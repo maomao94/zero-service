@@ -8,8 +8,8 @@ Timeout: 15000
 Mode: dev
 Log:
   Encoding: plain
-#  Mode: file
-#  Path: logs/zeroalarm
+  Mode: file
+  Path: /opt/logs/zeroalarm
 Redis:
   Host: 127.0.0.1:6379
   Type: node
@@ -27,4 +27,4 @@ Alarmx:
   VerificationToken: 7Tm89wiSVXSnwKXt5X0RNfeExOQdhonb
   UserId:
     - bc243e9d
-  Path: ./zeroalarm/alarm.json
+  Path: ./alarm.json
