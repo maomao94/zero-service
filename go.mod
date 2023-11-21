@@ -1,6 +1,6 @@
 module zero-service
 
-go 1.21.4
+go 1.19.4
 
 require (
 	github.com/go-pay/gopher v1.0.37
