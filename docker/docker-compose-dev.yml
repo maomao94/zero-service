@@ -2,7 +2,7 @@ version: '3'
 
 services:
   zero-alarm:
-    image: dockerhub.qingcloud.com/zeroservice/zeroalarmdev:latest
+    image: dockerhub.qingcloud.com/zeroservice/alarmdev:latest
     container_name: zeroalarmdev
     volumes:
       - /opt/logs:/opt/logs
