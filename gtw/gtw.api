@@ -1,0 +1,25 @@
+syntax = "v1"
+
+import "doc/base.api"
+
+info(
+	title: "网关服务"
+	desc: "网关服务"
+	author: "hehanpeng"
+	email: "hehanpengyy@163.com"
+	version: "v1"
+)
+
+@server(
+	prefix: gtw/v1
+	group: gtw
+)
+service gtw {
+	@doc "ping"
+	@handler ping
+	get /ping returns (PingReply)
+
+	@doc "forward"
+	@handler forward
+	post /forward (ForwardRequest) returns (ForwardReply)
+}

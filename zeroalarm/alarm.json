@@ -1,0 +1,75 @@
+{
+  "config": {
+    "wide_screen_mode": true
+  },
+  "header": {
+    "template": "red",
+    "title": {
+      "tag": "plain_text",
+      "content": "${title}"
+    }
+  },
+  "elements": [
+    {
+      "tag": "div",
+      "fields": [
+        {
+          "is_short": true,
+          "text": {
+            "tag": "lark_md",
+            "content": "**时间：**\n${dateTime}"
+          }
+        },
+        {
+          "is_short": true,
+          "text": {
+            "tag": "lark_md",
+            "content": "**事件 ID：**\n${alarmId}"
+          }
+        },
+        {
+          "is_short": true,
+          "text": {
+            "tag": "lark_md",
+            "content": "**项目：**\n${project}"
+          }
+        },
+        {
+          "is_short": true,
+          "text": {
+            "tag": "lark_md",
+            "content": "**IP地址：**\n${ip}"
+          }
+        },
+        {
+          "is_short": true,
+          "text": {
+            "tag": "lark_md",
+            "content": "**👤 一级值班：**\n<at id=all>所有人</at>"
+          }
+        },
+        {
+          "is_short": true,
+          "text": {
+            "tag": "lark_md",
+            "content": "**👤 二级值班：**\n<at id=all>所有人</at>"
+          }
+        },
+        {
+          "is_short": false,
+          "text": {
+            "tag": "lark_md",
+            "content": "** 内容: **\n${content}"
+          }
+        },
+        {
+          "is_short": false,
+          "text": {
+            "tag": "lark_md",
+            "content": "** 错误: **\n${error}"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+syntax = "v1"
+
+info(
+    title: "网关服务"
+    desc: "网关服务"
+    author: "hehanpeng"
+    email: "hehanpengyy@163.com"
+    version: "v1"
+)
+
+type (
+    PingReply {
+        Msg string `json:"msg"`
+    }
+
+    ForwardRequest {
+        MsgId string `json:"msgId"`
+        Body string `json:"body"`
+    }
+
+    ForwardReply {
+    }
+)
+
+type (
+    EmptyReply {
+    }
+    BaseReq {
+        Id int64 `json:"id"` // 主键ID
+    }
+    TenantReq {
+        Id int64 `json:"id"`              // 主键ID
+        TenantId string `json:"tenantId"` // 租户ID
+    }
+)

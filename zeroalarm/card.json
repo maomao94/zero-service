@@ -1,0 +1,141 @@
+{
+  "config": {
+    "wide_screen_mode": true
+  },
+  "header": {
+    "template": "red",
+    "title": {
+      "tag": "plain_text",
+      "content": "1 级报警 - 数据平台"
+    }
+  },
+  "elements": [
+    {
+      "tag": "div",
+      "fields": [
+        {
+          "is_short": true,
+          "text": {
+            "tag": "lark_md",
+            "content": "**🕐 时间：**\n2021-02-23 20:17:51"
+          }
+        },
+        {
+          "is_short": true,
+          "text": {
+            "tag": "lark_md",
+            "content": "**🔢 事件 ID：**\n336720"
+          }
+        },
+        {
+          "is_short": true,
+          "text": {
+            "tag": "lark_md",
+            "content": "**📋 项目：**\nQA 7"
+          }
+        },
+        {
+          "is_short": true,
+          "text": {
+            "tag": "lark_md",
+            "content": "**👤 一级值班：**\n<at id=all>所有人</at>"
+          }
+        },
+        {
+          "is_short": true,
+          "text": {
+            "tag": "lark_md",
+            "content": "**👤 二级值班：**\n<at id=all>所有人</at>"
+          }
+        }
+      ]
+    },
+    {
+      "tag": "img",
+      "img_key": "${image_key}",
+      "alt": {
+        "tag": "plain_text",
+        "content": " "
+      },
+      "title": {
+        "tag": "lark_md",
+        "content": "支付方式 支付成功率低于 50%："
+      }
+    },
+    {
+      "tag": "note",
+      "elements": [
+        {
+          "tag": "plain_text",
+          "content": "🔴 支付失败数  🔵 支付成功数"
+        }
+      ]
+    },
+    {
+      "tag": "action",
+      "actions": [
+        {
+          "tag": "button",
+          "text": {
+            "tag": "plain_text",
+            "content": "${button_name}"
+          },
+          "type": "primary",
+          "value": {
+            "key": "follow"
+          }
+        },
+        {
+          "tag": "select_static",
+          "placeholder": {
+            "tag": "plain_text",
+            "content": "暂时屏蔽"
+          },
+          "options": [
+            {
+              "text": {
+                "tag": "plain_text",
+                "content": "屏蔽10分钟"
+              },
+              "value": "1"
+            },
+            {
+              "text": {
+                "tag": "plain_text",
+                "content": "屏蔽30分钟"
+              },
+              "value": "2"
+            },
+            {
+              "text": {
+                "tag": "plain_text",
+                "content": "屏蔽1小时"
+              },
+              "value": "3"
+            },
+            {
+              "text": {
+                "tag": "plain_text",
+                "content": "屏蔽24小时"
+              },
+              "value": "4"
+            }
+          ],
+          "value": {
+            "key": "value"
+          }
+        }
+      ]
+    },
+    {
+      "tag": "hr"
+    },
+    {
+      "tag": "div",
+      "text": {
+        "tag": "lark_md",
+        "content": "🙋🏼 [我要反馈误报](https://open.feishu.cn/) | 📝 [录入报警处理过程](https://open.feishu.cn/)"
+      }
+    }
+  ]
+}

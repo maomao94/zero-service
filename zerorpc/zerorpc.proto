@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package zerorpc;
+option go_package = "./zerorpc";
+
+message Req {
+  string ping = 1;
+}
+
+message Res {
+  string pong = 1;
+}
+
+message SendDelayTaskReq {
+  string msgId = 1; // 唯一消息 id
+  string type = 2;
+  string body = 3;
+  int64 processIn = 4; // 分钟
+}
+
+message SendDelayTaskRes {
+}
+
+message ForwardTaskReq {
+  string msgId = 1; // 唯一消息 id
+  string body = 2;
+  int64 processIn = 3; // 秒
+  string triggerTime = 4; // 触发时间 2019-01-01 00:00:00 二选一
+  string url = 5; // 转发地址 POST json提交
+}
+
+message ForwardTaskRes {
+}
+
+service Zerorpc {
+  rpc Ping(Req) returns(Res);
+  rpc SendDelayTask(SendDelayTaskReq) returns(SendDelayTaskRes); // 发送延迟任务
+  rpc ForwardTask(ForwardTaskReq) returns(ForwardTaskRes); // 转发任务
+}
