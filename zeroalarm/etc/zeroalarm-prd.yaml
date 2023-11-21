@@ -11,7 +11,7 @@ Log:
   Mode: file
   Path: /opt/logs/zeroalarm
 Redis:
-  Host: 127.0.0.1:6379
+  Host: 192.168.100.4:6379
   Type: node
   Key: zero.alarm
 #链路追踪
