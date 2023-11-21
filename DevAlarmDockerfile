@@ -28,4 +28,4 @@ WORKDIR /app
 COPY --from=builder /app/zeroalarm /app/zeroalarm
 COPY --from=builder /app/etc /app/etc
 
-CMD ["./zeroalarm", "-f", "etc/zeroalarm.yaml"]
+CMD ["./zeroalarm", "-f", "etc/zeroalarm-dev.yaml"]
