@@ -8,8 +8,8 @@ Timeout: 15000
 Mode: dev
 Log:
   Encoding: plain
-#  Mode: file
-#  Path: logs/zero.alarm
+  Mode: file
+  Path: logs/zeroalarm
 Redis:
   Host: 127.0.0.1:6379
   Type: node
