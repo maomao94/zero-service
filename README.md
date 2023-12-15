@@ -53,7 +53,7 @@ cd /home/admin/app/alarm/output
 ./alarm -f ../zeroalarm/etc/zeroalarm-prd.yaml
 
 
-command = /home/admin/app/alarm/output/alarm -f /home/admin/app/alarm/zeroalarm-prd.yaml
+command = /home/admin/app/alarm/output/alarm -f /home/admin/app/alarm/zeroalarm/etc/zeroalarm-prd.yaml
 supervisorctl restart zeroalarm
 
 https://blog.csdn.net/chang995196962/article/details/130762977
