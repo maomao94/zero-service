@@ -29,4 +29,4 @@ Alarmx:
   UserId:
     - bc243e9d
 #  Path: /home/zero/alarm/alarm.json
-  Path: /home/admin/app/alarm/alarm.json
+  Path: /home/admin/app/alarm/zeroalarm/alarm.json
