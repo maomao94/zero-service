@@ -11,7 +11,7 @@ Log:
   Mode: file
   Path: /opt/logs/zeroalarm
 Redis:
-  Host: r-bp1h14rxvmijviluse.redis.rds.aliyuncs.com:6379
+  Host: r-bp1h14rxvmijvilusepd.redis.rds.aliyuncs.com:6379
   Pass: redisQINyun@1qhj
   Type: node
   Key: zero.alarm
