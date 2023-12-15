@@ -28,4 +28,5 @@ Alarmx:
   VerificationToken: 7Tm89wiSVXSnwKXt5X0RNfeExOQdhonb
   UserId:
     - bc243e9d
-  Path: /home/zero/alarm/alarm.json
+#  Path: /home/zero/alarm/alarm.json
+  Path: /home/admin/app/alarm/alarm.json
