@@ -49,6 +49,7 @@ export GO111MODULE=on
 # input your command here
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o output/alarm ./zeroalarm/zeroalarm.go
 
+rm -rf /home/admin/app/alarm
 tar zxvf /home/admin/app/alarm/package.tgz -C /home/admin/app/alarm/
 cd /home/admin/app/alarm/output
 ./alarm -f ../zeroalarm/etc/zeroalarm-prd.yaml
