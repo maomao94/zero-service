@@ -9,14 +9,14 @@ import (
 )
 
 // 微信支付通知
-func WechatNotifyHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
+func PaidNotifyHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		l := pay.NewWechatNotifyLogic(r.Context(), svcCtx)
-		resp, err := l.WechatNotify()
+		l := pay.NewPaidNotifyLogic(r.Context(), svcCtx, r, w)
+		err := l.PaidNotify()
 		if err != nil {
 			xhttp.JsonBaseResponseCtx(r.Context(), w, err)
 		} else {
-			xhttp.JsonBaseResponseCtx(r.Context(), w, resp)
+			//xhttp.JsonBaseResponseCtx(r.Context(), w, resp)
 		}
 	}
 }
