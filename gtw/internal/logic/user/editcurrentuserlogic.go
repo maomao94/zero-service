@@ -36,7 +36,6 @@ func (l *EditCurrentUserLogic) EditCurrentUser(req *types.EditCurrentUserRequest
 		Nickname: req.Nickname,
 		Sex:      req.Sex,
 		Avatar:   req.Avatar,
-		OpenId:   req.OpenId,
 	})
 	return
 }
