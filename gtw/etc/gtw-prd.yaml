@@ -6,7 +6,7 @@ Mode: dev
 Log:
   Encoding: plain
   Mode: file
-  Path: /opt/logs/zerorpc
+  Path: /opt/logs/gtw
 #链路追踪
 #Telemetry:
 #  Name: gtw
