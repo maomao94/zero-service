@@ -7,6 +7,7 @@ Timeout: 10000
 #  Key: zerorpc.rpc
 Mode: dev
 Log:
+  ServiceName: rpc
   Encoding: plain
   Mode: file
   Path: /opt/logs/zerorpc
