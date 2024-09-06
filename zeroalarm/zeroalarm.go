@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/zeromicro/go-zero/core/logx"
 	interceptor "zero-service/common/Interceptor/rpcserver"
 
 	"zero-service/zeroalarm/internal/config"
@@ -35,6 +36,7 @@ func main() {
 	})
 	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
 	defer s.Stop()
+	logx.AddGlobalFields(logx.Field("app", c.Name))
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
 	s.Start()

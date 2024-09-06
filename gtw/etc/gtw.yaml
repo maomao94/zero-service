@@ -4,7 +4,6 @@ Port: 11001
 Timeout: 5000
 Mode: dev
 Log:
-  ServiceName: gtw
   Encoding: plain
 #链路追踪
 #Telemetry:

@@ -7,7 +7,6 @@ Timeout: 100000
 #  Key: zerorpc.rpc
 Mode: dev
 Log:
-  ServiceName: rpc
   Encoding: plain
 #  Mode: file
 #  Path: logs/zero.rpc

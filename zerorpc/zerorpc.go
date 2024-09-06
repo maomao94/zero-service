@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/zeromicro/go-zero/core/logx"
 	interceptor "zero-service/common/Interceptor/rpcserver"
 	"zero-service/zerorpc/internal/task"
 
@@ -44,6 +45,8 @@ func main() {
 	scheduler := svc.NewSchedulerServer(ctx.Scheduler)
 	scheduler.Register()
 	serviceGroup.Add(scheduler)
+	logx.AddGlobalFields(logx.Field("app", c.Name))
+
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
 	serviceGroup.Start()
 }

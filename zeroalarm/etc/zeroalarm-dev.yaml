@@ -7,7 +7,6 @@ Timeout: 15000
 #  Key: zero.alarm
 Mode: dev
 Log:
-  ServiceName: alarm
   Encoding: plain
   Mode: file
   Path: /opt/logs/zeroalarm
