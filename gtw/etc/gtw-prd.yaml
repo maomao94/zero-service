@@ -4,7 +4,7 @@ Port: 11001
 Timeout: 5000
 Mode: dev
 Log:
-  Encoding: plain
+  Encoding: json
   Mode: file
   Path: /opt/logs/gtw
 #链路追踪
