@@ -7,7 +7,7 @@ Timeout: 15000
 #  Key: zero.alarm
 Mode: pro
 Log:
-  Encoding: plain
+  Encoding: json
   Mode: file
   Path: /opt/logs/zeroalarm
 Redis:

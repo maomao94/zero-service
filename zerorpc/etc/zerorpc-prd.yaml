@@ -7,7 +7,7 @@ Timeout: 10000
 #  Key: zerorpc.rpc
 Mode: dev
 Log:
-  Encoding: plain
+  Encoding: json
   Mode: file
   Path: /opt/logs/zerorpc
 Redis:
