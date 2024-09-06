@@ -23,5 +23,5 @@ func NewPingLogic(ctx context.Context, svcCtx *svc.ServiceContext) *PingLogic {
 }
 
 func (l *PingLogic) Ping(in *zerorpc.Req) (*zerorpc.Res, error) {
-	return &zerorpc.Res{Pong: "hello-rpc"}, nil
+	return &zerorpc.Res{Pong: "hello-rpc gtw"}, nil
 }
