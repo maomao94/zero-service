@@ -36,6 +36,7 @@ func NewForwardTaskLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Forwa
 	}
 }
 
+// 转发任务
 func (l *ForwardTaskLogic) ForwardTask(in *zerorpc.ForwardTaskReq) (*zerorpc.ForwardTaskRes, error) {
 	traceID := trace.TraceIDFromContext(l.ctx)
 	spanCtx, span := svc.StartAsynqProducerSpan(l.ctx, tasktype.DeferForwardTask)

@@ -11,8 +11,8 @@ Log:
   Mode: file
   Path: /opt/logs/zeroalarm
 Redis:
-  Host: r-bp1h14rxvmijvilusepd.redis.rds.aliyuncs.com:6379
-  Pass: redisQINyun@1qhj
+  Host: 192.168.100.4:6379
+  Pass: Aexaa4Le@juziQ123
   Type: node
   Key: zero.alarm
 #链路追踪
@@ -28,6 +28,4 @@ Alarmx:
   VerificationToken: 7Tm89wiSVXSnwKXt5X0RNfeExOQdhonb
   UserId:
     - bc243e9d
-    - b4da1843
-#  Path: /home/zero/alarm/alarm.json
-  Path: /home/admin/app/alarm/zeroalarm/alarm.json
+  Path: /home/zero/alarm/alarm.json

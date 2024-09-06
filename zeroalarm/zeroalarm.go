@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	interceptor "zero-service/common/Interceptor/rpcserver"
 
 	"zero-service/zeroalarm/internal/config"
 	"zero-service/zeroalarm/internal/server"
@@ -32,6 +33,7 @@ func main() {
 			reflection.Register(grpcServer)
 		}
 	})
+	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
 	defer s.Stop()
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)

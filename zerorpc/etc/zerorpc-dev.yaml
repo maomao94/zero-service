@@ -12,7 +12,7 @@ Log:
   Path: /opt/logs/zerorpc
 Redis:
   Host: 192.168.100.4:6379
-  Pass: redisQINyun@1qhj
+  Pass: Aexaa4Le@juziQ123
   Type: node
   Key: zero.rpc
 #链路追踪

@@ -3,7 +3,7 @@ package logic
 import (
 	"context"
 	"fmt"
-	"github.com/go-pay/gopher/util"
+	"github.com/duke-git/lancet/v2/stream"
 	"github.com/jinzhu/copier"
 	larkim "github.com/larksuite/oapi-sdk-go/v3/service/im/v1"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -29,7 +29,7 @@ func NewAlarmLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AlarmLogic 
 
 func (l *AlarmLogic) Alarm(in *zeroalarm.AlarmReq) (*zeroalarm.AlarmRes, error) {
 	in.UserId = append(in.UserId, l.svcCtx.Config.Alarmx.UserId...)
-	result := util.StringDeduplicate(in.UserId)
+	result := stream.FromSlice(in.UserId).Distinct().ToSlice()
 	formatChatName := in.ChatName + fmt.Sprintf("[%s]", l.svcCtx.Config.Mode)
 	// 告警
 	chatId, err := l.svcCtx.AlarmX.AlarmChat(l.ctx, l.svcCtx.Config.Name, formatChatName, in.Description, result)

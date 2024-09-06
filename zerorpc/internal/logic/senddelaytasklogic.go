@@ -30,6 +30,7 @@ func NewSendDelayTaskLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Sen
 	}
 }
 
+// 发送延迟任务
 func (l *SendDelayTaskLogic) SendDelayTask(in *zerorpc.SendDelayTaskReq) (*zerorpc.SendDelayTaskRes, error) {
 	spanCtx, span := svc.StartAsynqProducerSpan(l.ctx, tasktype.DeferDelayTask)
 	defer span.End()
