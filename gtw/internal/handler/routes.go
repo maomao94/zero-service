@@ -67,6 +67,12 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/wechat/paidNotify",
 				Handler: pay.PaidNotifyHandler(serverCtx),
 			},
+			{
+				// 微信退款通知
+				Method:  http.MethodPost,
+				Path:    "/wechat/refundedNotify",
+				Handler: pay.RefundedNotifyHandler(serverCtx),
+			},
 		},
 		rest.WithPrefix("/gtw/v1/pay"),
 	)
