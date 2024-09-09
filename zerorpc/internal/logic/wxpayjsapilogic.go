@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"database/sql"
+	"github.com/ArtisanCloud/PowerWeChat/v3/src/kernel/models"
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/payment/order/request"
 	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/duke-git/lancet/v2/random"
@@ -75,7 +76,7 @@ func (l *WxPayJsApiLogic) WxPayJsApi(in *zerorpc.WxPayJsApiReq) (*zerorpc.WxPayJ
 		MchOrderNo:     in.MchOrderNo,
 		PayType:        common.PayType_Wxpay,
 		TxnType:        common.TxnType_Consume,
-		TxnChannel:     common.TRADE_TYPE_JSAPI,
+		TxnChannel:     models.WX_TRADE_STATE_,
 		TxnAmt:         in.TxnAmt,
 		RealAmt:        in.RealAmt,
 		Result:         common.ResultProcessing,

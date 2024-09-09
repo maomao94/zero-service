@@ -5,14 +5,11 @@ import (
 )
 
 const (
-	ExpireTime        = 30 * 60
-	PayType_Wxpay     = "wxpay"
-	PayType_Alipay    = "alipay"
-	TxnType_Consume   = 1000
-	TxnType_Refund    = 2000
-	TRADE_TYPE_APP    = "APP"    // APP支付
-	TRADE_TYPE_JSAPI  = "JSAPI"  // 公众号支付或小程序支付
-	TRADE_TYPE_NATIVE = "NATIVE" // 原生扫码支付
+	ExpireTime      = 30 * 60
+	PayType_Wxpay   = "wxpay"
+	PayType_Alipay  = "alipay"
+	TxnType_Consume = 1000
+	TxnType_Refund  = 2000
 )
 
 // 定义交易结果的常量
