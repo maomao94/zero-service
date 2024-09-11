@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/duke-git/lancet/v2/compare"
+	"github.com/duke-git/lancet/v2/random"
 	"github.com/songzhibin97/gkit/errors"
 	"zero-service/model"
 	"zero-service/zerorpc/internal/svc"
@@ -70,7 +71,7 @@ func (l *LoginLogic) Login(in *zerorpc.LoginReq) (*zerorpc.LoginRes, error) {
 		nU, err := l.svcCtx.UserModel.Insert(l.ctx, nil, &model.User{
 			Mobile:   in.AuthKey,
 			Password: "",
-			Nickname: "mono",
+			Nickname: random.RandNumeralOrLetter(8),
 			Sex:      0,
 			Avatar:   "",
 			Info:     "",
