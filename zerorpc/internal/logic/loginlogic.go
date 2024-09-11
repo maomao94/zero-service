@@ -35,7 +35,7 @@ func (l *LoginLogic) Login(in *zerorpc.LoginReq) (*zerorpc.LoginRes, error) {
 			return nil, err
 		}
 		if responseGetUserPhoneNumber.ErrCode != 0 {
-			l.Errorf("小程序手机号快速登录失败 %v", responseGetUserPhoneNumber.ErrCode)
+			l.Errorf("小程序手机号快速登录失败 %v,%v", responseGetUserPhoneNumber.ErrCode, responseGetUserPhoneNumber.ErrMsg)
 			return nil, errors.BadRequest("9999", "小程序手机号快速登录失败")
 		}
 		phoneNumber := responseGetUserPhoneNumber.PhoneInfo.PhoneNumber
@@ -66,6 +66,19 @@ func (l *LoginLogic) Login(in *zerorpc.LoginReq) (*zerorpc.LoginRes, error) {
 		if u != nil {
 			userId = u.Id
 		}
+	} else if compare.Equal(in.AuthType, "unionId") {
+		responseCode2Session, err := l.svcCtx.MiniCli.Auth.Session(l.ctx, in.AuthKey)
+		if err != nil {
+			return nil, err
+		}
+		if responseCode2Session.ErrCode != 0 {
+			l.Errorf("小程序unionId快速登录失败 %v,%v", responseCode2Session.ErrCode, responseCode2Session.ErrMsg)
+			return nil, errors.BadRequest("9999", "小程序unionId快速登录失败")
+		}
+		// todo
+		return nil, errors.BadRequest("9999", "未保存 unionId")
+	} else {
+		return nil, errors.BadRequest("9999", "未知类型")
 	}
 	if userId == 0 {
 		nU, err := l.svcCtx.UserModel.Insert(l.ctx, nil, &model.User{

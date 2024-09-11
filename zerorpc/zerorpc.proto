@@ -72,8 +72,8 @@ message GenerateTokenRes {
 }
 
 message LoginReq{
-  string authType = 1; // miniProgram-小程序一键登录,mobile-手机号
-  string authKey = 2; // miniProgram-Code,mobile-验证码
+  string authType = 1; // miniProgram-小程序一键登录,mobile-手机号,unionId-微信unionId
+  string authKey = 2; // miniProgram-Code,mobile-验证码,unionId-sessionKey
   string password = 3;
 }
 
