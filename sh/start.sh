@@ -60,4 +60,3 @@ case $2 in
 \033[0;31m Example: \033[0m
       \033[0;33m sh  $0  start esmart-test.jar \033[0m"
 esac
-
