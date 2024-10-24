@@ -1,6 +1,6 @@
 syntax = "proto3";
+package zero.boot.grpc.alarm;
 
-package zeroalarm;
 option go_package = "./zeroalarm";
 
 message Req {
