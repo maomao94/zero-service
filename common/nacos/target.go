@@ -46,6 +46,8 @@ func parseURL(rawURL url.URL) (target, error) {
 		return target{}, errors.Wrap(err, "Malformed URL parameters")
 	}
 
+	tgt.NotLoadCacheAtStart = true
+	tgt.UpdateCacheWhenEmpty = true
 	if tgt.NamespaceID == "" {
 		tgt.NamespaceID = "public"
 	}
