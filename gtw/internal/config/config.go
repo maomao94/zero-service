@@ -10,7 +10,8 @@ type Config struct {
 	JwtAuth struct {
 		AccessSecret string
 	}
-	ZeroRpcConf zrpc.RpcClientConf
-	NfsRootPath string
-	DownloadUrl string
+	ZeroRpcConf  zrpc.RpcClientConf
+	AdminRpcConf zrpc.RpcClientConf
+	NfsRootPath  string
+	DownloadUrl  string
 }

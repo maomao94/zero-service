@@ -16,6 +16,13 @@ ZeroRpcConf:
     - 127.0.0.1:21001
   NonBlock: true
   Timeout: 3000
+AdminRpcConf:
+#  Endpoints:
+#    - 127.0.0.1:1005
+  # nacos://[user:passwd]@host/service?param=value'
+  Target: nacos://nacos:Zxhc@1234ns@10.10.1.103:8848/guns?namespaceid=public&timeout=5000s&NotLoadCacheAtStart=true
+  NonBlock: true
+  Timeout: 3000
 JwtAuth:
   AccessSecret: 629c6233-1a76-471b-bd25-b87208762219
 NfsRootPath: /opt/nfs

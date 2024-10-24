@@ -11,6 +11,7 @@ import (
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/rest"
+	_ "zero-service/common/nacos"
 )
 
 var configFile = flag.String("f", "etc/gtw.yaml", "the config file")

@@ -4,15 +4,17 @@ import (
 	"fmt"
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/payment"
 	"github.com/zeromicro/go-zero/zrpc"
+	"zero-service/admin/guns"
 	"zero-service/common"
 	"zero-service/gtw/internal/config"
 	"zero-service/zerorpc/zerorpc"
 )
 
 type ServiceContext struct {
-	Config     config.Config
-	ZeroRpcCli zerorpc.ZerorpcClient
-	WxPayCli   *payment.Payment
+	Config      config.Config
+	ZeroRpcCli  zerorpc.ZerorpcClient
+	AdminRpcCli guns.AdminClient
+	WxPayCli    *payment.Payment
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -49,8 +51,9 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		panic(fmt.Errorf("微信支付初始化错误,%v", err))
 	}
 	return &ServiceContext{
-		Config:     c,
-		ZeroRpcCli: zerorpc.NewZerorpcClient(zrpc.MustNewClient(c.ZeroRpcConf).Conn()),
-		WxPayCli:   paymentService,
+		Config:      c,
+		ZeroRpcCli:  zerorpc.NewZerorpcClient(zrpc.MustNewClient(c.ZeroRpcConf).Conn()),
+		AdminRpcCli: guns.NewAdminClient(zrpc.MustNewClient(c.AdminRpcConf).Conn()),
+		WxPayCli:    paymentService,
 	}
 }

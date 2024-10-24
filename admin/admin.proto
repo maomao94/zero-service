@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package guns;
+
+option go_package = "./guns";
+option java_multiple_files = true;
+option java_package = "cn.stylefeng.guns.grpc";
+option java_outer_classname = "AdminProto";
+
+message Req {
+    string ping = 1;
+}
+
+message Res {
+    string pong = 1;
+}
+
+service Admin {
+    rpc ping (Req) returns (Res) {}
+}
