@@ -1,7 +1,10 @@
 syntax = "proto3";
-package zero.boot.grpc.alarm;
+package zeroalarm;
 
 option go_package = "./zeroalarm";
+option java_multiple_files = true;
+option java_package = "zero.boot.grpc.alarm";
+option java_outer_classname = "AlarmProto";
 
 message Req {
   string ping = 1;
