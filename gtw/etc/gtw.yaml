@@ -20,7 +20,7 @@ AdminRpcConf:
 #  Endpoints:
 #    - 127.0.0.1:1005
   # nacos://[user:passwd]@host/service?param=value'
-  Target: nacos://nacos:Zxhc@1234ns@10.10.1.103:8848/guns?namespaceid=public&timeout=5000s
+  Target: nacos://nacos:Zxhc@1234ns@10.10.1.103:8848/guns?namespaceid=public&timeout=5000s&notLoadCacheAtStart=true&updateCacheWhenEmpty=true
   NonBlock: true
   Timeout: 3000
 JwtAuth:

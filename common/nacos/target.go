@@ -23,8 +23,8 @@ type target struct {
 	LogLevel             string        `key:",optional"`
 	LogDir               string        `key:",optional"`
 	CacheDir             string        `key:",optional"`
-	NotLoadCacheAtStart  bool          `key:"notLoadCacheAtStart,optional"`
-	UpdateCacheWhenEmpty bool          `key:"updateCacheWhenEmpty,optional"`
+	NotLoadCacheAtStart  bool          `key:"notLoadCacheAtStart,optional,string"`
+	UpdateCacheWhenEmpty bool          `key:"updateCacheWhenEmpty,optional,string"`
 }
 
 // parseURL with parameters
@@ -46,8 +46,6 @@ func parseURL(rawURL url.URL) (target, error) {
 		return target{}, errors.Wrap(err, "Malformed URL parameters")
 	}
 
-	tgt.NotLoadCacheAtStart = true
-	tgt.UpdateCacheWhenEmpty = true
 	if tgt.NamespaceID == "" {
 		tgt.NamespaceID = "public"
 	}
