@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	"github.com/zeromicro/go-zero/core/logx"
 	interceptor "zero-service/common/Interceptor/rpcserver"
@@ -52,7 +53,11 @@ func main() {
 		//MaxAge:              3,
 		LogLevel: "debug",
 	}
-	opts := nacos.NewNacosConfig("nacos.alarm", c.ListenOn, sc, cc)
+	m := map[string]string{
+		"gRPC.port":                 strutil.After(":", c.RpcServerConf.ListenOn),
+		"preserved.register.source": "go-zero",
+	}
+	opts := nacos.NewNacosConfig("nacos.alarm", c.ListenOn, sc, cc, nacos.WithMetadata(m))
 	_ = nacos.RegisterService(opts)
 	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
 	defer s.Stop()
