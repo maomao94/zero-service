@@ -57,7 +57,7 @@ func main() {
 		"gRPC.port":                 strutil.After(c.RpcServerConf.ListenOn, ":"),
 		"preserved.register.source": "go-zero",
 	}
-	opts := nacos.NewNacosConfig("nacos.alarm", c.ListenOn, sc, cc, nacos.WithMetadata(m))
+	opts := nacos.NewNacosConfig("alarm", c.ListenOn, sc, cc, nacos.WithMetadata(m))
 	_ = nacos.RegisterService(opts)
 	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
 	defer s.Stop()
