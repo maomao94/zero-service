@@ -43,8 +43,8 @@ func (nw *watcher) CallBackHandle(services []model.Instance, err error) {
 	}
 	ee := make([]string, 0, len(services))
 	for _, s := range services {
-		if s.Metadata != nil && s.Metadata["gRPC.port"] != "" {
-			ee = append(ee, fmt.Sprintf("%s:%s", s.Ip, s.Metadata["gRPC.port"]))
+		if s.Metadata != nil && s.Metadata["gRPC_port"] != "" {
+			ee = append(ee, fmt.Sprintf("%s:%s", s.Ip, s.Metadata["gRPC_port"]))
 		} else {
 			ee = append(ee, fmt.Sprintf("%s:%d", s.Ip, s.Port))
 		}
