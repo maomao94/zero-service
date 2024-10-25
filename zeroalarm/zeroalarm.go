@@ -55,6 +55,7 @@ func main() {
 	}
 	m := map[string]string{
 		"gRPC.port":                 strutil.After(c.RpcServerConf.ListenOn, ":"),
+		"gRPC_port":                 strutil.After(c.RpcServerConf.ListenOn, ":"),
 		"preserved.register.source": "go-zero",
 	}
 	opts := nacos.NewNacosConfig("alarm", c.ListenOn, sc, cc, nacos.WithMetadata(m))
