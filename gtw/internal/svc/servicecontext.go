@@ -6,6 +6,7 @@ import (
 	"github.com/zeromicro/go-zero/zrpc"
 	"zero-service/admin/guns"
 	"zero-service/common"
+	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/gtw/internal/config"
 	"zero-service/zerorpc/zerorpc"
 )
@@ -51,9 +52,11 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		panic(fmt.Errorf("微信支付初始化错误,%v", err))
 	}
 	return &ServiceContext{
-		Config:      c,
-		ZeroRpcCli:  zerorpc.NewZerorpcClient(zrpc.MustNewClient(c.ZeroRpcConf).Conn()),
-		AdminRpcCli: guns.NewAdminClient(zrpc.MustNewClient(c.AdminRpcConf).Conn()),
-		WxPayCli:    paymentService,
+		Config: c,
+		ZeroRpcCli: zerorpc.NewZerorpcClient(zrpc.MustNewClient(c.ZeroRpcConf,
+			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor)).Conn()),
+		AdminRpcCli: guns.NewAdminClient(zrpc.MustNewClient(c.AdminRpcConf,
+			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor)).Conn()),
+		WxPayCli: paymentService,
 	}
 }
