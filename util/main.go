@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -69,6 +70,8 @@ func main() {
 	fmt.Println("Available operations:")
 	fmt.Println("1) run")
 	fmt.Println("2) check")
+	fmt.Println("3) image")
+	fmt.Println("4) save")
 	fmt.Print("Select an operation: ")
 
 	scanner := bufio.NewScanner(os.Stdin)
@@ -112,6 +115,10 @@ func main() {
 		runServices(serverConfig)
 	case "2":
 		checkServices(serverConfig)
+	case "3":
+		imagesService(serverConfig, false)
+	case "4":
+		imagesService(serverConfig, true)
 	default:
 		fmt.Println("Invalid operation.")
 	}
@@ -259,6 +266,109 @@ func checkServices(serverConfig ServerConfig) {
 		output := executeCommand(command)
 		printFullWidthLine()
 		fmt.Println("Service Status:")
+		fmt.Println(output)
+	} else {
+		fmt.Println("Command execution cancelled.")
+	}
+}
+
+func imagesService(serverConfig ServerConfig, save bool) {
+	printFullWidthLine()
+	fmt.Println("Available services:")
+	for i, service := range serverConfig.Services {
+		fmt.Printf("%d) %s (%s)\n", i+1, service.Name, service.Remark)
+	}
+
+	fmt.Print("Select service(s) to check (separated by space): ")
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	serviceIndexes := strings.Fields(scanner.Text())
+
+	selectedServices := make([]string, 0)
+	for _, index := range serviceIndexes {
+		if i := parseIndex(index, len(serverConfig.Services)); i != -1 {
+			selectedServices = append(selectedServices, serverConfig.Services[i].Name)
+		} else {
+			fmt.Printf("Invalid service index: %s\n", index)
+		}
+	}
+
+	if len(selectedServices) == 0 {
+		fmt.Println("No valid services selected.")
+		return
+	}
+
+	// Print the command to be executed
+	command := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'docker images|grep \"%s\"'",
+		serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, strings.Join(selectedServices, "\\|"))
+	fmt.Println("Executing command:", command)
+
+	// Confirm execution
+	if confirmExecution() {
+		output := executeCommand(command)
+		printFullWidthLine()
+		fmt.Println(output)
+		if save {
+			// 使用正则表达式匹配第三列（镜像 ID）的字符串
+			re := regexp.MustCompile(`\S+\s+\S+\s+([a-z0-9]{12})`)
+			matches := re.FindAllStringSubmatch(output, -1)
+
+			selectImageId := make([]string, 0)
+			// 打印所有匹配的镜像 ID
+			for _, match := range matches {
+				selectImageId = append(selectImageId, match[1])
+			}
+			// 获取当前时间
+			currentTime := time.Now()
+			// 格式化当前时间为字符串，作为文件名
+			// 格式：YYYY-MM-DD_HH-MM-SS
+			fileName := currentTime.Format("2006-01-02_15-04-05")
+			// Print the command to be executed
+			commandSave := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'docker save -o %s_imageSave.tar %s'",
+				serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, fileName, strings.Join(selectImageId, " "))
+			fmt.Println("Executing commandSave:", commandSave)
+			output = executeCommand(commandSave)
+			fmt.Println(output)
+		}
+	} else {
+		fmt.Println("Command execution cancelled.")
+	}
+}
+
+func saveService(serverConfig ServerConfig) {
+	printFullWidthLine()
+	fmt.Println("Available services:")
+	for i, service := range serverConfig.Services {
+		fmt.Printf("%d) %s (%s)\n", i+1, service.Name, service.Remark)
+	}
+
+	fmt.Print("Select service(s) to check (separated by space): ")
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	serviceIndexes := strings.Fields(scanner.Text())
+
+	selectedServices := make([]string, 0)
+	for _, index := range serviceIndexes {
+		if i := parseIndex(index, len(serverConfig.Services)); i != -1 {
+			selectedServices = append(selectedServices, serverConfig.Services[i].Name)
+		} else {
+			fmt.Printf("Invalid service index: %s\n", index)
+		}
+	}
+
+	if len(selectedServices) == 0 {
+		fmt.Println("No valid services selected.")
+		return
+	}
+	// Print the command to be executed
+	command := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'docker save -o zero.tar %s'",
+		serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, strings.Join(selectedServices, " "))
+	fmt.Println("Executing command:", command)
+
+	// Confirm execution
+	if confirmExecution() {
+		output := executeCommand(command)
+		printFullWidthLine()
 		fmt.Println(output)
 	} else {
 		fmt.Println("Command execution cancelled.")
