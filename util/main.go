@@ -78,6 +78,7 @@ func main() {
 	fmt.Println("3) image")
 	fmt.Println("4) save")
 	fmt.Println("5) log")
+	fmt.Println("6) exec")
 	fmt.Print("Select an operation: ")
 
 	scanner := bufio.NewScanner(os.Stdin)
@@ -127,6 +128,8 @@ func main() {
 		imagesService(serverConfig, true)
 	case "5":
 		logService(serverConfig)
+	case "6":
+		execService(serverConfig)
 	default:
 		fmt.Println("Invalid operation.")
 	}
