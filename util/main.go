@@ -105,8 +105,6 @@ func main() {
 		execService(serverConfig)
 	case "4":
 		logService(serverConfig)
-	case "5":
-		saveImages(serverConfig)
 	default:
 		fmt.Println("Invalid operation.")
 	}
@@ -276,10 +274,11 @@ func execService(serverConfig ServerConfig) {
 	if i := parseIndex(serviceIndex, len(serverConfig.Services)); i != -1 {
 		service := serverConfig.Services[i]
 		// Print the command to be executed
-		command := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'cd %s && docker-compose exec %s sh'",
-			serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, serverConfig.Path, service.Name)
+		//command := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'docker compose -f %s exec %s sh'",
+		//	serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, serverConfig.Path, service.Name)
+		command := fmt.Sprintf("docker compose -f %s exec -it %s /bin/bash", serverConfig.Path, service.Name)
 		fmt.Println("Executing command:", command)
-		executeInteractiveCommand(command)
+		runRemoteCommand(serverConfig, command)
 	} else {
 		fmt.Println("Invalid service index.")
 	}
@@ -300,7 +299,7 @@ func logService(serverConfig ServerConfig) {
 
 	if i := parseIndex(serviceIndex, len(serverConfig.Services)); i != -1 {
 		service := serverConfig.Services[i]
-		command := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'cd %s && docker-compose logs %s'",
+		command := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'docker-compose -f %s logs %s'",
 			serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, serverConfig.Path, service.Name)
 		fmt.Println("Executing command:", command)
 		output := executeCommand(command)
@@ -309,49 +308,6 @@ func logService(serverConfig ServerConfig) {
 		fmt.Println(output)
 	} else {
 		fmt.Println("Invalid service index.")
-	}
-}
-
-// saveImages saves the images of the specified services
-func saveImages(serverConfig ServerConfig) {
-	fmt.Println("====================================")
-	fmt.Println("Available services:")
-	for i, service := range serverConfig.Services {
-		fmt.Printf("%d) %s (%s)\n", i+1, service.Name, service.Remark)
-	}
-
-	fmt.Print("Select service(s) to save (separated by space): ")
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	serviceIndexes := strings.Fields(scanner.Text())
-
-	selectedServices := make([]string, 0)
-	for _, index := range serviceIndexes {
-		if i := parseIndex(index, len(serverConfig.Services)); i != -1 {
-			selectedServices = append(selectedServices, serverConfig.Services[i].Name)
-		} else {
-			fmt.Printf("Invalid service index: %s\n", index)
-		}
-	}
-
-	if len(selectedServices) == 0 {
-		fmt.Println("No valid services selected.")
-		return
-	}
-
-	// Print the command to be executed
-	command := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'cd %s && docker save -o images.tar %s'",
-		serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, serverConfig.Path, strings.Join(selectedServices, " "))
-	fmt.Println("Executing command:", command)
-
-	// Confirm execution
-	if confirmExecution() {
-		startTime := time.Now() // Start time
-		executeCommand(command)
-		elapsedTime := time.Since(startTime) // Calculate elapsed time
-		fmt.Printf("Command executed in: %s\n", formatDuration(elapsedTime))
-	} else {
-		fmt.Println("Command execution cancelled.")
 	}
 }
 
@@ -436,4 +392,46 @@ func executeRemoteCommand(config ServerConfig, command string) string {
 	}
 
 	return string(output)
+}
+
+// run remote command via SSH
+func runRemoteCommand(config ServerConfig, command string) {
+	// Create the SSH client configuration
+	sshConfig := &ssh.ClientConfig{
+		User: config.SSHUser,
+		Auth: []ssh.AuthMethod{
+			ssh.Password(config.SSHPassword),
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // Insecure, for testing only
+	}
+
+	// Build SSH connection string
+	sshAddress := fmt.Sprintf("%s:%s", config.SSHHost, config.SSHPort)
+
+	// Establish SSH connection
+	client, err := ssh.Dial("tcp", sshAddress, sshConfig)
+	if err != nil {
+		fmt.Println("Failed to dial: ", err)
+		return
+	}
+	defer client.Close()
+
+	// Create a new session
+	session, err := client.NewSession()
+	if err != nil {
+		fmt.Println("Failed to create session: ", err)
+		return
+	}
+	defer session.Close()
+	// 使用标准输入输出与容器交互
+	session.Stdout = os.Stdout
+	session.Stderr = os.Stderr
+	session.Stdin = os.Stdin
+
+	// Run the command on the remote server
+	err = session.Run(command)
+	if err != nil {
+		fmt.Printf("Failed to execute command: %s\n", err)
+		return
+	}
 }
