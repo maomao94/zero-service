@@ -132,8 +132,8 @@ func readConfig(filename string) Config {
 func runServices(serverConfig ServerConfig) {
 	fmt.Println("====================================")
 	fmt.Println("Select the mode:")
-	fmt.Println("1) 1-single (single selection)")
-	fmt.Println("2) 2-multi (multiple selection)")
+	fmt.Println("1) single (single selection)")
+	fmt.Println("2) multi (multiple selection)")
 	fmt.Print("Select mode: ")
 
 	scanner := bufio.NewScanner(os.Stdin)
@@ -175,9 +175,31 @@ func runServices(serverConfig ServerConfig) {
 		return
 	}
 
-	// Print the command to be executed
-	command := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'docker compose -f %s up -d %s'",
-		serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, serverConfig.Path, strings.Join(selectedServices, " "))
+	fmt.Println("====================================")
+	fmt.Println("Select the action:")
+	fmt.Println("1) start")
+	fmt.Println("2) stop")
+	fmt.Println("3) up")
+	fmt.Println("4) restart")
+	fmt.Print("Select action: ")
+	scanner2 := bufio.NewScanner(os.Stdin)
+	scanner2.Scan()
+	actionNum := scanner2.Text()
+	var action = ""
+	switch actionNum {
+	case "1":
+		action = "start"
+	case "2":
+		action = "stop"
+	case "3":
+		action = "up -d"
+	case "4":
+		action = "start"
+	}
+
+	// Print the command to be executed11
+	command := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'docker compose -f %s %s %s'",
+		serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, serverConfig.Path, action, strings.Join(selectedServices, " "))
 
 	//command := fmt.Sprintf("docker compose -f %s up -d %s", serverConfig.Path, strings.Join(selectedServices, " "))
 	fmt.Println("Executing command:", command)
