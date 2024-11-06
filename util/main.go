@@ -337,7 +337,7 @@ func imagesService(serverConfig ServerConfig, save bool) {
 			// Print the command to be executed
 			commandSave := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'docker save -o %s_image.tar %s'",
 				serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, fileName, strings.Join(selectImageId, " "))
-			fmt.Println("Executing commandSave:", commandSave)
+			fmt.Println("Executing command:", commandSave)
 			output = executeCommand(commandSave)
 			fmt.Println(output)
 			printFullWidthLine()
