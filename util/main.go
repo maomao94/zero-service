@@ -419,13 +419,10 @@ func logService(serverConfig ServerConfig) {
 
 	if i := parseIndex(serviceIndex, len(serverConfig.Services)); i != -1 {
 		service := serverConfig.Services[i]
-		command := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'docker-compose -f %s logs -n 500 %s'",
-			serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, serverConfig.Path, service.Name)
+		command := fmt.Sprintf("docker compose -f %s logs -f -n 500 %s", serverConfig.Path, service.Name)
 		fmt.Println("Executing command:", command)
-		output := executeCommand(command)
+		runRemoteCommand(serverConfig, command)
 		printFullWidthLine()
-		fmt.Println("Service Logs:")
-		fmt.Println(output)
 	} else {
 		fmt.Println("Invalid service index.")
 	}
