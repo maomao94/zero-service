@@ -404,7 +404,7 @@ func execService(serverConfig ServerConfig) {
 		// Print the command to be executed
 		//command := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'docker compose -f %s exec %s sh'",
 		//	serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, serverConfig.Path, service.Name)
-		command := fmt.Sprintf("docker compose -f %s exec -T -it %s bash -l", serverConfig.Path, service.Name)
+		command := fmt.Sprintf("docker compose -f %s exec -it %s /bin/bash", serverConfig.Path, service.Name)
 		fmt.Println("Executing command:", command)
 		runRemoteCommand(serverConfig, command)
 	} else {
