@@ -343,7 +343,7 @@ func imagesService(serverConfig ServerConfig, save bool) {
 			printFullWidthLine()
 			fmt.Println(output)
 			elapsedTime := time.Since(startTime) // Calculate elapsed time
-			fmt.Printf("Command executed in: %s\n fileName: %s", formatDuration(elapsedTime), fileName)
+			fmt.Printf("Command executed in: %s fileName: %s \n", formatDuration(elapsedTime), fileName)
 		}
 	} else {
 		fmt.Println("Command execution cancelled.")
