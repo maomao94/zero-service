@@ -1,20 +1,26 @@
-zgh:
-  sshUser: "zxhc"
-  sshHost: "10.10.1.135"
-  sshPort: "22"
-  sshPassword: "Zxhc@1234!@#$" 
-  path: "/home/zxhc/docker/app/docker-compose.yml"
-  serviceName:
-    - defect-server
-    - file-server
-  remark: "中广核项目"
-qny:
-  sshUser: "qny"
-  sshHost: "10.10.1.137"
-  sshPort: "22"
-  sshPassword: "Zxhc@1234!@#$" 
-  path: "/home/zxhc/docker/app/docker-compose.yml"
-  serviceName:
-    - other-server
-    - other1-server
-  remark: "氢能源项目"
+servers:
+  zgh:
+    sshUser: "zxhc"
+    sshHost: "10.10.1.135"
+    sshPort: "22"
+    sshPassword: "Zxhc@1234!@#$"
+    path: "/home/zxhc/docker/app/docker-compose.yml"
+    serviceName:
+      - name: "defect-server"
+        remark: "缺陷管理服务"
+      - name: "file-server"
+        remark: "文件管理服务"
+    remark: "中广核项目"
+
+  qny:
+    sshUser: "qny"
+    sshHost: "10.10.1.137"
+    sshPort: "22"
+    sshPassword: "Zxhc@1234!@#$"
+    path: "/home/zxhc/docker/app/docker-compose.yml"
+    serviceName:
+      - name: "other-server"
+        remark: "其他服务"
+      - name: "other1-server"
+        remark: "其他服务1"
+    remark: "氢能源项目"

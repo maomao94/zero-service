@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 配置文件路径
-CONFIG_FILE="config.yaml"
+CONFIG_FILE="config-sh.yaml"
 
 # 操作选择
 echo "Available operations:"

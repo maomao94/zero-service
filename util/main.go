@@ -27,6 +27,7 @@ type ServerConfig struct {
 	SSHPassword string    `yaml:"sshPassword"`
 	Path        string    `yaml:"path"`
 	Services    []Service `yaml:"serviceName"`
+	Remark      string    `yaml:"remark"`
 }
 
 // Config represents the overall configuration structure
@@ -65,14 +66,26 @@ func main() {
 	fmt.Println("====================================")
 	fmt.Println("Available servers:")
 	serverNames := make([]string, 0, len(config.Servers))
-	for name := range config.Servers {
-		serverNames = append(serverNames, name)
-		fmt.Println(name)
+	num := 1
+	for i, name := range config.Servers {
+		serverNames = append(serverNames, i)
+		fmt.Printf("%d) %s\n", num, i+" "+name.Remark) // 显示序号和服务器名称
+		num++
 	}
 
-	fmt.Print("Select a server: ")
+	fmt.Print("Select a server by number: ")
 	scanner.Scan()
-	selectedServer := scanner.Text()
+	selectedServerIndex := scanner.Text()
+
+	// 转换输入的序号为索引
+	index, err := strconv.Atoi(selectedServerIndex)
+	if err != nil || index < 1 || index > len(config.Servers) {
+		fmt.Println("Invalid selection.")
+		return
+	}
+
+	// 获取对应的服务器名称
+	selectedServer := serverNames[index-1] // 序号从1开始，因此需要减去1
 
 	serverConfig, exists := config.Servers[selectedServer]
 	if !exists {
