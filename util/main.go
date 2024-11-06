@@ -427,7 +427,7 @@ func runRemoteCommand(config ServerConfig, command string) {
 	session.Stdout = os.Stdout
 	session.Stderr = os.Stderr
 	session.Stdin = os.Stdin
-
+	fmt.Printf("into container success!!!")
 	// Run the command on the remote server
 	err = session.Run(command)
 	if err != nil {
