@@ -55,9 +55,6 @@ func main() {
 	fmt.Println("Available operations:")
 	fmt.Println("1) run")
 	fmt.Println("2) check")
-	fmt.Println("3) exec")
-	fmt.Println("4) log")
-	fmt.Println("5) save")
 	fmt.Print("Select an operation: ")
 
 	scanner := bufio.NewScanner(os.Stdin)
@@ -101,10 +98,6 @@ func main() {
 		runServices(serverConfig)
 	case "2":
 		checkServices(serverConfig)
-	case "3":
-		execService(serverConfig)
-	case "4":
-		logService(serverConfig)
 	default:
 		fmt.Println("Invalid operation.")
 	}
@@ -276,7 +269,7 @@ func execService(serverConfig ServerConfig) {
 		// Print the command to be executed
 		//command := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'docker compose -f %s exec %s sh'",
 		//	serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, serverConfig.Path, service.Name)
-		command := fmt.Sprintf("docker compose -f %s exec -it %s /bin/bash", serverConfig.Path, service.Name)
+		command := fmt.Sprintf("docker compose -f %s exec -T -it %s bash -l", serverConfig.Path, service.Name)
 		fmt.Println("Executing command:", command)
 		runRemoteCommand(serverConfig, command)
 	} else {
