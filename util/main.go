@@ -5,14 +5,14 @@ import (
 	"flag"
 	"fmt"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/term"
+	"gopkg.in/yaml.v2"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
-
-	"gopkg.in/yaml.v2"
 )
 
 // Service represents the structure of a service
@@ -52,11 +52,11 @@ func main() {
 	defaultConfigFile := filepath.Join(execDir, "config.yaml")
 
 	// Display author information
-	fmt.Println("====================================")
+	printFullWidthLine()
 	fmt.Println("Welcome to the Service Management Tool")
 	fmt.Println("Author: He Hanpeng")
 	fmt.Println("Email: hehanpengyy@163.com")
-	fmt.Println("====================================")
+	printFullWidthLine()
 
 	// Define command line flags
 	configFile := flag.String("f", defaultConfigFile, "Path to the YAML configuration file")
@@ -65,7 +65,7 @@ func main() {
 	// Read the configuration from the specified file
 	config := readConfig(*configFile)
 
-	fmt.Println("====================================")
+	printFullWidthLine()
 	fmt.Println("Available operations:")
 	fmt.Println("1) run")
 	fmt.Println("2) check")
@@ -75,7 +75,7 @@ func main() {
 	scanner.Scan()
 	operation := scanner.Text()
 
-	fmt.Println("====================================")
+	printFullWidthLine()
 	fmt.Println("Available servers:")
 	serverNames := make([]string, 0, len(config.Servers))
 	num := 1
@@ -135,7 +135,7 @@ func readConfig(filename string) Config {
 
 // runServices runs the specified services
 func runServices(serverConfig ServerConfig) {
-	fmt.Println("====================================")
+	printFullWidthLine()
 	fmt.Println("Select the mode:")
 	fmt.Println("1) single (single selection)")
 	fmt.Println("2) multi (multiple selection)")
@@ -180,7 +180,7 @@ func runServices(serverConfig ServerConfig) {
 		return
 	}
 
-	fmt.Println("====================================")
+	printFullWidthLine()
 	fmt.Println("Select the action:")
 	fmt.Println("1) start")
 	fmt.Println("2) stop")
@@ -213,7 +213,7 @@ func runServices(serverConfig ServerConfig) {
 	if confirmExecution() {
 		startTime := time.Now() // Start time
 		output := executeCommand(command)
-		fmt.Println("====================================")
+		printFullWidthLine()
 		fmt.Println(output)
 		elapsedTime := time.Since(startTime) // Calculate elapsed time
 		fmt.Printf("Command executed in: %s\n", formatDuration(elapsedTime))
@@ -224,7 +224,7 @@ func runServices(serverConfig ServerConfig) {
 
 // checkServices checks the status of the services
 func checkServices(serverConfig ServerConfig) {
-	fmt.Println("====================================")
+	printFullWidthLine()
 	fmt.Println("Available services:")
 	for i, service := range serverConfig.Services {
 		fmt.Printf("%d) %s (%s)\n", i+1, service.Name, service.Remark)
@@ -257,7 +257,7 @@ func checkServices(serverConfig ServerConfig) {
 	// Confirm execution
 	if confirmExecution() {
 		output := executeCommand(command)
-		fmt.Println("====================================")
+		printFullWidthLine()
 		fmt.Println("Service Status:")
 		fmt.Println(output)
 	} else {
@@ -267,7 +267,7 @@ func checkServices(serverConfig ServerConfig) {
 
 // execService enters the specified service container
 func execService(serverConfig ServerConfig) {
-	fmt.Println("====================================")
+	printFullWidthLine()
 	fmt.Println("Available services:")
 	for i, service := range serverConfig.Services {
 		fmt.Printf("%d) %s (%s)\n", i+1, service.Name, service.Remark)
@@ -293,7 +293,7 @@ func execService(serverConfig ServerConfig) {
 
 // logService views the logs of the specified service
 func logService(serverConfig ServerConfig) {
-	fmt.Println("====================================")
+	printFullWidthLine()
 	fmt.Println("Available services:")
 	for i, service := range serverConfig.Services {
 		fmt.Printf("%d) %s (%s)\n", i+1, service.Name, service.Remark)
@@ -310,7 +310,7 @@ func logService(serverConfig ServerConfig) {
 			serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, serverConfig.Path, service.Name)
 		fmt.Println("Executing command:", command)
 		output := executeCommand(command)
-		fmt.Println("====================================")
+		printFullWidthLine()
 		fmt.Println("Service Logs:")
 		fmt.Println(output)
 	} else {
@@ -441,4 +441,24 @@ func runRemoteCommand(config ServerConfig, command string) {
 		fmt.Printf("Failed to execute command: %s\n", err)
 		return
 	}
+}
+
+// 获取终端宽度
+func getTerminalWidth() int {
+	width, _, err := term.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		// 如果获取终端宽度失败，默认返回 80
+		return 80
+	}
+	return width
+}
+
+// 打印铺满终端宽度的分割线
+func printFullWidthLine() {
+	width := getTerminalWidth()
+	line := ""
+	for i := 0; i < width; i++ {
+		line += "="
+	}
+	fmt.Println(line)
 }
