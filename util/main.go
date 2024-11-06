@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"golang.org/x/crypto/ssh"
 	"os"
 	"os/exec"
 	"strconv"
@@ -175,14 +176,18 @@ func runServices(serverConfig ServerConfig) {
 	}
 
 	// Print the command to be executed
-	command := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'cd %s && docker-compose up -d %s'",
+	command := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'docker compose -f %s up -d %s'",
 		serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, serverConfig.Path, strings.Join(selectedServices, " "))
+
+	//command := fmt.Sprintf("docker compose -f %s up -d %s", serverConfig.Path, strings.Join(selectedServices, " "))
 	fmt.Println("Executing command:", command)
 
 	// Confirm execution
 	if confirmExecution() {
 		startTime := time.Now() // Start time
-		executeCommand(command)
+		output := executeCommand(command)
+		fmt.Println("====================================")
+		fmt.Println(output)
 		elapsedTime := time.Since(startTime) // Calculate elapsed time
 		fmt.Printf("Command executed in: %s\n", formatDuration(elapsedTime))
 	} else {
@@ -369,4 +374,44 @@ func executeInteractiveCommand(command string) {
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("Error executing command: %s\n", err)
 	}
+}
+
+// Execute remote command via SSH
+func executeRemoteCommand(config ServerConfig, command string) string {
+	// Create the SSH client configuration
+	sshConfig := &ssh.ClientConfig{
+		User: config.SSHUser,
+		Auth: []ssh.AuthMethod{
+			ssh.Password(config.SSHPassword),
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // Insecure, for testing only
+	}
+
+	// Build SSH connection string
+	sshAddress := fmt.Sprintf("%s:%s", config.SSHHost, config.SSHPort)
+
+	// Establish SSH connection
+	client, err := ssh.Dial("tcp", sshAddress, sshConfig)
+	if err != nil {
+		fmt.Println("Failed to dial: ", err)
+		return ""
+	}
+	defer client.Close()
+
+	// Create a new session
+	session, err := client.NewSession()
+	if err != nil {
+		fmt.Println("Failed to create session: ", err)
+		return ""
+	}
+	defer session.Close()
+
+	// Run the command on the remote server
+	output, err := session.CombinedOutput(command)
+	if err != nil {
+		fmt.Printf("Failed to execute command: %s\n", err)
+		return ""
+	}
+
+	return string(output)
 }
