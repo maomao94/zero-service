@@ -194,7 +194,7 @@ func runServices(serverConfig ServerConfig) {
 	case "3":
 		action = "up -d"
 	case "4":
-		action = "start"
+		action = "restart"
 	}
 
 	// Print the command to be executed11
