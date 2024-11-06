@@ -324,7 +324,7 @@ func imagesService(serverConfig ServerConfig, save bool) {
 			// 格式：YYYY-MM-DD_HH-MM-SS
 			fileName := currentTime.Format("2006-01-02_15-04-05")
 			// Print the command to be executed
-			commandSave := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'docker save -o %s_imageSave.tar %s'",
+			commandSave := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'docker save -o %s_image.tar %s'",
 				serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, fileName, strings.Join(selectImageId, " "))
 			fmt.Println("Executing commandSave:", commandSave)
 			output = executeCommand(commandSave)
