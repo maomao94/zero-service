@@ -38,6 +38,11 @@ type Config struct {
 	Servers map[string]ServerConfig `yaml:"servers"`
 }
 
+/*
+*
+GOARCH=arm GOOS=linux go build -o myprogram-arm
+GOARCH=amd64 GOOS=linux go build -o myprogram-x86
+*/
 func main() {
 	// 获取执行文件的路径
 	execPath, err := os.Executable()
