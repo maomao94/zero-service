@@ -7,6 +7,7 @@ import (
 	"golang.org/x/crypto/ssh"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -37,6 +38,19 @@ type Config struct {
 }
 
 func main() {
+	// 获取执行文件的路径
+	execPath, err := os.Executable()
+	if err != nil {
+		fmt.Println("Error getting executable path:", err)
+		return
+	}
+
+	// 获取执行文件所在的目录
+	execDir := filepath.Dir(execPath)
+
+	// 设置默认的配置文件路径为执行文件所在目录下的 config.yaml
+	defaultConfigFile := filepath.Join(execDir, "config.yaml")
+
 	// Display author information
 	fmt.Println("====================================")
 	fmt.Println("Welcome to the Service Management Tool")
@@ -45,7 +59,7 @@ func main() {
 	fmt.Println("====================================")
 
 	// Define command line flags
-	configFile := flag.String("f", "config.yaml", "Path to the YAML configuration file")
+	configFile := flag.String("f", defaultConfigFile, "Path to the YAML configuration file")
 	flag.Parse()
 
 	// Read the configuration from the specified file
