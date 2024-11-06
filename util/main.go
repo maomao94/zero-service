@@ -419,7 +419,7 @@ func logService(serverConfig ServerConfig) {
 
 	if i := parseIndex(serviceIndex, len(serverConfig.Services)); i != -1 {
 		service := serverConfig.Services[i]
-		command := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'docker-compose -f %s logs %s'",
+		command := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'docker-compose -f %s logs -n 500 %s'",
 			serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, serverConfig.Path, service.Name)
 		fmt.Println("Executing command:", command)
 		output := executeCommand(command)
