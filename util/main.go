@@ -245,8 +245,8 @@ func checkServices(serverConfig ServerConfig) {
 	}
 
 	// Print the command to be executed
-	command := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'cd %s && docker-compose ps'",
-		serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, serverConfig.Path)
+	command := fmt.Sprintf("sshpass -p '%s' ssh -p %s %s@%s 'docker compose -f %s ps -a %s'",
+		serverConfig.SSHPassword, serverConfig.SSHPort, serverConfig.SSHUser, serverConfig.SSHHost, serverConfig.Path, strings.Join(selectedServices, " "))
 	fmt.Println("Executing command:", command)
 
 	// Confirm execution
