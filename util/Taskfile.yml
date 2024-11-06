@@ -1,0 +1,33 @@
+version: '3'
+
+includes:
+  tests:
+    taskfile: ./Taskfile-docker.yml
+    flatten: true
+
+tasks:
+  # run:
+  #   # Make sure these variables are set before running
+  #   requires:
+  #     vars: [SSH_USER,SSH_HOST,SSH_PORT,SSH_PASSWORD,DOCKER_COMPOSE_PATH,c,a]
+  #   cmds:
+  #     - |
+  #       if [ -z "{{.c}}" ]; then
+  #       echo "Error: command must not be empty! Use 'restart', 'up', 'stop', or 'start'."
+  #         exit 1
+  #       fi
+        
+  #       sh manage.sh {{.ssh_user}} {{.ssh_host}} {{.ssh_port}} {{.ssh_password}}} {{.path}} {{.c}} "{{.a}}"
+  # up-all-135:
+  #   vars:
+  #     c: "up"
+  #     a: ""
+  #     i: "135"  # 可选，指定 IP 地址
+  #   cmds:
+  #     - |
+  #       if [ -z "{{.c}}" ]; then
+  #       echo "Error: command must not be empty! Use 'restart', 'up', 'stop', or 'start'."
+  #         exit 1
+  #       fi
+        
+  #       sh manage.sh {{.c}} "{{.a}}" {{.i}}
