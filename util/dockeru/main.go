@@ -42,11 +42,50 @@ func main() {
 
 	action := options[actionIndex-1]
 
-	// 获取用户输入的容器名称过滤条件（可选）
-	fmt.Print("请输入容器名称过滤条件（可选，留空表示不过滤）: ")
-	scanner.Scan()
-	filter := scanner.Text()
+	var filter string
 
+	// 获取用户输入的过滤条件
+	if action == "images" {
+		// 对于镜像操作，提示用户输入镜像名称过滤条件
+		fmt.Print("请输入镜像名称过滤条件（可选，留空表示不过滤）: ")
+		scanner.Scan()
+		filter = scanner.Text()
+	} else {
+		// 对于容器操作，提示用户输入容器名称过滤条件
+		fmt.Print("请输入容器名称过滤条件（可选，留空表示不过滤）: ")
+		scanner.Scan()
+		filter = scanner.Text()
+	}
+
+	// 根据选择执行操作
+	if action == "images" {
+		// 查看镜像列表
+		cmd := exec.Command("docker", "images", "--format", "{{.Repository}}|{{.Tag}}|{{.ID}}|{{.CreatedAt}}|{{.Size}}")
+		output, err := cmd.Output()
+		if err != nil {
+			fmt.Println("获取镜像列表失败:", err)
+			return
+		}
+
+		lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+		var images []string
+		for _, line := range lines {
+			// 过滤镜像信息
+			if filter != "" && !strings.Contains(line, filter) {
+				continue
+			}
+			images = append(images, line)
+		}
+
+		// 输出镜像列表
+		fmt.Println("镜像列表:")
+		for _, image := range images {
+			fmt.Printf("%s\n", image)
+		}
+		return
+	}
+
+	// 获取容器列表
 	containers := getAllContainers(filter) // 传入过滤条件
 	if len(containers) == 0 {
 		fmt.Println("没有找到容器")
@@ -103,7 +142,7 @@ func getAllContainers(filter string) []ContainerInfo {
 		}
 
 		// 如果 filter 不为空，检查容器的 Name 或 Image 是否包含 filter 字符串
-		if filter != "" && (!strings.Contains(parts[6], filter) || !strings.Contains(parts[1], filter)) {
+		if filter != "" && (!strings.Contains(parts[6], filter) && !strings.Contains(parts[1], filter)) {
 			continue
 		}
 
