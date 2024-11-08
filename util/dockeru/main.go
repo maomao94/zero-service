@@ -20,6 +20,9 @@ type ContainerInfo struct {
 }
 
 func main() {
+	fmt.Println("Welcome to the Service Management Tool")
+	fmt.Println("Author: He Hanpeng")
+	fmt.Println("Email: hehanpengyy@163.com")
 	options := []string{"start", "stop", "restart", "exec", "log"}
 	fmt.Println("选择一个操作:")
 	for i, option := range options {
