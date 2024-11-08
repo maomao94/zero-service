@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"text/tabwriter"
 )
 
 type ContainerInfo struct {
@@ -46,11 +47,14 @@ func main() {
 		return
 	}
 
-	fmt.Printf("%-5s %-15s %-30s %-30s %-20s %-25s %-20s %s\n", "序号", "CONTAINER ID", "IMAGE", "COMMAND", "CREATED", "STATUS", "PORTS", "NAMES")
+	// 设置 tabwriter 来美化输出格式
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	fmt.Fprintf(w, "序号\tCONTAINER ID\tIMAGE\tCOMMAND\tCREATED\tSTATUS\tPORTS\tNAMES\n")
 	for i, container := range containers {
-		fmt.Printf("%-5d %-15s %-30s %-30s %-20s %-25s %-20s %s\n",
+		fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 			i+1, container.ID, container.Image, container.Command, container.Created, container.Status, container.Ports, container.Name)
 	}
+	w.Flush() // 刷新缓冲区，将内容打印到控制台
 
 	fmt.Print("请输入容器序号: ")
 	scanner.Scan()
