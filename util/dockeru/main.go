@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"golang.org/x/term"
 	"os"
 	"os/exec"
 	"strconv"
@@ -22,10 +23,11 @@ type ContainerInfo struct {
 }
 
 func main() {
-	fmt.Println("Welcome to the Service Management Tool")
+	fmt.Println("Welcome to the Service Management Tool v1.0.0")
 	fmt.Println("Author: He Hanpeng")
 	fmt.Println("Email: hehanpengyy@163.com")
-	options := []string{"start", "stop", "restart", "exec", "log", "images"}
+	fmt.Println(strings.Repeat("-", getTerminalWidth())) // 打印分隔线
+	options := []string{"start", "stop", "restart", "exec", "log", "ps", "images"}
 	fmt.Println("选择一个操作:")
 	for i, option := range options {
 		fmt.Printf("%d. %s\n", i+1, option)
@@ -77,10 +79,22 @@ func main() {
 			images = append(images, line)
 		}
 
+		// 输出标题
+		fmt.Println(strings.Repeat("-", getTerminalWidth())) // 打印分隔线
+		fmt.Printf("%-50s %-15s %-15s %-20s %-10s\n", "Repository", "Tag", "ID", "CreatedAt", "Size")
 		// 输出镜像列表
-		fmt.Println("镜像列表:")
 		for _, image := range images {
-			fmt.Printf("%s\n", image)
+			parts := strings.Split(image, "|")
+			// 格式化时间为简洁的日期格式
+			createdTime, err := time.Parse("2006-01-02T15:04:05Z07:00", parts[3])
+			if err != nil {
+				createdTime = time.Now() // 如果解析错误，使用当前时间
+			}
+			// 格式化为日期和时间（YYYY-MM-DD HH:MM:SS）
+			formattedCreated := createdTime.Format("2006-01-02 15:04:05")
+			if len(parts) == 5 {
+				fmt.Printf("%-50s %-15s %-15s %-20s %-10s\n", parts[0], parts[1], parts[2], formattedCreated, parts[4])
+			}
 		}
 		return
 	}
@@ -94,7 +108,8 @@ func main() {
 
 	// 设置 tabwriter 来美化输出格式
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintf(w, "序号\tCONTAINER ID\tIMAGE\tCOMMAND\tCREATED\tSTATUS\tPORTS\tNAMES\n")
+	fmt.Println(strings.Repeat("-", getTerminalWidth())) // 打印分隔线
+	fmt.Fprintf(w, "N  CONTAINER ID\tNAMES\tSTATUS\tPORTS\tIMAGE\tCREATED\tCOMMAND\n")
 	for i, container := range containers {
 		// 格式化时间为简洁的日期格式
 		createdTime, err := time.Parse("2006-01-02T15:04:05Z07:00", container.Created)
@@ -105,10 +120,14 @@ func main() {
 		formattedCreated := createdTime.Format("2006-01-02 15:04:05")
 
 		// 输出容器信息
-		fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-			i+1, container.ID, container.Image, container.Command, formattedCreated, container.Status, container.Ports, container.Name)
+		fmt.Fprintf(w, "%d  %s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+			i+1, container.ID, container.Name, container.Status, container.Ports, container.Image, formattedCreated, container.Command)
 	}
 	w.Flush() // 刷新缓冲区，将内容打印到控制台
+
+	if action == "ps" {
+		return
+	}
 
 	// 容器操作部分
 	if action != "images" {
@@ -189,4 +208,14 @@ func executeCommandWithInteractive(action, container string) {
 	} else {
 		fmt.Printf("%s 操作成功执行\n", action)
 	}
+}
+
+// 获取终端宽度
+func getTerminalWidth() int {
+	width, _, err := term.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		// 如果获取终端宽度失败，默认返回 80
+		return 80
+	}
+	return width
 }
