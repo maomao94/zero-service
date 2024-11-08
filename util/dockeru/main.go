@@ -103,7 +103,7 @@ func getAllContainers(filter string) []ContainerInfo {
 		}
 
 		// 如果 filter 不为空，检查容器的 Name 或 Image 是否包含 filter 字符串
-		if filter != "" && !strings.Contains(parts[6], filter) && !strings.Contains(parts[1], filter) {
+		if filter != "" && (!strings.Contains(parts[6], filter) || !strings.Contains(parts[1], filter)) {
 			continue
 		}
 
