@@ -3,16 +3,12 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
-
-	"github.com/creack/pty"
 )
 
-// 容器信息结构体
 type ContainerInfo struct {
 	ID      string
 	Image   string
@@ -62,12 +58,9 @@ func main() {
 	}
 
 	container := containers[containerIndex-1]
-
-	// 使用伪终端执行命令
-	executeCommandWithPTY(action, container.Name)
+	executeCommandWithInteractiveTTY(action, container.Name)
 }
 
-// 获取所有容器的详细信息
 func getAllContainers() []ContainerInfo {
 	cmd := exec.Command("docker", "ps", "-a", "--format", "{{.ID}}|{{.Image}}|{{.Command}}|{{.CreatedAt}}|{{.Status}}|{{.Ports}}|{{.Names}}")
 	output, err := cmd.Output()
@@ -97,8 +90,7 @@ func getAllContainers() []ContainerInfo {
 	return containers
 }
 
-// 使用伪终端执行命令
-func executeCommandWithPTY(action, container string) {
+func executeCommandWithInteractiveTTY(action, container string) {
 	var cmd *exec.Cmd
 	switch action {
 	case "start":
@@ -108,19 +100,8 @@ func executeCommandWithPTY(action, container string) {
 	case "restart":
 		cmd = exec.Command("docker", "restart", container)
 	case "exec":
-		// 创建伪终端用于执行 `exec -it`
-		cmd = exec.Command("docker", "exec", "-i", container, "/bin/bash")
-		ptmx, err := pty.Start(cmd)
-		if err != nil {
-			fmt.Printf("创建伪终端失败: %v\n", err)
-			return
-		}
-		defer func() { _ = ptmx.Close() }()
-
-		// 将标准输入输出与伪终端关联
-		go func() { _, _ = io.Copy(ptmx, os.Stdin) }()
-		_, _ = io.Copy(os.Stdout, ptmx)
-		return
+		// 使用 `-it` 伪终端参数
+		cmd = exec.Command("docker", "exec", "-it", container, "/bin/bash")
 	case "log":
 		cmd = exec.Command("docker", "logs", "--tail", "100", "-f", container)
 	default:
@@ -128,8 +109,11 @@ func executeCommandWithPTY(action, container string) {
 		return
 	}
 
+	// 将标准输入、输出和错误与当前终端关联
+	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("执行 %s 命令失败: %v\n", action, err)
 	} else {
