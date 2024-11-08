@@ -42,7 +42,12 @@ func main() {
 
 	action := options[actionIndex-1]
 
-	containers := getAllContainers()
+	// 获取用户输入的容器名称过滤条件（可选）
+	fmt.Print("请输入容器名称过滤条件（可选，留空表示不过滤）: ")
+	scanner.Scan()
+	filter := scanner.Text()
+
+	containers := getAllContainers(filter) // 传入过滤条件
 	if len(containers) == 0 {
 		fmt.Println("没有找到容器")
 		return
@@ -57,9 +62,6 @@ func main() {
 		if err != nil {
 			createdTime = time.Now() // 如果解析错误，使用当前时间
 		}
-		// 格式化为日期（YYYY-MM-DD）或时间（HH:MM:SS）
-		//formattedCreated := createdTime.Format("2006/01/02") // 只保留日期
-		// formattedCreated := createdTime.Format("15:04:05") // 如果只需要时间
 		// 格式化为日期和时间（YYYY-MM-DD HH:MM:SS）
 		formattedCreated := createdTime.Format("2006-01-02 15:04:05")
 
@@ -69,23 +71,22 @@ func main() {
 	}
 	w.Flush() // 刷新缓冲区，将内容打印到控制台
 
-	if action == "images" {
-		return
-	}
+	// 容器操作部分
+	if action != "images" {
+		fmt.Print("请输入容器序号: ")
+		scanner.Scan()
+		containerIndex, _ := strconv.Atoi(scanner.Text())
+		if containerIndex < 1 || containerIndex > len(containers) {
+			fmt.Println("无效选择")
+			return
+		}
 
-	fmt.Print("请输入容器序号: ")
-	scanner.Scan()
-	containerIndex, _ := strconv.Atoi(scanner.Text())
-	if containerIndex < 1 || containerIndex > len(containers) {
-		fmt.Println("无效选择")
-		return
+		container := containers[containerIndex-1]
+		executeCommandWithInteractive(action, container.Name)
 	}
-
-	container := containers[containerIndex-1]
-	executeCommandWithInteractiveTTY(action, container.Name)
 }
 
-func getAllContainers() []ContainerInfo {
+func getAllContainers(filter string) []ContainerInfo {
 	cmd := exec.Command("docker", "ps", "-a", "--format", "{{.ID}}|{{.Image}}|{{.Command}}|{{.CreatedAt}}|{{.Status}}|{{.Ports}}|{{.Names}}")
 	output, err := cmd.Output()
 	if err != nil {
@@ -100,6 +101,12 @@ func getAllContainers() []ContainerInfo {
 		if len(parts) < 7 {
 			continue
 		}
+
+		// 如果 filter 不为空，检查容器的 Name 或 Image 是否包含 filter 字符串
+		if filter != "" && !strings.Contains(parts[6], filter) && !strings.Contains(parts[1], filter) {
+			continue
+		}
+
 		container := ContainerInfo{
 			ID:      parts[0],
 			Image:   parts[1],
@@ -114,7 +121,7 @@ func getAllContainers() []ContainerInfo {
 	return containers
 }
 
-func executeCommandWithInteractiveTTY(action, container string) {
+func executeCommandWithInteractive(action, container string) {
 	var cmd *exec.Cmd
 	switch action {
 	case "start":
