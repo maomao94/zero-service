@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"text/tabwriter"
+	"time"
 )
 
 type ContainerInfo struct {
@@ -24,7 +25,7 @@ func main() {
 	fmt.Println("Welcome to the Service Management Tool")
 	fmt.Println("Author: He Hanpeng")
 	fmt.Println("Email: hehanpengyy@163.com")
-	options := []string{"start", "stop", "restart", "exec", "log"}
+	options := []string{"start", "stop", "restart", "exec", "log", "images"}
 	fmt.Println("选择一个操作:")
 	for i, option := range options {
 		fmt.Printf("%d. %s\n", i+1, option)
@@ -51,10 +52,26 @@ func main() {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintf(w, "序号\tCONTAINER ID\tIMAGE\tCOMMAND\tCREATED\tSTATUS\tPORTS\tNAMES\n")
 	for i, container := range containers {
+		// 格式化时间为简洁的日期格式
+		createdTime, err := time.Parse("2006-01-02T15:04:05Z07:00", container.Created)
+		if err != nil {
+			createdTime = time.Now() // 如果解析错误，使用当前时间
+		}
+		// 格式化为日期（YYYY-MM-DD）或时间（HH:MM:SS）
+		//formattedCreated := createdTime.Format("2006/01/02") // 只保留日期
+		// formattedCreated := createdTime.Format("15:04:05") // 如果只需要时间
+		// 格式化为日期和时间（YYYY-MM-DD HH:MM:SS）
+		formattedCreated := createdTime.Format("2006-01-02 15:04:05")
+
+		// 输出容器信息
 		fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-			i+1, container.ID, container.Image, container.Command, container.Created, container.Status, container.Ports, container.Name)
+			i+1, container.ID, container.Image, container.Command, formattedCreated, container.Status, container.Ports, container.Name)
 	}
 	w.Flush() // 刷新缓冲区，将内容打印到控制台
+
+	if action == "images" {
+		return
+	}
 
 	fmt.Print("请输入容器序号: ")
 	scanner.Scan()
