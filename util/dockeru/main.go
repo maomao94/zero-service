@@ -142,7 +142,7 @@ func main() {
 	yellowColor := "\033[33m"  // 黄色，表示其他状态
 
 	// 输出带颜色的标题
-	fmt.Fprintf(w, "%s%-3s%-20s%-20s%-15s%-10s%-20s%-30s%s\n",
+	fmt.Fprintf(w, "%s%-3s%-20s%-20s%-15s%-10s%-20s%-30s%s%s\n",
 		titleColor, "N", "CONTAINER ID", "NAMES", "STATUS", "PORTS", "IMAGE", "CREATED", "COMMAND", resetColor)
 
 	for i, container := range containers {
