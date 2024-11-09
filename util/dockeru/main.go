@@ -23,14 +23,33 @@ type ContainerInfo struct {
 }
 
 func main() {
-	fmt.Println("Welcome to the Service Management Tool v1.0.0")
-	fmt.Println("Author: He Hanpeng")
-	fmt.Println("Email: hehanpengyy@163.com")
-	fmt.Println(strings.Repeat("-", getTerminalWidth())) // 打印分隔线
-	options := []string{"start", "stop", "restart", "exec", "log", "ps", "images"}
-	fmt.Println("选择一个操作:")
+	// 欢迎信息、作者信息、分隔线部分
+	fmt.Println("\033[1;32mWelcome to the Service Management Tool v1.0.0\033[0m") // 绿色
+	fmt.Println("\033[1;32mAuthor: He Hanpeng\033[0m")                            // 绿色
+	fmt.Println("\033[1;36mEmail: hehanpengyy@163.com\033[0m")                    // 绿色
+	fmt.Println(strings.Repeat("=", getTerminalWidth()))                          // 打印分隔线（使用=号更整齐）
+
+	// 选项部分
+	fmt.Println("\033[1;34m请选择一个操作:\033[0m") // 蓝色
+	options := []string{"log", "ps", "start", "stop", "restart", "exec", "images"}
 	for i, option := range options {
-		fmt.Printf("%d. %s\n", i+1, option)
+		// 为选项列表添加颜色
+		// 选项序号白色，操作命令加粗的绿色或红色
+		var color string
+		switch option {
+		case "start", "restart":
+			color = "\033[1;32m" // 绿色，表示启动或重启
+		case "stop":
+			color = "\033[1;31m" // 红色，表示停止
+		case "exec", "log":
+			color = "\033[1;33m" // 黄色，表示交互式命令或日志
+		case "ps":
+			color = "\033[1;36m" // 青色，表示查看容器状态
+		case "images":
+			color = "\033[1;35m" // 紫色，表示查看镜像
+		}
+		// 输出命令行选项，序号白色，命令名彩色
+		fmt.Printf("\033[0;37m%d.\033[0m %s%s\033[0m\n", i+1, color, option)
 	}
 
 	scanner := bufio.NewScanner(os.Stdin)
@@ -79,10 +98,12 @@ func main() {
 			images = append(images, line)
 		}
 
-		// 输出标题
-		fmt.Println(strings.Repeat("-", getTerminalWidth())) // 打印分隔线
-		fmt.Printf("%-50s %-15s %-15s %-20s %-10s\n", "Repository", "Tag", "ID", "CreatedAt", "Size")
-		// 输出镜像列表
+		// 输出标题行
+		fmt.Println("\033[1;30m" + strings.Repeat("-", getTerminalWidth()) + "\033[0m") // 分隔线（深灰色）
+		fmt.Printf("\033[1;32m%-50s \033[0m\033[1;34m%-15s \033[0m\033[1;33m%-15s \033[0m\033[1;35m%-20s \033[0m\033[1;37m%-10s\033[0m\n",
+			"Repository", "Tag", "ID", "CreatedAt", "Size")
+
+		// 输出镜像列表，应用颜色
 		for _, image := range images {
 			parts := strings.Split(image, "|")
 			// 格式化时间为简洁的日期格式
@@ -92,8 +113,11 @@ func main() {
 			}
 			// 格式化为日期和时间（YYYY-MM-DD HH:MM:SS）
 			formattedCreated := createdTime.Format("2006-01-02 15:04:05")
+
+			// 输出镜像列表，并应用颜色
 			if len(parts) == 5 {
-				fmt.Printf("%-50s %-15s %-15s %-20s %-10s\n", parts[0], parts[1], parts[2], formattedCreated, parts[4])
+				fmt.Printf("\033[1;32m%-50s \033[0m\033[1;34m%-15s \033[0m\033[1;33m%-15s \033[0m\033[1;35m%-20s \033[0m\033[1;37m%-10s\033[0m\n",
+					parts[0], parts[1], parts[2], formattedCreated, parts[4])
 			}
 		}
 		return
@@ -109,7 +133,15 @@ func main() {
 	// 设置 tabwriter 来美化输出格式
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Println(strings.Repeat("-", getTerminalWidth())) // 打印分隔线
-	fmt.Fprintf(w, "N  CONTAINER ID\tNAMES\tSTATUS\tPORTS\tIMAGE\tCREATED\tCOMMAND\n")
+
+	// 设置标题颜色
+	titleColor := "\033[1;34m" // 蓝色，1 表示加粗
+	resetColor := "\033[0m"    // 重置颜色
+
+	// 输出带颜色的标题
+	fmt.Fprintf(w, "%sN  CONTAINER ID%s\t%sNAMES%s\t%sSTATUS%s\t%sPORTS%s\t%sIMAGE%s\t%sCREATED%s\t%sCOMMAND%s\n",
+		titleColor, resetColor, titleColor, resetColor, titleColor, resetColor, titleColor, resetColor, titleColor, resetColor, titleColor, resetColor, titleColor, resetColor)
+
 	for i, container := range containers {
 		// 格式化时间为简洁的日期格式
 		createdTime, err := time.Parse("2006-01-02T15:04:05Z07:00", container.Created)
@@ -119,9 +151,19 @@ func main() {
 		// 格式化为日期和时间（YYYY-MM-DD HH:MM:SS）
 		formattedCreated := createdTime.Format("2006-01-02 15:04:05")
 
-		// 输出容器信息
-		fmt.Fprintf(w, "%d  %s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-			i+1, container.ID, container.Name, container.Status, container.Ports, container.Image, formattedCreated, container.Command)
+		// 检查状态并设置颜色
+		var statusColor string
+		if strings.Contains(container.Status, "Up") {
+			statusColor = "\033[32m" // 绿色
+		} else if strings.Contains(container.Status, "Exited") {
+			statusColor = "\033[31m" // 红色
+		} else {
+			statusColor = "\033[33m" // 黄色（其他状态）
+		}
+
+		// 输出容器信息，应用状态颜色并重置颜色
+		fmt.Fprintf(w, "%d  %s\t%s\t%s%s\033[0m\t%s\t%s\t%s\t%s\n",
+			i+1, container.ID, container.Name, statusColor, container.Status, container.Ports, container.Image, formattedCreated, container.Command)
 	}
 	w.Flush() // 刷新缓冲区，将内容打印到控制台
 
