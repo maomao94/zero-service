@@ -133,15 +133,15 @@ func main() {
 	// 设置 tabwriter 来美化输出格式
 
 	// 设置颜色
-	titleColor := "\033[1;34m" // 蓝色，标题
-	resetColor := "\033[0m"    // 重置颜色
-	greenColor := "\033[32m"   // 绿色，表示“Up”状态
-	redColor := "\033[31m"     // 红色，表示“Exited”状态
-	yellowColor := "\033[33m"  // 黄色，表示其他状态
+	//titleColor := "\033[1;34m" // 蓝色，标题
+	resetColor := "\033[0m"   // 重置颜色
+	greenColor := "\033[32m"  // 绿色，表示“Up”状态
+	redColor := "\033[31m"    // 红色，表示“Exited”状态
+	yellowColor := "\033[33m" // 黄色，表示其他状态
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Println(strings.Repeat("-", getTerminalWidth())) // 打印分隔线
-	fmt.Fprintf(w, "%sN  CONTAINER ID\tNAMES\tSTATUS\tPORTS\tIMAGE\tCREATED\tCOMMAND%s\n", titleColor, resetColor)
+	fmt.Fprintf(w, "N  CONTAINER ID\tNAMES\tSTATUS\tPORTS\tIMAGE\tCREATED\tCOMMAND\n")
 
 	for i, container := range containers {
 		// 格式化时间为简洁的日期格式
