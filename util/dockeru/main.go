@@ -142,7 +142,8 @@ func main() {
 	yellowColor := "\033[33m"  // 黄色，表示其他状态
 
 	// 输出带颜色的标题
-	fmt.Fprintf(w, "%sN  CONTAINER ID\tNAMES\tSTATUS\tPORTS\tIMAGE\tCREATED\tCOMMAND%s\n", titleColor, resetColor)
+	fmt.Fprintf(w, "%s%-3s%-20s%-20s%-15s%-10s%-20s%-30s%s\n",
+		titleColor, "N", "CONTAINER ID", "NAMES", "STATUS", "PORTS", "IMAGE", "CREATED", "COMMAND", resetColor)
 
 	for i, container := range containers {
 		// 格式化时间为简洁的日期格式
@@ -162,8 +163,9 @@ func main() {
 		} else {
 			statusColor = yellowColor // 黄色（其他状态）
 		}
-		// 输出容器信息
-		fmt.Fprintf(w, "%d  %s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+
+		// 输出容器信息，应用状态颜色并重置颜色
+		fmt.Fprintf(w, "%-3d%-20s%-20s%-15s%-10s%-20s%-30s%s\n",
 			i+1, container.ID, container.Name, statusColor+container.Status+resetColor, container.Ports, container.Image, formattedCreated, container.Command)
 	}
 
