@@ -133,7 +133,17 @@ func main() {
 	// 设置 tabwriter 来美化输出格式
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Println(strings.Repeat("-", getTerminalWidth())) // 打印分隔线
-	fmt.Fprintf(w, "N  CONTAINER ID\tNAMES\tSTATUS\tPORTS\tIMAGE\tCREATED\tCOMMAND\n")
+
+	// 设置颜色
+	titleColor := "\033[1;34m" // 蓝色，标题
+	resetColor := "\033[0m"    // 重置颜色
+	greenColor := "\033[32m"   // 绿色，表示“Up”状态
+	redColor := "\033[31m"     // 红色，表示“Exited”状态
+	yellowColor := "\033[33m"  // 黄色，表示其他状态
+
+	// 输出带颜色的标题
+	fmt.Fprintf(w, "%sN  CONTAINER ID\tNAMES\tSTATUS\tPORTS\tIMAGE\tCREATED\tCOMMAND%s\n", titleColor, resetColor)
+
 	for i, container := range containers {
 		// 格式化时间为简洁的日期格式
 		createdTime, err := time.Parse("2006-01-02T15:04:05Z07:00", container.Created)
@@ -143,10 +153,20 @@ func main() {
 		// 格式化为日期和时间（YYYY-MM-DD HH:MM:SS）
 		formattedCreated := createdTime.Format("2006-01-02 15:04:05")
 
+		// 检查状态并设置颜色
+		var statusColor string
+		if strings.Contains(container.Status, "Up") {
+			statusColor = greenColor // 绿色
+		} else if strings.Contains(container.Status, "Exited") {
+			statusColor = redColor // 红色
+		} else {
+			statusColor = yellowColor // 黄色（其他状态）
+		}
 		// 输出容器信息
 		fmt.Fprintf(w, "%d  %s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-			i+1, container.ID, container.Name, container.Status, container.Ports, container.Image, formattedCreated, container.Command)
+			i+1, container.ID, container.Name, statusColor+container.Status+resetColor, container.Ports, container.Image, formattedCreated, container.Command)
 	}
+
 	w.Flush() // 刷新缓冲区，将内容打印到控制台
 
 	if action == "ps" {
