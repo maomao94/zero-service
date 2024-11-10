@@ -48,8 +48,8 @@ func main() {
 		case "images":
 			color = "\033[1;35m" // 紫色，表示查看镜像
 		}
-		// 输出命令行选项，序号白色，命令名彩色
-		fmt.Printf("\033[0;37m%d.\033[0m %s%s\033[0m\n", i+1, color, option)
+		// 输出命令行选项，序号加粗黑色，命令名彩色
+		fmt.Printf("\033[1;30m%d.\033[0m %s%s\033[0m\n", i+1, color, option)
 	}
 
 	scanner := bufio.NewScanner(os.Stdin)
@@ -114,10 +114,18 @@ func main() {
 			// 格式化为日期和时间（YYYY-MM-DD HH:MM:SS）
 			formattedCreated := createdTime.Format("2006-01-02 15:04:05")
 
+			// 限制列宽最大长度，避免过长内容影响表格格式
+			truncate := func(s string, maxLen int) string {
+				if len(s) > maxLen {
+					return s[:maxLen-3] + "..."
+				}
+				return s
+			}
+
 			// 输出镜像列表，并应用颜色
 			if len(parts) == 5 {
 				fmt.Printf("\033[1;32m%-50s \033[0m\033[1;34m%-15s \033[0m\033[1;33m%-15s \033[0m\033[1;35m%-20s \033[0m\033[1;37m%-10s\033[0m\n",
-					parts[0], parts[1], parts[2], formattedCreated, parts[4])
+					truncate(parts[0], 50), truncate(parts[1], 15), truncate(parts[2], 15), formattedCreated, truncate(parts[4], 10))
 			}
 		}
 		return
