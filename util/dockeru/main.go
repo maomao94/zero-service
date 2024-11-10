@@ -49,7 +49,7 @@ func main() {
 			color = "\033[1;35m" // 紫色，表示查看镜像
 		}
 		// 输出命令行选项，序号加粗黑色，命令名彩色
-		fmt.Printf("\033[1;30m%d.\033[0m %s%s\033[0m\n", i+1, color, option)
+		fmt.Printf("\033[30m%d.\033[0m %s%s\033[0m\n", i+1, color, option)
 	}
 
 	scanner := bufio.NewScanner(os.Stdin)
@@ -124,7 +124,7 @@ func main() {
 
 			// 输出镜像列表，并应用颜色
 			if len(parts) == 5 {
-				fmt.Printf("\033[30m%-50s \033[0m\033[1;34m%-15s \033[0m\033[1;33m%-15s \033[0m\033[1;35m%-20s \033[0m\033[32m%-10s\033[0m\n",
+				fmt.Printf("\033[30m%-50s \033[0m\033[34m%-15s \033[0m\033[33m%-15s \033[0m\033[35m%-20s \033[0m\033[32m%-10s\033[0m\n",
 					truncate(parts[0], 50), truncate(parts[1], 15), truncate(parts[2], 15), formattedCreated, truncate(parts[4], 10))
 			}
 		}
