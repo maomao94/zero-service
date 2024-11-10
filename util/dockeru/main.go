@@ -100,7 +100,7 @@ func main() {
 
 		// 输出标题行
 		fmt.Println("\033[1;30m" + strings.Repeat("-", getTerminalWidth()) + "\033[0m") // 分隔线（深灰色）
-		fmt.Printf("\033[30m%-50s \033[0m\033[34m%-15s \033[0m\033[33m%-15s \033[0m\033[35m%-20s \033[0m\033[37;2m%-10s\033[0m\n",
+		fmt.Printf("\033[1;30m%-50s \033[0m\033[1;34m%-15s \033[0m\033[1;33m%-15s \033[0m\033[1;35m%-20s \033[0m\033[1;32m%-10s\033[0m\n",
 			"Repository", "Tag", "ID", "CreatedAt", "Size")
 
 		// 输出镜像列表，应用颜色
@@ -124,7 +124,7 @@ func main() {
 
 			// 输出镜像列表，并应用颜色
 			if len(parts) == 5 {
-				fmt.Printf("\033[30m%-50s \033[0m\033[1;34m%-15s \033[0m\033[1;33m%-15s \033[0m\033[1;35m%-20s \033[0m\033[37;2m%-10s\033[0m\n",
+				fmt.Printf("\033[30m%-50s \033[0m\033[1;34m%-15s \033[0m\033[1;33m%-15s \033[0m\033[1;35m%-20s \033[0m\033[32m%-10s\033[0m\n",
 					truncate(parts[0], 50), truncate(parts[1], 15), truncate(parts[2], 15), formattedCreated, truncate(parts[4], 10))
 			}
 		}
@@ -148,7 +148,7 @@ func main() {
 	yellowColor := "\033[33m" // 黄色，表示其他状态
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Println(strings.Repeat("-", getTerminalWidth())) // 打印分隔线
+	fmt.Println("\033[1;30m" + strings.Repeat("-", getTerminalWidth()) + "\033[0m") // 分隔线（深灰色）
 	fmt.Fprintf(w, "N  CONTAINER ID\tNAMES\tSTATUS\tPORTS\tIMAGE\tCREATED\tCOMMAND\n")
 
 	for i, container := range containers {
