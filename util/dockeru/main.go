@@ -26,7 +26,7 @@ func main() {
 	// 欢迎信息、作者信息、分隔线部分
 	fmt.Println("\033[1;32mWelcome to the Service Management Tool v1.0.0\033[0m") // 绿色
 	fmt.Println("\033[1;32mAuthor: He Hanpeng\033[0m")                            // 绿色
-	fmt.Println("\033[1;36mEmail: hehanpengyy@163.com\033[0m")                    // 绿色
+	fmt.Println("\033[1;32mEmail: hehanpengyy@163.com\033[0m")                    // 绿色
 	fmt.Println(strings.Repeat("=", getTerminalWidth()))                          // 打印分隔线（使用=号更整齐）
 
 	// 选项部分
