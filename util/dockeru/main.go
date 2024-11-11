@@ -106,8 +106,8 @@ func main() {
 		// 输出镜像列表，应用颜色
 		for _, image := range images {
 			parts := strings.Split(image, "|")
-			// 格式化时间为简洁的日期格式
-			createdTime, err := time.Parse("2006-01-02T15:04:05Z07:00", parts[3])
+			// 格式化时间为简洁的日期格式 2024-10-30 22:10:08 +0800 CST
+			createdTime, err := time.Parse("2006-01-02 15:04:05 -0700 MST", parts[3])
 			if err != nil {
 				createdTime = time.Now() // 如果解析错误，使用当前时间
 			}
@@ -153,7 +153,7 @@ func main() {
 
 	for i, container := range containers {
 		// 格式化时间为简洁的日期格式
-		createdTime, err := time.Parse("2006-01-02T15:04:05Z07:00", container.Created)
+		createdTime, err := time.Parse("2006-01-02 15:04:05 -0700 MST", container.Created)
 		if err != nil {
 			createdTime = time.Now() // 如果解析错误，使用当前时间
 		}
