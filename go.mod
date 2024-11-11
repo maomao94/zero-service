@@ -7,7 +7,6 @@ toolchain go1.23.0
 require (
 	github.com/ArtisanCloud/PowerWeChat/v3 v3.2.39
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/creack/pty v1.1.9
 	github.com/duke-git/lancet/v2 v2.3.2
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang-module/carbon/v2 v2.3.12
