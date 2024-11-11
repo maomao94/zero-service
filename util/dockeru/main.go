@@ -42,7 +42,6 @@ func main() {
 	options := []string{"log", "ps", "start", "stop", "restart", "exec", "images", "image-save", "image-prune"}
 	for i, option := range options {
 		// 为选项列表添加颜色
-		// 选项序号白色，操作命令加粗的绿色或红色
 		var color string
 		switch option {
 		case "start", "restart":
@@ -54,9 +53,9 @@ func main() {
 		case "ps":
 			color = "\033[1;36m" // 青色，表示查看容器状态
 		case "images":
-			color = "\033[1;35m" // 紫色，表示查看镜像
+			color = "\033[1;34m" // 蓝色，表示查看镜像
 		case "image-save":
-			color = "\033[1;36m" // 青色，表示保存镜像
+			color = "\033[1;35m" // 紫色，表示保存镜像
 		case "image-prune":
 			color = "\033[1;31m" // 红色，表示清理镜像
 		}
