@@ -84,7 +84,7 @@ func main() {
 	var filter string
 
 	// 获取用户输入的过滤条件
-	if action == "images" {
+	if strings.Contains(action, "image") {
 		// 对于镜像操作，提示用户输入镜像名称过滤条件
 		fmt.Print("请输入镜像名称过滤条件（可选，留空表示不过滤）: ")
 		scanner.Scan()
