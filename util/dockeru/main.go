@@ -22,6 +22,14 @@ type ContainerInfo struct {
 	Name    string
 }
 
+type ImageInfo struct {
+	Repository string
+	Tag        string
+	ID         string
+	CreatedAt  string
+	Size       string
+}
+
 func main() {
 	// 欢迎信息、作者信息、分隔线部分
 	fmt.Println("\033[1;32mWelcome to the Service Management Tool v1.0.0\033[0m") // 绿色
@@ -31,7 +39,7 @@ func main() {
 
 	// 选项部分
 	fmt.Println("\033[1;34m请选择一个操作:\033[0m") // 蓝色
-	options := []string{"log", "ps", "start", "stop", "restart", "exec", "images"}
+	options := []string{"log", "ps", "start", "stop", "restart", "exec", "images", "image-save", "image-prune"}
 	for i, option := range options {
 		// 为选项列表添加颜色
 		// 选项序号白色，操作命令加粗的绿色或红色
@@ -47,6 +55,10 @@ func main() {
 			color = "\033[1;36m" // 青色，表示查看容器状态
 		case "images":
 			color = "\033[1;35m" // 紫色，表示查看镜像
+		case "image-save":
+			color = "\033[1;36m" // 青色，表示保存镜像
+		case "image-prune":
+			color = "\033[1;31m" // 红色，表示清理镜像
 		}
 		// 输出命令行选项，序号加粗黑色，命令名彩色
 		fmt.Printf("\033[30m%d.\033[0m %s%s\033[0m\n", i+1, color, option)
@@ -63,6 +75,13 @@ func main() {
 
 	action := options[actionIndex-1]
 
+	// 特殊处理
+	if action == "image-prune" {
+		fmt.Print("\033[31m正在执行悬空镜像清理...\033[0m\n")
+		executeActionCommandWithInteractive(action, "")
+		return
+	}
+
 	var filter string
 
 	// 获取用户输入的过滤条件
@@ -78,36 +97,23 @@ func main() {
 		filter = scanner.Text()
 	}
 
-	// 根据选择执行操作
-	if action == "images" {
+	if strings.Contains(action, "image") {
 		// 查看镜像列表
-		cmd := exec.Command("docker", "images", "--format", "{{.Repository}}|{{.Tag}}|{{.ID}}|{{.CreatedAt}}|{{.Size}}")
-		output, err := cmd.Output()
-		if err != nil {
-			fmt.Println("获取镜像列表失败:", err)
+		images := getAllImageList(filter)
+		if len(images) == 0 {
+			fmt.Println("没有找到镜像")
 			return
-		}
-
-		lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-		var images []string
-		for _, line := range lines {
-			// 过滤镜像信息
-			if filter != "" && !strings.Contains(line, filter) {
-				continue
-			}
-			images = append(images, line)
 		}
 
 		// 输出标题行
 		fmt.Println("\033[1;30m" + strings.Repeat("-", getTerminalWidth()) + "\033[0m") // 分隔线（深灰色）
-		fmt.Printf("\033[1;30m%-50s \033[0m\033[1;34m%-15s \033[0m\033[1;33m%-15s \033[0m\033[1;35m%-20s \033[0m\033[1;32m%-10s\033[0m\n",
-			"Repository", "Tag", "ID", "CreatedAt", "Size")
+		fmt.Printf("\033[30m%-3s\033[0m \033[1;30m%-50s \033[0m\033[1;34m%-15s \033[0m\033[1;33m%-15s \033[0m\033[1;35m%-20s \033[0m\033[1;32m%-10s\033[0m\n",
+			"N", "Repository", "Tag", "ID", "CreatedAt", "Size")
 
 		// 输出镜像列表，应用颜色
-		for _, image := range images {
-			parts := strings.Split(image, "|")
+		for i, image := range images {
 			// 格式化时间为简洁的日期格式 2024-10-30 22:10:08 +0800 CST
-			createdTime, err := time.Parse("2006-01-02 15:04:05 -0700 MST", parts[3])
+			createdTime, err := time.Parse("2006-01-02 15:04:05 -0700 MST", image.CreatedAt)
 			if err != nil {
 				createdTime = time.Now() // 如果解析错误，使用当前时间
 			}
@@ -121,67 +127,75 @@ func main() {
 				}
 				return s
 			}
-
 			// 输出镜像列表，并应用颜色
-			if len(parts) == 5 {
-				fmt.Printf("\033[30m%-50s \033[0m\033[34m%-15s \033[0m\033[33m%-15s \033[0m\033[35m%-20s \033[0m\033[32m%-10s\033[0m\n",
-					truncate(parts[0], 50), truncate(parts[1], 15), truncate(parts[2], 15), formattedCreated, truncate(parts[4], 10))
+			fmt.Printf("\033[30m%-3d\033[0m \033[30m%-50s \033[0m\033[34m%-15s \033[0m\033[33m%-15s \033[0m\033[35m%-20s \033[0m\033[32m%-10s\033[0m\n",
+				i+1, truncate(image.Repository, 50), truncate(image.Tag, 15), truncate(image.ID, 15), formattedCreated, truncate(image.Size, 10))
+		}
+
+		if action == "image-save" {
+			// 镜像操作
+			fmt.Print("请输入镜像序号: ")
+			scanner.Scan()
+			imageIndex, _ := strconv.Atoi(scanner.Text())
+			if imageIndex < 1 || imageIndex > len(images) {
+				fmt.Println("无效选择")
+				return
 			}
+			image := images[imageIndex-1]
+			executeCommandWithInteractive(action, "docker", "image", "save", "-o", "test.tar", fmt.Sprintf("%s:%s", image.Repository, image.Tag))
+			return
 		}
 		return
-	}
-
-	// 获取容器列表
-	containers := getAllContainers(filter) // 传入过滤条件
-	if len(containers) == 0 {
-		fmt.Println("没有找到容器")
-		return
-	}
-
-	// 设置 tabwriter 来美化输出格式
-
-	// 设置颜色
-	//titleColor := "\033[1;34m" // 蓝色，标题
-	resetColor := "\033[0m"   // 重置颜色
-	greenColor := "\033[32m"  // 绿色，表示“Up”状态
-	redColor := "\033[31m"    // 红色，表示“Exited”状态
-	yellowColor := "\033[33m" // 黄色，表示其他状态
-
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Println("\033[1;30m" + strings.Repeat("-", getTerminalWidth()) + "\033[0m") // 分隔线（深灰色）
-	fmt.Fprintf(w, "N  CONTAINER ID\tNAMES\tSTATUS\tPORTS\tIMAGE\tCREATED\tCOMMAND\n")
-
-	for i, container := range containers {
-		// 格式化时间为简洁的日期格式
-		createdTime, err := time.Parse("2006-01-02 15:04:05 -0700 MST", container.Created)
-		if err != nil {
-			createdTime = time.Now() // 如果解析错误，使用当前时间
-		}
-		// 格式化为日期和时间（YYYY-MM-DD HH:MM:SS）
-		formattedCreated := createdTime.Format("2006-01-02 15:04:05")
-
-		// 检查状态并设置颜色
-		var statusColor string
-		if strings.Contains(container.Status, "Up") {
-			statusColor = greenColor // 绿色
-		} else if strings.Contains(container.Status, "Exited") {
-			statusColor = redColor // 红色
-		} else {
-			statusColor = yellowColor // 黄色（其他状态）
+	} else if !strings.Contains(action, "image") {
+		// 获取容器列表
+		containers := getAllContainers(filter) // 传入过滤条件
+		if len(containers) == 0 {
+			fmt.Println("没有找到容器")
+			return
 		}
 
-		// 输出容器信息
-		fmt.Fprintf(w, "%d  %s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-			i+1, container.ID, container.Name, statusColor+container.Status+resetColor, container.Ports, container.Image, formattedCreated, container.Command)
-	}
-	w.Flush() // 刷新缓冲区，将内容打印到控制台
+		// 设置 tabwriter 来美化输出格式
+		// 设置颜色
+		//titleColor := "\033[1;34m" // 蓝色，标题
+		resetColor := "\033[0m"   // 重置颜色
+		greenColor := "\033[32m"  // 绿色，表示“Up”状态
+		redColor := "\033[31m"    // 红色，表示“Exited”状态
+		yellowColor := "\033[33m" // 黄色，表示其他状态
 
-	if action == "ps" {
-		return
-	}
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		fmt.Println("\033[1;30m" + strings.Repeat("-", getTerminalWidth()) + "\033[0m") // 分隔线（深灰色）
+		fmt.Fprintf(w, "N  CONTAINER ID\tNAMES\tSTATUS\tPORTS\tIMAGE\tCREATED\tCOMMAND\n")
 
-	// 容器操作部分
-	if action != "images" {
+		for i, container := range containers {
+			// 格式化时间为简洁的日期格式
+			createdTime, err := time.Parse("2006-01-02 15:04:05 -0700 MST", container.Created)
+			if err != nil {
+				createdTime = time.Now() // 如果解析错误，使用当前时间
+			}
+			// 格式化为日期和时间（YYYY-MM-DD HH:MM:SS）
+			formattedCreated := createdTime.Format("2006-01-02 15:04:05")
+
+			// 检查状态并设置颜色
+			var statusColor string
+			if strings.Contains(container.Status, "Up") {
+				statusColor = greenColor // 绿色
+			} else if strings.Contains(container.Status, "Exited") {
+				statusColor = redColor // 红色
+			} else {
+				statusColor = yellowColor // 黄色（其他状态）
+			}
+
+			// 输出容器信息
+			fmt.Fprintf(w, "%d  %s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+				i+1, container.ID, container.Name, statusColor+container.Status+resetColor, container.Ports, container.Image, formattedCreated, container.Command)
+		}
+		w.Flush() // 刷新缓冲区，将内容打印到控制台
+
+		if action == "ps" {
+			return
+		}
+
+		// 容器操作部分
 		fmt.Print("请输入容器序号: ")
 		scanner.Scan()
 		containerIndex, _ := strconv.Atoi(scanner.Text())
@@ -191,7 +205,11 @@ func main() {
 		}
 
 		container := containers[containerIndex-1]
-		executeCommandWithInteractive(action, container.Name)
+		executeActionCommandWithInteractive(action, container.Name)
+		return
+	} else {
+		fmt.Println("未知操作")
+		return
 	}
 }
 
@@ -230,7 +248,40 @@ func getAllContainers(filter string) []ContainerInfo {
 	return containers
 }
 
-func executeCommandWithInteractive(action, container string) {
+func getAllImageList(filter string) []ImageInfo {
+	// 查看镜像列表
+	cmd := exec.Command("docker", "images", "--format", "{{.Repository}}|{{.Tag}}|{{.ID}}|{{.CreatedAt}}|{{.Size}}")
+	output, err := cmd.Output()
+	if err != nil {
+		fmt.Println("获取镜像列表失败:", err)
+		return nil
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	var imageList []ImageInfo
+	for _, line := range lines {
+		parts := strings.Split(line, "|")
+		if len(parts) < 5 {
+			continue
+		}
+
+		// 过滤镜像信息
+		if filter != "" && (!strings.Contains(parts[0], filter) && !strings.Contains(parts[1], filter)) {
+			continue
+		}
+		image := ImageInfo{
+			Repository: parts[0],
+			Tag:        parts[1],
+			ID:         parts[2],
+			CreatedAt:  parts[3],
+			Size:       parts[4],
+		}
+		imageList = append(imageList, image)
+	}
+	return imageList
+}
+
+func executeActionCommandWithInteractive(action, container string) {
 	var cmd *exec.Cmd
 	switch action {
 	case "start":
@@ -244,6 +295,8 @@ func executeCommandWithInteractive(action, container string) {
 		cmd = exec.Command("docker", "exec", "-it", container, "/bin/bash")
 	case "log":
 		cmd = exec.Command("docker", "logs", "--tail", "100", "-f", container)
+	case "image-prune":
+		cmd = exec.Command("docker", "image", "prune")
 	default:
 		fmt.Println("未知操作")
 		return
@@ -253,7 +306,24 @@ func executeCommandWithInteractive(action, container string) {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	// 打印最终命令
+	fmt.Printf("Command to be executed: %s %s\n", cmd.Path, strings.Join(cmd.Args[1:], " "))
+	if err := cmd.Run(); err != nil {
+		fmt.Printf("执行 %s 命令失败: %v\n", action, err)
+	} else {
+		fmt.Printf("%s 操作成功执行\n", action)
+	}
+}
 
+func executeCommandWithInteractive(action, name string, arg ...string) {
+	var cmd *exec.Cmd
+	cmd = exec.Command(name, arg...)
+	// 将标准输入、输出和错误与当前终端关联
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	// 打印最终命令
+	fmt.Printf("Command to be executed: %s %s\n", cmd.Path, strings.Join(cmd.Args[1:], " "))
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("执行 %s 命令失败: %v\n", action, err)
 	} else {
