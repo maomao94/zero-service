@@ -147,7 +147,7 @@ func main() {
 			// 格式：YYYY-MM-DD_HH-MM-SS 后缀
 			//suffix := startTime.Format("2006-01-02_15-04-05")
 			// 导出文件名 为镜像名称+tag+id+时间戳
-			fileName := fmt.Sprintf("%s_%s_%s.tar", strings.ReplaceAll(image.Repository, "/", "_"), strings.ReplaceAll(image.Tag, "/", "_"), strings.ReplaceAll(image.ID, "/", "_"))
+			fileName := fmt.Sprintf("%s_%s_%s.tar", strings.ReplaceAll(image.Repository, "/", "-"), strings.ReplaceAll(image.Tag, "/", "-"), strings.ReplaceAll(image.ID, "/", "-"))
 			fmt.Printf("导出文件名: %s\n", fileName)
 			executeCommandWithInteractive(action, "docker", "image", "save", "-o", fileName, fmt.Sprintf("%s:%s", image.Repository, image.Tag))
 			return
