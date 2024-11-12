@@ -147,9 +147,29 @@ func main() {
 			// 格式：YYYY-MM-DD_HH-MM-SS 后缀
 			//suffix := startTime.Format("2006-01-02_15-04-05")
 			// 导出文件名 为镜像名称+tag+id+时间戳
-			fileName := fmt.Sprintf("%s_%s_%s.tar", strings.ReplaceAll(image.Repository, "/", "-"), strings.ReplaceAll(image.Tag, "/", "-"), strings.ReplaceAll(image.ID, "/", "-"))
+			fileName := fmt.Sprintf("%s:%s-%s.tar", strings.ReplaceAll(image.Repository, "/", "-"), strings.ReplaceAll(image.Tag, "/", "-"), strings.ReplaceAll(image.ID, "/", "-"))
 			fmt.Printf("导出文件名: %s\n", fileName)
 			executeCommandWithInteractive(action, "docker", "image", "save", "-o", fileName, fmt.Sprintf("%s:%s", image.Repository, image.Tag))
+			//// 检查目标文件是否存在
+			//newName := fmt.Sprintf("%s:%s-%s.tar", image.Repository, image.Tag, image.ID)
+			//// 重命名文件
+			//err := fileutil.CopyFile(newName, fileName)
+			////err := os.Rename(fileName, newName)
+			//if err != nil {
+			//	// 如果重命名失败，删除源文件
+			//	fmt.Println("Error renaming file:", err)
+			//	fmt.Println("Attempting to delete the source file:", fileName)
+			//	// 尝试删除源文件
+			//	removeErr := os.Remove(fileName)
+			//	if removeErr != nil {
+			//		fmt.Println("Error deleting source file:", removeErr)
+			//	} else {
+			//		fmt.Println("Source file deleted successfully.")
+			//	}
+			//	return
+			//}
+			fmt.Println("File save successfully.")
+			//fmt.Printf("导出文件名: %s\n", newName)
 			return
 		}
 		return
