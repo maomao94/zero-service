@@ -164,7 +164,7 @@ func main() {
 				fmt.Println("文件已存在，是否覆盖？(y/n)")
 				scanner.Scan()
 				choice := scanner.Text()
-				if choice != "y" {
+				if choice == "n" {
 					fmt.Println("操作已取消。")
 					return
 				}
