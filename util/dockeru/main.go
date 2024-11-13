@@ -141,8 +141,9 @@ func main() {
 				return
 			}
 			image := images[imageIndex-1]
+			fmt.Printf("当前选择镜像：%s:%s", image.Repository, image.Tag, image.ID)
 			// 镜像操作
-			fmt.Print("请输入文件名:（可选，留空表示默认）: ")
+			fmt.Print("请输入文件名（可选，留空表示默认）: ")
 			scanner.Scan()
 			finaFileName := scanner.Text()
 			if len(finaFileName) == 0 {
@@ -155,6 +156,18 @@ func main() {
 				tempArr := strings.Split(image.Repository, "/")
 				prefix := tempArr[len(tempArr)-1]
 				finaFileName = fmt.Sprintf("%s:%s-%s.tar", prefix, strings.ReplaceAll(image.Tag, "/", "-"), strings.ReplaceAll(image.ID, "/", "-"))
+			} else {
+				finaFileName = fmt.Sprintf("%s.tar", finaFileName)
+			}
+			_, err := os.Stat(finaFileName)
+			if os.IsExist(err) {
+				fmt.Println("文件已存在，是否覆盖？(y/n)")
+				scanner.Scan()
+				choice := scanner.Text()
+				if choice != "y" {
+					fmt.Println("操作已取消。")
+					return
+				}
 			}
 			fmt.Printf("导出文件名: %s\n", finaFileName)
 			executeCommandWithInteractive(action, "docker", "image", "save", "-o", finaFileName, fmt.Sprintf("%s:%s", image.Repository, image.Tag))
