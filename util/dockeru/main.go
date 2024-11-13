@@ -141,15 +141,23 @@ func main() {
 				return
 			}
 			image := images[imageIndex-1]
-			// 获取当前时间
-			//startTime := time.Now()
-			// 格式化当前时间为字符串，作为文件名
-			// 格式：YYYY-MM-DD_HH-MM-SS 后缀
-			//suffix := startTime.Format("2006-01-02_15-04-05")
-			// 导出文件名 为镜像名称+tag+id+时间戳
-			fileName := fmt.Sprintf("%s:%s-%s.tar", strings.ReplaceAll(image.Repository, "/", "-"), strings.ReplaceAll(image.Tag, "/", "-"), strings.ReplaceAll(image.ID, "/", "-"))
-			fmt.Printf("导出文件名: %s\n", fileName)
-			executeCommandWithInteractive(action, "docker", "image", "save", "-o", fileName, fmt.Sprintf("%s:%s", image.Repository, image.Tag))
+			// 镜像操作
+			fmt.Print("请输入文件名:（可选，留空表示默认）: ")
+			scanner.Scan()
+			finaFileName := scanner.Text()
+			if len(finaFileName) == 0 {
+				// 获取当前时间
+				//startTime := time.Now()
+				// 格式化当前时间为字符串，作为文件名
+				// 格式：YYYY-MM-DD_HH-MM-SS 后缀
+				//suffix := startTime.Format("2006-01-02_15-04-05")
+				// 导出文件名 为镜像名称+tag+id+时间戳
+				tempArr := strings.Split(image.Repository, "/")
+				prefix := tempArr[len(tempArr)-1]
+				finaFileName = fmt.Sprintf("%s:%s-%s.tar", prefix, strings.ReplaceAll(image.Tag, "/", "-"), strings.ReplaceAll(image.ID, "/", "-"))
+			}
+			fmt.Printf("导出文件名: %s\n", finaFileName)
+			executeCommandWithInteractive(action, "docker", "image", "save", "-o", finaFileName, fmt.Sprintf("%s:%s", image.Repository, image.Tag))
 			//// 检查目标文件是否存在
 			//newName := fmt.Sprintf("%s:%s-%s.tar", image.Repository, image.Tag, image.ID)
 			//// 重命名文件
