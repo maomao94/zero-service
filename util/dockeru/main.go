@@ -141,7 +141,7 @@ func main() {
 				return
 			}
 			image := images[imageIndex-1]
-			fmt.Printf("当前选择镜像：%s:%s", image.Repository, image.Tag, image.ID)
+			fmt.Printf("当前选择镜像：%s:%s\n", image.Repository, image.Tag)
 			// 镜像操作
 			fmt.Print("请输入文件名（可选，留空表示默认）: ")
 			scanner.Scan()
@@ -160,7 +160,7 @@ func main() {
 				finaFileName = fmt.Sprintf("%s.tar", finaFileName)
 			}
 			_, err := os.Stat(finaFileName)
-			if os.IsExist(err) {
+			if err == nil {
 				fmt.Println("文件已存在，是否覆盖？(y/n)")
 				scanner.Scan()
 				choice := scanner.Text()
