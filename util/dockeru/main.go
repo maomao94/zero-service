@@ -136,9 +136,13 @@ func main() {
 			fmt.Print("请输入镜像序号: ")
 			scanner.Scan()
 			imageIndex, _ := strconv.Atoi(scanner.Text())
-			if imageIndex < 1 || imageIndex > len(images) {
-				fmt.Println("无效选择")
-				return
+			if len(images) > 1 {
+				if imageIndex < 1 || imageIndex > len(images) {
+					fmt.Println("无效选择")
+					return
+				}
+			} else {
+				imageIndex = 1
 			}
 			image := images[imageIndex-1]
 			fmt.Printf("当前选择镜像：%s:%s\n", image.Repository, image.Tag)
