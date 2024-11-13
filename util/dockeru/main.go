@@ -106,7 +106,7 @@ func main() {
 
 		// 输出标题行
 		fmt.Println("\033[1;30m" + strings.Repeat("-", getTerminalWidth()) + "\033[0m") // 分隔线（深灰色）
-		fmt.Printf("\033[30m%-3s\033[0m \033[1;30m%-50s \033[0m\033[1;34m%-15s \033[0m\033[1;33m%-15s \033[0m\033[1;35m%-20s \033[0m\033[1;32m%-10s\033[0m\n",
+		fmt.Printf("\033[30m%-3s\033[0m \033[1;30m%-50s \033[0m\033[1;34m%-30s \033[0m\033[1;33m%-15s \033[0m\033[1;35m%-20s \033[0m\033[1;32m%-15s\033[0m\n",
 			"N", "Repository", "Tag", "ID", "CreatedAt", "Size")
 
 		// 输出镜像列表，应用颜色
@@ -127,8 +127,8 @@ func main() {
 				return s
 			}
 			// 输出镜像列表，并应用颜色
-			fmt.Printf("\033[30m%-3d\033[0m \033[30m%-50s \033[0m\033[34m%-15s \033[0m\033[33m%-15s \033[0m\033[35m%-20s \033[0m\033[32m%-10s\033[0m\n",
-				i+1, truncate(image.Repository, 50), truncate(image.Tag, 15), truncate(image.ID, 15), formattedCreated, truncate(image.Size, 10))
+			fmt.Printf("\033[30m%-3d\033[0m \033[30m%-50s \033[0m\033[34m%-30s \033[0m\033[33m%-15s \033[0m\033[35m%-20s \033[0m\033[32m%-10s\033[0m\n",
+				i+1, truncate(image.Repository, 50), truncate(image.Tag, 30), truncate(image.ID, 15), formattedCreated, truncate(image.Size, 15))
 		}
 
 		if action == "image-save" {
