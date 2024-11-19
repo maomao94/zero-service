@@ -24,10 +24,8 @@ message Oss{
   string region = 10; // 地域简称 TencentCOS需要
   string remark = 11; // 备注
   int64 status = 12; // 状态
-  int64 createTime = 13;
-  int64 createUser = 14;
-  int64 updateTime = 15;
-  int64 updateUser = 16;
+  string createTime = 13;
+  string updateTime = 15;
 }
 
 message File {
@@ -181,7 +179,7 @@ message RemoveFilesReq {
   repeated string filename = 4; // 上传文件名
 }
 
-service Resource {
+service FileRpc {
   rpc Ping (Req) returns (Res);
   rpc OssDetail (OssDetailReq) returns (OssDetailRes); // 查看存储详情
   rpc OssList (OssListReq) returns (OssListRes); // 查看存储列表
