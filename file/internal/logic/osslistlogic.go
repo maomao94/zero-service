@@ -2,7 +2,9 @@ package logic
 
 import (
 	"context"
-
+	"github.com/Masterminds/squirrel"
+	"github.com/golang-module/carbon/v2"
+	"github.com/jinzhu/copier"
 	"zero-service/file/file"
 	"zero-service/file/internal/svc"
 
@@ -24,7 +26,38 @@ func NewOssListLogic(ctx context.Context, svcCtx *svc.ServiceContext) *OssListLo
 }
 
 func (l *OssListLogic) OssList(in *file.OssListReq) (*file.OssListRes, error) {
-	// todo: add your logic here and delete this line
-
-	return &file.OssListRes{}, nil
+	whereBuilder := l.svcCtx.OssModel.SelectBuilder()
+	if len(in.TenantId) > 0 {
+		whereBuilder = whereBuilder.Where(squirrel.Eq{
+			"tenant_id": in.TenantId,
+		})
+	}
+	if in.Category > 0 {
+		whereBuilder = whereBuilder.Where(squirrel.Eq{
+			"category": in.Category,
+		})
+	}
+	count, err := l.svcCtx.OssModel.FindCount(l.ctx, whereBuilder, "1")
+	if err != nil {
+		return nil, err
+	}
+	list, err := l.svcCtx.OssModel.FindPageListByPage(l.ctx, whereBuilder, in.Page, in.PageSize, in.OrderBy)
+	if err != nil {
+		return nil, err
+	}
+	var respOss []*file.Oss
+	if len(list) > 0 {
+		for _, oss := range list {
+			var pbOss file.Oss
+			_ = copier.Copy(&pbOss, oss)
+			pbOss.CreateTime = carbon.CreateFromStdTime(oss.CreateTime).ToDateTimeString()
+			pbOss.UpdateTime = carbon.CreateFromStdTime(oss.UpdateTime).ToDateTimeString()
+			respOss = append(respOss, &pbOss)
+		}
+	}
+	//copier.Copy(&respOss, list)
+	return &file.OssListRes{
+		Total: count,
+		Oss:   respOss,
+	}, nil
 }

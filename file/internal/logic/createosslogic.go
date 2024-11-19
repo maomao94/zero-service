@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"zero-service/model"
 
 	"zero-service/file/file"
 	"zero-service/file/internal/svc"
@@ -24,7 +25,22 @@ func NewCreateOssLogic(ctx context.Context, svcCtx *svc.ServiceContext) *CreateO
 }
 
 func (l *CreateOssLogic) CreateOss(in *file.CreateOssReq) (*file.CreateOssRes, error) {
-	// todo: add your logic here and delete this line
-
-	return &file.CreateOssRes{}, nil
+	oss, err := l.svcCtx.OssModel.Insert(l.ctx, nil, &model.Oss{
+		TenantId:   in.TenantId,
+		Category:   in.Category,
+		OssCode:    in.OssCode,
+		Endpoint:   in.Endpoint,
+		AccessKey:  in.AccessKey,
+		SecretKey:  in.SecretKey,
+		BucketName: in.BucketName,
+		AppId:      in.AppId,
+		Region:     in.Region,
+		Remark:     in.Remark,
+		Status:     2,
+	})
+	if err != nil {
+		return nil, err
+	}
+	id, _ := oss.LastInsertId()
+	return &file.CreateOssRes{Id: id}, nil
 }
