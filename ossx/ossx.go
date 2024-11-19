@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"zero-service/model"
 )
 
 var (
@@ -20,7 +21,7 @@ var (
 	Category_Tencent int64 = 4
 
 	templatePool = make(map[string]OssTemplate)
-	ossPool      = make(map[string]*model.TOss)
+	ossPool      = make(map[string]*model.Oss)
 	lock         sync.Mutex
 )
 
