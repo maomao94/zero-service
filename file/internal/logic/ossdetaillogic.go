@@ -2,7 +2,8 @@ package logic
 
 import (
 	"context"
-
+	"github.com/golang-module/carbon/v2"
+	"github.com/jinzhu/copier"
 	"zero-service/file/file"
 	"zero-service/file/internal/svc"
 
@@ -24,7 +25,13 @@ func NewOssDetailLogic(ctx context.Context, svcCtx *svc.ServiceContext) *OssDeta
 }
 
 func (l *OssDetailLogic) OssDetail(in *file.OssDetailReq) (*file.OssDetailRes, error) {
-	// todo: add your logic here and delete this line
-
-	return &file.OssDetailRes{}, nil
+	oss, err := l.svcCtx.OssModel.FindOne(l.ctx, in.Id)
+	if err != nil {
+		return nil, err
+	}
+	var respOss file.Oss
+	_ = copier.Copy(&respOss, oss)
+	respOss.CreateTime = carbon.CreateFromStdTime(oss.CreateTime).ToDateTimeString()
+	respOss.UpdateTime = carbon.CreateFromStdTime(oss.UpdateTime).ToDateTimeString()
+	return &file.OssDetailRes{Oss: &respOss}, nil
 }

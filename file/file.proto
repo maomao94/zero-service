@@ -79,6 +79,7 @@ message CreateOssReq{
 }
 
 message CreateOssRes{
+  int64 id = 1;
 }
 
 message UpdateOssReq{

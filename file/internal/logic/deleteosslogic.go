@@ -24,7 +24,13 @@ func NewDeleteOssLogic(ctx context.Context, svcCtx *svc.ServiceContext) *DeleteO
 }
 
 func (l *DeleteOssLogic) DeleteOss(in *file.DeleteOssReq) (*file.DeleteOssRes, error) {
-	// todo: add your logic here and delete this line
-
-	return &file.DeleteOssRes{}, nil
+	oss, err := l.svcCtx.OssModel.FindOne(l.ctx, in.Id)
+	if err != nil {
+		return nil, err
+	}
+	err = l.svcCtx.OssModel.DeleteSoft(l.ctx, nil, oss)
+	if err != nil {
+		return nil, err
+	}
+	return &file.DeleteOssRes{Id: oss.Id}, nil
 }
