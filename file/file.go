@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/zeromicro/go-zero/core/logx"
 
 	"zero-service/file/file"
 	"zero-service/file/internal/config"
@@ -33,6 +34,7 @@ func main() {
 		}
 	})
 	defer s.Stop()
+	logx.AddGlobalFields(logx.Field("app", c.Name))
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
 	s.Start()
