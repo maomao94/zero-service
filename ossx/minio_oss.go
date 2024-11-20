@@ -7,6 +7,8 @@ import (
 	"github.com/minio/minio-go"
 	"io"
 	"mime/multipart"
+	"net/url"
+	"time"
 	"zero-service/model"
 )
 
@@ -139,6 +141,20 @@ func (m MinioTemplate) GetObject(tenantId, bucketName, filename string) (*minio.
 		return nil, err
 	}
 	return m.client.GetObject(m.ossRule.bucketName(tenantId, bucketName), filename, minio.GetObjectOptions{})
+}
+
+func (m MinioTemplate) SignUrl(tenantId, bucketName, filename string, expires time.Duration) (string, error) {
+	if err := validateClient(m.client); err != nil {
+		return "", err
+	}
+	// 创建一个 URL 查询参数对象
+	reqParams := url.Values{}
+	reqParams.Set("version", "1.0") // 添加文件版本
+	url, err := m.client.PresignedGetObject(m.ossRule.bucketName(tenantId, bucketName), filename, expires, reqParams)
+	if err != nil {
+		return "", err
+	}
+	return url.String(), nil
 }
 
 func (m MinioTemplate) RemoveFile(tenantId, bucketName, filename string) error {

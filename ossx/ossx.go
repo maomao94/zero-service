@@ -33,7 +33,8 @@ type OssTemplate interface {
 	PutFile(tenantId, bucketName string, fileHeader *multipart.FileHeader) (*File, error)                            // 上传文件
 	PutStream(tenantId, bucketName, filename, contentType string, stream *[]byte) (*File, error)                     // 上传文件
 	PutObject(tenantId, bucketName, filename, contentType string, reader io.Reader, objectSize int64) (*File, error) // 上传文件
-	GetObject(tenantId, bucketName, filename string) (*minio.Object, error)                                          // 上传文件
+	GetObject(tenantId, bucketName, filename string) (*minio.Object, error)                                          // 查看文件
+	SignUrl(tenantId, bucketName, filename string, expires time.Duration) (string, error)                            // 生成文件url
 	RemoveFile(tenantId, bucketName, filename string) error                                                          // 删除文件
 	RemoveFiles(tenantId string, bucketName string, filenames []string) error                                        // 批量删除文件
 }
