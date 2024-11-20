@@ -87,7 +87,7 @@ func (l *PutChunkFileLogic) PutChunkFile(req *types.PutFileRequest) (resp *types
 				return nil, err
 			}
 			// 每当上传字节数超过阈值时打印一次进度
-			if uploadedSize-lastLoggedSize >= progressLogThreshold {
+			if (uploadedSize-lastLoggedSize >= progressLogThreshold) || uploadedSize-lastLoggedSize <= int64(partSize) {
 				progress := float64(uploadedSize) / float64(fileHeader.Size) * 100
 				l.Logger.Infof(
 					"Uploading part %d: %s (%.2f%% completed, Uploaded: %s / %s)",
