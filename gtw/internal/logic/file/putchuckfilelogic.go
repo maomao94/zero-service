@@ -3,6 +3,7 @@ package file
 import (
 	"context"
 	"github.com/jinzhu/copier"
+	"github.com/schollz/progressbar/v3"
 	"io"
 	"net/http"
 	"zero-service/common/tool"
@@ -40,6 +41,17 @@ func (l *PutChuckFileLogic) PutChuckFile(req *types.PutFileRequest) (resp *types
 	defer uploadFile.Close()
 	l.Logger.Infof("upload file: %+v, file size: %s, MIME header: %+v",
 		fileHeader.Filename, tool.FormatFileSize(fileHeader.Size), fileHeader.Header)
+	// 初始化进度条
+	bar := progressbar.NewOptions64(fileHeader.Size,
+		progressbar.OptionSetDescription("Uploading..."),
+		progressbar.OptionSetWidth(40),
+		progressbar.OptionSetTheme(progressbar.Theme{
+			Saucer:        "=",
+			SaucerPadding: " ",
+			BarStart:      "[",
+			BarEnd:        "]",
+		}),
+	)
 
 	// 执行 stream 上传
 	stream, err := l.svcCtx.FileRpcCLi.PutFileByte(context.Background())
@@ -77,6 +89,8 @@ func (l *PutChuckFileLogic) PutChuckFile(req *types.PutFileRequest) (resp *types
 				"Uploading part %d: %s (%.2f%% completed, Uploaded: %s / %s)",
 				partNum, tool.FormatFileSize(int64(n)), progress, tool.FormatFileSize(uploadedSize), tool.FormatFileSize(fileHeader.Size))
 			partNum++
+			// 更新进度条
+			bar.Add(n)
 		}
 
 		if err == io.EOF {
