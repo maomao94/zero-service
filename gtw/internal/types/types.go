@@ -7,7 +7,7 @@ type BaseRequest struct {
 	Id int64 `json:"id"` // 主键ID
 }
 
-type DownloadFileReq struct {
+type DownloadFileRequest struct {
 	Path string `form:"path"` // 文件路径
 }
 
@@ -46,7 +46,11 @@ type GetCurrentUserReply struct {
 type GetCurrentUserRequest struct {
 }
 
-type GetFileReq struct {
+type GetFileReply struct {
+	File File `json:"file"`
+}
+
+type GetFileRequest struct {
 	TenantId   string `json:"tenantId,optional"`   // 租户ID
 	Code       string `json:"code,optional"`       // 资源编号
 	BucketName string `json:"bucketName,optional"` // 存储桶名称
@@ -87,7 +91,7 @@ type PingReply struct {
 	Msg string `json:"msg"`
 }
 
-type PutFileReq struct {
+type PutFileRequest struct {
 	TenantId   string `form:"tenantId,optional"`   // 租户ID
 	Code       string `form:"code,optional"`       // 资源编号
 	BucketName string `form:"bucketName,optional"` // 存储桶名称
@@ -127,7 +131,7 @@ type UploadFileReply struct {
 	Url         string `json:"url"`         // 文件下载
 }
 
-type UploadFileReq struct {
+type UploadFileRequest struct {
 	MfsType int64 `json:"status,options=1|2,optional"` // 文件类型 1-临时文件 2-业务文件
 }
 

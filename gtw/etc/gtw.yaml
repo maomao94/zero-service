@@ -16,6 +16,11 @@ ZeroRpcConf:
     - 127.0.0.1:21001
   NonBlock: true
   Timeout: 3000
+FileRpcConf:
+  Endpoints:
+    - 127.0.0.1:21003
+  NonBlock: true
+  Timeout: 3000
 AdminRpcConf:
 #  Endpoints:
 #    - 127.0.0.1:1005

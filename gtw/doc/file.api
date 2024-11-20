@@ -1,16 +1,19 @@
 syntax = "v1"
 
 type (
-	PutFileReq {
+	PutFileRequest {
 		TenantId   string `form:"tenantId,optional"` // 租户ID
 		Code       string `form:"code,optional"` // 资源编号
 		BucketName string `form:"bucketName,optional"` // 存储桶名称
 	}
-	GetFileReq {
+	GetFileRequest {
 		TenantId   string `json:"tenantId,optional"` // 租户ID
 		Code       string `json:"code,optional"` // 资源编号
 		BucketName string `json:"bucketName,optional"` // 存储桶名称
 		Filename   string `json:"filename"` // 文件名
+	}
+	GetFileReply {
+		File File `json:"file"`
 	}
 	File {
 		Link         string `json:"link"` // 文件地址

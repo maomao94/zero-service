@@ -9,10 +9,10 @@ type (
 		Body  string `json:"body"`
 	}
 	ForwardReply  {}
-	UploadFileReq {
+	UploadFileRequest {
 		MfsType int64 `json:"status,options=1|2,optional"` // 文件类型 1-临时文件 2-业务文件
 	}
-	DownloadFileReq {
+	DownloadFileRequest {
 		Path string `form:"path"` // 文件路径
 	}
 	UploadFileReply {

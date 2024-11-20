@@ -30,7 +30,7 @@ func NewMfsDownloadFileLogic(ctx context.Context, svcCtx *svc.ServiceContext, r 
 	}
 }
 
-func (l *MfsDownloadFileLogic) MfsDownloadFile(req *types.DownloadFileReq) error {
+func (l *MfsDownloadFileLogic) MfsDownloadFile(req *types.DownloadFileRequest) error {
 	stat, err := os.Stat(req.Path)
 	if err != nil {
 		return err
