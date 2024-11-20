@@ -2,10 +2,10 @@ package file
 
 import (
 	"context"
-	"fmt"
 	"github.com/jinzhu/copier"
 	"io"
 	"net/http"
+	"zero-service/common/tool"
 	"zero-service/file/file"
 
 	"zero-service/gtw/internal/svc"
@@ -38,26 +38,8 @@ func (l *PutChuckFileLogic) PutChuckFile(req *types.PutFileRequest) (resp *types
 		return nil, err
 	}
 	defer uploadFile.Close()
-	// 格式化文件大小
-	formatSize := func(size int64) string {
-		const (
-			KB = 1024
-			MB = KB * 1024
-			GB = MB * 1024
-		)
-		switch {
-		case size >= GB:
-			return fmt.Sprintf("%.2f GB", float64(size)/float64(GB))
-		case size >= MB:
-			return fmt.Sprintf("%.2f MB", float64(size)/float64(MB))
-		case size >= KB:
-			return fmt.Sprintf("%.2f KB", float64(size)/float64(KB))
-		default:
-			return fmt.Sprintf("%d bytes", size)
-		}
-	}
 	l.Logger.Infof("upload file: %+v, file size: %s, MIME header: %+v",
-		fileHeader.Filename, formatSize(fileHeader.Size), fileHeader.Header)
+		fileHeader.Filename, tool.FormatFileSize(fileHeader.Size), fileHeader.Header)
 
 	// 执行 stream 上传
 	stream, err := l.svcCtx.FileRpcCLi.PutFileByte(context.Background())
@@ -92,9 +74,8 @@ func (l *PutChuckFileLogic) PutChuckFile(req *types.PutFileRequest) (resp *types
 			// 打印当前分片上传进度
 			progress := float64(uploadedSize) / float64(fileHeader.Size) * 100
 			l.Logger.Infof(
-				"Uploading part %d: %s (%.2f%% completed, Uploaded: %s / %s)\n",
-				partNum, formatSize(int64(n)), progress, formatSize(uploadedSize), formatSize(fileHeader.Size),
-			)
+				"Uploading part %s: %s (%.2f%% completed, Uploaded: %s / %s)\n",
+				partNum, tool.FormatFileSize(int64(n)), progress, tool.FormatFileSize(uploadedSize), tool.FormatFileSize(fileHeader.Size))
 			partNum++
 		}
 

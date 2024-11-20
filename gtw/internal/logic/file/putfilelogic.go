@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"zero-service/common/tool"
 	"zero-service/file/file"
 
 	"zero-service/gtw/internal/svc"
@@ -48,8 +49,8 @@ func (l *PutFileLogic) PutFile(req *types.PutFileRequest) (resp *types.GetFileRe
 		return nil, err
 	}
 	defer uploadFile.Close()
-	l.Logger.Infof("upload file: %+v, file size: %d, MIME header: %+v",
-		fileHeader.Filename, fileHeader.Size, fileHeader.Header)
+	l.Logger.Infof("upload file: %+v, file size: %s, MIME header: %+v",
+		fileHeader.Filename, tool.FormatFileSize(fileHeader.Size), fileHeader.Header)
 	// 执行普通上传
 	typeFile := "tempFile"
 	dayStr := carbon.Now().Format("20060102")
