@@ -3,6 +3,7 @@ syntax = "v1"
 import "doc/base.api"
 import "doc/user.api"
 import "doc/common.api"
+import "doc/file.api"
 
 info (
 	title:   "网关服务"
@@ -94,5 +95,19 @@ service gtw {
 	@doc "上传文件"
 	@handler mfsUploadFile
 	post /mfs/uploadFile (UploadFileReq) returns (UploadFileReply)
+}
+
+@server (
+	prefix: file/v1
+	group:  file
+)
+service gtw {
+	@doc "上传文件"
+	@handler putFile
+	post /oss/endpoint/putFile (PutFileReq) returns (File)
+
+	@doc "下载文件"
+	@handler getFile
+	post /oss/endpoint/getFile (GetFileReq)
 }
 

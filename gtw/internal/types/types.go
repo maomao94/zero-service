@@ -23,6 +23,14 @@ type EditCurrentUserRequest struct {
 type EmptyReply struct {
 }
 
+type File struct {
+	Link         string `json:"link"`               // 文件地址
+	Domain       string `json:"domain"`             // 域名地址
+	Name         string `json:"name"`               // 文件名
+	OriginalName string `json:"originalName"`       // 初始文件名
+	AttachId     string `json:"attachId,omitempty"` // 附件表ID
+}
+
 type ForwardReply struct {
 }
 
@@ -36,6 +44,13 @@ type GetCurrentUserReply struct {
 }
 
 type GetCurrentUserRequest struct {
+}
+
+type GetFileReq struct {
+	TenantId   string `json:"tenantId,optional"`   // 租户ID
+	Code       string `json:"code,optional"`       // 资源编号
+	BucketName string `json:"bucketName,optional"` // 存储桶名称
+	Filename   string `json:"filename"`            // 文件名
 }
 
 type GetRegionListReply struct {
@@ -70,6 +85,12 @@ type MiniProgramLoginRequest struct {
 
 type PingReply struct {
 	Msg string `json:"msg"`
+}
+
+type PutFileReq struct {
+	TenantId   string `form:"tenantId,optional"`   // 租户ID
+	Code       string `form:"code,optional"`       // 资源编号
+	BucketName string `form:"bucketName,optional"` // 存储桶名称
 }
 
 type Region struct {

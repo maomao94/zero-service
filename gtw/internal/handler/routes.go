@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	common "zero-service/gtw/internal/handler/common"
+	file "zero-service/gtw/internal/handler/file"
 	gtw "zero-service/gtw/internal/handler/gtw"
 	pay "zero-service/gtw/internal/handler/pay"
 	user "zero-service/gtw/internal/handler/user"
@@ -33,6 +34,24 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 		},
 		rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret),
 		rest.WithPrefix("/app/common/v1"),
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				// 下载文件
+				Method:  http.MethodPost,
+				Path:    "/oss/endpoint/getFile",
+				Handler: file.GetFileHandler(serverCtx),
+			},
+			{
+				// 上传文件
+				Method:  http.MethodPost,
+				Path:    "/oss/endpoint/putFile",
+				Handler: file.PutFileHandler(serverCtx),
+			},
+		},
+		rest.WithPrefix("/file/v1"),
 	)
 
 	server.AddRoutes(
