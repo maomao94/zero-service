@@ -87,3 +87,8 @@ func (s *FileRpcServer) RemoveFiles(ctx context.Context, in *file.RemoveFilesReq
 	l := logic.NewRemoveFilesLogic(ctx, s.svcCtx)
 	return l.RemoveFiles(in)
 }
+
+func (s *FileRpcServer) PutFileByte(stream file.FileRpc_PutFileByteServer) error {
+	l := logic.NewPutFileByteLogic(stream.Context(), s.svcCtx)
+	return l.PutFileByte(stream)
+}
