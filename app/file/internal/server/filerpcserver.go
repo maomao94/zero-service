@@ -73,9 +73,9 @@ func (s *FileRpcServer) PutFile(ctx context.Context, in *file.PutFileReq) (*file
 	return l.PutFile(in)
 }
 
-func (s *FileRpcServer) GetFile(ctx context.Context, in *file.GetFileReq) (*file.GetFileRes, error) {
-	l := logic.NewGetFileLogic(ctx, s.svcCtx)
-	return l.GetFile(in)
+func (s *FileRpcServer) PutFileByte(stream file.FileRpc_PutFileByteServer) error {
+	l := logic.NewPutFileByteLogic(stream.Context(), s.svcCtx)
+	return l.PutFileByte(stream)
 }
 
 func (s *FileRpcServer) RemoveFile(ctx context.Context, in *file.RemoveFileReq) (*file.RemoveFileRes, error) {
@@ -86,9 +86,4 @@ func (s *FileRpcServer) RemoveFile(ctx context.Context, in *file.RemoveFileReq) 
 func (s *FileRpcServer) RemoveFiles(ctx context.Context, in *file.RemoveFilesReq) (*file.RemoveFileRes, error) {
 	l := logic.NewRemoveFilesLogic(ctx, s.svcCtx)
 	return l.RemoveFiles(in)
-}
-
-func (s *FileRpcServer) PutFileByte(stream file.FileRpc_PutFileByteServer) error {
-	l := logic.NewPutFileByteLogic(stream.Context(), s.svcCtx)
-	return l.PutFileByte(stream)
 }
