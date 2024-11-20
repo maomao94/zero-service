@@ -52,7 +52,7 @@ func (l *PutChunkFileLogic) PutChunkFile(req *types.PutFileRequest) (resp *types
 			Saucer:        "=",
 			SaucerPadding: " ",
 			BarStart:      "[",
-			BarEnd:        "]",
+			BarEnd:        "]\n",
 		}),
 	)
 
