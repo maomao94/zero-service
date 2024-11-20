@@ -35,6 +35,7 @@ type FileRpcClient interface {
 	GetFile(ctx context.Context, in *GetFileReq, opts ...grpc.CallOption) (*GetFileRes, error)
 	RemoveFile(ctx context.Context, in *RemoveFileReq, opts ...grpc.CallOption) (*RemoveFileRes, error)
 	RemoveFiles(ctx context.Context, in *RemoveFilesReq, opts ...grpc.CallOption) (*RemoveFileRes, error)
+	PutFileByte(ctx context.Context, opts ...grpc.CallOption) (FileRpc_PutFileByteClient, error)
 }
 
 type fileRpcClient struct {
@@ -162,6 +163,40 @@ func (c *fileRpcClient) RemoveFiles(ctx context.Context, in *RemoveFilesReq, opt
 	return out, nil
 }
 
+func (c *fileRpcClient) PutFileByte(ctx context.Context, opts ...grpc.CallOption) (FileRpc_PutFileByteClient, error) {
+	stream, err := c.cc.NewStream(ctx, &FileRpc_ServiceDesc.Streams[0], "/file.FileRpc/PutFileByte", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &fileRpcPutFileByteClient{stream}
+	return x, nil
+}
+
+type FileRpc_PutFileByteClient interface {
+	Send(*PutFileByteReq) error
+	CloseAndRecv() (*PutFileByteRes, error)
+	grpc.ClientStream
+}
+
+type fileRpcPutFileByteClient struct {
+	grpc.ClientStream
+}
+
+func (x *fileRpcPutFileByteClient) Send(m *PutFileByteReq) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *fileRpcPutFileByteClient) CloseAndRecv() (*PutFileByteRes, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(PutFileByteRes)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // FileRpcServer is the server API for FileRpc service.
 // All implementations must embed UnimplementedFileRpcServer
 // for forward compatibility
@@ -179,6 +214,7 @@ type FileRpcServer interface {
 	GetFile(context.Context, *GetFileReq) (*GetFileRes, error)
 	RemoveFile(context.Context, *RemoveFileReq) (*RemoveFileRes, error)
 	RemoveFiles(context.Context, *RemoveFilesReq) (*RemoveFileRes, error)
+	PutFileByte(FileRpc_PutFileByteServer) error
 	mustEmbedUnimplementedFileRpcServer()
 }
 
@@ -224,6 +260,9 @@ func (UnimplementedFileRpcServer) RemoveFile(context.Context, *RemoveFileReq) (*
 }
 func (UnimplementedFileRpcServer) RemoveFiles(context.Context, *RemoveFilesReq) (*RemoveFileRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveFiles not implemented")
+}
+func (UnimplementedFileRpcServer) PutFileByte(FileRpc_PutFileByteServer) error {
+	return status.Errorf(codes.Unimplemented, "method PutFileByte not implemented")
 }
 func (UnimplementedFileRpcServer) mustEmbedUnimplementedFileRpcServer() {}
 
@@ -472,6 +511,32 @@ func _FileRpc_RemoveFiles_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FileRpc_PutFileByte_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(FileRpcServer).PutFileByte(&fileRpcPutFileByteServer{stream})
+}
+
+type FileRpc_PutFileByteServer interface {
+	SendAndClose(*PutFileByteRes) error
+	Recv() (*PutFileByteReq, error)
+	grpc.ServerStream
+}
+
+type fileRpcPutFileByteServer struct {
+	grpc.ServerStream
+}
+
+func (x *fileRpcPutFileByteServer) SendAndClose(m *PutFileByteRes) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *fileRpcPutFileByteServer) Recv() (*PutFileByteReq, error) {
+	m := new(PutFileByteReq)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // FileRpc_ServiceDesc is the grpc.ServiceDesc for FileRpc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -532,6 +597,12 @@ var FileRpc_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _FileRpc_RemoveFiles_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "PutFileByte",
+			Handler:       _FileRpc_PutFileByte_Handler,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "file.proto",
 }
