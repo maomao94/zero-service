@@ -16,7 +16,7 @@ import (
 )
 
 // 设置打印进度的阈值（单位：字节），比如每 1MB 打印一次
-const progressLogThreshold = 100 * 1024 * 1024 // 10MB
+const progressLogThreshold = 100 * 1024 * 1024 // 100MB
 
 type PutChunkFileLogic struct {
 	logx.Logger
