@@ -3,7 +3,6 @@ package file
 import (
 	"context"
 	"github.com/jinzhu/copier"
-	"github.com/schollz/progressbar/v3"
 	"io"
 	"net/http"
 	"zero-service/common/tool"
@@ -14,6 +13,9 @@ import (
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
+
+// 设置打印进度的阈值（单位：字节），比如每 1MB 打印一次
+const progressLogThreshold = 100 * 1024 * 1024 // 10MB
 
 type PutChuckFileLogic struct {
 	logx.Logger
@@ -42,16 +44,16 @@ func (l *PutChuckFileLogic) PutChuckFile(req *types.PutFileRequest) (resp *types
 	l.Logger.Infof("upload file: %+v, file size: %s, MIME header: %+v",
 		fileHeader.Filename, tool.FormatFileSize(fileHeader.Size), fileHeader.Header)
 	// 初始化进度条
-	bar := progressbar.NewOptions64(fileHeader.Size,
-		progressbar.OptionSetDescription("Uploading..."),
-		progressbar.OptionSetWidth(40),
-		progressbar.OptionSetTheme(progressbar.Theme{
-			Saucer:        "=",
-			SaucerPadding: " ",
-			BarStart:      "[",
-			BarEnd:        "]",
-		}),
-	)
+	//bar := progressbar.NewOptions64(fileHeader.Size,
+	//	progressbar.OptionSetDescription("Uploading..."),
+	//	progressbar.OptionSetWidth(40),
+	//	progressbar.OptionSetTheme(progressbar.Theme{
+	//		Saucer:        "=",
+	//		SaucerPadding: " ",
+	//		BarStart:      "[",
+	//		BarEnd:        "]",
+	//	}),
+	//)
 
 	// 执行 stream 上传
 	stream, err := l.svcCtx.FileRpcCLi.PutFileByte(context.Background())
@@ -63,7 +65,9 @@ func (l *PutChuckFileLogic) PutChuckFile(req *types.PutFileRequest) (resp *types
 	// 逐块读取文件并上传
 	buf := make([]byte, partSize)
 	partNum := 1
-	var uploadedSize int64 = 0
+	// 用来记录已上传的字节数
+	var uploadedSize int64
+	var lastLoggedSize int64 // 记录上次打印日志时的字节数
 	for {
 		n, err := uploadFile.Read(buf)
 		if n > 0 {
@@ -82,15 +86,17 @@ func (l *PutChuckFileLogic) PutChuckFile(req *types.PutFileRequest) (resp *types
 				l.Logger.Errorf("Failed to send chunk: %v", err)
 				return nil, err
 			}
-
-			// 打印当前分片上传进度
-			progress := float64(uploadedSize) / float64(fileHeader.Size) * 100
-			l.Logger.Infof(
-				"Uploading part %d: %s (%.2f%% completed, Uploaded: %s / %s)",
-				partNum, tool.FormatFileSize(int64(n)), progress, tool.FormatFileSize(uploadedSize), tool.FormatFileSize(fileHeader.Size))
+			// 每当上传字节数超过阈值时打印一次进度
+			if uploadedSize-lastLoggedSize >= progressLogThreshold {
+				progress := float64(uploadedSize) / float64(fileHeader.Size) * 100
+				l.Logger.Infof(
+					"Uploading part %d: %s (%.2f%% completed, Uploaded: %s / %s)",
+					partNum, tool.FormatFileSize(int64(n)), progress, tool.FormatFileSize(uploadedSize), tool.FormatFileSize(fileHeader.Size))
+				lastLoggedSize = uploadedSize // 更新上次打印的已上传字节数
+			}
 			partNum++
-			// 更新进度条
-			bar.Add(n)
+			//// 更新进度条
+			//bar.Add(n)
 		}
 
 		if err == io.EOF {
