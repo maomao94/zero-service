@@ -32,7 +32,7 @@ service gtw {
 
 	@doc "下载文件"
 	@handler mfsDownloadFile
-	get /mfs/downloadFile (DownloadFileReq)
+	get /mfs/downloadFile (DownloadFileRequest)
 }
 
 @server (
@@ -94,7 +94,7 @@ service gtw {
 
 	@doc "上传文件"
 	@handler mfsUploadFile
-	post /mfs/uploadFile (UploadFileReq) returns (UploadFileReply)
+	post /mfs/uploadFile (UploadFileRequest) returns (UploadFileReply)
 }
 
 @server (
@@ -104,10 +104,10 @@ service gtw {
 service gtw {
 	@doc "上传文件"
 	@handler putFile
-	post /oss/endpoint/putFile (PutFileReq) returns (File)
+	post /oss/endpoint/putFile (PutFileRequest) returns (GetFileReply)
 
 	@doc "下载文件"
 	@handler getFile
-	post /oss/endpoint/getFile (GetFileReq)
+	post /oss/endpoint/getFile (GetFileRequest)
 }
 

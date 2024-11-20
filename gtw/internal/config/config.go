@@ -11,6 +11,7 @@ type Config struct {
 		AccessSecret string
 	}
 	ZeroRpcConf  zrpc.RpcClientConf
+	FileRpcConf  zrpc.RpcClientConf
 	AdminRpcConf zrpc.RpcClientConf
 	NfsRootPath  string
 	DownloadUrl  string

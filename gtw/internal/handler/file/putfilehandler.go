@@ -12,13 +12,13 @@ import (
 // 上传文件
 func PutFileHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req types.PutFileReq
+		var req types.PutFileRequest
 		if err := httpx.Parse(r, &req); err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 			return
 		}
 
-		l := file.NewPutFileLogic(r.Context(), svcCtx)
+		l := file.NewPutFileLogic(r.Context(), svcCtx, r)
 		resp, err := l.PutFile(&req)
 		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)

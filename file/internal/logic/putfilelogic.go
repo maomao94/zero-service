@@ -2,6 +2,10 @@ package logic
 
 import (
 	"context"
+	"github.com/jinzhu/copier"
+	"os"
+	"zero-service/model"
+	"zero-service/ossx"
 
 	"zero-service/file/file"
 	"zero-service/file/internal/svc"
@@ -24,7 +28,26 @@ func NewPutFileLogic(ctx context.Context, svcCtx *svc.ServiceContext) *PutFileLo
 }
 
 func (l *PutFileLogic) PutFile(in *file.PutFileReq) (*file.PutFileRes, error) {
-	// todo: add your logic here and delete this line
-
+	ossTemplate, err := ossx.Template(in.TenantId, in.Code, l.svcCtx.Config.Oss.TenantMode, func(tenantId, code string) (oss *model.Oss, err error) {
+		return l.svcCtx.OssModel.FindOneByTenantIdOssCode(l.ctx, in.TenantId, in.Code)
+	})
+	if err != nil {
+		return nil, err
+	}
+	f, err := os.Open(in.Path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	fInfo, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+	file, err := ossTemplate.PutObject(in.TenantId, in.BucketName, in.Filename, in.ContentType, f, fInfo.Size())
+	if err != nil {
+		return nil, err
+	}
+	var pbFile file.File
+	_ = copier.Copy(&pbFile, file)
 	return &file.PutFileRes{}, nil
 }

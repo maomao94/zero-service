@@ -39,7 +39,7 @@ func NewMfsUploadFileLogic(ctx context.Context, svcCtx *svc.ServiceContext, r *h
 	}
 }
 
-func (l *MfsUploadFileLogic) MfsUploadFile(req *types.UploadFileReq) (resp *types.UploadFileReply, err error) {
+func (l *MfsUploadFileLogic) MfsUploadFile(req *types.UploadFileRequest) (resp *types.UploadFileReply, err error) {
 	l.r.ParseMultipartForm(maxFileSize)
 	file, fileHeader, err := l.r.FormFile("file")
 	if err != nil {

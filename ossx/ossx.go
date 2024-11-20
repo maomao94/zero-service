@@ -88,7 +88,7 @@ type OssProperties struct {
 	Args       map[string]any // 自定义属性
 }
 
-type GetOssFn func(tenantId, code string) (oss *model.TOss, err error)
+type GetOssFn func(tenantId, code string) (oss *model.Oss, err error)
 
 func Template(TenantId, Code string, tenantMode bool, getOss GetOssFn) (ossTemplate OssTemplate, err error) {
 	oss, err := getOss(TenantId, Code)
