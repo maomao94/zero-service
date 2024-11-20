@@ -3,7 +3,6 @@ package file
 import (
 	"context"
 	"github.com/jinzhu/copier"
-	"github.com/schollz/progressbar/v3"
 	"io"
 	"net/http"
 	"zero-service/common/tool"
@@ -45,16 +44,16 @@ func (l *PutChunkFileLogic) PutChunkFile(req *types.PutFileRequest) (resp *types
 	l.Logger.Infof("upload file: %+v, file size: %s, MIME header: %+v",
 		fileHeader.Filename, tool.FormatFileSize(fileHeader.Size), fileHeader.Header)
 	// 初始化进度条
-	bar := progressbar.NewOptions64(fileHeader.Size,
-		progressbar.OptionSetDescription("Uploading..."),
-		progressbar.OptionSetWidth(40),
-		progressbar.OptionSetTheme(progressbar.Theme{
-			Saucer:        "=",
-			SaucerPadding: " ",
-			BarStart:      "[",
-			BarEnd:        "]\n",
-		}),
-	)
+	//bar := progressbar.NewOptions64(fileHeader.Size,
+	//	progressbar.OptionSetDescription("Uploading..."),
+	//	progressbar.OptionSetWidth(40),
+	//	progressbar.OptionSetTheme(progressbar.Theme{
+	//		Saucer:        "=",
+	//		SaucerPadding: " ",
+	//		BarStart:      "[",
+	//		BarEnd:        "]\n",
+	//	}),
+	//)
 
 	// 执行 stream 上传
 	stream, err := l.svcCtx.FileRpcCLi.PutFileByte(context.Background())
@@ -96,8 +95,8 @@ func (l *PutChunkFileLogic) PutChunkFile(req *types.PutFileRequest) (resp *types
 				lastLoggedSize = uploadedSize // 更新上次打印的已上传字节数
 			}
 			partNum++
-			// 更新进度条
-			bar.Add(n)
+			//// 更新进度条
+			//bar.Add(n)
 		}
 
 		if err == io.EOF {
