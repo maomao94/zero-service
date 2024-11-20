@@ -12,9 +12,8 @@ import (
 	"os"
 	"path"
 	"strings"
+	"zero-service/app/file/file"
 	"zero-service/common/tool"
-	"zero-service/file/file"
-
 	"zero-service/gtw/internal/svc"
 	"zero-service/gtw/internal/types"
 

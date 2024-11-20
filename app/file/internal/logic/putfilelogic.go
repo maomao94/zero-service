@@ -4,11 +4,10 @@ import (
 	"context"
 	"github.com/jinzhu/copier"
 	"os"
+	"zero-service/app/file/file"
+	"zero-service/app/file/internal/svc"
 	"zero-service/model"
 	"zero-service/ossx"
-
-	"zero-service/file/file"
-	"zero-service/file/internal/svc"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )

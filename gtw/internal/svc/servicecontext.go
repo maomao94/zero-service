@@ -5,9 +5,9 @@ import (
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/payment"
 	"github.com/zeromicro/go-zero/zrpc"
 	"zero-service/admin/guns"
+	"zero-service/app/file/file"
 	"zero-service/common"
 	interceptor "zero-service/common/Interceptor/rpcclient"
-	"zero-service/file/file"
 	"zero-service/gtw/internal/config"
 	"zero-service/zerorpc/zerorpc"
 )

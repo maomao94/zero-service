@@ -2,7 +2,7 @@ package svc
 
 import (
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
-	"zero-service/file/internal/config"
+	"zero-service/app/file/internal/config"
 	"zero-service/model"
 )
 

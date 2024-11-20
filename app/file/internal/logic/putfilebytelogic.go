@@ -4,11 +4,10 @@ import (
 	"context"
 	"github.com/jinzhu/copier"
 	"io"
+	file2 "zero-service/app/file/file"
+	"zero-service/app/file/internal/svc"
 	"zero-service/model"
 	"zero-service/ossx"
-
-	"zero-service/file/file"
-	"zero-service/file/internal/svc"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -27,7 +26,7 @@ func NewPutFileByteLogic(ctx context.Context, svcCtx *svc.ServiceContext) *PutFi
 	}
 }
 
-func (l *PutFileByteLogic) PutFileByte(stream file.FileRpc_PutFileByteServer) error {
+func (l *PutFileByteLogic) PutFileByte(stream file2.FileRpc_PutFileByteServer) error {
 	// 使用管道实现流式数据写入
 	pr, pw := io.Pipe()
 	defer pw.Close()
@@ -38,7 +37,7 @@ func (l *PutFileByteLogic) PutFileByte(stream file.FileRpc_PutFileByteServer) er
 
 	// 预定义错误通道
 	errChan := make(chan error, 1)
-	var pbFile file.File
+	var pbFile file2.File
 
 	// 标记是否已经初始化 OSS 模板
 	var initialized bool
@@ -103,7 +102,7 @@ func (l *PutFileByteLogic) PutFileByte(stream file.FileRpc_PutFileByteServer) er
 		return err
 	}
 	// 返回上传结果
-	return stream.SendAndClose(&file.PutFileByteRes{
+	return stream.SendAndClose(&file2.PutFileByteRes{
 		File: &pbFile,
 	})
 }

@@ -4,10 +4,9 @@ import (
 	"context"
 	"github.com/golang-module/carbon/v2"
 	"github.com/jinzhu/copier"
-	"zero-service/file/file"
-	"zero-service/file/internal/svc"
-
 	"github.com/zeromicro/go-zero/core/logx"
+	"zero-service/app/file/file"
+	"zero-service/app/file/internal/svc"
 )
 
 type OssDetailLogic struct {

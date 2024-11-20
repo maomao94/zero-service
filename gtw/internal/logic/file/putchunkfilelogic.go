@@ -5,9 +5,8 @@ import (
 	"github.com/jinzhu/copier"
 	"io"
 	"net/http"
+	"zero-service/app/file/file"
 	"zero-service/common/tool"
-	"zero-service/file/file"
-
 	"zero-service/gtw/internal/svc"
 	"zero-service/gtw/internal/types"
 

@@ -4,12 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"github.com/zeromicro/go-zero/core/logx"
+	"zero-service/app/file/file"
+	"zero-service/app/file/internal/config"
+	"zero-service/app/file/internal/server"
+	"zero-service/app/file/internal/svc"
 	interceptor "zero-service/common/Interceptor/rpcserver"
-
-	"zero-service/file/file"
-	"zero-service/file/internal/config"
-	"zero-service/file/internal/server"
-	"zero-service/file/internal/svc"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/service"

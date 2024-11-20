@@ -2,28 +2,27 @@ package logic
 
 import (
 	"context"
-
-	"zero-service/file/file"
-	"zero-service/file/internal/svc"
+	"zero-service/app/file/file"
+	"zero-service/app/file/internal/svc"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
-type RemoveFilesLogic struct {
+type RemoveFileLogic struct {
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
 	logx.Logger
 }
 
-func NewRemoveFilesLogic(ctx context.Context, svcCtx *svc.ServiceContext) *RemoveFilesLogic {
-	return &RemoveFilesLogic{
+func NewRemoveFileLogic(ctx context.Context, svcCtx *svc.ServiceContext) *RemoveFileLogic {
+	return &RemoveFileLogic{
 		ctx:    ctx,
 		svcCtx: svcCtx,
 		Logger: logx.WithContext(ctx),
 	}
 }
 
-func (l *RemoveFilesLogic) RemoveFiles(in *file.RemoveFilesReq) (*file.RemoveFileRes, error) {
+func (l *RemoveFileLogic) RemoveFile(in *file.RemoveFileReq) (*file.RemoveFileRes, error) {
 	// todo: add your logic here and delete this line
 
 	return &file.RemoveFileRes{}, nil
