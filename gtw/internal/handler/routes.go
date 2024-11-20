@@ -5,6 +5,7 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
 	common "zero-service/gtw/internal/handler/common"
 	file "zero-service/gtw/internal/handler/file"
@@ -58,6 +59,7 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			},
 		},
 		rest.WithPrefix("/file/v1"),
+		rest.WithTimeout(100000000*time.Millisecond),
 	)
 
 	server.AddRoutes(

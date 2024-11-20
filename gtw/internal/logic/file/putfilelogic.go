@@ -23,7 +23,7 @@ import (
 
 const maxFileSize = 10 << 20 // 10 MB
 
-const partSize = 3 * 1024 * 1024 // 每个分片的大小 5MB
+const partSize = 3 * 1024 * 1024 // 每个分片的大小 3MB
 
 type PutFileLogic struct {
 	logx.Logger
