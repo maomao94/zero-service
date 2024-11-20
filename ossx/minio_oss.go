@@ -7,6 +7,7 @@ import (
 	"github.com/minio/minio-go"
 	"io"
 	"mime/multipart"
+	"zero-service/model"
 )
 
 type MinioTemplate struct {
@@ -180,7 +181,7 @@ func (m MinioTemplate) fileLink(tenantId, bucketName, filename string) string {
 	return m.ossProperties.Endpoint + "/" + m.ossRule.bucketName(tenantId, bucketName) + "/" + filename
 }
 
-func NewMinioTemplate(Oss *model.TOss, ossRule OssRule) *MinioTemplate {
+func NewMinioTemplate(Oss *model.Oss, ossRule OssRule) *MinioTemplate {
 	ossProperties := OssProperties{
 		Endpoint:   Oss.Endpoint,
 		AccessKey:  Oss.AccessKey,
