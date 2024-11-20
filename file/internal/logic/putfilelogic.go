@@ -43,11 +43,13 @@ func (l *PutFileLogic) PutFile(in *file.PutFileReq) (*file.PutFileRes, error) {
 	if err != nil {
 		return nil, err
 	}
-	file, err := ossTemplate.PutObject(in.TenantId, in.BucketName, in.Filename, in.ContentType, f, fInfo.Size())
+	ossFile, err := ossTemplate.PutObject(in.TenantId, in.BucketName, in.Filename, in.ContentType, f, fInfo.Size())
 	if err != nil {
 		return nil, err
 	}
 	var pbFile file.File
-	_ = copier.Copy(&pbFile, file)
-	return &file.PutFileRes{}, nil
+	_ = copier.Copy(&pbFile, ossFile)
+	return &file.PutFileRes{
+		File: &pbFile,
+	}, nil
 }
