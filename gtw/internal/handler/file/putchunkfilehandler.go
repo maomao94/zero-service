@@ -18,7 +18,7 @@ func PutChunkFileHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 			return
 		}
 
-		l := file.NewPutChunkFileLogic(r.Context(), svcCtx)
+		l := file.NewPutChunkFileLogic(r.Context(), svcCtx, r)
 		resp, err := l.PutChunkFile(&req)
 		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
