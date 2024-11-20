@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/zeromicro/go-zero/core/logx"
+	interceptor "zero-service/common/Interceptor/rpcserver"
 
 	"zero-service/file/file"
 	"zero-service/file/internal/config"
@@ -33,6 +34,7 @@ func main() {
 			reflection.Register(grpcServer)
 		}
 	})
+	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
 	defer s.Stop()
 	logx.AddGlobalFields(logx.Field("app", c.Name))
 

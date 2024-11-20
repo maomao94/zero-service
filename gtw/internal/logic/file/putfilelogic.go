@@ -80,6 +80,7 @@ func (l *PutFileLogic) PutFile(req *types.PutFileRequest) (resp *types.GetFileRe
 	}
 	var file types.File
 	_ = copier.Copy(&file, putFileResp.File)
-	resp.File = file
-	return resp, nil
+	return &types.GetFileReply{
+		File: file,
+	}, nil
 }
