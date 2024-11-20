@@ -91,7 +91,7 @@ func (l *PutChunkFileLogic) PutChunkFile(req *types.PutFileRequest) (resp *types
 				progress := float64(uploadedSize) / float64(fileHeader.Size) * 100
 				l.Logger.Infof(
 					"Uploading part %d: %s (%.2f%% completed, Uploaded: %s / %s)",
-					partNum, tool.FormatFileSize(int64(n)), progress, tool.FormatFileSize(uploadedSize), tool.FormatFileSize(fileHeader.Size))
+					partNum, tool.FormatFileSize(int64(uploadedSize-lastLoggedSize)), progress, tool.FormatFileSize(uploadedSize), tool.FormatFileSize(fileHeader.Size))
 				lastLoggedSize = uploadedSize // 更新上次打印的已上传字节数
 			}
 			partNum++
