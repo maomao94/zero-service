@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"zero-service/model"
 
 	"zero-service/file/file"
 	"zero-service/file/internal/svc"
@@ -24,7 +25,22 @@ func NewUpdateOssLogic(ctx context.Context, svcCtx *svc.ServiceContext) *UpdateO
 }
 
 func (l *UpdateOssLogic) UpdateOss(in *file.UpdateOssReq) (*file.UpdateOssRes, error) {
-	// todo: add your logic here and delete this line
-
+	_, err := l.svcCtx.OssModel.Update(l.ctx, nil, &model.Oss{
+		Id:         in.Id,
+		TenantId:   in.TenantId,
+		Category:   in.Category,
+		OssCode:    in.OssCode,
+		Endpoint:   in.Endpoint,
+		AccessKey:  in.AccessKey,
+		SecretKey:  in.SecretKey,
+		BucketName: in.BucketName,
+		AppId:      in.AppId,
+		Region:     in.Region,
+		Remark:     in.Remark,
+		Status:     in.Status,
+	})
+	if err != nil {
+		return nil, err
+	}
 	return &file.UpdateOssRes{}, nil
 }
