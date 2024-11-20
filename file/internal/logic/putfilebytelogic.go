@@ -51,6 +51,7 @@ func (l *PutFileByteLogic) PutFileByte(stream file.FileRpc_PutFileByteServer) er
 			break
 		}
 		if err != nil {
+			l.Logger.Errorf("Failed to read chunk: %v", err)
 			return err
 		}
 
@@ -72,6 +73,7 @@ func (l *PutFileByteLogic) PutFileByte(stream file.FileRpc_PutFileByteServer) er
 				},
 			)
 			if ossErr != nil {
+				l.Logger.Errorf("Failed to get OSS template: %v", ossErr)
 				return ossErr
 			}
 
@@ -97,6 +99,7 @@ func (l *PutFileByteLogic) PutFileByte(stream file.FileRpc_PutFileByteServer) er
 
 	// 等待上传完成
 	if err := <-errChan; err != nil {
+		l.Logger.Errorf("Failed to upload file: %v", err)
 		return err
 	}
 	// 返回上传结果
