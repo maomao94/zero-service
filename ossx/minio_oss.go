@@ -149,7 +149,7 @@ func (m MinioTemplate) SignUrl(tenantId, bucketName, filename string, expires ti
 	}
 	// 创建一个 URL 查询参数对象
 	reqParams := url.Values{}
-	reqParams.Set("version", "1.0") // 添加文件版本
+	reqParams.Set("version", "1.0.0") // 添加文件版本
 	url, err := m.client.PresignedGetObject(m.ossRule.bucketName(tenantId, bucketName), filename, expires, reqParams)
 	if err != nil {
 		return "", err
