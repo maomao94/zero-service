@@ -74,7 +74,7 @@ func (l *PutChuckFileLogic) PutChuckFile(req *types.PutFileRequest) (resp *types
 			// 打印当前分片上传进度
 			progress := float64(uploadedSize) / float64(fileHeader.Size) * 100
 			l.Logger.Infof(
-				"Uploading part %s: %s (%.2f%% completed, Uploaded: %s / %s)\n",
+				"Uploading part %d: %s (%.2f%% completed, Uploaded: %s / %s)\n",
 				partNum, tool.FormatFileSize(int64(n)), progress, tool.FormatFileSize(uploadedSize), tool.FormatFileSize(fileHeader.Size))
 			partNum++
 		}
