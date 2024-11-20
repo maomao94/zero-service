@@ -106,6 +106,10 @@ service gtw {
 	@handler putFile
 	post /oss/endpoint/putFile (PutFileRequest) returns (GetFileReply)
 
+	@doc "上传大文件"
+	@handler putChuckFile
+	post /oss/endpoint/putChuckFile (PutFileRequest) returns (GetFileReply)
+
 	@doc "下载文件"
 	@handler getFile
 	post /oss/endpoint/getFile (GetFileRequest)
