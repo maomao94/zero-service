@@ -100,7 +100,7 @@ service gtw {
 @server (
 	prefix:  file/v1
 	group:   file
-	timeout: 100000s
+	timeout: 7200s
 )
 service gtw {
 	@doc "上传文件"

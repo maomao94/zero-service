@@ -59,7 +59,7 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			},
 		},
 		rest.WithPrefix("/file/v1"),
-		rest.WithTimeout(100000000*time.Millisecond),
+		rest.WithTimeout(7200000*time.Millisecond),
 	)
 
 	server.AddRoutes(
