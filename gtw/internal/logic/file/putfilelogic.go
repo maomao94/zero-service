@@ -64,6 +64,26 @@ func (l *PutFileLogic) PutFile(req *types.PutFileRequest) (resp *types.GetFileRe
 		partNum := 1
 		for {
 			n, err := uploadFile.Read(buf)
+			if n > 0 {
+				// 发送文件块到服务器
+				chunk := &file.PutFileByteReq{
+					TenantId:    req.TenantId,
+					Code:        req.Code,
+					BucketName:  req.BucketName,
+					Content:     buf[:n],
+					Filename:    fileHeader.Filename,
+					ContentType: fileHeader.Header.Get("content-type"),
+				}
+				if err := stream.Send(chunk); err != nil {
+					l.Logger.Errorf("Failed to send chunk: %v", err)
+					return nil, err
+				}
+
+				// 打印当前分片上传进度
+				fmt.Printf("Uploading part %d: %d bytes\n", partNum, n)
+				partNum++
+			}
+
 			if err == io.EOF {
 				break // 文件读取完毕
 			}
@@ -71,24 +91,6 @@ func (l *PutFileLogic) PutFile(req *types.PutFileRequest) (resp *types.GetFileRe
 				l.Logger.Errorf("Failed to read file: %v", err)
 				return nil, err
 			}
-
-			// 发送文件块到服务器
-			chunk := &file.PutFileByteReq{
-				TenantId:    req.TenantId,
-				Code:        req.Code,
-				BucketName:  req.BucketName,
-				Content:     buf[:n],
-				Filename:    fileHeader.Filename,
-				ContentType: fileHeader.Header.Get("content-type"),
-			}
-			if err := stream.Send(chunk); err != nil {
-				l.Logger.Errorf("Failed to send chunk: %v", err)
-				return nil, err
-			}
-
-			// 打印当前分片上传进度
-			fmt.Printf("Uploading part %d: %d bytes\n", partNum, n)
-			partNum++
 		}
 
 		// 完成上传并接收服务器响应
