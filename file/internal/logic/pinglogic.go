@@ -24,7 +24,5 @@ func NewPingLogic(ctx context.Context, svcCtx *svc.ServiceContext) *PingLogic {
 }
 
 func (l *PingLogic) Ping(in *file.Req) (*file.Res, error) {
-	// todo: add your logic here and delete this line
-
-	return &file.Res{}, nil
+	return &file.Res{Pong: "file"}, nil
 }
