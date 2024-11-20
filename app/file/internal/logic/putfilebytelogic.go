@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/jinzhu/copier"
 	"io"
+	"net/http"
 	file2 "zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
 	"zero-service/model"
@@ -41,6 +42,9 @@ func (l *PutFileByteLogic) PutFileByte(stream file2.FileRpc_PutFileByteServer) e
 
 	// 标记是否已经初始化 OSS 模板
 	var initialized bool
+	// 存储用于探测内容类型的缓冲区
+	var contentBuffer []byte
+
 	// 从 gRPC 流中逐块读取数据并写入管道
 	for {
 		req, err := stream.Recv()
@@ -88,6 +92,17 @@ func (l *PutFileByteLogic) PutFileByte(stream file2.FileRpc_PutFileByteServer) e
 			}()
 
 			initialized = true
+		}
+
+		// 试图探测文件内容类型（在收到的第一部分数据上进行）
+		if len(contentBuffer) < 512 {
+			contentBuffer = append(contentBuffer, req.GetContent()...)
+
+			// 如果已经读取到足够的数据，探测内容类型
+			if len(contentBuffer) >= 512 {
+				contentType = http.DetectContentType(contentBuffer[:512])
+				l.Logger.Infof("Detected Content-Type: %s", contentType)
+			}
 		}
 
 		// 写入文件数据到管道
