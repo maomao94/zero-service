@@ -46,10 +46,10 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Handler: file.GetFileHandler(serverCtx),
 			},
 			{
-				// 上传大文件
+				// 上传块文件
 				Method:  http.MethodPost,
-				Path:    "/oss/endpoint/putChuckFile",
-				Handler: file.PutChuckFileHandler(serverCtx),
+				Path:    "/oss/endpoint/putChunkFile",
+				Handler: file.PutChunkFileHandler(serverCtx),
 			},
 			{
 				// 上传文件

@@ -17,7 +17,7 @@ import (
 // 设置打印进度的阈值（单位：字节），比如每 1MB 打印一次
 const progressLogThreshold = 100 * 1024 * 1024 // 10MB
 
-type PutChuckFileLogic struct {
+type PutChunkFileLogic struct {
 	logx.Logger
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
@@ -25,8 +25,8 @@ type PutChuckFileLogic struct {
 }
 
 // 上传大文件
-func NewPutChuckFileLogic(ctx context.Context, svcCtx *svc.ServiceContext, r *http.Request) *PutChuckFileLogic {
-	return &PutChuckFileLogic{
+func NewPutChunkFileLogic(ctx context.Context, svcCtx *svc.ServiceContext, r *http.Request) *PutChunkFileLogic {
+	return &PutChunkFileLogic{
 		Logger: logx.WithContext(ctx),
 		ctx:    ctx,
 		svcCtx: svcCtx,
@@ -34,7 +34,7 @@ func NewPutChuckFileLogic(ctx context.Context, svcCtx *svc.ServiceContext, r *ht
 	}
 }
 
-func (l *PutChuckFileLogic) PutChuckFile(req *types.PutFileRequest) (resp *types.GetFileReply, err error) {
+func (l *PutChunkFileLogic) PutChunkFile(req *types.PutFileRequest) (resp *types.GetFileReply, err error) {
 	l.r.ParseMultipartForm(maxFileSize)
 	uploadFile, fileHeader, err := l.r.FormFile("file")
 	if err != nil {
