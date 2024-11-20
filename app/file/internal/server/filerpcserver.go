@@ -6,14 +6,15 @@ package server
 
 import (
 	"context"
-	file2 "zero-service/app/file/file"
-	logic2 "zero-service/app/file/internal/logic"
+
+	"zero-service/app/file/file"
+	"zero-service/app/file/internal/logic"
 	"zero-service/app/file/internal/svc"
 )
 
 type FileRpcServer struct {
 	svcCtx *svc.ServiceContext
-	file2.UnimplementedFileRpcServer
+	file.UnimplementedFileRpcServer
 }
 
 func NewFileRpcServer(svcCtx *svc.ServiceContext) *FileRpcServer {
@@ -22,72 +23,72 @@ func NewFileRpcServer(svcCtx *svc.ServiceContext) *FileRpcServer {
 	}
 }
 
-func (s *FileRpcServer) Ping(ctx context.Context, in *file2.Req) (*file2.Res, error) {
-	l := logic2.NewPingLogic(ctx, s.svcCtx)
+func (s *FileRpcServer) Ping(ctx context.Context, in *file.Req) (*file.Res, error) {
+	l := logic.NewPingLogic(ctx, s.svcCtx)
 	return l.Ping(in)
 }
 
-func (s *FileRpcServer) OssDetail(ctx context.Context, in *file2.OssDetailReq) (*file2.OssDetailRes, error) {
-	l := logic2.NewOssDetailLogic(ctx, s.svcCtx)
+func (s *FileRpcServer) OssDetail(ctx context.Context, in *file.OssDetailReq) (*file.OssDetailRes, error) {
+	l := logic.NewOssDetailLogic(ctx, s.svcCtx)
 	return l.OssDetail(in)
 }
 
-func (s *FileRpcServer) OssList(ctx context.Context, in *file2.OssListReq) (*file2.OssListRes, error) {
-	l := logic2.NewOssListLogic(ctx, s.svcCtx)
+func (s *FileRpcServer) OssList(ctx context.Context, in *file.OssListReq) (*file.OssListRes, error) {
+	l := logic.NewOssListLogic(ctx, s.svcCtx)
 	return l.OssList(in)
 }
 
-func (s *FileRpcServer) CreateOss(ctx context.Context, in *file2.CreateOssReq) (*file2.CreateOssRes, error) {
-	l := logic2.NewCreateOssLogic(ctx, s.svcCtx)
+func (s *FileRpcServer) CreateOss(ctx context.Context, in *file.CreateOssReq) (*file.CreateOssRes, error) {
+	l := logic.NewCreateOssLogic(ctx, s.svcCtx)
 	return l.CreateOss(in)
 }
 
-func (s *FileRpcServer) UpdateOss(ctx context.Context, in *file2.UpdateOssReq) (*file2.UpdateOssRes, error) {
-	l := logic2.NewUpdateOssLogic(ctx, s.svcCtx)
+func (s *FileRpcServer) UpdateOss(ctx context.Context, in *file.UpdateOssReq) (*file.UpdateOssRes, error) {
+	l := logic.NewUpdateOssLogic(ctx, s.svcCtx)
 	return l.UpdateOss(in)
 }
 
-func (s *FileRpcServer) DeleteOss(ctx context.Context, in *file2.DeleteOssReq) (*file2.DeleteOssRes, error) {
-	l := logic2.NewDeleteOssLogic(ctx, s.svcCtx)
+func (s *FileRpcServer) DeleteOss(ctx context.Context, in *file.DeleteOssReq) (*file.DeleteOssRes, error) {
+	l := logic.NewDeleteOssLogic(ctx, s.svcCtx)
 	return l.DeleteOss(in)
 }
 
-func (s *FileRpcServer) MakeBucket(ctx context.Context, in *file2.MakeBucketReq) (*file2.MakeBucketRes, error) {
-	l := logic2.NewMakeBucketLogic(ctx, s.svcCtx)
+func (s *FileRpcServer) MakeBucket(ctx context.Context, in *file.MakeBucketReq) (*file.MakeBucketRes, error) {
+	l := logic.NewMakeBucketLogic(ctx, s.svcCtx)
 	return l.MakeBucket(in)
 }
 
-func (s *FileRpcServer) RemoveBucket(ctx context.Context, in *file2.RemoveBucketReq) (*file2.RemoveBucketRes, error) {
-	l := logic2.NewRemoveBucketLogic(ctx, s.svcCtx)
+func (s *FileRpcServer) RemoveBucket(ctx context.Context, in *file.RemoveBucketReq) (*file.RemoveBucketRes, error) {
+	l := logic.NewRemoveBucketLogic(ctx, s.svcCtx)
 	return l.RemoveBucket(in)
 }
 
-func (s *FileRpcServer) StatFile(ctx context.Context, in *file2.StatFileReq) (*file2.StatFileRes, error) {
-	l := logic2.NewStatFileLogic(ctx, s.svcCtx)
+func (s *FileRpcServer) StatFile(ctx context.Context, in *file.StatFileReq) (*file.StatFileRes, error) {
+	l := logic.NewStatFileLogic(ctx, s.svcCtx)
 	return l.StatFile(in)
 }
 
-func (s *FileRpcServer) PutFile(ctx context.Context, in *file2.PutFileReq) (*file2.PutFileRes, error) {
-	l := logic2.NewPutFileLogic(ctx, s.svcCtx)
+func (s *FileRpcServer) PutFile(ctx context.Context, in *file.PutFileReq) (*file.PutFileRes, error) {
+	l := logic.NewPutFileLogic(ctx, s.svcCtx)
 	return l.PutFile(in)
 }
 
-func (s *FileRpcServer) GetFile(ctx context.Context, in *file2.GetFileReq) (*file2.GetFileRes, error) {
-	l := logic2.NewGetFileLogic(ctx, s.svcCtx)
+func (s *FileRpcServer) GetFile(ctx context.Context, in *file.GetFileReq) (*file.GetFileRes, error) {
+	l := logic.NewGetFileLogic(ctx, s.svcCtx)
 	return l.GetFile(in)
 }
 
-func (s *FileRpcServer) RemoveFile(ctx context.Context, in *file2.RemoveFileReq) (*file2.RemoveFileRes, error) {
-	l := logic2.NewRemoveFileLogic(ctx, s.svcCtx)
+func (s *FileRpcServer) RemoveFile(ctx context.Context, in *file.RemoveFileReq) (*file.RemoveFileRes, error) {
+	l := logic.NewRemoveFileLogic(ctx, s.svcCtx)
 	return l.RemoveFile(in)
 }
 
-func (s *FileRpcServer) RemoveFiles(ctx context.Context, in *file2.RemoveFilesReq) (*file2.RemoveFileRes, error) {
-	l := logic2.NewRemoveFilesLogic(ctx, s.svcCtx)
+func (s *FileRpcServer) RemoveFiles(ctx context.Context, in *file.RemoveFilesReq) (*file.RemoveFileRes, error) {
+	l := logic.NewRemoveFilesLogic(ctx, s.svcCtx)
 	return l.RemoveFiles(in)
 }
 
-func (s *FileRpcServer) PutFileByte(stream file2.FileRpc_PutFileByteServer) error {
-	l := logic2.NewPutFileByteLogic(stream.Context(), s.svcCtx)
+func (s *FileRpcServer) PutFileByte(stream file.FileRpc_PutFileByteServer) error {
+	l := logic.NewPutFileByteLogic(stream.Context(), s.svcCtx)
 	return l.PutFileByte(stream)
 }
