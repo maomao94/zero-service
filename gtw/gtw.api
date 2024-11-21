@@ -110,9 +110,5 @@ service gtw {
 	@doc "上传块文件"
 	@handler putChunkFile
 	post /oss/endpoint/putChunkFile (PutFileRequest) returns (GetFileReply)
-
-	@doc "下载文件"
-	@handler getFile
-	post /oss/endpoint/getFile (GetFileRequest)
 }
 

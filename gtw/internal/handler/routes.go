@@ -40,12 +40,6 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	server.AddRoutes(
 		[]rest.Route{
 			{
-				// 下载文件
-				Method:  http.MethodPost,
-				Path:    "/oss/endpoint/getFile",
-				Handler: file.GetFileHandler(serverCtx),
-			},
-			{
 				// 上传块文件
 				Method:  http.MethodPost,
 				Path:    "/oss/endpoint/putChunkFile",
