@@ -33,7 +33,7 @@ type FileRpcClient interface {
 	StatFile(ctx context.Context, in *StatFileReq, opts ...grpc.CallOption) (*StatFileRes, error)
 	SignUrl(ctx context.Context, in *SignUrlReq, opts ...grpc.CallOption) (*SignUrlRes, error)
 	PutFile(ctx context.Context, in *PutFileReq, opts ...grpc.CallOption) (*PutFileRes, error)
-	PutFileByte(ctx context.Context, opts ...grpc.CallOption) (FileRpc_PutFileByteClient, error)
+	PutChunkFile(ctx context.Context, opts ...grpc.CallOption) (FileRpc_PutChunkFileClient, error)
 	RemoveFile(ctx context.Context, in *RemoveFileReq, opts ...grpc.CallOption) (*RemoveFileRes, error)
 	RemoveFiles(ctx context.Context, in *RemoveFilesReq, opts ...grpc.CallOption) (*RemoveFileRes, error)
 }
@@ -145,34 +145,34 @@ func (c *fileRpcClient) PutFile(ctx context.Context, in *PutFileReq, opts ...grp
 	return out, nil
 }
 
-func (c *fileRpcClient) PutFileByte(ctx context.Context, opts ...grpc.CallOption) (FileRpc_PutFileByteClient, error) {
-	stream, err := c.cc.NewStream(ctx, &FileRpc_ServiceDesc.Streams[0], "/file.FileRpc/PutFileByte", opts...)
+func (c *fileRpcClient) PutChunkFile(ctx context.Context, opts ...grpc.CallOption) (FileRpc_PutChunkFileClient, error) {
+	stream, err := c.cc.NewStream(ctx, &FileRpc_ServiceDesc.Streams[0], "/file.FileRpc/PutChunkFile", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &fileRpcPutFileByteClient{stream}
+	x := &fileRpcPutChunkFileClient{stream}
 	return x, nil
 }
 
-type FileRpc_PutFileByteClient interface {
-	Send(*PutFileByteReq) error
-	CloseAndRecv() (*PutFileByteRes, error)
+type FileRpc_PutChunkFileClient interface {
+	Send(*PutChunkFileReq) error
+	CloseAndRecv() (*PutChunkFileRes, error)
 	grpc.ClientStream
 }
 
-type fileRpcPutFileByteClient struct {
+type fileRpcPutChunkFileClient struct {
 	grpc.ClientStream
 }
 
-func (x *fileRpcPutFileByteClient) Send(m *PutFileByteReq) error {
+func (x *fileRpcPutChunkFileClient) Send(m *PutChunkFileReq) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *fileRpcPutFileByteClient) CloseAndRecv() (*PutFileByteRes, error) {
+func (x *fileRpcPutChunkFileClient) CloseAndRecv() (*PutChunkFileRes, error) {
 	if err := x.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
-	m := new(PutFileByteRes)
+	m := new(PutChunkFileRes)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -212,7 +212,7 @@ type FileRpcServer interface {
 	StatFile(context.Context, *StatFileReq) (*StatFileRes, error)
 	SignUrl(context.Context, *SignUrlReq) (*SignUrlRes, error)
 	PutFile(context.Context, *PutFileReq) (*PutFileRes, error)
-	PutFileByte(FileRpc_PutFileByteServer) error
+	PutChunkFile(FileRpc_PutChunkFileServer) error
 	RemoveFile(context.Context, *RemoveFileReq) (*RemoveFileRes, error)
 	RemoveFiles(context.Context, *RemoveFilesReq) (*RemoveFileRes, error)
 	mustEmbedUnimplementedFileRpcServer()
@@ -255,8 +255,8 @@ func (UnimplementedFileRpcServer) SignUrl(context.Context, *SignUrlReq) (*SignUr
 func (UnimplementedFileRpcServer) PutFile(context.Context, *PutFileReq) (*PutFileRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PutFile not implemented")
 }
-func (UnimplementedFileRpcServer) PutFileByte(FileRpc_PutFileByteServer) error {
-	return status.Errorf(codes.Unimplemented, "method PutFileByte not implemented")
+func (UnimplementedFileRpcServer) PutChunkFile(FileRpc_PutChunkFileServer) error {
+	return status.Errorf(codes.Unimplemented, "method PutChunkFile not implemented")
 }
 func (UnimplementedFileRpcServer) RemoveFile(context.Context, *RemoveFileReq) (*RemoveFileRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveFile not implemented")
@@ -475,26 +475,26 @@ func _FileRpc_PutFile_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
-func _FileRpc_PutFileByte_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(FileRpcServer).PutFileByte(&fileRpcPutFileByteServer{stream})
+func _FileRpc_PutChunkFile_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(FileRpcServer).PutChunkFile(&fileRpcPutChunkFileServer{stream})
 }
 
-type FileRpc_PutFileByteServer interface {
-	SendAndClose(*PutFileByteRes) error
-	Recv() (*PutFileByteReq, error)
+type FileRpc_PutChunkFileServer interface {
+	SendAndClose(*PutChunkFileRes) error
+	Recv() (*PutChunkFileReq, error)
 	grpc.ServerStream
 }
 
-type fileRpcPutFileByteServer struct {
+type fileRpcPutChunkFileServer struct {
 	grpc.ServerStream
 }
 
-func (x *fileRpcPutFileByteServer) SendAndClose(m *PutFileByteRes) error {
+func (x *fileRpcPutChunkFileServer) SendAndClose(m *PutChunkFileRes) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *fileRpcPutFileByteServer) Recv() (*PutFileByteReq, error) {
-	m := new(PutFileByteReq)
+func (x *fileRpcPutChunkFileServer) Recv() (*PutChunkFileReq, error) {
+	m := new(PutChunkFileReq)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -599,8 +599,8 @@ var FileRpc_ServiceDesc = grpc.ServiceDesc{
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "PutFileByte",
-			Handler:       _FileRpc_PutFileByte_Handler,
+			StreamName:    "PutChunkFile",
+			Handler:       _FileRpc_PutChunkFile_Handler,
 			ClientStreams: true,
 		},
 	},

@@ -55,7 +55,7 @@ func (l *PutChunkFileLogic) PutChunkFile(req *types.PutFileRequest) (resp *types
 	//)
 
 	// 执行 stream 上传
-	stream, err := l.svcCtx.FileRpcCLi.PutFileByte(context.Background())
+	stream, err := l.svcCtx.FileRpcCLi.PutChunkFile(context.Background())
 	if err != nil {
 		l.Logger.Errorf("Failed to create stream: %v", err)
 		return nil, err
@@ -73,7 +73,7 @@ func (l *PutChunkFileLogic) PutChunkFile(req *types.PutFileRequest) (resp *types
 			// 更新已上传大小
 			uploadedSize += int64(n)
 			// 发送文件块到服务器
-			chunk := &file.PutFileByteReq{
+			chunk := &file.PutChunkFileReq{
 				TenantId:    req.TenantId,
 				Code:        req.Code,
 				BucketName:  req.BucketName,
