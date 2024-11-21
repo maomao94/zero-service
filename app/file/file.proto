@@ -41,7 +41,8 @@ message OssFile {
   string name = 2; // 文件名
   int64 length = 3; // 文件大小
   string putTime = 4; // 文件上传时间
-  string contentType = 5; // 附件表ID
+  string contentType = 5; // 文件类型
+  string signUrl = 6; // 签名URL
 }
 
 message OssDetailReq{
@@ -131,6 +132,8 @@ message StatFileReq {
   string code = 2; // 资源编号
   string bucketName = 3; // 存储桶名称
   string filename = 4; // 上传文件名
+  bool isSign = 5; // 是否生成签名
+  int32 expires = 6; // 过期时间 默认一小时 单位分钟
 }
 
 message StatFileRes{

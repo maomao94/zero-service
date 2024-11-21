@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/golang-module/carbon/v2"
 	"github.com/jinzhu/copier"
+	"time"
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
 	"zero-service/model"
@@ -41,6 +42,18 @@ func (l *StatFileLogic) StatFile(in *file.StatFileReq) (*file.StatFileRes, error
 	_ = copier.Copy(&resOssFile, ossFile)
 	resOssFile.PutTime = carbon.CreateFromStdTime(ossFile.PutTime).ToDateTimeString()
 	//l.Infof("time %s", time.Unix(ossFile.PutTime.Unix(), 0).Format("2006-01-02 15:04:05"))
+	if in.IsSign {
+		expires := 60 * time.Minute // 1 小时
+		// 秒
+		if in.Expires > 0 {
+			expires = time.Duration(in.Expires) * time.Second
+		}
+		signUrl, err := ossTemplate.SignUrl(in.TenantId, in.BucketName, in.Filename, expires)
+		if err != nil {
+			return nil, err
+		}
+		resOssFile.SignUrl = signUrl
+	}
 	return &file.StatFileRes{
 		OssFile: &resOssFile,
 	}, nil
