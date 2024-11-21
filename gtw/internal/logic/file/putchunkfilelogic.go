@@ -82,7 +82,7 @@ func (l *PutChunkFileLogic) PutChunkFile(req *types.PutFileRequest) (resp *types
 				ContentType: fileHeader.Header.Get("content-type"),
 			}
 			if err := stream.Send(chunk); err != nil {
-				l.Logger.Errorf("Failed to send chunk: %v", err)
+				l.Logger.Errorf("Failed to write: %v", err)
 				return nil, err
 			}
 			// 每当上传字节数超过阈值时打印一次进度
