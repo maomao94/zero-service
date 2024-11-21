@@ -46,7 +46,7 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 	var contentBuffer []byte
 
 	errChan := make(chan error, 1)
-	defer close(errChan)
+	errOssChan := make(chan error, 1)
 	go threading.RunSafe(func() {
 		// 从 gRPC 流中逐块读取数据并写入管道
 		for {
@@ -86,9 +86,9 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 				// 启动一个 goroutine，将管道数据写入 OSS
 				go threading.RunSafe(func() {
 					// 写入 OSS
-					uploadedFile, ossChanErr := ossTemplate.PutObject(tenantID, bucketName, filename, contentType, pr, -1)
+					uploadedFile, ossPutErr := ossTemplate.PutObject(tenantID, bucketName, filename, contentType, pr, -1)
 					_ = copier.Copy(&pbFile, uploadedFile)
-					errChan <- ossChanErr
+					errOssChan <- ossPutErr
 				})
 				initialized = true
 			}
@@ -113,11 +113,18 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 			}
 		}
 	})
-	select {
-	case err := <-errChan:
-		if err != nil {
-			l.Logger.Errorf("Failed to upload file to OSS: %v", err)
-			return err
+	for {
+		select {
+		case err := <-errChan:
+			if err != nil {
+				l.Logger.Errorf("Failed to read from stream: %v", err)
+				continue
+			}
+		case err := <-errOssChan:
+			if err != nil {
+				l.Logger.Errorf("Failed to write to OSS: %v", err)
+				break
+			}
 		}
 	}
 	// 返回上传结果
