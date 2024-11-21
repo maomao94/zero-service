@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"github.com/jinzhu/copier"
+	"github.com/zeromicro/go-zero/core/threading"
 	"io"
 	"net/http"
 	"zero-service/model"
@@ -37,8 +38,6 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 	var tenantID, code, bucketName, filename string
 	var contentType string
 
-	// 预定义错误通道
-	errChan := make(chan error, 1)
 	var pbFile file.File
 
 	// 标记是否已经初始化 OSS 模板
@@ -46,76 +45,99 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 	// 存储用于探测内容类型的缓冲区
 	var contentBuffer []byte
 
-	// 从 gRPC 流中逐块读取数据并写入管道
-	for {
-		req, err := stream.Recv()
-		if err == io.EOF {
-			// 所有数据读取完毕，关闭管道写入
-			pw.Close()
-			break
+	errChan := make(chan error, 1)
+	errReadChan := make(chan error, 1)
+	go threading.RunSafe(func() {
+		defer close(errReadChan)
+		// 从 gRPC 流中逐块读取数据并写入管道
+		for {
+			req, err := stream.Recv()
+			if err == io.EOF {
+				pw.Close()
+				break
+			}
+			if err != nil && err != io.EOF {
+				l.Logger.Errorf("Failed to read from stream: %v", err)
+				errReadChan <- err
+				break
+			}
+			// 解析消息中的元数据（仅需要解析一次）
+			if !initialized {
+				tenantID = req.GetTenantId()
+				code = req.GetCode()
+				bucketName = req.GetBucketName()
+				filename = req.GetFilename()
+				contentType = req.GetContentType()
+
+				// 动态获取 OSS 模板
+				var ossErr error
+				ossTemplate, ossErr := ossx.Template(
+					tenantID, code,
+					l.svcCtx.Config.Oss.TenantMode,
+					func(tenantId, code string) (*model.Oss, error) {
+						return l.svcCtx.OssModel.FindOneByTenantIdOssCode(l.ctx, tenantId, code)
+					},
+				)
+				if ossErr != nil {
+					l.Logger.Errorf("Failed to get OSS template: %v", ossErr)
+					errReadChan <- ossErr
+					break
+				}
+
+				// 启动一个 goroutine，将管道数据写入 OSS
+				go threading.RunSafe(func() {
+					defer close(errChan)
+					// 写入 OSS
+					uploadedFile, ossChanErr := ossTemplate.PutObject(tenantID, bucketName, filename, contentType, pr, -1)
+					_ = copier.Copy(&pbFile, uploadedFile)
+					errChan <- ossChanErr
+				})
+				initialized = true
+			}
+
+			// 试图探测文件内容类型（在收到的第一部分数据上进行）
+			if len(contentBuffer) < 512 {
+				contentBuffer = append(contentBuffer, req.GetContent()...)
+
+				// 如果已经读取到足够的数据，探测内容类型
+				if len(contentBuffer) >= 512 {
+					contentType = http.DetectContentType(contentBuffer[:512])
+					l.Logger.Infof("Detected Content-Type: %s", contentType)
+				}
+			}
+
+			// 写入文件数据到管道
+			_, err = pw.Write(req.GetContent())
+			if err != nil {
+				l.Logger.Errorf("Failed to write to pipe: %v", err)
+				errChan <- err
+				break
+			}
 		}
+	})
+	select {
+	case err := <-errReadChan:
 		if err != nil {
-			l.Logger.Errorf("Failed to read chunk: %v", err)
-			return err
-		}
-
-		// 解析消息中的元数据（仅需要解析一次）
-		if !initialized {
-			tenantID = req.GetTenantId()
-			code = req.GetCode()
-			bucketName = req.GetBucketName()
-			filename = req.GetFilename()
-			contentType = req.GetContentType()
-
-			// 动态获取 OSS 模板
-			var ossErr error
-			ossTemplate, ossErr := ossx.Template(
-				tenantID, code,
-				l.svcCtx.Config.Oss.TenantMode,
-				func(tenantId, code string) (*model.Oss, error) {
-					return l.svcCtx.OssModel.FindOneByTenantIdOssCode(l.ctx, tenantId, code)
-				},
-			)
-			if ossErr != nil {
-				l.Logger.Errorf("Failed to get OSS template: %v", ossErr)
-				return ossErr
+			if initialized {
+				ossTemplate, ossErr := ossx.Template(
+					tenantID, code,
+					l.svcCtx.Config.Oss.TenantMode,
+					func(tenantId, code string) (*model.Oss, error) {
+						return l.svcCtx.OssModel.FindOneByTenantIdOssCode(l.ctx, tenantId, code)
+					},
+				)
+				if ossErr == nil {
+					ossTemplate.RemoveFile(tenantID, bucketName, filename)
+					l.Logger.Infof("File removed from OSS: %s", filename)
+				}
 			}
-
-			// 启动一个 goroutine，将管道数据写入 OSS
-			go func() {
-				defer func() {
-					close(errChan)
-				}()
-				// 写入 OSS
-				uploadedFile, ossChanErr := ossTemplate.PutObject(tenantID, bucketName, filename, contentType, pr, -1)
-				_ = copier.Copy(&pbFile, uploadedFile)
-				errChan <- ossChanErr
-			}()
-
-			initialized = true
+			return err // 这里返回的错误会导致中止操作
 		}
-
-		// 试图探测文件内容类型（在收到的第一部分数据上进行）
-		if len(contentBuffer) < 512 {
-			contentBuffer = append(contentBuffer, req.GetContent()...)
-
-			// 如果已经读取到足够的数据，探测内容类型
-			if len(contentBuffer) >= 512 {
-				contentType = http.DetectContentType(contentBuffer[:512])
-				l.Logger.Infof("Detected Content-Type: %s", contentType)
-			}
+	case ossErr := <-errChan:
+		if ossErr != nil {
+			l.Logger.Errorf("Failed to upload file to OSS: %v", ossErr)
+			return ossErr
 		}
-
-		// 写入文件数据到管道
-		if _, err = pw.Write(req.GetContent()); err != nil {
-			return err
-		}
-	}
-
-	// 等待上传完成
-	if err := <-errChan; err != nil {
-		l.Logger.Errorf("Failed to upload file: %v", err)
-		return err
 	}
 	// 返回上传结果
 	return stream.SendAndClose(&file.PutChunkFileRes{
