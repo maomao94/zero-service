@@ -33,6 +33,10 @@ func (l *SignUrlLogic) SignUrl(in *file.SignUrlReq) (*file.SignUrlRes, error) {
 	if err != nil {
 		return nil, err
 	}
+	//_, err = ossTemplate.StatFile(in.TenantId, in.BucketName, in.Filename)
+	//if err != nil {
+	//	return nil, err
+	//}
 	expires := 60 * time.Minute // 1 小时
 	signUrl, err := ossTemplate.SignUrl(in.TenantId, in.BucketName, in.Filename, expires)
 	if err != nil {
