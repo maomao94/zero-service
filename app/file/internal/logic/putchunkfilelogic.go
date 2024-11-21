@@ -123,10 +123,12 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 		case err := <-errOssChan:
 			if err != nil {
 				l.Logger.Errorf("Failed to write to OSS: %v", err)
-				break
 			}
+			break
 		}
 	}
+	close(errOssChan)
+	close(errChan)
 	// 返回上传结果
 	return stream.SendAndClose(&file.PutChunkFileRes{
 		File: &pbFile,
