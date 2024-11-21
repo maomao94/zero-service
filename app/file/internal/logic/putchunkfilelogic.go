@@ -47,8 +47,6 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 
 	errChan := make(chan error, 1)
 	defer close(errChan)
-	errReadChan := make(chan error, 1)
-	defer close(errReadChan)
 	go threading.RunSafe(func() {
 		// 从 gRPC 流中逐块读取数据并写入管道
 		for {
@@ -59,7 +57,7 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 			}
 			if err != nil && err != io.EOF {
 				l.Logger.Errorf("Failed to read from stream: %v", err)
-				errReadChan <- err
+				errChan <- err
 				break
 			}
 			// 解析消息中的元数据（仅需要解析一次）
@@ -81,7 +79,7 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 				)
 				if ossErr != nil {
 					l.Logger.Errorf("Failed to get OSS template: %v", ossErr)
-					errReadChan <- ossErr
+					errChan <- ossErr
 					break
 				}
 
@@ -116,12 +114,10 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 		}
 	})
 	select {
-	case err := <-errReadChan:
-		return err
-	case ossErr := <-errChan:
-		if ossErr != nil {
-			l.Logger.Errorf("Failed to upload file to OSS: %v", ossErr)
-			return ossErr
+	case err := <-errChan:
+		if err != nil {
+			l.Logger.Errorf("Failed to upload file to OSS: %v", err)
+			return err
 		}
 	}
 	// 返回上传结果
