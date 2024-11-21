@@ -31,6 +31,7 @@ type FileRpcClient interface {
 	MakeBucket(ctx context.Context, in *MakeBucketReq, opts ...grpc.CallOption) (*MakeBucketRes, error)
 	RemoveBucket(ctx context.Context, in *RemoveBucketReq, opts ...grpc.CallOption) (*RemoveBucketRes, error)
 	StatFile(ctx context.Context, in *StatFileReq, opts ...grpc.CallOption) (*StatFileRes, error)
+	SignUrl(ctx context.Context, in *SignUrlReq, opts ...grpc.CallOption) (*SignUrlRes, error)
 	PutFile(ctx context.Context, in *PutFileReq, opts ...grpc.CallOption) (*PutFileRes, error)
 	PutFileByte(ctx context.Context, opts ...grpc.CallOption) (FileRpc_PutFileByteClient, error)
 	RemoveFile(ctx context.Context, in *RemoveFileReq, opts ...grpc.CallOption) (*RemoveFileRes, error)
@@ -126,6 +127,15 @@ func (c *fileRpcClient) StatFile(ctx context.Context, in *StatFileReq, opts ...g
 	return out, nil
 }
 
+func (c *fileRpcClient) SignUrl(ctx context.Context, in *SignUrlReq, opts ...grpc.CallOption) (*SignUrlRes, error) {
+	out := new(SignUrlRes)
+	err := c.cc.Invoke(ctx, "/file.FileRpc/SignUrl", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *fileRpcClient) PutFile(ctx context.Context, in *PutFileReq, opts ...grpc.CallOption) (*PutFileRes, error) {
 	out := new(PutFileRes)
 	err := c.cc.Invoke(ctx, "/file.FileRpc/PutFile", in, out, opts...)
@@ -200,6 +210,7 @@ type FileRpcServer interface {
 	MakeBucket(context.Context, *MakeBucketReq) (*MakeBucketRes, error)
 	RemoveBucket(context.Context, *RemoveBucketReq) (*RemoveBucketRes, error)
 	StatFile(context.Context, *StatFileReq) (*StatFileRes, error)
+	SignUrl(context.Context, *SignUrlReq) (*SignUrlRes, error)
 	PutFile(context.Context, *PutFileReq) (*PutFileRes, error)
 	PutFileByte(FileRpc_PutFileByteServer) error
 	RemoveFile(context.Context, *RemoveFileReq) (*RemoveFileRes, error)
@@ -237,6 +248,9 @@ func (UnimplementedFileRpcServer) RemoveBucket(context.Context, *RemoveBucketReq
 }
 func (UnimplementedFileRpcServer) StatFile(context.Context, *StatFileReq) (*StatFileRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StatFile not implemented")
+}
+func (UnimplementedFileRpcServer) SignUrl(context.Context, *SignUrlReq) (*SignUrlRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SignUrl not implemented")
 }
 func (UnimplementedFileRpcServer) PutFile(context.Context, *PutFileReq) (*PutFileRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PutFile not implemented")
@@ -425,6 +439,24 @@ func _FileRpc_StatFile_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FileRpc_SignUrl_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SignUrlReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileRpcServer).SignUrl(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/file.FileRpc/SignUrl",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileRpcServer).SignUrl(ctx, req.(*SignUrlReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _FileRpc_PutFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PutFileReq)
 	if err := dec(in); err != nil {
@@ -547,6 +579,10 @@ var FileRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "StatFile",
 			Handler:    _FileRpc_StatFile_Handler,
+		},
+		{
+			MethodName: "SignUrl",
+			Handler:    _FileRpc_SignUrl_Handler,
 		},
 		{
 			MethodName: "PutFile",

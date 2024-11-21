@@ -68,6 +68,11 @@ func (s *FileRpcServer) StatFile(ctx context.Context, in *file.StatFileReq) (*fi
 	return l.StatFile(in)
 }
 
+func (s *FileRpcServer) SignUrl(ctx context.Context, in *file.SignUrlReq) (*file.SignUrlRes, error) {
+	l := logic.NewSignUrlLogic(ctx, s.svcCtx)
+	return l.SignUrl(in)
+}
+
 func (s *FileRpcServer) PutFile(ctx context.Context, in *file.PutFileReq) (*file.PutFileRes, error) {
 	l := logic.NewPutFileLogic(ctx, s.svcCtx)
 	return l.PutFile(in)
