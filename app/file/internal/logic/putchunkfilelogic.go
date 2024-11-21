@@ -88,6 +88,9 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 					// 写入 OSS
 					uploadedFile, ossPutErr := ossTemplate.PutObject(tenantID, bucketName, filename, contentType, pr, -1)
 					_ = copier.Copy(&pbFile, uploadedFile)
+					if ossPutErr != nil {
+						l.Logger.Errorf("Failed to write to OSS: %v", ossPutErr)
+					}
 					errOssChan <- ossPutErr
 				})
 				initialized = true
@@ -113,22 +116,16 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 			}
 		}
 	})
-	for {
-		select {
-		case err := <-errChan:
-			if err != nil {
-				l.Logger.Errorf("Failed to read from stream: %v", err)
-				continue
-			}
-		case err := <-errOssChan:
-			if err != nil {
-				l.Logger.Errorf("Failed to write to OSS: %v", err)
-			}
-			break
+	select {
+	case err := <-errChan:
+		if err != nil {
+		}
+		return err
+	case err := <-errOssChan:
+		if err != nil {
+			return err
 		}
 	}
-	close(errOssChan)
-	close(errChan)
 	// 返回上传结果
 	return stream.SendAndClose(&file.PutChunkFileRes{
 		File: &pbFile,
