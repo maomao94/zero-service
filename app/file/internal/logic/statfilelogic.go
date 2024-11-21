@@ -44,9 +44,8 @@ func (l *StatFileLogic) StatFile(in *file.StatFileReq) (*file.StatFileRes, error
 	//l.Infof("time %s", time.Unix(ossFile.PutTime.Unix(), 0).Format("2006-01-02 15:04:05"))
 	if in.IsSign {
 		expires := 60 * time.Minute // 1 小时
-		// 秒
 		if in.Expires > 0 {
-			expires = time.Duration(in.Expires) * time.Second
+			expires = time.Duration(in.Expires) * time.Minute
 		}
 		signUrl, err := ossTemplate.SignUrl(in.TenantId, in.BucketName, in.Filename, expires)
 		if err != nil {

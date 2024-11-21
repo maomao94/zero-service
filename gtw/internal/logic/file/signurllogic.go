@@ -31,6 +31,7 @@ func (l *SignUrlLogic) SignUrl(req *types.SignUrlRequest) (resp *types.SignUrlRe
 		Code:       req.Code,
 		BucketName: req.BucketName,
 		Filename:   req.Filename,
+		Expires:    req.Expires,
 	})
 	if err != nil {
 		return

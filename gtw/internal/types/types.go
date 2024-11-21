@@ -120,6 +120,7 @@ type SignUrlRequest struct {
 	Code       string `json:"code,optional"`       // 资源编号
 	BucketName string `json:"bucketName,optional"` // 存储桶名称
 	Filename   string `json:"filename"`            // 文件名
+	Expires    int32  `json:"expires"`             // 过期时间 默认一小时 单位分钟
 }
 
 type TenantRequest struct {
