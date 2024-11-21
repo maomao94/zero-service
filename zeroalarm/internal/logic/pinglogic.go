@@ -24,5 +24,5 @@ func NewPingLogic(ctx context.Context, svcCtx *svc.ServiceContext) *PingLogic {
 }
 
 func (l *PingLogic) Ping(in *zeroalarm.Req) (*zeroalarm.Res, error) {
-	return &zeroalarm.Res{Pong: "hello-alarm"}, nil
+	return &zeroalarm.Res{Pong: "alarm"}, nil
 }
