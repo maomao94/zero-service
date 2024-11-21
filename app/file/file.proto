@@ -145,7 +145,7 @@ message SignUrlReq {
 }
 
 message SignUrlRes{
-  string url = 1;
+  string url = 1; // 文件url
 }
 
 message PutFileReq {

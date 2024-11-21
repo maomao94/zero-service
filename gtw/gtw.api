@@ -110,5 +110,9 @@ service gtw {
 	@doc "上传块文件"
 	@handler putChunkFile
 	post /oss/endpoint/putChunkFile (PutFileRequest) returns (GetFileReply)
+
+	@doc "生成文件url"
+	@handler signUrl
+	post /oss/endpoint/signUrl (SignUrlRequest) returns (SignUrlReqly)
 }
 

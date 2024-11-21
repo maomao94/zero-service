@@ -50,13 +50,6 @@ type GetFileReply struct {
 	File File `json:"file"`
 }
 
-type GetFileRequest struct {
-	TenantId   string `json:"tenantId,optional"`   // 租户ID
-	Code       string `json:"code,optional"`       // 资源编号
-	BucketName string `json:"bucketName,optional"` // 存储桶名称
-	Filename   string `json:"filename"`            // 文件名
-}
-
 type GetRegionListReply struct {
 	Region []Region `json:"region"`
 }
@@ -116,6 +109,17 @@ type SendSMSVerifyCodeReply struct {
 
 type SendSMSVerifyCodeRequest struct {
 	Mobile string `json:"mobile"`
+}
+
+type SignUrlReqly struct {
+	Url string `json:"url"` // 文件url
+}
+
+type SignUrlRequest struct {
+	TenantId   string `json:"tenantId,optional"`   // 租户ID
+	Code       string `json:"code,optional"`       // 资源编号
+	BucketName string `json:"bucketName,optional"` // 存储桶名称
+	Filename   string `json:"filename"`            // 文件名
 }
 
 type TenantRequest struct {
