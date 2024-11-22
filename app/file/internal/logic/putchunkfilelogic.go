@@ -85,6 +85,7 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 
 			// 启动一个 goroutine，将管道数据写入 OSS
 			go threading.RunSafe(func() {
+				defer close(errOssChan)
 				// 写入 OSS
 				uploadedFile, ossPutErr := ossTemplate.PutObject(tenantID, bucketName, filename, contentType, pr, -1)
 				_ = copier.Copy(&pbFile, uploadedFile)
