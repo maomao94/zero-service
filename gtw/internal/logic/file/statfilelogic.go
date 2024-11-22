@@ -38,7 +38,7 @@ func (l *StatFileLogic) StatFile(req *types.StatFileRequest) (resp *types.StatFi
 	if err != nil {
 		return nil, err
 	}
-	var respOssFile types.OssFile
-	_ = copier.Copy(&respOssFile, statFileRes.OssFile)
-	return
+	var ossFile types.OssFile
+	_ = copier.Copy(&ossFile, statFileRes.OssFile)
+	return &types.StatFileReply{OssFile: ossFile}, nil
 }

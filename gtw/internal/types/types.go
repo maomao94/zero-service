@@ -136,7 +136,7 @@ type SignUrlRequest struct {
 }
 
 type StatFileReply struct {
-	OssFile File `json:"ossFile"`
+	OssFile OssFile `json:"ossFile"`
 }
 
 type StatFileRequest struct {

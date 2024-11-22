@@ -46,7 +46,7 @@ type (
 		Expires    int32  `json:"expires"` // 过期时间 默认一小时 单位分钟
 	}
 	StatFileReply {
-		ossFile File `json:"ossFile"`
+		ossFile OssFile `json:"ossFile"`
 	}
 )
 
