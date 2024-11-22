@@ -114,5 +114,9 @@ service gtw {
 	@doc "生成文件url"
 	@handler signUrl
 	post /oss/endpoint/signUrl (SignUrlRequest) returns (SignUrlReqly)
+
+	@doc "获取文件信息"
+	@handler StatFile
+	post /oss/endpoint/statFile (StatFileRequest) returns (StatFileReply)
 }
 

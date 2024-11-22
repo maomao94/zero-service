@@ -57,6 +57,12 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/oss/endpoint/signUrl",
 				Handler: file.SignUrlHandler(serverCtx),
 			},
+			{
+				// 获取文件信息
+				Method:  http.MethodPost,
+				Path:    "/oss/endpoint/statFile",
+				Handler: file.StatFileHandler(serverCtx),
+			},
 		},
 		rest.WithPrefix("/file/v1"),
 		rest.WithTimeout(7200000*time.Millisecond),

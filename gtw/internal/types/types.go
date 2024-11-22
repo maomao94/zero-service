@@ -26,9 +26,9 @@ type EmptyReply struct {
 type File struct {
 	Link         string `json:"link"`               // 文件地址
 	Domain       string `json:"domain"`             // 域名地址
+	Name         string `json:"name"`               // 文件名
 	Size         int64  `json:"size"`               // 文件大小
 	FormatSize   string `json:"formatSize"`         // 格式化文件大小
-	Name         string `json:"name"`               // 文件名
 	OriginalName string `json:"originalName"`       // 初始文件名
 	AttachId     string `json:"attachId,omitempty"` // 附件表ID
 }
@@ -82,6 +82,16 @@ type MiniProgramLoginRequest struct {
 	Code string `json:"code"`
 }
 
+type OssFile struct {
+	Link        string `json:"link"`        // 文件地址
+	Name        string `json:"name"`        // 文件名
+	Size        int64  `json:"size"`        // 文件大小
+	FormatSize  string `json:"formatSize"`  // 格式化文件大小
+	PutTime     string `json:"putTime"`     // 文件上传时间
+	ContentType string `json:"contentType"` // 文件contentType
+	SignUrl     string `json:"signUrl"`     // 签名URL
+}
+
 type PingReply struct {
 	Msg string `json:"msg"`
 }
@@ -122,6 +132,19 @@ type SignUrlRequest struct {
 	Code       string `json:"code,optional"`       // 资源编号
 	BucketName string `json:"bucketName,optional"` // 存储桶名称
 	Filename   string `json:"filename"`            // 文件名
+	Expires    int32  `json:"expires"`             // 过期时间 默认一小时 单位分钟
+}
+
+type StatFileReply struct {
+	OssFile File `json:"ossFile"`
+}
+
+type StatFileRequest struct {
+	TenantId   string `json:"tenantId,optional"`   // 租户ID
+	Code       string `json:"code,optional"`       // 资源编号
+	BucketName string `json:"bucketName,optional"` // 存储桶名称
+	Filename   string `json:"filename"`            // 文件名
+	IsSign     bool   `json:"filename"`            // 是否生成签名
 	Expires    int32  `json:"expires"`             // 过期时间 默认一小时 单位分钟
 }
 
