@@ -214,7 +214,7 @@ func NewMinioTemplate(Oss *model.Oss, ossRule OssRule) *MinioTemplate {
 	// 初使化 minio client对象。
 	minioClient, _ := minio.New(Oss.Endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(Oss.AccessKey, Oss.SecretKey, ""),
-		Secure: true,
+		Secure: false,
 	})
 	return &MinioTemplate{
 		client:        minioClient,
