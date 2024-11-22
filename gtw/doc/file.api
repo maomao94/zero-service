@@ -42,7 +42,7 @@ type (
 		Code       string `json:"code"` // 资源编号
 		BucketName string `json:"bucketName"` // 存储桶名称
 		Filename   string `json:"filename"` // 文件名
-		IsSign     bool   `json:"filename"` // 是否生成签名
+		IsSign     bool   `json:"isSign"` // 是否生成签名
 		Expires    int32  `json:"expires"` // 过期时间 默认一小时 单位分钟
 	}
 	StatFileReply {
