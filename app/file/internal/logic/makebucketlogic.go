@@ -31,12 +31,12 @@ func (l *MakeBucketLogic) MakeBucket(in *file.MakeBucketReq) (*file.MakeBucketRe
 	if err != nil {
 		return nil, err
 	}
-	bool, err := ossTemplate.BucketExists(in.TenantId, in.BucketName)
+	bool, err := ossTemplate.BucketExists(l.ctx, in.TenantId, in.BucketName)
 	if err != nil {
 		return nil, err
 	}
 	if !bool {
-		err = ossTemplate.MakeBucket(in.TenantId, in.BucketName)
+		err = ossTemplate.MakeBucket(l.ctx, in.TenantId, in.BucketName)
 		if err != nil {
 			return nil, err
 		}

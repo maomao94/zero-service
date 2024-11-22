@@ -34,7 +34,7 @@ func (l *StatFileLogic) StatFile(in *file.StatFileReq) (*file.StatFileRes, error
 	if err != nil {
 		return nil, err
 	}
-	ossFile, err := ossTemplate.StatFile(in.TenantId, in.BucketName, in.Filename)
+	ossFile, err := ossTemplate.StatFile(l.ctx, in.TenantId, in.BucketName, in.Filename)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (l *StatFileLogic) StatFile(in *file.StatFileReq) (*file.StatFileRes, error
 		if in.Expires > 0 {
 			expires = time.Duration(in.Expires) * time.Minute
 		}
-		signUrl, err := ossTemplate.SignUrl(in.TenantId, in.BucketName, in.Filename, expires)
+		signUrl, err := ossTemplate.SignUrl(l.ctx, in.TenantId, in.BucketName, in.Filename, expires)
 		if err != nil {
 			return nil, err
 		}

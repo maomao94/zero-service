@@ -1,10 +1,10 @@
 package ossx
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/minio/minio-go"
 	"io"
 	"mime/multipart"
 	"path"
@@ -26,17 +26,16 @@ var (
 )
 
 type OssTemplate interface {
-	MakeBucket(tenantId, bucketName string) error                                                                    // 创建存储桶
-	RemoveBucket(tenantId, bucketName string) error                                                                  // 删除存储桶
-	StatFile(tenantId, bucketName, filename string) (*OssFile, error)                                                // 获取文件信息
-	BucketExists(tenantId, bucketName string) (bool, error)                                                          // 存储桶是否存在
-	PutFile(tenantId, bucketName string, fileHeader *multipart.FileHeader) (*File, error)                            // 上传文件
-	PutStream(tenantId, bucketName, filename, contentType string, stream *[]byte) (*File, error)                     // 上传文件
-	PutObject(tenantId, bucketName, filename, contentType string, reader io.Reader, objectSize int64) (*File, error) // 上传文件
-	GetObject(tenantId, bucketName, filename string) (*minio.Object, error)                                          // 查看文件
-	SignUrl(tenantId, bucketName, filename string, expires time.Duration) (string, error)                            // 生成文件url
-	RemoveFile(tenantId, bucketName, filename string) error                                                          // 删除文件
-	RemoveFiles(tenantId string, bucketName string, filenames []string) error                                        // 批量删除文件
+	MakeBucket(ctx context.Context, tenantId, bucketName string) error                                                                    // 创建存储桶
+	RemoveBucket(ctx context.Context, tenantId, bucketName string) error                                                                  // 删除存储桶
+	StatFile(ctx context.Context, tenantId, bucketName, filename string) (*OssFile, error)                                                // 获取文件信息
+	BucketExists(ctx context.Context, tenantId, bucketName string) (bool, error)                                                          // 存储桶是否存在
+	PutFile(ctx context.Context, tenantId, bucketName string, fileHeader *multipart.FileHeader) (*File, error)                            // 上传文件
+	PutStream(ctx context.Context, tenantId, bucketName, filename, contentType string, stream *[]byte) (*File, error)                     // 上传文件
+	PutObject(ctx context.Context, tenantId, bucketName, filename, contentType string, reader io.Reader, objectSize int64) (*File, error) // 上传文件
+	SignUrl(ctx context.Context, tenantId, bucketName, filename string, expires time.Duration) (string, error)                            // 生成文件url
+	RemoveFile(ctx context.Context, tenantId, bucketName, filename string) error                                                          // 删除文件
+	RemoveFiles(ctx context.Context, tenantId string, bucketName string, filenames []string) error                                        // 批量删除文件
 }
 
 var _ OssTemplate = (*MinioTemplate)(nil)

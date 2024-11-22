@@ -3,8 +3,10 @@ package ossx
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"errors"
-	"github.com/minio/minio-go"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	"io"
 	"mime/multipart"
 	"net/url"
@@ -19,25 +21,25 @@ type MinioTemplate struct {
 	ossRule       OssRule
 }
 
-func (m MinioTemplate) MakeBucket(tenantId, bucketName string) error {
+func (m MinioTemplate) MakeBucket(ctx context.Context, tenantId, bucketName string) error {
 	if err := validateClient(m.client); err != nil {
 		return err
 	}
-	return m.client.MakeBucket(m.ossRule.bucketName(tenantId, bucketName), "")
+	return m.client.MakeBucket(ctx, m.ossRule.bucketName(tenantId, bucketName), minio.MakeBucketOptions{})
 }
 
-func (m MinioTemplate) RemoveBucket(tenantId, bucketName string) error {
+func (m MinioTemplate) RemoveBucket(ctx context.Context, tenantId, bucketName string) error {
 	if err := validateClient(m.client); err != nil {
 		return err
 	}
-	return m.client.RemoveBucket(m.ossRule.bucketName(tenantId, bucketName))
+	return m.client.RemoveBucket(ctx, m.ossRule.bucketName(tenantId, bucketName))
 }
 
-func (m MinioTemplate) StatFile(tenantId, bucketName, filename string) (*OssFile, error) {
+func (m MinioTemplate) StatFile(ctx context.Context, tenantId, bucketName, filename string) (*OssFile, error) {
 	if err := validateClient(m.client); err != nil {
 		return nil, err
 	}
-	object, err := m.client.StatObject(m.ossRule.bucketName(tenantId, bucketName), filename, minio.StatObjectOptions{})
+	object, err := m.client.StatObject(ctx, m.ossRule.bucketName(tenantId, bucketName), filename, minio.StatObjectOptions{})
 	if err != nil {
 		return nil, err
 	} else {
@@ -45,21 +47,20 @@ func (m MinioTemplate) StatFile(tenantId, bucketName, filename string) (*OssFile
 			Link:        m.fileLink(tenantId, bucketName, object.Key),
 			Name:        object.Key,
 			Size:        object.Size,
-			FormatSize:  tool.DecimalBytes(object.Size),
 			PutTime:     object.LastModified,
 			ContentType: object.ContentType,
 		}, nil
 	}
 }
 
-func (m MinioTemplate) BucketExists(tenantId, bucketName string) (bool, error) {
+func (m MinioTemplate) BucketExists(ctx context.Context, tenantId, bucketName string) (bool, error) {
 	if err := validateClient(m.client); err != nil {
 		return false, err
 	}
-	return m.client.BucketExists(m.ossRule.bucketName(tenantId, bucketName))
+	return m.client.BucketExists(ctx, m.ossRule.bucketName(tenantId, bucketName))
 }
 
-func (m MinioTemplate) PutFile(tenantId, bucketName string, fileHeader *multipart.FileHeader) (*File, error) {
+func (m MinioTemplate) PutFile(ctx context.Context, tenantId, bucketName string, fileHeader *multipart.FileHeader) (*File, error) {
 	if err := validateClient(m.client); err != nil {
 		return nil, err
 	}
@@ -72,7 +73,7 @@ func (m MinioTemplate) PutFile(tenantId, bucketName string, fileHeader *multipar
 	if len(bucketName) == 0 {
 		bucketName = m.ossProperties.BucketName
 	}
-	n, err := m.client.PutObject(m.ossRule.bucketName(tenantId, bucketName),
+	info, err := m.client.PutObject(ctx, m.ossRule.bucketName(tenantId, bucketName),
 		filename, f, fileHeader.Size, minio.PutObjectOptions{
 			ContentType: fileHeader.Header.Get("content-type"),
 		})
@@ -83,14 +84,14 @@ func (m MinioTemplate) PutFile(tenantId, bucketName string, fileHeader *multipar
 			Link:         m.fileLink(tenantId, bucketName, filename),
 			Domain:       m.getOssHost(tenantId, bucketName),
 			Name:         filename,
-			Size:         n,
-			FormatSize:   tool.DecimalBytes(n),
+			Size:         info.Size,
+			FormatSize:   tool.DecimalBytes(info.Size),
 			OriginalName: fileHeader.Filename,
 		}, nil
 	}
 }
 
-func (m MinioTemplate) PutStream(tenantId, bucketName, filename, contentType string, stream *[]byte) (*File, error) {
+func (m MinioTemplate) PutStream(ctx context.Context, tenantId, bucketName, filename, contentType string, stream *[]byte) (*File, error) {
 	if err := validateClient(m.client); err != nil {
 		return nil, err
 	}
@@ -100,7 +101,7 @@ func (m MinioTemplate) PutStream(tenantId, bucketName, filename, contentType str
 	}
 	reader := bytes.NewReader(*stream)
 	buffer := bufio.NewReader(reader)
-	n, err := m.client.PutObject(m.ossRule.bucketName(tenantId, bucketName),
+	info, err := m.client.PutObject(ctx, m.ossRule.bucketName(tenantId, bucketName),
 		objectName, buffer, reader.Size(), minio.PutObjectOptions{
 			ContentType: contentType,
 		})
@@ -111,14 +112,14 @@ func (m MinioTemplate) PutStream(tenantId, bucketName, filename, contentType str
 			Link:         m.fileLink(tenantId, bucketName, objectName),
 			Domain:       m.getOssHost(tenantId, bucketName),
 			Name:         objectName,
-			Size:         n,
-			FormatSize:   tool.DecimalBytes(n),
+			Size:         info.Size,
+			FormatSize:   tool.DecimalBytes(info.Size),
 			OriginalName: filename,
 		}, nil
 	}
 }
 
-func (m MinioTemplate) PutObject(tenantId, bucketName, filename, contentType string, reader io.Reader, objectSize int64) (*File, error) {
+func (m MinioTemplate) PutObject(ctx context.Context, tenantId, bucketName, filename, contentType string, reader io.Reader, objectSize int64) (*File, error) {
 	if err := validateClient(m.client); err != nil {
 		return nil, err
 	}
@@ -126,7 +127,7 @@ func (m MinioTemplate) PutObject(tenantId, bucketName, filename, contentType str
 	if len(bucketName) == 0 {
 		bucketName = m.ossProperties.BucketName
 	}
-	n, err := m.client.PutObject(m.ossRule.bucketName(tenantId, bucketName),
+	info, err := m.client.PutObject(ctx, m.ossRule.bucketName(tenantId, bucketName),
 		objectName, reader, objectSize, minio.PutObjectOptions{
 			ContentType: contentType,
 		})
@@ -137,59 +138,56 @@ func (m MinioTemplate) PutObject(tenantId, bucketName, filename, contentType str
 			Link:         m.fileLink(tenantId, bucketName, objectName),
 			Domain:       m.getOssHost(tenantId, bucketName),
 			Name:         objectName,
-			Size:         n,
-			FormatSize:   tool.DecimalBytes(n),
+			Size:         info.Size,
+			FormatSize:   tool.DecimalBytes(info.Size),
 			OriginalName: filename,
 		}, nil
 	}
 }
 
-func (m MinioTemplate) GetObject(tenantId, bucketName, filename string) (*minio.Object, error) {
-	if err := validateClient(m.client); err != nil {
-		return nil, err
-	}
-	return m.client.GetObject(m.ossRule.bucketName(tenantId, bucketName), filename, minio.GetObjectOptions{})
-}
-
-func (m MinioTemplate) SignUrl(tenantId, bucketName, filename string, expires time.Duration) (string, error) {
+func (m MinioTemplate) SignUrl(ctx context.Context, tenantId, bucketName, filename string, expires time.Duration) (string, error) {
 	if err := validateClient(m.client); err != nil {
 		return "", err
 	}
 	// 创建一个 URL 查询参数对象
 	reqParams := url.Values{}
 	reqParams.Set("version", "1.0.0") // 添加文件版本
-	url, err := m.client.PresignedGetObject(m.ossRule.bucketName(tenantId, bucketName), filename, expires, reqParams)
+	url, err := m.client.PresignedGetObject(ctx, m.ossRule.bucketName(tenantId, bucketName), filename, expires, reqParams)
 	if err != nil {
 		return "", err
 	}
 	return url.String(), nil
 }
 
-func (m MinioTemplate) RemoveFile(tenantId, bucketName, filename string) error {
+func (m MinioTemplate) RemoveFile(ctx context.Context, tenantId, bucketName, filename string) error {
 	if err := validateClient(m.client); err != nil {
 		return err
 	}
 	if len(bucketName) == 0 {
 		bucketName = m.ossProperties.BucketName
 	}
-	return m.client.RemoveObject(m.ossRule.bucketName(tenantId, bucketName), filename)
+	return m.client.RemoveObject(ctx, m.ossRule.bucketName(tenantId, bucketName), filename, minio.RemoveObjectOptions{})
 }
 
-func (m MinioTemplate) RemoveFiles(tenantId string, bucketName string, filenames []string) error {
+func (m MinioTemplate) RemoveFiles(ctx context.Context, tenantId string, bucketName string, filenames []string) error {
 	if err := validateClient(m.client); err != nil {
 		return err
 	}
 	if len(bucketName) == 0 {
 		bucketName = m.ossProperties.BucketName
 	}
-	objectsCh := make(chan string)
+	objectsCh := make(chan minio.ObjectInfo)
 	go func() {
 		defer close(objectsCh)
 		for _, f := range filenames {
-			objectsCh <- f
+			// 构造 ObjectInfo 对象
+			objectInfo := minio.ObjectInfo{
+				Key: f,
+			}
+			objectsCh <- objectInfo
 		}
 	}()
-	errorCh := m.client.RemoveObjects(m.ossRule.bucketName(tenantId, bucketName), objectsCh)
+	errorCh := m.client.RemoveObjects(ctx, m.ossRule.bucketName(tenantId, bucketName), objectsCh, minio.RemoveObjectsOptions{})
 	select {
 	case err := <-errorCh:
 		return err.Err
@@ -214,7 +212,10 @@ func NewMinioTemplate(Oss *model.Oss, ossRule OssRule) *MinioTemplate {
 		Args:       nil,
 	}
 	// 初使化 minio client对象。
-	minioClient, _ := minio.New(Oss.Endpoint, Oss.AccessKey, Oss.SecretKey, false)
+	minioClient, _ := minio.New(Oss.Endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(Oss.AccessKey, Oss.SecretKey, ""),
+		Secure: true,
+	})
 	return &MinioTemplate{
 		client:        minioClient,
 		ossProperties: ossProperties,

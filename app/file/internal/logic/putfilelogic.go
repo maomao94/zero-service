@@ -55,7 +55,7 @@ func (l *PutFileLogic) PutFile(in *file.PutFileReq) (*file.PutFileRes, error) {
 	contentType := http.DetectContentType(buffer)
 	// 重置文件指针，继续从文件开始读取
 	_, err = f.Seek(0, io.SeekStart)
-	ossFile, err := ossTemplate.PutObject(in.TenantId, in.BucketName, in.Filename, contentType, f, fInfo.Size())
+	ossFile, err := ossTemplate.PutObject(l.ctx, in.TenantId, in.BucketName, in.Filename, contentType, f, fInfo.Size())
 	if err != nil {
 		return nil, err
 	}

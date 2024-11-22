@@ -31,12 +31,12 @@ func (l *RemoveBucketLogic) RemoveBucket(in *file.RemoveBucketReq) (*file.Remove
 	if err != nil {
 		return nil, err
 	}
-	bool, err := ossTemplate.BucketExists(in.TenantId, in.BucketName)
+	bool, err := ossTemplate.BucketExists(l.ctx, in.TenantId, in.BucketName)
 	if err != nil {
 		return nil, err
 	}
 	if bool {
-		err = ossTemplate.RemoveBucket(in.TenantId, in.BucketName)
+		err = ossTemplate.RemoveBucket(l.ctx, in.TenantId, in.BucketName)
 		if err != nil {
 			return nil, err
 		}

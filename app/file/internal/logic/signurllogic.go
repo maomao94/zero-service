@@ -41,7 +41,7 @@ func (l *SignUrlLogic) SignUrl(in *file.SignUrlReq) (*file.SignUrlRes, error) {
 	if in.Expires > 0 {
 		expires = time.Duration(in.Expires) * time.Minute
 	}
-	signUrl, err := ossTemplate.SignUrl(in.TenantId, in.BucketName, in.Filename, expires)
+	signUrl, err := ossTemplate.SignUrl(l.ctx, in.TenantId, in.BucketName, in.Filename, expires)
 	if err != nil {
 		return nil, err
 	}

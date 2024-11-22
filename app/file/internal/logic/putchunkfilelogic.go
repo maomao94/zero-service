@@ -90,7 +90,7 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 					close(errOssChan)
 				}()
 				// 写入 OSS
-				uploadedFile, ossPutErr := ossTemplate.PutObject(tenantID, bucketName, filename, contentType, pr, -1)
+				uploadedFile, ossPutErr := ossTemplate.PutObject(l.ctx, tenantID, bucketName, filename, contentType, pr, -1)
 				_ = copier.Copy(&pbFile, uploadedFile)
 				if ossPutErr != nil {
 					l.Logger.Errorf("Failed to write to OSS: %v", ossPutErr)
@@ -132,7 +132,7 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 		if errRead != nil {
 			go threading.RunSafe(func() {
 				// 写入成功，但是 stream 错误，删除文件
-				_ = ossTemplate.RemoveFile(tenantID, bucketName, pbFile.Name)
+				_ = ossTemplate.RemoveFile(context.Background(), tenantID, bucketName, pbFile.Name)
 				l.Logger.Errorf("Stream error, removed file: %s", pbFile.Name)
 			})
 			return errRead

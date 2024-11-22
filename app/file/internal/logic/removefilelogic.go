@@ -31,7 +31,7 @@ func (l *RemoveFileLogic) RemoveFile(in *file.RemoveFileReq) (*file.RemoveFileRe
 	if err != nil {
 		return nil, err
 	}
-	err = ossTemplate.RemoveFile(in.TenantId, in.BucketName, in.Filename)
+	err = ossTemplate.RemoveFile(l.ctx, in.TenantId, in.BucketName, in.Filename)
 	if err != nil {
 		return nil, err
 	}
