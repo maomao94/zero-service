@@ -116,7 +116,7 @@ service gtw {
 	post /oss/endpoint/signUrl (SignUrlRequest) returns (SignUrlReqly)
 
 	@doc "获取文件信息"
-	@handler StatFile
+	@handler statFile
 	post /oss/endpoint/statFile (StatFileRequest) returns (StatFileReply)
 }
 
