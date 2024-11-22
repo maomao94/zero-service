@@ -64,6 +64,8 @@ type File struct {
 	Link         string // 文件地址
 	Domain       string // 域名地址
 	Name         string // 文件名
+	Size         int64  // 文件大小
+	FormatSize   string // 格式化文件大小
 	OriginalName string // 初始文件名
 	AttachId     string // 附件表ID
 }
@@ -71,7 +73,7 @@ type File struct {
 type OssFile struct {
 	Link        string    // 文件地址
 	Name        string    // 文件名
-	Length      int64     // 文件大小
+	Size        int64     // 文件大小
 	PutTime     time.Time // 文件上传时间
 	ContentType string    // 文件contentType
 }

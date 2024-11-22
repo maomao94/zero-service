@@ -41,7 +41,7 @@ func (l *PutChunkFileLogic) PutChunkFile(req *types.PutFileRequest) (resp *types
 	}
 	defer uploadFile.Close()
 	l.Logger.Infof("upload file: %+v, file size: %s, MIME header: %+v",
-		fileHeader.Filename, tool.FormatFileSize(fileHeader.Size), fileHeader.Header)
+		fileHeader.Filename, tool.DecimalBytes(fileHeader.Size), fileHeader.Header)
 	// 初始化进度条
 	//bar := progressbar.NewOptions64(fileHeader.Size,
 	//	progressbar.OptionSetDescription("Uploading..."),
@@ -90,7 +90,7 @@ func (l *PutChunkFileLogic) PutChunkFile(req *types.PutFileRequest) (resp *types
 				progress := float64(uploadedSize) / float64(fileHeader.Size) * 100
 				l.Logger.Infof(
 					"Uploading part %d: %s (%.2f%% completed, Uploaded: %s / %s)",
-					partNum, tool.FormatFileSize(int64(uploadedSize-lastLoggedSize)), progress, tool.FormatFileSize(uploadedSize), tool.FormatFileSize(fileHeader.Size))
+					partNum, tool.DecimalBytes(int64(uploadedSize-lastLoggedSize)), progress, tool.DecimalBytes(uploadedSize), tool.DecimalBytes(fileHeader.Size))
 				lastLoggedSize = uploadedSize // 更新上次打印的已上传字节数
 			}
 			partNum++

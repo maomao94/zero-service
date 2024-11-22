@@ -9,6 +9,7 @@ import (
 	"mime/multipart"
 	"net/url"
 	"time"
+	"zero-service/common/tool"
 	"zero-service/model"
 )
 
@@ -43,7 +44,7 @@ func (m MinioTemplate) StatFile(tenantId, bucketName, filename string) (*OssFile
 		return &OssFile{
 			Link:        m.fileLink(tenantId, bucketName, object.Key),
 			Name:        object.Key,
-			Length:      object.Size,
+			Size:        object.Size,
 			PutTime:     object.LastModified,
 			ContentType: object.ContentType,
 		}, nil
@@ -70,7 +71,7 @@ func (m MinioTemplate) PutFile(tenantId, bucketName string, fileHeader *multipar
 	if len(bucketName) == 0 {
 		bucketName = m.ossProperties.BucketName
 	}
-	_, err = m.client.PutObject(m.ossRule.bucketName(tenantId, bucketName),
+	n, err := m.client.PutObject(m.ossRule.bucketName(tenantId, bucketName),
 		filename, f, fileHeader.Size, minio.PutObjectOptions{
 			ContentType: fileHeader.Header.Get("content-type"),
 		})
@@ -81,6 +82,8 @@ func (m MinioTemplate) PutFile(tenantId, bucketName string, fileHeader *multipar
 			Link:         m.fileLink(tenantId, bucketName, filename),
 			Domain:       m.getOssHost(tenantId, bucketName),
 			Name:         filename,
+			Size:         n,
+			FormatSize:   tool.DecimalBytes(n),
 			OriginalName: fileHeader.Filename,
 		}, nil
 	}
@@ -96,7 +99,7 @@ func (m MinioTemplate) PutStream(tenantId, bucketName, filename, contentType str
 	}
 	reader := bytes.NewReader(*stream)
 	buffer := bufio.NewReader(reader)
-	_, err := m.client.PutObject(m.ossRule.bucketName(tenantId, bucketName),
+	n, err := m.client.PutObject(m.ossRule.bucketName(tenantId, bucketName),
 		objectName, buffer, reader.Size(), minio.PutObjectOptions{
 			ContentType: contentType,
 		})
@@ -107,6 +110,8 @@ func (m MinioTemplate) PutStream(tenantId, bucketName, filename, contentType str
 			Link:         m.fileLink(tenantId, bucketName, objectName),
 			Domain:       m.getOssHost(tenantId, bucketName),
 			Name:         objectName,
+			Size:         n,
+			FormatSize:   tool.DecimalBytes(n),
 			OriginalName: filename,
 		}, nil
 	}
@@ -120,7 +125,7 @@ func (m MinioTemplate) PutObject(tenantId, bucketName, filename, contentType str
 	if len(bucketName) == 0 {
 		bucketName = m.ossProperties.BucketName
 	}
-	_, err := m.client.PutObject(m.ossRule.bucketName(tenantId, bucketName),
+	n, err := m.client.PutObject(m.ossRule.bucketName(tenantId, bucketName),
 		objectName, reader, objectSize, minio.PutObjectOptions{
 			ContentType: contentType,
 		})
@@ -131,6 +136,8 @@ func (m MinioTemplate) PutObject(tenantId, bucketName, filename, contentType str
 			Link:         m.fileLink(tenantId, bucketName, objectName),
 			Domain:       m.getOssHost(tenantId, bucketName),
 			Name:         objectName,
+			Size:         n,
+			FormatSize:   tool.DecimalBytes(n),
 			OriginalName: filename,
 		}, nil
 	}

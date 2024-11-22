@@ -49,7 +49,7 @@ func (l *PutFileLogic) PutFile(req *types.PutFileRequest) (resp *types.GetFileRe
 	}
 	defer uploadFile.Close()
 	l.Logger.Infof("upload file: %+v, file size: %s, MIME header: %+v",
-		fileHeader.Filename, tool.FormatFileSize(fileHeader.Size), fileHeader.Header)
+		fileHeader.Filename, tool.DecimalBytes(fileHeader.Size), fileHeader.Header)
 	// 执行普通上传
 	typeFile := "tempFile"
 	dayStr := carbon.Now().Format("20060102")

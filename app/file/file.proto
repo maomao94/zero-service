@@ -32,17 +32,20 @@ message File {
   string link = 1; // 文件地址
   string domain = 2; // 域名地址
   string name = 3; // 文件名
-  string originalName = 4; // 初始文件名
-  string attachId = 5; // 附件表ID
+  int64 size = 4; // 文件大小
+  string formatSize = 5; // 格式化文件大小
+  string originalName = 6; // 初始文件名
+  string attachId = 7; // 附件表ID
 }
 
 message OssFile {
   string link = 1; // 文件地址
   string name = 2; // 文件名
-  int64 length = 3; // 文件大小
-  string putTime = 4; // 文件上传时间
-  string contentType = 5; // 文件类型
-  string signUrl = 6; // 签名URL
+  int64 size = 3; // 文件大小
+  string formatSize = 4; // 格式化文件大小
+  string putTime = 5; // 文件上传时间
+  string contentType = 6; // 文件类型
+  string signUrl = 7; // 签名URL
 }
 
 message OssDetailReq{

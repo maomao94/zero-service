@@ -1,7 +1,7 @@
 package tool
 
 import (
-	"fmt"
+	"github.com/duke-git/lancet/v2/formatter"
 	"github.com/shopspring/decimal"
 )
 
@@ -19,20 +19,6 @@ func Yuan2Fen(yuan float64) int64 {
 	return int64(f)
 }
 
-func FormatFileSize(size int64) string {
-	const (
-		KB = 1024
-		MB = KB * 1024
-		GB = MB * 1024
-	)
-	switch {
-	case size >= GB:
-		return fmt.Sprintf("%.2f GB", float64(size)/float64(GB))
-	case size >= MB:
-		return fmt.Sprintf("%.2f MB", float64(size)/float64(MB))
-	case size >= KB:
-		return fmt.Sprintf("%.2f KB", float64(size)/float64(KB))
-	default:
-		return fmt.Sprintf("%d bytes", size)
-	}
+func DecimalBytes(size int64, precision ...int) string {
+	return formatter.DecimalBytes(float64(size))
 }
