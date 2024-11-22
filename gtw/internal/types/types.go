@@ -97,9 +97,9 @@ type PingReply struct {
 }
 
 type PutFileRequest struct {
-	TenantId   string `form:"tenantId,optional"`   // 租户ID
-	Code       string `form:"code,optional"`       // 资源编号
-	BucketName string `form:"bucketName,optional"` // 存储桶名称
+	TenantId   string `form:"tenantId"`   // 租户ID
+	Code       string `form:"code"`       // 资源编号
+	BucketName string `form:"bucketName"` // 存储桶名称
 }
 
 type Region struct {
@@ -128,11 +128,11 @@ type SignUrlReqly struct {
 }
 
 type SignUrlRequest struct {
-	TenantId   string `json:"tenantId,optional"`   // 租户ID
-	Code       string `json:"code,optional"`       // 资源编号
-	BucketName string `json:"bucketName,optional"` // 存储桶名称
-	Filename   string `json:"filename"`            // 文件名
-	Expires    int32  `json:"expires"`             // 过期时间 默认一小时 单位分钟
+	TenantId   string `json:"tenantId"`   // 租户ID
+	Code       string `json:"code"`       // 资源编号
+	BucketName string `json:"bucketName"` // 存储桶名称
+	Filename   string `json:"filename"`   // 文件名
+	Expires    int32  `json:"expires"`    // 过期时间 默认一小时 单位分钟
 }
 
 type StatFileReply struct {
@@ -140,12 +140,12 @@ type StatFileReply struct {
 }
 
 type StatFileRequest struct {
-	TenantId   string `json:"tenantId,optional"`   // 租户ID
-	Code       string `json:"code,optional"`       // 资源编号
-	BucketName string `json:"bucketName,optional"` // 存储桶名称
-	Filename   string `json:"filename"`            // 文件名
-	IsSign     bool   `json:"filename"`            // 是否生成签名
-	Expires    int32  `json:"expires"`             // 过期时间 默认一小时 单位分钟
+	TenantId   string `json:"tenantId"`   // 租户ID
+	Code       string `json:"code"`       // 资源编号
+	BucketName string `json:"bucketName"` // 存储桶名称
+	Filename   string `json:"filename"`   // 文件名
+	IsSign     bool   `json:"filename"`   // 是否生成签名
+	Expires    int32  `json:"expires"`    // 过期时间 默认一小时 单位分钟
 }
 
 type TenantRequest struct {
