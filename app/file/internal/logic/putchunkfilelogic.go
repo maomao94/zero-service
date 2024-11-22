@@ -92,8 +92,11 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 				if ossPutErr != nil {
 					l.Logger.Errorf("Failed to write to OSS: %v", ossPutErr)
 				}
-				l.Logger.Infof("File uploaded to OSS: %s success", filename)
+				if ossPutErr == nil {
+					l.Logger.Infof("File uploaded to OSS: %s success", filename)
+				}
 				errOssChan <- ossPutErr
+
 			})
 			initialized = true
 		}
