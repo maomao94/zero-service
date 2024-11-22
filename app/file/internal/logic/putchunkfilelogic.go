@@ -37,6 +37,7 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 	// 用于存储元信息
 	var tenantID, code, bucketName, filename string
 	var contentType string
+	var size int64
 	var ossTemplate ossx.OssTemplate
 
 	var pbFile file.File
@@ -67,6 +68,7 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 			bucketName = req.GetBucketName()
 			filename = req.GetFilename()
 			contentType = req.GetContentType()
+			size = req.GetSize()
 
 			// 动态获取 OSS 模板
 			var ossErr error
@@ -90,7 +92,7 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 					close(errOssChan)
 				}()
 				// 写入 OSS
-				uploadedFile, ossPutErr := ossTemplate.PutObject(l.ctx, tenantID, bucketName, filename, contentType, pr, -1)
+				uploadedFile, ossPutErr := ossTemplate.PutObject(l.ctx, tenantID, bucketName, filename, contentType, pr, size)
 				_ = copier.Copy(&pbFile, uploadedFile)
 				if ossPutErr != nil {
 					l.Logger.Errorf("Failed to write to OSS: %v", ossPutErr)

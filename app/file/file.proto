@@ -175,6 +175,7 @@ message PutChunkFileReq {
   string filename = 4; // 上传文件名
   string contentType = 5;
   bytes content = 6;   // 文件内容
+  int64 size = 7; // 文件大小
 }
 
 message PutChunkFileRes {
