@@ -1,9 +1,5 @@
 # zero-service
 
-####
-go build -o ./app/zerorpc ./zerorpc/zerorpc.go
-go build -o ./app/zeroalarm ./zeroalarm/zeroalarm.go
-
 #### 相关包
 https://github.com/hibiken/asynq/
 https://github.com/Masterminds/squirrel
