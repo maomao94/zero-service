@@ -7,7 +7,7 @@ MaxBytes: 1073741824111
 Log:
   Encoding: plain
   Mode: file
-  Path: logs/file.rpc
+  Path: logs/gtw
 #链路追踪
 #Telemetry:
 #  Name: gtw
