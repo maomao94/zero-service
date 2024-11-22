@@ -45,6 +45,7 @@ func (m MinioTemplate) StatFile(tenantId, bucketName, filename string) (*OssFile
 			Link:        m.fileLink(tenantId, bucketName, object.Key),
 			Name:        object.Key,
 			Size:        object.Size,
+			FormatSize:  tool.DecimalBytes(object.Size),
 			PutTime:     object.LastModified,
 			ContentType: object.ContentType,
 		}, nil

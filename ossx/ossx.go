@@ -74,6 +74,7 @@ type OssFile struct {
 	Link        string    // 文件地址
 	Name        string    // 文件名
 	Size        int64     // 文件大小
+	FormatSize  string    // 格式化文件大小
 	PutTime     time.Time // 文件上传时间
 	ContentType string    // 文件contentType
 }
