@@ -1,8 +1,8 @@
 # zero-service
 
 #### 相关包
-https://github.com/hibiken/asynq/
-https://github.com/Masterminds/squirrel
+# https://github.com/hibiken/asynq/
+# https://github.com/Masterminds/squirrel
 
 #### util
 docker工具 本地快速执行 docker 相关命令
