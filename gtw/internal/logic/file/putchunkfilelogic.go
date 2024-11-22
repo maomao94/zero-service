@@ -80,6 +80,7 @@ func (l *PutChunkFileLogic) PutChunkFile(req *types.PutFileRequest) (resp *types
 				Content:     buf[:n],
 				Filename:    fileHeader.Filename,
 				ContentType: fileHeader.Header.Get("content-type"),
+				Size:        fileHeader.Size,
 			}
 			if err := stream.Send(chunk); err != nil {
 				l.Logger.Errorf("Failed to write: %v", err)
