@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.28.1
 // 	protoc        v5.28.3
-// source: iecServer.proto
+// source: iecrpc.proto
 
-package iecServer
+package iecrpc
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -31,7 +31,7 @@ type Req struct {
 func (x *Req) Reset() {
 	*x = Req{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_iecServer_proto_msgTypes[0]
+		mi := &file_iecrpc_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -44,7 +44,7 @@ func (x *Req) String() string {
 func (*Req) ProtoMessage() {}
 
 func (x *Req) ProtoReflect() protoreflect.Message {
-	mi := &file_iecServer_proto_msgTypes[0]
+	mi := &file_iecrpc_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -57,7 +57,7 @@ func (x *Req) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Req.ProtoReflect.Descriptor instead.
 func (*Req) Descriptor() ([]byte, []int) {
-	return file_iecServer_proto_rawDescGZIP(), []int{0}
+	return file_iecrpc_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Req) GetPing() string {
@@ -78,7 +78,7 @@ type Res struct {
 func (x *Res) Reset() {
 	*x = Res{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_iecServer_proto_msgTypes[1]
+		mi := &file_iecrpc_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -91,7 +91,7 @@ func (x *Res) String() string {
 func (*Res) ProtoMessage() {}
 
 func (x *Res) ProtoReflect() protoreflect.Message {
-	mi := &file_iecServer_proto_msgTypes[1]
+	mi := &file_iecrpc_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -104,7 +104,7 @@ func (x *Res) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Res.ProtoReflect.Descriptor instead.
 func (*Res) Descriptor() ([]byte, []int) {
-	return file_iecServer_proto_rawDescGZIP(), []int{1}
+	return file_iecrpc_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Res) GetPong() string {
@@ -114,40 +114,40 @@ func (x *Res) GetPong() string {
 	return ""
 }
 
-var File_iecServer_proto protoreflect.FileDescriptor
+var File_iecrpc_proto protoreflect.FileDescriptor
 
-var file_iecServer_proto_rawDesc = []byte{
-	0x0a, 0x0f, 0x69, 0x65, 0x63, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2e, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x12, 0x04, 0x66, 0x69, 0x6c, 0x65, 0x22, 0x19, 0x0a, 0x03, 0x52, 0x65, 0x71, 0x12, 0x12,
-	0x0a, 0x04, 0x70, 0x69, 0x6e, 0x67, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x70, 0x69,
-	0x6e, 0x67, 0x22, 0x19, 0x0a, 0x03, 0x52, 0x65, 0x73, 0x12, 0x12, 0x0a, 0x04, 0x70, 0x6f, 0x6e,
-	0x67, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x70, 0x6f, 0x6e, 0x67, 0x32, 0x29, 0x0a,
-	0x09, 0x49, 0x65, 0x63, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x12, 0x1c, 0x0a, 0x04, 0x50, 0x69,
-	0x6e, 0x67, 0x12, 0x09, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x52, 0x65, 0x71, 0x1a, 0x09, 0x2e,
-	0x66, 0x69, 0x6c, 0x65, 0x2e, 0x52, 0x65, 0x73, 0x42, 0x0d, 0x5a, 0x0b, 0x2e, 0x2f, 0x69, 0x65,
-	0x63, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+var file_iecrpc_proto_rawDesc = []byte{
+	0x0a, 0x0c, 0x69, 0x65, 0x63, 0x72, 0x70, 0x63, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x04,
+	0x66, 0x69, 0x6c, 0x65, 0x22, 0x19, 0x0a, 0x03, 0x52, 0x65, 0x71, 0x12, 0x12, 0x0a, 0x04, 0x70,
+	0x69, 0x6e, 0x67, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x70, 0x69, 0x6e, 0x67, 0x22,
+	0x19, 0x0a, 0x03, 0x52, 0x65, 0x73, 0x12, 0x12, 0x0a, 0x04, 0x70, 0x6f, 0x6e, 0x67, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x70, 0x6f, 0x6e, 0x67, 0x32, 0x26, 0x0a, 0x06, 0x49, 0x65,
+	0x63, 0x72, 0x70, 0x63, 0x12, 0x1c, 0x0a, 0x04, 0x50, 0x69, 0x6e, 0x67, 0x12, 0x09, 0x2e, 0x66,
+	0x69, 0x6c, 0x65, 0x2e, 0x52, 0x65, 0x71, 0x1a, 0x09, 0x2e, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x52,
+	0x65, 0x73, 0x42, 0x0a, 0x5a, 0x08, 0x2e, 0x2f, 0x69, 0x65, 0x63, 0x72, 0x70, 0x63, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
-	file_iecServer_proto_rawDescOnce sync.Once
-	file_iecServer_proto_rawDescData = file_iecServer_proto_rawDesc
+	file_iecrpc_proto_rawDescOnce sync.Once
+	file_iecrpc_proto_rawDescData = file_iecrpc_proto_rawDesc
 )
 
-func file_iecServer_proto_rawDescGZIP() []byte {
-	file_iecServer_proto_rawDescOnce.Do(func() {
-		file_iecServer_proto_rawDescData = protoimpl.X.CompressGZIP(file_iecServer_proto_rawDescData)
+func file_iecrpc_proto_rawDescGZIP() []byte {
+	file_iecrpc_proto_rawDescOnce.Do(func() {
+		file_iecrpc_proto_rawDescData = protoimpl.X.CompressGZIP(file_iecrpc_proto_rawDescData)
 	})
-	return file_iecServer_proto_rawDescData
+	return file_iecrpc_proto_rawDescData
 }
 
-var file_iecServer_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_iecServer_proto_goTypes = []interface{}{
+var file_iecrpc_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_iecrpc_proto_goTypes = []interface{}{
 	(*Req)(nil), // 0: file.Req
 	(*Res)(nil), // 1: file.Res
 }
-var file_iecServer_proto_depIdxs = []int32{
-	0, // 0: file.IecServer.Ping:input_type -> file.Req
-	1, // 1: file.IecServer.Ping:output_type -> file.Res
+var file_iecrpc_proto_depIdxs = []int32{
+	0, // 0: file.Iecrpc.Ping:input_type -> file.Req
+	1, // 1: file.Iecrpc.Ping:output_type -> file.Res
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -155,13 +155,13 @@ var file_iecServer_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_iecServer_proto_init() }
-func file_iecServer_proto_init() {
-	if File_iecServer_proto != nil {
+func init() { file_iecrpc_proto_init() }
+func file_iecrpc_proto_init() {
+	if File_iecrpc_proto != nil {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_iecServer_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_iecrpc_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Req); i {
 			case 0:
 				return &v.state
@@ -173,7 +173,7 @@ func file_iecServer_proto_init() {
 				return nil
 			}
 		}
-		file_iecServer_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+		file_iecrpc_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Res); i {
 			case 0:
 				return &v.state
@@ -190,18 +190,18 @@ func file_iecServer_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_iecServer_proto_rawDesc,
+			RawDescriptor: file_iecrpc_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_iecServer_proto_goTypes,
-		DependencyIndexes: file_iecServer_proto_depIdxs,
-		MessageInfos:      file_iecServer_proto_msgTypes,
+		GoTypes:           file_iecrpc_proto_goTypes,
+		DependencyIndexes: file_iecrpc_proto_depIdxs,
+		MessageInfos:      file_iecrpc_proto_msgTypes,
 	}.Build()
-	File_iecServer_proto = out.File
-	file_iecServer_proto_rawDesc = nil
-	file_iecServer_proto_goTypes = nil
-	file_iecServer_proto_depIdxs = nil
+	File_iecrpc_proto = out.File
+	file_iecrpc_proto_rawDesc = nil
+	file_iecrpc_proto_goTypes = nil
+	file_iecrpc_proto_depIdxs = nil
 }

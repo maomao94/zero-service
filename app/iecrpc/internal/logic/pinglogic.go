@@ -3,8 +3,8 @@ package logic
 import (
 	"context"
 
-	"zero-service/app/iecServer/iecServer"
-	"zero-service/app/iecServer/internal/svc"
+	"zero-service/app/iecrpc/iecrpc"
+	"zero-service/app/iecrpc/internal/svc"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -23,8 +23,8 @@ func NewPingLogic(ctx context.Context, svcCtx *svc.ServiceContext) *PingLogic {
 	}
 }
 
-func (l *PingLogic) Ping(in *iecServer.Req) (*iecServer.Res, error) {
-	return &iecServer.Res{
-		Pong: "iecServer",
-	}, nil
+func (l *PingLogic) Ping(in *iecrpc.Req) (*iecrpc.Res, error) {
+	// todo: add your logic here and delete this line
+
+	return &iecrpc.Res{}, nil
 }
