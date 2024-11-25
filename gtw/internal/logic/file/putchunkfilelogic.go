@@ -103,7 +103,7 @@ func (l *PutChunkFileLogic) PutChunkFile(req *types.PutFileRequest) (resp *types
 				l.Logger.Errorf("Failed to receive response: %v", err)
 				return nil, err
 			}
-			l.Logger.Infof("stream write size: %s", tool.DecimalBytes(res.Size))
+			l.Logger.Debugf("stream write size: %s", tool.DecimalBytes(res.Size))
 		}
 
 		if err == io.EOF {
