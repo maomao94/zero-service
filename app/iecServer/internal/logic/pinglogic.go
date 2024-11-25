@@ -24,7 +24,7 @@ func NewPingLogic(ctx context.Context, svcCtx *svc.ServiceContext) *PingLogic {
 }
 
 func (l *PingLogic) Ping(in *iecServer.Req) (*iecServer.Res, error) {
-	// todo: add your logic here and delete this line
-
-	return &iecServer.Res{}, nil
+	return &iecServer.Res{
+		Pong: "iecServer",
+	}, nil
 }
