@@ -9,8 +9,9 @@ Log:
   Encoding: plain
 #  Mode: file
   Path: /opt/logs/iecrpc.rpc
+  Level: debug
 
 IecSetting:
   Host: 0.0.0.0
-  Port: 11004
+  Port: 2404
   Enable: true

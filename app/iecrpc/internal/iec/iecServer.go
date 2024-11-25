@@ -14,7 +14,7 @@ type IecServer struct {
 }
 
 func NewIecServer(svcCtx *svc.ServiceContext) *IecServer {
-	cs104Server := cs104.NewServer(NewIecHandler(svcCtx))
+	cs104Server := cs104.NewServer(&ServerHandler{h: NewIecHandler(svcCtx)})
 	cfg104 := cs104.DefaultConfig()
 	cs104Server.SetConfig(cfg104)
 	cs104Server.SetParams(asdu.ParamsWide)
@@ -38,17 +38,33 @@ type LogProvider struct {
 }
 
 func (l *LogProvider) Critical(format string, v ...interface{}) {
-	logx.Errorf(format, v)
+	if v == nil {
+		logx.Error(format)
+	} else {
+		logx.Errorf(format, v)
+	}
 }
 
 func (l *LogProvider) Error(format string, v ...interface{}) {
-	logx.Errorf(format, v)
+	if v == nil {
+		logx.Error(format)
+	} else {
+		logx.Errorf(format, v)
+	}
 }
 
 func (l *LogProvider) Warn(format string, v ...interface{}) {
-	logx.Errorf(format, v)
+	if v == nil {
+		logx.Error(format)
+	} else {
+		logx.Errorf(format, v)
+	}
 }
 
 func (l *LogProvider) Debug(format string, v ...interface{}) {
-	logx.Debugf(format, v)
+	if v == nil {
+		logx.Debug(format)
+	} else {
+		logx.Debugf(format, v)
+	}
 }
