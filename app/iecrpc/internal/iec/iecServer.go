@@ -1,8 +1,8 @@
 package iec
 
 import (
-	"github.com/thinkgos/go-iecp5/asdu"
-	"github.com/thinkgos/go-iecp5/cs104"
+	"github.com/wendy512/go-iecp5/asdu"
+	"github.com/wendy512/go-iecp5/cs104"
 	"github.com/zeromicro/go-zero/core/logx"
 	"strconv"
 	"zero-service/app/iecrpc/internal/svc"

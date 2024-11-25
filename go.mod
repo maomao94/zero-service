@@ -21,6 +21,7 @@ require (
 	github.com/songzhibin97/gkit v1.2.13
 	github.com/spf13/cast v1.7.0
 	github.com/thinkgos/go-iecp5 v1.2.1
+	github.com/wendy512/go-iecp5 v1.2.3
 	github.com/zeromicro/go-zero v1.7.3
 	github.com/zeromicro/x v0.0.0-20240408115609-8224c482b07e
 	github.com/zeromicro/zero-contrib/zrpc/registry/nacos v0.0.0-20231030135404-af9ae855016f

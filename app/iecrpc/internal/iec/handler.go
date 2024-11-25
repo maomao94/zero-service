@@ -1,7 +1,7 @@
 package iec
 
 import (
-	"github.com/thinkgos/go-iecp5/asdu"
+	"github.com/wendy512/go-iecp5/asdu"
 	"time"
 )
 
