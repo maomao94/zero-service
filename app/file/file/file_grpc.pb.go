@@ -156,7 +156,7 @@ func (c *fileRpcClient) PutChunkFile(ctx context.Context, opts ...grpc.CallOptio
 
 type FileRpc_PutChunkFileClient interface {
 	Send(*PutChunkFileReq) error
-	CloseAndRecv() (*PutChunkFileRes, error)
+	Recv() (*PutChunkFileRes, error)
 	grpc.ClientStream
 }
 
@@ -168,10 +168,7 @@ func (x *fileRpcPutChunkFileClient) Send(m *PutChunkFileReq) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *fileRpcPutChunkFileClient) CloseAndRecv() (*PutChunkFileRes, error) {
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
+func (x *fileRpcPutChunkFileClient) Recv() (*PutChunkFileRes, error) {
 	m := new(PutChunkFileRes)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -480,7 +477,7 @@ func _FileRpc_PutChunkFile_Handler(srv interface{}, stream grpc.ServerStream) er
 }
 
 type FileRpc_PutChunkFileServer interface {
-	SendAndClose(*PutChunkFileRes) error
+	Send(*PutChunkFileRes) error
 	Recv() (*PutChunkFileReq, error)
 	grpc.ServerStream
 }
@@ -489,7 +486,7 @@ type fileRpcPutChunkFileServer struct {
 	grpc.ServerStream
 }
 
-func (x *fileRpcPutChunkFileServer) SendAndClose(m *PutChunkFileRes) error {
+func (x *fileRpcPutChunkFileServer) Send(m *PutChunkFileRes) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -601,6 +598,7 @@ var FileRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "PutChunkFile",
 			Handler:       _FileRpc_PutChunkFile_Handler,
+			ServerStreams: true,
 			ClientStreams: true,
 		},
 	},

@@ -3,6 +3,7 @@ package file
 import (
 	"context"
 	"github.com/jinzhu/copier"
+	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"zero-service/app/file/file"
@@ -97,6 +98,12 @@ func (l *PutChunkFileLogic) PutChunkFile(req *types.PutFileRequest) (resp *types
 			partNum++
 			//// 更新进度条
 			//bar.Add(n)
+			res, err := stream.Recv()
+			if err != nil {
+				l.Logger.Errorf("Failed to receive response: %v", err)
+				return nil, err
+			}
+			l.Logger.Infof("stream write size: %s", tool.DecimalBytes(res.Size))
 		}
 
 		if err == io.EOF {
@@ -109,14 +116,18 @@ func (l *PutChunkFileLogic) PutChunkFile(req *types.PutFileRequest) (resp *types
 	}
 
 	// 完成上传并接收服务器响应
-	res, err := stream.CloseAndRecv()
+	res, err := stream.Recv()
 	if err != nil {
 		l.Logger.Errorf("Failed to receive response: %v", err)
 		return nil, err
 	}
-	var file types.File
-	_ = copier.Copy(&file, res.File)
-	return &types.GetFileReply{
-		File: file,
-	}, nil
+	if res.IsEnd {
+		var file types.File
+		_ = copier.Copy(&file, res.File)
+		return &types.GetFileReply{
+			File: file,
+		}, nil
+	} else {
+		return nil, errors.New("文件上传错误")
+	}
 }

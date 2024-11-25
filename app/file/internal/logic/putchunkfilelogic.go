@@ -46,11 +46,18 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 	var initialized bool
 	// 存储用于探测内容类型的缓冲区
 	var contentBuffer []byte
+	// 用来记录已上传的字节数
+	var writeSize int64
 
 	errOssChan := make(chan error, 1)
 	var errRead error
 	// 从 gRPC 流中逐块读取数据并写入管道
 	for {
+		if initialized {
+			if writeSize >= size {
+				break
+			}
+		}
 		req, err := stream.Recv()
 		if err == io.EOF {
 			pw.Close()
@@ -124,6 +131,13 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 			errRead = err
 			break
 		}
+		writeSize += int64(len(req.GetContent()))
+		// 发送进度更新
+		stream.Send(&file.PutChunkFileRes{
+			File:  &pbFile,
+			IsEnd: false,
+			Size:  writeSize,
+		})
 	}
 	pw.Close()
 	if initialized {
@@ -142,8 +156,10 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 			return errRead
 		}
 		// 返回上传结果
-		return stream.SendAndClose(&file.PutChunkFileRes{
-			File: &pbFile,
+		return stream.Send(&file.PutChunkFileRes{
+			File:  &pbFile,
+			IsEnd: true,
+			Size:  writeSize,
 		})
 	} else {
 		if errRead == nil {

@@ -9,7 +9,7 @@ Mode: dev
 Log:
   Encoding: plain
 #  Mode: file
-  Path: logs/file.rpc
+  Path: /opt/logs/file.rpc
 Redis:
   Host: 127.0.0.1:36379
   Type: node
