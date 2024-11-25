@@ -132,13 +132,13 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 			return err
 		}
 		if errRead != nil {
-			go threading.RunSafe(func() {
-				// 写入成功，但是 stream 错误，删除文件
-				removeErr := ossTemplate.RemoveFile(context.Background(), tenantID, bucketName, pbFile.Name)
-				if removeErr == nil {
-					l.Logger.Errorf("Stream error, removed file: %s", pbFile.Name)
-				}
-			})
+			//go threading.RunSafe(func() {
+			//	// 写入成功，但是 stream 错误，删除文件
+			//	removeErr := ossTemplate.RemoveFile(context.Background(), tenantID, bucketName, pbFile.Name)
+			//	if removeErr == nil {
+			//		l.Logger.Errorf("Stream error, removed file: %s", pbFile.Name)
+			//	}
+			//})
 			return errRead
 		}
 		// 返回上传结果
