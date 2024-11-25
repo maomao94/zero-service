@@ -7,7 +7,7 @@ ListenOn: 0.0.0.0:21004
 Mode: dev
 Log:
   Encoding: plain
-  Mode: file
+#  Mode: file
   Path: /opt/logs/iecrpc.rpc
 
 IecSetting:
