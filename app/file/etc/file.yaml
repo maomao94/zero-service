@@ -4,16 +4,16 @@ Timeout: 10000
 #Etcd:
 #  Hosts:
 #  - 127.0.0.1:2379
-#  Key: file.rpc
+#  Key: file
 Mode: dev
 Log:
   Encoding: plain
   Mode: file
-  Path: /opt/logs/file.rpc
+  Path: /opt/logs/file
 Redis:
   Host: 127.0.0.1:36379
   Type: node
-  Key: file.rpc
+  Key: file
   Pass: G62m50oigInC30sf
 Cache:
   - Host: 127.0.0.1:36379
