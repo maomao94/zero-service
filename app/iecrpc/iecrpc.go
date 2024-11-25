@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/zeromicro/go-zero/core/logx"
+	"zero-service/app/iecrpc/internal/iec"
 	interceptor "zero-service/common/Interceptor/rpcserver"
 
 	"zero-service/app/iecrpc/iecrpc"
@@ -38,8 +39,11 @@ func main() {
 	serviceGroup := service.NewServiceGroup()
 	defer serviceGroup.Stop()
 	serviceGroup.Add(s)
+	iecServer := iec.NewIecServer(ctx)
+	serviceGroup.Add(iecServer)
+
 	logx.AddGlobalFields(logx.Field("app", c.Name))
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
-	s.Start()
+	serviceGroup.Start()
 }

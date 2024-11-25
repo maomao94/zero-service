@@ -9,3 +9,8 @@ Log:
   Encoding: plain
   Mode: file
   Path: /opt/logs/iecrpc.rpc
+
+IecSetting:
+  Host: 0.0.0.0
+  Port: 11004
+  Enable: true
