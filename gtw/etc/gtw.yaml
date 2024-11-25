@@ -6,7 +6,7 @@ Mode: dev
 MaxBytes: 1073741824111
 Log:
   Encoding: plain
-#  Mode: file
+  Mode: file
   Path: /opt/logs/gtw
 #链路追踪
 #Telemetry:
