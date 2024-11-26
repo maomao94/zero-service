@@ -10,7 +10,6 @@ import (
 	"zero-service/app/ieccaller/internal/svc"
 	"zero-service/iec104"
 	"zero-service/iec104/iec104client"
-	"zero-service/iec104/iec104server"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
