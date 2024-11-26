@@ -44,7 +44,7 @@ func (l *SendTestCmdLogic) SendTestCmd(in *ieccaller.SendTestCmdReq) (*ieccaller
 	client.SetLogProvider(iec104.NewLogProvider())
 
 	client.SetOnConnectHandler(func(c *cs104.Client) {
-		c.SendStartDt() // 发送startDt激活指令
+		//c.SendStartDt() // 发送startDt激活指令
 	})
 	err = client.Start()
 	if err != nil {
