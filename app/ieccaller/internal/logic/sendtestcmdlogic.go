@@ -8,6 +8,7 @@ import (
 	"zero-service/app/ieccaller/ieccaller"
 	"zero-service/app/ieccaller/internal/iec"
 	"zero-service/app/ieccaller/internal/svc"
+	"zero-service/iec104"
 	"zero-service/iec104/iec104client"
 	"zero-service/iec104/iec104server"
 
@@ -41,7 +42,7 @@ func (l *SendTestCmdLogic) SendTestCmd(in *ieccaller.SendTestCmdReq) (*ieccaller
 	client := cs104.NewClient(handler, option)
 
 	client.LogMode(true)
-	client.SetLogProvider(iec104server.NewLogProvider())
+	client.SetLogProvider(iec104.NewLogProvider())
 
 	client.SetOnConnectHandler(func(c *cs104.Client) {
 		c.SendStartDt() // 发送startDt激活指令
