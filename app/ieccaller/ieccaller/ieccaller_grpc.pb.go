@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type IecCallerClient interface {
 	Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error)
+	SendTestCmd(ctx context.Context, in *SendTestCmdReq, opts ...grpc.CallOption) (*SendTestCmdRes, error)
 }
 
 type iecCallerClient struct {
@@ -42,11 +43,21 @@ func (c *iecCallerClient) Ping(ctx context.Context, in *Req, opts ...grpc.CallOp
 	return out, nil
 }
 
+func (c *iecCallerClient) SendTestCmd(ctx context.Context, in *SendTestCmdReq, opts ...grpc.CallOption) (*SendTestCmdRes, error) {
+	out := new(SendTestCmdRes)
+	err := c.cc.Invoke(ctx, "/file.IecCaller/SendTestCmd", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IecCallerServer is the server API for IecCaller service.
 // All implementations must embed UnimplementedIecCallerServer
 // for forward compatibility
 type IecCallerServer interface {
 	Ping(context.Context, *Req) (*Res, error)
+	SendTestCmd(context.Context, *SendTestCmdReq) (*SendTestCmdRes, error)
 	mustEmbedUnimplementedIecCallerServer()
 }
 
@@ -56,6 +67,9 @@ type UnimplementedIecCallerServer struct {
 
 func (UnimplementedIecCallerServer) Ping(context.Context, *Req) (*Res, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
+}
+func (UnimplementedIecCallerServer) SendTestCmd(context.Context, *SendTestCmdReq) (*SendTestCmdRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendTestCmd not implemented")
 }
 func (UnimplementedIecCallerServer) mustEmbedUnimplementedIecCallerServer() {}
 
@@ -88,6 +102,24 @@ func _IecCaller_Ping_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IecCaller_SendTestCmd_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendTestCmdReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IecCallerServer).SendTestCmd(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/file.IecCaller/SendTestCmd",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IecCallerServer).SendTestCmd(ctx, req.(*SendTestCmdReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IecCaller_ServiceDesc is the grpc.ServiceDesc for IecCaller service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +130,10 @@ var IecCaller_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Ping",
 			Handler:    _IecCaller_Ping_Handler,
+		},
+		{
+			MethodName: "SendTestCmd",
+			Handler:    _IecCaller_SendTestCmd_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

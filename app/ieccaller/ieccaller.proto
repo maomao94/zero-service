@@ -11,6 +11,13 @@ message Res {
   string pong = 1;
 }
 
+message SendTestCmdReq {
+}
+
+message SendTestCmdRes {
+}
+
 service IecCaller {
   rpc Ping (Req) returns (Res);
+  rpc SendTestCmd (SendTestCmdReq) returns (SendTestCmdRes);
 }

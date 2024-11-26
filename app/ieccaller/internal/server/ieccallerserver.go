@@ -27,3 +27,8 @@ func (s *IecCallerServer) Ping(ctx context.Context, in *ieccaller.Req) (*ieccall
 	l := logic.NewPingLogic(ctx, s.svcCtx)
 	return l.Ping(in)
 }
+
+func (s *IecCallerServer) SendTestCmd(ctx context.Context, in *ieccaller.SendTestCmdReq) (*ieccaller.SendTestCmdRes, error) {
+	l := logic.NewSendTestCmdLogic(ctx, s.svcCtx)
+	return l.SendTestCmd(in)
+}
