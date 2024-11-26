@@ -4,14 +4,14 @@ import (
 	"flag"
 	"fmt"
 	"github.com/zeromicro/go-zero/core/logx"
-	"zero-service/app/iecrpc/internal/iec"
+	"zero-service/app/iecagent/internal/iec"
 	interceptor "zero-service/common/Interceptor/rpcserver"
 	"zero-service/iec104"
 
-	"zero-service/app/iecrpc/iecrpc"
-	"zero-service/app/iecrpc/internal/config"
-	"zero-service/app/iecrpc/internal/server"
-	"zero-service/app/iecrpc/internal/svc"
+	"zero-service/app/iecagent/iecagent"
+	"zero-service/app/iecagent/internal/config"
+	"zero-service/app/iecagent/internal/server"
+	"zero-service/app/iecagent/internal/svc"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/service"
@@ -20,7 +20,7 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-var configFile = flag.String("f", "etc/iecrpc.yaml", "the config file")
+var configFile = flag.String("f", "etc/iecagent.yaml", "the config file")
 
 func main() {
 	flag.Parse()
@@ -30,7 +30,7 @@ func main() {
 	ctx := svc.NewServiceContext(c)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
-		iecrpc.RegisterIecrpcServer(grpcServer, server.NewIecrpcServer(ctx))
+		iecagent.RegisterIecAgentServer(grpcServer, server.NewIecAgentServer(ctx))
 
 		if c.Mode == service.DevMode || c.Mode == service.TestMode {
 			reflection.Register(grpcServer)

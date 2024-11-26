@@ -1,8 +1,6 @@
 package svc
 
-import (
-	"zero-service/app/iecrpc/internal/config"
-)
+import "zero-service/app/iecagent/internal/config"
 
 type ServiceContext struct {
 	Config config.Config

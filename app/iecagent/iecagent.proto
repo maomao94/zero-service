@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package file;
-option go_package = "./iecrpc";
+option go_package = "./iecagent";
 
 message Req {
   string ping = 1;
@@ -11,6 +11,6 @@ message Res {
   string pong = 1;
 }
 
-service Iecrpc {
+service IecAgent {
   rpc Ping (Req) returns (Res);
 }

@@ -3,7 +3,7 @@ package iec
 import (
 	"github.com/wendy512/go-iecp5/asdu"
 	"time"
-	"zero-service/app/iecrpc/internal/svc"
+	"zero-service/app/iecagent/internal/svc"
 )
 
 const (
