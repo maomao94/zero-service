@@ -14,4 +14,4 @@ Log:
 IecSetting:
   Host: 0.0.0.0
   Port: 2404
-  Enable: true
+  LogMode: true

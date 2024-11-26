@@ -1,11 +1,10 @@
-package iec
+package iec104
 
 import (
 	"github.com/wendy512/go-iecp5/asdu"
 	"github.com/wendy512/go-iecp5/cs104"
 	"github.com/zeromicro/go-zero/core/logx"
 	"strconv"
-	"zero-service/app/iecrpc/internal/svc"
 )
 
 type IecServer struct {
@@ -13,16 +12,16 @@ type IecServer struct {
 	addr        string
 }
 
-func NewIecServer(svcCtx *svc.ServiceContext) *IecServer {
-	cs104Server := cs104.NewServer(&ServerHandler{h: NewIecHandler(svcCtx)})
+func NewIecServer(host string, port int, logMode bool, handler *ServerHandler) *IecServer {
+	cs104Server := cs104.NewServer(handler)
 	cfg104 := cs104.DefaultConfig()
 	cs104Server.SetConfig(cfg104)
 	cs104Server.SetParams(asdu.ParamsWide)
-	if svcCtx.Config.IecSetting.Enable {
+	if logMode {
 		cs104Server.LogMode(true)
 		cs104Server.SetLogProvider(&LogProvider{})
 	}
-	addr := svcCtx.Config.IecSetting.Host + ":" + strconv.Itoa(svcCtx.Config.IecSetting.Port)
+	addr := host + ":" + strconv.Itoa(port)
 	return &IecServer{cs104Server: cs104Server, addr: addr}
 }
 

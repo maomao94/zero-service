@@ -9,8 +9,8 @@ type Config struct {
 
 	IecSetting struct {
 		// Settings 连接配置
-		Host   string
-		Port   int
-		Enable bool //是否开启log
+		Host    string
+		Port    int
+		LogMode bool //是否开启log
 	}
 }
