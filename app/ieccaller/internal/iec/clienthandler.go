@@ -3,7 +3,7 @@ package iec
 import (
 	"fmt"
 	"github.com/wendy512/go-iecp5/asdu"
-	iec104client "zero-service/iec104/client"
+	iec104client "zero-service/iec104/iec104client"
 )
 
 type ClientCall struct {

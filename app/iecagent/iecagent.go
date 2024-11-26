@@ -6,7 +6,7 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 	"zero-service/app/iecagent/internal/iec"
 	interceptor "zero-service/common/Interceptor/rpcserver"
-	iec104server "zero-service/iec104/server"
+	"zero-service/iec104/iec104server"
 
 	"zero-service/app/iecagent/iecagent"
 	"zero-service/app/iecagent/internal/config"
