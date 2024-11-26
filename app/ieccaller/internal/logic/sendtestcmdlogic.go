@@ -53,6 +53,7 @@ func (l *SendTestCmdLogic) SendTestCmd(in *ieccaller.SendTestCmdReq) (*ieccaller
 			IsNegative: false,
 			Cause:      asdu.Activation,
 		}
+
 		err = client.InterrogationCmd(coa, asdu.CommonAddr(1), asdu.QOIStation)
 		if err != nil {
 			l.Logger.Errorf("interrogation cmd error: %s", err.Error())
