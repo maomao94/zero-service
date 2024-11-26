@@ -1,4 +1,4 @@
-package client
+package iec104client
 
 import (
 	"crypto/tls"
@@ -64,7 +64,7 @@ func NewSettings() *Settings {
 
 func New(settings *Settings, call ASDUCall) *Client {
 	opts := newClientOption(settings)
-	handler := &clientHandler{call: call}
+	handler := &ClientHandler{Call: call}
 	client104 := cs104.NewClient(handler, opts)
 	logCfg := settings.LogCfg
 	if logCfg != nil {

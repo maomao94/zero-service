@@ -1,4 +1,4 @@
-package client
+package iec104client
 
 import "errors"
 

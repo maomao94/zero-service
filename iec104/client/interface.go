@@ -1,4 +1,4 @@
-package client
+package iec104client
 
 import "github.com/wendy512/go-iecp5/asdu"
 

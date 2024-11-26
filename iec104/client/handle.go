@@ -1,4 +1,4 @@
-package client
+package iec104client
 
 import "github.com/wendy512/go-iecp5/asdu"
 
@@ -27,48 +27,48 @@ const (
 
 type DataType int
 
-type clientHandler struct {
-	call ASDUCall
+type ClientHandler struct {
+	Call ASDUCall
 }
 
 // InterrogationHandler 总召唤回复
-func (h *clientHandler) InterrogationHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	return h.call.OnInterrogation(rxAsdu)
+func (h *ClientHandler) InterrogationHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
+	return h.Call.OnInterrogation(rxAsdu)
 }
 
 // CounterInterrogationHandler 总计数器回复
-func (h *clientHandler) CounterInterrogationHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	return h.call.OnCounterInterrogation(rxAsdu)
+func (h *ClientHandler) CounterInterrogationHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
+	return h.Call.OnCounterInterrogation(rxAsdu)
 }
 
 // ReadHandler 读定值回复
-func (h *clientHandler) ReadHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	return h.call.OnRead(rxAsdu)
+func (h *ClientHandler) ReadHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
+	return h.Call.OnRead(rxAsdu)
 }
 
 // TestCommandHandler 测试下发回复
-func (h *clientHandler) TestCommandHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	return h.call.OnTestCommand(rxAsdu)
+func (h *ClientHandler) TestCommandHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
+	return h.Call.OnTestCommand(rxAsdu)
 }
 
 // ClockSyncHandler 时钟同步回复
-func (h *clientHandler) ClockSyncHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	return h.call.OnClockSync(rxAsdu)
+func (h *ClientHandler) ClockSyncHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
+	return h.Call.OnClockSync(rxAsdu)
 }
 
 // ResetProcessHandler 进程重置回复
-func (h *clientHandler) ResetProcessHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	return h.call.OnResetProcess(rxAsdu)
+func (h *ClientHandler) ResetProcessHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
+	return h.Call.OnResetProcess(rxAsdu)
 }
 
 // DelayAcquisitionHandler 延迟获取回复
-func (h *clientHandler) DelayAcquisitionHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	return h.call.OnDelayAcquisition(rxAsdu)
+func (h *ClientHandler) DelayAcquisitionHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
+	return h.Call.OnDelayAcquisition(rxAsdu)
 }
 
 // ASDUHandler ASDU上报，ASDU数据
-func (h *clientHandler) ASDUHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	return h.call.OnASDU(rxAsdu)
+func (h *ClientHandler) ASDUHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
+	return h.Call.OnASDU(rxAsdu)
 }
 
 func GetDataType(typeId asdu.TypeID) DataType {
