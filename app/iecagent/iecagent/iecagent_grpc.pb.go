@@ -35,7 +35,7 @@ func NewIecAgentClient(cc grpc.ClientConnInterface) IecAgentClient {
 
 func (c *iecAgentClient) Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error) {
 	out := new(Res)
-	err := c.cc.Invoke(ctx, "/file.IecAgent/Ping", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/iecagent.IecAgent/Ping", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func _IecAgent_Ping_Handler(srv interface{}, ctx context.Context, dec func(inter
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/file.IecAgent/Ping",
+		FullMethod: "/iecagent.IecAgent/Ping",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IecAgentServer).Ping(ctx, req.(*Req))
@@ -92,7 +92,7 @@ func _IecAgent_Ping_Handler(srv interface{}, ctx context.Context, dec func(inter
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var IecAgent_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "file.IecAgent",
+	ServiceName: "iecagent.IecAgent",
 	HandlerType: (*IecAgentServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

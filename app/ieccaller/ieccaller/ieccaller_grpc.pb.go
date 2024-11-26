@@ -36,7 +36,7 @@ func NewIecCallerClient(cc grpc.ClientConnInterface) IecCallerClient {
 
 func (c *iecCallerClient) Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error) {
 	out := new(Res)
-	err := c.cc.Invoke(ctx, "/file.IecCaller/Ping", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ieccaller.IecCaller/Ping", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (c *iecCallerClient) Ping(ctx context.Context, in *Req, opts ...grpc.CallOp
 
 func (c *iecCallerClient) SendTestCmd(ctx context.Context, in *SendTestCmdReq, opts ...grpc.CallOption) (*SendTestCmdRes, error) {
 	out := new(SendTestCmdRes)
-	err := c.cc.Invoke(ctx, "/file.IecCaller/SendTestCmd", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ieccaller.IecCaller/SendTestCmd", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func _IecCaller_Ping_Handler(srv interface{}, ctx context.Context, dec func(inte
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/file.IecCaller/Ping",
+		FullMethod: "/ieccaller.IecCaller/Ping",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IecCallerServer).Ping(ctx, req.(*Req))
@@ -112,7 +112,7 @@ func _IecCaller_SendTestCmd_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/file.IecCaller/SendTestCmd",
+		FullMethod: "/ieccaller.IecCaller/SendTestCmd",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IecCallerServer).SendTestCmd(ctx, req.(*SendTestCmdReq))
@@ -124,7 +124,7 @@ func _IecCaller_SendTestCmd_Handler(srv interface{}, ctx context.Context, dec fu
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var IecCaller_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "file.IecCaller",
+	ServiceName: "ieccaller.IecCaller",
 	HandlerType: (*IecCallerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

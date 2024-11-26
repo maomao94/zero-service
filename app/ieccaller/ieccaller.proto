@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package file;
+package ieccaller;
 option go_package = "./ieccaller";
 
 message Req {
