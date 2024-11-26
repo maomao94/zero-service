@@ -19,7 +19,7 @@ func NewIecServer(host string, port int, logMode bool, handler *ServerHandler) *
 	cs104Server.SetParams(asdu.ParamsWide)
 	if logMode {
 		cs104Server.LogMode(true)
-		cs104Server.SetLogProvider(&LogProvider{})
+		cs104Server.SetLogProvider(NewLogProvider())
 	}
 	addr := host + ":" + strconv.Itoa(port)
 	return &IecServer{cs104Server: cs104Server, addr: addr}
@@ -34,36 +34,43 @@ func (q *IecServer) Stop() {
 }
 
 type LogProvider struct {
+	logx.Logger
+}
+
+func NewLogProvider() *LogProvider {
+	return &LogProvider{
+		Logger: logx.WithContext(nil),
+	}
 }
 
 func (l *LogProvider) Critical(format string, v ...interface{}) {
 	if v == nil {
-		logx.Error(format)
+		l.Logger.Error(format)
 	} else {
-		logx.Errorf(format, v)
+		l.Logger.Errorf(format, v)
 	}
 }
 
 func (l *LogProvider) Error(format string, v ...interface{}) {
 	if v == nil {
-		logx.Error(format)
+		l.Logger.Error(format)
 	} else {
-		logx.Errorf(format, v)
+		l.Logger.Errorf(format, v)
 	}
 }
 
 func (l *LogProvider) Warn(format string, v ...interface{}) {
 	if v == nil {
-		logx.Error(format)
+		l.Logger.Error(format)
 	} else {
-		logx.Errorf(format, v)
+		l.Logger.Errorf(format, v)
 	}
 }
 
 func (l *LogProvider) Debug(format string, v ...interface{}) {
 	if v == nil {
-		logx.Debug(format)
+		l.Logger.Debug(format)
 	} else {
-		logx.Debugf(format, v)
+		l.Logger.Debugf(format, v)
 	}
 }

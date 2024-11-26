@@ -41,7 +41,7 @@ func (l *SendTestCmdLogic) SendTestCmd(in *ieccaller.SendTestCmdReq) (*ieccaller
 	client := cs104.NewClient(handler, option)
 
 	client.LogMode(true)
-	client.SetLogProvider(&iec104server.LogProvider{})
+	client.SetLogProvider(iec104server.NewLogProvider())
 
 	client.SetOnConnectHandler(func(c *cs104.Client) {
 		c.SendStartDt() // 发送startDt激活指令
