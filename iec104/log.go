@@ -1,6 +1,9 @@
 package iec104
 
-import "github.com/zeromicro/go-zero/core/logx"
+import (
+	"context"
+	"github.com/zeromicro/go-zero/core/logx"
+)
 
 type LogProvider struct {
 	logx.Logger
@@ -8,7 +11,7 @@ type LogProvider struct {
 
 func NewLogProvider() *LogProvider {
 	return &LogProvider{
-		Logger: logx.WithContext(nil),
+		Logger: logx.WithContext(context.TODO()),
 	}
 }
 
