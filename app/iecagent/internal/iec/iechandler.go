@@ -2,6 +2,7 @@ package iec
 
 import (
 	"github.com/wendy512/go-iecp5/asdu"
+	"github.com/zeromicro/go-zero/core/logx"
 	"time"
 	"zero-service/app/iecagent/internal/svc"
 )
@@ -84,6 +85,7 @@ func (ms *IecHandler) OnDelayAcquisition(conn asdu.Connect, pack *asdu.ASDU, mse
 func (ms *IecHandler) OnASDU(conn asdu.Connect, pack *asdu.ASDU) error {
 	_ = pack.SendReplyMirror(conn, asdu.ActivationCon)
 	// TODO
+	logx.Info("OnASDU")
 	cmd := pack.GetSingleCmd()
 	_ = asdu.SingleCmd(conn, pack.Type, pack.Coa, pack.CommonAddr, asdu.SingleCommandInfo{
 		Ioa:   cmd.Ioa,

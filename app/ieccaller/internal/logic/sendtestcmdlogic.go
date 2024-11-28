@@ -48,16 +48,16 @@ func (l *SendTestCmdLogic) SendTestCmd(in *ieccaller.SendTestCmdReq) (*ieccaller
 	client.SetServerActiveHandler(func(c *cs104.Client) {
 		// 连接成功以后做的操作
 		l.Logger.Infof("server active %s iec104 server", "IP_ADDRESS:2404")
-		//coa := asdu.CauseOfTransmission{
-		//	IsTest:     false,
-		//	IsNegative: false,
-		//	Cause:      asdu.Activation,
-		//}
-		//
-		//err = client.InterrogationCmd(coa, asdu.CommonAddr(1), asdu.QOIStation)
-		//if err != nil {
-		//	l.Logger.Errorf("interrogation cmd error: %s", err.Error())
-		//}
+		coa := asdu.CauseOfTransmission{
+			IsTest:     false,
+			IsNegative: false,
+			Cause:      asdu.Activation,
+		}
+
+		err = client.InterrogationCmd(coa, asdu.CommonAddr(1), asdu.QOIStation)
+		if err != nil {
+			l.Logger.Errorf("interrogation cmd error: %s", err.Error())
+		}
 	})
 	err = client.Start()
 	if err != nil {
