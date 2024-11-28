@@ -3,6 +3,7 @@ package svc
 import (
 	"fmt"
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/payment"
+	"github.com/go-playground/validator/v10"
 	"github.com/zeromicro/go-zero/zrpc"
 	"zero-service/admin/guns"
 	"zero-service/app/file/file"
@@ -14,6 +15,7 @@ import (
 
 type ServiceContext struct {
 	Config      config.Config
+	Validate    *validator.Validate
 	ZeroRpcCli  zerorpc.ZerorpcClient
 	FileRpcCLi  file.FileRpcClient
 	AdminRpcCli guns.AdminClient
@@ -54,7 +56,8 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		panic(fmt.Errorf("微信支付初始化错误,%v", err))
 	}
 	return &ServiceContext{
-		Config: c,
+		Config:   c,
+		Validate: validator.New(),
 		ZeroRpcCli: zerorpc.NewZerorpcClient(zrpc.MustNewClient(c.ZeroRpcConf,
 			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor)).Conn()),
 		FileRpcCLi: file.NewFileRpcClient(zrpc.MustNewClient(c.FileRpcConf,
