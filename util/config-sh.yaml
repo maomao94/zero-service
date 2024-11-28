@@ -1,20 +1,20 @@
 zgh:
-  sshUser: "zxhc"
-  sshHost: "10.10.1.135"
+  sshUser: "*"
+  sshHost: "*"
   sshPort: "22"
-  sshPassword: "Zxhc@1234!@#$"
-  path: "/home/zxhc/docker/app/docker-compose.yml"
+  sshPassword: "*"
+  path: "/home/*/app/docker-compose.yml"
   serviceName:
     - defect-server
     - file-server
-  remark: "中广核项目"
+  remark: "*"
 qny:
   sshUser: "qny"
-  sshHost: "10.10.1.137"
+  sshHost: "*"
   sshPort: "22"
-  sshPassword: "Zxhc@1234!@#$"
-  path: "/home/zxhc/docker/app/docker-compose.yml"
+  sshPassword: "*"
+  path: "/home/*/app/docker-compose.yml"
   serviceName:
     - other-server
     - other1-server
-  remark: "氢能源项目"
+  remark: "*"
