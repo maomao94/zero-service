@@ -92,6 +92,6 @@ func (ms *IecHandler) OnASDU(conn asdu.Connect, pack *asdu.ASDU) error {
 		Value: cmd.Value,
 		Qoc:   cmd.Qoc,
 	})
-	_ = pack.SendReplyMirror(conn, asdu.ActivationCon)
+	_ = pack.SendReplyMirror(conn, asdu.ActivationTerm)
 	return nil
 }
