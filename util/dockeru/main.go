@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/zeromicro/go-zero/core/stringx"
 	"golang.org/x/term"
 	"os"
 	"os/exec"
@@ -257,7 +258,7 @@ func main() {
 		}
 
 		container := containers[containerIndex-1]
-		executeActionCommandWithInteractive(action, container.Name)
+		executeActionCommandWithInteractive(action, container)
 		return
 	} else {
 		fmt.Println("未知操作")
@@ -333,20 +334,24 @@ func getAllImageList(filter string) []ImageInfo {
 	return imageList
 }
 
-func executeActionCommandWithInteractive(action, container string) {
+func executeActionCommandWithInteractive(action string, container ContainerInfo) {
 	var cmd *exec.Cmd
 	switch action {
 	case "start":
-		cmd = exec.Command("docker", "start", container)
+		cmd = exec.Command("docker", "start", container.ID)
 	case "stop":
-		cmd = exec.Command("docker", "stop", container)
+		cmd = exec.Command("docker", "stop", container.ID)
 	case "restart":
-		cmd = exec.Command("docker", "restart", container)
+		cmd = exec.Command("docker", "restart", container.ID)
 	case "exec":
+		arg := "/bin/bash"
 		// 使用 `-it` 伪终端参数
-		cmd = exec.Command("docker", "exec", "-it", container, "/bin/bash")
+		if strings.Contains(container.Name, "alpine") {
+			arg = "/bin/sh"
+		}
+		cmd = exec.Command("docker", "exec", "-it", container.ID, arg)
 	case "log":
-		cmd = exec.Command("docker", "logs", "--tail", "100", "-f", container)
+		cmd = exec.Command("docker", "logs", "--tail", "100", "-f", container.ID)
 	case "image-prune":
 		cmd = exec.Command("docker", "image", "prune")
 	default:
