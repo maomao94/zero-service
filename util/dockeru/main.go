@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/zeromicro/go-zero/core/stringx"
 	"golang.org/x/term"
 	"os"
 	"os/exec"
@@ -78,7 +77,7 @@ func main() {
 	// 特殊处理
 	if action == "image-prune" {
 		fmt.Print("\033[31m正在执行悬空镜像清理...\033[0m\n")
-		executeActionCommandWithInteractive(action, "")
+		executeActionCommandWithInteractive(action, ContainerInfo{})
 		return
 	}
 
