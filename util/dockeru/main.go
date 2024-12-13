@@ -345,7 +345,7 @@ func executeActionCommandWithInteractive(action string, container ContainerInfo)
 	case "exec":
 		arg := "/bin/bash"
 		// 使用 `-it` 伪终端参数
-		if strings.Contains(container.Name, "alpine") {
+		if strings.Contains(container.Image, "alpine") {
 			arg = "/bin/sh"
 		}
 		cmd = exec.Command("docker", "exec", "-it", container.ID, arg)
