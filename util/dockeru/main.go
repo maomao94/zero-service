@@ -370,8 +370,13 @@ func executeActionCommandWithInteractive(action string, container ContainerInfo)
 			}
 			return
 		}
-		upName := strutil.SubInBetween(container.Name, dirName+"_", "_")
-		fmt.Println("upName:", upName)
+		upName := strutil.BeforeLast(strutil.AfterLast(container.Name, dirName+"_"), "_")
+		if upName == "" {
+			fmt.Println("模块名获取失败")
+			return
+		}
+		// 打印模块名
+		fmt.Println("模块名:", upName)
 		cmd = exec.Command("docker", "compose", "up", "-d", upName)
 	case "exec":
 		arg := "/bin/bash"
