@@ -3,9 +3,11 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/duke-git/lancet/v2/strutil"
 	"golang.org/x/term"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -39,12 +41,12 @@ func main() {
 
 	// 选项部分
 	fmt.Println("\033[1;34m请选择一个操作:\033[0m") // 蓝色
-	options := []string{"log", "ps", "start", "stop", "restart", "exec", "images", "image-save", "image-prune"}
+	options := []string{"log", "ps", "start", "stop", "restart", "up", "exec", "images", "image-save", "image-prune"}
 	for i, option := range options {
 		// 为选项列表添加颜色
 		var color string
 		switch option {
-		case "start", "restart":
+		case "start", "restart", "up":
 			color = "\033[1;32m" // 绿色，表示启动或重启
 		case "stop":
 			color = "\033[1;31m" // 红色，表示停止
@@ -342,6 +344,35 @@ func executeActionCommandWithInteractive(action string, container ContainerInfo)
 		cmd = exec.Command("docker", "stop", container.ID)
 	case "restart":
 		cmd = exec.Command("docker", "restart", container.ID)
+	case "up":
+		// 执行 docker compose
+		// 判断当前文件夹名
+		// 获取当前工作目录
+		dir, err := os.Getwd()
+		if err != nil {
+			fmt.Println("获取当前目录失败:", err)
+			return
+		}
+		// 获取当前目录名
+		dirName := filepath.Base(dir)
+		fmt.Println("当前目录名:", dirName)
+		// 定义 docker-compose 文件路径
+		filePath := "docker-compose.yml"
+		// 使用 os.Stat 检查文件是否存在
+		_, err = os.Stat(filePath)
+		if err != nil {
+			// 如果文件不存在
+			if os.IsNotExist(err) {
+				fmt.Println("文件不存在:", filePath)
+			} else {
+				// 其他错误
+				fmt.Println("检查文件时发生错误:", err)
+			}
+			return
+		}
+		upName := strutil.SubInBetween(container.Name, dirName+"_", "_")
+		fmt.Println("upName:", upName)
+		cmd = exec.Command("docker", "compose", "up", "-d", upName)
 	case "exec":
 		arg := "/bin/bash"
 		// 使用 `-it` 伪终端参数
