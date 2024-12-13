@@ -370,14 +370,23 @@ func executeActionCommandWithInteractive(action string, container ContainerInfo)
 			}
 			return
 		}
-		upName := strutil.BeforeLast(strutil.AfterLast(container.Name, dirName+"_"), "_")
-		if upName == "" {
-			fmt.Println("模块名获取失败")
-			return
+		newCompose := false
+		upName := strutil.BeforeLast(strutil.After(container.Name, dirName+"_"), "_")
+		if upName == "" || container.Name == upName {
+			newCompose = true
+			upName = strutil.BeforeLast(strutil.After(container.Name, dirName+"-"), "-")
+			if upName == "" || container.Name == upName {
+				fmt.Println("无法解析模块名,请手工执行命令")
+				return
+			}
 		}
 		// 打印模块名
 		fmt.Println("模块名:", upName)
-		cmd = exec.Command("docker", "compose", "up", "-d", upName)
+		if newCompose {
+			cmd = exec.Command("docker", "compose", "up", "-d", upName)
+		} else {
+			cmd = exec.Command("docker-compose", "up", "-d", upName)
+		}
 	case "exec":
 		arg := "/bin/bash"
 		// 使用 `-it` 伪终端参数
