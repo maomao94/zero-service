@@ -1,0 +1,312 @@
+2024-11-22T15:44:39.708+08:00	 stat 	(file.rpc) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=file.rpc	caller=stat/metrics.go:210
+2024-11-22T15:45:58.514+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T15:45:58.515+08:00	 stat 	dbcache(sqlc) - qpm: 256, hit_ratio: 100.0%, hit: 256, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T15:45:58.518+08:00	 stat 	CPU: 0m, MEMORY: Alloc=13267.6Mi, TotalAlloc=73312.1Mi, Sys=14438.4Mi, NumGC=111	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T15:46:58.520+08:00	 stat 	dbcache(sqlc) - qpm: 296, hit_ratio: 100.0%, hit: 296, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T15:46:58.526+08:00	 stat 	CPU: 0m, MEMORY: Alloc=19028.8Mi, TotalAlloc=159324.3Mi, Sys=20204.3Mi, NumGC=236	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T15:46:58.526+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T15:47:58.527+08:00	 stat 	CPU: 0m, MEMORY: Alloc=12103.7Mi, TotalAlloc=225710.5Mi, Sys=20204.3Mi, NumGC=335	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T15:47:58.527+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T15:47:58.527+08:00	 stat 	dbcache(sqlc) - qpm: 230, hit_ratio: 100.0%, hit: 230, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T15:48:58.501+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.3Mi, TotalAlloc=295579.9Mi, Sys=20204.3Mi, NumGC=460	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T15:48:58.513+08:00	 stat 	dbcache(sqlc) - qpm: 242, hit_ratio: 100.0%, hit: 242, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T15:48:58.516+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T15:49:58.487+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.3Mi, TotalAlloc=295579.9Mi, Sys=20204.3Mi, NumGC=460	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T15:49:58.501+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T15:50:58.477+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.1Mi, TotalAlloc=295579.9Mi, Sys=20204.3Mi, NumGC=461	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T15:50:58.492+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T15:51:58.477+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.1Mi, TotalAlloc=295579.9Mi, Sys=20204.3Mi, NumGC=461	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T15:51:58.492+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T15:52:58.478+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.1Mi, TotalAlloc=295579.9Mi, Sys=20204.3Mi, NumGC=462	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T15:52:58.493+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T15:53:58.479+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.1Mi, TotalAlloc=295580.0Mi, Sys=20204.3Mi, NumGC=462	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T15:53:58.493+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T15:54:58.479+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.2Mi, TotalAlloc=299046.8Mi, Sys=20204.3Mi, NumGC=472	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T15:54:58.492+08:00	 stat 	dbcache(sqlc) - qpm: 12, hit_ratio: 100.0%, hit: 12, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T15:54:58.494+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T15:55:58.537+08:00	 stat 	CPU: 0m, MEMORY: Alloc=2308.4Mi, TotalAlloc=428376.2Mi, Sys=20204.3Mi, NumGC=659	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T15:55:58.537+08:00	 stat 	dbcache(sqlc) - qpm: 448, hit_ratio: 100.0%, hit: 448, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T15:55:58.537+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T15:56:58.521+08:00	 stat 	CPU: 0m, MEMORY: Alloc=2885.5Mi, TotalAlloc=534607.1Mi, Sys=20204.3Mi, NumGC=845	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T15:56:58.521+08:00	 stat 	dbcache(sqlc) - qpm: 368, hit_ratio: 100.0%, hit: 368, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T15:56:58.522+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	caller=load/sheddingstat.go:61	app=file.rpc
+2024-11-22T15:57:58.480+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=584257.6Mi, Sys=20204.3Mi, NumGC=925	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T15:57:58.493+08:00	 stat 	dbcache(sqlc) - qpm: 172, hit_ratio: 100.0%, hit: 172, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T15:57:58.495+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T15:58:58.481+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=584257.6Mi, Sys=20204.3Mi, NumGC=925	caller=stat/usage.go:61	app=file.rpc
+2024-11-22T15:58:58.495+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T15:59:58.486+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.3Mi, TotalAlloc=585989.8Mi, Sys=20204.3Mi, NumGC=931	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T15:59:58.494+08:00	 stat 	dbcache(sqlc) - qpm: 6, hit_ratio: 100.0%, hit: 6, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T15:59:58.498+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:00:58.579+08:00	 stat 	CPU: 0m, MEMORY: Alloc=579.6Mi, TotalAlloc=691053.7Mi, Sys=23663.8Mi, NumGC=1095	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:00:58.579+08:00	 stat 	dbcache(sqlc) - qpm: 364, hit_ratio: 100.0%, hit: 364, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:00:58.579+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:01:58.483+08:00	 stat 	CPU: 0m, MEMORY: Alloc=580.8Mi, TotalAlloc=785756.0Mi, Sys=23663.8Mi, NumGC=1270	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:01:58.510+08:00	 stat 	dbcache(sqlc) - qpm: 328, hit_ratio: 100.0%, hit: 328, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:01:58.511+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	caller=load/sheddingstat.go:61	app=file.rpc
+2024-11-22T16:02:58.545+08:00	 stat 	CPU: 0m, MEMORY: Alloc=5189.1Mi, TotalAlloc=872936.7Mi, Sys=23663.8Mi, NumGC=1412	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:02:58.545+08:00	 stat 	dbcache(sqlc) - qpm: 302, hit_ratio: 100.0%, hit: 302, miss: 0, db_fails: 0	caller=cache/cachestat.go:71	app=file.rpc
+2024-11-22T16:02:58.546+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:03:58.477+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=872940.4Mi, Sys=23663.8Mi, NumGC=1417	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:03:58.492+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:04:50.813+08:00	 stat 	(file.rpc) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=file.rpc	caller=stat/metrics.go:210
+2024-11-22T16:05:59.652+08:00	 stat 	CPU: 0m, MEMORY: Alloc=2.7Mi, TotalAlloc=4.9Mi, Sys=18.6Mi, NumGC=2	caller=stat/usage.go:61	app=file.rpc
+2024-11-22T16:05:59.665+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:06:48.646+08:00	 stat 	(file.rpc) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=file.rpc	caller=stat/metrics.go:210
+2024-11-22T16:07:54.520+08:00	 stat 	dbcache(sqlc) - qpm: 212, hit_ratio: 100.0%, hit: 212, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:07:54.524+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:07:54.537+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6921.3Mi, TotalAlloc=61204.4Mi, Sys=11554.7Mi, NumGC=108	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:08:24.678+08:00	 stat 	(file.rpc) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=file.rpc	caller=stat/metrics.go:210
+2024-11-22T16:09:40.435+08:00	 stat 	(file.rpc) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	caller=stat/metrics.go:210	app=file.rpc
+2024-11-22T16:09:42.810+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.3Mi, TotalAlloc=64674.9Mi, Sys=12704.3Mi, NumGC=119	caller=stat/usage.go:61	app=file.rpc
+2024-11-22T16:09:42.810+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:09:42.810+08:00	 stat 	dbcache(sqlc) - qpm: 224, hit_ratio: 100.0%, hit: 224, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:10:54.332+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.2Mi, TotalAlloc=34071.1Mi, Sys=6942.4Mi, NumGC=72	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:10:54.348+08:00	 stat 	dbcache(sqlc) - qpm: 118, hit_ratio: 100.0%, hit: 118, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:10:54.351+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:11:54.337+08:00	 stat 	CPU: 0m, MEMORY: Alloc=5190.5Mi, TotalAlloc=159920.2Mi, Sys=16168.1Mi, NumGC=256	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:11:54.349+08:00	 stat 	dbcache(sqlc) - qpm: 436, hit_ratio: 100.0%, hit: 436, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:11:54.352+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:12:54.357+08:00	 stat 	CPU: 0m, MEMORY: Alloc=12680.4Mi, TotalAlloc=262105.4Mi, Sys=16168.1Mi, NumGC=392	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:12:54.357+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:12:54.358+08:00	 stat 	dbcache(sqlc) - qpm: 354, hit_ratio: 100.0%, hit: 354, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:13:54.341+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.3Mi, TotalAlloc=322730.2Mi, Sys=16168.1Mi, NumGC=489	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:13:54.358+08:00	 stat 	dbcache(sqlc) - qpm: 210, hit_ratio: 100.0%, hit: 210, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:13:54.360+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:14:54.367+08:00	 stat 	CPU: 0m, MEMORY: Alloc=7494.7Mi, TotalAlloc=452597.0Mi, Sys=17897.9Mi, NumGC=648	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:14:54.368+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:14:54.368+08:00	 stat 	dbcache(sqlc) - qpm: 450, hit_ratio: 100.0%, hit: 450, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:15:54.356+08:00	 stat 	CPU: 0m, MEMORY: Alloc=13265.2Mi, TotalAlloc=547274.4Mi, Sys=17897.9Mi, NumGC=771	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:15:54.360+08:00	 stat 	dbcache(sqlc) - qpm: 328, hit_ratio: 100.0%, hit: 328, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:15:54.365+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:16:54.343+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.3Mi, TotalAlloc=598089.0Mi, Sys=17897.9Mi, NumGC=884	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:16:54.360+08:00	 stat 	dbcache(sqlc) - qpm: 176, hit_ratio: 100.0%, hit: 176, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:16:54.362+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:17:54.361+08:00	 stat 	dbcache(sqlc) - qpm: 272, hit_ratio: 100.0%, hit: 272, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:17:54.364+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:17:54.768+08:00	 stat 	CPU: 0m, MEMORY: Alloc=8655.1Mi, TotalAlloc=677761.0Mi, Sys=19051.1Mi, NumGC=999	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:18:54.353+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.9Mi, TotalAlloc=787417.4Mi, Sys=19051.1Mi, NumGC=1130	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:18:54.363+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:18:54.363+08:00	 stat 	dbcache(sqlc) - qpm: 384, hit_ratio: 100.0%, hit: 384, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:19:54.345+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.6Mi, TotalAlloc=880354.3Mi, Sys=19051.1Mi, NumGC=1247	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:19:54.362+08:00	 stat 	dbcache(sqlc) - qpm: 322, hit_ratio: 100.0%, hit: 322, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:19:54.364+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:20:54.345+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=899983.2Mi, Sys=19051.1Mi, NumGC=1285	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:20:54.362+08:00	 stat 	dbcache(sqlc) - qpm: 68, hit_ratio: 100.0%, hit: 68, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:20:54.364+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:21:54.363+08:00	 stat 	dbcache(sqlc) - qpm: 418, hit_ratio: 100.0%, hit: 418, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:21:54.365+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:21:54.522+08:00	 stat 	CPU: 0m, MEMORY: Alloc=9231.3Mi, TotalAlloc=1020633.4Mi, Sys=22510.6Mi, NumGC=1429	caller=stat/usage.go:61	app=file.rpc
+2024-11-22T16:22:54.383+08:00	 stat 	dbcache(sqlc) - qpm: 330, hit_ratio: 100.0%, hit: 330, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:22:54.385+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6926.4Mi, TotalAlloc=1115889.1Mi, Sys=22510.6Mi, NumGC=1568	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:22:54.385+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:23:54.348+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=1188635.2Mi, Sys=22510.6Mi, NumGC=1697	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:23:54.364+08:00	 stat 	dbcache(sqlc) - qpm: 252, hit_ratio: 100.0%, hit: 252, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:23:54.366+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:24:54.348+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=1188635.2Mi, Sys=22510.6Mi, NumGC=1697	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:24:54.367+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:25:54.349+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.1Mi, TotalAlloc=1188635.2Mi, Sys=22510.6Mi, NumGC=1698	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:25:54.368+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:26:54.349+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.1Mi, TotalAlloc=1188635.2Mi, Sys=22510.6Mi, NumGC=1698	caller=stat/usage.go:61	app=file.rpc
+2024-11-22T16:26:54.368+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	caller=load/sheddingstat.go:61	app=file.rpc
+2024-11-22T16:27:54.360+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.1Mi, TotalAlloc=1188635.2Mi, Sys=22510.6Mi, NumGC=1699	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:27:54.379+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:28:54.417+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	caller=load/sheddingstat.go:61	app=file.rpc
+2024-11-22T16:28:54.433+08:00	 stat 	dbcache(sqlc) - qpm: 176, hit_ratio: 100.0%, hit: 176, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:28:54.437+08:00	 stat 	CPU: 0m, MEMORY: Alloc=8649.2Mi, TotalAlloc=1239442.2Mi, Sys=22510.6Mi, NumGC=1776	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:29:54.391+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.3Mi, TotalAlloc=1342212.8Mi, Sys=22510.6Mi, NumGC=1935	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:29:54.407+08:00	 stat 	dbcache(sqlc) - qpm: 356, hit_ratio: 100.0%, hit: 356, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:29:54.410+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:30:54.392+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.7Mi, TotalAlloc=1451894.6Mi, Sys=22510.6Mi, NumGC=2068	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:30:54.410+08:00	 stat 	dbcache(sqlc) - qpm: 380, hit_ratio: 100.0%, hit: 380, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:30:54.413+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:31:54.396+08:00	 stat 	CPU: 0m, MEMORY: Alloc=580.8Mi, TotalAlloc=1547736.6Mi, Sys=22510.6Mi, NumGC=2206	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:31:54.411+08:00	 stat 	dbcache(sqlc) - qpm: 332, hit_ratio: 100.0%, hit: 332, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:31:54.413+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:32:54.396+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=1656262.5Mi, Sys=22510.6Mi, NumGC=2347	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:32:54.413+08:00	 stat 	dbcache(sqlc) - qpm: 376, hit_ratio: 100.0%, hit: 376, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:32:54.414+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	caller=load/sheddingstat.go:61	app=file.rpc
+2024-11-22T16:33:54.430+08:00	 stat 	CPU: 0m, MEMORY: Alloc=8076.3Mi, TotalAlloc=1749200.8Mi, Sys=22510.6Mi, NumGC=2478	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:33:54.430+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:33:54.430+08:00	 stat 	dbcache(sqlc) - qpm: 333, hit_ratio: 99.7%, hit: 332, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:34:00.563+08:00	 stat 	(file.rpc) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=file.rpc	caller=stat/metrics.go:210
+2024-11-22T16:35:23.116+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.3Mi, TotalAlloc=80261.4Mi, Sys=11555.2Mi, NumGC=142	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:35:23.131+08:00	 stat 	dbcache(sqlc) - qpm: 278, hit_ratio: 100.0%, hit: 278, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:35:23.135+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:36:23.237+08:00	 stat 	CPU: 0m, MEMORY: Alloc=9223.4Mi, TotalAlloc=195701.2Mi, Sys=14438.1Mi, NumGC=278	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:36:23.238+08:00	 stat 	dbcache(sqlc) - qpm: 400, hit_ratio: 100.0%, hit: 400, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:36:23.238+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:37:23.135+08:00	 stat 	dbcache(sqlc) - qpm: 280, hit_ratio: 100.0%, hit: 280, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:37:23.141+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6926.8Mi, TotalAlloc=276535.1Mi, Sys=16169.9Mi, NumGC=390	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:37:23.141+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:38:23.119+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=299642.6Mi, Sys=16168.1Mi, NumGC=433	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:38:23.135+08:00	 stat 	dbcache(sqlc) - qpm: 80, hit_ratio: 100.0%, hit: 80, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:38:23.138+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:39:23.121+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=299642.6Mi, Sys=16168.1Mi, NumGC=433	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:39:23.139+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:40:23.122+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6.8Mi, TotalAlloc=299646.4Mi, Sys=16169.1Mi, NumGC=435	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:40:23.140+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:41:23.166+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6925.4Mi, TotalAlloc=359103.5Mi, Sys=20204.3Mi, NumGC=520	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:41:23.166+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:41:23.168+08:00	 stat 	dbcache(sqlc) - qpm: 206, hit_ratio: 100.0%, hit: 206, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:42:23.884+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:42:23.887+08:00	 stat 	dbcache(sqlc) - qpm: 396, hit_ratio: 100.0%, hit: 396, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:42:23.908+08:00	 stat 	CPU: 0m, MEMORY: Alloc=12697.3Mi, TotalAlloc=472256.5Mi, Sys=20206.3Mi, NumGC=662	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:43:23.165+08:00	 stat 	CPU: 0m, MEMORY: Alloc=8653.9Mi, TotalAlloc=549055.0Mi, Sys=20204.3Mi, NumGC=800	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:43:23.162+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:43:23.167+08:00	 stat 	dbcache(sqlc) - qpm: 262, hit_ratio: 100.0%, hit: 262, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:44:23.071+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=588313.0Mi, Sys=20204.3Mi, NumGC=880	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:44:23.087+08:00	 stat 	dbcache(sqlc) - qpm: 136, hit_ratio: 100.0%, hit: 136, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T16:44:23.089+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:45:23.072+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=588313.0Mi, Sys=20204.3Mi, NumGC=880	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:45:23.090+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T16:46:23.073+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.1Mi, TotalAlloc=588313.0Mi, Sys=20204.3Mi, NumGC=881	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T16:46:23.091+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:04:12.819+08:00	 stat 	CPU: 0m, MEMORY: Alloc=7.6Mi, TotalAlloc=9.2Mi, Sys=18.6Mi, NumGC=2	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:04:12.831+08:00	 stat 	dbcache(sqlc) - qpm: 2, hit_ratio: 100.0%, hit: 2, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:04:12.834+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 1, pass: 1, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:04:24.555+08:00	 stat 	(file.rpc) - qps: 0.0/s, drops: 0, avg time: 11.0ms, med: 11.3ms, 90th: 11.3ms, 99th: 11.3ms, 99.9th: 11.3ms	app=file.rpc	caller=stat/metrics.go:210
+2024-11-22T17:05:32.222+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6883.1Mi, TotalAlloc=21370.2Mi, Sys=7483.5Mi, NumGC=17	caller=stat/usage.go:61	app=file.rpc
+2024-11-22T17:05:32.232+08:00	 stat 	dbcache(sqlc) - qpm: 78, hit_ratio: 100.0%, hit: 78, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:05:32.234+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 2, pass: 2, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:05:41.914+08:00	 stat 	(file.rpc) - qps: 0.0/s, drops: 0, avg time: 9.0ms, med: 11.2ms, 90th: 11.2ms, 99th: 11.2ms, 99.9th: 11.2ms	app=file.rpc	caller=stat/metrics.go:210
+2024-11-22T17:06:32.241+08:00	 stat 	CPU: 0m, MEMORY: Alloc=11687.6Mi, TotalAlloc=77607.5Mi, Sys=20168.8Mi, NumGC=26	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:06:32.242+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:06:32.241+08:00	 stat 	dbcache(sqlc) - qpm: 208, hit_ratio: 100.0%, hit: 208, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:06:41.996+08:00	 stat 	(file.rpc) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	caller=stat/metrics.go:210	app=file.rpc
+2024-11-22T17:07:32.225+08:00	 stat 	CPU: 0m, MEMORY: Alloc=23804.8Mi, TotalAlloc=109286.8Mi, Sys=24926.1Mi, NumGC=29	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:07:32.234+08:00	 stat 	dbcache(sqlc) - qpm: 118, hit_ratio: 100.0%, hit: 118, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:07:32.235+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:07:41.916+08:00	 stat 	(file.rpc) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=file.rpc	caller=stat/metrics.go:210
+2024-11-22T17:08:32.227+08:00	 stat 	CPU: 0m, MEMORY: Alloc=9525.4Mi, TotalAlloc=159540.7Mi, Sys=25454.7Mi, NumGC=39	caller=stat/usage.go:61	app=file.rpc
+2024-11-22T17:08:32.234+08:00	 stat 	dbcache(sqlc) - qpm: 190, hit_ratio: 100.0%, hit: 190, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:08:32.236+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:08:41.917+08:00	 stat 	(file.rpc) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=file.rpc	caller=stat/metrics.go:210
+2024-11-22T17:09:32.224+08:00	 stat 	CPU: 0m, MEMORY: Alloc=14813.6Mi, TotalAlloc=209789.2Mi, Sys=25454.7Mi, NumGC=45	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:09:32.236+08:00	 stat 	dbcache(sqlc) - qpm: 190, hit_ratio: 100.0%, hit: 190, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:09:32.237+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:09:41.917+08:00	 stat 	(file.rpc) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=file.rpc	caller=stat/metrics.go:210
+2024-11-22T17:10:32.225+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6349.5Mi, TotalAlloc=264261.1Mi, Sys=28097.0Mi, NumGC=54	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:10:32.237+08:00	 stat 	dbcache(sqlc) - qpm: 206, hit_ratio: 100.0%, hit: 206, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:10:32.238+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:10:41.919+08:00	 stat 	(file.rpc) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	caller=stat/metrics.go:210	app=file.rpc
+2024-11-22T17:11:32.227+08:00	 stat 	CPU: 0m, MEMORY: Alloc=10586.0Mi, TotalAlloc=268497.6Mi, Sys=28097.0Mi, NumGC=54	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:11:32.238+08:00	 stat 	dbcache(sqlc) - qpm: 16, hit_ratio: 100.0%, hit: 16, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:11:32.238+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:11:41.919+08:00	 stat 	(file.rpc) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=file.rpc	caller=stat/metrics.go:210
+2024-11-22T17:12:26.115+08:00	 stat 	(file.rpc) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=file.rpc	caller=stat/metrics.go:210
+2024-11-22T17:13:36.809+08:00	 stat 	CPU: 0m, MEMORY: Alloc=7.3Mi, TotalAlloc=8.8Mi, Sys=22.1Mi, NumGC=2	caller=stat/usage.go:61	app=file.rpc
+2024-11-22T17:13:36.828+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	caller=load/sheddingstat.go:61	app=file.rpc
+2024-11-22T17:14:36.826+08:00	 stat 	dbcache(sqlc) - qpm: 328, hit_ratio: 100.0%, hit: 328, miss: 0, db_fails: 0	caller=cache/cachestat.go:71	app=file.rpc
+2024-11-22T17:14:36.827+08:00	 stat 	CPU: 0m, MEMORY: Alloc=16397.2Mi, TotalAlloc=86776.9Mi, Sys=17469.9Mi, NumGC=30	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:14:36.829+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:15:36.876+08:00	 stat 	CPU: 0m, MEMORY: Alloc=10056.9Mi, TotalAlloc=160833.6Mi, Sys=43900.4Mi, NumGC=43	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:15:36.900+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:15:36.903+08:00	 stat 	dbcache(sqlc) - qpm: 282, hit_ratio: 100.0%, hit: 282, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:16:36.883+08:00	 stat 	CPU: 0m, MEMORY: Alloc=28037.1Mi, TotalAlloc=209505.9Mi, Sys=43900.4Mi, NumGC=47	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:16:36.888+08:00	 stat 	dbcache(sqlc) - qpm: 182, hit_ratio: 100.0%, hit: 182, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:16:36.889+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:17:36.868+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6357.9Mi, TotalAlloc=253418.0Mi, Sys=43898.4Mi, NumGC=56	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:17:36.883+08:00	 stat 	dbcache(sqlc) - qpm: 166, hit_ratio: 100.0%, hit: 166, miss: 0, db_fails: 0	caller=cache/cachestat.go:71	app=file.rpc
+2024-11-22T17:17:36.886+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:18:36.870+08:00	 stat 	CPU: 0m, MEMORY: Alloc=11115.9Mi, TotalAlloc=264526.2Mi, Sys=43898.4Mi, NumGC=57	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:18:36.884+08:00	 stat 	dbcache(sqlc) - qpm: 42, hit_ratio: 100.0%, hit: 42, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:18:36.888+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:19:36.872+08:00	 stat 	CPU: 0m, MEMORY: Alloc=11115.9Mi, TotalAlloc=264526.2Mi, Sys=43898.4Mi, NumGC=57	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:19:36.890+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:20:36.873+08:00	 stat 	CPU: 0m, MEMORY: Alloc=12.1Mi, TotalAlloc=264526.2Mi, Sys=43898.4Mi, NumGC=58	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:20:36.891+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:21:36.875+08:00	 stat 	CPU: 0m, MEMORY: Alloc=12.1Mi, TotalAlloc=264526.2Mi, Sys=43898.4Mi, NumGC=58	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:21:36.893+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:22:36.876+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6.9Mi, TotalAlloc=264526.2Mi, Sys=43898.4Mi, NumGC=59	caller=stat/usage.go:61	app=file.rpc
+2024-11-22T17:22:36.895+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:23:36.878+08:00	 stat 	CPU: 0m, MEMORY: Alloc=7.0Mi, TotalAlloc=264526.3Mi, Sys=43898.4Mi, NumGC=59	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:23:36.896+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	caller=load/sheddingstat.go:61	app=file.rpc
+2024-11-22T17:24:36.880+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6.9Mi, TotalAlloc=264526.3Mi, Sys=43898.4Mi, NumGC=60	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:24:36.898+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	caller=load/sheddingstat.go:61	app=file.rpc
+2024-11-22T17:25:36.881+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6.9Mi, TotalAlloc=264526.3Mi, Sys=43898.4Mi, NumGC=60	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:25:36.899+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:26:36.883+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6.9Mi, TotalAlloc=264526.3Mi, Sys=43898.4Mi, NumGC=61	caller=stat/usage.go:61	app=file.rpc
+2024-11-22T17:26:36.901+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:27:36.884+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6.9Mi, TotalAlloc=264526.3Mi, Sys=43898.4Mi, NumGC=61	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:27:36.903+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:28:36.886+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6.9Mi, TotalAlloc=264526.4Mi, Sys=43898.4Mi, NumGC=62	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:28:36.904+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:29:36.887+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6.9Mi, TotalAlloc=264526.4Mi, Sys=43898.4Mi, NumGC=62	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:29:36.906+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:30:36.908+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6.9Mi, TotalAlloc=264526.4Mi, Sys=43898.4Mi, NumGC=63	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:30:36.926+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:31:36.929+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6.9Mi, TotalAlloc=264526.4Mi, Sys=43898.4Mi, NumGC=63	caller=stat/usage.go:61	app=file.rpc
+2024-11-22T17:31:36.947+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:35:17.343+08:00	 stat 	CPU: 0m, MEMORY: Alloc=7.4Mi, TotalAlloc=8.8Mi, Sys=22.3Mi, NumGC=2	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:35:17.356+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:36:17.345+08:00	 stat 	CPU: 0m, MEMORY: Alloc=67.7Mi, TotalAlloc=4370.1Mi, Sys=131.6Mi, NumGC=96	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:36:17.355+08:00	 stat 	dbcache(sqlc) - qpm: 2, hit_ratio: 100.0%, hit: 2, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:36:17.360+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:37:17.348+08:00	 stat 	CPU: 0m, MEMORY: Alloc=26.1Mi, TotalAlloc=4480.2Mi, Sys=131.6Mi, NumGC=99	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:37:17.357+08:00	 stat 	dbcache(sqlc) - qpm: 200, hit_ratio: 100.0%, hit: 200, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:37:17.359+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:38:17.345+08:00	 stat 	CPU: 0m, MEMORY: Alloc=21.6Mi, TotalAlloc=4626.6Mi, Sys=131.6Mi, NumGC=112	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:38:17.355+08:00	 stat 	dbcache(sqlc) - qpm: 398, hit_ratio: 100.0%, hit: 398, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:38:17.357+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:39:17.345+08:00	 stat 	CPU: 0m, MEMORY: Alloc=19.5Mi, TotalAlloc=4743.1Mi, Sys=131.6Mi, NumGC=120	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:39:17.356+08:00	 stat 	dbcache(sqlc) - qpm: 354, hit_ratio: 100.0%, hit: 354, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:39:17.357+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:40:17.347+08:00	 stat 	CPU: 0m, MEMORY: Alloc=18.6Mi, TotalAlloc=4881.9Mi, Sys=131.6Mi, NumGC=130	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:40:17.357+08:00	 stat 	dbcache(sqlc) - qpm: 434, hit_ratio: 100.0%, hit: 434, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:40:17.359+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:41:17.350+08:00	 stat 	CPU: 0m, MEMORY: Alloc=19.2Mi, TotalAlloc=4995.9Mi, Sys=131.6Mi, NumGC=138	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:41:17.359+08:00	 stat 	dbcache(sqlc) - qpm: 352, hit_ratio: 100.0%, hit: 352, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:41:17.361+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:42:17.350+08:00	 stat 	CPU: 0m, MEMORY: Alloc=146.9Mi, TotalAlloc=6343.7Mi, Sys=264.0Mi, NumGC=154	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:42:17.361+08:00	 stat 	dbcache(sqlc) - qpm: 106, hit_ratio: 100.0%, hit: 106, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:42:17.363+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:43:17.352+08:00	 stat 	CPU: 0m, MEMORY: Alloc=114.8Mi, TotalAlloc=8799.2Mi, Sys=264.0Mi, NumGC=179	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:43:17.363+08:00	 stat 	dbcache(sqlc) - qpm: 68, hit_ratio: 100.0%, hit: 68, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:43:17.365+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:44:17.354+08:00	 stat 	CPU: 0m, MEMORY: Alloc=160.4Mi, TotalAlloc=10943.6Mi, Sys=272.1Mi, NumGC=200	caller=stat/usage.go:61	app=file.rpc
+2024-11-22T17:44:17.364+08:00	 stat 	dbcache(sqlc) - qpm: 46, hit_ratio: 100.0%, hit: 46, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:44:17.366+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:45:17.359+08:00	 stat 	CPU: 0m, MEMORY: Alloc=1057.1Mi, TotalAlloc=14315.4Mi, Sys=1446.7Mi, NumGC=210	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:45:17.366+08:00	 stat 	dbcache(sqlc) - qpm: 96, hit_ratio: 100.0%, hit: 96, miss: 0, db_fails: 0	caller=cache/cachestat.go:71	app=file.rpc
+2024-11-22T17:45:17.368+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:46:17.353+08:00	 stat 	CPU: 0m, MEMORY: Alloc=717.1Mi, TotalAlloc=16726.5Mi, Sys=1458.7Mi, NumGC=214	caller=stat/usage.go:61	app=file.rpc
+2024-11-22T17:46:17.369+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:47:17.347+08:00	 stat 	CPU: 0m, MEMORY: Alloc=1077.1Mi, TotalAlloc=20685.7Mi, Sys=1983.7Mi, NumGC=219	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:47:17.357+08:00	 stat 	dbcache(sqlc) - qpm: 22, hit_ratio: 100.0%, hit: 22, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:47:17.360+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:48:17.349+08:00	 stat 	CPU: 0m, MEMORY: Alloc=1754.2Mi, TotalAlloc=23936.0Mi, Sys=2016.0Mi, NumGC=222	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:48:17.359+08:00	 stat 	dbcache(sqlc) - qpm: 24, hit_ratio: 100.0%, hit: 24, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:48:17.361+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:49:17.352+08:00	 stat 	CPU: 0m, MEMORY: Alloc=2381.3Mi, TotalAlloc=29517.7Mi, Sys=2577.9Mi, NumGC=226	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:49:17.375+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:50:17.355+08:00	 stat 	CPU: 0m, MEMORY: Alloc=1879.6Mi, TotalAlloc=31450.8Mi, Sys=2630.5Mi, NumGC=228	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:50:17.365+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:51:17.419+08:00	 stat 	CPU: 0m, MEMORY: Alloc=2074.9Mi, TotalAlloc=33007.5Mi, Sys=2788.2Mi, NumGC=229	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:51:17.419+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:52:17.356+08:00	 stat 	CPU: 0m, MEMORY: Alloc=2406.5Mi, TotalAlloc=34717.9Mi, Sys=2848.3Mi, NumGC=230	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:52:17.368+08:00	 stat 	dbcache(sqlc) - qpm: 6, hit_ratio: 100.0%, hit: 6, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:52:17.368+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	caller=load/sheddingstat.go:61	app=file.rpc
+2024-11-22T17:53:17.358+08:00	 stat 	CPU: 0m, MEMORY: Alloc=2739.4Mi, TotalAlloc=36354.8Mi, Sys=2848.6Mi, NumGC=231	caller=stat/usage.go:61	app=file.rpc
+2024-11-22T17:53:17.370+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:54:17.360+08:00	 stat 	CPU: 0m, MEMORY: Alloc=2686.2Mi, TotalAlloc=37734.1Mi, Sys=2980.9Mi, NumGC=232	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:54:17.372+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:55:17.361+08:00	 stat 	CPU: 0m, MEMORY: Alloc=2205.5Mi, TotalAlloc=40178.8Mi, Sys=3009.4Mi, NumGC=234	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:55:17.372+08:00	 stat 	dbcache(sqlc) - qpm: 24, hit_ratio: 100.0%, hit: 24, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:55:17.374+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	caller=load/sheddingstat.go:61	app=file.rpc
+2024-11-22T17:56:17.363+08:00	 stat 	CPU: 0m, MEMORY: Alloc=4128.1Mi, TotalAlloc=44410.4Mi, Sys=4212.1Mi, NumGC=236	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:56:17.374+08:00	 stat 	dbcache(sqlc) - qpm: 70, hit_ratio: 100.0%, hit: 70, miss: 0, db_fails: 0	app=file.rpc	caller=cache/cachestat.go:71
+2024-11-22T17:56:17.376+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:57:17.365+08:00	 stat 	CPU: 0m, MEMORY: Alloc=4708.4Mi, TotalAlloc=50096.6Mi, Sys=5516.1Mi, NumGC=238	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:57:17.377+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:58:17.367+08:00	 stat 	CPU: 0m, MEMORY: Alloc=5091.4Mi, TotalAlloc=55954.3Mi, Sys=6466.6Mi, NumGC=240	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:58:17.379+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T17:59:17.409+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6314.9Mi, TotalAlloc=60900.7Mi, Sys=7585.6Mi, NumGC=241	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T17:59:17.409+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T18:00:17.396+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6962.9Mi, TotalAlloc=65394.7Mi, Sys=7706.8Mi, NumGC=242	app=file.rpc	caller=stat/usage.go:61
+2024-11-22T18:00:17.396+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-22T18:01:02.617+08:00	 stat 	(file.rpc) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=file.rpc	caller=stat/metrics.go:210
+2024-11-25T09:28:17.827+08:00	 stat 	(file.rpc) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=file.rpc	caller=stat/metrics.go:210
+2024-11-25T09:29:24.976+08:00	 stat 	CPU: 0m, MEMORY: Alloc=7.3Mi, TotalAlloc=8.9Mi, Sys=22.3Mi, NumGC=2	app=file.rpc	caller=stat/usage.go:61
+2024-11-25T09:29:24.990+08:00	 stat 	(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=file.rpc	caller=load/sheddingstat.go:61
+2024-11-25T09:30:00.690+08:00	 stat 	(file.rpc) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=file.rpc	caller=stat/metrics.go:210

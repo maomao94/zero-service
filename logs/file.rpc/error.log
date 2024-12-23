@@ -1,0 +1,15 @@
+2024-11-22T16:08:46.715+08:00	 error 	listen tcp 0.0.0.0:21003: bind: address already in use	app=file.rpc	caller=zrpc/server.go:90
+2024-11-22T16:37:34.229+08:00	 error 	profile: Start() already called	app=file.rpc	caller=proc/profile.go:169
+2024-11-22T16:41:48.085+08:00	 error 	profile: Start() already called	app=file.rpc	caller=proc/profile.go:169
+2024-11-22T16:41:53.858+08:00	 error 	profile: Start() already called	app=file.rpc	caller=proc/profile.go:169
+2024-11-22T16:42:01.267+08:00	 error 	profile: Start() already called	app=file.rpc	caller=proc/profile.go:169
+2024-11-22T16:42:11.563+08:00	 error 	profile: Start() already called	caller=proc/profile.go:169	app=file.rpc
+2024-11-22T16:42:30.403+08:00	 error 	profile: Start() already called	app=file.rpc	caller=proc/profile.go:169
+2024-11-22T17:04:00.124+08:00	 error 	【RPC-SRV-ERR】 Get "https://127.0.0.1:9000/000000-default/?location=": http: server gave HTTP response to HTTPS client	app=file.rpc	caller=rpcserver/loggerInterceptor.go:28	trace=7622b6856aad76ae1b7ca4abf365629b	span=504edd2cd50b5d99
+2024-11-22T17:04:41.913+08:00	 error 	【RPC-SRV-ERR】 The specified key does not exist.	caller=rpcserver/loggerInterceptor.go:28	trace=c0f34155ce3d5d6868f454edf1f47f35	span=c033fbd396f8f81f	app=file.rpc
+2024-11-22T17:15:09.754+08:00	 error 	profile: Start() already called	app=file.rpc	caller=proc/profile.go:169
+2024-11-22T17:15:19.114+08:00	 error 	profile: Start() already called	app=file.rpc	caller=proc/profile.go:169
+2024-11-22T17:15:36.172+08:00	 error 	profile: Start() already called	app=file.rpc	caller=proc/profile.go:169
+2024-11-22T17:15:54.003+08:00	 error 	profile: Start() already called	app=file.rpc	caller=proc/profile.go:169
+2024-11-25T09:29:45.706+08:00	 error 	Failed to write to OSS: Put "http://127.0.0.1:9000/000000-default/upload/20241125/b70d26a2aacc11ef94baacde48001122.zip?partNumber=72&uploadId=YjY3YjAwZDEtNTk0ZS00YTczLTk5MDYtYjM5N2VlMGJjZWYxLmE0NTk0ZTgwLTUyM2UtNDJmOS04MjI4LTJmNmNkMDExMTczYngxNzMyNDk4MTY5Mjk0ODY4OTc2": context canceled	app=file.rpc	caller=logic/putchunkfilelogic.go:98	trace=b97ec6462c66a160fee1aaf1b324c742	span=9deebc31ad510d4f
+2024-11-25T09:29:45.706+08:00	 error 	Failed to write to pipe: io: read/write on closed pipe	trace=b97ec6462c66a160fee1aaf1b324c742	span=9deebc31ad510d4f	app=file.rpc	caller=logic/putchunkfilelogic.go:123

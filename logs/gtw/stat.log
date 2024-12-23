@@ -1,0 +1,458 @@
+2024-11-22T15:45:02.230+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 48535, reqs: 5	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T15:46:01.368+08:00	 stat 	CPU: 0m, MEMORY: Alloc=35.9Mi, TotalAlloc=537.3Mi, Sys=55.3Mi, NumGC=51	app=gtw	caller=stat/usage.go:61
+2024-11-22T15:46:01.393+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 132, pass: 109, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T15:46:02.231+08:00	 stat 	(gtw) - qps: 1.8/s, drops: 0, avg time: 2695.2ms, med: 1638.1ms, 90th: 7458.5ms, 99th: 8285.1ms, 99.9th: 8285.1ms	caller=stat/metrics.go:210	app=gtw
+2024-11-22T15:46:04.267+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 1583400, reqs: 128	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T15:47:01.366+08:00	 stat 	CPU: 0m, MEMORY: Alloc=20.3Mi, TotalAlloc=1120.4Mi, Sys=67.3Mi, NumGC=95	app=gtw	caller=stat/usage.go:61
+2024-11-22T15:47:01.393+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 147, pass: 139, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T15:47:02.255+08:00	 stat 	(gtw) - qps: 2.3/s, drops: 0, avg time: 6043.0ms, med: 5903.8ms, 90th: 9846.1ms, 99th: 17586.3ms, 99.9th: 17586.3ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T15:47:04.498+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 1978560, reqs: 145	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T15:48:01.384+08:00	 stat 	CPU: 0m, MEMORY: Alloc=15.8Mi, TotalAlloc=1569.3Mi, Sys=83.4Mi, NumGC=125	app=gtw	caller=stat/usage.go:61
+2024-11-22T15:48:01.393+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 114, pass: 126, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T15:48:02.234+08:00	 stat 	(gtw) - qps: 2.1/s, drops: 0, avg time: 7239.2ms, med: 7496.9ms, 90th: 11746.6ms, 99th: 17816.0ms, 99.9th: 17816.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T15:48:04.515+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 1098642, reqs: 114	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T15:49:01.368+08:00	 stat 	CPU: 0m, MEMORY: Alloc=21.6Mi, TotalAlloc=2049.6Mi, Sys=83.4Mi, NumGC=153	app=gtw	caller=stat/usage.go:61
+2024-11-22T15:49:01.395+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 119, pass: 138, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T15:49:02.233+08:00	 stat 	(gtw) - qps: 2.3/s, drops: 0, avg time: 3734.6ms, med: 2577.2ms, 90th: 10194.8ms, 99th: 11360.3ms, 99.9th: 11360.3ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T15:50:01.351+08:00	 stat 	CPU: 0m, MEMORY: Alloc=21.6Mi, TotalAlloc=2049.6Mi, Sys=83.4Mi, NumGC=153	app=gtw	caller=stat/usage.go:61
+2024-11-22T15:50:01.378+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T15:50:02.217+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T15:51:01.345+08:00	 stat 	CPU: 0m, MEMORY: Alloc=7.7Mi, TotalAlloc=2049.6Mi, Sys=83.4Mi, NumGC=154	app=gtw	caller=stat/usage.go:61
+2024-11-22T15:51:01.371+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T15:51:02.210+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T15:52:01.344+08:00	 stat 	CPU: 0m, MEMORY: Alloc=7.7Mi, TotalAlloc=2049.6Mi, Sys=83.4Mi, NumGC=154	app=gtw	caller=stat/usage.go:61
+2024-11-22T15:52:01.371+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T15:52:02.211+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T15:53:01.346+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=2049.6Mi, Sys=83.4Mi, NumGC=155	caller=stat/usage.go:61	app=gtw
+2024-11-22T15:53:01.372+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T15:53:02.211+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T15:54:01.346+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.5Mi, TotalAlloc=2049.7Mi, Sys=83.4Mi, NumGC=155	app=gtw	caller=stat/usage.go:61
+2024-11-22T15:54:01.372+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T15:54:02.212+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T15:54:55.165+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 123051, reqs: 3	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T15:55:01.345+08:00	 stat 	CPU: 0m, MEMORY: Alloc=14.1Mi, TotalAlloc=2188.6Mi, Sys=83.4Mi, NumGC=167	app=gtw	caller=stat/usage.go:61
+2024-11-22T15:55:01.372+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 33, pass: 11, drop: 0	caller=load/sheddingstat.go:61	app=gtw
+2024-11-22T15:55:02.211+08:00	 stat 	(gtw) - qps: 0.2/s, drops: 0, avg time: 919.4ms, med: 774.9ms, 90th: 1908.3ms, 99th: 1908.3ms, 99.9th: 1908.3ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T15:55:55.176+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 86168, reqs: 211	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T15:56:01.347+08:00	 stat 	CPU: 0m, MEMORY: Alloc=15.2Mi, TotalAlloc=3047.6Mi, Sys=83.6Mi, NumGC=229	app=gtw	caller=stat/usage.go:61
+2024-11-22T15:56:01.373+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 216, pass: 234, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T15:56:02.213+08:00	 stat 	(gtw) - qps: 3.9/s, drops: 0, avg time: 4231.5ms, med: 3864.6ms, 90th: 8129.2ms, 99th: 13347.3ms, 99.9th: 14883.2ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T15:56:55.705+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 183835, reqs: 188	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T15:57:01.347+08:00	 stat 	CPU: 0m, MEMORY: Alloc=16.9Mi, TotalAlloc=3742.9Mi, Sys=83.6Mi, NumGC=281	app=gtw	caller=stat/usage.go:61
+2024-11-22T15:57:01.374+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 173, pass: 169, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T15:57:02.214+08:00	 stat 	(gtw) - qps: 2.8/s, drops: 0, avg time: 2368.5ms, med: 2135.7ms, 90th: 4187.4ms, 99th: 8461.8ms, 99.9th: 8461.8ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T15:58:01.347+08:00	 stat 	CPU: 0m, MEMORY: Alloc=33.7Mi, TotalAlloc=4055.3Mi, Sys=83.6Mi, NumGC=299	app=gtw	caller=stat/usage.go:61
+2024-11-22T15:58:01.373+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 78, pass: 86, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T15:58:02.213+08:00	 stat 	(gtw) - qps: 1.4/s, drops: 0, avg time: 2880.4ms, med: 2077.4ms, 90th: 6605.5ms, 99th: 7382.5ms, 99.9th: 7382.5ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T15:59:01.348+08:00	 stat 	CPU: 0m, MEMORY: Alloc=33.8Mi, TotalAlloc=4055.4Mi, Sys=83.6Mi, NumGC=299	app=gtw	caller=stat/usage.go:61
+2024-11-22T15:59:01.375+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	caller=load/sheddingstat.go:61	app=gtw
+2024-11-22T15:59:02.213+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T15:59:57.217+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 81009, reqs: 101	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:00:01.355+08:00	 stat 	CPU: 0m, MEMORY: Alloc=12.3Mi, TotalAlloc=4087.0Mi, Sys=83.6Mi, NumGC=303	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:00:01.376+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 8, pass: 8, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:00:02.214+08:00	 stat 	(gtw) - qps: 0.1/s, drops: 0, avg time: 650.5ms, med: 632.8ms, 90th: 984.6ms, 99th: 984.6ms, 99.9th: 984.6ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:00:57.275+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 111378, reqs: 177	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:01:01.349+08:00	 stat 	CPU: 0m, MEMORY: Alloc=14.3Mi, TotalAlloc=4825.1Mi, Sys=83.6Mi, NumGC=364	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:01:01.375+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 194, pass: 184, drop: 0	caller=load/sheddingstat.go:61	app=gtw
+2024-11-22T16:01:02.214+08:00	 stat 	(gtw) - qps: 3.1/s, drops: 0, avg time: 5763.6ms, med: 6107.7ms, 90th: 10053.6ms, 99th: 17669.0ms, 99.9th: 17669.0ms	caller=stat/metrics.go:210	app=gtw
+2024-11-22T16:01:58.687+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 37427, reqs: 169	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:02:01.349+08:00	 stat 	CPU: 0m, MEMORY: Alloc=15.8Mi, TotalAlloc=5520.5Mi, Sys=83.6Mi, NumGC=416	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:02:01.375+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 168, pass: 163, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:02:02.215+08:00	 stat 	(gtw) - qps: 2.7/s, drops: 0, avg time: 3340.0ms, med: 2788.4ms, 90th: 6573.6ms, 99th: 12053.5ms, 99.9th: 12053.5ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:02:58.789+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 299688, reqs: 151	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:03:01.344+08:00	 stat 	CPU: 0m, MEMORY: Alloc=30.8Mi, TotalAlloc=6077.1Mi, Sys=83.6Mi, NumGC=456	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:03:01.371+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 130, pass: 145, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:03:02.211+08:00	 stat 	(gtw) - qps: 2.4/s, drops: 0, avg time: 3508.2ms, med: 2576.1ms, 90th: 7312.7ms, 99th: 13258.0ms, 99.9th: 13258.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:04:01.344+08:00	 stat 	CPU: 0m, MEMORY: Alloc=30.9Mi, TotalAlloc=6077.1Mi, Sys=83.6Mi, NumGC=456	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:04:01.370+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:04:02.210+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:05:01.345+08:00	 stat 	CPU: 0m, MEMORY: Alloc=10.7Mi, TotalAlloc=6077.2Mi, Sys=83.6Mi, NumGC=457	caller=stat/usage.go:61	app=gtw
+2024-11-22T16:05:01.371+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:05:02.211+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:06:01.345+08:00	 stat 	CPU: 0m, MEMORY: Alloc=10.8Mi, TotalAlloc=6077.2Mi, Sys=83.6Mi, NumGC=457	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:06:01.372+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:06:02.212+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:07:01.346+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=6077.4Mi, Sys=83.6Mi, NumGC=458	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:07:01.372+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:07:02.211+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:07:24.011+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 23460, reqs: 3	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:08:01.347+08:00	 stat 	CPU: 0m, MEMORY: Alloc=32.4Mi, TotalAlloc=6577.1Mi, Sys=83.6Mi, NumGC=497	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:08:01.372+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 122, pass: 111, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:08:02.211+08:00	 stat 	(gtw) - qps: 1.9/s, drops: 0, avg time: 2094.8ms, med: 1886.5ms, 90th: 4768.5ms, 99th: 8696.3ms, 99.9th: 8696.3ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:08:24.073+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 849891, reqs: 190	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:08:49.488+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 12532, reqs: 2	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:09:01.347+08:00	 stat 	CPU: 0m, MEMORY: Alloc=25.8Mi, TotalAlloc=7004.9Mi, Sys=83.6Mi, NumGC=531	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:09:01.375+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 126, pass: 104, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:09:02.214+08:00	 stat 	(gtw) - qps: 2.3/s, drops: 51, avg time: 2590.0ms, med: 1675.6ms, 90th: 6651.9ms, 99th: 9982.4ms, 99.9th: 9982.4ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:09:55.718+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 43292, reqs: 4	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:10:01.347+08:00	 stat 	CPU: 0m, MEMORY: Alloc=20.1Mi, TotalAlloc=7436.2Mi, Sys=83.6Mi, NumGC=571	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:10:01.373+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 132, pass: 104, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:10:02.213+08:00	 stat 	(gtw) - qps: 2.2/s, drops: 30, avg time: 2885.9ms, med: 2860.6ms, 90th: 6062.3ms, 99th: 12843.8ms, 99.9th: 12843.8ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:10:56.684+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 38638, reqs: 60	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:11:01.347+08:00	 stat 	CPU: 0m, MEMORY: Alloc=10.4Mi, TotalAlloc=7649.1Mi, Sys=83.6Mi, NumGC=589	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:11:01.374+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 54, pass: 51, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:11:02.214+08:00	 stat 	(gtw) - qps: 0.9/s, drops: 2, avg time: 1103.1ms, med: 940.2ms, 90th: 2282.1ms, 99th: 2931.8ms, 99.9th: 2931.8ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:11:58.002+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 480792, reqs: 225	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:12:01.348+08:00	 stat 	CPU: 0m, MEMORY: Alloc=13.7Mi, TotalAlloc=8516.3Mi, Sys=83.6Mi, NumGC=653	caller=stat/usage.go:61	app=gtw
+2024-11-22T16:12:01.374+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 213, pass: 216, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:12:02.221+08:00	 stat 	(gtw) - qps: 3.6/s, drops: 0, avg time: 1932.7ms, med: 1555.0ms, 90th: 3770.5ms, 99th: 6144.6ms, 99.9th: 7474.5ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:13:01.354+08:00	 stat 	CPU: 0m, MEMORY: Alloc=41.8Mi, TotalAlloc=9178.1Mi, Sys=83.6Mi, NumGC=688	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:13:01.381+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 165, pass: 165, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:13:02.219+08:00	 stat 	(gtw) - qps: 2.7/s, drops: 0, avg time: 2657.2ms, med: 1936.8ms, 90th: 6699.1ms, 99th: 10436.6ms, 99.9th: 10436.6ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:13:04.431+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 649140, reqs: 177	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:14:01.357+08:00	 stat 	CPU: 0m, MEMORY: Alloc=30.6Mi, TotalAlloc=9647.0Mi, Sys=83.6Mi, NumGC=718	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:14:01.383+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 120, pass: 111, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:14:02.222+08:00	 stat 	(gtw) - qps: 2.0/s, drops: 0, avg time: 2448.1ms, med: 1480.2ms, 90th: 6808.1ms, 99th: 8050.8ms, 99.9th: 8050.8ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:14:06.151+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 72444, reqs: 118	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:15:01.357+08:00	 stat 	CPU: 0m, MEMORY: Alloc=31.2Mi, TotalAlloc=10537.1Mi, Sys=83.6Mi, NumGC=783	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:15:01.383+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 221, pass: 223, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:15:02.223+08:00	 stat 	(gtw) - qps: 3.7/s, drops: 0, avg time: 2246.2ms, med: 1612.2ms, 90th: 5132.5ms, 99th: 9430.2ms, 99.9th: 11127.5ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:15:06.176+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 72574, reqs: 223	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:16:01.360+08:00	 stat 	CPU: 0m, MEMORY: Alloc=26.2Mi, TotalAlloc=11154.4Mi, Sys=83.6Mi, NumGC=826	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:16:01.384+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 153, pass: 150, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:16:02.223+08:00	 stat 	(gtw) - qps: 2.4/s, drops: 0, avg time: 2153.7ms, med: 1785.3ms, 90th: 3632.8ms, 99th: 8221.7ms, 99.9th: 8221.7ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:16:10.303+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 708588, reqs: 153	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:17:01.358+08:00	 stat 	CPU: 0m, MEMORY: Alloc=26.7Mi, TotalAlloc=11548.2Mi, Sys=83.6Mi, NumGC=856	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:17:01.386+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 100, pass: 110, drop: 0	caller=load/sheddingstat.go:61	app=gtw
+2024-11-22T16:17:02.226+08:00	 stat 	(gtw) - qps: 1.8/s, drops: 0, avg time: 2853.8ms, med: 2295.8ms, 90th: 4228.3ms, 99th: 9385.7ms, 99.9th: 9385.7ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:17:24.897+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 67983, reqs: 102	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:18:01.361+08:00	 stat 	CPU: 0m, MEMORY: Alloc=23.6Mi, TotalAlloc=12150.0Mi, Sys=83.6Mi, NumGC=899	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:18:01.385+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 151, pass: 130, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:18:02.225+08:00	 stat 	(gtw) - qps: 2.2/s, drops: 0, avg time: 2986.7ms, med: 1548.1ms, 90th: 9249.1ms, 99th: 10108.6ms, 99.9th: 10108.6ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:18:24.918+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 146780, reqs: 208	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:19:01.360+08:00	 stat 	CPU: 0m, MEMORY: Alloc=28.6Mi, TotalAlloc=12842.1Mi, Sys=87.6Mi, NumGC=941	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:19:01.386+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 176, pass: 197, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:19:02.226+08:00	 stat 	(gtw) - qps: 3.3/s, drops: 0, avg time: 2759.7ms, med: 1732.8ms, 90th: 7096.4ms, 99th: 17211.1ms, 99.9th: 17211.1ms	caller=stat/metrics.go:210	app=gtw
+2024-11-22T16:19:25.390+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 880831, reqs: 199	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:20:01.360+08:00	 stat 	CPU: 0m, MEMORY: Alloc=15.2Mi, TotalAlloc=13528.6Mi, Sys=99.6Mi, NumGC=986	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:20:01.387+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 172, pass: 160, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:20:02.226+08:00	 stat 	(gtw) - qps: 2.8/s, drops: 0, avg time: 3010.4ms, med: 2212.5ms, 90th: 7095.6ms, 99th: 10174.1ms, 99.9th: 10174.1ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:20:55.566+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 61185, reqs: 93	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:21:01.364+08:00	 stat 	CPU: 0m, MEMORY: Alloc=10.9Mi, TotalAlloc=13618.4Mi, Sys=99.6Mi, NumGC=992	caller=stat/usage.go:61	app=gtw
+2024-11-22T16:21:01.390+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 24, pass: 34, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:21:02.227+08:00	 stat 	(gtw) - qps: 0.5/s, drops: 0, avg time: 2234.3ms, med: 2202.4ms, 90th: 5041.5ms, 99th: 5279.9ms, 99.9th: 5279.9ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:21:55.934+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 467240, reqs: 206	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:22:01.363+08:00	 stat 	CPU: 0m, MEMORY: Alloc=14.7Mi, TotalAlloc=14425.1Mi, Sys=99.6Mi, NumGC=1063	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:22:01.389+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 200, pass: 201, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:22:02.228+08:00	 stat 	(gtw) - qps: 3.3/s, drops: 0, avg time: 4617.2ms, med: 3129.4ms, 90th: 11561.1ms, 99th: 15125.4ms, 99.9th: 16261.9ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:22:56.122+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 314649, reqs: 165	caller=p2c/p2c.go:195	app=gtw
+2024-11-22T16:23:01.363+08:00	 stat 	CPU: 0m, MEMORY: Alloc=11.6Mi, TotalAlloc=15126.2Mi, Sys=99.6Mi, NumGC=1112	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:23:01.389+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 174, pass: 175, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:23:02.229+08:00	 stat 	(gtw) - qps: 2.9/s, drops: 0, avg time: 2510.1ms, med: 2060.8ms, 90th: 4449.2ms, 99th: 17647.4ms, 99.9th: 17647.4ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:24:01.363+08:00	 stat 	CPU: 0m, MEMORY: Alloc=23.4Mi, TotalAlloc=15576.8Mi, Sys=99.6Mi, NumGC=1136	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:24:01.389+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 114, pass: 114, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:24:02.229+08:00	 stat 	(gtw) - qps: 1.9/s, drops: 0, avg time: 1942.0ms, med: 1629.8ms, 90th: 3529.6ms, 99th: 4747.0ms, 99.9th: 4747.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:25:01.364+08:00	 stat 	CPU: 0m, MEMORY: Alloc=23.4Mi, TotalAlloc=15576.8Mi, Sys=99.6Mi, NumGC=1136	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:25:01.390+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:25:02.229+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:26:01.364+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6.8Mi, TotalAlloc=15576.8Mi, Sys=99.6Mi, NumGC=1137	caller=stat/usage.go:61	app=gtw
+2024-11-22T16:26:01.391+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:26:02.231+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	caller=stat/metrics.go:210	app=gtw
+2024-11-22T16:27:01.365+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6.8Mi, TotalAlloc=15576.8Mi, Sys=99.6Mi, NumGC=1137	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:27:01.392+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:27:02.232+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	caller=stat/metrics.go:210	app=gtw
+2024-11-22T16:28:01.386+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.5Mi, TotalAlloc=15576.8Mi, Sys=99.6Mi, NumGC=1138	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:28:01.413+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:28:02.253+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	caller=stat/metrics.go:210	app=gtw
+2024-11-22T16:28:31.331+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 96660, reqs: 129	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:29:01.407+08:00	 stat 	CPU: 0m, MEMORY: Alloc=15.3Mi, TotalAlloc=16048.0Mi, Sys=99.9Mi, NumGC=1175	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:29:01.431+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 117, pass: 98, drop: 0	caller=load/sheddingstat.go:61	app=gtw
+2024-11-22T16:29:02.271+08:00	 stat 	(gtw) - qps: 1.7/s, drops: 0, avg time: 3258.5ms, med: 2504.8ms, 90th: 6175.9ms, 99th: 8620.0ms, 99.9th: 8620.0ms	caller=stat/metrics.go:210	app=gtw
+2024-11-22T16:29:32.275+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 440976, reqs: 216	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:30:01.407+08:00	 stat 	CPU: 0m, MEMORY: Alloc=26.3Mi, TotalAlloc=16799.6Mi, Sys=99.9Mi, NumGC=1235	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:30:01.433+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 185, pass: 197, drop: 0	caller=load/sheddingstat.go:61	app=gtw
+2024-11-22T16:30:02.273+08:00	 stat 	(gtw) - qps: 3.2/s, drops: 0, avg time: 2277.1ms, med: 1924.5ms, 90th: 4243.0ms, 99th: 7818.3ms, 99.9th: 7818.3ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:30:32.645+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 355932, reqs: 176	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:31:01.408+08:00	 stat 	CPU: 0m, MEMORY: Alloc=12.8Mi, TotalAlloc=17465.7Mi, Sys=99.9Mi, NumGC=1284	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:31:01.434+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 167, pass: 173, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:31:02.275+08:00	 stat 	(gtw) - qps: 3.0/s, drops: 0, avg time: 2033.8ms, med: 1472.6ms, 90th: 4301.7ms, 99th: 7852.2ms, 99.9th: 7852.2ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:31:34.895+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 525192, reqs: 168	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:32:01.409+08:00	 stat 	CPU: 0m, MEMORY: Alloc=21.0Mi, TotalAlloc=18230.0Mi, Sys=99.9Mi, NumGC=1344	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:32:01.435+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 189, pass: 178, drop: 0	caller=load/sheddingstat.go:61	app=gtw
+2024-11-22T16:32:02.277+08:00	 stat 	(gtw) - qps: 3.0/s, drops: 0, avg time: 2566.3ms, med: 2018.1ms, 90th: 5799.4ms, 99th: 8092.4ms, 99.9th: 8092.4ms	caller=stat/metrics.go:210	app=gtw
+2024-11-22T16:32:37.119+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 313720, reqs: 211	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:33:01.411+08:00	 stat 	CPU: 0m, MEMORY: Alloc=28.6Mi, TotalAlloc=18935.3Mi, Sys=99.9Mi, NumGC=1401	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:33:01.437+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 176, pass: 188, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:33:02.277+08:00	 stat 	(gtw) - qps: 3.1/s, drops: 0, avg time: 1621.9ms, med: 1587.0ms, 90th: 2444.9ms, 99th: 5326.9ms, 99.9th: 5326.9ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:33:37.200+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 39010, reqs: 137	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:34:01.412+08:00	 stat 	CPU: 0m, MEMORY: Alloc=9.9Mi, TotalAlloc=19595.3Mi, Sys=99.9Mi, NumGC=1452	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:34:01.438+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 165, pass: 136, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:34:02.278+08:00	 stat 	(gtw) - qps: 2.8/s, drops: 0, avg time: 3437.5ms, med: 2660.9ms, 90th: 7351.5ms, 99th: 10754.3ms, 99.9th: 10754.3ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:34:30.771+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 10029, reqs: 2	caller=p2c/p2c.go:195	app=gtw
+2024-11-22T16:35:01.413+08:00	 stat 	CPU: 0m, MEMORY: Alloc=14.2Mi, TotalAlloc=19886.5Mi, Sys=99.9Mi, NumGC=1481	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:35:01.439+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 95, pass: 65, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:35:02.279+08:00	 stat 	(gtw) - qps: 1.5/s, drops: 93, avg time: 793.2ms, med: 642.1ms, 90th: 1907.4ms, 99th: 5019.4ms, 99.9th: 5019.4ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:35:32.381+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 483948, reqs: 173	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:36:01.415+08:00	 stat 	CPU: 0m, MEMORY: Alloc=13.7Mi, TotalAlloc=20650.7Mi, Sys=99.9Mi, NumGC=1549	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:36:01.440+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 189, pass: 195, drop: 0	caller=load/sheddingstat.go:61	app=gtw
+2024-11-22T16:36:02.294+08:00	 stat 	(gtw) - qps: 3.2/s, drops: 0, avg time: 2091.4ms, med: 1847.0ms, 90th: 3810.1ms, 99th: 7058.4ms, 99.9th: 7058.4ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:36:35.462+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 531684, reqs: 188	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:37:01.418+08:00	 stat 	CPU: 0m, MEMORY: Alloc=34.6Mi, TotalAlloc=21326.9Mi, Sys=99.9Mi, NumGC=1588	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:37:01.442+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 173, pass: 164, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:37:02.281+08:00	 stat 	(gtw) - qps: 2.7/s, drops: 0, avg time: 2326.9ms, med: 1695.9ms, 90th: 5589.8ms, 99th: 7237.2ms, 99.9th: 7237.2ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:37:35.504+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 118269, reqs: 139	caller=p2c/p2c.go:195	app=gtw
+2024-11-22T16:38:01.417+08:00	 stat 	CPU: 0m, MEMORY: Alloc=22.4Mi, TotalAlloc=21681.0Mi, Sys=99.9Mi, NumGC=1608	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:38:01.443+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 89, pass: 98, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:38:02.283+08:00	 stat 	(gtw) - qps: 1.6/s, drops: 0, avg time: 3230.0ms, med: 2089.9ms, 90th: 8453.2ms, 99th: 10648.5ms, 99.9th: 10648.5ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:39:01.419+08:00	 stat 	CPU: 0m, MEMORY: Alloc=22.4Mi, TotalAlloc=21681.1Mi, Sys=99.9Mi, NumGC=1608	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:39:01.445+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	caller=load/sheddingstat.go:61	app=gtw
+2024-11-22T16:39:02.284+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:40:01.419+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6.8Mi, TotalAlloc=21681.1Mi, Sys=99.9Mi, NumGC=1609	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:40:01.446+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	caller=load/sheddingstat.go:61	app=gtw
+2024-11-22T16:40:02.285+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:40:54.267+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 64740, reqs: 20	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:41:01.420+08:00	 stat 	CPU: 0m, MEMORY: Alloc=15.1Mi, TotalAlloc=21838.3Mi, Sys=99.9Mi, NumGC=1621	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:41:01.447+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 39, pass: 16, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:41:02.286+08:00	 stat 	(gtw) - qps: 0.4/s, drops: 0, avg time: 1168.5ms, med: 719.2ms, 90th: 2564.4ms, 99th: 2564.7ms, 99.9th: 2564.7ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:41:54.359+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 500181, reqs: 204	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:42:01.422+08:00	 stat 	CPU: 0m, MEMORY: Alloc=17.7Mi, TotalAlloc=22616.3Mi, Sys=99.9Mi, NumGC=1684	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:42:01.449+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 192, pass: 215, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:42:02.288+08:00	 stat 	(gtw) - qps: 3.5/s, drops: 0, avg time: 3160.3ms, med: 2480.7ms, 90th: 6975.4ms, 99th: 8269.2ms, 99.9th: 9453.6ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:42:55.480+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 89688, reqs: 148	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:43:01.367+08:00	 stat 	CPU: 0m, MEMORY: Alloc=25.0Mi, TotalAlloc=23233.7Mi, Sys=99.9Mi, NumGC=1732	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:43:01.394+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 156, pass: 132, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:43:02.239+08:00	 stat 	(gtw) - qps: 2.2/s, drops: 0, avg time: 5329.3ms, med: 4226.9ms, 90th: 11764.4ms, 99th: 15027.5ms, 99.9th: 15027.5ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:44:01.368+08:00	 stat 	CPU: 0m, MEMORY: Alloc=22.7Mi, TotalAlloc=23699.2Mi, Sys=99.9Mi, NumGC=1766	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:44:01.394+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 113, pass: 125, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:44:01.611+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 375900, reqs: 145	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T16:44:02.235+08:00	 stat 	(gtw) - qps: 2.2/s, drops: 0, avg time: 3193.0ms, med: 2069.6ms, 90th: 7622.2ms, 99th: 10210.4ms, 99.9th: 10210.4ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:45:01.369+08:00	 stat 	CPU: 0m, MEMORY: Alloc=23.0Mi, TotalAlloc=23699.4Mi, Sys=99.9Mi, NumGC=1766	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:45:01.395+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 12, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:45:02.235+08:00	 stat 	(gtw) - qps: 0.1/s, drops: 0, avg time: 1853.8ms, med: 1887.0ms, 90th: 2561.8ms, 99th: 2561.8ms, 99.9th: 2561.8ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:46:01.370+08:00	 stat 	CPU: 0m, MEMORY: Alloc=8.8Mi, TotalAlloc=23699.4Mi, Sys=99.9Mi, NumGC=1767	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:46:01.396+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:46:02.236+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:47:01.370+08:00	 stat 	CPU: 0m, MEMORY: Alloc=8.9Mi, TotalAlloc=23699.4Mi, Sys=99.9Mi, NumGC=1767	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:47:01.397+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:47:02.236+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:48:01.372+08:00	 stat 	CPU: 0m, MEMORY: Alloc=8.9Mi, TotalAlloc=23699.5Mi, Sys=99.9Mi, NumGC=1767	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:48:01.398+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:48:02.236+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:49:01.372+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=23699.5Mi, Sys=99.9Mi, NumGC=1768	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:49:01.398+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:49:02.238+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:50:01.373+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=23699.5Mi, Sys=99.9Mi, NumGC=1768	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:50:01.399+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:50:02.239+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:51:01.374+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=23699.5Mi, Sys=99.9Mi, NumGC=1769	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:51:01.400+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:51:02.239+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:52:01.374+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=23699.5Mi, Sys=99.9Mi, NumGC=1769	caller=stat/usage.go:61	app=gtw
+2024-11-22T16:52:01.401+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:52:02.240+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:53:01.375+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=23699.5Mi, Sys=99.9Mi, NumGC=1770	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:53:01.401+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:53:02.240+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:54:01.376+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=23699.5Mi, Sys=99.9Mi, NumGC=1770	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:54:01.402+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:54:02.240+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:55:01.376+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=23699.6Mi, Sys=99.9Mi, NumGC=1771	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:55:01.402+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:55:02.241+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:56:01.377+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=23699.6Mi, Sys=99.9Mi, NumGC=1771	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:56:01.402+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:56:02.242+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:57:01.377+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=23699.6Mi, Sys=99.9Mi, NumGC=1772	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:57:01.403+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:57:02.243+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:58:01.378+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=23699.6Mi, Sys=99.9Mi, NumGC=1772	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:58:01.405+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:58:02.244+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T16:59:01.379+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=23699.6Mi, Sys=99.9Mi, NumGC=1773	app=gtw	caller=stat/usage.go:61
+2024-11-22T16:59:01.405+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T16:59:02.244+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:00:01.381+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=23699.6Mi, Sys=99.9Mi, NumGC=1773	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:00:01.408+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:00:02.248+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:01:01.383+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=23699.6Mi, Sys=99.9Mi, NumGC=1774	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:01:01.409+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:01:02.248+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	caller=stat/metrics.go:210	app=gtw
+2024-11-22T17:02:01.384+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=23699.6Mi, Sys=99.9Mi, NumGC=1774	caller=stat/usage.go:61	app=gtw
+2024-11-22T17:02:01.410+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:02:02.248+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:03:01.384+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.4Mi, TotalAlloc=23699.7Mi, Sys=99.9Mi, NumGC=1775	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:03:01.411+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:03:02.250+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:03:33.439+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.5ms, med: 1.6ms, 90th: 1.6ms, 99th: 1.6ms, 99.9th: 1.6ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:04:00.125+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 3609, reqs: 1	caller=p2c/p2c.go:195	app=gtw
+2024-11-22T17:04:20.332+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 13.0ms, med: 13.9ms, 90th: 13.9ms, 99th: 13.9ms, 99.9th: 13.9ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:04:41.913+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 3602, reqs: 1	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T17:05:23.828+08:00	 stat 	CPU: 0m, MEMORY: Alloc=40.7Mi, TotalAlloc=338.2Mi, Sys=211.5Mi, NumGC=12	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:05:23.842+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 12, pass: 11, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:05:41.914+08:00	 stat 	(gtw) - qps: 0.9/s, drops: 0, avg time: 1249.6ms, med: 430.8ms, 90th: 4466.5ms, 99th: 5765.7ms, 99.9th: 5765.7ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:05:42.150+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 203139, reqs: 59	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T17:06:23.829+08:00	 stat 	CPU: 0m, MEMORY: Alloc=35.9Mi, TotalAlloc=808.9Mi, Sys=211.8Mi, NumGC=28	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:06:23.842+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 107, pass: 107, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:06:41.916+08:00	 stat 	(gtw) - qps: 1.5/s, drops: 0, avg time: 4917.2ms, med: 4289.4ms, 90th: 11849.2ms, 99th: 13632.4ms, 99.9th: 13632.4ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:06:47.744+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 1009968, reqs: 94	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T17:07:23.829+08:00	 stat 	CPU: 0m, MEMORY: Alloc=34.7Mi, TotalAlloc=1118.0Mi, Sys=211.8Mi, NumGC=42	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:07:23.843+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 71, pass: 72, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:07:41.917+08:00	 stat 	(gtw) - qps: 1.2/s, drops: 0, avg time: 9451.9ms, med: 7041.5ms, 90th: 15941.6ms, 99th: 139930.1ms, 99.9th: 139930.1ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:07:54.246+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 767304, reqs: 83	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T17:08:23.831+08:00	 stat 	CPU: 0m, MEMORY: Alloc=13.3Mi, TotalAlloc=1540.2Mi, Sys=211.8Mi, NumGC=66	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:08:23.844+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 107, pass: 91, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:08:41.917+08:00	 stat 	(gtw) - qps: 1.6/s, drops: 0, avg time: 4651.9ms, med: 4614.1ms, 90th: 8606.0ms, 99th: 15372.6ms, 99.9th: 15372.6ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:08:57.422+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 556710, reqs: 116	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T17:09:23.831+08:00	 stat 	CPU: 0m, MEMORY: Alloc=15.3Mi, TotalAlloc=1910.8Mi, Sys=211.8Mi, NumGC=85	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:09:23.845+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 95, pass: 89, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:09:41.918+08:00	 stat 	(gtw) - qps: 1.6/s, drops: 0, avg time: 4139.7ms, med: 4372.0ms, 90th: 9102.1ms, 99th: 10010.6ms, 99.9th: 10010.6ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:10:01.615+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 483802, reqs: 96	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T17:10:23.831+08:00	 stat 	CPU: 0m, MEMORY: Alloc=45.3Mi, TotalAlloc=2262.5Mi, Sys=211.8Mi, NumGC=101	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:10:23.846+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 91, pass: 113, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:10:41.919+08:00	 stat 	(gtw) - qps: 1.5/s, drops: 0, avg time: 1562.8ms, med: 415.8ms, 90th: 4420.1ms, 99th: 4596.2ms, 99.9th: 4596.2ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:11:23.833+08:00	 stat 	CPU: 0m, MEMORY: Alloc=21.5Mi, TotalAlloc=2342.8Mi, Sys=211.8Mi, NumGC=104	caller=stat/usage.go:61	app=gtw
+2024-11-22T17:11:23.846+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 20, pass: 20, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:11:41.919+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:12:23.833+08:00	 stat 	CPU: 0m, MEMORY: Alloc=21.5Mi, TotalAlloc=2342.8Mi, Sys=211.8Mi, NumGC=104	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:12:23.847+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:12:41.920+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:13:23.833+08:00	 stat 	CPU: 0m, MEMORY: Alloc=6.8Mi, TotalAlloc=2343.0Mi, Sys=211.8Mi, NumGC=105	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:13:23.848+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:13:41.921+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:13:44.365+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 20847, reqs: 3	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T17:14:23.834+08:00	 stat 	CPU: 0m, MEMORY: Alloc=13.7Mi, TotalAlloc=2904.5Mi, Sys=211.8Mi, NumGC=156	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:14:23.848+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 142, pass: 131, drop: 0	caller=load/sheddingstat.go:61	app=gtw
+2024-11-22T17:14:41.922+08:00	 stat 	(gtw) - qps: 2.8/s, drops: 0, avg time: 1952.8ms, med: 514.7ms, 90th: 5187.5ms, 99th: 19963.2ms, 99.9th: 19963.2ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:14:45.104+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 126750, reqs: 186	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T17:15:23.888+08:00	 stat 	CPU: 0m, MEMORY: Alloc=27.4Mi, TotalAlloc=3359.9Mi, Sys=211.8Mi, NumGC=177	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:15:23.903+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 114, pass: 125, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:15:41.978+08:00	 stat 	(gtw) - qps: 2.0/s, drops: 0, avg time: 4325.7ms, med: 995.3ms, 90th: 16026.0ms, 99th: 19806.8ms, 99.9th: 19806.8ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:15:45.533+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 2682078, reqs: 142	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T17:16:23.890+08:00	 stat 	CPU: 0m, MEMORY: Alloc=41.5Mi, TotalAlloc=3877.3Mi, Sys=211.8Mi, NumGC=208	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:16:23.904+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 130, pass: 108, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:16:41.978+08:00	 stat 	(gtw) - qps: 1.6/s, drops: 0, avg time: 14212.6ms, med: 17030.2ms, 90th: 18597.8ms, 99th: 26617.0ms, 99.9th: 26617.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:16:53.463+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 1452088, reqs: 98	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T17:17:23.892+08:00	 stat 	CPU: 0m, MEMORY: Alloc=21.7Mi, TotalAlloc=4201.3Mi, Sys=211.8Mi, NumGC=221	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:17:23.906+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 81, pass: 103, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:17:41.982+08:00	 stat 	(gtw) - qps: 1.5/s, drops: 0, avg time: 2809.0ms, med: 2901.9ms, 90th: 6507.5ms, 99th: 7082.6ms, 99.9th: 7082.6ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:18:23.893+08:00	 stat 	CPU: 0m, MEMORY: Alloc=24.7Mi, TotalAlloc=4333.1Mi, Sys=211.8Mi, NumGC=226	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:18:23.908+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 33, pass: 33, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:18:41.981+08:00	 stat 	(gtw) - qps: 0.3/s, drops: 0, avg time: 1407.7ms, med: 2029.0ms, 90th: 2450.6ms, 99th: 3091.1ms, 99.9th: 3091.1ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:19:23.895+08:00	 stat 	CPU: 0m, MEMORY: Alloc=24.7Mi, TotalAlloc=4333.1Mi, Sys=211.8Mi, NumGC=226	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:19:23.909+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:19:41.982+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:20:23.897+08:00	 stat 	CPU: 0m, MEMORY: Alloc=8.8Mi, TotalAlloc=4333.1Mi, Sys=211.8Mi, NumGC=227	caller=stat/usage.go:61	app=gtw
+2024-11-22T17:20:23.911+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:20:41.984+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:21:23.898+08:00	 stat 	CPU: 0m, MEMORY: Alloc=8.9Mi, TotalAlloc=4333.1Mi, Sys=211.8Mi, NumGC=227	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:21:23.914+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:21:41.986+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:22:23.900+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.5Mi, TotalAlloc=4333.1Mi, Sys=211.8Mi, NumGC=228	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:22:23.915+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:22:41.987+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:23:23.901+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.6Mi, TotalAlloc=4333.2Mi, Sys=211.8Mi, NumGC=228	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:23:23.916+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:23:41.990+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:24:23.903+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.5Mi, TotalAlloc=4333.2Mi, Sys=211.8Mi, NumGC=229	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:24:23.917+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:24:41.991+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:25:23.905+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.5Mi, TotalAlloc=4333.3Mi, Sys=211.8Mi, NumGC=229	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:25:23.920+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:25:41.992+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:26:23.906+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.5Mi, TotalAlloc=4333.3Mi, Sys=211.8Mi, NumGC=230	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:26:23.921+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:26:41.995+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:27:23.908+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.5Mi, TotalAlloc=4333.3Mi, Sys=211.8Mi, NumGC=230	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:27:23.922+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:27:41.996+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:28:23.910+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.5Mi, TotalAlloc=4333.4Mi, Sys=211.8Mi, NumGC=231	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:28:23.924+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:28:41.998+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:29:23.911+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.5Mi, TotalAlloc=4333.4Mi, Sys=211.8Mi, NumGC=231	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:29:23.960+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:29:41.999+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:30:23.913+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.5Mi, TotalAlloc=4333.4Mi, Sys=211.8Mi, NumGC=232	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:30:23.927+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:30:42.025+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:31:23.953+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3.5Mi, TotalAlloc=4333.4Mi, Sys=211.8Mi, NumGC=232	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:31:23.967+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:31:41.537+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:35:18.821+08:00	 stat 	CPU: 0m, MEMORY: Alloc=2.9Mi, TotalAlloc=5.3Mi, Sys=14.8Mi, NumGC=3	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:35:18.836+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	caller=load/sheddingstat.go:61	app=gtw
+2024-11-22T17:36:18.630+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 212470, reqs: 1	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T17:36:18.823+08:00	 stat 	CPU: 0m, MEMORY: Alloc=187.5Mi, TotalAlloc=286.0Mi, Sys=239.3Mi, NumGC=10	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:36:18.838+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 1, pass: 1, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:37:18.640+08:00	 stat 	(gtw) - qps: 1.8/s, drops: 0, avg time: 1249.5ms, med: 97.8ms, 90th: 2559.6ms, 99th: 54865.4ms, 99.9th: 54865.4ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:37:18.732+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 35769, reqs: 112	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T17:37:18.826+08:00	 stat 	CPU: 0m, MEMORY: Alloc=11.9Mi, TotalAlloc=744.1Mi, Sys=239.5Mi, NumGC=51	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:37:18.840+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 121, pass: 112, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:38:18.631+08:00	 stat 	(gtw) - qps: 3.2/s, drops: 0, avg time: 1304.7ms, med: 122.9ms, 90th: 4210.0ms, 99th: 10256.8ms, 99.9th: 10256.8ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:38:18.823+08:00	 stat 	CPU: 0m, MEMORY: Alloc=10.5Mi, TotalAlloc=1493.2Mi, Sys=239.5Mi, NumGC=114	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:38:18.837+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 180, pass: 187, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:38:19.964+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 10518, reqs: 189	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T17:39:18.631+08:00	 stat 	(gtw) - qps: 3.2/s, drops: 0, avg time: 290.4ms, med: 71.1ms, 90th: 380.6ms, 99th: 10747.5ms, 99.9th: 10747.5ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:39:18.823+08:00	 stat 	CPU: 0m, MEMORY: Alloc=23.5Mi, TotalAlloc=2249.6Mi, Sys=239.5Mi, NumGC=169	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:39:18.839+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 187, pass: 189, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:39:28.122+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 96348, reqs: 199	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T17:40:18.633+08:00	 stat 	(gtw) - qps: 3.4/s, drops: 0, avg time: 136.2ms, med: 63.0ms, 90th: 132.9ms, 99th: 2420.3ms, 99.9th: 5134.8ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:40:18.826+08:00	 stat 	CPU: 0m, MEMORY: Alloc=10.9Mi, TotalAlloc=3071.2Mi, Sys=239.5Mi, NumGC=234	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:40:18.846+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 205, pass: 205, drop: 0	caller=load/sheddingstat.go:61	app=gtw
+2024-11-22T17:40:29.511+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 69212, reqs: 251	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T17:41:19.039+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 203, pass: 176, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:41:19.040+08:00	 stat 	CPU: 0m, MEMORY: Alloc=732.3Mi, TotalAlloc=5533.4Mi, Sys=828.4Mi, NumGC=298	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:41:19.080+08:00	 stat 	(gtw) - qps: 2.9/s, drops: 0, avg time: 96.0ms, med: 76.8ms, 90th: 159.7ms, 99th: 682.6ms, 99.9th: 682.6ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:41:43.526+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 77248, reqs: 138	caller=p2c/p2c.go:195	app=gtw
+2024-11-22T17:42:18.636+08:00	 stat 	(gtw) - qps: 0.8/s, drops: 0, avg time: 3656.6ms, med: 425.3ms, 90th: 14242.5ms, 99th: 14252.1ms, 99.9th: 14252.1ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:42:18.830+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3152.0Mi, TotalAlloc=10944.9Mi, Sys=3807.5Mi, NumGC=303	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:42:18.844+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 62, pass: 50, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:42:59.268+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 179676, reqs: 55	caller=p2c/p2c.go:195	app=gtw
+2024-11-22T17:43:18.637+08:00	 stat 	(gtw) - qps: 0.6/s, drops: 0, avg time: 3136.3ms, med: 478.4ms, 90th: 10813.7ms, 99th: 10827.5ms, 99.9th: 10827.5ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:43:18.831+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3538.8Mi, TotalAlloc=11331.6Mi, Sys=3807.5Mi, NumGC=303	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:43:18.847+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 45, pass: 34, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:44:09.004+08:00	 stat 	p2c - conn: 127.0.0.1:21003, load: 211425, reqs: 35	app=gtw	caller=p2c/p2c.go:195
+2024-11-22T17:44:18.639+08:00	 stat 	(gtw) - qps: 0.4/s, drops: 0, avg time: 341.8ms, med: 347.0ms, 90th: 419.9ms, 99th: 426.3ms, 99.9th: 426.3ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:44:18.832+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3973.0Mi, TotalAlloc=14358.0Mi, Sys=4448.2Mi, NumGC=305	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:44:18.847+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 23, pass: 23, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:45:18.641+08:00	 stat 	(gtw) - qps: 0.4/s, drops: 0, avg time: 381.3ms, med: 306.7ms, 90th: 611.0ms, 99th: 659.5ms, 99.9th: 659.5ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:45:18.836+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3085.7Mi, TotalAlloc=17398.0Mi, Sys=4784.5Mi, NumGC=307	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:45:18.849+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 24, pass: 24, drop: 0	caller=load/sheddingstat.go:61	app=gtw
+2024-11-22T17:46:18.645+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:46:18.854+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:46:18.854+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3094.0Mi, TotalAlloc=17406.3Mi, Sys=4787.5Mi, NumGC=307	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:47:18.632+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:47:18.826+08:00	 stat 	CPU: 0m, MEMORY: Alloc=1148.8Mi, TotalAlloc=17518.3Mi, Sys=4784.5Mi, NumGC=308	caller=stat/usage.go:61	app=gtw
+2024-11-22T17:47:18.840+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:48:18.634+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:48:18.827+08:00	 stat 	CPU: 0m, MEMORY: Alloc=1250.1Mi, TotalAlloc=17619.6Mi, Sys=4784.5Mi, NumGC=308	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:48:18.842+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:49:18.640+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:49:18.829+08:00	 stat 	CPU: 0m, MEMORY: Alloc=534.5Mi, TotalAlloc=17688.7Mi, Sys=4784.5Mi, NumGC=309	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:49:18.844+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:50:18.639+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:50:18.832+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3569.6Mi, TotalAlloc=24627.7Mi, Sys=5681.4Mi, NumGC=315	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:50:18.846+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 27, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:51:18.687+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:51:18.863+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 23, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:51:19.499+08:00	 stat 	CPU: 0m, MEMORY: Alloc=4766.3Mi, TotalAlloc=30554.0Mi, Sys=6999.7Mi, NumGC=317	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:52:18.641+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:52:18.973+08:00	 stat 	CPU: 0m, MEMORY: Alloc=4797.1Mi, TotalAlloc=30584.8Mi, Sys=6994.8Mi, NumGC=317	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:52:18.974+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:53:18.643+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:53:18.836+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3523.9Mi, TotalAlloc=30585.8Mi, Sys=6994.8Mi, NumGC=318	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:53:18.851+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:54:18.646+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:54:18.838+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3548.5Mi, TotalAlloc=30610.4Mi, Sys=6994.8Mi, NumGC=318	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:54:18.852+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:55:18.649+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:55:18.839+08:00	 stat 	CPU: 0m, MEMORY: Alloc=2851.4Mi, TotalAlloc=30692.9Mi, Sys=6994.8Mi, NumGC=319	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:55:18.854+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T17:56:18.650+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:56:18.920+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	caller=load/sheddingstat.go:61	app=gtw
+2024-11-22T17:56:18.966+08:00	 stat 	CPU: 0m, MEMORY: Alloc=3187.7Mi, TotalAlloc=31029.2Mi, Sys=6994.8Mi, NumGC=319	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:57:18.651+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:57:18.843+08:00	 stat 	CPU: 0m, MEMORY: Alloc=1004.4Mi, TotalAlloc=31110.2Mi, Sys=6994.8Mi, NumGC=320	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:57:18.858+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	caller=load/sheddingstat.go:61	app=gtw
+2024-11-22T17:58:18.653+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	caller=stat/metrics.go:210	app=gtw
+2024-11-22T17:58:18.847+08:00	 stat 	CPU: 0m, MEMORY: Alloc=1006.2Mi, TotalAlloc=31112.0Mi, Sys=6994.8Mi, NumGC=320	app=gtw	caller=stat/usage.go:61
+2024-11-22T17:58:18.860+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	caller=load/sheddingstat.go:61	app=gtw
+2024-11-22T17:59:18.654+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T17:59:18.851+08:00	 stat 	CPU: 0m, MEMORY: Alloc=968.3Mi, TotalAlloc=31113.2Mi, Sys=6994.8Mi, NumGC=321	caller=stat/usage.go:61	app=gtw
+2024-11-22T17:59:18.866+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T18:00:18.661+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-22T18:00:18.855+08:00	 stat 	CPU: 0m, MEMORY: Alloc=969.3Mi, TotalAlloc=31114.3Mi, Sys=6994.8Mi, NumGC=321	app=gtw	caller=stat/usage.go:61
+2024-11-22T18:00:18.867+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-22T18:01:18.658+08:00	 stat 	(gtw) - qps: 1.7/s, drops: 0, avg time: 904864.3ms, med: 1076064.4ms, 90th: 1190923.6ms, 99th: 1202944.0ms, 99.9th: 1202944.0ms	caller=stat/metrics.go:210	app=gtw
+2024-11-22T18:01:18.850+08:00	 stat 	CPU: 0m, MEMORY: Alloc=643.0Mi, TotalAlloc=31116.0Mi, Sys=6994.8Mi, NumGC=322	app=gtw	caller=stat/usage.go:61
+2024-11-22T18:01:18.866+08:00	 stat 	(api) shedding_stat [1m], cpu: 0, total: 0, pass: 100, drop: 0	app=gtw	caller=load/sheddingstat.go:61
+2024-11-25T09:28:21.225+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
+2024-11-25T09:28:41.868+08:00	 stat 	(gtw) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms	app=gtw	caller=stat/metrics.go:210
