@@ -36,7 +36,7 @@ func NewAsynqServer(addr, pass string) *asynq.Server {
 		asynq.RedisClientOpt{Addr: addr, Password: pass},
 		asynq.Config{
 			IsFailure: func(err error) bool {
-				logx.Infof("asynq server exec task err:%+v", err)
+				//logx.Infof("asynq server exec task err:%+v", err)
 				return true
 			},
 			Concurrency: 20, //max concurrent process task task num
