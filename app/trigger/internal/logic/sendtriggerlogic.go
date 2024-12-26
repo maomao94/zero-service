@@ -52,20 +52,6 @@ func (l *SendTriggerLogic) SendTrigger(in *trigger.SendTriggerReq) (*trigger.Sen
 	if err != nil {
 		return nil, err
 	}
-	var d time.Duration
-	if len(in.TriggerTime) > 0 {
-		triggerTime := carbon.Parse(in.TriggerTime)
-		if triggerTime.Error != nil {
-			return nil, triggerTime.Error
-		}
-		internal := carbon.Now().DiffInSeconds(triggerTime)
-		if internal < 0 {
-			return nil, errors.New("triggerTime is invalid")
-		}
-		d = time.Duration(internal) * time.Second
-	} else {
-		d = time.Duration(in.ProcessIn) * time.Second
-	}
 	opts := []asynq.Option{}
 	if len(in.GetMsgId()) == 0 {
 		in.MsgId = uuid.NewString()
@@ -87,6 +73,20 @@ func (l *SendTriggerLogic) SendTrigger(in *trigger.SendTriggerReq) (*trigger.Sen
 			EntryId: id,
 		}, nil
 	} else {
+		var d time.Duration
+		if len(in.TriggerTime) > 0 {
+			triggerTime := carbon.Parse(in.TriggerTime)
+			if triggerTime.Error != nil {
+				return nil, triggerTime.Error
+			}
+			internal := carbon.Now().DiffInSeconds(triggerTime)
+			if internal < 0 {
+				return nil, errors.New("triggerTime is invalid")
+			}
+			d = time.Duration(internal) * time.Second
+		} else {
+			d = time.Duration(in.ProcessIn) * time.Second
+		}
 		opts = append(opts, asynq.ProcessIn(d))
 		taskInfo, err := l.svcCtx.AsynqClient.Enqueue(asynq.NewTask(tasktype.DeferTriggerTask, []byte(payload)), opts...)
 		if err != nil {
