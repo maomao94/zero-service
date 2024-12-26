@@ -48,14 +48,14 @@ func (l *SendTriggerLogic) SendTrigger(in *trigger.SendTriggerReq) (*trigger.Sen
 		Msg:     in.Body,
 		Url:     in.Url,
 	}
-	payload, err := jsonx.Marshal(msg)
-	if err != nil {
-		return nil, err
-	}
 	opts := []asynq.Option{}
 	if len(in.GetMsgId()) == 0 {
 		in.MsgId = uuid.NewString()
 		msg.MsgId = in.MsgId
+	}
+	payload, err := jsonx.Marshal(msg)
+	if err != nil {
+		return nil, err
 	}
 	opts = append(opts, asynq.TaskID(in.MsgId))
 	if in.GetMaxRetry() > 0 {
