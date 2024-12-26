@@ -10,7 +10,7 @@ Log:
 #  Mode: file
 #  Path: logs/trigger
 Redis:
-  Host: 127.0.0.1:6379
+  Host: 127.0.0.1:6379`
   Type: node
   Key: zero.trigger
 #链路追踪

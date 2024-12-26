@@ -13,10 +13,11 @@ message Res {
 
 message SendTriggerReq {
   string msgId = 1; // 唯一消息 id
-  string body = 2;
-  int64 processIn = 3; // 秒
-  string triggerTime = 4; // 触发时间 2019-01-01 00:00:00 二选一
-  string url = 5; // 转发地址 POST json提交
+  string group = 2; // 分组，可为空
+  string body = 3;
+  int64 processIn = 4; // 秒
+  string triggerTime = 5; // 触发时间 2019-01-01 00:00:00 二选一
+  string url = 6; // POST json提交
 }
 
 message SendTriggerRes {
