@@ -12,7 +12,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang-module/carbon/v2 v2.3.12
 	github.com/google/uuid v1.6.0
-	github.com/hibiken/asynq v0.25.0
+	github.com/hibiken/asynq v0.25.1
 	github.com/jinzhu/copier v0.4.0
 	github.com/larksuite/oapi-sdk-go/v3 v3.3.2
 	github.com/minio/minio-go/v7 v7.0.80
@@ -30,7 +30,7 @@ require (
 	golang.org/x/crypto v0.28.0
 	golang.org/x/term v0.26.0
 	google.golang.org/grpc v1.67.1
-	google.golang.org/protobuf v1.35.1
+	google.golang.org/protobuf v1.35.2
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -126,7 +126,7 @@ require (
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.27.0 // indirect
 	golang.org/x/text v0.19.0 // indirect
-	golang.org/x/time v0.7.0 // indirect
+	golang.org/x/time v0.8.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240822170219-fc7c04adadcd // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241021214115-324edc3d5d38 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
