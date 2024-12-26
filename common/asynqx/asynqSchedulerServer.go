@@ -37,6 +37,11 @@ func NewScheduler(addr, pass string) *asynq.Scheduler {
 			Password: pass,
 		}, &asynq.SchedulerOpts{
 			Location: location,
+			PostEnqueueFunc: func(info *asynq.TaskInfo, err error) {
+				if err != nil {
+					logx.Errorf("asynq scheduler err:%+v", err)
+				}
+			},
 		})
 }
 
