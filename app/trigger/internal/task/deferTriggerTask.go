@@ -43,7 +43,7 @@ func (l *DeferTriggerTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task
 				MsgId: msg.MsgId,
 				Msg:   msg.Msg,
 			}
-			postCtx, _ := context.WithTimeout(ctx, time.Duration(5)*time.Second)
+			postCtx, _ := context.WithTimeout(ctx, time.Duration(10)*time.Second)
 			resp, err := l.svcCtx.Httpc.Do(postCtx, http.MethodPost, msg.Url, data)
 			if err != nil {
 				t.ResultWriter().Write([]byte("fail,http"))
