@@ -40,7 +40,9 @@ func NewScheduler(addr, pass string) *asynq.Scheduler {
 			Location: location,
 			PostEnqueueFunc: func(info *asynq.TaskInfo, err error) {
 				ctx := context.Background()
-				ctx = logx.ContextWithFields(ctx, logx.Field("taskId", info.ID), logx.Field("type", info.Type))
+				if info != nil {
+					ctx = logx.ContextWithFields(ctx, logx.Field("taskId", info.ID), logx.Field("type", info.Type))
+				}
 				if err != nil {
 					logx.WithContext(ctx).Errorf("asynq scheduler err:%+v", err)
 				} else {
