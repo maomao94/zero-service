@@ -29,9 +29,6 @@ message SendTriggerRes {
   // Queue is the name of the queue in which the task belongs.
   string queue = 3;
 
-  // MaxRetry is the maximum number of times the task can be retried.
-  int64 maxRetry = 4;
-
   string entryId = 5;
 }
 
