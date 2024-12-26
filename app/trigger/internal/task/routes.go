@@ -5,6 +5,7 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/logx"
 	"zero-service/app/trigger/internal/svc"
+	"zero-service/app/trigger/internal/task/scheduler"
 	"zero-service/common/asynqx"
 	"zero-service/zerorpc/tasktype"
 )
@@ -24,5 +25,9 @@ func (l *CronJob) Register() *asynq.ServeMux {
 	mux.Use(asynqx.LoggingMiddleware)
 	mux.Handle(tasktype.DeferTriggerTask, NewDeferTriggerTask(l.svcCtx))
 	logx.Infow(fmt.Sprint("asynq cronJob-task registered"), logx.Field("type", tasktype.DeferTriggerTask))
+
+	//scheduler job
+	mux.Handle(tasktype.SchedulerDeferTask, scheduler.NewSchedulerDeferTask(l.svcCtx))
+	logx.Infow(fmt.Sprint("asynq cronJob-scheduler registered"), logx.Field("type", tasktype.SchedulerDeferTask))
 	return mux
 }

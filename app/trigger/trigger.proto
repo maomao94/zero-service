@@ -16,8 +16,9 @@ message SendTriggerReq {
   string body = 2; // 触发内容，可为空
   int64 processIn = 3; // 秒
   string triggerTime = 4; // 触发时间 2019-01-01 00:00:00 二选一
-  string url = 5; // POST json提交
-  int64 maxRetry = 6; // 重试次数 默认 25
+  string cron = 5; // cron表达式 存在变成周期任务
+  string url =  6; // POST json提交
+  int64 maxRetry = 7; // 重试次数 默认 25
 }
 
 message SendTriggerRes {

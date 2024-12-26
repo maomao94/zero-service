@@ -73,14 +73,26 @@ func (l *SendTriggerLogic) SendTrigger(in *trigger.SendTriggerReq) (*trigger.Sen
 		opts = append(opts, asynq.MaxRetry(int(in.GetMaxRetry())))
 	}
 	opts = append(opts, asynq.Queue("critical"), asynq.ProcessIn(d), asynq.Retention(7*24*time.Hour))
-	taskInfo, err := l.svcCtx.AsynqClient.Enqueue(asynq.NewTask(tasktype.DeferTriggerTask, []byte(payload)), opts...)
-	if err != nil {
-		return nil, err
+	if len(in.Cron) != 0 {
+		task := asynq.NewTask(tasktype.SchedulerDeferTask, []byte(payload), asynq.Retention(7*24*time.Hour))
+		id, err := l.svcCtx.Scheduler.Register(in.Cron, task)
+		if err != nil {
+			return nil, err
+		}
+		return &trigger.SendTriggerRes{
+			TraceId: traceID,
+			Id:      id,
+		}, nil
+	} else {
+		taskInfo, err := l.svcCtx.AsynqClient.Enqueue(asynq.NewTask(tasktype.DeferTriggerTask, []byte(payload)), opts...)
+		if err != nil {
+			return nil, err
+		}
+		return &trigger.SendTriggerRes{
+			TraceId:  traceID,
+			Id:       taskInfo.ID,
+			Queue:    taskInfo.Queue,
+			MaxRetry: int64(taskInfo.MaxRetry),
+		}, nil
 	}
-	return &trigger.SendTriggerRes{
-		TraceId:  traceID,
-		Id:       taskInfo.ID,
-		Queue:    taskInfo.Queue,
-		MaxRetry: int64(taskInfo.MaxRetry),
-	}, nil
 }

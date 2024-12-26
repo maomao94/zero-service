@@ -43,6 +43,9 @@ func main() {
 	mux := task.NewCronJob(ctx).Register()
 	taskServer := asynqx.NewTaskServer(ctx.AsynqServer, mux)
 	serviceGroup.Add(taskServer)
+	scheduler := asynqx.NewSchedulerServer(ctx.Scheduler)
+	//scheduler.RegisterTest()
+	serviceGroup.Add(scheduler)
 	logx.AddGlobalFields(logx.Field("app", c.Name))
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
