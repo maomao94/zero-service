@@ -61,9 +61,9 @@ func (l *SendTriggerLogic) SendTrigger(in *trigger.SendTriggerReq) (*trigger.Sen
 		opts = append(opts, asynq.MaxRetry(int(in.GetMaxRetry())))
 	}
 	opts = append(opts, asynq.Queue("critical"), asynq.Retention(7*24*time.Hour))
-	if len(in.Cron) != 0 {
+	if false {
 		task := asynq.NewTask(tasktype.SchedulerDeferTask, []byte(payload), opts...)
-		id, err := l.svcCtx.Scheduler.Register(in.Cron, task)
+		id, err := l.svcCtx.Scheduler.Register("*/1 * * * *", task)
 		if err != nil {
 			return nil, err
 		}
