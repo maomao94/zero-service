@@ -3,6 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/zeromicro/go-zero/core/logx"
+	"zero-service/app/trigger/internal/task"
+	interceptor "zero-service/common/Interceptor/rpcserver"
+	"zero-service/common/asynqx"
 
 	"zero-service/app/trigger/internal/config"
 	"zero-service/app/trigger/internal/server"
@@ -32,8 +36,15 @@ func main() {
 			reflection.Register(grpcServer)
 		}
 	})
-	defer s.Stop()
+	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
+	serviceGroup := service.NewServiceGroup()
+	defer serviceGroup.Stop()
+	serviceGroup.Add(s)
+	mux := task.NewCronJob(ctx).Register()
+	taskServer := asynqx.NewTaskServer(ctx.AsynqServer, mux)
+	serviceGroup.Add(taskServer)
+	logx.AddGlobalFields(logx.Field("app", c.Name))
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
-	s.Start()
+	serviceGroup.Start()
 }
