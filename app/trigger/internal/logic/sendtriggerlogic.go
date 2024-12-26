@@ -63,14 +63,14 @@ func (l *SendTriggerLogic) SendTrigger(in *trigger.SendTriggerReq) (*trigger.Sen
 	opts = append(opts, asynq.Queue("critical"), asynq.Retention(7*24*time.Hour))
 	if false {
 		task := asynq.NewTask(tasktype.SchedulerDeferTask, []byte(payload), opts...)
-		id, err := l.svcCtx.Scheduler.Register("*/1 * * * *", task)
+		_, err = l.svcCtx.Scheduler.Register("*/1 * * * *", task)
 		if err != nil {
 			return nil, err
 		}
 		return &trigger.SendTriggerRes{
 			TraceId: traceID,
 			Id:      in.MsgId,
-			EntryId: id,
+			//EntryId: id,
 		}, nil
 	} else {
 		var d time.Duration

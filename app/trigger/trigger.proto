@@ -27,8 +27,6 @@ message SendTriggerRes {
 
   // Queue is the name of the queue in which the task belongs.
   string queue = 3;
-
-  string entryId = 5;
 }
 
 service TriggerRpc {
