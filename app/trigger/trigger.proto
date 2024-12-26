@@ -31,6 +31,8 @@ message SendTriggerRes {
 
   // MaxRetry is the maximum number of times the task can be retried.
   int64 maxRetry = 4;
+
+  string entryId = 5;
 }
 
 service TriggerRpc {

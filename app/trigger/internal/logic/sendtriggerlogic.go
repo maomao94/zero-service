@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"github.com/google/uuid"
 
 	"github.com/golang-module/carbon/v2"
 	"github.com/hibiken/asynq"
@@ -66,22 +67,24 @@ func (l *SendTriggerLogic) SendTrigger(in *trigger.SendTriggerReq) (*trigger.Sen
 		d = time.Duration(in.ProcessIn) * time.Second
 	}
 	opts := []asynq.Option{}
-	if len(in.GetMsgId()) != 0 {
-		opts = append(opts, asynq.TaskID(in.GetMsgId()))
+	if len(in.GetMsgId()) == 0 {
+		in.MsgId = uuid.NewString()
 	}
+	opts = append(opts, asynq.TaskID(in.MsgId))
 	if in.GetMaxRetry() > 0 {
 		opts = append(opts, asynq.MaxRetry(int(in.GetMaxRetry())))
 	}
 	opts = append(opts, asynq.Queue("critical"), asynq.ProcessIn(d), asynq.Retention(7*24*time.Hour))
 	if len(in.Cron) != 0 {
-		task := asynq.NewTask(tasktype.SchedulerDeferTask, []byte(payload), asynq.Retention(7*24*time.Hour))
+		task := asynq.NewTask(tasktype.SchedulerDeferTask, []byte(payload), opts...)
 		id, err := l.svcCtx.Scheduler.Register(in.Cron, task)
 		if err != nil {
 			return nil, err
 		}
 		return &trigger.SendTriggerRes{
 			TraceId: traceID,
-			Id:      id,
+			Id:      in.MsgId,
+			EntryId: id,
 		}, nil
 	} else {
 		taskInfo, err := l.svcCtx.AsynqClient.Enqueue(asynq.NewTask(tasktype.DeferTriggerTask, []byte(payload)), opts...)
