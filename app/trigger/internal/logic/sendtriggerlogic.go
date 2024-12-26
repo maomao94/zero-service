@@ -69,7 +69,7 @@ func (l *SendTriggerLogic) SendTrigger(in *trigger.SendTriggerReq) (*trigger.Sen
 	if len(in.GetMsgId()) != 0 {
 		opts = append(opts, asynq.TaskID(in.GetMsgId()))
 	}
-	if in.GetMaxRetry() != 0 {
+	if in.GetMaxRetry() > 0 {
 		opts = append(opts, asynq.MaxRetry(int(in.GetMaxRetry())))
 	}
 	opts = append(opts, asynq.Queue("critical"), asynq.ProcessIn(d), asynq.Retention(7*24*time.Hour))
