@@ -42,6 +42,8 @@ func NewScheduler(addr, pass string) *asynq.Scheduler {
 				ctx := context.Background()
 				if info != nil {
 					ctx = logx.ContextWithFields(ctx, logx.Field("taskId", info.ID), logx.Field("type", info.Type))
+				} else {
+					logx.WithContext(ctx).Error("asynq scheduler info is nil")
 				}
 				if err != nil {
 					logx.WithContext(ctx).Errorf("asynq scheduler err:%+v", err)
