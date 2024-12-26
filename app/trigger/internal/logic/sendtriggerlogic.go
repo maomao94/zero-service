@@ -55,6 +55,7 @@ func (l *SendTriggerLogic) SendTrigger(in *trigger.SendTriggerReq) (*trigger.Sen
 	opts := []asynq.Option{}
 	if len(in.GetMsgId()) == 0 {
 		in.MsgId = uuid.NewString()
+		msg.MsgId = in.MsgId
 	}
 	opts = append(opts, asynq.TaskID(in.MsgId))
 	if in.GetMaxRetry() > 0 {
