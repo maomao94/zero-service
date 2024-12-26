@@ -93,10 +93,9 @@ func (l *SendTriggerLogic) SendTrigger(in *trigger.SendTriggerReq) (*trigger.Sen
 			return nil, err
 		}
 		return &trigger.SendTriggerRes{
-			TraceId:  traceID,
-			Id:       taskInfo.ID,
-			Queue:    taskInfo.Queue,
-			MaxRetry: int64(taskInfo.MaxRetry),
+			TraceId: traceID,
+			Id:      taskInfo.ID,
+			Queue:   taskInfo.Queue,
 		}, nil
 	}
 }
