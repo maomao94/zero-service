@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/hibiken/asynq"
+	"github.com/zeromicro/go-zero/core/logx"
 	"go.opentelemetry.io/otel"
 	"net/http"
 	"time"
@@ -29,6 +30,7 @@ func (l *DeferTriggerTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task
 		return err
 	} else {
 		ctx = otel.GetTextMapPropagator().Extract(ctx, msg.Carrier)
+		logx.WithContext(ctx).Info("ProcessTask")
 		ctx, span := asynqx.StartAsynqConsumerSpan(ctx, t.Type())
 		defer span.End()
 		if msg.Url != "" {
@@ -53,10 +55,11 @@ func (l *DeferTriggerTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task
 				t.ResultWriter().Write([]byte("success"))
 			} else {
 				t.ResultWriter().Write([]byte("fail,httpCode," + resp.Status))
-				return errors.New("forwardTask fail")
+				return errors.New("trigger fail")
 			}
 		} else {
 			t.ResultWriter().Write([]byte("fail,url,empty"))
+			return errors.New("trigger fail")
 		}
 	}
 	return nil

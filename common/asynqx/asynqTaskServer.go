@@ -59,8 +59,7 @@ func StartAsynqConsumerSpan(ctx context.Context, typename string) (context.Conte
 func LoggingMiddleware(h asynq.Handler) asynq.Handler {
 	return asynq.HandlerFunc(func(ctx context.Context, t *asynq.Task) error {
 		startTime := timex.Now()
-		ctx = logx.ContextWithFields(ctx, logx.Field("type", t.Type()))
-		logx.WithContext(ctx).Infof("asynq start processing")
+		ctx = logx.ContextWithFields(ctx, logx.Field("type", t.Type()), logx.Field("taskId", t.ResultWriter().TaskID()))
 		err := h.ProcessTask(ctx, t)
 		duration := timex.Since(startTime)
 		if err != nil {
