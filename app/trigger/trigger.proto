@@ -13,11 +13,11 @@ message Res {
 
 message SendTriggerReq {
   string msgId = 1; // 唯一消息 id
-  string group = 2; // 分组，可为空
-  string body = 3; // 触发内容，可为空
-  int64 processIn = 4; // 秒
-  string triggerTime = 5; // 触发时间 2019-01-01 00:00:00 二选一
-  string url = 6; // POST json提交
+  string body = 2; // 触发内容，可为空
+  int64 processIn = 3; // 秒
+  string triggerTime = 4; // 触发时间 2019-01-01 00:00:00 二选一
+  string url = 5; // POST json提交
+  int64 maxRetry = 6; // 重试次数 默认 25
 }
 
 message SendTriggerRes {
@@ -30,17 +30,6 @@ message SendTriggerRes {
 
   // MaxRetry is the maximum number of times the task can be retried.
   int64 maxRetry = 4;
-
-  // Retried is the number of times the task has retried so far.
-  int64 retried = 5;
-
-  // Group is the name of the group in which the task belongs.
-  //
-  // Tasks in the same queue can be grouped together by Group name and will be aggregated into one task
-  // by a Server processing the queue.
-  //
-  // Empty string (default) indicates task does not belong to any groups, and no aggregation will be applied to the task.
-  string group = 6;
 }
 
 service TriggerRpc {

@@ -69,10 +69,10 @@ func (l *SendTriggerLogic) SendTrigger(in *trigger.SendTriggerReq) (*trigger.Sen
 	if len(in.GetMsgId()) != 0 {
 		opts = append(opts, asynq.TaskID(in.GetMsgId()))
 	}
-	if len(in.Group) != 0 {
-		opts = append(opts, asynq.Group(in.GetGroup()))
+	if in.GetMaxRetry() != 0 {
+		opts = append(opts, asynq.MaxRetry(int(in.GetMaxRetry())))
 	}
-	opts = append(opts, asynq.Queue("critical"), asynq.ProcessIn(d), asynq.Retention(24*time.Hour))
+	opts = append(opts, asynq.Queue("critical"), asynq.ProcessIn(d), asynq.Retention(7*24*time.Hour))
 	taskInfo, err := l.svcCtx.AsynqClient.Enqueue(asynq.NewTask(tasktype.DeferTriggerTask, []byte(payload)), opts...)
 	if err != nil {
 		return nil, err
@@ -82,7 +82,5 @@ func (l *SendTriggerLogic) SendTrigger(in *trigger.SendTriggerReq) (*trigger.Sen
 		Id:       taskInfo.ID,
 		Queue:    taskInfo.Queue,
 		MaxRetry: int64(taskInfo.MaxRetry),
-		Retried:  int64(taskInfo.Retried),
-		Group:    taskInfo.Group,
 	}, nil
 }

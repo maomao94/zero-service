@@ -34,11 +34,14 @@ func (l *DeferTriggerTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task
 		if msg.Url != "" {
 			type Data struct {
 				MsgId string `json:"msgId"`
-				Body  string `json:"body"`
+				Msg   string `json:"Msg"`
+			}
+			if len(msg.MsgId) == 0 {
+				msg.Msg = t.ResultWriter().TaskID()
 			}
 			var data = Data{
 				MsgId: msg.MsgId,
-				Body:  msg.Msg,
+				Msg:   msg.Msg,
 			}
 			postCtx, _ := context.WithTimeout(ctx, time.Duration(5)*time.Second)
 			resp, err := l.svcCtx.Httpc.Do(postCtx, http.MethodPost, msg.Url, data)
