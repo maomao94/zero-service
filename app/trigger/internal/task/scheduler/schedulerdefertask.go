@@ -18,7 +18,7 @@ func NewSchedulerDeferTask(svcCtx *svc.ServiceContext) *SchedulerDeferTaskHandle
 }
 
 func (l *SchedulerDeferTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task) error {
-	logx.WithContext(ctx).Infof("do scheduler something %v", t)
-	t.ResultWriter().Write([]byte("scheduler something"))
+	logx.WithContext(ctx).Infof("SchedulerDeferTask %v", t.Payload())
+	t.ResultWriter().Write([]byte("success"))
 	return nil
 }
