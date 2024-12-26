@@ -39,7 +39,7 @@ func NewForwardTaskLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Forwa
 // 转发任务
 func (l *ForwardTaskLogic) ForwardTask(in *zerorpc.ForwardTaskReq) (*zerorpc.ForwardTaskRes, error) {
 	traceID := trace.TraceIDFromContext(l.ctx)
-	spanCtx, span := svc.StartAsynqProducerSpan(l.ctx, tasktype.DeferForwardTask)
+	spanCtx, span := svc.StartAsynqProducerSpan(l.ctx, tasktype.DeferTriggerTask)
 	defer span.End()
 	carrier := &propagation.HeaderCarrier{}
 	otel.GetTextMapPropagator().Inject(spanCtx, carrier)
@@ -67,7 +67,7 @@ func (l *ForwardTaskLogic) ForwardTask(in *zerorpc.ForwardTaskReq) (*zerorpc.For
 	} else {
 		d = time.Duration(in.ProcessIn) * time.Second
 	}
-	_, err = l.svcCtx.AsynqClient.Enqueue(asynq.NewTask(tasktype.DeferForwardTask, []byte(payload)), asynq.Queue("critical"), asynq.TaskID(in.GetMsgId()), asynq.ProcessIn(d), asynq.Retention(24*time.Hour))
+	_, err = l.svcCtx.AsynqClient.Enqueue(asynq.NewTask(tasktype.DeferTriggerTask, []byte(payload)), asynq.Queue("critical"), asynq.TaskID(in.GetMsgId()), asynq.ProcessIn(d), asynq.Retention(24*time.Hour))
 	if err != nil {
 		_, alarmErr := l.svcCtx.ZeroAlarmCli.Alarm(l.ctx, &zeroalarm.AlarmReq{
 			ChatName:    "服务告警",

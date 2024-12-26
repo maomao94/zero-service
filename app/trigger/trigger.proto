@@ -21,17 +21,18 @@ message SendTriggerReq {
 }
 
 message SendTriggerRes {
+  string traceId = 1; // 唯一追踪 id
   // ID is the identifier of the task.
-  string Id = 1;
+  string id = 2;
 
   // Queue is the name of the queue in which the task belongs.
-  string Queue = 2;
+  string queue = 3;
 
   // MaxRetry is the maximum number of times the task can be retried.
-  int64 MaxRetry = 3;
+  int64 maxRetry = 4;
 
   // Retried is the number of times the task has retried so far.
-  int64 Retried = 4;
+  int64 retried = 5;
 
   // Group is the name of the group in which the task belongs.
   //
@@ -39,7 +40,7 @@ message SendTriggerRes {
   // by a Server processing the queue.
   //
   // Empty string (default) indicates task does not belong to any groups, and no aggregation will be applied to the task.
-  string Group = 5;
+  string group = 6;
 }
 
 service TriggerRpc {

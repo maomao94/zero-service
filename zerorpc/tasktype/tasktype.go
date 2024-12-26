@@ -3,6 +3,6 @@ package tasktype
 // DeferDelayTask 延迟任务
 const DeferDelayTask = "defer:delayTask"
 
-const DeferForwardTask = "defer:forwardTask"
+const DeferTriggerTask = "defer:triggerTask"
 
 const SchedulerDeferTask = "scheduler:defer:task"

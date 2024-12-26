@@ -10,9 +10,10 @@ Log:
 #  Mode: file
 #  Path: logs/trigger
 Redis:
-  Host: 127.0.0.1:6379`
+  Host: 127.0.0.1:36379
   Type: node
-  Key: zero.trigger
+  Key: trigger.rpc
+  Pass: G62m50oigInC30sf
 #链路追踪
 #Telemetry:
 #  Name: zero.alarm
