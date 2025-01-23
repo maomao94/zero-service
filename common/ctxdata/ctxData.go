@@ -12,7 +12,7 @@ import (
 var CtxKeyUserId = "userId"
 
 type MsgBody struct {
-	MsgId   string                     `json:"msg_id"`
+	MsgId   string                     `json:"msgId"`
 	Carrier *propagation.HeaderCarrier `json:"carrier"`
 	Msg     string                     `json:"msg"`
 	Url     string                     `json:"url"`
