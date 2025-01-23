@@ -12,10 +12,10 @@ import (
 var CtxKeyUserId = "userId"
 
 type MsgBody struct {
-	MsgId   string
-	Carrier *propagation.HeaderCarrier
-	Msg     string
-	Url     string
+	MsgId   string                     `json:"msg_id"`
+	Carrier *propagation.HeaderCarrier `json:"carrier"`
+	Msg     string                     `json:"msg"`
+	Url     string                     `json:"url"`
 }
 
 func GetUserIdFromCtx(ctx context.Context, bool bool) int64 {
