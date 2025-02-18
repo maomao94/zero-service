@@ -252,7 +252,11 @@ func main() {
 		// 容器操作部分
 		fmt.Print("请输入容器序号: ")
 		scanner.Scan()
-		containerIndex, _ := strconv.Atoi(scanner.Text())
+		choose := scanner.Text()
+		if choose == "" {
+			choose = "1"
+		}
+		containerIndex, _ := strconv.Atoi(choose)
 		if containerIndex < 1 || containerIndex > len(containers) {
 			fmt.Println("无效选择")
 			return
