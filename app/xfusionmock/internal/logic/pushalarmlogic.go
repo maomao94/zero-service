@@ -39,16 +39,14 @@ func (l *PushAlarmLogic) PushAlarm(in *xfusionmock.ReqPushAlarm) (*xfusionmock.R
 		AlarmCode:      "CROSS_IN",
 		Level:          1,
 		TerminalNoList: []string{"T123456789013"},
-		TrackInfoList: []model.TrackInfo{
+		TrackInfoList: []model.TerminalInfo{
 			{
-				TerminalInfo: &model.TerminalInfo{
-					TerminalID: 1,
-					TerminalNo: "123456789013",
-					TrackID:    1,
-					TrackNo:    "沪A999991",
-					TrackType:  "CAR",
-				},
-				TrackName: "测试车辆001",
+				TerminalID: 100001,
+				TerminalNo: "T12345678901",
+				TrackID:    5001,
+				TrackNo:    "沪A12345",
+				TrackType:  "CAR",
+				TrackName:  l.svcCtx.Config.Name,
 			},
 		},
 		Position: &model.LocationPosition{

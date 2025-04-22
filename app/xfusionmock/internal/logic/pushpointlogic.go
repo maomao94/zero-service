@@ -35,6 +35,7 @@ func (l *PushPointLogic) PushPoint(in *xfusionmock.ReqPushPoint) (*xfusionmock.R
 			TrackID:    5001,
 			TrackNo:    "沪A12345",
 			TrackType:  "CAR",
+			TrackName:  l.svcCtx.Config.Name,
 		},
 		EpochTime: time.Now().UnixMilli(),
 		Location: &model.Location{

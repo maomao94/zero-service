@@ -27,7 +27,7 @@ type AlarmData struct {
 	// 关联终端编号列表（至少包含一个有效终端号）
 	TerminalNoList []string `json:"terminalNoList"`
 	// 报警涉及的主体信息列表
-	TrackInfoList []TrackInfo `json:"trackInfoList"`
+	TrackInfoList []TerminalInfo `json:"trackInfoList"`
 	// 监控对象类型：CAR-车辆 STAFF-人员
 	TrackType string `json:"trackType"`
 	// 报警触发位置（WGS84坐标系）
@@ -40,14 +40,6 @@ type AlarmData struct {
 	Duration int `json:"duration"`
 	// 报警当前状态：ON-进行中 OFF-已结束
 	AlarmStatus string `json:"alarmStatus"`
-}
-
-// TrackInfo 报警关联对象信息
-type TrackInfo struct {
-	// 终端设备详细信息
-	TerminalInfo *TerminalInfo `json:"terminalInfo"`
-	// 监控对象显示名称（如车牌号"沪A12345"）
-	TrackName string `json:"trackName"`
 }
 
 // LocationPosition 位置坐标（复用已有定义）
@@ -72,6 +64,8 @@ type TerminalInfo struct {
 	TrackNo string `json:"trackNo"`
 	// 对象类型：CAR-车辆, STAFF-人员
 	TrackType string `json:"trackType"`
+	// 监控对象显示名称（如车牌号"沪A12345"）
+	TrackName string `json:"trackName"`
 }
 
 // Location 定位数据
