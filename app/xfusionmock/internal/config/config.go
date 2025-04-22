@@ -8,7 +8,9 @@ import (
 
 type Config struct {
 	zrpc.RpcServerConf
-	KafkaTestConfig  kq.KqConf
-	KafkaPointConfig config.KqConfig
-	KafkaAlarmConfig config.KqConfig
+	KafkaTestConfig   kq.KqConf
+	KafkaPointConfig  config.KqConfig
+	KafkaAlarmConfig  config.KqConfig
+	KafkaEventConfig  config.KqConfig
+	KafkaTerminalBind config.KqConfig
 }

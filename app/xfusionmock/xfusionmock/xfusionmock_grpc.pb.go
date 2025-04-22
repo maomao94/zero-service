@@ -19,10 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	XFusionMockRpc_Ping_FullMethodName      = "/trigger.XFusionMockRpc/Ping"
-	XFusionMockRpc_PushTest_FullMethodName  = "/trigger.XFusionMockRpc/PushTest"
-	XFusionMockRpc_PushPoint_FullMethodName = "/trigger.XFusionMockRpc/PushPoint"
-	XFusionMockRpc_PushAlarm_FullMethodName = "/trigger.XFusionMockRpc/PushAlarm"
+	XFusionMockRpc_Ping_FullMethodName             = "/trigger.XFusionMockRpc/Ping"
+	XFusionMockRpc_PushTest_FullMethodName         = "/trigger.XFusionMockRpc/PushTest"
+	XFusionMockRpc_PushPoint_FullMethodName        = "/trigger.XFusionMockRpc/PushPoint"
+	XFusionMockRpc_PushAlarm_FullMethodName        = "/trigger.XFusionMockRpc/PushAlarm"
+	XFusionMockRpc_PushEvent_FullMethodName        = "/trigger.XFusionMockRpc/PushEvent"
+	XFusionMockRpc_PushTerminalBind_FullMethodName = "/trigger.XFusionMockRpc/PushTerminalBind"
 )
 
 // XFusionMockRpcClient is the client API for XFusionMockRpc service.
@@ -33,6 +35,8 @@ type XFusionMockRpcClient interface {
 	PushTest(ctx context.Context, in *ReqPushTest, opts ...grpc.CallOption) (*ResPushTest, error)
 	PushPoint(ctx context.Context, in *ReqPushPoint, opts ...grpc.CallOption) (*ResPushPoint, error)
 	PushAlarm(ctx context.Context, in *ReqPushAlarm, opts ...grpc.CallOption) (*ResPushAlarm, error)
+	PushEvent(ctx context.Context, in *ReqPushEvent, opts ...grpc.CallOption) (*ResPushEvent, error)
+	PushTerminalBind(ctx context.Context, in *ReqPushTerminalBind, opts ...grpc.CallOption) (*ResPushTerminalBind, error)
 }
 
 type xFusionMockRpcClient struct {
@@ -83,6 +87,26 @@ func (c *xFusionMockRpcClient) PushAlarm(ctx context.Context, in *ReqPushAlarm, 
 	return out, nil
 }
 
+func (c *xFusionMockRpcClient) PushEvent(ctx context.Context, in *ReqPushEvent, opts ...grpc.CallOption) (*ResPushEvent, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResPushEvent)
+	err := c.cc.Invoke(ctx, XFusionMockRpc_PushEvent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *xFusionMockRpcClient) PushTerminalBind(ctx context.Context, in *ReqPushTerminalBind, opts ...grpc.CallOption) (*ResPushTerminalBind, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResPushTerminalBind)
+	err := c.cc.Invoke(ctx, XFusionMockRpc_PushTerminalBind_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // XFusionMockRpcServer is the server API for XFusionMockRpc service.
 // All implementations must embed UnimplementedXFusionMockRpcServer
 // for forward compatibility.
@@ -91,6 +115,8 @@ type XFusionMockRpcServer interface {
 	PushTest(context.Context, *ReqPushTest) (*ResPushTest, error)
 	PushPoint(context.Context, *ReqPushPoint) (*ResPushPoint, error)
 	PushAlarm(context.Context, *ReqPushAlarm) (*ResPushAlarm, error)
+	PushEvent(context.Context, *ReqPushEvent) (*ResPushEvent, error)
+	PushTerminalBind(context.Context, *ReqPushTerminalBind) (*ResPushTerminalBind, error)
 	mustEmbedUnimplementedXFusionMockRpcServer()
 }
 
@@ -112,6 +138,12 @@ func (UnimplementedXFusionMockRpcServer) PushPoint(context.Context, *ReqPushPoin
 }
 func (UnimplementedXFusionMockRpcServer) PushAlarm(context.Context, *ReqPushAlarm) (*ResPushAlarm, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PushAlarm not implemented")
+}
+func (UnimplementedXFusionMockRpcServer) PushEvent(context.Context, *ReqPushEvent) (*ResPushEvent, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PushEvent not implemented")
+}
+func (UnimplementedXFusionMockRpcServer) PushTerminalBind(context.Context, *ReqPushTerminalBind) (*ResPushTerminalBind, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PushTerminalBind not implemented")
 }
 func (UnimplementedXFusionMockRpcServer) mustEmbedUnimplementedXFusionMockRpcServer() {}
 func (UnimplementedXFusionMockRpcServer) testEmbeddedByValue()                        {}
@@ -206,6 +238,42 @@ func _XFusionMockRpc_PushAlarm_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _XFusionMockRpc_PushEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReqPushEvent)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(XFusionMockRpcServer).PushEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: XFusionMockRpc_PushEvent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(XFusionMockRpcServer).PushEvent(ctx, req.(*ReqPushEvent))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _XFusionMockRpc_PushTerminalBind_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReqPushTerminalBind)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(XFusionMockRpcServer).PushTerminalBind(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: XFusionMockRpc_PushTerminalBind_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(XFusionMockRpcServer).PushTerminalBind(ctx, req.(*ReqPushTerminalBind))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // XFusionMockRpc_ServiceDesc is the grpc.ServiceDesc for XFusionMockRpc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -228,6 +296,14 @@ var XFusionMockRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PushAlarm",
 			Handler:    _XFusionMockRpc_PushAlarm_Handler,
+		},
+		{
+			MethodName: "PushEvent",
+			Handler:    _XFusionMockRpc_PushEvent_Handler,
+		},
+		{
+			MethodName: "PushTerminalBind",
+			Handler:    _XFusionMockRpc_PushTerminalBind_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

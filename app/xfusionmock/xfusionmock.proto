@@ -32,9 +32,25 @@ message ReqPushAlarm {
 message ResPushAlarm {
 }
 
+message ReqPushEvent {
+  string body = 1;
+}
+
+message ResPushEvent {
+}
+
+message ReqPushTerminalBind {
+  string body = 1;
+}
+
+message ResPushTerminalBind {
+}
+
 service XFusionMockRpc {
   rpc Ping (Req) returns (Res);
   rpc PushTest(ReqPushTest) returns (ResPushTest);
   rpc PushPoint(ReqPushPoint) returns (ResPushPoint);
   rpc PushAlarm(ReqPushAlarm) returns (ResPushAlarm);
+  rpc PushEvent(ReqPushEvent) returns (ResPushEvent);
+  rpc PushTerminalBind(ReqPushTerminalBind) returns (ResPushTerminalBind);
 }

@@ -1,5 +1,45 @@
 package model
 
+type TerminalBind struct {
+	// kafka tag
+	DataTagV1 string `json:"dataTagV1"`
+	// 绑定动作： BIND ｜ UNBIND
+	Action string `json:"action"`
+	// 终端ID（唯一标识）
+	TerminalID int64 `json:"terminalId"`
+	// 终端唯一编号（12位字符）
+	TerminalNo string `json:"terminalNo"`
+	// 跟踪对象ID（关联业务系统）
+	TrackID int64 `json:"trackId"`
+	// 对象编号（如车牌号"沪A12345"）
+	TrackNo string `json:"trackNo"`
+	// 对象类型：CAR-车辆, STAFF-人员
+	TrackType string `json:"trackType"`
+	// 监控对象显示名称（如车牌号"沪A12345"）
+	TrackName string `json:"trackName"`
+	// 操作时间，北京时间 eg: 2024-07-01 10:00:00
+	ActionTime string `json:"actionTime"`
+}
+
+type EventData struct {
+	// kafka tag
+	DataTagV1 string `json:"dataTagV1"`
+	// 事件ID
+	ID string `json:"id"`
+	// 事件名称
+	EventTitle string `json:"eventTitle"`
+	// 事件类型
+	EventCode string `json:"eventCode"`
+	// 事件时间（服务端）
+	ServerTime int64 `json:"serverTime"`
+	// 事件时间（终端）
+	EpochTime int64 `json:"epochTime"`
+	// 终端信息
+	TerminalInfo TerminalInfo `json:"terminalInfo"`
+	// 位置
+	Position Position `json:"position"`
+}
+
 type TerminalData struct {
 	// kafka tag
 	DataTagV1 string `json:"dataTagV1"`

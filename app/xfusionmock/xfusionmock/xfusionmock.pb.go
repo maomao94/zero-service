@@ -349,6 +349,166 @@ func (*ResPushAlarm) Descriptor() ([]byte, []int) {
 	return file_xfusionmock_proto_rawDescGZIP(), []int{7}
 }
 
+type ReqPushEvent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Body          string                 `protobuf:"bytes,1,opt,name=body,proto3" json:"body,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReqPushEvent) Reset() {
+	*x = ReqPushEvent{}
+	mi := &file_xfusionmock_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReqPushEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReqPushEvent) ProtoMessage() {}
+
+func (x *ReqPushEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_xfusionmock_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReqPushEvent.ProtoReflect.Descriptor instead.
+func (*ReqPushEvent) Descriptor() ([]byte, []int) {
+	return file_xfusionmock_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ReqPushEvent) GetBody() string {
+	if x != nil {
+		return x.Body
+	}
+	return ""
+}
+
+type ResPushEvent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResPushEvent) Reset() {
+	*x = ResPushEvent{}
+	mi := &file_xfusionmock_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResPushEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResPushEvent) ProtoMessage() {}
+
+func (x *ResPushEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_xfusionmock_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResPushEvent.ProtoReflect.Descriptor instead.
+func (*ResPushEvent) Descriptor() ([]byte, []int) {
+	return file_xfusionmock_proto_rawDescGZIP(), []int{9}
+}
+
+type ReqPushTerminalBind struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Body          string                 `protobuf:"bytes,1,opt,name=body,proto3" json:"body,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReqPushTerminalBind) Reset() {
+	*x = ReqPushTerminalBind{}
+	mi := &file_xfusionmock_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReqPushTerminalBind) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReqPushTerminalBind) ProtoMessage() {}
+
+func (x *ReqPushTerminalBind) ProtoReflect() protoreflect.Message {
+	mi := &file_xfusionmock_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReqPushTerminalBind.ProtoReflect.Descriptor instead.
+func (*ReqPushTerminalBind) Descriptor() ([]byte, []int) {
+	return file_xfusionmock_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ReqPushTerminalBind) GetBody() string {
+	if x != nil {
+		return x.Body
+	}
+	return ""
+}
+
+type ResPushTerminalBind struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResPushTerminalBind) Reset() {
+	*x = ResPushTerminalBind{}
+	mi := &file_xfusionmock_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResPushTerminalBind) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResPushTerminalBind) ProtoMessage() {}
+
+func (x *ResPushTerminalBind) ProtoReflect() protoreflect.Message {
+	mi := &file_xfusionmock_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResPushTerminalBind.ProtoReflect.Descriptor instead.
+func (*ResPushTerminalBind) Descriptor() ([]byte, []int) {
+	return file_xfusionmock_proto_rawDescGZIP(), []int{11}
+}
+
 var File_xfusionmock_proto protoreflect.FileDescriptor
 
 const file_xfusionmock_proto_rawDesc = "" +
@@ -366,12 +526,20 @@ const file_xfusionmock_proto_rawDesc = "" +
 	"\fResPushPoint\"\"\n" +
 	"\fReqPushAlarm\x12\x12\n" +
 	"\x04body\x18\x01 \x01(\tR\x04body\"\x0e\n" +
-	"\fResPushAlarm2\xe2\x01\n" +
+	"\fResPushAlarm\"\"\n" +
+	"\fReqPushEvent\x12\x12\n" +
+	"\x04body\x18\x01 \x01(\tR\x04body\"\x0e\n" +
+	"\fResPushEvent\")\n" +
+	"\x13ReqPushTerminalBind\x12\x12\n" +
+	"\x04body\x18\x01 \x01(\tR\x04body\"\x15\n" +
+	"\x13ResPushTerminalBind2\xed\x02\n" +
 	"\x0eXFusionMockRpc\x12\"\n" +
 	"\x04Ping\x12\f.trigger.Req\x1a\f.trigger.Res\x126\n" +
 	"\bPushTest\x12\x14.trigger.ReqPushTest\x1a\x14.trigger.ResPushTest\x129\n" +
 	"\tPushPoint\x12\x15.trigger.ReqPushPoint\x1a\x15.trigger.ResPushPoint\x129\n" +
-	"\tPushAlarm\x12\x15.trigger.ReqPushAlarm\x1a\x15.trigger.ResPushAlarmB\x0fZ\r./xfusionmockb\x06proto3"
+	"\tPushAlarm\x12\x15.trigger.ReqPushAlarm\x1a\x15.trigger.ResPushAlarm\x129\n" +
+	"\tPushEvent\x12\x15.trigger.ReqPushEvent\x1a\x15.trigger.ResPushEvent\x12N\n" +
+	"\x10PushTerminalBind\x12\x1c.trigger.ReqPushTerminalBind\x1a\x1c.trigger.ResPushTerminalBindB\x0fZ\r./xfusionmockb\x06proto3"
 
 var (
 	file_xfusionmock_proto_rawDescOnce sync.Once
@@ -385,31 +553,39 @@ func file_xfusionmock_proto_rawDescGZIP() []byte {
 	return file_xfusionmock_proto_rawDescData
 }
 
-var file_xfusionmock_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_xfusionmock_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_xfusionmock_proto_goTypes = []any{
-	(*Req)(nil),          // 0: trigger.Req
-	(*Res)(nil),          // 1: trigger.Res
-	(*ReqPushTest)(nil),  // 2: trigger.ReqPushTest
-	(*ResPushTest)(nil),  // 3: trigger.ResPushTest
-	(*ReqPushPoint)(nil), // 4: trigger.ReqPushPoint
-	(*ResPushPoint)(nil), // 5: trigger.ResPushPoint
-	(*ReqPushAlarm)(nil), // 6: trigger.ReqPushAlarm
-	(*ResPushAlarm)(nil), // 7: trigger.ResPushAlarm
+	(*Req)(nil),                 // 0: trigger.Req
+	(*Res)(nil),                 // 1: trigger.Res
+	(*ReqPushTest)(nil),         // 2: trigger.ReqPushTest
+	(*ResPushTest)(nil),         // 3: trigger.ResPushTest
+	(*ReqPushPoint)(nil),        // 4: trigger.ReqPushPoint
+	(*ResPushPoint)(nil),        // 5: trigger.ResPushPoint
+	(*ReqPushAlarm)(nil),        // 6: trigger.ReqPushAlarm
+	(*ResPushAlarm)(nil),        // 7: trigger.ResPushAlarm
+	(*ReqPushEvent)(nil),        // 8: trigger.ReqPushEvent
+	(*ResPushEvent)(nil),        // 9: trigger.ResPushEvent
+	(*ReqPushTerminalBind)(nil), // 10: trigger.ReqPushTerminalBind
+	(*ResPushTerminalBind)(nil), // 11: trigger.ResPushTerminalBind
 }
 var file_xfusionmock_proto_depIdxs = []int32{
-	0, // 0: trigger.XFusionMockRpc.Ping:input_type -> trigger.Req
-	2, // 1: trigger.XFusionMockRpc.PushTest:input_type -> trigger.ReqPushTest
-	4, // 2: trigger.XFusionMockRpc.PushPoint:input_type -> trigger.ReqPushPoint
-	6, // 3: trigger.XFusionMockRpc.PushAlarm:input_type -> trigger.ReqPushAlarm
-	1, // 4: trigger.XFusionMockRpc.Ping:output_type -> trigger.Res
-	3, // 5: trigger.XFusionMockRpc.PushTest:output_type -> trigger.ResPushTest
-	5, // 6: trigger.XFusionMockRpc.PushPoint:output_type -> trigger.ResPushPoint
-	7, // 7: trigger.XFusionMockRpc.PushAlarm:output_type -> trigger.ResPushAlarm
-	4, // [4:8] is the sub-list for method output_type
-	0, // [0:4] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0,  // 0: trigger.XFusionMockRpc.Ping:input_type -> trigger.Req
+	2,  // 1: trigger.XFusionMockRpc.PushTest:input_type -> trigger.ReqPushTest
+	4,  // 2: trigger.XFusionMockRpc.PushPoint:input_type -> trigger.ReqPushPoint
+	6,  // 3: trigger.XFusionMockRpc.PushAlarm:input_type -> trigger.ReqPushAlarm
+	8,  // 4: trigger.XFusionMockRpc.PushEvent:input_type -> trigger.ReqPushEvent
+	10, // 5: trigger.XFusionMockRpc.PushTerminalBind:input_type -> trigger.ReqPushTerminalBind
+	1,  // 6: trigger.XFusionMockRpc.Ping:output_type -> trigger.Res
+	3,  // 7: trigger.XFusionMockRpc.PushTest:output_type -> trigger.ResPushTest
+	5,  // 8: trigger.XFusionMockRpc.PushPoint:output_type -> trigger.ResPushPoint
+	7,  // 9: trigger.XFusionMockRpc.PushAlarm:output_type -> trigger.ResPushAlarm
+	9,  // 10: trigger.XFusionMockRpc.PushEvent:output_type -> trigger.ResPushEvent
+	11, // 11: trigger.XFusionMockRpc.PushTerminalBind:output_type -> trigger.ResPushTerminalBind
+	6,  // [6:12] is the sub-list for method output_type
+	0,  // [0:6] is the sub-list for method input_type
+	0,  // [0:0] is the sub-list for extension type_name
+	0,  // [0:0] is the sub-list for extension extendee
+	0,  // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_xfusionmock_proto_init() }
@@ -423,7 +599,7 @@ func file_xfusionmock_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_xfusionmock_proto_rawDesc), len(file_xfusionmock_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

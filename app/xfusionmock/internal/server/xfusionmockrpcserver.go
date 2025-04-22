@@ -42,3 +42,13 @@ func (s *XFusionMockRpcServer) PushAlarm(ctx context.Context, in *xfusionmock.Re
 	l := logic.NewPushAlarmLogic(ctx, s.svcCtx)
 	return l.PushAlarm(in)
 }
+
+func (s *XFusionMockRpcServer) PushEvent(ctx context.Context, in *xfusionmock.ReqPushEvent) (*xfusionmock.ResPushEvent, error) {
+	l := logic.NewPushEventLogic(ctx, s.svcCtx)
+	return l.PushEvent(in)
+}
+
+func (s *XFusionMockRpcServer) PushTerminalBind(ctx context.Context, in *xfusionmock.ReqPushTerminalBind) (*xfusionmock.ResPushTerminalBind, error) {
+	l := logic.NewPushTerminalBindLogic(ctx, s.svcCtx)
+	return l.PushTerminalBind(in)
+}
