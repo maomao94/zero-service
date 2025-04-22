@@ -22,6 +22,7 @@ const (
 	XFusionMockRpc_Ping_FullMethodName      = "/trigger.XFusionMockRpc/Ping"
 	XFusionMockRpc_PushTest_FullMethodName  = "/trigger.XFusionMockRpc/PushTest"
 	XFusionMockRpc_PushPoint_FullMethodName = "/trigger.XFusionMockRpc/PushPoint"
+	XFusionMockRpc_PushAlarm_FullMethodName = "/trigger.XFusionMockRpc/PushAlarm"
 )
 
 // XFusionMockRpcClient is the client API for XFusionMockRpc service.
@@ -31,6 +32,7 @@ type XFusionMockRpcClient interface {
 	Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error)
 	PushTest(ctx context.Context, in *ReqPushTest, opts ...grpc.CallOption) (*ResPushTest, error)
 	PushPoint(ctx context.Context, in *ReqPushPoint, opts ...grpc.CallOption) (*ResPushPoint, error)
+	PushAlarm(ctx context.Context, in *ReqPushAlarm, opts ...grpc.CallOption) (*ResPushAlarm, error)
 }
 
 type xFusionMockRpcClient struct {
@@ -71,6 +73,16 @@ func (c *xFusionMockRpcClient) PushPoint(ctx context.Context, in *ReqPushPoint, 
 	return out, nil
 }
 
+func (c *xFusionMockRpcClient) PushAlarm(ctx context.Context, in *ReqPushAlarm, opts ...grpc.CallOption) (*ResPushAlarm, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResPushAlarm)
+	err := c.cc.Invoke(ctx, XFusionMockRpc_PushAlarm_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // XFusionMockRpcServer is the server API for XFusionMockRpc service.
 // All implementations must embed UnimplementedXFusionMockRpcServer
 // for forward compatibility.
@@ -78,6 +90,7 @@ type XFusionMockRpcServer interface {
 	Ping(context.Context, *Req) (*Res, error)
 	PushTest(context.Context, *ReqPushTest) (*ResPushTest, error)
 	PushPoint(context.Context, *ReqPushPoint) (*ResPushPoint, error)
+	PushAlarm(context.Context, *ReqPushAlarm) (*ResPushAlarm, error)
 	mustEmbedUnimplementedXFusionMockRpcServer()
 }
 
@@ -96,6 +109,9 @@ func (UnimplementedXFusionMockRpcServer) PushTest(context.Context, *ReqPushTest)
 }
 func (UnimplementedXFusionMockRpcServer) PushPoint(context.Context, *ReqPushPoint) (*ResPushPoint, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PushPoint not implemented")
+}
+func (UnimplementedXFusionMockRpcServer) PushAlarm(context.Context, *ReqPushAlarm) (*ResPushAlarm, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PushAlarm not implemented")
 }
 func (UnimplementedXFusionMockRpcServer) mustEmbedUnimplementedXFusionMockRpcServer() {}
 func (UnimplementedXFusionMockRpcServer) testEmbeddedByValue()                        {}
@@ -172,6 +188,24 @@ func _XFusionMockRpc_PushPoint_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _XFusionMockRpc_PushAlarm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReqPushAlarm)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(XFusionMockRpcServer).PushAlarm(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: XFusionMockRpc_PushAlarm_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(XFusionMockRpcServer).PushAlarm(ctx, req.(*ReqPushAlarm))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // XFusionMockRpc_ServiceDesc is the grpc.ServiceDesc for XFusionMockRpc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -190,6 +224,10 @@ var XFusionMockRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PushPoint",
 			Handler:    _XFusionMockRpc_PushPoint_Handler,
+		},
+		{
+			MethodName: "PushAlarm",
+			Handler:    _XFusionMockRpc_PushAlarm_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

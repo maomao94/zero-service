@@ -20,3 +20,7 @@ KafkaPointConfig:
   Brokers:
     - 10.10.1.213:9094
   Topic: point
+KafkaAlarmConfig:
+  Brokers:
+    - 10.10.1.213:9094
+  Topic: alarm

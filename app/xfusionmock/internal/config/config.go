@@ -10,4 +10,5 @@ type Config struct {
 	zrpc.RpcServerConf
 	KafkaTestConfig  kq.KqConf
 	KafkaPointConfig config.KqConfig
+	KafkaAlarmConfig config.KqConfig
 }

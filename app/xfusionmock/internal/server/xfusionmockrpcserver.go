@@ -37,3 +37,8 @@ func (s *XFusionMockRpcServer) PushPoint(ctx context.Context, in *xfusionmock.Re
 	l := logic.NewPushPointLogic(ctx, s.svcCtx)
 	return l.PushPoint(in)
 }
+
+func (s *XFusionMockRpcServer) PushAlarm(ctx context.Context, in *xfusionmock.ReqPushAlarm) (*xfusionmock.ResPushAlarm, error) {
+	l := logic.NewPushAlarmLogic(ctx, s.svcCtx)
+	return l.PushAlarm(in)
+}

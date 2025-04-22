@@ -25,8 +25,16 @@ message ReqPushPoint {
 message ResPushPoint {
 }
 
+message ReqPushAlarm {
+  string body = 1;
+}
+
+message ResPushAlarm {
+}
+
 service XFusionMockRpc {
   rpc Ping (Req) returns (Res);
   rpc PushTest(ReqPushTest) returns (ResPushTest);
   rpc PushPoint(ReqPushPoint) returns (ResPushPoint);
+  rpc PushAlarm(ReqPushAlarm) returns (ResPushAlarm);
 }
