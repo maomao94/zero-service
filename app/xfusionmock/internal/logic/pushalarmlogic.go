@@ -3,7 +3,9 @@ package logic
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/duke-git/lancet/v2/random"
+	"sync/atomic"
 	"time"
 	"zero-service/model"
 
@@ -33,7 +35,7 @@ func (l *PushAlarmLogic) PushAlarm(in *xfusionmock.ReqPushAlarm) (*xfusionmock.R
 	data := model.AlarmData{
 		ID:             uuid,
 		Name:           "区域闯入报警",
-		AlarmNo:        "ALARM-20240530-0123",
+		AlarmNo:        GenerateAlarmNo(),
 		AlarmCode:      "CROSS_IN",
 		Level:          1,
 		TerminalNoList: []string{"T123456789013"},
@@ -65,4 +67,17 @@ func (l *PushAlarmLogic) PushAlarm(in *xfusionmock.ReqPushAlarm) (*xfusionmock.R
 	}
 	l.svcCtx.KafkaAlarmPusher.Push(l.ctx, string(jsonData))
 	return &xfusionmock.ResPushAlarm{}, nil
+}
+
+// 生成报警编号的工具函数
+func GenerateAlarmNo() string {
+	// 1. 获取当前日期（格式：yyyymmdd）
+	now := time.Now().Format("20060102")
+
+	// 2. 生成流水号（线程安全）
+	// 实际项目中可以用 Redis/数据库 等持久化计数
+	var counter uint64
+	seq := atomic.AddUint64(&counter, 1) // 原子操作避免并发冲突
+
+	return fmt.Sprintf("ALARM-%s-%04d", now, seq)
 }

@@ -33,6 +33,10 @@ func (s *CronService) Start() {
 		in := xfusionmock.ReqPushPoint{}
 		logic.NewPushPointLogic(context.Background(), s.svcCtx).PushPoint(&in)
 	})
+	_, _ = s.c.AddFunc("0 */5 * * * *", func() {
+		in := xfusionmock.ReqPushAlarm{}
+		logic.NewPushAlarmLogic(context.Background(), s.svcCtx).PushAlarm(&in)
+	})
 	s.c.Start()
 	fmt.Print("Starting cron \n")
 }
