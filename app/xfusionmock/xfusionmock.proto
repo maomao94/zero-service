@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package trigger;
+option go_package = "./xfusionmock";
+
+message Req {
+  string ping = 1;
+}
+
+message Res {
+  string pong = 1;
+}
+
+message ReqPushTest {
+  string body = 1;
+}
+
+message ResPushTest {
+}
+
+message ReqPushPoint {
+  string body = 1;
+}
+
+message ResPushPoint {
+}
+
+service XFusionMockRpc {
+  rpc Ping (Req) returns (Res);
+  rpc PushTest(ReqPushTest) returns (ResPushTest);
+  rpc PushPoint(ReqPushPoint) returns (ResPushPoint);
+}
