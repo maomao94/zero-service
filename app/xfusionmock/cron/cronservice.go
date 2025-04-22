@@ -38,7 +38,7 @@ func (s *CronService) Start() {
 		logic.NewPushAlarmLogic(context.Background(), s.svcCtx).PushAlarm(&in)
 	})
 	s.c.Start()
-	fmt.Print("Starting cron \n")
+	fmt.Print("Starting cron server \n")
 }
 
 func (s *CronService) Stop() {
