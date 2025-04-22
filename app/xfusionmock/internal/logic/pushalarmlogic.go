@@ -33,6 +33,7 @@ func (l *PushAlarmLogic) PushAlarm(in *xfusionmock.ReqPushAlarm) (*xfusionmock.R
 	l.Info("PushAlarm")
 	uuid, _ := random.UUIdV4()
 	data := model.AlarmData{
+		DataTagV1:      l.svcCtx.Config.Name,
 		ID:             uuid,
 		Name:           "区域闯入报警",
 		AlarmNo:        GenerateAlarmNo(),

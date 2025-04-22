@@ -29,6 +29,7 @@ func NewPushPointLogic(ctx context.Context, svcCtx *svc.ServiceContext) *PushPoi
 func (l *PushPointLogic) PushPoint(in *xfusionmock.ReqPushPoint) (*xfusionmock.ResPushPoint, error) {
 	l.Info("PushPoint")
 	data := &model.TerminalData{
+		DataTagV1: l.svcCtx.Config.Name,
 		TerminalInfo: &model.TerminalInfo{
 			TerminalID: 100001,
 			TerminalNo: "T12345678901",

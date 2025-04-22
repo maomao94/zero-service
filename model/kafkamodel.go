@@ -1,6 +1,8 @@
 package model
 
 type TerminalData struct {
+	// kafka tag
+	DataTagV1 string `json:"dataTagV1"`
 	// 终端信息
 	TerminalInfo *TerminalInfo `json:"terminalInfo"`
 	// 位置点上报时间（Unix时间戳，毫秒）
@@ -14,6 +16,8 @@ type TerminalData struct {
 }
 
 type AlarmData struct {
+	// kafka tag
+	DataTagV1 string `json:"dataTagV1"`
 	// 报警唯一标识
 	ID string `json:"id"`
 	// 报警自定义名称（最大长度50字符）
