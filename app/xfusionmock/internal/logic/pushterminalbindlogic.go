@@ -29,15 +29,16 @@ func NewPushTerminalBindLogic(ctx context.Context, svcCtx *svc.ServiceContext) *
 func (l *PushTerminalBindLogic) PushTerminalBind(in *xfusionmock.ReqPushTerminalBind) (*xfusionmock.ResPushTerminalBind, error) {
 	l.Info("PushTerminalBind")
 	data := model.TerminalBind{
-		DataTagV1:  l.svcCtx.Config.Name,
-		Action:     "BIND",
-		TerminalID: 100001,
-		TerminalNo: "T12345678901",
-		TrackID:    5001,
-		TrackNo:    "沪A12345",
-		TrackType:  "CAR",
-		TrackName:  l.svcCtx.Config.Name,
-		ActionTime: carbon.Now().Format("Y-m-d H:i:s"),
+		DataTagV1:     l.svcCtx.Config.Name,
+		Action:        "BIND",
+		TerminalID:    100001,
+		TerminalNo:    "T12345678901",
+		StaffIdCardNo: "11011100011",
+		TrackID:       5001,
+		TrackNo:       "沪A12345",
+		TrackType:     "CAR",
+		TrackName:     l.svcCtx.Config.Name,
+		ActionTime:    carbon.Now().Format("Y-m-d H:i:s"),
 	}
 	jsonData, err := json.Marshal(data)
 	if err != nil {

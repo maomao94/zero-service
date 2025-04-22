@@ -9,6 +9,8 @@ type TerminalBind struct {
 	TerminalID int64 `json:"terminalId"`
 	// 终端唯一编号（12位字符）
 	TerminalNo string `json:"terminalNo"`
+	// 员工身份证号
+	StaffIdCardNo string `json:"staffIdCardNo"`
 	// 跟踪对象ID（关联业务系统）
 	TrackID int64 `json:"trackId"`
 	// 对象编号（如车牌号"沪A12345"）
