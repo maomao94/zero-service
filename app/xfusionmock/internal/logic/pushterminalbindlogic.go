@@ -27,7 +27,7 @@ func NewPushTerminalBindLogic(ctx context.Context, svcCtx *svc.ServiceContext) *
 }
 
 func (l *PushTerminalBindLogic) PushTerminalBind(in *xfusionmock.ReqPushTerminalBind) (*xfusionmock.ResPushTerminalBind, error) {
-	l.Info("PushEvent")
+	l.Info("PushTerminalBind")
 	data := model.TerminalBind{
 		DataTagV1:  l.svcCtx.Config.Name,
 		Action:     "BIND",
