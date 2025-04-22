@@ -58,7 +58,7 @@ func (l *PushAlarmLogic) PushAlarm(in *xfusionmock.ReqPushAlarm) (*xfusionmock.R
 		StartTime:   time.Now().Add(-10 * time.Minute).UnixMilli(),
 		EndTime:     time.Now().UnixMilli(),
 		Duration:    600,
-		AlarmStatus: "OFF",
+		AlarmStatus: "ON",
 	}
 	jsonData, err := json.Marshal(data)
 	if err != nil {
