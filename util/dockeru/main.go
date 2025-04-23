@@ -399,7 +399,7 @@ func executeActionCommandWithInteractive(action string, container ContainerInfo)
 		}
 		cmd = exec.Command("docker", "exec", "-it", container.ID, arg)
 	case "log":
-		cmd = exec.Command("docker", "logs", "--tail", "100", "-f", container.ID)
+		cmd = exec.Command("docker", "logs", "--tail", "1000", "-f", container.ID)
 	case "image-prune":
 		cmd = exec.Command("docker", "image", "prune")
 	default:
