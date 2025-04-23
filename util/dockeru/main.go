@@ -218,7 +218,7 @@ func main() {
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 		fmt.Println("\033[1;30m" + strings.Repeat("-", getTerminalWidth()) + "\033[0m") // 分隔线（深灰色）
-		fmt.Fprintf(w, "N  CONTAINER ID\tNAMES\tSTATUS\tPORTS\tIMAGE\tCREATED\tCOMMAND\n")
+		fmt.Fprintf(w, "N  CONTAINER ID\tNAMES\tSTATUS\tIMAGE\tCREATED\tCOMMAND\tPORTS\n")
 
 		for i, container := range containers {
 			// 格式化时间为简洁的日期格式
@@ -241,7 +241,7 @@ func main() {
 
 			// 输出容器信息
 			fmt.Fprintf(w, "%d  %s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-				i+1, container.ID, container.Name, statusColor+container.Status+resetColor, container.Ports, container.Image, formattedCreated, container.Command)
+				i+1, container.ID, container.Name, statusColor+container.Status+resetColor, container.Image, formattedCreated, container.Command, container.Ports)
 		}
 		w.Flush() // 刷新缓冲区，将内容打印到控制台
 
