@@ -4,6 +4,8 @@
 // 	protoc        v5.29.3
 // source: xfusionmock.proto
 
+//import "google/api/annotations.proto";
+
 package xfusionmock
 
 import (
@@ -24,6 +26,8 @@ const (
 type Req struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Ping          string                 `protobuf:"bytes,1,opt,name=ping,proto3" json:"ping,omitempty"`
+	PingJson      string                 `protobuf:"bytes,2,opt,name=pingJson,proto3" json:"pingJson,omitempty"`
+	PingParm      string                 `protobuf:"bytes,3,opt,name=pingParm,proto3" json:"pingParm,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -61,6 +65,20 @@ func (*Req) Descriptor() ([]byte, []int) {
 func (x *Req) GetPing() string {
 	if x != nil {
 		return x.Ping
+	}
+	return ""
+}
+
+func (x *Req) GetPingJson() string {
+	if x != nil {
+		return x.PingJson
+	}
+	return ""
+}
+
+func (x *Req) GetPingParm() string {
+	if x != nil {
+		return x.PingParm
 	}
 	return ""
 }
@@ -513,9 +531,11 @@ var File_xfusionmock_proto protoreflect.FileDescriptor
 
 const file_xfusionmock_proto_rawDesc = "" +
 	"\n" +
-	"\x11xfusionmock.proto\x12\atrigger\"\x19\n" +
+	"\x11xfusionmock.proto\x12\vxfusionmock\"Q\n" +
 	"\x03Req\x12\x12\n" +
-	"\x04ping\x18\x01 \x01(\tR\x04ping\"\x19\n" +
+	"\x04ping\x18\x01 \x01(\tR\x04ping\x12\x1a\n" +
+	"\bpingJson\x18\x02 \x01(\tR\bpingJson\x12\x1a\n" +
+	"\bpingParm\x18\x03 \x01(\tR\bpingParm\"\x19\n" +
 	"\x03Res\x12\x12\n" +
 	"\x04pong\x18\x01 \x01(\tR\x04pong\"!\n" +
 	"\vReqPushTest\x12\x12\n" +
@@ -532,14 +552,15 @@ const file_xfusionmock_proto_rawDesc = "" +
 	"\fResPushEvent\")\n" +
 	"\x13ReqPushTerminalBind\x12\x12\n" +
 	"\x04body\x18\x01 \x01(\tR\x04body\"\x15\n" +
-	"\x13ResPushTerminalBind2\xed\x02\n" +
-	"\x0eXFusionMockRpc\x12\"\n" +
-	"\x04Ping\x12\f.trigger.Req\x1a\f.trigger.Res\x126\n" +
-	"\bPushTest\x12\x14.trigger.ReqPushTest\x1a\x14.trigger.ResPushTest\x129\n" +
-	"\tPushPoint\x12\x15.trigger.ReqPushPoint\x1a\x15.trigger.ResPushPoint\x129\n" +
-	"\tPushAlarm\x12\x15.trigger.ReqPushAlarm\x1a\x15.trigger.ResPushAlarm\x129\n" +
-	"\tPushEvent\x12\x15.trigger.ReqPushEvent\x1a\x15.trigger.ResPushEvent\x12N\n" +
-	"\x10PushTerminalBind\x12\x1c.trigger.ReqPushTerminalBind\x1a\x1c.trigger.ResPushTerminalBindB\x0fZ\r./xfusionmockb\x06proto3"
+	"\x13ResPushTerminalBind2\xcd\x03\n" +
+	"\x0eXFusionMockRpc\x12*\n" +
+	"\x04Ping\x12\x10.xfusionmock.Req\x1a\x10.xfusionmock.Res\x12.\n" +
+	"\x06PingV1\x12\x10.xfusionmock.Req\x1a\x10.xfusionmock.Res\"\x00\x12>\n" +
+	"\bPushTest\x12\x18.xfusionmock.ReqPushTest\x1a\x18.xfusionmock.ResPushTest\x12A\n" +
+	"\tPushPoint\x12\x19.xfusionmock.ReqPushPoint\x1a\x19.xfusionmock.ResPushPoint\x12A\n" +
+	"\tPushAlarm\x12\x19.xfusionmock.ReqPushAlarm\x1a\x19.xfusionmock.ResPushAlarm\x12A\n" +
+	"\tPushEvent\x12\x19.xfusionmock.ReqPushEvent\x1a\x19.xfusionmock.ResPushEvent\x12V\n" +
+	"\x10PushTerminalBind\x12 .xfusionmock.ReqPushTerminalBind\x1a .xfusionmock.ResPushTerminalBindB\x0fZ\r./xfusionmockb\x06proto3"
 
 var (
 	file_xfusionmock_proto_rawDescOnce sync.Once
@@ -555,34 +576,36 @@ func file_xfusionmock_proto_rawDescGZIP() []byte {
 
 var file_xfusionmock_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_xfusionmock_proto_goTypes = []any{
-	(*Req)(nil),                 // 0: trigger.Req
-	(*Res)(nil),                 // 1: trigger.Res
-	(*ReqPushTest)(nil),         // 2: trigger.ReqPushTest
-	(*ResPushTest)(nil),         // 3: trigger.ResPushTest
-	(*ReqPushPoint)(nil),        // 4: trigger.ReqPushPoint
-	(*ResPushPoint)(nil),        // 5: trigger.ResPushPoint
-	(*ReqPushAlarm)(nil),        // 6: trigger.ReqPushAlarm
-	(*ResPushAlarm)(nil),        // 7: trigger.ResPushAlarm
-	(*ReqPushEvent)(nil),        // 8: trigger.ReqPushEvent
-	(*ResPushEvent)(nil),        // 9: trigger.ResPushEvent
-	(*ReqPushTerminalBind)(nil), // 10: trigger.ReqPushTerminalBind
-	(*ResPushTerminalBind)(nil), // 11: trigger.ResPushTerminalBind
+	(*Req)(nil),                 // 0: xfusionmock.Req
+	(*Res)(nil),                 // 1: xfusionmock.Res
+	(*ReqPushTest)(nil),         // 2: xfusionmock.ReqPushTest
+	(*ResPushTest)(nil),         // 3: xfusionmock.ResPushTest
+	(*ReqPushPoint)(nil),        // 4: xfusionmock.ReqPushPoint
+	(*ResPushPoint)(nil),        // 5: xfusionmock.ResPushPoint
+	(*ReqPushAlarm)(nil),        // 6: xfusionmock.ReqPushAlarm
+	(*ResPushAlarm)(nil),        // 7: xfusionmock.ResPushAlarm
+	(*ReqPushEvent)(nil),        // 8: xfusionmock.ReqPushEvent
+	(*ResPushEvent)(nil),        // 9: xfusionmock.ResPushEvent
+	(*ReqPushTerminalBind)(nil), // 10: xfusionmock.ReqPushTerminalBind
+	(*ResPushTerminalBind)(nil), // 11: xfusionmock.ResPushTerminalBind
 }
 var file_xfusionmock_proto_depIdxs = []int32{
-	0,  // 0: trigger.XFusionMockRpc.Ping:input_type -> trigger.Req
-	2,  // 1: trigger.XFusionMockRpc.PushTest:input_type -> trigger.ReqPushTest
-	4,  // 2: trigger.XFusionMockRpc.PushPoint:input_type -> trigger.ReqPushPoint
-	6,  // 3: trigger.XFusionMockRpc.PushAlarm:input_type -> trigger.ReqPushAlarm
-	8,  // 4: trigger.XFusionMockRpc.PushEvent:input_type -> trigger.ReqPushEvent
-	10, // 5: trigger.XFusionMockRpc.PushTerminalBind:input_type -> trigger.ReqPushTerminalBind
-	1,  // 6: trigger.XFusionMockRpc.Ping:output_type -> trigger.Res
-	3,  // 7: trigger.XFusionMockRpc.PushTest:output_type -> trigger.ResPushTest
-	5,  // 8: trigger.XFusionMockRpc.PushPoint:output_type -> trigger.ResPushPoint
-	7,  // 9: trigger.XFusionMockRpc.PushAlarm:output_type -> trigger.ResPushAlarm
-	9,  // 10: trigger.XFusionMockRpc.PushEvent:output_type -> trigger.ResPushEvent
-	11, // 11: trigger.XFusionMockRpc.PushTerminalBind:output_type -> trigger.ResPushTerminalBind
-	6,  // [6:12] is the sub-list for method output_type
-	0,  // [0:6] is the sub-list for method input_type
+	0,  // 0: xfusionmock.XFusionMockRpc.Ping:input_type -> xfusionmock.Req
+	0,  // 1: xfusionmock.XFusionMockRpc.PingV1:input_type -> xfusionmock.Req
+	2,  // 2: xfusionmock.XFusionMockRpc.PushTest:input_type -> xfusionmock.ReqPushTest
+	4,  // 3: xfusionmock.XFusionMockRpc.PushPoint:input_type -> xfusionmock.ReqPushPoint
+	6,  // 4: xfusionmock.XFusionMockRpc.PushAlarm:input_type -> xfusionmock.ReqPushAlarm
+	8,  // 5: xfusionmock.XFusionMockRpc.PushEvent:input_type -> xfusionmock.ReqPushEvent
+	10, // 6: xfusionmock.XFusionMockRpc.PushTerminalBind:input_type -> xfusionmock.ReqPushTerminalBind
+	1,  // 7: xfusionmock.XFusionMockRpc.Ping:output_type -> xfusionmock.Res
+	1,  // 8: xfusionmock.XFusionMockRpc.PingV1:output_type -> xfusionmock.Res
+	3,  // 9: xfusionmock.XFusionMockRpc.PushTest:output_type -> xfusionmock.ResPushTest
+	5,  // 10: xfusionmock.XFusionMockRpc.PushPoint:output_type -> xfusionmock.ResPushPoint
+	7,  // 11: xfusionmock.XFusionMockRpc.PushAlarm:output_type -> xfusionmock.ResPushAlarm
+	9,  // 12: xfusionmock.XFusionMockRpc.PushEvent:output_type -> xfusionmock.ResPushEvent
+	11, // 13: xfusionmock.XFusionMockRpc.PushTerminalBind:output_type -> xfusionmock.ResPushTerminalBind
+	7,  // [7:14] is the sub-list for method output_type
+	0,  // [0:7] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
 	0,  // [0:0] is the sub-list for extension extendee
 	0,  // [0:0] is the sub-list for field type_name

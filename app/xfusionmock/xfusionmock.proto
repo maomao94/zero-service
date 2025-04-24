@@ -1,10 +1,12 @@
 syntax = "proto3";
-
-package trigger;
+//import "google/api/annotations.proto";
+package xfusionmock;
 option go_package = "./xfusionmock";
 
 message Req {
   string ping = 1;
+  string pingJson = 2;
+  string pingParm = 3;
 }
 
 message Res {
@@ -48,6 +50,11 @@ message ResPushTerminalBind {
 
 service XFusionMockRpc {
   rpc Ping (Req) returns (Res);
+  rpc PingV1 (Req) returns (Res) {
+//    option (google.api.http) = {
+//      get: "/api/v1/ping"
+//    };
+  };
   rpc PushTest(ReqPushTest) returns (ResPushTest);
   rpc PushPoint(ReqPushPoint) returns (ResPushPoint);
   rpc PushAlarm(ReqPushAlarm) returns (ResPushAlarm);

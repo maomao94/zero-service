@@ -6,7 +6,7 @@ Mode: dev
 #MaxBytes: 1073741824111
 Log:
   Encoding: plain
-  Mode: file
+#  Mode: file
   Path: /opt/logs/gtw
 #链路追踪
 #Telemetry:
@@ -14,6 +14,22 @@ Log:
 #  Endpoint: http://127.0.0.1:14268/api/traces
 #  Sampler: 1.0
 #  Batcher: jaeger
+Upstreams:
+  - Grpc:
+      Endpoints:
+      - 127.0.0.1:21007
+      NonBlock: true
+    # protoset mode
+    ProtoSets:
+      - app/xfusionmock/xfusionmock.pb
+    # Mappings can also be written in proto options
+    Mappings:
+      - Method: get
+        Path: /bff/ping
+        RpcPath: xfusionmock.XFusionMockRpc/Ping
+      - Method: post
+        Path: /bff/postPing
+        RpcPath: xfusionmock.XFusionMockRpc/Ping
 ZeroRpcConf:
   Endpoints:
     - 127.0.0.1:21001
