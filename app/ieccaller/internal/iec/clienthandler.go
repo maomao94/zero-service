@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/golang-module/carbon/v2"
 	"github.com/jinzhu/copier"
 	"github.com/wendy512/go-iecp5/asdu"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -110,6 +111,7 @@ func (c *ClientCall) onSinglePoint(packet *asdu.ASDU) {
 	for _, p := range packet.GetSinglePoint() {
 		logx.Infof("single point, ioa: %d, value: %v\n", p.Ioa, p.Value)
 		var obj types.SinglePointInfo
+		obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		jsonData, err := json.Marshal(&types.MsgBody{
 			TypeId: int(iec104client.GetDataType(packet.Type)),

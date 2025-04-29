@@ -407,7 +407,7 @@ func MustNewClient(host string, port int, name string, call ASDUCall, manager *C
 	settings.LogCfg = &LogCfg{Enable: true, LogProvider: iec104.NewLogProvider()}
 	c := New(settings, call)
 	c.SetOnConnectHandler(func(c *Client) {
-		fmt.Printf("connected %s:%s iec104 server\n", settings.Host, settings.Port)
+		fmt.Printf("connected %s:%d iec104 server\n", settings.Host, settings.Port)
 	})
 	// server active确认后回调
 	c.SetServerActiveHandler(func(c *Client) {
