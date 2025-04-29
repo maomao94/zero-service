@@ -23,7 +23,7 @@ var Option = copier.Option{
 					return nil, errors.New("src type not matching")
 				}
 
-				return s.Format(time.DateTime), nil
+				return carbon.CreateFromStdTime(s).Format("Y-m-d H:i:s.u"), nil
 			},
 		},
 		{
