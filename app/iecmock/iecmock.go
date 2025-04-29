@@ -3,13 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	"zero-service/app/ieccaller/cron"
-	"zero-service/app/ieccaller/ieccaller"
-	"zero-service/app/ieccaller/internal/config"
-	"zero-service/app/ieccaller/internal/iec"
-	"zero-service/app/ieccaller/internal/server"
-	"zero-service/app/ieccaller/internal/svc"
-	"zero-service/iec104/iec104client"
+	"github.com/zeromicro/go-queue/kq"
+	"zero-service/app/iecmock/kafka"
+
+	"zero-service/app/iecmock/iecmock"
+	"zero-service/app/iecmock/internal/config"
+	"zero-service/app/iecmock/internal/server"
+	"zero-service/app/iecmock/internal/svc"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/service"
@@ -18,7 +18,7 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-var configFile = flag.String("f", "etc/ieccaller.yaml", "the config file")
+var configFile = flag.String("f", "etc/iecmock.yaml", "the config file")
 
 func main() {
 	flag.Parse()
@@ -28,7 +28,7 @@ func main() {
 	ctx := svc.NewServiceContext(c)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
-		ieccaller.RegisterIecCallerServer(grpcServer, server.NewIecCallerServer(ctx))
+		iecmock.RegisterIecMockRpcServer(grpcServer, server.NewIecMockRpcServer(ctx))
 
 		if c.Mode == service.DevMode || c.Mode == service.TestMode {
 			reflection.Register(grpcServer)
@@ -38,11 +38,10 @@ func main() {
 	defer serviceGroup.Stop()
 	serviceGroup.Add(s)
 
-	// client conn
-	serviceGroup.Add(iec104client.MustNewClient(c.Remote.Host, c.Remote.Port, iec.NewClientCall(ctx), ctx.ClientManager))
+	// kafka
+	c.KafkaASDUConfig.ServiceConf = c.ServiceConf
+	serviceGroup.Add(kq.MustNewQueue(c.KafkaASDUConfig, kafka.NewAsdu(ctx)))
 
-	// cron
-	serviceGroup.Add(cron.NewCronService(ctx))
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
 	serviceGroup.Start()
 }

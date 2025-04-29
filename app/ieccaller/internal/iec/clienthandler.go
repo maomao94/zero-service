@@ -3,10 +3,18 @@ package iec
 import (
 	"fmt"
 	"github.com/wendy512/go-iecp5/asdu"
+	"zero-service/app/ieccaller/internal/svc"
 	iec104client "zero-service/iec104/iec104client"
 )
 
 type ClientCall struct {
+	svcCtx *svc.ServiceContext
+}
+
+func NewClientCall(svcCtx *svc.ServiceContext) *ClientCall {
+	return &ClientCall{
+		svcCtx: svcCtx,
+	}
 }
 
 // OnInterrogation 总召唤回复
