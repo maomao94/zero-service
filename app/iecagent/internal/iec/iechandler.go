@@ -22,7 +22,6 @@ func NewIecHandler(svcCtx *svc.ServiceContext) *IecHandler {
 }
 
 func (ms *IecHandler) OnInterrogation(conn asdu.Connect, pack *asdu.ASDU, quality asdu.QualifierOfInterrogation) error {
-	//_ = pack.SendReplyMirror(conn, asdu.ActivationCon)
 	// TODO
 	_ = asdu.Single(conn, false, asdu.CauseOfTransmission{Cause: asdu.InterrogatedByStation}, commonAddr, asdu.SinglePointInfo{
 		Ioa:   100,
@@ -34,7 +33,6 @@ func (ms *IecHandler) OnInterrogation(conn asdu.Connect, pack *asdu.ASDU, qualit
 		Value: asdu.DPIDeterminedOn,
 		Qds:   asdu.QDSGood,
 	})
-	//_ = pack.SendReplyMirror(conn, asdu.ActivationTerm)
 	return nil
 }
 
