@@ -107,6 +107,7 @@ func (c *ClientCall) OnASDU(packet *asdu.ASDU) error {
 }
 
 func (c *ClientCall) onSinglePoint(packet *asdu.ASDU) {
+	coa := packet.CommonAddr
 	// [M_SP_NA_1], [M_SP_TA_1] or [M_SP_TB_1] 获取单点信息信息体集合
 	for _, p := range packet.GetSinglePoint() {
 		logx.Infof("single point, ioa: %d, value: %v\n", p.Ioa, p.Value)
@@ -115,6 +116,7 @@ func (c *ClientCall) onSinglePoint(packet *asdu.ASDU) {
 		copier.CopyWithOption(&obj, &p, types.Option)
 		jsonData, err := json.Marshal(&types.MsgBody{
 			TypeId: int(iec104client.GetDataType(packet.Type)),
+			Coa:    uint(coa),
 			Body:   obj,
 		})
 		if err != nil {
@@ -126,6 +128,7 @@ func (c *ClientCall) onSinglePoint(packet *asdu.ASDU) {
 }
 
 func (c *ClientCall) onDoublePoint(packet *asdu.ASDU) {
+	coa := packet.CommonAddr
 	// [M_DP_NA_1], [M_DP_TA_1] or [M_DP_TB_1] 获得双点信息体集合
 	for _, p := range packet.GetDoublePoint() {
 		logx.Infof("double point, ioa: %d, value: %v\n", p.Ioa, p.Value)
@@ -134,6 +137,7 @@ func (c *ClientCall) onDoublePoint(packet *asdu.ASDU) {
 		copier.CopyWithOption(&obj, &p, types.Option)
 		jsonData, err := json.Marshal(&types.MsgBody{
 			TypeId: int(iec104client.GetDataType(packet.Type)),
+			Coa:    uint(coa),
 			Body:   obj,
 		})
 		if err != nil {

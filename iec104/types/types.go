@@ -55,11 +55,6 @@ var Option = copier.Option{
 	},
 }
 
-type MsgBody struct {
-	TypeId int `json:"typeId"`
-	Body   any `json:"body"`
-}
-
 // DateTime 定义 time.Time 的别名
 type DateTime time.Time
 
@@ -77,6 +72,12 @@ func (t *DateTime) UnmarshalJSON(data []byte) error {
 	c := carbon.Parse(s)
 	*t = DateTime(c.StdTime())
 	return nil
+}
+
+type MsgBody struct {
+	TypeId int  `json:"typeId"`
+	Coa    uint `json:"coa"` // 公共地址
+	Body   any  `json:"body"`
 }
 
 type SinglePointInfo struct {
