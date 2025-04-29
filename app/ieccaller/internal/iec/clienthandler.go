@@ -128,7 +128,19 @@ func (c *ClientCall) onSinglePoint(packet *asdu.ASDU) {
 func (c *ClientCall) onDoublePoint(packet *asdu.ASDU) {
 	// [M_DP_NA_1], [M_DP_TA_1] or [M_DP_TB_1] 获得双点信息体集合
 	for _, p := range packet.GetDoublePoint() {
-		fmt.Printf("double point, ioa: %d, value: %v\n", p.Ioa, p.Value)
+		logx.Infof("double point, ioa: %d, value: %v\n", p.Ioa, p.Value)
+		var obj types.DoublePointInfo
+		obj.Time = carbon.Now().ToDateTimeString()
+		copier.CopyWithOption(&obj, &p, types.Option)
+		jsonData, err := json.Marshal(&types.MsgBody{
+			TypeId: int(iec104client.GetDataType(packet.Type)),
+			Body:   obj,
+		})
+		if err != nil {
+			logx.Errorf("json marshal error %v", err)
+			continue
+		}
+		c.svcCtx.KafkaASDUPusher.PushWithKey(context.Background(), string(p.Ioa), string(jsonData))
 	}
 }
 

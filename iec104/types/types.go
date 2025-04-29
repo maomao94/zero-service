@@ -85,3 +85,10 @@ type SinglePointInfo struct {
 	Qds   byte   `json:"qds"`
 	Time  string `json:"time"`
 }
+
+type DoublePointInfo struct {
+	Ioa   uint   `json:"ioa"`   // 信息对象地址
+	Value bool   `json:"value"` // 状态值
+	Qds   byte   `json:"qds"`
+	Time  string `json:"time"`
+}
