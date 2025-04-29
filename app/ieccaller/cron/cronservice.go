@@ -24,12 +24,12 @@ func (s *CronService) Start() {
 	// 统计 session
 	_, _ = s.c.AddFunc("*/60 * * * * *", func() {
 		sessionLen := s.svcCtx.ClientManager.GetSessionLen()
-		logx.Infof("sessoion len %d", sessionLen)
+		logx.Infof("stats#session len %d", sessionLen)
 
 		clis := s.svcCtx.ClientManager.GetSessionClients()
 		for _, v := range clis {
 			if !v.IsConnected() {
-				logx.Errorf("iec104 server addr:%s connect error", v.GetServerUrl())
+				logx.Errorf("stats#iec104 server addr:%s connect error", v.GetServerUrl())
 			}
 		}
 	})
