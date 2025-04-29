@@ -1,10 +1,16 @@
 package iec
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/golang-module/carbon/v2"
+	"github.com/jinzhu/copier"
 	"github.com/wendy512/go-iecp5/asdu"
+	"github.com/zeromicro/go-zero/core/logx"
 	"zero-service/app/ieccaller/internal/svc"
 	iec104client "zero-service/iec104/iec104client"
+	"zero-service/iec104/types"
 )
 
 type ClientCall struct {
@@ -103,7 +109,20 @@ func (c *ClientCall) OnASDU(packet *asdu.ASDU) error {
 func (c *ClientCall) onSinglePoint(packet *asdu.ASDU) {
 	// [M_SP_NA_1], [M_SP_TA_1] or [M_SP_TB_1] 获取单点信息信息体集合
 	for _, p := range packet.GetSinglePoint() {
-		fmt.Printf("single point, ioa: %d, value: %v\n", p.Ioa, p.Value)
+		logx.Infof("single point, ioa: %d, value: %v\n", p.Ioa, p.Value)
+		var obj types.SinglePointInfo
+		copier.Copy(&obj, &p)
+		time := carbon.CreateFromStdTime(p.Time).Format("Y-m-d H:i:s.u")
+		obj.Time = time
+		jsonData, err := json.Marshal(&types.MsgBody{
+			TypeId: int(iec104client.GetDataType(packet.Type)),
+			Body:   obj,
+		})
+		if err != nil {
+			logx.Errorf("json marshal error %v", err)
+			continue
+		}
+		c.svcCtx.KafkaASDUPusher.PushWithKey(context.Background(), string(p.Ioa), string(jsonData))
 	}
 }
 

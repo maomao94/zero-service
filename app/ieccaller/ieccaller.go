@@ -39,7 +39,7 @@ func main() {
 	serviceGroup.Add(s)
 
 	// client conn
-	serviceGroup.Add(iec104client.MustNewClient(c.Remote.Host, c.Remote.Port, iec.NewClientCall(ctx), ctx.ClientManager))
+	serviceGroup.Add(iec104client.MustNewClient(c.Remote.Host, c.Remote.Port, c.Remote.Name, iec.NewClientCall(ctx), ctx.ClientManager))
 
 	// cron
 	serviceGroup.Add(cron.NewCronService(ctx))

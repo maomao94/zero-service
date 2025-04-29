@@ -397,10 +397,11 @@ func formatServerUrl(settings *Settings) string {
 	return server
 }
 
-func MustNewClient(host string, port int, call ASDUCall, manager *ClientManager) *Client {
+func MustNewClient(host string, port int, name string, call ASDUCall, manager *ClientManager) *Client {
 	settings := NewSettings()
 	settings.Host = host
 	settings.Port = port
+	settings.Name = name
 	settings.ReconnectInterval = time.Minute
 	settings.AutoConnect = true
 	settings.LogCfg = &LogCfg{Enable: true, LogProvider: iec104.NewLogProvider()}
@@ -430,6 +431,10 @@ func (q *Client) Stop() {
 
 func (c *Client) GetServerUrl() string {
 	return formatServerUrl(c.settings)
+}
+
+func (c *Client) GetName() string {
+	return c.settings.Name
 }
 
 type ClientManager struct {
@@ -481,7 +486,7 @@ func (manager *ClientManager) StartListener() {
 func (manager *ClientManager) EventRegister(client *Client) {
 	manager.AddClients(client)
 	manager.AddSession(client.settings.Name, client)
-	logx.Infof("eventRegister iec104 server addr:%s:%d", client.settings.Host, client.settings.Port)
+	logx.Infof("eventRegister-%s iec104 server addr:%s:%d", client.settings.Name, client.settings.Host, client.settings.Port)
 }
 
 func (manager *ClientManager) PublishRegister(client *Client) {
