@@ -95,9 +95,9 @@ func New(settings *Settings, call ASDUCall) *Client {
 }
 
 func (c *Client) Connect() error {
-	if err := c.testConnect(); err != nil {
-		return err
-	}
+	//if err := c.testConnect(); err != nil {
+	//	return err
+	//}
 
 	if err := c.client104.Start(); err != nil {
 		return err
