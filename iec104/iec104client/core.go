@@ -424,11 +424,6 @@ func MustNewIecServerClient(config IecServerConfig, coaConfig []CoaConfig, call 
 		if err := c.SendInterrogationCmd(1); err != nil {
 			logx.Errorf("send interrogation cmd error %v\n", err)
 		}
-
-		// 时钟同步
-		if err := c.SendClockSynchronizationCmd(1, time.Now()); err != nil {
-			logx.Errorf("send clock sync cmd error %v\n", err)
-		}
 	})
 	if manager != nil {
 		// 注册连接事件
