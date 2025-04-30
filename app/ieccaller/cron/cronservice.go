@@ -26,14 +26,13 @@ func (s *CronService) Start() {
 		sessionLen := s.svcCtx.ClientManager.GetSessionLen()
 		clients := s.svcCtx.ClientManager.GetClients()
 		clientsLen := len(clients)
-		logx.Statf("(iec104) clientLen: %d, sessionLen: %d", clientsLen, sessionLen)
 		loss := 0
 		for v := range clients {
 			if !v.IsConnected() {
 				loss++
 			}
 		}
-		logx.Statf("(iec104) clientLen: %d, sessionLen: %d, loss: %d", clientsLen, sessionLen, loss)
+		logx.Statf("(iec104) clientLen: %d, clientLoss: %d, sessionLen: %d, ", clientsLen, loss, sessionLen)
 	})
 	s.c.Start()
 	fmt.Print("Starting cron server \n")
