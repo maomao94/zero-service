@@ -414,6 +414,7 @@ func MustNewClient(host string, port int, name string, call ASDUCall, manager *C
 	})
 	if manager != nil {
 		manager.EventRegister(c)
+		manager.EventSession(c)
 	}
 	return c
 }
@@ -440,7 +441,7 @@ func (c *Client) GetName() string {
 type ClientManager struct {
 	clients     map[*Client]bool   // 全部的连接
 	clientsLock sync.RWMutex       // 读写锁
-	sessions    map[string]*Client // 登录的用户 // appId+uuid
+	sessions    map[string]*Client // 注册session name
 	sessionLock sync.RWMutex       // 读写锁
 	register    chan *Client       // 连接连接处理
 	broadcast   chan struct{}      // 广播 向全部成员发送数据
@@ -485,8 +486,17 @@ func (manager *ClientManager) StartListener() {
 
 func (manager *ClientManager) EventRegister(client *Client) {
 	manager.AddClients(client)
-	manager.AddSession(client.settings.Name, client)
 	logx.Infof("eventRegister-%s iec104 server addr:%s:%d", client.settings.Name, client.settings.Host, client.settings.Port)
+}
+
+// EventSession
+func (manager *ClientManager) EventSession(client *Client) {
+	// 连接存在，在添加
+	if manager.InClient(client) {
+		name := client.settings.Name
+		manager.AddSession(name, client)
+	}
+	logx.Infof("eventSession %s 注册", client.GetName())
 }
 
 func (manager *ClientManager) PublishRegister(client *Client) {
