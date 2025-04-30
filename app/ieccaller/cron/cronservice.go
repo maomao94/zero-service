@@ -36,15 +36,6 @@ func (s *CronService) Start() {
 
 	// 测试 发送一次 read
 	_, _ = s.c.AddFunc("*/5 * * * * *", func() {
-		// read cmd
-		cli, err := s.svcCtx.ClientManager.GetDefaultSessionClient()
-		if err != nil {
-			logx.Errorf("error GetDefaultSessionClient %v", err)
-		}
-		// read cmd
-		if err := cli.SendReadCmd(1, 1); err != nil {
-			logx.Errorf("send counter interrogation cmd error %v\n", err)
-		}
 	})
 	s.c.Start()
 	fmt.Print("Starting cron server \n")

@@ -1,6 +1,7 @@
 package iec
 
 import (
+	"github.com/duke-git/lancet/v2/random"
 	"github.com/wendy512/go-iecp5/asdu"
 	"github.com/zeromicro/go-zero/core/logx"
 	"time"
@@ -23,16 +24,15 @@ func NewIecHandler(svcCtx *svc.ServiceContext) *IecHandler {
 
 func (ms *IecHandler) OnInterrogation(conn asdu.Connect, pack *asdu.ASDU, quality asdu.QualifierOfInterrogation) error {
 	// TODO
-	_ = asdu.Single(conn, false, asdu.CauseOfTransmission{Cause: asdu.InterrogatedByStation}, commonAddr, asdu.SinglePointInfo{
-		Ioa:   100,
-		Value: true,
-		Qds:   asdu.QDSGood,
-	})
-	_ = asdu.Double(conn, false, asdu.CauseOfTransmission{Cause: asdu.InterrogatedByStation}, commonAddr, asdu.DoublePointInfo{
-		Ioa:   200,
-		Value: asdu.DPIDeterminedOn,
-		Qds:   asdu.QDSGood,
-	})
+	ioa := 1
+	for i := 0; i < 50; i++ {
+		_ = asdu.Single(conn, false, asdu.CauseOfTransmission{Cause: asdu.InterrogatedByStation}, commonAddr, asdu.SinglePointInfo{
+			Ioa:   asdu.InfoObjAddr(ioa),
+			Value: random.RandBool(),
+			Qds:   asdu.QDSGood,
+		})
+		ioa++
+	}
 	return nil
 }
 
@@ -49,7 +49,7 @@ func (ms *IecHandler) OnRead(conn asdu.Connect, pack *asdu.ASDU, addr asdu.InfoO
 	// TODO
 	_ = asdu.Single(conn, false, asdu.CauseOfTransmission{Cause: asdu.InterrogatedByStation}, commonAddr, asdu.SinglePointInfo{
 		Ioa:   addr,
-		Value: true,
+		Value: random.RandBool(),
 		Qds:   asdu.QDSGood,
 	})
 	_ = pack.SendReplyMirror(conn, asdu.ActivationTerm)
@@ -87,7 +87,7 @@ func (ms *IecHandler) OnASDU(conn asdu.Connect, pack *asdu.ASDU) error {
 	cmd := pack.GetSingleCmd()
 	_ = asdu.SingleCmd(conn, pack.Type, pack.Coa, pack.CommonAddr, asdu.SingleCommandInfo{
 		Ioa:   cmd.Ioa,
-		Value: cmd.Value,
+		Value: random.RandBool(),
 		Qoc:   cmd.Qoc,
 	})
 	_ = pack.SendReplyMirror(conn, asdu.ActivationTerm)

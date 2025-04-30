@@ -10,11 +10,18 @@ Log:
   #  Mode: file
   Path: /opt/logs/ieccaller.rpc
   Level: debug
-Remote:
+ServerConfig:
+  - Host: 127.0.0.1
+    Port: 2404
+    Name: server1
+    Coa: 1
+  - Host: 127.0.0.1
+    Port: 2404
+    Name: server2
+    Coa: 2
+IecServerConfig:
   Host: 127.0.0.1
   Port: 2404
-  Name: server1
-  DefaultName: server1
 KafkaASDUConfig:
   Brokers:
     - 10.10.1.213:9094

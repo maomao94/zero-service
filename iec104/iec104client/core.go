@@ -2,7 +2,6 @@ package iec104client
 
 import (
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/threading"
@@ -21,6 +20,17 @@ import (
 	"github.com/wendy512/go-iecp5/cs104"
 )
 
+type CoaConfig struct {
+	Host string
+	Port int
+	Coa  int
+}
+
+type IecServerConfig struct {
+	Host string
+	Port int
+}
+
 type Client struct {
 	client104             *cs104.Client
 	settings              *Settings
@@ -32,7 +42,6 @@ type Client struct {
 type Settings struct {
 	Host              string
 	Port              int
-	Name              string
 	AutoConnect       bool          //自动重连
 	ReconnectInterval time.Duration //重连间隔
 	Cfg104            *cs104.Config //104协议规范配置
@@ -397,24 +406,37 @@ func formatServerUrl(settings *Settings) string {
 	return server
 }
 
-func MustNewClient(host string, port int, name string, call ASDUCall, manager *ClientManager) *Client {
+func MustNewIecServerClient(config IecServerConfig, call ASDUCall, manager *ClientManager) *Client {
 	settings := NewSettings()
-	settings.Host = host
-	settings.Port = port
-	settings.Name = name
+	settings.Host = config.Host
+	settings.Port = config.Port
 	settings.ReconnectInterval = time.Minute
 	settings.AutoConnect = true
 	settings.LogCfg = &LogCfg{Enable: true, LogProvider: iec104.NewLogProvider()}
 	c := New(settings, call)
 	c.SetOnConnectHandler(func(c *Client) {
-		fmt.Printf("connected %s:%d iec104 server\n", settings.Host, settings.Port)
+		logx.Infof("connected %s:%d iec104 server\n", settings.Host, settings.Port)
 	})
 	// server active确认后回调
 	c.SetServerActiveHandler(func(c *Client) {
+		// 发送总召唤
+		if err := c.SendInterrogationCmd(1); err != nil {
+			logx.Errorf("send interrogation cmd error %v\n", err)
+		}
+
+		// 累积量召唤
+		if err := c.SendCounterInterrogationCmd(1); err != nil {
+			logx.Errorf("send counter interrogation cmd error %v\n", err)
+		}
+
+		// 时钟同步
+		if err := c.SendClockSynchronizationCmd(1, time.Now()); err != nil {
+			logx.Errorf("send clock sync cmd error %v\n", err)
+		}
 	})
 	if manager != nil {
+		// 注册连接事件
 		manager.EventRegister(c)
-		manager.EventSession(c)
 	}
 	return c
 }
@@ -434,24 +456,21 @@ func (c *Client) GetServerUrl() string {
 	return formatServerUrl(c.settings)
 }
 
-func (c *Client) GetName() string {
-	return c.settings.Name
-}
-
+// iec客户端管理容器
 type ClientManager struct {
-	clients     map[*Client]bool   // 全部的连接
-	clientsLock sync.RWMutex       // 读写锁
-	sessions    map[string]*Client // 注册session name
-	sessionLock sync.RWMutex       // 读写锁
-	register    chan *Client       // 连接连接处理
-	broadcast   chan struct{}      // 广播 向全部成员发送数据
-	defaultName string
+	clients        map[*Client]bool   // 全部的连接
+	clientsLock    sync.RWMutex       // 读写锁
+	coaSession     map[string]*Client // 注册session ip+port+coa 地址 构成唯一
+	coaSessionLock sync.RWMutex       // 读写锁
+	register       chan *Client       // 连接连接处理
+	broadcast      chan struct{}      // 广播 向全部成员发送数据
+	defaultName    string
 }
 
 func NewClientManager(defaultName string) (m *ClientManager) {
 	m = &ClientManager{
 		clients:     make(map[*Client]bool),
-		sessions:    make(map[string]*Client),
+		coaSession:  make(map[string]*Client),
 		broadcast:   make(chan struct{}, 1000),
 		defaultName: defaultName,
 	}
@@ -486,17 +505,19 @@ func (manager *ClientManager) StartListener() {
 
 func (manager *ClientManager) EventRegister(client *Client) {
 	manager.AddClients(client)
-	logx.Infof("eventRegister-%s iec104 server addr:%s:%d", client.settings.Name, client.settings.Host, client.settings.Port)
+	logx.Infof("eventRegister iec104 server addr:%s", client.GetServerUrl())
 }
 
-// EventSession
-func (manager *ClientManager) EventSession(client *Client) {
+func (manager *ClientManager) EventSession(config CoaConfig, client *Client) {
+	uId := getUId(config)
 	// 连接存在，在添加
 	if manager.InClient(client) {
-		name := client.settings.Name
-		manager.AddSession(name, client)
+		key := getKey(uId, config.Coa)
+		manager.AddSession(key, client)
+		logx.Infof("eventSession %s 注册", key)
+	} else {
+		logx.Errorf("eventSession fail, iec104 server addr:%s 连接不存在", client.GetServerUrl())
 	}
-	logx.Infof("eventSession %s 注册", client.GetName())
 }
 
 func (manager *ClientManager) PublishRegister(client *Client) {
@@ -517,7 +538,7 @@ func (manager *ClientManager) GetClientsLen() (clientsLen int) {
 }
 
 func (manager *ClientManager) GetSessionLen() (sessionLen int) {
-	sessionLen = len(manager.sessions)
+	sessionLen = len(manager.coaSession)
 	return
 }
 
@@ -530,9 +551,9 @@ func (manager *ClientManager) InClient(client *Client) (ok bool) {
 }
 
 func (manager *ClientManager) AddSession(name string, client *Client) {
-	manager.sessionLock.Lock()
-	defer manager.sessionLock.Unlock()
-	manager.sessions[name] = client
+	manager.coaSessionLock.Lock()
+	defer manager.coaSessionLock.Unlock()
+	manager.coaSession[name] = client
 }
 
 func (manager *ClientManager) GetClients() (clients map[*Client]bool) {
@@ -556,48 +577,42 @@ func (manager *ClientManager) ClientsRange(f func(client *Client, value bool) (r
 	return
 }
 
-func (manager *ClientManager) GetDefaultSessionClient() (client *Client, err error) {
-	return manager.GetSessionClient(manager.defaultName)
-}
-
-func (manager *ClientManager) GetSessionClient(name string) (client *Client, err error) {
-	manager.sessionLock.RLock()
-	defer manager.sessionLock.RUnlock()
-	if value, ok := manager.sessions[name]; ok {
-		client = value
-		return client, nil
-	}
-	return client, errors.New("cs104 client not found")
-}
-
 func (manager *ClientManager) GetSessionNames() (names []string) {
 	names = make([]string, 0)
-	manager.sessionLock.RLock()
-	defer manager.sessionLock.RUnlock()
-	for key := range manager.sessions {
+	manager.coaSessionLock.RLock()
+	defer manager.coaSessionLock.RUnlock()
+	for key := range manager.coaSession {
 		names = append(names, key)
 	}
 	return
 }
 
-func (manager *ClientManager) GetSessionList(name string) (sessionList []string) {
-	sessionList = make([]string, 0)
-	manager.sessionLock.RLock()
-	defer manager.sessionLock.RUnlock()
-	for _, v := range manager.sessions {
-		if v.settings.Name == name {
-			sessionList = append(sessionList, v.settings.Name)
-		}
+func (manager *ClientManager) GetSession(uId string, coa int) (clients *Client) {
+	manager.coaSessionLock.RLock()
+	defer manager.coaSessionLock.RUnlock()
+	key := getKey(uId, coa)
+	if value, ok := manager.coaSession[key]; ok {
+		clients = value
 	}
 	return
 }
 
 func (manager *ClientManager) GetSessionClients() (clients []*Client) {
 	clients = make([]*Client, 0)
-	manager.sessionLock.RLock()
-	defer manager.sessionLock.RUnlock()
-	for _, v := range manager.sessions {
+	manager.coaSessionLock.RLock()
+	defer manager.coaSessionLock.RUnlock()
+	for _, v := range manager.coaSession {
 		clients = append(clients, v)
 	}
+	return
+}
+
+func getKey(uId string, coa int) (key string) {
+	key = fmt.Sprintf("%s_%d", uId, coa)
+	return
+}
+
+func getUId(config CoaConfig) (uId string) {
+	uId = fmt.Sprintf("%s_%d", config.Host, config.Port)
 	return
 }

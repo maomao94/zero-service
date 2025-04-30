@@ -3,16 +3,12 @@ package config
 import (
 	"github.com/zeromicro/go-zero/zrpc"
 	"zero-service/common/config"
+	"zero-service/iec104/iec104client"
 )
 
 type Config struct {
 	zrpc.RpcServerConf
 	KafkaASDUConfig config.KqConfig
-
-	Remote struct {
-		Host        string
-		Port        int
-		Name        string
-		DefaultName string
-	}
+	IecServerConfig iec104client.IecServerConfig
+	CoaConfig       []iec104client.CoaConfig
 }
