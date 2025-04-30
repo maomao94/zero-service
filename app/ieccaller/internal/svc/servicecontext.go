@@ -15,7 +15,7 @@ type ServiceContext struct {
 func NewServiceContext(c config.Config) *ServiceContext {
 	svcCtx := &ServiceContext{
 		Config:          c,
-		ClientManager:   iec104client.NewClientManager(c.Remote.DefaultName),
+		ClientManager:   iec104client.NewClientManager(),
 		KafkaASDUPusher: kq.NewPusher(c.KafkaASDUConfig.Brokers, c.KafkaASDUConfig.Topic),
 	}
 	return svcCtx

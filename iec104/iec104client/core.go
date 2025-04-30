@@ -48,6 +48,7 @@ type Settings struct {
 	TLS               *tls.Config   // tls配置
 	Params            *asdu.Params  //ASDU相关特定参数
 	LogCfg            *LogCfg
+	CoaConfig         []CoaConfig
 }
 
 type LogCfg struct {
@@ -406,7 +407,7 @@ func formatServerUrl(settings *Settings) string {
 	return server
 }
 
-func MustNewIecServerClient(config IecServerConfig, call ASDUCall, manager *ClientManager) *Client {
+func MustNewIecServerClient(config IecServerConfig, coaConfig []CoaConfig, call ASDUCall, manager *ClientManager) *Client {
 	settings := NewSettings()
 	settings.Host = config.Host
 	settings.Port = config.Port
@@ -437,6 +438,13 @@ func MustNewIecServerClient(config IecServerConfig, call ASDUCall, manager *Clie
 	if manager != nil {
 		// 注册连接事件
 		manager.EventRegister(c)
+
+		// 注册 coaSession
+		for _, cf := range coaConfig {
+			if cf.Host == c.settings.Host && cf.Port == c.settings.Port {
+				manager.EventSession(cf, c)
+			}
+		}
 	}
 	return c
 }
@@ -467,12 +475,11 @@ type ClientManager struct {
 	defaultName    string
 }
 
-func NewClientManager(defaultName string) (m *ClientManager) {
+func NewClientManager() (m *ClientManager) {
 	m = &ClientManager{
-		clients:     make(map[*Client]bool),
-		coaSession:  make(map[string]*Client),
-		broadcast:   make(chan struct{}, 1000),
-		defaultName: defaultName,
+		clients:    make(map[*Client]bool),
+		coaSession: make(map[string]*Client),
+		broadcast:  make(chan struct{}, 1000),
 	}
 	threading.GoSafe(func() {
 		logx.Info("start clientManager listener")
@@ -509,10 +516,9 @@ func (manager *ClientManager) EventRegister(client *Client) {
 }
 
 func (manager *ClientManager) EventSession(config CoaConfig, client *Client) {
-	uId := getUId(config)
 	// 连接存在，在添加
 	if manager.InClient(client) {
-		key := getKey(uId, config.Coa)
+		key := getKey(config)
 		manager.AddSession(key, client)
 		logx.Infof("eventSession %s 注册", key)
 	} else {
@@ -587,10 +593,10 @@ func (manager *ClientManager) GetSessionNames() (names []string) {
 	return
 }
 
-func (manager *ClientManager) GetSession(uId string, coa int) (clients *Client) {
+func (manager *ClientManager) GetSession(config CoaConfig) (clients *Client) {
 	manager.coaSessionLock.RLock()
 	defer manager.coaSessionLock.RUnlock()
-	key := getKey(uId, coa)
+	key := getKey(config)
 	if value, ok := manager.coaSession[key]; ok {
 		clients = value
 	}
@@ -607,8 +613,8 @@ func (manager *ClientManager) GetSessionClients() (clients []*Client) {
 	return
 }
 
-func getKey(uId string, coa int) (key string) {
-	key = fmt.Sprintf("%s_%d", uId, coa)
+func getKey(config CoaConfig) (key string) {
+	key = fmt.Sprintf("%s_%d_%d", config.Host, config.Port, config.Coa)
 	return
 }
 

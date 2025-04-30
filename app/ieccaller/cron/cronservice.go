@@ -21,21 +21,19 @@ func NewCronService(svcCtx *svc.ServiceContext) *CronService {
 
 func (s *CronService) Start() {
 	s.c = cron.New(cron.WithSeconds()) // 支持秒级调度
-	// 统计 session
+	// stat
 	_, _ = s.c.AddFunc("*/60 * * * * *", func() {
 		sessionLen := s.svcCtx.ClientManager.GetSessionLen()
-		logx.Infof("stats session len:%d", sessionLen)
-
-		clis := s.svcCtx.ClientManager.GetSessionClients()
-		for _, v := range clis {
+		clients := s.svcCtx.ClientManager.GetClients()
+		clientsLen := len(clients)
+		logx.Statf("(iec104) clientLen: %d, sessionLen: %d", clientsLen, sessionLen)
+		loss := 0
+		for v := range clients {
 			if !v.IsConnected() {
-				logx.Errorf("stats iec104 server addr:%s connect error", v.GetServerUrl())
+				loss++
 			}
 		}
-	})
-
-	// 测试 发送一次 read
-	_, _ = s.c.AddFunc("*/5 * * * * *", func() {
+		logx.Statf("(iec104) clientLen: %d, sessionLen: %d, loss: %d", clientsLen, sessionLen, loss)
 	})
 	s.c.Start()
 	fmt.Print("Starting cron server \n")

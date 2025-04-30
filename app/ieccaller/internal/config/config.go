@@ -10,5 +10,5 @@ type Config struct {
 	zrpc.RpcServerConf
 	KafkaASDUConfig config.KqConfig
 	IecServerConfig iec104client.IecServerConfig
-	CoaConfig       []iec104client.CoaConfig
+	IecCoaConfig    []iec104client.CoaConfig
 }
