@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/threading"
+	"log"
 	"net"
 	"net/url"
 	"strconv"
@@ -442,7 +443,7 @@ func MustNewIecServerClient(config IecServerConfig, coaConfig []CoaConfig, call 
 func (q *Client) Start() {
 	err := q.Connect()
 	if err != nil {
-		logx.Error(err)
+		log.Fatal(err)
 	}
 }
 
