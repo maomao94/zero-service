@@ -425,11 +425,6 @@ func MustNewIecServerClient(config IecServerConfig, coaConfig []CoaConfig, call 
 			logx.Errorf("send interrogation cmd error %v\n", err)
 		}
 
-		// 累积量召唤
-		if err := c.SendCounterInterrogationCmd(1); err != nil {
-			logx.Errorf("send counter interrogation cmd error %v\n", err)
-		}
-
 		// 时钟同步
 		if err := c.SendClockSynchronizationCmd(1, time.Now()); err != nil {
 			logx.Errorf("send clock sync cmd error %v\n", err)
