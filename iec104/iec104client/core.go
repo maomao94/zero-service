@@ -119,9 +119,9 @@ func (c *Client) Connect() error {
 		}
 	})
 
-	if err := wg.WaitTimeout(c.settings.Cfg104.ConnectTimeout0); err != nil {
-		return fmt.Errorf("connection timeout of %f seconds", c.settings.Cfg104.ConnectTimeout0.Seconds())
-	}
+	//if err := wg.WaitTimeout(c.settings.Cfg104.ConnectTimeout0); err != nil {
+	//	return fmt.Errorf("connection timeout of %f seconds", c.settings.Cfg104.ConnectTimeout0.Seconds())
+	//}
 	return nil
 }
 
