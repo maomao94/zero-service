@@ -17,9 +17,14 @@ IecCoaConfig:
   - Host: 127.0.0.1
     Port: 2404
     Coa: 2
+  - Host: 127.0.0.1
+    Port: 12404
+    Coa: 1
 IecServerConfig:
-  Host: 127.0.0.1
-  Port: 2404
+  - Host: 127.0.0.1
+    Port: 2404
+  - Host: 127.0.0.1
+    Port: 12404
 KafkaASDUConfig:
   Brokers:
     - 10.10.1.213:9094

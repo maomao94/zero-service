@@ -9,6 +9,6 @@ import (
 type Config struct {
 	zrpc.RpcServerConf
 	KafkaASDUConfig config.KqConfig
-	IecServerConfig iec104client.IecServerConfig
+	IecServerConfig []iec104client.IecServerConfig
 	IecCoaConfig    []iec104client.CoaConfig
 }
