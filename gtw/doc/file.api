@@ -1,0 +1,52 @@
+syntax = "v1"
+
+type (
+	File {
+		Link         string `json:"link"` // 文件地址
+		Domain       string `json:"domain"` // 域名地址
+		Name         string `json:"name"` // 文件名
+		Size         int64  `json:"size"` // 文件大小
+		FormatSize   string `json:"formatSize"` // 格式化文件大小
+		OriginalName string `json:"originalName"` // 初始文件名
+		AttachId     string `json:"attachId,omitempty"` // 附件表ID
+	}
+	OssFile {
+		Link        string `json:"link"` // 文件地址
+		Name        string `json:"name"` // 文件名
+		Size        int64  `json:"size"` // 文件大小
+		FormatSize  string `json:"formatSize"` // 格式化文件大小
+		PutTime     string `json:"putTime"` // 文件上传时间
+		ContentType string `json:"contentType"` // 文件contentType
+		SignUrl     string `json:"signUrl"` // 签名URL
+	}
+	PutFileRequest {
+		TenantId   string `form:"tenantId"` // 租户ID
+		Code       string `form:"code"` // 资源编号
+		BucketName string `form:"bucketName"` // 存储桶名称
+	}
+	GetFileReply {
+		File File `json:"file"`
+	}
+	SignUrlRequest {
+		TenantId   string `json:"tenantId"` // 租户ID
+		Code       string `json:"code"` // 资源编号
+		BucketName string `json:"bucketName"` // 存储桶名称
+		Filename   string `json:"filename"` // 文件名
+		expires    int32  `json:"expires"` // 过期时间 默认一小时 单位分钟
+	}
+	SignUrlReqly {
+		Url string `json:"url"` // 文件url
+	}
+	StatFileRequest {
+		TenantId   string `json:"tenantId"` // 租户ID
+		Code       string `json:"code"` // 资源编号
+		BucketName string `json:"bucketName"` // 存储桶名称
+		Filename   string `json:"filename"` // 文件名
+		IsSign     bool   `json:"isSign"` // 是否生成签名
+		Expires    int32  `json:"expires"` // 过期时间 默认一小时 单位分钟
+	}
+	StatFileReply {
+		ossFile OssFile `json:"ossFile"`
+	}
+)
+

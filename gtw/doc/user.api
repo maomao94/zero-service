@@ -1,0 +1,46 @@
+syntax = "v1"
+
+type (
+	LoginRequest {
+		AuthType string `json:"authType"` // miniProgram-小程序一键登录,mobile-手机号
+		AuthKey  string `json:"authKey"` // miniProgram-Code,mobile-验证码
+		Password string `json:"password,optional"`
+	}
+	LoginReply {
+		accessToken  string `json:"accessToken"`
+		accessExpire int64  `json:"accessExpire"`
+		refreshAfter int64  `json:"refreshAfter"`
+	}
+	MiniProgramLoginRequest {
+		Code string `json:"code"`
+	}
+	MiniProgramLoginReply {
+		OpenId     string `json:"openId"`
+		UnionId    string `json:"unionId"`
+		SessionKey string `json:"sessionKey"`
+	}
+	SendSMSVerifyCodeRequest {
+		mobile string `json:"mobile"`
+	}
+	SendSMSVerifyCodeReply {
+		code string `json:"code"`
+	}
+	GetCurrentUserRequest  {}
+	GetCurrentUserReply {
+		User User `json:"user"`
+	}
+	User {
+		id       int64  `json:"id"`
+		mobile   string `json:"mobile"`
+		nickname string `json:"nickname"`
+		sex      int64  `json:"sex"`
+		avatar   string `json:"avatar"`
+	}
+	EditCurrentUserRequest {
+		nickname string `json:"nickname"`
+		sex      int64  `json:"sex"`
+		avatar   string `json:"avatar"`
+	}
+	EditCurrentUserReply  {}
+)
+

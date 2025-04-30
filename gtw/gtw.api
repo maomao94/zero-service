@@ -1,0 +1,122 @@
+syntax = "v1"
+
+import "doc/base.api"
+import "doc/user.api"
+import "doc/common.api"
+import "doc/file.api"
+
+info (
+	title:   "网关服务"
+	desc:    "网关服务"
+	author:  "hehanpeng"
+	email:   "hehanpengyy@163.com"
+	version: "v1"
+)
+
+@server (
+	prefix: gtw/v1
+	group:  gtw
+)
+service gtw {
+	@doc "ping"
+	@handler ping
+	get /ping returns (PingReply)
+
+	@doc "pingJava"
+	@handler pingJava
+	get /pingJava returns (PingReply)
+
+	@doc "forward"
+	@handler forward
+	post /forward (ForwardRequest) returns (ForwardReply)
+
+	@doc "下载文件"
+	@handler mfsDownloadFile
+	get /mfs/downloadFile (DownloadFileRequest)
+}
+
+@server (
+	prefix: gtw/v1/pay
+	group:  pay
+)
+service gtw {
+	@doc "微信支付通知"
+	@handler paidNotify
+	post /wechat/paidNotify
+
+	@doc "微信退款通知"
+	@handler refundedNotify
+	post /wechat/refundedNotify
+}
+
+@server (
+	prefix: app/user/v1
+	group:  user
+)
+service gtw {
+	@doc "登录"
+	@handler login
+	post /login (LoginRequest) returns (LoginReply)
+
+	@doc "小程序登录"
+	@handler miniProgramLogin
+	post /miniProgramLogin (MiniProgramLoginRequest) returns (MiniProgramLoginReply)
+
+	@doc "发送手机号验证码"
+	@handler sendSMSVerifyCode
+	post /sendSMSVerifyCode (SendSMSVerifyCodeRequest) returns (SendSMSVerifyCodeReply)
+}
+
+@server (
+	prefix: app/user/v1
+	group:  user
+	jwt:    JwtAuth
+)
+service gtw {
+	@doc "获取用户信息"
+	@handler getCurrentUser
+	get /getCurrentUser (GetCurrentUserRequest) returns (GetCurrentUserReply)
+
+	@doc "修改当前用户信息"
+	@handler editCurrentUser
+	post /editCurrentUser (EditCurrentUserRequest) returns (EditCurrentUserReply)
+}
+
+@server (
+	prefix: app/common/v1
+	group:  common
+	jwt:    JwtAuth
+)
+service gtw {
+	@doc "获取区域列表"
+	@handler getRegionList
+	post /getRegionList (GetRegionListRequest) returns (GetRegionListReply)
+
+	@doc "上传文件"
+	@handler mfsUploadFile
+	post /mfs/uploadFile (UploadFileRequest) returns (UploadFileReply)
+}
+
+@server (
+	prefix:  file/v1
+	group:   file
+	timeout: 7200s
+)
+service gtw {
+	@doc "上传文件"
+	@handler putFile
+	post /oss/endpoint/putFile (PutFileRequest) returns (GetFileReply)
+
+	@doc "上传块文件"
+	@handler putChunkFile
+	post /oss/endpoint/putChunkFile (PutFileRequest) returns (GetFileReply)
+
+	@doc "生成文件url"
+	@handler signUrl
+	post /oss/endpoint/signUrl (SignUrlRequest) returns (SignUrlReqly)
+
+	@doc "获取文件信息"
+	@handler statFile
+	post /oss/endpoint/statFile (StatFileRequest) returns (StatFileReply)
+}
+

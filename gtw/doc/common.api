@@ -1,0 +1,23 @@
+syntax = "v1"
+
+type (
+	GetRegionListRequest {
+		ParentCode string `json:"parentCode"` // 父区划编号
+	}
+	GetRegionListReply {
+		Region []Region `json:"region"`
+	}
+	Region {
+		Code         string `json:"code"` // 区划编号
+		ParentCode   string `json:"parentCode"` // 父区划编号
+		Name         string `json:"name"` // 区划名称
+		ProvinceCode string `json:"provinceCode"` // 省级区划编号
+		ProvinceName string `json:"provinceName"` // 省级名称
+		CityCode     string `json:"cityCode"` // 市级区划编号
+		CityName     string `json:"cityName"` // 市级名称
+		DistrictCode string `json:"districtCode"` // 区级区划编号
+		DistrictName string `json:"districtName"` // 区级名称
+		RegionLevel  int64  `json:"regionLevel"` // 层级
+	}
+)
+
