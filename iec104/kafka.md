@@ -280,6 +280,259 @@
 - **范围**：`1`-`65534`（`65535`为全局广播地址）
 - **用途**：标识RTU、子站或子系统
 
+### 附录D：输出电路信息（OCI）定义
+
+**概述**  
+本附录定义了输出电路信息（OCI）的字段、比特位映射规则及示例解析。
+
+####  1. 字段定义
+
+| 字段名 | 类型   | 位宽 | 描述                                                                 |
+|:-------|:-------|:-----|:--------------------------------------------------------------------|
+| `oci`  | `byte` | 8位  | 8位比特掩码，每一位表示一个输出电路的状态（`1`=闭合，`0`=断开）。 |
+
+#### 2. 比特位映射规则
+
+| 位索引 | 电路编号 | 状态说明                    |
+|:-------|:---------|:----------------------------|
+| 0 (LSB)| 电路1    | `1`=闭合，`0`=断开          |
+| 1      | 电路2    | `1`=闭合，`0`=断开          |
+| 2      | 电路3    | `1`=闭合，`0`=断开          |
+| 3      | 电路4    | `1`=闭合，`0`=断开          |
+| 4      | 电路5    | `1`=闭合，`0`=断开          |
+| 5      | 电路6    | `1`=闭合，`0`=断开          |
+| 6      | 电路7    | `1`=闭合，`0`=断开          |
+| 7 (MSB)| 电路8    | `1`=闭合，`0`=断开          |
+
+#### 3. 示例解析
+
+假设 `oci = 0xA5`（十六进制，二进制为 `10100101`）：
+
+#### Go 示例代码：
+```go
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	oci := 0xA5 // 十六进制值
+	var activeCircuits []int
+
+	for i := 0; i < 8; i++ {
+		if oci&(1<<i) != 0 {
+			activeCircuits = append(activeCircuits, i+1)
+		}
+	}
+
+	fmt.Println("闭合的电路:", activeCircuits)
+	// 输出: 闭合的电路: [1 3 6 8]
+}
+```
+
+#### Java 示例代码：
+``` java
+public class Main {
+    public static void main(String[] args) {
+        int oci = 0xA5; // 十六进制值
+        StringBuilder activeCircuits = new StringBuilder();
+
+        for (int i = 0; i < 8; i++) {
+            if ((oci & (1 << i)) != 0) {
+                activeCircuits.append((i + 1)).append(" ");
+            }
+        }
+
+        System.out.println("闭合的电路: " + activeCircuits.toString().trim());
+        // 输出: 闭合的电路: 1 3 6 8
+    }
+}
+```
+
+
+• 解析结果：电路1、3、6、8处于闭合状态。
+#### 4. 使用场景
+• 适用ASDU类型：`M_EP_TC_1`、`M_EP_TF_1`
+• 典型场景：表示继电保护设备的输出电路状态，如跳闸回路、信号回路等。
+#### 5. 注意事项
+• 若所有位为 `0`，表示所有输出电路均断开。
+• 比特位索引从右向左递增（即 `位0` 是最低位）。
+## 附录E：状态变位检出（SCD）定义
+**概述**
+本附录定义了状态变位检出（SCD）的字段、比特位结构及示例解析。
+#### 1. 字段定义
+
+| 字段名 | 类型 | 位宽 | 描述 |
+| --- | --- | --- | --- |
+| `scd` | `uint32` | 32位 | 32位比特掩码，低16位表示当前状态，高16位表示变位检出（=状态变化）。 `1` |
+#### 2. 比特位结构
+
+| 位域 | 说明 |
+| --- | --- |
+| 位0 ~ 位15 | 当前状态（16个单点状态） |
+| 位16 ~ 位31 | 变位检出（对应位=1表示变化 |
+
+
+#### 3. 示例解析
+假设 `scd = 0x0000FF0F`：
+#### Go 示例代码：
+``` go
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	scd := uint32(0x0000FF0F) // 十六进制值
+
+	currentStatus := scd & 0xFFFF
+	statusChange := (scd >> 16) & 0xFFFF
+
+	var activePoints []int
+	var changedPoints []int
+
+	for i := 0; i < 16; i++ {
+		if currentStatus&(1<<i) != 0 {
+			activePoints = append(activePoints, i)
+		}
+		if statusChange&(1<<i) != 0 {
+			changedPoints = append(changedPoints, i)
+		}
+	}
+
+	fmt.Println("当前闭合的位:", activePoints)
+	fmt.Println("状态变化的位:", changedPoints)
+	// 输出:
+	// 当前闭合的位: [0 1 2 3 8 9 10 11]
+	// 状态变化的位: []
+}
+```
+#### Java 示例代码：
+``` java
+public class Main {
+    public static void main(String[] args) {
+        int scd = 0x0000FF0F; // 十六进制值
+
+        int currentStatus = scd & 0xFFFF;
+        int statusChange = (scd >> 16) & 0xFFFF;
+
+        StringBuilder activePoints = new StringBuilder();
+        StringBuilder changedPoints = new StringBuilder();
+
+        for (int i = 0; i < 16; i++) {
+            if ((currentStatus & (1 << i)) != 0) {
+                activePoints.append(i).append(" ");
+            }
+            if ((statusChange & (1 << i)) != 0) {
+                changedPoints.append(i).append(" ");
+            }
+        }
+
+        System.out.println("当前闭合的位: " + activePoints.toString().trim());
+        System.out.println("状态变化的位: " + changedPoints.toString().trim());
+        // 输出:
+        // 当前闭合的位: 0 1 2 3 8 9 10 11
+        // 状态变化的位: 
+    }
+}
+```
+• 解析结果：当前状态中，位0-3和位8-11为闭合状态，无变位检出。
+
+
+#### 4. 使用场景
+• 适用ASDU类型：`M_EP_TC_1`、`M_EP_TF_1`
+• 典型场景：表示继电保护设备的输出电路状态，如跳闸回路、信号回路等。
+####5. 注意事项
+• 若所有位为 `0`，表示所有输出电路均断开。
+• 比特位索引从右向左递增（即 `位0` 是最低位）。
+## 附录E：状态变位检出（SCD）定义
+**概述**
+本附录定义了状态变位检出（SCD）的字段、比特位结构及示例解析。
+#### 1. 字段定义
+
+| 字段名 | 类型 | 位宽 | 描述 |
+| --- | --- | --- | --- |
+| `scd` | `uint32` | 32位 | 32位比特掩码，低16位表示当前状态，高16位表示变位检出（=状态变化）。 `1` |
+#### 2. 比特位结构
+
+| 位域 | 说明 |
+| --- | --- |
+| 位0 ~ 位15 | 当前状态（16个单点状态） |
+| 位16 ~ 位31 | 变位检出（对应位=1表示变化） |
+#### 3. 示例解析
+假设 `scd = 0x0000FF0F`：
+#### Go 示例代码：
+``` go
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	scd := uint32(0x0000FF0F) // 十六进制值
+
+	currentStatus := scd & 0xFFFF
+	statusChange := (scd >> 16) & 0xFFFF
+
+	var activePoints []int
+	var changedPoints []int
+
+	for i := 0; i < 16; i++ {
+		if currentStatus&(1<<i) != 0 {
+			activePoints = append(activePoints, i)
+		}
+		if statusChange&(1<<i) != 0 {
+			changedPoints = append(changedPoints, i)
+		}
+	}
+
+	fmt.Println("当前闭合的位:", activePoints)
+	fmt.Println("状态变化的位:", changedPoints)
+	// 输出:
+	// 当前闭合的位: [0 1 2 3 8 9 10 11]
+	// 状态变化的位: []
+}
+```
+#### Java 示例代码：
+``` java
+public class Main {
+    public static void main(String[] args) {
+        int scd = 0x0000FF0F; // 十六进制值
+
+        int currentStatus = scd & 0xFFFF;
+        int statusChange = (scd >> 16) & 0xFFFF;
+
+        StringBuilder activePoints = new StringBuilder();
+        StringBuilder changedPoints = new StringBuilder();
+
+        for (int i = 0; i < 16; i++) {
+            if ((currentStatus & (1 << i)) != 0) {
+                activePoints.append(i).append(" ");
+            }
+            if ((statusChange & (1 << i)) != 0) {
+                changedPoints.append(i).append(" ");
+            }
+        }
+
+        System.out.println("当前闭合的位: " + activePoints.toString().trim());
+        System.out.println("状态变化的位: " + changedPoints.toString().trim());
+        // 输出:
+        // 当前闭合的位: 0 1 2 3 8 9 10 11
+        // 状态变化的位: 
+    }
+}
+```
+• 解析结果：当前状态中，位0-3和位8-11为闭合状态，无变位检出。
+#### 4. 使用场景
+• 适用ASDU类型：`M_PS_NA_1`
+• 典型场景：批量监测单点状态变化（如开关量输入模块）。
+#### 5. 注意事项
+• 低16位和高16位独立解析，变位检出仅在状态变化时置位。
+• 若需要历史状态对比，需消费方自行缓存前一次状态。
+
 ---
 
 ## 5. 数据消费指南
