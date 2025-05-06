@@ -308,7 +308,7 @@
 
 假设 `oci = 0xA5`（十六进制，二进制为 `10100101`）：
 
-#### Go 示例代码：
+##### Go 示例代码：
 ```go
 package main
 
@@ -331,7 +331,7 @@ func main() {
 }
 ```
 
-#### Java 示例代码：
+##### Java 示例代码：
 ``` java
 public class Main {
     public static void main(String[] args) {
@@ -376,7 +376,7 @@ public class Main {
 
 #### 3. 示例解析
 假设 `scd = 0x0000FF0F`：
-#### Go 示例代码：
+##### Go 示例代码：
 ``` go
 package main
 
@@ -409,7 +409,7 @@ func main() {
 	// 状态变化的位: []
 }
 ```
-#### Java 示例代码：
+##### Java 示例代码：
 ``` java
 public class Main {
     public static void main(String[] args) {
@@ -463,7 +463,7 @@ public class Main {
 | 位16 ~ 位31 | 变位检出（对应位=1表示变化） |
 #### 3. 示例解析
 假设 `scd = 0x0000FF0F`：
-#### Go 示例代码：
+##### Go 示例代码：
 ``` go
 package main
 
@@ -496,7 +496,7 @@ func main() {
 	// 状态变化的位: []
 }
 ```
-#### Java 示例代码：
+##### Java 示例代码：
 ``` java
 public class Main {
     public static void main(String[] args) {
