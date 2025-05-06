@@ -12,11 +12,15 @@ import (
 
 type ClientCall struct {
 	svcCtx *svc.ServiceContext
+	Host   string
+	Port   int
 }
 
-func NewClientCall(svcCtx *svc.ServiceContext) *ClientCall {
+func NewClientCall(svcCtx *svc.ServiceContext, host string, port int) *ClientCall {
 	return &ClientCall{
 		svcCtx: svcCtx,
+		Host:   host,
+		Port:   port,
 	}
 }
 
@@ -112,6 +116,8 @@ func (c *ClientCall) onSinglePoint(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
+			Host:   c.Host,
+			Port:   c.Port,
 			TypeId: int(iec104client.GetDataType(packet.Type)),
 			Coa:    uint(coa),
 			Body:   &obj,
@@ -128,6 +134,8 @@ func (c *ClientCall) onDoublePoint(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
+			Host:   c.Host,
+			Port:   c.Port,
 			TypeId: int(iec104client.GetDataType(packet.Type)),
 			Coa:    uint(coa),
 			Body:   &obj,
@@ -144,6 +152,8 @@ func (c *ClientCall) onMeasuredValueScaled(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
+			Host:   c.Host,
+			Port:   c.Port,
 			TypeId: int(iec104client.GetDataType(packet.Type)),
 			Coa:    uint(coa),
 			Body:   &obj,
@@ -160,6 +170,8 @@ func (c *ClientCall) onMeasuredValueNormal(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
+			Host:   c.Host,
+			Port:   c.Port,
 			TypeId: int(iec104client.GetDataType(packet.Type)),
 			Coa:    uint(coa),
 			Body:   &obj,
@@ -177,6 +189,8 @@ func (c *ClientCall) onStepPosition(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
+			Host:   c.Host,
+			Port:   c.Port,
 			TypeId: int(iec104client.GetDataType(packet.Type)),
 			Coa:    uint(coa),
 			Body:   &obj,
@@ -209,6 +223,8 @@ func (c *ClientCall) onMeasuredValueFloat(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
+			Host:   c.Host,
+			Port:   c.Port,
 			TypeId: int(iec104client.GetDataType(packet.Type)),
 			Coa:    uint(coa),
 			Body:   &obj,
@@ -226,6 +242,8 @@ func (c *ClientCall) onIntegratedTotals(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
+			Host:   c.Host,
+			Port:   c.Port,
 			TypeId: int(iec104client.GetDataType(packet.Type)),
 			Coa:    uint(coa),
 			Body:   &obj,
@@ -243,6 +261,8 @@ func (c *ClientCall) onEventOfProtectionEquipment(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
+			Host:   c.Host,
+			Port:   c.Port,
 			TypeId: int(iec104client.GetDataType(packet.Type)),
 			Coa:    uint(coa),
 			Body:   &obj,
@@ -260,6 +280,8 @@ func (c *ClientCall) onPackedStartEventsOfProtectionEquipment(packet *asdu.ASDU)
 	//obj.Time = carbon.Now().ToDateTimeString()
 	copier.CopyWithOption(&obj, &p, types.Option)
 	_ = c.svcCtx.PushASDU(&types.MsgBody{
+		Host:   c.Host,
+		Port:   c.Port,
 		TypeId: int(iec104client.GetDataType(packet.Type)),
 		Coa:    uint(coa),
 		Body:   &obj,
@@ -276,6 +298,8 @@ func (c *ClientCall) onPackedOutputCircuitInfo(packet *asdu.ASDU) {
 	//obj.Time = carbon.Now().ToDateTimeString()
 	copier.CopyWithOption(&obj, &p, types.Option)
 	_ = c.svcCtx.PushASDU(&types.MsgBody{
+		Host:   c.Host,
+		Port:   c.Port,
 		TypeId: int(iec104client.GetDataType(packet.Type)),
 		Coa:    uint(coa),
 		Body:   &obj,
@@ -290,6 +314,8 @@ func (c *ClientCall) onPackedSinglePointWithSCD(packet *asdu.ASDU) {
 		var obj types.PackedSinglePointWithSCDInfo
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
+			Host:   c.Host,
+			Port:   c.Port,
 			TypeId: int(iec104client.GetDataType(packet.Type)),
 			Coa:    uint(coa),
 			Body:   &obj,

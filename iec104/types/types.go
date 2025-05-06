@@ -77,6 +77,8 @@ func (t *DateTime) UnmarshalJSON(data []byte) error {
 }
 
 type MsgBody struct {
+	Host   string    `json:"host"`
+	Port   int       `json:"port"`
 	TypeId int       `json:"typeId"`
 	Coa    uint      `json:"coa"` // 公共地址
 	Body   IoaGetter `json:"body"`
@@ -96,39 +98,13 @@ func (m *MsgBody) GetKey() (string, error) {
 	//coaHex := fmt.Sprintf("0x%x", m.Coa)
 	coa := fmt.Sprintf("%d", m.Coa)
 	ioaHex := fmt.Sprintf("0x%06x", m.Body.GetIoa())
-	return fmt.Sprintf("%s_%s", coa, ioaHex), nil
+	return fmt.Sprintf("%s_%s_%s", m.Host, coa, ioaHex), nil
 }
 
 type IoaGetter interface {
 	GetIoa() uint
 }
 
-/*
-		case asdu.M_EP_TB_1, asdu.M_EP_TE_1:
-			return PackedStartEventsOfProtectionEquipment
-		case asdu.M_EP_TC_1, asdu.M_EP_TF_1:
-			return PackedOutputCircuitInfo
-		case asdu.M_PS_NA_1:
-			return PackedSinglePointWithSCD
-		case asdu.C_SC_NA_1, asdu.C_SC_TA_1:
-			return SingleCommandInfo
-		case asdu.C_DC_NA_1, asdu.C_DC_TA_1:
-			return DoubleCommandInfo
-		case asdu.C_RC_NA_1, asdu.C_RC_TA_1:
-			return StepCommandInfo
-		case asdu.C_SE_NA_1, asdu.C_SE_TA_1:
-			return SetPointCommandNormalInfo
-		case asdu.C_SE_NB_1, asdu.C_SE_TB_1:
-			return SetPointCommandScaledInfo
-		case asdu.C_SE_NC_1, asdu.C_SE_TC_1:
-			return SetPointCommandFloatInfo
-		case asdu.C_BO_NA_1, asdu.C_BO_TA_1:
-			return BitsString32CommandInfo
-		default:
-			return UNKNOWN
-		}
-	}
-*/
 // asdu.M_SP_NA_1, asdu.M_SP_TA_1, asdu.M_SP_TB_1
 // 单点信息体
 type SinglePointInfo struct {
