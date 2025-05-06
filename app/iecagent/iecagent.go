@@ -39,6 +39,7 @@ func main() {
 	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
 	serviceGroup := service.NewServiceGroup()
 	defer serviceGroup.Stop()
+	logx.AddGlobalFields(logx.Field("app", c.Name))
 	serviceGroup.Add(s)
 	iecServer := iec104server.NewIecServer(c.IecSetting.Host, c.IecSetting.Port, c.IecSetting.LogMode, iec104server.NewServerHandler(iec.NewIecHandler(ctx)))
 	serviceGroup.Add(iecServer)

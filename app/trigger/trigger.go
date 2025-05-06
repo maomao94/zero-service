@@ -39,6 +39,7 @@ func main() {
 	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
 	serviceGroup := service.NewServiceGroup()
 	defer serviceGroup.Stop()
+	logx.AddGlobalFields(logx.Field("app", c.Name))
 	serviceGroup.Add(s)
 	mux := task.NewCronJob(ctx).Register()
 	taskServer := asynqx.NewTaskServer(ctx.AsynqServer, mux)

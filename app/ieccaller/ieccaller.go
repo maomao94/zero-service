@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/zeromicro/go-zero/core/logx"
 	"zero-service/app/ieccaller/cron"
 	"zero-service/app/ieccaller/ieccaller"
 	"zero-service/app/ieccaller/internal/config"
@@ -36,6 +37,7 @@ func main() {
 	})
 	serviceGroup := service.NewServiceGroup()
 	defer serviceGroup.Stop()
+	logx.AddGlobalFields(logx.Field("app", c.Name))
 	serviceGroup.Add(s)
 
 	for _, cf := range c.IecServerConfig {

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/zeromicro/go-queue/kq"
+	"github.com/zeromicro/go-zero/core/logx"
 	"zero-service/app/xfusionmock/cron"
 	"zero-service/app/xfusionmock/internal/config"
 	"zero-service/app/xfusionmock/internal/server"
@@ -36,6 +37,7 @@ func main() {
 	})
 	serviceGroup := service.NewServiceGroup()
 	defer serviceGroup.Stop()
+	logx.AddGlobalFields(logx.Field("app", c.Name))
 	serviceGroup.Add(s)
 
 	// kafka
