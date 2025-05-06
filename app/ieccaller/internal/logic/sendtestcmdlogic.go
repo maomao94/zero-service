@@ -2,9 +2,11 @@ package logic
 
 import (
 	"context"
+	"fmt"
 	"github.com/zeromicro/go-zero/core/logx"
 	"zero-service/app/ieccaller/ieccaller"
 	"zero-service/app/ieccaller/internal/svc"
+	"zero-service/iec104/iec104client"
 )
 
 type SendTestCmdLogic struct {
@@ -22,14 +24,16 @@ func NewSendTestCmdLogic(ctx context.Context, svcCtx *svc.ServiceContext) *SendT
 }
 
 func (l *SendTestCmdLogic) SendTestCmd(in *ieccaller.SendTestCmdReq) (*ieccaller.SendTestCmdRes, error) {
-	// test cmd
-	//cli, err := l.svcCtx.ClientManager.GetDefaultSessionClient()
-	//if err != nil {
-	//	return nil, err
-	//}
-	//if err := cli.SendTestCmd(1); err != nil {
-	//	l.Logger.Errorf("send test cmd error %v\n", err)
-	//	return nil, err
-	//}
+	cli := l.svcCtx.ClientManager.GetSession(iec104client.CoaConfig{
+		Host: in.Host,
+		Port: int(in.Port),
+		Coa:  int(in.Coa),
+	})
+	if cli == nil {
+		return nil, fmt.Errorf("cli is empty")
+	}
+	if err := cli.SendTestCmd(uint16(in.Coa)); err != nil {
+		return nil, err
+	}
 	return &ieccaller.SendTestCmdRes{}, nil
 }

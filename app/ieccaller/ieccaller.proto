@@ -12,6 +12,9 @@ message Res {
 }
 
 message SendTestCmdReq {
+  string host = 1;
+  int32 port = 2;
+  int32 coa = 3;
 }
 
 message SendTestCmdRes {
