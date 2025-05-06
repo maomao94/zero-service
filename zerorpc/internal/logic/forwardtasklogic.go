@@ -74,7 +74,7 @@ func (l *ForwardTaskLogic) ForwardTask(in *zerorpc.ForwardTaskReq) (*zerorpc.For
 			Description: "服务告警",
 			Title:       "服务告警 - Zero-Service",
 			Project:     "zero.rpc",
-			DateTime:    carbon.Now().Format("Y-m-d H:i:s.u"),
+			DateTime:    carbon.Now().Format("Y-m-d H:i:s"),
 			AlarmId:     in.MsgId,
 			Content:     fmt.Sprintf("%s, 转发任务下发失败, msg:%s, url:%s", traceID, msg.Msg, msg.Url),
 			Error:       fmt.Sprintf("err:%+v", err),
