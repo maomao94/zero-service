@@ -205,6 +205,110 @@ func (*SendTestCmdRes) Descriptor() ([]byte, []int) {
 	return file_ieccaller_proto_rawDescGZIP(), []int{3}
 }
 
+type SendReadCmdReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Host          string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	Port          int32                  `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	Coa           int32                  `protobuf:"varint,3,opt,name=coa,proto3" json:"coa,omitempty"`
+	Ioa           int32                  `protobuf:"varint,4,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendReadCmdReq) Reset() {
+	*x = SendReadCmdReq{}
+	mi := &file_ieccaller_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendReadCmdReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendReadCmdReq) ProtoMessage() {}
+
+func (x *SendReadCmdReq) ProtoReflect() protoreflect.Message {
+	mi := &file_ieccaller_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendReadCmdReq.ProtoReflect.Descriptor instead.
+func (*SendReadCmdReq) Descriptor() ([]byte, []int) {
+	return file_ieccaller_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *SendReadCmdReq) GetHost() string {
+	if x != nil {
+		return x.Host
+	}
+	return ""
+}
+
+func (x *SendReadCmdReq) GetPort() int32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
+}
+
+func (x *SendReadCmdReq) GetCoa() int32 {
+	if x != nil {
+		return x.Coa
+	}
+	return 0
+}
+
+func (x *SendReadCmdReq) GetIoa() int32 {
+	if x != nil {
+		return x.Ioa
+	}
+	return 0
+}
+
+type SendReadCmdRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendReadCmdRes) Reset() {
+	*x = SendReadCmdRes{}
+	mi := &file_ieccaller_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendReadCmdRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendReadCmdRes) ProtoMessage() {}
+
+func (x *SendReadCmdRes) ProtoReflect() protoreflect.Message {
+	mi := &file_ieccaller_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendReadCmdRes.ProtoReflect.Descriptor instead.
+func (*SendReadCmdRes) Descriptor() ([]byte, []int) {
+	return file_ieccaller_proto_rawDescGZIP(), []int{5}
+}
+
 var File_ieccaller_proto protoreflect.FileDescriptor
 
 const file_ieccaller_proto_rawDesc = "" +
@@ -218,10 +322,17 @@ const file_ieccaller_proto_rawDesc = "" +
 	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
 	"\x04port\x18\x02 \x01(\x05R\x04port\x12\x10\n" +
 	"\x03coa\x18\x03 \x01(\x05R\x03coa\"\x10\n" +
-	"\x0eSendTestCmdRes2x\n" +
+	"\x0eSendTestCmdRes\"\\\n" +
+	"\x0eSendReadCmdReq\x12\x12\n" +
+	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
+	"\x04port\x18\x02 \x01(\x05R\x04port\x12\x10\n" +
+	"\x03coa\x18\x03 \x01(\x05R\x03coa\x12\x10\n" +
+	"\x03ioa\x18\x04 \x01(\x05R\x03ioa\"\x10\n" +
+	"\x0eSendReadCmdRes2\xbd\x01\n" +
 	"\tIecCaller\x12&\n" +
 	"\x04Ping\x12\x0e.ieccaller.Req\x1a\x0e.ieccaller.Res\x12C\n" +
-	"\vSendTestCmd\x12\x19.ieccaller.SendTestCmdReq\x1a\x19.ieccaller.SendTestCmdResB\rZ\v./ieccallerb\x06proto3"
+	"\vSendTestCmd\x12\x19.ieccaller.SendTestCmdReq\x1a\x19.ieccaller.SendTestCmdRes\x12C\n" +
+	"\vSendReadCmd\x12\x19.ieccaller.SendReadCmdReq\x1a\x19.ieccaller.SendReadCmdResB\rZ\v./ieccallerb\x06proto3"
 
 var (
 	file_ieccaller_proto_rawDescOnce sync.Once
@@ -235,20 +346,24 @@ func file_ieccaller_proto_rawDescGZIP() []byte {
 	return file_ieccaller_proto_rawDescData
 }
 
-var file_ieccaller_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_ieccaller_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_ieccaller_proto_goTypes = []any{
 	(*Req)(nil),            // 0: ieccaller.Req
 	(*Res)(nil),            // 1: ieccaller.Res
 	(*SendTestCmdReq)(nil), // 2: ieccaller.SendTestCmdReq
 	(*SendTestCmdRes)(nil), // 3: ieccaller.SendTestCmdRes
+	(*SendReadCmdReq)(nil), // 4: ieccaller.SendReadCmdReq
+	(*SendReadCmdRes)(nil), // 5: ieccaller.SendReadCmdRes
 }
 var file_ieccaller_proto_depIdxs = []int32{
 	0, // 0: ieccaller.IecCaller.Ping:input_type -> ieccaller.Req
 	2, // 1: ieccaller.IecCaller.SendTestCmd:input_type -> ieccaller.SendTestCmdReq
-	1, // 2: ieccaller.IecCaller.Ping:output_type -> ieccaller.Res
-	3, // 3: ieccaller.IecCaller.SendTestCmd:output_type -> ieccaller.SendTestCmdRes
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
+	4, // 2: ieccaller.IecCaller.SendReadCmd:input_type -> ieccaller.SendReadCmdReq
+	1, // 3: ieccaller.IecCaller.Ping:output_type -> ieccaller.Res
+	3, // 4: ieccaller.IecCaller.SendTestCmd:output_type -> ieccaller.SendTestCmdRes
+	5, // 5: ieccaller.IecCaller.SendReadCmd:output_type -> ieccaller.SendReadCmdRes
+	3, // [3:6] is the sub-list for method output_type
+	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -265,7 +380,7 @@ func file_ieccaller_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ieccaller_proto_rawDesc), len(file_ieccaller_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

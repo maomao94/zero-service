@@ -32,3 +32,8 @@ func (s *IecCallerServer) SendTestCmd(ctx context.Context, in *ieccaller.SendTes
 	l := logic.NewSendTestCmdLogic(ctx, s.svcCtx)
 	return l.SendTestCmd(in)
 }
+
+func (s *IecCallerServer) SendReadCmd(ctx context.Context, in *ieccaller.SendReadCmdReq) (*ieccaller.SendReadCmdRes, error) {
+	l := logic.NewSendReadCmdLogic(ctx, s.svcCtx)
+	return l.SendReadCmd(in)
+}

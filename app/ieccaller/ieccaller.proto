@@ -20,7 +20,18 @@ message SendTestCmdReq {
 message SendTestCmdRes {
 }
 
+message SendReadCmdReq {
+  string host = 1;
+  int32 port = 2;
+  int32 coa = 3;
+  int32 ioa = 4;
+}
+
+message SendReadCmdRes {
+}
+
 service IecCaller {
   rpc Ping (Req) returns (Res);
   rpc SendTestCmd (SendTestCmdReq) returns (SendTestCmdRes);
+  rpc SendReadCmd (SendReadCmdReq) returns (SendReadCmdRes);
 }

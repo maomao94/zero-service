@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	IecCaller_Ping_FullMethodName        = "/ieccaller.IecCaller/Ping"
 	IecCaller_SendTestCmd_FullMethodName = "/ieccaller.IecCaller/SendTestCmd"
+	IecCaller_SendReadCmd_FullMethodName = "/ieccaller.IecCaller/SendReadCmd"
 )
 
 // IecCallerClient is the client API for IecCaller service.
@@ -29,6 +30,7 @@ const (
 type IecCallerClient interface {
 	Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error)
 	SendTestCmd(ctx context.Context, in *SendTestCmdReq, opts ...grpc.CallOption) (*SendTestCmdRes, error)
+	SendReadCmd(ctx context.Context, in *SendReadCmdReq, opts ...grpc.CallOption) (*SendReadCmdRes, error)
 }
 
 type iecCallerClient struct {
@@ -59,12 +61,23 @@ func (c *iecCallerClient) SendTestCmd(ctx context.Context, in *SendTestCmdReq, o
 	return out, nil
 }
 
+func (c *iecCallerClient) SendReadCmd(ctx context.Context, in *SendReadCmdReq, opts ...grpc.CallOption) (*SendReadCmdRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendReadCmdRes)
+	err := c.cc.Invoke(ctx, IecCaller_SendReadCmd_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IecCallerServer is the server API for IecCaller service.
 // All implementations must embed UnimplementedIecCallerServer
 // for forward compatibility.
 type IecCallerServer interface {
 	Ping(context.Context, *Req) (*Res, error)
 	SendTestCmd(context.Context, *SendTestCmdReq) (*SendTestCmdRes, error)
+	SendReadCmd(context.Context, *SendReadCmdReq) (*SendReadCmdRes, error)
 	mustEmbedUnimplementedIecCallerServer()
 }
 
@@ -80,6 +93,9 @@ func (UnimplementedIecCallerServer) Ping(context.Context, *Req) (*Res, error) {
 }
 func (UnimplementedIecCallerServer) SendTestCmd(context.Context, *SendTestCmdReq) (*SendTestCmdRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendTestCmd not implemented")
+}
+func (UnimplementedIecCallerServer) SendReadCmd(context.Context, *SendReadCmdReq) (*SendReadCmdRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendReadCmd not implemented")
 }
 func (UnimplementedIecCallerServer) mustEmbedUnimplementedIecCallerServer() {}
 func (UnimplementedIecCallerServer) testEmbeddedByValue()                   {}
@@ -138,6 +154,24 @@ func _IecCaller_SendTestCmd_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IecCaller_SendReadCmd_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendReadCmdReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IecCallerServer).SendReadCmd(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IecCaller_SendReadCmd_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IecCallerServer).SendReadCmd(ctx, req.(*SendReadCmdReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IecCaller_ServiceDesc is the grpc.ServiceDesc for IecCaller service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -152,6 +186,10 @@ var IecCaller_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendTestCmd",
 			Handler:    _IecCaller_SendTestCmd_Handler,
+		},
+		{
+			MethodName: "SendReadCmd",
+			Handler:    _IecCaller_SendReadCmd_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
