@@ -1,10 +1,7 @@
 package iec
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
-	"github.com/golang-module/carbon/v2"
 	"github.com/jinzhu/copier"
 	"github.com/wendy512/go-iecp5/asdu"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -112,18 +109,13 @@ func (c *ClientCall) onSinglePoint(packet *asdu.ASDU) {
 	for _, p := range packet.GetSinglePoint() {
 		logx.Infof("single point, ioa: %d, value: %v\n", p.Ioa, p.Value)
 		var obj types.SinglePointInfo
-		obj.Time = carbon.Now().ToDateTimeString()
+		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
-		jsonData, err := json.Marshal(&types.MsgBody{
+		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			TypeId: int(iec104client.GetDataType(packet.Type)),
 			Coa:    uint(coa),
-			Body:   obj,
+			Body:   &obj,
 		})
-		if err != nil {
-			logx.Errorf("json marshal error %v", err)
-			continue
-		}
-		c.svcCtx.KafkaASDUPusher.PushWithKey(context.Background(), string(p.Ioa), string(jsonData))
 	}
 }
 
@@ -133,90 +125,174 @@ func (c *ClientCall) onDoublePoint(packet *asdu.ASDU) {
 	for _, p := range packet.GetDoublePoint() {
 		logx.Infof("double point, ioa: %d, value: %v\n", p.Ioa, p.Value)
 		var obj types.DoublePointInfo
-		obj.Time = carbon.Now().ToDateTimeString()
+		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
-		jsonData, err := json.Marshal(&types.MsgBody{
+		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			TypeId: int(iec104client.GetDataType(packet.Type)),
 			Coa:    uint(coa),
-			Body:   obj,
+			Body:   &obj,
 		})
-		if err != nil {
-			logx.Errorf("json marshal error %v", err)
-			continue
-		}
-		c.svcCtx.KafkaASDUPusher.PushWithKey(context.Background(), string(p.Ioa), string(jsonData))
 	}
 }
 
 func (c *ClientCall) onMeasuredValueScaled(packet *asdu.ASDU) {
-	// [M_ME_NB_1], [M_ME_TB_1] or [M_ME_TE_1] 获得测量值，标度化值信息体集合
+	coa := packet.CommonAddr
+	// [M_ME_NB_1], [M_ME_TB_1] or [M_ME_TE_1] 获得测量值,标度化值信息体集合
 	for _, p := range packet.GetMeasuredValueScaled() {
 		fmt.Printf("measured value scaled, ioa: %d, value: %v\n", p.Ioa, p.Value)
+		var obj types.MeasuredValueScaledInfo
+		//obj.Time = carbon.Now().ToDateTimeString()
+		copier.CopyWithOption(&obj, &p, types.Option)
+		_ = c.svcCtx.PushASDU(&types.MsgBody{
+			TypeId: int(iec104client.GetDataType(packet.Type)),
+			Coa:    uint(coa),
+			Body:   &obj,
+		})
 	}
 }
 
 func (c *ClientCall) onMeasuredValueNormal(packet *asdu.ASDU) {
+	coa := packet.CommonAddr
 	// [M_ME_NA_1], [M_ME_TA_1],[ M_ME_TD_1] or [M_ME_ND_1] 获得测量值,规一化值信息体集合
 	for _, p := range packet.GetMeasuredValueNormal() {
 		fmt.Printf("measured value normal, ioa: %d, value: %v\n", p.Ioa, p.Value)
+		var obj types.MeasuredValueNormalInfo
+		//obj.Time = carbon.Now().ToDateTimeString()
+		copier.CopyWithOption(&obj, &p, types.Option)
+		_ = c.svcCtx.PushASDU(&types.MsgBody{
+			TypeId: int(iec104client.GetDataType(packet.Type)),
+			Coa:    uint(coa),
+			Body:   &obj,
+		})
 	}
 }
 
 func (c *ClientCall) onStepPosition(packet *asdu.ASDU) {
+	coa := packet.CommonAddr
 	// [M_ST_NA_1], [M_ST_TA_1] or [M_ST_TB_1] 获得步位置信息体集合
 	for _, p := range packet.GetStepPosition() {
 		// state：false: 设备未在瞬变状态 true： 设备处于瞬变状态
 		fmt.Printf("step position, ioa: %d, state: %t, value: %d\n", p.Ioa, p.Value.HasTransient, p.Value.Val)
+		var obj types.StepPositionInfo
+		//obj.Time = carbon.Now().ToDateTimeString()
+		copier.CopyWithOption(&obj, &p, types.Option)
+		_ = c.svcCtx.PushASDU(&types.MsgBody{
+			TypeId: int(iec104client.GetDataType(packet.Type)),
+			Coa:    uint(coa),
+			Body:   &obj,
+		})
 	}
 }
 
 func (c *ClientCall) onBitString32(packet *asdu.ASDU) {
+	coa := packet.CommonAddr
 	// [M_ME_NC_1], [M_ME_TC_1] or [M_ME_TF_1].获得测量值,短浮点数信息体集合
 	for _, p := range packet.GetMeasuredValueFloat() {
 		fmt.Printf("bigtstring32, ioa: %d, value: %v\n", p.Ioa, p.Value)
+		var obj types.MeasuredValueFloatInfo
+		//obj.Time = carbon.Now().ToDateTimeString()
+		copier.CopyWithOption(&obj, &p, types.Option)
+		_ = c.svcCtx.PushASDU(&types.MsgBody{
+			TypeId: int(iec104client.GetDataType(packet.Type)),
+			Coa:    uint(coa),
+			Body:   &obj,
+		})
 	}
 }
 
 func (c *ClientCall) onMeasuredValueFloat(packet *asdu.ASDU) {
+	coa := packet.CommonAddr
 	// [M_ME_NC_1], [M_ME_TC_1] or [M_ME_TF_1].获得测量值,短浮点数信息体集合
 	for _, p := range packet.GetMeasuredValueFloat() {
 		fmt.Printf("measured value float, ioa: %d, value: %v\n", p.Ioa, p.Value)
+		var obj types.MeasuredValueFloatInfo
+		//obj.Time = carbon.Now().ToDateTimeString()
+		copier.CopyWithOption(&obj, &p, types.Option)
+		_ = c.svcCtx.PushASDU(&types.MsgBody{
+			TypeId: int(iec104client.GetDataType(packet.Type)),
+			Coa:    uint(coa),
+			Body:   &obj,
+		})
 	}
 }
 
 func (c *ClientCall) onIntegratedTotals(packet *asdu.ASDU) {
+	coa := packet.CommonAddr
 	// [M_IT_NA_1], [M_IT_TA_1] or [M_IT_TB_1]. 获得累计量信息体集合
 	for _, p := range packet.GetIntegratedTotals() {
 		fmt.Printf("integrated totals, ioa: %d, count: %d, SQ: 0x%02X, CY: %t, CA: %t, IV: %t\n",
 			p.Ioa, p.Value.CounterReading, p.Value.SeqNumber, p.Value.HasCarry, p.Value.IsAdjusted, p.Value.IsInvalid)
+		var obj types.BinaryCounterReadingInfo
+		//obj.Time = carbon.Now().ToDateTimeString()
+		copier.CopyWithOption(&obj, &p, types.Option)
+		_ = c.svcCtx.PushASDU(&types.MsgBody{
+			TypeId: int(iec104client.GetDataType(packet.Type)),
+			Coa:    uint(coa),
+			Body:   &obj,
+		})
 	}
 }
 
 func (c *ClientCall) onEventOfProtectionEquipment(packet *asdu.ASDU) {
+	coa := packet.CommonAddr
 	// [M_EP_TA_1] [M_EP_TD_1] 获取继电器保护设备事件信息体
 	for _, p := range packet.GetEventOfProtectionEquipment() {
 		fmt.Printf("event of protection equipment, ioa: %d, event: %d, qdp: %d, mesc: %d, time: %d\n",
 			p.Ioa, p.Event, p.Qdp, p.Msec, p.Time.UnixMilli())
+		var obj types.EventOfProtectionEquipmentInfo
+		//obj.Time = carbon.Now().ToDateTimeString()
+		copier.CopyWithOption(&obj, &p, types.Option)
+		_ = c.svcCtx.PushASDU(&types.MsgBody{
+			TypeId: int(iec104client.GetDataType(packet.Type)),
+			Coa:    uint(coa),
+			Body:   &obj,
+		})
 	}
 }
 
 func (c *ClientCall) onPackedStartEventsOfProtectionEquipment(packet *asdu.ASDU) {
+	coa := packet.CommonAddr
 	// [M_EP_TB_1] [M_EP_TE_1] 获取继电器保护设备事件信息体
 	p := packet.GetPackedStartEventsOfProtectionEquipment()
 	fmt.Printf("packed start events of protection equipment, ioa: %d, event: %d, qdp: %d, mesc: %d, time: %d\n",
 		p.Ioa, p.Event, p.Qdp, p.Msec, p.Time.UnixMilli())
+	var obj types.PackedStartEventsOfProtectionEquipmentInfo
+	//obj.Time = carbon.Now().ToDateTimeString()
+	copier.CopyWithOption(&obj, &p, types.Option)
+	_ = c.svcCtx.PushASDU(&types.MsgBody{
+		TypeId: int(iec104client.GetDataType(packet.Type)),
+		Coa:    uint(coa),
+		Body:   &obj,
+	})
 }
 
 func (c *ClientCall) onPackedOutputCircuitInfo(packet *asdu.ASDU) {
+	coa := packet.CommonAddr
 	// [M_EP_TC_1] [M_EP_TF_1] 获取继电器保护设备成组输出电路信息信息体
 	p := packet.GetPackedOutputCircuitInfo()
 	fmt.Printf("packed Output circuit, ioa: %d, qci: %d, qdp: %d, mesc: %d, time: %d\n",
 		p.Ioa, p.Oci, p.Qdp, p.Msec, p.Time.UnixMilli())
+	var obj types.PackedOutputCircuitInfoInfo
+	//obj.Time = carbon.Now().ToDateTimeString()
+	copier.CopyWithOption(&obj, &p, types.Option)
+	_ = c.svcCtx.PushASDU(&types.MsgBody{
+		TypeId: int(iec104client.GetDataType(packet.Type)),
+		Coa:    uint(coa),
+		Body:   &obj,
+	})
 }
 
 func (c *ClientCall) onPackedSinglePointWithSCD(packet *asdu.ASDU) {
+	coa := packet.CommonAddr
 	// [M_PS_NA_1]. 获得带变位检出的成组单点信息
 	for _, p := range packet.GetPackedSinglePointWithSCD() {
 		fmt.Printf("packed single point with SCD, ioa: %d, scd: %d, qds: %d\n", p.Ioa, p.Scd, p.Qds)
+		var obj types.PackedSinglePointWithSCDInfo
+		copier.CopyWithOption(&obj, &p, types.Option)
+		_ = c.svcCtx.PushASDU(&types.MsgBody{
+			TypeId: int(iec104client.GetDataType(packet.Type)),
+			Coa:    uint(coa),
+			Body:   &obj,
+		})
 	}
 }
