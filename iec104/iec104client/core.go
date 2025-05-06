@@ -422,9 +422,9 @@ func MustNewIecServerClient(config IecServerConfig, coaConfig []CoaConfig, call 
 	// server active确认后回调
 	c.SetServerActiveHandler(func(c *Client) {
 		// 发送总召唤
-		if err := c.SendInterrogationCmd(1); err != nil {
-			logx.Errorf("send interrogation cmd error %v\n", err)
-		}
+		//if err := c.SendInterrogationCmd(1); err != nil {
+		//	logx.Errorf("send interrogation cmd error %v\n", err)
+		//}
 	})
 	if manager != nil {
 		// 注册连接事件
