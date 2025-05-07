@@ -123,7 +123,7 @@ func (s *SinglePointInfo) GetIoa() uint {
 // 双点信息体
 type DoublePointInfo struct {
 	Ioa   uint   `json:"ioa"`   // 信息对象地址
-	Value bool   `json:"value"` // 状态值
+	Value byte   `json:"value"` // 状态值
 	Qds   byte   `json:"qds"`
 	Time  string `json:"time"`
 }
