@@ -329,7 +329,20 @@ func (c *ClientCall) onPackedSinglePointWithSCD(packet *asdu.ASDU) {
 		var obj types.PackedSinglePointWithSCDInfo
 		currentStatus := p.Scd & 0xFFFF        // 低16位（当前状态）
 		statusChange := (p.Scd >> 16) & 0xFFFF // 高16位（状态变化）
+		var activePoints []int
+		var changedPoints []int
 		logx.Infof("stn: %d, cdn: %d", currentStatus, statusChange)
+		for i := 0; i < 16; i++ {
+			if currentStatus&(1<<i) != 0 {
+				activePoints = append(activePoints, i)
+			}
+			if statusChange&(1<<i) != 0 {
+				changedPoints = append(changedPoints, i)
+			}
+		}
+
+		logx.Infof("当前闭合的位: %v", activePoints)
+		logx.Infof("状态变化的位: %v", changedPoints)
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.Host,
