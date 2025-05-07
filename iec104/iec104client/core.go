@@ -420,7 +420,7 @@ func MustNewIecServerClient(config IecServerConfig, coaConfig []CoaConfig, call 
 	settings.LogCfg = &LogCfg{Enable: config.LogEnable, LogProvider: iec104.NewLogProvider(ctx)}
 	c := New(settings, call)
 	c.SetOnConnectHandler(func(c *Client) {
-		logx.Infof("connected %s:%d iec104 server\n", settings.Host, settings.Port)
+		logx.Infof("connected %s:%d iec104 server", settings.Host, settings.Port)
 	})
 	// server active确认后回调
 	c.SetServerActiveHandler(func(c *Client) {
