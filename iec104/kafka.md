@@ -38,41 +38,41 @@
 
 ## 2. 全量ASDU类型映射表
 
-| TypeID | ASDU类型                | Body结构体                           | 应用场景说明                         |
-|--------|-------------------------|--------------------------------------|--------------------------------------|
-| 1      | M_SP_NA_1              | `SinglePointInfo`                   | 单点遥信（不带时标）                 |
-| 2      | M_SP_TA_1              | `SinglePointInfo`                   | 单点遥信（带时标）                   |
-| 3      | M_DP_NA_1              | `DoublePointInfo`                   | 双点遥信（不带时标）                 |
-| 4      | M_DP_TA_1              | `DoublePointInfo`                   | 双点遥信（带时标）                   |
-| 5      | M_ST_NA_1              | `StepPositionInfo`                  | 步位置信息（不带时标）               |
-| 6      | M_ST_TA_1              | `StepPositionInfo`                  | 步位置信息（带时标）                 |
-| 7      | M_BO_NA_1              | `MeasuredValueFloatInfo`            | 32位比特串（不带时标）               |
-| 8      | M_BO_TA_1              | `MeasuredValueFloatInfo`            | 32位比特串（带时标）                 |
-| 9      | M_ME_NA_1              | `MeasuredValueNormalInfo`           | 规一化遥测值（不带时标）             |
-| 10     | M_ME_TA_1              | `MeasuredValueNormalInfo`           | 规一化遥测值（带时标）               |
-| 11     | M_ME_NB_1              | `MeasuredValueScaledInfo`           | 标度化遥测值（不带时标）             |
-| 12     | M_ME_TB_1              | `MeasuredValueScaledInfo`           | 标度化遥测值（带时标）               |
-| 13     | M_ME_NC_1              | `MeasuredValueFloatInfo`            | 短浮点数遥测值（不带时标）           |
-| 14     | M_ME_TC_1              | `MeasuredValueFloatInfo`            | 短浮点数遥测值（带时标）             |
-| 15     | M_IT_NA_1              | `BinaryCounterReadingInfo`          | 累计量（不带时标）                   |
-| 16     | M_IT_TA_1              | `BinaryCounterReadingInfo`          | 累计量（带时标）                     |
-| 17     | M_EP_TA_1              | `EventOfProtectionEquipmentInfo`    | 继电保护事件（带时标）               |
+| TypeID | ASDU类型                | Body结构体                                      | 应用场景说明                         |
+|--------|-------------------------|----------------------------------------------|--------------------------------------|
+| 1      | M_SP_NA_1              | `SinglePointInfo`                            | 单点遥信（不带时标）                 |
+| 2      | M_SP_TA_1              | `SinglePointInfo`                            | 单点遥信（带时标）                   |
+| 3      | M_DP_NA_1              | `DoublePointInfo`                            | 双点遥信（不带时标）                 |
+| 4      | M_DP_TA_1              | `DoublePointInfo`                            | 双点遥信（带时标）                   |
+| 5      | M_ST_NA_1              | `StepPositionInfo`                           | 步位置信息（不带时标）               |
+| 6      | M_ST_TA_1              | `StepPositionInfo`                           | 步位置信息（带时标）                 |
+| 7      | M_BO_NA_1              | `BitString32Info`                            | 32位比特串（不带时标）               |
+| 8      | M_BO_TA_1              | `BitString32Info`                            | 32位比特串（带时标）                 |
+| 9      | M_ME_NA_1              | `MeasuredValueNormalInfo`                    | 规一化遥测值（不带时标）             |
+| 10     | M_ME_TA_1              | `MeasuredValueNormalInfo`                    | 规一化遥测值（带时标）               |
+| 11     | M_ME_NB_1              | `MeasuredValueScaledInfo`                    | 标度化遥测值（不带时标）             |
+| 12     | M_ME_TB_1              | `MeasuredValueScaledInfo`                    | 标度化遥测值（带时标）               |
+| 13     | M_ME_NC_1              | `MeasuredValueFloatInfo`                     | 短浮点数遥测值（不带时标）           |
+| 14     | M_ME_TC_1              | `MeasuredValueFloatInfo`                     | 短浮点数遥测值（带时标）             |
+| 15     | M_IT_NA_1              | `BinaryCounterReadingInfo`                   | 累计量（不带时标）                   |
+| 16     | M_IT_TA_1              | `BinaryCounterReadingInfo`                   | 累计量（带时标）                     |
+| 17     | M_EP_TA_1              | `EventOfProtectionEquipmentInfo`             | 继电保护事件（带时标）               |
 | 18     | M_EP_TB_1              | `PackedStartEventsOfProtectionEquipmentInfo` | 成组启动事件（带时标）       |
-| 19     | M_EP_TC_1              | `PackedOutputCircuitInfoInfo`       | 成组输出电路信息（带时标）           |
-| 20     | M_PS_NA_1              | `PackedSinglePointWithSCDInfo`      | 带变位检出的成组单点信息             |
-| 21     | M_ME_ND_1              | `MeasuredValueNormalInfo`           | 无品质描述的规一化遥测值             |
-| 30     | M_SP_TB_1              | `SinglePointInfo`                   | 单点遥信（CP56Time2a时标）           |
-| 31     | M_DP_TB_1              | `DoublePointInfo`                   | 双点遥信（CP56Time2a时标）           |
-| 32     | M_ST_TB_1              | `StepPositionInfo`                  | 步位置信息（CP56Time2a时标）         |
-| 33     | M_BO_TB_1              | `MeasuredValueFloatInfo`            | 32位比特串（CP56Time2a时标）         |
-| 34     | M_ME_TD_1              | `MeasuredValueNormalInfo`           | 规一化遥测值（CP56Time2a时标）       |
-| 35     | M_ME_TE_1              | `MeasuredValueScaledInfo`           | 标度化遥测值（CP56Time2a时标）       |
-| 36     | M_ME_TF_1              | `MeasuredValueFloatInfo`            | 短浮点数遥测值（CP56Time2a时标）     |
-| 37     | M_IT_TB_1              | `BinaryCounterReadingInfo`          | 累计量（CP56Time2a时标）             |
-| 38     | M_EP_TD_1              | `EventOfProtectionEquipmentInfo`    | 继电保护事件（CP56Time2a时标）       |
+| 19     | M_EP_TC_1              | `PackedOutputCircuitInfoInfo`                | 成组输出电路信息（带时标）           |
+| 20     | M_PS_NA_1              | `PackedSinglePointWithSCDInfo`               | 带变位检出的成组单点信息             |
+| 21     | M_ME_ND_1              | `MeasuredValueNormalInfo`                    | 无品质描述的规一化遥测值             |
+| 30     | M_SP_TB_1              | `SinglePointInfo`                            | 单点遥信（CP56Time2a时标）           |
+| 31     | M_DP_TB_1              | `DoublePointInfo`                            | 双点遥信（CP56Time2a时标）           |
+| 32     | M_ST_TB_1              | `StepPositionInfo`                           | 步位置信息（CP56Time2a时标）         |
+| 33     | M_BO_TB_1              | `BitString32Info`                            | 32位比特串（CP56Time2a时标）         |
+| 34     | M_ME_TD_1              | `MeasuredValueNormalInfo`                    | 规一化遥测值（CP56Time2a时标）       |
+| 35     | M_ME_TE_1              | `MeasuredValueScaledInfo`                    | 标度化遥测值（CP56Time2a时标）       |
+| 36     | M_ME_TF_1              | `MeasuredValueFloatInfo`                     | 短浮点数遥测值（CP56Time2a时标）     |
+| 37     | M_IT_TB_1              | `BinaryCounterReadingInfo`                   | 累计量（CP56Time2a时标）             |
+| 38     | M_EP_TD_1              | `EventOfProtectionEquipmentInfo`             | 继电保护事件（CP56Time2a时标）       |
 | 39     | M_EP_TE_1              | `PackedStartEventsOfProtectionEquipmentInfo` | 成组启动事件（CP56Time2a时标） |
-| 40     | M_EP_TF_1              | `PackedOutputCircuitInfoInfo`       | 成组输出电路信息（CP56Time2a时标）   |
-| 70     | M_EI_NA_1              | `无Body`                            | 初始化结束（仅公共地址）             |
+| 40     | M_EP_TF_1              | `PackedOutputCircuitInfoInfo`                | 成组输出电路信息（CP56Time2a时标）   |
+| 70     | M_EI_NA_1              | `无Body`                                      | 初始化结束（仅公共地址）             |
 
 ---
 
@@ -145,7 +145,24 @@
 
 ---
 
-### 3.5 短浮点数遥测值（MeasuredValueFloatInfo）
+### 3.5 比特位串信息（BitString32Info）
+```json
+{
+  "ioa": 4002,
+  "value": 220,
+  "qds": 0,
+  "time": "2023-10-01 14:30:00"
+}
+```
+| 字段   | 类型      | 说明                                                                 |
+|--------|---------|----------------------------------------------------------------------|
+| value  | uint32  | IEEE 754短浮点数（直接为工程值，如电压、电流等）                    |
+
+---
+
+---
+
+### 3.6 短浮点数遥测值（MeasuredValueFloatInfo）
 ```json
 {
   "ioa": 4002,
@@ -160,7 +177,7 @@
 
 ---
 
-### 3.6 累计量（BinaryCounterReadingInfo）
+### 3.7 累计量（BinaryCounterReadingInfo）
 ```json
 {
   "ioa": 5001,
@@ -184,7 +201,7 @@
 
 ---
 
-### 3.7 继电保护事件（EventOfProtectionEquipmentInfo）
+### 3.8 继电保护事件（EventOfProtectionEquipmentInfo）
 ```json
 {
   "ioa": 6001,
@@ -204,7 +221,7 @@
 
 ---
 
-### 3.8 继电器保护设备成组启动事件（PackedStartEventsOfProtectionEquipmentInfo）
+### 3.9 继电器保护设备成组启动事件（PackedStartEventsOfProtectionEquipmentInfo）
 ```json
 {
   "ioa": 6001,
@@ -224,7 +241,7 @@
 
 ---
 
-### 3.9 继电器保护设备成组输出电路信息（PackedOutputCircuitInfoInfo）
+### 3.10 继电器保护设备成组输出电路信息（PackedOutputCircuitInfoInfo）
 ```json
 {
   "ioa": 6001,
@@ -244,7 +261,7 @@
 
 ---
 
-### 3.10 带变位检出的成组单点信息（PackedSinglePointWithSCDInfo）
+### 3.11 带变位检出的成组单点信息（PackedSinglePointWithSCDInfo）
 ```json
 {
   "ioa": 6001,

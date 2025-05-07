@@ -186,8 +186,19 @@ func (s *StepPositionInfo) GetIoa() uint {
 	return s.Ioa
 }
 
-// asdu.M_BO_NA_1, asdu.M_BO_TA_1, asdu.M_BO_TB_1 onBitString32
-// asdu.M_ME_NC_1, asdu.M_ME_TC_1, asdu.M_ME_TF_1 onMeasuredValueFloat
+// asdu.M_BO_NA_1, asdu.M_BO_TA_1, asdu.M_BO_TB_1
+type BitString32Info struct {
+	Ioa   uint   `json:"ioa"` // 信息对象地址
+	Value uint32 `json:"value"`
+	Qds   byte   `json:"qds"`
+	Time  string `json:"time"`
+}
+
+func (s *BitString32Info) GetIoa() uint {
+	return s.Ioa
+}
+
+// asdu.M_ME_NC_1, asdu.M_ME_TC_1, asdu.M_ME_TF_1
 // 测量值,短浮点数信息
 type MeasuredValueFloatInfo struct {
 	Ioa   uint    `json:"ioa"` // 信息对象地址

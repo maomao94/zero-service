@@ -207,10 +207,10 @@ func (c *ClientCall) onStepPosition(packet *asdu.ASDU) {
 
 func (c *ClientCall) onBitString32(packet *asdu.ASDU) {
 	coa := packet.CommonAddr
-	// [M_ME_NC_1], [M_ME_TC_1] or [M_ME_TF_1].获得测量值,短浮点数信息体集合
-	for _, p := range packet.GetMeasuredValueFloat() {
+	// [M_BO_NA_1], [M_BO_TA_1] or [M_BO_TB_1] 获得比特位串信息体集合
+	for _, p := range packet.GetBitString32() {
 		fmt.Printf("bigtstring32, ioa: %d, value: %v\n", p.Ioa, p.Value)
-		var obj types.MeasuredValueFloatInfo
+		var obj types.BitString32Info
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
