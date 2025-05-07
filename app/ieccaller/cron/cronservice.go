@@ -23,16 +23,24 @@ func (s *CronService) Start() {
 	s.c = cron.New(cron.WithSeconds()) // 支持秒级调度
 	// stat
 	_, _ = s.c.AddFunc("*/60 * * * * *", func() {
-		sessionLen := s.svcCtx.ClientManager.GetSessionLen()
 		clients := s.svcCtx.ClientManager.GetClients()
+		sessionCli := s.svcCtx.ClientManager.GetSessionClients()
 		clientsLen := len(clients)
+		sessionLen := len(sessionCli)
 		loss := 0
+		sessionLoss := 0
 		for v := range clients {
 			if !v.IsConnected() {
 				loss++
 			}
 		}
-		logx.Statf("(iec104) clientLen: %d, clientLoss: %d, sessionLen: %d, ", clientsLen, loss, sessionLen)
+
+		for _, v := range sessionCli {
+			if !v.IsConnected() {
+				sessionLoss++
+			}
+		}
+		logx.Statf("(iec104) clientLen: %d, clientLoss: %d, sessionLen: %d, sessionLoss: %d", clientsLen, loss, sessionLen, sessionLoss)
 	})
 	s.c.Start()
 	fmt.Print("Starting cron server \n")
