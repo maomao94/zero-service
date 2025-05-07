@@ -240,6 +240,7 @@ func (s *BinaryCounterReadingInfo) GetIoa() uint {
 }
 
 // asdu.M_EP_TA_1, asdu.M_EP_TD_1
+// asdu.M_EP_TD_1 EOF
 // 继电器保护设备事件信息
 type EventOfProtectionEquipmentInfo struct {
 	Ioa   uint   `json:"ioa"` // 信息对象地址
