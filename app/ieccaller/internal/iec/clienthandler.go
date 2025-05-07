@@ -332,6 +332,7 @@ func (c *ClientCall) onPackedSinglePointWithSCD(packet *asdu.ASDU) {
 		var activePoints []int
 		var changedPoints []int
 		logx.Infof("stn: %d, cdn: %d", currentStatus, statusChange)
+		logx.Infof("ST (当前状态): %016b, CD (状态变化): %016b", currentStatus, statusChange)
 		for i := 0; i < 16; i++ {
 			if currentStatus&(1<<i) != 0 {
 				activePoints = append(activePoints, i)
