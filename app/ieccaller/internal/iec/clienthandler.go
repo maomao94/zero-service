@@ -327,6 +327,9 @@ func (c *ClientCall) onPackedSinglePointWithSCD(packet *asdu.ASDU) {
 	for _, p := range packet.GetPackedSinglePointWithSCD() {
 		fmt.Printf("packed single point with SCD, ioa: %d, scd: %d, qds: %d\n", p.Ioa, p.Scd, p.Qds)
 		var obj types.PackedSinglePointWithSCDInfo
+		currentStatus := p.Scd & 0xFFFF        // 低16位（当前状态）
+		statusChange := (p.Scd >> 16) & 0xFFFF // 高16位（状态变化）
+		logx.Infof("stn: %d, cdn: %d", currentStatus, statusChange)
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.Host,
