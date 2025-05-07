@@ -1,8 +1,10 @@
 package iec104server
 
 import (
+	"context"
 	"github.com/wendy512/go-iecp5/asdu"
 	"github.com/wendy512/go-iecp5/cs104"
+	"github.com/zeromicro/go-zero/core/logx"
 	"strconv"
 	"zero-service/iec104"
 )
@@ -19,7 +21,8 @@ func NewIecServer(host string, port int, logMode bool, handler *ServerHandler) *
 	cs104Server.SetParams(asdu.ParamsWide)
 	if logMode {
 		cs104Server.LogMode(true)
-		cs104Server.SetLogProvider(iec104.NewLogProvider())
+		ctx := logx.ContextWithFields(context.Background())
+		cs104Server.SetLogProvider(iec104.NewLogProvider(ctx))
 	}
 	addr := host + ":" + strconv.Itoa(port)
 	return &IecServer{cs104Server: cs104Server, addr: addr}

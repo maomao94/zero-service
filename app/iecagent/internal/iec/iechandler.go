@@ -45,14 +45,28 @@ func (ms *IecHandler) OnCounterInterrogation(conn asdu.Connect, pack *asdu.ASDU,
 }
 
 func (ms *IecHandler) OnRead(conn asdu.Connect, pack *asdu.ASDU, addr asdu.InfoObjAddr) error {
-	_ = pack.SendReplyMirror(conn, asdu.ActivationCon)
 	// TODO
-	_ = asdu.Single(conn, false, asdu.CauseOfTransmission{Cause: asdu.InterrogatedByStation}, commonAddr, asdu.SinglePointInfo{
-		Ioa:   addr,
-		Value: random.RandBool(),
-		Qds:   asdu.QDSGood,
+	//_ = asdu.Single(conn, false, asdu.CauseOfTransmission{Cause: asdu.InterrogatedByStation}, commonAddr, asdu.SinglePointInfo{
+	//	Ioa:   addr,
+	//	Value: random.RandBool(),
+	//	Qds:   asdu.QDSGood,
+	//})
+
+	_ = asdu.EventOfProtectionEquipmentCP24Time2a(conn, asdu.CauseOfTransmission{Cause: asdu.Spontaneous}, pack.CommonAddr, asdu.EventOfProtectionEquipmentInfo{
+		Ioa:   commonAddr,
+		Event: asdu.SEDeterminedOff,
+		Msec:  500,
+		Qdp:   asdu.QDPGood,
+		Time:  time.Now(),
 	})
-	_ = pack.SendReplyMirror(conn, asdu.ActivationTerm)
+
+	_ = asdu.EventOfProtectionEquipmentCP56Time2a(conn, asdu.CauseOfTransmission{Cause: asdu.Spontaneous}, pack.CommonAddr, asdu.EventOfProtectionEquipmentInfo{
+		Ioa:   commonAddr,
+		Event: asdu.SEDeterminedOff,
+		Msec:  500,
+		Qdp:   asdu.QDPGood,
+		Time:  time.Now(),
+	})
 	return nil
 }
 
