@@ -29,8 +29,9 @@ type CoaConfig struct {
 }
 
 type IecServerConfig struct {
-	Host string
-	Port int
+	Host      string
+	Port      int
+	LogEnable bool
 }
 
 type Client struct {
@@ -416,7 +417,7 @@ func MustNewIecServerClient(config IecServerConfig, coaConfig []CoaConfig, call 
 	settings.ReconnectInterval = time.Minute
 	settings.AutoConnect = true
 	ctx := logx.ContextWithFields(context.Background(), logx.Field("host", settings.Host), logx.Field("port", settings.Port))
-	settings.LogCfg = &LogCfg{Enable: true, LogProvider: iec104.NewLogProvider(ctx)}
+	settings.LogCfg = &LogCfg{Enable: config.LogEnable, LogProvider: iec104.NewLogProvider(ctx)}
 	c := New(settings, call)
 	c.SetOnConnectHandler(func(c *Client) {
 		logx.Infof("connected %s:%d iec104 server\n", settings.Host, settings.Port)
