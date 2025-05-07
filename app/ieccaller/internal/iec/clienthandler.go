@@ -1,6 +1,7 @@
 package iec
 
 import (
+	"context"
 	"fmt"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/golang-module/carbon/v2"
@@ -14,15 +15,21 @@ import (
 
 type ClientCall struct {
 	svcCtx *svc.ServiceContext
-	Host   string
-	Port   int
+	host   string
+	port   int
+	logger logx.Logger
 }
 
 func NewClientCall(svcCtx *svc.ServiceContext, host string, port int) *ClientCall {
+	ctx := logx.ContextWithFields(context.Background(),
+		logx.Field("host", host),
+		logx.Field("port", port),
+	)
 	return &ClientCall{
 		svcCtx: svcCtx,
-		Host:   host,
-		Port:   port,
+		host:   host,
+		port:   port,
+		logger: logx.WithContext(ctx),
 	}
 }
 
@@ -113,13 +120,13 @@ func (c *ClientCall) onSinglePoint(packet *asdu.ASDU) {
 	coa := packet.CommonAddr
 	// [M_SP_NA_1], [M_SP_TA_1] or [M_SP_TB_1] 获取单点信息信息体集合
 	for _, p := range packet.GetSinglePoint() {
-		logx.Infof("single point, ioa: %d, value: %v\n", p.Ioa, p.Value)
+		c.logger.Infof("single point, ioa: %d, value: %v\n", p.Ioa, p.Value)
 		var obj types.SinglePointInfo
 		obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
-			Host:   c.Host,
-			Port:   c.Port,
+			Host:   c.host,
+			Port:   c.port,
 			Asdu:   genASDUName(packet.Type),
 			TypeId: int(packet.Type),
 			Coa:    uint(coa),
@@ -132,13 +139,13 @@ func (c *ClientCall) onDoublePoint(packet *asdu.ASDU) {
 	coa := packet.CommonAddr
 	// [M_DP_NA_1], [M_DP_TA_1] or [M_DP_TB_1] 获得双点信息体集合
 	for _, p := range packet.GetDoublePoint() {
-		logx.Infof("double point, ioa: %d, value: %v\n", p.Ioa, p.Value)
+		c.logger.Infof("double point, ioa: %d, value: %v\n", p.Ioa, p.Value)
 		var obj types.DoublePointInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
-			Host:   c.Host,
-			Port:   c.Port,
+			Host:   c.host,
+			Port:   c.port,
 			Asdu:   genASDUName(packet.Type),
 			TypeId: int(packet.Type),
 			Coa:    uint(coa),
@@ -156,8 +163,8 @@ func (c *ClientCall) onMeasuredValueScaled(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
-			Host:   c.Host,
-			Port:   c.Port,
+			Host:   c.host,
+			Port:   c.port,
 			Asdu:   genASDUName(packet.Type),
 			TypeId: int(packet.Type),
 			Coa:    uint(coa),
@@ -175,8 +182,8 @@ func (c *ClientCall) onMeasuredValueNormal(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
-			Host:   c.Host,
-			Port:   c.Port,
+			Host:   c.host,
+			Port:   c.port,
 			Asdu:   genASDUName(packet.Type),
 			TypeId: int(packet.Type),
 			Coa:    uint(coa),
@@ -195,8 +202,8 @@ func (c *ClientCall) onStepPosition(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
-			Host:   c.Host,
-			Port:   c.Port,
+			Host:   c.host,
+			Port:   c.port,
 			Asdu:   genASDUName(packet.Type),
 			TypeId: int(packet.Type),
 			Coa:    uint(coa),
@@ -214,8 +221,8 @@ func (c *ClientCall) onBitString32(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
-			Host:   c.Host,
-			Port:   c.Port,
+			Host:   c.host,
+			Port:   c.port,
 			Asdu:   genASDUName(packet.Type),
 			TypeId: int(packet.Type),
 			Coa:    uint(coa),
@@ -233,8 +240,8 @@ func (c *ClientCall) onMeasuredValueFloat(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
-			Host:   c.Host,
-			Port:   c.Port,
+			Host:   c.host,
+			Port:   c.port,
 			Asdu:   genASDUName(packet.Type),
 			TypeId: int(packet.Type),
 			Coa:    uint(coa),
@@ -253,8 +260,8 @@ func (c *ClientCall) onIntegratedTotals(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
-			Host:   c.Host,
-			Port:   c.Port,
+			Host:   c.host,
+			Port:   c.port,
 			Asdu:   genASDUName(packet.Type),
 			TypeId: int(packet.Type),
 			Coa:    uint(coa),
@@ -273,8 +280,8 @@ func (c *ClientCall) onEventOfProtectionEquipment(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
-			Host:   c.Host,
-			Port:   c.Port,
+			Host:   c.host,
+			Port:   c.port,
 			Asdu:   genASDUName(packet.Type),
 			TypeId: int(packet.Type),
 			Coa:    uint(coa),
@@ -293,8 +300,8 @@ func (c *ClientCall) onPackedStartEventsOfProtectionEquipment(packet *asdu.ASDU)
 	//obj.Time = carbon.Now().ToDateTimeString()
 	copier.CopyWithOption(&obj, &p, types.Option)
 	_ = c.svcCtx.PushASDU(&types.MsgBody{
-		Host:   c.Host,
-		Port:   c.Port,
+		Host:   c.host,
+		Port:   c.port,
 		Asdu:   genASDUName(packet.Type),
 		TypeId: int(packet.Type),
 		Coa:    uint(coa),
@@ -306,14 +313,14 @@ func (c *ClientCall) onPackedOutputCircuitInfo(packet *asdu.ASDU) {
 	coa := packet.CommonAddr
 	// [M_EP_TC_1] [M_EP_TF_1] 获取继电器保护设备成组输出电路信息信息体
 	p := packet.GetPackedOutputCircuitInfo()
-	fmt.Printf("packed Output circuit, ioa: %d, qci: %d, qdp: %d, mesc: %d, time: %d\n",
+	c.logger.Infof("packed Output circuit, ioa: %d, qci: %d, qdp: %d, mesc: %d, time: %d\n",
 		p.Ioa, p.Oci, p.Qdp, p.Msec, p.Time.UnixMilli())
 	var obj types.PackedOutputCircuitInfoInfo
 	//obj.Time = carbon.Now().ToDateTimeString()
 	copier.CopyWithOption(&obj, &p, types.Option)
 	_ = c.svcCtx.PushASDU(&types.MsgBody{
-		Host:   c.Host,
-		Port:   c.Port,
+		Host:   c.host,
+		Port:   c.port,
 		Asdu:   genASDUName(packet.Type),
 		TypeId: int(packet.Type),
 		Coa:    uint(coa),
@@ -331,8 +338,8 @@ func (c *ClientCall) onPackedSinglePointWithSCD(packet *asdu.ASDU) {
 		statusChange := (p.Scd >> 16) & 0xFFFF // 高16位（状态变化）
 		var activePoints []int
 		var changedPoints []int
-		logx.Infof("stn: %d, cdn: %d", currentStatus, statusChange)
-		logx.Infof("ST (当前状态): %016b, CD (状态变化): %016b", currentStatus, statusChange)
+		c.logger.Infof("stn: %d, cdn: %d", currentStatus, statusChange)
+		c.logger.Infof("ST (当前状态): %016b, CD (状态变化): %016b", currentStatus, statusChange)
 		for i := 0; i < 16; i++ {
 			if currentStatus&(1<<i) != 0 {
 				activePoints = append(activePoints, i)
@@ -342,12 +349,12 @@ func (c *ClientCall) onPackedSinglePointWithSCD(packet *asdu.ASDU) {
 			}
 		}
 
-		logx.Infof("当前闭合的位: %v", activePoints)
-		logx.Infof("状态变化的位: %v", changedPoints)
+		c.logger.Infof("当前闭合的位: %v", activePoints)
+		c.logger.Infof("状态变化的位: %v", changedPoints)
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
-			Host:   c.Host,
-			Port:   c.Port,
+			Host:   c.host,
+			Port:   c.port,
 			Asdu:   genASDUName(packet.Type),
 			TypeId: int(packet.Type),
 			Coa:    uint(coa),
