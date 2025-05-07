@@ -1,6 +1,7 @@
 package iec104client
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -414,9 +415,8 @@ func MustNewIecServerClient(config IecServerConfig, coaConfig []CoaConfig, call 
 	settings.Port = config.Port
 	settings.ReconnectInterval = time.Minute
 	settings.AutoConnect = true
-	logger := iec104.NewLogProvider()
-	logger.WithFields(logx.Field("host", settings.Host), logx.Field("port", settings.Port))
-	settings.LogCfg = &LogCfg{Enable: true, LogProvider: logger}
+	ctx := logx.ContextWithFields(context.Background(), logx.Field("host", settings.Host), logx.Field("port", settings.Port))
+	settings.LogCfg = &LogCfg{Enable: true, LogProvider: iec104.NewLogProvider(ctx)}
 	c := New(settings, call)
 	c.SetOnConnectHandler(func(c *Client) {
 		logx.Infof("connected %s:%d iec104 server\n", settings.Host, settings.Port)

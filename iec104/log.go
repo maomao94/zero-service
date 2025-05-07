@@ -9,9 +9,9 @@ type LogProvider struct {
 	logx.Logger
 }
 
-func NewLogProvider() *LogProvider {
+func NewLogProvider(context context.Context) *LogProvider {
 	return &LogProvider{
-		Logger: logx.WithContext(context.TODO()),
+		Logger: logx.WithContext(context),
 	}
 }
 
