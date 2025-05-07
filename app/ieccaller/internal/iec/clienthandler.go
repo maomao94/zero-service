@@ -215,7 +215,7 @@ func (c *ClientCall) onBitString32(packet *asdu.ASDU) {
 	coa := packet.CommonAddr
 	// [M_BO_NA_1], [M_BO_TA_1] or [M_BO_TB_1] 获得比特位串信息体集合
 	for _, p := range packet.GetBitString32() {
-		c.logger.Infof("bigtstring32, ioa: %d, value: %v\n, bsi: %32b", p.Ioa, p.Value, p.Value)
+		c.logger.Infof("bigtstring32, ioa: %d, value: %v\n, bsi: %032b", p.Ioa, p.Value, p.Value)
 		var obj types.BitString32Info
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
