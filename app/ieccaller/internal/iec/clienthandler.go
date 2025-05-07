@@ -215,7 +215,7 @@ func (c *ClientCall) onBitString32(packet *asdu.ASDU) {
 	coa := packet.CommonAddr
 	// [M_BO_NA_1], [M_BO_TA_1] or [M_BO_TB_1] 获得比特位串信息体集合
 	for _, p := range packet.GetBitString32() {
-		c.logger.Infof("bigtstring32, ioa: %d, value: %v\n", p.Ioa, p.Value)
+		c.logger.Infof("bigtstring32, ioa: %d, value: %v\n, bsi: %32b", p.Ioa, p.Value, p.Value)
 		var obj types.BitString32Info
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
@@ -337,8 +337,7 @@ func (c *ClientCall) onPackedSinglePointWithSCD(packet *asdu.ASDU) {
 		statusChange := (p.Scd >> 16) & 0xFFFF // 高16位（状态变化）
 		var activePoints []int
 		var changedPoints []int
-		c.logger.Infof("stn: %d, cdn: %d", currentStatus, statusChange)
-		c.logger.Infof("ST (当前状态): %016b, CD (状态变化): %016b", currentStatus, statusChange)
+		c.logger.Infof("stn: %d, %016b, cdn: %d, %016b", currentStatus, currentStatus, statusChange, statusChange)
 		for i := 0; i < 16; i++ {
 			if currentStatus&(1<<i) != 0 {
 				activePoints = append(activePoints, i)
