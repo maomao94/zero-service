@@ -24,9 +24,6 @@ IecServerConfig:
   - Host: 127.0.0.1
     Port: 2404
     LogEnable: true
-  - Host: 10.10.10.63
-    Port: 2404
-    LogEnable: false
 KafkaASDUConfig:
   Brokers:
     - 10.10.1.213:9094

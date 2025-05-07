@@ -52,19 +52,33 @@ func (ms *IecHandler) OnRead(conn asdu.Connect, pack *asdu.ASDU, addr asdu.InfoO
 	//	Qds:   asdu.QDSGood,
 	//})
 
-	_ = asdu.EventOfProtectionEquipmentCP24Time2a(conn, asdu.CauseOfTransmission{Cause: asdu.Spontaneous}, pack.CommonAddr, asdu.EventOfProtectionEquipmentInfo{
-		Ioa:   commonAddr,
-		Event: asdu.SEDeterminedOff,
-		Msec:  500,
-		Qdp:   asdu.QDPGood,
-		Time:  time.Now(),
-	})
+	//_ = asdu.EventOfProtectionEquipmentCP24Time2a(conn, asdu.CauseOfTransmission{Cause: asdu.Spontaneous}, pack.CommonAddr, asdu.EventOfProtectionEquipmentInfo{
+	//	Ioa:   commonAddr,
+	//	Event: asdu.SEDeterminedOff,
+	//	Msec:  500,
+	//	Qdp:   asdu.QDPGood,
+	//	Time:  time.Now(),
+	//})
 
-	_ = asdu.EventOfProtectionEquipmentCP56Time2a(conn, asdu.CauseOfTransmission{Cause: asdu.Spontaneous}, pack.CommonAddr, asdu.EventOfProtectionEquipmentInfo{
+	//_ = asdu.EventOfProtectionEquipmentCP56Time2a(conn, asdu.CauseOfTransmission{Cause: asdu.Spontaneous}, pack.CommonAddr, asdu.EventOfProtectionEquipmentInfo{
+	//	Ioa:   commonAddr,
+	//	Event: asdu.SEDeterminedOff,
+	//	Msec:  500,
+	//	Qdp:   asdu.QDPGood,
+	//	Time:  time.Now(),
+	//})
+
+	//_ = asdu.MeasuredValueNormalCP56Time2a(conn, asdu.CauseOfTransmission{Cause: asdu.Spontaneous}, pack.CommonAddr, asdu.MeasuredValueNormalInfo{
+	//	Ioa:   commonAddr,
+	//	Value: 123,
+	//	Qds:   asdu.QDSGood,
+	//	Time:  time.Now(),
+	//})
+
+	_ = asdu.MeasuredValueNormalNoQuality(conn, false, asdu.CauseOfTransmission{Cause: asdu.Spontaneous}, pack.CommonAddr, asdu.MeasuredValueNormalInfo{
 		Ioa:   commonAddr,
-		Event: asdu.SEDeterminedOff,
-		Msec:  500,
-		Qdp:   asdu.QDPGood,
+		Value: 321,
+		Qds:   asdu.QDSGood,
 		Time:  time.Now(),
 	})
 	return nil
