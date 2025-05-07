@@ -414,7 +414,9 @@ func MustNewIecServerClient(config IecServerConfig, coaConfig []CoaConfig, call 
 	settings.Port = config.Port
 	settings.ReconnectInterval = time.Minute
 	settings.AutoConnect = true
-	settings.LogCfg = &LogCfg{Enable: true, LogProvider: iec104.NewLogProvider()}
+	logger := iec104.NewLogProvider()
+	logger.WithFields(logx.Field("host", settings.Host), logx.Field("port", settings.Port))
+	settings.LogCfg = &LogCfg{Enable: true, LogProvider: logger}
 	c := New(settings, call)
 	c.SetOnConnectHandler(func(c *Client) {
 		logx.Infof("connected %s:%d iec104 server\n", settings.Host, settings.Port)
