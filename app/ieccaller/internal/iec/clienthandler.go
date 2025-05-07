@@ -2,6 +2,7 @@ package iec
 
 import (
 	"fmt"
+	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/golang-module/carbon/v2"
 	"github.com/jinzhu/copier"
 	"github.com/wendy512/go-iecp5/asdu"
@@ -119,7 +120,8 @@ func (c *ClientCall) onSinglePoint(packet *asdu.ASDU) {
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.Host,
 			Port:   c.Port,
-			TypeId: int(iec104client.GetDataType(packet.Type)),
+			Asdu:   genASDUName(packet.Type),
+			TypeId: int(packet.Type),
 			Coa:    uint(coa),
 			Body:   &obj,
 		})
@@ -137,7 +139,8 @@ func (c *ClientCall) onDoublePoint(packet *asdu.ASDU) {
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.Host,
 			Port:   c.Port,
-			TypeId: int(iec104client.GetDataType(packet.Type)),
+			Asdu:   genASDUName(packet.Type),
+			TypeId: int(packet.Type),
 			Coa:    uint(coa),
 			Body:   &obj,
 		})
@@ -155,7 +158,8 @@ func (c *ClientCall) onMeasuredValueScaled(packet *asdu.ASDU) {
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.Host,
 			Port:   c.Port,
-			TypeId: int(iec104client.GetDataType(packet.Type)),
+			Asdu:   genASDUName(packet.Type),
+			TypeId: int(packet.Type),
 			Coa:    uint(coa),
 			Body:   &obj,
 		})
@@ -173,7 +177,8 @@ func (c *ClientCall) onMeasuredValueNormal(packet *asdu.ASDU) {
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.Host,
 			Port:   c.Port,
-			TypeId: int(iec104client.GetDataType(packet.Type)),
+			Asdu:   genASDUName(packet.Type),
+			TypeId: int(packet.Type),
 			Coa:    uint(coa),
 			Body:   &obj,
 		})
@@ -192,7 +197,8 @@ func (c *ClientCall) onStepPosition(packet *asdu.ASDU) {
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.Host,
 			Port:   c.Port,
-			TypeId: int(iec104client.GetDataType(packet.Type)),
+			Asdu:   genASDUName(packet.Type),
+			TypeId: int(packet.Type),
 			Coa:    uint(coa),
 			Body:   &obj,
 		})
@@ -208,7 +214,10 @@ func (c *ClientCall) onBitString32(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
-			TypeId: int(iec104client.GetDataType(packet.Type)),
+			Host:   c.Host,
+			Port:   c.Port,
+			Asdu:   genASDUName(packet.Type),
+			TypeId: int(packet.Type),
 			Coa:    uint(coa),
 			Body:   &obj,
 		})
@@ -226,7 +235,8 @@ func (c *ClientCall) onMeasuredValueFloat(packet *asdu.ASDU) {
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.Host,
 			Port:   c.Port,
-			TypeId: int(iec104client.GetDataType(packet.Type)),
+			Asdu:   genASDUName(packet.Type),
+			TypeId: int(packet.Type),
 			Coa:    uint(coa),
 			Body:   &obj,
 		})
@@ -245,7 +255,8 @@ func (c *ClientCall) onIntegratedTotals(packet *asdu.ASDU) {
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.Host,
 			Port:   c.Port,
-			TypeId: int(iec104client.GetDataType(packet.Type)),
+			Asdu:   genASDUName(packet.Type),
+			TypeId: int(packet.Type),
 			Coa:    uint(coa),
 			Body:   &obj,
 		})
@@ -264,7 +275,8 @@ func (c *ClientCall) onEventOfProtectionEquipment(packet *asdu.ASDU) {
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.Host,
 			Port:   c.Port,
-			TypeId: int(iec104client.GetDataType(packet.Type)),
+			Asdu:   genASDUName(packet.Type),
+			TypeId: int(packet.Type),
 			Coa:    uint(coa),
 			Body:   &obj,
 		})
@@ -283,7 +295,8 @@ func (c *ClientCall) onPackedStartEventsOfProtectionEquipment(packet *asdu.ASDU)
 	_ = c.svcCtx.PushASDU(&types.MsgBody{
 		Host:   c.Host,
 		Port:   c.Port,
-		TypeId: int(iec104client.GetDataType(packet.Type)),
+		Asdu:   genASDUName(packet.Type),
+		TypeId: int(packet.Type),
 		Coa:    uint(coa),
 		Body:   &obj,
 	})
@@ -301,7 +314,8 @@ func (c *ClientCall) onPackedOutputCircuitInfo(packet *asdu.ASDU) {
 	_ = c.svcCtx.PushASDU(&types.MsgBody{
 		Host:   c.Host,
 		Port:   c.Port,
-		TypeId: int(iec104client.GetDataType(packet.Type)),
+		Asdu:   genASDUName(packet.Type),
+		TypeId: int(packet.Type),
 		Coa:    uint(coa),
 		Body:   &obj,
 	})
@@ -317,9 +331,14 @@ func (c *ClientCall) onPackedSinglePointWithSCD(packet *asdu.ASDU) {
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.Host,
 			Port:   c.Port,
-			TypeId: int(iec104client.GetDataType(packet.Type)),
+			Asdu:   genASDUName(packet.Type),
+			TypeId: int(packet.Type),
 			Coa:    uint(coa),
 			Body:   &obj,
 		})
 	}
+}
+
+func genASDUName(typeId asdu.TypeID) string {
+	return strutil.SubInBetween(typeId.String(), "<", ">")
 }

@@ -79,6 +79,7 @@ func (t *DateTime) UnmarshalJSON(data []byte) error {
 type MsgBody struct {
 	Host   string    `json:"host"`
 	Port   int       `json:"port"`
+	Asdu   string    `json:"asdu"`
 	TypeId int       `json:"typeId"`
 	Coa    uint      `json:"coa"` // 公共地址
 	Body   IoaGetter `json:"body"`

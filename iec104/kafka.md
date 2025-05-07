@@ -1,4 +1,4 @@
-# Kafka ASDU 消息对接文档（全量版）
+# Kafka IEC-104 消息对接文档
 
 ---
 
@@ -13,8 +13,9 @@
 ### 消息结构
 ```json
 {
-  "host": "设备标识（如RTU-01）",
+  "host": "从站 ip",
   "port": 2404,
+  "asdu":"M_SP_NA_1",
   "typeId": 1,
   "coa": 1001,
   "body": {
