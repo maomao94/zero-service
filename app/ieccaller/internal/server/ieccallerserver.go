@@ -39,3 +39,9 @@ func (s *IecCallerServer) SendReadCmd(ctx context.Context, in *ieccaller.SendRea
 	l := logic.NewSendReadCmdLogic(ctx, s.svcCtx)
 	return l.SendReadCmd(in)
 }
+
+// 发送总召唤
+func (s *IecCallerServer) SendInterrogationCmd(ctx context.Context, in *ieccaller.SendInterrogationCmdReq) (*ieccaller.SendInterrogationCmdRes, error) {
+	l := logic.NewSendInterrogationCmdLogic(ctx, s.svcCtx)
+	return l.SendInterrogationCmd(in)
+}

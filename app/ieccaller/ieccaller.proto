@@ -30,10 +30,21 @@ message SendReadCmdReq {
 message SendReadCmdRes {
 }
 
+message SendInterrogationCmdReq {
+  string host = 1;
+  int32 port = 2;
+  int32 coa = 3;
+}
+
+message SendInterrogationCmdRes {
+}
+
 service IecCaller {
   rpc Ping (Req) returns (Res);
   // 发送带时标的测试命令
   rpc SendTestCmd (SendTestCmdReq) returns (SendTestCmdRes);
   // 发起读命令
   rpc SendReadCmd (SendReadCmdReq) returns (SendReadCmdRes);
+  // 发送总召唤
+  rpc SendInterrogationCmd (SendInterrogationCmdReq) returns (SendInterrogationCmdRes);
 }
