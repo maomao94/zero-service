@@ -28,11 +28,13 @@ func (s *IecCallerServer) Ping(ctx context.Context, in *ieccaller.Req) (*ieccall
 	return l.Ping(in)
 }
 
+// 发送带时标的测试命令
 func (s *IecCallerServer) SendTestCmd(ctx context.Context, in *ieccaller.SendTestCmdReq) (*ieccaller.SendTestCmdRes, error) {
 	l := logic.NewSendTestCmdLogic(ctx, s.svcCtx)
 	return l.SendTestCmd(in)
 }
 
+// 发起读命令
 func (s *IecCallerServer) SendReadCmd(ctx context.Context, in *ieccaller.SendReadCmdReq) (*ieccaller.SendReadCmdRes, error) {
 	l := logic.NewSendReadCmdLogic(ctx, s.svcCtx)
 	return l.SendReadCmd(in)

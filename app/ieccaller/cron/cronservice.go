@@ -36,11 +36,24 @@ func (s *CronService) Start() {
 		}
 
 		for _, v := range sessionCli {
-			if !v.IsConnected() {
+			if !v.GetCli().IsConnected() {
 				sessionLoss++
 			}
 		}
 		logx.Statf("(iec104) clientLen: %d, clientLoss: %d, sessionLen: %d, sessionLoss: %d", clientsLen, loss, sessionLen, sessionLoss)
+	})
+
+	// 定时总召唤
+	_, _ = s.c.AddFunc(s.svcCtx.Config.InterrogationCmdCron, func() {
+		sessionCli := s.svcCtx.ClientManager.GetSessionClients()
+		for _, v := range sessionCli {
+			if v.GetCli().IsConnected() {
+				// 发送总召唤
+				if err := v.GetCli().SendInterrogationCmd(uint16(v.GetConfig().Coa)); err != nil {
+					logx.Errorf("send interrogation cmd error %v\n", err)
+				}
+			}
+		}
 	})
 	s.c.Start()
 	fmt.Print("Starting cron server \n")

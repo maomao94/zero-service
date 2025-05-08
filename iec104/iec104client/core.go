@@ -460,19 +460,32 @@ func (c *Client) GetServerUrl() string {
 
 // iec客户端管理容器
 type ClientManager struct {
-	clients        map[*Client]bool   // 全部的连接
-	clientsLock    sync.RWMutex       // 读写锁
-	coaSession     map[string]*Client // 注册session ip+port+coa 地址 构成唯一
-	coaSessionLock sync.RWMutex       // 读写锁
-	register       chan *Client       // 连接连接处理
-	broadcast      chan struct{}      // 广播 向全部成员发送数据
+	clients        map[*Client]bool       // 全部的连接
+	clientsLock    sync.RWMutex           // 读写锁
+	coaSession     map[string]*CoaSession // 注册session ip+port+coa 地址 构成唯一
+	coaSessionLock sync.RWMutex           // 读写锁
+	register       chan *Client           // 连接连接处理
+	broadcast      chan struct{}          // 广播 向全部成员发送数据
 	defaultName    string
+}
+
+type CoaSession struct {
+	clients   *Client // 连接
+	coaConfig CoaConfig
+}
+
+func (cs *CoaSession) GetCli() *Client {
+	return cs.clients
+}
+
+func (cs *CoaSession) GetConfig() CoaConfig {
+	return cs.coaConfig
 }
 
 func NewClientManager() (m *ClientManager) {
 	m = &ClientManager{
 		clients:    make(map[*Client]bool),
-		coaSession: make(map[string]*Client),
+		coaSession: make(map[string]*CoaSession),
 		broadcast:  make(chan struct{}, 1000),
 	}
 	threading.GoSafe(func() {
@@ -513,7 +526,10 @@ func (manager *ClientManager) EventSession(config CoaConfig, client *Client) {
 	// 连接存在，在添加
 	if manager.InClient(client) {
 		key := getKey(config)
-		manager.AddSession(key, client)
+		manager.AddSession(key, &CoaSession{
+			clients:   client,
+			coaConfig: config,
+		})
 		logx.Infof("eventSession %s 注册", key)
 	} else {
 		logx.Errorf("eventSession fail, iec104 server addr:%s 连接不存在", client.GetServerUrl())
@@ -550,7 +566,7 @@ func (manager *ClientManager) InClient(client *Client) (ok bool) {
 	return
 }
 
-func (manager *ClientManager) AddSession(name string, client *Client) {
+func (manager *ClientManager) AddSession(name string, client *CoaSession) {
 	manager.coaSessionLock.Lock()
 	defer manager.coaSessionLock.Unlock()
 	manager.coaSession[name] = client
@@ -563,6 +579,21 @@ func (manager *ClientManager) GetClients() (clients map[*Client]bool) {
 		return true
 	})
 	return
+}
+
+func (manager *ClientManager) GetClient(host string, port int) (*Client, error) {
+	var cli *Client
+	manager.ClientsRange(func(client *Client, value bool) (result bool) {
+		if client.settings.Host == host && client.settings.Port == port {
+			cli = client
+			return true
+		}
+		return false
+	})
+	if cli == nil {
+		return nil, fmt.Errorf("cli is empty")
+	}
+	return cli, nil
 }
 
 func (manager *ClientManager) ClientsRange(f func(client *Client, value bool) (result bool)) {
@@ -587,18 +618,22 @@ func (manager *ClientManager) GetSessionNames() (names []string) {
 	return
 }
 
-func (manager *ClientManager) GetSession(config CoaConfig) (clients *Client) {
+func (manager *ClientManager) GetSession(config CoaConfig) (*CoaSession, error) {
+	var cli *CoaSession
 	manager.coaSessionLock.RLock()
 	defer manager.coaSessionLock.RUnlock()
 	key := getKey(config)
 	if value, ok := manager.coaSession[key]; ok {
-		clients = value
+		cli = value
 	}
-	return
+	if cli == nil {
+		return nil, fmt.Errorf("cli is empty")
+	}
+	return cli, nil
 }
 
-func (manager *ClientManager) GetSessionClients() (clients []*Client) {
-	clients = make([]*Client, 0)
+func (manager *ClientManager) GetSessionClients() (clients []*CoaSession) {
+	clients = make([]*CoaSession, 0)
 	manager.coaSessionLock.RLock()
 	defer manager.coaSessionLock.RUnlock()
 	for _, v := range manager.coaSession {

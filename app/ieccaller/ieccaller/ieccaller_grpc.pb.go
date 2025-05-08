@@ -29,7 +29,9 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type IecCallerClient interface {
 	Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error)
+	// 发送带时标的测试命令
 	SendTestCmd(ctx context.Context, in *SendTestCmdReq, opts ...grpc.CallOption) (*SendTestCmdRes, error)
+	// 发起读命令
 	SendReadCmd(ctx context.Context, in *SendReadCmdReq, opts ...grpc.CallOption) (*SendReadCmdRes, error)
 }
 
@@ -76,7 +78,9 @@ func (c *iecCallerClient) SendReadCmd(ctx context.Context, in *SendReadCmdReq, o
 // for forward compatibility.
 type IecCallerServer interface {
 	Ping(context.Context, *Req) (*Res, error)
+	// 发送带时标的测试命令
 	SendTestCmd(context.Context, *SendTestCmdReq) (*SendTestCmdRes, error)
+	// 发起读命令
 	SendReadCmd(context.Context, *SendReadCmdReq) (*SendReadCmdRes, error)
 	mustEmbedUnimplementedIecCallerServer()
 }
