@@ -2,9 +2,6 @@ package logic
 
 import (
 	"context"
-	"fmt"
-	"zero-service/iec104/iec104client"
-
 	"zero-service/app/ieccaller/ieccaller"
 	"zero-service/app/ieccaller/internal/svc"
 
@@ -26,15 +23,11 @@ func NewSendReadCmdLogic(ctx context.Context, svcCtx *svc.ServiceContext) *SendR
 }
 
 func (l *SendReadCmdLogic) SendReadCmd(in *ieccaller.SendReadCmdReq) (*ieccaller.SendReadCmdRes, error) {
-	cli := l.svcCtx.ClientManager.GetSession(iec104client.CoaConfig{
-		Host: in.Host,
-		Port: int(in.Port),
-		Coa:  int(in.Coa),
-	})
-	if cli == nil {
-		return nil, fmt.Errorf("cli is empty")
+	cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
+	if err != nil {
+		return nil, err
 	}
-	if err := cli.SendReadCmd(uint16(in.Coa), uint(in.Ioa)); err != nil {
+	if err = cli.SendReadCmd(uint16(in.Coa), uint(in.Ioa)); err != nil {
 		return nil, err
 	}
 	return &ieccaller.SendReadCmdRes{}, nil

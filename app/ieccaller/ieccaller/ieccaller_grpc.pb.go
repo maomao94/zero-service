@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	IecCaller_Ping_FullMethodName        = "/ieccaller.IecCaller/Ping"
-	IecCaller_SendTestCmd_FullMethodName = "/ieccaller.IecCaller/SendTestCmd"
-	IecCaller_SendReadCmd_FullMethodName = "/ieccaller.IecCaller/SendReadCmd"
+	IecCaller_Ping_FullMethodName                 = "/ieccaller.IecCaller/Ping"
+	IecCaller_SendTestCmd_FullMethodName          = "/ieccaller.IecCaller/SendTestCmd"
+	IecCaller_SendReadCmd_FullMethodName          = "/ieccaller.IecCaller/SendReadCmd"
+	IecCaller_SendInterrogationCmd_FullMethodName = "/ieccaller.IecCaller/SendInterrogationCmd"
 )
 
 // IecCallerClient is the client API for IecCaller service.
@@ -29,8 +30,12 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type IecCallerClient interface {
 	Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error)
+	// 发送带时标的测试命令
 	SendTestCmd(ctx context.Context, in *SendTestCmdReq, opts ...grpc.CallOption) (*SendTestCmdRes, error)
+	// 发起读命令
 	SendReadCmd(ctx context.Context, in *SendReadCmdReq, opts ...grpc.CallOption) (*SendReadCmdRes, error)
+	// 发送总召唤
+	SendInterrogationCmd(ctx context.Context, in *SendInterrogationCmdReq, opts ...grpc.CallOption) (*SendInterrogationCmdRes, error)
 }
 
 type iecCallerClient struct {
@@ -71,13 +76,27 @@ func (c *iecCallerClient) SendReadCmd(ctx context.Context, in *SendReadCmdReq, o
 	return out, nil
 }
 
+func (c *iecCallerClient) SendInterrogationCmd(ctx context.Context, in *SendInterrogationCmdReq, opts ...grpc.CallOption) (*SendInterrogationCmdRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendInterrogationCmdRes)
+	err := c.cc.Invoke(ctx, IecCaller_SendInterrogationCmd_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IecCallerServer is the server API for IecCaller service.
 // All implementations must embed UnimplementedIecCallerServer
 // for forward compatibility.
 type IecCallerServer interface {
 	Ping(context.Context, *Req) (*Res, error)
+	// 发送带时标的测试命令
 	SendTestCmd(context.Context, *SendTestCmdReq) (*SendTestCmdRes, error)
+	// 发起读命令
 	SendReadCmd(context.Context, *SendReadCmdReq) (*SendReadCmdRes, error)
+	// 发送总召唤
+	SendInterrogationCmd(context.Context, *SendInterrogationCmdReq) (*SendInterrogationCmdRes, error)
 	mustEmbedUnimplementedIecCallerServer()
 }
 
@@ -96,6 +115,9 @@ func (UnimplementedIecCallerServer) SendTestCmd(context.Context, *SendTestCmdReq
 }
 func (UnimplementedIecCallerServer) SendReadCmd(context.Context, *SendReadCmdReq) (*SendReadCmdRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendReadCmd not implemented")
+}
+func (UnimplementedIecCallerServer) SendInterrogationCmd(context.Context, *SendInterrogationCmdReq) (*SendInterrogationCmdRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendInterrogationCmd not implemented")
 }
 func (UnimplementedIecCallerServer) mustEmbedUnimplementedIecCallerServer() {}
 func (UnimplementedIecCallerServer) testEmbeddedByValue()                   {}
@@ -172,6 +194,24 @@ func _IecCaller_SendReadCmd_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IecCaller_SendInterrogationCmd_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendInterrogationCmdReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IecCallerServer).SendInterrogationCmd(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IecCaller_SendInterrogationCmd_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IecCallerServer).SendInterrogationCmd(ctx, req.(*SendInterrogationCmdReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IecCaller_ServiceDesc is the grpc.ServiceDesc for IecCaller service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -190,6 +230,10 @@ var IecCaller_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendReadCmd",
 			Handler:    _IecCaller_SendReadCmd_Handler,
+		},
+		{
+			MethodName: "SendInterrogationCmd",
+			Handler:    _IecCaller_SendInterrogationCmd_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

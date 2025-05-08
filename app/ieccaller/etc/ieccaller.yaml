@@ -10,6 +10,7 @@ Log:
   #  Mode: file
   Path: /opt/logs/ieccaller.rpc
   Level: debug
+# iec从站 coa 配置 用于定时总召唤，不配置，请自己触发总召唤
 IecCoaConfig:
   - Host: 127.0.0.1
     Port: 2404
@@ -17,9 +18,10 @@ IecCoaConfig:
   - Host: 127.0.0.1
     Port: 2404
     Coa: 2
-  - Host: 10.10.10.63
+  - Host: 127.0.0.1
     Port: 2404
-    Coa: 1
+    Coa: 3
+# iec从站配置
 IecServerConfig:
   - Host: 127.0.0.1
     Port: 2404
@@ -29,3 +31,4 @@ KafkaASDUConfig:
     - 10.10.1.213:9094
   Topic: asdu
   IsPush: true
+InterrogationCmdCron: "*/60 * * * * *"
