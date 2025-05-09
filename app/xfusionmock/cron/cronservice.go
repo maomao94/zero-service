@@ -24,24 +24,23 @@ func NewCronService(svcCtx *svc.ServiceContext) *CronService {
 func (s *CronService) Start() {
 	s.c = cron.New(cron.WithSeconds()) // 支持秒级调度
 
-	// 每30秒执行一次
-	_, _ = s.c.AddFunc("*/30 * * * * *", func() {
+	_, _ = s.c.AddFunc(s.svcCtx.Config.PushCron, func() {
 		in := xfusionmock.ReqPushTest{}
 		logic.NewPushTestLogic(context.Background(), s.svcCtx).PushTest(&in)
 	})
-	_, _ = s.c.AddFunc("*/30 * * * * *", func() {
+	_, _ = s.c.AddFunc(s.svcCtx.Config.PushCron, func() {
 		in := xfusionmock.ReqPushPoint{}
 		logic.NewPushPointLogic(context.Background(), s.svcCtx).PushPoint(&in)
 	})
-	_, _ = s.c.AddFunc("0 */5 * * * *", func() {
+	_, _ = s.c.AddFunc(s.svcCtx.Config.PushCron, func() {
 		in := xfusionmock.ReqPushAlarm{}
 		logic.NewPushAlarmLogic(context.Background(), s.svcCtx).PushAlarm(&in)
 	})
-	_, _ = s.c.AddFunc("*/30 * * * * *", func() {
+	_, _ = s.c.AddFunc(s.svcCtx.Config.PushCron, func() {
 		in := xfusionmock.ReqPushEvent{}
 		logic.NewPushEventLogic(context.Background(), s.svcCtx).PushEvent(&in)
 	})
-	_, _ = s.c.AddFunc("*/30 * * * * *", func() {
+	_, _ = s.c.AddFunc(s.svcCtx.Config.PushCron, func() {
 		in := xfusionmock.ReqPushTerminalBind{}
 		logic.NewPushTerminalBindLogic(context.Background(), s.svcCtx).PushTerminalBind(&in)
 	})
