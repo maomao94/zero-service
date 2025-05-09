@@ -33,19 +33,18 @@ var (
 	}
 
 	alarmNameMap = map[string]string{
-		"CROSS_IN":             "区域闯入报警",
-		"CROSS_OUT":            "区域离开报警",
-		"CLUSTER":              "人员聚集报警",
-		"CROWDED":              "车辆超员报警",
-		"LACKED":               "人员缺员报警",
-		"LOW_BATTERY":          "设备低电量报警",
-		"OVER_SPEED":           "车辆超速报警",
-		"RETENTION":            "人员滞留报警",
-		"SOS":                  "SOS紧急报警",
-		"STATIC":               "设备静止报警",
-		"STAY":                 "车辆停留报警",
-		"CRASH":                "车辆碰撞报警",
-		"VEHICLE_ILLEGAL_MOVE": "车辆设备位移报警",
+		"CROSS_IN":    "区域闯入报警",
+		"CROSS_OUT":   "区域离开报警",
+		"CLUSTER":     "人员聚集报警",
+		"CROWDED":     "车辆超员报警",
+		"LACKED":      "人员缺员报警",
+		"LOW_BATTERY": "设备低电量报警",
+		"OVER_SPEED":  "车辆超速报警",
+		"RETENTION":   "人员滞留报警",
+		"SOS":         "SOS紧急报警",
+		"STATIC":      "设备静止报警",
+		"STAY":        "车辆停留报警",
+		"CRASH":       "车辆碰撞报警",
 	}
 	alarmLevels = []int{1, 2, 3}
 )
