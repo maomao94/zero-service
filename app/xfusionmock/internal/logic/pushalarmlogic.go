@@ -46,6 +46,8 @@ var (
 		"CRASH":       "车辆碰撞报警",
 	}
 	alarmLevels = []int{1, 2, 3}
+
+	userIds = []string{"b88ca6b10d3f098f0c2cccab1ef7afa2", "92cf0f46966a2dc5432ba02048ca57fb", "9ae27e8b3218fee13f4c7c872d5e9a86"}
 )
 
 type PushAlarmLogic struct {
@@ -79,7 +81,7 @@ func (l *PushAlarmLogic) PushAlarm(in *xfusionmock.ReqPushAlarm) (*xfusionmock.R
 				TerminalID: 100001,
 				TerminalNo: "test",
 				TrackID:    5001,
-				TrackNo:    "沪A12345",
+				TrackNo:    randomUserId(),
 				TrackType:  "CAR",
 				TrackName:  l.svcCtx.Config.Name,
 			},
@@ -93,6 +95,7 @@ func (l *PushAlarmLogic) PushAlarm(in *xfusionmock.ReqPushAlarm) (*xfusionmock.R
 		EndTime:     time.Now().UnixMilli(),
 		Duration:    600,
 		AlarmStatus: "ON",
+		OrgCode:     "001013002",
 	}
 	jsonData, err := json.Marshal(data)
 	if err != nil {
@@ -121,6 +124,10 @@ func randomAlarmCode() string {
 
 func randomLevel() int32 {
 	return int32(random.RandFromGivenSlice(alarmLevels))
+}
+
+func randomUserId() string {
+	return string(random.RandFromGivenSlice(userIds))
 }
 
 func getAlarmName(code string) string {

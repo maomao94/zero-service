@@ -86,6 +86,7 @@ type AlarmData struct {
 	Duration int `json:"duration"`
 	// 报警当前状态：ON-进行中 OFF-已结束
 	AlarmStatus string `json:"alarmStatus"`
+	OrgCode     string `json:"orgCode"`
 }
 
 // LocationPosition 位置坐标（复用已有定义）

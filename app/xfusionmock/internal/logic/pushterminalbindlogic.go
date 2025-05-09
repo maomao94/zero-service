@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	terminalList = []string{"test", "test1", "test2", "test3"}
+	terminalList = []string{"test"}
 )
 
 type PushTerminalBindLogic struct {
@@ -40,7 +40,7 @@ func (l *PushTerminalBindLogic) PushTerminalBind(in *xfusionmock.ReqPushTerminal
 		TerminalNo:    randomTerminal(),
 		StaffIdCardNo: "11011100011",
 		TrackID:       5001,
-		TrackNo:       "沪A12345",
+		TrackNo:       randomUserId(),
 		TrackType:     "CAR",
 		TrackName:     l.svcCtx.Config.Name,
 		ActionTime:    carbon.Now().Format("Y-m-d H:i:s"),
