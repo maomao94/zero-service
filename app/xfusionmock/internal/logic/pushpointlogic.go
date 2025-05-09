@@ -32,7 +32,7 @@ func (l *PushPointLogic) PushPoint(in *xfusionmock.ReqPushPoint) (*xfusionmock.R
 		DataTagV1: l.svcCtx.Config.Name,
 		TerminalInfo: &model.TerminalInfo{
 			TerminalID: 100001,
-			TerminalNo: "T12345678901",
+			TerminalNo: randomTerminal(),
 			TrackID:    5001,
 			TrackNo:    "沪A12345",
 			TrackType:  "CAR",
