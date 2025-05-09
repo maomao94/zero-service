@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"encoding/json"
+	"github.com/duke-git/lancet/v2/random"
 	"github.com/golang-module/carbon/v2"
 	"zero-service/model"
 
@@ -10,6 +11,10 @@ import (
 	"zero-service/app/xfusionmock/xfusionmock"
 
 	"github.com/zeromicro/go-zero/core/logx"
+)
+
+var (
+	terminalList = []string{"test", "test1", "test2", "test3"}
 )
 
 type PushTerminalBindLogic struct {
@@ -32,7 +37,7 @@ func (l *PushTerminalBindLogic) PushTerminalBind(in *xfusionmock.ReqPushTerminal
 		DataTagV1:     l.svcCtx.Config.Name,
 		Action:        "BIND",
 		TerminalID:    100001,
-		TerminalNo:    "T12345678901",
+		TerminalNo:    randomTerminal(),
 		StaffIdCardNo: "11011100011",
 		TrackID:       5001,
 		TrackNo:       "沪A12345",
@@ -46,4 +51,8 @@ func (l *PushTerminalBindLogic) PushTerminalBind(in *xfusionmock.ReqPushTerminal
 	}
 	l.svcCtx.KafkaTerminalBindPusher.Push(l.ctx, string(jsonData))
 	return &xfusionmock.ResPushTerminalBind{}, nil
+}
+
+func randomTerminal() string {
+	return string(random.RandFromGivenSlice(terminalList))
 }

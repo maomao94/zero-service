@@ -31,7 +31,6 @@ var (
 		"CRASH",
 		"VEHICLE_ILLEGAL_MOVE",
 	}
-
 	alarmNameMap = map[string]string{
 		"CROSS_IN":    "区域闯入报警",
 		"CROSS_OUT":   "区域离开报警",
@@ -74,11 +73,11 @@ func (l *PushAlarmLogic) PushAlarm(in *xfusionmock.ReqPushAlarm) (*xfusionmock.R
 		AlarmNo:        generateAlarmNo(),
 		AlarmCode:      alarmCode,
 		Level:          randomLevel(),
-		TerminalNoList: []string{"T123456789013"},
+		TerminalNoList: []string{"test"},
 		TrackInfoList: []model.TerminalInfo{
 			{
 				TerminalID: 100001,
-				TerminalNo: "T12345678901",
+				TerminalNo: "test",
 				TrackID:    5001,
 				TrackNo:    "沪A12345",
 				TrackType:  "CAR",
