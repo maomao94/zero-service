@@ -66,8 +66,13 @@ func NewPushAlarmLogic(ctx context.Context, svcCtx *svc.ServiceContext) *PushAla
 
 func (l *PushAlarmLogic) PushAlarm(in *xfusionmock.ReqPushAlarm) (*xfusionmock.ResPushAlarm, error) {
 	l.Info("PushAlarm")
-	if len(in.Body) > 0 {
-		l.svcCtx.KafkaAlarmPusher.Push(l.ctx, string(in.Body))
+	var jsonData []byte
+	var err error
+	if in.PushMode {
+		jsonData, err = json.Marshal(in.Data)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		uuid, _ := random.UUIdV4()
 		alarmCode := randomAlarmCode()
@@ -100,12 +105,12 @@ func (l *PushAlarmLogic) PushAlarm(in *xfusionmock.ReqPushAlarm) (*xfusionmock.R
 			AlarmStatus: "ON",
 			OrgCode:     "001013002",
 		}
-		jsonData, err := json.Marshal(data)
+		jsonData, err = json.Marshal(data)
 		if err != nil {
 			return nil, err
 		}
-		l.svcCtx.KafkaAlarmPusher.Push(l.ctx, string(jsonData))
 	}
+	l.svcCtx.KafkaAlarmPusher.Push(l.ctx, string(jsonData))
 	return &xfusionmock.ResPushAlarm{}, nil
 }
 

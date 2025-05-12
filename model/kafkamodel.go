@@ -89,7 +89,7 @@ type AlarmData struct {
 	OrgCode     string `json:"orgCode"`
 }
 
-// LocationPosition 位置坐标（复用已有定义）
+// LocationPosition 位置坐标
 type LocationPosition struct {
 	// 纬度（-90~90）
 	Lat float64 `json:"lat"`
