@@ -66,42 +66,46 @@ func NewPushAlarmLogic(ctx context.Context, svcCtx *svc.ServiceContext) *PushAla
 
 func (l *PushAlarmLogic) PushAlarm(in *xfusionmock.ReqPushAlarm) (*xfusionmock.ResPushAlarm, error) {
 	l.Info("PushAlarm")
-	uuid, _ := random.UUIdV4()
-	alarmCode := randomAlarmCode()
-	data := model.AlarmData{
-		DataTagV1:      l.svcCtx.Config.Name,
-		ID:             uuid,
-		Name:           getAlarmName(alarmCode),
-		AlarmNo:        generateAlarmNo(),
-		AlarmCode:      alarmCode,
-		Level:          randomLevel(),
-		TerminalNoList: []string{"test"},
-		TrackInfoList: []model.TerminalInfo{
-			{
-				TerminalID: 100001,
-				TerminalNo: "test",
-				TrackID:    5001,
-				TrackNo:    randomUserId(),
-				TrackType:  "CAR",
-				TrackName:  l.svcCtx.Config.Name,
+	if len(in.Body) > 0 {
+		l.svcCtx.KafkaAlarmPusher.Push(l.ctx, string(in.Body))
+	} else {
+		uuid, _ := random.UUIdV4()
+		alarmCode := randomAlarmCode()
+		data := model.AlarmData{
+			DataTagV1:      l.svcCtx.Config.Name,
+			ID:             uuid,
+			Name:           getAlarmName(alarmCode),
+			AlarmNo:        generateAlarmNo(),
+			AlarmCode:      alarmCode,
+			Level:          randomLevel(),
+			TerminalNoList: []string{"test"},
+			TrackInfoList: []model.TerminalInfo{
+				{
+					TerminalID: 100001,
+					TerminalNo: "test",
+					TrackID:    5001,
+					TrackNo:    randomUserId(),
+					TrackType:  "CAR",
+					TrackName:  l.svcCtx.Config.Name,
+				},
 			},
-		},
-		Position: &model.LocationPosition{
-			Lat: 31.31464578,
-			Lon: 121.31891978,
-			Alt: 30.12,
-		},
-		StartTime:   time.Now().Add(-10 * time.Minute).UnixMilli(),
-		EndTime:     time.Now().UnixMilli(),
-		Duration:    600,
-		AlarmStatus: "ON",
-		OrgCode:     "001013002",
+			Position: &model.LocationPosition{
+				Lat: 31.31464578,
+				Lon: 121.31891978,
+				Alt: 30.12,
+			},
+			StartTime:   time.Now().Add(-10 * time.Minute).UnixMilli(),
+			EndTime:     time.Now().UnixMilli(),
+			Duration:    600,
+			AlarmStatus: "ON",
+			OrgCode:     "001013002",
+		}
+		jsonData, err := json.Marshal(data)
+		if err != nil {
+			return nil, err
+		}
+		l.svcCtx.KafkaAlarmPusher.Push(l.ctx, string(jsonData))
 	}
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		return nil, err
-	}
-	l.svcCtx.KafkaAlarmPusher.Push(l.ctx, string(jsonData))
 	return &xfusionmock.ResPushAlarm{}, nil
 }
 
