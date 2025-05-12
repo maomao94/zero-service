@@ -32,4 +32,4 @@ KafkaTerminalBind:
   Brokers:
     - 10.10.1.213:9094
   Topic: xfusion-terminal_bind
-PushCron: "*/5 * * * * *"
+PushCron: "*/60 * * * * *"
