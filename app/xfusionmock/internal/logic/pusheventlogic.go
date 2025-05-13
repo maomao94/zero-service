@@ -29,31 +29,40 @@ func NewPushEventLogic(ctx context.Context, svcCtx *svc.ServiceContext) *PushEve
 
 func (l *PushEventLogic) PushEvent(in *xfusionmock.ReqPushEvent) (*xfusionmock.ResPushEvent, error) {
 	l.Info("PushEvent")
-	uuid, _ := random.UUIdV4()
-	data := model.EventData{
-		DataTagV1:  l.svcCtx.Config.Name,
-		ID:         uuid,
-		EventTitle: "进⼊围栏",
-		EventCode:  "IN_FENCE",
-		ServerTime: time.Now().UnixMilli(),
-		EpochTime:  time.Now().UnixMilli(),
-		TerminalInfo: model.TerminalInfo{
-			TerminalID: 100001,
-			TerminalNo: "T12345678901",
-			TrackID:    5001,
-			TrackNo:    "沪A12345",
-			TrackType:  "CAR",
-			TrackName:  l.svcCtx.Config.Name,
-		},
-		Position: model.Position{
-			Lat: 31.2304,
-			Lon: 121.4737,
-			Alt: 15.5,
-		},
-	}
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		return nil, err
+	var jsonData []byte
+	var err error
+	if in.PushMode {
+		jsonData, err = json.Marshal(in.Data)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		uuid, _ := random.UUIdV4()
+		data := model.EventData{
+			DataTagV1:  l.svcCtx.Config.Name,
+			ID:         uuid,
+			EventTitle: "进⼊围栏",
+			EventCode:  "IN_FENCE",
+			ServerTime: time.Now().UnixMilli(),
+			EpochTime:  time.Now().UnixMilli(),
+			TerminalInfo: model.TerminalInfo{
+				TerminalID: 100001,
+				TerminalNo: randomTerminal(),
+				TrackID:    5001,
+				TrackNo:    "沪A12345",
+				TrackType:  "CAR",
+				TrackName:  l.svcCtx.Config.Name,
+			},
+			Position: model.Position{
+				Lat: 31.2304,
+				Lon: 121.4737,
+				Alt: 15.5,
+			},
+		}
+		jsonData, err = json.Marshal(data)
+		if err != nil {
+			return nil, err
+		}
 	}
 	l.svcCtx.KafkaEventPusher.Push(l.ctx, string(jsonData))
 	return &xfusionmock.ResPushEvent{}, nil

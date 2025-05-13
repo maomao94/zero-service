@@ -19,16 +19,17 @@ KafkaTestConfig:
 KafkaPointConfig:
   Brokers:
     - 10.10.1.213:9094
-  Topic: point
+  Topic: xfusion-point
 KafkaAlarmConfig:
   Brokers:
     - 10.10.1.213:9094
-  Topic: alarm
+  Topic: xfusion-alarm
 KafkaEventConfig:
   Brokers:
     - 10.10.1.213:9094
-  Topic: event
+  Topic: xfusion-event
 KafkaTerminalBind:
   Brokers:
     - 10.10.1.213:9094
-  Topic: terminal_bind
+  Topic: xfusion-terminal_bind
+PushCron: "*/60 * * * * *"

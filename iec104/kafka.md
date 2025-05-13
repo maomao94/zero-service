@@ -488,7 +488,7 @@ key = f"{host}_{coa}_0x{ioa:06X}"  # 示例：RTU-01_1001_0x0007D1
 
 - **文档版本**：v1.0.0（2025-05-06）
 - **协议版本**：IEC 60870-5-104 Ed.2.0
-- **联系支持**：[hehanpeng@163.com](mailto:hehanpeng@163.com)
+- **联系支持**：[hehanpengyy@163.com](mailto:hehanpengyy@163.com)
 
 ---
 

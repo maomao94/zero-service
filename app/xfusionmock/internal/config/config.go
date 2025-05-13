@@ -13,4 +13,5 @@ type Config struct {
 	KafkaAlarmConfig  config.KqConfig
 	KafkaEventConfig  config.KqConfig
 	KafkaTerminalBind config.KqConfig
+	PushCron          string
 }
