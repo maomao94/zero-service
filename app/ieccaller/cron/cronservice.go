@@ -40,7 +40,7 @@ func (s *CronService) Start() {
 				sessionLoss++
 			}
 		}
-		logx.Statf("(iec104) clientLen: %d, clientLoss: %d, sessionLen: %d, sessionLoss: %d", clientsLen, loss, sessionLen, sessionLoss)
+		logx.Statf("(iec-104) client: %d, loss: %d, session: %d, loss: %d", clientsLen, loss, sessionLen, sessionLoss)
 	})
 
 	// 定时总召唤
@@ -51,7 +51,9 @@ func (s *CronService) Start() {
 				// 发送总召唤
 				if err := v.GetCli().SendInterrogationCmd(uint16(v.GetConfig().Coa)); err != nil {
 					logx.Errorf("send interrogation cmd error %v\n", err)
+					continue
 				}
+				logx.Infof("sendInterrogationCmd, host: %s, port: %d, coa: %d", v.GetConfig().Host, v.GetConfig().Port, v.GetConfig().Coa)
 			}
 		}
 	})
