@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/golang-module/carbon/v2"
 	"github.com/jinzhu/copier"
-	"reflect"
 	"strconv"
 	"time"
 )
@@ -87,14 +86,17 @@ type MsgBody struct {
 }
 
 func (m *MsgBody) GetKey() (string, error) {
-	v := reflect.ValueOf(m.Body)
-	if !v.IsValid() {
-		return "", errors.New("body is nil (invalid)")
-	}
-	if v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
-		if v.IsNil() {
-			return "", errors.New("body is nil")
-		}
+	//v := reflect.ValueOf(m.Body)
+	//if !v.IsValid() {
+	//	return "", errors.New("body is nil (invalid)")
+	//}
+	//if v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
+	//	if v.IsNil() {
+	//		return "", errors.New("body is nil")
+	//	}
+	//}
+	if m.Body == nil {
+		return "", errors.New("body is nil")
 	}
 	//coaHex := fmt.Sprintf("0x%x", m.Coa)
 	coa := fmt.Sprintf("%d", m.Coa)
@@ -194,7 +196,7 @@ type BitString32Info struct {
 	Time  string `json:"time"`
 }
 
-func (s *BitString32Info) GetIoa() uint {
+func (s BitString32Info) GetIoa() uint {
 	return s.Ioa
 }
 
