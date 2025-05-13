@@ -53,7 +53,7 @@ func (s *CronService) Start() {
 					logx.Errorf("send interrogation cmd error %v\n", err)
 					continue
 				}
-				logx.Infof("sendInterrogationCmd, host: %s, port: %d, coa: %d", v.GetConfig().Host, v.GetConfig().Port, v.GetConfig().Coa)
+				logx.Infof("send interrogation cmd, host: %s, port: %d, coa: %d", v.GetConfig().Host, v.GetConfig().Port, v.GetConfig().Coa)
 			}
 		}
 	})
