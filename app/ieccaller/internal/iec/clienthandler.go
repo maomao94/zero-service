@@ -312,8 +312,12 @@ func (c *ClientCall) onPackedOutputCircuitInfo(packet *asdu.ASDU) {
 	coa := packet.CommonAddr
 	// [M_EP_TC_1] [M_EP_TF_1] 获取继电器保护设备成组输出电路信息信息体
 	p := packet.GetPackedOutputCircuitInfo()
-	c.logger.Infof("packed Output circuit, ioa: %d, qci: %d, qdp: %d, mesc: %d, time: %d",
-		p.Ioa, p.Oci, p.Qdp, p.Msec, p.Time.UnixMilli())
+	gc := (p.Oci & asdu.OCIGeneralCommand) != 0
+	cl1 := (p.Oci & asdu.OCICommandL1) != 0
+	cl2 := (p.Oci & asdu.OCICommandL2) != 0
+	cl3 := (p.Oci & asdu.OCICommandL3) != 0
+	c.logger.Infof("packed Output circuit, ioa: %d, qci: %d, gc: %v, cl1: %v, cl2: %v, cl3: %v, qdp: %d, mesc: %d, time: %d",
+		p.Ioa, p.Oci, gc, cl1, cl2, cl3, p.Qdp, p.Msec, p.Time.UnixMilli())
 	var obj types.PackedOutputCircuitInfoInfo
 	//obj.Time = carbon.Now().ToDateTimeString()
 	copier.CopyWithOption(&obj, &p, types.Option)
