@@ -22,6 +22,10 @@ import (
 
 var configFile = flag.String("f", "etc/iecagent.yaml", "the config file")
 
+// GOOS=windows GOARCH=amd64 go build -o app.exe
+// GOARCH=amd64 GOOS=linux GOOS=linux go build -o app
+// GOARCH=arm GOOS=linux go build -o app
+// go build -o app
 func main() {
 	flag.Parse()
 
