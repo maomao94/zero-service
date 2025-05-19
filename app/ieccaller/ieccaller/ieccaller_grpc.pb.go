@@ -19,10 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	IecCaller_Ping_FullMethodName                 = "/ieccaller.IecCaller/Ping"
-	IecCaller_SendTestCmd_FullMethodName          = "/ieccaller.IecCaller/SendTestCmd"
-	IecCaller_SendReadCmd_FullMethodName          = "/ieccaller.IecCaller/SendReadCmd"
-	IecCaller_SendInterrogationCmd_FullMethodName = "/ieccaller.IecCaller/SendInterrogationCmd"
+	IecCaller_Ping_FullMethodName                        = "/ieccaller.IecCaller/Ping"
+	IecCaller_SendTestCmd_FullMethodName                 = "/ieccaller.IecCaller/SendTestCmd"
+	IecCaller_SendReadCmd_FullMethodName                 = "/ieccaller.IecCaller/SendReadCmd"
+	IecCaller_SendInterrogationCmd_FullMethodName        = "/ieccaller.IecCaller/SendInterrogationCmd"
+	IecCaller_SendCounterInterrogationCmd_FullMethodName = "/ieccaller.IecCaller/SendCounterInterrogationCmd"
 )
 
 // IecCallerClient is the client API for IecCaller service.
@@ -36,6 +37,8 @@ type IecCallerClient interface {
 	SendReadCmd(ctx context.Context, in *SendReadCmdReq, opts ...grpc.CallOption) (*SendReadCmdRes, error)
 	// 发送总召唤
 	SendInterrogationCmd(ctx context.Context, in *SendInterrogationCmdReq, opts ...grpc.CallOption) (*SendInterrogationCmdRes, error)
+	// 累积量召唤
+	SendCounterInterrogationCmd(ctx context.Context, in *SendCounterInterrogationCmdReq, opts ...grpc.CallOption) (*SendCounterInterrogationCmdRes, error)
 }
 
 type iecCallerClient struct {
@@ -86,6 +89,16 @@ func (c *iecCallerClient) SendInterrogationCmd(ctx context.Context, in *SendInte
 	return out, nil
 }
 
+func (c *iecCallerClient) SendCounterInterrogationCmd(ctx context.Context, in *SendCounterInterrogationCmdReq, opts ...grpc.CallOption) (*SendCounterInterrogationCmdRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendCounterInterrogationCmdRes)
+	err := c.cc.Invoke(ctx, IecCaller_SendCounterInterrogationCmd_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IecCallerServer is the server API for IecCaller service.
 // All implementations must embed UnimplementedIecCallerServer
 // for forward compatibility.
@@ -97,6 +110,8 @@ type IecCallerServer interface {
 	SendReadCmd(context.Context, *SendReadCmdReq) (*SendReadCmdRes, error)
 	// 发送总召唤
 	SendInterrogationCmd(context.Context, *SendInterrogationCmdReq) (*SendInterrogationCmdRes, error)
+	// 累积量召唤
+	SendCounterInterrogationCmd(context.Context, *SendCounterInterrogationCmdReq) (*SendCounterInterrogationCmdRes, error)
 	mustEmbedUnimplementedIecCallerServer()
 }
 
@@ -118,6 +133,9 @@ func (UnimplementedIecCallerServer) SendReadCmd(context.Context, *SendReadCmdReq
 }
 func (UnimplementedIecCallerServer) SendInterrogationCmd(context.Context, *SendInterrogationCmdReq) (*SendInterrogationCmdRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendInterrogationCmd not implemented")
+}
+func (UnimplementedIecCallerServer) SendCounterInterrogationCmd(context.Context, *SendCounterInterrogationCmdReq) (*SendCounterInterrogationCmdRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendCounterInterrogationCmd not implemented")
 }
 func (UnimplementedIecCallerServer) mustEmbedUnimplementedIecCallerServer() {}
 func (UnimplementedIecCallerServer) testEmbeddedByValue()                   {}
@@ -212,6 +230,24 @@ func _IecCaller_SendInterrogationCmd_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IecCaller_SendCounterInterrogationCmd_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendCounterInterrogationCmdReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IecCallerServer).SendCounterInterrogationCmd(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IecCaller_SendCounterInterrogationCmd_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IecCallerServer).SendCounterInterrogationCmd(ctx, req.(*SendCounterInterrogationCmdReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IecCaller_ServiceDesc is the grpc.ServiceDesc for IecCaller service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -234,6 +270,10 @@ var IecCaller_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendInterrogationCmd",
 			Handler:    _IecCaller_SendInterrogationCmd_Handler,
+		},
+		{
+			MethodName: "SendCounterInterrogationCmd",
+			Handler:    _IecCaller_SendCounterInterrogationCmd_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

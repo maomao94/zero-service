@@ -48,7 +48,8 @@ var (
 	}
 	alarmLevels = []int{1, 2, 3}
 
-	userIds = []string{"b88ca6b10d3f098f0c2cccab1ef7afa2", "92cf0f46966a2dc5432ba02048ca57fb", "9ae27e8b3218fee13f4c7c872d5e9a86"}
+	userIds    = []string{"b88ca6b10d3f098f0c2cccab1ef7afa2", "92cf0f46966a2dc5432ba02048ca57fb", "9ae27e8b3218fee13f4c7c872d5e9a86"}
+	fenceCodes = []string{"SZQapVxmaX", "cRLqgcjzfh", "iNNMLtLtHw"}
 )
 
 type PushAlarmLogic struct {
@@ -95,16 +96,17 @@ func (l *PushAlarmLogic) PushAlarm(in *xfusionmock.ReqPushAlarm) (*xfusionmock.R
 					TrackName:  l.svcCtx.Config.Name,
 				},
 			},
-			Position: &model.LocationPosition{
+			Position: model.LocationPosition{
 				Lat: 31.31464578,
 				Lon: 121.31891978,
 				Alt: 30.12,
 			},
-			StartTime:   time.Now().Add(-10 * time.Minute).UnixMilli(),
-			EndTime:     time.Now().UnixMilli(),
-			Duration:    600,
-			AlarmStatus: "ON",
-			OrgCode:     "001013002",
+			StartFenceCodes: []string{randomFenceCode()},
+			EndFenceCodes:   []string{randomFenceCode()},
+			StartTime:       time.Now().Add(-10 * time.Minute).UnixMilli(),
+			EndTime:         time.Now().UnixMilli(),
+			Duration:        600,
+			AlarmStatus:     "ON",
 		}
 		jsonData, err = json.Marshal(data)
 		if err != nil {
@@ -138,6 +140,10 @@ func randomLevel() int32 {
 
 func randomUserId() string {
 	return string(random.RandFromGivenSlice(userIds))
+}
+
+func randomFenceCode() string {
+	return string(random.RandFromGivenSlice(fenceCodes))
 }
 
 func getAlarmName(code string) string {

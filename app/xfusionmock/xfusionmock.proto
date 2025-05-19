@@ -100,11 +100,12 @@ message AlarmData {
   repeated TerminalInfo trackInfoList = 8 [json_name = "trackInfoList"]; // 报警涉及的主体信息列表
   string trackType = 9 [json_name = "trackType"]; // 监控对象类型：CAR-车辆 STAFF-人员
   LocationPosition position = 10 [json_name = "position"]; // 报警触发位置（WGS84坐标系）
-  int64 startTime = 11 [json_name = "startTime"]; // 报警开始时间（Unix时间戳，毫秒级）
-  int64 endTime = 12 [json_name = "endTime"]; // 报警结束时间（Unix时间戳，毫秒级）
-  int32 duration = 13 [json_name = "duration"]; // 报警持续时长（单位：秒），由结束时间-开始时间计算得出
-  string alarmStatus = 14 [json_name = "alarmStatus"]; // 报警当前状态：ON-进行中 OFF-已结束
-  string orgCode = 15 [json_name = "orgCode"];
+  repeated string startFenceCodes = 11 [json_name = "startFenceCodes"]; // 报警开始围栏code列表
+  repeated string endFenceCodes = 12 [json_name = "endFenceCodes"]; // 报警结束围栏code列表
+  int64 startTime = 13 [json_name = "startTime"]; // 报警开始时间（Unix时间戳，毫秒级）
+  int64 endTime = 14 [json_name = "endTime"]; // 报警结束时间（Unix时间戳，毫秒级）
+  int32 duration = 15 [json_name = "duration"]; // 报警持续时长（单位：秒），由结束时间-开始时间计算得出
+  string alarmStatus = 16 [json_name = "alarmStatus"]; // 报警当前状态：ON-进行中 OFF-已结束
 }
 
 // LocationPosition 位置坐标

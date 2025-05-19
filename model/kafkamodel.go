@@ -77,7 +77,11 @@ type AlarmData struct {
 	// 监控对象类型：CAR-车辆 STAFF-人员
 	TrackType string `json:"trackType"`
 	// 报警触发位置（WGS84坐标系）
-	Position *LocationPosition `json:"position"`
+	Position LocationPosition `json:"position"`
+	// 报警开始围栏code列表
+	StartFenceCodes []string `json:"startFenceCodes"`
+	// 报警结束围栏code列表
+	EndFenceCodes []string `json:"endFenceCodes"`
 	// 报警开始时间（Unix时间戳，毫秒级）
 	StartTime int64 `json:"startTime"`
 	// 报警结束时间（Unix时间戳，毫秒级）
@@ -86,7 +90,6 @@ type AlarmData struct {
 	Duration int `json:"duration"`
 	// 报警当前状态：ON-进行中 OFF-已结束
 	AlarmStatus string `json:"alarmStatus"`
-	OrgCode     string `json:"orgCode"`
 }
 
 // LocationPosition 位置坐标

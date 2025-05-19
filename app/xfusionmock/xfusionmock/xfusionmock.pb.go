@@ -864,24 +864,25 @@ func (x *TerminalData) GetStatus() *Status {
 
 // AlarmData 结构体
 type AlarmData struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	DataTagV1      string                 `protobuf:"bytes,1,opt,name=dataTagV1,proto3" json:"dataTagV1,omitempty"`           // kafka tag
-	Id             string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`                         // 报警唯一标识
-	Name           string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`                     // 报警自定义名称（最大长度50字符）
-	AlarmNo        string                 `protobuf:"bytes,4,opt,name=alarmNo,proto3" json:"alarmNo,omitempty"`               // 报警编号（格式：ALARM-日期-序号）
-	AlarmCode      string                 `protobuf:"bytes,5,opt,name=alarmCode,proto3" json:"alarmCode,omitempty"`           // 报警类型编码（见AlarmType枚举）
-	Level          int32                  `protobuf:"varint,6,opt,name=level,proto3" json:"level,omitempty"`                  // 报警等级：1-紧急 2-严重 3-警告
-	TerminalNoList []string               `protobuf:"bytes,7,rep,name=terminalNoList,proto3" json:"terminalNoList,omitempty"` // 关联终端编号列表（至少包含一个有效终端号）
-	TrackInfoList  []*TerminalInfo        `protobuf:"bytes,8,rep,name=trackInfoList,proto3" json:"trackInfoList,omitempty"`   // 报警涉及的主体信息列表
-	TrackType      string                 `protobuf:"bytes,9,opt,name=trackType,proto3" json:"trackType,omitempty"`           // 监控对象类型：CAR-车辆 STAFF-人员
-	Position       *LocationPosition      `protobuf:"bytes,10,opt,name=position,proto3" json:"position,omitempty"`            // 报警触发位置（WGS84坐标系）
-	StartTime      int64                  `protobuf:"varint,11,opt,name=startTime,proto3" json:"startTime,omitempty"`         // 报警开始时间（Unix时间戳，毫秒级）
-	EndTime        int64                  `protobuf:"varint,12,opt,name=endTime,proto3" json:"endTime,omitempty"`             // 报警结束时间（Unix时间戳，毫秒级）
-	Duration       int32                  `protobuf:"varint,13,opt,name=duration,proto3" json:"duration,omitempty"`           // 报警持续时长（单位：秒），由结束时间-开始时间计算得出
-	AlarmStatus    string                 `protobuf:"bytes,14,opt,name=alarmStatus,proto3" json:"alarmStatus,omitempty"`      // 报警当前状态：ON-进行中 OFF-已结束
-	OrgCode        string                 `protobuf:"bytes,15,opt,name=orgCode,proto3" json:"orgCode,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	DataTagV1       string                 `protobuf:"bytes,1,opt,name=dataTagV1,proto3" json:"dataTagV1,omitempty"`              // kafka tag
+	Id              string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`                            // 报警唯一标识
+	Name            string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`                        // 报警自定义名称（最大长度50字符）
+	AlarmNo         string                 `protobuf:"bytes,4,opt,name=alarmNo,proto3" json:"alarmNo,omitempty"`                  // 报警编号（格式：ALARM-日期-序号）
+	AlarmCode       string                 `protobuf:"bytes,5,opt,name=alarmCode,proto3" json:"alarmCode,omitempty"`              // 报警类型编码（见AlarmType枚举）
+	Level           int32                  `protobuf:"varint,6,opt,name=level,proto3" json:"level,omitempty"`                     // 报警等级：1-紧急 2-严重 3-警告
+	TerminalNoList  []string               `protobuf:"bytes,7,rep,name=terminalNoList,proto3" json:"terminalNoList,omitempty"`    // 关联终端编号列表（至少包含一个有效终端号）
+	TrackInfoList   []*TerminalInfo        `protobuf:"bytes,8,rep,name=trackInfoList,proto3" json:"trackInfoList,omitempty"`      // 报警涉及的主体信息列表
+	TrackType       string                 `protobuf:"bytes,9,opt,name=trackType,proto3" json:"trackType,omitempty"`              // 监控对象类型：CAR-车辆 STAFF-人员
+	Position        *LocationPosition      `protobuf:"bytes,10,opt,name=position,proto3" json:"position,omitempty"`               // 报警触发位置（WGS84坐标系）
+	StartFenceCodes []string               `protobuf:"bytes,11,rep,name=startFenceCodes,proto3" json:"startFenceCodes,omitempty"` // 报警开始围栏code列表
+	EndFenceCodes   []string               `protobuf:"bytes,12,rep,name=endFenceCodes,proto3" json:"endFenceCodes,omitempty"`     // 报警结束围栏code列表
+	StartTime       int64                  `protobuf:"varint,13,opt,name=startTime,proto3" json:"startTime,omitempty"`            // 报警开始时间（Unix时间戳，毫秒级）
+	EndTime         int64                  `protobuf:"varint,14,opt,name=endTime,proto3" json:"endTime,omitempty"`                // 报警结束时间（Unix时间戳，毫秒级）
+	Duration        int32                  `protobuf:"varint,15,opt,name=duration,proto3" json:"duration,omitempty"`              // 报警持续时长（单位：秒），由结束时间-开始时间计算得出
+	AlarmStatus     string                 `protobuf:"bytes,16,opt,name=alarmStatus,proto3" json:"alarmStatus,omitempty"`         // 报警当前状态：ON-进行中 OFF-已结束
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *AlarmData) Reset() {
@@ -984,6 +985,20 @@ func (x *AlarmData) GetPosition() *LocationPosition {
 	return nil
 }
 
+func (x *AlarmData) GetStartFenceCodes() []string {
+	if x != nil {
+		return x.StartFenceCodes
+	}
+	return nil
+}
+
+func (x *AlarmData) GetEndFenceCodes() []string {
+	if x != nil {
+		return x.EndFenceCodes
+	}
+	return nil
+}
+
 func (x *AlarmData) GetStartTime() int64 {
 	if x != nil {
 		return x.StartTime
@@ -1008,13 +1023,6 @@ func (x *AlarmData) GetDuration() int32 {
 func (x *AlarmData) GetAlarmStatus() string {
 	if x != nil {
 		return x.AlarmStatus
-	}
-	return ""
-}
-
-func (x *AlarmData) GetOrgCode() string {
-	if x != nil {
-		return x.OrgCode
 	}
 	return ""
 }
@@ -1516,7 +1524,7 @@ const file_xfusionmock_proto_rawDesc = "" +
 	"\tepochTime\x18\x03 \x01(\x03R\tepochTime\x121\n" +
 	"\blocation\x18\x04 \x01(\v2\x15.xfusionmock.LocationR\blocation\x12=\n" +
 	"\fbuildingInfo\x18\x05 \x01(\v2\x19.xfusionmock.BuildingInfoR\fbuildingInfo\x12+\n" +
-	"\x06status\x18\x06 \x01(\v2\x13.xfusionmock.StatusR\x06status\"\xed\x03\n" +
+	"\x06status\x18\x06 \x01(\v2\x13.xfusionmock.StatusR\x06status\"\xa3\x04\n" +
 	"\tAlarmData\x12\x1c\n" +
 	"\tdataTagV1\x18\x01 \x01(\tR\tdataTagV1\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x12\x12\n" +
@@ -1528,12 +1536,13 @@ const file_xfusionmock_proto_rawDesc = "" +
 	"\rtrackInfoList\x18\b \x03(\v2\x19.xfusionmock.TerminalInfoR\rtrackInfoList\x12\x1c\n" +
 	"\ttrackType\x18\t \x01(\tR\ttrackType\x129\n" +
 	"\bposition\x18\n" +
-	" \x01(\v2\x1d.xfusionmock.LocationPositionR\bposition\x12\x1c\n" +
-	"\tstartTime\x18\v \x01(\x03R\tstartTime\x12\x18\n" +
-	"\aendTime\x18\f \x01(\x03R\aendTime\x12\x1a\n" +
-	"\bduration\x18\r \x01(\x05R\bduration\x12 \n" +
-	"\valarmStatus\x18\x0e \x01(\tR\valarmStatus\x12\x18\n" +
-	"\aorgCode\x18\x0f \x01(\tR\aorgCode\"H\n" +
+	" \x01(\v2\x1d.xfusionmock.LocationPositionR\bposition\x12(\n" +
+	"\x0fstartFenceCodes\x18\v \x03(\tR\x0fstartFenceCodes\x12$\n" +
+	"\rendFenceCodes\x18\f \x03(\tR\rendFenceCodes\x12\x1c\n" +
+	"\tstartTime\x18\r \x01(\x03R\tstartTime\x12\x18\n" +
+	"\aendTime\x18\x0e \x01(\x03R\aendTime\x12\x1a\n" +
+	"\bduration\x18\x0f \x01(\x05R\bduration\x12 \n" +
+	"\valarmStatus\x18\x10 \x01(\tR\valarmStatus\"H\n" +
 	"\x10LocationPosition\x12\x10\n" +
 	"\x03lat\x18\x01 \x01(\x01R\x03lat\x12\x10\n" +
 	"\x03lon\x18\x02 \x01(\x01R\x03lon\x12\x10\n" +
