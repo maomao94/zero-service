@@ -31,4 +31,4 @@ KafkaASDUConfig:
     - 10.10.1.213:9094
   Topic: asdu
   IsPush: true
-InterrogationCmdCron: "*/5 * * * * *"
+InterrogationCmdCron: "*/60 * * * * *"
