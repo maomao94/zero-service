@@ -12,7 +12,7 @@ KafkaTestConfig:
   Brokers:
     - 10.10.1.213:9094
   Group: xfusion-mock
-  Topic: test
+  Topic: xfusion-test
   Offset: first
   Consumer: 1
   Processors: 1
