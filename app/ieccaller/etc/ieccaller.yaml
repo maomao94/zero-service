@@ -15,7 +15,7 @@ NacosConfig:
   Host: 10.10.1.103
   Port: 8848
   Username: nacos
-  PassWord: Zxhc@1234ns
+  PassWord: test@1234ns
   NamespaceId: 5b839313-ac3a-47a7-bf8d-6246576347ff
   ServiceName: ieccaller
 # iec从站 coa 配置 用于定时总召唤，不配置，请自己触发总召唤
