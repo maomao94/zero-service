@@ -44,7 +44,7 @@ func main() {
 	cc := &constant.ClientConfig{
 		NamespaceId:         "public",
 		Username:            "nacos",
-		Password:            "Zxhc@1234ns",
+		Password:            "test@1234ns",
 		TimeoutMs:           5000,
 		NotLoadCacheAtStart: true,
 		LogDir:              "/tmp/nacos/log",

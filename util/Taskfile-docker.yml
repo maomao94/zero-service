@@ -1,11 +1,11 @@
 version: '3'
 
 # vars:
-#   SSH_USER: "zxhc"
+#   SSH_USER: "test"
 #   SSH_HOST: "10.10.1.135"
 #   SSH_PORT: "22"
-#   SSH_PASSWORD: "Zxhc@1234!@#$" 
-#   DOCKER_COMPOSE_PATH: "/home/zxhc/docker/app/docker-compose.yml"
+#   SSH_PASSWORD: "test@1234!@#$" 
+#   DOCKER_COMPOSE_PATH: "/home/test/docker/app/docker-compose.yml"
 
 tasks:
   restart-docker:
