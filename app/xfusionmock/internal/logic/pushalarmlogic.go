@@ -85,11 +85,11 @@ func (l *PushAlarmLogic) PushAlarm(in *xfusionmock.ReqPushAlarm) (*xfusionmock.R
 			AlarmNo:        generateAlarmNo(),
 			AlarmCode:      alarmCode,
 			Level:          randomLevel(),
-			TerminalNoList: []string{"test"},
+			TerminalNoList: []string{"600000000001"},
 			TrackInfoList: []model.TerminalInfo{
 				{
 					TerminalID: 100001,
-					TerminalNo: "test",
+					TerminalNo: "600000000001",
 					TrackID:    5001,
 					TrackNo:    randomUserId(),
 					TrackType:  "CAR",

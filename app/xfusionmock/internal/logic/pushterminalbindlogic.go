@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	terminalList = []string{"test"}
+	terminalList = []string{"600000000001"}
 )
 
 type PushTerminalBindLogic struct {
