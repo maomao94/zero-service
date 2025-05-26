@@ -864,25 +864,25 @@ func (x *TerminalData) GetStatus() *Status {
 
 // AlarmData 结构体
 type AlarmData struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	DataTagV1       string                 `protobuf:"bytes,1,opt,name=dataTagV1,proto3" json:"dataTagV1,omitempty"`              // kafka tag
-	Id              string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`                            // 报警唯一标识
-	Name            string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`                        // 报警自定义名称（最大长度50字符）
-	AlarmNo         string                 `protobuf:"bytes,4,opt,name=alarmNo,proto3" json:"alarmNo,omitempty"`                  // 报警编号（格式：ALARM-日期-序号）
-	AlarmCode       string                 `protobuf:"bytes,5,opt,name=alarmCode,proto3" json:"alarmCode,omitempty"`              // 报警类型编码（见AlarmType枚举）
-	Level           int32                  `protobuf:"varint,6,opt,name=level,proto3" json:"level,omitempty"`                     // 报警等级：1-紧急 2-严重 3-警告
-	TerminalNoList  []string               `protobuf:"bytes,7,rep,name=terminalNoList,proto3" json:"terminalNoList,omitempty"`    // 关联终端编号列表（至少包含一个有效终端号）
-	TrackInfoList   []*TerminalInfo        `protobuf:"bytes,8,rep,name=trackInfoList,proto3" json:"trackInfoList,omitempty"`      // 报警涉及的主体信息列表
-	TrackType       string                 `protobuf:"bytes,9,opt,name=trackType,proto3" json:"trackType,omitempty"`              // 监控对象类型：CAR-车辆 STAFF-人员
-	Position        *LocationPosition      `protobuf:"bytes,10,opt,name=position,proto3" json:"position,omitempty"`               // 报警触发位置（WGS84坐标系）
-	StartFenceCodes []string               `protobuf:"bytes,11,rep,name=startFenceCodes,proto3" json:"startFenceCodes,omitempty"` // 报警开始围栏code列表
-	EndFenceCodes   []string               `protobuf:"bytes,12,rep,name=endFenceCodes,proto3" json:"endFenceCodes,omitempty"`     // 报警结束围栏code列表
-	StartTime       int64                  `protobuf:"varint,13,opt,name=startTime,proto3" json:"startTime,omitempty"`            // 报警开始时间（Unix时间戳，毫秒级）
-	EndTime         int64                  `protobuf:"varint,14,opt,name=endTime,proto3" json:"endTime,omitempty"`                // 报警结束时间（Unix时间戳，毫秒级）
-	Duration        int32                  `protobuf:"varint,15,opt,name=duration,proto3" json:"duration,omitempty"`              // 报警持续时长（单位：秒），由结束时间-开始时间计算得出
-	AlarmStatus     string                 `protobuf:"bytes,16,opt,name=alarmStatus,proto3" json:"alarmStatus,omitempty"`         // 报警当前状态：ON-进行中 OFF-已结束
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	DataTagV1      string                 `protobuf:"bytes,1,opt,name=dataTagV1,proto3" json:"dataTagV1,omitempty"`           // kafka tag
+	Id             string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`                         // 报警唯一标识
+	Name           string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`                     // 报警自定义名称（最大长度50字符）
+	AlarmNo        string                 `protobuf:"bytes,4,opt,name=alarmNo,proto3" json:"alarmNo,omitempty"`               // 报警编号（格式：ALARM-日期-序号）
+	AlarmCode      string                 `protobuf:"bytes,5,opt,name=alarmCode,proto3" json:"alarmCode,omitempty"`           // 报警类型编码（见AlarmType枚举）
+	Level          int32                  `protobuf:"varint,6,opt,name=level,proto3" json:"level,omitempty"`                  // 报警等级：1-紧急 2-严重 3-警告
+	TerminalNoList []string               `protobuf:"bytes,7,rep,name=terminalNoList,proto3" json:"terminalNoList,omitempty"` // 关联终端编号列表（至少包含一个有效终端号）
+	TrackInfoList  []*TerminalInfo        `protobuf:"bytes,8,rep,name=trackInfoList,proto3" json:"trackInfoList,omitempty"`   // 报警涉及的主体信息列表
+	TrackType      string                 `protobuf:"bytes,9,opt,name=trackType,proto3" json:"trackType,omitempty"`           // 监控对象类型：CAR-车辆 STAFF-人员
+	Position       *LocationPosition      `protobuf:"bytes,10,opt,name=position,proto3" json:"position,omitempty"`            // 报警触发位置（WGS84坐标系）
+	StartFences    []*FenceInfo           `protobuf:"bytes,11,rep,name=startFences,proto3" json:"startFences,omitempty"`      // 报警开始围栏code列表
+	EndFences      []*FenceInfo           `protobuf:"bytes,12,rep,name=endFences,proto3" json:"endFences,omitempty"`          // 报警结束围栏code列表
+	StartTime      int64                  `protobuf:"varint,13,opt,name=startTime,proto3" json:"startTime,omitempty"`         // 报警开始时间（Unix时间戳，毫秒级）
+	EndTime        int64                  `protobuf:"varint,14,opt,name=endTime,proto3" json:"endTime,omitempty"`             // 报警结束时间（Unix时间戳，毫秒级）
+	Duration       int32                  `protobuf:"varint,15,opt,name=duration,proto3" json:"duration,omitempty"`           // 报警持续时长（单位：秒），由结束时间-开始时间计算得出
+	AlarmStatus    string                 `protobuf:"bytes,16,opt,name=alarmStatus,proto3" json:"alarmStatus,omitempty"`      // 报警当前状态：ON-进行中 OFF-已结束
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *AlarmData) Reset() {
@@ -985,16 +985,16 @@ func (x *AlarmData) GetPosition() *LocationPosition {
 	return nil
 }
 
-func (x *AlarmData) GetStartFenceCodes() []string {
+func (x *AlarmData) GetStartFences() []*FenceInfo {
 	if x != nil {
-		return x.StartFenceCodes
+		return x.StartFences
 	}
 	return nil
 }
 
-func (x *AlarmData) GetEndFenceCodes() []string {
+func (x *AlarmData) GetEndFences() []*FenceInfo {
 	if x != nil {
-		return x.EndFenceCodes
+		return x.EndFences
 	}
 	return nil
 }
@@ -1027,6 +1027,59 @@ func (x *AlarmData) GetAlarmStatus() string {
 	return ""
 }
 
+// FenceInfo 围栏信息
+type FenceInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FenceCode     string                 `protobuf:"bytes,1,opt,name=fenceCode,proto3" json:"fenceCode,omitempty"` // 围栏code
+	OrgCode       string                 `protobuf:"bytes,7,opt,name=orgCode,proto3" json:"orgCode,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FenceInfo) Reset() {
+	*x = FenceInfo{}
+	mi := &file_xfusionmock_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FenceInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FenceInfo) ProtoMessage() {}
+
+func (x *FenceInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_xfusionmock_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FenceInfo.ProtoReflect.Descriptor instead.
+func (*FenceInfo) Descriptor() ([]byte, []int) {
+	return file_xfusionmock_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *FenceInfo) GetFenceCode() string {
+	if x != nil {
+		return x.FenceCode
+	}
+	return ""
+}
+
+func (x *FenceInfo) GetOrgCode() string {
+	if x != nil {
+		return x.OrgCode
+	}
+	return ""
+}
+
 // LocationPosition 位置坐标
 type LocationPosition struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1039,7 +1092,7 @@ type LocationPosition struct {
 
 func (x *LocationPosition) Reset() {
 	*x = LocationPosition{}
-	mi := &file_xfusionmock_proto_msgTypes[16]
+	mi := &file_xfusionmock_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1051,7 +1104,7 @@ func (x *LocationPosition) String() string {
 func (*LocationPosition) ProtoMessage() {}
 
 func (x *LocationPosition) ProtoReflect() protoreflect.Message {
-	mi := &file_xfusionmock_proto_msgTypes[16]
+	mi := &file_xfusionmock_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1064,7 +1117,7 @@ func (x *LocationPosition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LocationPosition.ProtoReflect.Descriptor instead.
 func (*LocationPosition) Descriptor() ([]byte, []int) {
-	return file_xfusionmock_proto_rawDescGZIP(), []int{16}
+	return file_xfusionmock_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *LocationPosition) GetLat() float64 {
@@ -1097,13 +1150,15 @@ type TerminalInfo struct {
 	TrackNo       string                 `protobuf:"bytes,4,opt,name=trackNo,proto3" json:"trackNo,omitempty"`        // 对象编号（如车牌号"沪A12345"）
 	TrackType     string                 `protobuf:"bytes,5,opt,name=trackType,proto3" json:"trackType,omitempty"`    // 对象类型：CAR-车辆, STAFF-人员
 	TrackName     string                 `protobuf:"bytes,6,opt,name=trackName,proto3" json:"trackName,omitempty"`    // 监控对象显示名称（如车牌号"沪A12345"）
+	OrgCode       string                 `protobuf:"bytes,7,opt,name=orgCode,proto3" json:"orgCode,omitempty"`
+	OrgName       string                 `protobuf:"bytes,8,opt,name=orgName,proto3" json:"orgName,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *TerminalInfo) Reset() {
 	*x = TerminalInfo{}
-	mi := &file_xfusionmock_proto_msgTypes[17]
+	mi := &file_xfusionmock_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1115,7 +1170,7 @@ func (x *TerminalInfo) String() string {
 func (*TerminalInfo) ProtoMessage() {}
 
 func (x *TerminalInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_xfusionmock_proto_msgTypes[17]
+	mi := &file_xfusionmock_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1128,7 +1183,7 @@ func (x *TerminalInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TerminalInfo.ProtoReflect.Descriptor instead.
 func (*TerminalInfo) Descriptor() ([]byte, []int) {
-	return file_xfusionmock_proto_rawDescGZIP(), []int{17}
+	return file_xfusionmock_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *TerminalInfo) GetTerminalId() int64 {
@@ -1173,6 +1228,20 @@ func (x *TerminalInfo) GetTrackName() string {
 	return ""
 }
 
+func (x *TerminalInfo) GetOrgCode() string {
+	if x != nil {
+		return x.OrgCode
+	}
+	return ""
+}
+
+func (x *TerminalInfo) GetOrgName() string {
+	if x != nil {
+		return x.OrgName
+	}
+	return ""
+}
+
 // Location 定位数据
 type Location struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1188,7 +1257,7 @@ type Location struct {
 
 func (x *Location) Reset() {
 	*x = Location{}
-	mi := &file_xfusionmock_proto_msgTypes[18]
+	mi := &file_xfusionmock_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1200,7 +1269,7 @@ func (x *Location) String() string {
 func (*Location) ProtoMessage() {}
 
 func (x *Location) ProtoReflect() protoreflect.Message {
-	mi := &file_xfusionmock_proto_msgTypes[18]
+	mi := &file_xfusionmock_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1213,7 +1282,7 @@ func (x *Location) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Location.ProtoReflect.Descriptor instead.
 func (*Location) Descriptor() ([]byte, []int) {
-	return file_xfusionmock_proto_rawDescGZIP(), []int{18}
+	return file_xfusionmock_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *Location) GetPosition() *Position {
@@ -1270,7 +1339,7 @@ type Position struct {
 
 func (x *Position) Reset() {
 	*x = Position{}
-	mi := &file_xfusionmock_proto_msgTypes[19]
+	mi := &file_xfusionmock_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1282,7 +1351,7 @@ func (x *Position) String() string {
 func (*Position) ProtoMessage() {}
 
 func (x *Position) ProtoReflect() protoreflect.Message {
-	mi := &file_xfusionmock_proto_msgTypes[19]
+	mi := &file_xfusionmock_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1295,7 +1364,7 @@ func (x *Position) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Position.ProtoReflect.Descriptor instead.
 func (*Position) Descriptor() ([]byte, []int) {
-	return file_xfusionmock_proto_rawDescGZIP(), []int{19}
+	return file_xfusionmock_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *Position) GetLat() float64 {
@@ -1330,7 +1399,7 @@ type BuildingInfo struct {
 
 func (x *BuildingInfo) Reset() {
 	*x = BuildingInfo{}
-	mi := &file_xfusionmock_proto_msgTypes[20]
+	mi := &file_xfusionmock_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1342,7 +1411,7 @@ func (x *BuildingInfo) String() string {
 func (*BuildingInfo) ProtoMessage() {}
 
 func (x *BuildingInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_xfusionmock_proto_msgTypes[20]
+	mi := &file_xfusionmock_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1355,7 +1424,7 @@ func (x *BuildingInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BuildingInfo.ProtoReflect.Descriptor instead.
 func (*BuildingInfo) Descriptor() ([]byte, []int) {
-	return file_xfusionmock_proto_rawDescGZIP(), []int{20}
+	return file_xfusionmock_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *BuildingInfo) GetBuildingId() int64 {
@@ -1387,7 +1456,7 @@ type Status struct {
 
 func (x *Status) Reset() {
 	*x = Status{}
-	mi := &file_xfusionmock_proto_msgTypes[21]
+	mi := &file_xfusionmock_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1399,7 +1468,7 @@ func (x *Status) String() string {
 func (*Status) ProtoMessage() {}
 
 func (x *Status) ProtoReflect() protoreflect.Message {
-	mi := &file_xfusionmock_proto_msgTypes[21]
+	mi := &file_xfusionmock_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1412,7 +1481,7 @@ func (x *Status) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Status.ProtoReflect.Descriptor instead.
 func (*Status) Descriptor() ([]byte, []int) {
-	return file_xfusionmock_proto_rawDescGZIP(), []int{21}
+	return file_xfusionmock_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *Status) GetAcc() bool {
@@ -1524,7 +1593,7 @@ const file_xfusionmock_proto_rawDesc = "" +
 	"\tepochTime\x18\x03 \x01(\x03R\tepochTime\x121\n" +
 	"\blocation\x18\x04 \x01(\v2\x15.xfusionmock.LocationR\blocation\x12=\n" +
 	"\fbuildingInfo\x18\x05 \x01(\v2\x19.xfusionmock.BuildingInfoR\fbuildingInfo\x12+\n" +
-	"\x06status\x18\x06 \x01(\v2\x13.xfusionmock.StatusR\x06status\"\xa3\x04\n" +
+	"\x06status\x18\x06 \x01(\v2\x13.xfusionmock.StatusR\x06status\"\xc3\x04\n" +
 	"\tAlarmData\x12\x1c\n" +
 	"\tdataTagV1\x18\x01 \x01(\tR\tdataTagV1\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x12\x12\n" +
@@ -1536,17 +1605,20 @@ const file_xfusionmock_proto_rawDesc = "" +
 	"\rtrackInfoList\x18\b \x03(\v2\x19.xfusionmock.TerminalInfoR\rtrackInfoList\x12\x1c\n" +
 	"\ttrackType\x18\t \x01(\tR\ttrackType\x129\n" +
 	"\bposition\x18\n" +
-	" \x01(\v2\x1d.xfusionmock.LocationPositionR\bposition\x12(\n" +
-	"\x0fstartFenceCodes\x18\v \x03(\tR\x0fstartFenceCodes\x12$\n" +
-	"\rendFenceCodes\x18\f \x03(\tR\rendFenceCodes\x12\x1c\n" +
+	" \x01(\v2\x1d.xfusionmock.LocationPositionR\bposition\x128\n" +
+	"\vstartFences\x18\v \x03(\v2\x16.xfusionmock.FenceInfoR\vstartFences\x124\n" +
+	"\tendFences\x18\f \x03(\v2\x16.xfusionmock.FenceInfoR\tendFences\x12\x1c\n" +
 	"\tstartTime\x18\r \x01(\x03R\tstartTime\x12\x18\n" +
 	"\aendTime\x18\x0e \x01(\x03R\aendTime\x12\x1a\n" +
 	"\bduration\x18\x0f \x01(\x05R\bduration\x12 \n" +
-	"\valarmStatus\x18\x10 \x01(\tR\valarmStatus\"H\n" +
+	"\valarmStatus\x18\x10 \x01(\tR\valarmStatus\"C\n" +
+	"\tFenceInfo\x12\x1c\n" +
+	"\tfenceCode\x18\x01 \x01(\tR\tfenceCode\x12\x18\n" +
+	"\aorgCode\x18\a \x01(\tR\aorgCode\"H\n" +
 	"\x10LocationPosition\x12\x10\n" +
 	"\x03lat\x18\x01 \x01(\x01R\x03lat\x12\x10\n" +
 	"\x03lon\x18\x02 \x01(\x01R\x03lon\x12\x10\n" +
-	"\x03alt\x18\x03 \x01(\x01R\x03alt\"\xbe\x01\n" +
+	"\x03alt\x18\x03 \x01(\x01R\x03alt\"\xf2\x01\n" +
 	"\fTerminalInfo\x12\x1e\n" +
 	"\n" +
 	"terminalId\x18\x01 \x01(\x03R\n" +
@@ -1557,7 +1629,9 @@ const file_xfusionmock_proto_rawDesc = "" +
 	"\atrackId\x18\x03 \x01(\x03R\atrackId\x12\x18\n" +
 	"\atrackNo\x18\x04 \x01(\tR\atrackNo\x12\x1c\n" +
 	"\ttrackType\x18\x05 \x01(\tR\ttrackType\x12\x1c\n" +
-	"\ttrackName\x18\x06 \x01(\tR\ttrackName\"\xd7\x01\n" +
+	"\ttrackName\x18\x06 \x01(\tR\ttrackName\x12\x18\n" +
+	"\aorgCode\x18\a \x01(\tR\aorgCode\x12\x18\n" +
+	"\aorgName\x18\b \x01(\tR\aorgName\"\xd7\x01\n" +
 	"\bLocation\x121\n" +
 	"\bposition\x18\x01 \x01(\v2\x15.xfusionmock.PositionR\bposition\x12\x14\n" +
 	"\x05speed\x18\x02 \x01(\x01R\x05speed\x12\x1c\n" +
@@ -1602,7 +1676,7 @@ func file_xfusionmock_proto_rawDescGZIP() []byte {
 	return file_xfusionmock_proto_rawDescData
 }
 
-var file_xfusionmock_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_xfusionmock_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_xfusionmock_proto_goTypes = []any{
 	(*Req)(nil),                 // 0: xfusionmock.Req
 	(*Res)(nil),                 // 1: xfusionmock.Res
@@ -1620,46 +1694,49 @@ var file_xfusionmock_proto_goTypes = []any{
 	(*EventData)(nil),           // 13: xfusionmock.EventData
 	(*TerminalData)(nil),        // 14: xfusionmock.TerminalData
 	(*AlarmData)(nil),           // 15: xfusionmock.AlarmData
-	(*LocationPosition)(nil),    // 16: xfusionmock.LocationPosition
-	(*TerminalInfo)(nil),        // 17: xfusionmock.TerminalInfo
-	(*Location)(nil),            // 18: xfusionmock.Location
-	(*Position)(nil),            // 19: xfusionmock.Position
-	(*BuildingInfo)(nil),        // 20: xfusionmock.BuildingInfo
-	(*Status)(nil),              // 21: xfusionmock.Status
+	(*FenceInfo)(nil),           // 16: xfusionmock.FenceInfo
+	(*LocationPosition)(nil),    // 17: xfusionmock.LocationPosition
+	(*TerminalInfo)(nil),        // 18: xfusionmock.TerminalInfo
+	(*Location)(nil),            // 19: xfusionmock.Location
+	(*Position)(nil),            // 20: xfusionmock.Position
+	(*BuildingInfo)(nil),        // 21: xfusionmock.BuildingInfo
+	(*Status)(nil),              // 22: xfusionmock.Status
 }
 var file_xfusionmock_proto_depIdxs = []int32{
 	14, // 0: xfusionmock.ReqPushPoint.data:type_name -> xfusionmock.TerminalData
 	15, // 1: xfusionmock.ReqPushAlarm.data:type_name -> xfusionmock.AlarmData
 	13, // 2: xfusionmock.ReqPushEvent.data:type_name -> xfusionmock.EventData
 	12, // 3: xfusionmock.ReqPushTerminalBind.data:type_name -> xfusionmock.TerminalBind
-	17, // 4: xfusionmock.EventData.terminalInfo:type_name -> xfusionmock.TerminalInfo
-	19, // 5: xfusionmock.EventData.position:type_name -> xfusionmock.Position
-	17, // 6: xfusionmock.TerminalData.terminalInfo:type_name -> xfusionmock.TerminalInfo
-	18, // 7: xfusionmock.TerminalData.location:type_name -> xfusionmock.Location
-	20, // 8: xfusionmock.TerminalData.buildingInfo:type_name -> xfusionmock.BuildingInfo
-	21, // 9: xfusionmock.TerminalData.status:type_name -> xfusionmock.Status
-	17, // 10: xfusionmock.AlarmData.trackInfoList:type_name -> xfusionmock.TerminalInfo
-	16, // 11: xfusionmock.AlarmData.position:type_name -> xfusionmock.LocationPosition
-	19, // 12: xfusionmock.Location.position:type_name -> xfusionmock.Position
-	0,  // 13: xfusionmock.XFusionMockRpc.Ping:input_type -> xfusionmock.Req
-	0,  // 14: xfusionmock.XFusionMockRpc.PingV1:input_type -> xfusionmock.Req
-	2,  // 15: xfusionmock.XFusionMockRpc.PushTest:input_type -> xfusionmock.ReqPushTest
-	4,  // 16: xfusionmock.XFusionMockRpc.PushPoint:input_type -> xfusionmock.ReqPushPoint
-	6,  // 17: xfusionmock.XFusionMockRpc.PushAlarm:input_type -> xfusionmock.ReqPushAlarm
-	8,  // 18: xfusionmock.XFusionMockRpc.PushEvent:input_type -> xfusionmock.ReqPushEvent
-	10, // 19: xfusionmock.XFusionMockRpc.PushTerminalBind:input_type -> xfusionmock.ReqPushTerminalBind
-	1,  // 20: xfusionmock.XFusionMockRpc.Ping:output_type -> xfusionmock.Res
-	1,  // 21: xfusionmock.XFusionMockRpc.PingV1:output_type -> xfusionmock.Res
-	3,  // 22: xfusionmock.XFusionMockRpc.PushTest:output_type -> xfusionmock.ResPushTest
-	5,  // 23: xfusionmock.XFusionMockRpc.PushPoint:output_type -> xfusionmock.ResPushPoint
-	7,  // 24: xfusionmock.XFusionMockRpc.PushAlarm:output_type -> xfusionmock.ResPushAlarm
-	9,  // 25: xfusionmock.XFusionMockRpc.PushEvent:output_type -> xfusionmock.ResPushEvent
-	11, // 26: xfusionmock.XFusionMockRpc.PushTerminalBind:output_type -> xfusionmock.ResPushTerminalBind
-	20, // [20:27] is the sub-list for method output_type
-	13, // [13:20] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	18, // 4: xfusionmock.EventData.terminalInfo:type_name -> xfusionmock.TerminalInfo
+	20, // 5: xfusionmock.EventData.position:type_name -> xfusionmock.Position
+	18, // 6: xfusionmock.TerminalData.terminalInfo:type_name -> xfusionmock.TerminalInfo
+	19, // 7: xfusionmock.TerminalData.location:type_name -> xfusionmock.Location
+	21, // 8: xfusionmock.TerminalData.buildingInfo:type_name -> xfusionmock.BuildingInfo
+	22, // 9: xfusionmock.TerminalData.status:type_name -> xfusionmock.Status
+	18, // 10: xfusionmock.AlarmData.trackInfoList:type_name -> xfusionmock.TerminalInfo
+	17, // 11: xfusionmock.AlarmData.position:type_name -> xfusionmock.LocationPosition
+	16, // 12: xfusionmock.AlarmData.startFences:type_name -> xfusionmock.FenceInfo
+	16, // 13: xfusionmock.AlarmData.endFences:type_name -> xfusionmock.FenceInfo
+	20, // 14: xfusionmock.Location.position:type_name -> xfusionmock.Position
+	0,  // 15: xfusionmock.XFusionMockRpc.Ping:input_type -> xfusionmock.Req
+	0,  // 16: xfusionmock.XFusionMockRpc.PingV1:input_type -> xfusionmock.Req
+	2,  // 17: xfusionmock.XFusionMockRpc.PushTest:input_type -> xfusionmock.ReqPushTest
+	4,  // 18: xfusionmock.XFusionMockRpc.PushPoint:input_type -> xfusionmock.ReqPushPoint
+	6,  // 19: xfusionmock.XFusionMockRpc.PushAlarm:input_type -> xfusionmock.ReqPushAlarm
+	8,  // 20: xfusionmock.XFusionMockRpc.PushEvent:input_type -> xfusionmock.ReqPushEvent
+	10, // 21: xfusionmock.XFusionMockRpc.PushTerminalBind:input_type -> xfusionmock.ReqPushTerminalBind
+	1,  // 22: xfusionmock.XFusionMockRpc.Ping:output_type -> xfusionmock.Res
+	1,  // 23: xfusionmock.XFusionMockRpc.PingV1:output_type -> xfusionmock.Res
+	3,  // 24: xfusionmock.XFusionMockRpc.PushTest:output_type -> xfusionmock.ResPushTest
+	5,  // 25: xfusionmock.XFusionMockRpc.PushPoint:output_type -> xfusionmock.ResPushPoint
+	7,  // 26: xfusionmock.XFusionMockRpc.PushAlarm:output_type -> xfusionmock.ResPushAlarm
+	9,  // 27: xfusionmock.XFusionMockRpc.PushEvent:output_type -> xfusionmock.ResPushEvent
+	11, // 28: xfusionmock.XFusionMockRpc.PushTerminalBind:output_type -> xfusionmock.ResPushTerminalBind
+	22, // [22:29] is the sub-list for method output_type
+	15, // [15:22] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_xfusionmock_proto_init() }
@@ -1673,7 +1750,7 @@ func file_xfusionmock_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_xfusionmock_proto_rawDesc), len(file_xfusionmock_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   22,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

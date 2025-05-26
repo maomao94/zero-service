@@ -100,12 +100,18 @@ message AlarmData {
   repeated TerminalInfo trackInfoList = 8 [json_name = "trackInfoList"]; // 报警涉及的主体信息列表
   string trackType = 9 [json_name = "trackType"]; // 监控对象类型：CAR-车辆 STAFF-人员
   LocationPosition position = 10 [json_name = "position"]; // 报警触发位置（WGS84坐标系）
-  repeated string startFenceCodes = 11 [json_name = "startFenceCodes"]; // 报警开始围栏code列表
-  repeated string endFenceCodes = 12 [json_name = "endFenceCodes"]; // 报警结束围栏code列表
+  repeated FenceInfo startFences = 11 [json_name = "startFences"]; // 报警开始围栏code列表
+  repeated FenceInfo endFences = 12 [json_name = "endFences"]; // 报警结束围栏code列表
   int64 startTime = 13 [json_name = "startTime"]; // 报警开始时间（Unix时间戳，毫秒级）
   int64 endTime = 14 [json_name = "endTime"]; // 报警结束时间（Unix时间戳，毫秒级）
   int32 duration = 15 [json_name = "duration"]; // 报警持续时长（单位：秒），由结束时间-开始时间计算得出
   string alarmStatus = 16 [json_name = "alarmStatus"]; // 报警当前状态：ON-进行中 OFF-已结束
+}
+
+// FenceInfo 围栏信息
+message FenceInfo {
+  string fenceCode = 1 [json_name = "fenceCode"]; // 围栏code
+  string orgCode = 7 [json_name = "orgCode"];
 }
 
 // LocationPosition 位置坐标
@@ -123,6 +129,8 @@ message TerminalInfo {
   string trackNo = 4 [json_name = "trackNo"]; // 对象编号（如车牌号"沪A12345"）
   string trackType = 5 [json_name = "trackType"]; // 对象类型：CAR-车辆, STAFF-人员
   string trackName = 6 [json_name = "trackName"]; // 监控对象显示名称（如车牌号"沪A12345"）
+  string orgCode = 7 [json_name = "orgCode"];
+  string orgName = 8 [json_name = "orgName"];
 }
 
 // Location 定位数据

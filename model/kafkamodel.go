@@ -79,9 +79,9 @@ type AlarmData struct {
 	// 报警触发位置（WGS84坐标系）
 	Position LocationPosition `json:"position"`
 	// 报警开始围栏code列表
-	StartFenceCodes []string `json:"startFenceCodes"`
+	StartFenceCodes []FenceInfo `json:"startFences"`
 	// 报警结束围栏code列表
-	EndFenceCodes []string `json:"endFenceCodes"`
+	EndFenceCodes []FenceInfo `json:"endFences"`
 	// 报警开始时间（Unix时间戳，毫秒级）
 	StartTime int64 `json:"startTime"`
 	// 报警结束时间（Unix时间戳，毫秒级）
@@ -90,6 +90,12 @@ type AlarmData struct {
 	Duration int `json:"duration"`
 	// 报警当前状态：ON-进行中 OFF-已结束
 	AlarmStatus string `json:"alarmStatus"`
+}
+
+// FenceInfo 围栏信息
+type FenceInfo struct {
+	FenceCode string `json:"fenceCode"` // 围栏code
+	OrgCode   string `json:"orgCode"`
 }
 
 // LocationPosition 位置坐标
@@ -116,6 +122,8 @@ type TerminalInfo struct {
 	TrackType string `json:"trackType"`
 	// 监控对象显示名称（如车牌号"沪A12345"）
 	TrackName string `json:"trackName"`
+	OrgCode   string `json:"orgCode"`
+	OrgName   string `json:"orgName"`
 }
 
 // Location 定位数据
