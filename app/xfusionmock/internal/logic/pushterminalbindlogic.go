@@ -44,7 +44,7 @@ func (l *PushTerminalBindLogic) PushTerminalBind(in *xfusionmock.ReqPushTerminal
 		data := model.TerminalBind{
 			DataTagV1:     l.svcCtx.Config.Name,
 			Action:        "BIND",
-			TerminalID:    100001,
+			TerminalID:    600000000001,
 			TerminalNo:    randomTerminal(),
 			StaffIdCardNo: "11011100011",
 			TrackID:       5001,
