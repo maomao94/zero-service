@@ -79,9 +79,9 @@ type AlarmData struct {
 	// 报警触发位置（WGS84坐标系）
 	Position LocationPosition `json:"position"`
 	// 报警开始围栏code列表
-	StartFenceCodes []FenceInfo `json:"startFences"`
+	StartFences []FenceInfo `json:"startFences"`
 	// 报警结束围栏code列表
-	EndFenceCodes []FenceInfo `json:"endFences"`
+	EndFences []FenceInfo `json:"endFences"`
 	// 报警开始时间（Unix时间戳，毫秒级）
 	StartTime int64 `json:"startTime"`
 	// 报警结束时间（Unix时间戳，毫秒级）

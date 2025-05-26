@@ -103,12 +103,12 @@ func (l *PushAlarmLogic) PushAlarm(in *xfusionmock.ReqPushAlarm) (*xfusionmock.R
 				Lon: 121.31891978,
 				Alt: 30.12,
 			},
-			StartFenceCodes: []model.FenceInfo{model.FenceInfo{FenceCode: randomFenceCode(), OrgCode: "001013002"}},
-			EndFenceCodes:   []model.FenceInfo{model.FenceInfo{FenceCode: randomFenceCode(), OrgCode: "001013002"}},
-			StartTime:       time.Now().Add(-30 * time.Minute).UnixMilli(),
-			EndTime:         time.Now().UnixMilli(),
-			Duration:        600,
-			AlarmStatus:     "ON",
+			StartFences: []model.FenceInfo{model.FenceInfo{FenceCode: randomFenceCode(), OrgCode: "001013002"}},
+			EndFences:   []model.FenceInfo{model.FenceInfo{FenceCode: randomFenceCode(), OrgCode: "001013002"}},
+			StartTime:   time.Now().Add(-30 * time.Minute).UnixMilli(),
+			EndTime:     time.Now().UnixMilli(),
+			Duration:    600,
+			AlarmStatus: "ON",
 		}
 		jsonData, err = json.Marshal(data)
 		if err != nil {
