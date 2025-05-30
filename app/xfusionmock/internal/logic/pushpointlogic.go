@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"encoding/json"
+	"github.com/duke-git/lancet/v2/random"
 	"time"
 	"zero-service/app/xfusionmock/internal/svc"
 	"zero-service/app/xfusionmock/xfusionmock"
@@ -29,6 +30,9 @@ func (l *PushPointLogic) PushPoint(in *xfusionmock.ReqPushPoint) (*xfusionmock.R
 	l.Info("PushPoint")
 	var jsonData []byte
 	var err error
+	seedFunc := func() float64 {
+		return 0.0001 * float64(random.RandInt(0, 10))
+	}
 	if in.PushMode {
 		jsonData, err = json.Marshal(in.Data)
 		if err != nil {
@@ -48,9 +52,10 @@ func (l *PushPointLogic) PushPoint(in *xfusionmock.ReqPushPoint) (*xfusionmock.R
 			EpochTime: time.Now().UnixMilli(),
 			Location: &model.Location{
 				Position: &model.Position{
-					Lat: 37.61774353704819,
-					Lon: 100.41165033341075,
-					Alt: 15.5,
+					// 随机减 小数点后四位
+					Lat: 37.61774353704819 - seedFunc(),
+					Lon: 100.41165033341075 - seedFunc(),
+					Alt: 3597.769531,
 				},
 				Speed:        55.1234,
 				Direction:    182.5,
