@@ -99,8 +99,8 @@ func (l *PushAlarmLogic) PushAlarm(in *xfusionmock.ReqPushAlarm) (*xfusionmock.R
 				},
 			},
 			Position: model.LocationPosition{
-				Lat: 31.31464578,
-				Lon: 121.31891978,
+				Lat: 37.61774353704819,
+				Lon: 100.41165033341075,
 				Alt: 30.12,
 			},
 			StartFences: []model.FenceInfo{model.FenceInfo{FenceCode: randomFenceCode(), OrgCode: "001013002"}},

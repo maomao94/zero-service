@@ -54,8 +54,8 @@ func (l *PushEventLogic) PushEvent(in *xfusionmock.ReqPushEvent) (*xfusionmock.R
 				TrackName:  l.svcCtx.Config.Name,
 			},
 			Position: model.Position{
-				Lat: 31.2304,
-				Lon: 121.4737,
+				Lat: 37.61774353704819,
+				Lon: 100.41165033341075,
 				Alt: 15.5,
 			},
 		}

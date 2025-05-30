@@ -48,8 +48,8 @@ func (l *PushPointLogic) PushPoint(in *xfusionmock.ReqPushPoint) (*xfusionmock.R
 			EpochTime: time.Now().UnixMilli(),
 			Location: &model.Location{
 				Position: &model.Position{
-					Lat: 31.2304,
-					Lon: 121.4737,
+					Lat: 37.61774353704819,
+					Lon: 100.41165033341075,
 					Alt: 15.5,
 				},
 				Speed:        55.1234,
