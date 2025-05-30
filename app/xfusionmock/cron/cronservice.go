@@ -28,7 +28,7 @@ func (s *CronService) Start() {
 		in := xfusionmock.ReqPushTest{}
 		logic.NewPushTestLogic(context.Background(), s.svcCtx).PushTest(&in)
 	})
-	_, _ = s.c.AddFunc(s.svcCtx.Config.PushCron, func() {
+	_, _ = s.c.AddFunc(s.svcCtx.Config.PushCronPoint, func() {
 		in := xfusionmock.ReqPushPoint{}
 		logic.NewPushPointLogic(context.Background(), s.svcCtx).PushPoint(&in)
 	})
