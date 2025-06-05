@@ -1,0 +1,42 @@
+Name: ieccaller.rpc
+ListenOn: 0.0.0.0:21004
+#Etcd:
+#  Hosts:
+#  - 127.0.0.1:2379
+#  Key: ieccaller.rpc
+Mode: dev
+Log:
+  Encoding: plain
+  #  Mode: file
+  Path: /opt/logs/ieccaller.rpc
+  Level: debug
+NacosConfig:
+  IsRegister: true
+  Host: 10.10.1.103
+  Port: 8848
+  Username: nacos
+  PassWord: test@1234ns
+  NamespaceId: 5b839313-ac3a-47a7-bf8d-6246576347ff
+  ServiceName: ieccaller
+# iec从站 coa 配置 用于定时总召唤，不配置，请自己触发总召唤
+IecCoaConfig:
+  - Host: 127.0.0.1
+    Port: 2404
+    Coa: 1
+  - Host: 127.0.0.1
+    Port: 2404
+    Coa: 1
+  - Host: 127.0.0.1
+    Port: 2404
+    Coa: 2
+# iec从站配置
+IecServerConfig:
+  - Host: 127.0.0.1
+    Port: 2404
+    LogEnable: true
+KafkaASDUConfig:
+  Brokers:
+    - 10.10.1.213:9094
+  Topic: asdu
+  IsPush: true
+InterrogationCmdCron: "*/60 * * * * *"

@@ -1,0 +1,37 @@
+version: '3'
+
+vars:
+  SSH_USER: "*"
+  SSH_HOST: "*"
+  SSH_PORT: "22"
+  SSH_PASSWORD: "*"
+  DOCKER_COMPOSE_PATH: "/home/*/docker-compose.yml"
+
+tasks:
+  restart-docker:
+    requires:
+      vars: [SERVICE_NAME]
+    cmds:
+      - echo "Restarting {{.SERVICE_NAME}} on remote server..."
+      - sshpass -p '{{.SSH_PASSWORD}}' ssh -p {{.SSH_PORT}} {{.SSH_USER}}@{{.SSH_HOST}} "cd $(dirname {{.DOCKER_COMPOSE_PATH}}) && docker compose -f {{.DOCKER_COMPOSE_PATH}} restart {{.SERVICE_NAME}}"
+
+  up-docker:
+    requires:
+      vars: [SERVICE_NAME]
+    cmds:
+      - echo "Updating {{.SERVICE_NAME}} on remote server..."
+      - sshpass -p '{{.SSH_PASSWORD}}' ssh -p {{.SSH_PORT}} {{.SSH_USER}}@{{.SSH_HOST}} "cd $(dirname {{.DOCKER_COMPOSE_PATH}}) && docker compose -f {{.DOCKER_COMPOSE_PATH}} up -d {{.SERVICE_NAME}}"
+
+  stop-docker:
+    requires:
+      vars: [SERVICE_NAME]
+    cmds:
+      - echo "Stopping {{.SERVICE_NAME}} on remote server..."
+      - sshpass -p '{{.SSH_PASSWORD}}' ssh -p {{.SSH_PORT}} {{.SSH_USER}}@{{.SSH_HOST}} "cd $(dirname {{.DOCKER_COMPOSE_PATH}}) && docker compose -f {{.DOCKER_COMPOSE_PATH}} stop {{.SERVICE_NAME}}"
+
+  start-docker:
+    requires:
+      vars: [SERVICE_NAME]
+    cmds:
+      - echo "Starting {{.SERVICE_NAME}} on remote server..."
+      - sshpass -p '{{.SSH_PASSWORD}}' ssh -p {{.SSH_PORT}} {{.SSH_USER}}@{{.SSH_HOST}} "cd $(dirname {{.DOCKER_COMPOSE_PATH}}) && docker compose -f {{.DOCKER_COMPOSE_PATH}} start {{.SERVICE_NAME}}"

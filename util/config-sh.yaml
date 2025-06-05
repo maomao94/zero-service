@@ -1,0 +1,20 @@
+zgh:
+  sshUser: "*"
+  sshHost: "*"
+  sshPort: "22"
+  sshPassword: "*"
+  path: "/home/*/app/docker-compose.yml"
+  serviceName:
+    - defect-server
+    - file-server
+  remark: "*"
+qny:
+  sshUser: "qny"
+  sshHost: "*"
+  sshPort: "22"
+  sshPassword: "*"
+  path: "/home/*/app/docker-compose.yml"
+  serviceName:
+    - other-server
+    - other1-server
+  remark: "*"

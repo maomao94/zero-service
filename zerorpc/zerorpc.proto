@@ -1,0 +1,166 @@
+syntax = "proto3";
+
+package zerorpc;
+option go_package = "./zerorpc";
+
+message Req {
+  string ping = 1;
+}
+
+message Res {
+  string pong = 1;
+}
+
+message SendDelayTaskReq {
+  string msgId = 1; // 唯一消息 id
+  string type = 2;
+  string body = 3;
+  int64 processIn = 4; // 分钟
+}
+
+message SendDelayTaskRes {
+}
+
+message ForwardTaskReq {
+  string msgId = 1; // 唯一消息 id
+  string body = 2;
+  int64 processIn = 3; // 秒
+  string triggerTime = 4; // 触发时间 2019-01-01 00:00:00 二选一
+  string url = 5; // 转发地址 POST json提交
+}
+
+message ForwardTaskRes {
+}
+
+message SendSMSVerifyCodeReq {
+  string mobile = 1;
+}
+
+message SendSMSVerifyCodeRes {
+  string code = 1;
+}
+
+message GetRegionListReq {
+  string parentCode = 1;
+}
+
+message GetRegionListRes {
+  repeated Region region = 1;
+}
+
+message Region {
+  string code = 1; // 区划编号
+  string parentCode = 2; // 父区划编号
+  string name = 3; // 区划名称
+  string provinceCode = 4; // 省级区划编号
+  string provinceName = 5; // 省级名称
+  string cityCode = 6; // 市级区划编号
+  string cityName = 7; // 市级名称
+  string districtCode = 8; // 区级区划编号
+  string districtName = 9; // 区级名称
+  int64 regionLevel = 10; // 层级
+}
+
+message GenerateTokenReq {
+  int64 userId = 1;
+}
+
+message GenerateTokenRes {
+  string accessToken = 1;
+  int64  accessExpire = 2;
+  int64  refreshAfter = 3;
+}
+
+message LoginReq{
+  string authType = 1; // miniProgram-小程序一键登录,mobile-手机号,unionId-微信unionId
+  string authKey = 2; // miniProgram-Code,mobile-验证码,unionId-sessionKey
+  string password = 3;
+}
+
+message LoginRes{
+  string accessToken = 1;
+  int64  accessExpire = 2;
+  int64  refreshAfter = 3;
+}
+
+message MiniProgramLoginReq{
+  string code = 1;
+}
+
+message MiniProgramLoginRes{
+  string openId = 1;
+  string unionId = 2;
+  string sessionKey = 3;
+}
+
+message GetUserInfoReq {
+  int64 id = 1;
+}
+
+message GetUserInfoRes {
+  User user = 1;
+}
+
+message EditUserInfoReq {
+  int64 id = 1;
+  string mobile = 2;
+  string nickname = 3;
+  int64  sex = 4;
+  string avatar = 5;
+}
+
+message EditUserInfoRes {
+}
+
+message User {
+  int64 id = 1;
+  string mobile = 2;
+  string nickname = 3;
+  int64  sex = 4;
+  string avatar = 5;
+  string openId = 6;
+}
+
+message WxPayJsApiReq {
+  string openId = 1;
+  string mchId = 2; // 商户id
+  string mchOrderNo = 3; // 商户订单号
+  int64 txnAmt = 4; // 支付金额 分
+  int64 realAmt = 5; // 实付金额 分
+  string body = 6; // 商品描述信息
+  int64 userId = 7; // 用户id
+}
+
+message WxPayJsApiRes {
+  string txnId = 1; // 支付订单号
+  string payConf = 2; // 调起支付 json
+  string prepayId = 7; // 预支付交易会话标识
+}
+
+service Zerorpc {
+  rpc Ping(Req) returns(Res);
+  // 发送延迟任务
+  rpc SendDelayTask(SendDelayTaskReq) returns(SendDelayTaskRes);
+  // 转发任务
+  rpc ForwardTask(ForwardTaskReq) returns(ForwardTaskRes);
+
+  // 发送手机号验证码
+  rpc SendSMSVerifyCode(SendSMSVerifyCodeReq) returns(SendSMSVerifyCodeRes);
+
+  // 获取区域列表
+  rpc GetRegionList(GetRegionListReq) returns(GetRegionListRes);
+
+  // 生成 token
+  rpc GenerateToken(GenerateTokenReq) returns(GenerateTokenRes);
+  // 登录
+  rpc Login (LoginReq) returns (LoginRes);
+  // 小程序登录
+  rpc MiniProgramLogin (MiniProgramLoginReq) returns (MiniProgramLoginRes);
+  // 用户详情
+  rpc GetUserInfo(GetUserInfoReq) returns (GetUserInfoRes);
+  // 编辑用户
+  rpc EditUserInfo(EditUserInfoReq) returns (EditUserInfoRes);
+
+  // JSAPI支付
+  rpc WxPayJsApi (WxPayJsApiReq) returns (WxPayJsApiRes);
+}

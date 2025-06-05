@@ -1,0 +1,18 @@
+Name: iecmock.rpc
+ListenOn: 0.0.0.0:21007
+#Etcd:
+#  Hosts:
+#  - 127.0.0.1:2379
+#  Key: iecmock.rpc
+Mode: dev
+Log:
+  Encoding: plain
+KafkaASDUConfig:
+  Name: asdu
+  Brokers:
+    - 10.10.1.213:9094
+  Group: iec-mock
+  Topic: asdu
+  Offset: first
+  Consumer: 1
+  Processors: 1

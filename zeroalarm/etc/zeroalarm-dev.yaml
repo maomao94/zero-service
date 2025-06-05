@@ -1,0 +1,31 @@
+Name: zero.alarm
+ListenOn: 0.0.0.0:21002
+Timeout: 15000
+#Etcd:
+#  Hosts:
+#  - 127.0.0.1:2379
+#  Key: zero.alarm
+Mode: dev
+Log:
+  Encoding: plain
+  Mode: file
+  Path: /opt/logs/zeroalarm
+Redis:
+  Host: 192.168.100.4:6379
+  Pass: Aexaa4Le@juziQ123
+  Type: node
+  Key: zero.alarm
+#链路追踪
+#Telemetry:
+#  Name: zero.alarm
+#  Endpoint: http://127.0.0.1:14268/api/traces
+#  Sampler: 1.0
+#  Batcher: jaeger
+Alarmx:
+  AppId: cli_a5dea62c2c3f500b
+  AppSecret: PA3dsq5JMkADErUvvuCFjgAJsKNRppP1
+  EncryptKey: 2h5sbZ96qBfmHC9vDjteyfT6QtmpPpMZ
+  VerificationToken: 7Tm89wiSVXSnwKXt5X0RNfeExOQdhonb
+  UserId:
+    - bc243e9d
+  Path: /home/zero/alarm/alarm.json

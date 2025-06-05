@@ -1,0 +1,28 @@
+Name: zero.rpc
+ListenOn: 0.0.0.0:21001
+Timeout: 10000
+#Etcd:
+#  Hosts:
+#  - 127.0.0.1:2379
+#  Key: zerorpc.rpc
+Mode: dev
+Log:
+  Encoding: plain
+  Mode: file
+  Path: /opt/logs/zerorpc
+Redis:
+  Host: 192.168.100.4:6379
+  Pass: Aexaa4Le@juziQ123
+  Type: node
+  Key: zero.rpc
+#链路追踪
+#Telemetry:
+#  Name: zero.rpc
+#  Endpoint: http://127.0.0.1:14268/api/traces
+#  Sampler: 1.0
+#  Batcher: jaeger
+ZeroAlarmConf:
+  Endpoints:
+    - 127.0.0.1:21002
+  NonBlock: false
+  Timeout: 10000

@@ -1,0 +1,37 @@
+syntax = "v1"
+
+type (
+	PingReply {
+		Msg string `json:"msg"`
+	}
+	ForwardRequest {
+		MsgId string `json:"msgId"`
+		Body  string `json:"body"`
+	}
+	ForwardReply  {}
+	UploadFileRequest {
+		MfsType int64 `json:"status,options=1|2,optional"` // 文件类型 1-临时文件 2-业务文件
+	}
+	DownloadFileRequest {
+		Path string `form:"path"` // 文件路径
+	}
+	UploadFileReply {
+		Name        string `json:"name"` // 文件名
+		Path        string `json:"path"` // 文件路径
+		Size        int64  `json:"size"` // 文件大小
+		ContextType string `json:"contextType"` // 文件类型
+		Url         string `json:"url"` // 文件下载
+	}
+)
+
+type (
+	EmptyReply  {}
+	BaseRequest {
+		Id int64 `json:"id"` // 主键ID
+	}
+	TenantRequest {
+		Id       int64  `json:"id"` // 主键ID
+		TenantId string `json:"tenantId"` // 租户ID
+	}
+)
+

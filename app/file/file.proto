@@ -1,0 +1,232 @@
+syntax = "proto3";
+
+package file;
+option go_package = "./file";
+
+message Req {
+  string ping = 1;
+}
+
+message Res {
+  string pong = 1;
+}
+
+message Oss{
+  int64 id = 1;
+  string tenantId = 2; // 租户ID
+  int64 category = 3; // 所属分类
+  string ossCode = 4; // 资源编号
+  string endpoint = 5; // 资源地址
+  string accessKey = 6; // accessKey
+  string secretKey = 7; // secretKey
+  string bucketName = 8; // 空间名
+  string appId = 9; // 应用ID TencentCOS需要
+  string region = 10; // 地域简称 TencentCOS需要
+  string remark = 11; // 备注
+  int64 status = 12; // 状态
+  string createTime = 13;
+  string updateTime = 15;
+}
+
+message File {
+  string link = 1; // 文件地址
+  string domain = 2; // 域名地址
+  string name = 3; // 文件名
+  int64 size = 4; // 文件大小
+  string formatSize = 5; // 格式化文件大小
+  string originalName = 6; // 初始文件名
+  string attachId = 7; // 附件表ID
+}
+
+message OssFile {
+  string link = 1; // 文件地址
+  string name = 2; // 文件名
+  int64 size = 3; // 文件大小
+  string formatSize = 4; // 格式化文件大小
+  string putTime = 5; // 文件上传时间
+  string contentType = 6; // 文件类型
+  string signUrl = 7; // 签名URL
+}
+
+message OssDetailReq{
+  int64 id = 1;
+}
+
+message OssDetailRes{
+  Oss oss = 1;
+}
+
+message OssListReq{
+  int64 page = 1; // 页码
+  int64 pageSize = 2; // 每页大小
+  string orderBy = 3; // 排序
+  string tenantId = 4; // 租户ID
+  int64 category = 5; // 所属分类
+}
+
+message OssListRes{
+  repeated Oss oss = 1;
+  int64 total = 2;
+}
+
+message CreateOssReq{
+  string tenantId = 1; // 租户ID
+  int64 category = 2; // 所属分类
+  string ossCode = 3; // 资源编号
+  string endpoint = 4; // 资源地址
+  string accessKey = 5; // accessKey
+  string secretKey = 6; // secretKey
+  string bucketName = 7; // 空间名
+  string appId = 8; // 应用ID TencentCOS需要
+  string region = 9; // 地域简称 TencentCOS需要
+  string remark = 10; // 备注
+}
+
+message CreateOssRes{
+  int64 id = 1;
+}
+
+message UpdateOssReq{
+  int64 id = 1;
+  string tenantId = 2; // 租户ID
+  int64 category = 3; // 所属分类
+  string ossCode = 4; // 资源编号
+  string endpoint = 5; // 资源地址
+  string accessKey = 6; // accessKey
+  string secretKey = 7; // secretKey
+  string bucketName = 8; // 空间名
+  string appId = 9; // 应用ID TencentCOS需要
+  string region = 10; // 地域简称 TencentCOS需要
+  string remark = 11; // 备注
+  int64 status = 12; // 状态
+}
+
+message UpdateOssRes{
+}
+
+message DeleteOssReq{
+  int64 id = 1;
+}
+
+message DeleteOssRes{
+  int64 id = 1;
+}
+
+message MakeBucketReq {
+  string tenantId = 1; // 租户ID
+  string code = 2; // 资源编号
+  string bucketName = 3; // 存储桶名称
+}
+
+message MakeBucketRes {
+}
+
+message RemoveBucketReq {
+  string tenantId = 1; // 租户ID
+  string code = 2; // 资源编号
+  string bucketName = 3; // 存储桶名称
+}
+
+message RemoveBucketRes {
+}
+
+message StatFileReq {
+  string tenantId = 1; // 租户ID
+  string code = 2; // 资源编号
+  string bucketName = 3; // 存储桶名称
+  string filename = 4; // 上传文件名
+  bool isSign = 5; // 是否生成签名
+  int32 expires = 6; // 过期时间 默认一小时 单位分钟
+}
+
+message StatFileRes{
+  OssFile ossFile = 1;
+}
+
+message SignUrlReq {
+  string tenantId = 1; // 租户ID
+  string code = 2; // 资源编号
+  string bucketName = 3; // 存储桶名称
+  string filename = 4; // 上传文件名
+  int32 expires = 5; // 过期时间 默认一小时 单位分钟
+}
+
+message SignUrlRes{
+  string url = 1; // 文件url
+}
+
+message PutFileReq {
+  string tenantId = 1; // 租户ID
+  string code = 2; // 资源编号
+  string bucketName = 3; // 存储桶名称
+  string filename = 4; // 上传文件名
+  string contentType = 5;
+  string path = 6; // 文件路径
+}
+
+message PutFileRes {
+  File file = 1;
+}
+
+message PutChunkFileReq {
+  string tenantId = 1; // 租户ID
+  string code = 2; // 资源编号
+  string bucketName = 3; // 存储桶名称
+  string filename = 4; // 上传文件名
+  string contentType = 5;
+  bytes content = 6;   // 文件内容
+  int64 size = 7; // 文件大小
+}
+
+message PutChunkFileRes {
+  File file = 1;
+  bool isEnd = 2; // 是否结束
+  int64 size = 3; // 文件大小
+}
+
+message GetFileReq {
+  string tenantId = 1; // 租户ID
+  string code = 2; // 资源编号
+  string bucketName = 3; // 存储桶名称
+  string filename = 4; // 上传文件名
+}
+
+message GetFileRes {
+  string filename = 1; // 上传文件名
+  string contentType = 2;
+  string path = 3; // 文件路径
+}
+
+message RemoveFileReq {
+  string tenantId = 1; // 租户ID
+  string code = 2; // 资源编号
+  string bucketName = 3; // 存储桶名称
+  string filename = 4; // 上传文件名
+}
+
+message RemoveFileRes {
+}
+
+message RemoveFilesReq {
+  string tenantId = 1; // 租户ID
+  string code = 2; // 资源编号
+  string bucketName = 3; // 存储桶名称
+  repeated string filename = 4; // 上传文件名
+}
+
+service FileRpc {
+  rpc Ping (Req) returns (Res);
+  rpc OssDetail (OssDetailReq) returns (OssDetailRes); // 查看存储详情
+  rpc OssList (OssListReq) returns (OssListRes); // 查看存储列表
+  rpc CreateOss (CreateOssReq) returns (CreateOssRes); // 创建存储
+  rpc UpdateOss (UpdateOssReq) returns (UpdateOssRes); // 更新存储
+  rpc DeleteOss (DeleteOssReq) returns (DeleteOssRes); // 删除存储
+  rpc MakeBucket (MakeBucketReq) returns (MakeBucketRes); // 创建存储桶
+  rpc RemoveBucket (RemoveBucketReq) returns (RemoveBucketRes); // 删除存储桶
+  rpc StatFile (StatFileReq) returns (StatFileRes); // 获取文件信息
+  rpc SignUrl (SignUrlReq) returns (SignUrlRes); // 生成文件url
+  rpc PutFile (PutFileReq) returns (PutFileRes); // 上传文件
+  rpc PutChunkFile (stream PutChunkFileReq) returns (stream PutChunkFileRes); // 上传文件
+  rpc RemoveFile (RemoveFileReq) returns (RemoveFileRes); // 删除文件
+  rpc RemoveFiles (RemoveFilesReq) returns (RemoveFileRes); // 批量删除文件
+}

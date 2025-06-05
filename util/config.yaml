@@ -1,0 +1,26 @@
+servers:
+  zgh:
+    sshUser: "test"
+    sshHost: "10.10.1.135"
+    sshPort: "22"
+    sshPassword: "test@1234!@#$"
+    path: "/home/test/docker/app/docker-compose.yml"
+    serviceName:
+      - name: "defect-server"
+        remark: "缺陷管理服务"
+      - name: "file-server"
+        remark: "文件管理服务"
+    remark: "中广核项目"
+
+  qny:
+    sshUser: "qny"
+    sshHost: "10.10.1.137"
+    sshPort: "22"
+    sshPassword: "test@1234!@#$"
+    path: "/home/test/docker/app/docker-compose.yml"
+    serviceName:
+      - name: "other-server"
+        remark: "其他服务"
+      - name: "other1-server"
+        remark: "其他服务1"
+    remark: "氢能源项目"

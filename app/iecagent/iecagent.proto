@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package iecagent;
+option go_package = "./iecagent";
+
+message Req {
+  string ping = 1;
+}
+
+message Res {
+  string pong = 1;
+}
+
+service IecAgent {
+  rpc Ping (Req) returns (Res);
+}

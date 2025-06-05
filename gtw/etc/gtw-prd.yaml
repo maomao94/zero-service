@@ -1,0 +1,24 @@
+Name: gtw
+Host: 0.0.0.0
+Port: 11001
+Timeout: 5000
+Mode: dev
+Log:
+  Encoding: json
+  Mode: file
+  Path: /opt/logs/gtw
+#链路追踪
+#Telemetry:
+#  Name: gtw
+#  Endpoint: http://127.0.0.1:14268/api/traces
+#  Sampler: 1.0
+#  Batcher: jaeger
+ZeroRpcConf:
+  Endpoints:
+    - 127.0.0.1:21001
+  NonBlock: true
+  Timeout: 3000
+JwtAuth:
+  AccessSecret: 629c6233-1a76-471b-bd25-b87208762219
+NfsRootPath: /opt/nfs
+DownloadUrl: http://127.0.0.1:11001/gtw/v1/mfs/downloadFile?path=

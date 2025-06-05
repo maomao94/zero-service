@@ -1,0 +1,25 @@
+Name: file.rpc
+ListenOn: 0.0.0.0:21003
+Timeout: 10000
+#Etcd:
+#  Hosts:
+#  - 127.0.0.1:2379
+#  Key: file.rpc
+Mode: dev
+Log:
+  Encoding: plain
+  Mode: file
+  Path: /opt/logs/file.rpc
+Redis:
+  Host: 127.0.0.1:36379
+  Type: node
+  Key: file.rpc
+  Pass: G62m50oigInC30sf
+Cache:
+  - Host: 127.0.0.1:36379
+    Pass: G62m50oigInC30sf
+Oss:
+  # 是否开启租户模式
+  TenantMode: true
+DB:
+  DataSource: root:123456@tcp(localhost:33069)/zero?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai

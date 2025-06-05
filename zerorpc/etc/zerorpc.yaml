@@ -1,0 +1,39 @@
+Name: zero.rpc
+ListenOn: 0.0.0.0:21001
+Timeout: 10000
+#Etcd:
+#  Hosts:
+#  - 127.0.0.1:2379
+#  Key: zerorpc.rpc
+Mode: dev
+Log:
+  Encoding: plain
+#  Mode: file
+#  Path: logs/zero.rpc
+Redis:
+  Host: 127.0.0.1:6379
+  Type: node
+  Key: zero.rpc
+Cache:
+  - Host: 127.0.0.1:6379
+    Pass:
+DB:
+  DataSource: root:123456@tcp(localhost:3306)/resource?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+#链路追踪
+#Telemetry:
+#  Name: zero.rpc
+#  Endpoint: http://127.0.0.1:14268/api/traces
+#  Sampler: 1.0
+#  Batcher: jaeger
+ZeroAlarmConf:
+  Endpoints:
+    - 127.0.0.1:21002
+  NonBlock: true
+  Timeout: 10000
+JwtAuth:
+  AccessSecret: 629c6233-1a76-471b-bd25-b87208762219
+  AccessExpire: 31536000
+# 小程序配置文档： https://powerwechat.artisan-cloud.com/zh/mini-program/index.html
+MiniProgram:
+  AppId: wxe1c5b62cdf6af9ea
+  Secret: 1962b233519271775bb9b403115f83bb

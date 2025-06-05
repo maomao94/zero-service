@@ -1,0 +1,36 @@
+Name: xfusionmock.rpc
+ListenOn: 0.0.0.0:21008
+#Etcd:
+#  Hosts:
+#  - 127.0.0.1:2379
+#  Key: xfusionmock.rpc
+Mode: dev
+Log:
+  Encoding: plain
+KafkaTestConfig:
+  Name: test
+  Brokers:
+    - 10.10.1.213:9094
+  Group: xfusion-mock
+  Topic: xfusion-test
+  Offset: first
+  Consumer: 1
+  Processors: 1
+KafkaPointConfig:
+  Brokers:
+    - 10.10.1.213:9094
+  Topic: xfusion-point
+KafkaAlarmConfig:
+  Brokers:
+    - 10.10.1.213:9094
+  Topic: xfusion-alarm
+KafkaEventConfig:
+  Brokers:
+    - 10.10.1.213:9094
+  Topic: xfusion-event
+KafkaTerminalBind:
+  Brokers:
+    - 10.10.1.213:9094
+  Topic: xfusion-terminal_bind
+PushCron: "*/60 * * * * *"
+PushCronPoint: "*/5 * * * * *"

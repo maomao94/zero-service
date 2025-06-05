@@ -1,0 +1,52 @@
+Name: gtw
+Host: 0.0.0.0
+Port: 11001
+Timeout: 5000
+Mode: dev
+#MaxBytes: 1073741824111
+Log:
+  Encoding: plain
+#  Mode: file
+  Path: /opt/logs/gtw
+#链路追踪
+#Telemetry:
+#  Name: gtw
+#  Endpoint: http://127.0.0.1:14268/api/traces
+#  Sampler: 1.0
+#  Batcher: jaeger
+Upstreams:
+  - Grpc:
+      Endpoints:
+      - 127.0.0.1:21007
+      NonBlock: true
+    # protoset mode
+    ProtoSets:
+      - app/xfusionmock/xfusionmock.pb
+    # Mappings can also be written in proto options
+    Mappings:
+      - Method: get
+        Path: /bff/ping
+        RpcPath: xfusionmock.XFusionMockRpc/Ping
+      - Method: post
+        Path: /bff/postPing
+        RpcPath: xfusionmock.XFusionMockRpc/Ping
+ZeroRpcConf:
+  Endpoints:
+    - 127.0.0.1:21001
+  NonBlock: true
+  Timeout: 3000
+FileRpcConf:
+  Endpoints:
+    - 127.0.0.1:21003
+  NonBlock: true
+  Timeout: 3000
+AdminRpcConf:
+  Endpoints:
+    - 127.0.0.1:1005
+#  Target: nacos://nacos:test@1234ns@10.10.1.103:8848/guns?namespaceid=public&timeout=5000s&notLoadCacheAtStart=true&updateCacheWhenEmpty=true
+  NonBlock: true
+  Timeout: 3000
+JwtAuth:
+  AccessSecret: 629c6233-1a76-471b-bd25-b87208762219
+NfsRootPath: /opt/nfs
+DownloadUrl: http://127.0.0.1:11001/gtw/v1/mfs/downloadFile?path=
