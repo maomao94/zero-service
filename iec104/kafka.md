@@ -86,7 +86,8 @@
 {
   "ioa": 2001,
   "value": true,
-  "qds": 0,
+  "qds": 208,
+  "qdsDesc":"QDS(11010000)[Blocked|NotTopical|Invalid]",
   "time": "2023-10-01 14:30:00"
 }
 ```
@@ -106,7 +107,8 @@
 {
   "ioa": 2002,
   "value": 0,
-  "qds": 0,
+  "qds": 208,
+  "qdsDesc":"QDS(11010000)[Blocked|NotTopical|Invalid]",
   "time": "2023-10-01 14:30:00"
 }
 ```
@@ -126,7 +128,8 @@
     "val": 63,
     "hasTransient": false
   },
-  "qds": 0,
+  "qds": 208,
+  "qdsDesc":"QDS(11010000)[Blocked|NotTopical|Invalid]",
   "time": "2023-10-01 14:30:00"
 }
 ```
@@ -144,7 +147,8 @@
 {
   "ioa": 4001,
   "value": 16384,
-  "qds": 0,
+  "qds": 208,
+  "qdsDesc":"QDS(11010000)[Blocked|NotTopical|Invalid]",
   "time": "2023-10-01 14:30:00"
 }
 ```
@@ -161,7 +165,8 @@
 {
   "ioa": 4002,
   "value": 220,
-  "qds": 0,
+  "qds": 208,
+  "qdsDesc":"QDS(11010000)[Blocked|NotTopical|Invalid]",
   "time": "2023-10-01 14:30:00"
 }
 ```
@@ -180,7 +185,8 @@
 {
   "ioa": 4002,
   "value": 220.5,
-  "qds": 0,
+  "qds": 208,
+  "qdsDesc":"QDS(11010000)[Blocked|NotTopical|Invalid]",
   "time": "2023-10-01 14:30:00"
 }
 ```
@@ -289,7 +295,8 @@
 {
   "ioa": 6001,
   "scd": 1,
-  "qds": 0
+  "qds": 208,
+  "qdsDesc":"QDS(11010000)[Blocked|NotTopical|Invalid]",
 }
 ```
 
@@ -303,11 +310,6 @@
 ## 4. 附录
 
 ### 附录A：品质描述（QDS/QDP）
-
-| 位 | 名称 | 描述   |
-|---|----|------|
-| 0 | 溢出 | 数据溢出 |
-| 1 | 无效 | 数据无效 |
 
 ### 附录B：继电保护事件类型
 

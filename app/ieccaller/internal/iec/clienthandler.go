@@ -145,6 +145,7 @@ func (c *ClientCall) onDoublePoint(packet *asdu.ASDU) {
 		var obj types.DoublePointInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
+		obj.QdsDesc = util.QdsString(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.host,
 			Port:   c.port,
@@ -164,6 +165,7 @@ func (c *ClientCall) onMeasuredValueScaled(packet *asdu.ASDU) {
 		var obj types.MeasuredValueScaledInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
+		obj.QdsDesc = util.QdsString(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.host,
 			Port:   c.port,
@@ -183,6 +185,7 @@ func (c *ClientCall) onMeasuredValueNormal(packet *asdu.ASDU) {
 		var obj types.MeasuredValueNormalInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
+		obj.QdsDesc = util.QdsString(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.host,
 			Port:   c.port,
@@ -203,6 +206,7 @@ func (c *ClientCall) onStepPosition(packet *asdu.ASDU) {
 		var obj types.StepPositionInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
+		obj.QdsDesc = util.QdsString(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.host,
 			Port:   c.port,
@@ -222,6 +226,7 @@ func (c *ClientCall) onBitString32(packet *asdu.ASDU) {
 		var obj types.BitString32Info
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
+		obj.QdsDesc = util.QdsString(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.host,
 			Port:   c.port,
@@ -241,6 +246,7 @@ func (c *ClientCall) onMeasuredValueFloat(packet *asdu.ASDU) {
 		var obj types.MeasuredValueFloatInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
+		obj.QdsDesc = util.QdsString(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.host,
 			Port:   c.port,
@@ -357,6 +363,7 @@ func (c *ClientCall) onPackedSinglePointWithSCD(packet *asdu.ASDU) {
 		c.logger.Infof("当前闭合的位: %v", activePoints)
 		c.logger.Infof("状态变化的位: %v", changedPoints)
 		copier.CopyWithOption(&obj, &p, types.Option)
+		obj.QdsDesc = util.QdsString(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.host,
 			Port:   c.port,

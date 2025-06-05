@@ -107,10 +107,11 @@ type IoaGetter interface {
 // asdu.M_SP_NA_1, asdu.M_SP_TA_1, asdu.M_SP_TB_1
 // 单点信息体
 type SinglePointInfo struct {
-	Ioa   uint   `json:"ioa"`   // 信息对象地址
-	Value bool   `json:"value"` // 状态值
-	Qds   byte   `json:"qds"`
-	Time  string `json:"time"`
+	Ioa     uint   `json:"ioa"`   // 信息对象地址
+	Value   bool   `json:"value"` // 状态值
+	Qds     byte   `json:"qds"`
+	QdsDesc string `json:"qdsDesc"`
+	Time    string `json:"time"`
 }
 
 func (s *SinglePointInfo) GetIoa() uint {
@@ -120,10 +121,11 @@ func (s *SinglePointInfo) GetIoa() uint {
 // asdu.M_DP_NA_1, asdu.M_DP_TA_1, asdu.M_DP_TB_1
 // 双点信息体
 type DoublePointInfo struct {
-	Ioa   uint   `json:"ioa"`   // 信息对象地址
-	Value byte   `json:"value"` // 状态值
-	Qds   byte   `json:"qds"`
-	Time  string `json:"time"`
+	Ioa     uint   `json:"ioa"`   // 信息对象地址
+	Value   byte   `json:"value"` // 状态值
+	Qds     byte   `json:"qds"`
+	QdsDesc string `json:"qdsDesc"`
+	Time    string `json:"time"`
 }
 
 func (s *DoublePointInfo) GetIoa() uint {
@@ -133,10 +135,11 @@ func (s *DoublePointInfo) GetIoa() uint {
 // asdu.M_ME_NB_1, asdu.M_ME_TB_1, asdu.M_ME_TE_1
 // 测量值,标度化值信息
 type MeasuredValueScaledInfo struct {
-	Ioa   uint   `json:"ioa"` // 信息对象地址
-	Value int16  `json:"value"`
-	Qds   byte   `json:"qds"`
-	Time  string `json:"time"`
+	Ioa     uint   `json:"ioa"` // 信息对象地址
+	Value   int16  `json:"value"`
+	Qds     byte   `json:"qds"`
+	QdsDesc string `json:"qdsDesc"`
+	Time    string `json:"time"`
 }
 
 func (s *MeasuredValueScaledInfo) GetIoa() uint {
@@ -150,9 +153,10 @@ type MeasuredValueNormalInfo struct {
 	// Normalize is a 16-bit normalized value in[-1, 1 − 2⁻¹⁵]..
 	// 规一化值 f归一= 32768 * f真实 / 满码值
 	// See companion standard 101, subclass 7.2.6.6.
-	Value int16  `json:"value"`
-	Qds   byte   `json:"qds"`
-	Time  string `json:"time"`
+	Value   int16  `json:"value"`
+	Qds     byte   `json:"qds"`
+	QdsDesc string `json:"qdsDesc"`
+	Time    string `json:"time"`
 }
 
 func (s *MeasuredValueNormalInfo) GetIoa() uint {
@@ -162,10 +166,11 @@ func (s *MeasuredValueNormalInfo) GetIoa() uint {
 // asdu.M_ST_NA_1, asdu.M_ST_TA_1, asdu.M_ST_TB_1
 // 步位置信息
 type StepPositionInfo struct {
-	Ioa   uint         `json:"ioa"` // 信息对象地址
-	Value StepPosition `json:"value"`
-	Qds   byte         `json:"qds"`
-	Time  string       `json:"time"`
+	Ioa     uint         `json:"ioa"` // 信息对象地址
+	Value   StepPosition `json:"value"`
+	Qds     byte         `json:"qds"`
+	QdsDesc string       `json:"qdsDesc"`
+	Time    string       `json:"time"`
 }
 
 // StepPosition is a measured value with transient state indication.
@@ -186,10 +191,11 @@ func (s *StepPositionInfo) GetIoa() uint {
 
 // asdu.M_BO_NA_1, asdu.M_BO_TA_1, asdu.M_BO_TB_1
 type BitString32Info struct {
-	Ioa   uint   `json:"ioa"` // 信息对象地址
-	Value uint32 `json:"value"`
-	Qds   byte   `json:"qds"`
-	Time  string `json:"time"`
+	Ioa     uint   `json:"ioa"` // 信息对象地址
+	Value   uint32 `json:"value"`
+	Qds     byte   `json:"qds"`
+	QdsDesc string `json:"qdsDesc"`
+	Time    string `json:"time"`
 }
 
 func (s *BitString32Info) GetIoa() uint {
@@ -199,10 +205,11 @@ func (s *BitString32Info) GetIoa() uint {
 // asdu.M_ME_NC_1, asdu.M_ME_TC_1, asdu.M_ME_TF_1
 // 测量值,短浮点数信息
 type MeasuredValueFloatInfo struct {
-	Ioa   uint    `json:"ioa"` // 信息对象地址
-	Value float32 `json:"value"`
-	Qds   byte    `json:"qds"`
-	Time  string  `json:"time"`
+	Ioa     uint    `json:"ioa"` // 信息对象地址
+	Value   float32 `json:"value"`
+	Qds     byte    `json:"qds"`
+	QdsDesc string  `json:"qdsDesc"`
+	Time    string  `json:"time"`
 }
 
 func (s *MeasuredValueFloatInfo) GetIoa() uint {
@@ -287,8 +294,9 @@ type PackedSinglePointWithSCDInfo struct {
 	Ioa uint `json:"ioa"` // 信息对象地址
 	// StatusAndStatusChangeDetection 状态和状态变位检出
 	// See companion standard 101, subclass 7.2.6.40.
-	Scd uint32 `json:"scd"`
-	Qds byte   `json:"qds"`
+	Scd     uint32 `json:"scd"`
+	Qds     byte   `json:"qds"`
+	QdsDesc string `json:"qdsDesc"`
 }
 
 func (s *PackedSinglePointWithSCDInfo) GetIoa() uint {
