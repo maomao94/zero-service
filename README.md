@@ -39,7 +39,7 @@ zero-service/
 
 - **ASDU 消息解析与生成**：支持多种类型 ASDU 消息的解析和生成。
 - **协议模拟**：提供 IEC 104 协议的模拟功能，用于测试和开发。
-- **Kafka 集成**：可与 Kafka 消息队列集成，实现高效的数据流处理。
+- **Kafka 集成**：可与 Kafka 消息队列集成，实现高效的数据流处理。 对接文档：[Kafka 消息对接文档](https://github.com/maomao94/zero-service/blob/master/iec104/kafka.md)
 
 #### 2.3 服务 `file`
 
