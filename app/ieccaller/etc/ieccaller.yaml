@@ -25,9 +25,6 @@ IecCoaConfig:
     Coa: 1
   - Host: 127.0.0.1
     Port: 2404
-    Coa: 1
-  - Host: 127.0.0.1
-    Port: 2404
     Coa: 2
 # iec从站配置
 IecServerConfig:
