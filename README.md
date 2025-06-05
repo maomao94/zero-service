@@ -1,0 +1,58 @@
+# zero-service
+##### go-zero 脚手架
+是一个基于 [go-zero](https://github.com/zeromicro/go-zero) 的微服务脚手架，旨在帮助开发者快速搭建高性能的微服务应用 `zero-service`
+
+``` 
+zero-service/
+├── admin            # 管理模块
+├── alarmx           # 告警相关功能
+├── app              # 应用核心逻辑
+├── common           # 公共工具和常量
+├── gtw              # 网关模块
+├── iec104           # IEC 104 协议相关实现
+├── model            # 数据模型定义
+├── ossx             # 对象存储相关功能
+├── util             # 工具库（如 Docker 工具等）
+├── file             # 文件服务模块，支持 gRPC 分片流上传和 OSS 上传
+├── zeroalarm        # 告警服务
+├── zerorpc          # RPC 服务
+├── .gitignore       # Git 忽略文件配置
+├── Dockerfile       # Docker 配置文件
+├── go.mod           # Go 模块依赖管理
+└── README.md        # 项目说明文档
+```
+## 核心功能模块
+
+### 1. BFF 网关 (`gtw`)
+`gtw` 是项目的 BFF 层网关，负责聚合后端微服务并为前端提供统一接口。它是整个系统的核心入口，可以作为 grpc 服务的入口，同时支持 grpc-gateway 的功能。
+### 2. `app` 模块
+
+`app` 模块是整个项目的核心部分，包含多个子服务，主要用于实现业务逻辑和外部系统交互。以下是 `app` 模块的主要功能和服务说明：
+
+#### 2.1 服务 `iecmock`
+`iecmock` 模块主要负责处理 Kafka 消息队列中的数据流，并提供 RPC 接口支持。该服务的功能包括： `iecmock``go-zero`
+- **Kafka 数据处理**：接收并处理 `ASDU` 数据流。
+- **RPC 接口**：通过 `IecMockRpcServer` 提供远程调用接口，支持开发和测试模式下的反射功能。
+
+#### 2.2 服务 `iec104` IEC 104 协议处理
+`iec104` 模块提供了对 IEC 104 协议中 ASDU 消息的全面处理功能。该模块旨在解析、生成和处理 ASDU 消息，支持与电力系统设备的通信。主要功能包括：
+
+- **ASDU 消息解析与生成**：支持多种类型 ASDU 消息的解析和生成。
+- **协议模拟**：提供 IEC 104 协议的模拟功能，用于测试和开发。
+- **Kafka 集成**：可与 Kafka 消息队列集成，实现高效的数据流处理。
+
+#### 2.3 服务 `file`
+
+`file` 模块提供文件服务功能，支持通过 gRPC 实现分片流上传，并集成了对象存储（OSS）上传能力。
+- **其他微服务**：更多微服务模块将逐步完善，详情请参考各模块目录下的文档
+## 注意事项
+1. **依赖管理**：确保 文件中的依赖项已正确安装。 `go.mod`
+2. **日志路径**：检查配置文件中的日志路径是否有效。
+3. **Kafka 配置**：确保 Kafka 集群地址和主题名称正确无误。
+4. 如果需要与 **Java** 应用混合开发，并入微服务体系，请参考  [Java 接入文档](https://yidongnan.github.io/grpc-spring-boot-starter/zh-CN/)
+
+## 相关链接
+- [go-zero 文档](https://github.com/zeromicro/go-zero)
+- [asynq 异步任务队列](https://github.com/hibiken/asynq/)
+- [squirrel SQL 构建器](https://github.com/Masterminds/squirrel)
+希望这个更新后的文档能更好地满足你的需求！如果还有其他需要补充的内容，请随时告诉我。
