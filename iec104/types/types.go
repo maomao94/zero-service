@@ -111,6 +111,11 @@ type SinglePointInfo struct {
 	Value   bool   `json:"value"` // 状态值
 	Qds     byte   `json:"qds"`
 	QdsDesc string `json:"qdsDesc"`
+	Ov      bool   `json:"ov"`
+	Bl      bool   `json:"bl"`
+	Sb      bool   `json:"sb"`
+	Nt      bool   `json:"nt"`
+	Iv      bool   `json:"iv"`
 	Time    string `json:"time"`
 }
 
@@ -125,6 +130,11 @@ type DoublePointInfo struct {
 	Value   byte   `json:"value"` // 状态值
 	Qds     byte   `json:"qds"`
 	QdsDesc string `json:"qdsDesc"`
+	Ov      bool   `json:"ov"`
+	Bl      bool   `json:"bl"`
+	Sb      bool   `json:"sb"`
+	Nt      bool   `json:"nt"`
+	Iv      bool   `json:"iv"`
 	Time    string `json:"time"`
 }
 
@@ -139,6 +149,11 @@ type MeasuredValueScaledInfo struct {
 	Value   int16  `json:"value"`
 	Qds     byte   `json:"qds"`
 	QdsDesc string `json:"qdsDesc"`
+	Ov      bool   `json:"ov"`
+	Bl      bool   `json:"bl"`
+	Sb      bool   `json:"sb"`
+	Nt      bool   `json:"nt"`
+	Iv      bool   `json:"iv"`
 	Time    string `json:"time"`
 }
 
@@ -156,6 +171,11 @@ type MeasuredValueNormalInfo struct {
 	Value   int16  `json:"value"`
 	Qds     byte   `json:"qds"`
 	QdsDesc string `json:"qdsDesc"`
+	Ov      bool   `json:"ov"`
+	Bl      bool   `json:"bl"`
+	Sb      bool   `json:"sb"`
+	Nt      bool   `json:"nt"`
+	Iv      bool   `json:"iv"`
 	Time    string `json:"time"`
 }
 
@@ -170,6 +190,11 @@ type StepPositionInfo struct {
 	Value   StepPosition `json:"value"`
 	Qds     byte         `json:"qds"`
 	QdsDesc string       `json:"qdsDesc"`
+	Ov      bool         `json:"ov"`
+	Bl      bool         `json:"bl"`
+	Sb      bool         `json:"sb"`
+	Nt      bool         `json:"nt"`
+	Iv      bool         `json:"iv"`
 	Time    string       `json:"time"`
 }
 
@@ -195,6 +220,11 @@ type BitString32Info struct {
 	Value   uint32 `json:"value"`
 	Qds     byte   `json:"qds"`
 	QdsDesc string `json:"qdsDesc"`
+	Ov      bool   `json:"ov"`
+	Bl      bool   `json:"bl"`
+	Sb      bool   `json:"sb"`
+	Nt      bool   `json:"nt"`
+	Iv      bool   `json:"iv"`
 	Time    string `json:"time"`
 }
 
@@ -209,6 +239,11 @@ type MeasuredValueFloatInfo struct {
 	Value   float32 `json:"value"`
 	Qds     byte    `json:"qds"`
 	QdsDesc string  `json:"qdsDesc"`
+	Ov      bool    `json:"ov"`
+	Bl      bool    `json:"bl"`
+	Sb      bool    `json:"sb"`
+	Nt      bool    `json:"nt"`
+	Iv      bool    `json:"iv"`
 	Time    string  `json:"time"`
 }
 
@@ -297,6 +332,11 @@ type PackedSinglePointWithSCDInfo struct {
 	Scd     uint32 `json:"scd"`
 	Qds     byte   `json:"qds"`
 	QdsDesc string `json:"qdsDesc"`
+	Ov      bool   `json:"ov"`
+	Bl      bool   `json:"bl"`
+	Sb      bool   `json:"sb"`
+	Nt      bool   `json:"nt"`
+	Iv      bool   `json:"iv"`
 }
 
 func (s *PackedSinglePointWithSCDInfo) GetIoa() uint {

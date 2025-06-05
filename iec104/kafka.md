@@ -86,8 +86,13 @@
 {
   "ioa": 2001,
   "value": true,
-  "qds": 208,
-  "qdsDesc":"QDS(11010000)[Blocked|NotTopical|Invalid]",
+  "qds": 160,
+  "qdsDesc": "QDS(10100000)[Substituted|Invalid]",
+  "ov": false,
+  "bl": false,
+  "sb": true,
+  "nt": false,
+  "iv": true,
   "time": "2023-10-01 14:30:00"
 }
 ```
@@ -107,8 +112,13 @@
 {
   "ioa": 2002,
   "value": 0,
-  "qds": 208,
-  "qdsDesc":"QDS(11010000)[Blocked|NotTopical|Invalid]",
+  "qds": 160,
+  "qdsDesc": "QDS(10100000)[Substituted|Invalid]",
+  "ov": false,
+  "bl": false,
+  "sb": true,
+  "nt": false,
+  "iv": true,
   "time": "2023-10-01 14:30:00"
 }
 ```
@@ -128,8 +138,13 @@
     "val": 63,
     "hasTransient": false
   },
-  "qds": 208,
-  "qdsDesc":"QDS(11010000)[Blocked|NotTopical|Invalid]",
+  "qds": 160,
+  "qdsDesc": "QDS(10100000)[Substituted|Invalid]",
+  "ov": false,
+  "bl": false,
+  "sb": true,
+  "nt": false,
+  "iv": true,
   "time": "2023-10-01 14:30:00"
 }
 ```
@@ -147,8 +162,13 @@
 {
   "ioa": 4001,
   "value": 16384,
-  "qds": 208,
-  "qdsDesc":"QDS(11010000)[Blocked|NotTopical|Invalid]",
+  "qds": 160,
+  "qdsDesc": "QDS(10100000)[Substituted|Invalid]",
+  "ov": false,
+  "bl": false,
+  "sb": true,
+  "nt": false,
+  "iv": true,
   "time": "2023-10-01 14:30:00"
 }
 ```
@@ -165,8 +185,13 @@
 {
   "ioa": 4002,
   "value": 220,
-  "qds": 208,
-  "qdsDesc":"QDS(11010000)[Blocked|NotTopical|Invalid]",
+  "qds": 160,
+  "qdsDesc": "QDS(10100000)[Substituted|Invalid]",
+  "ov": false,
+  "bl": false,
+  "sb": true,
+  "nt": false,
+  "iv": true,
   "time": "2023-10-01 14:30:00"
 }
 ```
@@ -185,8 +210,13 @@
 {
   "ioa": 4002,
   "value": 220.5,
-  "qds": 208,
-  "qdsDesc":"QDS(11010000)[Blocked|NotTopical|Invalid]",
+  "qds": 160,
+  "qdsDesc": "QDS(10100000)[Substituted|Invalid]",
+  "ov": false,
+  "bl": false,
+  "sb": true,
+  "nt": false,
+  "iv": true,
   "time": "2023-10-01 14:30:00"
 }
 ```
@@ -295,8 +325,13 @@
 {
   "ioa": 6001,
   "scd": 1,
-  "qds": 208,
-  "qdsDesc":"QDS(11010000)[Blocked|NotTopical|Invalid]",
+  "qds": 160,
+  "qdsDesc": "QDS(10100000)[Substituted|Invalid]",
+  "ov": false,
+  "bl": false,
+  "sb": true,
+  "nt": false,
+  "iv": true
 }
 ```
 

@@ -124,6 +124,12 @@ func (c *ClientCall) onSinglePoint(packet *asdu.ASDU) {
 		var obj types.SinglePointInfo
 		obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
+		obj.QdsDesc = util.QdsString(p.Qds)
+		obj.Ov = util.QdsIsOverflow(p.Qds)
+		obj.Bl = util.QdsIsBlocked(p.Qds)
+		obj.Sb = util.QdsIsSubstituted(p.Qds)
+		obj.Nt = util.QdsIsNotTopical(p.Qds)
+		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.host,
 			Port:   c.port,
@@ -146,6 +152,11 @@ func (c *ClientCall) onDoublePoint(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		obj.QdsDesc = util.QdsString(p.Qds)
+		obj.Ov = util.QdsIsOverflow(p.Qds)
+		obj.Bl = util.QdsIsBlocked(p.Qds)
+		obj.Sb = util.QdsIsSubstituted(p.Qds)
+		obj.Nt = util.QdsIsNotTopical(p.Qds)
+		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.host,
 			Port:   c.port,
@@ -166,6 +177,11 @@ func (c *ClientCall) onMeasuredValueScaled(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		obj.QdsDesc = util.QdsString(p.Qds)
+		obj.Ov = util.QdsIsOverflow(p.Qds)
+		obj.Bl = util.QdsIsBlocked(p.Qds)
+		obj.Sb = util.QdsIsSubstituted(p.Qds)
+		obj.Nt = util.QdsIsNotTopical(p.Qds)
+		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.host,
 			Port:   c.port,
@@ -186,6 +202,11 @@ func (c *ClientCall) onMeasuredValueNormal(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		obj.QdsDesc = util.QdsString(p.Qds)
+		obj.Ov = util.QdsIsOverflow(p.Qds)
+		obj.Bl = util.QdsIsBlocked(p.Qds)
+		obj.Sb = util.QdsIsSubstituted(p.Qds)
+		obj.Nt = util.QdsIsNotTopical(p.Qds)
+		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.host,
 			Port:   c.port,
@@ -207,6 +228,11 @@ func (c *ClientCall) onStepPosition(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		obj.QdsDesc = util.QdsString(p.Qds)
+		obj.Ov = util.QdsIsOverflow(p.Qds)
+		obj.Bl = util.QdsIsBlocked(p.Qds)
+		obj.Sb = util.QdsIsSubstituted(p.Qds)
+		obj.Nt = util.QdsIsNotTopical(p.Qds)
+		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.host,
 			Port:   c.port,
@@ -227,6 +253,11 @@ func (c *ClientCall) onBitString32(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		obj.QdsDesc = util.QdsString(p.Qds)
+		obj.Ov = util.QdsIsOverflow(p.Qds)
+		obj.Bl = util.QdsIsBlocked(p.Qds)
+		obj.Sb = util.QdsIsSubstituted(p.Qds)
+		obj.Nt = util.QdsIsNotTopical(p.Qds)
+		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.host,
 			Port:   c.port,
@@ -247,6 +278,11 @@ func (c *ClientCall) onMeasuredValueFloat(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		obj.QdsDesc = util.QdsString(p.Qds)
+		obj.Ov = util.QdsIsOverflow(p.Qds)
+		obj.Bl = util.QdsIsBlocked(p.Qds)
+		obj.Sb = util.QdsIsSubstituted(p.Qds)
+		obj.Nt = util.QdsIsNotTopical(p.Qds)
+		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.host,
 			Port:   c.port,
@@ -364,6 +400,11 @@ func (c *ClientCall) onPackedSinglePointWithSCD(packet *asdu.ASDU) {
 		c.logger.Infof("状态变化的位: %v", changedPoints)
 		copier.CopyWithOption(&obj, &p, types.Option)
 		obj.QdsDesc = util.QdsString(p.Qds)
+		obj.Ov = util.QdsIsOverflow(p.Qds)
+		obj.Bl = util.QdsIsBlocked(p.Qds)
+		obj.Sb = util.QdsIsSubstituted(p.Qds)
+		obj.Nt = util.QdsIsNotTopical(p.Qds)
+		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:   c.host,
 			Port:   c.port,
