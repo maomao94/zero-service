@@ -18,18 +18,12 @@ NacosConfig:
   PassWord: test@1234ns
   NamespaceId: 5b839313-ac3a-47a7-bf8d-6246576347ff
   ServiceName: ieccaller
-# iec从站 coa 配置 用于定时总召唤，不配置，请自己触发总召唤
-IecCoaConfig:
-  - Host: 127.0.0.1
-    Port: 2404
-    Coa: 1
-  - Host: 127.0.0.1
-    Port: 2404
-    Coa: 2
 # iec从站配置
 IecServerConfig:
   - Host: 127.0.0.1
     Port: 2404
+    # 定时总召唤COA
+    IcCoaList: [ 1,2 ]
     LogEnable: true
 KafkaASDUConfig:
   Brokers:

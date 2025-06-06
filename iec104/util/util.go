@@ -75,7 +75,7 @@ func QdsString(qds asdu.QualityDescriptor) string {
 	switch {
 	case qds == asdu.QDSGood:
 		// 完全为0的情况
-		return "QDSGood(00000000)"
+		return fmt.Sprintf("QDS(%s)[%s]", binaryStr, "QDSGood")
 	case len(flags) == 0:
 		// 没有标准标志位，但有保留位
 		return fmt.Sprintf("QDS(%s)[ReservedBits]", binaryStr)

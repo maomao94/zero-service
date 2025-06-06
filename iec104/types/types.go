@@ -25,7 +25,7 @@ var Option = copier.Option{
 					return nil, errors.New("src type not matching")
 				}
 
-				return carbon.CreateFromStdTime(s).Format("Y-m-d H:i:s"), nil
+				return carbon.CreateFromStdTime(s).Format(carbon.DateTimeMicroFormat), nil
 			},
 		},
 		{
@@ -62,7 +62,7 @@ type DateTime time.Time
 
 // 序列化为 yyyy-MM-dd HH:mm:ss
 func (t DateTime) MarshalJSON() ([]byte, error) {
-	ts := carbon.CreateFromStdTime(time.Time(t)).ToDateTimeString()
+	ts := carbon.CreateFromStdTime(time.Time(t)).ToDateTimeMicroString()
 	return json.Marshal(ts) // 直接返回格式化后的字符串
 }
 

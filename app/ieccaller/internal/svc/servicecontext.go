@@ -28,7 +28,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 
 func (svc ServiceContext) PushASDU(data *types.MsgBody) error {
 	key, _ := data.GetKey()
-	data.Time = carbon.Now().ToDateTimeString()
+	data.Time = carbon.Now().ToDateTimeMicroString()
 	byteData, err := json.Marshal(data)
 	if err != nil {
 		return fmt.Errorf("json marshal error %v", err)

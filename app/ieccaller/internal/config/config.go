@@ -8,18 +8,18 @@ import (
 
 type Config struct {
 	zrpc.RpcServerConf
-	KafkaASDUConfig      config.KqConfig
-	IecServerConfig      []iec104client.IecServerConfig
-	IecCoaConfig         []iec104client.CoaConfig
+	KafkaASDUConfig config.KqConfig
+	IecServerConfig []iec104client.IecServerConfig
+	//IecCoaConfig         []iec104client.CoaConfig
 	InterrogationCmdCron string
 
 	NacosConfig struct {
-		IsRegister  bool `json:",optional"`
+		IsRegister  bool
 		Host        string
 		Port        uint64
 		Username    string
 		PassWord    string
 		NamespaceId string
 		ServiceName string
-	}
+	} `json:",optional"`
 }

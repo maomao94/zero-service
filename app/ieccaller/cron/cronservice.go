@@ -2,6 +2,7 @@ package cron
 
 import (
 	"fmt"
+	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/robfig/cron/v3"
 	"github.com/zeromicro/go-zero/core/logx"
 	"zero-service/app/ieccaller/internal/svc"
@@ -24,36 +25,31 @@ func (s *CronService) Start() {
 	// stat
 	_, _ = s.c.AddFunc("*/60 * * * * *", func() {
 		clients := s.svcCtx.ClientManager.GetClients()
-		sessionCli := s.svcCtx.ClientManager.GetSessionClients()
 		clientsLen := len(clients)
-		sessionLen := len(sessionCli)
 		loss := 0
-		sessionLoss := 0
 		for v := range clients {
 			if !v.IsConnected() {
 				loss++
 			}
 		}
-
-		for _, v := range sessionCli {
-			if !v.GetCli().IsConnected() {
-				sessionLoss++
-			}
-		}
-		logx.Statf("(iec-104) client: %d, loss: %d, session: %d, loss: %d", clientsLen, loss, sessionLen, sessionLoss)
+		logx.Statf("(iec-104) client: %d, loss: %d", clientsLen, loss)
 	})
 
 	// 定时总召唤
 	_, _ = s.c.AddFunc(s.svcCtx.Config.InterrogationCmdCron, func() {
-		sessionCli := s.svcCtx.ClientManager.GetSessionClients()
-		for _, v := range sessionCli {
-			if v.GetCli().IsConnected() {
+		cliList := s.svcCtx.ClientManager.GetClients()
+		for cli, _ := range cliList {
+			if cli.IsConnected() {
 				// 发送总召唤
-				if err := v.GetCli().SendInterrogationCmd(uint16(v.GetConfig().Coa)); err != nil {
-					logx.Errorf("send interrogation cmd error %v\n", err)
-					continue
+				icCoaList := cli.GetIcCoaList()
+				for _, v := range icCoaList {
+					convertor.ToInt(v)
+					if err := cli.SendInterrogationCmd(v); err != nil {
+						logx.Errorf("send interrogation cmd error %v\n", err)
+						continue
+					}
+					logx.Infof("send interrogation cmd, serverUrl: %s, coa: %d", cli.GetServerUrl(), v)
 				}
-				logx.Infof("send interrogation cmd, host: %s, port: %d, coa: %d", v.GetConfig().Host, v.GetConfig().Port, v.GetConfig().Coa)
 			}
 		}
 	})
