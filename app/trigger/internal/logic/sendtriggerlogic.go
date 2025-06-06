@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/google/uuid"
 
-	"github.com/golang-module/carbon/v2"
+	"github.com/dromara/carbon/v2"
 	"github.com/hibiken/asynq"
 	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/jsonx"

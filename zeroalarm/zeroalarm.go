@@ -19,6 +19,7 @@ import (
 	"github.com/zeromicro/zero-contrib/zrpc/registry/nacos"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	_ "zero-service/common/carbonx"
 )
 
 var configFile = flag.String("f", "etc/zeroalarm.yaml", "the config file")

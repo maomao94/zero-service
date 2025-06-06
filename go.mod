@@ -7,10 +7,10 @@ toolchain go1.23.0
 require (
 	github.com/ArtisanCloud/PowerWeChat/v3 v3.2.39
 	github.com/Masterminds/squirrel v1.5.4
+	github.com/dromara/carbon/v2 v2.6.7
 	github.com/duke-git/lancet/v2 v2.3.6
 	github.com/go-playground/validator/v10 v10.10.0
 	github.com/golang-jwt/jwt/v4 v4.5.2
-	github.com/golang-module/carbon/v2 v2.6.6
 	github.com/google/uuid v1.6.0
 	github.com/hibiken/asynq v0.25.1
 	github.com/jinzhu/copier v0.4.0
@@ -62,7 +62,6 @@ require (
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/dromara/carbon/v2 v2.6.6 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/envoyproxy/go-control-plane v0.13.0 // indirect

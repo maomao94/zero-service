@@ -2,6 +2,10 @@ FROM golang:alpine AS builder
 
 LABEL stage=gobuilder
 
+# 指定容器时区:东八区
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 ENV CGO_ENABLED 0
 
 # 接收代理参数（构建时通过 --build-arg 传递）

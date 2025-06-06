@@ -15,7 +15,7 @@ import (
 	"zero-service/zeroalarm/zeroalarm"
 	"zero-service/zerorpc/tasktype"
 
-	"github.com/golang-module/carbon/v2"
+	"github.com/dromara/carbon/v2"
 	"zero-service/zerorpc/internal/svc"
 	"zero-service/zerorpc/zerorpc"
 
