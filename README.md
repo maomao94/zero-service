@@ -52,7 +52,9 @@ zero-service/
 4. 如果需要与 **Java** 应用混合开发，并入微服务体系，请参考  [Java 接入文档](https://yidongnan.github.io/grpc-spring-boot-starter/zh-CN/)
 
 ## 相关链接
-- [go-zero 文档](https://github.com/zeromicro/go-zero)
+- [go-zero 微服务框架](https://github.com/zeromicro/go-zero)
 - [asynq 异步任务队列](https://github.com/hibiken/asynq/)
+- [lancet 工具包](https://github.com/duke-git/lancet)
 - [squirrel SQL 构建器](https://github.com/Masterminds/squirrel)
+- [IEC104协议实现包](https://github.com/wendy512/iec104)
 希望这个更新后的文档能更好地满足你的需求！如果还有其他需要补充的内容，请随时告诉我。
