@@ -19,3 +19,4 @@ KafkaASDUConfig:
   Offset: first
   Consumer: 1
   Processors: 1
+  CommitInOrder: true
