@@ -31,8 +31,9 @@ type CoaConfig struct {
 type IecServerConfig struct {
 	Host      string
 	Port      int
+	IcCoaList []uint16       `json:",optional"`
+	MetaData  map[string]any `json:",optional"`
 	LogEnable bool
-	IcCoaList []uint16 `json:",optional"`
 }
 
 type Client struct {
@@ -47,6 +48,7 @@ type Settings struct {
 	Host              string
 	Port              int
 	IcCoaList         []uint16
+	MetaData          map[string]any
 	AutoConnect       bool          //自动重连
 	ReconnectInterval time.Duration //重连间隔
 	Cfg104            *cs104.Config //104协议规范配置
@@ -421,6 +423,7 @@ func MustNewIecServerClient(config IecServerConfig, call ASDUCall, manager *Clie
 	settings.Host = config.Host
 	settings.Port = config.Port
 	settings.IcCoaList = config.IcCoaList
+	settings.MetaData = config.MetaData
 	settings.ReconnectInterval = time.Minute
 	settings.AutoConnect = true
 	ctx := logx.ContextWithFields(context.Background(), logx.Field("host", settings.Host), logx.Field("port", settings.Port))

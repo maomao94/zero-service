@@ -24,6 +24,9 @@ IecServerConfig:
     Port: 2404
     # 定时总召唤COA
     IcCoaList: [ 1,2 ]
+    MetaData:
+      stationId: 330KV
+      arrayId: [ 1,2,3 ]
     LogEnable: true
 KafkaASDUConfig:
   Brokers:

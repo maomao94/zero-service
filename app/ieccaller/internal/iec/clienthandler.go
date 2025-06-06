@@ -13,22 +13,24 @@ import (
 )
 
 type ClientCall struct {
-	svcCtx *svc.ServiceContext
-	host   string
-	port   int
-	logger logx.Logger
+	svcCtx   *svc.ServiceContext
+	host     string
+	port     int
+	MetaData map[string]any
+	logger   logx.Logger
 }
 
-func NewClientCall(svcCtx *svc.ServiceContext, host string, port int) *ClientCall {
+func NewClientCall(svcCtx *svc.ServiceContext, host string, port int, metaData map[string]any) *ClientCall {
 	ctx := logx.ContextWithFields(context.Background(),
 		logx.Field("host", host),
 		logx.Field("port", port),
 	)
 	return &ClientCall{
-		svcCtx: svcCtx,
-		host:   host,
-		port:   port,
-		logger: logx.WithContext(ctx),
+		svcCtx:   svcCtx,
+		host:     host,
+		port:     port,
+		MetaData: metaData,
+		logger:   logx.WithContext(ctx),
 	}
 }
 
@@ -130,12 +132,13 @@ func (c *ClientCall) onSinglePoint(packet *asdu.ASDU) {
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
-			Host:   c.host,
-			Port:   c.port,
-			Asdu:   genASDUName(packet.Type),
-			TypeId: int(packet.Type),
-			Coa:    uint(coa),
-			Body:   &obj,
+			Host:     c.host,
+			Port:     c.port,
+			Asdu:     genASDUName(packet.Type),
+			TypeId:   int(packet.Type),
+			Coa:      uint(coa),
+			Body:     &obj,
+			MetaData: c.MetaData,
 		})
 	}
 }
@@ -157,12 +160,13 @@ func (c *ClientCall) onDoublePoint(packet *asdu.ASDU) {
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
-			Host:   c.host,
-			Port:   c.port,
-			Asdu:   genASDUName(packet.Type),
-			TypeId: int(packet.Type),
-			Coa:    uint(coa),
-			Body:   &obj,
+			Host:     c.host,
+			Port:     c.port,
+			Asdu:     genASDUName(packet.Type),
+			TypeId:   int(packet.Type),
+			Coa:      uint(coa),
+			Body:     &obj,
+			MetaData: c.MetaData,
 		})
 	}
 }
@@ -182,12 +186,13 @@ func (c *ClientCall) onMeasuredValueScaled(packet *asdu.ASDU) {
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
-			Host:   c.host,
-			Port:   c.port,
-			Asdu:   genASDUName(packet.Type),
-			TypeId: int(packet.Type),
-			Coa:    uint(coa),
-			Body:   &obj,
+			Host:     c.host,
+			Port:     c.port,
+			Asdu:     genASDUName(packet.Type),
+			TypeId:   int(packet.Type),
+			Coa:      uint(coa),
+			Body:     &obj,
+			MetaData: c.MetaData,
 		})
 	}
 }
@@ -207,12 +212,13 @@ func (c *ClientCall) onMeasuredValueNormal(packet *asdu.ASDU) {
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
-			Host:   c.host,
-			Port:   c.port,
-			Asdu:   genASDUName(packet.Type),
-			TypeId: int(packet.Type),
-			Coa:    uint(coa),
-			Body:   &obj,
+			Host:     c.host,
+			Port:     c.port,
+			Asdu:     genASDUName(packet.Type),
+			TypeId:   int(packet.Type),
+			Coa:      uint(coa),
+			Body:     &obj,
+			MetaData: c.MetaData,
 		})
 	}
 }
@@ -233,12 +239,13 @@ func (c *ClientCall) onStepPosition(packet *asdu.ASDU) {
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
-			Host:   c.host,
-			Port:   c.port,
-			Asdu:   genASDUName(packet.Type),
-			TypeId: int(packet.Type),
-			Coa:    uint(coa),
-			Body:   &obj,
+			Host:     c.host,
+			Port:     c.port,
+			Asdu:     genASDUName(packet.Type),
+			TypeId:   int(packet.Type),
+			Coa:      uint(coa),
+			Body:     &obj,
+			MetaData: c.MetaData,
 		})
 	}
 }
@@ -258,12 +265,13 @@ func (c *ClientCall) onBitString32(packet *asdu.ASDU) {
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
-			Host:   c.host,
-			Port:   c.port,
-			Asdu:   genASDUName(packet.Type),
-			TypeId: int(packet.Type),
-			Coa:    uint(coa),
-			Body:   &obj,
+			Host:     c.host,
+			Port:     c.port,
+			Asdu:     genASDUName(packet.Type),
+			TypeId:   int(packet.Type),
+			Coa:      uint(coa),
+			Body:     &obj,
+			MetaData: c.MetaData,
 		})
 	}
 }
@@ -283,12 +291,13 @@ func (c *ClientCall) onMeasuredValueFloat(packet *asdu.ASDU) {
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
-			Host:   c.host,
-			Port:   c.port,
-			Asdu:   genASDUName(packet.Type),
-			TypeId: int(packet.Type),
-			Coa:    uint(coa),
-			Body:   &obj,
+			Host:     c.host,
+			Port:     c.port,
+			Asdu:     genASDUName(packet.Type),
+			TypeId:   int(packet.Type),
+			Coa:      uint(coa),
+			Body:     &obj,
+			MetaData: c.MetaData,
 		})
 	}
 }
@@ -303,12 +312,13 @@ func (c *ClientCall) onIntegratedTotals(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
-			Host:   c.host,
-			Port:   c.port,
-			Asdu:   genASDUName(packet.Type),
-			TypeId: int(packet.Type),
-			Coa:    uint(coa),
-			Body:   &obj,
+			Host:     c.host,
+			Port:     c.port,
+			Asdu:     genASDUName(packet.Type),
+			TypeId:   int(packet.Type),
+			Coa:      uint(coa),
+			Body:     &obj,
+			MetaData: c.MetaData,
 		})
 	}
 }
@@ -323,12 +333,13 @@ func (c *ClientCall) onEventOfProtectionEquipment(packet *asdu.ASDU) {
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
-			Host:   c.host,
-			Port:   c.port,
-			Asdu:   genASDUName(packet.Type),
-			TypeId: int(packet.Type),
-			Coa:    uint(coa),
-			Body:   &obj,
+			Host:     c.host,
+			Port:     c.port,
+			Asdu:     genASDUName(packet.Type),
+			TypeId:   int(packet.Type),
+			Coa:      uint(coa),
+			Body:     &obj,
+			MetaData: c.MetaData,
 		})
 	}
 }
@@ -343,12 +354,13 @@ func (c *ClientCall) onPackedStartEventsOfProtectionEquipment(packet *asdu.ASDU)
 	//obj.Time = carbon.Now().ToDateTimeString()
 	copier.CopyWithOption(&obj, &p, types.Option)
 	_ = c.svcCtx.PushASDU(&types.MsgBody{
-		Host:   c.host,
-		Port:   c.port,
-		Asdu:   genASDUName(packet.Type),
-		TypeId: int(packet.Type),
-		Coa:    uint(coa),
-		Body:   &obj,
+		Host:     c.host,
+		Port:     c.port,
+		Asdu:     genASDUName(packet.Type),
+		TypeId:   int(packet.Type),
+		Coa:      uint(coa),
+		Body:     &obj,
+		MetaData: c.MetaData,
 	})
 }
 
@@ -366,12 +378,13 @@ func (c *ClientCall) onPackedOutputCircuitInfo(packet *asdu.ASDU) {
 	//obj.Time = carbon.Now().ToDateTimeString()
 	copier.CopyWithOption(&obj, &p, types.Option)
 	_ = c.svcCtx.PushASDU(&types.MsgBody{
-		Host:   c.host,
-		Port:   c.port,
-		Asdu:   genASDUName(packet.Type),
-		TypeId: int(packet.Type),
-		Coa:    uint(coa),
-		Body:   &obj,
+		Host:     c.host,
+		Port:     c.port,
+		Asdu:     genASDUName(packet.Type),
+		TypeId:   int(packet.Type),
+		Coa:      uint(coa),
+		Body:     &obj,
+		MetaData: c.MetaData,
 	})
 }
 
@@ -405,12 +418,13 @@ func (c *ClientCall) onPackedSinglePointWithSCD(packet *asdu.ASDU) {
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
-			Host:   c.host,
-			Port:   c.port,
-			Asdu:   genASDUName(packet.Type),
-			TypeId: int(packet.Type),
-			Coa:    uint(coa),
-			Body:   &obj,
+			Host:     c.host,
+			Port:     c.port,
+			Asdu:     genASDUName(packet.Type),
+			TypeId:   int(packet.Type),
+			Coa:      uint(coa),
+			Body:     &obj,
+			MetaData: c.MetaData,
 		})
 	}
 }
