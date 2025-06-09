@@ -17,7 +17,7 @@ NacosConfig:
   Username: nacos
   PassWord: test@1234ns
   NamespaceId: 5b839313-ac3a-47a7-bf8d-6246576347ff
-  ServiceName: ieccaller
+  ServiceName: iec-caller
 # iec从站配置
 IecServerConfig:
   - Host: 127.0.0.1

@@ -1,0 +1,30 @@
+Name: iecstash.rpc
+ListenOn: 0.0.0.0:8080
+#Etcd:
+#  Hosts:
+#  - 127.0.0.1:2379
+#  Key: iecstash.rpc
+Mode: dev
+Log:
+  Encoding: plain
+  #  Mode: file
+  Path: /opt/logs/iecstash.rpc
+  Level: debug
+NacosConfig:
+  IsRegister: true
+  Host: 10.10.1.103
+  Port: 8848
+  Username: nacos
+  PassWord: test@1234ns
+  NamespaceId: 5b839313-ac3a-47a7-bf8d-6246576347ff
+  ServiceName: iec-stash
+KafkaASDUConfig:
+  Name: asdu
+  Brokers:
+    - 10.10.1.213:9094
+  Group: iec-stash
+  Topic: asdu
+  Offset: first
+  Consumer: 1
+  Processors: 1
+  CommitInOrder: true

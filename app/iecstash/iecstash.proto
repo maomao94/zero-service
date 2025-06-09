@@ -1,6 +1,6 @@
 syntax = "proto3";
 package iecmock;
-option go_package = "./iecmock";
+option go_package = "./iecstash";
 
 message Req {
   string ping = 1;
@@ -10,6 +10,6 @@ message Res {
   string pong = 1;
 }
 
-service IecMockRpc {
+service IecStashRpc {
   rpc Ping (Req) returns (Res);
 }

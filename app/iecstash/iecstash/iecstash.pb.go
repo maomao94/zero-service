@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v5.29.3
-// source: iecmock.proto
+// source: iecstash.proto
 
-package iecmock
+package iecstash
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -30,7 +30,7 @@ type Req struct {
 
 func (x *Req) Reset() {
 	*x = Req{}
-	mi := &file_iecmock_proto_msgTypes[0]
+	mi := &file_iecstash_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -42,7 +42,7 @@ func (x *Req) String() string {
 func (*Req) ProtoMessage() {}
 
 func (x *Req) ProtoReflect() protoreflect.Message {
-	mi := &file_iecmock_proto_msgTypes[0]
+	mi := &file_iecstash_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -55,7 +55,7 @@ func (x *Req) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Req.ProtoReflect.Descriptor instead.
 func (*Req) Descriptor() ([]byte, []int) {
-	return file_iecmock_proto_rawDescGZIP(), []int{0}
+	return file_iecstash_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Req) GetPing() string {
@@ -74,7 +74,7 @@ type Res struct {
 
 func (x *Res) Reset() {
 	*x = Res{}
-	mi := &file_iecmock_proto_msgTypes[1]
+	mi := &file_iecstash_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -86,7 +86,7 @@ func (x *Res) String() string {
 func (*Res) ProtoMessage() {}
 
 func (x *Res) ProtoReflect() protoreflect.Message {
-	mi := &file_iecmock_proto_msgTypes[1]
+	mi := &file_iecstash_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -99,7 +99,7 @@ func (x *Res) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Res.ProtoReflect.Descriptor instead.
 func (*Res) Descriptor() ([]byte, []int) {
-	return file_iecmock_proto_rawDescGZIP(), []int{1}
+	return file_iecstash_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Res) GetPong() string {
@@ -109,39 +109,39 @@ func (x *Res) GetPong() string {
 	return ""
 }
 
-var File_iecmock_proto protoreflect.FileDescriptor
+var File_iecstash_proto protoreflect.FileDescriptor
 
-const file_iecmock_proto_rawDesc = "" +
+const file_iecstash_proto_rawDesc = "" +
 	"\n" +
-	"\riecmock.proto\x12\aiecmock\"\x19\n" +
+	"\x0eiecstash.proto\x12\aiecmock\"\x19\n" +
 	"\x03Req\x12\x12\n" +
 	"\x04ping\x18\x01 \x01(\tR\x04ping\"\x19\n" +
 	"\x03Res\x12\x12\n" +
-	"\x04pong\x18\x01 \x01(\tR\x04pong20\n" +
-	"\n" +
-	"IecMockRpc\x12\"\n" +
-	"\x04Ping\x12\f.iecmock.Req\x1a\f.iecmock.ResB\vZ\t./iecmockb\x06proto3"
+	"\x04pong\x18\x01 \x01(\tR\x04pong21\n" +
+	"\vIecStashRpc\x12\"\n" +
+	"\x04Ping\x12\f.iecmock.Req\x1a\f.iecmock.ResB\fZ\n" +
+	"./iecstashb\x06proto3"
 
 var (
-	file_iecmock_proto_rawDescOnce sync.Once
-	file_iecmock_proto_rawDescData []byte
+	file_iecstash_proto_rawDescOnce sync.Once
+	file_iecstash_proto_rawDescData []byte
 )
 
-func file_iecmock_proto_rawDescGZIP() []byte {
-	file_iecmock_proto_rawDescOnce.Do(func() {
-		file_iecmock_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_iecmock_proto_rawDesc), len(file_iecmock_proto_rawDesc)))
+func file_iecstash_proto_rawDescGZIP() []byte {
+	file_iecstash_proto_rawDescOnce.Do(func() {
+		file_iecstash_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_iecstash_proto_rawDesc), len(file_iecstash_proto_rawDesc)))
 	})
-	return file_iecmock_proto_rawDescData
+	return file_iecstash_proto_rawDescData
 }
 
-var file_iecmock_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_iecmock_proto_goTypes = []any{
+var file_iecstash_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_iecstash_proto_goTypes = []any{
 	(*Req)(nil), // 0: iecmock.Req
 	(*Res)(nil), // 1: iecmock.Res
 }
-var file_iecmock_proto_depIdxs = []int32{
-	0, // 0: iecmock.IecMockRpc.Ping:input_type -> iecmock.Req
-	1, // 1: iecmock.IecMockRpc.Ping:output_type -> iecmock.Res
+var file_iecstash_proto_depIdxs = []int32{
+	0, // 0: iecmock.IecStashRpc.Ping:input_type -> iecmock.Req
+	1, // 1: iecmock.IecStashRpc.Ping:output_type -> iecmock.Res
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -149,26 +149,26 @@ var file_iecmock_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_iecmock_proto_init() }
-func file_iecmock_proto_init() {
-	if File_iecmock_proto != nil {
+func init() { file_iecstash_proto_init() }
+func file_iecstash_proto_init() {
+	if File_iecstash_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_iecmock_proto_rawDesc), len(file_iecmock_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_iecstash_proto_rawDesc), len(file_iecstash_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_iecmock_proto_goTypes,
-		DependencyIndexes: file_iecmock_proto_depIdxs,
-		MessageInfos:      file_iecmock_proto_msgTypes,
+		GoTypes:           file_iecstash_proto_goTypes,
+		DependencyIndexes: file_iecstash_proto_depIdxs,
+		MessageInfos:      file_iecstash_proto_msgTypes,
 	}.Build()
-	File_iecmock_proto = out.File
-	file_iecmock_proto_goTypes = nil
-	file_iecmock_proto_depIdxs = nil
+	File_iecstash_proto = out.File
+	file_iecstash_proto_goTypes = nil
+	file_iecstash_proto_depIdxs = nil
 }

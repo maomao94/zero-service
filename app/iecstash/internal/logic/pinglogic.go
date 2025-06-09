@@ -3,8 +3,8 @@ package logic
 import (
 	"context"
 
-	"zero-service/app/iecmock/iecmock"
-	"zero-service/app/iecmock/internal/svc"
+	"zero-service/app/iecstash/iecstash"
+	"zero-service/app/iecstash/internal/svc"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -23,8 +23,6 @@ func NewPingLogic(ctx context.Context, svcCtx *svc.ServiceContext) *PingLogic {
 	}
 }
 
-func (l *PingLogic) Ping(in *iecmock.Req) (*iecmock.Res, error) {
-	// todo: add your logic here and delete this line
-
-	return &iecmock.Res{}, nil
+func (l *PingLogic) Ping(in *iecstash.Req) (*iecstash.Res, error) {
+	return &iecstash.Res{Pong: in.Ping}, nil
 }
