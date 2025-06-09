@@ -33,3 +33,5 @@ IecStreamRpcConf:
     - 127.0.0.1:21009
   NonBlock: true
   Timeout: 3000
+# 10M 提交一次
+PushAsduChunkBytes: 10485760

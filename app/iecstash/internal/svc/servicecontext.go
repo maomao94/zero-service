@@ -22,7 +22,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	return &ServiceContext{
 		Config:          c,
 		IecStreamRpcCli: iecStreamRpcCli,
-		AsduPusher:      NewAsduPusher(iecStreamRpcCli),
+		AsduPusher:      NewAsduPusher(iecStreamRpcCli, c.PushAsduChunkBytes),
 	}
 }
 
@@ -62,9 +62,9 @@ func (w *AsduPusher) execute(vals []interface{}) {
 	})
 }
 
-func NewAsduPusher(iecStreamRpcCli iecstream.IecStreamRpcClient) *AsduPusher {
+func NewAsduPusher(iecStreamRpcCli iecstream.IecStreamRpcClient, ChunkBytes int) *AsduPusher {
 	writer := AsduPusher{}
-	writer.inserter = executors.NewChunkExecutor(writer.execute, executors.WithChunkBytes(1048))
+	writer.inserter = executors.NewChunkExecutor(writer.execute, executors.WithChunkBytes(ChunkBytes))
 	writer.IecStreamRpcCli = iecStreamRpcCli
 	return &writer
 }

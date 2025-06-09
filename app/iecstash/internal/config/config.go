@@ -17,5 +17,6 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
-	IecStreamRpcConf zrpc.RpcClientConf
+	IecStreamRpcConf   zrpc.RpcClientConf
+	PushAsduChunkBytes int `json:",default=10485760"` // 10M
 }
