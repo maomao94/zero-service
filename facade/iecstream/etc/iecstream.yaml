@@ -1,5 +1,8 @@
 Name: iecstream.rpc
 ListenOn: 0.0.0.0:21009
+Middlewares:
+  StatConf:
+    IgnoreContentMethods: [ /pb.IecStreamRpc/pushChunkAsdu ]
 #Etcd:
 #  Hosts:
 #  - 127.0.0.1:2379
