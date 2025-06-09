@@ -1,5 +1,5 @@
 Name: iecstash.rpc
-ListenOn: 0.0.0.0:8080
+ListenOn: 0.0.0.0:21008
 #Etcd:
 #  Hosts:
 #  - 127.0.0.1:2379
@@ -28,3 +28,8 @@ KafkaASDUConfig:
   Consumer: 1
   Processors: 1
   CommitInOrder: true
+IecStreamRpcConf:
+  Endpoints:
+    - 127.0.0.1:21009
+  NonBlock: true
+  Timeout: 3000

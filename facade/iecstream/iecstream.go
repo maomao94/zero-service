@@ -5,16 +5,14 @@ import (
 	"fmt"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
-	"github.com/zeromicro/go-queue/kq"
 	"github.com/zeromicro/go-zero/core/logx"
-	"zero-service/app/iecstash/kafka"
 	interceptor "zero-service/common/Interceptor/rpcserver"
 	"zero-service/common/nacos"
 
-	"zero-service/app/iecstash/iecstash"
-	"zero-service/app/iecstash/internal/config"
-	"zero-service/app/iecstash/internal/server"
-	"zero-service/app/iecstash/internal/svc"
+	"zero-service/facade/iecstream/iecstream"
+	"zero-service/facade/iecstream/internal/config"
+	"zero-service/facade/iecstream/internal/server"
+	"zero-service/facade/iecstream/internal/svc"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/service"
@@ -24,7 +22,7 @@ import (
 	_ "zero-service/common/carbonx"
 )
 
-var configFile = flag.String("f", "etc/iecstash.yaml", "the config file")
+var configFile = flag.String("f", "etc/iecstream.yaml", "the config file")
 
 func main() {
 	flag.Parse()
@@ -34,7 +32,7 @@ func main() {
 	ctx := svc.NewServiceContext(c)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
-		iecstash.RegisterIecStashRpcServer(grpcServer, server.NewIecStashRpcServer(ctx))
+		iecstream.RegisterIecStreamRpcServer(grpcServer, server.NewIecStreamRpcServer(ctx))
 
 		if c.Mode == service.DevMode || c.Mode == service.TestMode {
 			reflection.Register(grpcServer)
@@ -69,10 +67,6 @@ func main() {
 	defer serviceGroup.Stop()
 	logx.AddGlobalFields(logx.Field("app", c.Name))
 	serviceGroup.Add(s)
-
-	// kafka
-	c.KafkaASDUConfig.ServiceConf = c.ServiceConf
-	serviceGroup.Add(kq.MustNewQueue(c.KafkaASDUConfig, kafka.NewAsdu(ctx)))
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
 	serviceGroup.Start()

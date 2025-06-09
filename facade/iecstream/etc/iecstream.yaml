@@ -1,0 +1,20 @@
+Name: iecstream.rpc
+ListenOn: 0.0.0.0:21009
+#Etcd:
+#  Hosts:
+#  - 127.0.0.1:2379
+#  Key: iecstream.rpc
+Mode: dev
+Log:
+  Encoding: plain
+  #  Mode: file
+  Path: /opt/logs/iecstream.rpc
+  Level: debug
+NacosConfig:
+  IsRegister: true
+  Host: 10.10.1.103
+  Port: 8848
+  Username: nacos
+  PassWord: test@1234ns
+  NamespaceId: 5b839313-ac3a-47a7-bf8d-6246576347ff
+  ServiceName: iec-stream

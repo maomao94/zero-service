@@ -1,14 +1,10 @@
 package config
 
-import (
-	"github.com/zeromicro/go-queue/kq"
-	"github.com/zeromicro/go-zero/zrpc"
-)
+import "github.com/zeromicro/go-zero/zrpc"
 
 type Config struct {
 	zrpc.RpcServerConf
-	KafkaASDUConfig kq.KqConf
-	NacosConfig     struct {
+	NacosConfig struct {
 		IsRegister  bool
 		Host        string
 		Port        uint64
@@ -17,5 +13,4 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
-	IecStreamRpcConf zrpc.RpcClientConf
 }
