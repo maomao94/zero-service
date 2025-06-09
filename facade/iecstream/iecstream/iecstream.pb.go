@@ -111,7 +111,7 @@ func (x *Res) GetPong() string {
 
 type PushChunkAsduReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Info          *MsgBody               `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
+	MsgBody       []*MsgBody             `protobuf:"bytes,1,rep,name=msgBody,proto3" json:"msgBody,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -146,9 +146,9 @@ func (*PushChunkAsduReq) Descriptor() ([]byte, []int) {
 	return file_iecstream_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *PushChunkAsduReq) GetInfo() *MsgBody {
+func (x *PushChunkAsduReq) GetMsgBody() []*MsgBody {
 	if x != nil {
-		return x.Info
+		return x.MsgBody
 	}
 	return nil
 }
@@ -191,29 +191,16 @@ func (*PushChunkAsduRes) Descriptor() ([]byte, []int) {
 
 // 消息体结构
 type MsgBody struct {
-	state  protoimpl.MessageState `protogen:"open.v1"`
-	Host   string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
-	Port   int32                  `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
-	Asdu   string                 `protobuf:"bytes,3,opt,name=asdu,proto3" json:"asdu,omitempty"`
-	TypeId int32                  `protobuf:"varint,4,opt,name=type_id,json=typeId,proto3" json:"type_id,omitempty"`
-	Coa    uint32                 `protobuf:"varint,5,opt,name=coa,proto3" json:"coa,omitempty"`
-	// Types that are valid to be assigned to Body:
-	//
-	//	*MsgBody_SinglePointInfo
-	//	*MsgBody_DoublePointInfo
-	//	*MsgBody_MeasuredValueScaledInfo
-	//	*MsgBody_MeasuredValueNormalInfo
-	//	*MsgBody_StepPositionInfo
-	//	*MsgBody_BitString32Info
-	//	*MsgBody_MeasuredValueFloatInfo
-	//	*MsgBody_BinaryCounterReadingInfo
-	//	*MsgBody_EventOfProtectionEquipmentInfo
-	//	*MsgBody_PackedStartEventsInfo
-	//	*MsgBody_PackedOutputCircuitInfo
-	//	*MsgBody_PackedSinglePointWithScdInfo
-	Body          isMsgBody_Body `protobuf_oneof:"body"`
-	Time          string         `protobuf:"bytes,18,opt,name=time,proto3" json:"time,omitempty"`
-	MetaData      string         `protobuf:"bytes,19,opt,name=metaData,proto3" json:"metaData,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Host          string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	Port          int32                  `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	Asdu          string                 `protobuf:"bytes,3,opt,name=asdu,proto3" json:"asdu,omitempty"`
+	TypeId        int32                  `protobuf:"varint,4,opt,name=typeId,proto3" json:"typeId,omitempty"`
+	DataType      int32                  `protobuf:"varint,5,opt,name=dataType,proto3" json:"dataType,omitempty"`
+	Coa           uint32                 `protobuf:"varint,6,opt,name=coa,proto3" json:"coa,omitempty"`
+	BodyRaw       string                 `protobuf:"bytes,7,opt,name=bodyRaw,proto3" json:"bodyRaw,omitempty"`
+	Time          string                 `protobuf:"bytes,8,opt,name=time,proto3" json:"time,omitempty"`
+	MetaDataRaw   string                 `protobuf:"bytes,9,opt,name=metaDataRaw,proto3" json:"metaDataRaw,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -276,6 +263,13 @@ func (x *MsgBody) GetTypeId() int32 {
 	return 0
 }
 
+func (x *MsgBody) GetDataType() int32 {
+	if x != nil {
+		return x.DataType
+	}
+	return 0
+}
+
 func (x *MsgBody) GetCoa() uint32 {
 	if x != nil {
 		return x.Coa
@@ -283,119 +277,11 @@ func (x *MsgBody) GetCoa() uint32 {
 	return 0
 }
 
-func (x *MsgBody) GetBody() isMsgBody_Body {
+func (x *MsgBody) GetBodyRaw() string {
 	if x != nil {
-		return x.Body
+		return x.BodyRaw
 	}
-	return nil
-}
-
-func (x *MsgBody) GetSinglePointInfo() *SinglePointInfo {
-	if x != nil {
-		if x, ok := x.Body.(*MsgBody_SinglePointInfo); ok {
-			return x.SinglePointInfo
-		}
-	}
-	return nil
-}
-
-func (x *MsgBody) GetDoublePointInfo() *DoublePointInfo {
-	if x != nil {
-		if x, ok := x.Body.(*MsgBody_DoublePointInfo); ok {
-			return x.DoublePointInfo
-		}
-	}
-	return nil
-}
-
-func (x *MsgBody) GetMeasuredValueScaledInfo() *MeasuredValueScaledInfo {
-	if x != nil {
-		if x, ok := x.Body.(*MsgBody_MeasuredValueScaledInfo); ok {
-			return x.MeasuredValueScaledInfo
-		}
-	}
-	return nil
-}
-
-func (x *MsgBody) GetMeasuredValueNormalInfo() *MeasuredValueNormalInfo {
-	if x != nil {
-		if x, ok := x.Body.(*MsgBody_MeasuredValueNormalInfo); ok {
-			return x.MeasuredValueNormalInfo
-		}
-	}
-	return nil
-}
-
-func (x *MsgBody) GetStepPositionInfo() *StepPositionInfo {
-	if x != nil {
-		if x, ok := x.Body.(*MsgBody_StepPositionInfo); ok {
-			return x.StepPositionInfo
-		}
-	}
-	return nil
-}
-
-func (x *MsgBody) GetBitString32Info() *BitString32Info {
-	if x != nil {
-		if x, ok := x.Body.(*MsgBody_BitString32Info); ok {
-			return x.BitString32Info
-		}
-	}
-	return nil
-}
-
-func (x *MsgBody) GetMeasuredValueFloatInfo() *MeasuredValueFloatInfo {
-	if x != nil {
-		if x, ok := x.Body.(*MsgBody_MeasuredValueFloatInfo); ok {
-			return x.MeasuredValueFloatInfo
-		}
-	}
-	return nil
-}
-
-func (x *MsgBody) GetBinaryCounterReadingInfo() *BinaryCounterReadingInfo {
-	if x != nil {
-		if x, ok := x.Body.(*MsgBody_BinaryCounterReadingInfo); ok {
-			return x.BinaryCounterReadingInfo
-		}
-	}
-	return nil
-}
-
-func (x *MsgBody) GetEventOfProtectionEquipmentInfo() *EventOfProtectionEquipmentInfo {
-	if x != nil {
-		if x, ok := x.Body.(*MsgBody_EventOfProtectionEquipmentInfo); ok {
-			return x.EventOfProtectionEquipmentInfo
-		}
-	}
-	return nil
-}
-
-func (x *MsgBody) GetPackedStartEventsInfo() *PackedStartEventsOfProtectionEquipmentInfo {
-	if x != nil {
-		if x, ok := x.Body.(*MsgBody_PackedStartEventsInfo); ok {
-			return x.PackedStartEventsInfo
-		}
-	}
-	return nil
-}
-
-func (x *MsgBody) GetPackedOutputCircuitInfo() *PackedOutputCircuitInfoInfo {
-	if x != nil {
-		if x, ok := x.Body.(*MsgBody_PackedOutputCircuitInfo); ok {
-			return x.PackedOutputCircuitInfo
-		}
-	}
-	return nil
-}
-
-func (x *MsgBody) GetPackedSinglePointWithScdInfo() *PackedSinglePointWithSCDInfo {
-	if x != nil {
-		if x, ok := x.Body.(*MsgBody_PackedSinglePointWithScdInfo); ok {
-			return x.PackedSinglePointWithScdInfo
-		}
-	}
-	return nil
+	return ""
 }
 
 func (x *MsgBody) GetTime() string {
@@ -405,95 +291,19 @@ func (x *MsgBody) GetTime() string {
 	return ""
 }
 
-func (x *MsgBody) GetMetaData() string {
+func (x *MsgBody) GetMetaDataRaw() string {
 	if x != nil {
-		return x.MetaData
+		return x.MetaDataRaw
 	}
 	return ""
 }
-
-type isMsgBody_Body interface {
-	isMsgBody_Body()
-}
-
-type MsgBody_SinglePointInfo struct {
-	SinglePointInfo *SinglePointInfo `protobuf:"bytes,100,opt,name=single_point_info,json=singlePointInfo,proto3,oneof"`
-}
-
-type MsgBody_DoublePointInfo struct {
-	DoublePointInfo *DoublePointInfo `protobuf:"bytes,101,opt,name=double_point_info,json=doublePointInfo,proto3,oneof"`
-}
-
-type MsgBody_MeasuredValueScaledInfo struct {
-	MeasuredValueScaledInfo *MeasuredValueScaledInfo `protobuf:"bytes,102,opt,name=measured_value_scaled_info,json=measuredValueScaledInfo,proto3,oneof"`
-}
-
-type MsgBody_MeasuredValueNormalInfo struct {
-	MeasuredValueNormalInfo *MeasuredValueNormalInfo `protobuf:"bytes,103,opt,name=measured_value_normal_info,json=measuredValueNormalInfo,proto3,oneof"`
-}
-
-type MsgBody_StepPositionInfo struct {
-	StepPositionInfo *StepPositionInfo `protobuf:"bytes,104,opt,name=step_position_info,json=stepPositionInfo,proto3,oneof"`
-}
-
-type MsgBody_BitString32Info struct {
-	BitString32Info *BitString32Info `protobuf:"bytes,105,opt,name=bit_string32_info,json=bitString32Info,proto3,oneof"`
-}
-
-type MsgBody_MeasuredValueFloatInfo struct {
-	MeasuredValueFloatInfo *MeasuredValueFloatInfo `protobuf:"bytes,106,opt,name=measured_value_float_info,json=measuredValueFloatInfo,proto3,oneof"`
-}
-
-type MsgBody_BinaryCounterReadingInfo struct {
-	BinaryCounterReadingInfo *BinaryCounterReadingInfo `protobuf:"bytes,107,opt,name=binary_counter_reading_info,json=binaryCounterReadingInfo,proto3,oneof"`
-}
-
-type MsgBody_EventOfProtectionEquipmentInfo struct {
-	EventOfProtectionEquipmentInfo *EventOfProtectionEquipmentInfo `protobuf:"bytes,108,opt,name=event_of_protection_equipment_info,json=eventOfProtectionEquipmentInfo,proto3,oneof"`
-}
-
-type MsgBody_PackedStartEventsInfo struct {
-	PackedStartEventsInfo *PackedStartEventsOfProtectionEquipmentInfo `protobuf:"bytes,109,opt,name=packed_start_events_info,json=packedStartEventsInfo,proto3,oneof"`
-}
-
-type MsgBody_PackedOutputCircuitInfo struct {
-	PackedOutputCircuitInfo *PackedOutputCircuitInfoInfo `protobuf:"bytes,110,opt,name=packed_output_circuit_info,json=packedOutputCircuitInfo,proto3,oneof"`
-}
-
-type MsgBody_PackedSinglePointWithScdInfo struct {
-	PackedSinglePointWithScdInfo *PackedSinglePointWithSCDInfo `protobuf:"bytes,111,opt,name=packed_single_point_with_scd_info,json=packedSinglePointWithScdInfo,proto3,oneof"`
-}
-
-func (*MsgBody_SinglePointInfo) isMsgBody_Body() {}
-
-func (*MsgBody_DoublePointInfo) isMsgBody_Body() {}
-
-func (*MsgBody_MeasuredValueScaledInfo) isMsgBody_Body() {}
-
-func (*MsgBody_MeasuredValueNormalInfo) isMsgBody_Body() {}
-
-func (*MsgBody_StepPositionInfo) isMsgBody_Body() {}
-
-func (*MsgBody_BitString32Info) isMsgBody_Body() {}
-
-func (*MsgBody_MeasuredValueFloatInfo) isMsgBody_Body() {}
-
-func (*MsgBody_BinaryCounterReadingInfo) isMsgBody_Body() {}
-
-func (*MsgBody_EventOfProtectionEquipmentInfo) isMsgBody_Body() {}
-
-func (*MsgBody_PackedStartEventsInfo) isMsgBody_Body() {}
-
-func (*MsgBody_PackedOutputCircuitInfo) isMsgBody_Body() {}
-
-func (*MsgBody_PackedSinglePointWithScdInfo) isMsgBody_Body() {}
 
 type SinglePointInfo struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Ioa           uint32                 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
 	Value         bool                   `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
 	Qds           uint32                 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
-	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qds_desc,json=qdsDesc,proto3" json:"qds_desc,omitempty"`
+	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
 	Ov            bool                   `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
 	Bl            bool                   `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
 	Sb            bool                   `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
@@ -609,7 +419,7 @@ type DoublePointInfo struct {
 	Ioa           uint32                 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
 	Value         uint32                 `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
 	Qds           uint32                 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
-	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qds_desc,json=qdsDesc,proto3" json:"qds_desc,omitempty"`
+	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
 	Ov            bool                   `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
 	Bl            bool                   `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
 	Sb            bool                   `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
@@ -723,9 +533,9 @@ func (x *DoublePointInfo) GetTime() string {
 type MeasuredValueScaledInfo struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Ioa           uint32                 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
-	Value         int32                  `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
+	Value         uint32                 `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
 	Qds           uint32                 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
-	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qds_desc,json=qdsDesc,proto3" json:"qds_desc,omitempty"`
+	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
 	Ov            bool                   `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
 	Bl            bool                   `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
 	Sb            bool                   `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
@@ -773,7 +583,7 @@ func (x *MeasuredValueScaledInfo) GetIoa() uint32 {
 	return 0
 }
 
-func (x *MeasuredValueScaledInfo) GetValue() int32 {
+func (x *MeasuredValueScaledInfo) GetValue() uint32 {
 	if x != nil {
 		return x.Value
 	}
@@ -839,9 +649,9 @@ func (x *MeasuredValueScaledInfo) GetTime() string {
 type MeasuredValueNormalInfo struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Ioa           uint32                 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
-	Value         int32                  `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
+	Value         uint32                 `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
 	Qds           uint32                 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
-	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qds_desc,json=qdsDesc,proto3" json:"qds_desc,omitempty"`
+	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
 	Ov            bool                   `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
 	Bl            bool                   `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
 	Sb            bool                   `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
@@ -889,7 +699,7 @@ func (x *MeasuredValueNormalInfo) GetIoa() uint32 {
 	return 0
 }
 
-func (x *MeasuredValueNormalInfo) GetValue() int32 {
+func (x *MeasuredValueNormalInfo) GetValue() uint32 {
 	if x != nil {
 		return x.Value
 	}
@@ -957,7 +767,7 @@ type StepPositionInfo struct {
 	Ioa           uint32                 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
 	Value         *StepPosition          `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
 	Qds           uint32                 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
-	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qds_desc,json=qdsDesc,proto3" json:"qds_desc,omitempty"`
+	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
 	Ov            bool                   `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
 	Bl            bool                   `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
 	Sb            bool                   `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
@@ -1071,7 +881,7 @@ func (x *StepPositionInfo) GetTime() string {
 type StepPosition struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Val           int32                  `protobuf:"varint,1,opt,name=val,proto3" json:"val,omitempty"`
-	HasTransient  bool                   `protobuf:"varint,2,opt,name=has_transient,json=hasTransient,proto3" json:"has_transient,omitempty"`
+	HasTransient  bool                   `protobuf:"varint,2,opt,name=hasTransient,proto3" json:"hasTransient,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1125,7 +935,7 @@ type BitString32Info struct {
 	Ioa           uint32                 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
 	Value         uint32                 `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
 	Qds           uint32                 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
-	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qds_desc,json=qdsDesc,proto3" json:"qds_desc,omitempty"`
+	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
 	Ov            bool                   `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
 	Bl            bool                   `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
 	Sb            bool                   `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
@@ -1241,7 +1051,7 @@ type MeasuredValueFloatInfo struct {
 	Ioa           uint32                 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
 	Value         float32                `protobuf:"fixed32,2,opt,name=value,proto3" json:"value,omitempty"`
 	Qds           uint32                 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
-	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qds_desc,json=qdsDesc,proto3" json:"qds_desc,omitempty"`
+	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
 	Ov            bool                   `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
 	Bl            bool                   `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
 	Sb            bool                   `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
@@ -1414,11 +1224,11 @@ func (x *BinaryCounterReadingInfo) GetTime() string {
 
 type BinaryCounterReading struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
-	CounterReading int32                  `protobuf:"varint,1,opt,name=counter_reading,json=counterReading,proto3" json:"counter_reading,omitempty"`
-	SeqNumber      uint32                 `protobuf:"varint,2,opt,name=seq_number,json=seqNumber,proto3" json:"seq_number,omitempty"`
-	HasCarry       bool                   `protobuf:"varint,3,opt,name=has_carry,json=hasCarry,proto3" json:"has_carry,omitempty"`
-	IsAdjusted     bool                   `protobuf:"varint,4,opt,name=is_adjusted,json=isAdjusted,proto3" json:"is_adjusted,omitempty"`
-	IsInvalid      bool                   `protobuf:"varint,5,opt,name=is_invalid,json=isInvalid,proto3" json:"is_invalid,omitempty"`
+	CounterReading int32                  `protobuf:"varint,1,opt,name=counterReading,proto3" json:"counterReading,omitempty"`
+	SeqNumber      uint32                 `protobuf:"varint,2,opt,name=seqNumber,proto3" json:"seqNumber,omitempty"`
+	HasCarry       bool                   `protobuf:"varint,3,opt,name=hasCarry,proto3" json:"hasCarry,omitempty"`
+	IsAdjusted     bool                   `protobuf:"varint,4,opt,name=isAdjusted,proto3" json:"isAdjusted,omitempty"`
+	IsInvalid      bool                   `protobuf:"varint,5,opt,name=isInvalid,proto3" json:"isInvalid,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -1721,7 +1531,7 @@ type PackedSinglePointWithSCDInfo struct {
 	Ioa           uint32                 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
 	Scd           uint32                 `protobuf:"varint,2,opt,name=scd,proto3" json:"scd,omitempty"`
 	Qds           uint32                 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
-	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qds_desc,json=qdsDesc,proto3" json:"qds_desc,omitempty"`
+	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
 	Ov            bool                   `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
 	Bl            bool                   `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
 	Sb            bool                   `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
@@ -1832,99 +1642,37 @@ const file_iecstream_proto_rawDesc = "" +
 	"\x03Req\x12\x12\n" +
 	"\x04ping\x18\x01 \x01(\tR\x04ping\"\x19\n" +
 	"\x03Res\x12\x12\n" +
-	"\x04pong\x18\x01 \x01(\tR\x04pong\"3\n" +
-	"\x10PushChunkAsduReq\x12\x1f\n" +
-	"\x04info\x18\x01 \x01(\v2\v.pb.MsgBodyR\x04info\"\x12\n" +
-	"\x10PushChunkAsduRes\"\xd1\t\n" +
+	"\x04pong\x18\x01 \x01(\tR\x04pong\"9\n" +
+	"\x10PushChunkAsduReq\x12%\n" +
+	"\amsgBody\x18\x01 \x03(\v2\v.pb.MsgBodyR\amsgBody\"\x12\n" +
+	"\x10PushChunkAsduRes\"\xdb\x01\n" +
 	"\aMsgBody\x12\x12\n" +
 	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
 	"\x04port\x18\x02 \x01(\x05R\x04port\x12\x12\n" +
-	"\x04asdu\x18\x03 \x01(\tR\x04asdu\x12\x17\n" +
-	"\atype_id\x18\x04 \x01(\x05R\x06typeId\x12\x10\n" +
-	"\x03coa\x18\x05 \x01(\rR\x03coa\x12A\n" +
-	"\x11single_point_info\x18d \x01(\v2\x13.pb.SinglePointInfoH\x00R\x0fsinglePointInfo\x12A\n" +
-	"\x11double_point_info\x18e \x01(\v2\x13.pb.DoublePointInfoH\x00R\x0fdoublePointInfo\x12Z\n" +
-	"\x1ameasured_value_scaled_info\x18f \x01(\v2\x1b.pb.MeasuredValueScaledInfoH\x00R\x17measuredValueScaledInfo\x12Z\n" +
-	"\x1ameasured_value_normal_info\x18g \x01(\v2\x1b.pb.MeasuredValueNormalInfoH\x00R\x17measuredValueNormalInfo\x12D\n" +
-	"\x12step_position_info\x18h \x01(\v2\x14.pb.StepPositionInfoH\x00R\x10stepPositionInfo\x12A\n" +
-	"\x11bit_string32_info\x18i \x01(\v2\x13.pb.BitString32InfoH\x00R\x0fbitString32Info\x12W\n" +
-	"\x19measured_value_float_info\x18j \x01(\v2\x1a.pb.MeasuredValueFloatInfoH\x00R\x16measuredValueFloatInfo\x12]\n" +
-	"\x1bbinary_counter_reading_info\x18k \x01(\v2\x1c.pb.BinaryCounterReadingInfoH\x00R\x18binaryCounterReadingInfo\x12p\n" +
-	"\"event_of_protection_equipment_info\x18l \x01(\v2\".pb.EventOfProtectionEquipmentInfoH\x00R\x1eeventOfProtectionEquipmentInfo\x12i\n" +
-	"\x18packed_start_events_info\x18m \x01(\v2..pb.PackedStartEventsOfProtectionEquipmentInfoH\x00R\x15packedStartEventsInfo\x12^\n" +
-	"\x1apacked_output_circuit_info\x18n \x01(\v2\x1f.pb.PackedOutputCircuitInfoInfoH\x00R\x17packedOutputCircuitInfo\x12k\n" +
-	"!packed_single_point_with_scd_info\x18o \x01(\v2 .pb.PackedSinglePointWithSCDInfoH\x00R\x1cpackedSinglePointWithScdInfo\x12\x12\n" +
-	"\x04time\x18\x12 \x01(\tR\x04time\x12\x1a\n" +
-	"\bmetaData\x18\x13 \x01(\tR\bmetaDataB\x06\n" +
-	"\x04body\"\xca\x01\n" +
+	"\x04asdu\x18\x03 \x01(\tR\x04asdu\x12\x16\n" +
+	"\x06typeId\x18\x04 \x01(\x05R\x06typeId\x12\x1a\n" +
+	"\bdataType\x18\x05 \x01(\x05R\bdataType\x12\x10\n" +
+	"\x03coa\x18\x06 \x01(\rR\x03coa\x12\x18\n" +
+	"\abodyRaw\x18\a \x01(\tR\abodyRaw\x12\x12\n" +
+	"\x04time\x18\b \x01(\tR\x04time\x12 \n" +
+	"\vmetaDataRaw\x18\t \x01(\tR\vmetaDataRaw\"\xc9\x01\n" +
 	"\x0fSinglePointInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\bR\x05value\x12\x10\n" +
-	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x19\n" +
-	"\bqds_desc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
+	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x18\n" +
+	"\aqdsDesc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
 	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
 	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
 	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
 	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
 	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
 	"\x04time\x18\n" +
-	" \x01(\tR\x04time\"\xca\x01\n" +
+	" \x01(\tR\x04time\"\xc9\x01\n" +
 	"\x0fDoublePointInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\rR\x05value\x12\x10\n" +
-	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x19\n" +
-	"\bqds_desc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
-	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
-	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
-	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
-	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
-	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
-	"\x04time\x18\n" +
-	" \x01(\tR\x04time\"\xd2\x01\n" +
-	"\x17MeasuredValueScaledInfo\x12\x10\n" +
-	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\x05R\x05value\x12\x10\n" +
-	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x19\n" +
-	"\bqds_desc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
-	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
-	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
-	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
-	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
-	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
-	"\x04time\x18\n" +
-	" \x01(\tR\x04time\"\xd2\x01\n" +
-	"\x17MeasuredValueNormalInfo\x12\x10\n" +
-	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\x05R\x05value\x12\x10\n" +
-	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x19\n" +
-	"\bqds_desc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
-	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
-	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
-	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
-	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
-	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
-	"\x04time\x18\n" +
-	" \x01(\tR\x04time\"\xdd\x01\n" +
-	"\x10StepPositionInfo\x12\x10\n" +
-	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12&\n" +
-	"\x05value\x18\x02 \x01(\v2\x10.pb.StepPositionR\x05value\x12\x10\n" +
-	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x19\n" +
-	"\bqds_desc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
-	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
-	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
-	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
-	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
-	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
-	"\x04time\x18\n" +
-	" \x01(\tR\x04time\"E\n" +
-	"\fStepPosition\x12\x10\n" +
-	"\x03val\x18\x01 \x01(\x05R\x03val\x12#\n" +
-	"\rhas_transient\x18\x02 \x01(\bR\fhasTransient\"\xca\x01\n" +
-	"\x0fBitString32Info\x12\x10\n" +
-	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\rR\x05value\x12\x10\n" +
-	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x19\n" +
-	"\bqds_desc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
+	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x18\n" +
+	"\aqdsDesc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
 	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
 	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
 	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
@@ -1932,11 +1680,62 @@ const file_iecstream_proto_rawDesc = "" +
 	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
 	"\x04time\x18\n" +
 	" \x01(\tR\x04time\"\xd1\x01\n" +
+	"\x17MeasuredValueScaledInfo\x12\x10\n" +
+	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\rR\x05value\x12\x10\n" +
+	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x18\n" +
+	"\aqdsDesc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
+	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
+	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
+	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
+	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
+	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
+	"\x04time\x18\n" +
+	" \x01(\tR\x04time\"\xd1\x01\n" +
+	"\x17MeasuredValueNormalInfo\x12\x10\n" +
+	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\rR\x05value\x12\x10\n" +
+	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x18\n" +
+	"\aqdsDesc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
+	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
+	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
+	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
+	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
+	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
+	"\x04time\x18\n" +
+	" \x01(\tR\x04time\"\xdc\x01\n" +
+	"\x10StepPositionInfo\x12\x10\n" +
+	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12&\n" +
+	"\x05value\x18\x02 \x01(\v2\x10.pb.StepPositionR\x05value\x12\x10\n" +
+	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x18\n" +
+	"\aqdsDesc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
+	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
+	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
+	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
+	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
+	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
+	"\x04time\x18\n" +
+	" \x01(\tR\x04time\"D\n" +
+	"\fStepPosition\x12\x10\n" +
+	"\x03val\x18\x01 \x01(\x05R\x03val\x12\"\n" +
+	"\fhasTransient\x18\x02 \x01(\bR\fhasTransient\"\xc9\x01\n" +
+	"\x0fBitString32Info\x12\x10\n" +
+	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\rR\x05value\x12\x10\n" +
+	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x18\n" +
+	"\aqdsDesc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
+	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
+	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
+	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
+	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
+	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
+	"\x04time\x18\n" +
+	" \x01(\tR\x04time\"\xd0\x01\n" +
 	"\x16MeasuredValueFloatInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\x02R\x05value\x12\x10\n" +
-	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x19\n" +
-	"\bqds_desc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
+	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x18\n" +
+	"\aqdsDesc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
 	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
 	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
 	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
@@ -1947,16 +1746,15 @@ const file_iecstream_proto_rawDesc = "" +
 	"\x18BinaryCounterReadingInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12.\n" +
 	"\x05value\x18\x02 \x01(\v2\x18.pb.BinaryCounterReadingR\x05value\x12\x12\n" +
-	"\x04time\x18\x03 \x01(\tR\x04time\"\xbb\x01\n" +
-	"\x14BinaryCounterReading\x12'\n" +
-	"\x0fcounter_reading\x18\x01 \x01(\x05R\x0ecounterReading\x12\x1d\n" +
+	"\x04time\x18\x03 \x01(\tR\x04time\"\xb6\x01\n" +
+	"\x14BinaryCounterReading\x12&\n" +
+	"\x0ecounterReading\x18\x01 \x01(\x05R\x0ecounterReading\x12\x1c\n" +
+	"\tseqNumber\x18\x02 \x01(\rR\tseqNumber\x12\x1a\n" +
+	"\bhasCarry\x18\x03 \x01(\bR\bhasCarry\x12\x1e\n" +
 	"\n" +
-	"seq_number\x18\x02 \x01(\rR\tseqNumber\x12\x1b\n" +
-	"\thas_carry\x18\x03 \x01(\bR\bhasCarry\x12\x1f\n" +
-	"\vis_adjusted\x18\x04 \x01(\bR\n" +
-	"isAdjusted\x12\x1d\n" +
-	"\n" +
-	"is_invalid\x18\x05 \x01(\bR\tisInvalid\"\x82\x01\n" +
+	"isAdjusted\x18\x04 \x01(\bR\n" +
+	"isAdjusted\x12\x1c\n" +
+	"\tisInvalid\x18\x05 \x01(\bR\tisInvalid\"\x82\x01\n" +
 	"\x1eEventOfProtectionEquipmentInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
 	"\x05event\x18\x02 \x01(\rR\x05event\x12\x10\n" +
@@ -1974,12 +1772,12 @@ const file_iecstream_proto_rawDesc = "" +
 	"\x03oci\x18\x02 \x01(\rR\x03oci\x12\x10\n" +
 	"\x03qdp\x18\x03 \x01(\rR\x03qdp\x12\x12\n" +
 	"\x04msec\x18\x04 \x01(\rR\x04msec\x12\x12\n" +
-	"\x04time\x18\x05 \x01(\tR\x04time\"\xbf\x01\n" +
+	"\x04time\x18\x05 \x01(\tR\x04time\"\xbe\x01\n" +
 	"\x1cPackedSinglePointWithSCDInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x10\n" +
 	"\x03scd\x18\x02 \x01(\rR\x03scd\x12\x10\n" +
-	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x19\n" +
-	"\bqds_desc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
+	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x18\n" +
+	"\aqdsDesc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
 	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
 	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
 	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
@@ -2025,50 +1823,24 @@ var file_iecstream_proto_goTypes = []any{
 	(*PackedSinglePointWithSCDInfo)(nil),               // 18: pb.PackedSinglePointWithSCDInfo
 }
 var file_iecstream_proto_depIdxs = []int32{
-	4,  // 0: pb.PushChunkAsduReq.info:type_name -> pb.MsgBody
-	5,  // 1: pb.MsgBody.single_point_info:type_name -> pb.SinglePointInfo
-	6,  // 2: pb.MsgBody.double_point_info:type_name -> pb.DoublePointInfo
-	7,  // 3: pb.MsgBody.measured_value_scaled_info:type_name -> pb.MeasuredValueScaledInfo
-	8,  // 4: pb.MsgBody.measured_value_normal_info:type_name -> pb.MeasuredValueNormalInfo
-	9,  // 5: pb.MsgBody.step_position_info:type_name -> pb.StepPositionInfo
-	11, // 6: pb.MsgBody.bit_string32_info:type_name -> pb.BitString32Info
-	12, // 7: pb.MsgBody.measured_value_float_info:type_name -> pb.MeasuredValueFloatInfo
-	13, // 8: pb.MsgBody.binary_counter_reading_info:type_name -> pb.BinaryCounterReadingInfo
-	15, // 9: pb.MsgBody.event_of_protection_equipment_info:type_name -> pb.EventOfProtectionEquipmentInfo
-	16, // 10: pb.MsgBody.packed_start_events_info:type_name -> pb.PackedStartEventsOfProtectionEquipmentInfo
-	17, // 11: pb.MsgBody.packed_output_circuit_info:type_name -> pb.PackedOutputCircuitInfoInfo
-	18, // 12: pb.MsgBody.packed_single_point_with_scd_info:type_name -> pb.PackedSinglePointWithSCDInfo
-	10, // 13: pb.StepPositionInfo.value:type_name -> pb.StepPosition
-	14, // 14: pb.BinaryCounterReadingInfo.value:type_name -> pb.BinaryCounterReading
-	0,  // 15: pb.IecStreamRpc.ping:input_type -> pb.Req
-	2,  // 16: pb.IecStreamRpc.pushChunkAsdu:input_type -> pb.PushChunkAsduReq
-	1,  // 17: pb.IecStreamRpc.ping:output_type -> pb.Res
-	3,  // 18: pb.IecStreamRpc.pushChunkAsdu:output_type -> pb.PushChunkAsduRes
-	17, // [17:19] is the sub-list for method output_type
-	15, // [15:17] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	4,  // 0: pb.PushChunkAsduReq.msgBody:type_name -> pb.MsgBody
+	10, // 1: pb.StepPositionInfo.value:type_name -> pb.StepPosition
+	14, // 2: pb.BinaryCounterReadingInfo.value:type_name -> pb.BinaryCounterReading
+	0,  // 3: pb.IecStreamRpc.ping:input_type -> pb.Req
+	2,  // 4: pb.IecStreamRpc.pushChunkAsdu:input_type -> pb.PushChunkAsduReq
+	1,  // 5: pb.IecStreamRpc.ping:output_type -> pb.Res
+	3,  // 6: pb.IecStreamRpc.pushChunkAsdu:output_type -> pb.PushChunkAsduRes
+	5,  // [5:7] is the sub-list for method output_type
+	3,  // [3:5] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_iecstream_proto_init() }
 func file_iecstream_proto_init() {
 	if File_iecstream_proto != nil {
 		return
-	}
-	file_iecstream_proto_msgTypes[4].OneofWrappers = []any{
-		(*MsgBody_SinglePointInfo)(nil),
-		(*MsgBody_DoublePointInfo)(nil),
-		(*MsgBody_MeasuredValueScaledInfo)(nil),
-		(*MsgBody_MeasuredValueNormalInfo)(nil),
-		(*MsgBody_StepPositionInfo)(nil),
-		(*MsgBody_BitString32Info)(nil),
-		(*MsgBody_MeasuredValueFloatInfo)(nil),
-		(*MsgBody_BinaryCounterReadingInfo)(nil),
-		(*MsgBody_EventOfProtectionEquipmentInfo)(nil),
-		(*MsgBody_PackedStartEventsInfo)(nil),
-		(*MsgBody_PackedOutputCircuitInfo)(nil),
-		(*MsgBody_PackedSinglePointWithScdInfo)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

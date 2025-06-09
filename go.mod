@@ -22,6 +22,7 @@ require (
 	github.com/shopspring/decimal v1.4.0
 	github.com/songzhibin97/gkit v1.2.13
 	github.com/spf13/cast v1.7.0
+	github.com/tidwall/gjson v1.18.0
 	github.com/wendy512/go-iecp5 v1.2.3
 	github.com/zeromicro/go-queue v1.2.2
 	github.com/zeromicro/go-zero v1.8.3
@@ -115,6 +116,8 @@ require (
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/segmentio/kafka-go v0.4.47 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.15 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.15 // indirect

@@ -19,6 +19,7 @@
   "port": 2404,
   "asdu": "M_SP_NA_1",
   "typeId": 1,
+  "dataType": 0,
   "coa": 1001,
   "body": {
     /* 信息体结构（不同typeId对应不同结构） */
@@ -34,55 +35,57 @@
 }
 ```
 
-| 字段     | 类型     | 说明                                           |
-|--------|--------|----------------------------------------------|
-| host   | String | 设备唯一标识（如RTU/IP地址）                            |
-| port   | int    | 设备端口号                                        |
-| typeId | int    | ASDU类型标识符（见第2章类型映射表）                         |
-| coa    | uint   | 公共地址（范围：1-65534，全局地址65535保留）                 |
-| body   | Object | 信息体对象（结构随typeId变化）                           |
-| time   | String | 消息推送时间戳（格式：`YYYY-MM-DD HH:mm:ss.SSSSSS`，UTC+8时区） |
-| metaData | Object | 应用级元数据（如：应用ID、用户信息、场站信息等）                    |
+| 字段       | 类型     | 说明                                               |
+|----------|--------|--------------------------------------------------|
+| host     | String | 设备唯一标识（如RTU/IP地址）                                |
+| port     | int    | 设备端口号                                            |
+| asdu     | String | ASDU类型名称                                         |
+| typeId   | int    | ASDU类型标识符                                        |
+| dataType | int    | 信息体类型标识符                                         |
+| coa      | uint   | 公共地址（范围：1-65534，全局地址65535保留）                     |
+| body     | Object | 信息体对象（结构随typeId变化）                               |
+| time     | String | 消息推送时间戳（格式：`YYYY-MM-DD HH:mm:ss.SSSSSS`，UTC+8时区） |
+| metaData | Object | 应用级元数据（如：应用ID、用户信息、场站信息等）                        |
 
 ---
 
 ## 2. 全量ASDU类型映射表
 
-| TypeID | ASDU类型    | Body结构体                                      | 应用场景说明                 |
-|--------|-----------|----------------------------------------------|------------------------|
-| 0      | M_SP_NA_1 | `SinglePointInfo`                            | 单点遥信（不带时标）             |
-| 0      | M_SP_TA_1 | `SinglePointInfo`                            | 单点遥信（带时标）              |
-| 1      | M_DP_NA_1 | `DoublePointInfo`                            | 双点遥信（不带时标）             |
-| 1      | M_DP_TA_1 | `DoublePointInfo`                            | 双点遥信（带时标）              |
-| 4      | M_ST_NA_1 | `StepPositionInfo`                           | 步位置信息（不带时标）            |
-| 4      | M_ST_TA_1 | `StepPositionInfo`                           | 步位置信息（带时标）             |
-| 5      | M_BO_NA_1 | `BitString32Info`                            | 32位比特串（不带时标）           |
-| 5      | M_BO_TA_1 | `BitString32Info`                            | 32位比特串（带时标）            |
-| 3      | M_ME_NA_1 | `MeasuredValueNormalInfo`                    | 规一化遥测值（不带时标）           |
-| 3      | M_ME_TA_1 | `MeasuredValueNormalInfo`                    | 规一化遥测值（带时标）            |
-| 2      | M_ME_NB_1 | `MeasuredValueScaledInfo`                    | 标度化遥测值（不带时标）           |
-| 2      | M_ME_TB_1 | `MeasuredValueScaledInfo`                    | 标度化遥测值（带时标）            |
-| 6      | M_ME_NC_1 | `MeasuredValueFloatInfo`                     | 短浮点数遥测值（不带时标）          |
-| 6      | M_ME_TC_1 | `MeasuredValueFloatInfo`                     | 短浮点数遥测值（带时标）           |
-| 7      | M_IT_NA_1 | `BinaryCounterReadingInfo`                   | 累计量（不带时标）              |
-| 7      | M_IT_TA_1 | `BinaryCounterReadingInfo`                   | 累计量（带时标）               |
-| 8      | M_EP_TA_1 | `EventOfProtectionEquipmentInfo`             | 继电保护事件（带时标）            |
-| 9      | M_EP_TB_1 | `PackedStartEventsOfProtectionEquipmentInfo` | 成组启动事件（带时标）            |
-| 10     | M_EP_TC_1 | `PackedOutputCircuitInfoInfo`                | 成组输出电路信息（带时标）          |
-| 11     | M_PS_NA_1 | `PackedSinglePointWithSCDInfo`               | 带变位检出的成组单点信息           |
-| 3      | M_ME_ND_1 | `MeasuredValueNormalInfo`                    | 无品质描述的规一化遥测值           |
-| 0      | M_SP_TB_1 | `SinglePointInfo`                            | 单点遥信（CP56Time2a时标）     |
-| 1      | M_DP_TB_1 | `DoublePointInfo`                            | 双点遥信（CP56Time2a时标）     |
-| 4      | M_ST_TB_1 | `StepPositionInfo`                           | 步位置信息（CP56Time2a时标）    |
-| 5      | M_BO_TB_1 | `BitString32Info`                            | 32位比特串（CP56Time2a时标）   |
-| 3      | M_ME_TD_1 | `MeasuredValueNormalInfo`                    | 规一化遥测值（CP56Time2a时标）   |
-| 2      | M_ME_TE_1 | `MeasuredValueScaledInfo`                    | 标度化遥测值（CP56Time2a时标）   |
-| 6      | M_ME_TF_1 | `MeasuredValueFloatInfo`                     | 短浮点数遥测值（CP56Time2a时标）  |
-| 7      | M_IT_TB_1 | `BinaryCounterReadingInfo`                   | 累计量（CP56Time2a时标）      |
-| 8      | M_EP_TD_1 | `EventOfProtectionEquipmentInfo`             | 继电保护事件（CP56Time2a时标）   |
-| 9      | M_EP_TE_1 | `PackedStartEventsOfProtectionEquipmentInfo` | 成组启动事件（CP56Time2a时标）   |
-| 10     | M_EP_TF_1 | `PackedOutputCircuitInfoInfo`                | 成组输出电路信息（CP56Time2a时标） |
-| 19     |           | `UNKNOWN`                                    | UNKNOWN 不发送            |
+| DataType | ASDU类型    | Body结构体                                      | 应用场景说明                 |
+|----------|-----------|----------------------------------------------|------------------------|
+| 0        | M_SP_NA_1 | `SinglePointInfo`                            | 单点遥信（不带时标）             |
+| 0        | M_SP_TA_1 | `SinglePointInfo`                            | 单点遥信（带时标）              |
+| 1        | M_DP_NA_1 | `DoublePointInfo`                            | 双点遥信（不带时标）             |
+| 1        | M_DP_TA_1 | `DoublePointInfo`                            | 双点遥信（带时标）              |
+| 4        | M_ST_NA_1 | `StepPositionInfo`                           | 步位置信息（不带时标）            |
+| 4        | M_ST_TA_1 | `StepPositionInfo`                           | 步位置信息（带时标）             |
+| 5        | M_BO_NA_1 | `BitString32Info`                            | 32位比特串（不带时标）           |
+| 5        | M_BO_TA_1 | `BitString32Info`                            | 32位比特串（带时标）            |
+| 3        | M_ME_NA_1 | `MeasuredValueNormalInfo`                    | 规一化遥测值（不带时标）           |
+| 3        | M_ME_TA_1 | `MeasuredValueNormalInfo`                    | 规一化遥测值（带时标）            |
+| 2        | M_ME_NB_1 | `MeasuredValueScaledInfo`                    | 标度化遥测值（不带时标）           |
+| 2        | M_ME_TB_1 | `MeasuredValueScaledInfo`                    | 标度化遥测值（带时标）            |
+| 6        | M_ME_NC_1 | `MeasuredValueFloatInfo`                     | 短浮点数遥测值（不带时标）          |
+| 6        | M_ME_TC_1 | `MeasuredValueFloatInfo`                     | 短浮点数遥测值（带时标）           |
+| 7        | M_IT_NA_1 | `BinaryCounterReadingInfo`                   | 累计量（不带时标）              |
+| 7        | M_IT_TA_1 | `BinaryCounterReadingInfo`                   | 累计量（带时标）               |
+| 8        | M_EP_TA_1 | `EventOfProtectionEquipmentInfo`             | 继电保护事件（带时标）            |
+| 9        | M_EP_TB_1 | `PackedStartEventsOfProtectionEquipmentInfo` | 成组启动事件（带时标）            |
+| 10       | M_EP_TC_1 | `PackedOutputCircuitInfoInfo`                | 成组输出电路信息（带时标）          |
+| 11       | M_PS_NA_1 | `PackedSinglePointWithSCDInfo`               | 带变位检出的成组单点信息           |
+| 3        | M_ME_ND_1 | `MeasuredValueNormalInfo`                    | 无品质描述的规一化遥测值           |
+| 0        | M_SP_TB_1 | `SinglePointInfo`                            | 单点遥信（CP56Time2a时标）     |
+| 1        | M_DP_TB_1 | `DoublePointInfo`                            | 双点遥信（CP56Time2a时标）     |
+| 4        | M_ST_TB_1 | `StepPositionInfo`                           | 步位置信息（CP56Time2a时标）    |
+| 5        | M_BO_TB_1 | `BitString32Info`                            | 32位比特串（CP56Time2a时标）   |
+| 3        | M_ME_TD_1 | `MeasuredValueNormalInfo`                    | 规一化遥测值（CP56Time2a时标）   |
+| 2        | M_ME_TE_1 | `MeasuredValueScaledInfo`                    | 标度化遥测值（CP56Time2a时标）   |
+| 6        | M_ME_TF_1 | `MeasuredValueFloatInfo`                     | 短浮点数遥测值（CP56Time2a时标）  |
+| 7        | M_IT_TB_1 | `BinaryCounterReadingInfo`                   | 累计量（CP56Time2a时标）      |
+| 8        | M_EP_TD_1 | `EventOfProtectionEquipmentInfo`             | 继电保护事件（CP56Time2a时标）   |
+| 9        | M_EP_TE_1 | `PackedStartEventsOfProtectionEquipmentInfo` | 成组启动事件（CP56Time2a时标）   |
+| 10       | M_EP_TF_1 | `PackedOutputCircuitInfoInfo`                | 成组输出电路信息（CP56Time2a时标） |
+| 19       |           | `UNKNOWN`                                    | UNKNOWN 不发送            |
 
 ---
 
@@ -137,17 +140,17 @@
 }
 ```
 
-| 字段      | 类型     | 说明                          |
-|---------|--------|-----------------------------|
-| value   | byte   | `0`=不确定，`1`=开，`2`=合，`3`=不确定 |
-| qds     | byte   | 品质                          |
-| qdsDesc | string | 品质描述                        |
-| ov      | bool   | Overflow `true`=溢出，`false`=未溢出         |
-| bl      | bool   | Blocked `true`=闭锁，`false`=未闭锁          |
-| sb      | bool   | Substituted `true`=取代，`false`=未取代      |
-| nt      | bool   | NotTopical `true`=非当前值，`false`=当前值     |
-| iv      | bool   | Invalid `true`=无效，`false`=有效           |
-| time    | string | 时标（仅带时标的ASDU类型包含此字段）                   |
+| 字段      | 类型     | 说明                                 |
+|---------|--------|------------------------------------|
+| value   | byte   | `0`=不确定，`1`=开，`2`=合，`3`=不确定        |
+| qds     | byte   | 品质                                 |
+| qdsDesc | string | 品质描述                               |
+| ov      | bool   | Overflow `true`=溢出，`false`=未溢出     |
+| bl      | bool   | Blocked `true`=闭锁，`false`=未闭锁      |
+| sb      | bool   | Substituted `true`=取代，`false`=未取代  |
+| nt      | bool   | NotTopical `true`=非当前值，`false`=当前值 |
+| iv      | bool   | Invalid `true`=无效，`false`=有效       |
+| time    | string | 时标（仅带时标的ASDU类型包含此字段）               |
 
 ---
 
@@ -171,18 +174,18 @@
 }
 ```
 
-| 字段           | 类型     | 说明                      |
-|--------------|--------|-------------------------|
-| val          | int    | 步位置值（范围：`-64` 至 `63`）   |
-| hasTransient | bool   | `true`=设备处于瞬变状态         |
-| qds          | byte   | 品质                      |
-| qdsDesc      | string | 品质描述                    |
-| ov      | bool   | Overflow `true`=溢出，`false`=未溢出         |
-| bl      | bool   | Blocked `true`=闭锁，`false`=未闭锁          |
-| sb      | bool   | Substituted `true`=取代，`false`=未取代      |
-| nt      | bool   | NotTopical `true`=非当前值，`false`=当前值     |
-| iv      | bool   | Invalid `true`=无效，`false`=有效           |
-| time    | string | 时标（仅带时标的ASDU类型包含此字段）                   |
+| 字段           | 类型     | 说明                                 |
+|--------------|--------|------------------------------------|
+| val          | int    | 步位置值（范围：`-64` 至 `63`）              |
+| hasTransient | bool   | `true`=设备处于瞬变状态                    |
+| qds          | byte   | 品质                                 |
+| qdsDesc      | string | 品质描述                               |
+| ov           | bool   | Overflow `true`=溢出，`false`=未溢出     |
+| bl           | bool   | Blocked `true`=闭锁，`false`=未闭锁      |
+| sb           | bool   | Substituted `true`=取代，`false`=未取代  |
+| nt           | bool   | NotTopical `true`=非当前值，`false`=当前值 |
+| iv           | bool   | Invalid `true`=无效，`false`=有效       |
+| time         | string | 时标（仅带时标的ASDU类型包含此字段）               |
 
 ---
 
@@ -239,12 +242,12 @@
 | value   | uint32 | 32 个独立设备状态（如开关、传感器、继电器），每个比特位对应一个设备 |
 | qds     | byte   | 品质                                  |
 | qdsDesc | string | 品质描述                                |
-| ov      | bool   | Overflow `true`=溢出，`false`=未溢出         |
-| bl      | bool   | Blocked `true`=闭锁，`false`=未闭锁          |
-| sb      | bool   | Substituted `true`=取代，`false`=未取代      |
-| nt      | bool   | NotTopical `true`=非当前值，`false`=当前值     |
-| iv      | bool   | Invalid `true`=无效，`false`=有效           |
-| time    | string | 时标（仅带时标的ASDU类型包含此字段）                   |
+| ov      | bool   | Overflow `true`=溢出，`false`=未溢出      |
+| bl      | bool   | Blocked `true`=闭锁，`false`=未闭锁       |
+| sb      | bool   | Substituted `true`=取代，`false`=未取代   |
+| nt      | bool   | NotTopical `true`=非当前值，`false`=当前值  |
+| iv      | bool   | Invalid `true`=无效，`false`=有效        |
+| time    | string | 时标（仅带时标的ASDU类型包含此字段）                |
 
 ---
 
@@ -267,17 +270,17 @@
 }
 ```
 
-| 字段      | 类型      | 说明                           |
-|---------|---------|------------------------------|
-| value   | float32 | IEEE 754短浮点数（直接为工程值，如电压、电流等） |
-| qds     | byte    | 品质                           |
-| qdsDesc | string  | 品质描述                         |
-| ov      | bool   | Overflow `true`=溢出，`false`=未溢出         |
-| bl      | bool   | Blocked `true`=闭锁，`false`=未闭锁          |
-| sb      | bool   | Substituted `true`=取代，`false`=未取代      |
-| nt      | bool   | NotTopical `true`=非当前值，`false`=当前值     |
-| iv      | bool   | Invalid `true`=无效，`false`=有效           |
-| time    | string | 时标（仅带时标的ASDU类型包含此字段）                   |
+| 字段      | 类型      | 说明                                 |
+|---------|---------|------------------------------------|
+| value   | float32 | IEEE 754短浮点数（直接为工程值，如电压、电流等）       |
+| qds     | byte    | 品质                                 |
+| qdsDesc | string  | 品质描述                               |
+| ov      | bool    | Overflow `true`=溢出，`false`=未溢出     |
+| bl      | bool    | Blocked `true`=闭锁，`false`=未闭锁      |
+| sb      | bool    | Substituted `true`=取代，`false`=未取代  |
+| nt      | bool    | NotTopical `true`=非当前值，`false`=当前值 |
+| iv      | bool    | Invalid `true`=无效，`false`=有效       |
+| time    | string  | 时标（仅带时标的ASDU类型包含此字段）               |
 
 ---
 
@@ -389,16 +392,16 @@
 }
 ```
 
-| 字段      | 类型     | 说明                      |
-|---------|--------|-------------------------|
-| scd     | byte   | 事件类型（见附录E）              |
-| qds     | byte   | 品质                      |
-| qdsDesc | string | 品质描述                    |
-| ov      | bool   | Overflow `true`=溢出，`false`=未溢出         |
-| bl      | bool   | Blocked `true`=闭锁，`false`=未闭锁          |
-| sb      | bool   | Substituted `true`=取代，`false`=未取代      |
-| nt      | bool   | NotTopical `true`=非当前值，`false`=当前值     |
-| iv      | bool   | Invalid `true`=无效，`false`=有效           |
+| 字段      | 类型     | 说明                                 |
+|---------|--------|------------------------------------|
+| scd     | byte   | 事件类型（见附录E）                         |
+| qds     | byte   | 品质                                 |
+| qdsDesc | string | 品质描述                               |
+| ov      | bool   | Overflow `true`=溢出，`false`=未溢出     |
+| bl      | bool   | Blocked `true`=闭锁，`false`=未闭锁      |
+| sb      | bool   | Substituted `true`=取代，`false`=未取代  |
+| nt      | bool   | NotTopical `true`=非当前值，`false`=当前值 |
+| iv      | bool   | Invalid `true`=无效，`false`=有效       |
 
 ---
 
@@ -415,7 +418,6 @@
 | sb | 6  | Substituted `true`=取代，`false`=未取代  |
 | nt | 7  | NotTopical `true`=非当前值，`false`=当前值 |
 | iv | 8  | Invalid `true`=无效，`false`=有效       |
-
 
 #### 1.QDP
 

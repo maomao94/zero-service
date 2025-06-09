@@ -16,7 +16,7 @@ message Res {
 }
 
 message PushChunkAsduReq {
-  MsgBody info = 1;
+  repeated MsgBody msgBody = 1;
 }
 
 message PushChunkAsduRes {
@@ -24,173 +24,161 @@ message PushChunkAsduRes {
 
 // 消息体结构
 message MsgBody {
-  string host = 1;
-  int32 port = 2;
-  string asdu = 3;
-  int32 type_id = 4;
-  uint32 coa = 5;
-  oneof body {
-    SinglePointInfo single_point_info = 100;
-    DoublePointInfo double_point_info = 101;
-    MeasuredValueScaledInfo measured_value_scaled_info = 102;
-    MeasuredValueNormalInfo measured_value_normal_info = 103;
-    StepPositionInfo step_position_info = 104;
-    BitString32Info bit_string32_info = 105;
-    MeasuredValueFloatInfo measured_value_float_info = 106;
-    BinaryCounterReadingInfo binary_counter_reading_info = 107;
-    EventOfProtectionEquipmentInfo event_of_protection_equipment_info = 108;
-    PackedStartEventsOfProtectionEquipmentInfo packed_start_events_info = 109;
-    PackedOutputCircuitInfoInfo packed_output_circuit_info = 110;
-    PackedSinglePointWithSCDInfo packed_single_point_with_scd_info = 111;
-  }
-  string time = 18;
-  string metaData = 19;
+  string host = 1 [json_name = "host"];
+  int32 port = 2 [json_name = "port"];
+  string asdu = 3 [json_name = "asdu"];
+  int32 typeId = 4 [json_name = "typeId"];
+  int32 dataType = 5 [json_name = "dataType"];
+  uint32 coa = 6 [json_name = "coa"];
+  string bodyRaw = 7 [json_name = "bodyRaw"];
+  string time = 8 [json_name = "time"];
+  string metaDataRaw = 9 [json_name = "metaDataRaw"];
 }
 
 message SinglePointInfo {
-  uint32 ioa = 1;
-  bool value = 2;
-  uint32 qds = 3;
-  string qds_desc = 4;
-  bool ov = 5;
-  bool bl = 6;
-  bool sb = 7;
-  bool nt = 8;
-  bool iv = 9;
-  string time = 10;
+  uint32 ioa = 1 [json_name = "ioa"];
+  bool value = 2 [json_name = "value"];
+  uint32 qds = 3 [json_name = "qds"];
+  string qdsDesc = 4 [json_name = "qdsDesc"];
+  bool ov = 5 [json_name = "ov"];
+  bool bl = 6 [json_name = "bl"];
+  bool sb = 7 [json_name = "sb"];
+  bool nt = 8 [json_name = "nt"];
+  bool iv = 9 [json_name = "iv"];
+  string time = 10 [json_name = "time"];
 }
 
 message DoublePointInfo {
-  uint32 ioa = 1;
-  uint32 value = 2;
-  uint32 qds = 3;
-  string qds_desc = 4;
-  bool ov = 5;
-  bool bl = 6;
-  bool sb = 7;
-  bool nt = 8;
-  bool iv = 9;
-  string time = 10;
+  uint32 ioa = 1 [json_name = "ioa"];
+  uint32 value = 2 [json_name = "value"];
+  uint32 qds = 3 [json_name = "qds"];
+  string qdsDesc = 4 [json_name = "qdsDesc"];
+  bool ov = 5 [json_name = "ov"];
+  bool bl = 6 [json_name = "bl"];
+  bool sb = 7 [json_name = "sb"];
+  bool nt = 8 [json_name = "nt"];
+  bool iv = 9 [json_name = "iv"];
+  string time = 10 [json_name = "time"];
 }
 
 message MeasuredValueScaledInfo {
-  uint32 ioa = 1;
-  int32 value = 2;
-  uint32 qds = 3;
-  string qds_desc = 4;
-  bool ov = 5;
-  bool bl = 6;
-  bool sb = 7;
-  bool nt = 8;
-  bool iv = 9;
-  string time = 10;
+  uint32 ioa = 1 [json_name = "ioa"];
+  uint32 value = 2 [json_name = "value"];
+  uint32 qds = 3 [json_name = "qds"];
+  string qdsDesc = 4 [json_name = "qdsDesc"];
+  bool ov = 5 [json_name = "ov"];
+  bool bl = 6 [json_name = "bl"];
+  bool sb = 7 [json_name = "sb"];
+  bool nt = 8 [json_name = "nt"];
+  bool iv = 9 [json_name = "iv"];
+  string time = 10 [json_name = "time"];
 }
 
 message MeasuredValueNormalInfo {
-  uint32 ioa = 1;
-  int32 value = 2;
-  uint32 qds = 3;
-  string qds_desc = 4;
-  bool ov = 5;
-  bool bl = 6;
-  bool sb = 7;
-  bool nt = 8;
-  bool iv = 9;
-  string time = 10;
+  uint32 ioa = 1 [json_name = "ioa"];
+  uint32 value = 2 [json_name = "value"];
+  uint32 qds = 3 [json_name = "qds"];
+  string qdsDesc = 4 [json_name = "qdsDesc"];
+  bool ov = 5 [json_name = "ov"];
+  bool bl = 6 [json_name = "bl"];
+  bool sb = 7 [json_name = "sb"];
+  bool nt = 8 [json_name = "nt"];
+  bool iv = 9 [json_name = "iv"];
+  string time = 10 [json_name = "time"];
 }
 
 message StepPositionInfo {
-  uint32 ioa = 1;
-  StepPosition value = 2;
-  uint32 qds = 3;
-  string qds_desc = 4;
-  bool ov = 5;
-  bool bl = 6;
-  bool sb = 7;
-  bool nt = 8;
-  bool iv = 9;
-  string time = 10;
+  uint32 ioa = 1 [json_name = "ioa"];
+  StepPosition value = 2 [json_name = "value"];
+  uint32 qds = 3 [json_name = "qds"];
+  string qdsDesc = 4 [json_name = "qdsDesc"];
+  bool ov = 5 [json_name = "ov"];
+  bool bl = 6 [json_name = "bl"];
+  bool sb = 7 [json_name = "sb"];
+  bool nt = 8 [json_name = "nt"];
+  bool iv = 9 [json_name = "iv"];
+  string time = 10 [json_name = "time"];
 }
 
 message StepPosition {
-  int32 val = 1;
-  bool has_transient = 2;
+  int32 val = 1 [json_name = "val"];
+  bool hasTransient = 2 [json_name = "hasTransient"];
 }
 
 message BitString32Info {
-  uint32 ioa = 1;
-  uint32 value = 2;
-  uint32 qds = 3;
-  string qds_desc = 4;
-  bool ov = 5;
-  bool bl = 6;
-  bool sb = 7;
-  bool nt = 8;
-  bool iv = 9;
-  string time = 10;
+  uint32 ioa = 1 [json_name = "ioa"];
+  uint32 value = 2 [json_name = "value"];
+  uint32 qds = 3 [json_name = "qds"];
+  string qdsDesc = 4 [json_name = "qdsDesc"];
+  bool ov = 5 [json_name = "ov"];
+  bool bl = 6 [json_name = "bl"];
+  bool sb = 7 [json_name = "sb"];
+  bool nt = 8 [json_name = "nt"];
+  bool iv = 9 [json_name = "iv"];
+  string time = 10 [json_name = "time"];
 }
 
 message MeasuredValueFloatInfo {
-  uint32 ioa = 1;
-  float value = 2;
-  uint32 qds = 3;
-  string qds_desc = 4;
-  bool ov = 5;
-  bool bl = 6;
-  bool sb = 7;
-  bool nt = 8;
-  bool iv = 9;
-  string time = 10;
+  uint32 ioa = 1 [json_name = "ioa"];
+  float value = 2 [json_name = "value"];
+  uint32 qds = 3 [json_name = "qds"];
+  string qdsDesc = 4 [json_name = "qdsDesc"];
+  bool ov = 5 [json_name = "ov"];
+  bool bl = 6 [json_name = "bl"];
+  bool sb = 7 [json_name = "sb"];
+  bool nt = 8 [json_name = "nt"];
+  bool iv = 9 [json_name = "iv"];
+  string time = 10 [json_name = "time"];
 }
 
 message BinaryCounterReadingInfo {
-  uint32 ioa = 1;
-  BinaryCounterReading value = 2;
-  string time = 3;
+  uint32 ioa = 1 [json_name = "ioa"];
+  BinaryCounterReading value = 2 [json_name = "value"];
+  string time = 3 [json_name = "time"];
 }
 
 message BinaryCounterReading {
-  int32 counter_reading = 1;
-  uint32 seq_number = 2;
-  bool has_carry = 3;
-  bool is_adjusted = 4;
-  bool is_invalid = 5;
+  int32 counterReading = 1 [json_name = "counterReading"];
+  uint32 seqNumber = 2 [json_name = "seqNumber"];
+  bool hasCarry = 3  [json_name = "hasCarry"];
+  bool isAdjusted = 4 [json_name = "isAdjusted"];
+  bool isInvalid = 5 [json_name = "isInvalid"];
 }
 
 message EventOfProtectionEquipmentInfo {
-  uint32 ioa = 1;
-  uint32 event = 2;
-  uint32 qdp = 3;
-  uint32 msec = 4;
-  string time = 5;
+  uint32 ioa = 1 [json_name = "ioa"];
+  uint32 event = 2 [json_name = "event"];
+  uint32 qdp = 3 [json_name = "qdp"];
+  uint32 msec = 4 [json_name = "msec"];
+  string time = 5 [json_name = "time"];
 }
 
 message PackedStartEventsOfProtectionEquipmentInfo {
-  uint32 ioa = 1;
-  uint32 event = 2;
-  uint32 qdp = 3;
-  uint32 msec = 4;
-  string time = 5;
+  uint32 ioa = 1 [json_name = "ioa"];
+  uint32 event = 2 [json_name = "event"];
+  uint32 qdp = 3 [json_name = "qdp"];
+  uint32 msec = 4 [json_name = "msec"];
+  string time = 5 [json_name = "time"];
 }
 
 message PackedOutputCircuitInfoInfo {
-  uint32 ioa = 1;
-  uint32 oci = 2;
-  uint32 qdp = 3;
-  uint32 msec = 4;
-  string time = 5;
+  uint32 ioa = 1 [json_name = "ioa"];
+  uint32 oci = 2 [json_name = "oci"];
+  uint32 qdp = 3 [json_name = "qdp"];
+  uint32 msec = 4 [json_name = "msec"];
+  string time = 5 [json_name = "time"];
 }
 
 message PackedSinglePointWithSCDInfo {
-  uint32 ioa = 1;
-  uint32 scd = 2;
-  uint32 qds = 3;
-  string qds_desc = 4;
-  bool ov = 5;
-  bool bl = 6;
-  bool sb = 7;
-  bool nt = 8;
-  bool iv = 9;
+  uint32 ioa = 1 [json_name = "ioa"];
+  uint32 scd = 2 [json_name = "scd"];
+  uint32 qds = 3 [json_name = "qds"];
+  string qdsDesc = 4 [json_name = "qdsDesc"];
+  bool ov = 5 [json_name = "ov"];
+  bool bl = 6 [json_name = "bl"];
+  bool sb = 7 [json_name = "sb"];
+  bool nt = 8 [json_name = "nt"];
+  bool iv = 9 [json_name = "iv"];
 }
 
 service IecStreamRpc {
