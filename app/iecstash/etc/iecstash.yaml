@@ -27,9 +27,9 @@ KafkaASDUConfig:
   # 链接kafka的链接数，链接数依据cpu的核数，一般<= CPU的核数
   Conns: 3
   # 每个连接数打开的协程数，计算规则为Conns * Consumers，不建议超过分片总数，比如topic分片为30，Conns *Consumers <= 30
-  Consumers: 10
+  Consumers: 3
   # 处理数据的协程数量，依据CPU的核数，可以适当增加，建议配置：Conns * Consumers * 2 或 Conns * Consumers * 3，例如：60  或 90
-  Processors: 60
+  Processors: 18
   # 每次从kafka获取数据块的区间大小，默认为1M~10M，网络和IO较好的情况下，可以适当调高
   MinBytes: 1048576
   MaxBytes: 10485760
