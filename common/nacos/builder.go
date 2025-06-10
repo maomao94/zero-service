@@ -85,7 +85,7 @@ func (b *builder) Build(url resolver.Target, conn resolver.ClientConn, opts reso
 	go populateEndpoints(ctx, conn, pipe)
 
 	go func() {
-		ticker := time.NewTicker(5 * time.Second)
+		ticker := time.NewTicker(60 * time.Second)
 		defer ticker.Stop()
 		for {
 			select {
