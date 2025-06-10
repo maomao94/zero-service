@@ -3,17 +3,16 @@ package nacos
 import (
 	"context"
 	"fmt"
+	"github.com/nacos-group/nacos-sdk-go/v2/clients"
+	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	"github.com/nacos-group/nacos-sdk-go/v2/model"
+	"github.com/nacos-group/nacos-sdk-go/v2/vo"
+	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/logx"
+	"google.golang.org/grpc/resolver"
 	"net"
 	"strconv"
 	"time"
-
-	"github.com/nacos-group/nacos-sdk-go/v2/clients"
-	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
-	"github.com/nacos-group/nacos-sdk-go/v2/vo"
-	"github.com/pkg/errors"
-	"google.golang.org/grpc/resolver"
 )
 
 func init() {
@@ -91,11 +90,10 @@ func (b *builder) Build(url resolver.Target, conn resolver.ClientConn, opts reso
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				instances, err := cli.SelectInstances(vo.SelectInstancesParam{
+				instances, err := cli.SelectAllInstances(vo.SelectAllInstancesParam{
 					ServiceName: tgt.Service,
 					Clusters:    tgt.Clusters,
 					GroupName:   tgt.GroupName,
-					HealthyOnly: true,
 				})
 				if err != nil {
 					logx.Errorf("failed to pull nacos service instances: %v", err)
