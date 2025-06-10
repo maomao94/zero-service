@@ -43,6 +43,15 @@ func (nw *watcher) CallBackHandle(services []model.Instance, err error) {
 	}
 	ee := make([]string, 0, len(services))
 	for _, s := range services {
+		// 关键修改：只保留健康且启用的实例
+		if !s.Healthy || !s.Enable {
+			logx.Infof("[Nacos] 忽略不健康/禁用实例: %s:%d (健康: %t, 启用: %t)",
+				s.Ip, s.Port, s.Healthy, s.Enable)
+			continue
+		}
+
+		logx.Infof("[Nacos] 发现健康实例: %s|%s:%d (权重: %.1f)",
+			s.InstanceId, s.Ip, s.Port, s.Weight)
 		if s.Metadata != nil && s.Metadata["gRPC_port"] != "" {
 			ee = append(ee, fmt.Sprintf("%s:%s", s.Ip, s.Metadata["gRPC_port"]))
 		} else {

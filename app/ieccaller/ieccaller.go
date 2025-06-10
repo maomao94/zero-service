@@ -56,9 +56,7 @@ func main() {
 			NotLoadCacheAtStart: true,
 			LogDir:              "/tmp/nacos/log",
 			CacheDir:            "/tmp/nacos/cache",
-			//RotateTime:          "1h",
-			//MaxAge:              3,
-			LogLevel: "debug",
+			LogLevel:            "debug",
 		}
 		m := map[string]string{
 			"gRPC_port":                 strutil.After(c.RpcServerConf.ListenOn, ":"),
