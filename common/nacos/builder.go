@@ -130,7 +130,7 @@ func extractHealthyGRPCInstances(instances []model.Instance) []string {
 				s.Ip, s.Port, s.Healthy, s.Enable)
 			continue
 		}
-		logx.Debugf("[Nacos] 发现健康实例: %s|%s:%d (权重: %.1f)",
+		logx.Debugf("[Nacos] 发现健康实例: %s|%s:%s (权重: %.1f)",
 			s.InstanceId, s.Ip, s.Metadata["gRPC_port"], s.Weight)
 		addrs = append(addrs, fmt.Sprintf("%s:%s", s.Ip, s.Metadata["gRPC_port"]))
 	}
