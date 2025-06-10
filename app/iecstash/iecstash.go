@@ -7,6 +7,7 @@ import (
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	"github.com/zeromicro/go-queue/kq"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/proc"
 	"zero-service/app/iecstash/kafka"
 	interceptor "zero-service/common/Interceptor/rpcserver"
 	"zero-service/common/nacos"
@@ -32,6 +33,7 @@ func main() {
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
+	proc.SetTimeToForceQuit(c.GracePeriod)
 	zrpc.DontLogClientContentForMethod(iecstream.IecStreamRpc_PushChunkAsdu_FullMethodName)
 	ctx := svc.NewServiceContext(c)
 

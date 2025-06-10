@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/zeromicro/go-queue/kq"
 	"github.com/zeromicro/go-zero/zrpc"
+	"time"
 )
 
 type Config struct {
@@ -18,5 +19,6 @@ type Config struct {
 		ServiceName string
 	} `json:",optional"`
 	IecStreamRpcConf   zrpc.RpcClientConf
-	PushAsduChunkBytes int `json:",default=10485760"` // 10M
+	PushAsduChunkBytes int           `json:",default=10485760"` // 10M
+	GracePeriod        time.Duration `json:",default=10s"`
 }
