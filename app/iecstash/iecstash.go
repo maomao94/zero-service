@@ -10,6 +10,7 @@ import (
 	"zero-service/app/iecstash/kafka"
 	interceptor "zero-service/common/Interceptor/rpcserver"
 	"zero-service/common/nacos"
+	"zero-service/facade/iecstream/iecstream"
 
 	"zero-service/app/iecstash/iecstash"
 	"zero-service/app/iecstash/internal/config"
@@ -31,7 +32,7 @@ func main() {
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
-	zrpc.DontLogClientContentForMethod("/pb.IecStreamRpc/pushChunkAsdu")
+	zrpc.DontLogClientContentForMethod(iecstream.IecStreamRpc_PushChunkAsdu_FullMethodName)
 	ctx := svc.NewServiceContext(c)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
