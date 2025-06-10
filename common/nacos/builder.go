@@ -126,8 +126,8 @@ func extractHealthyGRPCInstances(instances []model.Instance) []string {
 		}
 
 		if !s.Healthy || !s.Enable {
-			logx.Debugf("[Nacos] 忽略实例: %s:%d (健康: %t, 启用: %t)",
-				s.Ip, s.Port, s.Healthy, s.Enable)
+			logx.Debugf("[Nacos] 忽略实例: %s:%s (健康: %t, 启用: %t)",
+				s.Ip, s.Metadata["gRPC_port"], s.Healthy, s.Enable)
 			continue
 		}
 		logx.Debugf("[Nacos] 发现健康实例: %s|%s:%s (权重: %.1f)",
