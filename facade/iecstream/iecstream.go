@@ -29,11 +29,11 @@ func main() {
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
+	c.RpcServerConf.Middlewares.StatConf.IgnoreContentMethods = []string{"/pb.IecStreamRpc/pushChunkAsdu"}
 	ctx := svc.NewServiceContext(c)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
 		iecstream.RegisterIecStreamRpcServer(grpcServer, server.NewIecStreamRpcServer(ctx))
-
 		if c.Mode == service.DevMode || c.Mode == service.TestMode {
 			reflection.Register(grpcServer)
 		}

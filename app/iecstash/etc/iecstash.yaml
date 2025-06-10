@@ -9,7 +9,7 @@ Log:
   Encoding: plain
   #  Mode: file
   Path: /opt/logs/iecstash.rpc
-  Level: debug
+  Level: info
 NacosConfig:
   IsRegister: true
   Host: 10.10.1.103
@@ -29,6 +29,8 @@ KafkaASDUConfig:
   Processors: 1
   CommitInOrder: true
 IecStreamRpcConf:
+  # nacos://[user:passwd]@host/service?param=value'
+#  Target: nacos://192.168.100.15:8848/nacos.rpc?namespaceid=public&timeout=5000s
   Endpoints:
     - 127.0.0.1:21009
   NonBlock: true

@@ -31,6 +31,7 @@ func main() {
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
+	zrpc.DontLogClientContentForMethod("/pb.IecStreamRpc/pushChunkAsdu")
 	ctx := svc.NewServiceContext(c)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
