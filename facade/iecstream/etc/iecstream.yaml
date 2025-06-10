@@ -12,9 +12,9 @@ Log:
   Level: debug
 NacosConfig:
   IsRegister: true
-  Host: 10.10.1.103
+  Host: 127.0.0.1
   Port: 8848
   Username: nacos
-  PassWord: test@1234ns
-  NamespaceId: 5b839313-ac3a-47a7-bf8d-6246576347ff
+  PassWord: nacos
+  NamespaceId: public
   ServiceName: iec-stream

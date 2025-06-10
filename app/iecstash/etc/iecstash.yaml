@@ -12,11 +12,11 @@ Log:
   Level: info
 NacosConfig:
   IsRegister: true
-  Host: 10.10.1.103
+  Host: 127.0.0.1
   Port: 8848
   Username: nacos
-  PassWord: test@1234ns
-  NamespaceId: 5b839313-ac3a-47a7-bf8d-6246576347ff
+  PassWord: nacos
+  NamespaceId: public
   ServiceName: iec-stash
 KafkaASDUConfig:
   Name: asdu
@@ -38,9 +38,9 @@ KafkaASDUConfig:
   Offset: first
 IecStreamRpcConf:
   # nacos://[user:passwd]@host/service?param=value'
-  #  Target: nacos://192.168.100.15:8848/nacos.rpc?namespaceid=public&timeout=5000s
-  Endpoints:
-    - 127.0.0.1:21009
+  Target: nacos://nacos:nacos@127.0.0.1:8848/iec-stream?namespaceid=public&timeout=5000s
+#  Endpoints:
+#    - 127.0.0.1:21009
   NonBlock: true
   Timeout: 3000
 # 10MB 一批次
