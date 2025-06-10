@@ -25,7 +25,7 @@ require (
 	github.com/tidwall/gjson v1.18.0
 	github.com/wendy512/go-iecp5 v1.2.3
 	github.com/zeromicro/go-queue v1.2.2
-	github.com/zeromicro/go-zero v1.8.3
+	github.com/zeromicro/go-zero v1.8.4
 	github.com/zeromicro/x v0.0.0-20240408115609-8224c482b07e
 	github.com/zeromicro/zero-contrib/zrpc/registry/nacos v0.0.0-20231030135404-af9ae855016f
 	go.opentelemetry.io/otel v1.31.0
@@ -85,6 +85,8 @@ require (
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
+	github.com/grafana/pyroscope-go v1.2.2 // indirect
+	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0 // indirect
 	github.com/jhump/protoreflect v1.17.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
@@ -112,7 +114,7 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	github.com/redis/go-redis/v9 v9.8.0 // indirect
+	github.com/redis/go-redis/v9 v9.10.0 // indirect
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/segmentio/kafka-go v0.4.47 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
