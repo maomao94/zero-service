@@ -22,12 +22,20 @@ KafkaASDUConfig:
   Name: asdu
   Brokers:
     - 10.10.1.213:9094
-  Group: iec-stash
   Topic: asdu
-  Offset: first
-  Consumer: 1
-  Processors: 1
+  Group: iec-stash
+  # 链接kafka的链接数，链接数依据cpu的核数，一般<= CPU的核数
+  Conns: 3
+  # 每个连接数打开的协程数，计算规则为Conns * Consumers，不建议超过分片总数，比如topic分片为30，Conns *Consumers <= 30
+  Consumers: 10
+  # 处理数据的协程数量，依据CPU的核数，可以适当增加，建议配置：Conns * Consumers * 2 或 Conns * Consumers * 3，例如：60  或 90
+  Processors: 60
+  # 每次从kafka获取数据块的区间大小，默认为1M~10M，网络和IO较好的情况下，可以适当调高
+  MinBytes: 1048576
+  MaxBytes: 10485760
   CommitInOrder: true
+  # 可选last和first，默认为last，表示从头从kafka开始读取数据
+  Offset: first
 IecStreamRpcConf:
   # nacos://[user:passwd]@host/service?param=value'
   #  Target: nacos://192.168.100.15:8848/nacos.rpc?namespaceid=public&timeout=5000s
