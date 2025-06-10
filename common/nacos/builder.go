@@ -3,8 +3,11 @@ package nacos
 import (
 	"context"
 	"fmt"
+	"github.com/nacos-group/nacos-sdk-go/v2/model"
+	"github.com/zeromicro/go-zero/core/logx"
 	"net"
 	"strconv"
+	"time"
 
 	"github.com/nacos-group/nacos-sdk-go/v2/clients"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
@@ -80,6 +83,31 @@ func (b *builder) Build(url resolver.Target, conn resolver.ClientConn, opts reso
 
 	go populateEndpoints(ctx, conn, pipe)
 
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				instances, err := cli.SelectInstances(vo.SelectInstancesParam{
+					ServiceName: tgt.Service,
+					Clusters:    tgt.Clusters,
+					GroupName:   tgt.GroupName,
+					HealthyOnly: true,
+				})
+				if err != nil {
+					logx.Errorf("failed to pull nacos service instances: %v", err)
+					continue
+				}
+
+				addrs := extractHealthyGRPCInstances(instances)
+				pipe <- addrs
+			}
+		}
+	}()
+
 	return &resolvr{cancelFunc: cancel}, nil
 }
 
@@ -87,4 +115,25 @@ func (b *builder) Build(url resolver.Target, conn resolver.ClientConn, opts reso
 // Scheme is defined at https://github.com/grpc/grpc/blob/master/doc/naming.md.
 func (b *builder) Scheme() string {
 	return schemeName
+}
+
+func extractHealthyGRPCInstances(instances []model.Instance) []string {
+	addrs := make([]string, 0, len(instances))
+	for _, s := range instances {
+		if !s.Healthy || !s.Enable {
+			logx.Statf("[Nacos] 忽略不健康/禁用实例: %s:%d (健康: %t, 启用: %t)",
+				s.Ip, s.Port, s.Healthy, s.Enable)
+			continue
+		}
+
+		logx.Statf("[Nacos] 发现健康实例: %s|%s:%d (权重: %.1f)",
+			s.InstanceId, s.Ip, s.Port, s.Weight)
+
+		if s.Metadata != nil && s.Metadata["gRPC_port"] != "" {
+			addrs = append(addrs, fmt.Sprintf("%s:%s", s.Ip, s.Metadata["gRPC_port"]))
+		} else {
+			addrs = append(addrs, fmt.Sprintf("%s:%d", s.Ip, s.Port))
+		}
+	}
+	return addrs
 }
