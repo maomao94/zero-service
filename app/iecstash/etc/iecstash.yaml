@@ -30,10 +30,10 @@ KafkaASDUConfig:
   CommitInOrder: true
 IecStreamRpcConf:
   # nacos://[user:passwd]@host/service?param=value'
-#  Target: nacos://192.168.100.15:8848/nacos.rpc?namespaceid=public&timeout=5000s
+  #  Target: nacos://192.168.100.15:8848/nacos.rpc?namespaceid=public&timeout=5000s
   Endpoints:
     - 127.0.0.1:21009
   NonBlock: true
   Timeout: 3000
-# 10M 提交一次
+# 10MB 一批次
 PushAsduChunkBytes: 10485760
