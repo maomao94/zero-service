@@ -43,13 +43,15 @@ func (b *builder) Build(url resolver.Target, conn resolver.ClientConn, opts reso
 	}
 
 	cc := &constant.ClientConfig{
-		AppName:              tgt.AppName,
-		NamespaceId:          tgt.NamespaceID,
-		Username:             tgt.User,
-		Password:             tgt.Password,
-		TimeoutMs:            uint64(tgt.Timeout),
-		NotLoadCacheAtStart:  tgt.NotLoadCacheAtStart,
-		UpdateCacheWhenEmpty: tgt.UpdateCacheWhenEmpty,
+		AppName:     tgt.AppName,
+		NamespaceId: tgt.NamespaceID,
+		Username:    tgt.User,
+		Password:    tgt.Password,
+		TimeoutMs:   uint64(tgt.Timeout),
+		//NotLoadCacheAtStart: tgt.NotLoadCacheAtStart,
+		//UpdateCacheWhenEmpty: tgt.UpdateCacheWhenEmpty,
+		NotLoadCacheAtStart:  true,  // 不用旧缓存启动
+		UpdateCacheWhenEmpty: false, // 查询不到就返回空，别用缓存兜底
 	}
 
 	if tgt.CacheDir != "" {
@@ -118,20 +120,19 @@ func (b *builder) Scheme() string {
 func extractHealthyGRPCInstances(instances []model.Instance) []string {
 	addrs := make([]string, 0, len(instances))
 	for _, s := range instances {
-		if !s.Healthy || !s.Enable {
-			logx.Statf("[Nacos] 忽略不健康/禁用实例: %s:%d (健康: %t, 启用: %t)",
-				s.Ip, s.Port, s.Healthy, s.Enable)
+		if s.Metadata == nil || s.Metadata["gRPC_port"] == "" {
+			logx.Errorf("[Nacos] 忽略实例: %s:%d (无gRPC_port配置)", s.Ip, s.Port)
 			continue
 		}
 
-		logx.Statf("[Nacos] 发现健康实例: %s|%s:%d (权重: %.1f)",
-			s.InstanceId, s.Ip, s.Port, s.Weight)
-
-		if s.Metadata != nil && s.Metadata["gRPC_port"] != "" {
-			addrs = append(addrs, fmt.Sprintf("%s:%s", s.Ip, s.Metadata["gRPC_port"]))
-		} else {
-			addrs = append(addrs, fmt.Sprintf("%s:%d", s.Ip, s.Port))
+		if !s.Healthy || !s.Enable {
+			logx.Debugf("[Nacos] 忽略实例: %s:%d (健康: %t, 启用: %t)",
+				s.Ip, s.Port, s.Healthy, s.Enable)
+			continue
 		}
+		logx.Debugf("[Nacos] 发现健康实例: %s|%s:%d (权重: %.1f)",
+			s.InstanceId, s.Ip, s.Metadata["gRPC_port"], s.Weight)
+		addrs = append(addrs, fmt.Sprintf("%s:%s", s.Ip, s.Metadata["gRPC_port"]))
 	}
 	return addrs
 }
