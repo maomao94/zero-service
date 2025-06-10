@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	IecStreamRpc_Ping_FullMethodName          = "/pb.IecStreamRpc/ping"
-	IecStreamRpc_PushChunkAsdu_FullMethodName = "/pb.IecStreamRpc/pushChunkAsdu"
+	IecStreamRpc_Ping_FullMethodName          = "/iecstream.IecStreamRpc/ping"
+	IecStreamRpc_PushChunkAsdu_FullMethodName = "/iecstream.IecStreamRpc/pushChunkAsdu"
 )
 
 // IecStreamRpcClient is the client API for IecStreamRpc service.
@@ -142,7 +142,7 @@ func _IecStreamRpc_PushChunkAsdu_Handler(srv interface{}, ctx context.Context, d
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var IecStreamRpc_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "pb.IecStreamRpc",
+	ServiceName: "iecstream.IecStreamRpc",
 	HandlerType: (*IecStreamRpcServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

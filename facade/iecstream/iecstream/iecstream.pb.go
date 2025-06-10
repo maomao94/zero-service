@@ -1638,13 +1638,13 @@ var File_iecstream_proto protoreflect.FileDescriptor
 
 const file_iecstream_proto_rawDesc = "" +
 	"\n" +
-	"\x0fiecstream.proto\x12\x02pb\"\x19\n" +
+	"\x0fiecstream.proto\x12\tiecstream\"\x19\n" +
 	"\x03Req\x12\x12\n" +
 	"\x04ping\x18\x01 \x01(\tR\x04ping\"\x19\n" +
 	"\x03Res\x12\x12\n" +
-	"\x04pong\x18\x01 \x01(\tR\x04pong\"9\n" +
-	"\x10PushChunkAsduReq\x12%\n" +
-	"\amsgBody\x18\x01 \x03(\v2\v.pb.MsgBodyR\amsgBody\"\x12\n" +
+	"\x04pong\x18\x01 \x01(\tR\x04pong\"@\n" +
+	"\x10PushChunkAsduReq\x12,\n" +
+	"\amsgBody\x18\x01 \x03(\v2\x12.iecstream.MsgBodyR\amsgBody\"\x12\n" +
 	"\x10PushChunkAsduRes\"\xdb\x01\n" +
 	"\aMsgBody\x12\x12\n" +
 	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
@@ -1703,10 +1703,10 @@ const file_iecstream_proto_rawDesc = "" +
 	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
 	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
 	"\x04time\x18\n" +
-	" \x01(\tR\x04time\"\xdc\x01\n" +
+	" \x01(\tR\x04time\"\xe3\x01\n" +
 	"\x10StepPositionInfo\x12\x10\n" +
-	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12&\n" +
-	"\x05value\x18\x02 \x01(\v2\x10.pb.StepPositionR\x05value\x12\x10\n" +
+	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12-\n" +
+	"\x05value\x18\x02 \x01(\v2\x17.iecstream.StepPositionR\x05value\x12\x10\n" +
 	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x18\n" +
 	"\aqdsDesc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
 	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
@@ -1742,10 +1742,10 @@ const file_iecstream_proto_rawDesc = "" +
 	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
 	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
 	"\x04time\x18\n" +
-	" \x01(\tR\x04time\"p\n" +
+	" \x01(\tR\x04time\"w\n" +
 	"\x18BinaryCounterReadingInfo\x12\x10\n" +
-	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12.\n" +
-	"\x05value\x18\x02 \x01(\v2\x18.pb.BinaryCounterReadingR\x05value\x12\x12\n" +
+	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x125\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.iecstream.BinaryCounterReadingR\x05value\x12\x12\n" +
 	"\x04time\x18\x03 \x01(\tR\x04time\"\xb6\x01\n" +
 	"\x14BinaryCounterReading\x12&\n" +
 	"\x0ecounterReading\x18\x01 \x01(\x05R\x0ecounterReading\x12\x1c\n" +
@@ -1782,10 +1782,10 @@ const file_iecstream_proto_rawDesc = "" +
 	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
 	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
 	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
-	"\x02iv\x18\t \x01(\bR\x02iv2i\n" +
-	"\fIecStreamRpc\x12\x1a\n" +
-	"\x04ping\x12\a.pb.Req\x1a\a.pb.Res\"\x00\x12=\n" +
-	"\rpushChunkAsdu\x12\x14.pb.PushChunkAsduReq\x1a\x14.pb.PushChunkAsduRes\"\x00B;\n" +
+	"\x02iv\x18\t \x01(\bR\x02iv2\x85\x01\n" +
+	"\fIecStreamRpc\x12(\n" +
+	"\x04ping\x12\x0e.iecstream.Req\x1a\x0e.iecstream.Res\"\x00\x12K\n" +
+	"\rpushChunkAsdu\x12\x1b.iecstream.PushChunkAsduReq\x1a\x1b.iecstream.PushChunkAsduRes\"\x00B;\n" +
 	"\x1acom.github.iec.stream.grpcB\x0eIecStreamProtoP\x01Z\v./iecstreamb\x06proto3"
 
 var (
@@ -1802,34 +1802,34 @@ func file_iecstream_proto_rawDescGZIP() []byte {
 
 var file_iecstream_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_iecstream_proto_goTypes = []any{
-	(*Req)(nil),                                        // 0: pb.Req
-	(*Res)(nil),                                        // 1: pb.Res
-	(*PushChunkAsduReq)(nil),                           // 2: pb.PushChunkAsduReq
-	(*PushChunkAsduRes)(nil),                           // 3: pb.PushChunkAsduRes
-	(*MsgBody)(nil),                                    // 4: pb.MsgBody
-	(*SinglePointInfo)(nil),                            // 5: pb.SinglePointInfo
-	(*DoublePointInfo)(nil),                            // 6: pb.DoublePointInfo
-	(*MeasuredValueScaledInfo)(nil),                    // 7: pb.MeasuredValueScaledInfo
-	(*MeasuredValueNormalInfo)(nil),                    // 8: pb.MeasuredValueNormalInfo
-	(*StepPositionInfo)(nil),                           // 9: pb.StepPositionInfo
-	(*StepPosition)(nil),                               // 10: pb.StepPosition
-	(*BitString32Info)(nil),                            // 11: pb.BitString32Info
-	(*MeasuredValueFloatInfo)(nil),                     // 12: pb.MeasuredValueFloatInfo
-	(*BinaryCounterReadingInfo)(nil),                   // 13: pb.BinaryCounterReadingInfo
-	(*BinaryCounterReading)(nil),                       // 14: pb.BinaryCounterReading
-	(*EventOfProtectionEquipmentInfo)(nil),             // 15: pb.EventOfProtectionEquipmentInfo
-	(*PackedStartEventsOfProtectionEquipmentInfo)(nil), // 16: pb.PackedStartEventsOfProtectionEquipmentInfo
-	(*PackedOutputCircuitInfoInfo)(nil),                // 17: pb.PackedOutputCircuitInfoInfo
-	(*PackedSinglePointWithSCDInfo)(nil),               // 18: pb.PackedSinglePointWithSCDInfo
+	(*Req)(nil),                                        // 0: iecstream.Req
+	(*Res)(nil),                                        // 1: iecstream.Res
+	(*PushChunkAsduReq)(nil),                           // 2: iecstream.PushChunkAsduReq
+	(*PushChunkAsduRes)(nil),                           // 3: iecstream.PushChunkAsduRes
+	(*MsgBody)(nil),                                    // 4: iecstream.MsgBody
+	(*SinglePointInfo)(nil),                            // 5: iecstream.SinglePointInfo
+	(*DoublePointInfo)(nil),                            // 6: iecstream.DoublePointInfo
+	(*MeasuredValueScaledInfo)(nil),                    // 7: iecstream.MeasuredValueScaledInfo
+	(*MeasuredValueNormalInfo)(nil),                    // 8: iecstream.MeasuredValueNormalInfo
+	(*StepPositionInfo)(nil),                           // 9: iecstream.StepPositionInfo
+	(*StepPosition)(nil),                               // 10: iecstream.StepPosition
+	(*BitString32Info)(nil),                            // 11: iecstream.BitString32Info
+	(*MeasuredValueFloatInfo)(nil),                     // 12: iecstream.MeasuredValueFloatInfo
+	(*BinaryCounterReadingInfo)(nil),                   // 13: iecstream.BinaryCounterReadingInfo
+	(*BinaryCounterReading)(nil),                       // 14: iecstream.BinaryCounterReading
+	(*EventOfProtectionEquipmentInfo)(nil),             // 15: iecstream.EventOfProtectionEquipmentInfo
+	(*PackedStartEventsOfProtectionEquipmentInfo)(nil), // 16: iecstream.PackedStartEventsOfProtectionEquipmentInfo
+	(*PackedOutputCircuitInfoInfo)(nil),                // 17: iecstream.PackedOutputCircuitInfoInfo
+	(*PackedSinglePointWithSCDInfo)(nil),               // 18: iecstream.PackedSinglePointWithSCDInfo
 }
 var file_iecstream_proto_depIdxs = []int32{
-	4,  // 0: pb.PushChunkAsduReq.msgBody:type_name -> pb.MsgBody
-	10, // 1: pb.StepPositionInfo.value:type_name -> pb.StepPosition
-	14, // 2: pb.BinaryCounterReadingInfo.value:type_name -> pb.BinaryCounterReading
-	0,  // 3: pb.IecStreamRpc.ping:input_type -> pb.Req
-	2,  // 4: pb.IecStreamRpc.pushChunkAsdu:input_type -> pb.PushChunkAsduReq
-	1,  // 5: pb.IecStreamRpc.ping:output_type -> pb.Res
-	3,  // 6: pb.IecStreamRpc.pushChunkAsdu:output_type -> pb.PushChunkAsduRes
+	4,  // 0: iecstream.PushChunkAsduReq.msgBody:type_name -> iecstream.MsgBody
+	10, // 1: iecstream.StepPositionInfo.value:type_name -> iecstream.StepPosition
+	14, // 2: iecstream.BinaryCounterReadingInfo.value:type_name -> iecstream.BinaryCounterReading
+	0,  // 3: iecstream.IecStreamRpc.ping:input_type -> iecstream.Req
+	2,  // 4: iecstream.IecStreamRpc.pushChunkAsdu:input_type -> iecstream.PushChunkAsduReq
+	1,  // 5: iecstream.IecStreamRpc.ping:output_type -> iecstream.Res
+	3,  // 6: iecstream.IecStreamRpc.pushChunkAsdu:output_type -> iecstream.PushChunkAsduRes
 	5,  // [5:7] is the sub-list for method output_type
 	3,  // [3:5] is the sub-list for method input_type
 	3,  // [3:3] is the sub-list for extension type_name
