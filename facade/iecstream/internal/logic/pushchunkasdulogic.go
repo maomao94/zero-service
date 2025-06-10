@@ -3,7 +3,6 @@ package logic
 import (
 	"context"
 	"fmt"
-	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/jsonx"
 
 	"zero-service/facade/iecstream/iecstream"
@@ -28,8 +27,8 @@ func NewPushChunkAsduLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Pus
 
 func (l *PushChunkAsduLogic) PushChunkAsdu(in *iecstream.PushChunkAsduReq) (*iecstream.PushChunkAsduRes, error) {
 	logx.Infof("PushChunkAsduReq: msgBodySize:%d", len(in.MsgBody))
-	return nil, errors.BadRequest("9999", "暂不支持该类型")
-	//return &iecstream.PushChunkAsduRes{}, nil
+	//return nil, errors.BadRequest("9999", "暂不支持该类型")
+	return &iecstream.PushChunkAsduRes{}, nil
 }
 
 func BuildIoaBodyFromJson(dataType int32, data []byte) (any, error) {
