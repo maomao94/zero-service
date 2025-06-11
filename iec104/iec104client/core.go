@@ -604,6 +604,9 @@ func (manager *ClientManager) GetClient(host string, port int) (*Client, error) 
 	if cli == nil {
 		return nil, fmt.Errorf("cli is empty")
 	}
+	if !cli.IsConnected() {
+		return nil, fmt.Errorf("cli is not connected")
+	}
 	return cli, nil
 }
 
