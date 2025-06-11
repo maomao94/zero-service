@@ -26,7 +26,7 @@ func NewPushChunkAsduLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Pus
 }
 
 func (l *PushChunkAsduLogic) PushChunkAsdu(in *iecstream.PushChunkAsduReq) (*iecstream.PushChunkAsduRes, error) {
-	logx.Infof("PushChunkAsduReq: msgBodySize:%d", len(in.MsgBody))
+	logx.Infof("msgBodySize:%d", len(in.MsgBody))
 	//return nil, errors.BadRequest("9999", "暂不支持该类型")
 	return &iecstream.PushChunkAsduRes{}, nil
 }
