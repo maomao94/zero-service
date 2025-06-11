@@ -47,7 +47,7 @@ func (l *PushEventLogic) PushEvent(in *xfusionmock.ReqPushEvent) (*xfusionmock.R
 			EpochTime:  time.Now().UnixMilli(),
 			TerminalInfo: model.TerminalInfo{
 				TerminalID: 100001,
-				TerminalNo: randomTerminal(),
+				TerminalNo: randomTerminal(l.svcCtx.Config.TerminalList),
 				TrackID:    5001,
 				TrackNo:    "沪A12345",
 				TrackType:  "CAR",
