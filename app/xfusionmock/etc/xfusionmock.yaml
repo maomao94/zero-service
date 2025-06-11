@@ -34,3 +34,9 @@ KafkaTerminalBind:
   Topic: xfusion-terminal_bind
 PushCron: "*/60 * * * * *"
 PushCronPoint: "*/5 * * * * *"
+TerminalBind:
+  # 千寻
+  8088: "9ae27e8b3218fee13f4c7c872d5e9a86"
+  # 旭光
+  8087: "b88ca6b10d3f098f0c2cccab1ef7afa2"
+TerminalList: [ 8088,8087 ]

@@ -39,13 +39,15 @@ func (l *PushPointLogic) PushPoint(in *xfusionmock.ReqPushPoint) (*xfusionmock.R
 			return nil, err
 		}
 	} else {
+		terminalNo := randomTerminal(l.svcCtx.Config.TerminalList)
+		trackNo := l.svcCtx.Config.TerminalBind[terminalNo]
 		data := &model.TerminalData{
 			DataTagV1: l.svcCtx.Config.Name,
 			TerminalInfo: &model.TerminalInfo{
 				TerminalID: 100001,
-				TerminalNo: randomTerminal(),
+				TerminalNo: terminalNo,
 				TrackID:    5001,
-				TrackNo:    "b88ca6b10d3f098f0c2cccab1ef7afa2",
+				TrackNo:    trackNo,
 				TrackType:  "STAFF",
 				TrackName:  l.svcCtx.Config.Name,
 			},
@@ -83,4 +85,8 @@ func (l *PushPointLogic) PushPoint(in *xfusionmock.ReqPushPoint) (*xfusionmock.R
 	}
 	l.svcCtx.KafkaPointPusher.Push(l.ctx, string(jsonData))
 	return &xfusionmock.ResPushPoint{}, nil
+}
+
+func randomTerminal(terminalList []string) string {
+	return string(random.RandFromGivenSlice(terminalList))
 }

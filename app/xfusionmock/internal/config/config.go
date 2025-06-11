@@ -15,4 +15,6 @@ type Config struct {
 	KafkaTerminalBind config.KqConfig
 	PushCron          string
 	PushCronPoint     string
+	TerminalBind      map[string]string
+	TerminalList      []string
 }
