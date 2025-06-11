@@ -5,6 +5,7 @@ import (
 	"github.com/tidwall/gjson"
 	"github.com/zeromicro/go-zero/core/executors"
 	"github.com/zeromicro/go-zero/zrpc"
+	"sync"
 	"zero-service/app/iecstash/internal/config"
 	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/facade/iecstream/iecstream"
@@ -29,9 +30,12 @@ func NewServiceContext(c config.Config) *ServiceContext {
 type AsduPusher struct {
 	inserter        *executors.ChunkExecutor
 	IecStreamRpcCli iecstream.IecStreamRpcClient
+	writerLock      sync.Mutex
 }
 
 func (w *AsduPusher) Write(val string) error {
+	w.writerLock.Lock()
+	defer w.writerLock.Unlock()
 	return w.inserter.Add(val, len(val))
 }
 
