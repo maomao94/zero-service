@@ -47,6 +47,7 @@ func (w *AsduPusher) execute(vals []interface{}) {
 			Port:        int32(result.Get("port").Int()),
 			Asdu:        result.Get("asdu").String(),
 			TypeId:      int32(typeId),
+			DataType:    int32(result.Get("dataType").Int()),
 			Coa:         uint32(result.Get("coa").Int()),
 			BodyRaw:     bodyRaw,
 			Time:        result.Get("time").String(),
