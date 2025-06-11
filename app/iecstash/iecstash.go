@@ -73,7 +73,6 @@ func main() {
 	serviceGroup.Add(s)
 
 	// kafka
-	c.KafkaASDUConfig.ServiceConf = c.ServiceConf
 	serviceGroup.Add(kq.MustNewQueue(c.KafkaASDUConfig, kafka.NewAsdu(ctx)))
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)

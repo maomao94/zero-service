@@ -42,7 +42,6 @@ func main() {
 	serviceGroup.Add(s)
 
 	// kafka
-	c.KafkaTestConfig.ServiceConf = c.ServiceConf
 	serviceGroup.Add(kq.MustNewQueue(c.KafkaTestConfig, kafka.NewTest(ctx)))
 
 	// cron
