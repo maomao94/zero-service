@@ -42,7 +42,7 @@ func (svc ServiceContext) PushASDU(data *types.MsgBody) error {
 }
 
 func (svc ServiceContext) PushPbBroadcast(method string, in any) error {
-	if svc.Config.DeployMode == "cluster" {
+	if svc.IsBroadcast() {
 		pbData, err := json.Marshal(in)
 		if err != nil {
 			return err
@@ -60,7 +60,7 @@ func (svc ServiceContext) PushPbBroadcast(method string, in any) error {
 }
 
 func (svc ServiceContext) PushBroadcast(data *types.BroadcastBody) error {
-	if svc.Config.DeployMode == "cluster" {
+	if svc.IsBroadcast() {
 		byteData, err := json.Marshal(data)
 		if err != nil {
 			return fmt.Errorf("json marshal error %v", err)
@@ -68,4 +68,8 @@ func (svc ServiceContext) PushBroadcast(data *types.BroadcastBody) error {
 		return svc.KafkaBroadcastPusher.Push(context.Background(), string(byteData))
 	}
 	return nil
+}
+
+func (svc ServiceContext) IsBroadcast() bool {
+	return svc.Config.DeployMode == "cluster"
 }

@@ -26,15 +26,17 @@ func (l *SendReadCmdLogic) SendReadCmd(in *ieccaller.SendReadCmdReq) (*ieccaller
 	if err != nil {
 		return nil, err
 	}
-	if cli == nil {
+	if cli == nil && l.svcCtx.IsBroadcast() {
 		err = l.svcCtx.PushPbBroadcast(ieccaller.IecCaller_SendReadCmd_FullMethodName, in)
 		if err != nil {
 			return nil, err
 		}
-	} else {
+	} else if cli != nil {
 		if err = cli.SendReadCmd(uint16(in.Coa), uint(in.Ioa)); err != nil {
 			return nil, err
 		}
+	} else {
+		logx.Errorf("no client found")
 	}
 	return &ieccaller.SendReadCmdRes{}, nil
 }

@@ -80,7 +80,7 @@ func main() {
 	// cron
 	serviceGroup.Add(cron.NewCronService(ctx))
 
-	if c.DeployMode == "cluster" {
+	if ctx.IsBroadcast() {
 		// kafka 广播队列
 		kqConf := kq.KqConf{
 			ServiceConf: service.ServiceConf{

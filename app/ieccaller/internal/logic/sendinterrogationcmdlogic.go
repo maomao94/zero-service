@@ -28,13 +28,15 @@ func (l *SendInterrogationCmdLogic) SendInterrogationCmd(in *ieccaller.SendInter
 	if err != nil {
 		return nil, err
 	}
-	if cli == nil {
+	if cli == nil && l.svcCtx.IsBroadcast() {
 		err = l.svcCtx.PushPbBroadcast(ieccaller.IecCaller_SendInterrogationCmd_FullMethodName, in)
 		return nil, err
-	} else {
+	} else if cli != nil {
 		if err = cli.SendInterrogationCmd(uint16(in.Coa)); err != nil {
 			return nil, err
 		}
+	} else {
+		logx.Errorf("no client found")
 	}
 	return &ieccaller.SendInterrogationCmdRes{}, nil
 }
