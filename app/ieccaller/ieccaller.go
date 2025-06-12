@@ -80,26 +80,25 @@ func main() {
 	// cron
 	serviceGroup.Add(cron.NewCronService(ctx))
 
-	if ctx.IsBroadcast() {
-		// kafka 广播队列
-		kqConf := kq.KqConf{
-			ServiceConf: service.ServiceConf{
-				Name: "broadcast-" + c.KafkaConfig.BroadcastGroupId,
-			},
-			Brokers:       c.KafkaConfig.Brokers,
-			Group:         c.KafkaConfig.BroadcastGroupId,
-			Topic:         c.KafkaConfig.BroadcastTopic,
-			Offset:        "last",
-			Conns:         1,
-			Consumers:     3,
-			Processors:    6,
-			MinBytes:      10240,
-			MaxBytes:      10485760,
-			ForceCommit:   true,
-			CommitInOrder: false,
-		}
-		serviceGroup.Add(kq.MustNewQueue(kqConf, kafka.NewBroadcast(ctx)))
+	// kafka 广播队列
+	kqConf := kq.KqConf{
+		ServiceConf: service.ServiceConf{
+			Name: "broadcast-" + c.KafkaConfig.BroadcastGroupId,
+		},
+		Brokers:       c.KafkaConfig.Brokers,
+		Group:         c.KafkaConfig.BroadcastGroupId,
+		Topic:         c.KafkaConfig.BroadcastTopic,
+		Offset:        "last",
+		Conns:         1,
+		Consumers:     3,
+		Processors:    6,
+		MinBytes:      10240,
+		MaxBytes:      10485760,
+		ForceCommit:   true,
+		CommitInOrder: false,
 	}
+	serviceGroup.Add(kq.MustNewQueue(kqConf, kafka.NewBroadcast(ctx)))
+
 	fmt.Printf("DeployMode: %s\n", c.DeployMode)
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
 	serviceGroup.Start()
