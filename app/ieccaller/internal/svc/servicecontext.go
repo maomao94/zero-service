@@ -61,6 +61,7 @@ func (svc ServiceContext) PushPbBroadcast(method string, in any) error {
 
 func (svc ServiceContext) PushBroadcast(data *types.BroadcastBody) error {
 	if svc.IsBroadcast() {
+		data.BroadcastGroupId = svc.Config.KafkaConfig.BroadcastGroupId
 		byteData, err := json.Marshal(data)
 		if err != nil {
 			return fmt.Errorf("json marshal error %v", err)

@@ -77,8 +77,9 @@ func (t *DateTime) UnmarshalJSON(data []byte) error {
 }
 
 type BroadcastBody struct {
-	Method string `json:"method"`
-	Body   string `json:"body"`
+	BroadcastGroupId string `json:"broadcastGroupId"`
+	Method           string `json:"method"`
+	Body             string `json:"body"`
 }
 
 type MsgBody struct {

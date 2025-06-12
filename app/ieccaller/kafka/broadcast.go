@@ -21,10 +21,17 @@ func NewBroadcast(svcCtx *svc.ServiceContext) *Broadcast {
 
 func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 	logx.Infof("broadcast, msg:%+v", value)
+	if !l.svcCtx.IsBroadcast() {
+		logx.Error("not setting cluster")
+		return nil
+	}
 	broadcastBody := &types.BroadcastBody{}
 	err := jsonx.Unmarshal([]byte(value), broadcastBody)
 	if err != nil {
 		return err
+	}
+	if broadcastBody.BroadcastGroupId == l.svcCtx.Config.KafkaConfig.BroadcastGroupId {
+		logx.Debug("ignore broadcast")
 	}
 	switch broadcastBody.Method {
 	case ieccaller.IecCaller_SendInterrogationCmd_FullMethodName:
