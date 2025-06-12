@@ -8,10 +8,12 @@ import (
 
 type Config struct {
 	zrpc.RpcServerConf
-	KafkaASDUConfig config.KqConfig
+	DeployMode      string `json:",default=standalone,options=standalone|cluster"` // 可选值：standalone 或 cluster
+	KafkaConfig     config.KqConfig
 	IecServerConfig []iec104client.IecServerConfig
 	//IecCoaConfig         []iec104client.CoaConfig
 	InterrogationCmdCron string
+	// 模式字段，支持 cluster / standalone
 
 	NacosConfig struct {
 		IsRegister  bool

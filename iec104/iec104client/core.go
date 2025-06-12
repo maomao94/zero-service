@@ -610,6 +610,24 @@ func (manager *ClientManager) GetClient(host string, port int) (*Client, error) 
 	return cli, nil
 }
 
+func (manager *ClientManager) GetClientOrNil(host string, port int) (*Client, error) {
+	var cli *Client
+	manager.ClientsRange(func(client *Client, value bool) (result bool) {
+		if client.settings.Host == host && client.settings.Port == port {
+			cli = client
+			return true
+		}
+		return false
+	})
+	if cli == nil {
+		return nil, nil
+	}
+	if !cli.IsConnected() {
+		return nil, fmt.Errorf("cli is not connected")
+	}
+	return cli, nil
+}
+
 func (manager *ClientManager) ClientsRange(f func(client *Client, value bool) (result bool)) {
 	manager.clientsLock.RLock()
 	defer manager.clientsLock.RUnlock()

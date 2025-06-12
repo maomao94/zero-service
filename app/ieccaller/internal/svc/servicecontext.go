@@ -12,16 +12,18 @@ import (
 )
 
 type ServiceContext struct {
-	Config          config.Config
-	ClientManager   *iec104client.ClientManager
-	KafkaASDUPusher *kq.Pusher
+	Config               config.Config
+	ClientManager        *iec104client.ClientManager
+	KafkaASDUPusher      *kq.Pusher
+	KafkaBroadcastPusher *kq.Pusher
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	svcCtx := &ServiceContext{
-		Config:          c,
-		ClientManager:   iec104client.NewClientManager(),
-		KafkaASDUPusher: kq.NewPusher(c.KafkaASDUConfig.Brokers, c.KafkaASDUConfig.Topic),
+		Config:               c,
+		ClientManager:        iec104client.NewClientManager(),
+		KafkaASDUPusher:      kq.NewPusher(c.KafkaConfig.Brokers, c.KafkaConfig.AsduTopic),
+		KafkaBroadcastPusher: kq.NewPusher(c.KafkaConfig.Brokers, c.KafkaConfig.BroadcastTopic),
 	}
 	return svcCtx
 }
@@ -33,8 +35,37 @@ func (svc ServiceContext) PushASDU(data *types.MsgBody) error {
 	if err != nil {
 		return fmt.Errorf("json marshal error %v", err)
 	}
-	if svc.Config.KafkaASDUConfig.IsPush {
+	if svc.Config.KafkaConfig.IsPush {
 		return svc.KafkaASDUPusher.PushWithKey(context.Background(), key, string(byteData))
+	}
+	return nil
+}
+
+func (svc ServiceContext) PushPbBroadcast(method string, in any) error {
+	if svc.Config.DeployMode == "cluster" {
+		pbData, err := json.Marshal(in)
+		if err != nil {
+			return err
+		}
+		data := &types.BroadcastBody{
+			Method: method,
+			Body:   string(pbData),
+		}
+		err = svc.PushBroadcast(data)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (svc ServiceContext) PushBroadcast(data *types.BroadcastBody) error {
+	if svc.Config.DeployMode == "cluster" {
+		byteData, err := json.Marshal(data)
+		if err != nil {
+			return fmt.Errorf("json marshal error %v", err)
+		}
+		return svc.KafkaBroadcastPusher.Push(context.Background(), string(byteData))
 	}
 	return nil
 }

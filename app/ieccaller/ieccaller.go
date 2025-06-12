@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
+	"github.com/zeromicro/go-queue/kq"
 	"github.com/zeromicro/go-zero/core/logx"
 	"zero-service/app/ieccaller/cron"
 	"zero-service/app/ieccaller/ieccaller"
@@ -12,6 +13,7 @@ import (
 	"zero-service/app/ieccaller/internal/iec"
 	"zero-service/app/ieccaller/internal/server"
 	"zero-service/app/ieccaller/internal/svc"
+	"zero-service/app/ieccaller/kafka"
 	interceptor "zero-service/common/Interceptor/rpcserver"
 	"zero-service/common/nacosx"
 	"zero-service/iec104/iec104client"
@@ -77,6 +79,27 @@ func main() {
 
 	// cron
 	serviceGroup.Add(cron.NewCronService(ctx))
+
+	if c.DeployMode == "cluster" {
+		// kafka 广播队列
+		kqConf := kq.KqConf{
+			ServiceConf: service.ServiceConf{
+				Name: "broadcast-" + c.KafkaConfig.BroadcastGroupId,
+			},
+			Brokers:       c.KafkaConfig.Brokers,
+			Group:         c.KafkaConfig.BroadcastGroupId,
+			Topic:         c.KafkaConfig.BroadcastTopic,
+			Offset:        "last",
+			Conns:         1,
+			Consumers:     3,
+			Processors:    6,
+			MinBytes:      10240,
+			MaxBytes:      10485760,
+			ForceCommit:   true,
+			CommitInOrder: false,
+		}
+		serviceGroup.Add(kq.MustNewQueue(kqConf, kafka.NewBroadcast(ctx)))
+	}
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
 	serviceGroup.Start()
 }

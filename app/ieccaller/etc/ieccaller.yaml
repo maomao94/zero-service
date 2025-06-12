@@ -1,5 +1,7 @@
 Name: ieccaller.rpc
 ListenOn: 0.0.0.0:21004
+# 模式字段，支持 cluster / standalone
+DeployMode: standalone
 #Etcd:
 #  Hosts:
 #  - 127.0.0.1:2379
@@ -15,8 +17,8 @@ NacosConfig:
   Host: 10.10.1.103
   Port: 8848
   Username: nacos
-  PassWord: test@1234ns
-  NamespaceId: 5b839313-ac3a-47a7-bf8d-6246576347ff
+  PassWord: nacos
+  NamespaceId: public
   ServiceName: iec-caller
 # iec从站配置
 IecServerConfig:
@@ -28,9 +30,12 @@ IecServerConfig:
       stationId: 330KV
       arrayId: [ 1,2,3 ]
     LogEnable: true
-KafkaASDUConfig:
+KafkaConfig:
   Brokers:
     - 10.10.1.213:9094
-  Topic: asdu
+  AsduTopic: asdu
+  BroadcastTopic: iec-broadcast
+  BroadcastGroupId: iec-caller
+  # 是否推送指令数据
   IsPush: true
 InterrogationCmdCron: "*/60 * * * * *"
