@@ -1,7 +1,7 @@
 # zero-service
 ##### go-zero 脚手架
 是一个基于 [go-zero](https://github.com/zeromicro/go-zero) 的微服务脚手架，旨在帮助开发者快速搭建高性能的微服务应用 `zero-service`
-
+![iec-architecture](doc/iec-architecture.png)
 ``` 
 zero-service/
 ├── admin            # 管理模块
