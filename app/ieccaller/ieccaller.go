@@ -91,7 +91,7 @@ func main() {
 		Offset:        "last",
 		Conns:         3,
 		Consumers:     3,
-		Processors:    12,
+		Processors:    18,
 		MinBytes:      10240,
 		MaxBytes:      10485760,
 		ForceCommit:   true,
