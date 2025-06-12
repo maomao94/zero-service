@@ -100,6 +100,7 @@ func main() {
 		}
 		serviceGroup.Add(kq.MustNewQueue(kqConf, kafka.NewBroadcast(ctx)))
 	}
+	fmt.Printf("DeployMode: %s\n", c.DeployMode)
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
 	serviceGroup.Start()
 }
