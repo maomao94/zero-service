@@ -32,6 +32,7 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 	}
 	if broadcastBody.BroadcastGroupId == l.svcCtx.Config.KafkaConfig.BroadcastGroupId {
 		logx.Debug("ignore broadcast")
+		return nil
 	}
 	switch broadcastBody.Method {
 	case ieccaller.IecCaller_SendInterrogationCmd_FullMethodName:
