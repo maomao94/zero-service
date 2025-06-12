@@ -1,4 +1,4 @@
-package nacos
+package nacosx
 
 import (
 	"fmt"

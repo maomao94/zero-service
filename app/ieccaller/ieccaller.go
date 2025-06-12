@@ -13,7 +13,7 @@ import (
 	"zero-service/app/ieccaller/internal/server"
 	"zero-service/app/ieccaller/internal/svc"
 	interceptor "zero-service/common/Interceptor/rpcserver"
-	"zero-service/common/nacos"
+	"zero-service/common/nacosx"
 	"zero-service/iec104/iec104client"
 
 	"github.com/zeromicro/go-zero/core/conf"
@@ -62,8 +62,8 @@ func main() {
 			"gRPC_port":                 strutil.After(c.RpcServerConf.ListenOn, ":"),
 			"preserved.register.source": "go-zero",
 		}
-		opts := nacos.NewNacosConfig(c.NacosConfig.ServiceName, c.ListenOn, sc, cc, nacos.WithMetadata(m))
-		_ = nacos.RegisterService(opts)
+		opts := nacosx.NewNacosConfig(c.NacosConfig.ServiceName, c.ListenOn, sc, cc, nacosx.WithMetadata(m))
+		_ = nacosx.RegisterService(opts)
 	}
 	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
 	serviceGroup := service.NewServiceGroup()

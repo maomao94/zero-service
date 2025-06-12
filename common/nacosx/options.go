@@ -1,4 +1,4 @@
-package nacos
+package nacosx
 
 import "github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 

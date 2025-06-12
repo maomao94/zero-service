@@ -3,11 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/duke-git/lancet/v2/strutil"
-	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	"github.com/zeromicro/go-zero/core/logx"
 	interceptor "zero-service/common/Interceptor/rpcserver"
-
 	"zero-service/zeroalarm/internal/config"
 	"zero-service/zeroalarm/internal/server"
 	"zero-service/zeroalarm/internal/svc"
@@ -16,7 +13,6 @@ import (
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/zrpc"
-	"github.com/zeromicro/zero-contrib/zrpc/registry/nacos"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	_ "zero-service/common/carbonx"
@@ -38,27 +34,6 @@ func main() {
 			reflection.Register(grpcServer)
 		}
 	})
-	// register service to nacos
-	sc := []constant.ServerConfig{
-		*constant.NewServerConfig("10.10.1.103", 8848),
-	}
-	cc := &constant.ClientConfig{
-		NamespaceId:         "public",
-		Username:            "nacos",
-		Password:            "test@1234ns",
-		TimeoutMs:           5000,
-		NotLoadCacheAtStart: true,
-		LogDir:              "/tmp/nacos/log",
-		CacheDir:            "/tmp/nacos/cache",
-		LogLevel:            "debug",
-	}
-	m := map[string]string{
-		//"gRPC.port":                 strutil.After(c.RpcServerConf.ListenOn, ":"),
-		"gRPC_port":                 strutil.After(c.RpcServerConf.ListenOn, ":"),
-		"preserved.register.source": "go-zero",
-	}
-	opts := nacos.NewNacosConfig("alarm", c.ListenOn, sc, cc, nacos.WithMetadata(m))
-	_ = nacos.RegisterService(opts)
 	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
 	defer s.Stop()
 	logx.AddGlobalFields(logx.Field("app", c.Name))
