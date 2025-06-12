@@ -28,6 +28,7 @@ func (s *IecStreamRpcServer) Ping(ctx context.Context, in *iecstream.Req) (*iecs
 	return l.Ping(in)
 }
 
+// 推送 chunk asdu 消息
 func (s *IecStreamRpcServer) PushChunkAsdu(ctx context.Context, in *iecstream.PushChunkAsduReq) (*iecstream.PushChunkAsduRes, error) {
 	l := logic.NewPushChunkAsduLogic(ctx, s.svcCtx)
 	return l.PushChunkAsdu(in)

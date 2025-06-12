@@ -24,164 +24,291 @@ message PushChunkAsduRes {
 
 // 消息体结构
 message MsgBody {
+  // 设备唯一标识（如RTU/IP地址）
   string host = 1 [json_name = "host"];
+  // 设备端口号
   int32 port = 2 [json_name = "port"];
+  // ASDU类型名称
   string asdu = 3 [json_name = "asdu"];
+  // ASDU类型标识符
   int32 typeId = 4 [json_name = "typeId"];
+  // 信息体类型标识符
   int32 dataType = 5 [json_name = "dataType"];
+  // 公共地址（范围：1-65534,全局地址65535保留）
   uint32 coa = 6 [json_name = "coa"];
+  // 信息体对象（结构随typeId变化）
   string bodyRaw = 7 [json_name = "bodyRaw"];
+  // 消息推送时间戳（格式：`YYYY-MM-DD HH:mm:ss.SSSSSS`,UTC+8时区）
   string time = 8 [json_name = "time"];
+  // 应用级元数据（如：应用ID、用户信息、场站信息等）
   string metaDataRaw = 9 [json_name = "metaDataRaw"];
 }
 
+// 单点遥信
 message SinglePointInfo {
+  // 信息对象地址
   uint32 ioa = 1 [json_name = "ioa"];
+  // `true`=合/动作,`false`=分/未动作
   bool value = 2 [json_name = "value"];
+  // 品质
   uint32 qds = 3 [json_name = "qds"];
+  // 品质描述
   string qdsDesc = 4 [json_name = "qdsDesc"];
+  // Overflow `true`=溢出,`false`=未溢出
   bool ov = 5 [json_name = "ov"];
+  // Blocked `true`=闭锁,`false`=未闭锁
   bool bl = 6 [json_name = "bl"];
+  // Substituted `true`=取代,`false`=未取代
   bool sb = 7 [json_name = "sb"];
+  // NotTopical `true`=非当前值,`false`=当前值
   bool nt = 8 [json_name = "nt"];
+  // Invalid `true`=无效,`false`=有效
   bool iv = 9 [json_name = "iv"];
+  // 时标（仅带时标的ASDU类型包含此字段）
   string time = 10 [json_name = "time"];
 }
 
+// 双点遥信
 message DoublePointInfo {
+  // 信息对象地址
   uint32 ioa = 1 [json_name = "ioa"];
+  // `0`=不确定,`1`=开,`2`=合,`3`=不确定
   uint32 value = 2 [json_name = "value"];
+  // 品质
   uint32 qds = 3 [json_name = "qds"];
+  // 品质描述
   string qdsDesc = 4 [json_name = "qdsDesc"];
+  // Overflow `true`=溢出,`false`=未溢出
   bool ov = 5 [json_name = "ov"];
+  // Blocked `true`=闭锁,`false`=未闭锁
   bool bl = 6 [json_name = "bl"];
+  // Substituted `true`=取代,`false`=未取代
   bool sb = 7 [json_name = "sb"];
+  // NotTopical `true`=非当前值,`false`=当前值
   bool nt = 8 [json_name = "nt"];
+  // Invalid `true`=无效,`false`=有效
   bool iv = 9 [json_name = "iv"];
+  // 时标（仅带时标的ASDU类型包含此字段）
   string time = 10 [json_name = "time"];
 }
 
+// 标度化遥测值
 message MeasuredValueScaledInfo {
+  // 信息对象地址
   uint32 ioa = 1 [json_name = "ioa"];
+  // 标度化值
   uint32 value = 2 [json_name = "value"];
+  // 品质
   uint32 qds = 3 [json_name = "qds"];
+  // 品质描述
   string qdsDesc = 4 [json_name = "qdsDesc"];
+  // Overflow `true`=溢出,`false`=未溢出
   bool ov = 5 [json_name = "ov"];
+  // Blocked `true`=闭锁,`false`=未闭锁`
   bool bl = 6 [json_name = "bl"];
+  // Substituted `true`=取代,`false`=未取代
   bool sb = 7 [json_name = "sb"];
+  // NotTopical `true`=非当前值,`false`=当前值
   bool nt = 8 [json_name = "nt"];
+  // Invalid `true`=无效,`false`=有效
   bool iv = 9 [json_name = "iv"];
+  // 时标（仅带时标的ASDU类型包含此字段）
   string time = 10 [json_name = "time"];
 }
 
+// 无品质描述的规一化遥测值
 message MeasuredValueNormalInfo {
+  // 信息对象地址
   uint32 ioa = 1 [json_name = "ioa"];
+  // 规一化值
   uint32 value = 2 [json_name = "value"];
+  // 品质
   uint32 qds = 3 [json_name = "qds"];
+  // 品质描述
   string qdsDesc = 4 [json_name = "qdsDesc"];
+  // Overflow `true`=溢出,`false`=未溢出
   bool ov = 5 [json_name = "ov"];
+  // Blocked `true`=闭锁,`false`=未闭锁
   bool bl = 6 [json_name = "bl"];
+  // Substituted `true`=取代,`false`=未取代
   bool sb = 7 [json_name = "sb"];
+  // NotTopical `true`=非当前值,`false`=当前值
   bool nt = 8 [json_name = "nt"];
+  // Invalid `true`=无效,`false`=有效
   bool iv = 9 [json_name = "iv"];
+  // 时标（仅带时标的ASDU类型包含此字段）
   string time = 10 [json_name = "time"];
 }
 
+// 步位置信息
 message StepPositionInfo {
+  // 信息对象地址
   uint32 ioa = 1 [json_name = "ioa"];
+  // 步位置值
   StepPosition value = 2 [json_name = "value"];
+  // 品质
   uint32 qds = 3 [json_name = "qds"];
+  // 品质描述
   string qdsDesc = 4 [json_name = "qdsDesc"];
+  // Overflow `true`=溢出,`false`=未溢出
   bool ov = 5 [json_name = "ov"];
+  // Blocked `true`=闭锁,`false`=未闭锁
   bool bl = 6 [json_name = "bl"];
+  // Substituted `true`=取代,`false`=未取代
   bool sb = 7 [json_name = "sb"];
+  // NotTopical `true`=非当前值,`false`=当前值
   bool nt = 8 [json_name = "nt"];
+  // Invalid `true`=无效,`false`=有效
   bool iv = 9 [json_name = "iv"];
+  // 时标（仅带时标的ASDU类型包含此字段）
   string time = 10 [json_name = "time"];
 }
 
+// 步位置值
 message StepPosition {
+  // 步位置值
   int32 val = 1 [json_name = "val"];
+  // `true`=设备处于瞬变状态
   bool hasTransient = 2 [json_name = "hasTransient"];
 }
 
+// 32位比特串
 message BitString32Info {
+  // 信息对象地址
   uint32 ioa = 1 [json_name = "ioa"];
+  // 32 个独立设备状态（如开关、传感器、继电器）,每个比特位对应一个设备
   uint32 value = 2 [json_name = "value"];
+  // 品质
   uint32 qds = 3 [json_name = "qds"];
+  // 品质描述
   string qdsDesc = 4 [json_name = "qdsDesc"];
+  // Overflow `true`=溢出,`false`=未溢出
   bool ov = 5 [json_name = "ov"];
+  // Blocked `true`=闭锁,`false`=未闭锁
   bool bl = 6 [json_name = "bl"];
+  // Substituted `true`=取代,`false`=未取代
   bool sb = 7 [json_name = "sb"];
+  // NotTopical `true`=非当前值,`false`=当前值
   bool nt = 8 [json_name = "nt"];
+  // Invalid `true`=无效,`false`=有效
   bool iv = 9 [json_name = "iv"];
+  // 时标（仅带时标的ASDU类型包含此字段）
   string time = 10 [json_name = "time"];
 }
 
+// 短浮点数遥测值
 message MeasuredValueFloatInfo {
+  // 信息对象地址
   uint32 ioa = 1 [json_name = "ioa"];
+  // 短浮点数值（直接为工程值,如电压、电流等）
   float value = 2 [json_name = "value"];
+  // 品质
   uint32 qds = 3 [json_name = "qds"];
+  // 品质描述
   string qdsDesc = 4 [json_name = "qdsDesc"];
+  // Overflow `true`=溢出,`false`=未溢出
   bool ov = 5 [json_name = "ov"];
+  // Blocked `true`=闭锁,`false`=未闭锁
   bool bl = 6 [json_name = "bl"];
+  // Substituted `true`=取代,`false`=未取代
   bool sb = 7 [json_name = "sb"];
+  // NotTopical `true`=非当前值,`false`=当前值
   bool nt = 8 [json_name = "nt"];
+  // Invalid `true`=无效,`false`=有效
   bool iv = 9 [json_name = "iv"];
+  // 时标（仅带时标的ASDU类型包含此字段）
   string time = 10 [json_name = "time"];
 }
 
+// 累计量
 message BinaryCounterReadingInfo {
+  // 信息对象地址
   uint32 ioa = 1 [json_name = "ioa"];
+  // 累计量值
   BinaryCounterReading value = 2 [json_name = "value"];
   string time = 3 [json_name = "time"];
 }
 
+// 累计量值
 message BinaryCounterReading {
+  // 计数器读数（32位有符号整数）
   int32 counterReading = 1 [json_name = "counterReading"];
+  // 顺序号（范围：`0`-`31`）
   uint32 seqNumber = 2 [json_name = "seqNumber"];
+  // `true`=计数器溢出
   bool hasCarry = 3  [json_name = "hasCarry"];
+  // `true`=计数量被人工调整
   bool isAdjusted = 4 [json_name = "isAdjusted"];
+  // `true`=数据无效
   bool isInvalid = 5 [json_name = "isInvalid"];
 }
 
+// 继电保护事件
 message EventOfProtectionEquipmentInfo {
+  // 信息对象地址
   uint32 ioa = 1 [json_name = "ioa"];
+  // 事件类型 `0`=不确定或中间状态,`1`=开,`2`=合,`3`=不确定
   uint32 event = 2 [json_name = "event"];
+  // 保护事件品质
   uint32 qdp = 3 [json_name = "qdp"];
+  // 事件发生的毫秒时间戳（范围：`0`-`59999`）
   uint32 msec = 4 [json_name = "msec"];
+  // 时标（仅带时标的ASDU类型包含此字段）
   string time = 5 [json_name = "time"];
 }
 
+// 继电器保护设备成组启动事件
 message PackedStartEventsOfProtectionEquipmentInfo {
+  // 信息对象地址
   uint32 ioa = 1 [json_name = "ioa"];
+  // 事件类型
   uint32 event = 2 [json_name = "event"];
+  // 保护事件品质
   uint32 qdp = 3 [json_name = "qdp"];
+  // 事件发生的毫秒时间戳（范围：`0`-`59999`）
   uint32 msec = 4 [json_name = "msec"];
+  // 时标（仅带时标的ASDU类型包含此字段）
   string time = 5 [json_name = "time"];
 }
 
+// 继电器保护设备成组输出电路信息
 message PackedOutputCircuitInfoInfo {
+  // 信息对象地址
   uint32 ioa = 1 [json_name = "ioa"];
+  // 输出电路信息
   uint32 oci = 2 [json_name = "oci"];
+  // 保护事件品质
   uint32 qdp = 3 [json_name = "qdp"];
+  // 事件发生的毫秒时间戳（范围：`0`-`59999`）
   uint32 msec = 4 [json_name = "msec"];
+  // 时标（仅带时标的ASDU类型包含此字段）
   string time = 5 [json_name = "time"];
 }
 
+// 带变位检出的成组单点信息
 message PackedSinglePointWithSCDInfo {
+  // 信息对象地址
   uint32 ioa = 1 [json_name = "ioa"];
+  // 状态变位检出
   uint32 scd = 2 [json_name = "scd"];
+  // 品质
   uint32 qds = 3 [json_name = "qds"];
+  // 品质描述
   string qdsDesc = 4 [json_name = "qdsDesc"];
+  // Overflow `true`=溢出,`false`=未溢出
   bool ov = 5 [json_name = "ov"];
+  // Blocked `true`=闭锁,`false`=未闭锁
   bool bl = 6 [json_name = "bl"];
+  // Substituted `true`=取代,`false`=未取代
   bool sb = 7 [json_name = "sb"];
+  // NotTopical `true`=非当前值,`false`=当前值
   bool nt = 8 [json_name = "nt"];
+  // Invalid `true`=无效,`false`=有效
   bool iv = 9 [json_name = "iv"];
 }
 
 service IecStreamRpc {
   rpc ping (Req) returns (Res) {}
+  // 推送 chunk asdu 消息
   rpc pushChunkAsdu (PushChunkAsduReq) returns (PushChunkAsduRes) {}
 }

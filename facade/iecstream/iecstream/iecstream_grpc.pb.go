@@ -28,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type IecStreamRpcClient interface {
 	Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error)
+	// 推送 chunk asdu 消息
 	PushChunkAsdu(ctx context.Context, in *PushChunkAsduReq, opts ...grpc.CallOption) (*PushChunkAsduRes, error)
 }
 
@@ -64,6 +65,7 @@ func (c *iecStreamRpcClient) PushChunkAsdu(ctx context.Context, in *PushChunkAsd
 // for forward compatibility.
 type IecStreamRpcServer interface {
 	Ping(context.Context, *Req) (*Res, error)
+	// 推送 chunk asdu 消息
 	PushChunkAsdu(context.Context, *PushChunkAsduReq) (*PushChunkAsduRes, error)
 	mustEmbedUnimplementedIecStreamRpcServer()
 }

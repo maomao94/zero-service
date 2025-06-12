@@ -191,16 +191,25 @@ func (*PushChunkAsduRes) Descriptor() ([]byte, []int) {
 
 // 消息体结构
 type MsgBody struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Host          string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
-	Port          int32                  `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
-	Asdu          string                 `protobuf:"bytes,3,opt,name=asdu,proto3" json:"asdu,omitempty"`
-	TypeId        int32                  `protobuf:"varint,4,opt,name=typeId,proto3" json:"typeId,omitempty"`
-	DataType      int32                  `protobuf:"varint,5,opt,name=dataType,proto3" json:"dataType,omitempty"`
-	Coa           uint32                 `protobuf:"varint,6,opt,name=coa,proto3" json:"coa,omitempty"`
-	BodyRaw       string                 `protobuf:"bytes,7,opt,name=bodyRaw,proto3" json:"bodyRaw,omitempty"`
-	Time          string                 `protobuf:"bytes,8,opt,name=time,proto3" json:"time,omitempty"`
-	MetaDataRaw   string                 `protobuf:"bytes,9,opt,name=metaDataRaw,proto3" json:"metaDataRaw,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 设备唯一标识（如RTU/IP地址）
+	Host string `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	// 设备端口号
+	Port int32 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	// ASDU类型名称
+	Asdu string `protobuf:"bytes,3,opt,name=asdu,proto3" json:"asdu,omitempty"`
+	// ASDU类型标识符
+	TypeId int32 `protobuf:"varint,4,opt,name=typeId,proto3" json:"typeId,omitempty"`
+	// 信息体类型标识符
+	DataType int32 `protobuf:"varint,5,opt,name=dataType,proto3" json:"dataType,omitempty"`
+	// 公共地址（范围：1-65534,全局地址65535保留）
+	Coa uint32 `protobuf:"varint,6,opt,name=coa,proto3" json:"coa,omitempty"`
+	// 信息体对象（结构随typeId变化）
+	BodyRaw string `protobuf:"bytes,7,opt,name=bodyRaw,proto3" json:"bodyRaw,omitempty"`
+	// 消息推送时间戳（格式：`YYYY-MM-DD HH:mm:ss.SSSSSS`,UTC+8时区）
+	Time string `protobuf:"bytes,8,opt,name=time,proto3" json:"time,omitempty"`
+	// 应用级元数据（如：应用ID、用户信息、场站信息等）
+	MetaDataRaw   string `protobuf:"bytes,9,opt,name=metaDataRaw,proto3" json:"metaDataRaw,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -298,18 +307,29 @@ func (x *MsgBody) GetMetaDataRaw() string {
 	return ""
 }
 
+// 单点遥信
 type SinglePointInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ioa           uint32                 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
-	Value         bool                   `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
-	Qds           uint32                 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
-	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
-	Ov            bool                   `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
-	Bl            bool                   `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
-	Sb            bool                   `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
-	Nt            bool                   `protobuf:"varint,8,opt,name=nt,proto3" json:"nt,omitempty"`
-	Iv            bool                   `protobuf:"varint,9,opt,name=iv,proto3" json:"iv,omitempty"`
-	Time          string                 `protobuf:"bytes,10,opt,name=time,proto3" json:"time,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 信息对象地址
+	Ioa uint32 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	// `true`=合/动作,`false`=分/未动作
+	Value bool `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
+	// 品质
+	Qds uint32 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
+	// 品质描述
+	QdsDesc string `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
+	// Overflow `true`=溢出,`false`=未溢出
+	Ov bool `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
+	// Blocked `true`=闭锁,`false`=未闭锁
+	Bl bool `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
+	// Substituted `true`=取代,`false`=未取代
+	Sb bool `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
+	// NotTopical `true`=非当前值,`false`=当前值
+	Nt bool `protobuf:"varint,8,opt,name=nt,proto3" json:"nt,omitempty"`
+	// Invalid `true`=无效,`false`=有效
+	Iv bool `protobuf:"varint,9,opt,name=iv,proto3" json:"iv,omitempty"`
+	// 时标（仅带时标的ASDU类型包含此字段）
+	Time          string `protobuf:"bytes,10,opt,name=time,proto3" json:"time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -414,18 +434,29 @@ func (x *SinglePointInfo) GetTime() string {
 	return ""
 }
 
+// 双点遥信
 type DoublePointInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ioa           uint32                 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
-	Value         uint32                 `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
-	Qds           uint32                 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
-	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
-	Ov            bool                   `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
-	Bl            bool                   `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
-	Sb            bool                   `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
-	Nt            bool                   `protobuf:"varint,8,opt,name=nt,proto3" json:"nt,omitempty"`
-	Iv            bool                   `protobuf:"varint,9,opt,name=iv,proto3" json:"iv,omitempty"`
-	Time          string                 `protobuf:"bytes,10,opt,name=time,proto3" json:"time,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 信息对象地址
+	Ioa uint32 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	// `0`=不确定,`1`=开,`2`=合,`3`=不确定
+	Value uint32 `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
+	// 品质
+	Qds uint32 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
+	// 品质描述
+	QdsDesc string `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
+	// Overflow `true`=溢出,`false`=未溢出
+	Ov bool `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
+	// Blocked `true`=闭锁,`false`=未闭锁
+	Bl bool `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
+	// Substituted `true`=取代,`false`=未取代
+	Sb bool `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
+	// NotTopical `true`=非当前值,`false`=当前值
+	Nt bool `protobuf:"varint,8,opt,name=nt,proto3" json:"nt,omitempty"`
+	// Invalid `true`=无效,`false`=有效
+	Iv bool `protobuf:"varint,9,opt,name=iv,proto3" json:"iv,omitempty"`
+	// 时标（仅带时标的ASDU类型包含此字段）
+	Time          string `protobuf:"bytes,10,opt,name=time,proto3" json:"time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -530,18 +561,29 @@ func (x *DoublePointInfo) GetTime() string {
 	return ""
 }
 
+// 标度化遥测值
 type MeasuredValueScaledInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ioa           uint32                 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
-	Value         uint32                 `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
-	Qds           uint32                 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
-	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
-	Ov            bool                   `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
-	Bl            bool                   `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
-	Sb            bool                   `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
-	Nt            bool                   `protobuf:"varint,8,opt,name=nt,proto3" json:"nt,omitempty"`
-	Iv            bool                   `protobuf:"varint,9,opt,name=iv,proto3" json:"iv,omitempty"`
-	Time          string                 `protobuf:"bytes,10,opt,name=time,proto3" json:"time,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 信息对象地址
+	Ioa uint32 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	// 标度化值
+	Value uint32 `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
+	// 品质
+	Qds uint32 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
+	// 品质描述
+	QdsDesc string `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
+	// Overflow `true`=溢出,`false`=未溢出
+	Ov bool `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
+	// Blocked `true`=闭锁,`false`=未闭锁`
+	Bl bool `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
+	// Substituted `true`=取代,`false`=未取代
+	Sb bool `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
+	// NotTopical `true`=非当前值,`false`=当前值
+	Nt bool `protobuf:"varint,8,opt,name=nt,proto3" json:"nt,omitempty"`
+	// Invalid `true`=无效,`false`=有效
+	Iv bool `protobuf:"varint,9,opt,name=iv,proto3" json:"iv,omitempty"`
+	// 时标（仅带时标的ASDU类型包含此字段）
+	Time          string `protobuf:"bytes,10,opt,name=time,proto3" json:"time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -646,18 +688,29 @@ func (x *MeasuredValueScaledInfo) GetTime() string {
 	return ""
 }
 
+// 无品质描述的规一化遥测值
 type MeasuredValueNormalInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ioa           uint32                 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
-	Value         uint32                 `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
-	Qds           uint32                 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
-	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
-	Ov            bool                   `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
-	Bl            bool                   `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
-	Sb            bool                   `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
-	Nt            bool                   `protobuf:"varint,8,opt,name=nt,proto3" json:"nt,omitempty"`
-	Iv            bool                   `protobuf:"varint,9,opt,name=iv,proto3" json:"iv,omitempty"`
-	Time          string                 `protobuf:"bytes,10,opt,name=time,proto3" json:"time,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 信息对象地址
+	Ioa uint32 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	// 规一化值
+	Value uint32 `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
+	// 品质
+	Qds uint32 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
+	// 品质描述
+	QdsDesc string `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
+	// Overflow `true`=溢出,`false`=未溢出
+	Ov bool `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
+	// Blocked `true`=闭锁,`false`=未闭锁
+	Bl bool `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
+	// Substituted `true`=取代,`false`=未取代
+	Sb bool `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
+	// NotTopical `true`=非当前值,`false`=当前值
+	Nt bool `protobuf:"varint,8,opt,name=nt,proto3" json:"nt,omitempty"`
+	// Invalid `true`=无效,`false`=有效
+	Iv bool `protobuf:"varint,9,opt,name=iv,proto3" json:"iv,omitempty"`
+	// 时标（仅带时标的ASDU类型包含此字段）
+	Time          string `protobuf:"bytes,10,opt,name=time,proto3" json:"time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -762,18 +815,29 @@ func (x *MeasuredValueNormalInfo) GetTime() string {
 	return ""
 }
 
+// 步位置信息
 type StepPositionInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ioa           uint32                 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
-	Value         *StepPosition          `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
-	Qds           uint32                 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
-	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
-	Ov            bool                   `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
-	Bl            bool                   `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
-	Sb            bool                   `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
-	Nt            bool                   `protobuf:"varint,8,opt,name=nt,proto3" json:"nt,omitempty"`
-	Iv            bool                   `protobuf:"varint,9,opt,name=iv,proto3" json:"iv,omitempty"`
-	Time          string                 `protobuf:"bytes,10,opt,name=time,proto3" json:"time,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 信息对象地址
+	Ioa uint32 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	// 步位置值
+	Value *StepPosition `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	// 品质
+	Qds uint32 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
+	// 品质描述
+	QdsDesc string `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
+	// Overflow `true`=溢出,`false`=未溢出
+	Ov bool `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
+	// Blocked `true`=闭锁,`false`=未闭锁
+	Bl bool `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
+	// Substituted `true`=取代,`false`=未取代
+	Sb bool `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
+	// NotTopical `true`=非当前值,`false`=当前值
+	Nt bool `protobuf:"varint,8,opt,name=nt,proto3" json:"nt,omitempty"`
+	// Invalid `true`=无效,`false`=有效
+	Iv bool `protobuf:"varint,9,opt,name=iv,proto3" json:"iv,omitempty"`
+	// 时标（仅带时标的ASDU类型包含此字段）
+	Time          string `protobuf:"bytes,10,opt,name=time,proto3" json:"time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -878,10 +942,13 @@ func (x *StepPositionInfo) GetTime() string {
 	return ""
 }
 
+// 步位置值
 type StepPosition struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Val           int32                  `protobuf:"varint,1,opt,name=val,proto3" json:"val,omitempty"`
-	HasTransient  bool                   `protobuf:"varint,2,opt,name=hasTransient,proto3" json:"hasTransient,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 步位置值
+	Val int32 `protobuf:"varint,1,opt,name=val,proto3" json:"val,omitempty"`
+	// `true`=设备处于瞬变状态
+	HasTransient  bool `protobuf:"varint,2,opt,name=hasTransient,proto3" json:"hasTransient,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -930,18 +997,29 @@ func (x *StepPosition) GetHasTransient() bool {
 	return false
 }
 
+// 32位比特串
 type BitString32Info struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ioa           uint32                 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
-	Value         uint32                 `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
-	Qds           uint32                 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
-	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
-	Ov            bool                   `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
-	Bl            bool                   `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
-	Sb            bool                   `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
-	Nt            bool                   `protobuf:"varint,8,opt,name=nt,proto3" json:"nt,omitempty"`
-	Iv            bool                   `protobuf:"varint,9,opt,name=iv,proto3" json:"iv,omitempty"`
-	Time          string                 `protobuf:"bytes,10,opt,name=time,proto3" json:"time,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 信息对象地址
+	Ioa uint32 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	// 32 个独立设备状态（如开关、传感器、继电器）,每个比特位对应一个设备
+	Value uint32 `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
+	// 品质
+	Qds uint32 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
+	// 品质描述
+	QdsDesc string `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
+	// Overflow `true`=溢出,`false`=未溢出
+	Ov bool `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
+	// Blocked `true`=闭锁,`false`=未闭锁
+	Bl bool `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
+	// Substituted `true`=取代,`false`=未取代
+	Sb bool `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
+	// NotTopical `true`=非当前值,`false`=当前值
+	Nt bool `protobuf:"varint,8,opt,name=nt,proto3" json:"nt,omitempty"`
+	// Invalid `true`=无效,`false`=有效
+	Iv bool `protobuf:"varint,9,opt,name=iv,proto3" json:"iv,omitempty"`
+	// 时标（仅带时标的ASDU类型包含此字段）
+	Time          string `protobuf:"bytes,10,opt,name=time,proto3" json:"time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1046,18 +1124,29 @@ func (x *BitString32Info) GetTime() string {
 	return ""
 }
 
+// 短浮点数遥测值
 type MeasuredValueFloatInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ioa           uint32                 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
-	Value         float32                `protobuf:"fixed32,2,opt,name=value,proto3" json:"value,omitempty"`
-	Qds           uint32                 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
-	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
-	Ov            bool                   `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
-	Bl            bool                   `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
-	Sb            bool                   `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
-	Nt            bool                   `protobuf:"varint,8,opt,name=nt,proto3" json:"nt,omitempty"`
-	Iv            bool                   `protobuf:"varint,9,opt,name=iv,proto3" json:"iv,omitempty"`
-	Time          string                 `protobuf:"bytes,10,opt,name=time,proto3" json:"time,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 信息对象地址
+	Ioa uint32 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	// 短浮点数值（直接为工程值,如电压、电流等）
+	Value float32 `protobuf:"fixed32,2,opt,name=value,proto3" json:"value,omitempty"`
+	// 品质
+	Qds uint32 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
+	// 品质描述
+	QdsDesc string `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
+	// Overflow `true`=溢出,`false`=未溢出
+	Ov bool `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
+	// Blocked `true`=闭锁,`false`=未闭锁
+	Bl bool `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
+	// Substituted `true`=取代,`false`=未取代
+	Sb bool `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
+	// NotTopical `true`=非当前值,`false`=当前值
+	Nt bool `protobuf:"varint,8,opt,name=nt,proto3" json:"nt,omitempty"`
+	// Invalid `true`=无效,`false`=有效
+	Iv bool `protobuf:"varint,9,opt,name=iv,proto3" json:"iv,omitempty"`
+	// 时标（仅带时标的ASDU类型包含此字段）
+	Time          string `protobuf:"bytes,10,opt,name=time,proto3" json:"time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1162,11 +1251,14 @@ func (x *MeasuredValueFloatInfo) GetTime() string {
 	return ""
 }
 
+// 累计量
 type BinaryCounterReadingInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ioa           uint32                 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
-	Value         *BinaryCounterReading  `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
-	Time          string                 `protobuf:"bytes,3,opt,name=time,proto3" json:"time,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 信息对象地址
+	Ioa uint32 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	// 累计量值
+	Value         *BinaryCounterReading `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	Time          string                `protobuf:"bytes,3,opt,name=time,proto3" json:"time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1222,15 +1314,21 @@ func (x *BinaryCounterReadingInfo) GetTime() string {
 	return ""
 }
 
+// 累计量值
 type BinaryCounterReading struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	CounterReading int32                  `protobuf:"varint,1,opt,name=counterReading,proto3" json:"counterReading,omitempty"`
-	SeqNumber      uint32                 `protobuf:"varint,2,opt,name=seqNumber,proto3" json:"seqNumber,omitempty"`
-	HasCarry       bool                   `protobuf:"varint,3,opt,name=hasCarry,proto3" json:"hasCarry,omitempty"`
-	IsAdjusted     bool                   `protobuf:"varint,4,opt,name=isAdjusted,proto3" json:"isAdjusted,omitempty"`
-	IsInvalid      bool                   `protobuf:"varint,5,opt,name=isInvalid,proto3" json:"isInvalid,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 计数器读数（32位有符号整数）
+	CounterReading int32 `protobuf:"varint,1,opt,name=counterReading,proto3" json:"counterReading,omitempty"`
+	// 顺序号（范围：`0`-`31`）
+	SeqNumber uint32 `protobuf:"varint,2,opt,name=seqNumber,proto3" json:"seqNumber,omitempty"`
+	// `true`=计数器溢出
+	HasCarry bool `protobuf:"varint,3,opt,name=hasCarry,proto3" json:"hasCarry,omitempty"`
+	// `true`=计数量被人工调整
+	IsAdjusted bool `protobuf:"varint,4,opt,name=isAdjusted,proto3" json:"isAdjusted,omitempty"`
+	// `true`=数据无效
+	IsInvalid     bool `protobuf:"varint,5,opt,name=isInvalid,proto3" json:"isInvalid,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *BinaryCounterReading) Reset() {
@@ -1298,13 +1396,19 @@ func (x *BinaryCounterReading) GetIsInvalid() bool {
 	return false
 }
 
+// 继电保护事件
 type EventOfProtectionEquipmentInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ioa           uint32                 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
-	Event         uint32                 `protobuf:"varint,2,opt,name=event,proto3" json:"event,omitempty"`
-	Qdp           uint32                 `protobuf:"varint,3,opt,name=qdp,proto3" json:"qdp,omitempty"`
-	Msec          uint32                 `protobuf:"varint,4,opt,name=msec,proto3" json:"msec,omitempty"`
-	Time          string                 `protobuf:"bytes,5,opt,name=time,proto3" json:"time,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 信息对象地址
+	Ioa uint32 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	// 事件类型 `0`=不确定或中间状态,`1`=开,`2`=合,`3`=不确定
+	Event uint32 `protobuf:"varint,2,opt,name=event,proto3" json:"event,omitempty"`
+	// 保护事件品质
+	Qdp uint32 `protobuf:"varint,3,opt,name=qdp,proto3" json:"qdp,omitempty"`
+	// 事件发生的毫秒时间戳（范围：`0`-`59999`）
+	Msec uint32 `protobuf:"varint,4,opt,name=msec,proto3" json:"msec,omitempty"`
+	// 时标（仅带时标的ASDU类型包含此字段）
+	Time          string `protobuf:"bytes,5,opt,name=time,proto3" json:"time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1374,13 +1478,19 @@ func (x *EventOfProtectionEquipmentInfo) GetTime() string {
 	return ""
 }
 
+// 继电器保护设备成组启动事件
 type PackedStartEventsOfProtectionEquipmentInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ioa           uint32                 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
-	Event         uint32                 `protobuf:"varint,2,opt,name=event,proto3" json:"event,omitempty"`
-	Qdp           uint32                 `protobuf:"varint,3,opt,name=qdp,proto3" json:"qdp,omitempty"`
-	Msec          uint32                 `protobuf:"varint,4,opt,name=msec,proto3" json:"msec,omitempty"`
-	Time          string                 `protobuf:"bytes,5,opt,name=time,proto3" json:"time,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 信息对象地址
+	Ioa uint32 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	// 事件类型
+	Event uint32 `protobuf:"varint,2,opt,name=event,proto3" json:"event,omitempty"`
+	// 保护事件品质
+	Qdp uint32 `protobuf:"varint,3,opt,name=qdp,proto3" json:"qdp,omitempty"`
+	// 事件发生的毫秒时间戳（范围：`0`-`59999`）
+	Msec uint32 `protobuf:"varint,4,opt,name=msec,proto3" json:"msec,omitempty"`
+	// 时标（仅带时标的ASDU类型包含此字段）
+	Time          string `protobuf:"bytes,5,opt,name=time,proto3" json:"time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1450,13 +1560,19 @@ func (x *PackedStartEventsOfProtectionEquipmentInfo) GetTime() string {
 	return ""
 }
 
+// 继电器保护设备成组输出电路信息
 type PackedOutputCircuitInfoInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ioa           uint32                 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
-	Oci           uint32                 `protobuf:"varint,2,opt,name=oci,proto3" json:"oci,omitempty"`
-	Qdp           uint32                 `protobuf:"varint,3,opt,name=qdp,proto3" json:"qdp,omitempty"`
-	Msec          uint32                 `protobuf:"varint,4,opt,name=msec,proto3" json:"msec,omitempty"`
-	Time          string                 `protobuf:"bytes,5,opt,name=time,proto3" json:"time,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 信息对象地址
+	Ioa uint32 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	// 输出电路信息
+	Oci uint32 `protobuf:"varint,2,opt,name=oci,proto3" json:"oci,omitempty"`
+	// 保护事件品质
+	Qdp uint32 `protobuf:"varint,3,opt,name=qdp,proto3" json:"qdp,omitempty"`
+	// 事件发生的毫秒时间戳（范围：`0`-`59999`）
+	Msec uint32 `protobuf:"varint,4,opt,name=msec,proto3" json:"msec,omitempty"`
+	// 时标（仅带时标的ASDU类型包含此字段）
+	Time          string `protobuf:"bytes,5,opt,name=time,proto3" json:"time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1526,17 +1642,27 @@ func (x *PackedOutputCircuitInfoInfo) GetTime() string {
 	return ""
 }
 
+// 带变位检出的成组单点信息
 type PackedSinglePointWithSCDInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ioa           uint32                 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
-	Scd           uint32                 `protobuf:"varint,2,opt,name=scd,proto3" json:"scd,omitempty"`
-	Qds           uint32                 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
-	QdsDesc       string                 `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
-	Ov            bool                   `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
-	Bl            bool                   `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
-	Sb            bool                   `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
-	Nt            bool                   `protobuf:"varint,8,opt,name=nt,proto3" json:"nt,omitempty"`
-	Iv            bool                   `protobuf:"varint,9,opt,name=iv,proto3" json:"iv,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 信息对象地址
+	Ioa uint32 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	// 状态变位检出
+	Scd uint32 `protobuf:"varint,2,opt,name=scd,proto3" json:"scd,omitempty"`
+	// 品质
+	Qds uint32 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
+	// 品质描述
+	QdsDesc string `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
+	// Overflow `true`=溢出,`false`=未溢出
+	Ov bool `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
+	// Blocked `true`=闭锁,`false`=未闭锁
+	Bl bool `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
+	// Substituted `true`=取代,`false`=未取代
+	Sb bool `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
+	// NotTopical `true`=非当前值,`false`=当前值
+	Nt bool `protobuf:"varint,8,opt,name=nt,proto3" json:"nt,omitempty"`
+	// Invalid `true`=无效,`false`=有效
+	Iv            bool `protobuf:"varint,9,opt,name=iv,proto3" json:"iv,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

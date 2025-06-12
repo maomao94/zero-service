@@ -220,7 +220,38 @@
 
 ---
 
-### 3.5 比特位串信息（BitString32Info）
+### 3.5 标度化遥测值（MeasuredValueScaledInfo）
+
+```json
+{
+  "ioa": 4001,
+  "value": 16384,
+  "qds": 160,
+  "qdsDesc": "QDS(10100000)[Substituted|Invalid]",
+  "ov": false,
+  "bl": false,
+  "sb": true,
+  "nt": false,
+  "iv": true,
+  "time": "2023-10-01 14:30:00.000000"
+}
+```
+
+| 字段      | 类型     | 说明                                 |
+|---------|--------|------------------------------------|
+| value   | int16  | 标度化值                               |
+| qds     | byte   | 品质                                 |
+| qdsDesc | string | 品质描述                               |
+| ov      | bool   | Overflow `true`=溢出，`false`=未溢出     |
+| bl      | bool   | Blocked `true`=闭锁，`false`=未闭锁      |
+| sb      | bool   | Substituted `true`=取代，`false`=未取代  |
+| nt      | bool   | NotTopical `true`=非当前值，`false`=当前值 |
+| iv      | bool   | Invalid `true`=无效，`false`=有效       |
+| time    | string | 时标（仅带时标的ASDU类型包含此字段）               |
+
+---
+
+### 3.6 比特位串信息（BitString32Info）
 
 ```json
 {
@@ -253,7 +284,7 @@
 
 ---
 
-### 3.6 短浮点数遥测值（MeasuredValueFloatInfo）
+### 3.7 短浮点数遥测值（MeasuredValueFloatInfo）
 
 ```json
 {
@@ -272,7 +303,7 @@
 
 | 字段      | 类型      | 说明                                 |
 |---------|---------|------------------------------------|
-| value   | float32 | IEEE 754短浮点数（直接为工程值，如电压、电流等）       |
+| value   | float32 | 短浮点数值（直接为工程值，如电压、电流等）              |
 | qds     | byte    | 品质                                 |
 | qdsDesc | string  | 品质描述                               |
 | ov      | bool    | Overflow `true`=溢出，`false`=未溢出     |
@@ -284,7 +315,7 @@
 
 ---
 
-### 3.7 累计量（BinaryCounterReadingInfo）
+### 3.8 累计量（BinaryCounterReadingInfo）
 
 ```json
 {
@@ -310,7 +341,7 @@
 
 ---
 
-### 3.8 继电保护事件（EventOfProtectionEquipmentInfo）
+### 3.9 继电保护事件（EventOfProtectionEquipmentInfo）
 
 ```json
 {
@@ -332,7 +363,7 @@
 
 ---
 
-### 3.9 继电器保护设备成组启动事件（PackedStartEventsOfProtectionEquipmentInfo）
+### 3.10 继电器保护设备成组启动事件（PackedStartEventsOfProtectionEquipmentInfo）
 
 ```json
 {
@@ -354,7 +385,7 @@
 
 ---
 
-### 3.10 继电器保护设备成组输出电路信息（PackedOutputCircuitInfoInfo）
+### 3.11 继电器保护设备成组输出电路信息（PackedOutputCircuitInfoInfo）
 
 ```json
 {
@@ -368,7 +399,7 @@
 
 | 字段   | 类型     | 说明                         |
 |------|--------|----------------------------|
-| oci  | byte   | 事件类型（见附录D）                 |
+| oci  | byte   | 输出电路信息（见附录D）               |
 | msec | uint16 | 事件发生的毫秒时间戳（范围：`0`-`59999`） |
 | qdp  | byte   | 保护事件品质（见附录A）               |
 
@@ -376,7 +407,7 @@
 
 ---
 
-### 3.11 带变位检出的成组单点信息（PackedSinglePointWithSCDInfo）
+### 3.12 带变位检出的成组单点信息（PackedSinglePointWithSCDInfo）
 
 ```json
 {
@@ -394,7 +425,7 @@
 
 | 字段      | 类型     | 说明                                 |
 |---------|--------|------------------------------------|
-| scd     | byte   | 事件类型（见附录E）                         |
+| scd     | byte   | 状态变位检出（见附录E）                         |
 | qds     | byte   | 品质                                 |
 | qdsDesc | string | 品质描述                               |
 | ov      | bool   | Overflow `true`=溢出，`false`=未溢出     |
@@ -438,7 +469,7 @@
 | 2 | 合        |
 | 3 | 不确定      |
 
-### 附录B_2：继电保护事件类型
+### 附录B_2：继电保护事件类型 todo
 
 #### 1. 字段定义
 
@@ -614,6 +645,6 @@ key = f"{host}_{coa}_0x{ioa:06X}"  # 示例：RTU-01_1001_0x0007D1
 
 > ⚠️ **注意**：实际解析时需严格参照设备点表定义，部分字段（如双点信息的value）的具体含义可能因设备而异。
 >
-> ⚠️ **注意**：代码需要测试
+> ⚠️ **注意**：代码需要测试,存在一些字节码没有解析，需要再解析，同时添加进 pb 文件定义中
 >
 > ⚠️ **注意**：ieccaller.proto 包含常见控制指令（总召唤...）,接入方式 Endpoints,Nacos
