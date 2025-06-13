@@ -87,3 +87,85 @@ func QdsString(qds asdu.QualityDescriptor) string {
 		return fmt.Sprintf("QDS(%s)[%s]", binaryStr, strings.Join(flags, "|"))
 	}
 }
+
+func QdpContainsAny(qdp asdu.QualityDescriptorProtection, flags ...asdu.QualityDescriptorProtection) bool {
+	for _, flag := range flags {
+		if (qdp & flag) != 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func QdpContainsAll(qdp asdu.QualityDescriptorProtection, flags ...asdu.QualityDescriptorProtection) bool {
+	for _, flag := range flags {
+		if (qdp & flag) == flag {
+			return false
+		}
+	}
+	return true
+}
+
+func QdpIsGood(qdp asdu.QualityDescriptorProtection) bool {
+	return qdp == asdu.QDPGood
+}
+
+func QdpIsElapsedTimeInvalid(qdp asdu.QualityDescriptorProtection) bool {
+	return (qdp & asdu.QDPElapsedTimeInvalid) != 0
+}
+
+func QdpIsBlocked(qdp asdu.QualityDescriptorProtection) bool {
+	return (qdp & asdu.QDPBlocked) != 0
+}
+
+func QdpIsSubstituted(qdp asdu.QualityDescriptorProtection) bool {
+	return (qdp & asdu.QDPSubstituted) != 0
+}
+
+func QdpIsNotTopical(qdp asdu.QualityDescriptorProtection) bool {
+	return (qdp & asdu.QDPNotTopical) != 0
+}
+
+func QdpIsInvalid(qdp asdu.QualityDescriptorProtection) bool {
+	return (qdp & asdu.QDPInvalid) != 0
+}
+
+func QdpString(qdp asdu.QualityDescriptorProtection) string {
+	// 首先获取所有有效标志
+	var flags []string
+
+	if qdp&asdu.QDPElapsedTimeInvalid != 0 {
+		flags = append(flags, "ElapsedTimeInvalid")
+	}
+	if qdp&asdu.QDPBlocked != 0 {
+		flags = append(flags, "Blocked")
+	}
+	if qdp&asdu.QDPSubstituted != 0 {
+		flags = append(flags, "Substituted")
+	}
+	if qdp&asdu.QDPNotTopical != 0 {
+		flags = append(flags, "NotTopical")
+	}
+	if qdp&asdu.QDPInvalid != 0 {
+		flags = append(flags, "Invalid")
+	}
+
+	// 获取完整的8位二进制表示
+	binaryStr := fmt.Sprintf("%08b", uint8(qdp))
+
+	// 处理特殊状态
+	switch {
+	case qdp == asdu.QDPGood:
+		// 完全为0的情况
+		return fmt.Sprintf("QDP(%s)[%s]", binaryStr, "QDPGood")
+	case len(flags) == 0:
+		// 没有标准标志位，但有保留位
+		return fmt.Sprintf("QDP(%s)[ReservedBits]", binaryStr)
+	//case len(flags) == 1:
+	//	// 单个标志位，保留二进制信息
+	//	return fmt.Sprintf("%s(%s)", flags[0], binaryStr)
+	default:
+		// 多个标志位
+		return fmt.Sprintf("QDP(%s)[%s]", binaryStr, strings.Join(flags, "|"))
+	}
+}

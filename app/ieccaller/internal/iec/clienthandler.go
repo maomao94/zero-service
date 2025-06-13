@@ -340,6 +340,12 @@ func (c *ClientCall) onEventOfProtectionEquipment(packet *asdu.ASDU) {
 		var obj types.EventOfProtectionEquipmentInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
+		obj.QdpDesc = util.QdpString(p.Qdp)
+		obj.Ei = util.QdpIsElapsedTimeInvalid(p.Qdp)
+		obj.Bl = util.QdpIsBlocked(p.Qdp)
+		obj.Sb = util.QdpIsSubstituted(p.Qdp)
+		obj.Nt = util.QdpIsNotTopical(p.Qdp)
+		obj.Iv = util.QdpIsInvalid(p.Qdp)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:     c.host,
 			Port:     c.port,
@@ -362,6 +368,12 @@ func (c *ClientCall) onPackedStartEventsOfProtectionEquipment(packet *asdu.ASDU)
 	var obj types.PackedStartEventsOfProtectionEquipmentInfo
 	//obj.Time = carbon.Now().ToDateTimeString()
 	copier.CopyWithOption(&obj, &p, types.Option)
+	obj.QdpDesc = util.QdpString(p.Qdp)
+	obj.Ei = util.QdpIsElapsedTimeInvalid(p.Qdp)
+	obj.Bl = util.QdpIsBlocked(p.Qdp)
+	obj.Sb = util.QdpIsSubstituted(p.Qdp)
+	obj.Nt = util.QdpIsNotTopical(p.Qdp)
+	obj.Iv = util.QdpIsInvalid(p.Qdp)
 	_ = c.svcCtx.PushASDU(&types.MsgBody{
 		Host:     c.host,
 		Port:     c.port,
@@ -387,6 +399,12 @@ func (c *ClientCall) onPackedOutputCircuitInfo(packet *asdu.ASDU) {
 	var obj types.PackedOutputCircuitInfoInfo
 	//obj.Time = carbon.Now().ToDateTimeString()
 	copier.CopyWithOption(&obj, &p, types.Option)
+	obj.QdpDesc = util.QdpString(p.Qdp)
+	obj.Ei = util.QdpIsElapsedTimeInvalid(p.Qdp)
+	obj.Bl = util.QdpIsBlocked(p.Qdp)
+	obj.Sb = util.QdpIsSubstituted(p.Qdp)
+	obj.Nt = util.QdpIsNotTopical(p.Qdp)
+	obj.Iv = util.QdpIsInvalid(p.Qdp)
 	_ = c.svcCtx.PushASDU(&types.MsgBody{
 		Host:     c.host,
 		Port:     c.port,

@@ -251,10 +251,22 @@ message EventOfProtectionEquipmentInfo {
   uint32 event = 2 [json_name = "event"];
   // 保护事件品质
   uint32 qdp = 3 [json_name = "qdp"];
+  // 保护事件品质描述
+  string qdpDesc = 4 [json_name = "qdpDesc"];
+  // ElapsedTimeInvalid `true`=动作时间无效,`false`=动作时间有效
+  bool ei = 5 [json_name = "ei"];
+  // Blocked `true`=闭锁,`false`=未闭锁
+  bool bl = 6 [json_name = "bl"];
+  // Substituted `true`=取代,`false`=未取代
+  bool sb = 7 [json_name = "sb"];
+  // NotTopical `true`=非当前值,`false`=当前值
+  bool nt = 8 [json_name = "nt"];
+  // Invalid `true`=无效,`false`=有效
+  bool iv = 9 [json_name = "iv"];
   // 事件发生的毫秒时间戳（范围：`0`-`59999`）
-  uint32 msec = 4 [json_name = "msec"];
+  uint32 msec = 10 [json_name = "msec"];
   // 时标（仅带时标的ASDU类型包含此字段）
-  string time = 5 [json_name = "time"];
+  string time = 11 [json_name = "time"];
 }
 
 // 继电器保护设备成组启动事件
@@ -265,10 +277,22 @@ message PackedStartEventsOfProtectionEquipmentInfo {
   uint32 event = 2 [json_name = "event"];
   // 保护事件品质
   uint32 qdp = 3 [json_name = "qdp"];
+  // 保护事件品质描述
+  string qdpDesc = 4 [json_name = "qdpDesc"];
+  // ElapsedTimeInvalid `true`=动作时间无效,`false`=动作时间有效
+  bool ei = 5 [json_name = "ei"];
+  // Blocked `true`=闭锁,`false`=未闭锁
+  bool bl = 6 [json_name = "bl"];
+  // Substituted `true`=取代,`false`=未取代
+  bool sb = 7 [json_name = "sb"];
+  // NotTopical `true`=非当前值,`false`=当前值
+  bool nt = 8 [json_name = "nt"];
+  // Invalid `true`=无效,`false`=有效
+  bool iv = 9 [json_name = "iv"];
   // 事件发生的毫秒时间戳（范围：`0`-`59999`）
-  uint32 msec = 4 [json_name = "msec"];
+  uint32 msec = 10 [json_name = "msec"];
   // 时标（仅带时标的ASDU类型包含此字段）
-  string time = 5 [json_name = "time"];
+  string time = 11 [json_name = "time"];
 }
 
 // 继电器保护设备成组输出电路信息
@@ -279,10 +303,22 @@ message PackedOutputCircuitInfoInfo {
   uint32 oci = 2 [json_name = "oci"];
   // 保护事件品质
   uint32 qdp = 3 [json_name = "qdp"];
+  // 保护事件品质描述
+  string qdpDesc = 4 [json_name = "qdpDesc"];
+  // ElapsedTimeInvalid `true`=动作时间无效,`false`=动作时间有效
+  bool ei = 5 [json_name = "ei"];
+  // Blocked `true`=闭锁,`false`=未闭锁
+  bool bl = 6 [json_name = "bl"];
+  // Substituted `true`=取代,`false`=未取代
+  bool sb = 7 [json_name = "sb"];
+  // NotTopical `true`=非当前值,`false`=当前值
+  bool nt = 8 [json_name = "nt"];
+  // Invalid `true`=无效,`false`=有效
+  bool iv = 9 [json_name = "iv"];
   // 事件发生的毫秒时间戳（范围：`0`-`59999`）
-  uint32 msec = 4 [json_name = "msec"];
+  uint32 msec = 10 [json_name = "msec"];
   // 时标（仅带时标的ASDU类型包含此字段）
-  string time = 5 [json_name = "time"];
+  string time = 11 [json_name = "time"];
 }
 
 // 带变位检出的成组单点信息

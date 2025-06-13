@@ -291,11 +291,17 @@ func (s *BinaryCounterReadingInfo) GetIoa() uint {
 // asdu.M_EP_TD_1 EOF
 // 继电器保护设备事件信息
 type EventOfProtectionEquipmentInfo struct {
-	Ioa   uint   `json:"ioa"` // 信息对象地址
-	Event byte   `json:"event"`
-	Qdp   byte   `json:"qdp"`
-	Msec  uint16 `json:"msec"`
-	Time  string `json:"time"`
+	Ioa     uint   `json:"ioa"` // 信息对象地址
+	Event   byte   `json:"event"`
+	Qdp     byte   `json:"qdp"`
+	QdpDesc string `json:"qdpDesc"`
+	Ei      bool   `json:"ei"`
+	Bl      bool   `json:"bl"`
+	Sb      bool   `json:"sb"`
+	Nt      bool   `json:"nt"`
+	Iv      bool   `json:"iv"`
+	Msec    uint16 `json:"msec"`
+	Time    string `json:"time"`
 }
 
 func (s *EventOfProtectionEquipmentInfo) GetIoa() uint {
@@ -305,11 +311,17 @@ func (s *EventOfProtectionEquipmentInfo) GetIoa() uint {
 // asdu.M_EP_TB_1, asdu.M_EP_TE_1
 // 继电器保护设备成组启动事件
 type PackedStartEventsOfProtectionEquipmentInfo struct {
-	Ioa   uint   `json:"ioa"` // 信息对象地址
-	Event byte   `json:"event"`
-	Qdp   byte   `json:"qdp"`
-	Msec  uint16 `json:"msec"`
-	Time  string `json:"time"`
+	Ioa     uint   `json:"ioa"` // 信息对象地址
+	Event   byte   `json:"event"`
+	Qdp     byte   `json:"qdp"`
+	QdpDesc string `json:"qdpDesc"`
+	Ei      bool   `json:"ei"`
+	Bl      bool   `json:"bl"`
+	Sb      bool   `json:"sb"`
+	Nt      bool   `json:"nt"`
+	Iv      bool   `json:"iv"`
+	Msec    uint16 `json:"msec"`
+	Time    string `json:"time"`
 }
 
 func (s *PackedStartEventsOfProtectionEquipmentInfo) GetIoa() uint {
@@ -319,10 +331,16 @@ func (s *PackedStartEventsOfProtectionEquipmentInfo) GetIoa() uint {
 // asdu.M_EP_TC_1, asdu.M_EP_TF_1
 // 继电器保护设备成组输出电路信息
 type PackedOutputCircuitInfoInfo struct {
-	Ioa  uint   `json:"ioa"` // 信息对象地址
-	Oci  byte   `json:"oci"`
-	Qdp  byte   `json:"qdp"`
-	Msec uint16 `json:"msec"`
+	Ioa     uint   `json:"ioa"` // 信息对象地址
+	Oci     byte   `json:"oci"`
+	Qdp     byte   `json:"qdp"`
+	QdpDesc string `json:"qdpDesc"`
+	Ei      bool   `json:"ei"`
+	Bl      bool   `json:"bl"`
+	Sb      bool   `json:"sb"`
+	Nt      bool   `json:"nt"`
+	Iv      bool   `json:"iv"`
+	Msec    uint16 `json:"msec"`
 	// the type does not include timing will ignore
 	Time string `json:"time"`
 }

@@ -347,17 +347,29 @@
 {
   "ioa": 6001,
   "event": 1,
-  "qdp": 0,
+  "qdp": 145,
+  "qdpDesc": "QDP(10010001)[Blocked|Invalid]",
+  "ei": false,
+  "bl": true,
+  "sb": false,
+  "nt": false,
+  "iv": true,
   "msec": 500,
   "time": "2023-10-01 14:30:00.000000"
 }
 ```
 
-| 字段    | 类型     | 说明                         |
-|-------|--------|----------------------------|
-| event | byte   | 事件类型（见附录B）                 |
-| msec  | uint16 | 事件发生的毫秒时间戳（范围：`0`-`59999`） |
-| qdp   | byte   | 保护事件品质（见附录A）               |
+| 字段      | 类型     | 说明                                              |
+|---------|--------|-------------------------------------------------|
+| event   | byte   | 事件类型（见附录B）                                      |
+| msec    | uint16 | 事件发生的毫秒时间戳（范围：`0`-`59999`）                      |
+| qdp     | byte   | 保护事件品质（见附录A）                                    |
+| qdpDesc | string | 保护事件品质描述                                        |
+| ei      | bool   | ElapsedTimeInvalid `true`=动作时间无效，`false`=动作时间有效 |
+| bl      | bool   | Blocked `true`=闭锁，`false`=未闭锁                   |
+| sb      | bool   | Substituted `true`=取代，`false`=未取代               |
+| nt      | bool   | NotTopical `true`=非当前值，`false`=当前值              |
+| iv      | bool   | Invalid `true`=无效，`false`=有效                    |
 
 ---
 
@@ -369,7 +381,13 @@
 {
   "ioa": 6001,
   "event": 32,
-  "qdp": 0,
+  "qdp": 145,
+  "qdpDesc": "QDP(10010001)[Blocked|Invalid]",
+  "ei": false,
+  "bl": true,
+  "sb": false,
+  "nt": false,
+  "iv": true,
   "msec": 500,
   "time": "2023-10-01 14:30:00.000000"
 }
@@ -380,6 +398,12 @@
 | event | byte   | 事件类型（见附录B_2）               |
 | msec  | uint16 | 事件发生的毫秒时间戳（范围：`0`-`59999`） |
 | qdp   | byte   | 保护事件品质（见附录A）               |
+| qdpDesc | string | 保护事件品质描述                                        |
+| ei      | bool   | ElapsedTimeInvalid `true`=动作时间无效，`false`=动作时间有效 |
+| bl      | bool   | Blocked `true`=闭锁，`false`=未闭锁                   |
+| sb      | bool   | Substituted `true`=取代，`false`=未取代               |
+| nt      | bool   | NotTopical `true`=非当前值，`false`=当前值              |
+| iv      | bool   | Invalid `true`=无效，`false`=有效                    |
 
 ---
 
@@ -391,7 +415,13 @@
 {
   "ioa": 6001,
   "oci": 7,
-  "qdp": 0,
+  "qdp": 145,
+  "qdpDesc": "QDP(10010001)[Blocked|Invalid]",
+  "ei": false,
+  "bl": true,
+  "sb": false,
+  "nt": false,
+  "iv": true,
   "msec": 500,
   "time": "2023-10-01 14:30:00.000000"
 }
@@ -402,6 +432,12 @@
 | oci  | byte   | 输出电路信息（见附录D）               |
 | msec | uint16 | 事件发生的毫秒时间戳（范围：`0`-`59999`） |
 | qdp  | byte   | 保护事件品质（见附录A）               |
+| qdpDesc | string | 保护事件品质描述                                        |
+| ei      | bool   | ElapsedTimeInvalid `true`=动作时间无效，`false`=动作时间有效 |
+| bl      | bool   | Blocked `true`=闭锁，`false`=未闭锁                   |
+| sb      | bool   | Substituted `true`=取代，`false`=未取代               |
+| nt      | bool   | NotTopical `true`=非当前值，`false`=当前值              |
+| iv      | bool   | Invalid `true`=无效，`false`=有效                    |
 
 ---
 
@@ -425,7 +461,7 @@
 
 | 字段      | 类型     | 说明                                 |
 |---------|--------|------------------------------------|
-| scd     | byte   | 状态变位检出（见附录E）                         |
+| scd     | byte   | 状态变位检出（见附录E）                       |
 | qds     | byte   | 品质                                 |
 | qdsDesc | string | 品质描述                               |
 | ov      | bool   | Overflow `true`=溢出，`false`=未溢出     |
@@ -452,13 +488,13 @@
 
 #### 1.QDP
 
-| 字段 | 位号 | 说明                                                 |
-|----|----|----------------------------------------------------|
-| ei | 4  | QDPElapsedTimeInvalid `true`=动作时间无效，`false`=动作时间有效 |
-| bl | 5  | Blocked `true`=闭锁，`false`=未闭锁                      |
-| sb | 6  | Substituted `true`=取代，`false`=未取代                  |
-| nt | 7  | NotTopical `true`=非当前值，`false`=当前值                 |
-| iv | 8  | Invalid `true`=无效，`false`=有效                       |
+| 字段 | 位号 | 说明                                              |
+|----|----|-------------------------------------------------|
+| ei | 4  | ElapsedTimeInvalid `true`=动作时间无效，`false`=动作时间有效 |
+| bl | 5  | Blocked `true`=闭锁，`false`=未闭锁                   |
+| sb | 6  | Substituted `true`=取代，`false`=未取代               |
+| nt | 7  | NotTopical `true`=非当前值，`false`=当前值              |
+| iv | 8  | Invalid `true`=无效，`false`=有效                    |
 
 ### 附录B：继电保护事件类型
 
