@@ -301,24 +301,32 @@ message PackedOutputCircuitInfoInfo {
   uint32 ioa = 1 [json_name = "ioa"];
   // 输出电路信息
   uint32 oci = 2 [json_name = "oci"];
+  // `true`=总命令输出至输出电路,`false`=无总命令输出至输出电路
+  bool gc = 3 [json_name = "gc"];
+  // `true`=命令输出至A相输出电路,`false`=无命令输出至A相输出电路
+  bool cl1 = 4 [json_name = "cl1"];
+  // `true`=命令输出至B相输出电路,`false`=无命令输出至B相输出电路
+  bool cl2 = 5 [json_name = "cl2"];
+  // `true`=命令输出至C相输出电路,`false`=无命令输出至C相输出电路
+  bool cl3 = 6 [json_name = "cl3"];
   // 保护事件品质
-  uint32 qdp = 3 [json_name = "qdp"];
+  uint32 qdp = 7 [json_name = "qdp"];
   // 保护事件品质描述
-  string qdpDesc = 4 [json_name = "qdpDesc"];
+  string qdpDesc = 8 [json_name = "qdpDesc"];
   // ElapsedTimeInvalid `true`=动作时间无效,`false`=动作时间有效
-  bool ei = 5 [json_name = "ei"];
+  bool ei = 9 [json_name = "ei"];
   // Blocked `true`=闭锁,`false`=未闭锁
-  bool bl = 6 [json_name = "bl"];
+  bool bl = 10 [json_name = "bl"];
   // Substituted `true`=取代,`false`=未取代
-  bool sb = 7 [json_name = "sb"];
+  bool sb = 11 [json_name = "sb"];
   // NotTopical `true`=非当前值,`false`=当前值
-  bool nt = 8 [json_name = "nt"];
+  bool nt = 12 [json_name = "nt"];
   // Invalid `true`=无效,`false`=有效
-  bool iv = 9 [json_name = "iv"];
+  bool iv = 13 [json_name = "iv"];
   // 事件发生的毫秒时间戳（范围：`0`-`59999`）
-  uint32 msec = 10 [json_name = "msec"];
+  uint32 msec = 14 [json_name = "msec"];
   // 时标（仅带时标的ASDU类型包含此字段）
-  string time = 11 [json_name = "time"];
+  string time = 15 [json_name = "time"];
 }
 
 // 带变位检出的成组单点信息

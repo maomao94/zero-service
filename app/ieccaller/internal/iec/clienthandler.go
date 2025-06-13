@@ -399,6 +399,10 @@ func (c *ClientCall) onPackedOutputCircuitInfo(packet *asdu.ASDU) {
 	var obj types.PackedOutputCircuitInfoInfo
 	//obj.Time = carbon.Now().ToDateTimeString()
 	copier.CopyWithOption(&obj, &p, types.Option)
+	obj.Gc = gc
+	obj.Cl1 = cl1
+	obj.Cl2 = cl2
+	obj.Cl3 = cl3
 	obj.QdpDesc = util.QdpString(p.Qdp)
 	obj.Ei = util.QdpIsElapsedTimeInvalid(p.Qdp)
 	obj.Bl = util.QdpIsBlocked(p.Qdp)

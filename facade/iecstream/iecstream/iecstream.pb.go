@@ -1675,24 +1675,32 @@ type PackedOutputCircuitInfoInfo struct {
 	Ioa uint32 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
 	// 输出电路信息
 	Oci uint32 `protobuf:"varint,2,opt,name=oci,proto3" json:"oci,omitempty"`
+	// `true`=总命令输出至输出电路,`false`=无总命令输出至输出电路
+	Gc bool `protobuf:"varint,3,opt,name=gc,proto3" json:"gc,omitempty"`
+	// `true`=命令输出至A相输出电路,`false`=无命令输出至A相输出电路
+	Cl1 bool `protobuf:"varint,4,opt,name=cl1,proto3" json:"cl1,omitempty"`
+	// `true`=命令输出至B相输出电路,`false`=无命令输出至B相输出电路
+	Cl2 bool `protobuf:"varint,5,opt,name=cl2,proto3" json:"cl2,omitempty"`
+	// `true`=命令输出至C相输出电路,`false`=无命令输出至C相输出电路
+	Cl3 bool `protobuf:"varint,6,opt,name=cl3,proto3" json:"cl3,omitempty"`
 	// 保护事件品质
-	Qdp uint32 `protobuf:"varint,3,opt,name=qdp,proto3" json:"qdp,omitempty"`
+	Qdp uint32 `protobuf:"varint,7,opt,name=qdp,proto3" json:"qdp,omitempty"`
 	// 保护事件品质描述
-	QdpDesc string `protobuf:"bytes,4,opt,name=qdpDesc,proto3" json:"qdpDesc,omitempty"`
+	QdpDesc string `protobuf:"bytes,8,opt,name=qdpDesc,proto3" json:"qdpDesc,omitempty"`
 	// ElapsedTimeInvalid `true`=动作时间无效,`false`=动作时间有效
-	Ei bool `protobuf:"varint,5,opt,name=ei,proto3" json:"ei,omitempty"`
+	Ei bool `protobuf:"varint,9,opt,name=ei,proto3" json:"ei,omitempty"`
 	// Blocked `true`=闭锁,`false`=未闭锁
-	Bl bool `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
+	Bl bool `protobuf:"varint,10,opt,name=bl,proto3" json:"bl,omitempty"`
 	// Substituted `true`=取代,`false`=未取代
-	Sb bool `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
+	Sb bool `protobuf:"varint,11,opt,name=sb,proto3" json:"sb,omitempty"`
 	// NotTopical `true`=非当前值,`false`=当前值
-	Nt bool `protobuf:"varint,8,opt,name=nt,proto3" json:"nt,omitempty"`
+	Nt bool `protobuf:"varint,12,opt,name=nt,proto3" json:"nt,omitempty"`
 	// Invalid `true`=无效,`false`=有效
-	Iv bool `protobuf:"varint,9,opt,name=iv,proto3" json:"iv,omitempty"`
+	Iv bool `protobuf:"varint,13,opt,name=iv,proto3" json:"iv,omitempty"`
 	// 事件发生的毫秒时间戳（范围：`0`-`59999`）
-	Msec uint32 `protobuf:"varint,10,opt,name=msec,proto3" json:"msec,omitempty"`
+	Msec uint32 `protobuf:"varint,14,opt,name=msec,proto3" json:"msec,omitempty"`
 	// 时标（仅带时标的ASDU类型包含此字段）
-	Time          string `protobuf:"bytes,11,opt,name=time,proto3" json:"time,omitempty"`
+	Time          string `protobuf:"bytes,15,opt,name=time,proto3" json:"time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1739,6 +1747,34 @@ func (x *PackedOutputCircuitInfoInfo) GetOci() uint32 {
 		return x.Oci
 	}
 	return 0
+}
+
+func (x *PackedOutputCircuitInfoInfo) GetGc() bool {
+	if x != nil {
+		return x.Gc
+	}
+	return false
+}
+
+func (x *PackedOutputCircuitInfoInfo) GetCl1() bool {
+	if x != nil {
+		return x.Cl1
+	}
+	return false
+}
+
+func (x *PackedOutputCircuitInfoInfo) GetCl2() bool {
+	if x != nil {
+		return x.Cl2
+	}
+	return false
+}
+
+func (x *PackedOutputCircuitInfoInfo) GetCl3() bool {
+	if x != nil {
+		return x.Cl3
+	}
+	return false
 }
 
 func (x *PackedOutputCircuitInfoInfo) GetQdp() uint32 {
@@ -2068,20 +2104,24 @@ const file_iecstream_proto_rawDesc = "" +
 	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
 	"\x04msec\x18\n" +
 	" \x01(\rR\x04msec\x12\x12\n" +
-	"\x04time\x18\v \x01(\tR\x04time\"\xe5\x01\n" +
+	"\x04time\x18\v \x01(\tR\x04time\"\xab\x02\n" +
 	"\x1bPackedOutputCircuitInfoInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x10\n" +
-	"\x03oci\x18\x02 \x01(\rR\x03oci\x12\x10\n" +
-	"\x03qdp\x18\x03 \x01(\rR\x03qdp\x12\x18\n" +
-	"\aqdpDesc\x18\x04 \x01(\tR\aqdpDesc\x12\x0e\n" +
-	"\x02ei\x18\x05 \x01(\bR\x02ei\x12\x0e\n" +
-	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
-	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
-	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
-	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
-	"\x04msec\x18\n" +
-	" \x01(\rR\x04msec\x12\x12\n" +
-	"\x04time\x18\v \x01(\tR\x04time\"\xbe\x01\n" +
+	"\x03oci\x18\x02 \x01(\rR\x03oci\x12\x0e\n" +
+	"\x02gc\x18\x03 \x01(\bR\x02gc\x12\x10\n" +
+	"\x03cl1\x18\x04 \x01(\bR\x03cl1\x12\x10\n" +
+	"\x03cl2\x18\x05 \x01(\bR\x03cl2\x12\x10\n" +
+	"\x03cl3\x18\x06 \x01(\bR\x03cl3\x12\x10\n" +
+	"\x03qdp\x18\a \x01(\rR\x03qdp\x12\x18\n" +
+	"\aqdpDesc\x18\b \x01(\tR\aqdpDesc\x12\x0e\n" +
+	"\x02ei\x18\t \x01(\bR\x02ei\x12\x0e\n" +
+	"\x02bl\x18\n" +
+	" \x01(\bR\x02bl\x12\x0e\n" +
+	"\x02sb\x18\v \x01(\bR\x02sb\x12\x0e\n" +
+	"\x02nt\x18\f \x01(\bR\x02nt\x12\x0e\n" +
+	"\x02iv\x18\r \x01(\bR\x02iv\x12\x12\n" +
+	"\x04msec\x18\x0e \x01(\rR\x04msec\x12\x12\n" +
+	"\x04time\x18\x0f \x01(\tR\x04time\"\xbe\x01\n" +
 	"\x1cPackedSinglePointWithSCDInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x10\n" +
 	"\x03scd\x18\x02 \x01(\rR\x03scd\x12\x10\n" +

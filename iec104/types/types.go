@@ -333,6 +333,10 @@ func (s *PackedStartEventsOfProtectionEquipmentInfo) GetIoa() uint {
 type PackedOutputCircuitInfoInfo struct {
 	Ioa     uint   `json:"ioa"` // 信息对象地址
 	Oci     byte   `json:"oci"`
+	Gc      bool   `json:"gc"`
+	Cl1     bool   `json:"cl1"`
+	Cl2     bool   `json:"cl2"`
+	Cl3     bool   `json:"cl3"`
 	Qdp     byte   `json:"qdp"`
 	QdpDesc string `json:"qdpDesc"`
 	Ei      bool   `json:"ei"`
