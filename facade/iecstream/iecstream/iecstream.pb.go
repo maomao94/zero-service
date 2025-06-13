@@ -1847,20 +1847,24 @@ type PackedSinglePointWithSCDInfo struct {
 	Ioa uint32 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
 	// 状态变位检出
 	Scd uint32 `protobuf:"varint,2,opt,name=scd,proto3" json:"scd,omitempty"`
+	// `0`=开,`1`=合
+	Stn string `protobuf:"bytes,3,opt,name=stn,proto3" json:"stn,omitempty"`
+	// `0`=上次报告后未检出到状态变化,`1`=上次报告后至少检出到一次状态变化
+	Cdn string `protobuf:"bytes,4,opt,name=cdn,proto3" json:"cdn,omitempty"`
 	// 品质
-	Qds uint32 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
+	Qds uint32 `protobuf:"varint,5,opt,name=qds,proto3" json:"qds,omitempty"`
 	// 品质描述
-	QdsDesc string `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
+	QdsDesc string `protobuf:"bytes,6,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
 	// Overflow `true`=溢出,`false`=未溢出
-	Ov bool `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
+	Ov bool `protobuf:"varint,7,opt,name=ov,proto3" json:"ov,omitempty"`
 	// Blocked `true`=闭锁,`false`=未闭锁
-	Bl bool `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
+	Bl bool `protobuf:"varint,8,opt,name=bl,proto3" json:"bl,omitempty"`
 	// Substituted `true`=取代,`false`=未取代
-	Sb bool `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
+	Sb bool `protobuf:"varint,9,opt,name=sb,proto3" json:"sb,omitempty"`
 	// NotTopical `true`=非当前值,`false`=当前值
-	Nt bool `protobuf:"varint,8,opt,name=nt,proto3" json:"nt,omitempty"`
+	Nt bool `protobuf:"varint,10,opt,name=nt,proto3" json:"nt,omitempty"`
 	// Invalid `true`=无效,`false`=有效
-	Iv            bool `protobuf:"varint,9,opt,name=iv,proto3" json:"iv,omitempty"`
+	Iv            bool `protobuf:"varint,11,opt,name=iv,proto3" json:"iv,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1907,6 +1911,20 @@ func (x *PackedSinglePointWithSCDInfo) GetScd() uint32 {
 		return x.Scd
 	}
 	return 0
+}
+
+func (x *PackedSinglePointWithSCDInfo) GetStn() string {
+	if x != nil {
+		return x.Stn
+	}
+	return ""
+}
+
+func (x *PackedSinglePointWithSCDInfo) GetCdn() string {
+	if x != nil {
+		return x.Cdn
+	}
+	return ""
 }
 
 func (x *PackedSinglePointWithSCDInfo) GetQds() uint32 {
@@ -2121,17 +2139,20 @@ const file_iecstream_proto_rawDesc = "" +
 	"\x02nt\x18\f \x01(\bR\x02nt\x12\x0e\n" +
 	"\x02iv\x18\r \x01(\bR\x02iv\x12\x12\n" +
 	"\x04msec\x18\x0e \x01(\rR\x04msec\x12\x12\n" +
-	"\x04time\x18\x0f \x01(\tR\x04time\"\xbe\x01\n" +
+	"\x04time\x18\x0f \x01(\tR\x04time\"\xe2\x01\n" +
 	"\x1cPackedSinglePointWithSCDInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x10\n" +
 	"\x03scd\x18\x02 \x01(\rR\x03scd\x12\x10\n" +
-	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x18\n" +
-	"\aqdsDesc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
-	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
-	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
-	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
-	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
-	"\x02iv\x18\t \x01(\bR\x02iv2\x85\x01\n" +
+	"\x03stn\x18\x03 \x01(\tR\x03stn\x12\x10\n" +
+	"\x03cdn\x18\x04 \x01(\tR\x03cdn\x12\x10\n" +
+	"\x03qds\x18\x05 \x01(\rR\x03qds\x12\x18\n" +
+	"\aqdsDesc\x18\x06 \x01(\tR\aqdsDesc\x12\x0e\n" +
+	"\x02ov\x18\a \x01(\bR\x02ov\x12\x0e\n" +
+	"\x02bl\x18\b \x01(\bR\x02bl\x12\x0e\n" +
+	"\x02sb\x18\t \x01(\bR\x02sb\x12\x0e\n" +
+	"\x02nt\x18\n" +
+	" \x01(\bR\x02nt\x12\x0e\n" +
+	"\x02iv\x18\v \x01(\bR\x02iv2\x85\x01\n" +
 	"\fIecStreamRpc\x12(\n" +
 	"\x04ping\x12\x0e.iecstream.Req\x1a\x0e.iecstream.Res\"\x00\x12K\n" +
 	"\rpushChunkAsdu\x12\x1b.iecstream.PushChunkAsduReq\x1a\x1b.iecstream.PushChunkAsduRes\"\x00B;\n" +

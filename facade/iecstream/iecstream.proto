@@ -335,20 +335,24 @@ message PackedSinglePointWithSCDInfo {
   uint32 ioa = 1 [json_name = "ioa"];
   // 状态变位检出
   uint32 scd = 2 [json_name = "scd"];
+  // `0`=开,`1`=合
+  string stn = 3  [json_name = "stn"];
+  // `0`=上次报告后未检出到状态变化,`1`=上次报告后至少检出到一次状态变化
+  string cdn = 4 [json_name = "cdn"];
   // 品质
-  uint32 qds = 3 [json_name = "qds"];
+  uint32 qds = 5 [json_name = "qds"];
   // 品质描述
-  string qdsDesc = 4 [json_name = "qdsDesc"];
+  string qdsDesc = 6 [json_name = "qdsDesc"];
   // Overflow `true`=溢出,`false`=未溢出
-  bool ov = 5 [json_name = "ov"];
+  bool ov = 7 [json_name = "ov"];
   // Blocked `true`=闭锁,`false`=未闭锁
-  bool bl = 6 [json_name = "bl"];
+  bool bl = 8 [json_name = "bl"];
   // Substituted `true`=取代,`false`=未取代
-  bool sb = 7 [json_name = "sb"];
+  bool sb = 9 [json_name = "sb"];
   // NotTopical `true`=非当前值,`false`=当前值
-  bool nt = 8 [json_name = "nt"];
+  bool nt = 10 [json_name = "nt"];
   // Invalid `true`=无效,`false`=有效
-  bool iv = 9 [json_name = "iv"];
+  bool iv = 11 [json_name = "iv"];
 }
 
 service IecStreamRpc {

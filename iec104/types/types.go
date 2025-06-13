@@ -360,6 +360,8 @@ type PackedSinglePointWithSCDInfo struct {
 	// StatusAndStatusChangeDetection 状态和状态变位检出
 	// See companion standard 101, subclass 7.2.6.40.
 	Scd     uint32 `json:"scd"`
+	Stn     string `json:"stn"`
+	Cdn     string `json:"cdn"`
 	Qds     byte   `json:"qds"`
 	QdsDesc string `json:"qdsDesc"`
 	Ov      bool   `json:"ov"`

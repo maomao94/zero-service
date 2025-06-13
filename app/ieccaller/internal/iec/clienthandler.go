@@ -2,6 +2,7 @@ package iec
 
 import (
 	"context"
+	"fmt"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/jinzhu/copier"
 	"github.com/wendy512/go-iecp5/asdu"
@@ -427,11 +428,13 @@ func (c *ClientCall) onPackedSinglePointWithSCD(packet *asdu.ASDU) {
 	for _, p := range packet.GetPackedSinglePointWithSCD() {
 		c.logger.Debugf("packed single point with SCD, ioa: %d, scd: %d, qds: %d", p.Ioa, p.Scd, p.Qds)
 		var obj types.PackedSinglePointWithSCDInfo
-		currentStatus := p.Scd & 0xFFFF        // 低16位（当前状态）
+		currentStatus := p.Scd & 0xFFFF // 低16位（当前状态）
+		stn := fmt.Sprintf("%016b", currentStatus)
 		statusChange := (p.Scd >> 16) & 0xFFFF // 高16位（状态变化）
+		cdn := fmt.Sprintf("%016b", statusChange)
 		var activePoints []int
 		var changedPoints []int
-		c.logger.Debugf("stn: %d, %016b, cdn: %d, %016b", currentStatus, currentStatus, statusChange, statusChange)
+		c.logger.Debugf("stn: %d, %s, cdn: %d, %s", currentStatus, stn, statusChange, cdn)
 		for i := 0; i < 16; i++ {
 			if currentStatus&(1<<i) != 0 {
 				activePoints = append(activePoints, i)
@@ -444,6 +447,8 @@ func (c *ClientCall) onPackedSinglePointWithSCD(packet *asdu.ASDU) {
 		c.logger.Debugf("当前闭合的位: %v", activePoints)
 		c.logger.Debugf("状态变化的位: %v", changedPoints)
 		copier.CopyWithOption(&obj, &p, types.Option)
+		obj.Stn = stn
+		obj.Cdn = cdn
 		obj.QdsDesc = util.QdsString(p.Qds)
 		obj.Ov = util.QdsIsOverflow(p.Qds)
 		obj.Bl = util.QdsIsBlocked(p.Qds)

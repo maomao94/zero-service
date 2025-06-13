@@ -111,14 +111,14 @@
 | 字段      | 类型     | 说明                                     |
 |---------|--------|----------------------------------------|
 | ioa     | uint   | 信息对象地址（范围：`0x000001`-`0xFFFFFF`，十进制显示） |
-| value   | bool   | `true`=合/动作，`false`=分/未动作              |
+| value   | bool   | `true`=合/动作,`false`=分/未动作              |
 | qds     | byte   | 品质                                     |
 | qdsDesc | string | 品质描述                                   |
-| ov      | bool   | Overflow `true`=溢出，`false`=未溢出         |
-| bl      | bool   | Blocked `true`=闭锁，`false`=未闭锁          |
-| sb      | bool   | Substituted `true`=取代，`false`=未取代      |
-| nt      | bool   | NotTopical `true`=非当前值，`false`=当前值     |
-| iv      | bool   | Invalid `true`=无效，`false`=有效           |
+| ov      | bool   | Overflow `true`=溢出,`false`=未溢出         |
+| bl      | bool   | Blocked `true`=闭锁,`false`=未闭锁          |
+| sb      | bool   | Substituted `true`=取代,`false`=未取代      |
+| nt      | bool   | NotTopical `true`=非当前值,`false`=当前值     |
+| iv      | bool   | Invalid `true`=无效,`false`=有效           |
 | time    | string | 时标（仅带时标的ASDU类型包含此字段）                   |
 
 ---
@@ -142,14 +142,14 @@
 
 | 字段      | 类型     | 说明                                 |
 |---------|--------|------------------------------------|
-| value   | byte   | `0`=不确定，`1`=开，`2`=合，`3`=不确定        |
+| value   | byte   | `0`=不确定,`1`=开,`2`=合,`3`=不确定        |
 | qds     | byte   | 品质                                 |
 | qdsDesc | string | 品质描述                               |
-| ov      | bool   | Overflow `true`=溢出，`false`=未溢出     |
-| bl      | bool   | Blocked `true`=闭锁，`false`=未闭锁      |
-| sb      | bool   | Substituted `true`=取代，`false`=未取代  |
-| nt      | bool   | NotTopical `true`=非当前值，`false`=当前值 |
-| iv      | bool   | Invalid `true`=无效，`false`=有效       |
+| ov      | bool   | Overflow `true`=溢出,`false`=未溢出     |
+| bl      | bool   | Blocked `true`=闭锁,`false`=未闭锁      |
+| sb      | bool   | Substituted `true`=取代,`false`=未取代  |
+| nt      | bool   | NotTopical `true`=非当前值,`false`=当前值 |
+| iv      | bool   | Invalid `true`=无效,`false`=有效       |
 | time    | string | 时标（仅带时标的ASDU类型包含此字段）               |
 
 ---
@@ -180,11 +180,11 @@
 | hasTransient | bool   | `true`=设备处于瞬变状态                    |
 | qds          | byte   | 品质                                 |
 | qdsDesc      | string | 品质描述                               |
-| ov           | bool   | Overflow `true`=溢出，`false`=未溢出     |
-| bl           | bool   | Blocked `true`=闭锁，`false`=未闭锁      |
-| sb           | bool   | Substituted `true`=取代，`false`=未取代  |
-| nt           | bool   | NotTopical `true`=非当前值，`false`=当前值 |
-| iv           | bool   | Invalid `true`=无效，`false`=有效       |
+| ov           | bool   | Overflow `true`=溢出,`false`=未溢出     |
+| bl           | bool   | Blocked `true`=闭锁,`false`=未闭锁      |
+| sb           | bool   | Substituted `true`=取代,`false`=未取代  |
+| nt           | bool   | NotTopical `true`=非当前值,`false`=当前值 |
+| iv           | bool   | Invalid `true`=无效,`false`=有效       |
 | time         | string | 时标（仅带时标的ASDU类型包含此字段）               |
 
 ---
@@ -211,11 +211,11 @@
 | value   | int16  | 归一化值（范围：`-32768` 至 `32767`，需按公式转换为工程值） |
 | qds     | byte   | 品质                                     |
 | qdsDesc | string | 品质描述                                   |
-| ov      | bool   | Overflow `true`=溢出，`false`=未溢出         |
-| bl      | bool   | Blocked `true`=闭锁，`false`=未闭锁          |
-| sb      | bool   | Substituted `true`=取代，`false`=未取代      |
-| nt      | bool   | NotTopical `true`=非当前值，`false`=当前值     |
-| iv      | bool   | Invalid `true`=无效，`false`=有效           |
+| ov      | bool   | Overflow `true`=溢出,`false`=未溢出         |
+| bl      | bool   | Blocked `true`=闭锁,`false`=未闭锁          |
+| sb      | bool   | Substituted `true`=取代,`false`=未取代      |
+| nt      | bool   | NotTopical `true`=非当前值,`false`=当前值     |
+| iv      | bool   | Invalid `true`=无效,`false`=有效           |
 | time    | string | 时标（仅带时标的ASDU类型包含此字段）                   |
 
 ---
@@ -242,11 +242,11 @@
 | value   | int16  | 标度化值                               |
 | qds     | byte   | 品质                                 |
 | qdsDesc | string | 品质描述                               |
-| ov      | bool   | Overflow `true`=溢出，`false`=未溢出     |
-| bl      | bool   | Blocked `true`=闭锁，`false`=未闭锁      |
-| sb      | bool   | Substituted `true`=取代，`false`=未取代  |
-| nt      | bool   | NotTopical `true`=非当前值，`false`=当前值 |
-| iv      | bool   | Invalid `true`=无效，`false`=有效       |
+| ov      | bool   | Overflow `true`=溢出,`false`=未溢出     |
+| bl      | bool   | Blocked `true`=闭锁,`false`=未闭锁      |
+| sb      | bool   | Substituted `true`=取代,`false`=未取代  |
+| nt      | bool   | NotTopical `true`=非当前值,`false`=当前值 |
+| iv      | bool   | Invalid `true`=无效,`false`=有效       |
 | time    | string | 时标（仅带时标的ASDU类型包含此字段）               |
 
 ---
@@ -273,11 +273,11 @@
 | value   | uint32 | 32 个独立设备状态（如开关、传感器、继电器），每个比特位对应一个设备 |
 | qds     | byte   | 品质                                  |
 | qdsDesc | string | 品质描述                                |
-| ov      | bool   | Overflow `true`=溢出，`false`=未溢出      |
-| bl      | bool   | Blocked `true`=闭锁，`false`=未闭锁       |
-| sb      | bool   | Substituted `true`=取代，`false`=未取代   |
-| nt      | bool   | NotTopical `true`=非当前值，`false`=当前值  |
-| iv      | bool   | Invalid `true`=无效，`false`=有效        |
+| ov      | bool   | Overflow `true`=溢出,`false`=未溢出      |
+| bl      | bool   | Blocked `true`=闭锁,`false`=未闭锁       |
+| sb      | bool   | Substituted `true`=取代,`false`=未取代   |
+| nt      | bool   | NotTopical `true`=非当前值,`false`=当前值  |
+| iv      | bool   | Invalid `true`=无效,`false`=有效        |
 | time    | string | 时标（仅带时标的ASDU类型包含此字段）                |
 
 ---
@@ -306,11 +306,11 @@
 | value   | float32 | 短浮点数值（直接为工程值，如电压、电流等）              |
 | qds     | byte    | 品质                                 |
 | qdsDesc | string  | 品质描述                               |
-| ov      | bool    | Overflow `true`=溢出，`false`=未溢出     |
-| bl      | bool    | Blocked `true`=闭锁，`false`=未闭锁      |
-| sb      | bool    | Substituted `true`=取代，`false`=未取代  |
-| nt      | bool    | NotTopical `true`=非当前值，`false`=当前值 |
-| iv      | bool    | Invalid `true`=无效，`false`=有效       |
+| ov      | bool    | Overflow `true`=溢出,`false`=未溢出     |
+| bl      | bool    | Blocked `true`=闭锁,`false`=未闭锁      |
+| sb      | bool    | Substituted `true`=取代,`false`=未取代  |
+| nt      | bool    | NotTopical `true`=非当前值,`false`=当前值 |
+| iv      | bool    | Invalid `true`=无效,`false`=有效       |
 | time    | string  | 时标（仅带时标的ASDU类型包含此字段）               |
 
 ---
@@ -365,11 +365,11 @@
 | msec    | uint16 | 事件发生的毫秒时间戳（范围：`0`-`59999`）                      |
 | qdp     | byte   | 保护事件品质（见附录A）                                    |
 | qdpDesc | string | 保护事件品质描述                                        |
-| ei      | bool   | ElapsedTimeInvalid `true`=动作时间无效，`false`=动作时间有效 |
-| bl      | bool   | Blocked `true`=闭锁，`false`=未闭锁                   |
-| sb      | bool   | Substituted `true`=取代，`false`=未取代               |
-| nt      | bool   | NotTopical `true`=非当前值，`false`=当前值              |
-| iv      | bool   | Invalid `true`=无效，`false`=有效                    |
+| ei      | bool   | ElapsedTimeInvalid `true`=动作时间无效,`false`=动作时间有效 |
+| bl      | bool   | Blocked `true`=闭锁,`false`=未闭锁                   |
+| sb      | bool   | Substituted `true`=取代,`false`=未取代               |
+| nt      | bool   | NotTopical `true`=非当前值,`false`=当前值              |
+| iv      | bool   | Invalid `true`=无效,`false`=有效                    |
 
 ---
 
@@ -399,11 +399,11 @@
 | msec    | uint16 | 事件发生的毫秒时间戳（范围：`0`-`59999`）                      |
 | qdp     | byte   | 保护事件品质（见附录A）                                    |
 | qdpDesc | string | 保护事件品质描述                                        |
-| ei      | bool   | ElapsedTimeInvalid `true`=动作时间无效，`false`=动作时间有效 |
-| bl      | bool   | Blocked `true`=闭锁，`false`=未闭锁                   |
-| sb      | bool   | Substituted `true`=取代，`false`=未取代               |
-| nt      | bool   | NotTopical `true`=非当前值，`false`=当前值              |
-| iv      | bool   | Invalid `true`=无效，`false`=有效                    |
+| ei      | bool   | ElapsedTimeInvalid `true`=动作时间无效,`false`=动作时间有效 |
+| bl      | bool   | Blocked `true`=闭锁,`false`=未闭锁                   |
+| sb      | bool   | Substituted `true`=取代,`false`=未取代               |
+| nt      | bool   | NotTopical `true`=非当前值,`false`=当前值              |
+| iv      | bool   | Invalid `true`=无效,`false`=有效                    |
 
 ---
 
@@ -414,7 +414,11 @@
 ```json
 {
   "ioa": 6001,
-  "oci": 7,
+  "oci": 10,
+  "gc": false,
+  "cl1": true,
+  "cl2": false,
+  "cl3": true,
   "qdp": 145,
   "qdpDesc": "QDP(10010001)[Blocked|Invalid]",
   "ei": false,
@@ -430,14 +434,18 @@
 | 字段      | 类型     | 说明                                              |
 |---------|--------|-------------------------------------------------|
 | oci     | byte   | 输出电路信息（见附录D）                                    |
+| gc      | bool   | `true`=总命令输出至输出电路,`false`=无总命令输出至输出电路           |
+| cl1     | bool   | `true`=命令输出至A相输出电路,`false`=无命令输出至A相输出电路         |
+| cl2     | bool   | `true`=命令输出至B相输出电路,`false`=无命令输出至B相输出电路         |
+| cl3     | bool   | `true`=命令输出至C相输出电路,`false`=无命令输出至C相输出电路         |
 | msec    | uint16 | 事件发生的毫秒时间戳（范围：`0`-`59999`）                      |
 | qdp     | byte   | 保护事件品质（见附录A）                                    |
 | qdpDesc | string | 保护事件品质描述                                        |
-| ei      | bool   | ElapsedTimeInvalid `true`=动作时间无效，`false`=动作时间有效 |
-| bl      | bool   | Blocked `true`=闭锁，`false`=未闭锁                   |
-| sb      | bool   | Substituted `true`=取代，`false`=未取代               |
-| nt      | bool   | NotTopical `true`=非当前值，`false`=当前值              |
-| iv      | bool   | Invalid `true`=无效，`false`=有效                    |
+| ei      | bool   | ElapsedTimeInvalid `true`=动作时间无效,`false`=动作时间有效 |
+| bl      | bool   | Blocked `true`=闭锁,`false`=未闭锁                   |
+| sb      | bool   | Substituted `true`=取代,`false`=未取代               |
+| nt      | bool   | NotTopical `true`=非当前值,`false`=当前值              |
+| iv      | bool   | Invalid `true`=无效,`false`=有效                    |
 
 ---
 
@@ -464,11 +472,11 @@
 | scd     | byte   | 状态变位检出（见附录E）                       |
 | qds     | byte   | 品质                                 |
 | qdsDesc | string | 品质描述                               |
-| ov      | bool   | Overflow `true`=溢出，`false`=未溢出     |
-| bl      | bool   | Blocked `true`=闭锁，`false`=未闭锁      |
-| sb      | bool   | Substituted `true`=取代，`false`=未取代  |
-| nt      | bool   | NotTopical `true`=非当前值，`false`=当前值 |
-| iv      | bool   | Invalid `true`=无效，`false`=有效       |
+| ov      | bool   | Overflow `true`=溢出,`false`=未溢出     |
+| bl      | bool   | Blocked `true`=闭锁,`false`=未闭锁      |
+| sb      | bool   | Substituted `true`=取代,`false`=未取代  |
+| nt      | bool   | NotTopical `true`=非当前值,`false`=当前值 |
+| iv      | bool   | Invalid `true`=无效,`false`=有效       |
 
 ---
 
@@ -480,21 +488,21 @@
 
 | 字段 | 位号 | 说明                                 |
 |----|----|------------------------------------|
-| ov | 1  | Overflow `true`=溢出，`false`=未溢出     |
-| bl | 5  | Blocked `true`=闭锁，`false`=未闭锁      |
-| sb | 6  | Substituted `true`=取代，`false`=未取代  |
-| nt | 7  | NotTopical `true`=非当前值，`false`=当前值 |
-| iv | 8  | Invalid `true`=无效，`false`=有效       |
+| ov | 1  | Overflow `true`=溢出,`false`=未溢出     |
+| bl | 5  | Blocked `true`=闭锁,`false`=未闭锁      |
+| sb | 6  | Substituted `true`=取代,`false`=未取代  |
+| nt | 7  | NotTopical `true`=非当前值,`false`=当前值 |
+| iv | 8  | Invalid `true`=无效,`false`=有效       |
 
 #### 1.QDP
 
 | 字段 | 位号 | 说明                                              |
 |----|----|-------------------------------------------------|
-| ei | 4  | ElapsedTimeInvalid `true`=动作时间无效，`false`=动作时间有效 |
-| bl | 5  | Blocked `true`=闭锁，`false`=未闭锁                   |
-| sb | 6  | Substituted `true`=取代，`false`=未取代               |
-| nt | 7  | NotTopical `true`=非当前值，`false`=当前值              |
-| iv | 8  | Invalid `true`=无效，`false`=有效                    |
+| ei | 4  | ElapsedTimeInvalid `true`=动作时间无效,`false`=动作时间有效 |
+| bl | 5  | Blocked `true`=闭锁,`false`=未闭锁                   |
+| sb | 6  | Substituted `true`=取代,`false`=未取代               |
+| nt | 7  | NotTopical `true`=非当前值,`false`=当前值              |
+| iv | 8  | Invalid `true`=无效,`false`=有效                    |
 
 ### 附录B：继电保护事件类型
 
@@ -511,16 +519,16 @@
 
 | 字段名 | 类型   | 位宽 | 描述                                     |
 |:----|:-----|:---|:---------------------------------------|
-| oci | byte | 8位 | 8位比特掩码，每一位表示一个输出电路的状态（`1`=启动，`0`=未启动）。 |
+| oci | byte | 8位 | 8位比特掩码，每一位表示一个输出电路的状态（`1`=启动,`0`=未启动）。 |
 
 #### 2. 比特位映射规则
 
 | 字段  | 位号 | 说明                                      |
 |-----|----|-----------------------------------------|
-| gc  | 1  | `true`=总命令输出至输出电路，`false`=无总命令输出至输出电路   |
-| cl1 | 2  | `true`=命令输出至A相输出电路，`false`=无命令输出至A相输出电路 |
-| cl2 | 3  | `true`=命令输出至B相输出电路，`false`=无命令输出至B相输出电路 |
-| cl3 | 4  | `true`=命令输出至C相输出电路，`false`=无命令输出至C相输出电路 |
+| gc  | 1  | `true`=总命令输出至输出电路,`false`=无总命令输出至输出电路   |
+| cl1 | 2  | `true`=命令输出至A相输出电路,`false`=无命令输出至A相输出电路 |
+| cl2 | 3  | `true`=命令输出至B相输出电路,`false`=无命令输出至B相输出电路 |
+| cl3 | 4  | `true`=命令输出至C相输出电路,`false`=无命令输出至C相输出电路 |
 
 ### 附录C：公共地址（COA）规则
 
@@ -536,7 +544,7 @@
 
 | 字段名   | 类型     | 位宽 | 描述                                                     |
 |:------|:-------|:---|:-------------------------------------------------------|
-| `oci` | `byte` | 8位 | 8位比特掩码，每一位表示一个输出电路的状态（`1`=无总命令输出至输出电路，`0`=总命令输出至输出电路）。 |
+| `oci` | `byte` | 8位 | 8位比特掩码，每一位表示一个输出电路的状态（`1`=无总命令输出至输出电路,`0`=总命令输出至输出电路）。 |
 
 #### 2. 比特位映射规则
 
