@@ -63,6 +63,9 @@ func main() {
 		m := map[string]string{
 			"gRPC_port":                 strutil.After(c.RpcServerConf.ListenOn, ":"),
 			"preserved.register.source": "go-zero",
+			"deployMode":                c.DeployMode,
+			"broadcastTopic":            c.KafkaConfig.BroadcastTopic,
+			"broadcastGroupId":          c.KafkaConfig.BroadcastGroupId,
 		}
 		opts := nacosx.NewNacosConfig(c.NacosConfig.ServiceName, c.ListenOn, sc, cc, nacosx.WithMetadata(m))
 		_ = nacosx.RegisterService(opts)
