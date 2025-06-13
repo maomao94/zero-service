@@ -33,7 +33,7 @@ IecServerConfig:
 KafkaConfig:
   Brokers:
     - 10.10.1.213:9094
-  AsduTopic: asdu
+  Topic: asdu
   BroadcastTopic: iec-broadcast
   BroadcastGroupId: iec-caller
   # 是否推送指令数据

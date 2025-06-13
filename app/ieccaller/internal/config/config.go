@@ -2,14 +2,12 @@ package config
 
 import (
 	"github.com/zeromicro/go-zero/zrpc"
-	"zero-service/common/config"
 	"zero-service/iec104/iec104client"
 )
 
 type Config struct {
 	zrpc.RpcServerConf
 	DeployMode      string `json:",default=standalone,options=standalone|cluster"` // 可选值：standalone 或 cluster
-	KafkaConfig     config.KqConfig
 	IecServerConfig []iec104client.IecServerConfig
 	//IecCoaConfig         []iec104client.CoaConfig
 	InterrogationCmdCron string
@@ -24,4 +22,12 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
+
+	KafkaConfig struct {
+		Brokers          []string
+		Topic            string
+		BroadcastTopic   string `json:",optional,default=iec-broadcast"`
+		BroadcastGroupId string `json:",optional,default=iec-caller"`
+		IsPush           bool   `json:",optional"`
+	}
 }
