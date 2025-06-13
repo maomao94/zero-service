@@ -456,7 +456,9 @@
 ```json
 {
   "ioa": 6001,
-  "scd": 1,
+  "scd": 0,
+  "stn": "0000000000000000",
+  "cdn": "0000000000000000",
   "qds": 160,
   "qdsDesc": "QDS(10100000)[Substituted|Invalid]",
   "ov": false,
