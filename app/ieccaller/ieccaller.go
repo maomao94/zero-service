@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	"github.com/zeromicro/go-queue/kq"
@@ -66,6 +67,7 @@ func main() {
 			"deployMode":                c.DeployMode,
 			"broadcastTopic":            c.KafkaConfig.BroadcastTopic,
 			"broadcastGroupId":          c.KafkaConfig.BroadcastGroupId,
+			"isPush":                    convertor.ToString(c.KafkaConfig.IsPush),
 		}
 		opts := nacosx.NewNacosConfig(c.NacosConfig.ServiceName, c.ListenOn, sc, cc, nacosx.WithMetadata(m))
 		_ = nacosx.RegisterService(opts)
