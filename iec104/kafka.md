@@ -195,6 +195,7 @@
 {
   "ioa": 4001,
   "value": 16384,
+  "nva": 0.7355652,
   "qds": 160,
   "qdsDesc": "QDS(10100000)[Substituted|Invalid]",
   "ov": false,
@@ -206,17 +207,18 @@
 }
 ```
 
-| 字段      | 类型     | 说明                                     |
-|---------|--------|----------------------------------------|
-| value   | int16  | 归一化值（范围：`-32768` 至 `32767`，需按公式转换为工程值） |
-| qds     | byte   | 品质                                     |
-| qdsDesc | string | 品质描述                                   |
-| ov      | bool   | Overflow `true`=溢出,`false`=未溢出         |
-| bl      | bool   | Blocked `true`=闭锁,`false`=未闭锁          |
-| sb      | bool   | Substituted `true`=取代,`false`=未取代      |
-| nt      | bool   | NotTopical `true`=非当前值,`false`=当前值     |
-| iv      | bool   | Invalid `true`=无效,`false`=有效           |
-| time    | string | 时标（仅带时标的ASDU类型包含此字段）                   |
+| 字段      | 类型      | 说明                                       |
+|---------|---------|------------------------------------------|
+| value   | int16   | 原始归一化值（范围：`-32768` 至 `32767`，需按公式转换为工程值） |
+| nva     | float32 | 规一化值 默认公式 f归一= 32768 * f真实 / 满码值         |
+| qds     | byte    | 品质                                       |
+| qdsDesc | string  | 品质描述                                     |
+| ov      | bool    | Overflow `true`=溢出,`false`=未溢出           |
+| bl      | bool    | Blocked `true`=闭锁,`false`=未闭锁            |
+| sb      | bool    | Substituted `true`=取代,`false`=未取代        |
+| nt      | bool    | NotTopical `true`=非当前值,`false`=当前值       |
+| iv      | bool    | Invalid `true`=无效,`false`=有效             |
+| time    | string  | 时标（仅带时标的ASDU类型包含此字段）                     |
 
 ---
 

@@ -693,24 +693,26 @@ type MeasuredValueNormalInfo struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 信息对象地址
 	Ioa uint32 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
-	// 规一化值
+	// 原始归一化值（范围：`-32768` 至 `32767`，需按公式转换为工程值）
 	Value uint32 `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
+	// 规一化值 默认公式 f归一= 32768 * f真实 / 满码值
+	Nva float32 `protobuf:"fixed32,3,opt,name=nva,proto3" json:"nva,omitempty"`
 	// 品质
-	Qds uint32 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
+	Qds uint32 `protobuf:"varint,4,opt,name=qds,proto3" json:"qds,omitempty"`
 	// 品质描述
-	QdsDesc string `protobuf:"bytes,4,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
+	QdsDesc string `protobuf:"bytes,5,opt,name=qdsDesc,proto3" json:"qdsDesc,omitempty"`
 	// Overflow `true`=溢出,`false`=未溢出
-	Ov bool `protobuf:"varint,5,opt,name=ov,proto3" json:"ov,omitempty"`
+	Ov bool `protobuf:"varint,6,opt,name=ov,proto3" json:"ov,omitempty"`
 	// Blocked `true`=闭锁,`false`=未闭锁
-	Bl bool `protobuf:"varint,6,opt,name=bl,proto3" json:"bl,omitempty"`
+	Bl bool `protobuf:"varint,7,opt,name=bl,proto3" json:"bl,omitempty"`
 	// Substituted `true`=取代,`false`=未取代
-	Sb bool `protobuf:"varint,7,opt,name=sb,proto3" json:"sb,omitempty"`
+	Sb bool `protobuf:"varint,8,opt,name=sb,proto3" json:"sb,omitempty"`
 	// NotTopical `true`=非当前值,`false`=当前值
-	Nt bool `protobuf:"varint,8,opt,name=nt,proto3" json:"nt,omitempty"`
+	Nt bool `protobuf:"varint,9,opt,name=nt,proto3" json:"nt,omitempty"`
 	// Invalid `true`=无效,`false`=有效
-	Iv bool `protobuf:"varint,9,opt,name=iv,proto3" json:"iv,omitempty"`
+	Iv bool `protobuf:"varint,10,opt,name=iv,proto3" json:"iv,omitempty"`
 	// 时标（仅带时标的ASDU类型包含此字段）
-	Time          string `protobuf:"bytes,10,opt,name=time,proto3" json:"time,omitempty"`
+	Time          string `protobuf:"bytes,11,opt,name=time,proto3" json:"time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -755,6 +757,13 @@ func (x *MeasuredValueNormalInfo) GetIoa() uint32 {
 func (x *MeasuredValueNormalInfo) GetValue() uint32 {
 	if x != nil {
 		return x.Value
+	}
+	return 0
+}
+
+func (x *MeasuredValueNormalInfo) GetNva() float32 {
+	if x != nil {
+		return x.Nva
 	}
 	return 0
 }
@@ -2033,19 +2042,20 @@ const file_iecstream_proto_rawDesc = "" +
 	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
 	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
 	"\x04time\x18\n" +
-	" \x01(\tR\x04time\"\xd1\x01\n" +
+	" \x01(\tR\x04time\"\xe3\x01\n" +
 	"\x17MeasuredValueNormalInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\rR\x05value\x12\x10\n" +
-	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x18\n" +
-	"\aqdsDesc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
-	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
-	"\x02bl\x18\x06 \x01(\bR\x02bl\x12\x0e\n" +
-	"\x02sb\x18\a \x01(\bR\x02sb\x12\x0e\n" +
-	"\x02nt\x18\b \x01(\bR\x02nt\x12\x0e\n" +
-	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
-	"\x04time\x18\n" +
-	" \x01(\tR\x04time\"\xe3\x01\n" +
+	"\x03nva\x18\x03 \x01(\x02R\x03nva\x12\x10\n" +
+	"\x03qds\x18\x04 \x01(\rR\x03qds\x12\x18\n" +
+	"\aqdsDesc\x18\x05 \x01(\tR\aqdsDesc\x12\x0e\n" +
+	"\x02ov\x18\x06 \x01(\bR\x02ov\x12\x0e\n" +
+	"\x02bl\x18\a \x01(\bR\x02bl\x12\x0e\n" +
+	"\x02sb\x18\b \x01(\bR\x02sb\x12\x0e\n" +
+	"\x02nt\x18\t \x01(\bR\x02nt\x12\x0e\n" +
+	"\x02iv\x18\n" +
+	" \x01(\bR\x02iv\x12\x12\n" +
+	"\x04time\x18\v \x01(\tR\x04time\"\xe3\x01\n" +
 	"\x10StepPositionInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12-\n" +
 	"\x05value\x18\x02 \x01(\v2\x17.iecstream.StepPositionR\x05value\x12\x10\n" +
