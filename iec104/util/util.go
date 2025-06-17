@@ -169,3 +169,16 @@ func QdpString(qdp asdu.QualityDescriptorProtection) string {
 		return fmt.Sprintf("QDP(%s)[%s]", binaryStr, strings.Join(flags, "|"))
 	}
 }
+
+func FloatToNormalize(f float64) asdu.Normalize {
+	if f >= 1.0 {
+		f = 1.0 - 1.0/32768.0 // 最大不能等于1
+	} else if f < -1.0 {
+		f = -1.0 // 最小值为-1.0
+	}
+	return asdu.Normalize(int16(f * 32768.0))
+}
+
+func NormalizeToFloat(n asdu.Normalize) float32 {
+	return float32(n) / 32768.0
+}

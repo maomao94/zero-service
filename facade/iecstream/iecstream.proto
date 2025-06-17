@@ -122,22 +122,23 @@ message MeasuredValueNormalInfo {
   uint32 ioa = 1 [json_name = "ioa"];
   // 规一化值
   uint32 value = 2 [json_name = "value"];
+  float nva = 3 [json_name = "nva"];
   // 品质
-  uint32 qds = 3 [json_name = "qds"];
+  uint32 qds = 4 [json_name = "qds"];
   // 品质描述
-  string qdsDesc = 4 [json_name = "qdsDesc"];
+  string qdsDesc = 5 [json_name = "qdsDesc"];
   // Overflow `true`=溢出,`false`=未溢出
-  bool ov = 5 [json_name = "ov"];
+  bool ov = 6 [json_name = "ov"];
   // Blocked `true`=闭锁,`false`=未闭锁
-  bool bl = 6 [json_name = "bl"];
+  bool bl = 7 [json_name = "bl"];
   // Substituted `true`=取代,`false`=未取代
-  bool sb = 7 [json_name = "sb"];
+  bool sb = 8 [json_name = "sb"];
   // NotTopical `true`=非当前值,`false`=当前值
-  bool nt = 8 [json_name = "nt"];
+  bool nt = 9 [json_name = "nt"];
   // Invalid `true`=无效,`false`=有效
-  bool iv = 9 [json_name = "iv"];
+  bool iv = 10 [json_name = "iv"];
   // 时标（仅带时标的ASDU类型包含此字段）
-  string time = 10 [json_name = "time"];
+  string time = 11 [json_name = "time"];
 }
 
 // 步位置信息

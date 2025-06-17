@@ -176,15 +176,16 @@ type MeasuredValueNormalInfo struct {
 	// Normalize is a 16-bit normalized value in[-1, 1 − 2⁻¹⁵]..
 	// 规一化值 f归一= 32768 * f真实 / 满码值
 	// See companion standard 101, subclass 7.2.6.6.
-	Value   int16  `json:"value"`
-	Qds     byte   `json:"qds"`
-	QdsDesc string `json:"qdsDesc"`
-	Ov      bool   `json:"ov"`
-	Bl      bool   `json:"bl"`
-	Sb      bool   `json:"sb"`
-	Nt      bool   `json:"nt"`
-	Iv      bool   `json:"iv"`
-	Time    string `json:"time"`
+	Value   int16   `json:"value"`
+	Nva     float32 `json:"nva"`
+	Qds     byte    `json:"qds"`
+	QdsDesc string  `json:"qdsDesc"`
+	Ov      bool    `json:"ov"`
+	Bl      bool    `json:"bl"`
+	Sb      bool    `json:"sb"`
+	Nt      bool    `json:"nt"`
+	Iv      bool    `json:"iv"`
+	Time    string  `json:"time"`
 }
 
 func (s *MeasuredValueNormalInfo) GetIoa() uint {

@@ -205,10 +205,12 @@ func (c *ClientCall) onMeasuredValueNormal(packet *asdu.ASDU) {
 	coa := packet.CommonAddr
 	// [M_ME_NA_1], [M_ME_TA_1],[ M_ME_TD_1] or [M_ME_ND_1] 获得测量值,规一化值信息体集合
 	for _, p := range packet.GetMeasuredValueNormal() {
-		c.logger.Debugf("measured value normal, ioa: %d, value: %v", p.Ioa, p.Value)
+		nva := util.NormalizeToFloat(p.Value)
+		c.logger.Debugf("measured value normal, ioa: %d, value: %v, nva: %.5f", p.Ioa, p.Value, nva)
 		var obj types.MeasuredValueNormalInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, types.Option)
+		obj.Nva = nva
 		obj.QdsDesc = util.QdsString(p.Qds)
 		obj.Ov = util.QdsIsOverflow(p.Qds)
 		obj.Bl = util.QdsIsBlocked(p.Qds)
