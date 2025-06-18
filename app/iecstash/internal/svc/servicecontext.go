@@ -5,6 +5,8 @@ import (
 	"github.com/tidwall/gjson"
 	"github.com/zeromicro/go-zero/core/executors"
 	"github.com/zeromicro/go-zero/zrpc"
+	"google.golang.org/grpc"
+	"math"
 	"sync"
 	"zero-service/app/iecstash/internal/config"
 	interceptor "zero-service/common/Interceptor/rpcclient"
@@ -19,7 +21,14 @@ type ServiceContext struct {
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	iecStreamRpcCli := iecstream.NewIecStreamRpcClient(zrpc.MustNewClient(c.IecStreamRpcConf,
-		zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor)).Conn())
+		zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
+		// 添加最大消息配置
+		zrpc.WithDialOption(grpc.WithDefaultCallOptions(
+			grpc.MaxCallSendMsgSize(math.MaxInt32), // 发送最大2GB
+			//grpc.MaxCallSendMsgSize(50 * 1024 * 1024),   // 发送最大50MB
+			//grpc.MaxCallRecvMsgSize(100 * 1024 * 1024),  // 接收最大100MB
+		)),
+	).Conn())
 	return &ServiceContext{
 		Config:          c,
 		IecStreamRpcCli: iecStreamRpcCli,
