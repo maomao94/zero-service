@@ -175,20 +175,20 @@
 }
 ```
 
-| 字段             | 类型     | 说明                                     |
-|----------------|--------|----------------------------------------|
-| ioa            | uint   | 信息对象地址（范围：`0x000001`-`0xFFFFFF`，十进制显示） |
-| value          | object | 步位置值对象                                 |
-| - val          | int    | 步位置值（范围：`-64` 至 `63`）                  |
-| - hasTransient | bool   | `true`=设备处于瞬变状态                        |
-| qds            | byte   | 品质                                     |
-| qdsDesc        | string | 品质描述                                   |
-| ov             | bool   | Overflow `true`=溢出,`false`=未溢出         |
-| bl             | bool   | Blocked `true`=闭锁,`false`=未闭锁          |
-| sb             | bool   | Substituted `true`=取代,`false`=未取代      |
-| nt             | bool   | NotTopical `true`=非当前值,`false`=当前值     |
-| iv             | bool   | Invalid `true`=无效,`false`=有效           |
-| time           | string | 时标（仅带时标的ASDU类型包含此字段）                   |
+| 字段              | 类型     | 说明                                     |
+|-----------------|--------|----------------------------------------|
+| ioa             | uint   | 信息对象地址（范围：`0x000001`-`0xFFFFFF`，十进制显示） |
+| value           | object | 步位置值对象                                 |
+| ├─ val          | int    | 步位置值（范围：`-64` 至 `63`）                  |
+| ├─ hasTransient | bool   | `true`=设备处于瞬变状态                        |
+| qds             | byte   | 品质                                     |
+| qdsDesc         | string | 品质描述                                   |
+| ov              | bool   | Overflow `true`=溢出,`false`=未溢出         |
+| bl              | bool   | Blocked `true`=闭锁,`false`=未闭锁          |
+| sb              | bool   | Substituted `true`=取代,`false`=未取代      |
+| nt              | bool   | NotTopical `true`=非当前值,`false`=当前值     |
+| iv              | bool   | Invalid `true`=无效,`false`=有效           |
+| time            | string | 时标（仅带时标的ASDU类型包含此字段）                   |
 
 ---
 
@@ -340,16 +340,16 @@
 }
 ```
 
-| 字段               | 类型     | 说明                                     |
-|------------------|--------|----------------------------------------|
-| ioa              | uint   | 信息对象地址（范围：`0x000001`-`0xFFFFFF`，十进制显示） |
-| value            | object | 累计量信息                                  |
-| - counterReading | int32  | 计数器读数（32位有符号整数）                        |
-| - seqNumber      | byte   | 顺序号（范围：`0`-`31`）                       |
-| - hasCarry       | bool   | `true`=计数器溢出                           |
-| - isAdjusted     | bool   | `true`=计数量被人工调整                        |
-| - isInvalid      | bool   | `true`=数据无效                            |
-| time             | string | 时标（仅带时标的ASDU类型包含此字段）                   |
+| 字段                | 类型     | 说明                                     |
+|-------------------|--------|----------------------------------------|
+| ioa               | uint   | 信息对象地址（范围：`0x000001`-`0xFFFFFF`，十进制显示） |
+| value             | object | 累计量信息                                  |
+| ├─ counterReading | int32  | 计数器读数（32位有符号整数）                        |
+| ├─ seqNumber      | byte   | 顺序号（范围：`0`-`31`）                       |
+| - hasCarry        | bool   | `true`=计数器溢出                           |
+| - isAdjusted      | bool   | `true`=计数量被人工调整                        |
+| - isInvalid       | bool   | `true`=数据无效                            |
+| time              | string | 时标（仅带时标的ASDU类型包含此字段）                   |
 
 ---
 
