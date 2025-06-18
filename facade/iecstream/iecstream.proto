@@ -298,7 +298,7 @@ message PackedStartEventsOfProtectionEquipmentInfo {
 }
 
 // 继电器保护设备成组输出电路信息
-message PackedOutputCircuitInfoInfo {
+message PackedOutputCircuitInfo {
   // 信息对象地址
   uint32 ioa = 1 [json_name = "ioa"];
   // 输出电路信息

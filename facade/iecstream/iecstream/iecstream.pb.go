@@ -1678,7 +1678,7 @@ func (x *PackedStartEventsOfProtectionEquipmentInfo) GetTime() string {
 }
 
 // 继电器保护设备成组输出电路信息
-type PackedOutputCircuitInfoInfo struct {
+type PackedOutputCircuitInfo struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 信息对象地址
 	Ioa uint32 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
@@ -1714,20 +1714,20 @@ type PackedOutputCircuitInfoInfo struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *PackedOutputCircuitInfoInfo) Reset() {
-	*x = PackedOutputCircuitInfoInfo{}
+func (x *PackedOutputCircuitInfo) Reset() {
+	*x = PackedOutputCircuitInfo{}
 	mi := &file_iecstream_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PackedOutputCircuitInfoInfo) String() string {
+func (x *PackedOutputCircuitInfo) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PackedOutputCircuitInfoInfo) ProtoMessage() {}
+func (*PackedOutputCircuitInfo) ProtoMessage() {}
 
-func (x *PackedOutputCircuitInfoInfo) ProtoReflect() protoreflect.Message {
+func (x *PackedOutputCircuitInfo) ProtoReflect() protoreflect.Message {
 	mi := &file_iecstream_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1739,110 +1739,110 @@ func (x *PackedOutputCircuitInfoInfo) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PackedOutputCircuitInfoInfo.ProtoReflect.Descriptor instead.
-func (*PackedOutputCircuitInfoInfo) Descriptor() ([]byte, []int) {
+// Deprecated: Use PackedOutputCircuitInfo.ProtoReflect.Descriptor instead.
+func (*PackedOutputCircuitInfo) Descriptor() ([]byte, []int) {
 	return file_iecstream_proto_rawDescGZIP(), []int{17}
 }
 
-func (x *PackedOutputCircuitInfoInfo) GetIoa() uint32 {
+func (x *PackedOutputCircuitInfo) GetIoa() uint32 {
 	if x != nil {
 		return x.Ioa
 	}
 	return 0
 }
 
-func (x *PackedOutputCircuitInfoInfo) GetOci() uint32 {
+func (x *PackedOutputCircuitInfo) GetOci() uint32 {
 	if x != nil {
 		return x.Oci
 	}
 	return 0
 }
 
-func (x *PackedOutputCircuitInfoInfo) GetGc() bool {
+func (x *PackedOutputCircuitInfo) GetGc() bool {
 	if x != nil {
 		return x.Gc
 	}
 	return false
 }
 
-func (x *PackedOutputCircuitInfoInfo) GetCl1() bool {
+func (x *PackedOutputCircuitInfo) GetCl1() bool {
 	if x != nil {
 		return x.Cl1
 	}
 	return false
 }
 
-func (x *PackedOutputCircuitInfoInfo) GetCl2() bool {
+func (x *PackedOutputCircuitInfo) GetCl2() bool {
 	if x != nil {
 		return x.Cl2
 	}
 	return false
 }
 
-func (x *PackedOutputCircuitInfoInfo) GetCl3() bool {
+func (x *PackedOutputCircuitInfo) GetCl3() bool {
 	if x != nil {
 		return x.Cl3
 	}
 	return false
 }
 
-func (x *PackedOutputCircuitInfoInfo) GetQdp() uint32 {
+func (x *PackedOutputCircuitInfo) GetQdp() uint32 {
 	if x != nil {
 		return x.Qdp
 	}
 	return 0
 }
 
-func (x *PackedOutputCircuitInfoInfo) GetQdpDesc() string {
+func (x *PackedOutputCircuitInfo) GetQdpDesc() string {
 	if x != nil {
 		return x.QdpDesc
 	}
 	return ""
 }
 
-func (x *PackedOutputCircuitInfoInfo) GetEi() bool {
+func (x *PackedOutputCircuitInfo) GetEi() bool {
 	if x != nil {
 		return x.Ei
 	}
 	return false
 }
 
-func (x *PackedOutputCircuitInfoInfo) GetBl() bool {
+func (x *PackedOutputCircuitInfo) GetBl() bool {
 	if x != nil {
 		return x.Bl
 	}
 	return false
 }
 
-func (x *PackedOutputCircuitInfoInfo) GetSb() bool {
+func (x *PackedOutputCircuitInfo) GetSb() bool {
 	if x != nil {
 		return x.Sb
 	}
 	return false
 }
 
-func (x *PackedOutputCircuitInfoInfo) GetNt() bool {
+func (x *PackedOutputCircuitInfo) GetNt() bool {
 	if x != nil {
 		return x.Nt
 	}
 	return false
 }
 
-func (x *PackedOutputCircuitInfoInfo) GetIv() bool {
+func (x *PackedOutputCircuitInfo) GetIv() bool {
 	if x != nil {
 		return x.Iv
 	}
 	return false
 }
 
-func (x *PackedOutputCircuitInfoInfo) GetMsec() uint32 {
+func (x *PackedOutputCircuitInfo) GetMsec() uint32 {
 	if x != nil {
 		return x.Msec
 	}
 	return 0
 }
 
-func (x *PackedOutputCircuitInfoInfo) GetTime() string {
+func (x *PackedOutputCircuitInfo) GetTime() string {
 	if x != nil {
 		return x.Time
 	}
@@ -2132,8 +2132,8 @@ const file_iecstream_proto_rawDesc = "" +
 	"\x02iv\x18\t \x01(\bR\x02iv\x12\x12\n" +
 	"\x04msec\x18\n" +
 	" \x01(\rR\x04msec\x12\x12\n" +
-	"\x04time\x18\v \x01(\tR\x04time\"\xab\x02\n" +
-	"\x1bPackedOutputCircuitInfoInfo\x12\x10\n" +
+	"\x04time\x18\v \x01(\tR\x04time\"\xa7\x02\n" +
+	"\x17PackedOutputCircuitInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x10\n" +
 	"\x03oci\x18\x02 \x01(\rR\x03oci\x12\x0e\n" +
 	"\x02gc\x18\x03 \x01(\bR\x02gc\x12\x10\n" +
@@ -2199,7 +2199,7 @@ var file_iecstream_proto_goTypes = []any{
 	(*BinaryCounterReading)(nil),                       // 14: iecstream.BinaryCounterReading
 	(*EventOfProtectionEquipmentInfo)(nil),             // 15: iecstream.EventOfProtectionEquipmentInfo
 	(*PackedStartEventsOfProtectionEquipmentInfo)(nil), // 16: iecstream.PackedStartEventsOfProtectionEquipmentInfo
-	(*PackedOutputCircuitInfoInfo)(nil),                // 17: iecstream.PackedOutputCircuitInfoInfo
+	(*PackedOutputCircuitInfo)(nil),                    // 17: iecstream.PackedOutputCircuitInfo
 	(*PackedSinglePointWithSCDInfo)(nil),               // 18: iecstream.PackedSinglePointWithSCDInfo
 }
 var file_iecstream_proto_depIdxs = []int32{
