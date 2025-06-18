@@ -683,7 +683,7 @@ public class Main {
 
 ```python
 # 格式：host_coa_0x{ioa}
-key = f"{host}_{coa}_0x{ioa:06X}"  # 示例：RTU-01_1001_0x0007D1
+key = f"{host}_{coa}_0x{ioa:06X}"  # 示例：127.0.0.1_1_0x0007D1
 ```
 
 ### 5.2 时区与时间处理
