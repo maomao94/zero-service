@@ -567,7 +567,7 @@ type MeasuredValueScaledInfo struct {
 	// 信息对象地址
 	Ioa uint32 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
 	// 标度化值
-	Value uint32 `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
+	Value int32 `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
 	// 品质
 	Qds uint32 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
 	// 品质描述
@@ -625,7 +625,7 @@ func (x *MeasuredValueScaledInfo) GetIoa() uint32 {
 	return 0
 }
 
-func (x *MeasuredValueScaledInfo) GetValue() uint32 {
+func (x *MeasuredValueScaledInfo) GetValue() int32 {
 	if x != nil {
 		return x.Value
 	}
@@ -694,7 +694,7 @@ type MeasuredValueNormalInfo struct {
 	// 信息对象地址
 	Ioa uint32 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
 	// 原始归一化值（范围：`-32768` 至 `32767`，需按公式转换为工程值）
-	Value uint32 `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
+	Value int32 `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
 	// 规一化值 默认公式 f归一= 32768 * f真实 / 满码值
 	Nva float32 `protobuf:"fixed32,3,opt,name=nva,proto3" json:"nva,omitempty"`
 	// 品质
@@ -754,7 +754,7 @@ func (x *MeasuredValueNormalInfo) GetIoa() uint32 {
 	return 0
 }
 
-func (x *MeasuredValueNormalInfo) GetValue() uint32 {
+func (x *MeasuredValueNormalInfo) GetValue() int32 {
 	if x != nil {
 		return x.Value
 	}
@@ -2033,7 +2033,7 @@ const file_iecstream_proto_rawDesc = "" +
 	" \x01(\tR\x04time\"\xd1\x01\n" +
 	"\x17MeasuredValueScaledInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\rR\x05value\x12\x10\n" +
+	"\x05value\x18\x02 \x01(\x05R\x05value\x12\x10\n" +
 	"\x03qds\x18\x03 \x01(\rR\x03qds\x12\x18\n" +
 	"\aqdsDesc\x18\x04 \x01(\tR\aqdsDesc\x12\x0e\n" +
 	"\x02ov\x18\x05 \x01(\bR\x02ov\x12\x0e\n" +
@@ -2045,7 +2045,7 @@ const file_iecstream_proto_rawDesc = "" +
 	" \x01(\tR\x04time\"\xe3\x01\n" +
 	"\x17MeasuredValueNormalInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\rR\x05value\x12\x10\n" +
+	"\x05value\x18\x02 \x01(\x05R\x05value\x12\x10\n" +
 	"\x03nva\x18\x03 \x01(\x02R\x03nva\x12\x10\n" +
 	"\x03qds\x18\x04 \x01(\rR\x03qds\x12\x18\n" +
 	"\aqdsDesc\x18\x05 \x01(\tR\aqdsDesc\x12\x0e\n" +
