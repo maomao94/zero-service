@@ -35,6 +35,19 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 		return nil
 	}
 	switch broadcastBody.Method {
+	case ieccaller.IecCaller_SendCounterInterrogationCmd_FullMethodName:
+		in := &ieccaller.SendCounterInterrogationCmdReq{}
+		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
+		if err != nil {
+			return err
+		}
+		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
+		if err != nil {
+			return err
+		}
+		if err = cli.SendCounterInterrogationCmd(uint16(in.Coa)); err != nil {
+			return err
+		}
 	case ieccaller.IecCaller_SendInterrogationCmd_FullMethodName:
 		in := &ieccaller.SendInterrogationCmdReq{}
 		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
@@ -59,6 +72,19 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 			return err
 		}
 		if err = cli.SendReadCmd(uint16(in.Coa), uint(in.Ioa)); err != nil {
+			return err
+		}
+	case ieccaller.IecCaller_SendTestCmd_FullMethodName:
+		in := &ieccaller.SendTestCmdReq{}
+		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
+		if err != nil {
+			return err
+		}
+		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
+		if err != nil {
+			return err
+		}
+		if err = cli.SendTestCmd(uint16(in.Coa)); err != nil {
 			return err
 		}
 	default:

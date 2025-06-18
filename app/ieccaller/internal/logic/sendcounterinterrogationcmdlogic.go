@@ -25,12 +25,19 @@ func NewSendCounterInterrogationCmdLogic(ctx context.Context, svcCtx *svc.Servic
 
 // 累积量召唤
 func (l *SendCounterInterrogationCmdLogic) SendCounterInterrogationCmd(in *ieccaller.SendCounterInterrogationCmdReq) (*ieccaller.SendCounterInterrogationCmdRes, error) {
-	cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
+	cli, err := l.svcCtx.ClientManager.GetClientOrNil(in.Host, int(in.Port))
 	if err != nil {
 		return nil, err
 	}
-	if err = cli.SendCounterInterrogationCmd(uint16(in.Coa)); err != nil {
+	if cli == nil && l.svcCtx.IsBroadcast() {
+		err = l.svcCtx.PushPbBroadcast(ieccaller.IecCaller_SendCounterInterrogationCmd_FullMethodName, in)
 		return nil, err
+	} else if cli != nil {
+		if err = cli.SendCounterInterrogationCmd(uint16(in.Coa)); err != nil {
+			return nil, err
+		}
+	} else {
+		logx.Errorf("cli is empty")
 	}
 	return &ieccaller.SendCounterInterrogationCmdRes{}, nil
 }

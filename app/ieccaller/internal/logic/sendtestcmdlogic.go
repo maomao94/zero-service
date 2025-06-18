@@ -22,12 +22,19 @@ func NewSendTestCmdLogic(ctx context.Context, svcCtx *svc.ServiceContext) *SendT
 }
 
 func (l *SendTestCmdLogic) SendTestCmd(in *ieccaller.SendTestCmdReq) (*ieccaller.SendTestCmdRes, error) {
-	cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
+	cli, err := l.svcCtx.ClientManager.GetClientOrNil(in.Host, int(in.Port))
 	if err != nil {
 		return nil, err
 	}
-	if err = cli.SendTestCmd(uint16(in.Coa)); err != nil {
+	if cli == nil && l.svcCtx.IsBroadcast() {
+		err = l.svcCtx.PushPbBroadcast(ieccaller.IecCaller_SendTestCmd_FullMethodName, in)
 		return nil, err
+	} else if cli != nil {
+		if err = cli.SendTestCmd(uint16(in.Coa)); err != nil {
+			return nil, err
+		}
+	} else {
+		logx.Errorf("cli is empty")
 	}
 	return &ieccaller.SendTestCmdRes{}, nil
 }

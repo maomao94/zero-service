@@ -36,7 +36,7 @@ func (l *SendInterrogationCmdLogic) SendInterrogationCmd(in *ieccaller.SendInter
 			return nil, err
 		}
 	} else {
-		logx.Errorf("no client found")
+		logx.Errorf("cli is empty")
 	}
 	return &ieccaller.SendInterrogationCmdRes{}, nil
 }

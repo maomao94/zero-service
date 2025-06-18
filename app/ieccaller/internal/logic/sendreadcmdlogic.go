@@ -36,7 +36,7 @@ func (l *SendReadCmdLogic) SendReadCmd(in *ieccaller.SendReadCmdReq) (*ieccaller
 			return nil, err
 		}
 	} else {
-		logx.Errorf("no client found")
+		logx.Errorf("cli is empty")
 	}
 	return &ieccaller.SendReadCmdRes{}, nil
 }
