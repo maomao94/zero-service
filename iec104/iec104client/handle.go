@@ -1,6 +1,10 @@
 package iec104client
 
-import "github.com/wendy512/go-iecp5/asdu"
+import (
+	"github.com/wendy512/go-iecp5/asdu"
+	"github.com/zeromicro/go-zero/core/stat"
+	"github.com/zeromicro/go-zero/core/timex"
+)
 
 const (
 	SinglePoint                            DataType = iota // 单点信息
@@ -28,47 +32,80 @@ const (
 type DataType int
 
 type ClientHandler struct {
-	Call ASDUCall
+	call    ASDUCall
+	metrics *stat.Metrics
 }
 
 // InterrogationHandler 总召唤回复
 func (h *ClientHandler) InterrogationHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	return h.Call.OnInterrogation(rxAsdu)
+	startTime := timex.Now()
+	defer h.metrics.Add(stat.Task{
+		Duration: timex.Since(startTime),
+	})
+	return h.call.OnInterrogation(rxAsdu)
 }
 
 // CounterInterrogationHandler 总计数器回复
 func (h *ClientHandler) CounterInterrogationHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	return h.Call.OnCounterInterrogation(rxAsdu)
+	startTime := timex.Now()
+	defer h.metrics.Add(stat.Task{
+		Duration: timex.Since(startTime),
+	})
+	return h.call.OnCounterInterrogation(rxAsdu)
 }
 
 // ReadHandler 读定值回复
 func (h *ClientHandler) ReadHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	return h.Call.OnRead(rxAsdu)
+	startTime := timex.Now()
+	defer h.metrics.Add(stat.Task{
+		Duration: timex.Since(startTime),
+	})
+	return h.call.OnRead(rxAsdu)
 }
 
 // TestCommandHandler 测试下发回复
 func (h *ClientHandler) TestCommandHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	return h.Call.OnTestCommand(rxAsdu)
+	startTime := timex.Now()
+	defer h.metrics.Add(stat.Task{
+		Duration: timex.Since(startTime),
+	})
+	return h.call.OnTestCommand(rxAsdu)
 }
 
 // ClockSyncHandler 时钟同步回复
 func (h *ClientHandler) ClockSyncHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	return h.Call.OnClockSync(rxAsdu)
+	startTime := timex.Now()
+	defer h.metrics.Add(stat.Task{
+		Duration: timex.Since(startTime),
+	})
+	return h.call.OnClockSync(rxAsdu)
 }
 
 // ResetProcessHandler 进程重置回复
 func (h *ClientHandler) ResetProcessHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	return h.Call.OnResetProcess(rxAsdu)
+	startTime := timex.Now()
+	defer h.metrics.Add(stat.Task{
+		Duration: timex.Since(startTime),
+	})
+	return h.call.OnResetProcess(rxAsdu)
 }
 
 // DelayAcquisitionHandler 延迟获取回复
 func (h *ClientHandler) DelayAcquisitionHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	return h.Call.OnDelayAcquisition(rxAsdu)
+	startTime := timex.Now()
+	defer h.metrics.Add(stat.Task{
+		Duration: timex.Since(startTime),
+	})
+	return h.call.OnDelayAcquisition(rxAsdu)
 }
 
 // ASDUHandler ASDU上报，ASDU数据
 func (h *ClientHandler) ASDUHandler(_ asdu.Connect, rxAsdu *asdu.ASDU) error {
-	return h.Call.OnASDU(rxAsdu)
+	startTime := timex.Now()
+	defer h.metrics.Add(stat.Task{
+		Duration: timex.Since(startTime),
+	})
+	return h.call.OnASDU(rxAsdu)
 }
 
 func GetDataType(typeId asdu.TypeID) DataType {

@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/stat"
 	"github.com/zeromicro/go-zero/core/threading"
 	"log"
 	"net"
@@ -89,7 +90,10 @@ func NewSettings() *Settings {
 
 func New(settings *Settings, call ASDUCall) *Client {
 	opts := newClientOption(settings)
-	handler := &ClientHandler{Call: call}
+	handler := &ClientHandler{
+		call:    call,
+		metrics: stat.NewMetrics("tcp-iec-104"),
+	}
 	client104 := cs104.NewClient(handler, opts)
 	logCfg := settings.LogCfg
 	if logCfg != nil {
