@@ -340,16 +340,16 @@
 }
 ```
 
-| 字段               | 类型     | 说明                                     |
-|------------------|--------|----------------------------------------|
-| ioa              | uint   | 信息对象地址（范围：`0x000001`-`0xFFFFFF`，十进制显示） |
-| value            | object | 累计量信息                                  |
+| 字段            | 类型     | 说明                                     |
+|---------------|--------|----------------------------------------|
+| ioa           | uint   | 信息对象地址（范围：`0x000001`-`0xFFFFFF`，十进制显示） |
+| value         | object | 累计量信息                                  |
 | ├ counterReading | int32  | 计数器读数（32位有符号整数）                        |
-| ├ seqNumber      | byte   | 顺序号（范围：`0`-`31`）                       |
-| - hasCarry       | bool   | `true`=计数器溢出                           |
-| - isAdjusted     | bool   | `true`=计数量被人工调整                        |
-| - isInvalid      | bool   | `true`=数据无效                            |
-| time             | string | 时标（仅带时标的ASDU类型包含此字段）                   |
+| ├ seqNumber   | byte   | 顺序号（范围：`0`-`31`）                       |
+| ├ hasCarry     | bool   | `true`=计数器溢出                           |
+| ├ isAdjusted   | bool   | `true`=计数量被人工调整                        |
+| ├ isInvalid    | bool   | `true`=数据无效                            |
+| time          | string | 时标（仅带时标的ASDU类型包含此字段）                   |
 
 ---
 
