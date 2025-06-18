@@ -80,10 +80,10 @@
 | 7        | M_IT_TB_1 | `BinaryCounterReadingInfo`                   | 累计量（CP56Time2a时标）      |
 | 8        | M_EP_TA_1 | `EventOfProtectionEquipmentInfo`             | 继电保护事件（带时标）            |
 | 8        | M_EP_TD_1 | `EventOfProtectionEquipmentInfo`             | 继电保护事件（CP56Time2a时标）   |
-| 9        | M_EP_TB_1 | `PackedStartEventsOfProtectionEquipmentInfo` | 成组启动事件（带时标）            |
-| 9        | M_EP_TE_1 | `PackedStartEventsOfProtectionEquipmentInfo` | 成组启动事件（CP56Time2a时标）   |
-| 10       | M_EP_TC_1 | `PackedOutputCircuitInfoInfo`                | 成组输出电路信息（带时标）          |
-| 10       | M_EP_TF_1 | `PackedOutputCircuitInfoInfo`                | 成组输出电路信息（CP56Time2a时标） |
+| 9        | M_EP_TB_1 | `PackedStartEventsOfProtectionEquipmentInfo` | 继电器保护设备成组启动事件（带时标）            |
+| 9        | M_EP_TE_1 | `PackedStartEventsOfProtectionEquipmentInfo` | 继电器保护设备成组启动事件（CP56Time2a时标）   |
+| 10       | M_EP_TC_1 | `PackedOutputCircuitInfoInfo`                | 继电器保护设备成组输出电路信息（带时标）          |
+| 10       | M_EP_TF_1 | `PackedOutputCircuitInfoInfo`                | 继电器保护设备成组输出电路信息（CP56Time2a时标） |
 | 11       | M_PS_NA_1 | `PackedSinglePointWithSCDInfo`               | 带变位检出的成组单点信息           |
 | 19       |           | `UNKNOWN`                                    | UNKNOWN 不发送            |
 
