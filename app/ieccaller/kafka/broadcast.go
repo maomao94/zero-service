@@ -43,7 +43,8 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 		}
 		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
 		if err != nil {
-			return err
+			logx.Errorf("get client error: %v", err)
+			return nil
 		}
 		if err = cli.SendCounterInterrogationCmd(uint16(in.Coa)); err != nil {
 			return err
@@ -56,7 +57,8 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 		}
 		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
 		if err != nil {
-			return err
+			logx.Errorf("get client error: %v", err)
+			return nil
 		}
 		if err = cli.SendInterrogationCmd(uint16(in.Coa)); err != nil {
 			return err
@@ -69,7 +71,8 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 		}
 		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
 		if err != nil {
-			return err
+			logx.Errorf("get client error: %v", err)
+			return nil
 		}
 		if err = cli.SendReadCmd(uint16(in.Coa), uint(in.Ioa)); err != nil {
 			return err
@@ -82,7 +85,8 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 		}
 		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
 		if err != nil {
-			return err
+			logx.Errorf("get client error: %v", err)
+			return nil
 		}
 		if err = cli.SendTestCmd(uint16(in.Coa)); err != nil {
 			return err
