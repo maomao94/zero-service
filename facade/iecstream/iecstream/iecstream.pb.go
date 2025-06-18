@@ -192,9 +192,9 @@ func (*PushChunkAsduRes) Descriptor() ([]byte, []int) {
 // 消息体结构
 type MsgBody struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 设备唯一标识（如RTU/IP地址）
+	// 采集设备地址
 	Host string `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
-	// 设备端口号
+	// 采集设备端口号
 	Port int32 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
 	// ASDU类型名称
 	Asdu string `protobuf:"bytes,3,opt,name=asdu,proto3" json:"asdu,omitempty"`

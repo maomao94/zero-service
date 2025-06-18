@@ -24,9 +24,9 @@ message PushChunkAsduRes {
 
 // 消息体结构
 message MsgBody {
-  // 设备唯一标识（如RTU/IP地址）
+  // 采集设备地址
   string host = 1 [json_name = "host"];
-  // 设备端口号
+  // 采集设备端口号
   int32 port = 2 [json_name = "port"];
   // ASDU类型名称
   string asdu = 3 [json_name = "asdu"];

@@ -37,8 +37,8 @@
 
 | 字段       | 类型     | 说明                                               |
 |----------|--------|--------------------------------------------------|
-| host     | String | 设备唯一标识（如RTU/IP地址）                                |
-| port     | int    | 设备端口号                                            |
+| host     | String | 采集设备地址                                |
+| port     | int    | 采集设备端口号                                            |
 | asdu     | String | ASDU类型名称                                         |
 | typeId   | int    | ASDU类型标识符                                        |
 | dataType | int    | 信息体类型标识符                                         |
