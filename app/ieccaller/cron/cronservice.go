@@ -53,6 +53,24 @@ func (s *CronService) Start() {
 			}
 		}
 	})
+	// 定时累计量召唤
+	_, _ = s.c.AddFunc(s.svcCtx.Config.CounterInterrogationCmd, func() {
+		cliList := s.svcCtx.ClientManager.GetClients()
+		for cli, _ := range cliList {
+			if cli.IsConnected() {
+				// 累计量召唤
+				ccCoaList := cli.GetCcCoaList()
+				for _, v := range ccCoaList {
+					convertor.ToInt(v)
+					if err := cli.SendCounterInterrogationCmd(v); err != nil {
+						logx.Errorf("send counter interrogation cmd error %v\n", err)
+						continue
+					}
+					logx.Infof("send counter interrogation cmd, serverUrl: %s, coa: %d", cli.GetServerUrl(), v)
+				}
+			}
+		}
+	})
 	s.c.Start()
 	fmt.Print("Starting cron server \n")
 }

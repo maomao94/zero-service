@@ -316,7 +316,7 @@ func (c *ClientCall) onIntegratedTotals(packet *asdu.ASDU) {
 	coa := packet.CommonAddr
 	// [M_IT_NA_1], [M_IT_TA_1] or [M_IT_TB_1]. 获得累计量信息体集合
 	for _, p := range packet.GetIntegratedTotals() {
-		c.logger.Debugf("integrated totals, ioa: %d, count: %d, SQ: 0x%02X, CY: %t, CA: %t, IV: %t",
+		c.logger.Debugf("integrated totals, ioa: %d, counter: %d, sq: %d, cy: %t, ca: %t, iv: %t",
 			p.Ioa, p.Value.CounterReading, p.Value.SeqNumber, p.Value.HasCarry, p.Value.IsAdjusted, p.Value.IsInvalid)
 		var obj types.BinaryCounterReadingInfo
 		//obj.Time = carbon.Now().ToDateTimeString()

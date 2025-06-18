@@ -32,6 +32,7 @@ type IecServerConfig struct {
 	Host      string
 	Port      int
 	IcCoaList []uint16       `json:",optional"`
+	CcCoaList []uint16       `json:",optional"`
 	MetaData  map[string]any `json:",optional"`
 	LogEnable bool
 }
@@ -48,6 +49,7 @@ type Settings struct {
 	Host              string
 	Port              int
 	IcCoaList         []uint16
+	CcCoaList         []uint16
 	MetaData          map[string]any
 	AutoConnect       bool          //自动重连
 	ReconnectInterval time.Duration //重连间隔
@@ -103,6 +105,10 @@ func New(settings *Settings, call ASDUCall) *Client {
 
 func (c *Client) GetIcCoaList() []uint16 {
 	return c.settings.IcCoaList
+}
+
+func (c *Client) GetCcCoaList() []uint16 {
+	return c.settings.CcCoaList
 }
 
 func (c *Client) Connect() error {
@@ -423,6 +429,7 @@ func MustNewIecServerClient(config IecServerConfig, call ASDUCall, manager *Clie
 	settings.Host = config.Host
 	settings.Port = config.Port
 	settings.IcCoaList = config.IcCoaList
+	settings.CcCoaList = config.CcCoaList
 	settings.MetaData = config.MetaData
 	settings.ReconnectInterval = time.Minute
 	settings.AutoConnect = true

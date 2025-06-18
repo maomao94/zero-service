@@ -26,6 +26,8 @@ IecServerConfig:
     Port: 2404
     # 定时总召唤COA
     IcCoaList: [ 1,2 ]
+    # 累计量召唤 COA
+    CcCoaList: [ 1 ]
     MetaData:
       stationId: 330KV
       arrayId: [ 1,2,3 ]
@@ -38,4 +40,7 @@ KafkaConfig:
   BroadcastGroupId: iec-caller
   # 是否推送指令数据
   IsPush: true
+# 总召唤 默认 @every 60s
 InterrogationCmdCron: "*/60 * * * * *"
+# 累计量召唤 默认 @every 60s
+CounterInterrogationCmd: "*/60 * * * * *"
