@@ -51,41 +51,41 @@
 
 ## 2. 全量ASDU类型映射表
 
-| DataType | ASDU类型    | Body结构体                                      | 应用场景说明                 |
-|----------|-----------|----------------------------------------------|------------------------|
-| 0        | M_SP_NA_1 | `SinglePointInfo`                            | 单点遥信（不带时标）             |
-| 0        | M_SP_TA_1 | `SinglePointInfo`                            | 单点遥信（带时标）              |
-| 0        | M_SP_TB_1 | `SinglePointInfo`                            | 单点遥信（CP56Time2a时标）     |
-| 1        | M_DP_NA_1 | `DoublePointInfo`                            | 双点遥信（不带时标）             |
-| 1        | M_DP_TA_1 | `DoublePointInfo`                            | 双点遥信（带时标）              |
-| 1        | M_DP_TB_1 | `DoublePointInfo`                            | 双点遥信（CP56Time2a时标）     |
-| 2        | M_ME_NB_1 | `MeasuredValueScaledInfo`                    | 标度化遥测值（不带时标）           |
-| 2        | M_ME_TB_1 | `MeasuredValueScaledInfo`                    | 标度化遥测值（带时标）            |
-| 2        | M_ME_TE_1 | `MeasuredValueScaledInfo`                    | 标度化遥测值（CP56Time2a时标）   |
-| 3        | M_ME_NA_1 | `MeasuredValueNormalInfo`                    | 规一化遥测值（不带时标）           |
-| 3        | M_ME_TA_1 | `MeasuredValueNormalInfo`                    | 规一化遥测值（带时标）            |
-| 3        | M_ME_TD_1 | `MeasuredValueNormalInfo`                    | 规一化遥测值（CP56Time2a时标）   |
-| 3        | M_ME_ND_1 | `MeasuredValueNormalInfo`                    | 无品质描述的规一化遥测值           |
-| 4        | M_ST_NA_1 | `StepPositionInfo`                           | 步位置信息（不带时标）            |
-| 4        | M_ST_TA_1 | `StepPositionInfo`                           | 步位置信息（带时标）             |
-| 4        | M_ST_TB_1 | `StepPositionInfo`                           | 步位置信息（CP56Time2a时标）    |
-| 5        | M_BO_NA_1 | `BitString32Info`                            | 32位比特串（不带时标）           |
-| 5        | M_BO_TA_1 | `BitString32Info`                            | 32位比特串（带时标）            |
-| 5        | M_BO_TB_1 | `BitString32Info`                            | 32位比特串（CP56Time2a时标）   |
-| 6        | M_ME_NC_1 | `MeasuredValueFloatInfo`                     | 短浮点数遥测值（不带时标）          |
-| 6        | M_ME_TC_1 | `MeasuredValueFloatInfo`                     | 短浮点数遥测值（带时标）           |
-| 6        | M_ME_TF_1 | `MeasuredValueFloatInfo`                     | 短浮点数遥测值（CP56Time2a时标）  |
-| 7        | M_IT_NA_1 | `BinaryCounterReadingInfo`                   | 累计量（不带时标）              |
-| 7        | M_IT_TA_1 | `BinaryCounterReadingInfo`                   | 累计量（带时标）               |
-| 7        | M_IT_TB_1 | `BinaryCounterReadingInfo`                   | 累计量（CP56Time2a时标）      |
-| 8        | M_EP_TA_1 | `EventOfProtectionEquipmentInfo`             | 继电保护事件（带时标）            |
-| 8        | M_EP_TD_1 | `EventOfProtectionEquipmentInfo`             | 继电保护事件（CP56Time2a时标）   |
+| DataType | ASDU类型    | Body结构体                                      | 应用场景说明                        |
+|----------|-----------|----------------------------------------------|-------------------------------|
+| 0        | M_SP_NA_1 | `SinglePointInfo`                            | 单点遥信（不带时标）                    |
+| 0        | M_SP_TA_1 | `SinglePointInfo`                            | 单点遥信（带时标）                     |
+| 0        | M_SP_TB_1 | `SinglePointInfo`                            | 单点遥信（CP56Time2a时标）            |
+| 1        | M_DP_NA_1 | `DoublePointInfo`                            | 双点遥信（不带时标）                    |
+| 1        | M_DP_TA_1 | `DoublePointInfo`                            | 双点遥信（带时标）                     |
+| 1        | M_DP_TB_1 | `DoublePointInfo`                            | 双点遥信（CP56Time2a时标）            |
+| 2        | M_ME_NB_1 | `MeasuredValueScaledInfo`                    | 标度化遥测值（不带时标）                  |
+| 2        | M_ME_TB_1 | `MeasuredValueScaledInfo`                    | 标度化遥测值（带时标）                   |
+| 2        | M_ME_TE_1 | `MeasuredValueScaledInfo`                    | 标度化遥测值（CP56Time2a时标）          |
+| 3        | M_ME_NA_1 | `MeasuredValueNormalInfo`                    | 规一化遥测值（不带时标）                  |
+| 3        | M_ME_TA_1 | `MeasuredValueNormalInfo`                    | 规一化遥测值（带时标）                   |
+| 3        | M_ME_TD_1 | `MeasuredValueNormalInfo`                    | 规一化遥测值（CP56Time2a时标）          |
+| 3        | M_ME_ND_1 | `MeasuredValueNormalInfo`                    | 无品质描述的规一化遥测值                  |
+| 4        | M_ST_NA_1 | `StepPositionInfo`                           | 步位置信息（不带时标）                   |
+| 4        | M_ST_TA_1 | `StepPositionInfo`                           | 步位置信息（带时标）                    |
+| 4        | M_ST_TB_1 | `StepPositionInfo`                           | 步位置信息（CP56Time2a时标）           |
+| 5        | M_BO_NA_1 | `BitString32Info`                            | 32位比特串（不带时标）                  |
+| 5        | M_BO_TA_1 | `BitString32Info`                            | 32位比特串（带时标）                   |
+| 5        | M_BO_TB_1 | `BitString32Info`                            | 32位比特串（CP56Time2a时标）          |
+| 6        | M_ME_NC_1 | `MeasuredValueFloatInfo`                     | 短浮点数遥测值（不带时标）                 |
+| 6        | M_ME_TC_1 | `MeasuredValueFloatInfo`                     | 短浮点数遥测值（带时标）                  |
+| 6        | M_ME_TF_1 | `MeasuredValueFloatInfo`                     | 短浮点数遥测值（CP56Time2a时标）         |
+| 7        | M_IT_NA_1 | `BinaryCounterReadingInfo`                   | 累计量（不带时标）                     |
+| 7        | M_IT_TA_1 | `BinaryCounterReadingInfo`                   | 累计量（带时标）                      |
+| 7        | M_IT_TB_1 | `BinaryCounterReadingInfo`                   | 累计量（CP56Time2a时标）             |
+| 8        | M_EP_TA_1 | `EventOfProtectionEquipmentInfo`             | 继电保护事件（带时标）                   |
+| 8        | M_EP_TD_1 | `EventOfProtectionEquipmentInfo`             | 继电保护事件（CP56Time2a时标）          |
 | 9        | M_EP_TB_1 | `PackedStartEventsOfProtectionEquipmentInfo` | 继电器保护设备成组启动事件（带时标）            |
 | 9        | M_EP_TE_1 | `PackedStartEventsOfProtectionEquipmentInfo` | 继电器保护设备成组启动事件（CP56Time2a时标）   |
 | 10       | M_EP_TC_1 | `PackedOutputCircuitInfoInfo`                | 继电器保护设备成组输出电路信息（带时标）          |
 | 10       | M_EP_TF_1 | `PackedOutputCircuitInfoInfo`                | 继电器保护设备成组输出电路信息（CP56Time2a时标） |
-| 11       | M_PS_NA_1 | `PackedSinglePointWithSCDInfo`               | 带变位检出的成组单点信息           |
-| 19       |           | `UNKNOWN`                                    | UNKNOWN 不发送            |
+| 11       | M_PS_NA_1 | `PackedSinglePointWithSCDInfo`               | 带变位检出的成组单点信息                  |
+| 19       |           | `UNKNOWN`                                    | UNKNOWN 不发送                   |
 
 ---
 
@@ -340,16 +340,16 @@
 }
 ```
 
-| 字段            | 类型     | 说明                                     |
-|---------------|--------|----------------------------------------|
-| ioa           | uint   | 信息对象地址（范围：`0x000001`-`0xFFFFFF`，十进制显示） |
-| value         | object | 累计量信息                                  |
+| 字段               | 类型     | 说明                                     |
+|------------------|--------|----------------------------------------|
+| ioa              | uint   | 信息对象地址（范围：`0x000001`-`0xFFFFFF`，十进制显示） |
+| value            | object | 累计量信息                                  |
 | ├ counterReading | int32  | 计数器读数（32位有符号整数）                        |
-| ├ seqNumber   | byte   | 顺序号（范围：`0`-`31`）                       |
-| ├ hasCarry     | bool   | `true`=计数器溢出                           |
-| ├ isAdjusted   | bool   | `true`=计数量被人工调整                        |
-| ├ isInvalid    | bool   | `true`=数据无效                            |
-| time          | string | 时标（仅带时标的ASDU类型包含此字段）                   |
+| ├ seqNumber      | byte   | 顺序号（范围：`0`-`31`）                       |
+| ├ hasCarry       | bool   | `true`=计数器溢出                           |
+| ├ isAdjusted     | bool   | `true`=计数量被人工调整                        |
+| ├ isInvalid      | bool   | `true`=数据无效                            |
+| time             | string | 时标（仅带时标的ASDU类型包含此字段）                   |
 
 ---
 
@@ -410,7 +410,7 @@
 | 字段      | 类型     | 说明                                              |
 |---------|--------|-------------------------------------------------|
 | ioa     | uint   | 信息对象地址（范围：`0x000001`-`0xFFFFFF`，十进制显示）          |
-| event   | byte   | 事件类型（见附录B_2）                                    |
+| event   | byte   | 事件类型（见附录C）                                      |
 | qdp     | byte   | 保护事件品质（见附录A）                                    |
 | qdpDesc | string | 保护事件品质描述                                        |
 | ei      | bool   | ElapsedTimeInvalid `true`=动作时间无效,`false`=动作时间有效 |
@@ -450,7 +450,7 @@
 | 字段      | 类型     | 说明                                              |
 |---------|--------|-------------------------------------------------|
 | ioa     | uint   | 信息对象地址（范围：`0x000001`-`0xFFFFFF`，十进制显示）          |
-| oci     | byte   | 输出电路信息（见附录D）                                    |
+| oci     | byte   | 输出电路信息（见附录C）                                    |
 | gc      | bool   | `true`=总命令输出至输出电路,`false`=无总命令输出至输出电路           |
 | cl1     | bool   | `true`=命令输出至A相输出电路,`false`=无命令输出至A相输出电路         |
 | cl2     | bool   | `true`=命令输出至B相输出电路,`false`=无命令输出至B相输出电路         |
@@ -490,7 +490,7 @@
 | 字段      | 类型     | 说明                                     |
 |---------|--------|----------------------------------------|
 | ioa     | uint   | 信息对象地址（范围：`0x000001`-`0xFFFFFF`，十进制显示） |
-| scd     | byte   | 状态变位检出（见附录E）                           |
+| scd     | byte   | 状态变位检出（见附录F）                           |
 | qds     | byte   | 品质                                     |
 | qdsDesc | string | 品质描述                                   |
 | ov      | bool   | Overflow `true`=溢出,`false`=未溢出         |
@@ -534,7 +534,7 @@
 | 2 | 合        |
 | 3 | 不确定      |
 
-### 附录B_2：继电保护事件类型 todo
+### 附录C：继电保护事件类型
 
 #### 1. 字段定义
 
@@ -551,12 +551,12 @@
 | cl2 | 3  | `true`=命令输出至B相输出电路,`false`=无命令输出至B相输出电路 |
 | cl3 | 4  | `true`=命令输出至C相输出电路,`false`=无命令输出至C相输出电路 |
 
-### 附录C：公共地址（COA）规则
+### 附录D：公共地址（COA）规则
 
 - **范围**：`1`-`65534`（`65535`为全局广播地址）
 - **用途**：标识RTU、子站或子系统
 
-### 附录D：输出电路信息（OCI）定义
+### 附录E：输出电路信息（OCI）定义
 
 **概述**  
 本附录定义了输出电路信息（OCI）的字段、比特位映射规则及示例解析。
@@ -576,7 +576,7 @@
 | 4 | OCICommandL2      | B 相保护命令输出至输出电路 |
 | 8 | OCICommandL3      | C 相保护命令输出至输出电路 |
 
-### 附录E：状态变位检出（SCD）定义
+### 附录F：状态变位检出（SCD）定义
 
 **概述**
 本附录定义了状态变位检出（SCD）的字段、比特位结构及示例解析。
