@@ -536,7 +536,8 @@ const file_ieccaller_proto_rawDesc = "" +
 	"\vSendTestCmd\x12\x19.ieccaller.SendTestCmdReq\x1a\x19.ieccaller.SendTestCmdRes\x12C\n" +
 	"\vSendReadCmd\x12\x19.ieccaller.SendReadCmdReq\x1a\x19.ieccaller.SendReadCmdRes\x12^\n" +
 	"\x14SendInterrogationCmd\x12\".ieccaller.SendInterrogationCmdReq\x1a\".ieccaller.SendInterrogationCmdRes\x12s\n" +
-	"\x1bSendCounterInterrogationCmd\x12).ieccaller.SendCounterInterrogationCmdReq\x1a).ieccaller.SendCounterInterrogationCmdResB\rZ\v./ieccallerb\x06proto3"
+	"\x1bSendCounterInterrogationCmd\x12).ieccaller.SendCounterInterrogationCmdReq\x1a).ieccaller.SendCounterInterrogationCmdResB;\n" +
+	"\x1acom.github.iec.caller.grpcB\x0eIecCallerProtoP\x01Z\v./ieccallerb\x06proto3"
 
 var (
 	file_ieccaller_proto_rawDescOnce sync.Once
