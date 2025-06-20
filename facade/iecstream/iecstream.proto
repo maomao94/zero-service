@@ -72,7 +72,7 @@ message SinglePointInfo {
 message DoublePointInfo {
   // 信息对象地址
   uint32 ioa = 1 [json_name = "ioa"];
-  // `0`=不确定,`1`=开,`2`=合,`3`=不确定
+  // `0`=不确定或中间状态,`1`=开,`2`=合,`3`=不确定
   uint32 value = 2 [json_name = "value"];
   // 品质
   uint32 qds = 3 [json_name = "qds"];
