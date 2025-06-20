@@ -32,6 +32,9 @@ var configFile = flag.String("f", "etc/ieccaller.yaml", "the config file")
 // GOARCH=amd64 GOOS=linux GOOS=linux go build -o app
 // GOARCH=arm GOOS=linux go build -o app
 // go build -o app
+// GOOS=linux GOARCH=arm64 go build -x -v -ldflags="-s -w" -o app/iecaller ieccaller.go
+// docker build -t {name}:{tag} .
+// docker buildx build --pull=false --platform linux/arm64 -t {name}:{tag} .
 func main() {
 	flag.Parse()
 

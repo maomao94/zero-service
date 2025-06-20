@@ -28,6 +28,7 @@ import (
 
 var configFile = flag.String("f", "etc/iecstash.yaml", "the config file")
 
+// GOOS=linux GOARCH=arm64 go build -x -v -ldflags="-s -w" -o app/iecstash iecstash.go
 func main() {
 	flag.Parse()
 
