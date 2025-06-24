@@ -3,12 +3,20 @@ package task
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/hibiken/asynq"
+	"github.com/pkg/errors"
+	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/zrpc"
 	"go.opentelemetry.io/otel"
+	"google.golang.org/grpc"
+	"time"
 	"zero-service/app/trigger/internal/svc"
+	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/asynqx"
 	"zero-service/common/ctxdata"
+	"zero-service/common/tool"
 )
 
 type DeferTriggerProtoTaskHandler struct {
@@ -29,7 +37,53 @@ func (l *DeferTriggerProtoTaskHandler) ProcessTask(ctx context.Context, t *asynq
 		ctx = otel.GetTextMapPropagator().Extract(ctx, msg.Carrier)
 		ctx, span := asynqx.StartAsynqConsumerSpan(ctx, t.Type())
 		defer span.End()
-		logx.WithContext(ctx).Infof("defer protoTrigger task,msg:%s", msg)
+		logx.WithContext(ctx).Debugf("defer protoTrigger task,msg:%s", msg)
+		grpcServer := tool.MayReplaceLocalhost(msg.GrpcServer)
+		clientConf := zrpc.RpcClientConf{}
+		conf.FillDefault(&clientConf)
+		clientConf.Target = grpcServer
+		clientConf.NonBlock = true
+		clientConf.Timeout = 15000
+		v, ok := l.svcCtx.ConnMap.Get(grpcServer)
+		if !ok {
+			conn, err := zrpc.NewClient(clientConf,
+				zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
+				zrpc.WithDialOption(grpc.WithDefaultCallOptions(grpc.ForceCodec(rawCodec{}))))
+			if err == nil {
+				l.svcCtx.ConnMap.Set(grpcServer, conn)
+				v = conn
+			}
+		}
+		if v == nil {
+			t.ResultWriter().Write([]byte("fail,conn,empty"))
+			return errors.New("trigger fail")
+		}
+		cli := v.(*zrpc.RpcClient)
+		if msg.RequestTimeout > 0 {
+			ctx, _ = context.WithTimeout(ctx, time.Duration(msg.RequestTimeout)*time.Second)
+		}
+		err = cli.Conn().Invoke(ctx, msg.Method, msg.Payload, &[]byte{})
+		if err != nil {
+			t.ResultWriter().Write([]byte("fail,rpcInvokeError"))
+			return err
+		}
 	}
 	return nil
 }
+
+type rawCodec struct{}
+
+func (cb rawCodec) Marshal(v interface{}) ([]byte, error) {
+	return v.([]byte), nil
+}
+
+func (cb rawCodec) Unmarshal(data []byte, v interface{}) error {
+	ba, ok := v.(*[]byte)
+	if ok {
+		panic(fmt.Errorf("please pass in *[]byte"))
+	}
+	*ba = append(*ba, data...)
+	return nil
+}
+
+func (cb rawCodec) Name() string { return "proto_raw" }

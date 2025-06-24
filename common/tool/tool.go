@@ -3,6 +3,8 @@ package tool
 import (
 	"github.com/duke-git/lancet/v2/formatter"
 	"github.com/shopspring/decimal"
+	"os"
+	"strings"
 )
 
 var oneHundredDecimal decimal.Decimal = decimal.NewFromInt(100)
@@ -21,4 +23,13 @@ func Yuan2Fen(yuan float64) int64 {
 
 func DecimalBytes(size int64, precision ...int) string {
 	return formatter.DecimalBytes(float64(size))
+}
+
+func MayReplaceLocalhost(host string) string {
+	if os.Getenv("IS_DOCKER") != "" {
+		return strings.Replace(strings.Replace(host,
+			"localhost", "host.docker.internal", 1),
+			"127.0.0.1", "host.docker.internal", 1)
+	}
+	return host
 }
