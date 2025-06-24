@@ -1,9 +1,6 @@
 # zero-service
 ##### go-zero 脚手架
 是一个基于 [go-zero](https://github.com/zeromicro/go-zero) 的微服务脚手架，旨在帮助开发者快速搭建高性能的微服务应用 `zero-service`
-
-##### 104 协议服务系统框架图
-![iec-architecture](doc/iec-architecture.png)
 ``` 
 zero-service/
 ├── admin            # 管理模块
@@ -23,6 +20,8 @@ zero-service/
 ├── go.mod           # Go 模块依赖管理
 └── README.md        # 项目说明文档
 ```
+## 业务系统框架图
+![iec-architecture](doc/iec-architecture.png)
 ## 核心功能模块
 
 ### 1. BFF 网关 (`gtw`)
