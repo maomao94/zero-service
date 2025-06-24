@@ -12,10 +12,19 @@ import (
 var CtxKeyUserId = "userId"
 
 type MsgBody struct {
-	MsgId   string                     `json:"msgId"`
+	MsgId   string                     `json:"msgId,omitempty"`
 	Carrier *propagation.HeaderCarrier `json:"carrier"`
-	Msg     string                     `json:"msg"`
-	Url     string                     `json:"url"`
+	Msg     string                     `json:"msg,omitempty"`
+	Url     string                     `json:"url" validate:"required"`
+}
+
+type ProtoMsgBody struct {
+	MsgId          string                     `json:"msgId,omitempty"`
+	Carrier        *propagation.HeaderCarrier `json:"carrier"`
+	GrpcServer     string                     `json:"grpcServer" validate:"required"`
+	Method         string                     `json:"method" validate:"required"`
+	Payload        string                     `json:"payload" validate:"required"`
+	RequestTimeout int64                      `json:"requestTimeout"`
 }
 
 func GetUserIdFromCtx(ctx context.Context, bool bool) int64 {

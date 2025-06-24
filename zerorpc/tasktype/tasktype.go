@@ -4,5 +4,6 @@ package tasktype
 const DeferDelayTask = "defer:delayTask"
 
 const DeferTriggerTask = "defer:triggerTask"
+const DeferTriggerProtoTask = "defer:triggerProtoTask"
 
 const SchedulerDeferTask = "scheduler:defer:task"

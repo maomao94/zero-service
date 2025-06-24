@@ -53,11 +53,15 @@ func (l *SendTriggerLogic) SendTrigger(in *trigger.SendTriggerReq) (*trigger.Sen
 		in.MsgId = uuid.NewString()
 		msg.MsgId = in.MsgId
 	}
+	opts = append(opts, asynq.TaskID(in.MsgId))
 	payload, err := jsonx.Marshal(msg)
 	if err != nil {
 		return nil, err
 	}
-	opts = append(opts, asynq.TaskID(in.MsgId))
+	err = l.svcCtx.Validate.Struct(msg)
+	if err != nil {
+		return nil, err
+	}
 	if in.GetMaxRetry() > 0 {
 		opts = append(opts, asynq.MaxRetry(int(in.GetMaxRetry())))
 	}

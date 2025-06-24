@@ -25,6 +25,9 @@ func (l *CronJob) Register() *asynq.ServeMux {
 	mux.Handle(tasktype.DeferTriggerTask, NewDeferTriggerTask(l.svcCtx))
 	logx.Infow(fmt.Sprint("asynq cronJob-task registered"), logx.Field("type", tasktype.DeferTriggerTask))
 
+	mux.Handle(tasktype.DeferTriggerProtoTask, NewDeferTriggerProtoTask(l.svcCtx))
+	logx.Infow(fmt.Sprint("asynq cronJob-task registered"), logx.Field("type", tasktype.DeferTriggerProtoTask))
+
 	//scheduler job
 	mux.Handle(tasktype.SchedulerDeferTask, NewDeferTriggerTask(l.svcCtx))
 	logx.Infow(fmt.Sprint("asynq cronJob-scheduler registered"), logx.Field("type", tasktype.SchedulerDeferTask))
