@@ -2163,9 +2163,9 @@ const file_iecstream_proto_rawDesc = "" +
 	"\x02sb\x18\t \x01(\bR\x02sb\x12\x0e\n" +
 	"\x02nt\x18\n" +
 	" \x01(\bR\x02nt\x12\x0e\n" +
-	"\x02iv\x18\v \x01(\bR\x02iv2\xa3\x01\n" +
-	"\fIecStreamRpc\x12F\n" +
-	"\x04Ping\x12\x0e.iecstream.Req\x1a\x0e.iecstream.Res\"\x1e\x82\xd3\xe4\x93\x02\x18\"\x16/api/v1/iecstream/ping\x12K\n" +
+	"\x02iv\x18\v \x01(\bR\x02iv2\xa6\x01\n" +
+	"\fIecStreamRpc\x12I\n" +
+	"\x04Ping\x12\x0e.iecstream.Req\x1a\x0e.iecstream.Res\"!\x82\xd3\xe4\x93\x02\x1b:\x01*\"\x16/api/v1/iecstream/ping\x12K\n" +
 	"\rpushChunkAsdu\x12\x1b.iecstream.PushChunkAsduReq\x1a\x1b.iecstream.PushChunkAsduRes\"\x00B;\n" +
 	"\x1acom.github.iec.stream.grpcB\x0eIecStreamProtoP\x01Z\v./iecstreamb\x06proto3"
 

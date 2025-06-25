@@ -362,6 +362,7 @@ service IecStreamRpc {
   rpc Ping (Req) returns (Res) {
     option (google.api.http) = {
       post: "/api/v1/iecstream/ping"
+      body: "*"
     };
   };
   // 推送 chunk asdu 消息

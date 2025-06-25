@@ -35,10 +35,12 @@
         },
         "parameters": [
           {
-            "name": "ping",
-            "in": "query",
-            "required": false,
-            "type": "string"
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/iecstreamReq"
+            }
           }
         ],
         "tags": [
@@ -96,6 +98,14 @@
     },
     "iecstreamPushChunkAsduRes": {
       "type": "object"
+    },
+    "iecstreamReq": {
+      "type": "object",
+      "properties": {
+        "ping": {
+          "type": "string"
+        }
+      }
     },
     "iecstreamRes": {
       "type": "object",
