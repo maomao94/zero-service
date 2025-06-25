@@ -22,10 +22,6 @@ service gtw {
 	@handler ping
 	get /ping returns (PingReply)
 
-	@doc "pingJava"
-	@handler pingJava
-	get /pingJava returns (PingReply)
-
 	@doc "forward"
 	@handler forward
 	post /forward (ForwardRequest) returns (ForwardReply)
