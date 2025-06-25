@@ -1,5 +1,7 @@
 syntax = "proto3";
 import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "validate.proto";
 
 package iecstream;
 
@@ -9,7 +11,10 @@ option java_package = "com.github.iec.stream.grpc";
 option java_outer_classname = "IecStreamProto";
 
 message Req {
-  string ping = 1;
+  string ping = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {min_len: 1}
+  ];
 }
 
 message Res {

@@ -1,0 +1,500 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "xfusionmock.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "XFusionMockRpc"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/xfusion/ping": {
+      "post": {
+        "operationId": "XFusionMockRpc_Ping",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/xfusionmockRes"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/xfusionmockReq"
+            }
+          }
+        ],
+        "tags": [
+          "XFusionMockRpc"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "googlerpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "xfusionmockAlarmData": {
+      "type": "object",
+      "properties": {
+        "dataTagV1": {
+          "type": "string",
+          "title": "kafka tag"
+        },
+        "id": {
+          "type": "string",
+          "title": "报警唯一标识"
+        },
+        "name": {
+          "type": "string",
+          "title": "报警自定义名称（最大长度50字符）"
+        },
+        "alarmNo": {
+          "type": "string",
+          "title": "报警编号（格式：ALARM-日期-序号）"
+        },
+        "alarmCode": {
+          "type": "string",
+          "title": "报警类型编码（见AlarmType枚举）"
+        },
+        "level": {
+          "type": "integer",
+          "format": "int32",
+          "title": "报警等级：1-紧急 2-严重 3-警告"
+        },
+        "terminalNoList": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "关联终端编号列表（至少包含一个有效终端号）"
+        },
+        "trackInfoList": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/xfusionmockTerminalInfo"
+          },
+          "title": "报警涉及的主体信息列表"
+        },
+        "trackType": {
+          "type": "string",
+          "title": "监控对象类型：CAR-车辆 STAFF-人员"
+        },
+        "position": {
+          "$ref": "#/definitions/xfusionmockLocationPosition",
+          "title": "报警触发位置（WGS84坐标系）"
+        },
+        "startFences": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/xfusionmockFenceInfo"
+          },
+          "title": "报警开始围栏code列表"
+        },
+        "endFences": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/xfusionmockFenceInfo"
+          },
+          "title": "报警结束围栏code列表"
+        },
+        "startTime": {
+          "type": "string",
+          "format": "int64",
+          "title": "报警开始时间（Unix时间戳，毫秒级）"
+        },
+        "endTime": {
+          "type": "string",
+          "format": "int64",
+          "title": "报警结束时间（Unix时间戳，毫秒级）"
+        },
+        "duration": {
+          "type": "integer",
+          "format": "int32",
+          "title": "报警持续时长（单位：秒），由结束时间-开始时间计算得出"
+        },
+        "alarmStatus": {
+          "type": "string",
+          "title": "报警当前状态：ON-进行中 OFF-已结束"
+        }
+      },
+      "title": "AlarmData 结构体"
+    },
+    "xfusionmockBuildingInfo": {
+      "type": "object",
+      "properties": {
+        "buildingId": {
+          "type": "string",
+          "format": "int64",
+          "title": "建筑ID（地理围栏标识）"
+        },
+        "floorNo": {
+          "type": "integer",
+          "format": "int32",
+          "title": "楼层编号（地下层用负数表示）"
+        }
+      },
+      "title": "BuildingInfo 建筑信息"
+    },
+    "xfusionmockEventData": {
+      "type": "object",
+      "properties": {
+        "dataTagV1": {
+          "type": "string",
+          "title": "kafka tag"
+        },
+        "id": {
+          "type": "string",
+          "title": "事件ID"
+        },
+        "eventTitle": {
+          "type": "string",
+          "title": "事件名称"
+        },
+        "eventCode": {
+          "type": "string",
+          "title": "事件类型"
+        },
+        "serverTime": {
+          "type": "string",
+          "format": "int64",
+          "title": "事件时间（服务端）"
+        },
+        "epochTime": {
+          "type": "string",
+          "format": "int64",
+          "title": "事件时间（终端）"
+        },
+        "terminalInfo": {
+          "$ref": "#/definitions/xfusionmockTerminalInfo",
+          "title": "终端信息"
+        },
+        "position": {
+          "$ref": "#/definitions/xfusionmockPosition",
+          "title": "位置"
+        }
+      },
+      "title": "EventData 结构体"
+    },
+    "xfusionmockFenceInfo": {
+      "type": "object",
+      "properties": {
+        "fenceCode": {
+          "type": "string",
+          "title": "围栏code"
+        },
+        "orgCode": {
+          "type": "string"
+        }
+      },
+      "title": "FenceInfo 围栏信息"
+    },
+    "xfusionmockLocation": {
+      "type": "object",
+      "properties": {
+        "position": {
+          "$ref": "#/definitions/xfusionmockPosition",
+          "title": "经纬度坐标"
+        },
+        "speed": {
+          "type": "number",
+          "format": "double",
+          "title": "速度（千米/小时，保留4位小数）"
+        },
+        "direction": {
+          "type": "number",
+          "format": "double",
+          "title": "方向角度（0-360度，正北为0）"
+        },
+        "locationMode": {
+          "type": "string",
+          "title": "定位模式（如GNSS、LBS等）"
+        },
+        "satelliteNum": {
+          "type": "integer",
+          "format": "int32",
+          "title": "卫星数量（GPS定位时有效）"
+        },
+        "ggaStatus": {
+          "type": "integer",
+          "format": "int32",
+          "title": "GGA状态：1-单点定位，4-固定解"
+        }
+      },
+      "title": "Location 定位数据"
+    },
+    "xfusionmockLocationPosition": {
+      "type": "object",
+      "properties": {
+        "lat": {
+          "type": "number",
+          "format": "double",
+          "title": "纬度（-90~90）"
+        },
+        "lon": {
+          "type": "number",
+          "format": "double",
+          "title": "经度（-180~180）"
+        },
+        "alt": {
+          "type": "number",
+          "format": "double",
+          "title": "海拔高度（米）"
+        }
+      },
+      "title": "LocationPosition 位置坐标"
+    },
+    "xfusionmockPosition": {
+      "type": "object",
+      "properties": {
+        "lat": {
+          "type": "number",
+          "format": "double",
+          "title": "纬度（WGS84坐标系）"
+        },
+        "lon": {
+          "type": "number",
+          "format": "double",
+          "title": "经度（WGS84坐标系）"
+        },
+        "alt": {
+          "type": "number",
+          "format": "double",
+          "title": "海拔高度（米）"
+        }
+      },
+      "title": "Position 经纬度坐标点"
+    },
+    "xfusionmockReq": {
+      "type": "object",
+      "properties": {
+        "ping": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "ping"
+      ]
+    },
+    "xfusionmockRes": {
+      "type": "object",
+      "properties": {
+        "pong": {
+          "type": "string"
+        }
+      }
+    },
+    "xfusionmockResPushAlarm": {
+      "type": "object"
+    },
+    "xfusionmockResPushEvent": {
+      "type": "object"
+    },
+    "xfusionmockResPushPoint": {
+      "type": "object"
+    },
+    "xfusionmockResPushTerminalBind": {
+      "type": "object"
+    },
+    "xfusionmockResPushTest": {
+      "type": "object"
+    },
+    "xfusionmockStatus": {
+      "type": "object",
+      "properties": {
+        "acc": {
+          "type": "boolean",
+          "title": "ACC点火状态：true-车辆启动"
+        },
+        "emergency": {
+          "type": "boolean",
+          "title": "紧急报警状态：true-触发报警"
+        },
+        "mainSourceDown": {
+          "type": "boolean",
+          "title": "主电源状态：true-电源断开"
+        },
+        "signal": {
+          "type": "integer",
+          "format": "int32",
+          "title": "信号强度（0-31，越大越好）"
+        },
+        "battery": {
+          "type": "integer",
+          "format": "int32",
+          "title": "剩余电量百分比（0-100）"
+        },
+        "moveState": {
+          "type": "integer",
+          "format": "int32",
+          "title": "运动状态：0-静止，1-移动"
+        }
+      },
+      "title": "Status 设备实时状态"
+    },
+    "xfusionmockTerminalBind": {
+      "type": "object",
+      "properties": {
+        "dataTagV1": {
+          "type": "string",
+          "title": "kafka tag"
+        },
+        "action": {
+          "type": "string",
+          "title": "绑定动作： BIND ｜ UNBIND"
+        },
+        "terminalId": {
+          "type": "string",
+          "format": "int64",
+          "title": "终端ID（唯一标识）"
+        },
+        "terminalNo": {
+          "type": "string",
+          "title": "终端唯一编号（12位字符）"
+        },
+        "staffIdCardNo": {
+          "type": "string",
+          "title": "员工身份证号"
+        },
+        "trackId": {
+          "type": "string",
+          "format": "int64",
+          "title": "跟踪对象ID（关联业务系统）"
+        },
+        "trackNo": {
+          "type": "string",
+          "title": "对象编号（如车牌号\"沪A12345\"）"
+        },
+        "trackType": {
+          "type": "string",
+          "title": "对象类型：CAR-车辆, STAFF-人员"
+        },
+        "trackName": {
+          "type": "string",
+          "title": "监控对象显示名称（如车牌号\"沪A12345\"）"
+        },
+        "actionTime": {
+          "type": "string",
+          "title": "操作时间，北京时间 eg: 2024-07-01 10:00:00"
+        }
+      },
+      "title": "TerminalBind 结构体"
+    },
+    "xfusionmockTerminalData": {
+      "type": "object",
+      "properties": {
+        "dataTagV1": {
+          "type": "string",
+          "title": "kafka tag"
+        },
+        "terminalInfo": {
+          "$ref": "#/definitions/xfusionmockTerminalInfo",
+          "title": "终端信息"
+        },
+        "epochTime": {
+          "type": "string",
+          "format": "int64",
+          "title": "位置点上报时间（Unix时间戳，毫秒）"
+        },
+        "location": {
+          "$ref": "#/definitions/xfusionmockLocation",
+          "title": "定位信息"
+        },
+        "buildingInfo": {
+          "$ref": "#/definitions/xfusionmockBuildingInfo",
+          "title": "建筑信息"
+        },
+        "status": {
+          "$ref": "#/definitions/xfusionmockStatus",
+          "title": "设备状态"
+        }
+      },
+      "title": "TerminalData 结构体"
+    },
+    "xfusionmockTerminalInfo": {
+      "type": "object",
+      "properties": {
+        "terminalId": {
+          "type": "string",
+          "format": "int64",
+          "title": "终端ID（唯一标识）"
+        },
+        "terminalNo": {
+          "type": "string",
+          "title": "终端唯一编号（12位字符）"
+        },
+        "trackId": {
+          "type": "string",
+          "format": "int64",
+          "title": "跟踪对象ID（关联业务系统）"
+        },
+        "trackNo": {
+          "type": "string",
+          "title": "对象编号（如车牌号\"沪A12345\"）"
+        },
+        "trackType": {
+          "type": "string",
+          "title": "对象类型：CAR-车辆, STAFF-人员"
+        },
+        "trackName": {
+          "type": "string",
+          "title": "监控对象显示名称（如车牌号\"沪A12345\"）"
+        },
+        "orgCode": {
+          "type": "string"
+        },
+        "orgName": {
+          "type": "string"
+        }
+      },
+      "title": "TerminalInfo 终端详细信息"
+    }
+  }
+}

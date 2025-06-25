@@ -1,10 +1,15 @@
 syntax = "proto3";
 import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "validate.proto";
 package xfusionmock;
 option go_package = "./xfusionmock";
 
 message Req {
-  string ping = 1;
+  string ping = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {min_len: 1}
+  ];
 }
 
 message Res {
@@ -243,6 +248,7 @@ service XFusionMockRpc {
   rpc Ping (Req) returns (Res) {
     option (google.api.http) = {
       post: "/api/v1/xfusion/ping"
+      body: "*"
     };
   };
   rpc PushTest(ReqPushTest) returns (ResPushTest);
