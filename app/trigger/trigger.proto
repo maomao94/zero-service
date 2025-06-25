@@ -22,10 +22,10 @@ message SendTriggerReq {
 
 message SendTriggerRes {
   string traceId = 1; // 唯一追踪 id
-  // ID is the identifier of the task.
-  string id = 2;
   // Queue is the name of the queue in which the task belongs.
-  string queue = 3;
+  string queue = 2;
+  // ID is the identifier of the task.
+  string id = 3;
 }
 
 message SendProtoTriggerReq {
@@ -41,11 +41,30 @@ message SendProtoTriggerReq {
 
 message SendProtoTriggerRes {
   string traceId = 1; // 唯一追踪 id
-  // ID is the identifier of the task.
-  string id = 2;
-
   // Queue is the name of the queue in which the task belongs.
-  string queue = 3;
+  string queue = 2;
+  // ID is the identifier of the task.
+  string id = 3;
+}
+
+message ArchiveTaskReq {
+  // Queue is the name of the queue in which the task belongs.
+  string queue = 2;
+  // ID is the identifier of the task.
+  string id = 3;
+}
+
+message ArchiveTaskRes {
+}
+
+message DeleteTaskReq {
+  // Queue is the name of the queue in which the task belongs.
+  string queue = 2;
+  // ID is the identifier of the task.
+  string id = 3;
+}
+
+message DeleteTaskRes {
 }
 
 service TriggerRpc {
@@ -54,4 +73,7 @@ service TriggerRpc {
   rpc SendTrigger(SendTriggerReq) returns(SendTriggerRes);
   // 发送 grpc proto字节码 回调
   rpc SendProtoTrigger(SendProtoTriggerReq) returns (SendProtoTriggerRes);
+  // ArchiveTask
+  rpc ArchiveTask(ArchiveTaskReq) returns (ArchiveTaskRes);
+  rpc DeleteTask(DeleteTaskReq) returns (DeleteTaskRes);
 }

@@ -22,6 +22,8 @@ const (
 	TriggerRpc_Ping_FullMethodName             = "/trigger.TriggerRpc/Ping"
 	TriggerRpc_SendTrigger_FullMethodName      = "/trigger.TriggerRpc/SendTrigger"
 	TriggerRpc_SendProtoTrigger_FullMethodName = "/trigger.TriggerRpc/SendProtoTrigger"
+	TriggerRpc_ArchiveTask_FullMethodName      = "/trigger.TriggerRpc/ArchiveTask"
+	TriggerRpc_DeleteTask_FullMethodName       = "/trigger.TriggerRpc/DeleteTask"
 )
 
 // TriggerRpcClient is the client API for TriggerRpc service.
@@ -33,6 +35,9 @@ type TriggerRpcClient interface {
 	SendTrigger(ctx context.Context, in *SendTriggerReq, opts ...grpc.CallOption) (*SendTriggerRes, error)
 	// 发送 grpc proto字节码 回调
 	SendProtoTrigger(ctx context.Context, in *SendProtoTriggerReq, opts ...grpc.CallOption) (*SendProtoTriggerRes, error)
+	// ArchiveTask
+	ArchiveTask(ctx context.Context, in *ArchiveTaskReq, opts ...grpc.CallOption) (*ArchiveTaskRes, error)
+	DeleteTask(ctx context.Context, in *DeleteTaskReq, opts ...grpc.CallOption) (*DeleteTaskRes, error)
 }
 
 type triggerRpcClient struct {
@@ -73,6 +78,26 @@ func (c *triggerRpcClient) SendProtoTrigger(ctx context.Context, in *SendProtoTr
 	return out, nil
 }
 
+func (c *triggerRpcClient) ArchiveTask(ctx context.Context, in *ArchiveTaskReq, opts ...grpc.CallOption) (*ArchiveTaskRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ArchiveTaskRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_ArchiveTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) DeleteTask(ctx context.Context, in *DeleteTaskReq, opts ...grpc.CallOption) (*DeleteTaskRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteTaskRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_DeleteTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TriggerRpcServer is the server API for TriggerRpc service.
 // All implementations must embed UnimplementedTriggerRpcServer
 // for forward compatibility.
@@ -82,6 +107,9 @@ type TriggerRpcServer interface {
 	SendTrigger(context.Context, *SendTriggerReq) (*SendTriggerRes, error)
 	// 发送 grpc proto字节码 回调
 	SendProtoTrigger(context.Context, *SendProtoTriggerReq) (*SendProtoTriggerRes, error)
+	// ArchiveTask
+	ArchiveTask(context.Context, *ArchiveTaskReq) (*ArchiveTaskRes, error)
+	DeleteTask(context.Context, *DeleteTaskReq) (*DeleteTaskRes, error)
 	mustEmbedUnimplementedTriggerRpcServer()
 }
 
@@ -100,6 +128,12 @@ func (UnimplementedTriggerRpcServer) SendTrigger(context.Context, *SendTriggerRe
 }
 func (UnimplementedTriggerRpcServer) SendProtoTrigger(context.Context, *SendProtoTriggerReq) (*SendProtoTriggerRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendProtoTrigger not implemented")
+}
+func (UnimplementedTriggerRpcServer) ArchiveTask(context.Context, *ArchiveTaskReq) (*ArchiveTaskRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ArchiveTask not implemented")
+}
+func (UnimplementedTriggerRpcServer) DeleteTask(context.Context, *DeleteTaskReq) (*DeleteTaskRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteTask not implemented")
 }
 func (UnimplementedTriggerRpcServer) mustEmbedUnimplementedTriggerRpcServer() {}
 func (UnimplementedTriggerRpcServer) testEmbeddedByValue()                    {}
@@ -176,6 +210,42 @@ func _TriggerRpc_SendProtoTrigger_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TriggerRpc_ArchiveTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ArchiveTaskReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).ArchiveTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_ArchiveTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).ArchiveTask(ctx, req.(*ArchiveTaskReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_DeleteTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteTaskReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).DeleteTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_DeleteTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).DeleteTask(ctx, req.(*DeleteTaskReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TriggerRpc_ServiceDesc is the grpc.ServiceDesc for TriggerRpc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -194,6 +264,14 @@ var TriggerRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendProtoTrigger",
 			Handler:    _TriggerRpc_SendProtoTrigger_Handler,
+		},
+		{
+			MethodName: "ArchiveTask",
+			Handler:    _TriggerRpc_ArchiveTask_Handler,
+		},
+		{
+			MethodName: "DeleteTask",
+			Handler:    _TriggerRpc_DeleteTask_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

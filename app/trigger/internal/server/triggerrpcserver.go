@@ -39,3 +39,14 @@ func (s *TriggerRpcServer) SendProtoTrigger(ctx context.Context, in *trigger.Sen
 	l := logic.NewSendProtoTriggerLogic(ctx, s.svcCtx)
 	return l.SendProtoTrigger(in)
 }
+
+// ArchiveTask
+func (s *TriggerRpcServer) ArchiveTask(ctx context.Context, in *trigger.ArchiveTaskReq) (*trigger.ArchiveTaskRes, error) {
+	l := logic.NewArchiveTaskLogic(ctx, s.svcCtx)
+	return l.ArchiveTask(in)
+}
+
+func (s *TriggerRpcServer) DeleteTask(ctx context.Context, in *trigger.DeleteTaskReq) (*trigger.DeleteTaskRes, error) {
+	l := logic.NewDeleteTaskLogic(ctx, s.svcCtx)
+	return l.DeleteTask(in)
+}

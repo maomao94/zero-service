@@ -18,6 +18,10 @@ func NewAsynqClient(addr, pass string) *asynq.Client {
 	return asynq.NewClient(asynq.RedisClientOpt{Addr: addr, Password: pass})
 }
 
+func NewAsynqInspector(addr, pass string) *asynq.Inspector {
+	return asynq.NewInspector(asynq.RedisClientOpt{Addr: addr, Password: pass})
+}
+
 func StartAsynqProducerSpan(ctx context.Context, typename string) (context.Context, trace.Span) {
 	trace := otel.Tracer(trace2.TraceName)
 	ctx, span := trace.Start(ctx, "asynq-producer", oteltrace.WithSpanKind(oteltrace.SpanKindProducer))
