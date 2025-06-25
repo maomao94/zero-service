@@ -13,4 +13,5 @@ protoc \
   --proto_path=../../third/googleapis \
   --include_imports \
   --descriptor_set_out=./iecstream.pb \
+  --openapiv2_out ../../swagger \
   iecstream.proto

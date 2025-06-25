@@ -15,4 +15,5 @@ type Config struct {
 	AdminRpcConf zrpc.RpcClientConf
 	NfsRootPath  string
 	DownloadUrl  string
+	SwaggerPath  string `json:",omitempty"`
 }

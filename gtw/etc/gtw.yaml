@@ -48,3 +48,4 @@ JwtAuth:
   AccessSecret: 629c6233-1a76-471b-bd25-b87208762219
 NfsRootPath: /opt/nfs
 DownloadUrl: http://127.0.0.1:11001/gtw/v1/mfs/downloadFile?path=
+SwaggerPath: ./swagger

@@ -1,0 +1,137 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "iecstream.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "IecStreamRpc"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/iecstream/ping": {
+      "post": {
+        "operationId": "IecStreamRpc_Ping",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/iecstreamRes"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ping",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "IecStreamRpc"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "iecstreamMsgBody": {
+      "type": "object",
+      "properties": {
+        "host": {
+          "type": "string",
+          "title": "采集设备地址"
+        },
+        "port": {
+          "type": "integer",
+          "format": "int32",
+          "title": "采集设备端口号"
+        },
+        "asdu": {
+          "type": "string",
+          "title": "ASDU类型名称"
+        },
+        "typeId": {
+          "type": "integer",
+          "format": "int32",
+          "title": "ASDU类型标识符"
+        },
+        "dataType": {
+          "type": "integer",
+          "format": "int32",
+          "title": "信息体类型标识符"
+        },
+        "coa": {
+          "type": "integer",
+          "format": "int64",
+          "title": "公共地址（范围：1-65534,全局地址65535保留）"
+        },
+        "bodyRaw": {
+          "type": "string",
+          "title": "信息体对象（结构随typeId变化）"
+        },
+        "time": {
+          "type": "string",
+          "title": "消息推送时间戳（格式：`YYYY-MM-DD HH:mm:ss.SSSSSS`,UTC+8时区）"
+        },
+        "metaDataRaw": {
+          "type": "string",
+          "title": "应用级元数据（如：应用ID、用户信息、场站信息等）"
+        }
+      },
+      "title": "消息体结构"
+    },
+    "iecstreamPushChunkAsduRes": {
+      "type": "object"
+    },
+    "iecstreamRes": {
+      "type": "object",
+      "properties": {
+        "pong": {
+          "type": "string"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}
