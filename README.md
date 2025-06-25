@@ -48,9 +48,27 @@ zero-service/
 `file` 模块提供文件服务功能，支持通过 gRPC 实现分片流上传，并集成了对象存储（OSS）上传能力。
 
 #### 2.34 服务 `trigger`
-`trigger` 模块提供功能，结合 asynq 进行异步任务处理。该服务的主要功能是处理定时触发的任务，支持 HTTP 回调和 gRPC 回调，同时还提供任务的存档和删除等操作。
+`trigger` 模块提供基于 [asynq](https://github.com/hibiken/asynq) 的异步任务处理能力。该服务主要负责定时任务触发，支持 HTTP 和 gRPC 两种回调方式，同时提供任务存档与删除等管理功能。
+
 - **使用流程图**
-  ![trigger-flow](doc/trigger-flow.png)
+  <div align="center">
+    <img src="doc/trigger-flow.png" alt="Trigger 服务流程图" style="max-width: 80%; height: auto;" />
+  </div>
+
+- **架构简单**
+  - 模块化设计，代码结构清晰，配置简洁，方便上手。
+
+- **依赖轻量**
+  - 仅依赖 Redis 作为数据存储和消息队列，部署成本低。
+
+- **多协议支持**
+  - 支持 HTTP 和 gRPC 回调，灵活适配不同客户端。
+
+- **服务注册**
+  - 可注册至 Nacos，实现服务发现和负载均衡。
+
+- **跨语言兼容**
+  - 基于 gRPC 协议，支持多语言环境下的服务交互。
 
 ## 注意事项
 1. **依赖管理**：确保 文件中的依赖项已正确安装。 `go.mod`
