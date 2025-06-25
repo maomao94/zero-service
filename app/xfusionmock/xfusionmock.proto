@@ -1,303 +1,181 @@
 syntax = "proto3";
+//import "google/api/annotations.proto";
+package xfusionmock;
+option go_package = "./xfusionmock";
 
-package iec104;
-
-import "google/protobuf/timestamp.proto";
-
-// 消息体结构
-message MsgBody {
-  string host = 1;              // 主机地址
-  int32 port = 2;               // 端口号
-  string asdu = 3;              // ASDU数据
-  TypeId type_id = 4;           // 类型标识
-  uint32 coa = 5;               // 公共地址(Common Address)
-  IoaBody body = 6;             // 信息对象体
-  google.protobuf.Timestamp time = 7;  // 时间戳
-  map<string, bytes> meta_data = 8;  // 元数据，值类型为bytes以支持任意数据
+message Req {
+  string ping = 1;
+  string pingJson = 2;
+  string pingParm = 3;
 }
 
-// 类型标识枚举
-enum TypeId {
-  UNKNOWN = 0;
-
-  // 遥信信息
-  M_SP_NA_1 = 1;    // 单点信息
-  M_DP_NA_1 = 3;    // 双点信息
-  M_ST_NA_1 = 5;    // 步位置信息
-  M_BO_NA_1 = 7;    // 比特串信息
-
-  // 遥测信息
-  M_ME_NA_1 = 9;    // 规一化值
-  M_ME_NB_1 = 11;   // 标度化值
-  M_ME_NC_1 = 13;   // 短浮点数
-  M_IT_NA_1 = 21;   // 累计量
-
-  // 遥控信息
-  C_SC_NA_1 = 45;   // 单点遥控
-  C_DC_NA_1 = 46;   // 双点遥控
-  C_RC_NA_1 = 47;   // 调节步长
-  C_SE_NA_1 = 48;   // 设置值(规一化值)
-  C_SE_NB_1 = 49;   // 设置值(标度化值)
-  C_SE_NC_1 = 50;   // 设置值(短浮点数)
-
-  // 遥调信息
-  C_CS_NA_1 = 58;   // 命令撤销
-
-  // 总召唤
-  C_IC_NA_1 = 100;  // 总召唤命令
-  C_CI_NA_1 = 101;  // 时钟同步命令
-  C_RD_NA_1 = 102;  // 读命令
-  C_CS_NA_1 = 103;  // 时钟同步命令(带时标)
-  C_TS_NA_1 = 104;  // 测试命令
+message Res {
+  string pong = 1;
 }
 
-// 信息对象体
-message IoaBody {
-  oneof body_type {
-    // 遥信信息
-    SinglePointInfo single_point = 1;       // 单点信息(M_SP_NA_1)
-    DoublePointInfo double_point = 2;       // 双点信息(M_DP_NA_1)
-    StepPositionInfo step_position = 3;     // 步位置信息(M_ST_NA_1)
-    BitString32Info bit_string = 4;         // 比特位串信息(M_BO_NA_1)
-
-    // 遥测信息
-    MeasuredValueNormalInfo normalized = 5; // 规一化遥测值(M_ME_NA_1)
-    MeasuredValueScaledInfo scaled = 6;     // 标度化遥测值(M_ME_NB_1)
-    MeasuredValueFloatInfo float_value = 7; // 浮点遥测值(M_ME_NC_1)
-    IntegratedTotalInfo integrated_total = 8; // 累计量(M_IT_NA_1)
-
-    // 遥控信息
-    SingleCommand single_command = 9;       // 单点遥控(C_SC_NA_1)
-    DoubleCommand double_command = 10;      // 双点遥控(C_DC_NA_1)
-    RegulatingStepCommand regulating_step = 11; // 调节步长(C_RC_NA_1)
-    SetpointCommandNormalized setpoint_normalized = 12; // 设置值(规一化值)(C_SE_NA_1)
-    SetpointCommandScaled setpoint_scaled = 13; // 设置值(标度化值)(C_SE_NB_1)
-    SetpointCommandFloat setpoint_float = 14; // 设置值(短浮点数)(C_SE_NC_1)
-
-    // 遥调信息
-    CommandCancel command_cancel = 15;      // 命令撤销(C_CS_NA_1)
-
-    // 总召唤
-    GeneralInterrogation general_interrogation = 16; // 总召唤命令(C_IC_NA_1)
-    ClockSynchronization clock_synchronization = 17; // 时钟同步命令(C_CI_NA_1)
-    ReadCommand read_command = 18;          // 读命令(C_RD_NA_1)
-    TestCommand test_command = 19;          // 测试命令(C_TS_NA_1)
-  }
+message ReqPushTest {
+  string body = 1;
 }
 
-// 单点信息
-message SinglePointInfo {
-  uint32 ioa = 1;               // 信息对象地址
-  bool value = 2;               // 状态值
-  uint32 qds = 3;               // 品质描述词
-  string qds_desc = 4;          // 品质描述词说明
-  bool ov = 5;                  // 溢出标志
-  bool bl = 6;                  // 封锁标志
-  bool sb = 7;                  // 替换标志
-  bool nt = 8;                  // 新旧标志
-  bool iv = 9;                  // 无效标志
-  google.protobuf.Timestamp time = 10;  // 时标
+message ResPushTest {
 }
 
-// 双点信息
-message DoublePointInfo {
-  uint32 ioa = 1;               // 信息对象地址
-  uint32 value = 2;             // 状态值(0-3)
-  uint32 qds = 3;               // 品质描述词
-  string qds_desc = 4;          // 品质描述词说明
-  bool ov = 5;                  // 溢出标志
-  bool bl = 6;                  // 封锁标志
-  bool sb = 7;                  // 替换标志
-  bool nt = 8;                  // 新旧标志
-  bool iv = 9;                  // 无效标志
-  google.protobuf.Timestamp time = 10;  // 时标
+message ReqPushPoint {
+  bool pushMode = 1; // 是否手动推送 默认 false-自动 true-手动
+  TerminalData data = 2; // 推送数据
 }
 
-// 步位置信息
-message StepPositionInfo {
-  uint32 ioa = 1;               // 信息对象地址
-
-  message StepValue {
-    int32 val = 1;              // 步位置值
-    bool has_transient = 2;     // 是否有暂态过程
-  }
-  StepValue value = 2;          // 步位置值
-
-  uint32 qds = 3;               // 品质描述词
-  string qds_desc = 4;          // 品质描述词说明
-  bool ov = 5;                  // 溢出标志
-  bool bl = 6;                  // 封锁标志
-  bool sb = 7;                  // 替换标志
-  bool nt = 8;                  // 新旧标志
-  bool iv = 9;                  // 无效标志
-  google.protobuf.Timestamp time = 10;  // 时标
+message ResPushPoint {
 }
 
-// 比特位串信息
-message BitString32Info {
-  uint32 ioa = 1;               // 信息对象地址
-  uint32 value = 2;             // 32位比特串值
-  uint32 qds = 3;               // 品质描述词
-  string qds_desc = 4;          // 品质描述词说明
-  bool ov = 5;                  // 溢出标志
-  bool bl = 6;                  // 封锁标志
-  bool sb = 7;                  // 替换标志
-  bool nt = 8;                  // 新旧标志
-  bool iv = 9;                  // 无效标志
-  google.protobuf.Timestamp time = 10;  // 时标
+message ReqPushAlarm {
+  bool pushMode = 1; // 是否手动推送 默认 false-自动 true-手动
+  AlarmData data = 2; // 推送数据
 }
 
-// 规一化遥测值
-message MeasuredValueNormalInfo {
-  uint32 ioa = 1;               // 信息对象地址
-  float value = 2;              // 规一化值(-1.0~1.0)
-  uint32 qds = 3;               // 品质描述词
-  string qds_desc = 4;          // 品质描述词说明
-  bool ov = 5;                  // 溢出标志
-  bool bl = 6;                  // 封锁标志
-  bool sb = 7;                  // 替换标志
-  bool nt = 8;                  // 新旧标志
-  bool iv = 9;                  // 无效标志
-  google.protobuf.Timestamp time = 10;  // 时标
+message ResPushAlarm {
 }
 
-// 标度化遥测值
-message MeasuredValueScaledInfo {
-  uint32 ioa = 1;               // 信息对象地址
-  int32 value = 2;              // 标度化值
-  uint32 qds = 3;               // 品质描述词
-  string qds_desc = 4;          // 品质描述词说明
-  bool ov = 5;                  // 溢出标志
-  bool bl = 6;                  // 封锁标志
-  bool sb = 7;                  // 替换标志
-  bool nt = 8;                  // 新旧标志
-  bool iv = 9;                  // 无效标志
-  google.protobuf.Timestamp time = 10;  // 时标
+message ReqPushEvent {
+  bool pushMode = 1; // 是否手动推送 默认 false-自动 true-手动
+  EventData data = 2; // 推送数据
 }
 
-// 浮点遥测值
-message MeasuredValueFloatInfo {
-  uint32 ioa = 1;               // 信息对象地址
-  double value = 2;             // 浮点值
-  uint32 qds = 3;               // 品质描述词
-  string qds_desc = 4;          // 品质描述词说明
-  bool ov = 5;                  // 溢出标志
-  bool bl = 6;                  // 封锁标志
-  bool sb = 7;                  // 替换标志
-  bool nt = 8;                  // 新旧标志
-  bool iv = 9;                  // 无效标志
-  google.protobuf.Timestamp time = 10;  // 时标
+message ResPushEvent {
 }
 
-// 累计量
-message IntegratedTotalInfo {
-  uint32 ioa = 1;               // 信息对象地址
-  uint64 value = 2;             // 累计值
-  uint32 qds = 3;               // 品质描述词
-  string qds_desc = 4;          // 品质描述词说明
-  bool ov = 5;                  // 溢出标志
-  bool bl = 6;                  // 封锁标志
-  bool sb = 7;                  // 替换标志
-  bool nt = 8;                  // 新旧标志
-  bool iv = 9;                  // 无效标志
-  google.protobuf.Timestamp time = 10;  // 时标
+message ReqPushTerminalBind {
+  bool pushMode = 1; // 是否手动推送 默认 false-自动 true-手动
+  TerminalBind data = 2; // 推送数据
 }
 
-// 单点遥控
-message SingleCommand {
-  uint32 ioa = 1;               // 信息对象地址
-  bool value = 2;               // 控制值
-  uint32 qcc = 3;               // 命令品质描述词
-  string qcc_desc = 4;          // 命令品质描述词说明
-  uint32 select_execute = 5;    // 选择/执行标志
-  uint32 time = 6;              // 命令有效期
+message ResPushTerminalBind {
 }
 
-// 双点遥控
-message DoubleCommand {
-  uint32 ioa = 1;               // 信息对象地址
-  uint32 value = 2;             // 控制值(0-3)
-  uint32 qcc = 3;               // 命令品质描述词
-  string qcc_desc = 4;          // 命令品质描述词说明
-  uint32 select_execute = 5;    // 选择/执行标志
-  uint32 time = 6;              // 命令有效期
+// TerminalBind 结构体
+message TerminalBind {
+  string dataTagV1 = 1 [json_name = "dataTagV1"]; // kafka tag
+  string action = 2 [json_name = "action"]; // 绑定动作： BIND ｜ UNBIND
+  int64 terminalId = 3 [json_name = "terminalId"]; // 终端ID（唯一标识）
+  string terminalNo = 4 [json_name = "terminalNo"]; // 终端唯一编号（12位字符）
+  string staffIdCardNo = 5 [json_name = "staffIdCardNo"]; // 员工身份证号
+  int64 trackId = 6 [json_name = "trackId"]; // 跟踪对象ID（关联业务系统）
+  string trackNo = 7 [json_name = "trackNo"]; // 对象编号（如车牌号"沪A12345"）
+  string trackType = 8 [json_name = "trackType"]; // 对象类型：CAR-车辆, STAFF-人员
+  string trackName = 9 [json_name = "trackName"]; // 监控对象显示名称（如车牌号"沪A12345"）
+  string actionTime = 10 [json_name = "actionTime"]; // 操作时间，北京时间 eg: 2024-07-01 10:00:00
 }
 
-// 调节步长
-message RegulatingStepCommand {
-  uint32 ioa = 1;               // 信息对象地址
-
-  message StepValue {
-    int32 val = 1;              // 步长值
-    bool is_scaled = 2;         // 是否为标度值
-  }
-  StepValue value = 2;          // 步长值
-
-  uint32 qcc = 3;               // 命令品质描述词
-  string qcc_desc = 4;          // 命令品质描述词说明
-  uint32 select_execute = 5;    // 选择/执行标志
-  uint32 time = 6;              // 命令有效期
+// EventData 结构体
+message EventData {
+  string dataTagV1 = 1 [json_name = "dataTagV1"]; // kafka tag
+  string id = 2 [json_name = "id"]; // 事件ID
+  string eventTitle = 3 [json_name = "eventTitle"]; // 事件名称
+  string eventCode = 4 [json_name = "eventCode"]; // 事件类型
+  int64 serverTime = 5 [json_name = "serverTime"]; // 事件时间（服务端）
+  int64 epochTime = 6 [json_name = "epochTime"]; // 事件时间（终端）
+  TerminalInfo terminalInfo = 7 [json_name = "terminalInfo"]; // 终端信息
+  Position position = 8 [json_name = "position"]; // 位置
 }
 
-// 设置值(规一化值)
-message SetpointCommandNormalized {
-  uint32 ioa = 1;               // 信息对象地址
-  float value = 2;              // 规一化值
-  uint32 qos = 3;               // 设置值品质描述词
-  string qos_desc = 4;          // 设置值品质描述词说明
-  uint32 select_execute = 5;    // 选择/执行标志
+// TerminalData 结构体
+message TerminalData {
+  string dataTagV1 = 1 [json_name = "dataTagV1"]; // kafka tag
+  TerminalInfo terminalInfo = 2 [json_name = "terminalInfo"]; // 终端信息
+  int64 epochTime = 3 [json_name = "epochTime"]; // 位置点上报时间（Unix时间戳，毫秒）
+  Location location = 4 [json_name = "location"]; // 定位信息
+  BuildingInfo buildingInfo = 5 [json_name = "buildingInfo"]; // 建筑信息
+  Status status = 6 [json_name = "status"]; // 设备状态
 }
 
-// 设置值(标度化值)
-message SetpointCommandScaled {
-  uint32 ioa = 1;               // 信息对象地址
-  int32 value = 2;              // 标度化值
-  uint32 qos = 3;               // 设置值品质描述词
-  string qos_desc = 4;          // 设置值品质描述词说明
-  uint32 select_execute = 5;    // 选择/执行标志
+// AlarmData 结构体
+message AlarmData {
+  string dataTagV1 = 1 [json_name = "dataTagV1"]; // kafka tag
+  string id = 2 [json_name = "id"]; // 报警唯一标识
+  string name = 3 [json_name = "name"]; // 报警自定义名称（最大长度50字符）
+  string alarmNo = 4 [json_name = "alarmNo"]; // 报警编号（格式：ALARM-日期-序号）
+  string alarmCode = 5 [json_name = "alarmCode"]; // 报警类型编码（见AlarmType枚举）
+  int32 level = 6 [json_name = "level"]; // 报警等级：1-紧急 2-严重 3-警告
+  repeated string terminalNoList = 7 [json_name = "terminalNoList"]; // 关联终端编号列表（至少包含一个有效终端号）
+  repeated TerminalInfo trackInfoList = 8 [json_name = "trackInfoList"]; // 报警涉及的主体信息列表
+  string trackType = 9 [json_name = "trackType"]; // 监控对象类型：CAR-车辆 STAFF-人员
+  LocationPosition position = 10 [json_name = "position"]; // 报警触发位置（WGS84坐标系）
+  repeated FenceInfo startFences = 11 [json_name = "startFences"]; // 报警开始围栏code列表
+  repeated FenceInfo endFences = 12 [json_name = "endFences"]; // 报警结束围栏code列表
+  int64 startTime = 13 [json_name = "startTime"]; // 报警开始时间（Unix时间戳，毫秒级）
+  int64 endTime = 14 [json_name = "endTime"]; // 报警结束时间（Unix时间戳，毫秒级）
+  int32 duration = 15 [json_name = "duration"]; // 报警持续时长（单位：秒），由结束时间-开始时间计算得出
+  string alarmStatus = 16 [json_name = "alarmStatus"]; // 报警当前状态：ON-进行中 OFF-已结束
 }
 
-// 设置值(短浮点数)
-message SetpointCommandFloat {
-  uint32 ioa = 1;               // 信息对象地址
-  double value = 2;             // 浮点值
-  uint32 qos = 3;               // 设置值品质描述词
-  string qos_desc = 4;          // 设置值品质描述词说明
-  uint32 select_execute = 5;    // 选择/执行标志
+// FenceInfo 围栏信息
+message FenceInfo {
+  string fenceCode = 1 [json_name = "fenceCode"]; // 围栏code
+  string orgCode = 7 [json_name = "orgCode"];
 }
 
-// 命令撤销
-message CommandCancel {
-  uint32 ioa = 1;               // 信息对象地址
-  uint32 command_type = 2;      // 被撤销的命令类型
-  uint32 reason = 3;            // 撤销原因
-  string reason_desc = 4;       // 撤销原因说明
+// LocationPosition 位置坐标
+message LocationPosition {
+  double lat = 1 [json_name = "lat"]; // 纬度（-90~90）
+  double lon = 2 [json_name = "lon"]; // 经度（-180~180）
+  double alt = 3 [json_name = "alt"]; // 海拔高度（米）
 }
 
-// 总召唤命令
-message GeneralInterrogation {
-  uint32 ca = 1;                // 召唤地址
-  uint32 qoi = 2;               // 召唤限定词
-  string qoi_desc = 3;          // 召唤限定词说明
+// TerminalInfo 终端详细信息
+message TerminalInfo {
+  int64 terminalId = 1 [json_name = "terminalId"]; // 终端ID（唯一标识）
+  string terminalNo = 2 [json_name = "terminalNo"]; // 终端唯一编号（12位字符）
+  int64 trackId = 3 [json_name = "trackId"]; // 跟踪对象ID（关联业务系统）
+  string trackNo = 4 [json_name = "trackNo"]; // 对象编号（如车牌号"沪A12345"）
+  string trackType = 5 [json_name = "trackType"]; // 对象类型：CAR-车辆, STAFF-人员
+  string trackName = 6 [json_name = "trackName"]; // 监控对象显示名称（如车牌号"沪A12345"）
+  string orgCode = 7 [json_name = "orgCode"];
+  string orgName = 8 [json_name = "orgName"];
 }
 
-// 时钟同步命令
-message ClockSynchronization {
-  uint32 ca = 1;                // 召唤地址
-  google.protobuf.Timestamp time = 2;  // 同步时间
+// Location 定位数据
+message Location {
+  Position position = 1 [json_name = "position"]; // 经纬度坐标
+  double speed = 2 [json_name = "speed"]; // 速度（千米/小时，保留4位小数）
+  double direction = 3 [json_name = "direction"]; // 方向角度（0-360度，正北为0）
+  string locationMode = 4 [json_name = "locationMode"]; // 定位模式（如GNSS、LBS等）
+  int32 satelliteNum = 5 [json_name = "satelliteNum"]; // 卫星数量（GPS定位时有效）
+  int32 ggaStatus = 6 [json_name = "ggaStatus"]; // GGA状态：1-单点定位，4-固定解
 }
 
-// 读命令
-message ReadCommand {
-  uint32 ca = 1;                // 召唤地址
-  uint32 ioa = 2;               // 信息对象地址
-  uint32 qoi = 3;               // 召唤限定词
-  string qoi_desc = 4;          // 召唤限定词说明
+// Position 经纬度坐标点
+message Position {
+  double lat = 1 [json_name = "lat"]; // 纬度（WGS84坐标系）
+  double lon = 2 [json_name = "lon"]; // 经度（WGS84坐标系）
+  double alt = 3 [json_name = "alt"]; // 海拔高度（米）
 }
 
-// 测试命令
-message TestCommand {
-  uint32 ca = 1;                // 召唤地址
-  uint32 test_id = 2;           // 测试标识
-  string test_data = 3;         // 测试数据
+// BuildingInfo 建筑信息
+message BuildingInfo {
+  int64 buildingId = 1 [json_name = "buildingId"]; // 建筑ID（地理围栏标识）
+  int32 floorNo = 2 [json_name = "floorNo"]; // 楼层编号（地下层用负数表示）
+}
+
+// Status 设备实时状态
+message Status {
+  bool acc = 1 [json_name = "acc"]; // ACC点火状态：true-车辆启动
+  bool emergency = 2 [json_name = "emergency"]; // 紧急报警状态：true-触发报警
+  bool mainSourceDown = 3 [json_name = "mainSourceDown"]; // 主电源状态：true-电源断开
+  int32 signal = 4 [json_name = "signal"]; // 信号强度（0-31，越大越好）
+  int32 battery = 5 [json_name = "battery"]; // 剩余电量百分比（0-100）
+  int32 moveState = 6 [json_name = "moveState"]; // 运动状态：0-静止，1-移动
+}
+
+service XFusionMockRpc {
+  rpc Ping (Req) returns (Res);
+  rpc PingV1 (Req) returns (Res) {
+    //    option (google.api.http) = {
+    //      get: "/api/v1/ping"
+    //    };
+  };
+  rpc PushTest(ReqPushTest) returns (ResPushTest);
+  rpc PushPoint(ReqPushPoint) returns (ResPushPoint);
+  rpc PushAlarm(ReqPushAlarm) returns (ResPushAlarm);
+  rpc PushEvent(ReqPushEvent) returns (ResPushEvent);
+  rpc PushTerminalBind(ReqPushTerminalBind) returns (ResPushTerminalBind);
 }
