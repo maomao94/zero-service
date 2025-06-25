@@ -37,7 +37,6 @@ func (l *DeferTriggerProtoTaskHandler) ProcessTask(ctx context.Context, t *asynq
 		ctx = otel.GetTextMapPropagator().Extract(ctx, msg.Carrier)
 		ctx, span := asynqx.StartAsynqConsumerSpan(ctx, t.Type())
 		defer span.End()
-		logx.WithContext(ctx).Debugf("defer protoTrigger task,msg:%s", msg)
 		grpcServer := tool.MayReplaceLocalhost(msg.GrpcServer)
 		clientConf := zrpc.RpcClientConf{}
 		conf.FillDefault(&clientConf)
@@ -52,6 +51,7 @@ func (l *DeferTriggerProtoTaskHandler) ProcessTask(ctx context.Context, t *asynq
 			if err == nil {
 				l.svcCtx.ConnMap.Set(grpcServer, conn)
 				v = conn
+				logx.Debugf("grpc client inited for %s", grpcServer)
 			}
 		}
 		if v == nil {
