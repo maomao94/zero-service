@@ -30,6 +30,13 @@ Upstreams:
       - Method: post
         Path: /bff/xfusion/postPing
         RpcPath: xfusionmock.XFusionMockRpc/Ping
+  - Grpc:
+      Endpoints:
+        - 127.0.0.1:27300
+      NonBlock: true
+      # protoset mode
+      ProtoSets:
+        - facade/iecstream.pb
 ZeroRpcConf:
   Endpoints:
     - 127.0.0.1:21001

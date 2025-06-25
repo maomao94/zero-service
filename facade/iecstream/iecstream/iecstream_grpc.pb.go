@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	IecStreamRpc_Ping_FullMethodName          = "/iecstream.IecStreamRpc/ping"
+	IecStreamRpc_Ping_FullMethodName          = "/iecstream.IecStreamRpc/Ping"
 	IecStreamRpc_PushChunkAsdu_FullMethodName = "/iecstream.IecStreamRpc/pushChunkAsdu"
 )
 
@@ -148,7 +148,7 @@ var IecStreamRpc_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*IecStreamRpcServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "ping",
+			MethodName: "Ping",
 			Handler:    _IecStreamRpc_Ping_Handler,
 		},
 		{

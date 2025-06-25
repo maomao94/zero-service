@@ -7,6 +7,7 @@
 package iecstream
 
 import (
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -439,7 +440,7 @@ type DoublePointInfo struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 信息对象地址
 	Ioa uint32 `protobuf:"varint,1,opt,name=ioa,proto3" json:"ioa,omitempty"`
-	// `0`=不确定,`1`=开,`2`=合,`3`=不确定
+	// `0`=不确定或中间状态,`1`=开,`2`=合,`3`=不确定
 	Value uint32 `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
 	// 品质
 	Qds uint32 `protobuf:"varint,3,opt,name=qds,proto3" json:"qds,omitempty"`
@@ -1989,7 +1990,7 @@ var File_iecstream_proto protoreflect.FileDescriptor
 
 const file_iecstream_proto_rawDesc = "" +
 	"\n" +
-	"\x0fiecstream.proto\x12\tiecstream\"\x19\n" +
+	"\x0fiecstream.proto\x12\tiecstream\x1a\x1cgoogle/api/annotations.proto\"\x19\n" +
 	"\x03Req\x12\x12\n" +
 	"\x04ping\x18\x01 \x01(\tR\x04ping\"\x19\n" +
 	"\x03Res\x12\x12\n" +
@@ -2162,9 +2163,9 @@ const file_iecstream_proto_rawDesc = "" +
 	"\x02sb\x18\t \x01(\bR\x02sb\x12\x0e\n" +
 	"\x02nt\x18\n" +
 	" \x01(\bR\x02nt\x12\x0e\n" +
-	"\x02iv\x18\v \x01(\bR\x02iv2\x85\x01\n" +
-	"\fIecStreamRpc\x12(\n" +
-	"\x04ping\x12\x0e.iecstream.Req\x1a\x0e.iecstream.Res\"\x00\x12K\n" +
+	"\x02iv\x18\v \x01(\bR\x02iv2\xa3\x01\n" +
+	"\fIecStreamRpc\x12F\n" +
+	"\x04Ping\x12\x0e.iecstream.Req\x1a\x0e.iecstream.Res\"\x1e\x82\xd3\xe4\x93\x02\x18\"\x16/api/v1/iecstream/ping\x12K\n" +
 	"\rpushChunkAsdu\x12\x1b.iecstream.PushChunkAsduReq\x1a\x1b.iecstream.PushChunkAsduRes\"\x00B;\n" +
 	"\x1acom.github.iec.stream.grpcB\x0eIecStreamProtoP\x01Z\v./iecstreamb\x06proto3"
 
@@ -2206,9 +2207,9 @@ var file_iecstream_proto_depIdxs = []int32{
 	4,  // 0: iecstream.PushChunkAsduReq.msgBody:type_name -> iecstream.MsgBody
 	10, // 1: iecstream.StepPositionInfo.value:type_name -> iecstream.StepPosition
 	14, // 2: iecstream.BinaryCounterReadingInfo.value:type_name -> iecstream.BinaryCounterReading
-	0,  // 3: iecstream.IecStreamRpc.ping:input_type -> iecstream.Req
+	0,  // 3: iecstream.IecStreamRpc.Ping:input_type -> iecstream.Req
 	2,  // 4: iecstream.IecStreamRpc.pushChunkAsdu:input_type -> iecstream.PushChunkAsduReq
-	1,  // 5: iecstream.IecStreamRpc.ping:output_type -> iecstream.Res
+	1,  // 5: iecstream.IecStreamRpc.Ping:output_type -> iecstream.Res
 	3,  // 6: iecstream.IecStreamRpc.pushChunkAsdu:output_type -> iecstream.PushChunkAsduRes
 	5,  // [5:7] is the sub-list for method output_type
 	3,  // [3:5] is the sub-list for method input_type
