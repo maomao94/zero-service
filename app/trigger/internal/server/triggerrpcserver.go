@@ -28,11 +28,13 @@ func (s *TriggerRpcServer) Ping(ctx context.Context, in *trigger.Req) (*trigger.
 	return l.Ping(in)
 }
 
+// 发送 http 回调
 func (s *TriggerRpcServer) SendTrigger(ctx context.Context, in *trigger.SendTriggerReq) (*trigger.SendTriggerRes, error) {
 	l := logic.NewSendTriggerLogic(ctx, s.svcCtx)
 	return l.SendTrigger(in)
 }
 
+// 发送 grpc proto字节码 回调
 func (s *TriggerRpcServer) SendProtoTrigger(ctx context.Context, in *trigger.SendProtoTriggerReq) (*trigger.SendProtoTriggerRes, error) {
 	l := logic.NewSendProtoTriggerLogic(ctx, s.svcCtx)
 	return l.SendProtoTrigger(in)

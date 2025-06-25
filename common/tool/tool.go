@@ -1,9 +1,13 @@
 package tool
 
 import (
+	"fmt"
+	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/duke-git/lancet/v2/formatter"
 	"github.com/shopspring/decimal"
+	"google.golang.org/protobuf/proto"
 	"os"
+	"reflect"
 	"strings"
 )
 
@@ -32,4 +36,24 @@ func MayReplaceLocalhost(host string) string {
 			"127.0.0.1", "host.docker.internal", 1)
 	}
 	return host
+}
+func ToProtoBytes(v interface{}) ([]byte, error) {
+	if v == nil {
+		return nil, fmt.Errorf("input is nil")
+	}
+
+	// 先判断接口实现，避免漏掉指针类型
+	if msg, ok := v.(proto.Message); ok {
+		return proto.Marshal(msg)
+	}
+
+	rv := reflect.ValueOf(v)
+	if rv.Kind() == reflect.Ptr {
+		if rv.IsNil() {
+			return nil, fmt.Errorf("nil pointer")
+		}
+		return convertor.ToBytes(rv.Elem().Interface())
+	} else {
+		return convertor.ToBytes(v)
+	}
 }

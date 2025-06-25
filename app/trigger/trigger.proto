@@ -12,32 +12,31 @@ message Res {
 }
 
 message SendTriggerReq {
-  string msgId = 1; // 唯一消息 id 可为空
-  string body = 2; // 触发内容，可为空
-  int64 processIn = 3; // 秒
-  string triggerTime = 4; // 触发时间 2019-01-01 00:00:00 二选一
-  string url = 5; // POST json提交
-  int64 maxRetry = 6; // 重试次数 默认 25
+  uint64 processIn = 1; // 秒
+  string triggerTime = 2; // 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
+  string url = 3; // POST json提交 不可为空
+  int64 maxRetry = 4; // 重试次数 可为空 默认: 25
+  string msgId = 5; // 唯一消息 id 可为空
+  string body = 6; // 触发内容，可为空
 }
 
 message SendTriggerRes {
   string traceId = 1; // 唯一追踪 id
   // ID is the identifier of the task.
   string id = 2;
-
   // Queue is the name of the queue in which the task belongs.
   string queue = 3;
 }
 
 message SendProtoTriggerReq {
-  int64 processIn = 1; // 秒
-  string triggerTime = 2; // 触发时间 2019-01-01 00:00:00 二选一
-  int64 maxRetry = 3; // 重试次数 默认 25
+  uint64 processIn = 1; // 秒
+  string triggerTime = 2; // 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
+  int64 maxRetry = 3; // 重试次数 可为空 默认: 25
   string msgId = 4; // 唯一消息 id 可为空
-  string grpcServer = 5; // 服务名称
-  string method = 6; // 方法
+  string grpcServer = 5; // 服务名称 不可为空
+  string method = 6; // 方法 不可为空
   string payload = 7; // pb 字节数据 不可为空
-  int64 requestTimeout = 8; // 请求超时时间
+  int64 requestTimeout = 8; // 请求超时时间 秒 可为空
 }
 
 message SendProtoTriggerRes {
@@ -51,6 +50,8 @@ message SendProtoTriggerRes {
 
 service TriggerRpc {
   rpc Ping (Req) returns (Res);
+  // 发送 http 回调
   rpc SendTrigger(SendTriggerReq) returns(SendTriggerRes);
+  // 发送 grpc proto字节码 回调
   rpc SendProtoTrigger(SendProtoTriggerReq) returns (SendProtoTriggerRes);
 }

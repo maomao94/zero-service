@@ -31,34 +31,30 @@ func (l *DeferTriggerTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task
 		ctx = otel.GetTextMapPropagator().Extract(ctx, msg.Carrier)
 		ctx, span := asynqx.StartAsynqConsumerSpan(ctx, t.Type())
 		defer span.End()
-		if msg.Url != "" {
-			type Data struct {
-				MsgId string `json:"msgId"`
-				Msg   string `json:"Msg"`
-			}
-			if len(msg.MsgId) == 0 {
-				msg.Msg = t.ResultWriter().TaskID()
-			}
-			var data = Data{
-				MsgId: msg.MsgId,
-				Msg:   msg.Msg,
-			}
-			postCtx, _ := context.WithTimeout(ctx, time.Duration(10)*time.Second)
-			resp, err := l.svcCtx.Httpc.Do(postCtx, http.MethodPost, msg.Url, data)
-			if err != nil {
-				t.ResultWriter().Write([]byte("fail,http"))
-				return err
-			}
-			if resp.StatusCode == http.StatusOK {
-				t.ResultWriter().Write([]byte("success"))
-			} else {
-				t.ResultWriter().Write([]byte("fail,httpCode," + resp.Status))
-				return errors.New("trigger fail")
-			}
+		type Data struct {
+			MsgId string `json:"msgId"`
+			Msg   string `json:"Msg"`
+		}
+		if len(msg.MsgId) == 0 {
+			msg.Msg = t.ResultWriter().TaskID()
+		}
+		var data = Data{
+			MsgId: msg.MsgId,
+			Msg:   msg.Msg,
+		}
+		postCtx, _ := context.WithTimeout(ctx, time.Duration(10)*time.Second)
+		resp, err := l.svcCtx.Httpc.Do(postCtx, http.MethodPost, msg.Url, data)
+		if err != nil {
+			t.ResultWriter().Write([]byte("fail,http error"))
+			return err
+		}
+		if resp.StatusCode == http.StatusOK {
+			t.ResultWriter().Write([]byte("success"))
 		} else {
-			t.ResultWriter().Write([]byte("fail,url,empty"))
+			t.ResultWriter().Write([]byte("fail,httpCode error: " + resp.Status))
 			return errors.New("trigger fail")
 		}
+
 	}
 	return nil
 }

@@ -111,12 +111,12 @@ func (x *Res) GetPong() string {
 
 type SendTriggerReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	MsgId         string                 `protobuf:"bytes,1,opt,name=msgId,proto3" json:"msgId,omitempty"`             // 唯一消息 id 可为空
-	Body          string                 `protobuf:"bytes,2,opt,name=body,proto3" json:"body,omitempty"`               // 触发内容，可为空
-	ProcessIn     int64                  `protobuf:"varint,3,opt,name=processIn,proto3" json:"processIn,omitempty"`    // 秒
-	TriggerTime   string                 `protobuf:"bytes,4,opt,name=triggerTime,proto3" json:"triggerTime,omitempty"` // 触发时间 2019-01-01 00:00:00 二选一
-	Url           string                 `protobuf:"bytes,5,opt,name=url,proto3" json:"url,omitempty"`                 // POST json提交
-	MaxRetry      int64                  `protobuf:"varint,6,opt,name=maxRetry,proto3" json:"maxRetry,omitempty"`      // 重试次数 默认 25
+	ProcessIn     uint64                 `protobuf:"varint,1,opt,name=processIn,proto3" json:"processIn,omitempty"`    // 秒
+	TriggerTime   string                 `protobuf:"bytes,2,opt,name=triggerTime,proto3" json:"triggerTime,omitempty"` // 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
+	Url           string                 `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`                 // POST json提交 不可为空
+	MaxRetry      int64                  `protobuf:"varint,4,opt,name=maxRetry,proto3" json:"maxRetry,omitempty"`      // 重试次数 可为空 默认: 25
+	MsgId         string                 `protobuf:"bytes,5,opt,name=msgId,proto3" json:"msgId,omitempty"`             // 唯一消息 id 可为空
+	Body          string                 `protobuf:"bytes,6,opt,name=body,proto3" json:"body,omitempty"`               // 触发内容，可为空
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -151,21 +151,7 @@ func (*SendTriggerReq) Descriptor() ([]byte, []int) {
 	return file_trigger_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *SendTriggerReq) GetMsgId() string {
-	if x != nil {
-		return x.MsgId
-	}
-	return ""
-}
-
-func (x *SendTriggerReq) GetBody() string {
-	if x != nil {
-		return x.Body
-	}
-	return ""
-}
-
-func (x *SendTriggerReq) GetProcessIn() int64 {
+func (x *SendTriggerReq) GetProcessIn() uint64 {
 	if x != nil {
 		return x.ProcessIn
 	}
@@ -191,6 +177,20 @@ func (x *SendTriggerReq) GetMaxRetry() int64 {
 		return x.MaxRetry
 	}
 	return 0
+}
+
+func (x *SendTriggerReq) GetMsgId() string {
+	if x != nil {
+		return x.MsgId
+	}
+	return ""
+}
+
+func (x *SendTriggerReq) GetBody() string {
+	if x != nil {
+		return x.Body
+	}
+	return ""
 }
 
 type SendTriggerRes struct {
@@ -257,14 +257,14 @@ func (x *SendTriggerRes) GetQueue() string {
 
 type SendProtoTriggerReq struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
-	ProcessIn      int64                  `protobuf:"varint,1,opt,name=processIn,proto3" json:"processIn,omitempty"`           // 秒
-	TriggerTime    string                 `protobuf:"bytes,2,opt,name=triggerTime,proto3" json:"triggerTime,omitempty"`        // 触发时间 2019-01-01 00:00:00 二选一
-	MaxRetry       int64                  `protobuf:"varint,3,opt,name=maxRetry,proto3" json:"maxRetry,omitempty"`             // 重试次数 默认 25
+	ProcessIn      uint64                 `protobuf:"varint,1,opt,name=processIn,proto3" json:"processIn,omitempty"`           // 秒
+	TriggerTime    string                 `protobuf:"bytes,2,opt,name=triggerTime,proto3" json:"triggerTime,omitempty"`        // 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
+	MaxRetry       int64                  `protobuf:"varint,3,opt,name=maxRetry,proto3" json:"maxRetry,omitempty"`             // 重试次数 可为空 默认: 25
 	MsgId          string                 `protobuf:"bytes,4,opt,name=msgId,proto3" json:"msgId,omitempty"`                    // 唯一消息 id 可为空
-	GrpcServer     string                 `protobuf:"bytes,5,opt,name=grpcServer,proto3" json:"grpcServer,omitempty"`          // 服务名称
-	Method         string                 `protobuf:"bytes,6,opt,name=method,proto3" json:"method,omitempty"`                  // 方法
+	GrpcServer     string                 `protobuf:"bytes,5,opt,name=grpcServer,proto3" json:"grpcServer,omitempty"`          // 服务名称 不可为空
+	Method         string                 `protobuf:"bytes,6,opt,name=method,proto3" json:"method,omitempty"`                  // 方法 不可为空
 	Payload        string                 `protobuf:"bytes,7,opt,name=payload,proto3" json:"payload,omitempty"`                // pb 字节数据 不可为空
-	RequestTimeout int64                  `protobuf:"varint,8,opt,name=requestTimeout,proto3" json:"requestTimeout,omitempty"` // 请求超时时间
+	RequestTimeout int64                  `protobuf:"varint,8,opt,name=requestTimeout,proto3" json:"requestTimeout,omitempty"` // 请求超时时间 秒 可为空
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -299,7 +299,7 @@ func (*SendProtoTriggerReq) Descriptor() ([]byte, []int) {
 	return file_trigger_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *SendProtoTriggerReq) GetProcessIn() int64 {
+func (x *SendProtoTriggerReq) GetProcessIn() uint64 {
 	if x != nil {
 		return x.ProcessIn
 	}
@@ -426,19 +426,19 @@ const file_trigger_proto_rawDesc = "" +
 	"\x04ping\x18\x01 \x01(\tR\x04ping\"\x19\n" +
 	"\x03Res\x12\x12\n" +
 	"\x04pong\x18\x01 \x01(\tR\x04pong\"\xa8\x01\n" +
-	"\x0eSendTriggerReq\x12\x14\n" +
-	"\x05msgId\x18\x01 \x01(\tR\x05msgId\x12\x12\n" +
-	"\x04body\x18\x02 \x01(\tR\x04body\x12\x1c\n" +
-	"\tprocessIn\x18\x03 \x01(\x03R\tprocessIn\x12 \n" +
-	"\vtriggerTime\x18\x04 \x01(\tR\vtriggerTime\x12\x10\n" +
-	"\x03url\x18\x05 \x01(\tR\x03url\x12\x1a\n" +
-	"\bmaxRetry\x18\x06 \x01(\x03R\bmaxRetry\"P\n" +
+	"\x0eSendTriggerReq\x12\x1c\n" +
+	"\tprocessIn\x18\x01 \x01(\x04R\tprocessIn\x12 \n" +
+	"\vtriggerTime\x18\x02 \x01(\tR\vtriggerTime\x12\x10\n" +
+	"\x03url\x18\x03 \x01(\tR\x03url\x12\x1a\n" +
+	"\bmaxRetry\x18\x04 \x01(\x03R\bmaxRetry\x12\x14\n" +
+	"\x05msgId\x18\x05 \x01(\tR\x05msgId\x12\x12\n" +
+	"\x04body\x18\x06 \x01(\tR\x04body\"P\n" +
 	"\x0eSendTriggerRes\x12\x18\n" +
 	"\atraceId\x18\x01 \x01(\tR\atraceId\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x12\x14\n" +
 	"\x05queue\x18\x03 \x01(\tR\x05queue\"\x81\x02\n" +
 	"\x13SendProtoTriggerReq\x12\x1c\n" +
-	"\tprocessIn\x18\x01 \x01(\x03R\tprocessIn\x12 \n" +
+	"\tprocessIn\x18\x01 \x01(\x04R\tprocessIn\x12 \n" +
 	"\vtriggerTime\x18\x02 \x01(\tR\vtriggerTime\x12\x1a\n" +
 	"\bmaxRetry\x18\x03 \x01(\x03R\bmaxRetry\x12\x14\n" +
 	"\x05msgId\x18\x04 \x01(\tR\x05msgId\x12\x1e\n" +
