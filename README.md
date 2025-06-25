@@ -47,7 +47,7 @@ zero-service/
 #### 2.3 服务 `file`
 `file` 模块提供文件服务功能，支持通过 gRPC 实现分片流上传，并集成了对象存储（OSS）上传能力。
 
-#### 2.34 服务 `trigger`
+#### 2.4 服务 `trigger`
 `trigger` 模块提供基于 [asynq](https://github.com/hibiken/asynq) 的异步任务处理能力。该服务主要负责定时任务触发，支持 HTTP 和 gRPC 两种回调方式，同时提供任务存档与删除等管理功能。
 
 - **使用流程图**
