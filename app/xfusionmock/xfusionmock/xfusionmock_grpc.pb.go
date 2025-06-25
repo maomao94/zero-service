@@ -4,8 +4,6 @@
 // - protoc             v5.29.3
 // source: xfusionmock.proto
 
-//import "google/api/annotations.proto";
-
 package xfusionmock
 
 import (

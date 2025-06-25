@@ -4,11 +4,10 @@
 // 	protoc        v5.29.3
 // source: xfusionmock.proto
 
-//import "google/api/annotations.proto";
-
 package xfusionmock
 
 import (
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -1530,7 +1529,7 @@ var File_xfusionmock_proto protoreflect.FileDescriptor
 
 const file_xfusionmock_proto_rawDesc = "" +
 	"\n" +
-	"\x11xfusionmock.proto\x12\vxfusionmock\"Q\n" +
+	"\x11xfusionmock.proto\x12\vxfusionmock\x1a\x1cgoogle/api/annotations.proto\"Q\n" +
 	"\x03Req\x12\x12\n" +
 	"\x04ping\x18\x01 \x01(\tR\x04ping\x12\x1a\n" +
 	"\bpingJson\x18\x02 \x01(\tR\bpingJson\x12\x1a\n" +
@@ -1654,10 +1653,10 @@ const file_xfusionmock_proto_rawDesc = "" +
 	"\x0emainSourceDown\x18\x03 \x01(\bR\x0emainSourceDown\x12\x16\n" +
 	"\x06signal\x18\x04 \x01(\x05R\x06signal\x12\x18\n" +
 	"\abattery\x18\x05 \x01(\x05R\abattery\x12\x1c\n" +
-	"\tmoveState\x18\x06 \x01(\x05R\tmoveState2\xcd\x03\n" +
+	"\tmoveState\x18\x06 \x01(\x05R\tmoveState2\xe1\x03\n" +
 	"\x0eXFusionMockRpc\x12*\n" +
-	"\x04Ping\x12\x10.xfusionmock.Req\x1a\x10.xfusionmock.Res\x12.\n" +
-	"\x06PingV1\x12\x10.xfusionmock.Req\x1a\x10.xfusionmock.Res\"\x00\x12>\n" +
+	"\x04Ping\x12\x10.xfusionmock.Req\x1a\x10.xfusionmock.Res\x12B\n" +
+	"\x06PingV1\x12\x10.xfusionmock.Req\x1a\x10.xfusionmock.Res\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/api/v1/ping\x12>\n" +
 	"\bPushTest\x12\x18.xfusionmock.ReqPushTest\x1a\x18.xfusionmock.ResPushTest\x12A\n" +
 	"\tPushPoint\x12\x19.xfusionmock.ReqPushPoint\x1a\x19.xfusionmock.ResPushPoint\x12A\n" +
 	"\tPushAlarm\x12\x19.xfusionmock.ReqPushAlarm\x1a\x19.xfusionmock.ResPushAlarm\x12A\n" +
