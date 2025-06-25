@@ -191,9 +191,11 @@ func (*ResPushTest) Descriptor() ([]byte, []int) {
 }
 
 type ReqPushPoint struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PushMode      bool                   `protobuf:"varint,1,opt,name=pushMode,proto3" json:"pushMode,omitempty"` // 是否手动推送 默认 false-自动 true-手动
-	Data          *TerminalData          `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`          // 推送数据
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 是否手动推送 默认 false-自动 true-手动
+	PushMode bool `protobuf:"varint,1,opt,name=pushMode,proto3" json:"pushMode,omitempty"`
+	// 推送数据
+	Data          *TerminalData `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -279,9 +281,11 @@ func (*ResPushPoint) Descriptor() ([]byte, []int) {
 }
 
 type ReqPushAlarm struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PushMode      bool                   `protobuf:"varint,1,opt,name=pushMode,proto3" json:"pushMode,omitempty"` // 是否手动推送 默认 false-自动 true-手动
-	Data          *AlarmData             `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`          // 推送数据
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 是否手动推送 默认 false-自动 true-手动
+	PushMode bool `protobuf:"varint,1,opt,name=pushMode,proto3" json:"pushMode,omitempty"`
+	// 推送数据
+	Data          *AlarmData `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -367,9 +371,11 @@ func (*ResPushAlarm) Descriptor() ([]byte, []int) {
 }
 
 type ReqPushEvent struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PushMode      bool                   `protobuf:"varint,1,opt,name=pushMode,proto3" json:"pushMode,omitempty"` // 是否手动推送 默认 false-自动 true-手动
-	Data          *EventData             `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`          // 推送数据
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 是否手动推送 默认 false-自动 true-手动
+	PushMode bool `protobuf:"varint,1,opt,name=pushMode,proto3" json:"pushMode,omitempty"`
+	// 推送数据
+	Data          *EventData `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -455,9 +461,11 @@ func (*ResPushEvent) Descriptor() ([]byte, []int) {
 }
 
 type ReqPushTerminalBind struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PushMode      bool                   `protobuf:"varint,1,opt,name=pushMode,proto3" json:"pushMode,omitempty"` // 是否手动推送 默认 false-自动 true-手动
-	Data          *TerminalBind          `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`          // 推送数据
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 是否手动推送 默认 false-自动 true-手动
+	PushMode bool `protobuf:"varint,1,opt,name=pushMode,proto3" json:"pushMode,omitempty"`
+	// 推送数据
+	Data          *TerminalBind `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -544,17 +552,27 @@ func (*ResPushTerminalBind) Descriptor() ([]byte, []int) {
 
 // TerminalBind 结构体
 type TerminalBind struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	DataTagV1     string                 `protobuf:"bytes,1,opt,name=dataTagV1,proto3" json:"dataTagV1,omitempty"`         // kafka tag
-	Action        string                 `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`               // 绑定动作： BIND ｜ UNBIND
-	TerminalId    int64                  `protobuf:"varint,3,opt,name=terminalId,proto3" json:"terminalId,omitempty"`      // 终端ID（唯一标识）
-	TerminalNo    string                 `protobuf:"bytes,4,opt,name=terminalNo,proto3" json:"terminalNo,omitempty"`       // 终端唯一编号（12位字符）
-	StaffIdCardNo string                 `protobuf:"bytes,5,opt,name=staffIdCardNo,proto3" json:"staffIdCardNo,omitempty"` // 员工身份证号
-	TrackId       int64                  `protobuf:"varint,6,opt,name=trackId,proto3" json:"trackId,omitempty"`            // 跟踪对象ID（关联业务系统）
-	TrackNo       string                 `protobuf:"bytes,7,opt,name=trackNo,proto3" json:"trackNo,omitempty"`             // 对象编号（如车牌号"沪A12345"）
-	TrackType     string                 `protobuf:"bytes,8,opt,name=trackType,proto3" json:"trackType,omitempty"`         // 对象类型：CAR-车辆, STAFF-人员
-	TrackName     string                 `protobuf:"bytes,9,opt,name=trackName,proto3" json:"trackName,omitempty"`         // 监控对象显示名称（如车牌号"沪A12345"）
-	ActionTime    string                 `protobuf:"bytes,10,opt,name=actionTime,proto3" json:"actionTime,omitempty"`      // 操作时间，北京时间 eg: 2024-07-01 10:00:00
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// kafka tag
+	DataTagV1 string `protobuf:"bytes,1,opt,name=dataTagV1,proto3" json:"dataTagV1,omitempty"`
+	// 绑定动作： BIND ｜ UNBIND
+	Action string `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
+	// 终端ID（唯一标识）
+	TerminalId int64 `protobuf:"varint,3,opt,name=terminalId,proto3" json:"terminalId,omitempty"`
+	// 终端唯一编号（12位字符）
+	TerminalNo string `protobuf:"bytes,4,opt,name=terminalNo,proto3" json:"terminalNo,omitempty"`
+	// 员工身份证号
+	StaffIdCardNo string `protobuf:"bytes,5,opt,name=staffIdCardNo,proto3" json:"staffIdCardNo,omitempty"`
+	// 跟踪对象ID（关联业务系统）
+	TrackId int64 `protobuf:"varint,6,opt,name=trackId,proto3" json:"trackId,omitempty"`
+	// 对象编号（如车牌号"沪A12345"）
+	TrackNo string `protobuf:"bytes,7,opt,name=trackNo,proto3" json:"trackNo,omitempty"`
+	// 对象类型：CAR-车辆, STAFF-人员
+	TrackType string `protobuf:"bytes,8,opt,name=trackType,proto3" json:"trackType,omitempty"`
+	// 监控对象显示名称（如车牌号"沪A12345"）
+	TrackName string `protobuf:"bytes,9,opt,name=trackName,proto3" json:"trackName,omitempty"`
+	// 操作时间，北京时间 eg: 2024-07-01 10:00:00
+	ActionTime    string `protobuf:"bytes,10,opt,name=actionTime,proto3" json:"actionTime,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -661,15 +679,23 @@ func (x *TerminalBind) GetActionTime() string {
 
 // EventData 结构体
 type EventData struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	DataTagV1     string                 `protobuf:"bytes,1,opt,name=dataTagV1,proto3" json:"dataTagV1,omitempty"`       // kafka tag
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`                     // 事件ID
-	EventTitle    string                 `protobuf:"bytes,3,opt,name=eventTitle,proto3" json:"eventTitle,omitempty"`     // 事件名称
-	EventCode     string                 `protobuf:"bytes,4,opt,name=eventCode,proto3" json:"eventCode,omitempty"`       // 事件类型
-	ServerTime    int64                  `protobuf:"varint,5,opt,name=serverTime,proto3" json:"serverTime,omitempty"`    // 事件时间（服务端）
-	EpochTime     int64                  `protobuf:"varint,6,opt,name=epochTime,proto3" json:"epochTime,omitempty"`      // 事件时间（终端）
-	TerminalInfo  *TerminalInfo          `protobuf:"bytes,7,opt,name=terminalInfo,proto3" json:"terminalInfo,omitempty"` // 终端信息
-	Position      *Position              `protobuf:"bytes,8,opt,name=position,proto3" json:"position,omitempty"`         // 位置
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// kafka tag
+	DataTagV1 string `protobuf:"bytes,1,opt,name=dataTagV1,proto3" json:"dataTagV1,omitempty"`
+	// 事件ID
+	Id string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	// 事件名称
+	EventTitle string `protobuf:"bytes,3,opt,name=eventTitle,proto3" json:"eventTitle,omitempty"`
+	// 事件类型
+	EventCode string `protobuf:"bytes,4,opt,name=eventCode,proto3" json:"eventCode,omitempty"`
+	// 事件时间（服务端）
+	ServerTime int64 `protobuf:"varint,5,opt,name=serverTime,proto3" json:"serverTime,omitempty"`
+	// 事件时间（终端）
+	EpochTime int64 `protobuf:"varint,6,opt,name=epochTime,proto3" json:"epochTime,omitempty"`
+	// 终端信息
+	TerminalInfo *TerminalInfo `protobuf:"bytes,7,opt,name=terminalInfo,proto3" json:"terminalInfo,omitempty"`
+	// 位置
+	Position      *Position `protobuf:"bytes,8,opt,name=position,proto3" json:"position,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -762,13 +788,19 @@ func (x *EventData) GetPosition() *Position {
 
 // TerminalData 结构体
 type TerminalData struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	DataTagV1     string                 `protobuf:"bytes,1,opt,name=dataTagV1,proto3" json:"dataTagV1,omitempty"`       // kafka tag
-	TerminalInfo  *TerminalInfo          `protobuf:"bytes,2,opt,name=terminalInfo,proto3" json:"terminalInfo,omitempty"` // 终端信息
-	EpochTime     int64                  `protobuf:"varint,3,opt,name=epochTime,proto3" json:"epochTime,omitempty"`      // 位置点上报时间（Unix时间戳，毫秒）
-	Location      *Location              `protobuf:"bytes,4,opt,name=location,proto3" json:"location,omitempty"`         // 定位信息
-	BuildingInfo  *BuildingInfo          `protobuf:"bytes,5,opt,name=buildingInfo,proto3" json:"buildingInfo,omitempty"` // 建筑信息
-	Status        *Status                `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`             // 设备状态
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// kafka tag
+	DataTagV1 string `protobuf:"bytes,1,opt,name=dataTagV1,proto3" json:"dataTagV1,omitempty"`
+	// 终端信息
+	TerminalInfo *TerminalInfo `protobuf:"bytes,2,opt,name=terminalInfo,proto3" json:"terminalInfo,omitempty"`
+	// 位置点上报时间（Unix时间戳，毫秒）
+	EpochTime int64 `protobuf:"varint,3,opt,name=epochTime,proto3" json:"epochTime,omitempty"`
+	// 定位信息
+	Location *Location `protobuf:"bytes,4,opt,name=location,proto3" json:"location,omitempty"`
+	// 建筑信息
+	BuildingInfo *BuildingInfo `protobuf:"bytes,5,opt,name=buildingInfo,proto3" json:"buildingInfo,omitempty"`
+	// 设备状态
+	Status        *Status `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -847,25 +879,41 @@ func (x *TerminalData) GetStatus() *Status {
 
 // AlarmData 结构体
 type AlarmData struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	DataTagV1      string                 `protobuf:"bytes,1,opt,name=dataTagV1,proto3" json:"dataTagV1,omitempty"`           // kafka tag
-	Id             string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`                         // 报警唯一标识
-	Name           string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`                     // 报警自定义名称（最大长度50字符）
-	AlarmNo        string                 `protobuf:"bytes,4,opt,name=alarmNo,proto3" json:"alarmNo,omitempty"`               // 报警编号（格式：ALARM-日期-序号）
-	AlarmCode      string                 `protobuf:"bytes,5,opt,name=alarmCode,proto3" json:"alarmCode,omitempty"`           // 报警类型编码（见AlarmType枚举）
-	Level          int32                  `protobuf:"varint,6,opt,name=level,proto3" json:"level,omitempty"`                  // 报警等级：1-紧急 2-严重 3-警告
-	TerminalNoList []string               `protobuf:"bytes,7,rep,name=terminalNoList,proto3" json:"terminalNoList,omitempty"` // 关联终端编号列表（至少包含一个有效终端号）
-	TrackInfoList  []*TerminalInfo        `protobuf:"bytes,8,rep,name=trackInfoList,proto3" json:"trackInfoList,omitempty"`   // 报警涉及的主体信息列表
-	TrackType      string                 `protobuf:"bytes,9,opt,name=trackType,proto3" json:"trackType,omitempty"`           // 监控对象类型：CAR-车辆 STAFF-人员
-	Position       *LocationPosition      `protobuf:"bytes,10,opt,name=position,proto3" json:"position,omitempty"`            // 报警触发位置（WGS84坐标系）
-	StartFences    []*FenceInfo           `protobuf:"bytes,11,rep,name=startFences,proto3" json:"startFences,omitempty"`      // 报警开始围栏code列表
-	EndFences      []*FenceInfo           `protobuf:"bytes,12,rep,name=endFences,proto3" json:"endFences,omitempty"`          // 报警结束围栏code列表
-	StartTime      int64                  `protobuf:"varint,13,opt,name=startTime,proto3" json:"startTime,omitempty"`         // 报警开始时间（Unix时间戳，毫秒级）
-	EndTime        int64                  `protobuf:"varint,14,opt,name=endTime,proto3" json:"endTime,omitempty"`             // 报警结束时间（Unix时间戳，毫秒级）
-	Duration       int32                  `protobuf:"varint,15,opt,name=duration,proto3" json:"duration,omitempty"`           // 报警持续时长（单位：秒），由结束时间-开始时间计算得出
-	AlarmStatus    string                 `protobuf:"bytes,16,opt,name=alarmStatus,proto3" json:"alarmStatus,omitempty"`      // 报警当前状态：ON-进行中 OFF-已结束
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// kafka tag
+	DataTagV1 string `protobuf:"bytes,1,opt,name=dataTagV1,proto3" json:"dataTagV1,omitempty"`
+	// 报警唯一标识
+	Id string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	// 报警自定义名称（最大长度50字符）
+	Name string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	// 报警编号（格式：ALARM-日期-序号）
+	AlarmNo string `protobuf:"bytes,4,opt,name=alarmNo,proto3" json:"alarmNo,omitempty"`
+	// 报警类型编码（见AlarmType枚举）
+	AlarmCode string `protobuf:"bytes,5,opt,name=alarmCode,proto3" json:"alarmCode,omitempty"`
+	// 报警等级：1-紧急 2-严重 3-警告
+	Level int32 `protobuf:"varint,6,opt,name=level,proto3" json:"level,omitempty"`
+	// 关联终端编号列表（至少包含一个有效终端号）
+	TerminalNoList []string `protobuf:"bytes,7,rep,name=terminalNoList,proto3" json:"terminalNoList,omitempty"`
+	// 报警涉及的主体信息列表
+	TrackInfoList []*TerminalInfo `protobuf:"bytes,8,rep,name=trackInfoList,proto3" json:"trackInfoList,omitempty"`
+	// 监控对象类型：CAR-车辆 STAFF-人员
+	TrackType string `protobuf:"bytes,9,opt,name=trackType,proto3" json:"trackType,omitempty"`
+	// 报警触发位置（WGS84坐标系）
+	Position *LocationPosition `protobuf:"bytes,10,opt,name=position,proto3" json:"position,omitempty"`
+	// 报警开始围栏code列表
+	StartFences []*FenceInfo `protobuf:"bytes,11,rep,name=startFences,proto3" json:"startFences,omitempty"`
+	// 报警结束围栏code列表
+	EndFences []*FenceInfo `protobuf:"bytes,12,rep,name=endFences,proto3" json:"endFences,omitempty"`
+	// 报警开始时间（Unix时间戳，毫秒级）
+	StartTime int64 `protobuf:"varint,13,opt,name=startTime,proto3" json:"startTime,omitempty"`
+	// 报警结束时间（Unix时间戳，毫秒级）
+	EndTime int64 `protobuf:"varint,14,opt,name=endTime,proto3" json:"endTime,omitempty"`
+	// 报警持续时长（单位：秒），由结束时间-开始时间计算得出
+	Duration int32 `protobuf:"varint,15,opt,name=duration,proto3" json:"duration,omitempty"`
+	// 报警当前状态：ON-进行中 OFF-已结束
+	AlarmStatus   string `protobuf:"bytes,16,opt,name=alarmStatus,proto3" json:"alarmStatus,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AlarmData) Reset() {
@@ -1012,9 +1060,10 @@ func (x *AlarmData) GetAlarmStatus() string {
 
 // FenceInfo 围栏信息
 type FenceInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	FenceCode     string                 `protobuf:"bytes,1,opt,name=fenceCode,proto3" json:"fenceCode,omitempty"` // 围栏code
-	OrgCode       string                 `protobuf:"bytes,7,opt,name=orgCode,proto3" json:"orgCode,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 围栏code
+	FenceCode     string `protobuf:"bytes,1,opt,name=fenceCode,proto3" json:"fenceCode,omitempty"`
+	OrgCode       string `protobuf:"bytes,7,opt,name=orgCode,proto3" json:"orgCode,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1065,10 +1114,13 @@ func (x *FenceInfo) GetOrgCode() string {
 
 // LocationPosition 位置坐标
 type LocationPosition struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Lat           float64                `protobuf:"fixed64,1,opt,name=lat,proto3" json:"lat,omitempty"` // 纬度（-90~90）
-	Lon           float64                `protobuf:"fixed64,2,opt,name=lon,proto3" json:"lon,omitempty"` // 经度（-180~180）
-	Alt           float64                `protobuf:"fixed64,3,opt,name=alt,proto3" json:"alt,omitempty"` // 海拔高度（米）
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 纬度（-90~90）
+	Lat float64 `protobuf:"fixed64,1,opt,name=lat,proto3" json:"lat,omitempty"`
+	// 经度（-180~180）
+	Lon float64 `protobuf:"fixed64,2,opt,name=lon,proto3" json:"lon,omitempty"`
+	// 海拔高度（米）
+	Alt           float64 `protobuf:"fixed64,3,opt,name=alt,proto3" json:"alt,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1126,15 +1178,21 @@ func (x *LocationPosition) GetAlt() float64 {
 
 // TerminalInfo 终端详细信息
 type TerminalInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TerminalId    int64                  `protobuf:"varint,1,opt,name=terminalId,proto3" json:"terminalId,omitempty"` // 终端ID（唯一标识）
-	TerminalNo    string                 `protobuf:"bytes,2,opt,name=terminalNo,proto3" json:"terminalNo,omitempty"`  // 终端唯一编号（12位字符）
-	TrackId       int64                  `protobuf:"varint,3,opt,name=trackId,proto3" json:"trackId,omitempty"`       // 跟踪对象ID（关联业务系统）
-	TrackNo       string                 `protobuf:"bytes,4,opt,name=trackNo,proto3" json:"trackNo,omitempty"`        // 对象编号（如车牌号"沪A12345"）
-	TrackType     string                 `protobuf:"bytes,5,opt,name=trackType,proto3" json:"trackType,omitempty"`    // 对象类型：CAR-车辆, STAFF-人员
-	TrackName     string                 `protobuf:"bytes,6,opt,name=trackName,proto3" json:"trackName,omitempty"`    // 监控对象显示名称（如车牌号"沪A12345"）
-	OrgCode       string                 `protobuf:"bytes,7,opt,name=orgCode,proto3" json:"orgCode,omitempty"`
-	OrgName       string                 `protobuf:"bytes,8,opt,name=orgName,proto3" json:"orgName,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 终端ID（唯一标识）
+	TerminalId int64 `protobuf:"varint,1,opt,name=terminalId,proto3" json:"terminalId,omitempty"`
+	// 终端唯一编号（12位字符）
+	TerminalNo string `protobuf:"bytes,2,opt,name=terminalNo,proto3" json:"terminalNo,omitempty"`
+	// 跟踪对象ID（关联业务系统）
+	TrackId int64 `protobuf:"varint,3,opt,name=trackId,proto3" json:"trackId,omitempty"`
+	// 对象编号（如车牌号"沪A12345"）
+	TrackNo string `protobuf:"bytes,4,opt,name=trackNo,proto3" json:"trackNo,omitempty"`
+	// 对象类型：CAR-车辆, STAFF-人员
+	TrackType string `protobuf:"bytes,5,opt,name=trackType,proto3" json:"trackType,omitempty"`
+	// 监控对象显示名称（如车牌号"沪A12345"）
+	TrackName     string `protobuf:"bytes,6,opt,name=trackName,proto3" json:"trackName,omitempty"`
+	OrgCode       string `protobuf:"bytes,7,opt,name=orgCode,proto3" json:"orgCode,omitempty"`
+	OrgName       string `protobuf:"bytes,8,opt,name=orgName,proto3" json:"orgName,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1227,13 +1285,19 @@ func (x *TerminalInfo) GetOrgName() string {
 
 // Location 定位数据
 type Location struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Position      *Position              `protobuf:"bytes,1,opt,name=position,proto3" json:"position,omitempty"`          // 经纬度坐标
-	Speed         float64                `protobuf:"fixed64,2,opt,name=speed,proto3" json:"speed,omitempty"`              // 速度（千米/小时，保留4位小数）
-	Direction     float64                `protobuf:"fixed64,3,opt,name=direction,proto3" json:"direction,omitempty"`      // 方向角度（0-360度，正北为0）
-	LocationMode  string                 `protobuf:"bytes,4,opt,name=locationMode,proto3" json:"locationMode,omitempty"`  // 定位模式（如GNSS、LBS等）
-	SatelliteNum  int32                  `protobuf:"varint,5,opt,name=satelliteNum,proto3" json:"satelliteNum,omitempty"` // 卫星数量（GPS定位时有效）
-	GgaStatus     int32                  `protobuf:"varint,6,opt,name=ggaStatus,proto3" json:"ggaStatus,omitempty"`       // GGA状态：1-单点定位，4-固定解
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 经纬度坐标
+	Position *Position `protobuf:"bytes,1,opt,name=position,proto3" json:"position,omitempty"`
+	// 速度（千米/小时，保留4位小数）
+	Speed float64 `protobuf:"fixed64,2,opt,name=speed,proto3" json:"speed,omitempty"`
+	// 方向角度（0-360度，正北为0）
+	Direction float64 `protobuf:"fixed64,3,opt,name=direction,proto3" json:"direction,omitempty"`
+	// 定位模式（如GNSS、LBS等）
+	LocationMode string `protobuf:"bytes,4,opt,name=locationMode,proto3" json:"locationMode,omitempty"`
+	// 卫星数量（GPS定位时有效）
+	SatelliteNum int32 `protobuf:"varint,5,opt,name=satelliteNum,proto3" json:"satelliteNum,omitempty"`
+	// GGA状态：1-单点定位，4-固定解
+	GgaStatus     int32 `protobuf:"varint,6,opt,name=ggaStatus,proto3" json:"ggaStatus,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1312,10 +1376,13 @@ func (x *Location) GetGgaStatus() int32 {
 
 // Position 经纬度坐标点
 type Position struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Lat           float64                `protobuf:"fixed64,1,opt,name=lat,proto3" json:"lat,omitempty"` // 纬度（WGS84坐标系）
-	Lon           float64                `protobuf:"fixed64,2,opt,name=lon,proto3" json:"lon,omitempty"` // 经度（WGS84坐标系）
-	Alt           float64                `protobuf:"fixed64,3,opt,name=alt,proto3" json:"alt,omitempty"` // 海拔高度（米）
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 纬度（WGS84坐标系）
+	Lat float64 `protobuf:"fixed64,1,opt,name=lat,proto3" json:"lat,omitempty"`
+	// 经度（WGS84坐标系）
+	Lon float64 `protobuf:"fixed64,2,opt,name=lon,proto3" json:"lon,omitempty"`
+	// 海拔高度（米）
+	Alt           float64 `protobuf:"fixed64,3,opt,name=alt,proto3" json:"alt,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1373,9 +1440,11 @@ func (x *Position) GetAlt() float64 {
 
 // BuildingInfo 建筑信息
 type BuildingInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	BuildingId    int64                  `protobuf:"varint,1,opt,name=buildingId,proto3" json:"buildingId,omitempty"` // 建筑ID（地理围栏标识）
-	FloorNo       int32                  `protobuf:"varint,2,opt,name=floorNo,proto3" json:"floorNo,omitempty"`       // 楼层编号（地下层用负数表示）
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 建筑ID（地理围栏标识）
+	BuildingId int64 `protobuf:"varint,1,opt,name=buildingId,proto3" json:"buildingId,omitempty"`
+	// 楼层编号（地下层用负数表示）
+	FloorNo       int32 `protobuf:"varint,2,opt,name=floorNo,proto3" json:"floorNo,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1426,15 +1495,21 @@ func (x *BuildingInfo) GetFloorNo() int32 {
 
 // Status 设备实时状态
 type Status struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Acc            bool                   `protobuf:"varint,1,opt,name=acc,proto3" json:"acc,omitempty"`                       // ACC点火状态：true-车辆启动
-	Emergency      bool                   `protobuf:"varint,2,opt,name=emergency,proto3" json:"emergency,omitempty"`           // 紧急报警状态：true-触发报警
-	MainSourceDown bool                   `protobuf:"varint,3,opt,name=mainSourceDown,proto3" json:"mainSourceDown,omitempty"` // 主电源状态：true-电源断开
-	Signal         int32                  `protobuf:"varint,4,opt,name=signal,proto3" json:"signal,omitempty"`                 // 信号强度（0-31，越大越好）
-	Battery        int32                  `protobuf:"varint,5,opt,name=battery,proto3" json:"battery,omitempty"`               // 剩余电量百分比（0-100）
-	MoveState      int32                  `protobuf:"varint,6,opt,name=moveState,proto3" json:"moveState,omitempty"`           // 运动状态：0-静止，1-移动
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// ACC点火状态：true-车辆启动
+	Acc bool `protobuf:"varint,1,opt,name=acc,proto3" json:"acc,omitempty"`
+	// 紧急报警状态：true-触发报警
+	Emergency bool `protobuf:"varint,2,opt,name=emergency,proto3" json:"emergency,omitempty"`
+	// 主电源状态：true-电源断开
+	MainSourceDown bool `protobuf:"varint,3,opt,name=mainSourceDown,proto3" json:"mainSourceDown,omitempty"`
+	// 信号强度（0-31，越大越好）
+	Signal int32 `protobuf:"varint,4,opt,name=signal,proto3" json:"signal,omitempty"`
+	// 剩余电量百分比（0-100）
+	Battery int32 `protobuf:"varint,5,opt,name=battery,proto3" json:"battery,omitempty"`
+	// 运动状态：0-静止，1-移动
+	MoveState     int32 `protobuf:"varint,6,opt,name=moveState,proto3" json:"moveState,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Status) Reset() {

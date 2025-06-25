@@ -40,12 +40,13 @@ func (s *TriggerRpcServer) SendProtoTrigger(ctx context.Context, in *trigger.Sen
 	return l.SendProtoTrigger(in)
 }
 
-// ArchiveTask
+// 归档任务
 func (s *TriggerRpcServer) ArchiveTask(ctx context.Context, in *trigger.ArchiveTaskReq) (*trigger.ArchiveTaskRes, error) {
 	l := logic.NewArchiveTaskLogic(ctx, s.svcCtx)
 	return l.ArchiveTask(in)
 }
 
+// 删除任务
 func (s *TriggerRpcServer) DeleteTask(ctx context.Context, in *trigger.DeleteTaskReq) (*trigger.DeleteTaskRes, error) {
 	l := logic.NewDeleteTaskLogic(ctx, s.svcCtx)
 	return l.DeleteTask(in)

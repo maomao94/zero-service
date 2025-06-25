@@ -110,13 +110,19 @@ func (x *Res) GetPong() string {
 }
 
 type SendTriggerReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ProcessIn     uint64                 `protobuf:"varint,1,opt,name=processIn,proto3" json:"processIn,omitempty"`    // 秒
-	TriggerTime   string                 `protobuf:"bytes,2,opt,name=triggerTime,proto3" json:"triggerTime,omitempty"` // 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
-	Url           string                 `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`                 // POST json提交 不可为空
-	MaxRetry      int64                  `protobuf:"varint,4,opt,name=maxRetry,proto3" json:"maxRetry,omitempty"`      // 重试次数 可为空 默认: 25
-	MsgId         string                 `protobuf:"bytes,5,opt,name=msgId,proto3" json:"msgId,omitempty"`             // 唯一消息 id 可为空
-	Body          string                 `protobuf:"bytes,6,opt,name=body,proto3" json:"body,omitempty"`               // 触发内容，可为空
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 秒
+	ProcessIn uint64 `protobuf:"varint,1,opt,name=processIn,proto3" json:"processIn,omitempty"`
+	// 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
+	TriggerTime string `protobuf:"bytes,2,opt,name=triggerTime,proto3" json:"triggerTime,omitempty"`
+	// POST json提交 不可为空
+	Url string `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`
+	// 重试次数 可为空 默认: 25
+	MaxRetry int64 `protobuf:"varint,4,opt,name=maxRetry,proto3" json:"maxRetry,omitempty"`
+	// 唯一消息 id 可为空
+	MsgId string `protobuf:"bytes,5,opt,name=msgId,proto3" json:"msgId,omitempty"`
+	// 触发内容，可为空
+	Body          string `protobuf:"bytes,6,opt,name=body,proto3" json:"body,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -194,8 +200,9 @@ func (x *SendTriggerReq) GetBody() string {
 }
 
 type SendTriggerRes struct {
-	state   protoimpl.MessageState `protogen:"open.v1"`
-	TraceId string                 `protobuf:"bytes,1,opt,name=traceId,proto3" json:"traceId,omitempty"` // 唯一追踪 id
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 唯一追踪 id
+	TraceId string `protobuf:"bytes,1,opt,name=traceId,proto3" json:"traceId,omitempty"`
 	// Queue is the name of the queue in which the task belongs.
 	Queue string `protobuf:"bytes,2,opt,name=queue,proto3" json:"queue,omitempty"`
 	// ID is the identifier of the task.
@@ -256,15 +263,23 @@ func (x *SendTriggerRes) GetId() string {
 }
 
 type SendProtoTriggerReq struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	ProcessIn      uint64                 `protobuf:"varint,1,opt,name=processIn,proto3" json:"processIn,omitempty"`           // 秒
-	TriggerTime    string                 `protobuf:"bytes,2,opt,name=triggerTime,proto3" json:"triggerTime,omitempty"`        // 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
-	MaxRetry       int64                  `protobuf:"varint,3,opt,name=maxRetry,proto3" json:"maxRetry,omitempty"`             // 重试次数 可为空 默认: 25
-	MsgId          string                 `protobuf:"bytes,4,opt,name=msgId,proto3" json:"msgId,omitempty"`                    // 唯一消息 id 可为空
-	GrpcServer     string                 `protobuf:"bytes,5,opt,name=grpcServer,proto3" json:"grpcServer,omitempty"`          // 服务名称 不可为空
-	Method         string                 `protobuf:"bytes,6,opt,name=method,proto3" json:"method,omitempty"`                  // 方法 不可为空
-	Payload        string                 `protobuf:"bytes,7,opt,name=payload,proto3" json:"payload,omitempty"`                // pb 字节数据 不可为空
-	RequestTimeout int64                  `protobuf:"varint,8,opt,name=requestTimeout,proto3" json:"requestTimeout,omitempty"` // 请求超时时间 秒 可为空
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 秒
+	ProcessIn uint64 `protobuf:"varint,1,opt,name=processIn,proto3" json:"processIn,omitempty"`
+	// 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
+	TriggerTime string `protobuf:"bytes,2,opt,name=triggerTime,proto3" json:"triggerTime,omitempty"`
+	// 重试次数 可为空 默认: 25
+	MaxRetry int64 `protobuf:"varint,3,opt,name=maxRetry,proto3" json:"maxRetry,omitempty"`
+	// 唯一消息 id 可为空
+	MsgId string `protobuf:"bytes,4,opt,name=msgId,proto3" json:"msgId,omitempty"`
+	// 服务名称 不可为空
+	GrpcServer string `protobuf:"bytes,5,opt,name=grpcServer,proto3" json:"grpcServer,omitempty"`
+	// 方法 不可为空
+	Method string `protobuf:"bytes,6,opt,name=method,proto3" json:"method,omitempty"`
+	// pb 字节数据 不可为空
+	Payload string `protobuf:"bytes,7,opt,name=payload,proto3" json:"payload,omitempty"`
+	// 请求超时时间 单位: 秒 可为空
+	RequestTimeout int64 `protobuf:"varint,8,opt,name=requestTimeout,proto3" json:"requestTimeout,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -356,8 +371,9 @@ func (x *SendProtoTriggerReq) GetRequestTimeout() int64 {
 }
 
 type SendProtoTriggerRes struct {
-	state   protoimpl.MessageState `protogen:"open.v1"`
-	TraceId string                 `protobuf:"bytes,1,opt,name=traceId,proto3" json:"traceId,omitempty"` // 唯一追踪 id
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 唯一追踪 id
+	TraceId string `protobuf:"bytes,1,opt,name=traceId,proto3" json:"traceId,omitempty"`
 	// Queue is the name of the queue in which the task belongs.
 	Queue string `protobuf:"bytes,2,opt,name=queue,proto3" json:"queue,omitempty"`
 	// ID is the identifier of the task.
@@ -647,7 +663,8 @@ const file_trigger_proto_rawDesc = "" +
 	"\x10SendProtoTrigger\x12\x1c.trigger.SendProtoTriggerReq\x1a\x1c.trigger.SendProtoTriggerRes\x12?\n" +
 	"\vArchiveTask\x12\x17.trigger.ArchiveTaskReq\x1a\x17.trigger.ArchiveTaskRes\x12<\n" +
 	"\n" +
-	"DeleteTask\x12\x16.trigger.DeleteTaskReq\x1a\x16.trigger.DeleteTaskResB\vZ\t./triggerb\x06proto3"
+	"DeleteTask\x12\x16.trigger.DeleteTaskReq\x1a\x16.trigger.DeleteTaskResB4\n" +
+	"\x17com.github.trigger.grpcB\fTriggerProtoP\x01Z\t./triggerb\x06proto3"
 
 var (
 	file_trigger_proto_rawDescOnce sync.Once

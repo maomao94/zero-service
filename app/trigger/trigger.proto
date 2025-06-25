@@ -2,6 +2,9 @@ syntax = "proto3";
 
 package trigger;
 option go_package = "./trigger";
+option java_multiple_files = true;
+option java_package = "com.github.trigger.grpc";
+option java_outer_classname = "TriggerProto";
 
 message Req {
   string ping = 1;
@@ -12,16 +15,23 @@ message Res {
 }
 
 message SendTriggerReq {
-  uint64 processIn = 1; // 秒
-  string triggerTime = 2; // 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
-  string url = 3; // POST json提交 不可为空
-  int64 maxRetry = 4; // 重试次数 可为空 默认: 25
-  string msgId = 5; // 唯一消息 id 可为空
-  string body = 6; // 触发内容，可为空
+  // 秒
+  uint64 processIn = 1;
+  // 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
+  string triggerTime = 2;
+  // POST json提交 不可为空
+  string url = 3;
+  // 重试次数 可为空 默认: 25
+  int64 maxRetry = 4;
+  // 唯一消息 id 可为空
+  string msgId = 5;
+  // 触发内容，可为空
+  string body = 6;
 }
 
 message SendTriggerRes {
-  string traceId = 1; // 唯一追踪 id
+  // 唯一追踪 id
+  string traceId = 1;
   // Queue is the name of the queue in which the task belongs.
   string queue = 2;
   // ID is the identifier of the task.
@@ -29,18 +39,27 @@ message SendTriggerRes {
 }
 
 message SendProtoTriggerReq {
-  uint64 processIn = 1; // 秒
-  string triggerTime = 2; // 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
-  int64 maxRetry = 3; // 重试次数 可为空 默认: 25
-  string msgId = 4; // 唯一消息 id 可为空
-  string grpcServer = 5; // 服务名称 不可为空
-  string method = 6; // 方法 不可为空
-  string payload = 7; // pb 字节数据 不可为空
-  int64 requestTimeout = 8; // 请求超时时间 秒 可为空
+  // 秒
+  uint64 processIn = 1;
+  // 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
+  string triggerTime = 2;
+  // 重试次数 可为空 默认: 25
+  int64 maxRetry = 3;
+  // 唯一消息 id 可为空
+  string msgId = 4;
+  // 服务名称 不可为空
+  string grpcServer = 5;
+  // 方法 不可为空
+  string method = 6;
+  // pb 字节数据 不可为空
+  string payload = 7;
+  // 请求超时时间 单位: 秒 可为空
+  int64 requestTimeout = 8;
 }
 
 message SendProtoTriggerRes {
-  string traceId = 1; // 唯一追踪 id
+  // 唯一追踪 id
+  string traceId = 1;
   // Queue is the name of the queue in which the task belongs.
   string queue = 2;
   // ID is the identifier of the task.
@@ -73,7 +92,8 @@ service TriggerRpc {
   rpc SendTrigger(SendTriggerReq) returns(SendTriggerRes);
   // 发送 grpc proto字节码 回调
   rpc SendProtoTrigger(SendProtoTriggerReq) returns (SendProtoTriggerRes);
-  // ArchiveTask
+  // 归档任务
   rpc ArchiveTask(ArchiveTaskReq) returns (ArchiveTaskRes);
+  // 删除任务
   rpc DeleteTask(DeleteTaskReq) returns (DeleteTaskRes);
 }

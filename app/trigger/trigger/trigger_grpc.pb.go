@@ -35,8 +35,9 @@ type TriggerRpcClient interface {
 	SendTrigger(ctx context.Context, in *SendTriggerReq, opts ...grpc.CallOption) (*SendTriggerRes, error)
 	// 发送 grpc proto字节码 回调
 	SendProtoTrigger(ctx context.Context, in *SendProtoTriggerReq, opts ...grpc.CallOption) (*SendProtoTriggerRes, error)
-	// ArchiveTask
+	// 归档任务
 	ArchiveTask(ctx context.Context, in *ArchiveTaskReq, opts ...grpc.CallOption) (*ArchiveTaskRes, error)
+	// 删除任务
 	DeleteTask(ctx context.Context, in *DeleteTaskReq, opts ...grpc.CallOption) (*DeleteTaskRes, error)
 }
 
@@ -107,8 +108,9 @@ type TriggerRpcServer interface {
 	SendTrigger(context.Context, *SendTriggerReq) (*SendTriggerRes, error)
 	// 发送 grpc proto字节码 回调
 	SendProtoTrigger(context.Context, *SendProtoTriggerReq) (*SendProtoTriggerRes, error)
-	// ArchiveTask
+	// 归档任务
 	ArchiveTask(context.Context, *ArchiveTaskReq) (*ArchiveTaskRes, error)
+	// 删除任务
 	DeleteTask(context.Context, *DeleteTaskReq) (*DeleteTaskRes, error)
 	mustEmbedUnimplementedTriggerRpcServer()
 }

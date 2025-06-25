@@ -23,7 +23,7 @@ func NewArchiveTaskLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Archi
 	}
 }
 
-// ArchiveTask
+// 归档任务
 func (l *ArchiveTaskLogic) ArchiveTask(in *trigger.ArchiveTaskReq) (*trigger.ArchiveTaskRes, error) {
 	if err := l.svcCtx.AsynqInspector.ArchiveTask(in.Queue, in.Id); err != nil {
 		return nil, err

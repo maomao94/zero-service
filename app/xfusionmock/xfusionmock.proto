@@ -19,32 +19,40 @@ message ResPushTest {
 }
 
 message ReqPushPoint {
-  bool pushMode = 1; // 是否手动推送 默认 false-自动 true-手动
-  TerminalData data = 2; // 推送数据
+  // 是否手动推送 默认 false-自动 true-手动
+  bool pushMode = 1;
+  // 推送数据
+  TerminalData data = 2;
 }
 
 message ResPushPoint {
 }
 
 message ReqPushAlarm {
-  bool pushMode = 1; // 是否手动推送 默认 false-自动 true-手动
-  AlarmData data = 2; // 推送数据
+  // 是否手动推送 默认 false-自动 true-手动
+  bool pushMode = 1;
+  // 推送数据
+  AlarmData data = 2;
 }
 
 message ResPushAlarm {
 }
 
 message ReqPushEvent {
-  bool pushMode = 1; // 是否手动推送 默认 false-自动 true-手动
-  EventData data = 2; // 推送数据
+  // 是否手动推送 默认 false-自动 true-手动
+  bool pushMode = 1;
+  // 推送数据
+  EventData data = 2;
 }
 
 message ResPushEvent {
 }
 
 message ReqPushTerminalBind {
-  bool pushMode = 1; // 是否手动推送 默认 false-自动 true-手动
-  TerminalBind data = 2; // 推送数据
+  // 是否手动推送 默认 false-自动 true-手动
+  bool pushMode = 1;
+  // 推送数据
+  TerminalBind data = 2;
 }
 
 message ResPushTerminalBind {
@@ -52,116 +60,183 @@ message ResPushTerminalBind {
 
 // TerminalBind 结构体
 message TerminalBind {
-  string dataTagV1 = 1 [json_name = "dataTagV1"]; // kafka tag
-  string action = 2 [json_name = "action"]; // 绑定动作： BIND ｜ UNBIND
-  int64 terminalId = 3 [json_name = "terminalId"]; // 终端ID（唯一标识）
-  string terminalNo = 4 [json_name = "terminalNo"]; // 终端唯一编号（12位字符）
-  string staffIdCardNo = 5 [json_name = "staffIdCardNo"]; // 员工身份证号
-  int64 trackId = 6 [json_name = "trackId"]; // 跟踪对象ID（关联业务系统）
-  string trackNo = 7 [json_name = "trackNo"]; // 对象编号（如车牌号"沪A12345"）
-  string trackType = 8 [json_name = "trackType"]; // 对象类型：CAR-车辆, STAFF-人员
-  string trackName = 9 [json_name = "trackName"]; // 监控对象显示名称（如车牌号"沪A12345"）
-  string actionTime = 10 [json_name = "actionTime"]; // 操作时间，北京时间 eg: 2024-07-01 10:00:00
+  // kafka tag
+  string dataTagV1 = 1 [json_name = "dataTagV1"];
+  // 绑定动作： BIND ｜ UNBIND
+  string action = 2 [json_name = "action"];
+  // 终端ID（唯一标识）
+  int64 terminalId = 3 [json_name = "terminalId"];
+  // 终端唯一编号（12位字符）
+  string terminalNo = 4 [json_name = "terminalNo"];
+  // 员工身份证号
+  string staffIdCardNo = 5 [json_name = "staffIdCardNo"];
+  // 跟踪对象ID（关联业务系统）
+  int64 trackId = 6 [json_name = "trackId"];
+  // 对象编号（如车牌号"沪A12345"）
+  string trackNo = 7 [json_name = "trackNo"];
+  // 对象类型：CAR-车辆, STAFF-人员
+  string trackType = 8 [json_name = "trackType"];
+  // 监控对象显示名称（如车牌号"沪A12345"）
+  string trackName = 9 [json_name = "trackName"];
+  // 操作时间，北京时间 eg: 2024-07-01 10:00:00
+  string actionTime = 10 [json_name = "actionTime"];
 }
 
 // EventData 结构体
 message EventData {
-  string dataTagV1 = 1 [json_name = "dataTagV1"]; // kafka tag
-  string id = 2 [json_name = "id"]; // 事件ID
-  string eventTitle = 3 [json_name = "eventTitle"]; // 事件名称
-  string eventCode = 4 [json_name = "eventCode"]; // 事件类型
-  int64 serverTime = 5 [json_name = "serverTime"]; // 事件时间（服务端）
-  int64 epochTime = 6 [json_name = "epochTime"]; // 事件时间（终端）
-  TerminalInfo terminalInfo = 7 [json_name = "terminalInfo"]; // 终端信息
-  Position position = 8 [json_name = "position"]; // 位置
+  // kafka tag
+  string dataTagV1 = 1 [json_name = "dataTagV1"];
+  // 事件ID
+  string id = 2 [json_name = "id"];
+  // 事件名称
+  string eventTitle = 3 [json_name = "eventTitle"];
+  // 事件类型
+  string eventCode = 4 [json_name = "eventCode"];
+  // 事件时间（服务端）
+  int64 serverTime = 5 [json_name = "serverTime"];
+  // 事件时间（终端）
+  int64 epochTime = 6 [json_name = "epochTime"];
+  // 终端信息
+  TerminalInfo terminalInfo = 7 [json_name = "terminalInfo"];
+  // 位置
+  Position position = 8 [json_name = "position"];
 }
 
 // TerminalData 结构体
 message TerminalData {
-  string dataTagV1 = 1 [json_name = "dataTagV1"]; // kafka tag
-  TerminalInfo terminalInfo = 2 [json_name = "terminalInfo"]; // 终端信息
-  int64 epochTime = 3 [json_name = "epochTime"]; // 位置点上报时间（Unix时间戳，毫秒）
-  Location location = 4 [json_name = "location"]; // 定位信息
-  BuildingInfo buildingInfo = 5 [json_name = "buildingInfo"]; // 建筑信息
-  Status status = 6 [json_name = "status"]; // 设备状态
+  // kafka tag
+  string dataTagV1 = 1 [json_name = "dataTagV1"];
+  // 终端信息
+  TerminalInfo terminalInfo = 2 [json_name = "terminalInfo"];
+  // 位置点上报时间（Unix时间戳，毫秒）
+  int64 epochTime = 3 [json_name = "epochTime"];
+  // 定位信息
+  Location location = 4 [json_name = "location"];
+  // 建筑信息
+  BuildingInfo buildingInfo = 5 [json_name = "buildingInfo"];
+  // 设备状态
+  Status status = 6 [json_name = "status"];
 }
 
 // AlarmData 结构体
 message AlarmData {
-  string dataTagV1 = 1 [json_name = "dataTagV1"]; // kafka tag
-  string id = 2 [json_name = "id"]; // 报警唯一标识
-  string name = 3 [json_name = "name"]; // 报警自定义名称（最大长度50字符）
-  string alarmNo = 4 [json_name = "alarmNo"]; // 报警编号（格式：ALARM-日期-序号）
-  string alarmCode = 5 [json_name = "alarmCode"]; // 报警类型编码（见AlarmType枚举）
-  int32 level = 6 [json_name = "level"]; // 报警等级：1-紧急 2-严重 3-警告
-  repeated string terminalNoList = 7 [json_name = "terminalNoList"]; // 关联终端编号列表（至少包含一个有效终端号）
-  repeated TerminalInfo trackInfoList = 8 [json_name = "trackInfoList"]; // 报警涉及的主体信息列表
-  string trackType = 9 [json_name = "trackType"]; // 监控对象类型：CAR-车辆 STAFF-人员
-  LocationPosition position = 10 [json_name = "position"]; // 报警触发位置（WGS84坐标系）
-  repeated FenceInfo startFences = 11 [json_name = "startFences"]; // 报警开始围栏code列表
-  repeated FenceInfo endFences = 12 [json_name = "endFences"]; // 报警结束围栏code列表
-  int64 startTime = 13 [json_name = "startTime"]; // 报警开始时间（Unix时间戳，毫秒级）
-  int64 endTime = 14 [json_name = "endTime"]; // 报警结束时间（Unix时间戳，毫秒级）
-  int32 duration = 15 [json_name = "duration"]; // 报警持续时长（单位：秒），由结束时间-开始时间计算得出
-  string alarmStatus = 16 [json_name = "alarmStatus"]; // 报警当前状态：ON-进行中 OFF-已结束
+  // kafka tag
+  string dataTagV1 = 1 [json_name = "dataTagV1"];
+  // 报警唯一标识
+  string id = 2 [json_name = "id"];
+  // 报警自定义名称（最大长度50字符）
+  string name = 3 [json_name = "name"];
+  // 报警编号（格式：ALARM-日期-序号）
+  string alarmNo = 4 [json_name = "alarmNo"];
+  // 报警类型编码（见AlarmType枚举）
+  string alarmCode = 5 [json_name = "alarmCode"];
+  // 报警等级：1-紧急 2-严重 3-警告
+  int32 level = 6 [json_name = "level"];
+  // 关联终端编号列表（至少包含一个有效终端号）
+  repeated string terminalNoList = 7 [json_name = "terminalNoList"];
+  // 报警涉及的主体信息列表
+  repeated TerminalInfo trackInfoList = 8 [json_name = "trackInfoList"];
+  // 监控对象类型：CAR-车辆 STAFF-人员
+  string trackType = 9 [json_name = "trackType"];
+  // 报警触发位置（WGS84坐标系）
+  LocationPosition position = 10 [json_name = "position"];
+  // 报警开始围栏code列表
+  repeated FenceInfo startFences = 11 [json_name = "startFences"];
+  // 报警结束围栏code列表
+  repeated FenceInfo endFences = 12 [json_name = "endFences"];
+  // 报警开始时间（Unix时间戳，毫秒级）
+  int64 startTime = 13 [json_name = "startTime"];
+  // 报警结束时间（Unix时间戳，毫秒级）
+  int64 endTime = 14 [json_name = "endTime"];
+  // 报警持续时长（单位：秒），由结束时间-开始时间计算得出
+  int32 duration = 15 [json_name = "duration"];
+  // 报警当前状态：ON-进行中 OFF-已结束
+  string alarmStatus = 16 [json_name = "alarmStatus"];
 }
 
 // FenceInfo 围栏信息
 message FenceInfo {
-  string fenceCode = 1 [json_name = "fenceCode"]; // 围栏code
+  // 围栏code
+  string fenceCode = 1 [json_name = "fenceCode"];
   string orgCode = 7 [json_name = "orgCode"];
 }
 
 // LocationPosition 位置坐标
 message LocationPosition {
-  double lat = 1 [json_name = "lat"]; // 纬度（-90~90）
-  double lon = 2 [json_name = "lon"]; // 经度（-180~180）
-  double alt = 3 [json_name = "alt"]; // 海拔高度（米）
+  // 纬度（-90~90）
+  double lat = 1 [json_name = "lat"];
+  // 经度（-180~180）
+  double lon = 2 [json_name = "lon"];
+  // 海拔高度（米）
+  double alt = 3 [json_name = "alt"];
 }
 
 // TerminalInfo 终端详细信息
 message TerminalInfo {
-  int64 terminalId = 1 [json_name = "terminalId"]; // 终端ID（唯一标识）
-  string terminalNo = 2 [json_name = "terminalNo"]; // 终端唯一编号（12位字符）
-  int64 trackId = 3 [json_name = "trackId"]; // 跟踪对象ID（关联业务系统）
-  string trackNo = 4 [json_name = "trackNo"]; // 对象编号（如车牌号"沪A12345"）
-  string trackType = 5 [json_name = "trackType"]; // 对象类型：CAR-车辆, STAFF-人员
-  string trackName = 6 [json_name = "trackName"]; // 监控对象显示名称（如车牌号"沪A12345"）
+  // 终端ID（唯一标识）
+  int64 terminalId = 1 [json_name = "terminalId"];
+  // 终端唯一编号（12位字符）
+  string terminalNo = 2 [json_name = "terminalNo"];
+  // 跟踪对象ID（关联业务系统）
+  int64 trackId = 3 [json_name = "trackId"];
+  // 对象编号（如车牌号"沪A12345"）
+  string trackNo = 4 [json_name = "trackNo"];
+  // 对象类型：CAR-车辆, STAFF-人员
+  string trackType = 5 [json_name = "trackType"];
+  // 监控对象显示名称（如车牌号"沪A12345"）
+  string trackName = 6 [json_name = "trackName"];
   string orgCode = 7 [json_name = "orgCode"];
   string orgName = 8 [json_name = "orgName"];
 }
 
 // Location 定位数据
 message Location {
-  Position position = 1 [json_name = "position"]; // 经纬度坐标
-  double speed = 2 [json_name = "speed"]; // 速度（千米/小时，保留4位小数）
-  double direction = 3 [json_name = "direction"]; // 方向角度（0-360度，正北为0）
-  string locationMode = 4 [json_name = "locationMode"]; // 定位模式（如GNSS、LBS等）
-  int32 satelliteNum = 5 [json_name = "satelliteNum"]; // 卫星数量（GPS定位时有效）
-  int32 ggaStatus = 6 [json_name = "ggaStatus"]; // GGA状态：1-单点定位，4-固定解
+  // 经纬度坐标
+  Position position = 1 [json_name = "position"];
+  // 速度（千米/小时，保留4位小数）
+  double speed = 2 [json_name = "speed"];
+  // 方向角度（0-360度，正北为0）
+  double direction = 3 [json_name = "direction"];
+  // 定位模式（如GNSS、LBS等）
+  string locationMode = 4 [json_name = "locationMode"];
+  // 卫星数量（GPS定位时有效）
+  int32 satelliteNum = 5 [json_name = "satelliteNum"];
+  // GGA状态：1-单点定位，4-固定解
+  int32 ggaStatus = 6 [json_name = "ggaStatus"];
 }
 
 // Position 经纬度坐标点
 message Position {
-  double lat = 1 [json_name = "lat"]; // 纬度（WGS84坐标系）
-  double lon = 2 [json_name = "lon"]; // 经度（WGS84坐标系）
-  double alt = 3 [json_name = "alt"]; // 海拔高度（米）
+  // 纬度（WGS84坐标系）
+  double lat = 1 [json_name = "lat"];
+  // 经度（WGS84坐标系）
+  double lon = 2 [json_name = "lon"];
+  // 海拔高度（米）
+  double alt = 3 [json_name = "alt"];
 }
 
 // BuildingInfo 建筑信息
 message BuildingInfo {
-  int64 buildingId = 1 [json_name = "buildingId"]; // 建筑ID（地理围栏标识）
-  int32 floorNo = 2 [json_name = "floorNo"]; // 楼层编号（地下层用负数表示）
+  // 建筑ID（地理围栏标识）
+  int64 buildingId = 1 [json_name = "buildingId"];
+  // 楼层编号（地下层用负数表示）
+  int32 floorNo = 2 [json_name = "floorNo"];
 }
 
 // Status 设备实时状态
 message Status {
-  bool acc = 1 [json_name = "acc"]; // ACC点火状态：true-车辆启动
-  bool emergency = 2 [json_name = "emergency"]; // 紧急报警状态：true-触发报警
-  bool mainSourceDown = 3 [json_name = "mainSourceDown"]; // 主电源状态：true-电源断开
-  int32 signal = 4 [json_name = "signal"]; // 信号强度（0-31，越大越好）
-  int32 battery = 5 [json_name = "battery"]; // 剩余电量百分比（0-100）
-  int32 moveState = 6 [json_name = "moveState"]; // 运动状态：0-静止，1-移动
+  // ACC点火状态：true-车辆启动
+  bool acc = 1 [json_name = "acc"];
+  // 紧急报警状态：true-触发报警
+  bool emergency = 2 [json_name = "emergency"];
+  // 主电源状态：true-电源断开
+  bool mainSourceDown = 3 [json_name = "mainSourceDown"];
+  // 信号强度（0-31，越大越好）
+  int32 signal = 4 [json_name = "signal"];
+  // 剩余电量百分比（0-100）
+  int32 battery = 5 [json_name = "battery"];
+  // 运动状态：0-静止，1-移动
+  int32 moveState = 6 [json_name = "moveState"];
 }
 
 service XFusionMockRpc {
