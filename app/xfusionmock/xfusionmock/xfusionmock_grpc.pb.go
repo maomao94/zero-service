@@ -20,7 +20,6 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	XFusionMockRpc_Ping_FullMethodName             = "/xfusionmock.XFusionMockRpc/Ping"
-	XFusionMockRpc_PingV1_FullMethodName           = "/xfusionmock.XFusionMockRpc/PingV1"
 	XFusionMockRpc_PushTest_FullMethodName         = "/xfusionmock.XFusionMockRpc/PushTest"
 	XFusionMockRpc_PushPoint_FullMethodName        = "/xfusionmock.XFusionMockRpc/PushPoint"
 	XFusionMockRpc_PushAlarm_FullMethodName        = "/xfusionmock.XFusionMockRpc/PushAlarm"
@@ -33,7 +32,6 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type XFusionMockRpcClient interface {
 	Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error)
-	PingV1(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error)
 	PushTest(ctx context.Context, in *ReqPushTest, opts ...grpc.CallOption) (*ResPushTest, error)
 	PushPoint(ctx context.Context, in *ReqPushPoint, opts ...grpc.CallOption) (*ResPushPoint, error)
 	PushAlarm(ctx context.Context, in *ReqPushAlarm, opts ...grpc.CallOption) (*ResPushAlarm, error)
@@ -53,16 +51,6 @@ func (c *xFusionMockRpcClient) Ping(ctx context.Context, in *Req, opts ...grpc.C
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Res)
 	err := c.cc.Invoke(ctx, XFusionMockRpc_Ping_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *xFusionMockRpcClient) PingV1(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Res)
-	err := c.cc.Invoke(ctx, XFusionMockRpc_PingV1_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +112,6 @@ func (c *xFusionMockRpcClient) PushTerminalBind(ctx context.Context, in *ReqPush
 // for forward compatibility.
 type XFusionMockRpcServer interface {
 	Ping(context.Context, *Req) (*Res, error)
-	PingV1(context.Context, *Req) (*Res, error)
 	PushTest(context.Context, *ReqPushTest) (*ResPushTest, error)
 	PushPoint(context.Context, *ReqPushPoint) (*ResPushPoint, error)
 	PushAlarm(context.Context, *ReqPushAlarm) (*ResPushAlarm, error)
@@ -142,9 +129,6 @@ type UnimplementedXFusionMockRpcServer struct{}
 
 func (UnimplementedXFusionMockRpcServer) Ping(context.Context, *Req) (*Res, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
-}
-func (UnimplementedXFusionMockRpcServer) PingV1(context.Context, *Req) (*Res, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PingV1 not implemented")
 }
 func (UnimplementedXFusionMockRpcServer) PushTest(context.Context, *ReqPushTest) (*ResPushTest, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PushTest not implemented")
@@ -196,24 +180,6 @@ func _XFusionMockRpc_Ping_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(XFusionMockRpcServer).Ping(ctx, req.(*Req))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _XFusionMockRpc_PingV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Req)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(XFusionMockRpcServer).PingV1(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: XFusionMockRpc_PingV1_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(XFusionMockRpcServer).PingV1(ctx, req.(*Req))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -318,10 +284,6 @@ var XFusionMockRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Ping",
 			Handler:    _XFusionMockRpc_Ping_Handler,
-		},
-		{
-			MethodName: "PingV1",
-			Handler:    _XFusionMockRpc_PingV1_Handler,
 		},
 		{
 			MethodName: "PushTest",

@@ -28,11 +28,6 @@ func (s *XFusionMockRpcServer) Ping(ctx context.Context, in *xfusionmock.Req) (*
 	return l.Ping(in)
 }
 
-func (s *XFusionMockRpcServer) PingV1(ctx context.Context, in *xfusionmock.Req) (*xfusionmock.Res, error) {
-	l := logic.NewPingV1Logic(ctx, s.svcCtx)
-	return l.PingV1(in)
-}
-
 func (s *XFusionMockRpcServer) PushTest(ctx context.Context, in *xfusionmock.ReqPushTest) (*xfusionmock.ResPushTest, error) {
 	l := logic.NewPushTestLogic(ctx, s.svcCtx)
 	return l.PushTest(in)

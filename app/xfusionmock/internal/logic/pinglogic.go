@@ -25,7 +25,5 @@ func NewPingLogic(ctx context.Context, svcCtx *svc.ServiceContext) *PingLogic {
 
 func (l *PingLogic) Ping(in *xfusionmock.Req) (*xfusionmock.Res, error) {
 	l.Logger.Infof("ping >>> %s", in.Ping)
-	l.Logger.Infof("PingParm >>> %s", in.PingParm)
-	l.Logger.Infof("PingJson >>> %s", in.PingJson)
 	return &xfusionmock.Res{Pong: "hello"}, nil
 }

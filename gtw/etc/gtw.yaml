@@ -25,10 +25,10 @@ Upstreams:
     # Mappings can also be written in proto options
     Mappings:
       - Method: get
-        Path: /bff/ping
+        Path: /bff/xfusion/ping
         RpcPath: xfusionmock.XFusionMockRpc/Ping
       - Method: post
-        Path: /bff/postPing
+        Path: /bff/xfusion/postPing
         RpcPath: xfusionmock.XFusionMockRpc/Ping
 ZeroRpcConf:
   Endpoints:
