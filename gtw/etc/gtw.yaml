@@ -15,14 +15,12 @@ Log:
 #  Sampler: 1.0
 #  Batcher: jaeger
 Upstreams:
-  - Grpc:
+  - grpc:
       Endpoints:
-      - 127.0.0.1:21007
+        - 127.0.0.1:21007
       NonBlock: true
-    # protoset mode
     ProtoSets:
       - app/xfusionmock/xfusionmock.pb
-    # Mappings can also be written in proto options
     Mappings:
       - Method: get
         Path: /bff/xfusion/ping
@@ -30,13 +28,12 @@ Upstreams:
       - Method: post
         Path: /bff/xfusion/postPing
         RpcPath: xfusionmock.XFusionMockRpc/Ping
-  - Grpc:
+  - grpc:
       Endpoints:
         - 127.0.0.1:27300
       NonBlock: true
-      # protoset mode
-      ProtoSets:
-        - facade/iecstream.pb
+    ProtoSets:
+      - facade/iecstream/iecstream.pb
 ZeroRpcConf:
   Endpoints:
     - 127.0.0.1:21001
