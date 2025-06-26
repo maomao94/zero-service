@@ -51,7 +51,9 @@ func (l *DeferTriggerProtoTaskHandler) ProcessTask(ctx context.Context, t *asynq
 			if err == nil {
 				l.svcCtx.ConnMap.Set(grpcServer, conn)
 				v = conn
-				logx.Debugf("grpc client inited for %s", grpcServer)
+				logx.WithContext(ctx).Debugf("grpc client inited for %s", grpcServer)
+			} else {
+				logx.WithContext(ctx).Errorf("grpc client init fail for %s, %v", grpcServer, err)
 			}
 		}
 		if v == nil {
