@@ -280,7 +280,7 @@ service XFusionMockRpc {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "服务连通性测试"
       description: "验证服务是否正常运行的基础接口"
-      tags: "系统状态"
+      tags: "千寻mock"
       responses: {
         key: "200"
         value: {

@@ -1712,10 +1712,11 @@ const file_xfusionmock_proto_rawDesc = "" +
 	"\x0emainSourceDown\x18\x03 \x01(\bR\x0emainSourceDown\x12\x16\n" +
 	"\x06signal\x18\x04 \x01(\x05R\x06signal\x12\x18\n" +
 	"\abattery\x18\x05 \x01(\x05R\abattery\x12\x1c\n" +
-	"\tmoveState\x18\x06 \x01(\x05R\tmoveState2\xd2\x04\n" +
-	"\x0eXFusionMockRpc\x12\xde\x01\n" +
-	"\x04Ping\x12\x10.xfusionmock.Req\x1a\x10.xfusionmock.Res\"\xb1\x01\x92A\x8e\x01\n" +
-	"\f系统状态\x12\x15服务连通性测试\x1a-验证服务是否正常运行的基础接口J\x1b\n" +
+	"\tmoveState\x18\x06 \x01(\x05R\tmoveState2\xd0\x04\n" +
+	"\x0eXFusionMockRpc\x12\xdc\x01\n" +
+	"\x04Ping\x12\x10.xfusionmock.Req\x1a\x10.xfusionmock.Res\"\xaf\x01\x92A\x8c\x01\n" +
+	"\n" +
+	"千寻mock\x12\x15服务连通性测试\x1a-验证服务是否正常运行的基础接口J\x1b\n" +
 	"\x03200\x12\x14\n" +
 	"\x12服务正常运行J\x1b\n" +
 	"\x03500\x12\x14\n" +
