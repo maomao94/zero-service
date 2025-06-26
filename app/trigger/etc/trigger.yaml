@@ -7,8 +7,17 @@ ListenOn: 0.0.0.0:21006
 Mode: dev
 Log:
   Encoding: plain
-#  Mode: file
-#  Path: logs/trigger
+  #  Mode: file
+  Path: /opt/logs/trigger.rpc
+  Level: info
+NacosConfig:
+  IsRegister: true
+  Host: 127.0.0.1
+  Port: 8848
+  Username: nacos
+  PassWord: nacos
+  NamespaceId: public
+  ServiceName: trigger
 Redis:
   Host: 127.0.0.1:36379
   Type: node
