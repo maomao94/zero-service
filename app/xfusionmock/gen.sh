@@ -7,12 +7,10 @@ goctl rpc protoc xfusionmock.proto \
   --zrpc_out=. \
   --client=false \
   --proto_path=. \
-  --proto_path=../../third/googleapis \
-  --proto_path=../../third
+  --proto_path=../../third_party
 protoc \
   --proto_path=. \
-  --proto_path=../../third/googleapis \
-  --proto_path=../../third \
+  --proto_path=../../third_party \
   --validate_out=lang=go:. \
   --include_imports \
   --descriptor_set_out=./xfusionmock.pb \

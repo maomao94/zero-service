@@ -1,8 +1,18 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "xfusionmock.proto",
-    "version": "version not set"
+    "title": "XFusion Mock API",
+    "description": "模拟数据推送服务接口文档",
+    "version": "1.0",
+    "contact": {
+      "name": "技术支持",
+      "url": "https://support.example.com",
+      "email": "support@example.com"
+    },
+    "license": {
+      "name": "BSD 3-Clause License",
+      "url": "https://opensource.org/licenses/BSD-3-Clause"
+    }
   },
   "tags": [
     {
@@ -18,13 +28,19 @@
   "paths": {
     "/api/v1/xfusion/ping": {
       "post": {
+        "summary": "服务连通性测试",
+        "description": "验证服务是否正常运行的基础接口",
         "operationId": "XFusionMockRpc_Ping",
         "responses": {
           "200": {
-            "description": "A successful response.",
+            "description": "服务正常运行",
             "schema": {
               "$ref": "#/definitions/xfusionmockRes"
             }
+          },
+          "500": {
+            "description": "服务内部错误",
+            "schema": {}
           },
           "default": {
             "description": "An unexpected error response.",
@@ -44,7 +60,7 @@
           }
         ],
         "tags": [
-          "XFusionMockRpc"
+          "系统状态"
         ]
       }
     }
@@ -316,7 +332,9 @@
       "type": "object",
       "properties": {
         "ping": {
-          "type": "string"
+          "type": "string",
+          "example": "ping",
+          "description": "测试消息内容"
         }
       },
       "required": [
@@ -327,7 +345,9 @@
       "type": "object",
       "properties": {
         "pong": {
-          "type": "string"
+          "type": "string",
+          "example": "pong",
+          "description": "响应消息内容"
         }
       }
     },

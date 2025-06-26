@@ -1991,10 +1991,9 @@ var File_iecstream_proto protoreflect.FileDescriptor
 
 const file_iecstream_proto_rawDesc = "" +
 	"\n" +
-	"\x0fiecstream.proto\x12\tiecstream\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x17validate/validate.proto\"%\n" +
-	"\x03Req\x12\x1e\n" +
-	"\x04ping\x18\x01 \x01(\tB\n" +
-	"\xe0A\x02\xfaB\x04r\x02\x10\x01R\x04ping\"\x19\n" +
+	"\x0fiecstream.proto\x12\tiecstream\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x17validate/validate.proto\"&\n" +
+	"\x03Req\x12\x1f\n" +
+	"\x04ping\x18\x01 \x01(\tB\v\xe2A\x01\x02\xfaB\x04r\x02\x10\x01R\x04ping\"\x19\n" +
 	"\x03Res\x12\x12\n" +
 	"\x04pong\x18\x01 \x01(\tR\x04pong\"@\n" +
 	"\x10PushChunkAsduReq\x12,\n" +

@@ -2,18 +2,45 @@ syntax = "proto3";
 import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
 import "validate/validate.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 package xfusionmock;
 option go_package = "./xfusionmock";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "XFusion Mock API";
+    version: "1.0";
+    description: "模拟数据推送服务接口文档";
+    contact: {
+      name: "技术支持";
+      url: "https://support.example.com";
+      email: "support@example.com";
+    };
+    license: {
+      name: "BSD 3-Clause License";
+      url: "https://opensource.org/licenses/BSD-3-Clause";
+    };
+  };
+};
 
 message Req {
   string ping = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (validate.rules).string = {min_len: 1}
+    (validate.rules).string = {min_len: 1},
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "测试消息内容",
+      example: "\"ping\""  // 正确的 JSON 字符串格式
+    }
   ];
 }
 
 message Res {
-  string pong = 1;
+  string pong = 1 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "响应消息内容",
+      example: "\"pong\""  // 正确的 JSON 字符串格式
+    }
+  ];
 }
 
 message ReqPushTest {
@@ -249,6 +276,23 @@ service XFusionMockRpc {
     option (google.api.http) = {
       post: "/api/v1/xfusion/ping"
       body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "服务连通性测试"
+      description: "验证服务是否正常运行的基础接口"
+      tags: "系统状态"
+      responses: {
+        key: "200"
+        value: {
+          description: "服务正常运行"
+        }
+      }
+      responses: {
+        key: "500"
+        value: {
+          description: "服务内部错误"
+        }
+      }
     };
   };
   rpc PushTest(ReqPushTest) returns (ResPushTest);
