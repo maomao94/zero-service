@@ -51,3 +51,9 @@ func (s *TriggerRpcServer) DeleteTask(ctx context.Context, in *trigger.DeleteTas
 	l := logic.NewDeleteTaskLogic(ctx, s.svcCtx)
 	return l.DeleteTask(in)
 }
+
+// 获取任务
+func (s *TriggerRpcServer) GetTaskInfo(ctx context.Context, in *trigger.GetTaskInfoReq) (*trigger.GetTaskInfoRes, error) {
+	l := logic.NewGetTaskInfoLogic(ctx, s.svcCtx)
+	return l.GetTaskInfo(in)
+}

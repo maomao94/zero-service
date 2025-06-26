@@ -1,9 +1,9 @@
 package common
 
 import (
-	"context"
-	"github.com/ArtisanCloud/PowerLibs/v3/logger/contract"
-	"github.com/zeromicro/go-zero/core/logx"
+	"encoding/json"
+	"github.com/dromara/carbon/v2"
+	"time"
 )
 
 const (
@@ -24,60 +24,21 @@ const (
 	ResultSuccessful  string = "S" // 成功
 )
 
-type PowerWechatLogDriver struct {
-	ctx context.Context
+// DateTime 定义 time.Time 的别名
+type DateTime time.Time
+
+// 序列化为 yyyy-MM-dd HH:mm:ss
+func (t DateTime) MarshalJSON() ([]byte, error) {
+	ts := carbon.CreateFromStdTime(time.Time(t)).ToDateTimeMicroString()
+	return json.Marshal(ts) // 直接返回格式化后的字符串
 }
 
-func (l *PowerWechatLogDriver) WithContext(ctx context.Context) contract.LoggerInterface {
-	return &PowerWechatLogDriver{
-		ctx: ctx,
+func (t *DateTime) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
 	}
-}
-
-func (l *PowerWechatLogDriver) Debug(msg string, v ...interface{}) {
-	logx.WithContext(l.ctx).Debug(msg, v)
-}
-
-func (l *PowerWechatLogDriver) Info(msg string, v ...interface{}) {
-	logx.WithContext(l.ctx).Info(msg, v)
-}
-
-func (l *PowerWechatLogDriver) Warn(msg string, v ...interface{}) {
-	logx.WithContext(l.ctx).Info(msg, v)
-}
-
-func (l *PowerWechatLogDriver) Error(msg string, v ...interface{}) {
-	logx.WithContext(l.ctx).Error(msg, v)
-}
-
-func (l *PowerWechatLogDriver) Panic(msg string, v ...interface{}) {
-	logx.WithContext(l.ctx).Error(msg, v)
-}
-
-func (l *PowerWechatLogDriver) Fatal(msg string, v ...interface{}) {
-	logx.WithContext(l.ctx).Error(msg, v)
-}
-
-func (l *PowerWechatLogDriver) DebugF(format string, args ...interface{}) {
-	logx.WithContext(l.ctx).Debugf(format, args)
-}
-
-func (l *PowerWechatLogDriver) InfoF(format string, args ...interface{}) {
-	logx.WithContext(l.ctx).Infof(format, args)
-}
-
-func (l *PowerWechatLogDriver) WarnF(format string, args ...interface{}) {
-	logx.WithContext(l.ctx).Infof(format, args)
-}
-
-func (l *PowerWechatLogDriver) ErrorF(format string, args ...interface{}) {
-	logx.Errorf(format, args)
-}
-
-func (l *PowerWechatLogDriver) PanicF(format string, args ...interface{}) {
-	logx.Errorf(format, args)
-}
-
-func (l *PowerWechatLogDriver) FatalF(format string, args ...interface{}) {
-	logx.Errorf(format, args)
+	c := carbon.Parse(s)
+	*t = DateTime(c.StdTime())
+	return nil
 }

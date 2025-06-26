@@ -1,80 +1,10 @@
 package types
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/dromara/carbon/v2"
-	"github.com/jinzhu/copier"
 	"reflect"
-	"strconv"
-	"time"
 )
-
-var Option = copier.Option{
-	IgnoreEmpty: true,
-	DeepCopy:    true,
-	Converters: []copier.TypeConverter{
-		{
-			SrcType: time.Time{},
-			DstType: copier.String,
-			Fn: func(src interface{}) (interface{}, error) {
-				s, ok := src.(time.Time)
-
-				if !ok {
-					return nil, errors.New("src type not matching")
-				}
-
-				return carbon.CreateFromStdTime(s).Format(carbon.DateTimeMicroFormat), nil
-			},
-		},
-		{
-			SrcType: copier.String,
-			DstType: copier.Int,
-			Fn: func(src interface{}) (interface{}, error) {
-				s, ok := src.(string)
-
-				if !ok {
-					return nil, errors.New("src type not matching")
-				}
-
-				return strconv.Atoi(s)
-			},
-		},
-		{
-			SrcType: time.Time{},
-			DstType: DateTime{},
-			Fn: func(src interface{}) (interface{}, error) {
-				s, ok := src.(time.Time)
-
-				if !ok {
-					return nil, errors.New("src type not matching")
-				}
-
-				return DateTime(s), nil
-			},
-		},
-	},
-}
-
-// DateTime 定义 time.Time 的别名
-type DateTime time.Time
-
-// 序列化为 yyyy-MM-dd HH:mm:ss
-func (t DateTime) MarshalJSON() ([]byte, error) {
-	ts := carbon.CreateFromStdTime(time.Time(t)).ToDateTimeMicroString()
-	return json.Marshal(ts) // 直接返回格式化后的字符串
-}
-
-func (t *DateTime) UnmarshalJSON(data []byte) error {
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
-	}
-	c := carbon.Parse(s)
-	*t = DateTime(c.StdTime())
-	return nil
-}
 
 type BroadcastBody struct {
 	BroadcastGroupId string `json:"broadcastGroupId"`

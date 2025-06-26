@@ -8,6 +8,7 @@ import (
 	"github.com/wendy512/go-iecp5/asdu"
 	"github.com/zeromicro/go-zero/core/logx"
 	"zero-service/app/ieccaller/internal/svc"
+	"zero-service/common/copierx"
 	iec104client "zero-service/iec104/iec104client"
 	"zero-service/iec104/types"
 	"zero-service/iec104/util"
@@ -125,7 +126,7 @@ func (c *ClientCall) onSinglePoint(packet *asdu.ASDU) {
 		c.logger.Debugf("single point, ioa: %d, value: %v", p.Ioa, p.Value)
 		var obj types.SinglePointInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
-		copier.CopyWithOption(&obj, &p, types.Option)
+		copier.CopyWithOption(&obj, &p, copierx.Option)
 		obj.QdsDesc = util.QdsString(p.Qds)
 		obj.Ov = util.QdsIsOverflow(p.Qds)
 		obj.Bl = util.QdsIsBlocked(p.Qds)
@@ -154,7 +155,7 @@ func (c *ClientCall) onDoublePoint(packet *asdu.ASDU) {
 		c.logger.Debugf("qds: %s", util.QdsString(p.Qds))
 		var obj types.DoublePointInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
-		copier.CopyWithOption(&obj, &p, types.Option)
+		copier.CopyWithOption(&obj, &p, copierx.Option)
 		obj.QdsDesc = util.QdsString(p.Qds)
 		obj.Ov = util.QdsIsOverflow(p.Qds)
 		obj.Bl = util.QdsIsBlocked(p.Qds)
@@ -181,7 +182,7 @@ func (c *ClientCall) onMeasuredValueScaled(packet *asdu.ASDU) {
 		c.logger.Debugf("measured value scaled, ioa: %d, value: %v", p.Ioa, p.Value)
 		var obj types.MeasuredValueScaledInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
-		copier.CopyWithOption(&obj, &p, types.Option)
+		copier.CopyWithOption(&obj, &p, copierx.Option)
 		obj.QdsDesc = util.QdsString(p.Qds)
 		obj.Ov = util.QdsIsOverflow(p.Qds)
 		obj.Bl = util.QdsIsBlocked(p.Qds)
@@ -209,7 +210,7 @@ func (c *ClientCall) onMeasuredValueNormal(packet *asdu.ASDU) {
 		c.logger.Debugf("measured value normal, ioa: %d, value: %v, nva: %.5f", p.Ioa, p.Value, nva)
 		var obj types.MeasuredValueNormalInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
-		copier.CopyWithOption(&obj, &p, types.Option)
+		copier.CopyWithOption(&obj, &p, copierx.Option)
 		obj.Nva = nva
 		obj.QdsDesc = util.QdsString(p.Qds)
 		obj.Ov = util.QdsIsOverflow(p.Qds)
@@ -238,7 +239,7 @@ func (c *ClientCall) onStepPosition(packet *asdu.ASDU) {
 		c.logger.Debugf("step position, ioa: %d, state: %t, value: %d", p.Ioa, p.Value.HasTransient, p.Value.Val)
 		var obj types.StepPositionInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
-		copier.CopyWithOption(&obj, &p, types.Option)
+		copier.CopyWithOption(&obj, &p, copierx.Option)
 		obj.QdsDesc = util.QdsString(p.Qds)
 		obj.Ov = util.QdsIsOverflow(p.Qds)
 		obj.Bl = util.QdsIsBlocked(p.Qds)
@@ -265,7 +266,7 @@ func (c *ClientCall) onBitString32(packet *asdu.ASDU) {
 		c.logger.Debugf("bigtstring32, ioa: %d, value: %v, bsi: %032b", p.Ioa, p.Value, p.Value)
 		var obj types.BitString32Info
 		//obj.Time = carbon.Now().ToDateTimeString()
-		copier.CopyWithOption(&obj, &p, types.Option)
+		copier.CopyWithOption(&obj, &p, copierx.Option)
 		obj.QdsDesc = util.QdsString(p.Qds)
 		obj.Ov = util.QdsIsOverflow(p.Qds)
 		obj.Bl = util.QdsIsBlocked(p.Qds)
@@ -292,7 +293,7 @@ func (c *ClientCall) onMeasuredValueFloat(packet *asdu.ASDU) {
 		c.logger.Debugf("measured value float, ioa: %d, value: %v", p.Ioa, p.Value)
 		var obj types.MeasuredValueFloatInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
-		copier.CopyWithOption(&obj, &p, types.Option)
+		copier.CopyWithOption(&obj, &p, copierx.Option)
 		obj.QdsDesc = util.QdsString(p.Qds)
 		obj.Ov = util.QdsIsOverflow(p.Qds)
 		obj.Bl = util.QdsIsBlocked(p.Qds)
@@ -320,7 +321,7 @@ func (c *ClientCall) onIntegratedTotals(packet *asdu.ASDU) {
 			p.Ioa, p.Value.CounterReading, p.Value.SeqNumber, p.Value.HasCarry, p.Value.IsAdjusted, p.Value.IsInvalid)
 		var obj types.BinaryCounterReadingInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
-		copier.CopyWithOption(&obj, &p, types.Option)
+		copier.CopyWithOption(&obj, &p, copierx.Option)
 		_ = c.svcCtx.PushASDU(&types.MsgBody{
 			Host:     c.host,
 			Port:     c.port,
@@ -342,7 +343,7 @@ func (c *ClientCall) onEventOfProtectionEquipment(packet *asdu.ASDU) {
 			p.Ioa, p.Event, p.Qdp, p.Msec, p.Time.UnixMilli())
 		var obj types.EventOfProtectionEquipmentInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
-		copier.CopyWithOption(&obj, &p, types.Option)
+		copier.CopyWithOption(&obj, &p, copierx.Option)
 		obj.QdpDesc = util.QdpString(p.Qdp)
 		obj.Ei = util.QdpIsElapsedTimeInvalid(p.Qdp)
 		obj.Bl = util.QdpIsBlocked(p.Qdp)
@@ -370,7 +371,7 @@ func (c *ClientCall) onPackedStartEventsOfProtectionEquipment(packet *asdu.ASDU)
 		p.Ioa, p.Event, p.Qdp, p.Msec, p.Time.UnixMilli())
 	var obj types.PackedStartEventsOfProtectionEquipmentInfo
 	//obj.Time = carbon.Now().ToDateTimeString()
-	copier.CopyWithOption(&obj, &p, types.Option)
+	copier.CopyWithOption(&obj, &p, copierx.Option)
 	obj.QdpDesc = util.QdpString(p.Qdp)
 	obj.Ei = util.QdpIsElapsedTimeInvalid(p.Qdp)
 	obj.Bl = util.QdpIsBlocked(p.Qdp)
@@ -401,7 +402,7 @@ func (c *ClientCall) onPackedOutputCircuitInfo(packet *asdu.ASDU) {
 		p.Ioa, p.Oci, gc, cl1, cl2, cl3, p.Qdp, p.Msec, p.Time.UnixMilli())
 	var obj types.PackedOutputCircuitInfoInfo
 	//obj.Time = carbon.Now().ToDateTimeString()
-	copier.CopyWithOption(&obj, &p, types.Option)
+	copier.CopyWithOption(&obj, &p, copierx.Option)
 	obj.Gc = gc
 	obj.Cl1 = cl1
 	obj.Cl2 = cl2
@@ -448,7 +449,7 @@ func (c *ClientCall) onPackedSinglePointWithSCD(packet *asdu.ASDU) {
 
 		c.logger.Debugf("当前闭合的位: %v", activePoints)
 		c.logger.Debugf("状态变化的位: %v", changedPoints)
-		copier.CopyWithOption(&obj, &p, types.Option)
+		copier.CopyWithOption(&obj, &p, copierx.Option)
 		obj.Stn = stn
 		obj.Cdn = cdn
 		obj.QdsDesc = util.QdsString(p.Qds)

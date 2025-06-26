@@ -7,6 +7,7 @@
 package trigger
 
 import (
+	_ "github.com/envoyproxy/protoc-gen-validate/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -21,6 +22,195 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type PbTaskInfo struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// ID is the identifier of the task.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Queue is the name of the queue in which the task belongs.
+	Queue string `protobuf:"bytes,2,opt,name=queue,proto3" json:"queue,omitempty"`
+	// Type is the type name of the task.
+	Type string `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
+	// Payload is the payload data of the task.
+	Payload string `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"`
+	// State indicates the task state.
+	State int32 `protobuf:"varint,5,opt,name=state,proto3" json:"state,omitempty"` // 建议配合 enum TaskState 使用
+	// MaxRetry is the maximum number of times the task can be retried.
+	MaxRetry int32 `protobuf:"varint,6,opt,name=maxRetry,proto3" json:"maxRetry,omitempty"`
+	// Retried is the number of times the task has retried so far.
+	Retried int32 `protobuf:"varint,7,opt,name=retried,proto3" json:"retried,omitempty"`
+	// LastErr is the error message from the last failure.
+	LastErr string `protobuf:"bytes,8,opt,name=lastErr,proto3" json:"lastErr,omitempty"`
+	// LastFailedAt is the time of the last failure.
+	LastFailedAt string `protobuf:"bytes,9,opt,name=lastFailedAt,proto3" json:"lastFailedAt,omitempty"`
+	// Timeout is the duration the task can be processed before being retried.
+	Timeout int64 `protobuf:"varint,10,opt,name=timeout,proto3" json:"timeout,omitempty"` // 使用秒为单位的 duration
+	// Deadline is the deadline for the task.
+	Deadline string `protobuf:"bytes,11,opt,name=deadline,proto3" json:"deadline,omitempty"`
+	// Group is the name of the group in which the task belongs.
+	Group string `protobuf:"bytes,12,opt,name=group,proto3" json:"group,omitempty"`
+	// NextProcessAt is the time the task is scheduled to be processed.
+	NextProcessAt string `protobuf:"bytes,13,opt,name=nextProcessAt,proto3" json:"nextProcessAt,omitempty"`
+	// IsOrphaned indicates if the task is left in active state with no worker.
+	IsOrphaned bool `protobuf:"varint,14,opt,name=isOrphaned,proto3" json:"isOrphaned,omitempty"`
+	// Retention is duration of the retention period.
+	Retention int64 `protobuf:"varint,15,opt,name=retention,proto3" json:"retention,omitempty"` // 使用秒为单位的 duration
+	// CompletedAt is the time when the task is processed successfully.
+	CompletedAt string `protobuf:"bytes,16,opt,name=completedAt,proto3" json:"completedAt,omitempty"` // 或 google.protobuf.Timestamp
+	// Result holds the result data associated with the task.
+	Result        string `protobuf:"bytes,17,opt,name=result,proto3" json:"result,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PbTaskInfo) Reset() {
+	*x = PbTaskInfo{}
+	mi := &file_trigger_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PbTaskInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PbTaskInfo) ProtoMessage() {}
+
+func (x *PbTaskInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_trigger_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PbTaskInfo.ProtoReflect.Descriptor instead.
+func (*PbTaskInfo) Descriptor() ([]byte, []int) {
+	return file_trigger_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *PbTaskInfo) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *PbTaskInfo) GetQueue() string {
+	if x != nil {
+		return x.Queue
+	}
+	return ""
+}
+
+func (x *PbTaskInfo) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *PbTaskInfo) GetPayload() string {
+	if x != nil {
+		return x.Payload
+	}
+	return ""
+}
+
+func (x *PbTaskInfo) GetState() int32 {
+	if x != nil {
+		return x.State
+	}
+	return 0
+}
+
+func (x *PbTaskInfo) GetMaxRetry() int32 {
+	if x != nil {
+		return x.MaxRetry
+	}
+	return 0
+}
+
+func (x *PbTaskInfo) GetRetried() int32 {
+	if x != nil {
+		return x.Retried
+	}
+	return 0
+}
+
+func (x *PbTaskInfo) GetLastErr() string {
+	if x != nil {
+		return x.LastErr
+	}
+	return ""
+}
+
+func (x *PbTaskInfo) GetLastFailedAt() string {
+	if x != nil {
+		return x.LastFailedAt
+	}
+	return ""
+}
+
+func (x *PbTaskInfo) GetTimeout() int64 {
+	if x != nil {
+		return x.Timeout
+	}
+	return 0
+}
+
+func (x *PbTaskInfo) GetDeadline() string {
+	if x != nil {
+		return x.Deadline
+	}
+	return ""
+}
+
+func (x *PbTaskInfo) GetGroup() string {
+	if x != nil {
+		return x.Group
+	}
+	return ""
+}
+
+func (x *PbTaskInfo) GetNextProcessAt() string {
+	if x != nil {
+		return x.NextProcessAt
+	}
+	return ""
+}
+
+func (x *PbTaskInfo) GetIsOrphaned() bool {
+	if x != nil {
+		return x.IsOrphaned
+	}
+	return false
+}
+
+func (x *PbTaskInfo) GetRetention() int64 {
+	if x != nil {
+		return x.Retention
+	}
+	return 0
+}
+
+func (x *PbTaskInfo) GetCompletedAt() string {
+	if x != nil {
+		return x.CompletedAt
+	}
+	return ""
+}
+
+func (x *PbTaskInfo) GetResult() string {
+	if x != nil {
+		return x.Result
+	}
+	return ""
+}
+
 type Req struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Ping          string                 `protobuf:"bytes,1,opt,name=ping,proto3" json:"ping,omitempty"`
@@ -30,7 +220,7 @@ type Req struct {
 
 func (x *Req) Reset() {
 	*x = Req{}
-	mi := &file_trigger_proto_msgTypes[0]
+	mi := &file_trigger_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -42,7 +232,7 @@ func (x *Req) String() string {
 func (*Req) ProtoMessage() {}
 
 func (x *Req) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[0]
+	mi := &file_trigger_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -55,7 +245,7 @@ func (x *Req) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Req.ProtoReflect.Descriptor instead.
 func (*Req) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{0}
+	return file_trigger_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Req) GetPing() string {
@@ -74,7 +264,7 @@ type Res struct {
 
 func (x *Res) Reset() {
 	*x = Res{}
-	mi := &file_trigger_proto_msgTypes[1]
+	mi := &file_trigger_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -86,7 +276,7 @@ func (x *Res) String() string {
 func (*Res) ProtoMessage() {}
 
 func (x *Res) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[1]
+	mi := &file_trigger_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -99,7 +289,7 @@ func (x *Res) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Res.ProtoReflect.Descriptor instead.
 func (*Res) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{1}
+	return file_trigger_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Res) GetPong() string {
@@ -129,7 +319,7 @@ type SendTriggerReq struct {
 
 func (x *SendTriggerReq) Reset() {
 	*x = SendTriggerReq{}
-	mi := &file_trigger_proto_msgTypes[2]
+	mi := &file_trigger_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -141,7 +331,7 @@ func (x *SendTriggerReq) String() string {
 func (*SendTriggerReq) ProtoMessage() {}
 
 func (x *SendTriggerReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[2]
+	mi := &file_trigger_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -154,7 +344,7 @@ func (x *SendTriggerReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendTriggerReq.ProtoReflect.Descriptor instead.
 func (*SendTriggerReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{2}
+	return file_trigger_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *SendTriggerReq) GetProcessIn() uint64 {
@@ -213,7 +403,7 @@ type SendTriggerRes struct {
 
 func (x *SendTriggerRes) Reset() {
 	*x = SendTriggerRes{}
-	mi := &file_trigger_proto_msgTypes[3]
+	mi := &file_trigger_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -225,7 +415,7 @@ func (x *SendTriggerRes) String() string {
 func (*SendTriggerRes) ProtoMessage() {}
 
 func (x *SendTriggerRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[3]
+	mi := &file_trigger_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -238,7 +428,7 @@ func (x *SendTriggerRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendTriggerRes.ProtoReflect.Descriptor instead.
 func (*SendTriggerRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{3}
+	return file_trigger_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SendTriggerRes) GetTraceId() string {
@@ -272,7 +462,7 @@ type SendProtoTriggerReq struct {
 	MaxRetry int64 `protobuf:"varint,3,opt,name=maxRetry,proto3" json:"maxRetry,omitempty"`
 	// 唯一消息 id 可为空
 	MsgId string `protobuf:"bytes,4,opt,name=msgId,proto3" json:"msgId,omitempty"`
-	// 服务名称 不可为空
+	// 服务名称 不可为空 示例 127.0.0.1:8080 direct:///127.0.0.1:8080,127.0.0.2:8080 nacos://nacos:nacos@127.0.0.1:8848/service?namespaceid=public&timeout=5000s
 	GrpcServer string `protobuf:"bytes,5,opt,name=grpcServer,proto3" json:"grpcServer,omitempty"`
 	// 方法 不可为空
 	Method string `protobuf:"bytes,6,opt,name=method,proto3" json:"method,omitempty"`
@@ -286,7 +476,7 @@ type SendProtoTriggerReq struct {
 
 func (x *SendProtoTriggerReq) Reset() {
 	*x = SendProtoTriggerReq{}
-	mi := &file_trigger_proto_msgTypes[4]
+	mi := &file_trigger_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -298,7 +488,7 @@ func (x *SendProtoTriggerReq) String() string {
 func (*SendProtoTriggerReq) ProtoMessage() {}
 
 func (x *SendProtoTriggerReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[4]
+	mi := &file_trigger_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -311,7 +501,7 @@ func (x *SendProtoTriggerReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendProtoTriggerReq.ProtoReflect.Descriptor instead.
 func (*SendProtoTriggerReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{4}
+	return file_trigger_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *SendProtoTriggerReq) GetProcessIn() uint64 {
@@ -384,7 +574,7 @@ type SendProtoTriggerRes struct {
 
 func (x *SendProtoTriggerRes) Reset() {
 	*x = SendProtoTriggerRes{}
-	mi := &file_trigger_proto_msgTypes[5]
+	mi := &file_trigger_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -396,7 +586,7 @@ func (x *SendProtoTriggerRes) String() string {
 func (*SendProtoTriggerRes) ProtoMessage() {}
 
 func (x *SendProtoTriggerRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[5]
+	mi := &file_trigger_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -409,7 +599,7 @@ func (x *SendProtoTriggerRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendProtoTriggerRes.ProtoReflect.Descriptor instead.
 func (*SendProtoTriggerRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{5}
+	return file_trigger_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SendProtoTriggerRes) GetTraceId() string {
@@ -436,16 +626,16 @@ func (x *SendProtoTriggerRes) GetId() string {
 type ArchiveTaskReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Queue is the name of the queue in which the task belongs.
-	Queue string `protobuf:"bytes,2,opt,name=queue,proto3" json:"queue,omitempty"`
+	Queue string `protobuf:"bytes,1,opt,name=queue,proto3" json:"queue,omitempty"`
 	// ID is the identifier of the task.
-	Id            string `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ArchiveTaskReq) Reset() {
 	*x = ArchiveTaskReq{}
-	mi := &file_trigger_proto_msgTypes[6]
+	mi := &file_trigger_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -457,7 +647,7 @@ func (x *ArchiveTaskReq) String() string {
 func (*ArchiveTaskReq) ProtoMessage() {}
 
 func (x *ArchiveTaskReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[6]
+	mi := &file_trigger_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -470,7 +660,7 @@ func (x *ArchiveTaskReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveTaskReq.ProtoReflect.Descriptor instead.
 func (*ArchiveTaskReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{6}
+	return file_trigger_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ArchiveTaskReq) GetQueue() string {
@@ -495,7 +685,7 @@ type ArchiveTaskRes struct {
 
 func (x *ArchiveTaskRes) Reset() {
 	*x = ArchiveTaskRes{}
-	mi := &file_trigger_proto_msgTypes[7]
+	mi := &file_trigger_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -507,7 +697,7 @@ func (x *ArchiveTaskRes) String() string {
 func (*ArchiveTaskRes) ProtoMessage() {}
 
 func (x *ArchiveTaskRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[7]
+	mi := &file_trigger_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -520,22 +710,22 @@ func (x *ArchiveTaskRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveTaskRes.ProtoReflect.Descriptor instead.
 func (*ArchiveTaskRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{7}
+	return file_trigger_proto_rawDescGZIP(), []int{8}
 }
 
 type DeleteTaskReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Queue is the name of the queue in which the task belongs.
-	Queue string `protobuf:"bytes,2,opt,name=queue,proto3" json:"queue,omitempty"`
+	Queue string `protobuf:"bytes,1,opt,name=queue,proto3" json:"queue,omitempty"`
 	// ID is the identifier of the task.
-	Id            string `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *DeleteTaskReq) Reset() {
 	*x = DeleteTaskReq{}
-	mi := &file_trigger_proto_msgTypes[8]
+	mi := &file_trigger_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -547,7 +737,7 @@ func (x *DeleteTaskReq) String() string {
 func (*DeleteTaskReq) ProtoMessage() {}
 
 func (x *DeleteTaskReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[8]
+	mi := &file_trigger_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -560,7 +750,7 @@ func (x *DeleteTaskReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTaskReq.ProtoReflect.Descriptor instead.
 func (*DeleteTaskReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{8}
+	return file_trigger_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *DeleteTaskReq) GetQueue() string {
@@ -585,7 +775,7 @@ type DeleteTaskRes struct {
 
 func (x *DeleteTaskRes) Reset() {
 	*x = DeleteTaskRes{}
-	mi := &file_trigger_proto_msgTypes[9]
+	mi := &file_trigger_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -597,7 +787,7 @@ func (x *DeleteTaskRes) String() string {
 func (*DeleteTaskRes) ProtoMessage() {}
 
 func (x *DeleteTaskRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[9]
+	mi := &file_trigger_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -610,14 +800,134 @@ func (x *DeleteTaskRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTaskRes.ProtoReflect.Descriptor instead.
 func (*DeleteTaskRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{9}
+	return file_trigger_proto_rawDescGZIP(), []int{10}
+}
+
+type GetTaskInfoReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Queue is the name of the queue in which the task belongs.
+	Queue string `protobuf:"bytes,1,opt,name=queue,proto3" json:"queue,omitempty"`
+	// ID is the identifier of the task.
+	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetTaskInfoReq) Reset() {
+	*x = GetTaskInfoReq{}
+	mi := &file_trigger_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTaskInfoReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTaskInfoReq) ProtoMessage() {}
+
+func (x *GetTaskInfoReq) ProtoReflect() protoreflect.Message {
+	mi := &file_trigger_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTaskInfoReq.ProtoReflect.Descriptor instead.
+func (*GetTaskInfoReq) Descriptor() ([]byte, []int) {
+	return file_trigger_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *GetTaskInfoReq) GetQueue() string {
+	if x != nil {
+		return x.Queue
+	}
+	return ""
+}
+
+func (x *GetTaskInfoReq) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type GetTaskInfoRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TaskInfo      *PbTaskInfo            `protobuf:"bytes,1,opt,name=taskInfo,proto3" json:"taskInfo,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetTaskInfoRes) Reset() {
+	*x = GetTaskInfoRes{}
+	mi := &file_trigger_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTaskInfoRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTaskInfoRes) ProtoMessage() {}
+
+func (x *GetTaskInfoRes) ProtoReflect() protoreflect.Message {
+	mi := &file_trigger_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTaskInfoRes.ProtoReflect.Descriptor instead.
+func (*GetTaskInfoRes) Descriptor() ([]byte, []int) {
+	return file_trigger_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *GetTaskInfoRes) GetTaskInfo() *PbTaskInfo {
+	if x != nil {
+		return x.TaskInfo
+	}
+	return nil
 }
 
 var File_trigger_proto protoreflect.FileDescriptor
 
 const file_trigger_proto_rawDesc = "" +
 	"\n" +
-	"\rtrigger.proto\x12\atrigger\"\x19\n" +
+	"\rtrigger.proto\x12\atrigger\x1a\x17validate/validate.proto\"\xd4\x03\n" +
+	"\n" +
+	"PbTaskInfo\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05queue\x18\x02 \x01(\tR\x05queue\x12\x12\n" +
+	"\x04type\x18\x03 \x01(\tR\x04type\x12\x18\n" +
+	"\apayload\x18\x04 \x01(\tR\apayload\x12\x14\n" +
+	"\x05state\x18\x05 \x01(\x05R\x05state\x12\x1a\n" +
+	"\bmaxRetry\x18\x06 \x01(\x05R\bmaxRetry\x12\x18\n" +
+	"\aretried\x18\a \x01(\x05R\aretried\x12\x18\n" +
+	"\alastErr\x18\b \x01(\tR\alastErr\x12\"\n" +
+	"\flastFailedAt\x18\t \x01(\tR\flastFailedAt\x12\x18\n" +
+	"\atimeout\x18\n" +
+	" \x01(\x03R\atimeout\x12\x1a\n" +
+	"\bdeadline\x18\v \x01(\tR\bdeadline\x12\x14\n" +
+	"\x05group\x18\f \x01(\tR\x05group\x12$\n" +
+	"\rnextProcessAt\x18\r \x01(\tR\rnextProcessAt\x12\x1e\n" +
+	"\n" +
+	"isOrphaned\x18\x0e \x01(\bR\n" +
+	"isOrphaned\x12\x1c\n" +
+	"\tretention\x18\x0f \x01(\x03R\tretention\x12 \n" +
+	"\vcompletedAt\x18\x10 \x01(\tR\vcompletedAt\x12\x16\n" +
+	"\x06result\x18\x11 \x01(\tR\x06result\"\x19\n" +
 	"\x03Req\x12\x12\n" +
 	"\x04ping\x18\x01 \x01(\tR\x04ping\"\x19\n" +
 	"\x03Res\x12\x12\n" +
@@ -649,13 +959,18 @@ const file_trigger_proto_rawDesc = "" +
 	"\x05queue\x18\x02 \x01(\tR\x05queue\x12\x0e\n" +
 	"\x02id\x18\x03 \x01(\tR\x02id\"6\n" +
 	"\x0eArchiveTaskReq\x12\x14\n" +
-	"\x05queue\x18\x02 \x01(\tR\x05queue\x12\x0e\n" +
-	"\x02id\x18\x03 \x01(\tR\x02id\"\x10\n" +
+	"\x05queue\x18\x01 \x01(\tR\x05queue\x12\x0e\n" +
+	"\x02id\x18\x02 \x01(\tR\x02id\"\x10\n" +
 	"\x0eArchiveTaskRes\"5\n" +
 	"\rDeleteTaskReq\x12\x14\n" +
-	"\x05queue\x18\x02 \x01(\tR\x05queue\x12\x0e\n" +
-	"\x02id\x18\x03 \x01(\tR\x02id\"\x0f\n" +
-	"\rDeleteTaskRes2\xc0\x02\n" +
+	"\x05queue\x18\x01 \x01(\tR\x05queue\x12\x0e\n" +
+	"\x02id\x18\x02 \x01(\tR\x02id\"\x0f\n" +
+	"\rDeleteTaskRes\"H\n" +
+	"\x0eGetTaskInfoReq\x12\x1d\n" +
+	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x17\n" +
+	"\x02id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"A\n" +
+	"\x0eGetTaskInfoRes\x12/\n" +
+	"\btaskInfo\x18\x01 \x01(\v2\x13.trigger.PbTaskInfoR\btaskInfo2\x81\x03\n" +
 	"\n" +
 	"TriggerRpc\x12\"\n" +
 	"\x04Ping\x12\f.trigger.Req\x1a\f.trigger.Res\x12?\n" +
@@ -663,7 +978,8 @@ const file_trigger_proto_rawDesc = "" +
 	"\x10SendProtoTrigger\x12\x1c.trigger.SendProtoTriggerReq\x1a\x1c.trigger.SendProtoTriggerRes\x12?\n" +
 	"\vArchiveTask\x12\x17.trigger.ArchiveTaskReq\x1a\x17.trigger.ArchiveTaskRes\x12<\n" +
 	"\n" +
-	"DeleteTask\x12\x16.trigger.DeleteTaskReq\x1a\x16.trigger.DeleteTaskResB4\n" +
+	"DeleteTask\x12\x16.trigger.DeleteTaskReq\x1a\x16.trigger.DeleteTaskRes\x12?\n" +
+	"\vGetTaskInfo\x12\x17.trigger.GetTaskInfoReq\x1a\x17.trigger.GetTaskInfoResB4\n" +
 	"\x17com.github.trigger.grpcB\fTriggerProtoP\x01Z\t./triggerb\x06proto3"
 
 var (
@@ -678,35 +994,41 @@ func file_trigger_proto_rawDescGZIP() []byte {
 	return file_trigger_proto_rawDescData
 }
 
-var file_trigger_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_trigger_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_trigger_proto_goTypes = []any{
-	(*Req)(nil),                 // 0: trigger.Req
-	(*Res)(nil),                 // 1: trigger.Res
-	(*SendTriggerReq)(nil),      // 2: trigger.SendTriggerReq
-	(*SendTriggerRes)(nil),      // 3: trigger.SendTriggerRes
-	(*SendProtoTriggerReq)(nil), // 4: trigger.SendProtoTriggerReq
-	(*SendProtoTriggerRes)(nil), // 5: trigger.SendProtoTriggerRes
-	(*ArchiveTaskReq)(nil),      // 6: trigger.ArchiveTaskReq
-	(*ArchiveTaskRes)(nil),      // 7: trigger.ArchiveTaskRes
-	(*DeleteTaskReq)(nil),       // 8: trigger.DeleteTaskReq
-	(*DeleteTaskRes)(nil),       // 9: trigger.DeleteTaskRes
+	(*PbTaskInfo)(nil),          // 0: trigger.PbTaskInfo
+	(*Req)(nil),                 // 1: trigger.Req
+	(*Res)(nil),                 // 2: trigger.Res
+	(*SendTriggerReq)(nil),      // 3: trigger.SendTriggerReq
+	(*SendTriggerRes)(nil),      // 4: trigger.SendTriggerRes
+	(*SendProtoTriggerReq)(nil), // 5: trigger.SendProtoTriggerReq
+	(*SendProtoTriggerRes)(nil), // 6: trigger.SendProtoTriggerRes
+	(*ArchiveTaskReq)(nil),      // 7: trigger.ArchiveTaskReq
+	(*ArchiveTaskRes)(nil),      // 8: trigger.ArchiveTaskRes
+	(*DeleteTaskReq)(nil),       // 9: trigger.DeleteTaskReq
+	(*DeleteTaskRes)(nil),       // 10: trigger.DeleteTaskRes
+	(*GetTaskInfoReq)(nil),      // 11: trigger.GetTaskInfoReq
+	(*GetTaskInfoRes)(nil),      // 12: trigger.GetTaskInfoRes
 }
 var file_trigger_proto_depIdxs = []int32{
-	0, // 0: trigger.TriggerRpc.Ping:input_type -> trigger.Req
-	2, // 1: trigger.TriggerRpc.SendTrigger:input_type -> trigger.SendTriggerReq
-	4, // 2: trigger.TriggerRpc.SendProtoTrigger:input_type -> trigger.SendProtoTriggerReq
-	6, // 3: trigger.TriggerRpc.ArchiveTask:input_type -> trigger.ArchiveTaskReq
-	8, // 4: trigger.TriggerRpc.DeleteTask:input_type -> trigger.DeleteTaskReq
-	1, // 5: trigger.TriggerRpc.Ping:output_type -> trigger.Res
-	3, // 6: trigger.TriggerRpc.SendTrigger:output_type -> trigger.SendTriggerRes
-	5, // 7: trigger.TriggerRpc.SendProtoTrigger:output_type -> trigger.SendProtoTriggerRes
-	7, // 8: trigger.TriggerRpc.ArchiveTask:output_type -> trigger.ArchiveTaskRes
-	9, // 9: trigger.TriggerRpc.DeleteTask:output_type -> trigger.DeleteTaskRes
-	5, // [5:10] is the sub-list for method output_type
-	0, // [0:5] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0,  // 0: trigger.GetTaskInfoRes.taskInfo:type_name -> trigger.PbTaskInfo
+	1,  // 1: trigger.TriggerRpc.Ping:input_type -> trigger.Req
+	3,  // 2: trigger.TriggerRpc.SendTrigger:input_type -> trigger.SendTriggerReq
+	5,  // 3: trigger.TriggerRpc.SendProtoTrigger:input_type -> trigger.SendProtoTriggerReq
+	7,  // 4: trigger.TriggerRpc.ArchiveTask:input_type -> trigger.ArchiveTaskReq
+	9,  // 5: trigger.TriggerRpc.DeleteTask:input_type -> trigger.DeleteTaskReq
+	11, // 6: trigger.TriggerRpc.GetTaskInfo:input_type -> trigger.GetTaskInfoReq
+	2,  // 7: trigger.TriggerRpc.Ping:output_type -> trigger.Res
+	4,  // 8: trigger.TriggerRpc.SendTrigger:output_type -> trigger.SendTriggerRes
+	6,  // 9: trigger.TriggerRpc.SendProtoTrigger:output_type -> trigger.SendProtoTriggerRes
+	8,  // 10: trigger.TriggerRpc.ArchiveTask:output_type -> trigger.ArchiveTaskRes
+	10, // 11: trigger.TriggerRpc.DeleteTask:output_type -> trigger.DeleteTaskRes
+	12, // 12: trigger.TriggerRpc.GetTaskInfo:output_type -> trigger.GetTaskInfoRes
+	7,  // [7:13] is the sub-list for method output_type
+	1,  // [1:7] is the sub-list for method input_type
+	1,  // [1:1] is the sub-list for extension type_name
+	1,  // [1:1] is the sub-list for extension extendee
+	0,  // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_trigger_proto_init() }
@@ -720,7 +1042,7 @@ func file_trigger_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_trigger_proto_rawDesc), len(file_trigger_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -1,10 +1,51 @@
 syntax = "proto3";
 
 package trigger;
+
+import "validate/validate.proto";
+
 option go_package = "./trigger";
 option java_multiple_files = true;
 option java_package = "com.github.trigger.grpc";
 option java_outer_classname = "TriggerProto";
+
+
+message PbTaskInfo {
+  // ID is the identifier of the task.
+  string id = 1;
+  // Queue is the name of the queue in which the task belongs.
+  string queue = 2;
+  // Type is the type name of the task.
+  string type = 3;
+  // Payload is the payload data of the task.
+  string payload = 4;
+  // State indicates the task state.
+  int32 state = 5; // 建议配合 enum TaskState 使用
+  // MaxRetry is the maximum number of times the task can be retried.
+  int32 maxRetry = 6;
+  // Retried is the number of times the task has retried so far.
+  int32 retried = 7;
+  // LastErr is the error message from the last failure.
+  string lastErr = 8;
+  // LastFailedAt is the time of the last failure.
+  string lastFailedAt = 9;
+  // Timeout is the duration the task can be processed before being retried.
+  int64 timeout = 10; // 使用秒为单位的 duration
+  // Deadline is the deadline for the task.
+  string deadline = 11;
+  // Group is the name of the group in which the task belongs.
+  string group = 12;
+  // NextProcessAt is the time the task is scheduled to be processed.
+  string nextProcessAt = 13;
+  // IsOrphaned indicates if the task is left in active state with no worker.
+  bool isOrphaned = 14;
+  // Retention is duration of the retention period.
+  int64 retention = 15; // 使用秒为单位的 duration
+  // CompletedAt is the time when the task is processed successfully.
+  string completedAt = 16; // 或 google.protobuf.Timestamp
+  // Result holds the result data associated with the task.
+  string result = 17;
+}
 
 message Req {
   string ping = 1;
@@ -68,9 +109,9 @@ message SendProtoTriggerRes {
 
 message ArchiveTaskReq {
   // Queue is the name of the queue in which the task belongs.
-  string queue = 2;
+  string queue = 1;
   // ID is the identifier of the task.
-  string id = 3;
+  string id = 2;
 }
 
 message ArchiveTaskRes {
@@ -78,12 +119,23 @@ message ArchiveTaskRes {
 
 message DeleteTaskReq {
   // Queue is the name of the queue in which the task belongs.
-  string queue = 2;
+  string queue = 1;
   // ID is the identifier of the task.
-  string id = 3;
+  string id = 2;
 }
 
 message DeleteTaskRes {
+}
+
+message GetTaskInfoReq {
+  // Queue is the name of the queue in which the task belongs.
+  string queue = 1 [(validate.rules).string = {min_len: 1}];
+  // ID is the identifier of the task.
+  string id = 2 [(validate.rules).string = {min_len: 1}];
+}
+
+message GetTaskInfoRes {
+  PbTaskInfo taskInfo = 1;
 }
 
 service TriggerRpc {
@@ -96,4 +148,6 @@ service TriggerRpc {
   rpc ArchiveTask(ArchiveTaskReq) returns (ArchiveTaskRes);
   // 删除任务
   rpc DeleteTask(DeleteTaskReq) returns (DeleteTaskRes);
+  // 获取任务
+  rpc GetTaskInfo(GetTaskInfoReq) returns (GetTaskInfoRes);
 }
