@@ -26,6 +26,10 @@ func NewGetTaskInfoLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetTa
 
 // 获取任务
 func (l *GetTaskInfoLogic) GetTaskInfo(in *trigger.GetTaskInfoReq) (*trigger.GetTaskInfoRes, error) {
+	err := in.Validate()
+	if err != nil {
+		return nil, err
+	}
 	taskInfo, err := l.svcCtx.AsynqInspector.GetTaskInfo(in.Queue, in.Id)
 	if err != nil {
 		return nil, err
