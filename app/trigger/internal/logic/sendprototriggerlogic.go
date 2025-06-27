@@ -10,6 +10,7 @@ import (
 	"github.com/zeromicro/go-zero/core/trace"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
+	"regexp"
 	"time"
 	"zero-service/common/asynqx"
 	"zero-service/common/ctxdata"
@@ -20,6 +21,8 @@ import (
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
+
+var looseRe = regexp.MustCompile(`^(?:(?:[a-zA-Z0-9\-_.]+\.)*[a-zA-Z0-9\-_.]+:\d+|direct://[^/]*/(?:[a-zA-Z0-9\-_.]+:\d+(?:,[a-zA-Z0-9\-_.]+:\d+)*)|nacos://(.+)@([a-zA-Z0-9\-_.]+:\d+)(/[^?\s]*)?(?:\?[^#\s]*)?)$`)
 
 type SendProtoTriggerLogic struct {
 	ctx    context.Context
@@ -41,6 +44,10 @@ func (l *SendProtoTriggerLogic) SendProtoTrigger(in *trigger.SendProtoTriggerReq
 	defer span.End()
 	carrier := &propagation.HeaderCarrier{}
 	otel.GetTextMapPropagator().Inject(spanCtx, carrier)
+	matsh := looseRe.MatchString(in.GrpcServer)
+	if !matsh {
+		return nil, errors.New("grpcServer is invalid")
+	}
 	msg := &ctxdata.ProtoMsgBody{
 		MsgId:          in.MsgId,
 		Carrier:        carrier,
