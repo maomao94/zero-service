@@ -458,7 +458,24 @@ type SendProtoTriggerReq struct {
 	ProcessIn uint64 `protobuf:"varint,1,opt,name=processIn,proto3" json:"processIn,omitempty"`
 	// 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
 	TriggerTime string `protobuf:"bytes,2,opt,name=triggerTime,proto3" json:"triggerTime,omitempty"`
-	// 重试次数 可为空 默认: 25
+	// 最大重试次数（可为空，默认 25 次）
+	//
+	// 任务失败后会重试，重试间隔采用指数退避策略，时间间隔随重试次数成倍增长：
+	//   - 第 1 次重试间隔约 1 秒，
+	//   - 第 2 次重试间隔约 2 秒，
+	//   - 第 3 次重试间隔约 4 秒，
+	//   - 依此类推，间隔时间不断翻倍，
+	//   - 重试间隔最高封顶为 30 分钟（1800 秒）。
+	//
+	// 具体时间区间示例：
+	//
+	//	1 次重试：约 1 秒
+	//	5 次重试：约 16 秒
+	//	7 次重试：约 64 秒（约 1 分钟）
+	//	10 次重试：约 8 分钟
+	//	12 次及以上重试：间隔固定为 30 分钟
+	//
+	// 总之，重试间隔从秒级开始，逐步增长到分钟、十几分钟，最终封顶 30 分钟。
 	MaxRetry int64 `protobuf:"varint,3,opt,name=maxRetry,proto3" json:"maxRetry,omitempty"`
 	// 唯一消息 id 可为空
 	MsgId string `protobuf:"bytes,4,opt,name=msgId,proto3" json:"msgId,omitempty"`
@@ -467,7 +484,7 @@ type SendProtoTriggerReq struct {
 	// 方法 不可为空
 	Method string `protobuf:"bytes,6,opt,name=method,proto3" json:"method,omitempty"`
 	// pb 字节数据 不可为空
-	Payload string `protobuf:"bytes,7,opt,name=payload,proto3" json:"payload,omitempty"`
+	Payload []byte `protobuf:"bytes,7,opt,name=payload,proto3" json:"payload,omitempty"`
 	// 请求超时时间 单位: 秒 可为空
 	RequestTimeout int64 `protobuf:"varint,8,opt,name=requestTimeout,proto3" json:"requestTimeout,omitempty"`
 	unknownFields  protoimpl.UnknownFields
@@ -546,11 +563,11 @@ func (x *SendProtoTriggerReq) GetMethod() string {
 	return ""
 }
 
-func (x *SendProtoTriggerReq) GetPayload() string {
+func (x *SendProtoTriggerReq) GetPayload() []byte {
 	if x != nil {
 		return x.Payload
 	}
-	return ""
+	return nil
 }
 
 func (x *SendProtoTriggerReq) GetRequestTimeout() int64 {
@@ -952,7 +969,7 @@ const file_trigger_proto_rawDesc = "" +
 	"grpcServer\x18\x05 \x01(\tR\n" +
 	"grpcServer\x12\x16\n" +
 	"\x06method\x18\x06 \x01(\tR\x06method\x12\x18\n" +
-	"\apayload\x18\a \x01(\tR\apayload\x12&\n" +
+	"\apayload\x18\a \x01(\fR\apayload\x12&\n" +
 	"\x0erequestTimeout\x18\b \x01(\x03R\x0erequestTimeout\"U\n" +
 	"\x13SendProtoTriggerRes\x12\x18\n" +
 	"\atraceId\x18\x01 \x01(\tR\atraceId\x12\x14\n" +

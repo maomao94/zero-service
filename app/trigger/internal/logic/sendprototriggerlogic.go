@@ -53,7 +53,7 @@ func (l *SendProtoTriggerLogic) SendProtoTrigger(in *trigger.SendProtoTriggerReq
 		Carrier:        carrier,
 		GrpcServer:     in.GrpcServer,
 		Method:         in.Method,
-		Payload:        in.Payload,
+		Payload:        string(in.Payload),
 		RequestTimeout: in.RequestTimeout,
 	}
 	opts := []asynq.Option{}
