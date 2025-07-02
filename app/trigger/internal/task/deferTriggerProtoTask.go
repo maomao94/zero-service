@@ -42,7 +42,7 @@ func (l *DeferTriggerProtoTaskHandler) ProcessTask(ctx context.Context, t *asynq
 		conf.FillDefault(&clientConf)
 		clientConf.Target = grpcServer
 		clientConf.NonBlock = true
-		clientConf.Timeout = 15000
+		clientConf.Timeout = 60000
 		v, ok := l.svcCtx.ConnMap.Get(grpcServer)
 		if !ok {
 			conn, err := zrpc.NewClient(clientConf,
@@ -61,14 +61,13 @@ func (l *DeferTriggerProtoTaskHandler) ProcessTask(ctx context.Context, t *asynq
 			return errors.New("trigger fail")
 		}
 		cli := v.(*zrpc.RpcClient)
+		if msg.RequestTimeout == 0 {
+			msg.RequestTimeout = clientConf.Timeout
+		}
 		if msg.RequestTimeout > 0 {
 			ctx, _ = context.WithTimeout(ctx, time.Duration(msg.RequestTimeout)*time.Second)
 		}
 		var respBytes []byte
-		if err != nil {
-			t.ResultWriter().Write([]byte("fail,protoMarshalBytesError"))
-			return errors.New("trigger fail")
-		}
 		err = cli.Conn().Invoke(ctx, msg.Method, msg.Payload, &respBytes)
 		if err != nil {
 			t.ResultWriter().Write([]byte("fail,rpcInvokeError: " + err.Error()))
