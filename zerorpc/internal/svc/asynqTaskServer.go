@@ -61,14 +61,14 @@ func LoggingMiddleware(h asynq.Handler) asynq.Handler {
 	return asynq.HandlerFunc(func(ctx context.Context, t *asynq.Task) error {
 		startTime := timex.Now()
 		ctx = logx.ContextWithFields(ctx, logx.Field("type", t.Type()))
-		logx.WithContext(ctx).Infof("asynq start processing")
+		logx.WithContext(ctx).Debug("asynq start processing")
 		err := h.ProcessTask(ctx, t)
 		duration := timex.Since(startTime)
 		if err != nil {
-			logx.WithContext(ctx).WithDuration(duration).Errorf("asynq error processing")
+			logx.WithContext(ctx).WithDuration(duration).Errorf("asynq error processing %+v", err)
 			return err
 		}
-		logx.WithContext(ctx).WithDuration(duration).Infof("asynq finished processing")
+		logx.WithContext(ctx).WithDuration(duration).Debug("asynq finished processing")
 		return nil
 	})
 }

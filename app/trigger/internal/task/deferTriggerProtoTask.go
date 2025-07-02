@@ -71,7 +71,7 @@ func (l *DeferTriggerProtoTaskHandler) ProcessTask(ctx context.Context, t *asynq
 		err = cli.Conn().Invoke(ctx, msg.Method, msg.Payload, &respBytes)
 		if err != nil {
 			t.ResultWriter().Write([]byte("fail,rpcInvokeError: " + err.Error()))
-			return errors.New("trigger fail")
+			return err
 		}
 	}
 	return nil
