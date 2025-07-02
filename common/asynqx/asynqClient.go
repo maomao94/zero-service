@@ -14,12 +14,12 @@ const (
 	AsynqTypeKey = attribute.Key("asynq.type")
 )
 
-func NewAsynqClient(addr, pass string) *asynq.Client {
-	return asynq.NewClient(asynq.RedisClientOpt{Addr: addr, Password: pass})
+func NewAsynqClient(addr, pass string, db int) *asynq.Client {
+	return asynq.NewClient(asynq.RedisClientOpt{Addr: addr, Password: pass, DB: db})
 }
 
-func NewAsynqInspector(addr, pass string) *asynq.Inspector {
-	return asynq.NewInspector(asynq.RedisClientOpt{Addr: addr, Password: pass})
+func NewAsynqInspector(addr, pass string, db int) *asynq.Inspector {
+	return asynq.NewInspector(asynq.RedisClientOpt{Addr: addr, Password: pass, DB: db})
 }
 
 func StartAsynqProducerSpan(ctx context.Context, typename string) (context.Context, trace.Span) {

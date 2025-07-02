@@ -24,8 +24,8 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	return &ServiceContext{
 		Config:         c,
 		Validate:       validator.New(),
-		AsynqClient:    asynqx.NewAsynqClient(c.Redis.Host, c.Redis.Pass),
-		AsynqInspector: asynqx.NewAsynqInspector(c.Redis.Host, c.Redis.Pass),
+		AsynqClient:    asynqx.NewAsynqClient(c.Redis.Host, c.Redis.Pass, c.RedisDB),
+		AsynqInspector: asynqx.NewAsynqInspector(c.Redis.Host, c.Redis.Pass, c.RedisDB),
 		AsynqServer:    asynqx.NewAsynqServer(c.Redis.Host, c.Redis.Pass, c.RedisDB),
 		Scheduler:      asynqx.NewScheduler(c.Redis.Host, c.Redis.Pass),
 		Httpc:          httpc.NewService("httpc"),
