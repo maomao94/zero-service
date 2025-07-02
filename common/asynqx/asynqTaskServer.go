@@ -17,7 +17,10 @@ type TaskServer struct {
 }
 
 func NewTaskServer(server *asynq.Server, mux *asynq.ServeMux) *TaskServer {
-	return &TaskServer{asynqServer: server, mux: mux}
+	return &TaskServer{
+		asynqServer: server,
+		mux:         mux,
+	}
 }
 
 func (q *TaskServer) Start() {

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/hibiken/asynq"
+	"github.com/zeromicro/go-zero/core/stat"
+	"github.com/zeromicro/go-zero/core/timex"
 	"go.opentelemetry.io/otel"
 	"net/http"
 	"time"
@@ -14,16 +16,22 @@ import (
 )
 
 type DeferTriggerTaskHandler struct {
-	svcCtx *svc.ServiceContext
+	svcCtx  *svc.ServiceContext
+	metrics *stat.Metrics
 }
 
 func NewDeferTriggerTask(svcCtx *svc.ServiceContext) *DeferTriggerTaskHandler {
 	return &DeferTriggerTaskHandler{
-		svcCtx: svcCtx,
+		svcCtx:  svcCtx,
+		metrics: stat.NewMetrics("http-task"),
 	}
 }
 
 func (l *DeferTriggerTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task) error {
+	startTime := timex.Now()
+	defer l.metrics.Add(stat.Task{
+		Duration: timex.Since(startTime),
+	})
 	var msg ctxdata.MsgBody
 	if err := json.Unmarshal([]byte(t.Payload()), &msg); err != nil {
 		return err
