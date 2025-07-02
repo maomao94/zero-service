@@ -31,9 +31,9 @@ func (q *TaskServer) Stop() {
 	q.asynqServer.Stop()
 }
 
-func NewAsynqServer(addr, pass string) *asynq.Server {
+func NewAsynqServer(addr, pass string, db int) *asynq.Server {
 	return asynq.NewServer(
-		asynq.RedisClientOpt{Addr: addr, Password: pass},
+		asynq.RedisClientOpt{Addr: addr, Password: pass, DB: db},
 		asynq.Config{
 			IsFailure: func(err error) bool {
 				//logx.Infof("asynq server exec task err:%+v", err)

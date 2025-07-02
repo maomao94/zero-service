@@ -13,4 +13,5 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
+	RedisDB int `json:",optional"`
 }

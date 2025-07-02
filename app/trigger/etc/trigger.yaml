@@ -23,6 +23,7 @@ Redis:
   Type: node
   Key: trigger.rpc
   Pass: G62m50oigInC30sf
+RedisDB: 0
 #链路追踪
 #Telemetry:
 #  Name: zero.alarm
