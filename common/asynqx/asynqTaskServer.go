@@ -63,10 +63,10 @@ func LoggingMiddleware(h asynq.Handler) asynq.Handler {
 		err := h.ProcessTask(ctx, t)
 		duration := timex.Since(startTime)
 		if err != nil {
-			logx.WithContext(ctx).WithDuration(duration).Errorf("asynq error processing")
+			logx.WithContext(ctx).WithDuration(duration).Errorf("asynq processing error %+v", err)
 			return err
 		}
-		logx.WithContext(ctx).WithDuration(duration).Infof("asynq finished processing")
+		logx.WithContext(ctx).WithDuration(duration).Infof("asynq processing success")
 		return nil
 	})
 }
