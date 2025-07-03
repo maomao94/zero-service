@@ -25,6 +25,10 @@ func NewDeleteTaskLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Delete
 
 // 删除任务
 func (l *DeleteTaskLogic) DeleteTask(in *trigger.DeleteTaskReq) (*trigger.DeleteTaskRes, error) {
+	err := in.Validate()
+	if err != nil {
+		return nil, err
+	}
 	if err := l.svcCtx.AsynqInspector.DeleteTask(in.Queue, in.Id); err != nil {
 		return nil, err
 	}

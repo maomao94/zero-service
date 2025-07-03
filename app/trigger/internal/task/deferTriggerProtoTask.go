@@ -73,7 +73,7 @@ func (l *DeferTriggerProtoTaskHandler) ProcessTask(ctx context.Context, t *asynq
 			msg.RequestTimeout = clientConf.Timeout
 		}
 		if msg.RequestTimeout > 0 {
-			ctx, _ = context.WithTimeout(ctx, time.Duration(msg.RequestTimeout)*time.Second)
+			ctx, _ = context.WithTimeout(ctx, time.Duration(msg.RequestTimeout)*time.Millisecond)
 		}
 		var respBytes []byte
 		err = cli.Conn().Invoke(ctx, msg.Method, msg.Payload, &respBytes)

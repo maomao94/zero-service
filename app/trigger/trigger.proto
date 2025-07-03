@@ -110,7 +110,7 @@ message SendProtoTriggerReq {
   string method = 6;
   // pb 字节数据 不可为空
   bytes payload = 7;
-  // 请求超时时间 单位: 秒 可为空
+  // 请求超时时间 单位: 毫秒 可为空
   int64 requestTimeout = 8;
 }
 
@@ -125,9 +125,9 @@ message SendProtoTriggerRes {
 
 message ArchiveTaskReq {
   // Queue is the name of the queue in which the task belongs.
-  string queue = 1;
+  string queue = 1 [(validate.rules).string = {min_len: 1}]; // 默认 critical
   // ID is the identifier of the task.
-  string id = 2;
+  string id = 2 [(validate.rules).string = {min_len: 1}];
 }
 
 message ArchiveTaskRes {
@@ -135,9 +135,9 @@ message ArchiveTaskRes {
 
 message DeleteTaskReq {
   // Queue is the name of the queue in which the task belongs.
-  string queue = 1;
+  string queue = 1 [(validate.rules).string = {min_len: 1}]; // 默认 critical
   // ID is the identifier of the task.
-  string id = 2;
+  string id = 2 [(validate.rules).string = {min_len: 1}];
 }
 
 message DeleteTaskRes {
@@ -145,7 +145,7 @@ message DeleteTaskRes {
 
 message GetTaskInfoReq {
   // Queue is the name of the queue in which the task belongs.
-  string queue = 1 [(validate.rules).string = {min_len: 1}];
+  string queue = 1 [(validate.rules).string = {min_len: 1}]; // 默认 critical
   // ID is the identifier of the task.
   string id = 2 [(validate.rules).string = {min_len: 1}];
 }
