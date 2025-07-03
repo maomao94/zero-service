@@ -834,9 +834,27 @@ func (m *ArchiveTaskReq) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Queue
+	if utf8.RuneCountInString(m.GetQueue()) < 1 {
+		err := ArchiveTaskReqValidationError{
+			field:  "Queue",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for Id
+	if utf8.RuneCountInString(m.GetId()) < 1 {
+		err := ArchiveTaskReqValidationError{
+			field:  "Id",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if len(errors) > 0 {
 		return ArchiveTaskReqMultiError(errors)
@@ -1038,9 +1056,27 @@ func (m *DeleteTaskReq) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Queue
+	if utf8.RuneCountInString(m.GetQueue()) < 1 {
+		err := DeleteTaskReqValidationError{
+			field:  "Queue",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for Id
+	if utf8.RuneCountInString(m.GetId()) < 1 {
+		err := DeleteTaskReqValidationError{
+			field:  "Id",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if len(errors) > 0 {
 		return DeleteTaskReqMultiError(errors)

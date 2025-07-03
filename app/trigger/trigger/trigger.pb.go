@@ -485,7 +485,7 @@ type SendProtoTriggerReq struct {
 	Method string `protobuf:"bytes,6,opt,name=method,proto3" json:"method,omitempty"`
 	// pb 字节数据 不可为空
 	Payload []byte `protobuf:"bytes,7,opt,name=payload,proto3" json:"payload,omitempty"`
-	// 请求超时时间 单位: 秒 可为空
+	// 请求超时时间 单位: 毫秒 可为空
 	RequestTimeout int64 `protobuf:"varint,8,opt,name=requestTimeout,proto3" json:"requestTimeout,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -643,7 +643,7 @@ func (x *SendProtoTriggerRes) GetId() string {
 type ArchiveTaskReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Queue is the name of the queue in which the task belongs.
-	Queue string `protobuf:"bytes,1,opt,name=queue,proto3" json:"queue,omitempty"`
+	Queue string `protobuf:"bytes,1,opt,name=queue,proto3" json:"queue,omitempty"` // 默认 critical
 	// ID is the identifier of the task.
 	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -733,7 +733,7 @@ func (*ArchiveTaskRes) Descriptor() ([]byte, []int) {
 type DeleteTaskReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Queue is the name of the queue in which the task belongs.
-	Queue string `protobuf:"bytes,1,opt,name=queue,proto3" json:"queue,omitempty"`
+	Queue string `protobuf:"bytes,1,opt,name=queue,proto3" json:"queue,omitempty"` // 默认 critical
 	// ID is the identifier of the task.
 	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -823,7 +823,7 @@ func (*DeleteTaskRes) Descriptor() ([]byte, []int) {
 type GetTaskInfoReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Queue is the name of the queue in which the task belongs.
-	Queue string `protobuf:"bytes,1,opt,name=queue,proto3" json:"queue,omitempty"`
+	Queue string `protobuf:"bytes,1,opt,name=queue,proto3" json:"queue,omitempty"` // 默认 critical
 	// ID is the identifier of the task.
 	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -974,14 +974,14 @@ const file_trigger_proto_rawDesc = "" +
 	"\x13SendProtoTriggerRes\x12\x18\n" +
 	"\atraceId\x18\x01 \x01(\tR\atraceId\x12\x14\n" +
 	"\x05queue\x18\x02 \x01(\tR\x05queue\x12\x0e\n" +
-	"\x02id\x18\x03 \x01(\tR\x02id\"6\n" +
-	"\x0eArchiveTaskReq\x12\x14\n" +
-	"\x05queue\x18\x01 \x01(\tR\x05queue\x12\x0e\n" +
-	"\x02id\x18\x02 \x01(\tR\x02id\"\x10\n" +
-	"\x0eArchiveTaskRes\"5\n" +
-	"\rDeleteTaskReq\x12\x14\n" +
-	"\x05queue\x18\x01 \x01(\tR\x05queue\x12\x0e\n" +
-	"\x02id\x18\x02 \x01(\tR\x02id\"\x0f\n" +
+	"\x02id\x18\x03 \x01(\tR\x02id\"H\n" +
+	"\x0eArchiveTaskReq\x12\x1d\n" +
+	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x17\n" +
+	"\x02id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"\x10\n" +
+	"\x0eArchiveTaskRes\"G\n" +
+	"\rDeleteTaskReq\x12\x1d\n" +
+	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x17\n" +
+	"\x02id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"\x0f\n" +
 	"\rDeleteTaskRes\"H\n" +
 	"\x0eGetTaskInfoReq\x12\x1d\n" +
 	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x17\n" +
