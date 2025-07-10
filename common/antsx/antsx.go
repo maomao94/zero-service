@@ -3,6 +3,7 @@ package antsx
 import (
 	"context"
 	"fmt"
+	"github.com/zeromicro/go-zero/core/logx"
 	"sync"
 
 	"github.com/panjf2000/ants/v2"
@@ -83,6 +84,12 @@ func (p *Promise[T]) Reject(err error) {
 	})
 }
 
+func (p *Promise[T]) FireAndForget() {
+	go func() {
+		_, _ = p.Await(context.Background())
+	}()
+}
+
 func NewPromise[T any](id string) *Promise[T] {
 	return &Promise[T]{
 		id:     id,
@@ -133,6 +140,24 @@ func Submit[T any](ctx context.Context, r *Reactor, id string, task func(ctx con
 	}
 
 	return promise, nil
+}
+
+// Post 任务
+func Post[T any](ctx context.Context, r *Reactor, task func(ctx context.Context) (T, error)) error {
+
+	err := r.pool.Submit(func() {
+		// 这里传递 ctx 给 task
+		_, err := task(ctx)
+		if err != nil {
+			logx.WithContext(ctx).Errorf("task error: %v", err)
+		}
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *Reactor) Release() {

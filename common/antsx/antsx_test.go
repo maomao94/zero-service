@@ -77,3 +77,31 @@ func TestReactorAndPromise(t *testing.T) {
 
 	t.Log("Error handling test passed")
 }
+
+func TestPost(t *testing.T) {
+	r, err := antsx.NewReactor(2)
+	if err != nil {
+		t.Fatalf("Failed to create reactor: %v", err)
+	}
+	defer r.Release()
+
+	ctx := context.Background()
+	called := make(chan struct{}, 1)
+
+	err = antsx.Post(ctx, r, func(ctx context.Context) (string, error) {
+		time.Sleep(100 * time.Millisecond)
+		called <- struct{}{}
+		return "done", nil
+	})
+
+	if err != nil {
+		t.Fatalf("Post failed: %v", err)
+	}
+
+	select {
+	case <-called:
+		t.Logf("Post task executed successfully")
+	case <-time.After(1 * time.Second):
+		t.Fatalf("Post task did not complete in time")
+	}
+}
