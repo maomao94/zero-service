@@ -1,8 +1,6 @@
 module zero-service
 
-go 1.23.0
-
-toolchain go1.24.0
+go 1.24.0
 
 require (
 	github.com/ArtisanCloud/PowerLibs/v3 v3.3.2
@@ -20,6 +18,7 @@ require (
 	github.com/larksuite/oapi-sdk-go/v3 v3.4.20
 	github.com/minio/minio-go/v7 v7.0.94
 	github.com/nacos-group/nacos-sdk-go/v2 v2.3.2
+	github.com/panjf2000/ants/v2 v2.11.3
 	github.com/pkg/errors v0.9.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/shopspring/decimal v1.4.0
