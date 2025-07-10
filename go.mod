@@ -6,18 +6,18 @@ toolchain go1.24.0
 
 require (
 	github.com/ArtisanCloud/PowerLibs/v3 v3.3.2
-	github.com/ArtisanCloud/PowerWeChat/v3 v3.4.16
+	github.com/ArtisanCloud/PowerWeChat/v3 v3.4.20
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/dromara/carbon/v2 v2.6.8
-	github.com/duke-git/lancet/v2 v2.3.6
+	github.com/dromara/carbon/v2 v2.6.10
+	github.com/duke-git/lancet/v2 v2.3.7
 	github.com/envoyproxy/protoc-gen-validate v1.2.1
-	github.com/go-playground/validator/v10 v10.26.0
+	github.com/go-playground/validator/v10 v10.27.0
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1
 	github.com/hibiken/asynq v0.25.1
 	github.com/jinzhu/copier v0.4.0
-	github.com/larksuite/oapi-sdk-go/v3 v3.4.19
+	github.com/larksuite/oapi-sdk-go/v3 v3.4.20
 	github.com/minio/minio-go/v7 v7.0.94
 	github.com/nacos-group/nacos-sdk-go/v2 v2.3.2
 	github.com/pkg/errors v0.9.1
