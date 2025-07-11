@@ -6,8 +6,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/zeromicro/go-zero/zrpc"
 	"zero-service/app/file/file"
-	"zero-service/common"
 	interceptor "zero-service/common/Interceptor/rpcclient"
+	"zero-service/common/powerwechatx"
 	"zero-service/gtw/internal/config"
 	"zero-service/zerorpc/zerorpc"
 )
@@ -37,7 +37,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		NotifyURL: "http://zero-service/gtw/v1/pay/wechat/notify",
 		HttpDebug: true,
 		Log: payment.Log{
-			Driver: &common.PowerWechatLogDriver{},
+			Driver: &powerwechatx.PowerWechatLogDriver{},
 		},
 		Http: payment.Http{
 			Timeout: 30.0,
