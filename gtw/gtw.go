@@ -30,10 +30,10 @@ func main() {
 	server := gateway.MustNewServer(c.GatewayConf)
 	ctx := svc.NewServiceContext(c)
 	handler.RegisterHandlers(server.Server, ctx)
-	logx.AddGlobalFields(logx.Field("app", c.Name))
 	serviceGroup := service.NewServiceGroup()
 	defer serviceGroup.Stop()
 	serviceGroup.Add(server)
+
 	if len(c.SwaggerPath) > 0 {
 		// 静态文件路由，暴露 swagger.json
 		server.AddRoute(rest.Route{
@@ -55,6 +55,7 @@ func main() {
 			},
 		})
 	}
+	logx.AddGlobalFields(logx.Field("app", c.Name))
 
 	fmt.Printf("Starting server at %s:%d...\n", c.Host, c.Port)
 	serviceGroup.Start()
