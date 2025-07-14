@@ -35,9 +35,10 @@ zero-service/
 
 - **Kafka 数据消费**：从指定的 Kafka 主题消费数据。
 - **Chunk 任务处理**：使用 chunk 任务处理机制对消费的数据进行批量处理。
+- **处理能力** 使用 go-queue 实现海量数据消费下发，理论最大处理能力为 15W/s
 - **下游 RPC 调用**：将处理后的数据发送到下游 RPC 服务。pb协议：[iecstream.proto](facade/iecstream/iecstream.proto)
 
-#### 2.2 服务 `iec104` IEC 104 协议处理
+#### 2.2 `iec104` IEC 104 协议处理模块
 `iec104` 模块提供了对 IEC 104 协议中 ASDU 消息的全面处理功能。该模块旨在解析、生成和处理 ASDU 消息，支持与电力系统设备的通信。主要功能包括：
 
 - **ASDU 消息解析与生成**：支持多种类型 ASDU 消息的解析和生成。
@@ -54,10 +55,11 @@ zero-service/
   <div align="center">
     <img src="doc/trigger-flow.png" alt="Trigger 服务流程图" style="max-width: 80%; height: auto;" />
   </div>
-- 仅依赖 Redis 作为数据存储和消息队列，部署成本低。
+- 仅依赖 Redis 作为数据存储和消息队列，支持多节点，高可用，部署成本低。
 - 支持 HTTP 和 gRPC 回调，灵活适配不同客户端。
 - 可注册至 Nacos，实现服务发现和负载均衡。
 - 支持多语言环境下的服务交互。
+- pb协议：[trigger.proto](app/trigger/trigger.proto)
 
 ## 注意事项
 1. **依赖管理**：确保 文件中的依赖项已正确安装。 `go.mod`
@@ -67,6 +69,7 @@ zero-service/
 
 ## 相关链接
 - [go-zero 微服务框架](https://github.com/zeromicro/go-zero)
+- [go-queue](https://github.com/zeromicro/go-queue)
 - [asynq 异步任务队列](https://github.com/hibiken/asynq/)
 - [lancet 工具包](https://github.com/duke-git/lancet)
 - [squirrel SQL 构建器](https://github.com/Masterminds/squirrel)
