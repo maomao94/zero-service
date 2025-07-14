@@ -1,0 +1,15 @@
+syntax = "proto3";
+package extproto;
+
+option go_package = "zero-service/third_party/extproto;extproto";
+option java_multiple_files = true;
+option java_package = "com.github.extproto";
+option java_outer_classname = "ExtProto";
+
+message CurrentUser {
+  string userId = 1 [json_name = "userId"];
+  string userName = 2 [json_name = "userName"];
+  string orgCode = 3 [json_name = "orgCode"];
+  string orgId = 4 [json_name = "orgId"];
+  string tenantId = 100 [json_name = "tenantId"];
+}
