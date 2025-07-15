@@ -391,11 +391,11 @@ func (m *SendTriggerReq) validate(all bool) error {
 	var errors []error
 
 	if all {
-		switch v := interface{}(m.GetUser()).(type) {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, SendTriggerReqValidationError{
-					field:  "User",
+					field:  "CurrentUser",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -403,16 +403,16 @@ func (m *SendTriggerReq) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, SendTriggerReqValidationError{
-					field:  "User",
+					field:  "CurrentUser",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetUser()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return SendTriggerReqValidationError{
-				field:  "User",
+				field:  "CurrentUser",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -638,11 +638,11 @@ func (m *SendProtoTriggerReq) validate(all bool) error {
 	var errors []error
 
 	if all {
-		switch v := interface{}(m.GetUser()).(type) {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, SendProtoTriggerReqValidationError{
-					field:  "User",
+					field:  "CurrentUser",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -650,16 +650,16 @@ func (m *SendProtoTriggerReq) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, SendProtoTriggerReqValidationError{
-					field:  "User",
+					field:  "CurrentUser",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetUser()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return SendProtoTriggerReqValidationError{
-				field:  "User",
+				field:  "CurrentUser",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -893,11 +893,11 @@ func (m *ArchiveTaskReq) validate(all bool) error {
 	var errors []error
 
 	if all {
-		switch v := interface{}(m.GetUser()).(type) {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, ArchiveTaskReqValidationError{
-					field:  "User",
+					field:  "CurrentUser",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -905,16 +905,16 @@ func (m *ArchiveTaskReq) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, ArchiveTaskReqValidationError{
-					field:  "User",
+					field:  "CurrentUser",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetUser()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return ArchiveTaskReqValidationError{
-				field:  "User",
+				field:  "CurrentUser",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -1144,11 +1144,11 @@ func (m *DeleteTaskReq) validate(all bool) error {
 	var errors []error
 
 	if all {
-		switch v := interface{}(m.GetUser()).(type) {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, DeleteTaskReqValidationError{
-					field:  "User",
+					field:  "CurrentUser",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -1156,16 +1156,16 @@ func (m *DeleteTaskReq) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, DeleteTaskReqValidationError{
-					field:  "User",
+					field:  "CurrentUser",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetUser()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return DeleteTaskReqValidationError{
-				field:  "User",
+				field:  "CurrentUser",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -1395,11 +1395,11 @@ func (m *GetTaskInfoReq) validate(all bool) error {
 	var errors []error
 
 	if all {
-		switch v := interface{}(m.GetUser()).(type) {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, GetTaskInfoReqValidationError{
-					field:  "User",
+					field:  "CurrentUser",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -1407,16 +1407,16 @@ func (m *GetTaskInfoReq) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, GetTaskInfoReqValidationError{
-					field:  "User",
+					field:  "CurrentUser",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetUser()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return GetTaskInfoReqValidationError{
-				field:  "User",
+				field:  "CurrentUser",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}

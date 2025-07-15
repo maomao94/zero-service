@@ -57,7 +57,7 @@ message Res {
 }
 
 message SendTriggerReq {
-  extproto.CurrentUser user = 100;
+  extproto.CurrentUser currentUser = 100;
 
   // 秒
   uint64 processIn = 1;
@@ -83,7 +83,7 @@ message SendTriggerRes {
 }
 
 message SendProtoTriggerReq {
-  extproto.CurrentUser user = 100;
+  extproto.CurrentUser currentUser = 100;
 
   // 秒
   uint64 processIn = 1;
@@ -129,7 +129,7 @@ message SendProtoTriggerRes {
 }
 
 message ArchiveTaskReq {
-  extproto.CurrentUser user = 100;
+  extproto.CurrentUser currentUser = 100;
 
   // Queue is the name of the queue in which the task belongs.
   string queue = 1 [(validate.rules).string = {min_len: 1}]; // 默认 critical
@@ -141,7 +141,7 @@ message ArchiveTaskRes {
 }
 
 message DeleteTaskReq {
-  extproto.CurrentUser user = 100;
+  extproto.CurrentUser currentUser = 100;
 
   // Queue is the name of the queue in which the task belongs.
   string queue = 1 [(validate.rules).string = {min_len: 1}]; // 默认 critical
@@ -153,7 +153,7 @@ message DeleteTaskRes {
 }
 
 message GetTaskInfoReq {
-  extproto.CurrentUser user = 100;
+  extproto.CurrentUser currentUser = 100;
 
   // Queue is the name of the queue in which the task belongs.
   string queue = 1 [(validate.rules).string = {min_len: 1}]; // 默认 critical

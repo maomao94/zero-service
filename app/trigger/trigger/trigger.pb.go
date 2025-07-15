@@ -301,8 +301,8 @@ func (x *Res) GetPong() string {
 }
 
 type SendTriggerReq struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	User  *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=user,proto3" json:"user,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
 	// 秒
 	ProcessIn uint64 `protobuf:"varint,1,opt,name=processIn,proto3" json:"processIn,omitempty"`
 	// 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
@@ -349,9 +349,9 @@ func (*SendTriggerReq) Descriptor() ([]byte, []int) {
 	return file_trigger_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *SendTriggerReq) GetUser() *extproto.CurrentUser {
+func (x *SendTriggerReq) GetCurrentUser() *extproto.CurrentUser {
 	if x != nil {
-		return x.User
+		return x.CurrentUser
 	}
 	return nil
 }
@@ -462,8 +462,8 @@ func (x *SendTriggerRes) GetId() string {
 }
 
 type SendProtoTriggerReq struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	User  *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=user,proto3" json:"user,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
 	// 秒
 	ProcessIn uint64 `protobuf:"varint,1,opt,name=processIn,proto3" json:"processIn,omitempty"`
 	// 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
@@ -531,9 +531,9 @@ func (*SendProtoTriggerReq) Descriptor() ([]byte, []int) {
 	return file_trigger_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *SendProtoTriggerReq) GetUser() *extproto.CurrentUser {
+func (x *SendProtoTriggerReq) GetCurrentUser() *extproto.CurrentUser {
 	if x != nil {
-		return x.User
+		return x.CurrentUser
 	}
 	return nil
 }
@@ -658,8 +658,8 @@ func (x *SendProtoTriggerRes) GetId() string {
 }
 
 type ArchiveTaskReq struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	User  *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=user,proto3" json:"user,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
 	// Queue is the name of the queue in which the task belongs.
 	Queue string `protobuf:"bytes,1,opt,name=queue,proto3" json:"queue,omitempty"` // 默认 critical
 	// ID is the identifier of the task.
@@ -698,9 +698,9 @@ func (*ArchiveTaskReq) Descriptor() ([]byte, []int) {
 	return file_trigger_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *ArchiveTaskReq) GetUser() *extproto.CurrentUser {
+func (x *ArchiveTaskReq) GetCurrentUser() *extproto.CurrentUser {
 	if x != nil {
-		return x.User
+		return x.CurrentUser
 	}
 	return nil
 }
@@ -756,8 +756,8 @@ func (*ArchiveTaskRes) Descriptor() ([]byte, []int) {
 }
 
 type DeleteTaskReq struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	User  *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=user,proto3" json:"user,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
 	// Queue is the name of the queue in which the task belongs.
 	Queue string `protobuf:"bytes,1,opt,name=queue,proto3" json:"queue,omitempty"` // 默认 critical
 	// ID is the identifier of the task.
@@ -796,9 +796,9 @@ func (*DeleteTaskReq) Descriptor() ([]byte, []int) {
 	return file_trigger_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *DeleteTaskReq) GetUser() *extproto.CurrentUser {
+func (x *DeleteTaskReq) GetCurrentUser() *extproto.CurrentUser {
 	if x != nil {
-		return x.User
+		return x.CurrentUser
 	}
 	return nil
 }
@@ -854,8 +854,8 @@ func (*DeleteTaskRes) Descriptor() ([]byte, []int) {
 }
 
 type GetTaskInfoReq struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	User  *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=user,proto3" json:"user,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
 	// Queue is the name of the queue in which the task belongs.
 	Queue string `protobuf:"bytes,1,opt,name=queue,proto3" json:"queue,omitempty"` // 默认 critical
 	// ID is the identifier of the task.
@@ -894,9 +894,9 @@ func (*GetTaskInfoReq) Descriptor() ([]byte, []int) {
 	return file_trigger_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *GetTaskInfoReq) GetUser() *extproto.CurrentUser {
+func (x *GetTaskInfoReq) GetCurrentUser() *extproto.CurrentUser {
 	if x != nil {
-		return x.User
+		return x.CurrentUser
 	}
 	return nil
 }
@@ -989,9 +989,9 @@ const file_trigger_proto_rawDesc = "" +
 	"\x03Req\x12\x12\n" +
 	"\x04ping\x18\x01 \x01(\tR\x04ping\"\x19\n" +
 	"\x03Res\x12\x12\n" +
-	"\x04pong\x18\x01 \x01(\tR\x04pong\"\xd3\x01\n" +
-	"\x0eSendTriggerReq\x12)\n" +
-	"\x04user\x18d \x01(\v2\x15.extproto.CurrentUserR\x04user\x12\x1c\n" +
+	"\x04pong\x18\x01 \x01(\tR\x04pong\"\xe1\x01\n" +
+	"\x0eSendTriggerReq\x127\n" +
+	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x1c\n" +
 	"\tprocessIn\x18\x01 \x01(\x04R\tprocessIn\x12 \n" +
 	"\vtriggerTime\x18\x02 \x01(\tR\vtriggerTime\x12\x10\n" +
 	"\x03url\x18\x03 \x01(\tR\x03url\x12\x1a\n" +
@@ -1001,9 +1001,9 @@ const file_trigger_proto_rawDesc = "" +
 	"\x0eSendTriggerRes\x12\x18\n" +
 	"\atraceId\x18\x01 \x01(\tR\atraceId\x12\x14\n" +
 	"\x05queue\x18\x02 \x01(\tR\x05queue\x12\x0e\n" +
-	"\x02id\x18\x03 \x01(\tR\x02id\"\xac\x02\n" +
-	"\x13SendProtoTriggerReq\x12)\n" +
-	"\x04user\x18d \x01(\v2\x15.extproto.CurrentUserR\x04user\x12\x1c\n" +
+	"\x02id\x18\x03 \x01(\tR\x02id\"\xba\x02\n" +
+	"\x13SendProtoTriggerReq\x127\n" +
+	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x1c\n" +
 	"\tprocessIn\x18\x01 \x01(\x04R\tprocessIn\x12 \n" +
 	"\vtriggerTime\x18\x02 \x01(\tR\vtriggerTime\x12\x1a\n" +
 	"\bmaxRetry\x18\x03 \x01(\x03R\bmaxRetry\x12\x14\n" +
@@ -1017,19 +1017,19 @@ const file_trigger_proto_rawDesc = "" +
 	"\x13SendProtoTriggerRes\x12\x18\n" +
 	"\atraceId\x18\x01 \x01(\tR\atraceId\x12\x14\n" +
 	"\x05queue\x18\x02 \x01(\tR\x05queue\x12\x0e\n" +
-	"\x02id\x18\x03 \x01(\tR\x02id\"s\n" +
-	"\x0eArchiveTaskReq\x12)\n" +
-	"\x04user\x18d \x01(\v2\x15.extproto.CurrentUserR\x04user\x12\x1d\n" +
+	"\x02id\x18\x03 \x01(\tR\x02id\"\x81\x01\n" +
+	"\x0eArchiveTaskReq\x127\n" +
+	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x1d\n" +
 	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x17\n" +
 	"\x02id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"\x10\n" +
-	"\x0eArchiveTaskRes\"r\n" +
-	"\rDeleteTaskReq\x12)\n" +
-	"\x04user\x18d \x01(\v2\x15.extproto.CurrentUserR\x04user\x12\x1d\n" +
+	"\x0eArchiveTaskRes\"\x80\x01\n" +
+	"\rDeleteTaskReq\x127\n" +
+	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x1d\n" +
 	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x17\n" +
 	"\x02id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"\x0f\n" +
-	"\rDeleteTaskRes\"s\n" +
-	"\x0eGetTaskInfoReq\x12)\n" +
-	"\x04user\x18d \x01(\v2\x15.extproto.CurrentUserR\x04user\x12\x1d\n" +
+	"\rDeleteTaskRes\"\x81\x01\n" +
+	"\x0eGetTaskInfoReq\x127\n" +
+	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x1d\n" +
 	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x17\n" +
 	"\x02id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"A\n" +
 	"\x0eGetTaskInfoRes\x12/\n" +
@@ -1075,11 +1075,11 @@ var file_trigger_proto_goTypes = []any{
 	(*extproto.CurrentUser)(nil), // 13: extproto.CurrentUser
 }
 var file_trigger_proto_depIdxs = []int32{
-	13, // 0: trigger.SendTriggerReq.user:type_name -> extproto.CurrentUser
-	13, // 1: trigger.SendProtoTriggerReq.user:type_name -> extproto.CurrentUser
-	13, // 2: trigger.ArchiveTaskReq.user:type_name -> extproto.CurrentUser
-	13, // 3: trigger.DeleteTaskReq.user:type_name -> extproto.CurrentUser
-	13, // 4: trigger.GetTaskInfoReq.user:type_name -> extproto.CurrentUser
+	13, // 0: trigger.SendTriggerReq.currentUser:type_name -> extproto.CurrentUser
+	13, // 1: trigger.SendProtoTriggerReq.currentUser:type_name -> extproto.CurrentUser
+	13, // 2: trigger.ArchiveTaskReq.currentUser:type_name -> extproto.CurrentUser
+	13, // 3: trigger.DeleteTaskReq.currentUser:type_name -> extproto.CurrentUser
+	13, // 4: trigger.GetTaskInfoReq.currentUser:type_name -> extproto.CurrentUser
 	0,  // 5: trigger.GetTaskInfoRes.taskInfo:type_name -> trigger.PbTaskInfo
 	1,  // 6: trigger.TriggerRpc.Ping:input_type -> trigger.Req
 	3,  // 7: trigger.TriggerRpc.SendTrigger:input_type -> trigger.SendTriggerReq
