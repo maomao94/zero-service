@@ -27,7 +27,14 @@ func main() {
 	conf.MustLoad(*configFile, &c)
 
 	// grpc-gateway
-	server := gateway.MustNewServer(c.GatewayConf)
+	server := gateway.MustNewServer(c.GatewayConf, func(server *gateway.Server) {
+		server.Use(rest.ToMiddleware(func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// todo
+				next.ServeHTTP(w, r)
+			})
+		}))
+	})
 	ctx := svc.NewServiceContext(c)
 	handler.RegisterHandlers(server.Server, ctx)
 	serviceGroup := service.NewServiceGroup()
