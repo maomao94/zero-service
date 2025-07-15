@@ -3,6 +3,7 @@ syntax = "proto3";
 package trigger;
 
 import "validate/validate.proto";
+import "extproto.proto";
 
 option go_package = "./trigger";
 option java_multiple_files = true;
@@ -56,6 +57,8 @@ message Res {
 }
 
 message SendTriggerReq {
+  extproto.CurrentUser user = 100;
+
   // 秒
   uint64 processIn = 1;
   // 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
@@ -80,6 +83,8 @@ message SendTriggerRes {
 }
 
 message SendProtoTriggerReq {
+  extproto.CurrentUser user = 100;
+
   // 秒
   uint64 processIn = 1;
   // 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
@@ -124,6 +129,8 @@ message SendProtoTriggerRes {
 }
 
 message ArchiveTaskReq {
+  extproto.CurrentUser user = 100;
+
   // Queue is the name of the queue in which the task belongs.
   string queue = 1 [(validate.rules).string = {min_len: 1}]; // 默认 critical
   // ID is the identifier of the task.
@@ -134,6 +141,8 @@ message ArchiveTaskRes {
 }
 
 message DeleteTaskReq {
+  extproto.CurrentUser user = 100;
+
   // Queue is the name of the queue in which the task belongs.
   string queue = 1 [(validate.rules).string = {min_len: 1}]; // 默认 critical
   // ID is the identifier of the task.
@@ -144,6 +153,8 @@ message DeleteTaskRes {
 }
 
 message GetTaskInfoReq {
+  extproto.CurrentUser user = 100;
+
   // Queue is the name of the queue in which the task belongs.
   string queue = 1 [(validate.rules).string = {min_len: 1}]; // 默认 critical
   // ID is the identifier of the task.

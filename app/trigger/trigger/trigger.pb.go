@@ -13,6 +13,7 @@ import (
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+	extproto "zero-service/third_party/extproto"
 )
 
 const (
@@ -301,6 +302,7 @@ func (x *Res) GetPong() string {
 
 type SendTriggerReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	User  *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=user,proto3" json:"user,omitempty"`
 	// 秒
 	ProcessIn uint64 `protobuf:"varint,1,opt,name=processIn,proto3" json:"processIn,omitempty"`
 	// 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
@@ -345,6 +347,13 @@ func (x *SendTriggerReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use SendTriggerReq.ProtoReflect.Descriptor instead.
 func (*SendTriggerReq) Descriptor() ([]byte, []int) {
 	return file_trigger_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *SendTriggerReq) GetUser() *extproto.CurrentUser {
+	if x != nil {
+		return x.User
+	}
+	return nil
 }
 
 func (x *SendTriggerReq) GetProcessIn() uint64 {
@@ -454,6 +463,7 @@ func (x *SendTriggerRes) GetId() string {
 
 type SendProtoTriggerReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	User  *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=user,proto3" json:"user,omitempty"`
 	// 秒
 	ProcessIn uint64 `protobuf:"varint,1,opt,name=processIn,proto3" json:"processIn,omitempty"`
 	// 触发时间 2019-01-01 00:00:00 二选一 该字段存在时，优先使用
@@ -479,7 +489,7 @@ type SendProtoTriggerReq struct {
 	MaxRetry int64 `protobuf:"varint,3,opt,name=maxRetry,proto3" json:"maxRetry,omitempty"`
 	// 唯一消息 id 可为空
 	MsgId string `protobuf:"bytes,4,opt,name=msgId,proto3" json:"msgId,omitempty"`
-	// 服务名称 不可为空 示例 127.0.0.1:8080 direct:///127.0.0.1:8080,127.0.0.2:8080 nacos://nacos:nacos@127.0.0.1:8848/service?namespaceid=public&timeout=5000s
+	// 服务名称 不可为空 示例 127.0.0.1:8080 direct:///127.0.0.1:8080,127.0.0.2:8080,nacos://nacos:nacos@127.0.0.1:8848/service?namespaceid=public&timeout=5000s
 	GrpcServer string `protobuf:"bytes,5,opt,name=grpcServer,proto3" json:"grpcServer,omitempty"`
 	// 方法 不可为空
 	Method string `protobuf:"bytes,6,opt,name=method,proto3" json:"method,omitempty"`
@@ -519,6 +529,13 @@ func (x *SendProtoTriggerReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use SendProtoTriggerReq.ProtoReflect.Descriptor instead.
 func (*SendProtoTriggerReq) Descriptor() ([]byte, []int) {
 	return file_trigger_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *SendProtoTriggerReq) GetUser() *extproto.CurrentUser {
+	if x != nil {
+		return x.User
+	}
+	return nil
 }
 
 func (x *SendProtoTriggerReq) GetProcessIn() uint64 {
@@ -642,6 +659,7 @@ func (x *SendProtoTriggerRes) GetId() string {
 
 type ArchiveTaskReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	User  *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=user,proto3" json:"user,omitempty"`
 	// Queue is the name of the queue in which the task belongs.
 	Queue string `protobuf:"bytes,1,opt,name=queue,proto3" json:"queue,omitempty"` // 默认 critical
 	// ID is the identifier of the task.
@@ -678,6 +696,13 @@ func (x *ArchiveTaskReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ArchiveTaskReq.ProtoReflect.Descriptor instead.
 func (*ArchiveTaskReq) Descriptor() ([]byte, []int) {
 	return file_trigger_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ArchiveTaskReq) GetUser() *extproto.CurrentUser {
+	if x != nil {
+		return x.User
+	}
+	return nil
 }
 
 func (x *ArchiveTaskReq) GetQueue() string {
@@ -732,6 +757,7 @@ func (*ArchiveTaskRes) Descriptor() ([]byte, []int) {
 
 type DeleteTaskReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	User  *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=user,proto3" json:"user,omitempty"`
 	// Queue is the name of the queue in which the task belongs.
 	Queue string `protobuf:"bytes,1,opt,name=queue,proto3" json:"queue,omitempty"` // 默认 critical
 	// ID is the identifier of the task.
@@ -768,6 +794,13 @@ func (x *DeleteTaskReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use DeleteTaskReq.ProtoReflect.Descriptor instead.
 func (*DeleteTaskReq) Descriptor() ([]byte, []int) {
 	return file_trigger_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *DeleteTaskReq) GetUser() *extproto.CurrentUser {
+	if x != nil {
+		return x.User
+	}
+	return nil
 }
 
 func (x *DeleteTaskReq) GetQueue() string {
@@ -822,6 +855,7 @@ func (*DeleteTaskRes) Descriptor() ([]byte, []int) {
 
 type GetTaskInfoReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	User  *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=user,proto3" json:"user,omitempty"`
 	// Queue is the name of the queue in which the task belongs.
 	Queue string `protobuf:"bytes,1,opt,name=queue,proto3" json:"queue,omitempty"` // 默认 critical
 	// ID is the identifier of the task.
@@ -858,6 +892,13 @@ func (x *GetTaskInfoReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetTaskInfoReq.ProtoReflect.Descriptor instead.
 func (*GetTaskInfoReq) Descriptor() ([]byte, []int) {
 	return file_trigger_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *GetTaskInfoReq) GetUser() *extproto.CurrentUser {
+	if x != nil {
+		return x.User
+	}
+	return nil
 }
 
 func (x *GetTaskInfoReq) GetQueue() string {
@@ -922,7 +963,7 @@ var File_trigger_proto protoreflect.FileDescriptor
 
 const file_trigger_proto_rawDesc = "" +
 	"\n" +
-	"\rtrigger.proto\x12\atrigger\x1a\x17validate/validate.proto\"\xd4\x03\n" +
+	"\rtrigger.proto\x12\atrigger\x1a\x17validate/validate.proto\x1a\x0eextproto.proto\"\xd4\x03\n" +
 	"\n" +
 	"PbTaskInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
@@ -948,8 +989,9 @@ const file_trigger_proto_rawDesc = "" +
 	"\x03Req\x12\x12\n" +
 	"\x04ping\x18\x01 \x01(\tR\x04ping\"\x19\n" +
 	"\x03Res\x12\x12\n" +
-	"\x04pong\x18\x01 \x01(\tR\x04pong\"\xa8\x01\n" +
-	"\x0eSendTriggerReq\x12\x1c\n" +
+	"\x04pong\x18\x01 \x01(\tR\x04pong\"\xd3\x01\n" +
+	"\x0eSendTriggerReq\x12)\n" +
+	"\x04user\x18d \x01(\v2\x15.extproto.CurrentUserR\x04user\x12\x1c\n" +
 	"\tprocessIn\x18\x01 \x01(\x04R\tprocessIn\x12 \n" +
 	"\vtriggerTime\x18\x02 \x01(\tR\vtriggerTime\x12\x10\n" +
 	"\x03url\x18\x03 \x01(\tR\x03url\x12\x1a\n" +
@@ -959,8 +1001,9 @@ const file_trigger_proto_rawDesc = "" +
 	"\x0eSendTriggerRes\x12\x18\n" +
 	"\atraceId\x18\x01 \x01(\tR\atraceId\x12\x14\n" +
 	"\x05queue\x18\x02 \x01(\tR\x05queue\x12\x0e\n" +
-	"\x02id\x18\x03 \x01(\tR\x02id\"\x81\x02\n" +
-	"\x13SendProtoTriggerReq\x12\x1c\n" +
+	"\x02id\x18\x03 \x01(\tR\x02id\"\xac\x02\n" +
+	"\x13SendProtoTriggerReq\x12)\n" +
+	"\x04user\x18d \x01(\v2\x15.extproto.CurrentUserR\x04user\x12\x1c\n" +
 	"\tprocessIn\x18\x01 \x01(\x04R\tprocessIn\x12 \n" +
 	"\vtriggerTime\x18\x02 \x01(\tR\vtriggerTime\x12\x1a\n" +
 	"\bmaxRetry\x18\x03 \x01(\x03R\bmaxRetry\x12\x14\n" +
@@ -974,16 +1017,19 @@ const file_trigger_proto_rawDesc = "" +
 	"\x13SendProtoTriggerRes\x12\x18\n" +
 	"\atraceId\x18\x01 \x01(\tR\atraceId\x12\x14\n" +
 	"\x05queue\x18\x02 \x01(\tR\x05queue\x12\x0e\n" +
-	"\x02id\x18\x03 \x01(\tR\x02id\"H\n" +
-	"\x0eArchiveTaskReq\x12\x1d\n" +
+	"\x02id\x18\x03 \x01(\tR\x02id\"s\n" +
+	"\x0eArchiveTaskReq\x12)\n" +
+	"\x04user\x18d \x01(\v2\x15.extproto.CurrentUserR\x04user\x12\x1d\n" +
 	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x17\n" +
 	"\x02id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"\x10\n" +
-	"\x0eArchiveTaskRes\"G\n" +
-	"\rDeleteTaskReq\x12\x1d\n" +
+	"\x0eArchiveTaskRes\"r\n" +
+	"\rDeleteTaskReq\x12)\n" +
+	"\x04user\x18d \x01(\v2\x15.extproto.CurrentUserR\x04user\x12\x1d\n" +
 	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x17\n" +
 	"\x02id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"\x0f\n" +
-	"\rDeleteTaskRes\"H\n" +
-	"\x0eGetTaskInfoReq\x12\x1d\n" +
+	"\rDeleteTaskRes\"s\n" +
+	"\x0eGetTaskInfoReq\x12)\n" +
+	"\x04user\x18d \x01(\v2\x15.extproto.CurrentUserR\x04user\x12\x1d\n" +
 	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x17\n" +
 	"\x02id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"A\n" +
 	"\x0eGetTaskInfoRes\x12/\n" +
@@ -1013,39 +1059,45 @@ func file_trigger_proto_rawDescGZIP() []byte {
 
 var file_trigger_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_trigger_proto_goTypes = []any{
-	(*PbTaskInfo)(nil),          // 0: trigger.PbTaskInfo
-	(*Req)(nil),                 // 1: trigger.Req
-	(*Res)(nil),                 // 2: trigger.Res
-	(*SendTriggerReq)(nil),      // 3: trigger.SendTriggerReq
-	(*SendTriggerRes)(nil),      // 4: trigger.SendTriggerRes
-	(*SendProtoTriggerReq)(nil), // 5: trigger.SendProtoTriggerReq
-	(*SendProtoTriggerRes)(nil), // 6: trigger.SendProtoTriggerRes
-	(*ArchiveTaskReq)(nil),      // 7: trigger.ArchiveTaskReq
-	(*ArchiveTaskRes)(nil),      // 8: trigger.ArchiveTaskRes
-	(*DeleteTaskReq)(nil),       // 9: trigger.DeleteTaskReq
-	(*DeleteTaskRes)(nil),       // 10: trigger.DeleteTaskRes
-	(*GetTaskInfoReq)(nil),      // 11: trigger.GetTaskInfoReq
-	(*GetTaskInfoRes)(nil),      // 12: trigger.GetTaskInfoRes
+	(*PbTaskInfo)(nil),           // 0: trigger.PbTaskInfo
+	(*Req)(nil),                  // 1: trigger.Req
+	(*Res)(nil),                  // 2: trigger.Res
+	(*SendTriggerReq)(nil),       // 3: trigger.SendTriggerReq
+	(*SendTriggerRes)(nil),       // 4: trigger.SendTriggerRes
+	(*SendProtoTriggerReq)(nil),  // 5: trigger.SendProtoTriggerReq
+	(*SendProtoTriggerRes)(nil),  // 6: trigger.SendProtoTriggerRes
+	(*ArchiveTaskReq)(nil),       // 7: trigger.ArchiveTaskReq
+	(*ArchiveTaskRes)(nil),       // 8: trigger.ArchiveTaskRes
+	(*DeleteTaskReq)(nil),        // 9: trigger.DeleteTaskReq
+	(*DeleteTaskRes)(nil),        // 10: trigger.DeleteTaskRes
+	(*GetTaskInfoReq)(nil),       // 11: trigger.GetTaskInfoReq
+	(*GetTaskInfoRes)(nil),       // 12: trigger.GetTaskInfoRes
+	(*extproto.CurrentUser)(nil), // 13: extproto.CurrentUser
 }
 var file_trigger_proto_depIdxs = []int32{
-	0,  // 0: trigger.GetTaskInfoRes.taskInfo:type_name -> trigger.PbTaskInfo
-	1,  // 1: trigger.TriggerRpc.Ping:input_type -> trigger.Req
-	3,  // 2: trigger.TriggerRpc.SendTrigger:input_type -> trigger.SendTriggerReq
-	5,  // 3: trigger.TriggerRpc.SendProtoTrigger:input_type -> trigger.SendProtoTriggerReq
-	7,  // 4: trigger.TriggerRpc.ArchiveTask:input_type -> trigger.ArchiveTaskReq
-	9,  // 5: trigger.TriggerRpc.DeleteTask:input_type -> trigger.DeleteTaskReq
-	11, // 6: trigger.TriggerRpc.GetTaskInfo:input_type -> trigger.GetTaskInfoReq
-	2,  // 7: trigger.TriggerRpc.Ping:output_type -> trigger.Res
-	4,  // 8: trigger.TriggerRpc.SendTrigger:output_type -> trigger.SendTriggerRes
-	6,  // 9: trigger.TriggerRpc.SendProtoTrigger:output_type -> trigger.SendProtoTriggerRes
-	8,  // 10: trigger.TriggerRpc.ArchiveTask:output_type -> trigger.ArchiveTaskRes
-	10, // 11: trigger.TriggerRpc.DeleteTask:output_type -> trigger.DeleteTaskRes
-	12, // 12: trigger.TriggerRpc.GetTaskInfo:output_type -> trigger.GetTaskInfoRes
-	7,  // [7:13] is the sub-list for method output_type
-	1,  // [1:7] is the sub-list for method input_type
-	1,  // [1:1] is the sub-list for extension type_name
-	1,  // [1:1] is the sub-list for extension extendee
-	0,  // [0:1] is the sub-list for field type_name
+	13, // 0: trigger.SendTriggerReq.user:type_name -> extproto.CurrentUser
+	13, // 1: trigger.SendProtoTriggerReq.user:type_name -> extproto.CurrentUser
+	13, // 2: trigger.ArchiveTaskReq.user:type_name -> extproto.CurrentUser
+	13, // 3: trigger.DeleteTaskReq.user:type_name -> extproto.CurrentUser
+	13, // 4: trigger.GetTaskInfoReq.user:type_name -> extproto.CurrentUser
+	0,  // 5: trigger.GetTaskInfoRes.taskInfo:type_name -> trigger.PbTaskInfo
+	1,  // 6: trigger.TriggerRpc.Ping:input_type -> trigger.Req
+	3,  // 7: trigger.TriggerRpc.SendTrigger:input_type -> trigger.SendTriggerReq
+	5,  // 8: trigger.TriggerRpc.SendProtoTrigger:input_type -> trigger.SendProtoTriggerReq
+	7,  // 9: trigger.TriggerRpc.ArchiveTask:input_type -> trigger.ArchiveTaskReq
+	9,  // 10: trigger.TriggerRpc.DeleteTask:input_type -> trigger.DeleteTaskReq
+	11, // 11: trigger.TriggerRpc.GetTaskInfo:input_type -> trigger.GetTaskInfoReq
+	2,  // 12: trigger.TriggerRpc.Ping:output_type -> trigger.Res
+	4,  // 13: trigger.TriggerRpc.SendTrigger:output_type -> trigger.SendTriggerRes
+	6,  // 14: trigger.TriggerRpc.SendProtoTrigger:output_type -> trigger.SendProtoTriggerRes
+	8,  // 15: trigger.TriggerRpc.ArchiveTask:output_type -> trigger.ArchiveTaskRes
+	10, // 16: trigger.TriggerRpc.DeleteTask:output_type -> trigger.DeleteTaskRes
+	12, // 17: trigger.TriggerRpc.GetTaskInfo:output_type -> trigger.GetTaskInfoRes
+	12, // [12:18] is the sub-list for method output_type
+	6,  // [6:12] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_trigger_proto_init() }
