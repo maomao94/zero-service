@@ -32,7 +32,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TriggerRpcClient interface {
 	Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error)
-	// 发送 http 回调
+	// 发送 http-post-json 回调
 	SendTrigger(ctx context.Context, in *SendTriggerReq, opts ...grpc.CallOption) (*SendTriggerRes, error)
 	// 发送 grpc proto字节码 回调
 	SendProtoTrigger(ctx context.Context, in *SendProtoTriggerReq, opts ...grpc.CallOption) (*SendProtoTriggerRes, error)
@@ -117,7 +117,7 @@ func (c *triggerRpcClient) GetTaskInfo(ctx context.Context, in *GetTaskInfoReq, 
 // for forward compatibility.
 type TriggerRpcServer interface {
 	Ping(context.Context, *Req) (*Res, error)
-	// 发送 http 回调
+	// 发送 http-post-json 回调
 	SendTrigger(context.Context, *SendTriggerReq) (*SendTriggerRes, error)
 	// 发送 grpc proto字节码 回调
 	SendProtoTrigger(context.Context, *SendProtoTriggerReq) (*SendProtoTriggerRes, error)
