@@ -30,7 +30,7 @@ func main() {
 	server := gateway.MustNewServer(c.GatewayConf, func(server *gateway.Server) {
 		server.Use(rest.ToMiddleware(func(next http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				// todo
+				//r.Header.Set("Grpc-Metadata-user-id", "test")
 				next.ServeHTTP(w, r)
 			})
 		}))

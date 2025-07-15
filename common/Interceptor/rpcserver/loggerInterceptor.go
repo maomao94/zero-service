@@ -2,15 +2,21 @@ package interceptor
 
 import (
 	"context"
+	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/zeromicro/go-zero/core/logx"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 func LoggerInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
-	//md, ok := metadata.FromIncomingContext(ctx)
-	//if !ok {
-	//	md = metadata.MD{}
-	//}
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		md = metadata.MD{}
+	}
+	userId := md.Get("gateway-user-id")
+	if len(userId) > 0 {
+		logx.WithContext(ctx).Infof("gateway-user-id: %s", convertor.ToString(userId[0]))
+	}
 	//traceid := md.Get("x-b3-traceid")
 	//if traceid != nil {
 	//	traceId := convertor.ToString(traceid[0])
