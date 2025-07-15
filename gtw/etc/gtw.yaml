@@ -34,6 +34,16 @@ Upstreams:
       NonBlock: true
     ProtoSets:
       - facade/iecstream/iecstream.pb
+  - grpc:
+      Endpoints:
+        - 127.0.0.1:21006
+      NonBlock: true
+    ProtoSets:
+      - app/trigger/trigger.pb
+    Mappings:
+      - Method: post
+        Path: /bff/trigger/ping
+        RpcPath: trigger.TriggerRpc/Ping
 ZeroRpcConf:
   Endpoints:
     - 127.0.0.1:21001

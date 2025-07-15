@@ -1,0 +1,224 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "trigger.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "TriggerRpc"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "extprotoCurrentUser": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "userName": {
+          "type": "string"
+        },
+        "tenantId": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "dept": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/extprotoDept"
+          }
+        }
+      }
+    },
+    "extprotoDept": {
+      "type": "object",
+      "properties": {
+        "orgId": {
+          "type": "string"
+        },
+        "orgCode": {
+          "type": "string"
+        },
+        "orgName": {
+          "type": "string"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "triggerArchiveTaskRes": {
+      "type": "object"
+    },
+    "triggerDeleteTaskRes": {
+      "type": "object"
+    },
+    "triggerGetTaskInfoRes": {
+      "type": "object",
+      "properties": {
+        "taskInfo": {
+          "$ref": "#/definitions/triggerPbTaskInfo"
+        }
+      }
+    },
+    "triggerPbTaskInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID is the identifier of the task."
+        },
+        "queue": {
+          "type": "string",
+          "description": "Queue is the name of the queue in which the task belongs."
+        },
+        "type": {
+          "type": "string",
+          "description": "Type is the type name of the task."
+        },
+        "payload": {
+          "type": "string",
+          "description": "Payload is the payload data of the task."
+        },
+        "state": {
+          "type": "integer",
+          "format": "int32",
+          "description": "State indicates the task state.\n\n建议配合 enum TaskState 使用"
+        },
+        "maxRetry": {
+          "type": "integer",
+          "format": "int32",
+          "description": "MaxRetry is the maximum number of times the task can be retried."
+        },
+        "retried": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Retried is the number of times the task has retried so far."
+        },
+        "lastErr": {
+          "type": "string",
+          "description": "LastErr is the error message from the last failure."
+        },
+        "lastFailedAt": {
+          "type": "string",
+          "description": "LastFailedAt is the time of the last failure."
+        },
+        "timeout": {
+          "type": "string",
+          "format": "int64",
+          "description": "Timeout is the duration the task can be processed before being retried.\n\n使用秒为单位的 duration"
+        },
+        "deadline": {
+          "type": "string",
+          "description": "Deadline is the deadline for the task."
+        },
+        "group": {
+          "type": "string",
+          "description": "Group is the name of the group in which the task belongs."
+        },
+        "nextProcessAt": {
+          "type": "string",
+          "description": "NextProcessAt is the time the task is scheduled to be processed."
+        },
+        "isOrphaned": {
+          "type": "boolean",
+          "description": "IsOrphaned indicates if the task is left in active state with no worker."
+        },
+        "retention": {
+          "type": "string",
+          "format": "int64",
+          "description": "Retention is duration of the retention period.\n\n使用秒为单位的 duration"
+        },
+        "completedAt": {
+          "type": "string",
+          "description": "CompletedAt is the time when the task is processed successfully.\n\n或 google.protobuf.Timestamp"
+        },
+        "result": {
+          "type": "string",
+          "description": "Result holds the result data associated with the task."
+        }
+      }
+    },
+    "triggerRes": {
+      "type": "object",
+      "properties": {
+        "pong": {
+          "type": "string"
+        }
+      }
+    },
+    "triggerSendProtoTriggerRes": {
+      "type": "object",
+      "properties": {
+        "traceId": {
+          "type": "string",
+          "title": "唯一追踪 id"
+        },
+        "queue": {
+          "type": "string",
+          "description": "Queue is the name of the queue in which the task belongs."
+        },
+        "id": {
+          "type": "string",
+          "description": "ID is the identifier of the task."
+        }
+      }
+    },
+    "triggerSendTriggerRes": {
+      "type": "object",
+      "properties": {
+        "traceId": {
+          "type": "string",
+          "title": "唯一追踪 id"
+        },
+        "queue": {
+          "type": "string",
+          "description": "Queue is the name of the queue in which the task belongs."
+        },
+        "id": {
+          "type": "string",
+          "description": "ID is the identifier of the task."
+        }
+      }
+    }
+  }
+}
