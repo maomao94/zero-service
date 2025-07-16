@@ -100,6 +100,41 @@
         }
       }
     },
+    "triggerHistoricalStatsRes": {
+      "type": "object",
+      "properties": {
+        "dailyStat": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/triggerPbDailyStats"
+          }
+        }
+      }
+    },
+    "triggerPbDailyStats": {
+      "type": "object",
+      "properties": {
+        "queue": {
+          "type": "string",
+          "description": "Name of the queue."
+        },
+        "processed": {
+          "type": "string",
+          "format": "int64",
+          "description": "Total number of tasks being processed during the given date.\nThe number includes both succeeded and failed tasks."
+        },
+        "failed": {
+          "type": "string",
+          "format": "int64",
+          "description": "Total number of tasks failed to be processed during the given date."
+        },
+        "date": {
+          "type": "string",
+          "description": "Date this stats was taken."
+        }
+      }
+    },
     "triggerPbTaskInfo": {
       "type": "object",
       "properties": {

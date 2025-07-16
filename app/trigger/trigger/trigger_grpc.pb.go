@@ -25,6 +25,7 @@ const (
 	TriggerRpc_ArchiveTask_FullMethodName      = "/trigger.TriggerRpc/ArchiveTask"
 	TriggerRpc_DeleteTask_FullMethodName       = "/trigger.TriggerRpc/DeleteTask"
 	TriggerRpc_GetTaskInfo_FullMethodName      = "/trigger.TriggerRpc/GetTaskInfo"
+	TriggerRpc_HistoricalStats_FullMethodName  = "/trigger.TriggerRpc/HistoricalStats"
 )
 
 // TriggerRpcClient is the client API for TriggerRpc service.
@@ -42,6 +43,8 @@ type TriggerRpcClient interface {
 	DeleteTask(ctx context.Context, in *DeleteTaskReq, opts ...grpc.CallOption) (*DeleteTaskRes, error)
 	// 获取任务
 	GetTaskInfo(ctx context.Context, in *GetTaskInfoReq, opts ...grpc.CallOption) (*GetTaskInfoRes, error)
+	// 获取任务历史统计
+	HistoricalStats(ctx context.Context, in *HistoricalStatsReq, opts ...grpc.CallOption) (*HistoricalStatsRes, error)
 }
 
 type triggerRpcClient struct {
@@ -112,6 +115,16 @@ func (c *triggerRpcClient) GetTaskInfo(ctx context.Context, in *GetTaskInfoReq, 
 	return out, nil
 }
 
+func (c *triggerRpcClient) HistoricalStats(ctx context.Context, in *HistoricalStatsReq, opts ...grpc.CallOption) (*HistoricalStatsRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HistoricalStatsRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_HistoricalStats_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TriggerRpcServer is the server API for TriggerRpc service.
 // All implementations must embed UnimplementedTriggerRpcServer
 // for forward compatibility.
@@ -127,6 +140,8 @@ type TriggerRpcServer interface {
 	DeleteTask(context.Context, *DeleteTaskReq) (*DeleteTaskRes, error)
 	// 获取任务
 	GetTaskInfo(context.Context, *GetTaskInfoReq) (*GetTaskInfoRes, error)
+	// 获取任务历史统计
+	HistoricalStats(context.Context, *HistoricalStatsReq) (*HistoricalStatsRes, error)
 	mustEmbedUnimplementedTriggerRpcServer()
 }
 
@@ -154,6 +169,9 @@ func (UnimplementedTriggerRpcServer) DeleteTask(context.Context, *DeleteTaskReq)
 }
 func (UnimplementedTriggerRpcServer) GetTaskInfo(context.Context, *GetTaskInfoReq) (*GetTaskInfoRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTaskInfo not implemented")
+}
+func (UnimplementedTriggerRpcServer) HistoricalStats(context.Context, *HistoricalStatsReq) (*HistoricalStatsRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HistoricalStats not implemented")
 }
 func (UnimplementedTriggerRpcServer) mustEmbedUnimplementedTriggerRpcServer() {}
 func (UnimplementedTriggerRpcServer) testEmbeddedByValue()                    {}
@@ -284,6 +302,24 @@ func _TriggerRpc_GetTaskInfo_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TriggerRpc_HistoricalStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HistoricalStatsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).HistoricalStats(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_HistoricalStats_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).HistoricalStats(ctx, req.(*HistoricalStatsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TriggerRpc_ServiceDesc is the grpc.ServiceDesc for TriggerRpc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -314,6 +350,10 @@ var TriggerRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetTaskInfo",
 			Handler:    _TriggerRpc_GetTaskInfo_Handler,
+		},
+		{
+			MethodName: "HistoricalStats",
+			Handler:    _TriggerRpc_HistoricalStats_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -168,6 +168,113 @@ var _ interface {
 	ErrorName() string
 } = PbTaskInfoValidationError{}
 
+// Validate checks the field values on PbDailyStats with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *PbDailyStats) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PbDailyStats with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in PbDailyStatsMultiError, or
+// nil if none found.
+func (m *PbDailyStats) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PbDailyStats) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Queue
+
+	// no validation rules for Processed
+
+	// no validation rules for Failed
+
+	// no validation rules for Date
+
+	if len(errors) > 0 {
+		return PbDailyStatsMultiError(errors)
+	}
+
+	return nil
+}
+
+// PbDailyStatsMultiError is an error wrapping multiple validation errors
+// returned by PbDailyStats.ValidateAll() if the designated constraints aren't met.
+type PbDailyStatsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PbDailyStatsMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PbDailyStatsMultiError) AllErrors() []error { return m }
+
+// PbDailyStatsValidationError is the validation error returned by
+// PbDailyStats.Validate if the designated constraints aren't met.
+type PbDailyStatsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PbDailyStatsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PbDailyStatsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PbDailyStatsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PbDailyStatsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PbDailyStatsValidationError) ErrorName() string { return "PbDailyStatsValidationError" }
+
+// Error satisfies the builtin error interface
+func (e PbDailyStatsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPbDailyStats.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PbDailyStatsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PbDailyStatsValidationError{}
+
 // Validate checks the field values on Req with the rules defined in the proto
 // definition for this message. If any rules are violated, the first error
 // encountered is returned, or nil if there are no violations.
@@ -1651,3 +1758,292 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = GetTaskInfoResValidationError{}
+
+// Validate checks the field values on HistoricalStatsReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *HistoricalStatsReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on HistoricalStatsReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// HistoricalStatsReqMultiError, or nil if none found.
+func (m *HistoricalStatsReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *HistoricalStatsReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, HistoricalStatsReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, HistoricalStatsReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return HistoricalStatsReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if utf8.RuneCountInString(m.GetQueue()) < 1 {
+		err := HistoricalStatsReqValidationError{
+			field:  "Queue",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if val := m.GetN(); val < 1 || val > 90 {
+		err := HistoricalStatsReqValidationError{
+			field:  "N",
+			reason: "value must be inside range [1, 90]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return HistoricalStatsReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// HistoricalStatsReqMultiError is an error wrapping multiple validation errors
+// returned by HistoricalStatsReq.ValidateAll() if the designated constraints
+// aren't met.
+type HistoricalStatsReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m HistoricalStatsReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m HistoricalStatsReqMultiError) AllErrors() []error { return m }
+
+// HistoricalStatsReqValidationError is the validation error returned by
+// HistoricalStatsReq.Validate if the designated constraints aren't met.
+type HistoricalStatsReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e HistoricalStatsReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e HistoricalStatsReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e HistoricalStatsReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e HistoricalStatsReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e HistoricalStatsReqValidationError) ErrorName() string {
+	return "HistoricalStatsReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e HistoricalStatsReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sHistoricalStatsReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = HistoricalStatsReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = HistoricalStatsReqValidationError{}
+
+// Validate checks the field values on HistoricalStatsRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *HistoricalStatsRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on HistoricalStatsRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// HistoricalStatsResMultiError, or nil if none found.
+func (m *HistoricalStatsRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *HistoricalStatsRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetDailyStat() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, HistoricalStatsResValidationError{
+						field:  fmt.Sprintf("DailyStat[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, HistoricalStatsResValidationError{
+						field:  fmt.Sprintf("DailyStat[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return HistoricalStatsResValidationError{
+					field:  fmt.Sprintf("DailyStat[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return HistoricalStatsResMultiError(errors)
+	}
+
+	return nil
+}
+
+// HistoricalStatsResMultiError is an error wrapping multiple validation errors
+// returned by HistoricalStatsRes.ValidateAll() if the designated constraints
+// aren't met.
+type HistoricalStatsResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m HistoricalStatsResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m HistoricalStatsResMultiError) AllErrors() []error { return m }
+
+// HistoricalStatsResValidationError is the validation error returned by
+// HistoricalStatsRes.Validate if the designated constraints aren't met.
+type HistoricalStatsResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e HistoricalStatsResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e HistoricalStatsResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e HistoricalStatsResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e HistoricalStatsResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e HistoricalStatsResValidationError) ErrorName() string {
+	return "HistoricalStatsResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e HistoricalStatsResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sHistoricalStatsRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = HistoricalStatsResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = HistoricalStatsResValidationError{}

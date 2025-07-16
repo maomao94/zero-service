@@ -212,6 +212,79 @@ func (x *PbTaskInfo) GetResult() string {
 	return ""
 }
 
+type PbDailyStats struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Name of the queue.
+	Queue string `protobuf:"bytes,1,opt,name=queue,proto3" json:"queue,omitempty"`
+	// Total number of tasks being processed during the given date.
+	// The number includes both succeeded and failed tasks.
+	Processed int64 `protobuf:"varint,2,opt,name=processed,proto3" json:"processed,omitempty"`
+	// Total number of tasks failed to be processed during the given date.
+	Failed int64 `protobuf:"varint,3,opt,name=failed,proto3" json:"failed,omitempty"`
+	// Date this stats was taken.
+	Date          string `protobuf:"bytes,4,opt,name=date,proto3" json:"date,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PbDailyStats) Reset() {
+	*x = PbDailyStats{}
+	mi := &file_trigger_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PbDailyStats) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PbDailyStats) ProtoMessage() {}
+
+func (x *PbDailyStats) ProtoReflect() protoreflect.Message {
+	mi := &file_trigger_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PbDailyStats.ProtoReflect.Descriptor instead.
+func (*PbDailyStats) Descriptor() ([]byte, []int) {
+	return file_trigger_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *PbDailyStats) GetQueue() string {
+	if x != nil {
+		return x.Queue
+	}
+	return ""
+}
+
+func (x *PbDailyStats) GetProcessed() int64 {
+	if x != nil {
+		return x.Processed
+	}
+	return 0
+}
+
+func (x *PbDailyStats) GetFailed() int64 {
+	if x != nil {
+		return x.Failed
+	}
+	return 0
+}
+
+func (x *PbDailyStats) GetDate() string {
+	if x != nil {
+		return x.Date
+	}
+	return ""
+}
+
 type Req struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Ping          string                 `protobuf:"bytes,1,opt,name=ping,proto3" json:"ping,omitempty"`
@@ -221,7 +294,7 @@ type Req struct {
 
 func (x *Req) Reset() {
 	*x = Req{}
-	mi := &file_trigger_proto_msgTypes[1]
+	mi := &file_trigger_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -233,7 +306,7 @@ func (x *Req) String() string {
 func (*Req) ProtoMessage() {}
 
 func (x *Req) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[1]
+	mi := &file_trigger_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -246,7 +319,7 @@ func (x *Req) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Req.ProtoReflect.Descriptor instead.
 func (*Req) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{1}
+	return file_trigger_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Req) GetPing() string {
@@ -265,7 +338,7 @@ type Res struct {
 
 func (x *Res) Reset() {
 	*x = Res{}
-	mi := &file_trigger_proto_msgTypes[2]
+	mi := &file_trigger_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -277,7 +350,7 @@ func (x *Res) String() string {
 func (*Res) ProtoMessage() {}
 
 func (x *Res) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[2]
+	mi := &file_trigger_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -290,7 +363,7 @@ func (x *Res) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Res.ProtoReflect.Descriptor instead.
 func (*Res) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{2}
+	return file_trigger_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Res) GetPong() string {
@@ -321,7 +394,7 @@ type SendTriggerReq struct {
 
 func (x *SendTriggerReq) Reset() {
 	*x = SendTriggerReq{}
-	mi := &file_trigger_proto_msgTypes[3]
+	mi := &file_trigger_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -333,7 +406,7 @@ func (x *SendTriggerReq) String() string {
 func (*SendTriggerReq) ProtoMessage() {}
 
 func (x *SendTriggerReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[3]
+	mi := &file_trigger_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -346,7 +419,7 @@ func (x *SendTriggerReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendTriggerReq.ProtoReflect.Descriptor instead.
 func (*SendTriggerReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{3}
+	return file_trigger_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SendTriggerReq) GetCurrentUser() *extproto.CurrentUser {
@@ -412,7 +485,7 @@ type SendTriggerRes struct {
 
 func (x *SendTriggerRes) Reset() {
 	*x = SendTriggerRes{}
-	mi := &file_trigger_proto_msgTypes[4]
+	mi := &file_trigger_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -424,7 +497,7 @@ func (x *SendTriggerRes) String() string {
 func (*SendTriggerRes) ProtoMessage() {}
 
 func (x *SendTriggerRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[4]
+	mi := &file_trigger_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -437,7 +510,7 @@ func (x *SendTriggerRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendTriggerRes.ProtoReflect.Descriptor instead.
 func (*SendTriggerRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{4}
+	return file_trigger_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *SendTriggerRes) GetTraceId() string {
@@ -503,7 +576,7 @@ type SendProtoTriggerReq struct {
 
 func (x *SendProtoTriggerReq) Reset() {
 	*x = SendProtoTriggerReq{}
-	mi := &file_trigger_proto_msgTypes[5]
+	mi := &file_trigger_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -515,7 +588,7 @@ func (x *SendProtoTriggerReq) String() string {
 func (*SendProtoTriggerReq) ProtoMessage() {}
 
 func (x *SendProtoTriggerReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[5]
+	mi := &file_trigger_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -528,7 +601,7 @@ func (x *SendProtoTriggerReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendProtoTriggerReq.ProtoReflect.Descriptor instead.
 func (*SendProtoTriggerReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{5}
+	return file_trigger_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SendProtoTriggerReq) GetCurrentUser() *extproto.CurrentUser {
@@ -608,7 +681,7 @@ type SendProtoTriggerRes struct {
 
 func (x *SendProtoTriggerRes) Reset() {
 	*x = SendProtoTriggerRes{}
-	mi := &file_trigger_proto_msgTypes[6]
+	mi := &file_trigger_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -620,7 +693,7 @@ func (x *SendProtoTriggerRes) String() string {
 func (*SendProtoTriggerRes) ProtoMessage() {}
 
 func (x *SendProtoTriggerRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[6]
+	mi := &file_trigger_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -633,7 +706,7 @@ func (x *SendProtoTriggerRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendProtoTriggerRes.ProtoReflect.Descriptor instead.
 func (*SendProtoTriggerRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{6}
+	return file_trigger_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *SendProtoTriggerRes) GetTraceId() string {
@@ -670,7 +743,7 @@ type ArchiveTaskReq struct {
 
 func (x *ArchiveTaskReq) Reset() {
 	*x = ArchiveTaskReq{}
-	mi := &file_trigger_proto_msgTypes[7]
+	mi := &file_trigger_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -682,7 +755,7 @@ func (x *ArchiveTaskReq) String() string {
 func (*ArchiveTaskReq) ProtoMessage() {}
 
 func (x *ArchiveTaskReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[7]
+	mi := &file_trigger_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -695,7 +768,7 @@ func (x *ArchiveTaskReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveTaskReq.ProtoReflect.Descriptor instead.
 func (*ArchiveTaskReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{7}
+	return file_trigger_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ArchiveTaskReq) GetCurrentUser() *extproto.CurrentUser {
@@ -727,7 +800,7 @@ type ArchiveTaskRes struct {
 
 func (x *ArchiveTaskRes) Reset() {
 	*x = ArchiveTaskRes{}
-	mi := &file_trigger_proto_msgTypes[8]
+	mi := &file_trigger_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -739,7 +812,7 @@ func (x *ArchiveTaskRes) String() string {
 func (*ArchiveTaskRes) ProtoMessage() {}
 
 func (x *ArchiveTaskRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[8]
+	mi := &file_trigger_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -752,7 +825,7 @@ func (x *ArchiveTaskRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveTaskRes.ProtoReflect.Descriptor instead.
 func (*ArchiveTaskRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{8}
+	return file_trigger_proto_rawDescGZIP(), []int{9}
 }
 
 type DeleteTaskReq struct {
@@ -768,7 +841,7 @@ type DeleteTaskReq struct {
 
 func (x *DeleteTaskReq) Reset() {
 	*x = DeleteTaskReq{}
-	mi := &file_trigger_proto_msgTypes[9]
+	mi := &file_trigger_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -780,7 +853,7 @@ func (x *DeleteTaskReq) String() string {
 func (*DeleteTaskReq) ProtoMessage() {}
 
 func (x *DeleteTaskReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[9]
+	mi := &file_trigger_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -793,7 +866,7 @@ func (x *DeleteTaskReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTaskReq.ProtoReflect.Descriptor instead.
 func (*DeleteTaskReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{9}
+	return file_trigger_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *DeleteTaskReq) GetCurrentUser() *extproto.CurrentUser {
@@ -825,7 +898,7 @@ type DeleteTaskRes struct {
 
 func (x *DeleteTaskRes) Reset() {
 	*x = DeleteTaskRes{}
-	mi := &file_trigger_proto_msgTypes[10]
+	mi := &file_trigger_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -837,7 +910,7 @@ func (x *DeleteTaskRes) String() string {
 func (*DeleteTaskRes) ProtoMessage() {}
 
 func (x *DeleteTaskRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[10]
+	mi := &file_trigger_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -850,7 +923,7 @@ func (x *DeleteTaskRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTaskRes.ProtoReflect.Descriptor instead.
 func (*DeleteTaskRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{10}
+	return file_trigger_proto_rawDescGZIP(), []int{11}
 }
 
 type GetTaskInfoReq struct {
@@ -866,7 +939,7 @@ type GetTaskInfoReq struct {
 
 func (x *GetTaskInfoReq) Reset() {
 	*x = GetTaskInfoReq{}
-	mi := &file_trigger_proto_msgTypes[11]
+	mi := &file_trigger_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -878,7 +951,7 @@ func (x *GetTaskInfoReq) String() string {
 func (*GetTaskInfoReq) ProtoMessage() {}
 
 func (x *GetTaskInfoReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[11]
+	mi := &file_trigger_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -891,7 +964,7 @@ func (x *GetTaskInfoReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTaskInfoReq.ProtoReflect.Descriptor instead.
 func (*GetTaskInfoReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{11}
+	return file_trigger_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetTaskInfoReq) GetCurrentUser() *extproto.CurrentUser {
@@ -924,7 +997,7 @@ type GetTaskInfoRes struct {
 
 func (x *GetTaskInfoRes) Reset() {
 	*x = GetTaskInfoRes{}
-	mi := &file_trigger_proto_msgTypes[12]
+	mi := &file_trigger_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -936,7 +1009,7 @@ func (x *GetTaskInfoRes) String() string {
 func (*GetTaskInfoRes) ProtoMessage() {}
 
 func (x *GetTaskInfoRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[12]
+	mi := &file_trigger_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -949,12 +1022,118 @@ func (x *GetTaskInfoRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTaskInfoRes.ProtoReflect.Descriptor instead.
 func (*GetTaskInfoRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{12}
+	return file_trigger_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetTaskInfoRes) GetTaskInfo() *PbTaskInfo {
 	if x != nil {
 		return x.TaskInfo
+	}
+	return nil
+}
+
+type HistoricalStatsReq struct {
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
+	// Queue is the name of the queue in which the task belongs.
+	Queue string `protobuf:"bytes,1,opt,name=queue,proto3" json:"queue,omitempty"` // 默认 critical
+	// 天
+	N             uint32 `protobuf:"varint,2,opt,name=n,proto3" json:"n,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HistoricalStatsReq) Reset() {
+	*x = HistoricalStatsReq{}
+	mi := &file_trigger_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HistoricalStatsReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HistoricalStatsReq) ProtoMessage() {}
+
+func (x *HistoricalStatsReq) ProtoReflect() protoreflect.Message {
+	mi := &file_trigger_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HistoricalStatsReq.ProtoReflect.Descriptor instead.
+func (*HistoricalStatsReq) Descriptor() ([]byte, []int) {
+	return file_trigger_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *HistoricalStatsReq) GetCurrentUser() *extproto.CurrentUser {
+	if x != nil {
+		return x.CurrentUser
+	}
+	return nil
+}
+
+func (x *HistoricalStatsReq) GetQueue() string {
+	if x != nil {
+		return x.Queue
+	}
+	return ""
+}
+
+func (x *HistoricalStatsReq) GetN() uint32 {
+	if x != nil {
+		return x.N
+	}
+	return 0
+}
+
+type HistoricalStatsRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DailyStat     []*PbDailyStats        `protobuf:"bytes,1,rep,name=dailyStat,proto3" json:"dailyStat,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HistoricalStatsRes) Reset() {
+	*x = HistoricalStatsRes{}
+	mi := &file_trigger_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HistoricalStatsRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HistoricalStatsRes) ProtoMessage() {}
+
+func (x *HistoricalStatsRes) ProtoReflect() protoreflect.Message {
+	mi := &file_trigger_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HistoricalStatsRes.ProtoReflect.Descriptor instead.
+func (*HistoricalStatsRes) Descriptor() ([]byte, []int) {
+	return file_trigger_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *HistoricalStatsRes) GetDailyStat() []*PbDailyStats {
+	if x != nil {
+		return x.DailyStat
 	}
 	return nil
 }
@@ -985,7 +1164,12 @@ const file_trigger_proto_rawDesc = "" +
 	"isOrphaned\x12\x1c\n" +
 	"\tretention\x18\x0f \x01(\x03R\tretention\x12 \n" +
 	"\vcompletedAt\x18\x10 \x01(\tR\vcompletedAt\x12\x16\n" +
-	"\x06result\x18\x11 \x01(\tR\x06result\"\x19\n" +
+	"\x06result\x18\x11 \x01(\tR\x06result\"n\n" +
+	"\fPbDailyStats\x12\x14\n" +
+	"\x05queue\x18\x01 \x01(\tR\x05queue\x12\x1c\n" +
+	"\tprocessed\x18\x02 \x01(\x03R\tprocessed\x12\x16\n" +
+	"\x06failed\x18\x03 \x01(\x03R\x06failed\x12\x12\n" +
+	"\x04date\x18\x04 \x01(\tR\x04date\"\x19\n" +
 	"\x03Req\x12\x12\n" +
 	"\x04ping\x18\x01 \x01(\tR\x04ping\"\x19\n" +
 	"\x03Res\x12\x12\n" +
@@ -1033,7 +1217,13 @@ const file_trigger_proto_rawDesc = "" +
 	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x17\n" +
 	"\x02id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"A\n" +
 	"\x0eGetTaskInfoRes\x12/\n" +
-	"\btaskInfo\x18\x01 \x01(\v2\x13.trigger.PbTaskInfoR\btaskInfo2\x81\x03\n" +
+	"\btaskInfo\x18\x01 \x01(\v2\x13.trigger.PbTaskInfoR\btaskInfo\"\x85\x01\n" +
+	"\x12HistoricalStatsReq\x127\n" +
+	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x1d\n" +
+	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x17\n" +
+	"\x01n\x18\x02 \x01(\rB\t\xfaB\x06*\x04\x18Z(\x01R\x01n\"I\n" +
+	"\x12HistoricalStatsRes\x123\n" +
+	"\tdailyStat\x18\x01 \x03(\v2\x15.trigger.PbDailyStatsR\tdailyStat2\xce\x03\n" +
 	"\n" +
 	"TriggerRpc\x12\"\n" +
 	"\x04Ping\x12\f.trigger.Req\x1a\f.trigger.Res\x12?\n" +
@@ -1042,7 +1232,8 @@ const file_trigger_proto_rawDesc = "" +
 	"\vArchiveTask\x12\x17.trigger.ArchiveTaskReq\x1a\x17.trigger.ArchiveTaskRes\x12<\n" +
 	"\n" +
 	"DeleteTask\x12\x16.trigger.DeleteTaskReq\x1a\x16.trigger.DeleteTaskRes\x12?\n" +
-	"\vGetTaskInfo\x12\x17.trigger.GetTaskInfoReq\x1a\x17.trigger.GetTaskInfoResB4\n" +
+	"\vGetTaskInfo\x12\x17.trigger.GetTaskInfoReq\x1a\x17.trigger.GetTaskInfoRes\x12K\n" +
+	"\x0fHistoricalStats\x12\x1b.trigger.HistoricalStatsReq\x1a\x1b.trigger.HistoricalStatsResB4\n" +
 	"\x17com.github.trigger.grpcB\fTriggerProtoP\x01Z\t./triggerb\x06proto3"
 
 var (
@@ -1057,47 +1248,54 @@ func file_trigger_proto_rawDescGZIP() []byte {
 	return file_trigger_proto_rawDescData
 }
 
-var file_trigger_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_trigger_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_trigger_proto_goTypes = []any{
 	(*PbTaskInfo)(nil),           // 0: trigger.PbTaskInfo
-	(*Req)(nil),                  // 1: trigger.Req
-	(*Res)(nil),                  // 2: trigger.Res
-	(*SendTriggerReq)(nil),       // 3: trigger.SendTriggerReq
-	(*SendTriggerRes)(nil),       // 4: trigger.SendTriggerRes
-	(*SendProtoTriggerReq)(nil),  // 5: trigger.SendProtoTriggerReq
-	(*SendProtoTriggerRes)(nil),  // 6: trigger.SendProtoTriggerRes
-	(*ArchiveTaskReq)(nil),       // 7: trigger.ArchiveTaskReq
-	(*ArchiveTaskRes)(nil),       // 8: trigger.ArchiveTaskRes
-	(*DeleteTaskReq)(nil),        // 9: trigger.DeleteTaskReq
-	(*DeleteTaskRes)(nil),        // 10: trigger.DeleteTaskRes
-	(*GetTaskInfoReq)(nil),       // 11: trigger.GetTaskInfoReq
-	(*GetTaskInfoRes)(nil),       // 12: trigger.GetTaskInfoRes
-	(*extproto.CurrentUser)(nil), // 13: extproto.CurrentUser
+	(*PbDailyStats)(nil),         // 1: trigger.PbDailyStats
+	(*Req)(nil),                  // 2: trigger.Req
+	(*Res)(nil),                  // 3: trigger.Res
+	(*SendTriggerReq)(nil),       // 4: trigger.SendTriggerReq
+	(*SendTriggerRes)(nil),       // 5: trigger.SendTriggerRes
+	(*SendProtoTriggerReq)(nil),  // 6: trigger.SendProtoTriggerReq
+	(*SendProtoTriggerRes)(nil),  // 7: trigger.SendProtoTriggerRes
+	(*ArchiveTaskReq)(nil),       // 8: trigger.ArchiveTaskReq
+	(*ArchiveTaskRes)(nil),       // 9: trigger.ArchiveTaskRes
+	(*DeleteTaskReq)(nil),        // 10: trigger.DeleteTaskReq
+	(*DeleteTaskRes)(nil),        // 11: trigger.DeleteTaskRes
+	(*GetTaskInfoReq)(nil),       // 12: trigger.GetTaskInfoReq
+	(*GetTaskInfoRes)(nil),       // 13: trigger.GetTaskInfoRes
+	(*HistoricalStatsReq)(nil),   // 14: trigger.HistoricalStatsReq
+	(*HistoricalStatsRes)(nil),   // 15: trigger.HistoricalStatsRes
+	(*extproto.CurrentUser)(nil), // 16: extproto.CurrentUser
 }
 var file_trigger_proto_depIdxs = []int32{
-	13, // 0: trigger.SendTriggerReq.currentUser:type_name -> extproto.CurrentUser
-	13, // 1: trigger.SendProtoTriggerReq.currentUser:type_name -> extproto.CurrentUser
-	13, // 2: trigger.ArchiveTaskReq.currentUser:type_name -> extproto.CurrentUser
-	13, // 3: trigger.DeleteTaskReq.currentUser:type_name -> extproto.CurrentUser
-	13, // 4: trigger.GetTaskInfoReq.currentUser:type_name -> extproto.CurrentUser
+	16, // 0: trigger.SendTriggerReq.currentUser:type_name -> extproto.CurrentUser
+	16, // 1: trigger.SendProtoTriggerReq.currentUser:type_name -> extproto.CurrentUser
+	16, // 2: trigger.ArchiveTaskReq.currentUser:type_name -> extproto.CurrentUser
+	16, // 3: trigger.DeleteTaskReq.currentUser:type_name -> extproto.CurrentUser
+	16, // 4: trigger.GetTaskInfoReq.currentUser:type_name -> extproto.CurrentUser
 	0,  // 5: trigger.GetTaskInfoRes.taskInfo:type_name -> trigger.PbTaskInfo
-	1,  // 6: trigger.TriggerRpc.Ping:input_type -> trigger.Req
-	3,  // 7: trigger.TriggerRpc.SendTrigger:input_type -> trigger.SendTriggerReq
-	5,  // 8: trigger.TriggerRpc.SendProtoTrigger:input_type -> trigger.SendProtoTriggerReq
-	7,  // 9: trigger.TriggerRpc.ArchiveTask:input_type -> trigger.ArchiveTaskReq
-	9,  // 10: trigger.TriggerRpc.DeleteTask:input_type -> trigger.DeleteTaskReq
-	11, // 11: trigger.TriggerRpc.GetTaskInfo:input_type -> trigger.GetTaskInfoReq
-	2,  // 12: trigger.TriggerRpc.Ping:output_type -> trigger.Res
-	4,  // 13: trigger.TriggerRpc.SendTrigger:output_type -> trigger.SendTriggerRes
-	6,  // 14: trigger.TriggerRpc.SendProtoTrigger:output_type -> trigger.SendProtoTriggerRes
-	8,  // 15: trigger.TriggerRpc.ArchiveTask:output_type -> trigger.ArchiveTaskRes
-	10, // 16: trigger.TriggerRpc.DeleteTask:output_type -> trigger.DeleteTaskRes
-	12, // 17: trigger.TriggerRpc.GetTaskInfo:output_type -> trigger.GetTaskInfoRes
-	12, // [12:18] is the sub-list for method output_type
-	6,  // [6:12] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	16, // 6: trigger.HistoricalStatsReq.currentUser:type_name -> extproto.CurrentUser
+	1,  // 7: trigger.HistoricalStatsRes.dailyStat:type_name -> trigger.PbDailyStats
+	2,  // 8: trigger.TriggerRpc.Ping:input_type -> trigger.Req
+	4,  // 9: trigger.TriggerRpc.SendTrigger:input_type -> trigger.SendTriggerReq
+	6,  // 10: trigger.TriggerRpc.SendProtoTrigger:input_type -> trigger.SendProtoTriggerReq
+	8,  // 11: trigger.TriggerRpc.ArchiveTask:input_type -> trigger.ArchiveTaskReq
+	10, // 12: trigger.TriggerRpc.DeleteTask:input_type -> trigger.DeleteTaskReq
+	12, // 13: trigger.TriggerRpc.GetTaskInfo:input_type -> trigger.GetTaskInfoReq
+	14, // 14: trigger.TriggerRpc.HistoricalStats:input_type -> trigger.HistoricalStatsReq
+	3,  // 15: trigger.TriggerRpc.Ping:output_type -> trigger.Res
+	5,  // 16: trigger.TriggerRpc.SendTrigger:output_type -> trigger.SendTriggerRes
+	7,  // 17: trigger.TriggerRpc.SendProtoTrigger:output_type -> trigger.SendProtoTriggerRes
+	9,  // 18: trigger.TriggerRpc.ArchiveTask:output_type -> trigger.ArchiveTaskRes
+	11, // 19: trigger.TriggerRpc.DeleteTask:output_type -> trigger.DeleteTaskRes
+	13, // 20: trigger.TriggerRpc.GetTaskInfo:output_type -> trigger.GetTaskInfoRes
+	15, // 21: trigger.TriggerRpc.HistoricalStats:output_type -> trigger.HistoricalStatsRes
+	15, // [15:22] is the sub-list for method output_type
+	8,  // [8:15] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_trigger_proto_init() }
@@ -1111,7 +1309,7 @@ func file_trigger_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_trigger_proto_rawDesc), len(file_trigger_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

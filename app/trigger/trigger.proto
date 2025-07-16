@@ -48,6 +48,18 @@ message PbTaskInfo {
   string result = 17;
 }
 
+message PbDailyStats  {
+  // Name of the queue.
+  string queue = 1;
+  // Total number of tasks being processed during the given date.
+  // The number includes both succeeded and failed tasks.
+  int64 processed = 2;
+  // Total number of tasks failed to be processed during the given date.
+  int64 failed = 3;
+  // Date this stats was taken.
+  string date = 4;
+}
+
 message Req {
   string ping = 1;
 }
@@ -165,6 +177,19 @@ message GetTaskInfoRes {
   PbTaskInfo taskInfo = 1;
 }
 
+message HistoricalStatsReq {
+  extproto.CurrentUser currentUser = 100;
+
+  // Queue is the name of the queue in which the task belongs.
+  string queue = 1 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+  // 天
+  uint32 n = 2 [(validate.rules).uint32 = {gte:1, lte:90}];
+}
+
+message HistoricalStatsRes {
+  repeated PbDailyStats dailyStat = 1;
+}
+
 service TriggerRpc {
   rpc Ping (Req) returns (Res);
   // 发送 http-post-json 回调
@@ -177,4 +202,6 @@ service TriggerRpc {
   rpc DeleteTask(DeleteTaskReq) returns (DeleteTaskRes);
   // 获取任务
   rpc GetTaskInfo(GetTaskInfoReq) returns (GetTaskInfoRes);
+  // 获取任务历史统计
+  rpc HistoricalStats(HistoricalStatsReq) returns (HistoricalStatsRes);
 }
