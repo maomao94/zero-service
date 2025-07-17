@@ -1112,6 +1112,502 @@ var _ interface {
 	ErrorName() string
 } = SendProtoTriggerResValidationError{}
 
+// Validate checks the field values on QueuesReq with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *QueuesReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on QueuesReq with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in QueuesReqMultiError, or nil
+// if none found.
+func (m *QueuesReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *QueuesReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, QueuesReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, QueuesReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return QueuesReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return QueuesReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// QueuesReqMultiError is an error wrapping multiple validation errors returned
+// by QueuesReq.ValidateAll() if the designated constraints aren't met.
+type QueuesReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m QueuesReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m QueuesReqMultiError) AllErrors() []error { return m }
+
+// QueuesReqValidationError is the validation error returned by
+// QueuesReq.Validate if the designated constraints aren't met.
+type QueuesReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e QueuesReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e QueuesReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e QueuesReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e QueuesReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e QueuesReqValidationError) ErrorName() string { return "QueuesReqValidationError" }
+
+// Error satisfies the builtin error interface
+func (e QueuesReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sQueuesReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = QueuesReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = QueuesReqValidationError{}
+
+// Validate checks the field values on QueuesRes with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *QueuesRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on QueuesRes with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in QueuesResMultiError, or nil
+// if none found.
+func (m *QueuesRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *QueuesRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return QueuesResMultiError(errors)
+	}
+
+	return nil
+}
+
+// QueuesResMultiError is an error wrapping multiple validation errors returned
+// by QueuesRes.ValidateAll() if the designated constraints aren't met.
+type QueuesResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m QueuesResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m QueuesResMultiError) AllErrors() []error { return m }
+
+// QueuesResValidationError is the validation error returned by
+// QueuesRes.Validate if the designated constraints aren't met.
+type QueuesResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e QueuesResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e QueuesResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e QueuesResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e QueuesResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e QueuesResValidationError) ErrorName() string { return "QueuesResValidationError" }
+
+// Error satisfies the builtin error interface
+func (e QueuesResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sQueuesRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = QueuesResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = QueuesResValidationError{}
+
+// Validate checks the field values on GetQueueInfoReq with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *GetQueueInfoReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetQueueInfoReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetQueueInfoReqMultiError, or nil if none found.
+func (m *GetQueueInfoReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetQueueInfoReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GetQueueInfoReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GetQueueInfoReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GetQueueInfoReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if utf8.RuneCountInString(m.GetQueue()) < 1 {
+		err := GetQueueInfoReqValidationError{
+			field:  "Queue",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return GetQueueInfoReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetQueueInfoReqMultiError is an error wrapping multiple validation errors
+// returned by GetQueueInfoReq.ValidateAll() if the designated constraints
+// aren't met.
+type GetQueueInfoReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetQueueInfoReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetQueueInfoReqMultiError) AllErrors() []error { return m }
+
+// GetQueueInfoReqValidationError is the validation error returned by
+// GetQueueInfoReq.Validate if the designated constraints aren't met.
+type GetQueueInfoReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetQueueInfoReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetQueueInfoReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetQueueInfoReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetQueueInfoReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetQueueInfoReqValidationError) ErrorName() string { return "GetQueueInfoReqValidationError" }
+
+// Error satisfies the builtin error interface
+func (e GetQueueInfoReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetQueueInfoReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetQueueInfoReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetQueueInfoReqValidationError{}
+
+// Validate checks the field values on GetQueueInfoRes with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *GetQueueInfoRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetQueueInfoRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetQueueInfoResMultiError, or nil if none found.
+func (m *GetQueueInfoRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetQueueInfoRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetQueueInfo()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GetQueueInfoResValidationError{
+					field:  "QueueInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GetQueueInfoResValidationError{
+					field:  "QueueInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetQueueInfo()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GetQueueInfoResValidationError{
+				field:  "QueueInfo",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return GetQueueInfoResMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetQueueInfoResMultiError is an error wrapping multiple validation errors
+// returned by GetQueueInfoRes.ValidateAll() if the designated constraints
+// aren't met.
+type GetQueueInfoResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetQueueInfoResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetQueueInfoResMultiError) AllErrors() []error { return m }
+
+// GetQueueInfoResValidationError is the validation error returned by
+// GetQueueInfoRes.Validate if the designated constraints aren't met.
+type GetQueueInfoResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetQueueInfoResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetQueueInfoResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetQueueInfoResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetQueueInfoResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetQueueInfoResValidationError) ErrorName() string { return "GetQueueInfoResValidationError" }
+
+// Error satisfies the builtin error interface
+func (e GetQueueInfoResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetQueueInfoRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetQueueInfoResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetQueueInfoResValidationError{}
+
 // Validate checks the field values on ArchiveTaskReq with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -4496,3 +4992,252 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListCompletedTasksResValidationError{}
+
+// Validate checks the field values on RunTaskReq with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *RunTaskReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RunTaskReq with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in RunTaskReqMultiError, or
+// nil if none found.
+func (m *RunTaskReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RunTaskReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunTaskReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunTaskReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RunTaskReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if utf8.RuneCountInString(m.GetQueue()) < 1 {
+		err := RunTaskReqValidationError{
+			field:  "Queue",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetId()) < 1 {
+		err := RunTaskReqValidationError{
+			field:  "Id",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return RunTaskReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// RunTaskReqMultiError is an error wrapping multiple validation errors
+// returned by RunTaskReq.ValidateAll() if the designated constraints aren't met.
+type RunTaskReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RunTaskReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RunTaskReqMultiError) AllErrors() []error { return m }
+
+// RunTaskReqValidationError is the validation error returned by
+// RunTaskReq.Validate if the designated constraints aren't met.
+type RunTaskReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RunTaskReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RunTaskReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RunTaskReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RunTaskReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RunTaskReqValidationError) ErrorName() string { return "RunTaskReqValidationError" }
+
+// Error satisfies the builtin error interface
+func (e RunTaskReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRunTaskReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RunTaskReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RunTaskReqValidationError{}
+
+// Validate checks the field values on RunTaskRes with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *RunTaskRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RunTaskRes with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in RunTaskResMultiError, or
+// nil if none found.
+func (m *RunTaskRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RunTaskRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return RunTaskResMultiError(errors)
+	}
+
+	return nil
+}
+
+// RunTaskResMultiError is an error wrapping multiple validation errors
+// returned by RunTaskRes.ValidateAll() if the designated constraints aren't met.
+type RunTaskResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RunTaskResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RunTaskResMultiError) AllErrors() []error { return m }
+
+// RunTaskResValidationError is the validation error returned by
+// RunTaskRes.Validate if the designated constraints aren't met.
+type RunTaskResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RunTaskResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RunTaskResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RunTaskResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RunTaskResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RunTaskResValidationError) ErrorName() string { return "RunTaskResValidationError" }
+
+// Error satisfies the builtin error interface
+func (e RunTaskResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRunTaskRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RunTaskResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RunTaskResValidationError{}

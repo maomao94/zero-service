@@ -183,6 +183,25 @@ message SendProtoTriggerRes {
   string id = 3;
 }
 
+message QueuesReq {
+  extproto.CurrentUser currentUser = 100;
+}
+
+message QueuesRes {
+  repeated string queues = 1;
+}
+
+message GetQueueInfoReq {
+  extproto.CurrentUser currentUser = 100;
+
+  // Queue is the name of the queue in which the task belongs.
+  string queue = 1 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+}
+
+message GetQueueInfoRes {
+  PbQueueInfo queueInfo = 1;
+}
+
 message ArchiveTaskReq {
   extproto.CurrentUser currentUser = 100;
 
@@ -325,12 +344,28 @@ message ListCompletedTasksRes {
   repeated PbTaskInfo tasksInfo = 2;
 }
 
+message RunTaskReq {
+  extproto.CurrentUser currentUser = 100;
+
+  // Queue is the name of the queue in which the task belongs.
+  string queue = 1 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+  // ID is the identifier of the task.
+  string id = 2 [(validate.rules).string = {min_len: 1}];
+}
+
+message RunTaskRes {
+}
+
 service TriggerRpc {
   rpc Ping (Req) returns (Res);
   // 发送 http-post-json 回调
   rpc SendTrigger(SendTriggerReq) returns(SendTriggerRes);
   // 发送 grpc proto字节码 回调
   rpc SendProtoTrigger(SendProtoTriggerReq) returns (SendProtoTriggerRes);
+  // 获取队列列表
+  rpc Queues(QueuesReq) returns (QueuesRes);
+  // 获取队列信息
+  rpc GetQueueInfo(GetQueueInfoReq) returns (GetQueueInfoRes);
   // 归档任务
   rpc ArchiveTask(ArchiveTaskReq) returns (ArchiveTaskRes);
   // 删除任务
@@ -353,4 +388,6 @@ service TriggerRpc {
   rpc ListArchivedTasks(ListArchivedTasksReq) returns (ListArchivedTasksRes);
   // 获取已完成任务列表
   rpc ListCompletedTasks(ListCompletedTasksReq) returns (ListCompletedTasksRes);
+  // 运行任务
+  rpc RunTask(RunTaskReq) returns (RunTaskRes);
 }

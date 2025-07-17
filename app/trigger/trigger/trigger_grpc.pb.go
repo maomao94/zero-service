@@ -22,6 +22,8 @@ const (
 	TriggerRpc_Ping_FullMethodName                 = "/trigger.TriggerRpc/Ping"
 	TriggerRpc_SendTrigger_FullMethodName          = "/trigger.TriggerRpc/SendTrigger"
 	TriggerRpc_SendProtoTrigger_FullMethodName     = "/trigger.TriggerRpc/SendProtoTrigger"
+	TriggerRpc_Queues_FullMethodName               = "/trigger.TriggerRpc/Queues"
+	TriggerRpc_GetQueueInfo_FullMethodName         = "/trigger.TriggerRpc/GetQueueInfo"
 	TriggerRpc_ArchiveTask_FullMethodName          = "/trigger.TriggerRpc/ArchiveTask"
 	TriggerRpc_DeleteTask_FullMethodName           = "/trigger.TriggerRpc/DeleteTask"
 	TriggerRpc_GetTaskInfo_FullMethodName          = "/trigger.TriggerRpc/GetTaskInfo"
@@ -33,6 +35,7 @@ const (
 	TriggerRpc_ListRetryTasks_FullMethodName       = "/trigger.TriggerRpc/ListRetryTasks"
 	TriggerRpc_ListArchivedTasks_FullMethodName    = "/trigger.TriggerRpc/ListArchivedTasks"
 	TriggerRpc_ListCompletedTasks_FullMethodName   = "/trigger.TriggerRpc/ListCompletedTasks"
+	TriggerRpc_RunTask_FullMethodName              = "/trigger.TriggerRpc/RunTask"
 )
 
 // TriggerRpcClient is the client API for TriggerRpc service.
@@ -44,6 +47,10 @@ type TriggerRpcClient interface {
 	SendTrigger(ctx context.Context, in *SendTriggerReq, opts ...grpc.CallOption) (*SendTriggerRes, error)
 	// 发送 grpc proto字节码 回调
 	SendProtoTrigger(ctx context.Context, in *SendProtoTriggerReq, opts ...grpc.CallOption) (*SendProtoTriggerRes, error)
+	// 获取队列列表
+	Queues(ctx context.Context, in *QueuesReq, opts ...grpc.CallOption) (*QueuesRes, error)
+	// 获取队列信息
+	GetQueueInfo(ctx context.Context, in *GetQueueInfoReq, opts ...grpc.CallOption) (*GetQueueInfoRes, error)
 	// 归档任务
 	ArchiveTask(ctx context.Context, in *ArchiveTaskReq, opts ...grpc.CallOption) (*ArchiveTaskRes, error)
 	// 删除任务
@@ -66,6 +73,8 @@ type TriggerRpcClient interface {
 	ListArchivedTasks(ctx context.Context, in *ListArchivedTasksReq, opts ...grpc.CallOption) (*ListArchivedTasksRes, error)
 	// 获取已完成任务列表
 	ListCompletedTasks(ctx context.Context, in *ListCompletedTasksReq, opts ...grpc.CallOption) (*ListCompletedTasksRes, error)
+	// 运行任务
+	RunTask(ctx context.Context, in *RunTaskReq, opts ...grpc.CallOption) (*RunTaskRes, error)
 }
 
 type triggerRpcClient struct {
@@ -100,6 +109,26 @@ func (c *triggerRpcClient) SendProtoTrigger(ctx context.Context, in *SendProtoTr
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SendProtoTriggerRes)
 	err := c.cc.Invoke(ctx, TriggerRpc_SendProtoTrigger_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) Queues(ctx context.Context, in *QueuesReq, opts ...grpc.CallOption) (*QueuesRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(QueuesRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_Queues_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) GetQueueInfo(ctx context.Context, in *GetQueueInfoReq, opts ...grpc.CallOption) (*GetQueueInfoRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetQueueInfoRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_GetQueueInfo_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -216,6 +245,16 @@ func (c *triggerRpcClient) ListCompletedTasks(ctx context.Context, in *ListCompl
 	return out, nil
 }
 
+func (c *triggerRpcClient) RunTask(ctx context.Context, in *RunTaskReq, opts ...grpc.CallOption) (*RunTaskRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RunTaskRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_RunTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TriggerRpcServer is the server API for TriggerRpc service.
 // All implementations must embed UnimplementedTriggerRpcServer
 // for forward compatibility.
@@ -225,6 +264,10 @@ type TriggerRpcServer interface {
 	SendTrigger(context.Context, *SendTriggerReq) (*SendTriggerRes, error)
 	// 发送 grpc proto字节码 回调
 	SendProtoTrigger(context.Context, *SendProtoTriggerReq) (*SendProtoTriggerRes, error)
+	// 获取队列列表
+	Queues(context.Context, *QueuesReq) (*QueuesRes, error)
+	// 获取队列信息
+	GetQueueInfo(context.Context, *GetQueueInfoReq) (*GetQueueInfoRes, error)
 	// 归档任务
 	ArchiveTask(context.Context, *ArchiveTaskReq) (*ArchiveTaskRes, error)
 	// 删除任务
@@ -247,6 +290,8 @@ type TriggerRpcServer interface {
 	ListArchivedTasks(context.Context, *ListArchivedTasksReq) (*ListArchivedTasksRes, error)
 	// 获取已完成任务列表
 	ListCompletedTasks(context.Context, *ListCompletedTasksReq) (*ListCompletedTasksRes, error)
+	// 运行任务
+	RunTask(context.Context, *RunTaskReq) (*RunTaskRes, error)
 	mustEmbedUnimplementedTriggerRpcServer()
 }
 
@@ -265,6 +310,12 @@ func (UnimplementedTriggerRpcServer) SendTrigger(context.Context, *SendTriggerRe
 }
 func (UnimplementedTriggerRpcServer) SendProtoTrigger(context.Context, *SendProtoTriggerReq) (*SendProtoTriggerRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendProtoTrigger not implemented")
+}
+func (UnimplementedTriggerRpcServer) Queues(context.Context, *QueuesReq) (*QueuesRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Queues not implemented")
+}
+func (UnimplementedTriggerRpcServer) GetQueueInfo(context.Context, *GetQueueInfoReq) (*GetQueueInfoRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetQueueInfo not implemented")
 }
 func (UnimplementedTriggerRpcServer) ArchiveTask(context.Context, *ArchiveTaskReq) (*ArchiveTaskRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ArchiveTask not implemented")
@@ -298,6 +349,9 @@ func (UnimplementedTriggerRpcServer) ListArchivedTasks(context.Context, *ListArc
 }
 func (UnimplementedTriggerRpcServer) ListCompletedTasks(context.Context, *ListCompletedTasksReq) (*ListCompletedTasksRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListCompletedTasks not implemented")
+}
+func (UnimplementedTriggerRpcServer) RunTask(context.Context, *RunTaskReq) (*RunTaskRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RunTask not implemented")
 }
 func (UnimplementedTriggerRpcServer) mustEmbedUnimplementedTriggerRpcServer() {}
 func (UnimplementedTriggerRpcServer) testEmbeddedByValue()                    {}
@@ -370,6 +424,42 @@ func _TriggerRpc_SendProtoTrigger_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TriggerRpcServer).SendProtoTrigger(ctx, req.(*SendProtoTriggerReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_Queues_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueuesReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).Queues(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_Queues_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).Queues(ctx, req.(*QueuesReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_GetQueueInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetQueueInfoReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).GetQueueInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_GetQueueInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).GetQueueInfo(ctx, req.(*GetQueueInfoReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -572,6 +662,24 @@ func _TriggerRpc_ListCompletedTasks_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TriggerRpc_RunTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RunTaskReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).RunTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_RunTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).RunTask(ctx, req.(*RunTaskReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TriggerRpc_ServiceDesc is the grpc.ServiceDesc for TriggerRpc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -590,6 +698,14 @@ var TriggerRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendProtoTrigger",
 			Handler:    _TriggerRpc_SendProtoTrigger_Handler,
+		},
+		{
+			MethodName: "Queues",
+			Handler:    _TriggerRpc_Queues_Handler,
+		},
+		{
+			MethodName: "GetQueueInfo",
+			Handler:    _TriggerRpc_GetQueueInfo_Handler,
 		},
 		{
 			MethodName: "ArchiveTask",
@@ -634,6 +750,10 @@ var TriggerRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListCompletedTasks",
 			Handler:    _TriggerRpc_ListCompletedTasks_Handler,
+		},
+		{
+			MethodName: "RunTask",
+			Handler:    _TriggerRpc_RunTask_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

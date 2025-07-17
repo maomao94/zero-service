@@ -40,6 +40,18 @@ func (s *TriggerRpcServer) SendProtoTrigger(ctx context.Context, in *trigger.Sen
 	return l.SendProtoTrigger(in)
 }
 
+// 获取队列列表
+func (s *TriggerRpcServer) Queues(ctx context.Context, in *trigger.QueuesReq) (*trigger.QueuesRes, error) {
+	l := logic.NewQueuesLogic(ctx, s.svcCtx)
+	return l.Queues(in)
+}
+
+// 获取队列信息
+func (s *TriggerRpcServer) GetQueueInfo(ctx context.Context, in *trigger.GetQueueInfoReq) (*trigger.GetQueueInfoRes, error) {
+	l := logic.NewGetQueueInfoLogic(ctx, s.svcCtx)
+	return l.GetQueueInfo(in)
+}
+
 // 归档任务
 func (s *TriggerRpcServer) ArchiveTask(ctx context.Context, in *trigger.ArchiveTaskReq) (*trigger.ArchiveTaskRes, error) {
 	l := logic.NewArchiveTaskLogic(ctx, s.svcCtx)
@@ -104,4 +116,10 @@ func (s *TriggerRpcServer) ListArchivedTasks(ctx context.Context, in *trigger.Li
 func (s *TriggerRpcServer) ListCompletedTasks(ctx context.Context, in *trigger.ListCompletedTasksReq) (*trigger.ListCompletedTasksRes, error) {
 	l := logic.NewListCompletedTasksLogic(ctx, s.svcCtx)
 	return l.ListCompletedTasks(in)
+}
+
+// 运行任务
+func (s *TriggerRpcServer) RunTask(ctx context.Context, in *trigger.RunTaskReq) (*trigger.RunTaskRes, error) {
+	l := logic.NewRunTaskLogic(ctx, s.svcCtx)
+	return l.RunTask(in)
 }

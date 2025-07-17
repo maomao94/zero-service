@@ -92,6 +92,14 @@
     "triggerDeleteTaskRes": {
       "type": "object"
     },
+    "triggerGetQueueInfoRes": {
+      "type": "object",
+      "properties": {
+        "queueInfo": {
+          "$ref": "#/definitions/triggerPbQueueInfo"
+        }
+      }
+    },
     "triggerGetTaskInfoRes": {
       "type": "object",
       "properties": {
@@ -409,6 +417,17 @@
         }
       }
     },
+    "triggerQueuesRes": {
+      "type": "object",
+      "properties": {
+        "queues": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "triggerRes": {
       "type": "object",
       "properties": {
@@ -416,6 +435,9 @@
           "type": "string"
         }
       }
+    },
+    "triggerRunTaskRes": {
+      "type": "object"
     },
     "triggerSendProtoTriggerRes": {
       "type": "object",
