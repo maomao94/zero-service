@@ -60,6 +60,49 @@ message PbDailyStats  {
   string date = 4;
 }
 
+message PbQueueInfo  {
+  // Name of the queue.
+  string Queue = 1;
+  // Total number of bytes that the queue and its tasks require to be stored in redis.
+  // It is an approximate memory usage value in bytes since the value is computed by sampling.
+  int64 memoryUsage = 2;
+  // Latency of the queue, measured by the oldest pending task in the queue.
+  string latency = 3;
+  // Size is the total number of tasks in the queue.
+  // The value is the sum of Pending, Active, Scheduled, Retry, Aggregating and Archived.
+  int64 size = 4;
+  // Groups is the total number of groups in the queue.
+  int64 groups = 5;
+  // Number of pending tasks.
+  int64 pending = 6;
+  // Number of active tasks.
+  int64 active = 7;
+  // Number of scheduled tasks.
+  int64 scheduled = 8;
+  // Number of retry tasks.
+  int64 retry = 9;
+  // Number of archived tasks.
+  int64 archived = 10;
+  // Number of stored completed tasks.
+  int64 completed = 11;
+  // Number of aggregating tasks.
+  int64 aggregating = 12;
+  // Total number of tasks being processed within the given date (counter resets daily).
+  // The number includes both succeeded and failed tasks.
+  int64 processed = 13;
+  // Total number of tasks failed to be processed within the given date (counter resets daily).
+  int64 failed = 14;
+  // Total number of tasks processed (cumulative).
+  int64 processedTotal = 15;
+  // Total number of tasks failed (cumulative).
+  int64 failedTotal = 16;
+  // Paused indicates whether the queue is paused.
+  // If true, tasks in the queue will not be processed.
+  bool paused = 17;
+  // Time when this queue info snapshot was taken.
+  string timestamp = 18;
+}
+
 message Req {
   string ping = 1;
 }
@@ -190,6 +233,98 @@ message HistoricalStatsRes {
   repeated PbDailyStats dailyStat = 1;
 }
 
+message ListActiveTasksReq {
+  extproto.CurrentUser currentUser = 100;
+
+  int64 pageSize = 1 [(validate.rules).int64 = {gte:0}];
+  int64 pageNum = 2 [(validate.rules).int64 = {gte:0}];
+  string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+}
+
+message ListActiveTasksRes {
+  PbQueueInfo queueInfo = 1;
+  repeated PbTaskInfo tasksInfo = 2;
+}
+
+message ListPendingTasksReq {
+  extproto.CurrentUser currentUser = 100;
+
+  int64 pageSize = 1 [(validate.rules).int64 = {gte:0}];
+  int64 pageNum = 2 [(validate.rules).int64 = {gte:0}];
+  string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+}
+
+message ListPendingTasksRes {
+  PbQueueInfo queueInfo = 1;
+  repeated PbTaskInfo tasksInfo = 2;
+}
+
+message ListAggregatingTasksReq {
+  extproto.CurrentUser currentUser = 100;
+
+  int64 pageSize = 1 [(validate.rules).int64 = {gte:0}];
+  int64 pageNum = 2 [(validate.rules).int64 = {gte:0}];
+  string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+  string group = 4 [(validate.rules).string = {min_len: 1}];
+}
+
+message ListAggregatingTasksRes {
+  PbQueueInfo queueInfo = 1;
+  repeated PbTaskInfo tasksInfo = 2;
+}
+
+message ListScheduledTasksReq {
+  extproto.CurrentUser currentUser = 100;
+
+  int64 pageSize = 1 [(validate.rules).int64 = {gte:0}];
+  int64 pageNum = 2 [(validate.rules).int64 = {gte:0}];
+  string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+}
+
+message ListScheduledTasksRes {
+  PbQueueInfo queueInfo = 1;
+  repeated PbTaskInfo tasksInfo = 2;
+}
+
+message ListRetryTasksReq {
+  extproto.CurrentUser currentUser = 100;
+
+  int64 pageSize = 1 [(validate.rules).int64 = {gte:0}];
+  int64 pageNum = 2 [(validate.rules).int64 = {gte:0}];
+  string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+}
+
+message ListRetryTasksRes {
+  PbQueueInfo queueInfo = 1;
+  repeated PbTaskInfo tasksInfo = 2;
+}
+
+message ListArchivedTasksReq {
+  extproto.CurrentUser currentUser = 100;
+
+  int64 pageSize = 1 [(validate.rules).int64 = {gte:0}];
+  int64 pageNum = 2 [(validate.rules).int64 = {gte:0}];
+  string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+}
+
+message ListArchivedTasksRes {
+  PbQueueInfo queueInfo = 1;
+  repeated PbTaskInfo tasksInfo = 2;
+}
+
+message ListCompletedTasksReq {
+  extproto.CurrentUser currentUser = 100;
+
+  int64 pageSize = 1 [(validate.rules).int64 = {gte:0}];
+  int64 pageNum = 2 [(validate.rules).int64 = {gte:0}];
+  string queue = 3 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+}
+
+message ListCompletedTasksRes {
+  PbQueueInfo queueInfo = 1;
+  repeated PbTaskInfo tasksInfo = 2;
+}
+
 service TriggerRpc {
   rpc Ping (Req) returns (Res);
   // 发送 http-post-json 回调
@@ -204,4 +339,18 @@ service TriggerRpc {
   rpc GetTaskInfo(GetTaskInfoReq) returns (GetTaskInfoRes);
   // 获取任务历史统计
   rpc HistoricalStats(HistoricalStatsReq) returns (HistoricalStatsRes);
+  // 获取活跃任务列表
+  rpc ListActiveTasks(ListActiveTasksReq) returns (ListActiveTasksRes);
+  // 获取待处理任务列表
+  rpc ListPendingTasks(ListPendingTasksReq) returns (ListPendingTasksRes);
+  // 获取聚合任务列表
+  rpc ListAggregatingTasks(ListAggregatingTasksReq) returns (ListAggregatingTasksRes);
+  // 获取预定任务列表
+  rpc ListScheduledTasks(ListScheduledTasksReq) returns (ListScheduledTasksRes);
+  // 获取重试任务列表
+  rpc ListRetryTasks(ListRetryTasksReq) returns (ListRetryTasksRes);
+  // 获取已归档任务列表
+  rpc ListArchivedTasks(ListArchivedTasksReq) returns (ListArchivedTasksRes);
+  // 获取已完成任务列表
+  rpc ListCompletedTasks(ListCompletedTasksReq) returns (ListCompletedTasksRes);
 }

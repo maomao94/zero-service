@@ -19,13 +19,20 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TriggerRpc_Ping_FullMethodName             = "/trigger.TriggerRpc/Ping"
-	TriggerRpc_SendTrigger_FullMethodName      = "/trigger.TriggerRpc/SendTrigger"
-	TriggerRpc_SendProtoTrigger_FullMethodName = "/trigger.TriggerRpc/SendProtoTrigger"
-	TriggerRpc_ArchiveTask_FullMethodName      = "/trigger.TriggerRpc/ArchiveTask"
-	TriggerRpc_DeleteTask_FullMethodName       = "/trigger.TriggerRpc/DeleteTask"
-	TriggerRpc_GetTaskInfo_FullMethodName      = "/trigger.TriggerRpc/GetTaskInfo"
-	TriggerRpc_HistoricalStats_FullMethodName  = "/trigger.TriggerRpc/HistoricalStats"
+	TriggerRpc_Ping_FullMethodName                 = "/trigger.TriggerRpc/Ping"
+	TriggerRpc_SendTrigger_FullMethodName          = "/trigger.TriggerRpc/SendTrigger"
+	TriggerRpc_SendProtoTrigger_FullMethodName     = "/trigger.TriggerRpc/SendProtoTrigger"
+	TriggerRpc_ArchiveTask_FullMethodName          = "/trigger.TriggerRpc/ArchiveTask"
+	TriggerRpc_DeleteTask_FullMethodName           = "/trigger.TriggerRpc/DeleteTask"
+	TriggerRpc_GetTaskInfo_FullMethodName          = "/trigger.TriggerRpc/GetTaskInfo"
+	TriggerRpc_HistoricalStats_FullMethodName      = "/trigger.TriggerRpc/HistoricalStats"
+	TriggerRpc_ListActiveTasks_FullMethodName      = "/trigger.TriggerRpc/ListActiveTasks"
+	TriggerRpc_ListPendingTasks_FullMethodName     = "/trigger.TriggerRpc/ListPendingTasks"
+	TriggerRpc_ListAggregatingTasks_FullMethodName = "/trigger.TriggerRpc/ListAggregatingTasks"
+	TriggerRpc_ListScheduledTasks_FullMethodName   = "/trigger.TriggerRpc/ListScheduledTasks"
+	TriggerRpc_ListRetryTasks_FullMethodName       = "/trigger.TriggerRpc/ListRetryTasks"
+	TriggerRpc_ListArchivedTasks_FullMethodName    = "/trigger.TriggerRpc/ListArchivedTasks"
+	TriggerRpc_ListCompletedTasks_FullMethodName   = "/trigger.TriggerRpc/ListCompletedTasks"
 )
 
 // TriggerRpcClient is the client API for TriggerRpc service.
@@ -45,6 +52,20 @@ type TriggerRpcClient interface {
 	GetTaskInfo(ctx context.Context, in *GetTaskInfoReq, opts ...grpc.CallOption) (*GetTaskInfoRes, error)
 	// 获取任务历史统计
 	HistoricalStats(ctx context.Context, in *HistoricalStatsReq, opts ...grpc.CallOption) (*HistoricalStatsRes, error)
+	// 获取活跃任务列表
+	ListActiveTasks(ctx context.Context, in *ListActiveTasksReq, opts ...grpc.CallOption) (*ListActiveTasksRes, error)
+	// 获取待处理任务列表
+	ListPendingTasks(ctx context.Context, in *ListPendingTasksReq, opts ...grpc.CallOption) (*ListPendingTasksRes, error)
+	// 获取聚合任务列表
+	ListAggregatingTasks(ctx context.Context, in *ListAggregatingTasksReq, opts ...grpc.CallOption) (*ListAggregatingTasksRes, error)
+	// 获取预定任务列表
+	ListScheduledTasks(ctx context.Context, in *ListScheduledTasksReq, opts ...grpc.CallOption) (*ListScheduledTasksRes, error)
+	// 获取重试任务列表
+	ListRetryTasks(ctx context.Context, in *ListRetryTasksReq, opts ...grpc.CallOption) (*ListRetryTasksRes, error)
+	// 获取已归档任务列表
+	ListArchivedTasks(ctx context.Context, in *ListArchivedTasksReq, opts ...grpc.CallOption) (*ListArchivedTasksRes, error)
+	// 获取已完成任务列表
+	ListCompletedTasks(ctx context.Context, in *ListCompletedTasksReq, opts ...grpc.CallOption) (*ListCompletedTasksRes, error)
 }
 
 type triggerRpcClient struct {
@@ -125,6 +146,76 @@ func (c *triggerRpcClient) HistoricalStats(ctx context.Context, in *HistoricalSt
 	return out, nil
 }
 
+func (c *triggerRpcClient) ListActiveTasks(ctx context.Context, in *ListActiveTasksReq, opts ...grpc.CallOption) (*ListActiveTasksRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListActiveTasksRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_ListActiveTasks_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) ListPendingTasks(ctx context.Context, in *ListPendingTasksReq, opts ...grpc.CallOption) (*ListPendingTasksRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListPendingTasksRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_ListPendingTasks_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) ListAggregatingTasks(ctx context.Context, in *ListAggregatingTasksReq, opts ...grpc.CallOption) (*ListAggregatingTasksRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListAggregatingTasksRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_ListAggregatingTasks_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) ListScheduledTasks(ctx context.Context, in *ListScheduledTasksReq, opts ...grpc.CallOption) (*ListScheduledTasksRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListScheduledTasksRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_ListScheduledTasks_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) ListRetryTasks(ctx context.Context, in *ListRetryTasksReq, opts ...grpc.CallOption) (*ListRetryTasksRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListRetryTasksRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_ListRetryTasks_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) ListArchivedTasks(ctx context.Context, in *ListArchivedTasksReq, opts ...grpc.CallOption) (*ListArchivedTasksRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListArchivedTasksRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_ListArchivedTasks_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) ListCompletedTasks(ctx context.Context, in *ListCompletedTasksReq, opts ...grpc.CallOption) (*ListCompletedTasksRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListCompletedTasksRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_ListCompletedTasks_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TriggerRpcServer is the server API for TriggerRpc service.
 // All implementations must embed UnimplementedTriggerRpcServer
 // for forward compatibility.
@@ -142,6 +233,20 @@ type TriggerRpcServer interface {
 	GetTaskInfo(context.Context, *GetTaskInfoReq) (*GetTaskInfoRes, error)
 	// 获取任务历史统计
 	HistoricalStats(context.Context, *HistoricalStatsReq) (*HistoricalStatsRes, error)
+	// 获取活跃任务列表
+	ListActiveTasks(context.Context, *ListActiveTasksReq) (*ListActiveTasksRes, error)
+	// 获取待处理任务列表
+	ListPendingTasks(context.Context, *ListPendingTasksReq) (*ListPendingTasksRes, error)
+	// 获取聚合任务列表
+	ListAggregatingTasks(context.Context, *ListAggregatingTasksReq) (*ListAggregatingTasksRes, error)
+	// 获取预定任务列表
+	ListScheduledTasks(context.Context, *ListScheduledTasksReq) (*ListScheduledTasksRes, error)
+	// 获取重试任务列表
+	ListRetryTasks(context.Context, *ListRetryTasksReq) (*ListRetryTasksRes, error)
+	// 获取已归档任务列表
+	ListArchivedTasks(context.Context, *ListArchivedTasksReq) (*ListArchivedTasksRes, error)
+	// 获取已完成任务列表
+	ListCompletedTasks(context.Context, *ListCompletedTasksReq) (*ListCompletedTasksRes, error)
 	mustEmbedUnimplementedTriggerRpcServer()
 }
 
@@ -172,6 +277,27 @@ func (UnimplementedTriggerRpcServer) GetTaskInfo(context.Context, *GetTaskInfoRe
 }
 func (UnimplementedTriggerRpcServer) HistoricalStats(context.Context, *HistoricalStatsReq) (*HistoricalStatsRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HistoricalStats not implemented")
+}
+func (UnimplementedTriggerRpcServer) ListActiveTasks(context.Context, *ListActiveTasksReq) (*ListActiveTasksRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListActiveTasks not implemented")
+}
+func (UnimplementedTriggerRpcServer) ListPendingTasks(context.Context, *ListPendingTasksReq) (*ListPendingTasksRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListPendingTasks not implemented")
+}
+func (UnimplementedTriggerRpcServer) ListAggregatingTasks(context.Context, *ListAggregatingTasksReq) (*ListAggregatingTasksRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAggregatingTasks not implemented")
+}
+func (UnimplementedTriggerRpcServer) ListScheduledTasks(context.Context, *ListScheduledTasksReq) (*ListScheduledTasksRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListScheduledTasks not implemented")
+}
+func (UnimplementedTriggerRpcServer) ListRetryTasks(context.Context, *ListRetryTasksReq) (*ListRetryTasksRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListRetryTasks not implemented")
+}
+func (UnimplementedTriggerRpcServer) ListArchivedTasks(context.Context, *ListArchivedTasksReq) (*ListArchivedTasksRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListArchivedTasks not implemented")
+}
+func (UnimplementedTriggerRpcServer) ListCompletedTasks(context.Context, *ListCompletedTasksReq) (*ListCompletedTasksRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListCompletedTasks not implemented")
 }
 func (UnimplementedTriggerRpcServer) mustEmbedUnimplementedTriggerRpcServer() {}
 func (UnimplementedTriggerRpcServer) testEmbeddedByValue()                    {}
@@ -320,6 +446,132 @@ func _TriggerRpc_HistoricalStats_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TriggerRpc_ListActiveTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListActiveTasksReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).ListActiveTasks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_ListActiveTasks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).ListActiveTasks(ctx, req.(*ListActiveTasksReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_ListPendingTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPendingTasksReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).ListPendingTasks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_ListPendingTasks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).ListPendingTasks(ctx, req.(*ListPendingTasksReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_ListAggregatingTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAggregatingTasksReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).ListAggregatingTasks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_ListAggregatingTasks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).ListAggregatingTasks(ctx, req.(*ListAggregatingTasksReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_ListScheduledTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListScheduledTasksReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).ListScheduledTasks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_ListScheduledTasks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).ListScheduledTasks(ctx, req.(*ListScheduledTasksReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_ListRetryTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRetryTasksReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).ListRetryTasks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_ListRetryTasks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).ListRetryTasks(ctx, req.(*ListRetryTasksReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_ListArchivedTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListArchivedTasksReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).ListArchivedTasks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_ListArchivedTasks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).ListArchivedTasks(ctx, req.(*ListArchivedTasksReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_ListCompletedTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCompletedTasksReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).ListCompletedTasks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_ListCompletedTasks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).ListCompletedTasks(ctx, req.(*ListCompletedTasksReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TriggerRpc_ServiceDesc is the grpc.ServiceDesc for TriggerRpc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -354,6 +606,34 @@ var TriggerRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "HistoricalStats",
 			Handler:    _TriggerRpc_HistoricalStats_Handler,
+		},
+		{
+			MethodName: "ListActiveTasks",
+			Handler:    _TriggerRpc_ListActiveTasks_Handler,
+		},
+		{
+			MethodName: "ListPendingTasks",
+			Handler:    _TriggerRpc_ListPendingTasks_Handler,
+		},
+		{
+			MethodName: "ListAggregatingTasks",
+			Handler:    _TriggerRpc_ListAggregatingTasks_Handler,
+		},
+		{
+			MethodName: "ListScheduledTasks",
+			Handler:    _TriggerRpc_ListScheduledTasks_Handler,
+		},
+		{
+			MethodName: "ListRetryTasks",
+			Handler:    _TriggerRpc_ListRetryTasks_Handler,
+		},
+		{
+			MethodName: "ListArchivedTasks",
+			Handler:    _TriggerRpc_ListArchivedTasks_Handler,
+		},
+		{
+			MethodName: "ListCompletedTasks",
+			Handler:    _TriggerRpc_ListCompletedTasks_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

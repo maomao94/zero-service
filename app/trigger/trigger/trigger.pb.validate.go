@@ -275,6 +275,141 @@ var _ interface {
 	ErrorName() string
 } = PbDailyStatsValidationError{}
 
+// Validate checks the field values on PbQueueInfo with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *PbQueueInfo) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PbQueueInfo with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in PbQueueInfoMultiError, or
+// nil if none found.
+func (m *PbQueueInfo) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PbQueueInfo) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Queue
+
+	// no validation rules for MemoryUsage
+
+	// no validation rules for Latency
+
+	// no validation rules for Size
+
+	// no validation rules for Groups
+
+	// no validation rules for Pending
+
+	// no validation rules for Active
+
+	// no validation rules for Scheduled
+
+	// no validation rules for Retry
+
+	// no validation rules for Archived
+
+	// no validation rules for Completed
+
+	// no validation rules for Aggregating
+
+	// no validation rules for Processed
+
+	// no validation rules for Failed
+
+	// no validation rules for ProcessedTotal
+
+	// no validation rules for FailedTotal
+
+	// no validation rules for Paused
+
+	// no validation rules for Timestamp
+
+	if len(errors) > 0 {
+		return PbQueueInfoMultiError(errors)
+	}
+
+	return nil
+}
+
+// PbQueueInfoMultiError is an error wrapping multiple validation errors
+// returned by PbQueueInfo.ValidateAll() if the designated constraints aren't met.
+type PbQueueInfoMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PbQueueInfoMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PbQueueInfoMultiError) AllErrors() []error { return m }
+
+// PbQueueInfoValidationError is the validation error returned by
+// PbQueueInfo.Validate if the designated constraints aren't met.
+type PbQueueInfoValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PbQueueInfoValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PbQueueInfoValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PbQueueInfoValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PbQueueInfoValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PbQueueInfoValidationError) ErrorName() string { return "PbQueueInfoValidationError" }
+
+// Error satisfies the builtin error interface
+func (e PbQueueInfoValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPbQueueInfo.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PbQueueInfoValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PbQueueInfoValidationError{}
+
 // Validate checks the field values on Req with the rules defined in the proto
 // definition for this message. If any rules are violated, the first error
 // encountered is returned, or nil if there are no violations.
@@ -2047,3 +2182,2317 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = HistoricalStatsResValidationError{}
+
+// Validate checks the field values on ListActiveTasksReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListActiveTasksReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListActiveTasksReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListActiveTasksReqMultiError, or nil if none found.
+func (m *ListActiveTasksReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListActiveTasksReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListActiveTasksReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListActiveTasksReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListActiveTasksReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetPageSize() < 0 {
+		err := ListActiveTasksReqValidationError{
+			field:  "PageSize",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetPageNum() < 0 {
+		err := ListActiveTasksReqValidationError{
+			field:  "PageNum",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetQueue()) < 1 {
+		err := ListActiveTasksReqValidationError{
+			field:  "Queue",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return ListActiveTasksReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListActiveTasksReqMultiError is an error wrapping multiple validation errors
+// returned by ListActiveTasksReq.ValidateAll() if the designated constraints
+// aren't met.
+type ListActiveTasksReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListActiveTasksReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListActiveTasksReqMultiError) AllErrors() []error { return m }
+
+// ListActiveTasksReqValidationError is the validation error returned by
+// ListActiveTasksReq.Validate if the designated constraints aren't met.
+type ListActiveTasksReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListActiveTasksReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListActiveTasksReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListActiveTasksReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListActiveTasksReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListActiveTasksReqValidationError) ErrorName() string {
+	return "ListActiveTasksReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListActiveTasksReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListActiveTasksReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListActiveTasksReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListActiveTasksReqValidationError{}
+
+// Validate checks the field values on ListActiveTasksRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListActiveTasksRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListActiveTasksRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListActiveTasksResMultiError, or nil if none found.
+func (m *ListActiveTasksRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListActiveTasksRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetQueueInfo()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListActiveTasksResValidationError{
+					field:  "QueueInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListActiveTasksResValidationError{
+					field:  "QueueInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetQueueInfo()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListActiveTasksResValidationError{
+				field:  "QueueInfo",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetTasksInfo() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListActiveTasksResValidationError{
+						field:  fmt.Sprintf("TasksInfo[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListActiveTasksResValidationError{
+						field:  fmt.Sprintf("TasksInfo[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListActiveTasksResValidationError{
+					field:  fmt.Sprintf("TasksInfo[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return ListActiveTasksResMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListActiveTasksResMultiError is an error wrapping multiple validation errors
+// returned by ListActiveTasksRes.ValidateAll() if the designated constraints
+// aren't met.
+type ListActiveTasksResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListActiveTasksResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListActiveTasksResMultiError) AllErrors() []error { return m }
+
+// ListActiveTasksResValidationError is the validation error returned by
+// ListActiveTasksRes.Validate if the designated constraints aren't met.
+type ListActiveTasksResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListActiveTasksResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListActiveTasksResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListActiveTasksResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListActiveTasksResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListActiveTasksResValidationError) ErrorName() string {
+	return "ListActiveTasksResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListActiveTasksResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListActiveTasksRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListActiveTasksResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListActiveTasksResValidationError{}
+
+// Validate checks the field values on ListPendingTasksReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListPendingTasksReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListPendingTasksReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListPendingTasksReqMultiError, or nil if none found.
+func (m *ListPendingTasksReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListPendingTasksReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListPendingTasksReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListPendingTasksReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListPendingTasksReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetPageSize() < 0 {
+		err := ListPendingTasksReqValidationError{
+			field:  "PageSize",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetPageNum() < 0 {
+		err := ListPendingTasksReqValidationError{
+			field:  "PageNum",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetQueue()) < 1 {
+		err := ListPendingTasksReqValidationError{
+			field:  "Queue",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return ListPendingTasksReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListPendingTasksReqMultiError is an error wrapping multiple validation
+// errors returned by ListPendingTasksReq.ValidateAll() if the designated
+// constraints aren't met.
+type ListPendingTasksReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListPendingTasksReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListPendingTasksReqMultiError) AllErrors() []error { return m }
+
+// ListPendingTasksReqValidationError is the validation error returned by
+// ListPendingTasksReq.Validate if the designated constraints aren't met.
+type ListPendingTasksReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListPendingTasksReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListPendingTasksReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListPendingTasksReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListPendingTasksReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListPendingTasksReqValidationError) ErrorName() string {
+	return "ListPendingTasksReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListPendingTasksReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListPendingTasksReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListPendingTasksReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListPendingTasksReqValidationError{}
+
+// Validate checks the field values on ListPendingTasksRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListPendingTasksRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListPendingTasksRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListPendingTasksResMultiError, or nil if none found.
+func (m *ListPendingTasksRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListPendingTasksRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetQueueInfo()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListPendingTasksResValidationError{
+					field:  "QueueInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListPendingTasksResValidationError{
+					field:  "QueueInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetQueueInfo()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListPendingTasksResValidationError{
+				field:  "QueueInfo",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetTasksInfo() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListPendingTasksResValidationError{
+						field:  fmt.Sprintf("TasksInfo[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListPendingTasksResValidationError{
+						field:  fmt.Sprintf("TasksInfo[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListPendingTasksResValidationError{
+					field:  fmt.Sprintf("TasksInfo[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return ListPendingTasksResMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListPendingTasksResMultiError is an error wrapping multiple validation
+// errors returned by ListPendingTasksRes.ValidateAll() if the designated
+// constraints aren't met.
+type ListPendingTasksResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListPendingTasksResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListPendingTasksResMultiError) AllErrors() []error { return m }
+
+// ListPendingTasksResValidationError is the validation error returned by
+// ListPendingTasksRes.Validate if the designated constraints aren't met.
+type ListPendingTasksResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListPendingTasksResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListPendingTasksResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListPendingTasksResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListPendingTasksResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListPendingTasksResValidationError) ErrorName() string {
+	return "ListPendingTasksResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListPendingTasksResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListPendingTasksRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListPendingTasksResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListPendingTasksResValidationError{}
+
+// Validate checks the field values on ListAggregatingTasksReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListAggregatingTasksReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListAggregatingTasksReq with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListAggregatingTasksReqMultiError, or nil if none found.
+func (m *ListAggregatingTasksReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListAggregatingTasksReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListAggregatingTasksReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListAggregatingTasksReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListAggregatingTasksReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetPageSize() < 0 {
+		err := ListAggregatingTasksReqValidationError{
+			field:  "PageSize",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetPageNum() < 0 {
+		err := ListAggregatingTasksReqValidationError{
+			field:  "PageNum",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetQueue()) < 1 {
+		err := ListAggregatingTasksReqValidationError{
+			field:  "Queue",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetGroup()) < 1 {
+		err := ListAggregatingTasksReqValidationError{
+			field:  "Group",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return ListAggregatingTasksReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListAggregatingTasksReqMultiError is an error wrapping multiple validation
+// errors returned by ListAggregatingTasksReq.ValidateAll() if the designated
+// constraints aren't met.
+type ListAggregatingTasksReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListAggregatingTasksReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListAggregatingTasksReqMultiError) AllErrors() []error { return m }
+
+// ListAggregatingTasksReqValidationError is the validation error returned by
+// ListAggregatingTasksReq.Validate if the designated constraints aren't met.
+type ListAggregatingTasksReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListAggregatingTasksReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListAggregatingTasksReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListAggregatingTasksReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListAggregatingTasksReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListAggregatingTasksReqValidationError) ErrorName() string {
+	return "ListAggregatingTasksReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListAggregatingTasksReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListAggregatingTasksReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListAggregatingTasksReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListAggregatingTasksReqValidationError{}
+
+// Validate checks the field values on ListAggregatingTasksRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListAggregatingTasksRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListAggregatingTasksRes with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListAggregatingTasksResMultiError, or nil if none found.
+func (m *ListAggregatingTasksRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListAggregatingTasksRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetQueueInfo()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListAggregatingTasksResValidationError{
+					field:  "QueueInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListAggregatingTasksResValidationError{
+					field:  "QueueInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetQueueInfo()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListAggregatingTasksResValidationError{
+				field:  "QueueInfo",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetTasksInfo() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListAggregatingTasksResValidationError{
+						field:  fmt.Sprintf("TasksInfo[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListAggregatingTasksResValidationError{
+						field:  fmt.Sprintf("TasksInfo[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListAggregatingTasksResValidationError{
+					field:  fmt.Sprintf("TasksInfo[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return ListAggregatingTasksResMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListAggregatingTasksResMultiError is an error wrapping multiple validation
+// errors returned by ListAggregatingTasksRes.ValidateAll() if the designated
+// constraints aren't met.
+type ListAggregatingTasksResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListAggregatingTasksResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListAggregatingTasksResMultiError) AllErrors() []error { return m }
+
+// ListAggregatingTasksResValidationError is the validation error returned by
+// ListAggregatingTasksRes.Validate if the designated constraints aren't met.
+type ListAggregatingTasksResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListAggregatingTasksResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListAggregatingTasksResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListAggregatingTasksResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListAggregatingTasksResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListAggregatingTasksResValidationError) ErrorName() string {
+	return "ListAggregatingTasksResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListAggregatingTasksResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListAggregatingTasksRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListAggregatingTasksResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListAggregatingTasksResValidationError{}
+
+// Validate checks the field values on ListScheduledTasksReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListScheduledTasksReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListScheduledTasksReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListScheduledTasksReqMultiError, or nil if none found.
+func (m *ListScheduledTasksReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListScheduledTasksReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListScheduledTasksReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListScheduledTasksReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListScheduledTasksReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetPageSize() < 0 {
+		err := ListScheduledTasksReqValidationError{
+			field:  "PageSize",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetPageNum() < 0 {
+		err := ListScheduledTasksReqValidationError{
+			field:  "PageNum",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetQueue()) < 1 {
+		err := ListScheduledTasksReqValidationError{
+			field:  "Queue",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return ListScheduledTasksReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListScheduledTasksReqMultiError is an error wrapping multiple validation
+// errors returned by ListScheduledTasksReq.ValidateAll() if the designated
+// constraints aren't met.
+type ListScheduledTasksReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListScheduledTasksReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListScheduledTasksReqMultiError) AllErrors() []error { return m }
+
+// ListScheduledTasksReqValidationError is the validation error returned by
+// ListScheduledTasksReq.Validate if the designated constraints aren't met.
+type ListScheduledTasksReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListScheduledTasksReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListScheduledTasksReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListScheduledTasksReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListScheduledTasksReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListScheduledTasksReqValidationError) ErrorName() string {
+	return "ListScheduledTasksReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListScheduledTasksReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListScheduledTasksReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListScheduledTasksReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListScheduledTasksReqValidationError{}
+
+// Validate checks the field values on ListScheduledTasksRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListScheduledTasksRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListScheduledTasksRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListScheduledTasksResMultiError, or nil if none found.
+func (m *ListScheduledTasksRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListScheduledTasksRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetQueueInfo()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListScheduledTasksResValidationError{
+					field:  "QueueInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListScheduledTasksResValidationError{
+					field:  "QueueInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetQueueInfo()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListScheduledTasksResValidationError{
+				field:  "QueueInfo",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetTasksInfo() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListScheduledTasksResValidationError{
+						field:  fmt.Sprintf("TasksInfo[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListScheduledTasksResValidationError{
+						field:  fmt.Sprintf("TasksInfo[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListScheduledTasksResValidationError{
+					field:  fmt.Sprintf("TasksInfo[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return ListScheduledTasksResMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListScheduledTasksResMultiError is an error wrapping multiple validation
+// errors returned by ListScheduledTasksRes.ValidateAll() if the designated
+// constraints aren't met.
+type ListScheduledTasksResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListScheduledTasksResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListScheduledTasksResMultiError) AllErrors() []error { return m }
+
+// ListScheduledTasksResValidationError is the validation error returned by
+// ListScheduledTasksRes.Validate if the designated constraints aren't met.
+type ListScheduledTasksResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListScheduledTasksResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListScheduledTasksResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListScheduledTasksResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListScheduledTasksResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListScheduledTasksResValidationError) ErrorName() string {
+	return "ListScheduledTasksResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListScheduledTasksResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListScheduledTasksRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListScheduledTasksResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListScheduledTasksResValidationError{}
+
+// Validate checks the field values on ListRetryTasksReq with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *ListRetryTasksReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListRetryTasksReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListRetryTasksReqMultiError, or nil if none found.
+func (m *ListRetryTasksReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListRetryTasksReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListRetryTasksReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListRetryTasksReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListRetryTasksReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetPageSize() < 0 {
+		err := ListRetryTasksReqValidationError{
+			field:  "PageSize",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetPageNum() < 0 {
+		err := ListRetryTasksReqValidationError{
+			field:  "PageNum",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetQueue()) < 1 {
+		err := ListRetryTasksReqValidationError{
+			field:  "Queue",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return ListRetryTasksReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListRetryTasksReqMultiError is an error wrapping multiple validation errors
+// returned by ListRetryTasksReq.ValidateAll() if the designated constraints
+// aren't met.
+type ListRetryTasksReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListRetryTasksReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListRetryTasksReqMultiError) AllErrors() []error { return m }
+
+// ListRetryTasksReqValidationError is the validation error returned by
+// ListRetryTasksReq.Validate if the designated constraints aren't met.
+type ListRetryTasksReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListRetryTasksReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListRetryTasksReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListRetryTasksReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListRetryTasksReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListRetryTasksReqValidationError) ErrorName() string {
+	return "ListRetryTasksReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListRetryTasksReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListRetryTasksReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListRetryTasksReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListRetryTasksReqValidationError{}
+
+// Validate checks the field values on ListRetryTasksRes with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *ListRetryTasksRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListRetryTasksRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListRetryTasksResMultiError, or nil if none found.
+func (m *ListRetryTasksRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListRetryTasksRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetQueueInfo()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListRetryTasksResValidationError{
+					field:  "QueueInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListRetryTasksResValidationError{
+					field:  "QueueInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetQueueInfo()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListRetryTasksResValidationError{
+				field:  "QueueInfo",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetTasksInfo() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListRetryTasksResValidationError{
+						field:  fmt.Sprintf("TasksInfo[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListRetryTasksResValidationError{
+						field:  fmt.Sprintf("TasksInfo[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListRetryTasksResValidationError{
+					field:  fmt.Sprintf("TasksInfo[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return ListRetryTasksResMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListRetryTasksResMultiError is an error wrapping multiple validation errors
+// returned by ListRetryTasksRes.ValidateAll() if the designated constraints
+// aren't met.
+type ListRetryTasksResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListRetryTasksResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListRetryTasksResMultiError) AllErrors() []error { return m }
+
+// ListRetryTasksResValidationError is the validation error returned by
+// ListRetryTasksRes.Validate if the designated constraints aren't met.
+type ListRetryTasksResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListRetryTasksResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListRetryTasksResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListRetryTasksResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListRetryTasksResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListRetryTasksResValidationError) ErrorName() string {
+	return "ListRetryTasksResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListRetryTasksResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListRetryTasksRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListRetryTasksResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListRetryTasksResValidationError{}
+
+// Validate checks the field values on ListArchivedTasksReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListArchivedTasksReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListArchivedTasksReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListArchivedTasksReqMultiError, or nil if none found.
+func (m *ListArchivedTasksReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListArchivedTasksReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListArchivedTasksReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListArchivedTasksReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListArchivedTasksReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetPageSize() < 0 {
+		err := ListArchivedTasksReqValidationError{
+			field:  "PageSize",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetPageNum() < 0 {
+		err := ListArchivedTasksReqValidationError{
+			field:  "PageNum",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetQueue()) < 1 {
+		err := ListArchivedTasksReqValidationError{
+			field:  "Queue",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return ListArchivedTasksReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListArchivedTasksReqMultiError is an error wrapping multiple validation
+// errors returned by ListArchivedTasksReq.ValidateAll() if the designated
+// constraints aren't met.
+type ListArchivedTasksReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListArchivedTasksReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListArchivedTasksReqMultiError) AllErrors() []error { return m }
+
+// ListArchivedTasksReqValidationError is the validation error returned by
+// ListArchivedTasksReq.Validate if the designated constraints aren't met.
+type ListArchivedTasksReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListArchivedTasksReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListArchivedTasksReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListArchivedTasksReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListArchivedTasksReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListArchivedTasksReqValidationError) ErrorName() string {
+	return "ListArchivedTasksReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListArchivedTasksReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListArchivedTasksReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListArchivedTasksReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListArchivedTasksReqValidationError{}
+
+// Validate checks the field values on ListArchivedTasksRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListArchivedTasksRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListArchivedTasksRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListArchivedTasksResMultiError, or nil if none found.
+func (m *ListArchivedTasksRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListArchivedTasksRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetQueueInfo()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListArchivedTasksResValidationError{
+					field:  "QueueInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListArchivedTasksResValidationError{
+					field:  "QueueInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetQueueInfo()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListArchivedTasksResValidationError{
+				field:  "QueueInfo",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetTasksInfo() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListArchivedTasksResValidationError{
+						field:  fmt.Sprintf("TasksInfo[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListArchivedTasksResValidationError{
+						field:  fmt.Sprintf("TasksInfo[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListArchivedTasksResValidationError{
+					field:  fmt.Sprintf("TasksInfo[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return ListArchivedTasksResMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListArchivedTasksResMultiError is an error wrapping multiple validation
+// errors returned by ListArchivedTasksRes.ValidateAll() if the designated
+// constraints aren't met.
+type ListArchivedTasksResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListArchivedTasksResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListArchivedTasksResMultiError) AllErrors() []error { return m }
+
+// ListArchivedTasksResValidationError is the validation error returned by
+// ListArchivedTasksRes.Validate if the designated constraints aren't met.
+type ListArchivedTasksResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListArchivedTasksResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListArchivedTasksResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListArchivedTasksResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListArchivedTasksResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListArchivedTasksResValidationError) ErrorName() string {
+	return "ListArchivedTasksResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListArchivedTasksResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListArchivedTasksRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListArchivedTasksResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListArchivedTasksResValidationError{}
+
+// Validate checks the field values on ListCompletedTasksReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListCompletedTasksReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListCompletedTasksReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListCompletedTasksReqMultiError, or nil if none found.
+func (m *ListCompletedTasksReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListCompletedTasksReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListCompletedTasksReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListCompletedTasksReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListCompletedTasksReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetPageSize() < 0 {
+		err := ListCompletedTasksReqValidationError{
+			field:  "PageSize",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetPageNum() < 0 {
+		err := ListCompletedTasksReqValidationError{
+			field:  "PageNum",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetQueue()) < 1 {
+		err := ListCompletedTasksReqValidationError{
+			field:  "Queue",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return ListCompletedTasksReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListCompletedTasksReqMultiError is an error wrapping multiple validation
+// errors returned by ListCompletedTasksReq.ValidateAll() if the designated
+// constraints aren't met.
+type ListCompletedTasksReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListCompletedTasksReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListCompletedTasksReqMultiError) AllErrors() []error { return m }
+
+// ListCompletedTasksReqValidationError is the validation error returned by
+// ListCompletedTasksReq.Validate if the designated constraints aren't met.
+type ListCompletedTasksReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListCompletedTasksReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListCompletedTasksReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListCompletedTasksReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListCompletedTasksReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListCompletedTasksReqValidationError) ErrorName() string {
+	return "ListCompletedTasksReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListCompletedTasksReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListCompletedTasksReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListCompletedTasksReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListCompletedTasksReqValidationError{}
+
+// Validate checks the field values on ListCompletedTasksRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListCompletedTasksRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListCompletedTasksRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListCompletedTasksResMultiError, or nil if none found.
+func (m *ListCompletedTasksRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListCompletedTasksRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetQueueInfo()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListCompletedTasksResValidationError{
+					field:  "QueueInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListCompletedTasksResValidationError{
+					field:  "QueueInfo",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetQueueInfo()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListCompletedTasksResValidationError{
+				field:  "QueueInfo",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetTasksInfo() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListCompletedTasksResValidationError{
+						field:  fmt.Sprintf("TasksInfo[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListCompletedTasksResValidationError{
+						field:  fmt.Sprintf("TasksInfo[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListCompletedTasksResValidationError{
+					field:  fmt.Sprintf("TasksInfo[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return ListCompletedTasksResMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListCompletedTasksResMultiError is an error wrapping multiple validation
+// errors returned by ListCompletedTasksRes.ValidateAll() if the designated
+// constraints aren't met.
+type ListCompletedTasksResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListCompletedTasksResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListCompletedTasksResMultiError) AllErrors() []error { return m }
+
+// ListCompletedTasksResValidationError is the validation error returned by
+// ListCompletedTasksRes.Validate if the designated constraints aren't met.
+type ListCompletedTasksResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListCompletedTasksResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListCompletedTasksResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListCompletedTasksResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListCompletedTasksResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListCompletedTasksResValidationError) ErrorName() string {
+	return "ListCompletedTasksResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListCompletedTasksResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListCompletedTasksRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListCompletedTasksResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListCompletedTasksResValidationError{}

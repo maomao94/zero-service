@@ -63,3 +63,45 @@ func (s *TriggerRpcServer) HistoricalStats(ctx context.Context, in *trigger.Hist
 	l := logic.NewHistoricalStatsLogic(ctx, s.svcCtx)
 	return l.HistoricalStats(in)
 }
+
+// 获取活跃任务列表
+func (s *TriggerRpcServer) ListActiveTasks(ctx context.Context, in *trigger.ListActiveTasksReq) (*trigger.ListActiveTasksRes, error) {
+	l := logic.NewListActiveTasksLogic(ctx, s.svcCtx)
+	return l.ListActiveTasks(in)
+}
+
+// 获取待处理任务列表
+func (s *TriggerRpcServer) ListPendingTasks(ctx context.Context, in *trigger.ListPendingTasksReq) (*trigger.ListPendingTasksRes, error) {
+	l := logic.NewListPendingTasksLogic(ctx, s.svcCtx)
+	return l.ListPendingTasks(in)
+}
+
+// 获取聚合任务列表
+func (s *TriggerRpcServer) ListAggregatingTasks(ctx context.Context, in *trigger.ListAggregatingTasksReq) (*trigger.ListAggregatingTasksRes, error) {
+	l := logic.NewListAggregatingTasksLogic(ctx, s.svcCtx)
+	return l.ListAggregatingTasks(in)
+}
+
+// 获取预定任务列表
+func (s *TriggerRpcServer) ListScheduledTasks(ctx context.Context, in *trigger.ListScheduledTasksReq) (*trigger.ListScheduledTasksRes, error) {
+	l := logic.NewListScheduledTasksLogic(ctx, s.svcCtx)
+	return l.ListScheduledTasks(in)
+}
+
+// 获取重试任务列表
+func (s *TriggerRpcServer) ListRetryTasks(ctx context.Context, in *trigger.ListRetryTasksReq) (*trigger.ListRetryTasksRes, error) {
+	l := logic.NewListRetryTasksLogic(ctx, s.svcCtx)
+	return l.ListRetryTasks(in)
+}
+
+// 获取已归档任务列表
+func (s *TriggerRpcServer) ListArchivedTasks(ctx context.Context, in *trigger.ListArchivedTasksReq) (*trigger.ListArchivedTasksRes, error) {
+	l := logic.NewListArchivedTasksLogic(ctx, s.svcCtx)
+	return l.ListArchivedTasks(in)
+}
+
+// 获取已完成任务列表
+func (s *TriggerRpcServer) ListCompletedTasks(ctx context.Context, in *trigger.ListCompletedTasksReq) (*trigger.ListCompletedTasksRes, error) {
+	l := logic.NewListCompletedTasksLogic(ctx, s.svcCtx)
+	return l.ListCompletedTasks(in)
+}
