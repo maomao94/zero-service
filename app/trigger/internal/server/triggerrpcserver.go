@@ -76,6 +76,12 @@ func (s *TriggerRpcServer) DeleteAllCompletedTasks(ctx context.Context, in *trig
 	return l.DeleteAllCompletedTasks(in)
 }
 
+// 删除所有已归档任务
+func (s *TriggerRpcServer) DeleteAllArchivedTasks(ctx context.Context, in *trigger.DeleteAllArchivedTasksReq) (*trigger.DeleteAllArchivedTasksRes, error) {
+	l := logic.NewDeleteAllArchivedTasksLogic(ctx, s.svcCtx)
+	return l.DeleteAllArchivedTasks(in)
+}
+
 // 获取任务历史统计
 func (s *TriggerRpcServer) HistoricalStats(ctx context.Context, in *trigger.HistoricalStatsReq) (*trigger.HistoricalStatsRes, error) {
 	l := logic.NewHistoricalStatsLogic(ctx, s.svcCtx)

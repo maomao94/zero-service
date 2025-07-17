@@ -2636,6 +2636,252 @@ var _ interface {
 	ErrorName() string
 } = DeleteAllCompletedTasksResValidationError{}
 
+// Validate checks the field values on DeleteAllArchivedTasksReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *DeleteAllArchivedTasksReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DeleteAllArchivedTasksReq with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DeleteAllArchivedTasksReqMultiError, or nil if none found.
+func (m *DeleteAllArchivedTasksReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DeleteAllArchivedTasksReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DeleteAllArchivedTasksReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DeleteAllArchivedTasksReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DeleteAllArchivedTasksReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if utf8.RuneCountInString(m.GetQueue()) < 1 {
+		err := DeleteAllArchivedTasksReqValidationError{
+			field:  "Queue",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return DeleteAllArchivedTasksReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// DeleteAllArchivedTasksReqMultiError is an error wrapping multiple validation
+// errors returned by DeleteAllArchivedTasksReq.ValidateAll() if the
+// designated constraints aren't met.
+type DeleteAllArchivedTasksReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DeleteAllArchivedTasksReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DeleteAllArchivedTasksReqMultiError) AllErrors() []error { return m }
+
+// DeleteAllArchivedTasksReqValidationError is the validation error returned by
+// DeleteAllArchivedTasksReq.Validate if the designated constraints aren't met.
+type DeleteAllArchivedTasksReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DeleteAllArchivedTasksReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DeleteAllArchivedTasksReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DeleteAllArchivedTasksReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DeleteAllArchivedTasksReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DeleteAllArchivedTasksReqValidationError) ErrorName() string {
+	return "DeleteAllArchivedTasksReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DeleteAllArchivedTasksReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDeleteAllArchivedTasksReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DeleteAllArchivedTasksReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DeleteAllArchivedTasksReqValidationError{}
+
+// Validate checks the field values on DeleteAllArchivedTasksRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *DeleteAllArchivedTasksRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DeleteAllArchivedTasksRes with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DeleteAllArchivedTasksResMultiError, or nil if none found.
+func (m *DeleteAllArchivedTasksRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DeleteAllArchivedTasksRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Count
+
+	if len(errors) > 0 {
+		return DeleteAllArchivedTasksResMultiError(errors)
+	}
+
+	return nil
+}
+
+// DeleteAllArchivedTasksResMultiError is an error wrapping multiple validation
+// errors returned by DeleteAllArchivedTasksRes.ValidateAll() if the
+// designated constraints aren't met.
+type DeleteAllArchivedTasksResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DeleteAllArchivedTasksResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DeleteAllArchivedTasksResMultiError) AllErrors() []error { return m }
+
+// DeleteAllArchivedTasksResValidationError is the validation error returned by
+// DeleteAllArchivedTasksRes.Validate if the designated constraints aren't met.
+type DeleteAllArchivedTasksResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DeleteAllArchivedTasksResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DeleteAllArchivedTasksResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DeleteAllArchivedTasksResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DeleteAllArchivedTasksResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DeleteAllArchivedTasksResValidationError) ErrorName() string {
+	return "DeleteAllArchivedTasksResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DeleteAllArchivedTasksResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDeleteAllArchivedTasksRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DeleteAllArchivedTasksResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DeleteAllArchivedTasksResValidationError{}
+
 // Validate checks the field values on HistoricalStatsReq with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
