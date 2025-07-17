@@ -89,6 +89,15 @@
     "triggerArchiveTaskRes": {
       "type": "object"
     },
+    "triggerDeleteAllCompletedTasksRes": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
     "triggerDeleteTaskRes": {
       "type": "object"
     },

@@ -239,6 +239,17 @@ message GetTaskInfoRes {
   PbTaskInfo taskInfo = 1;
 }
 
+message DeleteAllCompletedTasksReq {
+  extproto.CurrentUser currentUser = 100;
+
+  // Queue is the name of the queue in which the task belongs.
+  string queue = 1 [(validate.rules).string = {min_len: 1}]; // 默认 critical
+}
+
+message DeleteAllCompletedTasksRes {
+  int64 count = 1;
+}
+
 message HistoricalStatsReq {
   extproto.CurrentUser currentUser = 100;
 
@@ -372,6 +383,8 @@ service TriggerRpc {
   rpc DeleteTask(DeleteTaskReq) returns (DeleteTaskRes);
   // 获取任务
   rpc GetTaskInfo(GetTaskInfoReq) returns (GetTaskInfoRes);
+  // 删除所有已完成任务
+  rpc DeleteAllCompletedTasks(DeleteAllCompletedTasksReq) returns (DeleteAllCompletedTasksRes);
   // 获取任务历史统计
   rpc HistoricalStats(HistoricalStatsReq) returns (HistoricalStatsRes);
   // 获取活跃任务列表

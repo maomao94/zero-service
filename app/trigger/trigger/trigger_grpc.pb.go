@@ -19,23 +19,24 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TriggerRpc_Ping_FullMethodName                 = "/trigger.TriggerRpc/Ping"
-	TriggerRpc_SendTrigger_FullMethodName          = "/trigger.TriggerRpc/SendTrigger"
-	TriggerRpc_SendProtoTrigger_FullMethodName     = "/trigger.TriggerRpc/SendProtoTrigger"
-	TriggerRpc_Queues_FullMethodName               = "/trigger.TriggerRpc/Queues"
-	TriggerRpc_GetQueueInfo_FullMethodName         = "/trigger.TriggerRpc/GetQueueInfo"
-	TriggerRpc_ArchiveTask_FullMethodName          = "/trigger.TriggerRpc/ArchiveTask"
-	TriggerRpc_DeleteTask_FullMethodName           = "/trigger.TriggerRpc/DeleteTask"
-	TriggerRpc_GetTaskInfo_FullMethodName          = "/trigger.TriggerRpc/GetTaskInfo"
-	TriggerRpc_HistoricalStats_FullMethodName      = "/trigger.TriggerRpc/HistoricalStats"
-	TriggerRpc_ListActiveTasks_FullMethodName      = "/trigger.TriggerRpc/ListActiveTasks"
-	TriggerRpc_ListPendingTasks_FullMethodName     = "/trigger.TriggerRpc/ListPendingTasks"
-	TriggerRpc_ListAggregatingTasks_FullMethodName = "/trigger.TriggerRpc/ListAggregatingTasks"
-	TriggerRpc_ListScheduledTasks_FullMethodName   = "/trigger.TriggerRpc/ListScheduledTasks"
-	TriggerRpc_ListRetryTasks_FullMethodName       = "/trigger.TriggerRpc/ListRetryTasks"
-	TriggerRpc_ListArchivedTasks_FullMethodName    = "/trigger.TriggerRpc/ListArchivedTasks"
-	TriggerRpc_ListCompletedTasks_FullMethodName   = "/trigger.TriggerRpc/ListCompletedTasks"
-	TriggerRpc_RunTask_FullMethodName              = "/trigger.TriggerRpc/RunTask"
+	TriggerRpc_Ping_FullMethodName                    = "/trigger.TriggerRpc/Ping"
+	TriggerRpc_SendTrigger_FullMethodName             = "/trigger.TriggerRpc/SendTrigger"
+	TriggerRpc_SendProtoTrigger_FullMethodName        = "/trigger.TriggerRpc/SendProtoTrigger"
+	TriggerRpc_Queues_FullMethodName                  = "/trigger.TriggerRpc/Queues"
+	TriggerRpc_GetQueueInfo_FullMethodName            = "/trigger.TriggerRpc/GetQueueInfo"
+	TriggerRpc_ArchiveTask_FullMethodName             = "/trigger.TriggerRpc/ArchiveTask"
+	TriggerRpc_DeleteTask_FullMethodName              = "/trigger.TriggerRpc/DeleteTask"
+	TriggerRpc_GetTaskInfo_FullMethodName             = "/trigger.TriggerRpc/GetTaskInfo"
+	TriggerRpc_DeleteAllCompletedTasks_FullMethodName = "/trigger.TriggerRpc/DeleteAllCompletedTasks"
+	TriggerRpc_HistoricalStats_FullMethodName         = "/trigger.TriggerRpc/HistoricalStats"
+	TriggerRpc_ListActiveTasks_FullMethodName         = "/trigger.TriggerRpc/ListActiveTasks"
+	TriggerRpc_ListPendingTasks_FullMethodName        = "/trigger.TriggerRpc/ListPendingTasks"
+	TriggerRpc_ListAggregatingTasks_FullMethodName    = "/trigger.TriggerRpc/ListAggregatingTasks"
+	TriggerRpc_ListScheduledTasks_FullMethodName      = "/trigger.TriggerRpc/ListScheduledTasks"
+	TriggerRpc_ListRetryTasks_FullMethodName          = "/trigger.TriggerRpc/ListRetryTasks"
+	TriggerRpc_ListArchivedTasks_FullMethodName       = "/trigger.TriggerRpc/ListArchivedTasks"
+	TriggerRpc_ListCompletedTasks_FullMethodName      = "/trigger.TriggerRpc/ListCompletedTasks"
+	TriggerRpc_RunTask_FullMethodName                 = "/trigger.TriggerRpc/RunTask"
 )
 
 // TriggerRpcClient is the client API for TriggerRpc service.
@@ -57,6 +58,8 @@ type TriggerRpcClient interface {
 	DeleteTask(ctx context.Context, in *DeleteTaskReq, opts ...grpc.CallOption) (*DeleteTaskRes, error)
 	// 获取任务
 	GetTaskInfo(ctx context.Context, in *GetTaskInfoReq, opts ...grpc.CallOption) (*GetTaskInfoRes, error)
+	// 删除所有已完成任务
+	DeleteAllCompletedTasks(ctx context.Context, in *DeleteAllCompletedTasksReq, opts ...grpc.CallOption) (*DeleteAllCompletedTasksRes, error)
 	// 获取任务历史统计
 	HistoricalStats(ctx context.Context, in *HistoricalStatsReq, opts ...grpc.CallOption) (*HistoricalStatsRes, error)
 	// 获取活跃任务列表
@@ -159,6 +162,16 @@ func (c *triggerRpcClient) GetTaskInfo(ctx context.Context, in *GetTaskInfoReq, 
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetTaskInfoRes)
 	err := c.cc.Invoke(ctx, TriggerRpc_GetTaskInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) DeleteAllCompletedTasks(ctx context.Context, in *DeleteAllCompletedTasksReq, opts ...grpc.CallOption) (*DeleteAllCompletedTasksRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteAllCompletedTasksRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_DeleteAllCompletedTasks_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -274,6 +287,8 @@ type TriggerRpcServer interface {
 	DeleteTask(context.Context, *DeleteTaskReq) (*DeleteTaskRes, error)
 	// 获取任务
 	GetTaskInfo(context.Context, *GetTaskInfoReq) (*GetTaskInfoRes, error)
+	// 删除所有已完成任务
+	DeleteAllCompletedTasks(context.Context, *DeleteAllCompletedTasksReq) (*DeleteAllCompletedTasksRes, error)
 	// 获取任务历史统计
 	HistoricalStats(context.Context, *HistoricalStatsReq) (*HistoricalStatsRes, error)
 	// 获取活跃任务列表
@@ -325,6 +340,9 @@ func (UnimplementedTriggerRpcServer) DeleteTask(context.Context, *DeleteTaskReq)
 }
 func (UnimplementedTriggerRpcServer) GetTaskInfo(context.Context, *GetTaskInfoReq) (*GetTaskInfoRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTaskInfo not implemented")
+}
+func (UnimplementedTriggerRpcServer) DeleteAllCompletedTasks(context.Context, *DeleteAllCompletedTasksReq) (*DeleteAllCompletedTasksRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteAllCompletedTasks not implemented")
 }
 func (UnimplementedTriggerRpcServer) HistoricalStats(context.Context, *HistoricalStatsReq) (*HistoricalStatsRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HistoricalStats not implemented")
@@ -514,6 +532,24 @@ func _TriggerRpc_GetTaskInfo_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TriggerRpcServer).GetTaskInfo(ctx, req.(*GetTaskInfoReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_DeleteAllCompletedTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteAllCompletedTasksReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).DeleteAllCompletedTasks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_DeleteAllCompletedTasks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).DeleteAllCompletedTasks(ctx, req.(*DeleteAllCompletedTasksReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -718,6 +754,10 @@ var TriggerRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetTaskInfo",
 			Handler:    _TriggerRpc_GetTaskInfo_Handler,
+		},
+		{
+			MethodName: "DeleteAllCompletedTasks",
+			Handler:    _TriggerRpc_DeleteAllCompletedTasks_Handler,
 		},
 		{
 			MethodName: "HistoricalStats",
