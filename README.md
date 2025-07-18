@@ -1,21 +1,7 @@
 # zero-service
 ##### go-zero 脚手架
 是一个基于 [go-zero](https://github.com/zeromicro/go-zero) 的微服务脚手架，旨在帮助开发者快速搭建高性能的微服务应用 `zero-service`
-``` 
-zero-service/
-├── app              # 应用核心逻辑
-├── common           # 公共工具和常量
-├── gtw              # 网关模块
-├── iec104           # IEC 104 协议相关实现
-├── model            # 数据模型定义
-├── util             # 工具库（如 Docker 工具等）
-├── zeroalarm        # 告警服务
-├── zerorpc          # RPC 服务
-├── .gitignore       # Git 忽略文件配置
-├── Dockerfile       # Docker 配置文件
-├── go.mod           # Go 模块依赖管理
-└── README.md        # 项目说明文档
-```
+
 ## 业务系统框架图
 ![iec-architecture](doc/iec-architecture.png)
 ## 核心功能模块
