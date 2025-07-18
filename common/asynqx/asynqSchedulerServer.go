@@ -42,6 +42,7 @@ func NewScheduler(addr, pass string) *asynq.Scheduler {
 					logx.Errorf("asynq scheduler err:%+v", err)
 				}
 			},
+			Logger: &BaseLogger{},
 		})
 }
 

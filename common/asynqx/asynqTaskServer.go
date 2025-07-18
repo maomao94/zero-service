@@ -48,6 +48,7 @@ func NewAsynqServer(addr, pass string, db int) *asynq.Server {
 				"default":  3,
 				"low":      1,
 			},
+			Logger: &BaseLogger{},
 		},
 	)
 }

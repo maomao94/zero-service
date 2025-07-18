@@ -6,6 +6,7 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/logx"
 	"time"
+	"zero-service/common/asynqx"
 	"zero-service/zerorpc/internal/config"
 	"zero-service/zerorpc/tasktype"
 )
@@ -48,6 +49,7 @@ func newScheduler(c config.Config) *asynq.Scheduler {
 					logx.WithContext(ctx).Info("asynq scheduler success")
 				}
 			},
+			Logger: &asynqx.BaseLogger{},
 		})
 }
 
