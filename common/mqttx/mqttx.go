@@ -3,6 +3,8 @@ package mqttx
 import (
 	"context"
 	"fmt"
+	"github.com/zeromicro/go-zero/core/stat"
+	"github.com/zeromicro/go-zero/core/timex"
 	"sync"
 	"time"
 
@@ -30,6 +32,7 @@ type Client struct {
 	mu            sync.Mutex
 	subscriptions map[string]MessageHandler
 	qos           byte
+	metrics       *stat.Metrics
 }
 
 func MustNewClient(cfg MqttConfig) *Client {
@@ -47,6 +50,7 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 		clientID:      cfg.ClientID,
 		subscriptions: make(map[string]MessageHandler),
 		qos:           cfg.Qos,
+		metrics:       stat.NewMetrics(fmt.Sprintf("mqtt-%s", cfg.ClientID)),
 	}
 
 	if c.qos > 2 {
@@ -69,6 +73,10 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 		defer c.mu.Unlock()
 		for topic, handler := range c.subscriptions {
 			token := cli.Subscribe(topic, c.qos, func(client mqtt.Client, msg mqtt.Message) {
+				startTime := timex.Now()
+				defer c.metrics.Add(stat.Task{
+					Duration: timex.Since(startTime),
+				})
 				handler(context.Background(), msg.Topic(), msg.Payload())
 			})
 			token.Wait()
@@ -89,10 +97,10 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 	// 启动时注册配置中订阅主题的默认回调，不触发订阅操作，等OnConnect统一处理
 	for _, topic := range cfg.SubscribeTopics {
 		c.mu.Lock()
+		defer c.mu.Unlock()
 		c.subscriptions[topic] = func(ctx context.Context, topic string, payload []byte) {
 			logx.Infof("[mqtt] Received message on %s but no handler registered", topic)
 		}
-		c.mu.Unlock()
 	}
 
 	return c, nil
@@ -109,6 +117,10 @@ func (c *Client) Subscribe(topic string, handler MessageHandler) error {
 		h, ok := c.subscriptions[msg.Topic()]
 		c.mu.Unlock()
 		if ok && h != nil {
+			startTime := timex.Now()
+			defer c.metrics.Add(stat.Task{
+				Duration: timex.Since(startTime),
+			})
 			h(context.Background(), msg.Topic(), msg.Payload())
 		}
 	})
