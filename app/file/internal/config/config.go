@@ -3,7 +3,7 @@ package config
 import (
 	"github.com/zeromicro/go-zero/core/stores/cache"
 	"github.com/zeromicro/go-zero/zrpc"
-	"zero-service/ossx/osssconfig"
+	"zero-service/common/ossx/osssconfig"
 )
 
 type Config struct {

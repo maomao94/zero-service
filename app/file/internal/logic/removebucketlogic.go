@@ -2,12 +2,11 @@ package logic
 
 import (
 	"context"
+	"github.com/zeromicro/go-zero/core/logx"
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
+	"zero-service/common/ossx"
 	"zero-service/model"
-	"zero-service/ossx"
-
-	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type RemoveBucketLogic struct {

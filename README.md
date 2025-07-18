@@ -3,16 +3,12 @@
 是一个基于 [go-zero](https://github.com/zeromicro/go-zero) 的微服务脚手架，旨在帮助开发者快速搭建高性能的微服务应用 `zero-service`
 ``` 
 zero-service/
-├── admin            # 管理模块
-├── alarmx           # 告警相关功能
 ├── app              # 应用核心逻辑
 ├── common           # 公共工具和常量
 ├── gtw              # 网关模块
 ├── iec104           # IEC 104 协议相关实现
 ├── model            # 数据模型定义
-├── ossx             # 对象存储相关功能
 ├── util             # 工具库（如 Docker 工具等）
-├── file             # 文件服务模块，支持 gRPC 分片流上传和 OSS 上传
 ├── zeroalarm        # 告警服务
 ├── zerorpc          # RPC 服务
 ├── .gitignore       # Git 忽略文件配置

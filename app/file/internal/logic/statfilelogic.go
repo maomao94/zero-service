@@ -4,13 +4,12 @@ import (
 	"context"
 	"github.com/dromara/carbon/v2"
 	"github.com/jinzhu/copier"
+	"github.com/zeromicro/go-zero/core/logx"
 	"time"
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
+	"zero-service/common/ossx"
 	"zero-service/model"
-	"zero-service/ossx"
-
-	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type StatFileLogic struct {
