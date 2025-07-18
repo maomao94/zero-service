@@ -10,7 +10,7 @@ import (
 )
 
 type MqttConfig struct {
-	Broker          string   `json:"broker"`
+	Broker          []string `json:"broker"`
 	ClientID        string   `json:"clientId"`
 	Username        string   `json:"username"`
 	Password        string   `json:"password"`
@@ -24,11 +24,17 @@ type MessageHandler func(topic string, payload []byte)
 
 type Client struct {
 	client        mqtt.Client
-	broker        string
+	broker        []string
 	clientID      string
 	mu            sync.Mutex
 	subscriptions map[string]MessageHandler
 	qos           byte
+}
+
+func MustNewClient(cfg MqttConfig) *Client {
+	cli, err := NewClient(cfg)
+	logx.Must(err)
+	return cli
 }
 
 // NewClient 根据配置创建 MQTT 客户端，连接成功后自动订阅内存里已注册的所有主题
@@ -45,10 +51,11 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 	if c.qos > 2 {
 		c.qos = 1
 	}
-
-	opts := mqtt.NewClientOptions().
-		AddBroker(cfg.Broker).
-		SetClientID(cfg.ClientID).
+	opts := mqtt.NewClientOptions()
+	for _, broker := range c.broker {
+		opts = opts.AddBroker(broker)
+	}
+	opts.SetClientID(cfg.ClientID).
 		SetUsername(cfg.Username).
 		SetPassword(cfg.Password).
 		SetAutoReconnect(true).
@@ -56,7 +63,7 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 		SetKeepAlive(time.Duration(cfg.KeepAlive) * time.Second)
 
 	opts.OnConnect = func(cli mqtt.Client) {
-		logx.Info("[mqttx] Connected to broker, restoring subscriptions")
+		logx.Info("[mqtt] Connected to broker, restoring subscriptions")
 		c.mu.Lock()
 		defer c.mu.Unlock()
 		for topic, handler := range c.subscriptions {
@@ -65,9 +72,9 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 			})
 			token.Wait()
 			if token.Error() != nil {
-				logx.Errorf("[mqttx] Subscribe to %s failed: %v", topic, token.Error())
+				logx.Errorf("[mqtt] Subscribe to %s failed: %v", topic, token.Error())
 			} else {
-				logx.Infof("[mqttx] Subscribed to %s", topic)
+				logx.Infof("[mqtt] Subscribed to %s", topic)
 			}
 		}
 	}
@@ -75,14 +82,14 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 	c.client = mqtt.NewClient(opts)
 	token := c.client.Connect()
 	if !token.WaitTimeout(time.Duration(cfg.Timeout)*time.Second) || token.Error() != nil {
-		return nil, fmt.Errorf("connect failed: %w", token.Error())
+		return nil, fmt.Errorf("[mqtt] connect failed: %w", token.Error())
 	}
 
 	// 启动时注册配置中订阅主题的默认回调，不触发订阅操作，等OnConnect统一处理
 	for _, topic := range cfg.SubscribeTopics {
 		c.mu.Lock()
 		c.subscriptions[topic] = func(topic string, payload []byte) {
-			logx.Infof("[mqttx] Received message on %s but no handler registered", topic)
+			logx.Infof("[mqtt] Received message on %s but no handler registered", topic)
 		}
 		c.mu.Unlock()
 	}
@@ -105,7 +112,7 @@ func (c *Client) Subscribe(topic string, handler MessageHandler) error {
 		}
 	})
 	if !token.WaitTimeout(3 * time.Second) {
-		return fmt.Errorf("subscribe timeout")
+		return fmt.Errorf("[mqtt] subscribe timeout")
 	}
 	return token.Error()
 }
@@ -114,7 +121,7 @@ func (c *Client) Subscribe(topic string, handler MessageHandler) error {
 func (c *Client) Publish(topic string, payload []byte) error {
 	token := c.client.Publish(topic, c.qos, false, payload)
 	if !token.WaitTimeout(3 * time.Second) {
-		return fmt.Errorf("publish timeout")
+		return fmt.Errorf("[mqtt] publish timeout")
 	}
 	return token.Error()
 }
