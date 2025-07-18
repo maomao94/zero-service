@@ -9,9 +9,9 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 	"zero-service/app/ieccaller/internal/svc"
 	"zero-service/common/copierx"
-	iec104client "zero-service/iec104/iec104client"
-	"zero-service/iec104/types"
-	"zero-service/iec104/util"
+	"zero-service/common/iec104/iec104client"
+	"zero-service/common/iec104/types"
+	"zero-service/common/iec104/util"
 )
 
 type ClientCall struct {

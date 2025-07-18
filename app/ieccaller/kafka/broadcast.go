@@ -6,7 +6,7 @@ import (
 	"golang.org/x/net/context"
 	"zero-service/app/ieccaller/ieccaller"
 	"zero-service/app/ieccaller/internal/svc"
-	"zero-service/iec104/types"
+	"zero-service/common/iec104/types"
 )
 
 type Broadcast struct {

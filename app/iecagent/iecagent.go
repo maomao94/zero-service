@@ -4,14 +4,13 @@ import (
 	"flag"
 	"fmt"
 	"github.com/zeromicro/go-zero/core/logx"
-	"zero-service/app/iecagent/internal/iec"
-	interceptor "zero-service/common/Interceptor/rpcserver"
-	"zero-service/iec104/iec104server"
-
 	"zero-service/app/iecagent/iecagent"
 	"zero-service/app/iecagent/internal/config"
+	"zero-service/app/iecagent/internal/iec"
 	"zero-service/app/iecagent/internal/server"
 	"zero-service/app/iecagent/internal/svc"
+	interceptor "zero-service/common/Interceptor/rpcserver"
+	iec104server2 "zero-service/common/iec104/iec104server"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/service"
@@ -45,7 +44,7 @@ func main() {
 	defer serviceGroup.Stop()
 	logx.AddGlobalFields(logx.Field("app", c.Name))
 	serviceGroup.Add(s)
-	iecServer := iec104server.NewIecServer(c.IecSetting.Host, c.IecSetting.Port, c.IecSetting.LogMode, iec104server.NewServerHandler(iec.NewIecHandler(ctx)))
+	iecServer := iec104server2.NewIecServer(c.IecSetting.Host, c.IecSetting.Port, c.IecSetting.LogMode, iec104server2.NewServerHandler(iec.NewIecHandler(ctx)))
 	serviceGroup.Add(iecServer)
 
 	logx.AddGlobalFields(logx.Field("app", c.Name))

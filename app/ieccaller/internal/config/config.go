@@ -2,7 +2,7 @@ package config
 
 import (
 	"github.com/zeromicro/go-zero/zrpc"
-	"zero-service/iec104/iec104client"
+	"zero-service/common/iec104/iec104client"
 )
 
 type Config struct {

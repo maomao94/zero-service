@@ -6,7 +6,7 @@ import (
 	"github.com/wendy512/go-iecp5/cs104"
 	"github.com/zeromicro/go-zero/core/logx"
 	"strconv"
-	"zero-service/iec104"
+	"zero-service/common/iec104"
 )
 
 type IecServer struct {

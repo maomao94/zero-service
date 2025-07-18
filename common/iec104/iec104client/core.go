@@ -4,6 +4,10 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"github.com/spf13/cast"
+	"github.com/wendy512/go-iecp5/asdu"
+	"github.com/wendy512/go-iecp5/clog"
+	"github.com/wendy512/go-iecp5/cs104"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stat"
 	"github.com/zeromicro/go-zero/core/threading"
@@ -14,13 +18,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-	"zero-service/iec104"
-	"zero-service/iec104/waitgroup"
-
-	"github.com/spf13/cast"
-	"github.com/wendy512/go-iecp5/asdu"
-	"github.com/wendy512/go-iecp5/clog"
-	"github.com/wendy512/go-iecp5/cs104"
+	"zero-service/common/iec104"
+	"zero-service/common/iec104/waitgroup"
 )
 
 type CoaConfig struct {
