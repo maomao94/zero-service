@@ -5,7 +5,7 @@ import (
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/rest/httpc"
 	"time"
-	"zero-service/alarmx"
+	"zero-service/common/alarmx"
 	"zero-service/zeroalarm/internal/config"
 )
 

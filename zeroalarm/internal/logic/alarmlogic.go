@@ -8,7 +8,7 @@ import (
 	larkim "github.com/larksuite/oapi-sdk-go/v3/service/im/v1"
 	"github.com/zeromicro/go-zero/core/logx"
 	"strings"
-	"zero-service/alarmx"
+	"zero-service/common/alarmx"
 	"zero-service/zeroalarm/internal/svc"
 	"zero-service/zeroalarm/zeroalarm"
 )
