@@ -1,6 +1,7 @@
 package mqttx
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -20,7 +21,7 @@ type MqttConfig struct {
 	SubscribeTopics []string `json:"subscribeTopics"`
 }
 
-type MessageHandler func(topic string, payload []byte)
+type MessageHandler func(ctx context.Context, topic string, payload []byte)
 
 type Client struct {
 	client        mqtt.Client
@@ -68,7 +69,7 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 		defer c.mu.Unlock()
 		for topic, handler := range c.subscriptions {
 			token := cli.Subscribe(topic, c.qos, func(client mqtt.Client, msg mqtt.Message) {
-				handler(msg.Topic(), msg.Payload())
+				handler(context.Background(), msg.Topic(), msg.Payload())
 			})
 			token.Wait()
 			if token.Error() != nil {
@@ -88,7 +89,7 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 	// 启动时注册配置中订阅主题的默认回调，不触发订阅操作，等OnConnect统一处理
 	for _, topic := range cfg.SubscribeTopics {
 		c.mu.Lock()
-		c.subscriptions[topic] = func(topic string, payload []byte) {
+		c.subscriptions[topic] = func(ctx context.Context, topic string, payload []byte) {
 			logx.Infof("[mqtt] Received message on %s but no handler registered", topic)
 		}
 		c.mu.Unlock()
@@ -108,10 +109,10 @@ func (c *Client) Subscribe(topic string, handler MessageHandler) error {
 		h, ok := c.subscriptions[msg.Topic()]
 		c.mu.Unlock()
 		if ok && h != nil {
-			h(msg.Topic(), msg.Payload())
+			h(context.Background(), msg.Topic(), msg.Payload())
 		}
 	})
-	if !token.WaitTimeout(3 * time.Second) {
+	if !token.WaitTimeout(15 * time.Second) {
 		return fmt.Errorf("[mqtt] subscribe timeout")
 	}
 	return token.Error()
@@ -120,7 +121,7 @@ func (c *Client) Subscribe(topic string, handler MessageHandler) error {
 // Publish 发送消息，等待确认
 func (c *Client) Publish(topic string, payload []byte) error {
 	token := c.client.Publish(topic, c.qos, false, payload)
-	if !token.WaitTimeout(3 * time.Second) {
+	if !token.WaitTimeout(15 * time.Second) {
 		return fmt.Errorf("[mqtt] publish timeout")
 	}
 	return token.Error()
