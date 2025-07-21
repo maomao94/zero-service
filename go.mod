@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/ArtisanCloud/PowerLibs/v3 v3.3.2
-	github.com/ArtisanCloud/PowerWeChat/v3 v3.4.20
+	github.com/ArtisanCloud/PowerWeChat/v3 v3.4.21
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/dromara/carbon/v2 v2.6.11
 	github.com/duke-git/lancet/v2 v2.3.7
@@ -17,7 +17,7 @@ require (
 	github.com/hibiken/asynq v0.25.1
 	github.com/jinzhu/copier v0.4.0
 	github.com/larksuite/oapi-sdk-go/v3 v3.4.21
-	github.com/minio/minio-go/v7 v7.0.94
+	github.com/minio/minio-go/v7 v7.0.95
 	github.com/nacos-group/nacos-sdk-go/v2 v2.3.2
 	github.com/panjf2000/ants/v2 v2.11.3
 	github.com/pkg/errors v0.9.1
@@ -107,14 +107,14 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
-	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.11 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/minio/crc64nvme v1.0.1 // indirect
+	github.com/minio/crc64nvme v1.0.2 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
@@ -123,7 +123,7 @@ require (
 	github.com/orcaman/concurrent-map v0.0.0-20210501183033-44dafcb38ecc // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
-	github.com/philhofer/fwd v1.1.3-0.20240916144458-20a13a1f6b7c // indirect
+	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/prometheus/client_golang v1.21.1 // indirect
