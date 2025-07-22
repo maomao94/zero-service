@@ -23,10 +23,10 @@
 
 ## 🛰 IEC 104 协议对接结构图
 
-该图展示了 **上级场站/调度系统通过 IEC 60870-5-104 协议接入本系统时的整体对接架构**：
+该图展示了 **本系统作为 IEC 60870-5-104 主站，主动对接多个下级从站设备的整体架构**：
 
 <div align="center">
-  <img src="doc/iec-architecture.png" alt="IEC104 场站对接结构图" style="max-width: 100%; height: auto;" />
+  <img src="doc/iec-architecture.png" alt="IEC104 主站对接结构图" style="max-width: 100%; height: auto;" />
 </div>
 
 ---
