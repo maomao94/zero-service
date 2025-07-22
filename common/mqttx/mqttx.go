@@ -109,20 +109,15 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 // Subscribe 注册订阅回调并立即订阅，支持覆盖回调和自动恢复
 func (c *Client) Subscribe(topic string, handler MessageHandler) error {
 	c.mu.Lock()
+	defer c.mu.Unlock()
 	c.subscriptions[topic] = handler
-	c.mu.Unlock()
 
 	token := c.client.Subscribe(topic, c.qos, func(cli mqtt.Client, msg mqtt.Message) {
-		c.mu.Lock()
-		h, ok := c.subscriptions[msg.Topic()]
-		c.mu.Unlock()
-		if ok && h != nil {
-			startTime := timex.Now()
-			defer c.metrics.Add(stat.Task{
-				Duration: timex.Since(startTime),
-			})
-			h(context.Background(), msg.Topic(), msg.Payload())
-		}
+		startTime := timex.Now()
+		defer c.metrics.Add(stat.Task{
+			Duration: timex.Since(startTime),
+		})
+		handler(context.Background(), msg.Topic(), msg.Payload())
 	})
 	if !token.WaitTimeout(15 * time.Second) {
 		return fmt.Errorf("[mqtt] subscribe timeout")
