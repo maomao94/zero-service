@@ -104,7 +104,7 @@ func BuildIoaBodyFromJson(dataType int32, data []byte) (any, error) {
 		return body, nil
 
 	case 10: // PackedOutputCircuitInfoInfo
-		body := &iecstream.PackedOutputCircuitInfoInfo{}
+		body := &iecstream.PackedOutputCircuitInfo{}
 		if err := jsonx.Unmarshal(data, body); err != nil {
 			return nil, fmt.Errorf("unmarshal PackedOutputCircuitInfoInfo: %w", err)
 		}

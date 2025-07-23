@@ -9,7 +9,7 @@ import (
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"github.com/zeromicro/go-zero/rest/httpc"
 	"github.com/zeromicro/go-zero/zrpc"
-	"zero-service/common"
+	"zero-service/common/powerwechatx"
 	"zero-service/model"
 	"zero-service/zeroalarm/zeroalarm"
 	"zero-service/zerorpc/internal/config"
@@ -39,7 +39,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Secret:    c.MiniProgram.Secret, // 小程序app secret
 		HttpDebug: false,
 		Log: miniProgram.Log{
-			Driver: &common.PowerWechatLogDriver{},
+			Driver: &powerwechatx.PowerWechatLogDriver{},
 		},
 		// 可选，不传默认走程序内存
 		//Cache: kernel.NewRedisClient(&kernel.UniversalOptions{
@@ -67,7 +67,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		NotifyURL: "http://zero-service/gtw/v1/pay/wechat/notify",
 		HttpDebug: true,
 		Log: payment.Log{
-			Driver: &common.PowerWechatLogDriver{},
+			Driver: &powerwechatx.PowerWechatLogDriver{},
 		},
 		Http: payment.Http{
 			Timeout: 30.0,
