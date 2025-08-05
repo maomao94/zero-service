@@ -5,7 +5,6 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/common/asynqx"
-	"zero-service/zerorpc/tasktype"
 )
 
 type CronJob struct {
@@ -21,14 +20,14 @@ func NewCronJob(svcCtx *svc.ServiceContext) *CronJob {
 func (l *CronJob) Register() *asynq.ServeMux {
 	mux := asynq.NewServeMux()
 	mux.Use(asynqx.LoggingMiddleware)
-	mux.Handle(tasktype.DeferTriggerTask, NewDeferTriggerTask(l.svcCtx))
-	logx.Infof("asynq cronJob-task registered: %s", tasktype.DeferTriggerTask)
+	mux.Handle(asynqx.DeferTriggerTask, NewDeferTriggerTask(l.svcCtx))
+	logx.Infof("asynq cronJob-task registered: %s", asynqx.DeferTriggerTask)
 
-	mux.Handle(tasktype.DeferTriggerProtoTask, NewDeferTriggerProtoTask(l.svcCtx))
-	logx.Infof("asynq cronJob-task registered: %s", tasktype.DeferTriggerProtoTask)
+	mux.Handle(asynqx.DeferTriggerProtoTask, NewDeferTriggerProtoTask(l.svcCtx))
+	logx.Infof("asynq cronJob-task registered: %s", asynqx.DeferTriggerProtoTask)
 
 	//scheduler job
-	mux.Handle(tasktype.SchedulerDeferTask, NewDeferTriggerTask(l.svcCtx))
-	logx.Infof("asynq cronJob-scheduler registered: %s", tasktype.SchedulerDeferTask)
+	mux.Handle(asynqx.SchedulerDeferTask, NewDeferTriggerTask(l.svcCtx))
+	logx.Infof("asynq cronJob-scheduler registered: %s", asynqx.SchedulerDeferTask)
 	return mux
 }

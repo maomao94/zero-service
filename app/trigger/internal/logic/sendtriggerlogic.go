@@ -12,12 +12,10 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
 	"time"
-	"zero-service/common/asynqx"
-	"zero-service/common/ctxdata"
-	"zero-service/zerorpc/tasktype"
-
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/asynqx"
+	"zero-service/common/ctxdata"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -38,7 +36,7 @@ func NewSendTriggerLogic(ctx context.Context, svcCtx *svc.ServiceContext) *SendT
 
 func (l *SendTriggerLogic) SendTrigger(in *trigger.SendTriggerReq) (*trigger.SendTriggerRes, error) {
 	traceID := trace.TraceIDFromContext(l.ctx)
-	spanCtx, span := asynqx.StartAsynqProducerSpan(l.ctx, tasktype.DeferTriggerTask)
+	spanCtx, span := asynqx.StartAsynqProducerSpan(l.ctx, asynqx.DeferTriggerTask)
 	defer span.End()
 	carrier := &propagation.HeaderCarrier{}
 	otel.GetTextMapPropagator().Inject(spanCtx, carrier)
@@ -67,7 +65,7 @@ func (l *SendTriggerLogic) SendTrigger(in *trigger.SendTriggerReq) (*trigger.Sen
 	}
 	opts = append(opts, asynq.Queue("critical"), asynq.Retention(7*24*time.Hour))
 	if false {
-		task := asynq.NewTask(tasktype.SchedulerDeferTask, []byte(payload), opts...)
+		task := asynq.NewTask(asynqx.SchedulerDeferTask, []byte(payload), opts...)
 		_, err = l.svcCtx.Scheduler.Register("*/1 * * * *", task)
 		if err != nil {
 			return nil, err
@@ -93,7 +91,7 @@ func (l *SendTriggerLogic) SendTrigger(in *trigger.SendTriggerReq) (*trigger.Sen
 			d = time.Duration(in.ProcessIn) * time.Second
 		}
 		opts = append(opts, asynq.ProcessIn(d))
-		taskInfo, err := l.svcCtx.AsynqClient.Enqueue(asynq.NewTask(tasktype.DeferTriggerTask, []byte(payload)), opts...)
+		taskInfo, err := l.svcCtx.AsynqClient.Enqueue(asynq.NewTask(asynqx.DeferTriggerTask, []byte(payload)), opts...)
 		if err != nil {
 			return nil, err
 		}

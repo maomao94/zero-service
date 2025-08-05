@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/dromara/carbon/v2"
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/netx"
@@ -11,11 +12,9 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
 	"time"
+	"zero-service/common/asynqx"
 	"zero-service/common/ctxdata"
 	"zero-service/zeroalarm/zeroalarm"
-	"zero-service/zerorpc/tasktype"
-
-	"github.com/dromara/carbon/v2"
 	"zero-service/zerorpc/internal/svc"
 	"zero-service/zerorpc/zerorpc"
 
@@ -39,7 +38,7 @@ func NewForwardTaskLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Forwa
 // 转发任务
 func (l *ForwardTaskLogic) ForwardTask(in *zerorpc.ForwardTaskReq) (*zerorpc.ForwardTaskRes, error) {
 	traceID := trace.TraceIDFromContext(l.ctx)
-	spanCtx, span := svc.StartAsynqProducerSpan(l.ctx, tasktype.DeferTriggerTask)
+	spanCtx, span := svc.StartAsynqProducerSpan(l.ctx, asynqx.DeferTriggerTask)
 	defer span.End()
 	carrier := &propagation.HeaderCarrier{}
 	otel.GetTextMapPropagator().Inject(spanCtx, carrier)
@@ -67,7 +66,7 @@ func (l *ForwardTaskLogic) ForwardTask(in *zerorpc.ForwardTaskReq) (*zerorpc.For
 	} else {
 		d = time.Duration(in.ProcessIn) * time.Second
 	}
-	_, err = l.svcCtx.AsynqClient.Enqueue(asynq.NewTask(tasktype.DeferTriggerTask, []byte(payload)), asynq.Queue("critical"), asynq.TaskID(in.GetMsgId()), asynq.ProcessIn(d), asynq.Retention(24*time.Hour))
+	_, err = l.svcCtx.AsynqClient.Enqueue(asynq.NewTask(asynqx.DeferTriggerTask, []byte(payload)), asynq.Queue("critical"), asynq.TaskID(in.GetMsgId()), asynq.ProcessIn(d), asynq.Retention(24*time.Hour))
 	if err != nil {
 		_, alarmErr := l.svcCtx.ZeroAlarmCli.Alarm(l.ctx, &zeroalarm.AlarmReq{
 			ChatName:    "服务告警",

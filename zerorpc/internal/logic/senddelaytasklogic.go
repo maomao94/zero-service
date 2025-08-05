@@ -7,9 +7,8 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
 	"time"
+	"zero-service/common/asynqx"
 	"zero-service/common/ctxdata"
-	"zero-service/zerorpc/tasktype"
-
 	"zero-service/zerorpc/internal/svc"
 	"zero-service/zerorpc/zerorpc"
 
@@ -32,7 +31,7 @@ func NewSendDelayTaskLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Sen
 
 // 发送延迟任务
 func (l *SendDelayTaskLogic) SendDelayTask(in *zerorpc.SendDelayTaskReq) (*zerorpc.SendDelayTaskRes, error) {
-	spanCtx, span := svc.StartAsynqProducerSpan(l.ctx, tasktype.DeferDelayTask)
+	spanCtx, span := svc.StartAsynqProducerSpan(l.ctx, asynqx.DeferDelayTask)
 	defer span.End()
 	carrier := &propagation.HeaderCarrier{}
 	otel.GetTextMapPropagator().Inject(spanCtx, carrier)
@@ -45,7 +44,7 @@ func (l *SendDelayTaskLogic) SendDelayTask(in *zerorpc.SendDelayTaskReq) (*zeror
 	if err != nil {
 		return nil, err
 	}
-	_, err = l.svcCtx.AsynqClient.Enqueue(asynq.NewTask(tasktype.DeferDelayTask, []byte(payload)), asynq.TaskID(in.GetMsgId()), asynq.ProcessIn(time.Duration(in.ProcessIn)*time.Minute), asynq.Retention(7*24*time.Hour))
+	_, err = l.svcCtx.AsynqClient.Enqueue(asynq.NewTask(asynqx.DeferDelayTask, []byte(payload)), asynq.TaskID(in.GetMsgId()), asynq.ProcessIn(time.Duration(in.ProcessIn)*time.Minute), asynq.Retention(7*24*time.Hour))
 	if err != nil {
 		return nil, err
 	}

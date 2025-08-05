@@ -5,7 +5,6 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/logx"
 	"time"
-	"zero-service/zerorpc/tasktype"
 )
 
 type SchedulerServer struct {
@@ -47,10 +46,10 @@ func NewScheduler(addr, pass string) *asynq.Scheduler {
 }
 
 func (q *SchedulerServer) RegisterTest() {
-	task := asynq.NewTask(tasktype.SchedulerDeferTask, []byte("test"), asynq.Retention(7*24*time.Hour))
+	task := asynq.NewTask(SchedulerDeferTask, []byte("test"), asynq.Retention(7*24*time.Hour))
 	entryID, err := q.Scheduler.Register("*/1 * * * *", task)
 	if err != nil {
 		logx.Errorf("asynq scheduleDelayTask err:%+v,task:%+v", err, task)
 	}
-	logx.Infow(fmt.Sprintf("asynq scheduleDelayTask registered %s", entryID), logx.Field("type", tasktype.SchedulerDeferTask))
+	logx.Infow(fmt.Sprintf("asynq scheduleDelayTask registered %s", entryID), logx.Field("type", SchedulerDeferTask))
 }

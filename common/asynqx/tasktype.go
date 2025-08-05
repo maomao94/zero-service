@@ -1,4 +1,4 @@
-package tasktype
+package asynqx
 
 // DeferDelayTask 延迟任务
 const DeferDelayTask = "defer:delayTask"
