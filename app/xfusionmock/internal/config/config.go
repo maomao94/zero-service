@@ -1,18 +1,19 @@
 package config
 
 import (
+	"zero-service/common/configx"
+
 	"github.com/zeromicro/go-queue/kq"
 	"github.com/zeromicro/go-zero/zrpc"
-	"zero-service/common/config"
 )
 
 type Config struct {
 	zrpc.RpcServerConf
 	KafkaTestConfig   kq.KqConf
-	KafkaPointConfig  config.KqConfig
-	KafkaAlarmConfig  config.KqConfig
-	KafkaEventConfig  config.KqConfig
-	KafkaTerminalBind config.KqConfig
+	KafkaPointConfig  configx.KqConfig
+	KafkaAlarmConfig  configx.KqConfig
+	KafkaEventConfig  configx.KqConfig
+	KafkaTerminalBind configx.KqConfig
 	PushCron          string
 	PushCronPoint     string
 	TerminalBind      map[string]string

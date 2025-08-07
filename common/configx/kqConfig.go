@@ -1,4 +1,4 @@
-package config
+package configx
 
 type KqConfig struct {
 	Brokers []string
