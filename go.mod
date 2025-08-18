@@ -29,7 +29,7 @@ require (
 	github.com/tidwall/gjson v1.18.0
 	github.com/wendy512/go-iecp5 v1.2.3
 	github.com/zeromicro/go-queue v1.2.2
-	github.com/zeromicro/go-zero v1.8.5
+	github.com/zeromicro/go-zero v1.9.5
 	github.com/zeromicro/x v0.0.0-20240408115609-8224c482b07e
 	go.opentelemetry.io/otel v1.37.0
 	go.opentelemetry.io/otel/trace v1.37.0
