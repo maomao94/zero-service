@@ -9,24 +9,53 @@ import (
 	"github.com/panjf2000/ants/v2"
 )
 
-// Promise 是泛型响应式对象
-type Promise[T any] struct {
-	id        string
-	result    chan result[T]
-	once      sync.Once
-	mu        sync.Mutex
-	err       error
-	catchFunc func(error)
-}
+// ---------------------- Promise ----------------------
 
 type result[T any] struct {
 	val T
 	err error
 }
 
+// Promise 泛型响应式对象
+type Promise[T any] struct {
+	id string
+
+	result chan result[T]
+	once   sync.Once
+	mu     sync.Mutex
+
+	val  T
+	err  error
+	done bool
+
+	catchFunc func(error)
+}
+
+// NewPromise 创建 Promise
+func NewPromise[T any](id string) *Promise[T] {
+	return &Promise[T]{
+		id:     id,
+		result: make(chan result[T], 1),
+	}
+}
+
+// Await 等待结果，支持多次调用
 func (p *Promise[T]) Await(ctx context.Context) (T, error) {
+	// 先检查缓存
+	p.mu.Lock()
+	if p.done {
+		val, err := p.val, p.err
+		p.mu.Unlock()
+		return val, err
+	}
+	p.mu.Unlock()
+
 	select {
 	case r := <-p.result:
+		p.mu.Lock()
+		p.val, p.err = r.val, r.err
+		p.done = true
+		p.mu.Unlock()
 		return r.val, r.err
 	case <-ctx.Done():
 		var zero T
@@ -34,6 +63,7 @@ func (p *Promise[T]) Await(ctx context.Context) (T, error) {
 	}
 }
 
+// Then 链式调用
 func Then[T, U any](ctx context.Context, p *Promise[T], fn func(T) (U, error)) *Promise[U] {
 	newPromise := NewPromise[U](p.id)
 
@@ -56,53 +86,73 @@ func Then[T, U any](ctx context.Context, p *Promise[T], fn func(T) (U, error)) *
 	return newPromise
 }
 
+// Catch 注册错误回调
 func (p *Promise[T]) Catch(fn func(error)) *Promise[T] {
 	p.mu.Lock()
-	defer p.mu.Unlock()
+	alreadyRejected := p.done && p.err != nil
+	err := p.err
 	p.catchFunc = fn
-	if p.err != nil {
-		go fn(p.err)
+	p.mu.Unlock()
+
+	if alreadyRejected && err != nil {
+		go fn(err)
 	}
+
 	return p
 }
 
+// Resolve 内部调用，保证只触发一次
 func (p *Promise[T]) Resolve(val T) {
 	p.once.Do(func() {
-		p.result <- result[T]{val: val}
-	})
-}
-
-func (p *Promise[T]) Reject(err error) {
-	p.once.Do(func() {
 		p.mu.Lock()
-		defer p.mu.Unlock()
-		p.err = err
-		p.result <- result[T]{err: err}
-		if p.catchFunc != nil {
-			go p.catchFunc(err)
+		p.val = val
+		p.err = nil
+		p.done = true
+		catchFn := p.catchFunc
+		p.mu.Unlock()
+
+		p.result <- result[T]{val: val}
+		close(p.result)
+
+		if catchFn != nil {
+			// 成功不触发 catch
 		}
 	})
 }
 
-func (p *Promise[T]) FireAndForget() {
+// Reject 内部调用，保证只触发一次
+func (p *Promise[T]) Reject(err error) {
+	p.once.Do(func() {
+		p.mu.Lock()
+		p.err = err
+		p.done = true
+		catchFn := p.catchFunc
+		p.mu.Unlock()
+
+		p.result <- result[T]{err: err}
+		close(p.result)
+
+		if catchFn != nil {
+			go catchFn(err)
+		}
+	})
+}
+
+// FireAndForget 异步消费结果，不关心返回值
+func (p *Promise[T]) FireAndForget(ctx context.Context) {
 	go func() {
-		_, _ = p.Await(context.Background())
+		_, _ = p.Await(ctx)
 	}()
 }
 
-func NewPromise[T any](id string) *Promise[T] {
-	return &Promise[T]{
-		id:     id,
-		result: make(chan result[T], 1),
-	}
-}
+// ---------------------- Reactor ----------------------
 
-// Reactor 非泛型，统一管理池和注册表
 type Reactor struct {
 	pool     *ants.Pool
 	registry *sync.Map
 }
 
+// NewReactor 创建 Reactor
 func NewReactor(size int) (*Reactor, error) {
 	pool, err := ants.NewPool(size)
 	if err != nil {
@@ -114,7 +164,7 @@ func NewReactor(size int) (*Reactor, error) {
 	}, nil
 }
 
-// Submit 泛型方法，支持任意类型任务
+// Submit 提交带 id 的任务，返回 Promise[T]
 func Submit[T any](ctx context.Context, r *Reactor, id string, task func(ctx context.Context) (T, error)) (*Promise[T], error) {
 	if _, loaded := r.registry.LoadOrStore(id, struct{}{}); loaded {
 		return nil, fmt.Errorf("promise id %s already exists", id)
@@ -125,7 +175,6 @@ func Submit[T any](ctx context.Context, r *Reactor, id string, task func(ctx con
 	err := r.pool.Submit(func() {
 		defer r.registry.Delete(id)
 
-		// 这里传递 ctx 给 task
 		val, err := task(ctx)
 		if err != nil {
 			promise.Reject(err)
@@ -142,28 +191,22 @@ func Submit[T any](ctx context.Context, r *Reactor, id string, task func(ctx con
 	return promise, nil
 }
 
-// Post 任务
+// Post 提交 fire-and-forget 任务
 func Post[T any](ctx context.Context, r *Reactor, task func(ctx context.Context) (T, error)) error {
-
-	err := r.pool.Submit(func() {
-		// 这里传递 ctx 给 task
+	return r.pool.Submit(func() {
 		_, err := task(ctx)
 		if err != nil {
 			logx.WithContext(ctx).Errorf("task error: %v", err)
 		}
 	})
-
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
+// Release 释放池
 func (r *Reactor) Release() {
 	r.pool.Release()
 }
 
+// ActiveCount 当前运行任务数
 func (r *Reactor) ActiveCount() int {
 	return r.pool.Running()
 }
