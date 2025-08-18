@@ -3,8 +3,9 @@ package antsx
 import (
 	"context"
 	"fmt"
-	"github.com/zeromicro/go-zero/core/logx"
 	"sync"
+
+	"github.com/zeromicro/go-zero/core/logx"
 
 	"github.com/panjf2000/ants/v2"
 )
