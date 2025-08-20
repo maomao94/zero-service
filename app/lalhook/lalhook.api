@@ -198,7 +198,7 @@ type (
 )
 
 @server (
-	prefix:  /v1
+	prefix:  v1
 	group:   webhook
 	timeout: 7200s
 )
