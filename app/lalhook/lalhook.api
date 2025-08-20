@@ -1,0 +1,246 @@
+syntax = "v1"
+
+info (
+	title:   "lalhook"
+	desc:    "lalhook HTTPNotify 回调接口"
+	author:  "hehanpeng"
+	email:   "hehanpengyy@163.com"
+	version: "v1"
+)
+
+type (
+	EmptyReply  {}
+	// ------------------ 内部结构类型 ------------------
+	PubInfo {
+		SessionID         string `json:"session_id"` // 会话ID，会话全局唯一标识
+		Protocol          string `json:"protocol"` // 推流协议，取值范围： "RTMP" | "RTSP"
+		BaseType          string `json:"base_type"` // 基础类型，该处固定为"PUB"
+		StartTime         string `json:"start_time"` // 推流开始时间
+		RemoteAddr        string `json:"remote_addr"` // 对端地址
+		ReadBytesSum      int64  `json:"read_bytes_sum"` // 累计读取数据大小（从推流开始时计算）
+		WroteBytesSum     int64  `json:"wrote_bytes_sum"` // 累计发送数据大小
+		BitrateKbits      int64  `json:"bitrate_kbits"` // 最近5秒码率，单位kbit/s
+		ReadBitrateKbits  int64  `json:"read_bitrate_kbits"` // 最近5秒读取数据码率
+		WriteBitrateKbits int64  `json:"write_bitrate_kbits"` // 最近5秒发送数据码率
+	}
+	SubInfo {
+		SessionID         string `json:"session_id"` // 会话ID
+		Protocol          string `json:"protocol"` // 拉流协议，取值范围： "RTMP" | "FLV" | "TS"
+		BaseType          string `json:"base_type"` // 基础类型，该处固定为"SUB"
+		StartTime         string `json:"start_time"` // 拉流开始时间
+		RemoteAddr        string `json:"remote_addr"` // 对端地址
+		ReadBytesSum      int64  `json:"read_bytes_sum"` // 累计读取数据
+		WroteBytesSum     int64  `json:"wrote_bytes_sum"` // 累计发送数据
+		BitrateKbits      int64  `json:"bitrate_kbits"` // 最近5秒码率
+		ReadBitrateKbits  int64  `json:"read_bitrate_kbits"` // 最近5秒读取数据码率
+		WriteBitrateKbits int64  `json:"write_bitrate_kbits"` // 最近5秒发送数据码率
+	}
+	PullInfo {
+		BaseType          string `json:"base_type"` // 固定 "PULL"
+		SessionID         string `json:"session_id"` // 会话ID
+		Protocol          string `json:"protocol"` // 协议 "RTMP" | "RTSP"
+		StartTime         string `json:"start_time"` // 开始时间
+		RemoteAddr        string `json:"remote_addr"` // 对端地址
+		ReadBytesSum      int64  `json:"read_bytes_sum"` // 累计读取数据
+		WroteBytesSum     int64  `json:"wrote_bytes_sum"` // 累计发送数据
+		BitrateKbits      int64  `json:"bitrate_kbits"` // 最近5秒码率
+		ReadBitrateKbits  int64  `json:"read_bitrate_kbits"` // 最近5秒读取数据码率
+		WriteBitrateKbits int64  `json:"write_bitrate_kbits"` // 最近5秒发送数据码率
+	}
+	FpsInfo {
+		UnixSec int64 `json:"unix_sec"` // 时间戳（秒）
+		V       int64 `json:"v"` // 帧数
+	}
+	GroupInfo {
+		StreamName    string        `json:"stream_name"` // 流名称
+		AppName       string        `json:"app_name"` // appName
+		AudioCodec    string        `json:"audio_codec"` // 音频编码格式 "AAC"
+		VideoCodec    string        `json:"video_codec"` // 视频编码格式 "H264" | "H265"
+		VideoWidth    int64         `json:"video_width"` // 视频宽
+		VideoHeight   int64         `json:"video_height"` // 视频高
+		Pub           PubInfo       `json:"pub"` // 接收推流的信息
+		Subs          []SubInfo     `json:"subs"` // 拉流信息
+		Pull          PullInfo      `json:"pull"` // 回源拉流信息
+		Pushs         []interface{} `json:"pushs"` // 主动外连转推信息
+		InFramePerSec []FpsInfo     `json:"in_frame_per_sec"` // 最近32秒内fps
+	}
+	// ------------------ onUpdate ------------------
+	OnUpdateRequest {
+		ServerID string      `json:"server_id"` // lalserver节点id
+		Groups   []GroupInfo `json:"groups"` // group信息列表
+	}
+	// ------------------ onPubStart ------------------
+	OnPubStartRequest {
+		ServerID      string `json:"server_id"` // 该lalserver节点的id，与配置文件中的server_id字段相同
+		SessionID     string `json:"session_id"` // 会话ID，会话全局唯一标识
+		Protocol      string `json:"protocol"` // 推流协议，取值范围： "RTMP" | "RTSP"
+		BaseType      string `json:"base_type"` // 基础类型，该处固定为"PUB"
+		RemoteAddr    string `json:"remote_addr"` // 连接对端地址
+		URL           string `json:"url"` // 完整url
+		AppName       string `json:"app_name"` // RTMP URL中的app name
+		StreamName    string `json:"stream_name"` // 流名称
+		URLParam      string `json:"url_param"` // URL参数
+		HasInSession  bool   `json:"has_in_session"` // 对应的group中，是否存在输入音视频数据的流
+		HasOutSession bool   `json:"has_out_session"` // 对应的group中，是否存在输出音视频数据的流
+		ReadBytesSum  int64  `json:"read_bytes_sum"` // 会话建立至当前时间点，总共读取的数据，单位字节
+		WroteBytesSum int64  `json:"wrote_bytes_sum"` // 会话建立至当前时间点，总共发送的数据，单位字节
+	}
+	// ------------------ onPubStop ------------------
+	OnPubStopRequest {
+		ServerID      string `json:"server_id"` // 该lalserver节点的id
+		SessionID     string `json:"session_id"` // 会话ID
+		Protocol      string `json:"protocol"` // 推流协议
+		BaseType      string `json:"base_type"` // 固定 "PUB"
+		RemoteAddr    string `json:"remote_addr"` // 连接对端地址
+		URL           string `json:"url"` // 完整url
+		AppName       string `json:"app_name"` // RTMP URL中的app name
+		StreamName    string `json:"stream_name"` // 流名称
+		URLParam      string `json:"url_param"` // URL参数
+		HasInSession  bool   `json:"has_in_session"` // 对应的group中是否存在输入流
+		HasOutSession bool   `json:"has_out_session"` // 对应的group中是否存在输出流
+		ReadBytesSum  int64  `json:"read_bytes_sum"` // 累计读取字节
+		WroteBytesSum int64  `json:"wrote_bytes_sum"` // 累计发送字节
+	}
+	// ------------------ onSubStart ------------------
+	OnSubStartRequest {
+		ServerID      string `json:"server_id"` // 该lalserver节点的id
+		SessionID     string `json:"session_id"` // 会话ID
+		Protocol      string `json:"protocol"` // 拉流协议
+		BaseType      string `json:"base_type"` // 固定 "SUB"
+		RemoteAddr    string `json:"remote_addr"` // 连接对端地址
+		URL           string `json:"url"` // 完整url
+		AppName       string `json:"app_name"` // RTMP URL中的app name
+		StreamName    string `json:"stream_name"` // 流名称
+		URLParam      string `json:"url_param"` // URL参数
+		HasInSession  bool   `json:"has_in_session"` // 是否存在输入流
+		HasOutSession bool   `json:"has_out_session"` // 是否存在输出流
+		ReadBytesSum  int64  `json:"read_bytes_sum"` // 累计读取字节
+		WroteBytesSum int64  `json:"wrote_bytes_sum"` // 累计发送字节
+	}
+	// ------------------ onSubStop ------------------
+	OnSubStopRequest {
+		ServerID      string `json:"server_id"` // 该lalserver节点的id
+		SessionID     string `json:"session_id"` // 会话ID
+		Protocol      string `json:"protocol"` // 拉流协议
+		BaseType      string `json:"base_type"` // 固定 "SUB"
+		RemoteAddr    string `json:"remote_addr"` // 连接对端地址
+		URL           string `json:"url"` // 完整url
+		AppName       string `json:"app_name"` // RTMP URL中的app name
+		StreamName    string `json:"stream_name"` // 流名称
+		URLParam      string `json:"url_param"` // URL参数
+		HasInSession  bool   `json:"has_in_session"` // 是否存在输入流
+		HasOutSession bool   `json:"has_out_session"` // 是否存在输出流
+		ReadBytesSum  int64  `json:"read_bytes_sum"` // 累计读取字节
+		WroteBytesSum int64  `json:"wrote_bytes_sum"` // 累计发送字节
+	}
+	// ------------------ onRelayPullStart ------------------
+	OnRelayPullStartRequest {
+		ServerID      string `json:"server_id"` // 该lalserver节点的id
+		SessionID     string `json:"session_id"` // 会话ID
+		Protocol      string `json:"protocol"` // 协议，取值范围： "RTMP" | "RTSP"
+		BaseType      string `json:"base_type"` // 基础类型，该处固定为"PULL"
+		RemoteAddr    string `json:"remote_addr"` // 连接对端地址
+		URL           string `json:"url"` // 完整url
+		AppName       string `json:"app_name"` // RTMP URL中的app name
+		StreamName    string `json:"stream_name"` // 流名称
+		URLParam      string `json:"url_param"` // URL参数
+		HasInSession  bool   `json:"has_in_session"` // 对应的group中，是否存在输入音视频数据的流
+		HasOutSession bool   `json:"has_out_session"` // 对应的group中，是否存在输出音视频数据的流
+		ReadBytesSum  int64  `json:"read_bytes_sum"` // 会话建立至当前时间点，总共读取的数据，单位字节
+		WroteBytesSum int64  `json:"wrote_bytes_sum"` // 会话建立至当前时间点，总共发送的数据，单位字节
+	}
+	// ------------------ onRelayPullStop ------------------
+	OnRelayPullStopRequest {
+		ServerID      string `json:"server_id"` // 该lalserver节点的id
+		SessionID     string `json:"session_id"` // 会话ID
+		Protocol      string `json:"protocol"` // 协议，取值范围： "RTMP" | "RTSP"
+		BaseType      string `json:"base_type"` // 基础类型，该处固定为"PULL"
+		RemoteAddr    string `json:"remote_addr"` // 连接对端地址
+		URL           string `json:"url"` // 完整url
+		AppName       string `json:"app_name"` // RTMP URL中的app name
+		StreamName    string `json:"stream_name"` // 流名称
+		URLParam      string `json:"url_param"` // URL参数
+		HasInSession  bool   `json:"has_in_session"` // 对应的group中，是否存在输入音视频数据的流
+		HasOutSession bool   `json:"has_out_session"` // 对应的group中，是否存在输出音视频数据的流
+		ReadBytesSum  int64  `json:"read_bytes_sum"` // 会话建立至当前时间点，总共读取的数据，单位字节
+		WroteBytesSum int64  `json:"wrote_bytes_sum"` // 会话建立至当前时间点，总共发送的数据，单位字节
+	}
+	// ------------------ onRtmpConnect ------------------
+	OnRtmpConnectRequest {
+		ServerID   string `json:"server_id"` // 该lalserver节点的id
+		SessionID  string `json:"session_id"` // 会话ID
+		RemoteAddr string `json:"remote_addr"` // 连接对端地址
+		App        string `json:"app"` // RTMP URL中的 app
+		FlashVer   string `json:"flashVer"` // Flash版本
+		TcUrl      string `json:"tcUrl"` // RTMP tcUrl
+	}
+	// ------------------ onServerStart ------------------
+	OnServerStartRequest {
+		ServerID      string `json:"server_id"` // lalserver节点id
+		BinInfo       string `json:"bin_info"` // 编译信息，包括 GitTag、GitCommitLog、BuildTime、GoVersion、runtime 等
+		LalVersion    string `json:"lal_version"` // lal可执行文件版本信息
+		APIversion    string `json:"api_version"` // HTTP API接口版本信息
+		NotifyVersion string `json:"notify_version"` // HTTP Notify版本信息
+		StartTime     string `json:"start_time"` // lal进程启动时间
+	}
+	// ------------------ onHlsMakeTs ------------------
+	OnHlsMakeTsRequest {
+		Event          string  `json:"event"` // "open" 表示 ts 分片文件被创建，"close" 表示 ts 分片文件写入完毕
+		StreamName     string  `json:"stream_name"` // 流名称
+		Cwd            string  `json:"cwd"` // 当前工作路径。当配置文件中的 hls 目录设置为相对路径时，相对的是该字段的值
+		TsFile         string  `json:"ts_file"` // ts文件磁盘地址
+		LiveM3u8File   string  `json:"live_m3u8_file"` // 直播 m3u8 文件磁盘地址
+		RecordM3u8File string  `json:"record_m3u8_file"` // 录制 m3u8 文件磁盘地址。只有开启录制时有效
+		ID             int64   `json:"id"` // ts 文件的 ID 编号，线性递增
+		Duration       float64 `json:"duration"` // ts 文件的时长，单位秒。只有 event 为 "close" 时有效
+		ServerID       string  `json:"server_id"` // lalserver节点id
+	}
+)
+
+@server (
+	prefix:  /v1
+	group:   webhook
+	timeout: 7200s
+)
+service lalwebhook {
+	@doc "定时汇报所有group、session的信息"
+	@handler onUpdateHandler
+	post /onUpdate (OnUpdateRequest) returns (EmptyReply)
+
+	@doc "别人推流到当前节点"
+	@handler onPubStartHandler
+	post /onPubStart (OnPubStartRequest) returns (EmptyReply)
+
+	@doc "推流停止"
+	@handler onPubStopHandler
+	post /onPubStop (OnPubStopRequest) returns (EmptyReply)
+
+	@doc "别人从当前节点拉流"
+	@handler onSubStartHandler
+	post /onSubStart (OnSubStartRequest) returns (EmptyReply)
+
+	@doc "拉流停止"
+	@handler onSubStopHandler
+	post /onSubStop (OnSubStopRequest) returns (EmptyReply)
+
+	@doc "回源拉流成功"
+	@handler onRelayPullStartHandler
+	post /onRelayPullStart (OnRelayPullStartRequest) returns (EmptyReply)
+
+	@doc "回源拉流停止"
+	@handler onRelayPullStopHandler
+	post /onRelayPullStop (OnRelayPullStopRequest) returns (EmptyReply)
+
+	@doc "收到 rtmp connect message 信令"
+	@handler onRtmpConnectHandler
+	post /onRtmpConnect (OnRtmpConnectRequest) returns (EmptyReply)
+
+	@doc "服务启动时"
+	@handler onServerStartHandler
+	post /onServerStart (OnServerStartRequest) returns (EmptyReply)
+
+	@doc "HLS 生成每个 ts 分片文件时"
+	@handler onHlsMakeTsHandler
+	post /onHlsMakeTs (OnHlsMakeTsRequest) returns (EmptyReply)
+}
+
