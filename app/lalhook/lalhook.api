@@ -202,7 +202,7 @@ type (
 	group:   webhook
 	timeout: 7200s
 )
-service lalwebhook {
+service lalhook {
 	@doc "定时汇报所有group、session的信息"
 	@handler onUpdateHandler
 	post /onUpdate (OnUpdateRequest) returns (EmptyReply)
