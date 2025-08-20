@@ -18,10 +18,10 @@ type GroupInfo struct {
 	VideoCodec    string        `json:"video_codec"`      // 视频编码格式 "H264" | "H265"
 	VideoWidth    int64         `json:"video_width"`      // 视频宽
 	VideoHeight   int64         `json:"video_height"`     // 视频高
-	Pub           PubInfo       `json:"pub"`              // 接收推流的信息
-	Subs          []SubInfo     `json:"subs"`             // 拉流信息
-	Pull          PullInfo      `json:"pull"`             // 回源拉流信息
-	Pushs         []interface{} `json:"pushs"`            // 主动外连转推信息
+	Pub           PubInfo       `json:"pub,optional"`     // 接收推流的信息
+	Subs          []SubInfo     `json:"subs,optional"`    // 拉流信息
+	Pull          PullInfo      `json:"pull,optional"`    // 回源拉流信息
+	Pushs         []interface{} `json:"pushs,optional"`   // 主动外连转推信息
 	InFramePerSec []FpsInfo     `json:"in_frame_per_sec"` // 最近32秒内fps
 }
 
@@ -152,8 +152,8 @@ type OnSubStopRequest struct {
 }
 
 type OnUpdateRequest struct {
-	ServerID string      `json:"server_id"` // lalserver节点id
-	Groups   []GroupInfo `json:"groups"`    // group信息列表
+	ServerID string      `json:"server_id"`       // lalserver节点id
+	Groups   []GroupInfo `json:"groups,optional"` // group信息列表
 }
 
 type PubInfo struct {
