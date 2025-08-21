@@ -27,12 +27,12 @@ func NewListTsFilesLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ListT
 
 func (l *ListTsFilesLogic) ListTsFiles(req *types.ApiListTsRequest) (resp *types.ApiListTsReply, err error) {
 	selectBuilder := l.svcCtx.HlsTsFilesModel.SelectBuilder()
-	selectBuilder.Where(squirrel.Eq{"stream_name": req.StreamName})
+	selectBuilder = selectBuilder.Where(squirrel.Eq{"stream_name": req.StreamName})
 	if req.StartTime > 0 {
-		selectBuilder = selectBuilder.Where(squirrel.GtOrEq{"create_time": req.StartTime})
+		selectBuilder = selectBuilder.Where(squirrel.GtOrEq{"ts_timestamp": req.StartTime})
 	}
 	if req.EndTime > 0 {
-		selectBuilder = selectBuilder.Where(squirrel.LtOrEq{"create_time": req.EndTime})
+		selectBuilder = selectBuilder.Where(squirrel.LtOrEq{"ts_timestamp": req.EndTime})
 	}
 	if req.Event != "" {
 		selectBuilder = selectBuilder.Where(squirrel.Eq{"event": req.Event})
@@ -47,10 +47,11 @@ func (l *ListTsFilesLogic) ListTsFiles(req *types.ApiListTsRequest) (resp *types
 		serverID = list[0].ServerId
 		for _, v := range list {
 			file := types.ApiTsFile{
-				Event:    v.Event,
-				TsFile:   v.TsFile,
-				TsId:     v.TsId,
-				Duration: v.Duration.Float64,
+				Event:       v.Event,
+				TsFile:      v.TsFile,
+				TsId:        v.TsId,
+				Duration:    v.Duration.Float64,
+				TsTimestamp: v.TsTimestamp,
 			}
 			files = append(files, file)
 		}
