@@ -5,3 +5,5 @@ Mode: dev
 Log:
   Encoding: plain
 Timeout: 15000
+DB:
+  DataSource: root:PXDN93VRKUm8TeE7@tcp(localhost:33069)/lal?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai

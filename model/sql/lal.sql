@@ -23,7 +23,7 @@ CREATE TABLE `hls_ts_files`
     `server_id`        VARCHAR(64)  NOT NULL COMMENT 'lalserver 节点 ID',
 
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uniq_ts_id_server` (`ts_id`,`server_id`),
+    UNIQUE KEY `uniq_ts_file` (`ts_file`),
     KEY                `idx_event` (`event`),
     KEY                `idx_stream_name` (`stream_name`)
 ) COMMENT='保存 HLS TS 文件生成事件';

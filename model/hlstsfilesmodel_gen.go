@@ -29,7 +29,7 @@ type (
 	hlsTsFilesModel interface {
 		Insert(ctx context.Context, session sqlx.Session, data *HlsTsFiles) (sql.Result, error)
 		FindOne(ctx context.Context, id int64) (*HlsTsFiles, error)
-		FindOneByTsIdServerId(ctx context.Context, tsId int64, serverId string) (*HlsTsFiles, error)
+		FindOneByTsFile(ctx context.Context, tsFile string) (*HlsTsFiles, error)
 		Update(ctx context.Context, session sqlx.Session, data *HlsTsFiles) (sql.Result, error)
 		UpdateWithVersion(ctx context.Context, session sqlx.Session, data *HlsTsFiles) error
 		Trans(ctx context.Context, fn func(context context.Context, session sqlx.Session) error) error
@@ -99,10 +99,10 @@ func (m *defaultHlsTsFilesModel) FindOne(ctx context.Context, id int64) (*HlsTsF
 	}
 }
 
-func (m *defaultHlsTsFilesModel) FindOneByTsIdServerId(ctx context.Context, tsId int64, serverId string) (*HlsTsFiles, error) {
+func (m *defaultHlsTsFilesModel) FindOneByTsFile(ctx context.Context, tsFile string) (*HlsTsFiles, error) {
 	var resp HlsTsFiles
-	query := fmt.Sprintf("select %s from %s where `ts_id` = ? and `server_id` = ?  and del_state = ? limit 1", hlsTsFilesRows, m.table)
-	err := m.conn.QueryRowCtx(ctx, &resp, query, tsId, serverId, 0)
+	query := fmt.Sprintf("select %s from %s where `ts_file` = ?  and del_state = ? limit 1", hlsTsFilesRows, m.table)
+	err := m.conn.QueryRowCtx(ctx, &resp, query, tsFile, 0)
 	switch err {
 	case nil:
 		return &resp, nil
