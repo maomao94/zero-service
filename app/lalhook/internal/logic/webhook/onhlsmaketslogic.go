@@ -3,12 +3,15 @@ package webhook
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"zero-service/model"
 
 	"zero-service/app/lalhook/internal/svc"
 	"zero-service/app/lalhook/internal/types"
 
 	"github.com/Masterminds/squirrel"
+	convertor2 "github.com/duke-git/lancet/v2/convertor"
+	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -28,6 +31,15 @@ func NewOnHlsMakeTsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *OnHls
 }
 
 func (l *OnHlsMakeTsLogic) OnHlsMakeTs(req *types.OnHlsMakeTsRequest) (resp *types.EmptyReply, err error) {
+	tsfileSplitSlice := strutil.SplitAndTrim(req.TsFile, "-")
+	tsTimestampStr := tsfileSplitSlice[len(tsfileSplitSlice)-2]
+	tsTimestamp, err := convertor2.ToInt(tsTimestampStr)
+	if err != nil {
+		return nil, err
+	}
+	if tsTimestamp <= 0 {
+		return nil, errors.New("tsTimestamp <= 0")
+	}
 	hlsTsFiles := model.HlsTsFiles{
 		Event:        req.Event,
 		StreamName:   req.StreamName,
@@ -38,7 +50,8 @@ func (l *OnHlsMakeTsLogic) OnHlsMakeTs(req *types.OnHlsMakeTsRequest) (resp *typ
 			String: req.RecordM3u8File,
 			Valid:  req.RecordM3u8File != "",
 		},
-		TsId: req.ID,
+		TsId:        req.ID,
+		TsTimestamp: tsTimestamp,
 		Duration: sql.NullFloat64{
 			Float64: req.Duration,
 			Valid:   req.Duration > 0,

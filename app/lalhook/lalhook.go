@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net/http"
 
 	"zero-service/app/lalhook/internal/config"
 	"zero-service/app/lalhook/internal/handler"
@@ -20,7 +21,12 @@ func main() {
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
 
-	server := rest.MustNewServer(c.RestConf)
+	server := rest.MustNewServer(c.RestConf, rest.WithCustomCors(func(header http.Header) {
+		header.Set("Access-Control-Allow-Origin", "*")
+		header.Add("Access-Control-Allow-Headers", "UserHeader1, UserHeader2")
+		header.Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
+		header.Set("Access-Control-Expose-Headers", "Content-Length, Content-Type")
+	}, nil, "*"))
 	defer server.Stop()
 
 	ctx := svc.NewServiceContext(c)

@@ -3,6 +3,26 @@
 
 package types
 
+type ApiListTsReply struct {
+	StreamName string      `json:"streamName"`
+	ServerID   string      `json:"serverId"` // lalserver节点id
+	Files      []ApiTsFile `json:"files"`    // TS 文件数组
+}
+
+type ApiListTsRequest struct {
+	StreamName string `json:"streamName,optional"` // 流名称
+	StartTime  int64  `json:"startTime,optional"`  // 开始时间戳（毫秒）
+	EndTime    int64  `json:"endTime,optional"`    // 结束时间戳（毫秒）
+	Event      string `json:"event,optional"`      // "open" 表示 ts 分片文件被创建，"close" 表示 ts 分片文件写入完毕
+}
+
+type ApiTsFile struct {
+	Event    string  `json:"event"`    // "open" 表示 ts 分片文件被创建，"close" 表示 ts 分片文件写入完毕
+	TsFile   string  `json:"tsFile"`   // ts文件磁盘地址
+	TsId     int64   `json:"tsId"`     // TS 文件编号
+	Duration float64 `json:"duration"` // ts 文件的时长，单位秒。只有 event 为 "close" 时有效
+}
+
 type EmptyReply struct {
 }
 

@@ -64,6 +64,7 @@ type (
 		LiveM3u8File   string          `db:"live_m3u8_file"`   // 直播 m3u8 文件路径
 		RecordM3u8File sql.NullString  `db:"record_m3u8_file"` // 录制 m3u8 文件路径（可为空）
 		TsId           int64           `db:"ts_id"`            // TS 文件的 ID 编号，线性递增
+		TsTimestamp    int64           `db:"ts_timestamp"`     // TS 文件时间戳，方便区间查询
 		Duration       sql.NullFloat64 `db:"duration"`         // TS 文件时长，单位秒，event 为 close 时有效
 		ServerId       string          `db:"server_id"`        // lalserver 节点 ID
 	}
@@ -117,11 +118,11 @@ func (m *defaultHlsTsFilesModel) Insert(ctx context.Context, session sqlx.Sessio
 	data.DeleteTime = time.Unix(0, 0)
 	data.DelState = 0
 
-	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, hlsTsFilesRowsExpectAutoSet)
+	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, hlsTsFilesRowsExpectAutoSet)
 	if session != nil {
-		return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.Event, data.StreamName, data.Cwd, data.TsFile, data.LiveM3u8File, data.RecordM3u8File, data.TsId, data.Duration, data.ServerId)
+		return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.Event, data.StreamName, data.Cwd, data.TsFile, data.LiveM3u8File, data.RecordM3u8File, data.TsId, data.TsTimestamp, data.Duration, data.ServerId)
 	}
-	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.Event, data.StreamName, data.Cwd, data.TsFile, data.LiveM3u8File, data.RecordM3u8File, data.TsId, data.Duration, data.ServerId)
+	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.Event, data.StreamName, data.Cwd, data.TsFile, data.LiveM3u8File, data.RecordM3u8File, data.TsId, data.TsTimestamp, data.Duration, data.ServerId)
 }
 
 func (m *defaultHlsTsFilesModel) Update(ctx context.Context, session sqlx.Session, newData *HlsTsFiles) (sql.Result, error) {
@@ -129,9 +130,9 @@ func (m *defaultHlsTsFilesModel) Update(ctx context.Context, session sqlx.Sessio
 	newData.DelState = 0
 	query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, hlsTsFilesRowsWithPlaceHolder)
 	if session != nil {
-		return session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.Event, newData.StreamName, newData.Cwd, newData.TsFile, newData.LiveM3u8File, newData.RecordM3u8File, newData.TsId, newData.Duration, newData.ServerId, newData.Id)
+		return session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.Event, newData.StreamName, newData.Cwd, newData.TsFile, newData.LiveM3u8File, newData.RecordM3u8File, newData.TsId, newData.TsTimestamp, newData.Duration, newData.ServerId, newData.Id)
 	}
-	return m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.Event, newData.StreamName, newData.Cwd, newData.TsFile, newData.LiveM3u8File, newData.RecordM3u8File, newData.TsId, newData.Duration, newData.ServerId, newData.Id)
+	return m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.Event, newData.StreamName, newData.Cwd, newData.TsFile, newData.LiveM3u8File, newData.RecordM3u8File, newData.TsId, newData.TsTimestamp, newData.Duration, newData.ServerId, newData.Id)
 }
 
 func (m *defaultHlsTsFilesModel) UpdateWithVersion(ctx context.Context, session sqlx.Session, newData *HlsTsFiles) error {
@@ -144,9 +145,9 @@ func (m *defaultHlsTsFilesModel) UpdateWithVersion(ctx context.Context, session 
 
 	query := fmt.Sprintf("update %s set %s where `id` = ? and version = ? ", m.table, hlsTsFilesRowsWithPlaceHolder)
 	if session != nil {
-		sqlResult, err = session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.Event, newData.StreamName, newData.Cwd, newData.TsFile, newData.LiveM3u8File, newData.RecordM3u8File, newData.TsId, newData.Duration, newData.ServerId, newData.Id, oldVersion)
+		sqlResult, err = session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.Event, newData.StreamName, newData.Cwd, newData.TsFile, newData.LiveM3u8File, newData.RecordM3u8File, newData.TsId, newData.TsTimestamp, newData.Duration, newData.ServerId, newData.Id, oldVersion)
 	} else {
-		sqlResult, err = m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.Event, newData.StreamName, newData.Cwd, newData.TsFile, newData.LiveM3u8File, newData.RecordM3u8File, newData.TsId, newData.Duration, newData.ServerId, newData.Id, oldVersion)
+		sqlResult, err = m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.Event, newData.StreamName, newData.Cwd, newData.TsFile, newData.LiveM3u8File, newData.RecordM3u8File, newData.TsId, newData.TsTimestamp, newData.Duration, newData.ServerId, newData.Id, oldVersion)
 	}
 
 	if err != nil {

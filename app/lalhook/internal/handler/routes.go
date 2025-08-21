@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	api "zero-service/app/lalhook/internal/handler/api"
 	webhook "zero-service/app/lalhook/internal/handler/webhook"
 	"zero-service/app/lalhook/internal/svc"
 
@@ -14,6 +15,19 @@ import (
 )
 
 func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				// 查询 TS 文件列表（按时间区间）
+				Method:  http.MethodPost,
+				Path:    "/ts/list",
+				Handler: api.ListTsFilesHandler(serverCtx),
+			},
+		},
+		rest.WithPrefix("/v1/api"),
+		rest.WithTimeout(7200000*time.Millisecond),
+	)
+
 	server.AddRoutes(
 		[]rest.Route{
 			{
@@ -77,7 +91,7 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Handler: webhook.OnUpdateHandler(serverCtx),
 			},
 		},
-		rest.WithPrefix("/v1"),
+		rest.WithPrefix("/v1/hook"),
 		rest.WithTimeout(7200000*time.Millisecond),
 	)
 }
