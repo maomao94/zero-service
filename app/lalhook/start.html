@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高级TS播放器 - HLS流媒体播放</title>
+<link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root {
+    --primary-color: #ff9e01;
+    --bg-dark: #121212;
+    --bg-card: #1e1e1e;
+    --bg-hover: #2d2d2d;
+    --text-primary: #ffffff;
+    --text-secondary: #aaaaaa;
+    --border-radius: 8px;
+    --transition: all 0.3s ease;
+  }
+  
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    padding: 20px;
+    min-height: 100vh;
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  header {
+    text-align: center;
+    margin-bottom: 25px;
+  }
+  
+  h1 {
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+    color: var(--primary-color);
+  }
+  
+  .subtitle {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+  }
+  
+  .control-panel {
+    background: var(--bg-card);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    margin-bottom: 25px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+  
+  .input-group {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  
+  .input-field {
+    flex: 1;
+    min-width: 250px;
+  }
+  
+  .input-field label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  
+  .input-field input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #444;
+    border-radius: var(--border-radius);
+    background: #2a2a2a;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: var(--transition);
+  }
+  
+  .input-field input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(255, 158, 1, 0.2);
+  }
+  
+  .btn {
+    padding: 12px 25px;
+    background: var(--primary-color);
+    color: #000;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  .btn:hover {
+    background: #ffb43a;
+    transform: translateY(-2px);
+  }
+  
+  .btn:active {
+    transform: translateY(0);
+  }
+  
+  .btn i {
+    font-size: 1.1rem;
+  }
+  
+  .video-container {
+    position: relative;
+    margin-bottom: 25px;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+  }
+  
+  #my-video {
+    width: 100%;
+    height: 500px;
+    background: #000;
+  }
+  
+  .timeline-container {
+    background: var(--bg-card);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    margin-bottom: 25px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+  
+  .timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  
+  .timeline-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+  
+  .timeline-actions button {
+    background: transparent;
+    border: 1px solid #444;
+    color: var(--text-secondary);
+    padding: 8px 15px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  
+  .timeline-actions button:hover {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+  }
+  
+  #timestamps {
+    width: 100%;
+    height: 60px;
+    display: flex;
+    overflow-x: auto;
+    padding: 10px 0;
+    background: #2a2a2a;
+    border-radius: var(--border-radius);
+    position: relative;
+  }
+  
+  .ts-btn {
+    flex: 0 0 auto;
+    height: 40px;
+    min-width: 8px;
+    margin: 0 1px;
+    background: #444;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: var(--transition);
+    position: relative;
+  }
+  
+  .ts-btn:hover {
+    background: #666;
+    transform: scaleY(1.3);
+  }
+  
+  .ts-btn.active {
+    background: var(--primary-color);
+  }
+  
+  .time-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition);
+    z-index: 100;
+  }
+  
+  .ts-btn:hover .time-tooltip {
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  .time-scale {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+  }
+  
+  .status-panel {
+    background: var(--bg-card);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    margin-bottom: 25px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+  
+  .status-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+  }
+  
+  .status-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+  }
+  
+  .status-item {
+    background: #2a2a2a;
+    padding: 15px;
+    border-radius: var(--border-radius);
+  }
+  
+  .status-item .label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+  }
+  
+  .status-item .value {
+    font-size: 1.1rem;
+    font-weight: 500;
+  }
+  
+  .playlist-container {
+    background: var(--bg-card);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+  
+  .playlist-header {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+  }
+  
+  #playlist {
+    list-style: none;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .playlist-item {
+    padding: 12px 15px;
+    border-bottom: 1px solid #333;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .playlist-item:hover {
+    background: var(--bg-hover);
+  }
+  
+  .playlist-item.active {
+    background: rgba(255, 158, 1, 0.15);
+    border-left: 3px solid var(--primary-color);
+  }
+  
+  .playlist-item .time {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+  
+  footer {
+    text-align: center;
+    margin-top: 40px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+  
+  /* 响应式设计 */
+  @media (max-width: 768px) {
+    .input-group {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .input-field {
+      min-width: unset;
+    }
+    
+    #my-video {
+      height: 300px;
+    }
+    
+    .status-content {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  /* 滚动条样式 */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #2a2a2a;
+    border-radius: 10px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 10px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>高级TS播放器</h1>
+    <p class="subtitle">HLS流媒体播放与时间轴导航</p>
+  </header>
+  
+  <div class="control-panel">
+    <div class="input-group">
+      <div class="input-field">
+        <label for="stream-input">流名称</label>
+        <input id="stream-input" type="text" placeholder="输入streamName">
+      </div>
+      <div class="input-field">
+        <label for="minutes-input">最近分钟数</label>
+        <input id="minutes-input" type="number" value="5" placeholder="最近分钟">
+      </div>
+    </div>
+    <button class="btn" onclick="startPlay()">
+      <i class="fas fa-play"></i> 开始播放
+    </button>
+  </div>
+  
+  <div class="video-container">
+    <video id="my-video" class="video-js vjs-big-play-centered" controls preload="auto"></video>
+  </div>
+  
+  <div class="timeline-container">
+    <div class="timeline-header">
+      <div class="timeline-title">时间轴导航</div>
+      <div class="timeline-actions">
+        <button onclick="zoomTimeline(0.8)"><i class="fas fa-search-minus"></i></button>
+        <button onclick="zoomTimeline(1.2)"><i class="fas fa-search-plus"></i></button>
+      </div>
+    </div>
+    <div id="timestamps"></div>
+    <div class="time-scale">
+      <span id="start-time">00:00</span>
+      <span id="end-time">00:00</span>
+    </div>
+  </div>
+  
+  <div class="status-panel">
+    <div class="status-title">播放状态</div>
+    <div class="status-content">
+      <div class="status-item">
+        <div class="label">当前流</div>
+        <div id="current-stream" class="value">未选择</div>
+      </div>
+      <div class="status-item">
+        <div class="label">TS片段数量</div>
+        <div id="ts-count" class="value">0</div>
+      </div>
+      <div class="status-item">
+        <div class="label">总时长</div>
+        <div id="total-duration" class="value">00:00:00</div>
+      </div>
+      <div class="status-item">
+        <div class="label">更新时间</div>
+        <div id="last-update" class="value">-</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="playlist-container">
+    <div class="playlist-header">播放列表</div>
+    <ul id="playlist"></ul>
+  </div>
+  
+  <footer>
+    <p>高级TS播放器 &copy; 2023 - HLS流媒体播放解决方案</p>
+  </footer>
+</div>
+
+<script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.0/dist/hls.min.js"></script>
+
+<script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.0/dist/hls.min.js"></script>
+
+<script>
+const apiUrl = "http://localhost:11002/v1/api/ts/list";
+let currentStream = "";
+let player, hls;
+let tsFiles = [];
+let prevTsFiles = []; // 用于比较新旧TS列表
+let totalDuration = 0;
+let updateInterval;
+
+// 格式化时间（无变化）
+function formatTime(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
+
+// 格式化日期时间（无变化）
+function formatDateTime(timestamp) {
+  if (!timestamp) return '-';
+  const date = new Date(Number(timestamp));
+  return date.toLocaleString();
+}
+
+// 更新时间显示（无变化）
+function updateTimeDisplay() {
+  const startTime = tsFiles.length > 0 ? tsFiles[0].timestamp : 0;
+  const endTime = tsFiles.length > 0 ? tsFiles[tsFiles.length - 1].timestamp : 0;
+  
+  document.getElementById('start-time').textContent = formatDateTime(startTime).split(' ')[1];
+  document.getElementById('end-time').textContent = formatDateTime(endTime).split(' ')[1];
+  document.getElementById('total-duration').textContent = formatTime(totalDuration);
+  document.getElementById('ts-count').textContent = tsFiles.length;
+  document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+}
+
+// 更新播放列表（无变化）
+function updatePlaylist() {
+  const playlist = document.getElementById('playlist');
+  playlist.innerHTML = '';
+  
+  tsFiles.forEach((f, index) => {
+    const li = document.createElement('li');
+    li.className = 'playlist-item';
+    li.innerHTML = `
+      <div class="file">TS片段 ${index + 1}</div>
+      <div class="time">${formatTime(f.duration)}</div>
+    `;
+    
+    li.addEventListener('click', () => {
+      const seekTime = tsFiles.slice(0, index).reduce((sum, t) => sum + t.duration, 0);
+      document.getElementById("my-video").currentTime = seekTime;
+      
+      // 高亮当前项目
+      document.querySelectorAll('.playlist-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      li.classList.add('active');
+    });
+    
+    playlist.appendChild(li);
+  });
+}
+
+async function fetchTsList() {
+  if (!currentStream) return;
+
+  const minutes = parseInt(document.getElementById("minutes-input").value) || 5;
+  const now = Date.now();
+  const cutoff = now - minutes * 60 * 1000;
+
+  try {
+    const res = await fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stream_name: currentStream, event: "close" })
+    });
+    const data = await res.json();
+
+    if (!data.files || data.files.length === 0) {
+      console.log('API未返回TS文件');
+      return;
+    }
+
+    let newTsFiles = data.files
+      .map(f => ({
+        url: `http://localhost:8081/lal_record/hls/${currentStream}/${f.tsFile.split("/").pop()}`,
+        duration: f.duration,
+        tsId: f.tsId,
+        timestamp: f.tsFile.split("/").pop().match(/-(\d+)-\d+\.ts$/)?.[1] || ""
+      }))
+      .filter(f => Number(f.timestamp) >= cutoff)
+      .sort((a, b) => Number(a.timestamp) - Number(b.timestamp)); // 按时间戳升序排序（正序）
+
+    console.log('新TS文件列表（已排序）:', newTsFiles.map(f => ({ timestamp: f.timestamp, url: f.url })));
+
+    // 比较新旧列表（通过JSON字符串比较，避免对象引用问题）
+    if (JSON.stringify(newTsFiles) === JSON.stringify(prevTsFiles)) {
+      console.log('TS列表无变化，跳过重建M3U8');
+      return; // 无变化，不更新
+    }
+
+    // 更新tsFiles和prevTsFiles
+    tsFiles = newTsFiles;
+    prevTsFiles = [...tsFiles]; // 深拷贝
+
+    if (tsFiles.length === 0) {
+      console.log('没有符合时间范围的TS文件');
+      return;
+    }
+
+    // 计算总时长
+    totalDuration = tsFiles.reduce((sum, f) => sum + f.duration, 0);
+    
+    // 更新状态显示
+    document.getElementById('current-stream').textContent = currentStream;
+    updateTimeDisplay();
+    updatePlaylist();
+
+    // 拼M3U8（正序）
+    let m3u8 = "#EXTM3U\n#EXT-X-VERSION:3\n";
+    m3u8 += `#EXT-X-TARGETDURATION:${Math.ceil(Math.max(...tsFiles.map(f => f.duration)))}\n`;
+    m3u8 += "#EXT-X-MEDIA-SEQUENCE:0\n";
+    tsFiles.forEach(f => m3u8 += `#EXTINF:${f.duration},\n${f.url}\n`);
+    m3u8 += "#EXT-X-ENDLIST"; // 点播模式；如果想切换直播模式，注释此行
+
+    console.log('生成的M3U8:', m3u8);
+
+    const blob = new Blob([m3u8], { type: "application/vnd.apple.mpegurl" });
+    const m3u8Url = URL.createObjectURL(blob);
+
+    const video = document.getElementById("my-video");
+    if (!player) player = videojs(video);
+
+    // 保存当前播放位置
+    const currentTime = video.currentTime || 0;
+    const wasPlaying = !video.paused;
+
+    if (hls) hls.destroy();
+
+    if (Hls.isSupported()) {
+      hls = new Hls();
+      hls.loadSource(m3u8Url);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.currentTime = currentTime; // 恢复位置
+        if (wasPlaying) video.play();
+      });
+    } else {
+      video.src = m3u8Url;
+      video.addEventListener('loadedmetadata', () => {
+        video.currentTime = currentTime; // 恢复位置
+        if (wasPlaying) video.play();
+      });
+    }
+
+    renderTsBlocks();
+  } catch (error) {
+    console.error('获取TS列表失败:', error);
+  }
+}
+
+// renderTsBlocks（无变化，但确保基于排序后的tsFiles）
+function renderTsBlocks() {
+  const container = document.getElementById("timestamps");
+  container.innerHTML = "";
+  
+  // 计算每个块的比例宽度
+  const totalDuration = tsFiles.reduce((sum, f) => sum + f.duration, 0);
+  
+  tsFiles.forEach((f, index) => {
+    const widthPercent = (f.duration / totalDuration) * 100;
+    const btn = document.createElement("div");
+    btn.className = "ts-btn";
+    btn.style.width = `${Math.max(2, widthPercent)}%`;
+    
+    const startTime = new Date(Number(f.timestamp));
+    const endTime = new Date(startTime.getTime() + f.duration * 1000);
+    
+    const tooltip = document.createElement("div");
+    tooltip.className = "time-tooltip";
+    tooltip.textContent = `${startTime.toLocaleTimeString()} - ${endTime.toLocaleTimeString()}`;
+    btn.appendChild(tooltip);
+    
+    btn.addEventListener("click", () => {
+      const seekTime = tsFiles.slice(0, index).reduce((sum, t) => sum + t.duration, 0);
+      document.getElementById("my-video").currentTime = seekTime;
+    });
+    
+    container.appendChild(btn);
+  });
+
+  const video = document.getElementById("my-video");
+  video.addEventListener("timeupdate", () => {
+    let currentTime = 0;
+    const buttons = document.querySelectorAll(".ts-btn");
+    
+    tsFiles.forEach((f, idx) => {
+      const start = currentTime;
+      const end = currentTime + f.duration;
+      buttons[idx].classList.toggle("active", video.currentTime >= start && video.currentTime < end);
+      currentTime = end;
+    });
+  });
+  
+  updateTimeDisplay();
+}
+
+function zoomTimeline(factor) {
+  const buttons = document.querySelectorAll(".ts-btn");
+  buttons.forEach(btn => {
+    const currentWidth = parseFloat(btn.style.width);
+    btn.style.width = `${currentWidth * factor}%`;
+  });
+}
+
+function startPlay() {
+  const streamName = document.getElementById("stream-input").value.trim();
+  if (!streamName) {
+    alert("请输入streamName");
+    return;
+  }
+  
+  currentStream = streamName;
+  
+  // 清除之前的更新间隔
+  if (updateInterval) {
+    clearInterval(updateInterval);
+  }
+  
+  // 重置prevTsFiles
+  prevTsFiles = [];
+  
+  fetchTsList();
+  updateInterval = setInterval(fetchTsList, 5000); // 每 5 秒刷新
+}
+
+// 初始化（无变化）
+document.addEventListener('DOMContentLoaded', function() {
+  // 设置默认值（可选）
+  document.getElementById("stream-input").value = "test";
+  document.getElementById("minutes-input").value = 5;
+});
+</script>
+</body>
+</html>
