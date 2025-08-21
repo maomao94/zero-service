@@ -17,8 +17,8 @@ port=33069
 #dbname=looklook_$1
 dbname=$1
 username=root
-passwd=123456
+passwd=PXDN93VRKUm8TeE7
 
 
 echo "开始创建库：$dbname 的表：$2"
-goctl model mysql datasource -url="${username}:${passwd}@tcp(${host}:${port})/${dbname}" -table="${tables}"  -dir="${modeldir}" -cache=true --style=gozero
+goctl model mysql datasource -url="${username}:${passwd}@tcp(${host}:${port})/${dbname}" -table="${tables}"  -dir="${modeldir}" -cache=false --style=gozero
