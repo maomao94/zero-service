@@ -90,7 +90,8 @@ async function fetchTsList() {
         url: `http://localhost:8081/lal_record/hls/${currentStream}/${f.tsFile.split("/").pop()}`,
         duration: f.duration,
         tsId: f.tsId,
-        timestamp: f.tsTimestamp  // 直接使用后端返回的时间戳
+        timestamp: f.tsTimestamp,  // 直接使用后端返回的时间戳
+        tsFile: f.tsFile  // 保留原始tsFile路径，用于显示文件名
       }))
       .filter(f => {
         // 使用后端返回的时间戳进行过滤
