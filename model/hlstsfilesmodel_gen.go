@@ -34,7 +34,7 @@ type (
 		UpdateWithVersion(ctx context.Context, session sqlx.Session, data *HlsTsFiles) error
 		Trans(ctx context.Context, fn func(context context.Context, session sqlx.Session) error) error
 		SelectBuilder() squirrel.SelectBuilder
-		DeleteSoft(ctx context.Context, session sqlx.Session, data *HlsTsFiles) error
+		DeleteSoft(ctx context.Context, session sqlx.Session, id int64) error
 		FindSum(ctx context.Context, sumBuilder squirrel.SelectBuilder, field string) (float64, error)
 		FindCount(ctx context.Context, countBuilder squirrel.SelectBuilder, field string) (int64, error)
 		FindAll(ctx context.Context, rowBuilder squirrel.SelectBuilder, orderBy ...string) ([]*HlsTsFiles, error)
@@ -171,7 +171,7 @@ func (m *defaultHlsTsFilesModel) DeleteSoft(ctx context.Context, session sqlx.Se
 	}
 	data.DelState = 1
 	data.DeleteTime = time.Now()
-	if err = m.UpdateWithVersion(ctx, session, data); err != nil {
+	if err := m.UpdateWithVersion(ctx, session, data); err != nil {
 		return errors.Wrapf(errors.New("delete soft failed "), "HlsTsFilesModel delete err : %+v", err)
 	}
 	return nil

@@ -79,6 +79,8 @@ async function fetchTsList() {
     });
     const data = await res.json();
 
+    console.log('API返回的原始数据:', data);
+
     if (!data.files || data.files.length === 0) {
       console.log('API未返回TS文件');
       return;
@@ -86,13 +88,18 @@ async function fetchTsList() {
 
     // 使用后端返回的TsTimestamp字段，提高准确性
     let newTsFiles = data.files
-      .map(f => ({
-        url: `http://localhost:8081/lal_record/hls/${currentStream}/${f.tsFile.split("/").pop()}`,
-        duration: f.duration,
-        tsId: f.tsId,
-        timestamp: f.tsTimestamp,  // 直接使用后端返回的时间戳
-        tsFile: f.tsFile  // 保留原始tsFile路径，用于显示文件名
-      }))
+      .map(f => {
+        console.log('处理单个文件:', f);
+        const mappedFile = {
+          url: `http://localhost:8081/lal_record/hls/${currentStream}/${f.tsFile.split("/").pop()}`,
+          duration: f.duration,
+          tsId: f.tsId,
+          timestamp: f.tsTimestamp,  // 直接使用后端返回的时间戳
+          tsFile: f.tsFile  // 保留原始tsFile路径，用于显示文件名
+        };
+        console.log('映射后的文件:', mappedFile);
+        return mappedFile;
+      })
       .filter(f => {
         // 使用后端返回的时间戳进行过滤
         return f.timestamp >= startTime && f.timestamp <= endTime;
