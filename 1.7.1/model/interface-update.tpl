@@ -2,7 +2,7 @@ Update(ctx context.Context,session sqlx.Session, data *{{.upperStartCamelObject}
 UpdateWithVersion(ctx context.Context,session sqlx.Session, data *{{.upperStartCamelObject}}) error
 Trans(ctx context.Context,fn func(context context.Context, session sqlx.Session) error) error
 SelectBuilder() squirrel.SelectBuilder
-DeleteSoft(ctx context.Context, session sqlx.Session, data *{{.upperStartCamelObject}}) error
+DeleteSoft(ctx context.Context, session sqlx.Session, id int64) error
 FindSum(ctx context.Context, sumBuilder squirrel.SelectBuilder, field string) (float64,error)
 FindCount(ctx context.Context, countBuilder squirrel.SelectBuilder, field string) (int64,error)
 FindAll(ctx context.Context, rowBuilder squirrel.SelectBuilder, orderBy ...string) ([]*{{.upperStartCamelObject}},error)
