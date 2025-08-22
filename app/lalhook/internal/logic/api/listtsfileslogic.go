@@ -37,7 +37,7 @@ func (l *ListTsFilesLogic) ListTsFiles(req *types.ApiListTsRequest) (resp *types
 	if req.Event != "" {
 		selectBuilder = selectBuilder.Where(squirrel.Eq{"event": req.Event})
 	}
-	list, err := l.svcCtx.HlsTsFilesModel.FindAll(l.ctx, selectBuilder, "ts_timestamp desc")
+	list, err := l.svcCtx.HlsTsFilesModel.FindAll(l.ctx, selectBuilder, "ts_timestamp desc", "ts_id desc")
 	if err != nil {
 		return nil, err
 	}

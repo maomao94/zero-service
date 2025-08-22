@@ -124,14 +124,14 @@ func (m *default{{.upperStartCamelObject}}Model) FindCount(ctx context.Context, 
 	}
 }
 
-func (m *default{{.upperStartCamelObject}}Model) FindAll(ctx context.Context,builder squirrel.SelectBuilder,orderBy string) ([]*{{.upperStartCamelObject}},error) {
+func (m *default{{.upperStartCamelObject}}Model) FindAll(ctx context.Context,builder squirrel.SelectBuilder,orderBy ...string) ([]*{{.upperStartCamelObject}},error) {
 
     builder = builder.Columns({{.lowerStartCamelObject}}Rows)
 
-	if orderBy == ""{
+	if len(orderBy) == 0{
 		builder = builder.OrderBy("id DESC")
 	}else{
-		builder = builder.OrderBy(orderBy)
+		builder = builder.OrderBy(orderBy...)
 	}
 
 	query, values, err := builder.Where("del_state = ?", 0).ToSql()
@@ -151,14 +151,14 @@ func (m *default{{.upperStartCamelObject}}Model) FindAll(ctx context.Context,bui
 	}
 }
 
-func (m *default{{.upperStartCamelObject}}Model) FindPageListByPage(ctx context.Context,builder squirrel.SelectBuilder,page ,pageSize int64,orderBy string) ([]*{{.upperStartCamelObject}},error) {
+func (m *default{{.upperStartCamelObject}}Model) FindPageListByPage(ctx context.Context,builder squirrel.SelectBuilder,page ,pageSize int64,orderBy ...string) ([]*{{.upperStartCamelObject}},error) {
 
     builder = builder.Columns({{.lowerStartCamelObject}}Rows)
 
-	if orderBy == ""{
+	if len(orderBy) == 0{
 		builder = builder.OrderBy("id DESC")
 	}else{
-		builder = builder.OrderBy(orderBy)
+		builder = builder.OrderBy(orderBy...)
 	}
 
 	if page < 1{
@@ -184,7 +184,7 @@ func (m *default{{.upperStartCamelObject}}Model) FindPageListByPage(ctx context.
 }
 
 
-func (m *default{{.upperStartCamelObject}}Model) FindPageListByPageWithTotal(ctx context.Context,builder squirrel.SelectBuilder,page ,pageSize int64,orderBy string) ([]*{{.upperStartCamelObject}},int64,error) {
+func (m *default{{.upperStartCamelObject}}Model) FindPageListByPageWithTotal(ctx context.Context,builder squirrel.SelectBuilder,page ,pageSize int64, orderBy ...string) ([]*{{.upperStartCamelObject}},int64,error) {
 
     total, err := m.FindCount(ctx, builder, "id")
     if err != nil {
@@ -193,10 +193,10 @@ func (m *default{{.upperStartCamelObject}}Model) FindPageListByPageWithTotal(ctx
 
     builder = builder.Columns({{.lowerStartCamelObject}}Rows)
 
-	if orderBy == ""{
+	if len(orderBy) == 0{
 		builder = builder.OrderBy("id DESC")
 	}else{
-		builder = builder.OrderBy(orderBy)
+		builder = builder.OrderBy(orderBy...)
 	}
 
 	if page < 1{

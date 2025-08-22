@@ -37,9 +37,9 @@ type (
 		DeleteSoft(ctx context.Context, session sqlx.Session, data *HlsTsFiles) error
 		FindSum(ctx context.Context, sumBuilder squirrel.SelectBuilder, field string) (float64, error)
 		FindCount(ctx context.Context, countBuilder squirrel.SelectBuilder, field string) (int64, error)
-		FindAll(ctx context.Context, rowBuilder squirrel.SelectBuilder, orderBy string) ([]*HlsTsFiles, error)
-		FindPageListByPage(ctx context.Context, rowBuilder squirrel.SelectBuilder, page, pageSize int64, orderBy string) ([]*HlsTsFiles, error)
-		FindPageListByPageWithTotal(ctx context.Context, rowBuilder squirrel.SelectBuilder, page, pageSize int64, orderBy string) ([]*HlsTsFiles, int64, error)
+		FindAll(ctx context.Context, rowBuilder squirrel.SelectBuilder, orderBy ...string) ([]*HlsTsFiles, error)
+		FindPageListByPage(ctx context.Context, rowBuilder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*HlsTsFiles, error)
+		FindPageListByPageWithTotal(ctx context.Context, rowBuilder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*HlsTsFiles, int64, error)
 		FindPageListByIdDESC(ctx context.Context, rowBuilder squirrel.SelectBuilder, preMinId, pageSize int64) ([]*HlsTsFiles, error)
 		FindPageListByIdASC(ctx context.Context, rowBuilder squirrel.SelectBuilder, preMaxId, pageSize int64) ([]*HlsTsFiles, error)
 		Delete(ctx context.Context, session sqlx.Session, id int64) error
@@ -223,14 +223,14 @@ func (m *defaultHlsTsFilesModel) FindCount(ctx context.Context, builder squirrel
 	}
 }
 
-func (m *defaultHlsTsFilesModel) FindAll(ctx context.Context, builder squirrel.SelectBuilder, orderBy string) ([]*HlsTsFiles, error) {
+func (m *defaultHlsTsFilesModel) FindAll(ctx context.Context, builder squirrel.SelectBuilder, orderBy ...string) ([]*HlsTsFiles, error) {
 
 	builder = builder.Columns(hlsTsFilesRows)
 
-	if orderBy == "" {
+	if len(orderBy) == 0 {
 		builder = builder.OrderBy("id DESC")
 	} else {
-		builder = builder.OrderBy(orderBy)
+		builder = builder.OrderBy(orderBy...)
 	}
 
 	query, values, err := builder.Where("del_state = ?", 0).ToSql()
@@ -250,14 +250,14 @@ func (m *defaultHlsTsFilesModel) FindAll(ctx context.Context, builder squirrel.S
 	}
 }
 
-func (m *defaultHlsTsFilesModel) FindPageListByPage(ctx context.Context, builder squirrel.SelectBuilder, page, pageSize int64, orderBy string) ([]*HlsTsFiles, error) {
+func (m *defaultHlsTsFilesModel) FindPageListByPage(ctx context.Context, builder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*HlsTsFiles, error) {
 
 	builder = builder.Columns(hlsTsFilesRows)
 
-	if orderBy == "" {
+	if len(orderBy) == 0 {
 		builder = builder.OrderBy("id DESC")
 	} else {
-		builder = builder.OrderBy(orderBy)
+		builder = builder.OrderBy(orderBy...)
 	}
 
 	if page < 1 {
@@ -282,7 +282,7 @@ func (m *defaultHlsTsFilesModel) FindPageListByPage(ctx context.Context, builder
 	}
 }
 
-func (m *defaultHlsTsFilesModel) FindPageListByPageWithTotal(ctx context.Context, builder squirrel.SelectBuilder, page, pageSize int64, orderBy string) ([]*HlsTsFiles, int64, error) {
+func (m *defaultHlsTsFilesModel) FindPageListByPageWithTotal(ctx context.Context, builder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*HlsTsFiles, int64, error) {
 
 	total, err := m.FindCount(ctx, builder, "id")
 	if err != nil {
@@ -291,10 +291,10 @@ func (m *defaultHlsTsFilesModel) FindPageListByPageWithTotal(ctx context.Context
 
 	builder = builder.Columns(hlsTsFilesRows)
 
-	if orderBy == "" {
+	if len(orderBy) == 0 {
 		builder = builder.OrderBy("id DESC")
 	} else {
-		builder = builder.OrderBy(orderBy)
+		builder = builder.OrderBy(orderBy...)
 	}
 
 	if page < 1 {
