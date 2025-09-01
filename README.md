@@ -16,6 +16,7 @@
   - [`iec-stash`：Kafka 数据消费与转发](#iec-stash-kafka-数据消费与转发)
   - [`file`：文件上传服务](#file-文件上传服务)
   - [`trigger`：异步任务调度服务](#trigger-异步任务调度服务)
+  - [`lalhook`：lal 服务钩子模块](#LAL 直播服务钩子模块)
 - [使用注意事项](#使用注意事项)
 - [相关链接](#相关链接)
 
@@ -72,6 +73,12 @@
 <div align="center">
   <img src="doc/trigger-flow.png" alt="Trigger 服务流程图" style="max-width: 80%; height: auto;" />
 </div>
+
+---
+
+## `lalhook` LAL 直播服务钩子模块
+- 🔧 集成 LAL 回调接口
+- 📦 集成 ts 录制记录回调，提供分片播放能力
 
 ---
 

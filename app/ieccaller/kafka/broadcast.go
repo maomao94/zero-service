@@ -1,12 +1,13 @@
 package kafka
 
 import (
-	"github.com/zeromicro/go-zero/core/jsonx"
-	"github.com/zeromicro/go-zero/core/logx"
-	"golang.org/x/net/context"
 	"zero-service/app/ieccaller/ieccaller"
 	"zero-service/app/ieccaller/internal/svc"
 	"zero-service/common/iec104/types"
+
+	"github.com/zeromicro/go-zero/core/jsonx"
+	"github.com/zeromicro/go-zero/core/logx"
+	"golang.org/x/net/context"
 )
 
 type Broadcast struct {
@@ -20,7 +21,7 @@ func NewBroadcast(svcCtx *svc.ServiceContext) *Broadcast {
 }
 
 func (l Broadcast) Consume(ctx context.Context, key, value string) error {
-	logx.Infof("broadcast, msg:%+v", value)
+	logx.WithContext(ctx).Infof("broadcast, msg:%+v", value)
 	if !l.svcCtx.IsBroadcast() {
 		logx.Error("not setting cluster")
 		return nil
@@ -31,7 +32,7 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 		return err
 	}
 	if broadcastBody.BroadcastGroupId == l.svcCtx.Config.KafkaConfig.BroadcastGroupId {
-		logx.Debug("ignore broadcast")
+		logx.WithContext(ctx).Debug("ignore broadcast")
 		return nil
 	}
 	switch broadcastBody.Method {
@@ -43,7 +44,7 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 		}
 		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
 		if err != nil {
-			logx.Errorf("get client error: %v", err)
+			logx.WithContext(ctx).Errorf("get client error: %v", err)
 			return nil
 		}
 		if err = cli.SendCounterInterrogationCmd(uint16(in.Coa)); err != nil {
@@ -57,7 +58,7 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 		}
 		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
 		if err != nil {
-			logx.Errorf("get client error: %v", err)
+			logx.WithContext(ctx).Errorf("get client error: %v", err)
 			return nil
 		}
 		if err = cli.SendInterrogationCmd(uint16(in.Coa)); err != nil {
@@ -71,7 +72,7 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 		}
 		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
 		if err != nil {
-			logx.Errorf("get client error: %v", err)
+			logx.WithContext(ctx).Errorf("get client error: %v", err)
 			return nil
 		}
 		if err = cli.SendReadCmd(uint16(in.Coa), uint(in.Ioa)); err != nil {
@@ -85,14 +86,14 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 		}
 		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
 		if err != nil {
-			logx.Errorf("get client error: %v", err)
+			logx.WithContext(ctx).Errorf("get client error: %v", err)
 			return nil
 		}
 		if err = cli.SendTestCmd(uint16(in.Coa)); err != nil {
 			return err
 		}
 	default:
-		logx.Errorf("unknown method:%s", broadcastBody.Method)
+		logx.WithContext(ctx).Errorf("unknown method:%s", broadcastBody.Method)
 	}
 	return nil
 }
