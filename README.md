@@ -16,7 +16,7 @@
     - [`iec-stash`：Kafka 数据消费与转发](#iec-stash-数据消费与转发)
     - [`file`：文件上传服务](#file-文件上传服务)
     - [`trigger`：异步任务调度服务](#trigger-异步任务调度服务)
-    - [`lalhook`：LAL 流媒体服务钩子](#lalhook-LAL-直播服务钩子模块)
+    - [`lalhook`：LAL 直播服务钩子模块](#lalhook-LAL 直播服务钩子模块)
 - [使用注意事项](#使用注意事项)
 - [相关链接](#相关链接)
 
