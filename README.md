@@ -12,11 +12,11 @@
 - [项目简介](#zero-service)
 - [IEC 104 协议对接结构图](#iec-104-协议对接结构图)
 - [核心服务模块](#核心服务模块)
-  - [`iec104`：IEC 协议处理模块](#iec104-iec-协议处理模块)
-  - [`iec-stash`：Kafka 数据消费与转发](#iec-stash-kafka-数据消费与转发)
-  - [`file`：文件上传服务](#file-文件上传服务)
-  - [`trigger`：异步任务调度服务](#trigger-异步任务调度服务)
-  - [`lalhook`：lal 服务钩子模块](#LAL 直播服务钩子模块)
+    - [`iec104`：IEC 协议处理模块](#iec104-iec-协议处理模块)
+    - [`iec-stash`：Kafka 数据消费与转发](#iec-stash-kafka-数据消费与转发)
+    - [`file`：文件上传服务](#file-文件上传服务)
+    - [`trigger`：异步任务调度服务](#trigger-异步任务调度服务)
+    - [`lalhook`：LAL 流媒体服务钩子模块](#LAL 流媒体服务钩子模块)
 - [使用注意事项](#使用注意事项)
 - [相关链接](#相关链接)
 
@@ -77,6 +77,7 @@
 ---
 
 ## `lalhook` LAL 直播服务钩子模块
+
 - 🔧 集成 LAL 回调接口
 - 📦 集成 ts 录制记录回调，提供分片播放能力
 
@@ -87,7 +88,8 @@
 1. **依赖管理**：请确认 `go.mod` 中的依赖已正确安装，执行 `go mod tidy`；
 2. **日志配置**：确认各服务配置文件中的日志路径可用；
 3. **Kafka 配置**：确保 Kafka 地址与 topic 配置正确；
-4. **Java 接入**：如需与 Java 应用集成，可参考 [grpc-spring-boot-starter](https://yidongnan.github.io/grpc-spring-boot-starter/zh-CN/)。
+4. **Java 接入**：如需与 Java
+   应用集成，可参考 [grpc-spring-boot-starter](https://yidongnan.github.io/grpc-spring-boot-starter/zh-CN/)。
 
 ---
 
