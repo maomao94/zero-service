@@ -58,7 +58,7 @@ func (l *OnHlsMakeTsLogic) OnHlsMakeTs(req *types.OnHlsMakeTsRequest) (resp *typ
 		},
 		ServerId: req.ServerID,
 	}
-	list, err := l.svcCtx.HlsTsFilesModel.FindAll(l.ctx, l.svcCtx.HlsTsFilesModel.SelectBuilder().Where(squirrel.Eq{"ts_file": hlsTsFiles.TsFile}), "")
+	list, err := l.svcCtx.HlsTsFilesModel.FindAll(l.ctx, l.svcCtx.HlsTsFilesModel.SelectBuilder().Where(squirrel.Eq{"ts_file": hlsTsFiles.TsFile}), "id")
 	if err != nil {
 		return nil, err
 	}
