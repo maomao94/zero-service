@@ -47,11 +47,12 @@ func (l *ListTsFilesLogic) ListTsFiles(req *types.ApiListTsRequest) (resp *types
 		serverID = list[0].ServerId
 		for _, v := range list {
 			file := types.ApiTsFile{
-				Event:       v.Event,
-				TsFile:      v.TsFile,
-				TsId:        v.TsId,
-				Duration:    v.Duration.Float64,
-				TsTimestamp: v.TsTimestamp,
+				Event:        v.Event,
+				TsFile:       v.TsFile,
+				LiveM3u8File: v.LiveM3u8File,
+				TsId:         v.TsId,
+				Duration:     v.Duration.Float64,
+				TsTimestamp:  v.TsTimestamp,
 			}
 			files = append(files, file)
 		}

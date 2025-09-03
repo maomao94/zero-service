@@ -252,11 +252,12 @@ type (
 		Event      string `json:"event,optional"` // "open" 表示 ts 分片文件被创建，"close" 表示 ts 分片文件写入完毕
 	}
 	ApiTsFile {
-		Event       string  `json:"event"` // "open" 表示 ts 分片文件被创建，"close" 表示 ts 分片文件写入完毕
-		TsFile      string  `json:"tsFile"` // ts文件磁盘地址
-		TsId        int64   `json:"tsId"` // TS 文件编号
-		Duration    float64 `json:"duration"` // ts 文件的时长，单位秒。只有 event 为 "close" 时有效
-		TsTimestamp int64   `json:"tsTimestamp"` // TS 文件时间戳，方便区间查询
+		Event        string  `json:"event"` // "open" 表示 ts 分片文件被创建，"close" 表示 ts 分片文件写入完毕
+		TsFile       string  `json:"tsFile"` // ts文件磁盘地址
+		TsId         int64   `json:"tsId"` // TS 文件编号
+		LiveM3u8File string  `json:"liveM3u8File"` // 直播 m3u8 文件磁盘地址
+		Duration     float64 `json:"duration"` // ts 文件的时长，单位秒。只有 event 为 "close" 时有效
+		TsTimestamp  int64   `json:"tsTimestamp"` // TS 文件时间戳，方便区间查询
 	}
 	ApiListTsReply {
 		StreamName string      `json:"streamName"`
