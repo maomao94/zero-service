@@ -5,10 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"zero-service/common/lalx"
-
 	"zero-service/app/lalproxy/internal/svc"
 	"zero-service/app/lalproxy/lalproxy"
+	"zero-service/common/lalx"
 
 	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -56,18 +55,20 @@ func (l *GetAllGroupsLogic) GetAllGroups(in *lalproxy.GetAllGroupsReq) (*lalprox
 
 	// 解析JSON响应
 	var httpResp struct {
-		ErrorCode int              `json:"error_code"`
-		Desp      string           `json:"desp"`
-		Groups    []lalx.GroupData `json:"groups"`
+		ErrorCode int    `json:"error_code"`
+		Desp      string `json:"desp"`
+		Data      struct {
+			Groups []*lalx.GroupData `json:"groups"`
+		} `"json: data"`
 	}
 	if err := json.Unmarshal(body, &httpResp); err != nil {
 		l.Logger.Errorf("解析响应JSON失败: %v, 响应内容: %s", err, string(body))
 		return nil, fmt.Errorf("解析响应JSON失败: %w", err)
 	}
 
-	groups := make([]*lalproxy.GroupData, 0, len(httpResp.Groups))
+	groups := make([]*lalproxy.GroupData, 0, len(httpResp.Data.Groups))
 	// 遍历所有GroupData，转换为PB对象
-	for _, item := range httpResp.Groups {
+	for _, item := range httpResp.Data.Groups {
 		v := &lalproxy.GroupData{}
 		err = copier.Copy(v, item)
 		if err != nil {
