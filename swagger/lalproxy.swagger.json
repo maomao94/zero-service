@@ -1,0 +1,471 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "lalproxy.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "LalProxy"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "LalproxyAddIpBlacklistRes": {
+      "type": "object",
+      "properties": {
+        "errorCode": {
+          "type": "integer",
+          "format": "int32",
+          "title": "错误码（0=成功，1002=参数错误；参考lalserver HTTP API错误码规范）"
+        },
+        "desp": {
+          "type": "string",
+          "title": "错误描述（成功时为\"succ\"，失败时为具体原因，如\"ip invalid\"；与errorCode一一对应）"
+        }
+      },
+      "title": "AddIpBlacklist响应：对应/api/ctrl/add_ip_blacklist接口返回结果"
+    },
+    "LalproxyFrameData": {
+      "type": "object",
+      "properties": {
+        "unixSec": {
+          "type": "string",
+          "format": "int64",
+          "title": "时间戳（秒级Unix时间，如1723513826，必返）"
+        },
+        "v": {
+          "type": "integer",
+          "format": "int32",
+          "title": "每秒视频帧数（如15，必返）"
+        }
+      },
+      "title": "帧率数据：对应接口返回的 in_frame_per_sec 数组元素（最近32秒每秒视频帧数）"
+    },
+    "LalproxyGetAllGroupsRes": {
+      "type": "object",
+      "properties": {
+        "errorCode": {
+          "type": "integer",
+          "format": "int32",
+          "title": "错误码（仅0=成功；无其他错误场景，参考lalserver HTTP API规范）"
+        },
+        "desp": {
+          "type": "string",
+          "title": "错误描述（成功时为\"succ\"；无失败场景，固定返回该值）"
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/LalproxyGroupData"
+          },
+          "title": "所有group列表（成功时返回，每个元素格式与GetGroupInfoRes.data一致；无活跃group时为空数组）"
+        }
+      },
+      "title": "GetAllGroups响应：对应/api/stat/all_group接口返回结果"
+    },
+    "LalproxyGetGroupInfoRes": {
+      "type": "object",
+      "properties": {
+        "errorCode": {
+          "type": "integer",
+          "format": "int32",
+          "title": "错误码（0=成功，1001=group不存在，1002=参数缺失；参考lalserver HTTP API错误码规范）"
+        },
+        "desp": {
+          "type": "string",
+          "title": "错误描述（成功时为\"succ\"，失败时为具体原因，如\"group not found\"；与errorCode一一对应）"
+        },
+        "data": {
+          "$ref": "#/definitions/LalproxyGroupData",
+          "title": "分组详细数据（成功时返回，包含流编码、会话列表、帧率等信息；失败时为空）"
+        }
+      },
+      "title": "GetGroupInfo响应：对应/api/stat/group接口返回结果"
+    },
+    "LalproxyGetLalInfoRes": {
+      "type": "object",
+      "properties": {
+        "errorCode": {
+          "type": "integer",
+          "format": "int32",
+          "title": "错误码（仅0=成功；无其他错误场景，参考lalserver HTTP API规范）"
+        },
+        "desp": {
+          "type": "string",
+          "title": "错误描述（成功时为\"succ\"；无失败场景，固定返回该值）"
+        },
+        "data": {
+          "$ref": "#/definitions/LalproxyLalServerData",
+          "title": "服务器信息数据（成功时返回，包含版本、启动时间等基础信息；无失败场景，必然非空）"
+        }
+      },
+      "title": "GetLalInfo响应：对应/api/stat/lal_info接口返回结果"
+    },
+    "LalproxyGroupData": {
+      "type": "object",
+      "properties": {
+        "streamName": {
+          "type": "string",
+          "title": "流名称（如\"test110\"，必返）"
+        },
+        "appName": {
+          "type": "string",
+          "title": "应用名（如\"live\"，必返）"
+        },
+        "audioCodec": {
+          "type": "string",
+          "title": "音频编码格式（如\"AAC\"，必返）"
+        },
+        "videoCodec": {
+          "type": "string",
+          "title": "视频编码格式（如\"H264\"|\"H265\"，必返）"
+        },
+        "videoWidth": {
+          "type": "integer",
+          "format": "int32",
+          "title": "视频宽度（像素，如640，必返）"
+        },
+        "videoHeight": {
+          "type": "integer",
+          "format": "int32",
+          "title": "视频高度（像素，如360，必返）"
+        },
+        "pub": {
+          "$ref": "#/definitions/LalproxyPubSessionInfo",
+          "title": "发布者会话信息（推流详情，无推流时为nil，必返）"
+        },
+        "subs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/LalproxySubSessionInfo"
+          },
+          "title": "订阅者会话列表（拉流详情，无拉流时为空数组，必返）"
+        },
+        "pull": {
+          "$ref": "#/definitions/LalproxyPullSessionInfo",
+          "title": "中继拉流会话信息（回源流详情，无回源时为nil，必返）"
+        },
+        "pushs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/LalproxyPushSessionInfo"
+          },
+          "title": "中继推流会话列表（外连转推，暂为空数组，必返）"
+        },
+        "inFramePerSec": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/LalproxyFrameData"
+          },
+          "title": "最近32秒视频帧率统计（每秒视频帧数，必返）"
+        }
+      },
+      "title": "分组核心数据：对应接口返回的 data 字段（流的完整信息聚合）"
+    },
+    "LalproxyKickSessionRes": {
+      "type": "object",
+      "properties": {
+        "errorCode": {
+          "type": "integer",
+          "format": "int32",
+          "title": "错误码（0=成功，1001=group不存在，1002=参数错误，1003=会话不存在；参考lalserver HTTP API错误码规范）"
+        },
+        "desp": {
+          "type": "string",
+          "title": "错误描述（成功时为\"succ\"，失败时为具体原因，如\"session not found\"；与errorCode一一对应）"
+        }
+      },
+      "title": "KickSession响应：对应/api/ctrl/kick_session接口返回结果"
+    },
+    "LalproxyLalServerData": {
+      "type": "object",
+      "properties": {
+        "serverId": {
+          "type": "string",
+          "title": "服务器唯一 ID"
+        },
+        "binInfo": {
+          "type": "string",
+          "title": "二进制文件信息"
+        },
+        "lalVersion": {
+          "type": "string",
+          "title": "lal可执行文件版本信息"
+        },
+        "apiVersion": {
+          "type": "string",
+          "title": "HTTP API接口版本信息"
+        },
+        "notifyVersion": {
+          "type": "string",
+          "title": "HTTP Notify版本信息"
+        },
+        "WebUiVersion": {
+          "type": "string",
+          "title": "Web UI版本信息"
+        },
+        "startTime": {
+          "type": "string",
+          "title": "lal进程启动时间"
+        }
+      },
+      "title": "服务器基础信息：对应 /api/stat/lal_info 接口返回的「服务器基础信息」，与Go结构体 LalServerData 完全对齐"
+    },
+    "LalproxyPubSessionInfo": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "title": "会话ID（全局唯一标识，如\"RTMPPUBSUB1\"，必返）"
+        },
+        "protocol": {
+          "type": "string",
+          "title": "推流协议（取值：\"RTMP\"|\"RTSP\"，必返）"
+        },
+        "baseType": {
+          "type": "string",
+          "title": "基础类型（固定为\"PUB\"，标识发布者角色，必返）"
+        },
+        "startTime": {
+          "type": "string",
+          "title": "推流开始时间（格式化字符串，如\"2020-10-11 19:17:41.586\"，必返）"
+        },
+        "remoteAddr": {
+          "type": "string",
+          "title": "对端地址（客户端IP:端口，如\"127.0.0.1:61353\"，必返）"
+        },
+        "readBytesSum": {
+          "type": "string",
+          "format": "int64",
+          "title": "累计读取数据大小（从推流开始计算，单位字节，必返）"
+        },
+        "wroteBytesSum": {
+          "type": "string",
+          "format": "int64",
+          "title": "累计发送数据大小（从推流开始计算，单位字节，必返）"
+        },
+        "bitrateKbits": {
+          "type": "integer",
+          "format": "int32",
+          "title": "最近5秒总码率（单位kbit/s，对PUB类型等价于read_bitrate_kbits，必返）"
+        },
+        "readBitrateKbits": {
+          "type": "integer",
+          "format": "int32",
+          "title": "最近5秒读取数据码率（单位kbit/s，必返）"
+        },
+        "writeBitrateKbits": {
+          "type": "integer",
+          "format": "int32",
+          "title": "最近5秒发送数据码率（单位kbit/s，必返）"
+        }
+      },
+      "title": "发布者会话信息：对应接口返回的 data.pub（接收推流的详情）"
+    },
+    "LalproxyPullSessionInfo": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "title": "会话ID（全局唯一标识，如\"RTMPPULL1\"，必返）"
+        },
+        "protocol": {
+          "type": "string",
+          "title": "拉流协议（取值：\"RTMP\"|\"RTSP\"，必返）"
+        },
+        "baseType": {
+          "type": "string",
+          "title": "基础类型（固定为\"PULL\"，标识中继拉流角色，必返）"
+        },
+        "startTime": {
+          "type": "string",
+          "title": "拉流开始时间（格式化字符串，如\"2020-10-11 19:20:00.123\"，必返）"
+        },
+        "remoteAddr": {
+          "type": "string",
+          "title": "对端地址（源节点IP:端口，如\"192.168.1.10:1935\"，必返）"
+        },
+        "readBytesSum": {
+          "type": "string",
+          "format": "int64",
+          "title": "累计读取数据大小（从拉流开始计算，单位字节，必返）"
+        },
+        "wroteBytesSum": {
+          "type": "string",
+          "format": "int64",
+          "title": "累计发送数据大小（从拉流开始计算，单位字节，必返）"
+        },
+        "bitrateKbits": {
+          "type": "integer",
+          "format": "int32",
+          "title": "最近5秒总码率（单位kbit/s，对PULL类型等价于read_bitrate_kbits，必返）"
+        },
+        "readBitrateKbits": {
+          "type": "integer",
+          "format": "int32",
+          "title": "最近5秒读取数据码率（单位kbit/s，必返）"
+        },
+        "writeBitrateKbits": {
+          "type": "integer",
+          "format": "int32",
+          "title": "最近5秒发送数据码率（单位kbit/s，必返）"
+        }
+      },
+      "title": "中继拉流会话信息：对应接口返回的 data.pull（从其他节点拉流回源的详情）"
+    },
+    "LalproxyPushSessionInfo": {
+      "type": "object",
+      "title": "中继推流会话信息：对应接口返回的 data.pushs（主动外连转推，暂不提供数据）"
+    },
+    "LalproxyStartRelayPullRes": {
+      "type": "object",
+      "properties": {
+        "errorCode": {
+          "type": "integer",
+          "format": "int32",
+          "title": "错误码（0=请求成功，1002=参数错误，2001=拉流失败；2001包含具体失败原因，如\"in stream already exist\"）"
+        },
+        "desp": {
+          "type": "string",
+          "title": "错误描述（成功时为\"succ\"，失败时为具体原因；如参数错误返回\"param missing\"，拉流失败返回\"lal.logic: in stream already exist\"）"
+        }
+      },
+      "title": "StartRelayPull响应：对应/api/ctrl/start_relay_pull接口返回结果"
+    },
+    "LalproxyStartRtpPubRes": {
+      "type": "object",
+      "properties": {
+        "errorCode": {
+          "type": "integer",
+          "format": "int32",
+          "title": "错误码（0=成功，1002=参数错误，2002=端口绑定失败；参考lalserver HTTP API错误码规范）"
+        },
+        "desp": {
+          "type": "string",
+          "title": "错误描述（成功时为\"succ\"，失败时为具体原因，如\"open gb28181 port failed\"；与errorCode一一对应）"
+        }
+      },
+      "title": "StartRtpPub响应：对应/api/ctrl/start_rtp_pub接口返回结果"
+    },
+    "LalproxyStopRelayPullRes": {
+      "type": "object",
+      "properties": {
+        "errorCode": {
+          "type": "integer",
+          "format": "int32",
+          "title": "错误码（0=成功，1001=group不存在，1002=参数缺失，1003=pull会话不存在；参考lalserver HTTP API错误码规范）"
+        },
+        "desp": {
+          "type": "string",
+          "title": "错误描述（成功时为\"succ\"，失败时为具体原因，如\"pull session not found\"；与errorCode一一对应）"
+        }
+      },
+      "title": "StopRelayPull响应：对应/api/ctrl/stop_relay_pull接口返回结果"
+    },
+    "LalproxyStopRtpPubRes": {
+      "type": "object",
+      "properties": {
+        "errorCode": {
+          "type": "integer",
+          "format": "int32",
+          "title": "错误码（0=成功，1001=group不存在，1002=参数错误，1003=RTP会话不存在；参考lalserver HTTP API错误码规范）"
+        },
+        "desp": {
+          "type": "string",
+          "title": "错误描述（成功时为\"succ\"，失败时为具体原因，如\"rtp pub session not found\"；与errorCode一一对应）"
+        }
+      },
+      "title": "StopRtpPub响应：对应/api/ctrl/stop_rtp_pub接口返回结果（注：接口暂未开放，返回结果参考KickSession）"
+    },
+    "LalproxySubSessionInfo": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "title": "会话ID（全局唯一标识，如\"FLVSUB1\"，必返）"
+        },
+        "protocol": {
+          "type": "string",
+          "title": "拉流协议（取值：\"RTMP\"|\"FLV\"|\"TS\"，必返）"
+        },
+        "baseType": {
+          "type": "string",
+          "title": "基础类型（固定为\"SUB\"，标识订阅者角色，必返）"
+        },
+        "startTime": {
+          "type": "string",
+          "title": "拉流开始时间（格式化字符串，如\"2020-10-11 19:19:21.724\"，必返）"
+        },
+        "remoteAddr": {
+          "type": "string",
+          "title": "对端地址（客户端IP:端口，如\"127.0.0.1:61785\"，必返）"
+        },
+        "readBytesSum": {
+          "type": "string",
+          "format": "int64",
+          "title": "累计读取数据大小（从拉流开始计算，单位字节，必返）"
+        },
+        "wroteBytesSum": {
+          "type": "string",
+          "format": "int64",
+          "title": "累计发送数据大小（从拉流开始计算，单位字节，必返）"
+        },
+        "bitrateKbits": {
+          "type": "integer",
+          "format": "int32",
+          "title": "最近5秒总码率（单位kbit/s，对SUB类型等价于write_bitrate_kbits，必返）"
+        },
+        "readBitrateKbits": {
+          "type": "integer",
+          "format": "int32",
+          "title": "最近5秒读取数据码率（单位kbit/s，必返）"
+        },
+        "writeBitrateKbits": {
+          "type": "integer",
+          "format": "int32",
+          "title": "最近5秒发送数据码率（单位kbit/s，必返）"
+        }
+      },
+      "title": "订阅者会话信息：对应接口返回的 data.subs 数组元素（拉流的详情）"
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}
