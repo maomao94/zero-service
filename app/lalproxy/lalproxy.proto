@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package Lalproxy;
+package lalproxy;
 
 option go_package = "./lalproxy";
 option java_multiple_files = true;
