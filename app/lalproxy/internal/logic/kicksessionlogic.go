@@ -36,15 +36,18 @@ func (l *KickSessionLogic) KickSession(in *lalproxy.KickSessionReq) (*lalproxy.K
 	// 构建请求URL
 	fullUrl := fmt.Sprintf("%s/api/ctrl/kick_session", l.svcCtx.LalBaseUrl)
 
-	// 准备请求数据
-	reqData := map[string]interface{}{
-		"stream_name":  in.StreamName,
-		"session_id":   in.SessionId,
-		"session_type": in.SessionType, // 可选参数
+	type reqData struct {
+		streamName string `json:"stream_name"`
+		sessionId  string `json:"session_id"`
+	}
+
+	reqBody := reqData{
+		streamName: in.StreamName,
+		sessionId:  in.SessionId,
 	}
 
 	// 调用LAL HTTP API（POST请求）
-	resp, err := l.svcCtx.LalClient.Do(l.ctx, "POST", fullUrl, reqData)
+	resp, err := l.svcCtx.LalClient.Do(l.ctx, "POST", fullUrl, reqBody)
 	if err != nil {
 		l.Logger.Errorf("调用LAL API失败: %v, URL: %s", err, fullUrl)
 		return nil, fmt.Errorf("调用LAL API失败: %w", err)

@@ -39,14 +39,18 @@ func (l *StartRtpPubLogic) StartRtpPub(in *lalproxy.StartRtpPubReq) (*lalproxy.S
 	// 构建请求URL
 	fullUrl := fmt.Sprintf("%s/api/ctrl/start_rtp_pub", l.svcCtx.LalBaseUrl)
 
-	// 准备请求数据
-	reqData := map[string]interface{}{
-		"port":        in.Port,
-		"stream_name": in.StreamName,
+	type reqData struct {
+		streamName string `json:"stream_name"`
+		port       string `json:"port"`
+	}
+
+	reqBody := reqData{
+		streamName: in.StreamName,
+		port:       in.StreamName,
 	}
 
 	// 调用LAL HTTP API（POST请求）
-	resp, err := l.svcCtx.LalClient.Do(l.ctx, "POST", fullUrl, reqData)
+	resp, err := l.svcCtx.LalClient.Do(l.ctx, "POST", fullUrl, reqBody)
 	if err != nil {
 		l.Logger.Errorf("调用LAL API失败: %v, URL: %s", err, fullUrl)
 		return nil, fmt.Errorf("调用LAL API失败: %w", err)

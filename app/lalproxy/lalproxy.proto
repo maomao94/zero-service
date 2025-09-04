@@ -245,8 +245,6 @@ message KickSessionReq {
   string streamName = 1 [json_name = "streamName"];
   // 会话ID（必填，JSON Body参数；唯一标识要踢出的会话，如"FLVSUB1"；需从查询接口获取，缺失时返回error_code=1002）
   string sessionId = 2 [json_name = "sessionId"];
-  // 会话类型（选填，JSON Body参数；过滤会话角色，如"pub"=发布者，"sub"=订阅者，"pull"=拉流者；不填则匹配所有类型）
-  string sessionType = 3 [json_name = "sessionType"];
 }
 
 // KickSession响应：对应/api/ctrl/kick_session接口返回结果
@@ -283,8 +281,6 @@ message StartRtpPubRes {
 message StopRtpPubReq {
   // 流名称（选填，JSON Body参数；用于匹配要关闭的RTP流，如"test110"）
   string streamName = 1 [json_name = "streamName"];
-  // 接收端口（选填，JSON Body参数；用于匹配要关闭的RTP端口，如20000；与流名称配合定位目标）
-  int32 port = 2 [json_name = "port"];
 }
 
 // StopRtpPub响应：对应/api/ctrl/stop_rtp_pub接口返回结果（注：接口暂未开放，返回结果参考KickSession）

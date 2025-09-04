@@ -40,14 +40,18 @@ func (l *AddIpBlacklistLogic) AddIpBlacklist(in *lalproxy.AddIpBlacklistReq) (*l
 	// 构建请求URL
 	fullUrl := fmt.Sprintf("%s/api/ctrl/add_ip_blacklist", l.svcCtx.LalBaseUrl)
 
-	// 准备请求数据
-	reqData := map[string]interface{}{
-		"ip":           in.Ip,
-		"duration_sec": in.DurationSec, // 必填项，加入黑名单的时长，单位秒
+	type reqData struct {
+		ip          string `json:"ip"`
+		durationSec int    `json:"duration_sec"`
+	}
+
+	reqBody := reqData{
+		ip:          in.Ip,
+		durationSec: int(in.DurationSec),
 	}
 
 	// 调用LAL HTTP API（POST请求）
-	resp, err := l.svcCtx.LalClient.Do(l.ctx, "POST", fullUrl, reqData)
+	resp, err := l.svcCtx.LalClient.Do(l.ctx, "POST", fullUrl, reqBody)
 	if err != nil {
 		l.Logger.Errorf("调用LAL API失败: %v, URL: %s", err, fullUrl)
 		return nil, fmt.Errorf("调用LAL API失败: %w", err)
