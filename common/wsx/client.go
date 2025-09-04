@@ -461,12 +461,20 @@ func (c *client) waitBeforeReconnect() {
 
 	c.logger.Infof("Attempting reconnect %d in %v", reconnectCount+1, reconnectInterval)
 
+	// 创建可复用的定时器
+	timer := time.NewTimer(reconnectInterval)
+	defer timer.Stop() // 确保定时器最终会被停止
+
 	select {
 	case <-c.ctx.Done():
 		c.logger.Info("Context canceled, stopping reconnect")
+		// 此时定时器未触发，手动停止避免资源泄漏
+		if !timer.Stop() {
+			<-timer.C // 确保通道被清空，避免内存泄漏
+		}
 		return
-	case <-time.After(reconnectInterval):
-		// 等待重连间隔结束
+	case <-timer.C:
+		// 等待重连间隔结束，定时器自动停止
 	}
 }
 
