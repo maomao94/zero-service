@@ -32,7 +32,7 @@ service LalProxy {
 // 帧率数据：对应接口返回的 in_frame_per_sec 数组元素（最近32秒每秒视频帧数）
 message FrameData {
   // 时间戳（秒级Unix时间，如1723513826，必返）
-  int64 unix_sec = 1 [json_name = "unixSec"];
+  int64 unixSec = 1 [json_name = "unixSec"];
   // 每秒视频帧数（如15，必返）
   int32 v = 2 [json_name = "v"];
 }
@@ -40,45 +40,45 @@ message FrameData {
 // 发布者会话信息：对应接口返回的 data.pub（接收推流的详情）
 message PubSessionInfo {
   // 会话ID（全局唯一标识，如"RTMPPUBSUB1"，必返）
-  string session_id = 1 [json_name = "sessionId"];
+  string sessionId = 1 [json_name = "sessionId"];
   // 推流协议（取值："RTMP"|"RTSP"，必返）
   string protocol = 2 [json_name = "protocol"];
   // 基础类型（固定为"PUB"，标识发布者角色，必返）
-  string base_type = 3 [json_name = "baseType"];
+  string baseType = 3 [json_name = "baseType"];
   // 推流开始时间（格式化字符串，如"2020-10-11 19:17:41.586"，必返）
-  string start_time = 4 [json_name = "startTime"];
+  string startTime = 4 [json_name = "startTime"];
   // 对端地址（客户端IP:端口，如"127.0.0.1:61353"，必返）
-  string remote_addr = 5 [json_name = "remoteAddr"];
+  string remoteAddr = 5 [json_name = "remoteAddr"];
   // 累计读取数据大小（从推流开始计算，单位字节，必返）
-  int64 read_bytes_sum = 6 [json_name = "readBytesSum"];
+  int64 readBytesSum = 6 [json_name = "readBytesSum"];
   // 累计发送数据大小（从推流开始计算，单位字节，必返）
-  int64 wrote_bytes_sum = 7 [json_name = "wroteBytesSum"];
+  int64 wroteBytesSum = 7 [json_name = "wroteBytesSum"];
   // 最近5秒总码率（单位kbit/s，对PUB类型等价于read_bitrate_kbits，必返）
-  int32 bitrate_kbits = 8 [json_name = "bitrate_kbits"];
+  int32 bitrateKbits = 8 [json_name = "bitrate_kbits"];
   // 最近5秒读取数据码率（单位kbit/s，必返）
-  int32 read_bitrate_kbits = 9 [json_name = "read_bitrate_kbits"];
+  int32 readBitrateKbits = 9 [json_name = "read_bitrate_kbits"];
   // 最近5秒发送数据码率（单位kbit/s，必返）
-  int32 write_bitrate_kbits = 10 [json_name = "write_bitrate_kbits"];
+  int32 writeBitrateKbits = 10 [json_name = "write_bitrate_kbits"];
 }
 
 // 订阅者会话信息：对应接口返回的 data.subs 数组元素（拉流的详情）
 message SubSessionInfo {
   // 会话ID（全局唯一标识，如"FLVSUB1"，必返）
-  string session_id = 1 [json_name = "session_id"];
+  string sessionId = 1 [json_name = "session_id"];
   // 拉流协议（取值："RTMP"|"FLV"|"TS"，必返）
   string protocol = 2 [json_name = "protocol"];
   // 基础类型（固定为"SUB"，标识订阅者角色，必返）
-  string base_type = 3 [json_name = "base_type"];
+  string baseType = 3 [json_name = "base_type"];
   // 拉流开始时间（格式化字符串，如"2020-10-11 19:19:21.724"，必返）
-  string start_time = 4 [json_name = "start_time"];
+  string startTime = 4 [json_name = "start_time"];
   // 对端地址（客户端IP:端口，如"127.0.0.1:61785"，必返）
-  string remote_addr = 5 [json_name = "remote_addr"];
+  string remoteAddr = 5 [json_name = "remote_addr"];
   // 累计读取数据大小（从拉流开始计算，单位字节，必返）
-  int64 read_bytes_sum = 6 [json_name = "read_bytes_sum"];
+  int64 readBytesSum = 6 [json_name = "read_bytes_sum"];
   // 累计发送数据大小（从拉流开始计算，单位字节，必返）
-  int64 wrote_bytes_sum = 7 [json_name = "wrote_bytes_sum"];
+  int64 wroteBytesSum = 7 [json_name = "wrote_bytes_sum"];
   // 最近5秒总码率（单位kbit/s，对SUB类型等价于write_bitrate_kbits，必返）
-  int32 bitrate_kbits = 8 [json_name = "bitrate_kbits"];
+  int32 bitrateKbits = 8 [json_name = "bitrate_kbits"];
   // 最近5秒读取数据码率（单位kbit/s，必返）
   int32 read_bitrate_kbits = 9 [json_name = "read_bitrate_kbits"];
   // 最近5秒发送数据码率（单位kbit/s，必返）
