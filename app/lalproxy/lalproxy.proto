@@ -29,78 +29,128 @@ service LalProxy {
   rpc AddIpBlacklist (AddIpBlacklistReq) returns (AddIpBlacklistRes);
 }
 
-// 会话详情：用于GroupData中描述单个流会话的信息（对应lalserver /api/stat/group接口返回的session列表结构）
-message SessionInfo {
-  // 会话ID（唯一标识，如"FLVSUB1"、"RTMPPULL1"；与KickSession接口的sessionId字段对应）
-  string sessionId = 1 [json_name = "sessionId"];
-  // 会话类型（"pub"=发布者，"sub"=订阅者，"pull"=中继拉流者；与KickSession接口的sessionType字段对应）
-  string sessionType = 2 [json_name = "sessionType"];
-  // 客户端IP（会话对应的客户端地址，如"192.168.1.100"；用于定位会话来源）
-  string clientIp = 3 [json_name = "clientIp"];
-  // 客户端端口（会话对应的客户端端口，如54321；与clientIp配合标识完整客户端地址）
-  int32 clientPort = 4 [json_name = "clientPort"];
-  // 协议类型（会话使用的流媒体协议，如"rtmp"、"flv"、"hls"、"rtsp"）
-  string protocol = 5 [json_name = "protocol"];
-  // 创建时间（会话建立的时间戳，单位毫秒；如1716000000000）
-  int64 createTimeMs = 6 [json_name = "createTimeMs"];
-  // 存活时长（会话已存活的时间，单位秒；如300表示已存活5分钟）
-  int32 aliveSec = 7 [json_name = "aliveSec"];
-  // 接收字节数（会话累计接收的数据量，单位字节；用于统计流量）
-  int64 recvBytes = 8 [json_name = "recvBytes"];
-  // 发送字节数（会话累计发送的数据量，单位字节；用于统计流量）
-  int64 sendBytes = 9 [json_name = "sendBytes"];
+// 帧率数据：对应接口返回的 in_frame_per_sec 数组元素（最近32秒每秒视频帧数）
+message FrameData {
+  // 时间戳（秒级Unix时间，如1723513826，必返）
+  int64 unix_sec = 1 [json_name = "unixSec"];
+  // 每秒视频帧数（如15，必返）
+  int32 v = 2 [json_name = "v"];
 }
 
-// 视频编码信息：用于GroupData中描述流的视频编码参数
-message VideoCodec {
-  // 编码格式（如"h264"、"h265"、"vp8"；对应流的视频压缩格式）
-  string codec = 1 [json_name = "codec"];
-  // 分辨率宽度（视频画面宽度，单位像素；如1920）
-  int32 width = 2 [json_name = "width"];
-  // 分辨率高度（视频画面高度，单位像素；如1080）
-  int32 height = 3 [json_name = "height"];
-  // 帧率（每秒视频帧数，如25、30；反映视频流畅度）
-  int32 fps = 4 [json_name = "fps"];
-  // 码率（视频编码码率，单位bps；如2000000表示2Mbps）
-  int64 bitrateBps = 5 [json_name = "bitrateBps"];
-  // 关键帧间隔（两个关键帧之间的间隔，单位秒；如10表示每10秒一个关键帧）
-  int32 gopSec = 6 [json_name = "gopSec"];
+// 发布者会话信息：对应接口返回的 data.pub（接收推流的详情）
+message PubSessionInfo {
+  // 会话ID（全局唯一标识，如"RTMPPUBSUB1"，必返）
+  string session_id = 1 [json_name = "sessionId"];
+  // 推流协议（取值："RTMP"|"RTSP"，必返）
+  string protocol = 2 [json_name = "protocol"];
+  // 基础类型（固定为"PUB"，标识发布者角色，必返）
+  string base_type = 3 [json_name = "baseType"];
+  // 推流开始时间（格式化字符串，如"2020-10-11 19:17:41.586"，必返）
+  string start_time = 4 [json_name = "startTime"];
+  // 对端地址（客户端IP:端口，如"127.0.0.1:61353"，必返）
+  string remote_addr = 5 [json_name = "remoteAddr"];
+  // 累计读取数据大小（从推流开始计算，单位字节，必返）
+  int64 read_bytes_sum = 6 [json_name = "readBytesSum"];
+  // 累计发送数据大小（从推流开始计算，单位字节，必返）
+  int64 wrote_bytes_sum = 7 [json_name = "wroteBytesSum"];
+  // 最近5秒总码率（单位kbit/s，对PUB类型等价于read_bitrate_kbits，必返）
+  int32 bitrate_kbits = 8 [json_name = "bitrate_kbits"];
+  // 最近5秒读取数据码率（单位kbit/s，必返）
+  int32 read_bitrate_kbits = 9 [json_name = "read_bitrate_kbits"];
+  // 最近5秒发送数据码率（单位kbit/s，必返）
+  int32 write_bitrate_kbits = 10 [json_name = "write_bitrate_kbits"];
 }
 
-// 音频编码信息：用于GroupData中描述流的音频编码参数
-message AudioCodec {
-  // 编码格式（如"aac"、"mp3"、"pcm"；对应流的音频压缩格式）
-  string codec = 1 [json_name = "codec"];
-  // 采样率（音频采样频率，单位Hz；如44100、48000）
-  int32 sampleRate = 2 [json_name = "sampleRate"];
-  // 声道数（音频声道数量，如1=单声道，2=立体声）
-  int32 channels = 3 [json_name = "channels"];
-  // 码率（音频编码码率，单位bps；如128000表示128Kbps）
-  int64 bitrateBps = 4 [json_name = "bitrateBps"];
+// 订阅者会话信息：对应接口返回的 data.subs 数组元素（拉流的详情）
+message SubSessionInfo {
+  // 会话ID（全局唯一标识，如"FLVSUB1"，必返）
+  string session_id = 1 [json_name = "session_id"];
+  // 拉流协议（取值："RTMP"|"FLV"|"TS"，必返）
+  string protocol = 2 [json_name = "protocol"];
+  // 基础类型（固定为"SUB"，标识订阅者角色，必返）
+  string base_type = 3 [json_name = "base_type"];
+  // 拉流开始时间（格式化字符串，如"2020-10-11 19:19:21.724"，必返）
+  string start_time = 4 [json_name = "start_time"];
+  // 对端地址（客户端IP:端口，如"127.0.0.1:61785"，必返）
+  string remote_addr = 5 [json_name = "remote_addr"];
+  // 累计读取数据大小（从拉流开始计算，单位字节，必返）
+  int64 read_bytes_sum = 6 [json_name = "read_bytes_sum"];
+  // 累计发送数据大小（从拉流开始计算，单位字节，必返）
+  int64 wrote_bytes_sum = 7 [json_name = "wrote_bytes_sum"];
+  // 最近5秒总码率（单位kbit/s，对SUB类型等价于write_bitrate_kbits，必返）
+  int32 bitrate_kbits = 8 [json_name = "bitrate_kbits"];
+  // 最近5秒读取数据码率（单位kbit/s，必返）
+  int32 read_bitrate_kbits = 9 [json_name = "read_bitrate_kbits"];
+  // 最近5秒发送数据码率（单位kbit/s，必返）
+  int32 write_bitrate_kbits = 10 [json_name = "write_bitrate_kbits"];
 }
 
-// 分组数据：对应查询接口返回的单个流分组详情（GetGroupInfoRes.data、GetAllGroupsRes.groups元素）
+// 中继拉流会话信息：对应接口返回的 data.pull（从其他节点拉流回源的详情）
+message PullSessionInfo {
+  // 会话ID（全局唯一标识，如"RTMPPULL1"，必返）
+  string session_id = 1 [json_name = "session_id"];
+  // 拉流协议（取值："RTMP"|"RTSP"，必返）
+  string protocol = 2 [json_name = "protocol"];
+  // 基础类型（固定为"PULL"，标识中继拉流角色，必返）
+  string base_type = 3 [json_name = "base_type"];
+  // 拉流开始时间（格式化字符串，如"2020-10-11 19:20:00.123"，必返）
+  string start_time = 4 [json_name = "start_time"];
+  // 对端地址（源节点IP:端口，如"192.168.1.10:1935"，必返）
+  string remote_addr = 5 [json_name = "remote_addr"];
+  // 累计读取数据大小（从拉流开始计算，单位字节，必返）
+  int64 read_bytes_sum = 6 [json_name = "read_bytes_sum"];
+  // 累计发送数据大小（从拉流开始计算，单位字节，必返）
+  int64 wrote_bytes_sum = 7 [json_name = "wrote_bytes_sum"];
+  // 最近5秒总码率（单位kbit/s，对PULL类型等价于read_bitrate_kbits，必返）
+  int32 bitrate_kbits = 8 [json_name = "bitrate_kbits"];
+  // 最近5秒读取数据码率（单位kbit/s，必返）
+  int32 read_bitrate_kbits = 9 [json_name = "read_bitrate_kbits"];
+  // 最近5秒发送数据码率（单位kbit/s，必返）
+  int32 write_bitrate_kbits = 10 [json_name = "write_bitrate_kbits"];
+}
+
+// 中继推流会话信息：对应接口返回的 data.pushs（主动外连转推，暂不提供数据）
+message PushSessionInfo {
+  // 会话ID（全局唯一标识，暂为空，待后续开放）
+  string session_id = 1 [json_name = "session_id"];
+  // 推流协议（暂为空，待后续开放）
+  string protocol = 2 [json_name = "protocol"];
+  // 基础类型（固定为"PUSH"，标识中继推流角色，待开放）
+  string base_type = 3 [json_name = "base_type"];
+  // 其他字段同PullSessionInfo，暂不填充数据
+  string start_time = 4 [json_name = "start_time"];
+  string remote_addr = 5 [json_name = "remote_addr"];
+  int64 read_bytes_sum = 6 [json_name = "read_bytes_sum"];
+  int64 wrote_bytes_sum = 7 [json_name = "wrote_bytes_sum"];
+  int32 bitrate_kbits = 8 [json_name = "bitrate_kbits"];
+  int32 read_bitrate_kbits = 9 [json_name = "read_bitrate_kbits"];
+  int32 write_bitrate_kbits = 10 [json_name = "write_bitrate_kbits"];
+}
+
+// 分组核心数据：对应接口返回的 data 字段（流的完整信息聚合）
 message GroupData {
-  // 流名称（分组唯一标识，与请求参数streamName一致；如"test110"）
-  string streamName = 1 [json_name = "streamName"];
-  // 分组状态（"active"=活跃，"inactive"=非活跃；标识流是否正常传输）
-  string status = 2 [json_name = "status"];
-  // 视频编码信息（流的视频参数；无视频流时为空）
-  VideoCodec video = 3 [json_name = "video"];
-  // 音频编码信息（流的音频参数；无音频流时为空）
-  AudioCodec audio = 4 [json_name = "audio"];
-  // 会话列表（分组下所有活跃会话；包含发布者、订阅者、拉流者会话）
-  repeated SessionInfo sessions = 5 [json_name = "sessions"];
-  // 发布者数量（分组下活跃的发布者会话数；通常为1，多发布者场景可能大于1）
-  int32 pubCount = 6 [json_name = "pubCount"];
-  // 订阅者数量（分组下活跃的订阅者会话数；反映流的观看人数）
-  int32 subCount = 7 [json_name = "subCount"];
-  // 拉流者数量（分组下活跃的中继拉流会话数；反映流的分发情况）
-  int32 pullCount = 8 [json_name = "pullCount"];
-  // 总会话数（pubCount + subCount + pullCount；分组下所有活跃会话总数）
-  int32 totalSessionCount = 9 [json_name = "totalSessionCount"];
-  // 分组创建时间（分组首次建立的时间戳，单位毫秒；如1716000000000）
-  int64 createTimeMs = 10 [json_name = "createTimeMs"];
+  // 流名称（如"test110"，必返）
+  string stream_name = 1 [json_name = "stream_name"];
+  // 应用名（如"live"，必返）
+  string app_name = 2 [json_name = "app_name"];
+  // 音频编码格式（如"AAC"，必返）
+  string audio_codec = 3 [json_name = "audio_codec"];
+  // 视频编码格式（如"H264"|"H265"，必返）
+  string video_codec = 4 [json_name = "video_codec"];
+  // 视频宽度（像素，如640，必返）
+  int32 video_width = 5 [json_name = "video_width"];
+  // 视频高度（像素，如360，必返）
+  int32 video_height = 6 [json_name = "video_height"];
+  // 发布者会话信息（推流详情，无推流时为nil，必返）
+  PubSessionInfo pub = 7 [json_name = "pub"];
+  // 订阅者会话列表（拉流详情，无拉流时为空数组，必返）
+  repeated SubSessionInfo subs = 8 [json_name = "subs"];
+  // 中继拉流会话信息（回源流详情，无回源时为nil，必返）
+  PullSessionInfo pull = 9 [json_name = "pull"];
+  // 中继推流会话列表（外连转推，暂为空数组，必返）
+  repeated PushSessionInfo pushs = 10 [json_name = "pushs"];
+  // 最近32秒视频帧率统计（每秒视频帧数，必返）
+  repeated FrameData in_frame_per_sec = 11 [json_name = "in_frame_per_sec"];
 }
 
 // 服务器基础信息：对应 /api/stat/lal_info 接口返回的「服务器基础信息」，与Go结构体 LalServerData 完全对齐

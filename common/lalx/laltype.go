@@ -61,7 +61,6 @@ type SessionInfo struct {
 type FrameData struct {
 	UnixSec     int64 `json:"unix_sec"` // 时间戳（秒级 Unix 时间，必返）
 	VideoFrames int   `json:"v"`        // 视频帧数（每秒，必返，原 V 修正为 VideoFrames 更清晰）
-	AudioFrames int   `json:"a"`        // 音频帧数（每秒，必返，补充原缺失字段）
 }
 
 // LalServerData 对应 /api/stat/lal_info 返回的「服务器基础信息」
