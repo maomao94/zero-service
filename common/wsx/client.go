@@ -15,13 +15,12 @@ import (
 
 // 常量定义
 const (
-	DefaultHeartbeatInterval      = 30 * time.Second
-	DefaultReconnectInterval      = 5 * time.Second
-	DefaultDialTimeout            = 10 * time.Second
-	DefaultTokenRefreshInterval   = 30 * time.Minute // 默认token刷新间隔
-	DefaultAuthTimeout            = 5 * time.Second  // 默认认证超时时间
-	DefaultMaxReconnectInterval   = 30 * time.Second // 默认最大重连间隔（指数退避上限）
-	DefaultReconnectBackoffEnable = true             // 默认启用重连指数退避
+	DefaultHeartbeatInterval    = 30 * time.Second
+	DefaultReconnectInterval    = 5 * time.Second
+	DefaultDialTimeout          = 10 * time.Second
+	DefaultTokenRefreshInterval = 30 * time.Minute // 默认token刷新间隔
+	DefaultAuthTimeout          = 5 * time.Second  // 默认认证超时时间
+	DefaultMaxReconnectInterval = 30 * time.Second // 默认最大重连间隔（指数退避上限）
 )
 
 // ConnStatus 连接状态枚举
@@ -76,15 +75,15 @@ type Client interface {
 
 // Config 定义WebSocket客户端配置（含所有增强配置）
 type Config struct {
-	URL                  string        `json:"url"`
-	HeartbeatInterval    time.Duration `json:"heartbeatInterval" default:"30s"`
-	ReconnectInterval    time.Duration `json:"reconnectInterval" default:"5s"`
-	ReconnectMaxRetries  int           `json:"reconnectMaxRetries" default:"0"`
-	DialTimeout          time.Duration `json:"dialTimeout" default:"10s"`
-	TokenRefreshInterval time.Duration `json:"tokenRefreshInterval" default:"30m"`
-	AuthTimeout          time.Duration `json:"authTimeout" default:"5s"`           // 认证超时
-	ReconnectBackoff     bool          `json:"reconnectBackoff" default:"true"`    // 是否启用重连指数退避
-	MaxReconnectInterval time.Duration `json:"maxReconnectInterval" default:"30s"` // 最大重连间隔
+	URL                  string
+	HeartbeatInterval    time.Duration `json:",default=30s"`
+	ReconnectInterval    time.Duration `json:",default=5s"`
+	ReconnectMaxRetries  int           `json:",default=0"`
+	DialTimeout          time.Duration `json:",default=10s"`
+	TokenRefreshInterval time.Duration `json:",default=30m"`
+	AuthTimeout          time.Duration `json:",default=5s"`   // 认证超时
+	ReconnectBackoff     bool          `json:",default=true"` // 是否启用重连指数退避
+	MaxReconnectInterval time.Duration `json:",default=30s"`  // 最大重连间隔
 }
 
 // ClientOptions 定义客户端选项（含所有增强回调）
@@ -279,8 +278,7 @@ func fillDefaultConfig(conf Config) Config {
 	if conf.MaxReconnectInterval <= 0 {
 		conf.MaxReconnectInterval = DefaultMaxReconnectInterval
 	}
-	// 使用DefaultReconnectBackoffEnable作为ReconnectBackoff的默认值
-	conf.ReconnectBackoff = conf.ReconnectBackoff || DefaultReconnectBackoffEnable
+	conf.ReconnectBackoff = conf.ReconnectBackoff
 
 	return conf
 }
@@ -448,6 +446,12 @@ func (c *client) setConnection(conn *websocket.Conn) {
 	// 重置连接关闭通道
 	c.connClosed = make(chan struct{})
 	c.conn = conn
+
+	// 设置默认 PongHandler（刷新 ReadDeadline）
+	c.conn.SetPongHandler(func(appData string) error {
+		c.logger.Debug("Received Pong, refresh ReadDeadline")
+		return c.conn.SetReadDeadline(time.Now().Add(2 * c.heartbeatInterval))
+	})
 
 	// 启动消息接收和心跳
 	c.wg.Add(2)
