@@ -113,7 +113,7 @@ func (x *Res) GetPong() string {
 type GetGroupInfoReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 流名称，用于指定要查询的分组
-	StreamName    string `protobuf:"bytes,1,opt,name=streamName,proto3" json:"streamName,omitempty"`
+	StreamName    string `protobuf:"bytes,1,opt,name=streamName,json=stream_name,proto3" json:"streamName,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -159,7 +159,7 @@ func (x *GetGroupInfoReq) GetStreamName() string {
 type GetGroupInfoRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 错误码，0表示成功，非0表示失败
-	ErrorCode int32 `protobuf:"varint,1,opt,name=errorCode,proto3" json:"errorCode,omitempty"`
+	ErrorCode int32 `protobuf:"varint,1,opt,name=errorCode,json=error_code,proto3" json:"errorCode,omitempty"`
 	// 错误描述信息
 	Desp string `protobuf:"bytes,2,opt,name=desp,proto3" json:"desp,omitempty"`
 	// 分组详细信息
@@ -260,7 +260,7 @@ func (*GetAllGroupsReq) Descriptor() ([]byte, []int) {
 type GetAllGroupsRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 错误码，0表示成功，非0表示失败
-	ErrorCode int32 `protobuf:"varint,1,opt,name=errorCode,proto3" json:"errorCode,omitempty"`
+	ErrorCode int32 `protobuf:"varint,1,opt,name=errorCode,json=error_code,proto3" json:"errorCode,omitempty"`
 	// 错误描述信息
 	Desp string `protobuf:"bytes,2,opt,name=desp,proto3" json:"desp,omitempty"`
 	// 所有分组的列表
@@ -361,7 +361,7 @@ func (*GetLalInfoReq) Descriptor() ([]byte, []int) {
 type GetLalInfoRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 错误码，0表示成功，非0表示失败
-	ErrorCode int32 `protobuf:"varint,1,opt,name=errorCode,proto3" json:"errorCode,omitempty"`
+	ErrorCode int32 `protobuf:"varint,1,opt,name=errorCode,json=error_code,proto3" json:"errorCode,omitempty"`
 	// 错误描述信息
 	Desp string `protobuf:"bytes,2,opt,name=desp,proto3" json:"desp,omitempty"`
 	// 服务器详细信息
@@ -427,15 +427,15 @@ type StartRelayPullReq struct {
 	// 拉流地址（如rtmp://example.com/live/stream）
 	Url string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
 	// 流名称，可选，默认从url中解析
-	StreamName string `protobuf:"bytes,2,opt,name=streamName,proto3" json:"streamName,omitempty"`
+	StreamName string `protobuf:"bytes,2,opt,name=streamName,json=stream_name,proto3" json:"streamName,omitempty"`
 	// 拉流超时时间，单位：毫秒
-	PullTimeoutMs int32 `protobuf:"varint,3,opt,name=pullTimeoutMs,proto3" json:"pullTimeoutMs,omitempty"`
+	PullTimeoutMs int32 `protobuf:"varint,3,opt,name=pullTimeoutMs,json=pull_timeout_ms,proto3" json:"pullTimeoutMs,omitempty"`
 	// 拉流重试次数（-1表示一直重试，0表示不重试）
-	PullRetryNum int32 `protobuf:"varint,4,opt,name=pullRetryNum,proto3" json:"pullRetryNum,omitempty"`
+	PullRetryNum int32 `protobuf:"varint,4,opt,name=pullRetryNum,json=pull_retry_num,proto3" json:"pullRetryNum,omitempty"`
 	// 无输出时自动停止拉流的时间，单位：毫秒
-	AutoStopPullAfterNoOutMs int32 `protobuf:"varint,5,opt,name=autoStopPullAfterNoOutMs,proto3" json:"autoStopPullAfterNoOutMs,omitempty"`
+	AutoStopPullAfterNoOutMs int32 `protobuf:"varint,5,opt,name=autoStopPullAfterNoOutMs,json=auto_stop_pull_after_no_out_ms,proto3" json:"autoStopPullAfterNoOutMs,omitempty"`
 	// RTSP模式（0表示TCP，1表示UDP）
-	RtspMode      int32 `protobuf:"varint,6,opt,name=rtspMode,proto3" json:"rtspMode,omitempty"`
+	RtspMode      int32 `protobuf:"varint,6,opt,name=rtspMode,json=rtsp_mode,proto3" json:"rtspMode,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -516,7 +516,7 @@ func (x *StartRelayPullReq) GetRtspMode() int32 {
 type StartRelayPullRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 错误码，0表示成功，非0表示失败
-	ErrorCode int32 `protobuf:"varint,1,opt,name=errorCode,proto3" json:"errorCode,omitempty"`
+	ErrorCode int32 `protobuf:"varint,1,opt,name=errorCode,json=error_code,proto3" json:"errorCode,omitempty"`
 	// 错误描述信息
 	Desp string `protobuf:"bytes,2,opt,name=desp,proto3" json:"desp,omitempty"`
 	// 操作结果的附加数据（可能为空）
@@ -580,7 +580,7 @@ func (x *StartRelayPullRes) GetData() map[string]string {
 type StopRelayPullReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 要停止拉流的流名称
-	StreamName    string `protobuf:"bytes,1,opt,name=streamName,proto3" json:"streamName,omitempty"`
+	StreamName    string `protobuf:"bytes,1,opt,name=streamName,json=stream_name,proto3" json:"streamName,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -626,7 +626,7 @@ func (x *StopRelayPullReq) GetStreamName() string {
 type StopRelayPullRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 错误码，0表示成功，非0表示失败
-	ErrorCode int32 `protobuf:"varint,1,opt,name=errorCode,proto3" json:"errorCode,omitempty"`
+	ErrorCode int32 `protobuf:"varint,1,opt,name=errorCode,json=error_code,proto3" json:"errorCode,omitempty"`
 	// 错误描述信息
 	Desp string `protobuf:"bytes,2,opt,name=desp,proto3" json:"desp,omitempty"`
 	// 操作结果的附加数据（可能为空）
@@ -690,11 +690,11 @@ func (x *StopRelayPullRes) GetData() map[string]string {
 type KickSessionReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 流名称
-	StreamName string `protobuf:"bytes,1,opt,name=streamName,proto3" json:"streamName,omitempty"`
+	StreamName string `protobuf:"bytes,1,opt,name=streamName,json=stream_name,proto3" json:"streamName,omitempty"`
 	// 会话ID，可通过查询接口获取
-	SessionId string `protobuf:"bytes,2,opt,name=sessionId,proto3" json:"sessionId,omitempty"`
+	SessionId string `protobuf:"bytes,2,opt,name=sessionId,json=session_id,proto3" json:"sessionId,omitempty"`
 	// 会话类型（可选，如"pub"发布者,"sub"订阅者,"pull"拉流者）
-	SessionType   string `protobuf:"bytes,3,opt,name=sessionType,proto3" json:"sessionType,omitempty"`
+	SessionType   string `protobuf:"bytes,3,opt,name=sessionType,json=session_type,proto3" json:"sessionType,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -754,7 +754,7 @@ func (x *KickSessionReq) GetSessionType() string {
 type KickSessionRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 错误码，0表示成功，非0表示失败
-	ErrorCode int32 `protobuf:"varint,1,opt,name=errorCode,proto3" json:"errorCode,omitempty"`
+	ErrorCode int32 `protobuf:"varint,1,opt,name=errorCode,json=error_code,proto3" json:"errorCode,omitempty"`
 	// 错误描述信息
 	Desp string `protobuf:"bytes,2,opt,name=desp,proto3" json:"desp,omitempty"`
 	// 操作结果的附加数据（可能为空）
@@ -820,7 +820,7 @@ type StartRtpPubReq struct {
 	// 本地接收RTP流的端口
 	Port int32 `protobuf:"varint,1,opt,name=port,proto3" json:"port,omitempty"`
 	// 流名称，用于标识该RTP流
-	StreamName    string `protobuf:"bytes,2,opt,name=streamName,proto3" json:"streamName,omitempty"`
+	StreamName    string `protobuf:"bytes,2,opt,name=streamName,json=stream_name,proto3" json:"streamName,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -873,7 +873,7 @@ func (x *StartRtpPubReq) GetStreamName() string {
 type StartRtpPubRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 错误码，0表示成功，非0表示失败
-	ErrorCode int32 `protobuf:"varint,1,opt,name=errorCode,proto3" json:"errorCode,omitempty"`
+	ErrorCode int32 `protobuf:"varint,1,opt,name=errorCode,json=error_code,proto3" json:"errorCode,omitempty"`
 	// 错误描述信息
 	Desp string `protobuf:"bytes,2,opt,name=desp,proto3" json:"desp,omitempty"`
 	// 操作结果的附加数据（可能为空）
@@ -939,7 +939,7 @@ type StopRtpPubReq struct {
 	// 要关闭的RTP接收端口
 	Port int32 `protobuf:"varint,1,opt,name=port,proto3" json:"port,omitempty"`
 	// 流名称，用于标识要停止的RTP流
-	StreamName    string `protobuf:"bytes,2,opt,name=streamName,proto3" json:"streamName,omitempty"`
+	StreamName    string `protobuf:"bytes,2,opt,name=streamName,json=stream_name,proto3" json:"streamName,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -992,7 +992,7 @@ func (x *StopRtpPubReq) GetStreamName() string {
 type StopRtpPubRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 错误码，0表示成功，非0表示失败
-	ErrorCode int32 `protobuf:"varint,1,opt,name=errorCode,proto3" json:"errorCode,omitempty"`
+	ErrorCode int32 `protobuf:"varint,1,opt,name=errorCode,json=error_code,proto3" json:"errorCode,omitempty"`
 	// 错误描述信息
 	Desp string `protobuf:"bytes,2,opt,name=desp,proto3" json:"desp,omitempty"`
 	// 操作结果的附加数据（可能为空）
@@ -1058,7 +1058,7 @@ type AddIpBlacklistReq struct {
 	// 要加入黑名单的IP地址
 	Ip string `protobuf:"bytes,1,opt,name=ip,proto3" json:"ip,omitempty"`
 	// 黑名单过期时间，单位：秒（0表示永久有效）
-	ExpireSeconds int32 `protobuf:"varint,2,opt,name=expireSeconds,proto3" json:"expireSeconds,omitempty"`
+	ExpireSeconds int32 `protobuf:"varint,2,opt,name=expireSeconds,json=expire_seconds,proto3" json:"expireSeconds,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1111,7 +1111,7 @@ func (x *AddIpBlacklistReq) GetExpireSeconds() int32 {
 type AddIpBlacklistRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 错误码，0表示成功，非0表示失败
-	ErrorCode int32 `protobuf:"varint,1,opt,name=errorCode,proto3" json:"errorCode,omitempty"`
+	ErrorCode int32 `protobuf:"varint,1,opt,name=errorCode,json=error_code,proto3" json:"errorCode,omitempty"`
 	// 错误描述信息
 	Desp string `protobuf:"bytes,2,opt,name=desp,proto3" json:"desp,omitempty"`
 	// 操作结果的附加数据（可能为空）
@@ -1175,9 +1175,9 @@ func (x *AddIpBlacklistRes) GetData() map[string]string {
 type GroupData struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 流名称
-	StreamName string `protobuf:"bytes,1,opt,name=streamName,proto3" json:"streamName,omitempty"`
+	StreamName string `protobuf:"bytes,1,opt,name=streamName,json=stream_name,proto3" json:"streamName,omitempty"`
 	// 分组创建时间，单位：毫秒时间戳
-	CreateTimeMs int64 `protobuf:"varint,2,opt,name=createTimeMs,proto3" json:"createTimeMs,omitempty"`
+	CreateTimeMs int64 `protobuf:"varint,2,opt,name=createTimeMs,json=create_time_ms,proto3" json:"createTimeMs,omitempty"`
 	// 发布者会话信息
 	Publisher *SessionInfo `protobuf:"bytes,3,opt,name=publisher,proto3" json:"publisher,omitempty"`
 	// 订阅者会话列表
@@ -1257,17 +1257,17 @@ func (x *GroupData) GetPullers() []*SessionInfo {
 type SessionInfo struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 会话ID
-	SessionId string `protobuf:"bytes,1,opt,name=sessionId,proto3" json:"sessionId,omitempty"`
+	SessionId string `protobuf:"bytes,1,opt,name=sessionId,json=session_id,proto3" json:"sessionId,omitempty"`
 	// 会话类型（"pub"发布者,"sub"订阅者,"pull"拉流者）
 	Type string `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
 	// 客户端IP地址
-	ClientIp string `protobuf:"bytes,3,opt,name=clientIp,proto3" json:"clientIp,omitempty"`
+	ClientIp string `protobuf:"bytes,3,opt,name=clientIp,json=client_ip,proto3" json:"clientIp,omitempty"`
 	// 会话创建时间，单位：毫秒时间戳
-	CreateTimeMs int64 `protobuf:"varint,4,opt,name=createTimeMs,proto3" json:"createTimeMs,omitempty"`
+	CreateTimeMs int64 `protobuf:"varint,4,opt,name=createTimeMs,json=create_time_ms,proto3" json:"createTimeMs,omitempty"`
 	// 数据发送字节数
-	SendBytes int64 `protobuf:"varint,5,opt,name=sendBytes,proto3" json:"sendBytes,omitempty"`
+	SendBytes int64 `protobuf:"varint,5,opt,name=sendBytes,json=send_bytes,proto3" json:"sendBytes,omitempty"`
 	// 数据接收字节数
-	RecvBytes     int64 `protobuf:"varint,6,opt,name=recvBytes,proto3" json:"recvBytes,omitempty"`
+	RecvBytes     int64 `protobuf:"varint,6,opt,name=recvBytes,json=recv_bytes,proto3" json:"recvBytes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1350,17 +1350,17 @@ type LalServerData struct {
 	// 服务器版本号
 	Version string `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
 	// 启动时间，单位：毫秒时间戳
-	StartTimeMs int64 `protobuf:"varint,2,opt,name=startTimeMs,proto3" json:"startTimeMs,omitempty"`
+	StartTimeMs int64 `protobuf:"varint,2,opt,name=startTimeMs,json=start_time_ms,proto3" json:"startTimeMs,omitempty"`
 	// 运行时长，单位：秒
-	UptimeSeconds int64 `protobuf:"varint,3,opt,name=uptimeSeconds,proto3" json:"uptimeSeconds,omitempty"`
+	UptimeSeconds int64 `protobuf:"varint,3,opt,name=uptimeSeconds,json=uptime_seconds,proto3" json:"uptimeSeconds,omitempty"`
 	// 总连接数
-	TotalConnections int32 `protobuf:"varint,4,opt,name=totalConnections,proto3" json:"totalConnections,omitempty"`
+	TotalConnections int32 `protobuf:"varint,4,opt,name=totalConnections,json=total_connections,proto3" json:"totalConnections,omitempty"`
 	// 当前流数量
-	StreamCount int32 `protobuf:"varint,5,opt,name=streamCount,proto3" json:"streamCount,omitempty"`
+	StreamCount int32 `protobuf:"varint,5,opt,name=streamCount,json=stream_count,proto3" json:"streamCount,omitempty"`
 	// 系统信息（如操作系统、CPU核心数等）
-	SystemInfo string `protobuf:"bytes,6,opt,name=systemInfo,proto3" json:"systemInfo,omitempty"`
+	SystemInfo string `protobuf:"bytes,6,opt,name=systemInfo,json=system_info,proto3" json:"systemInfo,omitempty"`
 	// 配置信息摘要
-	ConfigSummary string `protobuf:"bytes,7,opt,name=configSummary,proto3" json:"configSummary,omitempty"`
+	ConfigSummary string `protobuf:"bytes,7,opt,name=configSummary,json=config_summary,proto3" json:"configSummary,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1452,124 +1452,129 @@ const file_lalproxy_proto_rawDesc = "" +
 	"\x03Req\x12\x12\n" +
 	"\x04ping\x18\x01 \x01(\tR\x04ping\"\x19\n" +
 	"\x03Res\x12\x12\n" +
-	"\x04pong\x18\x01 \x01(\tR\x04pong\"1\n" +
-	"\x0fGetGroupInfoReq\x12\x1e\n" +
+	"\x04pong\x18\x01 \x01(\tR\x04pong\"2\n" +
+	"\x0fGetGroupInfoReq\x12\x1f\n" +
 	"\n" +
-	"streamName\x18\x01 \x01(\tR\n" +
-	"streamName\"l\n" +
-	"\x0fGetGroupInfoRes\x12\x1c\n" +
-	"\terrorCode\x18\x01 \x01(\x05R\terrorCode\x12\x12\n" +
+	"streamName\x18\x01 \x01(\tR\vstream_name\"m\n" +
+	"\x0fGetGroupInfoRes\x12\x1d\n" +
+	"\terrorCode\x18\x01 \x01(\x05R\n" +
+	"error_code\x12\x12\n" +
 	"\x04desp\x18\x02 \x01(\tR\x04desp\x12'\n" +
 	"\x04data\x18\x03 \x01(\v2\x13.lalproxy.GroupDataR\x04data\"\x11\n" +
-	"\x0fGetAllGroupsReq\"p\n" +
-	"\x0fGetAllGroupsRes\x12\x1c\n" +
-	"\terrorCode\x18\x01 \x01(\x05R\terrorCode\x12\x12\n" +
+	"\x0fGetAllGroupsReq\"q\n" +
+	"\x0fGetAllGroupsRes\x12\x1d\n" +
+	"\terrorCode\x18\x01 \x01(\x05R\n" +
+	"error_code\x12\x12\n" +
 	"\x04desp\x18\x02 \x01(\tR\x04desp\x12+\n" +
 	"\x06groups\x18\x03 \x03(\v2\x13.lalproxy.GroupDataR\x06groups\"\x0f\n" +
-	"\rGetLalInfoReq\"n\n" +
-	"\rGetLalInfoRes\x12\x1c\n" +
-	"\terrorCode\x18\x01 \x01(\x05R\terrorCode\x12\x12\n" +
+	"\rGetLalInfoReq\"o\n" +
+	"\rGetLalInfoRes\x12\x1d\n" +
+	"\terrorCode\x18\x01 \x01(\x05R\n" +
+	"error_code\x12\x12\n" +
 	"\x04desp\x18\x02 \x01(\tR\x04desp\x12+\n" +
-	"\x04data\x18\x03 \x01(\v2\x17.lalproxy.LalServerDataR\x04data\"\xe7\x01\n" +
+	"\x04data\x18\x03 \x01(\v2\x17.lalproxy.LalServerDataR\x04data\"\xf3\x01\n" +
 	"\x11StartRelayPullReq\x12\x10\n" +
-	"\x03url\x18\x01 \x01(\tR\x03url\x12\x1e\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\x12\x1f\n" +
 	"\n" +
-	"streamName\x18\x02 \x01(\tR\n" +
-	"streamName\x12$\n" +
-	"\rpullTimeoutMs\x18\x03 \x01(\x05R\rpullTimeoutMs\x12\"\n" +
-	"\fpullRetryNum\x18\x04 \x01(\x05R\fpullRetryNum\x12:\n" +
-	"\x18autoStopPullAfterNoOutMs\x18\x05 \x01(\x05R\x18autoStopPullAfterNoOutMs\x12\x1a\n" +
-	"\brtspMode\x18\x06 \x01(\x05R\brtspMode\"\xb9\x01\n" +
-	"\x11StartRelayPullRes\x12\x1c\n" +
-	"\terrorCode\x18\x01 \x01(\x05R\terrorCode\x12\x12\n" +
+	"streamName\x18\x02 \x01(\tR\vstream_name\x12&\n" +
+	"\rpullTimeoutMs\x18\x03 \x01(\x05R\x0fpull_timeout_ms\x12$\n" +
+	"\fpullRetryNum\x18\x04 \x01(\x05R\x0epull_retry_num\x12@\n" +
+	"\x18autoStopPullAfterNoOutMs\x18\x05 \x01(\x05R\x1eauto_stop_pull_after_no_out_ms\x12\x1b\n" +
+	"\brtspMode\x18\x06 \x01(\x05R\trtsp_mode\"\xba\x01\n" +
+	"\x11StartRelayPullRes\x12\x1d\n" +
+	"\terrorCode\x18\x01 \x01(\x05R\n" +
+	"error_code\x12\x12\n" +
 	"\x04desp\x18\x02 \x01(\tR\x04desp\x129\n" +
 	"\x04data\x18\x03 \x03(\v2%.lalproxy.StartRelayPullRes.DataEntryR\x04data\x1a7\n" +
 	"\tDataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"2\n" +
-	"\x10StopRelayPullReq\x12\x1e\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"3\n" +
+	"\x10StopRelayPullReq\x12\x1f\n" +
 	"\n" +
-	"streamName\x18\x01 \x01(\tR\n" +
-	"streamName\"\xb7\x01\n" +
-	"\x10StopRelayPullRes\x12\x1c\n" +
-	"\terrorCode\x18\x01 \x01(\x05R\terrorCode\x12\x12\n" +
+	"streamName\x18\x01 \x01(\tR\vstream_name\"\xb8\x01\n" +
+	"\x10StopRelayPullRes\x12\x1d\n" +
+	"\terrorCode\x18\x01 \x01(\x05R\n" +
+	"error_code\x12\x12\n" +
 	"\x04desp\x18\x02 \x01(\tR\x04desp\x128\n" +
 	"\x04data\x18\x03 \x03(\v2$.lalproxy.StopRelayPullRes.DataEntryR\x04data\x1a7\n" +
 	"\tDataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"p\n" +
-	"\x0eKickSessionReq\x12\x1e\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"s\n" +
+	"\x0eKickSessionReq\x12\x1f\n" +
 	"\n" +
-	"streamName\x18\x01 \x01(\tR\n" +
-	"streamName\x12\x1c\n" +
-	"\tsessionId\x18\x02 \x01(\tR\tsessionId\x12 \n" +
-	"\vsessionType\x18\x03 \x01(\tR\vsessionType\"\xb3\x01\n" +
-	"\x0eKickSessionRes\x12\x1c\n" +
-	"\terrorCode\x18\x01 \x01(\x05R\terrorCode\x12\x12\n" +
+	"streamName\x18\x01 \x01(\tR\vstream_name\x12\x1d\n" +
+	"\tsessionId\x18\x02 \x01(\tR\n" +
+	"session_id\x12!\n" +
+	"\vsessionType\x18\x03 \x01(\tR\fsession_type\"\xb4\x01\n" +
+	"\x0eKickSessionRes\x12\x1d\n" +
+	"\terrorCode\x18\x01 \x01(\x05R\n" +
+	"error_code\x12\x12\n" +
 	"\x04desp\x18\x02 \x01(\tR\x04desp\x126\n" +
 	"\x04data\x18\x03 \x03(\v2\".lalproxy.KickSessionRes.DataEntryR\x04data\x1a7\n" +
 	"\tDataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"D\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"E\n" +
 	"\x0eStartRtpPubReq\x12\x12\n" +
-	"\x04port\x18\x01 \x01(\x05R\x04port\x12\x1e\n" +
+	"\x04port\x18\x01 \x01(\x05R\x04port\x12\x1f\n" +
 	"\n" +
-	"streamName\x18\x02 \x01(\tR\n" +
-	"streamName\"\xb3\x01\n" +
-	"\x0eStartRtpPubRes\x12\x1c\n" +
-	"\terrorCode\x18\x01 \x01(\x05R\terrorCode\x12\x12\n" +
+	"streamName\x18\x02 \x01(\tR\vstream_name\"\xb4\x01\n" +
+	"\x0eStartRtpPubRes\x12\x1d\n" +
+	"\terrorCode\x18\x01 \x01(\x05R\n" +
+	"error_code\x12\x12\n" +
 	"\x04desp\x18\x02 \x01(\tR\x04desp\x126\n" +
 	"\x04data\x18\x03 \x03(\v2\".lalproxy.StartRtpPubRes.DataEntryR\x04data\x1a7\n" +
 	"\tDataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"C\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"D\n" +
 	"\rStopRtpPubReq\x12\x12\n" +
-	"\x04port\x18\x01 \x01(\x05R\x04port\x12\x1e\n" +
+	"\x04port\x18\x01 \x01(\x05R\x04port\x12\x1f\n" +
 	"\n" +
-	"streamName\x18\x02 \x01(\tR\n" +
-	"streamName\"\xb1\x01\n" +
-	"\rStopRtpPubRes\x12\x1c\n" +
-	"\terrorCode\x18\x01 \x01(\x05R\terrorCode\x12\x12\n" +
+	"streamName\x18\x02 \x01(\tR\vstream_name\"\xb2\x01\n" +
+	"\rStopRtpPubRes\x12\x1d\n" +
+	"\terrorCode\x18\x01 \x01(\x05R\n" +
+	"error_code\x12\x12\n" +
 	"\x04desp\x18\x02 \x01(\tR\x04desp\x125\n" +
 	"\x04data\x18\x03 \x03(\v2!.lalproxy.StopRtpPubRes.DataEntryR\x04data\x1a7\n" +
 	"\tDataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"I\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"J\n" +
 	"\x11AddIpBlacklistReq\x12\x0e\n" +
-	"\x02ip\x18\x01 \x01(\tR\x02ip\x12$\n" +
-	"\rexpireSeconds\x18\x02 \x01(\x05R\rexpireSeconds\"\xb9\x01\n" +
-	"\x11AddIpBlacklistRes\x12\x1c\n" +
-	"\terrorCode\x18\x01 \x01(\x05R\terrorCode\x12\x12\n" +
+	"\x02ip\x18\x01 \x01(\tR\x02ip\x12%\n" +
+	"\rexpireSeconds\x18\x02 \x01(\x05R\x0eexpire_seconds\"\xba\x01\n" +
+	"\x11AddIpBlacklistRes\x12\x1d\n" +
+	"\terrorCode\x18\x01 \x01(\x05R\n" +
+	"error_code\x12\x12\n" +
 	"\x04desp\x18\x02 \x01(\tR\x04desp\x129\n" +
 	"\x04data\x18\x03 \x03(\v2%.lalproxy.AddIpBlacklistRes.DataEntryR\x04data\x1a7\n" +
 	"\tDataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xee\x01\n" +
-	"\tGroupData\x12\x1e\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xf1\x01\n" +
+	"\tGroupData\x12\x1f\n" +
 	"\n" +
-	"streamName\x18\x01 \x01(\tR\n" +
-	"streamName\x12\"\n" +
-	"\fcreateTimeMs\x18\x02 \x01(\x03R\fcreateTimeMs\x123\n" +
+	"streamName\x18\x01 \x01(\tR\vstream_name\x12$\n" +
+	"\fcreateTimeMs\x18\x02 \x01(\x03R\x0ecreate_time_ms\x123\n" +
 	"\tpublisher\x18\x03 \x01(\v2\x15.lalproxy.SessionInfoR\tpublisher\x127\n" +
 	"\vsubscribers\x18\x04 \x03(\v2\x15.lalproxy.SessionInfoR\vsubscribers\x12/\n" +
-	"\apullers\x18\x05 \x03(\v2\x15.lalproxy.SessionInfoR\apullers\"\xbb\x01\n" +
-	"\vSessionInfo\x12\x1c\n" +
-	"\tsessionId\x18\x01 \x01(\tR\tsessionId\x12\x12\n" +
-	"\x04type\x18\x02 \x01(\tR\x04type\x12\x1a\n" +
-	"\bclientIp\x18\x03 \x01(\tR\bclientIp\x12\"\n" +
-	"\fcreateTimeMs\x18\x04 \x01(\x03R\fcreateTimeMs\x12\x1c\n" +
-	"\tsendBytes\x18\x05 \x01(\x03R\tsendBytes\x12\x1c\n" +
-	"\trecvBytes\x18\x06 \x01(\x03R\trecvBytes\"\x85\x02\n" +
+	"\apullers\x18\x05 \x03(\v2\x15.lalproxy.SessionInfoR\apullers\"\xc1\x01\n" +
+	"\vSessionInfo\x12\x1d\n" +
+	"\tsessionId\x18\x01 \x01(\tR\n" +
+	"session_id\x12\x12\n" +
+	"\x04type\x18\x02 \x01(\tR\x04type\x12\x1b\n" +
+	"\bclientIp\x18\x03 \x01(\tR\tclient_ip\x12$\n" +
+	"\fcreateTimeMs\x18\x04 \x01(\x03R\x0ecreate_time_ms\x12\x1d\n" +
+	"\tsendBytes\x18\x05 \x01(\x03R\n" +
+	"send_bytes\x12\x1d\n" +
+	"\trecvBytes\x18\x06 \x01(\x03R\n" +
+	"recv_bytes\"\x8c\x02\n" +
 	"\rLalServerData\x12\x18\n" +
-	"\aversion\x18\x01 \x01(\tR\aversion\x12 \n" +
-	"\vstartTimeMs\x18\x02 \x01(\x03R\vstartTimeMs\x12$\n" +
-	"\ruptimeSeconds\x18\x03 \x01(\x03R\ruptimeSeconds\x12*\n" +
-	"\x10totalConnections\x18\x04 \x01(\x05R\x10totalConnections\x12 \n" +
-	"\vstreamCount\x18\x05 \x01(\x05R\vstreamCount\x12\x1e\n" +
+	"\aversion\x18\x01 \x01(\tR\aversion\x12\"\n" +
+	"\vstartTimeMs\x18\x02 \x01(\x03R\rstart_time_ms\x12%\n" +
+	"\ruptimeSeconds\x18\x03 \x01(\x03R\x0euptime_seconds\x12+\n" +
+	"\x10totalConnections\x18\x04 \x01(\x05R\x11total_connections\x12!\n" +
+	"\vstreamCount\x18\x05 \x01(\x05R\fstream_count\x12\x1f\n" +
 	"\n" +
-	"systemInfo\x18\x06 \x01(\tR\n" +
-	"systemInfo\x12$\n" +
-	"\rconfigSummary\x18\a \x01(\tR\rconfigSummary2\xfd\x04\n" +
+	"systemInfo\x18\x06 \x01(\tR\vsystem_info\x12%\n" +
+	"\rconfigSummary\x18\a \x01(\tR\x0econfig_summary2\xfd\x04\n" +
 	"\bLalProxy\x12D\n" +
 	"\fGetGroupInfo\x12\x19.lalproxy.GetGroupInfoReq\x1a\x19.lalproxy.GetGroupInfoRes\x12D\n" +
 	"\fGetAllGroups\x12\x19.lalproxy.GetAllGroupsReq\x1a\x19.lalproxy.GetAllGroupsRes\x12>\n" +

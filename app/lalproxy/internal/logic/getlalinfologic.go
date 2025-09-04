@@ -2,13 +2,14 @@ package logic
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 
 	"zero-service/app/lalproxy/internal/svc"
 	"zero-service/app/lalproxy/lalproxy"
 
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -52,20 +53,14 @@ func (l *GetLalInfoLogic) GetLalInfo(in *lalproxy.GetLalInfoReq) (*lalproxy.GetL
 		return nil, fmt.Errorf("读取响应体失败: %w", err)
 	}
 
-	// 解析JSON响应
-	var httpResp struct {
-		ErrorCode int                     `json:"error_code"`
-		Desp      string                  `json:"desp"`
-		Data      *lalproxy.LalServerData `json:"data"`
+	unmarshaler := &jsonpb.Unmarshaler{
+		AllowUnknownFields: true, // 核心配置：允许未知字段，不报错
 	}
-	if err := json.Unmarshal(body, &httpResp); err != nil {
-		l.Logger.Errorf("解析响应JSON失败: %v, 响应内容: %s", err, string(body))
-		return nil, fmt.Errorf("解析响应JSON失败: %w", err)
+	result := &lalproxy.GetLalInfoRes{}
+	if err := unmarshaler.Unmarshal(strings.NewReader(string(body)), result); err != nil {
+		l.Logger.Errorf("解析所有分组响应失败: %v, 响应内容: %s", err, string(body))
+		return nil, fmt.Errorf("解析响应失败: %w", err)
 	}
 
-	return &lalproxy.GetLalInfoRes{
-		ErrorCode: int32(httpResp.ErrorCode),
-		Desp:      httpResp.Desp,
-		Data:      httpResp.Data,
-	}, nil
+	return result, nil
 }

@@ -8,11 +8,11 @@ option java_package = "com.github.lalproxy.grpc";
 option java_outer_classname = "LalProxyProto";
 
 message Req {
-  string ping = 1;
+  string ping = 1 [json_name = "ping"];
 }
 
 message Res {
-  string pong = 1;
+  string pong = 1 [json_name = "pong"];
 }
 
 service LalProxy {
@@ -39,17 +39,17 @@ service LalProxy {
 // 查询特定流分组的请求参数
 message GetGroupInfoReq {
   // 流名称，用于指定要查询的分组
-  string streamName = 1;
+  string streamName = 1 [json_name = "stream_name"];
 }
 
 // 查询特定流分组的响应
 message GetGroupInfoRes {
   // 错误码，0表示成功，非0表示失败
-  int32 errorCode = 1;
+  int32 errorCode = 1 [json_name = "error_code"];
   // 错误描述信息
-  string desp = 2;
+  string desp = 2 [json_name = "desp"];
   // 分组详细信息
-  GroupData data = 3;
+  GroupData data = 3 [json_name = "data"];
 }
 
 // 查询所有流分组的请求参数（暂无需额外参数）
@@ -58,11 +58,11 @@ message GetAllGroupsReq {}
 // 查询所有流分组的响应
 message GetAllGroupsRes {
   // 错误码，0表示成功，非0表示失败
-  int32 errorCode = 1;
+  int32 errorCode = 1 [json_name = "error_code"];
   // 错误描述信息
-  string desp = 2;
+  string desp = 2 [json_name = "desp"];
   // 所有分组的列表
-  repeated GroupData groups = 3;
+  repeated GroupData groups = 3 [json_name = "groups"];
 }
 
 // 查询服务器信息的请求参数（暂无需额外参数）
@@ -71,173 +71,173 @@ message GetLalInfoReq {}
 // 查询服务器信息的响应
 message GetLalInfoRes {
   // 错误码，0表示成功，非0表示失败
-  int32 errorCode = 1;
+  int32 errorCode = 1 [json_name = "error_code"];
   // 错误描述信息
-  string desp = 2;
+  string desp = 2 [json_name = "desp"];
   // 服务器详细信息
-  LalServerData data = 3;
+  LalServerData data = 3 [json_name = "data"];
 }
 
 // 启动中继拉流的请求参数
 message StartRelayPullReq {
   // 拉流地址（如rtmp://example.com/live/stream）
-  string url = 1;
+  string url = 1 [json_name = "url"];
   // 流名称，可选，默认从url中解析
-  string streamName = 2;
+  string streamName = 2 [json_name = "stream_name"];
   // 拉流超时时间，单位：毫秒
-  int32 pullTimeoutMs = 3;
+  int32 pullTimeoutMs = 3 [json_name = "pull_timeout_ms"];
   // 拉流重试次数（-1表示一直重试，0表示不重试）
-  int32 pullRetryNum = 4;
+  int32 pullRetryNum = 4 [json_name = "pull_retry_num"];
   // 无输出时自动停止拉流的时间，单位：毫秒
-  int32 autoStopPullAfterNoOutMs = 5;
+  int32 autoStopPullAfterNoOutMs = 5 [json_name = "auto_stop_pull_after_no_out_ms"];
   // RTSP模式（0表示TCP，1表示UDP）
-  int32 rtspMode = 6;
+  int32 rtspMode = 6 [json_name = "rtsp_mode"];
 }
 
 // 启动中继拉流的响应
 message StartRelayPullRes {
   // 错误码，0表示成功，非0表示失败
-  int32 errorCode = 1;
+  int32 errorCode = 1 [json_name = "error_code"];
   // 错误描述信息
-  string desp = 2;
+  string desp = 2 [json_name = "desp"];
   // 操作结果的附加数据（可能为空）
-  map<string, string> data = 3;
+  map<string, string> data = 3 [json_name = "data"];
 }
 
 // 停止中继拉流的请求参数
 message StopRelayPullReq {
   // 要停止拉流的流名称
-  string streamName = 1;
+  string streamName = 1 [json_name = "stream_name"];
 }
 
 // 停止中继拉流的响应
 message StopRelayPullRes {
   // 错误码，0表示成功，非0表示失败
-  int32 errorCode = 1;
+  int32 errorCode = 1 [json_name = "error_code"];
   // 错误描述信息
-  string desp = 2;
+  string desp = 2 [json_name = "desp"];
   // 操作结果的附加数据（可能为空）
-  map<string, string> data = 3;
+  map<string, string> data = 3 [json_name = "data"];
 }
 
 // 踢出会话的请求参数
 message KickSessionReq {
   // 流名称
-  string streamName = 1;
+  string streamName = 1 [json_name = "stream_name"];
   // 会话ID，可通过查询接口获取
-  string sessionId = 2;
+  string sessionId = 2 [json_name = "session_id"];
   // 会话类型（可选，如"pub"发布者,"sub"订阅者,"pull"拉流者）
-  string sessionType = 3;
+  string sessionType = 3 [json_name = "session_type"];
 }
 
 // 踢出会话的响应
 message KickSessionRes {
   // 错误码，0表示成功，非0表示失败
-  int32 errorCode = 1;
+  int32 errorCode = 1 [json_name = "error_code"];
   // 错误描述信息
-  string desp = 2;
+  string desp = 2 [json_name = "desp"];
   // 操作结果的附加数据（可能为空）
-  map<string, string> data = 3;
+  map<string, string> data = 3 [json_name = "data"];
 }
 
 // 启动RTP发布的请求参数（GB28181相关）
 message StartRtpPubReq {
   // 本地接收RTP流的端口
-  int32 port = 1;
+  int32 port = 1 [json_name = "port"];
   // 流名称，用于标识该RTP流
-  string streamName = 2;
+  string streamName = 2 [json_name = "stream_name"];
 }
 
 // 启动RTP发布的响应
 message StartRtpPubRes {
   // 错误码，0表示成功，非0表示失败
-  int32 errorCode = 1;
+  int32 errorCode = 1 [json_name = "error_code"];
   // 错误描述信息
-  string desp = 2;
+  string desp = 2 [json_name = "desp"];
   // 操作结果的附加数据（可能为空）
-  map<string, string> data = 3;
+  map<string, string> data = 3 [json_name = "data"];
 }
 
 // 停止RTP发布的请求参数（GB28181相关）
 message StopRtpPubReq {
   // 要关闭的RTP接收端口
-  int32 port = 1;
+  int32 port = 1 [json_name = "port"];
   // 流名称，用于标识要停止的RTP流
-  string streamName = 2;
+  string streamName = 2 [json_name = "stream_name"];
 }
 
 // 停止RTP发布的响应
 message StopRtpPubRes {
   // 错误码，0表示成功，非0表示失败
-  int32 errorCode = 1;
+  int32 errorCode = 1 [json_name = "error_code"];
   // 错误描述信息
-  string desp = 2;
+  string desp = 2 [json_name = "desp"];
   // 操作结果的附加数据（可能为空）
-  map<string, string> data = 3;
+  map<string, string> data = 3 [json_name = "data"];
 }
 
 // 添加IP黑名单的请求参数
 message AddIpBlacklistReq {
   // 要加入黑名单的IP地址
-  string ip = 1;
+  string ip = 1 [json_name = "ip"];
   // 黑名单过期时间，单位：秒（0表示永久有效）
-  int32 expireSeconds = 2;
+  int32 expireSeconds = 2 [json_name = "expire_seconds"];
 }
 
 // 添加IP黑名单的响应
 message AddIpBlacklistRes {
   // 错误码，0表示成功，非0表示失败
-  int32 errorCode = 1;
+  int32 errorCode = 1 [json_name = "error_code"];
   // 错误描述信息
-  string desp = 2;
+  string desp = 2 [json_name = "desp"];
   // 操作结果的附加数据（可能为空）
-  map<string, string> data = 3;
+  map<string, string> data = 3 [json_name = "data"];
 }
 
 // 流分组数据结构
 message GroupData {
   // 流名称
-  string streamName = 1;
+  string streamName = 1 [json_name = "stream_name"];
   // 分组创建时间，单位：毫秒时间戳
-  int64 createTimeMs = 2;
+  int64 createTimeMs = 2 [json_name = "create_time_ms"];
   // 发布者会话信息
-  SessionInfo publisher = 3;
+  SessionInfo publisher = 3 [json_name = "publisher"];
   // 订阅者会话列表
-  repeated SessionInfo subscribers = 4;
+  repeated SessionInfo subscribers = 4 [json_name = "subscribers"];
   // 拉流会话列表
-  repeated SessionInfo pullers = 5;
+  repeated SessionInfo pullers = 5 [json_name = "pullers"];
 }
 
 // 会话信息数据结构
 message SessionInfo {
   // 会话ID
-  string sessionId = 1;
+  string sessionId = 1 [json_name = "session_id"];
   // 会话类型（"pub"发布者,"sub"订阅者,"pull"拉流者）
-  string type = 2;
+  string type = 2 [json_name = "type"];
   // 客户端IP地址
-  string clientIp = 3;
+  string clientIp = 3 [json_name = "client_ip"];
   // 会话创建时间，单位：毫秒时间戳
-  int64 createTimeMs = 4;
+  int64 createTimeMs = 4 [json_name = "create_time_ms"];
   // 数据发送字节数
-  int64 sendBytes = 5;
+  int64 sendBytes = 5 [json_name = "send_bytes"];
   // 数据接收字节数
-  int64 recvBytes = 6;
+  int64 recvBytes = 6 [json_name = "recv_bytes"];
 }
 
 // 服务器信息数据结构
 message LalServerData {
   // 服务器版本号
-  string version = 1;
+  string version = 1 [json_name = "version"];
   // 启动时间，单位：毫秒时间戳
-  int64 startTimeMs = 2;
+  int64 startTimeMs = 2 [json_name = "start_time_ms"];
   // 运行时长，单位：秒
-  int64 uptimeSeconds = 3;
+  int64 uptimeSeconds = 3 [json_name = "uptime_seconds"];
   // 总连接数
-  int32 totalConnections = 4;
+  int32 totalConnections = 4 [json_name = "total_connections"];
   // 当前流数量
-  int32 streamCount = 5;
+  int32 streamCount = 5 [json_name = "stream_count"];
   // 系统信息（如操作系统、CPU核心数等）
-  string systemInfo = 6;
+  string systemInfo = 6 [json_name = "system_info"];
   // 配置信息摘要
-  string configSummary = 7;
+  string configSummary = 7 [json_name = "config_summary"];
 }
