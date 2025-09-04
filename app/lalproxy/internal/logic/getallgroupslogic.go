@@ -2,6 +2,9 @@ package logic
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"io"
 
 	"zero-service/app/lalproxy/internal/svc"
 	"zero-service/app/lalproxy/lalproxy"
@@ -25,7 +28,44 @@ func NewGetAllGroupsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetA
 
 // 查询所有流分组的信息
 func (l *GetAllGroupsLogic) GetAllGroups(in *lalproxy.GetAllGroupsReq) (*lalproxy.GetAllGroupsRes, error) {
-	// todo: add your logic here and delete this line
+	// 构建请求URL
+	fullUrl := fmt.Sprintf("%s/api/stat/all_group", l.svcCtx.LalBaseUrl)
 
-	return &lalproxy.GetAllGroupsRes{}, nil
+	// 调用LAL HTTP API
+	resp, err := l.svcCtx.LalClient.Do(l.ctx, "GET", fullUrl, nil)
+	if err != nil {
+		l.Logger.Errorf("调用LAL API失败: %v, URL: %s", err, fullUrl)
+		return nil, fmt.Errorf("调用LAL API失败: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		body, _ := io.ReadAll(resp.Body)
+		l.Logger.Errorf("LAL API返回非200状态码: %d, 响应内容: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("LAL API返回异常状态码: %d", resp.StatusCode)
+	}
+
+	// 读取响应体
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		l.Logger.Errorf("读取响应体失败: %v", err)
+		return nil, fmt.Errorf("读取响应体失败: %w", err)
+	}
+
+	// 解析JSON响应
+	var httpResp struct {
+		ErrorCode int                   `json:"error_code"`
+		Desp      string                `json:"desp"`
+		Groups    []*lalproxy.GroupData `json:"groups"`
+	}
+	if err := json.Unmarshal(body, &httpResp); err != nil {
+		l.Logger.Errorf("解析响应JSON失败: %v, 响应内容: %s", err, string(body))
+		return nil, fmt.Errorf("解析响应JSON失败: %w", err)
+	}
+
+	return &lalproxy.GetAllGroupsRes{
+		ErrorCode: int32(httpResp.ErrorCode),
+		Desp:      httpResp.Desp,
+		Groups:    httpResp.Groups,
+	}, nil
 }
