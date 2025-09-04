@@ -1,252 +1,196 @@
 syntax = "proto3";
 
-package lalproxy;
+package Lalproxy;
 
 option go_package = "./lalproxy";
 option java_multiple_files = true;
 option java_package = "com.github.lalproxy.grpc";
 option java_outer_classname = "LalProxyProto";
 
-message Req {
-  string ping = 1 [json_name = "ping"];
-}
-
-message Res {
-  string pong = 1 [json_name = "pong"];
-}
-
+// LalProxy服务：封装lalserver全部HTTP API能力，包含查询类（/api/stat）和控制类（/api/ctrl）接口
 service LalProxy {
-  // 查询特定流分组的信息
+  // 查询指定group信息（对应HTTP API：/api/stat/group，GET请求+URL参数）
   rpc GetGroupInfo (GetGroupInfoReq) returns (GetGroupInfoRes);
-  // 查询所有流分组的信息
+  // 查询所有group信息（对应HTTP API：/api/stat/all_group，GET请求，无参数）
   rpc GetAllGroups (GetAllGroupsReq) returns (GetAllGroupsRes);
-  // 查询服务器基本信息
+  // 查询服务器基础信息（对应HTTP API：/api/stat/lal_info，GET请求，无参数）
   rpc GetLalInfo (GetLalInfoReq) returns (GetLalInfoRes);
-  // 控制服务器从远端拉流至本地
+  // 启动中继拉流（对应HTTP API：/api/ctrl/start_relay_pull，POST请求+JSON Body）
   rpc StartRelayPull (StartRelayPullReq) returns (StartRelayPullRes);
-  // 停止从远端拉流
+  // 停止中继拉流（对应HTTP API：/api/ctrl/stop_relay_pull，GET请求+URL参数）
   rpc StopRelayPull (StopRelayPullReq) returns (StopRelayPullRes);
-  // 强行踢出关闭指定会话
+  // 踢出指定会话（对应HTTP API：/api/ctrl/kick_session，POST请求+JSON Body；支持关闭pub/sub/pull类型会话）
   rpc KickSession (KickSessionReq) returns (KickSessionRes);
-  // 打开GB28181接收端口
+  // 打开GB28181 RTP接收端口（对应HTTP API：/api/ctrl/start_rtp_pub，POST请求+JSON Body）
   rpc StartRtpPub (StartRtpPubReq) returns (StartRtpPubRes);
-  // 关闭GB28181接收端口
+  // 关闭GB28181 RTP接收端口（注：根据lalserver文档，当前需通过KickSession接口实现，本接口暂未开放）
   rpc StopRtpPub (StopRtpPubReq) returns (StopRtpPubRes);
-  // 增加IP黑名单，加入名单的IP将无法连接本服务
+  // 添加IP到黑名单（对应HTTP API：/api/ctrl/add_ip_blacklist，POST请求+JSON Body；目前仅支持HLS协议）
   rpc AddIpBlacklist (AddIpBlacklistReq) returns (AddIpBlacklistRes);
 }
 
-// 查询特定流分组的请求参数
+// GetGroupInfo请求：对应/api/stat/group接口，查询指定流名称的group信息
 message GetGroupInfoReq {
-  // 流名称，用于指定要查询的分组
+  // 流名称（必填，URL参数；用于指定查询的group，如"test110"；缺失时返回error_code=1002）
   string streamName = 1 [json_name = "streamName"];
 }
 
-// 查询特定流分组的响应
+// GetGroupInfo响应：对应/api/stat/group接口返回结果
 message GetGroupInfoRes {
-  // 错误码，0表示成功，非0表示失败
+  // 错误码（0=成功，1001=group不存在，1002=参数缺失；参考lalserver HTTP API错误码规范）
   int32 errorCode = 1 [json_name = "errorCode"];
-  // 错误描述信息
+  // 错误描述（成功时为"succ"，失败时为具体原因，如"group not found"；与errorCode一一对应）
   string desp = 2 [json_name = "desp"];
-  // 分组详细信息
+  // 分组详细数据（成功时返回，包含流编码、会话列表、帧率等信息；失败时为空）
   GroupData data = 3 [json_name = "data"];
 }
 
-// 查询所有流分组的请求参数（暂无需额外参数）
+// GetAllGroups请求：对应/api/stat/all_group接口，查询所有活跃group列表
 message GetAllGroupsReq {}
 
-// 查询所有流分组的响应
+// GetAllGroups响应：对应/api/stat/all_group接口返回结果
 message GetAllGroupsRes {
-  // 错误码，0表示成功，非0表示失败
+  // 错误码（仅0=成功；无其他错误场景，参考lalserver HTTP API规范）
   int32 errorCode = 1 [json_name = "errorCode"];
-  // 错误描述信息
+  // 错误描述（成功时为"succ"；无失败场景，固定返回该值）
   string desp = 2 [json_name = "desp"];
-  // 所有分组的列表
+  // 所有group列表（成功时返回，每个元素格式与GetGroupInfoRes.data一致；无活跃group时为空数组）
   repeated GroupData groups = 3 [json_name = "groups"];
 }
 
-// 查询服务器信息的请求参数（暂无需额外参数）
+// GetLalInfo请求：对应/api/stat/lal_info接口，查询lalserver服务器基础信息
 message GetLalInfoReq {}
 
-// 查询服务器信息的响应
+// GetLalInfo响应：对应/api/stat/lal_info接口返回结果
 message GetLalInfoRes {
-  // 错误码，0表示成功，非0表示失败
+  // 错误码（仅0=成功；无其他错误场景，参考lalserver HTTP API规范）
   int32 errorCode = 1 [json_name = "errorCode"];
-  // 错误描述信息
+  // 错误描述（成功时为"succ"；无失败场景，固定返回该值）
   string desp = 2 [json_name = "desp"];
-  // 服务器详细信息
+  // 服务器信息数据（成功时返回，包含版本、启动时间等基础信息；无失败场景，必然非空）
   LalServerData data = 3 [json_name = "data"];
 }
 
-// 启动中继拉流的请求参数
+// StartRelayPull请求：对应/api/ctrl/start_relay_pull接口，控制服务器从远端拉流
 message StartRelayPullReq {
-  // 拉流地址（如rtmp://example.com/live/stream）
+  // 拉流URL（必填，JSON Body参数；支持RTMP/RTSP协议，如"rtmp://127.0.0.1/live/test110"；缺失时返回error_code=1002）
   string url = 1 [json_name = "url"];
-  // 流名称，可选，默认从url中解析
+  // 流名称（选填，JSON Body参数；不指定则从url中解析；如"test110"）
   string streamName = 2 [json_name = "streamName"];
-  // 拉流超时时间，单位：毫秒
+  // 拉流超时时间（选填，JSON Body参数；单位毫秒，默认10000ms；表示建立拉流会话的超时阈值）
   int32 pullTimeoutMs = 3 [json_name = "pullTimeoutMs"];
-  // 拉流重试次数（-1表示一直重试，0表示不重试）
+  // 拉流重试次数（选填，JSON Body参数；-1=一直重试，0=不重试，>0=指定次数；默认0；断开后是否自动重试）
   int32 pullRetryNum = 4 [json_name = "pullRetryNum"];
-  // 无输出时自动停止拉流的时间，单位：毫秒
+  // 无输出自动停止时间（选填，JSON Body参数；单位毫秒，默认-1；-1=不自动停止，>0=无观看者持续该时长后停止拉流）
   int32 autoStopPullAfterNoOutMs = 5 [json_name = "autoStopPullAfterNoOutMs"];
-  // RTSP模式（0表示TCP，1表示UDP）
+  // RTSP模式（选填，JSON Body参数；0=TCP，1=UDP；仅RTSP协议拉流时生效，默认0）
   int32 rtspMode = 6 [json_name = "rtspMode"];
+  // 调试数据包存储路径（选填，JSON Body参数；默认空字符串；非空时将拉流数据存为文件，如"./dump/test110.laldump"，用于问题排查）
+  string debugDumpPacket = 7 [json_name = "debugDumpPacket"];
 }
 
-// 启动中继拉流的响应
+// StartRelayPull响应：对应/api/ctrl/start_relay_pull接口返回结果
 message StartRelayPullRes {
-  // 错误码，0表示成功，非0表示失败
+  // 错误码（0=请求成功，1002=参数错误，2001=拉流失败；2001包含具体失败原因，如"in stream already exist"）
   int32 errorCode = 1 [json_name = "errorCode"];
-  // 错误描述信息
+  // 错误描述（成功时为"succ"，失败时为具体原因；如参数错误返回"param missing"，拉流失败返回"lal.logic: in stream already exist"）
   string desp = 2 [json_name = "desp"];
-  // 操作结果的附加数据（可能为空）
+  // 附加数据（成功时返回，包含流名称、会话ID，如{"stream_name":"test110","session_id":"RTMPPULL1"}；失败时为空）
   map<string, string> data = 3 [json_name = "data"];
 }
 
-// 停止中继拉流的请求参数
+// StopRelayPull请求：对应/api/ctrl/stop_relay_pull接口，停止指定流的中继拉流
 message StopRelayPullReq {
-  // 要停止拉流的流名称
+  // 流名称（必填，URL参数；用于指定停止拉流的group，如"test110"；缺失时返回error_code=1002）
   string streamName = 1 [json_name = "streamName"];
 }
 
-// 停止中继拉流的响应
+// StopRelayPull响应：对应/api/ctrl/stop_relay_pull接口返回结果
 message StopRelayPullRes {
-  // 错误码，0表示成功，非0表示失败
+  // 错误码（0=成功，1001=group不存在，1002=参数缺失，1003=pull会话不存在；参考lalserver HTTP API错误码规范）
   int32 errorCode = 1 [json_name = "errorCode"];
-  // 错误描述信息
+  // 错误描述（成功时为"succ"，失败时为具体原因，如"pull session not found"；与errorCode一一对应）
   string desp = 2 [json_name = "desp"];
-  // 操作结果的附加数据（可能为空）
+  // 附加数据（成功时返回，包含停止的会话ID，如{"session_id":"RTMPPULL1"}；失败时为空）
   map<string, string> data = 3 [json_name = "data"];
 }
 
-// 踢出会话的请求参数
+// KickSession请求：对应/api/ctrl/kick_session接口，踢出指定流的指定会话
 message KickSessionReq {
-  // 流名称
+  // 流名称（必填，JSON Body参数；会话所属的group，如"test110"；缺失时返回error_code=1002）
   string streamName = 1 [json_name = "streamName"];
-  // 会话ID，可通过查询接口获取
+  // 会话ID（必填，JSON Body参数；唯一标识要踢出的会话，如"FLVSUB1"；需从查询接口获取，缺失时返回error_code=1002）
   string sessionId = 2 [json_name = "sessionId"];
-  // 会话类型（可选，如"pub"发布者,"sub"订阅者,"pull"拉流者）
+  // 会话类型（选填，JSON Body参数；过滤会话角色，如"pub"=发布者，"sub"=订阅者，"pull"=拉流者；不填则匹配所有类型）
   string sessionType = 3 [json_name = "sessionType"];
 }
 
-// 踢出会话的响应
+// KickSession响应：对应/api/ctrl/kick_session接口返回结果
 message KickSessionRes {
-  // 错误码，0表示成功，非0表示失败
+  // 错误码（0=成功，1001=group不存在，1002=参数错误，1003=会话不存在；参考lalserver HTTP API错误码规范）
   int32 errorCode = 1 [json_name = "errorCode"];
-  // 错误描述信息
+  // 错误描述（成功时为"succ"，失败时为具体原因，如"session not found"；与errorCode一一对应）
   string desp = 2 [json_name = "desp"];
-  // 操作结果的附加数据（可能为空）
+  // 附加数据（成功时可能为空，失败时为空；无固定返回字段，根据实际场景补充）
   map<string, string> data = 3 [json_name = "data"];
 }
 
-// 启动RTP发布的请求参数（GB28181相关）
+// StartRtpPub请求：对应/api/ctrl/start_rtp_pub接口，打开GB28181 RTP接收端口
 message StartRtpPubReq {
-  // 本地接收RTP流的端口
-  int32 port = 1 [json_name = "port"];
-  // 流名称，用于标识该RTP流
-  string streamName = 2 [json_name = "streamName"];
+  // 流名称（必填，JSON Body参数；绑定RTP流的标识，如"test110"；后续拉流、录制均使用该名称，缺失时返回error_code=1002）
+  string streamName = 1 [json_name = "streamName"];
+  // 接收端口（选填，JSON Body参数；默认0；0表示随机分配端口，非0表示指定端口；绑定失败返回error_code=2002）
+  int32 port = 2 [json_name = "port"];
+  // 超时时间（选填，JSON Body参数；单位毫秒，默认60000ms；超时无数据则关闭端口，0表示不超时）
+  int32 timeoutMs = 3 [json_name = "timeoutMs"];
+  // TCP传输标识（选填，JSON Body参数；0=UDP，1=TCP；默认0；指定RTP流的传输协议）
+  int32 isTcpFlag = 4 [json_name = "isTcpFlag"];
+  // 调试数据包存储路径（选填，JSON Body参数；默认空字符串；非空时存储RTP数据到文件，用于问题排查，如"/tmp/test110.laldump"）
+  string debugDumpPacket = 5 [json_name = "debugDumpPacket"];
 }
 
-// 启动RTP发布的响应
+// StartRtpPub响应：对应/api/ctrl/start_rtp_pub接口返回结果
 message StartRtpPubRes {
-  // 错误码，0表示成功，非0表示失败
+  // 错误码（0=成功，1002=参数错误，2002=端口绑定失败；参考lalserver HTTP API错误码规范）
   int32 errorCode = 1 [json_name = "errorCode"];
-  // 错误描述信息
+  // 错误描述（成功时为"succ"，失败时为具体原因，如"open gb28181 port failed"；与errorCode一一对应）
   string desp = 2 [json_name = "desp"];
-  // 操作结果的附加数据（可能为空）
+  // 附加数据（成功时返回，包含流名称、会话ID、端口，如{"stream_name":"test110","session_id":"PSSUB1","port":20000}；失败时为空）
   map<string, string> data = 3 [json_name = "data"];
 }
 
-// 停止RTP发布的请求参数（GB28181相关）
+// StopRtpPub请求：对应/api/ctrl/stop_rtp_pub接口（注：根据lalserver文档，当前暂未开放，需使用KickSession接口替代）
 message StopRtpPubReq {
-  // 要关闭的RTP接收端口
-  int32 port = 1 [json_name = "port"];
-  // 流名称，用于标识要停止的RTP流
-  string streamName = 2 [json_name = "streamName"];
+  // 流名称（选填，JSON Body参数；用于匹配要关闭的RTP流，如"test110"）
+  string streamName = 1 [json_name = "streamName"];
+  // 接收端口（选填，JSON Body参数；用于匹配要关闭的RTP端口，如20000；与流名称配合定位目标）
+  int32 port = 2 [json_name = "port"];
 }
 
-// 停止RTP发布的响应
+// StopRtpPub响应：对应/api/ctrl/stop_rtp_pub接口返回结果（注：接口暂未开放，返回结果参考KickSession）
 message StopRtpPubRes {
-  // 错误码，0表示成功，非0表示失败
+  // 错误码（0=成功，1001=group不存在，1002=参数错误，1003=RTP会话不存在；参考lalserver HTTP API错误码规范）
   int32 errorCode = 1 [json_name = "errorCode"];
-  // 错误描述信息
+  // 错误描述（成功时为"succ"，失败时为具体原因，如"rtp pub session not found"；与errorCode一一对应）
   string desp = 2 [json_name = "desp"];
-  // 操作结果的附加数据（可能为空）
+  // 附加数据（成功时可能返回会话ID，失败时为空；无固定返回字段，根据实际场景补充）
   map<string, string> data = 3 [json_name = "data"];
 }
 
-// 添加IP黑名单的请求参数
+// AddIpBlacklist请求：对应/api/ctrl/add_ip_blacklist接口，添加IP到HLS协议黑名单
 message AddIpBlacklistReq {
-  // 要加入黑名单的IP地址
+  // IP地址（必填，JSON Body参数；要加入黑名单的客户端IP，如"127.0.0.1"；缺失时返回error_code=1002）
   string ip = 1 [json_name = "ip"];
-  // 黑名单过期时间，单位：秒（0表示永久有效）
-  int32 expireSeconds = 2 [json_name = "expireSeconds"];
+  // 黑名单时长（必填，JSON Body参数；单位秒，如60；表示IP在黑名单中的有效时间，缺失时返回error_code=1002）
+  int32 durationSec = 2 [json_name = "durationSec"];
 }
 
-// 通用操作响应消息类型（用于各操作响应的基础结构）
-message OperationRes {
-  // 错误码，0表示成功，非0表示失败
-  int32 errorCode = 1 [json_name = "errorCode"];
-  // 错误描述信息
-  string desp = 2 [json_name = "desp"];
-  // 操作结果的附加数据（可能为空）
-  map<string, string> data = 3 [json_name = "data"];
-}
-
-// 添加IP黑名单的响应
+// AddIpBlacklist响应：对应/api/ctrl/add_ip_blacklist接口返回结果
 message AddIpBlacklistRes {
-  // 错误码，0表示成功，非0表示失败
+  // 错误码（0=成功，1002=参数错误；参考lalserver HTTP API错误码规范）
   int32 errorCode = 1 [json_name = "errorCode"];
-  // 错误描述信息
+  // 错误描述（成功时为"succ"，失败时为具体原因，如"ip invalid"；与errorCode一一对应）
   string desp = 2 [json_name = "desp"];
-  // 操作结果的附加数据（可能为空）
+  // 附加数据（成功时可能为空，失败时为空；无固定返回字段，根据实际场景补充）
   map<string, string> data = 3 [json_name = "data"];
-}
-
-// 流分组数据结构
-message GroupData {
-  string streamName = 1 [json_name = "streamName"];      // 流名称
-  string appName = 2 [json_name = "appName"];            // 应用名称
-  string audioCodec = 3 [json_name = "audioCodec"];      // 音频编码格式
-  string videoCodec = 4 [json_name = "videoCodec"];      // 视频编码格式
-  int32 videoWidth = 5 [json_name = "videoWidth"];       // 视频宽度
-  int32 videoHeight = 6 [json_name = "videoHeight"];     // 视频高度
-  SessionInfo pub = 7 [json_name = "pub"];               // 发布者信息
-  repeated SessionInfo subs = 8 [json_name = "subs"];    // 订阅者列表
-  SessionInfo pull = 9 [json_name = "pull"];             // 拉流回源信息
-  repeated bytes pushs = 10 [json_name = "pushs"];       // 外连转推信息
-  repeated FrameData inFramePerSec = 11 [json_name = "inFramePerSec"]; // 帧率数据
-}
-
-// 会话信息数据结构
-message SessionInfo {
-  string sessionId = 1 [json_name = "sessionId"];             // 会话ID
-  string protocol = 2 [json_name = "protocol"];               // 协议类型（RTMP/FLV等）
-  string baseType = 3 [json_name = "baseType"];               // 基础类型（PUB/SUB/PULL）
-  string startTime = 4 [json_name = "startTime"];             // 会话开始时间（字符串）
-  string remoteAddr = 5 [json_name = "remoteAddr"];           // 对端地址
-  int64 readBytesSum = 6 [json_name = "readBytesSum"];        // 累计读取字节数
-  int64 wroteBytesSum = 7 [json_name = "wroteBytesSum"];      // 累计写入字节数
-  int32 bitrateKbits = 8 [json_name = "bitrateKbits"];        // 最近5秒码率（kbit/s）
-  int32 readBitrateKbits = 9 [json_name = "readBitrateKbits"];// 最近5秒读取码率
-  int32 writeBitrateKbits = 10 [json_name = "writeBitrateKbits"]; // 最近5秒写入码率
-}
-
-// 帧率数据结构
-message FrameData {
-  // Unix 时间戳（单位：秒），标记该帧统计的具体时间点
-  int64 unixSec = 1 [json_name = "unixSec"];
-  // 对应时间戳那一秒内的视频帧数（即该秒的 FPS 值）
-  int32 v = 2 [json_name = "v"];
-}
-
-// 服务器信息数据结构
-message LalServerData {
-  string serverId = 1 [json_name = "serverId"];         // 服务器ID
-  string binInfo = 2 [json_name = "binInfo"];           // 二进制版本信息
-  string lalVersion = 3 [json_name = "lalVersion"];     // LAL服务版本
-  string apiVersion = 4 [json_name = "apiVersion"];     // API接口版本
-  string notifyVersion = 5 [json_name = "notifyVersion"]; // 通知接口版本
-  string startTime = 6 [json_name = "startTime"];       // 服务启动时间（字符串格式）
 }
