@@ -17,7 +17,6 @@ import (
 const (
 	DefaultHeartbeatInterval      = 30 * time.Second
 	DefaultReconnectInterval      = 5 * time.Second
-	DefaultReconnectMaxRetries    = 0 // 0表示无限重连
 	DefaultDialTimeout            = 10 * time.Second
 	DefaultTokenRefreshInterval   = 30 * time.Minute // 默认token刷新间隔
 	DefaultAuthTimeout            = 5 * time.Second  // 默认认证超时时间
