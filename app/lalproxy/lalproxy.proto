@@ -235,8 +235,10 @@ message SessionInfo {
 
 // 帧率数据结构
 message FrameData {
-  int64 unixSec = 1 [json_name = "unixSec"];  // 时间戳（秒）
-  int32 v = 2 [json_name = "v"];              // 该秒的帧数
+  // Unix 时间戳（单位：秒），标记该帧统计的具体时间点
+  int64 unixSec = 1 [json_name = "unixSec"];
+  // 对应时间戳那一秒内的视频帧数（即该秒的 FPS 值）
+  int32 v = 2 [json_name = "v"];
 }
 
 // 服务器信息数据结构
