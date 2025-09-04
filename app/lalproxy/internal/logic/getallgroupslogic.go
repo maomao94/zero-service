@@ -2,13 +2,15 @@ package logic
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
+	"zero-service/common/lalx"
 
 	"zero-service/app/lalproxy/internal/svc"
 	"zero-service/app/lalproxy/lalproxy"
 
-	"github.com/golang/protobuf/jsonpb"
+	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -52,10 +54,33 @@ func (l *GetAllGroupsLogic) GetAllGroups(in *lalproxy.GetAllGroupsReq) (*lalprox
 		return nil, fmt.Errorf("读取响应体失败: %w", err)
 	}
 
-	result := &lalproxy.GetAllGroupsRes{}
-	if err := jsonpb.UnmarshalString(string(body), result); err != nil {
-		l.Logger.Errorf("解析所有分组响应失败: %v, 响应内容: %s", err, string(body))
-		return nil, fmt.Errorf("解析响应失败: %w", err)
+	// 解析JSON响应
+	var httpResp struct {
+		ErrorCode int              `json:"error_code"`
+		Desp      string           `json:"desp"`
+		Groups    []lalx.GroupData `json:"groups"`
 	}
-	return result, nil
+	if err := json.Unmarshal(body, &httpResp); err != nil {
+		l.Logger.Errorf("解析响应JSON失败: %v, 响应内容: %s", err, string(body))
+		return nil, fmt.Errorf("解析响应JSON失败: %w", err)
+	}
+
+	groups := make([]*lalproxy.GroupData, 0, len(httpResp.Groups))
+	// 遍历所有GroupData，转换为PB对象
+	for _, item := range httpResp.Groups {
+		v := &lalproxy.GroupData{}
+		err = copier.Copy(v, item)
+		if err != nil {
+			l.Logger.Errorf("转换GroupData失败: %v", err)
+			continue
+		}
+		groups = append(groups, v)
+	}
+	pbRes := &lalproxy.GetAllGroupsRes{
+		ErrorCode: int32(httpResp.ErrorCode),
+		Desp:      httpResp.Desp,
+		Groups:    groups,
+	}
+
+	return pbRes, nil
 }

@@ -2,14 +2,16 @@ package logic
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/url"
+	"zero-service/common/lalx"
 
 	"zero-service/app/lalproxy/internal/svc"
 	"zero-service/app/lalproxy/lalproxy"
 
-	"github.com/golang/protobuf/jsonpb"
+	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -58,10 +60,26 @@ func (l *GetGroupInfoLogic) GetGroupInfo(in *lalproxy.GetGroupInfoReq) (*lalprox
 		return nil, fmt.Errorf("读取响应体失败: %w", err)
 	}
 
-	result := &lalproxy.GetGroupInfoRes{}
-	if err := jsonpb.UnmarshalString(string(body), result); err != nil {
-		l.Logger.Errorf("解析所有分组响应失败: %v, 响应内容: %s", err, string(body))
-		return nil, fmt.Errorf("解析响应失败: %w", err)
+	// 解析JSON响应
+	var httpResp struct {
+		ErrorCode int            `json:"error_code"`
+		Desp      string         `json:"desp"`
+		Data      lalx.GroupData `json:"data"`
 	}
-	return result, nil
+	if err := json.Unmarshal(body, &httpResp); err != nil {
+		l.Logger.Errorf("解析响应JSON失败: %v, 响应内容: %s", err, string(body))
+		return nil, fmt.Errorf("解析响应JSON失败: %w", err)
+	}
+	data := &lalproxy.GroupData{}
+	err = copier.Copy(data, httpResp.Data)
+	if err != nil {
+		l.Logger.Errorf("转换数据结构失败: %v", err)
+		return nil, fmt.Errorf("转换数据结构失败: %w", err)
+	}
+	// LAL返回的错误通过响应结构体传递，不返回error
+	return &lalproxy.GetGroupInfoRes{
+		ErrorCode: int32(httpResp.ErrorCode),
+		Desp:      httpResp.Desp,
+		Data:      data,
+	}, nil
 }
