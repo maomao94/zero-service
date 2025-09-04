@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 
 	"zero-service/app/lalproxy/internal/svc"
 	"zero-service/app/lalproxy/lalproxy"
@@ -38,7 +39,7 @@ func (l *StartRelayPullLogic) StartRelayPull(in *lalproxy.StartRelayPullReq) (*l
 
 	type reqData struct {
 		Url                      string `json:"url"`
-		streamName               string `json:"stream_name"`
+		StreamName               string `json:"stream_name"`
 		PullTimeoutMs            int    `json:"pull_timeout_ms"`
 		PullRetryNum             int    `json:"pull_retry_num"`
 		AutoStopPullAfterNoOutMs int    `json:"auto_stop_pull_after_no_out_ms"`
@@ -47,14 +48,14 @@ func (l *StartRelayPullLogic) StartRelayPull(in *lalproxy.StartRelayPullReq) (*l
 
 	reqBody := reqData{
 		Url:                      in.Url,
-		streamName:               in.StreamName,
+		StreamName:               in.StreamName,
 		PullTimeoutMs:            int(in.PullTimeoutMs),
 		PullRetryNum:             int(in.PullRetryNum),
 		AutoStopPullAfterNoOutMs: int(in.AutoStopPullAfterNoOutMs),
 		RtspMode:                 string(in.RtspMode),
 	}
 	// 调用LAL HTTP API（POST请求）
-	resp, err := l.svcCtx.LalClient.Do(l.ctx, "POST", fullUrl, reqBody)
+	resp, err := l.svcCtx.LalClient.Do(l.ctx, http.MethodPost, fullUrl, reqBody)
 	if err != nil {
 		l.Logger.Errorf("调用LAL API失败: %v, URL: %s", err, fullUrl)
 		return nil, fmt.Errorf("调用LAL API失败: %w", err)

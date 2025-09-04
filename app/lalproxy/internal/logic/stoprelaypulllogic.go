@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 
 	"zero-service/app/lalproxy/internal/svc"
@@ -40,7 +41,7 @@ func (l *StopRelayPullLogic) StopRelayPull(in *lalproxy.StopRelayPullReq) (*lalp
 	fullUrl := fmt.Sprintf("%s/api/ctrl/stop_relay_pull?%s", l.svcCtx.LalBaseUrl, queryParams.Encode())
 
 	// 调用LAL HTTP API
-	resp, err := l.svcCtx.LalClient.Do(l.ctx, "GET", fullUrl, nil)
+	resp, err := l.svcCtx.LalClient.Do(l.ctx, http.MethodGet, fullUrl, nil)
 	if err != nil {
 		l.Logger.Errorf("调用LAL API失败: %v, URL: %s", err, fullUrl)
 		return nil, fmt.Errorf("调用LAL API失败: %w", err)

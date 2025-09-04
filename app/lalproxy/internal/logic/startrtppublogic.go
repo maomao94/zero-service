@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 
 	"zero-service/app/lalproxy/internal/svc"
 	"zero-service/app/lalproxy/lalproxy"
@@ -40,17 +41,17 @@ func (l *StartRtpPubLogic) StartRtpPub(in *lalproxy.StartRtpPubReq) (*lalproxy.S
 	fullUrl := fmt.Sprintf("%s/api/ctrl/start_rtp_pub", l.svcCtx.LalBaseUrl)
 
 	type reqData struct {
-		streamName string `json:"stream_name"`
-		port       string `json:"port"`
+		StreamName string `json:"stream_name"`
+		Port       string `json:"port"`
 	}
 
 	reqBody := reqData{
-		streamName: in.StreamName,
-		port:       in.StreamName,
+		StreamName: in.StreamName,
+		Port:       in.StreamName,
 	}
 
 	// 调用LAL HTTP API（POST请求）
-	resp, err := l.svcCtx.LalClient.Do(l.ctx, "POST", fullUrl, reqBody)
+	resp, err := l.svcCtx.LalClient.Do(l.ctx, http.MethodPost, fullUrl, reqBody)
 	if err != nil {
 		l.Logger.Errorf("调用LAL API失败: %v, URL: %s", err, fullUrl)
 		return nil, fmt.Errorf("调用LAL API失败: %w", err)

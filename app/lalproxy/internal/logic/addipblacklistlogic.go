@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/http"
 
 	"zero-service/app/lalproxy/internal/svc"
 	"zero-service/app/lalproxy/lalproxy"
@@ -41,17 +42,17 @@ func (l *AddIpBlacklistLogic) AddIpBlacklist(in *lalproxy.AddIpBlacklistReq) (*l
 	fullUrl := fmt.Sprintf("%s/api/ctrl/add_ip_blacklist", l.svcCtx.LalBaseUrl)
 
 	type reqData struct {
-		ip          string `json:"ip"`
-		durationSec int    `json:"duration_sec"`
+		Ip          string `json:"ip"`
+		DurationSec int    `json:"duration_sec"`
 	}
 
 	reqBody := reqData{
-		ip:          in.Ip,
-		durationSec: int(in.DurationSec),
+		Ip:          in.Ip,
+		DurationSec: int(in.DurationSec),
 	}
 
 	// 调用LAL HTTP API（POST请求）
-	resp, err := l.svcCtx.LalClient.Do(l.ctx, "POST", fullUrl, reqBody)
+	resp, err := l.svcCtx.LalClient.Do(l.ctx, http.MethodPost, fullUrl, reqBody)
 	if err != nil {
 		l.Logger.Errorf("调用LAL API失败: %v, URL: %s", err, fullUrl)
 		return nil, fmt.Errorf("调用LAL API失败: %w", err)

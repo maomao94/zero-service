@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 
 	"zero-service/app/lalproxy/internal/svc"
 	"zero-service/app/lalproxy/lalproxy"
@@ -37,17 +38,17 @@ func (l *KickSessionLogic) KickSession(in *lalproxy.KickSessionReq) (*lalproxy.K
 	fullUrl := fmt.Sprintf("%s/api/ctrl/kick_session", l.svcCtx.LalBaseUrl)
 
 	type reqData struct {
-		streamName string `json:"stream_name"`
-		sessionId  string `json:"session_id"`
+		StreamName string `json:"stream_name"`
+		SessionId  string `json:"session_id"`
 	}
 
 	reqBody := reqData{
-		streamName: in.StreamName,
-		sessionId:  in.SessionId,
+		StreamName: in.StreamName,
+		SessionId:  in.SessionId,
 	}
 
 	// 调用LAL HTTP API（POST请求）
-	resp, err := l.svcCtx.LalClient.Do(l.ctx, "POST", fullUrl, reqBody)
+	resp, err := l.svcCtx.LalClient.Do(l.ctx, http.MethodPost, fullUrl, reqBody)
 	if err != nil {
 		l.Logger.Errorf("调用LAL API失败: %v, URL: %s", err, fullUrl)
 		return nil, fmt.Errorf("调用LAL API失败: %w", err)

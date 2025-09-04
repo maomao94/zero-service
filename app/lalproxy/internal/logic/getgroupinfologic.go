@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"zero-service/common/lalx"
 
@@ -40,7 +41,7 @@ func (l *GetGroupInfoLogic) GetGroupInfo(in *lalproxy.GetGroupInfoReq) (*lalprox
 	queryParams.Add("stream_name", in.StreamName)
 	fullUrl := fmt.Sprintf("%s/api/stat/group?%s", l.svcCtx.LalBaseUrl, queryParams.Encode())
 	// 调用LAL HTTP API，失败直接返回error
-	resp, err := l.svcCtx.LalClient.Do(l.ctx, "GET", fullUrl, nil)
+	resp, err := l.svcCtx.LalClient.Do(l.ctx, http.MethodGet, fullUrl, nil)
 	if err != nil {
 		l.Logger.Errorf("调用LAL API失败: %v, URL: %s", err, fullUrl)
 		return nil, fmt.Errorf("调用LAL API失败: %w", err)
