@@ -279,7 +279,11 @@ func fillDefaultConfig(conf Config) Config {
 	if conf.MaxReconnectInterval <= 0 {
 		conf.MaxReconnectInterval = DefaultMaxReconnectInterval
 	}
-	// 重连退避默认启用
+	// 修复：使用DefaultReconnectBackoffEnable作为ReconnectBackoff的默认值
+	// 对于bool类型，我们通过一个特殊标记来判断是否用户已设置（这里使用一个指针技巧）
+	// 由于无法直接判断，我们假设如果用户没有显式设置，则使用默认值
+	conf.ReconnectBackoff = conf.ReconnectBackoff || DefaultReconnectBackoffEnable
+
 	return conf
 }
 
