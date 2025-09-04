@@ -54,93 +54,79 @@ message PubSessionInfo {
   // 累计发送数据大小（从推流开始计算，单位字节，必返）
   int64 wroteBytesSum = 7 [json_name = "wroteBytesSum"];
   // 最近5秒总码率（单位kbit/s，对PUB类型等价于read_bitrate_kbits，必返）
-  int32 bitrateKbits = 8 [json_name = "bitrate_kbits"];
+  int32 bitrateKbits = 8 [json_name = "bitrateKbits"];
   // 最近5秒读取数据码率（单位kbit/s，必返）
-  int32 readBitrateKbits = 9 [json_name = "read_bitrate_kbits"];
+  int32 readBitrateKbits = 9 [json_name = "readBitrateKbits"];
   // 最近5秒发送数据码率（单位kbit/s，必返）
-  int32 writeBitrateKbits = 10 [json_name = "write_bitrate_kbits"];
+  int32 writeBitrateKbits = 10 [json_name = "writeBitrateKbits"];
 }
 
 // 订阅者会话信息：对应接口返回的 data.subs 数组元素（拉流的详情）
 message SubSessionInfo {
   // 会话ID（全局唯一标识，如"FLVSUB1"，必返）
-  string sessionId = 1 [json_name = "session_id"];
+  string sessionId = 1 [json_name = "sessionId"];
   // 拉流协议（取值："RTMP"|"FLV"|"TS"，必返）
   string protocol = 2 [json_name = "protocol"];
   // 基础类型（固定为"SUB"，标识订阅者角色，必返）
-  string baseType = 3 [json_name = "base_type"];
+  string baseType = 3 [json_name = "baseType"];
   // 拉流开始时间（格式化字符串，如"2020-10-11 19:19:21.724"，必返）
-  string startTime = 4 [json_name = "start_time"];
+  string startTime = 4 [json_name = "startTime"];
   // 对端地址（客户端IP:端口，如"127.0.0.1:61785"，必返）
-  string remoteAddr = 5 [json_name = "remote_addr"];
+  string remoteAddr = 5 [json_name = "remoteAddr"];
   // 累计读取数据大小（从拉流开始计算，单位字节，必返）
-  int64 readBytesSum = 6 [json_name = "read_bytes_sum"];
+  int64 readBytesSum = 6 [json_name = "readBytesSum"];
   // 累计发送数据大小（从拉流开始计算，单位字节，必返）
-  int64 wroteBytesSum = 7 [json_name = "wrote_bytes_sum"];
+  int64 wroteBytesSum = 7 [json_name = "wroteBytesSum"];
   // 最近5秒总码率（单位kbit/s，对SUB类型等价于write_bitrate_kbits，必返）
-  int32 bitrateKbits = 8 [json_name = "bitrate_kbits"];
+  int32 bitrateKbits = 8 [json_name = "bitrateKbits"];
   // 最近5秒读取数据码率（单位kbit/s，必返）
-  int32 read_bitrate_kbits = 9 [json_name = "read_bitrate_kbits"];
+  int32 readBitrateKbits = 9 [json_name = "readBitrateKbits"];
   // 最近5秒发送数据码率（单位kbit/s，必返）
-  int32 write_bitrate_kbits = 10 [json_name = "write_bitrate_kbits"];
+  int32 writeBitrateKbits = 10 [json_name = "writeBitrateKbits"];
 }
 
 // 中继拉流会话信息：对应接口返回的 data.pull（从其他节点拉流回源的详情）
 message PullSessionInfo {
   // 会话ID（全局唯一标识，如"RTMPPULL1"，必返）
-  string session_id = 1 [json_name = "session_id"];
+  string sessionId = 1 [json_name = "sessionId"];
   // 拉流协议（取值："RTMP"|"RTSP"，必返）
   string protocol = 2 [json_name = "protocol"];
   // 基础类型（固定为"PULL"，标识中继拉流角色，必返）
-  string base_type = 3 [json_name = "base_type"];
+  string baseType = 3 [json_name = "baseType"];
   // 拉流开始时间（格式化字符串，如"2020-10-11 19:20:00.123"，必返）
-  string start_time = 4 [json_name = "start_time"];
+  string startTime = 4 [json_name = "startTime"];
   // 对端地址（源节点IP:端口，如"192.168.1.10:1935"，必返）
-  string remote_addr = 5 [json_name = "remote_addr"];
+  string remoteAddr = 5 [json_name = "remoteAddr"];
   // 累计读取数据大小（从拉流开始计算，单位字节，必返）
-  int64 read_bytes_sum = 6 [json_name = "read_bytes_sum"];
+  int64 readBytesSum = 6 [json_name = "readBytesSum"];
   // 累计发送数据大小（从拉流开始计算，单位字节，必返）
-  int64 wrote_bytes_sum = 7 [json_name = "wrote_bytes_sum"];
+  int64 wroteBytesSum = 7 [json_name = "wroteBytesSum"];
   // 最近5秒总码率（单位kbit/s，对PULL类型等价于read_bitrate_kbits，必返）
-  int32 bitrate_kbits = 8 [json_name = "bitrate_kbits"];
+  int32 bitrateKbits = 8 [json_name = "bitrateKbits"];
   // 最近5秒读取数据码率（单位kbit/s，必返）
-  int32 read_bitrate_kbits = 9 [json_name = "read_bitrate_kbits"];
+  int32 readBitrateKbits = 9 [json_name = "readBitrateKbits"];
   // 最近5秒发送数据码率（单位kbit/s，必返）
-  int32 write_bitrate_kbits = 10 [json_name = "write_bitrate_kbits"];
+  int32 writeBitrateKbits = 10 [json_name = "writeBitrateKbits"];
 }
 
 // 中继推流会话信息：对应接口返回的 data.pushs（主动外连转推，暂不提供数据）
 message PushSessionInfo {
-  // 会话ID（全局唯一标识，暂为空，待后续开放）
-  string session_id = 1 [json_name = "session_id"];
-  // 推流协议（暂为空，待后续开放）
-  string protocol = 2 [json_name = "protocol"];
-  // 基础类型（固定为"PUSH"，标识中继推流角色，待开放）
-  string base_type = 3 [json_name = "base_type"];
-  // 其他字段同PullSessionInfo，暂不填充数据
-  string start_time = 4 [json_name = "start_time"];
-  string remote_addr = 5 [json_name = "remote_addr"];
-  int64 read_bytes_sum = 6 [json_name = "read_bytes_sum"];
-  int64 wrote_bytes_sum = 7 [json_name = "wrote_bytes_sum"];
-  int32 bitrate_kbits = 8 [json_name = "bitrate_kbits"];
-  int32 read_bitrate_kbits = 9 [json_name = "read_bitrate_kbits"];
-  int32 write_bitrate_kbits = 10 [json_name = "write_bitrate_kbits"];
 }
 
 // 分组核心数据：对应接口返回的 data 字段（流的完整信息聚合）
 message GroupData {
   // 流名称（如"test110"，必返）
-  string stream_name = 1 [json_name = "stream_name"];
+  string streamName = 1 [json_name = "streamName"];
   // 应用名（如"live"，必返）
-  string app_name = 2 [json_name = "app_name"];
+  string appName = 2 [json_name = "appName"];
   // 音频编码格式（如"AAC"，必返）
-  string audio_codec = 3 [json_name = "audio_codec"];
+  string audioCodec = 3 [json_name = "audioCodec"];
   // 视频编码格式（如"H264"|"H265"，必返）
-  string video_codec = 4 [json_name = "video_codec"];
+  string videoCodec = 4 [json_name = "videoCodec"];
   // 视频宽度（像素，如640，必返）
-  int32 video_width = 5 [json_name = "video_width"];
+  int32 videoWidth = 5 [json_name = "videoWidth"];
   // 视频高度（像素，如360，必返）
-  int32 video_height = 6 [json_name = "video_height"];
+  int32 videoHeight = 6 [json_name = "videoHeight"];
   // 发布者会话信息（推流详情，无推流时为nil，必返）
   PubSessionInfo pub = 7 [json_name = "pub"];
   // 订阅者会话列表（拉流详情，无拉流时为空数组，必返）
@@ -150,23 +136,23 @@ message GroupData {
   // 中继推流会话列表（外连转推，暂为空数组，必返）
   repeated PushSessionInfo pushs = 10 [json_name = "pushs"];
   // 最近32秒视频帧率统计（每秒视频帧数，必返）
-  repeated FrameData in_frame_per_sec = 11 [json_name = "in_frame_per_sec"];
+  repeated FrameData inFramePerSec = 11 [json_name = "inFramePerSec"];
 }
 
 // 服务器基础信息：对应 /api/stat/lal_info 接口返回的「服务器基础信息」，与Go结构体 LalServerData 完全对齐
 message LalServerData {
   // 服务器唯一 ID
-  string server_id = 1 [json_name = "server_id"];
+  string serverId = 1 [json_name = "serverId"];
   // 二进制文件信息
-  string bin_info = 2 [json_name = "bin_info"];
+  string binInfo = 2 [json_name = "binInfo"];
   // lal可执行文件版本信息
-  string lal_version = 3 [json_name = "lal_version"];
+  string lalVersion = 3 [json_name = "lalVersion"];
   // HTTP API接口版本信息
-  string api_version = 4 [json_name = "api_version"];
+  string apiVersion = 4 [json_name = "apiVersion"];
   // HTTP Notify版本信息
-  string notify_version = 5 [json_name = "notify_version"];
+  string notifyVersion = 5 [json_name = "notifyVersion"];
   // lal进程启动时间
-  string start_time = 6 [json_name = "start_time"];
+  string startTime = 6 [json_name = "startTime"];
 }
 
 // GetGroupInfo请求：对应/api/stat/group接口，查询指定流名称的group信息
