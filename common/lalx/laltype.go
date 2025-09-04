@@ -68,12 +68,11 @@ type FrameData struct {
 // 修正 JSON 标签错误（如 server_Id→server_id），补充运行时长、负载等关键字段
 type LalServerData struct {
 	// 版本信息（必返）
-	ServerId      string `json:"server_id"`      // 服务器唯一 ID（修正原 server_Id 的大小写错误）
-	BinInfo       string `json:"bin_info"`       // 二进制文件信息（如 "lal_linux_amd64_v1.6.0"，必返）
-	LalVersion    string `json:"lal_version"`    // lal 版本（如 "v1.6.0"，必返）
-	ApiVersion    string `json:"api_version"`    // API 版本（如 "v1"，必返）
-	NotifyVersion string `json:"notify_version"` // 通知版本（如 "v1"，必返）
-
+	ServerId      string `json:"server_id"`      // 服务器唯一 ID
+	BinInfo       string `json:"bin_info"`       // 二进制文件信息
+	LalVersion    string `json:"lal_version"`    // lal可执行文件版本信息
+	ApiVersion    string `json:"api_version"`    // HTTP API接口版本信息
+	NotifyVersion string `json:"notify_version"` // HTTP Notify版本信息
 	// 时间信息（必返）
-	StartTime string `json:"start_time"` // 服务启动时间（格式化字符串，如 "2024-09-04 10:00:00"）
+	StartTime string `json:"start_time"` // lal进程启动时间
 }

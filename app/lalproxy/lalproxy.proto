@@ -103,28 +103,20 @@ message GroupData {
   int64 createTimeMs = 10 [json_name = "createTimeMs"];
 }
 
-// 服务器基础信息：对应GetLalInfoRes.data，描述lalserver的系统与运行参数
+// 服务器基础信息：对应 /api/stat/lal_info 接口返回的「服务器基础信息」，与Go结构体 LalServerData 完全对齐
 message LalServerData {
-  // 服务版本（lalserver的版本号，如"v1.5.0"；用于确认服务版本兼容性）
-  string version = 1 [json_name = "version"];
-  // 启动时间（服务启动的时间戳，单位毫秒；如1716000000000）
-  int64 startTimeMs = 2 [json_name = "startTimeMs"];
-  // 运行时长（服务已运行的时间，单位秒；如86400表示已运行1天）
-  int32 runSec = 3 [json_name = "runSec"];
-  // 监听地址列表（服务所有监听的网络地址，如["rtmp://0.0.0.0:1935", "http://0.0.0.0:8080"]）
-  repeated string listenAddrs = 4 [json_name = "listenAddrs"];
-  // 当前活跃分组数（服务中正在传输的流分组数量；反映服务负载情况）
-  int32 activeGroupCount = 5 [json_name = "activeGroupCount"];
-  // 当前总会话数（服务中所有活跃的流媒体会话数量；反映服务并发量）
-  int32 totalSessionCount = 6 [json_name = "totalSessionCount"];
-  // Go语言版本（服务编译使用的Go版本，如"go1.21.0"；用于排查语言相关问题）
-  string goVersion = 7 [json_name = "goVersion"];
-  // 操作系统架构（服务运行的系统架构，如"linux/amd64"、"darwin/arm64"）
-  string osArch = 8 [json_name = "osArch"];
-  // CPU核心数（服务运行环境的CPU核心数量；如8）
-  int32 cpuCores = 9 [json_name = "cpuCores"];
-  // 内存使用量（服务当前占用的内存，单位字节；如1073741824表示1GB）
-  int64 memoryUsedBytes = 10 [json_name = "memoryUsedBytes"];
+  // 服务器唯一 ID
+  string server_id = 1 [json_name = "server_id"];
+  // 二进制文件信息
+  string bin_info = 2 [json_name = "bin_info"];
+  // lal可执行文件版本信息
+  string lal_version = 3 [json_name = "lal_version"];
+  // HTTP API接口版本信息
+  string api_version = 4 [json_name = "api_version"];
+  // HTTP Notify版本信息
+  string notify_version = 5 [json_name = "notify_version"];
+  // lal进程启动时间
+  string start_time = 6 [json_name = "start_time"];
 }
 
 // GetGroupInfo请求：对应/api/stat/group接口，查询指定流名称的group信息
