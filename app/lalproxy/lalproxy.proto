@@ -206,32 +206,37 @@ message AddIpBlacklistRes {
 
 // 流分组数据结构
 message GroupData {
-  // 流名称
-  string streamName = 1 [json_name = "streamName"];
-  // 分组创建时间，单位：毫秒时间戳
-  int64 createTimeMs = 2 [json_name = "createTimeMs"];
-  // 发布者会话信息
-  SessionInfo publisher = 3 [json_name = "publisher"];
-  // 订阅者会话列表
-  repeated SessionInfo subscribers = 4 [json_name = "subscribers"];
-  // 拉流会话列表
-  repeated SessionInfo pullers = 5 [json_name = "pullers"];
+  string streamName = 1 [json_name = "streamName"];      // 流名称
+  string appName = 2 [json_name = "appName"];            // 应用名称
+  string audioCodec = 3 [json_name = "audioCodec"];      // 音频编码格式
+  string videoCodec = 4 [json_name = "videoCodec"];      // 视频编码格式
+  int32 videoWidth = 5 [json_name = "videoWidth"];       // 视频宽度
+  int32 videoHeight = 6 [json_name = "videoHeight"];     // 视频高度
+  SessionInfo pub = 7 [json_name = "pub"];               // 发布者信息
+  repeated SessionInfo subs = 8 [json_name = "subs"];    // 订阅者列表
+  SessionInfo pull = 9 [json_name = "pull"];             // 拉流回源信息
+  repeated bytes pushs = 10 [json_name = "pushs"];       // 外连转推信息
+  repeated FrameData inFramePerSec = 11 [json_name = "inFramePerSec"]; // 帧率数据
 }
 
 // 会话信息数据结构
 message SessionInfo {
-  // 会话ID
-  string sessionId = 1 [json_name = "sessionId"];
-  // 会话类型（"pub"发布者,"sub"订阅者,"pull"拉流者）
-  string type = 2 [json_name = "type"];
-  // 客户端IP地址
-  string clientIp = 3 [json_name = "clientIp"];
-  // 会话创建时间，单位：毫秒时间戳
-  int64 createTimeMs = 4 [json_name = "createTimeMs"];
-  // 数据发送字节数
-  int64 sendBytes = 5 [json_name = "sendBytes"];
-  // 数据接收字节数
-  int64 recvBytes = 6 [json_name = "recvBytes"];
+  string sessionId = 1 [json_name = "sessionId"];             // 会话ID
+  string protocol = 2 [json_name = "protocol"];               // 协议类型（RTMP/FLV等）
+  string baseType = 3 [json_name = "baseType"];               // 基础类型（PUB/SUB/PULL）
+  string startTime = 4 [json_name = "startTime"];             // 会话开始时间（字符串）
+  string remoteAddr = 5 [json_name = "remoteAddr"];           // 对端地址
+  int64 readBytesSum = 6 [json_name = "readBytesSum"];        // 累计读取字节数
+  int64 wroteBytesSum = 7 [json_name = "wroteBytesSum"];      // 累计写入字节数
+  int32 bitrateKbits = 8 [json_name = "bitrateKbits"];        // 最近5秒码率（kbit/s）
+  int32 readBitrateKbits = 9 [json_name = "readBitrateKbits"];// 最近5秒读取码率
+  int32 writeBitrateKbits = 10 [json_name = "writeBitrateKbits"]; // 最近5秒写入码率
+}
+
+// 帧率数据结构
+message FrameData {
+  int64 unixSec = 1 [json_name = "unixSec"];  // 时间戳（秒）
+  int32 v = 2 [json_name = "v"];              // 该秒的帧数
 }
 
 // 服务器信息数据结构
