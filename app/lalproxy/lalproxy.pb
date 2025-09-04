@@ -150,7 +150,7 @@ streamName"A
 AddIpBlacklistRes
 	errorCode (R	errorCode
 desp (	Rdesp2ý
-LalProxyD
+lalProxyD
 GetGroupInfo.Lalproxy.GetGroupInfoReq.Lalproxy.GetGroupInfoResD
 GetAllGroups.Lalproxy.GetAllGroupsReq.Lalproxy.GetAllGroupsRes>
 

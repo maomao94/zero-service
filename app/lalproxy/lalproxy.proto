@@ -7,8 +7,8 @@ option java_multiple_files = true;
 option java_package = "com.github.lalproxy.grpc";
 option java_outer_classname = "LalProxyProto";
 
-// LalProxy服务：封装lalserver全部HTTP API能力，包含查询类（/api/stat）和控制类（/api/ctrl）接口
-service LalProxy {
+// lalProxy：封装lalserver全部HTTP API能力，包含查询类（/api/stat）和控制类（/api/ctrl）接口
+service lalProxy {
   // 查询指定group信息（对应HTTP API：/api/stat/group，GET请求+URL参数）
   rpc GetGroupInfo (GetGroupInfoReq) returns (GetGroupInfoRes);
   // 查询所有group信息（对应HTTP API：/api/stat/all_group，GET请求，无参数）

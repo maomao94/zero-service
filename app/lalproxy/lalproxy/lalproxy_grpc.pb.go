@@ -19,22 +19,22 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	LalProxy_GetGroupInfo_FullMethodName   = "/Lalproxy.LalProxy/GetGroupInfo"
-	LalProxy_GetAllGroups_FullMethodName   = "/Lalproxy.LalProxy/GetAllGroups"
-	LalProxy_GetLalInfo_FullMethodName     = "/Lalproxy.LalProxy/GetLalInfo"
-	LalProxy_StartRelayPull_FullMethodName = "/Lalproxy.LalProxy/StartRelayPull"
-	LalProxy_StopRelayPull_FullMethodName  = "/Lalproxy.LalProxy/StopRelayPull"
-	LalProxy_KickSession_FullMethodName    = "/Lalproxy.LalProxy/KickSession"
-	LalProxy_StartRtpPub_FullMethodName    = "/Lalproxy.LalProxy/StartRtpPub"
-	LalProxy_StopRtpPub_FullMethodName     = "/Lalproxy.LalProxy/StopRtpPub"
-	LalProxy_AddIpBlacklist_FullMethodName = "/Lalproxy.LalProxy/AddIpBlacklist"
+	LalProxy_GetGroupInfo_FullMethodName   = "/Lalproxy.lalProxy/GetGroupInfo"
+	LalProxy_GetAllGroups_FullMethodName   = "/Lalproxy.lalProxy/GetAllGroups"
+	LalProxy_GetLalInfo_FullMethodName     = "/Lalproxy.lalProxy/GetLalInfo"
+	LalProxy_StartRelayPull_FullMethodName = "/Lalproxy.lalProxy/StartRelayPull"
+	LalProxy_StopRelayPull_FullMethodName  = "/Lalproxy.lalProxy/StopRelayPull"
+	LalProxy_KickSession_FullMethodName    = "/Lalproxy.lalProxy/KickSession"
+	LalProxy_StartRtpPub_FullMethodName    = "/Lalproxy.lalProxy/StartRtpPub"
+	LalProxy_StopRtpPub_FullMethodName     = "/Lalproxy.lalProxy/StopRtpPub"
+	LalProxy_AddIpBlacklist_FullMethodName = "/Lalproxy.lalProxy/AddIpBlacklist"
 )
 
 // LalProxyClient is the client API for LalProxy service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// LalProxy服务：封装lalserver全部HTTP API能力，包含查询类（/api/stat）和控制类（/api/ctrl）接口
+// lalProxy：封装lalserver全部HTTP API能力，包含查询类（/api/stat）和控制类（/api/ctrl）接口
 type LalProxyClient interface {
 	// 查询指定group信息（对应HTTP API：/api/stat/group，GET请求+URL参数）
 	GetGroupInfo(ctx context.Context, in *GetGroupInfoReq, opts ...grpc.CallOption) (*GetGroupInfoRes, error)
@@ -158,7 +158,7 @@ func (c *lalProxyClient) AddIpBlacklist(ctx context.Context, in *AddIpBlacklistR
 // All implementations must embed UnimplementedLalProxyServer
 // for forward compatibility.
 //
-// LalProxy服务：封装lalserver全部HTTP API能力，包含查询类（/api/stat）和控制类（/api/ctrl）接口
+// lalProxy：封装lalserver全部HTTP API能力，包含查询类（/api/stat）和控制类（/api/ctrl）接口
 type LalProxyServer interface {
 	// 查询指定group信息（对应HTTP API：/api/stat/group，GET请求+URL参数）
 	GetGroupInfo(context.Context, *GetGroupInfoReq) (*GetGroupInfoRes, error)
@@ -402,7 +402,7 @@ func _LalProxy_AddIpBlacklist_Handler(srv interface{}, ctx context.Context, dec 
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var LalProxy_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "Lalproxy.LalProxy",
+	ServiceName: "Lalproxy.lalProxy",
 	HandlerType: (*LalProxyServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

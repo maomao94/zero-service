@@ -1910,7 +1910,7 @@ const file_lalproxy_proto_rawDesc = "" +
 	"\x11AddIpBlacklistRes\x12\x1c\n" +
 	"\terrorCode\x18\x01 \x01(\x05R\terrorCode\x12\x12\n" +
 	"\x04desp\x18\x02 \x01(\tR\x04desp2\xfd\x04\n" +
-	"\bLalProxy\x12D\n" +
+	"\blalProxy\x12D\n" +
 	"\fGetGroupInfo\x12\x19.Lalproxy.GetGroupInfoReq\x1a\x19.Lalproxy.GetGroupInfoRes\x12D\n" +
 	"\fGetAllGroups\x12\x19.Lalproxy.GetAllGroupsReq\x1a\x19.Lalproxy.GetAllGroupsRes\x12>\n" +
 	"\n" +
@@ -1974,24 +1974,24 @@ var file_lalproxy_proto_depIdxs = []int32{
 	5,  // 5: Lalproxy.GetGroupInfoRes.data:type_name -> Lalproxy.GroupData
 	5,  // 6: Lalproxy.GetAllGroupsRes.groups:type_name -> Lalproxy.GroupData
 	6,  // 7: Lalproxy.GetLalInfoRes.data:type_name -> Lalproxy.LalServerData
-	7,  // 8: Lalproxy.LalProxy.GetGroupInfo:input_type -> Lalproxy.GetGroupInfoReq
-	9,  // 9: Lalproxy.LalProxy.GetAllGroups:input_type -> Lalproxy.GetAllGroupsReq
-	11, // 10: Lalproxy.LalProxy.GetLalInfo:input_type -> Lalproxy.GetLalInfoReq
-	13, // 11: Lalproxy.LalProxy.StartRelayPull:input_type -> Lalproxy.StartRelayPullReq
-	15, // 12: Lalproxy.LalProxy.StopRelayPull:input_type -> Lalproxy.StopRelayPullReq
-	17, // 13: Lalproxy.LalProxy.KickSession:input_type -> Lalproxy.KickSessionReq
-	19, // 14: Lalproxy.LalProxy.StartRtpPub:input_type -> Lalproxy.StartRtpPubReq
-	21, // 15: Lalproxy.LalProxy.StopRtpPub:input_type -> Lalproxy.StopRtpPubReq
-	23, // 16: Lalproxy.LalProxy.AddIpBlacklist:input_type -> Lalproxy.AddIpBlacklistReq
-	8,  // 17: Lalproxy.LalProxy.GetGroupInfo:output_type -> Lalproxy.GetGroupInfoRes
-	10, // 18: Lalproxy.LalProxy.GetAllGroups:output_type -> Lalproxy.GetAllGroupsRes
-	12, // 19: Lalproxy.LalProxy.GetLalInfo:output_type -> Lalproxy.GetLalInfoRes
-	14, // 20: Lalproxy.LalProxy.StartRelayPull:output_type -> Lalproxy.StartRelayPullRes
-	16, // 21: Lalproxy.LalProxy.StopRelayPull:output_type -> Lalproxy.StopRelayPullRes
-	18, // 22: Lalproxy.LalProxy.KickSession:output_type -> Lalproxy.KickSessionRes
-	20, // 23: Lalproxy.LalProxy.StartRtpPub:output_type -> Lalproxy.StartRtpPubRes
-	22, // 24: Lalproxy.LalProxy.StopRtpPub:output_type -> Lalproxy.StopRtpPubRes
-	24, // 25: Lalproxy.LalProxy.AddIpBlacklist:output_type -> Lalproxy.AddIpBlacklistRes
+	7,  // 8: Lalproxy.lalProxy.GetGroupInfo:input_type -> Lalproxy.GetGroupInfoReq
+	9,  // 9: Lalproxy.lalProxy.GetAllGroups:input_type -> Lalproxy.GetAllGroupsReq
+	11, // 10: Lalproxy.lalProxy.GetLalInfo:input_type -> Lalproxy.GetLalInfoReq
+	13, // 11: Lalproxy.lalProxy.StartRelayPull:input_type -> Lalproxy.StartRelayPullReq
+	15, // 12: Lalproxy.lalProxy.StopRelayPull:input_type -> Lalproxy.StopRelayPullReq
+	17, // 13: Lalproxy.lalProxy.KickSession:input_type -> Lalproxy.KickSessionReq
+	19, // 14: Lalproxy.lalProxy.StartRtpPub:input_type -> Lalproxy.StartRtpPubReq
+	21, // 15: Lalproxy.lalProxy.StopRtpPub:input_type -> Lalproxy.StopRtpPubReq
+	23, // 16: Lalproxy.lalProxy.AddIpBlacklist:input_type -> Lalproxy.AddIpBlacklistReq
+	8,  // 17: Lalproxy.lalProxy.GetGroupInfo:output_type -> Lalproxy.GetGroupInfoRes
+	10, // 18: Lalproxy.lalProxy.GetAllGroups:output_type -> Lalproxy.GetAllGroupsRes
+	12, // 19: Lalproxy.lalProxy.GetLalInfo:output_type -> Lalproxy.GetLalInfoRes
+	14, // 20: Lalproxy.lalProxy.StartRelayPull:output_type -> Lalproxy.StartRelayPullRes
+	16, // 21: Lalproxy.lalProxy.StopRelayPull:output_type -> Lalproxy.StopRelayPullRes
+	18, // 22: Lalproxy.lalProxy.KickSession:output_type -> Lalproxy.KickSessionRes
+	20, // 23: Lalproxy.lalProxy.StartRtpPub:output_type -> Lalproxy.StartRtpPubRes
+	22, // 24: Lalproxy.lalProxy.StopRtpPub:output_type -> Lalproxy.StopRtpPubRes
+	24, // 25: Lalproxy.lalProxy.AddIpBlacklist:output_type -> Lalproxy.AddIpBlacklistRes
 	17, // [17:26] is the sub-list for method output_type
 	8,  // [8:17] is the sub-list for method input_type
 	8,  // [8:8] is the sub-list for extension type_name
