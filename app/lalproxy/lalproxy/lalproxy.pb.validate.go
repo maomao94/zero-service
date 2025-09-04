@@ -2143,8 +2143,6 @@ func (m *KickSessionReq) validate(all bool) error {
 
 	// no validation rules for SessionId
 
-	// no validation rules for SessionType
-
 	if len(errors) > 0 {
 		return KickSessionReqMultiError(errors)
 	}
@@ -2564,8 +2562,6 @@ func (m *StopRtpPubReq) validate(all bool) error {
 	var errors []error
 
 	// no validation rules for StreamName
-
-	// no validation rules for Port
 
 	if len(errors) > 0 {
 		return StopRtpPubReqMultiError(errors)

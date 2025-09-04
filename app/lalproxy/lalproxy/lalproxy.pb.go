@@ -1304,9 +1304,7 @@ type KickSessionReq struct {
 	// 流名称（必填，JSON Body参数；会话所属的group，如"test110"；缺失时返回error_code=1002）
 	StreamName string `protobuf:"bytes,1,opt,name=streamName,proto3" json:"streamName,omitempty"`
 	// 会话ID（必填，JSON Body参数；唯一标识要踢出的会话，如"FLVSUB1"；需从查询接口获取，缺失时返回error_code=1002）
-	SessionId string `protobuf:"bytes,2,opt,name=sessionId,proto3" json:"sessionId,omitempty"`
-	// 会话类型（选填，JSON Body参数；过滤会话角色，如"pub"=发布者，"sub"=订阅者，"pull"=拉流者；不填则匹配所有类型）
-	SessionType   string `protobuf:"bytes,3,opt,name=sessionType,proto3" json:"sessionType,omitempty"`
+	SessionId     string `protobuf:"bytes,2,opt,name=sessionId,proto3" json:"sessionId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1351,13 +1349,6 @@ func (x *KickSessionReq) GetStreamName() string {
 func (x *KickSessionReq) GetSessionId() string {
 	if x != nil {
 		return x.SessionId
-	}
-	return ""
-}
-
-func (x *KickSessionReq) GetSessionType() string {
-	if x != nil {
-		return x.SessionType
 	}
 	return ""
 }
@@ -1558,9 +1549,7 @@ func (x *StartRtpPubRes) GetDesp() string {
 type StopRtpPubReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 流名称（选填，JSON Body参数；用于匹配要关闭的RTP流，如"test110"）
-	StreamName string `protobuf:"bytes,1,opt,name=streamName,proto3" json:"streamName,omitempty"`
-	// 接收端口（选填，JSON Body参数；用于匹配要关闭的RTP端口，如20000；与流名称配合定位目标）
-	Port          int32 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	StreamName    string `protobuf:"bytes,1,opt,name=streamName,proto3" json:"streamName,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1600,13 +1589,6 @@ func (x *StopRtpPubReq) GetStreamName() string {
 		return x.StreamName
 	}
 	return ""
-}
-
-func (x *StopRtpPubReq) GetPort() int32 {
-	if x != nil {
-		return x.Port
-	}
-	return 0
 }
 
 // StopRtpPub响应：对应/api/ctrl/stop_rtp_pub接口返回结果（注：接口暂未开放，返回结果参考KickSession）
@@ -1895,13 +1877,12 @@ const file_lalproxy_proto_rawDesc = "" +
 	"streamName\"D\n" +
 	"\x10StopRelayPullRes\x12\x1c\n" +
 	"\terrorCode\x18\x01 \x01(\x05R\terrorCode\x12\x12\n" +
-	"\x04desp\x18\x02 \x01(\tR\x04desp\"p\n" +
+	"\x04desp\x18\x02 \x01(\tR\x04desp\"N\n" +
 	"\x0eKickSessionReq\x12\x1e\n" +
 	"\n" +
 	"streamName\x18\x01 \x01(\tR\n" +
 	"streamName\x12\x1c\n" +
-	"\tsessionId\x18\x02 \x01(\tR\tsessionId\x12 \n" +
-	"\vsessionType\x18\x03 \x01(\tR\vsessionType\"B\n" +
+	"\tsessionId\x18\x02 \x01(\tR\tsessionId\"B\n" +
 	"\x0eKickSessionRes\x12\x1c\n" +
 	"\terrorCode\x18\x01 \x01(\x05R\terrorCode\x12\x12\n" +
 	"\x04desp\x18\x02 \x01(\tR\x04desp\"\xaa\x01\n" +
@@ -1915,12 +1896,11 @@ const file_lalproxy_proto_rawDesc = "" +
 	"\x0fdebugDumpPacket\x18\x05 \x01(\tR\x0fdebugDumpPacket\"B\n" +
 	"\x0eStartRtpPubRes\x12\x1c\n" +
 	"\terrorCode\x18\x01 \x01(\x05R\terrorCode\x12\x12\n" +
-	"\x04desp\x18\x02 \x01(\tR\x04desp\"C\n" +
+	"\x04desp\x18\x02 \x01(\tR\x04desp\"/\n" +
 	"\rStopRtpPubReq\x12\x1e\n" +
 	"\n" +
 	"streamName\x18\x01 \x01(\tR\n" +
-	"streamName\x12\x12\n" +
-	"\x04port\x18\x02 \x01(\x05R\x04port\"A\n" +
+	"streamName\"A\n" +
 	"\rStopRtpPubRes\x12\x1c\n" +
 	"\terrorCode\x18\x01 \x01(\x05R\terrorCode\x12\x12\n" +
 	"\x04desp\x18\x02 \x01(\tR\x04desp\"E\n" +

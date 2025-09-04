@@ -1,5 +1,5 @@
 
-Ù 
+£ 
 lalproxy.protoLalproxy"3
 	FrameData
 unixSec (RunixSec
@@ -117,13 +117,12 @@ streamName (	R
 streamName"D
 StopRelayPullRes
 	errorCode (R	errorCode
-desp (	Rdesp"p
+desp (	Rdesp"N
 KickSessionReq
 
 streamName (	R
 streamName
-	sessionId (	R	sessionId 
-sessionType (	RsessionType"B
+	sessionId (	R	sessionId"B
 KickSessionRes
 	errorCode (R	errorCode
 desp (	Rdesp"ª
@@ -137,12 +136,11 @@ streamName
 debugDumpPacket (	RdebugDumpPacket"B
 StartRtpPubRes
 	errorCode (R	errorCode
-desp (	Rdesp"C
+desp (	Rdesp"/
 StopRtpPubReq
 
 streamName (	R
-streamName
-port (Rport"A
+streamName"A
 StopRtpPubRes
 	errorCode (R	errorCode
 desp (	Rdesp"E
