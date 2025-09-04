@@ -1,64 +1,84 @@
 
-¬
-lalproxy.protoLalproxy"¡
-SessionInfo
-	sessionId (	R	sessionId 
-sessionType (	RsessionType
-clientIp (	RclientIp
+µ 
+lalproxy.protoLalproxy"3
+	FrameData
+unixSec (RunixSec
+v (Rv"ì
+PubSessionInfo
+	sessionId (	R	sessionId
+protocol (	Rprotocol
+baseType (	RbaseType
+	startTime (	R	startTime
 
-clientPort (R
-clientPort
-protocol (	Rprotocol"
-createTimeMs (RcreateTimeMs
-aliveSec (RaliveSec
-	recvBytes (R	recvBytes
-	sendBytes	 (R	sendBytes"š
+remoteAddr (	R
+remoteAddr"
+readBytesSum (RreadBytesSum$
+wroteBytesSum (RwroteBytesSum"
+bitrateKbits (RbitrateKbits*
+readBitrateKbits	 (RreadBitrateKbits,
+writeBitrateKbits
+ (RwriteBitrateKbits"ì
+SubSessionInfo
+	sessionId (	R	sessionId
+protocol (	Rprotocol
+baseType (	RbaseType
+	startTime (	R	startTime
 
-VideoCodec
-codec (	Rcodec
-width (Rwidth
-height (Rheight
-fps (Rfps
+remoteAddr (	R
+remoteAddr"
+readBytesSum (RreadBytesSum$
+wroteBytesSum (RwroteBytesSum"
+bitrateKbits (RbitrateKbits*
+readBitrateKbits	 (RreadBitrateKbits,
+writeBitrateKbits
+ (RwriteBitrateKbits"í
+PullSessionInfo
+	sessionId (	R	sessionId
+protocol (	Rprotocol
+baseType (	RbaseType
+	startTime (	R	startTime
 
-bitrateBps (R
-bitrateBps
-gopSec (RgopSec"~
-
-AudioCodec
-codec (	Rcodec
-
-sampleRate (R
-sampleRate
-channels (Rchannels
-
-bitrateBps (R
-bitrateBps"ö
+remoteAddr (	R
+remoteAddr"
+readBytesSum (RreadBytesSum$
+wroteBytesSum (RwroteBytesSum"
+bitrateKbits (RbitrateKbits*
+readBitrateKbits	 (RreadBitrateKbits,
+writeBitrateKbits
+ (RwriteBitrateKbits"
+PushSessionInfo"¼
 	GroupData
 
 streamName (	R
-streamName
-status (	Rstatus*
-video (2.Lalproxy.VideoCodecRvideo*
-audio (2.Lalproxy.AudioCodecRaudio1
-sessions (2.Lalproxy.SessionInfoRsessions
-pubCount (RpubCount
-subCount (RsubCount
-	pullCount (R	pullCount,
-totalSessionCount	 (RtotalSessionCount"
-createTimeMs
- (RcreateTimeMs"Û
-LalServerData
-version (	Rversion 
-startTimeMs (RstartTimeMs
-runSec (RrunSec 
-listenAddrs (	RlistenAddrs*
-activeGroupCount (RactiveGroupCount,
-totalSessionCount (RtotalSessionCount
-	goVersion (	R	goVersion
-osArch (	RosArch
-cpuCores	 (RcpuCores(
-memoryUsedBytes
- (RmemoryUsedBytes"1
+streamName
+appName (	RappName
+
+audioCodec (	R
+audioCodec
+
+videoCodec (	R
+videoCodec
+
+videoWidth (R
+videoWidth 
+videoHeight (RvideoHeight*
+pub (2.Lalproxy.PubSessionInfoRpub,
+subs (2.Lalproxy.SubSessionInfoRsubs-
+pull	 (2.Lalproxy.PullSessionInfoRpull/
+pushs
+ (2.Lalproxy.PushSessionInfoRpushs9
+inFramePerSec (2.Lalproxy.FrameDataRinFramePerSec"É
+LalServerData
+serverId (	RserverId
+binInfo (	RbinInfo
+
+lalVersion (	R
+lalVersion
+
+apiVersion (	R
+apiVersion$
+notifyVersion (	RnotifyVersion
+	startTime (	R	startTime"1
 GetGroupInfoReq
 
 streamName (	R

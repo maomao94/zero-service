@@ -21,45 +21,31 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// 会话详情：用于GroupData中描述单个流会话的信息（对应lalserver /api/stat/group接口返回的session列表结构）
-type SessionInfo struct {
+// 帧率数据：对应接口返回的 in_frame_per_sec 数组元素（最近32秒每秒视频帧数）
+type FrameData struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 会话ID（唯一标识，如"FLVSUB1"、"RTMPPULL1"；与KickSession接口的sessionId字段对应）
-	SessionId string `protobuf:"bytes,1,opt,name=sessionId,proto3" json:"sessionId,omitempty"`
-	// 会话类型（"pub"=发布者，"sub"=订阅者，"pull"=中继拉流者；与KickSession接口的sessionType字段对应）
-	SessionType string `protobuf:"bytes,2,opt,name=sessionType,proto3" json:"sessionType,omitempty"`
-	// 客户端IP（会话对应的客户端地址，如"192.168.1.100"；用于定位会话来源）
-	ClientIp string `protobuf:"bytes,3,opt,name=clientIp,proto3" json:"clientIp,omitempty"`
-	// 客户端端口（会话对应的客户端端口，如54321；与clientIp配合标识完整客户端地址）
-	ClientPort int32 `protobuf:"varint,4,opt,name=clientPort,proto3" json:"clientPort,omitempty"`
-	// 协议类型（会话使用的流媒体协议，如"rtmp"、"flv"、"hls"、"rtsp"）
-	Protocol string `protobuf:"bytes,5,opt,name=protocol,proto3" json:"protocol,omitempty"`
-	// 创建时间（会话建立的时间戳，单位毫秒；如1716000000000）
-	CreateTimeMs int64 `protobuf:"varint,6,opt,name=createTimeMs,proto3" json:"createTimeMs,omitempty"`
-	// 存活时长（会话已存活的时间，单位秒；如300表示已存活5分钟）
-	AliveSec int32 `protobuf:"varint,7,opt,name=aliveSec,proto3" json:"aliveSec,omitempty"`
-	// 接收字节数（会话累计接收的数据量，单位字节；用于统计流量）
-	RecvBytes int64 `protobuf:"varint,8,opt,name=recvBytes,proto3" json:"recvBytes,omitempty"`
-	// 发送字节数（会话累计发送的数据量，单位字节；用于统计流量）
-	SendBytes     int64 `protobuf:"varint,9,opt,name=sendBytes,proto3" json:"sendBytes,omitempty"`
+	// 时间戳（秒级Unix时间，如1723513826，必返）
+	UnixSec int64 `protobuf:"varint,1,opt,name=unixSec,proto3" json:"unixSec,omitempty"`
+	// 每秒视频帧数（如15，必返）
+	V             int32 `protobuf:"varint,2,opt,name=v,proto3" json:"v,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SessionInfo) Reset() {
-	*x = SessionInfo{}
+func (x *FrameData) Reset() {
+	*x = FrameData{}
 	mi := &file_lalproxy_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SessionInfo) String() string {
+func (x *FrameData) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SessionInfo) ProtoMessage() {}
+func (*FrameData) ProtoMessage() {}
 
-func (x *SessionInfo) ProtoReflect() protoreflect.Message {
+func (x *FrameData) ProtoReflect() protoreflect.Message {
 	mi := &file_lalproxy_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -71,194 +57,193 @@ func (x *SessionInfo) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SessionInfo.ProtoReflect.Descriptor instead.
-func (*SessionInfo) Descriptor() ([]byte, []int) {
+// Deprecated: Use FrameData.ProtoReflect.Descriptor instead.
+func (*FrameData) Descriptor() ([]byte, []int) {
 	return file_lalproxy_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *SessionInfo) GetSessionId() string {
+func (x *FrameData) GetUnixSec() int64 {
+	if x != nil {
+		return x.UnixSec
+	}
+	return 0
+}
+
+func (x *FrameData) GetV() int32 {
+	if x != nil {
+		return x.V
+	}
+	return 0
+}
+
+// 发布者会话信息：对应接口返回的 data.pub（接收推流的详情）
+type PubSessionInfo struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 会话ID（全局唯一标识，如"RTMPPUBSUB1"，必返）
+	SessionId string `protobuf:"bytes,1,opt,name=sessionId,proto3" json:"sessionId,omitempty"`
+	// 推流协议（取值："RTMP"|"RTSP"，必返）
+	Protocol string `protobuf:"bytes,2,opt,name=protocol,proto3" json:"protocol,omitempty"`
+	// 基础类型（固定为"PUB"，标识发布者角色，必返）
+	BaseType string `protobuf:"bytes,3,opt,name=baseType,proto3" json:"baseType,omitempty"`
+	// 推流开始时间（格式化字符串，如"2020-10-11 19:17:41.586"，必返）
+	StartTime string `protobuf:"bytes,4,opt,name=startTime,proto3" json:"startTime,omitempty"`
+	// 对端地址（客户端IP:端口，如"127.0.0.1:61353"，必返）
+	RemoteAddr string `protobuf:"bytes,5,opt,name=remoteAddr,proto3" json:"remoteAddr,omitempty"`
+	// 累计读取数据大小（从推流开始计算，单位字节，必返）
+	ReadBytesSum int64 `protobuf:"varint,6,opt,name=readBytesSum,proto3" json:"readBytesSum,omitempty"`
+	// 累计发送数据大小（从推流开始计算，单位字节，必返）
+	WroteBytesSum int64 `protobuf:"varint,7,opt,name=wroteBytesSum,proto3" json:"wroteBytesSum,omitempty"`
+	// 最近5秒总码率（单位kbit/s，对PUB类型等价于read_bitrate_kbits，必返）
+	BitrateKbits int32 `protobuf:"varint,8,opt,name=bitrateKbits,proto3" json:"bitrateKbits,omitempty"`
+	// 最近5秒读取数据码率（单位kbit/s，必返）
+	ReadBitrateKbits int32 `protobuf:"varint,9,opt,name=readBitrateKbits,proto3" json:"readBitrateKbits,omitempty"`
+	// 最近5秒发送数据码率（单位kbit/s，必返）
+	WriteBitrateKbits int32 `protobuf:"varint,10,opt,name=writeBitrateKbits,proto3" json:"writeBitrateKbits,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *PubSessionInfo) Reset() {
+	*x = PubSessionInfo{}
+	mi := &file_lalproxy_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PubSessionInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PubSessionInfo) ProtoMessage() {}
+
+func (x *PubSessionInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_lalproxy_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PubSessionInfo.ProtoReflect.Descriptor instead.
+func (*PubSessionInfo) Descriptor() ([]byte, []int) {
+	return file_lalproxy_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *PubSessionInfo) GetSessionId() string {
 	if x != nil {
 		return x.SessionId
 	}
 	return ""
 }
 
-func (x *SessionInfo) GetSessionType() string {
-	if x != nil {
-		return x.SessionType
-	}
-	return ""
-}
-
-func (x *SessionInfo) GetClientIp() string {
-	if x != nil {
-		return x.ClientIp
-	}
-	return ""
-}
-
-func (x *SessionInfo) GetClientPort() int32 {
-	if x != nil {
-		return x.ClientPort
-	}
-	return 0
-}
-
-func (x *SessionInfo) GetProtocol() string {
+func (x *PubSessionInfo) GetProtocol() string {
 	if x != nil {
 		return x.Protocol
 	}
 	return ""
 }
 
-func (x *SessionInfo) GetCreateTimeMs() int64 {
+func (x *PubSessionInfo) GetBaseType() string {
 	if x != nil {
-		return x.CreateTimeMs
-	}
-	return 0
-}
-
-func (x *SessionInfo) GetAliveSec() int32 {
-	if x != nil {
-		return x.AliveSec
-	}
-	return 0
-}
-
-func (x *SessionInfo) GetRecvBytes() int64 {
-	if x != nil {
-		return x.RecvBytes
-	}
-	return 0
-}
-
-func (x *SessionInfo) GetSendBytes() int64 {
-	if x != nil {
-		return x.SendBytes
-	}
-	return 0
-}
-
-// 视频编码信息：用于GroupData中描述流的视频编码参数
-type VideoCodec struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// 编码格式（如"h264"、"h265"、"vp8"；对应流的视频压缩格式）
-	Codec string `protobuf:"bytes,1,opt,name=codec,proto3" json:"codec,omitempty"`
-	// 分辨率宽度（视频画面宽度，单位像素；如1920）
-	Width int32 `protobuf:"varint,2,opt,name=width,proto3" json:"width,omitempty"`
-	// 分辨率高度（视频画面高度，单位像素；如1080）
-	Height int32 `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
-	// 帧率（每秒视频帧数，如25、30；反映视频流畅度）
-	Fps int32 `protobuf:"varint,4,opt,name=fps,proto3" json:"fps,omitempty"`
-	// 码率（视频编码码率，单位bps；如2000000表示2Mbps）
-	BitrateBps int64 `protobuf:"varint,5,opt,name=bitrateBps,proto3" json:"bitrateBps,omitempty"`
-	// 关键帧间隔（两个关键帧之间的间隔，单位秒；如10表示每10秒一个关键帧）
-	GopSec        int32 `protobuf:"varint,6,opt,name=gopSec,proto3" json:"gopSec,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *VideoCodec) Reset() {
-	*x = VideoCodec{}
-	mi := &file_lalproxy_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *VideoCodec) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*VideoCodec) ProtoMessage() {}
-
-func (x *VideoCodec) ProtoReflect() protoreflect.Message {
-	mi := &file_lalproxy_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use VideoCodec.ProtoReflect.Descriptor instead.
-func (*VideoCodec) Descriptor() ([]byte, []int) {
-	return file_lalproxy_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *VideoCodec) GetCodec() string {
-	if x != nil {
-		return x.Codec
+		return x.BaseType
 	}
 	return ""
 }
 
-func (x *VideoCodec) GetWidth() int32 {
+func (x *PubSessionInfo) GetStartTime() string {
 	if x != nil {
-		return x.Width
+		return x.StartTime
+	}
+	return ""
+}
+
+func (x *PubSessionInfo) GetRemoteAddr() string {
+	if x != nil {
+		return x.RemoteAddr
+	}
+	return ""
+}
+
+func (x *PubSessionInfo) GetReadBytesSum() int64 {
+	if x != nil {
+		return x.ReadBytesSum
 	}
 	return 0
 }
 
-func (x *VideoCodec) GetHeight() int32 {
+func (x *PubSessionInfo) GetWroteBytesSum() int64 {
 	if x != nil {
-		return x.Height
+		return x.WroteBytesSum
 	}
 	return 0
 }
 
-func (x *VideoCodec) GetFps() int32 {
+func (x *PubSessionInfo) GetBitrateKbits() int32 {
 	if x != nil {
-		return x.Fps
+		return x.BitrateKbits
 	}
 	return 0
 }
 
-func (x *VideoCodec) GetBitrateBps() int64 {
+func (x *PubSessionInfo) GetReadBitrateKbits() int32 {
 	if x != nil {
-		return x.BitrateBps
+		return x.ReadBitrateKbits
 	}
 	return 0
 }
 
-func (x *VideoCodec) GetGopSec() int32 {
+func (x *PubSessionInfo) GetWriteBitrateKbits() int32 {
 	if x != nil {
-		return x.GopSec
+		return x.WriteBitrateKbits
 	}
 	return 0
 }
 
-// 音频编码信息：用于GroupData中描述流的音频编码参数
-type AudioCodec struct {
+// 订阅者会话信息：对应接口返回的 data.subs 数组元素（拉流的详情）
+type SubSessionInfo struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 编码格式（如"aac"、"mp3"、"pcm"；对应流的音频压缩格式）
-	Codec string `protobuf:"bytes,1,opt,name=codec,proto3" json:"codec,omitempty"`
-	// 采样率（音频采样频率，单位Hz；如44100、48000）
-	SampleRate int32 `protobuf:"varint,2,opt,name=sampleRate,proto3" json:"sampleRate,omitempty"`
-	// 声道数（音频声道数量，如1=单声道，2=立体声）
-	Channels int32 `protobuf:"varint,3,opt,name=channels,proto3" json:"channels,omitempty"`
-	// 码率（音频编码码率，单位bps；如128000表示128Kbps）
-	BitrateBps    int64 `protobuf:"varint,4,opt,name=bitrateBps,proto3" json:"bitrateBps,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// 会话ID（全局唯一标识，如"FLVSUB1"，必返）
+	SessionId string `protobuf:"bytes,1,opt,name=sessionId,proto3" json:"sessionId,omitempty"`
+	// 拉流协议（取值："RTMP"|"FLV"|"TS"，必返）
+	Protocol string `protobuf:"bytes,2,opt,name=protocol,proto3" json:"protocol,omitempty"`
+	// 基础类型（固定为"SUB"，标识订阅者角色，必返）
+	BaseType string `protobuf:"bytes,3,opt,name=baseType,proto3" json:"baseType,omitempty"`
+	// 拉流开始时间（格式化字符串，如"2020-10-11 19:19:21.724"，必返）
+	StartTime string `protobuf:"bytes,4,opt,name=startTime,proto3" json:"startTime,omitempty"`
+	// 对端地址（客户端IP:端口，如"127.0.0.1:61785"，必返）
+	RemoteAddr string `protobuf:"bytes,5,opt,name=remoteAddr,proto3" json:"remoteAddr,omitempty"`
+	// 累计读取数据大小（从拉流开始计算，单位字节，必返）
+	ReadBytesSum int64 `protobuf:"varint,6,opt,name=readBytesSum,proto3" json:"readBytesSum,omitempty"`
+	// 累计发送数据大小（从拉流开始计算，单位字节，必返）
+	WroteBytesSum int64 `protobuf:"varint,7,opt,name=wroteBytesSum,proto3" json:"wroteBytesSum,omitempty"`
+	// 最近5秒总码率（单位kbit/s，对SUB类型等价于write_bitrate_kbits，必返）
+	BitrateKbits int32 `protobuf:"varint,8,opt,name=bitrateKbits,proto3" json:"bitrateKbits,omitempty"`
+	// 最近5秒读取数据码率（单位kbit/s，必返）
+	ReadBitrateKbits int32 `protobuf:"varint,9,opt,name=readBitrateKbits,proto3" json:"readBitrateKbits,omitempty"`
+	// 最近5秒发送数据码率（单位kbit/s，必返）
+	WriteBitrateKbits int32 `protobuf:"varint,10,opt,name=writeBitrateKbits,proto3" json:"writeBitrateKbits,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
-func (x *AudioCodec) Reset() {
-	*x = AudioCodec{}
+func (x *SubSessionInfo) Reset() {
+	*x = SubSessionInfo{}
 	mi := &file_lalproxy_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AudioCodec) String() string {
+func (x *SubSessionInfo) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AudioCodec) ProtoMessage() {}
+func (*SubSessionInfo) ProtoMessage() {}
 
-func (x *AudioCodec) ProtoReflect() protoreflect.Message {
+func (x *SubSessionInfo) ProtoReflect() protoreflect.Message {
 	mi := &file_lalproxy_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -270,69 +255,277 @@ func (x *AudioCodec) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AudioCodec.ProtoReflect.Descriptor instead.
-func (*AudioCodec) Descriptor() ([]byte, []int) {
+// Deprecated: Use SubSessionInfo.ProtoReflect.Descriptor instead.
+func (*SubSessionInfo) Descriptor() ([]byte, []int) {
 	return file_lalproxy_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *AudioCodec) GetCodec() string {
+func (x *SubSessionInfo) GetSessionId() string {
 	if x != nil {
-		return x.Codec
+		return x.SessionId
 	}
 	return ""
 }
 
-func (x *AudioCodec) GetSampleRate() int32 {
+func (x *SubSessionInfo) GetProtocol() string {
 	if x != nil {
-		return x.SampleRate
+		return x.Protocol
+	}
+	return ""
+}
+
+func (x *SubSessionInfo) GetBaseType() string {
+	if x != nil {
+		return x.BaseType
+	}
+	return ""
+}
+
+func (x *SubSessionInfo) GetStartTime() string {
+	if x != nil {
+		return x.StartTime
+	}
+	return ""
+}
+
+func (x *SubSessionInfo) GetRemoteAddr() string {
+	if x != nil {
+		return x.RemoteAddr
+	}
+	return ""
+}
+
+func (x *SubSessionInfo) GetReadBytesSum() int64 {
+	if x != nil {
+		return x.ReadBytesSum
 	}
 	return 0
 }
 
-func (x *AudioCodec) GetChannels() int32 {
+func (x *SubSessionInfo) GetWroteBytesSum() int64 {
 	if x != nil {
-		return x.Channels
+		return x.WroteBytesSum
 	}
 	return 0
 }
 
-func (x *AudioCodec) GetBitrateBps() int64 {
+func (x *SubSessionInfo) GetBitrateKbits() int32 {
 	if x != nil {
-		return x.BitrateBps
+		return x.BitrateKbits
 	}
 	return 0
 }
 
-// 分组数据：对应查询接口返回的单个流分组详情（GetGroupInfoRes.data、GetAllGroupsRes.groups元素）
+func (x *SubSessionInfo) GetReadBitrateKbits() int32 {
+	if x != nil {
+		return x.ReadBitrateKbits
+	}
+	return 0
+}
+
+func (x *SubSessionInfo) GetWriteBitrateKbits() int32 {
+	if x != nil {
+		return x.WriteBitrateKbits
+	}
+	return 0
+}
+
+// 中继拉流会话信息：对应接口返回的 data.pull（从其他节点拉流回源的详情）
+type PullSessionInfo struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 会话ID（全局唯一标识，如"RTMPPULL1"，必返）
+	SessionId string `protobuf:"bytes,1,opt,name=sessionId,proto3" json:"sessionId,omitempty"`
+	// 拉流协议（取值："RTMP"|"RTSP"，必返）
+	Protocol string `protobuf:"bytes,2,opt,name=protocol,proto3" json:"protocol,omitempty"`
+	// 基础类型（固定为"PULL"，标识中继拉流角色，必返）
+	BaseType string `protobuf:"bytes,3,opt,name=baseType,proto3" json:"baseType,omitempty"`
+	// 拉流开始时间（格式化字符串，如"2020-10-11 19:20:00.123"，必返）
+	StartTime string `protobuf:"bytes,4,opt,name=startTime,proto3" json:"startTime,omitempty"`
+	// 对端地址（源节点IP:端口，如"192.168.1.10:1935"，必返）
+	RemoteAddr string `protobuf:"bytes,5,opt,name=remoteAddr,proto3" json:"remoteAddr,omitempty"`
+	// 累计读取数据大小（从拉流开始计算，单位字节，必返）
+	ReadBytesSum int64 `protobuf:"varint,6,opt,name=readBytesSum,proto3" json:"readBytesSum,omitempty"`
+	// 累计发送数据大小（从拉流开始计算，单位字节，必返）
+	WroteBytesSum int64 `protobuf:"varint,7,opt,name=wroteBytesSum,proto3" json:"wroteBytesSum,omitempty"`
+	// 最近5秒总码率（单位kbit/s，对PULL类型等价于read_bitrate_kbits，必返）
+	BitrateKbits int32 `protobuf:"varint,8,opt,name=bitrateKbits,proto3" json:"bitrateKbits,omitempty"`
+	// 最近5秒读取数据码率（单位kbit/s，必返）
+	ReadBitrateKbits int32 `protobuf:"varint,9,opt,name=readBitrateKbits,proto3" json:"readBitrateKbits,omitempty"`
+	// 最近5秒发送数据码率（单位kbit/s，必返）
+	WriteBitrateKbits int32 `protobuf:"varint,10,opt,name=writeBitrateKbits,proto3" json:"writeBitrateKbits,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *PullSessionInfo) Reset() {
+	*x = PullSessionInfo{}
+	mi := &file_lalproxy_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PullSessionInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PullSessionInfo) ProtoMessage() {}
+
+func (x *PullSessionInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_lalproxy_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PullSessionInfo.ProtoReflect.Descriptor instead.
+func (*PullSessionInfo) Descriptor() ([]byte, []int) {
+	return file_lalproxy_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *PullSessionInfo) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *PullSessionInfo) GetProtocol() string {
+	if x != nil {
+		return x.Protocol
+	}
+	return ""
+}
+
+func (x *PullSessionInfo) GetBaseType() string {
+	if x != nil {
+		return x.BaseType
+	}
+	return ""
+}
+
+func (x *PullSessionInfo) GetStartTime() string {
+	if x != nil {
+		return x.StartTime
+	}
+	return ""
+}
+
+func (x *PullSessionInfo) GetRemoteAddr() string {
+	if x != nil {
+		return x.RemoteAddr
+	}
+	return ""
+}
+
+func (x *PullSessionInfo) GetReadBytesSum() int64 {
+	if x != nil {
+		return x.ReadBytesSum
+	}
+	return 0
+}
+
+func (x *PullSessionInfo) GetWroteBytesSum() int64 {
+	if x != nil {
+		return x.WroteBytesSum
+	}
+	return 0
+}
+
+func (x *PullSessionInfo) GetBitrateKbits() int32 {
+	if x != nil {
+		return x.BitrateKbits
+	}
+	return 0
+}
+
+func (x *PullSessionInfo) GetReadBitrateKbits() int32 {
+	if x != nil {
+		return x.ReadBitrateKbits
+	}
+	return 0
+}
+
+func (x *PullSessionInfo) GetWriteBitrateKbits() int32 {
+	if x != nil {
+		return x.WriteBitrateKbits
+	}
+	return 0
+}
+
+// 中继推流会话信息：对应接口返回的 data.pushs（主动外连转推，暂不提供数据）
+type PushSessionInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PushSessionInfo) Reset() {
+	*x = PushSessionInfo{}
+	mi := &file_lalproxy_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PushSessionInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PushSessionInfo) ProtoMessage() {}
+
+func (x *PushSessionInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_lalproxy_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PushSessionInfo.ProtoReflect.Descriptor instead.
+func (*PushSessionInfo) Descriptor() ([]byte, []int) {
+	return file_lalproxy_proto_rawDescGZIP(), []int{4}
+}
+
+// 分组核心数据：对应接口返回的 data 字段（流的完整信息聚合）
 type GroupData struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 流名称（分组唯一标识，与请求参数streamName一致；如"test110"）
+	// 流名称（如"test110"，必返）
 	StreamName string `protobuf:"bytes,1,opt,name=streamName,proto3" json:"streamName,omitempty"`
-	// 分组状态（"active"=活跃，"inactive"=非活跃；标识流是否正常传输）
-	Status string `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
-	// 视频编码信息（流的视频参数；无视频流时为空）
-	Video *VideoCodec `protobuf:"bytes,3,opt,name=video,proto3" json:"video,omitempty"`
-	// 音频编码信息（流的音频参数；无音频流时为空）
-	Audio *AudioCodec `protobuf:"bytes,4,opt,name=audio,proto3" json:"audio,omitempty"`
-	// 会话列表（分组下所有活跃会话；包含发布者、订阅者、拉流者会话）
-	Sessions []*SessionInfo `protobuf:"bytes,5,rep,name=sessions,proto3" json:"sessions,omitempty"`
-	// 发布者数量（分组下活跃的发布者会话数；通常为1，多发布者场景可能大于1）
-	PubCount int32 `protobuf:"varint,6,opt,name=pubCount,proto3" json:"pubCount,omitempty"`
-	// 订阅者数量（分组下活跃的订阅者会话数；反映流的观看人数）
-	SubCount int32 `protobuf:"varint,7,opt,name=subCount,proto3" json:"subCount,omitempty"`
-	// 拉流者数量（分组下活跃的中继拉流会话数；反映流的分发情况）
-	PullCount int32 `protobuf:"varint,8,opt,name=pullCount,proto3" json:"pullCount,omitempty"`
-	// 总会话数（pubCount + subCount + pullCount；分组下所有活跃会话总数）
-	TotalSessionCount int32 `protobuf:"varint,9,opt,name=totalSessionCount,proto3" json:"totalSessionCount,omitempty"`
-	// 分组创建时间（分组首次建立的时间戳，单位毫秒；如1716000000000）
-	CreateTimeMs  int64 `protobuf:"varint,10,opt,name=createTimeMs,proto3" json:"createTimeMs,omitempty"`
+	// 应用名（如"live"，必返）
+	AppName string `protobuf:"bytes,2,opt,name=appName,proto3" json:"appName,omitempty"`
+	// 音频编码格式（如"AAC"，必返）
+	AudioCodec string `protobuf:"bytes,3,opt,name=audioCodec,proto3" json:"audioCodec,omitempty"`
+	// 视频编码格式（如"H264"|"H265"，必返）
+	VideoCodec string `protobuf:"bytes,4,opt,name=videoCodec,proto3" json:"videoCodec,omitempty"`
+	// 视频宽度（像素，如640，必返）
+	VideoWidth int32 `protobuf:"varint,5,opt,name=videoWidth,proto3" json:"videoWidth,omitempty"`
+	// 视频高度（像素，如360，必返）
+	VideoHeight int32 `protobuf:"varint,6,opt,name=videoHeight,proto3" json:"videoHeight,omitempty"`
+	// 发布者会话信息（推流详情，无推流时为nil，必返）
+	Pub *PubSessionInfo `protobuf:"bytes,7,opt,name=pub,proto3" json:"pub,omitempty"`
+	// 订阅者会话列表（拉流详情，无拉流时为空数组，必返）
+	Subs []*SubSessionInfo `protobuf:"bytes,8,rep,name=subs,proto3" json:"subs,omitempty"`
+	// 中继拉流会话信息（回源流详情，无回源时为nil，必返）
+	Pull *PullSessionInfo `protobuf:"bytes,9,opt,name=pull,proto3" json:"pull,omitempty"`
+	// 中继推流会话列表（外连转推，暂为空数组，必返）
+	Pushs []*PushSessionInfo `protobuf:"bytes,10,rep,name=pushs,proto3" json:"pushs,omitempty"`
+	// 最近32秒视频帧率统计（每秒视频帧数，必返）
+	InFramePerSec []*FrameData `protobuf:"bytes,11,rep,name=inFramePerSec,proto3" json:"inFramePerSec,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GroupData) Reset() {
 	*x = GroupData{}
-	mi := &file_lalproxy_proto_msgTypes[3]
+	mi := &file_lalproxy_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -344,7 +537,7 @@ func (x *GroupData) String() string {
 func (*GroupData) ProtoMessage() {}
 
 func (x *GroupData) ProtoReflect() protoreflect.Message {
-	mi := &file_lalproxy_proto_msgTypes[3]
+	mi := &file_lalproxy_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -357,7 +550,7 @@ func (x *GroupData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupData.ProtoReflect.Descriptor instead.
 func (*GroupData) Descriptor() ([]byte, []int) {
-	return file_lalproxy_proto_rawDescGZIP(), []int{3}
+	return file_lalproxy_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GroupData) GetStreamName() string {
@@ -367,99 +560,98 @@ func (x *GroupData) GetStreamName() string {
 	return ""
 }
 
-func (x *GroupData) GetStatus() string {
+func (x *GroupData) GetAppName() string {
 	if x != nil {
-		return x.Status
+		return x.AppName
 	}
 	return ""
 }
 
-func (x *GroupData) GetVideo() *VideoCodec {
+func (x *GroupData) GetAudioCodec() string {
 	if x != nil {
-		return x.Video
+		return x.AudioCodec
+	}
+	return ""
+}
+
+func (x *GroupData) GetVideoCodec() string {
+	if x != nil {
+		return x.VideoCodec
+	}
+	return ""
+}
+
+func (x *GroupData) GetVideoWidth() int32 {
+	if x != nil {
+		return x.VideoWidth
+	}
+	return 0
+}
+
+func (x *GroupData) GetVideoHeight() int32 {
+	if x != nil {
+		return x.VideoHeight
+	}
+	return 0
+}
+
+func (x *GroupData) GetPub() *PubSessionInfo {
+	if x != nil {
+		return x.Pub
 	}
 	return nil
 }
 
-func (x *GroupData) GetAudio() *AudioCodec {
+func (x *GroupData) GetSubs() []*SubSessionInfo {
 	if x != nil {
-		return x.Audio
+		return x.Subs
 	}
 	return nil
 }
 
-func (x *GroupData) GetSessions() []*SessionInfo {
+func (x *GroupData) GetPull() *PullSessionInfo {
 	if x != nil {
-		return x.Sessions
+		return x.Pull
 	}
 	return nil
 }
 
-func (x *GroupData) GetPubCount() int32 {
+func (x *GroupData) GetPushs() []*PushSessionInfo {
 	if x != nil {
-		return x.PubCount
+		return x.Pushs
 	}
-	return 0
+	return nil
 }
 
-func (x *GroupData) GetSubCount() int32 {
+func (x *GroupData) GetInFramePerSec() []*FrameData {
 	if x != nil {
-		return x.SubCount
+		return x.InFramePerSec
 	}
-	return 0
+	return nil
 }
 
-func (x *GroupData) GetPullCount() int32 {
-	if x != nil {
-		return x.PullCount
-	}
-	return 0
-}
-
-func (x *GroupData) GetTotalSessionCount() int32 {
-	if x != nil {
-		return x.TotalSessionCount
-	}
-	return 0
-}
-
-func (x *GroupData) GetCreateTimeMs() int64 {
-	if x != nil {
-		return x.CreateTimeMs
-	}
-	return 0
-}
-
-// 服务器基础信息：对应GetLalInfoRes.data，描述lalserver的系统与运行参数
+// 服务器基础信息：对应 /api/stat/lal_info 接口返回的「服务器基础信息」，与Go结构体 LalServerData 完全对齐
 type LalServerData struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 服务版本（lalserver的版本号，如"v1.5.0"；用于确认服务版本兼容性）
-	Version string `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
-	// 启动时间（服务启动的时间戳，单位毫秒；如1716000000000）
-	StartTimeMs int64 `protobuf:"varint,2,opt,name=startTimeMs,proto3" json:"startTimeMs,omitempty"`
-	// 运行时长（服务已运行的时间，单位秒；如86400表示已运行1天）
-	RunSec int32 `protobuf:"varint,3,opt,name=runSec,proto3" json:"runSec,omitempty"`
-	// 监听地址列表（服务所有监听的网络地址，如["rtmp://0.0.0.0:1935", "http://0.0.0.0:8080"]）
-	ListenAddrs []string `protobuf:"bytes,4,rep,name=listenAddrs,proto3" json:"listenAddrs,omitempty"`
-	// 当前活跃分组数（服务中正在传输的流分组数量；反映服务负载情况）
-	ActiveGroupCount int32 `protobuf:"varint,5,opt,name=activeGroupCount,proto3" json:"activeGroupCount,omitempty"`
-	// 当前总会话数（服务中所有活跃的流媒体会话数量；反映服务并发量）
-	TotalSessionCount int32 `protobuf:"varint,6,opt,name=totalSessionCount,proto3" json:"totalSessionCount,omitempty"`
-	// Go语言版本（服务编译使用的Go版本，如"go1.21.0"；用于排查语言相关问题）
-	GoVersion string `protobuf:"bytes,7,opt,name=goVersion,proto3" json:"goVersion,omitempty"`
-	// 操作系统架构（服务运行的系统架构，如"linux/amd64"、"darwin/arm64"）
-	OsArch string `protobuf:"bytes,8,opt,name=osArch,proto3" json:"osArch,omitempty"`
-	// CPU核心数（服务运行环境的CPU核心数量；如8）
-	CpuCores int32 `protobuf:"varint,9,opt,name=cpuCores,proto3" json:"cpuCores,omitempty"`
-	// 内存使用量（服务当前占用的内存，单位字节；如1073741824表示1GB）
-	MemoryUsedBytes int64 `protobuf:"varint,10,opt,name=memoryUsedBytes,proto3" json:"memoryUsedBytes,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// 服务器唯一 ID
+	ServerId string `protobuf:"bytes,1,opt,name=serverId,proto3" json:"serverId,omitempty"`
+	// 二进制文件信息
+	BinInfo string `protobuf:"bytes,2,opt,name=binInfo,proto3" json:"binInfo,omitempty"`
+	// lal可执行文件版本信息
+	LalVersion string `protobuf:"bytes,3,opt,name=lalVersion,proto3" json:"lalVersion,omitempty"`
+	// HTTP API接口版本信息
+	ApiVersion string `protobuf:"bytes,4,opt,name=apiVersion,proto3" json:"apiVersion,omitempty"`
+	// HTTP Notify版本信息
+	NotifyVersion string `protobuf:"bytes,5,opt,name=notifyVersion,proto3" json:"notifyVersion,omitempty"`
+	// lal进程启动时间
+	StartTime     string `protobuf:"bytes,6,opt,name=startTime,proto3" json:"startTime,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *LalServerData) Reset() {
 	*x = LalServerData{}
-	mi := &file_lalproxy_proto_msgTypes[4]
+	mi := &file_lalproxy_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -471,7 +663,7 @@ func (x *LalServerData) String() string {
 func (*LalServerData) ProtoMessage() {}
 
 func (x *LalServerData) ProtoReflect() protoreflect.Message {
-	mi := &file_lalproxy_proto_msgTypes[4]
+	mi := &file_lalproxy_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -484,77 +676,49 @@ func (x *LalServerData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LalServerData.ProtoReflect.Descriptor instead.
 func (*LalServerData) Descriptor() ([]byte, []int) {
-	return file_lalproxy_proto_rawDescGZIP(), []int{4}
+	return file_lalproxy_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *LalServerData) GetVersion() string {
+func (x *LalServerData) GetServerId() string {
 	if x != nil {
-		return x.Version
+		return x.ServerId
 	}
 	return ""
 }
 
-func (x *LalServerData) GetStartTimeMs() int64 {
+func (x *LalServerData) GetBinInfo() string {
 	if x != nil {
-		return x.StartTimeMs
-	}
-	return 0
-}
-
-func (x *LalServerData) GetRunSec() int32 {
-	if x != nil {
-		return x.RunSec
-	}
-	return 0
-}
-
-func (x *LalServerData) GetListenAddrs() []string {
-	if x != nil {
-		return x.ListenAddrs
-	}
-	return nil
-}
-
-func (x *LalServerData) GetActiveGroupCount() int32 {
-	if x != nil {
-		return x.ActiveGroupCount
-	}
-	return 0
-}
-
-func (x *LalServerData) GetTotalSessionCount() int32 {
-	if x != nil {
-		return x.TotalSessionCount
-	}
-	return 0
-}
-
-func (x *LalServerData) GetGoVersion() string {
-	if x != nil {
-		return x.GoVersion
+		return x.BinInfo
 	}
 	return ""
 }
 
-func (x *LalServerData) GetOsArch() string {
+func (x *LalServerData) GetLalVersion() string {
 	if x != nil {
-		return x.OsArch
+		return x.LalVersion
 	}
 	return ""
 }
 
-func (x *LalServerData) GetCpuCores() int32 {
+func (x *LalServerData) GetApiVersion() string {
 	if x != nil {
-		return x.CpuCores
+		return x.ApiVersion
 	}
-	return 0
+	return ""
 }
 
-func (x *LalServerData) GetMemoryUsedBytes() int64 {
+func (x *LalServerData) GetNotifyVersion() string {
 	if x != nil {
-		return x.MemoryUsedBytes
+		return x.NotifyVersion
 	}
-	return 0
+	return ""
+}
+
+func (x *LalServerData) GetStartTime() string {
+	if x != nil {
+		return x.StartTime
+	}
+	return ""
 }
 
 // GetGroupInfo请求：对应/api/stat/group接口，查询指定流名称的group信息
@@ -568,7 +732,7 @@ type GetGroupInfoReq struct {
 
 func (x *GetGroupInfoReq) Reset() {
 	*x = GetGroupInfoReq{}
-	mi := &file_lalproxy_proto_msgTypes[5]
+	mi := &file_lalproxy_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -580,7 +744,7 @@ func (x *GetGroupInfoReq) String() string {
 func (*GetGroupInfoReq) ProtoMessage() {}
 
 func (x *GetGroupInfoReq) ProtoReflect() protoreflect.Message {
-	mi := &file_lalproxy_proto_msgTypes[5]
+	mi := &file_lalproxy_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -593,7 +757,7 @@ func (x *GetGroupInfoReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetGroupInfoReq.ProtoReflect.Descriptor instead.
 func (*GetGroupInfoReq) Descriptor() ([]byte, []int) {
-	return file_lalproxy_proto_rawDescGZIP(), []int{5}
+	return file_lalproxy_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetGroupInfoReq) GetStreamName() string {
@@ -618,7 +782,7 @@ type GetGroupInfoRes struct {
 
 func (x *GetGroupInfoRes) Reset() {
 	*x = GetGroupInfoRes{}
-	mi := &file_lalproxy_proto_msgTypes[6]
+	mi := &file_lalproxy_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -630,7 +794,7 @@ func (x *GetGroupInfoRes) String() string {
 func (*GetGroupInfoRes) ProtoMessage() {}
 
 func (x *GetGroupInfoRes) ProtoReflect() protoreflect.Message {
-	mi := &file_lalproxy_proto_msgTypes[6]
+	mi := &file_lalproxy_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -643,7 +807,7 @@ func (x *GetGroupInfoRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetGroupInfoRes.ProtoReflect.Descriptor instead.
 func (*GetGroupInfoRes) Descriptor() ([]byte, []int) {
-	return file_lalproxy_proto_rawDescGZIP(), []int{6}
+	return file_lalproxy_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GetGroupInfoRes) GetErrorCode() int32 {
@@ -676,7 +840,7 @@ type GetAllGroupsReq struct {
 
 func (x *GetAllGroupsReq) Reset() {
 	*x = GetAllGroupsReq{}
-	mi := &file_lalproxy_proto_msgTypes[7]
+	mi := &file_lalproxy_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -688,7 +852,7 @@ func (x *GetAllGroupsReq) String() string {
 func (*GetAllGroupsReq) ProtoMessage() {}
 
 func (x *GetAllGroupsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_lalproxy_proto_msgTypes[7]
+	mi := &file_lalproxy_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -701,7 +865,7 @@ func (x *GetAllGroupsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAllGroupsReq.ProtoReflect.Descriptor instead.
 func (*GetAllGroupsReq) Descriptor() ([]byte, []int) {
-	return file_lalproxy_proto_rawDescGZIP(), []int{7}
+	return file_lalproxy_proto_rawDescGZIP(), []int{9}
 }
 
 // GetAllGroups响应：对应/api/stat/all_group接口返回结果
@@ -719,7 +883,7 @@ type GetAllGroupsRes struct {
 
 func (x *GetAllGroupsRes) Reset() {
 	*x = GetAllGroupsRes{}
-	mi := &file_lalproxy_proto_msgTypes[8]
+	mi := &file_lalproxy_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -731,7 +895,7 @@ func (x *GetAllGroupsRes) String() string {
 func (*GetAllGroupsRes) ProtoMessage() {}
 
 func (x *GetAllGroupsRes) ProtoReflect() protoreflect.Message {
-	mi := &file_lalproxy_proto_msgTypes[8]
+	mi := &file_lalproxy_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -744,7 +908,7 @@ func (x *GetAllGroupsRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAllGroupsRes.ProtoReflect.Descriptor instead.
 func (*GetAllGroupsRes) Descriptor() ([]byte, []int) {
-	return file_lalproxy_proto_rawDescGZIP(), []int{8}
+	return file_lalproxy_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetAllGroupsRes) GetErrorCode() int32 {
@@ -777,7 +941,7 @@ type GetLalInfoReq struct {
 
 func (x *GetLalInfoReq) Reset() {
 	*x = GetLalInfoReq{}
-	mi := &file_lalproxy_proto_msgTypes[9]
+	mi := &file_lalproxy_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -789,7 +953,7 @@ func (x *GetLalInfoReq) String() string {
 func (*GetLalInfoReq) ProtoMessage() {}
 
 func (x *GetLalInfoReq) ProtoReflect() protoreflect.Message {
-	mi := &file_lalproxy_proto_msgTypes[9]
+	mi := &file_lalproxy_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -802,7 +966,7 @@ func (x *GetLalInfoReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetLalInfoReq.ProtoReflect.Descriptor instead.
 func (*GetLalInfoReq) Descriptor() ([]byte, []int) {
-	return file_lalproxy_proto_rawDescGZIP(), []int{9}
+	return file_lalproxy_proto_rawDescGZIP(), []int{11}
 }
 
 // GetLalInfo响应：对应/api/stat/lal_info接口返回结果
@@ -820,7 +984,7 @@ type GetLalInfoRes struct {
 
 func (x *GetLalInfoRes) Reset() {
 	*x = GetLalInfoRes{}
-	mi := &file_lalproxy_proto_msgTypes[10]
+	mi := &file_lalproxy_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -832,7 +996,7 @@ func (x *GetLalInfoRes) String() string {
 func (*GetLalInfoRes) ProtoMessage() {}
 
 func (x *GetLalInfoRes) ProtoReflect() protoreflect.Message {
-	mi := &file_lalproxy_proto_msgTypes[10]
+	mi := &file_lalproxy_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -845,7 +1009,7 @@ func (x *GetLalInfoRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetLalInfoRes.ProtoReflect.Descriptor instead.
 func (*GetLalInfoRes) Descriptor() ([]byte, []int) {
-	return file_lalproxy_proto_rawDescGZIP(), []int{10}
+	return file_lalproxy_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetLalInfoRes) GetErrorCode() int32 {
@@ -892,7 +1056,7 @@ type StartRelayPullReq struct {
 
 func (x *StartRelayPullReq) Reset() {
 	*x = StartRelayPullReq{}
-	mi := &file_lalproxy_proto_msgTypes[11]
+	mi := &file_lalproxy_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -904,7 +1068,7 @@ func (x *StartRelayPullReq) String() string {
 func (*StartRelayPullReq) ProtoMessage() {}
 
 func (x *StartRelayPullReq) ProtoReflect() protoreflect.Message {
-	mi := &file_lalproxy_proto_msgTypes[11]
+	mi := &file_lalproxy_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -917,7 +1081,7 @@ func (x *StartRelayPullReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartRelayPullReq.ProtoReflect.Descriptor instead.
 func (*StartRelayPullReq) Descriptor() ([]byte, []int) {
-	return file_lalproxy_proto_rawDescGZIP(), []int{11}
+	return file_lalproxy_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *StartRelayPullReq) GetUrl() string {
@@ -982,7 +1146,7 @@ type StartRelayPullRes struct {
 
 func (x *StartRelayPullRes) Reset() {
 	*x = StartRelayPullRes{}
-	mi := &file_lalproxy_proto_msgTypes[12]
+	mi := &file_lalproxy_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -994,7 +1158,7 @@ func (x *StartRelayPullRes) String() string {
 func (*StartRelayPullRes) ProtoMessage() {}
 
 func (x *StartRelayPullRes) ProtoReflect() protoreflect.Message {
-	mi := &file_lalproxy_proto_msgTypes[12]
+	mi := &file_lalproxy_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1007,7 +1171,7 @@ func (x *StartRelayPullRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartRelayPullRes.ProtoReflect.Descriptor instead.
 func (*StartRelayPullRes) Descriptor() ([]byte, []int) {
-	return file_lalproxy_proto_rawDescGZIP(), []int{12}
+	return file_lalproxy_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *StartRelayPullRes) GetErrorCode() int32 {
@@ -1035,7 +1199,7 @@ type StopRelayPullReq struct {
 
 func (x *StopRelayPullReq) Reset() {
 	*x = StopRelayPullReq{}
-	mi := &file_lalproxy_proto_msgTypes[13]
+	mi := &file_lalproxy_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1047,7 +1211,7 @@ func (x *StopRelayPullReq) String() string {
 func (*StopRelayPullReq) ProtoMessage() {}
 
 func (x *StopRelayPullReq) ProtoReflect() protoreflect.Message {
-	mi := &file_lalproxy_proto_msgTypes[13]
+	mi := &file_lalproxy_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1060,7 +1224,7 @@ func (x *StopRelayPullReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopRelayPullReq.ProtoReflect.Descriptor instead.
 func (*StopRelayPullReq) Descriptor() ([]byte, []int) {
-	return file_lalproxy_proto_rawDescGZIP(), []int{13}
+	return file_lalproxy_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *StopRelayPullReq) GetStreamName() string {
@@ -1083,7 +1247,7 @@ type StopRelayPullRes struct {
 
 func (x *StopRelayPullRes) Reset() {
 	*x = StopRelayPullRes{}
-	mi := &file_lalproxy_proto_msgTypes[14]
+	mi := &file_lalproxy_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1095,7 +1259,7 @@ func (x *StopRelayPullRes) String() string {
 func (*StopRelayPullRes) ProtoMessage() {}
 
 func (x *StopRelayPullRes) ProtoReflect() protoreflect.Message {
-	mi := &file_lalproxy_proto_msgTypes[14]
+	mi := &file_lalproxy_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1108,7 +1272,7 @@ func (x *StopRelayPullRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopRelayPullRes.ProtoReflect.Descriptor instead.
 func (*StopRelayPullRes) Descriptor() ([]byte, []int) {
-	return file_lalproxy_proto_rawDescGZIP(), []int{14}
+	return file_lalproxy_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *StopRelayPullRes) GetErrorCode() int32 {
@@ -1140,7 +1304,7 @@ type KickSessionReq struct {
 
 func (x *KickSessionReq) Reset() {
 	*x = KickSessionReq{}
-	mi := &file_lalproxy_proto_msgTypes[15]
+	mi := &file_lalproxy_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1152,7 +1316,7 @@ func (x *KickSessionReq) String() string {
 func (*KickSessionReq) ProtoMessage() {}
 
 func (x *KickSessionReq) ProtoReflect() protoreflect.Message {
-	mi := &file_lalproxy_proto_msgTypes[15]
+	mi := &file_lalproxy_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1165,7 +1329,7 @@ func (x *KickSessionReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KickSessionReq.ProtoReflect.Descriptor instead.
 func (*KickSessionReq) Descriptor() ([]byte, []int) {
-	return file_lalproxy_proto_rawDescGZIP(), []int{15}
+	return file_lalproxy_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *KickSessionReq) GetStreamName() string {
@@ -1202,7 +1366,7 @@ type KickSessionRes struct {
 
 func (x *KickSessionRes) Reset() {
 	*x = KickSessionRes{}
-	mi := &file_lalproxy_proto_msgTypes[16]
+	mi := &file_lalproxy_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1214,7 +1378,7 @@ func (x *KickSessionRes) String() string {
 func (*KickSessionRes) ProtoMessage() {}
 
 func (x *KickSessionRes) ProtoReflect() protoreflect.Message {
-	mi := &file_lalproxy_proto_msgTypes[16]
+	mi := &file_lalproxy_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1227,7 +1391,7 @@ func (x *KickSessionRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KickSessionRes.ProtoReflect.Descriptor instead.
 func (*KickSessionRes) Descriptor() ([]byte, []int) {
-	return file_lalproxy_proto_rawDescGZIP(), []int{16}
+	return file_lalproxy_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *KickSessionRes) GetErrorCode() int32 {
@@ -1263,7 +1427,7 @@ type StartRtpPubReq struct {
 
 func (x *StartRtpPubReq) Reset() {
 	*x = StartRtpPubReq{}
-	mi := &file_lalproxy_proto_msgTypes[17]
+	mi := &file_lalproxy_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1275,7 +1439,7 @@ func (x *StartRtpPubReq) String() string {
 func (*StartRtpPubReq) ProtoMessage() {}
 
 func (x *StartRtpPubReq) ProtoReflect() protoreflect.Message {
-	mi := &file_lalproxy_proto_msgTypes[17]
+	mi := &file_lalproxy_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1288,7 +1452,7 @@ func (x *StartRtpPubReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartRtpPubReq.ProtoReflect.Descriptor instead.
 func (*StartRtpPubReq) Descriptor() ([]byte, []int) {
-	return file_lalproxy_proto_rawDescGZIP(), []int{17}
+	return file_lalproxy_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *StartRtpPubReq) GetStreamName() string {
@@ -1339,7 +1503,7 @@ type StartRtpPubRes struct {
 
 func (x *StartRtpPubRes) Reset() {
 	*x = StartRtpPubRes{}
-	mi := &file_lalproxy_proto_msgTypes[18]
+	mi := &file_lalproxy_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1351,7 +1515,7 @@ func (x *StartRtpPubRes) String() string {
 func (*StartRtpPubRes) ProtoMessage() {}
 
 func (x *StartRtpPubRes) ProtoReflect() protoreflect.Message {
-	mi := &file_lalproxy_proto_msgTypes[18]
+	mi := &file_lalproxy_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1364,7 +1528,7 @@ func (x *StartRtpPubRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartRtpPubRes.ProtoReflect.Descriptor instead.
 func (*StartRtpPubRes) Descriptor() ([]byte, []int) {
-	return file_lalproxy_proto_rawDescGZIP(), []int{18}
+	return file_lalproxy_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *StartRtpPubRes) GetErrorCode() int32 {
@@ -1394,7 +1558,7 @@ type StopRtpPubReq struct {
 
 func (x *StopRtpPubReq) Reset() {
 	*x = StopRtpPubReq{}
-	mi := &file_lalproxy_proto_msgTypes[19]
+	mi := &file_lalproxy_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1406,7 +1570,7 @@ func (x *StopRtpPubReq) String() string {
 func (*StopRtpPubReq) ProtoMessage() {}
 
 func (x *StopRtpPubReq) ProtoReflect() protoreflect.Message {
-	mi := &file_lalproxy_proto_msgTypes[19]
+	mi := &file_lalproxy_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1419,7 +1583,7 @@ func (x *StopRtpPubReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopRtpPubReq.ProtoReflect.Descriptor instead.
 func (*StopRtpPubReq) Descriptor() ([]byte, []int) {
-	return file_lalproxy_proto_rawDescGZIP(), []int{19}
+	return file_lalproxy_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *StopRtpPubReq) GetStreamName() string {
@@ -1449,7 +1613,7 @@ type StopRtpPubRes struct {
 
 func (x *StopRtpPubRes) Reset() {
 	*x = StopRtpPubRes{}
-	mi := &file_lalproxy_proto_msgTypes[20]
+	mi := &file_lalproxy_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1461,7 +1625,7 @@ func (x *StopRtpPubRes) String() string {
 func (*StopRtpPubRes) ProtoMessage() {}
 
 func (x *StopRtpPubRes) ProtoReflect() protoreflect.Message {
-	mi := &file_lalproxy_proto_msgTypes[20]
+	mi := &file_lalproxy_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1474,7 +1638,7 @@ func (x *StopRtpPubRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopRtpPubRes.ProtoReflect.Descriptor instead.
 func (*StopRtpPubRes) Descriptor() ([]byte, []int) {
-	return file_lalproxy_proto_rawDescGZIP(), []int{20}
+	return file_lalproxy_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *StopRtpPubRes) GetErrorCode() int32 {
@@ -1504,7 +1668,7 @@ type AddIpBlacklistReq struct {
 
 func (x *AddIpBlacklistReq) Reset() {
 	*x = AddIpBlacklistReq{}
-	mi := &file_lalproxy_proto_msgTypes[21]
+	mi := &file_lalproxy_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1516,7 +1680,7 @@ func (x *AddIpBlacklistReq) String() string {
 func (*AddIpBlacklistReq) ProtoMessage() {}
 
 func (x *AddIpBlacklistReq) ProtoReflect() protoreflect.Message {
-	mi := &file_lalproxy_proto_msgTypes[21]
+	mi := &file_lalproxy_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1529,7 +1693,7 @@ func (x *AddIpBlacklistReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddIpBlacklistReq.ProtoReflect.Descriptor instead.
 func (*AddIpBlacklistReq) Descriptor() ([]byte, []int) {
-	return file_lalproxy_proto_rawDescGZIP(), []int{21}
+	return file_lalproxy_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *AddIpBlacklistReq) GetIp() string {
@@ -1559,7 +1723,7 @@ type AddIpBlacklistRes struct {
 
 func (x *AddIpBlacklistRes) Reset() {
 	*x = AddIpBlacklistRes{}
-	mi := &file_lalproxy_proto_msgTypes[22]
+	mi := &file_lalproxy_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1571,7 +1735,7 @@ func (x *AddIpBlacklistRes) String() string {
 func (*AddIpBlacklistRes) ProtoMessage() {}
 
 func (x *AddIpBlacklistRes) ProtoReflect() protoreflect.Message {
-	mi := &file_lalproxy_proto_msgTypes[22]
+	mi := &file_lalproxy_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1584,7 +1748,7 @@ func (x *AddIpBlacklistRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddIpBlacklistRes.ProtoReflect.Descriptor instead.
 func (*AddIpBlacklistRes) Descriptor() ([]byte, []int) {
-	return file_lalproxy_proto_rawDescGZIP(), []int{22}
+	return file_lalproxy_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *AddIpBlacklistRes) GetErrorCode() int32 {
@@ -1605,65 +1769,85 @@ var File_lalproxy_proto protoreflect.FileDescriptor
 
 const file_lalproxy_proto_rawDesc = "" +
 	"\n" +
-	"\x0elalproxy.proto\x12\bLalproxy\"\xa1\x02\n" +
-	"\vSessionInfo\x12\x1c\n" +
-	"\tsessionId\x18\x01 \x01(\tR\tsessionId\x12 \n" +
-	"\vsessionType\x18\x02 \x01(\tR\vsessionType\x12\x1a\n" +
-	"\bclientIp\x18\x03 \x01(\tR\bclientIp\x12\x1e\n" +
+	"\x0elalproxy.proto\x12\bLalproxy\"3\n" +
+	"\tFrameData\x12\x18\n" +
+	"\aunixSec\x18\x01 \x01(\x03R\aunixSec\x12\f\n" +
+	"\x01v\x18\x02 \x01(\x05R\x01v\"\xec\x02\n" +
+	"\x0ePubSessionInfo\x12\x1c\n" +
+	"\tsessionId\x18\x01 \x01(\tR\tsessionId\x12\x1a\n" +
+	"\bprotocol\x18\x02 \x01(\tR\bprotocol\x12\x1a\n" +
+	"\bbaseType\x18\x03 \x01(\tR\bbaseType\x12\x1c\n" +
+	"\tstartTime\x18\x04 \x01(\tR\tstartTime\x12\x1e\n" +
 	"\n" +
-	"clientPort\x18\x04 \x01(\x05R\n" +
-	"clientPort\x12\x1a\n" +
-	"\bprotocol\x18\x05 \x01(\tR\bprotocol\x12\"\n" +
-	"\fcreateTimeMs\x18\x06 \x01(\x03R\fcreateTimeMs\x12\x1a\n" +
-	"\baliveSec\x18\a \x01(\x05R\baliveSec\x12\x1c\n" +
-	"\trecvBytes\x18\b \x01(\x03R\trecvBytes\x12\x1c\n" +
-	"\tsendBytes\x18\t \x01(\x03R\tsendBytes\"\x9a\x01\n" +
+	"remoteAddr\x18\x05 \x01(\tR\n" +
+	"remoteAddr\x12\"\n" +
+	"\freadBytesSum\x18\x06 \x01(\x03R\freadBytesSum\x12$\n" +
+	"\rwroteBytesSum\x18\a \x01(\x03R\rwroteBytesSum\x12\"\n" +
+	"\fbitrateKbits\x18\b \x01(\x05R\fbitrateKbits\x12*\n" +
+	"\x10readBitrateKbits\x18\t \x01(\x05R\x10readBitrateKbits\x12,\n" +
+	"\x11writeBitrateKbits\x18\n" +
+	" \x01(\x05R\x11writeBitrateKbits\"\xec\x02\n" +
+	"\x0eSubSessionInfo\x12\x1c\n" +
+	"\tsessionId\x18\x01 \x01(\tR\tsessionId\x12\x1a\n" +
+	"\bprotocol\x18\x02 \x01(\tR\bprotocol\x12\x1a\n" +
+	"\bbaseType\x18\x03 \x01(\tR\bbaseType\x12\x1c\n" +
+	"\tstartTime\x18\x04 \x01(\tR\tstartTime\x12\x1e\n" +
 	"\n" +
-	"VideoCodec\x12\x14\n" +
-	"\x05codec\x18\x01 \x01(\tR\x05codec\x12\x14\n" +
-	"\x05width\x18\x02 \x01(\x05R\x05width\x12\x16\n" +
-	"\x06height\x18\x03 \x01(\x05R\x06height\x12\x10\n" +
-	"\x03fps\x18\x04 \x01(\x05R\x03fps\x12\x1e\n" +
+	"remoteAddr\x18\x05 \x01(\tR\n" +
+	"remoteAddr\x12\"\n" +
+	"\freadBytesSum\x18\x06 \x01(\x03R\freadBytesSum\x12$\n" +
+	"\rwroteBytesSum\x18\a \x01(\x03R\rwroteBytesSum\x12\"\n" +
+	"\fbitrateKbits\x18\b \x01(\x05R\fbitrateKbits\x12*\n" +
+	"\x10readBitrateKbits\x18\t \x01(\x05R\x10readBitrateKbits\x12,\n" +
+	"\x11writeBitrateKbits\x18\n" +
+	" \x01(\x05R\x11writeBitrateKbits\"\xed\x02\n" +
+	"\x0fPullSessionInfo\x12\x1c\n" +
+	"\tsessionId\x18\x01 \x01(\tR\tsessionId\x12\x1a\n" +
+	"\bprotocol\x18\x02 \x01(\tR\bprotocol\x12\x1a\n" +
+	"\bbaseType\x18\x03 \x01(\tR\bbaseType\x12\x1c\n" +
+	"\tstartTime\x18\x04 \x01(\tR\tstartTime\x12\x1e\n" +
 	"\n" +
-	"bitrateBps\x18\x05 \x01(\x03R\n" +
-	"bitrateBps\x12\x16\n" +
-	"\x06gopSec\x18\x06 \x01(\x05R\x06gopSec\"~\n" +
-	"\n" +
-	"AudioCodec\x12\x14\n" +
-	"\x05codec\x18\x01 \x01(\tR\x05codec\x12\x1e\n" +
-	"\n" +
-	"sampleRate\x18\x02 \x01(\x05R\n" +
-	"sampleRate\x12\x1a\n" +
-	"\bchannels\x18\x03 \x01(\x05R\bchannels\x12\x1e\n" +
-	"\n" +
-	"bitrateBps\x18\x04 \x01(\x03R\n" +
-	"bitrateBps\"\xf6\x02\n" +
+	"remoteAddr\x18\x05 \x01(\tR\n" +
+	"remoteAddr\x12\"\n" +
+	"\freadBytesSum\x18\x06 \x01(\x03R\freadBytesSum\x12$\n" +
+	"\rwroteBytesSum\x18\a \x01(\x03R\rwroteBytesSum\x12\"\n" +
+	"\fbitrateKbits\x18\b \x01(\x05R\fbitrateKbits\x12*\n" +
+	"\x10readBitrateKbits\x18\t \x01(\x05R\x10readBitrateKbits\x12,\n" +
+	"\x11writeBitrateKbits\x18\n" +
+	" \x01(\x05R\x11writeBitrateKbits\"\x11\n" +
+	"\x0fPushSessionInfo\"\xbc\x03\n" +
 	"\tGroupData\x12\x1e\n" +
 	"\n" +
 	"streamName\x18\x01 \x01(\tR\n" +
-	"streamName\x12\x16\n" +
-	"\x06status\x18\x02 \x01(\tR\x06status\x12*\n" +
-	"\x05video\x18\x03 \x01(\v2\x14.Lalproxy.VideoCodecR\x05video\x12*\n" +
-	"\x05audio\x18\x04 \x01(\v2\x14.Lalproxy.AudioCodecR\x05audio\x121\n" +
-	"\bsessions\x18\x05 \x03(\v2\x15.Lalproxy.SessionInfoR\bsessions\x12\x1a\n" +
-	"\bpubCount\x18\x06 \x01(\x05R\bpubCount\x12\x1a\n" +
-	"\bsubCount\x18\a \x01(\x05R\bsubCount\x12\x1c\n" +
-	"\tpullCount\x18\b \x01(\x05R\tpullCount\x12,\n" +
-	"\x11totalSessionCount\x18\t \x01(\x05R\x11totalSessionCount\x12\"\n" +
-	"\fcreateTimeMs\x18\n" +
-	" \x01(\x03R\fcreateTimeMs\"\xdb\x02\n" +
-	"\rLalServerData\x12\x18\n" +
-	"\aversion\x18\x01 \x01(\tR\aversion\x12 \n" +
-	"\vstartTimeMs\x18\x02 \x01(\x03R\vstartTimeMs\x12\x16\n" +
-	"\x06runSec\x18\x03 \x01(\x05R\x06runSec\x12 \n" +
-	"\vlistenAddrs\x18\x04 \x03(\tR\vlistenAddrs\x12*\n" +
-	"\x10activeGroupCount\x18\x05 \x01(\x05R\x10activeGroupCount\x12,\n" +
-	"\x11totalSessionCount\x18\x06 \x01(\x05R\x11totalSessionCount\x12\x1c\n" +
-	"\tgoVersion\x18\a \x01(\tR\tgoVersion\x12\x16\n" +
-	"\x06osArch\x18\b \x01(\tR\x06osArch\x12\x1a\n" +
-	"\bcpuCores\x18\t \x01(\x05R\bcpuCores\x12(\n" +
-	"\x0fmemoryUsedBytes\x18\n" +
-	" \x01(\x03R\x0fmemoryUsedBytes\"1\n" +
+	"streamName\x12\x18\n" +
+	"\aappName\x18\x02 \x01(\tR\aappName\x12\x1e\n" +
+	"\n" +
+	"audioCodec\x18\x03 \x01(\tR\n" +
+	"audioCodec\x12\x1e\n" +
+	"\n" +
+	"videoCodec\x18\x04 \x01(\tR\n" +
+	"videoCodec\x12\x1e\n" +
+	"\n" +
+	"videoWidth\x18\x05 \x01(\x05R\n" +
+	"videoWidth\x12 \n" +
+	"\vvideoHeight\x18\x06 \x01(\x05R\vvideoHeight\x12*\n" +
+	"\x03pub\x18\a \x01(\v2\x18.Lalproxy.PubSessionInfoR\x03pub\x12,\n" +
+	"\x04subs\x18\b \x03(\v2\x18.Lalproxy.SubSessionInfoR\x04subs\x12-\n" +
+	"\x04pull\x18\t \x01(\v2\x19.Lalproxy.PullSessionInfoR\x04pull\x12/\n" +
+	"\x05pushs\x18\n" +
+	" \x03(\v2\x19.Lalproxy.PushSessionInfoR\x05pushs\x129\n" +
+	"\rinFramePerSec\x18\v \x03(\v2\x13.Lalproxy.FrameDataR\rinFramePerSec\"\xc9\x01\n" +
+	"\rLalServerData\x12\x1a\n" +
+	"\bserverId\x18\x01 \x01(\tR\bserverId\x12\x18\n" +
+	"\abinInfo\x18\x02 \x01(\tR\abinInfo\x12\x1e\n" +
+	"\n" +
+	"lalVersion\x18\x03 \x01(\tR\n" +
+	"lalVersion\x12\x1e\n" +
+	"\n" +
+	"apiVersion\x18\x04 \x01(\tR\n" +
+	"apiVersion\x12$\n" +
+	"\rnotifyVersion\x18\x05 \x01(\tR\rnotifyVersion\x12\x1c\n" +
+	"\tstartTime\x18\x06 \x01(\tR\tstartTime\"1\n" +
 	"\x0fGetGroupInfoReq\x12\x1e\n" +
 	"\n" +
 	"streamName\x18\x01 \x01(\tR\n" +
@@ -1763,62 +1947,66 @@ func file_lalproxy_proto_rawDescGZIP() []byte {
 	return file_lalproxy_proto_rawDescData
 }
 
-var file_lalproxy_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
+var file_lalproxy_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_lalproxy_proto_goTypes = []any{
-	(*SessionInfo)(nil),       // 0: Lalproxy.SessionInfo
-	(*VideoCodec)(nil),        // 1: Lalproxy.VideoCodec
-	(*AudioCodec)(nil),        // 2: Lalproxy.AudioCodec
-	(*GroupData)(nil),         // 3: Lalproxy.GroupData
-	(*LalServerData)(nil),     // 4: Lalproxy.LalServerData
-	(*GetGroupInfoReq)(nil),   // 5: Lalproxy.GetGroupInfoReq
-	(*GetGroupInfoRes)(nil),   // 6: Lalproxy.GetGroupInfoRes
-	(*GetAllGroupsReq)(nil),   // 7: Lalproxy.GetAllGroupsReq
-	(*GetAllGroupsRes)(nil),   // 8: Lalproxy.GetAllGroupsRes
-	(*GetLalInfoReq)(nil),     // 9: Lalproxy.GetLalInfoReq
-	(*GetLalInfoRes)(nil),     // 10: Lalproxy.GetLalInfoRes
-	(*StartRelayPullReq)(nil), // 11: Lalproxy.StartRelayPullReq
-	(*StartRelayPullRes)(nil), // 12: Lalproxy.StartRelayPullRes
-	(*StopRelayPullReq)(nil),  // 13: Lalproxy.StopRelayPullReq
-	(*StopRelayPullRes)(nil),  // 14: Lalproxy.StopRelayPullRes
-	(*KickSessionReq)(nil),    // 15: Lalproxy.KickSessionReq
-	(*KickSessionRes)(nil),    // 16: Lalproxy.KickSessionRes
-	(*StartRtpPubReq)(nil),    // 17: Lalproxy.StartRtpPubReq
-	(*StartRtpPubRes)(nil),    // 18: Lalproxy.StartRtpPubRes
-	(*StopRtpPubReq)(nil),     // 19: Lalproxy.StopRtpPubReq
-	(*StopRtpPubRes)(nil),     // 20: Lalproxy.StopRtpPubRes
-	(*AddIpBlacklistReq)(nil), // 21: Lalproxy.AddIpBlacklistReq
-	(*AddIpBlacklistRes)(nil), // 22: Lalproxy.AddIpBlacklistRes
+	(*FrameData)(nil),         // 0: Lalproxy.FrameData
+	(*PubSessionInfo)(nil),    // 1: Lalproxy.PubSessionInfo
+	(*SubSessionInfo)(nil),    // 2: Lalproxy.SubSessionInfo
+	(*PullSessionInfo)(nil),   // 3: Lalproxy.PullSessionInfo
+	(*PushSessionInfo)(nil),   // 4: Lalproxy.PushSessionInfo
+	(*GroupData)(nil),         // 5: Lalproxy.GroupData
+	(*LalServerData)(nil),     // 6: Lalproxy.LalServerData
+	(*GetGroupInfoReq)(nil),   // 7: Lalproxy.GetGroupInfoReq
+	(*GetGroupInfoRes)(nil),   // 8: Lalproxy.GetGroupInfoRes
+	(*GetAllGroupsReq)(nil),   // 9: Lalproxy.GetAllGroupsReq
+	(*GetAllGroupsRes)(nil),   // 10: Lalproxy.GetAllGroupsRes
+	(*GetLalInfoReq)(nil),     // 11: Lalproxy.GetLalInfoReq
+	(*GetLalInfoRes)(nil),     // 12: Lalproxy.GetLalInfoRes
+	(*StartRelayPullReq)(nil), // 13: Lalproxy.StartRelayPullReq
+	(*StartRelayPullRes)(nil), // 14: Lalproxy.StartRelayPullRes
+	(*StopRelayPullReq)(nil),  // 15: Lalproxy.StopRelayPullReq
+	(*StopRelayPullRes)(nil),  // 16: Lalproxy.StopRelayPullRes
+	(*KickSessionReq)(nil),    // 17: Lalproxy.KickSessionReq
+	(*KickSessionRes)(nil),    // 18: Lalproxy.KickSessionRes
+	(*StartRtpPubReq)(nil),    // 19: Lalproxy.StartRtpPubReq
+	(*StartRtpPubRes)(nil),    // 20: Lalproxy.StartRtpPubRes
+	(*StopRtpPubReq)(nil),     // 21: Lalproxy.StopRtpPubReq
+	(*StopRtpPubRes)(nil),     // 22: Lalproxy.StopRtpPubRes
+	(*AddIpBlacklistReq)(nil), // 23: Lalproxy.AddIpBlacklistReq
+	(*AddIpBlacklistRes)(nil), // 24: Lalproxy.AddIpBlacklistRes
 }
 var file_lalproxy_proto_depIdxs = []int32{
-	1,  // 0: Lalproxy.GroupData.video:type_name -> Lalproxy.VideoCodec
-	2,  // 1: Lalproxy.GroupData.audio:type_name -> Lalproxy.AudioCodec
-	0,  // 2: Lalproxy.GroupData.sessions:type_name -> Lalproxy.SessionInfo
-	3,  // 3: Lalproxy.GetGroupInfoRes.data:type_name -> Lalproxy.GroupData
-	3,  // 4: Lalproxy.GetAllGroupsRes.groups:type_name -> Lalproxy.GroupData
-	4,  // 5: Lalproxy.GetLalInfoRes.data:type_name -> Lalproxy.LalServerData
-	5,  // 6: Lalproxy.LalProxy.GetGroupInfo:input_type -> Lalproxy.GetGroupInfoReq
-	7,  // 7: Lalproxy.LalProxy.GetAllGroups:input_type -> Lalproxy.GetAllGroupsReq
-	9,  // 8: Lalproxy.LalProxy.GetLalInfo:input_type -> Lalproxy.GetLalInfoReq
-	11, // 9: Lalproxy.LalProxy.StartRelayPull:input_type -> Lalproxy.StartRelayPullReq
-	13, // 10: Lalproxy.LalProxy.StopRelayPull:input_type -> Lalproxy.StopRelayPullReq
-	15, // 11: Lalproxy.LalProxy.KickSession:input_type -> Lalproxy.KickSessionReq
-	17, // 12: Lalproxy.LalProxy.StartRtpPub:input_type -> Lalproxy.StartRtpPubReq
-	19, // 13: Lalproxy.LalProxy.StopRtpPub:input_type -> Lalproxy.StopRtpPubReq
-	21, // 14: Lalproxy.LalProxy.AddIpBlacklist:input_type -> Lalproxy.AddIpBlacklistReq
-	6,  // 15: Lalproxy.LalProxy.GetGroupInfo:output_type -> Lalproxy.GetGroupInfoRes
-	8,  // 16: Lalproxy.LalProxy.GetAllGroups:output_type -> Lalproxy.GetAllGroupsRes
-	10, // 17: Lalproxy.LalProxy.GetLalInfo:output_type -> Lalproxy.GetLalInfoRes
-	12, // 18: Lalproxy.LalProxy.StartRelayPull:output_type -> Lalproxy.StartRelayPullRes
-	14, // 19: Lalproxy.LalProxy.StopRelayPull:output_type -> Lalproxy.StopRelayPullRes
-	16, // 20: Lalproxy.LalProxy.KickSession:output_type -> Lalproxy.KickSessionRes
-	18, // 21: Lalproxy.LalProxy.StartRtpPub:output_type -> Lalproxy.StartRtpPubRes
-	20, // 22: Lalproxy.LalProxy.StopRtpPub:output_type -> Lalproxy.StopRtpPubRes
-	22, // 23: Lalproxy.LalProxy.AddIpBlacklist:output_type -> Lalproxy.AddIpBlacklistRes
-	15, // [15:24] is the sub-list for method output_type
-	6,  // [6:15] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	1,  // 0: Lalproxy.GroupData.pub:type_name -> Lalproxy.PubSessionInfo
+	2,  // 1: Lalproxy.GroupData.subs:type_name -> Lalproxy.SubSessionInfo
+	3,  // 2: Lalproxy.GroupData.pull:type_name -> Lalproxy.PullSessionInfo
+	4,  // 3: Lalproxy.GroupData.pushs:type_name -> Lalproxy.PushSessionInfo
+	0,  // 4: Lalproxy.GroupData.inFramePerSec:type_name -> Lalproxy.FrameData
+	5,  // 5: Lalproxy.GetGroupInfoRes.data:type_name -> Lalproxy.GroupData
+	5,  // 6: Lalproxy.GetAllGroupsRes.groups:type_name -> Lalproxy.GroupData
+	6,  // 7: Lalproxy.GetLalInfoRes.data:type_name -> Lalproxy.LalServerData
+	7,  // 8: Lalproxy.LalProxy.GetGroupInfo:input_type -> Lalproxy.GetGroupInfoReq
+	9,  // 9: Lalproxy.LalProxy.GetAllGroups:input_type -> Lalproxy.GetAllGroupsReq
+	11, // 10: Lalproxy.LalProxy.GetLalInfo:input_type -> Lalproxy.GetLalInfoReq
+	13, // 11: Lalproxy.LalProxy.StartRelayPull:input_type -> Lalproxy.StartRelayPullReq
+	15, // 12: Lalproxy.LalProxy.StopRelayPull:input_type -> Lalproxy.StopRelayPullReq
+	17, // 13: Lalproxy.LalProxy.KickSession:input_type -> Lalproxy.KickSessionReq
+	19, // 14: Lalproxy.LalProxy.StartRtpPub:input_type -> Lalproxy.StartRtpPubReq
+	21, // 15: Lalproxy.LalProxy.StopRtpPub:input_type -> Lalproxy.StopRtpPubReq
+	23, // 16: Lalproxy.LalProxy.AddIpBlacklist:input_type -> Lalproxy.AddIpBlacklistReq
+	8,  // 17: Lalproxy.LalProxy.GetGroupInfo:output_type -> Lalproxy.GetGroupInfoRes
+	10, // 18: Lalproxy.LalProxy.GetAllGroups:output_type -> Lalproxy.GetAllGroupsRes
+	12, // 19: Lalproxy.LalProxy.GetLalInfo:output_type -> Lalproxy.GetLalInfoRes
+	14, // 20: Lalproxy.LalProxy.StartRelayPull:output_type -> Lalproxy.StartRelayPullRes
+	16, // 21: Lalproxy.LalProxy.StopRelayPull:output_type -> Lalproxy.StopRelayPullRes
+	18, // 22: Lalproxy.LalProxy.KickSession:output_type -> Lalproxy.KickSessionRes
+	20, // 23: Lalproxy.LalProxy.StartRtpPub:output_type -> Lalproxy.StartRtpPubRes
+	22, // 24: Lalproxy.LalProxy.StopRtpPub:output_type -> Lalproxy.StopRtpPubRes
+	24, // 25: Lalproxy.LalProxy.AddIpBlacklist:output_type -> Lalproxy.AddIpBlacklistRes
+	17, // [17:26] is the sub-list for method output_type
+	8,  // [8:17] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_lalproxy_proto_init() }
@@ -1832,7 +2020,7 @@ func file_lalproxy_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_lalproxy_proto_rawDesc), len(file_lalproxy_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   23,
+			NumMessages:   25,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
