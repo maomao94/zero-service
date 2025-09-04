@@ -119,6 +119,7 @@ type LalServerData struct {
 	LalVersion    string `json:"lal_version"`    // lal可执行文件版本信息
 	ApiVersion    string `json:"api_version"`    // HTTP API接口版本信息
 	NotifyVersion string `json:"notify_version"` // HTTP Notify版本信息
+	WebUiVersion  string `json:"web_ui_version"` // Web UI版本信息
 	// 时间信息（必返）
 	StartTime string `json:"start_time"` // lal进程启动时间
 }

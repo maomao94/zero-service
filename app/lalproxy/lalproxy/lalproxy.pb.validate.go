@@ -901,6 +901,8 @@ func (m *LalServerData) validate(all bool) error {
 
 	// no validation rules for NotifyVersion
 
+	// no validation rules for WebUiVersion
+
 	// no validation rules for StartTime
 
 	if len(errors) > 0 {

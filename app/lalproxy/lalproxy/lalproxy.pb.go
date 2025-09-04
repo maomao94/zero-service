@@ -643,8 +643,10 @@ type LalServerData struct {
 	ApiVersion string `protobuf:"bytes,4,opt,name=apiVersion,proto3" json:"apiVersion,omitempty"`
 	// HTTP Notify版本信息
 	NotifyVersion string `protobuf:"bytes,5,opt,name=notifyVersion,proto3" json:"notifyVersion,omitempty"`
+	// Web UI版本信息
+	WebUiVersion string `protobuf:"bytes,6,opt,name=webUiVersion,json=WebUiVersion,proto3" json:"webUiVersion,omitempty"`
 	// lal进程启动时间
-	StartTime     string `protobuf:"bytes,6,opt,name=startTime,proto3" json:"startTime,omitempty"`
+	StartTime     string `protobuf:"bytes,7,opt,name=startTime,proto3" json:"startTime,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -710,6 +712,13 @@ func (x *LalServerData) GetApiVersion() string {
 func (x *LalServerData) GetNotifyVersion() string {
 	if x != nil {
 		return x.NotifyVersion
+	}
+	return ""
+}
+
+func (x *LalServerData) GetWebUiVersion() string {
+	if x != nil {
+		return x.WebUiVersion
 	}
 	return ""
 }
@@ -1836,7 +1845,7 @@ const file_lalproxy_proto_rawDesc = "" +
 	"\x04pull\x18\t \x01(\v2\x19.Lalproxy.PullSessionInfoR\x04pull\x12/\n" +
 	"\x05pushs\x18\n" +
 	" \x03(\v2\x19.Lalproxy.PushSessionInfoR\x05pushs\x129\n" +
-	"\rinFramePerSec\x18\v \x03(\v2\x13.Lalproxy.FrameDataR\rinFramePerSec\"\xc9\x01\n" +
+	"\rinFramePerSec\x18\v \x03(\v2\x13.Lalproxy.FrameDataR\rinFramePerSec\"\xed\x01\n" +
 	"\rLalServerData\x12\x1a\n" +
 	"\bserverId\x18\x01 \x01(\tR\bserverId\x12\x18\n" +
 	"\abinInfo\x18\x02 \x01(\tR\abinInfo\x12\x1e\n" +
@@ -1846,8 +1855,9 @@ const file_lalproxy_proto_rawDesc = "" +
 	"\n" +
 	"apiVersion\x18\x04 \x01(\tR\n" +
 	"apiVersion\x12$\n" +
-	"\rnotifyVersion\x18\x05 \x01(\tR\rnotifyVersion\x12\x1c\n" +
-	"\tstartTime\x18\x06 \x01(\tR\tstartTime\"1\n" +
+	"\rnotifyVersion\x18\x05 \x01(\tR\rnotifyVersion\x12\"\n" +
+	"\fwebUiVersion\x18\x06 \x01(\tR\fWebUiVersion\x12\x1c\n" +
+	"\tstartTime\x18\a \x01(\tR\tstartTime\"1\n" +
 	"\x0fGetGroupInfoReq\x12\x1e\n" +
 	"\n" +
 	"streamName\x18\x01 \x01(\tR\n" +

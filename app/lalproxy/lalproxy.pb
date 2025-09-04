@@ -1,5 +1,5 @@
 
-µ 
+Ù 
 lalproxy.protoLalproxy"3
 	FrameData
 unixSec (RunixSec
@@ -67,7 +67,7 @@ videoWidth
 pull	 (2.Lalproxy.PullSessionInfoRpull/
 pushs
  (2.Lalproxy.PushSessionInfoRpushs9
-inFramePerSec (2.Lalproxy.FrameDataRinFramePerSec"É
+inFramePerSec (2.Lalproxy.FrameDataRinFramePerSec"í
 LalServerData
 serverId (	RserverId
 binInfo (	RbinInfo
@@ -77,8 +77,9 @@ lalVersion
 
 apiVersion (	R
 apiVersion$
-notifyVersion (	RnotifyVersion
-	startTime (	R	startTime"1
+notifyVersion (	RnotifyVersion"
+webUiVersion (	RWebUiVersion
+	startTime (	R	startTime"1
 GetGroupInfoReq
 
 streamName (	R

@@ -151,8 +151,10 @@ message LalServerData {
   string apiVersion = 4 [json_name = "apiVersion"];
   // HTTP Notify版本信息
   string notifyVersion = 5 [json_name = "notifyVersion"];
+  // Web UI版本信息
+  string webUiVersion = 6 [json_name = "WebUiVersion"];
   // lal进程启动时间
-  string startTime = 6 [json_name = "startTime"];
+  string startTime = 7 [json_name = "startTime"];
 }
 
 // GetGroupInfo请求：对应/api/stat/group接口，查询指定流名称的group信息
