@@ -2,6 +2,7 @@ package wsx
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"sync"
@@ -279,9 +280,7 @@ func fillDefaultConfig(conf Config) Config {
 	if conf.MaxReconnectInterval <= 0 {
 		conf.MaxReconnectInterval = DefaultMaxReconnectInterval
 	}
-	// 修复：使用DefaultReconnectBackoffEnable作为ReconnectBackoff的默认值
-	// 对于bool类型，我们通过一个特殊标记来判断是否用户已设置（这里使用一个指针技巧）
-	// 由于无法直接判断，我们假设如果用户没有显式设置，则使用默认值
+	// 使用DefaultReconnectBackoffEnable作为ReconnectBackoff的默认值
 	conf.ReconnectBackoff = conf.ReconnectBackoff || DefaultReconnectBackoffEnable
 
 	return conf
@@ -310,6 +309,65 @@ func (c *client) Connect() error {
 
 	c.logger.Infof("WebSocket client started, target: %s", c.url)
 	c.onStatusChange(StatusConnecting, nil)
+	return nil
+}
+
+// Send 发送消息到服务器
+func (c *client) Send(message []byte) error {
+	if !c.IsConnected() {
+		return errors.New("not connected to server")
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// 设置写入超时
+	if err := c.conn.SetWriteDeadline(time.Now().Add(c.heartbeatInterval)); err != nil {
+		return err
+	}
+
+	// 发送文本消息
+	if err := c.conn.WriteMessage(websocket.TextMessage, message); err != nil {
+		c.logger.Errorf("Failed to send message: %v", err)
+		// 发送失败时关闭连接，触发重连
+		go c.closeConnection()
+		return err
+	}
+
+	c.logger.Debugf("Message sent successfully (size: %d bytes)", len(message))
+	return nil
+}
+
+// SendJSON 发送JSON消息到服务器
+func (c *client) SendJSON(data interface{}) error {
+	if !c.IsConnected() {
+		return errors.New("not connected to server")
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// 设置写入超时
+	if err := c.conn.SetWriteDeadline(time.Now().Add(c.heartbeatInterval)); err != nil {
+		return err
+	}
+
+	// 序列化为JSON并发送
+	if err := c.conn.WriteJSON(data); err != nil {
+		// 区分序列化错误和发送错误
+		var jsonErr *json.MarshalerError
+		if errors.As(err, &jsonErr) {
+			c.logger.Errorf("Failed to marshal JSON: %v", err)
+			return err
+		}
+
+		c.logger.Errorf("Failed to send JSON message: %v", err)
+		// 发送失败时关闭连接，触发重连
+		go c.closeConnection()
+		return err
+	}
+
+	c.logger.Debug("JSON message sent successfully")
 	return nil
 }
 
