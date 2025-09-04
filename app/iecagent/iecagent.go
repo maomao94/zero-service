@@ -47,8 +47,6 @@ func main() {
 	iecServer := iec104server2.NewIecServer(c.IecSetting.Host, c.IecSetting.Port, c.IecSetting.LogMode, iec104server2.NewServerHandler(iec.NewIecHandler(ctx)))
 	serviceGroup.Add(iecServer)
 
-	logx.AddGlobalFields(logx.Field("app", c.Name))
-
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
 	serviceGroup.Start()
 }

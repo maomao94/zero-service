@@ -3,30 +3,25 @@ package main
 import (
 	"flag"
 	"fmt"
-	"zero-service/app/trigger/internal/task"
 	interceptor "zero-service/common/Interceptor/rpcserver"
-	"zero-service/common/asynqx"
+	"zero-service/common/nacosx"
+
+	"zero-service/app/lalproxy/internal/config"
+	"zero-service/app/lalproxy/internal/server"
+	"zero-service/app/lalproxy/internal/svc"
+	"zero-service/app/lalproxy/lalproxy"
 
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
-	"github.com/zeromicro/go-zero/core/logx"
-
-	"zero-service/app/trigger/internal/config"
-	"zero-service/app/trigger/internal/server"
-	"zero-service/app/trigger/internal/svc"
-	"zero-service/app/trigger/trigger"
-
-	_ "zero-service/common/carbonx"
-	"zero-service/common/nacosx"
-
 	"github.com/zeromicro/go-zero/core/conf"
+	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
-var configFile = flag.String("f", "etc/trigger.yaml", "the config file")
+var configFile = flag.String("f", "etc/lalproxy.yaml", "the config file")
 
 func main() {
 	flag.Parse()
@@ -36,12 +31,13 @@ func main() {
 	ctx := svc.NewServiceContext(c)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
-		trigger.RegisterTriggerRpcServer(grpcServer, server.NewTriggerRpcServer(ctx))
+		lalproxy.RegisterLalProxyServer(grpcServer, server.NewLalProxyServer(ctx))
 
 		if c.Mode == service.DevMode || c.Mode == service.TestMode {
 			reflection.Register(grpcServer)
 		}
 	})
+	defer s.Stop()
 	// register service to nacos
 	if c.NacosConfig.IsRegister {
 		sc := []constant.ServerConfig{
@@ -65,17 +61,8 @@ func main() {
 		_ = nacosx.RegisterService(opts)
 	}
 	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
-	serviceGroup := service.NewServiceGroup()
-	defer serviceGroup.Stop()
 	logx.AddGlobalFields(logx.Field("app", c.Name))
-	serviceGroup.Add(s)
-	mux := task.NewCronJob(ctx).Register()
-	taskServer := asynqx.NewTaskServer(ctx.AsynqServer, mux)
-	serviceGroup.Add(taskServer)
-	scheduler := asynqx.NewSchedulerServer(ctx.Scheduler)
-	//scheduler.RegisterTest()
-	serviceGroup.Add(scheduler)
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
-	serviceGroup.Start()
+	s.Start()
 }

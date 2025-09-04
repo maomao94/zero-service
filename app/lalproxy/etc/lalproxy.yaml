@@ -1,0 +1,18 @@
+Name: lalproxy.rpc
+ListenOn: 0.0.0.0:21002
+Mode: dev
+Log:
+  Encoding: plain
+  #  Mode: file
+  Path: /opt/logs/lalproxy
+  Level: info
+NacosConfig:
+  IsRegister: true
+  Host: 127.0.0.1
+  Port: 8848
+  Username: nacos
+  PassWord: nacos
+  NamespaceId: public
+  ServiceName: iec-stash
+DB:
+  DataSource: root:PXDN93VRKUm8TeE7@tcp(localhost:33069)/lal?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai

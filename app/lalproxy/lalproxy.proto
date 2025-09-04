@@ -1,0 +1,243 @@
+syntax = "proto3";
+
+package lalproxy;
+
+option go_package = "./lalproxy";
+option java_multiple_files = true;
+option java_package = "com.github.lalproxy.grpc";
+option java_outer_classname = "LalProxyProto";
+
+message Req {
+  string ping = 1;
+}
+
+message Res {
+  string pong = 1;
+}
+
+service LalProxy {
+  // 查询特定流分组的信息
+  rpc GetGroupInfo (GetGroupInfoReq) returns (GetGroupInfoRes);
+  // 查询所有流分组的信息
+  rpc GetAllGroups (GetAllGroupsReq) returns (GetAllGroupsRes);
+  // 查询服务器基本信息
+  rpc GetLalInfo (GetLalInfoReq) returns (GetLalInfoRes);
+  // 控制服务器从远端拉流至本地
+  rpc StartRelayPull (StartRelayPullReq) returns (StartRelayPullRes);
+  // 停止从远端拉流
+  rpc StopRelayPull (StopRelayPullReq) returns (StopRelayPullRes);
+  // 强行踢出关闭指定会话
+  rpc KickSession (KickSessionReq) returns (KickSessionRes);
+  // 打开GB28181接收端口
+  rpc StartRtpPub (StartRtpPubReq) returns (StartRtpPubRes);
+  // 关闭GB28181接收端口
+  rpc StopRtpPub (StopRtpPubReq) returns (StopRtpPubRes);
+  // 增加IP黑名单，加入名单的IP将无法连接本服务
+  rpc AddIpBlacklist (AddIpBlacklistReq) returns (AddIpBlacklistRes);
+}
+
+// 查询特定流分组的请求参数
+message GetGroupInfoReq {
+  // 流名称，用于指定要查询的分组
+  string streamName = 1;
+}
+
+// 查询特定流分组的响应
+message GetGroupInfoRes {
+  // 错误码，0表示成功，非0表示失败
+  int32 errorCode = 1;
+  // 错误描述信息
+  string desp = 2;
+  // 分组详细信息
+  GroupData data = 3;
+}
+
+// 查询所有流分组的请求参数（暂无需额外参数）
+message GetAllGroupsReq {}
+
+// 查询所有流分组的响应
+message GetAllGroupsRes {
+  // 错误码，0表示成功，非0表示失败
+  int32 errorCode = 1;
+  // 错误描述信息
+  string desp = 2;
+  // 所有分组的列表
+  repeated GroupData groups = 3;
+}
+
+// 查询服务器信息的请求参数（暂无需额外参数）
+message GetLalInfoReq {}
+
+// 查询服务器信息的响应
+message GetLalInfoRes {
+  // 错误码，0表示成功，非0表示失败
+  int32 errorCode = 1;
+  // 错误描述信息
+  string desp = 2;
+  // 服务器详细信息
+  LalServerData data = 3;
+}
+
+// 启动中继拉流的请求参数
+message StartRelayPullReq {
+  // 拉流地址（如rtmp://example.com/live/stream）
+  string url = 1;
+  // 流名称，可选，默认从url中解析
+  string streamName = 2;
+  // 拉流超时时间，单位：毫秒
+  int32 pullTimeoutMs = 3;
+  // 拉流重试次数（-1表示一直重试，0表示不重试）
+  int32 pullRetryNum = 4;
+  // 无输出时自动停止拉流的时间，单位：毫秒
+  int32 autoStopPullAfterNoOutMs = 5;
+  // RTSP模式（0表示TCP，1表示UDP）
+  int32 rtspMode = 6;
+}
+
+// 启动中继拉流的响应
+message StartRelayPullRes {
+  // 错误码，0表示成功，非0表示失败
+  int32 errorCode = 1;
+  // 错误描述信息
+  string desp = 2;
+  // 操作结果的附加数据（可能为空）
+  map<string, string> data = 3;
+}
+
+// 停止中继拉流的请求参数
+message StopRelayPullReq {
+  // 要停止拉流的流名称
+  string streamName = 1;
+}
+
+// 停止中继拉流的响应
+message StopRelayPullRes {
+  // 错误码，0表示成功，非0表示失败
+  int32 errorCode = 1;
+  // 错误描述信息
+  string desp = 2;
+  // 操作结果的附加数据（可能为空）
+  map<string, string> data = 3;
+}
+
+// 踢出会话的请求参数
+message KickSessionReq {
+  // 流名称
+  string streamName = 1;
+  // 会话ID，可通过查询接口获取
+  string sessionId = 2;
+  // 会话类型（可选，如"pub"发布者,"sub"订阅者,"pull"拉流者）
+  string sessionType = 3;
+}
+
+// 踢出会话的响应
+message KickSessionRes {
+  // 错误码，0表示成功，非0表示失败
+  int32 errorCode = 1;
+  // 错误描述信息
+  string desp = 2;
+  // 操作结果的附加数据（可能为空）
+  map<string, string> data = 3;
+}
+
+// 启动RTP发布的请求参数（GB28181相关）
+message StartRtpPubReq {
+  // 本地接收RTP流的端口
+  int32 port = 1;
+  // 流名称，用于标识该RTP流
+  string streamName = 2;
+}
+
+// 启动RTP发布的响应
+message StartRtpPubRes {
+  // 错误码，0表示成功，非0表示失败
+  int32 errorCode = 1;
+  // 错误描述信息
+  string desp = 2;
+  // 操作结果的附加数据（可能为空）
+  map<string, string> data = 3;
+}
+
+// 停止RTP发布的请求参数（GB28181相关）
+message StopRtpPubReq {
+  // 要关闭的RTP接收端口
+  int32 port = 1;
+  // 流名称，用于标识要停止的RTP流
+  string streamName = 2;
+}
+
+// 停止RTP发布的响应
+message StopRtpPubRes {
+  // 错误码，0表示成功，非0表示失败
+  int32 errorCode = 1;
+  // 错误描述信息
+  string desp = 2;
+  // 操作结果的附加数据（可能为空）
+  map<string, string> data = 3;
+}
+
+// 添加IP黑名单的请求参数
+message AddIpBlacklistReq {
+  // 要加入黑名单的IP地址
+  string ip = 1;
+  // 黑名单过期时间，单位：秒（0表示永久有效）
+  int32 expireSeconds = 2;
+}
+
+// 添加IP黑名单的响应
+message AddIpBlacklistRes {
+  // 错误码，0表示成功，非0表示失败
+  int32 errorCode = 1;
+  // 错误描述信息
+  string desp = 2;
+  // 操作结果的附加数据（可能为空）
+  map<string, string> data = 3;
+}
+
+// 流分组数据结构
+message GroupData {
+  // 流名称
+  string streamName = 1;
+  // 分组创建时间，单位：毫秒时间戳
+  int64 createTimeMs = 2;
+  // 发布者会话信息
+  SessionInfo publisher = 3;
+  // 订阅者会话列表
+  repeated SessionInfo subscribers = 4;
+  // 拉流会话列表
+  repeated SessionInfo pullers = 5;
+}
+
+// 会话信息数据结构
+message SessionInfo {
+  // 会话ID
+  string sessionId = 1;
+  // 会话类型（"pub"发布者,"sub"订阅者,"pull"拉流者）
+  string type = 2;
+  // 客户端IP地址
+  string clientIp = 3;
+  // 会话创建时间，单位：毫秒时间戳
+  int64 createTimeMs = 4;
+  // 数据发送字节数
+  int64 sendBytes = 5;
+  // 数据接收字节数
+  int64 recvBytes = 6;
+}
+
+// 服务器信息数据结构
+message LalServerData {
+  // 服务器版本号
+  string version = 1;
+  // 启动时间，单位：毫秒时间戳
+  int64 startTimeMs = 2;
+  // 运行时长，单位：秒
+  int64 uptimeSeconds = 3;
+  // 总连接数
+  int32 totalConnections = 4;
+  // 当前流数量
+  int32 streamCount = 5;
+  // 系统信息（如操作系统、CPU核心数等）
+  string systemInfo = 6;
+  // 配置信息摘要
+  string configSummary = 7;
+}
