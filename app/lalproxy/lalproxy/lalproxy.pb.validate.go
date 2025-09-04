@@ -2550,19 +2550,17 @@ func (m *LalServerData) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Version
+	// no validation rules for ServerId
 
-	// no validation rules for StartTimeMs
+	// no validation rules for BinInfo
 
-	// no validation rules for UptimeSeconds
+	// no validation rules for LalVersion
 
-	// no validation rules for TotalConnections
+	// no validation rules for ApiVersion
 
-	// no validation rules for StreamCount
+	// no validation rules for NotifyVersion
 
-	// no validation rules for SystemInfo
-
-	// no validation rules for ConfigSummary
+	// no validation rules for StartTime
 
 	if len(errors) > 0 {
 		return LalServerDataMultiError(errors)

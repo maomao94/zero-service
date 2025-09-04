@@ -1,5 +1,5 @@
 
-Ô
+
 lalproxy.protolalproxy"
 Req
 ping (	Rping"
@@ -117,16 +117,16 @@ session_id
 	sendBytes (R
 send_bytes
 	recvBytes (R
-recv_bytes"Œ
-LalServerData
-version (	Rversion"
-startTimeMs (Rstart_time_ms%
-uptimeSeconds (Ruptime_seconds+
-totalConnections (Rtotal_connections!
-streamCount (Rstream_count
+recv_bytes"Õ
+LalServerData
+	server_id (	R	server_id
+bin_info (	Rbin_info 
+lal_version (	Rlal_version 
+api_version (	Rapi_version&
+notify_version (	Rnotify_version
 
-systemInfo (	Rsystem_info%
-configSummary (	Rconfig_summary2ý
+start_time (	R
+start_time2ý
 LalProxyD
 GetGroupInfo.lalproxy.GetGroupInfoReq.lalproxy.GetGroupInfoResD
 GetAllGroups.lalproxy.GetAllGroupsReq.lalproxy.GetAllGroupsRes>

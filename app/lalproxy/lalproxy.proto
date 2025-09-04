@@ -226,18 +226,10 @@ message SessionInfo {
 
 // 服务器信息数据结构
 message LalServerData {
-  // 服务器版本号
-  string version = 1 [json_name = "version"];
-  // 启动时间，单位：毫秒时间戳
-  int64 startTimeMs = 2 [json_name = "start_time_ms"];
-  // 运行时长，单位：秒
-  int64 uptimeSeconds = 3 [json_name = "uptime_seconds"];
-  // 总连接数
-  int32 totalConnections = 4 [json_name = "total_connections"];
-  // 当前流数量
-  int32 streamCount = 5 [json_name = "stream_count"];
-  // 系统信息（如操作系统、CPU核心数等）
-  string systemInfo = 6 [json_name = "system_info"];
-  // 配置信息摘要
-  string configSummary = 7 [json_name = "config_summary"];
+  string serverId = 1 [json_name = "server_id"];         // 服务器ID
+  string binInfo = 2 [json_name = "bin_info"];           // 二进制版本信息
+  string lalVersion = 3 [json_name = "lal_version"];     // LAL服务版本
+  string apiVersion = 4 [json_name = "api_version"];     // API接口版本
+  string notifyVersion = 5 [json_name = "notify_version"]; // 通知接口版本
+  string startTime = 6 [json_name = "start_time"];       // 服务启动时间（字符串格式）
 }
