@@ -1,70 +1,117 @@
 package lalx
 
-// GroupData 对应 /api/stat/group 或 /api/stat/all_group 返回的「单流分组详情」
-// 完全对齐 lal 官方 JSON 结构，补充状态、会话统计等关键字段
-type GroupData struct {
-	// 基础标识
-	StreamName string `json:"stream_name"` // 流名称（唯一标识，必返）
-	AppName    string `json:"app_name"`    // 应用名（如 live，部分场景返回，非必返）
-	Status     string `json:"status"`      // 分组状态（active=活跃/inactive=非活跃，必返）
-
-	// 音视频编码信息（必返，无对应流时为空字符串）
-	AudioCodec  string `json:"audio_codec"`  // 音频编码（如 aac、mp3）
-	VideoCodec  string `json:"video_codec"`  // 视频编码（如 h264、h265）
-	VideoWidth  int    `json:"video_width"`  // 视频宽度（像素，无视频时为 0）
-	VideoHeight int    `json:"video_height"` // 视频高度（像素，无视频时为 0）
-
-	// 会话列表（按类型区分，无对应会话时为 nil 或空切片）
-	Pub   SessionInfo   `json:"pub"`   // 发布者会话（单会话，无则为 nil）
-	Subs  []SessionInfo `json:"subs"`  // 订阅者会话列表（多会话，无则为空切片）
-	Pull  SessionInfo   `json:"pull"`  // 中继拉流会话（单会话，无则为 nil）
-	Pushs []SessionInfo `json:"pushs"` // 中继推流会话列表（多会话，无则为空切片，替换原 interface{} 确保类型安全）
-
-	// 会话统计（必返，反映分组负载）
-	PubCount          int `json:"pub_count"`           // 发布者数量（0/1，多发布场景可能大于 1）
-	SubCount          int `json:"sub_count"`           // 订阅者数量
-	PullCount         int `json:"pull_count"`          // 中继拉流数量
-	TotalSessionCount int `json:"total_session_count"` // 总会话数（pub+sub+pull+push）
-
-	// 帧率数据（必返，最近一段时间的帧统计）
-	InFramePerSec []FrameData `json:"in_frame_per_sec"` // 输入帧统计（每秒视频/音频帧数）
-
-	// 时间信息（必返）
-	CreateTimeMs int64 `json:"create_time_ms"` // 分组创建时间戳（毫秒级 Unix 时间）
-}
-
-// SessionInfo 对应各类会话（pub/sub/pull/push）的详情
-// 补充存活时长、客户端地址拆分等字段，修正比特率类型
-type SessionInfo struct {
-	SessionId string `json:"session_id"` // 会话唯一 ID（如 FLVSUB1、RTMPPULL1，必返）
-	Protocol  string `json:"protocol"`   // 协议类型（如 rtmp、flv、hls、rtsp，必返）
-	BaseType  string `json:"base_type"`  // 会话类型（pub=发布者/sub=订阅者/pull=拉流/push=推流，必返）
-	StartTime string `json:"start_time"` // 会话启动时间（格式化字符串，如 "2024-09-04 15:30:00"，必返）
-	AliveSec  int    `json:"alive_sec"`  // 会话存活时长（秒，必返，补充原缺失字段）
-
-	// 地址信息（拆分 IP 和端口，兼容官方返回的两种格式：remote_addr 是 "ip:port" 字符串，client_ip/client_port 是单独字段）
-	RemoteAddr string `json:"remote_addr"` // 客户端地址（ip:port 格式，必返）
-	ClientIp   string `json:"client_ip"`   // 客户端 IP（单独字段，部分接口返回，非必返）
-	ClientPort int    `json:"client_port"` // 客户端端口（单独字段，部分接口返回，非必返）
-
-	// 流量统计（必返，int64 避免溢出）
-	ReadBytesSum  int64 `json:"read_bytes_sum"`  // 累计读取字节数（从客户端到服务端）
-	WroteBytesSum int64 `json:"wrote_bytes_sum"` // 累计写入字节数（从服务端到客户端）
-
-	// 比特率（当前实时比特率，单位 kbps，必返，修正原字段注释）
-	BitrateKbits      int `json:"bitrate_kbits"`       // 总比特率（read+write）
-	ReadBitrateKbits  int `json:"read_bitrate_kbits"`  // 读取比特率（客户端→服务端）
-	WriteBitrateKbits int `json:"write_bitrate_kbits"` // 写入比特率（服务端→客户端）
-}
-
-// FrameData 对应每秒输入帧统计（视频+音频，补充原缺失的音频帧数）
+// FrameData 帧率数据：对应接口返回的 in_frame_per_sec 数组元素（最近32秒每秒视频帧数）
 type FrameData struct {
-	UnixSec     int64 `json:"unix_sec"` // 时间戳（秒级 Unix 时间，必返）
-	VideoFrames int   `json:"v"`        // 视频帧数（每秒，必返，原 V 修正为 VideoFrames 更清晰）
+	// 时间戳（秒级Unix时间，如1723513826，必返）
+	UnixSec int64 `json:"unix_sec"` // 驼峰转下划线：unixSec → unix_sec
+	// 每秒视频帧数（如15，必返）
+	V int32 `json:"v"` // 单个字母无需转换，保持原标签
+}
+
+// PubSessionInfo 发布者会话信息：对应接口返回的 data.pub（接收推流的详情）
+type PubSessionInfo struct {
+	// 会话ID（全局唯一标识，如"RTMPPUBSUB1"，必返）
+	SessionId string `json:"session_id"` // 驼峰转下划线：sessionId → session_id
+	// 推流协议（取值："RTMP"|"RTSP"，必返）
+	Protocol string `json:"protocol"` // 无驼峰，保持原标签
+	// 基础类型（固定为"PUB"，标识发布者角色，必返）
+	BaseType string `json:"base_type"` // 驼峰转下划线：baseType → base_type
+	// 推流开始时间（格式化字符串，如"2020-10-11 19:17:41.586"，必返）
+	StartTime string `json:"start_time"` // 驼峰转下划线：startTime → start_time
+	// 对端地址（客户端IP:端口，如"127.0.0.1:61353"，必返）
+	RemoteAddr string `json:"remote_addr"` // 驼峰转下划线：remoteAddr → remote_addr
+	// 累计读取数据大小（从推流开始计算，单位字节，必返）
+	ReadBytesSum int64 `json:"read_bytes_sum"` // 驼峰转下划线：readBytesSum → read_bytes_sum
+	// 累计发送数据大小（从推流开始计算，单位字节，必返）
+	WroteBytesSum int64 `json:"wrote_bytes_sum"` // 驼峰转下划线：wroteBytesSum → wrote_bytes_sum
+	// 最近5秒总码率（单位kbit/s，对PUB类型等价于read_bitrate_kbits，必返）
+	BitrateKbits int32 `json:"bitrate_kbits"` // 驼峰转下划线：bitrateKbits → bitrate_kbits
+	// 最近5秒读取数据码率（单位kbit/s，必返）
+	ReadBitrateKbits int32 `json:"read_bitrate_kbits"` // 驼峰转下划线：readBitrateKbits → read_bitrate_kbits
+	// 最近5秒发送数据码率（单位kbit/s，必返）
+	WriteBitrateKbits int32 `json:"write_bitrate_kbits"` // 驼峰转下划线：writeBitrateKbits → write_bitrate_kbits
+}
+
+// SubSessionInfo 订阅者会话信息：对应接口返回的 data.subs 数组元素（拉流的详情）
+type SubSessionInfo struct {
+	// 会话ID（全局唯一标识，如"FLVSUB1"，必返）
+	SessionId string `json:"session_id"` // 驼峰转下划线：sessionId → session_id
+	// 拉流协议（取值："RTMP"|"FLV"|"TS"，必返）
+	Protocol string `json:"protocol"` // 无驼峰，保持原标签
+	// 基础类型（固定为"SUB"，标识订阅者角色，必返）
+	BaseType string `json:"base_type"` // 驼峰转下划线：baseType → base_type
+	// 拉流开始时间（格式化字符串，如"2020-10-11 19:19:21.724"，必返）
+	StartTime string `json:"start_time"` // 驼峰转下划线：startTime → start_time
+	// 对端地址（客户端IP:端口，如"127.0.0.1:61785"，必返）
+	RemoteAddr string `json:"remote_addr"` // 驼峰转下划线：remoteAddr → remote_addr
+	// 累计读取数据大小（从拉流开始计算，单位字节，必返）
+	ReadBytesSum int64 `json:"read_bytes_sum"` // 驼峰转下划线：readBytesSum → read_bytes_sum
+	// 累计发送数据大小（从拉流开始计算，单位字节，必返）
+	WroteBytesSum int64 `json:"wrote_bytes_sum"` // 驼峰转下划线：wroteBytesSum → wrote_bytes_sum
+	// 最近5秒总码率（单位kbit/s，对SUB类型等价于write_bitrate_kbits，必返）
+	BitrateKbits int32 `json:"bitrate_kbits"` // 驼峰转下划线：bitrateKbits → bitrate_kbits
+	// 最近5秒读取数据码率（单位kbit/s，必返）
+	ReadBitrateKbits int32 `json:"read_bitrate_kbits"` // 驼峰转下划线：readBitrateKbits → read_bitrate_kbits
+	// 最近5秒发送数据码率（单位kbit/s，必返）
+	WriteBitrateKbits int32 `json:"write_bitrate_kbits"` // 驼峰转下划线：writeBitrateKbits → write_bitrate_kbits
+}
+
+// PullSessionInfo 中继拉流会话信息：对应接口返回的 data.pull（从其他节点拉流回源的详情）
+type PullSessionInfo struct {
+	// 会话ID（全局唯一标识，如"RTMPPULL1"，必返）
+	SessionId string `json:"session_id"` // 驼峰转下划线：sessionId → session_id
+	// 拉流协议（取值："RTMP"|"RTSP"，必返）
+	Protocol string `json:"protocol"` // 无驼峰，保持原标签
+	// 基础类型（固定为"PULL"，标识中继拉流角色，必返）
+	BaseType string `json:"base_type"` // 驼峰转下划线：baseType → base_type
+	// 拉流开始时间（格式化字符串，如"2020-10-11 19:20:00.123"，必返）
+	StartTime string `json:"start_time"` // 驼峰转下划线：startTime → start_time
+	// 对端地址（源节点IP:端口，如"192.168.1.10:1935"，必返）
+	RemoteAddr string `json:"remote_addr"` // 驼峰转下划线：remoteAddr → remote_addr
+	// 累计读取数据大小（从拉流开始计算，单位字节，必返）
+	ReadBytesSum int64 `json:"read_bytes_sum"` // 驼峰转下划线：readBytesSum → read_bytes_sum
+	// 累计发送数据大小（从拉流开始计算，单位字节，必返）
+	WroteBytesSum int64 `json:"wrote_bytes_sum"` // 驼峰转下划线：wroteBytesSum → wrote_bytes_sum
+	// 最近5秒总码率（单位kbit/s，对PULL类型等价于read_bitrate_kbits，必返）
+	BitrateKbits int32 `json:"bitrate_kbits"` // 驼峰转下划线：bitrateKbits → bitrate_kbits
+	// 最近5秒读取数据码率（单位kbit/s，必返）
+	ReadBitrateKbits int32 `json:"read_bitrate_kbits"` // 驼峰转下划线：readBitrateKbits → read_bitrate_kbits
+	// 最近5秒发送数据码率（单位kbit/s，必返）
+	WriteBitrateKbits int32 `json:"write_bitrate_kbits"` // 驼峰转下划线：writeBitrateKbits → write_bitrate_kbits
+}
+
+// PushSessionInfo 中继推流会话信息：对应接口返回的 data.pushs（主动外连转推，暂不提供数据）
+type PushSessionInfo struct {
+	// 预留字段，后续接口开放时可参考PullSessionInfo补充，当前暂空
+}
+
+// GroupData 分组核心数据：对应接口返回的 data 字段（流的完整信息聚合）
+type GroupData struct {
+	// 流名称（如"test110"，必返）
+	StreamName string `json:"stream_name"` // 驼峰转下划线：streamName → stream_name
+	// 应用名（如"live"，必返）
+	AppName string `json:"app_name"` // 驼峰转下划线：appName → app_name
+	// 音频编码格式（如"AAC"，必返）
+	AudioCodec string `json:"audio_codec"` // 驼峰转下划线：audioCodec → audio_codec
+	// 视频编码格式（如"H264"|"H265"，必返）
+	VideoCodec string `json:"video_codec"` // 驼峰转下划线：videoCodec → video_codec
+	// 视频宽度（像素，如640，必返）
+	VideoWidth int32 `json:"video_width"` // 驼峰转下划线：videoWidth → video_width
+	// 视频高度（像素，如360，必返）
+	VideoHeight int32 `json:"video_height"` // 驼峰转下划线：videoHeight → video_height
+	// 发布者会话信息（推流详情，无推流时为nil，必返）
+	Pub *PubSessionInfo `json:"pub"` // 无驼峰，保持原标签（接口返回字段为"pub"）
+	// 订阅者会话列表（拉流详情，无拉流时为空切片，必返）
+	Subs []*SubSessionInfo `json:"subs"` // 无驼峰，保持原标签（接口返回字段为"subs"）
+	// 中继拉流会话信息（回源流详情，无回源时为nil，必返）
+	Pull *PullSessionInfo `json:"pull"` // 无驼峰，保持原标签（接口返回字段为"pull"）
+	// 中继推流会话列表（外连转推，暂为空数组，必返）
+	Pushs []*PushSessionInfo `json:"pushs"` // 无驼峰，保持原标签（接口返回字段为"pushs"）
+	// 最近32秒视频帧率统计（每秒视频帧数，必返）
+	InFramePerSec []*FrameData `json:"in_frame_per_sec"` // 驼峰转下划线：inFramePerSec → in_frame_per_sec
 }
 
 // LalServerData 对应 /api/stat/lal_info 返回的「服务器基础信息」
-// 修正 JSON 标签错误（如 server_Id→server_id），补充运行时长、负载等关键字段
 type LalServerData struct {
 	// 版本信息（必返）
 	ServerId      string `json:"server_id"`      // 服务器唯一 ID
