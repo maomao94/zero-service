@@ -23,55 +23,55 @@ func NewLalProxyServer(svcCtx *svc.ServiceContext) *LalProxyServer {
 	}
 }
 
-// 查询特定流分组的信息
+// 查询指定group信息（对应HTTP API：/api/stat/group，GET请求+URL参数）
 func (s *LalProxyServer) GetGroupInfo(ctx context.Context, in *lalproxy.GetGroupInfoReq) (*lalproxy.GetGroupInfoRes, error) {
 	l := logic.NewGetGroupInfoLogic(ctx, s.svcCtx)
 	return l.GetGroupInfo(in)
 }
 
-// 查询所有流分组的信息
+// 查询所有group信息（对应HTTP API：/api/stat/all_group，GET请求，无参数）
 func (s *LalProxyServer) GetAllGroups(ctx context.Context, in *lalproxy.GetAllGroupsReq) (*lalproxy.GetAllGroupsRes, error) {
 	l := logic.NewGetAllGroupsLogic(ctx, s.svcCtx)
 	return l.GetAllGroups(in)
 }
 
-// 查询服务器基本信息
+// 查询服务器基础信息（对应HTTP API：/api/stat/lal_info，GET请求，无参数）
 func (s *LalProxyServer) GetLalInfo(ctx context.Context, in *lalproxy.GetLalInfoReq) (*lalproxy.GetLalInfoRes, error) {
 	l := logic.NewGetLalInfoLogic(ctx, s.svcCtx)
 	return l.GetLalInfo(in)
 }
 
-// 控制服务器从远端拉流至本地
+// 启动中继拉流（对应HTTP API：/api/ctrl/start_relay_pull，POST请求+JSON Body）
 func (s *LalProxyServer) StartRelayPull(ctx context.Context, in *lalproxy.StartRelayPullReq) (*lalproxy.StartRelayPullRes, error) {
 	l := logic.NewStartRelayPullLogic(ctx, s.svcCtx)
 	return l.StartRelayPull(in)
 }
 
-// 停止从远端拉流
+// 停止中继拉流（对应HTTP API：/api/ctrl/stop_relay_pull，GET请求+URL参数）
 func (s *LalProxyServer) StopRelayPull(ctx context.Context, in *lalproxy.StopRelayPullReq) (*lalproxy.StopRelayPullRes, error) {
 	l := logic.NewStopRelayPullLogic(ctx, s.svcCtx)
 	return l.StopRelayPull(in)
 }
 
-// 强行踢出关闭指定会话
+// 踢出指定会话（对应HTTP API：/api/ctrl/kick_session，POST请求+JSON Body；支持关闭pub/sub/pull类型会话）
 func (s *LalProxyServer) KickSession(ctx context.Context, in *lalproxy.KickSessionReq) (*lalproxy.KickSessionRes, error) {
 	l := logic.NewKickSessionLogic(ctx, s.svcCtx)
 	return l.KickSession(in)
 }
 
-// 打开GB28181接收端口
+// 打开GB28181 RTP接收端口（对应HTTP API：/api/ctrl/start_rtp_pub，POST请求+JSON Body）
 func (s *LalProxyServer) StartRtpPub(ctx context.Context, in *lalproxy.StartRtpPubReq) (*lalproxy.StartRtpPubRes, error) {
 	l := logic.NewStartRtpPubLogic(ctx, s.svcCtx)
 	return l.StartRtpPub(in)
 }
 
-// 关闭GB28181接收端口
+// 关闭GB28181 RTP接收端口（注：根据lalserver文档，当前需通过KickSession接口实现，本接口暂未开放）
 func (s *LalProxyServer) StopRtpPub(ctx context.Context, in *lalproxy.StopRtpPubReq) (*lalproxy.StopRtpPubRes, error) {
 	l := logic.NewStopRtpPubLogic(ctx, s.svcCtx)
 	return l.StopRtpPub(in)
 }
 
-// 增加IP黑名单，加入名单的IP将无法连接本服务
+// 添加IP到黑名单（对应HTTP API：/api/ctrl/add_ip_blacklist，POST请求+JSON Body；目前仅支持HLS协议）
 func (s *LalProxyServer) AddIpBlacklist(ctx context.Context, in *lalproxy.AddIpBlacklistReq) (*lalproxy.AddIpBlacklistRes, error) {
 	l := logic.NewAddIpBlacklistLogic(ctx, s.svcCtx)
 	return l.AddIpBlacklist(in)

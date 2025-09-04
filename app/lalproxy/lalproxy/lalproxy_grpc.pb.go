@@ -19,38 +19,40 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	LalProxy_GetGroupInfo_FullMethodName   = "/lalproxy.LalProxy/GetGroupInfo"
-	LalProxy_GetAllGroups_FullMethodName   = "/lalproxy.LalProxy/GetAllGroups"
-	LalProxy_GetLalInfo_FullMethodName     = "/lalproxy.LalProxy/GetLalInfo"
-	LalProxy_StartRelayPull_FullMethodName = "/lalproxy.LalProxy/StartRelayPull"
-	LalProxy_StopRelayPull_FullMethodName  = "/lalproxy.LalProxy/StopRelayPull"
-	LalProxy_KickSession_FullMethodName    = "/lalproxy.LalProxy/KickSession"
-	LalProxy_StartRtpPub_FullMethodName    = "/lalproxy.LalProxy/StartRtpPub"
-	LalProxy_StopRtpPub_FullMethodName     = "/lalproxy.LalProxy/StopRtpPub"
-	LalProxy_AddIpBlacklist_FullMethodName = "/lalproxy.LalProxy/AddIpBlacklist"
+	LalProxy_GetGroupInfo_FullMethodName   = "/Lalproxy.LalProxy/GetGroupInfo"
+	LalProxy_GetAllGroups_FullMethodName   = "/Lalproxy.LalProxy/GetAllGroups"
+	LalProxy_GetLalInfo_FullMethodName     = "/Lalproxy.LalProxy/GetLalInfo"
+	LalProxy_StartRelayPull_FullMethodName = "/Lalproxy.LalProxy/StartRelayPull"
+	LalProxy_StopRelayPull_FullMethodName  = "/Lalproxy.LalProxy/StopRelayPull"
+	LalProxy_KickSession_FullMethodName    = "/Lalproxy.LalProxy/KickSession"
+	LalProxy_StartRtpPub_FullMethodName    = "/Lalproxy.LalProxy/StartRtpPub"
+	LalProxy_StopRtpPub_FullMethodName     = "/Lalproxy.LalProxy/StopRtpPub"
+	LalProxy_AddIpBlacklist_FullMethodName = "/Lalproxy.LalProxy/AddIpBlacklist"
 )
 
 // LalProxyClient is the client API for LalProxy service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// LalProxy服务：封装lalserver全部HTTP API能力，包含查询类（/api/stat）和控制类（/api/ctrl）接口
 type LalProxyClient interface {
-	// 查询特定流分组的信息
+	// 查询指定group信息（对应HTTP API：/api/stat/group，GET请求+URL参数）
 	GetGroupInfo(ctx context.Context, in *GetGroupInfoReq, opts ...grpc.CallOption) (*GetGroupInfoRes, error)
-	// 查询所有流分组的信息
+	// 查询所有group信息（对应HTTP API：/api/stat/all_group，GET请求，无参数）
 	GetAllGroups(ctx context.Context, in *GetAllGroupsReq, opts ...grpc.CallOption) (*GetAllGroupsRes, error)
-	// 查询服务器基本信息
+	// 查询服务器基础信息（对应HTTP API：/api/stat/lal_info，GET请求，无参数）
 	GetLalInfo(ctx context.Context, in *GetLalInfoReq, opts ...grpc.CallOption) (*GetLalInfoRes, error)
-	// 控制服务器从远端拉流至本地
+	// 启动中继拉流（对应HTTP API：/api/ctrl/start_relay_pull，POST请求+JSON Body）
 	StartRelayPull(ctx context.Context, in *StartRelayPullReq, opts ...grpc.CallOption) (*StartRelayPullRes, error)
-	// 停止从远端拉流
+	// 停止中继拉流（对应HTTP API：/api/ctrl/stop_relay_pull，GET请求+URL参数）
 	StopRelayPull(ctx context.Context, in *StopRelayPullReq, opts ...grpc.CallOption) (*StopRelayPullRes, error)
-	// 强行踢出关闭指定会话
+	// 踢出指定会话（对应HTTP API：/api/ctrl/kick_session，POST请求+JSON Body；支持关闭pub/sub/pull类型会话）
 	KickSession(ctx context.Context, in *KickSessionReq, opts ...grpc.CallOption) (*KickSessionRes, error)
-	// 打开GB28181接收端口
+	// 打开GB28181 RTP接收端口（对应HTTP API：/api/ctrl/start_rtp_pub，POST请求+JSON Body）
 	StartRtpPub(ctx context.Context, in *StartRtpPubReq, opts ...grpc.CallOption) (*StartRtpPubRes, error)
-	// 关闭GB28181接收端口
+	// 关闭GB28181 RTP接收端口（注：根据lalserver文档，当前需通过KickSession接口实现，本接口暂未开放）
 	StopRtpPub(ctx context.Context, in *StopRtpPubReq, opts ...grpc.CallOption) (*StopRtpPubRes, error)
-	// 增加IP黑名单，加入名单的IP将无法连接本服务
+	// 添加IP到黑名单（对应HTTP API：/api/ctrl/add_ip_blacklist，POST请求+JSON Body；目前仅支持HLS协议）
 	AddIpBlacklist(ctx context.Context, in *AddIpBlacklistReq, opts ...grpc.CallOption) (*AddIpBlacklistRes, error)
 }
 
@@ -155,24 +157,26 @@ func (c *lalProxyClient) AddIpBlacklist(ctx context.Context, in *AddIpBlacklistR
 // LalProxyServer is the server API for LalProxy service.
 // All implementations must embed UnimplementedLalProxyServer
 // for forward compatibility.
+//
+// LalProxy服务：封装lalserver全部HTTP API能力，包含查询类（/api/stat）和控制类（/api/ctrl）接口
 type LalProxyServer interface {
-	// 查询特定流分组的信息
+	// 查询指定group信息（对应HTTP API：/api/stat/group，GET请求+URL参数）
 	GetGroupInfo(context.Context, *GetGroupInfoReq) (*GetGroupInfoRes, error)
-	// 查询所有流分组的信息
+	// 查询所有group信息（对应HTTP API：/api/stat/all_group，GET请求，无参数）
 	GetAllGroups(context.Context, *GetAllGroupsReq) (*GetAllGroupsRes, error)
-	// 查询服务器基本信息
+	// 查询服务器基础信息（对应HTTP API：/api/stat/lal_info，GET请求，无参数）
 	GetLalInfo(context.Context, *GetLalInfoReq) (*GetLalInfoRes, error)
-	// 控制服务器从远端拉流至本地
+	// 启动中继拉流（对应HTTP API：/api/ctrl/start_relay_pull，POST请求+JSON Body）
 	StartRelayPull(context.Context, *StartRelayPullReq) (*StartRelayPullRes, error)
-	// 停止从远端拉流
+	// 停止中继拉流（对应HTTP API：/api/ctrl/stop_relay_pull，GET请求+URL参数）
 	StopRelayPull(context.Context, *StopRelayPullReq) (*StopRelayPullRes, error)
-	// 强行踢出关闭指定会话
+	// 踢出指定会话（对应HTTP API：/api/ctrl/kick_session，POST请求+JSON Body；支持关闭pub/sub/pull类型会话）
 	KickSession(context.Context, *KickSessionReq) (*KickSessionRes, error)
-	// 打开GB28181接收端口
+	// 打开GB28181 RTP接收端口（对应HTTP API：/api/ctrl/start_rtp_pub，POST请求+JSON Body）
 	StartRtpPub(context.Context, *StartRtpPubReq) (*StartRtpPubRes, error)
-	// 关闭GB28181接收端口
+	// 关闭GB28181 RTP接收端口（注：根据lalserver文档，当前需通过KickSession接口实现，本接口暂未开放）
 	StopRtpPub(context.Context, *StopRtpPubReq) (*StopRtpPubRes, error)
-	// 增加IP黑名单，加入名单的IP将无法连接本服务
+	// 添加IP到黑名单（对应HTTP API：/api/ctrl/add_ip_blacklist，POST请求+JSON Body；目前仅支持HLS协议）
 	AddIpBlacklist(context.Context, *AddIpBlacklistReq) (*AddIpBlacklistRes, error)
 	mustEmbedUnimplementedLalProxyServer()
 }
@@ -398,7 +402,7 @@ func _LalProxy_AddIpBlacklist_Handler(srv interface{}, ctx context.Context, dec 
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var LalProxy_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "lalproxy.LalProxy",
+	ServiceName: "Lalproxy.LalProxy",
 	HandlerType: (*LalProxyServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

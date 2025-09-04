@@ -26,7 +26,7 @@ func NewStartRelayPullLogic(ctx context.Context, svcCtx *svc.ServiceContext) *St
 	}
 }
 
-// 控制服务器从远端拉流至本地
+// 启动中继拉流（对应HTTP API：/api/ctrl/start_relay_pull，POST请求+JSON Body）
 func (l *StartRelayPullLogic) StartRelayPull(in *lalproxy.StartRelayPullReq) (*lalproxy.StartRelayPullRes, error) {
 	// 参数验证
 	if in.Url == "" {
@@ -81,6 +81,5 @@ func (l *StartRelayPullLogic) StartRelayPull(in *lalproxy.StartRelayPullReq) (*l
 	return &lalproxy.StartRelayPullRes{
 		ErrorCode: int32(httpResp.ErrorCode),
 		Desp:      httpResp.Desp,
-		Data:      httpResp.Data,
 	}, nil
 }

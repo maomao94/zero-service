@@ -26,7 +26,7 @@ func NewStopRtpPubLogic(ctx context.Context, svcCtx *svc.ServiceContext) *StopRt
 	}
 }
 
-// 关闭GB28181接收端口
+// 关闭GB28181 RTP接收端口（注：根据lalserver文档，当前需通过KickSession接口实现，本接口暂未开放）
 func (l *StopRtpPubLogic) StopRtpPub(in *lalproxy.StopRtpPubReq) (*lalproxy.StopRtpPubRes, error) {
 	// 参数验证
 	if in.Port <= 0 || in.Port > 65535 {
@@ -68,9 +68,8 @@ func (l *StopRtpPubLogic) StopRtpPub(in *lalproxy.StopRtpPubReq) (*lalproxy.Stop
 
 	// 解析JSON响应
 	var httpResp struct {
-		ErrorCode int               `json:"error_code"`
-		Desp      string            `json:"desp"`
-		Data      map[string]string `json:"data"`
+		ErrorCode int    `json:"error_code"`
+		Desp      string `json:"desp"`
 	}
 	if err := json.Unmarshal(body, &httpResp); err != nil {
 		l.Logger.Errorf("解析响应JSON失败: %v, 响应内容: %s", err, string(body))
@@ -80,6 +79,5 @@ func (l *StopRtpPubLogic) StopRtpPub(in *lalproxy.StopRtpPubReq) (*lalproxy.Stop
 	return &lalproxy.StopRtpPubRes{
 		ErrorCode: int32(httpResp.ErrorCode),
 		Desp:      httpResp.Desp,
-		Data:      httpResp.Data,
 	}, nil
 }

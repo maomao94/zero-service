@@ -27,7 +27,7 @@ func NewStopRelayPullLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Sto
 	}
 }
 
-// 停止从远端拉流
+// 停止中继拉流（对应HTTP API：/api/ctrl/stop_relay_pull，GET请求+URL参数）
 func (l *StopRelayPullLogic) StopRelayPull(in *lalproxy.StopRelayPullReq) (*lalproxy.StopRelayPullRes, error) {
 	// 参数验证
 	if in.StreamName == "" {
@@ -62,9 +62,8 @@ func (l *StopRelayPullLogic) StopRelayPull(in *lalproxy.StopRelayPullReq) (*lalp
 
 	// 解析JSON响应
 	var httpResp struct {
-		ErrorCode int               `json:"error_code"`
-		Desp      string            `json:"desp"`
-		Data      map[string]string `json:"data"`
+		ErrorCode int    `json:"error_code"`
+		Desp      string `json:"desp"`
 	}
 	if err := json.Unmarshal(body, &httpResp); err != nil {
 		l.Logger.Errorf("解析响应JSON失败: %v, 响应内容: %s", err, string(body))
@@ -74,6 +73,5 @@ func (l *StopRelayPullLogic) StopRelayPull(in *lalproxy.StopRelayPullReq) (*lalp
 	return &lalproxy.StopRelayPullRes{
 		ErrorCode: int32(httpResp.ErrorCode),
 		Desp:      httpResp.Desp,
-		Data:      httpResp.Data,
 	}, nil
 }

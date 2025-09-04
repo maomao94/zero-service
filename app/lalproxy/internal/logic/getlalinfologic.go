@@ -27,7 +27,7 @@ func NewGetLalInfoLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetLal
 	}
 }
 
-// 查询服务器基本信息
+// 查询服务器基础信息（对应HTTP API：/api/stat/lal_info，GET请求，无参数）
 func (l *GetLalInfoLogic) GetLalInfo(in *lalproxy.GetLalInfoReq) (*lalproxy.GetLalInfoRes, error) {
 	// 构建请求URL
 	fullUrl := fmt.Sprintf("%s/api/stat/lal_info", l.svcCtx.LalBaseUrl)

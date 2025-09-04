@@ -1,143 +1,147 @@
 
-
-lalproxy.protolalproxy"
-Req
-ping (	Rping"
-Res
-pong (	Rpong"2
-GetGroupInfoReq
+¬
+lalproxy.protoLalproxy"¡
+SessionInfo
+	sessionId (	R	sessionId 
+sessionType (	RsessionType
+clientIp (	RclientIp
 
-streamName (	Rstream_name"m
-GetGroupInfoRes
-	errorCode (R
-error_code
+clientPort (R
+clientPort
+protocol (	Rprotocol"
+createTimeMs (RcreateTimeMs
+aliveSec (RaliveSec
+	recvBytes (R	recvBytes
+	sendBytes	 (R	sendBytes"š
+
+VideoCodec
+codec (	Rcodec
+width (Rwidth
+height (Rheight
+fps (Rfps
+
+bitrateBps (R
+bitrateBps
+gopSec (RgopSec"~
+
+AudioCodec
+codec (	Rcodec
+
+sampleRate (R
+sampleRate
+channels (Rchannels
+
+bitrateBps (R
+bitrateBps"ö
+	GroupData
+
+streamName (	R
+streamName
+status (	Rstatus*
+video (2.Lalproxy.VideoCodecRvideo*
+audio (2.Lalproxy.AudioCodecRaudio1
+sessions (2.Lalproxy.SessionInfoRsessions
+pubCount (RpubCount
+subCount (RsubCount
+	pullCount (R	pullCount,
+totalSessionCount	 (RtotalSessionCount"
+createTimeMs
+ (RcreateTimeMs"Û
+LalServerData
+version (	Rversion 
+startTimeMs (RstartTimeMs
+runSec (RrunSec 
+listenAddrs (	RlistenAddrs*
+activeGroupCount (RactiveGroupCount,
+totalSessionCount (RtotalSessionCount
+	goVersion (	R	goVersion
+osArch (	RosArch
+cpuCores	 (RcpuCores(
+memoryUsedBytes
+ (RmemoryUsedBytes"1
+GetGroupInfoReq
+
+streamName (	R
+streamName"l
+GetGroupInfoRes
+	errorCode (R	errorCode
 desp (	Rdesp'
-data (2.lalproxy.GroupDataRdata"
-GetAllGroupsReq"q
-GetAllGroupsRes
-	errorCode (R
-error_code
+data (2.Lalproxy.GroupDataRdata"
+GetAllGroupsReq"p
+GetAllGroupsRes
+	errorCode (R	errorCode
 desp (	Rdesp+
-groups (2.lalproxy.GroupDataRgroups"
-GetLalInfoReq"o
-GetLalInfoRes
-	errorCode (R
-error_code
+groups (2.Lalproxy.GroupDataRgroups"
+GetLalInfoReq"n
+GetLalInfoRes
+	errorCode (R	errorCode
 desp (	Rdesp+
-data (2.lalproxy.LalServerDataRdata"ó
+data (2.Lalproxy.LalServerDataRdata"‘
 StartRelayPullReq
-url (	Rurl
+url (	Rurl
 
-streamName (	Rstream_name&
-pullTimeoutMs (Rpull_timeout_ms$
-pullRetryNum (Rpull_retry_num@
-autoStopPullAfterNoOutMs (Rauto_stop_pull_after_no_out_ms
-rtspMode (R	rtsp_mode"º
-StartRelayPullRes
-	errorCode (R
-error_code
-desp (	Rdesp9
-data (2%.lalproxy.StartRelayPullRes.DataEntryRdata7
-	DataEntry
-key (	Rkey
-value (	Rvalue:8"3
-StopRelayPullReq
+streamName (	R
+streamName$
+pullTimeoutMs (RpullTimeoutMs"
+pullRetryNum (RpullRetryNum:
+autoStopPullAfterNoOutMs (RautoStopPullAfterNoOutMs
+rtspMode (RrtspMode(
+debugDumpPacket (	RdebugDumpPacket"E
+StartRelayPullRes
+	errorCode (R	errorCode
+desp (	Rdesp"2
+StopRelayPullReq
 
-streamName (	Rstream_name"¸
-StopRelayPullRes
-	errorCode (R
-error_code
-desp (	Rdesp8
-data (2$.lalproxy.StopRelayPullRes.DataEntryRdata7
-	DataEntry
-key (	Rkey
-value (	Rvalue:8"s
-KickSessionReq
+streamName (	R
+streamName"D
+StopRelayPullRes
+	errorCode (R	errorCode
+desp (	Rdesp"p
+KickSessionReq
 
-streamName (	Rstream_name
-	sessionId (	R
-session_id!
-sessionType (	Rsession_type"´
-KickSessionRes
-	errorCode (R
-error_code
-desp (	Rdesp6
-data (2".lalproxy.KickSessionRes.DataEntryRdata7
-	DataEntry
-key (	Rkey
-value (	Rvalue:8"E
-StartRtpPubReq
-port (Rport
+streamName (	R
+streamName
+	sessionId (	R	sessionId 
+sessionType (	RsessionType"B
+KickSessionRes
+	errorCode (R	errorCode
+desp (	Rdesp"ª
+StartRtpPubReq
 
-streamName (	Rstream_name"´
-StartRtpPubRes
-	errorCode (R
-error_code
-desp (	Rdesp6
-data (2".lalproxy.StartRtpPubRes.DataEntryRdata7
-	DataEntry
-key (	Rkey
-value (	Rvalue:8"D
-StopRtpPubReq
-port (Rport
+streamName (	R
+streamName
+port (Rport
+	timeoutMs (R	timeoutMs
+	isTcpFlag (R	isTcpFlag(
+debugDumpPacket (	RdebugDumpPacket"B
+StartRtpPubRes
+	errorCode (R	errorCode
+desp (	Rdesp"C
+StopRtpPubReq
 
-streamName (	Rstream_name"²
-StopRtpPubRes
-	errorCode (R
-error_code
-desp (	Rdesp5
-data (2!.lalproxy.StopRtpPubRes.DataEntryRdata7
-	DataEntry
-key (	Rkey
-value (	Rvalue:8"J
+streamName (	R
+streamName
+port (Rport"A
+StopRtpPubRes
+	errorCode (R	errorCode
+desp (	Rdesp"E
 AddIpBlacklistReq
-ip (	Rip%
-expireSeconds (Rexpire_seconds"º
-AddIpBlacklistRes
-	errorCode (R
-error_code
-desp (	Rdesp9
-data (2%.lalproxy.AddIpBlacklistRes.DataEntryRdata7
-	DataEntry
-key (	Rkey
-value (	Rvalue:8"ñ
-	GroupData
-
-streamName (	Rstream_name$
-createTimeMs (Rcreate_time_ms3
-	publisher (2.lalproxy.SessionInfoR	publisher7
-subscribers (2.lalproxy.SessionInfoRsubscribers/
-pullers (2.lalproxy.SessionInfoRpullers"Á
-SessionInfo
-	sessionId (	R
-session_id
-type (	Rtype
-clientIp (	R	client_ip$
-createTimeMs (Rcreate_time_ms
-	sendBytes (R
-send_bytes
-	recvBytes (R
-recv_bytes"Õ
-LalServerData
-	server_id (	R	server_id
-bin_info (	Rbin_info 
-lal_version (	Rlal_version 
-api_version (	Rapi_version&
-notify_version (	Rnotify_version
-
-start_time (	R
-start_time2ý
+ip (	Rip 
+durationSec (RdurationSec"E
+AddIpBlacklistRes
+	errorCode (R	errorCode
+desp (	Rdesp2ý
 LalProxyD
-GetGroupInfo.lalproxy.GetGroupInfoReq.lalproxy.GetGroupInfoResD
-GetAllGroups.lalproxy.GetAllGroupsReq.lalproxy.GetAllGroupsRes>
+GetGroupInfo.Lalproxy.GetGroupInfoReq.Lalproxy.GetGroupInfoResD
+GetAllGroups.Lalproxy.GetAllGroupsReq.Lalproxy.GetAllGroupsRes>
 
-GetLalInfo.lalproxy.GetLalInfoReq.lalproxy.GetLalInfoResJ
-StartRelayPull.lalproxy.StartRelayPullReq.lalproxy.StartRelayPullResG
-StopRelayPull.lalproxy.StopRelayPullReq.lalproxy.StopRelayPullResA
-KickSession.lalproxy.KickSessionReq.lalproxy.KickSessionResA
-StartRtpPub.lalproxy.StartRtpPubReq.lalproxy.StartRtpPubRes>
+GetLalInfo.Lalproxy.GetLalInfoReq.Lalproxy.GetLalInfoResJ
+StartRelayPull.Lalproxy.StartRelayPullReq.Lalproxy.StartRelayPullResG
+StopRelayPull.Lalproxy.StopRelayPullReq.Lalproxy.StopRelayPullResA
+KickSession.Lalproxy.KickSessionReq.Lalproxy.KickSessionResA
+StartRtpPub.Lalproxy.StartRtpPubReq.Lalproxy.StartRtpPubRes>
 
-StopRtpPub.lalproxy.StopRtpPubReq.lalproxy.StopRtpPubResJ
-AddIpBlacklist.lalproxy.AddIpBlacklistReq.lalproxy.AddIpBlacklistResB7
+StopRtpPub.Lalproxy.StopRtpPubReq.Lalproxy.StopRtpPubResJ
+AddIpBlacklist.Lalproxy.AddIpBlacklistReq.Lalproxy.AddIpBlacklistResB7
 com.github.lalproxy.grpcBLalProxyProtoPZ
 ./lalproxybproto3

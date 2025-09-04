@@ -26,7 +26,7 @@ func NewKickSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *KickS
 	}
 }
 
-// 强行踢出关闭指定会话
+// 踢出指定会话（对应HTTP API：/api/ctrl/kick_session，POST请求+JSON Body；支持关闭pub/sub/pull类型会话）
 func (l *KickSessionLogic) KickSession(in *lalproxy.KickSessionReq) (*lalproxy.KickSessionRes, error) {
 	// 参数验证
 	if in.StreamName == "" || in.SessionId == "" {
@@ -78,6 +78,5 @@ func (l *KickSessionLogic) KickSession(in *lalproxy.KickSessionReq) (*lalproxy.K
 	return &lalproxy.KickSessionRes{
 		ErrorCode: int32(httpResp.ErrorCode),
 		Desp:      httpResp.Desp,
-		Data:      httpResp.Data,
 	}, nil
 }

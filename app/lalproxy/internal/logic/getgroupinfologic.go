@@ -29,7 +29,7 @@ func NewGetGroupInfoLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetG
 	}
 }
 
-// 查询特定流分组的信息
+// 查询指定group信息（对应HTTP API：/api/stat/group，GET请求+URL参数）
 func (l *GetGroupInfoLogic) GetGroupInfo(in *lalproxy.GetGroupInfoReq) (*lalproxy.GetGroupInfoRes, error) {
 	// 参数验证
 	if in.StreamName == "" {

@@ -28,7 +28,7 @@ func NewGetAllGroupsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetA
 	}
 }
 
-// 查询所有流分组的信息
+// 查询所有group信息（对应HTTP API：/api/stat/all_group，GET请求，无参数）
 func (l *GetAllGroupsLogic) GetAllGroups(in *lalproxy.GetAllGroupsReq) (*lalproxy.GetAllGroupsRes, error) {
 	// 构建请求URL
 	fullUrl := fmt.Sprintf("%s/api/stat/all_group", l.svcCtx.LalBaseUrl)

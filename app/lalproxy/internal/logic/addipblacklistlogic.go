@@ -27,14 +27,14 @@ func NewAddIpBlacklistLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Ad
 	}
 }
 
-// 增加IP黑名单，加入名单的IP将无法连接本服务
+// 添加IP到黑名单（对应HTTP API：/api/ctrl/add_ip_blacklist，POST请求+JSON Body；目前仅支持HLS协议）
 func (l *AddIpBlacklistLogic) AddIpBlacklist(in *lalproxy.AddIpBlacklistReq) (*lalproxy.AddIpBlacklistRes, error) {
 	// 参数验证（IP地址格式）
 	if net.ParseIP(in.Ip) == nil {
 		return nil, fmt.Errorf("无效的IP地址: %s", in.Ip)
 	}
-	if in.ExpireSeconds < 0 {
-		return nil, fmt.Errorf("过期时间不能为负数: %d", in.ExpireSeconds)
+	if in.DurationSec < 0 {
+		return nil, fmt.Errorf("过期时间不能为负数: %d", in.DurationSec)
 	}
 
 	// 构建请求URL
@@ -42,8 +42,8 @@ func (l *AddIpBlacklistLogic) AddIpBlacklist(in *lalproxy.AddIpBlacklistReq) (*l
 
 	// 准备请求数据
 	reqData := map[string]interface{}{
-		"ip":             in.Ip,
-		"expire_seconds": in.ExpireSeconds, // 0表示永久有效
+		"ip":           in.Ip,
+		"duration_sec": in.DurationSec, // 必填项，加入黑名单的时长，单位秒
 	}
 
 	// 调用LAL HTTP API（POST请求）
@@ -69,9 +69,8 @@ func (l *AddIpBlacklistLogic) AddIpBlacklist(in *lalproxy.AddIpBlacklistReq) (*l
 
 	// 解析JSON响应
 	var httpResp struct {
-		ErrorCode int               `json:"error_code"`
-		Desp      string            `json:"desp"`
-		Data      map[string]string `json:"data"`
+		ErrorCode int    `json:"error_code"`
+		Desp      string `json:"desp"`
 	}
 	if err := json.Unmarshal(body, &httpResp); err != nil {
 		l.Logger.Errorf("解析响应JSON失败: %v, 响应内容: %s", err, string(body))
@@ -81,6 +80,5 @@ func (l *AddIpBlacklistLogic) AddIpBlacklist(in *lalproxy.AddIpBlacklistReq) (*l
 	return &lalproxy.AddIpBlacklistRes{
 		ErrorCode: int32(httpResp.ErrorCode),
 		Desp:      httpResp.Desp,
-		Data:      httpResp.Data,
 	}, nil
 }

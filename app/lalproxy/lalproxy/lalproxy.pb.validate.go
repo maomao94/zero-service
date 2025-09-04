@@ -35,42 +35,59 @@ var (
 	_ = sort.Sort
 )
 
-// Validate checks the field values on Req with the rules defined in the proto
-// definition for this message. If any rules are violated, the first error
-// encountered is returned, or nil if there are no violations.
-func (m *Req) Validate() error {
+// Validate checks the field values on SessionInfo with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *SessionInfo) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Req with the rules defined in the
-// proto definition for this message. If any rules are violated, the result is
-// a list of violation errors wrapped in ReqMultiError, or nil if none found.
-func (m *Req) ValidateAll() error {
+// ValidateAll checks the field values on SessionInfo with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in SessionInfoMultiError, or
+// nil if none found.
+func (m *SessionInfo) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Req) validate(all bool) error {
+func (m *SessionInfo) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	// no validation rules for Ping
+	// no validation rules for SessionId
+
+	// no validation rules for SessionType
+
+	// no validation rules for ClientIp
+
+	// no validation rules for ClientPort
+
+	// no validation rules for Protocol
+
+	// no validation rules for CreateTimeMs
+
+	// no validation rules for AliveSec
+
+	// no validation rules for RecvBytes
+
+	// no validation rules for SendBytes
 
 	if len(errors) > 0 {
-		return ReqMultiError(errors)
+		return SessionInfoMultiError(errors)
 	}
 
 	return nil
 }
 
-// ReqMultiError is an error wrapping multiple validation errors returned by
-// Req.ValidateAll() if the designated constraints aren't met.
-type ReqMultiError []error
+// SessionInfoMultiError is an error wrapping multiple validation errors
+// returned by SessionInfo.ValidateAll() if the designated constraints aren't met.
+type SessionInfoMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m ReqMultiError) Error() string {
+func (m SessionInfoMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -79,11 +96,11 @@ func (m ReqMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m ReqMultiError) AllErrors() []error { return m }
+func (m SessionInfoMultiError) AllErrors() []error { return m }
 
-// ReqValidationError is the validation error returned by Req.Validate if the
-// designated constraints aren't met.
-type ReqValidationError struct {
+// SessionInfoValidationError is the validation error returned by
+// SessionInfo.Validate if the designated constraints aren't met.
+type SessionInfoValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -91,22 +108,22 @@ type ReqValidationError struct {
 }
 
 // Field function returns field value.
-func (e ReqValidationError) Field() string { return e.field }
+func (e SessionInfoValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ReqValidationError) Reason() string { return e.reason }
+func (e SessionInfoValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ReqValidationError) Cause() error { return e.cause }
+func (e SessionInfoValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ReqValidationError) Key() bool { return e.key }
+func (e SessionInfoValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ReqValidationError) ErrorName() string { return "ReqValidationError" }
+func (e SessionInfoValidationError) ErrorName() string { return "SessionInfoValidationError" }
 
 // Error satisfies the builtin error interface
-func (e ReqValidationError) Error() string {
+func (e SessionInfoValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -118,14 +135,14 @@ func (e ReqValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sReq.%s: %s%s",
+		"invalid %sSessionInfo.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ReqValidationError{}
+var _ error = SessionInfoValidationError{}
 
 var _ interface {
 	Field() string
@@ -133,44 +150,55 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ReqValidationError{}
+} = SessionInfoValidationError{}
 
-// Validate checks the field values on Res with the rules defined in the proto
-// definition for this message. If any rules are violated, the first error
-// encountered is returned, or nil if there are no violations.
-func (m *Res) Validate() error {
+// Validate checks the field values on VideoCodec with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *VideoCodec) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Res with the rules defined in the
-// proto definition for this message. If any rules are violated, the result is
-// a list of violation errors wrapped in ResMultiError, or nil if none found.
-func (m *Res) ValidateAll() error {
+// ValidateAll checks the field values on VideoCodec with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in VideoCodecMultiError, or
+// nil if none found.
+func (m *VideoCodec) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Res) validate(all bool) error {
+func (m *VideoCodec) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	// no validation rules for Pong
+	// no validation rules for Codec
+
+	// no validation rules for Width
+
+	// no validation rules for Height
+
+	// no validation rules for Fps
+
+	// no validation rules for BitrateBps
+
+	// no validation rules for GopSec
 
 	if len(errors) > 0 {
-		return ResMultiError(errors)
+		return VideoCodecMultiError(errors)
 	}
 
 	return nil
 }
 
-// ResMultiError is an error wrapping multiple validation errors returned by
-// Res.ValidateAll() if the designated constraints aren't met.
-type ResMultiError []error
+// VideoCodecMultiError is an error wrapping multiple validation errors
+// returned by VideoCodec.ValidateAll() if the designated constraints aren't met.
+type VideoCodecMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m ResMultiError) Error() string {
+func (m VideoCodecMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -179,11 +207,11 @@ func (m ResMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m ResMultiError) AllErrors() []error { return m }
+func (m VideoCodecMultiError) AllErrors() []error { return m }
 
-// ResValidationError is the validation error returned by Res.Validate if the
-// designated constraints aren't met.
-type ResValidationError struct {
+// VideoCodecValidationError is the validation error returned by
+// VideoCodec.Validate if the designated constraints aren't met.
+type VideoCodecValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -191,22 +219,22 @@ type ResValidationError struct {
 }
 
 // Field function returns field value.
-func (e ResValidationError) Field() string { return e.field }
+func (e VideoCodecValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ResValidationError) Reason() string { return e.reason }
+func (e VideoCodecValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ResValidationError) Cause() error { return e.cause }
+func (e VideoCodecValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ResValidationError) Key() bool { return e.key }
+func (e VideoCodecValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ResValidationError) ErrorName() string { return "ResValidationError" }
+func (e VideoCodecValidationError) ErrorName() string { return "VideoCodecValidationError" }
 
 // Error satisfies the builtin error interface
-func (e ResValidationError) Error() string {
+func (e VideoCodecValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -218,14 +246,14 @@ func (e ResValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sRes.%s: %s%s",
+		"invalid %sVideoCodec.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ResValidationError{}
+var _ error = VideoCodecValidationError{}
 
 var _ interface {
 	Field() string
@@ -233,7 +261,437 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ResValidationError{}
+} = VideoCodecValidationError{}
+
+// Validate checks the field values on AudioCodec with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *AudioCodec) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AudioCodec with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in AudioCodecMultiError, or
+// nil if none found.
+func (m *AudioCodec) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AudioCodec) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Codec
+
+	// no validation rules for SampleRate
+
+	// no validation rules for Channels
+
+	// no validation rules for BitrateBps
+
+	if len(errors) > 0 {
+		return AudioCodecMultiError(errors)
+	}
+
+	return nil
+}
+
+// AudioCodecMultiError is an error wrapping multiple validation errors
+// returned by AudioCodec.ValidateAll() if the designated constraints aren't met.
+type AudioCodecMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AudioCodecMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AudioCodecMultiError) AllErrors() []error { return m }
+
+// AudioCodecValidationError is the validation error returned by
+// AudioCodec.Validate if the designated constraints aren't met.
+type AudioCodecValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AudioCodecValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AudioCodecValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AudioCodecValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AudioCodecValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AudioCodecValidationError) ErrorName() string { return "AudioCodecValidationError" }
+
+// Error satisfies the builtin error interface
+func (e AudioCodecValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAudioCodec.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AudioCodecValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AudioCodecValidationError{}
+
+// Validate checks the field values on GroupData with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *GroupData) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GroupData with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in GroupDataMultiError, or nil
+// if none found.
+func (m *GroupData) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GroupData) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for StreamName
+
+	// no validation rules for Status
+
+	if all {
+		switch v := interface{}(m.GetVideo()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GroupDataValidationError{
+					field:  "Video",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GroupDataValidationError{
+					field:  "Video",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetVideo()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GroupDataValidationError{
+				field:  "Video",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetAudio()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GroupDataValidationError{
+					field:  "Audio",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GroupDataValidationError{
+					field:  "Audio",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetAudio()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GroupDataValidationError{
+				field:  "Audio",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetSessions() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, GroupDataValidationError{
+						field:  fmt.Sprintf("Sessions[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, GroupDataValidationError{
+						field:  fmt.Sprintf("Sessions[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return GroupDataValidationError{
+					field:  fmt.Sprintf("Sessions[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for PubCount
+
+	// no validation rules for SubCount
+
+	// no validation rules for PullCount
+
+	// no validation rules for TotalSessionCount
+
+	// no validation rules for CreateTimeMs
+
+	if len(errors) > 0 {
+		return GroupDataMultiError(errors)
+	}
+
+	return nil
+}
+
+// GroupDataMultiError is an error wrapping multiple validation errors returned
+// by GroupData.ValidateAll() if the designated constraints aren't met.
+type GroupDataMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GroupDataMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GroupDataMultiError) AllErrors() []error { return m }
+
+// GroupDataValidationError is the validation error returned by
+// GroupData.Validate if the designated constraints aren't met.
+type GroupDataValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GroupDataValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GroupDataValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GroupDataValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GroupDataValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GroupDataValidationError) ErrorName() string { return "GroupDataValidationError" }
+
+// Error satisfies the builtin error interface
+func (e GroupDataValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGroupData.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GroupDataValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GroupDataValidationError{}
+
+// Validate checks the field values on LalServerData with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *LalServerData) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on LalServerData with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in LalServerDataMultiError, or
+// nil if none found.
+func (m *LalServerData) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *LalServerData) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Version
+
+	// no validation rules for StartTimeMs
+
+	// no validation rules for RunSec
+
+	// no validation rules for ActiveGroupCount
+
+	// no validation rules for TotalSessionCount
+
+	// no validation rules for GoVersion
+
+	// no validation rules for OsArch
+
+	// no validation rules for CpuCores
+
+	// no validation rules for MemoryUsedBytes
+
+	if len(errors) > 0 {
+		return LalServerDataMultiError(errors)
+	}
+
+	return nil
+}
+
+// LalServerDataMultiError is an error wrapping multiple validation errors
+// returned by LalServerData.ValidateAll() if the designated constraints
+// aren't met.
+type LalServerDataMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m LalServerDataMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m LalServerDataMultiError) AllErrors() []error { return m }
+
+// LalServerDataValidationError is the validation error returned by
+// LalServerData.Validate if the designated constraints aren't met.
+type LalServerDataValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e LalServerDataValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e LalServerDataValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e LalServerDataValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e LalServerDataValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e LalServerDataValidationError) ErrorName() string { return "LalServerDataValidationError" }
+
+// Error satisfies the builtin error interface
+func (e LalServerDataValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sLalServerData.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = LalServerDataValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = LalServerDataValidationError{}
 
 // Validate checks the field values on GetGroupInfoReq with the rules defined
 // in the proto definition for this message. If any rules are violated, the
@@ -975,6 +1433,8 @@ func (m *StartRelayPullReq) validate(all bool) error {
 
 	// no validation rules for RtspMode
 
+	// no validation rules for DebugDumpPacket
+
 	if len(errors) > 0 {
 		return StartRelayPullReqMultiError(errors)
 	}
@@ -1080,8 +1540,6 @@ func (m *StartRelayPullRes) validate(all bool) error {
 	// no validation rules for ErrorCode
 
 	// no validation rules for Desp
-
-	// no validation rules for Data
 
 	if len(errors) > 0 {
 		return StartRelayPullResMultiError(errors)
@@ -1290,8 +1748,6 @@ func (m *StopRelayPullRes) validate(all bool) error {
 	// no validation rules for ErrorCode
 
 	// no validation rules for Desp
-
-	// no validation rules for Data
 
 	if len(errors) > 0 {
 		return StopRelayPullResMultiError(errors)
@@ -1503,8 +1959,6 @@ func (m *KickSessionRes) validate(all bool) error {
 
 	// no validation rules for Desp
 
-	// no validation rules for Data
-
 	if len(errors) > 0 {
 		return KickSessionResMultiError(errors)
 	}
@@ -1605,9 +2059,15 @@ func (m *StartRtpPubReq) validate(all bool) error {
 
 	var errors []error
 
+	// no validation rules for StreamName
+
 	// no validation rules for Port
 
-	// no validation rules for StreamName
+	// no validation rules for TimeoutMs
+
+	// no validation rules for IsTcpFlag
+
+	// no validation rules for DebugDumpPacket
 
 	if len(errors) > 0 {
 		return StartRtpPubReqMultiError(errors)
@@ -1713,8 +2173,6 @@ func (m *StartRtpPubRes) validate(all bool) error {
 
 	// no validation rules for Desp
 
-	// no validation rules for Data
-
 	if len(errors) > 0 {
 		return StartRtpPubResMultiError(errors)
 	}
@@ -1815,9 +2273,9 @@ func (m *StopRtpPubReq) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Port
-
 	// no validation rules for StreamName
+
+	// no validation rules for Port
 
 	if len(errors) > 0 {
 		return StopRtpPubReqMultiError(errors)
@@ -1923,8 +2381,6 @@ func (m *StopRtpPubRes) validate(all bool) error {
 
 	// no validation rules for Desp
 
-	// no validation rules for Data
-
 	if len(errors) > 0 {
 		return StopRtpPubResMultiError(errors)
 	}
@@ -2027,7 +2483,7 @@ func (m *AddIpBlacklistReq) validate(all bool) error {
 
 	// no validation rules for Ip
 
-	// no validation rules for ExpireSeconds
+	// no validation rules for DurationSec
 
 	if len(errors) > 0 {
 		return AddIpBlacklistReqMultiError(errors)
@@ -2135,8 +2591,6 @@ func (m *AddIpBlacklistRes) validate(all bool) error {
 
 	// no validation rules for Desp
 
-	// no validation rules for Data
-
 	if len(errors) > 0 {
 		return AddIpBlacklistResMultiError(errors)
 	}
@@ -2216,426 +2670,3 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = AddIpBlacklistResValidationError{}
-
-// Validate checks the field values on GroupData with the rules defined in the
-// proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *GroupData) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on GroupData with the rules defined in
-// the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in GroupDataMultiError, or nil
-// if none found.
-func (m *GroupData) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *GroupData) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	// no validation rules for StreamName
-
-	// no validation rules for CreateTimeMs
-
-	if all {
-		switch v := interface{}(m.GetPublisher()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, GroupDataValidationError{
-					field:  "Publisher",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, GroupDataValidationError{
-					field:  "Publisher",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetPublisher()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return GroupDataValidationError{
-				field:  "Publisher",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	for idx, item := range m.GetSubscribers() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, GroupDataValidationError{
-						field:  fmt.Sprintf("Subscribers[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, GroupDataValidationError{
-						field:  fmt.Sprintf("Subscribers[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return GroupDataValidationError{
-					field:  fmt.Sprintf("Subscribers[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	for idx, item := range m.GetPullers() {
-		_, _ = idx, item
-
-		if all {
-			switch v := interface{}(item).(type) {
-			case interface{ ValidateAll() error }:
-				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, GroupDataValidationError{
-						field:  fmt.Sprintf("Pullers[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			case interface{ Validate() error }:
-				if err := v.Validate(); err != nil {
-					errors = append(errors, GroupDataValidationError{
-						field:  fmt.Sprintf("Pullers[%v]", idx),
-						reason: "embedded message failed validation",
-						cause:  err,
-					})
-				}
-			}
-		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return GroupDataValidationError{
-					field:  fmt.Sprintf("Pullers[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	if len(errors) > 0 {
-		return GroupDataMultiError(errors)
-	}
-
-	return nil
-}
-
-// GroupDataMultiError is an error wrapping multiple validation errors returned
-// by GroupData.ValidateAll() if the designated constraints aren't met.
-type GroupDataMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m GroupDataMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m GroupDataMultiError) AllErrors() []error { return m }
-
-// GroupDataValidationError is the validation error returned by
-// GroupData.Validate if the designated constraints aren't met.
-type GroupDataValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e GroupDataValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e GroupDataValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e GroupDataValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e GroupDataValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e GroupDataValidationError) ErrorName() string { return "GroupDataValidationError" }
-
-// Error satisfies the builtin error interface
-func (e GroupDataValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sGroupData.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = GroupDataValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = GroupDataValidationError{}
-
-// Validate checks the field values on SessionInfo with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *SessionInfo) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on SessionInfo with the rules defined in
-// the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in SessionInfoMultiError, or
-// nil if none found.
-func (m *SessionInfo) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *SessionInfo) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	// no validation rules for SessionId
-
-	// no validation rules for Type
-
-	// no validation rules for ClientIp
-
-	// no validation rules for CreateTimeMs
-
-	// no validation rules for SendBytes
-
-	// no validation rules for RecvBytes
-
-	if len(errors) > 0 {
-		return SessionInfoMultiError(errors)
-	}
-
-	return nil
-}
-
-// SessionInfoMultiError is an error wrapping multiple validation errors
-// returned by SessionInfo.ValidateAll() if the designated constraints aren't met.
-type SessionInfoMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m SessionInfoMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m SessionInfoMultiError) AllErrors() []error { return m }
-
-// SessionInfoValidationError is the validation error returned by
-// SessionInfo.Validate if the designated constraints aren't met.
-type SessionInfoValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e SessionInfoValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e SessionInfoValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e SessionInfoValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e SessionInfoValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e SessionInfoValidationError) ErrorName() string { return "SessionInfoValidationError" }
-
-// Error satisfies the builtin error interface
-func (e SessionInfoValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sSessionInfo.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = SessionInfoValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = SessionInfoValidationError{}
-
-// Validate checks the field values on LalServerData with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *LalServerData) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on LalServerData with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in LalServerDataMultiError, or
-// nil if none found.
-func (m *LalServerData) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *LalServerData) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	// no validation rules for ServerId
-
-	// no validation rules for BinInfo
-
-	// no validation rules for LalVersion
-
-	// no validation rules for ApiVersion
-
-	// no validation rules for NotifyVersion
-
-	// no validation rules for StartTime
-
-	if len(errors) > 0 {
-		return LalServerDataMultiError(errors)
-	}
-
-	return nil
-}
-
-// LalServerDataMultiError is an error wrapping multiple validation errors
-// returned by LalServerData.ValidateAll() if the designated constraints
-// aren't met.
-type LalServerDataMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m LalServerDataMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m LalServerDataMultiError) AllErrors() []error { return m }
-
-// LalServerDataValidationError is the validation error returned by
-// LalServerData.Validate if the designated constraints aren't met.
-type LalServerDataValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e LalServerDataValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e LalServerDataValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e LalServerDataValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e LalServerDataValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e LalServerDataValidationError) ErrorName() string { return "LalServerDataValidationError" }
-
-// Error satisfies the builtin error interface
-func (e LalServerDataValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sLalServerData.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = LalServerDataValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = LalServerDataValidationError{}

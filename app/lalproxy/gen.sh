@@ -10,7 +10,6 @@ goctl rpc protoc lalproxy.proto \
   --proto_path=../../third_party
 protoc \
   --proto_path=. \
-  --go_opt=json_tag \
   --proto_path=../../third_party \
   --validate_out=lang=go:. \
   --include_imports \

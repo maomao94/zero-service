@@ -26,7 +26,7 @@ func NewStartRtpPubLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Start
 	}
 }
 
-// 打开GB28181接收端口
+// 打开GB28181 RTP接收端口（对应HTTP API：/api/ctrl/start_rtp_pub，POST请求+JSON Body）
 func (l *StartRtpPubLogic) StartRtpPub(in *lalproxy.StartRtpPubReq) (*lalproxy.StartRtpPubRes, error) {
 	// 参数验证
 	if in.Port <= 0 || in.Port > 65535 {
@@ -80,6 +80,5 @@ func (l *StartRtpPubLogic) StartRtpPub(in *lalproxy.StartRtpPubReq) (*lalproxy.S
 	return &lalproxy.StartRtpPubRes{
 		ErrorCode: int32(httpResp.ErrorCode),
 		Desp:      httpResp.Desp,
-		Data:      httpResp.Data,
 	}, nil
 }
