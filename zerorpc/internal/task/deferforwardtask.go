@@ -5,16 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/dromara/carbon/v2"
-	"github.com/hibiken/asynq"
-	"github.com/zeromicro/go-zero/core/netx"
-	"github.com/zeromicro/go-zero/core/trace"
-	"go.opentelemetry.io/otel"
 	"net/http"
 	"time"
 	"zero-service/common/ctxdata"
 	"zero-service/zeroalarm/zeroalarm"
 	"zero-service/zerorpc/internal/svc"
+
+	"github.com/dromara/carbon/v2"
+	"github.com/hibiken/asynq"
+	"github.com/zeromicro/go-zero/core/netx"
+	"github.com/zeromicro/go-zero/core/trace"
+	"go.opentelemetry.io/otel"
 )
 
 type DeferForwardTaskHandler struct {
@@ -65,6 +66,7 @@ func (l *DeferForwardTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task
 				t.ResultWriter().Write([]byte("fail"))
 				return err
 			}
+			defer resp.Body.Close()
 			if resp.StatusCode == http.StatusOK {
 				t.ResultWriter().Write([]byte("success"))
 			} else {
