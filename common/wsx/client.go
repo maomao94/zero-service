@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/duke-git/lancet/v2/cryptor"
 	"github.com/gorilla/websocket"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stat"
@@ -241,6 +242,7 @@ func NewClient(conf Config, opts ...ClientOption) (Client, error) {
 	// 创建根上下文
 	ctx, cancel := context.WithCancel(context.Background())
 	ctx = logx.ContextWithFields(ctx, logx.Field("url", conf.URL))
+	ctx = logx.ContextWithFields(ctx, logx.Field("session", cryptor.Md5String(conf.URL)))
 	// 初始化客户端实例
 	c := &client{
 		url:                    conf.URL,
