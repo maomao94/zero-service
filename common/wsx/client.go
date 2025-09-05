@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stat"
+	"github.com/zeromicro/go-zero/core/threading"
 	"github.com/zeromicro/go-zero/core/timex"
 )
 
@@ -772,15 +773,17 @@ func (c *client) receiveLoop() {
 			continue
 		}
 
-		// 处理业务消息（传递客户端根ctx）
-		c.logger.WithContext(c.ctx).Debugf("Received message (size: %d bytes, type: %d)", len(msgData), msgType)
-		startTime := timex.Now()
-		if err := c.onMessage(c.ctx, msgData); err != nil {
-			c.logger.WithContext(c.ctx).Errorf("Handle message error: %v", err)
-			c.metrics.AddDrop()
-		}
-		c.metrics.Add(stat.Task{
-			Duration: timex.Since(startTime),
+		threading.GoSafe(func() {
+			// 处理业务消息（传递客户端根ctx）
+			c.logger.WithContext(c.ctx).Debugf("Received message (size: %d bytes, type: %d)", len(msgData), msgType)
+			startTime := timex.Now()
+			if err := c.onMessage(c.ctx, msgData); err != nil {
+				c.logger.WithContext(c.ctx).Errorf("Handle message error: %v", err)
+				c.metrics.AddDrop()
+			}
+			c.metrics.Add(stat.Task{
+				Duration: timex.Since(startTime),
+			})
 		})
 	}
 
