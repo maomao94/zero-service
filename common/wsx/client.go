@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -445,9 +446,39 @@ func (c *client) connectionManager() {
 // dial 建立WebSocket连接
 func (c *client) dial() (*websocket.Conn, error) {
 	c.logger.WithContext(c.ctx).Info("Trying to connect to WebSocket server")
-	conn, _, err := c.dialer.Dial(c.url, c.headers)
+	conn, resp, err := c.dialer.Dial(c.url, c.headers)
 	if err != nil {
-		c.logger.WithContext(c.ctx).Errorf("Connect failed: %v", err)
+		// 处理响应可能为nil的情况
+		var bodyContent string
+		var readErr error
+
+		// 仅在resp和resp.Body都不为空时才尝试读取
+		if resp != nil && resp.Body != nil {
+			// 确保响应体被关闭
+			defer resp.Body.Close()
+
+			// 读取响应体内容
+			var body []byte
+			body, readErr = io.ReadAll(resp.Body)
+			if readErr != nil {
+				bodyContent = "failed to read response body: " + readErr.Error()
+			} else {
+				bodyContent = string(body)
+			}
+		} else {
+			if resp == nil {
+				bodyContent = "no response received from server"
+			} else {
+				bodyContent = "response has no body"
+			}
+		}
+
+		// 记录详细错误信息
+		c.logger.WithContext(c.ctx).Errorf(
+			"Connect failed: %v, body: %s",
+			err,
+			bodyContent,
+		)
 		return nil, err
 	}
 	return conn, nil
