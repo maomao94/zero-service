@@ -14,7 +14,16 @@ filebeat.inputs:
     multiline.pattern: '^<Bridge:=Free'
     multiline.negate: true
     multiline.match: after
-    close_inactive: 2s  # 文件写入完成 1 分钟后关闭 harvester
+    # 增加文件系统扫描频率，默认是10秒
+    scan_frequency: 10s
+    # 调整文件关闭时间为10秒（足够长的时间处理可能的写入间隔）
+    close_inactive: 10s
+    # 忽略超过24小时未修改的文件
+    ignore_older: 24h
+    # 清理超过72小时未活动的文件状态
+    clean_inactive: 72h
+    # 即使文件重命名，也能通过inode跟踪文件
+    close_renamed: false
 
   # 监听 cable_fault_data 目录下的 JSON 文件
   - type: log
@@ -28,7 +37,16 @@ filebeat.inputs:
     multiline.pattern: '^<Bridge:=Free'
     multiline.negate: true
     multiline.match: after
-    close_inactive: 2s  # 文件写入完成 1 分钟后关闭 harvester
+    # 增加文件系统扫描频率，默认是10秒
+    scan_frequency: 10s
+    # 调整文件关闭时间为10秒（足够长的时间处理可能的写入间隔）
+    close_inactive: 10s
+    # 忽略超过24小时未修改的文件
+    ignore_older: 24h
+    # 清理超过72小时未活动的文件状态
+    clean_inactive: 72h
+    # 即使文件重命名，也能通过inode跟踪文件
+    close_renamed: false
 
   # 监听 cable_fault_wave 目录下的 JSON 文件
   - type: log
@@ -42,7 +60,16 @@ filebeat.inputs:
     multiline.pattern: '^<Bridge:=Free'
     multiline.negate: true
     multiline.match: after
-    close_inactive: 2s  # 文件写入完成 1 分钟后关闭 harvester
+    # 增加文件系统扫描频率，默认是10秒
+    scan_frequency: 10s
+    # 调整文件关闭时间为10秒（足够长的时间处理可能的写入间隔）
+    close_inactive: 10s
+    # 忽略超过24小时未修改的文件
+    ignore_older: 24h
+    # 清理超过72小时未活动的文件状态
+    clean_inactive: 72h
+    # 即使文件重命名，也能通过inode跟踪文件
+    close_renamed: false
 
 # ======================================
 # Filebeat Modules 配置
