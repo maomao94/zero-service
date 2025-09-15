@@ -7,28 +7,6 @@ option java_multiple_files = true;
 option java_package = "com.github.lalproxy.grpc";
 option java_outer_classname = "LalProxyProto";
 
-// lalProxy：封装lalserver全部HTTP API能力，包含查询类（/api/stat）和控制类（/api/ctrl）接口
-service lalProxy {
-  // 查询指定group信息（对应HTTP API：/api/stat/group，GET请求+URL参数）
-  rpc GetGroupInfo (GetGroupInfoReq) returns (GetGroupInfoRes);
-  // 查询所有group信息（对应HTTP API：/api/stat/all_group，GET请求，无参数）
-  rpc GetAllGroups (GetAllGroupsReq) returns (GetAllGroupsRes);
-  // 查询服务器基础信息（对应HTTP API：/api/stat/lal_info，GET请求，无参数）
-  rpc GetLalInfo (GetLalInfoReq) returns (GetLalInfoRes);
-  // 启动中继拉流（对应HTTP API：/api/ctrl/start_relay_pull，POST请求+JSON Body）
-  rpc StartRelayPull (StartRelayPullReq) returns (StartRelayPullRes);
-  // 停止中继拉流（对应HTTP API：/api/ctrl/stop_relay_pull，GET请求+URL参数）
-  rpc StopRelayPull (StopRelayPullReq) returns (StopRelayPullRes);
-  // 踢出指定会话（对应HTTP API：/api/ctrl/kick_session，POST请求+JSON Body；支持关闭pub/sub/pull类型会话）
-  rpc KickSession (KickSessionReq) returns (KickSessionRes);
-  // 打开GB28181 RTP接收端口（对应HTTP API：/api/ctrl/start_rtp_pub，POST请求+JSON Body）
-  rpc StartRtpPub (StartRtpPubReq) returns (StartRtpPubRes);
-  // 关闭GB28181 RTP接收端口（注：根据lalserver文档，当前需通过KickSession接口实现，本接口暂未开放）
-  rpc StopRtpPub (StopRtpPubReq) returns (StopRtpPubRes);
-  // 添加IP到黑名单（对应HTTP API：/api/ctrl/add_ip_blacklist，POST请求+JSON Body；目前仅支持HLS协议）
-  rpc AddIpBlacklist (AddIpBlacklistReq) returns (AddIpBlacklistRes);
-}
-
 // 帧率数据：对应接口返回的 in_frame_per_sec 数组元素（最近32秒每秒视频帧数）
 message FrameData {
   // 时间戳（秒级Unix时间，如1723513826，必返）
@@ -305,4 +283,26 @@ message AddIpBlacklistRes {
   int32 errorCode = 1 [json_name = "errorCode"];
   // 错误描述（成功时为"succ"，失败时为具体原因，如"ip invalid"；与errorCode一一对应）
   string desp = 2 [json_name = "desp"];
+}
+
+// lalProxy：封装lalserver全部HTTP API能力，包含查询类（/api/stat）和控制类（/api/ctrl）接口
+service lalProxy {
+  // 查询指定group信息（对应HTTP API：/api/stat/group，GET请求+URL参数）
+  rpc GetGroupInfo (GetGroupInfoReq) returns (GetGroupInfoRes);
+  // 查询所有group信息（对应HTTP API：/api/stat/all_group，GET请求，无参数）
+  rpc GetAllGroups (GetAllGroupsReq) returns (GetAllGroupsRes);
+  // 查询服务器基础信息（对应HTTP API：/api/stat/lal_info，GET请求，无参数）
+  rpc GetLalInfo (GetLalInfoReq) returns (GetLalInfoRes);
+  // 启动中继拉流（对应HTTP API：/api/ctrl/start_relay_pull，POST请求+JSON Body）
+  rpc StartRelayPull (StartRelayPullReq) returns (StartRelayPullRes);
+  // 停止中继拉流（对应HTTP API：/api/ctrl/stop_relay_pull，GET请求+URL参数）
+  rpc StopRelayPull (StopRelayPullReq) returns (StopRelayPullRes);
+  // 踢出指定会话（对应HTTP API：/api/ctrl/kick_session，POST请求+JSON Body；支持关闭pub/sub/pull类型会话）
+  rpc KickSession (KickSessionReq) returns (KickSessionRes);
+  // 打开GB28181 RTP接收端口（对应HTTP API：/api/ctrl/start_rtp_pub，POST请求+JSON Body）
+  rpc StartRtpPub (StartRtpPubReq) returns (StartRtpPubRes);
+  // 关闭GB28181 RTP接收端口（注：根据lalserver文档，当前需通过KickSession接口实现，本接口暂未开放）
+  rpc StopRtpPub (StopRtpPubReq) returns (StopRtpPubRes);
+  // 添加IP到黑名单（对应HTTP API：/api/ctrl/add_ip_blacklist，POST请求+JSON Body；目前仅支持HLS协议）
+  rpc AddIpBlacklist (AddIpBlacklistReq) returns (AddIpBlacklistRes);
 }

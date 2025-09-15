@@ -17,7 +17,7 @@
   ],
   "paths": {},
   "definitions": {
-    "LalproxyAddIpBlacklistRes": {
+    "lalproxyAddIpBlacklistRes": {
       "type": "object",
       "properties": {
         "errorCode": {
@@ -32,7 +32,7 @@
       },
       "title": "AddIpBlacklist响应：对应/api/ctrl/add_ip_blacklist接口返回结果"
     },
-    "LalproxyFrameData": {
+    "lalproxyFrameData": {
       "type": "object",
       "properties": {
         "unixSec": {
@@ -48,7 +48,7 @@
       },
       "title": "帧率数据：对应接口返回的 in_frame_per_sec 数组元素（最近32秒每秒视频帧数）"
     },
-    "LalproxyGetAllGroupsRes": {
+    "lalproxyGetAllGroupsRes": {
       "type": "object",
       "properties": {
         "errorCode": {
@@ -64,14 +64,14 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/LalproxyGroupData"
+            "$ref": "#/definitions/lalproxyGroupData"
           },
           "title": "所有group列表（成功时返回，每个元素格式与GetGroupInfoRes.data一致；无活跃group时为空数组）"
         }
       },
       "title": "GetAllGroups响应：对应/api/stat/all_group接口返回结果"
     },
-    "LalproxyGetGroupInfoRes": {
+    "lalproxyGetGroupInfoRes": {
       "type": "object",
       "properties": {
         "errorCode": {
@@ -84,13 +84,13 @@
           "title": "错误描述（成功时为\"succ\"，失败时为具体原因，如\"group not found\"；与errorCode一一对应）"
         },
         "data": {
-          "$ref": "#/definitions/LalproxyGroupData",
+          "$ref": "#/definitions/lalproxyGroupData",
           "title": "分组详细数据（成功时返回，包含流编码、会话列表、帧率等信息；失败时为空）"
         }
       },
       "title": "GetGroupInfo响应：对应/api/stat/group接口返回结果"
     },
-    "LalproxyGetLalInfoRes": {
+    "lalproxyGetLalInfoRes": {
       "type": "object",
       "properties": {
         "errorCode": {
@@ -103,13 +103,13 @@
           "title": "错误描述（成功时为\"succ\"；无失败场景，固定返回该值）"
         },
         "data": {
-          "$ref": "#/definitions/LalproxyLalServerData",
+          "$ref": "#/definitions/lalproxyLalServerData",
           "title": "服务器信息数据（成功时返回，包含版本、启动时间等基础信息；无失败场景，必然非空）"
         }
       },
       "title": "GetLalInfo响应：对应/api/stat/lal_info接口返回结果"
     },
-    "LalproxyGroupData": {
+    "lalproxyGroupData": {
       "type": "object",
       "properties": {
         "streamName": {
@@ -139,26 +139,26 @@
           "title": "视频高度（像素，如360，必返）"
         },
         "pub": {
-          "$ref": "#/definitions/LalproxyPubSessionInfo",
+          "$ref": "#/definitions/lalproxyPubSessionInfo",
           "title": "发布者会话信息（推流详情，无推流时为nil，必返）"
         },
         "subs": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/LalproxySubSessionInfo"
+            "$ref": "#/definitions/lalproxySubSessionInfo"
           },
           "title": "订阅者会话列表（拉流详情，无拉流时为空数组，必返）"
         },
         "pull": {
-          "$ref": "#/definitions/LalproxyPullSessionInfo",
+          "$ref": "#/definitions/lalproxyPullSessionInfo",
           "title": "中继拉流会话信息（回源流详情，无回源时为nil，必返）"
         },
         "pushs": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/LalproxyPushSessionInfo"
+            "$ref": "#/definitions/lalproxyPushSessionInfo"
           },
           "title": "中继推流会话列表（外连转推，暂为空数组，必返）"
         },
@@ -166,14 +166,14 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/LalproxyFrameData"
+            "$ref": "#/definitions/lalproxyFrameData"
           },
           "title": "最近32秒视频帧率统计（每秒视频帧数，必返）"
         }
       },
       "title": "分组核心数据：对应接口返回的 data 字段（流的完整信息聚合）"
     },
-    "LalproxyKickSessionRes": {
+    "lalproxyKickSessionRes": {
       "type": "object",
       "properties": {
         "errorCode": {
@@ -188,7 +188,7 @@
       },
       "title": "KickSession响应：对应/api/ctrl/kick_session接口返回结果"
     },
-    "LalproxyLalServerData": {
+    "lalproxyLalServerData": {
       "type": "object",
       "properties": {
         "serverId": {
@@ -222,7 +222,7 @@
       },
       "title": "服务器基础信息：对应 /api/stat/lal_info 接口返回的「服务器基础信息」，与Go结构体 LalServerData 完全对齐"
     },
-    "LalproxyPubSessionInfo": {
+    "lalproxyPubSessionInfo": {
       "type": "object",
       "properties": {
         "sessionId": {
@@ -273,7 +273,7 @@
       },
       "title": "发布者会话信息：对应接口返回的 data.pub（接收推流的详情）"
     },
-    "LalproxyPullSessionInfo": {
+    "lalproxyPullSessionInfo": {
       "type": "object",
       "properties": {
         "sessionId": {
@@ -324,11 +324,11 @@
       },
       "title": "中继拉流会话信息：对应接口返回的 data.pull（从其他节点拉流回源的详情）"
     },
-    "LalproxyPushSessionInfo": {
+    "lalproxyPushSessionInfo": {
       "type": "object",
       "title": "中继推流会话信息：对应接口返回的 data.pushs（主动外连转推，暂不提供数据）"
     },
-    "LalproxyStartRelayPullRes": {
+    "lalproxyStartRelayPullRes": {
       "type": "object",
       "properties": {
         "errorCode": {
@@ -343,7 +343,7 @@
       },
       "title": "StartRelayPull响应：对应/api/ctrl/start_relay_pull接口返回结果"
     },
-    "LalproxyStartRtpPubRes": {
+    "lalproxyStartRtpPubRes": {
       "type": "object",
       "properties": {
         "errorCode": {
@@ -358,7 +358,7 @@
       },
       "title": "StartRtpPub响应：对应/api/ctrl/start_rtp_pub接口返回结果"
     },
-    "LalproxyStopRelayPullRes": {
+    "lalproxyStopRelayPullRes": {
       "type": "object",
       "properties": {
         "errorCode": {
@@ -373,7 +373,7 @@
       },
       "title": "StopRelayPull响应：对应/api/ctrl/stop_relay_pull接口返回结果"
     },
-    "LalproxyStopRtpPubRes": {
+    "lalproxyStopRtpPubRes": {
       "type": "object",
       "properties": {
         "errorCode": {
@@ -388,7 +388,7 @@
       },
       "title": "StopRtpPub响应：对应/api/ctrl/stop_rtp_pub接口返回结果（注：接口暂未开放，返回结果参考KickSession）"
     },
-    "LalproxySubSessionInfo": {
+    "lalproxySubSessionInfo": {
       "type": "object",
       "properties": {
         "sessionId": {

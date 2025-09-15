@@ -19,15 +19,15 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	LalProxy_GetGroupInfo_FullMethodName   = "/Lalproxy.lalProxy/GetGroupInfo"
-	LalProxy_GetAllGroups_FullMethodName   = "/Lalproxy.lalProxy/GetAllGroups"
-	LalProxy_GetLalInfo_FullMethodName     = "/Lalproxy.lalProxy/GetLalInfo"
-	LalProxy_StartRelayPull_FullMethodName = "/Lalproxy.lalProxy/StartRelayPull"
-	LalProxy_StopRelayPull_FullMethodName  = "/Lalproxy.lalProxy/StopRelayPull"
-	LalProxy_KickSession_FullMethodName    = "/Lalproxy.lalProxy/KickSession"
-	LalProxy_StartRtpPub_FullMethodName    = "/Lalproxy.lalProxy/StartRtpPub"
-	LalProxy_StopRtpPub_FullMethodName     = "/Lalproxy.lalProxy/StopRtpPub"
-	LalProxy_AddIpBlacklist_FullMethodName = "/Lalproxy.lalProxy/AddIpBlacklist"
+	LalProxy_GetGroupInfo_FullMethodName   = "/lalproxy.lalProxy/GetGroupInfo"
+	LalProxy_GetAllGroups_FullMethodName   = "/lalproxy.lalProxy/GetAllGroups"
+	LalProxy_GetLalInfo_FullMethodName     = "/lalproxy.lalProxy/GetLalInfo"
+	LalProxy_StartRelayPull_FullMethodName = "/lalproxy.lalProxy/StartRelayPull"
+	LalProxy_StopRelayPull_FullMethodName  = "/lalproxy.lalProxy/StopRelayPull"
+	LalProxy_KickSession_FullMethodName    = "/lalproxy.lalProxy/KickSession"
+	LalProxy_StartRtpPub_FullMethodName    = "/lalproxy.lalProxy/StartRtpPub"
+	LalProxy_StopRtpPub_FullMethodName     = "/lalproxy.lalProxy/StopRtpPub"
+	LalProxy_AddIpBlacklist_FullMethodName = "/lalproxy.lalProxy/AddIpBlacklist"
 )
 
 // LalProxyClient is the client API for LalProxy service.
@@ -402,7 +402,7 @@ func _LalProxy_AddIpBlacklist_Handler(srv interface{}, ctx context.Context, dec 
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var LalProxy_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "Lalproxy.lalProxy",
+	ServiceName: "lalproxy.lalProxy",
 	HandlerType: (*LalProxyServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

@@ -1,6 +1,6 @@
 
 £ 
-lalproxy.protoLalproxy"3
+lalproxy.protolalproxy"3
 	FrameData
 unixSec (RunixSec
 v (Rv"ì
@@ -62,12 +62,12 @@ videoCodec
 videoWidth (R
 videoWidth 
 videoHeight (RvideoHeight*
-pub (2.Lalproxy.PubSessionInfoRpub,
-subs (2.Lalproxy.SubSessionInfoRsubs-
-pull	 (2.Lalproxy.PullSessionInfoRpull/
+pub (2.lalproxy.PubSessionInfoRpub,
+subs (2.lalproxy.SubSessionInfoRsubs-
+pull	 (2.lalproxy.PullSessionInfoRpull/
 pushs
- (2.Lalproxy.PushSessionInfoRpushs9
-inFramePerSec (2.Lalproxy.FrameDataRinFramePerSec"í
+ (2.lalproxy.PushSessionInfoRpushs9
+inFramePerSec (2.lalproxy.FrameDataRinFramePerSec"í
 LalServerData
 serverId (	RserverId
 binInfo (	RbinInfo
@@ -87,17 +87,17 @@ streamName"l
 GetGroupInfoRes
 	errorCode (R	errorCode
 desp (	Rdesp'
-data (2.Lalproxy.GroupDataRdata"
+data (2.lalproxy.GroupDataRdata"
 GetAllGroupsReq"p
 GetAllGroupsRes
 	errorCode (R	errorCode
 desp (	Rdesp+
-groups (2.Lalproxy.GroupDataRgroups"
+groups (2.lalproxy.GroupDataRgroups"
 GetLalInfoReq"n
 GetLalInfoRes
 	errorCode (R	errorCode
 desp (	Rdesp+
-data (2.Lalproxy.LalServerDataRdata"‘
+data (2.lalproxy.LalServerDataRdata"‘
 StartRelayPullReq
 url (	Rurl
 
@@ -151,16 +151,16 @@ streamName"A
 	errorCode (R	errorCode
 desp (	Rdesp2ý
 lalProxyD
-GetGroupInfo.Lalproxy.GetGroupInfoReq.Lalproxy.GetGroupInfoResD
-GetAllGroups.Lalproxy.GetAllGroupsReq.Lalproxy.GetAllGroupsRes>
+GetGroupInfo.lalproxy.GetGroupInfoReq.lalproxy.GetGroupInfoResD
+GetAllGroups.lalproxy.GetAllGroupsReq.lalproxy.GetAllGroupsRes>
 
-GetLalInfo.Lalproxy.GetLalInfoReq.Lalproxy.GetLalInfoResJ
-StartRelayPull.Lalproxy.StartRelayPullReq.Lalproxy.StartRelayPullResG
-StopRelayPull.Lalproxy.StopRelayPullReq.Lalproxy.StopRelayPullResA
-KickSession.Lalproxy.KickSessionReq.Lalproxy.KickSessionResA
-StartRtpPub.Lalproxy.StartRtpPubReq.Lalproxy.StartRtpPubRes>
+GetLalInfo.lalproxy.GetLalInfoReq.lalproxy.GetLalInfoResJ
+StartRelayPull.lalproxy.StartRelayPullReq.lalproxy.StartRelayPullResG
+StopRelayPull.lalproxy.StopRelayPullReq.lalproxy.StopRelayPullResA
+KickSession.lalproxy.KickSessionReq.lalproxy.KickSessionResA
+StartRtpPub.lalproxy.StartRtpPubReq.lalproxy.StartRtpPubRes>
 
-StopRtpPub.Lalproxy.StopRtpPubReq.Lalproxy.StopRtpPubResJ
-AddIpBlacklist.Lalproxy.AddIpBlacklistReq.Lalproxy.AddIpBlacklistResB7
+StopRtpPub.lalproxy.StopRtpPubReq.lalproxy.StopRtpPubResJ
+AddIpBlacklist.lalproxy.AddIpBlacklistReq.lalproxy.AddIpBlacklistResB7
 com.github.lalproxy.grpcBLalProxyProtoPZ
 ./lalproxybproto3
