@@ -1,0 +1,16 @@
+syntax = "v1"
+
+type (
+	EmptyReply  {}
+	BaseRequest {
+		Id int64 `json:"id"` // 主键ID
+	}
+	TenantRequest {
+		Id       int64  `json:"id"` // 主键ID
+		TenantId string `json:"tenantId"` // 租户ID
+	}
+	PingReply {
+		Msg string `json:"msg"`
+	}
+)
+

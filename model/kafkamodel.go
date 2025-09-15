@@ -175,3 +175,10 @@ type Status struct {
 	// 运动状态：0-静止，1-移动
 	MoveState int `json:"moveState"`
 }
+
+type BridgeMsgBody struct {
+	TraceId  string `json:"traceId"`
+	Body     string `json:"body"`
+	Time     string `json:"time"`
+	FilePath string `json:"filePath"`
+}

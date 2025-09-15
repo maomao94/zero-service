@@ -1,0 +1,85 @@
+version: '3'
+services:
+
+  #消息队列 - Message queue
+  allcore-kafka:
+    image: apache/kafka:3.9.0
+    container_name: kafka # 用于容器内网络
+    ports:
+      - 9092:9092  # 容器内部之间使用的监听端口
+      - 9094:9094  # 容器外部访问监听端口
+    privileged: true
+    restart: always
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      # 外部访问监听端口为 9092，容器内部使用不同的端口 9094
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9094,CONTROLLER://localhost:9093,PLAINTEXT_CONTAINER://kafka:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://10.10.1.213:9094,PLAINTEXT_CONTAINER://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_CONTAINER:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+    volumes:
+      - ./data/kafka/data:/var/lib/kafka/data
+  
+  #收集业务数据 - Collect business data
+  filebeat:
+    image: elastic/filebeat:8.19.2
+    container_name: filebeat
+    environment:
+      # 时区上海 - Time zone Shanghai (Change if needed)
+      TZ: Asia/Shanghai
+    user: root
+    restart: always
+    entrypoint:
+      - filebeat
+      - -e
+      - --strict.perms=false
+    volumes:
+      - /home/zxhc/app/etc/filebeat.yml:/usr/share/filebeat/filebeat.yml
+      - /home/zxhc/bridgedump/:/opt/bridgedump/
+      # 此处需指定docker的containers目录，取决于你docker的配置 - The containers directory of docker needs to be specified here, depending on your docker configuration
+      # 如snap安装的docker，则为/var/snap/docker/common/var-lib-docker/containers - Example if docker is installed by Snap /var/snap/docker/common/var-lib-docker/containers
+      # - /var/snap/docker/common/var-lib-docker/containers:/var/lib/docker/containers
+      - /var/lib/docker/containers:/var/lib/docker/containers
+    depends_on:
+      - allcore-kafka
+
+  allcore-bridgegtw:
+    image: "${REGISTER}/bridgegtw:${ALLCORE_MAIN_TAG}"
+    mem_limit: 1G
+    environment:
+      - TZ=Asia/Shanghai
+    privileged: true
+    restart: always
+    volumes:
+      - /home/zxhc/app/etc:/app/etc/
+    network_mode: host
+  
+  allcore-bridgedump:
+    image: "${REGISTER}/bridgedump:${ALLCORE_MAIN_TAG}"
+    mem_limit: 1G
+    environment:
+      - TZ=Asia/Shanghai
+    privileged: true
+    restart: always
+    volumes:
+      - /home/zxhc/app/etc:/app/etc
+      - /home/zxhc/bridgedump/:/opt/bridgedump/
+    network_mode: host
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    container_name: kafdrop
+    restart: "no"
+    ports:
+      - "39000:9000"
+    environment:
+      KAFKA_BROKERCONNECT: "10.10.1.213:9092"
+

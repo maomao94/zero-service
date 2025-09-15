@@ -1,0 +1,22 @@
+syntax = "v1"
+
+import "doc/base.api"
+
+info (
+	title:   "桥接 http 网关"
+	desc:    "桥接 http 网关"
+	author:  "hehanpeng"
+	email:   "hehanpengyy@163.com"
+	version: "v1"
+)
+
+@server (
+	prefix: bridge/v1
+	group:  bridgeGtw
+)
+service bridgeGtw {
+	@doc "ping"
+	@handler ping
+	get /ping returns (PingReply)
+}
+

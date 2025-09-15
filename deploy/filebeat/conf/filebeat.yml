@@ -1,0 +1,95 @@
+# ======================================
+# Filebeat Inputs
+# ======================================
+filebeat.inputs:
+  # 监听 cable_worklist 目录下的所有 JSON 文件
+  - type: log                      # 输入类型为日志文件
+    enabled: true                   # 是否启用
+    paths:
+      - /opt/bridgedump/cable_work_list/*_json.txt  # 要读取的文件路径
+    #    json.keys_under_root: true      # JSON 文件的字段直接放到 root level
+    #    json.add_error_key: true        # 如果解析 JSON 出错，会增加 error 字段
+    fields:
+      topic: "cable_work_list"       # 指定 Kafka topic 名称
+    multiline.pattern: '^<Bridge:=Free'
+    multiline.negate: true
+    multiline.match: after
+    close_inactive: 2s  # 文件写入完成 1 分钟后关闭 harvester
+
+  # 监听 cable_fault_data 目录下的 JSON 文件
+  - type: log
+    enabled: true
+    paths:
+      - /opt/bridgedump/cable_fault/*_json.txt
+    #    json.keys_under_root: true
+    #    json.add_error_key: true
+    fields:
+      topic: "cable_fault"
+    multiline.pattern: '^<Bridge:=Free'
+    multiline.negate: true
+    multiline.match: after
+    close_inactive: 2s  # 文件写入完成 1 分钟后关闭 harvester
+
+  # 监听 cable_fault_wave 目录下的 JSON 文件
+  - type: log
+    enabled: true
+    paths:
+      - /opt/bridgedump/cable_fault_wave/*_json.txt
+    #    json.keys_under_root: true
+    #    json.add_error_key: true
+    fields:
+      topic: "cable_fault_wave"
+    multiline.pattern: '^<Bridge:=Free'
+    multiline.negate: true
+    multiline.match: after
+    close_inactive: 2s  # 文件写入完成 1 分钟后关闭 harvester
+
+# ======================================
+# Filebeat Modules 配置
+# ======================================
+filebeat.config:
+  modules:
+    path: ${path.config}/modules.d/*.yml  # 模块配置目录
+    reload.enabled: false                  # 禁用自动重新加载模块配置
+
+# ======================================
+# 数据处理器（Processors）
+# ======================================
+processors:
+  - add_host_metadata: ~   # 给每条日志增加宿主机信息
+  - add_cloud_metadata: ~  # 如果在云上运行，会自动增加云信息
+  - add_docker_metadata: ~ # 增加 Docker 容器元信息
+  - drop_event.when:
+      or:
+        - has_fields: [ "dissect_parsing_error" ]   # 如果 dissect 解析失败，丢弃
+        - contains:
+            message: "<!System=OMG"              # 忽略第一行 <!System=OMG ...>
+  - dissect:
+      tokenizer: "<Bridge:=Free%{+extra}>%{json_data}</Bridge:=Free>"
+      field: "message"
+      target_prefix: ""
+  - decode_json_fields:
+      fields: [ "json_data" ]  # 要解析的字段
+      target: "message"             # 空字符串表示解析结果直接放在根目录
+      overwrite_keys: true   # 如果有同名字段可以覆盖
+  - include_fields:
+      fields: [ "@timestamp", "message", "fields" ]
+  - drop_fields:
+      fields: [ "@metadata" ]
+
+# ======================================
+# 输出到 Kafka
+# ======================================
+output.kafka:
+  enabled: true
+  hosts: [ "kafka:9092" ]           # Kafka 集群地址
+  topic: '%{[fields.topic]}'      # 根据上面 input 的 fields.topic 动态选择 topic
+  partition.hash:
+    reachable_only: true           # 只选择可达的分区
+  compression: gzip                # 压缩方式
+  max_message_bytes: 5000000  # 5 MB
+  required_acks: 1                 # ack 数量（1=leader确认）
+
+# 日志等级
+# logging.level: debug        # debug、info、warn、error
+# logging.selectors: ["*"]    # 或者指定模块，比如 ["kafka","publish"]

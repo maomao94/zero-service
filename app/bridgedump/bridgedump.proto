@@ -1,0 +1,124 @@
+syntax = "proto3";
+package bridgedump;
+option go_package = "./bridgedump";
+
+
+message Req {
+  string ping = 1;
+}
+
+message Res {
+  string pong = 1;
+}
+
+message CableWorkListReq {
+  repeated DeviceRunData data = 1;
+}
+
+message CableWorkListRes {
+  int32 code = 1;
+  string msg = 2;
+}
+
+// 设备运行数据单条记录
+message DeviceRunData {
+  // 设备ID
+  string dtuId = 1;
+  // 电流值
+  double loadCur = 2;
+  // 电压值
+  double loadVoltage = 3;
+  // 相别（1：A相，2：B相，3：C相）
+  int32 sltype = 4;
+  // 工况时间，格式：yyyyMMddHHmmss
+  string operateTime = 5;
+  // 环境温度
+  double amTemperature = 6;
+  // GPS有效性(1:有效 0:无效)
+  int32 gps = 7;
+
+  // 工况时间 CableWorkListData -> operateTime
+  string workTime = 8;
+}
+
+message CableFaultReq{
+  // 多条故障结果数据
+  repeated FaultData data = 1;
+}
+
+message CableFaultRes{
+  int32 code = 1;
+  string msg = 2;
+}
+
+// 单条故障结果数据
+message FaultData {
+  // 故障编号(唯一)
+  string acciId = 1;
+  // 故障时间，格式：yyyyMMddHHmmssSSS
+  string downTime = 2;
+  // 故障线路名称
+  string mlName = 3;
+  // 区间标识(0:精确定位 1: 区间定位)
+  int32 fixedType = 4;
+  // 故障起始杆塔
+  string diaElepo1 = 5;
+  // 故障终止杆塔
+  string diaElepo2 = 6;
+  // 故障杆塔
+  string diaElepo = 7;
+  // 故障距离（米）
+  double errDistance = 8;
+  // 故障相别（1，2,3代表A,B,C三相)
+  int32 fsltype = 9;
+  // 故障描述
+  string notice = 10;
+  // 告警处理状态（0：未处理  1：已处理）
+  int32 warnProcessed = 11;
+  // 故障类型(SC短路 GD接地 OT其他)
+  string warnCategory = 12;
+
+  // 故障时间 -> downTime
+  string acciTime = 13;
+  // 告警类别
+  string shortType = 14;
+}
+
+message CableFaultWaveReq{
+  // 多条故障波形数据
+  repeated FaultWaveData data = 1;
+}
+
+message CableFaultWaveRes{
+  int32 code = 1;
+  string msg = 2;
+}
+
+// 单条故障波形数据
+message FaultWaveData {
+  // 故障编号（唯一）
+  string acciId = 1;
+  // 波形编号（唯一）
+  string waveBatchId = 2;
+  // 设备ID(终端编号)
+  string dtuId = 3;
+  // 波形类型（1：代表行波，3：代表工频）
+  int32 waveType = 4;
+  // 波形起始时间(精确到纳秒)
+  string aheadTime = 5;
+  // 波形数据(英文逗号分隔)
+  string waveData = 6;
+  // 采样率
+  int32 samprate = 7;
+}
+
+service BridgeDumpRpc {
+  rpc Ping (Req) returns (Res);
+
+  // 电缆设备运行数据接入
+  rpc CableWorkList(CableWorkListReq) returns (CableWorkListRes);
+  // 电缆故障结果数据接入
+  rpc CableFault(CableFaultReq) returns (CableFaultRes);
+  // 电缆故障波形数据接入
+  rpc CableFaultWave(CableFaultWaveReq) returns (CableFaultWaveRes);
+}

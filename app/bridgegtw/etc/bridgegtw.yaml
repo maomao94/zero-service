@@ -1,0 +1,39 @@
+Name: bridgeGtw
+Host: 0.0.0.0
+Port: 15002
+Mode: dev
+Log:
+  Encoding: plain
+  Mode: console
+  Path: /opt/logs/bridgegtw
+  Level: info
+Timeout: 15000
+Upstreams:
+#  - Name: external-cable  # 可选，如果未指定则使用 target
+#    Http:
+#      Target: localhost:19103
+#      Prefix:  # 可选 废弃
+#      Timeout: 15000    # 单位为毫秒，默认值 3000
+#    Mappings:
+#      - Method: POST
+#        Path: /api/abandoned/external/cable/workList
+#      - Method: POST
+#        Path: /api/abandoned/external/cable/fault
+#      - Method: POST
+#        Path: /api/abandoned/external/cable/faultWave
+  - grpc:
+      Endpoints:
+        - 127.0.0.1:25002
+      NonBlock: true
+    ProtoSets:
+      - app/bridgedump/bridgedump.pb
+    Mappings:
+      - Method: POST
+        Path: /api/external/cable/workList
+        RpcPath: bridgedump.BridgeDumpRpc/CableWorkList
+      - Method: POST
+        Path: /api/external/cable/fault
+        RpcPath: bridgedump.BridgeDumpRpc/CableFault
+      - Method: POST
+        Path: /api/external/cable/faultWave
+        RpcPath: bridgedump.BridgeDumpRpc/CableFaultWave
