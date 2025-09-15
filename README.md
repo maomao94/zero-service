@@ -83,6 +83,30 @@
 
 ---
 
+### `bridgegtw` HTTP 代理转发网关
+
+- 🌉 提供高性能的 HTTP 请求代理转发功能
+- 🔀 支持多后端服务负载均衡与请求路由
+- 🔒 内置访问控制与安全防护机制
+- 📊 提供请求监控与统计功能
+
+---
+
+### `bridgedump` 南瑞反向隔离装置文件生成服务
+
+- 📄 生成符合南瑞反向隔离装置要求的文本文件，格式为 `<Bridge:=Free...>JSON数据</Bridge:=Free>`
+- 📑 支持多种数据类型的文件生成：
+  - 电缆工作列表数据（输出到 `/opt/bridgedump/cable_work_list/*_json.txt`）
+  - 电缆故障数据（输出到 `/opt/bridgedump/cable_fault/*_json.txt`）
+  - 电缆故障波形数据（输出到 `/opt/bridgedump/cable_fault_wave/*_json.txt`）
+- 📤 与 filebeat 无缝集成，自动采集生成的 txt 文件
+- 📥 通过 filebeat 将数据分类发送至不同的 Kafka topic：
+  - 电缆工作列表数据：`cable_work_list`
+  - 电缆故障数据：`cable_fault`
+  - 电缆故障波形数据：`cable_fault_wave`
+
+---
+
 ## ⚙️ 使用注意事项
 
 1. **依赖管理**：请确认 `go.mod` 中的依赖已正确安装，执行 `go mod tidy`；

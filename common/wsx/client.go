@@ -294,7 +294,6 @@ func fillDefaultConfig(conf Config) Config {
 	if conf.MaxReconnectInterval <= 0 {
 		conf.MaxReconnectInterval = DefaultMaxReconnectInterval
 	}
-	conf.ReconnectBackoff = conf.ReconnectBackoff
 
 	return conf
 }
