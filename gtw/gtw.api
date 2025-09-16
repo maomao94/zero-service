@@ -81,7 +81,7 @@ service gtw {
 @server (
 	prefix: app/common/v1
 	group:  common
-	jwt:    JwtAuth
+// jwt:    JwtAuth
 )
 service gtw {
 	@doc "获取区域列表"

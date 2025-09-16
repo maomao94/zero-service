@@ -16,11 +16,21 @@ type (
 		Path string `form:"path"` // 文件路径
 	}
 	UploadFileReply {
-		Name        string `json:"name"` // 文件名
-		Path        string `json:"path"` // 文件路径
-		Size        int64  `json:"size"` // 文件大小
-		ContextType string `json:"contextType"` // 文件类型
-		Url         string `json:"url"` // 文件下载
+		Name        string    `json:"name"` // 文件名
+		Path        string    `json:"path"` // 文件路径
+		Size        int64     `json:"size"` // 文件大小
+		ContextType string    `json:"contextType"` // 文件类型
+		Url         string    `json:"url"` // 文件下载
+		Meta        ImageMeta `json:"meta,omitempty"` // 图片 EXIF 信息
+	}
+	ImageMeta {
+		Longitude   float64 `json:"longitude"` // 经度
+		Latitude    float64 `json:"latitude"` // 纬度
+		Time        string  `json:"time"` // 拍摄时间
+		ImgHeight   int     `json:"imgHeight"` // 高
+		ImgWidth    int     `json:"imgWidth"` // 宽
+		Altitude    float64 `json:"altitude"` // 高度
+		CameraModel string  `json:"cameraModel"` // 相机型号
 	}
 )
 

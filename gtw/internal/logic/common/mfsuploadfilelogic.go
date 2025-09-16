@@ -4,13 +4,16 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/dromara/carbon/v2"
-	"github.com/duke-git/lancet/v2/random"
 	"io"
 	"net/http"
 	"os"
 	"path"
 	"strings"
+	"zero-service/common/exifx"
+
+	"github.com/dromara/carbon/v2"
+	"github.com/duke-git/lancet/v2/random"
+	"github.com/jinzhu/copier"
 
 	"zero-service/gtw/internal/svc"
 	"zero-service/gtw/internal/types"
@@ -88,11 +91,17 @@ func (l *MfsUploadFileLogic) MfsUploadFile(req *types.UploadFileRequest) (resp *
 	if err != nil {
 		return nil, err
 	}
+	meta := types.ImageMeta{}
+	if strings.HasPrefix(fileHeader.Header.Get("Content-Type"), "image/") {
+		exifMeta, _ := exifx.ExtractImageMeta(path)
+		copier.Copy(&meta, &exifMeta)
+	}
 	return &types.UploadFileReply{
 		Name:        fileHeader.Filename,
 		Path:        path,
 		Size:        fileHeader.Size,
 		ContextType: fileHeader.Header.Get("Content-Type"),
 		Url:         l.svcCtx.Config.DownloadUrl + path,
+		Meta:        meta,
 	}, nil
 }

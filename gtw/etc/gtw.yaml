@@ -3,7 +3,7 @@ Host: 0.0.0.0
 Port: 11001
 Timeout: 5000
 Mode: dev
-#MaxBytes: 1073741824111
+MaxBytes: 1073741824111
 Log:
   Encoding: plain
 #  Mode: file
