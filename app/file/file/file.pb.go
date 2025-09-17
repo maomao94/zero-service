@@ -266,6 +266,7 @@ type File struct {
 	FormatSize    string                 `protobuf:"bytes,5,opt,name=formatSize,proto3" json:"formatSize,omitempty"`     // 格式化文件大小
 	OriginalName  string                 `protobuf:"bytes,6,opt,name=originalName,proto3" json:"originalName,omitempty"` // 初始文件名
 	AttachId      string                 `protobuf:"bytes,7,opt,name=attachId,proto3" json:"attachId,omitempty"`         // 附件表ID
+	Meta          *ImageMeta             `protobuf:"bytes,8,opt,name=meta,proto3" json:"meta,omitempty"`                 // 图片信息
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -349,6 +350,105 @@ func (x *File) GetAttachId() string {
 	return ""
 }
 
+func (x *File) GetMeta() *ImageMeta {
+	if x != nil {
+		return x.Meta
+	}
+	return nil
+}
+
+type ImageMeta struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Longitude     float64                `protobuf:"fixed64,1,opt,name=longitude,proto3" json:"longitude,omitempty"`   // 经度
+	Latitude      float64                `protobuf:"fixed64,2,opt,name=latitude,proto3" json:"latitude,omitempty"`     // 纬度
+	Time          string                 `protobuf:"bytes,3,opt,name=time,proto3" json:"time,omitempty"`               // 拍摄时间
+	ImgHeight     int32                  `protobuf:"varint,4,opt,name=imgHeight,proto3" json:"imgHeight,omitempty"`    // 高
+	ImgWidth      int32                  `protobuf:"varint,5,opt,name=imgWidth,proto3" json:"imgWidth,omitempty"`      // 宽
+	Altitude      float64                `protobuf:"fixed64,6,opt,name=altitude,proto3" json:"altitude,omitempty"`     // 高度
+	CameraModel   string                 `protobuf:"bytes,7,opt,name=cameraModel,proto3" json:"cameraModel,omitempty"` // 相机型号
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ImageMeta) Reset() {
+	*x = ImageMeta{}
+	mi := &file_file_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImageMeta) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImageMeta) ProtoMessage() {}
+
+func (x *ImageMeta) ProtoReflect() protoreflect.Message {
+	mi := &file_file_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ImageMeta.ProtoReflect.Descriptor instead.
+func (*ImageMeta) Descriptor() ([]byte, []int) {
+	return file_file_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ImageMeta) GetLongitude() float64 {
+	if x != nil {
+		return x.Longitude
+	}
+	return 0
+}
+
+func (x *ImageMeta) GetLatitude() float64 {
+	if x != nil {
+		return x.Latitude
+	}
+	return 0
+}
+
+func (x *ImageMeta) GetTime() string {
+	if x != nil {
+		return x.Time
+	}
+	return ""
+}
+
+func (x *ImageMeta) GetImgHeight() int32 {
+	if x != nil {
+		return x.ImgHeight
+	}
+	return 0
+}
+
+func (x *ImageMeta) GetImgWidth() int32 {
+	if x != nil {
+		return x.ImgWidth
+	}
+	return 0
+}
+
+func (x *ImageMeta) GetAltitude() float64 {
+	if x != nil {
+		return x.Altitude
+	}
+	return 0
+}
+
+func (x *ImageMeta) GetCameraModel() string {
+	if x != nil {
+		return x.CameraModel
+	}
+	return ""
+}
+
 type OssFile struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Link          string                 `protobuf:"bytes,1,opt,name=link,proto3" json:"link,omitempty"`               // 文件地址
@@ -364,7 +464,7 @@ type OssFile struct {
 
 func (x *OssFile) Reset() {
 	*x = OssFile{}
-	mi := &file_file_proto_msgTypes[4]
+	mi := &file_file_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -376,7 +476,7 @@ func (x *OssFile) String() string {
 func (*OssFile) ProtoMessage() {}
 
 func (x *OssFile) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[4]
+	mi := &file_file_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -389,7 +489,7 @@ func (x *OssFile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OssFile.ProtoReflect.Descriptor instead.
 func (*OssFile) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{4}
+	return file_file_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *OssFile) GetLink() string {
@@ -450,7 +550,7 @@ type OssDetailReq struct {
 
 func (x *OssDetailReq) Reset() {
 	*x = OssDetailReq{}
-	mi := &file_file_proto_msgTypes[5]
+	mi := &file_file_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -462,7 +562,7 @@ func (x *OssDetailReq) String() string {
 func (*OssDetailReq) ProtoMessage() {}
 
 func (x *OssDetailReq) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[5]
+	mi := &file_file_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -475,7 +575,7 @@ func (x *OssDetailReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OssDetailReq.ProtoReflect.Descriptor instead.
 func (*OssDetailReq) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{5}
+	return file_file_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *OssDetailReq) GetId() int64 {
@@ -494,7 +594,7 @@ type OssDetailRes struct {
 
 func (x *OssDetailRes) Reset() {
 	*x = OssDetailRes{}
-	mi := &file_file_proto_msgTypes[6]
+	mi := &file_file_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -506,7 +606,7 @@ func (x *OssDetailRes) String() string {
 func (*OssDetailRes) ProtoMessage() {}
 
 func (x *OssDetailRes) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[6]
+	mi := &file_file_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -519,7 +619,7 @@ func (x *OssDetailRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OssDetailRes.ProtoReflect.Descriptor instead.
 func (*OssDetailRes) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{6}
+	return file_file_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *OssDetailRes) GetOss() *Oss {
@@ -542,7 +642,7 @@ type OssListReq struct {
 
 func (x *OssListReq) Reset() {
 	*x = OssListReq{}
-	mi := &file_file_proto_msgTypes[7]
+	mi := &file_file_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -554,7 +654,7 @@ func (x *OssListReq) String() string {
 func (*OssListReq) ProtoMessage() {}
 
 func (x *OssListReq) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[7]
+	mi := &file_file_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -567,7 +667,7 @@ func (x *OssListReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OssListReq.ProtoReflect.Descriptor instead.
 func (*OssListReq) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{7}
+	return file_file_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *OssListReq) GetPage() int64 {
@@ -615,7 +715,7 @@ type OssListRes struct {
 
 func (x *OssListRes) Reset() {
 	*x = OssListRes{}
-	mi := &file_file_proto_msgTypes[8]
+	mi := &file_file_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -627,7 +727,7 @@ func (x *OssListRes) String() string {
 func (*OssListRes) ProtoMessage() {}
 
 func (x *OssListRes) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[8]
+	mi := &file_file_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -640,7 +740,7 @@ func (x *OssListRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OssListRes.ProtoReflect.Descriptor instead.
 func (*OssListRes) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{8}
+	return file_file_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *OssListRes) GetOss() []*Oss {
@@ -675,7 +775,7 @@ type CreateOssReq struct {
 
 func (x *CreateOssReq) Reset() {
 	*x = CreateOssReq{}
-	mi := &file_file_proto_msgTypes[9]
+	mi := &file_file_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -687,7 +787,7 @@ func (x *CreateOssReq) String() string {
 func (*CreateOssReq) ProtoMessage() {}
 
 func (x *CreateOssReq) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[9]
+	mi := &file_file_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -700,7 +800,7 @@ func (x *CreateOssReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateOssReq.ProtoReflect.Descriptor instead.
 func (*CreateOssReq) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{9}
+	return file_file_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *CreateOssReq) GetTenantId() string {
@@ -782,7 +882,7 @@ type CreateOssRes struct {
 
 func (x *CreateOssRes) Reset() {
 	*x = CreateOssRes{}
-	mi := &file_file_proto_msgTypes[10]
+	mi := &file_file_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -794,7 +894,7 @@ func (x *CreateOssRes) String() string {
 func (*CreateOssRes) ProtoMessage() {}
 
 func (x *CreateOssRes) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[10]
+	mi := &file_file_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -807,7 +907,7 @@ func (x *CreateOssRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateOssRes.ProtoReflect.Descriptor instead.
 func (*CreateOssRes) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{10}
+	return file_file_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *CreateOssRes) GetId() int64 {
@@ -837,7 +937,7 @@ type UpdateOssReq struct {
 
 func (x *UpdateOssReq) Reset() {
 	*x = UpdateOssReq{}
-	mi := &file_file_proto_msgTypes[11]
+	mi := &file_file_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -849,7 +949,7 @@ func (x *UpdateOssReq) String() string {
 func (*UpdateOssReq) ProtoMessage() {}
 
 func (x *UpdateOssReq) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[11]
+	mi := &file_file_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -862,7 +962,7 @@ func (x *UpdateOssReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateOssReq.ProtoReflect.Descriptor instead.
 func (*UpdateOssReq) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{11}
+	return file_file_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *UpdateOssReq) GetId() int64 {
@@ -957,7 +1057,7 @@ type UpdateOssRes struct {
 
 func (x *UpdateOssRes) Reset() {
 	*x = UpdateOssRes{}
-	mi := &file_file_proto_msgTypes[12]
+	mi := &file_file_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -969,7 +1069,7 @@ func (x *UpdateOssRes) String() string {
 func (*UpdateOssRes) ProtoMessage() {}
 
 func (x *UpdateOssRes) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[12]
+	mi := &file_file_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -982,7 +1082,7 @@ func (x *UpdateOssRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateOssRes.ProtoReflect.Descriptor instead.
 func (*UpdateOssRes) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{12}
+	return file_file_proto_rawDescGZIP(), []int{13}
 }
 
 type DeleteOssReq struct {
@@ -994,7 +1094,7 @@ type DeleteOssReq struct {
 
 func (x *DeleteOssReq) Reset() {
 	*x = DeleteOssReq{}
-	mi := &file_file_proto_msgTypes[13]
+	mi := &file_file_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1006,7 +1106,7 @@ func (x *DeleteOssReq) String() string {
 func (*DeleteOssReq) ProtoMessage() {}
 
 func (x *DeleteOssReq) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[13]
+	mi := &file_file_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1019,7 +1119,7 @@ func (x *DeleteOssReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteOssReq.ProtoReflect.Descriptor instead.
 func (*DeleteOssReq) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{13}
+	return file_file_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *DeleteOssReq) GetId() int64 {
@@ -1038,7 +1138,7 @@ type DeleteOssRes struct {
 
 func (x *DeleteOssRes) Reset() {
 	*x = DeleteOssRes{}
-	mi := &file_file_proto_msgTypes[14]
+	mi := &file_file_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1050,7 +1150,7 @@ func (x *DeleteOssRes) String() string {
 func (*DeleteOssRes) ProtoMessage() {}
 
 func (x *DeleteOssRes) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[14]
+	mi := &file_file_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1063,7 +1163,7 @@ func (x *DeleteOssRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteOssRes.ProtoReflect.Descriptor instead.
 func (*DeleteOssRes) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{14}
+	return file_file_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *DeleteOssRes) GetId() int64 {
@@ -1084,7 +1184,7 @@ type MakeBucketReq struct {
 
 func (x *MakeBucketReq) Reset() {
 	*x = MakeBucketReq{}
-	mi := &file_file_proto_msgTypes[15]
+	mi := &file_file_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1096,7 +1196,7 @@ func (x *MakeBucketReq) String() string {
 func (*MakeBucketReq) ProtoMessage() {}
 
 func (x *MakeBucketReq) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[15]
+	mi := &file_file_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1109,7 +1209,7 @@ func (x *MakeBucketReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MakeBucketReq.ProtoReflect.Descriptor instead.
 func (*MakeBucketReq) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{15}
+	return file_file_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *MakeBucketReq) GetTenantId() string {
@@ -1141,7 +1241,7 @@ type MakeBucketRes struct {
 
 func (x *MakeBucketRes) Reset() {
 	*x = MakeBucketRes{}
-	mi := &file_file_proto_msgTypes[16]
+	mi := &file_file_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1153,7 +1253,7 @@ func (x *MakeBucketRes) String() string {
 func (*MakeBucketRes) ProtoMessage() {}
 
 func (x *MakeBucketRes) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[16]
+	mi := &file_file_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1166,7 +1266,7 @@ func (x *MakeBucketRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MakeBucketRes.ProtoReflect.Descriptor instead.
 func (*MakeBucketRes) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{16}
+	return file_file_proto_rawDescGZIP(), []int{17}
 }
 
 type RemoveBucketReq struct {
@@ -1180,7 +1280,7 @@ type RemoveBucketReq struct {
 
 func (x *RemoveBucketReq) Reset() {
 	*x = RemoveBucketReq{}
-	mi := &file_file_proto_msgTypes[17]
+	mi := &file_file_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1192,7 +1292,7 @@ func (x *RemoveBucketReq) String() string {
 func (*RemoveBucketReq) ProtoMessage() {}
 
 func (x *RemoveBucketReq) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[17]
+	mi := &file_file_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1205,7 +1305,7 @@ func (x *RemoveBucketReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveBucketReq.ProtoReflect.Descriptor instead.
 func (*RemoveBucketReq) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{17}
+	return file_file_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *RemoveBucketReq) GetTenantId() string {
@@ -1237,7 +1337,7 @@ type RemoveBucketRes struct {
 
 func (x *RemoveBucketRes) Reset() {
 	*x = RemoveBucketRes{}
-	mi := &file_file_proto_msgTypes[18]
+	mi := &file_file_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1249,7 +1349,7 @@ func (x *RemoveBucketRes) String() string {
 func (*RemoveBucketRes) ProtoMessage() {}
 
 func (x *RemoveBucketRes) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[18]
+	mi := &file_file_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1262,7 +1362,7 @@ func (x *RemoveBucketRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveBucketRes.ProtoReflect.Descriptor instead.
 func (*RemoveBucketRes) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{18}
+	return file_file_proto_rawDescGZIP(), []int{19}
 }
 
 type StatFileReq struct {
@@ -1279,7 +1379,7 @@ type StatFileReq struct {
 
 func (x *StatFileReq) Reset() {
 	*x = StatFileReq{}
-	mi := &file_file_proto_msgTypes[19]
+	mi := &file_file_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1291,7 +1391,7 @@ func (x *StatFileReq) String() string {
 func (*StatFileReq) ProtoMessage() {}
 
 func (x *StatFileReq) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[19]
+	mi := &file_file_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1304,7 +1404,7 @@ func (x *StatFileReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StatFileReq.ProtoReflect.Descriptor instead.
 func (*StatFileReq) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{19}
+	return file_file_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *StatFileReq) GetTenantId() string {
@@ -1358,7 +1458,7 @@ type StatFileRes struct {
 
 func (x *StatFileRes) Reset() {
 	*x = StatFileRes{}
-	mi := &file_file_proto_msgTypes[20]
+	mi := &file_file_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1370,7 +1470,7 @@ func (x *StatFileRes) String() string {
 func (*StatFileRes) ProtoMessage() {}
 
 func (x *StatFileRes) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[20]
+	mi := &file_file_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1383,7 +1483,7 @@ func (x *StatFileRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StatFileRes.ProtoReflect.Descriptor instead.
 func (*StatFileRes) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{20}
+	return file_file_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *StatFileRes) GetOssFile() *OssFile {
@@ -1406,7 +1506,7 @@ type SignUrlReq struct {
 
 func (x *SignUrlReq) Reset() {
 	*x = SignUrlReq{}
-	mi := &file_file_proto_msgTypes[21]
+	mi := &file_file_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1418,7 +1518,7 @@ func (x *SignUrlReq) String() string {
 func (*SignUrlReq) ProtoMessage() {}
 
 func (x *SignUrlReq) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[21]
+	mi := &file_file_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1431,7 +1531,7 @@ func (x *SignUrlReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SignUrlReq.ProtoReflect.Descriptor instead.
 func (*SignUrlReq) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{21}
+	return file_file_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *SignUrlReq) GetTenantId() string {
@@ -1478,7 +1578,7 @@ type SignUrlRes struct {
 
 func (x *SignUrlRes) Reset() {
 	*x = SignUrlRes{}
-	mi := &file_file_proto_msgTypes[22]
+	mi := &file_file_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1490,7 +1590,7 @@ func (x *SignUrlRes) String() string {
 func (*SignUrlRes) ProtoMessage() {}
 
 func (x *SignUrlRes) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[22]
+	mi := &file_file_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1503,7 +1603,7 @@ func (x *SignUrlRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SignUrlRes.ProtoReflect.Descriptor instead.
 func (*SignUrlRes) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{22}
+	return file_file_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *SignUrlRes) GetUrl() string {
@@ -1527,7 +1627,7 @@ type PutFileReq struct {
 
 func (x *PutFileReq) Reset() {
 	*x = PutFileReq{}
-	mi := &file_file_proto_msgTypes[23]
+	mi := &file_file_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1539,7 +1639,7 @@ func (x *PutFileReq) String() string {
 func (*PutFileReq) ProtoMessage() {}
 
 func (x *PutFileReq) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[23]
+	mi := &file_file_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1552,7 +1652,7 @@ func (x *PutFileReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutFileReq.ProtoReflect.Descriptor instead.
 func (*PutFileReq) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{23}
+	return file_file_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *PutFileReq) GetTenantId() string {
@@ -1606,7 +1706,7 @@ type PutFileRes struct {
 
 func (x *PutFileRes) Reset() {
 	*x = PutFileRes{}
-	mi := &file_file_proto_msgTypes[24]
+	mi := &file_file_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1618,7 +1718,7 @@ func (x *PutFileRes) String() string {
 func (*PutFileRes) ProtoMessage() {}
 
 func (x *PutFileRes) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[24]
+	mi := &file_file_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1631,7 +1731,7 @@ func (x *PutFileRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutFileRes.ProtoReflect.Descriptor instead.
 func (*PutFileRes) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{24}
+	return file_file_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *PutFileRes) GetFile() *File {
@@ -1656,7 +1756,7 @@ type PutChunkFileReq struct {
 
 func (x *PutChunkFileReq) Reset() {
 	*x = PutChunkFileReq{}
-	mi := &file_file_proto_msgTypes[25]
+	mi := &file_file_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1668,7 +1768,7 @@ func (x *PutChunkFileReq) String() string {
 func (*PutChunkFileReq) ProtoMessage() {}
 
 func (x *PutChunkFileReq) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[25]
+	mi := &file_file_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1681,7 +1781,7 @@ func (x *PutChunkFileReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutChunkFileReq.ProtoReflect.Descriptor instead.
 func (*PutChunkFileReq) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{25}
+	return file_file_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *PutChunkFileReq) GetTenantId() string {
@@ -1744,7 +1844,7 @@ type PutChunkFileRes struct {
 
 func (x *PutChunkFileRes) Reset() {
 	*x = PutChunkFileRes{}
-	mi := &file_file_proto_msgTypes[26]
+	mi := &file_file_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1756,7 +1856,7 @@ func (x *PutChunkFileRes) String() string {
 func (*PutChunkFileRes) ProtoMessage() {}
 
 func (x *PutChunkFileRes) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[26]
+	mi := &file_file_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1769,7 +1869,7 @@ func (x *PutChunkFileRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutChunkFileRes.ProtoReflect.Descriptor instead.
 func (*PutChunkFileRes) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{26}
+	return file_file_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *PutChunkFileRes) GetFile() *File {
@@ -1808,7 +1908,7 @@ type PutStreamFileReq struct {
 
 func (x *PutStreamFileReq) Reset() {
 	*x = PutStreamFileReq{}
-	mi := &file_file_proto_msgTypes[27]
+	mi := &file_file_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1820,7 +1920,7 @@ func (x *PutStreamFileReq) String() string {
 func (*PutStreamFileReq) ProtoMessage() {}
 
 func (x *PutStreamFileReq) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[27]
+	mi := &file_file_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1833,7 +1933,7 @@ func (x *PutStreamFileReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutStreamFileReq.ProtoReflect.Descriptor instead.
 func (*PutStreamFileReq) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{27}
+	return file_file_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *PutStreamFileReq) GetTenantId() string {
@@ -1896,7 +1996,7 @@ type PutStreamFileRes struct {
 
 func (x *PutStreamFileRes) Reset() {
 	*x = PutStreamFileRes{}
-	mi := &file_file_proto_msgTypes[28]
+	mi := &file_file_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1908,7 +2008,7 @@ func (x *PutStreamFileRes) String() string {
 func (*PutStreamFileRes) ProtoMessage() {}
 
 func (x *PutStreamFileRes) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[28]
+	mi := &file_file_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1921,7 +2021,7 @@ func (x *PutStreamFileRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutStreamFileRes.ProtoReflect.Descriptor instead.
 func (*PutStreamFileRes) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{28}
+	return file_file_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *PutStreamFileRes) GetFile() *File {
@@ -1957,7 +2057,7 @@ type GetFileReq struct {
 
 func (x *GetFileReq) Reset() {
 	*x = GetFileReq{}
-	mi := &file_file_proto_msgTypes[29]
+	mi := &file_file_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1969,7 +2069,7 @@ func (x *GetFileReq) String() string {
 func (*GetFileReq) ProtoMessage() {}
 
 func (x *GetFileReq) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[29]
+	mi := &file_file_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1982,7 +2082,7 @@ func (x *GetFileReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFileReq.ProtoReflect.Descriptor instead.
 func (*GetFileReq) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{29}
+	return file_file_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *GetFileReq) GetTenantId() string {
@@ -2024,7 +2124,7 @@ type GetFileRes struct {
 
 func (x *GetFileRes) Reset() {
 	*x = GetFileRes{}
-	mi := &file_file_proto_msgTypes[30]
+	mi := &file_file_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2036,7 +2136,7 @@ func (x *GetFileRes) String() string {
 func (*GetFileRes) ProtoMessage() {}
 
 func (x *GetFileRes) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[30]
+	mi := &file_file_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2049,7 +2149,7 @@ func (x *GetFileRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFileRes.ProtoReflect.Descriptor instead.
 func (*GetFileRes) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{30}
+	return file_file_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *GetFileRes) GetFilename() string {
@@ -2085,7 +2185,7 @@ type RemoveFileReq struct {
 
 func (x *RemoveFileReq) Reset() {
 	*x = RemoveFileReq{}
-	mi := &file_file_proto_msgTypes[31]
+	mi := &file_file_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2097,7 +2197,7 @@ func (x *RemoveFileReq) String() string {
 func (*RemoveFileReq) ProtoMessage() {}
 
 func (x *RemoveFileReq) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[31]
+	mi := &file_file_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2110,7 +2210,7 @@ func (x *RemoveFileReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveFileReq.ProtoReflect.Descriptor instead.
 func (*RemoveFileReq) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{31}
+	return file_file_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *RemoveFileReq) GetTenantId() string {
@@ -2149,7 +2249,7 @@ type RemoveFileRes struct {
 
 func (x *RemoveFileRes) Reset() {
 	*x = RemoveFileRes{}
-	mi := &file_file_proto_msgTypes[32]
+	mi := &file_file_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2161,7 +2261,7 @@ func (x *RemoveFileRes) String() string {
 func (*RemoveFileRes) ProtoMessage() {}
 
 func (x *RemoveFileRes) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[32]
+	mi := &file_file_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2174,7 +2274,7 @@ func (x *RemoveFileRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveFileRes.ProtoReflect.Descriptor instead.
 func (*RemoveFileRes) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{32}
+	return file_file_proto_rawDescGZIP(), []int{33}
 }
 
 type RemoveFilesReq struct {
@@ -2189,7 +2289,7 @@ type RemoveFilesReq struct {
 
 func (x *RemoveFilesReq) Reset() {
 	*x = RemoveFilesReq{}
-	mi := &file_file_proto_msgTypes[33]
+	mi := &file_file_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2201,7 +2301,7 @@ func (x *RemoveFilesReq) String() string {
 func (*RemoveFilesReq) ProtoMessage() {}
 
 func (x *RemoveFilesReq) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[33]
+	mi := &file_file_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2214,7 +2314,7 @@ func (x *RemoveFilesReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveFilesReq.ProtoReflect.Descriptor instead.
 func (*RemoveFilesReq) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{33}
+	return file_file_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *RemoveFilesReq) GetTenantId() string {
@@ -2276,7 +2376,7 @@ const file_file_proto_rawDesc = "" +
 	"createTime\x12\x1e\n" +
 	"\n" +
 	"updateTime\x18\x0f \x01(\tR\n" +
-	"updateTime\"\xba\x01\n" +
+	"updateTime\"\xdf\x01\n" +
 	"\x04File\x12\x12\n" +
 	"\x04link\x18\x01 \x01(\tR\x04link\x12\x16\n" +
 	"\x06domain\x18\x02 \x01(\tR\x06domain\x12\x12\n" +
@@ -2286,7 +2386,16 @@ const file_file_proto_rawDesc = "" +
 	"formatSize\x18\x05 \x01(\tR\n" +
 	"formatSize\x12\"\n" +
 	"\foriginalName\x18\x06 \x01(\tR\foriginalName\x12\x1a\n" +
-	"\battachId\x18\a \x01(\tR\battachId\"\xbb\x01\n" +
+	"\battachId\x18\a \x01(\tR\battachId\x12#\n" +
+	"\x04meta\x18\b \x01(\v2\x0f.file.ImageMetaR\x04meta\"\xd1\x01\n" +
+	"\tImageMeta\x12\x1c\n" +
+	"\tlongitude\x18\x01 \x01(\x01R\tlongitude\x12\x1a\n" +
+	"\blatitude\x18\x02 \x01(\x01R\blatitude\x12\x12\n" +
+	"\x04time\x18\x03 \x01(\tR\x04time\x12\x1c\n" +
+	"\timgHeight\x18\x04 \x01(\x05R\timgHeight\x12\x1a\n" +
+	"\bimgWidth\x18\x05 \x01(\x05R\bimgWidth\x12\x1a\n" +
+	"\baltitude\x18\x06 \x01(\x01R\baltitude\x12 \n" +
+	"\vcameraModel\x18\a \x01(\tR\vcameraModel\"\xbb\x01\n" +
 	"\aOssFile\x12\x12\n" +
 	"\x04link\x18\x01 \x01(\tR\x04link\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
@@ -2489,85 +2598,87 @@ func file_file_proto_rawDescGZIP() []byte {
 	return file_file_proto_rawDescData
 }
 
-var file_file_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
+var file_file_proto_msgTypes = make([]protoimpl.MessageInfo, 35)
 var file_file_proto_goTypes = []any{
 	(*Req)(nil),              // 0: file.Req
 	(*Res)(nil),              // 1: file.Res
 	(*Oss)(nil),              // 2: file.Oss
 	(*File)(nil),             // 3: file.File
-	(*OssFile)(nil),          // 4: file.OssFile
-	(*OssDetailReq)(nil),     // 5: file.OssDetailReq
-	(*OssDetailRes)(nil),     // 6: file.OssDetailRes
-	(*OssListReq)(nil),       // 7: file.OssListReq
-	(*OssListRes)(nil),       // 8: file.OssListRes
-	(*CreateOssReq)(nil),     // 9: file.CreateOssReq
-	(*CreateOssRes)(nil),     // 10: file.CreateOssRes
-	(*UpdateOssReq)(nil),     // 11: file.UpdateOssReq
-	(*UpdateOssRes)(nil),     // 12: file.UpdateOssRes
-	(*DeleteOssReq)(nil),     // 13: file.DeleteOssReq
-	(*DeleteOssRes)(nil),     // 14: file.DeleteOssRes
-	(*MakeBucketReq)(nil),    // 15: file.MakeBucketReq
-	(*MakeBucketRes)(nil),    // 16: file.MakeBucketRes
-	(*RemoveBucketReq)(nil),  // 17: file.RemoveBucketReq
-	(*RemoveBucketRes)(nil),  // 18: file.RemoveBucketRes
-	(*StatFileReq)(nil),      // 19: file.StatFileReq
-	(*StatFileRes)(nil),      // 20: file.StatFileRes
-	(*SignUrlReq)(nil),       // 21: file.SignUrlReq
-	(*SignUrlRes)(nil),       // 22: file.SignUrlRes
-	(*PutFileReq)(nil),       // 23: file.PutFileReq
-	(*PutFileRes)(nil),       // 24: file.PutFileRes
-	(*PutChunkFileReq)(nil),  // 25: file.PutChunkFileReq
-	(*PutChunkFileRes)(nil),  // 26: file.PutChunkFileRes
-	(*PutStreamFileReq)(nil), // 27: file.PutStreamFileReq
-	(*PutStreamFileRes)(nil), // 28: file.PutStreamFileRes
-	(*GetFileReq)(nil),       // 29: file.GetFileReq
-	(*GetFileRes)(nil),       // 30: file.GetFileRes
-	(*RemoveFileReq)(nil),    // 31: file.RemoveFileReq
-	(*RemoveFileRes)(nil),    // 32: file.RemoveFileRes
-	(*RemoveFilesReq)(nil),   // 33: file.RemoveFilesReq
+	(*ImageMeta)(nil),        // 4: file.ImageMeta
+	(*OssFile)(nil),          // 5: file.OssFile
+	(*OssDetailReq)(nil),     // 6: file.OssDetailReq
+	(*OssDetailRes)(nil),     // 7: file.OssDetailRes
+	(*OssListReq)(nil),       // 8: file.OssListReq
+	(*OssListRes)(nil),       // 9: file.OssListRes
+	(*CreateOssReq)(nil),     // 10: file.CreateOssReq
+	(*CreateOssRes)(nil),     // 11: file.CreateOssRes
+	(*UpdateOssReq)(nil),     // 12: file.UpdateOssReq
+	(*UpdateOssRes)(nil),     // 13: file.UpdateOssRes
+	(*DeleteOssReq)(nil),     // 14: file.DeleteOssReq
+	(*DeleteOssRes)(nil),     // 15: file.DeleteOssRes
+	(*MakeBucketReq)(nil),    // 16: file.MakeBucketReq
+	(*MakeBucketRes)(nil),    // 17: file.MakeBucketRes
+	(*RemoveBucketReq)(nil),  // 18: file.RemoveBucketReq
+	(*RemoveBucketRes)(nil),  // 19: file.RemoveBucketRes
+	(*StatFileReq)(nil),      // 20: file.StatFileReq
+	(*StatFileRes)(nil),      // 21: file.StatFileRes
+	(*SignUrlReq)(nil),       // 22: file.SignUrlReq
+	(*SignUrlRes)(nil),       // 23: file.SignUrlRes
+	(*PutFileReq)(nil),       // 24: file.PutFileReq
+	(*PutFileRes)(nil),       // 25: file.PutFileRes
+	(*PutChunkFileReq)(nil),  // 26: file.PutChunkFileReq
+	(*PutChunkFileRes)(nil),  // 27: file.PutChunkFileRes
+	(*PutStreamFileReq)(nil), // 28: file.PutStreamFileReq
+	(*PutStreamFileRes)(nil), // 29: file.PutStreamFileRes
+	(*GetFileReq)(nil),       // 30: file.GetFileReq
+	(*GetFileRes)(nil),       // 31: file.GetFileRes
+	(*RemoveFileReq)(nil),    // 32: file.RemoveFileReq
+	(*RemoveFileRes)(nil),    // 33: file.RemoveFileRes
+	(*RemoveFilesReq)(nil),   // 34: file.RemoveFilesReq
 }
 var file_file_proto_depIdxs = []int32{
-	2,  // 0: file.OssDetailRes.oss:type_name -> file.Oss
-	2,  // 1: file.OssListRes.oss:type_name -> file.Oss
-	4,  // 2: file.StatFileRes.ossFile:type_name -> file.OssFile
-	3,  // 3: file.PutFileRes.file:type_name -> file.File
-	3,  // 4: file.PutChunkFileRes.file:type_name -> file.File
-	3,  // 5: file.PutStreamFileRes.file:type_name -> file.File
-	0,  // 6: file.FileRpc.Ping:input_type -> file.Req
-	5,  // 7: file.FileRpc.OssDetail:input_type -> file.OssDetailReq
-	7,  // 8: file.FileRpc.OssList:input_type -> file.OssListReq
-	9,  // 9: file.FileRpc.CreateOss:input_type -> file.CreateOssReq
-	11, // 10: file.FileRpc.UpdateOss:input_type -> file.UpdateOssReq
-	13, // 11: file.FileRpc.DeleteOss:input_type -> file.DeleteOssReq
-	15, // 12: file.FileRpc.MakeBucket:input_type -> file.MakeBucketReq
-	17, // 13: file.FileRpc.RemoveBucket:input_type -> file.RemoveBucketReq
-	19, // 14: file.FileRpc.StatFile:input_type -> file.StatFileReq
-	21, // 15: file.FileRpc.SignUrl:input_type -> file.SignUrlReq
-	23, // 16: file.FileRpc.PutFile:input_type -> file.PutFileReq
-	25, // 17: file.FileRpc.PutChunkFile:input_type -> file.PutChunkFileReq
-	27, // 18: file.FileRpc.PutStreamFile:input_type -> file.PutStreamFileReq
-	31, // 19: file.FileRpc.RemoveFile:input_type -> file.RemoveFileReq
-	33, // 20: file.FileRpc.RemoveFiles:input_type -> file.RemoveFilesReq
-	1,  // 21: file.FileRpc.Ping:output_type -> file.Res
-	6,  // 22: file.FileRpc.OssDetail:output_type -> file.OssDetailRes
-	8,  // 23: file.FileRpc.OssList:output_type -> file.OssListRes
-	10, // 24: file.FileRpc.CreateOss:output_type -> file.CreateOssRes
-	12, // 25: file.FileRpc.UpdateOss:output_type -> file.UpdateOssRes
-	14, // 26: file.FileRpc.DeleteOss:output_type -> file.DeleteOssRes
-	16, // 27: file.FileRpc.MakeBucket:output_type -> file.MakeBucketRes
-	18, // 28: file.FileRpc.RemoveBucket:output_type -> file.RemoveBucketRes
-	20, // 29: file.FileRpc.StatFile:output_type -> file.StatFileRes
-	22, // 30: file.FileRpc.SignUrl:output_type -> file.SignUrlRes
-	24, // 31: file.FileRpc.PutFile:output_type -> file.PutFileRes
-	26, // 32: file.FileRpc.PutChunkFile:output_type -> file.PutChunkFileRes
-	28, // 33: file.FileRpc.PutStreamFile:output_type -> file.PutStreamFileRes
-	32, // 34: file.FileRpc.RemoveFile:output_type -> file.RemoveFileRes
-	32, // 35: file.FileRpc.RemoveFiles:output_type -> file.RemoveFileRes
-	21, // [21:36] is the sub-list for method output_type
-	6,  // [6:21] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	4,  // 0: file.File.meta:type_name -> file.ImageMeta
+	2,  // 1: file.OssDetailRes.oss:type_name -> file.Oss
+	2,  // 2: file.OssListRes.oss:type_name -> file.Oss
+	5,  // 3: file.StatFileRes.ossFile:type_name -> file.OssFile
+	3,  // 4: file.PutFileRes.file:type_name -> file.File
+	3,  // 5: file.PutChunkFileRes.file:type_name -> file.File
+	3,  // 6: file.PutStreamFileRes.file:type_name -> file.File
+	0,  // 7: file.FileRpc.Ping:input_type -> file.Req
+	6,  // 8: file.FileRpc.OssDetail:input_type -> file.OssDetailReq
+	8,  // 9: file.FileRpc.OssList:input_type -> file.OssListReq
+	10, // 10: file.FileRpc.CreateOss:input_type -> file.CreateOssReq
+	12, // 11: file.FileRpc.UpdateOss:input_type -> file.UpdateOssReq
+	14, // 12: file.FileRpc.DeleteOss:input_type -> file.DeleteOssReq
+	16, // 13: file.FileRpc.MakeBucket:input_type -> file.MakeBucketReq
+	18, // 14: file.FileRpc.RemoveBucket:input_type -> file.RemoveBucketReq
+	20, // 15: file.FileRpc.StatFile:input_type -> file.StatFileReq
+	22, // 16: file.FileRpc.SignUrl:input_type -> file.SignUrlReq
+	24, // 17: file.FileRpc.PutFile:input_type -> file.PutFileReq
+	26, // 18: file.FileRpc.PutChunkFile:input_type -> file.PutChunkFileReq
+	28, // 19: file.FileRpc.PutStreamFile:input_type -> file.PutStreamFileReq
+	32, // 20: file.FileRpc.RemoveFile:input_type -> file.RemoveFileReq
+	34, // 21: file.FileRpc.RemoveFiles:input_type -> file.RemoveFilesReq
+	1,  // 22: file.FileRpc.Ping:output_type -> file.Res
+	7,  // 23: file.FileRpc.OssDetail:output_type -> file.OssDetailRes
+	9,  // 24: file.FileRpc.OssList:output_type -> file.OssListRes
+	11, // 25: file.FileRpc.CreateOss:output_type -> file.CreateOssRes
+	13, // 26: file.FileRpc.UpdateOss:output_type -> file.UpdateOssRes
+	15, // 27: file.FileRpc.DeleteOss:output_type -> file.DeleteOssRes
+	17, // 28: file.FileRpc.MakeBucket:output_type -> file.MakeBucketRes
+	19, // 29: file.FileRpc.RemoveBucket:output_type -> file.RemoveBucketRes
+	21, // 30: file.FileRpc.StatFile:output_type -> file.StatFileRes
+	23, // 31: file.FileRpc.SignUrl:output_type -> file.SignUrlRes
+	25, // 32: file.FileRpc.PutFile:output_type -> file.PutFileRes
+	27, // 33: file.FileRpc.PutChunkFile:output_type -> file.PutChunkFileRes
+	29, // 34: file.FileRpc.PutStreamFile:output_type -> file.PutStreamFileRes
+	33, // 35: file.FileRpc.RemoveFile:output_type -> file.RemoveFileRes
+	33, // 36: file.FileRpc.RemoveFiles:output_type -> file.RemoveFileRes
+	22, // [22:37] is the sub-list for method output_type
+	7,  // [7:22] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_file_proto_init() }
@@ -2581,7 +2692,7 @@ func file_file_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_file_proto_rawDesc), len(file_file_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   34,
+			NumMessages:   35,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

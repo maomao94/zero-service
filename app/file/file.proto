@@ -36,7 +36,19 @@ message File {
   string formatSize = 5; // 格式化文件大小
   string originalName = 6; // 初始文件名
   string attachId = 7; // 附件表ID
+  ImageMeta meta = 8; // 图片信息
 }
+
+message ImageMeta {
+  double longitude = 1;   // 经度
+  double latitude = 2;    // 纬度
+  string time = 3;        // 拍摄时间
+  int32 imgHeight = 4;    // 高
+  int32 imgWidth = 5;     // 宽
+  double altitude = 6;    // 高度
+  string cameraModel = 7; // 相机型号
+}
+
 
 message OssFile {
   string link = 1; // 文件地址

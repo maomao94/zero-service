@@ -4,8 +4,10 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"strings"
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
+	"zero-service/common/exifx"
 	"zero-service/common/ossx"
 	"zero-service/model"
 
@@ -44,6 +46,8 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 	var initialized bool
 	// 存储用于探测内容类型的缓冲区
 	var contentBuffer []byte
+	// 用来存储EXIF信息
+	var exifBuf []byte
 	// 用来记录已上传的字节数
 	var writeSize int64
 
@@ -121,6 +125,18 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 			}
 		}
 
+		if strings.HasPrefix(contentType, "image/") {
+			// 缓存前 maxExifRead 字节用于 EXIF
+			if len(exifBuf) < maxExifRead {
+				need := maxExifRead - len(exifBuf)
+				if len(contentBuffer) > need {
+					exifBuf = append(exifBuf, contentBuffer[:need]...)
+				} else {
+					exifBuf = append(exifBuf, contentBuffer...)
+				}
+			}
+		}
+
 		// 写入文件数据到管道
 		_, err = pw.Write(req.GetContent())
 		if err != nil {
@@ -151,6 +167,15 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 			//	}
 			//})
 			return errRead
+		}
+
+		if strings.HasPrefix(contentType, "image/") {
+			exifMeta, err := exifx.ExtractImageMetaFromBytes(exifBuf)
+			if err == nil {
+				var meta file.ImageMeta
+				_ = copier.Copy(&meta, &exifMeta)
+				pbFile.Meta = &meta
+			}
 		}
 		// 返回上传结果
 		return stream.Send(&file.PutChunkFileRes{

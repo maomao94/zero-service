@@ -24,13 +24,14 @@ type EmptyReply struct {
 }
 
 type File struct {
-	Link         string `json:"link"`               // 文件地址
-	Domain       string `json:"domain"`             // 域名地址
-	Name         string `json:"name"`               // 文件名
-	Size         int64  `json:"size"`               // 文件大小
-	FormatSize   string `json:"formatSize"`         // 格式化文件大小
-	OriginalName string `json:"originalName"`       // 初始文件名
-	AttachId     string `json:"attachId,omitempty"` // 附件表ID
+	Link         string     `json:"link"`               // 文件地址
+	Domain       string     `json:"domain"`             // 域名地址
+	Name         string     `json:"name"`               // 文件名
+	Size         int64      `json:"size"`               // 文件大小
+	FormatSize   string     `json:"formatSize"`         // 格式化文件大小
+	OriginalName string     `json:"originalName"`       // 初始文件名
+	AttachId     string     `json:"attachId,omitempty"` // 附件表ID
+	Meta         *ImageMeta `json:"meta,omitempty"`     // 图片 EXIF 信息
 }
 
 type ForwardReply struct {

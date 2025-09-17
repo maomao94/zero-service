@@ -1,8 +1,10 @@
 package exifx
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -84,24 +86,15 @@ func (_ Walker) Walk(name exif.FieldName, tag *tiff.Tag) error {
 	return nil
 }
 
-// ExtractImageMeta 提取图片元数据
-func ExtractImageMeta(imgPath string) (meta ImageMeta, err error) {
-	// 检查文件格式
-	ext := strings.ToLower(filepath.Ext(imgPath))
-	if ext != ".jpg" && ext != ".jpeg" {
-		return meta, errors.New("仅支持JPG/JPEG文件")
-	}
+func ExtractImageMetaFromBytes(data []byte) (meta ImageMeta, err error) {
+	reader := bytes.NewReader(data)
+	return ExtractImageMetaReader(reader)
+}
 
-	// 打开文件
-	f, err := os.Open(imgPath)
-	if err != nil {
-		return meta, fmt.Errorf("打开文件失败: %w", err)
-	}
-	defer f.Close()
-
+func ExtractImageMetaReader(reader io.Reader) (meta ImageMeta, err error) {
 	// 解析EXIF
 	exif.RegisterParsers(mknote.All...)
-	x, err := exif.Decode(f)
+	x, err := exif.Decode(reader)
 	if err != nil {
 		// 无EXIF数据时返回默认值
 		if strings.Contains(err.Error(), "no exif data") {
@@ -174,6 +167,23 @@ func ExtractImageMeta(imgPath string) (meta ImageMeta, err error) {
 	//}
 
 	return meta, nil
+}
+
+// ExtractImageMeta 提取图片元数据
+func ExtractImageMeta(imgPath string) (meta ImageMeta, err error) {
+	// 检查文件格式
+	ext := strings.ToLower(filepath.Ext(imgPath))
+	if ext != ".jpg" && ext != ".jpeg" {
+		return meta, errors.New("仅支持JPG/JPEG文件")
+	}
+
+	// 打开文件
+	f, err := os.Open(imgPath)
+	if err != nil {
+		return meta, fmt.Errorf("打开文件失败: %w", err)
+	}
+	defer f.Close()
+	return ExtractImageMetaReader(f)
 }
 
 // parseGPSCoordinate 优化的经纬度解析函数，专门处理["36/1","40/1","342293/10000"]格式
