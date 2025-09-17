@@ -6,7 +6,7 @@ Mode: dev
 MaxBytes: 1073741824111
 Log:
   Encoding: plain
-#  Mode: file
+  #  Mode: file
   Path: /opt/logs/gtw
 #链路追踪
 #Telemetry:
@@ -14,36 +14,36 @@ Log:
 #  Endpoint: http://127.0.0.1:14268/api/traces
 #  Sampler: 1.0
 #  Batcher: jaeger
-Upstreams:
-  - grpc:
-      Endpoints:
-        - 127.0.0.1:21007
-      NonBlock: true
-    ProtoSets:
-      - app/xfusionmock/xfusionmock.pb
-    Mappings:
-      - Method: get
-        Path: /bff/xfusion/ping
-        RpcPath: xfusionmock.XFusionMockRpc/Ping
-      - Method: post
-        Path: /bff/xfusion/postPing
-        RpcPath: xfusionmock.XFusionMockRpc/Ping
-  - grpc:
-      Endpoints:
-        - 127.0.0.1:27300
-      NonBlock: true
-    ProtoSets:
-      - facade/iecstream/iecstream.pb
-  - grpc:
-      Endpoints:
-        - 127.0.0.1:21006
-      NonBlock: true
-    ProtoSets:
-      - app/trigger/trigger.pb
-    Mappings:
-      - Method: post
-        Path: /bff/trigger/ping
-        RpcPath: trigger.TriggerRpc/Ping
+#Upstreams:
+#  - grpc:
+#      Endpoints:
+#        - 127.0.0.1:21007
+#      NonBlock: true
+#    ProtoSets:
+#      - app/xfusionmock/xfusionmock.pb
+#    Mappings:
+#      - Method: get
+#        Path: /bff/xfusion/ping
+#        RpcPath: xfusionmock.XFusionMockRpc/Ping
+#      - Method: post
+#        Path: /bff/xfusion/postPing
+#        RpcPath: xfusionmock.XFusionMockRpc/Ping
+#  - grpc:
+#      Endpoints:
+#        - 127.0.0.1:27300
+#      NonBlock: true
+#    ProtoSets:
+#      - facade/iecstream/iecstream.pb
+#  - grpc:
+#      Endpoints:
+#        - 127.0.0.1:21006
+#      NonBlock: true
+#    ProtoSets:
+#      - app/trigger/trigger.pb
+#    Mappings:
+#      - Method: post
+#        Path: /bff/trigger/ping
+#        RpcPath: trigger.TriggerRpc/Ping
 ZeroRpcConf:
   Endpoints:
     - 127.0.0.1:21001
