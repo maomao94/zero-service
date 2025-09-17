@@ -91,17 +91,20 @@ func (l *MfsUploadFileLogic) MfsUploadFile(req *types.UploadFileRequest) (resp *
 	if err != nil {
 		return nil, err
 	}
-	meta := types.ImageMeta{}
-	if strings.HasPrefix(fileHeader.Header.Get("Content-Type"), "image/") {
-		exifMeta, _ := exifx.ExtractImageMeta(path)
-		copier.Copy(&meta, &exifMeta)
-	}
-	return &types.UploadFileReply{
+	reply := &types.UploadFileReply{
 		Name:        fileHeader.Filename,
 		Path:        path,
 		Size:        fileHeader.Size,
 		ContextType: fileHeader.Header.Get("Content-Type"),
 		Url:         l.svcCtx.Config.DownloadUrl + path,
-		Meta:        meta,
-	}, nil
+	}
+	meta := types.ImageMeta{}
+	if strings.HasPrefix(fileHeader.Header.Get("Content-Type"), "image/") {
+		exifMeta, err := exifx.ExtractImageMeta(path)
+		if err == nil {
+			_ = copier.Copy(&meta, &exifMeta)
+			reply.Meta = &meta
+		}
+	}
+	return reply, nil
 }

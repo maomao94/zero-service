@@ -164,12 +164,12 @@ type TenantRequest struct {
 }
 
 type UploadFileReply struct {
-	Name        string    `json:"name"`           // 文件名
-	Path        string    `json:"path"`           // 文件路径
-	Size        int64     `json:"size"`           // 文件大小
-	ContextType string    `json:"contextType"`    // 文件类型
-	Url         string    `json:"url"`            // 文件下载
-	Meta        ImageMeta `json:"meta,omitempty"` // 图片 EXIF 信息
+	Name        string     `json:"name"`           // 文件名
+	Path        string     `json:"path"`           // 文件路径
+	Size        int64      `json:"size"`           // 文件大小
+	ContextType string     `json:"contextType"`    // 文件类型
+	Url         string     `json:"url"`            // 文件下载
+	Meta        *ImageMeta `json:"meta,omitempty"` // 图片 EXIF 信息
 }
 
 type UploadFileRequest struct {
