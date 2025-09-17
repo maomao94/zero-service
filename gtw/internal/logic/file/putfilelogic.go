@@ -78,6 +78,7 @@ func (l *PutFileLogic) PutFile(req *types.PutFileRequest) (resp *types.GetFileRe
 		Path:        path,
 		Filename:    fileHeader.Filename,
 		ContentType: fileHeader.Header.Get("content-type"),
+		IsThumb:     req.IsThumb,
 	})
 	if err != nil {
 		return nil, err

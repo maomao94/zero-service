@@ -69,6 +69,7 @@ func (l *PutStreamFileLogic) PutStreamFile(req *types.PutFileRequest) (resp *typ
 				Filename:    fileHeader.Filename,
 				ContentType: fileHeader.Header.Get("content-type"),
 				Size:        fileHeader.Size,
+				IsThumb:     req.IsThumb,
 			}
 			if err := stream.Send(chunk); err != nil {
 				if errors.Is(err, io.EOF) {
