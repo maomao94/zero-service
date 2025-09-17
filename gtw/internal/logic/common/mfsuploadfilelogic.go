@@ -9,14 +9,15 @@ import (
 	"os"
 	"path"
 	"strings"
-	"zero-service/common/exifx"
+	"zero-service/common/imagex"
+
+	"zero-service/gtw/internal/svc"
+	"zero-service/gtw/internal/types"
 
 	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/random"
 	"github.com/jinzhu/copier"
-
-	"zero-service/gtw/internal/svc"
-	"zero-service/gtw/internal/types"
+	"github.com/zeromicro/go-zero/core/timex"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -65,8 +66,8 @@ func (l *MfsUploadFileLogic) MfsUploadFile(req *types.UploadFileRequest) (resp *
 		return nil, err
 	}
 	u, _ := random.UUIdV4()
-	path := dirPath + "/" + strings.Replace(fmt.Sprintf("%s", u), "-", "", -1) + path.Ext(fileHeader.Filename)
-	f, err := os.Create(path)
+	filePath := dirPath + "/" + strings.Replace(fmt.Sprintf("%s", u), "-", "", -1) + path.Ext(fileHeader.Filename)
+	f, err := os.Create(filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -93,17 +94,29 @@ func (l *MfsUploadFileLogic) MfsUploadFile(req *types.UploadFileRequest) (resp *
 	}
 	reply := &types.UploadFileReply{
 		Name:        fileHeader.Filename,
-		Path:        path,
+		Path:        filePath,
 		Size:        fileHeader.Size,
 		ContextType: fileHeader.Header.Get("Content-Type"),
-		Url:         l.svcCtx.Config.DownloadUrl + path,
+		Url:         l.svcCtx.Config.DownloadUrl + filePath,
 	}
 	meta := types.ImageMeta{}
 	if strings.HasPrefix(fileHeader.Header.Get("Content-Type"), "image/") {
-		exifMeta, err := exifx.ExtractImageMeta(path)
+		exifMeta, err := imagex.ExtractImageMeta(filePath)
 		if err == nil {
 			_ = copier.Copy(&meta, &exifMeta)
 			reply.Meta = &meta
+			if req.IsThumb {
+				thumbStart := timex.Now()
+				thumbPath := dirPath + "/" + strings.Replace(fmt.Sprintf("%s", u), "-", "", -1) + "_thumb" + path.Ext(fileHeader.Filename)
+				err = imagex.FromFileToFile(filePath, thumbPath, 200, 200)
+				if err != nil {
+					l.Logger.Errorf("thumb error: %v", err)
+				}
+				duration := timex.Since(thumbStart)
+				l.Logger.WithDuration(duration).Infof("thumb finished processing")
+				reply.ThumbPath = thumbPath
+				reply.ThumbUrl = l.svcCtx.Config.DownloadUrl + thumbPath
+			}
 		}
 	}
 	return reply, nil

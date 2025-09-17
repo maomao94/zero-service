@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"zero-service/common/exifx"
+	"zero-service/common/imagex"
 	"zero-service/common/ossx"
 	"zero-service/model"
 
@@ -159,7 +159,7 @@ func (l *PutStreamFileLogic) PutStreamFile(stream file.FileRpc_PutStreamFileServ
 			return errRead
 		}
 		if strings.HasPrefix(contentType, "image/") {
-			exifMeta, err := exifx.ExtractImageMetaFromBytes(exifBuf)
+			exifMeta, err := imagex.ExtractImageMetaFromBytes(exifBuf)
 			if err == nil {
 				var meta file.ImageMeta
 				_ = copier.Copy(&meta, &exifMeta)

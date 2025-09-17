@@ -7,7 +7,7 @@ import (
 	"strings"
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
-	"zero-service/common/exifx"
+	"zero-service/common/imagex"
 	"zero-service/common/ossx"
 	"zero-service/model"
 
@@ -170,7 +170,7 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 		}
 
 		if strings.HasPrefix(contentType, "image/") {
-			exifMeta, err := exifx.ExtractImageMetaFromBytes(exifBuf)
+			exifMeta, err := imagex.ExtractImageMetaFromBytes(exifBuf)
 			if err == nil {
 				var meta file.ImageMeta
 				_ = copier.Copy(&meta, &exifMeta)

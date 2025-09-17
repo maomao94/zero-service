@@ -8,7 +8,7 @@ import (
 	"strings"
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
-	"zero-service/common/exifx"
+	"zero-service/common/imagex"
 	"zero-service/common/ossx"
 	"zero-service/model"
 
@@ -65,7 +65,7 @@ func (l *PutFileLogic) PutFile(in *file.PutFileReq) (*file.PutFileRes, error) {
 	_ = copier.Copy(&pbFile, ossFile)
 	meta := file.ImageMeta{}
 	if strings.HasPrefix(contentType, "image/") {
-		exifMeta, err := exifx.ExtractImageMeta(in.Path)
+		exifMeta, err := imagex.ExtractImageMeta(in.Path)
 		if err == nil {
 			_ = copier.Copy(&meta, &exifMeta)
 			pbFile.Meta = &meta

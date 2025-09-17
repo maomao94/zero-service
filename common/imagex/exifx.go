@@ -1,4 +1,4 @@
-package exifx
+package imagex
 
 import (
 	"bytes"

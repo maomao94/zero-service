@@ -171,10 +171,13 @@ type UploadFileReply struct {
 	ContextType string     `json:"contextType"`    // 文件类型
 	Url         string     `json:"url"`            // 文件下载
 	Meta        *ImageMeta `json:"meta,omitempty"` // 图片 EXIF 信息
+	ThumbPath   string     `json:"thumbPath"`      // 缩略图路径
+	ThumbUrl    string     `json:"thumbUrl"`       // 缩略图下载
 }
 
 type UploadFileRequest struct {
-	MfsType int64 `json:"status,options=1|2,optional"` // 文件类型 1-临时文件 2-业务文件
+	MfsType int64 `form:"status,options=1|2,optional"` // 文件类型 1-临时文件 2-业务文件
+	IsThumb bool  `form:"isThumb, optional"`           // 是否缩略图
 }
 
 type User struct {
