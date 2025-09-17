@@ -2,8 +2,6 @@ package logic
 
 import (
 	"context"
-	"github.com/jinzhu/copier"
-	"github.com/zeromicro/go-zero/core/logx"
 	"io"
 	"net/http"
 	"os"
@@ -11,6 +9,9 @@ import (
 	"zero-service/app/file/internal/svc"
 	"zero-service/common/ossx"
 	"zero-service/model"
+
+	"github.com/jinzhu/copier"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type PutFileLogic struct {
@@ -54,7 +55,7 @@ func (l *PutFileLogic) PutFile(in *file.PutFileReq) (*file.PutFileRes, error) {
 	contentType := http.DetectContentType(buffer)
 	// 重置文件指针，继续从文件开始读取
 	_, err = f.Seek(0, io.SeekStart)
-	ossFile, err := ossTemplate.PutObject(l.ctx, in.TenantId, in.BucketName, in.Filename, contentType, f, fInfo.Size())
+	ossFile, err := ossTemplate.PutObject(context.Background(), in.TenantId, in.BucketName, in.Filename, contentType, f, fInfo.Size())
 	if err != nil {
 		return nil, err
 	}

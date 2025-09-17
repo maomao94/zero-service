@@ -22,4 +22,4 @@ Oss:
   # 是否开启租户模式
   TenantMode: true
 DB:
-  DataSource: root:123456@tcp(localhost:33069)/zero?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+  DataSource: root:PXDN93VRKUm8TeE7@tcp(localhost:33069)/zero?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
