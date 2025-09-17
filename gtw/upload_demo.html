@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件上传演示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#10b981',
+                        danger: '#ef4444',
+                        warning: '#f59e0b',
+                        info: '#6366f1',
+                        dark: '#1e293b',
+                        light: '#f1f5f9',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .transition-custom {
+                transition: all 0.3s ease;
+            }
+            .gradient-bg {
+                background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- 标题栏 -->
+        <header class="mb-8 text-center">
+            <h1 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-dark mb-2">文件上传演示系统</h1>
+            <p class="text-gray-600 text-lg">支持文件和文件夹上传，实时进度显示，并发上传管理</p>
+        </header>
+
+        <!-- 上传区域 -->
+        <div class="mb-10 bg-white rounded-xl shadow-lg p-6 border border-gray-200 transition-custom hover:shadow-xl">
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- 左侧：上传控制 -->
+                <div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">租户ID</label>
+                        <input type="text" id="tenantId" value="000000" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-custom">
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">资源编号</label>
+                        <input type="text" id="code" value="minio-1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-custom">
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">存储桶名称</label>
+                        <input type="text" id="bucketName" value="default" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-custom">
+                    </div>
+                    
+                    <!-- 服务器地址配置 -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">服务器地址配置</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">服务器IP</label>
+                                <input type="text" id="serverIp" value="127.0.0.1" placeholder="例如: 127.0.0.1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-custom">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">服务器端口</label>
+                                <input type="text" id="serverPort" value="11001" placeholder="例如: 11001" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-custom">
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">默认值: 127.0.0.1:11001</p>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="flex items-center justify-between text-sm font-medium text-gray-700 mb-2">
+                            <span>生成缩略图（仅图片文件）</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="isThumb" class="sr-only peer" checked>
+                                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </label>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">并发数控制</label>
+                        <div class="flex items-center">
+                            <button id="decreaseConcurrency" class="px-3 py-1 bg-gray-200 rounded-l-lg hover:bg-gray-300 transition-custom">
+                                <i class="fa fa-minus"></i>
+                            </button>
+                            <input type="number" id="concurrency" min="1" max="10" value="3" class="w-16 px-2 py-1 border-t border-b border-gray-300 text-center">
+                            <button id="increaseConcurrency" class="px-3 py-1 bg-gray-200 rounded-r-lg hover:bg-gray-300 transition-custom">
+                                <i class="fa fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧：上传按钮和拖放区域 -->
+                <div class="flex flex-col justify-center">
+                    <!-- 拖放区域 -->
+                    <div id="dropArea" class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center mb-6 cursor-pointer transition-custom hover:border-primary hover:bg-blue-50">
+                        <i class="fa fa-cloud-upload text-4xl text-gray-400 mb-3"></i>
+                        <p class="text-gray-500 mb-2">拖放文件或文件夹到此处</p>
+                        <p class="text-xs text-gray-400">支持多文件和文件夹上传</p>
+                        <input type="file" id="fileInput" class="hidden" multiple directory webkitdirectory mozdirectory>
+                    </div>
+
+                    <!-- 上传按钮组 -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <button id="selectFileBtn" class="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-custom flex items-center justify-center text-gray-700">
+                            <i class="fa fa-file text-gray-500 mr-2"></i>
+                            选择文件
+                        </button>
+                        <button id="selectFolderBtn" class="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-custom flex items-center justify-center text-gray-700">
+                            <i class="fa fa-folder text-gray-500 mr-2"></i>
+                            选择文件夹
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 统计信息和操作按钮 -->
+        <div class="mb-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div class="bg-white rounded-xl shadow p-4 border border-gray-200 transition-custom hover:shadow-md">
+                    <p class="text-sm text-gray-500 mb-1">总文件数</p>
+                    <p class="text-2xl font-bold text-dark" id="totalFiles">0</p>
+                </div>
+                <div class="bg-white rounded-xl shadow p-4 border border-gray-200 transition-custom hover:shadow-md">
+                    <p class="text-sm text-gray-500 mb-1">已上传</p>
+                    <p class="text-2xl font-bold text-secondary" id="uploadedFiles">0</p>
+                </div>
+                <div class="bg-white rounded-xl shadow p-4 border border-gray-200 transition-custom hover:shadow-md">
+                    <p class="text-sm text-gray-500 mb-1">上传中</p>
+                    <p class="text-2xl font-bold text-primary" id="uploadingFiles">0</p>
+                </div>
+                <div class="bg-white rounded-xl shadow p-4 border border-gray-200 transition-custom hover:shadow-md">
+                    <p class="text-sm text-gray-500 mb-1">上传失败</p>
+                    <p class="text-2xl font-bold text-danger" id="failedFiles">0</p>
+                </div>
+                <div class="bg-white rounded-xl shadow p-4 border border-gray-200 transition-custom hover:shadow-md">
+                    <p class="text-sm text-gray-500 mb-1">已上传数据大小</p>
+                    <p class="text-2xl font-bold text-info" id="uploadedSize">0 Bytes</p>
+                </div>
+            </div>
+            
+            <div class="flex justify-center">
+                <button id="retryAllFailedBtn" class="px-4 py-2 bg-white border border-danger rounded-lg hover:bg-red-50 transition-custom flex items-center justify-center text-danger disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <i class="fa fa-refresh mr-2"></i>
+                    一键重试所有失败文件
+                </button>
+            </div>
+        </div>
+
+        <!-- 上传文件列表 -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            <div class="p-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-dark">文件上传列表</h2>
+                <div class="flex gap-2">
+                    <button id="clearCompletedBtn" class="px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded transition-custom">
+                        <i class="fa fa-trash-o mr-1"></i> 清除已完成
+                    </button>
+                    <button id="clearAllBtn" class="px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded transition-custom">
+                        <i class="fa fa-trash mr-1"></i> 清除全部
+                    </button>
+                </div>
+            </div>
+            
+            <div id="uploadList" class="divide-y divide-gray-100 max-h-[500px] overflow-y-auto scrollbar-hide">
+                <!-- 文件列表项会在这里动态生成 -->
+                <div class="p-8 text-center text-gray-400">
+                    <i class="fa fa-folder-open-o text-4xl mb-3"></i>
+                    <p>暂无上传文件</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let filesQueue = []; // 文件队列
+        let activeUploads = 0; // 当前活跃上传数
+        let concurrency = 3; // 并发数
+        let stats = {
+            total: 0,
+            uploaded: 0,
+            uploading: 0,
+            queued: 0,
+            failed: 0,
+            uploadedSize: 0 // 已上传的数据总大小（字节）
+        };
+
+        // DOM 元素
+        const dropArea = document.getElementById('dropArea');
+        const fileInput = document.getElementById('fileInput');
+        const selectFileBtn = document.getElementById('selectFileBtn');
+        const selectFolderBtn = document.getElementById('selectFolderBtn');
+        const uploadList = document.getElementById('uploadList');
+        const totalFilesEl = document.getElementById('totalFiles');
+        const uploadedFilesEl = document.getElementById('uploadedFiles');
+        const uploadingFilesEl = document.getElementById('uploadingFiles');
+        const failedFilesEl = document.getElementById('failedFiles');
+        const uploadedSizeEl = document.getElementById('uploadedSize');
+        const concurrencyEl = document.getElementById('concurrency');
+        const decreaseConcurrencyBtn = document.getElementById('decreaseConcurrency');
+        const increaseConcurrencyBtn = document.getElementById('increaseConcurrency');
+        const clearCompletedBtn = document.getElementById('clearCompletedBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+
+        // 初始化事件监听
+        function initEventListeners() {
+            // 拖放事件
+            dropArea.addEventListener('dragover', handleDragOver);
+            dropArea.addEventListener('dragleave', handleDragLeave);
+            dropArea.addEventListener('drop', handleDrop);
+            dropArea.addEventListener('click', () => fileInput.click());
+
+            // 文件选择事件
+            fileInput.addEventListener('change', handleFileSelect);
+            selectFileBtn.addEventListener('click', () => {
+                fileInput.removeAttribute('directory');
+                fileInput.removeAttribute('webkitdirectory');
+                fileInput.removeAttribute('mozdirectory');
+                fileInput.click();
+            });
+            selectFolderBtn.addEventListener('click', () => {
+                fileInput.setAttribute('directory', '');
+                fileInput.setAttribute('webkitdirectory', '');
+                fileInput.setAttribute('mozdirectory', '');
+                fileInput.click();
+            });
+
+            // 并发控制
+            decreaseConcurrencyBtn.addEventListener('click', () => {
+                concurrency = Math.max(1, concurrency - 1);
+                concurrencyEl.value = concurrency;
+            });
+            increaseConcurrencyBtn.addEventListener('click', () => {
+                concurrency = Math.min(10, concurrency + 1);
+                concurrencyEl.value = concurrency;
+            });
+            concurrencyEl.addEventListener('change', () => {
+                concurrency = Math.max(1, Math.min(10, parseInt(concurrencyEl.value) || 1));
+                concurrencyEl.value = concurrency;
+                processQueue(); // 调整并发后立即处理队列
+            });
+
+            // 清除和重试按钮
+            clearCompletedBtn.addEventListener('click', clearCompletedFiles);
+            clearAllBtn.addEventListener('click', clearAllFiles);
+            retryAllFailedBtn.addEventListener('click', retryAllFailedFiles);
+        }
+
+        // 处理拖放悬停
+        function handleDragOver(e) {
+            e.preventDefault();
+            dropArea.classList.add('border-primary', 'bg-blue-50');
+        }
+
+        // 处理拖放离开
+        function handleDragLeave() {
+            dropArea.classList.remove('border-primary', 'bg-blue-50');
+        }
+
+        // 处理拖放
+        function handleDrop(e) {
+            e.preventDefault();
+            handleDragLeave();
+            
+            if (e.dataTransfer.files.length > 0) {
+                addFilesToQueue(e.dataTransfer.files);
+            }
+        }
+
+        // 处理文件选择
+        function handleFileSelect(e) {
+            if (e.target.files.length > 0) {
+                addFilesToQueue(e.target.files);
+                // 重置文件输入值，允许再次选择相同的文件
+                e.target.value = '';
+            }
+        }
+
+        // 添加文件到队列
+        function addFilesToQueue(files) {
+            Array.from(files).forEach(file => {
+                const fileId = generateUniqueId();
+                const fileInfo = {
+                    id: fileId,
+                    name: file.name,
+                    size: file.size,
+                    type: file.type || 'application/octet-stream',
+                    progress: 0,
+                    status: 'queued', // queued, uploading, completed, failed
+                    file: file,
+                    isImage: file.type.startsWith('image/') // 标记是否为图片文件
+                };
+                
+                filesQueue.push(fileInfo);
+                // 只对图片文件增加总文件数
+                if (fileInfo.isImage) {
+                    stats.total++;
+                }
+                updateStats();
+                renderFileItem(fileInfo);
+            });
+            
+            console.log(`已添加 ${files.length} 个文件到队列，队列总文件数: ${filesQueue.length}，图片文件数: ${stats.total}`);
+            processQueue();
+        }
+
+        // 处理上传队列
+        function processQueue() {
+            while (activeUploads < concurrency && filesQueue.length > 0) {
+                const fileIndex = filesQueue.findIndex(file => file.status === 'queued');
+                if (fileIndex === -1) break;
+                
+                const fileInfo = filesQueue[fileIndex];
+                startUpload(fileInfo);
+            }
+        }
+
+        // 开始上传文件
+        function startUpload(fileInfo) {
+            fileInfo.status = 'uploading';
+            stats.uploading++;
+            // 不再减少总文件数，保持总文件数不变
+            updateStats();
+            updateFileItem(fileInfo);
+            activeUploads++;
+
+            // 获取表单数据
+            const tenantId = document.getElementById('tenantId').value;
+            const code = document.getElementById('code').value;
+            const bucketName = document.getElementById('bucketName').value;
+            const isThumb = document.getElementById('isThumb').checked;
+
+            // 创建 FormData
+            const formData = new FormData();
+            formData.append('file', fileInfo.file);
+            formData.append('tenantId', tenantId);
+            formData.append('code', code);
+            formData.append('bucketName', bucketName);
+            formData.append('isThumb', isThumb.toString());
+
+            // 创建 XMLHttpRequest
+            const xhr = new XMLHttpRequest();
+            
+            // 监听进度事件
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const progress = Math.round((e.loaded / e.total) * 100);
+                    fileInfo.progress = progress;
+                    updateFileItem(fileInfo);
+                }
+            });
+
+            // 监听完成事件
+            xhr.addEventListener('load', () => {
+                activeUploads--;
+                stats.uploading--;
+                
+                if (xhr.status === 200) {
+                    fileInfo.status = 'completed';
+                    stats.uploaded++;
+                    // 更新已上传数据总大小
+                    stats.uploadedSize += fileInfo.size;
+                    console.log(`文件上传完成并保留在队列中: ${fileInfo.name}`);
+                } else {
+                    fileInfo.status = 'failed';
+                    stats.failed++;
+                    console.error(`上传失败: ${fileInfo.name}, 状态码: ${xhr.status}`);
+                }
+                
+                // 确保文件仍然在队列中
+                if (!filesQueue.find(f => f.id === fileInfo.id)) {
+                    console.warn(`警告: 文件 ${fileInfo.name} 在上传完成后不在队列中，重新添加`);
+                    filesQueue.push(fileInfo);
+                    stats.total = filesQueue.length;
+                }
+                
+                console.log(`上传完成后，队列中仍有 ${filesQueue.length} 个文件，其中已完成 ${stats.uploaded} 个`);
+                updateStats();
+                updateFileItem(fileInfo);
+                processQueue(); // 继续处理队列
+            });
+
+            // 监听错误事件
+            xhr.addEventListener('error', () => {
+                activeUploads--;
+                stats.uploading--;
+                fileInfo.status = 'failed';
+                stats.failed++;
+                updateStats();
+                updateFileItem(fileInfo);
+                processQueue(); // 继续处理队列
+            });
+
+            // 获取服务器地址配置
+            const serverIp = document.getElementById('serverIp').value || '127.0.0.1';
+            const serverPort = document.getElementById('serverPort').value || '11001';
+            
+            // 发送请求
+            xhr.open('POST', `http://${serverIp}:${serverPort}/file/v1/oss/endpoint/putStreamFile`);
+            xhr.send(formData);
+            
+            // 保存 xhr 引用以便取消上传
+            fileInfo.xhr = xhr;
+        }
+
+        // 重新上传文件
+        function retryUpload(fileId) {
+            const fileIndex = filesQueue.findIndex(file => file.id === fileId);
+            if (fileIndex !== -1) {
+                const fileInfo = filesQueue[fileIndex];
+                
+                // 取消可能正在进行的上传
+                if (fileInfo.xhr) {
+                    fileInfo.xhr.abort();
+                }
+                
+                // 更新状态
+                if (fileInfo.status === 'failed') {
+                    stats.failed--;
+                } else if (fileInfo.status === 'completed') {
+                    stats.uploaded--;
+                    // 从已上传大小中减去该文件的大小
+                    stats.uploadedSize -= fileInfo.size;
+                } else if (fileInfo.status === 'uploading') {
+                    stats.uploading--;
+                }
+                
+                // 重置文件信息
+                fileInfo.status = 'queued';
+                fileInfo.progress = 0;
+                fileInfo.xhr = null;
+                // 只对图片文件增加总文件数
+                if (fileInfo.isImage) {
+                    stats.total++;
+                }
+                
+                updateStats();
+                updateFileItem(fileInfo);
+                processQueue();
+            }
+        }
+
+        // 取消上传
+        function cancelUpload(fileId) {
+            const fileIndex = filesQueue.findIndex(file => file.id === fileId);
+            if (fileIndex !== -1) {
+                const fileInfo = filesQueue[fileIndex];
+                
+                // 取消可能正在进行的上传
+                if (fileInfo.xhr) {
+                    fileInfo.xhr.abort();
+                }
+                
+                // 更新状态
+                if (fileInfo.status === 'uploading') {
+                    stats.uploading--;
+                    activeUploads--;
+                } else if (fileInfo.status === 'queued' && fileInfo.isImage) {
+                    // 只对图片文件减少总文件数
+                    stats.total--;
+                }
+                
+                // 从队列中移除
+                filesQueue.splice(fileIndex, 1);
+                updateStats();
+                renderFileList();
+                processQueue();
+            }
+        }
+
+        // 清除已完成的文件
+        function clearCompletedFiles() {
+            // 计算需要减去的已上传大小
+            const completedSize = filesQueue
+                .filter(file => file.status === 'completed')
+                .reduce((total, file) => total + file.size, 0);
+            
+            // 只过滤掉已完成的文件，保留失败的文件
+            const filteredQueue = filesQueue.filter(file => 
+                file.status !== 'completed'
+            );
+            
+            // 更新统计
+            filteredQueue.forEach(file => {
+                if (file.status === 'uploading') {
+                    stats.uploading++;
+                } else if (file.status === 'queued') {
+                    stats.total++;
+                }
+            });
+            
+            // 重置队列和统计
+            filesQueue = filteredQueue;
+            
+            // 重新计算各项统计
+            stats.total = filesQueue.filter(file => file.isImage).length; // 只统计图片文件数量
+            stats.uploading = filesQueue.filter(file => file.status === 'uploading').length;
+            stats.queued = filesQueue.filter(file => file.status === 'queued').length;
+            stats.failed = filesQueue.filter(file => file.status === 'failed').length;
+            stats.uploaded = 0; // 已上传的文件已被清除
+            
+            // 减去已清除的已上传大小
+            stats.uploadedSize -= completedSize;
+            
+            updateStats();
+            renderFileList();
+        }
+
+        // 清除所有文件
+        function clearAllFiles() {
+            // 取消所有上传
+            filesQueue.forEach(file => {
+                if (file.xhr) {
+                    file.xhr.abort();
+                }
+            });
+            
+            // 重置队列和统计
+            filesQueue = [];
+            stats = {
+                total: 0,
+                uploaded: 0,
+                uploading: 0,
+                queued: 0,
+                failed: 0,
+                uploadedSize: 0
+            };
+            activeUploads = 0;
+            
+            updateStats();
+            renderFileList();
+        }
+
+        // 渲染文件列表
+        function renderFileList() {
+            console.log(`渲染文件列表，队列中的文件数量: ${filesQueue.length}`);
+            
+            if (filesQueue.length === 0) {
+                uploadList.innerHTML = `
+                    <div class="p-8 text-center text-gray-400">
+                        <i class="fa fa-folder-open-o text-4xl mb-3"></i>
+                        <p>暂无上传文件</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            uploadList.innerHTML = '';
+            filesQueue.forEach(fileInfo => {
+                const fileItem = createFileItemElement(fileInfo);
+                uploadList.appendChild(fileItem);
+            });
+        }
+
+        // 渲染单个文件项
+        function renderFileItem(fileInfo) {
+            const existingElement = document.getElementById(`file-${fileInfo.id}`);
+            if (existingElement) {
+                const newElement = createFileItemElement(fileInfo);
+                uploadList.replaceChild(newElement, existingElement);
+            } else {
+                const fileItem = createFileItemElement(fileInfo);
+                uploadList.appendChild(fileItem);
+            }
+        }
+
+        // 更新单个文件项
+        function updateFileItem(fileInfo) {
+            renderFileItem(fileInfo);
+        }
+
+        // 创建文件项元素
+        function createFileItemElement(fileInfo) {
+            const div = document.createElement('div');
+            div.id = `file-${fileInfo.id}`;
+            div.className = 'p-4 transition-custom hover:bg-gray-50';
+            
+            // 根据状态获取图标和颜色
+            let statusIcon, statusClass, statusText;
+            switch (fileInfo.status) {
+                case 'queued':
+                    statusIcon = 'fa-clock-o';
+                    statusClass = 'text-gray-400';
+                    statusText = '等待上传';
+                    break;
+                case 'uploading':
+                    statusIcon = 'fa-spinner fa-spin';
+                    statusClass = 'text-primary';
+                    statusText = '上传中';
+                    break;
+                case 'completed':
+                    statusIcon = 'fa-check-circle';
+                    statusClass = 'text-secondary';
+                    statusText = '上传完成';
+                    break;
+                case 'failed':
+                    statusIcon = 'fa-exclamation-circle';
+                    statusClass = 'text-danger';
+                    statusText = '上传失败';
+                    break;
+            }
+            
+            // 格式化文件大小
+            const formattedSize = formatFileSize(fileInfo.size);
+            
+            div.innerHTML = `
+                <div class="flex flex-col md:flex-row md:items-center gap-4">
+                    <!-- 左侧：文件信息 -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <i class="fa ${getFileIcon(fileInfo.name)} text-gray-500"></i>
+                            <span class="font-medium text-dark truncate">${fileInfo.name}</span>
+                            <span class="text-sm text-gray-500 ml-2">${formattedSize}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fa ${statusIcon} ${statusClass} text-sm"></i>
+                            <span class="text-sm text-gray-500">${statusText}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 右侧：进度条和操作 -->
+                    <div class="w-full md:w-auto flex flex-col items-end gap-2">
+                        ${fileInfo.status === 'uploading' ? `
+                            <div class="w-full max-w-xs h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div class="h-full bg-primary rounded-full" style="width: ${fileInfo.progress}%"></div>
+                            </div>
+                            <span class="text-xs text-gray-500">${fileInfo.progress}%</span>
+                        ` : ''}
+                        
+                        <div class="flex gap-2">
+                            ${fileInfo.status === 'failed' ? `
+                                <button onclick="retryUpload('${fileInfo.id}')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded transition-custom">
+                                    <i class="fa fa-refresh mr-1"></i> 重试
+                                </button>
+                            ` : ''}
+                            ${(fileInfo.status === 'queued' || fileInfo.status === 'uploading') ? `
+                                <button onclick="cancelUpload('${fileInfo.id}')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded transition-custom">
+                                    <i class="fa fa-times mr-1"></i> 取消
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            return div;
+        }
+
+
+
+        // 辅助函数：生成唯一ID
+        function generateUniqueId() {
+            return 'file-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // 辅助函数：格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 辅助函数：获取文件图标
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const iconMap = {
+                'doc': 'fa-file-word-o',
+                'docx': 'fa-file-word-o',
+                'xls': 'fa-file-excel-o',
+                'xlsx': 'fa-file-excel-o',
+                'ppt': 'fa-file-powerpoint-o',
+                'pptx': 'fa-file-powerpoint-o',
+                'pdf': 'fa-file-pdf-o',
+                'jpg': 'fa-file-image-o',
+                'jpeg': 'fa-file-image-o',
+                'png': 'fa-file-image-o',
+                'gif': 'fa-file-image-o',
+                'mp3': 'fa-file-audio-o',
+                'mp4': 'fa-file-video-o',
+                'zip': 'fa-file-archive-o',
+                'rar': 'fa-file-archive-o',
+                '7z': 'fa-file-archive-o',
+                'txt': 'fa-file-text-o',
+                'md': 'fa-file-text-o',
+                'js': 'fa-file-code-o',
+                'css': 'fa-file-code-o',
+                'html': 'fa-file-code-o',
+                'go': 'fa-file-code-o',
+                'py': 'fa-file-code-o'
+            };
+            
+            return iconMap[ext] || 'fa-file-o';
+        }
+
+        // 重试所有失败的文件
+        function retryAllFailedFiles() {
+            const failedFiles = filesQueue.filter(file => file.status === 'failed');
+            
+            if (failedFiles.length === 0) {
+                return;
+            }
+            
+            // 重置每个失败文件的状态
+            failedFiles.forEach(fileInfo => {
+                // 取消可能正在进行的上传（如果有的话）
+                if (fileInfo.xhr) {
+                    fileInfo.xhr.abort();
+                }
+                
+                // 更新状态统计
+                stats.failed--;
+                fileInfo.status = 'queued';
+                fileInfo.progress = 0;
+                fileInfo.xhr = null;
+                // 只对图片文件增加总文件数
+                if (fileInfo.isImage) {
+                    stats.total++;
+                }
+                
+                // 更新UI
+                updateFileItem(fileInfo);
+            });
+            
+            updateStats();
+            processQueue(); // 开始处理队列
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            totalFilesEl.textContent = stats.total;
+            uploadedFilesEl.textContent = stats.uploaded;
+            uploadingFilesEl.textContent = stats.uploading;
+            failedFilesEl.textContent = stats.failed;
+            uploadedSizeEl.textContent = formatFileSize(stats.uploadedSize);
+            
+            // 更新一键重试按钮状态
+            retryAllFailedBtn.disabled = stats.failed === 0;
+        }
+
+        // 全局函数（供HTML中使用）
+        window.retryUpload = retryUpload;
+        window.cancelUpload = cancelUpload;
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            initEventListeners();
+        });
+    </script>
+</body>
+</html>
