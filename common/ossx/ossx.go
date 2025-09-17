@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
 	"io"
 	"mime/multipart"
 	"path"
@@ -12,6 +11,8 @@ import (
 	"sync"
 	"time"
 	"zero-service/model"
+
+	"github.com/google/uuid"
 )
 
 var (
@@ -22,7 +23,7 @@ var (
 
 	templatePool = make(map[string]OssTemplate)
 	ossPool      = make(map[string]*model.Oss)
-	lock         sync.Mutex
+	poolLock     sync.RWMutex
 )
 
 type OssTemplate interface {
@@ -95,16 +96,18 @@ type GetOssFn func(tenantId, code string) (oss *model.Oss, err error)
 
 func Template(TenantId, Code string, tenantMode bool, getOss GetOssFn) (ossTemplate OssTemplate, err error) {
 	oss, err := getOss(TenantId, Code)
+	poolLock.RLock()
 	ossCached := ossPool[TenantId]
 	ossTemplate = templatePool[TenantId]
+	poolLock.RUnlock()
 	if err != nil {
 		return nil, err
 	} else {
 		if ossCached == nil || ossTemplate == nil ||
 			(oss.Endpoint != ossCached.Endpoint) ||
 			(oss.AccessKey != ossCached.AccessKey) {
-			lock.Lock()
-			defer lock.Unlock()
+			poolLock.Lock()
+			defer poolLock.Unlock()
 			if ossCached == nil || ossTemplate == nil ||
 				(oss.Endpoint != ossCached.Endpoint) ||
 				(oss.AccessKey != ossCached.AccessKey) {
