@@ -3,19 +3,21 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/service"
-	"github.com/zeromicro/go-zero/gateway"
-	"github.com/zeromicro/go-zero/rest"
-	"github.com/zeromicro/go-zero/rest/httpx"
 	"net/http"
 	"path/filepath"
 	"zero-service/gtw/internal/config"
 	"zero-service/gtw/internal/handler"
 	"zero-service/gtw/internal/svc"
 
-	"github.com/zeromicro/go-zero/core/conf"
+	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/service"
+	"github.com/zeromicro/go-zero/gateway"
+	"github.com/zeromicro/go-zero/rest"
+	"github.com/zeromicro/go-zero/rest/httpx"
+
 	_ "zero-service/common/nacosx"
+
+	"github.com/zeromicro/go-zero/core/conf"
 )
 
 var configFile = flag.String("f", "etc/gtw.yaml", "the config file")
@@ -31,6 +33,12 @@ func main() {
 		server.Use(rest.ToMiddleware(func(next http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				//r.Header.Set("Grpc-Metadata-user-id", "test")
+				origin := r.Header.Get("Origin")
+				w.Header().Set("Access-Control-Allow-Origin", origin)
+				w.Header().Add("Access-Control-Allow-Headers", "Content-Type,AccessToken,X-CSRF-Token, Authorization, Token,X-Token,X-User-Id")
+				w.Header().Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS,DELETE,PUT")
+				w.Header().Add("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type")
+				w.Header().Add("Access-Control-Allow-Credentials", "true")
 				next.ServeHTTP(w, r)
 			})
 		}))
