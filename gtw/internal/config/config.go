@@ -1,11 +1,13 @@
 package config
 
 import (
+	"github.com/zeromicro/go-zero/rest"
 	"github.com/zeromicro/go-zero/zrpc"
 )
 
 type Config struct {
 	//gateway.GatewayConf
+	rest.RestConf
 	JwtAuth struct {
 		AccessSecret string
 	}
