@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"zero-service/gtw/internal/config"
 	"zero-service/gtw/internal/handler"
@@ -22,6 +23,7 @@ import (
 var configFile = flag.String("f", "etc/gtw.yaml", "the config file")
 
 func main() {
+	os.Setenv("TMPDIR", "/opt/data/tmp")
 	flag.Parse()
 
 	var c config.Config
