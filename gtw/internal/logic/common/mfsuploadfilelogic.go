@@ -17,9 +17,8 @@ import (
 	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/random"
 	"github.com/jinzhu/copier"
-	"github.com/zeromicro/go-zero/core/timex"
-
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/timex"
 )
 
 const maxFileSize = 10 << 20 // 10 MB
@@ -105,18 +104,18 @@ func (l *MfsUploadFileLogic) MfsUploadFile(req *types.UploadFileRequest) (resp *
 		if err == nil {
 			_ = copier.Copy(&meta, &exifMeta)
 			reply.Meta = &meta
-			if req.IsThumb {
-				thumbStart := timex.Now()
-				thumbPath := dirPath + "/" + strings.Replace(fmt.Sprintf("%s", u), "-", "", -1) + "_thumb" + path.Ext(fileHeader.Filename)
-				err = imagex.FromFileToFile(filePath, thumbPath, 200, 200)
-				if err != nil {
-					l.Logger.Errorf("thumb error: %v", err)
-				}
-				duration := timex.Since(thumbStart)
-				l.Logger.WithDuration(duration).Infof("thumb finished processing")
-				reply.ThumbPath = thumbPath
-				reply.ThumbUrl = l.svcCtx.Config.DownloadUrl + thumbPath
+		}
+		if req.IsThumb {
+			thumbStart := timex.Now()
+			thumbPath := dirPath + "/" + strings.Replace(fmt.Sprintf("%s", u), "-", "", -1) + "_thumb" + path.Ext(fileHeader.Filename)
+			err = imagex.FromFileToFile(filePath, thumbPath, 200, 200)
+			if err != nil {
+				l.Logger.Errorf("thumb error: %v", err)
 			}
+			duration := timex.Since(thumbStart)
+			l.Logger.WithDuration(duration).Infof("thumb finished processing")
+			reply.ThumbPath = thumbPath
+			reply.ThumbUrl = l.svcCtx.Config.DownloadUrl + thumbPath
 		}
 	}
 	return reply, nil

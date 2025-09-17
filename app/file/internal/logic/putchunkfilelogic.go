@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
@@ -12,9 +13,9 @@ import (
 	"zero-service/model"
 
 	"github.com/jinzhu/copier"
-	"github.com/zeromicro/go-zero/core/threading"
-
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/threading"
+	"github.com/zeromicro/go-zero/core/timex"
 )
 
 type PutChunkFileLogic struct {
@@ -34,6 +35,15 @@ func NewPutChunkFileLogic(ctx context.Context, svcCtx *svc.ServiceContext) *PutC
 func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer) error {
 	// 使用管道实现流式数据写入
 	pr, pw := io.Pipe()
+	err := os.MkdirAll("/opt/data/temp", os.ModePerm)
+	if err != nil {
+		return err
+	}
+	tmpFile, err := os.CreateTemp("/opt/data/temp", "upload-*")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmpFile.Name())
 	// 用于存储元信息
 	var tenantID, code, bucketName, filename string
 	var contentType string
@@ -50,6 +60,7 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 	var exifBuf []byte
 	// 用来记录已上传的字节数
 	var writeSize int64
+	var isThumb bool
 
 	errOssChan := make(chan error, 1)
 	var errRead error
@@ -77,6 +88,7 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 			filename = req.GetFilename()
 			contentType = req.GetContentType()
 			size = req.GetSize()
+			isThumb = req.GetIsThumb()
 
 			// 动态获取 OSS 模板
 			var ossErr error
@@ -135,14 +147,21 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 					exifBuf = append(exifBuf, contentBuffer...)
 				}
 			}
-		}
-
-		// 写入文件数据到管道
-		_, err = pw.Write(req.GetContent())
-		if err != nil {
-			l.Logger.Errorf("Failed to write to pipe: %v", err)
-			errRead = err
-			break
+			multi := io.MultiWriter(pw, tmpFile)
+			_, err = multi.Write(req.GetContent())
+			if err != nil {
+				l.Logger.Errorf("Failed to write to multi writer: %v", err)
+				errRead = err
+				break
+			}
+		} else {
+			// 写入文件数据到管道
+			_, err = pw.Write(req.GetContent())
+			if err != nil {
+				l.Logger.Errorf("Failed to write to pipe: %v", err)
+				errRead = err
+				break
+			}
 		}
 		writeSize += int64(len(req.GetContent()))
 		// 发送进度更新
@@ -175,6 +194,29 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 				var meta file.ImageMeta
 				_ = copier.Copy(&meta, &exifMeta)
 				pbFile.Meta = &meta
+			}
+			if isThumb {
+				go threading.RunSafe(func() {
+					thumbStart := timex.Now()
+					thumbPath := tmpFile.Name() + "_thumb.jpg"
+					// 生成缩略图
+					if err = imagex.FromFileToFile(tmpFile.Name(), thumbPath, 300, 300); err == nil {
+						// 上传缩略图
+						f, _ := os.Open(thumbPath)
+						defer f.Close()
+						thumbFile, err := ossTemplate.PutObject(context.Background(), tenantID, bucketName, "thumb_"+filename, "image/jpeg", f, -1)
+						if err != nil {
+							l.Logger.Errorf("Failed to upload thumbnail: %v", err)
+						}
+						os.Remove(thumbPath)
+						pbFile.ThumbLink = thumbFile.Link
+						pbFile.ThumbName = thumbFile.Name
+					} else {
+						l.Logger.Errorf("Failed to generate thumbnail: %v", err)
+					}
+					duration := timex.Since(thumbStart)
+					l.Logger.WithDuration(duration).Infof("thumb finished processing")
+				})
 			}
 		}
 		// 返回上传结果

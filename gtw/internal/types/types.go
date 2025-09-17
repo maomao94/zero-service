@@ -32,6 +32,8 @@ type File struct {
 	OriginalName string     `json:"originalName"`       // 初始文件名
 	AttachId     string     `json:"attachId,omitempty"` // 附件表ID
 	Meta         *ImageMeta `json:"meta,omitempty"`     // 图片 EXIF 信息
+	ThumbLink    string     `json:"thumbLink"`          // 缩略图地址
+	ThumbName    string     `json:"thumbName"`          // 缩略图文件名
 }
 
 type ForwardReply struct {
@@ -108,9 +110,10 @@ type PingReply struct {
 }
 
 type PutFileRequest struct {
-	TenantId   string `form:"tenantId"`   // 租户ID
-	Code       string `form:"code"`       // 资源编号
-	BucketName string `form:"bucketName"` // 存储桶名称
+	TenantId   string `form:"tenantId"`          // 租户ID
+	Code       string `form:"code"`              // 资源编号
+	BucketName string `form:"bucketName"`        // 存储桶名称
+	IsThumb    bool   `form:"isThumb, optional"` // 是否缩略图
 }
 
 type Region struct {

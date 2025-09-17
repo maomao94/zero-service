@@ -267,6 +267,8 @@ type File struct {
 	OriginalName  string                 `protobuf:"bytes,6,opt,name=originalName,proto3" json:"originalName,omitempty"` // 初始文件名
 	AttachId      string                 `protobuf:"bytes,7,opt,name=attachId,proto3" json:"attachId,omitempty"`         // 附件表ID
 	Meta          *ImageMeta             `protobuf:"bytes,8,opt,name=meta,proto3" json:"meta,omitempty"`                 // 图片信息
+	ThumbLink     string                 `protobuf:"bytes,9,opt,name=thumbLink,proto3" json:"thumbLink,omitempty"`       // 缩略图地址
+	ThumbName     string                 `protobuf:"bytes,10,opt,name=ThumbName,proto3" json:"ThumbName,omitempty"`      // 缩略图文件名
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -355,6 +357,20 @@ func (x *File) GetMeta() *ImageMeta {
 		return x.Meta
 	}
 	return nil
+}
+
+func (x *File) GetThumbLink() string {
+	if x != nil {
+		return x.ThumbLink
+	}
+	return ""
+}
+
+func (x *File) GetThumbName() string {
+	if x != nil {
+		return x.ThumbName
+	}
+	return ""
 }
 
 type ImageMeta struct {
@@ -1620,7 +1636,8 @@ type PutFileReq struct {
 	BucketName    string                 `protobuf:"bytes,3,opt,name=bucketName,proto3" json:"bucketName,omitempty"` // 存储桶名称
 	Filename      string                 `protobuf:"bytes,4,opt,name=filename,proto3" json:"filename,omitempty"`     // 上传文件名
 	ContentType   string                 `protobuf:"bytes,5,opt,name=contentType,proto3" json:"contentType,omitempty"`
-	Path          string                 `protobuf:"bytes,6,opt,name=path,proto3" json:"path,omitempty"` // 文件路径
+	Path          string                 `protobuf:"bytes,6,opt,name=path,proto3" json:"path,omitempty"`        // 文件路径
+	IsThumb       bool                   `protobuf:"varint,7,opt,name=isThumb,proto3" json:"isThumb,omitempty"` // 是否缩略图
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1697,6 +1714,13 @@ func (x *PutFileReq) GetPath() string {
 	return ""
 }
 
+func (x *PutFileReq) GetIsThumb() bool {
+	if x != nil {
+		return x.IsThumb
+	}
+	return false
+}
+
 type PutFileRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	File          *File                  `protobuf:"bytes,1,opt,name=file,proto3" json:"file,omitempty"`
@@ -1748,8 +1772,9 @@ type PutChunkFileReq struct {
 	BucketName    string                 `protobuf:"bytes,3,opt,name=bucketName,proto3" json:"bucketName,omitempty"` // 存储桶名称
 	Filename      string                 `protobuf:"bytes,4,opt,name=filename,proto3" json:"filename,omitempty"`     // 上传文件名
 	ContentType   string                 `protobuf:"bytes,5,opt,name=contentType,proto3" json:"contentType,omitempty"`
-	Content       []byte                 `protobuf:"bytes,6,opt,name=content,proto3" json:"content,omitempty"` // 文件内容
-	Size          int64                  `protobuf:"varint,7,opt,name=size,proto3" json:"size,omitempty"`      // 文件大小
+	Content       []byte                 `protobuf:"bytes,6,opt,name=content,proto3" json:"content,omitempty"`  // 文件内容
+	Size          int64                  `protobuf:"varint,7,opt,name=size,proto3" json:"size,omitempty"`       // 文件大小
+	IsThumb       bool                   `protobuf:"varint,8,opt,name=isThumb,proto3" json:"isThumb,omitempty"` // 是否缩略图
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1833,6 +1858,13 @@ func (x *PutChunkFileReq) GetSize() int64 {
 	return 0
 }
 
+func (x *PutChunkFileReq) GetIsThumb() bool {
+	if x != nil {
+		return x.IsThumb
+	}
+	return false
+}
+
 type PutChunkFileRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	File          *File                  `protobuf:"bytes,1,opt,name=file,proto3" json:"file,omitempty"`
@@ -1900,8 +1932,9 @@ type PutStreamFileReq struct {
 	BucketName    string                 `protobuf:"bytes,3,opt,name=bucketName,proto3" json:"bucketName,omitempty"` // 存储桶名称
 	Filename      string                 `protobuf:"bytes,4,opt,name=filename,proto3" json:"filename,omitempty"`     // 上传文件名
 	ContentType   string                 `protobuf:"bytes,5,opt,name=contentType,proto3" json:"contentType,omitempty"`
-	Content       []byte                 `protobuf:"bytes,6,opt,name=content,proto3" json:"content,omitempty"` // 文件内容
-	Size          int64                  `protobuf:"varint,7,opt,name=size,proto3" json:"size,omitempty"`      // 文件大小
+	Content       []byte                 `protobuf:"bytes,6,opt,name=content,proto3" json:"content,omitempty"`  // 文件内容
+	Size          int64                  `protobuf:"varint,7,opt,name=size,proto3" json:"size,omitempty"`       // 文件大小
+	IsThumb       bool                   `protobuf:"varint,8,opt,name=isThumb,proto3" json:"isThumb,omitempty"` // 是否缩略图
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1983,6 +2016,13 @@ func (x *PutStreamFileReq) GetSize() int64 {
 		return x.Size
 	}
 	return 0
+}
+
+func (x *PutStreamFileReq) GetIsThumb() bool {
+	if x != nil {
+		return x.IsThumb
+	}
+	return false
 }
 
 type PutStreamFileRes struct {
@@ -2376,7 +2416,7 @@ const file_file_proto_rawDesc = "" +
 	"createTime\x12\x1e\n" +
 	"\n" +
 	"updateTime\x18\x0f \x01(\tR\n" +
-	"updateTime\"\xdf\x01\n" +
+	"updateTime\"\x9b\x02\n" +
 	"\x04File\x12\x12\n" +
 	"\x04link\x18\x01 \x01(\tR\x04link\x12\x16\n" +
 	"\x06domain\x18\x02 \x01(\tR\x06domain\x12\x12\n" +
@@ -2387,7 +2427,10 @@ const file_file_proto_rawDesc = "" +
 	"formatSize\x12\"\n" +
 	"\foriginalName\x18\x06 \x01(\tR\foriginalName\x12\x1a\n" +
 	"\battachId\x18\a \x01(\tR\battachId\x12#\n" +
-	"\x04meta\x18\b \x01(\v2\x0f.file.ImageMetaR\x04meta\"\xd1\x01\n" +
+	"\x04meta\x18\b \x01(\v2\x0f.file.ImageMetaR\x04meta\x12\x1c\n" +
+	"\tthumbLink\x18\t \x01(\tR\tthumbLink\x12\x1c\n" +
+	"\tThumbName\x18\n" +
+	" \x01(\tR\tThumbName\"\xd1\x01\n" +
 	"\tImageMeta\x12\x1c\n" +
 	"\tlongitude\x18\x01 \x01(\x01R\tlongitude\x12\x1a\n" +
 	"\blatitude\x18\x02 \x01(\x01R\blatitude\x12\x12\n" +
@@ -2494,7 +2537,7 @@ const file_file_proto_rawDesc = "" +
 	"\aexpires\x18\x05 \x01(\x05R\aexpires\"\x1e\n" +
 	"\n" +
 	"SignUrlRes\x12\x10\n" +
-	"\x03url\x18\x01 \x01(\tR\x03url\"\xae\x01\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\"\xc8\x01\n" +
 	"\n" +
 	"PutFileReq\x12\x1a\n" +
 	"\btenantId\x18\x01 \x01(\tR\btenantId\x12\x12\n" +
@@ -2504,11 +2547,12 @@ const file_file_proto_rawDesc = "" +
 	"bucketName\x12\x1a\n" +
 	"\bfilename\x18\x04 \x01(\tR\bfilename\x12 \n" +
 	"\vcontentType\x18\x05 \x01(\tR\vcontentType\x12\x12\n" +
-	"\x04path\x18\x06 \x01(\tR\x04path\",\n" +
+	"\x04path\x18\x06 \x01(\tR\x04path\x12\x18\n" +
+	"\aisThumb\x18\a \x01(\bR\aisThumb\",\n" +
 	"\n" +
 	"PutFileRes\x12\x1e\n" +
 	"\x04file\x18\x01 \x01(\v2\n" +
-	".file.FileR\x04file\"\xcd\x01\n" +
+	".file.FileR\x04file\"\xe7\x01\n" +
 	"\x0fPutChunkFileReq\x12\x1a\n" +
 	"\btenantId\x18\x01 \x01(\tR\btenantId\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\x12\x1e\n" +
@@ -2518,12 +2562,13 @@ const file_file_proto_rawDesc = "" +
 	"\bfilename\x18\x04 \x01(\tR\bfilename\x12 \n" +
 	"\vcontentType\x18\x05 \x01(\tR\vcontentType\x12\x18\n" +
 	"\acontent\x18\x06 \x01(\fR\acontent\x12\x12\n" +
-	"\x04size\x18\a \x01(\x03R\x04size\"[\n" +
+	"\x04size\x18\a \x01(\x03R\x04size\x12\x18\n" +
+	"\aisThumb\x18\b \x01(\bR\aisThumb\"[\n" +
 	"\x0fPutChunkFileRes\x12\x1e\n" +
 	"\x04file\x18\x01 \x01(\v2\n" +
 	".file.FileR\x04file\x12\x14\n" +
 	"\x05isEnd\x18\x02 \x01(\bR\x05isEnd\x12\x12\n" +
-	"\x04size\x18\x03 \x01(\x03R\x04size\"\xce\x01\n" +
+	"\x04size\x18\x03 \x01(\x03R\x04size\"\xe8\x01\n" +
 	"\x10PutStreamFileReq\x12\x1a\n" +
 	"\btenantId\x18\x01 \x01(\tR\btenantId\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\x12\x1e\n" +
@@ -2533,7 +2578,8 @@ const file_file_proto_rawDesc = "" +
 	"\bfilename\x18\x04 \x01(\tR\bfilename\x12 \n" +
 	"\vcontentType\x18\x05 \x01(\tR\vcontentType\x12\x18\n" +
 	"\acontent\x18\x06 \x01(\fR\acontent\x12\x12\n" +
-	"\x04size\x18\a \x01(\x03R\x04size\"\\\n" +
+	"\x04size\x18\a \x01(\x03R\x04size\x12\x18\n" +
+	"\aisThumb\x18\b \x01(\bR\aisThumb\"\\\n" +
 	"\x10PutStreamFileRes\x12\x1e\n" +
 	"\x04file\x18\x01 \x01(\v2\n" +
 	".file.FileR\x04file\x12\x14\n" +

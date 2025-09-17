@@ -37,6 +37,8 @@ message File {
   string originalName = 6; // 初始文件名
   string attachId = 7; // 附件表ID
   ImageMeta meta = 8; // 图片信息
+  string thumbLink = 9;     // 缩略图地址
+  string ThumbName = 10; // 缩略图文件名
 }
 
 message ImageMeta {
@@ -174,6 +176,7 @@ message PutFileReq {
   string filename = 4; // 上传文件名
   string contentType = 5;
   string path = 6; // 文件路径
+  bool isThumb = 7; // 是否缩略图
 }
 
 message PutFileRes {
@@ -188,6 +191,7 @@ message PutChunkFileReq {
   string contentType = 5;
   bytes content = 6;   // 文件内容
   int64 size = 7; // 文件大小
+  bool isThumb = 8; // 是否缩略图
 }
 
 message PutChunkFileRes {
@@ -204,6 +208,7 @@ message PutStreamFileReq {
   string contentType = 5;
   bytes content = 6;   // 文件内容
   int64 size = 7; // 文件大小
+  bool isThumb = 8; // 是否缩略图
 }
 
 message PutStreamFileRes {
