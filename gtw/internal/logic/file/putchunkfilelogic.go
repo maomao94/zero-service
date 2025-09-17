@@ -2,14 +2,15 @@ package file
 
 import (
 	"context"
-	"github.com/jinzhu/copier"
-	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"zero-service/app/file/file"
 	"zero-service/common/tool"
 	"zero-service/gtw/internal/svc"
 	"zero-service/gtw/internal/types"
+
+	"github.com/jinzhu/copier"
+	"github.com/pkg/errors"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -121,6 +122,7 @@ func (l *PutChunkFileLogic) PutChunkFile(req *types.PutFileRequest) (resp *types
 		l.Logger.Errorf("Failed to receive response: %v", err)
 		return nil, err
 	}
+	_ = stream.CloseSend()
 	if res.IsEnd {
 		var file types.File
 		_ = copier.Copy(&file, res.File)

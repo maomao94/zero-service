@@ -2,14 +2,15 @@ package logic
 
 import (
 	"context"
-	"github.com/jinzhu/copier"
-	"github.com/zeromicro/go-zero/core/threading"
 	"io"
 	"net/http"
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
 	"zero-service/common/ossx"
 	"zero-service/model"
+
+	"github.com/jinzhu/copier"
+	"github.com/zeromicro/go-zero/core/threading"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -32,7 +33,6 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 	// 使用管道实现流式数据写入
 	pr, pw := io.Pipe()
 	defer pw.Close()
-
 	// 用于存储元信息
 	var tenantID, code, bucketName, filename string
 	var contentType string
@@ -138,7 +138,6 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 			Size:  writeSize,
 		})
 	}
-	pw.Close()
 	if initialized {
 		// 等待上传完成
 		if err := <-errOssChan; err != nil {
