@@ -19,20 +19,21 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	FileRpc_Ping_FullMethodName         = "/file.FileRpc/Ping"
-	FileRpc_OssDetail_FullMethodName    = "/file.FileRpc/OssDetail"
-	FileRpc_OssList_FullMethodName      = "/file.FileRpc/OssList"
-	FileRpc_CreateOss_FullMethodName    = "/file.FileRpc/CreateOss"
-	FileRpc_UpdateOss_FullMethodName    = "/file.FileRpc/UpdateOss"
-	FileRpc_DeleteOss_FullMethodName    = "/file.FileRpc/DeleteOss"
-	FileRpc_MakeBucket_FullMethodName   = "/file.FileRpc/MakeBucket"
-	FileRpc_RemoveBucket_FullMethodName = "/file.FileRpc/RemoveBucket"
-	FileRpc_StatFile_FullMethodName     = "/file.FileRpc/StatFile"
-	FileRpc_SignUrl_FullMethodName      = "/file.FileRpc/SignUrl"
-	FileRpc_PutFile_FullMethodName      = "/file.FileRpc/PutFile"
-	FileRpc_PutChunkFile_FullMethodName = "/file.FileRpc/PutChunkFile"
-	FileRpc_RemoveFile_FullMethodName   = "/file.FileRpc/RemoveFile"
-	FileRpc_RemoveFiles_FullMethodName  = "/file.FileRpc/RemoveFiles"
+	FileRpc_Ping_FullMethodName          = "/file.FileRpc/Ping"
+	FileRpc_OssDetail_FullMethodName     = "/file.FileRpc/OssDetail"
+	FileRpc_OssList_FullMethodName       = "/file.FileRpc/OssList"
+	FileRpc_CreateOss_FullMethodName     = "/file.FileRpc/CreateOss"
+	FileRpc_UpdateOss_FullMethodName     = "/file.FileRpc/UpdateOss"
+	FileRpc_DeleteOss_FullMethodName     = "/file.FileRpc/DeleteOss"
+	FileRpc_MakeBucket_FullMethodName    = "/file.FileRpc/MakeBucket"
+	FileRpc_RemoveBucket_FullMethodName  = "/file.FileRpc/RemoveBucket"
+	FileRpc_StatFile_FullMethodName      = "/file.FileRpc/StatFile"
+	FileRpc_SignUrl_FullMethodName       = "/file.FileRpc/SignUrl"
+	FileRpc_PutFile_FullMethodName       = "/file.FileRpc/PutFile"
+	FileRpc_PutChunkFile_FullMethodName  = "/file.FileRpc/PutChunkFile"
+	FileRpc_PutStreamFile_FullMethodName = "/file.FileRpc/PutStreamFile"
+	FileRpc_RemoveFile_FullMethodName    = "/file.FileRpc/RemoveFile"
+	FileRpc_RemoveFiles_FullMethodName   = "/file.FileRpc/RemoveFiles"
 )
 
 // FileRpcClient is the client API for FileRpc service.
@@ -51,6 +52,7 @@ type FileRpcClient interface {
 	SignUrl(ctx context.Context, in *SignUrlReq, opts ...grpc.CallOption) (*SignUrlRes, error)
 	PutFile(ctx context.Context, in *PutFileReq, opts ...grpc.CallOption) (*PutFileRes, error)
 	PutChunkFile(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[PutChunkFileReq, PutChunkFileRes], error)
+	PutStreamFile(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[PutStreamFileReq, PutStreamFileRes], error)
 	RemoveFile(ctx context.Context, in *RemoveFileReq, opts ...grpc.CallOption) (*RemoveFileRes, error)
 	RemoveFiles(ctx context.Context, in *RemoveFilesReq, opts ...grpc.CallOption) (*RemoveFileRes, error)
 }
@@ -186,6 +188,19 @@ func (c *fileRpcClient) PutChunkFile(ctx context.Context, opts ...grpc.CallOptio
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type FileRpc_PutChunkFileClient = grpc.BidiStreamingClient[PutChunkFileReq, PutChunkFileRes]
 
+func (c *fileRpcClient) PutStreamFile(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[PutStreamFileReq, PutStreamFileRes], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &FileRpc_ServiceDesc.Streams[1], FileRpc_PutStreamFile_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[PutStreamFileReq, PutStreamFileRes]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type FileRpc_PutStreamFileClient = grpc.ClientStreamingClient[PutStreamFileReq, PutStreamFileRes]
+
 func (c *fileRpcClient) RemoveFile(ctx context.Context, in *RemoveFileReq, opts ...grpc.CallOption) (*RemoveFileRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RemoveFileRes)
@@ -222,6 +237,7 @@ type FileRpcServer interface {
 	SignUrl(context.Context, *SignUrlReq) (*SignUrlRes, error)
 	PutFile(context.Context, *PutFileReq) (*PutFileRes, error)
 	PutChunkFile(grpc.BidiStreamingServer[PutChunkFileReq, PutChunkFileRes]) error
+	PutStreamFile(grpc.ClientStreamingServer[PutStreamFileReq, PutStreamFileRes]) error
 	RemoveFile(context.Context, *RemoveFileReq) (*RemoveFileRes, error)
 	RemoveFiles(context.Context, *RemoveFilesReq) (*RemoveFileRes, error)
 	mustEmbedUnimplementedFileRpcServer()
@@ -269,6 +285,9 @@ func (UnimplementedFileRpcServer) PutFile(context.Context, *PutFileReq) (*PutFil
 }
 func (UnimplementedFileRpcServer) PutChunkFile(grpc.BidiStreamingServer[PutChunkFileReq, PutChunkFileRes]) error {
 	return status.Errorf(codes.Unimplemented, "method PutChunkFile not implemented")
+}
+func (UnimplementedFileRpcServer) PutStreamFile(grpc.ClientStreamingServer[PutStreamFileReq, PutStreamFileRes]) error {
+	return status.Errorf(codes.Unimplemented, "method PutStreamFile not implemented")
 }
 func (UnimplementedFileRpcServer) RemoveFile(context.Context, *RemoveFileReq) (*RemoveFileRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveFile not implemented")
@@ -502,6 +521,13 @@ func _FileRpc_PutChunkFile_Handler(srv interface{}, stream grpc.ServerStream) er
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type FileRpc_PutChunkFileServer = grpc.BidiStreamingServer[PutChunkFileReq, PutChunkFileRes]
 
+func _FileRpc_PutStreamFile_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(FileRpcServer).PutStreamFile(&grpc.GenericServerStream[PutStreamFileReq, PutStreamFileRes]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type FileRpc_PutStreamFileServer = grpc.ClientStreamingServer[PutStreamFileReq, PutStreamFileRes]
+
 func _FileRpc_RemoveFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RemoveFileReq)
 	if err := dec(in); err != nil {
@@ -603,6 +629,11 @@ var FileRpc_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "PutChunkFile",
 			Handler:       _FileRpc_PutChunkFile_Handler,
 			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "PutStreamFile",
+			Handler:       _FileRpc_PutStreamFile_Handler,
 			ClientStreams: true,
 		},
 	},

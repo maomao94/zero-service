@@ -184,6 +184,22 @@ message PutChunkFileRes {
   int64 size = 3; // 文件大小
 }
 
+message PutStreamFileReq {
+  string tenantId = 1; // 租户ID
+  string code = 2; // 资源编号
+  string bucketName = 3; // 存储桶名称
+  string filename = 4; // 上传文件名
+  string contentType = 5;
+  bytes content = 6;   // 文件内容
+  int64 size = 7; // 文件大小
+}
+
+message PutStreamFileRes {
+  File file = 1;
+  bool isEnd = 2; // 是否结束
+  int64 size = 3; // 文件大小
+}
+
 message GetFileReq {
   string tenantId = 1; // 租户ID
   string code = 2; // 资源编号
@@ -226,7 +242,8 @@ service FileRpc {
   rpc StatFile (StatFileReq) returns (StatFileRes); // 获取文件信息
   rpc SignUrl (SignUrlReq) returns (SignUrlRes); // 生成文件url
   rpc PutFile (PutFileReq) returns (PutFileRes); // 上传文件
-  rpc PutChunkFile (stream PutChunkFileReq) returns (stream PutChunkFileRes); // 上传文件
+  rpc PutChunkFile (stream PutChunkFileReq) returns (stream PutChunkFileRes); // 上传文件-流上传（双向流）
+  rpc PutStreamFile (stream PutStreamFileReq) returns (PutStreamFileRes); // 上传文件-流上传
   rpc RemoveFile (RemoveFileReq) returns (RemoveFileRes); // 删除文件
   rpc RemoveFiles (RemoveFilesReq) returns (RemoveFileRes); // 批量删除文件
 }

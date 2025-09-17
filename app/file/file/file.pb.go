@@ -1793,6 +1793,158 @@ func (x *PutChunkFileRes) GetSize() int64 {
 	return 0
 }
 
+type PutStreamFileReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenantId,proto3" json:"tenantId,omitempty"`     // 租户ID
+	Code          string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`             // 资源编号
+	BucketName    string                 `protobuf:"bytes,3,opt,name=bucketName,proto3" json:"bucketName,omitempty"` // 存储桶名称
+	Filename      string                 `protobuf:"bytes,4,opt,name=filename,proto3" json:"filename,omitempty"`     // 上传文件名
+	ContentType   string                 `protobuf:"bytes,5,opt,name=contentType,proto3" json:"contentType,omitempty"`
+	Content       []byte                 `protobuf:"bytes,6,opt,name=content,proto3" json:"content,omitempty"` // 文件内容
+	Size          int64                  `protobuf:"varint,7,opt,name=size,proto3" json:"size,omitempty"`      // 文件大小
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PutStreamFileReq) Reset() {
+	*x = PutStreamFileReq{}
+	mi := &file_file_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PutStreamFileReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PutStreamFileReq) ProtoMessage() {}
+
+func (x *PutStreamFileReq) ProtoReflect() protoreflect.Message {
+	mi := &file_file_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PutStreamFileReq.ProtoReflect.Descriptor instead.
+func (*PutStreamFileReq) Descriptor() ([]byte, []int) {
+	return file_file_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *PutStreamFileReq) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *PutStreamFileReq) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *PutStreamFileReq) GetBucketName() string {
+	if x != nil {
+		return x.BucketName
+	}
+	return ""
+}
+
+func (x *PutStreamFileReq) GetFilename() string {
+	if x != nil {
+		return x.Filename
+	}
+	return ""
+}
+
+func (x *PutStreamFileReq) GetContentType() string {
+	if x != nil {
+		return x.ContentType
+	}
+	return ""
+}
+
+func (x *PutStreamFileReq) GetContent() []byte {
+	if x != nil {
+		return x.Content
+	}
+	return nil
+}
+
+func (x *PutStreamFileReq) GetSize() int64 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+type PutStreamFileRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	File          *File                  `protobuf:"bytes,1,opt,name=file,proto3" json:"file,omitempty"`
+	IsEnd         bool                   `protobuf:"varint,2,opt,name=isEnd,proto3" json:"isEnd,omitempty"` // 是否结束
+	Size          int64                  `protobuf:"varint,3,opt,name=size,proto3" json:"size,omitempty"`   // 文件大小
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PutStreamFileRes) Reset() {
+	*x = PutStreamFileRes{}
+	mi := &file_file_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PutStreamFileRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PutStreamFileRes) ProtoMessage() {}
+
+func (x *PutStreamFileRes) ProtoReflect() protoreflect.Message {
+	mi := &file_file_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PutStreamFileRes.ProtoReflect.Descriptor instead.
+func (*PutStreamFileRes) Descriptor() ([]byte, []int) {
+	return file_file_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *PutStreamFileRes) GetFile() *File {
+	if x != nil {
+		return x.File
+	}
+	return nil
+}
+
+func (x *PutStreamFileRes) GetIsEnd() bool {
+	if x != nil {
+		return x.IsEnd
+	}
+	return false
+}
+
+func (x *PutStreamFileRes) GetSize() int64 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
 type GetFileReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TenantId      string                 `protobuf:"bytes,1,opt,name=tenantId,proto3" json:"tenantId,omitempty"`     // 租户ID
@@ -1805,7 +1957,7 @@ type GetFileReq struct {
 
 func (x *GetFileReq) Reset() {
 	*x = GetFileReq{}
-	mi := &file_file_proto_msgTypes[27]
+	mi := &file_file_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1817,7 +1969,7 @@ func (x *GetFileReq) String() string {
 func (*GetFileReq) ProtoMessage() {}
 
 func (x *GetFileReq) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[27]
+	mi := &file_file_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1830,7 +1982,7 @@ func (x *GetFileReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFileReq.ProtoReflect.Descriptor instead.
 func (*GetFileReq) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{27}
+	return file_file_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *GetFileReq) GetTenantId() string {
@@ -1872,7 +2024,7 @@ type GetFileRes struct {
 
 func (x *GetFileRes) Reset() {
 	*x = GetFileRes{}
-	mi := &file_file_proto_msgTypes[28]
+	mi := &file_file_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1884,7 +2036,7 @@ func (x *GetFileRes) String() string {
 func (*GetFileRes) ProtoMessage() {}
 
 func (x *GetFileRes) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[28]
+	mi := &file_file_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1897,7 +2049,7 @@ func (x *GetFileRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFileRes.ProtoReflect.Descriptor instead.
 func (*GetFileRes) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{28}
+	return file_file_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *GetFileRes) GetFilename() string {
@@ -1933,7 +2085,7 @@ type RemoveFileReq struct {
 
 func (x *RemoveFileReq) Reset() {
 	*x = RemoveFileReq{}
-	mi := &file_file_proto_msgTypes[29]
+	mi := &file_file_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1945,7 +2097,7 @@ func (x *RemoveFileReq) String() string {
 func (*RemoveFileReq) ProtoMessage() {}
 
 func (x *RemoveFileReq) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[29]
+	mi := &file_file_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1958,7 +2110,7 @@ func (x *RemoveFileReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveFileReq.ProtoReflect.Descriptor instead.
 func (*RemoveFileReq) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{29}
+	return file_file_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *RemoveFileReq) GetTenantId() string {
@@ -1997,7 +2149,7 @@ type RemoveFileRes struct {
 
 func (x *RemoveFileRes) Reset() {
 	*x = RemoveFileRes{}
-	mi := &file_file_proto_msgTypes[30]
+	mi := &file_file_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2009,7 +2161,7 @@ func (x *RemoveFileRes) String() string {
 func (*RemoveFileRes) ProtoMessage() {}
 
 func (x *RemoveFileRes) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[30]
+	mi := &file_file_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2022,7 +2174,7 @@ func (x *RemoveFileRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveFileRes.ProtoReflect.Descriptor instead.
 func (*RemoveFileRes) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{30}
+	return file_file_proto_rawDescGZIP(), []int{32}
 }
 
 type RemoveFilesReq struct {
@@ -2037,7 +2189,7 @@ type RemoveFilesReq struct {
 
 func (x *RemoveFilesReq) Reset() {
 	*x = RemoveFilesReq{}
-	mi := &file_file_proto_msgTypes[31]
+	mi := &file_file_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2049,7 +2201,7 @@ func (x *RemoveFilesReq) String() string {
 func (*RemoveFilesReq) ProtoMessage() {}
 
 func (x *RemoveFilesReq) ProtoReflect() protoreflect.Message {
-	mi := &file_file_proto_msgTypes[31]
+	mi := &file_file_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2062,7 +2214,7 @@ func (x *RemoveFilesReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveFilesReq.ProtoReflect.Descriptor instead.
 func (*RemoveFilesReq) Descriptor() ([]byte, []int) {
-	return file_file_proto_rawDescGZIP(), []int{31}
+	return file_file_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *RemoveFilesReq) GetTenantId() string {
@@ -2262,6 +2414,21 @@ const file_file_proto_rawDesc = "" +
 	"\x04file\x18\x01 \x01(\v2\n" +
 	".file.FileR\x04file\x12\x14\n" +
 	"\x05isEnd\x18\x02 \x01(\bR\x05isEnd\x12\x12\n" +
+	"\x04size\x18\x03 \x01(\x03R\x04size\"\xce\x01\n" +
+	"\x10PutStreamFileReq\x12\x1a\n" +
+	"\btenantId\x18\x01 \x01(\tR\btenantId\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\tR\x04code\x12\x1e\n" +
+	"\n" +
+	"bucketName\x18\x03 \x01(\tR\n" +
+	"bucketName\x12\x1a\n" +
+	"\bfilename\x18\x04 \x01(\tR\bfilename\x12 \n" +
+	"\vcontentType\x18\x05 \x01(\tR\vcontentType\x12\x18\n" +
+	"\acontent\x18\x06 \x01(\fR\acontent\x12\x12\n" +
+	"\x04size\x18\a \x01(\x03R\x04size\"\\\n" +
+	"\x10PutStreamFileRes\x12\x1e\n" +
+	"\x04file\x18\x01 \x01(\v2\n" +
+	".file.FileR\x04file\x12\x14\n" +
+	"\x05isEnd\x18\x02 \x01(\bR\x05isEnd\x12\x12\n" +
 	"\x04size\x18\x03 \x01(\x03R\x04size\"x\n" +
 	"\n" +
 	"GetFileReq\x12\x1a\n" +
@@ -2290,7 +2457,7 @@ const file_file_proto_rawDesc = "" +
 	"\n" +
 	"bucketName\x18\x03 \x01(\tR\n" +
 	"bucketName\x12\x1a\n" +
-	"\bfilename\x18\x04 \x03(\tR\bfilename2\xe4\x05\n" +
+	"\bfilename\x18\x04 \x03(\tR\bfilename2\xa7\x06\n" +
 	"\aFileRpc\x12\x1c\n" +
 	"\x04Ping\x12\t.file.Req\x1a\t.file.Res\x123\n" +
 	"\tOssDetail\x12\x12.file.OssDetailReq\x1a\x12.file.OssDetailRes\x12-\n" +
@@ -2304,7 +2471,8 @@ const file_file_proto_rawDesc = "" +
 	"\bStatFile\x12\x11.file.StatFileReq\x1a\x11.file.StatFileRes\x12-\n" +
 	"\aSignUrl\x12\x10.file.SignUrlReq\x1a\x10.file.SignUrlRes\x12-\n" +
 	"\aPutFile\x12\x10.file.PutFileReq\x1a\x10.file.PutFileRes\x12@\n" +
-	"\fPutChunkFile\x12\x15.file.PutChunkFileReq\x1a\x15.file.PutChunkFileRes(\x010\x01\x126\n" +
+	"\fPutChunkFile\x12\x15.file.PutChunkFileReq\x1a\x15.file.PutChunkFileRes(\x010\x01\x12A\n" +
+	"\rPutStreamFile\x12\x16.file.PutStreamFileReq\x1a\x16.file.PutStreamFileRes(\x01\x126\n" +
 	"\n" +
 	"RemoveFile\x12\x13.file.RemoveFileReq\x1a\x13.file.RemoveFileRes\x128\n" +
 	"\vRemoveFiles\x12\x14.file.RemoveFilesReq\x1a\x13.file.RemoveFileResB\bZ\x06./fileb\x06proto3"
@@ -2321,40 +2489,42 @@ func file_file_proto_rawDescGZIP() []byte {
 	return file_file_proto_rawDescData
 }
 
-var file_file_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
+var file_file_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
 var file_file_proto_goTypes = []any{
-	(*Req)(nil),             // 0: file.Req
-	(*Res)(nil),             // 1: file.Res
-	(*Oss)(nil),             // 2: file.Oss
-	(*File)(nil),            // 3: file.File
-	(*OssFile)(nil),         // 4: file.OssFile
-	(*OssDetailReq)(nil),    // 5: file.OssDetailReq
-	(*OssDetailRes)(nil),    // 6: file.OssDetailRes
-	(*OssListReq)(nil),      // 7: file.OssListReq
-	(*OssListRes)(nil),      // 8: file.OssListRes
-	(*CreateOssReq)(nil),    // 9: file.CreateOssReq
-	(*CreateOssRes)(nil),    // 10: file.CreateOssRes
-	(*UpdateOssReq)(nil),    // 11: file.UpdateOssReq
-	(*UpdateOssRes)(nil),    // 12: file.UpdateOssRes
-	(*DeleteOssReq)(nil),    // 13: file.DeleteOssReq
-	(*DeleteOssRes)(nil),    // 14: file.DeleteOssRes
-	(*MakeBucketReq)(nil),   // 15: file.MakeBucketReq
-	(*MakeBucketRes)(nil),   // 16: file.MakeBucketRes
-	(*RemoveBucketReq)(nil), // 17: file.RemoveBucketReq
-	(*RemoveBucketRes)(nil), // 18: file.RemoveBucketRes
-	(*StatFileReq)(nil),     // 19: file.StatFileReq
-	(*StatFileRes)(nil),     // 20: file.StatFileRes
-	(*SignUrlReq)(nil),      // 21: file.SignUrlReq
-	(*SignUrlRes)(nil),      // 22: file.SignUrlRes
-	(*PutFileReq)(nil),      // 23: file.PutFileReq
-	(*PutFileRes)(nil),      // 24: file.PutFileRes
-	(*PutChunkFileReq)(nil), // 25: file.PutChunkFileReq
-	(*PutChunkFileRes)(nil), // 26: file.PutChunkFileRes
-	(*GetFileReq)(nil),      // 27: file.GetFileReq
-	(*GetFileRes)(nil),      // 28: file.GetFileRes
-	(*RemoveFileReq)(nil),   // 29: file.RemoveFileReq
-	(*RemoveFileRes)(nil),   // 30: file.RemoveFileRes
-	(*RemoveFilesReq)(nil),  // 31: file.RemoveFilesReq
+	(*Req)(nil),              // 0: file.Req
+	(*Res)(nil),              // 1: file.Res
+	(*Oss)(nil),              // 2: file.Oss
+	(*File)(nil),             // 3: file.File
+	(*OssFile)(nil),          // 4: file.OssFile
+	(*OssDetailReq)(nil),     // 5: file.OssDetailReq
+	(*OssDetailRes)(nil),     // 6: file.OssDetailRes
+	(*OssListReq)(nil),       // 7: file.OssListReq
+	(*OssListRes)(nil),       // 8: file.OssListRes
+	(*CreateOssReq)(nil),     // 9: file.CreateOssReq
+	(*CreateOssRes)(nil),     // 10: file.CreateOssRes
+	(*UpdateOssReq)(nil),     // 11: file.UpdateOssReq
+	(*UpdateOssRes)(nil),     // 12: file.UpdateOssRes
+	(*DeleteOssReq)(nil),     // 13: file.DeleteOssReq
+	(*DeleteOssRes)(nil),     // 14: file.DeleteOssRes
+	(*MakeBucketReq)(nil),    // 15: file.MakeBucketReq
+	(*MakeBucketRes)(nil),    // 16: file.MakeBucketRes
+	(*RemoveBucketReq)(nil),  // 17: file.RemoveBucketReq
+	(*RemoveBucketRes)(nil),  // 18: file.RemoveBucketRes
+	(*StatFileReq)(nil),      // 19: file.StatFileReq
+	(*StatFileRes)(nil),      // 20: file.StatFileRes
+	(*SignUrlReq)(nil),       // 21: file.SignUrlReq
+	(*SignUrlRes)(nil),       // 22: file.SignUrlRes
+	(*PutFileReq)(nil),       // 23: file.PutFileReq
+	(*PutFileRes)(nil),       // 24: file.PutFileRes
+	(*PutChunkFileReq)(nil),  // 25: file.PutChunkFileReq
+	(*PutChunkFileRes)(nil),  // 26: file.PutChunkFileRes
+	(*PutStreamFileReq)(nil), // 27: file.PutStreamFileReq
+	(*PutStreamFileRes)(nil), // 28: file.PutStreamFileRes
+	(*GetFileReq)(nil),       // 29: file.GetFileReq
+	(*GetFileRes)(nil),       // 30: file.GetFileRes
+	(*RemoveFileReq)(nil),    // 31: file.RemoveFileReq
+	(*RemoveFileRes)(nil),    // 32: file.RemoveFileRes
+	(*RemoveFilesReq)(nil),   // 33: file.RemoveFilesReq
 }
 var file_file_proto_depIdxs = []int32{
 	2,  // 0: file.OssDetailRes.oss:type_name -> file.Oss
@@ -2362,39 +2532,42 @@ var file_file_proto_depIdxs = []int32{
 	4,  // 2: file.StatFileRes.ossFile:type_name -> file.OssFile
 	3,  // 3: file.PutFileRes.file:type_name -> file.File
 	3,  // 4: file.PutChunkFileRes.file:type_name -> file.File
-	0,  // 5: file.FileRpc.Ping:input_type -> file.Req
-	5,  // 6: file.FileRpc.OssDetail:input_type -> file.OssDetailReq
-	7,  // 7: file.FileRpc.OssList:input_type -> file.OssListReq
-	9,  // 8: file.FileRpc.CreateOss:input_type -> file.CreateOssReq
-	11, // 9: file.FileRpc.UpdateOss:input_type -> file.UpdateOssReq
-	13, // 10: file.FileRpc.DeleteOss:input_type -> file.DeleteOssReq
-	15, // 11: file.FileRpc.MakeBucket:input_type -> file.MakeBucketReq
-	17, // 12: file.FileRpc.RemoveBucket:input_type -> file.RemoveBucketReq
-	19, // 13: file.FileRpc.StatFile:input_type -> file.StatFileReq
-	21, // 14: file.FileRpc.SignUrl:input_type -> file.SignUrlReq
-	23, // 15: file.FileRpc.PutFile:input_type -> file.PutFileReq
-	25, // 16: file.FileRpc.PutChunkFile:input_type -> file.PutChunkFileReq
-	29, // 17: file.FileRpc.RemoveFile:input_type -> file.RemoveFileReq
-	31, // 18: file.FileRpc.RemoveFiles:input_type -> file.RemoveFilesReq
-	1,  // 19: file.FileRpc.Ping:output_type -> file.Res
-	6,  // 20: file.FileRpc.OssDetail:output_type -> file.OssDetailRes
-	8,  // 21: file.FileRpc.OssList:output_type -> file.OssListRes
-	10, // 22: file.FileRpc.CreateOss:output_type -> file.CreateOssRes
-	12, // 23: file.FileRpc.UpdateOss:output_type -> file.UpdateOssRes
-	14, // 24: file.FileRpc.DeleteOss:output_type -> file.DeleteOssRes
-	16, // 25: file.FileRpc.MakeBucket:output_type -> file.MakeBucketRes
-	18, // 26: file.FileRpc.RemoveBucket:output_type -> file.RemoveBucketRes
-	20, // 27: file.FileRpc.StatFile:output_type -> file.StatFileRes
-	22, // 28: file.FileRpc.SignUrl:output_type -> file.SignUrlRes
-	24, // 29: file.FileRpc.PutFile:output_type -> file.PutFileRes
-	26, // 30: file.FileRpc.PutChunkFile:output_type -> file.PutChunkFileRes
-	30, // 31: file.FileRpc.RemoveFile:output_type -> file.RemoveFileRes
-	30, // 32: file.FileRpc.RemoveFiles:output_type -> file.RemoveFileRes
-	19, // [19:33] is the sub-list for method output_type
-	5,  // [5:19] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	3,  // 5: file.PutStreamFileRes.file:type_name -> file.File
+	0,  // 6: file.FileRpc.Ping:input_type -> file.Req
+	5,  // 7: file.FileRpc.OssDetail:input_type -> file.OssDetailReq
+	7,  // 8: file.FileRpc.OssList:input_type -> file.OssListReq
+	9,  // 9: file.FileRpc.CreateOss:input_type -> file.CreateOssReq
+	11, // 10: file.FileRpc.UpdateOss:input_type -> file.UpdateOssReq
+	13, // 11: file.FileRpc.DeleteOss:input_type -> file.DeleteOssReq
+	15, // 12: file.FileRpc.MakeBucket:input_type -> file.MakeBucketReq
+	17, // 13: file.FileRpc.RemoveBucket:input_type -> file.RemoveBucketReq
+	19, // 14: file.FileRpc.StatFile:input_type -> file.StatFileReq
+	21, // 15: file.FileRpc.SignUrl:input_type -> file.SignUrlReq
+	23, // 16: file.FileRpc.PutFile:input_type -> file.PutFileReq
+	25, // 17: file.FileRpc.PutChunkFile:input_type -> file.PutChunkFileReq
+	27, // 18: file.FileRpc.PutStreamFile:input_type -> file.PutStreamFileReq
+	31, // 19: file.FileRpc.RemoveFile:input_type -> file.RemoveFileReq
+	33, // 20: file.FileRpc.RemoveFiles:input_type -> file.RemoveFilesReq
+	1,  // 21: file.FileRpc.Ping:output_type -> file.Res
+	6,  // 22: file.FileRpc.OssDetail:output_type -> file.OssDetailRes
+	8,  // 23: file.FileRpc.OssList:output_type -> file.OssListRes
+	10, // 24: file.FileRpc.CreateOss:output_type -> file.CreateOssRes
+	12, // 25: file.FileRpc.UpdateOss:output_type -> file.UpdateOssRes
+	14, // 26: file.FileRpc.DeleteOss:output_type -> file.DeleteOssRes
+	16, // 27: file.FileRpc.MakeBucket:output_type -> file.MakeBucketRes
+	18, // 28: file.FileRpc.RemoveBucket:output_type -> file.RemoveBucketRes
+	20, // 29: file.FileRpc.StatFile:output_type -> file.StatFileRes
+	22, // 30: file.FileRpc.SignUrl:output_type -> file.SignUrlRes
+	24, // 31: file.FileRpc.PutFile:output_type -> file.PutFileRes
+	26, // 32: file.FileRpc.PutChunkFile:output_type -> file.PutChunkFileRes
+	28, // 33: file.FileRpc.PutStreamFile:output_type -> file.PutStreamFileRes
+	32, // 34: file.FileRpc.RemoveFile:output_type -> file.RemoveFileRes
+	32, // 35: file.FileRpc.RemoveFiles:output_type -> file.RemoveFileRes
+	21, // [21:36] is the sub-list for method output_type
+	6,  // [6:21] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_file_proto_init() }
@@ -2408,7 +2581,7 @@ func file_file_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_file_proto_rawDesc), len(file_file_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   32,
+			NumMessages:   34,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -83,6 +83,11 @@ func (s *FileRpcServer) PutChunkFile(stream file.FileRpc_PutChunkFileServer) err
 	return l.PutChunkFile(stream)
 }
 
+func (s *FileRpcServer) PutStreamFile(stream file.FileRpc_PutStreamFileServer) error {
+	l := logic.NewPutStreamFileLogic(stream.Context(), s.svcCtx)
+	return l.PutStreamFile(stream)
+}
+
 func (s *FileRpcServer) RemoveFile(ctx context.Context, in *file.RemoveFileReq) (*file.RemoveFileRes, error) {
 	l := logic.NewRemoveFileLogic(ctx, s.svcCtx)
 	return l.RemoveFile(in)

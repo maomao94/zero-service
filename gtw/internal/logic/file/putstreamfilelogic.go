@@ -2,32 +2,29 @@ package file
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"zero-service/app/file/file"
 	"zero-service/common/tool"
+
 	"zero-service/gtw/internal/svc"
 	"zero-service/gtw/internal/types"
 
 	"github.com/jinzhu/copier"
-	"github.com/pkg/errors"
-
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
-// 设置打印进度的阈值（单位：字节），比如每 1MB 打印一次
-const progressLogThreshold = 100 * 1024 * 1024 // 100MB
-
-type PutChunkFileLogic struct {
+type PutStreamFileLogic struct {
 	logx.Logger
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
 	r      *http.Request
 }
 
-// 上传大文件
-func NewPutChunkFileLogic(ctx context.Context, svcCtx *svc.ServiceContext, r *http.Request) *PutChunkFileLogic {
-	return &PutChunkFileLogic{
+// 上传快文件-grpc单向流
+func NewPutStreamFileLogic(ctx context.Context, svcCtx *svc.ServiceContext, r *http.Request) *PutStreamFileLogic {
+	return &PutStreamFileLogic{
 		Logger: logx.WithContext(ctx),
 		ctx:    ctx,
 		svcCtx: svcCtx,
@@ -35,7 +32,7 @@ func NewPutChunkFileLogic(ctx context.Context, svcCtx *svc.ServiceContext, r *ht
 	}
 }
 
-func (l *PutChunkFileLogic) PutChunkFile(req *types.PutFileRequest) (resp *types.GetFileReply, err error) {
+func (l *PutStreamFileLogic) PutStreamFile(req *types.PutFileRequest) (resp *types.GetFileReply, err error) {
 	l.r.ParseMultipartForm(maxFileSize)
 	uploadFile, fileHeader, err := l.r.FormFile("file")
 	if err != nil {
@@ -44,20 +41,8 @@ func (l *PutChunkFileLogic) PutChunkFile(req *types.PutFileRequest) (resp *types
 	defer uploadFile.Close()
 	l.Logger.Infof("upload file: %+v, file size: %s, MIME header: %+v",
 		fileHeader.Filename, tool.DecimalBytes(fileHeader.Size), fileHeader.Header)
-	// 初始化进度条
-	//bar := progressbar.NewOptions64(fileHeader.Size,
-	//	progressbar.OptionSetDescription("Uploading..."),
-	//	progressbar.OptionSetWidth(40),
-	//	progressbar.OptionSetTheme(progressbar.Theme{
-	//		Saucer:        "=",
-	//		SaucerPadding: " ",
-	//		BarStart:      "[",
-	//		BarEnd:        "]\n",
-	//	}),
-	//)
-
 	// 执行 stream 上传
-	stream, err := l.svcCtx.FileRpcCLi.PutChunkFile(context.Background())
+	stream, err := l.svcCtx.FileRpcCLi.PutStreamFile(context.Background())
 	if err != nil {
 		l.Logger.Errorf("Failed to create stream: %v", err)
 		return nil, err
@@ -76,7 +61,7 @@ func (l *PutChunkFileLogic) PutChunkFile(req *types.PutFileRequest) (resp *types
 			// 更新已上传大小
 			uploadedSize += int64(n)
 			// 发送文件块到服务器
-			chunk := &file.PutChunkFileReq{
+			chunk := &file.PutStreamFileReq{
 				TenantId:    req.TenantId,
 				Code:        req.Code,
 				BucketName:  req.BucketName,
@@ -101,14 +86,6 @@ func (l *PutChunkFileLogic) PutChunkFile(req *types.PutFileRequest) (resp *types
 				lastLoggedSize = uploadedSize // 更新上次打印的已上传字节数
 			}
 			partNum++
-			//// 更新进度条
-			//bar.Add(n)
-			res, err := stream.Recv()
-			if err != nil {
-				l.Logger.Errorf("Failed to receive response: %v", err)
-				return nil, err
-			}
-			l.Logger.Debugf("stream write size: %s", tool.DecimalBytes(res.Size))
 		}
 
 		if err == io.EOF {
@@ -121,12 +98,11 @@ func (l *PutChunkFileLogic) PutChunkFile(req *types.PutFileRequest) (resp *types
 	}
 
 	// 完成上传并接收服务器响应
-	res, err := stream.Recv()
+	res, err := stream.CloseAndRecv()
 	if err != nil {
 		l.Logger.Errorf("Failed to receive response: %v", err)
 		return nil, err
 	}
-	_ = stream.CloseSend()
 	if res.IsEnd {
 		var file types.File
 		_ = copier.Copy(&file, res.File)

@@ -103,9 +103,13 @@ service gtw {
 	@handler putFile
 	post /oss/endpoint/putFile (PutFileRequest) returns (GetFileReply)
 
-	@doc "上传块文件"
+	@doc "上传块文件-grpc双向流"
 	@handler putChunkFile
 	post /oss/endpoint/putChunkFile (PutFileRequest) returns (GetFileReply)
+
+	@doc "上传快文件-grpc单向流"
+	@handler putStreamFile
+	post /oss/endpoint/putStreamFile (PutFileRequest) returns (GetFileReply)
 
 	@doc "生成文件url"
 	@handler signUrl

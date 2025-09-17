@@ -39,7 +39,7 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	server.AddRoutes(
 		[]rest.Route{
 			{
-				// 上传块文件
+				// 上传块文件-grpc双向流
 				Method:  http.MethodPost,
 				Path:    "/oss/endpoint/putChunkFile",
 				Handler: file.PutChunkFileHandler(serverCtx),
@@ -49,6 +49,12 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Method:  http.MethodPost,
 				Path:    "/oss/endpoint/putFile",
 				Handler: file.PutFileHandler(serverCtx),
+			},
+			{
+				// 上传快文件-grpc单向流
+				Method:  http.MethodPost,
+				Path:    "/oss/endpoint/putStreamFile",
+				Handler: file.PutStreamFileHandler(serverCtx),
 			},
 			{
 				// 生成文件url
