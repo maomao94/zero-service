@@ -59,7 +59,6 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 		}
 		req, err := stream.Recv()
 		if err == io.EOF {
-			pw.Close()
 			break
 		}
 		if err != nil && err != io.EOF {
