@@ -2,6 +2,8 @@ package logic
 
 import (
 	"context"
+	"crypto/md5"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -44,11 +46,23 @@ func (l *PutStreamFileLogic) PutStreamFile(stream file.FileRpc_PutStreamFileServ
 	if err != nil {
 		return err
 	}
+
+	// 临时文件流
 	tmpFile, err := os.CreateTemp("/opt/data/temp", "upload-*")
 	if err != nil {
 		return err
 	}
-	defer os.Remove(tmpFile.Name())
+	defer func() {
+		tmpFile.Close()
+		os.Remove(tmpFile.Name())
+	}()
+
+	// 计算 md5流
+	hash := md5.New()
+
+	// 管道流
+	var multiPw io.Writer
+
 	// 用于存储元信息
 	var tenantID, code, bucketName, filename string
 	var contentType string
@@ -162,21 +176,17 @@ func (l *PutStreamFileLogic) PutStreamFile(stream file.FileRpc_PutStreamFileServ
 					exifBuf = append(exifBuf, contentBuffer...)
 				}
 			}
-			multi := io.MultiWriter(pw, tmpFile)
-			_, err = multi.Write(req.GetContent())
-			if err != nil {
-				l.Logger.Errorf("Failed to write to multi writer: %v", err)
-				errRead = err
-				break
-			}
+			multiPw = io.MultiWriter(pw, tmpFile, hash)
 		} else {
-			// 写入文件数据到管道
-			_, err = pw.Write(req.GetContent())
-			if err != nil {
-				l.Logger.Errorf("Failed to write to pipe: %v", err)
-				errRead = err
-				break
-			}
+			multiPw = io.MultiWriter(pw, hash)
+		}
+
+		// 写入文件数据到管道
+		_, err = multiPw.Write(req.GetContent())
+		if err != nil {
+			l.Logger.Errorf("Failed to write to pipe: %v", err)
+			errRead = err
+			break
 		}
 
 		// 更新已上传字节数和块编号
@@ -215,21 +225,35 @@ func (l *PutStreamFileLogic) PutStreamFile(stream file.FileRpc_PutStreamFileServ
 				pbFile.Meta = &meta
 			}
 			if isThumb {
+				// 需要压缩图片 copy 临时文件
+				tmpPath := tmpFile.Name()
+				thumbFilename := "thumb_" + filename
+				// 复制一份临时文件给异步任务用
+				thumbTmpPath := tmpPath + "_copy"
+				src, _ := os.Open(tmpPath)
+				dst, _ := os.Create(thumbTmpPath)
+				io.Copy(dst, src)
+				src.Close()
+				dst.Close()
+				ossName := tool.GenOssFilename(thumbFilename, "thumb")
+				pbFile.ThumbLink = pbFile.Domain + "/" + ossName
+				pbFile.ThumbName = ossName
 				l.svcCtx.TaskRunner.Schedule(func() {
 					thumbStart := timex.Now()
 					thumbPath := tmpFile.Name() + "_thumb.jpg"
 					// 生成缩略图
-					if err = imagex.FromFileToFile(tmpFile.Name(), thumbPath, 300, 300); err == nil {
+					if err = imagex.FromFileToFile(thumbTmpPath, thumbPath, 300, 300); err == nil {
 						// 上传缩略图
 						f, _ := os.Open(thumbPath)
-						defer f.Close()
-						thumbFile, err := ossTemplate.PutObject(context.Background(), tenantID, bucketName, "thumb_"+filename, "image/jpeg", f, -1)
+						defer func() {
+							f.Close()
+							os.Remove(thumbTmpPath)
+							os.Remove(thumbPath)
+						}()
+						_, err := ossTemplate.PutObject(context.Background(), tenantID, bucketName, thumbFilename, "image/jpeg", f, -1, "", ossName)
 						if err != nil {
 							l.Logger.Errorf("Failed to upload thumbnail: %v", err)
 						}
-						os.Remove(thumbPath)
-						pbFile.ThumbLink = thumbFile.Link
-						pbFile.ThumbName = thumbFile.Name
 					} else {
 						l.Logger.Errorf("Failed to generate thumbnail: %v", err)
 					}
@@ -243,6 +267,8 @@ func (l *PutStreamFileLogic) PutStreamFile(stream file.FileRpc_PutStreamFileServ
 		l.Logger.Infof("File %s uploaded completely. Total received: %s",
 			filename, tool.DecimalBytes(writeSize))
 
+		md5Str := fmt.Sprintf("%x", hash.Sum(nil))
+		pbFile.Md5 = md5Str
 		// 返回上传结果
 		return stream.SendAndClose(&file.PutStreamFileRes{
 			File:  &pbFile,

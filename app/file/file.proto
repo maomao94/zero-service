@@ -39,9 +39,10 @@ message File {
   string formatSize = 5; // 格式化文件大小
   string originalName = 6; // 初始文件名
   string attachId = 7; // 附件表ID
-  ImageMeta meta = 8; // 图片信息
-  string thumbLink = 9;     // 缩略图地址
-  string ThumbName = 10; // 缩略图文件名
+  string md5 = 8; // 原文件md5
+  ImageMeta meta = 9; // 图片信息
+  string thumbLink = 10;     // 缩略图地址
+  string ThumbName = 11; // 缩略图文件名
 }
 
 message ImageMeta {

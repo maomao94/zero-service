@@ -11,6 +11,7 @@ type (
 		FormatSize   string     `json:"formatSize"` // 格式化文件大小
 		OriginalName string     `json:"originalName"` // 初始文件名
 		AttachId     string     `json:"attachId,omitempty"` // 附件表ID
+		Md5          string     `json:"md5,omitempty"` // 文件md5
 		Meta         *ImageMeta `json:"meta,omitempty"` // 图片 EXIF 信息
 		ThumbLink    string     `json:"thumbLink"` // 缩略图地址
 		ThumbName    string     `json:"thumbName"` // 缩略图文件名

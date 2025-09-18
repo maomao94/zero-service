@@ -266,9 +266,10 @@ type File struct {
 	FormatSize    string                 `protobuf:"bytes,5,opt,name=formatSize,proto3" json:"formatSize,omitempty"`     // 格式化文件大小
 	OriginalName  string                 `protobuf:"bytes,6,opt,name=originalName,proto3" json:"originalName,omitempty"` // 初始文件名
 	AttachId      string                 `protobuf:"bytes,7,opt,name=attachId,proto3" json:"attachId,omitempty"`         // 附件表ID
-	Meta          *ImageMeta             `protobuf:"bytes,8,opt,name=meta,proto3" json:"meta,omitempty"`                 // 图片信息
-	ThumbLink     string                 `protobuf:"bytes,9,opt,name=thumbLink,proto3" json:"thumbLink,omitempty"`       // 缩略图地址
-	ThumbName     string                 `protobuf:"bytes,10,opt,name=ThumbName,proto3" json:"ThumbName,omitempty"`      // 缩略图文件名
+	Md5           string                 `protobuf:"bytes,8,opt,name=md5,proto3" json:"md5,omitempty"`                   // 原文件md5
+	Meta          *ImageMeta             `protobuf:"bytes,9,opt,name=meta,proto3" json:"meta,omitempty"`                 // 图片信息
+	ThumbLink     string                 `protobuf:"bytes,10,opt,name=thumbLink,proto3" json:"thumbLink,omitempty"`      // 缩略图地址
+	ThumbName     string                 `protobuf:"bytes,11,opt,name=ThumbName,proto3" json:"ThumbName,omitempty"`      // 缩略图文件名
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -348,6 +349,13 @@ func (x *File) GetOriginalName() string {
 func (x *File) GetAttachId() string {
 	if x != nil {
 		return x.AttachId
+	}
+	return ""
+}
+
+func (x *File) GetMd5() string {
+	if x != nil {
+		return x.Md5
 	}
 	return ""
 }
@@ -2440,7 +2448,7 @@ const file_file_proto_rawDesc = "" +
 	"createTime\x12\x1e\n" +
 	"\n" +
 	"updateTime\x18\x0f \x01(\tR\n" +
-	"updateTime\"\x9b\x02\n" +
+	"updateTime\"\xad\x02\n" +
 	"\x04File\x12\x12\n" +
 	"\x04link\x18\x01 \x01(\tR\x04link\x12\x16\n" +
 	"\x06domain\x18\x02 \x01(\tR\x06domain\x12\x12\n" +
@@ -2450,11 +2458,12 @@ const file_file_proto_rawDesc = "" +
 	"formatSize\x18\x05 \x01(\tR\n" +
 	"formatSize\x12\"\n" +
 	"\foriginalName\x18\x06 \x01(\tR\foriginalName\x12\x1a\n" +
-	"\battachId\x18\a \x01(\tR\battachId\x12#\n" +
-	"\x04meta\x18\b \x01(\v2\x0f.file.ImageMetaR\x04meta\x12\x1c\n" +
-	"\tthumbLink\x18\t \x01(\tR\tthumbLink\x12\x1c\n" +
-	"\tThumbName\x18\n" +
-	" \x01(\tR\tThumbName\"\xd1\x01\n" +
+	"\battachId\x18\a \x01(\tR\battachId\x12\x10\n" +
+	"\x03md5\x18\b \x01(\tR\x03md5\x12#\n" +
+	"\x04meta\x18\t \x01(\v2\x0f.file.ImageMetaR\x04meta\x12\x1c\n" +
+	"\tthumbLink\x18\n" +
+	" \x01(\tR\tthumbLink\x12\x1c\n" +
+	"\tThumbName\x18\v \x01(\tR\tThumbName\"\xd1\x01\n" +
 	"\tImageMeta\x12\x1c\n" +
 	"\tlongitude\x18\x01 \x01(\x01R\tlongitude\x12\x1a\n" +
 	"\blatitude\x18\x02 \x01(\x01R\blatitude\x12\x12\n" +

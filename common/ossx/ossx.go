@@ -52,8 +52,11 @@ func (o *OssRule) bucketName(tenantId, bucketName string) string {
 	return prefix + bucketName
 }
 
-// filename 支持可选桶内路径
 func (o *OssRule) filename(originalFilename string, pathPrefix ...string) string {
+	if len(pathPrefix) > 1 && pathPrefix[1] != "" { // 第二个参数是固定 filename
+		return pathPrefix[1]
+	}
+
 	u, _ := uuid.NewUUID()
 	prefix := "upload"
 	if len(pathPrefix) > 0 && pathPrefix[0] != "" {

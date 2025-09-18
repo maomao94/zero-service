@@ -2,13 +2,17 @@ package tool
 
 import (
 	"fmt"
-	"github.com/duke-git/lancet/v2/convertor"
-	"github.com/duke-git/lancet/v2/formatter"
-	"github.com/shopspring/decimal"
-	"google.golang.org/protobuf/proto"
 	"os"
+	"path"
 	"reflect"
 	"strings"
+	"time"
+
+	"github.com/duke-git/lancet/v2/convertor"
+	"github.com/duke-git/lancet/v2/formatter"
+	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
+	"google.golang.org/protobuf/proto"
 )
 
 var oneHundredDecimal decimal.Decimal = decimal.NewFromInt(100)
@@ -56,4 +60,11 @@ func ToProtoBytes(v interface{}) ([]byte, error) {
 	} else {
 		return convertor.ToBytes(v)
 	}
+}
+
+func GenOssFilename(filename, pathPrefix string) string {
+	u, _ := uuid.NewUUID()
+	return pathPrefix + "/" + time.Now().Format("20060102") + "/" +
+		strings.ReplaceAll(u.String(), "-", "") +
+		path.Ext(filename)
 }
