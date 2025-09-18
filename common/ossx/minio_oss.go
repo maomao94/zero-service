@@ -5,14 +5,15 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
 	"io"
 	"mime/multipart"
 	"net/url"
 	"time"
 	"zero-service/common/tool"
 	"zero-service/model"
+
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 type MinioTemplate struct {
@@ -60,7 +61,7 @@ func (m MinioTemplate) BucketExists(ctx context.Context, tenantId, bucketName st
 	return m.client.BucketExists(ctx, m.ossRule.bucketName(tenantId, bucketName))
 }
 
-func (m MinioTemplate) PutFile(ctx context.Context, tenantId, bucketName string, fileHeader *multipart.FileHeader) (*File, error) {
+func (m MinioTemplate) PutFile(ctx context.Context, tenantId, bucketName string, fileHeader *multipart.FileHeader, pathPrefix ...string) (*File, error) {
 	if err := validateClient(m.client); err != nil {
 		return nil, err
 	}
@@ -69,7 +70,7 @@ func (m MinioTemplate) PutFile(ctx context.Context, tenantId, bucketName string,
 		return nil, err
 	}
 	defer f.Close()
-	filename := m.ossRule.filename(fileHeader.Filename)
+	filename := m.ossRule.filename(fileHeader.Filename, pathPrefix...)
 	if len(bucketName) == 0 {
 		bucketName = m.ossProperties.BucketName
 	}
@@ -119,11 +120,11 @@ func (m MinioTemplate) PutStream(ctx context.Context, tenantId, bucketName, file
 	}
 }
 
-func (m MinioTemplate) PutObject(ctx context.Context, tenantId, bucketName, filename, contentType string, reader io.Reader, objectSize int64) (*File, error) {
+func (m MinioTemplate) PutObject(ctx context.Context, tenantId, bucketName, filename, contentType string, reader io.Reader, objectSize int64, pathPrefix ...string) (*File, error) {
 	if err := validateClient(m.client); err != nil {
 		return nil, err
 	}
-	objectName := m.ossRule.filename(filename)
+	objectName := m.ossRule.filename(filename, pathPrefix...)
 	if len(bucketName) == 0 {
 		bucketName = m.ossProperties.BucketName
 	}

@@ -1631,13 +1631,15 @@ func (x *SignUrlRes) GetUrl() string {
 
 type PutFileReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenantId,proto3" json:"tenantId,omitempty"`     // 租户ID
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenantId,proto3" json:"tenantId,omitempty"`     // 租户ID 默认值 000000
 	Code          string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`             // 资源编号
 	BucketName    string                 `protobuf:"bytes,3,opt,name=bucketName,proto3" json:"bucketName,omitempty"` // 存储桶名称
 	Filename      string                 `protobuf:"bytes,4,opt,name=filename,proto3" json:"filename,omitempty"`     // 上传文件名
 	ContentType   string                 `protobuf:"bytes,5,opt,name=contentType,proto3" json:"contentType,omitempty"`
-	Path          string                 `protobuf:"bytes,6,opt,name=path,proto3" json:"path,omitempty"`        // 文件路径
-	IsThumb       bool                   `protobuf:"varint,7,opt,name=isThumb,proto3" json:"isThumb,omitempty"` // 是否缩略图
+	Content       []byte                 `protobuf:"bytes,6,opt,name=content,proto3" json:"content,omitempty"`       // 文件内容
+	Size          int64                  `protobuf:"varint,7,opt,name=size,proto3" json:"size,omitempty"`            // 文件大小
+	IsThumb       bool                   `protobuf:"varint,8,opt,name=isThumb,proto3" json:"isThumb,omitempty"`      // 是否缩略图
+	PathPrefix    string                 `protobuf:"bytes,9,opt,name=pathPrefix,proto3" json:"pathPrefix,omitempty"` // 默认值 default 文件路径前缀, 文件格式 pathPrefix/20060102/uuid.ext
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1707,11 +1709,18 @@ func (x *PutFileReq) GetContentType() string {
 	return ""
 }
 
-func (x *PutFileReq) GetPath() string {
+func (x *PutFileReq) GetContent() []byte {
 	if x != nil {
-		return x.Path
+		return x.Content
 	}
-	return ""
+	return nil
+}
+
+func (x *PutFileReq) GetSize() int64 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
 }
 
 func (x *PutFileReq) GetIsThumb() bool {
@@ -1719,6 +1728,13 @@ func (x *PutFileReq) GetIsThumb() bool {
 		return x.IsThumb
 	}
 	return false
+}
+
+func (x *PutFileReq) GetPathPrefix() string {
+	if x != nil {
+		return x.PathPrefix
+	}
+	return ""
 }
 
 type PutFileRes struct {
@@ -1767,14 +1783,15 @@ func (x *PutFileRes) GetFile() *File {
 
 type PutChunkFileReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenantId,proto3" json:"tenantId,omitempty"`     // 租户ID
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenantId,proto3" json:"tenantId,omitempty"`     // 租户ID 默认值 000000
 	Code          string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`             // 资源编号
 	BucketName    string                 `protobuf:"bytes,3,opt,name=bucketName,proto3" json:"bucketName,omitempty"` // 存储桶名称
 	Filename      string                 `protobuf:"bytes,4,opt,name=filename,proto3" json:"filename,omitempty"`     // 上传文件名
 	ContentType   string                 `protobuf:"bytes,5,opt,name=contentType,proto3" json:"contentType,omitempty"`
-	Content       []byte                 `protobuf:"bytes,6,opt,name=content,proto3" json:"content,omitempty"`  // 文件内容
-	Size          int64                  `protobuf:"varint,7,opt,name=size,proto3" json:"size,omitempty"`       // 文件大小
-	IsThumb       bool                   `protobuf:"varint,8,opt,name=isThumb,proto3" json:"isThumb,omitempty"` // 是否缩略图
+	Content       []byte                 `protobuf:"bytes,6,opt,name=content,proto3" json:"content,omitempty"`       // 文件内容
+	Size          int64                  `protobuf:"varint,7,opt,name=size,proto3" json:"size,omitempty"`            // 文件大小
+	IsThumb       bool                   `protobuf:"varint,8,opt,name=isThumb,proto3" json:"isThumb,omitempty"`      // 是否缩略图
+	PathPrefix    string                 `protobuf:"bytes,9,opt,name=pathPrefix,proto3" json:"pathPrefix,omitempty"` // 默认值 default 文件路径前缀, 文件格式 pathPrefix/20060102/uuid.ext
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1865,6 +1882,13 @@ func (x *PutChunkFileReq) GetIsThumb() bool {
 	return false
 }
 
+func (x *PutChunkFileReq) GetPathPrefix() string {
+	if x != nil {
+		return x.PathPrefix
+	}
+	return ""
+}
+
 type PutChunkFileRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	File          *File                  `protobuf:"bytes,1,opt,name=file,proto3" json:"file,omitempty"`
@@ -1927,14 +1951,15 @@ func (x *PutChunkFileRes) GetSize() int64 {
 
 type PutStreamFileReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenantId,proto3" json:"tenantId,omitempty"`     // 租户ID
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenantId,proto3" json:"tenantId,omitempty"`     // 租户ID 默认值 000000
 	Code          string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`             // 资源编号
 	BucketName    string                 `protobuf:"bytes,3,opt,name=bucketName,proto3" json:"bucketName,omitempty"` // 存储桶名称
 	Filename      string                 `protobuf:"bytes,4,opt,name=filename,proto3" json:"filename,omitempty"`     // 上传文件名
 	ContentType   string                 `protobuf:"bytes,5,opt,name=contentType,proto3" json:"contentType,omitempty"`
-	Content       []byte                 `protobuf:"bytes,6,opt,name=content,proto3" json:"content,omitempty"`  // 文件内容
-	Size          int64                  `protobuf:"varint,7,opt,name=size,proto3" json:"size,omitempty"`       // 文件大小
-	IsThumb       bool                   `protobuf:"varint,8,opt,name=isThumb,proto3" json:"isThumb,omitempty"` // 是否缩略图
+	Content       []byte                 `protobuf:"bytes,6,opt,name=content,proto3" json:"content,omitempty"`       // 文件内容
+	Size          int64                  `protobuf:"varint,7,opt,name=size,proto3" json:"size,omitempty"`            // 文件大小
+	IsThumb       bool                   `protobuf:"varint,8,opt,name=isThumb,proto3" json:"isThumb,omitempty"`      // 是否缩略图
+	PathPrefix    string                 `protobuf:"bytes,9,opt,name=pathPrefix,proto3" json:"pathPrefix,omitempty"` // 默认值 upload 文件路径前缀, 文件格式 pathPrefix/20060102/uuid.ext
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2023,6 +2048,13 @@ func (x *PutStreamFileReq) GetIsThumb() bool {
 		return x.IsThumb
 	}
 	return false
+}
+
+func (x *PutStreamFileReq) GetPathPrefix() string {
+	if x != nil {
+		return x.PathPrefix
+	}
+	return ""
 }
 
 type PutStreamFileRes struct {
@@ -2537,7 +2569,7 @@ const file_file_proto_rawDesc = "" +
 	"\aexpires\x18\x05 \x01(\x05R\aexpires\"\x1e\n" +
 	"\n" +
 	"SignUrlRes\x12\x10\n" +
-	"\x03url\x18\x01 \x01(\tR\x03url\"\xc8\x01\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\"\x82\x02\n" +
 	"\n" +
 	"PutFileReq\x12\x1a\n" +
 	"\btenantId\x18\x01 \x01(\tR\btenantId\x12\x12\n" +
@@ -2546,13 +2578,17 @@ const file_file_proto_rawDesc = "" +
 	"bucketName\x18\x03 \x01(\tR\n" +
 	"bucketName\x12\x1a\n" +
 	"\bfilename\x18\x04 \x01(\tR\bfilename\x12 \n" +
-	"\vcontentType\x18\x05 \x01(\tR\vcontentType\x12\x12\n" +
-	"\x04path\x18\x06 \x01(\tR\x04path\x12\x18\n" +
-	"\aisThumb\x18\a \x01(\bR\aisThumb\",\n" +
+	"\vcontentType\x18\x05 \x01(\tR\vcontentType\x12\x18\n" +
+	"\acontent\x18\x06 \x01(\fR\acontent\x12\x12\n" +
+	"\x04size\x18\a \x01(\x03R\x04size\x12\x18\n" +
+	"\aisThumb\x18\b \x01(\bR\aisThumb\x12\x1e\n" +
+	"\n" +
+	"pathPrefix\x18\t \x01(\tR\n" +
+	"pathPrefix\",\n" +
 	"\n" +
 	"PutFileRes\x12\x1e\n" +
 	"\x04file\x18\x01 \x01(\v2\n" +
-	".file.FileR\x04file\"\xe7\x01\n" +
+	".file.FileR\x04file\"\x87\x02\n" +
 	"\x0fPutChunkFileReq\x12\x1a\n" +
 	"\btenantId\x18\x01 \x01(\tR\btenantId\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\x12\x1e\n" +
@@ -2563,12 +2599,15 @@ const file_file_proto_rawDesc = "" +
 	"\vcontentType\x18\x05 \x01(\tR\vcontentType\x12\x18\n" +
 	"\acontent\x18\x06 \x01(\fR\acontent\x12\x12\n" +
 	"\x04size\x18\a \x01(\x03R\x04size\x12\x18\n" +
-	"\aisThumb\x18\b \x01(\bR\aisThumb\"[\n" +
+	"\aisThumb\x18\b \x01(\bR\aisThumb\x12\x1e\n" +
+	"\n" +
+	"pathPrefix\x18\t \x01(\tR\n" +
+	"pathPrefix\"[\n" +
 	"\x0fPutChunkFileRes\x12\x1e\n" +
 	"\x04file\x18\x01 \x01(\v2\n" +
 	".file.FileR\x04file\x12\x14\n" +
 	"\x05isEnd\x18\x02 \x01(\bR\x05isEnd\x12\x12\n" +
-	"\x04size\x18\x03 \x01(\x03R\x04size\"\xe8\x01\n" +
+	"\x04size\x18\x03 \x01(\x03R\x04size\"\x88\x02\n" +
 	"\x10PutStreamFileReq\x12\x1a\n" +
 	"\btenantId\x18\x01 \x01(\tR\btenantId\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\x12\x1e\n" +
@@ -2579,7 +2618,10 @@ const file_file_proto_rawDesc = "" +
 	"\vcontentType\x18\x05 \x01(\tR\vcontentType\x12\x18\n" +
 	"\acontent\x18\x06 \x01(\fR\acontent\x12\x12\n" +
 	"\x04size\x18\a \x01(\x03R\x04size\x12\x18\n" +
-	"\aisThumb\x18\b \x01(\bR\aisThumb\"\\\n" +
+	"\aisThumb\x18\b \x01(\bR\aisThumb\x12\x1e\n" +
+	"\n" +
+	"pathPrefix\x18\t \x01(\tR\n" +
+	"pathPrefix\"\\\n" +
 	"\x10PutStreamFileRes\x12\x1e\n" +
 	"\x04file\x18\x01 \x01(\v2\n" +
 	".file.FileR\x04file\x12\x14\n" +

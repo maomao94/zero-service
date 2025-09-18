@@ -61,6 +61,7 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 	// 用来记录已上传的字节数
 	var writeSize int64
 	var isThumb bool
+	var pathPrefix string
 
 	errOssChan := make(chan error, 1)
 	var errRead error
@@ -83,12 +84,16 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 		// 解析消息中的元数据（仅需要解析一次）
 		if !initialized {
 			tenantID = req.GetTenantId()
+			if len(tenantID) == 0 {
+				tenantID = "000000"
+			}
 			code = req.GetCode()
 			bucketName = req.GetBucketName()
 			filename = req.GetFilename()
 			contentType = req.GetContentType()
 			size = req.GetSize()
 			isThumb = req.GetIsThumb()
+			pathPrefix = req.GetPathPrefix()
 
 			// 动态获取 OSS 模板
 			var ossErr error
@@ -112,7 +117,7 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 					close(errOssChan)
 				}()
 				// 写入 OSS
-				uploadedFile, ossPutErr := ossTemplate.PutObject(l.ctx, tenantID, bucketName, filename, contentType, pr, size)
+				uploadedFile, ossPutErr := ossTemplate.PutObject(l.ctx, tenantID, bucketName, filename, contentType, pr, size, pathPrefix)
 				_ = copier.Copy(&pbFile, uploadedFile)
 				if ossPutErr != nil {
 					l.Logger.Errorf("Failed to write to OSS: %v", ossPutErr)

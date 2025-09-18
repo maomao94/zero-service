@@ -173,21 +173,7 @@ message SignUrlRes{
 }
 
 message PutFileReq {
-  string tenantId = 1; // 租户ID
-  string code = 2; // 资源编号
-  string bucketName = 3; // 存储桶名称
-  string filename = 4; // 上传文件名
-  string contentType = 5;
-  string path = 6; // 文件路径
-  bool isThumb = 7; // 是否缩略图
-}
-
-message PutFileRes {
-  File file = 1;
-}
-
-message PutChunkFileReq {
-  string tenantId = 1; // 租户ID
+  string tenantId = 1; // 租户ID 默认值 000000
   string code = 2; // 资源编号
   string bucketName = 3; // 存储桶名称
   string filename = 4; // 上传文件名
@@ -195,6 +181,23 @@ message PutChunkFileReq {
   bytes content = 6;   // 文件内容
   int64 size = 7; // 文件大小
   bool isThumb = 8; // 是否缩略图
+  string pathPrefix = 9; // 默认值 default 文件路径前缀, 文件格式 pathPrefix/20060102/uuid.ext
+}
+
+message PutFileRes {
+  File file = 1;
+}
+
+message PutChunkFileReq {
+  string tenantId = 1; // 租户ID 默认值 000000
+  string code = 2; // 资源编号
+  string bucketName = 3; // 存储桶名称
+  string filename = 4; // 上传文件名
+  string contentType = 5;
+  bytes content = 6;   // 文件内容
+  int64 size = 7; // 文件大小
+  bool isThumb = 8; // 是否缩略图
+  string pathPrefix = 9; // 默认值 default 文件路径前缀, 文件格式 pathPrefix/20060102/uuid.ext
 }
 
 message PutChunkFileRes {
@@ -204,7 +207,7 @@ message PutChunkFileRes {
 }
 
 message PutStreamFileReq {
-  string tenantId = 1; // 租户ID
+  string tenantId = 1; // 租户ID 默认值 000000
   string code = 2; // 资源编号
   string bucketName = 3; // 存储桶名称
   string filename = 4; // 上传文件名
@@ -212,6 +215,7 @@ message PutStreamFileReq {
   bytes content = 6;   // 文件内容
   int64 size = 7; // 文件大小
   bool isThumb = 8; // 是否缩略图
+  string pathPrefix = 9; // 默认值 upload 文件路径前缀, 文件格式 pathPrefix/20060102/uuid.ext
 }
 
 message PutStreamFileRes {

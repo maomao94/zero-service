@@ -3,7 +3,6 @@ package ossx
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"mime/multipart"
 	"path"
@@ -27,16 +26,16 @@ var (
 )
 
 type OssTemplate interface {
-	MakeBucket(ctx context.Context, tenantId, bucketName string) error                                                                    // 创建存储桶
-	RemoveBucket(ctx context.Context, tenantId, bucketName string) error                                                                  // 删除存储桶
-	StatFile(ctx context.Context, tenantId, bucketName, filename string) (*OssFile, error)                                                // 获取文件信息
-	BucketExists(ctx context.Context, tenantId, bucketName string) (bool, error)                                                          // 存储桶是否存在
-	PutFile(ctx context.Context, tenantId, bucketName string, fileHeader *multipart.FileHeader) (*File, error)                            // 上传文件
-	PutStream(ctx context.Context, tenantId, bucketName, filename, contentType string, stream *[]byte) (*File, error)                     // 上传文件
-	PutObject(ctx context.Context, tenantId, bucketName, filename, contentType string, reader io.Reader, objectSize int64) (*File, error) // 上传文件
-	SignUrl(ctx context.Context, tenantId, bucketName, filename string, expires time.Duration) (string, error)                            // 生成文件url
-	RemoveFile(ctx context.Context, tenantId, bucketName, filename string) error                                                          // 删除文件
-	RemoveFiles(ctx context.Context, tenantId string, bucketName string, filenames []string) error                                        // 批量删除文件
+	MakeBucket(ctx context.Context, tenantId, bucketName string) error                                                                                          // 创建存储桶
+	RemoveBucket(ctx context.Context, tenantId, bucketName string) error                                                                                        // 删除存储桶
+	StatFile(ctx context.Context, tenantId, bucketName, filename string) (*OssFile, error)                                                                      // 获取文件信息
+	BucketExists(ctx context.Context, tenantId, bucketName string) (bool, error)                                                                                // 存储桶是否存在
+	PutFile(ctx context.Context, tenantId, bucketName string, fileHeader *multipart.FileHeader, pathPrefix ...string) (*File, error)                            // 上传文件
+	PutStream(ctx context.Context, tenantId, bucketName, filename, contentType string, stream *[]byte) (*File, error)                                           // 上传文件
+	PutObject(ctx context.Context, tenantId, bucketName, filename, contentType string, reader io.Reader, objectSize int64, pathPrefix ...string) (*File, error) // 上传文件
+	SignUrl(ctx context.Context, tenantId, bucketName, filename string, expires time.Duration) (string, error)                                                  // 生成文件url
+	RemoveFile(ctx context.Context, tenantId, bucketName, filename string) error                                                                                // 删除文件
+	RemoveFiles(ctx context.Context, tenantId string, bucketName string, filenames []string) error                                                              // 批量删除文件
 }
 
 var _ OssTemplate = (*MinioTemplate)(nil)
@@ -53,10 +52,15 @@ func (o *OssRule) bucketName(tenantId, bucketName string) string {
 	return prefix + bucketName
 }
 
-func (o *OssRule) filename(originalFilename string) string {
+// filename 支持可选桶内路径
+func (o *OssRule) filename(originalFilename string, pathPrefix ...string) string {
 	u, _ := uuid.NewUUID()
-	return "upload" + "/" + time.Now().Format("20060102") + "/" +
-		strings.Replace(fmt.Sprintf("%s", u), "-", "", -1) +
+	prefix := "upload"
+	if len(pathPrefix) > 0 && pathPrefix[0] != "" {
+		prefix = pathPrefix[0] // 使用调用者传入的路径
+	}
+	return prefix + "/" + time.Now().Format("20060102") + "/" +
+		strings.ReplaceAll(u.String(), "-", "") +
 		path.Ext(originalFilename)
 }
 
