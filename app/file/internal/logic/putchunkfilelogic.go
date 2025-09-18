@@ -196,7 +196,7 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 				pbFile.Meta = &meta
 			}
 			if isThumb {
-				go threading.RunSafe(func() {
+				l.svcCtx.TaskRunner.Schedule(func() {
 					thumbStart := timex.Now()
 					thumbPath := tmpFile.Name() + "_thumb.jpg"
 					// 生成缩略图

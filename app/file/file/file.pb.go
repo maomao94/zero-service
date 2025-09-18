@@ -2630,7 +2630,8 @@ const file_file_proto_rawDesc = "" +
 	"\rPutStreamFile\x12\x16.file.PutStreamFileReq\x1a\x16.file.PutStreamFileRes(\x01\x126\n" +
 	"\n" +
 	"RemoveFile\x12\x13.file.RemoveFileReq\x1a\x13.file.RemoveFileRes\x128\n" +
-	"\vRemoveFiles\x12\x14.file.RemoveFilesReq\x1a\x13.file.RemoveFileResB\bZ\x06./fileb\x06proto3"
+	"\vRemoveFiles\x12\x14.file.RemoveFilesReq\x1a\x13.file.RemoveFileResB+\n" +
+	"\x14com.github.file.grpcB\tFileProtoP\x01Z\x06./fileb\x06proto3"
 
 var (
 	file_file_proto_rawDescOnce sync.Once

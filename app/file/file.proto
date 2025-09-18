@@ -2,6 +2,9 @@ syntax = "proto3";
 
 package file;
 option go_package = "./file";
+option java_multiple_files = true;
+option java_package = "com.github.file.grpc";
+option java_outer_classname = "FileProto";
 
 message Req {
   string ping = 1;
