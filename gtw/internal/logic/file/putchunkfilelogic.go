@@ -62,7 +62,7 @@ func (l *PutChunkFileLogic) PutChunkFile(req *types.PutFileRequest) (resp *types
 	//)
 
 	// 执行 stream 上传
-	stream, err := l.svcCtx.FileRpcCLi.PutChunkFile(context.Background())
+	stream, err := l.svcCtx.FileRpcCLi.PutChunkFile(l.ctx)
 	if err != nil {
 		l.Logger.Errorf("Failed to create stream: %v", err)
 		return nil, err

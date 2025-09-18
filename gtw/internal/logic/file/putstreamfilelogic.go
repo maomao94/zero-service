@@ -47,7 +47,7 @@ func (l *PutStreamFileLogic) PutStreamFile(req *types.PutFileRequest) (resp *typ
 	l.Logger.Infof("upload file: %+v, file size: %s, MIME header: %+v",
 		fileHeader.Filename, tool.DecimalBytes(fileHeader.Size), fileHeader.Header)
 	// 执行 stream 上传
-	stream, err := l.svcCtx.FileRpcCLi.PutStreamFile(context.Background())
+	stream, err := l.svcCtx.FileRpcCLi.PutStreamFile(l.ctx)
 	if err != nil {
 		l.Logger.Errorf("Failed to create stream: %v", err)
 		return nil, err

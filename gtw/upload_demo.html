@@ -323,10 +323,8 @@
                 };
                 
                 filesQueue.push(fileInfo);
-                // 只对图片文件增加总文件数
-                if (fileInfo.isImage) {
-                    stats.total++;
-                }
+                // 增加历史文件数（所有类型的文件都计数）
+                stats.total++;
                 updateStats();
                 renderFileItem(fileInfo);
             });
@@ -465,10 +463,7 @@
                 fileInfo.status = 'queued';
                 fileInfo.progress = 0;
                 fileInfo.xhr = null;
-                // 只对图片文件增加总文件数
-                if (fileInfo.isImage) {
-                    stats.total++;
-                }
+                // 重试的文件不计入历史文件数
                 
                 updateStats();
                 updateFileItem(fileInfo);
@@ -491,8 +486,8 @@
                 if (fileInfo.status === 'uploading') {
                     stats.uploading--;
                     activeUploads--;
-                } else if (fileInfo.status === 'queued' && fileInfo.isImage) {
-                    // 只对图片文件减少总文件数
+                } else if (fileInfo.status === 'queued') {
+                    // 取消队列中的文件时减少历史文件数
                     stats.total--;
                 }
                 
@@ -516,20 +511,11 @@
                 file.status !== 'completed'
             );
             
-            // 更新统计
-            filteredQueue.forEach(file => {
-                if (file.status === 'uploading') {
-                    stats.uploading++;
-                } else if (file.status === 'queued') {
-                    stats.total++;
-                }
-            });
-            
-            // 重置队列和统计
+            // 重置队列
             filesQueue = filteredQueue;
             
             // 重新计算各项统计
-            stats.total = filesQueue.filter(file => file.isImage).length; // 只统计图片文件数量
+            stats.total = filesQueue.length; // 所有文件都计数
             stats.uploading = filesQueue.filter(file => file.status === 'uploading').length;
             stats.queued = filesQueue.filter(file => file.status === 'queued').length;
             stats.failed = filesQueue.filter(file => file.status === 'failed').length;
@@ -765,10 +751,7 @@
                 fileInfo.status = 'queued';
                 fileInfo.progress = 0;
                 fileInfo.xhr = null;
-                // 只对图片文件增加总文件数
-                if (fileInfo.isImage) {
-                    stats.total++;
-                }
+                // 重试的文件不计入历史文件数
                 
                 // 更新UI
                 updateFileItem(fileInfo);
@@ -781,7 +764,7 @@
         // 更新统计信息
         function updateStats() {
             // 重新计算未上传数量
-            stats.queued = filesQueue.filter(file => file.status === 'queued' && file.isImage).length;
+            stats.queued = filesQueue.filter(file => file.status === 'queued').length;
             
             totalFilesEl.textContent = stats.total;
             uploadedFilesEl.textContent = stats.uploaded;
