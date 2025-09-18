@@ -144,7 +144,7 @@
         <div class="mb-8">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                 <div class="bg-white rounded-xl shadow p-4 border border-gray-200 transition-custom hover:shadow-md">
-                    <p class="text-sm text-gray-500 mb-1">总文件数</p>
+                    <p class="text-sm text-gray-500 mb-1">历史文件数</p>
                     <p class="text-2xl font-bold text-dark" id="totalFiles">0</p>
                 </div>
                 <div class="bg-white rounded-xl shadow p-4 border border-gray-200 transition-custom hover:shadow-md">
@@ -158,6 +158,10 @@
                 <div class="bg-white rounded-xl shadow p-4 border border-gray-200 transition-custom hover:shadow-md">
                     <p class="text-sm text-gray-500 mb-1">上传失败</p>
                     <p class="text-2xl font-bold text-danger" id="failedFiles">0</p>
+                </div>
+                <div class="bg-white rounded-xl shadow p-4 border border-gray-200 transition-custom hover:shadow-md">
+                    <p class="text-sm text-gray-500 mb-1">未上传</p>
+                    <p class="text-2xl font-bold text-warning" id="queuedFiles">0</p>
                 </div>
                 <div class="bg-white rounded-xl shadow p-4 border border-gray-200 transition-custom hover:shadow-md">
                     <p class="text-sm text-gray-500 mb-1">已上传数据大小</p>
@@ -221,6 +225,7 @@
         const uploadedFilesEl = document.getElementById('uploadedFiles');
         const uploadingFilesEl = document.getElementById('uploadingFiles');
         const failedFilesEl = document.getElementById('failedFiles');
+        const queuedFilesEl = document.getElementById('queuedFiles');
         const uploadedSizeEl = document.getElementById('uploadedSize');
         const concurrencyEl = document.getElementById('concurrency');
         const decreaseConcurrencyBtn = document.getElementById('decreaseConcurrency');
@@ -775,10 +780,14 @@
 
         // 更新统计信息
         function updateStats() {
+            // 重新计算未上传数量
+            stats.queued = filesQueue.filter(file => file.status === 'queued' && file.isImage).length;
+            
             totalFilesEl.textContent = stats.total;
             uploadedFilesEl.textContent = stats.uploaded;
             uploadingFilesEl.textContent = stats.uploading;
             failedFilesEl.textContent = stats.failed;
+            queuedFilesEl.textContent = stats.queued;
             uploadedSizeEl.textContent = formatFileSize(stats.uploadedSize);
             
             // 更新一键重试按钮状态
