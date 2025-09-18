@@ -250,7 +250,6 @@ func (l *PutStreamFileLogic) PutStreamFile(stream file.FileRpc_PutStreamFileServ
 						f, _ := os.Open(thumbPath)
 						defer func() {
 							f.Close()
-							os.Remove(thumbPath)
 						}()
 						_, err := ossTemplate.PutObject(context.Background(), tenantID, bucketName, thumbFilename, "image/jpeg", f, -1, "", ossName)
 						if err != nil {
@@ -259,6 +258,7 @@ func (l *PutStreamFileLogic) PutStreamFile(stream file.FileRpc_PutStreamFileServ
 					} else {
 						l.Logger.Errorf("Failed to generate thumbnail: %v", err)
 					}
+					os.Remove(thumbPath)
 					duration := timex.Since(thumbStart)
 					l.Logger.WithDuration(duration).Infof("thumb finished processing")
 				})
