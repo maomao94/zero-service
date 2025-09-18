@@ -8,6 +8,7 @@ import (
 	"strings"
 	"zero-service/common/imagex"
 	"zero-service/common/ossx"
+	"zero-service/common/tool"
 	"zero-service/model"
 
 	"zero-service/app/file/file"
@@ -21,6 +22,7 @@ import (
 
 const maxExifRead = 64 * 1024 // 64KB
 
+const progressLogThreshold = 100 * 1024 * 1024 // 100MB
 type PutStreamFileLogic struct {
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
@@ -64,6 +66,10 @@ func (l *PutStreamFileLogic) PutStreamFile(stream file.FileRpc_PutStreamFileServ
 	// 用来记录已上传的字节数
 	var writeSize int64
 	var isThumb bool
+
+	// 进度日志相关变量
+	var lastLoggedSize int64 // 上次记录日志时的已上传字节数
+	var partNum int          // 块编号
 
 	errOssChan := make(chan error, 1)
 	var errRead error
@@ -127,6 +133,7 @@ func (l *PutStreamFileLogic) PutStreamFile(stream file.FileRpc_PutStreamFileServ
 
 			})
 			initialized = true
+			l.Logger.Infof("Start receiving file: %s, total size: %s", filename, tool.DecimalBytes(size))
 		}
 
 		// 试图探测文件内容类型（在收到的第一部分数据上进行）
@@ -166,10 +173,26 @@ func (l *PutStreamFileLogic) PutStreamFile(stream file.FileRpc_PutStreamFileServ
 				break
 			}
 		}
-		writeSize += int64(len(req.GetContent()))
+
+		// 更新已上传字节数和块编号
+		chunkSize := int64(len(req.GetContent()))
+		writeSize += chunkSize
+		partNum++
+
+		// 上传进度日志，达到阈值或完成时打印
+		if writeSize-lastLoggedSize >= progressLogThreshold || writeSize == size {
+			progress := float64(writeSize) / float64(size) * 100
+			l.Logger.Infof(
+				"Received part %d: %s (%.2f%% completed, Received: %s / %s)",
+				partNum, tool.DecimalBytes(writeSize-lastLoggedSize), progress,
+				tool.DecimalBytes(writeSize), tool.DecimalBytes(size))
+			lastLoggedSize = writeSize
+		}
 	}
+
 	// 关闭写管道
 	pw.Close()
+
 	if initialized {
 		// 等待上传完成
 		if err := <-errOssChan; err != nil {
@@ -178,6 +201,7 @@ func (l *PutStreamFileLogic) PutStreamFile(stream file.FileRpc_PutStreamFileServ
 		if errRead != nil {
 			return errRead
 		}
+
 		if strings.HasPrefix(contentType, "image/") {
 			exifMeta, err := imagex.ExtractImageMetaFromBytes(exifBuf)
 			if err == nil {
@@ -209,6 +233,11 @@ func (l *PutStreamFileLogic) PutStreamFile(stream file.FileRpc_PutStreamFileServ
 				})
 			}
 		}
+
+		// 新增：上传完成日志
+		l.Logger.Infof("File %s uploaded completely. Total received: %s",
+			filename, tool.DecimalBytes(writeSize))
+
 		// 返回上传结果
 		return stream.SendAndClose(&file.PutStreamFileRes{
 			File:  &pbFile,
