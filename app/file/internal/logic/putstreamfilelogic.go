@@ -241,6 +241,7 @@ func (l *PutStreamFileLogic) PutStreamFile(stream file.FileRpc_PutStreamFileServ
 				pbFile.ThumbLink = pbFile.Domain + "/" + ossName
 				pbFile.ThumbName = ossName
 				l.svcCtx.TaskRunner.Schedule(func() {
+					defer os.Remove(thumbTmpPath)
 					thumbStart := timex.Now()
 					thumbPath := tmpFile.Name() + "_thumb.jpg"
 					// 生成缩略图
@@ -249,7 +250,6 @@ func (l *PutStreamFileLogic) PutStreamFile(stream file.FileRpc_PutStreamFileServ
 						f, _ := os.Open(thumbPath)
 						defer func() {
 							f.Close()
-							os.Remove(thumbTmpPath)
 							os.Remove(thumbPath)
 						}()
 						_, err := ossTemplate.PutObject(context.Background(), tenantID, bucketName, thumbFilename, "image/jpeg", f, -1, "", ossName)
