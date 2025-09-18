@@ -1,9 +1,10 @@
 package config
 
 import (
+	"zero-service/common/ossx/osssconfig"
+
 	"github.com/zeromicro/go-zero/core/stores/cache"
 	"github.com/zeromicro/go-zero/zrpc"
-	"zero-service/common/ossx/osssconfig"
 )
 
 type Config struct {
@@ -15,4 +16,6 @@ type Config struct {
 
 	Cache cache.CacheConf
 	Oss   osssconfig.OssConf
+
+	ThumbTaskConcurrency int `json:",default=2"`
 }

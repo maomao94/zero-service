@@ -240,7 +240,7 @@ func (l *PutStreamFileLogic) PutStreamFile(stream file.FileRpc_PutStreamFileServ
 				ossName := tool.GenOssFilename(thumbFilename, "thumb")
 				pbFile.ThumbLink = pbFile.Domain + "/" + ossName
 				pbFile.ThumbName = ossName
-				l.svcCtx.TaskRunner.Schedule(func() {
+				l.svcCtx.ThumbTaskRunner.Schedule(func() {
 					defer os.Remove(thumbTmpPath)
 					thumbStart := timex.Now()
 					thumbPath := tmpFile.Name() + "_thumb.jpg"

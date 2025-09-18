@@ -8,7 +8,7 @@ Timeout: 10000
 Mode: dev
 Log:
   Encoding: plain
-#  Mode: file
+  #  Mode: file
   Path: /opt/logs/file.rpc
 Redis:
   Host: 127.0.0.1:36379
@@ -21,5 +21,6 @@ Cache:
 Oss:
   # 是否开启租户模式
   TenantMode: true
+ThumbTaskConcurrency: 2
 DB:
   DataSource: root:PXDN93VRKUm8TeE7@tcp(localhost:33069)/zero?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
