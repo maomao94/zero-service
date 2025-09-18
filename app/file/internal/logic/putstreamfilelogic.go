@@ -16,6 +16,7 @@ import (
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
 
+	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/threading"
@@ -48,7 +49,8 @@ func (l *PutStreamFileLogic) PutStreamFile(stream file.FileRpc_PutStreamFileServ
 	}
 
 	// 临时文件流
-	tmpFile, err := os.CreateTemp("/opt/data/temp", "upload-*")
+	fileName := "upload-" + uuid.NewString()
+	tmpFile, err := os.CreateTemp("/opt/data/temp", fileName)
 	if err != nil {
 		return err
 	}

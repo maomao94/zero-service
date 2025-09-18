@@ -14,6 +14,7 @@ import (
 	"zero-service/common/tool"
 	"zero-service/model"
 
+	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/threading"
@@ -43,7 +44,8 @@ func (l *PutChunkFileLogic) PutChunkFile(stream file.FileRpc_PutChunkFileServer)
 	}
 
 	// 临时文件流
-	tmpFile, err := os.CreateTemp("/opt/data/temp", "upload-*")
+	fileName := "upload-" + uuid.NewString()
+	tmpFile, err := os.CreateTemp("/opt/data/temp", fileName)
 	if err != nil {
 		return err
 	}
