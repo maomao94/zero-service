@@ -44,6 +44,11 @@ func NewPutFileLogic(ctx context.Context, svcCtx *svc.ServiceContext, r *http.Re
 
 func (l *PutFileLogic) PutFile(req *types.PutFileRequest) (resp *types.GetFileReply, err error) {
 	l.r.ParseMultipartForm(maxFileSize)
+	defer func() {
+		if l.r.MultipartForm != nil {
+			_ = l.r.MultipartForm.RemoveAll() // 清理临时文件
+		}
+	}()
 	uploadFile, fileHeader, err := l.r.FormFile("file")
 	if err != nil {
 		return nil, err

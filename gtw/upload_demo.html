@@ -344,6 +344,7 @@
         // 开始上传文件
         function startUpload(fileInfo) {
             fileInfo.status = 'uploading';
+            fileInfo.startTime = new Date().getTime(); // 记录上传开始时间
             stats.uploading++;
             // 不再减少总文件数，保持总文件数不变
             updateStats();
@@ -380,6 +381,10 @@
             xhr.addEventListener('load', () => {
                 activeUploads--;
                 stats.uploading--;
+                
+                // 计算上传耗时
+                const endTime = new Date().getTime();
+                fileInfo.uploadTime = endTime - (fileInfo.startTime || endTime); // 毫秒
                 
                 if (xhr.status === 200) {
                     fileInfo.status = 'completed';
@@ -641,6 +646,7 @@
                         <div class="flex items-center gap-2">
                             <i class="fa ${statusIcon} ${statusClass} text-sm"></i>
                             <span class="text-sm text-gray-500">${statusText}</span>
+                            ${fileInfo.status === 'completed' && fileInfo.uploadTime ? `<span class="text-xs text-gray-400">（耗时: ${formatTime(fileInfo.uploadTime)}）</span>` : ''}
                         </div>
                     </div>
                     
@@ -688,6 +694,18 @@
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // 辅助函数：格式化时间（毫秒）
+        function formatTime(milliseconds) {
+            if (!milliseconds || milliseconds === 0) return '0ms';
+            
+            if (milliseconds < 1000) {
+                return milliseconds + 'ms';
+            }
+            
+            const seconds = (milliseconds / 1000).toFixed(2);
+            return seconds + 's';
         }
 
         // 辅助函数：获取文件图标
