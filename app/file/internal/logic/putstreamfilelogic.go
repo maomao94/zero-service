@@ -143,13 +143,13 @@ func (l *PutStreamFileLogic) PutStreamFile(stream file.FileRpc_PutStreamFileServ
 				}()
 				// 写入 OSS
 				uploadedFile, ossPutErr := ossTemplate.PutObject(l.ctx, tenantID, bucketName, filename, contentType, pr, size, pathPrefix)
-				_ = copier.Copy(&pbFile, uploadedFile)
 				if ossPutErr != nil {
 					l.Logger.Errorf("Failed to write to OSS: %v", ossPutErr)
 				}
 				if ossPutErr == nil {
 					l.Logger.Infof("File uploaded to OSS: %s success", filename)
 				}
+				_ = copier.Copy(&pbFile, uploadedFile)
 				errOssChan <- ossPutErr
 
 			})

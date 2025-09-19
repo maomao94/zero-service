@@ -8,7 +8,7 @@ Timeout: 10000
 Mode: dev
 Log:
   Encoding: plain
-  #  Mode: file
+#  Mode: file
   Path: /opt/logs/file.rpc
 NacosConfig:
   IsRegister: true

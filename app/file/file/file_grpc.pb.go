@@ -19,21 +19,22 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	FileRpc_Ping_FullMethodName          = "/file.FileRpc/Ping"
-	FileRpc_OssDetail_FullMethodName     = "/file.FileRpc/OssDetail"
-	FileRpc_OssList_FullMethodName       = "/file.FileRpc/OssList"
-	FileRpc_CreateOss_FullMethodName     = "/file.FileRpc/CreateOss"
-	FileRpc_UpdateOss_FullMethodName     = "/file.FileRpc/UpdateOss"
-	FileRpc_DeleteOss_FullMethodName     = "/file.FileRpc/DeleteOss"
-	FileRpc_MakeBucket_FullMethodName    = "/file.FileRpc/MakeBucket"
-	FileRpc_RemoveBucket_FullMethodName  = "/file.FileRpc/RemoveBucket"
-	FileRpc_StatFile_FullMethodName      = "/file.FileRpc/StatFile"
-	FileRpc_SignUrl_FullMethodName       = "/file.FileRpc/SignUrl"
-	FileRpc_PutFile_FullMethodName       = "/file.FileRpc/PutFile"
-	FileRpc_PutChunkFile_FullMethodName  = "/file.FileRpc/PutChunkFile"
-	FileRpc_PutStreamFile_FullMethodName = "/file.FileRpc/PutStreamFile"
-	FileRpc_RemoveFile_FullMethodName    = "/file.FileRpc/RemoveFile"
-	FileRpc_RemoveFiles_FullMethodName   = "/file.FileRpc/RemoveFiles"
+	FileRpc_Ping_FullMethodName               = "/file.FileRpc/Ping"
+	FileRpc_OssDetail_FullMethodName          = "/file.FileRpc/OssDetail"
+	FileRpc_OssList_FullMethodName            = "/file.FileRpc/OssList"
+	FileRpc_CreateOss_FullMethodName          = "/file.FileRpc/CreateOss"
+	FileRpc_UpdateOss_FullMethodName          = "/file.FileRpc/UpdateOss"
+	FileRpc_DeleteOss_FullMethodName          = "/file.FileRpc/DeleteOss"
+	FileRpc_MakeBucket_FullMethodName         = "/file.FileRpc/MakeBucket"
+	FileRpc_RemoveBucket_FullMethodName       = "/file.FileRpc/RemoveBucket"
+	FileRpc_StatFile_FullMethodName           = "/file.FileRpc/StatFile"
+	FileRpc_SignUrl_FullMethodName            = "/file.FileRpc/SignUrl"
+	FileRpc_PutFile_FullMethodName            = "/file.FileRpc/PutFile"
+	FileRpc_PutChunkFile_FullMethodName       = "/file.FileRpc/PutChunkFile"
+	FileRpc_PutStreamFile_FullMethodName      = "/file.FileRpc/PutStreamFile"
+	FileRpc_RemoveFile_FullMethodName         = "/file.FileRpc/RemoveFile"
+	FileRpc_RemoveFiles_FullMethodName        = "/file.FileRpc/RemoveFiles"
+	FileRpc_CaptureVideoStream_FullMethodName = "/file.FileRpc/CaptureVideoStream"
 )
 
 // FileRpcClient is the client API for FileRpc service.
@@ -55,6 +56,7 @@ type FileRpcClient interface {
 	PutStreamFile(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[PutStreamFileReq, PutStreamFileRes], error)
 	RemoveFile(ctx context.Context, in *RemoveFileReq, opts ...grpc.CallOption) (*RemoveFileRes, error)
 	RemoveFiles(ctx context.Context, in *RemoveFilesReq, opts ...grpc.CallOption) (*RemoveFileRes, error)
+	CaptureVideoStream(ctx context.Context, in *CaptureVideoStreamReq, opts ...grpc.CallOption) (*CaptureVideoStreamRes, error)
 }
 
 type fileRpcClient struct {
@@ -221,6 +223,16 @@ func (c *fileRpcClient) RemoveFiles(ctx context.Context, in *RemoveFilesReq, opt
 	return out, nil
 }
 
+func (c *fileRpcClient) CaptureVideoStream(ctx context.Context, in *CaptureVideoStreamReq, opts ...grpc.CallOption) (*CaptureVideoStreamRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CaptureVideoStreamRes)
+	err := c.cc.Invoke(ctx, FileRpc_CaptureVideoStream_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FileRpcServer is the server API for FileRpc service.
 // All implementations must embed UnimplementedFileRpcServer
 // for forward compatibility.
@@ -240,6 +252,7 @@ type FileRpcServer interface {
 	PutStreamFile(grpc.ClientStreamingServer[PutStreamFileReq, PutStreamFileRes]) error
 	RemoveFile(context.Context, *RemoveFileReq) (*RemoveFileRes, error)
 	RemoveFiles(context.Context, *RemoveFilesReq) (*RemoveFileRes, error)
+	CaptureVideoStream(context.Context, *CaptureVideoStreamReq) (*CaptureVideoStreamRes, error)
 	mustEmbedUnimplementedFileRpcServer()
 }
 
@@ -294,6 +307,9 @@ func (UnimplementedFileRpcServer) RemoveFile(context.Context, *RemoveFileReq) (*
 }
 func (UnimplementedFileRpcServer) RemoveFiles(context.Context, *RemoveFilesReq) (*RemoveFileRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveFiles not implemented")
+}
+func (UnimplementedFileRpcServer) CaptureVideoStream(context.Context, *CaptureVideoStreamReq) (*CaptureVideoStreamRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CaptureVideoStream not implemented")
 }
 func (UnimplementedFileRpcServer) mustEmbedUnimplementedFileRpcServer() {}
 func (UnimplementedFileRpcServer) testEmbeddedByValue()                 {}
@@ -564,6 +580,24 @@ func _FileRpc_RemoveFiles_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FileRpc_CaptureVideoStream_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CaptureVideoStreamReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileRpcServer).CaptureVideoStream(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileRpc_CaptureVideoStream_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileRpcServer).CaptureVideoStream(ctx, req.(*CaptureVideoStreamReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FileRpc_ServiceDesc is the grpc.ServiceDesc for FileRpc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -622,6 +656,10 @@ var FileRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveFiles",
 			Handler:    _FileRpc_RemoveFiles_Handler,
+		},
+		{
+			MethodName: "CaptureVideoStream",
+			Handler:    _FileRpc_CaptureVideoStream_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

@@ -97,3 +97,8 @@ func (s *FileRpcServer) RemoveFiles(ctx context.Context, in *file.RemoveFilesReq
 	l := logic.NewRemoveFilesLogic(ctx, s.svcCtx)
 	return l.RemoveFiles(in)
 }
+
+func (s *FileRpcServer) CaptureVideoStream(ctx context.Context, in *file.CaptureVideoStreamReq) (*file.CaptureVideoStreamRes, error) {
+	l := logic.NewCaptureVideoStreamLogic(ctx, s.svcCtx)
+	return l.CaptureVideoStream(in)
+}

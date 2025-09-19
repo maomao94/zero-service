@@ -254,6 +254,19 @@ message RemoveFilesReq {
   repeated string filename = 4; // 上传文件名
 }
 
+message CaptureVideoStreamReq {
+  string tenantId = 1; // 租户ID
+  string code = 2; // 资源编号
+  string bucketName = 3; // 存储桶名称
+  string pathPrefix = 5; // 默认值 default 文件路径前缀, 文件格式 pathPrefix/20060102/uuid.ext
+
+  string streamUrl = 6; // 视频流
+}
+
+message CaptureVideoStreamRes {
+  File file = 1;
+}
+
 service FileRpc {
   rpc Ping (Req) returns (Res);
   rpc OssDetail (OssDetailReq) returns (OssDetailRes); // 查看存储详情
@@ -270,4 +283,5 @@ service FileRpc {
   rpc PutStreamFile (stream PutStreamFileReq) returns (PutStreamFileRes); // 上传文件-流上传
   rpc RemoveFile (RemoveFileReq) returns (RemoveFileRes); // 删除文件
   rpc RemoveFiles (RemoveFilesReq) returns (RemoveFileRes); // 批量删除文件
+  rpc CaptureVideoStream (CaptureVideoStreamReq) returns (CaptureVideoStreamRes); // 截取视频流图片
 }
