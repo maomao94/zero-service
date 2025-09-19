@@ -266,7 +266,7 @@ service FileRpc {
   rpc StatFile (StatFileReq) returns (StatFileRes); // 获取文件信息
   rpc SignUrl (SignUrlReq) returns (SignUrlRes); // 生成文件url
   rpc PutFile (PutFileReq) returns (PutFileRes); // 上传文件
-  rpc PutChunkFile (stream PutChunkFileReq) returns (stream PutChunkFileRes); // 上传文件-流上传（双向流）
+  rpc PutChunkFile (stream PutChunkFileReq) returns (stream PutChunkFileRes); // 上传文件-流上传（双向流） gtw 特供，可以废弃用下面的
   rpc PutStreamFile (stream PutStreamFileReq) returns (PutStreamFileRes); // 上传文件-流上传
   rpc RemoveFile (RemoveFileReq) returns (RemoveFileRes); // 删除文件
   rpc RemoveFiles (RemoveFilesReq) returns (RemoveFileRes); // 批量删除文件
