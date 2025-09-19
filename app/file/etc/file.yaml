@@ -10,6 +10,14 @@ Log:
   Encoding: plain
   #  Mode: file
   Path: /opt/logs/file.rpc
+NacosConfig:
+  IsRegister: true
+  Host: 127.0.0.1
+  Port: 8848
+  Username: nacos
+  PassWord: nacos
+  NamespaceId: public
+  ServiceName: file
 Redis:
   Host: 127.0.0.1:36379
   Type: node
