@@ -22,10 +22,17 @@ func main() {
 	conf.MustLoad(*configFile, &c)
 
 	server := rest.MustNewServer(c.RestConf, rest.WithCustomCors(func(header http.Header) {
-		header.Set("Access-Control-Allow-Origin", "*")
-		header.Add("Access-Control-Allow-Headers", "UserHeader1, UserHeader2")
-		header.Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
-		header.Set("Access-Control-Expose-Headers", "Content-Length, Content-Type")
+		origin := header.Get("Origin") // 动态获取请求域名
+		if origin != "" {
+			header.Set("Access-Control-Allow-Origin", origin) // 指定允许的域
+		}
+		header.Set("Vary", "Origin") // 避免缓存污染
+
+		header.Set("Access-Control-Allow-Credentials", "true")                                                                          // 允许携带 Cookie/Token
+		header.Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")                                            // 支持的请求方法
+		header.Set("Access-Control-Allow-Headers", "Content-Type, AccessToken, X-CSRF-Token, Authorization, Token, X-Token, X-User-Id") // 支持的请求头
+		header.Set("Access-Control-Expose-Headers", "Content-Length, Content-Type")                                                     // 前端可以读取的响应头
+
 	}, nil, "*"))
 	defer server.Stop()
 
