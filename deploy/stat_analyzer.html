@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>系统 Stats 日志分析 | 高级可视化工具</title>
+    <title>Go-Zero Stats 日志分析工具</title>
     <!-- 引入外部资源 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
@@ -20,7 +20,6 @@
                         success: '#52C41A',
                         warning: '#FAAD14',
                         danger: '#FF4D4F',
-                        purple: '#722ED1',
                         dark: '#1D2129',
                         'dark-2': '#4E5969',
                         'light-1': '#F2F3F5',
@@ -50,7 +49,7 @@
                 background: linear-gradient(135deg, #165DFF 0%, #0A4BDB 100%);
             }
             .chart-container {
-                min-height: 450px;
+                min-height: 350px;
                 width: 100%;
             }
             .hide-scrollbar::-webkit-scrollbar {
@@ -59,6 +58,18 @@
             .hide-scrollbar {
                 -ms-overflow-style: none;
                 scrollbar-width: none;
+            }
+            .data-table th {
+                font-weight: 500;
+            }
+            .data-table tr:hover {
+                background-color: rgba(22, 93, 255, 0.02);
+            }
+            .card-shadow-hover {
+                transition: box-shadow 0.3s ease;
+            }
+            .card-shadow-hover:hover {
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
             }
         }
     </style>
@@ -70,14 +81,14 @@
         <div class="flex justify-between items-center h-16">
             <div class="flex items-center">
                 <div class="flex-shrink-0 flex items-center">
-                    <i class="fa fa-bar-chart text-primary text-2xl mr-2"></i>
-                    <span class="text-xl font-semibold">系统 Stats 分析</span>
+                    <i class="fa fa-line-chart text-primary text-2xl mr-2"></i>
+                    <span class="text-xl font-semibold">Go-Zero Stats 分析</span>
                 </div>
             </div>
             <div class="flex items-center space-x-4">
-                <button class="text-dark-2 hover:text-primary transition-colors" id="zoomHelpBtn">
+                <button class="text-dark-2 hover:text-primary transition-colors" id="helpBtn">
                     <i class="fa fa-question-circle"></i>
-                    <span class="ml-1 hidden sm:inline">图表操作帮助</span>
+                    <span class="ml-1 hidden sm:inline">使用帮助</span>
                 </button>
             </div>
         </div>
@@ -85,24 +96,43 @@
 </header>
 
 <!-- 帮助提示框 -->
-<div id="zoomHelp" class="fixed top-20 right-4 bg-white rounded-lg shadow-lg p-4 w-64 z-50 hidden">
-    <h4 class="font-medium text-dark mb-2">图表操作指南</h4>
-    <ul class="text-sm text-dark-2 space-y-1">
-        <li><i class="fa fa-search-plus text-primary mr-1"></i> 鼠标滚轮：缩放图表</li>
-        <li><i class="fa fa-arrows text-primary mr-1"></i> 按住鼠标拖动：选择区域</li>
-        <li><i class="fa fa-refresh text-primary mr-1"></i> 双击图表：重置视图</li>
-        <li><i class="fa fa-expand text-primary mr-1"></i> 点击全屏按钮：查看大图</li>
-    </ul>
-    <button id="closeHelp" class="mt-3 text-xs text-primary hover:text-primary/80">关闭</button>
+<div id="helpModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-xl p-6 w-full max-w-lg">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-medium text-lg">使用帮助</h3>
+            <button id="closeHelpModal" class="text-dark-2 hover:text-primary transition-colors">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div class="space-y-4 text-sm">
+            <div>
+                <h4 class="font-medium mb-1">支持的日志类型：</h4>
+                <ul class="list-disc pl-5 text-dark-2 space-y-1">
+                    <li>内存使用统计 (CPU: xxm, MEMORY: Alloc=xxMi)</li>
+                    <li>限流状态统计 (shedding_stat [1m], cpu: xx, total: xx, pass: xx, drop: xx)</li>
+                    <li>性能指标统计 (qps: xx.x/s, drops: xx, avg time: xx.xms)</li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-medium mb-1">图表操作：</h4>
+                <ul class="list-disc pl-5 text-dark-2 space-y-1">
+                    <li><i class="fa fa-search-plus text-primary"></i> 鼠标滚轮：缩放图表</li>
+                    <li><i class="fa fa-arrows text-primary"></i> 按住鼠标拖动：选择区域</li>
+                    <li><i class="fa fa-refresh text-primary"></i> 双击图表：重置视图</li>
+                    <li><i class="fa fa-expand text-primary"></i> 点击全屏按钮：查看大图</li>
+                </ul>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- 主内容区 -->
 <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- 页面标题和描述 -->
     <div class="mb-8 text-center">
-        <h1 class="text-[clamp(1.75rem,3vw,2.5rem)] font-bold text-dark mb-2">系统 Stats 日志分析工具</h1>
+        <h1 class="text-[clamp(1.75rem,3vw,2.5rem)] font-bold text-dark mb-2">Go-Zero Stats 日志分析工具</h1>
         <p class="text-dark-2 max-w-2xl mx-auto">
-            支持1天级日志数据（1440条/天），图表可缩放、拖拽选择时间段，内存单位清晰显示
+            专业解析Go-Zero微服务stat日志，可视化展示内存使用、CPU占用、QPS和限流状态
         </p>
     </div>
 
@@ -113,8 +143,8 @@
                 <div id="dropArea" class="border-2 border-dashed border-light-2 rounded-lg w-full py-12 px-4 text-center mb-6 cursor-pointer hover:border-primary transition-colors">
                     <input type="file" id="fileInput" accept=".txt,.log" class="hidden" />
                     <i class="fa fa-cloud-upload text-4xl text-primary mb-4"></i>
-                    <h3 class="text-lg font-medium mb-2">拖放系统 stats 日志文件到此处，或点击选择文件</h3>
-                    <p class="text-dark-2 text-sm">支持 .txt 和 .log 格式，自动处理大量数据（1天日志）</p>
+                    <h3 class="text-lg font-medium mb-2">拖放Go-Zero stat日志文件到此处，或点击选择文件</h3>
+                    <p class="text-dark-2 text-sm">支持 .txt 和 .log 格式，自动处理1天级日志数据</p>
                 </div>
 
                 <div id="fileInfo" class="hidden w-full mb-6 p-4 bg-light-1 rounded-lg">
@@ -134,7 +164,7 @@
 
                 <button id="parseBtn" class="gradient-bg text-white px-6 py-3 rounded-lg font-medium flex items-center opacity-70 cursor-not-allowed transition-all hover:opacity-100">
                     <i class="fa fa-play-circle mr-2"></i>
-                    开始分析（支持1天日志）
+                    开始分析
                 </button>
             </div>
         </div>
@@ -150,172 +180,137 @@
 
     <!-- 分析结果区域（默认隐藏） -->
     <div id="resultsArea" class="hidden">
-        <!-- 概览统计卡片 -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-xl shadow-card p-6 card-transition hover:shadow-card-hover">
-                <div class="flex items-start justify-between">
-                    <div>
-                        <p class="text-dark-2 text-sm mb-1">总日志条目</p>
-                        <h3 id="totalEntries" class="text-2xl font-bold">0</h3>
-                    </div>
-                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                        <i class="fa fa-file-text-o"></i>
-                    </div>
-                </div>
-                <div class="mt-4 h-1 w-full bg-light-1 rounded-full overflow-hidden">
-                    <div id="totalEntriesProgress" class="h-full gradient-bg rounded-full" style="width: 100%"></div>
+        <!-- 数据概览 -->
+        <div class="bg-white rounded-xl shadow-card p-6 mb-8">
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+                <h2 class="text-xl font-semibold">数据概览</h2>
+                <div class="text-sm text-dark-2">
+                    <span id="timeRange">-- 至 --</span>
                 </div>
             </div>
-
-            <div class="bg-white rounded-xl shadow-card p-6 card-transition hover:shadow-card-hover">
-                <div class="flex items-start justify-between">
-                    <div>
-                        <p class="text-dark-2 text-sm mb-1">服务数量</p>
-                        <h3 id="serviceCount" class="text-2xl font-bold">0</h3>
-                    </div>
-                    <div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
-                        <i class="fa fa-sitemap"></i>
-                    </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div class="p-4 rounded-lg bg-light-1">
+                    <p class="text-dark-2 text-xs mb-1">总日志条目</p>
+                    <p id="totalEntries" class="text-2xl font-bold">0</p>
                 </div>
-                <div class="mt-4 h-1 w-full bg-light-1 rounded-full overflow-hidden">
-                    <div id="serviceProgress" class="h-full bg-secondary rounded-full" style="width: 0%"></div>
+                <div class="p-4 rounded-lg bg-light-1">
+                    <p class="text-dark-2 text-xs mb-1">服务数量</p>
+                    <p id="serviceCount" class="text-2xl font-bold">0</p>
                 </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-card p-6 card-transition hover:shadow-card-hover">
-                <div class="flex items-start justify-between">
-                    <div>
-                        <p class="text-dark-2 text-sm mb-1">平均内存（MiB）</p>
-                        <h3 id="avgMemory" class="text-2xl font-bold">0.0</h3>
-                    </div>
-                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                        <i class="fa fa-microchip"></i>
-                    </div>
+                <div class="p-4 rounded-lg bg-light-1">
+                    <p class="text-dark-2 text-xs mb-1">平均内存</p>
+                    <p id="avgMemory" class="text-2xl font-bold">0.00 MiB</p>
                 </div>
-                <div class="mt-4 h-1 w-full bg-light-1 rounded-full overflow-hidden">
-                    <div id="avgMemoryProgress" class="h-full bg-primary rounded-full" style="width: 0%"></div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-card p-6 card-transition hover:shadow-card-hover">
-                <div class="flex items-start justify-between">
-                    <div>
-                        <p class="text-dark-2 text-sm mb-1">总丢弃数</p>
-                        <h3 id="totalDrops" class="text-2xl font-bold">0</h3>
-                    </div>
-                    <div class="w-10 h-10 rounded-full bg-danger/10 flex items-center justify-center text-danger">
-                        <i class="fa fa-exclamation-triangle"></i>
-                    </div>
-                </div>
-                <div class="mt-4 h-1 w-full bg-light-1 rounded-full overflow-hidden">
-                    <div id="totalDropsProgress" class="h-full bg-danger rounded-full" style="width: 0%"></div>
+                <div class="p-4 rounded-lg bg-light-1">
+                    <p class="text-dark-2 text-xs mb-1">总丢弃请求</p>
+                    <p id="totalDrops" class="text-2xl font-bold">0</p>
                 </div>
             </div>
         </div>
 
-        <!-- 服务分布和资源概览 -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white rounded-xl shadow-card p-6 card-transition hover:shadow-card-hover lg:col-span-1">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-semibold text-lg">服务分布</h3>
+        <!-- 关键指标图表 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- 内存趋势图 -->
+            <div class="bg-white rounded-xl shadow-card p-6 card-shadow-hover">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold">内存使用趋势 (MiB)</h3>
                     <div class="flex space-x-2">
-                        <button class="chart-refresh p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="serviceDistribution">
+                        <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="memoryTrend">
                             <i class="fa fa-refresh"></i>
                         </button>
-                        <button class="chart-expand p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="serviceDistribution">
+                        <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="memoryTrend">
                             <i class="fa fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container" id="memoryTrendChart"></div>
+            </div>
+
+            <!-- QPS和丢弃数趋势 -->
+            <div class="bg-white rounded-xl shadow-card p-6 card-shadow-hover">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold">QPS和丢弃数趋势</h3>
+                    <div class="flex space-x-2">
+                        <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="qpsTrend">
+                            <i class="fa fa-refresh"></i>
+                        </button>
+                        <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="qpsTrend">
+                            <i class="fa fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container" id="qpsTrendChart"></div>
+            </div>
+        </div>
+
+        <!-- 服务性能和限流状态 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <!-- 服务分布 -->
+            <div class="bg-white rounded-xl shadow-card p-6 card-shadow-hover">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold">服务分布</h3>
+                    <div class="flex space-x-2">
+                        <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="serviceDistribution">
+                            <i class="fa fa-refresh"></i>
                         </button>
                     </div>
                 </div>
                 <div class="chart-container" id="serviceDistributionChart"></div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-card p-6 card-transition hover:shadow-card-hover lg:col-span-2">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-semibold text-lg">系统资源使用概况</h3>
+            <!-- CPU占用趋势 -->
+            <div class="bg-white rounded-xl shadow-card p-6 card-shadow-hover lg:col-span-2">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold">CPU占用趋势 (m)</h3>
                     <div class="flex space-x-2">
-                        <button class="chart-refresh p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="resourceOverview">
+                        <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="cpuTrend">
                             <i class="fa fa-refresh"></i>
                         </button>
-                        <button class="chart-expand p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="resourceOverview">
+                        <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="cpuTrend">
                             <i class="fa fa-expand"></i>
                         </button>
                     </div>
                 </div>
-                <div class="chart-container" id="resourceOverviewChart"></div>
+                <div class="chart-container" id="cpuTrendChart"></div>
             </div>
         </div>
 
-        <!-- gRPC 专用分析图表 -->
-        <div id="grpcSection" class="hidden bg-white rounded-xl shadow-card p-6 card-transition hover:shadow-card-hover mb-8">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="font-semibold text-lg">gRPC 性能指标（1分钟/条）</h3>
-                <div class="flex space-x-2">
-                    <button class="chart-refresh p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="grpcMetrics">
-                        <i class="fa fa-refresh"></i>
-                    </button>
-                    <button class="chart-expand p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="grpcMetrics">
-                        <i class="fa fa-expand"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="chart-container" id="grpcMetricsChart"></div>
-        </div>
-
-        <!-- 内存专用图表 -->
-        <div class="bg-white rounded-xl shadow-card p-6 card-transition hover:shadow-card-hover mb-8">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="font-semibold text-lg">内存趋势分析（单位：MiB）</h3>
-                <div class="flex space-x-2">
-                    <button class="chart-refresh p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="memoryTrend">
-                        <i class="fa fa-refresh"></i>
-                    </button>
-                    <button class="chart-expand p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="memoryTrend">
-                        <i class="fa fa-expand"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="chart-container" id="memoryTrendChart"></div>
-        </div>
-
-        <!-- 服务性能趋势图表区域 -->
-        <div id="serviceChartsContainer" class="mb-8">
+        <!-- 限流状态分析 -->
+        <div class="bg-white rounded-xl shadow-card p-6 mb-8 card-shadow-hover">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="font-semibold text-lg">各服务性能趋势</h3>
+                <h3 class="font-semibold">限流状态分析</h3>
+                <div class="flex space-x-2">
+                    <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="sheddingStats">
+                        <i class="fa fa-refresh"></i>
+                    </button>
+                    <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="sheddingStats">
+                        <i class="fa fa-expand"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-container" id="sheddingStatsChart"></div>
+        </div>
+
+        <!-- 服务性能详情 -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-semibold">服务性能详情</h3>
                 <div>
-                    <select id="dataSample" class="border border-light-2 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary">
-                        <option value="200">默认显示最近200条</option>
-                        <option value="500">显示最近500条</option>
-                        <option value="all">显示全部数据</option>
+                    <select id="serviceFilter" class="border border-light-2 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary">
+                        <option value="all">所有服务</option>
+                        <!-- 服务选项将动态生成 -->
                     </select>
                 </div>
-            </div>
-            <div class="grid grid-cols-1 gap-6" id="serviceChartsGrid">
-                <!-- 服务图表将动态生成在这里 -->
-            </div>
-        </div>
-
-        <!-- 数据表格区域 -->
-        <div class="mb-8">
-            <h3 class="font-semibold text-lg mb-4">系统 Stats 日志详细数据（1分钟/条）</h3>
-
-            <!-- 服务切换标签 -->
-            <div class="flex border-b border-light-2 mb-4 overflow-x-auto pb-1 hide-scrollbar">
-                <button class="data-tab px-4 py-2 font-medium text-primary border-b-2 border-primary mr-2 whitespace-nowrap" data-service="all">
-                    全部日志
-                </button>
-                <!-- 服务标签将动态生成在这里 -->
             </div>
 
             <!-- 表格容器 -->
             <div class="bg-white rounded-xl shadow-card overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
+                    <table class="w-full text-sm data-table">
                         <thead>
                         <tr class="bg-light-1">
                             <th class="px-6 py-3 text-left font-medium text-dark-2">日志时间</th>
                             <th class="px-6 py-3 text-left font-medium text-dark-2">服务名</th>
-                            <th class="px-6 py-3 text-left font-medium text-dark-2">类型</th>
                             <th class="px-6 py-3 text-left font-medium text-dark-2">CPU占用(m)</th>
                             <th class="px-6 py-3 text-left font-medium text-dark-2">实时内存(MiB)</th>
                             <th class="px-6 py-3 text-left font-medium text-dark-2">系统内存(MiB)</th>
@@ -336,13 +331,21 @@
                     <div class="text-dark-2 text-sm">
                         显示 <span id="currentRange">0-0</span> 条，共 <span id="totalCount">0</span> 条
                     </div>
-                    <div class="flex space-x-2">
-                        <button id="prevPage" class="px-3 py-1 border border-light-2 rounded hover:bg-light-1 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                            <i class="fa fa-chevron-left"></i>
-                        </button>
-                        <button id="nextPage" class="px-3 py-1 border border-light-2 rounded hover:bg-light-1 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                            <i class="fa fa-chevron-right"></i>
-                        </button>
+                    <div class="flex items-center space-x-2">
+                        <select id="pageSize" class="border border-light-2 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary">
+                            <option value="20">20条/页</option>
+                            <option value="50">50条/页</option>
+                            <option value="100">100条/页</option>
+                        </select>
+                        <div class="flex space-x-2">
+                            <button id="prevPage" class="px-3 py-1 border border-light-2 rounded hover:bg-light-1 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                <i class="fa fa-chevron-left"></i>
+                            </button>
+                            <span id="pageInfo" class="px-2 py-1 text-sm">第 1 页</span>
+                            <button id="nextPage" class="px-3 py-1 border border-light-2 rounded hover:bg-light-1 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                <i class="fa fa-chevron-right"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -354,20 +357,20 @@
         <div class="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-6">
             <i class="fa fa-line-chart text-4xl text-primary"></i>
         </div>
-        <h3 class="text-xl font-semibold mb-2">准备好分析您的系统 Stats 日志了吗？</h3>
-        <p class="text-dark-2 max-w-md mb-8">支持1天级日志数据（1440条），图表可缩放、拖拽选择时间段，内存单位清晰显示</p>
+        <h3 class="text-xl font-semibold mb-2">准备好分析您的Go-Zero Stats日志了吗？</h3>
+        <p class="text-dark-2 max-w-md mb-8">专业解析Go-Zero微服务stat日志，可视化展示内存使用、CPU占用、QPS和限流状态</p>
         <div class="flex flex-wrap justify-center gap-4">
             <div class="flex items-center bg-white px-4 py-3 rounded-lg shadow-sm">
                 <i class="fa fa-check-circle text-success mr-2"></i>
-                <span>1天日志自动适配</span>
+                <span>支持多种日志类型</span>
             </div>
             <div class="flex items-center bg-white px-4 py-3 rounded-lg shadow-sm">
                 <i class="fa fa-check-circle text-success mr-2"></i>
-                <span>图表滚轮缩放</span>
+                <span>图表交互功能</span>
             </div>
             <div class="flex items-center bg-white px-4 py-3 rounded-lg shadow-sm">
                 <i class="fa fa-check-circle text-success mr-2"></i>
-                <span>内存单位清晰显示</span>
+                <span>性能指标全面展示</span>
             </div>
         </div>
     </div>
@@ -375,8 +378,8 @@
     <!-- 加载状态 -->
     <div id="loadingState" class="hidden flex flex-col items-center justify-center py-16">
         <div class="w-16 h-16 border-4 border-light-2 border-t-primary rounded-full animate-spin mb-6"></div>
-        <h3 class="text-lg font-medium mb-2">正在解析系统 Stats 日志数据...</h3>
-        <p class="text-dark-2" id="loadingProgress">准备解析文件（支持1天数据）</p>
+        <h3 class="text-lg font-medium mb-2">正在解析Go-Zero Stats日志数据...</h3>
+        <p class="text-dark-2" id="loadingProgress">准备解析文件</p>
     </div>
 
     <!-- 图表全屏查看模态框 -->
@@ -384,58 +387,19 @@
         <div class="bg-white rounded-xl w-full max-w-5xl max-h-[90vh] flex flex-col">
             <div class="p-4 border-b border-light-2 flex justify-between items-center">
                 <h3 id="modalChartTitle" class="font-medium">图表详情</h3>
-                <button id="closeModal" class="text-dark-2 hover:text-dark transition-colors">
+                <button id="closeChartModalHandler" class="text-dark-2 hover:text-primary transition-colors">
                     <i class="fa fa-times"></i>
                 </button>
             </div>
-            <div class="flex-1 p-4" id="modalChartContainer">
-                <!-- 全屏图表将在这里渲染 -->
-            </div>
+            <div class="flex-grow p-2" id="modalChartContainer"></div>
         </div>
     </div>
 </main>
 
 <script>
-    // 全局变量
-    let logDataMap = {};
-    let allData = [];
-    let services = [];
-    let hasGrpcData = false;
-    let currentPage = 1;
-    const pageSize = 15; // 增大每页显示数量
-    let currentTab = 'all';
-    let charts = {};
-    let modalChartInstance = null;
-    let dataSample = '200'; // 默认显示最近200条数据
-
-    // 服务颜色映射
-    const serviceColors = {
-        'rpc': '#36CFC9',
-        'file.rpc': '#165DFF',
-        'http': '#52C41A',
-        'queue': '#722ED1',
-        'db': '#FAAD14',
-        'cache': '#F53F3F',
-        'default': '#165DFF'
-    };
-
-    // 获取服务对应的颜色
-    function getServiceColor(service) {
-        if (serviceColors[service]) return serviceColors[service];
-
-        // 为未知服务生成随机但一致的颜色
-        let hash = 0;
-        for (let i = 0; i < service.length; i++) {
-            hash = service.charCodeAt(i) + ((hash << 5) - hash);
-        }
-        const color = `hsl(${hash % 360}, 70%, 60%)`;
-        serviceColors[service] = color;
-        return color;
-    }
-
-    // DOM元素
-    const fileInput = document.getElementById('fileInput');
+    // DOM 元素
     const dropArea = document.getElementById('dropArea');
+    const fileInput = document.getElementById('fileInput');
     const fileInfo = document.getElementById('fileInfo');
     const fileName = document.getElementById('fileName');
     const fileSize = document.getElementById('fileSize');
@@ -453,211 +417,143 @@
     const nextPage = document.getElementById('nextPage');
     const currentRange = document.getElementById('currentRange');
     const totalCount = document.getElementById('totalCount');
-    const dataTabsContainer = document.querySelector('.flex.border-b');
+    const pageInfo = document.getElementById('pageInfo');
+    const pageSize = document.getElementById('pageSize');
+    const serviceFilter = document.getElementById('serviceFilter');
+    const helpBtn = document.getElementById('helpBtn');
+    const helpModal = document.getElementById('helpModal');
+    const closeHelpModal = document.getElementById('closeHelpModal');
     const chartModal = document.getElementById('chartModal');
-    const modalChartTitle = document.getElementById('modalChartTitle');
+    const closeChartModalHandler = document.getElementById('closeChartModalHandler');
     const modalChartContainer = document.getElementById('modalChartContainer');
-    const closeModal = document.getElementById('closeModal');
-    const dataSampleSelect = document.getElementById('dataSample');
-    const grpcSection = document.getElementById('grpcSection');
-    const zoomHelpBtn = document.getElementById('zoomHelpBtn');
-    const zoomHelp = document.getElementById('zoomHelp');
-    const closeHelp = document.getElementById('closeHelp');
+    const modalChartTitle = document.getElementById('modalChartTitle');
+    const timeRange = document.getElementById('timeRange');
 
-    // 初始化事件监听
-    function initEventListeners() {
-        // 文件上传相关事件
+    // 数据存储
+    let logData = []; // 所有日志数据
+    let services = []; // 识别到的服务列表
+    let charts = {}; // 图表实例
+    let currentPage = 1; // 当前页码
+    let selectedFile = null; // 当前选择的文件
+
+    // 初始化
+    function init() {
+        // 事件监听
         dropArea.addEventListener('click', () => fileInput.click());
+        dropArea.addEventListener('dragover', handleDragOver);
+        dropArea.addEventListener('drop', handleDrop);
         fileInput.addEventListener('change', handleFileSelect);
-        removeFile.addEventListener('click', clearFileSelection);
-
-        // 拖放事件
-        dropArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropArea.classList.add('border-primary');
-        });
-
-        dropArea.addEventListener('dragleave', () => {
-            dropArea.classList.remove('border-primary');
-        });
-
-        dropArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropArea.classList.remove('border-primary');
-
-            if (e.dataTransfer.files.length) {
-                fileInput.files = e.dataTransfer.files;
-                handleFileSelect({ target: fileInput });
-            }
-        });
-
-        // 解析按钮点击事件
+        removeFile.addEventListener('click', removeSelectedFile);
         parseBtn.addEventListener('click', parseLogFile);
-
-        // 分页事件
-        prevPage.addEventListener('click', () => changePage(currentPage - 1));
-        nextPage.addEventListener('click', () => changePage(currentPage + 1));
-
-        // 数据样本选择事件
-        dataSampleSelect.addEventListener('change', (e) => {
-            dataSample = e.target.value;
-            renderAllCharts(); // 重新渲染所有图表
-        });
-
-        // 窗口大小变化时重绘图表
-        window.addEventListener('resize', () => {
-            Object.values(charts).forEach(chart => chart.resize());
-            if (modalChartInstance) {
-                modalChartInstance.resize();
-            }
-        });
-
-        // 关闭模态框事件
-        closeModal.addEventListener('click', closeChartModal);
-
-        // 图表操作帮助
-        zoomHelpBtn.addEventListener('click', () => {
-            zoomHelp.classList.toggle('hidden');
-        });
-
-        closeHelp.addEventListener('click', () => {
-            zoomHelp.classList.add('hidden');
-        });
-
-        // 点击页面其他区域关闭帮助框
-        document.addEventListener('click', (e) => {
-            if (!zoomHelpBtn.contains(e.target) && !zoomHelp.contains(e.target)) {
-                zoomHelp.classList.add('hidden');
-            }
-        });
-
-        // 为图表刷新和全屏按钮添加事件委托
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.chart-refresh')) {
-                const btn = e.target.closest('.chart-refresh');
-                const chartId = btn.getAttribute('data-chart');
-                refreshChart(chartId);
-            } else if (e.target.closest('.chart-expand')) {
-                const btn = e.target.closest('.chart-expand');
-                const chartId = btn.getAttribute('data-chart');
-                openChartInModal(chartId);
-            }
+        prevPage.addEventListener('click', goToPrevPage);
+        nextPage.addEventListener('click', goToNextPage);
+        pageSize.addEventListener('change', changePageSize);
+        serviceFilter.addEventListener('change', filterTableData);
+        helpBtn.addEventListener('click', () => helpModal.classList.remove('hidden'));
+        closeHelpModal.addEventListener('click', () => helpModal.classList.add('hidden'));
+        closeChartModalHandler.addEventListener('click', () => chartModal.classList.add('hidden'));
+        window.addEventListener('resize', handleResize);
+        document.querySelectorAll('.chart-action-btn').forEach(btn => {
+            btn.addEventListener('click', handleChartAction);
         });
     }
 
-    // 处理文件选择
-    function handleFileSelect(e) {
-        const file = e.target.files[0];
-        if (!file) return;
+    // 文件拖放处理
+    function handleDragOver(e) {
+        e.preventDefault();
+        dropArea.classList.add('border-primary');
+    }
 
-        // 验证文件类型
-        const fileExtension = file.name.split('.').pop().toLowerCase();
-        if (!['txt', 'log'].includes(fileExtension)) {
-            showStatus('error', '请上传 .txt 或 .log 格式的系统 stats 日志文件');
-            clearFileSelection();
-            return;
+    function handleDrop(e) {
+        e.preventDefault();
+        dropArea.classList.remove('border-primary');
+        if (e.dataTransfer.files.length) {
+            handleFile(e.dataTransfer.files[0]);
         }
+    }
 
-        // 显示文件信息
+    // 文件选择处理
+    function handleFileSelect(e) {
+        if (e.target.files.length) {
+            handleFile(e.target.files[0]);
+        }
+    }
+
+    // 处理选择的文件
+    function handleFile(file) {
+        selectedFile = file;
         fileName.textContent = file.name;
-        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-        fileSize.textContent = `${sizeMB} MB`;
+        fileSize.textContent = formatFileSize(file.size);
         fileInfo.classList.remove('hidden');
-
-        // 启用解析按钮
         parseBtn.classList.remove('opacity-70', 'cursor-not-allowed');
         parseBtn.classList.add('opacity-100', 'cursor-pointer');
-
-        // 隐藏状态消息
-        statusMessage.classList.add('hidden');
+        hideStatus();
     }
 
-    // 清除文件选择
-    function clearFileSelection() {
+    // 移除选择的文件
+    function removeSelectedFile() {
+        selectedFile = null;
         fileInput.value = '';
         fileInfo.classList.add('hidden');
         parseBtn.classList.add('opacity-70', 'cursor-not-allowed');
         parseBtn.classList.remove('opacity-100', 'cursor-pointer');
+        hideStatus();
     }
 
-    // 显示状态消息
-    function showStatus(type, message) {
-        statusMessage.classList.remove('hidden', 'bg-success/10', 'text-success', 'bg-danger/10', 'text-danger');
-
-        if (type === 'success') {
-            statusMessage.classList.add('bg-success/10', 'text-success');
-            statusIcon.className = 'fa fa-check-circle mr-3 text-xl';
-        } else if (type === 'error') {
-            statusMessage.classList.add('bg-danger/10', 'text-danger');
-            statusIcon.className = 'fa fa-exclamation-circle mr-3 text-xl';
-        }
-
-        statusText.textContent = message;
+    // 格式化文件大小
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
+        else return (bytes / 1048576).toFixed(2) + ' MB';
     }
 
     // 解析日志文件
     function parseLogFile() {
-        const file = fileInput.files[0];
-        if (!file) return;
+        if (!selectedFile) return;
 
         // 显示加载状态
         emptyState.classList.add('hidden');
         resultsArea.classList.add('hidden');
         loadingState.classList.remove('hidden');
-        loadingProgress.textContent = '正在读取系统 stats 日志内容...';
+        loadingProgress.textContent = '正在读取日志内容...';
 
         const reader = new FileReader();
 
         reader.onload = function(e) {
             try {
-                loadingProgress.textContent = '正在解析系统 stats 日志数据...';
+                loadingProgress.textContent = '正在解析日志数据...';
                 const content = e.target.result;
-
+                
                 // 重置数据
-                logDataMap = {};
+                logData = [];
                 services = [];
-                hasGrpcData = false;
-
+                
                 // 解析日志内容
                 parseLogContent(content);
-
+                
                 // 提取所有识别到的服务名
-                services = Object.keys(logDataMap);
-
-                // 检查是否有gRPC数据
-                hasGrpcData = services.includes('rpc');
-
-                // 准备所有数据的合并数组
-                allData = [];
-                services.forEach(service => {
-                    allData.push(...logDataMap[service].map(item => ({
-                        ...item,
-                        service,
-                        type: service === 'rpc' ? 'gRPC' : '微服务'
-                    })));
-                });
-                allData.sort((a, b) => new Date(a.time) - new Date(b.time));
-
-                // 更新统计卡片
-                updateStatsCards();
-
-                // 生成服务切换标签
-                generateServiceTabs();
-
+                const serviceSet = new Set(logData.map(item => item.service));
+                services = Array.from(serviceSet).sort();
+                
+                // 更新服务过滤器
+                updateServiceFilter();
+                
+                // 更新统计信息
+                updateStats();
+                
                 // 渲染图表
                 renderAllCharts();
-
+                
                 // 渲染表格
                 currentPage = 1;
                 renderTable();
-
+                
                 // 显示结果区域
                 loadingState.classList.add('hidden');
                 resultsArea.classList.remove('hidden');
-
+                
                 // 显示成功状态
-                showStatus('success',
-                    `解析完成，共发现 ${allData.length} 条记录（1分钟/条），识别到 ${services.length} 个服务${hasGrpcData ? '，包含gRPC指标' : ''}`);
+                showStatus('success', `解析完成，共发现 ${logData.length} 条记录，识别到 ${services.length} 个服务`);
             } catch (err) {
                 loadingState.classList.add('hidden');
                 emptyState.classList.remove('hidden');
@@ -672,7 +568,7 @@
             showStatus('error', '读取文件时发生错误');
         };
 
-        reader.readAsText(file, 'utf-8');
+        reader.readAsText(selectedFile, 'utf-8');
     }
 
     // 解析日志内容
@@ -681,144 +577,124 @@
         if (lines.length === 0) throw new Error('日志文件为空');
 
         const totalLines = lines.length;
-        let processedLines = 0;
-
-        lines.forEach(line => {
+        
+        lines.forEach((line, index) => {
             // 更新加载进度
-            processedLines++;
-            if (processedLines % 100 === 0) {
-                const progress = Math.floor((processedLines / totalLines) * 100);
-                loadingProgress.textContent = `正在解析系统 stats 日志数据... ${progress}%`;
+            if (index % 100 === 0) {
+                const progress = Math.floor((index / totalLines) * 100);
+                loadingProgress.textContent = `正在解析日志数据... ${progress}%`;
             }
 
             // 提取时间戳
-            const timeMatch = line.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}\+08:00/);
-            const time = timeMatch ? timeMatch[0] : '';
+            const timeMatch = line.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}\+08:00)/);
+            const time = timeMatch ? timeMatch[1] : '';
+            
+            if (!time) return; // 跳过无效行
+
+            // 初始化日志条目
+            const logEntry = {
+                time,
+                service: 'unknown',
+                cpu: '0',
+                alloc: '0.0',
+                totalAlloc: '0.0',
+                sys: '0.0',
+                numGC: '0',
+                qps: '0.0',
+                drops: '0',
+                shedding: '正常'
+            };
+
+            // 提取应用名
+            const appMatch = line.match(/app=([\w.]+)/);
+            if (appMatch) {
+                logEntry.service = appMatch[1].toLowerCase();
+            }
 
             // 提取CPU信息
             const cpuMatch = line.match(/CPU: (\d+)m/);
-            const cpu = cpuMatch ? cpuMatch[1] : '0';
+            if (cpuMatch) {
+                logEntry.cpu = cpuMatch[1];
+            }
 
-            // 提取内存信息（带单位）
-            const allocMatch = line.match(/Alloc=([\d.]+)Mi/);
-            const alloc = allocMatch ? allocMatch[1] : '';
+            // 提取内存信息
+            const allocMatch = line.match(/Alloc=(\d+\.\d+)Mi/);
+            if (allocMatch) {
+                logEntry.alloc = allocMatch[1];
+            }
 
-            const totalAllocMatch = line.match(/TotalAlloc=([\d.]+)Mi/);
-            const totalAlloc = totalAllocMatch ? totalAllocMatch[1] : '';
+            const totalAllocMatch = line.match(/TotalAlloc=(\d+\.\d+)Mi/);
+            if (totalAllocMatch) {
+                logEntry.totalAlloc = totalAllocMatch[1];
+            }
 
-            const sysMatch = line.match(/Sys=([\d.]+)Mi/);
-            const sys = sysMatch ? sysMatch[1] : '';
+            const sysMatch = line.match(/Sys=(\d+\.\d+)Mi/);
+            if (sysMatch) {
+                logEntry.sys = sysMatch[1];
+            }
 
             // 提取GC次数
             const numGCMatch = line.match(/NumGC=(\d+)/);
-            const numGC = numGCMatch ? numGCMatch[1] : '';
-
-            // 提取服务名
-            let service = null;
-
-            // 尝试从括号中提取服务名
-            const serviceMatch = line.match(/\(([^)]+)\)/);
-            if (serviceMatch) {
-                service = serviceMatch[1].toLowerCase();
-            }
-            // 从app=file.rpc提取服务名作为备选
-            else {
-                const appMatch = line.match(/app=([\w.]+)/);
-                if (appMatch) {
-                    service = appMatch[1].toLowerCase();
-                }
+            if (numGCMatch) {
+                logEntry.numGC = numGCMatch[1];
             }
 
             // 提取QPS信息
-            let qps = '0.0';
-            const qpsMatch = line.match(/qps: ([\d.]+)\/s/);
+            const qpsMatch = line.match(/qps: (\d+\.\d+)\/s/);
             if (qpsMatch) {
-                qps = qpsMatch[1];
+                logEntry.qps = qpsMatch[1];
             }
 
             // 提取丢弃数
-            let drops = '0';
             const dropsMatch = line.match(/drops: (\d+)/);
             if (dropsMatch) {
-                drops = dropsMatch[1];
+                logEntry.drops = dropsMatch[1];
             }
 
             // 提取限流状态
-            let shedding = '无数据';
-
-            // 针对gRPC的限流状态解析
-            const grpcSheddingMatch = line.match(/shedding_stat \[1m\], cpu: (\d+), total: (\d+), pass: (\d+), drop: (\d+)/);
-            if (grpcSheddingMatch) {
-                shedding = `cpu:${grpcSheddingMatch[1]}, total:${grpcSheddingMatch[2]}, pass:${grpcSheddingMatch[3]}, drop:${grpcSheddingMatch[4]}`;
-            }
-            // 通用限流状态解析
-            else if (line.includes('shedding')) {
-                const sheddingMatch = line.match(/shedding[^,]+/);
-                if (sheddingMatch) {
-                    shedding = sheddingMatch[0];
-                }
+            const sheddingMatch = line.match(/shedding_stat \[1m\], cpu: (\d+), total: (\d+), pass: (\d+), drop: (\d+)/);
+            if (sheddingMatch) {
+                const dropCount = parseInt(sheddingMatch[4]);
+                logEntry.shedding = dropCount > 0 ? `丢弃: ${dropCount}` : '正常';
+                logEntry.drops = sheddingMatch[4]; // 更新丢弃数
             }
 
-            // 只保留有效数据
-            if (service && time && (alloc || qps !== '0.0' || cpu !== '0')) {
-                // 初始化服务数组
-                if (!logDataMap[service]) {
-                    logDataMap[service] = [];
-                }
-                logDataMap[service].push({
-                    time, cpu, alloc, totalAlloc, sys, numGC, qps, drops, shedding
-                });
-            }
+            // 将日志条目添加到数据列表
+            logData.push(logEntry);
         });
+
+        // 按时间排序
+        logData.sort((a, b) => new Date(a.time) - new Date(b.time));
 
         // 检查是否有有效数据
-        const total = Object.values(logDataMap).reduce((sum, list) => sum + list.length, 0);
-        if (total === 0) throw new Error('未提取到有效日志数据，请检查日志格式');
+        if (logData.length === 0) throw new Error('未提取到有效日志数据，请检查日志格式');
     }
 
-    // 生成服务切换标签
-    function generateServiceTabs() {
-        // 清除现有标签（保留"全部日志"标签）
-        const existingTabs = dataTabsContainer.querySelectorAll('.data-tab:not([data-service="all"])');
-        existingTabs.forEach(tab => tab.remove());
+    // 更新服务过滤器
+    function updateServiceFilter() {
+        // 清空现有选项（保留"所有服务"选项）
+        while (serviceFilter.options.length > 1) {
+            serviceFilter.remove(1);
+        }
 
-        // 为每个服务创建标签
-        const sortedServices = [...services].sort((a, b) => {
-            if (a === 'rpc') return -1;
-            if (b === 'rpc') return 1;
-            return a.localeCompare(b);
-        });
-
-        sortedServices.forEach(service => {
-            const tab = document.createElement('button');
-            tab.className = 'data-tab px-4 py-2 font-medium text-dark-2 hover:text-primary mr-2 whitespace-nowrap';
-            tab.setAttribute('data-service', service);
-
-            if (service === 'rpc') {
-                tab.innerHTML = `<span class="inline-flex items-center">
-                        <i class="fa fa-exchange text-purple mr-1"></i> gRPC 日志
-                    </span>`;
-            } else {
-                tab.textContent = `${getServiceName(service)} 日志`;
-            }
-
-            tab.addEventListener('click', () => {
-                switchDataTab(service);
-            });
-
-            dataTabsContainer.appendChild(tab);
+        // 添加新的服务选项
+        services.forEach(service => {
+            const option = document.createElement('option');
+            option.value = service;
+            option.textContent = service;
+            serviceFilter.appendChild(option);
         });
     }
 
-    // 更新统计卡片
-    function updateStatsCards() {
-        const total = allData.length;
+    // 更新统计信息
+    function updateStats() {
+        const total = logData.length;
         const serviceCount = services.length;
 
         // 计算平均内存
         let totalMemory = 0;
         let memoryCount = 0;
-        allData.forEach(item => {
+        logData.forEach(item => {
             const memory = parseFloat(item.alloc);
             if (!isNaN(memory)) {
                 totalMemory += memory;
@@ -829,23 +705,44 @@
 
         // 计算总丢弃数
         let totalDrops = 0;
-        allData.forEach(item => {
+        logData.forEach(item => {
             totalDrops += parseInt(item.drops) || 0;
         });
 
         // 更新统计数字
         document.getElementById('totalEntries').textContent = total;
         document.getElementById('serviceCount').textContent = serviceCount;
-        document.getElementById('avgMemory').textContent = avgMemory;
+        document.getElementById('avgMemory').textContent = `${avgMemory} MiB`;
         document.getElementById('totalDrops').textContent = totalDrops;
 
-        // 更新进度条
-        document.getElementById('serviceProgress').style.width = `${serviceCount > 0 ? (serviceCount / Math.max(serviceCount, 5)) * 100 : 0}%`;
-        document.getElementById('avgMemoryProgress').style.width = `${Math.min(100, parseFloat(avgMemory))}%`;
-        document.getElementById('totalDropsProgress').style.width = `${total > 0 ? Math.min(100, (totalDrops / total) * 100) : 0}%`;
+        // 更新时间范围
+        if (logData.length > 0) {
+            const startTime = formatDateTime(logData[0].time);
+            const endTime = formatDateTime(logData[logData.length - 1].time);
+            timeRange.textContent = `${startTime} 至 ${endTime}`;
+        }
 
         // 更新表格总数
         totalCount.textContent = total;
+    }
+
+    // 格式化日期时间
+    function formatDateTime(dateTimeStr) {
+        const date = new Date(dateTimeStr);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}`;
+    }
+
+    // 格式化时间（图表显示用）
+    function formatTime(dateTimeStr) {
+        const date = new Date(dateTimeStr);
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
     }
 
     // 渲染所有图表
@@ -854,37 +751,453 @@
         Object.values(charts).forEach(chart => chart.dispose());
         charts = {};
 
-        // 渲染服务分布饼图
-        renderServiceDistributionChart();
-
-        // 渲染系统资源概览图
-        renderResourceOverviewChart();
-
-        // 如果有gRPC数据，渲染gRPC专用图表
-        if (hasGrpcData) {
-            grpcSection.classList.remove('hidden');
-            renderGrpcMetricsChart();
-        } else {
-            grpcSection.classList.add('hidden');
-        }
-
         // 渲染内存趋势图
         renderMemoryTrendChart();
 
-        // 渲染服务性能趋势图
-        renderServiceCharts();
+        // 渲染QPS和丢弃数趋势图
+        renderQpsTrendChart();
+
+        // 渲染服务分布图
+        renderServiceDistributionChart();
+
+        // 渲染CPU占用趋势图
+        renderCpuTrendChart();
+
+        // 渲染限流状态分析图
+        renderSheddingStatsChart();
     }
 
-    // 渲染服务分布饼图
+    // 渲染内存趋势图
+    function renderMemoryTrendChart() {
+        const chartDom = document.getElementById('memoryTrendChart');
+        const chart = echarts.init(chartDom);
+        charts['memoryTrend'] = chart;
+
+        // 处理数据
+        const times = logData.map(item => formatTime(item.time));
+        const allocData = logData.map(item => {
+            const value = parseFloat(item.alloc);
+            return isNaN(value) ? 0 : value;
+        });
+        const sysData = logData.map(item => {
+            const value = parseFloat(item.sys);
+            return isNaN(value) ? 0 : value;
+        });
+
+        // 图表配置 - 全新设计
+        const option = {
+            backgroundColor: 'transparent',
+            // 增强的tooltip
+            tooltip: {
+                trigger: 'axis',
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                borderColor: '#E0E6ED',
+                borderWidth: 1,
+                borderRadius: 8,
+                padding: [12, 16],
+                textStyle: { 
+                    color: '#1D2129',
+                    fontSize: 12
+                },
+                formatter: function(params) {
+                    let result = `<div style="font-weight: 600; color: #1D2129; margin-bottom: 6px;">${params[0].name}</div>`;
+                    params.forEach(item => {
+                        // 格式化内存值，保留2位小数
+                        const formattedValue = item.value.toFixed(2);
+                        result += `<div style="margin: 4px 0;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${item.color}; margin-right: 8px;"></span>${item.seriesName}: <span style="font-weight: 600;">${formattedValue} MiB</span></div>`;
+                    });
+                    return result;
+                },
+                // 添加阴影效果
+                shadowColor: 'rgba(0, 0, 0, 0.1)',
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowOffsetY: 4
+            },
+            legend: {
+                data: ['实时内存', '系统内存'],
+                top: 0,
+                left: 'center',
+                textStyle: { 
+                    color: '#4E5969',
+                    fontSize: 12,
+                    fontWeight: 500
+                },
+                itemWidth: 14,
+                itemHeight: 14,
+                padding: [0, 20]
+            },
+            grid: {
+                left: '3%',
+                right: '3%',
+                bottom: '15%',
+                top: '20%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: times,
+                axisLine: { 
+                    lineStyle: { 
+                        color: '#E5E6EB',
+                        width: 1
+                    } 
+                },
+                axisLabel: {
+                    color: '#86909C',
+                    fontSize: 11,
+                    rotate: 0,
+                    interval: calculateLabelInterval(times.length),
+                    padding: [5, 0]
+                },
+                axisTick: {
+                    show: false
+                },
+                splitLine: { 
+                    show: false 
+                }
+            },
+            yAxis: {
+                name: '内存 (MiB)',
+                type: 'value',
+                min: 0,
+                axisLine: { 
+                    show: false
+                },
+                axisLabel: {
+                    color: '#86909C',
+                    fontSize: 11,
+                    formatter: '{value}'
+                },
+                axisTick: {
+                    show: false
+                },
+                splitLine: { 
+                    lineStyle: { 
+                        color: '#F2F3F5',
+                        type: 'solid',
+                        width: 1
+                    } 
+                }
+            },
+            series: [
+                {
+                    name: '实时内存',
+                    type: 'line',
+                    data: allocData,
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    symbolHoverSize: 10,
+                    smooth: true,
+                    smoothMonotone: 'x',
+                    lineStyle: { 
+                        width: 4, 
+                        color: '#36BFFA',
+                        shadowColor: 'rgba(54, 191, 250, 0.4)',
+                        shadowBlur: 10,
+                        shadowOffsetY: 5
+                    },
+                    itemStyle: { 
+                        color: '#36BFFA',
+                        borderColor: '#fff',
+                        borderWidth: 2,
+                        shadowColor: 'rgba(54, 191, 250, 0.5)',
+                        shadowBlur: 6
+                    },
+                    emphasis: {
+                        focus: 'series',
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowColor: 'rgba(54, 191, 250, 0.6)'
+                        }
+                    },
+                    areaStyle: {
+                        color: {
+                            type: 'linear',
+                            x: 0,
+                            y: 0,
+                            x2: 0,
+                            y2: 1,
+                            colorStops: [{
+                                offset: 0, color: 'rgba(54, 191, 250, 0.3)'
+                            }, {
+                                offset: 1, color: 'rgba(54, 191, 250, 0.02)'
+                            }]
+                        }
+                    }
+                },
+                {
+                    name: '系统内存',
+                    type: 'line',
+                    data: sysData,
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    symbolHoverSize: 10,
+                    smooth: true,
+                    smoothMonotone: 'x',
+                    lineStyle: { 
+                        width: 4, 
+                        color: '#722ED1',
+                        shadowColor: 'rgba(114, 46, 209, 0.4)',
+                        shadowBlur: 10,
+                        shadowOffsetY: 5
+                    },
+                    itemStyle: { 
+                        color: '#722ED1',
+                        borderColor: '#fff',
+                        borderWidth: 2,
+                        shadowColor: 'rgba(114, 46, 209, 0.5)',
+                        shadowBlur: 6
+                    },
+                    emphasis: {
+                        focus: 'series',
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowColor: 'rgba(114, 46, 209, 0.6)'
+                        }
+                    },
+                    areaStyle: {
+                        color: {
+                            type: 'linear',
+                            x: 0,
+                            y: 0,
+                            x2: 0,
+                            y2: 1,
+                            colorStops: [{
+                                offset: 0, color: 'rgba(114, 46, 209, 0.3)'
+                            }, {
+                                offset: 1, color: 'rgba(114, 46, 209, 0.02)'
+                            }]
+                        }
+                    }
+                }
+            ],
+            dataZoom: [
+                {
+                    type: 'inside',
+                    xAxisIndex: 0,
+                    start: calculateInitialZoom(logData.length),
+                    end: 100,
+                    zoomOnMouseWheel: true,
+                    moveOnMouseMove: true,
+                    moveOnMouseWheel: false
+                },
+                {
+                    type: 'slider',
+                    xAxisIndex: 0,
+                    bottom: 10,
+                    start: calculateInitialZoom(logData.length),
+                    end: 100,
+                    height: 4,
+                    backgroundColor: '#F2F3F5',
+                    fillerColor: '#36BFFA',
+                    handleStyle: {
+                        color: '#36BFFA',
+                        width: 12,
+                        height: 12,
+                        borderRadius: 6,
+                        shadowColor: 'rgba(54, 191, 250, 0.4)',
+                        shadowBlur: 6
+                    },
+                    borderColor: '#E5E6EB',
+                    borderWidth: 0
+                }
+            ],
+            // 增强的动画效果
+            animation: true,
+            animationDuration: 1500,
+            animationEasing: 'cubicOut',
+            animationDelay: function (idx) {
+                return idx * 10;
+            },
+            animationDurationUpdate: 1000
+        };
+
+        chart.setOption(option);
+    }
+
+    // 渲染QPS和丢弃数趋势图
+    function renderQpsTrendChart() {
+        const chartDom = document.getElementById('qpsTrendChart');
+        const chart = echarts.init(chartDom);
+        charts['qpsTrend'] = chart;
+
+        // 处理数据
+        const times = logData.map(item => formatTime(item.time));
+        const qpsData = logData.map(item => {
+            const value = parseFloat(item.qps);
+            return isNaN(value) ? 0 : value;
+        });
+        const dropsData = logData.map(item => {
+            const value = parseInt(item.drops);
+            return isNaN(value) ? 0 : value;
+        });
+
+        // 图表配置
+        const option = {
+            backgroundColor: 'transparent',
+            tooltip: {
+                trigger: 'axis',
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                borderColor: '#333',
+                borderWidth: 1,
+                textStyle: { color: '#fff' },
+                formatter: function(params) {
+                    let result = `<strong>${params[0].name}</strong><br/>`;
+                    params.forEach(item => {
+                        result += `${item.marker} ${item.seriesName}: ${item.value}<br/>`;
+                    });
+                    return result;
+                }
+            },
+            legend: {
+                data: ['QPS', '丢弃数'],
+                top: 0,
+                textStyle: { color: '#4E5969' },
+                itemWidth: 12,
+                itemHeight: 12
+            },
+            grid: {
+                left: '5%',
+                right: '10%',
+                bottom: '15%',
+                top: '15%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: times,
+                axisLine: { lineStyle: { color: '#E5E6EB' } },
+                axisLabel: {
+                    color: '#4E5969',
+                    rotate: 45,
+                    interval: calculateLabelInterval(times.length)
+                },
+                splitLine: { show: false }
+            },
+            yAxis: [
+                {
+                    type: 'value',
+                    name: 'QPS',
+                    min: 0,
+                    axisLine: { lineStyle: { color: '#165DFF' } },
+                    axisLabel: { color: '#4E5969' },
+                    splitLine: { 
+                        lineStyle: { 
+                            color: '#F2F3F5',
+                            type: 'dashed'
+                        } 
+                    }
+                },
+                {
+                    type: 'value',
+                    name: '丢弃数',
+                    position: 'right',
+                    min: 0,
+                    axisLine: { lineStyle: { color: '#FF4D4F' } },
+                    axisLabel: { color: '#FF4D4F' },
+                    splitLine: { show: false }
+                }
+            ],
+            series: [
+                {
+                    name: 'QPS',
+                    type: 'line',
+                    data: qpsData,
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    symbolHoverSize: 8,
+                    smooth: true,
+                    lineStyle: { 
+                        width: 3, 
+                        color: '#165DFF',
+                        shadowColor: 'rgba(22, 93, 255, 0.3)',
+                        shadowBlur: 10
+                    },
+                    itemStyle: { 
+                        color: '#165DFF',
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    areaStyle: {
+                        color: {
+                            type: 'linear',
+                            x: 0,
+                            y: 0,
+                            x2: 0,
+                            y2: 1,
+                            colorStops: [{
+                                offset: 0, color: 'rgba(22, 93, 255, 0.25)'
+                            }, {
+                                offset: 1, color: 'rgba(22, 93, 255, 0)'
+                            }]
+                        }
+                    }
+                },
+                {
+                    name: '丢弃数',
+                    type: 'bar',
+                    yAxisIndex: 1,
+                    data: dropsData,
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#FF4D4F' },
+                            { offset: 1, color: '#FF7875' }
+                        ])
+                    },
+                    barWidth: '30%',
+                    emphasis: {
+                        itemStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: '#F5222D' },
+                                { offset: 1, color: '#FF4D4F' }
+                            ])
+                        }
+                    }
+                }
+            ],
+            dataZoom: [
+                {
+                    type: 'inside',
+                    xAxisIndex: 0,
+                    start: calculateInitialZoom(logData.length),
+                    end: 100
+                },
+                {
+                    type: 'slider',
+                    xAxisIndex: 0,
+                    bottom: 5,
+                    start: calculateInitialZoom(logData.length),
+                    end: 100,
+                    height: 20,
+                    handleStyle: {
+                        color: '#165DFF'
+                    },
+                    fillerColor: 'rgba(22, 93, 255, 0.2)'
+                }
+            ],
+            animation: true,
+            animationDuration: 1000
+        };
+
+        chart.setOption(option);
+    }
+
+    // 渲染服务分布图
     function renderServiceDistributionChart() {
         const chartDom = document.getElementById('serviceDistributionChart');
         const chart = echarts.init(chartDom);
         charts['serviceDistribution'] = chart;
 
         // 准备数据
-        const data = services.map(service => ({
-            name: service === 'rpc' ? 'gRPC' : getServiceName(service),
-            value: logDataMap[service].length,
+        const serviceData = {};
+        logData.forEach(item => {
+            serviceData[item.service] = (serviceData[item.service] || 0) + 1;
+        });
+
+        const data = Object.keys(serviceData).map(service => ({
+            name: service,
+            value: serviceData[service],
             itemStyle: { color: getServiceColor(service) }
         }));
 
@@ -893,21 +1206,27 @@
             backgroundColor: 'transparent',
             tooltip: {
                 trigger: 'item',
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                borderColor: '#eee',
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                borderColor: '#333',
                 borderWidth: 1,
-                textStyle: { color: '#333' },
-                formatter: '{a} <br/>{b}: {c} ({d}%)'
+                textStyle: { color: '#fff' },
+                formatter: function(params) {
+                    return `${params.name}<br/>日志数量: ${params.value}<br/>占比: ${params.percent.toFixed(1)}%`;
+                }
             },
             legend: {
                 orient: 'vertical',
                 left: 10,
                 textStyle: { color: '#4E5969' },
                 formatter: function(name) {
-                    if (name.length > 6) {
-                        return name.substring(0, 6) + '...';
+                    const serviceCount = serviceData[name];
+                    const totalCount = logData.length;
+                    const percentage = ((serviceCount / totalCount) * 100).toFixed(1);
+                    
+                    if (name.length > 8) {
+                        return `${name.substring(0, 8)}... (${percentage}%)`;
                     }
-                    return name;
+                    return `${name} (${percentage}%)`;
                 }
             },
             series: [
@@ -917,9 +1236,11 @@
                     radius: ['40%', '70%'],
                     avoidLabelOverlap: false,
                     itemStyle: {
-                        borderRadius: 4,
+                        borderRadius: 6,
                         borderColor: '#fff',
-                        borderWidth: 2
+                        borderWidth: 2,
+                        shadowBlur: 10,
+                        shadowColor: 'rgba(0, 0, 0, 0.1)'
                     },
                     label: {
                         show: false,
@@ -929,7 +1250,13 @@
                         label: {
                             show: true,
                             fontSize: 16,
-                            fontWeight: 'bold'
+                            fontWeight: 'bold',
+                            color: '#333'
+                        },
+                        itemStyle: {
+                            shadowBlur: 20,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.3)'
                         }
                     },
                     labelLine: {
@@ -937,208 +1264,59 @@
                     },
                     data: data
                 }
-            ]
+            ],
+            animation: true,
+            animationDuration: 1000,
+            animationEasing: 'cubicOut'
         };
 
         chart.setOption(option);
     }
 
-    // 渲染gRPC专用指标图表（支持缩放）
-    function renderGrpcMetricsChart() {
-        const grpcData = logDataMap['rpc'] || [];
-        if (grpcData.length === 0) return;
-
-        // 根据数据样本量筛选
-        let sortedData = [...grpcData].sort((a, b) => new Date(a.time) - new Date(b.time));
-        if (dataSample !== 'all') {
-            const sampleSize = parseInt(dataSample);
-            sortedData = sortedData.slice(-sampleSize);
-        }
-
-        const chartDom = document.getElementById('grpcMetricsChart');
+    // 渲染CPU占用趋势图
+    function renderCpuTrendChart() {
+        const chartDom = document.getElementById('cpuTrendChart');
         const chart = echarts.init(chartDom);
-        charts['grpcMetrics'] = chart;
+        charts['cpuTrend'] = chart;
 
         // 处理数据
-        const times = sortedData.map(item => formatTime(item.time));
-        const cpuData = sortedData.map(item => parseInt(item.cpu) || 0);
-        const qpsData = sortedData.map(item => parseFloat(item.qps) || 0);
-        const dropData = sortedData.map(item => parseInt(item.drops) || 0);
-
-        // 提取shedding数据
-        const passData = [];
-        const totalData = [];
-
-        sortedData.forEach(item => {
-            let pass = 0, total = 0;
-            const shedParts = item.shedding.split(',');
-            shedParts.forEach(part => {
-                if (part.includes('pass:')) {
-                    pass = parseInt(part.split(':')[1]) || 0;
-                } else if (part.includes('total:')) {
-                    total = parseInt(part.split(':')[1]) || 0;
-                }
-            });
-            passData.push(pass);
-            totalData.push(total);
+        const times = logData.map(item => formatTime(item.time));
+        const cpuData = logData.map(item => {
+            const value = parseInt(item.cpu);
+            return isNaN(value) ? 0 : value;
+        });
+        const numGCData = logData.map(item => {
+            const value = parseInt(item.numGC);
+            return isNaN(value) ? 0 : value;
         });
 
-        // 图表配置 - 添加缩放功能
+        // 图表配置
         const option = {
             backgroundColor: 'transparent',
             tooltip: {
                 trigger: 'axis',
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                borderColor: '#eee',
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                borderColor: '#333',
                 borderWidth: 1,
-                textStyle: { color: '#333' }
-            },
-            legend: {
-                data: ['CPU占用(m)', 'QPS', '丢弃数', '通过数', '总数'],
-                top: 0,
-                textStyle: { color: '#4E5969' }
-            },
-            grid: {
-                left: '5%',
-                right: '5%',
-                bottom: '15%',
-                top: '15%',
-                containLabel: true
-            },
-            xAxis: {
-                type: 'category',
-                data: times,
-                axisLine: { lineStyle: { color: '#E5E6EB' } },
-                axisLabel: {
-                    color: '#4E5969',
-                    rotate: 45,
-                    interval: calculateLabelInterval(times.length)
-                },
-                splitLine: { show: false }
-            },
-            yAxis: [
-                {
-                    type: 'value',
-                    min: 0,
-                    axisLine: { lineStyle: { color: '#E5E6EB' } },
-                    axisLabel: { color: '#4E5969' },
-                    splitLine: { lineStyle: { color: '#F2F3F5' } }
-                }
-            ],
-            series: [
-                {
-                    name: 'CPU占用(m)',
-                    type: 'bar',
-                    data: cpuData,
-                    itemStyle: { color: '#36CFC9' },
-                    barWidth: '20%'
-                },
-                {
-                    name: 'QPS',
-                    type: 'line',
-                    data: qpsData,
-                    symbol: 'circle',
-                    symbolSize: 4,
-                    lineStyle: { width: 2, color: '#165DFF' },
-                    itemStyle: { color: '#165DFF' }
-                },
-                {
-                    name: '丢弃数',
-                    type: 'line',
-                    data: dropData,
-                    symbol: 'circle',
-                    symbolSize: 4,
-                    lineStyle: { width: 2, color: '#FF4D4F' },
-                    itemStyle: { color: '#FF4D4F' }
-                },
-                {
-                    name: '通过数',
-                    type: 'line',
-                    data: passData,
-                    symbol: 'circle',
-                    symbolSize: 4,
-                    lineStyle: { width: 2, color: '#52C41A' },
-                    itemStyle: { color: '#52C41A' }
-                },
-                {
-                    name: '总数',
-                    type: 'line',
-                    data: totalData,
-                    symbol: 'circle',
-                    symbolSize: 4,
-                    lineStyle: { width: 2, color: '#FAAD14', type: 'dashed' },
-                    itemStyle: { color: '#FAAD14' }
-                }
-            ],
-            // 添加缩放和平移功能
-            dataZoom: [
-                {
-                    type: 'inside', // 内置缩放
-                    xAxisIndex: 0,
-                    start: calculateInitialZoom(sortedData.length),
-                    end: 100
-                },
-                {
-                    type: 'slider', // 滑动条缩放
-                    xAxisIndex: 0,
-                    bottom: 5,
-                    start: calculateInitialZoom(sortedData.length),
-                    end: 100
-                }
-            ]
-        };
-
-        chart.setOption(option);
-    }
-
-    // 渲染内存趋势图（突出单位显示）
-    function renderMemoryTrendChart() {
-        // 根据数据样本量筛选
-        let chartData = [...allData];
-        if (dataSample !== 'all') {
-            const sampleSize = parseInt(dataSample);
-            chartData = chartData.slice(-sampleSize);
-        }
-
-        if (chartData.length === 0) return;
-
-        const chartDom = document.getElementById('memoryTrendChart');
-        const chart = echarts.init(chartDom);
-        charts['memoryTrend'] = chart;
-
-        // 处理数据
-        const times = chartData.map(item => formatTime(item.time));
-        const allocData = chartData.map(item => parseFloat(item.alloc) || 0);
-        const sysData = chartData.map(item => parseFloat(item.sys) || 0);
-        const numGCData = chartData.map(item => parseInt(item.numGC) || 0);
-
-        // 图表配置 - 明确显示内存单位
-        const option = {
-            backgroundColor: 'transparent',
-            tooltip: {
-                trigger: 'axis',
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                borderColor: '#eee',
-                borderWidth: 1,
-                textStyle: { color: '#333' },
+                textStyle: { color: '#fff' },
                 formatter: function(params) {
                     let result = `<strong>${params[0].name}</strong><br/>`;
                     params.forEach(item => {
-                        // 显示单位
-                        const unit = item.seriesName.includes('内存') ? ' MiB' : '';
-                        result += `${item.seriesName}: ${item.value}${unit}<br/>`;
+                        result += `${item.marker} ${item.seriesName}: ${item.value}<br/>`;
                     });
                     return result;
                 }
             },
             legend: {
-                data: ['实时内存', '系统内存', 'GC次数'],
+                data: ['CPU占用(m)', 'GC次数'],
                 top: 0,
-                textStyle: { color: '#4E5969' }
+                textStyle: { color: '#4E5969' },
+                itemWidth: 12,
+                itemHeight: 12
             },
             grid: {
                 left: '5%',
-                right: '5%',
+                right: '10%',
                 bottom: '15%',
                 top: '15%',
                 containLabel: true
@@ -1156,20 +1334,23 @@
             },
             yAxis: [
                 {
-                    name: '内存 (MiB)', // 明确标注单位
+                    name: 'CPU占用(m)',
                     type: 'value',
-                    min: Math.max(0, Math.min(...allocData) - 2),
-                    axisLine: { lineStyle: { color: '#E5E6EB' } },
-                    axisLabel: {
-                        color: '#4E5969',
-                        formatter: '{value} MiB' // 显示单位
-                    },
-                    splitLine: { lineStyle: { color: '#F2F3F5' } }
+                    min: 0,
+                    axisLine: { lineStyle: { color: '#FAAD14' } },
+                    axisLabel: { color: '#4E5969' },
+                    splitLine: { 
+                        lineStyle: { 
+                            color: '#F2F3F5',
+                            type: 'dashed'
+                        } 
+                    }
                 },
                 {
                     name: 'GC次数',
                     type: 'value',
                     position: 'right',
+                    min: 0,
                     axisLine: { lineStyle: { color: '#52C41A' } },
                     axisLabel: { color: '#52C41A' },
                     splitLine: { show: false }
@@ -1177,106 +1358,134 @@
             ],
             series: [
                 {
-                    name: '实时内存',
-                    type: 'line',
-                    data: allocData,
-                    symbol: 'circle',
-                    symbolSize: 4,
-                    lineStyle: { width: 2, color: '#165DFF' },
-                    itemStyle: { color: '#165DFF' },
-                    areaStyle: {
-                        color: {
-                            type: 'linear',
-                            x: 0,
-                            y: 0,
-                            x2: 0,
-                            y2: 1,
-                            colorStops: [{
-                                offset: 0, color: 'rgba(22, 93, 255, 0.2)'
-                            }, {
-                                offset: 1, color: 'rgba(22, 93, 255, 0)'
-                            }]
-                        }
+                    name: 'CPU占用(m)',
+                    type: 'bar',
+                    data: cpuData,
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#FAAD14' },
+                            { offset: 1, color: '#FFC53D' }
+                        ])
                     },
-                    smooth: true
-                },
-                {
-                    name: '系统内存',
-                    type: 'line',
-                    data: sysData,
-                    symbol: 'circle',
-                    symbolSize: 4,
-                    lineStyle: { width: 2, color: '#FAAD14', type: 'dashed' },
-                    itemStyle: { color: '#FAAD14' },
-                    smooth: true
+                    barWidth: '30%',
+                    emphasis: {
+                        itemStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: '#FA8C16' },
+                                { offset: 1, color: '#FAAD14' }
+                            ])
+                        }
+                    }
                 },
                 {
                     name: 'GC次数',
                     type: 'line',
+                    yAxisIndex: 1,
                     data: numGCData,
                     symbol: 'circle',
-                    symbolSize: 4,
-                    lineStyle: { width: 2, color: '#52C41A' },
-                    itemStyle: { color: '#52C41A' },
-                    yAxisIndex: 1,
-                    smooth: true
+                    symbolSize: 6,
+                    symbolHoverSize: 8,
+                    smooth: true,
+                    lineStyle: { 
+                        width: 3, 
+                        color: '#52C41A',
+                        type: 'dashed',
+                        shadowColor: 'rgba(82, 196, 26, 0.3)',
+                        shadowBlur: 10
+                    },
+                    itemStyle: { 
+                        color: '#52C41A',
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }
                 }
             ],
-            // 添加缩放功能
             dataZoom: [
                 {
                     type: 'inside',
                     xAxisIndex: 0,
-                    start: calculateInitialZoom(chartData.length),
+                    start: calculateInitialZoom(logData.length),
                     end: 100
                 },
                 {
                     type: 'slider',
                     xAxisIndex: 0,
                     bottom: 5,
-                    start: calculateInitialZoom(chartData.length),
-                    end: 100
+                    start: calculateInitialZoom(logData.length),
+                    end: 100,
+                    height: 20,
+                    handleStyle: {
+                        color: '#FAAD14'
+                    },
+                    fillerColor: 'rgba(250, 173, 20, 0.2)'
                 }
-            ]
+            ],
+            animation: true,
+            animationDuration: 1000
         };
 
         chart.setOption(option);
     }
 
-    // 渲染系统资源概览图
-    function renderResourceOverviewChart() {
-        // 根据数据样本量筛选
-        let chartData = [...allData];
-        if (dataSample !== 'all') {
-            const sampleSize = parseInt(dataSample);
-            chartData = chartData.slice(-sampleSize);
-        }
-
-        if (chartData.length === 0) return;
-
-        const chartDom = document.getElementById('resourceOverviewChart');
+    // 渲染限流状态分析图
+    function renderSheddingStatsChart() {
+        const chartDom = document.getElementById('sheddingStatsChart');
         const chart = echarts.init(chartDom);
-        charts['resourceOverview'] = chart;
+        charts['sheddingStats'] = chart;
 
-        // 处理数据
-        const times = chartData.map(item => formatTime(item.time));
-        const cpuData = chartData.map(item => parseInt(item.cpu) || 0);
-        const allocData = chartData.map(item => parseFloat(item.alloc) || 0);
+        // 统计限流状态数据
+        const normalCount = logData.filter(item => item.shedding === '正常').length;
+        const sheddingCount = logData.filter(item => item.shedding !== '正常').length;
+
+        // 按服务统计限流状态
+        const serviceSheddingData = {};
+        logData.forEach(item => {
+            if (!serviceSheddingData[item.service]) {
+                serviceSheddingData[item.service] = { normal: 0, shedding: 0 };
+            }
+            if (item.shedding === '正常') {
+                serviceSheddingData[item.service].normal++;
+            } else {
+                serviceSheddingData[item.service].shedding++;
+            }
+        });
+
+        const serviceNames = Object.keys(serviceSheddingData);
+        const normalData = serviceNames.map(service => serviceSheddingData[service].normal);
+        const sheddingData = serviceNames.map(service => serviceSheddingData[service].shedding);
 
         // 图表配置
         const option = {
             backgroundColor: 'transparent',
             tooltip: {
                 trigger: 'axis',
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                borderColor: '#eee',
+                axisPointer: {
+                    type: 'shadow'
+                },
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                borderColor: '#333',
                 borderWidth: 1,
-                textStyle: { color: '#333' }
+                textStyle: { color: '#fff' },
+                formatter: function(params) {
+                    let result = `<strong>${params[0].name}</strong><br/>`;
+                    let total = 0;
+                    params.forEach(item => {
+                        result += `${item.marker} ${item.seriesName}: ${item.value}<br/>`;
+                        total += item.value;
+                    });
+                    // 计算限流比例
+                    const sheddingValue = params.find(p => p.seriesName === '限流')?.value || 0;
+                    const sheddingRatio = total > 0 ? ((sheddingValue / total) * 100).toFixed(1) : 0;
+                    result += `<br/>总日志数: ${total}<br/>限流比例: ${sheddingRatio}%`;
+                    return result;
+                }
             },
             legend: {
-                data: ['CPU占用(m)', '实时内存(MiB)'],
+                data: ['正常', '限流'],
                 top: 0,
-                textStyle: { color: '#4E5969' }
+                textStyle: { color: '#4E5969' },
+                itemWidth: 12,
+                itemHeight: 12
             },
             grid: {
                 left: '5%',
@@ -1287,406 +1496,330 @@
             },
             xAxis: {
                 type: 'category',
-                data: times,
+                data: serviceNames,
                 axisLine: { lineStyle: { color: '#E5E6EB' } },
                 axisLabel: {
                     color: '#4E5969',
                     rotate: 45,
-                    interval: calculateLabelInterval(times.length)
+                    interval: calculateLabelInterval(serviceNames.length)
                 },
                 splitLine: { show: false }
             },
-            yAxis: [
-                {
-                    type: 'value',
-                    axisLine: { lineStyle: { color: '#E5E6EB' } },
-                    axisLabel: { color: '#4E5969' },
-                    splitLine: { lineStyle: { color: '#F2F3F5' } }
+            yAxis: {
+                type: 'value',
+                min: 0,
+                axisLine: { lineStyle: { color: '#E5E6EB' } },
+                axisLabel: { color: '#4E5969' },
+                splitLine: { 
+                    lineStyle: { 
+                        color: '#F2F3F5',
+                        type: 'dashed'
+                    } 
                 }
-            ],
+            },
             series: [
                 {
-                    name: 'CPU占用(m)',
+                    name: '正常',
                     type: 'bar',
-                    data: cpuData,
-                    itemStyle: { color: '#36CFC9' },
-                    barWidth: '30%'
+                    stack: 'total',
+                    emphasis: {
+                        focus: 'series'
+                    },
+                    data: normalData,
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#52C41A' },
+                            { offset: 1, color: '#73D13D' }
+                        ])
+                    },
+                    barWidth: '40%'
                 },
                 {
-                    name: '实时内存(MiB)', // 显示单位
-                    type: 'line',
-                    data: allocData,
-                    symbol: 'circle',
-                    symbolSize: 4,
-                    lineStyle: { width: 2, color: '#165DFF' },
-                    itemStyle: { color: '#165DFF' }
+                    name: '限流',
+                    type: 'bar',
+                    stack: 'total',
+                    emphasis: {
+                        focus: 'series'
+                    },
+                    data: sheddingData,
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#FF4D4F' },
+                            { offset: 1, color: '#FF7875' }
+                        ])
+                    },
+                    barWidth: '40%'
                 }
             ],
-            // 添加缩放功能
-            dataZoom: [
-                {
-                    type: 'inside',
-                    xAxisIndex: 0,
-                    start: calculateInitialZoom(chartData.length),
-                    end: 100
-                },
-                {
-                    type: 'slider',
-                    xAxisIndex: 0,
-                    bottom: 5,
-                    start: calculateInitialZoom(chartData.length),
-                    end: 100
-                }
-            ]
+            animation: true,
+            animationDuration: 1000
         };
 
         chart.setOption(option);
     }
 
-    // 渲染服务性能趋势图
-    function renderServiceCharts() {
-        const container = document.getElementById('serviceChartsGrid');
-        container.innerHTML = '';
-
-        // 为每个识别到的服务创建图表，跳过gRPC服务
-        services.forEach(service => {
-            if (service === 'rpc') return;
-
-            const data = logDataMap[service] || [];
-            if (data.length === 0) return;
-
-            // 创建图表容器
-            const chartId = `serviceChart_${service}`;
-            const chartCard = document.createElement('div');
-            chartCard.className = 'bg-white rounded-xl shadow-card p-6 card-transition hover:shadow-card-hover';
-            chartCard.innerHTML = `
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="font-semibold text-lg">${getServiceName(service)} 性能趋势</h3>
-                        <div class="flex space-x-2">
-                            <button class="chart-refresh p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="${chartId}">
-                                <i class="fa fa-refresh"></i>
-                            </button>
-                            <button class="chart-expand p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="${chartId}">
-                                <i class="fa fa-expand"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="chart-container" id="${chartId}"></div>
-                `;
-            container.appendChild(chartCard);
-
-            // 初始化图表
-            const chartDom = document.getElementById(chartId);
-            const chart = echarts.init(chartDom);
-            charts[chartId] = chart;
-
-            // 根据数据样本量筛选
-            let sortedData = [...data].sort((a, b) => new Date(a.time) - new Date(b.time));
-            if (dataSample !== 'all') {
-                const sampleSize = parseInt(dataSample);
-                sortedData = sortedData.slice(-sampleSize);
-            }
-
-            // 处理数据
-            const times = sortedData.map(item => formatTime(item.time));
-            const qpsData = sortedData.map(item => parseFloat(item.qps) || 0);
-            const dropData = sortedData.map(item => parseInt(item.drops) || 0);
-            const cpuData = sortedData.map(item => parseInt(item.cpu) || 0);
-
-            // 获取该服务的颜色
-            const color = getServiceColor(service);
-
-            // 图表配置
-            const option = {
-                backgroundColor: 'transparent',
-                tooltip: {
-                    trigger: 'axis',
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    borderColor: '#eee',
-                    borderWidth: 1,
-                    textStyle: { color: '#333' }
-                },
-                legend: {
-                    data: [`${getServiceName(service)} QPS`, '丢弃数', 'CPU占用(m)'],
-                    top: 0,
-                    textStyle: { color: '#4E5969' }
-                },
-                grid: {
-                    left: '5%',
-                    right: '5%',
-                    bottom: '15%',
-                    top: '15%',
-                    containLabel: true
-                },
-                xAxis: {
-                    type: 'category',
-                    data: times,
-                    axisLine: { lineStyle: { color: '#E5E6EB' } },
-                    axisLabel: {
-                        color: '#4E5969',
-                        rotate: 45,
-                        interval: calculateLabelInterval(times.length)
-                    },
-                    splitLine: { show: false }
-                },
-                yAxis: [
-                    {
-                        type: 'value',
-                        min: 0,
-                        axisLine: { lineStyle: { color: '#E5E6EB' } },
-                        axisLabel: { color: '#4E5969' },
-                        splitLine: { lineStyle: { color: '#F2F3F5' } }
-                    }
-                ],
-                series: [
-                    {
-                        name: `${getServiceName(service)} QPS`,
-                        type: 'line',
-                        data: qpsData,
-                        symbol: 'circle',
-                        symbolSize: 4,
-                        lineStyle: { width: 2, color: color },
-                        itemStyle: { color: color },
-                        areaStyle: {
-                            color: {
-                                type: 'linear',
-                                x: 0,
-                                y: 0,
-                                x2: 0,
-                                y2: 1,
-                                colorStops: [{
-                                    offset: 0, color: `${color}33`
-                                }, {
-                                    offset: 1, color: `${color}00`
-                                }]
-                            }
-                        },
-                        smooth: true
-                    },
-                    {
-                        name: '丢弃数',
-                        type: 'line',
-                        data: dropData,
-                        symbol: 'circle',
-                        symbolSize: 4,
-                        lineStyle: { width: 2, color: '#FF4D4F' },
-                        itemStyle: { color: '#FF4D4F' },
-                        smooth: true
-                    },
-                    {
-                        name: 'CPU占用(m)',
-                        type: 'bar',
-                        data: cpuData,
-                        itemStyle: { color: '#36CFC9' },
-                        barWidth: '20%'
-                    }
-                ],
-                // 添加缩放功能
-                dataZoom: [
-                    {
-                        type: 'inside',
-                        xAxisIndex: 0,
-                        start: calculateInitialZoom(sortedData.length),
-                        end: 100
-                    },
-                    {
-                        type: 'slider',
-                        xAxisIndex: 0,
-                        bottom: 5,
-                        start: calculateInitialZoom(sortedData.length),
-                        end: 100
-                    }
-                ]
-            };
-
-            chart.setOption(option);
-        });
+    // 获取服务对应的颜色
+    function getServiceColor(service) {
+        const colors = ['#165DFF', '#36CFC9', '#52C41A', '#FAAD14', '#FF4D4F', '#722ED1', '#F5222D', '#FA8C16', '#EB2F96'];
+        let hash = 0;
+        for (let i = 0; i < service.length; i++) {
+            hash = service.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        return colors[Math.abs(hash) % colors.length];
     }
 
-    // 渲染表格数据
-    function renderTable() {
-        // 根据当前标签筛选数据
-        let filteredData = [];
-        if (currentTab === 'all') {
-            filteredData = allData;
+    // 计算标签显示间隔
+    function calculateLabelInterval(dataLength) {
+        if (dataLength <= 20) return 0;  // 显示所有标签
+        if (dataLength <= 50) return 2;  // 每2个显示一个
+        if (dataLength <= 100) return 4; // 每4个显示一个
+        return Math.floor(dataLength / 20); // 最多显示20个标签
+    }
+
+    // 计算初始缩放比例
+    function calculateInitialZoom(dataLength) {
+        if (dataLength <= 100) return 0;
+        if (dataLength <= 500) return Math.max(0, 100 - 2000 / dataLength);
+        return Math.max(0, 100 - 1000 / (dataLength / 20));
+    }
+
+    // 处理图表操作
+    function handleChartAction(e) {
+        const chartId = e.currentTarget.getAttribute('data-chart');
+        const action = e.currentTarget.querySelector('i').classList.contains('fa-expand') ? 'expand' : 'refresh';
+        
+        if (action === 'expand') {
+            showFullscreenChart(chartId);
         } else {
-            filteredData = allData.filter(item => item.service === currentTab);
+            refreshChart(chartId);
         }
-
-        // 计算分页
-        const totalPages = Math.ceil(filteredData.length / pageSize);
-        const startIndex = (currentPage - 1) * pageSize;
-        const endIndex = Math.min(startIndex + pageSize, filteredData.length);
-        const pageData = filteredData.slice(startIndex, endIndex);
-
-        // 更新分页信息
-        currentRange.textContent = filteredData.length > 0 ? `${startIndex + 1}-${endIndex}` : '0-0';
-        prevPage.disabled = currentPage === 1;
-        nextPage.disabled = currentPage === totalPages;
-
-        // 清空表格
-        logTableBody.innerHTML = '';
-
-        // 填充表格
-        if (pageData.length === 0) {
-            const emptyRow = document.createElement('tr');
-            emptyRow.innerHTML = `<td colspan="10" class="px-6 py-10 text-center text-dark-2">没有找到匹配的日志数据</td>`;
-            logTableBody.appendChild(emptyRow);
-            return;
-        }
-
-        pageData.forEach(item => {
-            const row = document.createElement('tr');
-            row.className = 'border-t border-light-2 hover:bg-light-1/50 transition-colors';
-
-            // 获取服务颜色和标签
-            const color = getServiceColor(item.service);
-            const serviceLabel = item.service === 'rpc' ? 'gRPC' : getServiceName(item.service);
-            const serviceBadge = `<span class="px-2 py-1" style="background-color: ${color}20; color: ${color}; border-radius: 999px; font-size: 0.75rem;">${serviceLabel}</span>`;
-
-            // 类型标签
-            const typeBadge = item.type === 'gRPC'
-                ? `<span class="px-2 py-1 bg-purple/10 text-purple rounded-full text-xs">gRPC</span>`
-                : `<span class="px-2 py-1 bg-secondary/10 text-secondary rounded-full text-xs">微服务</span>`;
-
-            row.innerHTML = `
-                    <td class="px-6 py-4">${item.time}</td>
-                    <td class="px-6 py-4">${serviceBadge}</td>
-                    <td class="px-6 py-4">${typeBadge}</td>
-                    <td class="px-6 py-4">${item.cpu}</td>
-                    <td class="px-6 py-4">${item.alloc}</td>
-                    <td class="px-6 py-4">${item.sys}</td>
-                    <td class="px-6 py-4">${item.numGC}</td>
-                    <td class="px-6 py-4">${item.qps}</td>
-                    <td class="px-6 py-4">${item.drops > 0 ? `<span class="text-danger">${item.drops}</span>` : item.drops}</td>
-                    <td class="px-6 py-4 text-sm">${item.shedding}</td>
-                `;
-            logTableBody.appendChild(row);
-        });
-    }
-
-    // 切换数据标签
-    function switchDataTab(service) {
-        // 更新标签样式
-        document.querySelectorAll('.data-tab').forEach(tab => {
-            if (tab.getAttribute('data-service') === service) {
-                tab.classList.remove('text-dark-2');
-                tab.classList.add('text-primary', 'border-b-2', 'border-primary');
-            } else {
-                tab.classList.add('text-dark-2');
-                tab.classList.remove('text-primary', 'border-b-2', 'border-primary');
-            }
-        });
-
-        // 更新当前标签和表格
-        currentTab = service;
-        currentPage = 1;
-        renderTable();
-    }
-
-    // 更改页码
-    function changePage(page) {
-        currentPage = page;
-        renderTable();
     }
 
     // 刷新图表
     function refreshChart(chartId) {
         const chart = charts[chartId];
         if (chart) {
-            // 添加刷新动画
-            const chartDom = chart.getDom();
-            chartDom.style.opacity = '0.5';
-
-            setTimeout(() => {
-                chart.resize();
-                chartDom.style.opacity = '1';
-            }, 300);
+            chart.resize();
+            chart.dispatchAction({ type: 'takeGlobalCursor', key: 'dataZoomSelect', dataZoomSelectActive: true });
         }
     }
 
-    // 在模态框中打开图表
-    function openChartInModal(chartId) {
-        const originalChart = charts[chartId];
-        if (!originalChart) return;
+    // 显示全屏图表
+    function showFullscreenChart(chartId) {
+        const chart = charts[chartId];
+        if (!chart) return;
 
-        // 设置模态框标题
-        let title = '图表详情';
-        if (chartId === 'serviceDistribution') {
-            title = '服务分布';
-        } else if (chartId === 'memoryTrend') {
-            title = '内存趋势分析（单位：MiB）';
-        } else if (chartId === 'resourceOverview') {
-            title = '系统资源使用概况';
-        } else if (chartId === 'grpcMetrics') {
-            title = 'gRPC 性能指标';
-        } else if (chartId.startsWith('serviceChart_')) {
-            const service = chartId.split('_')[1];
-            title = `${getServiceName(service)} 性能趋势`;
+        // 获取图表标题
+        const chartTitle = document.querySelector(`[data-chart="${chartId}"]`).closest('.chart-container').previousElementSibling.querySelector('h3').textContent;
+        modalChartTitle.textContent = chartTitle;
+
+        // 创建新的图表实例
+        const fullscreenChart = echarts.init(modalChartContainer);
+        
+        // 获取原始图表配置并进行深拷贝，避免直接引用导致数据问题
+        const originalOption = chart.getOption();
+        const fullscreenOption = JSON.parse(JSON.stringify(originalOption));
+        
+        // 优化全屏图表样式
+        fullscreenOption.title = {
+            text: chartTitle,
+            left: 'center',
+            top: 20,
+            textStyle: {
+                fontSize: 18,
+                fontWeight: 'bold',
+                color: '#1D2129'
+            }
+        };
+        
+        // 优化tooltip样式
+        if (!fullscreenOption.tooltip) {
+            fullscreenOption.tooltip = {};
         }
-        modalChartTitle.textContent = title;
-
-        // 清空模态框容器
-        modalChartContainer.innerHTML = `<div id="modalChart" class="w-full h-full"></div>`;
-
-        // 创建新图表实例
-        const modalChartDom = document.getElementById('modalChart');
-        modalChartInstance = echarts.init(modalChartDom);
-
-        // 复制原始图表配置
-        const option = JSON.parse(JSON.stringify(originalChart.getOption()));
-        modalChartInstance.setOption(option);
-
+        fullscreenOption.tooltip.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        fullscreenOption.tooltip.borderColor = '#333';
+        fullscreenOption.tooltip.borderWidth = 1;
+        fullscreenOption.tooltip.textStyle = { color: '#fff' };
+        
+        // 确保数据格式正确，特别是内存图表
+        if (chartId === 'memoryTrend') {
+            // 确保数据数组不为空
+            if (fullscreenOption.series) {
+                fullscreenOption.series.forEach(series => {
+                    if (series.data && Array.isArray(series.data) && series.data.length > 0) {
+                        // 确保数据点是有效数字
+                        series.data = series.data.map(point => {
+                            if (typeof point === 'number') {
+                                return point;
+                            } else if (Array.isArray(point)) {
+                                // 确保数组中的数值有效
+                                return point.map(val => val === null || val === undefined ? 0 : val);
+                            }
+                            return point;
+                        });
+                    }
+                });
+            }
+        }
+        
+        fullscreenChart.setOption(fullscreenOption);
+        
+        // 保存到临时变量以便关闭时销毁
+        modalChartContainer.chartInstance = fullscreenChart;
+        
         // 显示模态框
         chartModal.classList.remove('hidden');
+        
+        // 调整大小
+        setTimeout(() => {
+            fullscreenChart.resize();
+        }, 100);
     }
 
-    // 关闭图表模态框
-    function closeChartModal() {
-        chartModal.classList.add('hidden');
-        if (modalChartInstance) {
-            modalChartInstance.dispose();
-            modalChartInstance = null;
+    // 渲染表格
+    function renderTable() {
+        const filteredData = getFilteredData();
+        const pageSizeValue = parseInt(pageSize.value);
+        const startIndex = (currentPage - 1) * pageSizeValue;
+        const endIndex = Math.min(startIndex + pageSizeValue, filteredData.length);
+        const pageData = filteredData.slice(startIndex, endIndex);
+
+        // 清空表格
+        logTableBody.innerHTML = '';
+
+        // 添加数据行
+        if (pageData.length > 0) {
+            pageData.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-light-1 hover:bg-gray-50 transition-colors';
+                
+                // 为有丢弃数的行添加特殊样式
+                if (parseInt(item.drops) > 0) {
+                    row.classList.add('bg-danger/5');
+                }
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4">${formatDateTime(item.time)}</td>
+                    <td class="px-6 py-4 font-medium">${item.service}</td>
+                    <td class="px-6 py-4">${item.cpu}</td>
+                    <td class="px-6 py-4">${item.alloc}</td>
+                    <td class="px-6 py-4">${item.sys}</td>
+                    <td class="px-6 py-4">${item.numGC}</td>
+                    <td class="px-6 py-4">${item.qps}</td>
+                    <td class="px-6 py-4 ${parseInt(item.drops) > 0 ? 'text-danger font-medium' : ''}">${item.drops}</td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.shedding === '正常' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}">
+                            ${item.shedding}
+                        </span>
+                    </td>
+                `;
+                
+                logTableBody.appendChild(row);
+            });
+        } else {
+            // 显示空数据提示
+            const emptyRow = document.createElement('tr');
+            emptyRow.innerHTML = `
+                <td colspan="9" class="px-6 py-10 text-center text-dark-2">
+                    <i class="fa fa-inbox text-3xl mb-2"></i>
+                    <p>暂无数据</p>
+                </td>
+            `;
+            logTableBody.appendChild(emptyRow);
+        }
+
+        // 更新分页信息
+        currentRange.textContent = filteredData.length > 0 ? `${startIndex + 1}-${endIndex}` : '0-0';
+        pageInfo.textContent = `第 ${currentPage} 页`;
+        
+        // 更新分页按钮状态
+        prevPage.disabled = currentPage === 1 || filteredData.length === 0;
+        nextPage.disabled = endIndex >= filteredData.length || filteredData.length === 0;
+    }
+
+    // 获取过滤后的数据
+    function getFilteredData() {
+        const service = serviceFilter.value;
+        if (service === 'all') {
+            return logData;
+        } else {
+            return logData.filter(item => item.service === service);
         }
     }
 
-    // 格式化时间（只保留时分秒）
-    function formatTime(timeString) {
-        if (!timeString) return '';
-        return timeString.slice(11, 19);
+    // 过滤表格数据
+    function filterTableData() {
+        currentPage = 1;
+        renderTable();
     }
 
-    // 获取服务的友好名称
-    function getServiceName(service) {
-        if (!service) return '未知';
-        return service.charAt(0).toUpperCase() + service.slice(1);
+    // 上一页
+    function goToPrevPage() {
+        if (currentPage > 1) {
+            currentPage--;
+            renderTable();
+        }
     }
 
-    // 根据数据量计算初始缩放比例
-    function calculateInitialZoom(dataLength) {
-        // 数据越多，初始显示的比例越小
-        if (dataLength <= 50) return 0;
-        if (dataLength <= 100) return 50;
-        if (dataLength <= 500) return 80;
-        return 90; // 对于1000+条数据，默认只显示最后10%
+    // 下一页
+    function goToNextPage() {
+        const filteredData = getFilteredData();
+        const pageSizeValue = parseInt(pageSize.value);
+        const maxPage = Math.ceil(filteredData.length / pageSizeValue);
+        if (currentPage < maxPage) {
+            currentPage++;
+            renderTable();
+        }
     }
 
-    // 根据数据量计算标签间隔
-    function calculateLabelInterval(dataLength) {
-        // 数据越多，标签间隔越大，避免拥挤
-        if (dataLength <= 30) return 0; // 显示所有标签
-        if (dataLength <= 100) return Math.floor(dataLength / 10);
-        if (dataLength <= 500) return Math.floor(dataLength / 20);
-        return Math.floor(dataLength / 30);
+    // 更改每页显示数量
+    function changePageSize() {
+        currentPage = 1;
+        renderTable();
+    }
+
+    // 显示状态消息
+    function showStatus(type, message) {
+        statusMessage.classList.remove('hidden');
+        
+        if (type === 'success') {
+            statusMessage.classList.add('bg-success/10', 'text-success');
+            statusMessage.classList.remove('bg-danger/10', 'text-danger', 'bg-warning/10', 'text-warning');
+            statusIcon.className = 'fa fa-check-circle mr-3 text-xl';
+        } else if (type === 'error') {
+            statusMessage.classList.add('bg-danger/10', 'text-danger');
+            statusMessage.classList.remove('bg-success/10', 'text-success', 'bg-warning/10', 'text-warning');
+            statusIcon.className = 'fa fa-exclamation-circle mr-3 text-xl';
+        } else if (type === 'warning') {
+            statusMessage.classList.add('bg-warning/10', 'text-warning');
+            statusMessage.classList.remove('bg-success/10', 'text-success', 'bg-danger/10', 'text-danger');
+            statusIcon.className = 'fa fa-exclamation-triangle mr-3 text-xl';
+        }
+        
+        statusText.textContent = message;
+        
+        // 3秒后自动隐藏
+        setTimeout(() => {
+            hideStatus();
+        }, 5000);
+    }
+
+    // 隐藏状态消息
+    function hideStatus() {
+        statusMessage.classList.add('hidden');
+    }
+
+    // 处理窗口大小变化
+    function handleResize() {
+        // 延迟执行，避免频繁触发
+        clearTimeout(window.resizeTimeout);
+        window.resizeTimeout = setTimeout(() => {
+            Object.values(charts).forEach(chart => chart.resize());
+        }, 100);
     }
 
     // 初始化应用
-    function initApp() {
-        initEventListeners();
-    }
-
-    // 启动应用
-    document.addEventListener('DOMContentLoaded', initApp);
+    init();
 </script>
 </body>
 </html>
