@@ -6,11 +6,11 @@ require (
 	github.com/ArtisanCloud/PowerLibs/v3 v3.3.2
 	github.com/ArtisanCloud/PowerWeChat/v3 v3.4.26
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/brianvoe/gofakeit/v7 v7.6.0
+	github.com/brianvoe/gofakeit/v7 v7.7.1
 	github.com/disintegration/imaging v1.6.2
-	github.com/dromara/carbon/v2 v2.6.11
+	github.com/dromara/carbon/v2 v2.6.12
 	github.com/duke-git/lancet/v2 v2.3.7
-	github.com/eclipse/paho.mqtt.golang v1.5.0
+	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/envoyproxy/protoc-gen-validate v1.2.1
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/golang-jwt/jwt/v4 v4.5.2
@@ -19,7 +19,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2
 	github.com/hibiken/asynq v0.25.1
 	github.com/jinzhu/copier v0.4.0
-	github.com/larksuite/oapi-sdk-go/v3 v3.4.24
+	github.com/larksuite/oapi-sdk-go/v3 v3.4.25
 	github.com/minio/minio-go/v7 v7.0.95
 	github.com/nacos-group/nacos-sdk-go/v2 v2.3.3
 	github.com/panjf2000/ants/v2 v2.11.3
