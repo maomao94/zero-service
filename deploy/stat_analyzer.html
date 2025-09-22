@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>stat.log 系统资源与自适应降载分析工具</title>
+    <!-- 外部资源 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+
+    <!-- Tailwind配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#36CFC9',
+                        success: '#52C41A',
+                        warning: '#FAAD14',
+                        danger: '#FF4D4F',
+                        shed: '#722ED1', // 降载事件专属颜色
+                        dark: '#1D2129',
+                        'dark-2': '#4E5969',
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto { content-visibility: auto; }
+            .card-hover { @apply transition-all duration-300 hover:shadow-lg; }
+            .chart-container { @apply min-h-[400px] w-full; }
+            .shed-event { @apply relative pl-6 before:absolute before:left-2 before:top-1/2 before:-translate-y-1/2 before:w-2 before:h-2 before:rounded-full before:bg-shed; }
+            .alert-line { @apply absolute z-10 h-0.5 bg-danger/50; }
+            .drop-active { @apply border-primary bg-primary/5; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-dark">
+<!-- 顶部导航 -->
+<header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div class="flex items-center">
+            <i class="fa fa-file-text-o text-primary text-2xl mr-2"></i>
+            <h1 class="text-xl font-semibold">stat.log 分析工具</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+            <button id="thresholdBtn" class="flex items-center text-dark-2 hover:text-primary text-sm">
+                <i class="fa fa-sliders mr-1"></i>
+                <span>预警阈值设置</span>
+            </button>
+            <button id="helpBtn" class="flex items-center text-dark-2 hover:text-primary">
+                <i class="fa fa-question-circle mr-1"></i>
+                <span class="hidden sm:inline">使用帮助</span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- 阈值设置弹窗 -->
+<div id="thresholdModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl w-full max-w-md p-6 transform transition-all scale-95 opacity-0" id="modalContent">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold">设置预警阈值</h3>
+            <button id="closeThreshold" class="text-dark-2 hover:text-dark">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium mb-1 text-dark-2">CPU预警阈值 (m)</label>
+                <input type="number" id="cpuThreshold" value="100" min="1" max="500"
+                       class="w-full border border-gray-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-primary">
+                <p class="text-xs text-dark-2 mt-1">超过此值将显示红色预警线</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1 text-dark-2">内存预警阈值 (MiB)</label>
+                <input type="number" id="memThreshold" value="2000" min="100" max="5000"
+                       class="w-full border border-gray-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-primary">
+                <p class="text-xs text-dark-2 mt-1">超过此值将显示红色预警线</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1 text-dark-2">降载监控CPU阈值</label>
+                <input type="number" id="shedCpuThreshold" value="148" min="50" max="300"
+                       class="w-full border border-gray-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-primary">
+                <p class="text-xs text-dark-2 mt-1">对应shedding_stat中的cpu触发值</p>
+            </div>
+            <button id="saveThreshold" class="w-full bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-all">
+                保存设置
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 帮助弹窗 -->
+<div id="helpModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl w-full max-w-2xl max-h-[80vh] overflow-y-auto p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold">stat.log 分析工具使用指南</h3>
+            <button id="closeHelp" class="text-dark-2 hover:text-dark">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div class="space-y-4 text-sm">
+            <div>
+                <h4 class="font-medium text-dark mb-1">1. 文件上传</h4>
+                <p class="text-dark-2">可以通过两种方式上传stat.log文件：</p>
+                <ul class="list-disc list-inside mt-1 text-dark-2">
+                    <li>点击上传区域选择文件</li>
+                    <li>直接将文件拖放到上传区域</li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-medium text-dark mb-1">2. 支持的日志格式</h4>
+                <p class="text-dark-2">自动识别包含以下内容的日志条目：</p>
+                <ul class="list-disc list-inside mt-1 text-dark-2">
+                    <li>系统资源数据（CPU、内存等）</li>
+                    <li>自适应降载事件 (rpc) shedding_stat</li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-medium text-dark mb-1">3. 图表解读</h4>
+                <p class="text-dark-2">资源趋势图中：</p>
+                <ul class="list-disc list-inside mt-1 text-dark-2">
+                    <li>红色虚线：资源预警阈值线</li>
+                    <li>紫色标记：自适应降载事件发生点</li>
+                    <li>点击图例可显示/隐藏对应数据</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 主内容区 -->
+<main class="container mx-auto px-4 py-8">
+    <!-- 批量上传区域 -->
+    <div class="mb-8">
+        <div class="bg-white rounded-xl shadow p-6 card-hover">
+            <h2 class="text-lg font-semibold mb-4">上传 stat.log 日志文件</h2>
+
+            <!-- 拖放区域 -->
+            <div id="dropArea" class="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center mb-6 cursor-pointer transition-all">
+                <input type="file" id="fileInput" accept=".txt,.log" multiple class="hidden" />
+                <i class="fa fa-cloud-upload text-4xl text-primary mb-3"></i>
+                <h3 class="text-base font-medium mb-1">拖放 stat.log 文件到此处，或点击选择文件</h3>
+                <p class="text-sm text-dark-2">支持批量上传多个日志文件，自动解析系统资源与降载事件</p>
+            </div>
+
+            <!-- 已选文件列表 -->
+            <div id="fileListContainer" class="hidden mb-6">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-medium flex items-center">
+                        <i class="fa fa-files-o text-primary mr-2"></i>
+                        已选择文件
+                    </h3>
+                    <span class="text-xs text-dark-2" id="fileCount">0 个文件</span>
+                </div>
+                <div id="fileList" class="max-h-40 overflow-y-auto p-2 bg-gray-50 rounded-lg space-y-2">
+                    <!-- 文件项将动态生成 -->
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button id="analyzeBtn" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-all opacity-70 cursor-not-allowed">
+                    <i class="fa fa-play-circle mr-2"></i>
+                    开始分析（选择文件后可用）
+                </button>
+                <button id="clearFilesBtn" class="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-all hidden">
+                    <i class="fa fa-trash mr-2"></i>
+                    清空文件
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 状态提示 -->
+    <div id="statusMessage" class="mb-8 hidden p-4 rounded-lg flex items-center">
+        <i id="statusIcon" class="mr-3 text-xl"></i>
+        <span id="statusText"></span>
+    </div>
+
+    <!-- 分析结果区域 -->
+    <div id="resultsArea" class="hidden space-y-8">
+        <!-- 关键指标概览 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-white rounded-xl shadow p-5 card-hover">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <p class="text-sm text-dark-2">CPU最高占用</p>
+                        <h3 id="maxCpu" class="text-2xl font-bold">0 m</h3>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-danger/10 flex items-center justify-center text-danger">
+                        <i class="fa fa-microchip"></i>
+                    </div>
+                </div>
+                <p id="cpuWarnTip" class="text-xs text-danger hidden">
+                    <i class="fa fa-exclamation-circle mr-1"></i>已超过预警阈值
+                </p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow p-5 card-hover">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <p class="text-sm text-dark-2">内存最高占用</p>
+                        <h3 id="maxMem" class="text-2xl font-bold">0 MiB</h3>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-danger/10 flex items-center justify-center text-danger">
+                        <i class="fa fa-memory"></i>
+                    </div>
+                </div>
+                <p id="memWarnTip" class="text-xs text-danger hidden">
+                    <i class="fa fa-exclamation-circle mr-1"></i>已超过预警阈值
+                </p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow p-5 card-hover">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <p class="text-sm text-dark-2">降载触发次数</p>
+                        <h3 id="shedCount" class="text-2xl font-bold">0 次</h3>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-shed/10 flex items-center justify-center text-shed">
+                        <i class="fa fa-shield"></i>
+                    </div>
+                </div>
+                <p class="text-xs text-dark-2">
+                    检测到的 (rpc) shedding_stat 事件
+                </p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow p-5 card-hover">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <p class="text-sm text-dark-2">总丢弃请求数</p>
+                        <h3 id="totalDrops" class="text-2xl font-bold">0</h3>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-warning/10 flex items-center justify-center text-warning">
+                        <i class="fa fa-filter"></i>
+                    </div>
+                </div>
+                <p class="text-xs text-dark-2">
+                    所有降载事件中的丢弃请求总和
+                </p>
+            </div>
+        </div>
+
+        <!-- 资源与降载关联分析 -->
+        <div class="bg-white rounded-xl shadow p-6 card-hover">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-medium">系统资源与降载事件趋势</h3>
+                <div class="flex space-x-2">
+                    <button id="refreshTrend" class="p-1.5 rounded hover:bg-gray-50 text-dark-2">
+                        <i class="fa fa-refresh"></i>
+                    </button>
+                    <button id="expandTrend" class="p-1.5 rounded hover:bg-gray-50 text-dark-2">
+                        <i class="fa fa-expand"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-container" id="resourceTrendChart"></div>
+            <div class="mt-4 pt-4 border-t border-gray-100">
+                <div class="flex flex-wrap gap-2">
+                    <div class="flex items-center text-sm">
+                        <span class="w-3 h-3 rounded-full bg-primary inline-block mr-1"></span>
+                        <span>CPU (m)</span>
+                    </div>
+                    <div class="flex items-center text-sm">
+                        <span class="w-3 h-3 rounded-full bg-secondary inline-block mr-1"></span>
+                        <span>内存 (MiB)</span>
+                    </div>
+                    <div class="flex items-center text-sm">
+                        <span class="w-3 h-3 rounded-full bg-shed inline-block mr-1"></span>
+                        <span>降载事件</span>
+                    </div>
+                    <div class="flex items-center text-sm">
+                        <span class="w-3 h-0.5 bg-danger inline-block mr-1"></span>
+                        <span>预警阈值线</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 降载事件详情 -->
+        <div class="bg-white rounded-xl shadow p-6 card-hover">
+            <h3 class="font-medium mb-4">降载事件详情</h3>
+            <div id="shedEventsContainer" class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-dark-2 uppercase tracking-wider">时间</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-dark-2 uppercase tracking-wider">CPU (m)</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-dark-2 uppercase tracking-wider">总请求</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-dark-2 uppercase tracking-wider">通过请求</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-dark-2 uppercase tracking-wider">丢弃请求</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-dark-2 uppercase tracking-wider">服务</th>
+                    </tr>
+                    </thead>
+                    <tbody id="shedEventsTable" class="bg-white divide-y divide-gray-200">
+                    <!-- 降载事件数据将动态生成 -->
+                    <tr>
+                        <td colspan="6" class="px-6 py-10 text-center text-dark-2">
+                            未检测到降载事件
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 原始日志数据表格 -->
+        <div class="bg-white rounded-xl shadow overflow-hidden card-hover">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="font-medium">stat.log 原始数据</h3>
+                <div class="flex items-center">
+                    <span class="text-sm text-dark-2 mr-3">显示：</span>
+                    <select id="dataFilter" class="text-sm border border-gray-200 rounded p-1 focus:outline-none focus:ring-1 focus:ring-primary">
+                        <option value="all">所有数据</option>
+                        <option value="shedding">仅降载事件</option>
+                        <option value="normal">仅正常数据</option>
+                    </select>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-dark-2 uppercase tracking-wider">时间</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-dark-2 uppercase tracking-wider">CPU (m)</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-dark-2 uppercase tracking-wider">内存 (MiB)</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-dark-2 uppercase tracking-wider">请求情况</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-dark-2 uppercase tracking-wider">服务</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-dark-2 uppercase tracking-wider">类型</th>
+                    </tr>
+                    </thead>
+                    <tbody id="logTableBody" class="bg-white divide-y divide-gray-200">
+                    <!-- 表格数据将动态生成 -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-100 flex justify-between items-center">
+                <div class="text-sm text-dark-2">
+                    显示 <span id="tableRange">0-0</span> 条，共 <span id="tableTotal">0</span> 条
+                </div>
+                <div class="flex space-x-2">
+                    <button id="prevPage" class="border border-gray-200 px-3 py-1 text-sm rounded hover:bg-gray-50 disabled:opacity-50" disabled>
+                        <i class="fa fa-chevron-left mr-1"></i> 上一页
+                    </button>
+                    <button id="nextPage" class="border border-gray-200 px-3 py-1 text-sm rounded hover:bg-gray-50 disabled:opacity-50" disabled>
+                        下一页 <i class="fa fa-chevron-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 初始状态 -->
+    <div id="emptyState" class="flex flex-col items-center justify-center py-16 text-center">
+        <div class="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <i class="fa fa-file-text-o text-3xl text-primary"></i>
+        </div>
+        <h3 class="text-lg font-medium mb-2">准备分析 stat.log 日志</h3>
+        <p class="text-dark-2 max-w-md mb-6">上传 stat.log 文件，分析系统资源使用情况与自适应降载事件的关联</p>
+        <div class="flex flex-wrap justify-center gap-3">
+            <div class="flex items-center bg-white px-3 py-2 rounded shadow-sm text-sm">
+                <i class="fa fa-check text-success mr-2"></i>
+                支持批量上传
+            </div>
+            <div class="flex items-center bg-white px-3 py-2 rounded shadow-sm text-sm">
+                <i class="fa fa-check text-success mr-2"></i>
+                降载事件高亮
+            </div>
+            <div class="flex items-center bg-white px-3 py-2 rounded shadow-sm text-sm">
+                <i class="fa fa-check text-success mr-2"></i>
+                资源阈值预警
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载状态 -->
+    <div id="loadingState" class="hidden flex flex-col items-center justify-center py-16">
+        <div class="w-12 h-12 border-4 border-gray-200 border-t-primary rounded-full animate-spin mb-4"></div>
+        <h3 class="text-base font-medium mb-1">正在解析 stat.log 日志...</h3>
+        <p class="text-sm text-dark-2" id="loadingProgress">准备解析文件</p>
+    </div>
+
+    <!-- 图表全屏模态框 -->
+    <div id="chartModal" class="fixed inset-0 bg-black/70 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-xl w-full max-w-5xl max-h-[90vh] flex flex-col">
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="font-medium">系统资源与降载事件趋势</h3>
+                <button id="closeChartModal" class="text-dark-2 hover:text-dark">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="flex-1 p-4" id="modalChartContainer">
+                <div id="fullscreenChart" class="w-full h-full"></div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // 全局变量
+    let uploadedFiles = [];
+    let logData = [];          // 所有日志数据
+    let shedEvents = [];       // 降载事件数据
+    let cpuThreshold = 100;    // CPU预警阈值
+    let memThreshold = 2000;   // 内存预警阈值
+    let shedCpuThreshold = 148;// 降载CPU阈值
+    let currentPage = 1;
+    const pageSize = 15;
+    let resourceChart = null;
+    let fullscreenChart = null;
+
+    // DOM元素
+    const dropArea = document.getElementById('dropArea');
+    const fileInput = document.getElementById('fileInput');
+    const fileListContainer = document.getElementById('fileListContainer');
+    const fileList = document.getElementById('fileList');
+    const fileCount = document.getElementById('fileCount');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const clearFilesBtn = document.getElementById('clearFilesBtn');
+    const statusMessage = document.getElementById('statusMessage');
+    const statusIcon = document.getElementById('statusIcon');
+    const statusText = document.getElementById('statusText');
+    const resultsArea = document.getElementById('resultsArea');
+    const emptyState = document.getElementById('emptyState');
+    const loadingState = document.getElementById('loadingState');
+    const loadingProgress = document.getElementById('loadingProgress');
+    const thresholdBtn = document.getElementById('thresholdBtn');
+    const thresholdModal = document.getElementById('thresholdModal');
+    const modalContent = document.getElementById('modalContent');
+    const closeThreshold = document.getElementById('closeThreshold');
+    const cpuThresholdInput = document.getElementById('cpuThreshold');
+    const memThresholdInput = document.getElementById('memThreshold');
+    const shedCpuThresholdInput = document.getElementById('shedCpuThreshold');
+    const saveThreshold = document.getElementById('saveThreshold');
+    const helpBtn = document.getElementById('helpBtn');
+    const helpModal = document.getElementById('helpModal');
+    const closeHelp = document.getElementById('closeHelp');
+    const chartModal = document.getElementById('chartModal');
+    const closeChartModal = document.getElementById('closeChartModal');
+    const refreshTrend = document.getElementById('refreshTrend');
+    const expandTrend = document.getElementById('expandTrend');
+    const dataFilter = document.getElementById('dataFilter');
+    const logTableBody = document.getElementById('logTableBody');
+    const tableRange = document.getElementById('tableRange');
+    const tableTotal = document.getElementById('tableTotal');
+    const prevPage = document.getElementById('prevPage');
+    const nextPage = document.getElementById('nextPage');
+    const shedEventsTable = document.getElementById('shedEventsTable');
+
+    // 统计数据元素
+    const maxCpuEl = document.getElementById('maxCpu');
+    const maxMemEl = document.getElementById('maxMem');
+    const shedCountEl = document.getElementById('shedCount');
+    const totalDropsEl = document.getElementById('totalDrops');
+    const cpuWarnTip = document.getElementById('cpuWarnTip');
+    const memWarnTip = document.getElementById('memWarnTip');
+
+    // 初始化事件监听
+    function initEventListeners() {
+        console.log('初始化事件监听...');
+
+        // 文件上传相关
+        dropArea.addEventListener('click', () => {
+            console.log('点击上传区域，触发文件选择');
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            console.log('文件选择变化，文件数量:', e.target.files.length);
+            handleFileSelection(e);
+        });
+
+        // 拖放事件 - 修复上传问题的核心部分
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('文件拖入上传区域');
+            dropArea.classList.add('drop-active');
+        });
+
+        dropArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('文件拖出上传区域');
+            dropArea.classList.remove('drop-active');
+        });
+
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('文件在上传区域放下，文件数量:', e.dataTransfer.files.length);
+            dropArea.classList.remove('drop-active');
+
+            if (e.dataTransfer.files.length) {
+                handleDroppedFiles(e.dataTransfer.files);
+            }
+        });
+
+        // 防止文档默认拖放行为干扰
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+        // 按钮事件
+        analyzeBtn.addEventListener('click', analyzeFiles);
+        clearFilesBtn.addEventListener('click', clearFiles);
+        thresholdBtn.addEventListener('click', openThresholdModal);
+        closeThreshold.addEventListener('click', closeThresholdModal);
+        saveThreshold.addEventListener('click', saveThresholdSettings);
+        helpBtn.addEventListener('click', () => {
+            console.log('打开帮助弹窗');
+            helpModal.classList.replace('hidden', 'flex');
+        });
+        closeHelp.addEventListener('click', () => {
+            console.log('关闭帮助弹窗');
+            helpModal.classList.replace('flex', 'hidden');
+        });
+        refreshTrend.addEventListener('click', refreshResourceChart);
+        expandTrend.addEventListener('click', openChartInFullscreen);
+        closeChartModal.addEventListener('click', closeChartModal);
+        dataFilter.addEventListener('change', () => {
+            console.log('数据筛选变化:', dataFilter.value);
+            currentPage = 1;
+            renderLogTable();
+        });
+
+        // 分页事件
+        prevPage.addEventListener('click', () => changePage(currentPage - 1));
+        nextPage.addEventListener('click', () => changePage(currentPage + 1));
+
+        // 窗口大小变化重绘图表
+        window.addEventListener('resize', () => {
+            if (resourceChart) resourceChart.resize();
+            if (fullscreenChart) fullscreenChart.resize();
+        });
+    }
+
+    // 处理文件选择
+    function handleFileSelection(e) {
+        const files = e.target.files;
+        if (files.length) {
+            console.log('处理文件选择，数量:', files.length);
+            addFilesToUploadList(files);
+
+            // 重置input值，允许重复选择同一文件
+            fileInput.value = '';
+        }
+    }
+
+    // 处理拖放文件
+    function handleDroppedFiles(files) {
+        console.log('处理拖放文件，数量:', files.length);
+        addFilesToUploadList(files);
+    }
+
+    // 添加文件到上传列表
+    function addFilesToUploadList(files) {
+        // 过滤已存在的文件
+        const newFiles = Array.from(files).filter(file =>
+            !uploadedFiles.some(f => f.name === file.name && f.size === file.size)
+        );
+
+        if (newFiles.length === 0) {
+            console.log('没有新文件添加');
+            showStatus('warning', '所有文件已在列表中');
+            return;
+        }
+
+        console.log('添加新文件数量:', newFiles.length);
+
+        // 添加到上传列表
+        uploadedFiles = [...uploadedFiles, ...newFiles];
+
+        // 更新UI
+        fileListContainer.classList.remove('hidden');
+        clearFilesBtn.classList.remove('hidden');
+        fileCount.textContent = `${uploadedFiles.length} 个文件`;
+
+        // 添加文件项
+        newFiles.forEach(file => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg mb-2 transition-all hover:bg-gray-100';
+            fileItem.dataset.name = file.name;
+            fileItem.dataset.size = file.size;
+
+            fileItem.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fa fa-file-text-o text-primary mr-2"></i>
+                        <div>
+                            <p class="text-sm truncate max-w-[200px]">${file.name}</p>
+                            <p class="text-xs text-dark-2">${formatFileSize(file.size)}</p>
+                        </div>
+                    </div>
+                    <button class="remove-file text-dark-2 hover:text-danger">
+                        <i class="fa fa-times"></i>
+                    </button>
+                `;
+
+            fileList.appendChild(fileItem);
+
+            // 添加删除事件
+            fileItem.querySelector('.remove-file').addEventListener('click', () => {
+                console.log('删除文件:', file.name);
+                removeFile(file.name, file.size);
+                fileItem.remove();
+            });
+        });
+
+        // 启用分析按钮
+        if (uploadedFiles.length > 0) {
+            analyzeBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+            console.log('分析按钮已启用');
+        }
+
+        showStatus('success', `成功添加 ${newFiles.length} 个文件`);
+    }
+
+    // 移除文件
+    function removeFile(name, size) {
+        uploadedFiles = uploadedFiles.filter(file => !(file.name === name && file.size === size));
+
+        // 更新UI
+        fileCount.textContent = `${uploadedFiles.length} 个文件`;
+
+        if (uploadedFiles.length === 0) {
+            fileListContainer.classList.add('hidden');
+            clearFilesBtn.classList.add('hidden');
+            analyzeBtn.classList.add('opacity-70', 'cursor-not-allowed');
+            console.log('所有文件已移除，分析按钮已禁用');
+        }
+    }
+
+    // 清空文件
+    function clearFiles() {
+        console.log('清空所有文件');
+        uploadedFiles = [];
+        fileList.innerHTML = '';
+        fileListContainer.classList.add('hidden');
+        clearFilesBtn.classList.add('hidden');
+        fileCount.textContent = '0 个文件';
+        analyzeBtn.classList.add('opacity-70', 'cursor-not-allowed');
+        showStatus('info', '已清空所有文件');
+    }
+
+    // 格式化文件大小
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    // 显示状态消息
+    function showStatus(type, message) {
+        statusMessage.classList.remove('hidden', 'bg-success/10', 'text-success', 'bg-danger/10', 'text-danger', 'bg-warning/10', 'text-warning', 'bg-primary/10', 'text-primary');
+
+        if (type === 'success') {
+            statusMessage.classList.add('bg-success/10', 'text-success');
+            statusIcon.className = 'fa fa-check-circle mr-3 text-xl';
+        } else if (type === 'error') {
+            statusMessage.classList.add('bg-danger/10', 'text-danger');
+            statusIcon.className = 'fa fa-exclamation-circle mr-3 text-xl';
+        } else if (type === 'warning') {
+            statusMessage.classList.add('bg-warning/10', 'text-warning');
+            statusIcon.className = 'fa fa-exclamation-triangle mr-3 text-xl';
+        } else if (type === 'info') {
+            statusMessage.classList.add('bg-primary/10', 'text-primary');
+            statusIcon.className = 'fa fa-info-circle mr-3 text-xl';
+        }
+
+        statusText.textContent = message;
+
+        // 3秒后自动隐藏信息类提示
+        if (type === 'info' || type === 'success') {
+            setTimeout(() => {
+                statusMessage.classList.add('hidden');
+            }, 3000);
+        }
+    }
+
+    // 分析上传的文件
+    function analyzeFiles() {
+        if (uploadedFiles.length === 0) return;
+
+        console.log('开始分析文件，数量:', uploadedFiles.length);
+
+        // 重置数据
+        logData = [];
+        shedEvents = [];
+
+        // 显示加载状态
+        emptyState.classList.add('hidden');
+        resultsArea.classList.add('hidden');
+        loadingState.classList.remove('hidden');
+        loadingProgress.textContent = `正在解析 1/${uploadedFiles.length} 个文件`;
+
+        // 逐个解析文件
+        processFilesSequentially(0);
+    }
+
+    // 顺序处理文件
+    function processFilesSequentially(index) {
+        if (index >= uploadedFiles.length) {
+            // 所有文件解析完成
+            loadingProgress.textContent = '解析完成，正在生成分析结果...';
+
+            // 按时间排序所有日志
+            logData.sort((a, b) => new Date(a.time) - new Date(b.time));
+
+            console.log('文件解析完成，总记录数:', logData.length);
+            console.log('降载事件数:', shedEvents.length);
+
+            // 更新统计信息
+            updateStatistics();
+
+            // 生成降载事件表格
+            renderShedEventsTable();
+
+            // 生成资源趋势图表
+            renderResourceChart();
+
+            // 生成日志表格
+            currentPage = 1;
+            renderLogTable();
+
+            // 显示结果
+            setTimeout(() => {
+                loadingState.classList.add('hidden');
+                resultsArea.classList.remove('hidden');
+                showStatus('success', `成功解析 ${uploadedFiles.length} 个 stat.log 文件，共 ${logData.length} 条记录`);
+            }, 800);
+
+            return;
+        }
+
+        // 解析当前文件
+        const file = uploadedFiles[index];
+        loadingProgress.textContent = `正在解析 ${index + 1}/${uploadedFiles.length} 个文件: ${file.name}`;
+        console.log(`解析文件 ${index + 1}/${uploadedFiles.length}: ${file.name}`);
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const content = e.target.result;
+                const parsedData = parseLogContent(content, file.name);
+
+                if (parsedData.length === 0) {
+                    showStatus('warning', `文件 ${file.name} 未解析到有效数据`);
+                } else {
+                    // 添加到全局数据
+                    logData.push(...parsedData);
+
+                    // 提取降载事件
+                    const fileShedEvents = parsedData.filter(item => item.isShedding);
+                    shedEvents.push(...fileShedEvents);
+
+                    console.log(`文件 ${file.name} 解析完成，记录数: ${parsedData.length}, 降载事件数: ${fileShedEvents.length}`);
+                }
+
+                // 处理下一个文件
+                processFilesSequentially(index + 1);
+            } catch (error) {
+                showStatus('error', `解析文件 ${file.name} 时出错: ${error.message}`);
+                console.error('文件解析错误:', error);
+                processFilesSequentially(index + 1);
+            }
+        };
+
+        reader.onerror = function() {
+            showStatus('error', `读取文件 ${file.name} 时出错: ${reader.error.message}`);
+            console.error('文件读取错误:', reader.error);
+            processFilesSequentially(index + 1);
+        };
+
+        reader.readAsText(file);
+    }
+
+    // 解析日志内容
+    function parseLogContent(content, filename) {
+        const lines = content.split('\n').filter(line => line.trim() !== '');
+        const results = [];
+
+        lines.forEach(line => {
+            // 提取时间戳 (2025-09-22T09:56:37.334+08:00)
+            const timeMatch = line.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}\+08:00/);
+            if (!timeMatch) return;
+            const time = timeMatch[0];
+
+            // 提取服务名
+            const appMatch = line.match(/app=([\w.]+)/);
+            const service = appMatch ? appMatch[1] : 'unknown';
+
+            // 判断是否为降载事件日志
+            const isShedding = line.includes('(rpc) shedding_stat');
+
+            if (isShedding) {
+                // 解析降载事件数据
+                const cpuMatch = line.match(/cpu: (\d+)/);
+                const cpu = cpuMatch ? parseInt(cpuMatch[1]) : 0;
+
+                const totalMatch = line.match(/total: (\d+)/);
+                const total = totalMatch ? parseInt(totalMatch[1]) : 0;
+
+                const passMatch = line.match(/pass: (\d+)/);
+                const pass = passMatch ? parseInt(passMatch[1]) : 0;
+
+                const dropMatch = line.match(/drop: (\d+)/);
+                const drop = dropMatch ? parseInt(dropMatch[1]) : 0;
+
+                results.push({
+                    time,
+                    service,
+                    cpu,
+                    memory: 0, // 降载日志可能不包含内存信息
+                    total,
+                    pass,
+                    drop,
+                    isShedding: true,
+                    sourceFile: filename
+                });
+            } else {
+                // 解析普通系统资源日志
+                // CPU信息
+                const cpuMatch = line.match(/CPU: (\d+)m/);
+                const cpu = cpuMatch ? parseInt(cpuMatch[1]) : 0;
+
+                // 内存信息
+                const allocMatch = line.match(/Alloc=([\d.]+)Mi/);
+                const memory = allocMatch ? parseFloat(allocMatch[1]) : 0;
+
+                // QPS信息
+                const qpsMatch = line.match(/qps: ([\d.]+)/);
+                const qps = qpsMatch ? parseFloat(qpsMatch[1]) : 0;
+
+                results.push({
+                    time,
+                    service,
+                    cpu,
+                    memory,
+                    qps,
+                    total: 0,
+                    pass: 0,
+                    drop: 0,
+                    isShedding: false,
+                    sourceFile: filename
+                });
+            }
+        });
+
+        return results;
+    }
+
+    // 更新统计信息
+    function updateStatistics() {
+        if (logData.length === 0) return;
+
+        // 计算CPU和内存最大值
+        const maxCpu = Math.max(...logData.map(item => item.cpu));
+        const maxMem = Math.max(...logData.map(item => item.memory));
+
+        // 计算降载事件数量和总丢弃数
+        const totalDrops = shedEvents.reduce((sum, event) => sum + event.drop, 0);
+
+        // 更新UI
+        maxCpuEl.textContent = `${maxCpu} m`;
+        maxMemEl.textContent = `${maxMem.toFixed(2)} MiB`;
+        shedCountEl.textContent = `${shedEvents.length} 次`;
+        totalDropsEl.textContent = totalDrops;
+
+        // 显示预警提示
+        cpuWarnTip.classList.toggle('hidden', maxCpu <= cpuThreshold);
+        memWarnTip.classList.toggle('hidden', maxMem <= memThreshold);
+    }
+
+    // 渲染降载事件表格
+    function renderShedEventsTable() {
+        if (shedEvents.length === 0) {
+            shedEventsTable.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-10 text-center text-dark-2">
+                            未检测到降载事件
+                        </td>
+                    </tr>
+                `;
+            return;
+        }
+
+        // 按时间排序（最新的在前）
+        const sortedEvents = [...shedEvents].sort((a, b) => new Date(b.time) - new Date(a.time));
+
+        // 生成表格内容
+        let html = '';
+        sortedEvents.forEach(event => {
+            html += `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${formatDateTime(event.time)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${event.cpu >= shedCpuThreshold ? 'text-danger font-medium' : ''}">
+                        ${event.cpu}
+                        ${event.cpu >= shedCpuThreshold ? '<i class="fa fa-exclamation-circle text-danger ml-1"></i>' : ''}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${event.total}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${event.pass}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${event.drop > 0 ? 'text-warning' : ''}">${event.drop}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${event.service}</td>
+                </tr>
+                `;
+        });
+
+        shedEventsTable.innerHTML = html;
+    }
+
+    // 渲染资源趋势图表
+    function renderResourceChart() {
+        // 销毁现有图表
+        if (resourceChart) {
+            resourceChart.dispose();
+        }
+
+        const chartDom = document.getElementById('resourceTrendChart');
+        resourceChart = echarts.init(chartDom);
+
+        // 准备数据
+        if (logData.length === 0) return;
+
+        // 按时间分组聚合数据
+        const timeGroups = {};
+
+        logData.forEach(item => {
+            if (!timeGroups[item.time]) {
+                timeGroups[item.time] = {
+                    cpu: [],
+                    memory: [],
+                    hasShedding: false
+                };
+            }
+
+            timeGroups[item.time].cpu.push(item.cpu);
+            if (item.memory > 0) { // 只统计有内存数据的条目
+                timeGroups[item.time].memory.push(item.memory);
+            }
+
+            if (item.isShedding) {
+                timeGroups[item.time].hasShedding = true;
+            }
+        });
+
+        // 处理时间和数据
+        const times = Object.keys(timeGroups).sort((a, b) => new Date(a) - new Date(b));
+        const formattedTimes = times.map(t => formatTime(t));
+        const cpuData = times.map(t => {
+            const values = timeGroups[t].cpu;
+            return values.length > 0 ? Math.round(values.reduce((sum, val) => sum + val, 0) / values.length) : 0;
+        });
+        const memoryData = times.map(t => {
+            const values = timeGroups[t].memory;
+            return values.length > 0 ? parseFloat((values.reduce((sum, val) => sum + val, 0) / values.length).toFixed(2)) : 0;
+        });
+        const shedData = times.map(t => timeGroups[t].hasShedding ? 1 : 0);
+
+        // 图表配置
+        const option = {
+            backgroundColor: 'transparent',
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: { type: 'shadow' },
+                formatter: function(params) {
+                    let result = `${formatDateTime(times[params[0].dataIndex])}<br/>`;
+                    params.forEach(p => {
+                        if (p.seriesType === 'bar') {
+                            result += `CPU: ${p.value} m<br/>`;
+                        } else if (p.seriesType === 'line') {
+                            result += `内存: ${p.value} MiB<br/>`;
+                        } else if (p.seriesType === 'scatter' && p.value > 0) {
+                            result += `<span style="color: ${p.color}">发生降载事件</span><br/>`;
+                        }
+                    });
+                    return result;
+                }
+            },
+            legend: { show: false },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '15%',
+                top: '10%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: formattedTimes,
+                axisLabel: {
+                    rotate: 45,
+                    interval: calculateLabelInterval(formattedTimes.length)
+                }
+            },
+            yAxis: [
+                {
+                    type: 'value',
+                    name: 'CPU (m)',
+                    min: 0,
+                    max: Math.max(...cpuData) * 1.2,
+                    splitLine: { lineStyle: { type: 'dashed' } }
+                },
+                {
+                    type: 'value',
+                    name: '内存 (MiB)',
+                    min: 0,
+                    max: Math.max(...memoryData) * 1.2,
+                    position: 'right',
+                    splitLine: { show: false }
+                },
+                {
+                    type: 'value',
+                    name: '降载',
+                    min: 0,
+                    max: 1,
+                    show: false
+                }
+            ],
+            series: [
+                // CPU数据
+                {
+                    name: 'CPU',
+                    type: 'bar',
+                    data: cpuData,
+                    itemStyle: { color: '#165DFF' },
+                    emphasis: { focus: 'series' },
+                    z: 2
+                },
+                // 内存数据
+                {
+                    name: '内存',
+                    type: 'line',
+                    data: memoryData,
+                    symbol: 'circle',
+                    symbolSize: 4,
+                    lineStyle: { width: 2, color: '#36CFC9' },
+                    itemStyle: { color: '#36CFC9' },
+                    yAxisIndex: 1,
+                    emphasis: { focus: 'series' },
+                    z: 2
+                },
+                // 降载事件
+                {
+                    name: '降载事件',
+                    type: 'scatter',
+                    data: shedData,
+                    symbol: 'pin',
+                    symbolSize: function(val) {
+                        return val > 0 ? 30 : 0;
+                    },
+                    itemStyle: { color: '#722ED1' },
+                    label: {
+                        show: function(val) { return val.data > 0; },
+                        formatter: '降',
+                        color: '#fff',
+                        fontSize: 12
+                    },
+                    yAxisIndex: 2,
+                    emphasis: { focus: 'series' },
+                    z: 3
+                },
+                // CPU预警线
+                {
+                    name: 'CPU预警线',
+                    type: 'line',
+                    data: cpuData.map(() => cpuThreshold),
+                    lineStyle: {
+                        width: 2,
+                        color: '#FF4D4F',
+                        type: 'dashed'
+                    },
+                    symbol: 'none',
+                    tooltip: { show: false },
+                    z: 1
+                },
+                // 内存预警线
+                {
+                    name: '内存预警线',
+                    type: 'line',
+                    data: memoryData.map(() => memThreshold),
+                    lineStyle: {
+                        width: 2,
+                        color: '#FF4D4F',
+                        type: 'dashed'
+                    },
+                    symbol: 'none',
+                    yAxisIndex: 1,
+                    tooltip: { show: false },
+                    z: 1
+                }
+            ],
+            dataZoom: [
+                { type: 'inside', xAxisIndex: 0 },
+                { type: 'slider', xAxisIndex: 0, bottom: 5 }
+            ]
+        };
+
+        resourceChart.setOption(option);
+    }
+
+    // 刷新资源图表
+    function refreshResourceChart() {
+        const chartDom = document.getElementById('resourceTrendChart');
+        chartDom.style.opacity = '0.5';
+
+        setTimeout(() => {
+            renderResourceChart();
+            chartDom.style.opacity = '1';
+        }, 300);
+    }
+
+    // 全屏显示图表
+    function openChartInFullscreen() {
+        // 显示模态框
+        chartModal.classList.replace('hidden', 'flex');
+
+        // 等待模态框显示后初始化图表
+        setTimeout(() => {
+            // 销毁现有全屏图表
+            if (fullscreenChart) {
+                fullscreenChart.dispose();
+            }
+
+            const chartDom = document.getElementById('fullscreenChart');
+            fullscreenChart = echarts.init(chartDom);
+
+            // 复制主图表配置
+            const option = JSON.parse(JSON.stringify(resourceChart.getOption()));
+            fullscreenChart.setOption(option);
+        }, 300);
+    }
+
+    // 关闭全屏图表
+    function closeChartModal() {
+        chartModal.classList.replace('flex', 'hidden');
+        if (fullscreenChart) {
+            fullscreenChart.dispose();
+            fullscreenChart = null;
+        }
+    }
+
+    // 渲染日志表格
+    function renderLogTable() {
+        // 根据筛选条件过滤数据
+        let filteredData = [...logData];
+
+        switch(dataFilter.value) {
+            case 'shedding':
+                filteredData = filteredData.filter(item => item.isShedding);
+                break;
+            case 'normal':
+                filteredData = filteredData.filter(item => !item.isShedding);
+                break;
+            // 默认显示所有数据
+        }
+
+        // 按时间排序（最新的在前）
+        filteredData.sort((a, b) => new Date(b.time) - new Date(a.time));
+
+        // 分页处理
+        const totalRecords = filteredData.length;
+        const totalPages = Math.ceil(totalRecords / pageSize);
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = Math.min(startIndex + pageSize, totalRecords);
+        const pageRecords = filteredData.slice(startIndex, endIndex);
+
+        // 更新分页信息
+        tableRange.textContent = totalRecords > 0 ? `${startIndex + 1}-${endIndex}` : '0-0';
+        tableTotal.textContent = totalRecords;
+        prevPage.disabled = currentPage === 1;
+        nextPage.disabled = currentPage === totalPages;
+
+        // 清空表格
+        logTableBody.innerHTML = '';
+
+        // 填充表格
+        if (pageRecords.length === 0) {
+            const emptyRow = document.createElement('tr');
+            emptyRow.innerHTML = `
+                    <td colspan="6" class="px-6 py-10 text-center text-dark-2">
+                        没有找到符合条件的数据
+                    </td>
+                `;
+            logTableBody.appendChild(emptyRow);
+            return;
+        }
+
+        pageRecords.forEach(record => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50 transition-colors';
+
+            // 确定请求情况显示内容
+            let requestInfo = '';
+            if (record.isShedding) {
+                requestInfo = `总: ${record.total}, 通过: ${record.pass}, 丢弃: ${record.drop}`;
+            } else if (record.qps) {
+                requestInfo = `QPS: ${record.qps}`;
+            } else {
+                requestInfo = '-';
+            }
+
+            row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${formatDateTime(record.time)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${record.cpu >= cpuThreshold ? 'text-danger' : ''}">
+                        ${record.cpu}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${record.memory >= memThreshold ? 'text-danger' : ''}">
+                        ${record.memory > 0 ? record.memory.toFixed(2) : '-'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${record.drop > 0 ? 'text-warning' : ''}">
+                        ${requestInfo}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${record.service}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <span class="px-2 py-0.5 rounded text-xs ${record.isShedding ? 'bg-shed/10 text-shed' : 'bg-primary/10 text-primary'}">
+                            ${record.isShedding ? '降载事件' : '系统资源'}
+                        </span>
+                    </td>
+                `;
+
+            logTableBody.appendChild(row);
+        });
+    }
+
+    // 更改页码
+    function changePage(page) {
+        currentPage = page;
+        renderLogTable();
+
+        // 滚动到表格顶部
+        logTableBody.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // 打开阈值设置弹窗
+    function openThresholdModal() {
+        // 填充当前值
+        cpuThresholdInput.value = cpuThreshold;
+        memThresholdInput.value = memThreshold;
+        shedCpuThresholdInput.value = shedCpuThreshold;
+
+        // 显示弹窗
+        thresholdModal.classList.replace('hidden', 'flex');
+
+        // 添加动画
+        setTimeout(() => {
+            modalContent.classList.remove('scale-95', 'opacity-0');
+            modalContent.classList.add('scale-100', 'opacity-100', 'transition-all', 'duration-300');
+        }, 10);
+    }
+
+    // 关闭阈值设置弹窗
+    function closeThresholdModal() {
+        modalContent.classList.remove('scale-100', 'opacity-100');
+        modalContent.classList.add('scale-95', 'opacity-0', 'transition-all', 'duration-300');
+
+        setTimeout(() => {
+            thresholdModal.classList.replace('flex', 'hidden');
+        }, 300);
+    }
+
+    // 保存阈值设置
+    function saveThresholdSettings() {
+        // 验证并保存设置
+        const newCpuThreshold = parseInt(cpuThresholdInput.value);
+        const newMemThreshold = parseInt(memThresholdInput.value);
+        const newShedCpuThreshold = parseInt(shedCpuThresholdInput.value);
+
+        if (isNaN(newCpuThreshold) || newCpuThreshold <= 0) {
+            showStatus('error', '请输入有效的CPU预警阈值');
+            return;
+        }
+
+        if (isNaN(newMemThreshold) || newMemThreshold <= 0) {
+            showStatus('error', '请输入有效的内存预警阈值');
+            return;
+        }
+
+        if (isNaN(newShedCpuThreshold) || newShedCpuThreshold <= 0) {
+            showStatus('error', '请输入有效的降载监控CPU阈值');
+            return;
+        }
+
+        // 更新阈值
+        cpuThreshold = newCpuThreshold;
+        memThreshold = newMemThreshold;
+        shedCpuThreshold = newShedCpuThreshold;
+
+        // 关闭弹窗
+        closeThresholdModal();
+
+        // 更新图表和统计信息
+        if (logData.length > 0) {
+            updateStatistics();
+            renderResourceChart();
+            renderLogTable();
+            renderShedEventsTable();
+        }
+
+        showStatus('success', '阈值设置已保存');
+    }
+
+    // 格式化时间（仅时分）
+    function formatTime(timeString) {
+        return timeString.slice(11, 16);
+    }
+
+    // 格式化日期时间
+    function formatDateTime(timeString) {
+        return timeString.slice(0, 16).replace('T', ' ');
+    }
+
+    // 计算标签间隔
+    function calculateLabelInterval(dataLength) {
+        if (dataLength <= 30) return 0;
+        if (dataLength <= 100) return Math.floor(dataLength / 10);
+        return Math.floor(dataLength / 20);
+    }
+
+    // 初始化应用
+    function initApp() {
+        console.log('初始化应用...');
+        initEventListeners();
+        showStatus('info', '应用已准备就绪，请上传stat.log文件进行分析');
+    }
+
+    // 启动应用
+    document.addEventListener('DOMContentLoaded', initApp);
+</script>
+</body>
+</html>
