@@ -371,5 +371,5 @@ service IecStreamRpc {
     };
   };
   // 推送 chunk asdu 消息
-  rpc pushChunkAsdu (PushChunkAsduReq) returns (PushChunkAsduRes) {}
+  rpc PushChunkAsdu (PushChunkAsduReq) returns (PushChunkAsduRes) {}
 }

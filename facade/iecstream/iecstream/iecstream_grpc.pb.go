@@ -20,7 +20,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	IecStreamRpc_Ping_FullMethodName          = "/iecstream.IecStreamRpc/Ping"
-	IecStreamRpc_PushChunkAsdu_FullMethodName = "/iecstream.IecStreamRpc/pushChunkAsdu"
+	IecStreamRpc_PushChunkAsdu_FullMethodName = "/iecstream.IecStreamRpc/PushChunkAsdu"
 )
 
 // IecStreamRpcClient is the client API for IecStreamRpc service.
@@ -152,7 +152,7 @@ var IecStreamRpc_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _IecStreamRpc_Ping_Handler,
 		},
 		{
-			MethodName: "pushChunkAsdu",
+			MethodName: "PushChunkAsdu",
 			Handler:    _IecStreamRpc_PushChunkAsdu_Handler,
 		},
 	},
