@@ -1654,7 +1654,7 @@
                     showDetail: true,
                     showDataShadow: 'auto'
                 }
-            ],
+            ].concat(qpsSeries),
             // 增强的动画效果
             animation: true,
             animationDuration: 1500,
@@ -2372,7 +2372,7 @@
                 {                    name: '限流请求数',                    type: 'bar',                    stack: 'total',                    data: sheddingData,                    itemStyle: {                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [                            { offset: 0, color: '#F5222D' },                            { offset: 1, color: '#FF7875' }                        ])                    },                    barWidth: '40%',                    emphasis: {                        focus: 'series',                        itemStyle: {                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [                                { offset: 0, color: '#cf1322' },                                { offset: 1, color: '#F5222D' }                            ])                        }                    }                },
                 {                    name: '总请求数',                    type: 'line',                    data: totalData,                    symbol: 'circle',                    symbolSize: 6,                    symbolHoverSize: 8,                    smooth: true,                    lineStyle: {                        width: 3,                        color: '#165DFF',                        shadowColor: 'rgba(22, 93, 255, 0.3)',                        shadowBlur: 10                    },                    itemStyle: {                        color: '#165DFF',                        borderColor: '#fff',                        borderWidth: 2                    },                    emphasis: {                        focus: 'series',                        itemStyle: {                            shadowBlur: 10,                            shadowColor: 'rgba(22, 93, 255, 0.6)'                        }                    }                },
                 {                    name: '限流率',                    type: 'line',                    yAxisIndex: 1,                    data: sheddingRateData,                    symbol: 'circle',                    symbolSize: 6,                    symbolHoverSize: 8,                    smooth: true,                    lineStyle: {                        width: 3,                        color: '#F5222D',                        shadowColor: 'rgba(245, 34, 45, 0.3)',                        shadowBlur: 10                    },                    itemStyle: {                        color: '#F5222D',                        borderColor: '#fff',                        borderWidth: 2                    },                    emphasis: {                        focus: 'series',                        itemStyle: {                            shadowBlur: 10,                            shadowColor: 'rgba(245, 34, 45, 0.6)'                        }                    }                }
-            ],
+            ].concat(qpsSeries),
             dataZoom: [
                 {
                     type: 'inside',
@@ -2423,26 +2423,64 @@
             return isNaN(value) ? 0 : value;
         });
         
-        // 处理响应时间数据
-        const avgTimeData = aggregatedData.map(item => {
-            const value = parseFloat(item.avgTime);
-            return isNaN(value) ? 0 : value;
+        // 处理QPS类型数据
+        const qpsSeries = [];
+        const qpsLegend = [];
+        const qpsColors = ['#1890FF', '#52C41A', '#FAAD14', '#F5222D', '#722ED1', '#13C2C2', '#EB2F96'];
+        let colorIndex = 0;
+        
+        // 提取所有QPS类型
+        const qpsTypes = new Set();
+        aggregatedData.forEach(item => {
+            if (item.qpsByType) {
+                Object.keys(item.qpsByType).forEach(type => {
+                    qpsTypes.add(type);
+                });
+            }
         });
-        const medTimeData = aggregatedData.map(item => {
-            const value = parseFloat(item.medTime);
-            return isNaN(value) ? 0 : value;
-        });
-        const p90TimeData = aggregatedData.map(item => {
-            const value = parseFloat(item.p90Time);
-            return isNaN(value) ? 0 : value;
-        });
-        const p99TimeData = aggregatedData.map(item => {
-            const value = parseFloat(item.p99Time);
-            return isNaN(value) ? 0 : value;
-        });
-        const p999TimeData = aggregatedData.map(item => {
-            const value = parseFloat(item.p999Time);
-            return isNaN(value) ? 0 : value;
+        
+        // 为每种QPS类型创建数据数组和系列配置
+        qpsTypes.forEach(type => {
+            const qpsData = aggregatedData.map(item => {
+                const value = item.qpsByType && item.qpsByType[type] ? parseFloat(item.qpsByType[type]) : 0;
+                return isNaN(value) ? 0 : value;
+            });
+            
+            if (qpsData.some(value => value > 0)) { // 只添加有数据的QPS类型
+                const color = qpsColors[colorIndex % qpsColors.length];
+                colorIndex++;
+                
+                qpsSeries.push({
+                    name: `QPS-${type}`,
+                    type: 'line',
+                    yAxisIndex: 3, // 使用新的Y轴索引
+                    data: qpsData,
+                    symbol: 'circle',
+                    symbolSize: 5,
+                    symbolHoverSize: 7,
+                    smooth: true,
+                    lineStyle: {
+                        width: 2,
+                        color: color,
+                        shadowColor: `${color}33`, // 添加透明度
+                        shadowBlur: 8
+                    },
+                    itemStyle: {
+                        color: color,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    emphasis: {
+                        focus: 'series',
+                        itemStyle: {
+                            shadowBlur: 8,
+                            shadowColor: `${color}66` // 添加透明度
+                        }
+                    }
+                });
+                
+                qpsLegend.push(`QPS-${type}`);
+            }
         });
 
         // 图表配置 - 统一样式和增强效果
@@ -2482,7 +2520,7 @@
                 shadowOffsetY: 4
             },
             legend: {
-                data: ['CPU占用(m)', 'GC次数', '内存占用(MB)', '平均响应时间(ms)', '中位数响应时间(ms)', '90%响应时间(ms)', '99%响应时间(ms)', '99.9%响应时间(ms)'],
+                data: ['CPU占用(m)', 'GC次数', '内存占用(MB)', 'QPS-Total'].concat(qpsLegend),
                 top: 0,
                 left: 'center',
                 textStyle: { 
@@ -2546,7 +2584,7 @@
                     splitLine: { show: false }
                 },
                 {
-                    name: '响应时间(ms)',
+                    name: 'QPS',
                     type: 'value',
                     position: 'right',
                     offset: 120,
@@ -2650,21 +2688,24 @@
                     }
                 },
                 {
-                    name: '平均响应时间(ms)',
+                    name: 'QPS-Total',
                     type: 'line',
                     yAxisIndex: 3,
-                    data: avgTimeData,
+                    data: aggregatedData.map(item => {
+                        const value = parseFloat(item.qps);
+                        return isNaN(value) ? 0 : value;
+                    }),
                     symbol: 'circle',
                     symbolSize: 6,
                     symbolHoverSize: 8,
                     smooth: true,
-                    lineStyle: { 
+                    lineStyle: {
                         width: 3,
                         color: '#722ED1',
                         shadowColor: 'rgba(114, 46, 209, 0.3)',
                         shadowBlur: 10
                     },
-                    itemStyle: { 
+                    itemStyle: {
                         color: '#722ED1',
                         borderColor: '#fff',
                         borderWidth: 2
@@ -2676,120 +2717,8 @@
                             shadowColor: 'rgba(114, 46, 209, 0.6)'
                         }
                     }
-                },
-                {
-                    name: '中位数响应时间(ms)',
-                    type: 'line',
-                    yAxisIndex: 3,
-                    data: medTimeData,
-                    symbol: 'circle',
-                    symbolSize: 5,
-                    symbolHoverSize: 7,
-                    smooth: true,
-                    lineStyle: { 
-                        width: 2,
-                        color: '#FA541C',
-                        shadowColor: 'rgba(250, 84, 28, 0.3)',
-                        shadowBlur: 8
-                    },
-                    itemStyle: { 
-                        color: '#FA541C',
-                        borderColor: '#fff',
-                        borderWidth: 2
-                    },
-                    emphasis: {
-                        focus: 'series',
-                        itemStyle: {
-                            shadowBlur: 8,
-                            shadowColor: 'rgba(250, 84, 28, 0.6)'
-                        }
-                    }
-                },
-                {
-                    name: '90%响应时间(ms)',
-                    type: 'line',
-                    yAxisIndex: 3,
-                    data: p90TimeData,
-                    symbol: 'circle',
-                    symbolSize: 5,
-                    symbolHoverSize: 7,
-                    smooth: true,
-                    lineStyle: { 
-                        width: 2,
-                        color: '#52C41A',
-                        shadowColor: 'rgba(82, 196, 26, 0.3)',
-                        shadowBlur: 8
-                    },
-                    itemStyle: { 
-                        color: '#52C41A',
-                        borderColor: '#fff',
-                        borderWidth: 2
-                    },
-                    emphasis: {
-                        focus: 'series',
-                        itemStyle: {
-                            shadowBlur: 8,
-                            shadowColor: 'rgba(82, 196, 26, 0.6)'
-                        }
-                    }
-                },
-                {
-                    name: '99%响应时间(ms)',
-                    type: 'line',
-                    yAxisIndex: 3,
-                    data: p99TimeData,
-                    symbol: 'circle',
-                    symbolSize: 5,
-                    symbolHoverSize: 7,
-                    smooth: true,
-                    lineStyle: { 
-                        width: 2,
-                        color: '#FAAD14',
-                        shadowColor: 'rgba(250, 173, 20, 0.3)',
-                        shadowBlur: 8
-                    },
-                    itemStyle: { 
-                        color: '#FAAD14',
-                        borderColor: '#fff',
-                        borderWidth: 2
-                    },
-                    emphasis: {
-                        focus: 'series',
-                        itemStyle: {
-                            shadowBlur: 8,
-                            shadowColor: 'rgba(250, 173, 20, 0.6)'
-                        }
-                    }
-                },
-                {
-                    name: '99.9%响应时间(ms)',
-                    type: 'line',
-                    yAxisIndex: 3,
-                    data: p999TimeData,
-                    symbol: 'circle',
-                    symbolSize: 5,
-                    symbolHoverSize: 7,
-                    smooth: true,
-                    lineStyle: { 
-                        width: 2,
-                        color: '#165DFF',
-                        shadowColor: 'rgba(22, 93, 255, 0.3)',
-                        shadowBlur: 8
-                    },
-                    itemStyle: { 
-                        color: '#165DFF',
-                        borderColor: '#fff',
-                        borderWidth: 2
-                    },
-                    emphasis: {
-                        focus: 'series',
-                        itemStyle: {
-                            shadowBlur: 8,
-                            shadowColor: 'rgba(22, 93, 255, 0.6)'
-                        }
-                    }
                 }
-            ],
+            ].concat(qpsSeries),
             dataZoom: [
                 {
                     type: 'inside',
