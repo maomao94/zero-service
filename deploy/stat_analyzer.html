@@ -2019,7 +2019,7 @@
                 }
             ],
             series: [
-                {
+                {                
                     name: 'CPU占用(m)',
                     type: 'bar',
                     data: cpuData,
@@ -2031,6 +2031,7 @@
                     },
                     barWidth: '30%',
                     emphasis: {
+                        focus: 'series',
                         itemStyle: {
                             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
                                 { offset: 0, color: '#FA8C16' },
@@ -2059,6 +2060,13 @@
                         color: '#52C41A',
                         borderColor: '#fff',
                         borderWidth: 2
+                    },
+                    emphasis: {
+                        focus: 'series',
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowColor: 'rgba(82, 196, 26, 0.6)'
+                        }
                     }
                 },
                 {
@@ -2080,6 +2088,13 @@
                         color: '#1677FF',
                         borderColor: '#fff',
                         borderWidth: 2
+                    },
+                    emphasis: {
+                        focus: 'series',
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowColor: 'rgba(22, 119, 255, 0.6)'
+                        }
                     },
                     areaStyle: {
                         color: {
