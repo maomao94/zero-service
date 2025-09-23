@@ -374,6 +374,22 @@
             <div class="chart-container" id="sheddingTrendChart"></div>
         </div>
 
+        <!-- 缓存命中率趋势图 -->
+        <div class="bg-white rounded-xl shadow-card p-6 mb-8 card-shadow-hover">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-semibold">缓存命中率趋势图</h3>
+                <div class="flex space-x-2">
+                    <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="cacheHit">
+                        <i class="fa fa-refresh"></i>
+                    </button>
+                    <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="cacheHit">
+                        <i class="fa fa-expand"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-container" id="cacheHitChart"></div>
+        </div>
+
         <!-- 服务性能详情 -->
         <div class="mb-8">
             <div class="flex justify-between items-center mb-4">
@@ -922,6 +938,24 @@
                 const dropCount = parseInt(sheddingMatch[4]);
                 logEntry.shedding = dropCount > 0 ? `丢弃: ${dropCount}` : '正常';
                 logEntry.drops = sheddingMatch[4]; // 更新丢弃数
+                // 保存完整的限流统计数据
+                logEntry.sheddingStat = {
+                    cpu: parseInt(sheddingMatch[1]),
+                    total: parseInt(sheddingMatch[2]),
+                    pass: parseInt(sheddingMatch[3]),
+                    drop: parseInt(sheddingMatch[4])
+                };
+            }
+
+            // 提取缓存命中率信息
+            const cacheMatch = line.match(/dbcache\(([^)]+)\) - qpm: (\d+), hit_ratio: ([\d.]+)%, hit: (\d+), miss: (\d+), db_fails: (\d+)/);
+            if (cacheMatch) {
+                logEntry.cacheType = cacheMatch[1];
+                logEntry.cacheQpm = parseInt(cacheMatch[2]);
+                logEntry.cacheHitRatio = parseFloat(cacheMatch[3]);
+                logEntry.cacheHit = parseInt(cacheMatch[4]);
+                logEntry.cacheMiss = parseInt(cacheMatch[5]);
+                logEntry.cacheDbFails = parseInt(cacheMatch[6]);
             }
 
             // 将日志条目添加到数据列表
@@ -1089,7 +1123,18 @@
                     sheddingCount: item.shedding !== '正常' ? 1 : 0,
                     totalCount: 1,
                     // 服务信息
-                    serviceStats: JSON.parse(JSON.stringify(serviceStats))
+                    serviceStats: JSON.parse(JSON.stringify(serviceStats)),
+                    // 完整的限流统计数据
+                    sheddingStat: item.sheddingStat || { cpu: 0, total: 0, pass: 0, drop: 0 },
+                    // 缓存命中率数据
+                    cacheStats: item.cacheType ? {
+                        type: item.cacheType,
+                        qpm: item.cacheQpm || 0,
+                        hitRatio: item.cacheHitRatio || 0,
+                        hit: item.cacheHit || 0,
+                        miss: item.cacheMiss || 0,
+                        dbFails: item.cacheDbFails || 0
+                    } : null
                 };
             } else {
                 // 对于同一分钟内的多个数据点，累加相关数值
@@ -1106,6 +1151,43 @@
                     existing.normalCount++;
                 } else {
                     existing.sheddingCount++;
+                }
+                
+                // 更新完整的限流统计数据
+                if (item.sheddingStat) {
+                    if (!existing.sheddingStat) {
+                        existing.sheddingStat = { cpu: 0, total: 0, pass: 0, drop: 0 };
+                    }
+                    existing.sheddingStat.cpu += item.sheddingStat.cpu || 0;
+                    existing.sheddingStat.total += item.sheddingStat.total || 0;
+                    existing.sheddingStat.pass += item.sheddingStat.pass || 0;
+                    existing.sheddingStat.drop += item.sheddingStat.drop || 0;
+                }
+                
+                // 更新缓存命中率数据
+                if (item.cacheType) {
+                    if (!existing.cacheStats) {
+                        existing.cacheStats = {
+                            type: item.cacheType,
+                            qpm: item.cacheQpm || 0,
+                            hitRatio: item.cacheHitRatio || 0,
+                            hit: item.cacheHit || 0,
+                            miss: item.cacheMiss || 0,
+                            dbFails: item.cacheDbFails || 0
+                        };
+                    } else {
+                        // 如果已经有缓存统计数据，并且类型相同，则累加
+                        if (existing.cacheStats.type === item.cacheType) {
+                            existing.cacheStats.qpm += item.cacheQpm || 0;
+                            existing.cacheStats.hit += item.cacheHit || 0;
+                            existing.cacheStats.miss += item.cacheMiss || 0;
+                            existing.cacheStats.dbFails += item.cacheDbFails || 0;
+                            // 重新计算命中率
+                            const total = existing.cacheStats.hit + existing.cacheStats.miss;
+                            existing.cacheStats.hitRatio = total > 0 ? 
+                                (existing.cacheStats.hit / total * 100).toFixed(1) : 0;
+                        }
+                    }
                 }
                 
                 // 更新服务统计信息的深拷贝
@@ -1185,6 +1267,9 @@
         
         // 渲染限流趋势图
         renderSheddingTrendChart();
+        
+        // 渲染缓存命中率趋势图
+        renderCacheHitChart();
     }
 
     // 渲染内存趋势图
@@ -2128,7 +2213,7 @@
         chart.setOption(option);
     }
 
-    // 渲染限流状态分析图
+    // 渲染自适应降载图（限流状态分析）
     function renderSheddingStatsChart() {
         const chartDom = document.getElementById('sheddingStatsChart');
         const chart = echarts.init(chartDom);
@@ -2137,75 +2222,49 @@
         // 使用分钟聚合后的数据
         const aggregatedData = aggregateDataByMinute();
 
-        // 统计限流状态数据
-        let totalNormalCount = 0;
-        let totalSheddingCount = 0;
+        // 处理数据 - 按时间分析限流状态
+        const times = aggregatedData.map(item => item.formattedTime);
         
-        // 按服务统计限流状态
-        const serviceSheddingData = {};
+        // 从完整的sheddingStat数据中提取指标
+        const totalData = aggregatedData.map(item => item.sheddingStat?.total || 0);
+        const passData = aggregatedData.map(item => item.sheddingStat?.pass || 0);
+        const dropData = aggregatedData.map(item => item.sheddingStat?.drop || 0);
+        const cpuData = aggregatedData.map(item => item.sheddingStat?.cpu || 0);
         
-        // 检查是否有聚合数据
-        if (aggregatedData.length > 0) {
-            // 获取最后一个时间点的服务统计数据（最完整的）
-            const lastDataPoint = aggregatedData[aggregatedData.length - 1];
-            if (lastDataPoint.serviceStats) {
-                // 从serviceStats中提取数据
-                Object.keys(lastDataPoint.serviceStats).forEach(service => {
-                    const stats = lastDataPoint.serviceStats[service];
-                    serviceSheddingData[service] = {
-                        normal: stats.normal || 0,
-                        shedding: stats.shedding || 0
-                    };
-                    totalNormalCount += stats.normal || 0;
-                    totalSheddingCount += stats.shedding || 0;
-                });
-            }
-        }
-        
-        // 如果聚合数据的服务统计为空，回退到原始方法
-        if (Object.keys(serviceSheddingData).length === 0) {
-            aggregatedData.forEach(item => {
-                // 对于每个聚合数据点，计算总数
-                totalNormalCount += item.normalCount || 0;
-                totalSheddingCount += item.sheddingCount || 0;
-            });
-        }
-
-        const serviceNames = Object.keys(serviceSheddingData);
-        const normalData = serviceNames.map(service => serviceSheddingData[service].normal);
-        const sheddingData = serviceNames.map(service => serviceSheddingData[service].shedding);
+        // 计算限流率
+        const dropRateData = times.map((time, index) => {
+            if (totalData[index] === 0) return 0;
+            return (dropData[index] / totalData[index] * 100).toFixed(1);
+        });
 
         // 图表配置 - 统一样式和增强效果
         const option = {
             backgroundColor: 'transparent',
             tooltip: {
                 trigger: 'axis',
-                axisPointer: {
-                    type: 'shadow'
-                },
                 backgroundColor: 'rgba(255, 255, 255, 0.95)',
                 borderColor: '#E0E6ED',
                 borderWidth: 1,
                 borderRadius: 8,
                 padding: [12, 16],
-                textStyle: { 
+                textStyle: {
                     color: '#1D2129',
                     fontSize: 12
                 },
                 formatter: function(params) {
                     let result = `<div style="font-weight: 600; color: #1D2129; margin-bottom: 6px;">${params[0].name}</div>`;
-                    let total = 0;
                     params.forEach(item => {
-                        result += `<div style="margin: 4px 0;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${item.color}; margin-right: 8px;"></span>${item.seriesName}: <span style="font-weight: 600;">${item.value.toLocaleString()}</span></div>`;
-                        total += item.value;
+                        let formattedValue = item.value;
+                        if (item.seriesName.includes('限流率')) {
+                            formattedValue = `${item.value}%`;
+                        } else if (item.seriesName.includes('CPU')) {
+                            formattedValue = `${item.value}m`;
+                        } else {
+                            formattedValue = item.value.toLocaleString();
+                        }
+                        
+                        result += `<div style="margin: 4px 0;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${item.color}; margin-right: 8px;"></span>${item.seriesName}: <span style="font-weight: 600;">${formattedValue}</span></div>`;
                     });
-                    // 计算限流比例
-                    const sheddingValue = params.find(p => p.seriesName === '限流')?.value || 0;
-                    const sheddingRatio = total > 0 ? ((sheddingValue / total) * 100).toFixed(1) : 0;
-                    result += `<div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #E5E6EB;">
-                                <div style="margin: 4px 0;">总日志数: <span style="font-weight: 600;">${total.toLocaleString()}</span></div>
-                                <div style="margin: 4px 0;">限流比例: <span style="font-weight: 600;">${sheddingRatio}%</span></div>
-                              </div>`;
                     return result;
                 },
                 shadowColor: 'rgba(0, 0, 0, 0.1)',
@@ -2214,10 +2273,10 @@
                 shadowOffsetY: 4
             },
             legend: {
-                data: ['正常', '限流'],
+                data: ['总请求数', '通过请求数', '限流请求数', 'CPU占用(m)', '限流率'],
                 top: 0,
                 left: 'center',
-                textStyle: { 
+                textStyle: {
                     color: '#4E5969',
                     fontSize: 12,
                     fontWeight: 500
@@ -2228,76 +2287,478 @@
             },
             grid: {
                 left: '5%',
-                right: '5%',
+                right: '10%',
                 bottom: '15%',
                 top: '15%',
                 containLabel: true
             },
             xAxis: {
                 type: 'category',
-                data: serviceNames,
+                data: times,
                 axisLine: { lineStyle: { color: '#E5E6EB' } },
                 axisLabel: {
                     color: '#4E5969',
                     rotate: 45,
-                    interval: calculateLabelInterval(serviceNames.length)
+                    interval: calculateTimeLabelInterval(times) // 基于时间跨度的自适应间隔
                 },
-                axisTick: {
-                    show: true,
-                    lineStyle: { color: '#E5E6EB' }
-                },
-                splitLine: {
-                    show: true,
-                    lineStyle: {
-                        color: '#F2F3F5',
-                        type: 'dashed'
+                splitLine: { show: false }
+            },
+            yAxis: [
+                {
+                    name: '请求数',
+                    type: 'value',
+                    min: 0,
+                    axisLine: { lineStyle: { color: '#165DFF' } },
+                    axisLabel: { color: '#4E5969' },
+                    splitLine: {
+                        lineStyle: {
+                            color: '#F2F3F5',
+                            type: 'dashed'
+                        }
                     }
+                },
+                {
+                    name: 'CPU占用(m)',
+                    type: 'value',
+                    position: 'right',
+                    offset: 60,
+                    min: 0,
+                    axisLine: { lineStyle: { color: '#FAAD14' } },
+                    axisLabel: { color: '#FAAD14' },
+                    splitLine: { show: false }
+                },
+                {
+                    name: '限流率(%)',
+                    type: 'value',
+                    position: 'right',
+                    min: 0,
+                    max: 100,
+                    axisLine: { lineStyle: { color: '#F5222D' } },
+                    axisLabel: {
+                        color: '#F5222D',
+                        formatter: '{value}%'
+                    },
+                    splitLine: { show: false }
                 }
-            },
-            yAxis: {
-                type: 'value',
-                min: 0,
-                axisLine: { lineStyle: { color: '#E5E6EB' } },
-                axisLabel: { color: '#4E5969' },
-                splitLine: { 
-                    lineStyle: { 
-                        color: '#F2F3F5',
-                        type: 'dashed'
-                    } 
-                }
-            },
+            ],
             series: [
                 {
-                    name: '正常',
-                    type: 'bar',
-                    stack: 'total',
-                    emphasis: {
-                        focus: 'series'
+                    name: '总请求数',
+                    type: 'line',
+                    data: totalData,
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    symbolHoverSize: 8,
+                    smooth: true,
+                    lineStyle: {
+                        width: 2,
+                        color: '#165DFF',
+                        shadowColor: 'rgba(22, 93, 255, 0.3)',
+                        shadowBlur: 10
                     },
-                    data: normalData,
                     itemStyle: {
-                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                            { offset: 0, color: '#52C41A' },
-                            { offset: 1, color: '#73D13D' }
-                        ])
+                        color: '#165DFF',
+                        borderColor: '#fff',
+                        borderWidth: 2
                     },
-                    barWidth: '40%'
+                    emphasis: {
+                        focus: 'series',
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowColor: 'rgba(22, 93, 255, 0.6)'
+                        }
+                    }
                 },
                 {
-                    name: '限流',
-                    type: 'bar',
-                    stack: 'total',
-                    emphasis: {
-                        focus: 'series'
+                    name: '通过请求数',
+                    type: 'line',
+                    data: passData,
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    symbolHoverSize: 8,
+                    smooth: true,
+                    lineStyle: {
+                        width: 2,
+                        color: '#52C41A',
+                        shadowColor: 'rgba(82, 196, 26, 0.3)',
+                        shadowBlur: 10
                     },
-                    data: sheddingData,
+                    itemStyle: {
+                        color: '#52C41A',
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    emphasis: {
+                        focus: 'series',
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowColor: 'rgba(82, 196, 26, 0.6)'
+                        }
+                    }
+                },
+                {
+                    name: '限流请求数',
+                    type: 'bar',
+                    data: dropData,
                     itemStyle: {
                         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
                             { offset: 0, color: '#FF4D4F' },
                             { offset: 1, color: '#FF7875' }
                         ])
                     },
-                    barWidth: '40%'
+                    barWidth: '30%',
+                    emphasis: {
+                        focus: 'series',
+                        itemStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: '#F5222D' },
+                                { offset: 1, color: '#FF4D4F' }
+                            ])
+                        }
+                    }
+                },
+                {
+                    name: 'CPU占用(m)',
+                    type: 'line',
+                    yAxisIndex: 1,
+                    data: cpuData,
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    symbolHoverSize: 8,
+                    smooth: true,
+                    lineStyle: {
+                        width: 2,
+                        color: '#FAAD14',
+                        shadowColor: 'rgba(250, 173, 20, 0.3)',
+                        shadowBlur: 10
+                    },
+                    itemStyle: {
+                        color: '#FAAD14',
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    emphasis: {
+                        focus: 'series',
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowColor: 'rgba(250, 173, 20, 0.6)'
+                        }
+                    }
+                },
+                {
+                    name: '限流率',
+                    type: 'line',
+                    yAxisIndex: 2,
+                    data: dropRateData,
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    symbolHoverSize: 8,
+                    smooth: true,
+                    lineStyle: {
+                        width: 3,
+                        color: '#F5222D',
+                        shadowColor: 'rgba(245, 34, 45, 0.3)',
+                        shadowBlur: 10
+                    },
+                    itemStyle: {
+                        color: '#F5222D',
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    emphasis: {
+                        focus: 'series',
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowColor: 'rgba(245, 34, 45, 0.6)'
+                        }
+                    },
+                    areaStyle: {
+                        color: {
+                            type: 'linear',
+                            x: 0,
+                            y: 0,
+                            x2: 0,
+                            y2: 1,
+                            colorStops: [{
+                                offset: 0, color: 'rgba(245, 34, 45, 0.1)'
+                            }, {
+                                offset: 1, color: 'rgba(245, 34, 45, 0)'
+                            }]
+                        }
+                    }
+                }
+            ],
+            dataZoom: [
+                {
+                    type: 'inside',
+                    xAxisIndex: 0,
+                    start: calculateInitialZoom(aggregatedData.length),
+                    end: 100
+                },
+                {
+                    type: 'slider',
+                    xAxisIndex: 0,
+                    bottom: 5,
+                    start: calculateInitialZoom(aggregatedData.length),
+                    end: 100,
+                    height: 20,
+                    handleStyle: {
+                        color: '#165DFF'
+                    },
+                    fillerColor: 'rgba(22, 93, 255, 0.2)'
+                }
+            ],
+            animation: true,
+            animationDuration: 1000
+        };
+
+        chart.setOption(option);
+    }
+
+    // 渲染缓存命中率趋势图
+    function renderCacheHitChart() {
+        const chartDom = document.getElementById('cacheHitChart');
+        if (!chartDom) return; // 如果图表容器不存在，则退出
+        
+        const chart = echarts.init(chartDom);
+        charts['cacheHit'] = chart;
+
+        // 使用分钟聚合后的数据
+        const aggregatedData = aggregateDataByMinute();
+
+        // 处理数据 - 过滤出包含缓存统计的数据点
+        const cacheDataPoints = aggregatedData.filter(item => item.cacheStats);
+        const times = cacheDataPoints.map(item => item.formattedTime);
+        const hitRatioData = cacheDataPoints.map(item => item.cacheStats?.hitRatio || 0);
+        const qpmData = cacheDataPoints.map(item => item.cacheStats?.qpm || 0);
+        const hitData = cacheDataPoints.map(item => item.cacheStats?.hit || 0);
+        const missData = cacheDataPoints.map(item => item.cacheStats?.miss || 0);
+
+        // 图表配置 - 统一样式和增强效果
+        const option = {
+            backgroundColor: 'transparent',
+            tooltip: {
+                trigger: 'axis',
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                borderColor: '#E0E6ED',
+                borderWidth: 1,
+                borderRadius: 8,
+                padding: [12, 16],
+                textStyle: {
+                    color: '#1D2129',
+                    fontSize: 12
+                },
+                formatter: function(params) {
+                    let result = `<div style="font-weight: 600; color: #1D2129; margin-bottom: 6px;">${params[0].name}</div>`;
+                    params.forEach(item => {
+                        let formattedValue = item.value;
+                        if (item.seriesName.includes('命中率')) {
+                            formattedValue = `${item.value}%`;
+                        } else {
+                            formattedValue = item.value.toLocaleString();
+                        }
+                        
+                        result += `<div style="margin: 4px 0;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${item.color}; margin-right: 8px;"></span>${item.seriesName}: <span style="font-weight: 600;">${formattedValue}</span></div>`;
+                    });
+                    return result;
+                },
+                shadowColor: 'rgba(0, 0, 0, 0.1)',
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowOffsetY: 4
+            },
+            legend: {
+                data: ['缓存命中率', '每分钟查询数', '命中次数', '未命中次数'],
+                top: 0,
+                left: 'center',
+                textStyle: {
+                    color: '#4E5969',
+                    fontSize: 12,
+                    fontWeight: 500
+                },
+                itemWidth: 14,
+                itemHeight: 14,
+                padding: [0, 20]
+            },
+            grid: {
+                left: '5%',
+                right: '10%',
+                bottom: '15%',
+                top: '15%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: times,
+                axisLine: { lineStyle: { color: '#E5E6EB' } },
+                axisLabel: {
+                    color: '#4E5969',
+                    rotate: 45,
+                    interval: calculateTimeLabelInterval(times) // 基于时间跨度的自适应间隔
+                },
+                splitLine: { show: false }
+            },
+            yAxis: [
+                {
+                    name: '命中率(%)',
+                    type: 'value',
+                    min: 0,
+                    max: 100,
+                    axisLine: { lineStyle: { color: '#52C41A' } },
+                    axisLabel: {
+                        color: '#52C41A',
+                        formatter: '{value}%'
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            color: '#F2F3F5',
+                            type: 'dashed'
+                        }
+                    }
+                },
+                {
+                    name: '数量',
+                    type: 'value',
+                    position: 'right',
+                    min: 0,
+                    axisLine: { lineStyle: { color: '#165DFF' } },
+                    axisLabel: { color: '#4E5969' },
+                    splitLine: { show: false }
+                }
+            ],
+            series: [
+                {
+                    name: '缓存命中率',
+                    type: 'line',
+                    data: hitRatioData,
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    symbolHoverSize: 8,
+                    smooth: true,
+                    lineStyle: {
+                        width: 3,
+                        color: '#52C41A',
+                        shadowColor: 'rgba(82, 196, 26, 0.3)',
+                        shadowBlur: 10
+                    },
+                    itemStyle: {
+                        color: '#52C41A',
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    emphasis: {
+                        focus: 'series',
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowColor: 'rgba(82, 196, 26, 0.6)'
+                        }
+                    },
+                    areaStyle: {
+                        color: {
+                            type: 'linear',
+                            x: 0,
+                            y: 0,
+                            x2: 0,
+                            y2: 1,
+                            colorStops: [{
+                                offset: 0, color: 'rgba(82, 196, 26, 0.15)'
+                            }, {
+                                offset: 1, color: 'rgba(82, 196, 26, 0)'
+                            }]
+                        }
+                    }
+                },
+                {
+                    name: '每分钟查询数',
+                    type: 'line',
+                    yAxisIndex: 1,
+                    data: qpmData,
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    symbolHoverSize: 8,
+                    smooth: true,
+                    lineStyle: {
+                        width: 2,
+                        color: '#165DFF',
+                        shadowColor: 'rgba(22, 93, 255, 0.3)',
+                        shadowBlur: 10
+                    },
+                    itemStyle: {
+                        color: '#165DFF',
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    emphasis: {
+                        focus: 'series',
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowColor: 'rgba(22, 93, 255, 0.6)'
+                        }
+                    }
+                },
+                {
+                    name: '命中次数',
+                    type: 'bar',
+                    yAxisIndex: 1,
+                    data: hitData,
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#52C41A' },
+                            { offset: 1, color: '#73D13D' }
+                        ])
+                    },
+                    barWidth: '20%',
+                    emphasis: {
+                        focus: 'series',
+                        itemStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: '#389e0d' },
+                                { offset: 1, color: '#52C41A' }
+                            ])
+                        }
+                    }
+                },
+                {
+                    name: '未命中次数',
+                    type: 'bar',
+                    yAxisIndex: 1,
+                    data: missData,
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#FAAD14' },
+                            { offset: 1, color: '#FFC53D' }
+                        ])
+                    },
+                    barWidth: '20%',
+                    emphasis: {
+                        focus: 'series',
+                        itemStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: '#FA8C16' },
+                                { offset: 1, color: '#FAAD14' }
+                            ])
+                        }
+                    }
+                }
+            ],
+            dataZoom: [
+                {
+                    type: 'inside',
+                    xAxisIndex: 0,
+                    start: calculateInitialZoom(cacheDataPoints.length),
+                    end: 100
+                },
+                {
+                    type: 'slider',
+                    xAxisIndex: 0,
+                    bottom: 5,
+                    start: calculateInitialZoom(cacheDataPoints.length),
+                    end: 100,
+                    height: 20,
+                    handleStyle: {
+                        color: '#52C41A'
+                    },
+                    fillerColor: 'rgba(82, 196, 26, 0.2)'
                 }
             ],
             animation: true,
