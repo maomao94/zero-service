@@ -378,11 +378,14 @@
         <div class="mb-8">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="font-semibold">服务性能详情</h3>
-                <div>
+                <div class="flex items-center space-x-3">
                     <select id="serviceFilter" class="border border-light-2 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary">
                         <option value="all">所有服务</option>
                         <!-- 服务选项将动态生成 -->
                     </select>
+                    <button id="tableFullscreenBtn" class="p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors">
+                        <i class="fa fa-expand"></i>
+                    </button>
                 </div>
             </div>
 
@@ -561,6 +564,10 @@
     const tableContainer = document.getElementById('tableContainer');
     const modalChartTitle = document.getElementById('modalChartTitle');
     const timeRange = document.getElementById('timeRange');
+    const tableFullscreenBtn = document.getElementById('tableFullscreenBtn');
+    const tableWrapper = document.querySelector('#tableContainer > div');
+    const tableHeader = document.querySelector('#tableContainer thead');
+    const tablePagination = document.querySelector('#tableContainer + div');
 
     // 数据存储
     let logData = []; // 所有日志数据
@@ -598,6 +605,104 @@
         
         // 初始化排序图标
         updateSortIcons();
+        
+        // 表格全屏功能
+        if (tableFullscreenBtn) {
+            tableFullscreenBtn.addEventListener('click', toggleTableFullscreen);
+        }
+    }
+    
+    // 表格全屏功能
+    let isTableFullscreen = false;
+    let tableOriginalStyles = null;
+    
+    function toggleTableFullscreen() {
+        if (!tableWrapper) return;
+        
+        if (!isTableFullscreen) {
+            // 保存原始样式
+            tableOriginalStyles = {
+                maxHeight: tableWrapper.style.maxHeight,
+                boxShadow: tableContainer.style.boxShadow,
+                position: tableContainer.style.position,
+                zIndex: tableContainer.style.zIndex
+            };
+            
+            // 应用全屏样式
+            tableContainer.style.maxHeight = 'none';
+            tableContainer.style.boxShadow = '0 0 30px rgba(0, 0, 0, 0.2)';
+            tableContainer.style.position = 'fixed';
+            tableContainer.style.zIndex = '100';
+            tableContainer.style.top = '0';
+            tableContainer.style.left = '0';
+            tableContainer.style.right = '0';
+            tableContainer.style.bottom = '80px';
+            tableContainer.style.margin = '0';
+            tableContainer.style.borderRadius = '0';
+            
+            // 调整表格内部样式
+            tableWrapper.style.maxHeight = 'calc(100vh - 120px)';
+            
+            // 调整分页器位置
+            if (tablePagination) {
+                tablePagination.style.position = 'fixed';
+                tablePagination.style.bottom = '0';
+                tablePagination.style.left = '0';
+                tablePagination.style.right = '0';
+                tablePagination.style.padding = '16px';
+                tablePagination.style.backgroundColor = '#fff';
+                tablePagination.style.boxShadow = '0 -2px 10px rgba(0, 0, 0, 0.1)';
+                tablePagination.style.zIndex = '101';
+            }
+            
+            // 更改按钮图标
+            tableFullscreenBtn.querySelector('i').className = 'fa fa-compress';
+            
+            // 添加退出全屏的ESC键监听
+            document.addEventListener('keydown', handleEscKey);
+        } else {
+            // 恢复原始样式
+            tableContainer.style.maxHeight = tableOriginalStyles.maxHeight;
+            tableContainer.style.boxShadow = tableOriginalStyles.boxShadow;
+            tableContainer.style.position = tableOriginalStyles.position;
+            tableContainer.style.zIndex = tableOriginalStyles.zIndex;
+            tableContainer.style.top = '';
+            tableContainer.style.left = '';
+            tableContainer.style.right = '';
+            tableContainer.style.bottom = '';
+            tableContainer.style.margin = '';
+            tableContainer.style.borderRadius = '';
+            
+            // 恢复表格内部样式
+            tableWrapper.style.maxHeight = '';
+            
+            // 恢复分页器位置
+            if (tablePagination) {
+                tablePagination.style.position = '';
+                tablePagination.style.bottom = '';
+                tablePagination.style.left = '';
+                tablePagination.style.right = '';
+                tablePagination.style.padding = '';
+                tablePagination.style.backgroundColor = '';
+                tablePagination.style.boxShadow = '';
+                tablePagination.style.zIndex = '';
+            }
+            
+            // 更改按钮图标
+            tableFullscreenBtn.querySelector('i').className = 'fa fa-expand';
+            
+            // 移除ESC键监听
+            document.removeEventListener('keydown', handleEscKey);
+        }
+        
+        isTableFullscreen = !isTableFullscreen;
+    }
+    
+    // ESC键退出全屏
+    function handleEscKey(e) {
+        if (e.key === 'Escape' && isTableFullscreen) {
+            toggleTableFullscreen();
+        }
     }
 
     // 文件拖放处理
@@ -1146,7 +1251,7 @@
             },
             grid: {
                 left: '3%',
-                right: '3%',
+                right: '10%',
                 bottom: '15%',
                 top: '20%',
                 containLabel: true
