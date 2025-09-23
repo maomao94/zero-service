@@ -592,7 +592,8 @@
         serviceFilter.addEventListener('change', filterTableData);
         helpBtn.addEventListener('click', () => helpModal.classList.remove('hidden'));
         closeHelpModal.addEventListener('click', () => helpModal.classList.add('hidden'));
-        closeChartModalHandler.addEventListener('click', () => chartModal.classList.add('hidden'));
+        // 关闭模态框按钮的事件监听已在showFullscreenChart函数中处理
+        // 这里不再重复添加，避免事件监听器叠加
         window.addEventListener('resize', handleResize);
         document.querySelectorAll('.chart-action-btn').forEach(btn => {
             btn.addEventListener('click', handleChartAction);
@@ -2355,7 +2356,9 @@
     // 处理图表操作
     function handleChartAction(e) {
         const chartId = e.currentTarget.getAttribute('data-chart');
-        const action = e.currentTarget.querySelector('i').classList.contains('fa-expand') ? 'expand' : 'refresh';
+        // 使用更可靠的方式检查按钮类型
+        const iconElement = e.currentTarget.querySelector('i');
+        const action = iconElement && iconElement.classList.contains('fa-expand') ? 'expand' : 'refresh';
         
         if (action === 'expand') {
             showFullscreenChart(chartId);
@@ -2378,8 +2381,18 @@
         const chart = charts[chartId];
         if (!chart) return;
 
-        // 获取图表标题
-        const chartTitle = document.querySelector(`[data-chart="${chartId}"]`).closest('.chart-container').previousElementSibling.querySelector('h3').textContent;
+        // 获取图表标题 - 使用更可靠的选择器
+        const chartElement = document.querySelector(`[data-chart="${chartId}"]`);
+        let chartTitle = '图表详情'; // 默认标题
+        if (chartElement) {
+            const cardElement = chartElement.closest('.bg-white.rounded-xl');
+            if (cardElement) {
+                const titleElement = cardElement.querySelector('h3');
+                if (titleElement) {
+                    chartTitle = titleElement.textContent;
+                }
+            }
+        }
         modalChartTitle.textContent = chartTitle;
 
         // 创建新的图表实例
@@ -2487,7 +2500,7 @@
         
         // 创建新的关闭处理函数
         const closeHandler = (e) => {
-            if (e.target === chartModal) {
+            if (e.target === chartModal || e.target === closeChartModalHandler) {
                 chartModal.classList.add('hidden');
                 
                 // 销毁全屏图表实例
