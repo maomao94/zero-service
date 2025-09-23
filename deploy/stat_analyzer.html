@@ -1161,11 +1161,10 @@
                     } 
                 },
                 axisLabel: {
-                    color: '#86909C',
+                    color: '#4E5969',
                     fontSize: 11,
-                    rotate: 0,
-                    interval: 0, // 显示所有标签，让echarts自动处理间隔（默认最小图表使用此设置）
-                    padding: [5, 0]
+                    rotate: 45, // 旋转45度以更好地显示时间标签
+                    interval: calculateTimeLabelInterval(times) // 基于时间跨度的自适应间隔
                 },
                 // 显示刻度线
                 axisTick: {
