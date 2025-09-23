@@ -850,23 +850,24 @@
         const total = logData.length;
         const serviceCount = services.length;
 
-        // 计算平均内存
+        // 优化：一次遍历完成所有计算
         let totalMemory = 0;
         let memoryCount = 0;
+        let totalDrops = 0;
+        
         logData.forEach(item => {
+            // 计算平均内存
             const memory = parseFloat(item.alloc);
             if (!isNaN(memory)) {
                 totalMemory += memory;
                 memoryCount++;
             }
-        });
-        const avgMemory = memoryCount > 0 ? (totalMemory / memoryCount).toFixed(2) : '0.00';
-
-        // 计算总丢弃数
-        let totalDrops = 0;
-        logData.forEach(item => {
+            
+            // 计算总丢弃数
             totalDrops += parseInt(item.drops) || 0;
         });
+        
+        const avgMemory = memoryCount > 0 ? (totalMemory / memoryCount).toFixed(2) : '0.00';
 
         // 更新统计数字
         document.getElementById('totalEntries').textContent = total;
@@ -904,11 +905,42 @@
         return `${hours}:${minutes}`;
     }
     
+    // 智能时间格式化（基于时间跨度）
+    function formatTimeSmart(dateTimeStr, timeSpanMinutes) {
+        const date = new Date(dateTimeStr);
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        
+        // 根据时间跨度调整格式
+        if (timeSpanMinutes <= 60) {
+            // 1小时内，显示完整时间
+            return `${hours}:${minutes}`;
+        } else if (timeSpanMinutes <= 1440) {
+            // 1天内，对于整点可以只显示小时
+            if (parseInt(minutes) === 0) {
+                return `${hours}时`;
+            } else {
+                return `${hours}:${minutes}`;
+            }
+        } else {
+            // 超过1天，显示日期+小时（简化格式）
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${month}/${day} ${hours}时`;
+        }
+    }
+    
     // 按分钟聚合数据 - 使用用户要求的逻辑：整分钟区间，无数据时用上一分钟数据
     function aggregateDataByMinute() {
         if (logData.length === 0) {
             return [];
         }
+        
+        // 先计算整体时间跨度
+        const allLogTimes = logData.map(item => new Date(item.time).getTime());
+        const globalStartTime = Math.min(...allLogTimes);
+        const globalEndTime = Math.max(...allLogTimes);
+        const globalTimeSpanMinutes = Math.abs((globalEndTime - globalStartTime) / (1000 * 60));
         
         // 初始化原始数据的分钟映射
         const originalMinuteData = {};
@@ -938,7 +970,7 @@
             if (!originalMinuteData[minuteKey]) {
                 originalMinuteData[minuteKey] = {
                     time: minuteKey,
-                    formattedTime: formatTime(item.time),
+                    formattedTime: formatTimeSmart(item.time, globalTimeSpanMinutes),
                     // 使用原始值
                     cpu: parseInt(item.cpu) || 0,
                     alloc: parseFloat(item.alloc) || 0,
@@ -987,16 +1019,18 @@
         
         while (currentMinute <= endTime) {
             const minuteKey = currentMinute.toISOString();
-            const formattedTime = formatTime(minuteKey);
+            const formattedTime = formatTimeSmart(minuteKey, globalTimeSpanMinutes);
             
             if (originalMinuteData[minuteKey]) {
                 // 如果当前分钟有数据，使用它
                 const data = originalMinuteData[minuteKey];
+                // 确保使用智能格式化的时间
+                data.formattedTime = formattedTime;
                 result.push(data);
                 lastValidData = data;
             } else if (lastValidData) {
                 // 如果没有数据但有上一分钟的数据，使用上一分钟的数据
-                // 创建新对象以避免引用问题
+                // 创建新对象以避免引用问题，确保包含serviceStats属性
                 const data = {
                     time: minuteKey,
                     formattedTime: formattedTime,
@@ -1008,7 +1042,9 @@
                     drops: lastValidData.drops,
                     normalCount: lastValidData.normalCount,
                     sheddingCount: lastValidData.sheddingCount,
-                    totalCount: lastValidData.totalCount
+                    totalCount: lastValidData.totalCount,
+                    // 深拷贝serviceStats以避免引用问题
+                    serviceStats: lastValidData.serviceStats ? JSON.parse(JSON.stringify(lastValidData.serviceStats)) : {}
                 };
                 result.push(data);
             }
@@ -1128,7 +1164,7 @@
                     color: '#86909C',
                     fontSize: 11,
                     rotate: 0,
-                    interval: 0, // 显示所有标签，让echarts自动处理间隔
+                    interval: 0, // 显示所有标签，让echarts自动处理间隔（默认最小图表使用此设置）
                     padding: [5, 0]
                 },
                 // 显示刻度线
@@ -1391,7 +1427,7 @@
                 axisLabel: {
                     color: '#4E5969',
                     rotate: 45,
-                    interval: calculateLabelInterval(times.length)
+                    interval: calculateTimeLabelInterval(times) // 基于时间跨度的自适应间隔
                 },
                 // 显示刻度线
                 axisTick: {
@@ -1720,7 +1756,7 @@
                 axisLabel: {
                     color: '#4E5969',
                     rotate: 45,
-                    interval: calculateLabelInterval(times.length)
+                    interval: calculateTimeLabelInterval(times) // 基于时间跨度的自适应间隔
                 },
                 axisTick: {
                     show: true,
@@ -1945,7 +1981,7 @@
                 axisLabel: {
                     color: '#4E5969',
                     rotate: 45,
-                    interval: calculateLabelInterval(times.length)
+                    interval: calculateTimeLabelInterval(times) // 基于时间跨度的自适应间隔
                 },
                 splitLine: { show: false }
             },
@@ -2278,12 +2314,33 @@
         return colors[Math.abs(hash) % colors.length];
     }
 
-    // 计算标签显示间隔
+    // 计算标签显示间隔（基于数据长度）
     function calculateLabelInterval(dataLength) {
         if (dataLength <= 20) return 0;  // 显示所有标签
         if (dataLength <= 50) return 2;  // 每2个显示一个
         if (dataLength <= 100) return 4; // 每4个显示一个
         return Math.floor(dataLength / 20); // 最多显示20个标签
+    }
+    
+    // 计算时间标签自适应间隔（基于时间跨度）
+    function calculateTimeLabelInterval(times) {
+        if (!times || times.length <= 20) return 0; // 数据较少时显示所有标签
+        
+        // 计算时间跨度（分钟）
+        const startTime = new Date(times[0]).getTime();
+        const endTime = new Date(times[times.length - 1]).getTime();
+        const timeSpanMinutes = Math.abs((endTime - startTime) / (1000 * 60));
+        
+        // 基于时间跨度计算间隔，优化长时间段显示
+        if (timeSpanMinutes <= 30) return 0; // 30分钟内显示所有
+        if (timeSpanMinutes <= 60) return 2; // 1小时内每2分钟显示一个
+        if (timeSpanMinutes <= 120) return 5; // 2小时内每5分钟显示一个
+        if (timeSpanMinutes <= 360) return 10; // 6小时内每10分钟显示一个
+        if (timeSpanMinutes <= 720) return 15; // 12小时内每15分钟显示一个
+        if (timeSpanMinutes <= 1080) return 20; // 18小时内每20分钟显示一个
+        if (timeSpanMinutes <= 1440) return 40; // 24小时内每40分钟显示一个
+        
+        return 60; // 超过24小时，每小时显示一个
     }
 
     // 计算初始缩放比例
@@ -2605,9 +2662,15 @@
             
             // 处理不同类型的数据排序
             if (sortField === 'time') {
-                // 时间排序
+                // 时间排序 - 添加健壮性检查
                 const timeA = new Date(valueA).getTime();
                 const timeB = new Date(valueB).getTime();
+                
+                // 处理无效日期的情况
+                if (isNaN(timeA) && isNaN(timeB)) return 0; // 两个都是无效日期，视为相等
+                if (isNaN(timeA)) return sortOrder === 'asc' ? 1 : -1; // 无效日期排在后面
+                if (isNaN(timeB)) return sortOrder === 'asc' ? -1 : 1; // 无效日期排在后面
+                
                 return sortOrder === 'asc' ? timeA - timeB : timeB - timeA;
             } else if (['cpu', 'alloc', 'sys', 'numGC', 'qps', 'drops'].includes(sortField)) {
                 // 数值排序
@@ -2615,7 +2678,9 @@
                 const numB = parseFloat(valueB) || 0;
                 return sortOrder === 'asc' ? numA - numB : numB - numA;
             } else {
-                // 字符串排序
+                // 字符串排序 - 处理undefined或null的情况
+                valueA = valueA || '';
+                valueB = valueB || '';
                 return sortOrder === 'asc' 
                     ? valueA.localeCompare(valueB) 
                     : valueB.localeCompare(valueA);
