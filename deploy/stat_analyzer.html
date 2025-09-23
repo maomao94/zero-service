@@ -62,14 +62,82 @@
             .data-table th {
                 font-weight: 500;
             }
+            .data-table tr {
+                transition: all 0.3s ease;
+            }
             .data-table tr:hover {
-                background-color: rgba(22, 93, 255, 0.02);
+                background-color: rgba(22, 93, 255, 0.06);
+                transform: translateY(-1px);
+            }
+            .table-row-animation {
+                animation: fadeIn 0.5s ease;
+            }
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .table-loading {
+                position: relative;
+                overflow: hidden;
+            }
+            .table-loading::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 50%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+                animation: shimmer 1.5s infinite;
+            }
+            @keyframes shimmer {
+                0% { left: -100%; }
+                100% { left: 150%; }
             }
             .card-shadow-hover {
                 transition: box-shadow 0.3s ease;
             }
             .card-shadow-hover:hover {
                 box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            }
+            .pulse-animation {
+                animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+            @keyframes pulse {
+                0%, 100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.8;
+                }
+            }
+            .upload-animation {
+                transition: all 0.3s ease;
+            }
+            .upload-animation.active {
+                transform: scale(1.02);
+                box-shadow: 0 10px 30px rgba(22, 93, 255, 0.15);
+            }
+            .custom-scrollbar::-webkit-scrollbar {
+                width: 6px;
+                height: 6px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 10px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+                background: #c1c1c1;
+                border-radius: 10px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                background: #a1a1a1;
             }
         }
     </style>
@@ -138,11 +206,11 @@
 
     <!-- 文件上传区域 -->
     <div class="mb-10" id="uploadSection">
-        <div id="uploadCard" class="bg-white rounded-xl shadow-card p-6 sm:p-8 card-transition hover:shadow-card-hover">
+        <div id="uploadCard" class="bg-white rounded-xl shadow-card p-6 sm:p-8 card-transition hover:shadow-card-hover upload-animation">
             <div class="flex flex-col items-center justify-center">
-                <div id="dropArea" class="border-2 border-dashed border-light-2 rounded-lg w-full py-12 px-4 text-center mb-6 cursor-pointer hover:border-primary transition-colors">
+                <div id="dropArea" class="border-2 border-dashed border-light-2 rounded-lg w-full py-12 px-4 text-center mb-6 cursor-pointer hover:border-primary transition-colors hover:bg-primary/5">
                     <input type="file" id="fileInput" accept=".txt,.log" class="hidden" />
-                    <i class="fa fa-cloud-upload text-4xl text-primary mb-4"></i>
+                    <i class="fa fa-cloud-upload text-4xl text-primary mb-4 pulse-animation"></i>
                     <h3 class="text-lg font-medium mb-2">拖放Go-Zero stat日志文件到此处，或点击选择文件</h3>
                     <p class="text-dark-2 text-sm">支持 .txt 和 .log 格式，自动处理1天级日志数据</p>
                 </div>
@@ -162,7 +230,7 @@
                     </div>
                 </div>
 
-                <button id="parseBtn" class="gradient-bg text-white px-6 py-3 rounded-lg font-medium flex items-center opacity-70 cursor-not-allowed transition-all hover:opacity-100">
+                <button id="parseBtn" class="gradient-bg text-white px-6 py-3 rounded-lg font-medium flex items-center opacity-70 cursor-not-allowed transition-all hover:opacity-100 hover:shadow-lg active:scale-98">
                     <i class="fa fa-play-circle mr-2"></i>
                     开始分析
                 </button>
@@ -304,8 +372,8 @@
             </div>
 
             <!-- 表格容器 -->
-            <div class="bg-white rounded-xl shadow-card overflow-hidden">
-                <div class="overflow-x-auto">
+            <div id="tableContainer" class="bg-white rounded-xl shadow-card overflow-hidden">
+                <div class="overflow-x-auto custom-scrollbar">
                     <table class="w-full text-sm data-table">
                         <thead>
                         <tr class="bg-light-1">
@@ -354,21 +422,21 @@
 
     <!-- 空状态/初始状态 -->
     <div id="emptyState" class="flex flex-col items-center justify-center py-16 text-center">
-        <div class="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+        <div class="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-6 pulse-animation">
             <i class="fa fa-line-chart text-4xl text-primary"></i>
         </div>
         <h3 class="text-xl font-semibold mb-2">准备好分析您的Go-Zero Stats日志了吗？</h3>
         <p class="text-dark-2 max-w-md mb-8">专业解析Go-Zero微服务stat日志，可视化展示内存使用、CPU占用、QPS和限流状态</p>
         <div class="flex flex-wrap justify-center gap-4">
-            <div class="flex items-center bg-white px-4 py-3 rounded-lg shadow-sm">
+            <div class="flex items-center bg-white px-4 py-3 rounded-lg shadow-sm transition-all hover:shadow-md hover:bg-primary/5 hover:-translate-y-1">
                 <i class="fa fa-check-circle text-success mr-2"></i>
                 <span>支持多种日志类型</span>
             </div>
-            <div class="flex items-center bg-white px-4 py-3 rounded-lg shadow-sm">
+            <div class="flex items-center bg-white px-4 py-3 rounded-lg shadow-sm transition-all hover:shadow-md hover:bg-primary/5 hover:-translate-y-1">
                 <i class="fa fa-check-circle text-success mr-2"></i>
                 <span>图表交互功能</span>
             </div>
-            <div class="flex items-center bg-white px-4 py-3 rounded-lg shadow-sm">
+            <div class="flex items-center bg-white px-4 py-3 rounded-lg shadow-sm transition-all hover:shadow-md hover:bg-primary/5 hover:-translate-y-1">
                 <i class="fa fa-check-circle text-success mr-2"></i>
                 <span>性能指标全面展示</span>
             </div>
@@ -379,7 +447,10 @@
     <div id="loadingState" class="hidden flex flex-col items-center justify-center py-16">
         <div class="w-16 h-16 border-4 border-light-2 border-t-primary rounded-full animate-spin mb-6"></div>
         <h3 class="text-lg font-medium mb-2">正在解析Go-Zero Stats日志数据...</h3>
-        <p class="text-dark-2" id="loadingProgress">准备解析文件</p>
+        <p class="text-dark-2 mb-4" id="loadingProgress">准备解析文件</p>
+        <div class="w-full max-w-md h-2 bg-light-2 rounded-full overflow-hidden">
+            <div id="loadingBar" class="h-full bg-primary rounded-full w-0 transition-all duration-300"></div>
+        </div>
     </div>
 
     <!-- 图表全屏查看模态框 -->
@@ -412,6 +483,7 @@
     const emptyState = document.getElementById('emptyState');
     const loadingState = document.getElementById('loadingState');
     const loadingProgress = document.getElementById('loadingProgress');
+    const loadingBar = document.getElementById('loadingBar');
     const logTableBody = document.getElementById('logTableBody');
     const prevPage = document.getElementById('prevPage');
     const nextPage = document.getElementById('nextPage');
@@ -426,6 +498,7 @@
     const chartModal = document.getElementById('chartModal');
     const closeChartModalHandler = document.getElementById('closeChartModalHandler');
     const modalChartContainer = document.getElementById('modalChartContainer');
+    const tableContainer = document.getElementById('tableContainer');
     const modalChartTitle = document.getElementById('modalChartTitle');
     const timeRange = document.getElementById('timeRange');
 
@@ -441,6 +514,7 @@
         // 事件监听
         dropArea.addEventListener('click', () => fileInput.click());
         dropArea.addEventListener('dragover', handleDragOver);
+        dropArea.addEventListener('dragleave', handleDragLeave);
         dropArea.addEventListener('drop', handleDrop);
         fileInput.addEventListener('change', handleFileSelect);
         removeFile.addEventListener('click', removeSelectedFile);
@@ -461,12 +535,18 @@
     // 文件拖放处理
     function handleDragOver(e) {
         e.preventDefault();
-        dropArea.classList.add('border-primary');
+        dropArea.classList.add('border-primary', 'bg-primary/5');
+        document.getElementById('uploadCard').classList.add('active');
+    }
+
+    function handleDragLeave() {
+        dropArea.classList.remove('border-primary', 'bg-primary/5');
+        document.getElementById('uploadCard').classList.remove('active');
     }
 
     function handleDrop(e) {
         e.preventDefault();
-        dropArea.classList.remove('border-primary');
+        handleDragLeave();
         if (e.dataTransfer.files.length) {
             handleFile(e.dataTransfer.files[0]);
         }
@@ -488,6 +568,12 @@
         parseBtn.classList.remove('opacity-70', 'cursor-not-allowed');
         parseBtn.classList.add('opacity-100', 'cursor-pointer');
         hideStatus();
+        
+        // 添加选中文件的动画效果
+        document.getElementById('uploadCard').classList.add('active');
+        setTimeout(() => {
+            document.getElementById('uploadCard').classList.remove('active');
+        }, 300);
     }
 
     // 移除选择的文件
@@ -522,6 +608,7 @@
         reader.onload = function(e) {
             try {
                 loadingProgress.textContent = '正在解析日志数据...';
+                loadingBar.style.width = '0%';
                 const content = e.target.result;
                 
                 // 重置数据
@@ -553,7 +640,10 @@
                 resultsArea.classList.remove('hidden');
                 
                 // 显示成功状态
-                showStatus('success', `解析完成，共发现 ${logData.length} 条记录，识别到 ${services.length} 个服务`);
+                loadingBar.style.width = '100%';
+                setTimeout(() => {
+                    showStatus('success', `解析完成，共发现 ${logData.length} 条记录，识别到 ${services.length} 个服务`);
+                }, 300);
             } catch (err) {
                 loadingState.classList.add('hidden');
                 emptyState.classList.remove('hidden');
@@ -583,6 +673,7 @@
             if (index % 100 === 0) {
                 const progress = Math.floor((index / totalLines) * 100);
                 loadingProgress.textContent = `正在解析日志数据... ${progress}%`;
+                loadingBar.style.width = `${progress}%`;
             }
 
             // 提取时间戳
@@ -988,19 +1079,22 @@
                     bottom: 10,
                     start: calculateInitialZoom(logData.length),
                     end: 100,
-                    height: 4,
+                    height: 20,
                     backgroundColor: '#F2F3F5',
                     fillerColor: '#36BFFA',
                     handleStyle: {
                         color: '#36BFFA',
-                        width: 12,
-                        height: 12,
-                        borderRadius: 6,
+                        width: 14,
+                        height: 24,
+                        borderRadius: 7,
                         shadowColor: 'rgba(54, 191, 250, 0.4)',
                         shadowBlur: 6
                     },
                     borderColor: '#E5E6EB',
-                    borderWidth: 0
+                    borderWidth: 1,
+                    zoomLock: false,
+                    showDetail: true,
+                    showDataShadow: 'auto'
                 }
             ],
             // 增强的动画效果
@@ -1033,29 +1127,53 @@
             return isNaN(value) ? 0 : value;
         });
 
-        // 图表配置
+        // 图表配置 - 统一样式和增强效果
         const option = {
             backgroundColor: 'transparent',
             tooltip: {
                 trigger: 'axis',
-                backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                borderColor: '#333',
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                borderColor: '#E0E6ED',
                 borderWidth: 1,
-                textStyle: { color: '#fff' },
+                borderRadius: 8,
+                padding: [12, 16],
+                textStyle: { 
+                    color: '#1D2129',
+                    fontSize: 12
+                },
                 formatter: function(params) {
-                    let result = `<strong>${params[0].name}</strong><br/>`;
+                    let result = `<div style="font-weight: 600; color: #1D2129; margin-bottom: 6px;">${params[0].name}</div>`;
                     params.forEach(item => {
-                        result += `${item.marker} ${item.seriesName}: ${item.value}<br/>`;
+                        // 格式化数值，根据系列名显示不同单位
+                        let formattedValue = item.value;
+                        if (item.seriesName.includes('QPS')) {
+                            formattedValue = item.value.toFixed(2);
+                        } else if (item.seriesName.includes('丢弃数')) {
+                            formattedValue = item.value.toLocaleString();
+                        }
+                         
+                        result += `<div style="margin: 4px 0;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${item.color}; margin-right: 8px;"></span>${item.seriesName}: <span style="font-weight: 600;">${formattedValue}</span></div>`;
                     });
                     return result;
-                }
+                },
+                // 添加阴影效果
+                shadowColor: 'rgba(0, 0, 0, 0.1)',
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowOffsetY: 4
             },
             legend: {
                 data: ['QPS', '丢弃数'],
                 top: 0,
-                textStyle: { color: '#4E5969' },
-                itemWidth: 12,
-                itemHeight: 12
+                left: 'center',
+                textStyle: { 
+                    color: '#4E5969',
+                    fontSize: 12,
+                    fontWeight: 500
+                },
+                itemWidth: 14,
+                itemHeight: 14,
+                padding: [0, 20]
             },
             grid: {
                 left: '5%',
@@ -1201,18 +1319,30 @@
             itemStyle: { color: getServiceColor(service) }
         }));
 
-        // 图表配置
+        // 图表配置 - 统一样式和增强效果
         const option = {
             backgroundColor: 'transparent',
             tooltip: {
                 trigger: 'item',
-                backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                borderColor: '#333',
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                borderColor: '#E0E6ED',
                 borderWidth: 1,
-                textStyle: { color: '#fff' },
+                borderRadius: 8,
+                padding: [12, 16],
+                textStyle: { 
+                    color: '#1D2129',
+                    fontSize: 12
+                },
                 formatter: function(params) {
-                    return `${params.name}<br/>日志数量: ${params.value}<br/>占比: ${params.percent.toFixed(1)}%`;
-                }
+                    const percentage = params.percent.toFixed(1);
+                    return `<div style="font-weight: 600; color: #1D2129; margin-bottom: 6px;">${params.name}</div>
+                           <div style="margin: 4px 0;">日志数量: <span style="font-weight: 600;">${params.value.toLocaleString()}</span></div>
+                           <div style="margin: 4px 0;">占比: <span style="font-weight: 600;">${percentage}%</span></div>`;
+                },
+                shadowColor: 'rgba(0, 0, 0, 0.1)',
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowOffsetY: 4
             },
             legend: {
                 orient: 'vertical',
@@ -1290,29 +1420,52 @@
             return isNaN(value) ? 0 : value;
         });
 
-        // 图表配置
+        // 图表配置 - 统一样式和增强效果
         const option = {
             backgroundColor: 'transparent',
             tooltip: {
                 trigger: 'axis',
-                backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                borderColor: '#333',
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                borderColor: '#E0E6ED',
                 borderWidth: 1,
-                textStyle: { color: '#fff' },
+                borderRadius: 8,
+                padding: [12, 16],
+                textStyle: { 
+                    color: '#1D2129',
+                    fontSize: 12
+                },
                 formatter: function(params) {
-                    let result = `<strong>${params[0].name}</strong><br/>`;
+                    let result = `<div style="font-weight: 600; color: #1D2129; margin-bottom: 6px;">${params[0].name}</div>`;
                     params.forEach(item => {
-                        result += `${item.marker} ${item.seriesName}: ${item.value}<br/>`;
+                        // 格式化数值
+                        let formattedValue = item.value;
+                        if (item.seriesName.includes('CPU')) {
+                            formattedValue = `${item.value.toLocaleString()}m`;
+                        } else if (item.seriesName.includes('GC')) {
+                            formattedValue = item.value.toLocaleString();
+                        }
+                         
+                        result += `<div style="margin: 4px 0;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${item.color}; margin-right: 8px;"></span>${item.seriesName}: <span style="font-weight: 600;">${formattedValue}</span></div>`;
                     });
                     return result;
-                }
+                },
+                shadowColor: 'rgba(0, 0, 0, 0.1)',
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowOffsetY: 4
             },
             legend: {
                 data: ['CPU占用(m)', 'GC次数'],
                 top: 0,
-                textStyle: { color: '#4E5969' },
-                itemWidth: 12,
-                itemHeight: 12
+                left: 'center',
+                textStyle: { 
+                    color: '#4E5969',
+                    fontSize: 12,
+                    fontWeight: 500
+                },
+                itemWidth: 14,
+                itemHeight: 14,
+                padding: [0, 20]
             },
             grid: {
                 left: '5%',
@@ -1454,7 +1607,7 @@
         const normalData = serviceNames.map(service => serviceSheddingData[service].normal);
         const sheddingData = serviceNames.map(service => serviceSheddingData[service].shedding);
 
-        // 图表配置
+        // 图表配置 - 统一样式和增强效果
         const option = {
             backgroundColor: 'transparent',
             tooltip: {
@@ -1462,30 +1615,48 @@
                 axisPointer: {
                     type: 'shadow'
                 },
-                backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                borderColor: '#333',
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                borderColor: '#E0E6ED',
                 borderWidth: 1,
-                textStyle: { color: '#fff' },
+                borderRadius: 8,
+                padding: [12, 16],
+                textStyle: { 
+                    color: '#1D2129',
+                    fontSize: 12
+                },
                 formatter: function(params) {
-                    let result = `<strong>${params[0].name}</strong><br/>`;
+                    let result = `<div style="font-weight: 600; color: #1D2129; margin-bottom: 6px;">${params[0].name}</div>`;
                     let total = 0;
                     params.forEach(item => {
-                        result += `${item.marker} ${item.seriesName}: ${item.value}<br/>`;
+                        result += `<div style="margin: 4px 0;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${item.color}; margin-right: 8px;"></span>${item.seriesName}: <span style="font-weight: 600;">${item.value.toLocaleString()}</span></div>`;
                         total += item.value;
                     });
                     // 计算限流比例
                     const sheddingValue = params.find(p => p.seriesName === '限流')?.value || 0;
                     const sheddingRatio = total > 0 ? ((sheddingValue / total) * 100).toFixed(1) : 0;
-                    result += `<br/>总日志数: ${total}<br/>限流比例: ${sheddingRatio}%`;
+                    result += `<div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #E5E6EB;">
+                                <div style="margin: 4px 0;">总日志数: <span style="font-weight: 600;">${total.toLocaleString()}</span></div>
+                                <div style="margin: 4px 0;">限流比例: <span style="font-weight: 600;">${sheddingRatio}%</span></div>
+                              </div>`;
                     return result;
-                }
+                },
+                shadowColor: 'rgba(0, 0, 0, 0.1)',
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowOffsetY: 4
             },
             legend: {
                 data: ['正常', '限流'],
                 top: 0,
-                textStyle: { color: '#4E5969' },
-                itemWidth: 12,
-                itemHeight: 12
+                left: 'center',
+                textStyle: { 
+                    color: '#4E5969',
+                    fontSize: 12,
+                    fontWeight: 500
+                },
+                itemWidth: 14,
+                itemHeight: 14,
+                padding: [0, 20]
             },
             grid: {
                 left: '5%',
@@ -1632,14 +1803,54 @@
             }
         };
         
-        // 优化tooltip样式
+        // 优化tooltip样式（统一使用白色半透明背景）
         if (!fullscreenOption.tooltip) {
             fullscreenOption.tooltip = {};
         }
-        fullscreenOption.tooltip.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-        fullscreenOption.tooltip.borderColor = '#333';
+        fullscreenOption.tooltip.backgroundColor = 'rgba(255, 255, 255, 0.95)';
+        fullscreenOption.tooltip.borderColor = '#E0E6ED';
         fullscreenOption.tooltip.borderWidth = 1;
-        fullscreenOption.tooltip.textStyle = { color: '#fff' };
+        fullscreenOption.tooltip.borderRadius = 8;
+        fullscreenOption.tooltip.padding = [12, 16];
+        fullscreenOption.tooltip.textStyle = { 
+            color: '#1D2129',
+            fontSize: 12
+        };
+        // 添加阴影效果
+        fullscreenOption.tooltip.shadowColor = 'rgba(0, 0, 0, 0.1)';
+        fullscreenOption.tooltip.shadowBlur = 10;
+        fullscreenOption.tooltip.shadowOffsetX = 0;
+        fullscreenOption.tooltip.shadowOffsetY = 4;
+        
+        // 优化图例样式
+        if (fullscreenOption.legend) {
+            fullscreenOption.legend.top = 60;
+            fullscreenOption.legend.left = 'center';
+            fullscreenOption.legend.textStyle = {
+                color: '#4E5969',
+                fontSize: 12,
+                fontWeight: 500
+            };
+            fullscreenOption.legend.itemWidth = 14;
+            fullscreenOption.legend.itemHeight = 14;
+            fullscreenOption.legend.padding = [0, 20];
+        };
+        
+        // 优化网格布局
+        if (fullscreenOption.grid) {
+            fullscreenOption.grid.left = '3%';
+            fullscreenOption.grid.right = '3%';
+            fullscreenOption.grid.bottom = '10%';
+            fullscreenOption.grid.top = '15%';
+        } else {
+            fullscreenOption.grid = {
+                left: '3%',
+                right: '3%',
+                bottom: '10%',
+                top: '15%',
+                containLabel: true
+            };
+        };
         
         // 确保数据格式正确，特别是内存图表
         if (chartId === 'memoryTrend') {
@@ -1667,13 +1878,54 @@
         // 保存到临时变量以便关闭时销毁
         modalChartContainer.chartInstance = fullscreenChart;
         
-        // 显示模态框
+        // 显示模态框并添加关闭事件处理
         chartModal.classList.remove('hidden');
+        
+        // 确保只添加一个关闭事件监听器
+        const existingCloseHandler = chartModal.closeHandler;
+        if (existingCloseHandler) {
+            chartModal.removeEventListener('click', existingCloseHandler);
+        }
+        
+        // 创建新的关闭处理函数
+        const closeHandler = (e) => {
+            if (e.target === chartModal) {
+                chartModal.classList.add('hidden');
+                
+                // 销毁全屏图表实例
+                if (modalChartContainer.chartInstance) {
+                    modalChartContainer.chartInstance.dispose();
+                    modalChartContainer.chartInstance = null;
+                }
+                
+                // 移除窗口大小变化监听
+                if (modalChartContainer.resizeHandler) {
+                    window.removeEventListener('resize', modalChartContainer.resizeHandler);
+                    modalChartContainer.resizeHandler = null;
+                }
+            }
+        };
+        
+        // 保存关闭处理函数引用
+        chartModal.closeHandler = closeHandler;
+        chartModal.addEventListener('click', closeHandler);
         
         // 调整大小
         setTimeout(() => {
             fullscreenChart.resize();
         }, 100);
+        
+        // 添加窗口大小变化监听
+        const handleModalResize = () => {
+            if (modalChartContainer.chartInstance) {
+                modalChartContainer.chartInstance.resize();
+            }
+        };
+        
+        window.addEventListener('resize', handleModalResize);
+        
+        // 保存resize处理器引用，以便关闭时移除
+        modalChartContainer.resizeHandler = handleModalResize;
     }
 
     // 渲染表格
@@ -1684,57 +1936,72 @@
         const endIndex = Math.min(startIndex + pageSizeValue, filteredData.length);
         const pageData = filteredData.slice(startIndex, endIndex);
 
+        // 显示加载状态
+        tableContainer.classList.add('table-loading');
+
         // 清空表格
         logTableBody.innerHTML = '';
 
-        // 添加数据行
-        if (pageData.length > 0) {
-            pageData.forEach(item => {
-                const row = document.createElement('tr');
-                row.className = 'border-b border-light-1 hover:bg-gray-50 transition-colors';
-                
-                // 为有丢弃数的行添加特殊样式
-                if (parseInt(item.drops) > 0) {
-                    row.classList.add('bg-danger/5');
-                }
-                
-                row.innerHTML = `
-                    <td class="px-6 py-4">${formatDateTime(item.time)}</td>
-                    <td class="px-6 py-4 font-medium">${item.service}</td>
-                    <td class="px-6 py-4">${item.cpu}</td>
-                    <td class="px-6 py-4">${item.alloc}</td>
-                    <td class="px-6 py-4">${item.sys}</td>
-                    <td class="px-6 py-4">${item.numGC}</td>
-                    <td class="px-6 py-4">${item.qps}</td>
-                    <td class="px-6 py-4 ${parseInt(item.drops) > 0 ? 'text-danger font-medium' : ''}">${item.drops}</td>
-                    <td class="px-6 py-4">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.shedding === '正常' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}">
-                            ${item.shedding}
-                        </span>
+        // 添加300ms延迟，让用户能看到加载动画
+        setTimeout(() => {
+            // 移除加载状态
+            tableContainer.classList.remove('table-loading');
+
+            // 添加数据行
+            if (pageData.length > 0) {
+                pageData.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    // 添加表格行过渡动画和hover效果
+                    row.className = 'border-b border-light-1 hover:bg-gray-50 transition-all duration-300 transform hover:-translate-y-1 opacity-0 table-row-animation';
+                    
+                    // 为有丢弃数的行添加特殊样式
+                    if (parseInt(item.drops) > 0) {
+                        row.classList.add('bg-danger/5');
+                    }
+                    
+                    row.innerHTML = `
+                        <td class="px-6 py-4">${formatDateTime(item.time)}</td>
+                        <td class="px-6 py-4 font-medium">${item.service}</td>
+                        <td class="px-6 py-4">${item.cpu}</td>
+                        <td class="px-6 py-4">${item.alloc}</td>
+                        <td class="px-6 py-4">${item.sys}</td>
+                        <td class="px-6 py-4">${item.numGC}</td>
+                        <td class="px-6 py-4">${item.qps}</td>
+                        <td class="px-6 py-4 ${parseInt(item.drops) > 0 ? 'text-danger font-medium' : ''}">${item.drops}</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.shedding === '正常' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}">
+                                ${item.shedding}
+                            </span>
+                        </td>
+                    `;
+                    
+                    logTableBody.appendChild(row);
+                    
+                    // 为每一行添加延迟动画效果
+                    setTimeout(() => {
+                        row.style.opacity = '1';
+                    }, index * 50);
+                });
+            } else {
+                // 显示空数据提示
+                const emptyRow = document.createElement('tr');
+                emptyRow.innerHTML = `
+                    <td colspan="9" class="px-6 py-10 text-center text-dark-2">
+                        <i class="fa fa-inbox text-3xl mb-2"></i>
+                        <p>暂无数据</p>
                     </td>
                 `;
-                
-                logTableBody.appendChild(row);
-            });
-        } else {
-            // 显示空数据提示
-            const emptyRow = document.createElement('tr');
-            emptyRow.innerHTML = `
-                <td colspan="9" class="px-6 py-10 text-center text-dark-2">
-                    <i class="fa fa-inbox text-3xl mb-2"></i>
-                    <p>暂无数据</p>
-                </td>
-            `;
-            logTableBody.appendChild(emptyRow);
-        }
+                logTableBody.appendChild(emptyRow);
+            }
 
-        // 更新分页信息
-        currentRange.textContent = filteredData.length > 0 ? `${startIndex + 1}-${endIndex}` : '0-0';
-        pageInfo.textContent = `第 ${currentPage} 页`;
-        
-        // 更新分页按钮状态
-        prevPage.disabled = currentPage === 1 || filteredData.length === 0;
-        nextPage.disabled = endIndex >= filteredData.length || filteredData.length === 0;
+            // 更新分页信息
+            currentRange.textContent = filteredData.length > 0 ? `${startIndex + 1}-${endIndex}` : '0-0';
+            pageInfo.textContent = `第 ${currentPage} 页`;
+            
+            // 更新分页按钮状态
+            prevPage.disabled = currentPage === 1 || filteredData.length === 0;
+            nextPage.disabled = endIndex >= filteredData.length || filteredData.length === 0;
+        }, 300);
     }
 
     // 获取过滤后的数据
