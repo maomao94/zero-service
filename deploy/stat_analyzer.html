@@ -32,11 +32,10 @@
                         'card': '0 4px 20px rgba(0, 0, 0, 0.08)',
                         'card-hover': '0 8px 30px rgba(0, 0, 0, 0.12)',
                     }
-                },
+                }
             }
         }
     </script>
-
     <style type="text/tailwindcss">
         @layer utilities {
             .content-auto {
@@ -329,7 +328,7 @@
             <!-- CPU占用趋势 -->
             <div class="bg-white rounded-xl shadow-card p-6 card-shadow-hover lg:col-span-2">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-semibold">CPU占用趋势 (m)</h3>
+                    <h3 class="font-semibold">系统指标综合图</h3>
                     <div class="flex space-x-2">
                         <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="cpuTrend">
                             <i class="fa fa-refresh"></i>
@@ -357,6 +356,22 @@
                 </div>
             </div>
             <div class="chart-container" id="sheddingStatsChart"></div>
+        </div>
+
+        <!-- 限流趋势图 -->
+        <div class="bg-white rounded-xl shadow-card p-6 mb-8 card-shadow-hover">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-semibold">限流趋势图</h3>
+                <div class="flex space-x-2">
+                    <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="sheddingTrend">
+                        <i class="fa fa-refresh"></i>
+                    </button>
+                    <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="sheddingTrend">
+                        <i class="fa fa-expand"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-container" id="sheddingTrendChart"></div>
         </div>
 
         <!-- 服务性能详情 -->
@@ -851,11 +866,14 @@
         // 渲染服务分布图
         renderServiceDistributionChart();
 
-        // 渲染CPU占用趋势图
-        renderCpuTrendChart();
+        // 渲染系统指标综合图
+        renderSystemMetricsChart();
 
         // 渲染限流状态分析图
         renderSheddingStatsChart();
+        
+        // 渲染限流趋势图
+        renderSheddingTrendChart();
     }
 
     // 渲染内存趋势图
@@ -1403,8 +1421,230 @@
         chart.setOption(option);
     }
 
-    // 渲染CPU占用趋势图
-    function renderCpuTrendChart() {
+    // 渲染限流趋势图
+    function renderSheddingTrendChart() {
+        const chartDom = document.getElementById('sheddingTrendChart');
+        const chart = echarts.init(chartDom);
+        charts['sheddingTrend'] = chart;
+
+        // 处理数据 - 按时间统计限流情况
+        // 1. 按时间分组统计正常和限流的请求数
+        const timeData = {};
+        logData.forEach(item => {
+            const timeKey = formatTime(item.time);
+            if (!timeData[timeKey]) {
+                timeData[timeKey] = { normal: 0, shedding: 0, total: 0 };
+            }
+            timeData[timeKey].total++;
+            if (item.shedding === '正常') {
+                timeData[timeKey].normal++;
+            } else {
+                timeData[timeKey].shedding++;
+            }
+        });
+
+        // 2. 转换为图表所需的数据格式
+        const times = Object.keys(timeData).sort();
+        const normalData = times.map(time => timeData[time].normal);
+        const sheddingData = times.map(time => timeData[time].shedding);
+        const totalData = times.map(time => timeData[time].total);
+        
+        // 计算限流率
+        const sheddingRateData = times.map((time, index) => {
+            if (totalData[index] === 0) return 0;
+            return (sheddingData[index] / totalData[index] * 100).toFixed(1);
+        });
+
+        // 图表配置 - 统一样式和增强效果
+        const option = {
+            backgroundColor: 'transparent',
+            tooltip: {
+                trigger: 'axis',
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                borderColor: '#E0E6ED',
+                borderWidth: 1,
+                borderRadius: 8,
+                padding: [12, 16],
+                textStyle: {
+                    color: '#1D2129',
+                    fontSize: 12
+                },
+                formatter: function(params) {
+                    let result = `<div style="font-weight: 600; color: #1D2129; margin-bottom: 6px;">${params[0].name}</div>`;
+                    params.forEach(item => {
+                        let formattedValue = item.value;
+                        if (item.seriesName.includes('限流率')) {
+                            formattedValue = `${item.value}%`;
+                        } else {
+                            formattedValue = item.value.toLocaleString();
+                        }
+                        
+                        result += `<div style="margin: 4px 0;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${item.color}; margin-right: 8px;"></span>${item.seriesName}: <span style="font-weight: 600;">${formattedValue}</span></div>`;
+                    });
+                    return result;
+                },
+                shadowColor: 'rgba(0, 0, 0, 0.1)',
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowOffsetY: 4
+            },
+            legend: {
+                data: ['正常请求数', '限流请求数', '总请求数', '限流率'],
+                top: 0,
+                left: 'center',
+                textStyle: {
+                    color: '#4E5969',
+                    fontSize: 12,
+                    fontWeight: 500
+                },
+                itemWidth: 14,
+                itemHeight: 14,
+                padding: [0, 20]
+            },
+            grid: {
+                left: '5%',
+                right: '10%',
+                bottom: '15%',
+                top: '15%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: times,
+                axisLine: { lineStyle: { color: '#E5E6EB' } },
+                axisLabel: {
+                    color: '#4E5969',
+                    rotate: 45,
+                    interval: calculateLabelInterval(times.length)
+                },
+                splitLine: { show: false }
+            },
+            yAxis: [
+                {
+                    name: '请求数',
+                    type: 'value',
+                    min: 0,
+                    axisLine: { lineStyle: { color: '#165DFF' } },
+                    axisLabel: { color: '#4E5969' },
+                    splitLine: {
+                        lineStyle: {
+                            color: '#F2F3F5',
+                            type: 'dashed'
+                        }
+                    }
+                },
+                {
+                    name: '限流率(%)',
+                    type: 'value',
+                    position: 'right',
+                    min: 0,
+                    max: 100,
+                    axisLine: { lineStyle: { color: '#F5222D' } },
+                    axisLabel: {
+                        color: '#F5222D',
+                        formatter: '{value}%'
+                    },
+                    splitLine: { show: false }
+                }
+            ],
+            series: [
+                {
+                    name: '正常请求数',
+                    type: 'bar',
+                    stack: 'total',
+                    data: normalData,
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#52C41A' },
+                            { offset: 1, color: '#95DE64' }
+                        ])
+                    },
+                    barWidth: '40%'
+                },
+                {
+                    name: '限流请求数',
+                    type: 'bar',
+                    stack: 'total',
+                    data: sheddingData,
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#F5222D' },
+                            { offset: 1, color: '#FF7875' }
+                        ])
+                    },
+                    barWidth: '40%'
+                },
+                {
+                    name: '总请求数',
+                    type: 'line',
+                    data: totalData,
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    symbolHoverSize: 8,
+                    smooth: true,
+                    lineStyle: {
+                        width: 3,
+                        color: '#165DFF',
+                        shadowColor: 'rgba(22, 93, 255, 0.3)',
+                        shadowBlur: 10
+                    },
+                    itemStyle: {
+                        color: '#165DFF',
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }
+                },
+                {
+                    name: '限流率',
+                    type: 'line',
+                    yAxisIndex: 1,
+                    data: sheddingRateData,
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    symbolHoverSize: 8,
+                    smooth: true,
+                    lineStyle: {
+                        width: 3,
+                        color: '#F5222D',
+                        type: 'dashed',
+                        shadowColor: 'rgba(245, 34, 45, 0.3)',
+                        shadowBlur: 10
+                    },
+                    itemStyle: {
+                        color: '#F5222D',
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }
+                }
+            ],
+            dataZoom: [
+                {
+                    type: 'inside',
+                    xAxisIndex: 0,
+                    start: calculateInitialZoom(logData.length),
+                    end: 100
+                },
+                {
+                    type: 'slider',
+                    xAxisIndex: 0,
+                    bottom: 5,
+                    start: calculateInitialZoom(logData.length),
+                    end: 100,
+                    height: 20,
+                    handleStyle: {
+                        color: '#165DFF'
+                    },
+                    fillerColor: 'rgba(22, 93, 255, 0.2)'
+                }
+            ],
+            animation: true,
+            animationDuration: 1000
+        };
+
+        chart.setOption(option);
+    }
+
+    function renderSystemMetricsChart() {
         const chartDom = document.getElementById('cpuTrendChart');
         const chart = echarts.init(chartDom);
         charts['cpuTrend'] = chart;
@@ -1417,6 +1657,10 @@
         });
         const numGCData = logData.map(item => {
             const value = parseInt(item.numGC);
+            return isNaN(value) ? 0 : value;
+        });
+        const memData = logData.map(item => {
+            const value = parseFloat(item.alloc);
             return isNaN(value) ? 0 : value;
         });
 
@@ -1443,6 +1687,8 @@
                             formattedValue = `${item.value.toLocaleString()}m`;
                         } else if (item.seriesName.includes('GC')) {
                             formattedValue = item.value.toLocaleString();
+                        } else if (item.seriesName.includes('内存')) {
+                            formattedValue = `${item.value.toLocaleString()}MB`;
                         }
                          
                         result += `<div style="margin: 4px 0;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${item.color}; margin-right: 8px;"></span>${item.seriesName}: <span style="font-weight: 600;">${formattedValue}</span></div>`;
@@ -1455,7 +1701,7 @@
                 shadowOffsetY: 4
             },
             legend: {
-                data: ['CPU占用(m)', 'GC次数'],
+                data: ['CPU占用(m)', 'GC次数', '内存占用(MB)'],
                 top: 0,
                 left: 'center',
                 textStyle: { 
@@ -1503,9 +1749,19 @@
                     name: 'GC次数',
                     type: 'value',
                     position: 'right',
+                    offset: 60,
                     min: 0,
                     axisLine: { lineStyle: { color: '#52C41A' } },
                     axisLabel: { color: '#52C41A' },
+                    splitLine: { show: false }
+                },
+                {
+                    name: '内存占用(MB)',
+                    type: 'value',
+                    position: 'right',
+                    min: 0,
+                    axisLine: { lineStyle: { color: '#1677FF' } },
+                    axisLabel: { color: '#1677FF' },
                     splitLine: { show: false }
                 }
             ],
@@ -1550,6 +1806,41 @@
                         color: '#52C41A',
                         borderColor: '#fff',
                         borderWidth: 2
+                    }
+                },
+                {
+                    name: '内存占用(MB)',
+                    type: 'line',
+                    yAxisIndex: 2,
+                    data: memData,
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    symbolHoverSize: 8,
+                    smooth: true,
+                    lineStyle: { 
+                        width: 3,
+                        color: '#1677FF',
+                        shadowColor: 'rgba(22, 119, 255, 0.3)',
+                        shadowBlur: 10
+                    },
+                    itemStyle: { 
+                        color: '#1677FF',
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    areaStyle: {
+                        color: {
+                            type: 'linear',
+                            x: 0,
+                            y: 0,
+                            x2: 0,
+                            y2: 1,
+                            colorStops: [{
+                                offset: 0, color: 'rgba(22, 119, 255, 0.15)'
+                            }, {
+                                offset: 1, color: 'rgba(22, 119, 255, 0)'
+                            }]
+                        }
                     }
                 }
             ],
