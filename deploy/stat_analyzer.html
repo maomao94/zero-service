@@ -277,6 +277,25 @@
 
         <!-- 关键指标图表 -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- QPS和丢弃数趋势 -->
+            <div class="bg-white rounded-xl shadow-card p-6 card-shadow-hover lg:col-span-2">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold">QPS和丢弃数趋势</h3>
+                    <div class="flex space-x-2">
+                        <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="qpsTrend">
+                            <i class="fa fa-refresh"></i>
+                        </button>
+                        <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="qpsTrend">
+                            <i class="fa fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container" id="qpsTrendChart"></div>
+            </div>
+        </div>
+
+        <!-- 内存和服务性能指标 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <!-- 内存趋势图 -->
             <div class="bg-white rounded-xl shadow-card p-6 card-shadow-hover">
                 <div class="flex justify-between items-center mb-4">
@@ -293,40 +312,8 @@
                 <div class="chart-container" id="memoryTrendChart"></div>
             </div>
 
-            <!-- QPS和丢弃数趋势 -->
-            <div class="bg-white rounded-xl shadow-card p-6 card-shadow-hover">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-semibold">QPS和丢弃数趋势</h3>
-                    <div class="flex space-x-2">
-                        <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="qpsTrend">
-                            <i class="fa fa-refresh"></i>
-                        </button>
-                        <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="qpsTrend">
-                            <i class="fa fa-expand"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="chart-container" id="qpsTrendChart"></div>
-            </div>
-        </div>
-
-        <!-- 服务性能和限流状态 -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-            <!-- 服务分布 -->
-            <div class="bg-white rounded-xl shadow-card p-6 card-shadow-hover">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-semibold">服务分布</h3>
-                    <div class="flex space-x-2">
-                        <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="serviceDistribution">
-                            <i class="fa fa-refresh"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="chart-container" id="serviceDistributionChart"></div>
-            </div>
-
             <!-- CPU占用趋势 -->
-            <div class="bg-white rounded-xl shadow-card p-6 card-shadow-hover lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-card p-6 card-shadow-hover">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="font-semibold">系统指标综合图</h3>
                     <div class="flex space-x-2">
@@ -340,6 +327,19 @@
                 </div>
                 <div class="chart-container" id="cpuTrendChart"></div>
             </div>
+        </div>
+
+        <!-- 服务分布 -->
+        <div class="bg-white rounded-xl shadow-card p-6 mb-8 card-shadow-hover">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-semibold">服务分布</h3>
+                <div class="flex space-x-2">
+                    <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="serviceDistribution">
+                        <i class="fa fa-refresh"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-container" id="serviceDistributionChart"></div>
         </div>
 
         <!-- 限流状态分析 -->
@@ -883,13 +883,27 @@
                 numGC: '0',
                 qps: '0.0',
                 drops: '0',
-                shedding: '正常'
+                shedding: '正常',
+                // 响应时间指标
+                avgTime: 0,
+                medTime: 0,
+                p90Time: 0,
+                p99Time: 0,
+                p999Time: 0,
+                // QPS类型
+                qpsType: 'general'
             };
 
             // 提取应用名
             const appMatch = line.match(/app=([\w.]+)/);
             if (appMatch) {
                 logEntry.service = appMatch[1].toLowerCase();
+            }
+
+            // 提取QPS类型 (如: (gtw), (tcp-iec-104) 等)
+            const typeMatch = line.match(/\(([\w-]+)\)/);
+            if (typeMatch) {
+                logEntry.qpsType = typeMatch[1].toLowerCase();
             }
 
             // 提取CPU信息
@@ -924,6 +938,37 @@
             const qpsMatch = line.match(/qps: (\d+\.\d+)\/s/);
             if (qpsMatch) {
                 logEntry.qps = qpsMatch[1];
+            }
+
+            // 提取响应时间指标
+            // 平均响应时间
+            const avgTimeMatch = line.match(/avg time: (\d+\.\d+)ms/);
+            if (avgTimeMatch) {
+                logEntry.avgTime = parseFloat(avgTimeMatch[1]);
+            }
+            
+            // 中位数响应时间
+            const medTimeMatch = line.match(/med: (\d+\.\d+)ms/);
+            if (medTimeMatch) {
+                logEntry.medTime = parseFloat(medTimeMatch[1]);
+            }
+            
+            // 90%分位响应时间
+            const p90TimeMatch = line.match(/90th: (\d+\.\d+)ms/);
+            if (p90TimeMatch) {
+                logEntry.p90Time = parseFloat(p90TimeMatch[1]);
+            }
+            
+            // 99%分位响应时间
+            const p99TimeMatch = line.match(/99th: (\d+\.\d+)ms/);
+            if (p99TimeMatch) {
+                logEntry.p99Time = parseFloat(p99TimeMatch[1]);
+            }
+            
+            // 99.9%分位响应时间
+            const p999TimeMatch = line.match(/99\.9th: (\d+\.\d+)ms/);
+            if (p999TimeMatch) {
+                logEntry.p999Time = parseFloat(p999TimeMatch[1]);
             }
 
             // 提取丢弃数
@@ -1118,6 +1163,26 @@
                     numGC: parseInt(item.numGC) || 0,
                     qps: parseFloat(item.qps) || 0,
                     drops: parseInt(item.drops) || 0,
+                    // 响应时间指标
+                    avgTime: item.avgTime || 0,
+                    medTime: item.medTime || 0,
+                    p90Time: item.p90Time || 0,
+                    p99Time: item.p99Time || 0,
+                    p999Time: item.p999Time || 0,
+                    // QPS类型
+                    qpsType: item.qpsType || 'general',
+                    // 按QPS类型分组的数据
+                    qpsByType: {
+                        [item.qpsType || 'general']: {
+                            qps: parseFloat(item.qps) || 0,
+                            avgTime: item.avgTime || 0,
+                            medTime: item.medTime || 0,
+                            p90Time: item.p90Time || 0,
+                            p99Time: item.p99Time || 0,
+                            p999Time: item.p999Time || 0,
+                            count: 1
+                        }
+                    },
                     // 统计正常和限流请求数
                     normalCount: item.shedding === '正常' ? 1 : 0,
                     sheddingCount: item.shedding !== '正常' ? 1 : 0,
@@ -1146,6 +1211,35 @@
                 existing.qps += parseFloat(item.qps) || 0;
                 existing.drops += parseInt(item.drops) || 0;
                 existing.totalCount++;
+                
+                // 累加响应时间指标（这里简单累加，后面会计算平均值）
+                existing.avgTime += item.avgTime || 0;
+                existing.medTime += item.medTime || 0;
+                existing.p90Time += item.p90Time || 0;
+                existing.p99Time += item.p99Time || 0;
+                existing.p999Time += item.p999Time || 0;
+                
+                // 累加按QPS类型分组的数据
+                const qpsType = item.qpsType || 'general';
+                if (!existing.qpsByType[qpsType]) {
+                    existing.qpsByType[qpsType] = {
+                        qps: parseFloat(item.qps) || 0,
+                        avgTime: item.avgTime || 0,
+                        medTime: item.medTime || 0,
+                        p90Time: item.p90Time || 0,
+                        p99Time: item.p99Time || 0,
+                        p999Time: item.p999Time || 0,
+                        count: 1
+                    };
+                } else {
+                    existing.qpsByType[qpsType].qps += parseFloat(item.qps) || 0;
+                    existing.qpsByType[qpsType].avgTime += item.avgTime || 0;
+                    existing.qpsByType[qpsType].medTime += item.medTime || 0;
+                    existing.qpsByType[qpsType].p90Time += item.p90Time || 0;
+                    existing.qpsByType[qpsType].p99Time += item.p99Time || 0;
+                    existing.qpsByType[qpsType].p999Time += item.p999Time || 0;
+                    existing.qpsByType[qpsType].count++;
+                }
                 
                 if (item.shedding === '正常') {
                     existing.normalCount++;
@@ -1240,6 +1334,31 @@
             // 移动到下一分钟
             currentMinute.setMinutes(currentMinute.getMinutes() + 1);
         }
+        
+        // 计算响应时间指标的平均值
+        result.forEach(dataPoint => {
+            if (dataPoint.totalCount > 0) {
+                dataPoint.avgTime = parseFloat((dataPoint.avgTime / dataPoint.totalCount).toFixed(2));
+                dataPoint.medTime = parseFloat((dataPoint.medTime / dataPoint.totalCount).toFixed(2));
+                dataPoint.p90Time = parseFloat((dataPoint.p90Time / dataPoint.totalCount).toFixed(2));
+                dataPoint.p99Time = parseFloat((dataPoint.p99Time / dataPoint.totalCount).toFixed(2));
+                dataPoint.p999Time = parseFloat((dataPoint.p999Time / dataPoint.totalCount).toFixed(2));
+            }
+            
+            // 计算按QPS类型分组的平均值
+            if (dataPoint.qpsByType) {
+                Object.keys(dataPoint.qpsByType).forEach(type => {
+                    const typeData = dataPoint.qpsByType[type];
+                    if (typeData.count > 0) {
+                        typeData.avgTime = parseFloat((typeData.avgTime / typeData.count).toFixed(2));
+                        typeData.medTime = parseFloat((typeData.medTime / typeData.count).toFixed(2));
+                        typeData.p90Time = parseFloat((typeData.p90Time / typeData.count).toFixed(2));
+                        typeData.p99Time = parseFloat((typeData.p99Time / typeData.count).toFixed(2));
+                        typeData.p999Time = parseFloat((typeData.p999Time / typeData.count).toFixed(2));
+                    }
+                });
+            }
+        });
         
         return result;
     }
@@ -1578,6 +1697,35 @@
             const value = parseInt(item.drops);
             return isNaN(value) ? 0 : value;
         });
+        
+        // 提取响应时间指标数据
+        const avgTimeData = aggregatedData.map(item => item.avgTime || 0);
+        const medTimeData = aggregatedData.map(item => item.medTime || 0);
+        const p90TimeData = aggregatedData.map(item => item.p90Time || 0);
+        const p99TimeData = aggregatedData.map(item => item.p99Time || 0);
+        const p999TimeData = aggregatedData.map(item => item.p999Time || 0);
+        
+        // 提取按QPS类型分组的数据
+        // 首先收集所有存在的QPS类型
+        const qpsTypes = new Set();
+        aggregatedData.forEach(item => {
+            if (item.qpsByType) {
+                Object.keys(item.qpsByType).forEach(type => {
+                    qpsTypes.add(type);
+                });
+            }
+        });
+        
+        // 为每种类型准备QPS数据
+        const qpsDataByType = {};
+        qpsTypes.forEach(type => {
+            qpsDataByType[type] = aggregatedData.map(item => {
+                if (item.qpsByType && item.qpsByType[type]) {
+                    return item.qpsByType[type].qps;
+                }
+                return 0;
+            });
+        });
 
         // 图表配置 - 统一样式和增强效果
         const option = {
@@ -1598,13 +1746,19 @@
                     params.forEach(item => {
                         // 格式化数值，根据系列名显示不同单位
                         let formattedValue = item.value;
+                        let unit = '';
+                        
                         if (item.seriesName.includes('QPS')) {
                             formattedValue = item.value.toFixed(2);
+                            unit = '/s';
                         } else if (item.seriesName.includes('丢弃数')) {
                             formattedValue = item.value.toLocaleString();
+                        } else if (item.seriesName.includes('响应时间')) {
+                            formattedValue = item.value.toFixed(2);
+                            unit = 'ms';
                         }
-                         
-                        result += `<div style="margin: 4px 0;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${item.color}; margin-right: 8px;"></span>${item.seriesName}: <span style="font-weight: 600;">${formattedValue}</span></div>`;
+                          
+                        result += `<div style="margin: 4px 0;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${item.color}; margin-right: 8px;"></span>${item.seriesName}: <span style="font-weight: 600;">${formattedValue}${unit}</span></div>`;
                     });
                     return result;
                 },
@@ -1615,7 +1769,7 @@
                 shadowOffsetY: 4
             },
             legend: {
-                data: ['总QPS', '标准QPS', '缓存QPS', '通过请求QPS', '丢弃数'],
+                data: ['总QPS', '标准QPS', '缓存QPS', '通过请求QPS', '丢弃数', '平均响应时间', '中位数响应时间', '90%响应时间', '99%响应时间', '99.9%响应时间'],
                 top: 0,
                 left: 'center',
                 textStyle: { 
@@ -1625,13 +1779,20 @@
                 },
                 itemWidth: 14,
                 itemHeight: 14,
-                padding: [0, 20]
+                padding: [0, 20],
+                formatter: function(name) {
+                    // 处理长名称，添加换行
+                    if (name.length > 12) {
+                        return name.substring(0, 12) + '\n' + name.substring(12);
+                    }
+                    return name;
+                }
             },
             grid: {
                 left: '5%',
-                right: '10%',
+                right: '15%', // 增加右侧空间以容纳第三个y轴
                 bottom: '15%',
-                top: '15%',
+                top: '20%', // 增加顶部空间以容纳图例
                 containLabel: true
             },
             xAxis: {
@@ -1681,6 +1842,16 @@
                     axisLine: { lineStyle: { color: '#FF4D4F' } },
                     axisLabel: { color: '#FF4D4F' },
                     splitLine: { show: false }
+                },
+                {
+                    type: 'value',
+                    name: '响应时间(ms)',
+                    position: 'right',
+                    offset: 50, // 偏移以避免与丢弃数的y轴重叠
+                    min: 0,
+                    axisLine: { lineStyle: { color: '#722ED1' } },
+                    axisLabel: { color: '#722ED1' },
+                    splitLine: { show: false }
                 }
             ],
             series: [
@@ -1688,7 +1859,13 @@
                 {                    name: '标准QPS',                    type: 'line',                    data: standardQpsData,                    symbol: 'circle',                    symbolSize: 5,                    symbolHoverSize: 7,                    smooth: true,                    lineStyle: {                         width: 3,                         color: '#52C41A',                        shadowColor: 'rgba(82, 196, 26, 0.3)',                        shadowBlur: 8                    },                    itemStyle: {                         color: '#52C41A',                        borderColor: '#fff',                        borderWidth: 2                    },                    emphasis: {                        focus: 'series',                        itemStyle: {                            shadowBlur: 8,                            shadowColor: 'rgba(82, 196, 26, 0.6)'                        }                    }                },
                 {                    name: '缓存QPS',                    type: 'line',                    data: cacheQpsData,                    symbol: 'circle',                    symbolSize: 5,                    symbolHoverSize: 7,                    smooth: true,                    lineStyle: {                         width: 3,                         color: '#FAAD14',                        shadowColor: 'rgba(250, 173, 20, 0.3)',                        shadowBlur: 8                    },                    itemStyle: {                         color: '#FAAD14',                        borderColor: '#fff',                        borderWidth: 2                    },                    emphasis: {                        focus: 'series',                        itemStyle: {                            shadowBlur: 8,                            shadowColor: 'rgba(250, 173, 20, 0.6)'                        }                    }                },
                 {                    name: '通过请求QPS',                    type: 'line',                    data: sheddingPassQpsData,                    symbol: 'circle',                    symbolSize: 5,                    symbolHoverSize: 7,                    smooth: true,                    lineStyle: {                         width: 3,                         color: '#722ED1',                        shadowColor: 'rgba(114, 46, 209, 0.3)',                        shadowBlur: 8                    },                    itemStyle: {                         color: '#722ED1',                        borderColor: '#fff',                        borderWidth: 2                    },                    emphasis: {                        focus: 'series',                        itemStyle: {                            shadowBlur: 8,                            shadowColor: 'rgba(114, 46, 209, 0.6)'                        }                    }                },
-                {                    name: '丢弃数',                    type: 'bar',                    yAxisIndex: 1,                    data: dropsData,                    itemStyle: {                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [                            { offset: 0, color: '#FF4D4F' },                            { offset: 1, color: '#FF7875' }                        ])                    },                    barWidth: '30%',                    emphasis: {                        focus: 'series',                        itemStyle: {                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [                                { offset: 0, color: '#F5222D' },                                { offset: 1, color: '#FF4D4F' }                            ])                        }                    }                }            ],
+                {                    name: '丢弃数',                    type: 'bar',                    yAxisIndex: 1,                    data: dropsData,                    itemStyle: {                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [                            { offset: 0, color: '#FF4D4F' },                            { offset: 1, color: '#FF7875' }                        ])                    },                    barWidth: '30%',                    emphasis: {                        focus: 'series',                        itemStyle: {                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [                                { offset: 0, color: '#F5222D' },                                { offset: 1, color: '#FF4D4F' }                            ])                        }                    }                },
+                // 响应时间指标系列 - 使用第三个y轴
+                {                    name: '平均响应时间',                    type: 'line',                    yAxisIndex: 2,                    data: avgTimeData,                    symbol: 'circle',                    symbolSize: 4,                    symbolHoverSize: 6,                    smooth: true,                    lineStyle: {                         width: 2,                         color: '#FF7875',                        shadowColor: 'rgba(255, 120, 117, 0.3)',                        shadowBlur: 6                    },                    itemStyle: {                         color: '#FF7875',                        borderColor: '#fff',                        borderWidth: 1                    },                    emphasis: {                        focus: 'series',                        itemStyle: {                            shadowBlur: 6,                            shadowColor: 'rgba(255, 120, 117, 0.6)'                        }                    }                },
+                {                    name: '中位数响应时间',                    type: 'line',                    yAxisIndex: 2,                    data: medTimeData,                    symbol: 'circle',                    symbolSize: 4,                    symbolHoverSize: 6,                    smooth: true,                    lineStyle: {                         width: 2,                         color: '#13C2C2',                        shadowColor: 'rgba(19, 194, 194, 0.3)',                        shadowBlur: 6                    },                    itemStyle: {                         color: '#13C2C2',                        borderColor: '#fff',                        borderWidth: 1                    },                    emphasis: {                        focus: 'series',                        itemStyle: {                            shadowBlur: 6,                            shadowColor: 'rgba(19, 194, 194, 0.6)'                        }                    }                },
+                {                    name: '90%响应时间',                    type: 'line',                    yAxisIndex: 2,                    data: p90TimeData,                    symbol: 'circle',                    symbolSize: 4,                    symbolHoverSize: 6,                    smooth: true,                    lineStyle: {                         width: 2,                         color: '#FAAD14',                        shadowColor: 'rgba(250, 173, 20, 0.3)',                        shadowBlur: 6                    },                    itemStyle: {                         color: '#FAAD14',                        borderColor: '#fff',                        borderWidth: 1                    },                    emphasis: {                        focus: 'series',                        itemStyle: {                            shadowBlur: 6,                            shadowColor: 'rgba(250, 173, 20, 0.6)'                        }                    }                },
+                {                    name: '99%响应时间',                    type: 'line',                    yAxisIndex: 2,                    data: p99TimeData,                    symbol: 'circle',                    symbolSize: 4,                    symbolHoverSize: 6,                    smooth: true,                    lineStyle: {                         width: 2,                         color: '#722ED1',                        shadowColor: 'rgba(114, 46, 209, 0.3)',                        shadowBlur: 6                    },                    itemStyle: {                         color: '#722ED1',                        borderColor: '#fff',                        borderWidth: 1                    },                    emphasis: {                        focus: 'series',                        itemStyle: {                            shadowBlur: 6,                            shadowColor: 'rgba(114, 46, 209, 0.6)'                        }                    }                },
+                {                    name: '99.9%响应时间',                    type: 'line',                    yAxisIndex: 2,                    data: p999TimeData,                    symbol: 'circle',                    symbolSize: 4,                    symbolHoverSize: 6,                    smooth: true,                    lineStyle: {                         width: 2,                         color: '#52C41A',                        shadowColor: 'rgba(82, 196, 26, 0.3)',                        shadowBlur: 6                    },                    itemStyle: {                         color: '#52C41A',                        borderColor: '#fff',                        borderWidth: 1                    },                    emphasis: {                        focus: 'series',                        itemStyle: {                            shadowBlur: 6,                            shadowColor: 'rgba(82, 196, 26, 0.6)'                        }                    }                }            ],
             dataZoom: [
                 {
                     type: 'inside',
@@ -3100,13 +3277,18 @@
                     }
                     
                     row.innerHTML = `
-                        <td class="px-6 py-4">${formatDateTime(item.time)}</td>
+                        <td class="px-6 py-4">${item.time ? formatDateTime(item.time) : ''}</td>
                         <td class="px-6 py-4 font-medium">${item.service}</td>
                         <td class="px-6 py-4">${item.cpu}</td>
                         <td class="px-6 py-4">${item.alloc}</td>
                         <td class="px-6 py-4">${item.sys}</td>
                         <td class="px-6 py-4">${item.numGC}</td>
-                        <td class="px-6 py-4">${item.qps}</td>
+                        <td class="px-6 py-4">
+                            ${item.qps}
+                            ${item.qpsType && item.qpsType !== 'general' ? `<span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                                ${item.qpsType}
+                            </span>` : ''}
+                        </td>
                         <td class="px-6 py-4 ${parseInt(item.drops) > 0 ? 'text-danger font-medium' : ''}">${item.drops}</td>
                         <td class="px-6 py-4">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.shedding === '正常' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}">
