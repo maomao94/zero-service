@@ -392,15 +392,60 @@
                     <table class="w-full text-sm data-table">
                         <thead>
                         <tr class="bg-light-1">
-                            <th class="px-6 py-3 text-left font-medium text-dark-2">日志时间</th>
-                            <th class="px-6 py-3 text-left font-medium text-dark-2">服务名</th>
-                            <th class="px-6 py-3 text-left font-medium text-dark-2">CPU占用(m)</th>
-                            <th class="px-6 py-3 text-left font-medium text-dark-2">实时内存(MiB)</th>
-                            <th class="px-6 py-3 text-left font-medium text-dark-2">系统内存(MiB)</th>
-                            <th class="px-6 py-3 text-left font-medium text-dark-2">GC次数</th>
-                            <th class="px-6 py-3 text-left font-medium text-dark-2">QPS</th>
-                            <th class="px-6 py-3 text-left font-medium text-dark-2">丢弃数</th>
-                            <th class="px-6 py-3 text-left font-medium text-dark-2">限流状态</th>
+                            <th class="px-6 py-3 text-left font-medium text-dark-2 cursor-pointer hover:bg-light-2 transition-colors" data-field="time">
+                                日志时间
+                                <span class="ml-1 text-primary">
+                                    <i class="fa fa-sort-down"></i>
+                                </span>
+                            </th>
+                            <th class="px-6 py-3 text-left font-medium text-dark-2 cursor-pointer hover:bg-light-2 transition-colors" data-field="service">
+                                服务名
+                                <span class="ml-1">
+                                    <i class="fa fa-sort"></i>
+                                </span>
+                            </th>
+                            <th class="px-6 py-3 text-left font-medium text-dark-2 cursor-pointer hover:bg-light-2 transition-colors" data-field="cpu">
+                                CPU占用(m)
+                                <span class="ml-1">
+                                    <i class="fa fa-sort"></i>
+                                </span>
+                            </th>
+                            <th class="px-6 py-3 text-left font-medium text-dark-2 cursor-pointer hover:bg-light-2 transition-colors" data-field="alloc">
+                                实时内存(MiB)
+                                <span class="ml-1">
+                                    <i class="fa fa-sort"></i>
+                                </span>
+                            </th>
+                            <th class="px-6 py-3 text-left font-medium text-dark-2 cursor-pointer hover:bg-light-2 transition-colors" data-field="sys">
+                                系统内存(MiB)
+                                <span class="ml-1">
+                                    <i class="fa fa-sort"></i>
+                                </span>
+                            </th>
+                            <th class="px-6 py-3 text-left font-medium text-dark-2 cursor-pointer hover:bg-light-2 transition-colors" data-field="numGC">
+                                GC次数
+                                <span class="ml-1">
+                                    <i class="fa fa-sort"></i>
+                                </span>
+                            </th>
+                            <th class="px-6 py-3 text-left font-medium text-dark-2 cursor-pointer hover:bg-light-2 transition-colors" data-field="qps">
+                                QPS
+                                <span class="ml-1">
+                                    <i class="fa fa-sort"></i>
+                                </span>
+                            </th>
+                            <th class="px-6 py-3 text-left font-medium text-dark-2 cursor-pointer hover:bg-light-2 transition-colors" data-field="drops">
+                                丢弃数
+                                <span class="ml-1">
+                                    <i class="fa fa-sort"></i>
+                                </span>
+                            </th>
+                            <th class="px-6 py-3 text-left font-medium text-dark-2 cursor-pointer hover:bg-light-2 transition-colors" data-field="shedding">
+                                限流状态
+                                <span class="ml-1">
+                                    <i class="fa fa-sort"></i>
+                                </span>
+                            </th>
                         </tr>
                         </thead>
                         <tbody id="logTableBody">
@@ -545,6 +590,14 @@
         document.querySelectorAll('.chart-action-btn').forEach(btn => {
             btn.addEventListener('click', handleChartAction);
         });
+        
+        // 添加表头点击排序事件
+        document.querySelectorAll('th[data-field]').forEach(header => {
+            header.addEventListener('click', handleHeaderClick);
+        });
+        
+        // 初始化排序图标
+        updateSortIcons();
     }
 
     // 文件拖放处理
@@ -850,6 +903,122 @@
         const minutes = String(date.getMinutes()).padStart(2, '0');
         return `${hours}:${minutes}`;
     }
+    
+    // 按分钟聚合数据 - 使用用户要求的逻辑：整分钟区间，无数据时用上一分钟数据
+    function aggregateDataByMinute() {
+        if (logData.length === 0) {
+            return [];
+        }
+        
+        // 初始化原始数据的分钟映射
+        const originalMinuteData = {};
+        // 按服务统计的映射
+        const serviceStats = {};
+        
+        // 处理原始日志数据
+        logData.forEach(item => {
+            // 创建分钟级时间戳作为键
+            const date = new Date(item.time);
+            date.setSeconds(0);
+            date.setMilliseconds(0);
+            const minuteKey = date.toISOString();
+            
+            // 按服务统计
+            if (!serviceStats[item.service]) {
+                serviceStats[item.service] = { normal: 0, shedding: 0, count: 0 };
+            }
+            serviceStats[item.service].count++;
+            if (item.shedding === '正常') {
+                serviceStats[item.service].normal++;
+            } else {
+                serviceStats[item.service].shedding++;
+            }
+            
+            // 初始化或累加统计数据
+            if (!originalMinuteData[minuteKey]) {
+                originalMinuteData[minuteKey] = {
+                    time: minuteKey,
+                    formattedTime: formatTime(item.time),
+                    // 使用原始值
+                    cpu: parseInt(item.cpu) || 0,
+                    alloc: parseFloat(item.alloc) || 0,
+                    sys: parseFloat(item.sys) || 0,
+                    numGC: parseInt(item.numGC) || 0,
+                    qps: parseFloat(item.qps) || 0,
+                    drops: parseInt(item.drops) || 0,
+                    // 统计正常和限流请求数
+                    normalCount: item.shedding === '正常' ? 1 : 0,
+                    sheddingCount: item.shedding !== '正常' ? 1 : 0,
+                    totalCount: 1,
+                    // 服务信息
+                    serviceStats: JSON.parse(JSON.stringify(serviceStats))
+                };
+            } else {
+                // 对于同一分钟内的多个数据点，累加相关数值
+                const existing = originalMinuteData[minuteKey];
+                existing.cpu += parseInt(item.cpu) || 0;
+                existing.alloc += parseFloat(item.alloc) || 0;
+                existing.sys += parseFloat(item.sys) || 0;
+                existing.numGC += parseInt(item.numGC) || 0;
+                existing.qps += parseFloat(item.qps) || 0;
+                existing.drops += parseInt(item.drops) || 0;
+                existing.totalCount++;
+                
+                if (item.shedding === '正常') {
+                    existing.normalCount++;
+                } else {
+                    existing.sheddingCount++;
+                }
+                
+                // 更新服务统计信息的深拷贝
+                existing.serviceStats = JSON.parse(JSON.stringify(serviceStats));
+            }
+        });
+        
+        // 获取时间范围内的第一个和最后一个时间点
+        const allKeys = Object.keys(originalMinuteData);
+        const startTime = new Date(Math.min(...allKeys.map(k => new Date(k))));
+        const endTime = new Date(Math.max(...allKeys.map(k => new Date(k))));
+        
+        // 创建完整的分钟序列
+        const result = [];
+        let currentMinute = new Date(startTime);
+        let lastValidData = null;
+        
+        while (currentMinute <= endTime) {
+            const minuteKey = currentMinute.toISOString();
+            const formattedTime = formatTime(minuteKey);
+            
+            if (originalMinuteData[minuteKey]) {
+                // 如果当前分钟有数据，使用它
+                const data = originalMinuteData[minuteKey];
+                result.push(data);
+                lastValidData = data;
+            } else if (lastValidData) {
+                // 如果没有数据但有上一分钟的数据，使用上一分钟的数据
+                // 创建新对象以避免引用问题
+                const data = {
+                    time: minuteKey,
+                    formattedTime: formattedTime,
+                    cpu: lastValidData.cpu,
+                    alloc: lastValidData.alloc,
+                    sys: lastValidData.sys,
+                    numGC: lastValidData.numGC,
+                    qps: lastValidData.qps,
+                    drops: lastValidData.drops,
+                    normalCount: lastValidData.normalCount,
+                    sheddingCount: lastValidData.sheddingCount,
+                    totalCount: lastValidData.totalCount
+                };
+                result.push(data);
+            }
+            
+            // 移动到下一分钟
+            currentMinute.setMinutes(currentMinute.getMinutes() + 1);
+        }
+        
+        return result;
+    }
 
     // 渲染所有图表
     function renderAllCharts() {
@@ -882,13 +1051,16 @@
         const chart = echarts.init(chartDom);
         charts['memoryTrend'] = chart;
 
+        // 使用分钟聚合后的数据
+        const aggregatedData = aggregateDataByMinute();
+
         // 处理数据
-        const times = logData.map(item => formatTime(item.time));
-        const allocData = logData.map(item => {
+        const times = aggregatedData.map(item => item.formattedTime);
+        const allocData = aggregatedData.map(item => {
             const value = parseFloat(item.alloc);
             return isNaN(value) ? 0 : value;
         });
-        const sysData = logData.map(item => {
+        const sysData = aggregatedData.map(item => {
             const value = parseFloat(item.sys);
             return isNaN(value) ? 0 : value;
         });
@@ -956,14 +1128,23 @@
                     color: '#86909C',
                     fontSize: 11,
                     rotate: 0,
-                    interval: calculateLabelInterval(times.length),
+                    interval: 0, // 显示所有标签，让echarts自动处理间隔
                     padding: [5, 0]
                 },
+                // 显示刻度线
                 axisTick: {
-                    show: false
+                    show: true,
+                    lineStyle: {
+                        color: '#E5E6EB'
+                    }
                 },
-                splitLine: { 
-                    show: false 
+                // 显示垂直分割线，提高可读性
+                splitLine: {
+                    show: true,
+                    lineStyle: {
+                        color: '#F2F3F5',
+                        type: 'dashed'
+                    }
                 }
             },
             yAxis: {
@@ -1085,7 +1266,7 @@
                 {
                     type: 'inside',
                     xAxisIndex: 0,
-                    start: calculateInitialZoom(logData.length),
+                    start: calculateInitialZoom(aggregatedData.length),
                     end: 100,
                     zoomOnMouseWheel: true,
                     moveOnMouseMove: true,
@@ -1095,7 +1276,7 @@
                     type: 'slider',
                     xAxisIndex: 0,
                     bottom: 10,
-                    start: calculateInitialZoom(logData.length),
+                    start: calculateInitialZoom(aggregatedData.length),
                     end: 100,
                     height: 20,
                     backgroundColor: '#F2F3F5',
@@ -1134,13 +1315,16 @@
         const chart = echarts.init(chartDom);
         charts['qpsTrend'] = chart;
 
+        // 使用分钟聚合后的数据
+        const aggregatedData = aggregateDataByMinute();
+
         // 处理数据
-        const times = logData.map(item => formatTime(item.time));
-        const qpsData = logData.map(item => {
+        const times = aggregatedData.map(item => item.formattedTime);
+        const qpsData = aggregatedData.map(item => {
             const value = parseFloat(item.qps);
             return isNaN(value) ? 0 : value;
         });
-        const dropsData = logData.map(item => {
+        const dropsData = aggregatedData.map(item => {
             const value = parseInt(item.drops);
             return isNaN(value) ? 0 : value;
         });
@@ -1209,7 +1393,21 @@
                     rotate: 45,
                     interval: calculateLabelInterval(times.length)
                 },
-                splitLine: { show: false }
+                // 显示刻度线
+                axisTick: {
+                    show: true,
+                    lineStyle: {
+                        color: '#E5E6EB'
+                    }
+                },
+                // 显示垂直分割线，提高可读性
+                splitLine: {
+                    show: true,
+                    lineStyle: {
+                        color: '#F2F3F5',
+                        type: 'dashed'
+                    }
+                }
             },
             yAxis: [
                 {
@@ -1296,14 +1494,14 @@
                 {
                     type: 'inside',
                     xAxisIndex: 0,
-                    start: calculateInitialZoom(logData.length),
+                    start: calculateInitialZoom(aggregatedData.length),
                     end: 100
                 },
                 {
                     type: 'slider',
                     xAxisIndex: 0,
                     bottom: 5,
-                    start: calculateInitialZoom(logData.length),
+                    start: calculateInitialZoom(aggregatedData.length),
                     end: 100,
                     height: 20,
                     handleStyle: {
@@ -1325,11 +1523,30 @@
         const chart = echarts.init(chartDom);
         charts['serviceDistribution'] = chart;
 
-        // 准备数据
+        // 使用分钟聚合后的数据
+        const aggregatedData = aggregateDataByMinute();
+        
+        // 准备数据 - 使用聚合数据中的服务统计信息
         const serviceData = {};
-        logData.forEach(item => {
-            serviceData[item.service] = (serviceData[item.service] || 0) + 1;
-        });
+        
+        // 检查是否有聚合数据
+        if (aggregatedData.length > 0) {
+            // 获取最后一个时间点的服务统计数据（最完整的）
+            const lastDataPoint = aggregatedData[aggregatedData.length - 1];
+            if (lastDataPoint.serviceStats) {
+                // 从serviceStats中提取数据
+                Object.keys(lastDataPoint.serviceStats).forEach(service => {
+                    serviceData[service] = lastDataPoint.serviceStats[service].count;
+                });
+            }
+        }
+        
+        // 如果聚合数据为空，使用原始logData作为后备
+        if (Object.keys(serviceData).length === 0) {
+            logData.forEach(item => {
+                serviceData[item.service] = (serviceData[item.service] || 0) + 1;
+            });
+        }
 
         const data = Object.keys(serviceData).map(service => ({
             name: service,
@@ -1427,27 +1644,15 @@
         const chart = echarts.init(chartDom);
         charts['sheddingTrend'] = chart;
 
-        // 处理数据 - 按时间统计限流情况
-        // 1. 按时间分组统计正常和限流的请求数
-        const timeData = {};
-        logData.forEach(item => {
-            const timeKey = formatTime(item.time);
-            if (!timeData[timeKey]) {
-                timeData[timeKey] = { normal: 0, shedding: 0, total: 0 };
-            }
-            timeData[timeKey].total++;
-            if (item.shedding === '正常') {
-                timeData[timeKey].normal++;
-            } else {
-                timeData[timeKey].shedding++;
-            }
-        });
+        // 使用分钟聚合后的数据
+        const aggregatedData = aggregateDataByMinute();
 
-        // 2. 转换为图表所需的数据格式
-        const times = Object.keys(timeData).sort();
-        const normalData = times.map(time => timeData[time].normal);
-        const sheddingData = times.map(time => timeData[time].shedding);
-        const totalData = times.map(time => timeData[time].total);
+        // 处理数据 - 按时间统计限流情况
+        // 1. 从聚合数据中提取时间和限流相关信息
+        const times = aggregatedData.map(item => item.formattedTime);
+        const normalData = aggregatedData.map(item => item.normalCount);
+        const sheddingData = aggregatedData.map(item => item.sheddingCount);
+        const totalData = aggregatedData.map(item => item.totalCount);
         
         // 计算限流率
         const sheddingRateData = times.map((time, index) => {
@@ -1517,7 +1722,17 @@
                     rotate: 45,
                     interval: calculateLabelInterval(times.length)
                 },
-                splitLine: { show: false }
+                axisTick: {
+                    show: true,
+                    lineStyle: { color: '#E5E6EB' }
+                },
+                splitLine: {
+                    show: true,
+                    lineStyle: {
+                        color: '#F2F3F5',
+                        type: 'dashed'
+                    }
+                }
             },
             yAxis: [
                 {
@@ -1621,14 +1836,14 @@
                 {
                     type: 'inside',
                     xAxisIndex: 0,
-                    start: calculateInitialZoom(logData.length),
+                    start: calculateInitialZoom(aggregatedData.length),
                     end: 100
                 },
                 {
                     type: 'slider',
                     xAxisIndex: 0,
                     bottom: 5,
-                    start: calculateInitialZoom(logData.length),
+                    start: calculateInitialZoom(aggregatedData.length),
                     end: 100,
                     height: 20,
                     handleStyle: {
@@ -1649,17 +1864,20 @@
         const chart = echarts.init(chartDom);
         charts['cpuTrend'] = chart;
 
+        // 使用分钟聚合后的数据
+        const aggregatedData = aggregateDataByMinute();
+
         // 处理数据
-        const times = logData.map(item => formatTime(item.time));
-        const cpuData = logData.map(item => {
+        const times = aggregatedData.map(item => item.formattedTime);
+        const cpuData = aggregatedData.map(item => {
             const value = parseInt(item.cpu);
             return isNaN(value) ? 0 : value;
         });
-        const numGCData = logData.map(item => {
+        const numGCData = aggregatedData.map(item => {
             const value = parseInt(item.numGC);
             return isNaN(value) ? 0 : value;
         });
-        const memData = logData.map(item => {
+        const memData = aggregatedData.map(item => {
             const value = parseFloat(item.alloc);
             return isNaN(value) ? 0 : value;
         });
@@ -1848,14 +2066,14 @@
                 {
                     type: 'inside',
                     xAxisIndex: 0,
-                    start: calculateInitialZoom(logData.length),
+                    start: calculateInitialZoom(aggregatedData.length),
                     end: 100
                 },
                 {
                     type: 'slider',
                     xAxisIndex: 0,
                     bottom: 5,
-                    start: calculateInitialZoom(logData.length),
+                    start: calculateInitialZoom(aggregatedData.length),
                     end: 100,
                     height: 20,
                     handleStyle: {
@@ -1877,22 +2095,42 @@
         const chart = echarts.init(chartDom);
         charts['sheddingStats'] = chart;
 
-        // 统计限流状态数据
-        const normalCount = logData.filter(item => item.shedding === '正常').length;
-        const sheddingCount = logData.filter(item => item.shedding !== '正常').length;
+        // 使用分钟聚合后的数据
+        const aggregatedData = aggregateDataByMinute();
 
+        // 统计限流状态数据
+        let totalNormalCount = 0;
+        let totalSheddingCount = 0;
+        
         // 按服务统计限流状态
         const serviceSheddingData = {};
-        logData.forEach(item => {
-            if (!serviceSheddingData[item.service]) {
-                serviceSheddingData[item.service] = { normal: 0, shedding: 0 };
+        
+        // 检查是否有聚合数据
+        if (aggregatedData.length > 0) {
+            // 获取最后一个时间点的服务统计数据（最完整的）
+            const lastDataPoint = aggregatedData[aggregatedData.length - 1];
+            if (lastDataPoint.serviceStats) {
+                // 从serviceStats中提取数据
+                Object.keys(lastDataPoint.serviceStats).forEach(service => {
+                    const stats = lastDataPoint.serviceStats[service];
+                    serviceSheddingData[service] = {
+                        normal: stats.normal || 0,
+                        shedding: stats.shedding || 0
+                    };
+                    totalNormalCount += stats.normal || 0;
+                    totalSheddingCount += stats.shedding || 0;
+                });
             }
-            if (item.shedding === '正常') {
-                serviceSheddingData[item.service].normal++;
-            } else {
-                serviceSheddingData[item.service].shedding++;
-            }
-        });
+        }
+        
+        // 如果聚合数据的服务统计为空，回退到原始方法
+        if (Object.keys(serviceSheddingData).length === 0) {
+            aggregatedData.forEach(item => {
+                // 对于每个聚合数据点，计算总数
+                totalNormalCount += item.normalCount || 0;
+                totalSheddingCount += item.sheddingCount || 0;
+            });
+        }
 
         const serviceNames = Object.keys(serviceSheddingData);
         const normalData = serviceNames.map(service => serviceSheddingData[service].normal);
@@ -1965,7 +2203,17 @@
                     rotate: 45,
                     interval: calculateLabelInterval(serviceNames.length)
                 },
-                splitLine: { show: false }
+                axisTick: {
+                    show: true,
+                    lineStyle: { color: '#E5E6EB' }
+                },
+                splitLine: {
+                    show: true,
+                    lineStyle: {
+                        color: '#F2F3F5',
+                        type: 'dashed'
+                    }
+                }
             },
             yAxis: {
                 type: 'value',
@@ -2219,6 +2467,48 @@
         modalChartContainer.resizeHandler = handleModalResize;
     }
 
+    // 处理表头排序
+    function handleHeaderClick(e) {
+        const header = e.target.closest('[data-field]');
+        if (!header) return;
+        
+        const field = header.dataset.field;
+        
+        // 如果点击的是当前排序字段，切换排序顺序
+        if (field === sortField) {
+            sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+            // 否则，设置新的排序字段，默认倒序
+            sortField = field;
+            sortOrder = 'desc';
+        }
+        
+        // 更新排序图标
+        updateSortIcons();
+        
+        // 保存滚动位置
+        saveScrollPosition();
+        
+        // 重新渲染表格
+        renderTable();
+    }
+    
+    // 更新排序图标
+    function updateSortIcons() {
+        // 重置所有图标
+        document.querySelectorAll('th[data-field] i').forEach(icon => {
+            icon.className = 'fa fa-sort';
+            icon.parentElement.className = 'ml-1';
+        });
+        
+        // 设置当前排序字段的图标
+        const currentHeader = document.querySelector(`th[data-field="${sortField}"] i`);
+        if (currentHeader) {
+            currentHeader.className = sortOrder === 'asc' ? 'fa fa-sort-up' : 'fa fa-sort-down';
+            currentHeader.parentElement.className = 'ml-1 text-primary';
+        }
+    }
+    
     // 渲染表格
     function renderTable() {
         const filteredData = getFilteredData();
@@ -2292,22 +2582,72 @@
             // 更新分页按钮状态
             prevPage.disabled = currentPage === 1 || filteredData.length === 0;
             nextPage.disabled = endIndex >= filteredData.length || filteredData.length === 0;
+            
+            // 恢复滚动位置
+            restoreScrollPosition();
         }, 300);
     }
 
+    // 排序相关变量
+    let sortField = 'time'; // 默认按时间排序
+    let sortOrder = 'desc'; // 默认倒序
+    let scrollPosition = 0; // 保存滚动位置
+    
     // 获取过滤后的数据
     function getFilteredData() {
         const service = serviceFilter.value;
-        if (service === 'all') {
-            return logData;
-        } else {
-            return logData.filter(item => item.service === service);
+        let filtered = service === 'all' ? logData : logData.filter(item => item.service === service);
+        
+        // 排序数据
+        filtered.sort((a, b) => {
+            let valueA = a[sortField];
+            let valueB = b[sortField];
+            
+            // 处理不同类型的数据排序
+            if (sortField === 'time') {
+                // 时间排序
+                const timeA = new Date(valueA).getTime();
+                const timeB = new Date(valueB).getTime();
+                return sortOrder === 'asc' ? timeA - timeB : timeB - timeA;
+            } else if (['cpu', 'alloc', 'sys', 'numGC', 'qps', 'drops'].includes(sortField)) {
+                // 数值排序
+                const numA = parseFloat(valueA) || 0;
+                const numB = parseFloat(valueB) || 0;
+                return sortOrder === 'asc' ? numA - numB : numB - numA;
+            } else {
+                // 字符串排序
+                return sortOrder === 'asc' 
+                    ? valueA.localeCompare(valueB) 
+                    : valueB.localeCompare(valueA);
+            }
+        });
+        
+        return filtered;
+    }
+    
+    // 保存当前滚动位置
+    function saveScrollPosition() {
+        const container = document.getElementById('tableContainer');
+        if (container) {
+            scrollPosition = container.scrollTop;
+        }
+    }
+    
+    // 恢复滚动位置
+    function restoreScrollPosition() {
+        const container = document.getElementById('tableContainer');
+        if (container && scrollPosition > 0) {
+            // 使用requestAnimationFrame确保DOM已更新
+            requestAnimationFrame(() => {
+                container.scrollTop = scrollPosition;
+            });
         }
     }
 
     // 过滤表格数据
     function filterTableData() {
         currentPage = 1;
+        saveScrollPosition();
         renderTable();
     }
 
@@ -2315,6 +2655,7 @@
     function goToPrevPage() {
         if (currentPage > 1) {
             currentPage--;
+            saveScrollPosition();
             renderTable();
         }
     }
@@ -2326,6 +2667,7 @@
         const maxPage = Math.ceil(filteredData.length / pageSizeValue);
         if (currentPage < maxPage) {
             currentPage++;
+            saveScrollPosition();
             renderTable();
         }
     }
@@ -2333,6 +2675,7 @@
     // 更改每页显示数量
     function changePageSize() {
         currentPage = 1;
+        saveScrollPosition();
         renderTable();
     }
 
