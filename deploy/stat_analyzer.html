@@ -2220,8 +2220,6 @@
                             formattedValue = `${item.value.toLocaleString()}m`;
                         } else if (item.seriesName.includes('GC')) {
                             formattedValue = item.value.toLocaleString();
-                        } else if (item.seriesName.includes('内存')) {
-                            formattedValue = `${item.value.toLocaleString()}MB`;
                         } else if (item.seriesName.includes('QPS')) {
                             formattedValue = item.value.toLocaleString();
                         }
@@ -2236,7 +2234,7 @@
                 shadowOffsetY: 4
             },
             legend: {
-                data: ['CPU占用(m)', 'GC次数', '内存占用(MB)', 'QPS-Total'].concat(qpsLegend),
+                data: ['CPU占用(m)', 'GC次数', 'QPS-Total'].concat(qpsLegend),
                 top: 0,
                 left: 'center',
                 textStyle: { 
@@ -2288,15 +2286,6 @@
                     min: 0,
                     axisLine: { lineStyle: { color: '#52C41A' } },
                     axisLabel: { color: '#52C41A' },
-                    splitLine: { show: false }
-                },
-                {
-                    name: '内存占用(MB)',
-                    type: 'value',
-                    position: 'right',
-                    min: 0,
-                    axisLine: { lineStyle: { color: '#1677FF' } },
-                    axisLabel: { color: '#1677FF' },
                     splitLine: { show: false }
                 },
                 {
@@ -2362,51 +2351,9 @@
                     }
                 },
                 {
-                    name: '内存占用(MB)',
-                    type: 'line',
-                    yAxisIndex: 2,
-                    data: memData,
-                    symbol: 'circle',
-                    symbolSize: 6,
-                    symbolHoverSize: 8,
-                    smooth: true,
-                    lineStyle: { 
-                        width: 3,
-                        color: '#1677FF',
-                        shadowColor: 'rgba(22, 119, 255, 0.3)',
-                        shadowBlur: 10
-                    },
-                    itemStyle: { 
-                        color: '#1677FF',
-                        borderColor: '#fff',
-                        borderWidth: 2
-                    },
-                    emphasis: {
-                        focus: 'series',
-                        itemStyle: {
-                            shadowBlur: 10,
-                            shadowColor: 'rgba(22, 119, 255, 0.6)'
-                        }
-                    },
-                    areaStyle: {
-                        color: {
-                            type: 'linear',
-                            x: 0,
-                            y: 0,
-                            x2: 0,
-                            y2: 1,
-                            colorStops: [{
-                                offset: 0, color: 'rgba(22, 119, 255, 0.15)'
-                            }, {
-                                offset: 1, color: 'rgba(22, 119, 255, 0)'
-                            }]
-                        }
-                    }
-                },
-                {
                     name: 'QPS-Total',
                     type: 'line',
-                    yAxisIndex: 3,
+                    yAxisIndex: 2,
                     data: aggregatedData.map(item => {
                         const value = parseFloat(item.qps);
                         return isNaN(value) ? 0 : value;
@@ -2434,7 +2381,10 @@
                         }
                     }
                 }
-            ].concat(qpsSeries),
+            ].concat(qpsSeries.map(series => ({
+                ...series,
+                yAxisIndex: 2  // 调整所有QPS类型系列的Y轴索引
+            }))),
             dataZoom: [
                 {
                     type: 'inside',

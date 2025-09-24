@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Go-Zero Stats 日志分析工具</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3b82f6',
+            secondary: '#6366f1',
+            success: '#10b981',
+            warning: '#f59e0b',
+            danger: '#ef4444',
+            dark: '#1e293b',
+            light: '#f8fafc'
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+      .text-shadow {
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      }
+      .transition-all-300 {
+        transition: all 300ms ease-in-out;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800 min-h-screen">
+  <div class="container mx-auto px-4 py-8 max-w-7xl">
+    <!-- 顶部导航栏 -->
+    <header class="mb-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <div class="text-primary text-3xl">
+            <i class="fa fa-bar-chart"></i>
+          </div>
+          <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            Go-Zero Stats 日志分析工具
+          </h1>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button id="clearBtn" class="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-700 transition-all-300 flex items-center gap-2">
+            <i class="fa fa-trash"></i>
+            <span>清空数据</span>
+          </button>
+          <button id="exportBtn" class="px-4 py-2 rounded-md bg-secondary hover:bg-indigo-600 text-white transition-all-300 flex items-center gap-2">
+            <i class="fa fa-download"></i>
+            <span>导出结果</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 拖放区域 -->
+    <section id="dropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 mb-8 text-center hover:border-primary transition-all-300 cursor-pointer bg-white">
+      <div class="flex flex-col items-center justify-center">
+        <div class="text-5xl text-gray-400 mb-4">
+          <i class="fa fa-file-text-o"></i>
+        </div>
+        <h2 class="text-xl font-semibold mb-2">拖放日志文件到此处</h2>
+        <p class="text-gray-500 mb-4">或</p>
+        <label class="px-6 py-3 bg-primary hover:bg-blue-600 text-white rounded-md transition-all-300 cursor-pointer flex items-center gap-2">
+          <i class="fa fa-upload"></i>
+          <span>选择文件</span>
+          <input type="file" id="fileInput" class="hidden" accept=".log,.txt" multiple>
+        </label>
+        <p class="text-gray-400 text-sm mt-4">支持 .log 或 .txt 文件，可多选</p>
+      </div>
+    </section>
+
+    <!-- 统计概览 -->
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-gray-500 text-sm font-medium">总日志行数</h3>
+          <div class="text-primary text-xl">
+            <i class="fa fa-list-ol"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-bold" id="totalLinesCount">0</div>
+      </div>
+      <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-gray-500 text-sm font-medium">系统指标日志</h3>
+          <div class="text-blue-500 text-xl">
+            <i class="fa fa-server"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-bold" id="systemLogCount">0</div>
+      </div>
+      <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-gray-500 text-sm font-medium">业务指标日志</h3>
+          <div class="text-green-500 text-xl">
+            <i class="fa fa-line-chart"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-bold" id="businessLogCount">0</div>
+      </div>
+      <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-gray-500 text-sm font-medium">降载指标日志</h3>
+          <div class="text-yellow-500 text-xl">
+            <i class="fa fa-exclamation-triangle"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-bold" id="limiterLogCount">0</div>
+      </div>
+    </section>
+
+    <!-- 主内容区 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- 左侧：图表区域 -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- CPU和内存图表 -->
+        <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold">CPU & 内存使用率</h2>
+            <div class="flex gap-2">
+              <span class="inline-flex items-center gap-1 text-sm">
+                <span class="w-3 h-3 rounded-full bg-primary"></span>
+                <span>CPU</span>
+              </span>
+              <span class="inline-flex items-center gap-1 text-sm">
+                <span class="w-3 h-3 rounded-full bg-secondary"></span>
+                <span>内存</span>
+              </span>
+            </div>
+          </div>
+          <div class="w-full h-64">
+            <canvas id="cpuMemChart"></canvas>
+          </div>
+        </div>
+
+        <!-- QPS图表 -->
+        <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold">请求 QPS</h2>
+            <div class="flex gap-2">
+              <span class="inline-flex items-center gap-1 text-sm">
+                <span class="w-3 h-3 rounded-full bg-success"></span>
+                <span>总请求</span>
+              </span>
+              <span class="inline-flex items-center gap-1 text-sm">
+                <span class="w-3 h-3 rounded-full bg-danger"></span>
+                <span>错误请求</span>
+              </span>
+            </div>
+          </div>
+          <div class="w-full h-64">
+            <canvas id="qpsChart"></canvas>
+          </div>
+        </div>
+
+        <!-- 降载指标图表 -->
+        <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold">自适应降载指标</h2>
+            <div class="flex gap-2">
+              <span class="inline-flex items-center gap-1 text-sm">
+                <span class="w-3 h-3 rounded-full bg-warning"></span>
+                <span>阈值</span>
+              </span>
+              <span class="inline-flex items-center gap-1 text-sm">
+                <span class="w-3 h-3 rounded-full bg-purple-500"></span>
+                <span>当前值</span>
+              </span>
+            </div>
+          </div>
+          <div class="w-full h-64">
+            <canvas id="limiterChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧：日志列表 -->
+      <div class="lg:col-span-1 space-y-6">
+        <!-- 日志类型过滤 -->
+        <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+          <h2 class="text-lg font-semibold mb-4">日志类型过滤</h2>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="filterAll" checked class="form-checkbox rounded text-primary focus:ring-primary">
+              <span>全部日志</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="filterSystem" checked class="form-checkbox rounded text-blue-500 focus:ring-blue-500">
+              <span>系统内存CPU指标</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="filterLimiter" checked class="form-checkbox rounded text-yellow-500 focus:ring-yellow-500">
+              <span>自适应降载指标</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="filterBusiness" checked class="form-checkbox rounded text-green-500 focus:ring-green-500">
+              <span>业务QPS指标</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="filterDbCache" checked class="form-checkbox rounded text-purple-500 focus:ring-purple-500">
+              <span>数据库缓存指标</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 日志搜索 -->
+        <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+          <div class="relative">
+            <input type="text" id="logSearch" placeholder="搜索日志内容..." class="w-full px-4 py-2 pr-10 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+            <div class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+              <i class="fa fa-search"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- 日志列表 -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100">
+          <div class="flex items-center justify-between p-4 border-b border-gray-100">
+            <h2 class="text-lg font-semibold">日志详情</h2>
+            <div class="text-sm text-gray-500" id="logCount">0 条日志</div>
+          </div>
+          <div id="logList" class="max-h-[600px] overflow-y-auto scrollbar-hide p-2">
+            <div class="text-center text-gray-400 py-12">
+              <div class="text-4xl mb-2"><i class="fa fa-file-text-o"></i></div>
+              <p>暂无日志数据</p>
+              <p class="text-sm mt-1">请上传日志文件开始分析</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 加载动画 -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-lg p-6 max-w-md w-full text-center">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+        <h3 class="text-lg font-semibold mb-2">正在分析日志</h3>
+        <p class="text-gray-500 mb-4" id="loadingMessage">请稍候，正在处理数据...</p>
+        <div class="w-full bg-gray-200 rounded-full h-2.5">
+          <div id="loadingProgress" class="bg-primary h-2.5 rounded-full" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 全局数据存储
+    const logData = {
+      allLogs: [],
+      filteredLogs: [],
+      systemLogs: [],
+      limiterLogs: [],
+      businessLogs: [],
+      dbCacheLogs: [],
+      timeSeriesData: {
+        timestamps: [],
+        cpuUsage: [],
+        memoryUsage: [],
+        qps: [],
+        errorQps: [],
+        limiterThreshold: [],
+        limiterCurrent: []
+      }
+    };
+
+    // 图表实例
+    let cpuMemChart = null;
+    let qpsChart = null;
+    let limiterChart = null;
+
+    // DOM 元素
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const logList = document.getElementById('logList');
+    const logSearch = document.getElementById('logSearch');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingMessage = document.getElementById('loadingMessage');
+    const loadingProgress = document.getElementById('loadingProgress');
+    const totalLinesCount = document.getElementById('totalLinesCount');
+    const systemLogCount = document.getElementById('systemLogCount');
+    const businessLogCount = document.getElementById('businessLogCount');
+    const limiterLogCount = document.getElementById('limiterLogCount');
+    const logCount = document.getElementById('logCount');
+    const clearBtn = document.getElementById('clearBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const filterAll = document.getElementById('filterAll');
+    const filterSystem = document.getElementById('filterSystem');
+    const filterLimiter = document.getElementById('filterLimiter');
+    const filterBusiness = document.getElementById('filterBusiness');
+    const filterDbCache = document.getElementById('filterDbCache');
+
+    // 初始化函数
+    function init() {
+      // 绑定拖放事件
+      dropZone.addEventListener('dragover', handleDragOver);
+      dropZone.addEventListener('dragleave', handleDragLeave);
+      dropZone.addEventListener('drop', handleDrop);
+      dropZone.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', handleFileSelect);
+
+      // 绑定其他事件
+      clearBtn.addEventListener('click', clearAllData);
+      exportBtn.addEventListener('click', exportAnalysisResults);
+      logSearch.addEventListener('input', handleLogSearch);
+
+      // 绑定过滤事件
+      filterAll.addEventListener('change', handleFilterChange);
+      filterSystem.addEventListener('change', handleFilterChange);
+      filterLimiter.addEventListener('change', handleFilterChange);
+      filterBusiness.addEventListener('change', handleFilterChange);
+      filterDbCache.addEventListener('change', handleFilterChange);
+
+      // 初始化图表
+      initCharts();
+    }
+
+    // 拖放事件处理
+    function handleDragOver(e) {
+      e.preventDefault();
+      dropZone.classList.add('border-primary', 'bg-blue-50');
+    }
+
+    function handleDragLeave() {
+      dropZone.classList.remove('border-primary', 'bg-blue-50');
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      dropZone.classList.remove('border-primary', 'bg-blue-50');
+      
+      if (e.dataTransfer.files.length) {
+        processFiles(Array.from(e.dataTransfer.files));
+      }
+    }
+
+    function handleFileSelect(e) {
+      if (e.target.files.length) {
+        processFiles(Array.from(e.target.files));
+        fileInput.value = ''; // 重置文件输入
+      }
+    }
+
+    // 文件处理
+    function processFiles(files) {
+      showLoading();
+      
+      // 清空现有数据
+      clearAllData(false);
+      
+      let processedFiles = 0;
+      
+      files.forEach(file => {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+          try {
+            const content = e.target.result;
+            processLogContent(content, file.name);
+          } catch (error) {
+            console.error('处理文件时出错:', error);
+            showNotification('处理文件失败: ' + file.name, 'error');
+          } finally {
+            processedFiles++;
+            updateLoadingProgress(processedFiles / files.length);
+            
+            if (processedFiles === files.length) {
+              setTimeout(() => {
+                finalizeAnalysis();
+                hideLoading();
+              }, 500);
+            }
+          }
+        };
+        
+        reader.readAsText(file);
+      });
+    }
+
+    // 日志内容处理
+    function processLogContent(content, fileName) {
+      const lines = content.split('\n').filter(line => line.trim());
+      
+      lines.forEach((line, index) => {
+        try {
+          const logEntry = parseLogLine(line, fileName, index + 1);
+          if (logEntry) {
+            // 添加到总日志列表
+            logData.allLogs.push(logEntry);
+            
+            // 根据类型分类
+            switch (logEntry.type) {
+              case 'system':
+                logData.systemLogs.push(logEntry);
+                break;
+              case 'limiter':
+                logData.limiterLogs.push(logEntry);
+                break;
+              case 'business':
+                logData.businessLogs.push(logEntry);
+                break;
+              case 'dbCache':
+                logData.dbCacheLogs.push(logEntry);
+                break;
+            }
+            
+            // 更新时间序列数据
+            updateTimeSeriesData(logEntry);
+          }
+        } catch (error) {
+          console.error('解析日志行时出错:', line, error);
+          // 记录解析错误但继续处理其他行
+          logData.allLogs.push({
+            timestamp: new Date(),
+            raw: line,
+            type: 'error',
+            message: '解析失败',
+            fileName: fileName,
+            lineNumber: index + 1
+          });
+        }
+      });
+    }
+
+    // 解析单条日志行
+    function parseLogLine(line, fileName, lineNumber) {
+      // 增强版日志类型的正则表达式模式，更加灵活地匹配各种格式
+      const patterns = {
+        // 系统内存CPU指标日志 - 支持多种格式
+        system: [
+          /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s+.*?\[(.*?)\].*?cpu=([\d.]+)%.*?mem=([\d.]+)%/, // 标准格式
+          /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s+.*?\[(.*?)\].*?mem=([\d.]+)%.*?cpu=([\d.]+)%/,  // 内存在前的格式
+          /(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}\+08:00).*?CPU: (\d+)m.*?Alloc=(\d+\.\d+)Mi.*?Sys=(\d+\.\d+)Mi/ // Go-Zero特有格式
+        ], 
+        // 自适应降载指标日志
+        limiter: [
+          /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s+.*?\[(.*?)\].*?limiter.*?threshold=([\d.]+).*?current=([\d.]+)/,
+          /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s+.*?\[(.*?)\].*?threshold=([\d.]+).*?current=([\d.]+).*?limiter/,
+          /(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}\+08:00).*?shedding_stat \[1m\], cpu: (\d+), total: (\d+), pass: (\d+), drop: (\d+)/ // Go-Zero限流格式
+        ], 
+        // 业务QPS指标日志
+        business: [
+          /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s+.*?\[(.*?)\].*?qps=([\d.]+).*?error_qps=([\d.]+)/,
+          /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s+.*?\[(.*?)\].*?error_qps=([\d.]+).*?qps=([\d.]+)/,
+          /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s+.*?\[(.*?)\].*?request_count=([\d.]+).*?error_count=([\d.]+)/, // 支持请求数和错误数格式
+          /(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}\+08:00).*?\(([\w-]+)\) - qps: (\d+\.\d+)\/s, drops: (\d+)/, // Go-Zero QPS格式
+          /(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}\+08:00).*?\(([\w-]+)\) - qps: (\d+\.\d+)\/s, drops: (\d+), avg time: (\d+\.\d+)ms/ // Go-Zero QPS带响应时间格式
+        ], 
+        // 数据库缓存指标日志
+        dbCache: [
+          /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s+.*?\[(.*?)\].*?db.*?hit=([\d.]+)%.*?miss=([\d.]+)%/,
+          /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s+.*?\[(.*?)\].*?cache.*?hit=([\d.]+)%.*?miss=([\d.]+)%/,
+          /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s+.*?\[(.*?)\].*?hit_rate=([\d.]+).*?miss_rate=([\d.]+)/, // 支持小数点格式
+          /(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}\+08:00).*?dbcache\(([^)]+)\) - qpm: (\d+), hit_ratio: ([\d.]+)%, hit: (\d+), miss: (\d+)/ // Go-Zero缓存格式
+        ]
+      };
+
+      // 尝试匹配每种日志类型的所有模式
+      for (const [type, patternList] of Object.entries(patterns)) {
+        for (const pattern of patternList) {
+          const match = line.match(pattern);
+          if (match) {
+            try {
+              const timestamp = new Date(match[1]);
+              let level = 'INFO'; // 默认级别为INFO
+              
+              // 提取应用名
+              const appMatch = line.match(/app=([\w.]+)/);
+              const service = appMatch ? appMatch[1].toLowerCase() : 'unknown';
+              
+              // 提取级别（如果存在）
+              const levelMatch = line.match(/\[(.*?)\]/);
+              if (levelMatch) {
+                level = levelMatch[1];
+              }
+              
+              const details = extractDetails(line);
+              
+              const logEntry = {
+                timestamp: timestamp,
+                raw: line,
+                type: type,
+                level: level,
+                fileName: fileName,
+                lineNumber: lineNumber,
+                service: service,
+                details: details
+              };
+
+              // 添加特定类型的指标
+              switch (type) {
+                case 'system':
+                  // 处理Go-Zero特有系统日志格式
+                  if (line.includes('CPU:') && line.includes('Alloc=')) {
+                    logEntry.cpuUsage = parseFloat(match[2]) / 1000; // 从毫秒转换为秒
+                    logEntry.memoryUsage = parseFloat(match[3]);
+                    logEntry.systemMemory = parseFloat(match[4]);
+                    
+                    // 提取其他内存指标
+                    const totalAllocMatch = line.match(/TotalAlloc=(\d+\.\d+)Mi/);
+                    const numGCMatch = line.match(/NumGC=(\d+)/);
+                    if (totalAllocMatch) logEntry.totalAlloc = parseFloat(totalAllocMatch[1]);
+                    if (numGCMatch) logEntry.numGC = parseInt(numGCMatch[1]);
+                  } else {
+                    // 处理标准格式
+                    logEntry.cpuUsage = parseFloat(match[3]);
+                    logEntry.memoryUsage = parseFloat(match[4]);
+                  }
+                  break;
+                case 'limiter':
+                  // 处理Go-Zero特有限流日志格式
+                  if (line.includes('shedding_stat')) {
+                    logEntry.cpu = parseInt(match[2]);
+                    logEntry.totalRequests = parseInt(match[3]);
+                    logEntry.passRequests = parseInt(match[4]);
+                    logEntry.dropRequests = parseInt(match[5]);
+                    logEntry.sheddingStatus = logEntry.dropRequests > 0 ? `丢弃: ${logEntry.dropRequests}` : '正常';
+                  } else {
+                    // 处理标准格式
+                    logEntry.threshold = parseFloat(match[3]);
+                    logEntry.current = parseFloat(match[4]);
+                  }
+                  break;
+                case 'business':
+                  // 处理Go-Zero特有QPS日志格式
+                  if (line.includes('qps:') && line.includes('/s')) {
+                    logEntry.qpsType = match[2].toLowerCase();
+                    logEntry.qps = parseFloat(match[3]);
+                    logEntry.drops = parseInt(match[4]);
+                    
+                    // 提取响应时间指标
+                    const avgTimeMatch = line.match(/avg time: (\d+\.\d+)ms/);
+                    const medTimeMatch = line.match(/med: (\d+\.\d+)ms/);
+                    const p90TimeMatch = line.match(/90th: (\d+\.\d+)ms/);
+                    const p99TimeMatch = line.match(/99th: (\d+\.\d+)ms/);
+                    const p999TimeMatch = line.match(/99\.9th: (\d+\.\d+)ms/);
+                    
+                    if (avgTimeMatch) logEntry.avgTime = parseFloat(avgTimeMatch[1]);
+                    if (medTimeMatch) logEntry.medTime = parseFloat(medTimeMatch[1]);
+                    if (p90TimeMatch) logEntry.p90Time = parseFloat(p90TimeMatch[1]);
+                    if (p99TimeMatch) logEntry.p99Time = parseFloat(p99TimeMatch[1]);
+                    if (p999TimeMatch) logEntry.p999Time = parseFloat(p999TimeMatch[1]);
+                  } else {
+                    // 处理标准格式
+                    logEntry.qps = parseFloat(match[3]);
+                    logEntry.errorQps = parseFloat(match[4]);
+                    // 对于请求数和错误数格式，我们将其除以60以近似QPS
+                    if (line.includes('request_count') && !line.includes('qps')) {
+                      logEntry.qps = parseFloat(match[3]) / 60;
+                      logEntry.errorQps = parseFloat(match[4]) / 60;
+                    }
+                  }
+                  break;
+                case 'dbCache':
+                  // 处理Go-Zero特有缓存日志格式
+                  if (line.includes('dbcache')) {
+                    logEntry.cacheType = match[2];
+                    logEntry.cacheQpm = parseInt(match[3]);
+                    logEntry.cacheHitRatio = parseFloat(match[4]);
+                    logEntry.cacheHits = parseInt(match[5]);
+                    logEntry.cacheMisses = parseInt(match[6]);
+                  } else {
+                    // 处理标准格式
+                    logEntry.hitRate = parseFloat(match[3]);
+                    logEntry.missRate = parseFloat(match[4]);
+                  }
+                  break;
+              }
+
+              return logEntry;
+            } catch (error) {
+              console.warn('解析日志时出错但继续处理:', error);
+              continue;
+            }
+          }
+        }
+      }
+
+      // 提取应用名
+      const appMatch = line.match(/app=([\w.]+)/);
+      const service = appMatch ? appMatch[1].toLowerCase() : 'unknown';
+      
+      // 如果没有匹配特定类型，尝试解析为通用日志
+      const timestampMatch1 = line.match(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})/);
+      const timestampMatch2 = line.match(/(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}\+08:00)/);
+      const levelMatch = line.match(/\[(.*?)\]/);
+      
+      let timestamp;
+      if (timestampMatch1) {
+        timestamp = new Date(timestampMatch1[1]);
+      } else if (timestampMatch2) {
+        timestamp = new Date(timestampMatch2[1]);
+      }
+      
+      if (timestamp) {
+        return {
+          timestamp: timestamp,
+          raw: line,
+          type: 'general',
+          level: levelMatch ? levelMatch[1] : 'INFO',
+          service: service,
+          fileName: fileName,
+          lineNumber: lineNumber,
+          details: extractDetails(line)
+        };
+      }
+
+      // 无法识别的日志格式，标记为未知
+      return {
+        timestamp: new Date(),
+        raw: line,
+        type: 'unknown',
+        level: 'INFO',
+        service: service,
+        fileName: fileName,
+        lineNumber: lineNumber,
+        details: line.substring(0, 100) + (line.length > 100 ? '...' : '')
+      };
+    }
+
+    // 从日志行中提取详细信息
+    function extractDetails(line) {
+      // 尝试提取所有key=value格式的信息
+      const keyValuePairs = [];
+      const matches = line.matchAll(/([\w_]+)=([^\s,]+)/g);
+      
+      for (const match of matches) {
+        keyValuePairs.push(`${match[1]}=${match[2]}`);
+      }
+      
+      if (keyValuePairs.length > 0) {
+        return keyValuePairs.join(', ');
+      }
+      
+      // 如果没有key=value格式，返回行的后半部分
+      const timestampEnd = line.indexOf(']') + 1;
+      if (timestampEnd > 0 && timestampEnd < line.length) {
+        return line.substring(timestampEnd).trim().substring(0, 200) + (line.length - timestampEnd > 200 ? '...' : '');
+      }
+      
+      return line.substring(0, 200) + (line.length > 200 ? '...' : '');
+
+      // 如果没有匹配到已知类型，尝试作为通用日志处理
+      const genericMatch = /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s+.*?\[(.*?)\]/.exec(line);
+      if (genericMatch) {
+        return {
+          timestamp: new Date(genericMatch[1]),
+          raw: line,
+          type: 'general',
+          level: genericMatch[2],
+          fileName: fileName,
+          lineNumber: lineNumber,
+          details: line.substring(genericMatch[0].length).trim()
+        };
+      }
+
+      // 如果完全匹配不到时间戳，返回带有当前时间的日志
+      return {
+        timestamp: new Date(),
+        raw: line,
+        type: 'unknown',
+        level: 'INFO',
+        fileName: fileName,
+        lineNumber: lineNumber,
+        details: line
+      };
+    }
+
+    // 更新时间序列数据
+    function updateTimeSeriesData(logEntry) {
+      const timestamp = logEntry.timestamp.toLocaleTimeString();
+      
+      switch (logEntry.type) {
+        case 'system':
+          if (logEntry.cpuUsage !== undefined) {
+            logData.timeSeriesData.timestamps.push(timestamp);
+            logData.timeSeriesData.cpuUsage.push(logEntry.cpuUsage);
+            logData.timeSeriesData.memoryUsage.push(logEntry.memoryUsage || null);
+            
+            // 保持数据点数在合理范围内
+            limitTimeSeriesData();
+          }
+          break;
+        case 'business':
+          if (logEntry.qps !== undefined) {
+            // 查找或添加时间戳
+            const index = logData.timeSeriesData.timestamps.indexOf(timestamp);
+            if (index === -1) {
+              logData.timeSeriesData.timestamps.push(timestamp);
+              logData.timeSeriesData.qps.push(logEntry.qps);
+              logData.timeSeriesData.errorQps.push(logEntry.errorQps || 0);
+              limitTimeSeriesData();
+            } else {
+              logData.timeSeriesData.qps[index] = logEntry.qps;
+              logData.timeSeriesData.errorQps[index] = logEntry.errorQps || 0;
+            }
+          }
+          break;
+        case 'limiter':
+          if (logEntry.threshold !== undefined) {
+            // 查找或添加时间戳
+            const index = logData.timeSeriesData.timestamps.indexOf(timestamp);
+            if (index === -1) {
+              logData.timeSeriesData.timestamps.push(timestamp);
+              logData.timeSeriesData.limiterThreshold.push(logEntry.threshold);
+              logData.timeSeriesData.limiterCurrent.push(logEntry.current || 0);
+              limitTimeSeriesData();
+            } else {
+              logData.timeSeriesData.limiterThreshold[index] = logEntry.threshold;
+              logData.timeSeriesData.limiterCurrent[index] = logEntry.current || 0;
+            }
+          }
+          break;
+      }
+    }
+
+    // 限制时间序列数据点数
+    function limitTimeSeriesData(maxPoints = 100) {
+      if (logData.timeSeriesData.timestamps.length > maxPoints) {
+        logData.timeSeriesData.timestamps = logData.timeSeriesData.timestamps.slice(-maxPoints);
+        logData.timeSeriesData.cpuUsage = logData.timeSeriesData.cpuUsage.slice(-maxPoints);
+        logData.timeSeriesData.memoryUsage = logData.timeSeriesData.memoryUsage.slice(-maxPoints);
+        logData.timeSeriesData.qps = logData.timeSeriesData.qps.slice(-maxPoints);
+        logData.timeSeriesData.errorQps = logData.timeSeriesData.errorQps.slice(-maxPoints);
+        logData.timeSeriesData.limiterThreshold = logData.timeSeriesData.limiterThreshold.slice(-maxPoints);
+        logData.timeSeriesData.limiterCurrent = logData.timeSeriesData.limiterCurrent.slice(-maxPoints);
+      }
+    }
+
+    // 初始化图表
+    function initCharts() {
+      // CPU和内存图表
+      const cpuMemCtx = document.getElementById('cpuMemChart').getContext('2d');
+      cpuMemChart = new Chart(cpuMemCtx, {
+        type: 'line',
+        data: {
+          labels: logData.timeSeriesData.timestamps,
+          datasets: [
+            {
+              label: 'CPU使用率(%)',
+              data: logData.timeSeriesData.cpuUsage,
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderWidth: 2,
+              tension: 0.3,
+              fill: true
+            },
+            {
+              label: '内存使用率(%)',
+              data: logData.timeSeriesData.memoryUsage,
+              borderColor: '#6366f1',
+              backgroundColor: 'rgba(99, 102, 241, 0.1)',
+              borderWidth: 2,
+              tension: 0.3,
+              fill: true
+            }
+          ]
+        },
+        options: getChartOptions('系统资源使用情况')
+      });
+
+      // QPS图表
+      const qpsCtx = document.getElementById('qpsChart').getContext('2d');
+      qpsChart = new Chart(qpsCtx, {
+        type: 'line',
+        data: {
+          labels: logData.timeSeriesData.timestamps,
+          datasets: [
+            {
+              label: '总请求QPS',
+              data: logData.timeSeriesData.qps,
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              borderWidth: 2,
+              tension: 0.3,
+              fill: true
+            },
+            {
+              label: '错误请求QPS',
+              data: logData.timeSeriesData.errorQps,
+              borderColor: '#ef4444',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              borderWidth: 2,
+              tension: 0.3,
+              fill: true
+            }
+          ]
+        },
+        options: getChartOptions('请求处理性能')
+      });
+
+      // 降载指标图表
+      const limiterCtx = document.getElementById('limiterChart').getContext('2d');
+      limiterChart = new Chart(limiterCtx, {
+        type: 'line',
+        data: {
+          labels: logData.timeSeriesData.timestamps,
+          datasets: [
+            {
+              label: '降载阈值',
+              data: logData.timeSeriesData.limiterThreshold,
+              borderColor: '#f59e0b',
+              backgroundColor: 'rgba(245, 158, 11, 0.1)',
+              borderWidth: 2,
+              tension: 0.3,
+              fill: false,
+              borderDash: [5, 5]
+            },
+            {
+              label: '当前值',
+              data: logData.timeSeriesData.limiterCurrent,
+              borderColor: '#8b5cf6',
+              backgroundColor: 'rgba(139, 92, 246, 0.1)',
+              borderWidth: 2,
+              tension: 0.3,
+              fill: true
+            }
+          ]
+        },
+        options: getChartOptions('自适应降载监控')
+      });
+    }
+
+    // 获取通用图表配置
+    function getChartOptions(title) {
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false
+        },
+        plugins: {
+          title: {
+            display: false
+          },
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: 'rgba(17, 24, 39, 0.9)',
+            padding: 12,
+            cornerRadius: 8,
+            displayColors: true,
+            titleFont: {
+              size: 14,
+              weight: 'bold'
+            },
+            bodyFont: {
+              size: 13
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              display: false
+            },
+            ticks: {
+              font: {
+                size: 11
+              },
+              maxRotation: 45,
+              minRotation: 45
+            }
+          },
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(229, 231, 235, 0.5)'
+            },
+            ticks: {
+              font: {
+                size: 11
+              }
+            }
+          }
+        },
+        animation: {
+          duration: 500
+        }
+      };
+    }
+
+    // 更新图表数据
+    function updateCharts() {
+      // 更新CPU和内存图表
+      cpuMemChart.data.labels = logData.timeSeriesData.timestamps;
+      cpuMemChart.data.datasets[0].data = logData.timeSeriesData.cpuUsage;
+      cpuMemChart.data.datasets[1].data = logData.timeSeriesData.memoryUsage;
+      cpuMemChart.update();
+
+      // 更新QPS图表
+      qpsChart.data.labels = logData.timeSeriesData.timestamps;
+      qpsChart.data.datasets[0].data = logData.timeSeriesData.qps;
+      qpsChart.data.datasets[1].data = logData.timeSeriesData.errorQps;
+      qpsChart.update();
+
+      // 更新降载指标图表
+      limiterChart.data.labels = logData.timeSeriesData.timestamps;
+      limiterChart.data.datasets[0].data = logData.timeSeriesData.limiterThreshold;
+      limiterChart.data.datasets[1].data = logData.timeSeriesData.limiterCurrent;
+      limiterChart.update();
+    }
+
+    // 渲染日志列表
+    function renderLogList() {
+      if (logData.filteredLogs.length === 0) {
+        logList.innerHTML = `
+          <div class="text-center text-gray-400 py-12">
+            <div class="text-4xl mb-2"><i class="fa fa-file-text-o"></i></div>
+            <p>暂无符合条件的日志</p>
+          </div>
+        `;
+        return;
+      }
+
+      // 按时间倒序排序
+      const sortedLogs = [...logData.filteredLogs].sort((a, b) => b.timestamp - a.timestamp);
+      
+      logList.innerHTML = sortedLogs.map(log => createLogEntryHTML(log)).join('');
+    }
+
+    // 创建日志条目HTML
+    function createLogEntryHTML(log) {
+      // 根据日志类型获取颜色和图标
+      const logTypeInfo = getLogTypeInfo(log.type);
+      const typeColor = logTypeInfo.color || 'bg-gray-400';
+      const typeIcon = logTypeInfo.icon || 'fa-question-circle';
+      const typeLabel = logTypeInfo.label || '未知类型';
+      
+      // 格式化时间
+      const formattedTime = log.timestamp.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      
+      // 构建详情HTML
+      let detailsHTML = '';
+      
+      // 系统指标 - 支持标准格式和Go-Zero特有格式
+      if (log.type === 'system') {
+        if (log.cpuUsage !== undefined) {
+          detailsHTML = `
+            <div class="mt-2 text-sm text-gray-600 space-y-1">
+              <div class="flex justify-between">
+                <span>CPU使用率:</span>
+                <span class="font-medium ${log.cpuUsage > 80 ? 'text-red-500' : log.cpuUsage > 60 ? 'text-yellow-500' : 'text-green-500'}">${log.cpuUsage}%</span>
+              </div>
+              <div class="flex justify-between">
+                <span>内存使用率:</span>
+                <span class="font-medium ${log.memoryUsage > 80 ? 'text-red-500' : log.memoryUsage > 60 ? 'text-yellow-500' : 'text-green-500'}">${log.memoryUsage}%</span>
+              </div>`;
+          
+          // Go-Zero特有系统指标
+          if (log.totalAlloc !== undefined) {
+            detailsHTML += `
+              <div class="flex justify-between">
+                <span>总内存分配:</span>
+                <span class="font-medium">${log.totalAlloc}Mi</span>
+              </div>
+              <div class="flex justify-between">
+                <span>系统内存:</span>
+                <span class="font-medium">${log.systemMemory}Mi</span>
+              </div>`;
+          }
+          
+          if (log.numGC !== undefined) {
+            detailsHTML += `
+              <div class="flex justify-between">
+                <span>GC次数:</span>
+                <span class="font-medium">${log.numGC}</span>
+              </div>`;
+          }
+          
+          detailsHTML += `
+            </div>`;
+        }
+      }
+      
+      // 业务指标 - 支持标准格式和Go-Zero特有格式
+      else if (log.type === 'business') {
+        if (log.qps !== undefined) {
+          detailsHTML = `
+            <div class="mt-2 text-sm text-gray-600 space-y-1">`;
+          
+          // Go-Zero特有QPS格式
+          if (log.qpsType !== undefined) {
+            detailsHTML += `
+              <div class="flex justify-between">
+                <span>QPS类型:</span>
+                <span class="font-medium">${log.qpsType}</span>
+              </div>`;
+          }
+          
+          detailsHTML += `
+              <div class="flex justify-between">
+                <span>QPS:</span>
+                <span class="font-medium">${log.qps}</span>
+              </div>`;
+          
+          if (log.drops !== undefined) {
+            detailsHTML += `
+              <div class="flex justify-between">
+                <span>丢弃数:</span>
+                <span class="font-medium ${log.drops > 0 ? 'text-red-500' : 'text-green-500'}">${log.drops}</span>
+              </div>`;
+          }
+          
+          // 显示响应时间指标（如果有）
+          if (log.avgTime !== undefined) {
+            detailsHTML += `
+              <div class="flex justify-between">
+                <span>平均响应时间:</span>
+                <span class="font-medium">${log.avgTime}ms</span>
+              </div>`;
+          }
+          
+          if (log.p90Time !== undefined) {
+            detailsHTML += `
+              <div class="flex justify-between">
+                <span>90%响应时间:</span>
+                <span class="font-medium">${log.p90Time}ms</span>
+              </div>`;
+          }
+          
+          if (log.p99Time !== undefined) {
+            detailsHTML += `
+              <div class="flex justify-between">
+                <span>99%响应时间:</span>
+                <span class="font-medium">${log.p99Time}ms</span>
+              </div>`;
+          }
+          
+          if (log.p999Time !== undefined) {
+            detailsHTML += `
+              <div class="flex justify-between">
+                <span>99.9%响应时间:</span>
+                <span class="font-medium">${log.p999Time}ms</span>
+              </div>`;
+          }
+          
+          // 标准格式的错误QPS
+          if (log.errorQps !== undefined && log.drops === undefined) {
+            detailsHTML += `
+              <div class="flex justify-between">
+                <span>错误QPS:</span>
+                <span class="font-medium ${log.errorQps > 0 ? 'text-red-500' : 'text-green-500'}">${log.errorQps}</span>
+              </div>`;
+          }
+          
+          detailsHTML += `
+            </div>`;
+        }
+      }
+      
+      // 降载指标 - 支持标准格式和Go-Zero特有格式
+      else if (log.type === 'limiter') {
+        if (log.sheddingStatus !== undefined) {
+          // Go-Zero特有限流格式
+          detailsHTML = `
+            <div class="mt-2 text-sm text-gray-600 space-y-1">
+              <div class="flex justify-between">
+                <span>CPU负载:</span>
+                <span class="font-medium ${log.cpu > 80 ? 'text-red-500' : log.cpu > 60 ? 'text-yellow-500' : 'text-green-500'}">${log.cpu}%</span>
+              </div>
+              <div class="flex justify-between">
+                <span>总请求数:</span>
+                <span class="font-medium">${log.totalRequests}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>通过请求:</span>
+                <span class="font-medium">${log.passRequests}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>丢弃请求:</span>
+                <span class="font-medium ${log.dropRequests > 0 ? 'text-red-500' : 'text-green-500'}">${log.dropRequests}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>降载状态:</span>
+                <span class="font-medium ${log.dropRequests > 0 ? 'text-red-500' : 'text-green-500'}">${log.sheddingStatus}</span>
+              </div>
+            </div>`;
+        } else if (log.threshold !== undefined) {
+          // 标准降载格式
+          detailsHTML = `
+            <div class="mt-2 text-sm text-gray-600 space-y-1">
+              <div class="flex justify-between">
+                <span>降载阈值:</span>
+                <span class="font-medium">${log.threshold}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>当前值:</span>
+                <span class="font-medium ${log.current > log.threshold ? 'text-red-500' : 'text-green-500'}">${log.current}</span>
+              </div>
+            </div>`;
+        }
+      }
+      
+      // 数据库缓存指标 - 支持标准格式和Go-Zero特有格式
+      else if (log.type === 'dbCache') {
+        if (log.cacheType !== undefined) {
+          // Go-Zero特有缓存格式
+          detailsHTML = `
+            <div class="mt-2 text-sm text-gray-600 space-y-1">
+              <div class="flex justify-between">
+                <span>缓存类型:</span>
+                <span class="font-medium">${log.cacheType}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>每分钟查询:</span>
+                <span class="font-medium">${log.cacheQpm}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>缓存命中率:</span>
+                <span class="font-medium ${log.cacheHitRatio < 90 ? 'text-yellow-500' : 'text-green-500'}">${log.cacheHitRatio}%</span>
+              </div>
+              <div class="flex justify-between">
+                <span>命中次数:</span>
+                <span class="font-medium">${log.cacheHits}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>未命中次数:</span>
+                <span class="font-medium">${log.cacheMisses}</span>
+              </div>
+            </div>`;
+        } else if (log.hitRate !== undefined) {
+          // 标准缓存格式
+          detailsHTML = `
+            <div class="mt-2 text-sm text-gray-600 space-y-1">
+              <div class="flex justify-between">
+                <span>缓存命中率:</span>
+                <span class="font-medium ${log.hitRate < 90 ? 'text-yellow-500' : 'text-green-500'}">${log.hitRate}%</span>
+              </div>
+              <div class="flex justify-between">
+                <span>缓存未命中率:</span>
+                <span class="font-medium ${log.missRate > 10 ? 'text-yellow-500' : 'text-gray-500'}">${log.missRate}%</span>
+              </div>
+            </div>`;
+        }
+      }
+      
+      // 所有日志类型都显示服务名
+      if (log.service && log.service !== 'unknown') {
+        // 在详情信息顶部添加服务名
+        if (detailsHTML) {
+          // 如果已经有详情，在第一个</div>前插入服务名信息
+          detailsHTML = detailsHTML.replace('<div class="mt-2 text-sm text-gray-600 space-y-1">', 
+            '<div class="mt-2 text-sm text-gray-600 space-y-1">\n              <div class="flex justify-between">\n                <span>服务名:</span>\n                <span class="font-medium">' + log.service + '</span>\n              </div>');
+        } else {
+          // 如果没有详情，创建包含服务名的详情
+          detailsHTML = `
+            <div class="mt-2 text-sm text-gray-600 space-y-1">
+              <div class="flex justify-between">
+                <span>服务名:</span>
+                <span class="font-medium">${log.service}</span>
+              </div>
+            </div>`;
+        }
+      }
+      
+      // 应用详情信息（如果有）
+      if (log.details && log.details.trim() && !detailsHTML) {
+        detailsHTML = `
+          <div class="mt-2 text-sm text-gray-600">
+            <p>${log.details}</p>
+          </div>
+        `;
+      }
+      
+      return `
+        <div class="log-entry mb-2 p-3 rounded-md border border-gray-100 hover:border-gray-200 transition-all-300 bg-white">
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center gap-2 flex-1">
+              <span class="inline-flex items-center justify-center w-8 h-8 rounded-full ${typeColor} text-white">
+                <i class="fa ${typeIcon}"></i>
+              </span>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="font-medium text-sm truncate">${typeLabel}</span>
+                  <span class="inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600">${log.level}</span>
+                </div>
+                <div class="text-xs text-gray-500 mt-0.5">${formattedTime} · ${log.fileName}:${log.lineNumber}</div>
+                ${detailsHTML}
+              </div>
+            </div>
+            <button class="text-gray-400 hover:text-primary transition-colors text-sm view-raw-btn" title="查看原始日志">
+              <i class="fa fa-code"></i>
+            </button>
+          </div>
+          <div class="raw-log hidden mt-2 p-2 bg-gray-50 rounded-md text-xs text-gray-600 font-mono overflow-x-auto">${escapeHtml(log.raw)}</div>
+        </div>
+      `;
+    }
+
+    // 获取日志类型信息
+    function getLogTypeInfo(type) {
+      const typeMap = {
+        system: {
+          color: 'bg-blue-500',
+          icon: 'fa-server',
+          label: '系统指标'
+        },
+        limiter: {
+          color: 'bg-yellow-500',
+          icon: 'fa-exclamation-triangle',
+          label: '降载指标'
+        },
+        business: {
+          color: 'bg-green-500',
+          icon: 'fa-line-chart',
+          label: '业务指标'
+        },
+        dbCache: {
+          color: 'bg-purple-500',
+          icon: 'fa-database',
+          label: '数据库缓存'
+        },
+        general: {
+          color: 'bg-gray-500',
+          icon: 'fa-info-circle',
+          label: '通用日志'
+        },
+        error: {
+          color: 'bg-red-500',
+          icon: 'fa-exclamation-circle',
+          label: '解析错误'
+        },
+        unknown: {
+          color: 'bg-gray-400',
+          icon: 'fa-question-circle',
+          label: '未知类型'
+        }
+      };
+      
+      return typeMap[type] || typeMap.unknown;
+    }
+
+    // HTML转义
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // 处理过滤变更
+    function handleFilterChange() {
+      // 如果全选被点击，同步其他复选框状态
+      if (event.target === filterAll) {
+        const isChecked = filterAll.checked;
+        filterSystem.checked = isChecked;
+        filterLimiter.checked = isChecked;
+        filterBusiness.checked = isChecked;
+        filterDbCache.checked = isChecked;
+      } else {
+        // 如果其他复选框被点击，检查是否需要更新全选状态
+        const allChecked = filterSystem.checked && filterLimiter.checked && filterBusiness.checked && filterDbCache.checked;
+        filterAll.checked = allChecked;
+      }
+      
+      // 应用过滤
+      applyFilters();
+    }
+
+    // 应用过滤器
+    function applyFilters() {
+      const searchTerm = logSearch.value.toLowerCase();
+      
+      logData.filteredLogs = logData.allLogs.filter(log => {
+        // 类型过滤
+        let typeMatch = filterAll.checked;
+        if (!typeMatch) {
+          typeMatch = 
+            (filterSystem.checked && ['system'].includes(log.type)) ||
+            (filterLimiter.checked && ['limiter'].includes(log.type)) ||
+            (filterBusiness.checked && ['business'].includes(log.type)) ||
+            (filterDbCache.checked && ['dbCache'].includes(log.type));
+        }
+        
+        // 搜索过滤
+        const searchMatch = searchTerm === '' || 
+          log.raw.toLowerCase().includes(searchTerm) ||
+          (log.details && log.details.toLowerCase().includes(searchTerm)) ||
+          log.fileName.toLowerCase().includes(searchTerm);
+        
+        return typeMatch && searchMatch;
+      });
+      
+      // 重新渲染日志列表
+      renderLogList();
+      
+      // 更新日志计数
+      logCount.textContent = `${logData.filteredLogs.length} 条日志`;
+    }
+
+    // 处理日志搜索
+    function handleLogSearch() {
+      applyFilters();
+    }
+
+    // 清空所有数据
+    function clearAllData(showNotification = true) {
+      // 重置数据存储
+      logData.allLogs = [];
+      logData.filteredLogs = [];
+      logData.systemLogs = [];
+      logData.limiterLogs = [];
+      logData.businessLogs = [];
+      logData.dbCacheLogs = [];
+      
+      // 重置时间序列数据
+      logData.timeSeriesData = {
+        timestamps: [],
+        cpuUsage: [],
+        memoryUsage: [],
+        qps: [],
+        errorQps: [],
+        limiterThreshold: [],
+        limiterCurrent: []
+      };
+      
+      // 重置UI
+      renderLogList();
+      updateCharts();
+      updateCounters();
+      logSearch.value = '';
+      
+      // 重置过滤器
+      filterAll.checked = true;
+      filterSystem.checked = true;
+      filterLimiter.checked = true;
+      filterBusiness.checked = true;
+      filterDbCache.checked = true;
+      
+      if (showNotification) {
+        showNotification('所有数据已清空', 'success');
+      }
+    }
+
+    // 导出分析结果
+    function exportAnalysisResults() {
+      if (logData.allLogs.length === 0) {
+        showNotification('没有数据可导出', 'warning');
+        return;
+      }
+      
+      const exportData = {
+        analysisTime: new Date().toISOString(),
+        totalLogs: logData.allLogs.length,
+        systemLogs: logData.systemLogs.length,
+        limiterLogs: logData.limiterLogs.length,
+        businessLogs: logData.businessLogs.length,
+        dbCacheLogs: logData.dbCacheLogs.length,
+        timeSeriesData: logData.timeSeriesData
+      };
+      
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `gozero-stats-analysis-${new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-')}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      showNotification('分析结果已导出', 'success');
+    }
+
+    // 分析完成后的最终处理
+    function finalizeAnalysis() {
+      // 应用当前过滤器
+      applyFilters();
+      
+      // 更新图表
+      updateCharts();
+      
+      // 更新计数器
+      updateCounters();
+      
+      // 添加事件监听器到日志条目
+      document.querySelectorAll('.view-raw-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const logEntry = this.closest('.log-entry');
+          const rawLog = logEntry.querySelector('.raw-log');
+          rawLog.classList.toggle('hidden');
+        });
+      });
+      
+      showNotification(`成功处理 ${logData.allLogs.length} 条日志`, 'success');
+    }
+
+    // 更新计数器
+    function updateCounters() {
+      totalLinesCount.textContent = logData.allLogs.length;
+      systemLogCount.textContent = logData.systemLogs.length;
+      businessLogCount.textContent = logData.businessLogs.length;
+      limiterLogCount.textContent = logData.limiterLogs.length;
+      logCount.textContent = `${logData.filteredLogs.length} 条日志`;
+    }
+
+    // 显示加载动画
+    function showLoading() {
+      loadingOverlay.classList.remove('hidden');
+      loadingProgress.style.width = '0%';
+    }
+
+    // 隐藏加载动画
+    function hideLoading() {
+      loadingOverlay.classList.add('hidden');
+    }
+
+    // 更新加载进度
+    function updateLoadingProgress(progress) {
+      const percentage = Math.min(100, Math.max(0, progress * 100));
+      loadingProgress.style.width = `${percentage}%`;
+      
+      if (percentage < 100) {
+        loadingMessage.textContent = `正在处理数据... ${Math.round(percentage)}%`;
+      } else {
+        loadingMessage.textContent = '正在生成图表...';
+      }
+    }
+
+    // 显示通知
+    function showNotification(message, type = 'info') {
+      // 创建通知元素
+      const notification = document.createElement('div');
+      
+      // 设置样式和内容
+      let bgColor = 'bg-blue-500';
+      let icon = 'fa-info-circle';
+      
+      switch (type) {
+        case 'success':
+          bgColor = 'bg-green-500';
+          icon = 'fa-check-circle';
+          break;
+        case 'error':
+          bgColor = 'bg-red-500';
+          icon = 'fa-exclamation-circle';
+          break;
+        case 'warning':
+          bgColor = 'bg-yellow-500';
+          icon = 'fa-exclamation-triangle';
+          break;
+      }
+      
+      notification.className = `fixed top-4 right-4 ${bgColor} text-white px-4 py-3 rounded-md shadow-lg transform transition-all duration-300 ease-in-out translate-x-full z-50`;
+      notification.innerHTML = `
+        <div class="flex items-center gap-3">
+          <i class="fa ${icon} text-xl"></i>
+          <span>${message}</span>
+        </div>
+      `;
+      
+      // 添加到文档
+      document.body.appendChild(notification);
+      
+      // 显示通知
+      setTimeout(() => {
+        notification.classList.remove('translate-x-full');
+      }, 10);
+      
+      // 3秒后隐藏通知
+      setTimeout(() => {
+        notification.classList.add('translate-x-full');
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 300);
+      }, 3000);
+    }
+
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
