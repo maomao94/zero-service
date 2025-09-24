@@ -277,10 +277,10 @@
 
         <!-- 关键指标图表 -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <!-- QPS和丢弃数趋势 -->
+            <!-- 系统QPS趋势图 -->
             <div class="bg-white rounded-xl shadow-card p-6 card-shadow-hover lg:col-span-2">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-semibold">QPS和丢弃数趋势</h3>
+                    <h3 class="font-semibold">系统QPS趋势图</h3>
                     <div class="flex space-x-2">
                         <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="qpsTrend">
                             <i class="fa fa-refresh"></i>
@@ -295,7 +295,7 @@
         </div>
 
         <!-- 内存和服务性能指标 -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div class="space-y-8 mb-8">
             <!-- 内存趋势图 -->
             <div class="bg-white rounded-xl shadow-card p-6 card-shadow-hover">
                 <div class="flex justify-between items-center mb-4">
@@ -312,7 +312,7 @@
                 <div class="chart-container" id="memoryTrendChart"></div>
             </div>
 
-            <!-- CPU占用趋势 -->
+            <!-- 系统指标综合图 -->
             <div class="bg-white rounded-xl shadow-card p-6 card-shadow-hover">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="font-semibold">系统指标综合图</h3>
@@ -358,21 +358,7 @@
             <div class="chart-container" id="sheddingStatsChart"></div>
         </div>
 
-        <!-- 限流趋势图 -->
-        <div class="bg-white rounded-xl shadow-card p-6 mb-8 card-shadow-hover">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-semibold">限流趋势图</h3>
-                <div class="flex space-x-2">
-                    <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="sheddingTrend">
-                        <i class="fa fa-refresh"></i>
-                    </button>
-                    <button class="chart-action-btn p-1.5 rounded hover:bg-light-1 text-dark-2 transition-colors" data-chart="sheddingTrend">
-                        <i class="fa fa-expand"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="chart-container" id="sheddingTrendChart"></div>
-        </div>
+
 
         <!-- 缓存命中率趋势图 -->
         <div class="bg-white rounded-xl shadow-card p-6 mb-8 card-shadow-hover">
@@ -610,7 +596,8 @@
         closeHelpModal.addEventListener('click', () => helpModal.classList.add('hidden'));
         // 关闭模态框按钮的事件监听已在showFullscreenChart函数中处理
         // 这里不再重复添加，避免事件监听器叠加
-        window.addEventListener('resize', handleResize);
+        // 添加passive标志以提高性能
+    window.addEventListener('resize', handleResize, { passive: true });
         document.querySelectorAll('.chart-action-btn').forEach(btn => {
             btn.addEventListener('click', handleChartAction);
         });
@@ -1142,8 +1129,6 @@
         
         // 初始化原始数据的分钟映射
         const originalMinuteData = {};
-        // 按服务统计的映射
-        const serviceStats = {};
         
         // 处理原始日志数据
         logData.forEach(item => {
@@ -1153,57 +1138,30 @@
             date.setMilliseconds(0);
             const minuteKey = date.toISOString();
             
-            // 按服务统计
-            if (!serviceStats[item.service]) {
-                serviceStats[item.service] = { normal: 0, shedding: 0, count: 0 };
-            }
-            serviceStats[item.service].count++;
-            if (item.shedding === '正常') {
-                serviceStats[item.service].normal++;
-            } else {
-                serviceStats[item.service].shedding++;
-            }
-            
-            // 初始化或累加统计数据
+            // 初始化该分钟的数据
             if (!originalMinuteData[minuteKey]) {
                 originalMinuteData[minuteKey] = {
                     time: minuteKey,
                     formattedTime: formatTimeSmart(item.time, globalTimeSpanMinutes),
-                    // 使用原始值
+                    // 初始化各类型计数器
+                    qpsByType: {},
+                    dropsByType: {},
+                    // 响应时间指标
+                    avgTimeByType: {},
+                    medTimeByType: {},
+                    p90TimeByType: {},
+                    p99TimeByType: {},
+                    p999TimeByType: {},
+                    // 类型计数
+                    typeCount: {},
+                    // 总体统计
+                    totalQps: 0,
+                    totalDrops: 0,
+                    // 系统指标
                     cpu: parseInt(item.cpu) || 0,
                     alloc: parseFloat(item.alloc) || 0,
                     sys: parseFloat(item.sys) || 0,
                     numGC: parseInt(item.numGC) || 0,
-                    qps: parseFloat(item.qps) || 0,
-                    drops: parseInt(item.drops) || 0,
-                    // 响应时间指标
-                    avgTime: item.avgTime || 0,
-                    medTime: item.medTime || 0,
-                    p90Time: item.p90Time || 0,
-                    p99Time: item.p99Time || 0,
-                    p999Time: item.p999Time || 0,
-                    // QPS类型
-                    qpsType: item.qpsType || 'general',
-                    // 按QPS类型分组的数据
-                    qpsByType: {
-                        [item.qpsType || 'general']: {
-                            qps: parseFloat(item.qps) || 0,
-                            avgTime: item.avgTime || 0,
-                            medTime: item.medTime || 0,
-                            p90Time: item.p90Time || 0,
-                            p99Time: item.p99Time || 0,
-                            p999Time: item.p999Time || 0,
-                            count: 1
-                        }
-                    },
-                    // 统计正常和限流请求数
-                    normalCount: item.shedding === '正常' ? 1 : 0,
-                    sheddingCount: item.shedding !== '正常' ? 1 : 0,
-                    totalCount: 1,
-                    // 服务信息
-                    serviceStats: JSON.parse(JSON.stringify(serviceStats)),
-                    // 完整的限流统计数据
-                    sheddingStat: item.sheddingStat || { cpu: 0, total: 0, pass: 0, drop: 0 },
                     // 缓存命中率数据
                     cacheStats: item.cacheType ? {
                         type: item.cacheType,
@@ -1212,93 +1170,84 @@
                         hit: item.cacheHit || 0,
                         miss: item.cacheMiss || 0,
                         dbFails: item.cacheDbFails || 0
-                    } : null
+                    } : null,
+                    // 限流统计数据
+                    sheddingStat: item.sheddingStat || { cpu: 0, total: 0, pass: 0, drop: 0 }
                 };
-            } else {
-                // 对于同一分钟内的多个数据点，累加相关数值
-                const existing = originalMinuteData[minuteKey];
-                existing.cpu += parseInt(item.cpu) || 0;
-                existing.alloc += parseFloat(item.alloc) || 0;
-                existing.sys += parseFloat(item.sys) || 0;
-                existing.numGC += parseInt(item.numGC) || 0;
-                existing.qps += parseFloat(item.qps) || 0;
-                existing.drops += parseInt(item.drops) || 0;
-                existing.totalCount++;
-                
-                // 累加响应时间指标（这里简单累加，后面会计算平均值）
-                existing.avgTime += item.avgTime || 0;
-                existing.medTime += item.medTime || 0;
-                existing.p90Time += item.p90Time || 0;
-                existing.p99Time += item.p99Time || 0;
-                existing.p999Time += item.p999Time || 0;
-                
-                // 累加按QPS类型分组的数据
-                const qpsType = item.qpsType || 'general';
-                if (!existing.qpsByType[qpsType]) {
-                    existing.qpsByType[qpsType] = {
-                        qps: parseFloat(item.qps) || 0,
-                        avgTime: item.avgTime || 0,
-                        medTime: item.medTime || 0,
-                        p90Time: item.p90Time || 0,
-                        p99Time: item.p99Time || 0,
-                        p999Time: item.p999Time || 0,
-                        count: 1
+            }
+            
+            const existing = originalMinuteData[minuteKey];
+            
+            // 提取QPS类型
+            const qpsType = item.qpsType || 'general';
+            
+            // 初始化该类型的数据（如果不存在）
+            if (!existing.qpsByType[qpsType]) {
+                existing.qpsByType[qpsType] = 0;
+                existing.dropsByType[qpsType] = 0;
+                existing.avgTimeByType[qpsType] = 0;
+                existing.medTimeByType[qpsType] = 0;
+                existing.p90TimeByType[qpsType] = 0;
+                existing.p99TimeByType[qpsType] = 0;
+                existing.p999TimeByType[qpsType] = 0;
+                existing.typeCount[qpsType] = 0;
+            }
+            
+            // 累加该类型的数据
+            existing.qpsByType[qpsType] += parseFloat(item.qps) || 0;
+            existing.dropsByType[qpsType] += parseInt(item.drops) || 0;
+            existing.avgTimeByType[qpsType] += item.avgTime || 0;
+            existing.medTimeByType[qpsType] += item.medTime || 0;
+            existing.p90TimeByType[qpsType] += item.p90Time || 0;
+            existing.p99TimeByType[qpsType] += item.p99Time || 0;
+            existing.p999TimeByType[qpsType] += item.p999Time || 0;
+            existing.typeCount[qpsType]++;
+            
+            // 累加总体统计
+            existing.totalQps += parseFloat(item.qps) || 0;
+            existing.totalDrops += parseInt(item.drops) || 0;
+            
+            // 累加系统指标
+            existing.cpu = Math.max(existing.cpu, parseInt(item.cpu) || 0); // 使用最大值而非累加
+            existing.alloc += parseFloat(item.alloc) || 0;
+            existing.sys += parseFloat(item.sys) || 0;
+            existing.numGC += parseInt(item.numGC) || 0;
+            
+            // 更新限流统计数据
+            if (item.sheddingStat) {
+                if (!existing.sheddingStat) {
+                    existing.sheddingStat = { cpu: 0, total: 0, pass: 0, drop: 0 };
+                }
+                existing.sheddingStat.cpu += item.sheddingStat.cpu || 0;
+                existing.sheddingStat.total += item.sheddingStat.total || 0;
+                existing.sheddingStat.pass += item.sheddingStat.pass || 0;
+                existing.sheddingStat.drop += item.sheddingStat.drop || 0;
+            }
+            
+            // 更新缓存命中率数据
+            if (item.cacheType) {
+                if (!existing.cacheStats) {
+                    existing.cacheStats = {
+                        type: item.cacheType,
+                        qpm: item.cacheQpm || 0,
+                        hitRatio: item.cacheHitRatio || 0,
+                        hit: item.cacheHit || 0,
+                        miss: item.cacheMiss || 0,
+                        dbFails: item.cacheDbFails || 0
                     };
                 } else {
-                    existing.qpsByType[qpsType].qps += parseFloat(item.qps) || 0;
-                    existing.qpsByType[qpsType].avgTime += item.avgTime || 0;
-                    existing.qpsByType[qpsType].medTime += item.medTime || 0;
-                    existing.qpsByType[qpsType].p90Time += item.p90Time || 0;
-                    existing.qpsByType[qpsType].p99Time += item.p99Time || 0;
-                    existing.qpsByType[qpsType].p999Time += item.p999Time || 0;
-                    existing.qpsByType[qpsType].count++;
-                }
-                
-                if (item.shedding === '正常') {
-                    existing.normalCount++;
-                } else {
-                    existing.sheddingCount++;
-                }
-                
-                // 更新完整的限流统计数据
-                if (item.sheddingStat) {
-                    if (!existing.sheddingStat) {
-                        existing.sheddingStat = { cpu: 0, total: 0, pass: 0, drop: 0 };
-                    }
-                    existing.sheddingStat.cpu += item.sheddingStat.cpu || 0;
-                    existing.sheddingStat.total += item.sheddingStat.total || 0;
-                    existing.sheddingStat.pass += item.sheddingStat.pass || 0;
-                    existing.sheddingStat.drop += item.sheddingStat.drop || 0;
-                }
-                
-                // 更新缓存命中率数据
-                if (item.cacheType) {
-                    if (!existing.cacheStats) {
-                        existing.cacheStats = {
-                            type: item.cacheType,
-                            qpm: item.cacheQpm || 0,
-                            hitRatio: item.cacheHitRatio || 0,
-                            hit: item.cacheHit || 0,
-                            miss: item.cacheMiss || 0,
-                            dbFails: item.cacheDbFails || 0
-                        };
-                    } else {
-                        // 如果已经有缓存统计数据，并且类型相同，则累加
-                        if (existing.cacheStats.type === item.cacheType) {
-                            existing.cacheStats.qpm += item.cacheQpm || 0;
-                            existing.cacheStats.hit += item.cacheHit || 0;
-                            existing.cacheStats.miss += item.cacheMiss || 0;
-                            existing.cacheStats.dbFails += item.cacheDbFails || 0;
-                            // 重新计算命中率
-                            const total = existing.cacheStats.hit + existing.cacheStats.miss;
-                            existing.cacheStats.hitRatio = total > 0 ? 
-                                (existing.cacheStats.hit / total * 100).toFixed(1) : 0;
-                        }
+                    // 如果已经有缓存统计数据，并且类型相同，则累加
+                    if (existing.cacheStats.type === item.cacheType) {
+                        existing.cacheStats.qpm += item.cacheQpm || 0;
+                        existing.cacheStats.hit += item.cacheHit || 0;
+                        existing.cacheStats.miss += item.cacheMiss || 0;
+                        existing.cacheStats.dbFails += item.cacheDbFails || 0;
+                        // 重新计算命中率
+                        const total = existing.cacheStats.hit + existing.cacheStats.miss;
+                        existing.cacheStats.hitRatio = total > 0 ? 
+                            (existing.cacheStats.hit / total * 100).toFixed(1) : 0;
                     }
                 }
-                
-                // 更新服务统计信息的深拷贝
-                existing.serviceStats = JSON.parse(JSON.stringify(serviceStats));
             }
         });
         
@@ -1348,28 +1297,29 @@
             currentMinute.setMinutes(currentMinute.getMinutes() + 1);
         }
         
-        // 计算响应时间指标的平均值
+        // 计算每个QPS类型的平均值
         result.forEach(dataPoint => {
-            if (dataPoint.totalCount > 0) {
-                dataPoint.avgTime = parseFloat((dataPoint.avgTime / dataPoint.totalCount).toFixed(2));
-                dataPoint.medTime = parseFloat((dataPoint.medTime / dataPoint.totalCount).toFixed(2));
-                dataPoint.p90Time = parseFloat((dataPoint.p90Time / dataPoint.totalCount).toFixed(2));
-                dataPoint.p99Time = parseFloat((dataPoint.p99Time / dataPoint.totalCount).toFixed(2));
-                dataPoint.p999Time = parseFloat((dataPoint.p999Time / dataPoint.totalCount).toFixed(2));
-            }
-            
-            // 计算按QPS类型分组的平均值
-            if (dataPoint.qpsByType) {
-                Object.keys(dataPoint.qpsByType).forEach(type => {
-                    const typeData = dataPoint.qpsByType[type];
-                    if (typeData.count > 0) {
-                        typeData.avgTime = parseFloat((typeData.avgTime / typeData.count).toFixed(2));
-                        typeData.medTime = parseFloat((typeData.medTime / typeData.count).toFixed(2));
-                        typeData.p90Time = parseFloat((typeData.p90Time / typeData.count).toFixed(2));
-                        typeData.p99Time = parseFloat((typeData.p99Time / typeData.count).toFixed(2));
-                        typeData.p999Time = parseFloat((typeData.p999Time / typeData.count).toFixed(2));
+            if (dataPoint.typeCount) {
+                Object.keys(dataPoint.typeCount).forEach(type => {
+                    const count = dataPoint.typeCount[type];
+                    if (count > 0) {
+                        // 计算响应时间的平均值
+                        dataPoint.avgTimeByType[type] = parseFloat((dataPoint.avgTimeByType[type] / count).toFixed(2));
+                        dataPoint.medTimeByType[type] = parseFloat((dataPoint.medTimeByType[type] / count).toFixed(2));
+                        dataPoint.p90TimeByType[type] = parseFloat((dataPoint.p90TimeByType[type] / count).toFixed(2));
+                        dataPoint.p99TimeByType[type] = parseFloat((dataPoint.p99TimeByType[type] / count).toFixed(2));
+                        dataPoint.p999TimeByType[type] = parseFloat((dataPoint.p999TimeByType[type] / count).toFixed(2));
                     }
                 });
+            }
+            
+            // 计算系统指标的平均值
+            const totalDataPoints = Object.values(dataPoint.typeCount || {}).reduce((sum, count) => sum + count, 0);
+            if (totalDataPoints > 0) {
+                // 系统指标中CPU使用最大值，其他使用平均值
+                dataPoint.alloc = parseFloat((dataPoint.alloc / totalDataPoints).toFixed(2));
+                dataPoint.sys = parseFloat((dataPoint.sys / totalDataPoints).toFixed(2));
+                dataPoint.numGC = parseInt(dataPoint.numGC / totalDataPoints);
             }
         });
         
@@ -1396,9 +1346,6 @@
 
         // 渲染限流状态分析图
         renderSheddingStatsChart();
-        
-        // 渲染限流趋势图
-        renderSheddingTrendChart();
         
         // 渲染缓存命中率趋势图
         renderCacheHitChart();
@@ -1654,7 +1601,7 @@
                     showDetail: true,
                     showDataShadow: 'auto'
                 }
-            ].concat(qpsSeries),
+            ],
             // 增强的动画效果
             animation: true,
             animationDuration: 1500,
@@ -1668,7 +1615,7 @@
         chart.setOption(option);
     }
 
-    // 渲染QPS和丢弃数趋势图（按类型拆分）
+    // 渲染系统QPS趋势图
     function renderQpsTrendChart() {
         const chartDom = document.getElementById('qpsTrendChart');
         const chart = echarts.init(chartDom);
@@ -1680,73 +1627,74 @@
         // 处理数据
         const times = aggregatedData.map(item => item.formattedTime);
         
-        // 提取不同类型的QPS数据
-        const standardQpsData = aggregatedData.map(item => {
-            const value = parseFloat(item.qps);
-            return isNaN(value) ? 0 : value;
-        });
-        
-        // 提取缓存相关的QPS数据 (转换为每秒QPS)
-        const cacheQpsData = aggregatedData.map(item => {
-            if (item.cacheStats && item.cacheStats.qpm) {
-                return parseFloat(item.cacheStats.qpm) / 60; // 从QPM转换为QPS
-            }
-            return 0;
-        });
-        
-        // 计算通过请求数 (当前一秒的 QPS 减去 drops 的数量)
-        const passingQpsData = aggregatedData.map(item => {
-            const qps = parseFloat(item.qps) || 0;
-            const drops = parseInt(item.drops) || 0;
-            // 确保结果不为负数
-            return Math.max(0, qps - drops);
-        });
-        
-        // 计算总QPS
-        const totalQpsData = standardQpsData.map((value, index) => {
-            return value + cacheQpsData[index];
-        });
-        
-        const dropsData = aggregatedData.map(item => {
-            const value = parseInt(item.drops);
-            return isNaN(value) ? 0 : value;
-        });
-        
         // 提取按QPS类型分组的数据
-        // 首先收集所有存在的QPS类型
+        // 首先收集所有存在的QPS类型，但排除缓存相关类型
         const qpsTypes = new Set();
+        const cacheTypes = ['dbcache']; // 定义需要排除的缓存类型
         aggregatedData.forEach(item => {
-            if (item.qpsByType) {
-                Object.keys(item.qpsByType).forEach(type => {
-                    qpsTypes.add(type);
+            if (item.typeCount) {
+                Object.keys(item.typeCount).forEach(type => {
+                    // 只添加非缓存类型的数据
+                    if (!cacheTypes.some(cacheType => type.includes(cacheType))) {
+                        qpsTypes.add(type);
+                    }
                 });
             }
         });
         
-        // 为每种类型准备QPS数据
+        // 为每种类型准备QPS数据和丢弃数数据
         const qpsDataByType = {};
+        const dropsDataByType = {};
+        
         qpsTypes.forEach(type => {
             qpsDataByType[type] = aggregatedData.map(item => {
                 if (item.qpsByType && item.qpsByType[type]) {
-                    return item.qpsByType[type].qps;
+                    return item.qpsByType[type];
                 }
                 return 0;
             });
-        });
-        
-        // 为每种类型准备丢弃数数据
-        const dropsDataByType = {};
-        qpsTypes.forEach(type => {
+            
             dropsDataByType[type] = aggregatedData.map(item => {
-                if (item.qpsByType && item.qpsByType[type] && item.qpsByType[type].drops) {
-                    return item.qpsByType[type].drops;
+                if (item.dropsByType && item.dropsByType[type]) {
+                    return item.dropsByType[type];
                 }
                 return 0;
             });
         });
 
+        // 计算总QPS和总丢弃数
+        const totalQpsData = aggregatedData.map(item => {
+            if (item.totalQps !== undefined) {
+                return parseFloat(item.totalQps) || 0;
+            }
+            
+            // 如果没有totalQps字段，计算所有类型的QPS总和
+            let total = 0;
+            if (item.qpsByType) {
+                Object.values(item.qpsByType).forEach(qps => {
+                    total += parseFloat(qps) || 0;
+                });
+            }
+            return total;
+        });
+        
+        const totalDropsData = aggregatedData.map(item => {
+            if (item.totalDrops !== undefined) {
+                return parseInt(item.totalDrops) || 0;
+            }
+            
+            // 如果没有totalDrops字段，计算所有类型的丢弃数总和
+            let total = 0;
+            if (item.dropsByType) {
+                Object.values(item.dropsByType).forEach(drops => {
+                    total += parseInt(drops) || 0;
+                });
+            }
+            return total;
+        });
+
         // 准备图例数据 - 包含总体数据和类型数据
-        const legendData = ['总QPS', '标准QPS', '缓存QPS', '通过请求数', '丢弃数'];
+        const legendData = ['总QPS', '总丢弃数'];
         qpsTypes.forEach(type => {
             legendData.push(`${type.toUpperCase()} QPS`);
             legendData.push(`${type.toUpperCase()} 丢弃数`);
@@ -1870,7 +1818,8 @@
             'rpc': '#FF4D4F',
             'http': '#FAAD14',
             'asdu': '#1890FF',
-            'general': '#52C41A'
+            'file.rpc': '#52C41A',
+            'general': '#722ED1'
         };
         
         // 获取默认颜色的辅助函数
@@ -1925,91 +1874,10 @@
                 }
             },
             {
-                name: '标准QPS',
-                type: 'line',
-                data: standardQpsData,
-                symbol: 'circle',
-                symbolSize: 5,
-                symbolHoverSize: 7,
-                smooth: true,
-                lineStyle: {
-                    width: 3,
-                    color: '#52C41A',
-                    shadowColor: 'rgba(82, 196, 26, 0.3)',
-                    shadowBlur: 8
-                },
-                itemStyle: {
-                    color: '#52C41A',
-                    borderColor: '#fff',
-                    borderWidth: 2
-                },
-                emphasis: {
-                    focus: 'series',
-                    itemStyle: {
-                        shadowBlur: 8,
-                        shadowColor: 'rgba(82, 196, 26, 0.6)'
-                    }
-                }
-            },
-            {
-                name: '缓存QPS',
-                type: 'line',
-                data: cacheQpsData,
-                symbol: 'circle',
-                symbolSize: 5,
-                symbolHoverSize: 7,
-                smooth: true,
-                lineStyle: {
-                    width: 3,
-                    color: '#FAAD14',
-                    shadowColor: 'rgba(250, 173, 20, 0.3)',
-                    shadowBlur: 8
-                },
-                itemStyle: {
-                    color: '#FAAD14',
-                    borderColor: '#fff',
-                    borderWidth: 2
-                },
-                emphasis: {
-                    focus: 'series',
-                    itemStyle: {
-                        shadowBlur: 8,
-                        shadowColor: 'rgba(250, 173, 20, 0.6)'
-                    }
-                }
-            },
-            {
-                name: '通过请求数',
-                type: 'line',
-                data: passingQpsData,
-                symbol: 'circle',
-                symbolSize: 5,
-                symbolHoverSize: 7,
-                smooth: true,
-                lineStyle: {
-                    width: 3,
-                    color: '#52C41A',
-                    shadowColor: 'rgba(82, 196, 26, 0.3)',
-                    shadowBlur: 8
-                },
-                itemStyle: {
-                    color: '#52C41A',
-                    borderColor: '#fff',
-                    borderWidth: 2
-                },
-                emphasis: {
-                    focus: 'series',
-                    itemStyle: {
-                        shadowBlur: 8,
-                        shadowColor: 'rgba(82, 196, 26, 0.6)'
-                    }
-                }
-            },
-            {
-                name: '丢弃数',
+                name: '总丢弃数',
                 type: 'bar',
                 yAxisIndex: 1,
-                data: dropsData,
+                data: totalDropsData,
                 itemStyle: {
                     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
                         { offset: 0, color: '#FF4D4F' },
@@ -2032,7 +1900,8 @@
         // 为每种QPS类型添加对应的系列数据
         let typeIndex = 0;
         qpsTypes.forEach(type => {
-            const color = getTypeColor(type, typeIndex);
+            // 获取类型对应的颜色
+            const qpsColor = getTypeColor(type, typeIndex);
             
             // 添加类型QPS系列
             series.push({
@@ -2045,12 +1914,12 @@
                 smooth: true,
                 lineStyle: {
                     width: 3,
-                    color: color,
-                    shadowColor: `rgba(${hexToRgb(color)}, 0.3)`,
+                    color: qpsColor,
+                    shadowColor: `rgba(${hexToRgb(qpsColor)}, 0.3)`,
                     shadowBlur: 8
                 },
                 itemStyle: {
-                    color: color,
+                    color: qpsColor,
                     borderColor: '#fff',
                     borderWidth: 2
                 },
@@ -2058,7 +1927,7 @@
                     focus: 'series',
                     itemStyle: {
                         shadowBlur: 8,
-                        shadowColor: `rgba(${hexToRgb(color)}, 0.6)`
+                        shadowColor: `rgba(${hexToRgb(qpsColor)}, 0.6)`
                     }
                 }
             });
@@ -2071,8 +1940,8 @@
                 data: dropsDataByType[type],
                 itemStyle: {
                     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                        { offset: 0, color: color },
-                        { offset: 1, color: lightenColor(color, 0.3) }
+                        { offset: 0, color: qpsColor },
+                        { offset: 1, color: lightenColor(qpsColor, 0.3) }
                     ])
                 },
                 barWidth: '30%',
@@ -2080,8 +1949,8 @@
                     focus: 'series',
                     itemStyle: {
                         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                            { offset: 0, color: darkenColor(color, 0.2) },
-                            { offset: 1, color: color }
+                            { offset: 0, color: darkenColor(qpsColor, 0.2) },
+                            { offset: 1, color: qpsColor }
                         ])
                     }
                 }
@@ -2243,162 +2112,7 @@
         chart.setOption(option);
     }
 
-    // 渲染限流趋势图
-    function renderSheddingTrendChart() {
-        const chartDom = document.getElementById('sheddingTrendChart');
-        const chart = echarts.init(chartDom);
-        charts['sheddingTrend'] = chart;
 
-        // 使用分钟聚合后的数据
-        const aggregatedData = aggregateDataByMinute();
-
-        // 处理数据 - 按时间统计限流情况
-        // 1. 从聚合数据中提取时间和限流相关信息
-        const times = aggregatedData.map(item => item.formattedTime);
-        const normalData = aggregatedData.map(item => item.normalCount);
-        const sheddingData = aggregatedData.map(item => item.sheddingCount);
-        const totalData = aggregatedData.map(item => item.totalCount);
-        
-        // 计算限流率
-        const sheddingRateData = times.map((time, index) => {
-            if (totalData[index] === 0) return 0;
-            return (sheddingData[index] / totalData[index] * 100).toFixed(1);
-        });
-
-        // 图表配置 - 统一样式和增强效果
-        const option = {
-            backgroundColor: 'transparent',
-            tooltip: {
-                trigger: 'axis',
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                borderColor: '#E0E6ED',
-                borderWidth: 1,
-                borderRadius: 8,
-                padding: [12, 16],
-                textStyle: {
-                    color: '#1D2129',
-                    fontSize: 12
-                },
-                formatter: function(params) {
-                    let result = `<div style="font-weight: 600; color: #1D2129; margin-bottom: 6px;">${params[0].name}</div>`;
-                    params.forEach(item => {
-                        let formattedValue = item.value;
-                        if (item.seriesName.includes('限流率')) {
-                            formattedValue = `${item.value}%`;
-                        } else {
-                            formattedValue = item.value.toLocaleString();
-                        }
-                        
-                        result += `<div style="margin: 4px 0;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${item.color}; margin-right: 8px;"></span>${item.seriesName}: <span style="font-weight: 600;">${formattedValue}</span></div>`;
-                    });
-                    return result;
-                },
-                shadowColor: 'rgba(0, 0, 0, 0.1)',
-                shadowBlur: 10,
-                shadowOffsetX: 0,
-                shadowOffsetY: 4
-            },
-            legend: {
-                data: ['正常请求数', '限流请求数', '总请求数', '限流率'],
-                top: 0,
-                left: 'center',
-                textStyle: {
-                    color: '#4E5969',
-                    fontSize: 12,
-                    fontWeight: 500
-                },
-                itemWidth: 14,
-                itemHeight: 14,
-                padding: [0, 20]
-            },
-            grid: {
-                left: '5%',
-                right: '10%',
-                bottom: '15%',
-                top: '15%',
-                containLabel: true
-            },
-            xAxis: {
-                type: 'category',
-                data: times,
-                axisLine: { lineStyle: { color: '#E5E6EB' } },
-                axisLabel: {
-                    color: '#4E5969',
-                    rotate: 45,
-                    interval: calculateTimeLabelInterval(times) // 基于时间跨度的自适应间隔
-                },
-                axisTick: {
-                    show: true,
-                    lineStyle: { color: '#E5E6EB' }
-                },
-                splitLine: {
-                    show: true,
-                    lineStyle: {
-                        color: '#F2F3F5',
-                        type: 'dashed'
-                    }
-                }
-            },
-            yAxis: [
-                {
-                    name: '请求数',
-                    type: 'value',
-                    min: 0,
-                    axisLine: { lineStyle: { color: '#165DFF' } },
-                    axisLabel: { color: '#4E5969' },
-                    splitLine: {
-                        lineStyle: {
-                            color: '#F2F3F5',
-                            type: 'dashed'
-                        }
-                    }
-                },
-                {
-                    name: '限流率(%)',
-                    type: 'value',
-                    position: 'right',
-                    min: 0,
-                    max: 100,
-                    axisLine: { lineStyle: { color: '#F5222D' } },
-                    axisLabel: {
-                        color: '#F5222D',
-                        formatter: '{value}%'
-                    },
-                    splitLine: { show: false }
-                }
-            ],
-            series: [
-                {                    name: '正常请求数',                    type: 'bar',                    stack: 'total',                    data: normalData,                    itemStyle: {                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [                            { offset: 0, color: '#52C41A' },                            { offset: 1, color: '#95DE64' }                        ])                    },                    barWidth: '40%',                    emphasis: {                        focus: 'series',                        itemStyle: {                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [                                { offset: 0, color: '#389e0d' },                                { offset: 1, color: '#52C41A' }                            ])                        }                    }                },
-                {                    name: '限流请求数',                    type: 'bar',                    stack: 'total',                    data: sheddingData,                    itemStyle: {                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [                            { offset: 0, color: '#F5222D' },                            { offset: 1, color: '#FF7875' }                        ])                    },                    barWidth: '40%',                    emphasis: {                        focus: 'series',                        itemStyle: {                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [                                { offset: 0, color: '#cf1322' },                                { offset: 1, color: '#F5222D' }                            ])                        }                    }                },
-                {                    name: '总请求数',                    type: 'line',                    data: totalData,                    symbol: 'circle',                    symbolSize: 6,                    symbolHoverSize: 8,                    smooth: true,                    lineStyle: {                        width: 3,                        color: '#165DFF',                        shadowColor: 'rgba(22, 93, 255, 0.3)',                        shadowBlur: 10                    },                    itemStyle: {                        color: '#165DFF',                        borderColor: '#fff',                        borderWidth: 2                    },                    emphasis: {                        focus: 'series',                        itemStyle: {                            shadowBlur: 10,                            shadowColor: 'rgba(22, 93, 255, 0.6)'                        }                    }                },
-                {                    name: '限流率',                    type: 'line',                    yAxisIndex: 1,                    data: sheddingRateData,                    symbol: 'circle',                    symbolSize: 6,                    symbolHoverSize: 8,                    smooth: true,                    lineStyle: {                        width: 3,                        color: '#F5222D',                        shadowColor: 'rgba(245, 34, 45, 0.3)',                        shadowBlur: 10                    },                    itemStyle: {                        color: '#F5222D',                        borderColor: '#fff',                        borderWidth: 2                    },                    emphasis: {                        focus: 'series',                        itemStyle: {                            shadowBlur: 10,                            shadowColor: 'rgba(245, 34, 45, 0.6)'                        }                    }                }
-            ].concat(qpsSeries),
-            dataZoom: [
-                {
-                    type: 'inside',
-                    xAxisIndex: 0,
-                    start: calculateInitialZoom(aggregatedData.length),
-                    end: 100
-                },
-                {
-                    type: 'slider',
-                    xAxisIndex: 0,
-                    bottom: 5,
-                    start: calculateInitialZoom(aggregatedData.length),
-                    end: 100,
-                    height: 20,
-                    handleStyle: {
-                        color: '#165DFF'
-                    },
-                    fillerColor: 'rgba(22, 93, 255, 0.2)'
-                }
-            ],
-            animation: true,
-            animationDuration: 1000
-        };
-
-        chart.setOption(option);
-    }
 
     function renderSystemMetricsChart() {
         const chartDom = document.getElementById('cpuTrendChart');
@@ -2508,6 +2222,8 @@
                             formattedValue = item.value.toLocaleString();
                         } else if (item.seriesName.includes('内存')) {
                             formattedValue = `${item.value.toLocaleString()}MB`;
+                        } else if (item.seriesName.includes('QPS')) {
+                            formattedValue = item.value.toLocaleString();
                         }
                          
                         result += `<div style="margin: 4px 0;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${item.color}; margin-right: 8px;"></span>${item.seriesName}: <span style="font-weight: 600;">${formattedValue}</span></div>`;
@@ -3527,7 +3243,8 @@
             }
         };
         
-        window.addEventListener('resize', handleModalResize);
+        // 添加passive标志以提高性能
+        window.addEventListener('resize', handleModalResize, { passive: true });
         
         // 保存resize处理器引用，以便关闭时移除
         modalChartContainer.resizeHandler = handleModalResize;
@@ -3629,10 +3346,10 @@
                     
                     logTableBody.appendChild(row);
                     
-                    // 为每一行添加延迟动画效果
-                    setTimeout(() => {
+                    // 使用requestAnimationFrame优化动画性能
+                    requestAnimationFrame(() => {
                         row.style.opacity = '1';
-                    }, index * 50);
+                    });
                 });
             } else {
                 // 显示空数据提示
