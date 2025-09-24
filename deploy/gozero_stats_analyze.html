@@ -6,7 +6,7 @@
   <title>Go-Zero Stats 日志分析工具</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -151,7 +151,7 @@
             </div>
           </div>
           <div class="w-full h-64">
-            <canvas id="cpuMemChart"></canvas>
+            <div id="cpuMemChart" class="chart-container"></div>
           </div>
         </div>
 
@@ -171,7 +171,7 @@
             </div>
           </div>
           <div class="w-full h-64">
-            <canvas id="qpsChart"></canvas>
+            <div id="qpsChart" class="chart-container"></div>
           </div>
         </div>
 
@@ -191,7 +191,37 @@
             </div>
           </div>
           <div class="w-full h-64">
-            <canvas id="limiterChart"></canvas>
+            <div id="limiterChart" class="chart-container"></div>
+          </div>
+        </div>
+
+        <!-- 缓存命中率趋势图 -->
+        <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold">缓存命中率趋势</h2>
+            <div class="flex gap-2">
+              <span class="inline-flex items-center gap-1 text-sm">
+                <span class="w-3 h-3 rounded-full bg-cyan-500"></span>
+                <span>命中率</span>
+              </span>
+              <span class="inline-flex items-center gap-1 text-sm">
+                <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                <span>缓存数</span>
+              </span>
+            </div>
+          </div>
+          <div class="w-full h-64">
+            <div id="cacheHitChart" class="chart-container"></div>
+          </div>
+        </div>
+
+        <!-- 系统指标综合图 -->
+        <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold">系统指标综合分析</h2>
+          </div>
+          <div class="w-full h-80">
+            <div id="systemOverviewChart" class="chart-container"></div>
           </div>
         </div>
       </div>
@@ -266,6 +296,9 @@
   </div>
 
   <script>
+    // 图表实例对象 - 移到最前面确保在初始化前已定义
+    const charts = {};
+
     // 全局数据存储
     const logData = {
       allLogs: [],
@@ -281,14 +314,12 @@
         qps: [],
         errorQps: [],
         limiterThreshold: [],
-        limiterCurrent: []
+        limiterCurrent: [],
+        // 缓存相关指标
+        cacheHitRate: [],
+        cacheCount: []
       }
     };
-
-    // 图表实例
-    let cpuMemChart = null;
-    let qpsChart = null;
-    let limiterChart = null;
 
     // DOM 元素
     const dropZone = document.getElementById('dropZone');
@@ -331,6 +362,21 @@
       filterLimiter.addEventListener('change', handleFilterChange);
       filterBusiness.addEventListener('change', handleFilterChange);
       filterDbCache.addEventListener('change', handleFilterChange);
+      
+      // 添加对通用日志的支持 - 事件委托处理原始日志按钮点击
+      logList.addEventListener('click', function(e) {
+        if (e.target.closest('.view-raw-btn')) {
+          const logEntry = e.target.closest('.log-entry');
+          const rawLogElement = logEntry.querySelector('.raw-log');
+          
+          // 切换原始日志显示状态
+          if (rawLogElement.classList.contains('hidden')) {
+            rawLogElement.classList.remove('hidden');
+          } else {
+            rawLogElement.classList.add('hidden');
+          }
+        }
+      });
 
       // 初始化图表
       initCharts();
@@ -358,7 +404,10 @@
     function handleFileSelect(e) {
       if (e.target.files.length) {
         processFiles(Array.from(e.target.files));
-        fileInput.value = ''; // 重置文件输入
+        // 延迟重置文件输入，避免影响首次上传
+        setTimeout(() => {
+          fileInput.value = '';
+        }, 100);
       }
     }
 
@@ -386,10 +435,9 @@
             updateLoadingProgress(processedFiles / files.length);
             
             if (processedFiles === files.length) {
-              setTimeout(() => {
-                finalizeAnalysis();
-                hideLoading();
-              }, 500);
+              // 直接处理，不使用setTimeout避免首次上传失败
+              finalizeAnalysis();
+              hideLoading();
             }
           }
         };
@@ -660,268 +708,1138 @@
       }
       
       return line.substring(0, 200) + (line.length > 200 ? '...' : '');
-
-      // 如果没有匹配到已知类型，尝试作为通用日志处理
-      const genericMatch = /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s+.*?\[(.*?)\]/.exec(line);
-      if (genericMatch) {
-        return {
-          timestamp: new Date(genericMatch[1]),
-          raw: line,
-          type: 'general',
-          level: genericMatch[2],
-          fileName: fileName,
-          lineNumber: lineNumber,
-          details: line.substring(genericMatch[0].length).trim()
-        };
-      }
-
-      // 如果完全匹配不到时间戳，返回带有当前时间的日志
-      return {
-        timestamp: new Date(),
-        raw: line,
-        type: 'unknown',
-        level: 'INFO',
-        fileName: fileName,
-        lineNumber: lineNumber,
-        details: line
-      };
     }
 
     // 更新时间序列数据
     function updateTimeSeriesData(logEntry) {
-      const timestamp = logEntry.timestamp.toLocaleTimeString();
+      // 确保logData和timeSeriesData对象存在
+      if (!logData || !logData.timeSeriesData) {
+        console.error('logData或timeSeriesData未定义');
+        return;
+      }
       
-      switch (logEntry.type) {
-        case 'system':
-          if (logEntry.cpuUsage !== undefined) {
-            logData.timeSeriesData.timestamps.push(timestamp);
-            logData.timeSeriesData.cpuUsage.push(logEntry.cpuUsage);
-            logData.timeSeriesData.memoryUsage.push(logEntry.memoryUsage || null);
-            
-            // 保持数据点数在合理范围内
-            limitTimeSeriesData();
-          }
-          break;
-        case 'business':
-          if (logEntry.qps !== undefined) {
-            // 查找或添加时间戳
-            const index = logData.timeSeriesData.timestamps.indexOf(timestamp);
-            if (index === -1) {
-              logData.timeSeriesData.timestamps.push(timestamp);
-              logData.timeSeriesData.qps.push(logEntry.qps);
-              logData.timeSeriesData.errorQps.push(logEntry.errorQps || 0);
-              limitTimeSeriesData();
-            } else {
-              logData.timeSeriesData.qps[index] = logEntry.qps;
-              logData.timeSeriesData.errorQps[index] = logEntry.errorQps || 0;
-            }
-          }
-          break;
-        case 'limiter':
-          if (logEntry.threshold !== undefined) {
-            // 查找或添加时间戳
-            const index = logData.timeSeriesData.timestamps.indexOf(timestamp);
-            if (index === -1) {
-              logData.timeSeriesData.timestamps.push(timestamp);
-              logData.timeSeriesData.limiterThreshold.push(logEntry.threshold);
-              logData.timeSeriesData.limiterCurrent.push(logEntry.current || 0);
-              limitTimeSeriesData();
-            } else {
-              logData.timeSeriesData.limiterThreshold[index] = logEntry.threshold;
-              logData.timeSeriesData.limiterCurrent[index] = logEntry.current || 0;
-            }
-          }
-          break;
+      // 确保所有需要的数组都已初始化
+      const requiredArrays = ['timestamps', 'cpuUsage', 'memoryUsage', 'qps', 'errorQps', 'limiterThreshold', 'limiterCurrent', 'cacheHitRate', 'cacheCount'];
+      for (const key of requiredArrays) {
+        if (!Array.isArray(logData.timeSeriesData[key])) {
+          logData.timeSeriesData[key] = [];
+        }
+      }
+      
+      try {
+        // 简化数据处理，直接添加新数据点，确保所有数组长度一致
+        const timestamp = logEntry.timestamp.toLocaleTimeString();
+        logData.timeSeriesData.timestamps.push(timestamp);
+        
+        // 根据日志类型设置相应数据，其他类型设为null
+        switch (logEntry.type) {
+          case 'system':
+            // 使用正确的字段名
+            logData.timeSeriesData.cpuUsage.push(logEntry.cpu !== undefined ? parseFloat(logEntry.cpu) : null);
+            logData.timeSeriesData.memoryUsage.push(logEntry.memory !== undefined ? parseFloat(logEntry.memory) : null);
+            logData.timeSeriesData.qps.push(null);
+            logData.timeSeriesData.errorQps.push(null);
+            logData.timeSeriesData.limiterThreshold.push(null);
+            logData.timeSeriesData.limiterCurrent.push(null);
+            logData.timeSeriesData.cacheHitRate.push(null);
+            logData.timeSeriesData.cacheCount.push(null);
+            break;
+          case 'business':
+            logData.timeSeriesData.cpuUsage.push(null);
+            logData.timeSeriesData.memoryUsage.push(null);
+            logData.timeSeriesData.qps.push(logEntry.qps !== undefined ? parseFloat(logEntry.qps) : null);
+            logData.timeSeriesData.errorQps.push(logEntry.errorQps !== undefined ? parseFloat(logEntry.errorQps) : 0);
+            logData.timeSeriesData.limiterThreshold.push(null);
+            logData.timeSeriesData.limiterCurrent.push(null);
+            logData.timeSeriesData.cacheHitRate.push(null);
+            logData.timeSeriesData.cacheCount.push(null);
+            break;
+          case 'limiter':
+            logData.timeSeriesData.cpuUsage.push(null);
+            logData.timeSeriesData.memoryUsage.push(null);
+            logData.timeSeriesData.qps.push(null);
+            logData.timeSeriesData.errorQps.push(null);
+            logData.timeSeriesData.limiterThreshold.push(logEntry.threshold !== undefined ? parseFloat(logEntry.threshold) : null);
+            logData.timeSeriesData.limiterCurrent.push(logEntry.current !== undefined ? parseFloat(logEntry.current) : 0);
+            logData.timeSeriesData.cacheHitRate.push(null);
+            logData.timeSeriesData.cacheCount.push(null);
+            break;
+          case 'dbCache':
+            logData.timeSeriesData.cpuUsage.push(null);
+            logData.timeSeriesData.memoryUsage.push(null);
+            logData.timeSeriesData.qps.push(null);
+            logData.timeSeriesData.errorQps.push(null);
+            logData.timeSeriesData.limiterThreshold.push(null);
+            logData.timeSeriesData.limiterCurrent.push(null);
+            logData.timeSeriesData.cacheHitRate.push(logEntry.hitRate !== undefined ? parseFloat(logEntry.hitRate) : null);
+            logData.timeSeriesData.cacheCount.push(logEntry.cacheCount !== undefined ? parseFloat(logEntry.cacheCount) : null);
+            break;
+          default:
+            // 对于未知类型，所有数据设为null
+            logData.timeSeriesData.cpuUsage.push(null);
+            logData.timeSeriesData.memoryUsage.push(null);
+            logData.timeSeriesData.qps.push(null);
+            logData.timeSeriesData.errorQps.push(null);
+            logData.timeSeriesData.limiterThreshold.push(null);
+            logData.timeSeriesData.limiterCurrent.push(null);
+            logData.timeSeriesData.cacheHitRate.push(null);
+            logData.timeSeriesData.cacheCount.push(null);
+        }
+        
+        // 限制数据点数
+        limitTimeSeriesData();
+      } catch (error) {
+        console.error('更新时间序列数据时出错:', error, '日志条目:', logEntry);
       }
     }
 
     // 限制时间序列数据点数
     function limitTimeSeriesData(maxPoints = 100) {
-      if (logData.timeSeriesData.timestamps.length > maxPoints) {
-        logData.timeSeriesData.timestamps = logData.timeSeriesData.timestamps.slice(-maxPoints);
-        logData.timeSeriesData.cpuUsage = logData.timeSeriesData.cpuUsage.slice(-maxPoints);
-        logData.timeSeriesData.memoryUsage = logData.timeSeriesData.memoryUsage.slice(-maxPoints);
-        logData.timeSeriesData.qps = logData.timeSeriesData.qps.slice(-maxPoints);
-        logData.timeSeriesData.errorQps = logData.timeSeriesData.errorQps.slice(-maxPoints);
-        logData.timeSeriesData.limiterThreshold = logData.timeSeriesData.limiterThreshold.slice(-maxPoints);
-        logData.timeSeriesData.limiterCurrent = logData.timeSeriesData.limiterCurrent.slice(-maxPoints);
+      // 确保logData.timeSeriesData存在
+      if (!logData.timeSeriesData) {
+        logData.timeSeriesData = { timestamps: [] };
+        return;
       }
+      
+      // 确保所有数组属性存在且为数组类型
+      const requiredArrays = ['timestamps', 'cpuUsage', 'memoryUsage', 'qps', 'errorQps', 'limiterThreshold', 'limiterCurrent', 'cacheHitRate', 'cacheCount'];
+      requiredArrays.forEach(key => {
+        if (!Array.isArray(logData.timeSeriesData[key])) {
+          logData.timeSeriesData[key] = [];
+        }
+      });
+      
+      if (logData.timeSeriesData.timestamps.length > maxPoints) {
+        requiredArrays.forEach(key => {
+          if (Array.isArray(logData.timeSeriesData[key])) {
+            logData.timeSeriesData[key] = logData.timeSeriesData[key].slice(-maxPoints);
+          }
+        });
+      }
+    }
+
+
+    
+    // 计算时间标签间隔
+    function calculateTimeLabelInterval(times) {
+      if (!times || times.length <= 10) return 0; // 10个以下数据点时不跳过
+      const interval = Math.ceil(times.length / 10); // 确保最多显示10个标签
+      return interval > 1 ? interval : 0;
+    }
+
+    // 计算初始缩放比例
+    function calculateInitialZoom(dataLength) {
+      if (dataLength <= 100) return 0;
+      if (dataLength <= 500) return Math.max(0, 100 - 2000 / dataLength);
+      return Math.max(0, 100 - 1000 / (dataLength / 20));
     }
 
     // 初始化图表
     function initCharts() {
-      // CPU和内存图表
-      const cpuMemCtx = document.getElementById('cpuMemChart').getContext('2d');
-      cpuMemChart = new Chart(cpuMemCtx, {
-        type: 'line',
-        data: {
-          labels: logData.timeSeriesData.timestamps,
-          datasets: [
-            {
-              label: 'CPU使用率(%)',
-              data: logData.timeSeriesData.cpuUsage,
-              borderColor: '#3b82f6',
-              backgroundColor: 'rgba(59, 130, 246, 0.1)',
-              borderWidth: 2,
-              tension: 0.3,
-              fill: true
-            },
-            {
-              label: '内存使用率(%)',
-              data: logData.timeSeriesData.memoryUsage,
-              borderColor: '#6366f1',
-              backgroundColor: 'rgba(99, 102, 241, 0.1)',
-              borderWidth: 2,
-              tension: 0.3,
-              fill: true
-            }
-          ]
-        },
-        options: getChartOptions('系统资源使用情况')
-      });
-
-      // QPS图表
-      const qpsCtx = document.getElementById('qpsChart').getContext('2d');
-      qpsChart = new Chart(qpsCtx, {
-        type: 'line',
-        data: {
-          labels: logData.timeSeriesData.timestamps,
-          datasets: [
-            {
-              label: '总请求QPS',
-              data: logData.timeSeriesData.qps,
-              borderColor: '#10b981',
-              backgroundColor: 'rgba(16, 185, 129, 0.1)',
-              borderWidth: 2,
-              tension: 0.3,
-              fill: true
-            },
-            {
-              label: '错误请求QPS',
-              data: logData.timeSeriesData.errorQps,
-              borderColor: '#ef4444',
-              backgroundColor: 'rgba(239, 68, 68, 0.1)',
-              borderWidth: 2,
-              tension: 0.3,
-              fill: true
-            }
-          ]
-        },
-        options: getChartOptions('请求处理性能')
-      });
-
-      // 降载指标图表
-      const limiterCtx = document.getElementById('limiterChart').getContext('2d');
-      limiterChart = new Chart(limiterCtx, {
-        type: 'line',
-        data: {
-          labels: logData.timeSeriesData.timestamps,
-          datasets: [
-            {
-              label: '降载阈值',
-              data: logData.timeSeriesData.limiterThreshold,
-              borderColor: '#f59e0b',
-              backgroundColor: 'rgba(245, 158, 11, 0.1)',
-              borderWidth: 2,
-              tension: 0.3,
-              fill: false,
-              borderDash: [5, 5]
-            },
-            {
-              label: '当前值',
-              data: logData.timeSeriesData.limiterCurrent,
-              borderColor: '#8b5cf6',
-              backgroundColor: 'rgba(139, 92, 246, 0.1)',
-              borderWidth: 2,
-              tension: 0.3,
-              fill: true
-            }
-          ]
-        },
-        options: getChartOptions('自适应降载监控')
+      // 初始化CPU和内存图表
+      const cpuMemChartDom = document.getElementById('cpuMemChart');
+      charts['cpuMem'] = echarts.init(cpuMemChartDom);
+      
+      // 初始化QPS图表
+      const qpsChartDom = document.getElementById('qpsChart');
+      charts['qps'] = echarts.init(qpsChartDom);
+      
+      // 初始化降载指标图表
+      const limiterChartDom = document.getElementById('limiterChart');
+      charts['limiter'] = echarts.init(limiterChartDom);
+      
+      // 初始化缓存命中率趋势图
+      const cacheHitChartDom = document.getElementById('cacheHitChart');
+      charts['cacheHit'] = echarts.init(cacheHitChartDom);
+      
+      // 初始化系统指标综合图
+      const systemOverviewChartDom = document.getElementById('systemOverviewChart');
+      charts['systemOverview'] = echarts.init(systemOverviewChartDom);
+      
+      // 添加窗口大小变化监听
+      window.addEventListener('resize', function() {
+        for (const chart of Object.values(charts)) {
+          chart.resize();
+        }
       });
     }
 
     // 获取通用图表配置
     function getChartOptions(title) {
       return {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-          mode: 'index',
-          intersect: false
+        backgroundColor: 'transparent',
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderColor: '#E0E6ED',
+          borderWidth: 1,
+          borderRadius: 8,
+          padding: [12, 16],
+          textStyle: {
+            color: '#1D2129',
+            fontSize: 12
+          },
+          // 添加阴影效果
+          shadowColor: 'rgba(0, 0, 0, 0.1)',
+          shadowBlur: 10,
+          shadowOffsetX: 0,
+          shadowOffsetY: 4
         },
-        plugins: {
-          title: {
-            display: false
+        legend: {
+          data: [],
+          top: 0,
+          left: 'center',
+          textStyle: {
+            color: '#4E5969',
+            fontSize: 12,
+            fontWeight: 500
           },
-          legend: {
-            display: false
+          itemWidth: 14,
+          itemHeight: 14,
+          padding: [0, 20]
+        },
+        grid: {
+          left: '5%',
+          right: '5%',
+          bottom: '15%',
+          top: '20%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'category',
+          data: [],
+          axisLine: {
+            lineStyle: {
+              color: '#E5E6EB'
+            }
           },
-          tooltip: {
-            backgroundColor: 'rgba(17, 24, 39, 0.9)',
-            padding: 12,
-            cornerRadius: 8,
-            displayColors: true,
-            titleFont: {
-              size: 14,
-              weight: 'bold'
-            },
-            bodyFont: {
-              size: 13
+          axisLabel: {
+            color: '#4E5969',
+            rotate: 45,
+            interval: 0
+          },
+          // 显示刻度线
+          axisTick: {
+            show: true,
+            lineStyle: {
+              color: '#E5E6EB'
+            }
+          },
+          // 显示垂直分割线，提高可读性
+          splitLine: {
+            show: true,
+            lineStyle: {
+              color: '#F2F3F5',
+              type: 'dashed'
             }
           }
         },
-        scales: {
-          x: {
-            grid: {
-              display: false
-            },
-            ticks: {
-              font: {
-                size: 11
-              },
-              maxRotation: 45,
-              minRotation: 45
+        yAxis: {
+          type: 'value',
+          min: 0,
+          axisLine: {
+            lineStyle: {
+              color: '#E5E6EB'
             }
           },
-          y: {
-            beginAtZero: true,
-            grid: {
-              color: 'rgba(229, 231, 235, 0.5)'
-            },
-            ticks: {
-              font: {
-                size: 11
-              }
+          axisLabel: {
+            color: '#4E5969'
+          },
+          splitLine: {
+            lineStyle: {
+              color: '#F2F3F5',
+              type: 'dashed'
             }
           }
         },
-        animation: {
-          duration: 500
-        }
+        // 时间滑动块
+        dataZoom: [
+          {
+            type: 'inside',
+            xAxisIndex: 0,
+            start: 0,
+            end: 100,
+            zoomOnMouseWheel: true,
+            moveOnMouseMove: true,
+            moveOnMouseWheel: false
+          },
+          {
+            type: 'slider',
+            xAxisIndex: 0,
+            bottom: 5,
+            start: 0,
+            end: 100,
+            height: 20,
+            backgroundColor: '#F2F3F5',
+            fillerColor: 'rgba(59, 130, 246, 0.2)',
+            handleStyle: {
+              color: '#3b82f6',
+              width: 14,
+              height: 24,
+              borderRadius: 7,
+              shadowColor: 'rgba(59, 130, 246, 0.4)',
+              shadowBlur: 6
+            },
+            borderColor: '#E5E6EB',
+            borderWidth: 1,
+            zoomLock: false,
+            showDetail: true,
+            showDataShadow: 'auto'
+          }
+        ],
+        // 增强的动画效果
+        animation: true,
+        animationDuration: 1500,
+        animationEasing: 'cubicOut',
+        animationDelay: function (idx) {
+          return idx * 10;
+        },
+        animationDurationUpdate: 1000
       };
     }
 
-    // 更新图表数据
+    // 更新CPU和内存图表
+    function updateCpuMemChart() {
+      const chart = charts['cpuMem'];
+      if (!chart) return;
+
+      // 确保logData和timeSeriesData对象存在
+      if (!logData || !logData.timeSeriesData) {
+        console.error('logData或timeSeriesData未定义');
+        return;
+      }
+
+      // 确保所有需要的数组都存在且为数组类型
+      const timestamps = Array.isArray(logData.timeSeriesData.timestamps) ? logData.timeSeriesData.timestamps : [];
+      const cpuData = Array.isArray(logData.timeSeriesData.cpuUsage) ? logData.timeSeriesData.cpuUsage : [];
+      const memoryData = Array.isArray(logData.timeSeriesData.memoryUsage) ? logData.timeSeriesData.memoryUsage : [];
+
+      // 处理数据，确保不会出现索引越界问题
+      const validData = [];
+      for (let i = 0; i < timestamps.length; i++) {
+        const timestamp = timestamps[i];
+        const cpu = i < cpuData.length && cpuData[i] !== undefined && cpuData[i] !== null ? cpuData[i] : null;
+        const memory = i < memoryData.length && memoryData[i] !== undefined && memoryData[i] !== null ? memoryData[i] : null;
+        
+        if (timestamp !== undefined && timestamp !== null && (cpu !== null || memory !== null)) {
+          validData.push({ timestamp, cpu, memory });
+        }
+      }
+
+      // 如果没有有效数据，不更新图表
+      if (validData.length === 0) {
+        console.warn('没有找到有效的CPU和内存使用率数据');
+        return;
+      }
+
+      const filteredTimestamps = validData.map(item => item.timestamp);
+      const filteredCpuData = validData.map(item => item.cpu);
+      const filteredMemoryData = validData.map(item => item.memory);
+
+      const option = getChartOptions('CPU & 内存使用率');
+      
+      option.legend.data = ['CPU使用率(%)', '内存使用率(%)'];
+      option.xAxis.data = filteredTimestamps;
+      option.xAxis.axisLabel.interval = calculateTimeLabelInterval(filteredTimestamps);
+      option.dataZoom[0].start = calculateInitialZoom(filteredTimestamps.length);
+      option.dataZoom[1].start = calculateInitialZoom(filteredTimestamps.length);
+      
+      option.series = [
+        {
+          name: 'CPU使用率(%)',
+          type: 'line',
+          data: filteredCpuData,
+          symbol: 'circle',
+          symbolSize: 6,
+          symbolHoverSize: 10,
+          smooth: true,
+          smoothMonotone: 'x',
+          lineStyle: {
+            width: 4,
+            color: '#3b82f6',
+            shadowColor: 'rgba(59, 130, 246, 0.4)',
+            shadowBlur: 10,
+            shadowOffsetY: 5
+          },
+          itemStyle: {
+            color: '#3b82f6',
+            borderColor: '#fff',
+            borderWidth: 2,
+            shadowColor: 'rgba(59, 130, 246, 0.5)',
+            shadowBlur: 6
+          },
+          emphasis: {
+            focus: 'series',
+            itemStyle: {
+              shadowBlur: 10,
+              shadowColor: 'rgba(59, 130, 246, 0.6)'
+            }
+          },
+          areaStyle: {
+            color: {
+              type: 'linear',
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
+              colorStops: [{
+                offset: 0, color: 'rgba(59, 130, 246, 0.3)'
+              }, {
+                offset: 1, color: 'rgba(59, 130, 246, 0.02)'
+              }]
+            }
+          },
+          markLine: {
+            silent: true,
+            lineStyle: {
+              color: '#FF4D4F',
+              type: 'dashed'
+            },
+            data: [
+              {
+                yAxis: 80,
+                label: {
+                  formatter: '警告阈值',
+                  position: 'insideEndTop'
+                }
+              }
+            ]
+          }
+        },
+        {
+          name: '内存使用率(%)',
+          type: 'line',
+          data: filteredMemoryData,
+          symbol: 'circle',
+          symbolSize: 6,
+          symbolHoverSize: 10,
+          smooth: true,
+          smoothMonotone: 'x',
+          lineStyle: {
+            width: 4,
+            color: '#6366f1',
+            shadowColor: 'rgba(99, 102, 241, 0.4)',
+            shadowBlur: 10,
+            shadowOffsetY: 5
+          },
+          itemStyle: {
+            color: '#6366f1',
+            borderColor: '#fff',
+            borderWidth: 2,
+            shadowColor: 'rgba(99, 102, 241, 0.5)',
+            shadowBlur: 6
+          },
+          emphasis: {
+            focus: 'series',
+            itemStyle: {
+              shadowBlur: 10,
+              shadowColor: 'rgba(99, 102, 241, 0.6)'
+            }
+          },
+          areaStyle: {
+            color: {
+              type: 'linear',
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
+              colorStops: [{
+                offset: 0, color: 'rgba(99, 102, 241, 0.3)'
+              }, {
+                offset: 1, color: 'rgba(99, 102, 241, 0.02)'
+              }]
+            }
+          },
+          markLine: {
+            silent: true,
+            lineStyle: {
+              color: '#FF4D4F',
+              type: 'dashed'
+            },
+            data: [
+              {
+                yAxis: 80,
+                label: {
+                  formatter: '警告阈值',
+                  position: 'insideEndTop'
+                }
+              }
+            ]
+          }
+        }
+      ];
+
+      chart.setOption(option);
+    }
+
+    // 更新QPS图表
+    function updateQpsChart() {
+      const chart = charts['qps'];
+      if (!chart) return;
+
+      // 确保logData和timeSeriesData对象存在
+      if (!logData || !logData.timeSeriesData) {
+        console.error('logData或timeSeriesData未定义');
+        return;
+      }
+
+      // 确保所有需要的数组都存在且为数组类型
+      const timestamps = Array.isArray(logData.timeSeriesData.timestamps) ? logData.timeSeriesData.timestamps : [];
+      const qpsData = Array.isArray(logData.timeSeriesData.qps) ? logData.timeSeriesData.qps : [];
+      const errorQpsData = Array.isArray(logData.timeSeriesData.errorQps) ? logData.timeSeriesData.errorQps : [];
+
+      // 处理数据，确保不会出现索引越界问题
+      const validData = [];
+      for (let i = 0; i < timestamps.length; i++) {
+        const timestamp = timestamps[i];
+        const qps = i < qpsData.length && qpsData[i] !== undefined && qpsData[i] !== null ? qpsData[i] : null;
+        const errorQps = i < errorQpsData.length && errorQpsData[i] !== undefined && errorQpsData[i] !== null ? errorQpsData[i] : null;
+        
+        if (timestamp !== undefined && timestamp !== null && (qps !== null || errorQps !== null)) {
+          validData.push({ timestamp, qps, errorQps });
+        }
+      }
+
+      // 如果没有有效数据，不更新图表
+      if (validData.length === 0) {
+        console.warn('没有找到有效的QPS数据');
+        return;
+      }
+
+      const filteredTimestamps = validData.map(item => item.timestamp);
+      const filteredQpsData = validData.map(item => item.qps);
+      const filteredErrorQpsData = validData.map(item => item.errorQps);
+
+      const option = getChartOptions('请求 QPS');
+      
+      option.legend.data = ['总请求QPS', '错误请求QPS'];
+      option.xAxis.data = filteredTimestamps;
+      option.xAxis.axisLabel.interval = calculateTimeLabelInterval(filteredTimestamps);
+      option.dataZoom[0].start = calculateInitialZoom(filteredTimestamps.length);
+      option.dataZoom[1].start = calculateInitialZoom(filteredTimestamps.length);
+      
+      // 双Y轴配置
+      option.yAxis = [
+        {
+          type: 'value',
+          name: 'QPS',
+          min: 0,
+          axisLine: { lineStyle: { color: '#10b981' } },
+          axisLabel: { color: '#4E5969' },
+          splitLine: {
+            lineStyle: {
+              color: '#F2F3F5',
+              type: 'dashed'
+            }
+          }
+        },
+        {
+          type: 'value',
+          name: '错误QPS',
+          position: 'right',
+          min: 0,
+          axisLine: { lineStyle: { color: '#ef4444' } },
+          axisLabel: { color: '#ef4444' },
+          splitLine: { show: false }
+        }
+      ];
+      
+      option.series = [
+        {
+          name: '总请求QPS',
+          type: 'line',
+          data: filteredQpsData,
+          symbol: 'circle',
+          symbolSize: 6,
+          symbolHoverSize: 10,
+          smooth: true,
+          smoothMonotone: 'x',
+          lineStyle: {
+            width: 4,
+            color: '#10b981',
+            shadowColor: 'rgba(16, 185, 129, 0.4)',
+            shadowBlur: 10,
+            shadowOffsetY: 5
+          },
+          itemStyle: {
+            color: '#10b981',
+            borderColor: '#fff',
+            borderWidth: 2,
+            shadowColor: 'rgba(16, 185, 129, 0.5)',
+            shadowBlur: 6
+          },
+          emphasis: {
+            focus: 'series',
+            itemStyle: {
+              shadowBlur: 10,
+              shadowColor: 'rgba(16, 185, 129, 0.6)'
+            }
+          },
+          areaStyle: {
+            color: {
+              type: 'linear',
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
+              colorStops: [{
+                offset: 0, color: 'rgba(16, 185, 129, 0.3)'
+              }, {
+                offset: 1, color: 'rgba(16, 185, 129, 0.02)'
+              }]
+            }
+          }
+        },
+        {
+          name: '错误请求QPS',
+          type: 'bar',
+          yAxisIndex: 1,
+          data: filteredErrorQpsData,
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: '#ef4444' },
+              { offset: 1, color: '#f87171' }
+            ])
+          },
+          barWidth: '40%',
+          emphasis: {
+            focus: 'series',
+            itemStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: '#dc2626' },
+                { offset: 1, color: '#ef4444' }
+              ])
+            }
+          }
+        }
+      ];
+
+      chart.setOption(option);
+    }
+
+    // 更新降载指标图表
+    function updateLimiterChart() {
+      const chart = charts['limiter'];
+      if (!chart) return;
+
+      // 确保logData和timeSeriesData对象存在
+      if (!logData || !logData.timeSeriesData) {
+        console.error('logData或timeSeriesData未定义');
+        return;
+      }
+
+      // 确保所有需要的数组都存在且为数组类型
+      const timestamps = Array.isArray(logData.timeSeriesData.timestamps) ? logData.timeSeriesData.timestamps : [];
+      const thresholdData = Array.isArray(logData.timeSeriesData.limiterThreshold) ? logData.timeSeriesData.limiterThreshold : [];
+      const currentData = Array.isArray(logData.timeSeriesData.limiterCurrent) ? logData.timeSeriesData.limiterCurrent : [];
+
+      // 处理数据，确保不会出现索引越界问题
+      const validData = [];
+      for (let i = 0; i < timestamps.length; i++) {
+        const timestamp = timestamps[i];
+        const threshold = i < thresholdData.length && thresholdData[i] !== undefined && thresholdData[i] !== null ? thresholdData[i] : null;
+        const current = i < currentData.length && currentData[i] !== undefined && currentData[i] !== null ? currentData[i] : null;
+        
+        if (timestamp !== undefined && timestamp !== null && (threshold !== null || current !== null)) {
+          validData.push({ timestamp, threshold, current });
+        }
+      }
+
+      // 如果没有有效数据，不更新图表
+      if (validData.length === 0) {
+        console.warn('没有找到有效的降载指标数据');
+        return;
+      }
+
+      const filteredTimestamps = validData.map(item => item.timestamp);
+      const filteredThresholdData = validData.map(item => item.threshold);
+      const filteredCurrentData = validData.map(item => item.current);
+
+      const option = getChartOptions('自适应降载指标');
+      
+      option.legend.data = ['降载阈值', '当前值'];
+      option.xAxis.data = filteredTimestamps;
+      option.xAxis.axisLabel.interval = calculateTimeLabelInterval(filteredTimestamps);
+      option.dataZoom[0].start = calculateInitialZoom(filteredTimestamps.length);
+      option.dataZoom[1].start = calculateInitialZoom(filteredTimestamps.length);
+      
+      option.series = [
+        {
+          name: '降载阈值',
+          type: 'line',
+          data: filteredThresholdData,
+          symbol: 'circle',
+          symbolSize: 6,
+          symbolHoverSize: 10,
+          smooth: true,
+          smoothMonotone: 'x',
+          lineStyle: {
+            width: 4,
+            color: '#f59e0b',
+            shadowColor: 'rgba(245, 158, 11, 0.4)',
+            shadowBlur: 10,
+            shadowOffsetY: 5,
+            type: 'dashed'
+          },
+          itemStyle: {
+            color: '#f59e0b',
+            borderColor: '#fff',
+            borderWidth: 2,
+            shadowColor: 'rgba(245, 158, 11, 0.5)',
+            shadowBlur: 6
+          },
+          emphasis: {
+            focus: 'series',
+            itemStyle: {
+              shadowBlur: 10,
+              shadowColor: 'rgba(245, 158, 11, 0.6)'
+            }
+          },
+          areaStyle: {
+            color: {
+              type: 'linear',
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
+              colorStops: [{
+                offset: 0, color: 'rgba(245, 158, 11, 0.1)'
+              }, {
+                offset: 1, color: 'rgba(245, 158, 11, 0.01)'
+              }]
+            }
+          }
+        },
+        {
+          name: '当前值',
+          type: 'line',
+          data: filteredCurrentData,
+          symbol: 'circle',
+          symbolSize: 6,
+          symbolHoverSize: 10,
+          smooth: true,
+          smoothMonotone: 'x',
+          lineStyle: {
+            width: 4,
+            color: '#8b5cf6',
+            shadowColor: 'rgba(139, 92, 246, 0.4)',
+            shadowBlur: 10,
+            shadowOffsetY: 5
+          },
+          itemStyle: {
+            color: '#8b5cf6',
+            borderColor: '#fff',
+            borderWidth: 2,
+            shadowColor: 'rgba(139, 92, 246, 0.5)',
+            shadowBlur: 6
+          },
+          emphasis: {
+            focus: 'series',
+            itemStyle: {
+              shadowBlur: 10,
+              shadowColor: 'rgba(139, 92, 246, 0.6)'
+            }
+          },
+          areaStyle: {
+            color: {
+              type: 'linear',
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
+              colorStops: [{
+                offset: 0, color: 'rgba(139, 92, 246, 0.3)'
+              }, {
+                offset: 1, color: 'rgba(139, 92, 246, 0.02)'
+              }]
+            }
+          },
+          markArea: {
+            silent: true,
+            itemStyle: {
+              color: 'rgba(239, 68, 68, 0.1)'
+            },
+            data: [
+              [
+                {
+                  name: '超过阈值',
+                  xAxis: 'min',
+                  yAxis: 'threshold'
+                },
+                {
+                  xAxis: 'max',
+                  yAxis: 'max'
+                }
+              ]
+            ]
+          }
+        }
+      ];
+
+      chart.setOption(option);
+    }
+
+    // 更新缓存命中率趋势图
+    function updateCacheHitChart() {
+      const chart = charts['cacheHit'];
+      if (!chart) return;
+
+      // 确保logData和timeSeriesData对象存在
+      if (!logData || !logData.timeSeriesData) {
+        console.error('logData或timeSeriesData未定义');
+        return;
+      }
+
+      // 确保所有需要的数组都存在且为数组类型
+      const timestamps = Array.isArray(logData.timeSeriesData.timestamps) ? logData.timeSeriesData.timestamps : [];
+      const cacheHitRateData = Array.isArray(logData.timeSeriesData.cacheHitRate) ? logData.timeSeriesData.cacheHitRate : [];
+      const cacheCountData = Array.isArray(logData.timeSeriesData.cacheCount) ? logData.timeSeriesData.cacheCount : [];
+
+      // 处理数据，确保不会出现索引越界问题
+      const validData = [];
+      for (let i = 0; i < timestamps.length; i++) {
+        const timestamp = timestamps[i];
+        const hitRate = i < cacheHitRateData.length && cacheHitRateData[i] !== undefined && cacheHitRateData[i] !== null ? cacheHitRateData[i] : null;
+        const count = i < cacheCountData.length && cacheCountData[i] !== undefined && cacheCountData[i] !== null ? cacheCountData[i] : null;
+        
+        if (timestamp !== undefined && timestamp !== null && (hitRate !== null || count !== null)) {
+          validData.push({ timestamp, hitRate, count });
+        }
+      }
+
+      // 如果没有有效数据，不更新图表
+      if (validData.length === 0) {
+        console.warn('没有找到有效的缓存命中率数据');
+        return;
+      }
+
+      const filteredTimestamps = validData.map(item => item.timestamp);
+      const filteredHitRateData = validData.map(item => item.hitRate);
+      const filteredCountData = validData.map(item => item.count);
+
+      const option = getChartOptions('缓存命中率趋势');
+      
+      option.legend.data = ['缓存命中率(%)', '缓存操作次数'];
+      option.xAxis.data = filteredTimestamps;
+      option.xAxis.axisLabel.interval = calculateTimeLabelInterval(filteredTimestamps);
+      option.dataZoom[0].start = calculateInitialZoom(filteredTimestamps.length);
+      option.dataZoom[1].start = calculateInitialZoom(filteredTimestamps.length);
+      
+      // 双Y轴配置
+      option.yAxis = [
+        {
+          type: 'value',
+          name: '命中率(%)',
+          min: 0,
+          max: 100,
+          axisLine: { lineStyle: { color: '#14b8a6' } },
+          axisLabel: { color: '#4E5969', formatter: '{value}%' },
+          splitLine: {
+            lineStyle: {
+              color: '#F2F3F5',
+              type: 'dashed'
+            }
+          }
+        },
+        {
+          type: 'value',
+          name: '操作次数',
+          position: 'right',
+          min: 0,
+          axisLine: { lineStyle: { color: '#f59e0b' } },
+          axisLabel: { color: '#f59e0b' },
+          splitLine: { show: false }
+        }
+      ];
+      
+      option.series = [
+        {
+          name: '缓存命中率(%)',
+          type: 'line',
+          data: filteredHitRateData,
+          symbol: 'circle',
+          symbolSize: 6,
+          symbolHoverSize: 10,
+          smooth: true,
+          smoothMonotone: 'x',
+          lineStyle: {
+            width: 4,
+            color: '#14b8a6',
+            shadowColor: 'rgba(20, 184, 166, 0.4)',
+            shadowBlur: 10,
+            shadowOffsetY: 5
+          },
+          itemStyle: {
+            color: '#14b8a6',
+            borderColor: '#fff',
+            borderWidth: 2,
+            shadowColor: 'rgba(20, 184, 166, 0.5)',
+            shadowBlur: 6
+          },
+          emphasis: {
+            focus: 'series',
+            itemStyle: {
+              shadowBlur: 10,
+              shadowColor: 'rgba(20, 184, 166, 0.6)'
+            }
+          },
+          areaStyle: {
+            color: {
+              type: 'linear',
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
+              colorStops: [{
+                offset: 0, color: 'rgba(20, 184, 166, 0.3)'
+              }, {
+                offset: 1, color: 'rgba(20, 184, 166, 0.02)'
+              }]
+            }
+          },
+          markLine: {
+            silent: true,
+            lineStyle: {
+              color: '#FF4D4F',
+              type: 'dashed'
+            },
+            data: [
+              {
+                yAxis: 70,
+                label: {
+                  formatter: '低命中率阈值',
+                  position: 'insideEndTop'
+                }
+              }
+            ]
+          }
+        },
+        {
+          name: '缓存操作次数',
+          type: 'bar',
+          yAxisIndex: 1,
+          data: filteredCountData,
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: '#f59e0b' },
+              { offset: 1, color: '#fbbf24' }
+            ])
+          },
+          barWidth: '40%',
+          emphasis: {
+            focus: 'series',
+            itemStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: '#d97706' },
+                { offset: 1, color: '#f59e0b' }
+              ])
+            }
+          }
+        }
+      ];
+
+      chart.setOption(option);
+    }
+
+    // 更新系统指标综合图
+    function updateSystemOverviewChart() {
+      const chart = charts['systemOverview'];
+      if (!chart) return;
+
+      // 确保logData和timeSeriesData对象存在
+      if (!logData || !logData.timeSeriesData) {
+        console.error('logData或timeSeriesData未定义');
+        return;
+      }
+
+      // 确保所有需要的数组都存在且为数组类型
+      const timestamps = Array.isArray(logData.timeSeriesData.timestamps) ? logData.timeSeriesData.timestamps : [];
+      const cpuData = Array.isArray(logData.timeSeriesData.cpuUsage) ? logData.timeSeriesData.cpuUsage : [];
+      const memoryData = Array.isArray(logData.timeSeriesData.memoryUsage) ? logData.timeSeriesData.memoryUsage : [];
+      const systemLogs = Array.isArray(logData.systemLogs) ? logData.systemLogs : [];
+
+      // 从日志中提取其他系统指标
+      let totalAllocData = [];
+      let gcCountData = [];
+      let systemMemoryData = [];
+      
+      // 同步时间戳，确保数据点对应
+      for (let i = 0; i < timestamps.length; i++) {
+        const timestamp = timestamps[i];
+        if (timestamp === undefined || timestamp === null) {
+          totalAllocData.push(null);
+          gcCountData.push(null);
+          systemMemoryData.push(null);
+          continue;
+        }
+        
+        // 查找对应时间戳的系统日志
+        const systemLog = systemLogs.find(log => 
+          log && log.timestamp && log.timestamp.toLocaleTimeString() === timestamp && 
+          log.totalAlloc !== undefined
+        );
+        
+        if (systemLog) {
+          totalAllocData.push(systemLog.totalAlloc);
+          gcCountData.push(systemLog.numGC || 0);
+          systemMemoryData.push(systemLog.systemMemory || 0);
+        } else {
+          totalAllocData.push(null);
+          gcCountData.push(null);
+          systemMemoryData.push(null);
+        }
+      }
+
+      // 处理数据，确保不会出现索引越界问题
+      const validData = [];
+      for (let i = 0; i < timestamps.length; i++) {
+        const timestamp = timestamps[i];
+        const cpu = i < cpuData.length && cpuData[i] !== undefined && cpuData[i] !== null ? cpuData[i] : null;
+        const memory = i < memoryData.length && memoryData[i] !== undefined && memoryData[i] !== null ? memoryData[i] : null;
+        const totalAlloc = i < totalAllocData.length && totalAllocData[i] !== undefined && totalAllocData[i] !== null ? totalAllocData[i] : null;
+        const gcCount = i < gcCountData.length && gcCountData[i] !== undefined && gcCountData[i] !== null ? gcCountData[i] : null;
+        
+        if (timestamp !== undefined && timestamp !== null && (cpu !== null || memory !== null || totalAlloc !== null || gcCount !== null)) {
+          validData.push({ timestamp, cpu, memory, totalAlloc, gcCount });
+        }
+      }
+
+      // 如果没有有效数据，不更新图表
+      if (validData.length === 0) {
+        console.warn('没有找到有效的系统指标数据');
+        return;
+      }
+
+      const filteredTimestamps = validData.map(item => item.timestamp);
+      const filteredCpuData = validData.map(item => item.cpu);
+      const filteredMemoryData = validData.map(item => item.memory);
+      const filteredTotalAllocData = validData.map(item => item.totalAlloc);
+      const filteredGcCountData = validData.map(item => item.gcCount);
+
+      const option = getChartOptions('系统指标综合');
+      
+      option.legend.data = ['CPU使用率(%)', '内存使用率(%)', '总内存分配(MiB)', 'GC次数'];
+      option.xAxis.data = filteredTimestamps;
+      option.xAxis.axisLabel.interval = calculateTimeLabelInterval(filteredTimestamps);
+      option.dataZoom[0].start = calculateInitialZoom(filteredTimestamps.length);
+      option.dataZoom[1].start = calculateInitialZoom(filteredTimestamps.length);
+      
+      // 多Y轴配置
+      option.yAxis = [
+        {
+          type: 'value',
+          name: '使用率(%)',
+          min: 0,
+          max: 100,
+          axisLine: { lineStyle: { color: '#3b82f6' } },
+          axisLabel: { color: '#4E5969', formatter: '{value}%' },
+          splitLine: {
+            lineStyle: {
+              color: '#F2F3F5',
+              type: 'dashed'
+            }
+          }
+        },
+        {
+          type: 'value',
+          name: '内存(MiB)',
+          position: 'right',
+          min: 0,
+          axisLine: { lineStyle: { color: '#6366f1' } },
+          axisLabel: { color: '#6366f1' },
+          splitLine: { show: false }
+        },
+        {
+          type: 'value',
+          name: 'GC次数',
+          position: 'right',
+          min: 0,
+          offset: 80,
+          axisLine: { lineStyle: { color: '#8b5cf6' } },
+          axisLabel: { color: '#8b5cf6' },
+          splitLine: { show: false }
+        }
+      ];
+      
+      option.series = [
+        {
+          name: 'CPU使用率(%)',
+          type: 'line',
+          data: filteredCpuData,
+          symbol: 'circle',
+          symbolSize: 4,
+          symbolHoverSize: 8,
+          smooth: true,
+          lineStyle: {
+            width: 3,
+            color: '#3b82f6'
+          },
+          itemStyle: {
+            color: '#3b82f6'
+          }
+        },
+        {
+          name: '内存使用率(%)',
+          type: 'line',
+          data: filteredMemoryData,
+          symbol: 'circle',
+          symbolSize: 4,
+          symbolHoverSize: 8,
+          smooth: true,
+          lineStyle: {
+            width: 3,
+            color: '#6366f1'
+          },
+          itemStyle: {
+            color: '#6366f1'
+          }
+        },
+        {
+          name: '总内存分配(MiB)',
+          type: 'line',
+          yAxisIndex: 1,
+          data: filteredTotalAllocData,
+          symbol: 'circle',
+          symbolSize: 4,
+          symbolHoverSize: 8,
+          smooth: true,
+          lineStyle: {
+            width: 3,
+            color: '#ec4899'
+          },
+          itemStyle: {
+            color: '#ec4899'
+          }
+        },
+        {
+          name: 'GC次数',
+          type: 'line',
+          yAxisIndex: 2,
+          data: filteredGcCountData,
+          symbol: 'circle',
+          symbolSize: 4,
+          symbolHoverSize: 8,
+          smooth: true,
+          lineStyle: {
+            width: 3,
+            color: '#8b5cf6'
+          },
+          itemStyle: {
+            color: '#8b5cf6'
+          }
+        }
+      ];
+
+      chart.setOption(option);
+    }
+
+    // 更新所有图表
     function updateCharts() {
-      // 更新CPU和内存图表
-      cpuMemChart.data.labels = logData.timeSeriesData.timestamps;
-      cpuMemChart.data.datasets[0].data = logData.timeSeriesData.cpuUsage;
-      cpuMemChart.data.datasets[1].data = logData.timeSeriesData.memoryUsage;
-      cpuMemChart.update();
-
-      // 更新QPS图表
-      qpsChart.data.labels = logData.timeSeriesData.timestamps;
-      qpsChart.data.datasets[0].data = logData.timeSeriesData.qps;
-      qpsChart.data.datasets[1].data = logData.timeSeriesData.errorQps;
-      qpsChart.update();
-
-      // 更新降载指标图表
-      limiterChart.data.labels = logData.timeSeriesData.timestamps;
-      limiterChart.data.datasets[0].data = logData.timeSeriesData.limiterThreshold;
-      limiterChart.data.datasets[1].data = logData.timeSeriesData.limiterCurrent;
-      limiterChart.update();
+      updateCpuMemChart();
+      updateQpsChart();
+      updateLimiterChart();
+      updateCacheHitChart();
+      updateSystemOverviewChart();
     }
 
     // 渲染日志列表
@@ -1292,14 +2210,15 @@
       const searchTerm = logSearch.value.toLowerCase();
       
       logData.filteredLogs = logData.allLogs.filter(log => {
-        // 类型过滤
+        // 类型过滤 - 包括通用日志类型
         let typeMatch = filterAll.checked;
         if (!typeMatch) {
           typeMatch = 
             (filterSystem.checked && ['system'].includes(log.type)) ||
             (filterLimiter.checked && ['limiter'].includes(log.type)) ||
             (filterBusiness.checked && ['business'].includes(log.type)) ||
-            (filterDbCache.checked && ['dbCache'].includes(log.type));
+            (filterDbCache.checked && ['dbCache'].includes(log.type)) ||
+            ['general', 'error', 'unknown'].includes(log.type); // 通用日志、错误和未知类型总是显示
         }
         
         // 搜索过滤
@@ -1403,14 +2322,7 @@
       // 更新计数器
       updateCounters();
       
-      // 添加事件监听器到日志条目
-      document.querySelectorAll('.view-raw-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          const logEntry = this.closest('.log-entry');
-          const rawLog = logEntry.querySelector('.raw-log');
-          rawLog.classList.toggle('hidden');
-        });
-      });
+      // 事件委托已在init函数中设置，无需在此添加事件监听器
       
       showNotification(`成功处理 ${logData.allLogs.length} 条日志`, 'success');
     }
