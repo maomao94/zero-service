@@ -712,11 +712,25 @@
 
     // 更新时间序列数据
     function updateTimeSeriesData(logEntry) {
-      // 确保logData和timeSeriesData对象存在
-      if (!logData || !logData.timeSeriesData) {
-        console.error('logData或timeSeriesData未定义');
-        return;
-      }
+      try {
+        // 确保logData和timeSeriesData对象存在
+        if (!logData) {
+          logData = { allLogs: [], filteredLogs: [], systemLogs: [], limiterLogs: [], businessLogs: [], dbCacheLogs: [] };
+        }
+        
+        if (!logData.timeSeriesData) {
+          logData.timeSeriesData = {
+            timestamps: [],
+            cpuUsage: [],
+            memoryUsage: [],
+            qps: [],
+            errorQps: [],
+            limiterThreshold: [],
+            limiterCurrent: [],
+            cacheHitRate: [],
+            cacheCount: []
+          };
+        }
       
       // 确保所有需要的数组都已初始化
       const requiredArrays = ['timestamps', 'cpuUsage', 'memoryUsage', 'qps', 'errorQps', 'limiterThreshold', 'limiterCurrent', 'cacheHitRate', 'cacheCount'];
@@ -726,70 +740,105 @@
         }
       }
       
-      try {
         // 简化数据处理，直接添加新数据点，确保所有数组长度一致
         const timestamp = logEntry.timestamp.toLocaleTimeString();
         logData.timeSeriesData.timestamps.push(timestamp);
         
-        // 根据日志类型设置相应数据，其他类型设为null
+        // 先初始化所有数据为null，确保数组长度一致
+        logData.timeSeriesData.cpuUsage.push(null);
+        logData.timeSeriesData.memoryUsage.push(null);
+        logData.timeSeriesData.qps.push(null);
+        logData.timeSeriesData.errorQps.push(null);
+        logData.timeSeriesData.limiterThreshold.push(null);
+        logData.timeSeriesData.limiterCurrent.push(null);
+        logData.timeSeriesData.cacheHitRate.push(null);
+        logData.timeSeriesData.cacheCount.push(null);
+        
+        // 获取当前索引位置
+        const currentIndex = logData.timeSeriesData.timestamps.length - 1;
+        
+        // 根据日志类型设置相应数据
         switch (logEntry.type) {
           case 'system':
-            // 使用正确的字段名
-            logData.timeSeriesData.cpuUsage.push(logEntry.cpu !== undefined ? parseFloat(logEntry.cpu) : null);
-            logData.timeSeriesData.memoryUsage.push(logEntry.memory !== undefined ? parseFloat(logEntry.memory) : null);
-            logData.timeSeriesData.qps.push(null);
-            logData.timeSeriesData.errorQps.push(null);
-            logData.timeSeriesData.limiterThreshold.push(null);
-            logData.timeSeriesData.limiterCurrent.push(null);
-            logData.timeSeriesData.cacheHitRate.push(null);
-            logData.timeSeriesData.cacheCount.push(null);
+            // 使用正确的字段名，添加多种格式支持
+            if (logEntry.cpuUsage !== undefined) {
+              logData.timeSeriesData.cpuUsage[currentIndex] = parseFloat(logEntry.cpuUsage);
+            } else if (logEntry.cpu !== undefined) {
+              logData.timeSeriesData.cpuUsage[currentIndex] = parseFloat(logEntry.cpu);
+            }
+            if (logEntry.memoryUsage !== undefined) {
+              logData.timeSeriesData.memoryUsage[currentIndex] = parseFloat(logEntry.memoryUsage);
+            } else if (logEntry.memory !== undefined) {
+              logData.timeSeriesData.memoryUsage[currentIndex] = parseFloat(logEntry.memory);
+            }
             break;
           case 'business':
-            logData.timeSeriesData.cpuUsage.push(null);
-            logData.timeSeriesData.memoryUsage.push(null);
-            logData.timeSeriesData.qps.push(logEntry.qps !== undefined ? parseFloat(logEntry.qps) : null);
-            logData.timeSeriesData.errorQps.push(logEntry.errorQps !== undefined ? parseFloat(logEntry.errorQps) : 0);
-            logData.timeSeriesData.limiterThreshold.push(null);
-            logData.timeSeriesData.limiterCurrent.push(null);
-            logData.timeSeriesData.cacheHitRate.push(null);
-            logData.timeSeriesData.cacheCount.push(null);
+            // 处理不同格式的QPS数据
+            if (logEntry.qps !== undefined) {
+              logData.timeSeriesData.qps[currentIndex] = parseFloat(logEntry.qps);
+            } else if (logEntry.request_count !== undefined) {
+              logData.timeSeriesData.qps[currentIndex] = parseFloat(logEntry.request_count);
+            }
+            // 处理不同格式的错误率数据
+            if (logEntry.errorQps !== undefined) {
+              logData.timeSeriesData.errorQps[currentIndex] = parseFloat(logEntry.errorQps);
+            } else if (logEntry.error_count !== undefined) {
+              logData.timeSeriesData.errorQps[currentIndex] = parseFloat(logEntry.error_count);
+            } else if (logEntry.drops !== undefined) {
+              logData.timeSeriesData.errorQps[currentIndex] = parseFloat(logEntry.drops);
+            }
             break;
           case 'limiter':
-            logData.timeSeriesData.cpuUsage.push(null);
-            logData.timeSeriesData.memoryUsage.push(null);
-            logData.timeSeriesData.qps.push(null);
-            logData.timeSeriesData.errorQps.push(null);
-            logData.timeSeriesData.limiterThreshold.push(logEntry.threshold !== undefined ? parseFloat(logEntry.threshold) : null);
-            logData.timeSeriesData.limiterCurrent.push(logEntry.current !== undefined ? parseFloat(logEntry.current) : 0);
-            logData.timeSeriesData.cacheHitRate.push(null);
-            logData.timeSeriesData.cacheCount.push(null);
+            // 处理不同格式的限流数据
+            if (logEntry.threshold !== undefined) {
+              logData.timeSeriesData.limiterThreshold[currentIndex] = parseFloat(logEntry.threshold);
+            } else if (logEntry.total !== undefined) {
+              logData.timeSeriesData.limiterThreshold[currentIndex] = parseFloat(logEntry.total);
+            }
+            if (logEntry.current !== undefined) {
+              logData.timeSeriesData.limiterCurrent[currentIndex] = parseFloat(logEntry.current);
+            } else if (logEntry.pass !== undefined) {
+              logData.timeSeriesData.limiterCurrent[currentIndex] = parseFloat(logEntry.pass);
+            } else if (logEntry.cpu !== undefined) {
+              // Go-Zero格式的CPU负载数据
+              logData.timeSeriesData.limiterCurrent[currentIndex] = parseFloat(logEntry.cpu);
+            }
             break;
           case 'dbCache':
-            logData.timeSeriesData.cpuUsage.push(null);
-            logData.timeSeriesData.memoryUsage.push(null);
-            logData.timeSeriesData.qps.push(null);
-            logData.timeSeriesData.errorQps.push(null);
-            logData.timeSeriesData.limiterThreshold.push(null);
-            logData.timeSeriesData.limiterCurrent.push(null);
-            logData.timeSeriesData.cacheHitRate.push(logEntry.hitRate !== undefined ? parseFloat(logEntry.hitRate) : null);
-            logData.timeSeriesData.cacheCount.push(logEntry.cacheCount !== undefined ? parseFloat(logEntry.cacheCount) : null);
+            // 处理不同格式的缓存命中率数据
+            if (logEntry.cacheHitRatio !== undefined) {
+              logData.timeSeriesData.cacheHitRate[currentIndex] = parseFloat(logEntry.cacheHitRatio);
+            } else if (logEntry.hit_rate !== undefined) {
+              logData.timeSeriesData.cacheHitRate[currentIndex] = parseFloat(logEntry.hit_rate);
+            } else if (logEntry.hitRate !== undefined) {
+              logData.timeSeriesData.cacheHitRate[currentIndex] = parseFloat(logEntry.hitRate);
+            }
+            // 处理缓存计数数据
+            if (logEntry.cacheQpm !== undefined) {
+              logData.timeSeriesData.cacheCount[currentIndex] = parseFloat(logEntry.cacheQpm);
+            } else if (logEntry.qpm !== undefined) {
+              logData.timeSeriesData.cacheCount[currentIndex] = parseFloat(logEntry.qpm);
+            }
             break;
-          default:
-            // 对于未知类型，所有数据设为null
-            logData.timeSeriesData.cpuUsage.push(null);
-            logData.timeSeriesData.memoryUsage.push(null);
-            logData.timeSeriesData.qps.push(null);
-            logData.timeSeriesData.errorQps.push(null);
-            logData.timeSeriesData.limiterThreshold.push(null);
-            logData.timeSeriesData.limiterCurrent.push(null);
-            logData.timeSeriesData.cacheHitRate.push(null);
-            logData.timeSeriesData.cacheCount.push(null);
         }
         
         // 限制数据点数
         limitTimeSeriesData();
       } catch (error) {
         console.error('更新时间序列数据时出错:', error, '日志条目:', logEntry);
+        // 即使出错也尝试确保数据一致性
+        if (logData && logData.timeSeriesData) {
+          const requiredArrays = ['timestamps', 'cpuUsage', 'memoryUsage', 'qps', 'errorQps', 'limiterThreshold', 'limiterCurrent', 'cacheHitRate', 'cacheCount'];
+          const maxLength = Math.max(...requiredArrays.map(key => logData.timeSeriesData[key]?.length || 0));
+          requiredArrays.forEach(key => {
+            if (!Array.isArray(logData.timeSeriesData[key])) {
+              logData.timeSeriesData[key] = [];
+            }
+            while (logData.timeSeriesData[key].length < maxLength) {
+              logData.timeSeriesData[key].push(null);
+            }
+          });
+        }
       }
     }
 
