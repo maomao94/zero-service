@@ -28,7 +28,7 @@ func NewReadDiscreteInputsLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 func (l *ReadDiscreteInputsLogic) ReadDiscreteInputs(in *bridgemodbus.ReadDiscreteInputsReq) (*bridgemodbus.ReadDiscreteInputsRes, error) {
 	mbCli := l.svcCtx.ModbusClientPool.Get()
 	defer l.svcCtx.ModbusClientPool.Put(mbCli)
-	results, err := mbCli.ReadCoils(l.ctx, uint16(in.Address), uint16(in.Quantity))
+	results, err := mbCli.ReadDiscreteInputs(l.ctx, uint16(in.Address), uint16(in.Quantity))
 	if err != nil {
 		return nil, err
 	}
