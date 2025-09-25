@@ -1,0 +1,172 @@
+syntax = "proto3";
+
+package bridgemodbus;
+option go_package = "./bridgemodbus";
+option java_multiple_files = true;
+option java_package = "com.github.bridgemodbus.grpc";
+option java_outer_classname = "BridgeModbusProto";
+
+// Modbus 协议桥接服务
+service BridgeModbus {
+  rpc Ping(Req) returns (Res);
+
+  // -------------------- Bit Access --------------------
+
+  // 读取线圈状态 (Function Code 0x01)
+  rpc ReadCoils(ReadCoilsReq) returns (ReadCoilsRes);
+
+  // 读取离散输入状态 (Function Code 0x02)
+  rpc ReadDiscreteInputs(ReadDiscreteInputsReq) returns (ReadDiscreteInputsRes);
+
+  // 写单个线圈 (Function Code 0x05)
+  rpc WriteSingleCoil(WriteSingleCoilReq) returns (WriteSingleCoilRes);
+
+  // 写多个线圈 (Function Code 0x0F)
+  rpc WriteMultipleCoils(WriteMultipleCoilsReq) returns (WriteMultipleCoilsRes);
+
+  // -------------------- 16-bit Register Access --------------------
+
+  // 读取输入寄存器 (Function Code 0x04)
+  rpc ReadInputRegisters(ReadInputRegistersReq) returns (ReadInputRegistersRes);
+
+  // 读取保持寄存器 (Function Code 0x03)
+  rpc ReadHoldingRegisters(ReadHoldingRegistersReq) returns (ReadHoldingRegistersRes);
+
+  // 写单个保持寄存器 (Function Code 0x06)
+  rpc WriteSingleRegister(WriteSingleRegisterReq) returns (WriteSingleRegisterRes);
+
+  // 写多个保持寄存器 (Function Code 0x10)
+  rpc WriteMultipleRegisters(WriteMultipleRegistersReq) returns (WriteMultipleRegistersRes);
+
+  // 读写多个保持寄存器 (Function Code 0x17)
+  rpc ReadWriteMultipleRegisters(ReadWriteMultipleRegistersReq) returns (ReadWriteMultipleRegistersRes);
+
+  // 屏蔽写保持寄存器 (Function Code 0x16)
+  rpc MaskWriteRegister(MaskWriteRegisterReq) returns (MaskWriteRegisterRes);
+
+  // 读取 FIFO 队列 (Function Code 0x18)
+  rpc ReadFIFOQueue(ReadFIFOQueueReq) returns (ReadFIFOQueueRes);
+
+  // -------------------- Device Identification --------------------
+
+  // 读取设备标识 (Function Code 0x2B / 0x0E)
+  rpc ReadDeviceIdentification(ReadDeviceIdentificationReq) returns (ReadDeviceIdentificationRes);
+}
+
+// -------------------- 通用请求/响应 --------------------
+
+message Req {
+  string ping = 1; // 健康检查请求内容
+}
+
+message Res {
+  string pong = 1; // 健康检查返回内容
+}
+
+// -------------------- 请求与响应定义 --------------------
+
+// -------------------- Bit Access --------------------
+
+message ReadCoilsReq {
+  uint32 address = 1;   // 起始线圈地址
+  uint32 quantity = 2;  // 读取数量（1–2000）
+}
+message ReadCoilsRes {
+  bytes results = 1;    // 按位表示的线圈状态（bit0 对应起始地址）
+}
+
+message ReadDiscreteInputsReq {
+  uint32 address = 1;   // 起始离散输入地址
+  uint32 quantity = 2;  // 读取数量（1–2000）
+}
+message ReadDiscreteInputsRes {
+  bytes results = 1;    // 按位表示的离散输入状态
+}
+
+message WriteSingleCoilReq {
+  uint32 address = 1;   // 线圈地址
+  uint32 value = 2;     // 写入值：0x0000=OFF, 0xFF00=ON
+}
+message WriteSingleCoilRes {
+  bytes results = 1;    // 回显写入后的线圈值
+}
+
+message WriteMultipleCoilsReq {
+  uint32 address = 1;   // 起始线圈地址
+  uint32 quantity = 2;  // 写入数量
+  bytes values = 3;     // 每 bit 对应一个线圈状态，0=OFF，1=ON
+}
+message WriteMultipleCoilsRes {
+  bytes results = 1;    // 回显写入的数量
+}
+
+// -------------------- 16-bit Register Access --------------------
+
+message ReadInputRegistersReq {
+  uint32 address = 1;   // 起始寄存器地址
+  uint32 quantity = 2;  // 读取数量（1–125）
+}
+message ReadInputRegistersRes {
+  bytes results = 1;    // 输入寄存器数据，每寄存器 2 字节，高字节在前
+}
+
+message ReadHoldingRegistersReq {
+  uint32 address = 1;   // 起始寄存器地址
+  uint32 quantity = 2;  // 读取数量（1–125）
+}
+message ReadHoldingRegistersRes {
+  bytes results = 1;    // 保持寄存器数据，每寄存器 2 字节
+}
+
+message WriteSingleRegisterReq {
+  uint32 address = 1;   // 寄存器地址
+  uint32 value = 2;     // 写入的 16-bit 值
+}
+message WriteSingleRegisterRes {
+  bytes results = 1;    // 回显写入后的寄存器值
+}
+
+message WriteMultipleRegistersReq {
+  uint32 address = 1;   // 起始寄存器地址
+  uint32 quantity = 2;  // 写入数量
+  bytes values = 3;     // 按寄存器顺序的字节数组，每寄存器 2 字节
+}
+message WriteMultipleRegistersRes {
+  bytes results = 1;    // 回显写入的数量
+}
+
+message ReadWriteMultipleRegistersReq {
+  uint32 readAddress = 1;     // 读取起始寄存器地址
+  uint32 readQuantity = 2;    // 读取数量
+  uint32 writeAddress = 3;    // 写入起始寄存器地址
+  uint32 writeQuantity = 4;   // 写入数量
+  bytes values = 5;            // 写入数据，每寄存器 2 字节
+}
+message ReadWriteMultipleRegistersRes {
+  bytes results = 1;           // 读取到的寄存器数据
+}
+
+message MaskWriteRegisterReq {
+  uint32 address = 1;   // 寄存器地址
+  uint32 andMask = 2;  // AND 掩码
+  uint32 orMask = 3;   // OR 掩码
+}
+message MaskWriteRegisterRes {
+  bytes results = 1;    // 回显写入后的寄存器值
+}
+
+message ReadFIFOQueueReq {
+  uint32 address = 1;   // FIFO 队列寄存器地址
+}
+message ReadFIFOQueueRes {
+  bytes results = 1;    // FIFO 队列内容
+}
+
+// -------------------- Device Identification --------------------
+
+message ReadDeviceIdentificationReq {
+  uint32 read_device_id_code = 1; // 读取类型：0x01=基本, 0x02=常规, 0x03=扩展
+}
+message ReadDeviceIdentificationRes {
+  map<uint32, bytes> results = 1; // 对象 ID -> 数据内容
+}
