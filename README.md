@@ -1,7 +1,7 @@
 # zero-service
 
 🚀 **基于 [go-zero](https://github.com/zeromicro/go-zero) 的高性能微服务脚手架**  
-`zero-service` 旨在帮助开发者快速搭建可扩展、可维护的工业协议处理系统，已适配 **IEC 60870-5-104** 协议在电力场站的接入需求。
+`zero-service` 旨在帮助开发者快速搭建可扩展、可维护的工业协议处理系统，已适配 **IEC 60870-5-104** 协议在电力场站的接入需求, 已适配 **Modbus** 协议在工业自动化系统的接入需求。
 
 > 支持 Kafka、gRPC、异步调度、文件上传等场景，适配多语言微服务对接。
 
@@ -19,6 +19,7 @@
     - [`lalhook`：流媒体钩子服务](#lalhook-流媒体钩子服务)
     - [`bridgegtw`：HTTP 代理转发网关](#bridgegtw-http-代理转发网关)
     - [`bridgedump`：南瑞反向隔离装置文件生成服务](#bridgedump-南瑞反向隔离装置文件生成服务)
+    - [`bridgemodbus`：modbus 协议处理服务](#bridgemodbus-modbus 协议处理服务)
 - [使用注意事项](#使用注意事项)
 - [相关链接](#相关链接)
 
@@ -109,6 +110,13 @@
 
 ---
 
+### `bridgemodbus` modbus 协议处理服务
+- 📦 提供 Modbus TCP/RTU 协议处理能力；
+- 🔗 集成 GRPC 服务 
+- 📄 协议定义：[`bridgemodbus.proto`](app/bridgemodbus/bridgemodbus.proto)
+
+---
+
 ## ⚙️ 使用注意事项
 
 1. **依赖管理**：请确认 `go.mod` 中的依赖已正确安装，执行 `go mod tidy`；
@@ -127,6 +135,7 @@
 - [lancet 工具包](https://github.com/duke-git/lancet)
 - [squirrel SQL 构建器](https://github.com/Masterminds/squirrel)
 - [IEC104 协议库](https://github.com/wendy512/iec104)
+- [Modbus 协议库](https://github.com/grid-x/modbus)
 
 ---
 
