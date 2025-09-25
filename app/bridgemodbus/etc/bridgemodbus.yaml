@@ -10,6 +10,14 @@ Log:
   #  Mode: file
   Path: /opt/logs/bridgemodbus
   Level: info
+NacosConfig:
+  IsRegister: true
+  Host: 127.0.0.1
+  Port: 8848
+  Username: nacos
+  PassWord: nacos
+  NamespaceId: public
+  ServiceName: bridge-modbus
 ModbusClientConf:
   Address: 127.0.0.1:5020
   SlaveID: 0
