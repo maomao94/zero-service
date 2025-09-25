@@ -1,5 +1,5 @@
 
-Š
+ê
 bridgemodbus.protobridgemodbus"
 Req
 ping (	Rping"
@@ -7,14 +7,16 @@
 pong (	Rpong"D
 ReadCoilsReq
 address (Raddress
-quantity (Rquantity"(
+quantity (Rquantity"@
 ReadCoilsRes
-results (Rresults"M
+results (Rresults
+values (Rvalues"M
 ReadDiscreteInputsReq
 address (Raddress
-quantity (Rquantity"1
+quantity (Rquantity"I
 ReadDiscreteInputsRes
-results (Rresults"D
+results (Rresults
+values (Rvalues"D
 WriteSingleCoilReq
 address (Raddress
 value (Rvalue".
@@ -28,14 +30,16 @@
 results (Rresults"M
 ReadInputRegistersReq
 address (Raddress
-quantity (Rquantity"1
+quantity (Rquantity"I
 ReadInputRegistersRes
-results (Rresults"O
+results (Rresults
+values (	Rvalues"O
 ReadHoldingRegistersReq
 address (Raddress
-quantity (Rquantity"3
+quantity (Rquantity"K
 ReadHoldingRegistersRes
-results (Rresults"H
+results (Rresults
+values (	Rvalues"H
 WriteSingleRegisterReq
 address (Raddress
 value (Rvalue"2
@@ -71,7 +75,7 @@
 results (26.bridgemodbus.ReadDeviceIdentificationRes.ResultsEntryRresults:
 ResultsEntry
 key (Rkey
-value (Rvalue:82Å	
+value (	Rvalue:82Å	
 BridgeModbus,
 Ping.bridgemodbus.Req.bridgemodbus.ResC
 	ReadCoils.bridgemodbus.ReadCoilsReq.bridgemodbus.ReadCoilsRes^

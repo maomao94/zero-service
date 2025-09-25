@@ -163,7 +163,8 @@ func (x *ReadCoilsReq) GetQuantity() uint32 {
 
 type ReadCoilsRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Results       []byte                 `protobuf:"bytes,1,opt,name=results,proto3" json:"results,omitempty"` // 按位表示的线圈状态（bit0 对应起始地址）
+	Results       []byte                 `protobuf:"bytes,1,opt,name=results,proto3" json:"results,omitempty"`       // 按位表示的线圈状态（bit0 对应起始地址）
+	Values        []bool                 `protobuf:"varint,2,rep,packed,name=values,proto3" json:"values,omitempty"` // 每个元素对应一个线圈状态
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -201,6 +202,13 @@ func (*ReadCoilsRes) Descriptor() ([]byte, []int) {
 func (x *ReadCoilsRes) GetResults() []byte {
 	if x != nil {
 		return x.Results
+	}
+	return nil
+}
+
+func (x *ReadCoilsRes) GetValues() []bool {
+	if x != nil {
+		return x.Values
 	}
 	return nil
 }
@@ -259,7 +267,8 @@ func (x *ReadDiscreteInputsReq) GetQuantity() uint32 {
 
 type ReadDiscreteInputsRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Results       []byte                 `protobuf:"bytes,1,opt,name=results,proto3" json:"results,omitempty"` // 按位表示的离散输入状态
+	Results       []byte                 `protobuf:"bytes,1,opt,name=results,proto3" json:"results,omitempty"`       // 按位表示的离散输入状态
+	Values        []bool                 `protobuf:"varint,2,rep,packed,name=values,proto3" json:"values,omitempty"` // 每个元素对应一个线圈状态
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -297,6 +306,13 @@ func (*ReadDiscreteInputsRes) Descriptor() ([]byte, []int) {
 func (x *ReadDiscreteInputsRes) GetResults() []byte {
 	if x != nil {
 		return x.Results
+	}
+	return nil
+}
+
+func (x *ReadDiscreteInputsRes) GetValues() []bool {
+	if x != nil {
+		return x.Values
 	}
 	return nil
 }
@@ -556,6 +572,7 @@ func (x *ReadInputRegistersReq) GetQuantity() uint32 {
 type ReadInputRegistersRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Results       []byte                 `protobuf:"bytes,1,opt,name=results,proto3" json:"results,omitempty"` // 输入寄存器数据，每寄存器 2 字节，高字节在前
+	Values        []string               `protobuf:"bytes,2,rep,name=values,proto3" json:"values,omitempty"`   // 每个寄存器值按 16 进制字符串返回，例如 "0xFF01"
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -593,6 +610,13 @@ func (*ReadInputRegistersRes) Descriptor() ([]byte, []int) {
 func (x *ReadInputRegistersRes) GetResults() []byte {
 	if x != nil {
 		return x.Results
+	}
+	return nil
+}
+
+func (x *ReadInputRegistersRes) GetValues() []string {
+	if x != nil {
+		return x.Values
 	}
 	return nil
 }
@@ -652,6 +676,7 @@ func (x *ReadHoldingRegistersReq) GetQuantity() uint32 {
 type ReadHoldingRegistersRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Results       []byte                 `protobuf:"bytes,1,opt,name=results,proto3" json:"results,omitempty"` // 保持寄存器数据，每寄存器 2 字节
+	Values        []string               `protobuf:"bytes,2,rep,name=values,proto3" json:"values,omitempty"`   // 每个寄存器值按 16 进制字符串返回，例如 "0xFF01"
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -689,6 +714,13 @@ func (*ReadHoldingRegistersRes) Descriptor() ([]byte, []int) {
 func (x *ReadHoldingRegistersRes) GetResults() []byte {
 	if x != nil {
 		return x.Results
+	}
+	return nil
+}
+
+func (x *ReadHoldingRegistersRes) GetValues() []string {
+	if x != nil {
+		return x.Values
 	}
 	return nil
 }
@@ -1251,7 +1283,7 @@ func (x *ReadDeviceIdentificationReq) GetReadDeviceIdCode() uint32 {
 
 type ReadDeviceIdentificationRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Results       map[uint32][]byte      `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // 对象 ID -> 数据内容
+	Results       map[uint32]string      `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // 对象 ID -> 数据内容
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1286,7 +1318,7 @@ func (*ReadDeviceIdentificationRes) Descriptor() ([]byte, []int) {
 	return file_bridgemodbus_proto_rawDescGZIP(), []int{25}
 }
 
-func (x *ReadDeviceIdentificationRes) GetResults() map[uint32][]byte {
+func (x *ReadDeviceIdentificationRes) GetResults() map[uint32]string {
 	if x != nil {
 		return x.Results
 	}
@@ -1304,14 +1336,16 @@ const file_bridgemodbus_proto_rawDesc = "" +
 	"\x04pong\x18\x01 \x01(\tR\x04pong\"D\n" +
 	"\fReadCoilsReq\x12\x18\n" +
 	"\aaddress\x18\x01 \x01(\rR\aaddress\x12\x1a\n" +
-	"\bquantity\x18\x02 \x01(\rR\bquantity\"(\n" +
+	"\bquantity\x18\x02 \x01(\rR\bquantity\"@\n" +
 	"\fReadCoilsRes\x12\x18\n" +
-	"\aresults\x18\x01 \x01(\fR\aresults\"M\n" +
+	"\aresults\x18\x01 \x01(\fR\aresults\x12\x16\n" +
+	"\x06values\x18\x02 \x03(\bR\x06values\"M\n" +
 	"\x15ReadDiscreteInputsReq\x12\x18\n" +
 	"\aaddress\x18\x01 \x01(\rR\aaddress\x12\x1a\n" +
-	"\bquantity\x18\x02 \x01(\rR\bquantity\"1\n" +
+	"\bquantity\x18\x02 \x01(\rR\bquantity\"I\n" +
 	"\x15ReadDiscreteInputsRes\x12\x18\n" +
-	"\aresults\x18\x01 \x01(\fR\aresults\"D\n" +
+	"\aresults\x18\x01 \x01(\fR\aresults\x12\x16\n" +
+	"\x06values\x18\x02 \x03(\bR\x06values\"D\n" +
 	"\x12WriteSingleCoilReq\x12\x18\n" +
 	"\aaddress\x18\x01 \x01(\rR\aaddress\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\rR\x05value\".\n" +
@@ -1325,14 +1359,16 @@ const file_bridgemodbus_proto_rawDesc = "" +
 	"\aresults\x18\x01 \x01(\fR\aresults\"M\n" +
 	"\x15ReadInputRegistersReq\x12\x18\n" +
 	"\aaddress\x18\x01 \x01(\rR\aaddress\x12\x1a\n" +
-	"\bquantity\x18\x02 \x01(\rR\bquantity\"1\n" +
+	"\bquantity\x18\x02 \x01(\rR\bquantity\"I\n" +
 	"\x15ReadInputRegistersRes\x12\x18\n" +
-	"\aresults\x18\x01 \x01(\fR\aresults\"O\n" +
+	"\aresults\x18\x01 \x01(\fR\aresults\x12\x16\n" +
+	"\x06values\x18\x02 \x03(\tR\x06values\"O\n" +
 	"\x17ReadHoldingRegistersReq\x12\x18\n" +
 	"\aaddress\x18\x01 \x01(\rR\aaddress\x12\x1a\n" +
-	"\bquantity\x18\x02 \x01(\rR\bquantity\"3\n" +
+	"\bquantity\x18\x02 \x01(\rR\bquantity\"K\n" +
 	"\x17ReadHoldingRegistersRes\x12\x18\n" +
-	"\aresults\x18\x01 \x01(\fR\aresults\"H\n" +
+	"\aresults\x18\x01 \x01(\fR\aresults\x12\x16\n" +
+	"\x06values\x18\x02 \x03(\tR\x06values\"H\n" +
 	"\x16WriteSingleRegisterReq\x12\x18\n" +
 	"\aaddress\x18\x01 \x01(\rR\aaddress\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\rR\x05value\"2\n" +
@@ -1368,7 +1404,7 @@ const file_bridgemodbus_proto_rawDesc = "" +
 	"\aresults\x18\x01 \x03(\v26.bridgemodbus.ReadDeviceIdentificationRes.ResultsEntryR\aresults\x1a:\n" +
 	"\fResultsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\rR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\fR\x05value:\x028\x012\xc5\t\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x012\xc5\t\n" +
 	"\fBridgeModbus\x12,\n" +
 	"\x04Ping\x12\x11.bridgemodbus.Req\x1a\x11.bridgemodbus.Res\x12C\n" +
 	"\tReadCoils\x12\x1a.bridgemodbus.ReadCoilsReq\x1a\x1a.bridgemodbus.ReadCoilsRes\x12^\n" +

@@ -73,6 +73,7 @@ message ReadCoilsReq {
 }
 message ReadCoilsRes {
   bytes results = 1;    // 按位表示的线圈状态（bit0 对应起始地址）
+  repeated bool values = 2;  // 每个元素对应一个线圈状态
 }
 
 message ReadDiscreteInputsReq {
@@ -81,6 +82,7 @@ message ReadDiscreteInputsReq {
 }
 message ReadDiscreteInputsRes {
   bytes results = 1;    // 按位表示的离散输入状态
+  repeated bool values = 2;  // 每个元素对应一个线圈状态
 }
 
 message WriteSingleCoilReq {
@@ -108,6 +110,7 @@ message ReadInputRegistersReq {
 }
 message ReadInputRegistersRes {
   bytes results = 1;    // 输入寄存器数据，每寄存器 2 字节，高字节在前
+  repeated string values = 2; // 每个寄存器值按 16 进制字符串返回，例如 "0xFF01"
 }
 
 message ReadHoldingRegistersReq {
@@ -116,6 +119,7 @@ message ReadHoldingRegistersReq {
 }
 message ReadHoldingRegistersRes {
   bytes results = 1;    // 保持寄存器数据，每寄存器 2 字节
+  repeated string values = 2; // 每个寄存器值按 16 进制字符串返回，例如 "0xFF01"
 }
 
 message WriteSingleRegisterReq {
@@ -168,5 +172,5 @@ message ReadDeviceIdentificationReq {
   uint32 read_device_id_code = 1; // 读取类型：0x01=基本, 0x02=常规, 0x03=扩展
 }
 message ReadDeviceIdentificationRes {
-  map<uint32, bytes> results = 1; // 对象 ID -> 数据内容
+  map<uint32, string> results = 1; // 对象 ID -> 数据内容
 }
