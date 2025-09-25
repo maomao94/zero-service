@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"zero-service/common/modbusx"
 
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/app/bridgemodbus/internal/svc"
@@ -25,7 +26,14 @@ func NewReadDiscreteInputsLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 
 // 读取离散输入状态 (Function Code 0x02)
 func (l *ReadDiscreteInputsLogic) ReadDiscreteInputs(in *bridgemodbus.ReadDiscreteInputsReq) (*bridgemodbus.ReadDiscreteInputsRes, error) {
-	// todo: add your logic here and delete this line
-
-	return &bridgemodbus.ReadDiscreteInputsRes{}, nil
+	mbCli := l.svcCtx.ModbusClientPool.Get()
+	defer l.svcCtx.ModbusClientPool.Put(mbCli)
+	results, err := mbCli.ReadCoils(l.ctx, uint16(in.Address), uint16(in.Quantity))
+	if err != nil {
+		return nil, err
+	}
+	return &bridgemodbus.ReadDiscreteInputsRes{
+		Results: results,
+		Values:  modbusx.BytesToBools(results, int(in.Quantity)),
+	}, nil
 }
