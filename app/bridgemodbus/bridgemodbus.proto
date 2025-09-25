@@ -82,7 +82,7 @@ message ReadDiscreteInputsReq {
 }
 message ReadDiscreteInputsRes {
   bytes results = 1;    // 按位表示的离散输入状态
-  repeated bool values = 2;  // 每个元素对应一个线圈状态
+  repeated bool values = 2;  // 每个元素对应一个离散输入
 }
 
 message WriteSingleCoilReq {
