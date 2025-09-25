@@ -268,7 +268,7 @@ func (x *ReadDiscreteInputsReq) GetQuantity() uint32 {
 type ReadDiscreteInputsRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Results       []byte                 `protobuf:"bytes,1,opt,name=results,proto3" json:"results,omitempty"`       // 按位表示的离散输入状态
-	Values        []bool                 `protobuf:"varint,2,rep,packed,name=values,proto3" json:"values,omitempty"` // 每个元素对应一个线圈状态
+	Values        []bool                 `protobuf:"varint,2,rep,packed,name=values,proto3" json:"values,omitempty"` // 每个元素对应一个离散输入
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
