@@ -19,7 +19,7 @@
     - [`lalhook`：流媒体钩子服务](#lalhook-流媒体钩子服务)
     - [`bridgegtw`：HTTP 代理转发网关](#bridgegtw-http-代理转发网关)
     - [`bridgedump`：南瑞反向隔离装置文件生成服务](#bridgedump-南瑞反向隔离装置文件生成服务)
-    - [`bridgemodbus`：modbus 协议处理服务](#bridgemodbus-modbus 协议处理服务)
+    - [`bridgemodbus`：modbus协议处理服务](#bridgemodbus-modbus协议处理服务)
 - [使用注意事项](#使用注意事项)
 - [相关链接](#相关链接)
 
@@ -110,7 +110,7 @@
 
 ---
 
-### `bridgemodbus` modbus 协议处理服务
+### `bridgemodbus` modbus协议处理服务
 - 📦 提供 Modbus TCP/RTU 协议处理能力；
 - 🔗 集成 GRPC 服务 
 - 📄 协议定义：[`bridgemodbus.proto`](app/bridgemodbus/bridgemodbus.proto)
