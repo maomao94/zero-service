@@ -28,8 +28,6 @@ type MessageHandler func(ctx context.Context, topic string, payload []byte)
 type Client struct {
 	client        mqtt.Client
 	cfg           MqttConfig // 保存配置，便于后续使用
-	broker        []string
-	clientID      string
 	mu            sync.Mutex
 	subscriptions map[string]MessageHandler // 存储主题与处理器的映射
 	qos           byte
@@ -44,6 +42,11 @@ func MustNewClient(cfg MqttConfig) *Client {
 
 // NewClient 创建MQTT客户端，连接成功后自动订阅已注册的主题
 func NewClient(cfg MqttConfig) (*Client, error) {
+	// 校验必要配置
+	if len(cfg.Broker) == 0 {
+		return nil, fmt.Errorf("[mqtt] no broker addresses provided in config")
+	}
+
 	// 初始化默认值（防止配置缺失导致异常）
 	if cfg.Timeout <= 0 {
 		cfg.Timeout = 30 // 默认超时30秒
@@ -51,9 +54,8 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 	if cfg.KeepAlive <= 0 {
 		cfg.KeepAlive = 60 // 默认心跳60秒
 	}
+
 	c := &Client{
-		broker:        cfg.Broker,
-		clientID:      cfg.ClientID,
 		cfg:           cfg, // 保存配置到Client
 		subscriptions: make(map[string]MessageHandler),
 		qos:           cfg.Qos,
@@ -68,7 +70,7 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 
 	// 配置MQTT客户端选项
 	opts := mqtt.NewClientOptions()
-	for _, broker := range c.broker {
+	for _, broker := range c.cfg.Broker {
 		opts = opts.AddBroker(broker)
 	}
 	opts.SetClientID(cfg.ClientID).
@@ -139,7 +141,7 @@ func (c *Client) wrapHandler(handler MessageHandler) mqtt.MessageHandler {
 			}
 		}()
 
-		// 调用用户提供的处理器（可考虑允许用户传入context，此处保持兼容）
+		// 调用用户提供的处理器
 		handler(context.Background(), msg.Topic(), msg.Payload())
 	}
 }
