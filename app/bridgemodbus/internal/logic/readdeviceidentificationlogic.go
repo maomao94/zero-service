@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"zero-service/common/modbusx"
 
@@ -28,8 +29,25 @@ func NewReadDeviceIdentificationLogic(ctx context.Context, svcCtx *svc.ServiceCo
 
 // 读取设备标识 (Function Code 0x2B / 0x0E)
 func (l *ReadDeviceIdentificationLogic) ReadDeviceIdentification(in *bridgemodbus.ReadDeviceIdentificationReq) (*bridgemodbus.ReadDeviceIdentificationRes, error) {
-	mbCli := l.svcCtx.ModbusClientPool.Get()
-	defer l.svcCtx.ModbusClientPool.Put(mbCli)
+	var mdCliPool *modbusx.ModbusClientPool
+	var err error
+	if len(in.ModbusCode) == 0 {
+		mdCliPool = l.svcCtx.ModbusClientPool
+	} else {
+		var ok bool
+		mdCliPool, ok = l.svcCtx.Manager.GetPool(in.ModbusCode) // 关键：用=而不是:=，避免局部变量
+		if !ok {
+			mdCliPool, err = l.svcCtx.AddPool(l.ctx, in.ModbusCode)
+			if err != nil {
+				return nil, fmt.Errorf("创建Modbus连接池失败: %w", err)
+			}
+		}
+		if mdCliPool == nil {
+			return nil, errors.New("获取的Modbus连接池为空")
+		}
+	}
+	mbCli := mdCliPool.Get()
+	defer mdCliPool.Put(mbCli)
 	results, err := mbCli.ReadDeviceIdentification(l.ctx, modbus.ReadDeviceIDCode(in.ReadDeviceIdCode))
 	if err != nil {
 		return nil, err
