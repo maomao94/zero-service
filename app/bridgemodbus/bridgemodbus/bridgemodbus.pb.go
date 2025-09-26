@@ -1282,10 +1282,15 @@ func (x *ReadDeviceIdentificationReq) GetReadDeviceIdCode() uint32 {
 }
 
 type ReadDeviceIdentificationRes struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Results       map[uint32]string      `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // 对象 ID -> 数据内容
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 原始对象 ID 映射 (十进制)，方便协议调试/直接对应 Modbus 规范
+	Results map[uint32]string `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// 对象 ID 用十六进制字符串表示，例如 "0x00", "0x01"
+	HexResults map[string]string `protobuf:"bytes,2,rep,name=hexResults,proto3" json:"hexResults,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// 语义化映射 (如果对象 ID 有标准含义，就用名字；否则 fallback 成 Object_0xXX)
+	SemanticResults map[string]string `protobuf:"bytes,3,rep,name=semanticResults,proto3" json:"semanticResults,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *ReadDeviceIdentificationRes) Reset() {
@@ -1321,6 +1326,20 @@ func (*ReadDeviceIdentificationRes) Descriptor() ([]byte, []int) {
 func (x *ReadDeviceIdentificationRes) GetResults() map[uint32]string {
 	if x != nil {
 		return x.Results
+	}
+	return nil
+}
+
+func (x *ReadDeviceIdentificationRes) GetHexResults() map[string]string {
+	if x != nil {
+		return x.HexResults
+	}
+	return nil
+}
+
+func (x *ReadDeviceIdentificationRes) GetSemanticResults() map[string]string {
+	if x != nil {
+		return x.SemanticResults
 	}
 	return nil
 }
@@ -1399,11 +1418,21 @@ const file_bridgemodbus_proto_rawDesc = "" +
 	"\x10ReadFIFOQueueRes\x12\x18\n" +
 	"\aresults\x18\x01 \x01(\fR\aresults\"L\n" +
 	"\x1bReadDeviceIdentificationReq\x12-\n" +
-	"\x13read_device_id_code\x18\x01 \x01(\rR\x10readDeviceIdCode\"\xab\x01\n" +
+	"\x13read_device_id_code\x18\x01 \x01(\rR\x10readDeviceIdCode\"\xf3\x03\n" +
 	"\x1bReadDeviceIdentificationRes\x12P\n" +
-	"\aresults\x18\x01 \x03(\v26.bridgemodbus.ReadDeviceIdentificationRes.ResultsEntryR\aresults\x1a:\n" +
+	"\aresults\x18\x01 \x03(\v26.bridgemodbus.ReadDeviceIdentificationRes.ResultsEntryR\aresults\x12Y\n" +
+	"\n" +
+	"hexResults\x18\x02 \x03(\v29.bridgemodbus.ReadDeviceIdentificationRes.HexResultsEntryR\n" +
+	"hexResults\x12h\n" +
+	"\x0fsemanticResults\x18\x03 \x03(\v2>.bridgemodbus.ReadDeviceIdentificationRes.SemanticResultsEntryR\x0fsemanticResults\x1a:\n" +
 	"\fResultsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\rR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a=\n" +
+	"\x0fHexResultsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1aB\n" +
+	"\x14SemanticResultsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x012\xc5\t\n" +
 	"\fBridgeModbus\x12,\n" +
 	"\x04Ping\x12\x11.bridgemodbus.Req\x1a\x11.bridgemodbus.Res\x12C\n" +
@@ -1433,7 +1462,7 @@ func file_bridgemodbus_proto_rawDescGZIP() []byte {
 	return file_bridgemodbus_proto_rawDescData
 }
 
-var file_bridgemodbus_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
+var file_bridgemodbus_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
 var file_bridgemodbus_proto_goTypes = []any{
 	(*Req)(nil),                           // 0: bridgemodbus.Req
 	(*Res)(nil),                           // 1: bridgemodbus.Res
@@ -1462,40 +1491,44 @@ var file_bridgemodbus_proto_goTypes = []any{
 	(*ReadDeviceIdentificationReq)(nil),   // 24: bridgemodbus.ReadDeviceIdentificationReq
 	(*ReadDeviceIdentificationRes)(nil),   // 25: bridgemodbus.ReadDeviceIdentificationRes
 	nil,                                   // 26: bridgemodbus.ReadDeviceIdentificationRes.ResultsEntry
+	nil,                                   // 27: bridgemodbus.ReadDeviceIdentificationRes.HexResultsEntry
+	nil,                                   // 28: bridgemodbus.ReadDeviceIdentificationRes.SemanticResultsEntry
 }
 var file_bridgemodbus_proto_depIdxs = []int32{
 	26, // 0: bridgemodbus.ReadDeviceIdentificationRes.results:type_name -> bridgemodbus.ReadDeviceIdentificationRes.ResultsEntry
-	0,  // 1: bridgemodbus.BridgeModbus.Ping:input_type -> bridgemodbus.Req
-	2,  // 2: bridgemodbus.BridgeModbus.ReadCoils:input_type -> bridgemodbus.ReadCoilsReq
-	4,  // 3: bridgemodbus.BridgeModbus.ReadDiscreteInputs:input_type -> bridgemodbus.ReadDiscreteInputsReq
-	6,  // 4: bridgemodbus.BridgeModbus.WriteSingleCoil:input_type -> bridgemodbus.WriteSingleCoilReq
-	8,  // 5: bridgemodbus.BridgeModbus.WriteMultipleCoils:input_type -> bridgemodbus.WriteMultipleCoilsReq
-	10, // 6: bridgemodbus.BridgeModbus.ReadInputRegisters:input_type -> bridgemodbus.ReadInputRegistersReq
-	12, // 7: bridgemodbus.BridgeModbus.ReadHoldingRegisters:input_type -> bridgemodbus.ReadHoldingRegistersReq
-	14, // 8: bridgemodbus.BridgeModbus.WriteSingleRegister:input_type -> bridgemodbus.WriteSingleRegisterReq
-	16, // 9: bridgemodbus.BridgeModbus.WriteMultipleRegisters:input_type -> bridgemodbus.WriteMultipleRegistersReq
-	18, // 10: bridgemodbus.BridgeModbus.ReadWriteMultipleRegisters:input_type -> bridgemodbus.ReadWriteMultipleRegistersReq
-	20, // 11: bridgemodbus.BridgeModbus.MaskWriteRegister:input_type -> bridgemodbus.MaskWriteRegisterReq
-	22, // 12: bridgemodbus.BridgeModbus.ReadFIFOQueue:input_type -> bridgemodbus.ReadFIFOQueueReq
-	24, // 13: bridgemodbus.BridgeModbus.ReadDeviceIdentification:input_type -> bridgemodbus.ReadDeviceIdentificationReq
-	1,  // 14: bridgemodbus.BridgeModbus.Ping:output_type -> bridgemodbus.Res
-	3,  // 15: bridgemodbus.BridgeModbus.ReadCoils:output_type -> bridgemodbus.ReadCoilsRes
-	5,  // 16: bridgemodbus.BridgeModbus.ReadDiscreteInputs:output_type -> bridgemodbus.ReadDiscreteInputsRes
-	7,  // 17: bridgemodbus.BridgeModbus.WriteSingleCoil:output_type -> bridgemodbus.WriteSingleCoilRes
-	9,  // 18: bridgemodbus.BridgeModbus.WriteMultipleCoils:output_type -> bridgemodbus.WriteMultipleCoilsRes
-	11, // 19: bridgemodbus.BridgeModbus.ReadInputRegisters:output_type -> bridgemodbus.ReadInputRegistersRes
-	13, // 20: bridgemodbus.BridgeModbus.ReadHoldingRegisters:output_type -> bridgemodbus.ReadHoldingRegistersRes
-	15, // 21: bridgemodbus.BridgeModbus.WriteSingleRegister:output_type -> bridgemodbus.WriteSingleRegisterRes
-	17, // 22: bridgemodbus.BridgeModbus.WriteMultipleRegisters:output_type -> bridgemodbus.WriteMultipleRegistersRes
-	19, // 23: bridgemodbus.BridgeModbus.ReadWriteMultipleRegisters:output_type -> bridgemodbus.ReadWriteMultipleRegistersRes
-	21, // 24: bridgemodbus.BridgeModbus.MaskWriteRegister:output_type -> bridgemodbus.MaskWriteRegisterRes
-	23, // 25: bridgemodbus.BridgeModbus.ReadFIFOQueue:output_type -> bridgemodbus.ReadFIFOQueueRes
-	25, // 26: bridgemodbus.BridgeModbus.ReadDeviceIdentification:output_type -> bridgemodbus.ReadDeviceIdentificationRes
-	14, // [14:27] is the sub-list for method output_type
-	1,  // [1:14] is the sub-list for method input_type
-	1,  // [1:1] is the sub-list for extension type_name
-	1,  // [1:1] is the sub-list for extension extendee
-	0,  // [0:1] is the sub-list for field type_name
+	27, // 1: bridgemodbus.ReadDeviceIdentificationRes.hexResults:type_name -> bridgemodbus.ReadDeviceIdentificationRes.HexResultsEntry
+	28, // 2: bridgemodbus.ReadDeviceIdentificationRes.semanticResults:type_name -> bridgemodbus.ReadDeviceIdentificationRes.SemanticResultsEntry
+	0,  // 3: bridgemodbus.BridgeModbus.Ping:input_type -> bridgemodbus.Req
+	2,  // 4: bridgemodbus.BridgeModbus.ReadCoils:input_type -> bridgemodbus.ReadCoilsReq
+	4,  // 5: bridgemodbus.BridgeModbus.ReadDiscreteInputs:input_type -> bridgemodbus.ReadDiscreteInputsReq
+	6,  // 6: bridgemodbus.BridgeModbus.WriteSingleCoil:input_type -> bridgemodbus.WriteSingleCoilReq
+	8,  // 7: bridgemodbus.BridgeModbus.WriteMultipleCoils:input_type -> bridgemodbus.WriteMultipleCoilsReq
+	10, // 8: bridgemodbus.BridgeModbus.ReadInputRegisters:input_type -> bridgemodbus.ReadInputRegistersReq
+	12, // 9: bridgemodbus.BridgeModbus.ReadHoldingRegisters:input_type -> bridgemodbus.ReadHoldingRegistersReq
+	14, // 10: bridgemodbus.BridgeModbus.WriteSingleRegister:input_type -> bridgemodbus.WriteSingleRegisterReq
+	16, // 11: bridgemodbus.BridgeModbus.WriteMultipleRegisters:input_type -> bridgemodbus.WriteMultipleRegistersReq
+	18, // 12: bridgemodbus.BridgeModbus.ReadWriteMultipleRegisters:input_type -> bridgemodbus.ReadWriteMultipleRegistersReq
+	20, // 13: bridgemodbus.BridgeModbus.MaskWriteRegister:input_type -> bridgemodbus.MaskWriteRegisterReq
+	22, // 14: bridgemodbus.BridgeModbus.ReadFIFOQueue:input_type -> bridgemodbus.ReadFIFOQueueReq
+	24, // 15: bridgemodbus.BridgeModbus.ReadDeviceIdentification:input_type -> bridgemodbus.ReadDeviceIdentificationReq
+	1,  // 16: bridgemodbus.BridgeModbus.Ping:output_type -> bridgemodbus.Res
+	3,  // 17: bridgemodbus.BridgeModbus.ReadCoils:output_type -> bridgemodbus.ReadCoilsRes
+	5,  // 18: bridgemodbus.BridgeModbus.ReadDiscreteInputs:output_type -> bridgemodbus.ReadDiscreteInputsRes
+	7,  // 19: bridgemodbus.BridgeModbus.WriteSingleCoil:output_type -> bridgemodbus.WriteSingleCoilRes
+	9,  // 20: bridgemodbus.BridgeModbus.WriteMultipleCoils:output_type -> bridgemodbus.WriteMultipleCoilsRes
+	11, // 21: bridgemodbus.BridgeModbus.ReadInputRegisters:output_type -> bridgemodbus.ReadInputRegistersRes
+	13, // 22: bridgemodbus.BridgeModbus.ReadHoldingRegisters:output_type -> bridgemodbus.ReadHoldingRegistersRes
+	15, // 23: bridgemodbus.BridgeModbus.WriteSingleRegister:output_type -> bridgemodbus.WriteSingleRegisterRes
+	17, // 24: bridgemodbus.BridgeModbus.WriteMultipleRegisters:output_type -> bridgemodbus.WriteMultipleRegistersRes
+	19, // 25: bridgemodbus.BridgeModbus.ReadWriteMultipleRegisters:output_type -> bridgemodbus.ReadWriteMultipleRegistersRes
+	21, // 26: bridgemodbus.BridgeModbus.MaskWriteRegister:output_type -> bridgemodbus.MaskWriteRegisterRes
+	23, // 27: bridgemodbus.BridgeModbus.ReadFIFOQueue:output_type -> bridgemodbus.ReadFIFOQueueRes
+	25, // 28: bridgemodbus.BridgeModbus.ReadDeviceIdentification:output_type -> bridgemodbus.ReadDeviceIdentificationRes
+	16, // [16:29] is the sub-list for method output_type
+	3,  // [3:16] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_bridgemodbus_proto_init() }
@@ -1509,7 +1542,7 @@ func file_bridgemodbus_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_bridgemodbus_proto_rawDesc), len(file_bridgemodbus_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   27,
+			NumMessages:   29,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -172,5 +172,10 @@ message ReadDeviceIdentificationReq {
   uint32 read_device_id_code = 1; // 读取类型：0x01=基本, 0x02=常规, 0x03=扩展
 }
 message ReadDeviceIdentificationRes {
-  map<uint32, string> results = 1; // 对象 ID -> 数据内容
+  // 原始对象 ID 映射 (十进制)，方便协议调试/直接对应 Modbus 规范
+  map<uint32, string> results = 1;
+  // 对象 ID 用十六进制字符串表示，例如 "0x00", "0x01"
+  map<string, string> hexResults = 2;
+  // 语义化映射 (如果对象 ID 有标准含义，就用名字；否则 fallback 成 Object_0xXX)
+  map<string, string> semanticResults = 3;
 }

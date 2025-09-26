@@ -1,5 +1,5 @@
 
-ê
+²
 bridgemodbus.protobridgemodbus"
 Req
 ping (	Rping"
@@ -70,11 +70,21 @@
 ReadFIFOQueueRes
 results (Rresults"L
 ReadDeviceIdentificationReq-
-read_device_id_code (RreadDeviceIdCode"«
+read_device_id_code (RreadDeviceIdCode"ó
 ReadDeviceIdentificationResP
-results (26.bridgemodbus.ReadDeviceIdentificationRes.ResultsEntryRresults:
+results (26.bridgemodbus.ReadDeviceIdentificationRes.ResultsEntryRresultsY
+
+hexResults (29.bridgemodbus.ReadDeviceIdentificationRes.HexResultsEntryR
+hexResultsh
+semanticResults (2>.bridgemodbus.ReadDeviceIdentificationRes.SemanticResultsEntryRsemanticResults:
 ResultsEntry
 key (Rkey
+value (	Rvalue:8=
+HexResultsEntry
+key (	Rkey
+value (	Rvalue:8B
+SemanticResultsEntry
+key (	Rkey
 value (	Rvalue:82Å	
 BridgeModbus,
 Ping.bridgemodbus.Req.bridgemodbus.ResC

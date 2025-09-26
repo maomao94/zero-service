@@ -15,6 +15,27 @@ import (
 	"github.com/zeromicro/go-zero/core/syncx"
 )
 
+// Standard Modbus Device Identification object IDs
+const (
+	DeviceIDVendorName          byte = 0x00 // 厂商名称
+	DeviceIDProductCode         byte = 0x01 // 产品代码
+	DeviceIDMajorMinorRevision  byte = 0x02 // 版本号 (Major.Minor)
+	DeviceIDVendorURL           byte = 0x03 // 厂商网址
+	DeviceIDProductName         byte = 0x04 // 产品名称
+	DeviceIDModelName           byte = 0x05 // 型号名称
+	DeviceIDUserApplicationName byte = 0x06 // 用户应用名称
+)
+
+var DeviceIDObjectNames = map[byte]string{
+	DeviceIDVendorName:          "VendorName",
+	DeviceIDProductCode:         "ProductCode",
+	DeviceIDMajorMinorRevision:  "MajorMinorRevision",
+	DeviceIDVendorURL:           "VendorURL",
+	DeviceIDProductName:         "ProductName",
+	DeviceIDModelName:           "ModelName",
+	DeviceIDUserApplicationName: "UserApplicationName",
+}
+
 type ModbusClientConf struct {
 	// TCP 设备地址，格式 IP:Port
 	Address string `json:"address"`
