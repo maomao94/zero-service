@@ -34,7 +34,6 @@ type Client struct {
 	subscriptions map[string]MessageHandler // 存储主题与处理器的映射
 	qos           byte
 	metrics       *stat.Metrics
-	ctx           context.Context
 }
 
 func MustNewClient(cfg MqttConfig) *Client {
