@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/duke-git/lancet/v2/cryptor"
 	"github.com/grid-x/modbus"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/syncx"
@@ -217,6 +218,7 @@ type ModbusLogger struct {
 
 func (l *ModbusLogger) Printf(format string, v ...any) {
 	ctx := logx.ContextWithFields(context.Background(), logx.Field("address", l.conf.Address))
+	ctx = logx.ContextWithFields(ctx, logx.Field("session", cryptor.Md5String(l.conf.Address)))
 	for _, val := range v {
 		if err, ok := val.(error); ok && err != nil {
 			logx.Error(err)
