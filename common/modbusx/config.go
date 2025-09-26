@@ -171,15 +171,18 @@ func NewModbusClient(c *ModbusClientConf) (*ModbusClient, error) {
 
 // ModbusClientPool 管理 Modbus TCP 客户端连接复用
 type ModbusClientPool struct {
-	pool *syncx.Pool
-	lock sync.Mutex
-	conf *ModbusClientConf
+	pool     *syncx.Pool
+	lock     sync.Mutex
+	conf     *ModbusClientConf
+	mu       sync.Mutex
+	lastUsed time.Time
 }
 
 // NewModbusClientPool 初始化一个 Modbus 客户端连接池
 func NewModbusClientPool(conf *ModbusClientConf, size int) *ModbusClientPool {
 	p := &ModbusClientPool{
-		conf: conf,
+		conf:     conf,
+		lastUsed: time.Now(),
 	}
 
 	p.pool = syncx.NewPool(
@@ -202,12 +205,13 @@ func NewModbusClientPool(conf *ModbusClientConf, size int) *ModbusClientPool {
 	return p
 }
 
-// Get 获取一个 Modbus TCP 客户端连接
 func (p *ModbusClientPool) Get() *ModbusClient {
+	p.mu.Lock()
+	p.lastUsed = time.Now() // 更新最后使用时间
+	p.mu.Unlock()
 	return p.pool.Get().(*ModbusClient)
 }
 
-// Put 归还一个客户端连接
 func (p *ModbusClientPool) Put(cli *ModbusClient) {
 	p.pool.Put(cli)
 }
