@@ -1,76 +1,112 @@
 
-²
+²
 bridgemodbus.protobridgemodbus"
 Req
 ping (	Rping"
 Res
-pong (	Rpong"D
-ReadCoilsReq
-address (Raddress
-quantity (Rquantity"@
+pong (	Rpong"d
+ReadCoilsReq
+
+modbusCode (	R
+modbusCode
+address (Raddress
+quantity (Rquantity"@
 ReadCoilsRes
 results (Rresults
-values (Rvalues"M
-ReadDiscreteInputsReq
-address (Raddress
-quantity (Rquantity"I
+values (Rvalues"m
+ReadDiscreteInputsReq
+
+modbusCode (	R
+modbusCode
+address (Raddress
+quantity (Rquantity"I
 ReadDiscreteInputsRes
 results (Rresults
-values (Rvalues"D
-WriteSingleCoilReq
-address (Raddress
-value (Rvalue".
+values (Rvalues"d
+WriteSingleCoilReq
+
+modbusCode (	R
+modbusCode
+address (Raddress
+value (Rvalue".
 WriteSingleCoilRes
-results (Rresults"e
-WriteMultipleCoilsReq
-address (Raddress
-quantity (Rquantity
-values (Rvalues"1
+results (Rresults"…
+WriteMultipleCoilsReq
+
+modbusCode (	R
+modbusCode
+address (Raddress
+quantity (Rquantity
+values (Rvalues"1
 WriteMultipleCoilsRes
-results (Rresults"M
-ReadInputRegistersReq
-address (Raddress
-quantity (Rquantity"I
+results (Rresults"m
+ReadInputRegistersReq
+
+modbusCode (	R
+modbusCode
+address (Raddress
+quantity (Rquantity"I
 ReadInputRegistersRes
 results (Rresults
-values (	Rvalues"O
-ReadHoldingRegistersReq
-address (Raddress
-quantity (Rquantity"K
+values (	Rvalues"o
+ReadHoldingRegistersReq
+
+modbusCode (	R
+modbusCode
+address (Raddress
+quantity (Rquantity"K
 ReadHoldingRegistersRes
 results (Rresults
-values (	Rvalues"H
-WriteSingleRegisterReq
-address (Raddress
-value (Rvalue"2
+values (	Rvalues"h
+WriteSingleRegisterReq
+
+modbusCode (	R
+modbusCode
+address (Raddress
+value (Rvalue"2
 WriteSingleRegisterRes
-results (Rresults"i
-WriteMultipleRegistersReq
-address (Raddress
-quantity (Rquantity
-values (Rvalues"5
+results (Rresults"‰
+WriteMultipleRegistersReq
+
+modbusCode (	R
+modbusCode
+address (Raddress
+quantity (Rquantity
+values (Rvalues"5
 WriteMultipleRegistersRes
-results (Rresults"Ç
-ReadWriteMultipleRegistersReq 
-readAddress (RreadAddress"
-readQuantity (RreadQuantity"
-writeAddress (RwriteAddress$
-writeQuantity (RwriteQuantity
-values (Rvalues"9
+results (Rresults"ç
+ReadWriteMultipleRegistersReq
+
+modbusCode (	R
+modbusCode 
+readAddress (RreadAddress"
+readQuantity (RreadQuantity"
+writeAddress (RwriteAddress$
+writeQuantity (RwriteQuantity
+values (Rvalues"9
 ReadWriteMultipleRegistersRes
-results (Rresults"b
-MaskWriteRegisterReq
-address (Raddress
-andMask (RandMask
-orMask (RorMask"0
+results (Rresults"‚
+MaskWriteRegisterReq
+
+modbusCode (	R
+modbusCode
+address (Raddress
+andMask (RandMask
+orMask (RorMask"0
 MaskWriteRegisterRes
-results (Rresults",
-ReadFIFOQueueReq
-address (Raddress",
-ReadFIFOQueueRes
 results (Rresults"L
-ReadDeviceIdentificationReq-
-read_device_id_code (RreadDeviceIdCode"ó
+ReadFIFOQueueReq
+
+modbusCode (	R
+modbusCode
+address (Raddress",
+ReadFIFOQueueRes
+results (Rresults"i
+ReadDeviceIdentificationReq
+
+modbusCode (	R
+modbusCode*
+readDeviceIdCode (RreadDeviceIdCode"ó
 ReadDeviceIdentificationResP
 results (26.bridgemodbus.ReadDeviceIdentificationRes.ResultsEntryRresultsY
 

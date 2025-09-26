@@ -111,8 +111,9 @@ func (x *Res) GetPong() string {
 
 type ReadCoilsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Address       uint32                 `protobuf:"varint,1,opt,name=address,proto3" json:"address,omitempty"`   // 起始线圈地址
-	Quantity      uint32                 `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"` // 读取数量（1–2000）
+	ModbusCode    string                 `protobuf:"bytes,1,opt,name=modbusCode,proto3" json:"modbusCode,omitempty"` // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+	Address       uint32                 `protobuf:"varint,2,opt,name=address,proto3" json:"address,omitempty"`      // 起始线圈地址
+	Quantity      uint32                 `protobuf:"varint,3,opt,name=quantity,proto3" json:"quantity,omitempty"`    // 读取数量（1–2000）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -145,6 +146,13 @@ func (x *ReadCoilsReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ReadCoilsReq.ProtoReflect.Descriptor instead.
 func (*ReadCoilsReq) Descriptor() ([]byte, []int) {
 	return file_bridgemodbus_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ReadCoilsReq) GetModbusCode() string {
+	if x != nil {
+		return x.ModbusCode
+	}
+	return ""
 }
 
 func (x *ReadCoilsReq) GetAddress() uint32 {
@@ -215,8 +223,9 @@ func (x *ReadCoilsRes) GetValues() []bool {
 
 type ReadDiscreteInputsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Address       uint32                 `protobuf:"varint,1,opt,name=address,proto3" json:"address,omitempty"`   // 起始离散输入地址
-	Quantity      uint32                 `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"` // 读取数量（1–2000）
+	ModbusCode    string                 `protobuf:"bytes,1,opt,name=modbusCode,proto3" json:"modbusCode,omitempty"` // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+	Address       uint32                 `protobuf:"varint,2,opt,name=address,proto3" json:"address,omitempty"`      // 起始离散输入地址
+	Quantity      uint32                 `protobuf:"varint,3,opt,name=quantity,proto3" json:"quantity,omitempty"`    // 读取数量（1–2000）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -249,6 +258,13 @@ func (x *ReadDiscreteInputsReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ReadDiscreteInputsReq.ProtoReflect.Descriptor instead.
 func (*ReadDiscreteInputsReq) Descriptor() ([]byte, []int) {
 	return file_bridgemodbus_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ReadDiscreteInputsReq) GetModbusCode() string {
+	if x != nil {
+		return x.ModbusCode
+	}
+	return ""
 }
 
 func (x *ReadDiscreteInputsReq) GetAddress() uint32 {
@@ -319,8 +335,9 @@ func (x *ReadDiscreteInputsRes) GetValues() []bool {
 
 type WriteSingleCoilReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Address       uint32                 `protobuf:"varint,1,opt,name=address,proto3" json:"address,omitempty"` // 线圈地址
-	Value         uint32                 `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`     // 写入值：0x0000=OFF, 0xFF00=ON
+	ModbusCode    string                 `protobuf:"bytes,1,opt,name=modbusCode,proto3" json:"modbusCode,omitempty"` // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+	Address       uint32                 `protobuf:"varint,2,opt,name=address,proto3" json:"address,omitempty"`      // 线圈地址
+	Value         uint32                 `protobuf:"varint,3,opt,name=value,proto3" json:"value,omitempty"`          // 写入值：0x0000=OFF, 0xFF00=ON
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -353,6 +370,13 @@ func (x *WriteSingleCoilReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use WriteSingleCoilReq.ProtoReflect.Descriptor instead.
 func (*WriteSingleCoilReq) Descriptor() ([]byte, []int) {
 	return file_bridgemodbus_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *WriteSingleCoilReq) GetModbusCode() string {
+	if x != nil {
+		return x.ModbusCode
+	}
+	return ""
 }
 
 func (x *WriteSingleCoilReq) GetAddress() uint32 {
@@ -415,9 +439,10 @@ func (x *WriteSingleCoilRes) GetResults() []byte {
 
 type WriteMultipleCoilsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Address       uint32                 `protobuf:"varint,1,opt,name=address,proto3" json:"address,omitempty"`   // 起始线圈地址
-	Quantity      uint32                 `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"` // 写入数量
-	Values        []byte                 `protobuf:"bytes,3,opt,name=values,proto3" json:"values,omitempty"`      // 每 bit 对应一个线圈状态，0=OFF，1=ON
+	ModbusCode    string                 `protobuf:"bytes,1,opt,name=modbusCode,proto3" json:"modbusCode,omitempty"` // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+	Address       uint32                 `protobuf:"varint,2,opt,name=address,proto3" json:"address,omitempty"`      // 起始线圈地址
+	Quantity      uint32                 `protobuf:"varint,3,opt,name=quantity,proto3" json:"quantity,omitempty"`    // 写入数量
+	Values        []byte                 `protobuf:"bytes,4,opt,name=values,proto3" json:"values,omitempty"`         // 每 bit 对应一个线圈状态，0=OFF，1=ON
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -450,6 +475,13 @@ func (x *WriteMultipleCoilsReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use WriteMultipleCoilsReq.ProtoReflect.Descriptor instead.
 func (*WriteMultipleCoilsReq) Descriptor() ([]byte, []int) {
 	return file_bridgemodbus_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *WriteMultipleCoilsReq) GetModbusCode() string {
+	if x != nil {
+		return x.ModbusCode
+	}
+	return ""
 }
 
 func (x *WriteMultipleCoilsReq) GetAddress() uint32 {
@@ -519,8 +551,9 @@ func (x *WriteMultipleCoilsRes) GetResults() []byte {
 
 type ReadInputRegistersReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Address       uint32                 `protobuf:"varint,1,opt,name=address,proto3" json:"address,omitempty"`   // 起始寄存器地址
-	Quantity      uint32                 `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"` // 读取数量（1–125）
+	ModbusCode    string                 `protobuf:"bytes,1,opt,name=modbusCode,proto3" json:"modbusCode,omitempty"` // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+	Address       uint32                 `protobuf:"varint,2,opt,name=address,proto3" json:"address,omitempty"`      // 起始寄存器地址
+	Quantity      uint32                 `protobuf:"varint,3,opt,name=quantity,proto3" json:"quantity,omitempty"`    // 读取数量（1–125）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -553,6 +586,13 @@ func (x *ReadInputRegistersReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ReadInputRegistersReq.ProtoReflect.Descriptor instead.
 func (*ReadInputRegistersReq) Descriptor() ([]byte, []int) {
 	return file_bridgemodbus_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ReadInputRegistersReq) GetModbusCode() string {
+	if x != nil {
+		return x.ModbusCode
+	}
+	return ""
 }
 
 func (x *ReadInputRegistersReq) GetAddress() uint32 {
@@ -623,8 +663,9 @@ func (x *ReadInputRegistersRes) GetValues() []string {
 
 type ReadHoldingRegistersReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Address       uint32                 `protobuf:"varint,1,opt,name=address,proto3" json:"address,omitempty"`   // 起始寄存器地址
-	Quantity      uint32                 `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"` // 读取数量（1–125）
+	ModbusCode    string                 `protobuf:"bytes,1,opt,name=modbusCode,proto3" json:"modbusCode,omitempty"` // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+	Address       uint32                 `protobuf:"varint,2,opt,name=address,proto3" json:"address,omitempty"`      // 起始寄存器地址
+	Quantity      uint32                 `protobuf:"varint,3,opt,name=quantity,proto3" json:"quantity,omitempty"`    // 读取数量（1–125）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -657,6 +698,13 @@ func (x *ReadHoldingRegistersReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ReadHoldingRegistersReq.ProtoReflect.Descriptor instead.
 func (*ReadHoldingRegistersReq) Descriptor() ([]byte, []int) {
 	return file_bridgemodbus_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ReadHoldingRegistersReq) GetModbusCode() string {
+	if x != nil {
+		return x.ModbusCode
+	}
+	return ""
 }
 
 func (x *ReadHoldingRegistersReq) GetAddress() uint32 {
@@ -727,8 +775,9 @@ func (x *ReadHoldingRegistersRes) GetValues() []string {
 
 type WriteSingleRegisterReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Address       uint32                 `protobuf:"varint,1,opt,name=address,proto3" json:"address,omitempty"` // 寄存器地址
-	Value         uint32                 `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`     // 写入的 16-bit 值
+	ModbusCode    string                 `protobuf:"bytes,1,opt,name=modbusCode,proto3" json:"modbusCode,omitempty"` // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+	Address       uint32                 `protobuf:"varint,2,opt,name=address,proto3" json:"address,omitempty"`      // 寄存器地址
+	Value         uint32                 `protobuf:"varint,3,opt,name=value,proto3" json:"value,omitempty"`          // 写入的 16-bit 值
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -761,6 +810,13 @@ func (x *WriteSingleRegisterReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use WriteSingleRegisterReq.ProtoReflect.Descriptor instead.
 func (*WriteSingleRegisterReq) Descriptor() ([]byte, []int) {
 	return file_bridgemodbus_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *WriteSingleRegisterReq) GetModbusCode() string {
+	if x != nil {
+		return x.ModbusCode
+	}
+	return ""
 }
 
 func (x *WriteSingleRegisterReq) GetAddress() uint32 {
@@ -823,9 +879,10 @@ func (x *WriteSingleRegisterRes) GetResults() []byte {
 
 type WriteMultipleRegistersReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Address       uint32                 `protobuf:"varint,1,opt,name=address,proto3" json:"address,omitempty"`   // 起始寄存器地址
-	Quantity      uint32                 `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"` // 写入数量
-	Values        []byte                 `protobuf:"bytes,3,opt,name=values,proto3" json:"values,omitempty"`      // 按寄存器顺序的字节数组，每寄存器 2 字节
+	ModbusCode    string                 `protobuf:"bytes,1,opt,name=modbusCode,proto3" json:"modbusCode,omitempty"` // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+	Address       uint32                 `protobuf:"varint,2,opt,name=address,proto3" json:"address,omitempty"`      // 起始寄存器地址
+	Quantity      uint32                 `protobuf:"varint,3,opt,name=quantity,proto3" json:"quantity,omitempty"`    // 写入数量
+	Values        []byte                 `protobuf:"bytes,4,opt,name=values,proto3" json:"values,omitempty"`         // 按寄存器顺序的字节数组，每寄存器 2 字节
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -858,6 +915,13 @@ func (x *WriteMultipleRegistersReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use WriteMultipleRegistersReq.ProtoReflect.Descriptor instead.
 func (*WriteMultipleRegistersReq) Descriptor() ([]byte, []int) {
 	return file_bridgemodbus_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *WriteMultipleRegistersReq) GetModbusCode() string {
+	if x != nil {
+		return x.ModbusCode
+	}
+	return ""
 }
 
 func (x *WriteMultipleRegistersReq) GetAddress() uint32 {
@@ -927,11 +991,12 @@ func (x *WriteMultipleRegistersRes) GetResults() []byte {
 
 type ReadWriteMultipleRegistersReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ReadAddress   uint32                 `protobuf:"varint,1,opt,name=readAddress,proto3" json:"readAddress,omitempty"`     // 读取起始寄存器地址
-	ReadQuantity  uint32                 `protobuf:"varint,2,opt,name=readQuantity,proto3" json:"readQuantity,omitempty"`   // 读取数量
-	WriteAddress  uint32                 `protobuf:"varint,3,opt,name=writeAddress,proto3" json:"writeAddress,omitempty"`   // 写入起始寄存器地址
-	WriteQuantity uint32                 `protobuf:"varint,4,opt,name=writeQuantity,proto3" json:"writeQuantity,omitempty"` // 写入数量
-	Values        []byte                 `protobuf:"bytes,5,opt,name=values,proto3" json:"values,omitempty"`                // 写入数据，每寄存器 2 字节
+	ModbusCode    string                 `protobuf:"bytes,1,opt,name=modbusCode,proto3" json:"modbusCode,omitempty"`        // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+	ReadAddress   uint32                 `protobuf:"varint,2,opt,name=readAddress,proto3" json:"readAddress,omitempty"`     // 读取起始寄存器地址
+	ReadQuantity  uint32                 `protobuf:"varint,3,opt,name=readQuantity,proto3" json:"readQuantity,omitempty"`   // 读取数量
+	WriteAddress  uint32                 `protobuf:"varint,4,opt,name=writeAddress,proto3" json:"writeAddress,omitempty"`   // 写入起始寄存器地址
+	WriteQuantity uint32                 `protobuf:"varint,5,opt,name=writeQuantity,proto3" json:"writeQuantity,omitempty"` // 写入数量
+	Values        []byte                 `protobuf:"bytes,6,opt,name=values,proto3" json:"values,omitempty"`                // 写入数据，每寄存器 2 字节
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -964,6 +1029,13 @@ func (x *ReadWriteMultipleRegistersReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ReadWriteMultipleRegistersReq.ProtoReflect.Descriptor instead.
 func (*ReadWriteMultipleRegistersReq) Descriptor() ([]byte, []int) {
 	return file_bridgemodbus_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *ReadWriteMultipleRegistersReq) GetModbusCode() string {
+	if x != nil {
+		return x.ModbusCode
+	}
+	return ""
 }
 
 func (x *ReadWriteMultipleRegistersReq) GetReadAddress() uint32 {
@@ -1047,9 +1119,10 @@ func (x *ReadWriteMultipleRegistersRes) GetResults() []byte {
 
 type MaskWriteRegisterReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Address       uint32                 `protobuf:"varint,1,opt,name=address,proto3" json:"address,omitempty"` // 寄存器地址
-	AndMask       uint32                 `protobuf:"varint,2,opt,name=andMask,proto3" json:"andMask,omitempty"` // AND 掩码
-	OrMask        uint32                 `protobuf:"varint,3,opt,name=orMask,proto3" json:"orMask,omitempty"`   // OR 掩码
+	ModbusCode    string                 `protobuf:"bytes,1,opt,name=modbusCode,proto3" json:"modbusCode,omitempty"` // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+	Address       uint32                 `protobuf:"varint,2,opt,name=address,proto3" json:"address,omitempty"`      // 寄存器地址
+	AndMask       uint32                 `protobuf:"varint,3,opt,name=andMask,proto3" json:"andMask,omitempty"`      // AND 掩码
+	OrMask        uint32                 `protobuf:"varint,4,opt,name=orMask,proto3" json:"orMask,omitempty"`        // OR 掩码
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1082,6 +1155,13 @@ func (x *MaskWriteRegisterReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use MaskWriteRegisterReq.ProtoReflect.Descriptor instead.
 func (*MaskWriteRegisterReq) Descriptor() ([]byte, []int) {
 	return file_bridgemodbus_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *MaskWriteRegisterReq) GetModbusCode() string {
+	if x != nil {
+		return x.ModbusCode
+	}
+	return ""
 }
 
 func (x *MaskWriteRegisterReq) GetAddress() uint32 {
@@ -1151,7 +1231,8 @@ func (x *MaskWriteRegisterRes) GetResults() []byte {
 
 type ReadFIFOQueueReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Address       uint32                 `protobuf:"varint,1,opt,name=address,proto3" json:"address,omitempty"` // FIFO 队列寄存器地址
+	ModbusCode    string                 `protobuf:"bytes,1,opt,name=modbusCode,proto3" json:"modbusCode,omitempty"` // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+	Address       uint32                 `protobuf:"varint,2,opt,name=address,proto3" json:"address,omitempty"`      // FIFO 队列寄存器地址
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1184,6 +1265,13 @@ func (x *ReadFIFOQueueReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ReadFIFOQueueReq.ProtoReflect.Descriptor instead.
 func (*ReadFIFOQueueReq) Descriptor() ([]byte, []int) {
 	return file_bridgemodbus_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *ReadFIFOQueueReq) GetModbusCode() string {
+	if x != nil {
+		return x.ModbusCode
+	}
+	return ""
 }
 
 func (x *ReadFIFOQueueReq) GetAddress() uint32 {
@@ -1239,7 +1327,8 @@ func (x *ReadFIFOQueueRes) GetResults() []byte {
 
 type ReadDeviceIdentificationReq struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
-	ReadDeviceIdCode uint32                 `protobuf:"varint,1,opt,name=read_device_id_code,json=readDeviceIdCode,proto3" json:"read_device_id_code,omitempty"` // 读取类型：0x01=基本, 0x02=常规, 0x03=扩展
+	ModbusCode       string                 `protobuf:"bytes,1,opt,name=modbusCode,proto3" json:"modbusCode,omitempty"`              // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+	ReadDeviceIdCode uint32                 `protobuf:"varint,2,opt,name=readDeviceIdCode,proto3" json:"readDeviceIdCode,omitempty"` // 读取类型：0x01=基本, 0x02=常规, 0x03=扩展
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -1272,6 +1361,13 @@ func (x *ReadDeviceIdentificationReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ReadDeviceIdentificationReq.ProtoReflect.Descriptor instead.
 func (*ReadDeviceIdentificationReq) Descriptor() ([]byte, []int) {
 	return file_bridgemodbus_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *ReadDeviceIdentificationReq) GetModbusCode() string {
+	if x != nil {
+		return x.ModbusCode
+	}
+	return ""
 }
 
 func (x *ReadDeviceIdentificationReq) GetReadDeviceIdCode() uint32 {
@@ -1352,73 +1448,109 @@ const file_bridgemodbus_proto_rawDesc = "" +
 	"\x03Req\x12\x12\n" +
 	"\x04ping\x18\x01 \x01(\tR\x04ping\"\x19\n" +
 	"\x03Res\x12\x12\n" +
-	"\x04pong\x18\x01 \x01(\tR\x04pong\"D\n" +
-	"\fReadCoilsReq\x12\x18\n" +
-	"\aaddress\x18\x01 \x01(\rR\aaddress\x12\x1a\n" +
-	"\bquantity\x18\x02 \x01(\rR\bquantity\"@\n" +
+	"\x04pong\x18\x01 \x01(\tR\x04pong\"d\n" +
+	"\fReadCoilsReq\x12\x1e\n" +
+	"\n" +
+	"modbusCode\x18\x01 \x01(\tR\n" +
+	"modbusCode\x12\x18\n" +
+	"\aaddress\x18\x02 \x01(\rR\aaddress\x12\x1a\n" +
+	"\bquantity\x18\x03 \x01(\rR\bquantity\"@\n" +
 	"\fReadCoilsRes\x12\x18\n" +
 	"\aresults\x18\x01 \x01(\fR\aresults\x12\x16\n" +
-	"\x06values\x18\x02 \x03(\bR\x06values\"M\n" +
-	"\x15ReadDiscreteInputsReq\x12\x18\n" +
-	"\aaddress\x18\x01 \x01(\rR\aaddress\x12\x1a\n" +
-	"\bquantity\x18\x02 \x01(\rR\bquantity\"I\n" +
+	"\x06values\x18\x02 \x03(\bR\x06values\"m\n" +
+	"\x15ReadDiscreteInputsReq\x12\x1e\n" +
+	"\n" +
+	"modbusCode\x18\x01 \x01(\tR\n" +
+	"modbusCode\x12\x18\n" +
+	"\aaddress\x18\x02 \x01(\rR\aaddress\x12\x1a\n" +
+	"\bquantity\x18\x03 \x01(\rR\bquantity\"I\n" +
 	"\x15ReadDiscreteInputsRes\x12\x18\n" +
 	"\aresults\x18\x01 \x01(\fR\aresults\x12\x16\n" +
-	"\x06values\x18\x02 \x03(\bR\x06values\"D\n" +
-	"\x12WriteSingleCoilReq\x12\x18\n" +
-	"\aaddress\x18\x01 \x01(\rR\aaddress\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\rR\x05value\".\n" +
+	"\x06values\x18\x02 \x03(\bR\x06values\"d\n" +
+	"\x12WriteSingleCoilReq\x12\x1e\n" +
+	"\n" +
+	"modbusCode\x18\x01 \x01(\tR\n" +
+	"modbusCode\x12\x18\n" +
+	"\aaddress\x18\x02 \x01(\rR\aaddress\x12\x14\n" +
+	"\x05value\x18\x03 \x01(\rR\x05value\".\n" +
 	"\x12WriteSingleCoilRes\x12\x18\n" +
-	"\aresults\x18\x01 \x01(\fR\aresults\"e\n" +
-	"\x15WriteMultipleCoilsReq\x12\x18\n" +
-	"\aaddress\x18\x01 \x01(\rR\aaddress\x12\x1a\n" +
-	"\bquantity\x18\x02 \x01(\rR\bquantity\x12\x16\n" +
-	"\x06values\x18\x03 \x01(\fR\x06values\"1\n" +
+	"\aresults\x18\x01 \x01(\fR\aresults\"\x85\x01\n" +
+	"\x15WriteMultipleCoilsReq\x12\x1e\n" +
+	"\n" +
+	"modbusCode\x18\x01 \x01(\tR\n" +
+	"modbusCode\x12\x18\n" +
+	"\aaddress\x18\x02 \x01(\rR\aaddress\x12\x1a\n" +
+	"\bquantity\x18\x03 \x01(\rR\bquantity\x12\x16\n" +
+	"\x06values\x18\x04 \x01(\fR\x06values\"1\n" +
 	"\x15WriteMultipleCoilsRes\x12\x18\n" +
-	"\aresults\x18\x01 \x01(\fR\aresults\"M\n" +
-	"\x15ReadInputRegistersReq\x12\x18\n" +
-	"\aaddress\x18\x01 \x01(\rR\aaddress\x12\x1a\n" +
-	"\bquantity\x18\x02 \x01(\rR\bquantity\"I\n" +
+	"\aresults\x18\x01 \x01(\fR\aresults\"m\n" +
+	"\x15ReadInputRegistersReq\x12\x1e\n" +
+	"\n" +
+	"modbusCode\x18\x01 \x01(\tR\n" +
+	"modbusCode\x12\x18\n" +
+	"\aaddress\x18\x02 \x01(\rR\aaddress\x12\x1a\n" +
+	"\bquantity\x18\x03 \x01(\rR\bquantity\"I\n" +
 	"\x15ReadInputRegistersRes\x12\x18\n" +
 	"\aresults\x18\x01 \x01(\fR\aresults\x12\x16\n" +
-	"\x06values\x18\x02 \x03(\tR\x06values\"O\n" +
-	"\x17ReadHoldingRegistersReq\x12\x18\n" +
-	"\aaddress\x18\x01 \x01(\rR\aaddress\x12\x1a\n" +
-	"\bquantity\x18\x02 \x01(\rR\bquantity\"K\n" +
+	"\x06values\x18\x02 \x03(\tR\x06values\"o\n" +
+	"\x17ReadHoldingRegistersReq\x12\x1e\n" +
+	"\n" +
+	"modbusCode\x18\x01 \x01(\tR\n" +
+	"modbusCode\x12\x18\n" +
+	"\aaddress\x18\x02 \x01(\rR\aaddress\x12\x1a\n" +
+	"\bquantity\x18\x03 \x01(\rR\bquantity\"K\n" +
 	"\x17ReadHoldingRegistersRes\x12\x18\n" +
 	"\aresults\x18\x01 \x01(\fR\aresults\x12\x16\n" +
-	"\x06values\x18\x02 \x03(\tR\x06values\"H\n" +
-	"\x16WriteSingleRegisterReq\x12\x18\n" +
-	"\aaddress\x18\x01 \x01(\rR\aaddress\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\rR\x05value\"2\n" +
+	"\x06values\x18\x02 \x03(\tR\x06values\"h\n" +
+	"\x16WriteSingleRegisterReq\x12\x1e\n" +
+	"\n" +
+	"modbusCode\x18\x01 \x01(\tR\n" +
+	"modbusCode\x12\x18\n" +
+	"\aaddress\x18\x02 \x01(\rR\aaddress\x12\x14\n" +
+	"\x05value\x18\x03 \x01(\rR\x05value\"2\n" +
 	"\x16WriteSingleRegisterRes\x12\x18\n" +
-	"\aresults\x18\x01 \x01(\fR\aresults\"i\n" +
-	"\x19WriteMultipleRegistersReq\x12\x18\n" +
-	"\aaddress\x18\x01 \x01(\rR\aaddress\x12\x1a\n" +
-	"\bquantity\x18\x02 \x01(\rR\bquantity\x12\x16\n" +
-	"\x06values\x18\x03 \x01(\fR\x06values\"5\n" +
+	"\aresults\x18\x01 \x01(\fR\aresults\"\x89\x01\n" +
+	"\x19WriteMultipleRegistersReq\x12\x1e\n" +
+	"\n" +
+	"modbusCode\x18\x01 \x01(\tR\n" +
+	"modbusCode\x12\x18\n" +
+	"\aaddress\x18\x02 \x01(\rR\aaddress\x12\x1a\n" +
+	"\bquantity\x18\x03 \x01(\rR\bquantity\x12\x16\n" +
+	"\x06values\x18\x04 \x01(\fR\x06values\"5\n" +
 	"\x19WriteMultipleRegistersRes\x12\x18\n" +
-	"\aresults\x18\x01 \x01(\fR\aresults\"\xc7\x01\n" +
-	"\x1dReadWriteMultipleRegistersReq\x12 \n" +
-	"\vreadAddress\x18\x01 \x01(\rR\vreadAddress\x12\"\n" +
-	"\freadQuantity\x18\x02 \x01(\rR\freadQuantity\x12\"\n" +
-	"\fwriteAddress\x18\x03 \x01(\rR\fwriteAddress\x12$\n" +
-	"\rwriteQuantity\x18\x04 \x01(\rR\rwriteQuantity\x12\x16\n" +
-	"\x06values\x18\x05 \x01(\fR\x06values\"9\n" +
+	"\aresults\x18\x01 \x01(\fR\aresults\"\xe7\x01\n" +
+	"\x1dReadWriteMultipleRegistersReq\x12\x1e\n" +
+	"\n" +
+	"modbusCode\x18\x01 \x01(\tR\n" +
+	"modbusCode\x12 \n" +
+	"\vreadAddress\x18\x02 \x01(\rR\vreadAddress\x12\"\n" +
+	"\freadQuantity\x18\x03 \x01(\rR\freadQuantity\x12\"\n" +
+	"\fwriteAddress\x18\x04 \x01(\rR\fwriteAddress\x12$\n" +
+	"\rwriteQuantity\x18\x05 \x01(\rR\rwriteQuantity\x12\x16\n" +
+	"\x06values\x18\x06 \x01(\fR\x06values\"9\n" +
 	"\x1dReadWriteMultipleRegistersRes\x12\x18\n" +
-	"\aresults\x18\x01 \x01(\fR\aresults\"b\n" +
-	"\x14MaskWriteRegisterReq\x12\x18\n" +
-	"\aaddress\x18\x01 \x01(\rR\aaddress\x12\x18\n" +
-	"\aandMask\x18\x02 \x01(\rR\aandMask\x12\x16\n" +
-	"\x06orMask\x18\x03 \x01(\rR\x06orMask\"0\n" +
+	"\aresults\x18\x01 \x01(\fR\aresults\"\x82\x01\n" +
+	"\x14MaskWriteRegisterReq\x12\x1e\n" +
+	"\n" +
+	"modbusCode\x18\x01 \x01(\tR\n" +
+	"modbusCode\x12\x18\n" +
+	"\aaddress\x18\x02 \x01(\rR\aaddress\x12\x18\n" +
+	"\aandMask\x18\x03 \x01(\rR\aandMask\x12\x16\n" +
+	"\x06orMask\x18\x04 \x01(\rR\x06orMask\"0\n" +
 	"\x14MaskWriteRegisterRes\x12\x18\n" +
-	"\aresults\x18\x01 \x01(\fR\aresults\",\n" +
-	"\x10ReadFIFOQueueReq\x12\x18\n" +
-	"\aaddress\x18\x01 \x01(\rR\aaddress\",\n" +
-	"\x10ReadFIFOQueueRes\x12\x18\n" +
 	"\aresults\x18\x01 \x01(\fR\aresults\"L\n" +
-	"\x1bReadDeviceIdentificationReq\x12-\n" +
-	"\x13read_device_id_code\x18\x01 \x01(\rR\x10readDeviceIdCode\"\xf3\x03\n" +
+	"\x10ReadFIFOQueueReq\x12\x1e\n" +
+	"\n" +
+	"modbusCode\x18\x01 \x01(\tR\n" +
+	"modbusCode\x12\x18\n" +
+	"\aaddress\x18\x02 \x01(\rR\aaddress\",\n" +
+	"\x10ReadFIFOQueueRes\x12\x18\n" +
+	"\aresults\x18\x01 \x01(\fR\aresults\"i\n" +
+	"\x1bReadDeviceIdentificationReq\x12\x1e\n" +
+	"\n" +
+	"modbusCode\x18\x01 \x01(\tR\n" +
+	"modbusCode\x12*\n" +
+	"\x10readDeviceIdCode\x18\x02 \x01(\rR\x10readDeviceIdCode\"\xf3\x03\n" +
 	"\x1bReadDeviceIdentificationRes\x12P\n" +
 	"\aresults\x18\x01 \x03(\v26.bridgemodbus.ReadDeviceIdentificationRes.ResultsEntryR\aresults\x12Y\n" +
 	"\n" +

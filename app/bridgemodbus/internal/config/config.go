@@ -17,5 +17,8 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
+	DB struct {
+		DataSource string
+	}
 	ModbusClientConf modbusx.ModbusClientConf
 }

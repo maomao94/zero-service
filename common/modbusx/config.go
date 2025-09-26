@@ -42,7 +42,7 @@ type ModbusClientConf struct {
 	Address string `json:"address"`
 
 	// Modbus 从站地址（Slave ID / Unit ID）
-	SlaveID byte `json:"slaveID"`
+	SlaveID int64 `json:"slaveID"`
 
 	// 发送/接收超时，单位毫秒
 	Timeout int64 `json:"timeout,default=10000"`
@@ -156,7 +156,7 @@ func NewModbusClient(c *ModbusClientConf) (*ModbusClient, error) {
 		}))
 	}
 	h := modbus.NewTCPClientHandler(c.Address, opts...)
-	h.SetSlave(c.SlaveID)
+	h.SetSlave(byte(c.SlaveID))
 	h.Timeout = time.Millisecond * time.Duration(c.Timeout)
 	h.IdleTimeout = time.Millisecond * time.Duration(c.IdleTimeout)
 	h.LinkRecoveryTimeout = time.Millisecond * time.Duration(c.LinkRecoveryTimeout)
@@ -248,10 +248,10 @@ func BytesToBools(data []byte, quantity int) []bool {
 	return bools
 }
 
-// PoolManager 连接池管理器：管理多个 Modbus 连接池（按 sessionID 区分）
+// PoolManager 连接池管理器：管理多个 Modbus 连接池（按 modbusCode 区分）
 type PoolManager struct {
-	pools   map[string]*ModbusClientPool // key: sessionID，包内私有
-	confMap map[string]*ModbusClientConf // 记录 session 与配置的映射，包内私有
+	pools   map[string]*ModbusClientPool // key: modbusCode，包内私有
+	confMap map[string]*ModbusClientConf // 记录 modbusCode 与配置的映射，包内私有
 	mu      sync.RWMutex                 // 并发安全锁，包内私有
 }
 
@@ -263,50 +263,50 @@ func NewPoolManager() *PoolManager {
 	}
 }
 
-// AddPool 新增连接池（按 sessionID 关联）
-// 入参：sessionID（唯一标识）、conf（Modbus 配置）、poolSize（池大小）
+// AddPool 新增连接池（按 modbusCode 关联）
+// 入参：modbusCode（唯一标识）、conf（Modbus 配置）、poolSize（池大小）
 // 返回：error（明确错误信息）
-func (m *PoolManager) AddPool(sessionID string, conf *ModbusClientConf, poolSize int) error {
-	if sessionID == "" {
-		return fmt.Errorf("sessionID 不能为空")
+func (m *PoolManager) AddPool(ctx context.Context, modbusCode string, conf *ModbusClientConf, poolSize int) (*ModbusClientPool, error) {
+	if modbusCode == "" {
+		return nil, fmt.Errorf("modbusCode 不能为空")
 	}
 	if conf == nil {
-		return fmt.Errorf("ModbusClientConf 不能为空")
+		return nil, fmt.Errorf("ModbusClientConf 不能为空")
 	}
 	if poolSize <= 0 {
-		return fmt.Errorf("poolSize 必须大于 0（当前：%d）", poolSize)
+		return nil, fmt.Errorf("poolSize 必须大于 0（当前：%d）", poolSize)
 	}
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	// 若已存在相同 sessionID，先关闭旧池避免泄漏
-	if _, exists := m.pools[sessionID]; exists {
-		logx.Errorf("sessionID [%s] 已存在（地址：%s）", sessionID, conf.Address)
-		return nil
+	// 若已存在相同 modbusCode，先关闭旧池避免泄漏
+	if pool, exists := m.pools[modbusCode]; exists {
+		logx.Errorf("modbusCode [%s] 已存在（地址：%s）", modbusCode, conf.Address)
+		return pool, nil
 	}
 
 	// 创建新连接池
 	newPool := NewModbusClientPool(conf, poolSize)
-	m.pools[sessionID] = newPool
-	m.confMap[sessionID] = conf
-	logx.Infof("sessionID [%s] 连接池创建成功（地址：%s，池大小：%d）", sessionID, conf.Address, poolSize)
-	return nil
+	m.pools[modbusCode] = newPool
+	m.confMap[modbusCode] = conf
+	logx.WithContext(ctx).Infof("modbusCode [%s] 连接池创建成功（地址：%s，池大小：%d）", modbusCode, conf.Address, poolSize)
+	return newPool, nil
 }
 
-// GetPool 获取指定 sessionID 的连接池
+// GetPool 获取指定 modbusCode 的连接池
 // 场景：业务逻辑中获取连接池，进而获取客户端执行 Modbus 操作
-func (m *PoolManager) GetPool(sessionID string) (*ModbusClientPool, error) {
-	if sessionID == "" {
-		return nil, fmt.Errorf("sessionID 不能为空")
+func (m *PoolManager) GetPool(modbusCode string) (*ModbusClientPool, bool) {
+	if modbusCode == "" {
+		return nil, false
 	}
 
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	pool, exists := m.pools[sessionID]
+	pool, exists := m.pools[modbusCode]
 	if !exists {
-		return nil, fmt.Errorf("sessionID [%s] 不存在，请先调用 AddPool 创建", sessionID)
+		return nil, false
 	}
-	return pool, nil
+	return pool, true
 }

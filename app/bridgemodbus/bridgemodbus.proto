@@ -68,8 +68,9 @@ message Res {
 // -------------------- Bit Access --------------------
 
 message ReadCoilsReq {
-  uint32 address = 1;   // 起始线圈地址
-  uint32 quantity = 2;  // 读取数量（1–2000）
+  string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+  uint32 address = 2;   // 起始线圈地址
+  uint32 quantity = 3;  // 读取数量（1–2000）
 }
 message ReadCoilsRes {
   bytes results = 1;    // 按位表示的线圈状态（bit0 对应起始地址）
@@ -77,8 +78,9 @@ message ReadCoilsRes {
 }
 
 message ReadDiscreteInputsReq {
-  uint32 address = 1;   // 起始离散输入地址
-  uint32 quantity = 2;  // 读取数量（1–2000）
+  string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+  uint32 address = 2;   // 起始离散输入地址
+  uint32 quantity = 3;  // 读取数量（1–2000）
 }
 message ReadDiscreteInputsRes {
   bytes results = 1;    // 按位表示的离散输入状态
@@ -86,17 +88,19 @@ message ReadDiscreteInputsRes {
 }
 
 message WriteSingleCoilReq {
-  uint32 address = 1;   // 线圈地址
-  uint32 value = 2;     // 写入值：0x0000=OFF, 0xFF00=ON
+  string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+  uint32 address = 2;   // 线圈地址
+  uint32 value = 3;     // 写入值：0x0000=OFF, 0xFF00=ON
 }
 message WriteSingleCoilRes {
   bytes results = 1;    // 回显写入后的线圈值
 }
 
 message WriteMultipleCoilsReq {
-  uint32 address = 1;   // 起始线圈地址
-  uint32 quantity = 2;  // 写入数量
-  bytes values = 3;     // 每 bit 对应一个线圈状态，0=OFF，1=ON
+  string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+  uint32 address = 2;   // 起始线圈地址
+  uint32 quantity = 3;  // 写入数量
+  bytes values = 4;     // 每 bit 对应一个线圈状态，0=OFF，1=ON
 }
 message WriteMultipleCoilsRes {
   bytes results = 1;    // 回显写入的数量
@@ -105,8 +109,9 @@ message WriteMultipleCoilsRes {
 // -------------------- 16-bit Register Access --------------------
 
 message ReadInputRegistersReq {
-  uint32 address = 1;   // 起始寄存器地址
-  uint32 quantity = 2;  // 读取数量（1–125）
+  string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+  uint32 address = 2;   // 起始寄存器地址
+  uint32 quantity = 3;  // 读取数量（1–125）
 }
 message ReadInputRegistersRes {
   bytes results = 1;    // 输入寄存器数据，每寄存器 2 字节，高字节在前
@@ -114,8 +119,9 @@ message ReadInputRegistersRes {
 }
 
 message ReadHoldingRegistersReq {
-  uint32 address = 1;   // 起始寄存器地址
-  uint32 quantity = 2;  // 读取数量（1–125）
+  string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+  uint32 address = 2;   // 起始寄存器地址
+  uint32 quantity = 3;  // 读取数量（1–125）
 }
 message ReadHoldingRegistersRes {
   bytes results = 1;    // 保持寄存器数据，每寄存器 2 字节
@@ -123,44 +129,49 @@ message ReadHoldingRegistersRes {
 }
 
 message WriteSingleRegisterReq {
-  uint32 address = 1;   // 寄存器地址
-  uint32 value = 2;     // 写入的 16-bit 值
+  string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+  uint32 address = 2;   // 寄存器地址
+  uint32 value = 3;     // 写入的 16-bit 值
 }
 message WriteSingleRegisterRes {
   bytes results = 1;    // 回显写入后的寄存器值
 }
 
 message WriteMultipleRegistersReq {
-  uint32 address = 1;   // 起始寄存器地址
-  uint32 quantity = 2;  // 写入数量
-  bytes values = 3;     // 按寄存器顺序的字节数组，每寄存器 2 字节
+  string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+  uint32 address = 2;   // 起始寄存器地址
+  uint32 quantity = 3;  // 写入数量
+  bytes values = 4;     // 按寄存器顺序的字节数组，每寄存器 2 字节
 }
 message WriteMultipleRegistersRes {
   bytes results = 1;    // 回显写入的数量
 }
 
 message ReadWriteMultipleRegistersReq {
-  uint32 readAddress = 1;     // 读取起始寄存器地址
-  uint32 readQuantity = 2;    // 读取数量
-  uint32 writeAddress = 3;    // 写入起始寄存器地址
-  uint32 writeQuantity = 4;   // 写入数量
-  bytes values = 5;            // 写入数据，每寄存器 2 字节
+  string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+  uint32 readAddress = 2;     // 读取起始寄存器地址
+  uint32 readQuantity = 3;    // 读取数量
+  uint32 writeAddress = 4;    // 写入起始寄存器地址
+  uint32 writeQuantity = 5;   // 写入数量
+  bytes values = 6;            // 写入数据，每寄存器 2 字节
 }
 message ReadWriteMultipleRegistersRes {
   bytes results = 1;           // 读取到的寄存器数据
 }
 
 message MaskWriteRegisterReq {
-  uint32 address = 1;   // 寄存器地址
-  uint32 andMask = 2;  // AND 掩码
-  uint32 orMask = 3;   // OR 掩码
+  string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+  uint32 address = 2;   // 寄存器地址
+  uint32 andMask = 3;  // AND 掩码
+  uint32 orMask = 4;   // OR 掩码
 }
 message MaskWriteRegisterRes {
   bytes results = 1;    // 回显写入后的寄存器值
 }
 
 message ReadFIFOQueueReq {
-  uint32 address = 1;   // FIFO 队列寄存器地址
+  string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+  uint32 address = 2;   // FIFO 队列寄存器地址
 }
 message ReadFIFOQueueRes {
   bytes results = 1;    // FIFO 队列内容
@@ -169,7 +180,8 @@ message ReadFIFOQueueRes {
 // -------------------- Device Identification --------------------
 
 message ReadDeviceIdentificationReq {
-  uint32 read_device_id_code = 1; // 读取类型：0x01=基本, 0x02=常规, 0x03=扩展
+  string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+  uint32 readDeviceIdCode = 2; // 读取类型：0x01=基本, 0x02=常规, 0x03=扩展
 }
 message ReadDeviceIdentificationRes {
   // 原始对象 ID 映射 (十进制)，方便协议调试/直接对应 Modbus 规范
