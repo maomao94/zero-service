@@ -34,6 +34,7 @@ type Client struct {
 	subscriptions map[string]MessageHandler // 存储主题与处理器的映射
 	qos           byte
 	metrics       *stat.Metrics
+	ctx           context.Context
 }
 
 func MustNewClient(cfg MqttConfig) *Client {
@@ -51,7 +52,6 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 	if cfg.KeepAlive <= 0 {
 		cfg.KeepAlive = 60 // 默认心跳60秒
 	}
-
 	c := &Client{
 		broker:        cfg.Broker,
 		clientID:      cfg.ClientID,
