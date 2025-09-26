@@ -74,52 +74,56 @@ type ModbusClient struct {
 
 var _ modbus.Client = (*ModbusClient)(nil)
 
-func (m ModbusClient) ReadCoils(ctx context.Context, address, quantity uint16) (results []byte, err error) {
+func (m *ModbusClient) ReadCoils(ctx context.Context, address, quantity uint16) (results []byte, err error) {
 	return m.client.ReadCoils(ctx, address, quantity)
 }
 
-func (m ModbusClient) ReadDiscreteInputs(ctx context.Context, address, quantity uint16) (results []byte, err error) {
+func (m *ModbusClient) ReadDiscreteInputs(ctx context.Context, address, quantity uint16) (results []byte, err error) {
 	return m.client.ReadDiscreteInputs(ctx, address, quantity)
 }
 
-func (m ModbusClient) WriteSingleCoil(ctx context.Context, address, value uint16) (results []byte, err error) {
+func (m *ModbusClient) WriteSingleCoil(ctx context.Context, address, value uint16) (results []byte, err error) {
 	return m.client.WriteSingleCoil(ctx, address, value)
 }
 
-func (m ModbusClient) WriteMultipleCoils(ctx context.Context, address, quantity uint16, value []byte) (results []byte, err error) {
+func (m *ModbusClient) WriteMultipleCoils(ctx context.Context, address, quantity uint16, value []byte) (results []byte, err error) {
 	return m.client.WriteMultipleCoils(ctx, address, quantity, value)
 }
 
-func (m ModbusClient) ReadInputRegisters(ctx context.Context, address, quantity uint16) (results []byte, err error) {
+func (m *ModbusClient) ReadInputRegisters(ctx context.Context, address, quantity uint16) (results []byte, err error) {
 	return m.client.ReadInputRegisters(ctx, address, quantity)
 }
 
-func (m ModbusClient) ReadHoldingRegisters(ctx context.Context, address, quantity uint16) (results []byte, err error) {
+func (m *ModbusClient) ReadHoldingRegisters(ctx context.Context, address, quantity uint16) (results []byte, err error) {
 	return m.client.ReadHoldingRegisters(ctx, address, quantity)
 }
 
-func (m ModbusClient) WriteSingleRegister(ctx context.Context, address, value uint16) (results []byte, err error) {
+func (m *ModbusClient) WriteSingleRegister(ctx context.Context, address, value uint16) (results []byte, err error) {
 	return m.client.WriteSingleRegister(ctx, address, value)
 }
 
-func (m ModbusClient) WriteMultipleRegisters(ctx context.Context, address, quantity uint16, value []byte) (results []byte, err error) {
+func (m *ModbusClient) WriteMultipleRegisters(ctx context.Context, address, quantity uint16, value []byte) (results []byte, err error) {
 	return m.client.WriteMultipleRegisters(ctx, address, quantity, value)
 }
 
-func (m ModbusClient) ReadWriteMultipleRegisters(ctx context.Context, readAddress, readQuantity, writeAddress, writeQuantity uint16, value []byte) (results []byte, err error) {
+func (m *ModbusClient) ReadWriteMultipleRegisters(ctx context.Context, readAddress, readQuantity, writeAddress, writeQuantity uint16, value []byte) (results []byte, err error) {
 	return m.client.ReadWriteMultipleRegisters(ctx, readAddress, readQuantity, writeAddress, writeQuantity, value)
 }
 
-func (m ModbusClient) MaskWriteRegister(ctx context.Context, address, andMask, orMask uint16) (results []byte, err error) {
+func (m *ModbusClient) MaskWriteRegister(ctx context.Context, address, andMask, orMask uint16) (results []byte, err error) {
 	return m.client.MaskWriteRegister(ctx, address, andMask, orMask)
 }
 
-func (m ModbusClient) ReadFIFOQueue(ctx context.Context, address uint16) (results []byte, err error) {
+func (m *ModbusClient) ReadFIFOQueue(ctx context.Context, address uint16) (results []byte, err error) {
 	return m.client.ReadFIFOQueue(ctx, address)
 }
 
-func (m ModbusClient) ReadDeviceIdentification(ctx context.Context, readDeviceIDCode modbus.ReadDeviceIDCode) (results map[byte][]byte, err error) {
+func (m *ModbusClient) ReadDeviceIdentification(ctx context.Context, readDeviceIDCode modbus.ReadDeviceIDCode) (results map[byte][]byte, err error) {
 	return m.client.ReadDeviceIdentification(ctx, readDeviceIDCode)
+}
+
+func (m *ModbusClient) Close() error {
+	return m.handler.Close()
 }
 
 func MustNewModbusClient(c *ModbusClientConf) *ModbusClient {
