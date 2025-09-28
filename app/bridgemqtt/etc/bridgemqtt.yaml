@@ -13,10 +13,10 @@ Log:
 MqttConfig:
   broker:
     - "tcp://localhost:1883"
-  #  clientId: "my-mqtt-client"
-  #  username: "mqtt"
-  #  password: "password"
-  qos: 1
+  clientId: "my-mqtt-client"
+  username: "mqtt"
+  password: "password"
+  qos: 0
   subscribeTopics:
     - "test/topic1"
     - "test/topic2"
