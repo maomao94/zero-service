@@ -1,13 +1,13 @@
 syntax = "proto3";
 
-package mqttreceiver;
+package mqttstream;
 
-option go_package = "./mqttreceiver";
+option go_package = "./mqttstream";
 option java_multiple_files = true;
-option java_package = "com.github.iec.mqttreceiver.grpc";
-option java_outer_classname = "MqttReceiverProto";
+option java_package = "com.github.mqttstream.grpc";
+option java_outer_classname = "MqttStreamProto";
 
-service MqttReceiver {
+service MqttStream {
   // 接收消息
   rpc ReceiveMessage (ReceiveMessageReq) returns (ReceiveMessageRes);
 }
@@ -20,12 +20,14 @@ message ReceiveMessageRes {
 }
 
 message MqttMessage {
+  // 会话ID
+  string sessionId = 1;
   // 消息唯一标识
-  string msgId = 1;
-  // 消息发送时间
-  string sendTime = 2;
+  string msgId = 2;
   // MQTT主题
   string topic = 3;
   // 消息体
   bytes payload = 4;
+  // 消息发送时间
+  string sendTime = 5;
 }
