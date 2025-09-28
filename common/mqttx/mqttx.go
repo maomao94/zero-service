@@ -239,11 +239,9 @@ func (c *Client) messageHandlerWrapper(topic string) mqtt.MessageHandler {
 			defaultHandler{}.Consume(context.Background(), topic, msg.Payload())
 			return
 		}
-
 		for _, handler := range handlers {
 			if err := handler.Consume(ctx, topic, msg.Payload()); err != nil {
 				logx.WithContext(ctx).Errorf("[mqtt] handler error for %s: %v", topic, err)
-				c.metrics.AddDrop()
 			}
 		}
 	}
