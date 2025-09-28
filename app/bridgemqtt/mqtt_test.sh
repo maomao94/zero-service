@@ -1,14 +1,14 @@
 #!/bin/bash
-# MQTT并发发布脚本（无文件操作版）
-# 功能：纯参数配置，并发发送MQTT消息
+# MQTT并发发布脚本（修复引号语法错误版）
+# 支持含特殊字符的用户名/密码，解决引号不匹配问题
 
 # 默认配置
 CONCURRENT=5        # 默认并发数
 TOTAL=100           # 默认总执行次数
-HOST="10.10.1.191"    # 默认服务器IP
+HOST="127.0.0.1"    # 默认服务器IP
 PORT=1883           # 默认端口
-USERNAME="admin"         # 用户名（空为匿名）
-PASSWORD="Znyjzx098!"         # 密码
+USERNAME=""         # 用户名（空为匿名）
+PASSWORD=""         # 密码
 TOPIC="testgo"      # 默认主题
 MESSAGE="hello"     # 默认消息
 
@@ -20,8 +20,8 @@ show_help() {
     echo "  -n  总执行次数 (默认: $TOTAL)"
     echo "  -H  服务器IP (默认: $HOST)"
     echo "  -p  端口 (默认: $PORT)"
-    echo "  -u  用户名 (可选)"
-    echo "  -P  密码 (可选)"
+    echo "  -u  用户名 (支持特殊字符，用单引号包裹)"
+    echo "  -P  密码 (支持特殊字符，用单引号包裹)"
     echo "  -t  主题 (默认: $TOPIC)"
     echo "  -m  消息内容 (默认: $MESSAGE)"
     echo "  --help  显示帮助"
@@ -58,15 +58,27 @@ if ! [[ "$PORT" =~ ^[0-9]+$ ]] || [ "$PORT" -lt 1 ] || [ "$PORT" -gt 65535 ]; th
     exit 1
 fi
 
-# 构建命令（处理认证）
+# 构建命令（关键修复：用双引号+printf转义处理特殊字符）
+BASE_CMD="mosquitto_pub -h '$HOST' -p '$PORT' -t '$TOPIC' -m '$MESSAGE'"
 AUTH=""
+
 if [ -n "$USERNAME" ] && [ -n "$PASSWORD" ]; then
-    AUTH="-u '$USERNAME' -P '$PASSWORD'"
+    # 用printf转义单引号和特殊字符，确保命令安全拼接
+    ESCAPED_USER=$(printf "%q" "$USERNAME")
+    ESCAPED_PASS=$(printf "%q" "$PASSWORD")
+    AUTH="-u $ESCAPED_USER -P $ESCAPED_PASS"
 elif [ -n "$USERNAME" ] || [ -n "$PASSWORD" ]; then
     echo "警告: 用户名和密码需同时提供，将使用匿名连接"
 fi
 
-# 显示配置
+# 组合最终命令
+if [ -n "$AUTH" ]; then
+    MQTT_CMD="$BASE_CMD $AUTH"
+else
+    MQTT_CMD="$BASE_CMD"
+fi
+
+# 显示配置（隐藏密码，避免泄露）
 echo "======================================"
 echo "MQTT并发发布配置"
 echo "--------------------------------------"
@@ -82,26 +94,18 @@ echo "开始发送..."
 # 记录开始时间
 START=$(date +%s%N)
 
-# 统计成功数（用变量+管道避免文件，适合简单场景）
+# 统计成功数（FIFO管道计数）
 SUCCESS=0
-# 用FIFO实现多进程计数（比临时文件更轻量）
 mkfifo /tmp/mqtt_counter.fifo
 cat /tmp/mqtt_counter.fifo | while read; do
     SUCCESS=$((SUCCESS + 1))
 done &
 COUNTER_PID=$!
 
-# 核心并发逻辑
-seq 1 $TOTAL | xargs -I {} -P $CONCURRENT bash -c '
-    # 执行发布命令
-    eval "mosquitto_pub -h '$HOST' -p '$PORT' -t '$TOPIC' -m '$MESSAGE' '$AUTH' > /dev/null 2>&1"
-    # 成功则写入计数器
-    if [ $? -eq 0 ]; then
-        echo 1 > /tmp/mqtt_counter.fifo
-    fi
-'
+# 核心并发逻辑（用printf传递命令，避免引号解析错误）
+seq 1 $TOTAL | xargs -I {} -P $CONCURRENT bash -c "$(printf "%q" "$MQTT_CMD") > /dev/null 2>&1; if [ \$? -eq 0 ]; then echo 1 > /tmp/mqtt_counter.fifo; fi"
 
-# 等待所有进程完成，关闭计数器
+# 等待所有进程完成，清理资源
 wait
 rm -f /tmp/mqtt_counter.fifo
 kill $COUNTER_PID 2>/dev/null
