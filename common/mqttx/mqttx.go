@@ -13,6 +13,19 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stat"
 	"github.com/zeromicro/go-zero/core/timex"
+	"github.com/zeromicro/go-zero/core/trace"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	oteltrace "go.opentelemetry.io/otel/trace"
+)
+
+const (
+	MqttTopicKey     = attribute.Key("mqtt.topic")
+	MqttClientIDKey  = attribute.Key("mqtt.client_id")
+	MqttMessageIDKey = attribute.Key("mqtt.message_id")
+	MqttQoSKey       = attribute.Key("mqtt.qos")
+	MqttActionKey    = attribute.Key("mqtt.action") // publish/subscribe
 )
 
 // ConsumeHandler 定义消息消费接口
@@ -47,6 +60,7 @@ type Client struct {
 	subscribed map[string]struct{}         // 已订阅的主题
 	qos        byte
 	metrics    *stat.Metrics
+	tracer     oteltrace.Tracer // 跟踪器实例
 }
 
 func MustNewClient(cfg MqttConfig) *Client {
@@ -62,7 +76,10 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 	}
 
 	if len(cfg.ClientID) == 0 {
-		uid, _ := random.UUIdV4()
+		uid, err := random.UUIdV4()
+		if err != nil {
+			return nil, fmt.Errorf("[mqtt] generate clientID failed: %w", err)
+		}
 		uid = strings.ReplaceAll(uid, "-", "") // 去掉所有 "-"
 		cfg.ClientID = uid
 	}
@@ -81,6 +98,7 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 		subscribed: make(map[string]struct{}),
 		qos:        cfg.Qos,
 		metrics:    stat.NewMetrics(fmt.Sprintf("mqtt-%s", cfg.ClientID)),
+		tracer:     otel.Tracer(trace.TraceName), // 初始化跟踪器
 	}
 
 	// 修正QoS值
@@ -219,15 +237,21 @@ func (c *Client) RestoreSubscriptions() error {
 	return lastErr
 }
 
-// 消息处理包装器：动态判断是否有处理器
+// 消息处理包装器
 func (c *Client) messageHandlerWrapper(topic string) mqtt.MessageHandler {
 	return func(client mqtt.Client, msg mqtt.Message) {
-		ctx := logx.ContextWithFields(context.Background(), logx.Field("clientID", c.cfg.ClientID))
+		// 1. 创建消费span，关联上下文
+		ctx, span := c.startConsumeSpan(context.Background(), msg, topic)
+		defer span.End() // 确保span最终会结束
+
 		startTime := timex.Now()
 		defer func() {
 			c.metrics.Add(stat.Task{Duration: timex.Since(startTime)})
 			if r := recover(); r != nil {
+				err := fmt.Errorf("handler panic: %v", r)
 				logx.WithContext(ctx).Errorf("[mqtt] handler panic for %s: %v", topic, r)
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
 			}
 		}()
 
@@ -236,9 +260,13 @@ func (c *Client) messageHandlerWrapper(topic string) mqtt.MessageHandler {
 		c.mu.RUnlock()
 
 		if len(handlers) == 0 {
-			defaultHandler{}.Consume(context.Background(), topic, msg.Payload())
+			err := errors.New("no handler for topic")
+			defaultHandler{}.Consume(ctx, topic, msg.Payload())
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return
 		}
+
 		for _, handler := range handlers {
 			if err := handler.Consume(ctx, topic, msg.Payload()); err != nil {
 				logx.WithContext(ctx).Errorf("[mqtt] handler error for %s: %v", topic, err)
@@ -247,18 +275,30 @@ func (c *Client) messageHandlerWrapper(topic string) mqtt.MessageHandler {
 	}
 }
 
-// Publish 发布消息（检查连接状态）
-func (c *Client) Publish(topic string, payload []byte) error {
+// Publish 发布消息
+func (c *Client) Publish(ctx context.Context, topic string, payload []byte) error {
 	if !c.client.IsConnected() {
 		return fmt.Errorf("[mqtt] cannot publish: client not connected")
 	}
 
+	_, span := c.startPublishSpan(ctx, topic)
+	defer span.End()
+
 	timeout := time.Duration(c.cfg.Timeout) * time.Second
 	token := c.client.Publish(topic, c.qos, false, payload)
 	if !token.WaitTimeout(timeout) {
-		return fmt.Errorf("[mqtt] publish to %s timeout after %v", topic, timeout)
+		err := fmt.Errorf("[mqtt] publish to %s timeout after %v", topic, timeout)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
-	return token.Error()
+
+	if err := token.Error(); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+	return nil
 }
 
 // Close 关闭客户端
@@ -277,10 +317,44 @@ func (c *Client) isSubscribed(topic string) bool {
 }
 
 // defaultHandler 仅在无自定义处理器时使用
-type defaultHandler struct {
-}
+type defaultHandler struct{}
 
 func (d defaultHandler) Consume(ctx context.Context, topic string, payload []byte) error {
 	logx.WithContext(ctx).Errorf("[mqtt] No handler for topic %s, add with AddHandler", topic)
 	return nil
+}
+
+// ---------------- 跟踪辅助方法 ----------------
+
+// startConsumeSpan 创建消息消费的span
+func (c *Client) startConsumeSpan(ctx context.Context, msg mqtt.Message, topic string) (context.Context, oteltrace.Span) {
+	// 从消息中提取或生成消息ID（Paho的Message有MessageID()方法）
+	msgID := fmt.Sprintf("%d", msg.MessageID())
+
+	ctx, span := c.tracer.Start(ctx, "mqtt-consume",
+		oteltrace.WithSpanKind(oteltrace.SpanKindConsumer),
+	)
+	// 添加关键属性，便于追踪和排查问题
+	span.SetAttributes(
+		MqttClientIDKey.String(c.cfg.ClientID),
+		MqttTopicKey.String(topic),
+		MqttMessageIDKey.String(msgID),
+		MqttQoSKey.Int(int(msg.Qos())),
+		MqttActionKey.String("consume"),
+	)
+	return ctx, span
+}
+
+// startPublishSpan 创建消息发布的span
+func (c *Client) startPublishSpan(ctx context.Context, topic string) (context.Context, oteltrace.Span) {
+	ctx, span := c.tracer.Start(ctx, "mqtt-publish",
+		oteltrace.WithSpanKind(oteltrace.SpanKindProducer),
+	)
+	span.SetAttributes(
+		MqttClientIDKey.String(c.cfg.ClientID),
+		MqttTopicKey.String(topic),
+		MqttQoSKey.Int(int(c.qos)),
+		MqttActionKey.String("publish"),
+	)
+	return ctx, span
 }
