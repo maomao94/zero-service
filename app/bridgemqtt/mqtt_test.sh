@@ -1,6 +1,6 @@
 #!/bin/bash
-# MQTT并发发布脚本（修复引号语法错误版）
-# 支持含特殊字符的用户名/密码，解决引号不匹配问题
+# MQTT并发发布脚本（相对路径临时文件版）
+# 临时文件存储在当前目录的./tmp子目录，自动创建和清理
 
 # 默认配置
 CONCURRENT=5        # 默认并发数
@@ -11,6 +11,8 @@ USERNAME=""         # 用户名（空为匿名）
 PASSWORD=""         # 密码
 TOPIC="testgo"      # 默认主题
 MESSAGE="hello"     # 默认消息
+TMP_DIR="./tmp"     # 相对路径临时目录
+FIFO_FILE="$TMP_DIR/mqtt_counter.fifo"  # FIFO管道路径
 
 # 显示帮助
 show_help() {
@@ -26,6 +28,17 @@ show_help() {
     echo "  -m  消息内容 (默认: $MESSAGE)"
     echo "  --help  显示帮助"
     exit 1
+}
+
+# 清理临时文件（脚本退出时执行）
+cleanup() {
+    if [ -p "$FIFO_FILE" ]; then
+        rm -f "$FIFO_FILE"
+    fi
+    # 仅在临时目录为空时删除（避免误删用户文件）
+    if [ -d "$TMP_DIR" ] && [ -z "$(ls -A "$TMP_DIR")" ]; then
+        rmdir "$TMP_DIR"
+    fi
 }
 
 # 解析参数
@@ -58,12 +71,19 @@ if ! [[ "$PORT" =~ ^[0-9]+$ ]] || [ "$PORT" -lt 1 ] || [ "$PORT" -gt 65535 ]; th
     exit 1
 fi
 
-# 构建命令（关键修复：用双引号+printf转义处理特殊字符）
+# 创建临时目录（如果不存在）
+if [ ! -d "$TMP_DIR" ]; then
+    mkdir -p "$TMP_DIR" || {
+        echo "错误: 无法创建临时目录 $TMP_DIR"
+        exit 1
+    }
+fi
+
+# 构建命令（处理特殊字符）
 BASE_CMD="mosquitto_pub -h '$HOST' -p '$PORT' -t '$TOPIC' -m '$MESSAGE'"
 AUTH=""
 
 if [ -n "$USERNAME" ] && [ -n "$PASSWORD" ]; then
-    # 用printf转义单引号和特殊字符，确保命令安全拼接
     ESCAPED_USER=$(printf "%q" "$USERNAME")
     ESCAPED_PASS=$(printf "%q" "$PASSWORD")
     AUTH="-u $ESCAPED_USER -P $ESCAPED_PASS"
@@ -71,14 +91,9 @@ elif [ -n "$USERNAME" ] || [ -n "$PASSWORD" ]; then
     echo "警告: 用户名和密码需同时提供，将使用匿名连接"
 fi
 
-# 组合最终命令
-if [ -n "$AUTH" ]; then
-    MQTT_CMD="$BASE_CMD $AUTH"
-else
-    MQTT_CMD="$BASE_CMD"
-fi
+MQTT_CMD="$BASE_CMD $AUTH"
 
-# 显示配置（隐藏密码，避免泄露）
+# 显示配置
 echo "======================================"
 echo "MQTT并发发布配置"
 echo "--------------------------------------"
@@ -88,26 +103,34 @@ echo "消息: $MESSAGE"
 echo "认证: $(if [ -n "$AUTH" ]; then echo "启用($USERNAME)"; else echo "禁用"; fi)"
 echo "并发数: $CONCURRENT"
 echo "总次数: $TOTAL"
+echo "临时目录: $(realpath "$TMP_DIR")"  # 显示绝对路径方便查看
 echo "======================================"
 echo "开始发送..."
 
 # 记录开始时间
 START=$(date +%s%N)
 
-# 统计成功数（FIFO管道计数）
+# 初始化FIFO管道（相对路径）
+rm -f "$FIFO_FILE"  # 清理可能残留的管道
+mkfifo "$FIFO_FILE" || {
+    echo "错误: 无法创建FIFO管道 $FIFO_FILE"
+    cleanup
+    exit 1
+}
+
+# 统计成功数
 SUCCESS=0
-mkfifo /tmp/mqtt_counter.fifo
-cat /tmp/mqtt_counter.fifo | while read; do
+cat "$FIFO_FILE" | while read; do
     SUCCESS=$((SUCCESS + 1))
 done &
 COUNTER_PID=$!
 
-# 核心并发逻辑（用printf传递命令，避免引号解析错误）
-seq 1 $TOTAL | xargs -I {} -P $CONCURRENT bash -c "$(printf "%q" "$MQTT_CMD") > /dev/null 2>&1; if [ \$? -eq 0 ]; then echo 1 > /tmp/mqtt_counter.fifo; fi"
+# 核心并发逻辑
+seq 1 $TOTAL | xargs -I {} -P $CONCURRENT bash -c "$(printf "%q" "$MQTT_CMD") > /dev/null 2>&1; if [ \$? -eq 0 ]; then echo 1 > '$FIFO_FILE'; fi"
 
 # 等待所有进程完成，清理资源
 wait
-rm -f /tmp/mqtt_counter.fifo
+cleanup  # 调用清理函数
 kill $COUNTER_PID 2>/dev/null
 
 # 计算结果
