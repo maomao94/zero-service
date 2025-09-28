@@ -6,6 +6,7 @@ import (
 
 	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/random"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type MqttStreamHandler struct {
@@ -34,6 +35,7 @@ func (h *MqttStreamHandler) Consume(ctx context.Context, topic string, payload [
 			},
 		},
 	})
+	logx.WithContext(ctx).Infof("push mqtt message, topic:%s,time:%s", topic, time)
 	if err != nil {
 		return err
 	}
