@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package bridgemqtt;
+option go_package = "./bridgemqtt";
+option java_multiple_files = true;
+option java_package = "com.github.bridgemqtt.grpc";
+option java_outer_classname = "BridgeMqttProto";
+
+// Modbus 协议桥接服务
+service BridgeMqtt {
+  rpc Ping(Req) returns (Res);
+}
+
+// -------------------- 通用请求/响应 --------------------
+
+message Req {
+  string ping = 1; // 健康检查请求内容
+}
+
+message Res {
+  string pong = 1; // 健康检查返回内容
+}

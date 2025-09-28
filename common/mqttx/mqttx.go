@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/duke-git/lancet/v2/random"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stat"
@@ -14,12 +15,12 @@ import (
 
 type MqttConfig struct {
 	Broker          []string `json:"broker"`
-	ClientID        string   `json:"clientId"`
+	ClientID        string   `json:"clientId,optional"`
 	Username        string   `json:"username"`
 	Password        string   `json:"password"`
 	Qos             byte     `json:"qos"`
-	Timeout         int      `json:"timeout"`   // 操作超时时间（秒），用于连接、订阅、发布等
-	KeepAlive       int      `json:"keepalive"` // 心跳间隔（秒）
+	Timeout         int      `json:"timeout,default=30"`   // 操作超时时间（秒），用于连接、订阅、发布等
+	KeepAlive       int      `json:"keepalive,default=60"` // 心跳间隔（秒）
 	SubscribeTopics []string `json:"subscribeTopics"`
 }
 
@@ -45,6 +46,11 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 	// 校验必要配置
 	if len(cfg.Broker) == 0 {
 		return nil, fmt.Errorf("[mqtt] no broker addresses provided in config")
+	}
+
+	if len(cfg.ClientID) == 0 {
+		uid, _ := random.UUIdV4()
+		cfg.ClientID = uid
 	}
 
 	// 初始化默认值（防止配置缺失导致异常）
