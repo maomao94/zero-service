@@ -17,7 +17,7 @@ func NewTestHandler(svcCtx *svc.ServiceContext) *testHandler {
 	}
 }
 
-func (h *testHandler) Handle(ctx context.Context, msg []byte) error {
-	logx.Info("testHandler: ", string(msg))
+func (h *testHandler) Consume(ctx context.Context, topic string, payload []byte) error {
+	logx.Info("testHandler: ", string(payload))
 	return nil
 }
