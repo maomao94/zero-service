@@ -216,11 +216,12 @@ func (c *Client) RestoreSubscriptions() error {
 // 消息处理包装器：动态判断是否有处理器
 func (c *Client) messageHandlerWrapper(topic string) mqtt.MessageHandler {
 	return func(client mqtt.Client, msg mqtt.Message) {
+		ctx := logx.ContextWithFields(context.Background(), logx.Field("clientID", c.cfg.ClientID))
 		startTime := timex.Now()
 		defer func() {
 			c.metrics.Add(stat.Task{Duration: timex.Since(startTime)})
 			if r := recover(); r != nil {
-				logx.Errorf("[mqtt] handler panic for %s: %v", topic, r)
+				logx.WithContext(ctx).Errorf("[mqtt] handler panic for %s: %v", topic, r)
 			}
 		}()
 
@@ -229,14 +230,13 @@ func (c *Client) messageHandlerWrapper(topic string) mqtt.MessageHandler {
 		c.mu.RUnlock()
 
 		if len(handlers) == 0 {
-			defaultHandler{topic: topic}.Consume(context.Background(), topic, msg.Payload())
+			defaultHandler{}.Consume(context.Background(), topic, msg.Payload())
 			return
 		}
 
-		ctx := context.Background()
 		for _, handler := range handlers {
 			if err := handler.Consume(ctx, topic, msg.Payload()); err != nil {
-				logx.Errorf("[mqtt] handler error for %s: %v", topic, err)
+				logx.WithContext(ctx).Errorf("[mqtt] handler error for %s: %v", topic, err)
 				c.metrics.AddDrop()
 			}
 		}
@@ -274,10 +274,9 @@ func (c *Client) isSubscribed(topic string) bool {
 
 // defaultHandler 仅在无自定义处理器时使用
 type defaultHandler struct {
-	topic string
 }
 
 func (d defaultHandler) Consume(ctx context.Context, topic string, payload []byte) error {
-	logx.Errorf("[mqtt] No handler for topic %s, add with AddHandler", d.topic)
+	logx.WithContext(ctx).Errorf("[mqtt] No handler for topic %s, add with AddHandler", topic)
 	return nil
 }
