@@ -38,7 +38,7 @@ func (h *MqttStreamHandler) Consume(ctx context.Context, topic string, payload [
 			},
 		},
 	})
-	logx.WithContext(ctx).WithDuration(duration).Infof("push mqtt message, topic: %s, time: %s", topic, time)
+	logx.WithContext(ctx).WithDuration(duration).Infof("push mqtt message, msgId: %s, topic: %s, time: %s", msgId, topic, time)
 	if err != nil {
 		return err
 	}
