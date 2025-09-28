@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"zero-service/app/bridgemqtt/internal/handler"
 
 	"zero-service/app/bridgemqtt/bridgemqtt"
 	"zero-service/app/bridgemqtt/internal/config"
@@ -32,6 +33,7 @@ func main() {
 			reflection.Register(grpcServer)
 		}
 	})
+	ctx.MqttClient.AddHandler("testGo", handler.NewTestHandler(ctx))
 	defer s.Stop()
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)

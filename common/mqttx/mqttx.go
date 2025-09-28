@@ -137,15 +137,14 @@ func (c *Client) AddHandler(topic string, handler ConsumeHandler) error {
 	}
 
 	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	c.handlers[topic] = append(c.handlers[topic], handler)
+	needSubscribe := c.cfg.AutoSubscribe && !c.isSubscribed(topic)
+	c.mu.Unlock()
 
-	// 自动订阅（如果已连接，立即订阅；未连接则等连接成功后由OnConnect处理）
-	if c.cfg.AutoSubscribe && !c.isSubscribed(topic) {
+	if needSubscribe {
 		// 检查当前是否已连接
 		if c.client.IsConnected() {
-			if err := c.subscribe(topic); err != nil {
+			if err := c.Subscribe(topic); err != nil {
 				return err
 			}
 		}
