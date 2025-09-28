@@ -7,6 +7,7 @@ import (
 	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/random"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/timex"
 )
 
 type MqttStreamHandler struct {
@@ -24,6 +25,8 @@ func NewMqttStreamHandler(clientID string, cli mqttstream.MqttStreamClient) *Mqt
 func (h *MqttStreamHandler) Consume(ctx context.Context, topic string, payload []byte) error {
 	msgId, _ := random.UUIdV4()
 	time := carbon.Now().ToDateTimeMicroString()
+	startTime := timex.Now()
+	duration := timex.Since(startTime)
 	_, err := h.cli.ReceiveMessage(ctx, &mqttstream.ReceiveMessageReq{
 		Messages: []*mqttstream.MqttMessage{
 			{
@@ -35,7 +38,7 @@ func (h *MqttStreamHandler) Consume(ctx context.Context, topic string, payload [
 			},
 		},
 	})
-	logx.WithContext(ctx).Infof("push mqtt message, topic:%s, time:%s", topic, time)
+	logx.WithContext(ctx).WithDuration(duration).Infof("push mqtt message, topic:%s, time:%s", topic, time)
 	if err != nil {
 		return err
 	}
