@@ -10,6 +10,7 @@ import (
 	interceptor "zero-service/common/Interceptor/rpcserver"
 
 	_ "zero-service/common/carbonx"
+	_ "zero-service/common/nacosx"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/logx"
