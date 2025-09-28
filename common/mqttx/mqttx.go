@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -27,15 +28,15 @@ func (f ConsumeHandlerFunc) Consume(ctx context.Context, topic string, payload [
 }
 
 type MqttConfig struct {
-	Broker          []string `json:"broker"`
-	ClientID        string   `json:"clientId,optional"`
-	Username        string   `json:"username,optional"`
-	Password        string   `json:"password,optional"`
-	Qos             byte     `json:"qos"`
-	Timeout         int      `json:"timeout,default=30"`         // 操作超时时间（秒）
-	KeepAlive       int      `json:"keepalive,default=60"`       // 心跳间隔（秒）
-	AutoSubscribe   bool     `json:"autoSubscribe,default=true"` // 是否自动订阅已添加处理器的主题
-	SubscribeTopics []string `json:"subscribeTopics"`            // 初始需要订阅的主题
+	Broker          []string
+	ClientID        string `json:",optional"`
+	Username        string `json:",optional"`
+	Password        string `json:",optional"`
+	Qos             byte
+	Timeout         int      `json:",default=30"`   // 操作超时时间（秒）
+	KeepAlive       int      `json:",default=60"`   // 心跳间隔（秒）
+	AutoSubscribe   bool     `json:",default=true"` // 是否自动订阅已添加处理器的主题
+	SubscribeTopics []string // 初始需要订阅的主题
 }
 
 type Client struct {
@@ -62,6 +63,7 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 
 	if len(cfg.ClientID) == 0 {
 		uid, _ := random.UUIdV4()
+		uid = strings.ReplaceAll(uid, "-", "") // 去掉所有 "-"
 		cfg.ClientID = uid
 	}
 
@@ -82,7 +84,7 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 	}
 
 	// 修正QoS值
-	if c.qos > 2 {
+	if c.qos < 0 || c.qos > 2 {
 		c.qos = 1
 		logx.Errorf("[mqtt] Invalid QoS %d, adjusted to 1", cfg.Qos)
 	}
@@ -128,6 +130,10 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 		return nil, fmt.Errorf("[mqtt] connect failed: %w", err)
 	}
 	return c, nil
+}
+
+func (c *Client) GetClientID() string {
+	return c.cfg.ClientID
 }
 
 // AddHandler 为主题添加处理器（自动订阅如果开启）

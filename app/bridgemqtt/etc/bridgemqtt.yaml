@@ -11,12 +11,19 @@ Log:
   Path: /opt/logs/bridgemqtt
   Level: info
 MqttConfig:
-  broker:
+  Broker:
     - "tcp://localhost:1883"
-  clientId: "my-mqtt-client"
-  username: "mqtt"
-  password: "password"
-  qos: 0
-  subscribeTopics:
+#  ClientId: "my-mqtt-client"
+  Username: "mqtt"
+  Password: "password"
+  Qos: 0
+  SubscribeTopics:
     - "test"
     - "test/topic2"
+MqttStreamConf:
+  # nacos://[user:passwd]@host/service?param=value'
+#  Target: nacos://nacos:nacos@127.0.0.1:8848/iec-stream?namespaceid=public&timeout=5000s
+  Endpoints:
+    - 127.0.0.1:27300
+  NonBlock: true
+  Timeout: 3000

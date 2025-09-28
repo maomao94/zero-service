@@ -13,6 +13,7 @@ service MqttStream {
 }
 
 message ReceiveMessageReq {
+  // MQTT消息 数据量大 考虑聚合
   repeated MqttMessage messages = 1;
 }
 
