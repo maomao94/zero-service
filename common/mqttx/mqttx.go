@@ -243,7 +243,8 @@ func (c *Client) messageHandlerWrapper(topic string) mqtt.MessageHandler {
 		// 1. 创建消费span，关联上下文
 		ctx, span := c.startConsumeSpan(context.Background(), msg, topic)
 		defer span.End() // 确保span最终会结束
-
+		// 添加日志 field
+		ctx = logx.ContextWithFields(ctx, logx.Field("client", c.GetClientID()))
 		startTime := timex.Now()
 		defer func() {
 			c.metrics.Add(stat.Task{Duration: timex.Since(startTime)})
