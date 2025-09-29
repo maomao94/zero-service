@@ -10,6 +10,7 @@ import (
 
 	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/duke-git/lancet/v2/formatter"
+	"github.com/duke-git/lancet/v2/random"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"google.golang.org/protobuf/proto"
@@ -67,4 +68,13 @@ func GenOssFilename(filename, pathPrefix string) string {
 	return pathPrefix + "/" + time.Now().Format("20060102") + "/" +
 		strings.ReplaceAll(u.String(), "-", "") +
 		path.Ext(filename)
+}
+
+// SimpleUUID 生成不带 "-" 的 UUID v4
+func SimpleUUID() (string, error) {
+	uid, err := random.UUIdV4()
+	if err != nil {
+		return "", err
+	}
+	return strings.ReplaceAll(uid, "-", ""), nil
 }

@@ -2,10 +2,10 @@ package handler
 
 import (
 	"context"
+	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
 
 	"github.com/dromara/carbon/v2"
-	"github.com/duke-git/lancet/v2/random"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/timex"
 )
@@ -23,7 +23,7 @@ func NewMqttStreamHandler(clientID string, cli streamevent.StreamEventClient) *M
 }
 
 func (h *MqttStreamHandler) Consume(ctx context.Context, topic string, payload []byte) error {
-	msgId, _ := random.UUIdV4()
+	msgId, _ := tool.SimpleUUID()
 	time := carbon.Now().ToDateTimeMicroString()
 	startTime := timex.Now()
 	duration := timex.Since(startTime)
