@@ -20,7 +20,7 @@ MqttConfig:
   SubscribeTopics:
     - "test"
     - "test/topic2"
-MqttStreamConf:
+StreamEventConf:
   # nacos://[user:passwd]@host/service?param=value'
 #  Target: nacos://nacos:nacos@127.0.0.1:8848/iec-stream?namespaceid=public&timeout=5000s
   Endpoints:

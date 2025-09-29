@@ -8,6 +8,6 @@ import (
 
 type Config struct {
 	zrpc.RpcServerConf
-	MqttConfig     mqttx.MqttConfig
-	MqttStreamConf zrpc.RpcClientConf
+	MqttConfig      mqttx.MqttConfig
+	StreamEventConf zrpc.RpcClientConf
 }

@@ -1,26 +1,58 @@
 syntax = "proto3";
-import "google/api/annotations.proto";
-import "google/api/field_behavior.proto";
-import "validate/validate.proto";
 
-package iecstream;
+package streamevent;
 
-option go_package = "./iecstream";
+option go_package = "./streamevent";
 option java_multiple_files = true;
-option java_package = "com.github.iec.stream.grpc";
-option java_outer_classname = "IecStreamProto";
+option java_package = "com.github.streamevent.grpc";
+option java_outer_classname = "StreamEventProto";
 
-message Req {
-  string ping = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (validate.rules).string = {min_len: 1}
-  ];
+service StreamEvent {
+  // 接收MQTT消息
+  rpc ReceiveMQTTMessage (ReceiveMQTTMessageReq) returns (ReceiveMQTTMessageRes);
+  // 接收WS消息
+  rpc ReceiveWSMessage (ReceiveWSMessageReq) returns (ReceiveWSMessageRes);
+  // 推送 chunk asdu 104协议消息
+  rpc PushChunkAsdu (PushChunkAsduReq) returns (PushChunkAsduRes) {}
 }
 
-message Res {
-  string pong = 1;
+message ReceiveMQTTMessageReq {
+  // MQTT消息 数据量大 考虑聚合
+  repeated MqttMessage messages = 1;
 }
 
+message ReceiveMQTTMessageRes {
+}
+
+message MqttMessage {
+  // 会话ID
+  string sessionId = 1;
+  // 消息唯一标识
+  string msgId = 2;
+  // MQTT主题
+  string topic = 3;
+  // 消息体
+  bytes payload = 4;
+  // 消息发送时间
+  string sendTime = 5;
+}
+
+
+message ReceiveWSMessageReq {
+  // 会话ID
+  string sessionId = 1;
+  // 消息唯一标识
+  string msgId = 2;
+  // 消息体
+  bytes payload = 3;
+  // 消息发送时间
+  string sendTime = 4;
+}
+
+message ReceiveWSMessageRes {
+}
+
+// -------------------- 104协议 --------------------
 message PushChunkAsduReq {
   repeated MsgBody msgBody = 1;
 }
@@ -363,13 +395,4 @@ message PackedSinglePointWithSCDInfo {
   bool iv = 11 [json_name = "iv"];
 }
 
-service IecStreamRpc {
-  rpc Ping (Req) returns (Res) {
-    option (google.api.http) = {
-      post: "/api/v1/iecstream/ping"
-      body: "*"
-    };
-  };
-  // 推送 chunk asdu 消息
-  rpc PushChunkAsdu (PushChunkAsduReq) returns (PushChunkAsduRes) {}
-}
+// ----------------------------------------

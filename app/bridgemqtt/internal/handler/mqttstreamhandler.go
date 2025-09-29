@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	"zero-service/facade/mqttstream/mqttstream"
+	"zero-service/facade/streamevent/streamevent"
 
 	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/random"
@@ -12,10 +12,10 @@ import (
 
 type MqttStreamHandler struct {
 	clientID string
-	cli      mqttstream.MqttStreamClient
+	cli      streamevent.StreamEventClient
 }
 
-func NewMqttStreamHandler(clientID string, cli mqttstream.MqttStreamClient) *MqttStreamHandler {
+func NewMqttStreamHandler(clientID string, cli streamevent.StreamEventClient) *MqttStreamHandler {
 	return &MqttStreamHandler{
 		clientID: clientID,
 		cli:      cli,
@@ -27,8 +27,8 @@ func (h *MqttStreamHandler) Consume(ctx context.Context, topic string, payload [
 	time := carbon.Now().ToDateTimeMicroString()
 	startTime := timex.Now()
 	duration := timex.Since(startTime)
-	_, err := h.cli.ReceiveMessage(ctx, &mqttstream.ReceiveMessageReq{
-		Messages: []*mqttstream.MqttMessage{
+	_, err := h.cli.ReceiveMQTTMessage(ctx, &streamevent.ReceiveMQTTMessageReq{
+		Messages: []*streamevent.MqttMessage{
 			{
 				SessionId: h.clientID,
 				MsgId:     msgId,

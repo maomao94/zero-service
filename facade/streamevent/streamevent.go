@@ -4,10 +4,10 @@ import (
 	"flag"
 	"fmt"
 
-	"zero-service/facade/mqttstream/internal/config"
-	"zero-service/facade/mqttstream/internal/server"
-	"zero-service/facade/mqttstream/internal/svc"
-	"zero-service/facade/mqttstream/mqttstream"
+	"zero-service/facade/streamevent/internal/config"
+	"zero-service/facade/streamevent/internal/server"
+	"zero-service/facade/streamevent/internal/svc"
+	"zero-service/facade/streamevent/streamevent"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/service"
@@ -16,7 +16,7 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-var configFile = flag.String("f", "etc/mqttstream.yaml", "the config file")
+var configFile = flag.String("f", "etc/streamevent.yaml", "the config file")
 
 func main() {
 	flag.Parse()
@@ -26,7 +26,7 @@ func main() {
 	ctx := svc.NewServiceContext(c)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
-		mqttstream.RegisterMqttStreamServer(grpcServer, server.NewMqttStreamServer(ctx))
+		streamevent.RegisterStreamEventServer(grpcServer, server.NewStreamEventServer(ctx))
 
 		if c.Mode == service.DevMode || c.Mode == service.TestMode {
 			reflection.Register(grpcServer)

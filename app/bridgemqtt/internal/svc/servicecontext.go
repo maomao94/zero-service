@@ -5,21 +5,21 @@ import (
 	"zero-service/app/bridgemqtt/internal/handler"
 	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/mqttx"
-	"zero-service/facade/mqttstream/mqttstream"
+	"zero-service/facade/streamevent/streamevent"
 
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
 )
 
 type ServiceContext struct {
-	Config        config.Config
-	MqttClient    *mqttx.Client
-	MqttStreamCli mqttstream.MqttStreamClient
+	Config         config.Config
+	MqttClient     *mqttx.Client
+	StreamEventCli streamevent.StreamEventClient
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	mqttCLi := mqttx.MustNewClient(c.MqttConfig)
-	mqttStreamCli := mqttstream.NewMqttStreamClient(zrpc.MustNewClient(c.MqttStreamConf,
+	streamEventCli := streamevent.NewStreamEventClient(zrpc.MustNewClient(c.StreamEventConf,
 		zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
 		// 添加最大消息配置
 		zrpc.WithDialOption(grpc.WithDefaultCallOptions(
@@ -30,11 +30,11 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	).Conn())
 	// 注册转发 handler
 	for _, topic := range c.MqttConfig.SubscribeTopics {
-		mqttCLi.AddHandler(topic, handler.NewMqttStreamHandler(mqttCLi.GetClientID(), mqttStreamCli))
+		mqttCLi.AddHandler(topic, handler.NewMqttStreamHandler(mqttCLi.GetClientID(), streamEventCli))
 	}
 	return &ServiceContext{
-		Config:        c,
-		MqttClient:    mqttCLi,
-		MqttStreamCli: mqttStreamCli,
+		Config:         c,
+		MqttClient:     mqttCLi,
+		StreamEventCli: streamEventCli,
 	}
 }

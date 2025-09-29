@@ -3,27 +3,29 @@ package main
 import (
 	"flag"
 	"fmt"
+	"zero-service/app/iecstash/kafka"
+	interceptor "zero-service/common/Interceptor/rpcserver"
+	"zero-service/common/nacosx"
+	"zero-service/facade/streamevent/streamevent"
+
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	"github.com/zeromicro/go-queue/kq"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/proc"
-	"zero-service/app/iecstash/kafka"
-	interceptor "zero-service/common/Interceptor/rpcserver"
-	"zero-service/common/nacosx"
-	"zero-service/facade/iecstream/iecstream"
 
 	"zero-service/app/iecstash/iecstash"
 	"zero-service/app/iecstash/internal/config"
 	"zero-service/app/iecstash/internal/server"
 	"zero-service/app/iecstash/internal/svc"
 
+	_ "zero-service/common/carbonx"
+
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	_ "zero-service/common/carbonx"
 )
 
 var configFile = flag.String("f", "etc/iecstash.yaml", "the config file")
@@ -35,7 +37,7 @@ func main() {
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
 	proc.SetTimeToForceQuit(c.GracePeriod)
-	zrpc.DontLogClientContentForMethod(iecstream.IecStreamRpc_PushChunkAsdu_FullMethodName)
+	zrpc.DontLogClientContentForMethod(streamevent.StreamEvent_PushChunkAsdu_FullMethodName)
 	ctx := svc.NewServiceContext(c)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {

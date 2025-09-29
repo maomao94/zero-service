@@ -2,25 +2,26 @@ package svc
 
 import (
 	"context"
-	"github.com/tidwall/gjson"
-	"github.com/zeromicro/go-zero/core/executors"
-	"github.com/zeromicro/go-zero/zrpc"
-	"google.golang.org/grpc"
 	"math"
 	"sync"
 	"zero-service/app/iecstash/internal/config"
 	interceptor "zero-service/common/Interceptor/rpcclient"
-	"zero-service/facade/iecstream/iecstream"
+	"zero-service/facade/streamevent/streamevent"
+
+	"github.com/tidwall/gjson"
+	"github.com/zeromicro/go-zero/core/executors"
+	"github.com/zeromicro/go-zero/zrpc"
+	"google.golang.org/grpc"
 )
 
 type ServiceContext struct {
-	Config          config.Config
-	IecStreamRpcCli iecstream.IecStreamRpcClient
-	AsduPusher      *AsduPusher
+	Config         config.Config
+	StreamEventCli streamevent.StreamEventClient
+	AsduPusher     *AsduPusher
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
-	iecStreamRpcCli := iecstream.NewIecStreamRpcClient(zrpc.MustNewClient(c.IecStreamRpcConf,
+	streamEventCli := streamevent.NewStreamEventClient(zrpc.MustNewClient(c.StreamEventConf,
 		zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
 		// 添加最大消息配置
 		zrpc.WithDialOption(grpc.WithDefaultCallOptions(
@@ -30,16 +31,16 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		)),
 	).Conn())
 	return &ServiceContext{
-		Config:          c,
-		IecStreamRpcCli: iecStreamRpcCli,
-		AsduPusher:      NewAsduPusher(iecStreamRpcCli, c.PushAsduChunkBytes),
+		Config:         c,
+		StreamEventCli: streamEventCli,
+		AsduPusher:     NewAsduPusher(streamEventCli, c.PushAsduChunkBytes),
 	}
 }
 
 type AsduPusher struct {
-	inserter        *executors.ChunkExecutor
-	IecStreamRpcCli iecstream.IecStreamRpcClient
-	writerLock      sync.Mutex
+	inserter       *executors.ChunkExecutor
+	streamEventCli streamevent.StreamEventClient
+	writerLock     sync.Mutex
 }
 
 func (w *AsduPusher) Write(val string) error {
@@ -49,13 +50,13 @@ func (w *AsduPusher) Write(val string) error {
 }
 
 func (w *AsduPusher) execute(vals []interface{}) {
-	msgBodyList := make([]*iecstream.MsgBody, 0)
+	msgBodyList := make([]*streamevent.MsgBody, 0)
 	for _, val := range vals {
 		s := val.(string)
 		result := gjson.Parse(s)
 		bodyRaw := result.Get("body").Raw
 		typeId := result.Get("typeId").Int()
-		msgBody := &iecstream.MsgBody{
+		msgBody := &streamevent.MsgBody{
 			Host:        result.Get("host").String(),
 			Port:        int32(result.Get("port").Int()),
 			Asdu:        result.Get("asdu").String(),
@@ -71,14 +72,14 @@ func (w *AsduPusher) execute(vals []interface{}) {
 	if len(msgBodyList) == 0 {
 		return
 	}
-	w.IecStreamRpcCli.PushChunkAsdu(context.Background(), &iecstream.PushChunkAsduReq{
+	w.streamEventCli.PushChunkAsdu(context.Background(), &streamevent.PushChunkAsduReq{
 		MsgBody: msgBodyList,
 	})
 }
 
-func NewAsduPusher(iecStreamRpcCli iecstream.IecStreamRpcClient, ChunkBytes int) *AsduPusher {
+func NewAsduPusher(streamEventCli streamevent.StreamEventClient, ChunkBytes int) *AsduPusher {
 	writer := AsduPusher{}
 	writer.inserter = executors.NewChunkExecutor(writer.execute, executors.WithChunkBytes(ChunkBytes))
-	writer.IecStreamRpcCli = iecStreamRpcCli
+	writer.streamEventCli = streamEventCli
 	return &writer
 }

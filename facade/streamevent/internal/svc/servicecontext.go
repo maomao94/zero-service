@@ -1,6 +1,6 @@
 package svc
 
-import "zero-service/facade/mqttstream/internal/config"
+import "zero-service/facade/streamevent/internal/config"
 
 type ServiceContext struct {
 	Config config.Config

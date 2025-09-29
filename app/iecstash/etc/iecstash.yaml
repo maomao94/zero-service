@@ -36,9 +36,9 @@ KafkaASDUConfig:
   CommitInOrder: true
   # 可选last和first，默认为last，表示从头从kafka开始读取数据
   Offset: first
-IecStreamRpcConf:
+StreamEventConf:
   # nacos://[user:passwd]@host/service?param=value'
-  Target: nacos://nacos:nacos@127.0.0.1:8848/iec-stream?namespaceid=public&timeout=5000s
+  Target: nacos://nacos:nacos@127.0.0.1:8848/stream-event?namespaceid=public&timeout=5000s
 #  Endpoints:
 #    - 127.0.0.1:21009
   NonBlock: true
