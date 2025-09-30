@@ -115,9 +115,7 @@ type PublishReq struct {
 	// 发布消息的 topic
 	Topic string `protobuf:"bytes,1,opt,name=topic,proto3" json:"topic,omitempty"`
 	// 发布消息的 payload
-	Payload []byte `protobuf:"bytes,2,opt,name=payload,proto3" json:"payload,omitempty"`
-	// 是否开启 trace, 默认-false, true-开启 otel 链路追踪, mqtt 消息会添加 trace_id
-	IsTrace       bool `protobuf:"varint,3,opt,name=isTrace,proto3" json:"isTrace,omitempty"`
+	Payload       []byte `protobuf:"bytes,2,opt,name=payload,proto3" json:"payload,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -166,13 +164,6 @@ func (x *PublishReq) GetPayload() []byte {
 	return nil
 }
 
-func (x *PublishReq) GetIsTrace() bool {
-	if x != nil {
-		return x.IsTrace
-	}
-	return false
-}
-
 type PublishRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -218,12 +209,11 @@ const file_bridgemqtt_proto_rawDesc = "" +
 	"\x03Req\x12\x12\n" +
 	"\x04ping\x18\x01 \x01(\tR\x04ping\"\x19\n" +
 	"\x03Res\x12\x12\n" +
-	"\x04pong\x18\x01 \x01(\tR\x04pong\"V\n" +
+	"\x04pong\x18\x01 \x01(\tR\x04pong\"<\n" +
 	"\n" +
 	"PublishReq\x12\x14\n" +
 	"\x05topic\x18\x01 \x01(\tR\x05topic\x12\x18\n" +
-	"\apayload\x18\x02 \x01(\fR\apayload\x12\x18\n" +
-	"\aisTrace\x18\x03 \x01(\bR\aisTrace\"\f\n" +
+	"\apayload\x18\x02 \x01(\fR\apayload\"\f\n" +
 	"\n" +
 	"PublishRes2q\n" +
 	"\n" +

@@ -29,8 +29,6 @@ message PublishReq {
   string topic = 1;
   // 发布消息的 payload
   bytes payload = 2;
-  // 是否开启 trace, 默认-false, true-开启 otel 链路追踪, mqtt 消息会添加 trace_id
-  bool isTrace = 3;
 }
 
 message PublishRes {

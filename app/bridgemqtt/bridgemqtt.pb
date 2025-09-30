@@ -1,16 +1,15 @@
 
-ô
+Ú
 bridgemqtt.proto
 bridgemqtt"
 Req
 ping (	Rping"
 Res
-pong (	Rpong"V
+pong (	Rpong"<
 
 PublishReq
 topic (	Rtopic
-payload (Rpayload
-isTrace (RisTrace"
+payload (Rpayload"
 
 PublishRes2q
 
