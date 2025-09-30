@@ -285,7 +285,7 @@ func (c *Client) messageHandlerWrapper(topic string) mqtt.MessageHandler {
 		}
 
 		for _, handler := range handlers {
-			if err := handler.Consume(ctx, topic, msg.Payload()); err != nil {
+			if err := handler.Consume(ctx, topic, payload); err != nil {
 				logx.WithContext(ctx).Errorf("[mqtt] handler error for %s: %v", topic, err)
 			}
 		}
