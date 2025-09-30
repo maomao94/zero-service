@@ -116,7 +116,7 @@ type PublishReq struct {
 	Topic string `protobuf:"bytes,1,opt,name=topic,proto3" json:"topic,omitempty"`
 	// 发布消息的 payload
 	Payload []byte `protobuf:"bytes,2,opt,name=payload,proto3" json:"payload,omitempty"`
-	// 是否开启 trace, 默认-false, true-开启 otel 链路追踪, 包装整个请求
+	// 是否开启 trace, 默认-false, true-开启 otel 链路追踪, mqtt 消息会添加 trace_id
 	IsTrace       bool `protobuf:"varint,3,opt,name=isTrace,proto3" json:"isTrace,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
