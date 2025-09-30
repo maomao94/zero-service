@@ -243,11 +243,13 @@ func (c *Client) messageHandlerWrapper(topic string) mqtt.MessageHandler {
 	return func(client mqtt.Client, msg mqtt.Message) {
 		// 默认上下文
 		ctx := context.Background()
+		payload := msg.Payload()
 
 		// --- Step 1: 尝试解析为包装消息 ---
 		var wrapped Message
 		if err := json.Unmarshal(msg.Payload(), &wrapped); err == nil && wrapped.Payload != nil {
 			// 包装过的消息，提取 trace
+			payload = wrapped.Payload
 			carrier := NewMessageCarrier(&wrapped)
 			ctx = otel.GetTextMapPropagator().Extract(ctx, carrier)
 		}
@@ -276,7 +278,7 @@ func (c *Client) messageHandlerWrapper(topic string) mqtt.MessageHandler {
 
 		if len(handlers) == 0 {
 			err := errors.New("no handler for topic")
-			defaultHandler{}.Consume(ctx, topic, msg.Payload()) // 仍然传原始 payload
+			defaultHandler{}.Consume(ctx, topic, payload)
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
 			return
