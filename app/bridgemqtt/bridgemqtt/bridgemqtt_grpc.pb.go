@@ -34,7 +34,7 @@ type BridgeMqttClient interface {
 	// 发布消息
 	Publish(ctx context.Context, in *PublishReq, opts ...grpc.CallOption) (*PublishRes, error)
 	// 带 traceId 的发布消息 内部服务链路追踪
-	PublishWithTrace(ctx context.Context, in *PublishReq, opts ...grpc.CallOption) (*PublishRes, error)
+	PublishWithTrace(ctx context.Context, in *PublishWithTraceReq, opts ...grpc.CallOption) (*PublishWithTraceRes, error)
 }
 
 type bridgeMqttClient struct {
@@ -65,9 +65,9 @@ func (c *bridgeMqttClient) Publish(ctx context.Context, in *PublishReq, opts ...
 	return out, nil
 }
 
-func (c *bridgeMqttClient) PublishWithTrace(ctx context.Context, in *PublishReq, opts ...grpc.CallOption) (*PublishRes, error) {
+func (c *bridgeMqttClient) PublishWithTrace(ctx context.Context, in *PublishWithTraceReq, opts ...grpc.CallOption) (*PublishWithTraceRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(PublishRes)
+	out := new(PublishWithTraceRes)
 	err := c.cc.Invoke(ctx, BridgeMqtt_PublishWithTrace_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -85,7 +85,7 @@ type BridgeMqttServer interface {
 	// 发布消息
 	Publish(context.Context, *PublishReq) (*PublishRes, error)
 	// 带 traceId 的发布消息 内部服务链路追踪
-	PublishWithTrace(context.Context, *PublishReq) (*PublishRes, error)
+	PublishWithTrace(context.Context, *PublishWithTraceReq) (*PublishWithTraceRes, error)
 	mustEmbedUnimplementedBridgeMqttServer()
 }
 
@@ -102,7 +102,7 @@ func (UnimplementedBridgeMqttServer) Ping(context.Context, *Req) (*Res, error) {
 func (UnimplementedBridgeMqttServer) Publish(context.Context, *PublishReq) (*PublishRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Publish not implemented")
 }
-func (UnimplementedBridgeMqttServer) PublishWithTrace(context.Context, *PublishReq) (*PublishRes, error) {
+func (UnimplementedBridgeMqttServer) PublishWithTrace(context.Context, *PublishWithTraceReq) (*PublishWithTraceRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PublishWithTrace not implemented")
 }
 func (UnimplementedBridgeMqttServer) mustEmbedUnimplementedBridgeMqttServer() {}
@@ -163,7 +163,7 @@ func _BridgeMqtt_Publish_Handler(srv interface{}, ctx context.Context, dec func(
 }
 
 func _BridgeMqtt_PublishWithTrace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PublishReq)
+	in := new(PublishWithTraceReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -175,7 +175,7 @@ func _BridgeMqtt_PublishWithTrace_Handler(srv interface{}, ctx context.Context, 
 		FullMethod: BridgeMqtt_PublishWithTrace_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BridgeMqttServer).PublishWithTrace(ctx, req.(*PublishReq))
+		return srv.(BridgeMqttServer).PublishWithTrace(ctx, req.(*PublishWithTraceReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }

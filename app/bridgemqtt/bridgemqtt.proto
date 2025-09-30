@@ -12,7 +12,7 @@ service BridgeMqtt {
   // 发布消息
   rpc Publish(PublishReq) returns (PublishRes);
   // 带 traceId 的发布消息 内部服务链路追踪
-  rpc PublishWithTrace(PublishReq) returns (PublishRes);
+  rpc PublishWithTrace(PublishWithTraceReq) returns (PublishWithTraceRes);
 }
 
 // -------------------- 通用请求/响应 --------------------
@@ -34,4 +34,16 @@ message PublishReq {
 }
 
 message PublishRes {
+}
+
+message PublishWithTraceReq {
+  // 暂不考虑 session 区分下发
+  // 发布消息的 topic
+  string topic = 1;
+  // 发布消息的 payload
+  bytes payload = 2;
+}
+
+message PublishWithTraceRes {
+  string traceId = 1;
 }

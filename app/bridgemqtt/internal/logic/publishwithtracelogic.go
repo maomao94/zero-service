@@ -9,6 +9,7 @@ import (
 
 	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/trace"
 	"go.opentelemetry.io/otel"
 )
 
@@ -27,7 +28,8 @@ func NewPublishWithTraceLogic(ctx context.Context, svcCtx *svc.ServiceContext) *
 }
 
 // 带 traceId 的发布消息 内部服务链路追踪
-func (l *PublishWithTraceLogic) PublishWithTrace(in *bridgemqtt.PublishReq) (*bridgemqtt.PublishRes, error) {
+func (l *PublishWithTraceLogic) PublishWithTrace(in *bridgemqtt.PublishWithTraceReq) (*bridgemqtt.PublishWithTraceRes, error) {
+	traceID := trace.TraceIDFromContext(l.ctx)
 	msg := mqttx.NewMessage(in.Topic, in.Payload)
 	carrier := mqttx.NewMessageCarrier(msg)
 	otel.GetTextMapPropagator().Inject(l.ctx, carrier)
@@ -39,5 +41,7 @@ func (l *PublishWithTraceLogic) PublishWithTrace(in *bridgemqtt.PublishReq) (*br
 	if err != nil {
 		return nil, err
 	}
-	return &bridgemqtt.PublishRes{}, nil
+	return &bridgemqtt.PublishWithTraceRes{
+		TraceId: traceID,
+	}, nil
 }

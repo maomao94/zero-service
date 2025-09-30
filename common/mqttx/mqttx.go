@@ -2,6 +2,7 @@ package mqttx
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -240,11 +241,23 @@ func (c *Client) RestoreSubscriptions() error {
 // 消息处理包装器
 func (c *Client) messageHandlerWrapper(topic string) mqtt.MessageHandler {
 	return func(client mqtt.Client, msg mqtt.Message) {
-		// 1. 创建消费span，关联上下文
-		ctx, span := c.startConsumeSpan(context.Background(), msg, topic)
-		defer span.End() // 确保span最终会结束
-		// 添加日志 field
+		// 默认上下文
+		ctx := context.Background()
+
+		// --- Step 1: 尝试解析为包装消息 ---
+		var wrapped Message
+		if err := json.Unmarshal(msg.Payload(), &wrapped); err == nil && wrapped.Payload != nil {
+			// 包装过的消息，提取 trace
+			carrier := NewMessageCarrier(&wrapped)
+			ctx = otel.GetTextMapPropagator().Extract(ctx, carrier)
+		}
+
+		// --- Step 2: 创建消费 span ---
+		ctx, span := c.startConsumeSpan(ctx, msg, topic)
+		defer span.End()
 		ctx = logx.ContextWithFields(ctx, logx.Field("client", c.GetClientID()))
+
+		// --- Step 3: 处理时间统计和 panic 捕获 ---
 		startTime := timex.Now()
 		defer func() {
 			c.metrics.Add(stat.Task{Duration: timex.Since(startTime)})
@@ -256,13 +269,14 @@ func (c *Client) messageHandlerWrapper(topic string) mqtt.MessageHandler {
 			}
 		}()
 
+		// --- Step 4: 分发给 handler ---
 		c.mu.RLock()
 		handlers := c.handlers[topic]
 		c.mu.RUnlock()
 
 		if len(handlers) == 0 {
 			err := errors.New("no handler for topic")
-			defaultHandler{}.Consume(ctx, topic, msg.Payload())
+			defaultHandler{}.Consume(ctx, topic, msg.Payload()) // 仍然传原始 payload
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
 			return

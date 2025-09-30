@@ -35,7 +35,7 @@ func (s *BridgeMqttServer) Publish(ctx context.Context, in *bridgemqtt.PublishRe
 }
 
 // 带 traceId 的发布消息 内部服务链路追踪
-func (s *BridgeMqttServer) PublishWithTrace(ctx context.Context, in *bridgemqtt.PublishReq) (*bridgemqtt.PublishRes, error) {
+func (s *BridgeMqttServer) PublishWithTrace(ctx context.Context, in *bridgemqtt.PublishWithTraceReq) (*bridgemqtt.PublishWithTraceRes, error) {
 	l := logic.NewPublishWithTraceLogic(ctx, s.svcCtx)
 	return l.PublishWithTrace(in)
 }
