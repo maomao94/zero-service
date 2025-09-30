@@ -109,6 +109,106 @@ func (x *Res) GetPong() string {
 	return ""
 }
 
+type PublishReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 暂不考虑 session 区分下发
+	// 发布消息的 topic
+	Topic string `protobuf:"bytes,1,opt,name=topic,proto3" json:"topic,omitempty"`
+	// 发布消息的 payload
+	Payload []byte `protobuf:"bytes,2,opt,name=payload,proto3" json:"payload,omitempty"`
+	// 是否开启 trace, 默认-false, true-开启 otel 链路追踪, 包装整个请求
+	IsTrace       bool `protobuf:"varint,3,opt,name=isTrace,proto3" json:"isTrace,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PublishReq) Reset() {
+	*x = PublishReq{}
+	mi := &file_bridgemqtt_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PublishReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PublishReq) ProtoMessage() {}
+
+func (x *PublishReq) ProtoReflect() protoreflect.Message {
+	mi := &file_bridgemqtt_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PublishReq.ProtoReflect.Descriptor instead.
+func (*PublishReq) Descriptor() ([]byte, []int) {
+	return file_bridgemqtt_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *PublishReq) GetTopic() string {
+	if x != nil {
+		return x.Topic
+	}
+	return ""
+}
+
+func (x *PublishReq) GetPayload() []byte {
+	if x != nil {
+		return x.Payload
+	}
+	return nil
+}
+
+func (x *PublishReq) GetIsTrace() bool {
+	if x != nil {
+		return x.IsTrace
+	}
+	return false
+}
+
+type PublishRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PublishRes) Reset() {
+	*x = PublishRes{}
+	mi := &file_bridgemqtt_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PublishRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PublishRes) ProtoMessage() {}
+
+func (x *PublishRes) ProtoReflect() protoreflect.Message {
+	mi := &file_bridgemqtt_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PublishRes.ProtoReflect.Descriptor instead.
+func (*PublishRes) Descriptor() ([]byte, []int) {
+	return file_bridgemqtt_proto_rawDescGZIP(), []int{3}
+}
+
 var File_bridgemqtt_proto protoreflect.FileDescriptor
 
 const file_bridgemqtt_proto_rawDesc = "" +
@@ -118,10 +218,18 @@ const file_bridgemqtt_proto_rawDesc = "" +
 	"\x03Req\x12\x12\n" +
 	"\x04ping\x18\x01 \x01(\tR\x04ping\"\x19\n" +
 	"\x03Res\x12\x12\n" +
-	"\x04pong\x18\x01 \x01(\tR\x04pong26\n" +
+	"\x04pong\x18\x01 \x01(\tR\x04pong\"V\n" +
+	"\n" +
+	"PublishReq\x12\x14\n" +
+	"\x05topic\x18\x01 \x01(\tR\x05topic\x12\x18\n" +
+	"\apayload\x18\x02 \x01(\fR\apayload\x12\x18\n" +
+	"\aisTrace\x18\x03 \x01(\bR\aisTrace\"\f\n" +
+	"\n" +
+	"PublishRes2q\n" +
 	"\n" +
 	"BridgeMqtt\x12(\n" +
-	"\x04Ping\x12\x0f.bridgemqtt.Req\x1a\x0f.bridgemqtt.ResB=\n" +
+	"\x04Ping\x12\x0f.bridgemqtt.Req\x1a\x0f.bridgemqtt.Res\x129\n" +
+	"\aPublish\x12\x16.bridgemqtt.PublishReq\x1a\x16.bridgemqtt.PublishResB=\n" +
 	"\x1acom.github.bridgemqtt.grpcB\x0fBridgeMqttProtoP\x01Z\f./bridgemqttb\x06proto3"
 
 var (
@@ -136,16 +244,20 @@ func file_bridgemqtt_proto_rawDescGZIP() []byte {
 	return file_bridgemqtt_proto_rawDescData
 }
 
-var file_bridgemqtt_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_bridgemqtt_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_bridgemqtt_proto_goTypes = []any{
-	(*Req)(nil), // 0: bridgemqtt.Req
-	(*Res)(nil), // 1: bridgemqtt.Res
+	(*Req)(nil),        // 0: bridgemqtt.Req
+	(*Res)(nil),        // 1: bridgemqtt.Res
+	(*PublishReq)(nil), // 2: bridgemqtt.PublishReq
+	(*PublishRes)(nil), // 3: bridgemqtt.PublishRes
 }
 var file_bridgemqtt_proto_depIdxs = []int32{
 	0, // 0: bridgemqtt.BridgeMqtt.Ping:input_type -> bridgemqtt.Req
-	1, // 1: bridgemqtt.BridgeMqtt.Ping:output_type -> bridgemqtt.Res
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	2, // 1: bridgemqtt.BridgeMqtt.Publish:input_type -> bridgemqtt.PublishReq
+	1, // 2: bridgemqtt.BridgeMqtt.Ping:output_type -> bridgemqtt.Res
+	3, // 3: bridgemqtt.BridgeMqtt.Publish:output_type -> bridgemqtt.PublishRes
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -162,7 +274,7 @@ func file_bridgemqtt_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_bridgemqtt_proto_rawDesc), len(file_bridgemqtt_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

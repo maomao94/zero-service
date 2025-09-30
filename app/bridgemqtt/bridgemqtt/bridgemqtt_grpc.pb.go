@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	BridgeMqtt_Ping_FullMethodName = "/bridgemqtt.BridgeMqtt/Ping"
+	BridgeMqtt_Ping_FullMethodName    = "/bridgemqtt.BridgeMqtt/Ping"
+	BridgeMqtt_Publish_FullMethodName = "/bridgemqtt.BridgeMqtt/Publish"
 )
 
 // BridgeMqttClient is the client API for BridgeMqtt service.
@@ -29,6 +30,8 @@ const (
 // Modbus 协议桥接服务
 type BridgeMqttClient interface {
 	Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error)
+	// 发布消息
+	Publish(ctx context.Context, in *PublishReq, opts ...grpc.CallOption) (*PublishRes, error)
 }
 
 type bridgeMqttClient struct {
@@ -49,6 +52,16 @@ func (c *bridgeMqttClient) Ping(ctx context.Context, in *Req, opts ...grpc.CallO
 	return out, nil
 }
 
+func (c *bridgeMqttClient) Publish(ctx context.Context, in *PublishReq, opts ...grpc.CallOption) (*PublishRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PublishRes)
+	err := c.cc.Invoke(ctx, BridgeMqtt_Publish_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BridgeMqttServer is the server API for BridgeMqtt service.
 // All implementations must embed UnimplementedBridgeMqttServer
 // for forward compatibility.
@@ -56,6 +69,8 @@ func (c *bridgeMqttClient) Ping(ctx context.Context, in *Req, opts ...grpc.CallO
 // Modbus 协议桥接服务
 type BridgeMqttServer interface {
 	Ping(context.Context, *Req) (*Res, error)
+	// 发布消息
+	Publish(context.Context, *PublishReq) (*PublishRes, error)
 	mustEmbedUnimplementedBridgeMqttServer()
 }
 
@@ -68,6 +83,9 @@ type UnimplementedBridgeMqttServer struct{}
 
 func (UnimplementedBridgeMqttServer) Ping(context.Context, *Req) (*Res, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
+}
+func (UnimplementedBridgeMqttServer) Publish(context.Context, *PublishReq) (*PublishRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Publish not implemented")
 }
 func (UnimplementedBridgeMqttServer) mustEmbedUnimplementedBridgeMqttServer() {}
 func (UnimplementedBridgeMqttServer) testEmbeddedByValue()                    {}
@@ -108,6 +126,24 @@ func _BridgeMqtt_Ping_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BridgeMqtt_Publish_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PublishReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BridgeMqttServer).Publish(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BridgeMqtt_Publish_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BridgeMqttServer).Publish(ctx, req.(*PublishReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BridgeMqtt_ServiceDesc is the grpc.ServiceDesc for BridgeMqtt service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -118,6 +154,10 @@ var BridgeMqtt_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Ping",
 			Handler:    _BridgeMqtt_Ping_Handler,
+		},
+		{
+			MethodName: "Publish",
+			Handler:    _BridgeMqtt_Publish_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -9,6 +9,8 @@ option java_outer_classname = "BridgeMqttProto";
 // Modbus 协议桥接服务
 service BridgeMqtt {
   rpc Ping(Req) returns (Res);
+  // 发布消息
+  rpc Publish(PublishReq) returns (PublishRes);
 }
 
 // -------------------- 通用请求/响应 --------------------
@@ -19,4 +21,17 @@ message Req {
 
 message Res {
   string pong = 1; // 健康检查返回内容
+}
+
+message PublishReq {
+  // 暂不考虑 session 区分下发
+  // 发布消息的 topic
+  string topic = 1;
+  // 发布消息的 payload
+  bytes payload = 2;
+  // 是否开启 trace, 默认-false, true-开启 otel 链路追踪, 包装整个请求
+  bool isTrace = 3;
+}
+
+message PublishRes {
 }
