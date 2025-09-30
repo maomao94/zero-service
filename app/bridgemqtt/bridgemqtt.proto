@@ -11,6 +11,8 @@ service BridgeMqtt {
   rpc Ping(Req) returns (Res);
   // 发布消息
   rpc Publish(PublishReq) returns (PublishRes);
+  // 带 traceId 的发布消息 内部服务链路追踪
+  rpc PublishWithTrace(PublishReq) returns (PublishRes);
 }
 
 // -------------------- 通用请求/响应 --------------------

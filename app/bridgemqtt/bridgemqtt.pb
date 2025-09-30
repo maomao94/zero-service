@@ -1,5 +1,5 @@
 
-Ú
+Ÿ
 bridgemqtt.proto
 bridgemqtt"
 Req
@@ -11,9 +11,10 @@ PublishReq
 topic (	Rtopic
 payload (Rpayload"
 
-PublishRes2q
+PublishRes2µ
 
 BridgeMqtt(
 Ping.bridgemqtt.Req.bridgemqtt.Res9
-Publish.bridgemqtt.PublishReq.bridgemqtt.PublishResB=
+Publish.bridgemqtt.PublishReq.bridgemqtt.PublishResB
+PublishWithTrace.bridgemqtt.PublishReq.bridgemqtt.PublishResB=
 com.github.bridgemqtt.grpcBBridgeMqttProtoPZ./bridgemqttbproto3

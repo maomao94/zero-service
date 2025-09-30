@@ -215,11 +215,12 @@ const file_bridgemqtt_proto_rawDesc = "" +
 	"\x05topic\x18\x01 \x01(\tR\x05topic\x12\x18\n" +
 	"\apayload\x18\x02 \x01(\fR\apayload\"\f\n" +
 	"\n" +
-	"PublishRes2q\n" +
+	"PublishRes2\xb5\x01\n" +
 	"\n" +
 	"BridgeMqtt\x12(\n" +
 	"\x04Ping\x12\x0f.bridgemqtt.Req\x1a\x0f.bridgemqtt.Res\x129\n" +
-	"\aPublish\x12\x16.bridgemqtt.PublishReq\x1a\x16.bridgemqtt.PublishResB=\n" +
+	"\aPublish\x12\x16.bridgemqtt.PublishReq\x1a\x16.bridgemqtt.PublishRes\x12B\n" +
+	"\x10PublishWithTrace\x12\x16.bridgemqtt.PublishReq\x1a\x16.bridgemqtt.PublishResB=\n" +
 	"\x1acom.github.bridgemqtt.grpcB\x0fBridgeMqttProtoP\x01Z\f./bridgemqttb\x06proto3"
 
 var (
@@ -244,10 +245,12 @@ var file_bridgemqtt_proto_goTypes = []any{
 var file_bridgemqtt_proto_depIdxs = []int32{
 	0, // 0: bridgemqtt.BridgeMqtt.Ping:input_type -> bridgemqtt.Req
 	2, // 1: bridgemqtt.BridgeMqtt.Publish:input_type -> bridgemqtt.PublishReq
-	1, // 2: bridgemqtt.BridgeMqtt.Ping:output_type -> bridgemqtt.Res
-	3, // 3: bridgemqtt.BridgeMqtt.Publish:output_type -> bridgemqtt.PublishRes
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
+	2, // 2: bridgemqtt.BridgeMqtt.PublishWithTrace:input_type -> bridgemqtt.PublishReq
+	1, // 3: bridgemqtt.BridgeMqtt.Ping:output_type -> bridgemqtt.Res
+	3, // 4: bridgemqtt.BridgeMqtt.Publish:output_type -> bridgemqtt.PublishRes
+	3, // 5: bridgemqtt.BridgeMqtt.PublishWithTrace:output_type -> bridgemqtt.PublishRes
+	3, // [3:6] is the sub-list for method output_type
+	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
