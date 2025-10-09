@@ -12,7 +12,6 @@ import (
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/gateway"
 	"github.com/zeromicro/go-zero/rest"
-	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
 var configFile = flag.String("f", "etc/bridgegtw.yaml", "the config file")
@@ -27,7 +26,7 @@ func main() {
 		server.Use(rest.ToMiddleware(func(next http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				next.ServeHTTP(w, r)
-				w.Header().Set(httpx.ContentType, httpx.JsonContentType)
+				//w.Header().Set(httpx.ContentType, httpx.JsonContentType)
 			})
 		}))
 	})
