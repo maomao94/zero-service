@@ -1,12 +1,13 @@
 package svc
 
 import (
+	"time"
+	"zero-service/app/alarm/internal/config"
+	"zero-service/common/alarmx"
+
 	lark "github.com/larksuite/oapi-sdk-go/v3"
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/rest/httpc"
-	"time"
-	"zero-service/common/alarmx"
-	"zero-service/zeroalarm/internal/config"
 )
 
 type ServiceContext struct {

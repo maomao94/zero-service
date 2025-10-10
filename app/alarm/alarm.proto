@@ -1,10 +1,7 @@
 syntax = "proto3";
-package zeroalarm;
+package alarm;
 
-option go_package = "./zeroalarm";
-option java_multiple_files = true;
-option java_package = "zero.boot.grpc.alarm";
-option java_outer_classname = "AlarmProto";
+option go_package = "./alarm";
 
 message Req {
   string ping = 1;
@@ -30,7 +27,7 @@ message AlarmReq {
 message AlarmRes {
 }
 
-service Zeroalarm {
+service Alarm {
   rpc Ping(Req) returns(Res);
   rpc Alarm(AlarmReq) returns(AlarmRes); // 报警
 }

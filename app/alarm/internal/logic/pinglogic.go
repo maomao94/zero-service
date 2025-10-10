@@ -3,8 +3,8 @@ package logic
 import (
 	"context"
 
-	"zero-service/zeroalarm/internal/svc"
-	"zero-service/zeroalarm/zeroalarm"
+	"zero-service/app/alarm/alarm"
+	"zero-service/app/alarm/internal/svc"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -23,6 +23,8 @@ func NewPingLogic(ctx context.Context, svcCtx *svc.ServiceContext) *PingLogic {
 	}
 }
 
-func (l *PingLogic) Ping(in *zeroalarm.Req) (*zeroalarm.Res, error) {
-	return &zeroalarm.Res{Pong: "alarm"}, nil
+func (l *PingLogic) Ping(in *alarm.Req) (*alarm.Res, error) {
+	return &alarm.Res{
+		Pong: "pong",
+	}, nil
 }

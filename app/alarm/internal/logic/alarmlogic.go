@@ -3,14 +3,15 @@ package logic
 import (
 	"context"
 	"fmt"
+	"strings"
+	"zero-service/app/alarm/alarm"
+	"zero-service/app/alarm/internal/svc"
+	"zero-service/common/alarmx"
+
 	"github.com/duke-git/lancet/v2/stream"
 	"github.com/jinzhu/copier"
 	larkim "github.com/larksuite/oapi-sdk-go/v3/service/im/v1"
 	"github.com/zeromicro/go-zero/core/logx"
-	"strings"
-	"zero-service/common/alarmx"
-	"zero-service/zeroalarm/internal/svc"
-	"zero-service/zeroalarm/zeroalarm"
 )
 
 type AlarmLogic struct {
@@ -27,7 +28,7 @@ func NewAlarmLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AlarmLogic 
 	}
 }
 
-func (l *AlarmLogic) Alarm(in *zeroalarm.AlarmReq) (*zeroalarm.AlarmRes, error) {
+func (l *AlarmLogic) Alarm(in *alarm.AlarmReq) (*alarm.AlarmRes, error) {
 	in.UserId = append(in.UserId, l.svcCtx.Config.Alarmx.UserId...)
 	result := stream.FromSlice(in.UserId).Distinct().ToSlice()
 	formatChatName := in.ChatName + fmt.Sprintf("[%s]", l.svcCtx.Config.Mode)
@@ -58,7 +59,7 @@ func (l *AlarmLogic) Alarm(in *zeroalarm.AlarmReq) (*zeroalarm.AlarmRes, error) 
 	//http.HandleFunc("/card", httpserverext.NewCardActionHandlerFunc(cardHandler,
 	//	larkevent.WithLogLevel(larkcore.LogLevelDebug)))
 	//err = http.ListenAndServe(":7777", nil)
-	return &zeroalarm.AlarmRes{}, nil
+	return &alarm.AlarmRes{}, nil
 }
 
 // 上传图片
