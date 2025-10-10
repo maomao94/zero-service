@@ -42,7 +42,7 @@ type ModbusClientConf struct {
 	Address string `json:"address"`
 
 	// Modbus 从站地址（Slave ID / Unit ID）
-	SlaveID int64 `json:"slaveID"`
+	Slave int64 `json:"slave"`
 
 	// 发送/接收超时，单位毫秒
 	Timeout int64 `json:"timeout,default=10000"`
@@ -156,7 +156,7 @@ func NewModbusClient(c *ModbusClientConf) (*ModbusClient, error) {
 		}))
 	}
 	h := modbus.NewTCPClientHandler(c.Address, opts...)
-	h.SetSlave(byte(c.SlaveID))
+	h.SetSlave(byte(c.Slave))
 	h.Timeout = time.Millisecond * time.Duration(c.Timeout)
 	h.IdleTimeout = time.Millisecond * time.Duration(c.IdleTimeout)
 	h.LinkRecoveryTimeout = time.Millisecond * time.Duration(c.LinkRecoveryTimeout)
