@@ -42,7 +42,7 @@ type ModbusClientConf struct {
 	Address string `json:"address"`
 
 	// Modbus 从站地址（Slave ID / Unit ID）
-	Slave int64 `json:"slave"`
+	Slave int64 `json:"slave,default=1"`
 
 	// 发送/接收超时，单位毫秒
 	Timeout int64 `json:"timeout,default=10000"`

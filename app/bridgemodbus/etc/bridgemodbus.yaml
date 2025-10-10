@@ -22,4 +22,4 @@ DB:
   DataSource: root:PXDN93VRKUm8TeE7@tcp(localhost:33069)/zero?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
 ModbusClientConf:
   Address: 127.0.0.1:5020
-  Slave: 0
+  Slave: 1
