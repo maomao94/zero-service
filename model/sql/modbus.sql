@@ -8,7 +8,7 @@ CREATE TABLE `modbus_slave_config`
     `version`                   bigint       NOT NULL DEFAULT '0' COMMENT '版本号（乐观锁，防并发修改）',
     `modbus_code`               varchar(32)  NOT NULL DEFAULT '' COMMENT 'Modbus配置唯一编码（如：modbus-192.168.1.100）',
     `slave_address`             varchar(64)  NOT NULL DEFAULT '' COMMENT 'TCP设备地址（格式：IP:Port，对应结构体 Address）',
-    `slave_id`                  tinyint      NOT NULL DEFAULT '1' COMMENT 'Modbus从站地址（Slave ID/Unit ID，对应结构体 SlaveID）',
+    `slave`                     int          NOT NULL DEFAULT '1' COMMENT 'Modbus从站地址（Slave ID/Unit ID，对应结构体 Slave）',
     `timeout`                   int          NOT NULL DEFAULT '10000' COMMENT '发送/接收超时（单位：毫秒，对应结构体 Timeout，默认10000）',
     `idle_timeout`              int          NOT NULL DEFAULT '60000' COMMENT '空闲连接自动关闭时间（单位：毫秒，对应结构体 IdleTimeout，默认60000）',
     `link_recovery_timeout`     int          NOT NULL DEFAULT '3000' COMMENT 'TCP连接出错重连间隔（单位：毫秒，对应结构体 LinkRecoveryTimeout，默认3000）',
@@ -24,7 +24,7 @@ CREATE TABLE `modbus_slave_config`
     UNIQUE KEY `idx_modbus_code` (`modbus_code`) COMMENT '配置编码唯一索引（避免重复配置）'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Modbus从站连接配置表';
 
-INSERT INTO `modbus_slave_config` (`modbus_code`, `slave_address`, `slave_id`, `status`, `remark`)
+INSERT INTO `modbus_slave_config` (`modbus_code`, `slave_address`, `slave`, `status`, `remark`)
 VALUES ('local', -- 唯一配置编码
         '127.0.0.1:5020', -- 从站地址（IP:Port）
         1, -- 从站ID（非默认值，区分同网段其他设备）

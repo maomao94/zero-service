@@ -59,7 +59,7 @@ type (
 		Version                 int64     `db:"version"`                   // 版本号（乐观锁，防并发修改）
 		ModbusCode              string    `db:"modbus_code"`               // Modbus配置唯一编码（如：modbus-192.168.1.100）
 		SlaveAddress            string    `db:"slave_address"`             // TCP设备地址（格式：IP:Port，对应结构体 Address）
-		SlaveId                 int64     `db:"slave_id"`                  // Modbus从站地址（Slave ID/Unit ID，对应结构体 SlaveID）
+		Slave                   int64     `db:"slave"`                     // Modbus从站地址（Slave ID/Unit ID，对应结构体 Slave）
 		Timeout                 int64     `db:"timeout"`                   // 发送/接收超时（单位：毫秒，对应结构体 Timeout，默认10000）
 		IdleTimeout             int64     `db:"idle_timeout"`              // 空闲连接自动关闭时间（单位：毫秒，对应结构体 IdleTimeout，默认60000）
 		LinkRecoveryTimeout     int64     `db:"link_recovery_timeout"`     // TCP连接出错重连间隔（单位：毫秒，对应结构体 LinkRecoveryTimeout，默认3000）
@@ -124,9 +124,9 @@ func (m *defaultModbusSlaveConfigModel) Insert(ctx context.Context, session sqlx
 
 	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, modbusSlaveConfigRowsExpectAutoSet)
 	if session != nil {
-		return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.ModbusCode, data.SlaveAddress, data.SlaveId, data.Timeout, data.IdleTimeout, data.LinkRecoveryTimeout, data.ProtocolRecoveryTimeout, data.ConnectDelay, data.EnableTls, data.TlsCertFile, data.TlsKeyFile, data.TlsCaFile, data.Status, data.Remark)
+		return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.ModbusCode, data.SlaveAddress, data.Slave, data.Timeout, data.IdleTimeout, data.LinkRecoveryTimeout, data.ProtocolRecoveryTimeout, data.ConnectDelay, data.EnableTls, data.TlsCertFile, data.TlsKeyFile, data.TlsCaFile, data.Status, data.Remark)
 	}
-	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.ModbusCode, data.SlaveAddress, data.SlaveId, data.Timeout, data.IdleTimeout, data.LinkRecoveryTimeout, data.ProtocolRecoveryTimeout, data.ConnectDelay, data.EnableTls, data.TlsCertFile, data.TlsKeyFile, data.TlsCaFile, data.Status, data.Remark)
+	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.ModbusCode, data.SlaveAddress, data.Slave, data.Timeout, data.IdleTimeout, data.LinkRecoveryTimeout, data.ProtocolRecoveryTimeout, data.ConnectDelay, data.EnableTls, data.TlsCertFile, data.TlsKeyFile, data.TlsCaFile, data.Status, data.Remark)
 }
 
 func (m *defaultModbusSlaveConfigModel) Update(ctx context.Context, session sqlx.Session, newData *ModbusSlaveConfig) (sql.Result, error) {
@@ -134,9 +134,9 @@ func (m *defaultModbusSlaveConfigModel) Update(ctx context.Context, session sqlx
 	newData.DelState = 0
 	query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, modbusSlaveConfigRowsWithPlaceHolder)
 	if session != nil {
-		return session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.ModbusCode, newData.SlaveAddress, newData.SlaveId, newData.Timeout, newData.IdleTimeout, newData.LinkRecoveryTimeout, newData.ProtocolRecoveryTimeout, newData.ConnectDelay, newData.EnableTls, newData.TlsCertFile, newData.TlsKeyFile, newData.TlsCaFile, newData.Status, newData.Remark, newData.Id)
+		return session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.ModbusCode, newData.SlaveAddress, newData.Slave, newData.Timeout, newData.IdleTimeout, newData.LinkRecoveryTimeout, newData.ProtocolRecoveryTimeout, newData.ConnectDelay, newData.EnableTls, newData.TlsCertFile, newData.TlsKeyFile, newData.TlsCaFile, newData.Status, newData.Remark, newData.Id)
 	}
-	return m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.ModbusCode, newData.SlaveAddress, newData.SlaveId, newData.Timeout, newData.IdleTimeout, newData.LinkRecoveryTimeout, newData.ProtocolRecoveryTimeout, newData.ConnectDelay, newData.EnableTls, newData.TlsCertFile, newData.TlsKeyFile, newData.TlsCaFile, newData.Status, newData.Remark, newData.Id)
+	return m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.ModbusCode, newData.SlaveAddress, newData.Slave, newData.Timeout, newData.IdleTimeout, newData.LinkRecoveryTimeout, newData.ProtocolRecoveryTimeout, newData.ConnectDelay, newData.EnableTls, newData.TlsCertFile, newData.TlsKeyFile, newData.TlsCaFile, newData.Status, newData.Remark, newData.Id)
 }
 
 func (m *defaultModbusSlaveConfigModel) UpdateWithVersion(ctx context.Context, session sqlx.Session, newData *ModbusSlaveConfig) error {
@@ -149,9 +149,9 @@ func (m *defaultModbusSlaveConfigModel) UpdateWithVersion(ctx context.Context, s
 
 	query := fmt.Sprintf("update %s set %s where `id` = ? and version = ? ", m.table, modbusSlaveConfigRowsWithPlaceHolder)
 	if session != nil {
-		sqlResult, err = session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.ModbusCode, newData.SlaveAddress, newData.SlaveId, newData.Timeout, newData.IdleTimeout, newData.LinkRecoveryTimeout, newData.ProtocolRecoveryTimeout, newData.ConnectDelay, newData.EnableTls, newData.TlsCertFile, newData.TlsKeyFile, newData.TlsCaFile, newData.Status, newData.Remark, newData.Id, oldVersion)
+		sqlResult, err = session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.ModbusCode, newData.SlaveAddress, newData.Slave, newData.Timeout, newData.IdleTimeout, newData.LinkRecoveryTimeout, newData.ProtocolRecoveryTimeout, newData.ConnectDelay, newData.EnableTls, newData.TlsCertFile, newData.TlsKeyFile, newData.TlsCaFile, newData.Status, newData.Remark, newData.Id, oldVersion)
 	} else {
-		sqlResult, err = m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.ModbusCode, newData.SlaveAddress, newData.SlaveId, newData.Timeout, newData.IdleTimeout, newData.LinkRecoveryTimeout, newData.ProtocolRecoveryTimeout, newData.ConnectDelay, newData.EnableTls, newData.TlsCertFile, newData.TlsKeyFile, newData.TlsCaFile, newData.Status, newData.Remark, newData.Id, oldVersion)
+		sqlResult, err = m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.ModbusCode, newData.SlaveAddress, newData.Slave, newData.Timeout, newData.IdleTimeout, newData.LinkRecoveryTimeout, newData.ProtocolRecoveryTimeout, newData.ConnectDelay, newData.EnableTls, newData.TlsCertFile, newData.TlsKeyFile, newData.TlsCaFile, newData.Status, newData.Remark, newData.Id, oldVersion)
 	}
 
 	if err != nil {
