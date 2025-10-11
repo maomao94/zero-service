@@ -10,6 +10,7 @@ Log:
   #  Mode: file
   Path: /opt/logs/bridgemodbus
   Level: info
+ModbusPool: 32
 NacosConfig:
   IsRegister: true
   Host: 127.0.0.1

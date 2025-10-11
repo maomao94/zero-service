@@ -23,7 +23,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Config:                 c,
 		ModbusSlaveConfigModel: model.NewModbusSlaveConfigModel(sqlx.NewMysql(c.DB.DataSource)),
 		ModbusConfigConverter:  model.NewModbusConfigConverter(),
-		ModbusClientPool:       modbusx.NewModbusClientPool(&c.ModbusClientConf, 10),
+		ModbusClientPool:       modbusx.NewModbusClientPool(&c.ModbusClientConf, c.ModbusPool),
 		Manager:                modbusx.NewPoolManager(),
 	}
 }
@@ -43,7 +43,7 @@ func (s *ServiceContext) AddPool(ctx context.Context, modbusCode string) (*modbu
 	if clientConf == nil {
 		return nil, errors.New("配置转换失败")
 	}
-	pool, err := s.Manager.AddPool(ctx, modbusCode, clientConf, 10)
+	pool, err := s.Manager.AddPool(ctx, modbusCode, clientConf, s.Config.ModbusPool)
 	if err != nil {
 		return nil, err
 	}

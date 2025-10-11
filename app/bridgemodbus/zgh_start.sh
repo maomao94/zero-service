@@ -8,7 +8,7 @@ ghz --insecure \
   --timeout 5s \
   --output read_coils_report.html \
   --format html \
-  127.0.0.1:25003
+  10.10.1.213:25003
 
 ghz --insecure \
   --proto ./bridgemodbus.proto \
@@ -20,4 +20,4 @@ ghz --insecure \
   --timeout 5s \
   --output read_holding_registers_report.html \
   --format html \
-  127.0.0.1:25003
+  10.10.1.213:25003
