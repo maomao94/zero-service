@@ -12,6 +12,8 @@ service StreamEvent {
   rpc ReceiveMQTTMessage (ReceiveMQTTMessageReq) returns (ReceiveMQTTMessageRes);
   // 接收WS消息
   rpc ReceiveWSMessage (ReceiveWSMessageReq) returns (ReceiveWSMessageRes);
+  // 接收kafka消息
+  rpc ReceiveKafkaMessage (ReceiveKafkaMessageReq) returns (ReceiveKafkaMessageRes);
   // 推送 chunk asdu 104协议消息
   rpc PushChunkAsdu (PushChunkAsduReq) returns (PushChunkAsduRes) {}
 }
@@ -50,6 +52,23 @@ message ReceiveWSMessageReq {
 }
 
 message ReceiveWSMessageRes {
+}
+
+message ReceiveKafkaMessageReq {
+  // Kafka消息 数据量大 考虑聚合
+  repeated KafkaMessage messages = 1;
+}
+
+message ReceiveKafkaMessageRes {
+}
+
+message KafkaMessage {
+  string sessionId = 1;
+  string topic = 2;
+  string group = 3;
+  string key = 4;
+  bytes value = 5;
+  string sendTime = 6;
 }
 
 // -------------------- 104协议 --------------------
