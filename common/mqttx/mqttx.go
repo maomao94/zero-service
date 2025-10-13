@@ -244,6 +244,10 @@ func (c *Client) messageHandlerWrapper(topic string) mqtt.MessageHandler {
 		// 默认上下文
 		ctx := context.Background()
 		payload := msg.Payload()
+		if len(payload) == 0 {
+			logx.Errorf("[mqtt] empty payload for %s", topic)
+			return
+		}
 
 		// --- Step 1: 尝试解析为包装消息 ---
 		var wrapped Message
