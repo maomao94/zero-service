@@ -377,7 +377,7 @@ type KafkaMessage struct {
 	SessionId     string                 `protobuf:"bytes,1,opt,name=sessionId,proto3" json:"sessionId,omitempty"`
 	Topic         string                 `protobuf:"bytes,2,opt,name=topic,proto3" json:"topic,omitempty"`
 	Group         string                 `protobuf:"bytes,3,opt,name=group,proto3" json:"group,omitempty"`
-	Key           string                 `protobuf:"bytes,4,opt,name=key,proto3" json:"key,omitempty"`
+	Key           []byte                 `protobuf:"bytes,4,opt,name=key,proto3" json:"key,omitempty"`
 	Value         []byte                 `protobuf:"bytes,5,opt,name=value,proto3" json:"value,omitempty"`
 	SendTime      string                 `protobuf:"bytes,6,opt,name=sendTime,proto3" json:"sendTime,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -435,11 +435,11 @@ func (x *KafkaMessage) GetGroup() string {
 	return ""
 }
 
-func (x *KafkaMessage) GetKey() string {
+func (x *KafkaMessage) GetKey() []byte {
 	if x != nil {
 		return x.Key
 	}
-	return ""
+	return nil
 }
 
 func (x *KafkaMessage) GetValue() []byte {
@@ -2360,7 +2360,7 @@ const file_streamevent_proto_rawDesc = "" +
 	"\tsessionId\x18\x01 \x01(\tR\tsessionId\x12\x14\n" +
 	"\x05topic\x18\x02 \x01(\tR\x05topic\x12\x14\n" +
 	"\x05group\x18\x03 \x01(\tR\x05group\x12\x10\n" +
-	"\x03key\x18\x04 \x01(\tR\x03key\x12\x14\n" +
+	"\x03key\x18\x04 \x01(\fR\x03key\x12\x14\n" +
 	"\x05value\x18\x05 \x01(\fR\x05value\x12\x1a\n" +
 	"\bsendTime\x18\x06 \x01(\tR\bsendTime\"B\n" +
 	"\x10PushChunkAsduReq\x12.\n" +
