@@ -277,7 +277,7 @@ func (c *Client) messageHandlerWrapper(topic string) mqtt.MessageHandler {
 		c.mu.RUnlock()
 
 		if len(payload) == 0 {
-			logx.Errorf("[mqtt] empty payload for %s", topic)
+			logx.WithContext(ctx).Errorf("[mqtt] empty payload for %s", topic)
 			return
 		}
 
