@@ -6,7 +6,7 @@ require (
 	github.com/ArtisanCloud/PowerLibs/v3 v3.3.2
 	github.com/ArtisanCloud/PowerWeChat/v3 v3.4.28
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/brianvoe/gofakeit/v7 v7.7.3
+	github.com/brianvoe/gofakeit/v7 v7.8.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/dromara/carbon/v2 v2.6.12
 	github.com/duke-git/lancet/v2 v2.3.7
@@ -34,7 +34,7 @@ require (
 	github.com/u2takey/ffmpeg-go v0.5.0
 	github.com/wendy512/go-iecp5 v1.2.3
 	github.com/zeromicro/go-queue v1.2.2
-	github.com/zeromicro/go-zero v1.9.1
+	github.com/zeromicro/go-zero v1.9.2
 	github.com/zeromicro/x v0.0.0-20240408115609-8224c482b07e
 	go.opentelemetry.io/otel v1.38.0
 	go.opentelemetry.io/otel/trace v1.38.0
