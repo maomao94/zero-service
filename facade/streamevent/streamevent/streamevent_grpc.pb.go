@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	StreamEvent_ReceiveMQTTMessage_FullMethodName = "/streamevent.StreamEvent/ReceiveMQTTMessage"
-	StreamEvent_ReceiveWSMessage_FullMethodName   = "/streamevent.StreamEvent/ReceiveWSMessage"
-	StreamEvent_PushChunkAsdu_FullMethodName      = "/streamevent.StreamEvent/PushChunkAsdu"
+	StreamEvent_ReceiveMQTTMessage_FullMethodName  = "/streamevent.StreamEvent/ReceiveMQTTMessage"
+	StreamEvent_ReceiveWSMessage_FullMethodName    = "/streamevent.StreamEvent/ReceiveWSMessage"
+	StreamEvent_ReceiveKafkaMessage_FullMethodName = "/streamevent.StreamEvent/ReceiveKafkaMessage"
+	StreamEvent_PushChunkAsdu_FullMethodName       = "/streamevent.StreamEvent/PushChunkAsdu"
 )
 
 // StreamEventClient is the client API for StreamEvent service.
@@ -32,6 +33,8 @@ type StreamEventClient interface {
 	ReceiveMQTTMessage(ctx context.Context, in *ReceiveMQTTMessageReq, opts ...grpc.CallOption) (*ReceiveMQTTMessageRes, error)
 	// 接收WS消息
 	ReceiveWSMessage(ctx context.Context, in *ReceiveWSMessageReq, opts ...grpc.CallOption) (*ReceiveWSMessageRes, error)
+	// 接收kafka消息
+	ReceiveKafkaMessage(ctx context.Context, in *ReceiveKafkaMessageReq, opts ...grpc.CallOption) (*ReceiveKafkaMessageRes, error)
 	// 推送 chunk asdu 104协议消息
 	PushChunkAsdu(ctx context.Context, in *PushChunkAsduReq, opts ...grpc.CallOption) (*PushChunkAsduRes, error)
 }
@@ -64,6 +67,16 @@ func (c *streamEventClient) ReceiveWSMessage(ctx context.Context, in *ReceiveWSM
 	return out, nil
 }
 
+func (c *streamEventClient) ReceiveKafkaMessage(ctx context.Context, in *ReceiveKafkaMessageReq, opts ...grpc.CallOption) (*ReceiveKafkaMessageRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReceiveKafkaMessageRes)
+	err := c.cc.Invoke(ctx, StreamEvent_ReceiveKafkaMessage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *streamEventClient) PushChunkAsdu(ctx context.Context, in *PushChunkAsduReq, opts ...grpc.CallOption) (*PushChunkAsduRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PushChunkAsduRes)
@@ -82,6 +95,8 @@ type StreamEventServer interface {
 	ReceiveMQTTMessage(context.Context, *ReceiveMQTTMessageReq) (*ReceiveMQTTMessageRes, error)
 	// 接收WS消息
 	ReceiveWSMessage(context.Context, *ReceiveWSMessageReq) (*ReceiveWSMessageRes, error)
+	// 接收kafka消息
+	ReceiveKafkaMessage(context.Context, *ReceiveKafkaMessageReq) (*ReceiveKafkaMessageRes, error)
 	// 推送 chunk asdu 104协议消息
 	PushChunkAsdu(context.Context, *PushChunkAsduReq) (*PushChunkAsduRes, error)
 	mustEmbedUnimplementedStreamEventServer()
@@ -99,6 +114,9 @@ func (UnimplementedStreamEventServer) ReceiveMQTTMessage(context.Context, *Recei
 }
 func (UnimplementedStreamEventServer) ReceiveWSMessage(context.Context, *ReceiveWSMessageReq) (*ReceiveWSMessageRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReceiveWSMessage not implemented")
+}
+func (UnimplementedStreamEventServer) ReceiveKafkaMessage(context.Context, *ReceiveKafkaMessageReq) (*ReceiveKafkaMessageRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReceiveKafkaMessage not implemented")
 }
 func (UnimplementedStreamEventServer) PushChunkAsdu(context.Context, *PushChunkAsduReq) (*PushChunkAsduRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PushChunkAsdu not implemented")
@@ -160,6 +178,24 @@ func _StreamEvent_ReceiveWSMessage_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _StreamEvent_ReceiveKafkaMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReceiveKafkaMessageReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StreamEventServer).ReceiveKafkaMessage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StreamEvent_ReceiveKafkaMessage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StreamEventServer).ReceiveKafkaMessage(ctx, req.(*ReceiveKafkaMessageReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _StreamEvent_PushChunkAsdu_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PushChunkAsduReq)
 	if err := dec(in); err != nil {
@@ -192,6 +228,10 @@ var StreamEvent_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReceiveWSMessage",
 			Handler:    _StreamEvent_ReceiveWSMessage_Handler,
+		},
+		{
+			MethodName: "ReceiveKafkaMessage",
+			Handler:    _StreamEvent_ReceiveKafkaMessage_Handler,
 		},
 		{
 			MethodName: "PushChunkAsdu",

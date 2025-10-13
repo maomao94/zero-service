@@ -594,6 +594,355 @@ var _ interface {
 	ErrorName() string
 } = ReceiveWSMessageResValidationError{}
 
+// Validate checks the field values on ReceiveKafkaMessageReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ReceiveKafkaMessageReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ReceiveKafkaMessageReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ReceiveKafkaMessageReqMultiError, or nil if none found.
+func (m *ReceiveKafkaMessageReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ReceiveKafkaMessageReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetMessages() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ReceiveKafkaMessageReqValidationError{
+						field:  fmt.Sprintf("Messages[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ReceiveKafkaMessageReqValidationError{
+						field:  fmt.Sprintf("Messages[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ReceiveKafkaMessageReqValidationError{
+					field:  fmt.Sprintf("Messages[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return ReceiveKafkaMessageReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// ReceiveKafkaMessageReqMultiError is an error wrapping multiple validation
+// errors returned by ReceiveKafkaMessageReq.ValidateAll() if the designated
+// constraints aren't met.
+type ReceiveKafkaMessageReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ReceiveKafkaMessageReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ReceiveKafkaMessageReqMultiError) AllErrors() []error { return m }
+
+// ReceiveKafkaMessageReqValidationError is the validation error returned by
+// ReceiveKafkaMessageReq.Validate if the designated constraints aren't met.
+type ReceiveKafkaMessageReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ReceiveKafkaMessageReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ReceiveKafkaMessageReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ReceiveKafkaMessageReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ReceiveKafkaMessageReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ReceiveKafkaMessageReqValidationError) ErrorName() string {
+	return "ReceiveKafkaMessageReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ReceiveKafkaMessageReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sReceiveKafkaMessageReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ReceiveKafkaMessageReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ReceiveKafkaMessageReqValidationError{}
+
+// Validate checks the field values on ReceiveKafkaMessageRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ReceiveKafkaMessageRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ReceiveKafkaMessageRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ReceiveKafkaMessageResMultiError, or nil if none found.
+func (m *ReceiveKafkaMessageRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ReceiveKafkaMessageRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return ReceiveKafkaMessageResMultiError(errors)
+	}
+
+	return nil
+}
+
+// ReceiveKafkaMessageResMultiError is an error wrapping multiple validation
+// errors returned by ReceiveKafkaMessageRes.ValidateAll() if the designated
+// constraints aren't met.
+type ReceiveKafkaMessageResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ReceiveKafkaMessageResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ReceiveKafkaMessageResMultiError) AllErrors() []error { return m }
+
+// ReceiveKafkaMessageResValidationError is the validation error returned by
+// ReceiveKafkaMessageRes.Validate if the designated constraints aren't met.
+type ReceiveKafkaMessageResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ReceiveKafkaMessageResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ReceiveKafkaMessageResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ReceiveKafkaMessageResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ReceiveKafkaMessageResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ReceiveKafkaMessageResValidationError) ErrorName() string {
+	return "ReceiveKafkaMessageResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ReceiveKafkaMessageResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sReceiveKafkaMessageRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ReceiveKafkaMessageResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ReceiveKafkaMessageResValidationError{}
+
+// Validate checks the field values on KafkaMessage with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *KafkaMessage) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on KafkaMessage with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in KafkaMessageMultiError, or
+// nil if none found.
+func (m *KafkaMessage) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *KafkaMessage) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for SessionId
+
+	// no validation rules for Topic
+
+	// no validation rules for Group
+
+	// no validation rules for Key
+
+	// no validation rules for Value
+
+	// no validation rules for SendTime
+
+	if len(errors) > 0 {
+		return KafkaMessageMultiError(errors)
+	}
+
+	return nil
+}
+
+// KafkaMessageMultiError is an error wrapping multiple validation errors
+// returned by KafkaMessage.ValidateAll() if the designated constraints aren't met.
+type KafkaMessageMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m KafkaMessageMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m KafkaMessageMultiError) AllErrors() []error { return m }
+
+// KafkaMessageValidationError is the validation error returned by
+// KafkaMessage.Validate if the designated constraints aren't met.
+type KafkaMessageValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e KafkaMessageValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e KafkaMessageValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e KafkaMessageValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e KafkaMessageValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e KafkaMessageValidationError) ErrorName() string { return "KafkaMessageValidationError" }
+
+// Error satisfies the builtin error interface
+func (e KafkaMessageValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sKafkaMessage.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = KafkaMessageValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = KafkaMessageValidationError{}
+
 // Validate checks the field values on PushChunkAsduReq with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.

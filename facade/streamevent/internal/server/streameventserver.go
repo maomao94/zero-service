@@ -35,6 +35,12 @@ func (s *StreamEventServer) ReceiveWSMessage(ctx context.Context, in *streameven
 	return l.ReceiveWSMessage(in)
 }
 
+// 接收kafka消息
+func (s *StreamEventServer) ReceiveKafkaMessage(ctx context.Context, in *streamevent.ReceiveKafkaMessageReq) (*streamevent.ReceiveKafkaMessageRes, error) {
+	l := logic.NewReceiveKafkaMessageLogic(ctx, s.svcCtx)
+	return l.ReceiveKafkaMessage(in)
+}
+
 // 推送 chunk asdu 104协议消息
 func (s *StreamEventServer) PushChunkAsdu(ctx context.Context, in *streamevent.PushChunkAsduReq) (*streamevent.PushChunkAsduRes, error) {
 	l := logic.NewPushChunkAsduLogic(ctx, s.svcCtx)
