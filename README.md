@@ -20,6 +20,7 @@
     - [`bridgegtw`：HTTP 代理转发网关](#bridgegtw-http-代理转发网关)
     - [`bridgedump`：南瑞反向隔离装置文件生成服务](#bridgedump-南瑞反向隔离装置文件生成服务)
     - [`bridgemodbus`：modbus协议处理服务](#bridgemodbus-modbus协议处理服务)
+    - [`bridgemqtt`：mqtt协议处理服务](#bridgemqtt-mqtt协议处理服务)
 - [使用注意事项](#使用注意事项)
 - [相关链接](#相关链接)
 
@@ -39,38 +40,38 @@
 
 ### `iec104` IEC 协议处理模块
 
-- 💡 提供 IEC 60870-5-104 协议 ASDU 报文的接收、解析与编码能力；
-- 🔍 支持多种类型 ASDU 的解析与生成（遥信、遥测、遥控等）；
-- 🧪 提供协议模拟功能，便于调试与联调；
-- 🔗 集成 Kafka，实现异步、高吞吐的数据流处理；
+- 💡 提供 IEC 60870-5-104 协议 ASDU 报文的接收、解析与编码能力
+- 🔍 支持多种类型 ASDU 的解析与生成（遥信、遥测、遥控等）
+- 🧪 提供协议模拟功能，便于调试与联调
+- 🔗 集成 Kafka，实现异步、高吞吐的数据流处理
 - 📄 对接文档：[Kafka 消息格式说明](common/iec104/kafka.md)
 
 ---
 
 ### `iec-stash` Kafka 数据消费与转发
 
-- ✅ 消费来自 `iec104` 服务发送的 Kafka 消息；
-- 🧩 支持 chunk 批处理机制，提升处理效率；
-- 🚀 基于 [go-queue](https://github.com/zeromicro/go-queue)，支持高并发处理（理论峰值 15W/s）；
-- 📡 将处理结果通过 gRPC 下发至后端业务模块；
-- 📄 协议定义：[`iecstream.proto`](facade/iecstream/iecstream.proto)
+- ✅ 消费来自 `iec104` 服务发送的 Kafka 消息
+- 🧩 支持 chunk 批处理机制，提升处理效率
+- 🚀 基于 [go-queue](https://github.com/zeromicro/go-queue)，支持高并发处理（理论峰值 15W/s）
+- 📡 将处理结果通过 gRPC 下发至后端业务模块
+- 📄 转发协议定义：[`streamevent.proto`](facade/streamevent/streamevent.proto)
 
 ---
 
 ### `file` 文件上传服务
 
-- 💾 支持基于 gRPC 的分片流式上传；
+- 💾 支持基于 gRPC 的分片流式上传
 - ☁️ 集成对象存储（OSS）能力，支持大文件grpc stream 上传
-- 📁 可用于存储协议数据、任务报告等业务文件。
+- 📁 可用于存储协议数据、任务报告等业务文件
 
 ---
 
 ### `trigger` 异步任务调度服务
 
-- ⏱️ 基于 [asynq](https://github.com/hibiken/asynq)，实现定时/延时任务调度；
-- 📦 使用 Redis 存储任务队列，支持多节点部署与高可用；
-- 🔁 支持 HTTP/gRPC 回调，适配多种业务场景；
-- 🔧 支持任务归档、删除与自动重试等管理能力；
+- ⏱️ 基于 [asynq](https://github.com/hibiken/asynq)，实现定时/延时任务调度
+- 📦 使用 Redis 存储任务队列，支持多节点部署与高可用
+- 🔁 支持 HTTP/gRPC 回调，适配多种业务场景
+- 🔧 支持任务归档、删除与自动重试等管理能力
 - 📄 协议定义：[`trigger.proto`](app/trigger/trigger.proto)
 
 <div align="center">
@@ -111,17 +112,25 @@
 ---
 
 ### `bridgemodbus` modbus协议处理服务
-- 📦 提供 Modbus TCP/RTU 协议处理能力；
+- 📦 提供 Modbus TCP/RTU 协议处理能力
 - 🔗 集成 GRPC 服务 
 - 📄 协议定义：[`bridgemodbus.proto`](app/bridgemodbus/bridgemodbus.proto)
 
 ---
 
+### `bridgemqtt` mqtt协议处理服务
+- 📦 提供 mqtt 协议处理能力
+- 🔗 集成 GRPC 服务
+- 📄 协议定义：[`bridgemodbus.proto`](app/bridgemodbus/bridgemodbus.proto)
+- 📄 转发协议定义：[`streamevent.proto`](facade/streamevent/streamevent.proto)
+
+---
+
 ## ⚙️ 使用注意事项
 
-1. **依赖管理**：请确认 `go.mod` 中的依赖已正确安装，执行 `go mod tidy`；
-2. **日志配置**：确认各服务配置文件中的日志路径可用；
-3. **Kafka 配置**：确保 Kafka 地址与 topic 配置正确；
+1. **依赖管理**：请确认 `go.mod` 中的依赖已正确安装，执行 `go mod tidy`
+2. **日志配置**：确认各服务配置文件中的日志路径可用
+3. **Kafka 配置**：确保 Kafka 地址与 topic 配置正确
 4. **Java 接入**：如需与 Java
    应用集成，可参考 [grpc-spring-boot-starter](https://yidongnan.github.io/grpc-spring-boot-starter/zh-CN/)。
 
