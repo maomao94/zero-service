@@ -34,6 +34,10 @@ type (
 		UpdateWithVersion(ctx context.Context, session sqlx.Session, data *ModbusSlaveConfig) error
 		Trans(ctx context.Context, fn func(context context.Context, session sqlx.Session) error) error
 		ExecCtx(ctx context.Context, session sqlx.Session, query string, args ...any) (sql.Result, error)
+		SelectWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) ([]*ModbusSlaveConfig, error)
+		InsertWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.InsertBuilder) (sql.Result, error)
+		UpdateWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.UpdateBuilder) (sql.Result, error)
+		DeleteWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.DeleteBuilder) (sql.Result, error)
 		SelectBuilder() squirrel.SelectBuilder
 		InsertBuilder() squirrel.InsertBuilder
 		UpdateBuilder() squirrel.UpdateBuilder
@@ -392,6 +396,51 @@ func (m *defaultModbusSlaveConfigModel) ExecCtx(ctx context.Context, session sql
 		return session.ExecCtx(ctx, query, args...)
 	}
 	return m.conn.ExecCtx(ctx, query, args...)
+}
+
+func (m *defaultModbusSlaveConfigModel) SelectWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) ([]*ModbusSlaveConfig, error) {
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	var resp []*ModbusSlaveConfig
+
+	err = m.conn.QueryRowsCtx(ctx, &resp, query, args...)
+
+	switch err {
+	case nil:
+		return resp, nil
+	default:
+		return nil, err
+	}
+}
+
+func (m *defaultModbusSlaveConfigModel) InsertWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.InsertBuilder) (sql.Result, error) {
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	return m.ExecCtx(ctx, session, query, args...)
+}
+
+func (m *defaultModbusSlaveConfigModel) UpdateWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.UpdateBuilder) (sql.Result, error) {
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	return m.ExecCtx(ctx, session, query, args...)
+}
+
+func (m *defaultModbusSlaveConfigModel) DeleteWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.DeleteBuilder) (sql.Result, error) {
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	return m.ExecCtx(ctx, session, query, args...)
 }
 
 func (m *defaultModbusSlaveConfigModel) SelectBuilder() squirrel.SelectBuilder {
