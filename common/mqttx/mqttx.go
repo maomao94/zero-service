@@ -12,6 +12,7 @@ import (
 	"github.com/duke-git/lancet/v2/random"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/proc"
 	"github.com/zeromicro/go-zero/core/stat"
 	"github.com/zeromicro/go-zero/core/timex"
 	"github.com/zeromicro/go-zero/core/trace"
@@ -67,6 +68,9 @@ type Client struct {
 func MustNewClient(cfg MqttConfig) *Client {
 	cli, err := NewClient(cfg)
 	logx.Must(err)
+	proc.AddShutdownListener(func() {
+		cli.Close()
+	})
 	return cli
 }
 

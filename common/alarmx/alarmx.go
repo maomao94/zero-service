@@ -2,15 +2,17 @@ package alarmx
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+	"os"
+	"strings"
+
 	lark "github.com/larksuite/oapi-sdk-go/v3"
 	larkcore "github.com/larksuite/oapi-sdk-go/v3/core"
 	larkim "github.com/larksuite/oapi-sdk-go/v3/service/im/v1"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/rest/httpc"
-	"net/http"
-	"os"
-	"strings"
 )
 
 type AlarmInfo struct {
@@ -174,34 +176,46 @@ func buildCard(path string, in *AlarmInfo, buttonName string) (string, error) {
 		card = strings.Replace(card, "${project}", in.Project, -1)
 		card = strings.Replace(card, "${dateTime}", in.DateTime, -1)
 		card = strings.Replace(card, "${alarmId}", in.AlarmId, -1)
-		card = strings.Replace(card, "${content}", escape(in.Content), -1)
-		card = strings.Replace(card, "${error}", escape(in.Error), -1)
+		card = strings.Replace(card, "${content}", EscapeString(in.Content), -1)
+		card = strings.Replace(card, "${error}", EscapeString(in.Error), -1)
 		card = strings.Replace(card, "${ip}", in.Ip, -1)
 		card = strings.Replace(card, "${button_name}", buttonName, -1)
 	}
 	return card, nil
 }
 
-func escape(input string) string {
+// EscapeString 安全地转义字符串，用于日志输出。
+// - 可打印字符（包括中文）原样保留
+// - 换行、回车、制表符转换为 \n \r \t
+// - 单/双引号、反斜杠转义
+// - 其他控制字符转为 \uXXXX
+func EscapeString(input string) string {
+	if input == "" {
+		return ""
+	}
+
 	var b strings.Builder
 	for _, ch := range input {
 		switch ch {
-		case '\x00':
-			b.WriteString(`\x00`)
-		case '\r':
-			b.WriteString(`\r`)
 		case '\n':
 			b.WriteString(`\n`)
+		case '\r':
+			b.WriteString(`\r`)
+		case '\t':
+			b.WriteString(`\t`)
 		case '\\':
 			b.WriteString(`\\`)
-		case '\'':
-			b.WriteString(`\'`)
 		case '"':
 			b.WriteString(`\"`)
-		case '\x1a':
-			b.WriteString(`\x1a`)
+		case '\'':
+			b.WriteString(`\'`)
 		default:
-			b.WriteRune(ch)
+			// 非可打印控制字符
+			if ch < 0x20 || ch == 0x7F {
+				b.WriteString(fmt.Sprintf("\\u%04x", ch))
+			} else {
+				b.WriteRune(ch)
+			}
 		}
 	}
 	return b.String()
