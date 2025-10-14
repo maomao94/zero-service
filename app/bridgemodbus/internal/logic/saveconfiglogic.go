@@ -31,7 +31,7 @@ func (l *SaveConfigLogic) SaveConfig(in *bridgemodbus.SaveConfigReq) (*bridgemod
 	if err != nil && err != model.ErrNotFound {
 		return nil, err
 	}
-	if false {
+	if err == nil && exist != nil {
 		exist.SlaveAddress = in.SlaveAddress
 		exist.Slave = int64(in.Slave)
 		_, err = l.svcCtx.ModbusSlaveConfigModel.Update(l.ctx, nil, exist)
