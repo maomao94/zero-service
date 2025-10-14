@@ -287,14 +287,14 @@ func (m *default{{.upperStartCamelObject}}Model) Trans(ctx context.Context,fn fu
 	{{end}}
 }
 
-func (m *default{{.upperStartCamelObject}} ExecCtx(ctx context.Context, session sqlx.Session, query string, args ...any) (sql.Result, error) {
+func (m *default{{.upperStartCamelObject}}Model) ExecCtx(ctx context.Context, session sqlx.Session, query string, args ...any) (sql.Result, error) {
 	if session != nil {
 		return session.ExecCtx(ctx, query, args...)
 	}
 	return m.conn.ExecCtx(ctx, query, args...)
 }
 
-func (m *default{{.upperStartCamelObject}} SelectWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) ([]*ModbusSlaveConfig, error) {
+func (m *default{{.upperStartCamelObject}}Model) SelectWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) ([]*ModbusSlaveConfig, error) {
 	query, args, err := builder.ToSql()
 	if err != nil {
 		return nil, err
@@ -302,8 +302,8 @@ func (m *default{{.upperStartCamelObject}} SelectWithBuilder(ctx context.Context
 
     var resp []*{{.upperStartCamelObject}}
 
-	{{if .withCache}}err = m.QueryRowsNoCacheCtx(ctx,&resp, query, values...){{else}}
-	err = m.conn.QueryRowsCtx(ctx,&resp, query, values...)
+	{{if .withCache}}err = m.QueryRowsNoCacheCtx(ctx,&resp, query, args...){{else}}
+	err = m.conn.QueryRowsCtx(ctx,&resp, query, args...)
 	{{end}}
 	switch err {
 	case nil:
@@ -313,7 +313,7 @@ func (m *default{{.upperStartCamelObject}} SelectWithBuilder(ctx context.Context
 	}
 }
 
-func (m *default{{.upperStartCamelObject}} InsertWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.InsertBuilder) (sql.Result, error) {
+func (m *default{{.upperStartCamelObject}}Model) InsertWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.InsertBuilder) (sql.Result, error) {
 	query, args, err := builder.ToSql()
 	if err != nil {
 		return nil, err
@@ -322,7 +322,7 @@ func (m *default{{.upperStartCamelObject}} InsertWithBuilder(ctx context.Context
 	return m.ExecCtx(ctx, session, query, args...)
 }
 
-func (m *default{{.upperStartCamelObject}} UpdateWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.UpdateBuilder) (sql.Result, error) {
+func (m *default{{.upperStartCamelObject}}Model) UpdateWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.UpdateBuilder) (sql.Result, error) {
 	query, args, err := builder.ToSql()
 	if err != nil {
 		return nil, err
@@ -331,7 +331,7 @@ func (m *default{{.upperStartCamelObject}} UpdateWithBuilder(ctx context.Context
 	return m.ExecCtx(ctx, session, query, args...)
 }
 
-func (m *default{{.upperStartCamelObject}} DeleteWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.DeleteBuilder) (sql.Result, error) {
+func (m *default{{.upperStartCamelObject}}Model) DeleteWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.DeleteBuilder) (sql.Result, error) {
 	query, args, err := builder.ToSql()
 	if err != nil {
 		return nil, err

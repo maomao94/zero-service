@@ -47,11 +47,7 @@ func (l *SaveConfigLogic) SaveConfig(in *bridgemodbus.SaveConfigReq) (*bridgemod
 		insertBuilder = insertBuilder.
 			Columns("delete_time", "modbus_code", "slave_address", "slave").
 			Values(time.Unix(0, 0), in.ModbusCode, in.SlaveAddress, in.Slave)
-		query, args, err := insertBuilder.ToSql()
-		if err != nil {
-			return nil, err
-		}
-		result, err := l.svcCtx.ModbusSlaveConfigModel.ExecCtx(l.ctx, nil, query, args...)
+		result, err := l.svcCtx.ModbusSlaveConfigModel.InsertWithBuilder(l.ctx, nil, insertBuilder)
 		if err != nil {
 			return nil, err
 		}

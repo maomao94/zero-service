@@ -32,7 +32,7 @@ type (
 		FindOneByModbusCode(ctx context.Context, modbusCode string) (*ModbusSlaveConfig, error)
 		Update(ctx context.Context, session sqlx.Session, data *ModbusSlaveConfig) (sql.Result, error)
 		UpdateWithVersion(ctx context.Context, session sqlx.Session, data *ModbusSlaveConfig) error
-		Trans(ctx context.Context, fn func(context context.Context, session sqlx.Session) error) error
+		Trans(ctx context.Context, fn func(ctx context.Context, session sqlx.Session) error) error
 		ExecCtx(ctx context.Context, session sqlx.Session, query string, args ...any) (sql.Result, error)
 		SelectWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) ([]*ModbusSlaveConfig, error)
 		InsertWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.InsertBuilder) (sql.Result, error)
@@ -386,9 +386,11 @@ func (m *defaultModbusSlaveConfigModel) FindPageListByIdASC(ctx context.Context,
 }
 
 func (m *defaultModbusSlaveConfigModel) Trans(ctx context.Context, fn func(ctx context.Context, session sqlx.Session) error) error {
+
 	return m.conn.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
 		return fn(ctx, session)
 	})
+
 }
 
 func (m *defaultModbusSlaveConfigModel) ExecCtx(ctx context.Context, session sqlx.Session, query string, args ...any) (sql.Result, error) {
@@ -447,16 +449,16 @@ func (m *defaultModbusSlaveConfigModel) SelectBuilder() squirrel.SelectBuilder {
 	return squirrel.Select().From(m.table)
 }
 
-func (m *defaultModbusSlaveConfigModel) InsertBuilder() squirrel.InsertBuilder {
-	return squirrel.Insert(m.table)
-}
-
 func (m *defaultModbusSlaveConfigModel) UpdateBuilder() squirrel.UpdateBuilder {
 	return squirrel.Update(m.table)
 }
 
 func (m *defaultModbusSlaveConfigModel) DeleteBuilder() squirrel.DeleteBuilder {
 	return squirrel.Delete(m.table)
+}
+
+func (m *defaultModbusSlaveConfigModel) InsertBuilder() squirrel.InsertBuilder {
+	return squirrel.Insert(m.table)
 }
 
 func (m *defaultModbusSlaveConfigModel) tableName() string {
