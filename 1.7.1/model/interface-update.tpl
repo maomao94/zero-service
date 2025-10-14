@@ -1,6 +1,7 @@
 Update(ctx context.Context,session sqlx.Session, data *{{.upperStartCamelObject}}) (sql.Result, error)
 UpdateWithVersion(ctx context.Context,session sqlx.Session, data *{{.upperStartCamelObject}}) error
 Trans(ctx context.Context,fn func(ctx context.Context, session sqlx.Session) error) error
+ExecCtx(ctx context.Context, session sqlx.Session, query string, args ...any) (sql.Result, error)
 SelectBuilder() squirrel.SelectBuilder
 InsertBuilder() squirrel.InsertBuilder
 UpdateBuilder() squirrel.UpdateBuilder

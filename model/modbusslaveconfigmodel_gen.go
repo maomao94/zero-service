@@ -33,6 +33,7 @@ type (
 		Update(ctx context.Context, session sqlx.Session, data *ModbusSlaveConfig) (sql.Result, error)
 		UpdateWithVersion(ctx context.Context, session sqlx.Session, data *ModbusSlaveConfig) error
 		Trans(ctx context.Context, fn func(context context.Context, session sqlx.Session) error) error
+		ExecCtx(ctx context.Context, session sqlx.Session, query string, args ...any) (sql.Result, error)
 		SelectBuilder() squirrel.SelectBuilder
 		InsertBuilder() squirrel.InsertBuilder
 		UpdateBuilder() squirrel.UpdateBuilder
@@ -381,11 +382,16 @@ func (m *defaultModbusSlaveConfigModel) FindPageListByIdASC(ctx context.Context,
 }
 
 func (m *defaultModbusSlaveConfigModel) Trans(ctx context.Context, fn func(ctx context.Context, session sqlx.Session) error) error {
-
 	return m.conn.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
 		return fn(ctx, session)
 	})
+}
 
+func (m *defaultModbusSlaveConfigModel) ExecCtx(ctx context.Context, session sqlx.Session, query string, args ...any) (sql.Result, error) {
+	if session != nil {
+		return session.ExecCtx(ctx, query, args...)
+	}
+	return m.conn.ExecCtx(ctx, query, args...)
 }
 
 func (m *defaultModbusSlaveConfigModel) SelectBuilder() squirrel.SelectBuilder {

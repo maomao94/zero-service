@@ -287,6 +287,13 @@ func (m *default{{.upperStartCamelObject}}Model) Trans(ctx context.Context,fn fu
 	{{end}}
 }
 
+func (m *default{{.upperStartCamelObject}} ExecCtx(ctx context.Context, session sqlx.Session, query string, args ...any) (sql.Result, error) {
+	if session != nil {
+		return session.ExecCtx(ctx, query, args...)
+	}
+	return m.conn.ExecCtx(ctx, query, args...)
+}
+
 func(m *default{{.upperStartCamelObject}}Model)  SelectBuilder() squirrel.SelectBuilder {
 	return squirrel.Select().From(m.table)
 }

@@ -24,8 +24,9 @@ CREATE TABLE `modbus_slave_config`
     UNIQUE KEY `idx_modbus_code` (`modbus_code`) COMMENT '配置编码唯一索引（避免重复配置）'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Modbus从站连接配置表';
 
-INSERT INTO `modbus_slave_config` (`modbus_code`, `slave_address`, `slave`, `status`, `remark`)
-VALUES ('local', -- 唯一配置编码
+INSERT INTO `modbus_slave_config` (`delete_time`, `modbus_code`, `slave_address`, `slave`, `status`, `remark`)
+VALUES ( '1970-01-01 08:00:00',
+        'local', -- 唯一配置编码
         '127.0.0.1:5020', -- 从站地址（IP:Port）
         1, -- 从站ID（非默认值，区分同网段其他设备）
         1, -- 启用状态

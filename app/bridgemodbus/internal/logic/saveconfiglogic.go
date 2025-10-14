@@ -2,13 +2,13 @@ package logic
 
 import (
 	"context"
+	"time"
 	"zero-service/model"
 
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/app/bridgemodbus/internal/svc"
 
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
 type SaveConfigLogic struct {
@@ -45,25 +45,17 @@ func (l *SaveConfigLogic) SaveConfig(in *bridgemodbus.SaveConfigReq) (*bridgemod
 		var lastId int64
 		insertBuilder := l.svcCtx.ModbusSlaveConfigModel.InsertBuilder()
 		insertBuilder = insertBuilder.
-			Columns("modbus_code", "slave_address", "slave").
-			Values(in.ModbusCode, in.SlaveAddress, in.Slave)
+			Columns("delete_time", "modbus_code", "slave_address", "slave").
+			Values(time.Unix(0, 0), in.ModbusCode, in.SlaveAddress, in.Slave)
 		query, args, err := insertBuilder.ToSql()
 		if err != nil {
 			return nil, err
 		}
-		//_, err = l.svcCtx.ModbusSlaveConfigModel.e(ctx, query, args...)
-		//lastId, _ := result.LastInsertId()
-		err = l.svcCtx.ModbusSlaveConfigModel.Trans(l.ctx, func(ctx context.Context, session sqlx.Session) error {
-			result, err := session.ExecCtx(l.ctx, query, args...)
-			if err != nil {
-				return err
-			}
-			lastId, _ = result.LastInsertId()
-			return nil
-		})
+		result, err := l.svcCtx.ModbusSlaveConfigModel.ExecCtx(l.ctx, nil, query, args...)
 		if err != nil {
 			return nil, err
 		}
+		lastId, _ = result.LastInsertId()
 		return &bridgemodbus.SaveConfigRes{
 			Id: lastId,
 		}, nil
