@@ -121,7 +121,7 @@
 ### `bridgemqtt` mqtt协议处理服务
 - 📦 提供 mqtt 协议处理能力
 - 🔗 集成 GRPC 服务
-- 📄 协议定义：[`bridgemodbus.proto`](app/bridgemodbus/bridgemodbus.proto)
+- 📄 协议定义：[`bridgemqtt.proto`](app/bridgemqtt/bridgemqtt.proto)
 - 📄 转发协议定义：[`streamevent.proto`](facade/streamevent/streamevent.proto)
 
 ---
