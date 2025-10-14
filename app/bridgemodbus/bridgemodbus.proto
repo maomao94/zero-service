@@ -10,6 +10,20 @@ option java_outer_classname = "BridgeModbusProto";
 service BridgeModbus {
   rpc Ping(Req) returns (Res);
 
+  // -------------------- 配置管理 --------------------
+
+  // 保存（新增或更新）配置
+  rpc SaveConfig(SaveConfigReq) returns (SaveConfigRes);
+
+  // 删除配置（支持批量）
+  rpc DeleteConfig(DeleteConfigReq) returns (DeleteConfigRes);
+
+  // 分页查询配置列表
+  rpc PageListConfig(PageListConfigReq) returns (PageListConfigRes);
+
+  // 根据编码查询详情
+  rpc GetConfigByCode(GetConfigByCodeReq) returns (GetConfigByCodeRes);
+
   // -------------------- Bit Access --------------------
 
   // 读取线圈状态 (Function Code 0x01)
@@ -64,6 +78,84 @@ message Res {
 }
 
 // -------------------- 请求与响应定义 --------------------
+
+// Modbus 从站配置结构
+message PbModbusConfig {
+  // 主键ID
+  string id = 1;
+  // 创建时间
+  string createTime = 2;
+  // 更新时间
+  string updateTime = 3;
+  // Modbus链路编号
+  string modbusCode = 4;
+  // 从站通信地址（如TCP地址或串口）
+  string slaveAddress = 5;
+  // 从站地址（Slave ID）
+  uint32 slave = 6;
+  // 通信超时时间（毫秒）
+  uint32 timeout = 7;
+  // 空闲超时时间（毫秒）
+  uint32 idleTimeout = 8;
+  // 链路重连超时时间（毫秒）
+  uint32 linkRecoveryTimeout = 9;
+  // 协议恢复超时时间（毫秒）
+  uint32 protocolRecoveryTimeout = 10;
+  // 建链延迟时间（毫秒）
+  uint32 connectDelay = 11;
+  // 是否启用TLS加密
+  uint32 enableTls = 12;
+  // TLS证书文件路径
+  string tlsCertFile = 13;
+  // TLS私钥文件路径
+  string tlsKeyFile = 14;
+  // TLS CA证书文件路径
+  string tlsCaFile = 15;
+  // 当前状态（0=禁用，1=启用）
+  uint32 status = 16;
+  // 备注信息
+  string remark = 17;
+}
+
+message SaveConfigReq {
+  // Modbus链路编号
+  string modbusCode = 1;
+  // 从站通信地址（如TCP地址或串口）
+  string slaveAddress = 2;
+  // 从站地址（Slave ID）
+  uint32 slave = 3;
+}
+
+message SaveConfigRes {
+  int64 id = 1;
+}
+
+message DeleteConfigReq {
+  repeated int64 ids = 1;
+}
+
+message DeleteConfigRes {
+}
+
+message PageListConfigReq {
+  int64 page = 1; // 页码
+  int64 pageSize = 2; // 每页大小
+  string keyword = 3; // 模糊匹配 modbusCode / remark
+  uint32 status = 4;  // 可选过滤状态
+}
+
+message PageListConfigRes {
+  uint32 total = 1;
+  repeated PbModbusConfig cfg = 2;
+}
+
+message GetConfigByCodeReq {
+  string modbusCode = 1;
+}
+
+message GetConfigByCodeRes {
+  PbModbusConfig cfg = 1;
+}
 
 // -------------------- Bit Access --------------------
 
