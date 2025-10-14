@@ -34,6 +34,9 @@ type (
 		UpdateWithVersion(ctx context.Context, session sqlx.Session, data *ModbusSlaveConfig) error
 		Trans(ctx context.Context, fn func(context context.Context, session sqlx.Session) error) error
 		SelectBuilder() squirrel.SelectBuilder
+		InsertBuilder() squirrel.InsertBuilder
+		UpdateBuilder() squirrel.UpdateBuilder
+		DeleteBuilder() squirrel.DeleteBuilder
 		DeleteSoft(ctx context.Context, session sqlx.Session, id int64) error
 		FindSum(ctx context.Context, sumBuilder squirrel.SelectBuilder, field string) (float64, error)
 		FindCount(ctx context.Context, countBuilder squirrel.SelectBuilder, field string) (int64, error)
@@ -387,6 +390,18 @@ func (m *defaultModbusSlaveConfigModel) Trans(ctx context.Context, fn func(ctx c
 
 func (m *defaultModbusSlaveConfigModel) SelectBuilder() squirrel.SelectBuilder {
 	return squirrel.Select().From(m.table)
+}
+
+func (m *defaultModbusSlaveConfigModel) InsertBuilder() squirrel.InsertBuilder {
+	return squirrel.Insert(m.table)
+}
+
+func (m *defaultModbusSlaveConfigModel) UpdateBuilder() squirrel.UpdateBuilder {
+	return squirrel.Update(m.table)
+}
+
+func (m *defaultModbusSlaveConfigModel) DeleteBuilder() squirrel.DeleteBuilder {
+	return squirrel.Delete(m.table)
 }
 
 func (m *defaultModbusSlaveConfigModel) tableName() string {

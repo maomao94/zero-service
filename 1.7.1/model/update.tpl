@@ -290,3 +290,15 @@ func (m *default{{.upperStartCamelObject}}Model) Trans(ctx context.Context,fn fu
 func(m *default{{.upperStartCamelObject}}Model)  SelectBuilder() squirrel.SelectBuilder {
 	return squirrel.Select().From(m.table)
 }
+
+func(m *default{{.upperStartCamelObject}}Model)  UpdateBuilder() squirrel.UpdateBuilder {
+	return squirrel.Update(m.table)
+}
+
+func(m *default{{.upperStartCamelObject}}Model)  DeleteBuilder() squirrel.DeleteBuilder {
+	return squirrel.Delete(m.table)
+}
+
+func(m *default{{.upperStartCamelObject}}Model)  InsertBuilder() squirrel.InsertBuilder {
+	return squirrel.Insert(m.table)
+}

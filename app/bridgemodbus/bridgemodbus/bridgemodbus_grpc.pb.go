@@ -20,6 +20,10 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	BridgeModbus_Ping_FullMethodName                       = "/bridgemodbus.BridgeModbus/Ping"
+	BridgeModbus_SaveConfig_FullMethodName                 = "/bridgemodbus.BridgeModbus/SaveConfig"
+	BridgeModbus_DeleteConfig_FullMethodName               = "/bridgemodbus.BridgeModbus/DeleteConfig"
+	BridgeModbus_PageListConfig_FullMethodName             = "/bridgemodbus.BridgeModbus/PageListConfig"
+	BridgeModbus_GetConfigByCode_FullMethodName            = "/bridgemodbus.BridgeModbus/GetConfigByCode"
 	BridgeModbus_ReadCoils_FullMethodName                  = "/bridgemodbus.BridgeModbus/ReadCoils"
 	BridgeModbus_ReadDiscreteInputs_FullMethodName         = "/bridgemodbus.BridgeModbus/ReadDiscreteInputs"
 	BridgeModbus_WriteSingleCoil_FullMethodName            = "/bridgemodbus.BridgeModbus/WriteSingleCoil"
@@ -41,6 +45,14 @@ const (
 // Modbus 协议桥接服务
 type BridgeModbusClient interface {
 	Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error)
+	// 保存（新增或更新）配置
+	SaveConfig(ctx context.Context, in *SaveConfigReq, opts ...grpc.CallOption) (*SaveConfigRes, error)
+	// 删除配置（支持批量）
+	DeleteConfig(ctx context.Context, in *DeleteConfigReq, opts ...grpc.CallOption) (*DeleteConfigRes, error)
+	// 分页查询配置列表
+	PageListConfig(ctx context.Context, in *PageListConfigReq, opts ...grpc.CallOption) (*PageListConfigRes, error)
+	// 根据编码查询详情
+	GetConfigByCode(ctx context.Context, in *GetConfigByCodeReq, opts ...grpc.CallOption) (*GetConfigByCodeRes, error)
 	// 读取线圈状态 (Function Code 0x01)
 	ReadCoils(ctx context.Context, in *ReadCoilsReq, opts ...grpc.CallOption) (*ReadCoilsRes, error)
 	// 读取离散输入状态 (Function Code 0x02)
@@ -79,6 +91,46 @@ func (c *bridgeModbusClient) Ping(ctx context.Context, in *Req, opts ...grpc.Cal
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Res)
 	err := c.cc.Invoke(ctx, BridgeModbus_Ping_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bridgeModbusClient) SaveConfig(ctx context.Context, in *SaveConfigReq, opts ...grpc.CallOption) (*SaveConfigRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SaveConfigRes)
+	err := c.cc.Invoke(ctx, BridgeModbus_SaveConfig_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bridgeModbusClient) DeleteConfig(ctx context.Context, in *DeleteConfigReq, opts ...grpc.CallOption) (*DeleteConfigRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteConfigRes)
+	err := c.cc.Invoke(ctx, BridgeModbus_DeleteConfig_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bridgeModbusClient) PageListConfig(ctx context.Context, in *PageListConfigReq, opts ...grpc.CallOption) (*PageListConfigRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PageListConfigRes)
+	err := c.cc.Invoke(ctx, BridgeModbus_PageListConfig_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bridgeModbusClient) GetConfigByCode(ctx context.Context, in *GetConfigByCodeReq, opts ...grpc.CallOption) (*GetConfigByCodeRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetConfigByCodeRes)
+	err := c.cc.Invoke(ctx, BridgeModbus_GetConfigByCode_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -212,6 +264,14 @@ func (c *bridgeModbusClient) ReadDeviceIdentification(ctx context.Context, in *R
 // Modbus 协议桥接服务
 type BridgeModbusServer interface {
 	Ping(context.Context, *Req) (*Res, error)
+	// 保存（新增或更新）配置
+	SaveConfig(context.Context, *SaveConfigReq) (*SaveConfigRes, error)
+	// 删除配置（支持批量）
+	DeleteConfig(context.Context, *DeleteConfigReq) (*DeleteConfigRes, error)
+	// 分页查询配置列表
+	PageListConfig(context.Context, *PageListConfigReq) (*PageListConfigRes, error)
+	// 根据编码查询详情
+	GetConfigByCode(context.Context, *GetConfigByCodeReq) (*GetConfigByCodeRes, error)
 	// 读取线圈状态 (Function Code 0x01)
 	ReadCoils(context.Context, *ReadCoilsReq) (*ReadCoilsRes, error)
 	// 读取离散输入状态 (Function Code 0x02)
@@ -248,6 +308,18 @@ type UnimplementedBridgeModbusServer struct{}
 
 func (UnimplementedBridgeModbusServer) Ping(context.Context, *Req) (*Res, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
+}
+func (UnimplementedBridgeModbusServer) SaveConfig(context.Context, *SaveConfigReq) (*SaveConfigRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaveConfig not implemented")
+}
+func (UnimplementedBridgeModbusServer) DeleteConfig(context.Context, *DeleteConfigReq) (*DeleteConfigRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteConfig not implemented")
+}
+func (UnimplementedBridgeModbusServer) PageListConfig(context.Context, *PageListConfigReq) (*PageListConfigRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PageListConfig not implemented")
+}
+func (UnimplementedBridgeModbusServer) GetConfigByCode(context.Context, *GetConfigByCodeReq) (*GetConfigByCodeRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetConfigByCode not implemented")
 }
 func (UnimplementedBridgeModbusServer) ReadCoils(context.Context, *ReadCoilsReq) (*ReadCoilsRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReadCoils not implemented")
@@ -320,6 +392,78 @@ func _BridgeModbus_Ping_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BridgeModbusServer).Ping(ctx, req.(*Req))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BridgeModbus_SaveConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveConfigReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BridgeModbusServer).SaveConfig(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BridgeModbus_SaveConfig_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BridgeModbusServer).SaveConfig(ctx, req.(*SaveConfigReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BridgeModbus_DeleteConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteConfigReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BridgeModbusServer).DeleteConfig(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BridgeModbus_DeleteConfig_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BridgeModbusServer).DeleteConfig(ctx, req.(*DeleteConfigReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BridgeModbus_PageListConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PageListConfigReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BridgeModbusServer).PageListConfig(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BridgeModbus_PageListConfig_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BridgeModbusServer).PageListConfig(ctx, req.(*PageListConfigReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BridgeModbus_GetConfigByCode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetConfigByCodeReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BridgeModbusServer).GetConfigByCode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BridgeModbus_GetConfigByCode_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BridgeModbusServer).GetConfigByCode(ctx, req.(*GetConfigByCodeReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -550,6 +694,22 @@ var BridgeModbus_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Ping",
 			Handler:    _BridgeModbus_Ping_Handler,
+		},
+		{
+			MethodName: "SaveConfig",
+			Handler:    _BridgeModbus_SaveConfig_Handler,
+		},
+		{
+			MethodName: "DeleteConfig",
+			Handler:    _BridgeModbus_DeleteConfig_Handler,
+		},
+		{
+			MethodName: "PageListConfig",
+			Handler:    _BridgeModbus_PageListConfig_Handler,
+		},
+		{
+			MethodName: "GetConfigByCode",
+			Handler:    _BridgeModbus_GetConfigByCode_Handler,
 		},
 		{
 			MethodName: "ReadCoils",

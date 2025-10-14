@@ -1,10 +1,62 @@
 
-²
+¼*
 bridgemodbus.protobridgemodbus"
 Req
 ping (	Rping"
 Res
-pong (	Rpong"d
+pong (	Rpong"´
+PbModbusConfig
+id (Rid
+
+createTime (	R
+createTime
+
+updateTime (	R
+updateTime
+
+modbusCode (	R
+modbusCode"
+slaveAddress (	RslaveAddress
+slave (Rslave
+timeout (Rtimeout 
+idleTimeout (RidleTimeout0
+linkRecoveryTimeout	 (RlinkRecoveryTimeout8
+protocolRecoveryTimeout
+ (RprotocolRecoveryTimeout"
+connectDelay (RconnectDelay
+	enableTls (R	enableTls 
+tlsCertFile (	RtlsCertFile
+
+tlsKeyFile (	R
+tlsKeyFile
+	tlsCaFile (	R	tlsCaFile
+status (Rstatus
+remark (	Rremark"i
+SaveConfigReq
+
+modbusCode (	R
+modbusCode"
+slaveAddress (	RslaveAddress
+slave (Rslave"
+SaveConfigRes
+id (Rid"#
+DeleteConfigReq
+ids (Rids"
+DeleteConfigRes"u
+PageListConfigReq
+page (Rpage
+pageSize (RpageSize
+keyword (	Rkeyword
+status (Rstatus"Y
+PageListConfigRes
+total (Rtotal.
+cfg (2.bridgemodbus.PbModbusConfigRcfg"4
+GetConfigByCodeReq
+
+modbusCode (	R
+modbusCode"D
+GetConfigByCodeRes.
+cfg (2.bridgemodbus.PbModbusConfigRcfg"d
 ReadCoilsReq
 
 modbusCode (	R
@@ -121,9 +173,14 @@ hexResultsh
 value (	Rvalue:8B
 SemanticResultsEntry
 key (	Rkey
-value (	Rvalue:82Å	
+value (	Rvalue:82†
 BridgeModbus,
-Ping.bridgemodbus.Req.bridgemodbus.ResC
+Ping.bridgemodbus.Req.bridgemodbus.ResF
+
+SaveConfig.bridgemodbus.SaveConfigReq.bridgemodbus.SaveConfigResL
+DeleteConfig.bridgemodbus.DeleteConfigReq.bridgemodbus.DeleteConfigResR
+PageListConfig.bridgemodbus.PageListConfigReq.bridgemodbus.PageListConfigResU
+GetConfigByCode .bridgemodbus.GetConfigByCodeReq .bridgemodbus.GetConfigByCodeResC
 	ReadCoils.bridgemodbus.ReadCoilsReq.bridgemodbus.ReadCoilsRes^
 ReadDiscreteInputs#.bridgemodbus.ReadDiscreteInputsReq#.bridgemodbus.ReadDiscreteInputsResU
 WriteSingleCoil .bridgemodbus.WriteSingleCoilReq .bridgemodbus.WriteSingleCoilRes^

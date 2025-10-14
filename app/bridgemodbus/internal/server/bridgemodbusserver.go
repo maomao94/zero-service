@@ -28,6 +28,30 @@ func (s *BridgeModbusServer) Ping(ctx context.Context, in *bridgemodbus.Req) (*b
 	return l.Ping(in)
 }
 
+// 保存（新增或更新）配置
+func (s *BridgeModbusServer) SaveConfig(ctx context.Context, in *bridgemodbus.SaveConfigReq) (*bridgemodbus.SaveConfigRes, error) {
+	l := logic.NewSaveConfigLogic(ctx, s.svcCtx)
+	return l.SaveConfig(in)
+}
+
+// 删除配置（支持批量）
+func (s *BridgeModbusServer) DeleteConfig(ctx context.Context, in *bridgemodbus.DeleteConfigReq) (*bridgemodbus.DeleteConfigRes, error) {
+	l := logic.NewDeleteConfigLogic(ctx, s.svcCtx)
+	return l.DeleteConfig(in)
+}
+
+// 分页查询配置列表
+func (s *BridgeModbusServer) PageListConfig(ctx context.Context, in *bridgemodbus.PageListConfigReq) (*bridgemodbus.PageListConfigRes, error) {
+	l := logic.NewPageListConfigLogic(ctx, s.svcCtx)
+	return l.PageListConfig(in)
+}
+
+// 根据编码查询详情
+func (s *BridgeModbusServer) GetConfigByCode(ctx context.Context, in *bridgemodbus.GetConfigByCodeReq) (*bridgemodbus.GetConfigByCodeRes, error) {
+	l := logic.NewGetConfigByCodeLogic(ctx, s.svcCtx)
+	return l.GetConfigByCode(in)
+}
+
 // 读取线圈状态 (Function Code 0x01)
 func (s *BridgeModbusServer) ReadCoils(ctx context.Context, in *bridgemodbus.ReadCoilsReq) (*bridgemodbus.ReadCoilsRes, error) {
 	l := logic.NewReadCoilsLogic(ctx, s.svcCtx)

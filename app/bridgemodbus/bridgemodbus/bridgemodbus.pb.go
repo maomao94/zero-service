@@ -109,6 +109,591 @@ func (x *Res) GetPong() string {
 	return ""
 }
 
+// Modbus 从站配置结构
+type PbModbusConfig struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 主键ID
+	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// 创建时间
+	CreateTime string `protobuf:"bytes,2,opt,name=createTime,proto3" json:"createTime,omitempty"`
+	// 更新时间
+	UpdateTime string `protobuf:"bytes,3,opt,name=updateTime,proto3" json:"updateTime,omitempty"`
+	// Modbus链路编号
+	ModbusCode string `protobuf:"bytes,4,opt,name=modbusCode,proto3" json:"modbusCode,omitempty"`
+	// 从站通信地址（如TCP地址或串口）
+	SlaveAddress string `protobuf:"bytes,5,opt,name=slaveAddress,proto3" json:"slaveAddress,omitempty"`
+	// 从站地址（Slave ID）
+	Slave uint32 `protobuf:"varint,6,opt,name=slave,proto3" json:"slave,omitempty"`
+	// 通信超时时间（毫秒）
+	Timeout uint32 `protobuf:"varint,7,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	// 空闲超时时间（毫秒）
+	IdleTimeout uint32 `protobuf:"varint,8,opt,name=idleTimeout,proto3" json:"idleTimeout,omitempty"`
+	// 链路重连超时时间（毫秒）
+	LinkRecoveryTimeout uint32 `protobuf:"varint,9,opt,name=linkRecoveryTimeout,proto3" json:"linkRecoveryTimeout,omitempty"`
+	// 协议恢复超时时间（毫秒）
+	ProtocolRecoveryTimeout uint32 `protobuf:"varint,10,opt,name=protocolRecoveryTimeout,proto3" json:"protocolRecoveryTimeout,omitempty"`
+	// 建链延迟时间（毫秒）
+	ConnectDelay uint32 `protobuf:"varint,11,opt,name=connectDelay,proto3" json:"connectDelay,omitempty"`
+	// 是否启用TLS加密
+	EnableTls uint32 `protobuf:"varint,12,opt,name=enableTls,proto3" json:"enableTls,omitempty"`
+	// TLS证书文件路径
+	TlsCertFile string `protobuf:"bytes,13,opt,name=tlsCertFile,proto3" json:"tlsCertFile,omitempty"`
+	// TLS私钥文件路径
+	TlsKeyFile string `protobuf:"bytes,14,opt,name=tlsKeyFile,proto3" json:"tlsKeyFile,omitempty"`
+	// TLS CA证书文件路径
+	TlsCaFile string `protobuf:"bytes,15,opt,name=tlsCaFile,proto3" json:"tlsCaFile,omitempty"`
+	// 当前状态（0=禁用，1=启用）
+	Status uint32 `protobuf:"varint,16,opt,name=status,proto3" json:"status,omitempty"`
+	// 备注信息
+	Remark        string `protobuf:"bytes,17,opt,name=remark,proto3" json:"remark,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PbModbusConfig) Reset() {
+	*x = PbModbusConfig{}
+	mi := &file_bridgemodbus_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PbModbusConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PbModbusConfig) ProtoMessage() {}
+
+func (x *PbModbusConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_bridgemodbus_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PbModbusConfig.ProtoReflect.Descriptor instead.
+func (*PbModbusConfig) Descriptor() ([]byte, []int) {
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *PbModbusConfig) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *PbModbusConfig) GetCreateTime() string {
+	if x != nil {
+		return x.CreateTime
+	}
+	return ""
+}
+
+func (x *PbModbusConfig) GetUpdateTime() string {
+	if x != nil {
+		return x.UpdateTime
+	}
+	return ""
+}
+
+func (x *PbModbusConfig) GetModbusCode() string {
+	if x != nil {
+		return x.ModbusCode
+	}
+	return ""
+}
+
+func (x *PbModbusConfig) GetSlaveAddress() string {
+	if x != nil {
+		return x.SlaveAddress
+	}
+	return ""
+}
+
+func (x *PbModbusConfig) GetSlave() uint32 {
+	if x != nil {
+		return x.Slave
+	}
+	return 0
+}
+
+func (x *PbModbusConfig) GetTimeout() uint32 {
+	if x != nil {
+		return x.Timeout
+	}
+	return 0
+}
+
+func (x *PbModbusConfig) GetIdleTimeout() uint32 {
+	if x != nil {
+		return x.IdleTimeout
+	}
+	return 0
+}
+
+func (x *PbModbusConfig) GetLinkRecoveryTimeout() uint32 {
+	if x != nil {
+		return x.LinkRecoveryTimeout
+	}
+	return 0
+}
+
+func (x *PbModbusConfig) GetProtocolRecoveryTimeout() uint32 {
+	if x != nil {
+		return x.ProtocolRecoveryTimeout
+	}
+	return 0
+}
+
+func (x *PbModbusConfig) GetConnectDelay() uint32 {
+	if x != nil {
+		return x.ConnectDelay
+	}
+	return 0
+}
+
+func (x *PbModbusConfig) GetEnableTls() uint32 {
+	if x != nil {
+		return x.EnableTls
+	}
+	return 0
+}
+
+func (x *PbModbusConfig) GetTlsCertFile() string {
+	if x != nil {
+		return x.TlsCertFile
+	}
+	return ""
+}
+
+func (x *PbModbusConfig) GetTlsKeyFile() string {
+	if x != nil {
+		return x.TlsKeyFile
+	}
+	return ""
+}
+
+func (x *PbModbusConfig) GetTlsCaFile() string {
+	if x != nil {
+		return x.TlsCaFile
+	}
+	return ""
+}
+
+func (x *PbModbusConfig) GetStatus() uint32 {
+	if x != nil {
+		return x.Status
+	}
+	return 0
+}
+
+func (x *PbModbusConfig) GetRemark() string {
+	if x != nil {
+		return x.Remark
+	}
+	return ""
+}
+
+type SaveConfigReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Modbus链路编号
+	ModbusCode string `protobuf:"bytes,1,opt,name=modbusCode,proto3" json:"modbusCode,omitempty"`
+	// 从站通信地址（如TCP地址或串口）
+	SlaveAddress string `protobuf:"bytes,2,opt,name=slaveAddress,proto3" json:"slaveAddress,omitempty"`
+	// 从站地址（Slave ID）
+	Slave         uint32 `protobuf:"varint,3,opt,name=slave,proto3" json:"slave,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SaveConfigReq) Reset() {
+	*x = SaveConfigReq{}
+	mi := &file_bridgemodbus_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SaveConfigReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SaveConfigReq) ProtoMessage() {}
+
+func (x *SaveConfigReq) ProtoReflect() protoreflect.Message {
+	mi := &file_bridgemodbus_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SaveConfigReq.ProtoReflect.Descriptor instead.
+func (*SaveConfigReq) Descriptor() ([]byte, []int) {
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *SaveConfigReq) GetModbusCode() string {
+	if x != nil {
+		return x.ModbusCode
+	}
+	return ""
+}
+
+func (x *SaveConfigReq) GetSlaveAddress() string {
+	if x != nil {
+		return x.SlaveAddress
+	}
+	return ""
+}
+
+func (x *SaveConfigReq) GetSlave() uint32 {
+	if x != nil {
+		return x.Slave
+	}
+	return 0
+}
+
+type SaveConfigRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SaveConfigRes) Reset() {
+	*x = SaveConfigRes{}
+	mi := &file_bridgemodbus_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SaveConfigRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SaveConfigRes) ProtoMessage() {}
+
+func (x *SaveConfigRes) ProtoReflect() protoreflect.Message {
+	mi := &file_bridgemodbus_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SaveConfigRes.ProtoReflect.Descriptor instead.
+func (*SaveConfigRes) Descriptor() ([]byte, []int) {
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *SaveConfigRes) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+type DeleteConfigReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ids           []int64                `protobuf:"varint,1,rep,packed,name=ids,proto3" json:"ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteConfigReq) Reset() {
+	*x = DeleteConfigReq{}
+	mi := &file_bridgemodbus_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteConfigReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteConfigReq) ProtoMessage() {}
+
+func (x *DeleteConfigReq) ProtoReflect() protoreflect.Message {
+	mi := &file_bridgemodbus_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteConfigReq.ProtoReflect.Descriptor instead.
+func (*DeleteConfigReq) Descriptor() ([]byte, []int) {
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *DeleteConfigReq) GetIds() []int64 {
+	if x != nil {
+		return x.Ids
+	}
+	return nil
+}
+
+type DeleteConfigRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteConfigRes) Reset() {
+	*x = DeleteConfigRes{}
+	mi := &file_bridgemodbus_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteConfigRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteConfigRes) ProtoMessage() {}
+
+func (x *DeleteConfigRes) ProtoReflect() protoreflect.Message {
+	mi := &file_bridgemodbus_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteConfigRes.ProtoReflect.Descriptor instead.
+func (*DeleteConfigRes) Descriptor() ([]byte, []int) {
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{6}
+}
+
+type PageListConfigReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Page          int64                  `protobuf:"varint,1,opt,name=page,proto3" json:"page,omitempty"`         // 页码
+	PageSize      int64                  `protobuf:"varint,2,opt,name=pageSize,proto3" json:"pageSize,omitempty"` // 每页大小
+	Keyword       string                 `protobuf:"bytes,3,opt,name=keyword,proto3" json:"keyword,omitempty"`    // 模糊匹配 modbusCode / remark
+	Status        uint32                 `protobuf:"varint,4,opt,name=status,proto3" json:"status,omitempty"`     // 可选过滤状态
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PageListConfigReq) Reset() {
+	*x = PageListConfigReq{}
+	mi := &file_bridgemodbus_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PageListConfigReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PageListConfigReq) ProtoMessage() {}
+
+func (x *PageListConfigReq) ProtoReflect() protoreflect.Message {
+	mi := &file_bridgemodbus_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PageListConfigReq.ProtoReflect.Descriptor instead.
+func (*PageListConfigReq) Descriptor() ([]byte, []int) {
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *PageListConfigReq) GetPage() int64 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *PageListConfigReq) GetPageSize() int64 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *PageListConfigReq) GetKeyword() string {
+	if x != nil {
+		return x.Keyword
+	}
+	return ""
+}
+
+func (x *PageListConfigReq) GetStatus() uint32 {
+	if x != nil {
+		return x.Status
+	}
+	return 0
+}
+
+type PageListConfigRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Total         uint32                 `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
+	Cfg           []*PbModbusConfig      `protobuf:"bytes,2,rep,name=cfg,proto3" json:"cfg,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PageListConfigRes) Reset() {
+	*x = PageListConfigRes{}
+	mi := &file_bridgemodbus_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PageListConfigRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PageListConfigRes) ProtoMessage() {}
+
+func (x *PageListConfigRes) ProtoReflect() protoreflect.Message {
+	mi := &file_bridgemodbus_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PageListConfigRes.ProtoReflect.Descriptor instead.
+func (*PageListConfigRes) Descriptor() ([]byte, []int) {
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *PageListConfigRes) GetTotal() uint32 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+func (x *PageListConfigRes) GetCfg() []*PbModbusConfig {
+	if x != nil {
+		return x.Cfg
+	}
+	return nil
+}
+
+type GetConfigByCodeReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ModbusCode    string                 `protobuf:"bytes,1,opt,name=modbusCode,proto3" json:"modbusCode,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetConfigByCodeReq) Reset() {
+	*x = GetConfigByCodeReq{}
+	mi := &file_bridgemodbus_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetConfigByCodeReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetConfigByCodeReq) ProtoMessage() {}
+
+func (x *GetConfigByCodeReq) ProtoReflect() protoreflect.Message {
+	mi := &file_bridgemodbus_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetConfigByCodeReq.ProtoReflect.Descriptor instead.
+func (*GetConfigByCodeReq) Descriptor() ([]byte, []int) {
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *GetConfigByCodeReq) GetModbusCode() string {
+	if x != nil {
+		return x.ModbusCode
+	}
+	return ""
+}
+
+type GetConfigByCodeRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Cfg           *PbModbusConfig        `protobuf:"bytes,1,opt,name=cfg,proto3" json:"cfg,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetConfigByCodeRes) Reset() {
+	*x = GetConfigByCodeRes{}
+	mi := &file_bridgemodbus_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetConfigByCodeRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetConfigByCodeRes) ProtoMessage() {}
+
+func (x *GetConfigByCodeRes) ProtoReflect() protoreflect.Message {
+	mi := &file_bridgemodbus_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetConfigByCodeRes.ProtoReflect.Descriptor instead.
+func (*GetConfigByCodeRes) Descriptor() ([]byte, []int) {
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *GetConfigByCodeRes) GetCfg() *PbModbusConfig {
+	if x != nil {
+		return x.Cfg
+	}
+	return nil
+}
+
 type ReadCoilsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ModbusCode    string                 `protobuf:"bytes,1,opt,name=modbusCode,proto3" json:"modbusCode,omitempty"` // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
@@ -120,7 +705,7 @@ type ReadCoilsReq struct {
 
 func (x *ReadCoilsReq) Reset() {
 	*x = ReadCoilsReq{}
-	mi := &file_bridgemodbus_proto_msgTypes[2]
+	mi := &file_bridgemodbus_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -132,7 +717,7 @@ func (x *ReadCoilsReq) String() string {
 func (*ReadCoilsReq) ProtoMessage() {}
 
 func (x *ReadCoilsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[2]
+	mi := &file_bridgemodbus_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -145,7 +730,7 @@ func (x *ReadCoilsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadCoilsReq.ProtoReflect.Descriptor instead.
 func (*ReadCoilsReq) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{2}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ReadCoilsReq) GetModbusCode() string {
@@ -179,7 +764,7 @@ type ReadCoilsRes struct {
 
 func (x *ReadCoilsRes) Reset() {
 	*x = ReadCoilsRes{}
-	mi := &file_bridgemodbus_proto_msgTypes[3]
+	mi := &file_bridgemodbus_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -191,7 +776,7 @@ func (x *ReadCoilsRes) String() string {
 func (*ReadCoilsRes) ProtoMessage() {}
 
 func (x *ReadCoilsRes) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[3]
+	mi := &file_bridgemodbus_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -204,7 +789,7 @@ func (x *ReadCoilsRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadCoilsRes.ProtoReflect.Descriptor instead.
 func (*ReadCoilsRes) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{3}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ReadCoilsRes) GetResults() []byte {
@@ -232,7 +817,7 @@ type ReadDiscreteInputsReq struct {
 
 func (x *ReadDiscreteInputsReq) Reset() {
 	*x = ReadDiscreteInputsReq{}
-	mi := &file_bridgemodbus_proto_msgTypes[4]
+	mi := &file_bridgemodbus_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -244,7 +829,7 @@ func (x *ReadDiscreteInputsReq) String() string {
 func (*ReadDiscreteInputsReq) ProtoMessage() {}
 
 func (x *ReadDiscreteInputsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[4]
+	mi := &file_bridgemodbus_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -257,7 +842,7 @@ func (x *ReadDiscreteInputsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadDiscreteInputsReq.ProtoReflect.Descriptor instead.
 func (*ReadDiscreteInputsReq) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{4}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ReadDiscreteInputsReq) GetModbusCode() string {
@@ -291,7 +876,7 @@ type ReadDiscreteInputsRes struct {
 
 func (x *ReadDiscreteInputsRes) Reset() {
 	*x = ReadDiscreteInputsRes{}
-	mi := &file_bridgemodbus_proto_msgTypes[5]
+	mi := &file_bridgemodbus_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -303,7 +888,7 @@ func (x *ReadDiscreteInputsRes) String() string {
 func (*ReadDiscreteInputsRes) ProtoMessage() {}
 
 func (x *ReadDiscreteInputsRes) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[5]
+	mi := &file_bridgemodbus_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -316,7 +901,7 @@ func (x *ReadDiscreteInputsRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadDiscreteInputsRes.ProtoReflect.Descriptor instead.
 func (*ReadDiscreteInputsRes) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{5}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ReadDiscreteInputsRes) GetResults() []byte {
@@ -344,7 +929,7 @@ type WriteSingleCoilReq struct {
 
 func (x *WriteSingleCoilReq) Reset() {
 	*x = WriteSingleCoilReq{}
-	mi := &file_bridgemodbus_proto_msgTypes[6]
+	mi := &file_bridgemodbus_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -356,7 +941,7 @@ func (x *WriteSingleCoilReq) String() string {
 func (*WriteSingleCoilReq) ProtoMessage() {}
 
 func (x *WriteSingleCoilReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[6]
+	mi := &file_bridgemodbus_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -369,7 +954,7 @@ func (x *WriteSingleCoilReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WriteSingleCoilReq.ProtoReflect.Descriptor instead.
 func (*WriteSingleCoilReq) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{6}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *WriteSingleCoilReq) GetModbusCode() string {
@@ -402,7 +987,7 @@ type WriteSingleCoilRes struct {
 
 func (x *WriteSingleCoilRes) Reset() {
 	*x = WriteSingleCoilRes{}
-	mi := &file_bridgemodbus_proto_msgTypes[7]
+	mi := &file_bridgemodbus_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -414,7 +999,7 @@ func (x *WriteSingleCoilRes) String() string {
 func (*WriteSingleCoilRes) ProtoMessage() {}
 
 func (x *WriteSingleCoilRes) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[7]
+	mi := &file_bridgemodbus_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -427,7 +1012,7 @@ func (x *WriteSingleCoilRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WriteSingleCoilRes.ProtoReflect.Descriptor instead.
 func (*WriteSingleCoilRes) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{7}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *WriteSingleCoilRes) GetResults() []byte {
@@ -449,7 +1034,7 @@ type WriteMultipleCoilsReq struct {
 
 func (x *WriteMultipleCoilsReq) Reset() {
 	*x = WriteMultipleCoilsReq{}
-	mi := &file_bridgemodbus_proto_msgTypes[8]
+	mi := &file_bridgemodbus_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -461,7 +1046,7 @@ func (x *WriteMultipleCoilsReq) String() string {
 func (*WriteMultipleCoilsReq) ProtoMessage() {}
 
 func (x *WriteMultipleCoilsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[8]
+	mi := &file_bridgemodbus_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -474,7 +1059,7 @@ func (x *WriteMultipleCoilsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WriteMultipleCoilsReq.ProtoReflect.Descriptor instead.
 func (*WriteMultipleCoilsReq) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{8}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *WriteMultipleCoilsReq) GetModbusCode() string {
@@ -514,7 +1099,7 @@ type WriteMultipleCoilsRes struct {
 
 func (x *WriteMultipleCoilsRes) Reset() {
 	*x = WriteMultipleCoilsRes{}
-	mi := &file_bridgemodbus_proto_msgTypes[9]
+	mi := &file_bridgemodbus_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -526,7 +1111,7 @@ func (x *WriteMultipleCoilsRes) String() string {
 func (*WriteMultipleCoilsRes) ProtoMessage() {}
 
 func (x *WriteMultipleCoilsRes) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[9]
+	mi := &file_bridgemodbus_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -539,7 +1124,7 @@ func (x *WriteMultipleCoilsRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WriteMultipleCoilsRes.ProtoReflect.Descriptor instead.
 func (*WriteMultipleCoilsRes) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{9}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *WriteMultipleCoilsRes) GetResults() []byte {
@@ -560,7 +1145,7 @@ type ReadInputRegistersReq struct {
 
 func (x *ReadInputRegistersReq) Reset() {
 	*x = ReadInputRegistersReq{}
-	mi := &file_bridgemodbus_proto_msgTypes[10]
+	mi := &file_bridgemodbus_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -572,7 +1157,7 @@ func (x *ReadInputRegistersReq) String() string {
 func (*ReadInputRegistersReq) ProtoMessage() {}
 
 func (x *ReadInputRegistersReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[10]
+	mi := &file_bridgemodbus_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -585,7 +1170,7 @@ func (x *ReadInputRegistersReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadInputRegistersReq.ProtoReflect.Descriptor instead.
 func (*ReadInputRegistersReq) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{10}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ReadInputRegistersReq) GetModbusCode() string {
@@ -619,7 +1204,7 @@ type ReadInputRegistersRes struct {
 
 func (x *ReadInputRegistersRes) Reset() {
 	*x = ReadInputRegistersRes{}
-	mi := &file_bridgemodbus_proto_msgTypes[11]
+	mi := &file_bridgemodbus_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -631,7 +1216,7 @@ func (x *ReadInputRegistersRes) String() string {
 func (*ReadInputRegistersRes) ProtoMessage() {}
 
 func (x *ReadInputRegistersRes) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[11]
+	mi := &file_bridgemodbus_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -644,7 +1229,7 @@ func (x *ReadInputRegistersRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadInputRegistersRes.ProtoReflect.Descriptor instead.
 func (*ReadInputRegistersRes) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{11}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ReadInputRegistersRes) GetResults() []byte {
@@ -672,7 +1257,7 @@ type ReadHoldingRegistersReq struct {
 
 func (x *ReadHoldingRegistersReq) Reset() {
 	*x = ReadHoldingRegistersReq{}
-	mi := &file_bridgemodbus_proto_msgTypes[12]
+	mi := &file_bridgemodbus_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -684,7 +1269,7 @@ func (x *ReadHoldingRegistersReq) String() string {
 func (*ReadHoldingRegistersReq) ProtoMessage() {}
 
 func (x *ReadHoldingRegistersReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[12]
+	mi := &file_bridgemodbus_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -697,7 +1282,7 @@ func (x *ReadHoldingRegistersReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadHoldingRegistersReq.ProtoReflect.Descriptor instead.
 func (*ReadHoldingRegistersReq) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{12}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ReadHoldingRegistersReq) GetModbusCode() string {
@@ -731,7 +1316,7 @@ type ReadHoldingRegistersRes struct {
 
 func (x *ReadHoldingRegistersRes) Reset() {
 	*x = ReadHoldingRegistersRes{}
-	mi := &file_bridgemodbus_proto_msgTypes[13]
+	mi := &file_bridgemodbus_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -743,7 +1328,7 @@ func (x *ReadHoldingRegistersRes) String() string {
 func (*ReadHoldingRegistersRes) ProtoMessage() {}
 
 func (x *ReadHoldingRegistersRes) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[13]
+	mi := &file_bridgemodbus_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -756,7 +1341,7 @@ func (x *ReadHoldingRegistersRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadHoldingRegistersRes.ProtoReflect.Descriptor instead.
 func (*ReadHoldingRegistersRes) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{13}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ReadHoldingRegistersRes) GetResults() []byte {
@@ -784,7 +1369,7 @@ type WriteSingleRegisterReq struct {
 
 func (x *WriteSingleRegisterReq) Reset() {
 	*x = WriteSingleRegisterReq{}
-	mi := &file_bridgemodbus_proto_msgTypes[14]
+	mi := &file_bridgemodbus_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -796,7 +1381,7 @@ func (x *WriteSingleRegisterReq) String() string {
 func (*WriteSingleRegisterReq) ProtoMessage() {}
 
 func (x *WriteSingleRegisterReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[14]
+	mi := &file_bridgemodbus_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -809,7 +1394,7 @@ func (x *WriteSingleRegisterReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WriteSingleRegisterReq.ProtoReflect.Descriptor instead.
 func (*WriteSingleRegisterReq) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{14}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *WriteSingleRegisterReq) GetModbusCode() string {
@@ -842,7 +1427,7 @@ type WriteSingleRegisterRes struct {
 
 func (x *WriteSingleRegisterRes) Reset() {
 	*x = WriteSingleRegisterRes{}
-	mi := &file_bridgemodbus_proto_msgTypes[15]
+	mi := &file_bridgemodbus_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -854,7 +1439,7 @@ func (x *WriteSingleRegisterRes) String() string {
 func (*WriteSingleRegisterRes) ProtoMessage() {}
 
 func (x *WriteSingleRegisterRes) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[15]
+	mi := &file_bridgemodbus_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -867,7 +1452,7 @@ func (x *WriteSingleRegisterRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WriteSingleRegisterRes.ProtoReflect.Descriptor instead.
 func (*WriteSingleRegisterRes) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{15}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *WriteSingleRegisterRes) GetResults() []byte {
@@ -889,7 +1474,7 @@ type WriteMultipleRegistersReq struct {
 
 func (x *WriteMultipleRegistersReq) Reset() {
 	*x = WriteMultipleRegistersReq{}
-	mi := &file_bridgemodbus_proto_msgTypes[16]
+	mi := &file_bridgemodbus_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -901,7 +1486,7 @@ func (x *WriteMultipleRegistersReq) String() string {
 func (*WriteMultipleRegistersReq) ProtoMessage() {}
 
 func (x *WriteMultipleRegistersReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[16]
+	mi := &file_bridgemodbus_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -914,7 +1499,7 @@ func (x *WriteMultipleRegistersReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WriteMultipleRegistersReq.ProtoReflect.Descriptor instead.
 func (*WriteMultipleRegistersReq) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{16}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *WriteMultipleRegistersReq) GetModbusCode() string {
@@ -954,7 +1539,7 @@ type WriteMultipleRegistersRes struct {
 
 func (x *WriteMultipleRegistersRes) Reset() {
 	*x = WriteMultipleRegistersRes{}
-	mi := &file_bridgemodbus_proto_msgTypes[17]
+	mi := &file_bridgemodbus_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -966,7 +1551,7 @@ func (x *WriteMultipleRegistersRes) String() string {
 func (*WriteMultipleRegistersRes) ProtoMessage() {}
 
 func (x *WriteMultipleRegistersRes) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[17]
+	mi := &file_bridgemodbus_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -979,7 +1564,7 @@ func (x *WriteMultipleRegistersRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WriteMultipleRegistersRes.ProtoReflect.Descriptor instead.
 func (*WriteMultipleRegistersRes) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{17}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *WriteMultipleRegistersRes) GetResults() []byte {
@@ -1003,7 +1588,7 @@ type ReadWriteMultipleRegistersReq struct {
 
 func (x *ReadWriteMultipleRegistersReq) Reset() {
 	*x = ReadWriteMultipleRegistersReq{}
-	mi := &file_bridgemodbus_proto_msgTypes[18]
+	mi := &file_bridgemodbus_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1015,7 +1600,7 @@ func (x *ReadWriteMultipleRegistersReq) String() string {
 func (*ReadWriteMultipleRegistersReq) ProtoMessage() {}
 
 func (x *ReadWriteMultipleRegistersReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[18]
+	mi := &file_bridgemodbus_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1028,7 +1613,7 @@ func (x *ReadWriteMultipleRegistersReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadWriteMultipleRegistersReq.ProtoReflect.Descriptor instead.
 func (*ReadWriteMultipleRegistersReq) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{18}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *ReadWriteMultipleRegistersReq) GetModbusCode() string {
@@ -1082,7 +1667,7 @@ type ReadWriteMultipleRegistersRes struct {
 
 func (x *ReadWriteMultipleRegistersRes) Reset() {
 	*x = ReadWriteMultipleRegistersRes{}
-	mi := &file_bridgemodbus_proto_msgTypes[19]
+	mi := &file_bridgemodbus_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1094,7 +1679,7 @@ func (x *ReadWriteMultipleRegistersRes) String() string {
 func (*ReadWriteMultipleRegistersRes) ProtoMessage() {}
 
 func (x *ReadWriteMultipleRegistersRes) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[19]
+	mi := &file_bridgemodbus_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1107,7 +1692,7 @@ func (x *ReadWriteMultipleRegistersRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadWriteMultipleRegistersRes.ProtoReflect.Descriptor instead.
 func (*ReadWriteMultipleRegistersRes) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{19}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ReadWriteMultipleRegistersRes) GetResults() []byte {
@@ -1129,7 +1714,7 @@ type MaskWriteRegisterReq struct {
 
 func (x *MaskWriteRegisterReq) Reset() {
 	*x = MaskWriteRegisterReq{}
-	mi := &file_bridgemodbus_proto_msgTypes[20]
+	mi := &file_bridgemodbus_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1141,7 +1726,7 @@ func (x *MaskWriteRegisterReq) String() string {
 func (*MaskWriteRegisterReq) ProtoMessage() {}
 
 func (x *MaskWriteRegisterReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[20]
+	mi := &file_bridgemodbus_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1154,7 +1739,7 @@ func (x *MaskWriteRegisterReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MaskWriteRegisterReq.ProtoReflect.Descriptor instead.
 func (*MaskWriteRegisterReq) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{20}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *MaskWriteRegisterReq) GetModbusCode() string {
@@ -1194,7 +1779,7 @@ type MaskWriteRegisterRes struct {
 
 func (x *MaskWriteRegisterRes) Reset() {
 	*x = MaskWriteRegisterRes{}
-	mi := &file_bridgemodbus_proto_msgTypes[21]
+	mi := &file_bridgemodbus_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1206,7 +1791,7 @@ func (x *MaskWriteRegisterRes) String() string {
 func (*MaskWriteRegisterRes) ProtoMessage() {}
 
 func (x *MaskWriteRegisterRes) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[21]
+	mi := &file_bridgemodbus_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1219,7 +1804,7 @@ func (x *MaskWriteRegisterRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MaskWriteRegisterRes.ProtoReflect.Descriptor instead.
 func (*MaskWriteRegisterRes) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{21}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *MaskWriteRegisterRes) GetResults() []byte {
@@ -1239,7 +1824,7 @@ type ReadFIFOQueueReq struct {
 
 func (x *ReadFIFOQueueReq) Reset() {
 	*x = ReadFIFOQueueReq{}
-	mi := &file_bridgemodbus_proto_msgTypes[22]
+	mi := &file_bridgemodbus_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1251,7 +1836,7 @@ func (x *ReadFIFOQueueReq) String() string {
 func (*ReadFIFOQueueReq) ProtoMessage() {}
 
 func (x *ReadFIFOQueueReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[22]
+	mi := &file_bridgemodbus_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1264,7 +1849,7 @@ func (x *ReadFIFOQueueReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadFIFOQueueReq.ProtoReflect.Descriptor instead.
 func (*ReadFIFOQueueReq) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{22}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *ReadFIFOQueueReq) GetModbusCode() string {
@@ -1290,7 +1875,7 @@ type ReadFIFOQueueRes struct {
 
 func (x *ReadFIFOQueueRes) Reset() {
 	*x = ReadFIFOQueueRes{}
-	mi := &file_bridgemodbus_proto_msgTypes[23]
+	mi := &file_bridgemodbus_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1302,7 +1887,7 @@ func (x *ReadFIFOQueueRes) String() string {
 func (*ReadFIFOQueueRes) ProtoMessage() {}
 
 func (x *ReadFIFOQueueRes) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[23]
+	mi := &file_bridgemodbus_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1315,7 +1900,7 @@ func (x *ReadFIFOQueueRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadFIFOQueueRes.ProtoReflect.Descriptor instead.
 func (*ReadFIFOQueueRes) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{23}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *ReadFIFOQueueRes) GetResults() []byte {
@@ -1335,7 +1920,7 @@ type ReadDeviceIdentificationReq struct {
 
 func (x *ReadDeviceIdentificationReq) Reset() {
 	*x = ReadDeviceIdentificationReq{}
-	mi := &file_bridgemodbus_proto_msgTypes[24]
+	mi := &file_bridgemodbus_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1347,7 +1932,7 @@ func (x *ReadDeviceIdentificationReq) String() string {
 func (*ReadDeviceIdentificationReq) ProtoMessage() {}
 
 func (x *ReadDeviceIdentificationReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[24]
+	mi := &file_bridgemodbus_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1360,7 +1945,7 @@ func (x *ReadDeviceIdentificationReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadDeviceIdentificationReq.ProtoReflect.Descriptor instead.
 func (*ReadDeviceIdentificationReq) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{24}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *ReadDeviceIdentificationReq) GetModbusCode() string {
@@ -1391,7 +1976,7 @@ type ReadDeviceIdentificationRes struct {
 
 func (x *ReadDeviceIdentificationRes) Reset() {
 	*x = ReadDeviceIdentificationRes{}
-	mi := &file_bridgemodbus_proto_msgTypes[25]
+	mi := &file_bridgemodbus_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1403,7 +1988,7 @@ func (x *ReadDeviceIdentificationRes) String() string {
 func (*ReadDeviceIdentificationRes) ProtoMessage() {}
 
 func (x *ReadDeviceIdentificationRes) ProtoReflect() protoreflect.Message {
-	mi := &file_bridgemodbus_proto_msgTypes[25]
+	mi := &file_bridgemodbus_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1416,7 +2001,7 @@ func (x *ReadDeviceIdentificationRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadDeviceIdentificationRes.ProtoReflect.Descriptor instead.
 func (*ReadDeviceIdentificationRes) Descriptor() ([]byte, []int) {
-	return file_bridgemodbus_proto_rawDescGZIP(), []int{25}
+	return file_bridgemodbus_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *ReadDeviceIdentificationRes) GetResults() map[uint32]string {
@@ -1448,7 +2033,59 @@ const file_bridgemodbus_proto_rawDesc = "" +
 	"\x03Req\x12\x12\n" +
 	"\x04ping\x18\x01 \x01(\tR\x04ping\"\x19\n" +
 	"\x03Res\x12\x12\n" +
-	"\x04pong\x18\x01 \x01(\tR\x04pong\"d\n" +
+	"\x04pong\x18\x01 \x01(\tR\x04pong\"\xb4\x04\n" +
+	"\x0ePbModbusConfig\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1e\n" +
+	"\n" +
+	"createTime\x18\x02 \x01(\tR\n" +
+	"createTime\x12\x1e\n" +
+	"\n" +
+	"updateTime\x18\x03 \x01(\tR\n" +
+	"updateTime\x12\x1e\n" +
+	"\n" +
+	"modbusCode\x18\x04 \x01(\tR\n" +
+	"modbusCode\x12\"\n" +
+	"\fslaveAddress\x18\x05 \x01(\tR\fslaveAddress\x12\x14\n" +
+	"\x05slave\x18\x06 \x01(\rR\x05slave\x12\x18\n" +
+	"\atimeout\x18\a \x01(\rR\atimeout\x12 \n" +
+	"\vidleTimeout\x18\b \x01(\rR\vidleTimeout\x120\n" +
+	"\x13linkRecoveryTimeout\x18\t \x01(\rR\x13linkRecoveryTimeout\x128\n" +
+	"\x17protocolRecoveryTimeout\x18\n" +
+	" \x01(\rR\x17protocolRecoveryTimeout\x12\"\n" +
+	"\fconnectDelay\x18\v \x01(\rR\fconnectDelay\x12\x1c\n" +
+	"\tenableTls\x18\f \x01(\rR\tenableTls\x12 \n" +
+	"\vtlsCertFile\x18\r \x01(\tR\vtlsCertFile\x12\x1e\n" +
+	"\n" +
+	"tlsKeyFile\x18\x0e \x01(\tR\n" +
+	"tlsKeyFile\x12\x1c\n" +
+	"\ttlsCaFile\x18\x0f \x01(\tR\ttlsCaFile\x12\x16\n" +
+	"\x06status\x18\x10 \x01(\rR\x06status\x12\x16\n" +
+	"\x06remark\x18\x11 \x01(\tR\x06remark\"i\n" +
+	"\rSaveConfigReq\x12\x1e\n" +
+	"\n" +
+	"modbusCode\x18\x01 \x01(\tR\n" +
+	"modbusCode\x12\"\n" +
+	"\fslaveAddress\x18\x02 \x01(\tR\fslaveAddress\x12\x14\n" +
+	"\x05slave\x18\x03 \x01(\rR\x05slave\"\x1f\n" +
+	"\rSaveConfigRes\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\"#\n" +
+	"\x0fDeleteConfigReq\x12\x10\n" +
+	"\x03ids\x18\x01 \x03(\x03R\x03ids\"\x11\n" +
+	"\x0fDeleteConfigRes\"u\n" +
+	"\x11PageListConfigReq\x12\x12\n" +
+	"\x04page\x18\x01 \x01(\x03R\x04page\x12\x1a\n" +
+	"\bpageSize\x18\x02 \x01(\x03R\bpageSize\x12\x18\n" +
+	"\akeyword\x18\x03 \x01(\tR\akeyword\x12\x16\n" +
+	"\x06status\x18\x04 \x01(\rR\x06status\"Y\n" +
+	"\x11PageListConfigRes\x12\x14\n" +
+	"\x05total\x18\x01 \x01(\rR\x05total\x12.\n" +
+	"\x03cfg\x18\x02 \x03(\v2\x1c.bridgemodbus.PbModbusConfigR\x03cfg\"4\n" +
+	"\x12GetConfigByCodeReq\x12\x1e\n" +
+	"\n" +
+	"modbusCode\x18\x01 \x01(\tR\n" +
+	"modbusCode\"D\n" +
+	"\x12GetConfigByCodeRes\x12.\n" +
+	"\x03cfg\x18\x01 \x01(\v2\x1c.bridgemodbus.PbModbusConfigR\x03cfg\"d\n" +
 	"\fReadCoilsReq\x12\x1e\n" +
 	"\n" +
 	"modbusCode\x18\x01 \x01(\tR\n" +
@@ -1565,9 +2202,14 @@ const file_bridgemodbus_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1aB\n" +
 	"\x14SemanticResultsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x012\xc5\t\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x012\x86\f\n" +
 	"\fBridgeModbus\x12,\n" +
-	"\x04Ping\x12\x11.bridgemodbus.Req\x1a\x11.bridgemodbus.Res\x12C\n" +
+	"\x04Ping\x12\x11.bridgemodbus.Req\x1a\x11.bridgemodbus.Res\x12F\n" +
+	"\n" +
+	"SaveConfig\x12\x1b.bridgemodbus.SaveConfigReq\x1a\x1b.bridgemodbus.SaveConfigRes\x12L\n" +
+	"\fDeleteConfig\x12\x1d.bridgemodbus.DeleteConfigReq\x1a\x1d.bridgemodbus.DeleteConfigRes\x12R\n" +
+	"\x0ePageListConfig\x12\x1f.bridgemodbus.PageListConfigReq\x1a\x1f.bridgemodbus.PageListConfigRes\x12U\n" +
+	"\x0fGetConfigByCode\x12 .bridgemodbus.GetConfigByCodeReq\x1a .bridgemodbus.GetConfigByCodeRes\x12C\n" +
 	"\tReadCoils\x12\x1a.bridgemodbus.ReadCoilsReq\x1a\x1a.bridgemodbus.ReadCoilsRes\x12^\n" +
 	"\x12ReadDiscreteInputs\x12#.bridgemodbus.ReadDiscreteInputsReq\x1a#.bridgemodbus.ReadDiscreteInputsRes\x12U\n" +
 	"\x0fWriteSingleCoil\x12 .bridgemodbus.WriteSingleCoilReq\x1a .bridgemodbus.WriteSingleCoilRes\x12^\n" +
@@ -1594,73 +2236,92 @@ func file_bridgemodbus_proto_rawDescGZIP() []byte {
 	return file_bridgemodbus_proto_rawDescData
 }
 
-var file_bridgemodbus_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
+var file_bridgemodbus_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
 var file_bridgemodbus_proto_goTypes = []any{
 	(*Req)(nil),                           // 0: bridgemodbus.Req
 	(*Res)(nil),                           // 1: bridgemodbus.Res
-	(*ReadCoilsReq)(nil),                  // 2: bridgemodbus.ReadCoilsReq
-	(*ReadCoilsRes)(nil),                  // 3: bridgemodbus.ReadCoilsRes
-	(*ReadDiscreteInputsReq)(nil),         // 4: bridgemodbus.ReadDiscreteInputsReq
-	(*ReadDiscreteInputsRes)(nil),         // 5: bridgemodbus.ReadDiscreteInputsRes
-	(*WriteSingleCoilReq)(nil),            // 6: bridgemodbus.WriteSingleCoilReq
-	(*WriteSingleCoilRes)(nil),            // 7: bridgemodbus.WriteSingleCoilRes
-	(*WriteMultipleCoilsReq)(nil),         // 8: bridgemodbus.WriteMultipleCoilsReq
-	(*WriteMultipleCoilsRes)(nil),         // 9: bridgemodbus.WriteMultipleCoilsRes
-	(*ReadInputRegistersReq)(nil),         // 10: bridgemodbus.ReadInputRegistersReq
-	(*ReadInputRegistersRes)(nil),         // 11: bridgemodbus.ReadInputRegistersRes
-	(*ReadHoldingRegistersReq)(nil),       // 12: bridgemodbus.ReadHoldingRegistersReq
-	(*ReadHoldingRegistersRes)(nil),       // 13: bridgemodbus.ReadHoldingRegistersRes
-	(*WriteSingleRegisterReq)(nil),        // 14: bridgemodbus.WriteSingleRegisterReq
-	(*WriteSingleRegisterRes)(nil),        // 15: bridgemodbus.WriteSingleRegisterRes
-	(*WriteMultipleRegistersReq)(nil),     // 16: bridgemodbus.WriteMultipleRegistersReq
-	(*WriteMultipleRegistersRes)(nil),     // 17: bridgemodbus.WriteMultipleRegistersRes
-	(*ReadWriteMultipleRegistersReq)(nil), // 18: bridgemodbus.ReadWriteMultipleRegistersReq
-	(*ReadWriteMultipleRegistersRes)(nil), // 19: bridgemodbus.ReadWriteMultipleRegistersRes
-	(*MaskWriteRegisterReq)(nil),          // 20: bridgemodbus.MaskWriteRegisterReq
-	(*MaskWriteRegisterRes)(nil),          // 21: bridgemodbus.MaskWriteRegisterRes
-	(*ReadFIFOQueueReq)(nil),              // 22: bridgemodbus.ReadFIFOQueueReq
-	(*ReadFIFOQueueRes)(nil),              // 23: bridgemodbus.ReadFIFOQueueRes
-	(*ReadDeviceIdentificationReq)(nil),   // 24: bridgemodbus.ReadDeviceIdentificationReq
-	(*ReadDeviceIdentificationRes)(nil),   // 25: bridgemodbus.ReadDeviceIdentificationRes
-	nil,                                   // 26: bridgemodbus.ReadDeviceIdentificationRes.ResultsEntry
-	nil,                                   // 27: bridgemodbus.ReadDeviceIdentificationRes.HexResultsEntry
-	nil,                                   // 28: bridgemodbus.ReadDeviceIdentificationRes.SemanticResultsEntry
+	(*PbModbusConfig)(nil),                // 2: bridgemodbus.PbModbusConfig
+	(*SaveConfigReq)(nil),                 // 3: bridgemodbus.SaveConfigReq
+	(*SaveConfigRes)(nil),                 // 4: bridgemodbus.SaveConfigRes
+	(*DeleteConfigReq)(nil),               // 5: bridgemodbus.DeleteConfigReq
+	(*DeleteConfigRes)(nil),               // 6: bridgemodbus.DeleteConfigRes
+	(*PageListConfigReq)(nil),             // 7: bridgemodbus.PageListConfigReq
+	(*PageListConfigRes)(nil),             // 8: bridgemodbus.PageListConfigRes
+	(*GetConfigByCodeReq)(nil),            // 9: bridgemodbus.GetConfigByCodeReq
+	(*GetConfigByCodeRes)(nil),            // 10: bridgemodbus.GetConfigByCodeRes
+	(*ReadCoilsReq)(nil),                  // 11: bridgemodbus.ReadCoilsReq
+	(*ReadCoilsRes)(nil),                  // 12: bridgemodbus.ReadCoilsRes
+	(*ReadDiscreteInputsReq)(nil),         // 13: bridgemodbus.ReadDiscreteInputsReq
+	(*ReadDiscreteInputsRes)(nil),         // 14: bridgemodbus.ReadDiscreteInputsRes
+	(*WriteSingleCoilReq)(nil),            // 15: bridgemodbus.WriteSingleCoilReq
+	(*WriteSingleCoilRes)(nil),            // 16: bridgemodbus.WriteSingleCoilRes
+	(*WriteMultipleCoilsReq)(nil),         // 17: bridgemodbus.WriteMultipleCoilsReq
+	(*WriteMultipleCoilsRes)(nil),         // 18: bridgemodbus.WriteMultipleCoilsRes
+	(*ReadInputRegistersReq)(nil),         // 19: bridgemodbus.ReadInputRegistersReq
+	(*ReadInputRegistersRes)(nil),         // 20: bridgemodbus.ReadInputRegistersRes
+	(*ReadHoldingRegistersReq)(nil),       // 21: bridgemodbus.ReadHoldingRegistersReq
+	(*ReadHoldingRegistersRes)(nil),       // 22: bridgemodbus.ReadHoldingRegistersRes
+	(*WriteSingleRegisterReq)(nil),        // 23: bridgemodbus.WriteSingleRegisterReq
+	(*WriteSingleRegisterRes)(nil),        // 24: bridgemodbus.WriteSingleRegisterRes
+	(*WriteMultipleRegistersReq)(nil),     // 25: bridgemodbus.WriteMultipleRegistersReq
+	(*WriteMultipleRegistersRes)(nil),     // 26: bridgemodbus.WriteMultipleRegistersRes
+	(*ReadWriteMultipleRegistersReq)(nil), // 27: bridgemodbus.ReadWriteMultipleRegistersReq
+	(*ReadWriteMultipleRegistersRes)(nil), // 28: bridgemodbus.ReadWriteMultipleRegistersRes
+	(*MaskWriteRegisterReq)(nil),          // 29: bridgemodbus.MaskWriteRegisterReq
+	(*MaskWriteRegisterRes)(nil),          // 30: bridgemodbus.MaskWriteRegisterRes
+	(*ReadFIFOQueueReq)(nil),              // 31: bridgemodbus.ReadFIFOQueueReq
+	(*ReadFIFOQueueRes)(nil),              // 32: bridgemodbus.ReadFIFOQueueRes
+	(*ReadDeviceIdentificationReq)(nil),   // 33: bridgemodbus.ReadDeviceIdentificationReq
+	(*ReadDeviceIdentificationRes)(nil),   // 34: bridgemodbus.ReadDeviceIdentificationRes
+	nil,                                   // 35: bridgemodbus.ReadDeviceIdentificationRes.ResultsEntry
+	nil,                                   // 36: bridgemodbus.ReadDeviceIdentificationRes.HexResultsEntry
+	nil,                                   // 37: bridgemodbus.ReadDeviceIdentificationRes.SemanticResultsEntry
 }
 var file_bridgemodbus_proto_depIdxs = []int32{
-	26, // 0: bridgemodbus.ReadDeviceIdentificationRes.results:type_name -> bridgemodbus.ReadDeviceIdentificationRes.ResultsEntry
-	27, // 1: bridgemodbus.ReadDeviceIdentificationRes.hexResults:type_name -> bridgemodbus.ReadDeviceIdentificationRes.HexResultsEntry
-	28, // 2: bridgemodbus.ReadDeviceIdentificationRes.semanticResults:type_name -> bridgemodbus.ReadDeviceIdentificationRes.SemanticResultsEntry
-	0,  // 3: bridgemodbus.BridgeModbus.Ping:input_type -> bridgemodbus.Req
-	2,  // 4: bridgemodbus.BridgeModbus.ReadCoils:input_type -> bridgemodbus.ReadCoilsReq
-	4,  // 5: bridgemodbus.BridgeModbus.ReadDiscreteInputs:input_type -> bridgemodbus.ReadDiscreteInputsReq
-	6,  // 6: bridgemodbus.BridgeModbus.WriteSingleCoil:input_type -> bridgemodbus.WriteSingleCoilReq
-	8,  // 7: bridgemodbus.BridgeModbus.WriteMultipleCoils:input_type -> bridgemodbus.WriteMultipleCoilsReq
-	10, // 8: bridgemodbus.BridgeModbus.ReadInputRegisters:input_type -> bridgemodbus.ReadInputRegistersReq
-	12, // 9: bridgemodbus.BridgeModbus.ReadHoldingRegisters:input_type -> bridgemodbus.ReadHoldingRegistersReq
-	14, // 10: bridgemodbus.BridgeModbus.WriteSingleRegister:input_type -> bridgemodbus.WriteSingleRegisterReq
-	16, // 11: bridgemodbus.BridgeModbus.WriteMultipleRegisters:input_type -> bridgemodbus.WriteMultipleRegistersReq
-	18, // 12: bridgemodbus.BridgeModbus.ReadWriteMultipleRegisters:input_type -> bridgemodbus.ReadWriteMultipleRegistersReq
-	20, // 13: bridgemodbus.BridgeModbus.MaskWriteRegister:input_type -> bridgemodbus.MaskWriteRegisterReq
-	22, // 14: bridgemodbus.BridgeModbus.ReadFIFOQueue:input_type -> bridgemodbus.ReadFIFOQueueReq
-	24, // 15: bridgemodbus.BridgeModbus.ReadDeviceIdentification:input_type -> bridgemodbus.ReadDeviceIdentificationReq
-	1,  // 16: bridgemodbus.BridgeModbus.Ping:output_type -> bridgemodbus.Res
-	3,  // 17: bridgemodbus.BridgeModbus.ReadCoils:output_type -> bridgemodbus.ReadCoilsRes
-	5,  // 18: bridgemodbus.BridgeModbus.ReadDiscreteInputs:output_type -> bridgemodbus.ReadDiscreteInputsRes
-	7,  // 19: bridgemodbus.BridgeModbus.WriteSingleCoil:output_type -> bridgemodbus.WriteSingleCoilRes
-	9,  // 20: bridgemodbus.BridgeModbus.WriteMultipleCoils:output_type -> bridgemodbus.WriteMultipleCoilsRes
-	11, // 21: bridgemodbus.BridgeModbus.ReadInputRegisters:output_type -> bridgemodbus.ReadInputRegistersRes
-	13, // 22: bridgemodbus.BridgeModbus.ReadHoldingRegisters:output_type -> bridgemodbus.ReadHoldingRegistersRes
-	15, // 23: bridgemodbus.BridgeModbus.WriteSingleRegister:output_type -> bridgemodbus.WriteSingleRegisterRes
-	17, // 24: bridgemodbus.BridgeModbus.WriteMultipleRegisters:output_type -> bridgemodbus.WriteMultipleRegistersRes
-	19, // 25: bridgemodbus.BridgeModbus.ReadWriteMultipleRegisters:output_type -> bridgemodbus.ReadWriteMultipleRegistersRes
-	21, // 26: bridgemodbus.BridgeModbus.MaskWriteRegister:output_type -> bridgemodbus.MaskWriteRegisterRes
-	23, // 27: bridgemodbus.BridgeModbus.ReadFIFOQueue:output_type -> bridgemodbus.ReadFIFOQueueRes
-	25, // 28: bridgemodbus.BridgeModbus.ReadDeviceIdentification:output_type -> bridgemodbus.ReadDeviceIdentificationRes
-	16, // [16:29] is the sub-list for method output_type
-	3,  // [3:16] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+	2,  // 0: bridgemodbus.PageListConfigRes.cfg:type_name -> bridgemodbus.PbModbusConfig
+	2,  // 1: bridgemodbus.GetConfigByCodeRes.cfg:type_name -> bridgemodbus.PbModbusConfig
+	35, // 2: bridgemodbus.ReadDeviceIdentificationRes.results:type_name -> bridgemodbus.ReadDeviceIdentificationRes.ResultsEntry
+	36, // 3: bridgemodbus.ReadDeviceIdentificationRes.hexResults:type_name -> bridgemodbus.ReadDeviceIdentificationRes.HexResultsEntry
+	37, // 4: bridgemodbus.ReadDeviceIdentificationRes.semanticResults:type_name -> bridgemodbus.ReadDeviceIdentificationRes.SemanticResultsEntry
+	0,  // 5: bridgemodbus.BridgeModbus.Ping:input_type -> bridgemodbus.Req
+	3,  // 6: bridgemodbus.BridgeModbus.SaveConfig:input_type -> bridgemodbus.SaveConfigReq
+	5,  // 7: bridgemodbus.BridgeModbus.DeleteConfig:input_type -> bridgemodbus.DeleteConfigReq
+	7,  // 8: bridgemodbus.BridgeModbus.PageListConfig:input_type -> bridgemodbus.PageListConfigReq
+	9,  // 9: bridgemodbus.BridgeModbus.GetConfigByCode:input_type -> bridgemodbus.GetConfigByCodeReq
+	11, // 10: bridgemodbus.BridgeModbus.ReadCoils:input_type -> bridgemodbus.ReadCoilsReq
+	13, // 11: bridgemodbus.BridgeModbus.ReadDiscreteInputs:input_type -> bridgemodbus.ReadDiscreteInputsReq
+	15, // 12: bridgemodbus.BridgeModbus.WriteSingleCoil:input_type -> bridgemodbus.WriteSingleCoilReq
+	17, // 13: bridgemodbus.BridgeModbus.WriteMultipleCoils:input_type -> bridgemodbus.WriteMultipleCoilsReq
+	19, // 14: bridgemodbus.BridgeModbus.ReadInputRegisters:input_type -> bridgemodbus.ReadInputRegistersReq
+	21, // 15: bridgemodbus.BridgeModbus.ReadHoldingRegisters:input_type -> bridgemodbus.ReadHoldingRegistersReq
+	23, // 16: bridgemodbus.BridgeModbus.WriteSingleRegister:input_type -> bridgemodbus.WriteSingleRegisterReq
+	25, // 17: bridgemodbus.BridgeModbus.WriteMultipleRegisters:input_type -> bridgemodbus.WriteMultipleRegistersReq
+	27, // 18: bridgemodbus.BridgeModbus.ReadWriteMultipleRegisters:input_type -> bridgemodbus.ReadWriteMultipleRegistersReq
+	29, // 19: bridgemodbus.BridgeModbus.MaskWriteRegister:input_type -> bridgemodbus.MaskWriteRegisterReq
+	31, // 20: bridgemodbus.BridgeModbus.ReadFIFOQueue:input_type -> bridgemodbus.ReadFIFOQueueReq
+	33, // 21: bridgemodbus.BridgeModbus.ReadDeviceIdentification:input_type -> bridgemodbus.ReadDeviceIdentificationReq
+	1,  // 22: bridgemodbus.BridgeModbus.Ping:output_type -> bridgemodbus.Res
+	4,  // 23: bridgemodbus.BridgeModbus.SaveConfig:output_type -> bridgemodbus.SaveConfigRes
+	6,  // 24: bridgemodbus.BridgeModbus.DeleteConfig:output_type -> bridgemodbus.DeleteConfigRes
+	8,  // 25: bridgemodbus.BridgeModbus.PageListConfig:output_type -> bridgemodbus.PageListConfigRes
+	10, // 26: bridgemodbus.BridgeModbus.GetConfigByCode:output_type -> bridgemodbus.GetConfigByCodeRes
+	12, // 27: bridgemodbus.BridgeModbus.ReadCoils:output_type -> bridgemodbus.ReadCoilsRes
+	14, // 28: bridgemodbus.BridgeModbus.ReadDiscreteInputs:output_type -> bridgemodbus.ReadDiscreteInputsRes
+	16, // 29: bridgemodbus.BridgeModbus.WriteSingleCoil:output_type -> bridgemodbus.WriteSingleCoilRes
+	18, // 30: bridgemodbus.BridgeModbus.WriteMultipleCoils:output_type -> bridgemodbus.WriteMultipleCoilsRes
+	20, // 31: bridgemodbus.BridgeModbus.ReadInputRegisters:output_type -> bridgemodbus.ReadInputRegistersRes
+	22, // 32: bridgemodbus.BridgeModbus.ReadHoldingRegisters:output_type -> bridgemodbus.ReadHoldingRegistersRes
+	24, // 33: bridgemodbus.BridgeModbus.WriteSingleRegister:output_type -> bridgemodbus.WriteSingleRegisterRes
+	26, // 34: bridgemodbus.BridgeModbus.WriteMultipleRegisters:output_type -> bridgemodbus.WriteMultipleRegistersRes
+	28, // 35: bridgemodbus.BridgeModbus.ReadWriteMultipleRegisters:output_type -> bridgemodbus.ReadWriteMultipleRegistersRes
+	30, // 36: bridgemodbus.BridgeModbus.MaskWriteRegister:output_type -> bridgemodbus.MaskWriteRegisterRes
+	32, // 37: bridgemodbus.BridgeModbus.ReadFIFOQueue:output_type -> bridgemodbus.ReadFIFOQueueRes
+	34, // 38: bridgemodbus.BridgeModbus.ReadDeviceIdentification:output_type -> bridgemodbus.ReadDeviceIdentificationRes
+	22, // [22:39] is the sub-list for method output_type
+	5,  // [5:22] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_bridgemodbus_proto_init() }
@@ -1674,7 +2335,7 @@ func file_bridgemodbus_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_bridgemodbus_proto_rawDesc), len(file_bridgemodbus_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   29,
+			NumMessages:   38,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
