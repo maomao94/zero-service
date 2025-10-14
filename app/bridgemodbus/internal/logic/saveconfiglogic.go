@@ -31,7 +31,7 @@ func (l *SaveConfigLogic) SaveConfig(in *bridgemodbus.SaveConfigReq) (*bridgemod
 	if err != nil && err != model.ErrNotFound {
 		return nil, err
 	}
-	if err == nil && exist != nil {
+	if false {
 		exist.SlaveAddress = in.SlaveAddress
 		exist.Slave = int64(in.Slave)
 		_, err = l.svcCtx.ModbusSlaveConfigModel.Update(l.ctx, nil, exist)
@@ -42,6 +42,7 @@ func (l *SaveConfigLogic) SaveConfig(in *bridgemodbus.SaveConfigReq) (*bridgemod
 			Id: int64(exist.Id),
 		}, nil
 	} else {
+		var lastId int64
 		insertBuilder := l.svcCtx.ModbusSlaveConfigModel.InsertBuilder()
 		insertBuilder = insertBuilder.
 			Columns("modbus_code", "slave_address", "slave").
@@ -52,15 +53,19 @@ func (l *SaveConfigLogic) SaveConfig(in *bridgemodbus.SaveConfigReq) (*bridgemod
 		}
 		//_, err = l.svcCtx.ModbusSlaveConfigModel.e(ctx, query, args...)
 		//lastId, _ := result.LastInsertId()
-		l.svcCtx.ModbusSlaveConfigModel.Trans(l.ctx, func(ctx context.Context, session sqlx.Session) error {
-			_, err = session.ExecCtx(l.ctx, query, args...)
+		err = l.svcCtx.ModbusSlaveConfigModel.Trans(l.ctx, func(ctx context.Context, session sqlx.Session) error {
+			result, err := session.ExecCtx(l.ctx, query, args...)
 			if err != nil {
 				return err
 			}
+			lastId, _ = result.LastInsertId()
 			return nil
 		})
+		if err != nil {
+			return nil, err
+		}
 		return &bridgemodbus.SaveConfigRes{
-			Id: 0,
+			Id: lastId,
 		}, nil
 	}
 }
