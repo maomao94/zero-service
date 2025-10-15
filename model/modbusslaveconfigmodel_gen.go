@@ -35,6 +35,7 @@ type (
 		Trans(ctx context.Context, fn func(ctx context.Context, session sqlx.Session) error) error
 		ExecCtx(ctx context.Context, session sqlx.Session, query string, args ...any) (sql.Result, error)
 		SelectWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) ([]*ModbusSlaveConfig, error)
+		SelectOneWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) (*ModbusSlaveConfig, error)
 		InsertWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.InsertBuilder) (sql.Result, error)
 		UpdateWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.UpdateBuilder) (sql.Result, error)
 		DeleteWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.DeleteBuilder) (sql.Result, error)
@@ -408,11 +409,29 @@ func (m *defaultModbusSlaveConfigModel) SelectWithBuilder(ctx context.Context, b
 
 	var resp []*ModbusSlaveConfig
 
-	err = m.conn.QueryRowsCtx(ctx, &resp, query, args...)
+	err = m.conn.QueryRowsPartialCtx(ctx, &resp, query, args...)
 
 	switch err {
 	case nil:
 		return resp, nil
+	default:
+		return nil, err
+	}
+}
+
+func (m *defaultModbusSlaveConfigModel) SelectOneWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) (*ModbusSlaveConfig, error) {
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	var resp ModbusSlaveConfig
+	err = m.conn.QueryRowPartialCtx(ctx, &resp, query, args...)
+	switch err {
+	case nil:
+		return &resp, nil
+	case sqlx.ErrNotFound:
+		return nil, ErrNotFound
 	default:
 		return nil, err
 	}

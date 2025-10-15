@@ -302,12 +302,28 @@ func (m *default{{.upperStartCamelObject}}Model) SelectWithBuilder(ctx context.C
 
     var resp []*{{.upperStartCamelObject}}
 
-	{{if .withCache}}err = m.QueryRowsNoCacheCtx(ctx,&resp, query, args...){{else}}
-	err = m.conn.QueryRowsCtx(ctx,&resp, query, args...)
-	{{end}}
+	err = m.conn.QueryRowsPartialCtx(ctx,&resp, query, args...)
 	switch err {
 	case nil:
 		return resp, nil
+	default:
+		return nil, err
+	}
+}
+
+func (m *default{{.upperStartCamelObject}}Model) SelectOneWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) (*{{.upperStartCamelObject}}, error) {
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	var resp {{.upperStartCamelObject}}
+	err = m.conn.QueryRowPartialCtx(ctx, &resp, query, args...)
+	switch err {
+	case nil:
+		return &resp, nil
+	case sqlx.ErrNotFound:
+		return nil, ErrNotFound
 	default:
 		return nil, err
 	}
