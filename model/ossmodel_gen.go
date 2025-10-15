@@ -14,8 +14,6 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/stores/builder"
-	"github.com/zeromicro/go-zero/core/stores/cache"
-	"github.com/zeromicro/go-zero/core/stores/sqlc"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"github.com/zeromicro/go-zero/core/stringx"
 )
@@ -25,9 +23,6 @@ var (
 	ossRows                = strings.Join(ossFieldNames, ",")
 	ossRowsExpectAutoSet   = strings.Join(stringx.Remove(ossFieldNames, "`id`", "`create_at`", "`create_time`", "`created_at`", "`update_at`", "`update_time`", "`updated_at`"), ",")
 	ossRowsWithPlaceHolder = strings.Join(stringx.Remove(ossFieldNames, "`id`", "`create_at`", "`create_time`", "`created_at`", "`update_at`", "`update_time`", "`updated_at`"), "=?,") + "=?"
-
-	cacheZeroOssIdPrefix              = "cache:zero:oss:id:"
-	cacheZeroOssTenantIdOssCodePrefix = "cache:zero:oss:tenantId:ossCode:"
 )
 
 type (
@@ -37,21 +32,29 @@ type (
 		FindOneByTenantIdOssCode(ctx context.Context, tenantId string, ossCode string) (*Oss, error)
 		Update(ctx context.Context, session sqlx.Session, data *Oss) (sql.Result, error)
 		UpdateWithVersion(ctx context.Context, session sqlx.Session, data *Oss) error
-		Trans(ctx context.Context, fn func(context context.Context, session sqlx.Session) error) error
+		Trans(ctx context.Context, fn func(ctx context.Context, session sqlx.Session) error) error
+		ExecCtx(ctx context.Context, session sqlx.Session, query string, args ...any) (sql.Result, error)
+		SelectWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) ([]*Oss, error)
+		InsertWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.InsertBuilder) (sql.Result, error)
+		UpdateWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.UpdateBuilder) (sql.Result, error)
+		DeleteWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.DeleteBuilder) (sql.Result, error)
 		SelectBuilder() squirrel.SelectBuilder
-		DeleteSoft(ctx context.Context, session sqlx.Session, data *Oss) error
+		InsertBuilder() squirrel.InsertBuilder
+		UpdateBuilder() squirrel.UpdateBuilder
+		DeleteBuilder() squirrel.DeleteBuilder
+		DeleteSoft(ctx context.Context, session sqlx.Session, id int64) error
 		FindSum(ctx context.Context, sumBuilder squirrel.SelectBuilder, field string) (float64, error)
 		FindCount(ctx context.Context, countBuilder squirrel.SelectBuilder, field string) (int64, error)
-		FindAll(ctx context.Context, rowBuilder squirrel.SelectBuilder, orderBy string) ([]*Oss, error)
-		FindPageListByPage(ctx context.Context, rowBuilder squirrel.SelectBuilder, page, pageSize int64, orderBy string) ([]*Oss, error)
-		FindPageListByPageWithTotal(ctx context.Context, rowBuilder squirrel.SelectBuilder, page, pageSize int64, orderBy string) ([]*Oss, int64, error)
+		FindAll(ctx context.Context, rowBuilder squirrel.SelectBuilder, orderBy ...string) ([]*Oss, error)
+		FindPageListByPage(ctx context.Context, rowBuilder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*Oss, error)
+		FindPageListByPageWithTotal(ctx context.Context, rowBuilder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*Oss, int64, error)
 		FindPageListByIdDESC(ctx context.Context, rowBuilder squirrel.SelectBuilder, preMinId, pageSize int64) ([]*Oss, error)
 		FindPageListByIdASC(ctx context.Context, rowBuilder squirrel.SelectBuilder, preMaxId, pageSize int64) ([]*Oss, error)
 		Delete(ctx context.Context, session sqlx.Session, id int64) error
 	}
 
 	defaultOssModel struct {
-		sqlc.CachedConn
+		conn  sqlx.SqlConn
 		table string
 	}
 
@@ -76,41 +79,30 @@ type (
 	}
 )
 
-func newOssModel(conn sqlx.SqlConn, c cache.CacheConf, opts ...cache.Option) *defaultOssModel {
+func newOssModel(conn sqlx.SqlConn) *defaultOssModel {
 	return &defaultOssModel{
-		CachedConn: sqlc.NewConn(conn, c, opts...),
-		table:      "`oss`",
+		conn:  conn,
+		table: "`oss`",
 	}
 }
 
 func (m *defaultOssModel) Delete(ctx context.Context, session sqlx.Session, id int64) error {
-	data, err := m.FindOne(ctx, id)
-	if err != nil {
+	query := fmt.Sprintf("delete from %s where `id` = ?", m.table)
+	if session != nil {
+		_, err := session.ExecCtx(ctx, query, id)
 		return err
 	}
-
-	zeroOssIdKey := fmt.Sprintf("%s%v", cacheZeroOssIdPrefix, id)
-	zeroOssTenantIdOssCodeKey := fmt.Sprintf("%s%v:%v", cacheZeroOssTenantIdOssCodePrefix, data.TenantId, data.OssCode)
-	_, err = m.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {
-		query := fmt.Sprintf("delete from %s where `id` = ?", m.table)
-		if session != nil {
-			return session.ExecCtx(ctx, query, id)
-		}
-		return conn.ExecCtx(ctx, query, id)
-	}, zeroOssIdKey, zeroOssTenantIdOssCodeKey)
+	_, err := m.conn.ExecCtx(ctx, query, id)
 	return err
 }
 func (m *defaultOssModel) FindOne(ctx context.Context, id int64) (*Oss, error) {
-	zeroOssIdKey := fmt.Sprintf("%s%v", cacheZeroOssIdPrefix, id)
+	query := fmt.Sprintf("select %s from %s where `id` = ? and del_state = ? limit 1", ossRows, m.table)
 	var resp Oss
-	err := m.QueryRowCtx(ctx, &resp, zeroOssIdKey, func(ctx context.Context, conn sqlx.SqlConn, v any) error {
-		query := fmt.Sprintf("select %s from %s where `id` = ? and del_state = ? limit 1", ossRows, m.table)
-		return conn.QueryRowCtx(ctx, v, query, id, 0)
-	})
+	err := m.conn.QueryRowCtx(ctx, &resp, query, id, 0)
 	switch err {
 	case nil:
 		return &resp, nil
-	case sqlc.ErrNotFound:
+	case sqlx.ErrNotFound:
 		return nil, ErrNotFound
 	default:
 		return nil, err
@@ -118,19 +110,13 @@ func (m *defaultOssModel) FindOne(ctx context.Context, id int64) (*Oss, error) {
 }
 
 func (m *defaultOssModel) FindOneByTenantIdOssCode(ctx context.Context, tenantId string, ossCode string) (*Oss, error) {
-	zeroOssTenantIdOssCodeKey := fmt.Sprintf("%s%v:%v", cacheZeroOssTenantIdOssCodePrefix, tenantId, ossCode)
 	var resp Oss
-	err := m.QueryRowIndexCtx(ctx, &resp, zeroOssTenantIdOssCodeKey, m.formatPrimary, func(ctx context.Context, conn sqlx.SqlConn, v any) (i any, e error) {
-		query := fmt.Sprintf("select %s from %s where `tenant_id` = ? and `oss_code` = ? and del_state = ? limit 1", ossRows, m.table)
-		if err := conn.QueryRowCtx(ctx, &resp, query, tenantId, ossCode, 0); err != nil {
-			return nil, err
-		}
-		return resp.Id, nil
-	}, m.queryPrimary)
+	query := fmt.Sprintf("select %s from %s where `tenant_id` = ? and `oss_code` = ?  and del_state = ? limit 1", ossRows, m.table)
+	err := m.conn.QueryRowCtx(ctx, &resp, query, tenantId, ossCode, 0)
 	switch err {
 	case nil:
 		return &resp, nil
-	case sqlc.ErrNotFound:
+	case sqlx.ErrNotFound:
 		return nil, ErrNotFound
 	default:
 		return nil, err
@@ -140,33 +126,22 @@ func (m *defaultOssModel) FindOneByTenantIdOssCode(ctx context.Context, tenantId
 func (m *defaultOssModel) Insert(ctx context.Context, session sqlx.Session, data *Oss) (sql.Result, error) {
 	data.DeleteTime = time.Unix(0, 0)
 	data.DelState = 0
-	zeroOssIdKey := fmt.Sprintf("%s%v", cacheZeroOssIdPrefix, data.Id)
-	zeroOssTenantIdOssCodeKey := fmt.Sprintf("%s%v:%v", cacheZeroOssTenantIdOssCodePrefix, data.TenantId, data.OssCode)
-	return m.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {
-		query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, ossRowsExpectAutoSet)
-		if session != nil {
-			return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.TenantId, data.Category, data.OssCode, data.Endpoint, data.AccessKey, data.SecretKey, data.BucketName, data.AppId, data.Region, data.Remark, data.Status)
-		}
-		return conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.TenantId, data.Category, data.OssCode, data.Endpoint, data.AccessKey, data.SecretKey, data.BucketName, data.AppId, data.Region, data.Remark, data.Status)
-	}, zeroOssIdKey, zeroOssTenantIdOssCodeKey)
+
+	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, ossRowsExpectAutoSet)
+	if session != nil {
+		return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.TenantId, data.Category, data.OssCode, data.Endpoint, data.AccessKey, data.SecretKey, data.BucketName, data.AppId, data.Region, data.Remark, data.Status)
+	}
+	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.TenantId, data.Category, data.OssCode, data.Endpoint, data.AccessKey, data.SecretKey, data.BucketName, data.AppId, data.Region, data.Remark, data.Status)
 }
 
 func (m *defaultOssModel) Update(ctx context.Context, session sqlx.Session, newData *Oss) (sql.Result, error) {
 	newData.DeleteTime = time.Unix(0, 0)
 	newData.DelState = 0
-	data, err := m.FindOne(ctx, newData.Id)
-	if err != nil {
-		return nil, err
+	query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, ossRowsWithPlaceHolder)
+	if session != nil {
+		return session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TenantId, newData.Category, newData.OssCode, newData.Endpoint, newData.AccessKey, newData.SecretKey, newData.BucketName, newData.AppId, newData.Region, newData.Remark, newData.Status, newData.Id)
 	}
-	zeroOssIdKey := fmt.Sprintf("%s%v", cacheZeroOssIdPrefix, data.Id)
-	zeroOssTenantIdOssCodeKey := fmt.Sprintf("%s%v:%v", cacheZeroOssTenantIdOssCodePrefix, data.TenantId, data.OssCode)
-	return m.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {
-		query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, ossRowsWithPlaceHolder)
-		if session != nil {
-			return session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TenantId, newData.Category, newData.OssCode, newData.Endpoint, newData.AccessKey, newData.SecretKey, newData.BucketName, newData.AppId, newData.Region, newData.Remark, newData.Status, newData.Id)
-		}
-		return conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TenantId, newData.Category, newData.OssCode, newData.Endpoint, newData.AccessKey, newData.SecretKey, newData.BucketName, newData.AppId, newData.Region, newData.Remark, newData.Status, newData.Id)
-	}, zeroOssIdKey, zeroOssTenantIdOssCodeKey)
+	return m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TenantId, newData.Category, newData.OssCode, newData.Endpoint, newData.AccessKey, newData.SecretKey, newData.BucketName, newData.AppId, newData.Region, newData.Remark, newData.Status, newData.Id)
 }
 
 func (m *defaultOssModel) UpdateWithVersion(ctx context.Context, session sqlx.Session, newData *Oss) error {
@@ -177,19 +152,13 @@ func (m *defaultOssModel) UpdateWithVersion(ctx context.Context, session sqlx.Se
 	var sqlResult sql.Result
 	var err error
 
-	data, err := m.FindOne(ctx, newData.Id)
-	if err != nil {
-		return err
+	query := fmt.Sprintf("update %s set %s where `id` = ? and version = ? ", m.table, ossRowsWithPlaceHolder)
+	if session != nil {
+		sqlResult, err = session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TenantId, newData.Category, newData.OssCode, newData.Endpoint, newData.AccessKey, newData.SecretKey, newData.BucketName, newData.AppId, newData.Region, newData.Remark, newData.Status, newData.Id, oldVersion)
+	} else {
+		sqlResult, err = m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TenantId, newData.Category, newData.OssCode, newData.Endpoint, newData.AccessKey, newData.SecretKey, newData.BucketName, newData.AppId, newData.Region, newData.Remark, newData.Status, newData.Id, oldVersion)
 	}
-	zeroOssIdKey := fmt.Sprintf("%s%v", cacheZeroOssIdPrefix, data.Id)
-	zeroOssTenantIdOssCodeKey := fmt.Sprintf("%s%v:%v", cacheZeroOssTenantIdOssCodePrefix, data.TenantId, data.OssCode)
-	sqlResult, err = m.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {
-		query := fmt.Sprintf("update %s set %s where `id` = ? and version = ? ", m.table, ossRowsWithPlaceHolder)
-		if session != nil {
-			return session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TenantId, newData.Category, newData.OssCode, newData.Endpoint, newData.AccessKey, newData.SecretKey, newData.BucketName, newData.AppId, newData.Region, newData.Remark, newData.Status, newData.Id, oldVersion)
-		}
-		return conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TenantId, newData.Category, newData.OssCode, newData.Endpoint, newData.AccessKey, newData.SecretKey, newData.BucketName, newData.AppId, newData.Region, newData.Remark, newData.Status, newData.Id, oldVersion)
-	}, zeroOssIdKey, zeroOssTenantIdOssCodeKey)
+
 	if err != nil {
 		return err
 	}
@@ -204,7 +173,11 @@ func (m *defaultOssModel) UpdateWithVersion(ctx context.Context, session sqlx.Se
 	return nil
 }
 
-func (m *defaultOssModel) DeleteSoft(ctx context.Context, session sqlx.Session, data *Oss) error {
+func (m *defaultOssModel) DeleteSoft(ctx context.Context, session sqlx.Session, id int64) error {
+	data, err := m.FindOne(ctx, id)
+	if err != nil {
+		return err
+	}
 	data.DelState = 1
 	data.DeleteTime = time.Now()
 	if err := m.UpdateWithVersion(ctx, session, data); err != nil {
@@ -227,7 +200,9 @@ func (m *defaultOssModel) FindSum(ctx context.Context, builder squirrel.SelectBu
 	}
 
 	var resp float64
-	err = m.QueryRowNoCacheCtx(ctx, &resp, query, values...)
+
+	err = m.conn.QueryRowCtx(ctx, &resp, query, values...)
+
 	switch err {
 	case nil:
 		return resp, nil
@@ -250,7 +225,9 @@ func (m *defaultOssModel) FindCount(ctx context.Context, builder squirrel.Select
 	}
 
 	var resp int64
-	err = m.QueryRowNoCacheCtx(ctx, &resp, query, values...)
+
+	err = m.conn.QueryRowCtx(ctx, &resp, query, values...)
+
 	switch err {
 	case nil:
 		return resp, nil
@@ -259,14 +236,14 @@ func (m *defaultOssModel) FindCount(ctx context.Context, builder squirrel.Select
 	}
 }
 
-func (m *defaultOssModel) FindAll(ctx context.Context, builder squirrel.SelectBuilder, orderBy string) ([]*Oss, error) {
+func (m *defaultOssModel) FindAll(ctx context.Context, builder squirrel.SelectBuilder, orderBy ...string) ([]*Oss, error) {
 
 	builder = builder.Columns(ossRows)
 
-	if orderBy == "" {
+	if len(orderBy) == 0 {
 		builder = builder.OrderBy("id DESC")
 	} else {
-		builder = builder.OrderBy(orderBy)
+		builder = builder.OrderBy(orderBy...)
 	}
 
 	query, values, err := builder.Where("del_state = ?", 0).ToSql()
@@ -275,7 +252,9 @@ func (m *defaultOssModel) FindAll(ctx context.Context, builder squirrel.SelectBu
 	}
 
 	var resp []*Oss
-	err = m.QueryRowsNoCacheCtx(ctx, &resp, query, values...)
+
+	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
+
 	switch err {
 	case nil:
 		return resp, nil
@@ -284,14 +263,14 @@ func (m *defaultOssModel) FindAll(ctx context.Context, builder squirrel.SelectBu
 	}
 }
 
-func (m *defaultOssModel) FindPageListByPage(ctx context.Context, builder squirrel.SelectBuilder, page, pageSize int64, orderBy string) ([]*Oss, error) {
+func (m *defaultOssModel) FindPageListByPage(ctx context.Context, builder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*Oss, error) {
 
 	builder = builder.Columns(ossRows)
 
-	if orderBy == "" {
+	if len(orderBy) == 0 {
 		builder = builder.OrderBy("id DESC")
 	} else {
-		builder = builder.OrderBy(orderBy)
+		builder = builder.OrderBy(orderBy...)
 	}
 
 	if page < 1 {
@@ -305,7 +284,9 @@ func (m *defaultOssModel) FindPageListByPage(ctx context.Context, builder squirr
 	}
 
 	var resp []*Oss
-	err = m.QueryRowsNoCacheCtx(ctx, &resp, query, values...)
+
+	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
+
 	switch err {
 	case nil:
 		return resp, nil
@@ -314,7 +295,7 @@ func (m *defaultOssModel) FindPageListByPage(ctx context.Context, builder squirr
 	}
 }
 
-func (m *defaultOssModel) FindPageListByPageWithTotal(ctx context.Context, builder squirrel.SelectBuilder, page, pageSize int64, orderBy string) ([]*Oss, int64, error) {
+func (m *defaultOssModel) FindPageListByPageWithTotal(ctx context.Context, builder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*Oss, int64, error) {
 
 	total, err := m.FindCount(ctx, builder, "id")
 	if err != nil {
@@ -323,10 +304,10 @@ func (m *defaultOssModel) FindPageListByPageWithTotal(ctx context.Context, build
 
 	builder = builder.Columns(ossRows)
 
-	if orderBy == "" {
+	if len(orderBy) == 0 {
 		builder = builder.OrderBy("id DESC")
 	} else {
-		builder = builder.OrderBy(orderBy)
+		builder = builder.OrderBy(orderBy...)
 	}
 
 	if page < 1 {
@@ -340,7 +321,9 @@ func (m *defaultOssModel) FindPageListByPageWithTotal(ctx context.Context, build
 	}
 
 	var resp []*Oss
-	err = m.QueryRowsNoCacheCtx(ctx, &resp, query, values...)
+
+	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
+
 	switch err {
 	case nil:
 		return resp, total, nil
@@ -363,7 +346,9 @@ func (m *defaultOssModel) FindPageListByIdDESC(ctx context.Context, builder squi
 	}
 
 	var resp []*Oss
-	err = m.QueryRowsNoCacheCtx(ctx, &resp, query, values...)
+
+	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
+
 	switch err {
 	case nil:
 		return resp, nil
@@ -386,7 +371,9 @@ func (m *defaultOssModel) FindPageListByIdASC(ctx context.Context, builder squir
 	}
 
 	var resp []*Oss
-	err = m.QueryRowsNoCacheCtx(ctx, &resp, query, values...)
+
+	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
+
 	switch err {
 	case nil:
 		return resp, nil
@@ -397,21 +384,78 @@ func (m *defaultOssModel) FindPageListByIdASC(ctx context.Context, builder squir
 
 func (m *defaultOssModel) Trans(ctx context.Context, fn func(ctx context.Context, session sqlx.Session) error) error {
 
-	return m.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
+	return m.conn.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
 		return fn(ctx, session)
 	})
 
 }
 
+func (m *defaultOssModel) ExecCtx(ctx context.Context, session sqlx.Session, query string, args ...any) (sql.Result, error) {
+	if session != nil {
+		return session.ExecCtx(ctx, query, args...)
+	}
+	return m.conn.ExecCtx(ctx, query, args...)
+}
+
+func (m *defaultOssModel) SelectWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) ([]*Oss, error) {
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	var resp []*Oss
+
+	err = m.conn.QueryRowsCtx(ctx, &resp, query, args...)
+
+	switch err {
+	case nil:
+		return resp, nil
+	default:
+		return nil, err
+	}
+}
+
+func (m *defaultOssModel) InsertWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.InsertBuilder) (sql.Result, error) {
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	return m.ExecCtx(ctx, session, query, args...)
+}
+
+func (m *defaultOssModel) UpdateWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.UpdateBuilder) (sql.Result, error) {
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	return m.ExecCtx(ctx, session, query, args...)
+}
+
+func (m *defaultOssModel) DeleteWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.DeleteBuilder) (sql.Result, error) {
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	return m.ExecCtx(ctx, session, query, args...)
+}
+
 func (m *defaultOssModel) SelectBuilder() squirrel.SelectBuilder {
 	return squirrel.Select().From(m.table)
 }
-func (m *defaultOssModel) formatPrimary(primary any) string {
-	return fmt.Sprintf("%s%v", cacheZeroOssIdPrefix, primary)
+
+func (m *defaultOssModel) UpdateBuilder() squirrel.UpdateBuilder {
+	return squirrel.Update(m.table)
 }
-func (m *defaultOssModel) queryPrimary(ctx context.Context, conn sqlx.SqlConn, v, primary any) error {
-	query := fmt.Sprintf("select %s from %s where `id` = ? and del_state = ? limit 1", ossRows, m.table)
-	return conn.QueryRowCtx(ctx, v, query, primary, 0)
+
+func (m *defaultOssModel) DeleteBuilder() squirrel.DeleteBuilder {
+	return squirrel.Delete(m.table)
+}
+
+func (m *defaultOssModel) InsertBuilder() squirrel.InsertBuilder {
+	return squirrel.Insert(m.table)
 }
 
 func (m *defaultOssModel) tableName() string {

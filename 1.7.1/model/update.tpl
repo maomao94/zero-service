@@ -294,7 +294,7 @@ func (m *default{{.upperStartCamelObject}}Model) ExecCtx(ctx context.Context, se
 	return m.conn.ExecCtx(ctx, query, args...)
 }
 
-func (m *default{{.upperStartCamelObject}}Model) SelectWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) ([]*ModbusSlaveConfig, error) {
+func (m *default{{.upperStartCamelObject}}Model) SelectWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) ([]*{{.upperStartCamelObject}}, error) {
 	query, args, err := builder.ToSql()
 	if err != nil {
 		return nil, err

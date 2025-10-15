@@ -18,14 +18,6 @@ NacosConfig:
   PassWord: nacos
   NamespaceId: public
   ServiceName: file
-Redis:
-  Host: 127.0.0.1:36379
-  Type: node
-  Key: file.rpc
-  Pass: G62m50oigInC30sf
-Cache:
-  - Host: 127.0.0.1:36379
-    Pass: G62m50oigInC30sf
 Oss:
   # 是否开启租户模式
   TenantMode: true

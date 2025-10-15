@@ -20,7 +20,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	return &ServiceContext{
 		Config:          c,
 		Validate:        validator.New(),
-		OssModel:        model.NewOssModel(sqlx.NewMysql(c.DB.DataSource), c.Cache),
+		OssModel:        model.NewOssModel(sqlx.NewMysql(c.DB.DataSource)),
 		ThumbTaskRunner: threading.NewTaskRunner(c.ThumbTaskConcurrency),
 	}
 }

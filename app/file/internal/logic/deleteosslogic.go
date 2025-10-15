@@ -27,7 +27,7 @@ func (l *DeleteOssLogic) DeleteOss(in *file.DeleteOssReq) (*file.DeleteOssRes, e
 	if err != nil {
 		return nil, err
 	}
-	err = l.svcCtx.OssModel.DeleteSoft(l.ctx, nil, oss)
+	err = l.svcCtx.OssModel.DeleteSoft(l.ctx, nil, oss.Id)
 	if err != nil {
 		return nil, err
 	}

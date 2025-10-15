@@ -2,7 +2,7 @@ Update(ctx context.Context,session sqlx.Session, data *{{.upperStartCamelObject}
 UpdateWithVersion(ctx context.Context,session sqlx.Session, data *{{.upperStartCamelObject}}) error
 Trans(ctx context.Context,fn func(ctx context.Context, session sqlx.Session) error) error
 ExecCtx(ctx context.Context, session sqlx.Session, query string, args ...any) (sql.Result, error)
-SelectWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) ([]*ModbusSlaveConfig, error)
+SelectWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) ([]*{{.upperStartCamelObject}}, error)
 InsertWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.InsertBuilder) (sql.Result, error)
 UpdateWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.UpdateBuilder) (sql.Result, error)
 DeleteWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.DeleteBuilder) (sql.Result, error)
