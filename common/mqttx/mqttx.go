@@ -333,7 +333,7 @@ func (c *Client) Close() {
 	defer c.mu.Unlock()
 	c.client.Disconnect(250)
 	c.subscribed = make(map[string]struct{})
-	logx.Info("[mqtt] Client closed")
+	logx.Info("[mqtt] Connection closed")
 }
 
 // 判断主题是否已订阅（已加锁时使用）
