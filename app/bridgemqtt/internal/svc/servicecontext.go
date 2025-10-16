@@ -7,6 +7,7 @@ import (
 	"zero-service/common/mqttx"
 	"zero-service/facade/streamevent/streamevent"
 
+	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
 )
@@ -18,6 +19,7 @@ type ServiceContext struct {
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
+	logx.Must(logx.SetUp(c.Log))
 	mqttCLi := mqttx.MustNewClient(c.MqttConfig)
 	streamEventCli := streamevent.NewStreamEventClient(zrpc.MustNewClient(c.StreamEventConf,
 		zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
