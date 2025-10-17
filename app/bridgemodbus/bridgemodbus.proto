@@ -24,6 +24,9 @@ service BridgeModbus {
   // 根据编码查询详情
   rpc GetConfigByCode(GetConfigByCodeReq) returns (GetConfigByCodeRes);
 
+  // 根据编码数组查询详情
+  rpc BatchGetConfigByCode(BatchGetConfigByCodeReq) returns (BatchGetConfigByCodeRes);
+
   // -------------------- Bit Access --------------------
 
   // 读取线圈状态 (Function Code 0x01)
@@ -155,6 +158,14 @@ message GetConfigByCodeReq {
 
 message GetConfigByCodeRes {
   PbModbusConfig cfg = 1;
+}
+
+message BatchGetConfigByCodeReq {
+  repeated string modbusCode = 1;
+}
+
+message BatchGetConfigByCodeRes {
+  repeated PbModbusConfig cfg = 1;
 }
 
 // -------------------- Bit Access --------------------

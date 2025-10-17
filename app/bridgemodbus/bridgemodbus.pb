@@ -1,5 +1,5 @@
 
-¼*
+¨,
 bridgemodbus.protobridgemodbus"
 Req
 ping (	Rping"
@@ -56,7 +56,13 @@ modbusCode"
 modbusCode (	R
 modbusCode"D
 GetConfigByCodeRes.
-cfg (2.bridgemodbus.PbModbusConfigRcfg"d
+cfg (2.bridgemodbus.PbModbusConfigRcfg"9
+BatchGetConfigByCodeReq
+
+modbusCode (	R
+modbusCode"I
+BatchGetConfigByCodeRes.
+cfg (2.bridgemodbus.PbModbusConfigRcfg"d
 ReadCoilsReq
 
 modbusCode (	R
@@ -173,14 +179,15 @@ hexResultsh
 value (	Rvalue:8B
 SemanticResultsEntry
 key (	Rkey
-value (	Rvalue:82†
+value (	Rvalue:82ì
 BridgeModbus,
 Ping.bridgemodbus.Req.bridgemodbus.ResF
 
 SaveConfig.bridgemodbus.SaveConfigReq.bridgemodbus.SaveConfigResL
 DeleteConfig.bridgemodbus.DeleteConfigReq.bridgemodbus.DeleteConfigResR
 PageListConfig.bridgemodbus.PageListConfigReq.bridgemodbus.PageListConfigResU
-GetConfigByCode .bridgemodbus.GetConfigByCodeReq .bridgemodbus.GetConfigByCodeResC
+GetConfigByCode .bridgemodbus.GetConfigByCodeReq .bridgemodbus.GetConfigByCodeResd
+BatchGetConfigByCode%.bridgemodbus.BatchGetConfigByCodeReq%.bridgemodbus.BatchGetConfigByCodeResC
 	ReadCoils.bridgemodbus.ReadCoilsReq.bridgemodbus.ReadCoilsRes^
 ReadDiscreteInputs#.bridgemodbus.ReadDiscreteInputsReq#.bridgemodbus.ReadDiscreteInputsResU
 WriteSingleCoil .bridgemodbus.WriteSingleCoilReq .bridgemodbus.WriteSingleCoilRes^

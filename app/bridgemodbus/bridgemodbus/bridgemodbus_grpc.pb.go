@@ -24,6 +24,7 @@ const (
 	BridgeModbus_DeleteConfig_FullMethodName               = "/bridgemodbus.BridgeModbus/DeleteConfig"
 	BridgeModbus_PageListConfig_FullMethodName             = "/bridgemodbus.BridgeModbus/PageListConfig"
 	BridgeModbus_GetConfigByCode_FullMethodName            = "/bridgemodbus.BridgeModbus/GetConfigByCode"
+	BridgeModbus_BatchGetConfigByCode_FullMethodName       = "/bridgemodbus.BridgeModbus/BatchGetConfigByCode"
 	BridgeModbus_ReadCoils_FullMethodName                  = "/bridgemodbus.BridgeModbus/ReadCoils"
 	BridgeModbus_ReadDiscreteInputs_FullMethodName         = "/bridgemodbus.BridgeModbus/ReadDiscreteInputs"
 	BridgeModbus_WriteSingleCoil_FullMethodName            = "/bridgemodbus.BridgeModbus/WriteSingleCoil"
@@ -53,6 +54,8 @@ type BridgeModbusClient interface {
 	PageListConfig(ctx context.Context, in *PageListConfigReq, opts ...grpc.CallOption) (*PageListConfigRes, error)
 	// 根据编码查询详情
 	GetConfigByCode(ctx context.Context, in *GetConfigByCodeReq, opts ...grpc.CallOption) (*GetConfigByCodeRes, error)
+	// 根据编码数组查询详情
+	BatchGetConfigByCode(ctx context.Context, in *BatchGetConfigByCodeReq, opts ...grpc.CallOption) (*BatchGetConfigByCodeRes, error)
 	// 读取线圈状态 (Function Code 0x01)
 	ReadCoils(ctx context.Context, in *ReadCoilsReq, opts ...grpc.CallOption) (*ReadCoilsRes, error)
 	// 读取离散输入状态 (Function Code 0x02)
@@ -131,6 +134,16 @@ func (c *bridgeModbusClient) GetConfigByCode(ctx context.Context, in *GetConfigB
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetConfigByCodeRes)
 	err := c.cc.Invoke(ctx, BridgeModbus_GetConfigByCode_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bridgeModbusClient) BatchGetConfigByCode(ctx context.Context, in *BatchGetConfigByCodeReq, opts ...grpc.CallOption) (*BatchGetConfigByCodeRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BatchGetConfigByCodeRes)
+	err := c.cc.Invoke(ctx, BridgeModbus_BatchGetConfigByCode_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -272,6 +285,8 @@ type BridgeModbusServer interface {
 	PageListConfig(context.Context, *PageListConfigReq) (*PageListConfigRes, error)
 	// 根据编码查询详情
 	GetConfigByCode(context.Context, *GetConfigByCodeReq) (*GetConfigByCodeRes, error)
+	// 根据编码数组查询详情
+	BatchGetConfigByCode(context.Context, *BatchGetConfigByCodeReq) (*BatchGetConfigByCodeRes, error)
 	// 读取线圈状态 (Function Code 0x01)
 	ReadCoils(context.Context, *ReadCoilsReq) (*ReadCoilsRes, error)
 	// 读取离散输入状态 (Function Code 0x02)
@@ -320,6 +335,9 @@ func (UnimplementedBridgeModbusServer) PageListConfig(context.Context, *PageList
 }
 func (UnimplementedBridgeModbusServer) GetConfigByCode(context.Context, *GetConfigByCodeReq) (*GetConfigByCodeRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetConfigByCode not implemented")
+}
+func (UnimplementedBridgeModbusServer) BatchGetConfigByCode(context.Context, *BatchGetConfigByCodeReq) (*BatchGetConfigByCodeRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BatchGetConfigByCode not implemented")
 }
 func (UnimplementedBridgeModbusServer) ReadCoils(context.Context, *ReadCoilsReq) (*ReadCoilsRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReadCoils not implemented")
@@ -464,6 +482,24 @@ func _BridgeModbus_GetConfigByCode_Handler(srv interface{}, ctx context.Context,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BridgeModbusServer).GetConfigByCode(ctx, req.(*GetConfigByCodeReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BridgeModbus_BatchGetConfigByCode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BatchGetConfigByCodeReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BridgeModbusServer).BatchGetConfigByCode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BridgeModbus_BatchGetConfigByCode_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BridgeModbusServer).BatchGetConfigByCode(ctx, req.(*BatchGetConfigByCodeReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -710,6 +746,10 @@ var BridgeModbus_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetConfigByCode",
 			Handler:    _BridgeModbus_GetConfigByCode_Handler,
+		},
+		{
+			MethodName: "BatchGetConfigByCode",
+			Handler:    _BridgeModbus_BatchGetConfigByCode_Handler,
 		},
 		{
 			MethodName: "ReadCoils",
