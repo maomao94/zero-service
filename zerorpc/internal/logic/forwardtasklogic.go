@@ -4,6 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+	"zero-service/app/alarm/alarm"
+	"zero-service/common/asynqx"
+	"zero-service/common/ctxdata"
+	"zero-service/zerorpc/internal/svc"
+	"zero-service/zerorpc/zerorpc"
+
 	"github.com/dromara/carbon/v2"
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/jsonx"
@@ -11,12 +18,6 @@ import (
 	"github.com/zeromicro/go-zero/core/trace"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
-	"time"
-	"zero-service/common/asynqx"
-	"zero-service/common/ctxdata"
-	"zero-service/zeroalarm/zeroalarm"
-	"zero-service/zerorpc/internal/svc"
-	"zero-service/zerorpc/zerorpc"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -68,7 +69,7 @@ func (l *ForwardTaskLogic) ForwardTask(in *zerorpc.ForwardTaskReq) (*zerorpc.For
 	}
 	_, err = l.svcCtx.AsynqClient.Enqueue(asynq.NewTask(asynqx.DeferTriggerTask, []byte(payload)), asynq.Queue("critical"), asynq.TaskID(in.GetMsgId()), asynq.ProcessIn(d), asynq.Retention(24*time.Hour))
 	if err != nil {
-		_, alarmErr := l.svcCtx.ZeroAlarmCli.Alarm(l.ctx, &zeroalarm.AlarmReq{
+		_, alarmErr := l.svcCtx.AlarmCli.Alarm(l.ctx, &alarm.AlarmReq{
 			ChatName:    "服务告警",
 			Description: "服务告警",
 			Title:       "服务告警 - Zero-Service",

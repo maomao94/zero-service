@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+	"zero-service/app/alarm/alarm"
 	"zero-service/common/ctxdata"
-	"zero-service/zeroalarm/zeroalarm"
 	"zero-service/zerorpc/internal/svc"
 
 	"github.com/dromara/carbon/v2"
@@ -49,7 +49,7 @@ func (l *DeferForwardTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task
 			postCtx, _ := context.WithTimeout(ctx, time.Duration(5)*time.Second)
 			resp, err := l.svcCtx.Httpc.Do(postCtx, http.MethodPost, msg.Url, data)
 			if err != nil {
-				_, alarmErr := l.svcCtx.ZeroAlarmCli.Alarm(ctx, &zeroalarm.AlarmReq{
+				_, alarmErr := l.svcCtx.AlarmCli.Alarm(ctx, &alarm.AlarmReq{
 					ChatName:    "服务告警",
 					Description: "服务告警",
 					Title:       "服务告警 - Zero-Service",
@@ -71,7 +71,7 @@ func (l *DeferForwardTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task
 				t.ResultWriter().Write([]byte("success"))
 			} else {
 				t.ResultWriter().Write([]byte("fail"))
-				_, alarmErr := l.svcCtx.ZeroAlarmCli.Alarm(ctx, &zeroalarm.AlarmReq{
+				_, alarmErr := l.svcCtx.AlarmCli.Alarm(ctx, &alarm.AlarmReq{
 					ChatName:    "服务告警",
 					Description: "服务告警",
 					Title:       "服务告警 - Zero-Service",
