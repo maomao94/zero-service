@@ -20,7 +20,6 @@ type ServiceContext struct {
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	logx.Must(logx.SetUp(c.Log))
-	mqttCLi := mqttx.MustNewClient(c.MqttConfig)
 	streamEventCli := streamevent.NewStreamEventClient(zrpc.MustNewClient(c.StreamEventConf,
 		zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
 		// 添加最大消息配置
@@ -30,10 +29,15 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			//grpc.MaxCallRecvMsgSize(100 * 1024 * 1024),  // 接收最大100MB
 		)),
 	).Conn())
-	// 注册转发 handler
-	for _, topic := range c.MqttConfig.SubscribeTopics {
-		mqttCLi.AddHandler(topic, handler.NewMqttStreamHandler(mqttCLi.GetClientID(), streamEventCli))
-	}
+	mqttCLi := mqttx.MustNewClient(c.MqttConfig,
+		mqttx.WithOnReady(func(cli *mqttx.Client) {
+			logx.Info("[onReady] 初始化 handler")
+			// 注册转发 handler
+			for _, topic := range c.MqttConfig.SubscribeTopics {
+				cli.AddHandler(topic, handler.NewMqttStreamHandler(cli.GetClientID(), streamEventCli))
+			}
+		}),
+	)
 	return &ServiceContext{
 		Config:         c,
 		MqttClient:     mqttCLi,

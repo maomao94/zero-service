@@ -42,6 +42,7 @@ func (f ConsumeHandlerFunc) Consume(ctx context.Context, topic string, payload [
 	return f(ctx, topic, payload)
 }
 
+// MqttConfig 定义 MQTT 客户端基础配置
 type MqttConfig struct {
 	Broker          []string
 	ClientID        string `json:",optional"`
@@ -54,19 +55,31 @@ type MqttConfig struct {
 	SubscribeTopics []string // 初始需要订阅的主题
 }
 
+// Option 定义可选配置函数
+type Option func(*Client)
+
+// WithOnReady 设置首次连接成功时的回调（仅执行一次）
+func WithOnReady(fn func(c *Client)) Option {
+	return func(c *Client) {
+		c.onReady = fn
+	}
+}
+
 type Client struct {
 	client     mqtt.Client
 	cfg        MqttConfig
 	mu         sync.RWMutex
 	handlers   map[string][]ConsumeHandler // 主题 -> 处理器列表
-	subscribed map[string]struct{}         // 已订阅的主题
+	subscribed map[string]struct{}         // 已订阅主题
+	onReady    func(c *Client)             // 第一次连接前调用
+	ready      bool
 	qos        byte
 	metrics    *stat.Metrics
-	tracer     oteltrace.Tracer // 跟踪器实例
+	tracer     oteltrace.Tracer
 }
 
-func MustNewClient(cfg MqttConfig) *Client {
-	cli, err := NewClient(cfg)
+func MustNewClient(cfg MqttConfig, opts ...Option) *Client {
+	cli, err := NewClient(cfg, opts...)
 	logx.Must(err)
 	proc.AddShutdownListener(func() {
 		cli.Close()
@@ -74,8 +87,8 @@ func MustNewClient(cfg MqttConfig) *Client {
 	return cli
 }
 
-// NewClient 创建MQTT客户端（连接成功后通过OnConnect回调执行订阅）
-func NewClient(cfg MqttConfig) (*Client, error) {
+// NewClient 创建 MQTT 客户端
+func NewClient(cfg MqttConfig, opts ...Option) (*Client, error) {
 	if len(cfg.Broker) == 0 {
 		return nil, fmt.Errorf("[mqtt] no broker addresses provided")
 	}
@@ -85,11 +98,9 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 		if err != nil {
 			return nil, fmt.Errorf("[mqtt] generate clientID failed: %w", err)
 		}
-		uid = strings.ReplaceAll(uid, "-", "") // 去掉所有 "-"
-		cfg.ClientID = uid
+		cfg.ClientID = strings.ReplaceAll(uid, "-", "")
 	}
 
-	// 初始化默认值
 	if cfg.Timeout <= 0 {
 		cfg.Timeout = 30
 	}
@@ -103,31 +114,39 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 		subscribed: make(map[string]struct{}),
 		qos:        cfg.Qos,
 		metrics:    stat.NewMetrics(fmt.Sprintf("mqtt-%s", cfg.ClientID)),
-		tracer:     otel.Tracer(trace.TraceName), // 初始化跟踪器
+		tracer:     otel.Tracer(trace.TraceName),
 	}
 
-	// 修正QoS值
+	for _, opt := range opts {
+		opt(c)
+	}
+
 	if c.qos < 0 || c.qos > 2 {
 		c.qos = 1
 		logx.Errorf("[mqtt] Invalid QoS %d, adjusted to 1", cfg.Qos)
 	}
 
-	// 配置MQTT客户端选项
-	opts := mqtt.NewClientOptions()
+	optsMqtt := mqtt.NewClientOptions()
 	for _, broker := range cfg.Broker {
-		opts.AddBroker(broker)
+		optsMqtt.AddBroker(broker)
 	}
-	opts.SetClientID(cfg.ClientID).
+	optsMqtt.SetClientID(cfg.ClientID).
 		SetUsername(cfg.Username).
 		SetPassword(cfg.Password).
 		SetAutoReconnect(true).
 		SetConnectTimeout(time.Duration(cfg.Timeout) * time.Second).
 		SetKeepAlive(time.Duration(cfg.KeepAlive) * time.Second)
 
-	// 连接成功回调：所有订阅操作（初始订阅+重连恢复）都在这里执行
-	opts.OnConnect = func(cli mqtt.Client) {
-		logx.Info("[mqtt] Connection successful, starting subscriptions")
-		// 连接成功后，恢复所有需要订阅的主题
+	optsMqtt.OnConnect = func(cli mqtt.Client) {
+		logx.Infof("[mqtt] Connection successful, client=%s", cfg.ClientID)
+
+		c.mu.Lock()
+		if !c.ready && c.onReady != nil {
+			c.onReady(c)
+			c.ready = true
+		}
+		c.mu.Unlock()
+
 		if err := c.RestoreSubscriptions(); err != nil {
 			logx.Errorf("[mqtt] Failed to restore subscriptions: %v", err)
 		} else {
@@ -135,16 +154,14 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 		}
 	}
 
-	// 连接丢失回调
-	opts.OnConnectionLost = func(cli mqtt.Client, err error) {
+	optsMqtt.OnConnectionLost = func(cli mqtt.Client, err error) {
 		logx.Errorf("[mqtt] Connection lost: %v (auto-reconnecting)", err)
 		c.mu.Lock()
 		c.subscribed = make(map[string]struct{}) // 重连后需重新订阅
 		c.mu.Unlock()
 	}
 
-	// 创建客户端并发起连接（此时还未执行订阅）
-	c.client = mqtt.NewClient(opts)
+	c.client = mqtt.NewClient(optsMqtt)
 	token := c.client.Connect()
 	if !token.WaitTimeout(time.Duration(cfg.Timeout) * time.Second) {
 		return nil, fmt.Errorf("[mqtt] connect timeout after %ds", cfg.Timeout)
@@ -152,14 +169,11 @@ func NewClient(cfg MqttConfig) (*Client, error) {
 	if err := token.Error(); err != nil {
 		return nil, fmt.Errorf("[mqtt] connect failed: %w", err)
 	}
+
 	return c, nil
 }
 
-func (c *Client) GetClientID() string {
-	return c.cfg.ClientID
-}
-
-// AddHandler 为主题添加处理器（自动订阅如果开启）
+// AddHandler 为主题添加处理器
 func (c *Client) AddHandler(topic string, handler ConsumeHandler) error {
 	if handler == nil {
 		return errors.New("[mqtt] handler cannot be nil")
@@ -170,26 +184,21 @@ func (c *Client) AddHandler(topic string, handler ConsumeHandler) error {
 	needSubscribe := c.cfg.AutoSubscribe && !c.isSubscribed(topic)
 	c.mu.Unlock()
 
-	if needSubscribe {
-		// 检查当前是否已连接
-		if c.client.IsConnected() {
-			if err := c.Subscribe(topic); err != nil {
-				return err
-			}
+	if needSubscribe && c.client.IsConnected() {
+		if err := c.Subscribe(topic); err != nil {
+			return err
 		}
 	}
-
 	return nil
 }
 
-// AddHandlerFunc 便捷方法：添加函数作为处理器
+// AddHandlerFunc 快捷注册函数处理器
 func (c *Client) AddHandlerFunc(topic string, handler func(ctx context.Context, topic string, payload []byte) error) error {
 	return c.AddHandler(topic, ConsumeHandlerFunc(handler))
 }
 
-// Subscribe 手动订阅主题（仅在已连接时执行）
+// Subscribe 手动订阅主题
 func (c *Client) Subscribe(topic string) error {
-	// 检查连接状态
 	if !c.client.IsConnected() {
 		return fmt.Errorf("[mqtt] cannot subscribe: client not connected")
 	}
@@ -199,7 +208,7 @@ func (c *Client) Subscribe(topic string) error {
 	return c.subscribe(topic)
 }
 
-// 实际订阅操作（已加锁，需确保连接已建立）
+// 内部订阅实现
 func (c *Client) subscribe(topic string) error {
 	if c.isSubscribed(topic) {
 		return nil
@@ -219,10 +228,9 @@ func (c *Client) subscribe(topic string) error {
 	return nil
 }
 
-// RestoreSubscriptions 连接成功后恢复所有需要订阅的主题
+// RestoreSubscriptions 连接成功后恢复主题
 func (c *Client) RestoreSubscriptions() error {
 	c.mu.RLock()
-	// 需要订阅的主题：已添加处理器的 + 配置中指定的
 	topics := make(map[string]struct{})
 	for topic := range c.handlers {
 		topics[topic] = struct{}{}
@@ -245,25 +253,20 @@ func (c *Client) RestoreSubscriptions() error {
 // 消息处理包装器
 func (c *Client) messageHandlerWrapper(topic string) mqtt.MessageHandler {
 	return func(client mqtt.Client, msg mqtt.Message) {
-		// 默认上下文
 		ctx := context.Background()
 		payload := msg.Payload()
 
-		// --- Step 1: 尝试解析为包装消息 ---
 		var wrapped Message
 		if err := json.Unmarshal(msg.Payload(), &wrapped); err == nil && wrapped.Payload != nil {
-			// 包装过的消息，提取 trace
 			payload = wrapped.Payload
 			carrier := NewMessageCarrier(&wrapped)
 			ctx = otel.GetTextMapPropagator().Extract(ctx, carrier)
 		}
 
-		// --- Step 2: 创建消费 span ---
 		ctx, span := c.startConsumeSpan(ctx, msg, topic)
 		defer span.End()
 		ctx = logx.ContextWithFields(ctx, logx.Field("client", c.GetClientID()))
 
-		// --- Step 3: 处理时间统计和 panic 捕获 ---
 		startTime := timex.Now()
 		defer func() {
 			c.metrics.Add(stat.Task{Duration: timex.Since(startTime)})
@@ -275,7 +278,6 @@ func (c *Client) messageHandlerWrapper(topic string) mqtt.MessageHandler {
 			}
 		}()
 
-		// --- Step 4: 分发给 handler ---
 		c.mu.RLock()
 		handlers := c.handlers[topic]
 		c.mu.RUnlock()
@@ -284,7 +286,6 @@ func (c *Client) messageHandlerWrapper(topic string) mqtt.MessageHandler {
 			logx.WithContext(ctx).Errorf("[mqtt] empty payload for %s", topic)
 			return
 		}
-
 		if len(handlers) == 0 {
 			err := errors.New("no handler for topic")
 			defaultHandler{}.Consume(ctx, topic, payload)
@@ -327,7 +328,7 @@ func (c *Client) Publish(ctx context.Context, topic string, payload []byte) erro
 	return nil
 }
 
-// Close 关闭客户端
+// Close 关闭客户端连接
 func (c *Client) Close() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -336,7 +337,10 @@ func (c *Client) Close() {
 	logx.Info("[mqtt] Connection closed")
 }
 
-// 判断主题是否已订阅（已加锁时使用）
+func (c *Client) GetClientID() string {
+	return c.cfg.ClientID
+}
+
 func (c *Client) isSubscribed(topic string) bool {
 	_, exists := c.subscribed[topic]
 	return exists
@@ -350,17 +354,12 @@ func (d defaultHandler) Consume(ctx context.Context, topic string, payload []byt
 	return nil
 }
 
-// ---------------- 跟踪辅助方法 ----------------
-
-// startConsumeSpan 创建消息消费的span
+// ---------------- 跟踪辅助 ----------------
 func (c *Client) startConsumeSpan(ctx context.Context, msg mqtt.Message, topic string) (context.Context, oteltrace.Span) {
-	// 从消息中提取或生成消息ID（Paho的Message有MessageID()方法）
 	msgID := fmt.Sprintf("%d", msg.MessageID())
-
 	ctx, span := c.tracer.Start(ctx, "mqtt-consume",
 		oteltrace.WithSpanKind(oteltrace.SpanKindConsumer),
 	)
-	// 添加关键属性，便于追踪和排查问题
 	span.SetAttributes(
 		MqttClientIDKey.String(c.cfg.ClientID),
 		MqttTopicKey.String(topic),
@@ -371,7 +370,6 @@ func (c *Client) startConsumeSpan(ctx context.Context, msg mqtt.Message, topic s
 	return ctx, span
 }
 
-// startPublishSpan 创建消息发布的span
 func (c *Client) startPublishSpan(ctx context.Context, topic string) (context.Context, oteltrace.Span) {
 	ctx, span := c.tracer.Start(ctx, "mqtt-publish",
 		oteltrace.WithSpanKind(oteltrace.SpanKindProducer),
