@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"zero-service/common/nacosx"
 
 	"zero-service/app/alarm/alarm"
 	"zero-service/app/alarm/internal/config"
@@ -31,6 +32,11 @@ func main() {
 		if c.Mode == service.DevMode || c.Mode == service.TestMode {
 			reflection.Register(grpcServer)
 		}
+	})
+	nacosx.SetUpLogger(nacosx.LoggerConfig{
+		AppendToStdout: true,
+		Level:          "error",
+		LogDir:         "/tmp/nacos/log",
 	})
 	defer s.Stop()
 

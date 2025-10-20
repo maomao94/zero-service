@@ -37,6 +37,11 @@ func main() {
 			reflection.Register(grpcServer)
 		}
 	})
+	nacosx.SetUpLogger(nacosx.LoggerConfig{
+		AppendToStdout: true,
+		Level:          "error",
+		LogDir:         "/tmp/nacos/log",
+	})
 	defer s.Stop()
 	// register service to nacos
 	if c.NacosConfig.IsRegister {
@@ -49,9 +54,6 @@ func main() {
 			Password:            c.NacosConfig.PassWord,
 			TimeoutMs:           5000,
 			NotLoadCacheAtStart: true,
-			LogDir:              "/tmp/nacos/log",
-			CacheDir:            "/tmp/nacos/cache",
-			LogLevel:            "debug",
 		}
 		m := map[string]string{
 			"gRPC_port":                 strutil.After(c.RpcServerConf.ListenOn, ":"),

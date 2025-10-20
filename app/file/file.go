@@ -3,9 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/duke-git/lancet/v2/strutil"
-	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
-	"github.com/zeromicro/go-zero/core/logx"
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/config"
 	"zero-service/app/file/internal/server"
@@ -13,6 +10,10 @@ import (
 	interceptor "zero-service/common/Interceptor/rpcserver"
 	_ "zero-service/common/carbonx"
 	"zero-service/common/nacosx"
+
+	"github.com/duke-git/lancet/v2/strutil"
+	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
+	"github.com/zeromicro/go-zero/core/logx"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/service"
@@ -37,6 +38,11 @@ func main() {
 			reflection.Register(grpcServer)
 		}
 	})
+	nacosx.SetUpLogger(nacosx.LoggerConfig{
+		AppendToStdout: true,
+		Level:          "error",
+		LogDir:         "/tmp/nacos/log",
+	})
 	// register service to nacos
 	if c.NacosConfig.IsRegister {
 		sc := []constant.ServerConfig{
@@ -48,9 +54,6 @@ func main() {
 			Password:            c.NacosConfig.PassWord,
 			TimeoutMs:           5000,
 			NotLoadCacheAtStart: true,
-			LogDir:              "/tmp/nacos/log",
-			CacheDir:            "/tmp/nacos/cache",
-			LogLevel:            "debug",
 		}
 		m := map[string]string{
 			"gRPC_port":                 strutil.After(c.RpcServerConf.ListenOn, ":"),

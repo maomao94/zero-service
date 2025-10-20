@@ -59,9 +59,6 @@ func main() {
 			Password:            c.NacosConfig.PassWord,
 			TimeoutMs:           5000,
 			NotLoadCacheAtStart: true,
-			LogDir:              "/tmp/nacos/log",
-			CacheDir:            "/tmp/nacos/cache",
-			LogLevel:            "debug",
 		}
 		m := map[string]string{
 			"gRPC_port":                 strutil.After(c.RpcServerConf.ListenOn, ":"),

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"zero-service/common/nacosx"
 
 	"zero-service/app/bridgegtw/internal/config"
 	"zero-service/app/bridgegtw/internal/handler"
@@ -30,6 +31,12 @@ func main() {
 			})
 		}))
 	})
+	nacosx.SetUpLogger(nacosx.LoggerConfig{
+		AppendToStdout: true,
+		Level:          "error",
+		LogDir:         "/tmp/nacos/log",
+	})
+
 	ctx := svc.NewServiceContext(c)
 	handler.RegisterHandlers(server.Server, ctx)
 
