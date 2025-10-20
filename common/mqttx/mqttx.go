@@ -139,14 +139,10 @@ func NewClient(cfg MqttConfig, opts ...Option) (*Client, error) {
 
 	optsMqtt.OnConnect = func(cli mqtt.Client) {
 		logx.Infof("[mqtt] Connection successful, client=%s", cfg.ClientID)
-
-		c.mu.Lock()
 		if !c.ready && c.onReady != nil {
 			c.onReady(c)
 			c.ready = true
 		}
-		c.mu.Unlock()
-
 		if err := c.RestoreSubscriptions(); err != nil {
 			logx.Errorf("[mqtt] Failed to restore subscriptions: %v", err)
 		} else {

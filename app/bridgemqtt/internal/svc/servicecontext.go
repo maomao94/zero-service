@@ -31,7 +31,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	).Conn())
 	mqttCLi := mqttx.MustNewClient(c.MqttConfig,
 		mqttx.WithOnReady(func(cli *mqttx.Client) {
-			logx.Info("[onReady] 初始化 handler")
+			logx.Info("[mqtt] onReady 初始化 handler")
 			// 注册转发 handler
 			for _, topic := range c.MqttConfig.SubscribeTopics {
 				cli.AddHandler(topic, handler.NewMqttStreamHandler(cli.GetClientID(), streamEventCli))
