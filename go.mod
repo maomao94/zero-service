@@ -22,7 +22,7 @@ require (
 	github.com/jinzhu/copier v0.4.0
 	github.com/larksuite/oapi-sdk-go/v3 v3.4.25
 	github.com/minio/minio-go/v7 v7.0.95
-	github.com/nacos-group/nacos-sdk-go/v2 v2.3.3
+	github.com/nacos-group/nacos-sdk-go/v2 v2.3.4
 	github.com/panjf2000/ants/v2 v2.11.3
 	github.com/pkg/errors v0.9.1
 	github.com/robfig/cron/v3 v3.0.1
