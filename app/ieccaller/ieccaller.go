@@ -3,16 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/duke-git/lancet/v2/convertor"
-	"github.com/duke-git/lancet/v2/strutil"
-	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
-	"github.com/zeromicro/go-queue/kq"
-	"github.com/zeromicro/go-zero/core/conf"
-	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/service"
-	"github.com/zeromicro/go-zero/zrpc"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 	"zero-service/app/ieccaller/cron"
 	"zero-service/app/ieccaller/ieccaller"
 	"zero-service/app/ieccaller/internal/config"
@@ -24,6 +14,17 @@ import (
 	_ "zero-service/common/carbonx"
 	"zero-service/common/iec104/iec104client"
 	"zero-service/common/nacosx"
+
+	"github.com/duke-git/lancet/v2/convertor"
+	"github.com/duke-git/lancet/v2/strutil"
+	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
+	"github.com/zeromicro/go-queue/kq"
+	"github.com/zeromicro/go-zero/core/conf"
+	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/service"
+	"github.com/zeromicro/go-zero/zrpc"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 var configFile = flag.String("f", "etc/ieccaller.yaml", "the config file")
@@ -47,6 +48,11 @@ func main() {
 		if c.Mode == service.DevMode || c.Mode == service.TestMode {
 			reflection.Register(grpcServer)
 		}
+	})
+	nacosx.SetUpLogger(nacosx.LoggerConfig{
+		AppendToStdout: true,
+		Level:          "error",
+		LogDir:         "/tmp/nacos/log",
 	})
 	// register service to nacos
 	if c.NacosConfig.IsRegister {
