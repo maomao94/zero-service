@@ -49,11 +49,6 @@ func main() {
 			reflection.Register(grpcServer)
 		}
 	})
-	nacosx.SetUpLogger(nacosx.LoggerConfig{
-		AppendToStdout: true,
-		Level:          "error",
-		LogDir:         "/tmp/nacos/log",
-	})
 	// register service to nacos
 	if c.NacosConfig.IsRegister {
 		sc := []constant.ServerConfig{

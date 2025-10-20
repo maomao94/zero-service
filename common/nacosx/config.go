@@ -12,6 +12,14 @@ type LoggerConfig struct {
 	AppendToStdout bool
 }
 
+func init() {
+	SetUpLogger(LoggerConfig{
+		AppendToStdout: true,
+		Level:          "error",
+		LogDir:         "/tmp/nacos/log",
+	})
+}
+
 // SetUpLogger 初始化全局 logger
 func SetUpLogger(cfg LoggerConfig) error {
 	clientConfig := constant.ClientConfig{

@@ -8,8 +8,6 @@ import (
 	"zero-service/app/bridgemqtt/internal/server"
 	"zero-service/app/bridgemqtt/internal/svc"
 	interceptor "zero-service/common/Interceptor/rpcserver"
-	"zero-service/common/nacosx"
-
 	_ "zero-service/common/carbonx"
 	_ "zero-service/common/nacosx"
 
@@ -37,11 +35,7 @@ func main() {
 			reflection.Register(grpcServer)
 		}
 	})
-	nacosx.SetUpLogger(nacosx.LoggerConfig{
-		AppendToStdout: true,
-		Level:          "error",
-		LogDir:         "/tmp/nacos/log",
-	})
+
 	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
 	logx.AddGlobalFields(logx.Field("app", c.Name))
 	defer s.Stop()
