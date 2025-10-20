@@ -8,7 +8,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/nacos-group/nacos-sdk-go/v2/clients"
+	"github.com/nacos-group/nacos-sdk-go/v2/clients/nacos_client"
+	"github.com/nacos-group/nacos-sdk-go/v2/clients/naming_client"
+	"github.com/nacos-group/nacos-sdk-go/v2/common/http_agent"
+	"github.com/nacos-group/nacos-sdk-go/v2/common/logger"
 	"github.com/nacos-group/nacos-sdk-go/v2/vo"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/proc"
@@ -26,12 +29,21 @@ func RegisterService(opts *Options) error {
 	}
 	port, _ := strconv.ParseUint(ports, 10, 16)
 
-	client, err := clients.NewNamingClient(
-		vo.NacosClientParam{
-			ServerConfigs: opts.ServerConfig,
-			ClientConfig:  opts.ClientConfig,
-		},
-	)
+	nc := nacos_client.NacosClient{}
+	_ = nc.SetServerConfig(opts.ServerConfig)
+	_ = nc.SetClientConfig(*opts.ClientConfig)
+	_ = nc.SetHttpAgent(&http_agent.HttpAgent{})
+	logCfg := logger.BuildLoggerConfig(*opts.ClientConfig)
+	nacos_logger, _ := logger.InitNacosLogger(logCfg)
+	logger.SetLogger(nacos_logger)
+	client, err := naming_client.NewNamingClient(&nc)
+
+	//client, err := clients.NewNamingClient(
+	//	vo.NacosClientParam{
+	//		ServerConfigs: opts.ServerConfig,
+	//		ClientConfig:  opts.ClientConfig,
+	//	},
+	//)
 	if err != nil {
 		log.Panic(err)
 	}
