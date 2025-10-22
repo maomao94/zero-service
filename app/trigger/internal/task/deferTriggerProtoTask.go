@@ -78,9 +78,11 @@ func (l *DeferTriggerProtoTaskHandler) ProcessTask(ctx context.Context, t *asynq
 			ctx, _ = context.WithTimeout(ctx, time.Duration(msg.RequestTimeout)*time.Millisecond)
 		}
 		var respBytes []byte
+		zrpc.DontLogClientContentForMethod(msg.Method)
 		err = cli.Conn().Invoke(ctx, msg.Method, msg.Payload, &respBytes)
 		serverName := path.Join(cli.Conn().Target(), msg.Method)
-		logx.WithContext(ctx).Infof("rpc invoke - %s", serverName)
+		duration := timex.Since(startTime)
+		logx.WithContext(ctx).WithDuration(duration).Infof("rpc invoke - %s", serverName)
 		if err != nil {
 			t.ResultWriter().Write([]byte("fail,rpcInvokeError: " + err.Error()))
 			return err
