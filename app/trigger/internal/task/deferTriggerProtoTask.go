@@ -4,6 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path"
+	"time"
+	"zero-service/app/trigger/internal/svc"
+	interceptor "zero-service/common/Interceptor/rpcclient"
+	"zero-service/common/asynqx"
+	"zero-service/common/ctxdata"
+	"zero-service/common/tool"
+
 	"github.com/hibiken/asynq"
 	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/conf"
@@ -13,12 +21,6 @@ import (
 	"github.com/zeromicro/go-zero/zrpc"
 	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
-	"time"
-	"zero-service/app/trigger/internal/svc"
-	interceptor "zero-service/common/Interceptor/rpcclient"
-	"zero-service/common/asynqx"
-	"zero-service/common/ctxdata"
-	"zero-service/common/tool"
 )
 
 type DeferTriggerProtoTaskHandler struct {
@@ -77,6 +79,8 @@ func (l *DeferTriggerProtoTaskHandler) ProcessTask(ctx context.Context, t *asynq
 		}
 		var respBytes []byte
 		err = cli.Conn().Invoke(ctx, msg.Method, msg.Payload, &respBytes)
+		serverName := path.Join(cli.Conn().Target(), msg.Method)
+		logx.WithContext(ctx).Infof("rpc invoke - %s", serverName)
 		if err != nil {
 			t.ResultWriter().Write([]byte("fail,rpcInvokeError: " + err.Error()))
 			return err

@@ -2,6 +2,7 @@ package asynqx
 
 import (
 	"context"
+
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/timex"
@@ -70,7 +71,7 @@ func LoggingMiddleware(h asynq.Handler) asynq.Handler {
 			logx.WithContext(ctx).WithDuration(duration).Errorf("asynq processing error %+v", err)
 			return err
 		}
-		logx.WithContext(ctx).WithDuration(duration).Info("asynq processing success")
+		logx.WithContext(ctx).WithDuration(duration).Debug("asynq processing success")
 		return nil
 	})
 }

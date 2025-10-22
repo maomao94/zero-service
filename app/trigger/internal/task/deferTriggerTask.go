@@ -4,15 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/hibiken/asynq"
-	"github.com/zeromicro/go-zero/core/stat"
-	"github.com/zeromicro/go-zero/core/timex"
-	"go.opentelemetry.io/otel"
 	"net/http"
 	"time"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/common/asynqx"
 	"zero-service/common/ctxdata"
+
+	"github.com/hibiken/asynq"
+	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/stat"
+	"github.com/zeromicro/go-zero/core/timex"
+	"go.opentelemetry.io/otel"
 )
 
 type DeferTriggerTaskHandler struct {
@@ -52,6 +54,7 @@ func (l *DeferTriggerTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task
 		}
 		postCtx, _ := context.WithTimeout(ctx, time.Duration(10)*time.Second)
 		resp, err := l.svcCtx.Httpc.Do(postCtx, http.MethodPost, msg.Url, data)
+		logx.WithContext(ctx).Infof("http invoke - %s", msg.Url)
 		if err != nil {
 			t.ResultWriter().Write([]byte("fail,http error"))
 			return err
