@@ -1,0 +1,8 @@
+Name: mcpserver
+Host: 0.0.0.0
+Port: 8888
+mcp:
+#  name: my-mcp-server
+  messageTimeout: 30s # 工具调用的超时时间
+  cors:
+    - http://localhost:3000 # 可选的 CORS 配置
