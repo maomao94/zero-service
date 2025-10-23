@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+
+	"github.com/zeromicro/go-zero/core/mapping"
 )
 
 type BroadcastBody struct {
@@ -28,9 +30,9 @@ func (m *MsgBody) GetKey() (string, error) {
 	if m.Body == nil {
 		return "", errors.New("body is nil")
 	}
-	v := reflect.ValueOf(m.Body)
-	if v.Kind() == reflect.Ptr && v.IsNil() {
-		return "", errors.New("body is nil (pointer)")
+	rv := reflect.ValueOf(m.Body)
+	if err := mapping.ValidatePtr(rv); err != nil {
+		return "", err
 	}
 	//coaHex := fmt.Sprintf("0x%x", m.Coa)
 	coa := fmt.Sprintf("%d", m.Coa)
