@@ -7,6 +7,7 @@ Log:
   Mode: console
   Path: /opt/logs/bridgegtw
   Level: info
+  KeepDays: 30
 Timeout: 15000
 Upstreams:
 #  - Name: external-cable  # 可选，如果未指定则使用 target
