@@ -8,7 +8,7 @@ require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/brianvoe/gofakeit/v7 v7.8.1
 	github.com/disintegration/imaging v1.6.2
-	github.com/dromara/carbon/v2 v2.6.13
+	github.com/dromara/carbon/v2 v2.6.14
 	github.com/duke-git/lancet/v2 v2.3.7
 	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/envoyproxy/protoc-gen-validate v1.2.1
