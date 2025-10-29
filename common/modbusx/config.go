@@ -194,7 +194,7 @@ func NewModbusClientPool(conf *ModbusClientConf, size int) *ModbusClientPool {
 			return cli
 		},
 		func(x any) {
-			logx.Debug("close modbus client: %s", conf.Address)
+			logx.Debugf("close modbus client: %s", conf.Address)
 			if h, ok := x.(*ModbusClient); ok {
 				h.handler.Close()
 			}
