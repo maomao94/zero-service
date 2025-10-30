@@ -1,5 +1,5 @@
 
-¨,
+Ü2
 bridgemodbus.protobridgemodbus"
 Req
 ping (	Rping"
@@ -179,7 +179,27 @@ hexResultsh
 value (	Rvalue:8B
 SemanticResultsEntry
 key (	Rkey
-value (	Rvalue:82ì
+value (	Rvalue:8"g
+)ReadDeviceIdentificationSpecificObjectReq
+
+modbusCode (	R
+modbusCode
+objectId (RobjectId"«
+)ReadDeviceIdentificationSpecificObjectRes^
+results (2D.bridgemodbus.ReadDeviceIdentificationSpecificObjectRes.ResultsEntryRresultsg
+
+hexResults (2G.bridgemodbus.ReadDeviceIdentificationSpecificObjectRes.HexResultsEntryR
+hexResultsv
+semanticResults (2L.bridgemodbus.ReadDeviceIdentificationSpecificObjectRes.SemanticResultsEntryRsemanticResults:
+ResultsEntry
+key (Rkey
+value (	Rvalue:8=
+HexResultsEntry
+key (	Rkey
+value (	Rvalue:8B
+SemanticResultsEntry
+key (	Rkey
+value (	Rvalue:82‰
 BridgeModbus,
 Ping.bridgemodbus.Req.bridgemodbus.ResF
 
@@ -199,5 +219,6 @@ SaveConfig.bridgemodbus.SaveConfigReq.bridgemodbus.SaveConfigResL
 ReadWriteMultipleRegisters+.bridgemodbus.ReadWriteMultipleRegistersReq+.bridgemodbus.ReadWriteMultipleRegistersRes[
 MaskWriteRegister".bridgemodbus.MaskWriteRegisterReq".bridgemodbus.MaskWriteRegisterResO
 ReadFIFOQueue.bridgemodbus.ReadFIFOQueueReq.bridgemodbus.ReadFIFOQueueResp
-ReadDeviceIdentification).bridgemodbus.ReadDeviceIdentificationReq).bridgemodbus.ReadDeviceIdentificationResBC
+ReadDeviceIdentification).bridgemodbus.ReadDeviceIdentificationReq).bridgemodbus.ReadDeviceIdentificationResš
+&ReadDeviceIdentificationSpecificObject7.bridgemodbus.ReadDeviceIdentificationSpecificObjectReq7.bridgemodbus.ReadDeviceIdentificationSpecificObjectResBC
 com.github.bridgemodbus.grpcBBridgeModbusProtoPZ./bridgemodbusbproto3

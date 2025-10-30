@@ -123,6 +123,10 @@ func (m *ModbusClient) ReadDeviceIdentification(ctx context.Context, readDeviceI
 	return m.client.ReadDeviceIdentification(ctx, readDeviceIDCode)
 }
 
+func (m *ModbusClient) ReadDeviceIdentificationSpecificObject(ctx context.Context, objectID byte) (results map[byte][]byte, err error) {
+	return m.client.ReadDeviceIdentificationSpecificObject(ctx, objectID)
+}
+
 func (m *ModbusClient) Close() error {
 	return m.handler.Close()
 }

@@ -129,3 +129,9 @@ func (s *BridgeModbusServer) ReadDeviceIdentification(ctx context.Context, in *b
 	l := logic.NewReadDeviceIdentificationLogic(ctx, s.svcCtx)
 	return l.ReadDeviceIdentification(in)
 }
+
+// 读取特定 Object ID 的设备标识 (Function Code 0x2B / 0x0E)
+func (s *BridgeModbusServer) ReadDeviceIdentificationSpecificObject(ctx context.Context, in *bridgemodbus.ReadDeviceIdentificationSpecificObjectReq) (*bridgemodbus.ReadDeviceIdentificationSpecificObjectRes, error) {
+	l := logic.NewReadDeviceIdentificationSpecificObjectLogic(ctx, s.svcCtx)
+	return l.ReadDeviceIdentificationSpecificObject(in)
+}

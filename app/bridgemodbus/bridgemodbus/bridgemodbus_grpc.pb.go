@@ -19,24 +19,25 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	BridgeModbus_Ping_FullMethodName                       = "/bridgemodbus.BridgeModbus/Ping"
-	BridgeModbus_SaveConfig_FullMethodName                 = "/bridgemodbus.BridgeModbus/SaveConfig"
-	BridgeModbus_DeleteConfig_FullMethodName               = "/bridgemodbus.BridgeModbus/DeleteConfig"
-	BridgeModbus_PageListConfig_FullMethodName             = "/bridgemodbus.BridgeModbus/PageListConfig"
-	BridgeModbus_GetConfigByCode_FullMethodName            = "/bridgemodbus.BridgeModbus/GetConfigByCode"
-	BridgeModbus_BatchGetConfigByCode_FullMethodName       = "/bridgemodbus.BridgeModbus/BatchGetConfigByCode"
-	BridgeModbus_ReadCoils_FullMethodName                  = "/bridgemodbus.BridgeModbus/ReadCoils"
-	BridgeModbus_ReadDiscreteInputs_FullMethodName         = "/bridgemodbus.BridgeModbus/ReadDiscreteInputs"
-	BridgeModbus_WriteSingleCoil_FullMethodName            = "/bridgemodbus.BridgeModbus/WriteSingleCoil"
-	BridgeModbus_WriteMultipleCoils_FullMethodName         = "/bridgemodbus.BridgeModbus/WriteMultipleCoils"
-	BridgeModbus_ReadInputRegisters_FullMethodName         = "/bridgemodbus.BridgeModbus/ReadInputRegisters"
-	BridgeModbus_ReadHoldingRegisters_FullMethodName       = "/bridgemodbus.BridgeModbus/ReadHoldingRegisters"
-	BridgeModbus_WriteSingleRegister_FullMethodName        = "/bridgemodbus.BridgeModbus/WriteSingleRegister"
-	BridgeModbus_WriteMultipleRegisters_FullMethodName     = "/bridgemodbus.BridgeModbus/WriteMultipleRegisters"
-	BridgeModbus_ReadWriteMultipleRegisters_FullMethodName = "/bridgemodbus.BridgeModbus/ReadWriteMultipleRegisters"
-	BridgeModbus_MaskWriteRegister_FullMethodName          = "/bridgemodbus.BridgeModbus/MaskWriteRegister"
-	BridgeModbus_ReadFIFOQueue_FullMethodName              = "/bridgemodbus.BridgeModbus/ReadFIFOQueue"
-	BridgeModbus_ReadDeviceIdentification_FullMethodName   = "/bridgemodbus.BridgeModbus/ReadDeviceIdentification"
+	BridgeModbus_Ping_FullMethodName                                   = "/bridgemodbus.BridgeModbus/Ping"
+	BridgeModbus_SaveConfig_FullMethodName                             = "/bridgemodbus.BridgeModbus/SaveConfig"
+	BridgeModbus_DeleteConfig_FullMethodName                           = "/bridgemodbus.BridgeModbus/DeleteConfig"
+	BridgeModbus_PageListConfig_FullMethodName                         = "/bridgemodbus.BridgeModbus/PageListConfig"
+	BridgeModbus_GetConfigByCode_FullMethodName                        = "/bridgemodbus.BridgeModbus/GetConfigByCode"
+	BridgeModbus_BatchGetConfigByCode_FullMethodName                   = "/bridgemodbus.BridgeModbus/BatchGetConfigByCode"
+	BridgeModbus_ReadCoils_FullMethodName                              = "/bridgemodbus.BridgeModbus/ReadCoils"
+	BridgeModbus_ReadDiscreteInputs_FullMethodName                     = "/bridgemodbus.BridgeModbus/ReadDiscreteInputs"
+	BridgeModbus_WriteSingleCoil_FullMethodName                        = "/bridgemodbus.BridgeModbus/WriteSingleCoil"
+	BridgeModbus_WriteMultipleCoils_FullMethodName                     = "/bridgemodbus.BridgeModbus/WriteMultipleCoils"
+	BridgeModbus_ReadInputRegisters_FullMethodName                     = "/bridgemodbus.BridgeModbus/ReadInputRegisters"
+	BridgeModbus_ReadHoldingRegisters_FullMethodName                   = "/bridgemodbus.BridgeModbus/ReadHoldingRegisters"
+	BridgeModbus_WriteSingleRegister_FullMethodName                    = "/bridgemodbus.BridgeModbus/WriteSingleRegister"
+	BridgeModbus_WriteMultipleRegisters_FullMethodName                 = "/bridgemodbus.BridgeModbus/WriteMultipleRegisters"
+	BridgeModbus_ReadWriteMultipleRegisters_FullMethodName             = "/bridgemodbus.BridgeModbus/ReadWriteMultipleRegisters"
+	BridgeModbus_MaskWriteRegister_FullMethodName                      = "/bridgemodbus.BridgeModbus/MaskWriteRegister"
+	BridgeModbus_ReadFIFOQueue_FullMethodName                          = "/bridgemodbus.BridgeModbus/ReadFIFOQueue"
+	BridgeModbus_ReadDeviceIdentification_FullMethodName               = "/bridgemodbus.BridgeModbus/ReadDeviceIdentification"
+	BridgeModbus_ReadDeviceIdentificationSpecificObject_FullMethodName = "/bridgemodbus.BridgeModbus/ReadDeviceIdentificationSpecificObject"
 )
 
 // BridgeModbusClient is the client API for BridgeModbus service.
@@ -80,6 +81,8 @@ type BridgeModbusClient interface {
 	ReadFIFOQueue(ctx context.Context, in *ReadFIFOQueueReq, opts ...grpc.CallOption) (*ReadFIFOQueueRes, error)
 	// 读取设备标识 (Function Code 0x2B / 0x0E)
 	ReadDeviceIdentification(ctx context.Context, in *ReadDeviceIdentificationReq, opts ...grpc.CallOption) (*ReadDeviceIdentificationRes, error)
+	// 读取特定 Object ID 的设备标识 (Function Code 0x2B / 0x0E)
+	ReadDeviceIdentificationSpecificObject(ctx context.Context, in *ReadDeviceIdentificationSpecificObjectReq, opts ...grpc.CallOption) (*ReadDeviceIdentificationSpecificObjectRes, error)
 }
 
 type bridgeModbusClient struct {
@@ -270,6 +273,16 @@ func (c *bridgeModbusClient) ReadDeviceIdentification(ctx context.Context, in *R
 	return out, nil
 }
 
+func (c *bridgeModbusClient) ReadDeviceIdentificationSpecificObject(ctx context.Context, in *ReadDeviceIdentificationSpecificObjectReq, opts ...grpc.CallOption) (*ReadDeviceIdentificationSpecificObjectRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReadDeviceIdentificationSpecificObjectRes)
+	err := c.cc.Invoke(ctx, BridgeModbus_ReadDeviceIdentificationSpecificObject_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BridgeModbusServer is the server API for BridgeModbus service.
 // All implementations must embed UnimplementedBridgeModbusServer
 // for forward compatibility.
@@ -311,6 +324,8 @@ type BridgeModbusServer interface {
 	ReadFIFOQueue(context.Context, *ReadFIFOQueueReq) (*ReadFIFOQueueRes, error)
 	// 读取设备标识 (Function Code 0x2B / 0x0E)
 	ReadDeviceIdentification(context.Context, *ReadDeviceIdentificationReq) (*ReadDeviceIdentificationRes, error)
+	// 读取特定 Object ID 的设备标识 (Function Code 0x2B / 0x0E)
+	ReadDeviceIdentificationSpecificObject(context.Context, *ReadDeviceIdentificationSpecificObjectReq) (*ReadDeviceIdentificationSpecificObjectRes, error)
 	mustEmbedUnimplementedBridgeModbusServer()
 }
 
@@ -374,6 +389,9 @@ func (UnimplementedBridgeModbusServer) ReadFIFOQueue(context.Context, *ReadFIFOQ
 }
 func (UnimplementedBridgeModbusServer) ReadDeviceIdentification(context.Context, *ReadDeviceIdentificationReq) (*ReadDeviceIdentificationRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReadDeviceIdentification not implemented")
+}
+func (UnimplementedBridgeModbusServer) ReadDeviceIdentificationSpecificObject(context.Context, *ReadDeviceIdentificationSpecificObjectReq) (*ReadDeviceIdentificationSpecificObjectRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadDeviceIdentificationSpecificObject not implemented")
 }
 func (UnimplementedBridgeModbusServer) mustEmbedUnimplementedBridgeModbusServer() {}
 func (UnimplementedBridgeModbusServer) testEmbeddedByValue()                      {}
@@ -720,6 +738,24 @@ func _BridgeModbus_ReadDeviceIdentification_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BridgeModbus_ReadDeviceIdentificationSpecificObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadDeviceIdentificationSpecificObjectReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BridgeModbusServer).ReadDeviceIdentificationSpecificObject(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BridgeModbus_ReadDeviceIdentificationSpecificObject_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BridgeModbusServer).ReadDeviceIdentificationSpecificObject(ctx, req.(*ReadDeviceIdentificationSpecificObjectReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BridgeModbus_ServiceDesc is the grpc.ServiceDesc for BridgeModbus service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -798,6 +834,10 @@ var BridgeModbus_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReadDeviceIdentification",
 			Handler:    _BridgeModbus_ReadDeviceIdentification_Handler,
+		},
+		{
+			MethodName: "ReadDeviceIdentificationSpecificObject",
+			Handler:    _BridgeModbus_ReadDeviceIdentificationSpecificObject_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
