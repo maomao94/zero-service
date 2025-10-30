@@ -57,6 +57,9 @@ func (l *ReadDeviceIdentificationLogic) ReadDeviceIdentification(in *bridgemodbu
 	resultsSemantic := make(map[string]string) // 语义化
 	for id, raw := range results {
 		val := string(raw)
+		if len(raw) == 0 {
+			continue
+		}
 
 		// 1. 十进制
 		resultsDec[uint32(id)] = val
