@@ -2114,9 +2114,18 @@ func (x *ReadDeviceIdentificationRes) GetSemanticResults() map[string]string {
 }
 
 type ReadDeviceIdentificationSpecificObjectReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ModbusCode    string                 `protobuf:"bytes,1,opt,name=modbusCode,proto3" json:"modbusCode,omitempty"` // Modbus配置唯一编码 空=默认配置
-	ObjectId      uint32                 `protobuf:"varint,2,opt,name=objectId,proto3" json:"objectId,omitempty"`    // 要读取的对象 ID (例如 0x00~0xFF)
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	ModbusCode string                 `protobuf:"bytes,1,opt,name=modbusCode,proto3" json:"modbusCode,omitempty"` // Modbus配置唯一编码 空=默认配置
+	// 常见对象 ID 对照表：
+	//
+	//	0x00 = 厂商名称 (VendorName)
+	//	0x01 = 产品代码 (ProductCode)
+	//	0x02 = 版本号 (MajorMinorRevision)
+	//	0x03 = 厂商网址 (VendorURL)
+	//	0x04 = 产品名称 (ProductName)
+	//	0x05 = 型号名称 (ModelName)
+	//	0x06 = 用户应用名称 (UserApplicationName)
+	ObjectId      uint32 `protobuf:"varint,2,opt,name=objectId,proto3" json:"objectId,omitempty"` // 要读取的对象 ID (例如 0x00~0xFF)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

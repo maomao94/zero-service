@@ -300,15 +300,15 @@ message ReadDeviceIdentificationRes {
 
 message ReadDeviceIdentificationSpecificObjectReq {
   string modbusCode = 1; // Modbus配置唯一编码 空=默认配置
-  uint32 objectId = 2;   // 要读取的对象 ID (例如 0x00~0xFF)
   // 常见对象 ID 对照表：
   //   0x00 = 厂商名称 (VendorName)
   //   0x01 = 产品代码 (ProductCode)
-  //   0x02 = 版本号 (Major.Minor)
+  //   0x02 = 版本号 (MajorMinorRevision)
   //   0x03 = 厂商网址 (VendorURL)
   //   0x04 = 产品名称 (ProductName)
   //   0x05 = 型号名称 (ModelName)
   //   0x06 = 用户应用名称 (UserApplicationName)
+  uint32 objectId = 2;   // 要读取的对象 ID (例如 0x00~0xFF)
 }
 
 message ReadDeviceIdentificationSpecificObjectRes {
