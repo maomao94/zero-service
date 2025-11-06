@@ -3,15 +3,16 @@ package iec
 import (
 	"context"
 	"fmt"
-	"github.com/duke-git/lancet/v2/strutil"
-	"github.com/jinzhu/copier"
-	"github.com/wendy512/go-iecp5/asdu"
-	"github.com/zeromicro/go-zero/core/logx"
 	"zero-service/app/ieccaller/internal/svc"
 	"zero-service/common/copierx"
 	"zero-service/common/iec104/iec104client"
 	"zero-service/common/iec104/types"
 	"zero-service/common/iec104/util"
+
+	"github.com/duke-git/lancet/v2/strutil"
+	"github.com/jinzhu/copier"
+	"github.com/wendy512/go-iecp5/asdu"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type ClientCall struct {
@@ -86,8 +87,14 @@ func (c *ClientCall) OnDelayAcquisition(packet *asdu.ASDU) error {
 
 // OnASDU 数据正体
 func (c *ClientCall) OnASDU(packet *asdu.ASDU) error {
+	c.logger = c.logger.
+		WithFields(logx.Field("type", packet.Type)).
+		WithFields(logx.Field("coa", packet.Coa.String())).
+		WithFields(logx.Field("commonAddr", packet.CommonAddr)).
+		WithFields(logx.Field("asdu", genASDUName(packet.Type)))
+	dataType := iec104client.GetDataType(packet.Type)
 	// 读取设备数据
-	switch iec104client.GetDataType(packet.Type) {
+	switch dataType {
 	case iec104client.SinglePoint:
 		c.onSinglePoint(packet)
 	case iec104client.DoublePoint:

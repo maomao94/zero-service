@@ -37,6 +37,6 @@ ENV TZ Asia/Shanghai
 WORKDIR /app
 COPY --from=builder /build /app/build
 COPY etc /app/etc
-COPY app/iecaller /app/ieccaller
+COPY app/ieccaller /app/ieccaller
 
 CMD ["./ieccaller", "-f", "etc/ieccaller.yaml"]
