@@ -10,6 +10,8 @@ import (
 
 	"github.com/tidwall/gjson"
 	"github.com/zeromicro/go-zero/core/executors"
+	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/timex"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
 )
@@ -50,6 +52,7 @@ func (w *AsduPusher) Write(val string) error {
 }
 
 func (w *AsduPusher) execute(vals []interface{}) {
+	startTime := timex.Now()
 	msgBodyList := make([]*streamevent.MsgBody, 0)
 	for _, val := range vals {
 		s := val.(string)
@@ -75,6 +78,8 @@ func (w *AsduPusher) execute(vals []interface{}) {
 	w.streamEventCli.PushChunkAsdu(context.Background(), &streamevent.PushChunkAsduReq{
 		MsgBody: msgBodyList,
 	})
+	duration := timex.Since(startTime)
+	logx.WithDuration(duration).Info("rpc PushChunkAsdu")
 }
 
 func NewAsduPusher(streamEventCli streamevent.StreamEventClient, ChunkBytes int) *AsduPusher {
