@@ -21,7 +21,7 @@ NacosConfig:
 KafkaASDUConfig:
   Name: asdu
   Brokers:
-    - 10.10.1.213:9094
+    - 127.0.0.1:9094
   Topic: asdu
   Group: iec-stash
   # 链接kafka的链接数，链接数依据cpu的核数，一般<= CPU的核数
