@@ -79,7 +79,7 @@ func (w *AsduPusher) execute(vals []interface{}) {
 		MsgBody: msgBodyList,
 	})
 	duration := timex.Since(startTime)
-	logx.WithDuration(duration).Info("rpc PushChunkAsdu")
+	logx.WithDuration(duration).Infof("rpc PushChunkAsdu, asdu size: %d", len(msgBodyList))
 }
 
 func NewAsduPusher(streamEventCli streamevent.StreamEventClient, ChunkBytes int) *AsduPusher {
