@@ -24,5 +24,5 @@ func NewPingLogic(ctx context.Context, svcCtx *svc.ServiceContext) *PingLogic {
 }
 
 func (l *PingLogic) Ping(in *iecstash.Req) (*iecstash.Res, error) {
-	return &iecstash.Res{Pong: in.Ping}, nil
+	return &iecstash.Res{Pong: "pong"}, nil
 }
