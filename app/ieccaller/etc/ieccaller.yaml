@@ -12,9 +12,10 @@ Log:
   #  Mode: file
   Path: /opt/logs/ieccaller.rpc
   Level: debug
+  KeepDays: 30
 NacosConfig:
   IsRegister: true
-  Host: 10.10.1.103
+  Host: 127.0.0.1
   Port: 8848
   Username: nacos
   PassWord: nacos
@@ -28,19 +29,21 @@ IecServerConfig:
     IcCoaList: [ 1,2 ]
     # 累计量召唤 COA
     CcCoaList: [ 1 ]
+    # 元数据配置
     MetaData:
       stationId: 330KV
       arrayId: [ 1,2,3 ]
     LogEnable: true
 KafkaConfig:
   Brokers:
-    - 10.10.1.213:9094
+    - 127.0.0.1:9094
   Topic: asdu
   BroadcastTopic: iec-broadcast
   BroadcastGroupId: iec-caller
   # 是否推送指令数据
   IsPush: true
+# 指令推送间隔
 # 总召唤 默认 @every 60s
-InterrogationCmdCron: "*/60 * * * * *"
+#InterrogationCmdCron: "*/10 * * * * *"
 # 累计量召唤 默认 @every 60s
-CounterInterrogationCmd: "*/60 * * * * *"
+#CounterInterrogationCmd: "*/60 * * * * *"

@@ -4,7 +4,7 @@ Port: 15002
 Mode: dev
 Log:
   Encoding: plain
-  Mode: console
+  #  Mode: file
   Path: /opt/logs/bridgegtw
   Level: info
   KeepDays: 30

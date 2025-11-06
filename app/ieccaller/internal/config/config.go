@@ -1,8 +1,9 @@
 package config
 
 import (
-	"github.com/zeromicro/go-zero/zrpc"
 	"zero-service/common/iec104/iec104client"
+
+	"github.com/zeromicro/go-zero/zrpc"
 )
 
 type Config struct {
@@ -11,8 +12,8 @@ type Config struct {
 	DeployMode      string `json:",default=standalone,options=standalone|cluster"` // 可选值：standalone 或 cluster
 	IecServerConfig []iec104client.IecServerConfig
 	//IecCoaConfig         []iec104client.CoaConfig
-	InterrogationCmdCron    string `json:",default=@every 60s"`
-	CounterInterrogationCmd string `json:",default=@every 60s"`
+	InterrogationCmdCron    string `json:",optional"`
+	CounterInterrogationCmd string `json:",optional"`
 
 	NacosConfig struct {
 		IsRegister  bool

@@ -4,13 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/spf13/cast"
-	"github.com/wendy512/go-iecp5/asdu"
-	"github.com/wendy512/go-iecp5/clog"
-	"github.com/wendy512/go-iecp5/cs104"
-	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/stat"
-	"github.com/zeromicro/go-zero/core/threading"
 	"log"
 	"net"
 	"net/url"
@@ -20,6 +13,14 @@ import (
 	"time"
 	"zero-service/common/iec104"
 	"zero-service/common/iec104/waitgroup"
+
+	"github.com/spf13/cast"
+	"github.com/wendy512/go-iecp5/asdu"
+	"github.com/wendy512/go-iecp5/clog"
+	"github.com/wendy512/go-iecp5/cs104"
+	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/stat"
+	"github.com/zeromicro/go-zero/core/threading"
 )
 
 type CoaConfig struct {
@@ -482,10 +483,7 @@ func (c *Client) GetServerUrl() string {
 type ClientManager struct {
 	clients     map[*Client]bool // 全部的连接
 	clientsLock sync.RWMutex     // 读写锁
-	//coaSession     map[string]*CoaSession // 注册session ip+port+coa 地址 构成唯一
-	//coaSessionLock sync.RWMutex  // 读写锁
-	register    chan *Client  // 连接连接处理
-	broadcast   chan struct{} // 广播 向全部成员发送数据
+	register    chan *Client     // 连接连接处理
 	defaultName string
 }
 
@@ -504,10 +502,8 @@ func (cs *CoaSession) GetConfig() CoaConfig {
 
 func NewClientManager() (m *ClientManager) {
 	m = &ClientManager{
-		clients: make(map[*Client]bool),
-		//coaSession: make(map[string]*CoaSession),
-		register:  make(chan *Client, 1000),
-		broadcast: make(chan struct{}, 1000),
+		clients:  make(map[*Client]bool),
+		register: make(chan *Client, 1000),
 	}
 	threading.GoSafe(func() {
 		logx.Info("start clientManager listener")
@@ -523,17 +519,6 @@ func (manager *ClientManager) StartListener() {
 		case client := <-manager.register:
 			// 建立连接事件
 			manager.EventRegister(client)
-		case _ = <-manager.broadcast:
-			// 广播事件
-			clients := manager.GetClients()
-			for _ = range clients {
-				//err := conn.send(message)
-				//if err != nil {
-				//	logx.Errorf("广播消息失败:%v", err)
-				//	continue
-				//}
-				logx.Info("broadcast")
-			}
 		}
 	}
 }
@@ -542,20 +527,6 @@ func (manager *ClientManager) EventRegister(client *Client) {
 	manager.AddClients(client)
 	logx.Infof("eventRegister iec104 server addr:%s success", client.GetServerUrl())
 }
-
-//func (manager *ClientManager) EventSession(config CoaConfig, client *Client) {
-//	// 连接存在，在添加
-//	if manager.InClient(client) {
-//		key := getKey(config)
-//		manager.AddSession(key, &CoaSession{
-//			clients:   client,
-//			coaConfig: config,
-//		})
-//		logx.Infof("eventSession %s 注册", key)
-//	} else {
-//		logx.Errorf("eventSession fail, iec104 server addr:%s 连接不存在", client.GetServerUrl())
-//	}
-//}
 
 func (manager *ClientManager) PublishRegister(client *Client) {
 	threading.RunSafe(func() {
@@ -574,11 +545,6 @@ func (manager *ClientManager) GetClientsLen() (clientsLen int) {
 	return
 }
 
-//func (manager *ClientManager) GetSessionLen() (sessionLen int) {
-//	sessionLen = len(manager.coaSession)
-//	return
-//}
-
 func (manager *ClientManager) InClient(client *Client) (ok bool) {
 	manager.clientsLock.RLock()
 	defer manager.clientsLock.RUnlock()
@@ -587,15 +553,9 @@ func (manager *ClientManager) InClient(client *Client) (ok bool) {
 	return
 }
 
-//func (manager *ClientManager) AddSession(name string, client *CoaSession) {
-//	manager.coaSessionLock.Lock()
-//	defer manager.coaSessionLock.Unlock()
-//	manager.coaSession[name] = client
-//}
-
 func (manager *ClientManager) GetClients() (clients map[*Client]bool) {
 	clients = make(map[*Client]bool)
-	manager.ClientsRange(func(client *Client, value bool) (result bool) {
+	manager.clientsRange(func(client *Client, value bool) (result bool) {
 		clients[client] = value
 		return true
 	})
@@ -604,7 +564,7 @@ func (manager *ClientManager) GetClients() (clients map[*Client]bool) {
 
 func (manager *ClientManager) GetClient(host string, port int) (*Client, error) {
 	var cli *Client
-	manager.ClientsRange(func(client *Client, value bool) (result bool) {
+	manager.clientsRange(func(client *Client, value bool) (result bool) {
 		if client.settings.Host == host && client.settings.Port == port {
 			cli = client
 			return true
@@ -622,7 +582,7 @@ func (manager *ClientManager) GetClient(host string, port int) (*Client, error) 
 
 func (manager *ClientManager) GetClientOrNil(host string, port int) (*Client, error) {
 	var cli *Client
-	manager.ClientsRange(func(client *Client, value bool) (result bool) {
+	manager.clientsRange(func(client *Client, value bool) (result bool) {
 		if client.settings.Host == host && client.settings.Port == port {
 			cli = client
 			return true
@@ -638,7 +598,7 @@ func (manager *ClientManager) GetClientOrNil(host string, port int) (*Client, er
 	return cli, nil
 }
 
-func (manager *ClientManager) ClientsRange(f func(client *Client, value bool) (result bool)) {
+func (manager *ClientManager) clientsRange(f func(client *Client, value bool) (result bool)) {
 	manager.clientsLock.RLock()
 	defer manager.clientsLock.RUnlock()
 	for key, value := range manager.clients {
@@ -647,49 +607,5 @@ func (manager *ClientManager) ClientsRange(f func(client *Client, value bool) (r
 			return
 		}
 	}
-	return
-}
-
-//func (manager *ClientManager) GetSessionNames() (names []string) {
-//	names = make([]string, 0)
-//	manager.coaSessionLock.RLock()
-//	defer manager.coaSessionLock.RUnlock()
-//	for key := range manager.coaSession {
-//		names = append(names, key)
-//	}
-//	return
-//}
-
-//func (manager *ClientManager) GetSession(config CoaConfig) (*CoaSession, error) {
-//	var cli *CoaSession
-//	manager.coaSessionLock.RLock()
-//	defer manager.coaSessionLock.RUnlock()
-//	key := getKey(config)
-//	if value, ok := manager.coaSession[key]; ok {
-//		cli = value
-//	}
-//	if cli == nil {
-//		return nil, fmt.Errorf("cli is empty")
-//	}
-//	return cli, nil
-//}
-
-//func (manager *ClientManager) GetSessionClients() (clients []*CoaSession) {
-//	clients = make([]*CoaSession, 0)
-//	manager.coaSessionLock.RLock()
-//	defer manager.coaSessionLock.RUnlock()
-//	for _, v := range manager.coaSession {
-//		clients = append(clients, v)
-//	}
-//	return
-//}
-
-//func getKey(config CoaConfig) (key string) {
-//	key = fmt.Sprintf("%s_%d_%d", config.Host, config.Port, config.Coa)
-//	return
-//}
-
-func getUId(config CoaConfig) (uId string) {
-	uId = fmt.Sprintf("%s_%d", config.Host, config.Port)
 	return
 }
