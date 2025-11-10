@@ -128,8 +128,10 @@ func (c *ClientCall) OnASDU(packet *asdu.ASDU) error {
 
 func (c *ClientCall) onSinglePoint(packet *asdu.ASDU) {
 	coa := packet.CommonAddr
+	asduDataList := packet.GetSinglePoint()
+	c.logger.Debugf("single point, size: %d", len(asduDataList))
 	// [M_SP_NA_1], [M_SP_TA_1] or [M_SP_TB_1] 获取单点信息信息体集合
-	for _, p := range packet.GetSinglePoint() {
+	for _, p := range asduDataList {
 		c.logger.Debugf("single point, ioa: %d, value: %v", p.Ioa, p.Value)
 		var obj types.SinglePointInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
@@ -155,8 +157,10 @@ func (c *ClientCall) onSinglePoint(packet *asdu.ASDU) {
 
 func (c *ClientCall) onDoublePoint(packet *asdu.ASDU) {
 	coa := packet.CommonAddr
+	asduDataList := packet.GetDoublePoint()
+	c.logger.Debugf("double point, size: %d", len(asduDataList))
 	// [M_DP_NA_1], [M_DP_TA_1] or [M_DP_TB_1] 获得双点信息体集合
-	for _, p := range packet.GetDoublePoint() {
+	for _, p := range asduDataList {
 		c.logger.Debugf("double point, ioa: %d, value: %v, bl: %v, sb: %v, nt: %v, iv:%v", p.Ioa, p.Value,
 			util.QdsIsBlocked(p.Qds), util.QdsIsSubstituted(p.Qds), util.QdsIsNotTopical(p.Qds), util.QdsIsInvalid(p.Qds))
 		c.logger.Debugf("qds: %s", util.QdsString(p.Qds))
@@ -184,8 +188,10 @@ func (c *ClientCall) onDoublePoint(packet *asdu.ASDU) {
 
 func (c *ClientCall) onMeasuredValueScaled(packet *asdu.ASDU) {
 	coa := packet.CommonAddr
+	asduDataList := packet.GetMeasuredValueScaled()
+	c.logger.Debugf("measured value scaled, size: %d", len(asduDataList))
 	// [M_ME_NB_1], [M_ME_TB_1] or [M_ME_TE_1] 获得测量值,标度化值信息体集合
-	for _, p := range packet.GetMeasuredValueScaled() {
+	for _, p := range asduDataList {
 		c.logger.Debugf("measured value scaled, ioa: %d, value: %v", p.Ioa, p.Value)
 		var obj types.MeasuredValueScaledInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
@@ -211,8 +217,10 @@ func (c *ClientCall) onMeasuredValueScaled(packet *asdu.ASDU) {
 
 func (c *ClientCall) onMeasuredValueNormal(packet *asdu.ASDU) {
 	coa := packet.CommonAddr
+	asduDataList := packet.GetMeasuredValueNormal()
+	c.logger.Debugf("measured value normal, size: %d", len(asduDataList))
 	// [M_ME_NA_1], [M_ME_TA_1],[ M_ME_TD_1] or [M_ME_ND_1] 获得测量值,规一化值信息体集合
-	for _, p := range packet.GetMeasuredValueNormal() {
+	for _, p := range asduDataList {
 		nva := util.NormalizeToFloat(p.Value)
 		c.logger.Debugf("measured value normal, ioa: %d, value: %v, nva: %.5f", p.Ioa, p.Value, nva)
 		var obj types.MeasuredValueNormalInfo
@@ -240,8 +248,10 @@ func (c *ClientCall) onMeasuredValueNormal(packet *asdu.ASDU) {
 
 func (c *ClientCall) onStepPosition(packet *asdu.ASDU) {
 	coa := packet.CommonAddr
+	asduDataList := packet.GetStepPosition()
+	c.logger.Debugf("step position, size: %d", len(asduDataList))
 	// [M_ST_NA_1], [M_ST_TA_1] or [M_ST_TB_1] 获得步位置信息体集合
-	for _, p := range packet.GetStepPosition() {
+	for _, p := range asduDataList {
 		// state：false: 设备未在瞬变状态 true： 设备处于瞬变状态
 		c.logger.Debugf("step position, ioa: %d, state: %t, value: %d", p.Ioa, p.Value.HasTransient, p.Value.Val)
 		var obj types.StepPositionInfo
@@ -268,8 +278,10 @@ func (c *ClientCall) onStepPosition(packet *asdu.ASDU) {
 
 func (c *ClientCall) onBitString32(packet *asdu.ASDU) {
 	coa := packet.CommonAddr
+	asduDataList := packet.GetBitString32()
+	c.logger.Debugf("bitstring32, size: %d", len(asduDataList))
 	// [M_BO_NA_1], [M_BO_TA_1] or [M_BO_TB_1] 获得比特位串信息体集合
-	for _, p := range packet.GetBitString32() {
+	for _, p := range asduDataList {
 		c.logger.Debugf("bigtstring32, ioa: %d, value: %v, bsi: %032b", p.Ioa, p.Value, p.Value)
 		var obj types.BitString32Info
 		//obj.Time = carbon.Now().ToDateTimeString()
@@ -295,8 +307,10 @@ func (c *ClientCall) onBitString32(packet *asdu.ASDU) {
 
 func (c *ClientCall) onMeasuredValueFloat(packet *asdu.ASDU) {
 	coa := packet.CommonAddr
+	asduDataList := packet.GetMeasuredValueFloat()
+	c.logger.Debugf("measured value float, size: %d", len(asduDataList))
 	// [M_ME_NC_1], [M_ME_TC_1] or [M_ME_TF_1].获得测量值,短浮点数信息体集合
-	for _, p := range packet.GetMeasuredValueFloat() {
+	for _, p := range asduDataList {
 		c.logger.Debugf("measured value float, ioa: %d, value: %v", p.Ioa, p.Value)
 		var obj types.MeasuredValueFloatInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
@@ -322,8 +336,10 @@ func (c *ClientCall) onMeasuredValueFloat(packet *asdu.ASDU) {
 
 func (c *ClientCall) onIntegratedTotals(packet *asdu.ASDU) {
 	coa := packet.CommonAddr
+	asduDataList := packet.GetIntegratedTotals()
+	c.logger.Debugf("integrated totals, size: %d", len(asduDataList))
 	// [M_IT_NA_1], [M_IT_TA_1] or [M_IT_TB_1]. 获得累计量信息体集合
-	for _, p := range packet.GetIntegratedTotals() {
+	for _, p := range asduDataList {
 		c.logger.Debugf("integrated totals, ioa: %d, counter: %d, sq: %d, cy: %t, ca: %t, iv: %t",
 			p.Ioa, p.Value.CounterReading, p.Value.SeqNumber, p.Value.HasCarry, p.Value.IsAdjusted, p.Value.IsInvalid)
 		var obj types.BinaryCounterReadingInfo
@@ -344,8 +360,10 @@ func (c *ClientCall) onIntegratedTotals(packet *asdu.ASDU) {
 
 func (c *ClientCall) onEventOfProtectionEquipment(packet *asdu.ASDU) {
 	coa := packet.CommonAddr
+	asduDataList := packet.GetEventOfProtectionEquipment()
+	c.logger.Debugf("event of protection equipment, size: %d", len(asduDataList))
 	// [M_EP_TA_1] [M_EP_TD_1] 获取继电器保护设备事件信息体
-	for _, p := range packet.GetEventOfProtectionEquipment() {
+	for _, p := range asduDataList {
 		c.logger.Debugf("event of protection equipment, ioa: %d, event: %d, qdp: %d, mesc: %d, time: %d",
 			p.Ioa, p.Event, p.Qdp, p.Msec, p.Time.UnixMilli())
 		var obj types.EventOfProtectionEquipmentInfo
@@ -434,8 +452,10 @@ func (c *ClientCall) onPackedOutputCircuitInfo(packet *asdu.ASDU) {
 
 func (c *ClientCall) onPackedSinglePointWithSCD(packet *asdu.ASDU) {
 	coa := packet.CommonAddr
+	asduDataList := packet.GetPackedSinglePointWithSCD()
+	c.logger.Debugf("packed single point with SCD, size: %d", len(asduDataList))
 	// [M_PS_NA_1]. 获得带变位检出的成组单点信息
-	for _, p := range packet.GetPackedSinglePointWithSCD() {
+	for _, p := range asduDataList {
 		c.logger.Debugf("packed single point with SCD, ioa: %d, scd: %d, qds: %d", p.Ioa, p.Scd, p.Qds)
 		var obj types.PackedSinglePointWithSCDInfo
 		currentStatus := p.Scd & 0xFFFF // 低16位（当前状态）
