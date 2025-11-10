@@ -604,7 +604,7 @@ func (manager *ClientManager) clientsRange(f func(client *Client, value bool) (r
 	for key, value := range manager.clients {
 		result := f(key, value)
 		if result == false {
-			return
+			continue
 		}
 	}
 	return
