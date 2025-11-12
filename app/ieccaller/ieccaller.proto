@@ -51,6 +51,18 @@ message SendCounterInterrogationCmdReq {
 message SendCounterInterrogationCmdRes {
 }
 
+message SendCommandReq {
+  string host = 1;
+  int32 port = 2;
+  int32 coa = 3;
+  int32 typeId = 4; // 指令类型，例如 45=C_SC_NA_1, 46=C_DC_NA_1 ...
+  int32 ioa = 5;
+  string value = 6; // 通用值，例如 "1","true","12.3"
+}
+
+message SendCommandRes {
+}
+
 service IecCaller {
   rpc Ping (Req) returns (Res);
   // 发送带时标的测试命令
@@ -61,4 +73,6 @@ service IecCaller {
   rpc SendInterrogationCmd (SendInterrogationCmdReq) returns (SendInterrogationCmdRes);
   // 累积量召唤
   rpc SendCounterInterrogationCmd(SendCounterInterrogationCmdReq) returns (SendCounterInterrogationCmdRes);
+  // 发送命令
+  rpc SendCommand(SendCommandReq) returns (SendCommandRes);
 }

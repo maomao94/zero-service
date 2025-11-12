@@ -5,6 +5,7 @@ import (
 	"zero-service/app/ieccaller/internal/svc"
 	"zero-service/common/iec104/types"
 
+	"github.com/wendy512/go-iecp5/asdu"
 	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
 	"golang.org/x/net/context"
@@ -90,6 +91,20 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 			return nil
 		}
 		if err = cli.SendTestCmd(uint16(in.Coa)); err != nil {
+			return err
+		}
+	case ieccaller.IecCaller_SendCommand_FullMethodName:
+		in := &ieccaller.SendCommandReq{}
+		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
+		if err != nil {
+			return err
+		}
+		cli, err := l.svcCtx.ClientManager.GetClient(in.Host, int(in.Port))
+		if err != nil {
+			logx.WithContext(ctx).Errorf("get client error: %v", err)
+			return nil
+		}
+		if err = cli.SendCmd(uint16(in.Coa), asdu.TypeID(in.TypeId), asdu.InfoObjAddr(in.Ioa), in.Value); err != nil {
 			return err
 		}
 	default:

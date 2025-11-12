@@ -24,6 +24,7 @@ const (
 	IecCaller_SendReadCmd_FullMethodName                 = "/ieccaller.IecCaller/SendReadCmd"
 	IecCaller_SendInterrogationCmd_FullMethodName        = "/ieccaller.IecCaller/SendInterrogationCmd"
 	IecCaller_SendCounterInterrogationCmd_FullMethodName = "/ieccaller.IecCaller/SendCounterInterrogationCmd"
+	IecCaller_SendCommand_FullMethodName                 = "/ieccaller.IecCaller/SendCommand"
 )
 
 // IecCallerClient is the client API for IecCaller service.
@@ -39,6 +40,8 @@ type IecCallerClient interface {
 	SendInterrogationCmd(ctx context.Context, in *SendInterrogationCmdReq, opts ...grpc.CallOption) (*SendInterrogationCmdRes, error)
 	// 累积量召唤
 	SendCounterInterrogationCmd(ctx context.Context, in *SendCounterInterrogationCmdReq, opts ...grpc.CallOption) (*SendCounterInterrogationCmdRes, error)
+	// 发送命令
+	SendCommand(ctx context.Context, in *SendCommandReq, opts ...grpc.CallOption) (*SendCommandRes, error)
 }
 
 type iecCallerClient struct {
@@ -99,6 +102,16 @@ func (c *iecCallerClient) SendCounterInterrogationCmd(ctx context.Context, in *S
 	return out, nil
 }
 
+func (c *iecCallerClient) SendCommand(ctx context.Context, in *SendCommandReq, opts ...grpc.CallOption) (*SendCommandRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendCommandRes)
+	err := c.cc.Invoke(ctx, IecCaller_SendCommand_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IecCallerServer is the server API for IecCaller service.
 // All implementations must embed UnimplementedIecCallerServer
 // for forward compatibility.
@@ -112,6 +125,8 @@ type IecCallerServer interface {
 	SendInterrogationCmd(context.Context, *SendInterrogationCmdReq) (*SendInterrogationCmdRes, error)
 	// 累积量召唤
 	SendCounterInterrogationCmd(context.Context, *SendCounterInterrogationCmdReq) (*SendCounterInterrogationCmdRes, error)
+	// 发送命令
+	SendCommand(context.Context, *SendCommandReq) (*SendCommandRes, error)
 	mustEmbedUnimplementedIecCallerServer()
 }
 
@@ -136,6 +151,9 @@ func (UnimplementedIecCallerServer) SendInterrogationCmd(context.Context, *SendI
 }
 func (UnimplementedIecCallerServer) SendCounterInterrogationCmd(context.Context, *SendCounterInterrogationCmdReq) (*SendCounterInterrogationCmdRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendCounterInterrogationCmd not implemented")
+}
+func (UnimplementedIecCallerServer) SendCommand(context.Context, *SendCommandReq) (*SendCommandRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendCommand not implemented")
 }
 func (UnimplementedIecCallerServer) mustEmbedUnimplementedIecCallerServer() {}
 func (UnimplementedIecCallerServer) testEmbeddedByValue()                   {}
@@ -248,6 +266,24 @@ func _IecCaller_SendCounterInterrogationCmd_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IecCaller_SendCommand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendCommandReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IecCallerServer).SendCommand(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IecCaller_SendCommand_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IecCallerServer).SendCommand(ctx, req.(*SendCommandReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IecCaller_ServiceDesc is the grpc.ServiceDesc for IecCaller service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -274,6 +310,10 @@ var IecCaller_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendCounterInterrogationCmd",
 			Handler:    _IecCaller_SendCounterInterrogationCmd_Handler,
+		},
+		{
+			MethodName: "SendCommand",
+			Handler:    _IecCaller_SendCommand_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

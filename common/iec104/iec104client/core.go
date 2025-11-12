@@ -178,7 +178,7 @@ func (c *Client) IsConnected() bool {
 	return c.client104.IsConnected()
 }
 
-// SendCmd 双点遥控
+// SendCmd
 func (c *Client) SendCmd(addr uint16, typeId asdu.TypeID, ioa asdu.InfoObjAddr, value any) error {
 	cmd := &command{
 		typeId: typeId,

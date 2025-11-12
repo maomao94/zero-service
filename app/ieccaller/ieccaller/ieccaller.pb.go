@@ -501,6 +501,126 @@ func (*SendCounterInterrogationCmdRes) Descriptor() ([]byte, []int) {
 	return file_ieccaller_proto_rawDescGZIP(), []int{9}
 }
 
+type SendCommandReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Host          string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	Port          int32                  `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	Coa           int32                  `protobuf:"varint,3,opt,name=coa,proto3" json:"coa,omitempty"`
+	TypeId        int32                  `protobuf:"varint,4,opt,name=typeId,proto3" json:"typeId,omitempty"` // 指令类型，例如 45=C_SC_NA_1, 46=C_DC_NA_1 ...
+	Ioa           int32                  `protobuf:"varint,5,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	Value         string                 `protobuf:"bytes,6,opt,name=value,proto3" json:"value,omitempty"` // 通用值，例如 "1","true","12.3"
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendCommandReq) Reset() {
+	*x = SendCommandReq{}
+	mi := &file_ieccaller_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendCommandReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendCommandReq) ProtoMessage() {}
+
+func (x *SendCommandReq) ProtoReflect() protoreflect.Message {
+	mi := &file_ieccaller_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendCommandReq.ProtoReflect.Descriptor instead.
+func (*SendCommandReq) Descriptor() ([]byte, []int) {
+	return file_ieccaller_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *SendCommandReq) GetHost() string {
+	if x != nil {
+		return x.Host
+	}
+	return ""
+}
+
+func (x *SendCommandReq) GetPort() int32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
+}
+
+func (x *SendCommandReq) GetCoa() int32 {
+	if x != nil {
+		return x.Coa
+	}
+	return 0
+}
+
+func (x *SendCommandReq) GetTypeId() int32 {
+	if x != nil {
+		return x.TypeId
+	}
+	return 0
+}
+
+func (x *SendCommandReq) GetIoa() int32 {
+	if x != nil {
+		return x.Ioa
+	}
+	return 0
+}
+
+func (x *SendCommandReq) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type SendCommandRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendCommandRes) Reset() {
+	*x = SendCommandRes{}
+	mi := &file_ieccaller_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendCommandRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendCommandRes) ProtoMessage() {}
+
+func (x *SendCommandRes) ProtoReflect() protoreflect.Message {
+	mi := &file_ieccaller_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendCommandRes.ProtoReflect.Descriptor instead.
+func (*SendCommandRes) Descriptor() ([]byte, []int) {
+	return file_ieccaller_proto_rawDescGZIP(), []int{11}
+}
+
 var File_ieccaller_proto protoreflect.FileDescriptor
 
 const file_ieccaller_proto_rawDesc = "" +
@@ -530,13 +650,22 @@ const file_ieccaller_proto_rawDesc = "" +
 	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
 	"\x04port\x18\x02 \x01(\x05R\x04port\x12\x10\n" +
 	"\x03coa\x18\x03 \x01(\x05R\x03coa\" \n" +
-	"\x1eSendCounterInterrogationCmdRes2\x92\x03\n" +
+	"\x1eSendCounterInterrogationCmdRes\"\x8a\x01\n" +
+	"\x0eSendCommandReq\x12\x12\n" +
+	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
+	"\x04port\x18\x02 \x01(\x05R\x04port\x12\x10\n" +
+	"\x03coa\x18\x03 \x01(\x05R\x03coa\x12\x16\n" +
+	"\x06typeId\x18\x04 \x01(\x05R\x06typeId\x12\x10\n" +
+	"\x03ioa\x18\x05 \x01(\x05R\x03ioa\x12\x14\n" +
+	"\x05value\x18\x06 \x01(\tR\x05value\"\x10\n" +
+	"\x0eSendCommandRes2\xd7\x03\n" +
 	"\tIecCaller\x12&\n" +
 	"\x04Ping\x12\x0e.ieccaller.Req\x1a\x0e.ieccaller.Res\x12C\n" +
 	"\vSendTestCmd\x12\x19.ieccaller.SendTestCmdReq\x1a\x19.ieccaller.SendTestCmdRes\x12C\n" +
 	"\vSendReadCmd\x12\x19.ieccaller.SendReadCmdReq\x1a\x19.ieccaller.SendReadCmdRes\x12^\n" +
 	"\x14SendInterrogationCmd\x12\".ieccaller.SendInterrogationCmdReq\x1a\".ieccaller.SendInterrogationCmdRes\x12s\n" +
-	"\x1bSendCounterInterrogationCmd\x12).ieccaller.SendCounterInterrogationCmdReq\x1a).ieccaller.SendCounterInterrogationCmdResB;\n" +
+	"\x1bSendCounterInterrogationCmd\x12).ieccaller.SendCounterInterrogationCmdReq\x1a).ieccaller.SendCounterInterrogationCmdRes\x12C\n" +
+	"\vSendCommand\x12\x19.ieccaller.SendCommandReq\x1a\x19.ieccaller.SendCommandResB;\n" +
 	"\x1acom.github.iec.caller.grpcB\x0eIecCallerProtoP\x01Z\v./ieccallerb\x06proto3"
 
 var (
@@ -551,7 +680,7 @@ func file_ieccaller_proto_rawDescGZIP() []byte {
 	return file_ieccaller_proto_rawDescData
 }
 
-var file_ieccaller_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_ieccaller_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_ieccaller_proto_goTypes = []any{
 	(*Req)(nil),                            // 0: ieccaller.Req
 	(*Res)(nil),                            // 1: ieccaller.Res
@@ -563,23 +692,27 @@ var file_ieccaller_proto_goTypes = []any{
 	(*SendInterrogationCmdRes)(nil),        // 7: ieccaller.SendInterrogationCmdRes
 	(*SendCounterInterrogationCmdReq)(nil), // 8: ieccaller.SendCounterInterrogationCmdReq
 	(*SendCounterInterrogationCmdRes)(nil), // 9: ieccaller.SendCounterInterrogationCmdRes
+	(*SendCommandReq)(nil),                 // 10: ieccaller.SendCommandReq
+	(*SendCommandRes)(nil),                 // 11: ieccaller.SendCommandRes
 }
 var file_ieccaller_proto_depIdxs = []int32{
-	0, // 0: ieccaller.IecCaller.Ping:input_type -> ieccaller.Req
-	2, // 1: ieccaller.IecCaller.SendTestCmd:input_type -> ieccaller.SendTestCmdReq
-	4, // 2: ieccaller.IecCaller.SendReadCmd:input_type -> ieccaller.SendReadCmdReq
-	6, // 3: ieccaller.IecCaller.SendInterrogationCmd:input_type -> ieccaller.SendInterrogationCmdReq
-	8, // 4: ieccaller.IecCaller.SendCounterInterrogationCmd:input_type -> ieccaller.SendCounterInterrogationCmdReq
-	1, // 5: ieccaller.IecCaller.Ping:output_type -> ieccaller.Res
-	3, // 6: ieccaller.IecCaller.SendTestCmd:output_type -> ieccaller.SendTestCmdRes
-	5, // 7: ieccaller.IecCaller.SendReadCmd:output_type -> ieccaller.SendReadCmdRes
-	7, // 8: ieccaller.IecCaller.SendInterrogationCmd:output_type -> ieccaller.SendInterrogationCmdRes
-	9, // 9: ieccaller.IecCaller.SendCounterInterrogationCmd:output_type -> ieccaller.SendCounterInterrogationCmdRes
-	5, // [5:10] is the sub-list for method output_type
-	0, // [0:5] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0,  // 0: ieccaller.IecCaller.Ping:input_type -> ieccaller.Req
+	2,  // 1: ieccaller.IecCaller.SendTestCmd:input_type -> ieccaller.SendTestCmdReq
+	4,  // 2: ieccaller.IecCaller.SendReadCmd:input_type -> ieccaller.SendReadCmdReq
+	6,  // 3: ieccaller.IecCaller.SendInterrogationCmd:input_type -> ieccaller.SendInterrogationCmdReq
+	8,  // 4: ieccaller.IecCaller.SendCounterInterrogationCmd:input_type -> ieccaller.SendCounterInterrogationCmdReq
+	10, // 5: ieccaller.IecCaller.SendCommand:input_type -> ieccaller.SendCommandReq
+	1,  // 6: ieccaller.IecCaller.Ping:output_type -> ieccaller.Res
+	3,  // 7: ieccaller.IecCaller.SendTestCmd:output_type -> ieccaller.SendTestCmdRes
+	5,  // 8: ieccaller.IecCaller.SendReadCmd:output_type -> ieccaller.SendReadCmdRes
+	7,  // 9: ieccaller.IecCaller.SendInterrogationCmd:output_type -> ieccaller.SendInterrogationCmdRes
+	9,  // 10: ieccaller.IecCaller.SendCounterInterrogationCmd:output_type -> ieccaller.SendCounterInterrogationCmdRes
+	11, // 11: ieccaller.IecCaller.SendCommand:output_type -> ieccaller.SendCommandRes
+	6,  // [6:12] is the sub-list for method output_type
+	0,  // [0:6] is the sub-list for method input_type
+	0,  // [0:0] is the sub-list for extension type_name
+	0,  // [0:0] is the sub-list for extension extendee
+	0,  // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_ieccaller_proto_init() }
@@ -593,7 +726,7 @@ func file_ieccaller_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ieccaller_proto_rawDesc), len(file_ieccaller_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
