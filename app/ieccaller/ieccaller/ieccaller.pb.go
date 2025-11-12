@@ -112,8 +112,8 @@ func (x *Res) GetPong() string {
 type SendTestCmdReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Host          string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
-	Port          int32                  `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
-	Coa           int32                  `protobuf:"varint,3,opt,name=coa,proto3" json:"coa,omitempty"`
+	Port          uint32                 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	Coa           uint32                 `protobuf:"varint,3,opt,name=coa,proto3" json:"coa,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -155,14 +155,14 @@ func (x *SendTestCmdReq) GetHost() string {
 	return ""
 }
 
-func (x *SendTestCmdReq) GetPort() int32 {
+func (x *SendTestCmdReq) GetPort() uint32 {
 	if x != nil {
 		return x.Port
 	}
 	return 0
 }
 
-func (x *SendTestCmdReq) GetCoa() int32 {
+func (x *SendTestCmdReq) GetCoa() uint32 {
 	if x != nil {
 		return x.Coa
 	}
@@ -208,9 +208,8 @@ func (*SendTestCmdRes) Descriptor() ([]byte, []int) {
 type SendReadCmdReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Host          string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
-	Port          int32                  `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
-	Coa           int32                  `protobuf:"varint,3,opt,name=coa,proto3" json:"coa,omitempty"`
-	Ioa           int32                  `protobuf:"varint,4,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	Port          uint32                 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	Coa           uint32                 `protobuf:"varint,3,opt,name=coa,proto3" json:"coa,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -252,23 +251,16 @@ func (x *SendReadCmdReq) GetHost() string {
 	return ""
 }
 
-func (x *SendReadCmdReq) GetPort() int32 {
+func (x *SendReadCmdReq) GetPort() uint32 {
 	if x != nil {
 		return x.Port
 	}
 	return 0
 }
 
-func (x *SendReadCmdReq) GetCoa() int32 {
+func (x *SendReadCmdReq) GetCoa() uint32 {
 	if x != nil {
 		return x.Coa
-	}
-	return 0
-}
-
-func (x *SendReadCmdReq) GetIoa() int32 {
-	if x != nil {
-		return x.Ioa
 	}
 	return 0
 }
@@ -408,8 +400,8 @@ func (*SendInterrogationCmdRes) Descriptor() ([]byte, []int) {
 type SendCounterInterrogationCmdReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Host          string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
-	Port          int32                  `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
-	Coa           int32                  `protobuf:"varint,3,opt,name=coa,proto3" json:"coa,omitempty"`
+	Port          uint32                 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	Coa           uint32                 `protobuf:"varint,3,opt,name=coa,proto3" json:"coa,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -451,14 +443,14 @@ func (x *SendCounterInterrogationCmdReq) GetHost() string {
 	return ""
 }
 
-func (x *SendCounterInterrogationCmdReq) GetPort() int32 {
+func (x *SendCounterInterrogationCmdReq) GetPort() uint32 {
 	if x != nil {
 		return x.Port
 	}
 	return 0
 }
 
-func (x *SendCounterInterrogationCmdReq) GetCoa() int32 {
+func (x *SendCounterInterrogationCmdReq) GetCoa() uint32 {
 	if x != nil {
 		return x.Coa
 	}
@@ -504,10 +496,10 @@ func (*SendCounterInterrogationCmdRes) Descriptor() ([]byte, []int) {
 type SendCommandReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Host          string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
-	Port          int32                  `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
-	Coa           int32                  `protobuf:"varint,3,opt,name=coa,proto3" json:"coa,omitempty"`
-	TypeId        int32                  `protobuf:"varint,4,opt,name=typeId,proto3" json:"typeId,omitempty"` // 指令类型，例如 45=C_SC_NA_1, 46=C_DC_NA_1 ...
-	Ioa           int32                  `protobuf:"varint,5,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	Port          uint32                 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	Coa           uint32                 `protobuf:"varint,3,opt,name=coa,proto3" json:"coa,omitempty"`
+	TypeId        uint32                 `protobuf:"varint,4,opt,name=typeId,proto3" json:"typeId,omitempty"` // 指令类型，例如 45=C_SC_NA_1, 46=C_DC_NA_1 ...
+	Ioa           uint32                 `protobuf:"varint,5,opt,name=ioa,proto3" json:"ioa,omitempty"`
 	Value         string                 `protobuf:"bytes,6,opt,name=value,proto3" json:"value,omitempty"` // 通用值，例如 "1","true","12.3"
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -550,28 +542,28 @@ func (x *SendCommandReq) GetHost() string {
 	return ""
 }
 
-func (x *SendCommandReq) GetPort() int32 {
+func (x *SendCommandReq) GetPort() uint32 {
 	if x != nil {
 		return x.Port
 	}
 	return 0
 }
 
-func (x *SendCommandReq) GetCoa() int32 {
+func (x *SendCommandReq) GetCoa() uint32 {
 	if x != nil {
 		return x.Coa
 	}
 	return 0
 }
 
-func (x *SendCommandReq) GetTypeId() int32 {
+func (x *SendCommandReq) GetTypeId() uint32 {
 	if x != nil {
 		return x.TypeId
 	}
 	return 0
 }
 
-func (x *SendCommandReq) GetIoa() int32 {
+func (x *SendCommandReq) GetIoa() uint32 {
 	if x != nil {
 		return x.Ioa
 	}
@@ -632,14 +624,13 @@ const file_ieccaller_proto_rawDesc = "" +
 	"\x04pong\x18\x01 \x01(\tR\x04pong\"J\n" +
 	"\x0eSendTestCmdReq\x12\x12\n" +
 	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
-	"\x04port\x18\x02 \x01(\x05R\x04port\x12\x10\n" +
-	"\x03coa\x18\x03 \x01(\x05R\x03coa\"\x10\n" +
-	"\x0eSendTestCmdRes\"\\\n" +
+	"\x04port\x18\x02 \x01(\rR\x04port\x12\x10\n" +
+	"\x03coa\x18\x03 \x01(\rR\x03coa\"\x10\n" +
+	"\x0eSendTestCmdRes\"J\n" +
 	"\x0eSendReadCmdReq\x12\x12\n" +
 	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
-	"\x04port\x18\x02 \x01(\x05R\x04port\x12\x10\n" +
-	"\x03coa\x18\x03 \x01(\x05R\x03coa\x12\x10\n" +
-	"\x03ioa\x18\x04 \x01(\x05R\x03ioa\"\x10\n" +
+	"\x04port\x18\x02 \x01(\rR\x04port\x12\x10\n" +
+	"\x03coa\x18\x03 \x01(\rR\x03coa\"\x10\n" +
 	"\x0eSendReadCmdRes\"S\n" +
 	"\x17SendInterrogationCmdReq\x12\x12\n" +
 	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
@@ -648,15 +639,15 @@ const file_ieccaller_proto_rawDesc = "" +
 	"\x17SendInterrogationCmdRes\"Z\n" +
 	"\x1eSendCounterInterrogationCmdReq\x12\x12\n" +
 	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
-	"\x04port\x18\x02 \x01(\x05R\x04port\x12\x10\n" +
-	"\x03coa\x18\x03 \x01(\x05R\x03coa\" \n" +
+	"\x04port\x18\x02 \x01(\rR\x04port\x12\x10\n" +
+	"\x03coa\x18\x03 \x01(\rR\x03coa\" \n" +
 	"\x1eSendCounterInterrogationCmdRes\"\x8a\x01\n" +
 	"\x0eSendCommandReq\x12\x12\n" +
 	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
-	"\x04port\x18\x02 \x01(\x05R\x04port\x12\x10\n" +
-	"\x03coa\x18\x03 \x01(\x05R\x03coa\x12\x16\n" +
-	"\x06typeId\x18\x04 \x01(\x05R\x06typeId\x12\x10\n" +
-	"\x03ioa\x18\x05 \x01(\x05R\x03ioa\x12\x14\n" +
+	"\x04port\x18\x02 \x01(\rR\x04port\x12\x10\n" +
+	"\x03coa\x18\x03 \x01(\rR\x03coa\x12\x16\n" +
+	"\x06typeId\x18\x04 \x01(\rR\x06typeId\x12\x10\n" +
+	"\x03ioa\x18\x05 \x01(\rR\x03ioa\x12\x14\n" +
 	"\x05value\x18\x06 \x01(\tR\x05value\"\x10\n" +
 	"\x0eSendCommandRes2\xd7\x03\n" +
 	"\tIecCaller\x12&\n" +

@@ -16,8 +16,8 @@ message Res {
 
 message SendTestCmdReq {
   string host = 1;
-  int32 port = 2;
-  int32 coa = 3;
+  uint32 port = 2;
+  uint32 coa = 3;
 }
 
 message SendTestCmdRes {
@@ -25,9 +25,8 @@ message SendTestCmdRes {
 
 message SendReadCmdReq {
   string host = 1;
-  int32 port = 2;
-  int32 coa = 3;
-  int32 ioa = 4;
+  uint32 port = 2;
+  uint32 coa = 3;
 }
 
 message SendReadCmdRes {
@@ -44,8 +43,8 @@ message SendInterrogationCmdRes {
 
 message SendCounterInterrogationCmdReq {
   string host = 1;
-  int32 port = 2;
-  int32 coa = 3;
+  uint32 port = 2;
+  uint32 coa = 3;
 }
 
 message SendCounterInterrogationCmdRes {
@@ -53,10 +52,10 @@ message SendCounterInterrogationCmdRes {
 
 message SendCommandReq {
   string host = 1;
-  int32 port = 2;
-  int32 coa = 3;
-  int32 typeId = 4; // 指令类型，例如 45=C_SC_NA_1, 46=C_DC_NA_1 ...
-  int32 ioa = 5;
+  uint32 port = 2;
+  uint32 coa = 3;
+  uint32 typeId = 4; // 指令类型，例如 45=C_SC_NA_1, 46=C_DC_NA_1 ...
+  uint32 ioa = 5;
   string value = 6; // 通用值，例如 "1","true","12.3"
 }
 
