@@ -29,6 +29,11 @@ func NewGenerateFenceCellsLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 
 // 一次性生成围栏 cells（小围栏）
 func (l *GenerateFenceCellsLogic) GenerateFenceCells(in *geo.GenFenceCellsReq) (*geo.GenFenceCellsRes, error) {
+	// 默认精度 7
+	precision := int(in.Precision)
+	if precision <= 0 {
+		precision = 7
+	}
 	// 1. polygon 转 orb.Polygon
 	var polygon orb.Polygon
 	if len(in.Points) > 0 {
@@ -57,7 +62,7 @@ func (l *GenerateFenceCellsLogic) GenerateFenceCells(in *geo.GenFenceCellsReq) (
 	// 4. 遍历 bbox 生成 candidate geohash
 	for lat := latMin; lat <= latMax; lat += latStep {
 		for lon := lonMin; lon <= lonMax; lon += lonStep {
-			hash := geohash.EncodeWithPrecision(lat, lon, uint(in.Precision))
+			hash := geohash.EncodeWithPrecision(lat, lon, uint(precision))
 			// 5. 精过滤：格子中心点在 polygon 内
 			cLat, cLon := geohash.DecodeCenter(hash)
 			if planar.PolygonContains(polygon, orb.Point{cLon, cLat}) {
