@@ -62,6 +62,8 @@ func (l *GenerateFenceCellsLogic) GenerateFenceCells(in *geo.GenFenceCellsReq) (
 	// 计算步长（粗略，10 等分 bbox）
 	geohashSet := make(map[string]struct{})
 	latStep, lonStep := geohashCellSize(precision, (latMin+latMax)/2)
+	//latStep := (latMax - latMin) / 10.0
+	//lonStep := (lonMax - lonMin) / 10.0
 	// 遍历 bbox 生成 candidate geohash
 	for lat := latMin; lat <= latMax; lat += latStep {
 		for lon := lonMin; lon <= lonMax; lon += lonStep {
