@@ -57,7 +57,7 @@ func (l *GenerateFenceCellsLogic) GenerateFenceCells(in *geo.GenFenceCellsReq) (
 	// 4. 遍历 bbox 生成 candidate geohash
 	for lat := latMin; lat <= latMax; lat += latStep {
 		for lon := lonMin; lon <= lonMax; lon += lonStep {
-			hash := geohash.EncodeWithPrecision(lat, lon, 7)
+			hash := geohash.EncodeWithPrecision(lat, lon, uint(in.Precision))
 			// 5. 精过滤：格子中心点在 polygon 内
 			cLat, cLon := geohash.DecodeCenter(hash)
 			if planar.PolygonContains(polygon, orb.Point{cLon, cLat}) {
