@@ -27,7 +27,7 @@ func NewEncodeGeoHashLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Enc
 
 // 计算 geohash
 func (l *EncodeGeoHashLogic) EncodeGeoHash(in *geo.EncodeGeoHashReq) (*geo.EncodeGeoHashRes, error) {
-	if in == nil || in.Point == nil {
+	if in.Point == nil {
 		return nil, errors.New("参数错误")
 	}
 	// 默认精度 7

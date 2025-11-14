@@ -27,7 +27,7 @@ func NewDecodeGeoHashLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Dec
 
 // 解码 geohash -> 经纬度
 func (l *DecodeGeoHashLogic) DecodeGeoHash(in *geo.DecodeGeoHashReq) (*geo.DecodeGeoHashRes, error) {
-	if in == nil || in.Geohash == "" {
+	if in.Geohash == "" {
 		return nil, errors.New("参数错误")
 	}
 	// 中心点
