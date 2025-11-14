@@ -13,6 +13,8 @@ service Geo {
   rpc EncodeGeoHash (EncodeGeoHashReq) returns (EncodeGeoHashRes);
   // 解码 geohash -> 经纬度
   rpc DecodeGeoHash (DecodeGeoHashReq) returns (DecodeGeoHashRes);
+  // 一次性生成围栏 cells（小围栏）
+  rpc GenerateFenceCells (GenFenceCellsReq) returns (GenFenceCellsRes);
   // 点是否命中电子围栏（单个）
   rpc PointInFence (PointInFenceReq) returns (PointInFenceRes);
   // 点是否命中电子围栏（多个围栏）
@@ -55,6 +57,17 @@ message DecodeGeoHashRes {
   double latMax = 3; // 最大纬度
   double lonMin = 4; // 最小经度
   double lonMax = 5; // 最大经度
+}
+
+message GenFenceCellsReq {
+  string fenceId = 1;          // 可选：已有 fence ID
+  repeated Point points = 2;   // polygon 顶点（当 fenceId 不存在时直接传 polygon）
+  uint32 precision = 3;        // geohash 精度，默认 7
+  bool includeNeighbors = 4;   // 是否扩展周边格子（默认 false）
+}
+
+message GenFenceCellsRes {
+  repeated string geohashes = 1; // geohash 列表（去重后的前缀）
 }
 
 message Fence {
