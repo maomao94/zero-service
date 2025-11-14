@@ -10,6 +10,14 @@ Log:
   #  Mode: file
   Path: /opt/logs/bridgemqtt
   Level: info
+NacosConfig:
+  IsRegister: false
+  Host: 127.0.0.1
+  Port: 8848
+  Username: nacos
+  PassWord: nacos
+  NamespaceId: public
+  ServiceName: bridge-mqtt
 MqttConfig:
   Broker:
     - "tcp://localhost:1883"
