@@ -27,3 +27,45 @@ func (s *GeoServer) Ping(ctx context.Context, in *geo.Req) (*geo.Res, error) {
 	l := logic.NewPingLogic(ctx, s.svcCtx)
 	return l.Ping(in)
 }
+
+// 计算 geohash
+func (s *GeoServer) EncodeGeoHash(ctx context.Context, in *geo.EncodeGeoHashReq) (*geo.EncodeGeoHashRes, error) {
+	l := logic.NewEncodeGeoHashLogic(ctx, s.svcCtx)
+	return l.EncodeGeoHash(in)
+}
+
+// 解码 geohash -> 经纬度
+func (s *GeoServer) DecodeGeoHash(ctx context.Context, in *geo.DecodeGeoHashReq) (*geo.DecodeGeoHashRes, error) {
+	l := logic.NewDecodeGeoHashLogic(ctx, s.svcCtx)
+	return l.DecodeGeoHash(in)
+}
+
+// 一次性生成围栏 cells（小围栏）
+func (s *GeoServer) GenerateFenceCells(ctx context.Context, in *geo.GenFenceCellsReq) (*geo.GenFenceCellsRes, error) {
+	l := logic.NewGenerateFenceCellsLogic(ctx, s.svcCtx)
+	return l.GenerateFenceCells(in)
+}
+
+// 点是否命中电子围栏（单个）
+func (s *GeoServer) PointInFence(ctx context.Context, in *geo.PointInFenceReq) (*geo.PointInFenceRes, error) {
+	l := logic.NewPointInFenceLogic(ctx, s.svcCtx)
+	return l.PointInFence(in)
+}
+
+// 点是否命中电子围栏（多个围栏）
+func (s *GeoServer) PointInFences(ctx context.Context, in *geo.PointInFencesReq) (*geo.PointInFencesRes, error) {
+	l := logic.NewPointInFencesLogic(ctx, s.svcCtx)
+	return l.PointInFences(in)
+}
+
+// 计算两个点之间的距离（米）
+func (s *GeoServer) Distance(ctx context.Context, in *geo.DistanceReq) (*geo.DistanceRes, error) {
+	l := logic.NewDistanceLogic(ctx, s.svcCtx)
+	return l.Distance(in)
+}
+
+// 获取某点附近多少 km 的围栏（粗过滤）
+func (s *GeoServer) NearbyFences(ctx context.Context, in *geo.NearbyFencesReq) (*geo.NearbyFencesRes, error) {
+	l := logic.NewNearbyFencesLogic(ctx, s.svcCtx)
+	return l.NearbyFences(in)
+}

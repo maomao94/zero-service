@@ -19,7 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Geo_Ping_FullMethodName = "/geo.Geo/Ping"
+	Geo_Ping_FullMethodName               = "/geo.Geo/Ping"
+	Geo_EncodeGeoHash_FullMethodName      = "/geo.Geo/EncodeGeoHash"
+	Geo_DecodeGeoHash_FullMethodName      = "/geo.Geo/DecodeGeoHash"
+	Geo_GenerateFenceCells_FullMethodName = "/geo.Geo/GenerateFenceCells"
+	Geo_PointInFence_FullMethodName       = "/geo.Geo/PointInFence"
+	Geo_PointInFences_FullMethodName      = "/geo.Geo/PointInFences"
+	Geo_Distance_FullMethodName           = "/geo.Geo/Distance"
+	Geo_NearbyFences_FullMethodName       = "/geo.Geo/NearbyFences"
 )
 
 // GeoClient is the client API for Geo service.
@@ -29,6 +36,20 @@ const (
 // GEO 相关服务
 type GeoClient interface {
 	Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error)
+	// 计算 geohash
+	EncodeGeoHash(ctx context.Context, in *EncodeGeoHashReq, opts ...grpc.CallOption) (*EncodeGeoHashRes, error)
+	// 解码 geohash -> 经纬度
+	DecodeGeoHash(ctx context.Context, in *DecodeGeoHashReq, opts ...grpc.CallOption) (*DecodeGeoHashRes, error)
+	// 一次性生成围栏 cells（小围栏）
+	GenerateFenceCells(ctx context.Context, in *GenFenceCellsReq, opts ...grpc.CallOption) (*GenFenceCellsRes, error)
+	// 点是否命中电子围栏（单个）
+	PointInFence(ctx context.Context, in *PointInFenceReq, opts ...grpc.CallOption) (*PointInFenceRes, error)
+	// 点是否命中电子围栏（多个围栏）
+	PointInFences(ctx context.Context, in *PointInFencesReq, opts ...grpc.CallOption) (*PointInFencesRes, error)
+	// 计算两个点之间的距离（米）
+	Distance(ctx context.Context, in *DistanceReq, opts ...grpc.CallOption) (*DistanceRes, error)
+	// 获取某点附近多少 km 的围栏（粗过滤）
+	NearbyFences(ctx context.Context, in *NearbyFencesReq, opts ...grpc.CallOption) (*NearbyFencesRes, error)
 }
 
 type geoClient struct {
@@ -49,6 +70,76 @@ func (c *geoClient) Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) 
 	return out, nil
 }
 
+func (c *geoClient) EncodeGeoHash(ctx context.Context, in *EncodeGeoHashReq, opts ...grpc.CallOption) (*EncodeGeoHashRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EncodeGeoHashRes)
+	err := c.cc.Invoke(ctx, Geo_EncodeGeoHash_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *geoClient) DecodeGeoHash(ctx context.Context, in *DecodeGeoHashReq, opts ...grpc.CallOption) (*DecodeGeoHashRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DecodeGeoHashRes)
+	err := c.cc.Invoke(ctx, Geo_DecodeGeoHash_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *geoClient) GenerateFenceCells(ctx context.Context, in *GenFenceCellsReq, opts ...grpc.CallOption) (*GenFenceCellsRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenFenceCellsRes)
+	err := c.cc.Invoke(ctx, Geo_GenerateFenceCells_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *geoClient) PointInFence(ctx context.Context, in *PointInFenceReq, opts ...grpc.CallOption) (*PointInFenceRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PointInFenceRes)
+	err := c.cc.Invoke(ctx, Geo_PointInFence_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *geoClient) PointInFences(ctx context.Context, in *PointInFencesReq, opts ...grpc.CallOption) (*PointInFencesRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PointInFencesRes)
+	err := c.cc.Invoke(ctx, Geo_PointInFences_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *geoClient) Distance(ctx context.Context, in *DistanceReq, opts ...grpc.CallOption) (*DistanceRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DistanceRes)
+	err := c.cc.Invoke(ctx, Geo_Distance_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *geoClient) NearbyFences(ctx context.Context, in *NearbyFencesReq, opts ...grpc.CallOption) (*NearbyFencesRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(NearbyFencesRes)
+	err := c.cc.Invoke(ctx, Geo_NearbyFences_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GeoServer is the server API for Geo service.
 // All implementations must embed UnimplementedGeoServer
 // for forward compatibility.
@@ -56,6 +147,20 @@ func (c *geoClient) Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) 
 // GEO 相关服务
 type GeoServer interface {
 	Ping(context.Context, *Req) (*Res, error)
+	// 计算 geohash
+	EncodeGeoHash(context.Context, *EncodeGeoHashReq) (*EncodeGeoHashRes, error)
+	// 解码 geohash -> 经纬度
+	DecodeGeoHash(context.Context, *DecodeGeoHashReq) (*DecodeGeoHashRes, error)
+	// 一次性生成围栏 cells（小围栏）
+	GenerateFenceCells(context.Context, *GenFenceCellsReq) (*GenFenceCellsRes, error)
+	// 点是否命中电子围栏（单个）
+	PointInFence(context.Context, *PointInFenceReq) (*PointInFenceRes, error)
+	// 点是否命中电子围栏（多个围栏）
+	PointInFences(context.Context, *PointInFencesReq) (*PointInFencesRes, error)
+	// 计算两个点之间的距离（米）
+	Distance(context.Context, *DistanceReq) (*DistanceRes, error)
+	// 获取某点附近多少 km 的围栏（粗过滤）
+	NearbyFences(context.Context, *NearbyFencesReq) (*NearbyFencesRes, error)
 	mustEmbedUnimplementedGeoServer()
 }
 
@@ -68,6 +173,27 @@ type UnimplementedGeoServer struct{}
 
 func (UnimplementedGeoServer) Ping(context.Context, *Req) (*Res, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
+}
+func (UnimplementedGeoServer) EncodeGeoHash(context.Context, *EncodeGeoHashReq) (*EncodeGeoHashRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EncodeGeoHash not implemented")
+}
+func (UnimplementedGeoServer) DecodeGeoHash(context.Context, *DecodeGeoHashReq) (*DecodeGeoHashRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DecodeGeoHash not implemented")
+}
+func (UnimplementedGeoServer) GenerateFenceCells(context.Context, *GenFenceCellsReq) (*GenFenceCellsRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GenerateFenceCells not implemented")
+}
+func (UnimplementedGeoServer) PointInFence(context.Context, *PointInFenceReq) (*PointInFenceRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PointInFence not implemented")
+}
+func (UnimplementedGeoServer) PointInFences(context.Context, *PointInFencesReq) (*PointInFencesRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PointInFences not implemented")
+}
+func (UnimplementedGeoServer) Distance(context.Context, *DistanceReq) (*DistanceRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Distance not implemented")
+}
+func (UnimplementedGeoServer) NearbyFences(context.Context, *NearbyFencesReq) (*NearbyFencesRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NearbyFences not implemented")
 }
 func (UnimplementedGeoServer) mustEmbedUnimplementedGeoServer() {}
 func (UnimplementedGeoServer) testEmbeddedByValue()             {}
@@ -108,6 +234,132 @@ func _Geo_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Geo_EncodeGeoHash_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EncodeGeoHashReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GeoServer).EncodeGeoHash(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Geo_EncodeGeoHash_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GeoServer).EncodeGeoHash(ctx, req.(*EncodeGeoHashReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Geo_DecodeGeoHash_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DecodeGeoHashReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GeoServer).DecodeGeoHash(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Geo_DecodeGeoHash_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GeoServer).DecodeGeoHash(ctx, req.(*DecodeGeoHashReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Geo_GenerateFenceCells_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GenFenceCellsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GeoServer).GenerateFenceCells(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Geo_GenerateFenceCells_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GeoServer).GenerateFenceCells(ctx, req.(*GenFenceCellsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Geo_PointInFence_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PointInFenceReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GeoServer).PointInFence(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Geo_PointInFence_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GeoServer).PointInFence(ctx, req.(*PointInFenceReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Geo_PointInFences_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PointInFencesReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GeoServer).PointInFences(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Geo_PointInFences_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GeoServer).PointInFences(ctx, req.(*PointInFencesReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Geo_Distance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DistanceReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GeoServer).Distance(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Geo_Distance_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GeoServer).Distance(ctx, req.(*DistanceReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Geo_NearbyFences_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NearbyFencesReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GeoServer).NearbyFences(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Geo_NearbyFences_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GeoServer).NearbyFences(ctx, req.(*NearbyFencesReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Geo_ServiceDesc is the grpc.ServiceDesc for Geo service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -118,6 +370,34 @@ var Geo_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Ping",
 			Handler:    _Geo_Ping_Handler,
+		},
+		{
+			MethodName: "EncodeGeoHash",
+			Handler:    _Geo_EncodeGeoHash_Handler,
+		},
+		{
+			MethodName: "DecodeGeoHash",
+			Handler:    _Geo_DecodeGeoHash_Handler,
+		},
+		{
+			MethodName: "GenerateFenceCells",
+			Handler:    _Geo_GenerateFenceCells_Handler,
+		},
+		{
+			MethodName: "PointInFence",
+			Handler:    _Geo_PointInFence_Handler,
+		},
+		{
+			MethodName: "PointInFences",
+			Handler:    _Geo_PointInFences_Handler,
+		},
+		{
+			MethodName: "Distance",
+			Handler:    _Geo_Distance_Handler,
+		},
+		{
+			MethodName: "NearbyFences",
+			Handler:    _Geo_NearbyFences_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

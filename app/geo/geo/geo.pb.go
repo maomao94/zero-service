@@ -109,6 +109,822 @@ func (x *Res) GetPong() string {
 	return ""
 }
 
+type Point struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Lat           float64                `protobuf:"fixed64,1,opt,name=lat,proto3" json:"lat,omitempty"` // 纬度
+	Lon           float64                `protobuf:"fixed64,2,opt,name=lon,proto3" json:"lon,omitempty"` // 经度
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Point) Reset() {
+	*x = Point{}
+	mi := &file_geo_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Point) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Point) ProtoMessage() {}
+
+func (x *Point) ProtoReflect() protoreflect.Message {
+	mi := &file_geo_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Point.ProtoReflect.Descriptor instead.
+func (*Point) Descriptor() ([]byte, []int) {
+	return file_geo_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *Point) GetLat() float64 {
+	if x != nil {
+		return x.Lat
+	}
+	return 0
+}
+
+func (x *Point) GetLon() float64 {
+	if x != nil {
+		return x.Lon
+	}
+	return 0
+}
+
+type EncodeGeoHashReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`
+	Precision     uint32                 `protobuf:"varint,2,opt,name=precision,proto3" json:"precision,omitempty"` // 默认 7
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EncodeGeoHashReq) Reset() {
+	*x = EncodeGeoHashReq{}
+	mi := &file_geo_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EncodeGeoHashReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EncodeGeoHashReq) ProtoMessage() {}
+
+func (x *EncodeGeoHashReq) ProtoReflect() protoreflect.Message {
+	mi := &file_geo_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EncodeGeoHashReq.ProtoReflect.Descriptor instead.
+func (*EncodeGeoHashReq) Descriptor() ([]byte, []int) {
+	return file_geo_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *EncodeGeoHashReq) GetPoint() *Point {
+	if x != nil {
+		return x.Point
+	}
+	return nil
+}
+
+func (x *EncodeGeoHashReq) GetPrecision() uint32 {
+	if x != nil {
+		return x.Precision
+	}
+	return 0
+}
+
+type EncodeGeoHashRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Geohash       string                 `protobuf:"bytes,1,opt,name=geohash,proto3" json:"geohash,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EncodeGeoHashRes) Reset() {
+	*x = EncodeGeoHashRes{}
+	mi := &file_geo_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EncodeGeoHashRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EncodeGeoHashRes) ProtoMessage() {}
+
+func (x *EncodeGeoHashRes) ProtoReflect() protoreflect.Message {
+	mi := &file_geo_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EncodeGeoHashRes.ProtoReflect.Descriptor instead.
+func (*EncodeGeoHashRes) Descriptor() ([]byte, []int) {
+	return file_geo_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *EncodeGeoHashRes) GetGeohash() string {
+	if x != nil {
+		return x.Geohash
+	}
+	return ""
+}
+
+type DecodeGeoHashReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Geohash       string                 `protobuf:"bytes,1,opt,name=geohash,proto3" json:"geohash,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DecodeGeoHashReq) Reset() {
+	*x = DecodeGeoHashReq{}
+	mi := &file_geo_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DecodeGeoHashReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DecodeGeoHashReq) ProtoMessage() {}
+
+func (x *DecodeGeoHashReq) ProtoReflect() protoreflect.Message {
+	mi := &file_geo_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DecodeGeoHashReq.ProtoReflect.Descriptor instead.
+func (*DecodeGeoHashReq) Descriptor() ([]byte, []int) {
+	return file_geo_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *DecodeGeoHashReq) GetGeohash() string {
+	if x != nil {
+		return x.Geohash
+	}
+	return ""
+}
+
+type DecodeGeoHashRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`     // 中心点
+	LatMin        float64                `protobuf:"fixed64,2,opt,name=latMin,proto3" json:"latMin,omitempty"` // 最小纬度
+	LatMax        float64                `protobuf:"fixed64,3,opt,name=latMax,proto3" json:"latMax,omitempty"` // 最大纬度
+	LonMin        float64                `protobuf:"fixed64,4,opt,name=lonMin,proto3" json:"lonMin,omitempty"` // 最小经度
+	LonMax        float64                `protobuf:"fixed64,5,opt,name=lonMax,proto3" json:"lonMax,omitempty"` // 最大经度
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DecodeGeoHashRes) Reset() {
+	*x = DecodeGeoHashRes{}
+	mi := &file_geo_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DecodeGeoHashRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DecodeGeoHashRes) ProtoMessage() {}
+
+func (x *DecodeGeoHashRes) ProtoReflect() protoreflect.Message {
+	mi := &file_geo_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DecodeGeoHashRes.ProtoReflect.Descriptor instead.
+func (*DecodeGeoHashRes) Descriptor() ([]byte, []int) {
+	return file_geo_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *DecodeGeoHashRes) GetPoint() *Point {
+	if x != nil {
+		return x.Point
+	}
+	return nil
+}
+
+func (x *DecodeGeoHashRes) GetLatMin() float64 {
+	if x != nil {
+		return x.LatMin
+	}
+	return 0
+}
+
+func (x *DecodeGeoHashRes) GetLatMax() float64 {
+	if x != nil {
+		return x.LatMax
+	}
+	return 0
+}
+
+func (x *DecodeGeoHashRes) GetLonMin() float64 {
+	if x != nil {
+		return x.LonMin
+	}
+	return 0
+}
+
+func (x *DecodeGeoHashRes) GetLonMax() float64 {
+	if x != nil {
+		return x.LonMax
+	}
+	return 0
+}
+
+type GenFenceCellsReq struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	FenceId          string                 `protobuf:"bytes,1,opt,name=fenceId,proto3" json:"fenceId,omitempty"`                    // 可选：已有 fence ID
+	Points           []*Point               `protobuf:"bytes,2,rep,name=points,proto3" json:"points,omitempty"`                      // polygon 顶点（当 fenceId 不存在时直接传 polygon）
+	Precision        uint32                 `protobuf:"varint,3,opt,name=precision,proto3" json:"precision,omitempty"`               // geohash 精度，默认 7
+	IncludeNeighbors bool                   `protobuf:"varint,4,opt,name=includeNeighbors,proto3" json:"includeNeighbors,omitempty"` // 是否扩展周边格子（默认 false）
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *GenFenceCellsReq) Reset() {
+	*x = GenFenceCellsReq{}
+	mi := &file_geo_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GenFenceCellsReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenFenceCellsReq) ProtoMessage() {}
+
+func (x *GenFenceCellsReq) ProtoReflect() protoreflect.Message {
+	mi := &file_geo_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GenFenceCellsReq.ProtoReflect.Descriptor instead.
+func (*GenFenceCellsReq) Descriptor() ([]byte, []int) {
+	return file_geo_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *GenFenceCellsReq) GetFenceId() string {
+	if x != nil {
+		return x.FenceId
+	}
+	return ""
+}
+
+func (x *GenFenceCellsReq) GetPoints() []*Point {
+	if x != nil {
+		return x.Points
+	}
+	return nil
+}
+
+func (x *GenFenceCellsReq) GetPrecision() uint32 {
+	if x != nil {
+		return x.Precision
+	}
+	return 0
+}
+
+func (x *GenFenceCellsReq) GetIncludeNeighbors() bool {
+	if x != nil {
+		return x.IncludeNeighbors
+	}
+	return false
+}
+
+type GenFenceCellsRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Geohashes     []string               `protobuf:"bytes,1,rep,name=geohashes,proto3" json:"geohashes,omitempty"` // geohash 列表（去重后的前缀）
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GenFenceCellsRes) Reset() {
+	*x = GenFenceCellsRes{}
+	mi := &file_geo_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GenFenceCellsRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenFenceCellsRes) ProtoMessage() {}
+
+func (x *GenFenceCellsRes) ProtoReflect() protoreflect.Message {
+	mi := &file_geo_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GenFenceCellsRes.ProtoReflect.Descriptor instead.
+func (*GenFenceCellsRes) Descriptor() ([]byte, []int) {
+	return file_geo_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *GenFenceCellsRes) GetGeohashes() []string {
+	if x != nil {
+		return x.Geohashes
+	}
+	return nil
+}
+
+type Fence struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Points        []*Point               `protobuf:"bytes,2,rep,name=points,proto3" json:"points,omitempty"` // polygon
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Fence) Reset() {
+	*x = Fence{}
+	mi := &file_geo_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Fence) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Fence) ProtoMessage() {}
+
+func (x *Fence) ProtoReflect() protoreflect.Message {
+	mi := &file_geo_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Fence.ProtoReflect.Descriptor instead.
+func (*Fence) Descriptor() ([]byte, []int) {
+	return file_geo_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *Fence) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Fence) GetPoints() []*Point {
+	if x != nil {
+		return x.Points
+	}
+	return nil
+}
+
+type PointInFenceReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`
+	Fence         *Fence                 `protobuf:"bytes,2,opt,name=fence,proto3" json:"fence,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PointInFenceReq) Reset() {
+	*x = PointInFenceReq{}
+	mi := &file_geo_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PointInFenceReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PointInFenceReq) ProtoMessage() {}
+
+func (x *PointInFenceReq) ProtoReflect() protoreflect.Message {
+	mi := &file_geo_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PointInFenceReq.ProtoReflect.Descriptor instead.
+func (*PointInFenceReq) Descriptor() ([]byte, []int) {
+	return file_geo_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *PointInFenceReq) GetPoint() *Point {
+	if x != nil {
+		return x.Point
+	}
+	return nil
+}
+
+func (x *PointInFenceReq) GetFence() *Fence {
+	if x != nil {
+		return x.Fence
+	}
+	return nil
+}
+
+type PointInFenceRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Hit           bool                   `protobuf:"varint,1,opt,name=hit,proto3" json:"hit,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PointInFenceRes) Reset() {
+	*x = PointInFenceRes{}
+	mi := &file_geo_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PointInFenceRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PointInFenceRes) ProtoMessage() {}
+
+func (x *PointInFenceRes) ProtoReflect() protoreflect.Message {
+	mi := &file_geo_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PointInFenceRes.ProtoReflect.Descriptor instead.
+func (*PointInFenceRes) Descriptor() ([]byte, []int) {
+	return file_geo_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *PointInFenceRes) GetHit() bool {
+	if x != nil {
+		return x.Hit
+	}
+	return false
+}
+
+type PointInFencesReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`
+	Fences        []*Fence               `protobuf:"bytes,2,rep,name=fences,proto3" json:"fences,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PointInFencesReq) Reset() {
+	*x = PointInFencesReq{}
+	mi := &file_geo_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PointInFencesReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PointInFencesReq) ProtoMessage() {}
+
+func (x *PointInFencesReq) ProtoReflect() protoreflect.Message {
+	mi := &file_geo_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PointInFencesReq.ProtoReflect.Descriptor instead.
+func (*PointInFencesReq) Descriptor() ([]byte, []int) {
+	return file_geo_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *PointInFencesReq) GetPoint() *Point {
+	if x != nil {
+		return x.Point
+	}
+	return nil
+}
+
+func (x *PointInFencesReq) GetFences() []*Fence {
+	if x != nil {
+		return x.Fences
+	}
+	return nil
+}
+
+type PointInFencesRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	HitFenceIds   []string               `protobuf:"bytes,1,rep,name=hitFenceIds,proto3" json:"hitFenceIds,omitempty"` // 命中的 fence ID 列表
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PointInFencesRes) Reset() {
+	*x = PointInFencesRes{}
+	mi := &file_geo_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PointInFencesRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PointInFencesRes) ProtoMessage() {}
+
+func (x *PointInFencesRes) ProtoReflect() protoreflect.Message {
+	mi := &file_geo_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PointInFencesRes.ProtoReflect.Descriptor instead.
+func (*PointInFencesRes) Descriptor() ([]byte, []int) {
+	return file_geo_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *PointInFencesRes) GetHitFenceIds() []string {
+	if x != nil {
+		return x.HitFenceIds
+	}
+	return nil
+}
+
+type DistanceReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	A             *Point                 `protobuf:"bytes,1,opt,name=a,proto3" json:"a,omitempty"`
+	B             *Point                 `protobuf:"bytes,2,opt,name=b,proto3" json:"b,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DistanceReq) Reset() {
+	*x = DistanceReq{}
+	mi := &file_geo_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DistanceReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DistanceReq) ProtoMessage() {}
+
+func (x *DistanceReq) ProtoReflect() protoreflect.Message {
+	mi := &file_geo_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DistanceReq.ProtoReflect.Descriptor instead.
+func (*DistanceReq) Descriptor() ([]byte, []int) {
+	return file_geo_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *DistanceReq) GetA() *Point {
+	if x != nil {
+		return x.A
+	}
+	return nil
+}
+
+func (x *DistanceReq) GetB() *Point {
+	if x != nil {
+		return x.B
+	}
+	return nil
+}
+
+type DistanceRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Meters        float64                `protobuf:"fixed64,1,opt,name=meters,proto3" json:"meters,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DistanceRes) Reset() {
+	*x = DistanceRes{}
+	mi := &file_geo_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DistanceRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DistanceRes) ProtoMessage() {}
+
+func (x *DistanceRes) ProtoReflect() protoreflect.Message {
+	mi := &file_geo_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DistanceRes.ProtoReflect.Descriptor instead.
+func (*DistanceRes) Descriptor() ([]byte, []int) {
+	return file_geo_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *DistanceRes) GetMeters() float64 {
+	if x != nil {
+		return x.Meters
+	}
+	return 0
+}
+
+type NearbyFencesReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`
+	Km            float64                `protobuf:"fixed64,2,opt,name=km,proto3" json:"km,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NearbyFencesReq) Reset() {
+	*x = NearbyFencesReq{}
+	mi := &file_geo_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NearbyFencesReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NearbyFencesReq) ProtoMessage() {}
+
+func (x *NearbyFencesReq) ProtoReflect() protoreflect.Message {
+	mi := &file_geo_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NearbyFencesReq.ProtoReflect.Descriptor instead.
+func (*NearbyFencesReq) Descriptor() ([]byte, []int) {
+	return file_geo_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *NearbyFencesReq) GetPoint() *Point {
+	if x != nil {
+		return x.Point
+	}
+	return nil
+}
+
+func (x *NearbyFencesReq) GetKm() float64 {
+	if x != nil {
+		return x.Km
+	}
+	return 0
+}
+
+type NearbyFencesRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FenceIds      []string               `protobuf:"bytes,1,rep,name=fenceIds,proto3" json:"fenceIds,omitempty"` // 粗过滤候选
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NearbyFencesRes) Reset() {
+	*x = NearbyFencesRes{}
+	mi := &file_geo_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NearbyFencesRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NearbyFencesRes) ProtoMessage() {}
+
+func (x *NearbyFencesRes) ProtoReflect() protoreflect.Message {
+	mi := &file_geo_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NearbyFencesRes.ProtoReflect.Descriptor instead.
+func (*NearbyFencesRes) Descriptor() ([]byte, []int) {
+	return file_geo_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *NearbyFencesRes) GetFenceIds() []string {
+	if x != nil {
+		return x.FenceIds
+	}
+	return nil
+}
+
 var File_geo_proto protoreflect.FileDescriptor
 
 const file_geo_proto_rawDesc = "" +
@@ -117,9 +933,73 @@ const file_geo_proto_rawDesc = "" +
 	"\x03Req\x12\x12\n" +
 	"\x04ping\x18\x01 \x01(\tR\x04ping\"\x19\n" +
 	"\x03Res\x12\x12\n" +
-	"\x04pong\x18\x01 \x01(\tR\x04pong2!\n" +
+	"\x04pong\x18\x01 \x01(\tR\x04pong\"+\n" +
+	"\x05Point\x12\x10\n" +
+	"\x03lat\x18\x01 \x01(\x01R\x03lat\x12\x10\n" +
+	"\x03lon\x18\x02 \x01(\x01R\x03lon\"R\n" +
+	"\x10EncodeGeoHashReq\x12 \n" +
+	"\x05point\x18\x01 \x01(\v2\n" +
+	".geo.PointR\x05point\x12\x1c\n" +
+	"\tprecision\x18\x02 \x01(\rR\tprecision\",\n" +
+	"\x10EncodeGeoHashRes\x12\x18\n" +
+	"\ageohash\x18\x01 \x01(\tR\ageohash\",\n" +
+	"\x10DecodeGeoHashReq\x12\x18\n" +
+	"\ageohash\x18\x01 \x01(\tR\ageohash\"\x94\x01\n" +
+	"\x10DecodeGeoHashRes\x12 \n" +
+	"\x05point\x18\x01 \x01(\v2\n" +
+	".geo.PointR\x05point\x12\x16\n" +
+	"\x06latMin\x18\x02 \x01(\x01R\x06latMin\x12\x16\n" +
+	"\x06latMax\x18\x03 \x01(\x01R\x06latMax\x12\x16\n" +
+	"\x06lonMin\x18\x04 \x01(\x01R\x06lonMin\x12\x16\n" +
+	"\x06lonMax\x18\x05 \x01(\x01R\x06lonMax\"\x9a\x01\n" +
+	"\x10GenFenceCellsReq\x12\x18\n" +
+	"\afenceId\x18\x01 \x01(\tR\afenceId\x12\"\n" +
+	"\x06points\x18\x02 \x03(\v2\n" +
+	".geo.PointR\x06points\x12\x1c\n" +
+	"\tprecision\x18\x03 \x01(\rR\tprecision\x12*\n" +
+	"\x10includeNeighbors\x18\x04 \x01(\bR\x10includeNeighbors\"0\n" +
+	"\x10GenFenceCellsRes\x12\x1c\n" +
+	"\tgeohashes\x18\x01 \x03(\tR\tgeohashes\";\n" +
+	"\x05Fence\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\"\n" +
+	"\x06points\x18\x02 \x03(\v2\n" +
+	".geo.PointR\x06points\"U\n" +
+	"\x0fPointInFenceReq\x12 \n" +
+	"\x05point\x18\x01 \x01(\v2\n" +
+	".geo.PointR\x05point\x12 \n" +
+	"\x05fence\x18\x02 \x01(\v2\n" +
+	".geo.FenceR\x05fence\"#\n" +
+	"\x0fPointInFenceRes\x12\x10\n" +
+	"\x03hit\x18\x01 \x01(\bR\x03hit\"X\n" +
+	"\x10PointInFencesReq\x12 \n" +
+	"\x05point\x18\x01 \x01(\v2\n" +
+	".geo.PointR\x05point\x12\"\n" +
+	"\x06fences\x18\x02 \x03(\v2\n" +
+	".geo.FenceR\x06fences\"4\n" +
+	"\x10PointInFencesRes\x12 \n" +
+	"\vhitFenceIds\x18\x01 \x03(\tR\vhitFenceIds\"A\n" +
+	"\vDistanceReq\x12\x18\n" +
+	"\x01a\x18\x01 \x01(\v2\n" +
+	".geo.PointR\x01a\x12\x18\n" +
+	"\x01b\x18\x02 \x01(\v2\n" +
+	".geo.PointR\x01b\"%\n" +
+	"\vDistanceRes\x12\x16\n" +
+	"\x06meters\x18\x01 \x01(\x01R\x06meters\"C\n" +
+	"\x0fNearbyFencesReq\x12 \n" +
+	"\x05point\x18\x01 \x01(\v2\n" +
+	".geo.PointR\x05point\x12\x0e\n" +
+	"\x02km\x18\x02 \x01(\x01R\x02km\"-\n" +
+	"\x0fNearbyFencesRes\x12\x1a\n" +
+	"\bfenceIds\x18\x01 \x03(\tR\bfenceIds2\xca\x03\n" +
 	"\x03Geo\x12\x1a\n" +
-	"\x04Ping\x12\b.geo.Req\x1a\b.geo.ResB(\n" +
+	"\x04Ping\x12\b.geo.Req\x1a\b.geo.Res\x12=\n" +
+	"\rEncodeGeoHash\x12\x15.geo.EncodeGeoHashReq\x1a\x15.geo.EncodeGeoHashRes\x12=\n" +
+	"\rDecodeGeoHash\x12\x15.geo.DecodeGeoHashReq\x1a\x15.geo.DecodeGeoHashRes\x12B\n" +
+	"\x12GenerateFenceCells\x12\x15.geo.GenFenceCellsReq\x1a\x15.geo.GenFenceCellsRes\x12:\n" +
+	"\fPointInFence\x12\x14.geo.PointInFenceReq\x1a\x14.geo.PointInFenceRes\x12=\n" +
+	"\rPointInFences\x12\x15.geo.PointInFencesReq\x1a\x15.geo.PointInFencesRes\x12.\n" +
+	"\bDistance\x12\x10.geo.DistanceReq\x1a\x10.geo.DistanceRes\x12:\n" +
+	"\fNearbyFences\x12\x14.geo.NearbyFencesReq\x1a\x14.geo.NearbyFencesResB(\n" +
 	"\x13com.github.geo.grpcB\bGeoProtoP\x01Z\x05./geob\x06proto3"
 
 var (
@@ -134,19 +1014,60 @@ func file_geo_proto_rawDescGZIP() []byte {
 	return file_geo_proto_rawDescData
 }
 
-var file_geo_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_geo_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_geo_proto_goTypes = []any{
-	(*Req)(nil), // 0: geo.Req
-	(*Res)(nil), // 1: geo.Res
+	(*Req)(nil),              // 0: geo.Req
+	(*Res)(nil),              // 1: geo.Res
+	(*Point)(nil),            // 2: geo.Point
+	(*EncodeGeoHashReq)(nil), // 3: geo.EncodeGeoHashReq
+	(*EncodeGeoHashRes)(nil), // 4: geo.EncodeGeoHashRes
+	(*DecodeGeoHashReq)(nil), // 5: geo.DecodeGeoHashReq
+	(*DecodeGeoHashRes)(nil), // 6: geo.DecodeGeoHashRes
+	(*GenFenceCellsReq)(nil), // 7: geo.GenFenceCellsReq
+	(*GenFenceCellsRes)(nil), // 8: geo.GenFenceCellsRes
+	(*Fence)(nil),            // 9: geo.Fence
+	(*PointInFenceReq)(nil),  // 10: geo.PointInFenceReq
+	(*PointInFenceRes)(nil),  // 11: geo.PointInFenceRes
+	(*PointInFencesReq)(nil), // 12: geo.PointInFencesReq
+	(*PointInFencesRes)(nil), // 13: geo.PointInFencesRes
+	(*DistanceReq)(nil),      // 14: geo.DistanceReq
+	(*DistanceRes)(nil),      // 15: geo.DistanceRes
+	(*NearbyFencesReq)(nil),  // 16: geo.NearbyFencesReq
+	(*NearbyFencesRes)(nil),  // 17: geo.NearbyFencesRes
 }
 var file_geo_proto_depIdxs = []int32{
-	0, // 0: geo.Geo.Ping:input_type -> geo.Req
-	1, // 1: geo.Geo.Ping:output_type -> geo.Res
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	2,  // 0: geo.EncodeGeoHashReq.point:type_name -> geo.Point
+	2,  // 1: geo.DecodeGeoHashRes.point:type_name -> geo.Point
+	2,  // 2: geo.GenFenceCellsReq.points:type_name -> geo.Point
+	2,  // 3: geo.Fence.points:type_name -> geo.Point
+	2,  // 4: geo.PointInFenceReq.point:type_name -> geo.Point
+	9,  // 5: geo.PointInFenceReq.fence:type_name -> geo.Fence
+	2,  // 6: geo.PointInFencesReq.point:type_name -> geo.Point
+	9,  // 7: geo.PointInFencesReq.fences:type_name -> geo.Fence
+	2,  // 8: geo.DistanceReq.a:type_name -> geo.Point
+	2,  // 9: geo.DistanceReq.b:type_name -> geo.Point
+	2,  // 10: geo.NearbyFencesReq.point:type_name -> geo.Point
+	0,  // 11: geo.Geo.Ping:input_type -> geo.Req
+	3,  // 12: geo.Geo.EncodeGeoHash:input_type -> geo.EncodeGeoHashReq
+	5,  // 13: geo.Geo.DecodeGeoHash:input_type -> geo.DecodeGeoHashReq
+	7,  // 14: geo.Geo.GenerateFenceCells:input_type -> geo.GenFenceCellsReq
+	10, // 15: geo.Geo.PointInFence:input_type -> geo.PointInFenceReq
+	12, // 16: geo.Geo.PointInFences:input_type -> geo.PointInFencesReq
+	14, // 17: geo.Geo.Distance:input_type -> geo.DistanceReq
+	16, // 18: geo.Geo.NearbyFences:input_type -> geo.NearbyFencesReq
+	1,  // 19: geo.Geo.Ping:output_type -> geo.Res
+	4,  // 20: geo.Geo.EncodeGeoHash:output_type -> geo.EncodeGeoHashRes
+	6,  // 21: geo.Geo.DecodeGeoHash:output_type -> geo.DecodeGeoHashRes
+	8,  // 22: geo.Geo.GenerateFenceCells:output_type -> geo.GenFenceCellsRes
+	11, // 23: geo.Geo.PointInFence:output_type -> geo.PointInFenceRes
+	13, // 24: geo.Geo.PointInFences:output_type -> geo.PointInFencesRes
+	15, // 25: geo.Geo.Distance:output_type -> geo.DistanceRes
+	17, // 26: geo.Geo.NearbyFences:output_type -> geo.NearbyFencesRes
+	19, // [19:27] is the sub-list for method output_type
+	11, // [11:19] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_geo_proto_init() }
@@ -160,7 +1081,7 @@ func file_geo_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_geo_proto_rawDesc), len(file_geo_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

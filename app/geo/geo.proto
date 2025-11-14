@@ -40,7 +40,7 @@ message Point {
 
 message EncodeGeoHashReq {
   Point point = 1;
-  uint32 precision = 2; // 默认 7
+  uint32 precision = 2; // 默认 7 max-12
 }
 
 message EncodeGeoHashRes {
