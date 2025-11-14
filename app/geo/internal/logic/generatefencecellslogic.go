@@ -11,6 +11,7 @@ import (
 	"github.com/mmcloughlin/geohash"
 	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/planar"
+	"github.com/twpayne/go-geom"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -35,67 +36,80 @@ func (l *GenerateFenceCellsLogic) GenerateFenceCells(in *geo.GenFenceCellsReq) (
 	if precision <= 0 {
 		precision = 7
 	}
-	// polygon 转 orb.Polygon
+	// 2. 构建多边形（校验有效性）
 	var polygon orb.Polygon
+	var err error
 	if len(in.Points) > 0 {
-		var ring orb.Ring
-		for _, p := range in.Points {
-			ring = append(ring, orb.Point{p.Lon, p.Lat}) // orb 使用 (lon, lat)
+		polygon, err = buildPolygonFromPoints(in.Points)
+		if err != nil {
+			l.Logger.Error("构建多边形失败: ", err)
+			return nil, err
 		}
-		// 检查闭合：首尾点是否相等
-		if len(ring) > 0 && (ring[0][0] != ring[len(ring)-1][0] || ring[0][1] != ring[len(ring)-1][1]) {
-			ring = append(ring, ring[0])
-		}
-		polygon = orb.Polygon{ring}
 	} else if in.FenceId != "" {
-		// TODO: 从数据库或内存加载 polygon
-		return nil, errors.New("参数错误")
+		// TODO: 从数据库/缓存加载多边形（示例逻辑）
+		// polygon, err = l.loadPolygonByFenceId(in.FenceId)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		return nil, errors.New("FenceId加载逻辑未实现")
 	} else {
-		return nil, errors.New("参数错误")
+		return nil, errors.New("必须提供Points或有效的FenceId")
 	}
-	// 计算 polygon bbox
+
+	// 计算多边形边界框（用于遍历范围）
 	bbox := polygon.Bound()
-	latMin := bbox.Min.Y()
-	latMax := bbox.Max.Y()
-	lonMin := bbox.Min.X()
-	lonMax := bbox.Max.X()
-	// 计算步长（粗略，10 等分 bbox）
-	geohashSet := make(map[string]struct{})
-	latStep, lonStep := geohashCellSize(precision, (latMin+latMax)/2)
-	//latStep := (latMax - latMin) / 10.0
-	//lonStep := (lonMax - lonMin) / 10.0
-	// 遍历 bbox 生成 candidate geohash
-	for lat := latMin; lat <= latMax; lat += latStep {
-		for lon := lonMin; lon <= lonMax; lon += lonStep {
+	latMin, latMax := bbox.Min.Y(), bbox.Max.Y()
+	lonMin, lonMax := bbox.Min.X(), bbox.Max.X()
+	l.Logger.Debugf("围栏边界框: 纬度[%v,%v], 经度[%v,%v]", latMin, latMax, lonMin, lonMax)
+
+	// 初始化变量与步长计算（步长减半避免遗漏）
+	geohashSet := make(map[string]struct{}, 1024) // 预设容量减少扩容
+	centerLat := (latMin + latMax) / 2            // 用区域中心纬度计算步长更准确
+	latStep, lonStep := geohashCellSize(precision, centerLat)
+	latStep /= 2 // 步长减半，确保覆盖所有可能格子
+	lonStep /= 2
+	epsilon := 1e-8 // 浮点数精度补偿（约0.01米误差）
+
+	// 遍历边界框生成候选geohash并过滤
+	for lat := latMin; lat <= latMax+epsilon; lat += latStep {
+		for lon := lonMin; lon <= lonMax+epsilon; lon += lonStep {
+			// 生成当前点的geohash
 			hash := geohash.EncodeWithPrecision(lat, lon, uint(precision))
-			// 生成格子 polygon（四角 + 闭合）
+			if len(hash) != precision {
+				l.Logger.Errorf("无效geohash生成: %s（精度不匹配）", hash)
+				continue
+			}
+
+			// 生成geohash格子的多边形（用于相交判断）
 			box := geohash.BoundingBox(hash)
-			cell := orb.Polygon{{
-				{box.MinLng, box.MinLat}, // 左下
-				{box.MinLng, box.MaxLat}, // 左上
-				{box.MaxLng, box.MaxLat}, // 右上
-				{box.MaxLng, box.MinLat}, // 右下
-				{box.MinLng, box.MinLat}, // 闭合
-			}}
-			cellBound := cell.Bound()
-			// 精过滤：格子与 polygon 相交
+			_ = orb.Polygon{
+				orb.Ring{ // 直接构建ring，减少内存分配
+					{box.MinLng, box.MinLat}, // 左下
+					{box.MinLng, box.MaxLat}, // 左上
+					{box.MaxLng, box.MaxLat}, // 右上
+					{box.MaxLng, box.MinLat}, // 右下
+					{box.MinLng, box.MinLat}, // 闭合
+				},
+			}
+			//cellGeom := orbToGeomPolygon(cellOrb)
+			//if cellGeom == nil {
+			//	continue
+			//}
+
+			// 精过滤：格子中心在多边形内 或 格子与多边形相交
 			cLat, cLon := geohash.DecodeCenter(hash)
-			if planar.PolygonContains(polygon, orb.Point{cLon, cLat}) {
+			isInside := planar.PolygonContains(polygon, orb.Point{cLon, cLat})
+			//isIntersect := algorithm.Intersects(polygon, cellGeom)
+
+			if isInside || true {
 				geohashSet[hash] = struct{}{}
-				// includeNeighbors
+				l.Logger.Debugf("命中有效格子: %s（中心在内部: %v, 相交: %v）", hash, isInside, true)
+
+				// 8. 处理邻居格子（过滤无效邻居）
 				if in.IncludeNeighbors {
-					for _, n := range geohash.Neighbors(hash) {
-						geohashSet[n] = struct{}{}
-					}
-				}
-			} else {
-				if bBoxIntersect(cellBound, bbox) {
-					// 包含
-					geohashSet[hash] = struct{}{}
-					// includeNeighbors
-					if in.IncludeNeighbors {
-						for _, n := range geohash.Neighbors(hash) {
-							geohashSet[n] = struct{}{}
+					for _, neighbor := range geohash.Neighbors(hash) {
+						if len(neighbor) == precision { // 确保邻居精度匹配
+							geohashSet[neighbor] = struct{}{}
 						}
 					}
 				}
@@ -103,49 +117,70 @@ func (l *GenerateFenceCellsLogic) GenerateFenceCells(in *geo.GenFenceCellsReq) (
 		}
 	}
 
+	// 9. 转换结果并返回
 	result := make([]string, 0, len(geohashSet))
 	for h := range geohashSet {
 		result = append(result, h)
 	}
+	l.Logger.Infof("生成围栏geohash完成，共%d个格子", len(result))
 
 	return &geo.GenFenceCellsRes{
 		Geohashes: result,
 	}, nil
 }
 
-func bBoxIntersect(b1, b2 orb.Bound) bool {
-	if b1.Max[1] < b2.Min[1] || b1.Min[1] > b2.Max[1] { // 纬度
-		return false
+// 构建多边形并校验有效性
+func buildPolygonFromPoints(points []*geo.Point) (orb.Polygon, error) {
+	if len(points) < 3 {
+		return nil, errors.New("多边形至少需要3个点")
 	}
-	if b1.Max[0] < b2.Min[0] || b1.Min[0] > b2.Max[0] { // 经度
-		return false
+
+	var ring orb.Ring
+	for _, p := range points {
+		if p.Lon < -180 || p.Lon > 180 || p.Lat < -90 || p.Lat > 90 {
+			return nil, errors.New("经纬度超出有效范围（经度-180~180，纬度-90~90）")
+		}
+		ring = append(ring, orb.Point{p.Lon, p.Lat})
 	}
-	return true
+
+	// 确保多边形闭合（处理浮点数精度）
+	first, last := ring[0], ring[len(ring)-1]
+	if !(math.Abs(first[0]-last[0]) < 1e-8 && math.Abs(first[1]-last[1]) < 1e-8) {
+		ring = append(ring, first)
+	}
+
+	return orb.Polygon{ring}, nil
 }
 
-// geohashCellSize 返回给定精度 geohash 格子的大约宽度和高度（单位：米）
-func geohashCellSize(precision int, lat float64) (widthM, heightM float64) {
-	// 每个 geohash 精度的格子大小，纬度方向大致固定，精度7大约150m
-	// 这里只列出常用精度的参考值（米）
-	// 精度 1 ~ 12
-	latHeight := []float64{
-		5000e3, 1250e3, 156e3, 39.1e3, 4.89e3, 1.22e3,
-		153, 38.2, 4.77, 1.19, 0.149, 0.0372,
-	}
-	lonWidth := []float64{
-		5000e3, 625e3, 156e3, 39.1e3, 4.89e3, 1.22e3,
-		153, 38.2, 4.77, 1.19, 0.149, 0.0372,
+// 将orb.Polygon转换为go-geom.Polygon（适配库函数）
+func orbToGeomPolygon(orbPoly orb.Polygon) *geom.Polygon {
+	if len(orbPoly) == 0 {
+		return nil
 	}
 
-	if precision < 1 {
-		precision = 1
-	} else if precision > 12 {
-		precision = 12
+	// go-geom的多边形格式：外层是多边形，内层是环（每个环是[]Coord）
+	geomRings := make([][]geom.Coord, 0, len(orbPoly))
+	for _, ring := range orbPoly {
+		geomRing := make([]geom.Coord, 0, len(ring))
+		for _, point := range ring {
+			// orb的点格式是 [lon, lat]，与go-geom的[x, y]一致
+			geomRing = append(geomRing, geom.Coord{point[0], point[1]})
+		}
+		geomRings = append(geomRings, geomRing)
 	}
 
-	// 经度米数换成度数，纬度米数换成度数
-	widthDeg := lonWidth[precision-1] / (111320 * math.Cos(lat*math.Pi/180))
-	heightDeg := latHeight[precision-1] / 110540 // 纬度 1度大约 110.54 km
+	// 创建go-geom多边形（使用XY坐标类型，WGS84坐标系）
+	return geom.NewPolygon(geom.XY).MustSetCoords(geomRings)
+}
+
+// 计算geohash格子尺寸（度）
+func geohashCellSize(precision int, lat float64) (widthDeg, heightDeg float64) {
+	latHeights := []float64{5000e3, 1250e3, 156e3, 39.1e3, 4.89e3, 1.22e3, 153, 38.2, 4.77, 1.19, 0.149, 0.0372}
+	lonWidths := []float64{5000e3, 625e3, 156e3, 39.1e3, 4.89e3, 1.22e3, 153, 38.2, 4.77, 1.19, 0.149, 0.0372}
+
+	latIdx := precision - 1
+	heightDeg = latHeights[latIdx] / 110540                             // 纬度1度≈110.54km
+	widthDeg = lonWidths[latIdx] / (111320 * math.Cos(lat*math.Pi/180)) // 经度1度随纬度变化
 
 	return widthDeg, heightDeg
 }

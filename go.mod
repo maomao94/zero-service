@@ -148,6 +148,7 @@ require (
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tinylib/msgp v1.3.0 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
+	github.com/twpayne/go-geom v1.6.1 // indirect
 	github.com/u2takey/go-utils v0.3.1 // indirect
 	github.com/zeebo/errs v1.4.0 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.15 // indirect
