@@ -2,10 +2,6 @@ Name: ieccaller.rpc
 ListenOn: 0.0.0.0:21004
 # 模式字段，支持 cluster / standalone
 DeployMode: standalone
-#Etcd:
-#  Hosts:
-#  - 127.0.0.1:2379
-#  Key: ieccaller.rpc
 Mode: dev
 Log:
   Encoding: plain

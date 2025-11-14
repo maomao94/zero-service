@@ -1,9 +1,5 @@
 Name: bridgemqtt.rpc
 ListenOn: 0.0.0.0:25004
-#Etcd:
-#  Hosts:
-#  - 127.0.0.1:2379
-#  Key: bridgemqtt.rpc
 Mode: dev
 Log:
   Encoding: plain

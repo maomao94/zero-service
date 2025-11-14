@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package geo;
+option go_package = "./geo";
+option java_multiple_files = true;
+option java_package = "com.github.geo.grpc";
+option java_outer_classname = "GeoProto";
+
+// GEO 相关服务
+service Geo {
+  rpc Ping (Req) returns (Res);
+}
+
+message Req {
+  string ping = 1;
+}
+
+message Res {
+  string pong = 1;
+}

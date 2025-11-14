@@ -1,9 +1,5 @@
 Name: trigger.rpc
 ListenOn: 0.0.0.0:21006
-#Etcd:
-#  Hosts:
-#  - 127.0.0.1:2379
-#  Key: trigger.rpc
 Mode: dev
 Log:
   Encoding: plain
