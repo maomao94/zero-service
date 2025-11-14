@@ -9,6 +9,18 @@ option java_outer_classname = "GeoProto";
 // GEO 相关服务
 service Geo {
   rpc Ping (Req) returns (Res);
+  // 计算 geohash
+  rpc EncodeGeoHash (EncodeGeoHashReq) returns (EncodeGeoHashRes);
+  // 解码 geohash -> 经纬度
+  rpc DecodeGeoHash (DecodeGeoHashReq) returns (DecodeGeoHashRes);
+  // 点是否命中电子围栏（单个）
+  rpc PointInFence (PointInFenceReq) returns (PointInFenceRes);
+  // 点是否命中电子围栏（多个围栏）
+  rpc PointInFences (PointInFencesReq) returns (PointInFencesRes);
+  // 计算两个点之间的距离（米）
+  rpc Distance (DistanceReq) returns (DistanceRes);
+  // 获取某点附近多少 km 的围栏（粗过滤）
+  rpc NearbyFences (NearbyFencesReq) returns (NearbyFencesRes);
 }
 
 message Req {
@@ -17,4 +29,71 @@ message Req {
 
 message Res {
   string pong = 1;
+}
+
+message Point {
+  double lat = 1; // 纬度
+  double lon = 2; // 经度
+}
+
+message EncodeGeoHashReq {
+  Point point = 1;
+  uint32 precision = 2; // 默认 7
+}
+
+message EncodeGeoHashRes {
+  string geohash = 1;
+}
+
+message DecodeGeoHashReq {
+  string geohash = 1;
+}
+
+message DecodeGeoHashRes {
+  Point point = 1; // 中心点
+  double latMin = 2; // 最小纬度
+  double latMax = 3; // 最大纬度
+  double lonMin = 4; // 最小经度
+  double lonMax = 5; // 最大经度
+}
+
+message Fence {
+  string id = 1;
+  repeated Point points = 2; // polygon
+}
+
+message PointInFenceReq {
+  Point point = 1;
+  Fence fence = 2;
+}
+
+message PointInFenceRes {
+  bool hit = 1;
+}
+
+message PointInFencesReq {
+  Point point = 1;
+  repeated Fence fences = 2;
+}
+
+message PointInFencesRes {
+  repeated string hitFenceIds = 1; // 命中的 fence ID 列表
+}
+
+message DistanceReq {
+  Point a = 1;
+  Point b = 2;
+}
+
+message DistanceRes {
+  double meters = 1;
+}
+
+message NearbyFencesReq {
+  Point point = 1;
+  double km = 2;
+}
+
+message NearbyFencesRes {
+  repeated string fenceIds = 1; // 粗过滤候选
 }
