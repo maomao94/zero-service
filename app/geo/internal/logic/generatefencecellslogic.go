@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"math"
-
 	"zero-service/app/geo/geo"
 	"zero-service/app/geo/internal/svc"
 
