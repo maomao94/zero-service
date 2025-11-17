@@ -99,7 +99,7 @@ func (l *GenerateFenceCellsLogic) GenerateFenceCells(in *geo.GenFenceCellsReq) (
 
 			if isInside || isIntersect {
 				geohashSet[hash] = struct{}{}
-				l.Logger.Debugf("命中有效格子: %s（中心在内部: %v, 相交: %v）", hash, isInside, true)
+				l.Logger.Debugf("命中有效格子: %s（中心在内部: %v, 相交: %v）", hash, isInside, isIntersect)
 
 				// 8. 处理邻居格子（过滤无效邻居）
 				if in.IncludeNeighbors {
