@@ -75,11 +75,15 @@ func (w *AsduPusher) execute(vals []interface{}) {
 	if len(msgBodyList) == 0 {
 		return
 	}
-	w.streamEventCli.PushChunkAsdu(context.Background(), &streamevent.PushChunkAsduReq{
+	_, err := w.streamEventCli.PushChunkAsdu(context.Background(), &streamevent.PushChunkAsduReq{
 		MsgBody: msgBodyList,
 	})
+	var invokeflg = "success"
+	if err != nil {
+		invokeflg = "fail"
+	}
 	duration := timex.Since(startTime)
-	logx.WithDuration(duration).Infof("PushChunkAsdu, asdu size: %d", len(msgBodyList))
+	logx.WithDuration(duration).Infof("PushChunkAsdu, asdu size: %d - %s", len(msgBodyList), invokeflg)
 }
 
 func NewAsduPusher(streamEventCli streamevent.StreamEventClient, ChunkBytes int) *AsduPusher {
