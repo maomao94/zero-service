@@ -33,6 +33,7 @@ require (
 	github.com/songzhibin97/gkit v1.2.13
 	github.com/spf13/cast v1.10.0
 	github.com/tidwall/gjson v1.18.0
+	github.com/twpayne/go-geom v1.6.1
 	github.com/u2takey/ffmpeg-go v0.5.0
 	github.com/wendy512/go-iecp5 v1.2.3
 	github.com/zeromicro/go-queue v1.2.2
@@ -148,7 +149,6 @@ require (
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tinylib/msgp v1.3.0 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
-	github.com/twpayne/go-geom v1.6.1 // indirect
 	github.com/u2takey/go-utils v0.3.1 // indirect
 	github.com/zeebo/errs v1.4.0 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.15 // indirect
