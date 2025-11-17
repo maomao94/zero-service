@@ -82,7 +82,7 @@ func (l *GenerateFenceCellsLogic) GenerateFenceCells(in *geo.GenFenceCellsReq) (
 
 			// 生成geohash格子的多边形（用于相交判断）
 			box := geohash.BoundingBox(hash)
-			_ = orb.Polygon{
+			cellOrb := orb.Polygon{
 				orb.Ring{ // 直接构建ring，减少内存分配
 					{box.MinLng, box.MinLat}, // 左下
 					{box.MinLng, box.MaxLat}, // 左上
@@ -91,17 +91,13 @@ func (l *GenerateFenceCellsLogic) GenerateFenceCells(in *geo.GenFenceCellsReq) (
 					{box.MinLng, box.MinLat}, // 闭合
 				},
 			}
-			//cellGeom := orbToGeomPolygon(cellOrb)
-			//if cellGeom == nil {
-			//	continue
-			//}
 
 			// 精过滤：格子中心在多边形内 或 格子与多边形相交
 			cLat, cLon := geohash.DecodeCenter(hash)
 			isInside := planar.PolygonContains(polygon, orb.Point{cLon, cLat})
-			//isIntersect := algorithm.Intersects(polygon, cellGeom)
+			isIntersect := PolygonIntersect(polygon, cellOrb)
 
-			if isInside || true {
+			if isInside || isIntersect {
 				geohashSet[hash] = struct{}{}
 				l.Logger.Debugf("命中有效格子: %s（中心在内部: %v, 相交: %v）", hash, isInside, true)
 
@@ -183,4 +179,115 @@ func geohashCellSize(precision int, lat float64) (widthDeg, heightDeg float64) {
 	widthDeg = lonWidths[latIdx] / (111320 * math.Cos(lat*math.Pi/180)) // 经度1度随纬度变化
 
 	return widthDeg, heightDeg
+}
+
+// ---------------------------------------------
+// 线段相交判断
+// ---------------------------------------------
+
+// SegmentIntersect 判断两条线段是否相交（含端点接触与共线重叠）
+func SegmentIntersect(a1, a2, b1, b2 orb.Point) bool {
+	// 快速排除 --- bbox 不重叠
+	if math.Max(a1.X(), a2.X()) < math.Min(b1.X(), b2.X()) ||
+		math.Max(b1.X(), b2.X()) < math.Min(a1.X(), a2.X()) ||
+		math.Max(a1.Y(), a2.Y()) < math.Min(b1.Y(), b2.Y()) ||
+		math.Max(b1.Y(), b2.Y()) < math.Min(a1.Y(), a2.Y()) {
+		return false
+	}
+
+	// 方向判断（叉积）
+	d1 := cross(b1, b2, a1)
+	d2 := cross(b1, b2, a2)
+	d3 := cross(a1, a2, b1)
+	d4 := cross(a1, a2, b2)
+
+	// 一般相交（跨立相交）
+	if (d1 > 0 && d2 < 0 || d1 < 0 && d2 > 0) &&
+		(d3 > 0 && d4 < 0 || d3 < 0 && d4 > 0) {
+		return true
+	}
+
+	// 特殊情况：共线
+	if d1 == 0 && onSegment(b1, b2, a1) {
+		return true
+	}
+	if d2 == 0 && onSegment(b1, b2, a2) {
+		return true
+	}
+	if d3 == 0 && onSegment(a1, a2, b1) {
+		return true
+	}
+	if d4 == 0 && onSegment(a1, a2, b2) {
+		return true
+	}
+
+	return false
+}
+
+// 叉积 (b - a) × (c - a)
+func cross(a, b, c orb.Point) float64 {
+	return (b.X()-a.X())*(c.Y()-a.Y()) - (b.Y()-a.Y())*(c.X()-a.X())
+}
+
+// onSegment 判断点 c 是否在线段 ab 上（仅在保证共线后使用）
+func onSegment(a, b, c orb.Point) bool {
+	return c.X() >= math.Min(a.X(), b.X()) &&
+		c.X() <= math.Max(a.X(), b.X()) &&
+		c.Y() >= math.Min(a.Y(), b.Y()) &&
+		c.Y() <= math.Max(a.Y(), b.Y())
+}
+
+// ---------------------------------------------
+// Ring 相交判断
+// ---------------------------------------------
+
+// RingIntersect 判断两个 ring 的边界是否相交
+func RingIntersect(r1, r2 orb.Ring) bool {
+	n1 := len(r1)
+	n2 := len(r2)
+
+	for i := 0; i < n1; i++ {
+		a1 := r1[i]
+		a2 := r1[(i+1)%n1]
+
+		for j := 0; j < n2; j++ {
+			b1 := r2[j]
+			b2 := r2[(j+1)%n2]
+
+			if SegmentIntersect(a1, a2, b1, b2) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// ---------------------------------------------
+// Polygon 相交判断（包含 + 边界）
+// ---------------------------------------------
+
+// PolygonIntersect 判断两个多边形是否相交
+// p1、p2 都为 orb.Polygon（外圈 r[0]）
+func PolygonIntersect(p1, p2 orb.Polygon) bool {
+	r1 := p1[0]
+	r2 := p2[0]
+
+	// 1. 顶点包含（内部包含情况）
+	for _, pt := range r1 {
+		if planar.PolygonContains(p2, pt) {
+			return true
+		}
+	}
+	for _, pt := range r2 {
+		if planar.PolygonContains(p1, pt) {
+			return true
+		}
+	}
+
+	// 2. 边界相交（交叉情况）
+	if RingIntersect(r1, r2) {
+		return true
+	}
+
+	return false
 }
