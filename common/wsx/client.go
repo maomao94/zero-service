@@ -405,6 +405,9 @@ func (c *client) connectionManager() {
 		// 2. 连接成功（未认证）
 		c.setConnection(conn)
 		c.onStatusChange(c.ctx, StatusConnected, nil) // 带ctx的状态通知
+		c.mu.Lock()
+		c.reconnectCount = 0
+		c.mu.Unlock()
 
 		// 3. 执行认证（带超时）
 		authSuccess, authErr := c.performAuthentication()
