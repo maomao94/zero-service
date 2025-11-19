@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"sync"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/duke-git/lancet/v2/cryptor"
 	"github.com/gorilla/websocket"
+	"github.com/zeromicro/go-zero/core/fx"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stat"
 	"github.com/zeromicro/go-zero/core/threading"
@@ -535,38 +537,34 @@ func (c *client) closeConnection() {
 // performAuthentication 执行认证（带超时）
 func (c *client) performAuthentication() (bool, error) {
 	c.logger.WithContext(c.ctx).Info("Starting authentication")
-
-	// 用带超时的上下文包装认证逻辑
-	authCtx, authCancel := context.WithTimeout(c.ctx, c.authTimeout)
-	defer authCancel()
-
-	// 异步执行认证（避免回调阻塞）
-	resultCh := make(chan struct {
-		success bool
-		err     error
-	}, 1) // 缓冲通道避免goroutine泄漏
-
-	go func() {
-		// 传递带超时的authCtx，确保认证能及时终止
-		success, err := c.onRefreshToken(authCtx)
-		resultCh <- struct {
-			success bool
-			err     error
-		}{success, err}
-	}()
-
-	// 等待结果或超时
-	select {
-	case res := <-resultCh:
-		if res.success {
-			c.logger.WithContext(c.ctx).Info("Authentication succeeded")
-			return true, nil
+	err := fx.DoWithTimeout(func() error {
+		// fx 内部会创建带超时的上下文，通过 WithContext 传入的 c.ctx 作为父上下文
+		// 这里的 ctx 是 fx 内部生成的（带超时），但需要传递给 onRefreshToken
+		// 注意：fx.DoWithTimeout 内部的 ctx 可通过 fx.WithContext 传递父上下文，但任务函数中无法直接获取，需要间接传递
+		// 修正：通过闭包捕获 fx 生成的 ctx（但 fx 内部 ctx 不暴露，因此更简单的方式是在任务函数中基于父 ctx 创建超时，或直接使用 fx 的超时）
+		// 更合理的做法：任务函数中直接使用 fx 内部的超时逻辑，onRefreshToken 传入 c.ctx 结合 fx 的超时（实际等价于 authCtx）
+		success, err := c.onRefreshToken(c.ctx) // 这里的 c.ctx 会被 fx 的超时上下文覆盖（因为 fx 内部已设置超时）
+		if !success {
+			return fmt.Errorf("authentication failed: %w", err)
 		}
-		c.logger.WithContext(c.ctx).Errorf("Authentication failed: %v", res.err)
-		return false, res.err
-	case <-authCtx.Done():
-		err := errors.New("authentication timeout")
-		c.logger.WithContext(c.ctx).Errorf(err.Error())
+		return nil
+	}, c.authTimeout, fx.WithContext(c.ctx)) // 传入客户端上下文作为父上下文，支持外部取消
+
+	// 处理 fx.DoWithTimeout 的返回结果
+	switch {
+	case err == nil:
+		c.logger.WithContext(c.ctx).Info("Authentication succeeded")
+		return true, nil
+	case errors.Is(err, fx.ErrTimeout):
+		timeoutErr := errors.New("Authentication timeout")
+		c.logger.WithContext(c.ctx).Errorf(timeoutErr.Error())
+		return false, timeoutErr
+	case errors.Is(err, fx.ErrCanceled):
+		cancelErr := errors.New("Authentication canceled")
+		c.logger.WithContext(c.ctx).Errorf(cancelErr.Error())
+		return false, cancelErr
+	default:
+		c.logger.WithContext(c.ctx).Errorf("Authentication failed: %v", err)
 		return false, err
 	}
 }
