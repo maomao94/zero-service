@@ -6,6 +6,14 @@ option java_multiple_files = true;
 option java_package = "com.github.geo.grpc";
 option java_outer_classname = "GeoProto";
 
+// 坐标系类型枚举（覆盖国内主流场景，后续可扩展）
+enum CoordType {
+  COORD_TYPE_UNSPECIFIED = 0; // 未指定（默认无效值，用于校验）
+  COORD_TYPE_WGS84 = 1;       // WGS84：GPS原生坐标（国际通用）
+  COORD_TYPE_GCJ02 = 2;       // GCJ02：高德/腾讯/谷歌中国坐标（火星加密）
+  COORD_TYPE_BD09 = 3;        // BD09：百度坐标（在GCJ02基础上二次加密）
+}
+
 // GEO 相关服务
 service Geo {
   rpc Ping (Req) returns (Res);
@@ -23,6 +31,10 @@ service Geo {
   rpc Distance (DistanceReq) returns (DistanceRes);
   // 获取某点附近多少 km 的围栏（粗过滤）
   rpc NearbyFences (NearbyFencesReq) returns (NearbyFencesRes);
+  // 单个坐标转换
+  rpc TransformCoord (TransformCoordReq) returns (TransformCoordRes);
+  // 批量坐标转换
+  rpc BatchTransformCoord (BatchTransformCoordReq) returns (BatchTransformCoordRes);
 }
 
 message Req {
@@ -109,4 +121,24 @@ message NearbyFencesReq {
 
 message NearbyFencesRes {
   repeated string fenceIds = 1; // 粗过滤候选
+}
+
+message TransformCoordReq {
+  Point point = 1;             // 待转换的点
+  CoordType sourceType = 2;   // 源坐标系（必填）
+  CoordType targetType = 3;   // 目标坐标系（必填）
+}
+
+message TransformCoordRes {
+  Point transformedPoint = 1; // 转换后的点
+}
+
+message BatchTransformCoordReq {
+  repeated Point points = 1;   // 待转换的点列表（必填）
+  CoordType sourceType = 2;   // 源坐标系（必填）
+  CoordType targetType = 3;   // 目标坐标系（必填）
+}
+
+message BatchTransformCoordRes {
+  repeated Point transformedPoints = 1; // 转换后的点列表（与输入顺序一致）
 }

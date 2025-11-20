@@ -21,6 +21,59 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// 坐标系类型枚举（覆盖国内主流场景，后续可扩展）
+type CoordType int32
+
+const (
+	CoordType_COORD_TYPE_UNSPECIFIED CoordType = 0 // 未指定（默认无效值，用于校验）
+	CoordType_COORD_TYPE_WGS84       CoordType = 1 // WGS84：GPS原生坐标（国际通用）
+	CoordType_COORD_TYPE_GCJ02       CoordType = 2 // GCJ02：高德/腾讯/谷歌中国坐标（火星加密）
+	CoordType_COORD_TYPE_BD09        CoordType = 3 // BD09：百度坐标（在GCJ02基础上二次加密）
+)
+
+// Enum value maps for CoordType.
+var (
+	CoordType_name = map[int32]string{
+		0: "COORD_TYPE_UNSPECIFIED",
+		1: "COORD_TYPE_WGS84",
+		2: "COORD_TYPE_GCJ02",
+		3: "COORD_TYPE_BD09",
+	}
+	CoordType_value = map[string]int32{
+		"COORD_TYPE_UNSPECIFIED": 0,
+		"COORD_TYPE_WGS84":       1,
+		"COORD_TYPE_GCJ02":       2,
+		"COORD_TYPE_BD09":        3,
+	}
+)
+
+func (x CoordType) Enum() *CoordType {
+	p := new(CoordType)
+	*p = x
+	return p
+}
+
+func (x CoordType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (CoordType) Descriptor() protoreflect.EnumDescriptor {
+	return file_geo_proto_enumTypes[0].Descriptor()
+}
+
+func (CoordType) Type() protoreflect.EnumType {
+	return &file_geo_proto_enumTypes[0]
+}
+
+func (x CoordType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use CoordType.Descriptor instead.
+func (CoordType) EnumDescriptor() ([]byte, []int) {
+	return file_geo_proto_rawDescGZIP(), []int{0}
+}
+
 type Req struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Ping          string                 `protobuf:"bytes,1,opt,name=ping,proto3" json:"ping,omitempty"`
@@ -164,7 +217,7 @@ func (x *Point) GetLon() float64 {
 type EncodeGeoHashReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`
-	Precision     uint32                 `protobuf:"varint,2,opt,name=precision,proto3" json:"precision,omitempty"` // 默认 7
+	Precision     uint32                 `protobuf:"varint,2,opt,name=precision,proto3" json:"precision,omitempty"` // 默认 7 max-12
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -925,6 +978,214 @@ func (x *NearbyFencesRes) GetFenceIds() []string {
 	return nil
 }
 
+type TransformCoordReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Point         *Point                 `protobuf:"bytes,1,opt,name=point,proto3" json:"point,omitempty"`                               // 待转换的点
+	SourceType    CoordType              `protobuf:"varint,2,opt,name=sourceType,proto3,enum=geo.CoordType" json:"sourceType,omitempty"` // 源坐标系（必填）
+	TargetType    CoordType              `protobuf:"varint,3,opt,name=targetType,proto3,enum=geo.CoordType" json:"targetType,omitempty"` // 目标坐标系（必填）
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TransformCoordReq) Reset() {
+	*x = TransformCoordReq{}
+	mi := &file_geo_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TransformCoordReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TransformCoordReq) ProtoMessage() {}
+
+func (x *TransformCoordReq) ProtoReflect() protoreflect.Message {
+	mi := &file_geo_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TransformCoordReq.ProtoReflect.Descriptor instead.
+func (*TransformCoordReq) Descriptor() ([]byte, []int) {
+	return file_geo_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *TransformCoordReq) GetPoint() *Point {
+	if x != nil {
+		return x.Point
+	}
+	return nil
+}
+
+func (x *TransformCoordReq) GetSourceType() CoordType {
+	if x != nil {
+		return x.SourceType
+	}
+	return CoordType_COORD_TYPE_UNSPECIFIED
+}
+
+func (x *TransformCoordReq) GetTargetType() CoordType {
+	if x != nil {
+		return x.TargetType
+	}
+	return CoordType_COORD_TYPE_UNSPECIFIED
+}
+
+type TransformCoordRes struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	TransformedPoint *Point                 `protobuf:"bytes,1,opt,name=transformedPoint,proto3" json:"transformedPoint,omitempty"` // 转换后的点
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *TransformCoordRes) Reset() {
+	*x = TransformCoordRes{}
+	mi := &file_geo_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TransformCoordRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TransformCoordRes) ProtoMessage() {}
+
+func (x *TransformCoordRes) ProtoReflect() protoreflect.Message {
+	mi := &file_geo_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TransformCoordRes.ProtoReflect.Descriptor instead.
+func (*TransformCoordRes) Descriptor() ([]byte, []int) {
+	return file_geo_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *TransformCoordRes) GetTransformedPoint() *Point {
+	if x != nil {
+		return x.TransformedPoint
+	}
+	return nil
+}
+
+type BatchTransformCoordReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Points        []*Point               `protobuf:"bytes,1,rep,name=points,proto3" json:"points,omitempty"`                             // 待转换的点列表（必填）
+	SourceType    CoordType              `protobuf:"varint,2,opt,name=sourceType,proto3,enum=geo.CoordType" json:"sourceType,omitempty"` // 源坐标系（必填）
+	TargetType    CoordType              `protobuf:"varint,3,opt,name=targetType,proto3,enum=geo.CoordType" json:"targetType,omitempty"` // 目标坐标系（必填）
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BatchTransformCoordReq) Reset() {
+	*x = BatchTransformCoordReq{}
+	mi := &file_geo_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BatchTransformCoordReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BatchTransformCoordReq) ProtoMessage() {}
+
+func (x *BatchTransformCoordReq) ProtoReflect() protoreflect.Message {
+	mi := &file_geo_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BatchTransformCoordReq.ProtoReflect.Descriptor instead.
+func (*BatchTransformCoordReq) Descriptor() ([]byte, []int) {
+	return file_geo_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *BatchTransformCoordReq) GetPoints() []*Point {
+	if x != nil {
+		return x.Points
+	}
+	return nil
+}
+
+func (x *BatchTransformCoordReq) GetSourceType() CoordType {
+	if x != nil {
+		return x.SourceType
+	}
+	return CoordType_COORD_TYPE_UNSPECIFIED
+}
+
+func (x *BatchTransformCoordReq) GetTargetType() CoordType {
+	if x != nil {
+		return x.TargetType
+	}
+	return CoordType_COORD_TYPE_UNSPECIFIED
+}
+
+type BatchTransformCoordRes struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	TransformedPoints []*Point               `protobuf:"bytes,1,rep,name=transformedPoints,proto3" json:"transformedPoints,omitempty"` // 转换后的点列表（与输入顺序一致）
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *BatchTransformCoordRes) Reset() {
+	*x = BatchTransformCoordRes{}
+	mi := &file_geo_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BatchTransformCoordRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BatchTransformCoordRes) ProtoMessage() {}
+
+func (x *BatchTransformCoordRes) ProtoReflect() protoreflect.Message {
+	mi := &file_geo_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BatchTransformCoordRes.ProtoReflect.Descriptor instead.
+func (*BatchTransformCoordRes) Descriptor() ([]byte, []int) {
+	return file_geo_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *BatchTransformCoordRes) GetTransformedPoints() []*Point {
+	if x != nil {
+		return x.TransformedPoints
+	}
+	return nil
+}
+
 var File_geo_proto protoreflect.FileDescriptor
 
 const file_geo_proto_rawDesc = "" +
@@ -990,7 +1251,36 @@ const file_geo_proto_rawDesc = "" +
 	".geo.PointR\x05point\x12\x0e\n" +
 	"\x02km\x18\x02 \x01(\x01R\x02km\"-\n" +
 	"\x0fNearbyFencesRes\x12\x1a\n" +
-	"\bfenceIds\x18\x01 \x03(\tR\bfenceIds2\xca\x03\n" +
+	"\bfenceIds\x18\x01 \x03(\tR\bfenceIds\"\x95\x01\n" +
+	"\x11TransformCoordReq\x12 \n" +
+	"\x05point\x18\x01 \x01(\v2\n" +
+	".geo.PointR\x05point\x12.\n" +
+	"\n" +
+	"sourceType\x18\x02 \x01(\x0e2\x0e.geo.CoordTypeR\n" +
+	"sourceType\x12.\n" +
+	"\n" +
+	"targetType\x18\x03 \x01(\x0e2\x0e.geo.CoordTypeR\n" +
+	"targetType\"K\n" +
+	"\x11TransformCoordRes\x126\n" +
+	"\x10transformedPoint\x18\x01 \x01(\v2\n" +
+	".geo.PointR\x10transformedPoint\"\x9c\x01\n" +
+	"\x16BatchTransformCoordReq\x12\"\n" +
+	"\x06points\x18\x01 \x03(\v2\n" +
+	".geo.PointR\x06points\x12.\n" +
+	"\n" +
+	"sourceType\x18\x02 \x01(\x0e2\x0e.geo.CoordTypeR\n" +
+	"sourceType\x12.\n" +
+	"\n" +
+	"targetType\x18\x03 \x01(\x0e2\x0e.geo.CoordTypeR\n" +
+	"targetType\"R\n" +
+	"\x16BatchTransformCoordRes\x128\n" +
+	"\x11transformedPoints\x18\x01 \x03(\v2\n" +
+	".geo.PointR\x11transformedPoints*h\n" +
+	"\tCoordType\x12\x1a\n" +
+	"\x16COORD_TYPE_UNSPECIFIED\x10\x00\x12\x14\n" +
+	"\x10COORD_TYPE_WGS84\x10\x01\x12\x14\n" +
+	"\x10COORD_TYPE_GCJ02\x10\x02\x12\x13\n" +
+	"\x0fCOORD_TYPE_BD09\x10\x032\xdd\x04\n" +
 	"\x03Geo\x12\x1a\n" +
 	"\x04Ping\x12\b.geo.Req\x1a\b.geo.Res\x12=\n" +
 	"\rEncodeGeoHash\x12\x15.geo.EncodeGeoHashReq\x1a\x15.geo.EncodeGeoHashRes\x12=\n" +
@@ -999,7 +1289,9 @@ const file_geo_proto_rawDesc = "" +
 	"\fPointInFence\x12\x14.geo.PointInFenceReq\x1a\x14.geo.PointInFenceRes\x12=\n" +
 	"\rPointInFences\x12\x15.geo.PointInFencesReq\x1a\x15.geo.PointInFencesRes\x12.\n" +
 	"\bDistance\x12\x10.geo.DistanceReq\x1a\x10.geo.DistanceRes\x12:\n" +
-	"\fNearbyFences\x12\x14.geo.NearbyFencesReq\x1a\x14.geo.NearbyFencesResB(\n" +
+	"\fNearbyFences\x12\x14.geo.NearbyFencesReq\x1a\x14.geo.NearbyFencesRes\x12@\n" +
+	"\x0eTransformCoord\x12\x16.geo.TransformCoordReq\x1a\x16.geo.TransformCoordRes\x12O\n" +
+	"\x13BatchTransformCoord\x12\x1b.geo.BatchTransformCoordReq\x1a\x1b.geo.BatchTransformCoordResB(\n" +
 	"\x13com.github.geo.grpcB\bGeoProtoP\x01Z\x05./geob\x06proto3"
 
 var (
@@ -1014,60 +1306,78 @@ func file_geo_proto_rawDescGZIP() []byte {
 	return file_geo_proto_rawDescData
 }
 
-var file_geo_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_geo_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_geo_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_geo_proto_goTypes = []any{
-	(*Req)(nil),              // 0: geo.Req
-	(*Res)(nil),              // 1: geo.Res
-	(*Point)(nil),            // 2: geo.Point
-	(*EncodeGeoHashReq)(nil), // 3: geo.EncodeGeoHashReq
-	(*EncodeGeoHashRes)(nil), // 4: geo.EncodeGeoHashRes
-	(*DecodeGeoHashReq)(nil), // 5: geo.DecodeGeoHashReq
-	(*DecodeGeoHashRes)(nil), // 6: geo.DecodeGeoHashRes
-	(*GenFenceCellsReq)(nil), // 7: geo.GenFenceCellsReq
-	(*GenFenceCellsRes)(nil), // 8: geo.GenFenceCellsRes
-	(*Fence)(nil),            // 9: geo.Fence
-	(*PointInFenceReq)(nil),  // 10: geo.PointInFenceReq
-	(*PointInFenceRes)(nil),  // 11: geo.PointInFenceRes
-	(*PointInFencesReq)(nil), // 12: geo.PointInFencesReq
-	(*PointInFencesRes)(nil), // 13: geo.PointInFencesRes
-	(*DistanceReq)(nil),      // 14: geo.DistanceReq
-	(*DistanceRes)(nil),      // 15: geo.DistanceRes
-	(*NearbyFencesReq)(nil),  // 16: geo.NearbyFencesReq
-	(*NearbyFencesRes)(nil),  // 17: geo.NearbyFencesRes
+	(CoordType)(0),                 // 0: geo.CoordType
+	(*Req)(nil),                    // 1: geo.Req
+	(*Res)(nil),                    // 2: geo.Res
+	(*Point)(nil),                  // 3: geo.Point
+	(*EncodeGeoHashReq)(nil),       // 4: geo.EncodeGeoHashReq
+	(*EncodeGeoHashRes)(nil),       // 5: geo.EncodeGeoHashRes
+	(*DecodeGeoHashReq)(nil),       // 6: geo.DecodeGeoHashReq
+	(*DecodeGeoHashRes)(nil),       // 7: geo.DecodeGeoHashRes
+	(*GenFenceCellsReq)(nil),       // 8: geo.GenFenceCellsReq
+	(*GenFenceCellsRes)(nil),       // 9: geo.GenFenceCellsRes
+	(*Fence)(nil),                  // 10: geo.Fence
+	(*PointInFenceReq)(nil),        // 11: geo.PointInFenceReq
+	(*PointInFenceRes)(nil),        // 12: geo.PointInFenceRes
+	(*PointInFencesReq)(nil),       // 13: geo.PointInFencesReq
+	(*PointInFencesRes)(nil),       // 14: geo.PointInFencesRes
+	(*DistanceReq)(nil),            // 15: geo.DistanceReq
+	(*DistanceRes)(nil),            // 16: geo.DistanceRes
+	(*NearbyFencesReq)(nil),        // 17: geo.NearbyFencesReq
+	(*NearbyFencesRes)(nil),        // 18: geo.NearbyFencesRes
+	(*TransformCoordReq)(nil),      // 19: geo.TransformCoordReq
+	(*TransformCoordRes)(nil),      // 20: geo.TransformCoordRes
+	(*BatchTransformCoordReq)(nil), // 21: geo.BatchTransformCoordReq
+	(*BatchTransformCoordRes)(nil), // 22: geo.BatchTransformCoordRes
 }
 var file_geo_proto_depIdxs = []int32{
-	2,  // 0: geo.EncodeGeoHashReq.point:type_name -> geo.Point
-	2,  // 1: geo.DecodeGeoHashRes.point:type_name -> geo.Point
-	2,  // 2: geo.GenFenceCellsReq.points:type_name -> geo.Point
-	2,  // 3: geo.Fence.points:type_name -> geo.Point
-	2,  // 4: geo.PointInFenceReq.point:type_name -> geo.Point
-	9,  // 5: geo.PointInFenceReq.fence:type_name -> geo.Fence
-	2,  // 6: geo.PointInFencesReq.point:type_name -> geo.Point
-	9,  // 7: geo.PointInFencesReq.fences:type_name -> geo.Fence
-	2,  // 8: geo.DistanceReq.a:type_name -> geo.Point
-	2,  // 9: geo.DistanceReq.b:type_name -> geo.Point
-	2,  // 10: geo.NearbyFencesReq.point:type_name -> geo.Point
-	0,  // 11: geo.Geo.Ping:input_type -> geo.Req
-	3,  // 12: geo.Geo.EncodeGeoHash:input_type -> geo.EncodeGeoHashReq
-	5,  // 13: geo.Geo.DecodeGeoHash:input_type -> geo.DecodeGeoHashReq
-	7,  // 14: geo.Geo.GenerateFenceCells:input_type -> geo.GenFenceCellsReq
-	10, // 15: geo.Geo.PointInFence:input_type -> geo.PointInFenceReq
-	12, // 16: geo.Geo.PointInFences:input_type -> geo.PointInFencesReq
-	14, // 17: geo.Geo.Distance:input_type -> geo.DistanceReq
-	16, // 18: geo.Geo.NearbyFences:input_type -> geo.NearbyFencesReq
-	1,  // 19: geo.Geo.Ping:output_type -> geo.Res
-	4,  // 20: geo.Geo.EncodeGeoHash:output_type -> geo.EncodeGeoHashRes
-	6,  // 21: geo.Geo.DecodeGeoHash:output_type -> geo.DecodeGeoHashRes
-	8,  // 22: geo.Geo.GenerateFenceCells:output_type -> geo.GenFenceCellsRes
-	11, // 23: geo.Geo.PointInFence:output_type -> geo.PointInFenceRes
-	13, // 24: geo.Geo.PointInFences:output_type -> geo.PointInFencesRes
-	15, // 25: geo.Geo.Distance:output_type -> geo.DistanceRes
-	17, // 26: geo.Geo.NearbyFences:output_type -> geo.NearbyFencesRes
-	19, // [19:27] is the sub-list for method output_type
-	11, // [11:19] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	3,  // 0: geo.EncodeGeoHashReq.point:type_name -> geo.Point
+	3,  // 1: geo.DecodeGeoHashRes.point:type_name -> geo.Point
+	3,  // 2: geo.GenFenceCellsReq.points:type_name -> geo.Point
+	3,  // 3: geo.Fence.points:type_name -> geo.Point
+	3,  // 4: geo.PointInFenceReq.point:type_name -> geo.Point
+	10, // 5: geo.PointInFenceReq.fence:type_name -> geo.Fence
+	3,  // 6: geo.PointInFencesReq.point:type_name -> geo.Point
+	10, // 7: geo.PointInFencesReq.fences:type_name -> geo.Fence
+	3,  // 8: geo.DistanceReq.a:type_name -> geo.Point
+	3,  // 9: geo.DistanceReq.b:type_name -> geo.Point
+	3,  // 10: geo.NearbyFencesReq.point:type_name -> geo.Point
+	3,  // 11: geo.TransformCoordReq.point:type_name -> geo.Point
+	0,  // 12: geo.TransformCoordReq.sourceType:type_name -> geo.CoordType
+	0,  // 13: geo.TransformCoordReq.targetType:type_name -> geo.CoordType
+	3,  // 14: geo.TransformCoordRes.transformedPoint:type_name -> geo.Point
+	3,  // 15: geo.BatchTransformCoordReq.points:type_name -> geo.Point
+	0,  // 16: geo.BatchTransformCoordReq.sourceType:type_name -> geo.CoordType
+	0,  // 17: geo.BatchTransformCoordReq.targetType:type_name -> geo.CoordType
+	3,  // 18: geo.BatchTransformCoordRes.transformedPoints:type_name -> geo.Point
+	1,  // 19: geo.Geo.Ping:input_type -> geo.Req
+	4,  // 20: geo.Geo.EncodeGeoHash:input_type -> geo.EncodeGeoHashReq
+	6,  // 21: geo.Geo.DecodeGeoHash:input_type -> geo.DecodeGeoHashReq
+	8,  // 22: geo.Geo.GenerateFenceCells:input_type -> geo.GenFenceCellsReq
+	11, // 23: geo.Geo.PointInFence:input_type -> geo.PointInFenceReq
+	13, // 24: geo.Geo.PointInFences:input_type -> geo.PointInFencesReq
+	15, // 25: geo.Geo.Distance:input_type -> geo.DistanceReq
+	17, // 26: geo.Geo.NearbyFences:input_type -> geo.NearbyFencesReq
+	19, // 27: geo.Geo.TransformCoord:input_type -> geo.TransformCoordReq
+	21, // 28: geo.Geo.BatchTransformCoord:input_type -> geo.BatchTransformCoordReq
+	2,  // 29: geo.Geo.Ping:output_type -> geo.Res
+	5,  // 30: geo.Geo.EncodeGeoHash:output_type -> geo.EncodeGeoHashRes
+	7,  // 31: geo.Geo.DecodeGeoHash:output_type -> geo.DecodeGeoHashRes
+	9,  // 32: geo.Geo.GenerateFenceCells:output_type -> geo.GenFenceCellsRes
+	12, // 33: geo.Geo.PointInFence:output_type -> geo.PointInFenceRes
+	14, // 34: geo.Geo.PointInFences:output_type -> geo.PointInFencesRes
+	16, // 35: geo.Geo.Distance:output_type -> geo.DistanceRes
+	18, // 36: geo.Geo.NearbyFences:output_type -> geo.NearbyFencesRes
+	20, // 37: geo.Geo.TransformCoord:output_type -> geo.TransformCoordRes
+	22, // 38: geo.Geo.BatchTransformCoord:output_type -> geo.BatchTransformCoordRes
+	29, // [29:39] is the sub-list for method output_type
+	19, // [19:29] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_geo_proto_init() }
@@ -1080,13 +1390,14 @@ func file_geo_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_geo_proto_rawDesc), len(file_geo_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   18,
+			NumEnums:      1,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_geo_proto_goTypes,
 		DependencyIndexes: file_geo_proto_depIdxs,
+		EnumInfos:         file_geo_proto_enumTypes,
 		MessageInfos:      file_geo_proto_msgTypes,
 	}.Build()
 	File_geo_proto = out.File

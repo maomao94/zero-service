@@ -19,14 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Geo_Ping_FullMethodName               = "/geo.Geo/Ping"
-	Geo_EncodeGeoHash_FullMethodName      = "/geo.Geo/EncodeGeoHash"
-	Geo_DecodeGeoHash_FullMethodName      = "/geo.Geo/DecodeGeoHash"
-	Geo_GenerateFenceCells_FullMethodName = "/geo.Geo/GenerateFenceCells"
-	Geo_PointInFence_FullMethodName       = "/geo.Geo/PointInFence"
-	Geo_PointInFences_FullMethodName      = "/geo.Geo/PointInFences"
-	Geo_Distance_FullMethodName           = "/geo.Geo/Distance"
-	Geo_NearbyFences_FullMethodName       = "/geo.Geo/NearbyFences"
+	Geo_Ping_FullMethodName                = "/geo.Geo/Ping"
+	Geo_EncodeGeoHash_FullMethodName       = "/geo.Geo/EncodeGeoHash"
+	Geo_DecodeGeoHash_FullMethodName       = "/geo.Geo/DecodeGeoHash"
+	Geo_GenerateFenceCells_FullMethodName  = "/geo.Geo/GenerateFenceCells"
+	Geo_PointInFence_FullMethodName        = "/geo.Geo/PointInFence"
+	Geo_PointInFences_FullMethodName       = "/geo.Geo/PointInFences"
+	Geo_Distance_FullMethodName            = "/geo.Geo/Distance"
+	Geo_NearbyFences_FullMethodName        = "/geo.Geo/NearbyFences"
+	Geo_TransformCoord_FullMethodName      = "/geo.Geo/TransformCoord"
+	Geo_BatchTransformCoord_FullMethodName = "/geo.Geo/BatchTransformCoord"
 )
 
 // GeoClient is the client API for Geo service.
@@ -50,6 +52,10 @@ type GeoClient interface {
 	Distance(ctx context.Context, in *DistanceReq, opts ...grpc.CallOption) (*DistanceRes, error)
 	// 获取某点附近多少 km 的围栏（粗过滤）
 	NearbyFences(ctx context.Context, in *NearbyFencesReq, opts ...grpc.CallOption) (*NearbyFencesRes, error)
+	// 单个坐标转换
+	TransformCoord(ctx context.Context, in *TransformCoordReq, opts ...grpc.CallOption) (*TransformCoordRes, error)
+	// 批量坐标转换
+	BatchTransformCoord(ctx context.Context, in *BatchTransformCoordReq, opts ...grpc.CallOption) (*BatchTransformCoordRes, error)
 }
 
 type geoClient struct {
@@ -140,6 +146,26 @@ func (c *geoClient) NearbyFences(ctx context.Context, in *NearbyFencesReq, opts 
 	return out, nil
 }
 
+func (c *geoClient) TransformCoord(ctx context.Context, in *TransformCoordReq, opts ...grpc.CallOption) (*TransformCoordRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TransformCoordRes)
+	err := c.cc.Invoke(ctx, Geo_TransformCoord_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *geoClient) BatchTransformCoord(ctx context.Context, in *BatchTransformCoordReq, opts ...grpc.CallOption) (*BatchTransformCoordRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BatchTransformCoordRes)
+	err := c.cc.Invoke(ctx, Geo_BatchTransformCoord_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GeoServer is the server API for Geo service.
 // All implementations must embed UnimplementedGeoServer
 // for forward compatibility.
@@ -161,6 +187,10 @@ type GeoServer interface {
 	Distance(context.Context, *DistanceReq) (*DistanceRes, error)
 	// 获取某点附近多少 km 的围栏（粗过滤）
 	NearbyFences(context.Context, *NearbyFencesReq) (*NearbyFencesRes, error)
+	// 单个坐标转换
+	TransformCoord(context.Context, *TransformCoordReq) (*TransformCoordRes, error)
+	// 批量坐标转换
+	BatchTransformCoord(context.Context, *BatchTransformCoordReq) (*BatchTransformCoordRes, error)
 	mustEmbedUnimplementedGeoServer()
 }
 
@@ -194,6 +224,12 @@ func (UnimplementedGeoServer) Distance(context.Context, *DistanceReq) (*Distance
 }
 func (UnimplementedGeoServer) NearbyFences(context.Context, *NearbyFencesReq) (*NearbyFencesRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NearbyFences not implemented")
+}
+func (UnimplementedGeoServer) TransformCoord(context.Context, *TransformCoordReq) (*TransformCoordRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TransformCoord not implemented")
+}
+func (UnimplementedGeoServer) BatchTransformCoord(context.Context, *BatchTransformCoordReq) (*BatchTransformCoordRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BatchTransformCoord not implemented")
 }
 func (UnimplementedGeoServer) mustEmbedUnimplementedGeoServer() {}
 func (UnimplementedGeoServer) testEmbeddedByValue()             {}
@@ -360,6 +396,42 @@ func _Geo_NearbyFences_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Geo_TransformCoord_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TransformCoordReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GeoServer).TransformCoord(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Geo_TransformCoord_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GeoServer).TransformCoord(ctx, req.(*TransformCoordReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Geo_BatchTransformCoord_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BatchTransformCoordReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GeoServer).BatchTransformCoord(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Geo_BatchTransformCoord_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GeoServer).BatchTransformCoord(ctx, req.(*BatchTransformCoordReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Geo_ServiceDesc is the grpc.ServiceDesc for Geo service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -398,6 +470,14 @@ var Geo_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "NearbyFences",
 			Handler:    _Geo_NearbyFences_Handler,
+		},
+		{
+			MethodName: "TransformCoord",
+			Handler:    _Geo_TransformCoord_Handler,
+		},
+		{
+			MethodName: "BatchTransformCoord",
+			Handler:    _Geo_BatchTransformCoord_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

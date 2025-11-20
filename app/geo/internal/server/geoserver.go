@@ -69,3 +69,15 @@ func (s *GeoServer) NearbyFences(ctx context.Context, in *geo.NearbyFencesReq) (
 	l := logic.NewNearbyFencesLogic(ctx, s.svcCtx)
 	return l.NearbyFences(in)
 }
+
+// 单个坐标转换
+func (s *GeoServer) TransformCoord(ctx context.Context, in *geo.TransformCoordReq) (*geo.TransformCoordRes, error) {
+	l := logic.NewTransformCoordLogic(ctx, s.svcCtx)
+	return l.TransformCoord(in)
+}
+
+// 批量坐标转换
+func (s *GeoServer) BatchTransformCoord(ctx context.Context, in *geo.BatchTransformCoordReq) (*geo.BatchTransformCoordRes, error) {
+	l := logic.NewBatchTransformCoordLogic(ctx, s.svcCtx)
+	return l.BatchTransformCoord(in)
+}

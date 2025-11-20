@@ -140,6 +140,7 @@ require (
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
+	github.com/qichengzx/coordtransform v0.0.0-20220708113031-010878418826 // indirect
 	github.com/redis/go-redis/v9 v9.16.0 // indirect
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/segmentio/kafka-go v0.4.47 // indirect
