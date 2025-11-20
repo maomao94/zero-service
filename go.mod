@@ -41,7 +41,7 @@ require (
 	github.com/zeromicro/x v0.0.0-20240408115609-8224c482b07e
 	go.opentelemetry.io/otel v1.38.0
 	go.opentelemetry.io/otel/trace v1.38.0
-	golang.org/x/crypto v0.44.0
+	golang.org/x/crypto v0.45.0
 	golang.org/x/net v0.47.0
 	golang.org/x/term v0.37.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20251111163417-95abcf5c77ba
