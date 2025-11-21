@@ -64,6 +64,12 @@ func (s *GisServer) GenerateFenceH3Cells(ctx context.Context, in *gis.GenFenceH3
 	return l.GenerateFenceH3Cells(in)
 }
 
+// 获取半径内的点
+func (s *GisServer) PointsWithinRadius(ctx context.Context, in *gis.PointsWithinRadiusReq) (*gis.PointsWithinRadiusRes, error) {
+	l := logic.NewPointsWithinRadiusLogic(ctx, s.svcCtx)
+	return l.PointsWithinRadius(in)
+}
+
 // 点是否命中电子围栏（单个）
 func (s *GisServer) PointInFence(ctx context.Context, in *gis.PointInFenceReq) (*gis.PointInFenceRes, error) {
 	l := logic.NewPointInFenceLogic(ctx, s.svcCtx)

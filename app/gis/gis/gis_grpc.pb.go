@@ -26,6 +26,7 @@ const (
 	Gis_DecodeH3_FullMethodName             = "/gis.Gis/DecodeH3"
 	Gis_GenerateFenceCells_FullMethodName   = "/gis.Gis/GenerateFenceCells"
 	Gis_GenerateFenceH3Cells_FullMethodName = "/gis.Gis/GenerateFenceH3Cells"
+	Gis_PointsWithinRadius_FullMethodName   = "/gis.Gis/PointsWithinRadius"
 	Gis_PointInFence_FullMethodName         = "/gis.Gis/PointInFence"
 	Gis_PointInFences_FullMethodName        = "/gis.Gis/PointInFences"
 	Gis_Distance_FullMethodName             = "/gis.Gis/Distance"
@@ -53,6 +54,8 @@ type GisClient interface {
 	GenerateFenceCells(ctx context.Context, in *GenFenceCellsReq, opts ...grpc.CallOption) (*GenFenceCellsRes, error)
 	// 一次性生成围栏 H3 cells（小围栏）
 	GenerateFenceH3Cells(ctx context.Context, in *GenFenceH3CellsReq, opts ...grpc.CallOption) (*GenFenceH3CellsRes, error)
+	// 获取半径内的点
+	PointsWithinRadius(ctx context.Context, in *PointsWithinRadiusReq, opts ...grpc.CallOption) (*PointsWithinRadiusRes, error)
 	// 点是否命中电子围栏（单个）
 	PointInFence(ctx context.Context, in *PointInFenceReq, opts ...grpc.CallOption) (*PointInFenceRes, error)
 	// 点是否命中电子围栏（多个围栏）
@@ -145,6 +148,16 @@ func (c *gisClient) GenerateFenceH3Cells(ctx context.Context, in *GenFenceH3Cell
 	return out, nil
 }
 
+func (c *gisClient) PointsWithinRadius(ctx context.Context, in *PointsWithinRadiusReq, opts ...grpc.CallOption) (*PointsWithinRadiusRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PointsWithinRadiusRes)
+	err := c.cc.Invoke(ctx, Gis_PointsWithinRadius_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *gisClient) PointInFence(ctx context.Context, in *PointInFenceReq, opts ...grpc.CallOption) (*PointInFenceRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PointInFenceRes)
@@ -224,6 +237,8 @@ type GisServer interface {
 	GenerateFenceCells(context.Context, *GenFenceCellsReq) (*GenFenceCellsRes, error)
 	// 一次性生成围栏 H3 cells（小围栏）
 	GenerateFenceH3Cells(context.Context, *GenFenceH3CellsReq) (*GenFenceH3CellsRes, error)
+	// 获取半径内的点
+	PointsWithinRadius(context.Context, *PointsWithinRadiusReq) (*PointsWithinRadiusRes, error)
 	// 点是否命中电子围栏（单个）
 	PointInFence(context.Context, *PointInFenceReq) (*PointInFenceRes, error)
 	// 点是否命中电子围栏（多个围栏）
@@ -266,6 +281,9 @@ func (UnimplementedGisServer) GenerateFenceCells(context.Context, *GenFenceCells
 }
 func (UnimplementedGisServer) GenerateFenceH3Cells(context.Context, *GenFenceH3CellsReq) (*GenFenceH3CellsRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GenerateFenceH3Cells not implemented")
+}
+func (UnimplementedGisServer) PointsWithinRadius(context.Context, *PointsWithinRadiusReq) (*PointsWithinRadiusRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PointsWithinRadius not implemented")
 }
 func (UnimplementedGisServer) PointInFence(context.Context, *PointInFenceReq) (*PointInFenceRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PointInFence not implemented")
@@ -432,6 +450,24 @@ func _Gis_GenerateFenceH3Cells_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Gis_PointsWithinRadius_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PointsWithinRadiusReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GisServer).PointsWithinRadius(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Gis_PointsWithinRadius_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GisServer).PointsWithinRadius(ctx, req.(*PointsWithinRadiusReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Gis_PointInFence_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PointInFenceReq)
 	if err := dec(in); err != nil {
@@ -574,6 +610,10 @@ var Gis_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GenerateFenceH3Cells",
 			Handler:    _Gis_GenerateFenceH3Cells_Handler,
+		},
+		{
+			MethodName: "PointsWithinRadius",
+			Handler:    _Gis_PointsWithinRadius_Handler,
 		},
 		{
 			MethodName: "PointInFence",

@@ -29,6 +29,8 @@ service Gis {
   rpc GenerateFenceCells (GenFenceCellsReq) returns (GenFenceCellsRes);
   // 一次性生成围栏 H3 cells（小围栏）
   rpc GenerateFenceH3Cells (GenFenceH3CellsReq) returns (GenFenceH3CellsRes);
+  // 获取半径内的点
+  rpc PointsWithinRadius (PointsWithinRadiusReq) returns (PointsWithinRadiusRes);
   // 点是否命中电子围栏（单个）
   rpc PointInFence (PointInFenceReq) returns (PointInFenceRes);
   // 点是否命中电子围栏（多个围栏）
@@ -43,17 +45,24 @@ service Gis {
   rpc BatchTransformCoord (BatchTransformCoordReq) returns (BatchTransformCoordRes);
 }
 
+
+// 常用对象
+message Fence {
+  string id = 1;
+  repeated Point points = 2; // polygon
+}
+
+message Point {
+  double lat = 1; // 纬度
+  double lon = 2; // 经度
+}
+
 message Req {
   string ping = 1;
 }
 
 message Res {
   string pong = 1;
-}
-
-message Point {
-  double lat = 1; // 纬度
-  double lon = 2; // 经度
 }
 
 message EncodeGeoHashReq {
@@ -106,7 +115,6 @@ message GenFenceCellsRes {
   repeated string geohashes = 1; // geohash 列表（去重后的前缀）
 }
 
-
 message GenFenceH3CellsReq {
   string fenceId = 1;          // 可选：已有 fence ID
   repeated Point points = 2;   // polygon 顶点（当 fenceId 不存在时直接传 polygon）
@@ -117,9 +125,14 @@ message GenFenceH3CellsRes {
   repeated string h3Indexes = 1; // H3 cell 列表（去重）
 }
 
-message Fence {
-  string id = 1;
-  repeated Point points = 2; // polygon
+message PointsWithinRadiusReq {
+  Point center = 1;            // 中心点
+  repeated Point points = 2;   // 待检测的点列表
+  double radiusMeters = 3;     // 半径（米）
+}
+
+message PointsWithinRadiusRes {
+  repeated int32 hitIndexes = 1;   // 命中的点在输入列表中的索引
 }
 
 message PointInFenceReq {
