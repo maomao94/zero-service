@@ -24,7 +24,7 @@ func NewPingLogic(ctx context.Context, svcCtx *svc.ServiceContext) *PingLogic {
 }
 
 func (l *PingLogic) Ping(in *gis.Req) (*gis.Res, error) {
-	// todo: add your logic here and delete this line
-
-	return &gis.Res{}, nil
+	return &gis.Res{
+		Pong: "pong",
+	}, nil
 }
