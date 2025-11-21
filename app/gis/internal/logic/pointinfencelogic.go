@@ -29,6 +29,10 @@ func NewPointInFenceLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Poin
 // 点是否命中电子围栏（单个）
 func (l *PointInFenceLogic) PointInFence(in *gis.PointInFenceReq) (*gis.PointInFenceRes, error) {
 	var err error
+	err = ValidatePoints(in.Point)
+	if err != nil {
+		return nil, err
+	}
 	var polygon orb.Polygon
 	if len(in.Fence.Points) > 0 {
 		polygon, err = pbPointToOrbPolygon(in.Fence.Points)
