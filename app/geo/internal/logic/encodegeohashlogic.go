@@ -25,7 +25,7 @@ func NewEncodeGeoHashLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Enc
 	}
 }
 
-// 计算 geohash
+// 编码 geohash
 func (l *EncodeGeoHashLogic) EncodeGeoHash(in *geo.EncodeGeoHashReq) (*geo.EncodeGeoHashRes, error) {
 	if in.Point == nil {
 		return nil, errors.New("参数错误")

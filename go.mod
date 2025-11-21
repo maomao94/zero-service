@@ -27,6 +27,7 @@ require (
 	github.com/panjf2000/ants/v2 v2.11.3
 	github.com/paulmach/orb v0.12.0
 	github.com/pkg/errors v0.9.1
+	github.com/qichengzx/coordtransform v0.0.0-20220708113031-010878418826
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
 	github.com/shopspring/decimal v1.4.0
@@ -35,6 +36,7 @@ require (
 	github.com/tidwall/gjson v1.18.0
 	github.com/twpayne/go-geom v1.6.1
 	github.com/u2takey/ffmpeg-go v0.5.0
+	github.com/uber/h3-go/v4 v4.3.0
 	github.com/wendy512/go-iecp5 v1.2.3
 	github.com/zeromicro/go-queue v1.2.2
 	github.com/zeromicro/go-zero v1.9.3
@@ -140,7 +142,6 @@ require (
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	github.com/qichengzx/coordtransform v0.0.0-20220708113031-010878418826 // indirect
 	github.com/redis/go-redis/v9 v9.16.0 // indirect
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/segmentio/kafka-go v0.4.47 // indirect

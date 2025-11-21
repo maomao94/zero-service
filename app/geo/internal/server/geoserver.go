@@ -28,7 +28,7 @@ func (s *GeoServer) Ping(ctx context.Context, in *geo.Req) (*geo.Res, error) {
 	return l.Ping(in)
 }
 
-// 计算 geohash
+// 编码 geohash
 func (s *GeoServer) EncodeGeoHash(ctx context.Context, in *geo.EncodeGeoHashReq) (*geo.EncodeGeoHashRes, error) {
 	l := logic.NewEncodeGeoHashLogic(ctx, s.svcCtx)
 	return l.EncodeGeoHash(in)
@@ -38,6 +38,18 @@ func (s *GeoServer) EncodeGeoHash(ctx context.Context, in *geo.EncodeGeoHashReq)
 func (s *GeoServer) DecodeGeoHash(ctx context.Context, in *geo.DecodeGeoHashReq) (*geo.DecodeGeoHashRes, error) {
 	l := logic.NewDecodeGeoHashLogic(ctx, s.svcCtx)
 	return l.DecodeGeoHash(in)
+}
+
+// 编码 h3
+func (s *GeoServer) EncodeH3(ctx context.Context, in *geo.EncodeH3Req) (*geo.EncodeH3Res, error) {
+	l := logic.NewEncodeH3Logic(ctx, s.svcCtx)
+	return l.EncodeH3(in)
+}
+
+// 解码 h3
+func (s *GeoServer) DecodeH3(ctx context.Context, in *geo.DecodeH3Req) (*geo.DecodeH3Res, error) {
+	l := logic.NewDecodeH3Logic(ctx, s.svcCtx)
+	return l.DecodeH3(in)
 }
 
 // 一次性生成围栏 cells（小围栏）

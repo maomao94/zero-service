@@ -22,6 +22,8 @@ const (
 	Geo_Ping_FullMethodName                = "/geo.Geo/Ping"
 	Geo_EncodeGeoHash_FullMethodName       = "/geo.Geo/EncodeGeoHash"
 	Geo_DecodeGeoHash_FullMethodName       = "/geo.Geo/DecodeGeoHash"
+	Geo_EncodeH3_FullMethodName            = "/geo.Geo/EncodeH3"
+	Geo_DecodeH3_FullMethodName            = "/geo.Geo/DecodeH3"
 	Geo_GenerateFenceCells_FullMethodName  = "/geo.Geo/GenerateFenceCells"
 	Geo_PointInFence_FullMethodName        = "/geo.Geo/PointInFence"
 	Geo_PointInFences_FullMethodName       = "/geo.Geo/PointInFences"
@@ -38,10 +40,14 @@ const (
 // GEO 相关服务
 type GeoClient interface {
 	Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error)
-	// 计算 geohash
+	// 编码 geohash
 	EncodeGeoHash(ctx context.Context, in *EncodeGeoHashReq, opts ...grpc.CallOption) (*EncodeGeoHashRes, error)
 	// 解码 geohash -> 经纬度
 	DecodeGeoHash(ctx context.Context, in *DecodeGeoHashReq, opts ...grpc.CallOption) (*DecodeGeoHashRes, error)
+	// 编码 h3
+	EncodeH3(ctx context.Context, in *EncodeH3Req, opts ...grpc.CallOption) (*EncodeH3Res, error)
+	// 解码 h3
+	DecodeH3(ctx context.Context, in *DecodeH3Req, opts ...grpc.CallOption) (*DecodeH3Res, error)
 	// 一次性生成围栏 cells（小围栏）
 	GenerateFenceCells(ctx context.Context, in *GenFenceCellsReq, opts ...grpc.CallOption) (*GenFenceCellsRes, error)
 	// 点是否命中电子围栏（单个）
@@ -90,6 +96,26 @@ func (c *geoClient) DecodeGeoHash(ctx context.Context, in *DecodeGeoHashReq, opt
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DecodeGeoHashRes)
 	err := c.cc.Invoke(ctx, Geo_DecodeGeoHash_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *geoClient) EncodeH3(ctx context.Context, in *EncodeH3Req, opts ...grpc.CallOption) (*EncodeH3Res, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EncodeH3Res)
+	err := c.cc.Invoke(ctx, Geo_EncodeH3_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *geoClient) DecodeH3(ctx context.Context, in *DecodeH3Req, opts ...grpc.CallOption) (*DecodeH3Res, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DecodeH3Res)
+	err := c.cc.Invoke(ctx, Geo_DecodeH3_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -173,10 +199,14 @@ func (c *geoClient) BatchTransformCoord(ctx context.Context, in *BatchTransformC
 // GEO 相关服务
 type GeoServer interface {
 	Ping(context.Context, *Req) (*Res, error)
-	// 计算 geohash
+	// 编码 geohash
 	EncodeGeoHash(context.Context, *EncodeGeoHashReq) (*EncodeGeoHashRes, error)
 	// 解码 geohash -> 经纬度
 	DecodeGeoHash(context.Context, *DecodeGeoHashReq) (*DecodeGeoHashRes, error)
+	// 编码 h3
+	EncodeH3(context.Context, *EncodeH3Req) (*EncodeH3Res, error)
+	// 解码 h3
+	DecodeH3(context.Context, *DecodeH3Req) (*DecodeH3Res, error)
 	// 一次性生成围栏 cells（小围栏）
 	GenerateFenceCells(context.Context, *GenFenceCellsReq) (*GenFenceCellsRes, error)
 	// 点是否命中电子围栏（单个）
@@ -209,6 +239,12 @@ func (UnimplementedGeoServer) EncodeGeoHash(context.Context, *EncodeGeoHashReq) 
 }
 func (UnimplementedGeoServer) DecodeGeoHash(context.Context, *DecodeGeoHashReq) (*DecodeGeoHashRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DecodeGeoHash not implemented")
+}
+func (UnimplementedGeoServer) EncodeH3(context.Context, *EncodeH3Req) (*EncodeH3Res, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EncodeH3 not implemented")
+}
+func (UnimplementedGeoServer) DecodeH3(context.Context, *DecodeH3Req) (*DecodeH3Res, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DecodeH3 not implemented")
 }
 func (UnimplementedGeoServer) GenerateFenceCells(context.Context, *GenFenceCellsReq) (*GenFenceCellsRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GenerateFenceCells not implemented")
@@ -302,6 +338,42 @@ func _Geo_DecodeGeoHash_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(GeoServer).DecodeGeoHash(ctx, req.(*DecodeGeoHashReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Geo_EncodeH3_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EncodeH3Req)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GeoServer).EncodeH3(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Geo_EncodeH3_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GeoServer).EncodeH3(ctx, req.(*EncodeH3Req))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Geo_DecodeH3_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DecodeH3Req)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GeoServer).DecodeH3(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Geo_DecodeH3_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GeoServer).DecodeH3(ctx, req.(*DecodeH3Req))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -450,6 +522,14 @@ var Geo_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DecodeGeoHash",
 			Handler:    _Geo_DecodeGeoHash_Handler,
+		},
+		{
+			MethodName: "EncodeH3",
+			Handler:    _Geo_EncodeH3_Handler,
+		},
+		{
+			MethodName: "DecodeH3",
+			Handler:    _Geo_DecodeH3_Handler,
 		},
 		{
 			MethodName: "GenerateFenceCells",

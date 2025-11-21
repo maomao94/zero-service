@@ -17,10 +17,14 @@ enum CoordType {
 // GEO 相关服务
 service Geo {
   rpc Ping (Req) returns (Res);
-  // 计算 geohash
+  // 编码 geohash
   rpc EncodeGeoHash (EncodeGeoHashReq) returns (EncodeGeoHashRes);
   // 解码 geohash -> 经纬度
   rpc DecodeGeoHash (DecodeGeoHashReq) returns (DecodeGeoHashRes);
+  // 编码 h3
+  rpc EncodeH3 (EncodeH3Req) returns (EncodeH3Res);
+  // 解码 h3
+  rpc DecodeH3 (DecodeH3Req) returns (DecodeH3Res);
   // 一次性生成围栏 cells（小围栏）
   rpc GenerateFenceCells (GenFenceCellsReq) returns (GenFenceCellsRes);
   // 点是否命中电子围栏（单个）
@@ -69,6 +73,24 @@ message DecodeGeoHashRes {
   double latMax = 3; // 最大纬度
   double lonMin = 4; // 最小经度
   double lonMax = 5; // 最大经度
+}
+
+message EncodeH3Req {
+  Point point = 1;
+  uint32 resolution = 2; // H3 分辨率 0-15
+}
+
+message EncodeH3Res {
+  string h3Index = 1;    // 返回 H3 cell string
+}
+
+message DecodeH3Req {
+  string h3Index = 1;
+}
+
+message DecodeH3Res {
+  Point center = 1;                // 六边形中心点
+  repeated Point boundary = 2;     // 六边形顶点
 }
 
 message GenFenceCellsReq {
