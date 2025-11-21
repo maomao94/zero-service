@@ -40,7 +40,7 @@ func (l *TransformCoordLogic) TransformCoord(in *geo.TransformCoordReq) (*geo.Tr
 	lon := in.Point.Lon
 	lat := in.Point.Lat
 
-	transformedLon, transformedLat := l.doTransform(lon, lat, in.SourceType, in.TargetType)
+	transformedLon, transformedLat := DoTransformCoord(lon, lat, in.SourceType, in.TargetType)
 
 	return &geo.TransformCoordRes{
 		TransformedPoint: &geo.Point{
@@ -76,7 +76,7 @@ func (l *TransformCoordLogic) validateReq(in *geo.TransformCoordReq) error {
 	return nil
 }
 
-func (l *TransformCoordLogic) doTransform(lon, lat float64, source, target geo.CoordType) (float64, float64) {
+func DoTransformCoord(lon, lat float64, source, target geo.CoordType) (float64, float64) {
 	switch {
 	// WGS84(1) ↔ GCJ02(2)
 	case source == geo.CoordType_COORD_TYPE_WGS84 && target == geo.CoordType_COORD_TYPE_GCJ02:
