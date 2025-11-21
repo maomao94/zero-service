@@ -65,6 +65,7 @@ func (l *PointsWithinRadiusLogic) PointsWithinRadius(in *gis.PointsWithinRadiusR
 			}
 			writer.Write(result)
 		},
+		mr.WithWorkers(64),
 	)
 	if err != nil {
 		return nil, err
