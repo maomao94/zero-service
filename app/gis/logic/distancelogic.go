@@ -6,6 +6,8 @@ import (
 
 	"zero-service/app/gis/internal/svc"
 
+	"github.com/paulmach/orb"
+	"github.com/paulmach/orb/geo"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -25,7 +27,10 @@ func NewDistanceLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Distance
 
 // 计算两个点之间的距离（米）
 func (l *DistanceLogic) Distance(in *gis.DistanceReq) (*gis.DistanceRes, error) {
-	// todo: add your logic here and delete this line
-
-	return &gis.DistanceRes{}, nil
+	a := orb.Point{in.A.Lon, in.A.Lat}
+	b := orb.Point{in.B.Lon, in.B.Lat}
+	distance := geo.Distance(a, b)
+	return &gis.DistanceRes{
+		Meters: distance,
+	}, nil
 }
