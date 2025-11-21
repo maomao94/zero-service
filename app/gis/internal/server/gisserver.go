@@ -105,3 +105,9 @@ func (s *GisServer) BatchTransformCoord(ctx context.Context, in *gis.BatchTransf
 	l := logic.NewBatchTransformCoordLogic(ctx, s.svcCtx)
 	return l.BatchTransformCoord(in)
 }
+
+// 计算点集合的最优路径
+func (s *GisServer) RoutePoints(ctx context.Context, in *gis.RoutePointsReq) (*gis.RoutePointsRes, error) {
+	l := logic.NewRoutePointsLogic(ctx, s.svcCtx)
+	return l.RoutePoints(in)
+}

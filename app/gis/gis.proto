@@ -43,6 +43,8 @@ service Gis {
   rpc TransformCoord (TransformCoordReq) returns (TransformCoordRes);
   // 批量坐标转换
   rpc BatchTransformCoord (BatchTransformCoordReq) returns (BatchTransformCoordRes);
+  // 计算点集合的最优路径
+  rpc RoutePoints(RoutePointsReq) returns (RoutePointsRes);
 }
 
 
@@ -189,4 +191,14 @@ message BatchTransformCoordReq {
 
 message BatchTransformCoordRes {
   repeated Point transformedPoints = 1; // 转换后的点列表（与输入顺序一致）
+}
+
+message RoutePointsReq {
+  Point start = 1;              // 起点
+  repeated Point points = 2;    // 待巡检点列表
+}
+
+message RoutePointsRes {
+  repeated int32 visitOrder = 1;  // 按索引顺序访问的点列表
+  double totalDistanceMeters = 2; // 总距离（米）
 }

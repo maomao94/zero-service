@@ -1587,6 +1587,110 @@ func (x *BatchTransformCoordRes) GetTransformedPoints() []*Point {
 	return nil
 }
 
+type RoutePointsReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Start         *Point                 `protobuf:"bytes,1,opt,name=start,proto3" json:"start,omitempty"`   // 起点
+	Points        []*Point               `protobuf:"bytes,2,rep,name=points,proto3" json:"points,omitempty"` // 待巡检点列表
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RoutePointsReq) Reset() {
+	*x = RoutePointsReq{}
+	mi := &file_gis_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RoutePointsReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RoutePointsReq) ProtoMessage() {}
+
+func (x *RoutePointsReq) ProtoReflect() protoreflect.Message {
+	mi := &file_gis_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RoutePointsReq.ProtoReflect.Descriptor instead.
+func (*RoutePointsReq) Descriptor() ([]byte, []int) {
+	return file_gis_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *RoutePointsReq) GetStart() *Point {
+	if x != nil {
+		return x.Start
+	}
+	return nil
+}
+
+func (x *RoutePointsReq) GetPoints() []*Point {
+	if x != nil {
+		return x.Points
+	}
+	return nil
+}
+
+type RoutePointsRes struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	VisitOrder          []int32                `protobuf:"varint,1,rep,packed,name=visitOrder,proto3" json:"visitOrder,omitempty"`             // 按索引顺序访问的点列表
+	TotalDistanceMeters float64                `protobuf:"fixed64,2,opt,name=totalDistanceMeters,proto3" json:"totalDistanceMeters,omitempty"` // 总距离（米）
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *RoutePointsRes) Reset() {
+	*x = RoutePointsRes{}
+	mi := &file_gis_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RoutePointsRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RoutePointsRes) ProtoMessage() {}
+
+func (x *RoutePointsRes) ProtoReflect() protoreflect.Message {
+	mi := &file_gis_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RoutePointsRes.ProtoReflect.Descriptor instead.
+func (*RoutePointsRes) Descriptor() ([]byte, []int) {
+	return file_gis_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *RoutePointsRes) GetVisitOrder() []int32 {
+	if x != nil {
+		return x.VisitOrder
+	}
+	return nil
+}
+
+func (x *RoutePointsRes) GetTotalDistanceMeters() float64 {
+	if x != nil {
+		return x.TotalDistanceMeters
+	}
+	return 0
+}
+
 var File_gis_proto protoreflect.FileDescriptor
 
 const file_gis_proto_rawDesc = "" +
@@ -1710,12 +1814,22 @@ const file_gis_proto_rawDesc = "" +
 	"targetType\"R\n" +
 	"\x16BatchTransformCoordRes\x128\n" +
 	"\x11transformedPoints\x18\x01 \x03(\v2\n" +
-	".gis.PointR\x11transformedPoints*h\n" +
+	".gis.PointR\x11transformedPoints\"V\n" +
+	"\x0eRoutePointsReq\x12 \n" +
+	"\x05start\x18\x01 \x01(\v2\n" +
+	".gis.PointR\x05start\x12\"\n" +
+	"\x06points\x18\x02 \x03(\v2\n" +
+	".gis.PointR\x06points\"b\n" +
+	"\x0eRoutePointsRes\x12\x1e\n" +
+	"\n" +
+	"visitOrder\x18\x01 \x03(\x05R\n" +
+	"visitOrder\x120\n" +
+	"\x13totalDistanceMeters\x18\x02 \x01(\x01R\x13totalDistanceMeters*h\n" +
 	"\tCoordType\x12\x1a\n" +
 	"\x16COORD_TYPE_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10COORD_TYPE_WGS84\x10\x01\x12\x14\n" +
 	"\x10COORD_TYPE_GCJ02\x10\x02\x12\x13\n" +
-	"\x0fCOORD_TYPE_BD09\x10\x032\xd5\x06\n" +
+	"\x0fCOORD_TYPE_BD09\x10\x032\x8e\a\n" +
 	"\x03Gis\x12\x1a\n" +
 	"\x04Ping\x12\b.gis.Req\x1a\b.gis.Res\x12=\n" +
 	"\rEncodeGeoHash\x12\x15.gis.EncodeGeoHashReq\x1a\x15.gis.EncodeGeoHashRes\x12=\n" +
@@ -1730,7 +1844,8 @@ const file_gis_proto_rawDesc = "" +
 	"\bDistance\x12\x10.gis.DistanceReq\x1a\x10.gis.DistanceRes\x12:\n" +
 	"\fNearbyFences\x12\x14.gis.NearbyFencesReq\x1a\x14.gis.NearbyFencesRes\x12@\n" +
 	"\x0eTransformCoord\x12\x16.gis.TransformCoordReq\x1a\x16.gis.TransformCoordRes\x12O\n" +
-	"\x13BatchTransformCoord\x12\x1b.gis.BatchTransformCoordReq\x1a\x1b.gis.BatchTransformCoordResB(\n" +
+	"\x13BatchTransformCoord\x12\x1b.gis.BatchTransformCoordReq\x1a\x1b.gis.BatchTransformCoordRes\x127\n" +
+	"\vRoutePoints\x12\x13.gis.RoutePointsReq\x1a\x13.gis.RoutePointsResB(\n" +
 	"\x13com.github.gis.grpcB\bGisProtoP\x01Z\x05./gisb\x06proto3"
 
 var (
@@ -1746,7 +1861,7 @@ func file_gis_proto_rawDescGZIP() []byte {
 }
 
 var file_gis_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_gis_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
+var file_gis_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
 var file_gis_proto_goTypes = []any{
 	(CoordType)(0),                 // 0: gis.CoordType
 	(*Fence)(nil),                  // 1: gis.Fence
@@ -1779,6 +1894,8 @@ var file_gis_proto_goTypes = []any{
 	(*TransformCoordRes)(nil),      // 28: gis.TransformCoordRes
 	(*BatchTransformCoordReq)(nil), // 29: gis.BatchTransformCoordReq
 	(*BatchTransformCoordRes)(nil), // 30: gis.BatchTransformCoordRes
+	(*RoutePointsReq)(nil),         // 31: gis.RoutePointsReq
+	(*RoutePointsRes)(nil),         // 32: gis.RoutePointsRes
 }
 var file_gis_proto_depIdxs = []int32{
 	2,  // 0: gis.Fence.points:type_name -> gis.Point
@@ -1806,39 +1923,43 @@ var file_gis_proto_depIdxs = []int32{
 	0,  // 22: gis.BatchTransformCoordReq.sourceType:type_name -> gis.CoordType
 	0,  // 23: gis.BatchTransformCoordReq.targetType:type_name -> gis.CoordType
 	2,  // 24: gis.BatchTransformCoordRes.transformedPoints:type_name -> gis.Point
-	3,  // 25: gis.Gis.Ping:input_type -> gis.Req
-	5,  // 26: gis.Gis.EncodeGeoHash:input_type -> gis.EncodeGeoHashReq
-	7,  // 27: gis.Gis.DecodeGeoHash:input_type -> gis.DecodeGeoHashReq
-	9,  // 28: gis.Gis.EncodeH3:input_type -> gis.EncodeH3Req
-	11, // 29: gis.Gis.DecodeH3:input_type -> gis.DecodeH3Req
-	13, // 30: gis.Gis.GenerateFenceCells:input_type -> gis.GenFenceCellsReq
-	15, // 31: gis.Gis.GenerateFenceH3Cells:input_type -> gis.GenFenceH3CellsReq
-	17, // 32: gis.Gis.PointsWithinRadius:input_type -> gis.PointsWithinRadiusReq
-	19, // 33: gis.Gis.PointInFence:input_type -> gis.PointInFenceReq
-	21, // 34: gis.Gis.PointInFences:input_type -> gis.PointInFencesReq
-	23, // 35: gis.Gis.Distance:input_type -> gis.DistanceReq
-	25, // 36: gis.Gis.NearbyFences:input_type -> gis.NearbyFencesReq
-	27, // 37: gis.Gis.TransformCoord:input_type -> gis.TransformCoordReq
-	29, // 38: gis.Gis.BatchTransformCoord:input_type -> gis.BatchTransformCoordReq
-	4,  // 39: gis.Gis.Ping:output_type -> gis.Res
-	6,  // 40: gis.Gis.EncodeGeoHash:output_type -> gis.EncodeGeoHashRes
-	8,  // 41: gis.Gis.DecodeGeoHash:output_type -> gis.DecodeGeoHashRes
-	10, // 42: gis.Gis.EncodeH3:output_type -> gis.EncodeH3Res
-	12, // 43: gis.Gis.DecodeH3:output_type -> gis.DecodeH3Res
-	14, // 44: gis.Gis.GenerateFenceCells:output_type -> gis.GenFenceCellsRes
-	16, // 45: gis.Gis.GenerateFenceH3Cells:output_type -> gis.GenFenceH3CellsRes
-	18, // 46: gis.Gis.PointsWithinRadius:output_type -> gis.PointsWithinRadiusRes
-	20, // 47: gis.Gis.PointInFence:output_type -> gis.PointInFenceRes
-	22, // 48: gis.Gis.PointInFences:output_type -> gis.PointInFencesRes
-	24, // 49: gis.Gis.Distance:output_type -> gis.DistanceRes
-	26, // 50: gis.Gis.NearbyFences:output_type -> gis.NearbyFencesRes
-	28, // 51: gis.Gis.TransformCoord:output_type -> gis.TransformCoordRes
-	30, // 52: gis.Gis.BatchTransformCoord:output_type -> gis.BatchTransformCoordRes
-	39, // [39:53] is the sub-list for method output_type
-	25, // [25:39] is the sub-list for method input_type
-	25, // [25:25] is the sub-list for extension type_name
-	25, // [25:25] is the sub-list for extension extendee
-	0,  // [0:25] is the sub-list for field type_name
+	2,  // 25: gis.RoutePointsReq.start:type_name -> gis.Point
+	2,  // 26: gis.RoutePointsReq.points:type_name -> gis.Point
+	3,  // 27: gis.Gis.Ping:input_type -> gis.Req
+	5,  // 28: gis.Gis.EncodeGeoHash:input_type -> gis.EncodeGeoHashReq
+	7,  // 29: gis.Gis.DecodeGeoHash:input_type -> gis.DecodeGeoHashReq
+	9,  // 30: gis.Gis.EncodeH3:input_type -> gis.EncodeH3Req
+	11, // 31: gis.Gis.DecodeH3:input_type -> gis.DecodeH3Req
+	13, // 32: gis.Gis.GenerateFenceCells:input_type -> gis.GenFenceCellsReq
+	15, // 33: gis.Gis.GenerateFenceH3Cells:input_type -> gis.GenFenceH3CellsReq
+	17, // 34: gis.Gis.PointsWithinRadius:input_type -> gis.PointsWithinRadiusReq
+	19, // 35: gis.Gis.PointInFence:input_type -> gis.PointInFenceReq
+	21, // 36: gis.Gis.PointInFences:input_type -> gis.PointInFencesReq
+	23, // 37: gis.Gis.Distance:input_type -> gis.DistanceReq
+	25, // 38: gis.Gis.NearbyFences:input_type -> gis.NearbyFencesReq
+	27, // 39: gis.Gis.TransformCoord:input_type -> gis.TransformCoordReq
+	29, // 40: gis.Gis.BatchTransformCoord:input_type -> gis.BatchTransformCoordReq
+	31, // 41: gis.Gis.RoutePoints:input_type -> gis.RoutePointsReq
+	4,  // 42: gis.Gis.Ping:output_type -> gis.Res
+	6,  // 43: gis.Gis.EncodeGeoHash:output_type -> gis.EncodeGeoHashRes
+	8,  // 44: gis.Gis.DecodeGeoHash:output_type -> gis.DecodeGeoHashRes
+	10, // 45: gis.Gis.EncodeH3:output_type -> gis.EncodeH3Res
+	12, // 46: gis.Gis.DecodeH3:output_type -> gis.DecodeH3Res
+	14, // 47: gis.Gis.GenerateFenceCells:output_type -> gis.GenFenceCellsRes
+	16, // 48: gis.Gis.GenerateFenceH3Cells:output_type -> gis.GenFenceH3CellsRes
+	18, // 49: gis.Gis.PointsWithinRadius:output_type -> gis.PointsWithinRadiusRes
+	20, // 50: gis.Gis.PointInFence:output_type -> gis.PointInFenceRes
+	22, // 51: gis.Gis.PointInFences:output_type -> gis.PointInFencesRes
+	24, // 52: gis.Gis.Distance:output_type -> gis.DistanceRes
+	26, // 53: gis.Gis.NearbyFences:output_type -> gis.NearbyFencesRes
+	28, // 54: gis.Gis.TransformCoord:output_type -> gis.TransformCoordRes
+	30, // 55: gis.Gis.BatchTransformCoord:output_type -> gis.BatchTransformCoordRes
+	32, // 56: gis.Gis.RoutePoints:output_type -> gis.RoutePointsRes
+	42, // [42:57] is the sub-list for method output_type
+	27, // [27:42] is the sub-list for method input_type
+	27, // [27:27] is the sub-list for extension type_name
+	27, // [27:27] is the sub-list for extension extendee
+	0,  // [0:27] is the sub-list for field type_name
 }
 
 func init() { file_gis_proto_init() }
@@ -1852,7 +1973,7 @@ func file_gis_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_gis_proto_rawDesc), len(file_gis_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   30,
+			NumMessages:   32,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

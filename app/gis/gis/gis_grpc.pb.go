@@ -33,6 +33,7 @@ const (
 	Gis_NearbyFences_FullMethodName         = "/gis.Gis/NearbyFences"
 	Gis_TransformCoord_FullMethodName       = "/gis.Gis/TransformCoord"
 	Gis_BatchTransformCoord_FullMethodName  = "/gis.Gis/BatchTransformCoord"
+	Gis_RoutePoints_FullMethodName          = "/gis.Gis/RoutePoints"
 )
 
 // GisClient is the client API for Gis service.
@@ -68,6 +69,8 @@ type GisClient interface {
 	TransformCoord(ctx context.Context, in *TransformCoordReq, opts ...grpc.CallOption) (*TransformCoordRes, error)
 	// 批量坐标转换
 	BatchTransformCoord(ctx context.Context, in *BatchTransformCoordReq, opts ...grpc.CallOption) (*BatchTransformCoordRes, error)
+	// 计算点集合的最优路径
+	RoutePoints(ctx context.Context, in *RoutePointsReq, opts ...grpc.CallOption) (*RoutePointsRes, error)
 }
 
 type gisClient struct {
@@ -218,6 +221,16 @@ func (c *gisClient) BatchTransformCoord(ctx context.Context, in *BatchTransformC
 	return out, nil
 }
 
+func (c *gisClient) RoutePoints(ctx context.Context, in *RoutePointsReq, opts ...grpc.CallOption) (*RoutePointsRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RoutePointsRes)
+	err := c.cc.Invoke(ctx, Gis_RoutePoints_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GisServer is the server API for Gis service.
 // All implementations must embed UnimplementedGisServer
 // for forward compatibility.
@@ -251,6 +264,8 @@ type GisServer interface {
 	TransformCoord(context.Context, *TransformCoordReq) (*TransformCoordRes, error)
 	// 批量坐标转换
 	BatchTransformCoord(context.Context, *BatchTransformCoordReq) (*BatchTransformCoordRes, error)
+	// 计算点集合的最优路径
+	RoutePoints(context.Context, *RoutePointsReq) (*RoutePointsRes, error)
 	mustEmbedUnimplementedGisServer()
 }
 
@@ -302,6 +317,9 @@ func (UnimplementedGisServer) TransformCoord(context.Context, *TransformCoordReq
 }
 func (UnimplementedGisServer) BatchTransformCoord(context.Context, *BatchTransformCoordReq) (*BatchTransformCoordRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BatchTransformCoord not implemented")
+}
+func (UnimplementedGisServer) RoutePoints(context.Context, *RoutePointsReq) (*RoutePointsRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RoutePoints not implemented")
 }
 func (UnimplementedGisServer) mustEmbedUnimplementedGisServer() {}
 func (UnimplementedGisServer) testEmbeddedByValue()             {}
@@ -576,6 +594,24 @@ func _Gis_BatchTransformCoord_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Gis_RoutePoints_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RoutePointsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GisServer).RoutePoints(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Gis_RoutePoints_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GisServer).RoutePoints(ctx, req.(*RoutePointsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Gis_ServiceDesc is the grpc.ServiceDesc for Gis service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -638,6 +674,10 @@ var Gis_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BatchTransformCoord",
 			Handler:    _Gis_BatchTransformCoord_Handler,
+		},
+		{
+			MethodName: "RoutePoints",
+			Handler:    _Gis_RoutePoints_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
