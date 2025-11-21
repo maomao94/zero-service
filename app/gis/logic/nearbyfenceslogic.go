@@ -2,9 +2,9 @@ package logic
 
 import (
 	"context"
+	"zero-service/app/gis/gis"
 
-	"zero-service/app/geo/geo"
-	"zero-service/app/geo/internal/svc"
+	"zero-service/app/gis/internal/svc"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -24,8 +24,8 @@ func NewNearbyFencesLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Near
 }
 
 // 获取某点附近多少 km 的围栏（粗过滤）
-func (l *NearbyFencesLogic) NearbyFences(in *geo.NearbyFencesReq) (*geo.NearbyFencesRes, error) {
+func (l *NearbyFencesLogic) NearbyFences(in *gis.NearbyFencesReq) (*gis.NearbyFencesRes, error) {
 	// todo: add your logic here and delete this line
 
-	return &geo.NearbyFencesRes{}, nil
+	return &gis.NearbyFencesRes{}, nil
 }

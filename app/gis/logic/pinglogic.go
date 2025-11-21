@@ -2,9 +2,9 @@ package logic
 
 import (
 	"context"
+	"zero-service/app/gis/gis"
 
-	"zero-service/app/geo/geo"
-	"zero-service/app/geo/internal/svc"
+	"zero-service/app/gis/internal/svc"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -23,8 +23,8 @@ func NewPingLogic(ctx context.Context, svcCtx *svc.ServiceContext) *PingLogic {
 	}
 }
 
-func (l *PingLogic) Ping(in *geo.Req) (*geo.Res, error) {
+func (l *PingLogic) Ping(in *gis.Req) (*gis.Res, error) {
 	// todo: add your logic here and delete this line
 
-	return &geo.Res{}, nil
+	return &gis.Res{}, nil
 }

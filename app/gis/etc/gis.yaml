@@ -1,9 +1,10 @@
-Name: geo.rpc
+Name: gis.rpc
 ListenOn: 0.0.0.0:25005
+Timeout: 10000
 Log:
   Encoding: plain
   #  Mode: file
-  Path: /opt/logs/geo
+  Path: /opt/logs/gis
   Level: info
 NacosConfig:
   IsRegister: false
@@ -12,4 +13,4 @@ NacosConfig:
   Username: nacos
   PassWord: nacos
   NamespaceId: public
-  ServiceName: geo
+  ServiceName: gis

@@ -3,9 +3,9 @@ package logic
 import (
 	"context"
 	"errors"
+	"zero-service/app/gis/gis"
 
-	"zero-service/app/geo/geo"
-	"zero-service/app/geo/internal/svc"
+	"zero-service/app/gis/internal/svc"
 
 	"github.com/mmcloughlin/geohash"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -26,7 +26,7 @@ func NewDecodeGeoHashLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Dec
 }
 
 // 解码 geohash -> 经纬度
-func (l *DecodeGeoHashLogic) DecodeGeoHash(in *geo.DecodeGeoHashReq) (*geo.DecodeGeoHashRes, error) {
+func (l *DecodeGeoHashLogic) DecodeGeoHash(in *gis.DecodeGeoHashReq) (*gis.DecodeGeoHashRes, error) {
 	if in.Geohash == "" {
 		return nil, errors.New("参数错误")
 	}
@@ -34,8 +34,8 @@ func (l *DecodeGeoHashLogic) DecodeGeoHash(in *geo.DecodeGeoHashReq) (*geo.Decod
 	lat, lon := geohash.DecodeCenter(in.Geohash)
 	// bbox
 	box := geohash.BoundingBox(in.Geohash)
-	return &geo.DecodeGeoHashRes{
-		Point: &geo.Point{
+	return &gis.DecodeGeoHashRes{
+		Point: &gis.Point{
 			Lat: lat,
 			Lon: lon,
 		},

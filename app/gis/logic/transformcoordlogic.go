@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
-	"zero-service/app/geo/geo"
-	"zero-service/app/geo/internal/svc"
+	"zero-service/app/gis/gis"
+	"zero-service/app/gis/internal/svc"
 
 	"github.com/qichengzx/coordtransform"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -27,12 +26,12 @@ func NewTransformCoordLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Tr
 }
 
 // 单个坐标转换
-func (l *TransformCoordLogic) TransformCoord(in *geo.TransformCoordReq) (*geo.TransformCoordRes, error) {
+func (l *TransformCoordLogic) TransformCoord(in *gis.TransformCoordReq) (*gis.TransformCoordRes, error) {
 	if err := l.validateReq(in); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 	if in.SourceType == in.TargetType {
-		return &geo.TransformCoordRes{
+		return &gis.TransformCoordRes{
 			TransformedPoint: in.Point,
 		}, nil
 	}
@@ -42,15 +41,15 @@ func (l *TransformCoordLogic) TransformCoord(in *geo.TransformCoordReq) (*geo.Tr
 
 	transformedLon, transformedLat := doTransformCoord(lon, lat, in.SourceType, in.TargetType)
 
-	return &geo.TransformCoordRes{
-		TransformedPoint: &geo.Point{
+	return &gis.TransformCoordRes{
+		TransformedPoint: &gis.Point{
 			Lat: transformedLat,
 			Lon: transformedLon,
 		},
 	}, nil
 }
 
-func (l *TransformCoordLogic) validateReq(in *geo.TransformCoordReq) error {
+func (l *TransformCoordLogic) validateReq(in *gis.TransformCoordReq) error {
 	if in.Point == nil {
 		return errors.New("point cannot be nil")
 	}
@@ -76,25 +75,25 @@ func (l *TransformCoordLogic) validateReq(in *geo.TransformCoordReq) error {
 	return nil
 }
 
-func doTransformCoord(lon, lat float64, source, target geo.CoordType) (float64, float64) {
+func doTransformCoord(lon, lat float64, source, target gis.CoordType) (float64, float64) {
 	switch {
 	// WGS84(1) ↔ GCJ02(2)
-	case source == geo.CoordType_COORD_TYPE_WGS84 && target == geo.CoordType_COORD_TYPE_GCJ02:
+	case source == gis.CoordType_COORD_TYPE_WGS84 && target == gis.CoordType_COORD_TYPE_GCJ02:
 		return coordtransform.WGS84toGCJ02(lon, lat)
-	case source == geo.CoordType_COORD_TYPE_GCJ02 && target == geo.CoordType_COORD_TYPE_WGS84:
+	case source == gis.CoordType_COORD_TYPE_GCJ02 && target == gis.CoordType_COORD_TYPE_WGS84:
 		return coordtransform.GCJ02toWGS84(lon, lat)
 
 	// GCJ02(2) ↔ BD09(3)
-	case source == geo.CoordType_COORD_TYPE_GCJ02 && target == geo.CoordType_COORD_TYPE_BD09:
+	case source == gis.CoordType_COORD_TYPE_GCJ02 && target == gis.CoordType_COORD_TYPE_BD09:
 		return coordtransform.GCJ02toBD09(lon, lat)
-	case source == geo.CoordType_COORD_TYPE_BD09 && target == geo.CoordType_COORD_TYPE_GCJ02:
+	case source == gis.CoordType_COORD_TYPE_BD09 && target == gis.CoordType_COORD_TYPE_GCJ02:
 		return coordtransform.BD09toGCJ02(lon, lat)
 
 	// WGS84(1) ↔ BD09(3)（中转GCJ02）
-	case source == geo.CoordType_COORD_TYPE_WGS84 && target == geo.CoordType_COORD_TYPE_BD09:
+	case source == gis.CoordType_COORD_TYPE_WGS84 && target == gis.CoordType_COORD_TYPE_BD09:
 		gcjLon, gcjLat := coordtransform.WGS84toGCJ02(lon, lat)
 		return coordtransform.GCJ02toBD09(gcjLon, gcjLat)
-	case source == geo.CoordType_COORD_TYPE_BD09 && target == geo.CoordType_COORD_TYPE_WGS84:
+	case source == gis.CoordType_COORD_TYPE_BD09 && target == gis.CoordType_COORD_TYPE_WGS84:
 		gcjLon, gcjLat := coordtransform.BD09toGCJ02(lon, lat)
 		return coordtransform.GCJ02toWGS84(gcjLon, gcjLat)
 	}

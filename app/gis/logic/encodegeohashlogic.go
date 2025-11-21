@@ -3,9 +3,9 @@ package logic
 import (
 	"context"
 	"errors"
+	"zero-service/app/gis/gis"
 
-	"zero-service/app/geo/geo"
-	"zero-service/app/geo/internal/svc"
+	"zero-service/app/gis/internal/svc"
 
 	"github.com/mmcloughlin/geohash"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -26,7 +26,7 @@ func NewEncodeGeoHashLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Enc
 }
 
 // 编码 geohash
-func (l *EncodeGeoHashLogic) EncodeGeoHash(in *geo.EncodeGeoHashReq) (*geo.EncodeGeoHashRes, error) {
+func (l *EncodeGeoHashLogic) EncodeGeoHash(in *gis.EncodeGeoHashReq) (*gis.EncodeGeoHashRes, error) {
 	if in.Point == nil {
 		return nil, errors.New("参数错误")
 	}
@@ -38,7 +38,7 @@ func (l *EncodeGeoHashLogic) EncodeGeoHash(in *geo.EncodeGeoHashReq) (*geo.Encod
 
 	hash := geohash.EncodeWithPrecision(in.Point.Lat, in.Point.Lon, uint(precision))
 
-	return &geo.EncodeGeoHashRes{
+	return &gis.EncodeGeoHashRes{
 		Geohash: hash,
 	}, nil
 }

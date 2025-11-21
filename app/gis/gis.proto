@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package geo;
-option go_package = "./geo";
+package gis;
+option go_package = "./gis";
 option java_multiple_files = true;
-option java_package = "com.github.geo.grpc";
-option java_outer_classname = "GeoProto";
+option java_package = "com.github.gis.grpc";
+option java_outer_classname = "GisProto";
 
 // 坐标系类型枚举（覆盖国内主流场景，后续可扩展）
 enum CoordType {
@@ -14,8 +14,8 @@ enum CoordType {
   COORD_TYPE_BD09 = 3;        // BD09：百度坐标（在GCJ02基础上二次加密）
 }
 
-// GEO 相关服务
-service Geo {
+// GIS 相关服务
+service Gis {
   rpc Ping (Req) returns (Res);
   // 编码 geohash
   rpc EncodeGeoHash (EncodeGeoHashReq) returns (EncodeGeoHashRes);

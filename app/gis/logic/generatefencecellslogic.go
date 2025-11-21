@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"zero-service/app/geo/geo"
-	"zero-service/app/geo/internal/svc"
+	"zero-service/app/gis/gis"
+	"zero-service/app/gis/internal/svc"
 
 	"github.com/mmcloughlin/geohash"
 	"github.com/paulmach/orb"
@@ -30,7 +30,7 @@ func NewGenerateFenceCellsLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 }
 
 // 一次性生成围栏 cells（小围栏）
-func (l *GenerateFenceCellsLogic) GenerateFenceCells(in *geo.GenFenceCellsReq) (*geo.GenFenceCellsRes, error) {
+func (l *GenerateFenceCellsLogic) GenerateFenceCells(in *gis.GenFenceCellsReq) (*gis.GenFenceCellsRes, error) {
 	// 默认精度 9
 	precision := int(in.Precision)
 	if precision <= 0 {
@@ -120,7 +120,7 @@ func (l *GenerateFenceCellsLogic) GenerateFenceCells(in *geo.GenFenceCellsReq) (
 	}
 	l.Logger.Infof("生成围栏geohash完成，共%d个格子", len(result))
 
-	return &geo.GenFenceCellsRes{
+	return &gis.GenFenceCellsRes{
 		Geohashes: result,
 	}, nil
 }
@@ -269,7 +269,7 @@ func PolygonIntersect(p1, p2 orb.Polygon) bool {
 	return false
 }
 
-func pbPointToOrbPolygon(points []*geo.Point) (orb.Polygon, error) {
+func pbPointToOrbPolygon(points []*gis.Point) (orb.Polygon, error) {
 	if len(points) < 3 {
 		return nil, errors.New("多边形至少需要3个点")
 	}

@@ -1,6 +1,6 @@
 package svc
 
-import "zero-service/app/geo/internal/config"
+import "zero-service/app/gis/internal/config"
 
 type ServiceContext struct {
 	Config config.Config

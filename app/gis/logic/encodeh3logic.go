@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
-	"zero-service/app/geo/geo"
-	"zero-service/app/geo/internal/svc"
+	"zero-service/app/gis/gis"
+	"zero-service/app/gis/internal/svc"
 
 	"github.com/uber/h3-go/v4"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -27,7 +26,7 @@ func NewEncodeH3Logic(ctx context.Context, svcCtx *svc.ServiceContext) *EncodeH3
 }
 
 // 编码 h3
-func (l *EncodeH3Logic) EncodeH3(in *geo.EncodeH3Req) (*geo.EncodeH3Res, error) {
+func (l *EncodeH3Logic) EncodeH3(in *gis.EncodeH3Req) (*gis.EncodeH3Res, error) {
 	if in.Point == nil {
 		return nil, errors.New("参数错误")
 	}
@@ -40,7 +39,7 @@ func (l *EncodeH3Logic) EncodeH3(in *geo.EncodeH3Req) (*geo.EncodeH3Res, error) 
 	if err != nil {
 		return nil, err
 	}
-	return &geo.EncodeH3Res{
+	return &gis.EncodeH3Res{
 		H3Index: cell.String(),
 	}, nil
 }

@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v5.29.3
-// source: geo.proto
+// source: gis.proto
 
-package geo
+package gis
 
 import (
 	context "context"
@@ -19,27 +19,27 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Geo_Ping_FullMethodName                 = "/geo.Geo/Ping"
-	Geo_EncodeGeoHash_FullMethodName        = "/geo.Geo/EncodeGeoHash"
-	Geo_DecodeGeoHash_FullMethodName        = "/geo.Geo/DecodeGeoHash"
-	Geo_EncodeH3_FullMethodName             = "/geo.Geo/EncodeH3"
-	Geo_DecodeH3_FullMethodName             = "/geo.Geo/DecodeH3"
-	Geo_GenerateFenceCells_FullMethodName   = "/geo.Geo/GenerateFenceCells"
-	Geo_GenerateFenceH3Cells_FullMethodName = "/geo.Geo/GenerateFenceH3Cells"
-	Geo_PointInFence_FullMethodName         = "/geo.Geo/PointInFence"
-	Geo_PointInFences_FullMethodName        = "/geo.Geo/PointInFences"
-	Geo_Distance_FullMethodName             = "/geo.Geo/Distance"
-	Geo_NearbyFences_FullMethodName         = "/geo.Geo/NearbyFences"
-	Geo_TransformCoord_FullMethodName       = "/geo.Geo/TransformCoord"
-	Geo_BatchTransformCoord_FullMethodName  = "/geo.Geo/BatchTransformCoord"
+	Gis_Ping_FullMethodName                 = "/gis.Gis/Ping"
+	Gis_EncodeGeoHash_FullMethodName        = "/gis.Gis/EncodeGeoHash"
+	Gis_DecodeGeoHash_FullMethodName        = "/gis.Gis/DecodeGeoHash"
+	Gis_EncodeH3_FullMethodName             = "/gis.Gis/EncodeH3"
+	Gis_DecodeH3_FullMethodName             = "/gis.Gis/DecodeH3"
+	Gis_GenerateFenceCells_FullMethodName   = "/gis.Gis/GenerateFenceCells"
+	Gis_GenerateFenceH3Cells_FullMethodName = "/gis.Gis/GenerateFenceH3Cells"
+	Gis_PointInFence_FullMethodName         = "/gis.Gis/PointInFence"
+	Gis_PointInFences_FullMethodName        = "/gis.Gis/PointInFences"
+	Gis_Distance_FullMethodName             = "/gis.Gis/Distance"
+	Gis_NearbyFences_FullMethodName         = "/gis.Gis/NearbyFences"
+	Gis_TransformCoord_FullMethodName       = "/gis.Gis/TransformCoord"
+	Gis_BatchTransformCoord_FullMethodName  = "/gis.Gis/BatchTransformCoord"
 )
 
-// GeoClient is the client API for Geo service.
+// GisClient is the client API for Gis service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// GEO 相关服务
-type GeoClient interface {
+// GIS 相关服务
+type GisClient interface {
 	Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error)
 	// 编码 geohash
 	EncodeGeoHash(ctx context.Context, in *EncodeGeoHashReq, opts ...grpc.CallOption) (*EncodeGeoHashRes, error)
@@ -67,150 +67,150 @@ type GeoClient interface {
 	BatchTransformCoord(ctx context.Context, in *BatchTransformCoordReq, opts ...grpc.CallOption) (*BatchTransformCoordRes, error)
 }
 
-type geoClient struct {
+type gisClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewGeoClient(cc grpc.ClientConnInterface) GeoClient {
-	return &geoClient{cc}
+func NewGisClient(cc grpc.ClientConnInterface) GisClient {
+	return &gisClient{cc}
 }
 
-func (c *geoClient) Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error) {
+func (c *gisClient) Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Res)
-	err := c.cc.Invoke(ctx, Geo_Ping_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Gis_Ping_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *geoClient) EncodeGeoHash(ctx context.Context, in *EncodeGeoHashReq, opts ...grpc.CallOption) (*EncodeGeoHashRes, error) {
+func (c *gisClient) EncodeGeoHash(ctx context.Context, in *EncodeGeoHashReq, opts ...grpc.CallOption) (*EncodeGeoHashRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(EncodeGeoHashRes)
-	err := c.cc.Invoke(ctx, Geo_EncodeGeoHash_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Gis_EncodeGeoHash_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *geoClient) DecodeGeoHash(ctx context.Context, in *DecodeGeoHashReq, opts ...grpc.CallOption) (*DecodeGeoHashRes, error) {
+func (c *gisClient) DecodeGeoHash(ctx context.Context, in *DecodeGeoHashReq, opts ...grpc.CallOption) (*DecodeGeoHashRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DecodeGeoHashRes)
-	err := c.cc.Invoke(ctx, Geo_DecodeGeoHash_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Gis_DecodeGeoHash_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *geoClient) EncodeH3(ctx context.Context, in *EncodeH3Req, opts ...grpc.CallOption) (*EncodeH3Res, error) {
+func (c *gisClient) EncodeH3(ctx context.Context, in *EncodeH3Req, opts ...grpc.CallOption) (*EncodeH3Res, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(EncodeH3Res)
-	err := c.cc.Invoke(ctx, Geo_EncodeH3_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Gis_EncodeH3_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *geoClient) DecodeH3(ctx context.Context, in *DecodeH3Req, opts ...grpc.CallOption) (*DecodeH3Res, error) {
+func (c *gisClient) DecodeH3(ctx context.Context, in *DecodeH3Req, opts ...grpc.CallOption) (*DecodeH3Res, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DecodeH3Res)
-	err := c.cc.Invoke(ctx, Geo_DecodeH3_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Gis_DecodeH3_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *geoClient) GenerateFenceCells(ctx context.Context, in *GenFenceCellsReq, opts ...grpc.CallOption) (*GenFenceCellsRes, error) {
+func (c *gisClient) GenerateFenceCells(ctx context.Context, in *GenFenceCellsReq, opts ...grpc.CallOption) (*GenFenceCellsRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GenFenceCellsRes)
-	err := c.cc.Invoke(ctx, Geo_GenerateFenceCells_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Gis_GenerateFenceCells_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *geoClient) GenerateFenceH3Cells(ctx context.Context, in *GenFenceH3CellsReq, opts ...grpc.CallOption) (*GenFenceH3CellsRes, error) {
+func (c *gisClient) GenerateFenceH3Cells(ctx context.Context, in *GenFenceH3CellsReq, opts ...grpc.CallOption) (*GenFenceH3CellsRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GenFenceH3CellsRes)
-	err := c.cc.Invoke(ctx, Geo_GenerateFenceH3Cells_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Gis_GenerateFenceH3Cells_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *geoClient) PointInFence(ctx context.Context, in *PointInFenceReq, opts ...grpc.CallOption) (*PointInFenceRes, error) {
+func (c *gisClient) PointInFence(ctx context.Context, in *PointInFenceReq, opts ...grpc.CallOption) (*PointInFenceRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PointInFenceRes)
-	err := c.cc.Invoke(ctx, Geo_PointInFence_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Gis_PointInFence_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *geoClient) PointInFences(ctx context.Context, in *PointInFencesReq, opts ...grpc.CallOption) (*PointInFencesRes, error) {
+func (c *gisClient) PointInFences(ctx context.Context, in *PointInFencesReq, opts ...grpc.CallOption) (*PointInFencesRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PointInFencesRes)
-	err := c.cc.Invoke(ctx, Geo_PointInFences_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Gis_PointInFences_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *geoClient) Distance(ctx context.Context, in *DistanceReq, opts ...grpc.CallOption) (*DistanceRes, error) {
+func (c *gisClient) Distance(ctx context.Context, in *DistanceReq, opts ...grpc.CallOption) (*DistanceRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DistanceRes)
-	err := c.cc.Invoke(ctx, Geo_Distance_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Gis_Distance_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *geoClient) NearbyFences(ctx context.Context, in *NearbyFencesReq, opts ...grpc.CallOption) (*NearbyFencesRes, error) {
+func (c *gisClient) NearbyFences(ctx context.Context, in *NearbyFencesReq, opts ...grpc.CallOption) (*NearbyFencesRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(NearbyFencesRes)
-	err := c.cc.Invoke(ctx, Geo_NearbyFences_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Gis_NearbyFences_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *geoClient) TransformCoord(ctx context.Context, in *TransformCoordReq, opts ...grpc.CallOption) (*TransformCoordRes, error) {
+func (c *gisClient) TransformCoord(ctx context.Context, in *TransformCoordReq, opts ...grpc.CallOption) (*TransformCoordRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(TransformCoordRes)
-	err := c.cc.Invoke(ctx, Geo_TransformCoord_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Gis_TransformCoord_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *geoClient) BatchTransformCoord(ctx context.Context, in *BatchTransformCoordReq, opts ...grpc.CallOption) (*BatchTransformCoordRes, error) {
+func (c *gisClient) BatchTransformCoord(ctx context.Context, in *BatchTransformCoordReq, opts ...grpc.CallOption) (*BatchTransformCoordRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(BatchTransformCoordRes)
-	err := c.cc.Invoke(ctx, Geo_BatchTransformCoord_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Gis_BatchTransformCoord_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// GeoServer is the server API for Geo service.
-// All implementations must embed UnimplementedGeoServer
+// GisServer is the server API for Gis service.
+// All implementations must embed UnimplementedGisServer
 // for forward compatibility.
 //
-// GEO 相关服务
-type GeoServer interface {
+// GIS 相关服务
+type GisServer interface {
 	Ping(context.Context, *Req) (*Res, error)
 	// 编码 geohash
 	EncodeGeoHash(context.Context, *EncodeGeoHashReq) (*EncodeGeoHashRes, error)
@@ -236,370 +236,370 @@ type GeoServer interface {
 	TransformCoord(context.Context, *TransformCoordReq) (*TransformCoordRes, error)
 	// 批量坐标转换
 	BatchTransformCoord(context.Context, *BatchTransformCoordReq) (*BatchTransformCoordRes, error)
-	mustEmbedUnimplementedGeoServer()
+	mustEmbedUnimplementedGisServer()
 }
 
-// UnimplementedGeoServer must be embedded to have
+// UnimplementedGisServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedGeoServer struct{}
+type UnimplementedGisServer struct{}
 
-func (UnimplementedGeoServer) Ping(context.Context, *Req) (*Res, error) {
+func (UnimplementedGisServer) Ping(context.Context, *Req) (*Res, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
 }
-func (UnimplementedGeoServer) EncodeGeoHash(context.Context, *EncodeGeoHashReq) (*EncodeGeoHashRes, error) {
+func (UnimplementedGisServer) EncodeGeoHash(context.Context, *EncodeGeoHashReq) (*EncodeGeoHashRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EncodeGeoHash not implemented")
 }
-func (UnimplementedGeoServer) DecodeGeoHash(context.Context, *DecodeGeoHashReq) (*DecodeGeoHashRes, error) {
+func (UnimplementedGisServer) DecodeGeoHash(context.Context, *DecodeGeoHashReq) (*DecodeGeoHashRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DecodeGeoHash not implemented")
 }
-func (UnimplementedGeoServer) EncodeH3(context.Context, *EncodeH3Req) (*EncodeH3Res, error) {
+func (UnimplementedGisServer) EncodeH3(context.Context, *EncodeH3Req) (*EncodeH3Res, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EncodeH3 not implemented")
 }
-func (UnimplementedGeoServer) DecodeH3(context.Context, *DecodeH3Req) (*DecodeH3Res, error) {
+func (UnimplementedGisServer) DecodeH3(context.Context, *DecodeH3Req) (*DecodeH3Res, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DecodeH3 not implemented")
 }
-func (UnimplementedGeoServer) GenerateFenceCells(context.Context, *GenFenceCellsReq) (*GenFenceCellsRes, error) {
+func (UnimplementedGisServer) GenerateFenceCells(context.Context, *GenFenceCellsReq) (*GenFenceCellsRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GenerateFenceCells not implemented")
 }
-func (UnimplementedGeoServer) GenerateFenceH3Cells(context.Context, *GenFenceH3CellsReq) (*GenFenceH3CellsRes, error) {
+func (UnimplementedGisServer) GenerateFenceH3Cells(context.Context, *GenFenceH3CellsReq) (*GenFenceH3CellsRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GenerateFenceH3Cells not implemented")
 }
-func (UnimplementedGeoServer) PointInFence(context.Context, *PointInFenceReq) (*PointInFenceRes, error) {
+func (UnimplementedGisServer) PointInFence(context.Context, *PointInFenceReq) (*PointInFenceRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PointInFence not implemented")
 }
-func (UnimplementedGeoServer) PointInFences(context.Context, *PointInFencesReq) (*PointInFencesRes, error) {
+func (UnimplementedGisServer) PointInFences(context.Context, *PointInFencesReq) (*PointInFencesRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PointInFences not implemented")
 }
-func (UnimplementedGeoServer) Distance(context.Context, *DistanceReq) (*DistanceRes, error) {
+func (UnimplementedGisServer) Distance(context.Context, *DistanceReq) (*DistanceRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Distance not implemented")
 }
-func (UnimplementedGeoServer) NearbyFences(context.Context, *NearbyFencesReq) (*NearbyFencesRes, error) {
+func (UnimplementedGisServer) NearbyFences(context.Context, *NearbyFencesReq) (*NearbyFencesRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NearbyFences not implemented")
 }
-func (UnimplementedGeoServer) TransformCoord(context.Context, *TransformCoordReq) (*TransformCoordRes, error) {
+func (UnimplementedGisServer) TransformCoord(context.Context, *TransformCoordReq) (*TransformCoordRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TransformCoord not implemented")
 }
-func (UnimplementedGeoServer) BatchTransformCoord(context.Context, *BatchTransformCoordReq) (*BatchTransformCoordRes, error) {
+func (UnimplementedGisServer) BatchTransformCoord(context.Context, *BatchTransformCoordReq) (*BatchTransformCoordRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BatchTransformCoord not implemented")
 }
-func (UnimplementedGeoServer) mustEmbedUnimplementedGeoServer() {}
-func (UnimplementedGeoServer) testEmbeddedByValue()             {}
+func (UnimplementedGisServer) mustEmbedUnimplementedGisServer() {}
+func (UnimplementedGisServer) testEmbeddedByValue()             {}
 
-// UnsafeGeoServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to GeoServer will
+// UnsafeGisServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to GisServer will
 // result in compilation errors.
-type UnsafeGeoServer interface {
-	mustEmbedUnimplementedGeoServer()
+type UnsafeGisServer interface {
+	mustEmbedUnimplementedGisServer()
 }
 
-func RegisterGeoServer(s grpc.ServiceRegistrar, srv GeoServer) {
-	// If the following call pancis, it indicates UnimplementedGeoServer was
+func RegisterGisServer(s grpc.ServiceRegistrar, srv GisServer) {
+	// If the following call pancis, it indicates UnimplementedGisServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&Geo_ServiceDesc, srv)
+	s.RegisterService(&Gis_ServiceDesc, srv)
 }
 
-func _Geo_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Gis_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Req)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GeoServer).Ping(ctx, in)
+		return srv.(GisServer).Ping(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Geo_Ping_FullMethodName,
+		FullMethod: Gis_Ping_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GeoServer).Ping(ctx, req.(*Req))
+		return srv.(GisServer).Ping(ctx, req.(*Req))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Geo_EncodeGeoHash_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Gis_EncodeGeoHash_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(EncodeGeoHashReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GeoServer).EncodeGeoHash(ctx, in)
+		return srv.(GisServer).EncodeGeoHash(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Geo_EncodeGeoHash_FullMethodName,
+		FullMethod: Gis_EncodeGeoHash_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GeoServer).EncodeGeoHash(ctx, req.(*EncodeGeoHashReq))
+		return srv.(GisServer).EncodeGeoHash(ctx, req.(*EncodeGeoHashReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Geo_DecodeGeoHash_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Gis_DecodeGeoHash_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DecodeGeoHashReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GeoServer).DecodeGeoHash(ctx, in)
+		return srv.(GisServer).DecodeGeoHash(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Geo_DecodeGeoHash_FullMethodName,
+		FullMethod: Gis_DecodeGeoHash_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GeoServer).DecodeGeoHash(ctx, req.(*DecodeGeoHashReq))
+		return srv.(GisServer).DecodeGeoHash(ctx, req.(*DecodeGeoHashReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Geo_EncodeH3_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Gis_EncodeH3_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(EncodeH3Req)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GeoServer).EncodeH3(ctx, in)
+		return srv.(GisServer).EncodeH3(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Geo_EncodeH3_FullMethodName,
+		FullMethod: Gis_EncodeH3_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GeoServer).EncodeH3(ctx, req.(*EncodeH3Req))
+		return srv.(GisServer).EncodeH3(ctx, req.(*EncodeH3Req))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Geo_DecodeH3_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Gis_DecodeH3_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DecodeH3Req)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GeoServer).DecodeH3(ctx, in)
+		return srv.(GisServer).DecodeH3(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Geo_DecodeH3_FullMethodName,
+		FullMethod: Gis_DecodeH3_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GeoServer).DecodeH3(ctx, req.(*DecodeH3Req))
+		return srv.(GisServer).DecodeH3(ctx, req.(*DecodeH3Req))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Geo_GenerateFenceCells_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Gis_GenerateFenceCells_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GenFenceCellsReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GeoServer).GenerateFenceCells(ctx, in)
+		return srv.(GisServer).GenerateFenceCells(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Geo_GenerateFenceCells_FullMethodName,
+		FullMethod: Gis_GenerateFenceCells_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GeoServer).GenerateFenceCells(ctx, req.(*GenFenceCellsReq))
+		return srv.(GisServer).GenerateFenceCells(ctx, req.(*GenFenceCellsReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Geo_GenerateFenceH3Cells_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Gis_GenerateFenceH3Cells_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GenFenceH3CellsReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GeoServer).GenerateFenceH3Cells(ctx, in)
+		return srv.(GisServer).GenerateFenceH3Cells(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Geo_GenerateFenceH3Cells_FullMethodName,
+		FullMethod: Gis_GenerateFenceH3Cells_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GeoServer).GenerateFenceH3Cells(ctx, req.(*GenFenceH3CellsReq))
+		return srv.(GisServer).GenerateFenceH3Cells(ctx, req.(*GenFenceH3CellsReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Geo_PointInFence_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Gis_PointInFence_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PointInFenceReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GeoServer).PointInFence(ctx, in)
+		return srv.(GisServer).PointInFence(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Geo_PointInFence_FullMethodName,
+		FullMethod: Gis_PointInFence_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GeoServer).PointInFence(ctx, req.(*PointInFenceReq))
+		return srv.(GisServer).PointInFence(ctx, req.(*PointInFenceReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Geo_PointInFences_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Gis_PointInFences_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PointInFencesReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GeoServer).PointInFences(ctx, in)
+		return srv.(GisServer).PointInFences(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Geo_PointInFences_FullMethodName,
+		FullMethod: Gis_PointInFences_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GeoServer).PointInFences(ctx, req.(*PointInFencesReq))
+		return srv.(GisServer).PointInFences(ctx, req.(*PointInFencesReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Geo_Distance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Gis_Distance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DistanceReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GeoServer).Distance(ctx, in)
+		return srv.(GisServer).Distance(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Geo_Distance_FullMethodName,
+		FullMethod: Gis_Distance_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GeoServer).Distance(ctx, req.(*DistanceReq))
+		return srv.(GisServer).Distance(ctx, req.(*DistanceReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Geo_NearbyFences_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Gis_NearbyFences_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(NearbyFencesReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GeoServer).NearbyFences(ctx, in)
+		return srv.(GisServer).NearbyFences(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Geo_NearbyFences_FullMethodName,
+		FullMethod: Gis_NearbyFences_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GeoServer).NearbyFences(ctx, req.(*NearbyFencesReq))
+		return srv.(GisServer).NearbyFences(ctx, req.(*NearbyFencesReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Geo_TransformCoord_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Gis_TransformCoord_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TransformCoordReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GeoServer).TransformCoord(ctx, in)
+		return srv.(GisServer).TransformCoord(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Geo_TransformCoord_FullMethodName,
+		FullMethod: Gis_TransformCoord_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GeoServer).TransformCoord(ctx, req.(*TransformCoordReq))
+		return srv.(GisServer).TransformCoord(ctx, req.(*TransformCoordReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Geo_BatchTransformCoord_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Gis_BatchTransformCoord_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(BatchTransformCoordReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GeoServer).BatchTransformCoord(ctx, in)
+		return srv.(GisServer).BatchTransformCoord(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Geo_BatchTransformCoord_FullMethodName,
+		FullMethod: Gis_BatchTransformCoord_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GeoServer).BatchTransformCoord(ctx, req.(*BatchTransformCoordReq))
+		return srv.(GisServer).BatchTransformCoord(ctx, req.(*BatchTransformCoordReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Geo_ServiceDesc is the grpc.ServiceDesc for Geo service.
+// Gis_ServiceDesc is the grpc.ServiceDesc for Gis service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Geo_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "geo.Geo",
-	HandlerType: (*GeoServer)(nil),
+var Gis_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "gis.Gis",
+	HandlerType: (*GisServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "Ping",
-			Handler:    _Geo_Ping_Handler,
+			Handler:    _Gis_Ping_Handler,
 		},
 		{
 			MethodName: "EncodeGeoHash",
-			Handler:    _Geo_EncodeGeoHash_Handler,
+			Handler:    _Gis_EncodeGeoHash_Handler,
 		},
 		{
 			MethodName: "DecodeGeoHash",
-			Handler:    _Geo_DecodeGeoHash_Handler,
+			Handler:    _Gis_DecodeGeoHash_Handler,
 		},
 		{
 			MethodName: "EncodeH3",
-			Handler:    _Geo_EncodeH3_Handler,
+			Handler:    _Gis_EncodeH3_Handler,
 		},
 		{
 			MethodName: "DecodeH3",
-			Handler:    _Geo_DecodeH3_Handler,
+			Handler:    _Gis_DecodeH3_Handler,
 		},
 		{
 			MethodName: "GenerateFenceCells",
-			Handler:    _Geo_GenerateFenceCells_Handler,
+			Handler:    _Gis_GenerateFenceCells_Handler,
 		},
 		{
 			MethodName: "GenerateFenceH3Cells",
-			Handler:    _Geo_GenerateFenceH3Cells_Handler,
+			Handler:    _Gis_GenerateFenceH3Cells_Handler,
 		},
 		{
 			MethodName: "PointInFence",
-			Handler:    _Geo_PointInFence_Handler,
+			Handler:    _Gis_PointInFence_Handler,
 		},
 		{
 			MethodName: "PointInFences",
-			Handler:    _Geo_PointInFences_Handler,
+			Handler:    _Gis_PointInFences_Handler,
 		},
 		{
 			MethodName: "Distance",
-			Handler:    _Geo_Distance_Handler,
+			Handler:    _Gis_Distance_Handler,
 		},
 		{
 			MethodName: "NearbyFences",
-			Handler:    _Geo_NearbyFences_Handler,
+			Handler:    _Gis_NearbyFences_Handler,
 		},
 		{
 			MethodName: "TransformCoord",
-			Handler:    _Geo_TransformCoord_Handler,
+			Handler:    _Gis_TransformCoord_Handler,
 		},
 		{
 			MethodName: "BatchTransformCoord",
-			Handler:    _Geo_BatchTransformCoord_Handler,
+			Handler:    _Gis_BatchTransformCoord_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "geo.proto",
+	Metadata: "gis.proto",
 }

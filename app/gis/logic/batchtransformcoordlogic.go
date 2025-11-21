@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"zero-service/app/geo/geo"
-	"zero-service/app/geo/internal/svc"
+	"zero-service/app/gis/gis"
+	"zero-service/app/gis/internal/svc"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -26,29 +26,29 @@ func NewBatchTransformCoordLogic(ctx context.Context, svcCtx *svc.ServiceContext
 }
 
 // 批量坐标转换
-func (l *BatchTransformCoordLogic) BatchTransformCoord(in *geo.BatchTransformCoordReq) (*geo.BatchTransformCoordRes, error) {
+func (l *BatchTransformCoordLogic) BatchTransformCoord(in *gis.BatchTransformCoordReq) (*gis.BatchTransformCoordRes, error) {
 	if in.Points == nil || len(in.Points) == 0 {
 		return nil, errors.New("points cannot be empty")
 	}
 
 	if in.SourceType == in.TargetType {
 		// 类型相同直接返回原始点
-		resPoints := make([]*geo.Point, len(in.Points))
+		resPoints := make([]*gis.Point, len(in.Points))
 		for i, p := range in.Points {
-			resPoints[i] = &geo.Point{
+			resPoints[i] = &gis.Point{
 				Lat: p.Lat,
 				Lon: p.Lon,
 			}
 		}
-		return &geo.BatchTransformCoordRes{
+		return &gis.BatchTransformCoordRes{
 			TransformedPoints: resPoints,
 		}, nil
 	}
 
 	// 批量转换
-	resPoints := make([]*geo.Point, len(in.Points))
+	resPoints := make([]*gis.Point, len(in.Points))
 	for i, p := range in.Points {
-		res, err := NewTransformCoordLogic(l.ctx, l.svcCtx).TransformCoord(&geo.TransformCoordReq{
+		res, err := NewTransformCoordLogic(l.ctx, l.svcCtx).TransformCoord(&gis.TransformCoordReq{
 			Point:      p,
 			SourceType: in.SourceType,
 			TargetType: in.TargetType,
@@ -59,7 +59,7 @@ func (l *BatchTransformCoordLogic) BatchTransformCoord(in *geo.BatchTransformCoo
 		resPoints[i] = res.TransformedPoint
 	}
 
-	return &geo.BatchTransformCoordRes{
+	return &gis.BatchTransformCoordRes{
 		TransformedPoints: resPoints,
 	}, nil
 }

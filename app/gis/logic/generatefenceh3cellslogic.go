@@ -3,8 +3,8 @@ package logic
 import (
 	"context"
 	"errors"
-	"zero-service/app/geo/geo"
-	"zero-service/app/geo/internal/svc"
+	"zero-service/app/gis/gis"
+	"zero-service/app/gis/internal/svc"
 	"zero-service/common/tool"
 
 	"github.com/paulmach/orb"
@@ -27,7 +27,7 @@ func NewGenerateFenceH3CellsLogic(ctx context.Context, svcCtx *svc.ServiceContex
 }
 
 // 一次性生成围栏 H3 cells（小围栏）
-func (l *GenerateFenceH3CellsLogic) GenerateFenceH3Cells(in *geo.GenFenceH3CellsReq) (*geo.GenFenceH3CellsRes, error) {
+func (l *GenerateFenceH3CellsLogic) GenerateFenceH3Cells(in *gis.GenFenceH3CellsReq) (*gis.GenFenceH3CellsRes, error) {
 	var polygon orb.Polygon
 	var err error
 
@@ -71,7 +71,7 @@ func (l *GenerateFenceH3CellsLogic) GenerateFenceH3Cells(in *geo.GenFenceH3Cells
 		cellStrings[i] = c.String()
 	}
 	// 返回结果
-	return &geo.GenFenceH3CellsRes{
+	return &gis.GenFenceH3CellsRes{
 		H3Indexes: cellStrings,
 	}, nil
 }

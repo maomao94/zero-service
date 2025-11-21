@@ -2,9 +2,8 @@ package logic
 
 import (
 	"context"
-
-	"zero-service/app/geo/geo"
-	"zero-service/app/geo/internal/svc"
+	"zero-service/app/gis/gis"
+	"zero-service/app/gis/internal/svc"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -24,8 +23,8 @@ func NewPointInFencesLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Poi
 }
 
 // 点是否命中电子围栏（多个围栏）
-func (l *PointInFencesLogic) PointInFences(in *geo.PointInFencesReq) (*geo.PointInFencesRes, error) {
+func (l *PointInFencesLogic) PointInFences(in *gis.PointInFencesReq) (*gis.PointInFencesRes, error) {
 	// todo: add your logic here and delete this line
 
-	return &geo.PointInFencesRes{}, nil
+	return &gis.PointInFencesRes{}, nil
 }
