@@ -58,6 +58,12 @@ func (s *GeoServer) GenerateFenceCells(ctx context.Context, in *geo.GenFenceCell
 	return l.GenerateFenceCells(in)
 }
 
+// 一次性生成围栏 H3 cells（小围栏）
+func (s *GeoServer) GenerateFenceH3Cells(ctx context.Context, in *geo.GenFenceH3CellsReq) (*geo.GenFenceH3CellsRes, error) {
+	l := logic.NewGenerateFenceH3CellsLogic(ctx, s.svcCtx)
+	return l.GenerateFenceH3Cells(in)
+}
+
 // 点是否命中电子围栏（单个）
 func (s *GeoServer) PointInFence(ctx context.Context, in *geo.PointInFenceReq) (*geo.PointInFenceRes, error) {
 	l := logic.NewPointInFenceLogic(ctx, s.svcCtx)

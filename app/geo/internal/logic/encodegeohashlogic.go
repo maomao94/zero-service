@@ -30,7 +30,7 @@ func (l *EncodeGeoHashLogic) EncodeGeoHash(in *geo.EncodeGeoHashReq) (*geo.Encod
 	if in.Point == nil {
 		return nil, errors.New("参数错误")
 	}
-	// 默认精度 7
+	// 默认精度 9
 	precision := int(in.Precision)
 	if precision <= 0 {
 		precision = 7

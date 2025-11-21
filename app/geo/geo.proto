@@ -27,6 +27,8 @@ service Geo {
   rpc DecodeH3 (DecodeH3Req) returns (DecodeH3Res);
   // 一次性生成围栏 cells（小围栏）
   rpc GenerateFenceCells (GenFenceCellsReq) returns (GenFenceCellsRes);
+  // 一次性生成围栏 H3 cells（小围栏）
+  rpc GenerateFenceH3Cells (GenFenceH3CellsReq) returns (GenFenceH3CellsRes);
   // 点是否命中电子围栏（单个）
   rpc PointInFence (PointInFenceReq) returns (PointInFenceRes);
   // 点是否命中电子围栏（多个围栏）
@@ -77,7 +79,7 @@ message DecodeGeoHashRes {
 
 message EncodeH3Req {
   Point point = 1;
-  uint32 resolution = 2; // H3 分辨率 0-15
+  uint32 resolution = 2; // H3 分辨率 0-15, 默认 9
 }
 
 message EncodeH3Res {
@@ -102,6 +104,17 @@ message GenFenceCellsReq {
 
 message GenFenceCellsRes {
   repeated string geohashes = 1; // geohash 列表（去重后的前缀）
+}
+
+
+message GenFenceH3CellsReq {
+  string fenceId = 1;          // 可选：已有 fence ID
+  repeated Point points = 2;   // polygon 顶点（当 fenceId 不存在时直接传 polygon）
+  uint32 resolution = 3;       // H3 分辨率 0-15, 默认 9
+}
+
+message GenFenceH3CellsRes {
+  repeated string h3Indexes = 1; // H3 cell 列表（去重）
 }
 
 message Fence {

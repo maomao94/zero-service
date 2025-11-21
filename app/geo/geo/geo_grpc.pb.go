@@ -19,18 +19,19 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Geo_Ping_FullMethodName                = "/geo.Geo/Ping"
-	Geo_EncodeGeoHash_FullMethodName       = "/geo.Geo/EncodeGeoHash"
-	Geo_DecodeGeoHash_FullMethodName       = "/geo.Geo/DecodeGeoHash"
-	Geo_EncodeH3_FullMethodName            = "/geo.Geo/EncodeH3"
-	Geo_DecodeH3_FullMethodName            = "/geo.Geo/DecodeH3"
-	Geo_GenerateFenceCells_FullMethodName  = "/geo.Geo/GenerateFenceCells"
-	Geo_PointInFence_FullMethodName        = "/geo.Geo/PointInFence"
-	Geo_PointInFences_FullMethodName       = "/geo.Geo/PointInFences"
-	Geo_Distance_FullMethodName            = "/geo.Geo/Distance"
-	Geo_NearbyFences_FullMethodName        = "/geo.Geo/NearbyFences"
-	Geo_TransformCoord_FullMethodName      = "/geo.Geo/TransformCoord"
-	Geo_BatchTransformCoord_FullMethodName = "/geo.Geo/BatchTransformCoord"
+	Geo_Ping_FullMethodName                 = "/geo.Geo/Ping"
+	Geo_EncodeGeoHash_FullMethodName        = "/geo.Geo/EncodeGeoHash"
+	Geo_DecodeGeoHash_FullMethodName        = "/geo.Geo/DecodeGeoHash"
+	Geo_EncodeH3_FullMethodName             = "/geo.Geo/EncodeH3"
+	Geo_DecodeH3_FullMethodName             = "/geo.Geo/DecodeH3"
+	Geo_GenerateFenceCells_FullMethodName   = "/geo.Geo/GenerateFenceCells"
+	Geo_GenerateFenceH3Cells_FullMethodName = "/geo.Geo/GenerateFenceH3Cells"
+	Geo_PointInFence_FullMethodName         = "/geo.Geo/PointInFence"
+	Geo_PointInFences_FullMethodName        = "/geo.Geo/PointInFences"
+	Geo_Distance_FullMethodName             = "/geo.Geo/Distance"
+	Geo_NearbyFences_FullMethodName         = "/geo.Geo/NearbyFences"
+	Geo_TransformCoord_FullMethodName       = "/geo.Geo/TransformCoord"
+	Geo_BatchTransformCoord_FullMethodName  = "/geo.Geo/BatchTransformCoord"
 )
 
 // GeoClient is the client API for Geo service.
@@ -50,6 +51,8 @@ type GeoClient interface {
 	DecodeH3(ctx context.Context, in *DecodeH3Req, opts ...grpc.CallOption) (*DecodeH3Res, error)
 	// 一次性生成围栏 cells（小围栏）
 	GenerateFenceCells(ctx context.Context, in *GenFenceCellsReq, opts ...grpc.CallOption) (*GenFenceCellsRes, error)
+	// 一次性生成围栏 H3 cells（小围栏）
+	GenerateFenceH3Cells(ctx context.Context, in *GenFenceH3CellsReq, opts ...grpc.CallOption) (*GenFenceH3CellsRes, error)
 	// 点是否命中电子围栏（单个）
 	PointInFence(ctx context.Context, in *PointInFenceReq, opts ...grpc.CallOption) (*PointInFenceRes, error)
 	// 点是否命中电子围栏（多个围栏）
@@ -126,6 +129,16 @@ func (c *geoClient) GenerateFenceCells(ctx context.Context, in *GenFenceCellsReq
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GenFenceCellsRes)
 	err := c.cc.Invoke(ctx, Geo_GenerateFenceCells_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *geoClient) GenerateFenceH3Cells(ctx context.Context, in *GenFenceH3CellsReq, opts ...grpc.CallOption) (*GenFenceH3CellsRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenFenceH3CellsRes)
+	err := c.cc.Invoke(ctx, Geo_GenerateFenceH3Cells_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -209,6 +222,8 @@ type GeoServer interface {
 	DecodeH3(context.Context, *DecodeH3Req) (*DecodeH3Res, error)
 	// 一次性生成围栏 cells（小围栏）
 	GenerateFenceCells(context.Context, *GenFenceCellsReq) (*GenFenceCellsRes, error)
+	// 一次性生成围栏 H3 cells（小围栏）
+	GenerateFenceH3Cells(context.Context, *GenFenceH3CellsReq) (*GenFenceH3CellsRes, error)
 	// 点是否命中电子围栏（单个）
 	PointInFence(context.Context, *PointInFenceReq) (*PointInFenceRes, error)
 	// 点是否命中电子围栏（多个围栏）
@@ -248,6 +263,9 @@ func (UnimplementedGeoServer) DecodeH3(context.Context, *DecodeH3Req) (*DecodeH3
 }
 func (UnimplementedGeoServer) GenerateFenceCells(context.Context, *GenFenceCellsReq) (*GenFenceCellsRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GenerateFenceCells not implemented")
+}
+func (UnimplementedGeoServer) GenerateFenceH3Cells(context.Context, *GenFenceH3CellsReq) (*GenFenceH3CellsRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GenerateFenceH3Cells not implemented")
 }
 func (UnimplementedGeoServer) PointInFence(context.Context, *PointInFenceReq) (*PointInFenceRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PointInFence not implemented")
@@ -396,6 +414,24 @@ func _Geo_GenerateFenceCells_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Geo_GenerateFenceH3Cells_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GenFenceH3CellsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GeoServer).GenerateFenceH3Cells(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Geo_GenerateFenceH3Cells_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GeoServer).GenerateFenceH3Cells(ctx, req.(*GenFenceH3CellsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Geo_PointInFence_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PointInFenceReq)
 	if err := dec(in); err != nil {
@@ -534,6 +570,10 @@ var Geo_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GenerateFenceCells",
 			Handler:    _Geo_GenerateFenceCells_Handler,
+		},
+		{
+			MethodName: "GenerateFenceH3Cells",
+			Handler:    _Geo_GenerateFenceH3Cells_Handler,
 		},
 		{
 			MethodName: "PointInFence",

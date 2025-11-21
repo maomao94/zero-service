@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"zero-service/app/geo/geo"
 	"zero-service/app/geo/internal/svc"
@@ -30,16 +31,16 @@ func NewGenerateFenceCellsLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 
 // 一次性生成围栏 cells（小围栏）
 func (l *GenerateFenceCellsLogic) GenerateFenceCells(in *geo.GenFenceCellsReq) (*geo.GenFenceCellsRes, error) {
-	// 默认精度 7
+	// 默认精度 9
 	precision := int(in.Precision)
 	if precision <= 0 {
-		precision = 7
+		precision = 9
 	}
 	// 2. 构建多边形（校验有效性）
 	var polygon orb.Polygon
 	var err error
 	if len(in.Points) > 0 {
-		polygon, err = buildPolygonFromPoints(in.Points)
+		polygon, err = pbPointToOrbPolygon(in.Points)
 		if err != nil {
 			l.Logger.Error("构建多边形失败: ", err)
 			return nil, err
@@ -122,29 +123,6 @@ func (l *GenerateFenceCellsLogic) GenerateFenceCells(in *geo.GenFenceCellsReq) (
 	return &geo.GenFenceCellsRes{
 		Geohashes: result,
 	}, nil
-}
-
-// 构建多边形并校验有效性
-func buildPolygonFromPoints(points []*geo.Point) (orb.Polygon, error) {
-	if len(points) < 3 {
-		return nil, errors.New("多边形至少需要3个点")
-	}
-
-	var ring orb.Ring
-	for _, p := range points {
-		if p.Lon < -180 || p.Lon > 180 || p.Lat < -90 || p.Lat > 90 {
-			return nil, errors.New("经纬度超出有效范围（经度-180~180，纬度-90~90）")
-		}
-		ring = append(ring, orb.Point{p.Lon, p.Lat})
-	}
-
-	// 确保多边形闭合（处理浮点数精度）
-	first, last := ring[0], ring[len(ring)-1]
-	if !(math.Abs(first[0]-last[0]) < 1e-8 && math.Abs(first[1]-last[1]) < 1e-8) {
-		ring = append(ring, first)
-	}
-
-	return orb.Polygon{ring}, nil
 }
 
 // 将orb.Polygon转换为go-geom.Polygon（适配库函数）
@@ -289,4 +267,27 @@ func PolygonIntersect(p1, p2 orb.Polygon) bool {
 	}
 
 	return false
+}
+
+func pbPointToOrbPolygon(points []*geo.Point) (orb.Polygon, error) {
+	if len(points) < 3 {
+		return nil, errors.New("多边形至少需要3个点")
+	}
+
+	var ring orb.Ring
+	for i, p := range points {
+		if p.Lon < -180 || p.Lon > 180 || p.Lat < -90 || p.Lat > 90 {
+			return nil, fmt.Errorf("第 %d 个点经纬度超出有效范围（经度-180~180，纬度-90~90）", i)
+		}
+		ring = append(ring, orb.Point{p.Lon, p.Lat})
+	}
+
+	// 确保首尾闭合，考虑浮点误差
+	first, last := ring[0], ring[len(ring)-1]
+	const epsilon = 1e-8
+	if math.Abs(first[0]-last[0]) > epsilon || math.Abs(first[1]-last[1]) > epsilon {
+		ring = append(ring, first)
+	}
+
+	return orb.Polygon{ring}, nil
 }
