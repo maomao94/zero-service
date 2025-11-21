@@ -33,12 +33,12 @@ func (l *PointsWithinRadiusLogic) PointsWithinRadius(in *gis.PointsWithinRadiusR
 		return nil, err
 	}
 	center := orb.Point{in.Center.Lon, in.Center.Lat}
-	//hitIndexs := make([]int32, 0)
+	//hits := make([]int32, 0)
 	//for i, p := range in.Points {
 	//	orbP := orb.Point{p.Lon, p.Lat}
 	//	distance := geo.Distance(center, orbP)
 	//	if distance <= in.RadiusMeters {
-	//		hitIndexs = append(hitIndexs, int32(i))
+	//		hits = append(hits, int32(i))
 	//	}
 	//}
 	type indexedPoint struct {
@@ -65,7 +65,6 @@ func (l *PointsWithinRadiusLogic) PointsWithinRadius(in *gis.PointsWithinRadiusR
 			}
 			writer.Write(result)
 		},
-		mr.WithWorkers(64),
 	)
 	if err != nil {
 		return nil, err
