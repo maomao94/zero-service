@@ -5,7 +5,7 @@ import (
 	"errors"
 	"zero-service/app/gis/gis"
 	"zero-service/app/gis/internal/svc"
-	"zero-service/common/tool"
+	"zero-service/common/gisx"
 
 	"github.com/paulmach/orb"
 	"github.com/uber/h3-go/v4"
@@ -54,7 +54,7 @@ func (l *GenerateFenceH3CellsLogic) GenerateFenceH3Cells(in *gis.GenFenceH3Cells
 		return nil, errors.New("H3分辨率必须在0-15之间")
 	}
 
-	geoPolygon, err := tool.OrbPolygonToH3GeoPolygon(polygon)
+	geoPolygon, err := gisx.OrbPolygonToH3GeoPolygon(polygon)
 	if err != nil {
 		l.Logger.Error("多边形格式转换失败: ", err)
 		return nil, err
