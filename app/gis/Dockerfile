@@ -27,15 +27,10 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o gis ./app/gis
+RUN go build -o gis ./app/gis && chmod +x gis
 
-# --------------------------------------
-# 最终镜像：scratch（最小镜像）+ 完整依赖
-# --------------------------------------
-FROM scratch
-
+FROM golang:1.25-alpine3.22
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-
 COPY --from=builder /usr/share/zoneinfo/Asia/Shanghai /usr/share/zoneinfo/Asia/Shanghai
 ENV TZ=Asia/Shanghai
 
