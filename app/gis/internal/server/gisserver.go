@@ -88,6 +88,12 @@ func (s *GisServer) Distance(ctx context.Context, in *gis.DistanceReq) (*gis.Dis
 	return l.Distance(in)
 }
 
+// 批量计算两点之间的距离（米）
+func (s *GisServer) BatchDistance(ctx context.Context, in *gis.BatchDistanceReq) (*gis.BatchDistanceRes, error) {
+	l := logic.NewBatchDistanceLogic(ctx, s.svcCtx)
+	return l.BatchDistance(in)
+}
+
 // 获取某点附近多少 km 的围栏（粗过滤）
 func (s *GisServer) NearbyFences(ctx context.Context, in *gis.NearbyFencesReq) (*gis.NearbyFencesRes, error) {
 	l := logic.NewNearbyFencesLogic(ctx, s.svcCtx)

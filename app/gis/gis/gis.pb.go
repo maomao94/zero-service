@@ -179,6 +179,58 @@ func (x *Point) GetLon() float64 {
 	return 0
 }
 
+type PointPair struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	A             *Point                 `protobuf:"bytes,1,opt,name=a,proto3" json:"a,omitempty"`
+	B             *Point                 `protobuf:"bytes,2,opt,name=b,proto3" json:"b,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PointPair) Reset() {
+	*x = PointPair{}
+	mi := &file_gis_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PointPair) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PointPair) ProtoMessage() {}
+
+func (x *PointPair) ProtoReflect() protoreflect.Message {
+	mi := &file_gis_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PointPair.ProtoReflect.Descriptor instead.
+func (*PointPair) Descriptor() ([]byte, []int) {
+	return file_gis_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *PointPair) GetA() *Point {
+	if x != nil {
+		return x.A
+	}
+	return nil
+}
+
+func (x *PointPair) GetB() *Point {
+	if x != nil {
+		return x.B
+	}
+	return nil
+}
+
 type Req struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Ping          string                 `protobuf:"bytes,1,opt,name=ping,proto3" json:"ping,omitempty"`
@@ -188,7 +240,7 @@ type Req struct {
 
 func (x *Req) Reset() {
 	*x = Req{}
-	mi := &file_gis_proto_msgTypes[2]
+	mi := &file_gis_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -200,7 +252,7 @@ func (x *Req) String() string {
 func (*Req) ProtoMessage() {}
 
 func (x *Req) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[2]
+	mi := &file_gis_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -213,7 +265,7 @@ func (x *Req) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Req.ProtoReflect.Descriptor instead.
 func (*Req) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{2}
+	return file_gis_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Req) GetPing() string {
@@ -232,7 +284,7 @@ type Res struct {
 
 func (x *Res) Reset() {
 	*x = Res{}
-	mi := &file_gis_proto_msgTypes[3]
+	mi := &file_gis_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -244,7 +296,7 @@ func (x *Res) String() string {
 func (*Res) ProtoMessage() {}
 
 func (x *Res) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[3]
+	mi := &file_gis_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -257,7 +309,7 @@ func (x *Res) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Res.ProtoReflect.Descriptor instead.
 func (*Res) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{3}
+	return file_gis_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Res) GetPong() string {
@@ -277,7 +329,7 @@ type EncodeGeoHashReq struct {
 
 func (x *EncodeGeoHashReq) Reset() {
 	*x = EncodeGeoHashReq{}
-	mi := &file_gis_proto_msgTypes[4]
+	mi := &file_gis_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -289,7 +341,7 @@ func (x *EncodeGeoHashReq) String() string {
 func (*EncodeGeoHashReq) ProtoMessage() {}
 
 func (x *EncodeGeoHashReq) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[4]
+	mi := &file_gis_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -302,7 +354,7 @@ func (x *EncodeGeoHashReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EncodeGeoHashReq.ProtoReflect.Descriptor instead.
 func (*EncodeGeoHashReq) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{4}
+	return file_gis_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *EncodeGeoHashReq) GetPoint() *Point {
@@ -328,7 +380,7 @@ type EncodeGeoHashRes struct {
 
 func (x *EncodeGeoHashRes) Reset() {
 	*x = EncodeGeoHashRes{}
-	mi := &file_gis_proto_msgTypes[5]
+	mi := &file_gis_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -340,7 +392,7 @@ func (x *EncodeGeoHashRes) String() string {
 func (*EncodeGeoHashRes) ProtoMessage() {}
 
 func (x *EncodeGeoHashRes) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[5]
+	mi := &file_gis_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -353,7 +405,7 @@ func (x *EncodeGeoHashRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EncodeGeoHashRes.ProtoReflect.Descriptor instead.
 func (*EncodeGeoHashRes) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{5}
+	return file_gis_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *EncodeGeoHashRes) GetGeohash() string {
@@ -372,7 +424,7 @@ type DecodeGeoHashReq struct {
 
 func (x *DecodeGeoHashReq) Reset() {
 	*x = DecodeGeoHashReq{}
-	mi := &file_gis_proto_msgTypes[6]
+	mi := &file_gis_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -384,7 +436,7 @@ func (x *DecodeGeoHashReq) String() string {
 func (*DecodeGeoHashReq) ProtoMessage() {}
 
 func (x *DecodeGeoHashReq) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[6]
+	mi := &file_gis_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -397,7 +449,7 @@ func (x *DecodeGeoHashReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DecodeGeoHashReq.ProtoReflect.Descriptor instead.
 func (*DecodeGeoHashReq) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{6}
+	return file_gis_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *DecodeGeoHashReq) GetGeohash() string {
@@ -420,7 +472,7 @@ type DecodeGeoHashRes struct {
 
 func (x *DecodeGeoHashRes) Reset() {
 	*x = DecodeGeoHashRes{}
-	mi := &file_gis_proto_msgTypes[7]
+	mi := &file_gis_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -432,7 +484,7 @@ func (x *DecodeGeoHashRes) String() string {
 func (*DecodeGeoHashRes) ProtoMessage() {}
 
 func (x *DecodeGeoHashRes) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[7]
+	mi := &file_gis_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -445,7 +497,7 @@ func (x *DecodeGeoHashRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DecodeGeoHashRes.ProtoReflect.Descriptor instead.
 func (*DecodeGeoHashRes) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{7}
+	return file_gis_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *DecodeGeoHashRes) GetPoint() *Point {
@@ -493,7 +545,7 @@ type EncodeH3Req struct {
 
 func (x *EncodeH3Req) Reset() {
 	*x = EncodeH3Req{}
-	mi := &file_gis_proto_msgTypes[8]
+	mi := &file_gis_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -505,7 +557,7 @@ func (x *EncodeH3Req) String() string {
 func (*EncodeH3Req) ProtoMessage() {}
 
 func (x *EncodeH3Req) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[8]
+	mi := &file_gis_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -518,7 +570,7 @@ func (x *EncodeH3Req) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EncodeH3Req.ProtoReflect.Descriptor instead.
 func (*EncodeH3Req) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{8}
+	return file_gis_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *EncodeH3Req) GetPoint() *Point {
@@ -544,7 +596,7 @@ type EncodeH3Res struct {
 
 func (x *EncodeH3Res) Reset() {
 	*x = EncodeH3Res{}
-	mi := &file_gis_proto_msgTypes[9]
+	mi := &file_gis_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -556,7 +608,7 @@ func (x *EncodeH3Res) String() string {
 func (*EncodeH3Res) ProtoMessage() {}
 
 func (x *EncodeH3Res) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[9]
+	mi := &file_gis_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -569,7 +621,7 @@ func (x *EncodeH3Res) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EncodeH3Res.ProtoReflect.Descriptor instead.
 func (*EncodeH3Res) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{9}
+	return file_gis_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *EncodeH3Res) GetH3Index() string {
@@ -588,7 +640,7 @@ type DecodeH3Req struct {
 
 func (x *DecodeH3Req) Reset() {
 	*x = DecodeH3Req{}
-	mi := &file_gis_proto_msgTypes[10]
+	mi := &file_gis_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -600,7 +652,7 @@ func (x *DecodeH3Req) String() string {
 func (*DecodeH3Req) ProtoMessage() {}
 
 func (x *DecodeH3Req) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[10]
+	mi := &file_gis_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -613,7 +665,7 @@ func (x *DecodeH3Req) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DecodeH3Req.ProtoReflect.Descriptor instead.
 func (*DecodeH3Req) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{10}
+	return file_gis_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *DecodeH3Req) GetH3Index() string {
@@ -633,7 +685,7 @@ type DecodeH3Res struct {
 
 func (x *DecodeH3Res) Reset() {
 	*x = DecodeH3Res{}
-	mi := &file_gis_proto_msgTypes[11]
+	mi := &file_gis_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -645,7 +697,7 @@ func (x *DecodeH3Res) String() string {
 func (*DecodeH3Res) ProtoMessage() {}
 
 func (x *DecodeH3Res) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[11]
+	mi := &file_gis_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -658,7 +710,7 @@ func (x *DecodeH3Res) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DecodeH3Res.ProtoReflect.Descriptor instead.
 func (*DecodeH3Res) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{11}
+	return file_gis_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *DecodeH3Res) GetCenter() *Point {
@@ -687,7 +739,7 @@ type GenFenceCellsReq struct {
 
 func (x *GenFenceCellsReq) Reset() {
 	*x = GenFenceCellsReq{}
-	mi := &file_gis_proto_msgTypes[12]
+	mi := &file_gis_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -699,7 +751,7 @@ func (x *GenFenceCellsReq) String() string {
 func (*GenFenceCellsReq) ProtoMessage() {}
 
 func (x *GenFenceCellsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[12]
+	mi := &file_gis_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -712,7 +764,7 @@ func (x *GenFenceCellsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenFenceCellsReq.ProtoReflect.Descriptor instead.
 func (*GenFenceCellsReq) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{12}
+	return file_gis_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GenFenceCellsReq) GetFenceId() string {
@@ -752,7 +804,7 @@ type GenFenceCellsRes struct {
 
 func (x *GenFenceCellsRes) Reset() {
 	*x = GenFenceCellsRes{}
-	mi := &file_gis_proto_msgTypes[13]
+	mi := &file_gis_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -764,7 +816,7 @@ func (x *GenFenceCellsRes) String() string {
 func (*GenFenceCellsRes) ProtoMessage() {}
 
 func (x *GenFenceCellsRes) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[13]
+	mi := &file_gis_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -777,7 +829,7 @@ func (x *GenFenceCellsRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenFenceCellsRes.ProtoReflect.Descriptor instead.
 func (*GenFenceCellsRes) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{13}
+	return file_gis_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GenFenceCellsRes) GetGeohashes() []string {
@@ -798,7 +850,7 @@ type GenFenceH3CellsReq struct {
 
 func (x *GenFenceH3CellsReq) Reset() {
 	*x = GenFenceH3CellsReq{}
-	mi := &file_gis_proto_msgTypes[14]
+	mi := &file_gis_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -810,7 +862,7 @@ func (x *GenFenceH3CellsReq) String() string {
 func (*GenFenceH3CellsReq) ProtoMessage() {}
 
 func (x *GenFenceH3CellsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[14]
+	mi := &file_gis_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -823,7 +875,7 @@ func (x *GenFenceH3CellsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenFenceH3CellsReq.ProtoReflect.Descriptor instead.
 func (*GenFenceH3CellsReq) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{14}
+	return file_gis_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GenFenceH3CellsReq) GetFenceId() string {
@@ -856,7 +908,7 @@ type GenFenceH3CellsRes struct {
 
 func (x *GenFenceH3CellsRes) Reset() {
 	*x = GenFenceH3CellsRes{}
-	mi := &file_gis_proto_msgTypes[15]
+	mi := &file_gis_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -868,7 +920,7 @@ func (x *GenFenceH3CellsRes) String() string {
 func (*GenFenceH3CellsRes) ProtoMessage() {}
 
 func (x *GenFenceH3CellsRes) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[15]
+	mi := &file_gis_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -881,7 +933,7 @@ func (x *GenFenceH3CellsRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenFenceH3CellsRes.ProtoReflect.Descriptor instead.
 func (*GenFenceH3CellsRes) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{15}
+	return file_gis_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GenFenceH3CellsRes) GetH3Indexes() []string {
@@ -902,7 +954,7 @@ type PointsWithinRadiusReq struct {
 
 func (x *PointsWithinRadiusReq) Reset() {
 	*x = PointsWithinRadiusReq{}
-	mi := &file_gis_proto_msgTypes[16]
+	mi := &file_gis_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -914,7 +966,7 @@ func (x *PointsWithinRadiusReq) String() string {
 func (*PointsWithinRadiusReq) ProtoMessage() {}
 
 func (x *PointsWithinRadiusReq) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[16]
+	mi := &file_gis_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -927,7 +979,7 @@ func (x *PointsWithinRadiusReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PointsWithinRadiusReq.ProtoReflect.Descriptor instead.
 func (*PointsWithinRadiusReq) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{16}
+	return file_gis_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *PointsWithinRadiusReq) GetCenter() *Point {
@@ -960,7 +1012,7 @@ type PointsWithinRadiusRes struct {
 
 func (x *PointsWithinRadiusRes) Reset() {
 	*x = PointsWithinRadiusRes{}
-	mi := &file_gis_proto_msgTypes[17]
+	mi := &file_gis_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -972,7 +1024,7 @@ func (x *PointsWithinRadiusRes) String() string {
 func (*PointsWithinRadiusRes) ProtoMessage() {}
 
 func (x *PointsWithinRadiusRes) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[17]
+	mi := &file_gis_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -985,7 +1037,7 @@ func (x *PointsWithinRadiusRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PointsWithinRadiusRes.ProtoReflect.Descriptor instead.
 func (*PointsWithinRadiusRes) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{17}
+	return file_gis_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *PointsWithinRadiusRes) GetHitIndexes() []int32 {
@@ -1005,7 +1057,7 @@ type PointInFenceReq struct {
 
 func (x *PointInFenceReq) Reset() {
 	*x = PointInFenceReq{}
-	mi := &file_gis_proto_msgTypes[18]
+	mi := &file_gis_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1017,7 +1069,7 @@ func (x *PointInFenceReq) String() string {
 func (*PointInFenceReq) ProtoMessage() {}
 
 func (x *PointInFenceReq) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[18]
+	mi := &file_gis_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1030,7 +1082,7 @@ func (x *PointInFenceReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PointInFenceReq.ProtoReflect.Descriptor instead.
 func (*PointInFenceReq) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{18}
+	return file_gis_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *PointInFenceReq) GetPoint() *Point {
@@ -1056,7 +1108,7 @@ type PointInFenceRes struct {
 
 func (x *PointInFenceRes) Reset() {
 	*x = PointInFenceRes{}
-	mi := &file_gis_proto_msgTypes[19]
+	mi := &file_gis_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1068,7 +1120,7 @@ func (x *PointInFenceRes) String() string {
 func (*PointInFenceRes) ProtoMessage() {}
 
 func (x *PointInFenceRes) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[19]
+	mi := &file_gis_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1081,7 +1133,7 @@ func (x *PointInFenceRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PointInFenceRes.ProtoReflect.Descriptor instead.
 func (*PointInFenceRes) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{19}
+	return file_gis_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *PointInFenceRes) GetHit() bool {
@@ -1101,7 +1153,7 @@ type PointInFencesReq struct {
 
 func (x *PointInFencesReq) Reset() {
 	*x = PointInFencesReq{}
-	mi := &file_gis_proto_msgTypes[20]
+	mi := &file_gis_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1113,7 +1165,7 @@ func (x *PointInFencesReq) String() string {
 func (*PointInFencesReq) ProtoMessage() {}
 
 func (x *PointInFencesReq) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[20]
+	mi := &file_gis_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1126,7 +1178,7 @@ func (x *PointInFencesReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PointInFencesReq.ProtoReflect.Descriptor instead.
 func (*PointInFencesReq) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{20}
+	return file_gis_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *PointInFencesReq) GetPoint() *Point {
@@ -1152,7 +1204,7 @@ type PointInFencesRes struct {
 
 func (x *PointInFencesRes) Reset() {
 	*x = PointInFencesRes{}
-	mi := &file_gis_proto_msgTypes[21]
+	mi := &file_gis_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1164,7 +1216,7 @@ func (x *PointInFencesRes) String() string {
 func (*PointInFencesRes) ProtoMessage() {}
 
 func (x *PointInFencesRes) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[21]
+	mi := &file_gis_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1177,7 +1229,7 @@ func (x *PointInFencesRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PointInFencesRes.ProtoReflect.Descriptor instead.
 func (*PointInFencesRes) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{21}
+	return file_gis_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *PointInFencesRes) GetHitFenceIds() []string {
@@ -1197,7 +1249,7 @@ type DistanceReq struct {
 
 func (x *DistanceReq) Reset() {
 	*x = DistanceReq{}
-	mi := &file_gis_proto_msgTypes[22]
+	mi := &file_gis_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1209,7 +1261,7 @@ func (x *DistanceReq) String() string {
 func (*DistanceReq) ProtoMessage() {}
 
 func (x *DistanceReq) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[22]
+	mi := &file_gis_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1222,7 +1274,7 @@ func (x *DistanceReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DistanceReq.ProtoReflect.Descriptor instead.
 func (*DistanceReq) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{22}
+	return file_gis_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *DistanceReq) GetA() *Point {
@@ -1248,7 +1300,7 @@ type DistanceRes struct {
 
 func (x *DistanceRes) Reset() {
 	*x = DistanceRes{}
-	mi := &file_gis_proto_msgTypes[23]
+	mi := &file_gis_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1260,7 +1312,7 @@ func (x *DistanceRes) String() string {
 func (*DistanceRes) ProtoMessage() {}
 
 func (x *DistanceRes) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[23]
+	mi := &file_gis_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1273,7 +1325,7 @@ func (x *DistanceRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DistanceRes.ProtoReflect.Descriptor instead.
 func (*DistanceRes) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{23}
+	return file_gis_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *DistanceRes) GetMeters() float64 {
@@ -1281,6 +1333,94 @@ func (x *DistanceRes) GetMeters() float64 {
 		return x.Meters
 	}
 	return 0
+}
+
+type BatchDistanceReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Pairs         []*PointPair           `protobuf:"bytes,1,rep,name=pairs,proto3" json:"pairs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BatchDistanceReq) Reset() {
+	*x = BatchDistanceReq{}
+	mi := &file_gis_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BatchDistanceReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BatchDistanceReq) ProtoMessage() {}
+
+func (x *BatchDistanceReq) ProtoReflect() protoreflect.Message {
+	mi := &file_gis_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BatchDistanceReq.ProtoReflect.Descriptor instead.
+func (*BatchDistanceReq) Descriptor() ([]byte, []int) {
+	return file_gis_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *BatchDistanceReq) GetPairs() []*PointPair {
+	if x != nil {
+		return x.Pairs
+	}
+	return nil
+}
+
+type BatchDistanceRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Meters        []float64              `protobuf:"fixed64,1,rep,packed,name=meters,proto3" json:"meters,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BatchDistanceRes) Reset() {
+	*x = BatchDistanceRes{}
+	mi := &file_gis_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BatchDistanceRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BatchDistanceRes) ProtoMessage() {}
+
+func (x *BatchDistanceRes) ProtoReflect() protoreflect.Message {
+	mi := &file_gis_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BatchDistanceRes.ProtoReflect.Descriptor instead.
+func (*BatchDistanceRes) Descriptor() ([]byte, []int) {
+	return file_gis_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *BatchDistanceRes) GetMeters() []float64 {
+	if x != nil {
+		return x.Meters
+	}
+	return nil
 }
 
 type NearbyFencesReq struct {
@@ -1293,7 +1433,7 @@ type NearbyFencesReq struct {
 
 func (x *NearbyFencesReq) Reset() {
 	*x = NearbyFencesReq{}
-	mi := &file_gis_proto_msgTypes[24]
+	mi := &file_gis_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1305,7 +1445,7 @@ func (x *NearbyFencesReq) String() string {
 func (*NearbyFencesReq) ProtoMessage() {}
 
 func (x *NearbyFencesReq) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[24]
+	mi := &file_gis_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1318,7 +1458,7 @@ func (x *NearbyFencesReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NearbyFencesReq.ProtoReflect.Descriptor instead.
 func (*NearbyFencesReq) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{24}
+	return file_gis_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *NearbyFencesReq) GetPoint() *Point {
@@ -1344,7 +1484,7 @@ type NearbyFencesRes struct {
 
 func (x *NearbyFencesRes) Reset() {
 	*x = NearbyFencesRes{}
-	mi := &file_gis_proto_msgTypes[25]
+	mi := &file_gis_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1356,7 +1496,7 @@ func (x *NearbyFencesRes) String() string {
 func (*NearbyFencesRes) ProtoMessage() {}
 
 func (x *NearbyFencesRes) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[25]
+	mi := &file_gis_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1369,7 +1509,7 @@ func (x *NearbyFencesRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NearbyFencesRes.ProtoReflect.Descriptor instead.
 func (*NearbyFencesRes) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{25}
+	return file_gis_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *NearbyFencesRes) GetFenceIds() []string {
@@ -1390,7 +1530,7 @@ type TransformCoordReq struct {
 
 func (x *TransformCoordReq) Reset() {
 	*x = TransformCoordReq{}
-	mi := &file_gis_proto_msgTypes[26]
+	mi := &file_gis_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1402,7 +1542,7 @@ func (x *TransformCoordReq) String() string {
 func (*TransformCoordReq) ProtoMessage() {}
 
 func (x *TransformCoordReq) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[26]
+	mi := &file_gis_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1415,7 +1555,7 @@ func (x *TransformCoordReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransformCoordReq.ProtoReflect.Descriptor instead.
 func (*TransformCoordReq) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{26}
+	return file_gis_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *TransformCoordReq) GetPoint() *Point {
@@ -1448,7 +1588,7 @@ type TransformCoordRes struct {
 
 func (x *TransformCoordRes) Reset() {
 	*x = TransformCoordRes{}
-	mi := &file_gis_proto_msgTypes[27]
+	mi := &file_gis_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1460,7 +1600,7 @@ func (x *TransformCoordRes) String() string {
 func (*TransformCoordRes) ProtoMessage() {}
 
 func (x *TransformCoordRes) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[27]
+	mi := &file_gis_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1473,7 +1613,7 @@ func (x *TransformCoordRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransformCoordRes.ProtoReflect.Descriptor instead.
 func (*TransformCoordRes) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{27}
+	return file_gis_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *TransformCoordRes) GetTransformedPoint() *Point {
@@ -1494,7 +1634,7 @@ type BatchTransformCoordReq struct {
 
 func (x *BatchTransformCoordReq) Reset() {
 	*x = BatchTransformCoordReq{}
-	mi := &file_gis_proto_msgTypes[28]
+	mi := &file_gis_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1506,7 +1646,7 @@ func (x *BatchTransformCoordReq) String() string {
 func (*BatchTransformCoordReq) ProtoMessage() {}
 
 func (x *BatchTransformCoordReq) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[28]
+	mi := &file_gis_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1519,7 +1659,7 @@ func (x *BatchTransformCoordReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchTransformCoordReq.ProtoReflect.Descriptor instead.
 func (*BatchTransformCoordReq) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{28}
+	return file_gis_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *BatchTransformCoordReq) GetPoints() []*Point {
@@ -1552,7 +1692,7 @@ type BatchTransformCoordRes struct {
 
 func (x *BatchTransformCoordRes) Reset() {
 	*x = BatchTransformCoordRes{}
-	mi := &file_gis_proto_msgTypes[29]
+	mi := &file_gis_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1564,7 +1704,7 @@ func (x *BatchTransformCoordRes) String() string {
 func (*BatchTransformCoordRes) ProtoMessage() {}
 
 func (x *BatchTransformCoordRes) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[29]
+	mi := &file_gis_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1577,7 +1717,7 @@ func (x *BatchTransformCoordRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchTransformCoordRes.ProtoReflect.Descriptor instead.
 func (*BatchTransformCoordRes) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{29}
+	return file_gis_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *BatchTransformCoordRes) GetTransformedPoints() []*Point {
@@ -1597,7 +1737,7 @@ type RoutePointsReq struct {
 
 func (x *RoutePointsReq) Reset() {
 	*x = RoutePointsReq{}
-	mi := &file_gis_proto_msgTypes[30]
+	mi := &file_gis_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1609,7 +1749,7 @@ func (x *RoutePointsReq) String() string {
 func (*RoutePointsReq) ProtoMessage() {}
 
 func (x *RoutePointsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[30]
+	mi := &file_gis_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1622,7 +1762,7 @@ func (x *RoutePointsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoutePointsReq.ProtoReflect.Descriptor instead.
 func (*RoutePointsReq) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{30}
+	return file_gis_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *RoutePointsReq) GetStart() *Point {
@@ -1649,7 +1789,7 @@ type RoutePointsRes struct {
 
 func (x *RoutePointsRes) Reset() {
 	*x = RoutePointsRes{}
-	mi := &file_gis_proto_msgTypes[31]
+	mi := &file_gis_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1661,7 +1801,7 @@ func (x *RoutePointsRes) String() string {
 func (*RoutePointsRes) ProtoMessage() {}
 
 func (x *RoutePointsRes) ProtoReflect() protoreflect.Message {
-	mi := &file_gis_proto_msgTypes[31]
+	mi := &file_gis_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1674,7 +1814,7 @@ func (x *RoutePointsRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoutePointsRes.ProtoReflect.Descriptor instead.
 func (*RoutePointsRes) Descriptor() ([]byte, []int) {
-	return file_gis_proto_rawDescGZIP(), []int{31}
+	return file_gis_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *RoutePointsRes) GetVisitOrder() []int32 {
@@ -1702,7 +1842,12 @@ const file_gis_proto_rawDesc = "" +
 	".gis.PointR\x06points\"+\n" +
 	"\x05Point\x12\x10\n" +
 	"\x03lat\x18\x01 \x01(\x01R\x03lat\x12\x10\n" +
-	"\x03lon\x18\x02 \x01(\x01R\x03lon\"\x19\n" +
+	"\x03lon\x18\x02 \x01(\x01R\x03lon\"?\n" +
+	"\tPointPair\x12\x18\n" +
+	"\x01a\x18\x01 \x01(\v2\n" +
+	".gis.PointR\x01a\x12\x18\n" +
+	"\x01b\x18\x02 \x01(\v2\n" +
+	".gis.PointR\x01b\"\x19\n" +
 	"\x03Req\x12\x12\n" +
 	"\x04ping\x18\x01 \x01(\tR\x04ping\"\x19\n" +
 	"\x03Res\x12\x12\n" +
@@ -1784,7 +1929,11 @@ const file_gis_proto_rawDesc = "" +
 	"\x01b\x18\x02 \x01(\v2\n" +
 	".gis.PointR\x01b\"%\n" +
 	"\vDistanceRes\x12\x16\n" +
-	"\x06meters\x18\x01 \x01(\x01R\x06meters\"C\n" +
+	"\x06meters\x18\x01 \x01(\x01R\x06meters\"8\n" +
+	"\x10BatchDistanceReq\x12$\n" +
+	"\x05pairs\x18\x01 \x03(\v2\x0e.gis.PointPairR\x05pairs\"*\n" +
+	"\x10BatchDistanceRes\x12\x16\n" +
+	"\x06meters\x18\x01 \x03(\x01R\x06meters\"C\n" +
 	"\x0fNearbyFencesReq\x12 \n" +
 	"\x05point\x18\x01 \x01(\v2\n" +
 	".gis.PointR\x05point\x12\x0e\n" +
@@ -1829,7 +1978,7 @@ const file_gis_proto_rawDesc = "" +
 	"\x16COORD_TYPE_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10COORD_TYPE_WGS84\x10\x01\x12\x14\n" +
 	"\x10COORD_TYPE_GCJ02\x10\x02\x12\x13\n" +
-	"\x0fCOORD_TYPE_BD09\x10\x032\x8e\a\n" +
+	"\x0fCOORD_TYPE_BD09\x10\x032\xcd\a\n" +
 	"\x03Gis\x12\x1a\n" +
 	"\x04Ping\x12\b.gis.Req\x1a\b.gis.Res\x12=\n" +
 	"\rEncodeGeoHash\x12\x15.gis.EncodeGeoHashReq\x1a\x15.gis.EncodeGeoHashRes\x12=\n" +
@@ -1841,7 +1990,8 @@ const file_gis_proto_rawDesc = "" +
 	"\x12PointsWithinRadius\x12\x1a.gis.PointsWithinRadiusReq\x1a\x1a.gis.PointsWithinRadiusRes\x12:\n" +
 	"\fPointInFence\x12\x14.gis.PointInFenceReq\x1a\x14.gis.PointInFenceRes\x12=\n" +
 	"\rPointInFences\x12\x15.gis.PointInFencesReq\x1a\x15.gis.PointInFencesRes\x12.\n" +
-	"\bDistance\x12\x10.gis.DistanceReq\x1a\x10.gis.DistanceRes\x12:\n" +
+	"\bDistance\x12\x10.gis.DistanceReq\x1a\x10.gis.DistanceRes\x12=\n" +
+	"\rBatchDistance\x12\x15.gis.BatchDistanceReq\x1a\x15.gis.BatchDistanceRes\x12:\n" +
 	"\fNearbyFences\x12\x14.gis.NearbyFencesReq\x1a\x14.gis.NearbyFencesRes\x12@\n" +
 	"\x0eTransformCoord\x12\x16.gis.TransformCoordReq\x1a\x16.gis.TransformCoordRes\x12O\n" +
 	"\x13BatchTransformCoord\x12\x1b.gis.BatchTransformCoordReq\x1a\x1b.gis.BatchTransformCoordRes\x127\n" +
@@ -1861,105 +2011,113 @@ func file_gis_proto_rawDescGZIP() []byte {
 }
 
 var file_gis_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_gis_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
+var file_gis_proto_msgTypes = make([]protoimpl.MessageInfo, 35)
 var file_gis_proto_goTypes = []any{
 	(CoordType)(0),                 // 0: gis.CoordType
 	(*Fence)(nil),                  // 1: gis.Fence
 	(*Point)(nil),                  // 2: gis.Point
-	(*Req)(nil),                    // 3: gis.Req
-	(*Res)(nil),                    // 4: gis.Res
-	(*EncodeGeoHashReq)(nil),       // 5: gis.EncodeGeoHashReq
-	(*EncodeGeoHashRes)(nil),       // 6: gis.EncodeGeoHashRes
-	(*DecodeGeoHashReq)(nil),       // 7: gis.DecodeGeoHashReq
-	(*DecodeGeoHashRes)(nil),       // 8: gis.DecodeGeoHashRes
-	(*EncodeH3Req)(nil),            // 9: gis.EncodeH3Req
-	(*EncodeH3Res)(nil),            // 10: gis.EncodeH3Res
-	(*DecodeH3Req)(nil),            // 11: gis.DecodeH3Req
-	(*DecodeH3Res)(nil),            // 12: gis.DecodeH3Res
-	(*GenFenceCellsReq)(nil),       // 13: gis.GenFenceCellsReq
-	(*GenFenceCellsRes)(nil),       // 14: gis.GenFenceCellsRes
-	(*GenFenceH3CellsReq)(nil),     // 15: gis.GenFenceH3CellsReq
-	(*GenFenceH3CellsRes)(nil),     // 16: gis.GenFenceH3CellsRes
-	(*PointsWithinRadiusReq)(nil),  // 17: gis.PointsWithinRadiusReq
-	(*PointsWithinRadiusRes)(nil),  // 18: gis.PointsWithinRadiusRes
-	(*PointInFenceReq)(nil),        // 19: gis.PointInFenceReq
-	(*PointInFenceRes)(nil),        // 20: gis.PointInFenceRes
-	(*PointInFencesReq)(nil),       // 21: gis.PointInFencesReq
-	(*PointInFencesRes)(nil),       // 22: gis.PointInFencesRes
-	(*DistanceReq)(nil),            // 23: gis.DistanceReq
-	(*DistanceRes)(nil),            // 24: gis.DistanceRes
-	(*NearbyFencesReq)(nil),        // 25: gis.NearbyFencesReq
-	(*NearbyFencesRes)(nil),        // 26: gis.NearbyFencesRes
-	(*TransformCoordReq)(nil),      // 27: gis.TransformCoordReq
-	(*TransformCoordRes)(nil),      // 28: gis.TransformCoordRes
-	(*BatchTransformCoordReq)(nil), // 29: gis.BatchTransformCoordReq
-	(*BatchTransformCoordRes)(nil), // 30: gis.BatchTransformCoordRes
-	(*RoutePointsReq)(nil),         // 31: gis.RoutePointsReq
-	(*RoutePointsRes)(nil),         // 32: gis.RoutePointsRes
+	(*PointPair)(nil),              // 3: gis.PointPair
+	(*Req)(nil),                    // 4: gis.Req
+	(*Res)(nil),                    // 5: gis.Res
+	(*EncodeGeoHashReq)(nil),       // 6: gis.EncodeGeoHashReq
+	(*EncodeGeoHashRes)(nil),       // 7: gis.EncodeGeoHashRes
+	(*DecodeGeoHashReq)(nil),       // 8: gis.DecodeGeoHashReq
+	(*DecodeGeoHashRes)(nil),       // 9: gis.DecodeGeoHashRes
+	(*EncodeH3Req)(nil),            // 10: gis.EncodeH3Req
+	(*EncodeH3Res)(nil),            // 11: gis.EncodeH3Res
+	(*DecodeH3Req)(nil),            // 12: gis.DecodeH3Req
+	(*DecodeH3Res)(nil),            // 13: gis.DecodeH3Res
+	(*GenFenceCellsReq)(nil),       // 14: gis.GenFenceCellsReq
+	(*GenFenceCellsRes)(nil),       // 15: gis.GenFenceCellsRes
+	(*GenFenceH3CellsReq)(nil),     // 16: gis.GenFenceH3CellsReq
+	(*GenFenceH3CellsRes)(nil),     // 17: gis.GenFenceH3CellsRes
+	(*PointsWithinRadiusReq)(nil),  // 18: gis.PointsWithinRadiusReq
+	(*PointsWithinRadiusRes)(nil),  // 19: gis.PointsWithinRadiusRes
+	(*PointInFenceReq)(nil),        // 20: gis.PointInFenceReq
+	(*PointInFenceRes)(nil),        // 21: gis.PointInFenceRes
+	(*PointInFencesReq)(nil),       // 22: gis.PointInFencesReq
+	(*PointInFencesRes)(nil),       // 23: gis.PointInFencesRes
+	(*DistanceReq)(nil),            // 24: gis.DistanceReq
+	(*DistanceRes)(nil),            // 25: gis.DistanceRes
+	(*BatchDistanceReq)(nil),       // 26: gis.BatchDistanceReq
+	(*BatchDistanceRes)(nil),       // 27: gis.BatchDistanceRes
+	(*NearbyFencesReq)(nil),        // 28: gis.NearbyFencesReq
+	(*NearbyFencesRes)(nil),        // 29: gis.NearbyFencesRes
+	(*TransformCoordReq)(nil),      // 30: gis.TransformCoordReq
+	(*TransformCoordRes)(nil),      // 31: gis.TransformCoordRes
+	(*BatchTransformCoordReq)(nil), // 32: gis.BatchTransformCoordReq
+	(*BatchTransformCoordRes)(nil), // 33: gis.BatchTransformCoordRes
+	(*RoutePointsReq)(nil),         // 34: gis.RoutePointsReq
+	(*RoutePointsRes)(nil),         // 35: gis.RoutePointsRes
 }
 var file_gis_proto_depIdxs = []int32{
 	2,  // 0: gis.Fence.points:type_name -> gis.Point
-	2,  // 1: gis.EncodeGeoHashReq.point:type_name -> gis.Point
-	2,  // 2: gis.DecodeGeoHashRes.point:type_name -> gis.Point
-	2,  // 3: gis.EncodeH3Req.point:type_name -> gis.Point
-	2,  // 4: gis.DecodeH3Res.center:type_name -> gis.Point
-	2,  // 5: gis.DecodeH3Res.boundary:type_name -> gis.Point
-	2,  // 6: gis.GenFenceCellsReq.points:type_name -> gis.Point
-	2,  // 7: gis.GenFenceH3CellsReq.points:type_name -> gis.Point
-	2,  // 8: gis.PointsWithinRadiusReq.center:type_name -> gis.Point
-	2,  // 9: gis.PointsWithinRadiusReq.points:type_name -> gis.Point
-	2,  // 10: gis.PointInFenceReq.point:type_name -> gis.Point
-	1,  // 11: gis.PointInFenceReq.fence:type_name -> gis.Fence
-	2,  // 12: gis.PointInFencesReq.point:type_name -> gis.Point
-	1,  // 13: gis.PointInFencesReq.fences:type_name -> gis.Fence
-	2,  // 14: gis.DistanceReq.a:type_name -> gis.Point
-	2,  // 15: gis.DistanceReq.b:type_name -> gis.Point
-	2,  // 16: gis.NearbyFencesReq.point:type_name -> gis.Point
-	2,  // 17: gis.TransformCoordReq.point:type_name -> gis.Point
-	0,  // 18: gis.TransformCoordReq.sourceType:type_name -> gis.CoordType
-	0,  // 19: gis.TransformCoordReq.targetType:type_name -> gis.CoordType
-	2,  // 20: gis.TransformCoordRes.transformedPoint:type_name -> gis.Point
-	2,  // 21: gis.BatchTransformCoordReq.points:type_name -> gis.Point
-	0,  // 22: gis.BatchTransformCoordReq.sourceType:type_name -> gis.CoordType
-	0,  // 23: gis.BatchTransformCoordReq.targetType:type_name -> gis.CoordType
-	2,  // 24: gis.BatchTransformCoordRes.transformedPoints:type_name -> gis.Point
-	2,  // 25: gis.RoutePointsReq.start:type_name -> gis.Point
-	2,  // 26: gis.RoutePointsReq.points:type_name -> gis.Point
-	3,  // 27: gis.Gis.Ping:input_type -> gis.Req
-	5,  // 28: gis.Gis.EncodeGeoHash:input_type -> gis.EncodeGeoHashReq
-	7,  // 29: gis.Gis.DecodeGeoHash:input_type -> gis.DecodeGeoHashReq
-	9,  // 30: gis.Gis.EncodeH3:input_type -> gis.EncodeH3Req
-	11, // 31: gis.Gis.DecodeH3:input_type -> gis.DecodeH3Req
-	13, // 32: gis.Gis.GenerateFenceCells:input_type -> gis.GenFenceCellsReq
-	15, // 33: gis.Gis.GenerateFenceH3Cells:input_type -> gis.GenFenceH3CellsReq
-	17, // 34: gis.Gis.PointsWithinRadius:input_type -> gis.PointsWithinRadiusReq
-	19, // 35: gis.Gis.PointInFence:input_type -> gis.PointInFenceReq
-	21, // 36: gis.Gis.PointInFences:input_type -> gis.PointInFencesReq
-	23, // 37: gis.Gis.Distance:input_type -> gis.DistanceReq
-	25, // 38: gis.Gis.NearbyFences:input_type -> gis.NearbyFencesReq
-	27, // 39: gis.Gis.TransformCoord:input_type -> gis.TransformCoordReq
-	29, // 40: gis.Gis.BatchTransformCoord:input_type -> gis.BatchTransformCoordReq
-	31, // 41: gis.Gis.RoutePoints:input_type -> gis.RoutePointsReq
-	4,  // 42: gis.Gis.Ping:output_type -> gis.Res
-	6,  // 43: gis.Gis.EncodeGeoHash:output_type -> gis.EncodeGeoHashRes
-	8,  // 44: gis.Gis.DecodeGeoHash:output_type -> gis.DecodeGeoHashRes
-	10, // 45: gis.Gis.EncodeH3:output_type -> gis.EncodeH3Res
-	12, // 46: gis.Gis.DecodeH3:output_type -> gis.DecodeH3Res
-	14, // 47: gis.Gis.GenerateFenceCells:output_type -> gis.GenFenceCellsRes
-	16, // 48: gis.Gis.GenerateFenceH3Cells:output_type -> gis.GenFenceH3CellsRes
-	18, // 49: gis.Gis.PointsWithinRadius:output_type -> gis.PointsWithinRadiusRes
-	20, // 50: gis.Gis.PointInFence:output_type -> gis.PointInFenceRes
-	22, // 51: gis.Gis.PointInFences:output_type -> gis.PointInFencesRes
-	24, // 52: gis.Gis.Distance:output_type -> gis.DistanceRes
-	26, // 53: gis.Gis.NearbyFences:output_type -> gis.NearbyFencesRes
-	28, // 54: gis.Gis.TransformCoord:output_type -> gis.TransformCoordRes
-	30, // 55: gis.Gis.BatchTransformCoord:output_type -> gis.BatchTransformCoordRes
-	32, // 56: gis.Gis.RoutePoints:output_type -> gis.RoutePointsRes
-	42, // [42:57] is the sub-list for method output_type
-	27, // [27:42] is the sub-list for method input_type
-	27, // [27:27] is the sub-list for extension type_name
-	27, // [27:27] is the sub-list for extension extendee
-	0,  // [0:27] is the sub-list for field type_name
+	2,  // 1: gis.PointPair.a:type_name -> gis.Point
+	2,  // 2: gis.PointPair.b:type_name -> gis.Point
+	2,  // 3: gis.EncodeGeoHashReq.point:type_name -> gis.Point
+	2,  // 4: gis.DecodeGeoHashRes.point:type_name -> gis.Point
+	2,  // 5: gis.EncodeH3Req.point:type_name -> gis.Point
+	2,  // 6: gis.DecodeH3Res.center:type_name -> gis.Point
+	2,  // 7: gis.DecodeH3Res.boundary:type_name -> gis.Point
+	2,  // 8: gis.GenFenceCellsReq.points:type_name -> gis.Point
+	2,  // 9: gis.GenFenceH3CellsReq.points:type_name -> gis.Point
+	2,  // 10: gis.PointsWithinRadiusReq.center:type_name -> gis.Point
+	2,  // 11: gis.PointsWithinRadiusReq.points:type_name -> gis.Point
+	2,  // 12: gis.PointInFenceReq.point:type_name -> gis.Point
+	1,  // 13: gis.PointInFenceReq.fence:type_name -> gis.Fence
+	2,  // 14: gis.PointInFencesReq.point:type_name -> gis.Point
+	1,  // 15: gis.PointInFencesReq.fences:type_name -> gis.Fence
+	2,  // 16: gis.DistanceReq.a:type_name -> gis.Point
+	2,  // 17: gis.DistanceReq.b:type_name -> gis.Point
+	3,  // 18: gis.BatchDistanceReq.pairs:type_name -> gis.PointPair
+	2,  // 19: gis.NearbyFencesReq.point:type_name -> gis.Point
+	2,  // 20: gis.TransformCoordReq.point:type_name -> gis.Point
+	0,  // 21: gis.TransformCoordReq.sourceType:type_name -> gis.CoordType
+	0,  // 22: gis.TransformCoordReq.targetType:type_name -> gis.CoordType
+	2,  // 23: gis.TransformCoordRes.transformedPoint:type_name -> gis.Point
+	2,  // 24: gis.BatchTransformCoordReq.points:type_name -> gis.Point
+	0,  // 25: gis.BatchTransformCoordReq.sourceType:type_name -> gis.CoordType
+	0,  // 26: gis.BatchTransformCoordReq.targetType:type_name -> gis.CoordType
+	2,  // 27: gis.BatchTransformCoordRes.transformedPoints:type_name -> gis.Point
+	2,  // 28: gis.RoutePointsReq.start:type_name -> gis.Point
+	2,  // 29: gis.RoutePointsReq.points:type_name -> gis.Point
+	4,  // 30: gis.Gis.Ping:input_type -> gis.Req
+	6,  // 31: gis.Gis.EncodeGeoHash:input_type -> gis.EncodeGeoHashReq
+	8,  // 32: gis.Gis.DecodeGeoHash:input_type -> gis.DecodeGeoHashReq
+	10, // 33: gis.Gis.EncodeH3:input_type -> gis.EncodeH3Req
+	12, // 34: gis.Gis.DecodeH3:input_type -> gis.DecodeH3Req
+	14, // 35: gis.Gis.GenerateFenceCells:input_type -> gis.GenFenceCellsReq
+	16, // 36: gis.Gis.GenerateFenceH3Cells:input_type -> gis.GenFenceH3CellsReq
+	18, // 37: gis.Gis.PointsWithinRadius:input_type -> gis.PointsWithinRadiusReq
+	20, // 38: gis.Gis.PointInFence:input_type -> gis.PointInFenceReq
+	22, // 39: gis.Gis.PointInFences:input_type -> gis.PointInFencesReq
+	24, // 40: gis.Gis.Distance:input_type -> gis.DistanceReq
+	26, // 41: gis.Gis.BatchDistance:input_type -> gis.BatchDistanceReq
+	28, // 42: gis.Gis.NearbyFences:input_type -> gis.NearbyFencesReq
+	30, // 43: gis.Gis.TransformCoord:input_type -> gis.TransformCoordReq
+	32, // 44: gis.Gis.BatchTransformCoord:input_type -> gis.BatchTransformCoordReq
+	34, // 45: gis.Gis.RoutePoints:input_type -> gis.RoutePointsReq
+	5,  // 46: gis.Gis.Ping:output_type -> gis.Res
+	7,  // 47: gis.Gis.EncodeGeoHash:output_type -> gis.EncodeGeoHashRes
+	9,  // 48: gis.Gis.DecodeGeoHash:output_type -> gis.DecodeGeoHashRes
+	11, // 49: gis.Gis.EncodeH3:output_type -> gis.EncodeH3Res
+	13, // 50: gis.Gis.DecodeH3:output_type -> gis.DecodeH3Res
+	15, // 51: gis.Gis.GenerateFenceCells:output_type -> gis.GenFenceCellsRes
+	17, // 52: gis.Gis.GenerateFenceH3Cells:output_type -> gis.GenFenceH3CellsRes
+	19, // 53: gis.Gis.PointsWithinRadius:output_type -> gis.PointsWithinRadiusRes
+	21, // 54: gis.Gis.PointInFence:output_type -> gis.PointInFenceRes
+	23, // 55: gis.Gis.PointInFences:output_type -> gis.PointInFencesRes
+	25, // 56: gis.Gis.Distance:output_type -> gis.DistanceRes
+	27, // 57: gis.Gis.BatchDistance:output_type -> gis.BatchDistanceRes
+	29, // 58: gis.Gis.NearbyFences:output_type -> gis.NearbyFencesRes
+	31, // 59: gis.Gis.TransformCoord:output_type -> gis.TransformCoordRes
+	33, // 60: gis.Gis.BatchTransformCoord:output_type -> gis.BatchTransformCoordRes
+	35, // 61: gis.Gis.RoutePoints:output_type -> gis.RoutePointsRes
+	46, // [46:62] is the sub-list for method output_type
+	30, // [30:46] is the sub-list for method input_type
+	30, // [30:30] is the sub-list for extension type_name
+	30, // [30:30] is the sub-list for extension extendee
+	0,  // [0:30] is the sub-list for field type_name
 }
 
 func init() { file_gis_proto_init() }
@@ -1973,7 +2131,7 @@ func file_gis_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_gis_proto_rawDesc), len(file_gis_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   32,
+			NumMessages:   35,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -37,6 +37,8 @@ service Gis {
   rpc PointInFences (PointInFencesReq) returns (PointInFencesRes);
   // 计算两个点之间的距离（米）
   rpc Distance (DistanceReq) returns (DistanceRes);
+  // 批量计算两点之间的距离（米）
+  rpc BatchDistance (BatchDistanceReq) returns (BatchDistanceRes);
   // 获取某点附近多少 km 的围栏（粗过滤）
   rpc NearbyFences (NearbyFencesReq) returns (NearbyFencesRes);
   // 单个坐标转换
@@ -57,6 +59,11 @@ message Fence {
 message Point {
   double lat = 1; // 纬度
   double lon = 2; // 经度
+}
+
+message PointPair {
+  Point a = 1;
+  Point b = 2;
 }
 
 message Req {
@@ -162,6 +169,14 @@ message DistanceReq {
 
 message DistanceRes {
   double meters = 1;
+}
+
+message BatchDistanceReq {
+  repeated PointPair pairs = 1;
+}
+
+message BatchDistanceRes {
+  repeated double meters = 1;
 }
 
 message NearbyFencesReq {

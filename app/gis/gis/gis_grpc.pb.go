@@ -30,6 +30,7 @@ const (
 	Gis_PointInFence_FullMethodName         = "/gis.Gis/PointInFence"
 	Gis_PointInFences_FullMethodName        = "/gis.Gis/PointInFences"
 	Gis_Distance_FullMethodName             = "/gis.Gis/Distance"
+	Gis_BatchDistance_FullMethodName        = "/gis.Gis/BatchDistance"
 	Gis_NearbyFences_FullMethodName         = "/gis.Gis/NearbyFences"
 	Gis_TransformCoord_FullMethodName       = "/gis.Gis/TransformCoord"
 	Gis_BatchTransformCoord_FullMethodName  = "/gis.Gis/BatchTransformCoord"
@@ -63,6 +64,8 @@ type GisClient interface {
 	PointInFences(ctx context.Context, in *PointInFencesReq, opts ...grpc.CallOption) (*PointInFencesRes, error)
 	// 计算两个点之间的距离（米）
 	Distance(ctx context.Context, in *DistanceReq, opts ...grpc.CallOption) (*DistanceRes, error)
+	// 批量计算两点之间的距离（米）
+	BatchDistance(ctx context.Context, in *BatchDistanceReq, opts ...grpc.CallOption) (*BatchDistanceRes, error)
 	// 获取某点附近多少 km 的围栏（粗过滤）
 	NearbyFences(ctx context.Context, in *NearbyFencesReq, opts ...grpc.CallOption) (*NearbyFencesRes, error)
 	// 单个坐标转换
@@ -191,6 +194,16 @@ func (c *gisClient) Distance(ctx context.Context, in *DistanceReq, opts ...grpc.
 	return out, nil
 }
 
+func (c *gisClient) BatchDistance(ctx context.Context, in *BatchDistanceReq, opts ...grpc.CallOption) (*BatchDistanceRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BatchDistanceRes)
+	err := c.cc.Invoke(ctx, Gis_BatchDistance_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *gisClient) NearbyFences(ctx context.Context, in *NearbyFencesReq, opts ...grpc.CallOption) (*NearbyFencesRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(NearbyFencesRes)
@@ -258,6 +271,8 @@ type GisServer interface {
 	PointInFences(context.Context, *PointInFencesReq) (*PointInFencesRes, error)
 	// 计算两个点之间的距离（米）
 	Distance(context.Context, *DistanceReq) (*DistanceRes, error)
+	// 批量计算两点之间的距离（米）
+	BatchDistance(context.Context, *BatchDistanceReq) (*BatchDistanceRes, error)
 	// 获取某点附近多少 km 的围栏（粗过滤）
 	NearbyFences(context.Context, *NearbyFencesReq) (*NearbyFencesRes, error)
 	// 单个坐标转换
@@ -308,6 +323,9 @@ func (UnimplementedGisServer) PointInFences(context.Context, *PointInFencesReq) 
 }
 func (UnimplementedGisServer) Distance(context.Context, *DistanceReq) (*DistanceRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Distance not implemented")
+}
+func (UnimplementedGisServer) BatchDistance(context.Context, *BatchDistanceReq) (*BatchDistanceRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BatchDistance not implemented")
 }
 func (UnimplementedGisServer) NearbyFences(context.Context, *NearbyFencesReq) (*NearbyFencesRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NearbyFences not implemented")
@@ -540,6 +558,24 @@ func _Gis_Distance_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Gis_BatchDistance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BatchDistanceReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GisServer).BatchDistance(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Gis_BatchDistance_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GisServer).BatchDistance(ctx, req.(*BatchDistanceReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Gis_NearbyFences_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(NearbyFencesReq)
 	if err := dec(in); err != nil {
@@ -662,6 +698,10 @@ var Gis_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Distance",
 			Handler:    _Gis_Distance_Handler,
+		},
+		{
+			MethodName: "BatchDistance",
+			Handler:    _Gis_BatchDistance_Handler,
 		},
 		{
 			MethodName: "NearbyFences",
