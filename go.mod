@@ -1,12 +1,12 @@
 module zero-service
 
-go 1.24.0
+go 1.25
 
 require (
 	github.com/ArtisanCloud/PowerLibs/v3 v3.3.2
 	github.com/ArtisanCloud/PowerWeChat/v3 v3.4.28
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/brianvoe/gofakeit/v7 v7.9.0
+	github.com/brianvoe/gofakeit/v7 v7.11.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/dromara/carbon/v2 v2.6.15
 	github.com/duke-git/lancet/v2 v2.3.8
@@ -16,7 +16,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
-	github.com/grid-x/modbus v0.0.0-20251120113319-2088ee557036
+	github.com/grid-x/modbus v0.0.0-20251121133955-8a6c959be366
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3
 	github.com/hibiken/asynq v0.25.1
 	github.com/jinzhu/copier v0.4.0
