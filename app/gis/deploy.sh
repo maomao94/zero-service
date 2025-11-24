@@ -43,11 +43,12 @@ REMOTE_IMAGE_TAG=${REMOTE_IMAGE_TAG:-latest}
 
 # === go build 编译 ===
 log "开始编译..."
-GOARCH=amd64 GOOS=linux go build -o app/trigger trigger.go
+# 👇 已删除本地编译行，编译逻辑移到 Dockerfile
 
 # === 本地构建镜像 ===
 log "本地构建镜像: ${IMAGE_NAME}:${LOCAL_IMAGE_TAG}"
-docker build -t ${IMAGE_NAME}:${LOCAL_IMAGE_TAG} .
+#docker build -t ${IMAGE_NAME}:${LOCAL_IMAGE_TAG} .
+docker build -t ${IMAGE_NAME}:${LOCAL_IMAGE_TAG} -f ./Dockerfile ../../
 
 # 获取本地新镜像ID
 LOCAL_IMAGE_ID=$(docker image inspect -f '{{.Id}}' ${IMAGE_NAME}:${LOCAL_IMAGE_TAG})
