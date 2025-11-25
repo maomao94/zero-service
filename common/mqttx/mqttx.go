@@ -52,7 +52,7 @@ type MqttConfig struct {
 	Timeout         int      `json:",default=30"`   // 操作超时时间（秒）
 	KeepAlive       int      `json:",default=60"`   // 心跳间隔（秒）
 	AutoSubscribe   bool     `json:",default=true"` // 是否自动订阅已添加处理器的主题
-	SubscribeTopics []string // 初始需要订阅的主题
+	SubscribeTopics []string `json:",optional"`     // 初始需要订阅的主题
 }
 
 // Option 定义可选配置函数
