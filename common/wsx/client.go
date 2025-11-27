@@ -307,7 +307,7 @@ func (c *client) Connect() error {
 	defer c.mu.Unlock()
 
 	if c.isRunning() {
-		err := errors.New("websocket client already running")
+		err := errors.New("Websocket client already running")
 		c.logger.WithContext(c.ctx).Errorf(err.Error())
 		return err
 	}
