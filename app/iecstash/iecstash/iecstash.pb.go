@@ -117,8 +117,8 @@ const file_iecstash_proto_rawDesc = "" +
 	"\x03Req\x12\x12\n" +
 	"\x04ping\x18\x01 \x01(\tR\x04ping\"\x19\n" +
 	"\x03Res\x12\x12\n" +
-	"\x04pong\x18\x01 \x01(\tR\x04pong21\n" +
-	"\vIecStashRpc\x12\"\n" +
+	"\x04pong\x18\x01 \x01(\tR\x04pong2.\n" +
+	"\bIecStash\x12\"\n" +
 	"\x04Ping\x12\f.iecmock.Req\x1a\f.iecmock.ResB\fZ\n" +
 	"./iecstashb\x06proto3"
 
@@ -140,8 +140,8 @@ var file_iecstash_proto_goTypes = []any{
 	(*Res)(nil), // 1: iecmock.Res
 }
 var file_iecstash_proto_depIdxs = []int32{
-	0, // 0: iecmock.IecStashRpc.Ping:input_type -> iecmock.Req
-	1, // 1: iecmock.IecStashRpc.Ping:output_type -> iecmock.Res
+	0, // 0: iecmock.IecStash.Ping:input_type -> iecmock.Req
+	1, // 1: iecmock.IecStash.Ping:output_type -> iecmock.Res
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

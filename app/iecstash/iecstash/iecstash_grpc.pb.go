@@ -19,101 +19,101 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	IecStashRpc_Ping_FullMethodName = "/iecmock.IecStashRpc/Ping"
+	IecStash_Ping_FullMethodName = "/iecmock.IecStash/Ping"
 )
 
-// IecStashRpcClient is the client API for IecStashRpc service.
+// IecStashClient is the client API for IecStash service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type IecStashRpcClient interface {
+type IecStashClient interface {
 	Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error)
 }
 
-type iecStashRpcClient struct {
+type iecStashClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewIecStashRpcClient(cc grpc.ClientConnInterface) IecStashRpcClient {
-	return &iecStashRpcClient{cc}
+func NewIecStashClient(cc grpc.ClientConnInterface) IecStashClient {
+	return &iecStashClient{cc}
 }
 
-func (c *iecStashRpcClient) Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error) {
+func (c *iecStashClient) Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Res)
-	err := c.cc.Invoke(ctx, IecStashRpc_Ping_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, IecStash_Ping_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// IecStashRpcServer is the server API for IecStashRpc service.
-// All implementations must embed UnimplementedIecStashRpcServer
+// IecStashServer is the server API for IecStash service.
+// All implementations must embed UnimplementedIecStashServer
 // for forward compatibility.
-type IecStashRpcServer interface {
+type IecStashServer interface {
 	Ping(context.Context, *Req) (*Res, error)
-	mustEmbedUnimplementedIecStashRpcServer()
+	mustEmbedUnimplementedIecStashServer()
 }
 
-// UnimplementedIecStashRpcServer must be embedded to have
+// UnimplementedIecStashServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedIecStashRpcServer struct{}
+type UnimplementedIecStashServer struct{}
 
-func (UnimplementedIecStashRpcServer) Ping(context.Context, *Req) (*Res, error) {
+func (UnimplementedIecStashServer) Ping(context.Context, *Req) (*Res, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
 }
-func (UnimplementedIecStashRpcServer) mustEmbedUnimplementedIecStashRpcServer() {}
-func (UnimplementedIecStashRpcServer) testEmbeddedByValue()                     {}
+func (UnimplementedIecStashServer) mustEmbedUnimplementedIecStashServer() {}
+func (UnimplementedIecStashServer) testEmbeddedByValue()                  {}
 
-// UnsafeIecStashRpcServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to IecStashRpcServer will
+// UnsafeIecStashServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to IecStashServer will
 // result in compilation errors.
-type UnsafeIecStashRpcServer interface {
-	mustEmbedUnimplementedIecStashRpcServer()
+type UnsafeIecStashServer interface {
+	mustEmbedUnimplementedIecStashServer()
 }
 
-func RegisterIecStashRpcServer(s grpc.ServiceRegistrar, srv IecStashRpcServer) {
-	// If the following call pancis, it indicates UnimplementedIecStashRpcServer was
+func RegisterIecStashServer(s grpc.ServiceRegistrar, srv IecStashServer) {
+	// If the following call pancis, it indicates UnimplementedIecStashServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&IecStashRpc_ServiceDesc, srv)
+	s.RegisterService(&IecStash_ServiceDesc, srv)
 }
 
-func _IecStashRpc_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _IecStash_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Req)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IecStashRpcServer).Ping(ctx, in)
+		return srv.(IecStashServer).Ping(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: IecStashRpc_Ping_FullMethodName,
+		FullMethod: IecStash_Ping_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IecStashRpcServer).Ping(ctx, req.(*Req))
+		return srv.(IecStashServer).Ping(ctx, req.(*Req))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// IecStashRpc_ServiceDesc is the grpc.ServiceDesc for IecStashRpc service.
+// IecStash_ServiceDesc is the grpc.ServiceDesc for IecStash service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var IecStashRpc_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "iecmock.IecStashRpc",
-	HandlerType: (*IecStashRpcServer)(nil),
+var IecStash_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "iecmock.IecStash",
+	HandlerType: (*IecStashServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "Ping",
-			Handler:    _IecStashRpc_Ping_Handler,
+			Handler:    _IecStash_Ping_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

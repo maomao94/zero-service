@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package logdump;
+option go_package = "./logdump";
+option java_multiple_files = true;
+option java_package = "com.github.logdump.grpc";
+option java_outer_classname = "LogDumpProto";
+
+service LogDumpRpc {
+  rpc Ping(PingReq) returns (PingRes);
+
+  // 推送日志
+  rpc PushLog(PushLogReq) returns (PushLogRes);
+}
+
+// 日志等级
+enum LogLevel {
+  INFO = 0;
+  ERROR = 1;
+}
+
+// 单条日志/事件数据
+message LogEntry {
+  string service = 1;              // 业务服务名称
+  LogLevel level = 2;              // 日志等级
+  string seq = 3;                  // 可选：业务日志序列号 / 任务ID
+  string message = 4;              // 日志内容
+  map<string, string> extra = 5;   // 可选附加字段
+}
+
+message PingReq {
+  string ping = 1;
+}
+
+message PingRes {
+  string pong = 1;
+}
+
+message PushLogReq {
+  repeated LogEntry logs = 1;
+}
+
+message PushLogRes {
+}

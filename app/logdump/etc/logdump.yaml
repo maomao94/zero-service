@@ -1,0 +1,21 @@
+Name: logdump.rpc
+ListenOn: 0.0.0.0:25006
+Timeout: 10000
+Log:
+  Encoding: plain
+  #  Mode: file
+  Path: /opt/logs/logdump
+  Level: info
+NacosConfig:
+  IsRegister: false
+  Host: 127.0.0.1
+  Port: 8848
+  Username: nacos
+  PassWord: nacos
+  NamespaceId: public
+  ServiceName: log-dump
+ExtraFields:
+  - orderId
+  - userId
+  - taskId
+  - errorCode

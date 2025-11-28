@@ -10,6 +10,6 @@ message Res {
   string pong = 1;
 }
 
-service IecStashRpc {
+service IecStash {
   rpc Ping (Req) returns (Res);
 }
