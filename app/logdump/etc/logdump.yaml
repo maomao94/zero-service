@@ -1,11 +1,15 @@
 Name: logdump.rpc
 ListenOn: 0.0.0.0:25006
 Timeout: 10000
+Middlewares:
+  StatConf:
+    IgnoreContentMethods: [/logdump.LogDumpRpc/PushLog]
 Log:
   Encoding: plain
   #  Mode: file
   Path: /opt/logs/logdump
   Level: info
+  KeepDays: 300
 NacosConfig:
   IsRegister: false
   Host: 127.0.0.1
@@ -18,4 +22,5 @@ ExtraFields:
   - orderId
   - userId
   - taskId
+  - taskGuid
   - errorCode
