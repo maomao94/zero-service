@@ -41,7 +41,7 @@ func main() {
 	ctx := svc.NewServiceContext(c)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
-		iecstash.RegisterIecStashRpcServer(grpcServer, server.NewIecStashRpcServer(ctx))
+		iecstash.RegisterIecStashServer(grpcServer, server.NewIecStashServer(ctx))
 
 		if c.Mode == service.DevMode || c.Mode == service.TestMode {
 			reflection.Register(grpcServer)
