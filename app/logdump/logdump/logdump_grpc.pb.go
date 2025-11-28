@@ -19,141 +19,141 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	LogDumpRpc_Ping_FullMethodName    = "/logdump.LogDumpRpc/Ping"
-	LogDumpRpc_PushLog_FullMethodName = "/logdump.LogDumpRpc/PushLog"
+	LogDump_Ping_FullMethodName    = "/logdump.LogDump/Ping"
+	LogDump_PushLog_FullMethodName = "/logdump.LogDump/PushLog"
 )
 
-// LogDumpRpcClient is the client API for LogDumpRpc service.
+// LogDumpClient is the client API for LogDump service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type LogDumpRpcClient interface {
+type LogDumpClient interface {
 	Ping(ctx context.Context, in *PingReq, opts ...grpc.CallOption) (*PingRes, error)
 	// 推送日志
 	PushLog(ctx context.Context, in *PushLogReq, opts ...grpc.CallOption) (*PushLogRes, error)
 }
 
-type logDumpRpcClient struct {
+type logDumpClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewLogDumpRpcClient(cc grpc.ClientConnInterface) LogDumpRpcClient {
-	return &logDumpRpcClient{cc}
+func NewLogDumpClient(cc grpc.ClientConnInterface) LogDumpClient {
+	return &logDumpClient{cc}
 }
 
-func (c *logDumpRpcClient) Ping(ctx context.Context, in *PingReq, opts ...grpc.CallOption) (*PingRes, error) {
+func (c *logDumpClient) Ping(ctx context.Context, in *PingReq, opts ...grpc.CallOption) (*PingRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PingRes)
-	err := c.cc.Invoke(ctx, LogDumpRpc_Ping_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, LogDump_Ping_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *logDumpRpcClient) PushLog(ctx context.Context, in *PushLogReq, opts ...grpc.CallOption) (*PushLogRes, error) {
+func (c *logDumpClient) PushLog(ctx context.Context, in *PushLogReq, opts ...grpc.CallOption) (*PushLogRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PushLogRes)
-	err := c.cc.Invoke(ctx, LogDumpRpc_PushLog_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, LogDump_PushLog_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// LogDumpRpcServer is the server API for LogDumpRpc service.
-// All implementations must embed UnimplementedLogDumpRpcServer
+// LogDumpServer is the server API for LogDump service.
+// All implementations must embed UnimplementedLogDumpServer
 // for forward compatibility.
-type LogDumpRpcServer interface {
+type LogDumpServer interface {
 	Ping(context.Context, *PingReq) (*PingRes, error)
 	// 推送日志
 	PushLog(context.Context, *PushLogReq) (*PushLogRes, error)
-	mustEmbedUnimplementedLogDumpRpcServer()
+	mustEmbedUnimplementedLogDumpServer()
 }
 
-// UnimplementedLogDumpRpcServer must be embedded to have
+// UnimplementedLogDumpServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedLogDumpRpcServer struct{}
+type UnimplementedLogDumpServer struct{}
 
-func (UnimplementedLogDumpRpcServer) Ping(context.Context, *PingReq) (*PingRes, error) {
+func (UnimplementedLogDumpServer) Ping(context.Context, *PingReq) (*PingRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
 }
-func (UnimplementedLogDumpRpcServer) PushLog(context.Context, *PushLogReq) (*PushLogRes, error) {
+func (UnimplementedLogDumpServer) PushLog(context.Context, *PushLogReq) (*PushLogRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PushLog not implemented")
 }
-func (UnimplementedLogDumpRpcServer) mustEmbedUnimplementedLogDumpRpcServer() {}
-func (UnimplementedLogDumpRpcServer) testEmbeddedByValue()                    {}
+func (UnimplementedLogDumpServer) mustEmbedUnimplementedLogDumpServer() {}
+func (UnimplementedLogDumpServer) testEmbeddedByValue()                 {}
 
-// UnsafeLogDumpRpcServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to LogDumpRpcServer will
+// UnsafeLogDumpServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to LogDumpServer will
 // result in compilation errors.
-type UnsafeLogDumpRpcServer interface {
-	mustEmbedUnimplementedLogDumpRpcServer()
+type UnsafeLogDumpServer interface {
+	mustEmbedUnimplementedLogDumpServer()
 }
 
-func RegisterLogDumpRpcServer(s grpc.ServiceRegistrar, srv LogDumpRpcServer) {
-	// If the following call pancis, it indicates UnimplementedLogDumpRpcServer was
+func RegisterLogDumpServer(s grpc.ServiceRegistrar, srv LogDumpServer) {
+	// If the following call pancis, it indicates UnimplementedLogDumpServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&LogDumpRpc_ServiceDesc, srv)
+	s.RegisterService(&LogDump_ServiceDesc, srv)
 }
 
-func _LogDumpRpc_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _LogDump_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PingReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LogDumpRpcServer).Ping(ctx, in)
+		return srv.(LogDumpServer).Ping(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LogDumpRpc_Ping_FullMethodName,
+		FullMethod: LogDump_Ping_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LogDumpRpcServer).Ping(ctx, req.(*PingReq))
+		return srv.(LogDumpServer).Ping(ctx, req.(*PingReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LogDumpRpc_PushLog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _LogDump_PushLog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PushLogReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LogDumpRpcServer).PushLog(ctx, in)
+		return srv.(LogDumpServer).PushLog(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LogDumpRpc_PushLog_FullMethodName,
+		FullMethod: LogDump_PushLog_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LogDumpRpcServer).PushLog(ctx, req.(*PushLogReq))
+		return srv.(LogDumpServer).PushLog(ctx, req.(*PushLogReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// LogDumpRpc_ServiceDesc is the grpc.ServiceDesc for LogDumpRpc service.
+// LogDump_ServiceDesc is the grpc.ServiceDesc for LogDump service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var LogDumpRpc_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "logdump.LogDumpRpc",
-	HandlerType: (*LogDumpRpcServer)(nil),
+var LogDump_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "logdump.LogDump",
+	HandlerType: (*LogDumpServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "Ping",
-			Handler:    _LogDumpRpc_Ping_Handler,
+			Handler:    _LogDump_Ping_Handler,
 		},
 		{
 			MethodName: "PushLog",
-			Handler:    _LogDumpRpc_PushLog_Handler,
+			Handler:    _LogDump_PushLog_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

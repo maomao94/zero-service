@@ -6,7 +6,7 @@ option java_multiple_files = true;
 option java_package = "com.github.logdump.grpc";
 option java_outer_classname = "LogDumpProto";
 
-service LogDumpRpc {
+service LogDump {
   rpc Ping(PingReq) returns (PingRes);
 
   // 推送日志

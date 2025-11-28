@@ -339,9 +339,8 @@ const file_logdump_proto_rawDesc = "" +
 	"PushLogRes*\x1f\n" +
 	"\bLogLevel\x12\b\n" +
 	"\x04INFO\x10\x00\x12\t\n" +
-	"\x05ERROR\x10\x012m\n" +
-	"\n" +
-	"LogDumpRpc\x12*\n" +
+	"\x05ERROR\x10\x012j\n" +
+	"\aLogDump\x12*\n" +
 	"\x04Ping\x12\x10.logdump.PingReq\x1a\x10.logdump.PingRes\x123\n" +
 	"\aPushLog\x12\x13.logdump.PushLogReq\x1a\x13.logdump.PushLogResB4\n" +
 	"\x17com.github.logdump.grpcB\fLogDumpProtoP\x01Z\t./logdumpb\x06proto3"
@@ -373,10 +372,10 @@ var file_logdump_proto_depIdxs = []int32{
 	0, // 0: logdump.LogEntry.level:type_name -> logdump.LogLevel
 	6, // 1: logdump.LogEntry.extra:type_name -> logdump.LogEntry.ExtraEntry
 	1, // 2: logdump.PushLogReq.logs:type_name -> logdump.LogEntry
-	2, // 3: logdump.LogDumpRpc.Ping:input_type -> logdump.PingReq
-	4, // 4: logdump.LogDumpRpc.PushLog:input_type -> logdump.PushLogReq
-	3, // 5: logdump.LogDumpRpc.Ping:output_type -> logdump.PingRes
-	5, // 6: logdump.LogDumpRpc.PushLog:output_type -> logdump.PushLogRes
+	2, // 3: logdump.LogDump.Ping:input_type -> logdump.PingReq
+	4, // 4: logdump.LogDump.PushLog:input_type -> logdump.PushLogReq
+	3, // 5: logdump.LogDump.Ping:output_type -> logdump.PingRes
+	5, // 6: logdump.LogDump.PushLog:output_type -> logdump.PushLogRes
 	5, // [5:7] is the sub-list for method output_type
 	3, // [3:5] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name

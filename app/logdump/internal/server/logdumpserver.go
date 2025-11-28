@@ -12,24 +12,24 @@ import (
 	"zero-service/app/logdump/logdump"
 )
 
-type LogDumpRpcServer struct {
+type LogDumpServer struct {
 	svcCtx *svc.ServiceContext
-	logdump.UnimplementedLogDumpRpcServer
+	logdump.UnimplementedLogDumpServer
 }
 
-func NewLogDumpRpcServer(svcCtx *svc.ServiceContext) *LogDumpRpcServer {
-	return &LogDumpRpcServer{
+func NewLogDumpServer(svcCtx *svc.ServiceContext) *LogDumpServer {
+	return &LogDumpServer{
 		svcCtx: svcCtx,
 	}
 }
 
-func (s *LogDumpRpcServer) Ping(ctx context.Context, in *logdump.PingReq) (*logdump.PingRes, error) {
+func (s *LogDumpServer) Ping(ctx context.Context, in *logdump.PingReq) (*logdump.PingRes, error) {
 	l := logic.NewPingLogic(ctx, s.svcCtx)
 	return l.Ping(in)
 }
 
 // 推送日志
-func (s *LogDumpRpcServer) PushLog(ctx context.Context, in *logdump.PushLogReq) (*logdump.PushLogRes, error) {
+func (s *LogDumpServer) PushLog(ctx context.Context, in *logdump.PushLogReq) (*logdump.PushLogRes, error) {
 	l := logic.NewPushLogLogic(ctx, s.svcCtx)
 	return l.PushLog(in)
 }
