@@ -74,6 +74,30 @@ services:
       - /home/zxhc/bridgedump/:/opt/bridgedump/
     network_mode: host
 
+  allcore-ieccaller:
+    image: "${REGISTER}/ieccaller:${IEC_CALLER_TAG}"
+    mem_limit: 1G
+    environment:
+      - TZ=Asia/Shanghai
+    privileged: true
+    restart: always
+    volumes:
+      - /home/zxhc/app/etc:/app/etc
+      - /home/zxhc/app/logs:/opt/logs/
+    network_mode: host
+
+  allcore-iecstash:
+    image: "${REGISTER}/iecstash:${IEC_STASH_TAG}"
+    mem_limit: 1G
+    environment:
+      - TZ=Asia/Shanghai
+    privileged: true
+    restart: always
+    volumes:
+      - /home/zxhc/app/etc:/app/etc
+      - /home/zxhc/app/logs:/opt/logs/
+    network_mode: host
+
   kafdrop:
     image: obsidiandynamics/kafdrop
     container_name: kafdrop
