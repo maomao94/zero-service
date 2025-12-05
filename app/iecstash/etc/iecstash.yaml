@@ -6,6 +6,7 @@ Log:
   #  Mode: file
   Path: /opt/logs/iecstash.rpc
   Level: info
+  KeepDays: 300
 NacosConfig:
   IsRegister: true
   Host: 127.0.0.1

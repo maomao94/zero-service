@@ -8,7 +8,7 @@ Log:
   #  Mode: file
   Path: /opt/logs/ieccaller.rpc
   Level: debug
-  KeepDays: 30
+  KeepDays: 300
 NacosConfig:
   IsRegister: true
   Host: 127.0.0.1
