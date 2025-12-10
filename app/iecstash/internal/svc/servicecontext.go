@@ -61,6 +61,7 @@ func (w *AsduPusher) execute(vals []interface{}) {
 		bodyRaw := result.Get("body").Raw
 		typeId := result.Get("typeId").Int()
 		msgBody := &streamevent.MsgBody{
+			MsgId:       result.Get("msgId").String(),
 			Host:        result.Get("host").String(),
 			Port:        int32(result.Get("port").Int()),
 			Asdu:        result.Get("asdu").String(),
