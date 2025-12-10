@@ -459,7 +459,8 @@ func (x *KafkaMessage) GetSendTime() string {
 // -------------------- 104协议 --------------------
 type PushChunkAsduReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	MsgBody       []*MsgBody             `protobuf:"bytes,1,rep,name=msgBody,proto3" json:"msgBody,omitempty"`
+	TId           string                 `protobuf:"bytes,1,opt,name=tId,proto3" json:"tId,omitempty"` // 事务（Transaction）的 UUID
+	MsgBody       []*MsgBody             `protobuf:"bytes,2,rep,name=msgBody,proto3" json:"msgBody,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -492,6 +493,13 @@ func (x *PushChunkAsduReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use PushChunkAsduReq.ProtoReflect.Descriptor instead.
 func (*PushChunkAsduReq) Descriptor() ([]byte, []int) {
 	return file_streamevent_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *PushChunkAsduReq) GetTId() string {
+	if x != nil {
+		return x.TId
+	}
+	return ""
 }
 
 func (x *PushChunkAsduReq) GetMsgBody() []*MsgBody {
@@ -540,24 +548,26 @@ func (*PushChunkAsduRes) Descriptor() ([]byte, []int) {
 // 消息体结构
 type MsgBody struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// 消息ID
+	MsgId string `protobuf:"bytes,1,opt,name=msgId,proto3" json:"msgId,omitempty"`
 	// 采集设备地址
-	Host string `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	Host string `protobuf:"bytes,2,opt,name=host,proto3" json:"host,omitempty"`
 	// 采集设备端口号
-	Port int32 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	Port int32 `protobuf:"varint,3,opt,name=port,proto3" json:"port,omitempty"`
 	// ASDU类型名称
-	Asdu string `protobuf:"bytes,3,opt,name=asdu,proto3" json:"asdu,omitempty"`
+	Asdu string `protobuf:"bytes,4,opt,name=asdu,proto3" json:"asdu,omitempty"`
 	// ASDU类型标识符
-	TypeId int32 `protobuf:"varint,4,opt,name=typeId,proto3" json:"typeId,omitempty"`
+	TypeId int32 `protobuf:"varint,5,opt,name=typeId,proto3" json:"typeId,omitempty"`
 	// 信息体类型标识符
-	DataType int32 `protobuf:"varint,5,opt,name=dataType,proto3" json:"dataType,omitempty"`
+	DataType int32 `protobuf:"varint,6,opt,name=dataType,proto3" json:"dataType,omitempty"`
 	// 公共地址（范围：1-65534,全局地址65535保留）
-	Coa uint32 `protobuf:"varint,6,opt,name=coa,proto3" json:"coa,omitempty"`
+	Coa uint32 `protobuf:"varint,7,opt,name=coa,proto3" json:"coa,omitempty"`
 	// 信息体对象（结构随typeId变化）
-	BodyRaw string `protobuf:"bytes,7,opt,name=bodyRaw,proto3" json:"bodyRaw,omitempty"`
+	BodyRaw string `protobuf:"bytes,8,opt,name=bodyRaw,proto3" json:"bodyRaw,omitempty"`
 	// 消息推送时间戳（格式：`YYYY-MM-DD HH:mm:ss.SSSSSS`,UTC+8时区）
-	Time string `protobuf:"bytes,8,opt,name=time,proto3" json:"time,omitempty"`
+	Time string `protobuf:"bytes,9,opt,name=time,proto3" json:"time,omitempty"`
 	// 应用级元数据（如：应用ID、用户信息、场站信息等）
-	MetaDataRaw   string `protobuf:"bytes,9,opt,name=metaDataRaw,proto3" json:"metaDataRaw,omitempty"`
+	MetaDataRaw   string `protobuf:"bytes,10,opt,name=metaDataRaw,proto3" json:"metaDataRaw,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -590,6 +600,13 @@ func (x *MsgBody) ProtoReflect() protoreflect.Message {
 // Deprecated: Use MsgBody.ProtoReflect.Descriptor instead.
 func (*MsgBody) Descriptor() ([]byte, []int) {
 	return file_streamevent_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *MsgBody) GetMsgId() string {
+	if x != nil {
+		return x.MsgId
+	}
+	return ""
 }
 
 func (x *MsgBody) GetHost() string {
@@ -2362,20 +2379,23 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x05group\x18\x03 \x01(\tR\x05group\x12\x10\n" +
 	"\x03key\x18\x04 \x01(\fR\x03key\x12\x14\n" +
 	"\x05value\x18\x05 \x01(\fR\x05value\x12\x1a\n" +
-	"\bsendTime\x18\x06 \x01(\tR\bsendTime\"B\n" +
-	"\x10PushChunkAsduReq\x12.\n" +
-	"\amsgBody\x18\x01 \x03(\v2\x14.streamevent.MsgBodyR\amsgBody\"\x12\n" +
-	"\x10PushChunkAsduRes\"\xdb\x01\n" +
-	"\aMsgBody\x12\x12\n" +
-	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
-	"\x04port\x18\x02 \x01(\x05R\x04port\x12\x12\n" +
-	"\x04asdu\x18\x03 \x01(\tR\x04asdu\x12\x16\n" +
-	"\x06typeId\x18\x04 \x01(\x05R\x06typeId\x12\x1a\n" +
-	"\bdataType\x18\x05 \x01(\x05R\bdataType\x12\x10\n" +
-	"\x03coa\x18\x06 \x01(\rR\x03coa\x12\x18\n" +
-	"\abodyRaw\x18\a \x01(\tR\abodyRaw\x12\x12\n" +
-	"\x04time\x18\b \x01(\tR\x04time\x12 \n" +
-	"\vmetaDataRaw\x18\t \x01(\tR\vmetaDataRaw\"\xc9\x01\n" +
+	"\bsendTime\x18\x06 \x01(\tR\bsendTime\"T\n" +
+	"\x10PushChunkAsduReq\x12\x10\n" +
+	"\x03tId\x18\x01 \x01(\tR\x03tId\x12.\n" +
+	"\amsgBody\x18\x02 \x03(\v2\x14.streamevent.MsgBodyR\amsgBody\"\x12\n" +
+	"\x10PushChunkAsduRes\"\xf1\x01\n" +
+	"\aMsgBody\x12\x14\n" +
+	"\x05msgId\x18\x01 \x01(\tR\x05msgId\x12\x12\n" +
+	"\x04host\x18\x02 \x01(\tR\x04host\x12\x12\n" +
+	"\x04port\x18\x03 \x01(\x05R\x04port\x12\x12\n" +
+	"\x04asdu\x18\x04 \x01(\tR\x04asdu\x12\x16\n" +
+	"\x06typeId\x18\x05 \x01(\x05R\x06typeId\x12\x1a\n" +
+	"\bdataType\x18\x06 \x01(\x05R\bdataType\x12\x10\n" +
+	"\x03coa\x18\a \x01(\rR\x03coa\x12\x18\n" +
+	"\abodyRaw\x18\b \x01(\tR\abodyRaw\x12\x12\n" +
+	"\x04time\x18\t \x01(\tR\x04time\x12 \n" +
+	"\vmetaDataRaw\x18\n" +
+	" \x01(\tR\vmetaDataRaw\"\xc9\x01\n" +
 	"\x0fSinglePointInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\bR\x05value\x12\x10\n" +

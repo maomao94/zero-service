@@ -15,6 +15,7 @@ type BroadcastBody struct {
 }
 
 type MsgBody struct {
+	MsgId    string         `json:"msgId"`
 	Host     string         `json:"host"`
 	Port     int            `json:"port"`
 	Asdu     string         `json:"asdu"`

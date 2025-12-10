@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/dromara/carbon/v2"
-	"github.com/zeromicro/go-queue/kq"
 	"zero-service/app/ieccaller/internal/config"
 	"zero-service/common/iec104/iec104client"
 	"zero-service/common/iec104/types"
+	"zero-service/common/tool"
+
+	"github.com/dromara/carbon/v2"
+	"github.com/zeromicro/go-queue/kq"
 )
 
 type ServiceContext struct {
@@ -30,6 +32,8 @@ func NewServiceContext(c config.Config) *ServiceContext {
 
 func (svc ServiceContext) PushASDU(data *types.MsgBody) error {
 	key, _ := data.GetKey()
+	msgId, _ := tool.SimpleUUID()
+	data.MsgId = msgId
 	data.Time = carbon.Now().ToDateTimeMicroString()
 	byteData, err := json.Marshal(data)
 	if err != nil {

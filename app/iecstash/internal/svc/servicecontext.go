@@ -6,6 +6,7 @@ import (
 	"sync"
 	"zero-service/app/iecstash/internal/config"
 	interceptor "zero-service/common/Interceptor/rpcclient"
+	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
 
 	"github.com/tidwall/gjson"
@@ -75,15 +76,18 @@ func (w *AsduPusher) execute(vals []interface{}) {
 	if len(msgBodyList) == 0 {
 		return
 	}
-	_, err := w.streamEventCli.PushChunkAsdu(context.Background(), &streamevent.PushChunkAsduReq{
+	ctx := context.Background()
+	tid, _ := tool.SimpleUUID()
+	_, err := w.streamEventCli.PushChunkAsdu(ctx, &streamevent.PushChunkAsduReq{
 		MsgBody: msgBodyList,
+		TId:     tid,
 	})
 	var invokeflg = "success"
 	if err != nil {
 		invokeflg = "fail"
 	}
 	duration := timex.Since(startTime)
-	logx.WithDuration(duration).Infof("PushChunkAsdu, asdu size: %d - %s", len(msgBodyList), invokeflg)
+	logx.WithContext(ctx).WithDuration(duration).Infof("PushChunkAsdu, tId: %s, asdu size: %d - %s", tid, len(msgBodyList), invokeflg)
 }
 
 func NewAsduPusher(streamEventCli streamevent.StreamEventClient, ChunkBytes int) *AsduPusher {

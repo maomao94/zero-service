@@ -73,7 +73,8 @@ message KafkaMessage {
 
 // -------------------- 104协议 --------------------
 message PushChunkAsduReq {
-  repeated MsgBody msgBody = 1;
+  string tId = 1; // 事务（Transaction）的 UUID
+  repeated MsgBody msgBody = 2;
 }
 
 message PushChunkAsduRes {
@@ -81,24 +82,26 @@ message PushChunkAsduRes {
 
 // 消息体结构
 message MsgBody {
+  // 消息ID
+  string msgId = 1 [json_name = "msgId"];
   // 采集设备地址
-  string host = 1 [json_name = "host"];
+  string host = 2 [json_name = "host"];
   // 采集设备端口号
-  int32 port = 2 [json_name = "port"];
+  int32 port = 3 [json_name = "port"];
   // ASDU类型名称
-  string asdu = 3 [json_name = "asdu"];
+  string asdu = 4 [json_name = "asdu"];
   // ASDU类型标识符
-  int32 typeId = 4 [json_name = "typeId"];
+  int32 typeId = 5 [json_name = "typeId"];
   // 信息体类型标识符
-  int32 dataType = 5 [json_name = "dataType"];
+  int32 dataType = 6 [json_name = "dataType"];
   // 公共地址（范围：1-65534,全局地址65535保留）
-  uint32 coa = 6 [json_name = "coa"];
+  uint32 coa = 7 [json_name = "coa"];
   // 信息体对象（结构随typeId变化）
-  string bodyRaw = 7 [json_name = "bodyRaw"];
+  string bodyRaw = 8 [json_name = "bodyRaw"];
   // 消息推送时间戳（格式：`YYYY-MM-DD HH:mm:ss.SSSSSS`,UTC+8时区）
-  string time = 8 [json_name = "time"];
+  string time = 9 [json_name = "time"];
   // 应用级元数据（如：应用ID、用户信息、场站信息等）
-  string metaDataRaw = 9 [json_name = "metaDataRaw"];
+  string metaDataRaw = 10 [json_name = "metaDataRaw"];
 }
 
 // 单点遥信

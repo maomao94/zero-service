@@ -965,6 +965,8 @@ func (m *PushChunkAsduReq) validate(all bool) error {
 
 	var errors []error
 
+	// no validation rules for TId
+
 	for idx, item := range m.GetMsgBody() {
 		_, _ = idx, item
 
@@ -1197,6 +1199,8 @@ func (m *MsgBody) validate(all bool) error {
 	}
 
 	var errors []error
+
+	// no validation rules for MsgId
 
 	// no validation rules for Host
 
