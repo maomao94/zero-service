@@ -90,9 +90,11 @@ func NewSettings() *Settings {
 
 func New(settings *Settings, call ASDUCall) *Client {
 	opts := newClientOption(settings)
+	safeAddr := fmt.Sprintf("%s_%d", settings.Host, settings.Port)
+	metricsName := fmt.Sprintf("tcp-iec-104-%s", safeAddr)
 	handler := &ClientHandler{
 		call:    call,
-		metrics: stat.NewMetrics("tcp-iec-104"),
+		metrics: stat.NewMetrics(metricsName),
 	}
 	client104 := cs104.NewClient(handler, opts)
 	logCfg := settings.LogCfg
