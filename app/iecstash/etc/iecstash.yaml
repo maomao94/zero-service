@@ -40,6 +40,6 @@ StreamEventConf:
 #    - 127.0.0.1:21009
   NonBlock: true
   Timeout: 3000
-# 10MB 一批次
-PushAsduChunkBytes: 10485760
+# 1MB 一批次
+PushAsduChunkBytes: 1048576
 GracePeriod: 30s
