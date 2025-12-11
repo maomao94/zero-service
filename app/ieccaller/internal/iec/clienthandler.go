@@ -26,7 +26,7 @@ type ClientCall struct {
 	taskRunner *threading.TaskRunner
 }
 
-func NewClientCall(svcCtx *svc.ServiceContext, host string, port int, metaData map[string]any) *ClientCall {
+func NewClientCall(svcCtx *svc.ServiceContext, host string, port int, metaData map[string]any, taskConcurrency int) *ClientCall {
 	ctx := logx.ContextWithFields(context.Background(),
 		logx.Field("host", host),
 		logx.Field("port", port),
@@ -37,7 +37,7 @@ func NewClientCall(svcCtx *svc.ServiceContext, host string, port int, metaData m
 		port:       port,
 		metaData:   metaData,
 		logger:     logx.WithContext(ctx),
-		taskRunner: threading.NewTaskRunner(32),
+		taskRunner: threading.NewTaskRunner(taskConcurrency),
 	}
 }
 

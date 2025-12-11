@@ -30,6 +30,7 @@ IecServerConfig:
       stationId: 330KV
       arrayId: [ 1,2,3 ]
     LogEnable: true
+    TaskConcurrency: 16
 KafkaConfig:
   Brokers:
     - 127.0.0.1:9094

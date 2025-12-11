@@ -30,12 +30,13 @@ type CoaConfig struct {
 }
 
 type IecServerConfig struct {
-	Host      string
-	Port      int
-	IcCoaList []uint16       `json:",optional"`
-	CcCoaList []uint16       `json:",optional"`
-	MetaData  map[string]any `json:",optional"`
-	LogEnable bool
+	Host            string
+	Port            int
+	IcCoaList       []uint16       `json:",optional"`
+	CcCoaList       []uint16       `json:",optional"`
+	MetaData        map[string]any `json:",optional"`
+	LogEnable       bool
+	TaskConcurrency int `json:",default=16"`
 }
 
 type Client struct {
