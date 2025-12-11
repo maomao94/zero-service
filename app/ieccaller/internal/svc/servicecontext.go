@@ -10,6 +10,7 @@ import (
 
 	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-queue/kq"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type ServiceContext struct {
@@ -38,6 +39,7 @@ func (svc ServiceContext) PushASDU(data *types.MsgBody) error {
 	}
 	if svc.Config.KafkaConfig.IsPush {
 		if svc.KafkaASDUPusher == nil {
+			logx.Errorf("kafka asdu pusher is nil, msgId: %s", data.MsgId)
 			return fmt.Errorf("kafka asdu pusher is nil")
 		}
 		return svc.KafkaASDUPusher.PushWithKey(context.Background(), key, string(byteData))
