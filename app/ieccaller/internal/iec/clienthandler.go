@@ -14,6 +14,7 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/wendy512/go-iecp5/asdu"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/threading"
 )
 
 type ClientCall struct {
@@ -88,42 +89,43 @@ func (c *ClientCall) OnDelayAcquisition(packet *asdu.ASDU) error {
 
 // OnASDU 数据正体
 func (c *ClientCall) OnASDU(packet *asdu.ASDU) error {
-	c.logger = c.logger.
-		WithFields(logx.Field("type", packet.Type)).
-		WithFields(logx.Field("coa", packet.Coa.String())).
-		WithFields(logx.Field("commonAddr", packet.CommonAddr)).
-		WithFields(logx.Field("asdu", genASDUName(packet.Type)))
-	dataType := iec104client.GetDataType(packet.Type)
-	// 读取设备数据
-	switch dataType {
-	case iec104client.SinglePoint:
-		c.onSinglePoint(packet)
-	case iec104client.DoublePoint:
-		c.onDoublePoint(packet)
-	case iec104client.MeasuredValueScaled:
-		c.onMeasuredValueScaled(packet)
-	case iec104client.MeasuredValueNormal:
-		c.onMeasuredValueNormal(packet)
-	case iec104client.StepPosition:
-		c.onStepPosition(packet)
-	case iec104client.BitString32:
-		c.onBitString32(packet)
-	case iec104client.MeasuredValueFloat:
-		c.onMeasuredValueFloat(packet)
-	case iec104client.IntegratedTotals:
-		c.onIntegratedTotals(packet)
-	case iec104client.EventOfProtectionEquipment:
-		c.onEventOfProtectionEquipment(packet)
-	case iec104client.PackedStartEventsOfProtectionEquipment:
-		c.onPackedStartEventsOfProtectionEquipment(packet)
-	case iec104client.PackedOutputCircuitInfo:
-		c.onPackedOutputCircuitInfo(packet)
-	case iec104client.PackedSinglePointWithSCD:
-		c.onPackedSinglePointWithSCD(packet)
-	default:
-		return nil
-	}
-
+	threading.GoSafe(func() {
+		c.logger = c.logger.
+			WithFields(logx.Field("type", packet.Type)).
+			WithFields(logx.Field("coa", packet.Coa.String())).
+			WithFields(logx.Field("commonAddr", packet.CommonAddr)).
+			WithFields(logx.Field("asdu", genASDUName(packet.Type)))
+		dataType := iec104client.GetDataType(packet.Type)
+		// 读取设备数据
+		switch dataType {
+		case iec104client.SinglePoint:
+			c.onSinglePoint(packet)
+		case iec104client.DoublePoint:
+			c.onDoublePoint(packet)
+		case iec104client.MeasuredValueScaled:
+			c.onMeasuredValueScaled(packet)
+		case iec104client.MeasuredValueNormal:
+			c.onMeasuredValueNormal(packet)
+		case iec104client.StepPosition:
+			c.onStepPosition(packet)
+		case iec104client.BitString32:
+			c.onBitString32(packet)
+		case iec104client.MeasuredValueFloat:
+			c.onMeasuredValueFloat(packet)
+		case iec104client.IntegratedTotals:
+			c.onIntegratedTotals(packet)
+		case iec104client.EventOfProtectionEquipment:
+			c.onEventOfProtectionEquipment(packet)
+		case iec104client.PackedStartEventsOfProtectionEquipment:
+			c.onPackedStartEventsOfProtectionEquipment(packet)
+		case iec104client.PackedOutputCircuitInfo:
+			c.onPackedOutputCircuitInfo(packet)
+		case iec104client.PackedSinglePointWithSCD:
+			c.onPackedSinglePointWithSCD(packet)
+		default:
+			return
+		}
+	})
 	return nil
 }
 
