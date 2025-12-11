@@ -12,6 +12,7 @@ import (
 	"github.com/tidwall/gjson"
 	"github.com/zeromicro/go-zero/core/executors"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/threading"
 	"github.com/zeromicro/go-zero/core/timex"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
@@ -77,18 +78,20 @@ func (w *AsduPusher) execute(vals []interface{}) {
 	if len(msgBodyList) == 0 {
 		return
 	}
-	ctx := context.Background()
-	tid, _ := tool.SimpleUUID()
-	_, err := w.streamEventCli.PushChunkAsdu(ctx, &streamevent.PushChunkAsduReq{
-		MsgBody: msgBodyList,
-		TId:     tid,
+	threading.GoSafe(func() {
+		ctx := context.Background()
+		tid, _ := tool.SimpleUUID()
+		_, err := w.streamEventCli.PushChunkAsdu(ctx, &streamevent.PushChunkAsduReq{
+			MsgBody: msgBodyList,
+			TId:     tid,
+		})
+		var invokeflg = "success"
+		if err != nil {
+			invokeflg = "fail"
+		}
+		duration := timex.Since(startTime)
+		logx.WithContext(ctx).WithDuration(duration).Infof("PushChunkAsdu, tId: %s, asdu size: %d - %s", tid, len(msgBodyList), invokeflg)
 	})
-	var invokeflg = "success"
-	if err != nil {
-		invokeflg = "fail"
-	}
-	duration := timex.Since(startTime)
-	logx.WithContext(ctx).WithDuration(duration).Infof("PushChunkAsdu, tId: %s, asdu size: %d - %s", tid, len(msgBodyList), invokeflg)
 }
 
 func NewAsduPusher(streamEventCli streamevent.StreamEventClient, ChunkBytes int) *AsduPusher {
