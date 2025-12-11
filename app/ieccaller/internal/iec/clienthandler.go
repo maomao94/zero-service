@@ -18,11 +18,12 @@ import (
 )
 
 type ClientCall struct {
-	svcCtx   *svc.ServiceContext
-	host     string
-	port     int
-	MetaData map[string]any
-	logger   logx.Logger
+	svcCtx     *svc.ServiceContext
+	host       string
+	port       int
+	metaData   map[string]any
+	logger     logx.Logger
+	taskRunner *threading.TaskRunner
 }
 
 func NewClientCall(svcCtx *svc.ServiceContext, host string, port int, metaData map[string]any) *ClientCall {
@@ -31,11 +32,12 @@ func NewClientCall(svcCtx *svc.ServiceContext, host string, port int, metaData m
 		logx.Field("port", port),
 	)
 	return &ClientCall{
-		svcCtx:   svcCtx,
-		host:     host,
-		port:     port,
-		MetaData: metaData,
-		logger:   logx.WithContext(ctx),
+		svcCtx:     svcCtx,
+		host:       host,
+		port:       port,
+		metaData:   metaData,
+		logger:     logx.WithContext(ctx),
+		taskRunner: threading.NewTaskRunner(32),
 	}
 }
 
@@ -89,7 +91,7 @@ func (c *ClientCall) OnDelayAcquisition(packet *asdu.ASDU) error {
 
 // OnASDU 数据正体
 func (c *ClientCall) OnASDU(packet *asdu.ASDU) error {
-	threading.GoSafe(func() {
+	c.taskRunner.Schedule(func() {
 		c.logger = c.logger.
 			WithFields(logx.Field("type", packet.Type)).
 			WithFields(logx.Field("coa", packet.Coa.String())).
@@ -155,7 +157,7 @@ func (c *ClientCall) onSinglePoint(packet *asdu.ASDU) {
 			DataType: int(iec104client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
-			MetaData: c.MetaData,
+			MetaData: c.metaData,
 		})
 	}
 }
@@ -188,7 +190,7 @@ func (c *ClientCall) onDoublePoint(packet *asdu.ASDU) {
 			DataType: int(iec104client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
-			MetaData: c.MetaData,
+			MetaData: c.metaData,
 		})
 	}
 }
@@ -219,7 +221,7 @@ func (c *ClientCall) onMeasuredValueScaled(packet *asdu.ASDU) {
 			DataType: int(iec104client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
-			MetaData: c.MetaData,
+			MetaData: c.metaData,
 		})
 	}
 }
@@ -252,7 +254,7 @@ func (c *ClientCall) onMeasuredValueNormal(packet *asdu.ASDU) {
 			DataType: int(iec104client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
-			MetaData: c.MetaData,
+			MetaData: c.metaData,
 		})
 	}
 }
@@ -284,7 +286,7 @@ func (c *ClientCall) onStepPosition(packet *asdu.ASDU) {
 			DataType: int(iec104client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
-			MetaData: c.MetaData,
+			MetaData: c.metaData,
 		})
 	}
 }
@@ -315,7 +317,7 @@ func (c *ClientCall) onBitString32(packet *asdu.ASDU) {
 			DataType: int(iec104client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
-			MetaData: c.MetaData,
+			MetaData: c.metaData,
 		})
 	}
 }
@@ -346,7 +348,7 @@ func (c *ClientCall) onMeasuredValueFloat(packet *asdu.ASDU) {
 			DataType: int(iec104client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
-			MetaData: c.MetaData,
+			MetaData: c.metaData,
 		})
 	}
 }
@@ -372,7 +374,7 @@ func (c *ClientCall) onIntegratedTotals(packet *asdu.ASDU) {
 			DataType: int(iec104client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
-			MetaData: c.MetaData,
+			MetaData: c.metaData,
 		})
 	}
 }
@@ -404,7 +406,7 @@ func (c *ClientCall) onEventOfProtectionEquipment(packet *asdu.ASDU) {
 			DataType: int(iec104client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
-			MetaData: c.MetaData,
+			MetaData: c.metaData,
 		})
 	}
 }
@@ -434,7 +436,7 @@ func (c *ClientCall) onPackedStartEventsOfProtectionEquipment(packet *asdu.ASDU)
 		DataType: int(iec104client.GetDataType(packet.Type)),
 		Coa:      uint(coa),
 		Body:     &obj,
-		MetaData: c.MetaData,
+		MetaData: c.metaData,
 	})
 }
 
@@ -471,7 +473,7 @@ func (c *ClientCall) onPackedOutputCircuitInfo(packet *asdu.ASDU) {
 		DataType: int(iec104client.GetDataType(packet.Type)),
 		Coa:      uint(coa),
 		Body:     &obj,
-		MetaData: c.MetaData,
+		MetaData: c.metaData,
 	})
 }
 
@@ -520,7 +522,7 @@ func (c *ClientCall) onPackedSinglePointWithSCD(packet *asdu.ASDU) {
 			DataType: int(iec104client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
-			MetaData: c.MetaData,
+			MetaData: c.metaData,
 		})
 	}
 }
