@@ -37,6 +37,9 @@ func (svc ServiceContext) PushASDU(data *types.MsgBody) error {
 		return fmt.Errorf("json marshal error %v", err)
 	}
 	if svc.Config.KafkaConfig.IsPush {
+		if svc.KafkaASDUPusher == nil {
+			return fmt.Errorf("kafka asdu pusher is nil")
+		}
 		return svc.KafkaASDUPusher.PushWithKey(context.Background(), key, string(byteData))
 	}
 	return nil
