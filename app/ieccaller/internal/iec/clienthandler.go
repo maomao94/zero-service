@@ -91,39 +91,41 @@ func (c *ClientCall) OnDelayAcquisition(packet *asdu.ASDU) error {
 
 // OnASDU 数据正体
 func (c *ClientCall) OnASDU(packet *asdu.ASDU) error {
+	ctx := logx.ContextWithFields(context.Background(),
+		logx.Field("type", packet.Type),
+		logx.Field("coa", packet.Coa.String()),
+		logx.Field("commonAddr", packet.CommonAddr),
+		logx.Field("asdu", genASDUName(packet.Type)),
+	)
+	c.logger.WithContext(ctx).Infof("received OnASDU")
 	c.taskRunner.Schedule(func() {
-		c.logger = c.logger.
-			WithFields(logx.Field("type", packet.Type)).
-			WithFields(logx.Field("coa", packet.Coa.String())).
-			WithFields(logx.Field("commonAddr", packet.CommonAddr)).
-			WithFields(logx.Field("asdu", genASDUName(packet.Type)))
 		dataType := iec104client.GetDataType(packet.Type)
 		// 读取设备数据
 		switch dataType {
 		case iec104client.SinglePoint:
-			c.onSinglePoint(packet)
+			c.onSinglePoint(ctx, packet)
 		case iec104client.DoublePoint:
-			c.onDoublePoint(packet)
+			c.onDoublePoint(ctx, packet)
 		case iec104client.MeasuredValueScaled:
-			c.onMeasuredValueScaled(packet)
+			c.onMeasuredValueScaled(ctx, packet)
 		case iec104client.MeasuredValueNormal:
-			c.onMeasuredValueNormal(packet)
+			c.onMeasuredValueNormal(ctx, packet)
 		case iec104client.StepPosition:
-			c.onStepPosition(packet)
+			c.onStepPosition(ctx, packet)
 		case iec104client.BitString32:
-			c.onBitString32(packet)
+			c.onBitString32(ctx, packet)
 		case iec104client.MeasuredValueFloat:
-			c.onMeasuredValueFloat(packet)
+			c.onMeasuredValueFloat(ctx, packet)
 		case iec104client.IntegratedTotals:
-			c.onIntegratedTotals(packet)
+			c.onIntegratedTotals(ctx, packet)
 		case iec104client.EventOfProtectionEquipment:
-			c.onEventOfProtectionEquipment(packet)
+			c.onEventOfProtectionEquipment(ctx, packet)
 		case iec104client.PackedStartEventsOfProtectionEquipment:
-			c.onPackedStartEventsOfProtectionEquipment(packet)
+			c.onPackedStartEventsOfProtectionEquipment(ctx, packet)
 		case iec104client.PackedOutputCircuitInfo:
-			c.onPackedOutputCircuitInfo(packet)
+			c.onPackedOutputCircuitInfo(ctx, packet)
 		case iec104client.PackedSinglePointWithSCD:
-			c.onPackedSinglePointWithSCD(packet)
+			c.onPackedSinglePointWithSCD(ctx, packet)
 		default:
 			return
 		}
@@ -131,14 +133,14 @@ func (c *ClientCall) OnASDU(packet *asdu.ASDU) error {
 	return nil
 }
 
-func (c *ClientCall) onSinglePoint(packet *asdu.ASDU) {
+func (c *ClientCall) onSinglePoint(ctx context.Context, packet *asdu.ASDU) {
 	coa := packet.CommonAddr
 	asduDataList := packet.GetSinglePoint()
-	c.logger.Debugf("single point, size: %d", len(asduDataList))
+	c.logger.WithContext(ctx).Debugf("single point, size: %d", len(asduDataList))
 	// [M_SP_NA_1], [M_SP_TA_1] or [M_SP_TB_1] 获取单点信息信息体集合
 	for _, p := range asduDataList {
 		msgId, _ := tool.SimpleUUID()
-		c.logger.Debugf("single point, msgId: %s, ioa: %d, value: %v", msgId, p.Ioa, p.Value)
+		c.logger.WithContext(ctx).Debugf("single point, msgId: %s, ioa: %d, value: %v", msgId, p.Ioa, p.Value)
 		var obj types.SinglePointInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, copierx.Option)
@@ -148,7 +150,7 @@ func (c *ClientCall) onSinglePoint(packet *asdu.ASDU) {
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.svcCtx.PushASDU(&types.MsgBody{
+		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 			MsgId:    msgId,
 			Host:     c.host,
 			Port:     c.port,
@@ -162,16 +164,16 @@ func (c *ClientCall) onSinglePoint(packet *asdu.ASDU) {
 	}
 }
 
-func (c *ClientCall) onDoublePoint(packet *asdu.ASDU) {
+func (c *ClientCall) onDoublePoint(ctx context.Context, packet *asdu.ASDU) {
 	coa := packet.CommonAddr
 	asduDataList := packet.GetDoublePoint()
-	c.logger.Debugf("double point, size: %d", len(asduDataList))
+	c.logger.WithContext(ctx).Debugf("double point, size: %d", len(asduDataList))
 	// [M_DP_NA_1], [M_DP_TA_1] or [M_DP_TB_1] 获得双点信息体集合
 	for _, p := range asduDataList {
 		msgId, _ := tool.SimpleUUID()
-		c.logger.Debugf("double point, msgId: %s, ioa: %d, value: %v, bl: %v, sb: %v, nt: %v, iv:%v", msgId, p.Ioa, p.Value,
+		c.logger.WithContext(ctx).Debugf("double point, msgId: %s, ioa: %d, value: %v, bl: %v, sb: %v, nt: %v, iv:%v", msgId, p.Ioa, p.Value,
 			util.QdsIsBlocked(p.Qds), util.QdsIsSubstituted(p.Qds), util.QdsIsNotTopical(p.Qds), util.QdsIsInvalid(p.Qds))
-		c.logger.Debugf("qds: %s", util.QdsString(p.Qds))
+		c.logger.WithContext(ctx).Debugf("qds: %s", util.QdsString(p.Qds))
 		var obj types.DoublePointInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, copierx.Option)
@@ -181,7 +183,7 @@ func (c *ClientCall) onDoublePoint(packet *asdu.ASDU) {
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.svcCtx.PushASDU(&types.MsgBody{
+		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 			MsgId:    msgId,
 			Host:     c.host,
 			Port:     c.port,
@@ -195,14 +197,14 @@ func (c *ClientCall) onDoublePoint(packet *asdu.ASDU) {
 	}
 }
 
-func (c *ClientCall) onMeasuredValueScaled(packet *asdu.ASDU) {
+func (c *ClientCall) onMeasuredValueScaled(ctx context.Context, packet *asdu.ASDU) {
 	coa := packet.CommonAddr
 	asduDataList := packet.GetMeasuredValueScaled()
-	c.logger.Debugf("measured value scaled, size: %d", len(asduDataList))
+	c.logger.WithContext(ctx).Debugf("measured value scaled, size: %d", len(asduDataList))
 	// [M_ME_NB_1], [M_ME_TB_1] or [M_ME_TE_1] 获得测量值,标度化值信息体集合
 	for _, p := range asduDataList {
 		msgId, _ := tool.SimpleUUID()
-		c.logger.Debugf("measured value scaled, msgId: %s, ioa: %d, value: %v", msgId, p.Ioa, p.Value)
+		c.logger.WithContext(ctx).Debugf("measured value scaled, msgId: %s, ioa: %d, value: %v", msgId, p.Ioa, p.Value)
 		var obj types.MeasuredValueScaledInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, copierx.Option)
@@ -212,7 +214,7 @@ func (c *ClientCall) onMeasuredValueScaled(packet *asdu.ASDU) {
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.svcCtx.PushASDU(&types.MsgBody{
+		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 			MsgId:    msgId,
 			Host:     c.host,
 			Port:     c.port,
@@ -226,15 +228,15 @@ func (c *ClientCall) onMeasuredValueScaled(packet *asdu.ASDU) {
 	}
 }
 
-func (c *ClientCall) onMeasuredValueNormal(packet *asdu.ASDU) {
+func (c *ClientCall) onMeasuredValueNormal(ctx context.Context, packet *asdu.ASDU) {
 	coa := packet.CommonAddr
 	asduDataList := packet.GetMeasuredValueNormal()
-	c.logger.Debugf("measured value normal, size: %d", len(asduDataList))
+	c.logger.WithContext(ctx).Debugf("measured value normal, size: %d", len(asduDataList))
 	// [M_ME_NA_1], [M_ME_TA_1],[ M_ME_TD_1] or [M_ME_ND_1] 获得测量值,规一化值信息体集合
 	for _, p := range asduDataList {
 		msgId, _ := tool.SimpleUUID()
 		nva := util.NormalizeToFloat(p.Value)
-		c.logger.Debugf("measured value normal, msgId: %s, ioa: %d, value: %v, nva: %.5f", msgId, p.Ioa, p.Value, nva)
+		c.logger.WithContext(ctx).Debugf("measured value normal, msgId: %s, ioa: %d, value: %v, nva: %.5f", msgId, p.Ioa, p.Value, nva)
 		var obj types.MeasuredValueNormalInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, copierx.Option)
@@ -245,7 +247,7 @@ func (c *ClientCall) onMeasuredValueNormal(packet *asdu.ASDU) {
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.svcCtx.PushASDU(&types.MsgBody{
+		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 			MsgId:    msgId,
 			Host:     c.host,
 			Port:     c.port,
@@ -259,15 +261,15 @@ func (c *ClientCall) onMeasuredValueNormal(packet *asdu.ASDU) {
 	}
 }
 
-func (c *ClientCall) onStepPosition(packet *asdu.ASDU) {
+func (c *ClientCall) onStepPosition(ctx context.Context, packet *asdu.ASDU) {
 	coa := packet.CommonAddr
 	asduDataList := packet.GetStepPosition()
-	c.logger.Debugf("step position, size: %d", len(asduDataList))
+	c.logger.WithContext(ctx).Debugf("step position, size: %d", len(asduDataList))
 	// [M_ST_NA_1], [M_ST_TA_1] or [M_ST_TB_1] 获得步位置信息体集合
 	for _, p := range asduDataList {
 		msgId, _ := tool.SimpleUUID()
 		// state：false: 设备未在瞬变状态 true： 设备处于瞬变状态
-		c.logger.Debugf("step position, msgId: %s, ioa: %d, state: %t, value: %d", msgId, p.Ioa, p.Value.HasTransient, p.Value.Val)
+		c.logger.WithContext(ctx).Debugf("step position, msgId: %s, ioa: %d, state: %t, value: %d", msgId, p.Ioa, p.Value.HasTransient, p.Value.Val)
 		var obj types.StepPositionInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, copierx.Option)
@@ -277,7 +279,7 @@ func (c *ClientCall) onStepPosition(packet *asdu.ASDU) {
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.svcCtx.PushASDU(&types.MsgBody{
+		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 			MsgId:    msgId,
 			Host:     c.host,
 			Port:     c.port,
@@ -291,14 +293,14 @@ func (c *ClientCall) onStepPosition(packet *asdu.ASDU) {
 	}
 }
 
-func (c *ClientCall) onBitString32(packet *asdu.ASDU) {
+func (c *ClientCall) onBitString32(ctx context.Context, packet *asdu.ASDU) {
 	coa := packet.CommonAddr
 	asduDataList := packet.GetBitString32()
-	c.logger.Debugf("bitstring32, size: %d", len(asduDataList))
+	c.logger.WithContext(ctx).Debugf("bitstring32, size: %d", len(asduDataList))
 	// [M_BO_NA_1], [M_BO_TA_1] or [M_BO_TB_1] 获得比特位串信息体集合
 	for _, p := range asduDataList {
 		msgId, _ := tool.SimpleUUID()
-		c.logger.Debugf("bigtstring32, msgId: %s, ioa: %d, value: %v, bsi: %032b", msgId, p.Ioa, p.Value, p.Value)
+		c.logger.WithContext(ctx).Debugf("bigtstring32, msgId: %s, ioa: %d, value: %v, bsi: %032b", msgId, p.Ioa, p.Value, p.Value)
 		var obj types.BitString32Info
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, copierx.Option)
@@ -308,7 +310,7 @@ func (c *ClientCall) onBitString32(packet *asdu.ASDU) {
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.svcCtx.PushASDU(&types.MsgBody{
+		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 			MsgId:    msgId,
 			Host:     c.host,
 			Port:     c.port,
@@ -322,14 +324,14 @@ func (c *ClientCall) onBitString32(packet *asdu.ASDU) {
 	}
 }
 
-func (c *ClientCall) onMeasuredValueFloat(packet *asdu.ASDU) {
+func (c *ClientCall) onMeasuredValueFloat(ctx context.Context, packet *asdu.ASDU) {
 	coa := packet.CommonAddr
 	asduDataList := packet.GetMeasuredValueFloat()
-	c.logger.Debugf("measured value float, size: %d", len(asduDataList))
+	c.logger.WithContext(ctx).Debugf("measured value float, size: %d", len(asduDataList))
 	// [M_ME_NC_1], [M_ME_TC_1] or [M_ME_TF_1].获得测量值,短浮点数信息体集合
 	for _, p := range asduDataList {
 		msgId, _ := tool.SimpleUUID()
-		c.logger.Debugf("measured value float, msgId: %s, ioa: %d, value: %v", msgId, p.Ioa, p.Value)
+		c.logger.WithContext(ctx).Debugf("measured value float, msgId: %s, ioa: %d, value: %v", msgId, p.Ioa, p.Value)
 		var obj types.MeasuredValueFloatInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, copierx.Option)
@@ -339,7 +341,7 @@ func (c *ClientCall) onMeasuredValueFloat(packet *asdu.ASDU) {
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.svcCtx.PushASDU(&types.MsgBody{
+		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 			MsgId:    msgId,
 			Host:     c.host,
 			Port:     c.port,
@@ -353,19 +355,19 @@ func (c *ClientCall) onMeasuredValueFloat(packet *asdu.ASDU) {
 	}
 }
 
-func (c *ClientCall) onIntegratedTotals(packet *asdu.ASDU) {
+func (c *ClientCall) onIntegratedTotals(ctx context.Context, packet *asdu.ASDU) {
 	coa := packet.CommonAddr
 	asduDataList := packet.GetIntegratedTotals()
-	c.logger.Debugf("integrated totals, size: %d", len(asduDataList))
+	c.logger.WithContext(ctx).Debugf("integrated totals, size: %d", len(asduDataList))
 	// [M_IT_NA_1], [M_IT_TA_1] or [M_IT_TB_1]. 获得累计量信息体集合
 	for _, p := range asduDataList {
 		msgId, _ := tool.SimpleUUID()
-		c.logger.Debugf("integrated totals, msgId: %s, ioa: %d, counter: %d, sq: %d, cy: %t, ca: %t, iv: %t",
+		c.logger.WithContext(ctx).Debugf("integrated totals, msgId: %s, ioa: %d, counter: %d, sq: %d, cy: %t, ca: %t, iv: %t",
 			msgId, p.Ioa, p.Value.CounterReading, p.Value.SeqNumber, p.Value.HasCarry, p.Value.IsAdjusted, p.Value.IsInvalid)
 		var obj types.BinaryCounterReadingInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, copierx.Option)
-		_ = c.svcCtx.PushASDU(&types.MsgBody{
+		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 			MsgId:    msgId,
 			Host:     c.host,
 			Port:     c.port,
@@ -379,14 +381,14 @@ func (c *ClientCall) onIntegratedTotals(packet *asdu.ASDU) {
 	}
 }
 
-func (c *ClientCall) onEventOfProtectionEquipment(packet *asdu.ASDU) {
+func (c *ClientCall) onEventOfProtectionEquipment(ctx context.Context, packet *asdu.ASDU) {
 	coa := packet.CommonAddr
 	asduDataList := packet.GetEventOfProtectionEquipment()
-	c.logger.Debugf("event of protection equipment, size: %d", len(asduDataList))
+	c.logger.WithContext(ctx).Debugf("event of protection equipment, size: %d", len(asduDataList))
 	// [M_EP_TA_1] [M_EP_TD_1] 获取继电器保护设备事件信息体
 	for _, p := range asduDataList {
 		msgId, _ := tool.SimpleUUID()
-		c.logger.Debugf("event of protection equipment, msgId: %s, ioa: %d, event: %d, qdp: %d, mesc: %d, time: %d",
+		c.logger.WithContext(ctx).Debugf("event of protection equipment, msgId: %s, ioa: %d, event: %d, qdp: %d, mesc: %d, time: %d",
 			msgId, p.Ioa, p.Event, p.Qdp, p.Msec, p.Time.UnixMilli())
 		var obj types.EventOfProtectionEquipmentInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
@@ -397,7 +399,7 @@ func (c *ClientCall) onEventOfProtectionEquipment(packet *asdu.ASDU) {
 		obj.Sb = util.QdpIsSubstituted(p.Qdp)
 		obj.Nt = util.QdpIsNotTopical(p.Qdp)
 		obj.Iv = util.QdpIsInvalid(p.Qdp)
-		_ = c.svcCtx.PushASDU(&types.MsgBody{
+		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 			MsgId:    msgId,
 			Host:     c.host,
 			Port:     c.port,
@@ -411,12 +413,12 @@ func (c *ClientCall) onEventOfProtectionEquipment(packet *asdu.ASDU) {
 	}
 }
 
-func (c *ClientCall) onPackedStartEventsOfProtectionEquipment(packet *asdu.ASDU) {
+func (c *ClientCall) onPackedStartEventsOfProtectionEquipment(ctx context.Context, packet *asdu.ASDU) {
 	coa := packet.CommonAddr
 	// [M_EP_TB_1] [M_EP_TE_1] 获取继电器保护设备事件信息体
 	p := packet.GetPackedStartEventsOfProtectionEquipment()
 	msgId, _ := tool.SimpleUUID()
-	c.logger.Debugf("packed start events of protection equipment, msgId: %s, ioa: %d, event: %d, qdp: %d, mesc: %d, time: %d",
+	c.logger.WithContext(ctx).Debugf("packed start events of protection equipment, msgId: %s, ioa: %d, event: %d, qdp: %d, mesc: %d, time: %d",
 		msgId, p.Ioa, p.Event, p.Qdp, p.Msec, p.Time.UnixMilli())
 	var obj types.PackedStartEventsOfProtectionEquipmentInfo
 	//obj.Time = carbon.Now().ToDateTimeString()
@@ -427,7 +429,7 @@ func (c *ClientCall) onPackedStartEventsOfProtectionEquipment(packet *asdu.ASDU)
 	obj.Sb = util.QdpIsSubstituted(p.Qdp)
 	obj.Nt = util.QdpIsNotTopical(p.Qdp)
 	obj.Iv = util.QdpIsInvalid(p.Qdp)
-	_ = c.svcCtx.PushASDU(&types.MsgBody{
+	_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 		MsgId:    msgId,
 		Host:     c.host,
 		Port:     c.port,
@@ -440,7 +442,7 @@ func (c *ClientCall) onPackedStartEventsOfProtectionEquipment(packet *asdu.ASDU)
 	})
 }
 
-func (c *ClientCall) onPackedOutputCircuitInfo(packet *asdu.ASDU) {
+func (c *ClientCall) onPackedOutputCircuitInfo(ctx context.Context, packet *asdu.ASDU) {
 	coa := packet.CommonAddr
 	// [M_EP_TC_1] [M_EP_TF_1] 获取继电器保护设备成组输出电路信息信息体
 	p := packet.GetPackedOutputCircuitInfo()
@@ -449,7 +451,7 @@ func (c *ClientCall) onPackedOutputCircuitInfo(packet *asdu.ASDU) {
 	cl1 := (p.Oci & asdu.OCICommandL1) != 0
 	cl2 := (p.Oci & asdu.OCICommandL2) != 0
 	cl3 := (p.Oci & asdu.OCICommandL3) != 0
-	c.logger.Debugf("packed Output circuit, msgId: %s, ioa: %d, qci: %d, gc: %v, cl1: %v, cl2: %v, cl3: %v, qdp: %d, mesc: %d, time: %d",
+	c.logger.WithContext(ctx).Debugf("packed Output circuit, msgId: %s, ioa: %d, qci: %d, gc: %v, cl1: %v, cl2: %v, cl3: %v, qdp: %d, mesc: %d, time: %d",
 		msgId, p.Ioa, p.Oci, gc, cl1, cl2, cl3, p.Qdp, p.Msec, p.Time.UnixMilli())
 	var obj types.PackedOutputCircuitInfoInfo
 	//obj.Time = carbon.Now().ToDateTimeString()
@@ -464,7 +466,7 @@ func (c *ClientCall) onPackedOutputCircuitInfo(packet *asdu.ASDU) {
 	obj.Sb = util.QdpIsSubstituted(p.Qdp)
 	obj.Nt = util.QdpIsNotTopical(p.Qdp)
 	obj.Iv = util.QdpIsInvalid(p.Qdp)
-	_ = c.svcCtx.PushASDU(&types.MsgBody{
+	_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 		MsgId:    msgId,
 		Host:     c.host,
 		Port:     c.port,
@@ -477,14 +479,14 @@ func (c *ClientCall) onPackedOutputCircuitInfo(packet *asdu.ASDU) {
 	})
 }
 
-func (c *ClientCall) onPackedSinglePointWithSCD(packet *asdu.ASDU) {
+func (c *ClientCall) onPackedSinglePointWithSCD(ctx context.Context, packet *asdu.ASDU) {
 	coa := packet.CommonAddr
 	asduDataList := packet.GetPackedSinglePointWithSCD()
-	c.logger.Debugf("packed single point with SCD, size: %d", len(asduDataList))
+	c.logger.WithContext(ctx).Debugf("packed single point with SCD, size: %d", len(asduDataList))
 	// [M_PS_NA_1]. 获得带变位检出的成组单点信息
 	for _, p := range asduDataList {
 		msgId, _ := tool.SimpleUUID()
-		c.logger.Debugf("packed single point with SCD, msgId: %s, ioa: %d, scd: %d, qds: %d", msgId, p.Ioa, p.Scd, p.Qds)
+		c.logger.WithContext(ctx).Debugf("packed single point with SCD, msgId: %s, ioa: %d, scd: %d, qds: %d", msgId, p.Ioa, p.Scd, p.Qds)
 		var obj types.PackedSinglePointWithSCDInfo
 		currentStatus := p.Scd & 0xFFFF // 低16位（当前状态）
 		stn := fmt.Sprintf("%016b", currentStatus)
@@ -492,7 +494,7 @@ func (c *ClientCall) onPackedSinglePointWithSCD(packet *asdu.ASDU) {
 		cdn := fmt.Sprintf("%016b", statusChange)
 		var activePoints []int
 		var changedPoints []int
-		c.logger.Debugf("stn: %d, %s, cdn: %d, %s", currentStatus, stn, statusChange, cdn)
+		c.logger.WithContext(ctx).Debugf("stn: %d, %s, cdn: %d, %s", currentStatus, stn, statusChange, cdn)
 		for i := 0; i < 16; i++ {
 			if currentStatus&(1<<i) != 0 {
 				activePoints = append(activePoints, i)
@@ -502,8 +504,8 @@ func (c *ClientCall) onPackedSinglePointWithSCD(packet *asdu.ASDU) {
 			}
 		}
 
-		c.logger.Debugf("当前闭合的位: %v", activePoints)
-		c.logger.Debugf("状态变化的位: %v", changedPoints)
+		c.logger.WithContext(ctx).Debugf("当前闭合的位: %v", activePoints)
+		c.logger.WithContext(ctx).Debugf("状态变化的位: %v", changedPoints)
 		copier.CopyWithOption(&obj, &p, copierx.Option)
 		obj.Stn = stn
 		obj.Cdn = cdn
@@ -513,7 +515,7 @@ func (c *ClientCall) onPackedSinglePointWithSCD(packet *asdu.ASDU) {
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.svcCtx.PushASDU(&types.MsgBody{
+		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 			MsgId:    msgId,
 			Host:     c.host,
 			Port:     c.port,

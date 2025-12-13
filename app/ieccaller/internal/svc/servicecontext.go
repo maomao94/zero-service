@@ -31,7 +31,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	return svcCtx
 }
 
-func (svc ServiceContext) PushASDU(data *types.MsgBody) error {
+func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody) error {
 	key, _ := data.GetKey()
 	data.Time = carbon.Now().ToDateTimeMicroString()
 	byteData, err := json.Marshal(data)
@@ -40,14 +40,14 @@ func (svc ServiceContext) PushASDU(data *types.MsgBody) error {
 	}
 	if svc.Config.KafkaConfig.IsPush {
 		if svc.KafkaASDUPusher == nil {
-			logx.Errorf("kafka asdu pusher is nil, msgId: %s", data.MsgId)
+			logx.WithContext(ctx).Errorf("kafka asdu pusher is nil, msgId: %s", data.MsgId)
 			return fmt.Errorf("kafka asdu pusher is nil")
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		pushCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
-		err = svc.KafkaASDUPusher.PushWithKey(ctx, key, string(byteData))
+		err = svc.KafkaASDUPusher.PushWithKey(pushCtx, key, string(byteData))
 		if err != nil {
-			logx.Errorf("failed to push asdu to kafka: %v", err)
+			logx.WithContext(ctx).Errorf("failed to push asdu to kafka: %v", err)
 			return err
 		}
 	}
