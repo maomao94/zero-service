@@ -97,7 +97,7 @@ func (c *ClientCall) OnASDU(packet *asdu.ASDU) error {
 		logx.Field("commonAddr", packet.CommonAddr),
 		logx.Field("asdu", genASDUName(packet.Type)),
 	)
-	c.logger.WithContext(ctx).Infof("received OnASDU")
+	c.logger.WithContext(ctx).Info("received OnASDU")
 	c.taskRunner.Schedule(func() {
 		dataType := iec104client.GetDataType(packet.Type)
 		// 读取设备数据
