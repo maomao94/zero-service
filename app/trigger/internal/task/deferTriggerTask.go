@@ -52,7 +52,8 @@ func (l *DeferTriggerTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task
 			MsgId: msg.MsgId,
 			Msg:   msg.Msg,
 		}
-		postCtx, _ := context.WithTimeout(ctx, time.Duration(10)*time.Second)
+		postCtx, cancel := context.WithTimeout(ctx, time.Duration(10)*time.Second)
+		defer cancel()
 		resp, err := l.svcCtx.Httpc.Do(postCtx, http.MethodPost, msg.Url, data)
 		logx.WithContext(ctx).Infof("http invoke - %s", msg.Url)
 		if err != nil {

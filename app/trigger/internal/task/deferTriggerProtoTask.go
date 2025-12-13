@@ -74,8 +74,10 @@ func (l *DeferTriggerProtoTaskHandler) ProcessTask(ctx context.Context, t *asynq
 		if msg.RequestTimeout == 0 {
 			msg.RequestTimeout = clientConf.Timeout
 		}
+		var cancel context.CancelFunc
 		if msg.RequestTimeout > 0 {
-			ctx, _ = context.WithTimeout(ctx, time.Duration(msg.RequestTimeout)*time.Millisecond)
+			ctx, cancel = context.WithTimeout(ctx, time.Duration(msg.RequestTimeout)*time.Millisecond)
+			defer cancel()
 		}
 		var respBytes []byte
 		zrpc.DontLogClientContentForMethod(msg.Method)

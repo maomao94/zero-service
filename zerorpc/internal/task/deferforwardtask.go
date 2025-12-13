@@ -46,7 +46,8 @@ func (l *DeferForwardTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task
 				MsgId: msg.MsgId,
 				Body:  msg.Msg,
 			}
-			postCtx, _ := context.WithTimeout(ctx, time.Duration(5)*time.Second)
+			postCtx, cancel := context.WithTimeout(ctx, time.Duration(5)*time.Second)
+			defer cancel()
 			resp, err := l.svcCtx.Httpc.Do(postCtx, http.MethodPost, msg.Url, data)
 			if err != nil {
 				_, alarmErr := l.svcCtx.AlarmCli.Alarm(ctx, &alarm.AlarmReq{
