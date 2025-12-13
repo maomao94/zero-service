@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 	"zero-service/app/ieccaller/internal/config"
 	"zero-service/common/iec104/iec104client"
 	"zero-service/common/iec104/types"
@@ -42,7 +43,13 @@ func (svc ServiceContext) PushASDU(data *types.MsgBody) error {
 			logx.Errorf("kafka asdu pusher is nil, msgId: %s", data.MsgId)
 			return fmt.Errorf("kafka asdu pusher is nil")
 		}
-		return svc.KafkaASDUPusher.PushWithKey(context.Background(), key, string(byteData))
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		err = svc.KafkaASDUPusher.PushWithKey(ctx, key, string(byteData))
+		if err != nil {
+			logx.Errorf("failed to push asdu to kafka: %v", err)
+			return err
+		}
 	}
 	return nil
 }
@@ -79,4 +86,21 @@ func (svc ServiceContext) PushBroadcast(data *types.BroadcastBody) error {
 
 func (svc ServiceContext) IsBroadcast() bool {
 	return svc.Config.DeployMode == "cluster"
+}
+
+// Close 关闭所有资源
+func (svc ServiceContext) Close() {
+	if svc.KafkaASDUPusher != nil {
+		logx.Infof("closing kafka asdu pusher")
+		if err := svc.KafkaASDUPusher.Close(); err != nil {
+			logx.Errorf("failed to close kafka asdu pusher: %v", err)
+		}
+	}
+	if svc.KafkaBroadcastPusher != nil {
+		logx.Infof("closing kafka broadcast pusher")
+		if err := svc.KafkaBroadcastPusher.Close(); err != nil {
+			logx.Errorf("failed to close kafka broadcast pusher: %v", err)
+		}
+	}
+	logx.Infof("service context closed")
 }
