@@ -96,6 +96,8 @@ func (c *ClientCall) OnASDU(packet *asdu.ASDU) error {
 		logx.Field("coa", packet.Coa.String()),
 		logx.Field("commonAddr", packet.CommonAddr),
 		logx.Field("asdu", genASDUName(packet.Type)),
+		logx.Field("host", c.host),
+		logx.Field("port", c.port),
 	)
 	c.logger.WithContext(ctx).Info("received OnASDU")
 	c.taskRunner.Schedule(func() {
