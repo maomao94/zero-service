@@ -36,7 +36,7 @@ type Config struct {
 
 	MqttConfig struct {
 		mqttx.MqttConfig
-		Topic  string `json:",optional,default=iec/asdu"`
-		IsPush bool   `json:",optional"`
+		Topic  []string `json:",optional"`
+		IsPush bool     `json:",optional"`
 	} `json:",optional"`
 }

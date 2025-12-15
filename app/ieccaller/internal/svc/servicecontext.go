@@ -101,14 +101,22 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody) err
 			logx.WithContext(ctx).Errorf("mqtt client is nil, msgId: %s", data.MsgId)
 			return fmt.Errorf("mqtt client is nil")
 		}
-		pushCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-		defer cancel()
-		// 根据配置规则和报文值生成最终的topic
-		topic := generateTopic(svc.Config.MqttConfig.Topic, data)
-		logx.WithContext(ctx).Debugf("pushing asdu to mqtt topic: %s, msgId: %s", topic, data.MsgId)
-		if err := svc.MqttClient.Publish(pushCtx, topic, byteData); err != nil {
-			logx.WithContext(ctx).Errorf("failed to push asdu to mqtt: %v", err)
-			return err
+
+		topics := svc.Config.MqttConfig.Topic
+		if len(topics) == 0 {
+			topics = []string{"iec/asdu"}
+		}
+
+		for _, topicPattern := range topics {
+			pushTopicCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			defer cancel()
+			topic := generateTopic(topicPattern, data)
+			logx.WithContext(ctx).Debugf("pushing asdu to mqtt topic: %s, msgId: %s", topic, data.MsgId)
+			err = svc.MqttClient.Publish(pushTopicCtx, topic, byteData)
+			if err != nil {
+				logx.WithContext(pushTopicCtx).Errorf("failed to push asdu to mqtt topic: %s, msgId: %s", topic, data.MsgId)
+				continue
+			}
 		}
 	}
 
