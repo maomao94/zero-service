@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"strings"
 	"time"
 	"zero-service/app/ieccaller/internal/config"
 	"zero-service/common/iec104/iec104client"
@@ -40,6 +42,36 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	return svcCtx
 }
 
+// generateTopic 根据配置的topic规则和报文值生成最终的topic
+func generateTopic(topicPattern string, data *types.MsgBody) string {
+	// 替换固定字段占位符
+	topic := strings.ReplaceAll(topicPattern, "{typeId}", fmt.Sprintf("%d", data.TypeId))
+	topic = strings.ReplaceAll(topic, "{host}", data.Host)
+	topic = strings.ReplaceAll(topic, "{port}", fmt.Sprintf("%d", data.Port))
+	topic = strings.ReplaceAll(topic, "{coa}", fmt.Sprintf("%d", data.Coa))
+	topic = strings.ReplaceAll(topic, "{dataType}", fmt.Sprintf("%d", data.DataType))
+	topic = strings.ReplaceAll(topic, "{asdu}", data.Asdu)
+
+	// 替换元数据占位符
+	if data.MetaData != nil {
+		// 使用正则表达式匹配所有{key}格式的占位符
+		placeholderRegex := regexp.MustCompile(`{([^}]+)}`)
+		topic = placeholderRegex.ReplaceAllStringFunc(topic, func(placeholder string) string {
+			// 提取占位符中的键名（去掉{}）
+			key := placeholder[1 : len(placeholder)-1]
+			// 从元数据中获取对应的值
+			if val, ok := data.MetaData[key]; ok {
+				// 将值转换为字符串
+				return fmt.Sprintf("%v", val)
+			}
+			// 如果元数据中没有对应键，则保留原占位符
+			return placeholder
+		})
+	}
+
+	return topic
+}
+
 func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody) error {
 	key, _ := data.GetKey()
 	data.Time = carbon.Now().ToDateTimeMicroString()
@@ -71,7 +103,10 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody) err
 		}
 		pushCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
-		if err := svc.MqttClient.Publish(pushCtx, svc.Config.MqttConfig.Topic, byteData); err != nil {
+		// 根据配置规则和报文值生成最终的topic
+		topic := generateTopic(svc.Config.MqttConfig.Topic, data)
+		logx.WithContext(ctx).Debugf("pushing asdu to mqtt topic: %s, msgId: %s", topic, data.MsgId)
+		if err := svc.MqttClient.Publish(pushCtx, topic, byteData); err != nil {
 			logx.WithContext(ctx).Errorf("failed to push asdu to mqtt: %v", err)
 			return err
 		}
