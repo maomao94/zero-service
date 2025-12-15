@@ -2,6 +2,7 @@ package config
 
 import (
 	"zero-service/common/iec104/iec104client"
+	"zero-service/common/mqttx"
 
 	"github.com/zeromicro/go-zero/zrpc"
 )
@@ -32,4 +33,10 @@ type Config struct {
 		BroadcastGroupId string `json:",optional,default=iec-caller"`
 		IsPush           bool   `json:",optional"`
 	}
+
+	MqttConfig struct {
+		mqttx.MqttConfig
+		Topic  string `json:",optional,default=iec/asdu"`
+		IsPush bool   `json:",optional"`
+	} `json:",optional"`
 }

@@ -29,7 +29,7 @@ func (l *SendInterrogationCmdLogic) SendInterrogationCmd(in *ieccaller.SendInter
 		return nil, err
 	}
 	if cli == nil && l.svcCtx.IsBroadcast() {
-		err = l.svcCtx.PushPbBroadcast(ieccaller.IecCaller_SendInterrogationCmd_FullMethodName, in)
+		err = l.svcCtx.PushPbBroadcast(l.ctx, ieccaller.IecCaller_SendInterrogationCmd_FullMethodName, in)
 		return nil, err
 	} else if cli != nil {
 		if err = cli.SendInterrogationCmd(uint16(in.Coa)); err != nil {

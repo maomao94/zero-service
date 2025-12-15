@@ -31,7 +31,7 @@ func (l *SendCommandLogic) SendCommand(in *ieccaller.SendCommandReq) (*ieccaller
 		return nil, err
 	}
 	if cli == nil && l.svcCtx.IsBroadcast() {
-		err = l.svcCtx.PushPbBroadcast(ieccaller.IecCaller_SendCommand_FullMethodName, in)
+		err = l.svcCtx.PushPbBroadcast(l.ctx, ieccaller.IecCaller_SendCommand_FullMethodName, in)
 		return nil, err
 	} else if cli != nil {
 		if err = cli.SendCmd(uint16(in.Coa), asdu.TypeID(in.TypeId), asdu.InfoObjAddr(in.Ioa), in.Value); err != nil {

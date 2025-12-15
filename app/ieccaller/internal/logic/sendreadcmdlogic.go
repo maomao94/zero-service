@@ -28,7 +28,7 @@ func (l *SendReadCmdLogic) SendReadCmd(in *ieccaller.SendReadCmdReq) (*ieccaller
 		return nil, err
 	}
 	if cli == nil && l.svcCtx.IsBroadcast() {
-		err = l.svcCtx.PushPbBroadcast(ieccaller.IecCaller_SendReadCmd_FullMethodName, in)
+		err = l.svcCtx.PushPbBroadcast(l.ctx, ieccaller.IecCaller_SendReadCmd_FullMethodName, in)
 		if err != nil {
 			return nil, err
 		}

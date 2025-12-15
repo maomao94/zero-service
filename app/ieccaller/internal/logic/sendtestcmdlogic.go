@@ -2,9 +2,10 @@ package logic
 
 import (
 	"context"
-	"github.com/zeromicro/go-zero/core/logx"
 	"zero-service/app/ieccaller/ieccaller"
 	"zero-service/app/ieccaller/internal/svc"
+
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type SendTestCmdLogic struct {
@@ -27,7 +28,7 @@ func (l *SendTestCmdLogic) SendTestCmd(in *ieccaller.SendTestCmdReq) (*ieccaller
 		return nil, err
 	}
 	if cli == nil && l.svcCtx.IsBroadcast() {
-		err = l.svcCtx.PushPbBroadcast(ieccaller.IecCaller_SendTestCmd_FullMethodName, in)
+		err = l.svcCtx.PushPbBroadcast(l.ctx, ieccaller.IecCaller_SendTestCmd_FullMethodName, in)
 		return nil, err
 	} else if cli != nil {
 		if err = cli.SendTestCmd(uint16(in.Coa)); err != nil {
