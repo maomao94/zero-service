@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 	"zero-service/app/ieccaller/internal/config"
@@ -51,6 +52,7 @@ func generateTopic(topicPattern string, data *types.MsgBody) string {
 	topic = strings.ReplaceAll(topic, "{coa}", fmt.Sprintf("%d", data.Coa))
 	topic = strings.ReplaceAll(topic, "{dataType}", fmt.Sprintf("%d", data.DataType))
 	topic = strings.ReplaceAll(topic, "{asdu}", data.Asdu)
+	topic = strings.ReplaceAll(topic, "{ioa}", strconv.Itoa(int(data.Body.GetIoa())))
 
 	// 替换元数据占位符
 	if data.MetaData != nil {
