@@ -22,6 +22,7 @@ type ServiceContext struct {
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
+	logx.Must(logx.SetUp(c.Log))
 	svcCtx := &ServiceContext{
 		Config:               c,
 		ClientManager:        iec104client.NewClientManager(),
