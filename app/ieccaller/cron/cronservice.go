@@ -33,7 +33,7 @@ func (s *CronService) Start() {
 				loss++
 			}
 		}
-		logx.Statf("(tcp-iec-104) client: %d, loss: %d", clientsLen, loss)
+		logx.Statf("(iec-104) client: %d, loss: %d", clientsLen, loss)
 	})
 
 	// 定时总召唤
