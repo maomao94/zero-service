@@ -71,9 +71,24 @@ func generateTopic(topicPattern string, data *types.MsgBody) (string, error) {
 	}
 
 	missingKeys := make([]string, 0)
+
 	topic = placeholderRegex.ReplaceAllStringFunc(topic, func(placeholder string) string {
 		key := placeholder[1 : len(placeholder)-1]
 
+		if strings.HasPrefix(key, "metaData.") {
+			metaKey := key[len("metaData."):]
+			if data.MetaData == nil {
+				missingKeys = append(missingKeys, key)
+				return placeholder
+			}
+			if val, ok := data.MetaData[metaKey]; ok {
+				return fmt.Sprintf("%v", val)
+			}
+			missingKeys = append(missingKeys, key)
+			return placeholder
+		}
+
+		// Handle regular keys for backward compatibility
 		if data.MetaData == nil {
 			missingKeys = append(missingKeys, key)
 			return placeholder

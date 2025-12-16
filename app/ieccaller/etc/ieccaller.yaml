@@ -48,7 +48,7 @@ MqttConfig:
   # 推送数据Topic
   Topic:
    - iec/asdu
-   - iec/asdu/{typeId}/{stationId}
+   - iec/asdu/{typeId}/{metaData.stationId}
   # 是否推送指令数据
   IsPush: true
 # 指令推送间隔
