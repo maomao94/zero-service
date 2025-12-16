@@ -38,7 +38,11 @@ func (h *MqttStreamHandler) Consume(ctx context.Context, topic string, payload [
 			},
 		},
 	})
-	logx.WithContext(ctx).WithDuration(duration).Debugf("consume mqtt message, msgId: %s, topic: %s, time: %s", msgId, topic, time)
+	var invokeflg = "success"
+	if err != nil {
+		invokeflg = "fail"
+	}
+	logx.WithContext(ctx).WithDuration(duration).Infof("consume mqtt message, msgId: %s, topic: %s, time: %s - %s", msgId, topic, time, invokeflg)
 	if err != nil {
 		return err
 	}
