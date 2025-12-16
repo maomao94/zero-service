@@ -36,7 +36,7 @@ type IecServerConfig struct {
 	CcCoaList       []uint16       `json:",optional"`
 	MetaData        map[string]any `json:",optional"`
 	LogEnable       bool
-	TaskConcurrency int `json:",default=16"`
+	TaskConcurrency int `json:",default=32"`
 }
 
 type Client struct {

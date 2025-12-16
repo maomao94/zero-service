@@ -10,7 +10,7 @@ Log:
   Level: debug
   KeepDays: 300
 NacosConfig:
-  IsRegister: true
+  IsRegister: false
   Host: 127.0.0.1
   Port: 8848
   Username: nacos

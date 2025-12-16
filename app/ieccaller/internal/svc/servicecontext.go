@@ -3,6 +3,7 @@ package svc
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -44,35 +45,60 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	return svcCtx
 }
 
-// generateTopic 根据配置的topic规则和报文值生成最终的topic
-func generateTopic(topicPattern string, data *types.MsgBody) string {
-	// 替换固定字段占位符
-	topic := strings.ReplaceAll(topicPattern, "{typeId}", fmt.Sprintf("%d", data.TypeId))
-	topic = strings.ReplaceAll(topic, "{host}", data.Host)
-	topic = strings.ReplaceAll(topic, "{port}", fmt.Sprintf("%d", data.Port))
-	topic = strings.ReplaceAll(topic, "{coa}", fmt.Sprintf("%d", data.Coa))
-	topic = strings.ReplaceAll(topic, "{dataType}", fmt.Sprintf("%d", data.DataType))
-	topic = strings.ReplaceAll(topic, "{asdu}", data.Asdu)
-	topic = strings.ReplaceAll(topic, "{ioa}", strconv.Itoa(int(data.Body.GetIoa())))
+var placeholderRegex = regexp.MustCompile(`{([^}]+)}`)
 
-	// 替换元数据占位符
-	if data.MetaData != nil {
-		// 使用正则表达式匹配所有{key}格式的占位符
-		placeholderRegex := regexp.MustCompile(`{([^}]+)}`)
-		topic = placeholderRegex.ReplaceAllStringFunc(topic, func(placeholder string) string {
-			// 提取占位符中的键名（去掉{}）
-			key := placeholder[1 : len(placeholder)-1]
-			// 从元数据中获取对应的值
-			if val, ok := data.MetaData[key]; ok {
-				// 将值转换为字符串
-				return fmt.Sprintf("%v", val)
-			}
-			// 如果元数据中没有对应键，则保留原占位符
-			return placeholder
-		})
+// generateTopic 根据配置的topic规则和报文值生成最终的topic
+func generateTopic(topicPattern string, data *types.MsgBody) (string, error) {
+	if data == nil {
+		return "", errors.New("msg body is nil")
 	}
 
-	return topic
+	replacements := map[string]string{
+		"typeId":   fmt.Sprintf("%d", data.TypeId),
+		"host":     data.Host,
+		"port":     fmt.Sprintf("%d", data.Port),
+		"coa":      fmt.Sprintf("%d", data.Coa),
+		"dataType": fmt.Sprintf("%d", data.DataType),
+		"asdu":     data.Asdu,
+		"ioa":      strconv.Itoa(int(data.Body.GetIoa())),
+	}
+	topic := topicPattern
+	for k, v := range replacements {
+		if v == "" {
+			return "", fmt.Errorf("topic field {%s} is empty", k)
+		}
+		topic = strings.ReplaceAll(topic, "{"+k+"}", v)
+	}
+
+	missingKeys := make([]string, 0)
+	topic = placeholderRegex.ReplaceAllStringFunc(topic, func(placeholder string) string {
+		key := placeholder[1 : len(placeholder)-1]
+
+		if data.MetaData == nil {
+			missingKeys = append(missingKeys, key)
+			return placeholder
+		}
+
+		if val, ok := data.MetaData[key]; ok {
+			return fmt.Sprintf("%v", val)
+		}
+
+		missingKeys = append(missingKeys, key)
+		return placeholder
+	})
+
+	if len(missingKeys) > 0 {
+		return "", fmt.Errorf("missing topic fields: %v", missingKeys)
+	}
+
+	if placeholderRegex.MatchString(topic) {
+		return "", fmt.Errorf("unresolved placeholders in topic: %s", topic)
+	}
+
+	if strings.Contains(topic, "+") || strings.Contains(topic, "#") {
+		return "", fmt.Errorf("invalid mqtt topic: %s", topic)
+	}
+	return topic, nil
 }
 
 func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody) error {
@@ -113,7 +139,11 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody) err
 		for _, topicPattern := range topics {
 			pushTopicCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 			defer cancel()
-			topic := generateTopic(topicPattern, data)
+			topic, genErr := generateTopic(topicPattern, data)
+			if genErr != nil {
+				logx.WithContext(ctx).Errorf("failed to generate topic: %v", genErr)
+				continue
+			}
 			logx.WithContext(ctx).Debugf("pushing asdu to mqtt topic: %s, msgId: %s", topic, data.MsgId)
 			err = svc.MqttClient.Publish(pushTopicCtx, topic, byteData)
 			if err != nil {
