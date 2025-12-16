@@ -33,6 +33,7 @@ require (
 	github.com/shopspring/decimal v1.4.0
 	github.com/songzhibin97/gkit v1.2.13
 	github.com/spf13/cast v1.10.0
+	github.com/taosdata/driver-go/v3 v3.7.6
 	github.com/tidwall/gjson v1.18.0
 	github.com/twpayne/go-geom v1.6.1
 	github.com/u2takey/ffmpeg-go v0.5.0
@@ -113,6 +114,7 @@ require (
 	github.com/grafana/pyroscope-go v1.2.7 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
 	github.com/grid-x/serial v0.0.0-20211107191517-583c7356b3aa // indirect
+	github.com/hashicorp/go-version v1.7.0 // indirect
 	github.com/jhump/protoreflect v1.17.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect

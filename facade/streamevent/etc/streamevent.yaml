@@ -1,6 +1,13 @@
 Name: streamevent.rpc
 ListenOn: 0.0.0.0:21009
-Etcd:
-  Hosts:
-  - 127.0.0.1:2379
-  Key: streamevent.rpc
+Mode: dev
+Log:
+  Encoding: plain
+  #  Mode: file
+  Path: /opt/logs/streamevent.rpc
+  Level: debug
+  KeepDays: 300
+Middlewares:
+  StatConf:
+    IgnoreContentMethods: [/streamevent.StreamEvent/PushChunkAsdu]
+TaosDSN: root:taosdata@ws(localhost:6041)/iec104
