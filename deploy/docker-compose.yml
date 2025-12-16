@@ -2,7 +2,7 @@ version: '3'
 services:
 
   #消息队列 - Message queue
-  allcore-kafka:
+  kafka:
     image: apache/kafka:3.9.0
     container_name: kafka # 用于容器内网络
     ports:
@@ -42,60 +42,60 @@ services:
       - -e
       - --strict.perms=false
     volumes:
-      - /home/zxhc/app/etc/filebeat.yml:/usr/share/filebeat/filebeat.yml
-      - /home/zxhc/bridgedump/:/opt/bridgedump/
+      - /home/root/app/etc/filebeat.yml:/usr/share/filebeat/filebeat.yml
+      - /home/root/bridgedump/:/opt/bridgedump/
       # 此处需指定docker的containers目录，取决于你docker的配置 - The containers directory of docker needs to be specified here, depending on your docker configuration
       # 如snap安装的docker，则为/var/snap/docker/common/var-lib-docker/containers - Example if docker is installed by Snap /var/snap/docker/common/var-lib-docker/containers
       # - /var/snap/docker/common/var-lib-docker/containers:/var/lib/docker/containers
       - /var/lib/docker/containers:/var/lib/docker/containers
     depends_on:
-      - allcore-kafka
+      - kafka
 
-  allcore-bridgegtw:
-    image: "${REGISTER}/bridgegtw:${ALLCORE_MAIN_TAG}"
+  bridgegtw:
+    image: "${REGISTER}/bridgegtw:${MAIN_TAG}"
     mem_limit: 1G
     environment:
       - TZ=Asia/Shanghai
     privileged: true
     restart: always
     volumes:
-      - /home/zxhc/app/etc:/app/etc/
+      - /home/root/app/etc:/app/etc/
     network_mode: host
   
-  allcore-bridgedump:
-    image: "${REGISTER}/bridgedump:${ALLCORE_MAIN_TAG}"
+  bridgedump:
+    image: "${REGISTER}/bridgedump:${MAIN_TAG}"
     mem_limit: 1G
     environment:
       - TZ=Asia/Shanghai
     privileged: true
     restart: always
     volumes:
-      - /home/zxhc/app/etc:/app/etc
-      - /home/zxhc/bridgedump/:/opt/bridgedump/
+      - /home/root/app/etc:/app/etc
+      - /home/root/bridgedump/:/opt/bridgedump/
     network_mode: host
 
-  allcore-ieccaller:
-    image: "${REGISTER}/ieccaller:${IEC_CALLER_TAG}"
+  ieccaller:
+    image: "${REGISTER}/ieccaller:${MAIN_TAG}"
     mem_limit: 1G
     environment:
       - TZ=Asia/Shanghai
     privileged: true
     restart: always
     volumes:
-      - /home/zxhc/app/etc:/app/etc
-      - /home/zxhc/app/logs:/opt/logs/
+      - /home/root/app/etc:/app/etc
+      - /home/root/app/logs:/opt/logs/
     network_mode: host
 
-  allcore-iecstash:
-    image: "${REGISTER}/iecstash:${IEC_STASH_TAG}"
+  iecstash:
+    image: "${REGISTER}/iecstash:${MAIN_TAG}"
     mem_limit: 1G
     environment:
       - TZ=Asia/Shanghai
     privileged: true
     restart: always
     volumes:
-      - /home/zxhc/app/etc:/app/etc
-      - /home/zxhc/app/logs:/opt/logs/
+      - /home/root/app/etc:/app/etc
+      - /home/root/app/logs:/opt/logs/
     network_mode: host
 
   kafdrop:
