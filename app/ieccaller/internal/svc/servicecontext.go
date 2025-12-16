@@ -30,12 +30,13 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	logx.Must(logx.SetUp(c.Log))
 
 	svcCtx := &ServiceContext{
-		Config:               c,
-		ClientManager:        iec104client.NewClientManager(),
-		KafkaASDUPusher:      kq.NewPusher(c.KafkaConfig.Brokers, c.KafkaConfig.Topic),
-		KafkaBroadcastPusher: kq.NewPusher(c.KafkaConfig.Brokers, c.KafkaConfig.BroadcastTopic),
+		Config:        c,
+		ClientManager: iec104client.NewClientManager(),
 	}
-	// 初始化MQTT客户端
+	if len(c.KafkaConfig.Brokers) > 0 {
+		svcCtx.KafkaASDUPusher = kq.NewPusher(c.KafkaConfig.Brokers, c.KafkaConfig.Topic)
+		svcCtx.KafkaBroadcastPusher = kq.NewPusher(c.KafkaConfig.Brokers, c.KafkaConfig.BroadcastTopic)
+	}
 	if len(c.MqttConfig.Broker) > 0 {
 		svcCtx.MqttClient = mqttx.MustNewClient(c.MqttConfig.MqttConfig)
 	}
@@ -106,7 +107,7 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody) err
 
 		topics := svc.Config.MqttConfig.Topic
 		if len(topics) == 0 {
-			topics = []string{"iec/asdu"}
+			return nil
 		}
 
 		for _, topicPattern := range topics {

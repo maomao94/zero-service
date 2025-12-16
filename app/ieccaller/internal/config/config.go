@@ -32,7 +32,7 @@ type Config struct {
 		BroadcastTopic   string `json:",optional,default=iec-broadcast"`
 		BroadcastGroupId string `json:",optional,default=iec-caller"`
 		IsPush           bool   `json:",optional"`
-	}
+	} `json:",optional"`
 
 	MqttConfig struct {
 		mqttx.MqttConfig
