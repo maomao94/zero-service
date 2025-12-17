@@ -23,5 +23,5 @@ INSERT INTO device_point_mapping (tag_station, coa, ioa, device_id, device_name,
 ('station_1', 1, 1, 'device_1_1', '遥信设备1-1', '遥信表', '示例遥信设备1'),
 ('station_1', 1, 2, 'device_1_2', '遥信设备1-2', '遥信表,遥测表', '示例遥信设备2，支持多个表类型'),
 ('station_1', 1, 3, 'device_1_3', '遥信设备1-3', '遥信表', '示例遥信设备3'),
-('station_1', 1, 4, 'device_1_4', '遥信设备1-4', '遥信表,历史表', '示例遥信设备4，支持多个表类型'),
+('station_1', 1, 4, 'device_1_4', '遥信设备1-4', '遥信表', '示例遥信设备4，支持多个表类型'),
 ('station_1', 1, 5, 'device_1_5', '遥信设备1-5', '遥信表', '示例遥信设备5');
