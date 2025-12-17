@@ -21,6 +21,7 @@ require (
 	github.com/hibiken/asynq v0.25.1
 	github.com/jinzhu/copier v0.4.0
 	github.com/larksuite/oapi-sdk-go/v3 v3.5.1
+	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/minio/minio-go/v7 v7.0.97
 	github.com/mmcloughlin/geohash v0.10.0
 	github.com/nacos-group/nacos-sdk-go/v2 v2.3.5

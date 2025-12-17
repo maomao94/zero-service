@@ -20,4 +20,5 @@ NacosConfig:
   NamespaceId: public
   ServiceName: streamevent
 TaosDSN: root:taosdata@http(localhost:6041)/?timezone=Asia%2FShanghai
+Sqlite: file:./facade/streamevent/etc/iec.db?_busy_timeout=5000&_journal_mode=WAL
 DisableStmtLog: true
