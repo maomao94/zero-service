@@ -14,6 +14,7 @@ import (
 
 	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/mr"
 	"github.com/zeromicro/go-zero/core/timex"
 )
 
@@ -83,64 +84,83 @@ func (l *PushChunkAsduLogic) PushChunkAsdu(in *streamevent.PushChunkAsduReq) (*s
 		return &streamevent.PushChunkAsduRes{}, nil
 	}
 
-	insertedCount := 0
+	insertedCount, err := mr.MapReduce(
+		// generate
+		func(source chan<- string) {
+			for _, msgBody := range in.MsgBody {
+				var bodyMap map[string]interface{}
+				if err := json.Unmarshal([]byte(msgBody.BodyRaw), &bodyMap); err != nil {
+					l.WithContext(ctx).Errorf("Failed to parse bodyRaw: %v, msgId: %s", err, msgBody.MsgId)
+					continue
+				}
 
-	for _, msgBody := range in.MsgBody {
-		var bodyMap map[string]interface{}
-		if err := json.Unmarshal([]byte(msgBody.BodyRaw), &bodyMap); err != nil {
-			l.WithContext(ctx).Errorf("Failed to parse bodyRaw: %v, msgId: %s", err, msgBody.MsgId)
-			continue
-		}
+				ioa, err := convertor.ToInt(bodyMap["ioa"])
+				if err != nil {
+					l.WithContext(ctx).Errorf("Failed to get ioa from bodyRaw, msgId: %s", msgBody.MsgId)
+					continue
+				}
+				ioaValueStr := extractIoaValue(bodyMap)
+				// 生成 stationId
+				safeHost := strings.ReplaceAll(msgBody.Host, ".", "_")
+				stationId := fmt.Sprintf("%s_%s", safeHost, msgBody.Port)
+				deviceTableName := fmt.Sprintf("raw_%s", stationId)
+				if len(msgBody.MetaDataRaw) > 0 {
+					var metaDataMap map[string]interface{}
+					err = json.Unmarshal([]byte(msgBody.MetaDataRaw), &metaDataMap)
+					if err == nil {
+						if sid, ok := metaDataMap["stationId"].(string); ok && sid != "" {
+							stationId = sid
+							deviceTableName = fmt.Sprintf("raw_%s", stationId)
+						}
+					}
+				}
 
-		ioa, err := convertor.ToInt(bodyMap["ioa"])
-		if err != nil {
-			l.WithContext(ctx).Errorf("Failed to get ioa from bodyRaw, msgId: %s", msgBody.MsgId)
-			continue
-		}
-		ioaValueStr := extractIoaValue(bodyMap)
-		// 还要拼接 host_port
-		safeHost := strings.ReplaceAll(msgBody.Host, ".", "_")
-		stationId := fmt.Sprintf("%s_%s", safeHost, msgBody.Port)
-		deviceTableName := fmt.Sprintf("raw_%s", stationId)
-		if len(msgBody.MetaDataRaw) > 0 {
-			var metaDataMap map[string]interface{}
-			err = json.Unmarshal([]byte(msgBody.MetaDataRaw), &metaDataMap)
-			if err != nil {
-				continue
+				// 构建 TDengine 插入语句
+				insertSQL := fmt.Sprintf(
+					"INSERT INTO iec104.%s USING iec104.raw_point_data "+
+						"TAGS ('%s') "+
+						"VALUES ('%s', '%s', '%s', %d, '%s', %d, %d, %d, %d, '%s', '%s')",
+					deviceTableName,  // 子表名
+					stationId,        // tag_station
+					msgBody.Time,     // ts
+					msgBody.MsgId,    // msg_id
+					msgBody.Host,     // host_v
+					msgBody.Port,     // port_v
+					msgBody.Asdu,     // asdu
+					msgBody.TypeId,   // type_id
+					msgBody.DataType, // data_type
+					msgBody.Coa,      // coa
+					ioa,              // ioa
+					ioaValueStr,      // ioa_value
+					msgBody.BodyRaw,  // raw_msg
+				)
+				source <- insertSQL
 			}
-			stationId = metaDataMap["stationId"].(string)
-			deviceTableName = fmt.Sprintf("raw_%s", stationId)
-		}
+		},
+		// Map
+		func(s string, writer mr.Writer[int], cancel func(error)) {
+			_, err := l.svcCtx.TaosConn.ExecCtx(ctx, s)
+			if err != nil {
+				l.WithContext(ctx).Errorf("Failed to insert into TDengine: %v", err)
+				writer.Write(0) // 插入失败，计数 0
+				return
+			}
+			writer.Write(1) // 插入成功，计数 1
+		},
+		// Reduce
+		func(pipe <-chan int, writer mr.Writer[int], cancel func(error)) {
+			total := 0
+			for count := range pipe {
+				total += count
+			}
+			writer.Write(total)
+		},
+	)
 
-		// 构建正确的TDengine插入语句，tag只打站id
-		insertSQL := fmt.Sprintf(
-			"INSERT INTO iec104.%s USING iec104.raw_point_data "+
-				"TAGS ('%s') "+
-				"VALUES ('%s', '%s', '%s', %d, '%s', %d, %d, %d, %d, '%s', '%s')",
-			deviceTableName,  // 子表名
-			stationId,        // tag_station
-			msgBody.Time,     // ts
-			msgBody.MsgId,    // msg_id
-			msgBody.Host,     // host_v
-			msgBody.Port,     // port_v
-			msgBody.Asdu,     // asdu
-			msgBody.TypeId,   // type_id
-			msgBody.DataType, // data_type
-			msgBody.Coa,      // coa
-			ioa,              // ioa
-			ioaValueStr,      // ioa_value
-			msgBody.BodyRaw,  // raw_msg (存储完整的JSON数据)
-		)
-
-		// 执行插入
-		_, err = l.svcCtx.TaosConn.ExecCtx(ctx, insertSQL)
-		if err != nil {
-			l.WithContext(ctx).Errorf("Failed to insert into TDengine: %v", err)
-			continue
-		}
-
-		insertedCount++
+	if err != nil {
+		l.WithContext(ctx).Errorf("MapReduce failed: %v", err)
 	}
+
 	duration := timex.Since(startTime)
 	l.WithContext(ctx).WithDuration(duration).Infof("PushChunkAsdu, received %d rows, inserted %d rows", len(in.MsgBody), insertedCount)
 	return &streamevent.PushChunkAsduRes{}, nil
