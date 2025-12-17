@@ -1,27 +1,25 @@
 package svc
 
 import (
-	"database/sql"
+	"zero-service/common/taosx"
 	"zero-service/facade/streamevent/internal/config"
 
 	_ "github.com/taosdata/driver-go/v3/taosWS"
+	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
 type ServiceContext struct {
-	Config config.Config
-	TaoDB  *sql.DB
+	Config   config.Config
+	TaosConn sqlx.SqlConn
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
+	sqlx.DisableStmtLog()
 	svcCtx := &ServiceContext{
 		Config: c,
 	}
 	if len(c.TaosDSN) > 0 {
-		taos, err := sql.Open("taosWS", c.TaosDSN)
-		if err != nil {
-			panic(err)
-		}
-		svcCtx.TaoDB = taos
+		svcCtx.TaosConn = taosx.New(c.TaosDSN)
 	}
 	return svcCtx
 }

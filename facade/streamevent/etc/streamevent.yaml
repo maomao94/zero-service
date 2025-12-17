@@ -10,4 +10,12 @@ Log:
 Middlewares:
   StatConf:
     IgnoreContentMethods: [/streamevent.StreamEvent/PushChunkAsdu]
-TaosDSN: root:taosdata@ws(localhost:6041)/iec104
+NacosConfig:
+  IsRegister: false
+  Host: 127.0.0.1
+  Port: 8848
+  Username: nacos
+  PassWord: nacos
+  NamespaceId: public
+  ServiceName: streamevent
+TaosDSN: root:taosdata@ws(localhost:6041)/
