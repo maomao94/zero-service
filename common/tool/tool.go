@@ -84,6 +84,20 @@ func SimpleUUID() (string, error) {
 	return strings.ReplaceAll(uid, "-", ""), nil
 }
 
+func GenSecondTS() int64 {
+	return time.Now().Unix() // 示例：1734429580（对应2025-12-17 09:59:40）
+}
+
+// 2. 毫秒级时间戳（推荐，int64，范围：1970~2262，低并发无重复）
+func GenMilliTS() int64 {
+	return time.Now().UnixMilli() // 示例：1734429580020（对应2025-12-17 09:59:40.020）
+}
+
+// 3. 微秒级时间戳（超高精度，int64，几乎无重复）
+func GenMicroTS() int64 {
+	return time.Now().UnixMicro() // 示例：1734429580020123
+}
+
 // EncodeBase62 对字节数组进行Base62编码，输出短字符串
 func EncodeBase62(data []byte) string {
 	if len(data) == 0 {

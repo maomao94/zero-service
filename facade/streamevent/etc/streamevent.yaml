@@ -1,6 +1,7 @@
 Name: streamevent.rpc
 ListenOn: 0.0.0.0:21009
 Mode: dev
+Timeout: 15000
 Log:
   Encoding: plain
   #  Mode: file

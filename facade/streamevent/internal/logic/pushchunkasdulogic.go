@@ -7,12 +7,14 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"zero-service/common/tool"
 
 	"zero-service/facade/streamevent/internal/svc"
 	"zero-service/facade/streamevent/streamevent"
 
 	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/timex"
 )
 
 type PushChunkAsduLogic struct {
@@ -73,8 +75,11 @@ func extractIoaValue(bodyMap map[string]interface{}) string {
 }
 
 func (l *PushChunkAsduLogic) PushChunkAsdu(in *streamevent.PushChunkAsduReq) (*streamevent.PushChunkAsduRes, error) {
+	startTime := timex.Now()
+	reqId := tool.GenMicroTS()
+	ctx := logx.WithFields(context.WithValue(l.ctx, "taos_req_id", reqId), logx.Field("taosReqId", reqId))
 	if l.svcCtx.TaosConn == nil {
-		l.Errorf("TDengine connection is not initialized")
+		l.WithContext(ctx).Errorf("TDengine connection is not initialized")
 		return &streamevent.PushChunkAsduRes{}, nil
 	}
 
@@ -83,23 +88,29 @@ func (l *PushChunkAsduLogic) PushChunkAsdu(in *streamevent.PushChunkAsduReq) (*s
 	for _, msgBody := range in.MsgBody {
 		var bodyMap map[string]interface{}
 		if err := json.Unmarshal([]byte(msgBody.BodyRaw), &bodyMap); err != nil {
-			l.Errorf("Failed to parse bodyRaw: %v, msgId: %s", err, msgBody.MsgId)
+			l.WithContext(ctx).Errorf("Failed to parse bodyRaw: %v, msgId: %s", err, msgBody.MsgId)
 			continue
 		}
 
 		ioa, err := convertor.ToInt(bodyMap["ioa"])
 		if err != nil {
-			l.Errorf("Failed to get ioa from bodyRaw, msgId: %s", msgBody.MsgId)
+			l.WithContext(ctx).Errorf("Failed to get ioa from bodyRaw, msgId: %s", msgBody.MsgId)
 			continue
 		}
 		ioaValueStr := extractIoaValue(bodyMap)
+		// 还要拼接 host_port
 		safeHost := strings.ReplaceAll(msgBody.Host, ".", "_")
-
-		stationId := safeHost
-		if stationIdFromMeta, ok := bodyMap["stationId"].(string); ok && stationIdFromMeta != "" {
-			stationId = stationIdFromMeta
+		stationId := fmt.Sprintf("%s_%s", safeHost, msgBody.Port)
+		deviceTableName := fmt.Sprintf("raw_%s", stationId)
+		if len(msgBody.MetaDataRaw) > 0 {
+			var metaDataMap map[string]interface{}
+			err = json.Unmarshal([]byte(msgBody.MetaDataRaw), &metaDataMap)
+			if err != nil {
+				continue
+			}
+			stationId = metaDataMap["stationId"].(string)
+			deviceTableName = fmt.Sprintf("raw_%s", stationId)
 		}
-		deviceTableName := fmt.Sprintf("iec104_raw_%s", stationId)
 
 		// 构建正确的TDengine插入语句，tag只打站id
 		insertSQL := fmt.Sprintf(
@@ -122,13 +133,15 @@ func (l *PushChunkAsduLogic) PushChunkAsdu(in *streamevent.PushChunkAsduReq) (*s
 		)
 
 		// 执行插入
-		_, err = l.svcCtx.TaosConn.Exec(insertSQL)
+		_, err = l.svcCtx.TaosConn.ExecCtx(ctx, insertSQL)
 		if err != nil {
-			l.Errorf("Failed to insert into TDengine: %v", err)
+			l.WithContext(ctx).Errorf("Failed to insert into TDengine: %v", err)
 			continue
 		}
 
 		insertedCount++
 	}
+	duration := timex.Since(startTime)
+	l.WithContext(ctx).WithDuration(duration).Infof("PushChunkAsdu, received %d rows, inserted %d rows", len(in.MsgBody), insertedCount)
 	return &streamevent.PushChunkAsduRes{}, nil
 }
