@@ -14,7 +14,9 @@ type ServiceContext struct {
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
-	sqlx.DisableStmtLog()
+	if c.DisableStmtLog {
+		sqlx.DisableStmtLog()
+	}
 	svcCtx := &ServiceContext{
 		Config: c,
 	}

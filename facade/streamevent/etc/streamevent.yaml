@@ -20,3 +20,4 @@ NacosConfig:
   NamespaceId: public
   ServiceName: streamevent
 TaosDSN: root:taosdata@http(localhost:6041)/?timezone=Asia%2FShanghai
+DisableStmtLog: true

@@ -13,5 +13,6 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
-	TaosDSN string `json:",optional"`
+	TaosDSN        string `json:",optional"`
+	DisableStmtLog bool   `json:",optional"`
 }
