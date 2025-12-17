@@ -19,4 +19,4 @@ NacosConfig:
   PassWord: nacos
   NamespaceId: public
   ServiceName: streamevent
-TaosDSN: root:taosdata@ws(localhost:6041)/
+TaosDSN: root:taosdata@ws(localhost:6041)/?timezone=Asia%2FShanghai
