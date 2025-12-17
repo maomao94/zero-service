@@ -1,4 +1,4 @@
-package taosx
+package dbx
 
 import (
 	_ "github.com/taosdata/driver-go/v3/taosRestful"
@@ -8,7 +8,6 @@ import (
 
 const taosDriverName = "taosRestful"
 
-// New returns a postgres connection.
-func New(datasource string, opts ...sqlx.SqlOption) sqlx.SqlConn {
+func NewTaos(datasource string, opts ...sqlx.SqlOption) sqlx.SqlConn {
 	return sqlx.NewSqlConn(taosDriverName, datasource, opts...)
 }

@@ -1,7 +1,7 @@
 package svc
 
 import (
-	"zero-service/common/taosx"
+	"zero-service/common/dbx"
 	"zero-service/facade/streamevent/internal/config"
 
 	_ "github.com/taosdata/driver-go/v3/taosWS"
@@ -9,8 +9,9 @@ import (
 )
 
 type ServiceContext struct {
-	Config   config.Config
-	TaosConn sqlx.SqlConn
+	Config     config.Config
+	TaosConn   sqlx.SqlConn
+	SqliteConn sqlx.SqlConn
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -21,7 +22,10 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Config: c,
 	}
 	if len(c.TaosDSN) > 0 {
-		svcCtx.TaosConn = taosx.New(c.TaosDSN)
+		svcCtx.TaosConn = dbx.NewTaos(c.TaosDSN)
+	}
+	if len(c.Sqlite) > 0 {
+		svcCtx.SqliteConn = dbx.NewSqlite(c.Sqlite)
 	}
 	return svcCtx
 }
