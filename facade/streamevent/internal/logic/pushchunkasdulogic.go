@@ -118,10 +118,12 @@ func (l *PushChunkAsduLogic) PushChunkAsdu(in *streamevent.PushChunkAsduReq) (*s
 				// 构建 TDengine 插入语句
 				insertSQL := fmt.Sprintf(
 					"INSERT INTO iec104.%s USING iec104.raw_point_data "+
-						"TAGS ('%s') "+
+						"TAGS ('%s','%s','%s') "+
 						"VALUES ('%s', '%s', '%s', %d, '%s', %d, %d, %d, %d, '%s', '%s')",
 					deviceTableName,  // 子表名
 					stationId,        // tag_station
+					msgBody.Coa,      // coa
+					ioa,              // ioa
 					msgBody.Time,     // ts
 					msgBody.MsgId,    // msg_id
 					msgBody.Host,     // host_v
