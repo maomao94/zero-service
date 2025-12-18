@@ -21,6 +21,8 @@ NacosConfig:
   ServiceName: streamevent
 TaosDB:
   DataSource: root:taosdata@http(localhost:6041)/?timezone=Asia%2FShanghai
+  # 默认采集库
+  DBName: iec104
 SqliteDB:
   DataSource: file:./facade/streamevent/etc/iec.db?_busy_timeout=5000&_journal_mode=WAL
 DisableStmtLog: false
