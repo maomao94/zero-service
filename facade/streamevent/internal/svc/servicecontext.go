@@ -10,6 +10,7 @@ import (
 
 	_ "github.com/taosdata/driver-go/v3/taosWS"
 	"github.com/zeromicro/go-zero/core/collection"
+	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
@@ -44,6 +45,10 @@ func NewServiceContext(c config.Config) *ServiceContext {
 func (s *ServiceContext) FindOneByTagStationCoaIoa(ctx context.Context, tagStation string, coa int64, ioa int64) (pm *model.DevicePointMapping, valid bool, err error) {
 	key := fmt.Sprintf("pm:%s:%d:%d", tagStation, coa, ioa)
 	val, err := s.pointMappingCache.Take(key, func() (any, error) {
+		if s.DevicePointMappingModel == nil {
+			logx.WithContext(ctx).Errorf("no device point mapping model")
+			return model.CacheEntry[model.DevicePointMapping]{}, nil
+		}
 		v, err := s.DevicePointMappingModel.
 			FindOneByTagStationCoaIoa(ctx, tagStation, coa, ioa)
 		if err != nil {
