@@ -17,6 +17,7 @@ NacosConfig:
   Port: 8848
   Username: nacos
   PassWord: nacos
+  NamespaceId: public
   ServiceName: streamevent
 TaosDB:
   DataSource: root:taosdata@http(localhost:6041)/?timezone=Asia%2FShanghai

@@ -5,18 +5,26 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 	"zero-service/app/ieccaller/internal/config"
+	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/iec104/iec104client"
 	"zero-service/common/iec104/types"
 	"zero-service/common/mqttx"
+	"zero-service/common/tool"
+	"zero-service/facade/streamevent/streamevent"
 
 	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-queue/kq"
+	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/mr"
+	"github.com/zeromicro/go-zero/zrpc"
+	"google.golang.org/grpc"
 )
 
 type ServiceContext struct {
@@ -25,6 +33,7 @@ type ServiceContext struct {
 	KafkaASDUPusher      *kq.Pusher
 	KafkaBroadcastPusher *kq.Pusher
 	MqttClient           *mqttx.Client
+	StreamEventCli       streamevent.StreamEventClient
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -40,6 +49,18 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	}
 	if len(c.MqttConfig.Broker) > 0 {
 		svcCtx.MqttClient = mqttx.MustNewClient(c.MqttConfig.MqttConfig)
+	}
+	if len(c.StreamEventConf.Endpoints) > 0 || len(c.StreamEventConf.Target) > 0 {
+		streamEventCli := streamevent.NewStreamEventClient(zrpc.MustNewClient(c.StreamEventConf,
+			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
+			// 添加最大消息配置
+			zrpc.WithDialOption(grpc.WithDefaultCallOptions(
+				grpc.MaxCallSendMsgSize(math.MaxInt32), // 发送最大2GB
+				//grpc.MaxCallSendMsgSize(50 * 1024 * 1024),   // 发送最大50MB
+				//grpc.MaxCallRecvMsgSize(100 * 1024 * 1024),  // 接收最大100MB
+			)),
+		).Conn())
+		svcCtx.StreamEventCli = streamEventCli
 	}
 
 	return svcCtx
@@ -124,50 +145,95 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody) err
 		return fmt.Errorf("json marshal error %v", err)
 	}
 
-	// Kafka推送
-	if svc.Config.KafkaConfig.IsPush {
-		if svc.KafkaASDUPusher == nil {
-			logx.WithContext(ctx).Errorf("kafka asdu pusher is nil, msgId: %s", data.MsgId)
-			return fmt.Errorf("kafka asdu pusher is nil")
-		}
-		pushCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-		defer cancel()
-		err = svc.KafkaASDUPusher.PushWithKey(pushCtx, key, string(byteData))
-		if err != nil {
-			logx.WithContext(ctx).Errorf("failed to push asdu to kafka: %v", err)
-			return err
-		}
-	}
-
-	// MQTT推送
-	if svc.Config.MqttConfig.IsPush {
-		if svc.MqttClient == nil {
-			logx.WithContext(ctx).Errorf("mqtt client is nil, msgId: %s", data.MsgId)
-			return fmt.Errorf("mqtt client is nil")
-		}
-
-		topics := svc.Config.MqttConfig.Topic
-		if len(topics) == 0 {
-			return nil
-		}
-
-		for _, topicPattern := range topics {
-			pushTopicCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	mr.FinishVoid(
+		// Kafka 推送
+		func() {
+			if !svc.Config.KafkaConfig.IsPush {
+				return
+			}
+			if svc.KafkaASDUPusher == nil {
+				logx.WithContext(ctx).Errorf("kafka asdu pusher is nil, msgId: %s", data.MsgId)
+				return
+			}
+			pushCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 			defer cancel()
-			topic, genErr := generateTopic(topicPattern, data)
-			if genErr != nil {
-				logx.WithContext(ctx).Errorf("failed to generate topic: %v", genErr)
-				continue
+			kafkaErr := svc.KafkaASDUPusher.PushWithKey(pushCtx, key, string(byteData))
+			if kafkaErr != nil {
+				logx.WithContext(pushCtx).Errorf("failed to push asdu to kafka, msgId: %s, err: %v", data.MsgId, kafkaErr)
 			}
-			logx.WithContext(ctx).Debugf("pushing asdu to mqtt topic: %s, msgId: %s", topic, data.MsgId)
-			err = svc.MqttClient.Publish(pushTopicCtx, topic, byteData)
-			if err != nil {
-				logx.WithContext(pushTopicCtx).Errorf("failed to push asdu to mqtt topic: %s, msgId: %s", topic, data.MsgId)
-				continue
+		},
+		// MQTT 推送
+		func() {
+			if !svc.Config.MqttConfig.IsPush {
+				return
 			}
-		}
-	}
+			if svc.MqttClient == nil {
+				logx.WithContext(ctx).Errorf("mqtt client is nil, msgId: %s", data.MsgId)
+				return
+			}
 
+			topics := svc.Config.MqttConfig.Topic
+			if len(topics) == 0 {
+				return
+			}
+
+			for _, topicPattern := range topics {
+				pushTopicCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+				defer cancel()
+				topic, genErr := generateTopic(topicPattern, data)
+				if genErr != nil {
+					logx.WithContext(pushTopicCtx).Errorf("failed to generate mqtt topic, pattern: %s, msgId: %s, err: %v", topicPattern, data.MsgId, genErr)
+					continue
+				}
+				logx.WithContext(pushTopicCtx).Debugf("pushing asdu to mqtt topic: %s, msgId: %s", topic, data.MsgId)
+				mqttErr := svc.MqttClient.Publish(pushTopicCtx, topic, byteData)
+				if mqttErr != nil {
+					logx.WithContext(pushTopicCtx).Errorf("failed to push asdu to mqtt topic: %s, msgId: %s, err: %v", topic, data.MsgId, mqttErr)
+					continue
+				}
+			}
+		},
+		// gRPC 推送
+		func() {
+			if svc.StreamEventCli == nil {
+				return
+			}
+			tid, _ := tool.SimpleUUID()
+			bodyRaw, rpcErr := jsonx.MarshalToString(data.Body)
+			if rpcErr != nil {
+				logx.WithContext(ctx).Errorf("failed to marshal body to json, msgId: %s, err: %v", data.MsgId, rpcErr)
+				return
+			}
+			metaDataRaw, rpcErr := jsonx.MarshalToString(data.MetaData)
+			if rpcErr != nil {
+				logx.WithContext(ctx).Errorf("failed to marshal metaData to json, msgId: %s, err: %v", data.MsgId, rpcErr)
+				return
+			}
+			msgBodyList := []*streamevent.MsgBody{
+				{
+					MsgId:       data.MsgId,
+					Host:        data.Host,
+					Port:        int32(data.Port),
+					Asdu:        data.Asdu,
+					TypeId:      int32(data.TypeId),
+					DataType:    int32(data.DataType),
+					Coa:         uint32(data.Coa),
+					BodyRaw:     bodyRaw,
+					Time:        data.Time,
+					MetaDataRaw: metaDataRaw,
+				},
+			}
+			pushGrpcCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+			defer cancel()
+			_, rpcErr = svc.StreamEventCli.PushChunkAsdu(pushGrpcCtx, &streamevent.PushChunkAsduReq{
+				MsgBody: msgBodyList,
+				TId:     tid,
+			})
+			if rpcErr != nil {
+				logx.WithContext(pushGrpcCtx).Errorf("failed to push asdu to grpc, msgId: %s, tid: %s, err: %v", data.MsgId, tid, rpcErr)
+			}
+		},
+	)
 	return nil
 }
 

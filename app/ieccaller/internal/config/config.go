@@ -39,4 +39,6 @@ type Config struct {
 		Topic  []string `json:",optional"`
 		IsPush bool     `json:",optional"`
 	} `json:",optional"`
+
+	StreamEventConf zrpc.RpcClientConf
 }
