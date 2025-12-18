@@ -83,7 +83,7 @@ func (l *PushChunkAsduLogic) PushChunkAsdu(in *streamevent.PushChunkAsduReq) (*s
 		l.WithContext(ctx).Errorf("TDengine connection is not initialized")
 		return &streamevent.PushChunkAsduRes{}, nil
 	}
-
+	var ignoreCount = 0
 	insertedCount, err := mr.MapReduce(
 		// generate
 		func(source chan<- string) {
@@ -144,6 +144,8 @@ func (l *PushChunkAsduLogic) PushChunkAsdu(in *streamevent.PushChunkAsduReq) (*s
 						msgBody.BodyRaw,  // raw_msg
 					)
 					source <- insertSQL
+				} else {
+					ignoreCount++
 				}
 			}
 		},
@@ -172,6 +174,6 @@ func (l *PushChunkAsduLogic) PushChunkAsdu(in *streamevent.PushChunkAsduReq) (*s
 	}
 
 	duration := timex.Since(startTime)
-	l.WithContext(ctx).WithDuration(duration).Infof("PushChunkAsdu, received %d asdu, dispatch inserted %d rows", len(in.MsgBody), insertedCount)
+	l.WithContext(ctx).WithDuration(duration).Infof("PushChunkAsdu, received %d asdu, ignored %d asdu, dispatch inserted %d rows", len(in.MsgBody), ignoreCount, insertedCount)
 	return &streamevent.PushChunkAsduRes{}, nil
 }
