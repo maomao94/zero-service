@@ -31,13 +31,9 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	svcCtx := &ServiceContext{
 		Config: c,
 	}
-	if len(c.TaosDSN) > 0 {
-		svcCtx.TaosConn = dbx.NewTaos(c.TaosDSN)
-	}
-	if len(c.Sqlite) > 0 {
-		svcCtx.SqliteConn = dbx.NewSqlite(c.Sqlite)
-		svcCtx.DevicePointMappingModel = model.NewDevicePointMappingModel(svcCtx.SqliteConn)
-	}
+	svcCtx.TaosConn = dbx.NewTaos(c.TaosDB.DataSource)
+	svcCtx.SqliteConn = dbx.NewSqlite(c.SqliteDB.DataSource)
+	svcCtx.DevicePointMappingModel = model.NewDevicePointMappingModel(svcCtx.SqliteConn)
 	svcCtx.pointMappingCache, _ = collection.NewCache(time.Hour*24, collection.WithName("pm-cache"))
 	return svcCtx
 }

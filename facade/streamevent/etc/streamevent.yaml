@@ -19,6 +19,8 @@ NacosConfig:
   PassWord: Zxhc@1234ns
   NamespaceId: 5b839313-ac3a-47a7-bf8d-6246576347ff
   ServiceName: streamevent
-TaosDSN: root:taosdata@http(localhost:6041)/?timezone=Asia%2FShanghai
-Sqlite: file:./facade/streamevent/etc/iec.db?_busy_timeout=5000&_journal_mode=WAL
+TaosDB:
+  DataSource: root:taosdata@http(localhost:6041)/?timezone=Asia%2FShanghai
+SqliteDB:
+  DataSource: file:./facade/streamevent/etc/iec.db?_busy_timeout=5000&_journal_mode=WAL
 DisableStmtLog: false

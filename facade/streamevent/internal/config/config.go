@@ -13,7 +13,11 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
-	DisableStmtLog bool   `json:",optional"`
-	TaosDSN        string `json:",optional"`
-	Sqlite         string `json:",optional"`
+	DisableStmtLog bool `json:",optional"`
+	TaosDB         struct {
+		DataSource string
+	}
+	SqliteDB struct {
+		DataSource string
+	}
 }
