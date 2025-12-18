@@ -12,13 +12,13 @@ Middlewares:
   StatConf:
     IgnoreContentMethods: [/streamevent.StreamEvent/PushChunkAsdu]
 NacosConfig:
-  IsRegister: false
-  Host: 127.0.0.1
+  IsRegister: true
+  Host: 10.10.1.103
   Port: 8848
   Username: nacos
-  PassWord: nacos
-  NamespaceId: public
+  PassWord: Zxhc@1234ns
+  NamespaceId: 5b839313-ac3a-47a7-bf8d-6246576347ff
   ServiceName: streamevent
 TaosDSN: root:taosdata@http(localhost:6041)/?timezone=Asia%2FShanghai
 Sqlite: file:./facade/streamevent/etc/iec.db?_busy_timeout=5000&_journal_mode=WAL
-DisableStmtLog: true
+DisableStmtLog: false

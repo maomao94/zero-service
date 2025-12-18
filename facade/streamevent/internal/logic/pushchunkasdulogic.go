@@ -115,28 +115,36 @@ func (l *PushChunkAsduLogic) PushChunkAsdu(in *streamevent.PushChunkAsduReq) (*s
 					}
 				}
 
-				// 构建 TDengine 插入语句
-				insertSQL := fmt.Sprintf(
-					"INSERT INTO iec104.%s USING iec104.raw_point_data "+
-						"TAGS ('%s','%s','%s') "+
-						"VALUES ('%s', '%s', '%s', %d, '%s', %d, %d, %d, %d, '%s', '%s')",
-					deviceTableName,  // 子表名
-					stationId,        // tag_station
-					msgBody.Coa,      // coa
-					ioa,              // ioa
-					msgBody.Time,     // ts
-					msgBody.MsgId,    // msg_id
-					msgBody.Host,     // host_v
-					msgBody.Port,     // port_v
-					msgBody.Asdu,     // asdu
-					msgBody.TypeId,   // type_id
-					msgBody.DataType, // data_type
-					msgBody.Coa,      // coa
-					ioa,              // ioa
-					ioaValueStr,      // ioa_value
-					msgBody.BodyRaw,  // raw_msg
-				)
-				source <- insertSQL
+				// 查询本地缓存表
+				query, ok, err := l.svcCtx.FindOneByTagStationCoaIoa(l.ctx, stationId, int64(msgBody.Coa), ioa)
+				if err != nil {
+					l.WithContext(ctx).Errorf("Failed to find point mapping: %v, msgId: %s", err, msgBody.MsgId)
+					continue
+				}
+				if ok && query.EnableRawInsert == 1 {
+					// 构建 TDengine 插入语句
+					insertSQL := fmt.Sprintf(
+						"INSERT INTO iec104.%s USING iec104.raw_point_data "+
+							"TAGS ('%s', %d, %d) "+
+							"VALUES ('%s', '%s', '%s', %d, '%s', %d, %d, %d, %d, '%s', '%s')",
+						deviceTableName,  // 子表名
+						stationId,        // tag_station
+						msgBody.Coa,      // coa
+						ioa,              // ioa
+						msgBody.Time,     // ts
+						msgBody.MsgId,    // msg_id
+						msgBody.Host,     // host_v
+						msgBody.Port,     // port_v
+						msgBody.Asdu,     // asdu
+						msgBody.TypeId,   // type_id
+						msgBody.DataType, // data_type
+						msgBody.Coa,      // coa
+						ioa,              // ioa
+						ioaValueStr,      // ioa_value
+						msgBody.BodyRaw,  // raw_msg
+					)
+					source <- insertSQL
+				}
 			}
 		},
 		// Map
@@ -164,6 +172,6 @@ func (l *PushChunkAsduLogic) PushChunkAsdu(in *streamevent.PushChunkAsduReq) (*s
 	}
 
 	duration := timex.Since(startTime)
-	l.WithContext(ctx).WithDuration(duration).Infof("PushChunkAsdu, received %d rows, inserted %d rows", len(in.MsgBody), insertedCount)
+	l.WithContext(ctx).WithDuration(duration).Infof("PushChunkAsdu, received %d asdu, dispatch inserted %d rows", len(in.MsgBody), insertedCount)
 	return &streamevent.PushChunkAsduRes{}, nil
 }

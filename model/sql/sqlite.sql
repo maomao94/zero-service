@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS device_point_mapping (
 );
 
 
--- 插入五条遥信设备映射数据，coa都是1，ioa是1-5
+-- 插入设备映射数据，coa都是1，ioa是1-10
 INSERT INTO device_point_mapping (tag_station, coa, ioa, device_id, device_name, td_table_type, enable_raw_insert, description) VALUES
 ('330KV', 1, 1, 'device_1_1', '遥信设备1-1', '遥信', 1, '示例遥信设备1'),
 ('330KV', 1, 2, 'device_1_2', '遥信设备1-2', '遥信', 1, '示例遥信设备2'),
