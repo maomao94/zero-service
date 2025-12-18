@@ -103,14 +103,14 @@ func (l *PushChunkAsduLogic) PushChunkAsdu(in *streamevent.PushChunkAsduReq) (*s
 				// 生成 stationId
 				safeHost := strings.ReplaceAll(msgBody.Host, ".", "_")
 				stationId := fmt.Sprintf("%s_%s", safeHost, msgBody.Port)
-				deviceTableName := fmt.Sprintf("raw_%s", stationId)
+				deviceTableName := fmt.Sprintf("raw_%s_%d_%d", stationId, msgBody.Coa, ioa)
 				if len(msgBody.MetaDataRaw) > 0 {
 					var metaDataMap map[string]interface{}
 					err = json.Unmarshal([]byte(msgBody.MetaDataRaw), &metaDataMap)
 					if err == nil {
 						if sid, ok := metaDataMap["stationId"].(string); ok && sid != "" {
 							stationId = sid
-							deviceTableName = fmt.Sprintf("raw_%s", stationId)
+							deviceTableName = fmt.Sprintf("raw_%s_%d_%d", stationId, msgBody.Coa, ioa)
 						}
 					}
 				}
