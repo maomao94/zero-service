@@ -1,5 +1,5 @@
 goctl model mysql ddl \
-  -src=./sql/sqlite.sql \
+  -src=./sql/genSql.sql \
   -dir=./genModel \
   -cache=false \
   --style=gozero

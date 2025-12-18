@@ -1,6 +1,8 @@
 
 func (m *default{{.upperStartCamelObject}}Model) Update(ctx context.Context,session sqlx.Session, {{if .containsIndexCache}}newData{{else}}data{{end}} *{{.upperStartCamelObject}})  (sql.Result,error) {
-	newData.DeleteTime = time.Unix(0, 0)
+	newData.DeleteTime = sql.NullTime{
+    		Valid: false,
+    }
     newData.DelState = 0
 	{{if .withCache}}{{if .containsIndexCache}}data, err:=m.FindOne(ctx, newData.{{.upperStartCamelPrimaryKey}})
         if err!=nil{
@@ -71,7 +73,10 @@ func (m *default{{.upperStartCamelObject}}Model) DeleteSoft(ctx context.Context,
         return err
     }
     data.DelState = 1
-    data.DeleteTime = time.Now()
+    data.DeleteTime = sql.NullTime{
+        Time:  time.Now(),
+        Valid: true,
+    }
 	if err:= m.UpdateWithVersion(ctx,session, data);err!= nil{
 		return errors.Wrapf(errors.New("delete soft failed "),"{{.upperStartCamelObject}}Model delete err : %+v",err)
 	}
