@@ -52,6 +52,8 @@ type (
 		FindPageListByIdDESC(ctx context.Context, rowBuilder squirrel.SelectBuilder, preMinId, pageSize int64) ([]*DevicePointMapping, error)
 		FindPageListByIdASC(ctx context.Context, rowBuilder squirrel.SelectBuilder, preMaxId, pageSize int64) ([]*DevicePointMapping, error)
 		Delete(ctx context.Context, session sqlx.Session, id int64) error
+
+		FindCacheOneByTagStationCoaIoa(ctx context.Context, tagStation string, coa int64, ioa int64) (*DevicePointMapping, bool, error)
 	}
 
 	defaultDevicePointMappingModel struct {
@@ -72,6 +74,7 @@ type (
 		DeviceId        string       `db:"device_id"`         // 设备编号/ID
 		DeviceName      string       `db:"device_name"`       // 设备名称
 		TdTableType     string       `db:"td_table_type"`     // TDengine 表类型（遥信表/遥测表等，逗号分隔）
+		EnablePush      int64        `db:"enable_push"`       // 是否允许caller服务推送数据：0-不允许，1-允许
 		EnableRawInsert int64        `db:"enable_raw_insert"` // 是否允许插入 raw 原生数据：0-否，1-是
 		Description     string       `db:"description"`       // 备注信息
 	}
@@ -127,11 +130,11 @@ func (m *defaultDevicePointMappingModel) Insert(ctx context.Context, session sql
 	}
 	data.DelState = 0
 
-	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, devicePointMappingRowsExpectAutoSet)
+	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, devicePointMappingRowsExpectAutoSet)
 	if session != nil {
-		return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.TagStation, data.Coa, data.Ioa, data.DeviceId, data.DeviceName, data.TdTableType, data.EnableRawInsert, data.Description)
+		return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.TagStation, data.Coa, data.Ioa, data.DeviceId, data.DeviceName, data.TdTableType, data.EnablePush, data.EnableRawInsert, data.Description)
 	}
-	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.TagStation, data.Coa, data.Ioa, data.DeviceId, data.DeviceName, data.TdTableType, data.EnableRawInsert, data.Description)
+	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.TagStation, data.Coa, data.Ioa, data.DeviceId, data.DeviceName, data.TdTableType, data.EnablePush, data.EnableRawInsert, data.Description)
 }
 
 func (m *defaultDevicePointMappingModel) Update(ctx context.Context, session sqlx.Session, newData *DevicePointMapping) (sql.Result, error) {
@@ -141,9 +144,9 @@ func (m *defaultDevicePointMappingModel) Update(ctx context.Context, session sql
 	newData.DelState = 0
 	query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, devicePointMappingRowsWithPlaceHolder)
 	if session != nil {
-		return session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TagStation, newData.Coa, newData.Ioa, newData.DeviceId, newData.DeviceName, newData.TdTableType, newData.EnableRawInsert, newData.Description, newData.Id)
+		return session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TagStation, newData.Coa, newData.Ioa, newData.DeviceId, newData.DeviceName, newData.TdTableType, newData.EnablePush, newData.EnableRawInsert, newData.Description, newData.Id)
 	}
-	return m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TagStation, newData.Coa, newData.Ioa, newData.DeviceId, newData.DeviceName, newData.TdTableType, newData.EnableRawInsert, newData.Description, newData.Id)
+	return m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TagStation, newData.Coa, newData.Ioa, newData.DeviceId, newData.DeviceName, newData.TdTableType, newData.EnablePush, newData.EnableRawInsert, newData.Description, newData.Id)
 }
 
 func (m *defaultDevicePointMappingModel) UpdateWithVersion(ctx context.Context, session sqlx.Session, newData *DevicePointMapping) error {
@@ -156,9 +159,9 @@ func (m *defaultDevicePointMappingModel) UpdateWithVersion(ctx context.Context, 
 
 	query := fmt.Sprintf("update %s set %s where `id` = ? and version = ? ", m.table, devicePointMappingRowsWithPlaceHolder)
 	if session != nil {
-		sqlResult, err = session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TagStation, newData.Coa, newData.Ioa, newData.DeviceId, newData.DeviceName, newData.TdTableType, newData.EnableRawInsert, newData.Description, newData.Id, oldVersion)
+		sqlResult, err = session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TagStation, newData.Coa, newData.Ioa, newData.DeviceId, newData.DeviceName, newData.TdTableType, newData.EnablePush, newData.EnableRawInsert, newData.Description, newData.Id, oldVersion)
 	} else {
-		sqlResult, err = m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TagStation, newData.Coa, newData.Ioa, newData.DeviceId, newData.DeviceName, newData.TdTableType, newData.EnableRawInsert, newData.Description, newData.Id, oldVersion)
+		sqlResult, err = m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TagStation, newData.Coa, newData.Ioa, newData.DeviceId, newData.DeviceName, newData.TdTableType, newData.EnablePush, newData.EnableRawInsert, newData.Description, newData.Id, oldVersion)
 	}
 
 	if err != nil {

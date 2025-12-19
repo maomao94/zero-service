@@ -41,4 +41,9 @@ type Config struct {
 	} `json:",optional"`
 
 	StreamEventConf zrpc.RpcClientConf
+
+	DisableStmtLog bool `json:",optional"`
+	SqliteDB       struct {
+		DataSource string `json:",optional"`
+	}
 }

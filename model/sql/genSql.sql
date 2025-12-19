@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS `device_point_mapping` (
     `device_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '设备编号/ID',
     `device_name` VARCHAR(128) NOT NULL DEFAULT '' COMMENT '设备名称',
     `td_table_type` VARCHAR(255) NOT NULL DEFAULT '' COMMENT 'TDengine 表类型（遥信表/遥测表等，逗号分隔）',
+    `enable_push` TINYINT NOT NULL DEFAULT 1 COMMENT '是否允许caller服务推送数据：0-不允许，1-允许',
     `enable_raw_insert` TINYINT NOT NULL DEFAULT 1 COMMENT '是否允许插入 raw 原生数据：0-否，1-是',
     `description` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '备注信息',
     PRIMARY KEY (`id`),

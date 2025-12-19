@@ -12,17 +12,20 @@ import (
 	"time"
 	"zero-service/app/ieccaller/internal/config"
 	interceptor "zero-service/common/Interceptor/rpcclient"
+	"zero-service/common/dbx"
 	"zero-service/common/iec104/iec104client"
 	"zero-service/common/iec104/types"
 	"zero-service/common/mqttx"
 	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
+	"zero-service/model"
 
 	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-queue/kq"
 	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/mr"
+	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
 )
@@ -34,11 +37,16 @@ type ServiceContext struct {
 	KafkaBroadcastPusher *kq.Pusher
 	MqttClient           *mqttx.Client
 	StreamEventCli       streamevent.StreamEventClient
+
+	SqliteConn              sqlx.SqlConn
+	DevicePointMappingModel model.DevicePointMappingModel
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	logx.Must(logx.SetUp(c.Log))
-
+	if c.DisableStmtLog {
+		sqlx.DisableStmtLog()
+	}
 	svcCtx := &ServiceContext{
 		Config:        c,
 		ClientManager: iec104client.NewClientManager(),
@@ -63,6 +71,10 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		svcCtx.StreamEventCli = streamEventCli
 	}
 
+	if len(c.SqliteDB.DataSource) > 0 {
+		svcCtx.SqliteConn = dbx.NewSqlite(c.SqliteDB.DataSource)
+		svcCtx.DevicePointMappingModel = model.NewDevicePointMappingModel(svcCtx.SqliteConn)
+	}
 	return svcCtx
 }
 
@@ -137,12 +149,27 @@ func generateTopic(topicPattern string, data *types.MsgBody) (string, error) {
 	return topic, nil
 }
 
-func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody) error {
+func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa uint) error {
 	key, _ := data.GetKey()
 	data.Time = carbon.Now().ToDateTimeMicroString()
 	byteData, err := json.Marshal(data)
 	if err != nil {
 		return fmt.Errorf("json marshal error %v", err)
+	}
+	stationId, ok := ctx.Value("stationId").(string)
+	if svc.SqliteConn != nil && ok {
+		query, exist, cacheErr := svc.DevicePointMappingModel.FindCacheOneByTagStationCoaIoa(ctx, stationId, int64(data.Coa), int64(ioa))
+		if cacheErr != nil {
+			return fmt.Errorf("cache error %v", cacheErr)
+		}
+		if !exist {
+			logx.WithContext(ctx).Debugf("no mapping for stationId: %s, coa: %d, ioa: %d, msgId: %s", stationId, data.Coa, ioa, data.MsgId)
+			return nil
+		}
+		if query.EnablePush != 1 {
+			logx.WithContext(ctx).Debugf("push asdu disabled for stationId: %s, coa: %d, ioa: %d, msgId: %s", stationId, data.Coa, ioa, data.MsgId)
+			return nil
+		}
 	}
 
 	mr.FinishVoid(
@@ -223,6 +250,7 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody) err
 					MetaDataRaw: metaDataRaw,
 				},
 			}
+			logx.WithContext(ctx).Debugf("pushing asdu to grpc, msgId: %s, tid: %s", data.MsgId, tid)
 			pushGrpcCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 			defer cancel()
 			_, rpcErr = svc.StreamEventCli.PushChunkAsdu(pushGrpcCtx, &streamevent.PushChunkAsduReq{

@@ -16,7 +16,7 @@ type Config struct {
 	DisableStmtLog bool `json:",optional"`
 	TaosDB         struct {
 		DataSource string
-		DBName     string `json:",default=iec104"`
+		DBName     string `json:",default=default"`
 	}
 	SqliteDB struct {
 		DataSource string

@@ -111,9 +111,8 @@ func (l *PushChunkAsduLogic) PushChunkAsdu(in *streamevent.PushChunkAsduReq) (*s
 						}
 					}
 				}
-
 				// 查询本地缓存表
-				query, ok, err := l.svcCtx.FindOneByTagStationCoaIoa(ctx, stationId, int64(msgBody.Coa), ioa)
+				query, ok, err := l.svcCtx.DevicePointMappingModel.FindCacheOneByTagStationCoaIoa(ctx, stationId, int64(msgBody.Coa), ioa)
 				if err != nil {
 					l.WithContext(ctx).Errorf("Failed to find point mapping: %v, msgId: %s", err, msgBody.MsgId)
 					continue
