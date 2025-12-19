@@ -7,6 +7,7 @@ import (
 	"zero-service/app/bridgegtw/internal/config"
 	"zero-service/app/bridgegtw/internal/handler"
 	"zero-service/app/bridgegtw/internal/svc"
+	"zero-service/common/tool"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/gateway"
@@ -20,6 +21,9 @@ func main() {
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
+
+	// Print Go version
+	tool.PrintGoVersion()
 
 	server := gateway.MustNewServer(c.GatewayConf, func(server *gateway.Server) {
 		server.Use(rest.ToMiddleware(func(next http.Handler) http.Handler {

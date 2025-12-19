@@ -7,6 +7,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"zero-service/common/tool"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -20,6 +21,9 @@ func main() {
 
 	var c mcp.McpConf
 	conf.MustLoad(*configFile, &c)
+
+	// Print Go version
+	tool.PrintGoVersion()
 
 	server := mcp.NewMcpServer(c)
 	// 可选：禁用统计日志

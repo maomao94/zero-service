@@ -10,6 +10,7 @@ import (
 	"zero-service/app/iecagent/internal/svc"
 	interceptor "zero-service/common/Interceptor/rpcserver"
 	iec104server2 "zero-service/common/iec104/iec104server"
+	"zero-service/common/tool"
 
 	"github.com/zeromicro/go-zero/core/logx"
 
@@ -31,6 +32,10 @@ func main() {
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
+
+	// Print Go version
+	tool.PrintGoVersion()
+
 	ctx := svc.NewServiceContext(c)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {

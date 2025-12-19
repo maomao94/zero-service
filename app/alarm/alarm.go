@@ -7,6 +7,7 @@ import (
 	"zero-service/app/alarm/internal/config"
 	"zero-service/app/alarm/internal/server"
 	"zero-service/app/alarm/internal/svc"
+	"zero-service/common/tool"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/service"
@@ -22,6 +23,10 @@ func main() {
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
+
+	// Print Go version
+	tool.PrintGoVersion()
+
 	ctx := svc.NewServiceContext(c)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {

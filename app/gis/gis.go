@@ -5,6 +5,7 @@ import (
 	"fmt"
 	interceptor "zero-service/common/Interceptor/rpcserver"
 	"zero-service/common/nacosx"
+	"zero-service/common/tool"
 
 	"zero-service/app/gis/gis"
 	"zero-service/app/gis/internal/config"
@@ -28,6 +29,10 @@ func main() {
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
+
+	// Print Go version
+	tool.PrintGoVersion()
+
 	ctx := svc.NewServiceContext(c)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {

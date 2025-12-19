@@ -7,6 +7,7 @@ import (
 	"zero-service/app/bridgedump/internal/config"
 	"zero-service/app/bridgedump/internal/server"
 	"zero-service/app/bridgedump/internal/svc"
+	"zero-service/common/tool"
 
 	_ "zero-service/common/carbonx"
 
@@ -24,6 +25,10 @@ func main() {
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
+
+	// Print Go version
+	tool.PrintGoVersion()
+
 	ctx := svc.NewServiceContext(c)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
