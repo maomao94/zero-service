@@ -61,9 +61,6 @@ func extractIoaValue(bodyMap map[string]interface{}) string {
 		} else if val, ok := v["val"].(float64); ok {
 			// 步位置信息：返回val值
 			return strconv.FormatFloat(val, 'f', -1, 64)
-		} else if counterReading, ok := v["counterReading"].(float64); ok {
-			// 累计量类型：返回计数器读数
-			return strconv.FormatFloat(counterReading, 'f', -1, 64)
 		} else {
 			return "-"
 		}
