@@ -73,6 +73,14 @@ func (w *AsduPusher) execute(vals []interface{}) {
 			Time:        result.Get("time").String(),
 			MetaDataRaw: result.Get("metaData").Raw,
 		}
+		pm := result.Get("pm")
+		if pm.Exists() {
+			msgBody.Pm = &streamevent.PointMapping{
+				DeviceId:    pm.Get("deviceId").String(),
+				DeviceName:  pm.Get("deviceName").String(),
+				TdTableType: pm.Get("tdTableType").String(),
+			}
+		}
 		msgBodyList = append(msgBodyList, msgBody)
 	}
 	if len(msgBodyList) == 0 {

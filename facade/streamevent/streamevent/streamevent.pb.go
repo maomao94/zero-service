@@ -567,7 +567,8 @@ type MsgBody struct {
 	// 消息推送时间戳（格式：`YYYY-MM-DD HH:mm:ss.SSSSSS`,UTC+8时区）
 	Time string `protobuf:"bytes,9,opt,name=time,proto3" json:"time,omitempty"`
 	// 应用级元数据（如：应用ID、用户信息、场站信息等）
-	MetaDataRaw   string `protobuf:"bytes,10,opt,name=metaDataRaw,proto3" json:"metaDataRaw,omitempty"`
+	MetaDataRaw   string        `protobuf:"bytes,10,opt,name=metaDataRaw,proto3" json:"metaDataRaw,omitempty"`
+	Pm            *PointMapping `protobuf:"bytes,11,opt,name=pm,proto3" json:"pm,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -672,6 +673,76 @@ func (x *MsgBody) GetMetaDataRaw() string {
 	return ""
 }
 
+func (x *MsgBody) GetPm() *PointMapping {
+	if x != nil {
+		return x.Pm
+	}
+	return nil
+}
+
+type PointMapping struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 设备编号/ID
+	DeviceId string `protobuf:"bytes,1,opt,name=deviceId,proto3" json:"deviceId,omitempty"`
+	// 设备名称
+	DeviceName string `protobuf:"bytes,2,opt,name=deviceName,proto3" json:"deviceName,omitempty"`
+	// TDengine 表类型（遥信表/遥测表等，逗号分隔）
+	TdTableType   string `protobuf:"bytes,3,opt,name=tdTableType,proto3" json:"tdTableType,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PointMapping) Reset() {
+	*x = PointMapping{}
+	mi := &file_streamevent_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PointMapping) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PointMapping) ProtoMessage() {}
+
+func (x *PointMapping) ProtoReflect() protoreflect.Message {
+	mi := &file_streamevent_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PointMapping.ProtoReflect.Descriptor instead.
+func (*PointMapping) Descriptor() ([]byte, []int) {
+	return file_streamevent_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *PointMapping) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
+}
+
+func (x *PointMapping) GetDeviceName() string {
+	if x != nil {
+		return x.DeviceName
+	}
+	return ""
+}
+
+func (x *PointMapping) GetTdTableType() string {
+	if x != nil {
+		return x.TdTableType
+	}
+	return ""
+}
+
 // 单点遥信
 type SinglePointInfo struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -701,7 +772,7 @@ type SinglePointInfo struct {
 
 func (x *SinglePointInfo) Reset() {
 	*x = SinglePointInfo{}
-	mi := &file_streamevent_proto_msgTypes[11]
+	mi := &file_streamevent_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -713,7 +784,7 @@ func (x *SinglePointInfo) String() string {
 func (*SinglePointInfo) ProtoMessage() {}
 
 func (x *SinglePointInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_streamevent_proto_msgTypes[11]
+	mi := &file_streamevent_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -726,7 +797,7 @@ func (x *SinglePointInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SinglePointInfo.ProtoReflect.Descriptor instead.
 func (*SinglePointInfo) Descriptor() ([]byte, []int) {
-	return file_streamevent_proto_rawDescGZIP(), []int{11}
+	return file_streamevent_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *SinglePointInfo) GetIoa() uint32 {
@@ -828,7 +899,7 @@ type DoublePointInfo struct {
 
 func (x *DoublePointInfo) Reset() {
 	*x = DoublePointInfo{}
-	mi := &file_streamevent_proto_msgTypes[12]
+	mi := &file_streamevent_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -840,7 +911,7 @@ func (x *DoublePointInfo) String() string {
 func (*DoublePointInfo) ProtoMessage() {}
 
 func (x *DoublePointInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_streamevent_proto_msgTypes[12]
+	mi := &file_streamevent_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -853,7 +924,7 @@ func (x *DoublePointInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DoublePointInfo.ProtoReflect.Descriptor instead.
 func (*DoublePointInfo) Descriptor() ([]byte, []int) {
-	return file_streamevent_proto_rawDescGZIP(), []int{12}
+	return file_streamevent_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *DoublePointInfo) GetIoa() uint32 {
@@ -955,7 +1026,7 @@ type MeasuredValueScaledInfo struct {
 
 func (x *MeasuredValueScaledInfo) Reset() {
 	*x = MeasuredValueScaledInfo{}
-	mi := &file_streamevent_proto_msgTypes[13]
+	mi := &file_streamevent_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -967,7 +1038,7 @@ func (x *MeasuredValueScaledInfo) String() string {
 func (*MeasuredValueScaledInfo) ProtoMessage() {}
 
 func (x *MeasuredValueScaledInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_streamevent_proto_msgTypes[13]
+	mi := &file_streamevent_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -980,7 +1051,7 @@ func (x *MeasuredValueScaledInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MeasuredValueScaledInfo.ProtoReflect.Descriptor instead.
 func (*MeasuredValueScaledInfo) Descriptor() ([]byte, []int) {
-	return file_streamevent_proto_rawDescGZIP(), []int{13}
+	return file_streamevent_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *MeasuredValueScaledInfo) GetIoa() uint32 {
@@ -1084,7 +1155,7 @@ type MeasuredValueNormalInfo struct {
 
 func (x *MeasuredValueNormalInfo) Reset() {
 	*x = MeasuredValueNormalInfo{}
-	mi := &file_streamevent_proto_msgTypes[14]
+	mi := &file_streamevent_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1096,7 +1167,7 @@ func (x *MeasuredValueNormalInfo) String() string {
 func (*MeasuredValueNormalInfo) ProtoMessage() {}
 
 func (x *MeasuredValueNormalInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_streamevent_proto_msgTypes[14]
+	mi := &file_streamevent_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1109,7 +1180,7 @@ func (x *MeasuredValueNormalInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MeasuredValueNormalInfo.ProtoReflect.Descriptor instead.
 func (*MeasuredValueNormalInfo) Descriptor() ([]byte, []int) {
-	return file_streamevent_proto_rawDescGZIP(), []int{14}
+	return file_streamevent_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *MeasuredValueNormalInfo) GetIoa() uint32 {
@@ -1218,7 +1289,7 @@ type StepPositionInfo struct {
 
 func (x *StepPositionInfo) Reset() {
 	*x = StepPositionInfo{}
-	mi := &file_streamevent_proto_msgTypes[15]
+	mi := &file_streamevent_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1230,7 +1301,7 @@ func (x *StepPositionInfo) String() string {
 func (*StepPositionInfo) ProtoMessage() {}
 
 func (x *StepPositionInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_streamevent_proto_msgTypes[15]
+	mi := &file_streamevent_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1243,7 +1314,7 @@ func (x *StepPositionInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StepPositionInfo.ProtoReflect.Descriptor instead.
 func (*StepPositionInfo) Descriptor() ([]byte, []int) {
-	return file_streamevent_proto_rawDescGZIP(), []int{15}
+	return file_streamevent_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *StepPositionInfo) GetIoa() uint32 {
@@ -1329,7 +1400,7 @@ type StepPosition struct {
 
 func (x *StepPosition) Reset() {
 	*x = StepPosition{}
-	mi := &file_streamevent_proto_msgTypes[16]
+	mi := &file_streamevent_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1341,7 +1412,7 @@ func (x *StepPosition) String() string {
 func (*StepPosition) ProtoMessage() {}
 
 func (x *StepPosition) ProtoReflect() protoreflect.Message {
-	mi := &file_streamevent_proto_msgTypes[16]
+	mi := &file_streamevent_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1354,7 +1425,7 @@ func (x *StepPosition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StepPosition.ProtoReflect.Descriptor instead.
 func (*StepPosition) Descriptor() ([]byte, []int) {
-	return file_streamevent_proto_rawDescGZIP(), []int{16}
+	return file_streamevent_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *StepPosition) GetVal() int32 {
@@ -1400,7 +1471,7 @@ type BitString32Info struct {
 
 func (x *BitString32Info) Reset() {
 	*x = BitString32Info{}
-	mi := &file_streamevent_proto_msgTypes[17]
+	mi := &file_streamevent_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1412,7 +1483,7 @@ func (x *BitString32Info) String() string {
 func (*BitString32Info) ProtoMessage() {}
 
 func (x *BitString32Info) ProtoReflect() protoreflect.Message {
-	mi := &file_streamevent_proto_msgTypes[17]
+	mi := &file_streamevent_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1425,7 +1496,7 @@ func (x *BitString32Info) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BitString32Info.ProtoReflect.Descriptor instead.
 func (*BitString32Info) Descriptor() ([]byte, []int) {
-	return file_streamevent_proto_rawDescGZIP(), []int{17}
+	return file_streamevent_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *BitString32Info) GetIoa() uint32 {
@@ -1527,7 +1598,7 @@ type MeasuredValueFloatInfo struct {
 
 func (x *MeasuredValueFloatInfo) Reset() {
 	*x = MeasuredValueFloatInfo{}
-	mi := &file_streamevent_proto_msgTypes[18]
+	mi := &file_streamevent_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1539,7 +1610,7 @@ func (x *MeasuredValueFloatInfo) String() string {
 func (*MeasuredValueFloatInfo) ProtoMessage() {}
 
 func (x *MeasuredValueFloatInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_streamevent_proto_msgTypes[18]
+	mi := &file_streamevent_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1552,7 +1623,7 @@ func (x *MeasuredValueFloatInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MeasuredValueFloatInfo.ProtoReflect.Descriptor instead.
 func (*MeasuredValueFloatInfo) Descriptor() ([]byte, []int) {
-	return file_streamevent_proto_rawDescGZIP(), []int{18}
+	return file_streamevent_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *MeasuredValueFloatInfo) GetIoa() uint32 {
@@ -1639,7 +1710,7 @@ type BinaryCounterReadingInfo struct {
 
 func (x *BinaryCounterReadingInfo) Reset() {
 	*x = BinaryCounterReadingInfo{}
-	mi := &file_streamevent_proto_msgTypes[19]
+	mi := &file_streamevent_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1651,7 +1722,7 @@ func (x *BinaryCounterReadingInfo) String() string {
 func (*BinaryCounterReadingInfo) ProtoMessage() {}
 
 func (x *BinaryCounterReadingInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_streamevent_proto_msgTypes[19]
+	mi := &file_streamevent_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1664,7 +1735,7 @@ func (x *BinaryCounterReadingInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BinaryCounterReadingInfo.ProtoReflect.Descriptor instead.
 func (*BinaryCounterReadingInfo) Descriptor() ([]byte, []int) {
-	return file_streamevent_proto_rawDescGZIP(), []int{19}
+	return file_streamevent_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *BinaryCounterReadingInfo) GetIoa() uint32 {
@@ -1707,7 +1778,7 @@ type BinaryCounterReading struct {
 
 func (x *BinaryCounterReading) Reset() {
 	*x = BinaryCounterReading{}
-	mi := &file_streamevent_proto_msgTypes[20]
+	mi := &file_streamevent_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1719,7 +1790,7 @@ func (x *BinaryCounterReading) String() string {
 func (*BinaryCounterReading) ProtoMessage() {}
 
 func (x *BinaryCounterReading) ProtoReflect() protoreflect.Message {
-	mi := &file_streamevent_proto_msgTypes[20]
+	mi := &file_streamevent_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1732,7 +1803,7 @@ func (x *BinaryCounterReading) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BinaryCounterReading.ProtoReflect.Descriptor instead.
 func (*BinaryCounterReading) Descriptor() ([]byte, []int) {
-	return file_streamevent_proto_rawDescGZIP(), []int{20}
+	return file_streamevent_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *BinaryCounterReading) GetCounterReading() int32 {
@@ -1801,7 +1872,7 @@ type EventOfProtectionEquipmentInfo struct {
 
 func (x *EventOfProtectionEquipmentInfo) Reset() {
 	*x = EventOfProtectionEquipmentInfo{}
-	mi := &file_streamevent_proto_msgTypes[21]
+	mi := &file_streamevent_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1813,7 +1884,7 @@ func (x *EventOfProtectionEquipmentInfo) String() string {
 func (*EventOfProtectionEquipmentInfo) ProtoMessage() {}
 
 func (x *EventOfProtectionEquipmentInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_streamevent_proto_msgTypes[21]
+	mi := &file_streamevent_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1826,7 +1897,7 @@ func (x *EventOfProtectionEquipmentInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EventOfProtectionEquipmentInfo.ProtoReflect.Descriptor instead.
 func (*EventOfProtectionEquipmentInfo) Descriptor() ([]byte, []int) {
-	return file_streamevent_proto_rawDescGZIP(), []int{21}
+	return file_streamevent_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *EventOfProtectionEquipmentInfo) GetIoa() uint32 {
@@ -1937,7 +2008,7 @@ type PackedStartEventsOfProtectionEquipmentInfo struct {
 
 func (x *PackedStartEventsOfProtectionEquipmentInfo) Reset() {
 	*x = PackedStartEventsOfProtectionEquipmentInfo{}
-	mi := &file_streamevent_proto_msgTypes[22]
+	mi := &file_streamevent_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1949,7 +2020,7 @@ func (x *PackedStartEventsOfProtectionEquipmentInfo) String() string {
 func (*PackedStartEventsOfProtectionEquipmentInfo) ProtoMessage() {}
 
 func (x *PackedStartEventsOfProtectionEquipmentInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_streamevent_proto_msgTypes[22]
+	mi := &file_streamevent_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1962,7 +2033,7 @@ func (x *PackedStartEventsOfProtectionEquipmentInfo) ProtoReflect() protoreflect
 
 // Deprecated: Use PackedStartEventsOfProtectionEquipmentInfo.ProtoReflect.Descriptor instead.
 func (*PackedStartEventsOfProtectionEquipmentInfo) Descriptor() ([]byte, []int) {
-	return file_streamevent_proto_rawDescGZIP(), []int{22}
+	return file_streamevent_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *PackedStartEventsOfProtectionEquipmentInfo) GetIoa() uint32 {
@@ -2081,7 +2152,7 @@ type PackedOutputCircuitInfo struct {
 
 func (x *PackedOutputCircuitInfo) Reset() {
 	*x = PackedOutputCircuitInfo{}
-	mi := &file_streamevent_proto_msgTypes[23]
+	mi := &file_streamevent_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2093,7 +2164,7 @@ func (x *PackedOutputCircuitInfo) String() string {
 func (*PackedOutputCircuitInfo) ProtoMessage() {}
 
 func (x *PackedOutputCircuitInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_streamevent_proto_msgTypes[23]
+	mi := &file_streamevent_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2106,7 +2177,7 @@ func (x *PackedOutputCircuitInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PackedOutputCircuitInfo.ProtoReflect.Descriptor instead.
 func (*PackedOutputCircuitInfo) Descriptor() ([]byte, []int) {
-	return file_streamevent_proto_rawDescGZIP(), []int{23}
+	return file_streamevent_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *PackedOutputCircuitInfo) GetIoa() uint32 {
@@ -2245,7 +2316,7 @@ type PackedSinglePointWithSCDInfo struct {
 
 func (x *PackedSinglePointWithSCDInfo) Reset() {
 	*x = PackedSinglePointWithSCDInfo{}
-	mi := &file_streamevent_proto_msgTypes[24]
+	mi := &file_streamevent_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2257,7 +2328,7 @@ func (x *PackedSinglePointWithSCDInfo) String() string {
 func (*PackedSinglePointWithSCDInfo) ProtoMessage() {}
 
 func (x *PackedSinglePointWithSCDInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_streamevent_proto_msgTypes[24]
+	mi := &file_streamevent_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2270,7 +2341,7 @@ func (x *PackedSinglePointWithSCDInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PackedSinglePointWithSCDInfo.ProtoReflect.Descriptor instead.
 func (*PackedSinglePointWithSCDInfo) Descriptor() ([]byte, []int) {
-	return file_streamevent_proto_rawDescGZIP(), []int{24}
+	return file_streamevent_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *PackedSinglePointWithSCDInfo) GetIoa() uint32 {
@@ -2383,7 +2454,7 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x10PushChunkAsduReq\x12\x10\n" +
 	"\x03tId\x18\x01 \x01(\tR\x03tId\x12.\n" +
 	"\amsgBody\x18\x02 \x03(\v2\x14.streamevent.MsgBodyR\amsgBody\"\x12\n" +
-	"\x10PushChunkAsduRes\"\xf1\x01\n" +
+	"\x10PushChunkAsduRes\"\x9c\x02\n" +
 	"\aMsgBody\x12\x14\n" +
 	"\x05msgId\x18\x01 \x01(\tR\x05msgId\x12\x12\n" +
 	"\x04host\x18\x02 \x01(\tR\x04host\x12\x12\n" +
@@ -2395,7 +2466,14 @@ const file_streamevent_proto_rawDesc = "" +
 	"\abodyRaw\x18\b \x01(\tR\abodyRaw\x12\x12\n" +
 	"\x04time\x18\t \x01(\tR\x04time\x12 \n" +
 	"\vmetaDataRaw\x18\n" +
-	" \x01(\tR\vmetaDataRaw\"\xc9\x01\n" +
+	" \x01(\tR\vmetaDataRaw\x12)\n" +
+	"\x02pm\x18\v \x01(\v2\x19.streamevent.PointMappingR\x02pm\"l\n" +
+	"\fPointMapping\x12\x1a\n" +
+	"\bdeviceId\x18\x01 \x01(\tR\bdeviceId\x12\x1e\n" +
+	"\n" +
+	"deviceName\x18\x02 \x01(\tR\n" +
+	"deviceName\x12 \n" +
+	"\vtdTableType\x18\x03 \x01(\tR\vtdTableType\"\xc9\x01\n" +
 	"\x0fSinglePointInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\bR\x05value\x12\x10\n" +
@@ -2571,7 +2649,7 @@ func file_streamevent_proto_rawDescGZIP() []byte {
 	return file_streamevent_proto_rawDescData
 }
 
-var file_streamevent_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
+var file_streamevent_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_streamevent_proto_goTypes = []any{
 	(*ReceiveMQTTMessageReq)(nil),                      // 0: streamevent.ReceiveMQTTMessageReq
 	(*ReceiveMQTTMessageRes)(nil),                      // 1: streamevent.ReceiveMQTTMessageRes
@@ -2584,40 +2662,42 @@ var file_streamevent_proto_goTypes = []any{
 	(*PushChunkAsduReq)(nil),                           // 8: streamevent.PushChunkAsduReq
 	(*PushChunkAsduRes)(nil),                           // 9: streamevent.PushChunkAsduRes
 	(*MsgBody)(nil),                                    // 10: streamevent.MsgBody
-	(*SinglePointInfo)(nil),                            // 11: streamevent.SinglePointInfo
-	(*DoublePointInfo)(nil),                            // 12: streamevent.DoublePointInfo
-	(*MeasuredValueScaledInfo)(nil),                    // 13: streamevent.MeasuredValueScaledInfo
-	(*MeasuredValueNormalInfo)(nil),                    // 14: streamevent.MeasuredValueNormalInfo
-	(*StepPositionInfo)(nil),                           // 15: streamevent.StepPositionInfo
-	(*StepPosition)(nil),                               // 16: streamevent.StepPosition
-	(*BitString32Info)(nil),                            // 17: streamevent.BitString32Info
-	(*MeasuredValueFloatInfo)(nil),                     // 18: streamevent.MeasuredValueFloatInfo
-	(*BinaryCounterReadingInfo)(nil),                   // 19: streamevent.BinaryCounterReadingInfo
-	(*BinaryCounterReading)(nil),                       // 20: streamevent.BinaryCounterReading
-	(*EventOfProtectionEquipmentInfo)(nil),             // 21: streamevent.EventOfProtectionEquipmentInfo
-	(*PackedStartEventsOfProtectionEquipmentInfo)(nil), // 22: streamevent.PackedStartEventsOfProtectionEquipmentInfo
-	(*PackedOutputCircuitInfo)(nil),                    // 23: streamevent.PackedOutputCircuitInfo
-	(*PackedSinglePointWithSCDInfo)(nil),               // 24: streamevent.PackedSinglePointWithSCDInfo
+	(*PointMapping)(nil),                               // 11: streamevent.PointMapping
+	(*SinglePointInfo)(nil),                            // 12: streamevent.SinglePointInfo
+	(*DoublePointInfo)(nil),                            // 13: streamevent.DoublePointInfo
+	(*MeasuredValueScaledInfo)(nil),                    // 14: streamevent.MeasuredValueScaledInfo
+	(*MeasuredValueNormalInfo)(nil),                    // 15: streamevent.MeasuredValueNormalInfo
+	(*StepPositionInfo)(nil),                           // 16: streamevent.StepPositionInfo
+	(*StepPosition)(nil),                               // 17: streamevent.StepPosition
+	(*BitString32Info)(nil),                            // 18: streamevent.BitString32Info
+	(*MeasuredValueFloatInfo)(nil),                     // 19: streamevent.MeasuredValueFloatInfo
+	(*BinaryCounterReadingInfo)(nil),                   // 20: streamevent.BinaryCounterReadingInfo
+	(*BinaryCounterReading)(nil),                       // 21: streamevent.BinaryCounterReading
+	(*EventOfProtectionEquipmentInfo)(nil),             // 22: streamevent.EventOfProtectionEquipmentInfo
+	(*PackedStartEventsOfProtectionEquipmentInfo)(nil), // 23: streamevent.PackedStartEventsOfProtectionEquipmentInfo
+	(*PackedOutputCircuitInfo)(nil),                    // 24: streamevent.PackedOutputCircuitInfo
+	(*PackedSinglePointWithSCDInfo)(nil),               // 25: streamevent.PackedSinglePointWithSCDInfo
 }
 var file_streamevent_proto_depIdxs = []int32{
 	2,  // 0: streamevent.ReceiveMQTTMessageReq.messages:type_name -> streamevent.MqttMessage
 	7,  // 1: streamevent.ReceiveKafkaMessageReq.messages:type_name -> streamevent.KafkaMessage
 	10, // 2: streamevent.PushChunkAsduReq.msgBody:type_name -> streamevent.MsgBody
-	16, // 3: streamevent.StepPositionInfo.value:type_name -> streamevent.StepPosition
-	20, // 4: streamevent.BinaryCounterReadingInfo.value:type_name -> streamevent.BinaryCounterReading
-	0,  // 5: streamevent.StreamEvent.ReceiveMQTTMessage:input_type -> streamevent.ReceiveMQTTMessageReq
-	3,  // 6: streamevent.StreamEvent.ReceiveWSMessage:input_type -> streamevent.ReceiveWSMessageReq
-	5,  // 7: streamevent.StreamEvent.ReceiveKafkaMessage:input_type -> streamevent.ReceiveKafkaMessageReq
-	8,  // 8: streamevent.StreamEvent.PushChunkAsdu:input_type -> streamevent.PushChunkAsduReq
-	1,  // 9: streamevent.StreamEvent.ReceiveMQTTMessage:output_type -> streamevent.ReceiveMQTTMessageRes
-	4,  // 10: streamevent.StreamEvent.ReceiveWSMessage:output_type -> streamevent.ReceiveWSMessageRes
-	6,  // 11: streamevent.StreamEvent.ReceiveKafkaMessage:output_type -> streamevent.ReceiveKafkaMessageRes
-	9,  // 12: streamevent.StreamEvent.PushChunkAsdu:output_type -> streamevent.PushChunkAsduRes
-	9,  // [9:13] is the sub-list for method output_type
-	5,  // [5:9] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	11, // 3: streamevent.MsgBody.pm:type_name -> streamevent.PointMapping
+	17, // 4: streamevent.StepPositionInfo.value:type_name -> streamevent.StepPosition
+	21, // 5: streamevent.BinaryCounterReadingInfo.value:type_name -> streamevent.BinaryCounterReading
+	0,  // 6: streamevent.StreamEvent.ReceiveMQTTMessage:input_type -> streamevent.ReceiveMQTTMessageReq
+	3,  // 7: streamevent.StreamEvent.ReceiveWSMessage:input_type -> streamevent.ReceiveWSMessageReq
+	5,  // 8: streamevent.StreamEvent.ReceiveKafkaMessage:input_type -> streamevent.ReceiveKafkaMessageReq
+	8,  // 9: streamevent.StreamEvent.PushChunkAsdu:input_type -> streamevent.PushChunkAsduReq
+	1,  // 10: streamevent.StreamEvent.ReceiveMQTTMessage:output_type -> streamevent.ReceiveMQTTMessageRes
+	4,  // 11: streamevent.StreamEvent.ReceiveWSMessage:output_type -> streamevent.ReceiveWSMessageRes
+	6,  // 12: streamevent.StreamEvent.ReceiveKafkaMessage:output_type -> streamevent.ReceiveKafkaMessageRes
+	9,  // 13: streamevent.StreamEvent.PushChunkAsdu:output_type -> streamevent.PushChunkAsduRes
+	10, // [10:14] is the sub-list for method output_type
+	6,  // [6:10] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_streamevent_proto_init() }
@@ -2631,7 +2711,7 @@ func file_streamevent_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_streamevent_proto_rawDesc), len(file_streamevent_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   25,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

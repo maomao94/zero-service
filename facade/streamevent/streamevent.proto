@@ -102,6 +102,16 @@ message MsgBody {
   string time = 9 [json_name = "time"];
   // 应用级元数据（如：应用ID、用户信息、场站信息等）
   string metaDataRaw = 10 [json_name = "metaDataRaw"];
+  PointMapping pm = 11 [json_name = "pm"];
+}
+
+message PointMapping {
+  // 设备编号/ID
+  string deviceId = 1 [json_name = "deviceId"];
+  // 设备名称
+  string deviceName = 2 [json_name = "deviceName"];
+  // TDengine 表类型（遥信表/遥测表等，逗号分隔）
+  string tdTableType = 3 [json_name = "tdTableType"];
 }
 
 // 单点遥信

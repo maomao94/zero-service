@@ -152,10 +152,6 @@ func generateTopic(topicPattern string, data *types.MsgBody) (string, error) {
 func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa uint) error {
 	key, _ := data.GetKey()
 	data.Time = carbon.Now().ToDateTimeMicroString()
-	byteData, err := json.Marshal(data)
-	if err != nil {
-		return fmt.Errorf("json marshal error %v", err)
-	}
 	stationId, ok := ctx.Value("stationId").(string)
 	if svc.SqliteConn != nil && ok {
 		query, exist, cacheErr := svc.DevicePointMappingModel.FindCacheOneByTagStationCoaIoa(ctx, stationId, int64(data.Coa), int64(ioa))
@@ -170,6 +166,15 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 			logx.WithContext(ctx).Debugf("push asdu disabled for stationId: %s, coa: %d, ioa: %d, msgId: %s", stationId, data.Coa, ioa, data.MsgId)
 			return nil
 		}
+		data.PointMapping = &types.PointMapping{
+			DeviceId:    query.DeviceId,
+			DeviceName:  query.DeviceName,
+			TdTableType: query.TdTableType,
+		}
+	}
+	byteData, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("json marshal error %v", err)
 	}
 
 	mr.FinishVoid(
@@ -236,19 +241,27 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 				logx.WithContext(ctx).Errorf("failed to marshal metaData to json, msgId: %s, err: %v", data.MsgId, rpcErr)
 				return
 			}
+			item := &streamevent.MsgBody{
+				MsgId:       data.MsgId,
+				Host:        data.Host,
+				Port:        int32(data.Port),
+				Asdu:        data.Asdu,
+				TypeId:      int32(data.TypeId),
+				DataType:    int32(data.DataType),
+				Coa:         uint32(data.Coa),
+				BodyRaw:     bodyRaw,
+				Time:        data.Time,
+				MetaDataRaw: metaDataRaw,
+			}
+			if data.PointMapping != nil {
+				item.Pm = &streamevent.PointMapping{
+					DeviceId:    data.PointMapping.DeviceId,
+					DeviceName:  data.PointMapping.DeviceName,
+					TdTableType: data.PointMapping.TdTableType,
+				}
+			}
 			msgBodyList := []*streamevent.MsgBody{
-				{
-					MsgId:       data.MsgId,
-					Host:        data.Host,
-					Port:        int32(data.Port),
-					Asdu:        data.Asdu,
-					TypeId:      int32(data.TypeId),
-					DataType:    int32(data.DataType),
-					Coa:         uint32(data.Coa),
-					BodyRaw:     bodyRaw,
-					Time:        data.Time,
-					MetaDataRaw: metaDataRaw,
-				},
+				item,
 			}
 			logx.WithContext(ctx).Debugf("pushing asdu to grpc, msgId: %s, tid: %s", data.MsgId, tid)
 			pushGrpcCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
