@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"reflect"
+	"runtime"
 	"strings"
 	"time"
 
@@ -141,4 +142,9 @@ func ShortPath(randomBytesLen int) (shortPath string, uniqueID string, err error
 	shortPath = EncodeBase62(randomBytes)
 
 	return shortPath, uniqueID, nil
+}
+
+// PrintGoVersion 打印当前Go版本信息
+func PrintGoVersion() {
+	fmt.Printf("Go Version: %s\n", runtime.Version())
 }

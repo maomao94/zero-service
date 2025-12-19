@@ -10,6 +10,7 @@ import (
 	interceptor "zero-service/common/Interceptor/rpcserver"
 	_ "zero-service/common/carbonx"
 	"zero-service/common/nacosx"
+	"zero-service/common/tool"
 
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
@@ -29,6 +30,10 @@ func main() {
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
+
+	// Print Go version
+	tool.PrintGoVersion()
+
 	ctx := svc.NewServiceContext(c)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {

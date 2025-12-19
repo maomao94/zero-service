@@ -14,6 +14,7 @@ import (
 	_ "zero-service/common/carbonx"
 	"zero-service/common/iec104/iec104client"
 	"zero-service/common/nacosx"
+	"zero-service/common/tool"
 
 	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/duke-git/lancet/v2/strutil"
@@ -41,6 +42,9 @@ func main() {
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
 	ctx := svc.NewServiceContext(c)
+
+	// Print Go version
+	tool.PrintGoVersion()
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
 		ieccaller.RegisterIecCallerServer(grpcServer, server.NewIecCallerServer(ctx))

@@ -15,6 +15,7 @@ import (
 	"github.com/zeromicro/go-zero/rest/httpx"
 
 	_ "zero-service/common/nacosx"
+	"zero-service/common/tool"
 
 	"github.com/zeromicro/go-zero/core/conf"
 )
@@ -27,6 +28,9 @@ func main() {
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
+
+	// Print Go version
+	tool.PrintGoVersion()
 
 	// grpc-gateway
 	//server := gateway.MustNewServer(c.GatewayConf, func(server *gateway.Server) {

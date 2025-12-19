@@ -6,6 +6,7 @@ import (
 	"zero-service/app/iecstash/kafka"
 	interceptor "zero-service/common/Interceptor/rpcserver"
 	"zero-service/common/nacosx"
+	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
 
 	"github.com/duke-git/lancet/v2/strutil"
@@ -37,6 +38,9 @@ func main() {
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
 	proc.SetTimeToForceQuit(c.GracePeriod)
+
+	// Print Go version
+	tool.PrintGoVersion()
 	zrpc.DontLogClientContentForMethod(streamevent.StreamEvent_PushChunkAsdu_FullMethodName)
 	ctx := svc.NewServiceContext(c)
 
