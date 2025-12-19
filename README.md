@@ -25,7 +25,7 @@
 #### 2.1 服务 `iec104` IEC 104 数采平台
 `iec104` 模块提供了完整的 IEC 104 数采平台解决方案，包含三个核心服务组件：
 
-1. **ieccaller 服务**：对接 104 从站，实现 IEC 104 主站功能，负责与多个子站通信，支持 Kafka 和 MQTT 双协议数据推送
+1. **ieccaller 服务**：对接 104 从站，实现 IEC 104 主站功能，负责与多个子站通信，支持 Kafka/MQTT/GRPC 多协议数据推送
 2. **iecstash 服务**：负责消费 Kafka 消息，对 ASDU 数据进行压缩合并处理，并使用 chunk 任务处理机制将数据发送到下游 RPC 服务
 3. **streamevent 服务**：接收 iecstash 压缩合并后的 ASDU 数据，使用 gRPC 实现，目前只实现采集原生指令数据功能
 
