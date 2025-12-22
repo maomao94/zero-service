@@ -7,7 +7,7 @@
 ### 0.1 核心功能
 
 - **IEC 60870-5-104 协议支持**：实现完整的IEC 104主站功能，支持与多个子站通信
-- **双协议消息推送**：同时支持Kafka和MQTT消息推送，可灵活配置
+- **三协议消息推送**：同时支持Kafka、MQTT和gRPC消息推送，可灵活配置
 - **动态Topic生成**：基于配置规则和消息元数据动态生成推送Topic
 - **配置驱动**：全配置化设计，支持灵活部署和扩展
 - **弱校验模式**：仅当配置了点位且明确设置不推送时，才会拒绝消息，否则默认推送
@@ -17,7 +17,7 @@
 **分层架构**：
 1. **协议处理层**：负责IEC 104协议的解析、编码和通信管理
 2. **核心处理层**：实现消息路由、格式转换和业务逻辑处理
-3. **输出层**：支持Kafka和MQTT双协议消息推送，可独立配置
+3. **输出层**：支持Kafka、MQTT和gRPC三协议消息推送，可独立配置
 
 **架构特性**：
 - 模块化设计，各层职责清晰，易于扩展和维护
@@ -34,7 +34,14 @@
 #### MQTT配置
 - 支持多个MQTT服务器连接
 - 支持多Topic推送，每个消息可推送至多个Topic
-- 支持动态Topic生成，基于消息内容和元数据
+- 支持自定义Topic生成，基于Go模板语法和消息内容
+- 支持点位映射字段、元数据字段和消息体字段的灵活组合
+
+#### gRPC配置
+- 支持直推gRPC服务
+- 支持批量消息推送
+- 支持自定义endpoint配置
+- 支持Nacos服务发现
 
 ### 0.4 弱校验模式说明
 
@@ -206,7 +213,7 @@ PointMapping包含设备的详细信息和扩展字段，用于动态生成MQTT 
 
 ### 扩展字段用途
 
-扩展字段（ext1-ext5）主要用于主题拆分，允许根据业务需求灵活生成不同维度的MQTT Topic：
+扩展字段（ext1-ext5）主要用于主题拆分，允许根据业务需求灵活生成不同维度的MQTT Topic,也可以透传到 facade 层进行业务处理。
 
 - **业务类型**：如alarm（告警）、normal（正常）、control（控制）
 - **设备类型**：如switch（开关）、sensor（传感器）、meter（仪表）
@@ -258,17 +265,17 @@ CREATE TABLE IF NOT EXISTS device_point_mapping (
 
 **核心字段说明**：
 
-| 字段名            | 类型     | 说明                                         |
-|----------------|--------|--------------------------------------------|
-| tag_station    | String | 与TDengine的tag_station对应，用于设备分组              |
-| coa            | int    | 公共地址，与IEC 104协议中的公共地址对应                   |
-| ioa            | int    | 信息对象地址，与IEC 104协议中的信息对象地址对应              |
-| device_id      | String | 设备唯一标识符，映射到PointMapping.DeviceId           |
-| device_name    | String | 设备名称，映射到PointMapping.DeviceName             |
-| td_table_type  | String | TDengine表类型，逗号分隔，如：yx, yc                 |
-| enable_push    | int    | 是否允许推送数据：0-不允许，1-允许，弱校验模式的核心控制字段        |
-| enable_raw_insert | int | 是否允许插入到raw原生数据中：0-不允许，1-允许              |
-| ext_1-ext_5    | String | 扩展字段，映射到PointMapping.Ext1-Ext5，用于动态生成Topic |
+| 字段名            | 类型     | 说明                                                 |
+|----------------|--------|----------------------------------------------------|
+| tag_station    | String | 与TDengine的tag_station对应，用于设备分组                     |
+| coa            | int    | 公共地址，与IEC 104协议中的公共地址对应                            |
+| ioa            | int    | 信息对象地址，与IEC 104协议中的信息对象地址对应                        |
+| device_id      | String | 设备唯一标识符，映射到PointMapping.DeviceId                   |
+| device_name    | String | 设备名称，映射到PointMapping.DeviceName                    |
+| td_table_type  | String | TDengine表类型，逗号分隔，如：yx, yc                          |
+| enable_push    | int    | 是否允许推送数据：0-不允许，1-允许，弱校验模式的核心控制字段                   |
+| enable_raw_insert | int | 是否允许插入到raw原生数据中：0-不允许，1-允许                         |
+| ext_1-ext_5    | String | 扩展字段，映射到PointMapping.Ext1-Ext5，用于动态生成Topic和自定义业务逻辑 |
 
 **索引说明**：
 - 唯一索引：`UNIQUE(tag_station, coa, ioa)`，保证同一个点位只对应一个设备配置
