@@ -22,6 +22,7 @@ import (
 	"github.com/zeromicro/go-queue/kq"
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/proc"
 	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
@@ -41,6 +42,7 @@ func main() {
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
+	proc.SetTimeToForceQuit(c.GracePeriod)
 	ctx := svc.NewServiceContext(c)
 
 	// Print Go version

@@ -70,3 +70,7 @@ DisableStmtLog: false
 #InterrogationCmdCron: "*/10 * * * * *"
 # 累计量召唤 默认 @every 60s
 #CounterInterrogationCmd: "*/60 * * * * *"
+
+# 1MB 一批次
+PushAsduChunkBytes: 1048576
+GracePeriod: 30s

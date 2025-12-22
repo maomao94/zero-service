@@ -216,6 +216,6 @@ func (l *PushChunkAsduLogic) PushChunkAsdu(in *streamevent.PushChunkAsduReq) (*s
 	}
 
 	duration := timex.Since(startTime)
-	l.WithContext(ctx).WithDuration(duration).Infof("PushChunkAsdu, received %d asdu, ignored %d asdu, dispatch inserted %d rows", len(in.MsgBody), ignoreCount, insertedCount)
+	l.WithContext(ctx).WithDuration(duration).Infof("PushChunkAsdu, tId: %s, received %d asdu, ignored %d asdu, dispatch inserted %d rows", in.TId, len(in.MsgBody), ignoreCount, insertedCount)
 	return &streamevent.PushChunkAsduRes{}, nil
 }

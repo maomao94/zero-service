@@ -1,9 +1,13 @@
 package util
 
 import (
+	"errors"
 	"fmt"
-	"github.com/wendy512/go-iecp5/asdu"
 	"strings"
+	"text/template"
+	"zero-service/common/iec104/types"
+
+	"github.com/wendy512/go-iecp5/asdu"
 )
 
 func QdsContainsAny(qds asdu.QualityDescriptor, flags ...asdu.QualityDescriptor) bool {
@@ -188,4 +192,50 @@ func NormalizeToFloat(n asdu.Normalize) float32 {
 func GenerateStationId(host string, port interface{}) string {
 	safeHost := strings.ReplaceAll(host, ".", "_")
 	return fmt.Sprintf("%s_%v", safeHost, port)
+}
+
+// generateTopic 根据配置的topic规则和报文值生成最终的topic
+func GenerateTopic(topicPattern string, data *types.MsgBody) (string, error) {
+	if data == nil {
+		return "", errors.New("msg body is nil")
+	}
+
+	tmpl, err := template.New("topic").Parse(topicPattern)
+	if err != nil {
+		return "", errors.New("failed to parse topic template")
+	}
+
+	// Execute the template directly with the MsgBody struct
+	var result strings.Builder
+	err = tmpl.Execute(&result, data)
+	if err != nil {
+		return "", errors.New("failed to execute topic template")
+	}
+
+	topic := result.String()
+
+	if strings.Contains(topic, "{{") && strings.Contains(topic, "}}") {
+		return "", errors.New("unresolved placeholders in topic")
+	}
+
+	if strings.Contains(topic, "+") || strings.Contains(topic, "#") {
+		return "", errors.New("invalid topic pattern")
+	}
+
+	// 检查连续的斜杠，例如 "iec//asdu/"，如果发现则返回错误
+	if strings.Contains(topic, "//") {
+		return "", errors.New("invalid topic: contains consecutive slashes")
+	}
+
+	// 检查开头是否有斜杠
+	if strings.HasPrefix(topic, "/") {
+		return "", errors.New("invalid topic: starts with slash")
+	}
+
+	// 检查结尾是否有斜杠
+	if strings.HasSuffix(topic, "/") {
+		return "", errors.New("invalid topic: ends with slash")
+	}
+
+	return topic, nil
 }

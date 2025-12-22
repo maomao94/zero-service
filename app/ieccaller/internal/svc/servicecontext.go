@@ -3,15 +3,13 @@ package svc
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math"
-	"strings"
-	"text/template"
 	"time"
 	"zero-service/app/ieccaller/internal/config"
 	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/dbx"
+	"zero-service/common/iec104"
 	"zero-service/common/iec104/iec104client"
 	"zero-service/common/iec104/types"
 	"zero-service/common/iec104/util"
@@ -21,11 +19,12 @@ import (
 	"zero-service/model"
 
 	"github.com/dromara/carbon/v2"
+	"github.com/tidwall/gjson"
 	"github.com/zeromicro/go-queue/kq"
-	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/mr"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"github.com/zeromicro/go-zero/core/timex"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
 )
@@ -37,6 +36,7 @@ type ServiceContext struct {
 	KafkaBroadcastPusher *kq.Pusher
 	MqttClient           *mqttx.Client
 	StreamEventCli       streamevent.StreamEventClient
+	ChunkAsduPusher      *iec104.ChunkAsduPusher
 
 	SqliteConn              sqlx.SqlConn
 	DevicePointMappingModel model.DevicePointMappingModel
@@ -69,6 +69,64 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			)),
 		).Conn())
 		svcCtx.StreamEventCli = streamEventCli
+
+		svcCtx.ChunkAsduPusher = iec104.NewChunkAsduPusher(
+			func(msgs []string) {
+				tid, _ := tool.SimpleUUID()
+				msgBodyList := make([]*streamevent.MsgBody, 0, len(msgs))
+				for _, s := range msgs {
+					result := gjson.Parse(s)
+					bodyRaw := result.Get("body").Raw
+					typeId := result.Get("typeId").Int()
+					item := &streamevent.MsgBody{
+						MsgId:       result.Get("msgId").String(),
+						Host:        result.Get("host").String(),
+						Port:        int32(result.Get("port").Int()),
+						Asdu:        result.Get("asdu").String(),
+						TypeId:      int32(typeId),
+						DataType:    int32(result.Get("dataType").Int()),
+						Coa:         uint32(result.Get("coa").Int()),
+						BodyRaw:     bodyRaw,
+						Time:        result.Get("time").String(),
+						MetaDataRaw: result.Get("metaData").Raw,
+					}
+					pm := result.Get("pm")
+					if pm.Exists() {
+						item.Pm = &streamevent.PointMapping{
+							DeviceId:    pm.Get("deviceId").String(),
+							DeviceName:  pm.Get("deviceName").String(),
+							TdTableType: pm.Get("tdTableType").String(),
+							Ext1:        pm.Get("ext1").String(),
+							Ext2:        pm.Get("ext2").String(),
+							Ext3:        pm.Get("ext3").String(),
+							Ext4:        pm.Get("ext4").String(),
+							Ext5:        pm.Get("ext5").String(),
+						}
+					}
+					msgBodyList = append(msgBodyList, item)
+				}
+
+				if len(msgBodyList) > 0 {
+					pushGrpcCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+					defer cancel()
+					startTime := timex.Now()
+					_, err := streamEventCli.PushChunkAsdu(pushGrpcCtx, &streamevent.PushChunkAsduReq{
+						MsgBody: msgBodyList,
+						TId:     tid,
+					})
+					var invokeflg = "success"
+					if err != nil {
+						invokeflg = "fail"
+						logx.WithContext(pushGrpcCtx).Errorf("PushChunkAsdu failed, tId: %s, err: %v", tid, err)
+					}
+					duration := timex.Since(startTime)
+					logx.WithContext(pushGrpcCtx).WithDuration(duration).Infof("PushChunkAsdu, tId: %s, asdu size: %d - %s", tid, len(msgBodyList), invokeflg)
+					return
+				}
+				return
+			},
+			c.PushAsduChunkBytes,
+		)
 	}
 
 	if len(c.SqliteDB.DataSource) > 0 {
@@ -76,52 +134,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		svcCtx.DevicePointMappingModel = model.NewDevicePointMappingModel(svcCtx.SqliteConn)
 	}
 	return svcCtx
-}
-
-// generateTopic 根据配置的topic规则和报文值生成最终的topic
-func generateTopic(topicPattern string, data *types.MsgBody) (string, error) {
-	if data == nil {
-		return "", errors.New("msg body is nil")
-	}
-
-	tmpl, err := template.New("topic").Parse(topicPattern)
-	if err != nil {
-		return "", errors.New("failed to parse topic template")
-	}
-
-	// Execute the template directly with the MsgBody struct
-	var result strings.Builder
-	err = tmpl.Execute(&result, data)
-	if err != nil {
-		return "", errors.New("failed to execute topic template")
-	}
-
-	topic := result.String()
-
-	if strings.Contains(topic, "{{") && strings.Contains(topic, "}}") {
-		return "", errors.New("unresolved placeholders in topic")
-	}
-
-	if strings.Contains(topic, "+") || strings.Contains(topic, "#") {
-		return "", errors.New("invalid topic pattern")
-	}
-
-	// 检查连续的斜杠，例如 "iec//asdu/"，如果发现则返回错误
-	if strings.Contains(topic, "//") {
-		return "", errors.New("invalid topic: contains consecutive slashes")
-	}
-
-	// 检查开头是否有斜杠
-	if strings.HasPrefix(topic, "/") {
-		return "", errors.New("invalid topic: starts with slash")
-	}
-
-	// 检查结尾是否有斜杠
-	if strings.HasSuffix(topic, "/") {
-		return "", errors.New("invalid topic: ends with slash")
-	}
-
-	return topic, nil
 }
 
 func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa uint) error {
@@ -201,7 +213,7 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 			for _, topicPattern := range topics {
 				pushTopicCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 				defer cancel()
-				topic, genErr := generateTopic(topicPattern, data)
+				topic, genErr := util.GenerateTopic(topicPattern, data)
 				if genErr != nil {
 					logx.WithContext(pushTopicCtx).Debugf("failed to generate mqtt topic, pattern: %s, msgId: %s, err: %v", topicPattern, data.MsgId, genErr)
 					continue
@@ -214,58 +226,11 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 				}
 			}
 		},
-		// gRPC 推送
 		func() {
-			if svc.StreamEventCli == nil {
-				return
-			}
-			tid, _ := tool.SimpleUUID()
-			bodyRaw, rpcErr := jsonx.MarshalToString(data.Body)
-			if rpcErr != nil {
-				logx.WithContext(ctx).Errorf("failed to marshal body to json, msgId: %s, err: %v", data.MsgId, rpcErr)
-				return
-			}
-			metaDataRaw, rpcErr := jsonx.MarshalToString(data.MetaData)
-			if rpcErr != nil {
-				logx.WithContext(ctx).Errorf("failed to marshal metaData to json, msgId: %s, err: %v", data.MsgId, rpcErr)
-				return
-			}
-			item := &streamevent.MsgBody{
-				MsgId:       data.MsgId,
-				Host:        data.Host,
-				Port:        int32(data.Port),
-				Asdu:        data.Asdu,
-				TypeId:      int32(data.TypeId),
-				DataType:    int32(data.DataType),
-				Coa:         uint32(data.Coa),
-				BodyRaw:     bodyRaw,
-				Time:        data.Time,
-				MetaDataRaw: metaDataRaw,
-			}
-			if data.Pm != nil {
-				item.Pm = &streamevent.PointMapping{
-					DeviceId:    data.Pm.DeviceId,
-					DeviceName:  data.Pm.DeviceName,
-					TdTableType: data.Pm.TdTableType,
-					Ext1:        data.Pm.Ext1,
-					Ext2:        data.Pm.Ext2,
-					Ext3:        data.Pm.Ext3,
-					Ext4:        data.Pm.Ext4,
-					Ext5:        data.Pm.Ext5,
+			if svc.ChunkAsduPusher != nil {
+				if chunkErr := svc.ChunkAsduPusher.Write(string(byteData)); chunkErr != nil {
+					logx.WithContext(ctx).Errorf("failed to write asdu to batch pusher, msgId: %s, err: %v", data.MsgId, chunkErr)
 				}
-			}
-			msgBodyList := []*streamevent.MsgBody{
-				item,
-			}
-			logx.WithContext(ctx).Debugf("pushing asdu to grpc, msgId: %s, tid: %s", data.MsgId, tid)
-			pushGrpcCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-			defer cancel()
-			_, rpcErr = svc.StreamEventCli.PushChunkAsdu(pushGrpcCtx, &streamevent.PushChunkAsduReq{
-				MsgBody: msgBodyList,
-				TId:     tid,
-			})
-			if rpcErr != nil {
-				logx.WithContext(pushGrpcCtx).Errorf("failed to push asdu to grpc, msgId: %s, tid: %s, err: %v", data.MsgId, tid, rpcErr)
 			}
 		},
 	)

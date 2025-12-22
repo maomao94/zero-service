@@ -3,25 +3,24 @@ package svc
 import (
 	"context"
 	"math"
-	"sync"
+	"time"
 	"zero-service/app/iecstash/internal/config"
 	interceptor "zero-service/common/Interceptor/rpcclient"
+	"zero-service/common/iec104"
 	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
 
 	"github.com/tidwall/gjson"
-	"github.com/zeromicro/go-zero/core/executors"
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/threading"
 	"github.com/zeromicro/go-zero/core/timex"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
 )
 
 type ServiceContext struct {
-	Config         config.Config
-	StreamEventCli streamevent.StreamEventClient
-	AsduPusher     *AsduPusher
+	Config          config.Config
+	StreamEventCli  streamevent.StreamEventClient
+	ChunkAsduPusher *iec104.ChunkAsduPusher
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -34,77 +33,62 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			//grpc.MaxCallRecvMsgSize(100 * 1024 * 1024),  // 接收最大100MB
 		)),
 	).Conn())
-	return &ServiceContext{
-		Config:         c,
-		StreamEventCli: streamEventCli,
-		AsduPusher:     NewAsduPusher(streamEventCli, c.PushAsduChunkBytes),
-	}
-}
 
-type AsduPusher struct {
-	inserter       *executors.ChunkExecutor
-	streamEventCli streamevent.StreamEventClient
-	writerLock     sync.Mutex
-}
-
-func (w *AsduPusher) Write(val string) error {
-	w.writerLock.Lock()
-	defer w.writerLock.Unlock()
-	return w.inserter.Add(val, len(val))
-}
-
-func (w *AsduPusher) execute(vals []interface{}) {
-	startTime := timex.Now()
-	msgBodyList := make([]*streamevent.MsgBody, 0)
-	for _, val := range vals {
-		s := val.(string)
-		result := gjson.Parse(s)
-		bodyRaw := result.Get("body").Raw
-		typeId := result.Get("typeId").Int()
-		msgBody := &streamevent.MsgBody{
-			MsgId:       result.Get("msgId").String(),
-			Host:        result.Get("host").String(),
-			Port:        int32(result.Get("port").Int()),
-			Asdu:        result.Get("asdu").String(),
-			TypeId:      int32(typeId),
-			DataType:    int32(result.Get("dataType").Int()),
-			Coa:         uint32(result.Get("coa").Int()),
-			BodyRaw:     bodyRaw,
-			Time:        result.Get("time").String(),
-			MetaDataRaw: result.Get("metaData").Raw,
-		}
-		pm := result.Get("pm")
-		if pm.Exists() {
-			msgBody.Pm = &streamevent.PointMapping{
-				DeviceId:    pm.Get("deviceId").String(),
-				DeviceName:  pm.Get("deviceName").String(),
-				TdTableType: pm.Get("tdTableType").String(),
+	chunkAsduPusher := iec104.NewChunkAsduPusher(
+		func(msgs []string) {
+			// 转换为streamevent.MsgBody列表
+			msgBodyList := make([]*streamevent.MsgBody, 0, len(msgs))
+			for _, s := range msgs {
+				result := gjson.Parse(s)
+				bodyRaw := result.Get("body").Raw
+				typeId := result.Get("typeId").Int()
+				msgBody := &streamevent.MsgBody{
+					MsgId:       result.Get("msgId").String(),
+					Host:        result.Get("host").String(),
+					Port:        int32(result.Get("port").Int()),
+					Asdu:        result.Get("asdu").String(),
+					TypeId:      int32(typeId),
+					DataType:    int32(result.Get("dataType").Int()),
+					Coa:         uint32(result.Get("coa").Int()),
+					BodyRaw:     bodyRaw,
+					Time:        result.Get("time").String(),
+					MetaDataRaw: result.Get("metaData").Raw,
+				}
+				pm := result.Get("pm")
+				if pm.Exists() {
+					msgBody.Pm = &streamevent.PointMapping{
+						DeviceId:    pm.Get("deviceId").String(),
+						DeviceName:  pm.Get("deviceName").String(),
+						TdTableType: pm.Get("tdTableType").String(),
+					}
+				}
+				msgBodyList = append(msgBodyList, msgBody)
 			}
-		}
-		msgBodyList = append(msgBodyList, msgBody)
-	}
-	if len(msgBodyList) == 0 {
-		return
-	}
-	threading.GoSafe(func() {
-		ctx := context.Background()
-		tid, _ := tool.SimpleUUID()
-		_, err := w.streamEventCli.PushChunkAsdu(ctx, &streamevent.PushChunkAsduReq{
-			MsgBody: msgBodyList,
-			TId:     tid,
-		})
-		var invokeflg = "success"
-		if err != nil {
-			invokeflg = "fail"
-		}
-		duration := timex.Since(startTime)
-		logx.WithContext(ctx).WithDuration(duration).Infof("PushChunkAsdu, tId: %s, asdu size: %d - %s", tid, len(msgBodyList), invokeflg)
-	})
-}
 
-func NewAsduPusher(streamEventCli streamevent.StreamEventClient, ChunkBytes int) *AsduPusher {
-	writer := AsduPusher{}
-	writer.inserter = executors.NewChunkExecutor(writer.execute, executors.WithChunkBytes(ChunkBytes))
-	writer.streamEventCli = streamEventCli
-	return &writer
+			// 调用gRPC推送
+			tid, _ := tool.SimpleUUID()
+			pushGrpcCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			startTime := timex.Now()
+			_, err := streamEventCli.PushChunkAsdu(pushGrpcCtx, &streamevent.PushChunkAsduReq{
+				MsgBody: msgBodyList,
+				TId:     tid,
+			})
+			var invokeflg = "success"
+			if err != nil {
+				invokeflg = "fail"
+				logx.WithContext(pushGrpcCtx).Errorf("PushChunkAsdu failed, tId: %s, err: %v", tid, err)
+			}
+			duration := timex.Since(startTime)
+			logx.WithContext(pushGrpcCtx).WithDuration(duration).Infof("PushChunkAsdu, tId: %s, asdu size: %d - %s", tid, len(msgBodyList), invokeflg)
+			return
+		},
+		c.PushAsduChunkBytes,
+	)
+
+	return &ServiceContext{
+		Config:          c,
+		StreamEventCli:  streamEventCli,
+		ChunkAsduPusher: chunkAsduPusher,
+	}
 }
