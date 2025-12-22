@@ -106,6 +106,21 @@ func generateTopic(topicPattern string, data *types.MsgBody) (string, error) {
 		return "", errors.New("invalid topic pattern")
 	}
 
+	// 检查连续的斜杠，例如 "iec//asdu/"，如果发现则返回错误
+	if strings.Contains(topic, "//") {
+		return "", errors.New("invalid topic: contains consecutive slashes")
+	}
+
+	// 检查开头是否有斜杠
+	if strings.HasPrefix(topic, "/") {
+		return "", errors.New("invalid topic: starts with slash")
+	}
+
+	// 检查结尾是否有斜杠
+	if strings.HasSuffix(topic, "/") {
+		return "", errors.New("invalid topic: ends with slash")
+	}
+
 	return topic, nil
 }
 
