@@ -15,6 +15,7 @@ import (
 	"zero-service/common/iec104/iec104client"
 	"zero-service/common/nacosx"
 	"zero-service/common/tool"
+	"zero-service/facade/streamevent/streamevent"
 
 	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/duke-git/lancet/v2/strutil"
@@ -47,6 +48,7 @@ func main() {
 
 	// Print Go version
 	tool.PrintGoVersion()
+	zrpc.DontLogClientContentForMethod(streamevent.StreamEvent_PushChunkAsdu_FullMethodName)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
 		ieccaller.RegisterIecCallerServer(grpcServer, server.NewIecCallerServer(ctx))
