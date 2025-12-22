@@ -19,6 +19,6 @@ func NewAsdu(svcCtx *svc.ServiceContext) *Asdu {
 
 func (l Asdu) Consume(ctx context.Context, key, value string) error {
 	logx.Debugf("asdu, key: %+v, msg:%+v", key, value)
-	l.svcCtx.AsduPusher.Write(value)
+	l.svcCtx.ChunkAsduPusher.Write(value)
 	return nil
 }
