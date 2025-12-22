@@ -77,6 +77,11 @@ type (
 		EnablePush      int64        `db:"enable_push"`       // 是否允许caller服务推送数据：0-不允许，1-允许
 		EnableRawInsert int64        `db:"enable_raw_insert"` // 是否允许插入 raw 原生数据：0-否，1-是
 		Description     string       `db:"description"`       // 备注信息
+		Ext1            string       `db:"ext_1"`             // 扩展字段1，如：alarm, normal, control等，用于主题拆分
+		Ext2            string       `db:"ext_2"`             // 扩展字段2
+		Ext3            string       `db:"ext_3"`             // 扩展字段3
+		Ext4            string       `db:"ext_4"`             // 扩展字段4
+		Ext5            string       `db:"ext_5"`             // 扩展字段5
 	}
 )
 
@@ -130,11 +135,11 @@ func (m *defaultDevicePointMappingModel) Insert(ctx context.Context, session sql
 	}
 	data.DelState = 0
 
-	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, devicePointMappingRowsExpectAutoSet)
+	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, devicePointMappingRowsExpectAutoSet)
 	if session != nil {
-		return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.TagStation, data.Coa, data.Ioa, data.DeviceId, data.DeviceName, data.TdTableType, data.EnablePush, data.EnableRawInsert, data.Description)
+		return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.TagStation, data.Coa, data.Ioa, data.DeviceId, data.DeviceName, data.TdTableType, data.EnablePush, data.EnableRawInsert, data.Description, data.Ext1, data.Ext2, data.Ext3, data.Ext4, data.Ext5)
 	}
-	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.TagStation, data.Coa, data.Ioa, data.DeviceId, data.DeviceName, data.TdTableType, data.EnablePush, data.EnableRawInsert, data.Description)
+	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.TagStation, data.Coa, data.Ioa, data.DeviceId, data.DeviceName, data.TdTableType, data.EnablePush, data.EnableRawInsert, data.Description, data.Ext1, data.Ext2, data.Ext3, data.Ext4, data.Ext5)
 }
 
 func (m *defaultDevicePointMappingModel) Update(ctx context.Context, session sqlx.Session, newData *DevicePointMapping) (sql.Result, error) {
@@ -144,9 +149,9 @@ func (m *defaultDevicePointMappingModel) Update(ctx context.Context, session sql
 	newData.DelState = 0
 	query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, devicePointMappingRowsWithPlaceHolder)
 	if session != nil {
-		return session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TagStation, newData.Coa, newData.Ioa, newData.DeviceId, newData.DeviceName, newData.TdTableType, newData.EnablePush, newData.EnableRawInsert, newData.Description, newData.Id)
+		return session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TagStation, newData.Coa, newData.Ioa, newData.DeviceId, newData.DeviceName, newData.TdTableType, newData.EnablePush, newData.EnableRawInsert, newData.Description, newData.Ext1, newData.Ext2, newData.Ext3, newData.Ext4, newData.Ext5, newData.Id)
 	}
-	return m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TagStation, newData.Coa, newData.Ioa, newData.DeviceId, newData.DeviceName, newData.TdTableType, newData.EnablePush, newData.EnableRawInsert, newData.Description, newData.Id)
+	return m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TagStation, newData.Coa, newData.Ioa, newData.DeviceId, newData.DeviceName, newData.TdTableType, newData.EnablePush, newData.EnableRawInsert, newData.Description, newData.Ext1, newData.Ext2, newData.Ext3, newData.Ext4, newData.Ext5, newData.Id)
 }
 
 func (m *defaultDevicePointMappingModel) UpdateWithVersion(ctx context.Context, session sqlx.Session, newData *DevicePointMapping) error {
@@ -159,9 +164,9 @@ func (m *defaultDevicePointMappingModel) UpdateWithVersion(ctx context.Context, 
 
 	query := fmt.Sprintf("update %s set %s where `id` = ? and version = ? ", m.table, devicePointMappingRowsWithPlaceHolder)
 	if session != nil {
-		sqlResult, err = session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TagStation, newData.Coa, newData.Ioa, newData.DeviceId, newData.DeviceName, newData.TdTableType, newData.EnablePush, newData.EnableRawInsert, newData.Description, newData.Id, oldVersion)
+		sqlResult, err = session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TagStation, newData.Coa, newData.Ioa, newData.DeviceId, newData.DeviceName, newData.TdTableType, newData.EnablePush, newData.EnableRawInsert, newData.Description, newData.Ext1, newData.Ext2, newData.Ext3, newData.Ext4, newData.Ext5, newData.Id, oldVersion)
 	} else {
-		sqlResult, err = m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TagStation, newData.Coa, newData.Ioa, newData.DeviceId, newData.DeviceName, newData.TdTableType, newData.EnablePush, newData.EnableRawInsert, newData.Description, newData.Id, oldVersion)
+		sqlResult, err = m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TagStation, newData.Coa, newData.Ioa, newData.DeviceId, newData.DeviceName, newData.TdTableType, newData.EnablePush, newData.EnableRawInsert, newData.Description, newData.Ext1, newData.Ext2, newData.Ext3, newData.Ext4, newData.Ext5, newData.Id, oldVersion)
 	}
 
 	if err != nil {
@@ -192,6 +197,10 @@ func (m *defaultDevicePointMappingModel) DeleteSoft(ctx context.Context, session
 		return errors.Wrapf(errors.New("delete soft failed "), "DevicePointMappingModel delete err : %+v", err)
 	}
 	return nil
+}
+
+func (m *defaultDevicePointMappingModel) FindCacheOneByTagStationCoaIoa(ctx context.Context, tagStation string, coa int64, ioa int64) (*DevicePointMapping, bool, error) {
+	return nil, false, fmt.Errorf("method FindCacheOneByTagStationCoaIoa not implemented")
 }
 
 func (m *defaultDevicePointMappingModel) FindSum(ctx context.Context, builder squirrel.SelectBuilder, field string) (float64, error) {

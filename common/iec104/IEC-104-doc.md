@@ -40,16 +40,30 @@
 **设计思路**：基于配置的Topic模板，结合消息字段和元数据动态生成实际推送Topic。
 
 **支持的占位符**：
-- 固定字段：`{typeId}`, `{asdu}`, `{coa}`, `{host}`, `{port}`
-- 元数据字段：`{key}`（支持任意元数据键值对）
+- **固定字段**：`{TypeId}`, `{Host}`, `{Port}`, `{Coa}`, `{DataType}`, `{Asdu}`, `{MsgId}`, `{Time}`
+- **元数据字段**：`{MetaData.key}`（支持任意元数据键值对）
+- **点位映射字段**：`{Pm.DeviceId}`, `{Pm.DeviceName}`, `{Pm.TdTableType}`（仅当开启绑定查询时有效）
+- **Body字段**：`{Body.Ioa}`（信息对象地址）
+
+**模板语法**：
+- 使用Go模板语法，支持点表示法访问嵌套字段
+- 占位符格式：`{{.Field}}` 或 `{{.Nested.Field}}`
+- 支持结构体字段、Map键值和嵌套访问
 
 **示例配置**：
 ```yaml
 mqtt:
   topic:
-    - "iec104/{typeId}/{asdu}"
-    - "site/{metaData.siteId}/data"
+    - "iec104/{{.Host}}/{{.Port}}/{{.Asdu}}"
+    - "site/{{.MetaData.stationId}}/device/{{.Pm.DeviceId}}"
+    - "data/{{.TypeId}}/{{.Coa}}/{{.Body.Ioa}}"
 ```
+
+**使用说明**：
+1. 模板中必须使用Go结构体的导出字段名（首字母大写）
+2. 对于Map类型的MetaData，直接使用Map的实际key
+3. Pm字段仅当开启绑定查询且成功获取到点位映射时有效
+4. 解析成功则使用解析后的值，失败则保留原始模板字符串
 
 ### 0.5 配置示例
 
@@ -69,8 +83,9 @@ Mqtt:
   Username: admin
   Password: password
   Topic:
-    - "iec104/{typeId}/{asdu}"
-    - "site/{metaData.siteId}/data"
+    - "iec104/{{.TypeId}}/{{.Asdu}}"
+    - "site/{{.MetaData.siteId}}/data"
+    - "device/{{.Pm.DeviceId}}/data/{{.Body.Ioa}}"
 ```
 
 ### 0.6 架构演进
@@ -128,6 +143,11 @@ Mqtt:
       "1",
       "2"
     ]
+  },
+  "pm": {
+    "deviceId": "设备ID",
+    "deviceName": "设备名称",
+    "tdTableType": "tdengine表类型"
   }
 }
 ```
@@ -144,6 +164,7 @@ Mqtt:
 | body     | Object | 信息体对象（结构随typeId变化）                               |
 | time     | String | 消息推送时间戳（格式：`YYYY-MM-DD HH:mm:ss.SSSSSS`，UTC+8时区） |
 | metaData | Object | 应用级元数据（如：应用ID、用户信息、场站信息等）                        |
+| pm       | Object | 点位映射信息（仅当开启绑定查询时存在），包含设备ID、设备名称等信息             |
 
 ---
 
@@ -862,7 +883,7 @@ key = f"{host}_{coa}_0x{ioa:06X}"  # 示例：127.0.0.1_1_0x0007D1
 
 ## 6. 技术支持
 
-- **文档版本**：v1.0.0（2025-06-12）
+- **文档版本**：v1.0.0（2025-12-22）
 - **协议版本**：IEC 104
 - **联系支持**：[hehanpengyy@163.com](mailto:hehanpengyy@163.com)
 

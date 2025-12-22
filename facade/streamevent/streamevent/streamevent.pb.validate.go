@@ -1354,6 +1354,16 @@ func (m *PointMapping) validate(all bool) error {
 
 	// no validation rules for TdTableType
 
+	// no validation rules for Ext1
+
+	// no validation rules for Ext2
+
+	// no validation rules for Ext3
+
+	// no validation rules for Ext4
+
+	// no validation rules for Ext5
+
 	if len(errors) > 0 {
 		return PointMappingMultiError(errors)
 	}

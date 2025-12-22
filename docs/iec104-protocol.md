@@ -10,6 +10,7 @@
 - **双协议消息推送**：同时支持Kafka和MQTT消息推送，可灵活配置
 - **动态Topic生成**：基于配置规则和消息元数据动态生成推送Topic
 - **配置驱动**：全配置化设计，支持灵活部署和扩展
+- **弱校验模式**：仅当配置了点位且明确设置不推送时，才会拒绝消息，否则默认推送
 
 ### 0.2 架构设计
 
@@ -35,23 +36,41 @@
 - 支持多Topic推送，每个消息可推送至多个Topic
 - 支持动态Topic生成，基于消息内容和元数据
 
-### 0.4 动态Topic生成机制
+### 0.4 弱校验模式说明
 
-**设计思路**：基于配置的Topic模板，结合消息字段和元数据动态生成实际推送Topic。
+**设计理念**：
+- 采用"配置了点位且不推送，才会不推"的弱校验模式
+- 默认推送所有消息，除非明确配置了点位且设置`enable_push=0`
+- 提高系统的灵活性和兼容性，支持未配置点位的消息推送
 
-**支持的占位符**：
-- 固定字段：`{typeId}`, `{asdu}`, `{coa}`, `{host}`, `{port}`
-- 元数据字段：`{key}`（支持任意元数据键值对）
+**工作流程**：
+1. 收到IEC 104消息
+2. 检查是否配置了对应点位映射
+3. 如果未配置，默认推送消息
+4. 如果已配置，检查`enable_push`字段
+5. 只有当`enable_push=0`时，才拒绝推送
+
+### 0.5 动态Topic生成机制
+
+**设计思路**：基于配置的Topic模板，结合消息字段和元数据动态生成实际推送Topic。采用Go模板语法，支持结构体字段访问。
+
+**支持的占位符格式**：
+- 使用双括号语法：`{{.Field}}`
+- 支持直接访问MsgBody字段：`{{.typeId}}`, `{{.asdu}}`, `{{.coa}}`, `{{.host}}`, `{{.port}}`
+- 支持访问PointMapping字段：`{{.Pm.DeviceId}}`, `{{.Pm.Ext1}}`等
+- 支持访问元数据字段：`{{.metaData.key}}`
 
 **示例配置**：
 ```yaml
 mqtt:
   topic:
-    - "iec104/{typeId}/{asdu}"
-    - "site/{metaData.siteId}/data"
+    - "iec104/{{.typeId}}/{{.asdu}}"
+    - "site/{{.metaData.siteId}}/data"
+    - "iec/asdu/{{.Pm.DeviceId}}"
+    - "{{.Pm.DeviceName}}/{{.Pm.Ext1}}/data"
 ```
 
-### 0.5 配置示例
+### 0.6 配置示例
 
 ```yaml
 Name: ieccaller
@@ -69,8 +88,9 @@ Mqtt:
   Username: admin
   Password: password
   Topic:
-    - "iec104/{typeId}/{asdu}"
-    - "site/{metaData.siteId}/data"
+    - "iec104/{{.typeId}}/{{.asdu}}"
+    - "site/{{.metaData.siteId}}/data"
+    - "iec/asdu/{{.Pm.DeviceId}}"
 ```
 
 ### 0.6 架构演进
@@ -128,6 +148,16 @@ Mqtt:
       "1",
       "2"
     ]
+  },
+  "pm": {
+    "deviceId": "device_123",
+    "deviceName": "测试设备",
+    "tdTableType": "yx, yc",
+    "ext1": "alarm",
+    "ext2": "",
+    "ext3": "",
+    "ext4": "",
+    "ext5": ""
   }
 }
 ```
@@ -144,6 +174,104 @@ Mqtt:
 | body     | Object | 信息体对象（结构随typeId变化）                               |
 | time     | String | 消息推送时间戳（格式：`YYYY-MM-DD HH:mm:ss.SSSSSS`，UTC+8时区） |
 | metaData | Object | 应用级元数据（如：应用ID、用户信息、场站信息等）                        |
+| pm       | Object | 点位映射信息，包含设备ID、名称和扩展字段，用于动态生成Topic                 |
+
+### PointMapping 结构详细说明
+
+PointMapping包含设备的详细信息和扩展字段，用于动态生成MQTT Topic和业务逻辑处理。
+
+```json
+{
+  "deviceId": "device_123",
+  "deviceName": "测试设备",
+  "tdTableType": "yx, yc",
+  "ext1": "alarm",
+  "ext2": "",
+  "ext3": "",
+  "ext4": "",
+  "ext5": ""
+}
+```
+
+| 字段名         | 类型     | 说明                                         |
+|-------------|--------|--------------------------------------------|
+| deviceId    | String | 设备唯一标识符，用于设备识别和关联                          |
+| deviceName  | String | 设备名称，用于业务显示和查询                              |
+| tdTableType | String | TDengine表类型，逗号分隔，如：yx, yc，用于数据存储归类           |
+| ext1        | String | 扩展字段1，用于主题拆分，如：alarm, normal, control等        |
+| ext2        | String | 扩展字段2，用于主题拆分和业务逻辑                            |
+| ext3        | String | 扩展字段3，用于主题拆分和业务逻辑                            |
+| ext4        | String | 扩展字段4，用于主题拆分和业务逻辑                            |
+| ext5        | String | 扩展字段5，用于主题拆分和业务逻辑                            |
+
+### 扩展字段用途
+
+扩展字段（ext1-ext5）主要用于主题拆分，允许根据业务需求灵活生成不同维度的MQTT Topic：
+
+- **业务类型**：如alarm（告警）、normal（正常）、control（控制）
+- **设备类型**：如switch（开关）、sensor（传感器）、meter（仪表）
+- **区域划分**：如area1、building1、floor1
+- **功能模块**：如power（电源）、communication（通信）、monitor（监控）
+- **数据类型**：如analog（模拟量）、digital（数字量）、counter（计数器）
+
+**示例**：
+- Topic模板：`{{.Pm.DeviceId}}/{{.Pm.Ext1}}/{{.asdu}}`
+- 实际生成：`device_123/alarm/M_SP_NA_1`
+
+---
+
+## 1.1 数据库表结构
+
+### device_point_mapping 表
+
+该表用于存储设备点位映射关系，是弱校验模式和动态Topic生成的核心配置。
+
+```sql
+CREATE TABLE IF NOT EXISTS device_point_mapping (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    delete_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    del_state INTEGER NOT NULL DEFAULT 0,
+    version INTEGER NOT NULL DEFAULT 0,
+    
+    tag_station VARCHAR(64) NOT NULL DEFAULT '', -- 与 TDengine tag_station 对应
+    coa INTEGER NOT NULL DEFAULT 0,              -- 与 TDengine coa 对应
+    ioa INTEGER NOT NULL DEFAULT 0,              -- 与 TDengine ioa 对应
+    device_id VARCHAR(64) NOT NULL DEFAULT '',   -- 设备编号/ID
+    device_name VARCHAR(128) NOT NULL DEFAULT '',-- 设备名称
+    td_table_type VARCHAR(255) NOT NULL DEFAULT '',-- TDengine表类型
+    enable_push INTEGER NOT NULL DEFAULT 1,      -- 是否允许caller服务推送数据：0-不允许，1-允许
+    enable_raw_insert INTEGER NOT NULL DEFAULT 1,-- 是否允许插入到raw原生数据中：0-不允许，1-允许
+    description VARCHAR(256) NOT NULL DEFAULT '',-- 备注信息
+    
+    -- 扩展字段，用于存储额外的元数据
+    ext_1 VARCHAR(64) NOT NULL DEFAULT '',      -- 扩展字段1，如：alarm, normal, control等
+    ext_2 VARCHAR(64) NOT NULL DEFAULT '',      -- 扩展字段2
+    ext_3 VARCHAR(64) NOT NULL DEFAULT '',      -- 扩展字段3
+    ext_4 VARCHAR(64) NOT NULL DEFAULT '',      -- 扩展字段4
+    ext_5 VARCHAR(64) NOT NULL DEFAULT '',      -- 扩展字段5
+    
+    UNIQUE(tag_station, coa, ioa)               -- 唯一索引，保证同一个点位只对应一个设备
+);
+```
+
+**核心字段说明**：
+
+| 字段名            | 类型     | 说明                                         |
+|----------------|--------|--------------------------------------------|
+| tag_station    | String | 与TDengine的tag_station对应，用于设备分组              |
+| coa            | int    | 公共地址，与IEC 104协议中的公共地址对应                   |
+| ioa            | int    | 信息对象地址，与IEC 104协议中的信息对象地址对应              |
+| device_id      | String | 设备唯一标识符，映射到PointMapping.DeviceId           |
+| device_name    | String | 设备名称，映射到PointMapping.DeviceName             |
+| td_table_type  | String | TDengine表类型，逗号分隔，如：yx, yc                 |
+| enable_push    | int    | 是否允许推送数据：0-不允许，1-允许，弱校验模式的核心控制字段        |
+| enable_raw_insert | int | 是否允许插入到raw原生数据中：0-不允许，1-允许              |
+| ext_1-ext_5    | String | 扩展字段，映射到PointMapping.Ext1-Ext5，用于动态生成Topic |
+
+**索引说明**：
+- 唯一索引：`UNIQUE(tag_station, coa, ioa)`，保证同一个点位只对应一个设备配置
 
 ---
 

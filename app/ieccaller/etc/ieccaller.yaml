@@ -48,7 +48,10 @@ MqttConfig:
   # 推送数据Topic
   Topic:
    - iec/asdu
-   - iec/asdu/{typeId}/{metaData.stationId}
+   - iec/asdu/{{.MetaData.stationId}}/{{.TypeId}}/
+   - iec/asdu/{{.MetaData.stationId}}/{{.Body.Ioa}}/
+   - iec/asdu/device/{{.Pm.DeviceId}}
+   - iec/asdu/ext1/{{.Pm.Ext1}}
   # 是否推送指令数据
   IsPush: true
 StreamEventConf:

@@ -3,7 +3,6 @@ package iec
 import (
 	"context"
 	"fmt"
-	"strings"
 	"zero-service/app/ieccaller/internal/svc"
 	"zero-service/common/copierx"
 	"zero-service/common/iec104/iec104client"
@@ -29,8 +28,7 @@ type ClientCall struct {
 
 func NewClientCall(svcCtx *svc.ServiceContext, host string, port int, metaData map[string]any, taskConcurrency int) *ClientCall {
 	// 生成 stationId
-	safeHost := strings.ReplaceAll(host, ".", "_")
-	stationId := fmt.Sprintf("%s_%s", safeHost, port)
+	stationId := util.GenerateStationId(host, port)
 	if len(metaData) > 0 {
 		if sid, ok := metaData["stationId"].(string); ok && sid != "" {
 			stationId = sid

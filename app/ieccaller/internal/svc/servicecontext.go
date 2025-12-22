@@ -6,15 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"regexp"
-	"strconv"
 	"strings"
+	"text/template"
 	"time"
 	"zero-service/app/ieccaller/internal/config"
 	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/dbx"
 	"zero-service/common/iec104/iec104client"
 	"zero-service/common/iec104/types"
+	"zero-service/common/iec104/util"
 	"zero-service/common/mqttx"
 	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
@@ -78,98 +78,72 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	return svcCtx
 }
 
-var placeholderRegex = regexp.MustCompile(`{([^}]+)}`)
-
 // generateTopic 根据配置的topic规则和报文值生成最终的topic
 func generateTopic(topicPattern string, data *types.MsgBody) (string, error) {
 	if data == nil {
 		return "", errors.New("msg body is nil")
 	}
 
-	replacements := map[string]string{
-		"typeId":   fmt.Sprintf("%d", data.TypeId),
-		"host":     data.Host,
-		"port":     fmt.Sprintf("%d", data.Port),
-		"coa":      fmt.Sprintf("%d", data.Coa),
-		"dataType": fmt.Sprintf("%d", data.DataType),
-		"asdu":     data.Asdu,
-		"ioa":      strconv.Itoa(int(data.Body.GetIoa())),
-	}
-	topic := topicPattern
-	for k, v := range replacements {
-		if v == "" {
-			return "", fmt.Errorf("topic field {%s} is empty", k)
-		}
-		topic = strings.ReplaceAll(topic, "{"+k+"}", v)
+	tmpl, err := template.New("topic").Parse(topicPattern)
+	if err != nil {
+		return "", errors.New("failed to parse topic template")
 	}
 
-	missingKeys := make([]string, 0)
-
-	topic = placeholderRegex.ReplaceAllStringFunc(topic, func(placeholder string) string {
-		key := placeholder[1 : len(placeholder)-1]
-
-		if strings.HasPrefix(key, "metaData.") {
-			metaKey := key[len("metaData."):]
-			if data.MetaData == nil {
-				missingKeys = append(missingKeys, key)
-				return placeholder
-			}
-			if val, ok := data.MetaData[metaKey]; ok {
-				return fmt.Sprintf("%v", val)
-			}
-			missingKeys = append(missingKeys, key)
-			return placeholder
-		}
-
-		// Handle regular keys for backward compatibility
-		if data.MetaData == nil {
-			missingKeys = append(missingKeys, key)
-			return placeholder
-		}
-
-		if val, ok := data.MetaData[key]; ok {
-			return fmt.Sprintf("%v", val)
-		}
-
-		missingKeys = append(missingKeys, key)
-		return placeholder
-	})
-
-	if len(missingKeys) > 0 {
-		return "", fmt.Errorf("missing topic fields: %v", missingKeys)
+	// Execute the template directly with the MsgBody struct
+	var result strings.Builder
+	err = tmpl.Execute(&result, data)
+	if err != nil {
+		return "", errors.New("failed to execute topic template")
 	}
 
-	if placeholderRegex.MatchString(topic) {
-		return "", fmt.Errorf("unresolved placeholders in topic: %s", topic)
+	topic := result.String()
+
+	if strings.Contains(topic, "{{") && strings.Contains(topic, "}}") {
+		return "", errors.New("unresolved placeholders in topic")
 	}
 
 	if strings.Contains(topic, "+") || strings.Contains(topic, "#") {
-		return "", fmt.Errorf("invalid mqtt topic: %s", topic)
+		return "", errors.New("invalid topic pattern")
 	}
+
 	return topic, nil
 }
 
 func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa uint) error {
 	key, _ := data.GetKey()
 	data.Time = carbon.Now().ToDateTimeMicroString()
+
+	// 获取 stationId，从上下文或生成
 	stationId, ok := ctx.Value("stationId").(string)
-	if svc.SqliteConn != nil && ok {
+	if !ok {
+		stationId = util.GenerateStationId(data.Host, data.Port)
+		logx.WithContext(ctx).Debugf("stationId not found in context, generated: %s, msgId: %s", stationId, data.MsgId)
+	}
+	if svc.SqliteConn != nil {
 		query, exist, cacheErr := svc.DevicePointMappingModel.FindCacheOneByTagStationCoaIoa(ctx, stationId, int64(data.Coa), int64(ioa))
 		if cacheErr != nil {
-			return fmt.Errorf("cache error %v", cacheErr)
-		}
-		if !exist {
-			logx.WithContext(ctx).Debugf("no mapping for stationId: %s, coa: %d, ioa: %d, msgId: %s", stationId, data.Coa, ioa, data.MsgId)
-			return nil
-		}
-		if query.EnablePush != 1 {
-			logx.WithContext(ctx).Debugf("push asdu disabled for stationId: %s, coa: %d, ioa: %d, msgId: %s", stationId, data.Coa, ioa, data.MsgId)
-			return nil
-		}
-		data.PointMapping = &types.PointMapping{
-			DeviceId:    query.DeviceId,
-			DeviceName:  query.DeviceName,
-			TdTableType: query.TdTableType,
+			logx.WithContext(ctx).Errorf("cache error %v, msgId: %s", cacheErr, data.MsgId)
+			// 继续推送
+		} else {
+			if !exist {
+				logx.WithContext(ctx).Debugf("no mapping for stationId: %s, coa: %d, ioa: %d, msgId: %s", stationId, data.Coa, ioa, data.MsgId)
+				// 继续推送
+			} else {
+				if query.EnablePush != 1 {
+					logx.WithContext(ctx).Debugf("push asdu disabled for stationId: %s, coa: %d, ioa: %d, msgId: %s", stationId, data.Coa, ioa, data.MsgId)
+					return nil
+				}
+				data.Pm = &types.PointMapping{
+					DeviceId:    query.DeviceId,
+					DeviceName:  query.DeviceName,
+					TdTableType: query.TdTableType,
+					Ext1:        query.Ext1,
+					Ext2:        query.Ext2,
+					Ext3:        query.Ext3,
+					Ext4:        query.Ext4,
+					Ext5:        query.Ext5,
+				}
+			}
 		}
 	}
 	byteData, err := json.Marshal(data)
@@ -214,7 +188,7 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 				defer cancel()
 				topic, genErr := generateTopic(topicPattern, data)
 				if genErr != nil {
-					logx.WithContext(pushTopicCtx).Errorf("failed to generate mqtt topic, pattern: %s, msgId: %s, err: %v", topicPattern, data.MsgId, genErr)
+					logx.WithContext(pushTopicCtx).Debugf("failed to generate mqtt topic, pattern: %s, msgId: %s, err: %v", topicPattern, data.MsgId, genErr)
 					continue
 				}
 				logx.WithContext(pushTopicCtx).Debugf("pushing asdu to mqtt topic: %s, msgId: %s", topic, data.MsgId)
@@ -253,11 +227,16 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 				Time:        data.Time,
 				MetaDataRaw: metaDataRaw,
 			}
-			if data.PointMapping != nil {
+			if data.Pm != nil {
 				item.Pm = &streamevent.PointMapping{
-					DeviceId:    data.PointMapping.DeviceId,
-					DeviceName:  data.PointMapping.DeviceName,
-					TdTableType: data.PointMapping.TdTableType,
+					DeviceId:    data.Pm.DeviceId,
+					DeviceName:  data.Pm.DeviceName,
+					TdTableType: data.Pm.TdTableType,
+					Ext1:        data.Pm.Ext1,
+					Ext2:        data.Pm.Ext2,
+					Ext3:        data.Pm.Ext3,
+					Ext4:        data.Pm.Ext4,
+					Ext5:        data.Pm.Ext5,
 				}
 			}
 			msgBodyList := []*streamevent.MsgBody{

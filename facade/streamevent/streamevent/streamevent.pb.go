@@ -687,7 +687,17 @@ type PointMapping struct {
 	// 设备名称
 	DeviceName string `protobuf:"bytes,2,opt,name=deviceName,proto3" json:"deviceName,omitempty"`
 	// TDengine 表类型（遥信表/遥测表等，逗号分隔）
-	TdTableType   string `protobuf:"bytes,3,opt,name=tdTableType,proto3" json:"tdTableType,omitempty"`
+	TdTableType string `protobuf:"bytes,3,opt,name=tdTableType,proto3" json:"tdTableType,omitempty"`
+	// 扩展字段1，如：alarm, normal, control等，用于主题拆分
+	Ext1 string `protobuf:"bytes,4,opt,name=ext1,proto3" json:"ext1,omitempty"`
+	// 扩展字段2
+	Ext2 string `protobuf:"bytes,5,opt,name=ext2,proto3" json:"ext2,omitempty"`
+	// 扩展字段3
+	Ext3 string `protobuf:"bytes,6,opt,name=ext3,proto3" json:"ext3,omitempty"`
+	// 扩展字段4
+	Ext4 string `protobuf:"bytes,7,opt,name=ext4,proto3" json:"ext4,omitempty"`
+	// 扩展字段5
+	Ext5          string `protobuf:"bytes,12,opt,name=ext5,proto3" json:"ext5,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -739,6 +749,41 @@ func (x *PointMapping) GetDeviceName() string {
 func (x *PointMapping) GetTdTableType() string {
 	if x != nil {
 		return x.TdTableType
+	}
+	return ""
+}
+
+func (x *PointMapping) GetExt1() string {
+	if x != nil {
+		return x.Ext1
+	}
+	return ""
+}
+
+func (x *PointMapping) GetExt2() string {
+	if x != nil {
+		return x.Ext2
+	}
+	return ""
+}
+
+func (x *PointMapping) GetExt3() string {
+	if x != nil {
+		return x.Ext3
+	}
+	return ""
+}
+
+func (x *PointMapping) GetExt4() string {
+	if x != nil {
+		return x.Ext4
+	}
+	return ""
+}
+
+func (x *PointMapping) GetExt5() string {
+	if x != nil {
+		return x.Ext5
 	}
 	return ""
 }
@@ -2467,13 +2512,18 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x04time\x18\t \x01(\tR\x04time\x12 \n" +
 	"\vmetaDataRaw\x18\n" +
 	" \x01(\tR\vmetaDataRaw\x12)\n" +
-	"\x02pm\x18\v \x01(\v2\x19.streamevent.PointMappingR\x02pm\"l\n" +
+	"\x02pm\x18\v \x01(\v2\x19.streamevent.PointMappingR\x02pm\"\xd0\x01\n" +
 	"\fPointMapping\x12\x1a\n" +
 	"\bdeviceId\x18\x01 \x01(\tR\bdeviceId\x12\x1e\n" +
 	"\n" +
 	"deviceName\x18\x02 \x01(\tR\n" +
 	"deviceName\x12 \n" +
-	"\vtdTableType\x18\x03 \x01(\tR\vtdTableType\"\xc9\x01\n" +
+	"\vtdTableType\x18\x03 \x01(\tR\vtdTableType\x12\x12\n" +
+	"\x04ext1\x18\x04 \x01(\tR\x04ext1\x12\x12\n" +
+	"\x04ext2\x18\x05 \x01(\tR\x04ext2\x12\x12\n" +
+	"\x04ext3\x18\x06 \x01(\tR\x04ext3\x12\x12\n" +
+	"\x04ext4\x18\a \x01(\tR\x04ext4\x12\x12\n" +
+	"\x04ext5\x18\f \x01(\tR\x04ext5\"\xc9\x01\n" +
 	"\x0fSinglePointInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\bR\x05value\x12\x10\n" +

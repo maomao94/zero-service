@@ -27,22 +27,22 @@ type Config struct {
 	} `json:",optional"`
 
 	KafkaConfig struct {
-		Brokers          []string
-		Topic            string
-		BroadcastTopic   string `json:",optional,default=iec-broadcast"`
-		BroadcastGroupId string `json:",optional,default=iec-caller"`
-		IsPush           bool   `json:",optional"`
+		Brokers          []string `json:",optional"`
+		Topic            string   `json:",optional,default=asdu"`
+		BroadcastTopic   string   `json:",optional,default=iec-broadcast"`
+		BroadcastGroupId string   `json:",optional,default=iec-caller"`
+		IsPush           bool     `json:",optional,default=false"`
 	} `json:",optional"`
 
 	MqttConfig struct {
 		mqttx.MqttConfig
 		Topic  []string `json:",optional"`
-		IsPush bool     `json:",optional"`
+		IsPush bool     `json:",optional,default=false"`
 	} `json:",optional"`
 
 	StreamEventConf zrpc.RpcClientConf
 
-	DisableStmtLog bool `json:",optional"`
+	DisableStmtLog bool `json:",optional,default=false"`
 	SqliteDB       struct {
 		DataSource string `json:",optional"`
 	}

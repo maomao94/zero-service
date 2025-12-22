@@ -182,3 +182,10 @@ func FloatToNormalize(f float64) asdu.Normalize {
 func NormalizeToFloat(n asdu.Normalize) float32 {
 	return float32(n) / 32768.0
 }
+
+// GenerateStationId 根据host和port生成stationId
+// 替换host中的.为_,然后与port拼接
+func GenerateStationId(host string, port interface{}) string {
+	safeHost := strings.ReplaceAll(host, ".", "_")
+	return fmt.Sprintf("%s_%v", safeHost, port)
+}

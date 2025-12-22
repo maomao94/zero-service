@@ -4,11 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
+	"zero-service/common/iec104/util"
 	"zero-service/common/tool"
-
 	"zero-service/facade/streamevent/internal/svc"
 	"zero-service/facade/streamevent/streamevent"
 
@@ -39,12 +38,36 @@ func extractIoaValue(bodyMap map[string]interface{}) string {
 		// 如果没有value字段，返回空字符串
 		return ""
 	}
+
+	// 处理nil值
+	if value == nil {
+		return ""
+	}
+
 	switch v := value.(type) {
 	// 简单类型：直接转换为字符串
 	case int:
 		return strconv.Itoa(v)
+	case int8:
+		return strconv.FormatInt(int64(v), 10)
+	case int16:
+		return strconv.FormatInt(int64(v), 10)
+	case int32:
+		return strconv.FormatInt(int64(v), 10)
 	case int64:
 		return strconv.FormatInt(v, 10)
+	case uint:
+		return strconv.FormatUint(uint64(v), 10)
+	case uint8:
+		return strconv.FormatUint(uint64(v), 10)
+	case uint16:
+		return strconv.FormatUint(uint64(v), 10)
+	case uint32:
+		return strconv.FormatUint(uint64(v), 10)
+	case uint64:
+		return strconv.FormatUint(v, 10)
+	case float32:
+		return strconv.FormatFloat(float64(v), 'f', -1, 64)
 	case float64:
 		return strconv.FormatFloat(v, 'f', -1, 64)
 	case bool:
@@ -61,13 +84,33 @@ func extractIoaValue(bodyMap map[string]interface{}) string {
 		} else if val, ok := v["val"].(float64); ok {
 			// 步位置信息：返回val值
 			return strconv.FormatFloat(val, 'f', -1, 64)
+		} else if value, ok := v["value"].(float64); ok {
+			// 通用value字段
+			return strconv.FormatFloat(value, 'f', -1, 64)
+		} else if value, ok := v["value"].(string); ok {
+			// 字符串类型value
+			return value
+		} else if value, ok := v["value"].(bool); ok {
+			// 布尔类型value
+			return strconv.FormatBool(value)
 		} else {
+			// 其他对象类型，返回JSON字符串
+			if jsonStr, err := json.Marshal(v); err == nil {
+				return string(jsonStr)
+			}
 			return "-"
 		}
 
-	// 其他类型：返回反射类型名称
+	// 切片类型：返回JSON字符串
+	case []interface{}:
+		if jsonStr, err := json.Marshal(v); err == nil {
+			return string(jsonStr)
+		}
+		return fmt.Sprintf("[%d]items", len(v))
+
+	// 其他类型
 	default:
-		return reflect.TypeOf(value).String()
+		return fmt.Sprintf("%v", v)
 	}
 	return "-"
 }
@@ -88,23 +131,26 @@ func (l *PushChunkAsduLogic) PushChunkAsdu(in *streamevent.PushChunkAsduReq) (*s
 				var bodyMap map[string]interface{}
 				if err := json.Unmarshal([]byte(msgBody.BodyRaw), &bodyMap); err != nil {
 					l.WithContext(ctx).Errorf("Failed to parse bodyRaw: %v, msgId: %s", err, msgBody.MsgId)
+					ignoreCount++
 					continue
 				}
 
 				ioa, err := convertor.ToInt(bodyMap["ioa"])
 				if err != nil {
 					l.WithContext(ctx).Errorf("Failed to get ioa from bodyRaw, msgId: %s", msgBody.MsgId)
+					ignoreCount++
 					continue
 				}
 				ioaValueStr := extractIoaValue(bodyMap)
 				// 生成 stationId
-				safeHost := strings.ReplaceAll(msgBody.Host, ".", "_")
-				stationId := fmt.Sprintf("%s_%s", safeHost, msgBody.Port)
+				stationId := util.GenerateStationId(msgBody.Host, msgBody.Port)
 				deviceTableName := fmt.Sprintf("raw_%s_%d_%d", stationId, msgBody.Coa, ioa)
 				if len(msgBody.MetaDataRaw) > 0 {
 					var metaDataMap map[string]interface{}
 					err = json.Unmarshal([]byte(msgBody.MetaDataRaw), &metaDataMap)
-					if err == nil {
+					if err != nil {
+						l.WithContext(ctx).Errorf("Failed to parse metaDataRaw: %v, msgId: %s", err, msgBody.MsgId)
+					} else {
 						if sid, ok := metaDataMap["stationId"].(string); ok && sid != "" {
 							stationId = sid
 							deviceTableName = fmt.Sprintf("raw_%s_%d_%d", stationId, msgBody.Coa, ioa)
@@ -118,28 +164,26 @@ func (l *PushChunkAsduLogic) PushChunkAsdu(in *streamevent.PushChunkAsduReq) (*s
 					continue
 				}
 				if ok && query.EnableRawInsert == 1 {
-					// 构建 TDengine 插入语句
 					insertSQL := fmt.Sprintf(
 						"INSERT INTO %s.%s USING iec104.raw_point_data "+
 							"TAGS ('%s', %d, %d) "+
 							"VALUES ('%s', '%s', '%s', %d, '%s', %d, %d, %d, %d, '%s', '%s')",
 						l.svcCtx.Config.TaosDB.DBName,
-						deviceTableName,  // 子表名
-						stationId,        // tag_station
-						msgBody.Coa,      // coa
-						ioa,              // ioa
-						msgBody.Time,     // ts
-						msgBody.MsgId,    // msg_id
-						msgBody.Host,     // host_v
-						msgBody.Port,     // port_v
-						msgBody.Asdu,     // asdu
+						deviceTableName,                          // 子表名
+						strings.ReplaceAll(stationId, "'", "''"), // tag_station
+						msgBody.Coa,                              // coa
+						ioa,                                      // ioa
+						strings.ReplaceAll(msgBody.Time, "'", "''"),  // ts
+						strings.ReplaceAll(msgBody.MsgId, "'", "''"), // msg_id
+						strings.ReplaceAll(msgBody.Host, "'", "''"),  // host_v
+						msgBody.Port, // port_v
+						strings.ReplaceAll(msgBody.Asdu, "'", "''"), // asdu
 						msgBody.TypeId,   // type_id
 						msgBody.DataType, // data_type
 						msgBody.Coa,      // coa
 						ioa,              // ioa
-						ioaValueStr,      // ioa_value
-						msgBody.BodyRaw,  // raw_msg
-					)
+						strings.ReplaceAll(ioaValueStr, "'", "''"),     // ioa_value
+						strings.ReplaceAll(msgBody.BodyRaw, "'", "''")) // raw_msg
 					source <- insertSQL
 				} else {
 					ignoreCount++
@@ -168,6 +212,7 @@ func (l *PushChunkAsduLogic) PushChunkAsdu(in *streamevent.PushChunkAsduReq) (*s
 
 	if err != nil {
 		l.WithContext(ctx).Errorf("MapReduce failed: %v", err)
+		return nil, err
 	}
 
 	duration := timex.Since(startTime)

@@ -15,23 +15,28 @@ type BroadcastBody struct {
 }
 
 type MsgBody struct {
-	MsgId        string         `json:"msgId"`
-	Host         string         `json:"host"`
-	Port         int            `json:"port"`
-	Asdu         string         `json:"asdu"`
-	TypeId       int            `json:"typeId"`
-	DataType     int            `json:"dataType"`
-	Coa          uint           `json:"coa"` // 公共地址
-	Body         IoaGetter      `json:"body"`
-	Time         string         `json:"time"`
-	MetaData     map[string]any `json:"metaData"`
-	PointMapping *PointMapping  `json:"pm,omitempty"`
+	MsgId    string         `json:"msgId"`
+	Host     string         `json:"host"`
+	Port     int            `json:"port"`
+	Asdu     string         `json:"asdu"`
+	TypeId   int            `json:"typeId"`
+	DataType int            `json:"dataType"`
+	Coa      uint           `json:"coa"` // 公共地址
+	Body     IoaGetter      `json:"body"`
+	Time     string         `json:"time"`
+	MetaData map[string]any `json:"metaData"`
+	Pm       *PointMapping  `json:"pm,omitempty"`
 }
 
 type PointMapping struct {
 	DeviceId    string `json:"deviceId"`    // 设备编号/ID
 	DeviceName  string `json:"deviceName"`  // 设备名称
 	TdTableType string `json:"tdTableType"` // TDengine 表类型（遥信表/遥测表等，逗号分隔）
+	Ext1        string `json:"ext1"`        // 扩展字段1，如：alarm, normal, control等，用于主题拆分
+	Ext2        string `json:"ext2"`        // 扩展字段2
+	Ext3        string `json:"ext3"`        // 扩展字段3
+	Ext4        string `json:"ext4"`        // 扩展字段4
+	Ext5        string `json:"ext5"`        // 扩展字段5
 }
 
 func (m *MsgBody) GetKey() (string, error) {

@@ -14,6 +14,11 @@ CREATE TABLE IF NOT EXISTS `device_point_mapping` (
     `enable_push` TINYINT NOT NULL DEFAULT 1 COMMENT '是否允许caller服务推送数据：0-不允许，1-允许',
     `enable_raw_insert` TINYINT NOT NULL DEFAULT 1 COMMENT '是否允许插入 raw 原生数据：0-否，1-是',
     `description` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '备注信息',
+    `ext_1` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '扩展字段1，如：alarm, normal, control等，用于主题拆分',
+    `ext_2` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '扩展字段2',
+    `ext_3` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '扩展字段3',
+    `ext_4` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '扩展字段4',
+    `ext_5` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '扩展字段5',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_station_coa_ioa` (`tag_station`, `coa`, `ioa`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='设备与 IEC104 点位映射表';
