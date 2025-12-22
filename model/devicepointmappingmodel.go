@@ -2,9 +2,12 @@ package model
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
+	"zero-service/common/copierx"
 
+	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/collection"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
@@ -59,10 +62,16 @@ func (s *customDevicePointMappingModel) FindCacheOneByTagStationCoaIoa(ctx conte
 	if err != nil {
 		return nil, false, err
 	}
-	entry := val.(CacheEntry[DevicePointMapping])
+	entry, ok := val.(CacheEntry[DevicePointMapping])
+	if !ok {
+		return nil, false, errors.New("cache entry type assertion failed")
+	}
 	if !entry.Valid {
 		return nil, false, nil
 	}
-	pmValue := entry.Data
-	return &pmValue, true, nil
+	var cacheData DevicePointMapping
+	if err = copier.CopyWithOption(&cacheData, entry.Data, copierx.Option); err != nil {
+		return nil, false, err
+	}
+	return &cacheData, true, nil
 }
