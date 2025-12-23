@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"zero-service/app/ieccaller/internal/svc"
 
-	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/robfig/cron/v3"
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -22,56 +21,53 @@ func NewCronService(svcCtx *svc.ServiceContext) *CronService {
 }
 
 func (s *CronService) Start() {
-	s.c = cron.New(cron.WithSeconds()) // 支持秒级调度
-	// stat
-	_, _ = s.c.AddFunc("*/60 * * * * *", func() {
-		clients := s.svcCtx.ClientManager.GetClients()
-		clientsLen := len(clients)
-		loss := 0
-		for v := range clients {
-			if !v.IsConnected() {
-				loss++
-			}
-		}
-		logx.Statf("(iec-104) client: %d, loss: %d", clientsLen, loss)
-	})
-
 	// 定时总召唤
-	_, _ = s.c.AddFunc(s.svcCtx.Config.InterrogationCmdCron, func() {
-		cliList := s.svcCtx.ClientManager.GetClients()
-		for cli, _ := range cliList {
-			if cli.IsConnected() {
+	if len(s.svcCtx.Config.InterrogationCmdCron) > 0 {
+		_, _ = s.c.AddFunc(s.svcCtx.Config.InterrogationCmdCron, func() {
+			for _, serverCfg := range s.svcCtx.Config.IecServerConfig {
+				// 获取客户端
+				cli, err := s.svcCtx.ClientManager.GetClient(serverCfg.Host, serverCfg.Port)
+				if err != nil {
+					continue
+				}
+				if !cli.IsConnected() {
+					continue
+				}
 				// 发送总召唤
-				icCoaList := cli.GetIcCoaList()
-				for _, v := range icCoaList {
-					convertor.ToInt(v)
+				for _, v := range serverCfg.IcCoaList {
 					if err := cli.SendInterrogationCmd(v); err != nil {
 						logx.Errorf("send interrogation cmd error %v\n", err)
 						continue
 					}
-					logx.Infof("send interrogation cmd, serverUrl: %s, coa: %d", cli.GetServerUrl(), v)
+					logx.Infof("send interrogation cmd, server: %s:%d, coa: %d", serverCfg.Host, serverCfg.Port, v)
 				}
 			}
-		}
-	})
+		})
+	}
+
 	// 定时累计量召唤
-	_, _ = s.c.AddFunc(s.svcCtx.Config.CounterInterrogationCmd, func() {
-		cliList := s.svcCtx.ClientManager.GetClients()
-		for cli, _ := range cliList {
-			if cli.IsConnected() {
+	if len(s.svcCtx.Config.CounterInterrogationCmd) > 0 {
+		_, _ = s.c.AddFunc(s.svcCtx.Config.CounterInterrogationCmd, func() {
+			for _, serverCfg := range s.svcCtx.Config.IecServerConfig {
+				// 获取客户端
+				cli, err := s.svcCtx.ClientManager.GetClient(serverCfg.Host, serverCfg.Port)
+				if err != nil {
+					continue
+				}
+				if !cli.IsConnected() {
+					continue
+				}
 				// 累计量召唤
-				ccCoaList := cli.GetCcCoaList()
-				for _, v := range ccCoaList {
-					convertor.ToInt(v)
+				for _, v := range serverCfg.CcCoaList {
 					if err := cli.SendCounterInterrogationCmd(v); err != nil {
 						logx.Errorf("send counter interrogation cmd error %v\n", err)
 						continue
 					}
-					logx.Infof("send counter interrogation cmd, serverUrl: %s, coa: %d", cli.GetServerUrl(), v)
+					logx.Infof("send counter interrogation cmd, server: %s:%d, coa: %d", serverCfg.Host, serverCfg.Port, v)
 				}
 			}
-		}
-	})
+		})
+	}
 	s.c.Start()
 	fmt.Print("Starting cron server \n")
 }

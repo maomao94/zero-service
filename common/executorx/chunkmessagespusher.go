@@ -1,4 +1,4 @@
-package iec104
+package executorx
 
 import (
 	"sync"
@@ -6,16 +6,16 @@ import (
 	"github.com/zeromicro/go-zero/core/executors"
 )
 
-type ChunkSender func(msgs []string)
+type ChunkSender func(messages []string)
 
-type ChunkAsduPusher struct {
+type ChunkMessagesPusher struct {
 	inserter    *executors.ChunkExecutor
 	chunkSender ChunkSender
 	writerLock  sync.Mutex
 }
 
-func NewChunkAsduPusher(chunkSender ChunkSender, chunkBytes int) *ChunkAsduPusher {
-	pusher := ChunkAsduPusher{
+func NewChunkMessagesPusher(chunkSender ChunkSender, chunkBytes int) *ChunkMessagesPusher {
+	pusher := ChunkMessagesPusher{
 		chunkSender: chunkSender,
 	}
 
@@ -23,13 +23,13 @@ func NewChunkAsduPusher(chunkSender ChunkSender, chunkBytes int) *ChunkAsduPushe
 	return &pusher
 }
 
-func (w *ChunkAsduPusher) Write(val string) error {
+func (w *ChunkMessagesPusher) Write(val string) error {
 	w.writerLock.Lock()
 	defer w.writerLock.Unlock()
 	return w.inserter.Add(val, len(val))
 }
 
-func (w *ChunkAsduPusher) execute(vals []interface{}) {
+func (w *ChunkMessagesPusher) execute(vals []interface{}) {
 	msgs := make([]string, 0, len(vals))
 	for _, val := range vals {
 		if s, ok := val.(string); ok {

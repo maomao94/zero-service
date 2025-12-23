@@ -21,3 +21,50 @@ type ASDUCall interface {
 	// OnASDU 数据回复或控制回复
 	OnASDU(*asdu.ASDU) error
 }
+
+// emptyASDUCall 是ASDUCall接口的空实现，用于默认初始化
+// 这样可以避免空指针异常，同时允许用户通过WithASDUHandler覆盖
+
+type emptyASDUCall struct{}
+
+var _ ASDUCall = (*emptyASDUCall)(nil)
+
+// OnInterrogation 空实现
+func (e *emptyASDUCall) OnInterrogation(*asdu.ASDU) error {
+	return nil
+}
+
+// OnCounterInterrogation 空实现
+func (e *emptyASDUCall) OnCounterInterrogation(*asdu.ASDU) error {
+	return nil
+}
+
+// OnRead 空实现
+func (e *emptyASDUCall) OnRead(*asdu.ASDU) error {
+	return nil
+}
+
+// OnTestCommand 空实现
+func (e *emptyASDUCall) OnTestCommand(*asdu.ASDU) error {
+	return nil
+}
+
+// OnClockSync 空实现
+func (e *emptyASDUCall) OnClockSync(*asdu.ASDU) error {
+	return nil
+}
+
+// OnResetProcess 空实现
+func (e *emptyASDUCall) OnResetProcess(*asdu.ASDU) error {
+	return nil
+}
+
+// OnDelayAcquisition 空实现
+func (e *emptyASDUCall) OnDelayAcquisition(*asdu.ASDU) error {
+	return nil
+}
+
+// OnASDU 空实现
+func (e *emptyASDUCall) OnASDU(*asdu.ASDU) error {
+	return nil
+}

@@ -2,186 +2,214 @@ package client
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"log"
-	"net"
-	"net/url"
 	"strconv"
-	"sync"
 	"sync/atomic"
 	"time"
 	"zero-service/common/iec104"
-	"zero-service/common/iec104/waitgroup"
 
 	"github.com/spf13/cast"
 	"github.com/wendy512/go-iecp5/asdu"
-	"github.com/wendy512/go-iecp5/clog"
 	"github.com/wendy512/go-iecp5/cs104"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stat"
-	"github.com/zeromicro/go-zero/core/threading"
 )
 
-type CoaConfig struct {
-	Host string
-	Port int
-	Coa  int
-}
-
-type IecServerConfig struct {
-	Host            string
-	Port            int
-	IcCoaList       []uint16       `json:",optional"`
-	CcCoaList       []uint16       `json:",optional"`
-	MetaData        map[string]any `json:",optional"`
-	LogEnable       bool
-	TaskConcurrency int `json:",default=32"`
-}
-
-type Client struct {
-	client104             *cs104.Client
-	settings              *Settings
-	onConnectHandler      func(c *Client)
-	connectionLostHandler func(c *Client)
-}
-
-// Settings 连接配置
-type Settings struct {
+type ClientConfig struct {
 	Host              string
 	Port              int
-	IcCoaList         []uint16
-	CcCoaList         []uint16
-	MetaData          map[string]any
-	AutoConnect       bool          //自动重连
-	ReconnectInterval time.Duration //重连间隔
-	Cfg104            *cs104.Config //104协议规范配置
-	TLS               *tls.Config   // tls配置
-	Params            *asdu.Params  //ASDU相关特定参数
-	LogCfg            *LogCfg
-	//CoaConfig         []CoaConfig
+	AutoConnect       bool           `json:",default=true"`
+	ReconnectInterval time.Duration  `json:",default=1m"`
+	LogEnable         bool           `json:",default=true"`
+	MetaData          map[string]any `json:",optional"`
 }
 
-type LogCfg struct {
-	Enable      bool //是否开启log
-	LogProvider clog.LogProvider
-}
-
-type command struct {
-	typeId asdu.TypeID
-	ca     asdu.CommonAddr
-	ioa    asdu.InfoObjAddr
-	t      time.Time
-	qoc    asdu.QualifierOfCommand
-	qos    asdu.QualifierOfSetpointCmd
-	value  any
-}
-
-func NewSettings() *Settings {
-	cfg104 := cs104.DefaultConfig()
-	return &Settings{
-		Host:              "localhost",
-		Port:              2404,
-		AutoConnect:       true,
-		ReconnectInterval: time.Minute,
-		Cfg104:            &cfg104,
-		Params:            asdu.ParamsWide,
+// Validate 验证配置
+func (cfg ClientConfig) Validate() error {
+	if cfg.Host == "" {
+		return fmt.Errorf("host is required")
 	}
-}
-
-func New(settings *Settings, call ASDUCall) *Client {
-	opts := newClientOption(settings)
-	safeAddr := fmt.Sprintf("%s_%d", settings.Host, settings.Port)
-	metricsName := fmt.Sprintf("tcp-%s", safeAddr)
-	handler := &ClientHandler{
-		call:    call,
-		metrics: stat.NewMetrics(metricsName),
+	if cfg.Port <= 0 || cfg.Port > 65535 {
+		return fmt.Errorf("invalid port: %d", cfg.Port)
 	}
-	client104 := cs104.NewClient(handler, opts)
-	logCfg := settings.LogCfg
-	if logCfg != nil {
-		client104.LogMode(logCfg.Enable)
-		client104.SetLogProvider(logCfg.LogProvider)
-	}
-
-	return &Client{
-		settings:  settings,
-		client104: client104,
-	}
-}
-
-func (c *Client) GetIcCoaList() []uint16 {
-	return c.settings.IcCoaList
-}
-
-func (c *Client) GetCcCoaList() []uint16 {
-	return c.settings.CcCoaList
-}
-
-func (c *Client) Connect() error {
-	//if err := c.testConnect(); err != nil {
-	//	return err
-	//}
-
-	if err := c.client104.Start(); err != nil {
-		return err
-	}
-
-	wg := &waitgroup.WaitGroup{}
-	wg.Add(1)
-	// 标记是不是第一次
-	var firstConnect atomic.Bool
-	// 连接状态事件
-	c.client104.SetOnConnectHandler(func(cs *cs104.Client) {
-		if firstConnect.CompareAndSwap(false, true) {
-			wg.Done()
-		}
-		cs.SendStartDt()
-		if c.onConnectHandler != nil {
-			c.onConnectHandler(c)
-		}
-	})
-
-	//if err := wg.WaitTimeout(c.settings.Cfg104.ConnectTimeout0); err != nil {
-	//	return fmt.Errorf("connection timeout of %f seconds", c.settings.Cfg104.ConnectTimeout0.Seconds())
-	//}
 	return nil
 }
 
+// ConnectionEvent 连接事件类型
+type ConnectionEvent int
+
+const (
+	EventConnected ConnectionEvent = iota
+	EventDisconnected
+	EventServerActive
+)
+
+// Client 104客户端
+type Client struct {
+	client104 *cs104.Client
+	cfg       ClientConfig
+	asduCall  ASDUCall
+	running   atomic.Bool
+	handler   *ClientHandler
+}
+
+// Option 客户端选项
+type Option func(*Client)
+
+// WithASDUHandler 设置ASDU处理器
+func WithASDUHandler(handler ASDUCall) Option {
+	return func(c *Client) {
+		c.asduCall = handler
+	}
+}
+
+// WithMetaData 设置元数据
+func WithMetaData(metaData map[string]any) Option {
+	return func(c *Client) {
+		c.cfg.MetaData = metaData
+	}
+}
+
+// WithAutoConnect 设置自动重连
+func WithAutoConnect(autoConnect bool) Option {
+	return func(c *Client) {
+		c.cfg.AutoConnect = autoConnect
+	}
+}
+
+func MustNewClient(cfg ClientConfig, opts ...Option) *Client {
+	cli, err := NewClient(cfg, opts...)
+	logx.Must(err)
+	return cli
+}
+
+// NewClient 创建新的104客户端
+func NewClient(cfg ClientConfig, opts ...Option) (*Client, error) {
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
+
+	client := &Client{
+		cfg:      cfg,
+		asduCall: &emptyASDUCall{},
+	}
+
+	// 应用选项
+	for _, opt := range opts {
+		opt(client)
+	}
+
+	// 初始化客户端处理器
+	client.handler = &ClientHandler{
+		call:    client.asduCall,
+		metrics: stat.NewMetrics(fmt.Sprintf("tcp-%s_%d", cfg.Host, cfg.Port)),
+	}
+
+	// 初始化104客户端
+	client104, err := client.initClient104()
+	if err != nil {
+		return nil, err
+	}
+	client.client104 = client104
+
+	return client, nil
+}
+
+// initClient104 初始化104客户端
+func (c *Client) initClient104() (*cs104.Client, error) {
+	opts := newClientOption(c.cfg)
+	client104 := cs104.NewClient(c.handler, opts)
+
+	// 设置日志配置
+	client104.LogMode(c.cfg.LogEnable)
+	ctx := logx.ContextWithFields(context.Background(), logx.Field("host", c.cfg.Host), logx.Field("port", c.cfg.Port))
+	client104.SetLogProvider(iec104.NewLogProvider(ctx))
+
+	// 设置连接事件处理器
+	client104.SetOnConnectHandler(func(_ *cs104.Client) {
+		c.running.Store(true)
+		// 发送START_DT帧，建立数据传输
+		client104.SendStartDt()
+		c.onConnectionEvent(EventConnected)
+	})
+
+	client104.SetConnectionLostHandler(func(_ *cs104.Client) {
+		c.running.Store(false)
+		c.onConnectionEvent(EventDisconnected)
+	})
+
+	client104.SetServerActiveHandler(func(_ *cs104.Client) {
+		c.onConnectionEvent(EventServerActive)
+	})
+
+	return client104, nil
+}
+
+func (c *Client) Start() {
+	err := c.Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (c *Client) Stop() {
+	c.running.Store(false)
+	c.Close()
+}
+
+// Connect 连接到104服务器
+func (c *Client) Connect() error {
+	return c.client104.Start()
+}
+
+// Close 关闭客户端连接
 func (c *Client) Close() error {
 	c.client104.SendStopDt()
 	return c.client104.Close()
 }
 
-func (c *Client) SetLogCfg(cfg LogCfg) {
-	c.client104.LogMode(cfg.Enable)
-	c.client104.SetLogProvider(cfg.LogProvider)
-}
-
-// SetOnConnectHandler 连接成功后回调，如果连接断开重新连接上也会回调，所以存在多次调用的情况
-func (c *Client) SetOnConnectHandler(f func(c *Client)) {
-	c.onConnectHandler = f
-}
-
-// SetConnectionLostHandler 连接断开后回调，如果连接重复断开也会回调，所以存在多次调用的情况
-func (c *Client) SetConnectionLostHandler(f func(c *Client)) {
-	c.client104.SetConnectionLostHandler(func(_ *cs104.Client) {
-		f(c)
-	})
-}
-
-// SetServerActiveHandler 激活确认后回调，如果连接断开重新连接上也会回调，所以存在多次调用的情况
-func (c *Client) SetServerActiveHandler(f func(c *Client)) {
-	c.client104.SetServerActiveHandler(func(_ *cs104.Client) {
-		f(c)
-	})
-}
-
+// IsConnected 检查客户端是否连接
 func (c *Client) IsConnected() bool {
 	return c.client104.IsConnected()
 }
 
-// SendCmd
+// IsRunning 检查客户端是否运行
+func (c *Client) IsRunning() bool {
+	return c.running.Load()
+}
+
+// SendInterrogationCmd 发送总召唤命令
+func (c *Client) SendInterrogationCmd(addr uint16) error {
+	return c.doSend(&command{typeId: asdu.C_IC_NA_1, ca: asdu.CommonAddr(addr)})
+}
+
+// SendCounterInterrogationCmd 发送计数器召唤命令
+func (c *Client) SendCounterInterrogationCmd(addr uint16) error {
+	return c.doSend(&command{typeId: asdu.C_CI_NA_1, ca: asdu.CommonAddr(addr)})
+}
+
+// SendClockSynchronizationCmd 发送时钟同步命令
+func (c *Client) SendClockSynchronizationCmd(addr uint16, t time.Time) error {
+	return c.doSend(&command{typeId: asdu.C_CS_NA_1, ca: asdu.CommonAddr(addr), t: t})
+}
+
+// SendReadCmd 发送读命令
+func (c *Client) SendReadCmd(addr uint16, ioa uint) error {
+	return c.doSend(&command{typeId: asdu.C_RD_NA_1, ioa: asdu.InfoObjAddr(ioa), ca: asdu.CommonAddr(addr)})
+}
+
+// SendResetProcessCmd 发送复位进程命令
+func (c *Client) SendResetProcessCmd(addr uint16) error {
+	return c.doSend(&command{typeId: asdu.C_RP_NA_1, ca: asdu.CommonAddr(addr)})
+}
+
+// SendTestCmd 发送测试命令
+func (c *Client) SendTestCmd(addr uint16) error {
+	return c.doSend(&command{typeId: asdu.C_TS_TA_1, ca: asdu.CommonAddr(addr)})
+}
+
+// SendCmd 发送控制命令
 func (c *Client) SendCmd(addr uint16, typeId asdu.TypeID, ioa asdu.InfoObjAddr, value any) error {
 	cmd := &command{
 		typeId: typeId,
@@ -202,46 +230,83 @@ func (c *Client) SendCmd(addr uint16, typeId asdu.TypeID, ioa asdu.InfoObjAddr, 
 	return c.doSend(cmd)
 }
 
-// SendInterrogationCmd 发起总召唤
-func (c *Client) SendInterrogationCmd(addr uint16) error {
-	cmd := &command{typeId: asdu.C_IC_NA_1, ca: asdu.CommonAddr(addr)}
-	return c.doSend(cmd)
+// GetServerURL 获取服务器URL
+func (c *Client) GetServerURL() string {
+	return formatServerUrl(c.cfg)
 }
 
-// SendClockSynchronizationCmd 发起时钟同步
-func (c *Client) SendClockSynchronizationCmd(addr uint16, t time.Time) error {
-	cmd := &command{typeId: asdu.C_CS_NA_1, ca: asdu.CommonAddr(addr), t: t}
-	return c.doSend(cmd)
+// GetHost 获取服务器主机
+func (c *Client) GetHost() string {
+	return c.cfg.Host
 }
 
-// SendCounterInterrogationCmd 发起累积量召唤
-func (c *Client) SendCounterInterrogationCmd(addr uint16) error {
-	cmd := &command{typeId: asdu.C_CI_NA_1, ca: asdu.CommonAddr(addr)}
-	return c.doSend(cmd)
+// GetPort 获取服务器端口
+func (c *Client) GetPort() int {
+	return c.cfg.Port
 }
 
-// SendReadCmd 发起读命令
-func (c *Client) SendReadCmd(addr uint16, ioa uint) error {
-	cmd := &command{typeId: asdu.C_RD_NA_1, ioa: asdu.InfoObjAddr(ioa), ca: asdu.CommonAddr(addr)}
-	return c.doSend(cmd)
+// GetMetaData 获取元数据
+func (c *Client) GetMetaData() map[string]any {
+	return c.cfg.MetaData
 }
 
-// SendResetProcessCmd 发起复位进程命令
-func (c *Client) SendResetProcessCmd(addr uint16) error {
-	cmd := &command{typeId: asdu.C_RP_NA_1, ca: asdu.CommonAddr(addr)}
-	return c.doSend(cmd)
+// onConnectionEvent 处理连接事件，内部直接打印日志
+func (c *Client) onConnectionEvent(event ConnectionEvent) {
+	var eventName string
+	switch event {
+	case EventConnected:
+		eventName = "Connected"
+	case EventDisconnected:
+		eventName = "Disconnected"
+	case EventServerActive:
+		eventName = "ServerActive"
+	default:
+		eventName = "Unknown"
+	}
+	logx.Infof("IEC104 client %s:%d %s", c.cfg.Host, c.cfg.Port, eventName)
 }
 
-// SendTestCmd 发送带时标的测试命令
-func (c *Client) SendTestCmd(addr uint16) error {
-	cmd := &command{typeId: asdu.C_TS_TA_1, ca: asdu.CommonAddr(addr)}
-	return c.doSend(cmd)
+// newClientOption 创建客户端选项
+func newClientOption(cfg ClientConfig) *cs104.ClientOption {
+	opts := cs104.NewOption()
+	cfg104 := cs104.DefaultConfig()
+	opts.SetConfig(cfg104)
+
+	opts.SetParams(asdu.ParamsWide)
+	opts.SetAutoReconnect(cfg.AutoConnect)
+	opts.SetReconnectInterval(cfg.ReconnectInterval)
+
+	server := formatServerUrl(cfg)
+	_ = opts.AddRemoteServer(server)
+
+	return opts
 }
 
+// formatServerUrl 格式化服务器URL
+func formatServerUrl(cfg ClientConfig) string {
+	var server string
+	// 暂时只支持tcp协议，因为没有TLS字段
+	server = "tcp://" + cfg.Host + ":" + strconv.Itoa(cfg.Port)
+	return server
+}
+
+// command 命令结构体
+type command struct {
+	typeId asdu.TypeID
+	ca     asdu.CommonAddr
+	ioa    asdu.InfoObjAddr
+	t      time.Time
+	qoc    asdu.QualifierOfCommand
+	qos    asdu.QualifierOfSetpointCmd
+	value  any
+}
+
+// doSend 执行发送命令
 func (c *Client) doSend(cmd *command) error {
 	if !c.IsConnected() {
 		return NotConnected
 	}
+
 	coa := activationCoa()
 	var err error
 
@@ -364,251 +429,17 @@ func (c *Client) doSend(cmd *command) error {
 		}
 		err = asdu.BitsString32Cmd(c.client104, cmd.typeId, coa, cmd.ca, asduCmd)
 	default:
-		err = fmt.Errorf("unknow type id %d", cmd.typeId)
+		err = fmt.Errorf("unknown type id %d", cmd.typeId)
 	}
 
 	return err
 }
 
+// activationCoa 获取激活COA
 func activationCoa() asdu.CauseOfTransmission {
 	return asdu.CauseOfTransmission{
 		IsTest:     false,
 		IsNegative: false,
 		Cause:      asdu.Activation,
 	}
-}
-
-// testConnect 测试端口连通性
-func (c *Client) testConnect() error {
-	url, _ := url.Parse(formatServerUrl(c.settings))
-	var (
-		conn net.Conn
-		err  error
-	)
-
-	timeout := c.settings.Cfg104.ConnectTimeout0
-	switch url.Scheme {
-	case "tcps":
-		conn, err = tls.DialWithDialer(&net.Dialer{Timeout: timeout}, "tcp", url.Host, c.settings.TLS)
-	default:
-		conn, err = net.DialTimeout("tcp", url.Host, timeout)
-	}
-
-	if err != nil {
-		return err
-	}
-	return conn.Close()
-}
-
-func newClientOption(settings *Settings) *cs104.ClientOption {
-	opts := cs104.NewOption()
-	if settings.Cfg104 == nil {
-		opts.SetConfig(cs104.DefaultConfig())
-	} else {
-		opts.SetConfig(*settings.Cfg104)
-	}
-	if settings.Params == nil {
-		opts.SetParams(asdu.ParamsWide)
-	} else {
-		opts.SetParams(settings.Params)
-	}
-	opts.SetAutoReconnect(settings.AutoConnect)
-	opts.SetReconnectInterval(settings.ReconnectInterval)
-	opts.SetTLSConfig(settings.TLS)
-
-	server := formatServerUrl(settings)
-	_ = opts.AddRemoteServer(server)
-	return opts
-}
-
-func formatServerUrl(settings *Settings) string {
-	var server string
-	if settings.TLS != nil {
-		server = "tcps://" + settings.Host + ":" + strconv.Itoa(settings.Port)
-	} else {
-		server = "tcp://" + settings.Host + ":" + strconv.Itoa(settings.Port)
-	}
-	return server
-}
-
-func MustNewIecServerClient(config IecServerConfig, call ASDUCall, manager *ClientManager) *Client {
-	settings := NewSettings()
-	settings.Host = config.Host
-	settings.Port = config.Port
-	settings.IcCoaList = config.IcCoaList
-	settings.CcCoaList = config.CcCoaList
-	settings.MetaData = config.MetaData
-	settings.ReconnectInterval = time.Minute
-	settings.AutoConnect = true
-	ctx := logx.ContextWithFields(context.Background(), logx.Field("host", settings.Host), logx.Field("port", settings.Port))
-	settings.LogCfg = &LogCfg{Enable: config.LogEnable, LogProvider: iec104.NewLogProvider(ctx)}
-	c := New(settings, call)
-	c.SetOnConnectHandler(func(c *Client) {
-		logx.Infof("connected %s:%d iec104 server", settings.Host, settings.Port)
-	})
-	// server active确认后回调
-	c.SetServerActiveHandler(func(c *Client) {
-		// 发送总召唤 定时任务处理总召唤
-		//if err := c.SendInterrogationCmd(1); err != nil {
-		//	logx.Errorf("send interrogation cmd error %v\n", err)
-		//}
-	})
-	if manager != nil {
-		// 注册连接事件
-		manager.PublishRegister(c)
-
-		// 注册 coaSession
-		//for _, cf := range coaConfig {
-		//	if cf.Host == c.settings.Host && cf.Port == c.settings.Port {
-		//		manager.EventSession(cf, c)
-		//	}
-		//}
-	}
-	return c
-}
-
-func (q *Client) Start() {
-	err := q.Connect()
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func (q *Client) Stop() {
-	q.Close()
-}
-
-func (c *Client) GetServerUrl() string {
-	return formatServerUrl(c.settings)
-}
-
-// iec客户端管理容器
-type ClientManager struct {
-	clients     map[*Client]bool // 全部的连接
-	clientsLock sync.RWMutex     // 读写锁
-	register    chan *Client     // 连接连接处理
-	defaultName string
-}
-
-type CoaSession struct {
-	clients   *Client // 连接
-	coaConfig CoaConfig
-}
-
-func (cs *CoaSession) GetCli() *Client {
-	return cs.clients
-}
-
-func (cs *CoaSession) GetConfig() CoaConfig {
-	return cs.coaConfig
-}
-
-func NewClientManager() (m *ClientManager) {
-	m = &ClientManager{
-		clients:  make(map[*Client]bool),
-		register: make(chan *Client, 1000),
-	}
-	threading.GoSafe(func() {
-		logx.Info("start clientManager listener")
-		m.StartListener()
-	})
-	return
-}
-
-// 管道处理程序
-func (manager *ClientManager) StartListener() {
-	for {
-		select {
-		case client := <-manager.register:
-			// 建立连接事件
-			manager.EventRegister(client)
-		}
-	}
-}
-
-func (manager *ClientManager) EventRegister(client *Client) {
-	manager.AddClients(client)
-	logx.Infof("eventRegister iec104 server addr:%s success", client.GetServerUrl())
-}
-
-func (manager *ClientManager) PublishRegister(client *Client) {
-	threading.RunSafe(func() {
-		manager.register <- client
-	})
-}
-
-func (manager *ClientManager) AddClients(client *Client) {
-	manager.clientsLock.Lock()
-	defer manager.clientsLock.Unlock()
-	manager.clients[client] = true
-}
-
-func (manager *ClientManager) GetClientsLen() (clientsLen int) {
-	clientsLen = len(manager.clients)
-	return
-}
-
-func (manager *ClientManager) InClient(client *Client) (ok bool) {
-	manager.clientsLock.RLock()
-	defer manager.clientsLock.RUnlock()
-	// 连接存在，在添加
-	_, ok = manager.clients[client]
-	return
-}
-
-func (manager *ClientManager) GetClients() (clients map[*Client]bool) {
-	clients = make(map[*Client]bool)
-	manager.clientsRange(func(client *Client, value bool) (result bool) {
-		clients[client] = value
-		return true
-	})
-	return
-}
-
-func (manager *ClientManager) GetClient(host string, port int) (*Client, error) {
-	var cli *Client
-	manager.clientsRange(func(client *Client, value bool) (result bool) {
-		if client.settings.Host == host && client.settings.Port == port {
-			cli = client
-			return true
-		}
-		return false
-	})
-	if cli == nil {
-		return nil, fmt.Errorf("cli is empty")
-	}
-	if !cli.IsConnected() {
-		return nil, fmt.Errorf("cli is not connected")
-	}
-	return cli, nil
-}
-
-func (manager *ClientManager) GetClientOrNil(host string, port int) (*Client, error) {
-	var cli *Client
-	manager.clientsRange(func(client *Client, value bool) (result bool) {
-		if client.settings.Host == host && client.settings.Port == port {
-			cli = client
-			return true
-		}
-		return false
-	})
-	if cli == nil {
-		return nil, nil
-	}
-	if !cli.IsConnected() {
-		return nil, fmt.Errorf("cli is not connected")
-	}
-	return cli, nil
-}
-
-func (manager *ClientManager) clientsRange(f func(client *Client, value bool) (result bool)) {
-	manager.clientsLock.RLock()
-	defer manager.clientsLock.RUnlock()
-	for key, value := range manager.clients {
-		result := f(key, value)
-		if result == false {
-			continue
-		}
-	}
-	return
 }

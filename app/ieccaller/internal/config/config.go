@@ -2,18 +2,24 @@ package config
 
 import (
 	"time"
-	"zero-service/common/iec104/iec104client"
+	"zero-service/common/iec104/client"
 	"zero-service/common/mqttx"
 
 	"github.com/zeromicro/go-zero/zrpc"
 )
 
+type IecServerConfig struct {
+	client.ClientConfig
+	IcCoaList       []uint16 `json:",optional"`
+	CcCoaList       []uint16 `json:",optional"`
+	TaskConcurrency int      `json:",default=32"`
+}
+
 type Config struct {
 	zrpc.RpcServerConf
 	// 模式字段，支持 cluster / standalone
-	DeployMode      string `json:",default=standalone,options=standalone|cluster"` // 可选值：standalone 或 cluster
-	IecServerConfig []client.IecServerConfig
-	//IecCoaConfig         []iec104client.CoaConfig
+	DeployMode              string `json:",default=standalone,options=standalone|cluster"` // 可选值：standalone 或 cluster
+	IecServerConfig         []IecServerConfig
 	InterrogationCmdCron    string `json:",optional"`
 	CounterInterrogationCmd string `json:",optional"`
 

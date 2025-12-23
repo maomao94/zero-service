@@ -3,9 +3,10 @@ package iec
 import (
 	"context"
 	"fmt"
+	"zero-service/app/ieccaller/internal/config"
 	"zero-service/app/ieccaller/internal/svc"
 	"zero-service/common/copierx"
-	"zero-service/common/iec104/iec104client"
+	"zero-service/common/iec104/client"
 	"zero-service/common/iec104/types"
 	"zero-service/common/iec104/util"
 	"zero-service/common/tool"
@@ -19,27 +20,24 @@ import (
 
 type ClientCall struct {
 	svcCtx     *svc.ServiceContext
-	host       string
-	port       int
-	metaData   map[string]any
-	taskRunner *threading.TaskRunner
+	config     config.IecServerConfig
 	stationId  string
+	taskRunner *threading.TaskRunner
 }
 
-func NewClientCall(svcCtx *svc.ServiceContext, host string, port int, metaData map[string]any, taskConcurrency int) *ClientCall {
+var _ client.ASDUCall = (*ClientCall)(nil)
+
+func NewClientCall(svcCtx *svc.ServiceContext, config config.IecServerConfig) *ClientCall {
 	// 生成 stationId
-	stationId := util.GenerateStationId(host, port)
-	if len(metaData) > 0 {
-		if sid, ok := metaData["stationId"].(string); ok && sid != "" {
+	stationId := util.GenerateStationId(config.Host, config.Port)
+	if len(config.MetaData) > 0 {
+		if sid, ok := config.MetaData["stationId"].(string); ok && sid != "" {
 			stationId = sid
 		}
 	}
 	return &ClientCall{
 		svcCtx:     svcCtx,
-		host:       host,
-		port:       port,
-		metaData:   metaData,
-		taskRunner: threading.NewTaskRunner(taskConcurrency),
+		taskRunner: threading.NewTaskRunner(config.TaskConcurrency),
 		stationId:  stationId,
 	}
 }
@@ -99,8 +97,8 @@ func (c *ClientCall) OnASDU(packet *asdu.ASDU) error {
 		logx.Field("coa", packet.Coa.String()),
 		logx.Field("commonAddr", packet.CommonAddr),
 		logx.Field("asdu", genASDUName(packet.Type)),
-		logx.Field("host", c.host),
-		logx.Field("port", c.port),
+		logx.Field("host", c.config.Host),
+		logx.Field("port", c.config.Port),
 		logx.Field("stationId", c.stationId),
 	)
 	ctx = context.WithValue(ctx, "stationId", c.stationId)
@@ -159,14 +157,14 @@ func (c *ClientCall) onSinglePoint(ctx context.Context, packet *asdu.ASDU) {
 		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 			MsgId:    msgId,
-			Host:     c.host,
-			Port:     c.port,
+			Host:     c.config.Host,
+			Port:     c.config.Port,
 			Asdu:     genASDUName(packet.Type),
 			TypeId:   int(packet.Type),
 			DataType: int(client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
-			MetaData: c.metaData,
+			MetaData: c.config.MetaData,
 		}, obj.Ioa)
 	}
 }
@@ -192,14 +190,14 @@ func (c *ClientCall) onDoublePoint(ctx context.Context, packet *asdu.ASDU) {
 		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 			MsgId:    msgId,
-			Host:     c.host,
-			Port:     c.port,
+			Host:     c.config.Host,
+			Port:     c.config.Port,
 			Asdu:     genASDUName(packet.Type),
 			TypeId:   int(packet.Type),
 			DataType: int(client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
-			MetaData: c.metaData,
+			MetaData: c.config.MetaData,
 		}, obj.Ioa)
 	}
 }
@@ -223,14 +221,14 @@ func (c *ClientCall) onMeasuredValueScaled(ctx context.Context, packet *asdu.ASD
 		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 			MsgId:    msgId,
-			Host:     c.host,
-			Port:     c.port,
+			Host:     c.config.Host,
+			Port:     c.config.Port,
 			Asdu:     genASDUName(packet.Type),
 			TypeId:   int(packet.Type),
 			DataType: int(client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
-			MetaData: c.metaData,
+			MetaData: c.config.MetaData,
 		}, obj.Ioa)
 	}
 }
@@ -256,14 +254,14 @@ func (c *ClientCall) onMeasuredValueNormal(ctx context.Context, packet *asdu.ASD
 		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 			MsgId:    msgId,
-			Host:     c.host,
-			Port:     c.port,
+			Host:     c.config.Host,
+			Port:     c.config.Port,
 			Asdu:     genASDUName(packet.Type),
 			TypeId:   int(packet.Type),
 			DataType: int(client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
-			MetaData: c.metaData,
+			MetaData: c.config.MetaData,
 		}, obj.Ioa)
 	}
 }
@@ -288,14 +286,14 @@ func (c *ClientCall) onStepPosition(ctx context.Context, packet *asdu.ASDU) {
 		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 			MsgId:    msgId,
-			Host:     c.host,
-			Port:     c.port,
+			Host:     c.config.Host,
+			Port:     c.config.Port,
 			Asdu:     genASDUName(packet.Type),
 			TypeId:   int(packet.Type),
 			DataType: int(client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
-			MetaData: c.metaData,
+			MetaData: c.config.MetaData,
 		}, obj.Ioa)
 	}
 }
@@ -319,14 +317,14 @@ func (c *ClientCall) onBitString32(ctx context.Context, packet *asdu.ASDU) {
 		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 			MsgId:    msgId,
-			Host:     c.host,
-			Port:     c.port,
+			Host:     c.config.Host,
+			Port:     c.config.Port,
 			Asdu:     genASDUName(packet.Type),
 			TypeId:   int(packet.Type),
 			DataType: int(client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
-			MetaData: c.metaData,
+			MetaData: c.config.MetaData,
 		}, obj.Ioa)
 	}
 }
@@ -350,14 +348,14 @@ func (c *ClientCall) onMeasuredValueFloat(ctx context.Context, packet *asdu.ASDU
 		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 			MsgId:    msgId,
-			Host:     c.host,
-			Port:     c.port,
+			Host:     c.config.Host,
+			Port:     c.config.Port,
 			Asdu:     genASDUName(packet.Type),
 			TypeId:   int(packet.Type),
 			DataType: int(client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
-			MetaData: c.metaData,
+			MetaData: c.config.MetaData,
 		}, obj.Ioa)
 	}
 }
@@ -376,14 +374,14 @@ func (c *ClientCall) onIntegratedTotals(ctx context.Context, packet *asdu.ASDU) 
 		copier.CopyWithOption(&obj, &p, copierx.Option)
 		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 			MsgId:    msgId,
-			Host:     c.host,
-			Port:     c.port,
+			Host:     c.config.Host,
+			Port:     c.config.Port,
 			Asdu:     genASDUName(packet.Type),
 			TypeId:   int(packet.Type),
 			DataType: int(client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
-			MetaData: c.metaData,
+			MetaData: c.config.MetaData,
 		}, obj.Ioa)
 	}
 }
@@ -408,14 +406,14 @@ func (c *ClientCall) onEventOfProtectionEquipment(ctx context.Context, packet *a
 		obj.Iv = util.QdpIsInvalid(p.Qdp)
 		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 			MsgId:    msgId,
-			Host:     c.host,
-			Port:     c.port,
+			Host:     c.config.Host,
+			Port:     c.config.Port,
 			Asdu:     genASDUName(packet.Type),
 			TypeId:   int(packet.Type),
 			DataType: int(client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
-			MetaData: c.metaData,
+			MetaData: c.config.MetaData,
 		}, obj.Ioa)
 	}
 }
@@ -438,14 +436,14 @@ func (c *ClientCall) onPackedStartEventsOfProtectionEquipment(ctx context.Contex
 	obj.Iv = util.QdpIsInvalid(p.Qdp)
 	_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 		MsgId:    msgId,
-		Host:     c.host,
-		Port:     c.port,
+		Host:     c.config.Host,
+		Port:     c.config.Port,
 		Asdu:     genASDUName(packet.Type),
 		TypeId:   int(packet.Type),
 		DataType: int(client.GetDataType(packet.Type)),
 		Coa:      uint(coa),
 		Body:     &obj,
-		MetaData: c.metaData,
+		MetaData: c.config.MetaData,
 	}, obj.Ioa)
 }
 
@@ -475,14 +473,14 @@ func (c *ClientCall) onPackedOutputCircuitInfo(ctx context.Context, packet *asdu
 	obj.Iv = util.QdpIsInvalid(p.Qdp)
 	_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 		MsgId:    msgId,
-		Host:     c.host,
-		Port:     c.port,
+		Host:     c.config.Host,
+		Port:     c.config.Port,
 		Asdu:     genASDUName(packet.Type),
 		TypeId:   int(packet.Type),
 		DataType: int(client.GetDataType(packet.Type)),
 		Coa:      uint(coa),
 		Body:     &obj,
-		MetaData: c.metaData,
+		MetaData: c.config.MetaData,
 	}, obj.Ioa)
 }
 
@@ -524,14 +522,14 @@ func (c *ClientCall) onPackedSinglePointWithSCD(ctx context.Context, packet *asd
 		obj.Iv = util.QdsIsInvalid(p.Qds)
 		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
 			MsgId:    msgId,
-			Host:     c.host,
-			Port:     c.port,
+			Host:     c.config.Host,
+			Port:     c.config.Port,
 			Asdu:     genASDUName(packet.Type),
 			TypeId:   int(packet.Type),
 			DataType: int(client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
-			MetaData: c.metaData,
+			MetaData: c.config.MetaData,
 		}, obj.Ioa)
 	}
 }
