@@ -231,6 +231,7 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 				if chunkErr := svc.ChunkAsduPusher.Write(string(byteData)); chunkErr != nil {
 					logx.WithContext(ctx).Errorf("failed to write asdu to batch pusher, msgId: %s, err: %v", data.MsgId, chunkErr)
 				}
+				logx.WithContext(ctx).Debugf("write asdu to batch pusher, msgId: %s", data.MsgId)
 			}
 		},
 	)
