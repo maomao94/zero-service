@@ -52,7 +52,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 					Coa:         uint32(result.Get("coa").Int()),
 					BodyRaw:     bodyRaw,
 					Time:        result.Get("time").String(),
-					MetaDataRaw: result.Get("metaData").Raw,
+					MetaDataRaw: result.Get("metaData").String(),
 				}
 				pm := result.Get("pm")
 				if pm.Exists() {

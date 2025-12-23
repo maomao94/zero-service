@@ -24,7 +24,7 @@ type MsgBody struct {
 	Coa      uint           `json:"coa"` // 公共地址
 	Body     IoaGetter      `json:"body"`
 	Time     string         `json:"time"`
-	MetaData map[string]any `json:"metaData"`
+	MetaData map[string]any `json:"metaData,omitempty"`
 	Pm       *PointMapping  `json:"pm,omitempty"`
 }
 

@@ -21,6 +21,7 @@ import (
 	"github.com/dromara/carbon/v2"
 	"github.com/tidwall/gjson"
 	"github.com/zeromicro/go-queue/kq"
+	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/mr"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -88,7 +89,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 						Coa:         uint32(result.Get("coa").Int()),
 						BodyRaw:     bodyRaw,
 						Time:        result.Get("time").String(),
-						MetaDataRaw: result.Get("metaData").Raw,
+						MetaDataRaw: result.Get("metaData").String(),
 					}
 					pm := result.Get("pm")
 					if pm.Exists() {
@@ -173,7 +174,7 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 			}
 		}
 	}
-	byteData, err := json.Marshal(data)
+	byteData, err := jsonx.Marshal(data)
 	if err != nil {
 		return fmt.Errorf("json marshal error %v", err)
 	}

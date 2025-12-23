@@ -37,6 +37,7 @@ func NewClientCall(svcCtx *svc.ServiceContext, config config.IecServerConfig) *C
 	}
 	return &ClientCall{
 		svcCtx:     svcCtx,
+		config:     config,
 		taskRunner: threading.NewTaskRunner(config.TaskConcurrency),
 		stationId:  stationId,
 	}
