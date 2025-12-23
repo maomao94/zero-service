@@ -156,6 +156,7 @@ func (c *Client) Start() {
 func (c *Client) Stop() {
 	c.running.Store(false)
 	c.Close()
+	logx.Infof("IEC104 client %s:%d is closed", c.cfg.Host, c.cfg.Port)
 }
 
 // Connect 连接到104服务器
