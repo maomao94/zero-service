@@ -697,7 +697,7 @@ type PointMapping struct {
 	// 扩展字段4
 	Ext4 string `protobuf:"bytes,7,opt,name=ext4,proto3" json:"ext4,omitempty"`
 	// 扩展字段5
-	Ext5          string `protobuf:"bytes,12,opt,name=ext5,proto3" json:"ext5,omitempty"`
+	Ext5          string `protobuf:"bytes,8,opt,name=ext5,proto3" json:"ext5,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2523,7 +2523,7 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x04ext2\x18\x05 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x18\x06 \x01(\tR\x04ext3\x12\x12\n" +
 	"\x04ext4\x18\a \x01(\tR\x04ext4\x12\x12\n" +
-	"\x04ext5\x18\f \x01(\tR\x04ext5\"\xc9\x01\n" +
+	"\x04ext5\x18\b \x01(\tR\x04ext5\"\xc9\x01\n" +
 	"\x0fSinglePointInfo\x12\x10\n" +
 	"\x03ioa\x18\x01 \x01(\rR\x03ioa\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\bR\x05value\x12\x10\n" +

@@ -121,7 +121,7 @@ message PointMapping {
   // 扩展字段4
   string ext4 = 7 [json_name = "ext4"];
   // 扩展字段5
-  string ext5 = 12 [json_name = "ext5"];
+  string ext5 = 8 [json_name = "ext5"];
 }
 
 // 单点遥信
