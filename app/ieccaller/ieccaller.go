@@ -87,7 +87,7 @@ func main() {
 	serviceGroup.Add(s)
 
 	for _, cf := range c.IecServerConfig {
-		serviceGroup.Add(iec104client.MustNewIecServerClient(cf, iec.NewClientCall(ctx, cf.Host, cf.Port, cf.MetaData, cf.TaskConcurrency), ctx.ClientManager))
+		serviceGroup.Add(client.MustNewIecServerClient(cf, iec.NewClientCall(ctx, cf.Host, cf.Port, cf.MetaData, cf.TaskConcurrency), ctx.ClientManager))
 	}
 
 	// cron

@@ -1,4 +1,4 @@
-package iec104server
+package server
 
 import (
 	"github.com/wendy512/go-iecp5/asdu"

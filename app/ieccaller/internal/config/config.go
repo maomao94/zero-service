@@ -12,7 +12,7 @@ type Config struct {
 	zrpc.RpcServerConf
 	// 模式字段，支持 cluster / standalone
 	DeployMode      string `json:",default=standalone,options=standalone|cluster"` // 可选值：standalone 或 cluster
-	IecServerConfig []iec104client.IecServerConfig
+	IecServerConfig []client.IecServerConfig
 	//IecCoaConfig         []iec104client.CoaConfig
 	InterrogationCmdCron    string `json:",optional"`
 	CounterInterrogationCmd string `json:",optional"`

@@ -1,4 +1,4 @@
-package iec104client
+package client
 
 import (
 	"context"

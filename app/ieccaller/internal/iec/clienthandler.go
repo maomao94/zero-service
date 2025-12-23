@@ -106,32 +106,32 @@ func (c *ClientCall) OnASDU(packet *asdu.ASDU) error {
 	ctx = context.WithValue(ctx, "stationId", c.stationId)
 	logx.WithContext(ctx).Info("received OnASDU")
 	c.taskRunner.Schedule(func() {
-		dataType := iec104client.GetDataType(packet.Type)
+		dataType := client.GetDataType(packet.Type)
 		// 读取设备数据
 		switch dataType {
-		case iec104client.SinglePoint:
+		case client.SinglePoint:
 			c.onSinglePoint(ctx, packet)
-		case iec104client.DoublePoint:
+		case client.DoublePoint:
 			c.onDoublePoint(ctx, packet)
-		case iec104client.MeasuredValueScaled:
+		case client.MeasuredValueScaled:
 			c.onMeasuredValueScaled(ctx, packet)
-		case iec104client.MeasuredValueNormal:
+		case client.MeasuredValueNormal:
 			c.onMeasuredValueNormal(ctx, packet)
-		case iec104client.StepPosition:
+		case client.StepPosition:
 			c.onStepPosition(ctx, packet)
-		case iec104client.BitString32:
+		case client.BitString32:
 			c.onBitString32(ctx, packet)
-		case iec104client.MeasuredValueFloat:
+		case client.MeasuredValueFloat:
 			c.onMeasuredValueFloat(ctx, packet)
-		case iec104client.IntegratedTotals:
+		case client.IntegratedTotals:
 			c.onIntegratedTotals(ctx, packet)
-		case iec104client.EventOfProtectionEquipment:
+		case client.EventOfProtectionEquipment:
 			c.onEventOfProtectionEquipment(ctx, packet)
-		case iec104client.PackedStartEventsOfProtectionEquipment:
+		case client.PackedStartEventsOfProtectionEquipment:
 			c.onPackedStartEventsOfProtectionEquipment(ctx, packet)
-		case iec104client.PackedOutputCircuitInfo:
+		case client.PackedOutputCircuitInfo:
 			c.onPackedOutputCircuitInfo(ctx, packet)
-		case iec104client.PackedSinglePointWithSCD:
+		case client.PackedSinglePointWithSCD:
 			c.onPackedSinglePointWithSCD(ctx, packet)
 		default:
 			return
@@ -163,7 +163,7 @@ func (c *ClientCall) onSinglePoint(ctx context.Context, packet *asdu.ASDU) {
 			Port:     c.port,
 			Asdu:     genASDUName(packet.Type),
 			TypeId:   int(packet.Type),
-			DataType: int(iec104client.GetDataType(packet.Type)),
+			DataType: int(client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
 			MetaData: c.metaData,
@@ -196,7 +196,7 @@ func (c *ClientCall) onDoublePoint(ctx context.Context, packet *asdu.ASDU) {
 			Port:     c.port,
 			Asdu:     genASDUName(packet.Type),
 			TypeId:   int(packet.Type),
-			DataType: int(iec104client.GetDataType(packet.Type)),
+			DataType: int(client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
 			MetaData: c.metaData,
@@ -227,7 +227,7 @@ func (c *ClientCall) onMeasuredValueScaled(ctx context.Context, packet *asdu.ASD
 			Port:     c.port,
 			Asdu:     genASDUName(packet.Type),
 			TypeId:   int(packet.Type),
-			DataType: int(iec104client.GetDataType(packet.Type)),
+			DataType: int(client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
 			MetaData: c.metaData,
@@ -260,7 +260,7 @@ func (c *ClientCall) onMeasuredValueNormal(ctx context.Context, packet *asdu.ASD
 			Port:     c.port,
 			Asdu:     genASDUName(packet.Type),
 			TypeId:   int(packet.Type),
-			DataType: int(iec104client.GetDataType(packet.Type)),
+			DataType: int(client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
 			MetaData: c.metaData,
@@ -292,7 +292,7 @@ func (c *ClientCall) onStepPosition(ctx context.Context, packet *asdu.ASDU) {
 			Port:     c.port,
 			Asdu:     genASDUName(packet.Type),
 			TypeId:   int(packet.Type),
-			DataType: int(iec104client.GetDataType(packet.Type)),
+			DataType: int(client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
 			MetaData: c.metaData,
@@ -323,7 +323,7 @@ func (c *ClientCall) onBitString32(ctx context.Context, packet *asdu.ASDU) {
 			Port:     c.port,
 			Asdu:     genASDUName(packet.Type),
 			TypeId:   int(packet.Type),
-			DataType: int(iec104client.GetDataType(packet.Type)),
+			DataType: int(client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
 			MetaData: c.metaData,
@@ -354,7 +354,7 @@ func (c *ClientCall) onMeasuredValueFloat(ctx context.Context, packet *asdu.ASDU
 			Port:     c.port,
 			Asdu:     genASDUName(packet.Type),
 			TypeId:   int(packet.Type),
-			DataType: int(iec104client.GetDataType(packet.Type)),
+			DataType: int(client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
 			MetaData: c.metaData,
@@ -380,7 +380,7 @@ func (c *ClientCall) onIntegratedTotals(ctx context.Context, packet *asdu.ASDU) 
 			Port:     c.port,
 			Asdu:     genASDUName(packet.Type),
 			TypeId:   int(packet.Type),
-			DataType: int(iec104client.GetDataType(packet.Type)),
+			DataType: int(client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
 			MetaData: c.metaData,
@@ -412,7 +412,7 @@ func (c *ClientCall) onEventOfProtectionEquipment(ctx context.Context, packet *a
 			Port:     c.port,
 			Asdu:     genASDUName(packet.Type),
 			TypeId:   int(packet.Type),
-			DataType: int(iec104client.GetDataType(packet.Type)),
+			DataType: int(client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
 			MetaData: c.metaData,
@@ -442,7 +442,7 @@ func (c *ClientCall) onPackedStartEventsOfProtectionEquipment(ctx context.Contex
 		Port:     c.port,
 		Asdu:     genASDUName(packet.Type),
 		TypeId:   int(packet.Type),
-		DataType: int(iec104client.GetDataType(packet.Type)),
+		DataType: int(client.GetDataType(packet.Type)),
 		Coa:      uint(coa),
 		Body:     &obj,
 		MetaData: c.metaData,
@@ -479,7 +479,7 @@ func (c *ClientCall) onPackedOutputCircuitInfo(ctx context.Context, packet *asdu
 		Port:     c.port,
 		Asdu:     genASDUName(packet.Type),
 		TypeId:   int(packet.Type),
-		DataType: int(iec104client.GetDataType(packet.Type)),
+		DataType: int(client.GetDataType(packet.Type)),
 		Coa:      uint(coa),
 		Body:     &obj,
 		MetaData: c.metaData,
@@ -528,7 +528,7 @@ func (c *ClientCall) onPackedSinglePointWithSCD(ctx context.Context, packet *asd
 			Port:     c.port,
 			Asdu:     genASDUName(packet.Type),
 			TypeId:   int(packet.Type),
-			DataType: int(iec104client.GetDataType(packet.Type)),
+			DataType: int(client.GetDataType(packet.Type)),
 			Coa:      uint(coa),
 			Body:     &obj,
 			MetaData: c.metaData,

@@ -1,4 +1,4 @@
-package iec104server
+package server
 
 import (
 	"context"

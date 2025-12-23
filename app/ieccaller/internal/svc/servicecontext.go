@@ -31,7 +31,7 @@ import (
 
 type ServiceContext struct {
 	Config               config.Config
-	ClientManager        *iec104client.ClientManager
+	ClientManager        *client.ClientManager
 	KafkaASDUPusher      *kq.Pusher
 	KafkaBroadcastPusher *kq.Pusher
 	MqttClient           *mqttx.Client
@@ -49,7 +49,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	}
 	svcCtx := &ServiceContext{
 		Config:        c,
-		ClientManager: iec104client.NewClientManager(),
+		ClientManager: client.NewClientManager(),
 	}
 	if len(c.KafkaConfig.Brokers) > 0 {
 		svcCtx.KafkaASDUPusher = kq.NewPusher(c.KafkaConfig.Brokers, c.KafkaConfig.Topic)
