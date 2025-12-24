@@ -26,6 +26,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Config: c,
 	}
 	svcCtx.TaosConn = dbx.New(c.TaosDB.DataSource)
-	svcCtx.DevicePointMappingModel = model.NewDevicePointMappingModel(dbx.New(c.SqliteDB.DataSource))
+	svcCtx.DevicePointMappingModel = model.NewDevicePointMappingModel(dbx.New(c.DB.DataSource))
 	return svcCtx
 }

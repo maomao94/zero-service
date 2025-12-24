@@ -18,7 +18,7 @@ type Config struct {
 		DataSource string
 		DBName     string `json:",default=default"`
 	}
-	SqliteDB struct {
+	DB struct {
 		DataSource string
 	}
 }
