@@ -25,7 +25,7 @@
 #### 2.1 服务 `iec104` IEC 104 数采平台
 `iec104` 模块提供了完整的 IEC 104 数采平台解决方案，包含三个核心服务组件：
 
-1. **ieccaller 服务**：对接 104 从站，实现 IEC 104 主站功能，负责与多个子站通信，支持 Kafka/MQTT/GRPC 多协议数据推送，支持内嵌 SQLite 数据库实现动态配置点位推送策略，通过 `enable_push` 字段控制数据是否推送，可选择开启或关闭内嵌数据库功能
+1. **ieccaller 服务**：对接 104 从站，实现 IEC 104 主站功能，负责与多个子站通信，支持 Kafka/MQTT/GRPC 多协议数据推送，支持动态数据库（SQLite、MySQL、PostgreSQL）实现动态配置点位推送策略，通过 `enable_push` 字段控制数据是否推送，可选择开启或关闭数据库功能
 
 2. **iecstash 服务**：负责消费 Kafka 消息，对 ASDU 数据进行压缩合并处理，并使用 chunk 任务处理机制将数据发送到下游 RPC 服务
 
@@ -81,7 +81,7 @@
 `facade` 模块提供了系统的对外接口，基于 gRPC 协议，支持多语言客户端。
 
 #### 3.1 streamevent 协议
-基于 [streamevent.proto](facade/streamevent/streamevent.proto) 协议，用于处理流式数据事件，支持与语言无关的数据推送。通过实现该协议，任何语言的客户端都可以与平台进行数据交互，将数据推送到系统中。系统会根据 SQLite 内嵌数据库的轻量化配置，将数据采集到 TDengine 数据库中。
+基于 [streamevent.proto](facade/streamevent/streamevent.proto) 协议，用于处理流式数据事件，支持与语言无关的数据推送。通过实现该协议，任何语言的客户端都可以与平台进行数据交互，将数据推送到系统中。系统会根据动态数据库（SQLite、MySQL、PostgreSQL）的轻量化配置，将数据采集到 TDengine 数据库中。
 
 ## 消息对接协议
 
@@ -96,7 +96,7 @@
 1. **依赖管理**：确保 `go.mod` 文件中的依赖项已正确安装
 2. **日志路径**：检查配置文件中的日志路径是否有效
 3. **Kafka 配置**：确保 Kafka 集群地址和主题名称正确无误
-4. **配置管理**：系统使用 SQLite 内嵌数据库进行轻量化配置管理
+4. **配置管理**：系统使用动态数据库（SQLite、MySQL、PostgreSQL）进行轻量化配置管理
 5. **Java 接入**：如需与 Java
    应用集成，可参考 [grpc-spring-boot-starter](https://yidongnan.github.io/grpc-spring-boot-starter/zh-CN/)。
 
