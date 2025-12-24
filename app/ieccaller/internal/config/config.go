@@ -50,7 +50,7 @@ type Config struct {
 	StreamEventConf zrpc.RpcClientConf
 
 	DisableStmtLog bool `json:",optional,default=false"`
-	SqliteDB       struct {
+	DB             struct {
 		DataSource string `json:",optional"`
 	}
 	PushAsduChunkBytes int           `json:",default=1048576"` // 1M

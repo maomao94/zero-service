@@ -19,7 +19,10 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
-	StreamEventConf    zrpc.RpcClientConf
+	StreamEventConf zrpc.RpcClientConf
+	DB              struct {
+		DataSource string `json:",optional"`
+	} `json:",optional"`
 	PushAsduChunkBytes int           `json:",default=1048576"` // 1M
 	GracePeriod        time.Duration `json:",default=10s"`
 }

@@ -23,6 +23,6 @@ TaosDB:
   DataSource: root:taosdata@http(localhost:6041)/?timezone=Asia%2FShanghai
   # 默认采集库 default
   DBName: iec104
-SqliteDB:
+DB:
   DataSource: file:./model/sql/default.db?_busy_timeout=5000&_journal_mode=WAL
 DisableStmtLog: false

@@ -62,7 +62,7 @@ StreamEventConf:
   NonBlock: true
   Timeout: 120000
 # 数据库配置, 配置后将根据点位表推送数据
-#SqliteDB:
+#DB:
 #  DataSource: file:./model/sql/default.db?_busy_timeout=5000&_journal_mode=WAL
 DisableStmtLog: false
 # 指令推送间隔

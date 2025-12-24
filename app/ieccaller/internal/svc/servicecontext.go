@@ -39,7 +39,6 @@ type ServiceContext struct {
 	StreamEventCli       streamevent.StreamEventClient
 	ChunkAsduPusher      *executorx.ChunkMessagesPusher
 
-	SqliteConn              sqlx.SqlConn
 	DevicePointMappingModel model.DevicePointMappingModel
 }
 
@@ -130,9 +129,8 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		)
 	}
 
-	if len(c.SqliteDB.DataSource) > 0 {
-		svcCtx.SqliteConn = dbx.NewSqlite(c.SqliteDB.DataSource)
-		svcCtx.DevicePointMappingModel = model.NewDevicePointMappingModel(svcCtx.SqliteConn)
+	if len(c.DB.DataSource) > 0 {
+		svcCtx.DevicePointMappingModel = model.NewDevicePointMappingModel(dbx.New(c.DB.DataSource))
 	}
 	return svcCtx
 }
@@ -147,7 +145,7 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 		stationId = util.GenerateStationId(data.Host, data.Port)
 		logx.WithContext(ctx).Debugf("stationId not found in context, generated: %s, msgId: %s", stationId, data.MsgId)
 	}
-	if svc.SqliteConn != nil {
+	if svc.DevicePointMappingModel != nil {
 		query, exist, cacheErr := svc.DevicePointMappingModel.FindCacheOneByTagStationCoaIoa(ctx, stationId, int64(data.Coa), int64(ioa))
 		if cacheErr != nil {
 			logx.WithContext(ctx).Errorf("cache error %v, msgId: %s", cacheErr, data.MsgId)
