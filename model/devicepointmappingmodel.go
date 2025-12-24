@@ -28,9 +28,11 @@ type (
 	}
 )
 
+const defaultExpiration = time.Hour * 24
+
 // NewDevicePointMappingModel returns a model for the database table.
 func NewDevicePointMappingModel(conn sqlx.SqlConn) DevicePointMappingModel {
-	pmc, _ := collection.NewCache(time.Hour*24, collection.WithName("pm-cache"))
+	pmc, _ := collection.NewCache(defaultExpiration, collection.WithName("pm-cache"))
 	return &customDevicePointMappingModel{
 		defaultDevicePointMappingModel: newDevicePointMappingModel(conn),
 		pointMappingCache:              pmc,
