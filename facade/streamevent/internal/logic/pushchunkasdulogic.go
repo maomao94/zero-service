@@ -165,11 +165,12 @@ func (l *PushChunkAsduLogic) PushChunkAsdu(in *streamevent.PushChunkAsduReq) (*s
 				}
 				if ok && query.EnableRawInsert == 1 {
 					insertSQL := fmt.Sprintf(
-						"INSERT INTO %s.%s USING iec104.raw_point_data "+
+						"INSERT INTO %s.%s USING %s.raw_point_data "+
 							"TAGS ('%s', %d, %d) "+
 							"VALUES ('%s', '%s', '%s', %d, '%s', %d, %d, %d, %d, '%s', '%s')",
 						l.svcCtx.Config.TaosDB.DBName,
-						deviceTableName,                          // 子表名
+						deviceTableName, // 子表名
+						l.svcCtx.Config.TaosDB.DBName,
 						strings.ReplaceAll(stationId, "'", "''"), // tag_station
 						msgBody.Coa,                              // coa
 						ioa,                                      // ioa
