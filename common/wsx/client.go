@@ -270,10 +270,8 @@ func NewClient(conf Config, opts ...ClientOption) (Client, error) {
 		logger:                 logx.WithContext(ctx),
 		connClosed:             make(chan struct{}),
 	}
-
-	// 初始状态通知（带ctx）
-	c.onStatusChange(c.ctx, StatusDisconnected, nil)
-	return c, nil
+	err := c.Connect()
+	return c, err
 }
 
 // fillDefaultConfig 填充配置默认值
@@ -322,7 +320,7 @@ func (c *client) Connect() error {
 	go c.connectionManager()
 
 	c.logger.WithContext(c.ctx).Infof("WebSocket client started, target: %s", c.url)
-	c.onStatusChange(c.ctx, StatusConnecting, nil) // 带ctx的状态通知
+	c.onStatusChange(c.ctx, StatusConnecting, nil)
 	return nil
 }
 
@@ -404,7 +402,7 @@ func (c *client) connectionManager() {
 
 		// 2. 连接成功（未认证）
 		c.setConnection(conn)
-		c.onStatusChange(c.ctx, StatusConnected, nil) // 带ctx的状态通知
+		c.onStatusChange(c.ctx, StatusConnected, nil)
 		c.mu.Lock()
 		c.reconnectCount = 0
 		c.mu.Unlock()
@@ -422,7 +420,7 @@ func (c *client) connectionManager() {
 
 		// 4. 认证成功（就绪状态）
 		atomic.StoreInt32(&c.authenticated, 1)
-		c.onStatusChange(c.ctx, StatusAuthenticated, nil) // 带ctx的状态通知
+		c.onStatusChange(c.ctx, StatusAuthenticated, nil)
 		c.startTokenRefresh()
 
 		// 5. 等待连接关闭
@@ -432,7 +430,7 @@ func (c *client) connectionManager() {
 		c.clearConnection()
 		atomic.StoreInt32(&c.authenticated, 0)
 		c.stopTokenRefresh()
-		c.onStatusChange(c.ctx, StatusDisconnected, nil) // 带ctx的状态通知
+		c.onStatusChange(c.ctx, StatusDisconnected, nil)
 
 		// 7. 决定是否重连
 		if !c.shouldReconnect() {
@@ -443,7 +441,7 @@ func (c *client) connectionManager() {
 
 	// 8. 管理器退出
 	c.logger.WithContext(c.ctx).Info("Connection manager exiting")
-	c.onStatusChange(c.ctx, StatusDisconnected, nil) // 带ctx的状态通知
+	c.onStatusChange(c.ctx, StatusDisconnected, nil)
 }
 
 // ------------------------------ 连接相关 ------------------------------
@@ -574,7 +572,7 @@ func (c *client) performAuthentication() (bool, error) {
 
 // handleAuthFailed 处理认证失败
 func (c *client) handleAuthFailed(err error) {
-	c.onStatusChange(c.ctx, StatusAuthFailed, err) // 带ctx的状态通知
+	c.onStatusChange(c.ctx, StatusAuthFailed, err)
 	c.closeConnection()
 }
 
@@ -590,7 +588,7 @@ func (c *client) shouldReconnect() bool {
 
 	// 无限重连（max=0）或未达最大次数
 	if c.reconnectMaxRetries == 0 || c.reconnectCount < c.reconnectMaxRetries {
-		c.onStatusChange(c.ctx, StatusReconnecting, nil) // 带ctx的状态通知
+		c.onStatusChange(c.ctx, StatusReconnecting, nil)
 		return true
 	}
 	c.logger.WithContext(c.ctx).Errorf("Reach max reconnect times (%d), stop reconnect", c.reconnectMaxRetries)

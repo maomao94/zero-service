@@ -13,7 +13,7 @@ require (
 	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/envoyproxy/protoc-gen-validate v1.3.0
 	github.com/go-playground/validator/v10 v10.30.0
-	github.com/go-sql-driver/mysql v1.9.3
+	github.com/go-sql-driver/mysql v1.9.4
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
@@ -42,7 +42,7 @@ require (
 	github.com/uber/h3-go/v4 v4.4.0
 	github.com/wendy512/go-iecp5 v1.2.3
 	github.com/zeromicro/go-queue v1.2.2
-	github.com/zeromicro/go-zero v1.9.3
+	github.com/zeromicro/go-zero v1.9.4
 	github.com/zeromicro/x v0.0.0-20240408115609-8224c482b07e
 	go.opentelemetry.io/otel v1.39.0
 	go.opentelemetry.io/otel/trace v1.39.0
@@ -151,7 +151,7 @@ require (
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	github.com/redis/go-redis/v9 v9.16.0 // indirect
+	github.com/redis/go-redis/v9 v9.17.2 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/segmentio/kafka-go v0.4.47 // indirect
