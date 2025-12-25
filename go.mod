@@ -12,8 +12,8 @@ require (
 	github.com/duke-git/lancet/v2 v2.3.8
 	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/envoyproxy/protoc-gen-validate v1.3.0
-	github.com/go-playground/validator/v10 v10.30.0
-	github.com/go-sql-driver/mysql v1.9.4
+	github.com/go-playground/validator/v10 v10.30.1
+	github.com/go-sql-driver/mysql v1.9.3
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
