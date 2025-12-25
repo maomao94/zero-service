@@ -6,6 +6,29 @@ option java_multiple_files = true;
 option java_package = "com.github.iec.caller.grpc";
 option java_outer_classname = "IecCallerProto";
 
+service IecCaller {
+  rpc Ping (Req) returns (Res);
+  // 发送带时标的测试命令
+  rpc SendTestCmd (SendTestCmdReq) returns (SendTestCmdRes);
+  // 发起读命令
+  rpc SendReadCmd (SendReadCmdReq) returns (SendReadCmdRes);
+  // 发送总召唤
+  rpc SendInterrogationCmd (SendInterrogationCmdReq) returns (SendInterrogationCmdRes);
+  // 累积量召唤
+  rpc SendCounterInterrogationCmd(SendCounterInterrogationCmdReq) returns (SendCounterInterrogationCmdRes);
+  // 发送命令
+  rpc SendCommand(SendCommandReq) returns (SendCommandRes);
+
+  // 根据ID查询点位绑定信息
+  rpc QueryPointMappingById(QueryPointMappingByIdReq) returns (QueryPointMappingByIdRes);
+  // 根据tagStation、coa、ioa查询点位绑定信息
+  rpc QueryPointMappingByKey(QueryPointMappingByKeyReq) returns (QueryPointMappingByKeyRes);
+  // 分页查询点位绑定列表
+  rpc PageListPointMapping(PageListPointMappingReq) returns (PageListPointMappingRes);
+  // 清除点位绑定缓存（支持批量）
+  rpc ClearPointMappingCache(ClearPointMappingCacheReq) returns (ClearPointMappingCacheRes);
+}
+
 message Req {
   string ping = 1;
 }
@@ -63,16 +86,66 @@ message SendCommandReq {
 message SendCommandRes {
 }
 
-service IecCaller {
-  rpc Ping (Req) returns (Res);
-  // 发送带时标的测试命令
-  rpc SendTestCmd (SendTestCmdReq) returns (SendTestCmdRes);
-  // 发起读命令
-  rpc SendReadCmd (SendReadCmdReq) returns (SendReadCmdRes);
-  // 发送总召唤
-  rpc SendInterrogationCmd (SendInterrogationCmdReq) returns (SendInterrogationCmdRes);
-  // 累积量召唤
-  rpc SendCounterInterrogationCmd(SendCounterInterrogationCmdReq) returns (SendCounterInterrogationCmdRes);
-  // 发送命令
-  rpc SendCommand(SendCommandReq) returns (SendCommandRes);
+message PbDevicePointMapping {
+  int64 id = 1;
+  string createTime = 2;
+  string updateTime = 3;
+  string tagStation = 4;
+  int64 coa = 5;
+  int64 ioa = 6;
+  string deviceId = 7;
+  string deviceName = 8;
+  string tdTableType = 9;
+  int32 enablePush = 10; // 0: 禁用推送, 1: 启用推送
+  string ext1 = 11;
+  string ext2 = 12;
+  string ext3 = 13;
+  string ext4 = 14;
+  string ext5 = 15;
+}
+
+message QueryPointMappingByIdReq {
+  int64 id = 1;
+}
+
+message QueryPointMappingByIdRes {
+  PbDevicePointMapping mapping = 1;
+}
+
+message QueryPointMappingByKeyReq {
+  string tagStation = 1;
+  int64 coa = 2;
+  int64 ioa = 3;
+}
+
+message QueryPointMappingByKeyRes {
+  PbDevicePointMapping mapping = 1;
+}
+
+message PageListPointMappingReq {
+  int64 page = 1; // 页码
+  int64 pageSize = 2; // 每页大小
+  string tagStation = 3;
+  int64 coa = 4;
+  string deviceId = 5;
+}
+
+message PageListPointMappingRes {
+  int64 total = 1;
+  repeated PbDevicePointMapping mappings = 2;
+}
+
+message ClearPointMappingCacheReq {
+  repeated string keys = 1; // 缓存key列表
+  repeated CacheKeyInfo keyInfos = 2; // 缓存key信息列表，用于根据tagStation、coa、ioa生成key
+}
+
+message CacheKeyInfo {
+  string tagStation = 1;
+  int64 coa = 2;
+  int64 ioa = 3;
+}
+
+message ClearPointMappingCacheRes {
+  int64 clearedCount = 1; // 清除的缓存数量
 }

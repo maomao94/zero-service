@@ -52,8 +52,6 @@ type (
 		FindPageListByIdDESC(ctx context.Context, rowBuilder squirrel.SelectBuilder, preMinId, pageSize int64) ([]*DevicePointMapping, error)
 		FindPageListByIdASC(ctx context.Context, rowBuilder squirrel.SelectBuilder, preMaxId, pageSize int64) ([]*DevicePointMapping, error)
 		Delete(ctx context.Context, session sqlx.Session, id int64) error
-
-		FindCacheOneByTagStationCoaIoa(ctx context.Context, tagStation string, coa int64, ioa int64) (*DevicePointMapping, bool, error)
 	}
 
 	defaultDevicePointMappingModel struct {
@@ -197,10 +195,6 @@ func (m *defaultDevicePointMappingModel) DeleteSoft(ctx context.Context, session
 		return errors.Wrapf(errors.New("delete soft failed "), "DevicePointMappingModel delete err : %+v", err)
 	}
 	return nil
-}
-
-func (m *defaultDevicePointMappingModel) FindCacheOneByTagStationCoaIoa(ctx context.Context, tagStation string, coa int64, ioa int64) (*DevicePointMapping, bool, error) {
-	return nil, false, fmt.Errorf("method FindCacheOneByTagStationCoaIoa not implemented")
 }
 
 func (m *defaultDevicePointMappingModel) FindSum(ctx context.Context, builder squirrel.SelectBuilder, field string) (float64, error) {

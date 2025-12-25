@@ -57,3 +57,27 @@ func (s *IecCallerServer) SendCommand(ctx context.Context, in *ieccaller.SendCom
 	l := logic.NewSendCommandLogic(ctx, s.svcCtx)
 	return l.SendCommand(in)
 }
+
+// 根据ID查询点位绑定信息
+func (s *IecCallerServer) QueryPointMappingById(ctx context.Context, in *ieccaller.QueryPointMappingByIdReq) (*ieccaller.QueryPointMappingByIdRes, error) {
+	l := logic.NewQueryPointMappingByIdLogic(ctx, s.svcCtx)
+	return l.QueryPointMappingById(in)
+}
+
+// 根据tagStation、coa、ioa查询点位绑定信息
+func (s *IecCallerServer) QueryPointMappingByKey(ctx context.Context, in *ieccaller.QueryPointMappingByKeyReq) (*ieccaller.QueryPointMappingByKeyRes, error) {
+	l := logic.NewQueryPointMappingByKeyLogic(ctx, s.svcCtx)
+	return l.QueryPointMappingByKey(in)
+}
+
+// 分页查询点位绑定列表
+func (s *IecCallerServer) PageListPointMapping(ctx context.Context, in *ieccaller.PageListPointMappingReq) (*ieccaller.PageListPointMappingRes, error) {
+	l := logic.NewPageListPointMappingLogic(ctx, s.svcCtx)
+	return l.PageListPointMapping(in)
+}
+
+// 清除点位绑定缓存（支持批量）
+func (s *IecCallerServer) ClearPointMappingCache(ctx context.Context, in *ieccaller.ClearPointMappingCacheReq) (*ieccaller.ClearPointMappingCacheRes, error) {
+	l := logic.NewClearPointMappingCacheLogic(ctx, s.svcCtx)
+	return l.ClearPointMappingCache(in)
+}

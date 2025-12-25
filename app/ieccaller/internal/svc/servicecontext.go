@@ -51,6 +51,9 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Config:        c,
 		ClientManager: client.NewClientManager(),
 	}
+	if svcCtx.IsBroadcast() && len(c.KafkaConfig.Brokers) == 0 {
+		logx.Must(fmt.Errorf("broadcast is enabled, but kafka config is empty"))
+	}
 	if len(c.KafkaConfig.Brokers) > 0 {
 		svcCtx.KafkaASDUPusher = kq.NewPusher(c.KafkaConfig.Brokers, c.KafkaConfig.Topic)
 		svcCtx.KafkaBroadcastPusher = kq.NewPusher(c.KafkaConfig.Brokers, c.KafkaConfig.BroadcastTopic)

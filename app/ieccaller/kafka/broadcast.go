@@ -22,7 +22,7 @@ func NewBroadcast(svcCtx *svc.ServiceContext) *Broadcast {
 }
 
 func (l Broadcast) Consume(ctx context.Context, key, value string) error {
-	logx.WithContext(ctx).Infof("broadcast, msg:%+v", value)
+	logx.WithContext(ctx).Debugf("Consume broadcast, msg:%+v", value)
 	if !l.svcCtx.IsBroadcast() {
 		logx.Error("not setting cluster")
 		return nil
@@ -33,9 +33,10 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 		return err
 	}
 	if broadcastBody.BroadcastGroupId == l.svcCtx.Config.KafkaConfig.BroadcastGroupId {
-		logx.WithContext(ctx).Debug("ignore broadcast")
+		logx.WithContext(ctx).Debug("broadcast, ignore broadcast")
 		return nil
 	}
+	logx.WithContext(ctx).Infof("broadcast, method:%s", broadcastBody.Method)
 	switch broadcastBody.Method {
 	case ieccaller.IecCaller_SendCounterInterrogationCmd_FullMethodName:
 		in := &ieccaller.SendCounterInterrogationCmdReq{}
@@ -106,6 +107,39 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 		}
 		if err = cli.SendCmd(uint16(in.Coa), asdu.TypeID(in.TypeId), asdu.InfoObjAddr(in.Ioa), in.Value); err != nil {
 			return err
+		}
+	case ieccaller.IecCaller_ClearPointMappingCache_FullMethodName:
+		in := &ieccaller.ClearPointMappingCacheReq{}
+		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
+		if err != nil {
+			return err
+		}
+		clearedCount := int64(0)
+		if l.svcCtx.DevicePointMappingModel != nil {
+			if len(in.Keys) > 0 {
+				for _, key := range in.Keys {
+					if _, exists := l.svcCtx.DevicePointMappingModel.GetCache(ctx, key); exists {
+						if err := l.svcCtx.DevicePointMappingModel.RemoveCache(ctx, key); err != nil {
+							logx.WithContext(ctx).Errorf("Remove cache failed, key: %s, err: %v", key, err)
+							continue
+						}
+						clearedCount++
+					}
+				}
+			}
+			if len(in.KeyInfos) > 0 {
+				for _, info := range in.KeyInfos {
+					key := l.svcCtx.DevicePointMappingModel.GenerateCacheKey(info.TagStation, info.Coa, info.Ioa)
+					if _, exists := l.svcCtx.DevicePointMappingModel.GetCache(ctx, key); exists {
+						if err := l.svcCtx.DevicePointMappingModel.RemoveCache(ctx, key); err != nil {
+							logx.WithContext(ctx).Errorf("Remove cache by key info failed, tagStation: %s, coa: %d, ioa: %d, err: %v", info.TagStation, info.Coa, info.Ioa, err)
+							continue
+						}
+						clearedCount++
+					}
+				}
+			}
+			logx.WithContext(ctx).Infof("Broadcast cleared cache count: %d", clearedCount)
 		}
 	default:
 		logx.WithContext(ctx).Errorf("unknown method:%s", broadcastBody.Method)

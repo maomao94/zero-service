@@ -20,6 +20,11 @@ type (
 	DevicePointMappingModel interface {
 		devicePointMappingModel
 		withSession(session sqlx.Session) DevicePointMappingModel
+		GetCache(ctx context.Context, key string) (any, bool)
+		GenerateCacheKey(tagStation string, coa int64, ioa int64) string
+		FindCacheOneByTagStationCoaIoa(ctx context.Context, tagStation string, coa int64, ioa int64) (*DevicePointMapping, bool, error)
+		RemoveCache(ctx context.Context, keys ...string) error
+		RemoveCacheByTagStationCoaIoa(ctx context.Context, tagStation string, coa int64, ioa int64) error
 	}
 
 	customDevicePointMappingModel struct {
@@ -43,8 +48,28 @@ func (m *customDevicePointMappingModel) withSession(session sqlx.Session) Device
 	return NewDevicePointMappingModel(sqlx.NewSqlConnFromSession(session))
 }
 
+func (s *customDevicePointMappingModel) RemoveCache(ctx context.Context, keys ...string) error {
+	for _, key := range keys {
+		s.pointMappingCache.Del(key)
+	}
+	return nil
+}
+
+func (s *customDevicePointMappingModel) RemoveCacheByTagStationCoaIoa(ctx context.Context, tagStation string, coa int64, ioa int64) error {
+	key := s.GenerateCacheKey(tagStation, coa, ioa)
+	return s.RemoveCache(ctx, key)
+}
+
+func (s *customDevicePointMappingModel) GetCache(ctx context.Context, key string) (any, bool) {
+	return s.pointMappingCache.Get(key)
+}
+
+func (s *customDevicePointMappingModel) GenerateCacheKey(tagStation string, coa int64, ioa int64) string {
+	return fmt.Sprintf("pm:%s:%d:%d", tagStation, coa, ioa)
+}
+
 func (s *customDevicePointMappingModel) FindCacheOneByTagStationCoaIoa(ctx context.Context, tagStation string, coa int64, ioa int64) (*DevicePointMapping, bool, error) {
-	key := fmt.Sprintf("pm:%s:%d:%d", tagStation, coa, ioa)
+	key := s.GenerateCacheKey(tagStation, coa, ioa)
 	val, err := s.pointMappingCache.Take(key, func() (any, error) {
 		v, err := s.FindOneByTagStationCoaIoa(ctx, tagStation, coa, ioa)
 		if err != nil {
