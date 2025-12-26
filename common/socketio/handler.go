@@ -1,9 +1,15 @@
 package socketio
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/zeromicro/go-zero/core/threading"
+)
 
 func SocketioHandler(server *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		go server.HttpHandler().ServeHTTP(w, r)
+		threading.GoSafe(func() {
+			server.HttpHandler().ServeHTTP(w, r)
+		})
 	}
 }
