@@ -48,15 +48,17 @@ type SocketResp struct {
 	Payload any    `json:"payload,omitempty"`
 	SeqId   int64  `json:"seqId,omitempty"`
 	ReqId   string `json:"reqId,omitempty"`
+	SId     string `json:"sId,omitempty"`
 }
 
 type SocketDown struct {
 	Payload any    `json:"payload,omitempty"`
 	SeqId   int64  `json:"seqId,omitempty"`
 	ReqId   string `json:"reqId,omitempty"`
+	SId     string `json:"sId,omitempty"`
 }
 
-func BuildResp(code int, msg string, topic, method string, payload any, seqId int64, reqId string) []byte {
+func BuildResp(code int, msg string, topic, method string, payload any, seqId int64, reqId string, sId string) []byte {
 	resp := SocketResp{
 		Code:    code,
 		Msg:     msg,
@@ -65,16 +67,18 @@ func BuildResp(code int, msg string, topic, method string, payload any, seqId in
 		Payload: payload,
 		SeqId:   seqId,
 		ReqId:   reqId,
+		SId:     sId,
 	}
 	bytes, _ := json.Marshal(resp)
 	return bytes
 }
 
-func BuildDown(payload any, seqId int64, reqId string) []byte {
+func BuildDown(payload any, seqId int64, reqId string, sId string) []byte {
 	down := SocketDown{
 		Payload: payload,
 		SeqId:   seqId,
 		ReqId:   reqId,
+		SId:     sId,
 	}
 	bytes, _ := json.Marshal(down)
 	return bytes
@@ -122,7 +126,7 @@ func (s *Session) ReplyDown(code int, msg string, topic, method string, payload 
 	s.lock.Lock()
 	seq := s.incrSeq(SeqKeyUser)
 	s.lock.Unlock()
-	data := BuildResp(code, msg, topic, method, payload, seq, reqId)
+	data := BuildResp(code, msg, topic, method, payload, seq, reqId, s.id)
 	return s.EmitJsonDown(string(data))
 }
 
@@ -132,7 +136,7 @@ func (s *Session) BroadcastToRoom(roomID string, event string, payload any) (seq
 	s.lock.Unlock()
 
 	reqId, _ = tool.SimpleUUID()
-	data := BuildDown(payload, seq, reqId)
+	data := BuildDown(payload, seq, reqId, s.id)
 	s.server.io.To(roomID).Emit(event, string(data))
 	return seq, reqId
 }
@@ -146,7 +150,7 @@ func (s *Session) BroadcastToGlobal(event string, payload any) (seq int64, reqId
 	seq = s.incrSeq(SeqKeyGlobal)
 	s.lock.Unlock()
 	reqId, _ = tool.SimpleUUID()
-	data := BuildDown(payload, seq, reqId)
+	data := BuildDown(payload, seq, reqId, s.id)
 	s.server.io.Emit(event, string(data))
 	return seq, reqId
 }
@@ -237,7 +241,7 @@ func (s *Server) bindEvents() {
 					if err != nil {
 						logx.WithContext(ctx).Errorf("[socketio] failed to marshal data for event %s: conn=%s, err=%v", EventUp, socket.Id, err)
 						if payload.Ack != nil {
-							payload.Ack(string(BuildResp(CodeParamErr, "数据格式错误", "", "", nil, 0, "")))
+							payload.Ack(string(BuildResp(CodeParamErr, "数据格式错误", "", "", nil, 0, "", payload.SID)))
 						} else {
 							_ = session.ReplyDown(CodeParamErr, "数据格式错误", "", "", nil, "")
 						}
@@ -251,7 +255,7 @@ func (s *Server) bindEvents() {
 			if err := jsonx.Unmarshal(handlerPayload, &upReq); err != nil {
 				logx.WithContext(ctx).Errorf("[socketio] failed to parse request: conn=%s, err=%v, raw_data=%s", socket.Id, err, string(handlerPayload))
 				if payload.Ack != nil {
-					payload.Ack(string(BuildResp(CodeParamErr, "参数解析失败", "", "", nil, 0, upReq.ReqId)))
+					payload.Ack(string(BuildResp(CodeParamErr, "参数解析失败", "", "", nil, 0, upReq.ReqId, payload.SID)))
 				} else {
 					_ = session.ReplyDown(CodeParamErr, "参数解析失败", "", "", nil, upReq.ReqId)
 				}
@@ -260,7 +264,7 @@ func (s *Server) bindEvents() {
 			if upReq.ReqId == "" || upReq.Topic == "" || upReq.Method == "" || upReq.Payload == nil {
 				logx.WithContext(ctx).Errorf("[socketio] missing required fields: conn=%s, topic=%q, method=%q", socket.Id, upReq.Topic, upReq.Method)
 				if payload.Ack != nil {
-					payload.Ack(string(BuildResp(CodeParamErr, "reqId|topic|method|payload为必填项", "", "", nil, 0, upReq.ReqId)))
+					payload.Ack(string(BuildResp(CodeParamErr, "reqId|topic|method|payload为必填项", "", "", nil, 0, upReq.ReqId, payload.SID)))
 				} else {
 					_ = session.ReplyDown(CodeParamErr, "reqId|topic|method|payload为必填项", "", "", nil, upReq.ReqId)
 				}
@@ -276,13 +280,13 @@ func (s *Server) bindEvents() {
 					if err != nil {
 						logx.WithContext(ctx).Errorf("[socketio] failed to process request: conn=%s, err=%v", socket.Id, err)
 						if ack != nil {
-							ack(string(BuildResp(CodeBizErr, "业务处理失败", replyTopic, upReq.Method, nil, 0, upReq.ReqId)))
+							ack(string(BuildResp(CodeBizErr, "业务处理失败", replyTopic, upReq.Method, nil, 0, upReq.ReqId, payload.SID)))
 						} else {
 							_ = session.ReplyDown(CodeBizErr, "业务处理失败", replyTopic, upReq.Method, nil, upReq.ReqId)
 						}
 					} else {
 						if ack != nil {
-							ack(string(BuildResp(CodeSuccess, "处理成功", replyTopic, upReq.Method, nil, 0, upReq.ReqId)))
+							ack(string(BuildResp(CodeSuccess, "处理成功", replyTopic, upReq.Method, nil, 0, upReq.ReqId, payload.SID)))
 						} else {
 							_ = session.ReplyDown(CodeSuccess, "处理成功", replyTopic, upReq.Method, nil, upReq.ReqId)
 						}
@@ -290,7 +294,7 @@ func (s *Server) bindEvents() {
 				} else {
 					logx.WithContext(ctx).Debugf("[socketio] no handler registered for EventUp: conn=%s", socket.Id)
 					if ack != nil {
-						ack(string(BuildResp(CodeBizErr, "未配置处理器", replyTopic, upReq.Method, nil, 0, upReq.ReqId)))
+						ack(string(BuildResp(CodeBizErr, "未配置处理器", replyTopic, upReq.Method, nil, 0, upReq.ReqId, payload.SID)))
 					} else {
 						_ = session.ReplyDown(CodeBizErr, "未配置处理器", replyTopic, upReq.Method, nil, upReq.ReqId)
 					}
