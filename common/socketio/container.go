@@ -28,9 +28,11 @@ func NewPubContainer(c zrpc.RpcClientConf) *SocketContainer {
 		}
 		return p
 	}
-	err := p.getConn4Etcd(c)
-	if err != nil {
-		logx.Must(err)
+	if len(c.Etcd.Hosts) != 0 && len(c.Etcd.Key) != 0 {
+		err := p.getConn4Etcd(c)
+		if err != nil {
+			logx.Must(err)
+		}
 	}
 	return p
 }
