@@ -48,8 +48,6 @@ type SocketUpRoomReq struct {
 type SocketResp struct {
 	Code    int    `json:"code"`
 	Msg     string `json:"msg"`
-	Topic   string `json:"topic,omitempty"`
-	Method  string `json:"method,omitempty"`
 	Payload any    `json:"payload,omitempty"`
 	SeqId   int64  `json:"seqId,omitempty"`
 	ReqId   string `json:"reqId,omitempty"`
