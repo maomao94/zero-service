@@ -52,7 +52,7 @@ func (h *MqttStreamHandler) Consume(ctx context.Context, payload []byte, topic s
 		if err != nil {
 			invokeflg = "fail"
 		}
-		logx.WithContext(ctx).WithDuration(duration).Infof("consume mqtt message, msgId: %s, topic: %s, topicTemplate: %s, time: %s - %s", msgId, topic, topicTemplate, sendTime, invokeflg)
+		logx.WithContext(ctx).WithDuration(duration).Infof("push mqtt eventMessage, msgId: %s, topic: %s, topicTemplate: %s, time: %s - %s", msgId, topic, topicTemplate, sendTime, invokeflg)
 	})
 	threading.GoSafe(func() {
 		reqId, _ := tool.SimpleUUID()
@@ -71,7 +71,7 @@ func (h *MqttStreamHandler) Consume(ctx context.Context, payload []byte, topic s
 			if err != nil {
 				invokeflg = "fail"
 			}
-			logx.WithContext(ctx).WithDuration(duration).Infof("[mqtt] broadcast socketio global, node: %s, reqId: %s, topicTemplate: %s, time: %s - %s", key, reqId, topicTemplate, sendTime, invokeflg)
+			logx.WithContext(ctx).WithDuration(duration).Infof("[mqtt] broadcast socketio global, node: %s, reqId: %s, topic: %s, topicTemplate: %s, time: %s - %s", key, reqId, topic, topicTemplate, sendTime, invokeflg)
 		}
 	})
 	return nil
