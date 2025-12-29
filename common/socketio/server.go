@@ -506,7 +506,7 @@ func (srv *Server) bindEvents() {
 			logx.WithContext(ctx).Debugf("[socketio] processing request: conn=%s", socket.Id)
 			threading.GoSafe(func() {
 				ack := payload.Ack
-				err := srv.BroadcastGlobal(upReq.Event, upReq.Payload)
+				err := srv.BroadcastGlobal(upReq.Event, upReq.Payload, upReq.ReqId)
 				if err != nil {
 					logx.WithContext(ctx).Errorf("[socketio] failed to process request: conn=%s, err=%v", socket.Id, err)
 					if ack != nil {
@@ -579,8 +579,8 @@ func (srv *Server) BroadcastRoom(room, event string, payload any, reqId string) 
 	return nil
 }
 
-func (s *Server) BroadcastGlobal(event string, payload any) error {
-	data := BuildDown(payload, "", "")
+func (s *Server) BroadcastGlobal(event string, payload any, reqId string) error {
+	data := BuildDown(payload, reqId, "")
 	if len(event) == 0 {
 		return errors.New("event name is empty")
 	}

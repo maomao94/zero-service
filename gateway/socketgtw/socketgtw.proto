@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package socketgtw;
+option go_package = "./socketgtw";
+option java_multiple_files = true;
+option java_package = "com.github.socketgtw.grpc";
+option java_outer_classname = "SocketGtwProto";
+
+service SocketGtw {
+  rpc GenToken (GenTokenReq) returns (GenTokenRes);
+  // 加入房间
+  rpc JoinRoom(JoinRoomReq) returns (JoinRoomRes);
+  // 离开房间
+  rpc LeaveRoom(LeaveRoomReq) returns (LeaveRoomRes);
+  // 向指定房间广播消息
+  rpc BroadcastRoom(BroadcastRoomReq) returns (BroadcastRoomRes);
+  // 向所有在线前端广播消息
+  rpc BroadcastGlobal(BroadcastGlobalReq) returns (BroadcastGlobalRes);
+}
+
+message GenTokenReq{
+  string authType = 1;
+  string authKey = 2;
+  string password = 3;
+}
+
+message GenTokenRes{
+  string accessToken = 1;
+  int64  accessExpire = 2;
+  int64  refreshAfter = 3;
+}
+
+message JoinRoomReq {
+  string sId = 1;    // session ID
+  string room = 2;   // 房间名
+}
+
+message JoinRoomRes {
+}
+
+message LeaveRoomReq {
+  string sId = 1;
+  string room = 2;
+}
+
+message LeaveRoomRes {
+}
+
+message BroadcastRoomReq {
+  string reqId = 1;
+  string room = 2;
+  string event = 3;
+  bytes payload = 4;
+}
+
+message BroadcastRoomRes {
+}
+
+message BroadcastGlobalReq {
+  string reqId = 1;
+  string event = 2;
+  bytes payload = 3;
+}
+
+message BroadcastGlobalRes {
+}

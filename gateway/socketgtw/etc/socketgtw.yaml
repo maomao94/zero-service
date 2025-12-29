@@ -1,0 +1,25 @@
+Name: socketgtw
+ListenOn: 0.0.0.0:25007
+Timeout: 10000
+Log:
+  Encoding: plain
+  #  Mode: file
+  Path: /opt/logs/socketgtw
+  Level: info
+  KeepDays: 300
+http:
+  Name: socketgtw
+  Host: 0.0.0.0
+  Port: 11003
+  Timeout: 10000
+JwtAuth:
+  AccessSecret: 629c6233-1a76-471b-bd25-b87208762219
+  AccessExpire: 31536000
+NacosConfig:
+  IsRegister: false
+  Host: 127.0.0.1
+  Port: 8848
+  Username: nacos
+  PassWord: nacos
+  NamespaceId: public
+  ServiceName: socket-gtw

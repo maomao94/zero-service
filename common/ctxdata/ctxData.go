@@ -3,13 +3,15 @@ package ctxdata
 import (
 	"context"
 	"encoding/json"
+	"strconv"
+
 	"github.com/zeromicro/go-zero/core/logx"
 	"go.opentelemetry.io/otel/propagation"
 	"google.golang.org/grpc/metadata"
-	"strconv"
 )
 
 var CtxKeyUserId = "userId"
+var CtxKeyAuthKey = "authKey"
 
 type MsgBody struct {
 	MsgId   string                     `json:"msgId,omitempty"`
