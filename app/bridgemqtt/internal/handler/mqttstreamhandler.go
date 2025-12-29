@@ -28,7 +28,7 @@ func NewMqttStreamHandler(clientID string, cli streamevent.StreamEventClient, co
 	}
 }
 
-func (h *MqttStreamHandler) Consume(ctx context.Context, topic string, payload []byte) error {
+func (h *MqttStreamHandler) Consume(ctx context.Context, payload []byte, topic string, topicTemplate string) error {
 	threading.GoSafe(func() {
 		msgId, _ := tool.SimpleUUID()
 		sendTime := carbon.Now().ToDateTimeMicroString()
@@ -39,11 +39,12 @@ func (h *MqttStreamHandler) Consume(ctx context.Context, topic string, payload [
 		_, err := h.cli.ReceiveMQTTMessage(mqttCtx, &streamevent.ReceiveMQTTMessageReq{
 			Messages: []*streamevent.MqttMessage{
 				{
-					SessionId: h.clientID,
-					MsgId:     msgId,
-					Topic:     topic,
-					Payload:   payload,
-					SendTime:  sendTime,
+					SessionId:     h.clientID,
+					MsgId:         msgId,
+					Topic:         topic,
+					Payload:       payload,
+					SendTime:      sendTime,
+					TopicTemplate: topicTemplate,
 				},
 			},
 		})
@@ -51,18 +52,19 @@ func (h *MqttStreamHandler) Consume(ctx context.Context, topic string, payload [
 		if err != nil {
 			invokeflg = "fail"
 		}
-		logx.WithContext(ctx).WithDuration(duration).Infof("consume mqtt message, msgId: %s, topic: %s, time: %s - %s", msgId, topic, sendTime, invokeflg)
+		logx.WithContext(ctx).WithDuration(duration).Infof("consume mqtt message, msgId: %s, topic: %s, topicTemplate: %s, time: %s - %s", msgId, topic, topicTemplate, sendTime, invokeflg)
 	})
 	threading.GoSafe(func() {
 		reqId, _ := tool.SimpleUUID()
-		for _, cli := range h.socketContainer.GetClients() {
+		for key, cli := range h.socketContainer.GetClients() {
 			socktCTx, cancel := context.WithTimeout(ctx, 10*time.Second)
 			defer cancel()
 			_, _ = cli.BroadcastGlobal(socktCTx, &socketgtw.BroadcastGlobalReq{
 				ReqId:   reqId,
-				Event:   "mqtt",
+				Event:   topicTemplate,
 				Payload: payload,
 			})
+			logx.WithContext(ctx).Infof("[mqtt] broadcast socketio global, node: %s, reqId: %s, topicTemplate: %s", key, reqId, topicTemplate)
 		}
 	})
 	return nil

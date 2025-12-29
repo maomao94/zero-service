@@ -32,14 +32,14 @@ const (
 
 // ConsumeHandler 定义消息消费接口
 type ConsumeHandler interface {
-	Consume(ctx context.Context, topic string, payload []byte) error
+	Consume(ctx context.Context, payload []byte, topic string, topicTemplate string) error
 }
 
 // ConsumeHandlerFunc 适配器，允许函数作为ConsumeHandler接口实现
-type ConsumeHandlerFunc func(ctx context.Context, topic string, payload []byte) error
+type ConsumeHandlerFunc func(ctx context.Context, payload []byte, topic string, topicTemplate string) error
 
-func (f ConsumeHandlerFunc) Consume(ctx context.Context, topic string, payload []byte) error {
-	return f(ctx, topic, payload)
+func (f ConsumeHandlerFunc) Consume(ctx context.Context, payload []byte, topic string, topicTemplate string) error {
+	return f(ctx, payload, topic, topicTemplate)
 }
 
 // MqttConfig 定义 MQTT 客户端基础配置
@@ -189,38 +189,38 @@ func (c *Client) AddHandler(topic string, handler ConsumeHandler) error {
 }
 
 // AddHandlerFunc 快捷注册函数处理器
-func (c *Client) AddHandlerFunc(topic string, handler func(ctx context.Context, topic string, payload []byte) error) error {
+func (c *Client) AddHandlerFunc(topic string, handler func(ctx context.Context, payload []byte, topic string, topicTemplate string) error) error {
 	return c.AddHandler(topic, ConsumeHandlerFunc(handler))
 }
 
 // Subscribe 手动订阅主题
-func (c *Client) Subscribe(topic string) error {
+func (c *Client) Subscribe(topicTemplate string) error {
 	if !c.client.IsConnected() {
 		return fmt.Errorf("[mqtt] cannot subscribe: client not connected")
 	}
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return c.subscribe(topic)
+	return c.subscribe(topicTemplate)
 }
 
 // 内部订阅实现
-func (c *Client) subscribe(topic string) error {
-	if c.isSubscribed(topic) {
+func (c *Client) subscribe(topicTemplate string) error {
+	if c.isSubscribed(topicTemplate) {
 		return nil
 	}
 
-	token := c.client.Subscribe(topic, c.qos, c.messageHandlerWrapper(topic))
+	token := c.client.Subscribe(topicTemplate, c.qos, c.messageHandlerWrapper(topicTemplate))
 	timeout := time.Duration(c.cfg.Timeout) * time.Second
 	if !token.WaitTimeout(timeout) {
-		return fmt.Errorf("[mqtt] subscribe to %s timeout after %v", topic, timeout)
+		return fmt.Errorf("[mqtt] subscribe to %s timeout after %v", topicTemplate, timeout)
 	}
 	if err := token.Error(); err != nil {
 		return err
 	}
 
-	c.subscribed[topic] = struct{}{}
-	logx.Infof("[mqtt] Subscribed to %s", topic)
+	c.subscribed[topicTemplate] = struct{}{}
+	logx.Infof("[mqtt] Subscribed to %s", topicTemplate)
 	return nil
 }
 
@@ -247,7 +247,7 @@ func (c *Client) RestoreSubscriptions() error {
 }
 
 // 消息处理包装器
-func (c *Client) messageHandlerWrapper(topic string) mqtt.MessageHandler {
+func (c *Client) messageHandlerWrapper(topicTemplate string) mqtt.MessageHandler {
 	return func(client mqtt.Client, msg mqtt.Message) {
 		ctx := context.Background()
 		payload := msg.Payload()
@@ -259,7 +259,7 @@ func (c *Client) messageHandlerWrapper(topic string) mqtt.MessageHandler {
 			ctx = otel.GetTextMapPropagator().Extract(ctx, carrier)
 		}
 
-		ctx, span := c.startConsumeSpan(ctx, msg, topic)
+		ctx, span := c.startConsumeSpan(ctx, msg, topicTemplate)
 		defer span.End()
 		ctx = logx.ContextWithFields(ctx, logx.Field("client", c.GetClientID()))
 
@@ -268,31 +268,31 @@ func (c *Client) messageHandlerWrapper(topic string) mqtt.MessageHandler {
 			c.metrics.Add(stat.Task{Duration: timex.Since(startTime)})
 			if r := recover(); r != nil {
 				err := fmt.Errorf("handler panic: %v", r)
-				logx.WithContext(ctx).Errorf("[mqtt] handler panic for %s: %v", topic, r)
+				logx.WithContext(ctx).Errorf("[mqtt] handler panic for %s: %v", topicTemplate, r)
 				span.RecordError(err)
 				span.SetStatus(codes.Error, err.Error())
 			}
 		}()
 
 		c.mu.RLock()
-		handlers := c.handlers[topic]
+		handlers := c.handlers[topicTemplate]
 		c.mu.RUnlock()
 
 		if len(payload) == 0 {
-			logx.WithContext(ctx).Errorf("[mqtt] empty payload for %s", topic)
+			logx.WithContext(ctx).Errorf("[mqtt] empty payload for %s", topicTemplate)
 			return
 		}
 		if len(handlers) == 0 {
 			err := errors.New("no handler for topic")
-			defaultHandler{}.Consume(ctx, topic, payload)
+			defaultHandler{}.Consume(ctx, payload, msg.Topic(), topicTemplate)
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
 			return
 		}
 
 		for _, handler := range handlers {
-			if err := handler.Consume(ctx, msg.Topic(), payload); err != nil {
-				logx.WithContext(ctx).Errorf("[mqtt] handler error for %s: %v", topic, err)
+			if err := handler.Consume(ctx, payload, msg.Topic(), topicTemplate); err != nil {
+				logx.WithContext(ctx).Errorf("[mqtt] handler error for %s: %v", topicTemplate, err)
 			}
 		}
 	}
@@ -345,8 +345,8 @@ func (c *Client) isSubscribed(topic string) bool {
 // defaultHandler 仅在无自定义处理器时使用
 type defaultHandler struct{}
 
-func (d defaultHandler) Consume(ctx context.Context, topic string, payload []byte) error {
-	logx.WithContext(ctx).Errorf("[mqtt] No handler for topic %s, add with AddHandler", topic)
+func (d defaultHandler) Consume(ctx context.Context, payload []byte, topic string, topicTemplate string) error {
+	logx.WithContext(ctx).Errorf("[mqtt] No handler for topic %s, topicTemplate %s, add with AddHandler", topic, topicTemplate)
 	return nil
 }
 

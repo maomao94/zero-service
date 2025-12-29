@@ -37,6 +37,8 @@ message MqttMessage {
   bytes payload = 4;
   // 消息发送时间
   string sendTime = 5;
+  // 订阅主题模板
+  string topicTemplate = 6;
 }
 
 

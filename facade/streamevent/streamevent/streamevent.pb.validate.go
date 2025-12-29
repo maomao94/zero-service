@@ -305,6 +305,8 @@ func (m *MqttMessage) validate(all bool) error {
 
 	// no validation rules for SendTime
 
+	// no validation rules for TopicTemplate
+
 	if len(errors) > 0 {
 		return MqttMessageMultiError(errors)
 	}
