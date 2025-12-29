@@ -17,17 +17,23 @@ NacosConfig:
 MqttConfig:
   Broker:
     - "tcp://localhost:1883"
-#  ClientId: "my-mqtt-client"
+  #  ClientId: "my-mqtt-client"
   Username: "mqtt"
   Password: "password"
   Qos: 0
   SubscribeTopics:
     - "test"
     - "test/topic2"
+    - "iec/asdu"
 StreamEventConf:
   # nacos://[user:passwd]@host/service?param=value'
-#  Target: nacos://nacos:nacos@127.0.0.1:8848/iec-stream?namespaceid=public&timeout=5000s
+  #  Target: nacos://nacos:nacos@127.0.0.1:8848/iec-stream?namespaceid=public&timeout=5000s
   Endpoints:
     - 127.0.0.1:27300
   NonBlock: true
   Timeout: 3000
+SocketMsgGtwConf:
+  Endpoints:
+    - 127.0.0.1:25007
+  NonBlock: true
+  Timeout: 5000

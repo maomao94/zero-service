@@ -2,8 +2,11 @@ package handler
 
 import (
 	"context"
+	"time"
+	"zero-service/common/socketio"
 	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
+	"zero-service/gateway/socketgtw/socketgtw"
 
 	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -12,31 +15,35 @@ import (
 )
 
 type MqttStreamHandler struct {
-	clientID string
-	cli      streamevent.StreamEventClient
+	clientID        string
+	cli             streamevent.StreamEventClient
+	socketContainer *socketio.SocketContainer
 }
 
-func NewMqttStreamHandler(clientID string, cli streamevent.StreamEventClient) *MqttStreamHandler {
+func NewMqttStreamHandler(clientID string, cli streamevent.StreamEventClient, container *socketio.SocketContainer) *MqttStreamHandler {
 	return &MqttStreamHandler{
-		clientID: clientID,
-		cli:      cli,
+		clientID:        clientID,
+		cli:             cli,
+		socketContainer: container,
 	}
 }
 
 func (h *MqttStreamHandler) Consume(ctx context.Context, topic string, payload []byte) error {
 	threading.GoSafe(func() {
 		msgId, _ := tool.SimpleUUID()
-		time := carbon.Now().ToDateTimeMicroString()
+		sendTime := carbon.Now().ToDateTimeMicroString()
 		startTime := timex.Now()
 		duration := timex.Since(startTime)
-		_, err := h.cli.ReceiveMQTTMessage(ctx, &streamevent.ReceiveMQTTMessageReq{
+		mqttCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+		_, err := h.cli.ReceiveMQTTMessage(mqttCtx, &streamevent.ReceiveMQTTMessageReq{
 			Messages: []*streamevent.MqttMessage{
 				{
 					SessionId: h.clientID,
 					MsgId:     msgId,
 					Topic:     topic,
 					Payload:   payload,
-					SendTime:  time,
+					SendTime:  sendTime,
 				},
 			},
 		})
@@ -44,7 +51,19 @@ func (h *MqttStreamHandler) Consume(ctx context.Context, topic string, payload [
 		if err != nil {
 			invokeflg = "fail"
 		}
-		logx.WithContext(ctx).WithDuration(duration).Infof("consume mqtt message, msgId: %s, topic: %s, time: %s - %s", msgId, topic, time, invokeflg)
+		logx.WithContext(ctx).WithDuration(duration).Infof("consume mqtt message, msgId: %s, topic: %s, time: %s - %s", msgId, topic, sendTime, invokeflg)
+	})
+	threading.GoSafe(func() {
+		reqId, _ := tool.SimpleUUID()
+		for _, cli := range h.socketContainer.GetClients() {
+			socktCTx, cancel := context.WithTimeout(ctx, 10*time.Second)
+			defer cancel()
+			_, _ = cli.BroadcastGlobal(socktCTx, &socketgtw.BroadcastGlobalReq{
+				ReqId:   reqId,
+				Event:   "mqtt",
+				Payload: payload,
+			})
+		}
 	})
 	return nil
 }

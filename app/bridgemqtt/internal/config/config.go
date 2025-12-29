@@ -17,6 +17,7 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
-	MqttConfig      mqttx.MqttConfig
-	StreamEventConf zrpc.RpcClientConf
+	MqttConfig       mqttx.MqttConfig
+	StreamEventConf  zrpc.RpcClientConf
+	SocketMsgGtwConf zrpc.RpcClientConf `json:",optional"`
 }

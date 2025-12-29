@@ -5,6 +5,7 @@ import (
 	"zero-service/app/bridgemqtt/internal/handler"
 	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/mqttx"
+	"zero-service/common/socketio"
 	"zero-service/facade/streamevent/streamevent"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -13,9 +14,10 @@ import (
 )
 
 type ServiceContext struct {
-	Config         config.Config
-	MqttClient     *mqttx.Client
-	StreamEventCli streamevent.StreamEventClient
+	Config          config.Config
+	MqttClient      *mqttx.Client
+	StreamEventCli  streamevent.StreamEventClient
+	SocketContainer *socketio.SocketContainer
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -29,18 +31,20 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			//grpc.MaxCallRecvMsgSize(100 * 1024 * 1024),  // 接收最大100MB
 		)),
 	).Conn())
+	socketContainer := socketio.NewPubContainer(c.SocketMsgGtwConf)
 	mqttCLi := mqttx.MustNewClient(c.MqttConfig,
 		mqttx.WithOnReady(func(cli *mqttx.Client) {
 			logx.Infof("[mqtt] OnReady, client=%s", cli.GetClientID())
 			// 注册转发 handler
 			for _, topic := range c.MqttConfig.SubscribeTopics {
-				cli.AddHandler(topic, handler.NewMqttStreamHandler(cli.GetClientID(), streamEventCli))
+				cli.AddHandler(topic, handler.NewMqttStreamHandler(cli.GetClientID(), streamEventCli, socketContainer))
 			}
 		}),
 	)
 	return &ServiceContext{
-		Config:         c,
-		MqttClient:     mqttCLi,
-		StreamEventCli: streamEventCli,
+		Config:          c,
+		MqttClient:      mqttCLi,
+		StreamEventCli:  streamEventCli,
+		SocketContainer: socketContainer,
 	}
 }
