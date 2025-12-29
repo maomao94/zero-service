@@ -326,7 +326,7 @@ func (s *Server) StartSeqSync() {
 			}
 			s.lock.RUnlock()
 			sockets := s.Io.Sockets()
-			if len(sockets) == len(sessions) {
+			if len(sockets) != len(sessions) {
 				logx.Errorf("[socketio] session count mismatch: sessions=%d, sockets=%d", len(sessions), len(sockets))
 			}
 			logx.Statf("[socketio] total sessions: %d", len(sessions))
