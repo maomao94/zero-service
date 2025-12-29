@@ -4,11 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"sync"
 	"sync/atomic"
 	"time"
-	"zero-service/common/tool"
 
 	"github.com/doquangtan/socketio/v4"
 	"github.com/zeromicro/go-zero/core/jsonx"
@@ -85,7 +83,6 @@ func BuildDown(payload any, seqId int64, reqId string, sId string) []byte {
 }
 
 type Session struct {
-	server   *Server
 	id       string
 	socket   *socketio.Socket
 	seqNum   map[string]*int64
@@ -114,12 +111,12 @@ func (s *Session) incrSeq(key string) int64 {
 	return atomic.AddInt64(s.seqNum[key], 1)
 }
 
-func (s *Session) EmitJson(event string, payload string) error {
+func (s *Session) EmitString(event string, payload string) error {
 	return s.socket.Emit(event, payload)
 }
 
-func (s *Session) EmitJsonDown(data string) error {
-	return s.EmitJson(EventDown, data)
+func (s *Session) EmitDown(data string) error {
+	return s.EmitString(EventDown, data)
 }
 
 func (s *Session) ReplyDown(code int, msg string, topic, method string, payload any, reqId string) error {
@@ -127,36 +124,7 @@ func (s *Session) ReplyDown(code int, msg string, topic, method string, payload 
 	seq := s.incrSeq(SeqKeyUser)
 	s.lock.Unlock()
 	data := BuildResp(code, msg, topic, method, payload, seq, reqId, s.id)
-	return s.EmitJsonDown(string(data))
-}
-
-func (s *Session) BroadcastToRoom(roomID string, event string, payload any) (seq int64, reqId string) {
-	s.lock.Lock()
-	seq = s.incrSeq(roomID)
-	s.lock.Unlock()
-
-	reqId, _ = tool.SimpleUUID()
-	data := BuildDown(payload, seq, reqId, s.id)
-	s.server.io.To(roomID).Emit(event, string(data))
-	return seq, reqId
-}
-
-func (s *Session) BroadcastToDownRoom(roomID string, payload map[string]interface{}) (seq int64, reqId string) {
-	return s.BroadcastToRoom(roomID, EventDown, payload)
-}
-
-func (s *Session) BroadcastToGlobal(event string, payload any) (seq int64, reqId string) {
-	s.lock.Lock()
-	seq = s.incrSeq(SeqKeyGlobal)
-	s.lock.Unlock()
-	reqId, _ = tool.SimpleUUID()
-	data := BuildDown(payload, seq, reqId, s.id)
-	s.server.io.Emit(event, string(data))
-	return seq, reqId
-}
-
-func (s *Session) BroadcastToDownGlobal(payload any) (seq int64, reqId string) {
-	return s.BroadcastToGlobal(EventDown, payload)
+	return s.EmitDown(string(data))
 }
 
 func (s *Session) JoinRoom(roomID string) {
@@ -170,7 +138,7 @@ func (s *Session) LeaveRoom(roomID string) {
 	s.lock.Unlock()
 }
 
-type EventHandler func(ctx context.Context, session *Session, event string, payload []byte) error
+type EventHandler func(ctx context.Context, event string, payload *socketio.EventPayload) error
 
 type EventHandlers map[string]EventHandler
 
@@ -185,7 +153,7 @@ func WithSeqSyncInterval(interval time.Duration) Option {
 }
 
 type Server struct {
-	io              *socketio.Io
+	*socketio.Io
 	eventHandlers   EventHandlers
 	sessions        map[string]*Session
 	lock            sync.RWMutex
@@ -202,10 +170,10 @@ func MustServer(opts ...Option) *Server {
 func NewServer(opts ...Option) (*Server, error) {
 	io := socketio.New()
 	s := &Server{
-		io:              io,
+		Io:              io,
 		eventHandlers:   make(EventHandlers),
 		sessions:        make(map[string]*Session),
-		seqSyncInterval: 0, // 默认不启动序列号同步
+		seqSyncInterval: 0,
 		stopChan:        make(chan struct{}),
 	}
 	for _, opt := range opts {
@@ -217,9 +185,8 @@ func NewServer(opts ...Option) (*Server, error) {
 }
 
 func (s *Server) bindEvents() {
-	s.io.OnConnection(func(socket *socketio.Socket) {
+	s.OnConnection(func(socket *socketio.Socket) {
 		session := &Session{
-			server:   s,
 			id:       socket.Id,
 			socket:   socket,
 			seqNum:   make(map[string]*int64),
@@ -237,7 +204,7 @@ func (s *Server) bindEvents() {
 				case string:
 					handlerPayload = []byte(data)
 				default:
-					b, err := json.Marshal(data)
+					b, err := jsonx.Marshal(data)
 					if err != nil {
 						logx.WithContext(ctx).Errorf("[socketio] failed to marshal data for event %s: conn=%s, err=%v", EventUp, socket.Id, err)
 						if payload.Ack != nil {
@@ -271,12 +238,11 @@ func (s *Server) bindEvents() {
 				return
 			}
 			logx.WithContext(ctx).Debugf("[socketio] processing request: conn=%s, topic=%q, method=%q", socket.Id, upReq.Topic, upReq.Method)
-			handlerPayload, _ = json.Marshal(upReq)
 			replyTopic := fmt.Sprintf("%s_%s", upReq.Topic, "reply")
 			threading.GoSafe(func() {
 				ack := payload.Ack
 				if upHandler := s.eventHandlers[EventUp]; upHandler != nil {
-					err := upHandler(ctx, session, EventUp, handlerPayload)
+					err := upHandler(ctx, EventUp, payload)
 					if err != nil {
 						logx.WithContext(ctx).Errorf("[socketio] failed to process request: conn=%s, err=%v", socket.Id, err)
 						if ack != nil {
@@ -325,7 +291,7 @@ func (s *Server) bindEvents() {
 				}
 				logx.WithContext(ctx).Debugf("[socketio] received event: %s from conn: %s, payload length: %d", currentEvent, socket.Id, len(handlerPayload))
 				threading.GoSafe(func() {
-					currentHandler(ctx, session, currentEvent, handlerPayload)
+					currentHandler(ctx, currentEvent, payload)
 				})
 			})
 		}
@@ -352,6 +318,7 @@ func (s *Server) StartSeqSync() {
 	for {
 		select {
 		case <-ticker.C:
+			logx.Debugf("[socketio] starting sequence synchronization")
 			s.lock.RLock()
 			sessions := make([]*Session, 0, len(s.sessions))
 			for _, sess := range s.sessions {
@@ -359,16 +326,19 @@ func (s *Server) StartSeqSync() {
 			}
 			s.lock.RUnlock()
 			for _, sess := range sessions {
-				seqData := make(map[string]int64)
-				for seqKey, seqPtr := range sess.seqNum {
-					seqData[seqKey] = atomic.LoadInt64(seqPtr)
-				}
-				data := map[string]any{
-					"sId":    sess.id,
-					"seqKey": seqData,
-				}
-				payload, _ := jsonx.Marshal(data)
-				sess.EmitJson(EventSeqSync, string(payload))
+				threading.GoSafe(func() {
+					seqData := make(map[string]int64)
+					for seqKey, seqPtr := range sess.seqNum {
+						seqData[seqKey] = atomic.LoadInt64(seqPtr)
+					}
+					data := map[string]any{
+						"sId":    sess.id,
+						"seqKey": seqData,
+					}
+					payload, _ := jsonx.Marshal(data)
+					logx.Debugf("[socketio] sending sequence synchronization: %s", string(payload))
+					sess.EmitString(EventSeqSync, string(payload))
+				})
 			}
 		case <-s.stopChan:
 			logx.Infof("[socketio] sequence synchronization stopped")
@@ -380,6 +350,7 @@ func (s *Server) StartSeqSync() {
 func (s *Server) cleanInvalidSession(sId string) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
+	logx.Debugf("[socketio] cleaning invalid session: %s", sId)
 	delete(s.sessions, sId)
 }
 
@@ -406,37 +377,29 @@ func (s *Server) GetSessionByDeviceID(deviceID string) *Session {
 	return nil
 }
 
-func (s *Server) JoinRoom(sId string, roomID string) {
+func (s *Server) JoinRoom(sId string, roomId string) {
 	s.lock.RLock()
 	session, ok := s.sessions[sId]
 	s.lock.RUnlock()
 	if ok {
-		session.JoinRoom(roomID)
+		session.JoinRoom(roomId)
 	}
 }
 
-func (s *Server) LeaveRoom(sId string, roomID string) {
+func (s *Server) LeaveRoom(sId string, roomId string) {
 	s.lock.RLock()
 	session, ok := s.sessions[sId]
 	s.lock.RUnlock()
 	if ok {
-		session.LeaveRoom(roomID)
+		session.LeaveRoom(roomId)
 	}
-}
-
-func (s *Server) HttpHandler() http.Handler {
-	return s.io.HttpHandler()
 }
 
 func (s *Server) Stop() {
 	close(s.stopChan)
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	for _, sess := range s.sessions {
-		if sess.socket != nil {
-			sess.socket.Disconnect()
-		}
-	}
 	s.sessions = make(map[string]*Session)
+	s.Close()
 	logx.Info("[socketio] server stopped")
 }
