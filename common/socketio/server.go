@@ -325,6 +325,11 @@ func (s *Server) StartSeqSync() {
 				sessions = append(sessions, sess)
 			}
 			s.lock.RUnlock()
+			sockets := s.Io.Sockets()
+			if len(sockets) == len(sessions) {
+				logx.Errorf("[socketio] session count mismatch: sessions=%d, sockets=%d", len(sessions), len(sockets))
+			}
+			logx.Statf("[socketio] total sessions: %d", len(sessions))
 			for _, sess := range sessions {
 				threading.GoSafe(func() {
 					seqData := make(map[string]int64)
