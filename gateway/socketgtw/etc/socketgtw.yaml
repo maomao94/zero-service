@@ -7,6 +7,9 @@ Log:
   Path: /opt/logs/socketgtw
   Level: info
   KeepDays: 300
+Middlewares:
+  StatConf:
+    IgnoreContentMethods: [/socketgtw.SocketGtw/BroadcastRoom, /socketgtw.SocketGtw/BroadcastGlobal]
 http:
   Name: socketgtw-http
   Host: 0.0.0.0
