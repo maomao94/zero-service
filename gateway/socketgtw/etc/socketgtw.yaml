@@ -8,7 +8,7 @@ Log:
   Level: info
   KeepDays: 300
 http:
-  Name: socketgtw
+  Name: socketgtw-http
   Host: 0.0.0.0
   Port: 11003
   Timeout: 10000
