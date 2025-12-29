@@ -2,6 +2,7 @@ package socketio
 
 import (
 	"math/rand/v2"
+	"strings"
 	"sync"
 	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/gateway/socketgtw/socketgtw"
@@ -32,6 +33,14 @@ func NewPubContainer(c zrpc.RpcClientConf) *SocketContainer {
 		err := p.getConn4Etcd(c)
 		if err != nil {
 			logx.Must(err)
+		}
+	}
+	if len(c.Target) != 0 {
+		if strings.HasPrefix(c.Target, "nacos:") {
+			err := p.getConn4Nacos(c)
+			if err != nil {
+				logx.Must(err)
+			}
 		}
 	}
 	return p
@@ -127,6 +136,10 @@ func (p *SocketContainer) getConn4Direct(c zrpc.RpcClientConf) error {
 		p.ClientMap[val] = client
 	}
 	p.lock.Unlock()
+	return nil
+}
+
+func (p *SocketContainer) getConn4Nacos(c zrpc.RpcClientConf) error {
 	return nil
 }
 
