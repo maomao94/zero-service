@@ -25,6 +25,7 @@ func NewBroadcastGlobalLogic(ctx context.Context, svcCtx *svc.ServiceContext) *B
 
 // 向所有在线前端广播消息
 func (l *BroadcastGlobalLogic) BroadcastGlobal(in *socketgtw.BroadcastGlobalReq) (*socketgtw.BroadcastGlobalRes, error) {
+	l.Infof("BroadcastGlobal, event: %s, reqId: %s", in.Event, in.ReqId)
 	err := l.svcCtx.SocketServer.BroadcastGlobal(in.Event, string(in.Payload), in.ReqId)
 	if err != nil {
 		return nil, err

@@ -25,6 +25,7 @@ func NewBroadcastRoomLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Bro
 
 // 向指定房间广播消息
 func (l *BroadcastRoomLogic) BroadcastRoom(in *socketgtw.BroadcastRoomReq) (*socketgtw.BroadcastRoomRes, error) {
+	l.Infof("BroadcastRoom, event:%s, room: %s, reqId: %s", in.Event, in.Room, in.ReqId)
 	err := l.svcCtx.SocketServer.BroadcastRoom(in.Room, in.Event, string(in.Payload), in.ReqId)
 	if err != nil {
 		return nil, err

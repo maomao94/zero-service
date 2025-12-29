@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/url"
 	"os"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -15,14 +14,12 @@ import (
 	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/gateway/socketgtw/socketgtw"
 
-	"github.com/nacos-group/nacos-sdk-go/v2/common/logger"
-	"github.com/nacos-group/nacos-sdk-go/v2/model"
-	"github.com/pkg/errors"
-	"google.golang.org/grpc/resolver"
-
 	"github.com/nacos-group/nacos-sdk-go/v2/clients"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
+	"github.com/nacos-group/nacos-sdk-go/v2/common/logger"
+	"github.com/nacos-group/nacos-sdk-go/v2/model"
 	"github.com/nacos-group/nacos-sdk-go/v2/vo"
+	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/discov"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/mapping"
@@ -157,7 +154,11 @@ func (p *SocketContainer) getConn4Direct(c zrpc.RpcClientConf) error {
 }
 
 func (p *SocketContainer) getConn4Nacos(c zrpc.RpcClientConf) error {
-	tgt, err := parseURL(c.Target)
+	rawURLObj, err := url.Parse(c.Target)
+	if err != nil {
+		return errors.Wrap(err, "parse nacos raw url string failed")
+	}
+	tgt, err := parseURL(*rawURLObj)
 	if err != nil {
 		return errors.Wrap(err, "Wrong nacos URL")
 	}
@@ -212,7 +213,7 @@ func (p *SocketContainer) getConn4Nacos(c zrpc.RpcClientConf) error {
 		SubscribeCallback: newWatcher(ctx, cancel, pipe).CallBackHandle, // required
 	})
 
-	go populateEndpoints(ctx, conn, pipe)
+	go p.populateClientMap(ctx, c, pipe)
 
 	go func() {
 		ticker := time.NewTicker(60 * time.Second)
@@ -263,25 +264,55 @@ func (nw *watcher) CallBackHandle(services []model.Instance, err error) {
 	nw.out <- addrs
 }
 
-func populateEndpoints(ctx context.Context, clientConn resolver.ClientConn, input <-chan []string) {
+func (p *SocketContainer) populateClientMap(ctx context.Context, c zrpc.RpcClientConf, input <-chan []string) {
 	for {
 		select {
-		case cc := <-input:
-			connsSet := make(map[string]struct{}, len(cc))
-			for _, c := range cc {
-				connsSet[c] = struct{}{}
-			}
-			conns := make([]resolver.Address, 0, len(connsSet))
-			for c := range connsSet {
-				conns = append(conns, resolver.Address{Addr: c})
-			}
-			sort.Sort(byAddressString(conns)) // Don't replace the same address list in the balancer
-			_ = clientConn.UpdateState(resolver.State{Addresses: conns})
+		case addrs := <-input:
+			p.updateClientMap(addrs, c)
 		case <-ctx.Done():
-			logx.Info("[Nacos resolver] Watch has been finished")
+			logx.Info("[Nacos] Watch has been finished")
 			return
 		}
 	}
+}
+func (p *SocketContainer) updateClientMap(addrs []string, c zrpc.RpcClientConf) {
+	var add []string
+	var remove []string
+	p.lock.Lock()
+	m := make(map[string]bool)
+	for _, val := range subset(addrs, subsetSize) {
+		m[val] = true
+	}
+	for k, _ := range p.ClientMap {
+		if _, ok := m[k]; !ok {
+			remove = append(remove, k)
+		}
+	}
+	for k, _ := range m {
+		if _, ok := p.ClientMap[k]; !ok {
+			add = append(add, k)
+		}
+	}
+	for _, val := range add {
+		endpoints := make([]string, 1)
+		endpoints[0] = val
+		c.Endpoints = endpoints
+		client := socketgtw.NewSocketGtwClient(zrpc.MustNewClient(c,
+			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
+			// 添加最大消息配置
+			zrpc.WithDialOption(grpc.WithDefaultCallOptions(
+				//grpc.MaxCallSendMsgSize(math.MaxInt32), // 发送最大2GB
+				grpc.MaxCallSendMsgSize(50*1024*1024), // 发送最大50MB
+				//grpc.MaxCallRecvMsgSize(100 * 1024 * 1024),  // 接收最大100MB
+			)),
+		).Conn())
+		p.ClientMap[val] = client
+	}
+	for _, val := range remove {
+		delete(p.ClientMap, val)
+	}
+	logx.Infof("update len(pubMap)=%d", len(p.ClientMap))
+	p.lock.Unlock()
 }
 
 func extractHealthyGRPCInstances(instances []model.Instance) []string {

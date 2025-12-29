@@ -57,14 +57,21 @@ func (h *MqttStreamHandler) Consume(ctx context.Context, payload []byte, topic s
 	threading.GoSafe(func() {
 		reqId, _ := tool.SimpleUUID()
 		for key, cli := range h.socketContainer.GetClients() {
+			sendTime := carbon.Now().ToDateTimeMicroString()
+			startTime := timex.Now()
+			duration := timex.Since(startTime)
 			socktCTx, cancel := context.WithTimeout(ctx, 10*time.Second)
 			defer cancel()
-			_, _ = cli.BroadcastGlobal(socktCTx, &socketgtw.BroadcastGlobalReq{
+			_, err := cli.BroadcastGlobal(socktCTx, &socketgtw.BroadcastGlobalReq{
 				ReqId:   reqId,
 				Event:   topicTemplate,
 				Payload: payload,
 			})
-			logx.WithContext(ctx).Infof("[mqtt] broadcast socketio global, node: %s, reqId: %s, topicTemplate: %s", key, reqId, topicTemplate)
+			var invokeflg = "success"
+			if err != nil {
+				invokeflg = "fail"
+			}
+			logx.WithContext(ctx).WithDuration(duration).Infof("[mqtt] broadcast socketio global, node: %s, reqId: %s, topicTemplate: %s, time: %s - %s", key, reqId, topicTemplate, sendTime, invokeflg)
 		}
 	})
 	return nil
