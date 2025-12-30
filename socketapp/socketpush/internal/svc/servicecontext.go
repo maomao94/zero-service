@@ -7,12 +7,12 @@ import (
 
 type ServiceContext struct {
 	Config          config.Config
-	SocketContainer *socketio.SocketContainer
+	SocketContainer *socketiox.SocketContainer
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	return &ServiceContext{
 		Config:          c,
-		SocketContainer: socketio.MustNewPubContainer(c.SocketGtwConf),
+		SocketContainer: socketiox.MustNewPubContainer(c.SocketGtwConf),
 	}
 }

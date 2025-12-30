@@ -17,7 +17,7 @@ type ServiceContext struct {
 	Config          config.Config
 	MqttClient      *mqttx.Client
 	StreamEventCli  streamevent.StreamEventClient
-	SocketContainer *socketio.SocketContainer
+	SocketContainer *socketiox.SocketContainer
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {

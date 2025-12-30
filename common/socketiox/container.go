@@ -1,4 +1,4 @@
-package socketio
+package socketiox
 
 import (
 	"context"

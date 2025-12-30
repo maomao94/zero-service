@@ -1,4 +1,4 @@
-package socketio
+package socketiox
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/doquangtan/socketio/v4"
+	"github.com/google/uuid"
 	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/threading"
@@ -694,4 +695,8 @@ func (srv *Server) Stop() {
 	srv.sessions = make(map[string]*Session)
 	srv.Close()
 	logx.Info("[socketio] server stopped")
+}
+
+func (s *Server) randomUUID() string {
+	return uuid.New().String()
 }
