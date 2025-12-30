@@ -218,7 +218,7 @@ type BroadcastRoomReq struct {
 	ReqId         string                 `protobuf:"bytes,1,opt,name=reqId,proto3" json:"reqId,omitempty"`
 	Room          string                 `protobuf:"bytes,2,opt,name=room,proto3" json:"room,omitempty"`
 	Event         string                 `protobuf:"bytes,3,opt,name=event,proto3" json:"event,omitempty"`
-	Payload       []byte                 `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"`
+	Payload       string                 `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -274,11 +274,11 @@ func (x *BroadcastRoomReq) GetEvent() string {
 	return ""
 }
 
-func (x *BroadcastRoomReq) GetPayload() []byte {
+func (x *BroadcastRoomReq) GetPayload() string {
 	if x != nil {
 		return x.Payload
 	}
-	return nil
+	return ""
 }
 
 type BroadcastRoomRes struct {
@@ -321,7 +321,7 @@ type BroadcastGlobalReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ReqId         string                 `protobuf:"bytes,1,opt,name=reqId,proto3" json:"reqId,omitempty"`
 	Event         string                 `protobuf:"bytes,2,opt,name=event,proto3" json:"event,omitempty"`
-	Payload       []byte                 `protobuf:"bytes,3,opt,name=payload,proto3" json:"payload,omitempty"`
+	Payload       string                 `protobuf:"bytes,3,opt,name=payload,proto3" json:"payload,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -370,11 +370,11 @@ func (x *BroadcastGlobalReq) GetEvent() string {
 	return ""
 }
 
-func (x *BroadcastGlobalReq) GetPayload() []byte {
+func (x *BroadcastGlobalReq) GetPayload() string {
 	if x != nil {
 		return x.Payload
 	}
-	return nil
+	return ""
 }
 
 type BroadcastGlobalRes struct {
@@ -506,7 +506,7 @@ type SendOneToSessionReq struct {
 	ReqId         string                 `protobuf:"bytes,1,opt,name=reqId,proto3" json:"reqId,omitempty"`
 	SId           string                 `protobuf:"bytes,2,opt,name=sId,proto3" json:"sId,omitempty"`
 	Event         string                 `protobuf:"bytes,3,opt,name=event,proto3" json:"event,omitempty"`
-	Payload       []byte                 `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"`
+	Payload       string                 `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -562,11 +562,11 @@ func (x *SendOneToSessionReq) GetEvent() string {
 	return ""
 }
 
-func (x *SendOneToSessionReq) GetPayload() []byte {
+func (x *SendOneToSessionReq) GetPayload() string {
 	if x != nil {
 		return x.Payload
 	}
-	return nil
+	return ""
 }
 
 type SendOneToSessionRes struct {
@@ -624,12 +624,12 @@ const file_socketgtw_proto_rawDesc = "" +
 	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x12\n" +
 	"\x04room\x18\x02 \x01(\tR\x04room\x12\x14\n" +
 	"\x05event\x18\x03 \x01(\tR\x05event\x12\x18\n" +
-	"\apayload\x18\x04 \x01(\fR\apayload\"\x12\n" +
+	"\apayload\x18\x04 \x01(\tR\apayload\"\x12\n" +
 	"\x10BroadcastRoomRes\"Z\n" +
 	"\x12BroadcastGlobalReq\x12\x14\n" +
 	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x14\n" +
 	"\x05event\x18\x02 \x01(\tR\x05event\x12\x18\n" +
-	"\apayload\x18\x03 \x01(\fR\apayload\"\x14\n" +
+	"\apayload\x18\x03 \x01(\tR\apayload\"\x14\n" +
 	"\x12BroadcastGlobalRes\"8\n" +
 	"\x0eKickSessionReq\x12\x14\n" +
 	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x10\n" +
@@ -639,7 +639,7 @@ const file_socketgtw_proto_rawDesc = "" +
 	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x10\n" +
 	"\x03sId\x18\x02 \x01(\tR\x03sId\x12\x14\n" +
 	"\x05event\x18\x03 \x01(\tR\x05event\x12\x18\n" +
-	"\apayload\x18\x04 \x01(\fR\apayload\"\x15\n" +
+	"\apayload\x18\x04 \x01(\tR\apayload\"\x15\n" +
 	"\x13SendOneToSessionRes2\xbb\x03\n" +
 	"\tSocketGtw\x12:\n" +
 	"\bJoinRoom\x12\x16.socketgtw.JoinRoomReq\x1a\x16.socketgtw.JoinRoomRes\x12=\n" +

@@ -55,7 +55,7 @@ message BroadcastRoomReq {
   string reqId = 1;
   string room = 2;
   string event = 3;
-  bytes payload = 4;
+  string payload = 4;
 }
 
 message BroadcastRoomRes {
@@ -64,7 +64,7 @@ message BroadcastRoomRes {
 message BroadcastGlobalReq {
   string reqId = 1;
   string event = 2;
-  bytes payload = 3;
+  string payload = 3;
 }
 
 message BroadcastGlobalRes {
@@ -82,7 +82,7 @@ message SendOneToSessionReq {
   string reqId = 1;
   string sId = 2;
   string event = 3;
-  bytes payload = 4;
+  string payload = 4;
 }
 
 message SendOneToSessionRes {

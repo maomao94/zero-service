@@ -123,6 +123,14 @@ func (s *Session) EmitString(event string, payload string) error {
 	return s.socket.Emit(event, payload)
 }
 
+func (s *Session) Emit(event string, payload any) error {
+	ok := s.checkSocketNil()
+	if ok {
+		return fmt.Errorf("socket is nil")
+	}
+	return s.socket.Emit(event, payload)
+}
+
 func (s *Session) EmitDown(data string) error {
 	return s.EmitString(EventDown, data)
 }
