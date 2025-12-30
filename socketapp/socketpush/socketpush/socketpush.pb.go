@@ -23,7 +23,7 @@ const (
 
 type GenTokenReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Subject       string                 `protobuf:"bytes,1,opt,name=subject,proto3" json:"subject,omitempty"`
+	Uid           string                 `protobuf:"bytes,1,opt,name=uid,proto3" json:"uid,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -58,9 +58,9 @@ func (*GenTokenReq) Descriptor() ([]byte, []int) {
 	return file_socketpush_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *GenTokenReq) GetSubject() string {
+func (x *GenTokenReq) GetUid() string {
 	if x != nil {
-		return x.Subject
+		return x.Uid
 	}
 	return ""
 }
@@ -610,9 +610,9 @@ var File_socketpush_proto protoreflect.FileDescriptor
 const file_socketpush_proto_rawDesc = "" +
 	"\n" +
 	"\x10socketpush.proto\x12\n" +
-	"socketpush\"'\n" +
-	"\vGenTokenReq\x12\x18\n" +
-	"\asubject\x18\x01 \x01(\tR\asubject\"w\n" +
+	"socketpush\"\x1f\n" +
+	"\vGenTokenReq\x12\x10\n" +
+	"\x03uid\x18\x01 \x01(\tR\x03uid\"w\n" +
 	"\vGenTokenRes\x12 \n" +
 	"\vaccessToken\x18\x01 \x01(\tR\vaccessToken\x12\"\n" +
 	"\faccessExpire\x18\x02 \x01(\x03R\faccessExpire\x12\"\n" +

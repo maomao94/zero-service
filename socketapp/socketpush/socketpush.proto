@@ -22,7 +22,7 @@ service SocketPush {
 }
 
 message GenTokenReq{
-  string subject = 1;
+  string uid = 1;
 }
 
 message GenTokenRes{

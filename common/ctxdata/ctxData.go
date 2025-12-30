@@ -11,7 +11,7 @@ import (
 )
 
 var CtxKeyUserId = "userId"
-var CtxKeyAuthKey = "authKey"
+var CtxKeyUID = "uid"
 
 type MsgBody struct {
 	MsgId   string                     `json:"msgId,omitempty"`
