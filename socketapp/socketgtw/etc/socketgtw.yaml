@@ -9,7 +9,7 @@ Log:
   KeepDays: 300
 Middlewares:
   StatConf:
-    IgnoreContentMethods: [/socketgtw.SocketGtw/BroadcastRoom, /socketgtw.SocketGtw/BroadcastGlobal]
+    IgnoreContentMethods: [ /socketgtw.SocketGtw/BroadcastRoom, /socketgtw.SocketGtw/BroadcastGlobal ]
 http:
   Name: socketgtw-http
   Host: 0.0.0.0
@@ -26,3 +26,4 @@ NacosConfig:
   PassWord: nacos
   NamespaceId: public
   ServiceName: socket-gtw
+SocketMetaData: [ "uid", "deviceId", "userId", "user_id","dept_id", "dept_code", "user_name" ]
