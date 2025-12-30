@@ -16,7 +16,7 @@ http:
   Port: 11003
   Timeout: 10000
 JwtAuth:
-  AccessSecret: allcoreisapowerfulmicroservicearchitectureupgradedandoptimizedfromacommercialproject
+  AccessSecret: 629c6233-1a76-471b-bd25-b87208762219
   AccessExpire: 31536000
 NacosConfig:
   IsRegister: false
