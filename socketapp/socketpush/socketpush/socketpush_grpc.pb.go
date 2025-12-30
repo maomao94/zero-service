@@ -19,12 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SocketPush_GenToken_FullMethodName        = "/socketpush.SocketPush/GenToken"
-	SocketPush_JoinRoom_FullMethodName        = "/socketpush.SocketPush/JoinRoom"
-	SocketPush_LeaveRoom_FullMethodName       = "/socketpush.SocketPush/LeaveRoom"
-	SocketPush_BroadcastRoom_FullMethodName   = "/socketpush.SocketPush/BroadcastRoom"
-	SocketPush_BroadcastGlobal_FullMethodName = "/socketpush.SocketPush/BroadcastGlobal"
-	SocketPush_KickSession_FullMethodName     = "/socketpush.SocketPush/KickSession"
+	SocketPush_GenToken_FullMethodName         = "/socketpush.SocketPush/GenToken"
+	SocketPush_JoinRoom_FullMethodName         = "/socketpush.SocketPush/JoinRoom"
+	SocketPush_LeaveRoom_FullMethodName        = "/socketpush.SocketPush/LeaveRoom"
+	SocketPush_BroadcastRoom_FullMethodName    = "/socketpush.SocketPush/BroadcastRoom"
+	SocketPush_BroadcastGlobal_FullMethodName  = "/socketpush.SocketPush/BroadcastGlobal"
+	SocketPush_KickSession_FullMethodName      = "/socketpush.SocketPush/KickSession"
+	SocketPush_SendOneToSession_FullMethodName = "/socketpush.SocketPush/SendOneToSession"
 )
 
 // SocketPushClient is the client API for SocketPush service.
@@ -43,6 +44,8 @@ type SocketPushClient interface {
 	BroadcastGlobal(ctx context.Context, in *BroadcastGlobalReq, opts ...grpc.CallOption) (*BroadcastGlobalRes, error)
 	// 剔除 session
 	KickSession(ctx context.Context, in *KickSessionReq, opts ...grpc.CallOption) (*KickSessionRes, error)
+	// 向指定 session 发送消息
+	SendOneToSession(ctx context.Context, in *SendOneToSessionReq, opts ...grpc.CallOption) (*SendOneToSessionRes, error)
 }
 
 type socketPushClient struct {
@@ -113,6 +116,16 @@ func (c *socketPushClient) KickSession(ctx context.Context, in *KickSessionReq, 
 	return out, nil
 }
 
+func (c *socketPushClient) SendOneToSession(ctx context.Context, in *SendOneToSessionReq, opts ...grpc.CallOption) (*SendOneToSessionRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendOneToSessionRes)
+	err := c.cc.Invoke(ctx, SocketPush_SendOneToSession_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SocketPushServer is the server API for SocketPush service.
 // All implementations must embed UnimplementedSocketPushServer
 // for forward compatibility.
@@ -129,6 +142,8 @@ type SocketPushServer interface {
 	BroadcastGlobal(context.Context, *BroadcastGlobalReq) (*BroadcastGlobalRes, error)
 	// 剔除 session
 	KickSession(context.Context, *KickSessionReq) (*KickSessionRes, error)
+	// 向指定 session 发送消息
+	SendOneToSession(context.Context, *SendOneToSessionReq) (*SendOneToSessionRes, error)
 	mustEmbedUnimplementedSocketPushServer()
 }
 
@@ -156,6 +171,9 @@ func (UnimplementedSocketPushServer) BroadcastGlobal(context.Context, *Broadcast
 }
 func (UnimplementedSocketPushServer) KickSession(context.Context, *KickSessionReq) (*KickSessionRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method KickSession not implemented")
+}
+func (UnimplementedSocketPushServer) SendOneToSession(context.Context, *SendOneToSessionReq) (*SendOneToSessionRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendOneToSession not implemented")
 }
 func (UnimplementedSocketPushServer) mustEmbedUnimplementedSocketPushServer() {}
 func (UnimplementedSocketPushServer) testEmbeddedByValue()                    {}
@@ -286,6 +304,24 @@ func _SocketPush_KickSession_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SocketPush_SendOneToSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendOneToSessionReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SocketPushServer).SendOneToSession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SocketPush_SendOneToSession_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SocketPushServer).SendOneToSession(ctx, req.(*SendOneToSessionReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SocketPush_ServiceDesc is the grpc.ServiceDesc for SocketPush service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -316,6 +352,10 @@ var SocketPush_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "KickSession",
 			Handler:    _SocketPush_KickSession_Handler,
+		},
+		{
+			MethodName: "SendOneToSession",
+			Handler:    _SocketPush_SendOneToSession_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -501,6 +501,110 @@ func (*KickSessionRes) Descriptor() ([]byte, []int) {
 	return file_socketgtw_proto_rawDescGZIP(), []int{9}
 }
 
+type SendOneToSessionReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ReqId         string                 `protobuf:"bytes,1,opt,name=reqId,proto3" json:"reqId,omitempty"`
+	SId           string                 `protobuf:"bytes,2,opt,name=sId,proto3" json:"sId,omitempty"`
+	Event         string                 `protobuf:"bytes,3,opt,name=event,proto3" json:"event,omitempty"`
+	Payload       []byte                 `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendOneToSessionReq) Reset() {
+	*x = SendOneToSessionReq{}
+	mi := &file_socketgtw_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendOneToSessionReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendOneToSessionReq) ProtoMessage() {}
+
+func (x *SendOneToSessionReq) ProtoReflect() protoreflect.Message {
+	mi := &file_socketgtw_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendOneToSessionReq.ProtoReflect.Descriptor instead.
+func (*SendOneToSessionReq) Descriptor() ([]byte, []int) {
+	return file_socketgtw_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *SendOneToSessionReq) GetReqId() string {
+	if x != nil {
+		return x.ReqId
+	}
+	return ""
+}
+
+func (x *SendOneToSessionReq) GetSId() string {
+	if x != nil {
+		return x.SId
+	}
+	return ""
+}
+
+func (x *SendOneToSessionReq) GetEvent() string {
+	if x != nil {
+		return x.Event
+	}
+	return ""
+}
+
+func (x *SendOneToSessionReq) GetPayload() []byte {
+	if x != nil {
+		return x.Payload
+	}
+	return nil
+}
+
+type SendOneToSessionRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendOneToSessionRes) Reset() {
+	*x = SendOneToSessionRes{}
+	mi := &file_socketgtw_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendOneToSessionRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendOneToSessionRes) ProtoMessage() {}
+
+func (x *SendOneToSessionRes) ProtoReflect() protoreflect.Message {
+	mi := &file_socketgtw_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendOneToSessionRes.ProtoReflect.Descriptor instead.
+func (*SendOneToSessionRes) Descriptor() ([]byte, []int) {
+	return file_socketgtw_proto_rawDescGZIP(), []int{11}
+}
+
 var File_socketgtw_proto protoreflect.FileDescriptor
 
 const file_socketgtw_proto_rawDesc = "" +
@@ -530,13 +634,20 @@ const file_socketgtw_proto_rawDesc = "" +
 	"\x0eKickSessionReq\x12\x14\n" +
 	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x10\n" +
 	"\x03sId\x18\x02 \x01(\tR\x03sId\"\x10\n" +
-	"\x0eKickSessionRes2\xe7\x02\n" +
+	"\x0eKickSessionRes\"m\n" +
+	"\x13SendOneToSessionReq\x12\x14\n" +
+	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x10\n" +
+	"\x03sId\x18\x02 \x01(\tR\x03sId\x12\x14\n" +
+	"\x05event\x18\x03 \x01(\tR\x05event\x12\x18\n" +
+	"\apayload\x18\x04 \x01(\fR\apayload\"\x15\n" +
+	"\x13SendOneToSessionRes2\xbb\x03\n" +
 	"\tSocketGtw\x12:\n" +
 	"\bJoinRoom\x12\x16.socketgtw.JoinRoomReq\x1a\x16.socketgtw.JoinRoomRes\x12=\n" +
 	"\tLeaveRoom\x12\x17.socketgtw.LeaveRoomReq\x1a\x17.socketgtw.LeaveRoomRes\x12I\n" +
 	"\rBroadcastRoom\x12\x1b.socketgtw.BroadcastRoomReq\x1a\x1b.socketgtw.BroadcastRoomRes\x12O\n" +
 	"\x0fBroadcastGlobal\x12\x1d.socketgtw.BroadcastGlobalReq\x1a\x1d.socketgtw.BroadcastGlobalRes\x12C\n" +
-	"\vKickSession\x12\x19.socketgtw.KickSessionReq\x1a\x19.socketgtw.KickSessionResB:\n" +
+	"\vKickSession\x12\x19.socketgtw.KickSessionReq\x1a\x19.socketgtw.KickSessionRes\x12R\n" +
+	"\x10SendOneToSession\x12\x1e.socketgtw.SendOneToSessionReq\x1a\x1e.socketgtw.SendOneToSessionResB:\n" +
 	"\x19com.github.socketgtw.grpcB\x0eSocketGtwProtoP\x01Z\v./socketgtwb\x06proto3"
 
 var (
@@ -551,35 +662,39 @@ func file_socketgtw_proto_rawDescGZIP() []byte {
 	return file_socketgtw_proto_rawDescData
 }
 
-var file_socketgtw_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_socketgtw_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_socketgtw_proto_goTypes = []any{
-	(*JoinRoomReq)(nil),        // 0: socketgtw.JoinRoomReq
-	(*JoinRoomRes)(nil),        // 1: socketgtw.JoinRoomRes
-	(*LeaveRoomReq)(nil),       // 2: socketgtw.LeaveRoomReq
-	(*LeaveRoomRes)(nil),       // 3: socketgtw.LeaveRoomRes
-	(*BroadcastRoomReq)(nil),   // 4: socketgtw.BroadcastRoomReq
-	(*BroadcastRoomRes)(nil),   // 5: socketgtw.BroadcastRoomRes
-	(*BroadcastGlobalReq)(nil), // 6: socketgtw.BroadcastGlobalReq
-	(*BroadcastGlobalRes)(nil), // 7: socketgtw.BroadcastGlobalRes
-	(*KickSessionReq)(nil),     // 8: socketgtw.KickSessionReq
-	(*KickSessionRes)(nil),     // 9: socketgtw.KickSessionRes
+	(*JoinRoomReq)(nil),         // 0: socketgtw.JoinRoomReq
+	(*JoinRoomRes)(nil),         // 1: socketgtw.JoinRoomRes
+	(*LeaveRoomReq)(nil),        // 2: socketgtw.LeaveRoomReq
+	(*LeaveRoomRes)(nil),        // 3: socketgtw.LeaveRoomRes
+	(*BroadcastRoomReq)(nil),    // 4: socketgtw.BroadcastRoomReq
+	(*BroadcastRoomRes)(nil),    // 5: socketgtw.BroadcastRoomRes
+	(*BroadcastGlobalReq)(nil),  // 6: socketgtw.BroadcastGlobalReq
+	(*BroadcastGlobalRes)(nil),  // 7: socketgtw.BroadcastGlobalRes
+	(*KickSessionReq)(nil),      // 8: socketgtw.KickSessionReq
+	(*KickSessionRes)(nil),      // 9: socketgtw.KickSessionRes
+	(*SendOneToSessionReq)(nil), // 10: socketgtw.SendOneToSessionReq
+	(*SendOneToSessionRes)(nil), // 11: socketgtw.SendOneToSessionRes
 }
 var file_socketgtw_proto_depIdxs = []int32{
-	0, // 0: socketgtw.SocketGtw.JoinRoom:input_type -> socketgtw.JoinRoomReq
-	2, // 1: socketgtw.SocketGtw.LeaveRoom:input_type -> socketgtw.LeaveRoomReq
-	4, // 2: socketgtw.SocketGtw.BroadcastRoom:input_type -> socketgtw.BroadcastRoomReq
-	6, // 3: socketgtw.SocketGtw.BroadcastGlobal:input_type -> socketgtw.BroadcastGlobalReq
-	8, // 4: socketgtw.SocketGtw.KickSession:input_type -> socketgtw.KickSessionReq
-	1, // 5: socketgtw.SocketGtw.JoinRoom:output_type -> socketgtw.JoinRoomRes
-	3, // 6: socketgtw.SocketGtw.LeaveRoom:output_type -> socketgtw.LeaveRoomRes
-	5, // 7: socketgtw.SocketGtw.BroadcastRoom:output_type -> socketgtw.BroadcastRoomRes
-	7, // 8: socketgtw.SocketGtw.BroadcastGlobal:output_type -> socketgtw.BroadcastGlobalRes
-	9, // 9: socketgtw.SocketGtw.KickSession:output_type -> socketgtw.KickSessionRes
-	5, // [5:10] is the sub-list for method output_type
-	0, // [0:5] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0,  // 0: socketgtw.SocketGtw.JoinRoom:input_type -> socketgtw.JoinRoomReq
+	2,  // 1: socketgtw.SocketGtw.LeaveRoom:input_type -> socketgtw.LeaveRoomReq
+	4,  // 2: socketgtw.SocketGtw.BroadcastRoom:input_type -> socketgtw.BroadcastRoomReq
+	6,  // 3: socketgtw.SocketGtw.BroadcastGlobal:input_type -> socketgtw.BroadcastGlobalReq
+	8,  // 4: socketgtw.SocketGtw.KickSession:input_type -> socketgtw.KickSessionReq
+	10, // 5: socketgtw.SocketGtw.SendOneToSession:input_type -> socketgtw.SendOneToSessionReq
+	1,  // 6: socketgtw.SocketGtw.JoinRoom:output_type -> socketgtw.JoinRoomRes
+	3,  // 7: socketgtw.SocketGtw.LeaveRoom:output_type -> socketgtw.LeaveRoomRes
+	5,  // 8: socketgtw.SocketGtw.BroadcastRoom:output_type -> socketgtw.BroadcastRoomRes
+	7,  // 9: socketgtw.SocketGtw.BroadcastGlobal:output_type -> socketgtw.BroadcastGlobalRes
+	9,  // 10: socketgtw.SocketGtw.KickSession:output_type -> socketgtw.KickSessionRes
+	11, // 11: socketgtw.SocketGtw.SendOneToSession:output_type -> socketgtw.SendOneToSessionRes
+	6,  // [6:12] is the sub-list for method output_type
+	0,  // [0:6] is the sub-list for method input_type
+	0,  // [0:0] is the sub-list for extension type_name
+	0,  // [0:0] is the sub-list for extension extendee
+	0,  // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_socketgtw_proto_init() }
@@ -593,7 +708,7 @@ func file_socketgtw_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_socketgtw_proto_rawDesc), len(file_socketgtw_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

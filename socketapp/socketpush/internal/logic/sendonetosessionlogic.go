@@ -12,32 +12,34 @@ import (
 	"github.com/zeromicro/go-zero/core/threading"
 )
 
-type KickSessionLogic struct {
+type SendOneToSessionLogic struct {
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
 	logx.Logger
 }
 
-func NewKickSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *KickSessionLogic {
-	return &KickSessionLogic{
+func NewSendOneToSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *SendOneToSessionLogic {
+	return &SendOneToSessionLogic{
 		ctx:    ctx,
 		svcCtx: svcCtx,
 		Logger: logx.WithContext(ctx),
 	}
 }
 
-// 剔除 session
-func (l *KickSessionLogic) KickSession(in *socketpush.KickSessionReq) (*socketpush.KickSessionRes, error) {
+// 向指定 session 发送消息
+func (l *SendOneToSessionLogic) SendOneToSession(in *socketpush.SendOneToSessionReq) (*socketpush.SendOneToSessionRes, error) {
 	baseCtx := context.WithoutCancel(l.ctx)
 	for _, cli := range l.svcCtx.SocketContainer.GetClients() {
 		threading.GoSafe(func() {
 			socktCTx, cancel := context.WithTimeout(baseCtx, 10*time.Second)
 			defer cancel()
-			cli.KickSession(socktCTx, &socketgtw.KickSessionReq{
-				ReqId: in.ReqId,
-				SId:   in.SId,
+			cli.SendOneToSession(socktCTx, &socketgtw.SendOneToSessionReq{
+				ReqId:   in.ReqId,
+				SId:     in.SId,
+				Event:   in.Event,
+				Payload: in.Payload,
 			})
 		})
 	}
-	return &socketpush.KickSessionRes{}, nil
+	return &socketpush.SendOneToSessionRes{}, nil
 }

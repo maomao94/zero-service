@@ -19,11 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SocketGtw_JoinRoom_FullMethodName        = "/socketgtw.SocketGtw/JoinRoom"
-	SocketGtw_LeaveRoom_FullMethodName       = "/socketgtw.SocketGtw/LeaveRoom"
-	SocketGtw_BroadcastRoom_FullMethodName   = "/socketgtw.SocketGtw/BroadcastRoom"
-	SocketGtw_BroadcastGlobal_FullMethodName = "/socketgtw.SocketGtw/BroadcastGlobal"
-	SocketGtw_KickSession_FullMethodName     = "/socketgtw.SocketGtw/KickSession"
+	SocketGtw_JoinRoom_FullMethodName         = "/socketgtw.SocketGtw/JoinRoom"
+	SocketGtw_LeaveRoom_FullMethodName        = "/socketgtw.SocketGtw/LeaveRoom"
+	SocketGtw_BroadcastRoom_FullMethodName    = "/socketgtw.SocketGtw/BroadcastRoom"
+	SocketGtw_BroadcastGlobal_FullMethodName  = "/socketgtw.SocketGtw/BroadcastGlobal"
+	SocketGtw_KickSession_FullMethodName      = "/socketgtw.SocketGtw/KickSession"
+	SocketGtw_SendOneToSession_FullMethodName = "/socketgtw.SocketGtw/SendOneToSession"
 )
 
 // SocketGtwClient is the client API for SocketGtw service.
@@ -40,6 +41,8 @@ type SocketGtwClient interface {
 	BroadcastGlobal(ctx context.Context, in *BroadcastGlobalReq, opts ...grpc.CallOption) (*BroadcastGlobalRes, error)
 	// 剔除 session
 	KickSession(ctx context.Context, in *KickSessionReq, opts ...grpc.CallOption) (*KickSessionRes, error)
+	// 向指定 session 发送消息
+	SendOneToSession(ctx context.Context, in *SendOneToSessionReq, opts ...grpc.CallOption) (*SendOneToSessionRes, error)
 }
 
 type socketGtwClient struct {
@@ -100,6 +103,16 @@ func (c *socketGtwClient) KickSession(ctx context.Context, in *KickSessionReq, o
 	return out, nil
 }
 
+func (c *socketGtwClient) SendOneToSession(ctx context.Context, in *SendOneToSessionReq, opts ...grpc.CallOption) (*SendOneToSessionRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendOneToSessionRes)
+	err := c.cc.Invoke(ctx, SocketGtw_SendOneToSession_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SocketGtwServer is the server API for SocketGtw service.
 // All implementations must embed UnimplementedSocketGtwServer
 // for forward compatibility.
@@ -114,6 +127,8 @@ type SocketGtwServer interface {
 	BroadcastGlobal(context.Context, *BroadcastGlobalReq) (*BroadcastGlobalRes, error)
 	// 剔除 session
 	KickSession(context.Context, *KickSessionReq) (*KickSessionRes, error)
+	// 向指定 session 发送消息
+	SendOneToSession(context.Context, *SendOneToSessionReq) (*SendOneToSessionRes, error)
 	mustEmbedUnimplementedSocketGtwServer()
 }
 
@@ -138,6 +153,9 @@ func (UnimplementedSocketGtwServer) BroadcastGlobal(context.Context, *BroadcastG
 }
 func (UnimplementedSocketGtwServer) KickSession(context.Context, *KickSessionReq) (*KickSessionRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method KickSession not implemented")
+}
+func (UnimplementedSocketGtwServer) SendOneToSession(context.Context, *SendOneToSessionReq) (*SendOneToSessionRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendOneToSession not implemented")
 }
 func (UnimplementedSocketGtwServer) mustEmbedUnimplementedSocketGtwServer() {}
 func (UnimplementedSocketGtwServer) testEmbeddedByValue()                   {}
@@ -250,6 +268,24 @@ func _SocketGtw_KickSession_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SocketGtw_SendOneToSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendOneToSessionReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SocketGtwServer).SendOneToSession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SocketGtw_SendOneToSession_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SocketGtwServer).SendOneToSession(ctx, req.(*SendOneToSessionReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SocketGtw_ServiceDesc is the grpc.ServiceDesc for SocketGtw service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -276,6 +312,10 @@ var SocketGtw_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "KickSession",
 			Handler:    _SocketGtw_KickSession_Handler,
+		},
+		{
+			MethodName: "SendOneToSession",
+			Handler:    _SocketGtw_SendOneToSession_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

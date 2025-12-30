@@ -605,6 +605,110 @@ func (*KickSessionRes) Descriptor() ([]byte, []int) {
 	return file_socketpush_proto_rawDescGZIP(), []int{11}
 }
 
+type SendOneToSessionReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ReqId         string                 `protobuf:"bytes,1,opt,name=reqId,proto3" json:"reqId,omitempty"`
+	SId           string                 `protobuf:"bytes,2,opt,name=sId,proto3" json:"sId,omitempty"`
+	Event         string                 `protobuf:"bytes,3,opt,name=event,proto3" json:"event,omitempty"`
+	Payload       []byte                 `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendOneToSessionReq) Reset() {
+	*x = SendOneToSessionReq{}
+	mi := &file_socketpush_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendOneToSessionReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendOneToSessionReq) ProtoMessage() {}
+
+func (x *SendOneToSessionReq) ProtoReflect() protoreflect.Message {
+	mi := &file_socketpush_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendOneToSessionReq.ProtoReflect.Descriptor instead.
+func (*SendOneToSessionReq) Descriptor() ([]byte, []int) {
+	return file_socketpush_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *SendOneToSessionReq) GetReqId() string {
+	if x != nil {
+		return x.ReqId
+	}
+	return ""
+}
+
+func (x *SendOneToSessionReq) GetSId() string {
+	if x != nil {
+		return x.SId
+	}
+	return ""
+}
+
+func (x *SendOneToSessionReq) GetEvent() string {
+	if x != nil {
+		return x.Event
+	}
+	return ""
+}
+
+func (x *SendOneToSessionReq) GetPayload() []byte {
+	if x != nil {
+		return x.Payload
+	}
+	return nil
+}
+
+type SendOneToSessionRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendOneToSessionRes) Reset() {
+	*x = SendOneToSessionRes{}
+	mi := &file_socketpush_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendOneToSessionRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendOneToSessionRes) ProtoMessage() {}
+
+func (x *SendOneToSessionRes) ProtoReflect() protoreflect.Message {
+	mi := &file_socketpush_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendOneToSessionRes.ProtoReflect.Descriptor instead.
+func (*SendOneToSessionRes) Descriptor() ([]byte, []int) {
+	return file_socketpush_proto_rawDescGZIP(), []int{13}
+}
+
 var File_socketpush_proto protoreflect.FileDescriptor
 
 const file_socketpush_proto_rawDesc = "" +
@@ -641,7 +745,13 @@ const file_socketpush_proto_rawDesc = "" +
 	"\x0eKickSessionReq\x12\x14\n" +
 	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x10\n" +
 	"\x03sId\x18\x02 \x01(\tR\x03sId\"\x10\n" +
-	"\x0eKickSessionRes2\xb0\x03\n" +
+	"\x0eKickSessionRes\"m\n" +
+	"\x13SendOneToSessionReq\x12\x14\n" +
+	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x10\n" +
+	"\x03sId\x18\x02 \x01(\tR\x03sId\x12\x14\n" +
+	"\x05event\x18\x03 \x01(\tR\x05event\x12\x18\n" +
+	"\apayload\x18\x04 \x01(\fR\apayload\"\x15\n" +
+	"\x13SendOneToSessionRes2\x86\x04\n" +
 	"\n" +
 	"SocketPush\x12<\n" +
 	"\bGenToken\x12\x17.socketpush.GenTokenReq\x1a\x17.socketpush.GenTokenRes\x12<\n" +
@@ -649,7 +759,8 @@ const file_socketpush_proto_rawDesc = "" +
 	"\tLeaveRoom\x12\x18.socketpush.LeaveRoomReq\x1a\x18.socketpush.LeaveRoomRes\x12K\n" +
 	"\rBroadcastRoom\x12\x1c.socketpush.BroadcastRoomReq\x1a\x1c.socketpush.BroadcastRoomRes\x12Q\n" +
 	"\x0fBroadcastGlobal\x12\x1e.socketpush.BroadcastGlobalReq\x1a\x1e.socketpush.BroadcastGlobalRes\x12E\n" +
-	"\vKickSession\x12\x1a.socketpush.KickSessionReq\x1a\x1a.socketpush.KickSessionResB=\n" +
+	"\vKickSession\x12\x1a.socketpush.KickSessionReq\x1a\x1a.socketpush.KickSessionRes\x12T\n" +
+	"\x10SendOneToSession\x12\x1f.socketpush.SendOneToSessionReq\x1a\x1f.socketpush.SendOneToSessionResB=\n" +
 	"\x1acom.github.socketpush.grpcB\x0fSocketPushProtoP\x01Z\f./socketpushb\x06proto3"
 
 var (
@@ -664,20 +775,22 @@ func file_socketpush_proto_rawDescGZIP() []byte {
 	return file_socketpush_proto_rawDescData
 }
 
-var file_socketpush_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_socketpush_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_socketpush_proto_goTypes = []any{
-	(*GenTokenReq)(nil),        // 0: socketpush.GenTokenReq
-	(*GenTokenRes)(nil),        // 1: socketpush.GenTokenRes
-	(*JoinRoomReq)(nil),        // 2: socketpush.JoinRoomReq
-	(*JoinRoomRes)(nil),        // 3: socketpush.JoinRoomRes
-	(*LeaveRoomReq)(nil),       // 4: socketpush.LeaveRoomReq
-	(*LeaveRoomRes)(nil),       // 5: socketpush.LeaveRoomRes
-	(*BroadcastRoomReq)(nil),   // 6: socketpush.BroadcastRoomReq
-	(*BroadcastRoomRes)(nil),   // 7: socketpush.BroadcastRoomRes
-	(*BroadcastGlobalReq)(nil), // 8: socketpush.BroadcastGlobalReq
-	(*BroadcastGlobalRes)(nil), // 9: socketpush.BroadcastGlobalRes
-	(*KickSessionReq)(nil),     // 10: socketpush.KickSessionReq
-	(*KickSessionRes)(nil),     // 11: socketpush.KickSessionRes
+	(*GenTokenReq)(nil),         // 0: socketpush.GenTokenReq
+	(*GenTokenRes)(nil),         // 1: socketpush.GenTokenRes
+	(*JoinRoomReq)(nil),         // 2: socketpush.JoinRoomReq
+	(*JoinRoomRes)(nil),         // 3: socketpush.JoinRoomRes
+	(*LeaveRoomReq)(nil),        // 4: socketpush.LeaveRoomReq
+	(*LeaveRoomRes)(nil),        // 5: socketpush.LeaveRoomRes
+	(*BroadcastRoomReq)(nil),    // 6: socketpush.BroadcastRoomReq
+	(*BroadcastRoomRes)(nil),    // 7: socketpush.BroadcastRoomRes
+	(*BroadcastGlobalReq)(nil),  // 8: socketpush.BroadcastGlobalReq
+	(*BroadcastGlobalRes)(nil),  // 9: socketpush.BroadcastGlobalRes
+	(*KickSessionReq)(nil),      // 10: socketpush.KickSessionReq
+	(*KickSessionRes)(nil),      // 11: socketpush.KickSessionRes
+	(*SendOneToSessionReq)(nil), // 12: socketpush.SendOneToSessionReq
+	(*SendOneToSessionRes)(nil), // 13: socketpush.SendOneToSessionRes
 }
 var file_socketpush_proto_depIdxs = []int32{
 	0,  // 0: socketpush.SocketPush.GenToken:input_type -> socketpush.GenTokenReq
@@ -686,14 +799,16 @@ var file_socketpush_proto_depIdxs = []int32{
 	6,  // 3: socketpush.SocketPush.BroadcastRoom:input_type -> socketpush.BroadcastRoomReq
 	8,  // 4: socketpush.SocketPush.BroadcastGlobal:input_type -> socketpush.BroadcastGlobalReq
 	10, // 5: socketpush.SocketPush.KickSession:input_type -> socketpush.KickSessionReq
-	1,  // 6: socketpush.SocketPush.GenToken:output_type -> socketpush.GenTokenRes
-	3,  // 7: socketpush.SocketPush.JoinRoom:output_type -> socketpush.JoinRoomRes
-	5,  // 8: socketpush.SocketPush.LeaveRoom:output_type -> socketpush.LeaveRoomRes
-	7,  // 9: socketpush.SocketPush.BroadcastRoom:output_type -> socketpush.BroadcastRoomRes
-	9,  // 10: socketpush.SocketPush.BroadcastGlobal:output_type -> socketpush.BroadcastGlobalRes
-	11, // 11: socketpush.SocketPush.KickSession:output_type -> socketpush.KickSessionRes
-	6,  // [6:12] is the sub-list for method output_type
-	0,  // [0:6] is the sub-list for method input_type
+	12, // 6: socketpush.SocketPush.SendOneToSession:input_type -> socketpush.SendOneToSessionReq
+	1,  // 7: socketpush.SocketPush.GenToken:output_type -> socketpush.GenTokenRes
+	3,  // 8: socketpush.SocketPush.JoinRoom:output_type -> socketpush.JoinRoomRes
+	5,  // 9: socketpush.SocketPush.LeaveRoom:output_type -> socketpush.LeaveRoomRes
+	7,  // 10: socketpush.SocketPush.BroadcastRoom:output_type -> socketpush.BroadcastRoomRes
+	9,  // 11: socketpush.SocketPush.BroadcastGlobal:output_type -> socketpush.BroadcastGlobalRes
+	11, // 12: socketpush.SocketPush.KickSession:output_type -> socketpush.KickSessionRes
+	13, // 13: socketpush.SocketPush.SendOneToSession:output_type -> socketpush.SendOneToSessionRes
+	7,  // [7:14] is the sub-list for method output_type
+	0,  // [0:7] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
 	0,  // [0:0] is the sub-list for extension extendee
 	0,  // [0:0] is the sub-list for field type_name
@@ -710,7 +825,7 @@ func file_socketpush_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_socketpush_proto_rawDesc), len(file_socketpush_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   12,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

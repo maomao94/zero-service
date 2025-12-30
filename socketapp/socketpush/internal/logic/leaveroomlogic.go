@@ -3,7 +3,6 @@ package logic
 import (
 	"context"
 	"time"
-	"zero-service/common/tool"
 	"zero-service/socketapp/socketgtw/socketgtw"
 
 	"zero-service/socketapp/socketpush/internal/svc"
@@ -32,11 +31,10 @@ func (l *LeaveRoomLogic) LeaveRoom(in *socketpush.LeaveRoomReq) (*socketpush.Lea
 	baseCtx := context.WithoutCancel(l.ctx)
 	for _, cli := range l.svcCtx.SocketContainer.GetClients() {
 		threading.GoSafe(func() {
-			reqId, _ := tool.SimpleUUID()
 			socktCTx, cancel := context.WithTimeout(baseCtx, 10*time.Second)
 			defer cancel()
 			cli.LeaveRoom(socktCTx, &socketgtw.LeaveRoomReq{
-				ReqId: reqId,
+				ReqId: in.ReqId,
 				SId:   in.SId,
 				Room:  in.Room,
 			})

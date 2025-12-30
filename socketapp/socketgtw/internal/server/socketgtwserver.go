@@ -52,3 +52,9 @@ func (s *SocketGtwServer) KickSession(ctx context.Context, in *socketgtw.KickSes
 	l := logic.NewKickSessionLogic(ctx, s.svcCtx)
 	return l.KickSession(in)
 }
+
+// 向指定 session 发送消息
+func (s *SocketGtwServer) SendOneToSession(ctx context.Context, in *socketgtw.SendOneToSessionReq) (*socketgtw.SendOneToSessionRes, error) {
+	l := logic.NewSendOneToSessionLogic(ctx, s.svcCtx)
+	return l.SendOneToSession(in)
+}

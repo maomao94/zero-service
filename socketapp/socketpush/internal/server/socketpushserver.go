@@ -58,3 +58,9 @@ func (s *SocketPushServer) KickSession(ctx context.Context, in *socketpush.KickS
 	l := logic.NewKickSessionLogic(ctx, s.svcCtx)
 	return l.KickSession(in)
 }
+
+// 向指定 session 发送消息
+func (s *SocketPushServer) SendOneToSession(ctx context.Context, in *socketpush.SendOneToSessionReq) (*socketpush.SendOneToSessionRes, error) {
+	l := logic.NewSendOneToSessionLogic(ctx, s.svcCtx)
+	return l.SendOneToSession(in)
+}

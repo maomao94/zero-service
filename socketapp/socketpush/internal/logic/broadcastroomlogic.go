@@ -3,7 +3,6 @@ package logic
 import (
 	"context"
 	"time"
-	"zero-service/common/tool"
 	"zero-service/socketapp/socketgtw/socketgtw"
 
 	"zero-service/socketapp/socketpush/internal/svc"
@@ -32,11 +31,10 @@ func (l *BroadcastRoomLogic) BroadcastRoom(in *socketpush.BroadcastRoomReq) (*so
 	baseCtx := context.WithoutCancel(l.ctx)
 	for _, cli := range l.svcCtx.SocketContainer.GetClients() {
 		threading.GoSafe(func() {
-			reqId, _ := tool.SimpleUUID()
 			socktCTx, cancel := context.WithTimeout(baseCtx, 10*time.Second)
 			defer cancel()
 			cli.BroadcastRoom(socktCTx, &socketgtw.BroadcastRoomReq{
-				ReqId:   reqId,
+				ReqId:   in.ReqId,
 				Room:    in.Room,
 				Event:   in.Event,
 				Payload: in.Payload,

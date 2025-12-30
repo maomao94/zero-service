@@ -1,7 +1,7 @@
 package svc
 
 import (
-	"zero-service/common/socketio"
+	"zero-service/common/socketiox"
 	"zero-service/socketapp/socketpush/internal/config"
 )
 
