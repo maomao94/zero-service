@@ -151,7 +151,7 @@ func (s *Session) EmitDown(event string, payload string, reqId string) error {
 	if event == EventDown {
 		return errors.New("event name is not allowed")
 	}
-	return s.socket.Emit(event, data)
+	return s.socket.Emit(event, string(data))
 }
 
 func (s *Session) EmitEventDown(data string) error {
