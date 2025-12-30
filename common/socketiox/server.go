@@ -50,14 +50,12 @@ type SocketResp struct {
 	Code    int    `json:"code"`
 	Msg     string `json:"msg"`
 	Payload any    `json:"payload,omitempty"`
-	SeqId   int64  `json:"seqId,omitempty"`
 	ReqId   string `json:"reqId,omitempty"`
 }
 
 type SocketDown struct {
 	Event   string `json:"event"`
 	Payload any    `json:"payload,omitempty"`
-	SeqId   int64  `json:"seqId,omitempty"`
 	ReqId   string `json:"reqId,omitempty"`
 }
 
