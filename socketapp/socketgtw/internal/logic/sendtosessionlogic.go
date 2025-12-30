@@ -27,7 +27,7 @@ func NewSendToSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Sen
 func (l *SendToSessionLogic) SendToSession(in *socketgtw.SendToSessionReq) (*socketgtw.SendToSessionRes, error) {
 	session := l.svcCtx.SocketServer.GetSession(in.SId)
 	if session != nil {
-		err := session.Emit(in.Event, in.Payload)
+		err := session.EmitDown(in.Event, in.Payload, in.ReqId)
 		if err != nil {
 			return nil, err
 		}
