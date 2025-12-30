@@ -60,7 +60,13 @@ func (s *SocketPushServer) KickSession(ctx context.Context, in *socketpush.KickS
 }
 
 // 向指定 session 发送消息
-func (s *SocketPushServer) SendOneToSession(ctx context.Context, in *socketpush.SendOneToSessionReq) (*socketpush.SendOneToSessionRes, error) {
-	l := logic.NewSendOneToSessionLogic(ctx, s.svcCtx)
-	return l.SendOneToSession(in)
+func (s *SocketPushServer) SendToSession(ctx context.Context, in *socketpush.SendToSessionReq) (*socketpush.SendToSessionRes, error) {
+	l := logic.NewSendToSessionLogic(ctx, s.svcCtx)
+	return l.SendToSession(in)
+}
+
+// 向指定元数据session 发送消息
+func (s *SocketPushServer) SendToMetaSession(ctx context.Context, in *socketpush.SendToMetaSessionReq) (*socketpush.SendToMetaSessionRes, error) {
+	l := logic.NewSendToMetaSessionLogic(ctx, s.svcCtx)
+	return l.SendToMetaSession(in)
 }

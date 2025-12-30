@@ -9,14 +9,14 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
-type SendOneToSessionLogic struct {
+type SendToSessionLogic struct {
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
 	logx.Logger
 }
 
-func NewSendOneToSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *SendOneToSessionLogic {
-	return &SendOneToSessionLogic{
+func NewSendToSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *SendToSessionLogic {
+	return &SendToSessionLogic{
 		ctx:    ctx,
 		svcCtx: svcCtx,
 		Logger: logx.WithContext(ctx),
@@ -24,7 +24,7 @@ func NewSendOneToSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *
 }
 
 // 向指定 session 发送消息
-func (l *SendOneToSessionLogic) SendOneToSession(in *socketgtw.SendOneToSessionReq) (*socketgtw.SendOneToSessionRes, error) {
+func (l *SendToSessionLogic) SendToSession(in *socketgtw.SendToSessionReq) (*socketgtw.SendToSessionRes, error) {
 	session := l.svcCtx.SocketServer.GetSession(in.SId)
 	if session != nil {
 		err := session.Emit(in.Event, in.Payload)
@@ -32,5 +32,5 @@ func (l *SendOneToSessionLogic) SendOneToSession(in *socketgtw.SendOneToSessionR
 			return nil, err
 		}
 	}
-	return &socketgtw.SendOneToSessionRes{}, nil
+	return &socketgtw.SendToSessionRes{}, nil
 }

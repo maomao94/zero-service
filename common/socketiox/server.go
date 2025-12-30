@@ -61,9 +61,10 @@ type SocketDown struct {
 }
 
 type StatDown struct {
-	SId   string   `json:"sId"`
-	Rooms []string `json:"rooms"`
-	Nps   string   `json:"nps"`
+	SId      string            `json:"sId"`
+	Rooms    []string          `json:"rooms"`
+	Nps      string            `json:"nps"`
+	MetaData map[string]string `json:"metadata,omitempty"`
 }
 
 func BuildResp(code int, msg string, payload any, reqId string) []byte {
@@ -90,7 +91,7 @@ type Session struct {
 	id       string
 	socket   *socketio.Socket
 	lock     sync.Mutex
-	metadata map[string]interface{}
+	metadata map[string]string
 }
 
 func (s *Session) Close() error {
@@ -112,7 +113,12 @@ func (s *Session) GetMetadata(key string) interface{} {
 func (s *Session) SetMetadata(key string, val interface{}) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	s.metadata[key] = val
+	if strValue, ok := val.(string); ok {
+		s.metadata[key] = strValue
+		logx.Debugf("[socketio] set metadata key %q with value %v for conn %s", key, strValue, s.id)
+	} else {
+		logx.Debugf("[socketio] skipped non-string metadata key %q with value %v (type: %T) for conn %s", key, val, val, s.id)
+	}
 }
 
 func (s *Session) EmitString(event string, payload string) error {
@@ -180,6 +186,11 @@ func WithEventHandlers(handlers EventHandlers) Option {
 	return func(s *Server) { s.eventHandlers = handlers }
 }
 
+// WithContextKeys 配置从上下文提取的键列表
+func WithContextKeys(keys []string) Option {
+	return func(s *Server) { s.contextKeys = keys }
+}
+
 type Server struct {
 	*socketio.Io
 	eventHandlers EventHandlers
@@ -187,6 +198,7 @@ type Server struct {
 	lock          sync.RWMutex
 	statInterval  time.Duration
 	stopChan      chan struct{}
+	contextKeys   []string // 从上下文提取的键列表
 }
 
 func MustServer(opts ...Option) *Server {
@@ -214,12 +226,20 @@ func NewServer(opts ...Option) (*Server, error) {
 
 func (srv *Server) bindEvents() {
 	srv.OnConnection(func(socket *socketio.Socket) {
+		ctx := socket.Context
 		session := &Session{
 			id:       socket.Id,
 			socket:   socket,
-			metadata: make(map[string]interface{}),
+			metadata: make(map[string]string),
 		}
 		srv.lock.Lock()
+		if ctx != nil && len(srv.contextKeys) > 0 {
+			for _, key := range srv.contextKeys {
+				if value := ctx.Value(key); value != nil {
+					session.SetMetadata(key, value)
+				}
+			}
+		}
 		srv.sessions[socket.Id] = session
 		srv.lock.Unlock()
 		logx.Infof("[socketio] new connection established: conn=%s", socket.Id)
@@ -622,9 +642,10 @@ func (srv *Server) statLoop() {
 			for _, sess := range sessions {
 				threading.GoSafe(func() {
 					stat := StatDown{
-						SId:   sess.id,
-						Rooms: sess.socket.Rooms(),
-						Nps:   sess.socket.Nps,
+						SId:      sess.id,
+						Rooms:    sess.socket.Rooms(),
+						Nps:      sess.socket.Nps,
+						MetaData: sess.metadata,
 					}
 					payload, _ := jsonx.Marshal(&stat)
 					sess.EmitString(EventStatDown, string(payload))

@@ -18,7 +18,9 @@ service SocketGtw {
   // 剔除 session
   rpc KickSession(KickSessionReq) returns (KickSessionRes);
   // 向指定 session 发送消息
-  rpc SendOneToSession(SendOneToSessionReq) returns (SendOneToSessionRes);
+  rpc SendToSession(SendToSessionReq) returns (SendToSessionRes);
+  // 向指定元数据session 发送消息
+  rpc SendToMetaSession(SendToMetaSessionReq) returns (SendToMetaSessionRes);
 }
 
 message JoinRoomReq {
@@ -66,12 +68,23 @@ message KickSessionReq {
 message KickSessionRes {
 }
 
-message SendOneToSessionReq {
+message SendToSessionReq {
   string reqId = 1;
   string sId = 2;
   string event = 3;
   string payload = 4;
 }
 
-message SendOneToSessionRes {
+message SendToSessionRes {
+}
+
+message SendToMetaSessionReq {
+  string reqId = 1;
+  string key = 2;
+  string value = 3;
+  string event = 4;
+  string payload = 5;
+}
+
+message SendToMetaSessionRes {
 }

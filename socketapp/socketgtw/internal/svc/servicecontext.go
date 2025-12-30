@@ -12,7 +12,9 @@ type ServiceContext struct {
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	return &ServiceContext{
-		Config:       c,
-		SocketServer: socketiox.MustServer(),
+		Config: c,
+		SocketServer: socketiox.MustServer(socketiox.WithContextKeys([]string{
+			"uid", "deviceId", "userId", "user_id",
+		})),
 	}
 }

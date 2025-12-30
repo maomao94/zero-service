@@ -54,7 +54,13 @@ func (s *SocketGtwServer) KickSession(ctx context.Context, in *socketgtw.KickSes
 }
 
 // 向指定 session 发送消息
-func (s *SocketGtwServer) SendOneToSession(ctx context.Context, in *socketgtw.SendOneToSessionReq) (*socketgtw.SendOneToSessionRes, error) {
-	l := logic.NewSendOneToSessionLogic(ctx, s.svcCtx)
-	return l.SendOneToSession(in)
+func (s *SocketGtwServer) SendToSession(ctx context.Context, in *socketgtw.SendToSessionReq) (*socketgtw.SendToSessionRes, error) {
+	l := logic.NewSendToSessionLogic(ctx, s.svcCtx)
+	return l.SendToSession(in)
+}
+
+// 向指定元数据session 发送消息
+func (s *SocketGtwServer) SendToMetaSession(ctx context.Context, in *socketgtw.SendToMetaSessionReq) (*socketgtw.SendToMetaSessionRes, error) {
+	l := logic.NewSendToMetaSessionLogic(ctx, s.svcCtx)
+	return l.SendToMetaSession(in)
 }
