@@ -299,13 +299,13 @@ func (m *MqttMessage) validate(all bool) error {
 
 	// no validation rules for MsgId
 
+	// no validation rules for TopicTemplate
+
 	// no validation rules for Topic
 
 	// no validation rules for Payload
 
 	// no validation rules for SendTime
-
-	// no validation rules for TopicTemplate
 
 	if len(errors) > 0 {
 		return MqttMessageMultiError(errors)

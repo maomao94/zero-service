@@ -108,14 +108,14 @@ type MqttMessage struct {
 	SessionId string `protobuf:"bytes,1,opt,name=sessionId,proto3" json:"sessionId,omitempty"`
 	// 消息唯一标识
 	MsgId string `protobuf:"bytes,2,opt,name=msgId,proto3" json:"msgId,omitempty"`
-	// MQTT主题
-	Topic string `protobuf:"bytes,3,opt,name=topic,proto3" json:"topic,omitempty"`
-	// 消息体
-	Payload []byte `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"`
-	// 消息发送时间
-	SendTime string `protobuf:"bytes,5,opt,name=sendTime,proto3" json:"sendTime,omitempty"`
 	// 订阅主题模板
-	TopicTemplate string `protobuf:"bytes,6,opt,name=topicTemplate,proto3" json:"topicTemplate,omitempty"`
+	TopicTemplate string `protobuf:"bytes,3,opt,name=topicTemplate,proto3" json:"topicTemplate,omitempty"`
+	// MQTT主题
+	Topic string `protobuf:"bytes,4,opt,name=topic,proto3" json:"topic,omitempty"`
+	// 消息体
+	Payload []byte `protobuf:"bytes,5,opt,name=payload,proto3" json:"payload,omitempty"`
+	// 消息发送时间
+	SendTime      string `protobuf:"bytes,6,opt,name=sendTime,proto3" json:"sendTime,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -164,6 +164,13 @@ func (x *MqttMessage) GetMsgId() string {
 	return ""
 }
 
+func (x *MqttMessage) GetTopicTemplate() string {
+	if x != nil {
+		return x.TopicTemplate
+	}
+	return ""
+}
+
 func (x *MqttMessage) GetTopic() string {
 	if x != nil {
 		return x.Topic
@@ -181,13 +188,6 @@ func (x *MqttMessage) GetPayload() []byte {
 func (x *MqttMessage) GetSendTime() string {
 	if x != nil {
 		return x.SendTime
-	}
-	return ""
-}
-
-func (x *MqttMessage) GetTopicTemplate() string {
-	if x != nil {
-		return x.TopicTemplate
 	}
 	return ""
 }
@@ -2485,11 +2485,11 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x15ReceiveMQTTMessageRes\"\xb3\x01\n" +
 	"\vMqttMessage\x12\x1c\n" +
 	"\tsessionId\x18\x01 \x01(\tR\tsessionId\x12\x14\n" +
-	"\x05msgId\x18\x02 \x01(\tR\x05msgId\x12\x14\n" +
-	"\x05topic\x18\x03 \x01(\tR\x05topic\x12\x18\n" +
-	"\apayload\x18\x04 \x01(\fR\apayload\x12\x1a\n" +
-	"\bsendTime\x18\x05 \x01(\tR\bsendTime\x12$\n" +
-	"\rtopicTemplate\x18\x06 \x01(\tR\rtopicTemplate\"\x7f\n" +
+	"\x05msgId\x18\x02 \x01(\tR\x05msgId\x12$\n" +
+	"\rtopicTemplate\x18\x03 \x01(\tR\rtopicTemplate\x12\x14\n" +
+	"\x05topic\x18\x04 \x01(\tR\x05topic\x12\x18\n" +
+	"\apayload\x18\x05 \x01(\fR\apayload\x12\x1a\n" +
+	"\bsendTime\x18\x06 \x01(\tR\bsendTime\"\x7f\n" +
 	"\x13ReceiveWSMessageReq\x12\x1c\n" +
 	"\tsessionId\x18\x01 \x01(\tR\tsessionId\x12\x14\n" +
 	"\x05msgId\x18\x02 \x01(\tR\x05msgId\x12\x18\n" +

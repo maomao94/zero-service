@@ -25,6 +25,7 @@ const (
 	SocketPush_BroadcastRoom_FullMethodName     = "/socketpush.SocketPush/BroadcastRoom"
 	SocketPush_BroadcastGlobal_FullMethodName   = "/socketpush.SocketPush/BroadcastGlobal"
 	SocketPush_KickSession_FullMethodName       = "/socketpush.SocketPush/KickSession"
+	SocketPush_KickMetaSession_FullMethodName   = "/socketpush.SocketPush/KickMetaSession"
 	SocketPush_SendToSession_FullMethodName     = "/socketpush.SocketPush/SendToSession"
 	SocketPush_SendToMetaSession_FullMethodName = "/socketpush.SocketPush/SendToMetaSession"
 )
@@ -45,6 +46,8 @@ type SocketPushClient interface {
 	BroadcastGlobal(ctx context.Context, in *BroadcastGlobalReq, opts ...grpc.CallOption) (*BroadcastGlobalRes, error)
 	// 剔除 session
 	KickSession(ctx context.Context, in *KickSessionReq, opts ...grpc.CallOption) (*KickSessionRes, error)
+	// 指定元数据剔除 session
+	KickMetaSession(ctx context.Context, in *KickMetaSessionReq, opts ...grpc.CallOption) (*KickMetaSessionRes, error)
 	// 向指定 session 发送消息
 	SendToSession(ctx context.Context, in *SendToSessionReq, opts ...grpc.CallOption) (*SendToSessionRes, error)
 	// 向指定元数据session 发送消息
@@ -119,6 +122,16 @@ func (c *socketPushClient) KickSession(ctx context.Context, in *KickSessionReq, 
 	return out, nil
 }
 
+func (c *socketPushClient) KickMetaSession(ctx context.Context, in *KickMetaSessionReq, opts ...grpc.CallOption) (*KickMetaSessionRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(KickMetaSessionRes)
+	err := c.cc.Invoke(ctx, SocketPush_KickMetaSession_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *socketPushClient) SendToSession(ctx context.Context, in *SendToSessionReq, opts ...grpc.CallOption) (*SendToSessionRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SendToSessionRes)
@@ -155,6 +168,8 @@ type SocketPushServer interface {
 	BroadcastGlobal(context.Context, *BroadcastGlobalReq) (*BroadcastGlobalRes, error)
 	// 剔除 session
 	KickSession(context.Context, *KickSessionReq) (*KickSessionRes, error)
+	// 指定元数据剔除 session
+	KickMetaSession(context.Context, *KickMetaSessionReq) (*KickMetaSessionRes, error)
 	// 向指定 session 发送消息
 	SendToSession(context.Context, *SendToSessionReq) (*SendToSessionRes, error)
 	// 向指定元数据session 发送消息
@@ -186,6 +201,9 @@ func (UnimplementedSocketPushServer) BroadcastGlobal(context.Context, *Broadcast
 }
 func (UnimplementedSocketPushServer) KickSession(context.Context, *KickSessionReq) (*KickSessionRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method KickSession not implemented")
+}
+func (UnimplementedSocketPushServer) KickMetaSession(context.Context, *KickMetaSessionReq) (*KickMetaSessionRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method KickMetaSession not implemented")
 }
 func (UnimplementedSocketPushServer) SendToSession(context.Context, *SendToSessionReq) (*SendToSessionRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendToSession not implemented")
@@ -322,6 +340,24 @@ func _SocketPush_KickSession_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SocketPush_KickMetaSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(KickMetaSessionReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SocketPushServer).KickMetaSession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SocketPush_KickMetaSession_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SocketPushServer).KickMetaSession(ctx, req.(*KickMetaSessionReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _SocketPush_SendToSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SendToSessionReq)
 	if err := dec(in); err != nil {
@@ -388,6 +424,10 @@ var SocketPush_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "KickSession",
 			Handler:    _SocketPush_KickSession_Handler,
+		},
+		{
+			MethodName: "KickMetaSession",
+			Handler:    _SocketPush_KickMetaSession_Handler,
 		},
 		{
 			MethodName: "SendToSession",

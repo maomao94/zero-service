@@ -59,6 +59,12 @@ func (s *SocketPushServer) KickSession(ctx context.Context, in *socketpush.KickS
 	return l.KickSession(in)
 }
 
+// 指定元数据剔除 session
+func (s *SocketPushServer) KickMetaSession(ctx context.Context, in *socketpush.KickMetaSessionReq) (*socketpush.KickMetaSessionRes, error) {
+	l := logic.NewKickMetaSessionLogic(ctx, s.svcCtx)
+	return l.KickMetaSession(in)
+}
+
 // 向指定 session 发送消息
 func (s *SocketPushServer) SendToSession(ctx context.Context, in *socketpush.SendToSessionReq) (*socketpush.SendToSessionRes, error) {
 	l := logic.NewSendToSessionLogic(ctx, s.svcCtx)

@@ -31,14 +31,14 @@ message MqttMessage {
   string sessionId = 1;
   // 消息唯一标识
   string msgId = 2;
-  // MQTT主题
-  string topic = 3;
-  // 消息体
-  bytes payload = 4;
-  // 消息发送时间
-  string sendTime = 5;
   // 订阅主题模板
-  string topicTemplate = 6;
+  string topicTemplate = 3;
+  // MQTT主题
+  string topic = 4;
+  // 消息体
+  bytes payload = 5;
+  // 消息发送时间
+  string sendTime = 6;
 }
 
 

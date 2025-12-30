@@ -605,6 +605,102 @@ func (*KickSessionRes) Descriptor() ([]byte, []int) {
 	return file_socketpush_proto_rawDescGZIP(), []int{11}
 }
 
+type KickMetaSessionReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ReqId         string                 `protobuf:"bytes,1,opt,name=reqId,proto3" json:"reqId,omitempty"`
+	Key           string                 `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
+	Value         string                 `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *KickMetaSessionReq) Reset() {
+	*x = KickMetaSessionReq{}
+	mi := &file_socketpush_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *KickMetaSessionReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*KickMetaSessionReq) ProtoMessage() {}
+
+func (x *KickMetaSessionReq) ProtoReflect() protoreflect.Message {
+	mi := &file_socketpush_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use KickMetaSessionReq.ProtoReflect.Descriptor instead.
+func (*KickMetaSessionReq) Descriptor() ([]byte, []int) {
+	return file_socketpush_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *KickMetaSessionReq) GetReqId() string {
+	if x != nil {
+		return x.ReqId
+	}
+	return ""
+}
+
+func (x *KickMetaSessionReq) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *KickMetaSessionReq) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type KickMetaSessionRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *KickMetaSessionRes) Reset() {
+	*x = KickMetaSessionRes{}
+	mi := &file_socketpush_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *KickMetaSessionRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*KickMetaSessionRes) ProtoMessage() {}
+
+func (x *KickMetaSessionRes) ProtoReflect() protoreflect.Message {
+	mi := &file_socketpush_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use KickMetaSessionRes.ProtoReflect.Descriptor instead.
+func (*KickMetaSessionRes) Descriptor() ([]byte, []int) {
+	return file_socketpush_proto_rawDescGZIP(), []int{13}
+}
+
 type SendToSessionReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ReqId         string                 `protobuf:"bytes,1,opt,name=reqId,proto3" json:"reqId,omitempty"`
@@ -617,7 +713,7 @@ type SendToSessionReq struct {
 
 func (x *SendToSessionReq) Reset() {
 	*x = SendToSessionReq{}
-	mi := &file_socketpush_proto_msgTypes[12]
+	mi := &file_socketpush_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -629,7 +725,7 @@ func (x *SendToSessionReq) String() string {
 func (*SendToSessionReq) ProtoMessage() {}
 
 func (x *SendToSessionReq) ProtoReflect() protoreflect.Message {
-	mi := &file_socketpush_proto_msgTypes[12]
+	mi := &file_socketpush_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -642,7 +738,7 @@ func (x *SendToSessionReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendToSessionReq.ProtoReflect.Descriptor instead.
 func (*SendToSessionReq) Descriptor() ([]byte, []int) {
-	return file_socketpush_proto_rawDescGZIP(), []int{12}
+	return file_socketpush_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *SendToSessionReq) GetReqId() string {
@@ -681,7 +777,7 @@ type SendToSessionRes struct {
 
 func (x *SendToSessionRes) Reset() {
 	*x = SendToSessionRes{}
-	mi := &file_socketpush_proto_msgTypes[13]
+	mi := &file_socketpush_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -693,7 +789,7 @@ func (x *SendToSessionRes) String() string {
 func (*SendToSessionRes) ProtoMessage() {}
 
 func (x *SendToSessionRes) ProtoReflect() protoreflect.Message {
-	mi := &file_socketpush_proto_msgTypes[13]
+	mi := &file_socketpush_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -706,7 +802,7 @@ func (x *SendToSessionRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendToSessionRes.ProtoReflect.Descriptor instead.
 func (*SendToSessionRes) Descriptor() ([]byte, []int) {
-	return file_socketpush_proto_rawDescGZIP(), []int{13}
+	return file_socketpush_proto_rawDescGZIP(), []int{15}
 }
 
 type SendToMetaSessionReq struct {
@@ -722,7 +818,7 @@ type SendToMetaSessionReq struct {
 
 func (x *SendToMetaSessionReq) Reset() {
 	*x = SendToMetaSessionReq{}
-	mi := &file_socketpush_proto_msgTypes[14]
+	mi := &file_socketpush_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -734,7 +830,7 @@ func (x *SendToMetaSessionReq) String() string {
 func (*SendToMetaSessionReq) ProtoMessage() {}
 
 func (x *SendToMetaSessionReq) ProtoReflect() protoreflect.Message {
-	mi := &file_socketpush_proto_msgTypes[14]
+	mi := &file_socketpush_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -747,7 +843,7 @@ func (x *SendToMetaSessionReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendToMetaSessionReq.ProtoReflect.Descriptor instead.
 func (*SendToMetaSessionReq) Descriptor() ([]byte, []int) {
-	return file_socketpush_proto_rawDescGZIP(), []int{14}
+	return file_socketpush_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *SendToMetaSessionReq) GetReqId() string {
@@ -793,7 +889,7 @@ type SendToMetaSessionRes struct {
 
 func (x *SendToMetaSessionRes) Reset() {
 	*x = SendToMetaSessionRes{}
-	mi := &file_socketpush_proto_msgTypes[15]
+	mi := &file_socketpush_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -805,7 +901,7 @@ func (x *SendToMetaSessionRes) String() string {
 func (*SendToMetaSessionRes) ProtoMessage() {}
 
 func (x *SendToMetaSessionRes) ProtoReflect() protoreflect.Message {
-	mi := &file_socketpush_proto_msgTypes[15]
+	mi := &file_socketpush_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -818,7 +914,7 @@ func (x *SendToMetaSessionRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendToMetaSessionRes.ProtoReflect.Descriptor instead.
 func (*SendToMetaSessionRes) Descriptor() ([]byte, []int) {
-	return file_socketpush_proto_rawDescGZIP(), []int{15}
+	return file_socketpush_proto_rawDescGZIP(), []int{17}
 }
 
 var File_socketpush_proto protoreflect.FileDescriptor
@@ -857,7 +953,12 @@ const file_socketpush_proto_rawDesc = "" +
 	"\x0eKickSessionReq\x12\x14\n" +
 	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x10\n" +
 	"\x03sId\x18\x02 \x01(\tR\x03sId\"\x10\n" +
-	"\x0eKickSessionRes\"j\n" +
+	"\x0eKickSessionRes\"R\n" +
+	"\x12KickMetaSessionReq\x12\x14\n" +
+	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x10\n" +
+	"\x03key\x18\x02 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x03 \x01(\tR\x05value\"\x14\n" +
+	"\x12KickMetaSessionRes\"j\n" +
 	"\x10SendToSessionReq\x12\x14\n" +
 	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x10\n" +
 	"\x03sId\x18\x02 \x01(\tR\x03sId\x12\x14\n" +
@@ -870,7 +971,7 @@ const file_socketpush_proto_rawDesc = "" +
 	"\x05value\x18\x03 \x01(\tR\x05value\x12\x14\n" +
 	"\x05event\x18\x04 \x01(\tR\x05event\x12\x18\n" +
 	"\apayload\x18\x05 \x01(\tR\apayload\"\x16\n" +
-	"\x14SendToMetaSessionRes2\xd6\x04\n" +
+	"\x14SendToMetaSessionRes2\xa9\x05\n" +
 	"\n" +
 	"SocketPush\x12<\n" +
 	"\bGenToken\x12\x17.socketpush.GenTokenReq\x1a\x17.socketpush.GenTokenRes\x12<\n" +
@@ -878,7 +979,8 @@ const file_socketpush_proto_rawDesc = "" +
 	"\tLeaveRoom\x12\x18.socketpush.LeaveRoomReq\x1a\x18.socketpush.LeaveRoomRes\x12K\n" +
 	"\rBroadcastRoom\x12\x1c.socketpush.BroadcastRoomReq\x1a\x1c.socketpush.BroadcastRoomRes\x12Q\n" +
 	"\x0fBroadcastGlobal\x12\x1e.socketpush.BroadcastGlobalReq\x1a\x1e.socketpush.BroadcastGlobalRes\x12E\n" +
-	"\vKickSession\x12\x1a.socketpush.KickSessionReq\x1a\x1a.socketpush.KickSessionRes\x12K\n" +
+	"\vKickSession\x12\x1a.socketpush.KickSessionReq\x1a\x1a.socketpush.KickSessionRes\x12Q\n" +
+	"\x0fKickMetaSession\x12\x1e.socketpush.KickMetaSessionReq\x1a\x1e.socketpush.KickMetaSessionRes\x12K\n" +
 	"\rSendToSession\x12\x1c.socketpush.SendToSessionReq\x1a\x1c.socketpush.SendToSessionRes\x12W\n" +
 	"\x11SendToMetaSession\x12 .socketpush.SendToMetaSessionReq\x1a .socketpush.SendToMetaSessionResB=\n" +
 	"\x1acom.github.socketpush.grpcB\x0fSocketPushProtoP\x01Z\f./socketpushb\x06proto3"
@@ -895,7 +997,7 @@ func file_socketpush_proto_rawDescGZIP() []byte {
 	return file_socketpush_proto_rawDescData
 }
 
-var file_socketpush_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_socketpush_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_socketpush_proto_goTypes = []any{
 	(*GenTokenReq)(nil),          // 0: socketpush.GenTokenReq
 	(*GenTokenRes)(nil),          // 1: socketpush.GenTokenRes
@@ -909,10 +1011,12 @@ var file_socketpush_proto_goTypes = []any{
 	(*BroadcastGlobalRes)(nil),   // 9: socketpush.BroadcastGlobalRes
 	(*KickSessionReq)(nil),       // 10: socketpush.KickSessionReq
 	(*KickSessionRes)(nil),       // 11: socketpush.KickSessionRes
-	(*SendToSessionReq)(nil),     // 12: socketpush.SendToSessionReq
-	(*SendToSessionRes)(nil),     // 13: socketpush.SendToSessionRes
-	(*SendToMetaSessionReq)(nil), // 14: socketpush.SendToMetaSessionReq
-	(*SendToMetaSessionRes)(nil), // 15: socketpush.SendToMetaSessionRes
+	(*KickMetaSessionReq)(nil),   // 12: socketpush.KickMetaSessionReq
+	(*KickMetaSessionRes)(nil),   // 13: socketpush.KickMetaSessionRes
+	(*SendToSessionReq)(nil),     // 14: socketpush.SendToSessionReq
+	(*SendToSessionRes)(nil),     // 15: socketpush.SendToSessionRes
+	(*SendToMetaSessionReq)(nil), // 16: socketpush.SendToMetaSessionReq
+	(*SendToMetaSessionRes)(nil), // 17: socketpush.SendToMetaSessionRes
 }
 var file_socketpush_proto_depIdxs = []int32{
 	0,  // 0: socketpush.SocketPush.GenToken:input_type -> socketpush.GenTokenReq
@@ -921,18 +1025,20 @@ var file_socketpush_proto_depIdxs = []int32{
 	6,  // 3: socketpush.SocketPush.BroadcastRoom:input_type -> socketpush.BroadcastRoomReq
 	8,  // 4: socketpush.SocketPush.BroadcastGlobal:input_type -> socketpush.BroadcastGlobalReq
 	10, // 5: socketpush.SocketPush.KickSession:input_type -> socketpush.KickSessionReq
-	12, // 6: socketpush.SocketPush.SendToSession:input_type -> socketpush.SendToSessionReq
-	14, // 7: socketpush.SocketPush.SendToMetaSession:input_type -> socketpush.SendToMetaSessionReq
-	1,  // 8: socketpush.SocketPush.GenToken:output_type -> socketpush.GenTokenRes
-	3,  // 9: socketpush.SocketPush.JoinRoom:output_type -> socketpush.JoinRoomRes
-	5,  // 10: socketpush.SocketPush.LeaveRoom:output_type -> socketpush.LeaveRoomRes
-	7,  // 11: socketpush.SocketPush.BroadcastRoom:output_type -> socketpush.BroadcastRoomRes
-	9,  // 12: socketpush.SocketPush.BroadcastGlobal:output_type -> socketpush.BroadcastGlobalRes
-	11, // 13: socketpush.SocketPush.KickSession:output_type -> socketpush.KickSessionRes
-	13, // 14: socketpush.SocketPush.SendToSession:output_type -> socketpush.SendToSessionRes
-	15, // 15: socketpush.SocketPush.SendToMetaSession:output_type -> socketpush.SendToMetaSessionRes
-	8,  // [8:16] is the sub-list for method output_type
-	0,  // [0:8] is the sub-list for method input_type
+	12, // 6: socketpush.SocketPush.KickMetaSession:input_type -> socketpush.KickMetaSessionReq
+	14, // 7: socketpush.SocketPush.SendToSession:input_type -> socketpush.SendToSessionReq
+	16, // 8: socketpush.SocketPush.SendToMetaSession:input_type -> socketpush.SendToMetaSessionReq
+	1,  // 9: socketpush.SocketPush.GenToken:output_type -> socketpush.GenTokenRes
+	3,  // 10: socketpush.SocketPush.JoinRoom:output_type -> socketpush.JoinRoomRes
+	5,  // 11: socketpush.SocketPush.LeaveRoom:output_type -> socketpush.LeaveRoomRes
+	7,  // 12: socketpush.SocketPush.BroadcastRoom:output_type -> socketpush.BroadcastRoomRes
+	9,  // 13: socketpush.SocketPush.BroadcastGlobal:output_type -> socketpush.BroadcastGlobalRes
+	11, // 14: socketpush.SocketPush.KickSession:output_type -> socketpush.KickSessionRes
+	13, // 15: socketpush.SocketPush.KickMetaSession:output_type -> socketpush.KickMetaSessionRes
+	15, // 16: socketpush.SocketPush.SendToSession:output_type -> socketpush.SendToSessionRes
+	17, // 17: socketpush.SocketPush.SendToMetaSession:output_type -> socketpush.SendToMetaSessionRes
+	9,  // [9:18] is the sub-list for method output_type
+	0,  // [0:9] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
 	0,  // [0:0] is the sub-list for extension extendee
 	0,  // [0:0] is the sub-list for field type_name
@@ -949,7 +1055,7 @@ func file_socketpush_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_socketpush_proto_rawDesc), len(file_socketpush_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   16,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
