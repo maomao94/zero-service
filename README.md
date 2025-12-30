@@ -1,5 +1,5 @@
 # zero-service
-##### go-zero 脚手架
+## go-zero 脚手架
 是一个基于 [go-zero](https://github.com/zeromicro/go-zero) 的微服务脚手架，旨在帮助开发者快速搭建高性能的微服务应用 `zero-service`
 
 ## 系统架构
@@ -83,14 +83,25 @@
 #### 3.1 streamevent 协议
 基于 [streamevent.proto](facade/streamevent/streamevent.proto) 协议，用于处理流式数据事件，支持与语言无关的数据推送。通过实现该协议，任何语言的客户端都可以与平台进行数据交互，将数据推送到系统中。系统会根据动态数据库（SQLite、MySQL、PostgreSQL）的轻量化配置，将数据采集到 TDengine 数据库中。
 
-## 消息对接协议
+### 4. SocketIO 实时通信模块 (`socketapp`)
+`socketapp` 模块提供了简单的 SocketIO 实时通信解决方案，包含两个核心服务：
 
-系统支持通过 Kafka 进行消息对接，具体实现方式如下：
+#### 4.1 socketgtw 服务 - SocketIO 网关
+`socketgtw` 是 SocketIO 网关服务，负责处理客户端连接、房间管理、消息路由和 Token 认证。
 
-1. **Kafka 主题配置**：在配置文件中指定需要消费的 Kafka 主题
-2. **消息格式**：消息采用 JSON 格式，包含必要的元数据和业务数据
-3. **Chunk 处理**：采用 chunk 任务处理机制，批量处理消费的数据
-4. **下游推送**：处理后的数据通过 gRPC 协议推送到下游服务
+**前端对接文档**：[SocketIO 消息网关客户端对接文档](./common/socketiox/client-documentation.md)
+
+#### 4.2 socketpush 服务 - SocketIO 推送服务
+`socketpush` 是 SocketIO 推送服务，负责 Token 生成和提供 SocketIO 推送相关的 gRPC 接口，支持房间广播、全局广播、消息推送等功能。
+
+#### 4.3 核心特性
+1. **集群部署支持**：支持网关和推送服务的集群部署，实现高可用和水平扩展
+2. **无中间件依赖**：不依赖 Redis、MQTT 等外部中间件，部署简单高效
+3. **Token 认证机制**：支持 Token 生成和验证，实现安全的客户端认证
+4. **实时双向通信**：基于 SocketIO 协议，支持浏览器和移动端实时双向通信
+5. **房间管理**：支持动态房间创建、加入和离开，实现灵活的消息广播机制
+6. **消息可靠性**：支持 ack 回调机制，确保消息可靠传递
+7. **轻量级设计**：采用 go-zero 框架，性能优异，资源占用低
 
 ## 注意事项
 1. **依赖管理**：确保 `go.mod` 文件中的依赖项已正确安装
