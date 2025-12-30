@@ -32,8 +32,3 @@ StreamEventConf:
     - 127.0.0.1:27300
   NonBlock: true
   Timeout: 3000
-SocketMsgGtwConf:
-  Endpoints:
-    - 127.0.0.1:25007
-  NonBlock: true
-  Timeout: 5000

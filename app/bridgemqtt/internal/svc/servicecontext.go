@@ -31,20 +31,18 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			//grpc.MaxCallRecvMsgSize(100 * 1024 * 1024),  // 接收最大100MB
 		)),
 	).Conn())
-	socketContainer := socketio.NewPubContainer(c.SocketMsgGtwConf)
 	mqttCLi := mqttx.MustNewClient(c.MqttConfig,
 		mqttx.WithOnReady(func(cli *mqttx.Client) {
 			logx.Infof("[mqtt] OnReady, client=%s", cli.GetClientID())
 			// 注册转发 handler
 			for _, topic := range c.MqttConfig.SubscribeTopics {
-				cli.AddHandler(topic, handler.NewMqttStreamHandler(cli.GetClientID(), streamEventCli, socketContainer))
+				cli.AddHandler(topic, handler.NewMqttStreamHandler(cli.GetClientID(), streamEventCli))
 			}
 		}),
 	)
 	return &ServiceContext{
-		Config:          c,
-		MqttClient:      mqttCLi,
-		StreamEventCli:  streamEventCli,
-		SocketContainer: socketContainer,
+		Config:         c,
+		MqttClient:     mqttCLi,
+		StreamEventCli: streamEventCli,
 	}
 }

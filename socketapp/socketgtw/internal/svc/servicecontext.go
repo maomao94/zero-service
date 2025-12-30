@@ -2,7 +2,7 @@ package svc
 
 import (
 	"zero-service/common/socketio"
-	"zero-service/gateway/socketgtw/internal/config"
+	"zero-service/socketapp/socketgtw/internal/config"
 )
 
 type ServiceContext struct {

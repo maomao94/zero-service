@@ -7,9 +7,9 @@ package server
 import (
 	"context"
 
-	"zero-service/gateway/socketgtw/internal/logic"
-	"zero-service/gateway/socketgtw/internal/svc"
-	"zero-service/gateway/socketgtw/socketgtw"
+	"zero-service/socketapp/socketgtw/internal/logic"
+	"zero-service/socketapp/socketgtw/internal/svc"
+	"zero-service/socketapp/socketgtw/socketgtw"
 )
 
 type SocketGtwServer struct {
@@ -21,11 +21,6 @@ func NewSocketGtwServer(svcCtx *svc.ServiceContext) *SocketGtwServer {
 	return &SocketGtwServer{
 		svcCtx: svcCtx,
 	}
-}
-
-func (s *SocketGtwServer) GenToken(ctx context.Context, in *socketgtw.GenTokenReq) (*socketgtw.GenTokenRes, error) {
-	l := logic.NewGenTokenLogic(ctx, s.svcCtx)
-	return l.GenToken(in)
 }
 
 // 加入房间
@@ -50,4 +45,10 @@ func (s *SocketGtwServer) BroadcastRoom(ctx context.Context, in *socketgtw.Broad
 func (s *SocketGtwServer) BroadcastGlobal(ctx context.Context, in *socketgtw.BroadcastGlobalReq) (*socketgtw.BroadcastGlobalRes, error) {
 	l := logic.NewBroadcastGlobalLogic(ctx, s.svcCtx)
 	return l.BroadcastGlobal(in)
+}
+
+// 剔除 session
+func (s *SocketGtwServer) KickSession(ctx context.Context, in *socketgtw.KickSessionReq) (*socketgtw.KickSessionRes, error) {
+	l := logic.NewKickSessionLogic(ctx, s.svcCtx)
+	return l.KickSession(in)
 }

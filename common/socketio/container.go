@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 	interceptor "zero-service/common/Interceptor/rpcclient"
-	"zero-service/gateway/socketgtw/socketgtw"
+	"zero-service/socketapp/socketgtw/socketgtw"
 
 	"github.com/nacos-group/nacos-sdk-go/v2/clients"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
@@ -29,10 +29,10 @@ import (
 
 type SocketContainer struct {
 	ClientMap map[string]socketgtw.SocketGtwClient
-	lock      sync.Mutex
+	lock      sync.RWMutex
 }
 
-func NewPubContainer(c zrpc.RpcClientConf) *SocketContainer {
+func MustNewPubContainer(c zrpc.RpcClientConf) *SocketContainer {
 	p := &SocketContainer{
 		ClientMap: make(map[string]socketgtw.SocketGtwClient),
 	}
@@ -61,14 +61,14 @@ func NewPubContainer(c zrpc.RpcClientConf) *SocketContainer {
 }
 
 func (p *SocketContainer) GetClient(key string) socketgtw.SocketGtwClient {
-	p.lock.Lock()
-	defer p.lock.Unlock()
+	p.lock.RLock()
+	defer p.lock.RUnlock()
 	return p.ClientMap[key]
 }
 
 func (p *SocketContainer) GetClients() map[string]socketgtw.SocketGtwClient {
-	p.lock.Lock()
-	defer p.lock.Unlock()
+	p.lock.RLock()
+	defer p.lock.RUnlock()
 	clients := make(map[string]socketgtw.SocketGtwClient, len(p.ClientMap))
 	for k, v := range p.ClientMap {
 		clients[k] = v
@@ -311,7 +311,7 @@ func (p *SocketContainer) updateClientMap(addrs []string, c zrpc.RpcClientConf) 
 	for _, val := range remove {
 		delete(p.ClientMap, val)
 	}
-	logx.Infof("update len(pubMap)=%d", len(p.ClientMap))
+	logx.Infof("update nacos len=%d", len(p.ClientMap))
 	p.lock.Unlock()
 }
 

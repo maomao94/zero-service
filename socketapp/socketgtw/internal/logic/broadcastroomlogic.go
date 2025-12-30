@@ -3,8 +3,8 @@ package logic
 import (
 	"context"
 
-	"zero-service/gateway/socketgtw/internal/svc"
-	"zero-service/gateway/socketgtw/socketgtw"
+	"zero-service/socketapp/socketgtw/internal/svc"
+	"zero-service/socketapp/socketgtw/socketgtw"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )

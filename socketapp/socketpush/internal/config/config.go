@@ -1,13 +1,13 @@
 package config
 
-import (
-	"zero-service/common/mqttx"
-
-	"github.com/zeromicro/go-zero/zrpc"
-)
+import "github.com/zeromicro/go-zero/zrpc"
 
 type Config struct {
 	zrpc.RpcServerConf
+	JwtAuth struct {
+		AccessSecret string
+		AccessExpire int64
+	}
 	NacosConfig struct {
 		IsRegister  bool
 		Host        string
@@ -17,6 +17,5 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
-	MqttConfig      mqttx.MqttConfig
-	StreamEventConf zrpc.RpcClientConf
+	SocketGtwConf zrpc.RpcClientConf `json:",optional"`
 }

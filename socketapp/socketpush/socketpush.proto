@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package socketpush;
+option go_package = "./socketpush";
+option java_multiple_files = true;
+option java_package = "com.github.socketpush.grpc";
+option java_outer_classname = "SocketPushProto";
+
+service SocketPush {
+  // 生成token
+  rpc GenToken (GenTokenReq) returns (GenTokenRes);
+  // 加入房间
+  rpc JoinRoom(JoinRoomReq) returns (JoinRoomRes);
+  // 离开房间
+  rpc LeaveRoom(LeaveRoomReq) returns (LeaveRoomRes);
+  // 向指定房间广播消息
+  rpc BroadcastRoom(BroadcastRoomReq) returns (BroadcastRoomRes);
+  // 向所有在线前端广播消息
+  rpc BroadcastGlobal(BroadcastGlobalReq) returns (BroadcastGlobalRes);
+  // 剔除 session
+  rpc KickSession(KickSessionReq) returns (KickSessionRes);
+}
+
+message GenTokenReq{
+  string subject = 1;
+}
+
+message GenTokenRes{
+  string accessToken = 1;
+  int64  accessExpire = 2;
+  int64  refreshAfter = 3;
+}
+
+message JoinRoomReq {
+  string reqId = 1;
+  string sId = 2;    // session ID
+  string room = 3;   // 房间名
+}
+
+message JoinRoomRes {
+}
+
+message LeaveRoomReq {
+  string reqId = 1;
+  string sId = 2;
+  string room = 3;
+}
+
+message LeaveRoomRes {
+}
+
+message BroadcastRoomReq {
+  string reqId = 1;
+  string room = 2;
+  string event = 3;
+  bytes payload = 4;
+}
+
+message BroadcastRoomRes {
+}
+
+message BroadcastGlobalReq {
+  string reqId = 1;
+  string event = 2;
+  bytes payload = 3;
+}
+
+message BroadcastGlobalRes {
+}
+
+message KickSessionReq {
+  string reqId = 1;
+  string sId = 2;
+}
+
+message KickSessionRes {
+}

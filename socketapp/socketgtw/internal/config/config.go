@@ -21,4 +21,5 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
+	SocketGtwConf zrpc.RpcClientConf `json:",optional"`
 }

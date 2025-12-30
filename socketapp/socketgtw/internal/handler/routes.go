@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 	"zero-service/common/socketio"
-	"zero-service/gateway/socketgtw/internal/svc"
+	"zero-service/socketapp/socketgtw/internal/svc"
 
 	"github.com/zeromicro/go-zero/rest"
 )

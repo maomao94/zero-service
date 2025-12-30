@@ -1,0 +1,26 @@
+Name: socketpush.rpc
+ListenOn: 0.0.0.0:25008
+Timeout: 10000
+Log:
+  Encoding: plain
+  #  Mode: file
+  Path: /opt/logs/socketpush
+  Level: info
+  KeepDays: 300
+JwtAuth:
+  AccessSecret: 629c6233-1a76-471b-bd25-b87208762219
+  AccessExpire: 31536000
+NacosConfig:
+  IsRegister: false
+  Host: 127.0.0.1
+  Port: 8848
+  Username: nacos
+  PassWord: nacos
+  NamespaceId: public
+  ServiceName: socket-push
+SocketGtwConf:
+  # nacos://[user:passwd]@host/service?param=value'
+#  Target: nacos://nacos:nacos@127.0.0.1:8848/socket-gtw?namespaceid=public&timeout=5000s
+  Endpoints:
+    - 127.0.0.1:25007
+  Timeout: 5000

@@ -19,18 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SocketGtw_GenToken_FullMethodName        = "/socketgtw.SocketGtw/GenToken"
 	SocketGtw_JoinRoom_FullMethodName        = "/socketgtw.SocketGtw/JoinRoom"
 	SocketGtw_LeaveRoom_FullMethodName       = "/socketgtw.SocketGtw/LeaveRoom"
 	SocketGtw_BroadcastRoom_FullMethodName   = "/socketgtw.SocketGtw/BroadcastRoom"
 	SocketGtw_BroadcastGlobal_FullMethodName = "/socketgtw.SocketGtw/BroadcastGlobal"
+	SocketGtw_KickSession_FullMethodName     = "/socketgtw.SocketGtw/KickSession"
 )
 
 // SocketGtwClient is the client API for SocketGtw service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SocketGtwClient interface {
-	GenToken(ctx context.Context, in *GenTokenReq, opts ...grpc.CallOption) (*GenTokenRes, error)
 	// 加入房间
 	JoinRoom(ctx context.Context, in *JoinRoomReq, opts ...grpc.CallOption) (*JoinRoomRes, error)
 	// 离开房间
@@ -39,6 +38,8 @@ type SocketGtwClient interface {
 	BroadcastRoom(ctx context.Context, in *BroadcastRoomReq, opts ...grpc.CallOption) (*BroadcastRoomRes, error)
 	// 向所有在线前端广播消息
 	BroadcastGlobal(ctx context.Context, in *BroadcastGlobalReq, opts ...grpc.CallOption) (*BroadcastGlobalRes, error)
+	// 剔除 session
+	KickSession(ctx context.Context, in *KickSessionReq, opts ...grpc.CallOption) (*KickSessionRes, error)
 }
 
 type socketGtwClient struct {
@@ -47,16 +48,6 @@ type socketGtwClient struct {
 
 func NewSocketGtwClient(cc grpc.ClientConnInterface) SocketGtwClient {
 	return &socketGtwClient{cc}
-}
-
-func (c *socketGtwClient) GenToken(ctx context.Context, in *GenTokenReq, opts ...grpc.CallOption) (*GenTokenRes, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GenTokenRes)
-	err := c.cc.Invoke(ctx, SocketGtw_GenToken_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *socketGtwClient) JoinRoom(ctx context.Context, in *JoinRoomReq, opts ...grpc.CallOption) (*JoinRoomRes, error) {
@@ -99,11 +90,20 @@ func (c *socketGtwClient) BroadcastGlobal(ctx context.Context, in *BroadcastGlob
 	return out, nil
 }
 
+func (c *socketGtwClient) KickSession(ctx context.Context, in *KickSessionReq, opts ...grpc.CallOption) (*KickSessionRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(KickSessionRes)
+	err := c.cc.Invoke(ctx, SocketGtw_KickSession_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SocketGtwServer is the server API for SocketGtw service.
 // All implementations must embed UnimplementedSocketGtwServer
 // for forward compatibility.
 type SocketGtwServer interface {
-	GenToken(context.Context, *GenTokenReq) (*GenTokenRes, error)
 	// 加入房间
 	JoinRoom(context.Context, *JoinRoomReq) (*JoinRoomRes, error)
 	// 离开房间
@@ -112,6 +112,8 @@ type SocketGtwServer interface {
 	BroadcastRoom(context.Context, *BroadcastRoomReq) (*BroadcastRoomRes, error)
 	// 向所有在线前端广播消息
 	BroadcastGlobal(context.Context, *BroadcastGlobalReq) (*BroadcastGlobalRes, error)
+	// 剔除 session
+	KickSession(context.Context, *KickSessionReq) (*KickSessionRes, error)
 	mustEmbedUnimplementedSocketGtwServer()
 }
 
@@ -122,9 +124,6 @@ type SocketGtwServer interface {
 // pointer dereference when methods are called.
 type UnimplementedSocketGtwServer struct{}
 
-func (UnimplementedSocketGtwServer) GenToken(context.Context, *GenTokenReq) (*GenTokenRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GenToken not implemented")
-}
 func (UnimplementedSocketGtwServer) JoinRoom(context.Context, *JoinRoomReq) (*JoinRoomRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method JoinRoom not implemented")
 }
@@ -136,6 +135,9 @@ func (UnimplementedSocketGtwServer) BroadcastRoom(context.Context, *BroadcastRoo
 }
 func (UnimplementedSocketGtwServer) BroadcastGlobal(context.Context, *BroadcastGlobalReq) (*BroadcastGlobalRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BroadcastGlobal not implemented")
+}
+func (UnimplementedSocketGtwServer) KickSession(context.Context, *KickSessionReq) (*KickSessionRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method KickSession not implemented")
 }
 func (UnimplementedSocketGtwServer) mustEmbedUnimplementedSocketGtwServer() {}
 func (UnimplementedSocketGtwServer) testEmbeddedByValue()                   {}
@@ -156,24 +158,6 @@ func RegisterSocketGtwServer(s grpc.ServiceRegistrar, srv SocketGtwServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&SocketGtw_ServiceDesc, srv)
-}
-
-func _SocketGtw_GenToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GenTokenReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SocketGtwServer).GenToken(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SocketGtw_GenToken_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SocketGtwServer).GenToken(ctx, req.(*GenTokenReq))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _SocketGtw_JoinRoom_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -248,6 +232,24 @@ func _SocketGtw_BroadcastGlobal_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SocketGtw_KickSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(KickSessionReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SocketGtwServer).KickSession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SocketGtw_KickSession_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SocketGtwServer).KickSession(ctx, req.(*KickSessionReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SocketGtw_ServiceDesc is the grpc.ServiceDesc for SocketGtw service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -255,10 +257,6 @@ var SocketGtw_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "socketgtw.SocketGtw",
 	HandlerType: (*SocketGtwServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "GenToken",
-			Handler:    _SocketGtw_GenToken_Handler,
-		},
 		{
 			MethodName: "JoinRoom",
 			Handler:    _SocketGtw_JoinRoom_Handler,
@@ -274,6 +272,10 @@ var SocketGtw_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BroadcastGlobal",
 			Handler:    _SocketGtw_BroadcastGlobal_Handler,
+		},
+		{
+			MethodName: "KickSession",
+			Handler:    _SocketGtw_KickSession_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
