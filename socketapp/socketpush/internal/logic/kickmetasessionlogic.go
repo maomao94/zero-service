@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"time"
 	"zero-service/socketapp/socketgtw/socketgtw"
 
 	"zero-service/socketapp/socketpush/internal/svc"
@@ -31,9 +30,7 @@ func (l *KickMetaSessionLogic) KickMetaSession(in *socketpush.KickMetaSessionReq
 	baseCtx := context.WithoutCancel(l.ctx)
 	for _, cli := range l.svcCtx.SocketContainer.GetClients() {
 		threading.GoSafe(func() {
-			socktCTx, cancel := context.WithTimeout(baseCtx, 10*time.Second)
-			defer cancel()
-			cli.KickMetaSession(socktCTx, &socketgtw.KickMetaSessionReq{
+			cli.KickMetaSession(baseCtx, &socketgtw.KickMetaSessionReq{
 				ReqId: in.ReqId,
 				Key:   in.Key,
 				Value: in.Value,

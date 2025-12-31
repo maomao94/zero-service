@@ -3177,3 +3177,215 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = PackedSinglePointWithSCDInfoValidationError{}
+
+// Validate checks the field values on UpSocketMessageReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *UpSocketMessageReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on UpSocketMessageReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// UpSocketMessageReqMultiError, or nil if none found.
+func (m *UpSocketMessageReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *UpSocketMessageReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ReqId
+
+	// no validation rules for SId
+
+	// no validation rules for Event
+
+	// no validation rules for Payload
+
+	if len(errors) > 0 {
+		return UpSocketMessageReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// UpSocketMessageReqMultiError is an error wrapping multiple validation errors
+// returned by UpSocketMessageReq.ValidateAll() if the designated constraints
+// aren't met.
+type UpSocketMessageReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m UpSocketMessageReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m UpSocketMessageReqMultiError) AllErrors() []error { return m }
+
+// UpSocketMessageReqValidationError is the validation error returned by
+// UpSocketMessageReq.Validate if the designated constraints aren't met.
+type UpSocketMessageReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UpSocketMessageReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UpSocketMessageReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UpSocketMessageReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UpSocketMessageReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UpSocketMessageReqValidationError) ErrorName() string {
+	return "UpSocketMessageReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e UpSocketMessageReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUpSocketMessageReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UpSocketMessageReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UpSocketMessageReqValidationError{}
+
+// Validate checks the field values on UpSocketMessageRsp with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *UpSocketMessageRsp) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on UpSocketMessageRsp with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// UpSocketMessageRspMultiError, or nil if none found.
+func (m *UpSocketMessageRsp) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *UpSocketMessageRsp) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return UpSocketMessageRspMultiError(errors)
+	}
+
+	return nil
+}
+
+// UpSocketMessageRspMultiError is an error wrapping multiple validation errors
+// returned by UpSocketMessageRsp.ValidateAll() if the designated constraints
+// aren't met.
+type UpSocketMessageRspMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m UpSocketMessageRspMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m UpSocketMessageRspMultiError) AllErrors() []error { return m }
+
+// UpSocketMessageRspValidationError is the validation error returned by
+// UpSocketMessageRsp.Validate if the designated constraints aren't met.
+type UpSocketMessageRspValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UpSocketMessageRspValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UpSocketMessageRspValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UpSocketMessageRspValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UpSocketMessageRspValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UpSocketMessageRspValidationError) ErrorName() string {
+	return "UpSocketMessageRspValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e UpSocketMessageRspValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUpSocketMessageRsp.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UpSocketMessageRspValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UpSocketMessageRspValidationError{}

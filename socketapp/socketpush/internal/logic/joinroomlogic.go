@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"time"
 	"zero-service/socketapp/socketgtw/socketgtw"
 
 	"zero-service/socketapp/socketpush/internal/svc"
@@ -31,9 +30,7 @@ func (l *JoinRoomLogic) JoinRoom(in *socketpush.JoinRoomReq) (*socketpush.JoinRo
 	baseCtx := context.WithoutCancel(l.ctx)
 	for _, cli := range l.svcCtx.SocketContainer.GetClients() {
 		threading.GoSafe(func() {
-			socktCTx, cancel := context.WithTimeout(baseCtx, 10*time.Second)
-			defer cancel()
-			cli.JoinRoom(socktCTx, &socketgtw.JoinRoomReq{
+			cli.JoinRoom(baseCtx, &socketgtw.JoinRoomReq{
 				ReqId: in.ReqId,
 				SId:   in.SId,
 				Room:  in.Room,

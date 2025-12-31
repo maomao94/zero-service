@@ -27,3 +27,10 @@ NacosConfig:
   NamespaceId: public
   ServiceName: socket-gtw
 SocketMetaData: [ "uid", "deviceId", "userId", "user_id","dept_id", "dept_code", "user_name" ]
+StreamEventConf:
+  # nacos://[user:passwd]@host/service?param=value'
+  #  Target: nacos://nacos:nacos@127.0.0.1:8848/stream-event?namespaceid=public&timeout=5000s
+  Endpoints:
+    - 127.0.0.1:21009
+  NonBlock: true
+  Timeout: 10000

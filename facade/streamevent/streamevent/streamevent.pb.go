@@ -2475,6 +2475,110 @@ func (x *PackedSinglePointWithSCDInfo) GetIv() bool {
 	return false
 }
 
+type UpSocketMessageReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ReqId         string                 `protobuf:"bytes,1,opt,name=reqId,proto3" json:"reqId,omitempty"`
+	SId           string                 `protobuf:"bytes,2,opt,name=sId,proto3" json:"sId,omitempty"`
+	Event         string                 `protobuf:"bytes,3,opt,name=event,proto3" json:"event,omitempty"`
+	Payload       string                 `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpSocketMessageReq) Reset() {
+	*x = UpSocketMessageReq{}
+	mi := &file_streamevent_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpSocketMessageReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpSocketMessageReq) ProtoMessage() {}
+
+func (x *UpSocketMessageReq) ProtoReflect() protoreflect.Message {
+	mi := &file_streamevent_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpSocketMessageReq.ProtoReflect.Descriptor instead.
+func (*UpSocketMessageReq) Descriptor() ([]byte, []int) {
+	return file_streamevent_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *UpSocketMessageReq) GetReqId() string {
+	if x != nil {
+		return x.ReqId
+	}
+	return ""
+}
+
+func (x *UpSocketMessageReq) GetSId() string {
+	if x != nil {
+		return x.SId
+	}
+	return ""
+}
+
+func (x *UpSocketMessageReq) GetEvent() string {
+	if x != nil {
+		return x.Event
+	}
+	return ""
+}
+
+func (x *UpSocketMessageReq) GetPayload() string {
+	if x != nil {
+		return x.Payload
+	}
+	return ""
+}
+
+type UpSocketMessageRsp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpSocketMessageRsp) Reset() {
+	*x = UpSocketMessageRsp{}
+	mi := &file_streamevent_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpSocketMessageRsp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpSocketMessageRsp) ProtoMessage() {}
+
+func (x *UpSocketMessageRsp) ProtoReflect() protoreflect.Message {
+	mi := &file_streamevent_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpSocketMessageRsp.ProtoReflect.Descriptor instead.
+func (*UpSocketMessageRsp) Descriptor() ([]byte, []int) {
+	return file_streamevent_proto_rawDescGZIP(), []int{27}
+}
+
 var File_streamevent_proto protoreflect.FileDescriptor
 
 const file_streamevent_proto_rawDesc = "" +
@@ -2689,12 +2793,19 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x02sb\x18\t \x01(\bR\x02sb\x12\x0e\n" +
 	"\x02nt\x18\n" +
 	" \x01(\bR\x02nt\x12\x0e\n" +
-	"\x02iv\x18\v \x01(\bR\x02iv2\xf5\x02\n" +
+	"\x02iv\x18\v \x01(\bR\x02iv\"l\n" +
+	"\x12UpSocketMessageReq\x12\x14\n" +
+	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x10\n" +
+	"\x03sId\x18\x02 \x01(\tR\x03sId\x12\x14\n" +
+	"\x05event\x18\x03 \x01(\tR\x05event\x12\x18\n" +
+	"\apayload\x18\x04 \x01(\tR\apayload\"\x14\n" +
+	"\x12UpSocketMessageRsp2\xcc\x03\n" +
 	"\vStreamEvent\x12\\\n" +
 	"\x12ReceiveMQTTMessage\x12\".streamevent.ReceiveMQTTMessageReq\x1a\".streamevent.ReceiveMQTTMessageRes\x12V\n" +
 	"\x10ReceiveWSMessage\x12 .streamevent.ReceiveWSMessageReq\x1a .streamevent.ReceiveWSMessageRes\x12_\n" +
 	"\x13ReceiveKafkaMessage\x12#.streamevent.ReceiveKafkaMessageReq\x1a#.streamevent.ReceiveKafkaMessageRes\x12O\n" +
-	"\rPushChunkAsdu\x12\x1d.streamevent.PushChunkAsduReq\x1a\x1d.streamevent.PushChunkAsduRes\"\x00B@\n" +
+	"\rPushChunkAsdu\x12\x1d.streamevent.PushChunkAsduReq\x1a\x1d.streamevent.PushChunkAsduRes\"\x00\x12U\n" +
+	"\x0fUpSocketMessage\x12\x1f.streamevent.UpSocketMessageReq\x1a\x1f.streamevent.UpSocketMessageReq\"\x00B@\n" +
 	"\x1bcom.github.streamevent.grpcB\x10StreamEventProtoP\x01Z\r./streameventb\x06proto3"
 
 var (
@@ -2709,7 +2820,7 @@ func file_streamevent_proto_rawDescGZIP() []byte {
 	return file_streamevent_proto_rawDescData
 }
 
-var file_streamevent_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
+var file_streamevent_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_streamevent_proto_goTypes = []any{
 	(*ReceiveMQTTMessageReq)(nil),                      // 0: streamevent.ReceiveMQTTMessageReq
 	(*ReceiveMQTTMessageRes)(nil),                      // 1: streamevent.ReceiveMQTTMessageRes
@@ -2737,6 +2848,8 @@ var file_streamevent_proto_goTypes = []any{
 	(*PackedStartEventsOfProtectionEquipmentInfo)(nil), // 23: streamevent.PackedStartEventsOfProtectionEquipmentInfo
 	(*PackedOutputCircuitInfo)(nil),                    // 24: streamevent.PackedOutputCircuitInfo
 	(*PackedSinglePointWithSCDInfo)(nil),               // 25: streamevent.PackedSinglePointWithSCDInfo
+	(*UpSocketMessageReq)(nil),                         // 26: streamevent.UpSocketMessageReq
+	(*UpSocketMessageRsp)(nil),                         // 27: streamevent.UpSocketMessageRsp
 }
 var file_streamevent_proto_depIdxs = []int32{
 	2,  // 0: streamevent.ReceiveMQTTMessageReq.messages:type_name -> streamevent.MqttMessage
@@ -2749,12 +2862,14 @@ var file_streamevent_proto_depIdxs = []int32{
 	3,  // 7: streamevent.StreamEvent.ReceiveWSMessage:input_type -> streamevent.ReceiveWSMessageReq
 	5,  // 8: streamevent.StreamEvent.ReceiveKafkaMessage:input_type -> streamevent.ReceiveKafkaMessageReq
 	8,  // 9: streamevent.StreamEvent.PushChunkAsdu:input_type -> streamevent.PushChunkAsduReq
-	1,  // 10: streamevent.StreamEvent.ReceiveMQTTMessage:output_type -> streamevent.ReceiveMQTTMessageRes
-	4,  // 11: streamevent.StreamEvent.ReceiveWSMessage:output_type -> streamevent.ReceiveWSMessageRes
-	6,  // 12: streamevent.StreamEvent.ReceiveKafkaMessage:output_type -> streamevent.ReceiveKafkaMessageRes
-	9,  // 13: streamevent.StreamEvent.PushChunkAsdu:output_type -> streamevent.PushChunkAsduRes
-	10, // [10:14] is the sub-list for method output_type
-	6,  // [6:10] is the sub-list for method input_type
+	26, // 10: streamevent.StreamEvent.UpSocketMessage:input_type -> streamevent.UpSocketMessageReq
+	1,  // 11: streamevent.StreamEvent.ReceiveMQTTMessage:output_type -> streamevent.ReceiveMQTTMessageRes
+	4,  // 12: streamevent.StreamEvent.ReceiveWSMessage:output_type -> streamevent.ReceiveWSMessageRes
+	6,  // 13: streamevent.StreamEvent.ReceiveKafkaMessage:output_type -> streamevent.ReceiveKafkaMessageRes
+	9,  // 14: streamevent.StreamEvent.PushChunkAsdu:output_type -> streamevent.PushChunkAsduRes
+	26, // 15: streamevent.StreamEvent.UpSocketMessage:output_type -> streamevent.UpSocketMessageReq
+	11, // [11:16] is the sub-list for method output_type
+	6,  // [6:11] is the sub-list for method input_type
 	6,  // [6:6] is the sub-list for extension type_name
 	6,  // [6:6] is the sub-list for extension extendee
 	0,  // [0:6] is the sub-list for field type_name
@@ -2771,7 +2886,7 @@ func file_streamevent_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_streamevent_proto_rawDesc), len(file_streamevent_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   26,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

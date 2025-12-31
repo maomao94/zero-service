@@ -16,6 +16,8 @@ service StreamEvent {
   rpc ReceiveKafkaMessage (ReceiveKafkaMessageReq) returns (ReceiveKafkaMessageRes);
   // 推送 chunk asdu 104协议消息
   rpc PushChunkAsdu (PushChunkAsduReq) returns (PushChunkAsduRes) {}
+  // 上行socket标准消息, 可以用于__up__和自定义up事件
+  rpc UpSocketMessage (UpSocketMessageReq) returns (UpSocketMessageReq) {}
 }
 
 message ReceiveMQTTMessageReq {
@@ -440,3 +442,13 @@ message PackedSinglePointWithSCDInfo {
 }
 
 // ----------------------------------------
+
+message UpSocketMessageReq{
+  string reqId = 1;
+  string sId = 2;
+  string event = 3;
+  string payload = 4;
+}
+
+message UpSocketMessageRsp{
+}

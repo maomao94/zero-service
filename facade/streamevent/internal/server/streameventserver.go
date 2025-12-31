@@ -46,3 +46,9 @@ func (s *StreamEventServer) PushChunkAsdu(ctx context.Context, in *streamevent.P
 	l := logic.NewPushChunkAsduLogic(ctx, s.svcCtx)
 	return l.PushChunkAsdu(in)
 }
+
+// 上行socket标准消息, 可以用于__up__和自定义up事件
+func (s *StreamEventServer) UpSocketMessage(ctx context.Context, in *streamevent.UpSocketMessageReq) (*streamevent.UpSocketMessageReq, error) {
+	l := logic.NewUpSocketMessageLogic(ctx, s.svcCtx)
+	return l.UpSocketMessage(in)
+}

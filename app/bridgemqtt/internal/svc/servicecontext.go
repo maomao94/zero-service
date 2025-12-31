@@ -5,7 +5,6 @@ import (
 	"zero-service/app/bridgemqtt/internal/handler"
 	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/mqttx"
-	"zero-service/common/socketio"
 	"zero-service/facade/streamevent/streamevent"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -14,10 +13,9 @@ import (
 )
 
 type ServiceContext struct {
-	Config          config.Config
-	MqttClient      *mqttx.Client
-	StreamEventCli  streamevent.StreamEventClient
-	SocketContainer *socketiox.SocketContainer
+	Config         config.Config
+	MqttClient     *mqttx.Client
+	StreamEventCli streamevent.StreamEventClient
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {

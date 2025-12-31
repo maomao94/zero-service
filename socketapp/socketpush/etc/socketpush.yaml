@@ -23,4 +23,4 @@ SocketGtwConf:
 #  Target: nacos://nacos:nacos@127.0.0.1:8848/socket-gtw?namespaceid=public&timeout=5000s
   Endpoints:
     - 127.0.0.1:25007
-  Timeout: 5000
+  Timeout: 10000

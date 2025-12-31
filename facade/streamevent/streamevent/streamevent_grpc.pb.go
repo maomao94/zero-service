@@ -23,6 +23,7 @@ const (
 	StreamEvent_ReceiveWSMessage_FullMethodName    = "/streamevent.StreamEvent/ReceiveWSMessage"
 	StreamEvent_ReceiveKafkaMessage_FullMethodName = "/streamevent.StreamEvent/ReceiveKafkaMessage"
 	StreamEvent_PushChunkAsdu_FullMethodName       = "/streamevent.StreamEvent/PushChunkAsdu"
+	StreamEvent_UpSocketMessage_FullMethodName     = "/streamevent.StreamEvent/UpSocketMessage"
 )
 
 // StreamEventClient is the client API for StreamEvent service.
@@ -37,6 +38,8 @@ type StreamEventClient interface {
 	ReceiveKafkaMessage(ctx context.Context, in *ReceiveKafkaMessageReq, opts ...grpc.CallOption) (*ReceiveKafkaMessageRes, error)
 	// 推送 chunk asdu 104协议消息
 	PushChunkAsdu(ctx context.Context, in *PushChunkAsduReq, opts ...grpc.CallOption) (*PushChunkAsduRes, error)
+	// 上行socket标准消息, 可以用于__up__和自定义up事件
+	UpSocketMessage(ctx context.Context, in *UpSocketMessageReq, opts ...grpc.CallOption) (*UpSocketMessageReq, error)
 }
 
 type streamEventClient struct {
@@ -87,6 +90,16 @@ func (c *streamEventClient) PushChunkAsdu(ctx context.Context, in *PushChunkAsdu
 	return out, nil
 }
 
+func (c *streamEventClient) UpSocketMessage(ctx context.Context, in *UpSocketMessageReq, opts ...grpc.CallOption) (*UpSocketMessageReq, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpSocketMessageReq)
+	err := c.cc.Invoke(ctx, StreamEvent_UpSocketMessage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StreamEventServer is the server API for StreamEvent service.
 // All implementations must embed UnimplementedStreamEventServer
 // for forward compatibility.
@@ -99,6 +112,8 @@ type StreamEventServer interface {
 	ReceiveKafkaMessage(context.Context, *ReceiveKafkaMessageReq) (*ReceiveKafkaMessageRes, error)
 	// 推送 chunk asdu 104协议消息
 	PushChunkAsdu(context.Context, *PushChunkAsduReq) (*PushChunkAsduRes, error)
+	// 上行socket标准消息, 可以用于__up__和自定义up事件
+	UpSocketMessage(context.Context, *UpSocketMessageReq) (*UpSocketMessageReq, error)
 	mustEmbedUnimplementedStreamEventServer()
 }
 
@@ -120,6 +135,9 @@ func (UnimplementedStreamEventServer) ReceiveKafkaMessage(context.Context, *Rece
 }
 func (UnimplementedStreamEventServer) PushChunkAsdu(context.Context, *PushChunkAsduReq) (*PushChunkAsduRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PushChunkAsdu not implemented")
+}
+func (UnimplementedStreamEventServer) UpSocketMessage(context.Context, *UpSocketMessageReq) (*UpSocketMessageReq, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpSocketMessage not implemented")
 }
 func (UnimplementedStreamEventServer) mustEmbedUnimplementedStreamEventServer() {}
 func (UnimplementedStreamEventServer) testEmbeddedByValue()                     {}
@@ -214,6 +232,24 @@ func _StreamEvent_PushChunkAsdu_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _StreamEvent_UpSocketMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpSocketMessageReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StreamEventServer).UpSocketMessage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StreamEvent_UpSocketMessage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StreamEventServer).UpSocketMessage(ctx, req.(*UpSocketMessageReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // StreamEvent_ServiceDesc is the grpc.ServiceDesc for StreamEvent service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -236,6 +272,10 @@ var StreamEvent_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PushChunkAsdu",
 			Handler:    _StreamEvent_PushChunkAsdu_Handler,
+		},
+		{
+			MethodName: "UpSocketMessage",
+			Handler:    _StreamEvent_UpSocketMessage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"time"
 	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
 
@@ -30,9 +29,7 @@ func (h *MqttStreamHandler) Consume(ctx context.Context, payload []byte, topic s
 		sendTime := carbon.Now().ToDateTimeMicroString()
 		startTime := timex.Now()
 		duration := timex.Since(startTime)
-		mqttCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-		defer cancel()
-		_, err := h.cli.ReceiveMQTTMessage(mqttCtx, &streamevent.ReceiveMQTTMessageReq{
+		_, err := h.cli.ReceiveMQTTMessage(ctx, &streamevent.ReceiveMQTTMessageReq{
 			Messages: []*streamevent.MqttMessage{
 				{
 					SessionId:     h.clientID,

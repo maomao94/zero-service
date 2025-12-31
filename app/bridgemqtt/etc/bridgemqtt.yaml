@@ -31,4 +31,4 @@ StreamEventConf:
   Endpoints:
     - 127.0.0.1:27300
   NonBlock: true
-  Timeout: 3000
+  Timeout: 10000

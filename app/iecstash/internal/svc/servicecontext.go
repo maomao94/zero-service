@@ -3,7 +3,6 @@ package svc
 import (
 	"context"
 	"math"
-	"time"
 	"zero-service/app/iecstash/internal/config"
 	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/executorx"
@@ -67,20 +66,18 @@ func NewServiceContext(c config.Config) *ServiceContext {
 
 			// 调用gRPC推送
 			tid, _ := tool.SimpleUUID()
-			pushGrpcCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
 			startTime := timex.Now()
-			_, err := streamEventCli.PushChunkAsdu(pushGrpcCtx, &streamevent.PushChunkAsduReq{
+			_, err := streamEventCli.PushChunkAsdu(context.Background(), &streamevent.PushChunkAsduReq{
 				MsgBody: msgBodyList,
 				TId:     tid,
 			})
 			var invokeflg = "success"
 			if err != nil {
 				invokeflg = "fail"
-				logx.WithContext(pushGrpcCtx).Errorf("PushChunkAsdu failed, tId: %s, err: %v", tid, err)
+				logx.Errorf("PushChunkAsdu failed, tId: %s, err: %v", tid, err)
 			}
 			duration := timex.Since(startTime)
-			logx.WithContext(pushGrpcCtx).WithDuration(duration).Infof("PushChunkAsdu, tId: %s, asdu size: %d - %s", tid, len(msgBodyList), invokeflg)
+			logx.WithDuration(duration).Infof("PushChunkAsdu, tId: %s, asdu size: %d - %s", tid, len(msgBodyList), invokeflg)
 			return
 		},
 		c.PushAsduChunkBytes,

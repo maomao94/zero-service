@@ -49,13 +49,13 @@ type SocketUpRoomReq struct {
 type SocketResp struct {
 	Code    int    `json:"code"`
 	Msg     string `json:"msg"`
-	Payload any    `json:"payload,omitempty"`
+	Payload string `json:"payload,omitempty"`
 	ReqId   string `json:"reqId,omitempty"`
 }
 
 type SocketDown struct {
 	Event   string `json:"event"`
-	Payload any    `json:"payload,omitempty"`
+	Payload string `json:"payload,omitempty"`
 	ReqId   string `json:"reqId,omitempty"`
 }
 
@@ -113,9 +113,9 @@ func (s *Session) GetMetadata(key string) interface{} {
 func (s *Session) SetMetadata(key string, val interface{}) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	if strValue, ok := val.(string); ok {
-		s.metadata[key] = strValue
-		logx.Debugf("[socketio] set metadata key %q with value %v for conn %s", key, strValue, s.id)
+	if str, ok := val.(string); ok && str != "" {
+		s.metadata[key] = str
+		logx.Debugf("[socketio] set metadata key %q with value %v for conn %s", key, str, s.id)
 	} else {
 		logx.Debugf("[socketio] skipped non-string metadata key %q with value %v (type: %T) for conn %s", key, val, val, s.id)
 	}
@@ -191,7 +191,15 @@ func (s *Session) LeaveRoom(room string) error {
 	return nil
 }
 
-type EventHandler func(ctx context.Context, event string, payload *socketio.EventPayload) error
+type EventHandler interface {
+	Handle(ctx context.Context, event string, payload *socketio.EventPayload) error
+}
+
+type EventHandlerFunc func(ctx context.Context, event string, payload *socketio.EventPayload) error
+
+func (f EventHandlerFunc) Handle(ctx context.Context, event string, payload *socketio.EventPayload) error {
+	return f(ctx, event, payload)
+}
 
 type EventHandlers map[string]EventHandler
 
@@ -201,9 +209,21 @@ func WithEventHandlers(handlers EventHandlers) Option {
 	return func(s *Server) { s.eventHandlers = handlers }
 }
 
-// WithContextKeys 配置从上下文提取的键列表
 func WithContextKeys(keys []string) Option {
 	return func(s *Server) { s.contextKeys = keys }
+}
+
+func WithStatInterval(interval time.Duration) Option {
+	return func(s *Server) { s.statInterval = interval }
+}
+
+func WithHandler(event string, handler EventHandler) Option {
+	return func(s *Server) {
+		if s.eventHandlers == nil {
+			s.eventHandlers = make(EventHandlers)
+		}
+		s.eventHandlers[event] = handler
+	}
 }
 
 type Server struct {
@@ -412,7 +432,7 @@ func (srv *Server) bindEvents() {
 			threading.GoSafe(func() {
 				ack := payload.Ack
 				if upHandler := srv.eventHandlers[EventUp]; upHandler != nil {
-					err := upHandler(ctx, EventUp, payload)
+					err := upHandler.Handle(ctx, EventUp, payload)
 					if err != nil {
 						logx.WithContext(ctx).Errorf("[socketio] failed to process request: conn=%s, err=%v", socket.Id, err)
 						if ack != nil {
@@ -592,7 +612,7 @@ func (srv *Server) bindEvents() {
 				}
 				logx.WithContext(ctx).Debugf("[socketio] received event: %s from conn: %s, payload length: %d", currentEvent, socket.Id, len(handlerPayload))
 				threading.GoSafe(func() {
-					currentHandler(ctx, currentEvent, payload)
+					currentHandler.Handle(ctx, currentEvent, payload)
 				})
 			})
 		}
