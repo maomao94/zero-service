@@ -31,5 +31,7 @@ func (l *JoinRoomLogic) JoinRoom(in *socketgtw.JoinRoomReq) (*socketgtw.JoinRoom
 			return nil, err
 		}
 	}
-	return &socketgtw.JoinRoomRes{}, nil
+	return &socketgtw.JoinRoomRes{
+		ReqId: in.ReqId,
+	}, nil
 }

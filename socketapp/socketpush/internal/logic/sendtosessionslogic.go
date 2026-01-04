@@ -11,33 +11,34 @@ import (
 	"github.com/zeromicro/go-zero/core/threading"
 )
 
-type KickMetaSessionLogic struct {
+type SendToSessionsLogic struct {
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
 	logx.Logger
 }
 
-func NewKickMetaSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *KickMetaSessionLogic {
-	return &KickMetaSessionLogic{
+func NewSendToSessionsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *SendToSessionsLogic {
+	return &SendToSessionsLogic{
 		ctx:    ctx,
 		svcCtx: svcCtx,
 		Logger: logx.WithContext(ctx),
 	}
 }
 
-// 指定元数据剔除 session
-func (l *KickMetaSessionLogic) KickMetaSession(in *socketpush.KickMetaSessionReq) (*socketpush.KickMetaSessionRes, error) {
+// 向指定 session 批量发送消息
+func (l *SendToSessionsLogic) SendToSessions(in *socketpush.SendToSessionsReq) (*socketpush.SendToSessionsRes, error) {
 	baseCtx := context.WithoutCancel(l.ctx)
 	for _, cli := range l.svcCtx.SocketContainer.GetClients() {
 		threading.GoSafe(func() {
-			cli.KickMetaSession(baseCtx, &socketgtw.KickMetaSessionReq{
-				ReqId: in.ReqId,
-				Key:   in.Key,
-				Value: in.Value,
+			cli.SendToSessions(baseCtx, &socketgtw.SendToSessionsReq{
+				ReqId:   in.ReqId,
+				SIds:    in.SIds,
+				Event:   in.Event,
+				Payload: in.Payload,
 			})
 		})
 	}
-	return &socketpush.KickMetaSessionRes{
+	return &socketpush.SendToSessionsRes{
 		ReqId: in.ReqId,
 	}, nil
 }

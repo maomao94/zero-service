@@ -30,5 +30,7 @@ func (l *KickSessionLogic) KickSession(in *socketgtw.KickSessionReq) (*socketgtw
 		err := sess.Close()
 		return nil, err
 	}
-	return &socketgtw.KickSessionRes{}, nil
+	return &socketgtw.KickSessionRes{
+		ReqId: in.ReqId,
+	}, nil
 }

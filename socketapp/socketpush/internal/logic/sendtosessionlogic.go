@@ -38,5 +38,7 @@ func (l *SendToSessionLogic) SendToSession(in *socketpush.SendToSessionReq) (*so
 			})
 		})
 	}
-	return &socketpush.SendToSessionRes{}, nil
+	return &socketpush.SendToSessionRes{
+		ReqId: in.ReqId,
+	}, nil
 }

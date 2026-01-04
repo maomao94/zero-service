@@ -31,8 +31,11 @@ func (l *SendToMetaSessionLogic) SendToMetaSession(in *socketgtw.SendToMetaSessi
 			err := session.EmitDown(in.Event, in.Payload, in.ReqId)
 			if err != nil {
 				l.Errorf("SendToMetaSession error: %v", err)
+				continue
 			}
 		}
 	}
-	return &socketgtw.SendToMetaSessionRes{}, nil
+	return &socketgtw.SendToMetaSessionRes{
+		ReqId: in.ReqId,
+	}, nil
 }

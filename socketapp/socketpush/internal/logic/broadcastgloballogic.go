@@ -37,5 +37,7 @@ func (l *BroadcastGlobalLogic) BroadcastGlobal(in *socketpush.BroadcastGlobalReq
 			})
 		})
 	}
-	return &socketpush.BroadcastGlobalRes{}, nil
+	return &socketpush.BroadcastGlobalRes{
+		ReqId: in.ReqId,
+	}, nil
 }

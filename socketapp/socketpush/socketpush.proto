@@ -23,8 +23,17 @@ service SocketPush {
   rpc KickMetaSession(KickMetaSessionReq) returns (KickMetaSessionRes);
   // 向指定 session 发送消息
   rpc SendToSession(SendToSessionReq) returns (SendToSessionRes);
-  // 向指定元数据session 发送消息
+  // 向指定 session 批量发送消息
+  rpc SendToSessions(SendToSessionsReq) returns (SendToSessionsRes);
+  // 向指定元数据 session 发送消息
   rpc SendToMetaSession(SendToMetaSessionReq) returns (SendToMetaSessionRes);
+  // 向指定元数据 session 批量发送消息
+  rpc SendToMetaSessions(SendToMetaSessionsReq) returns (SendToMetaSessionsRes);
+}
+
+message PbMetaSession{
+  string key = 1;
+  string value = 2;
 }
 
 message GenTokenReq{
@@ -44,6 +53,7 @@ message JoinRoomReq {
 }
 
 message JoinRoomRes {
+  string reqId = 1;
 }
 
 message LeaveRoomReq {
@@ -53,6 +63,7 @@ message LeaveRoomReq {
 }
 
 message LeaveRoomRes {
+  string reqId = 1;
 }
 
 message BroadcastRoomReq {
@@ -63,6 +74,7 @@ message BroadcastRoomReq {
 }
 
 message BroadcastRoomRes {
+  string reqId = 1;
 }
 
 message BroadcastGlobalReq {
@@ -72,6 +84,7 @@ message BroadcastGlobalReq {
 }
 
 message BroadcastGlobalRes {
+  string reqId = 1;
 }
 
 message KickSessionReq {
@@ -80,6 +93,7 @@ message KickSessionReq {
 }
 
 message KickSessionRes {
+  string reqId = 1;
 }
 
 message KickMetaSessionReq {
@@ -89,6 +103,7 @@ message KickMetaSessionReq {
 }
 
 message KickMetaSessionRes {
+  string reqId = 1;
 }
 
 message SendToSessionReq {
@@ -99,6 +114,18 @@ message SendToSessionReq {
 }
 
 message SendToSessionRes {
+  string reqId = 1;
+}
+
+message SendToSessionsReq {
+  string reqId = 1;
+  repeated string sIds = 2;
+  string event = 3;
+  string payload = 4;
+}
+
+message SendToSessionsRes {
+  string reqId = 1;
 }
 
 message SendToMetaSessionReq {
@@ -110,4 +137,16 @@ message SendToMetaSessionReq {
 }
 
 message SendToMetaSessionRes {
+  string reqId = 1;
+}
+
+message SendToMetaSessionsReq {
+  string reqId = 1;
+  repeated PbMetaSession metaSessions = 2;
+  string event = 3;
+  string payload = 4;
+}
+
+message SendToMetaSessionsRes {
+  string reqId = 1;
 }

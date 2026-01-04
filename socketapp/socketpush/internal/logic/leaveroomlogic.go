@@ -37,5 +37,7 @@ func (l *LeaveRoomLogic) LeaveRoom(in *socketpush.LeaveRoomReq) (*socketpush.Lea
 			})
 		})
 	}
-	return &socketpush.LeaveRoomRes{}, nil
+	return &socketpush.LeaveRoomRes{
+		ReqId: in.ReqId,
+	}, nil
 }

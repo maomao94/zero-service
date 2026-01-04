@@ -71,8 +71,20 @@ func (s *SocketPushServer) SendToSession(ctx context.Context, in *socketpush.Sen
 	return l.SendToSession(in)
 }
 
-// 向指定元数据session 发送消息
+// 向指定 session 批量发送消息
+func (s *SocketPushServer) SendToSessions(ctx context.Context, in *socketpush.SendToSessionsReq) (*socketpush.SendToSessionsRes, error) {
+	l := logic.NewSendToSessionsLogic(ctx, s.svcCtx)
+	return l.SendToSessions(in)
+}
+
+// 向指定元数据 session 发送消息
 func (s *SocketPushServer) SendToMetaSession(ctx context.Context, in *socketpush.SendToMetaSessionReq) (*socketpush.SendToMetaSessionRes, error) {
 	l := logic.NewSendToMetaSessionLogic(ctx, s.svcCtx)
 	return l.SendToMetaSession(in)
+}
+
+// 向指定元数据 session 批量发送消息
+func (s *SocketPushServer) SendToMetaSessions(ctx context.Context, in *socketpush.SendToMetaSessionsReq) (*socketpush.SendToMetaSessionsRes, error) {
+	l := logic.NewSendToMetaSessionsLogic(ctx, s.svcCtx)
+	return l.SendToMetaSessions(in)
 }

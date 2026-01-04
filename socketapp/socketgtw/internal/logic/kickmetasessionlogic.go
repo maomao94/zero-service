@@ -31,5 +31,7 @@ func (l *KickMetaSessionLogic) KickMetaSession(in *socketgtw.KickMetaSessionReq)
 			session.Close()
 		}
 	}
-	return &socketgtw.KickMetaSessionRes{}, nil
+	return &socketgtw.KickMetaSessionRes{
+		ReqId: in.ReqId,
+	}, nil
 }

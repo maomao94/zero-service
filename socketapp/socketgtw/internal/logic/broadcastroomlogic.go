@@ -30,5 +30,7 @@ func (l *BroadcastRoomLogic) BroadcastRoom(in *socketgtw.BroadcastRoomReq) (*soc
 	if err != nil {
 		return nil, err
 	}
-	return &socketgtw.BroadcastRoomRes{}, nil
+	return &socketgtw.BroadcastRoomRes{
+		ReqId: in.ReqId,
+	}, nil
 }

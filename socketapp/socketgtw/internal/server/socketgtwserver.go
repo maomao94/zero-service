@@ -65,8 +65,20 @@ func (s *SocketGtwServer) SendToSession(ctx context.Context, in *socketgtw.SendT
 	return l.SendToSession(in)
 }
 
-// 向指定元数据session 发送消息
+// 向指定 session 批量发送消息
+func (s *SocketGtwServer) SendToSessions(ctx context.Context, in *socketgtw.SendToSessionsReq) (*socketgtw.SendToSessionsRes, error) {
+	l := logic.NewSendToSessionsLogic(ctx, s.svcCtx)
+	return l.SendToSessions(in)
+}
+
+// 向指定元数据 session 发送消息
 func (s *SocketGtwServer) SendToMetaSession(ctx context.Context, in *socketgtw.SendToMetaSessionReq) (*socketgtw.SendToMetaSessionRes, error) {
 	l := logic.NewSendToMetaSessionLogic(ctx, s.svcCtx)
 	return l.SendToMetaSession(in)
+}
+
+// 向指定元数据 session 批量发送消息
+func (s *SocketGtwServer) SendToMetaSessions(ctx context.Context, in *socketgtw.SendToMetaSessionsReq) (*socketgtw.SendToMetaSessionsRes, error) {
+	l := logic.NewSendToMetaSessionsLogic(ctx, s.svcCtx)
+	return l.SendToMetaSessions(in)
 }

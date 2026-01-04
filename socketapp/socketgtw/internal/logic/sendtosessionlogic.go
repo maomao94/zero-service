@@ -32,5 +32,7 @@ func (l *SendToSessionLogic) SendToSession(in *socketgtw.SendToSessionReq) (*soc
 			return nil, err
 		}
 	}
-	return &socketgtw.SendToSessionRes{}, nil
+	return &socketgtw.SendToSessionRes{
+		ReqId: in.ReqId,
+	}, nil
 }

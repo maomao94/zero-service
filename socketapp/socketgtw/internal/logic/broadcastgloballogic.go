@@ -30,5 +30,7 @@ func (l *BroadcastGlobalLogic) BroadcastGlobal(in *socketgtw.BroadcastGlobalReq)
 	if err != nil {
 		return nil, err
 	}
-	return &socketgtw.BroadcastGlobalRes{}, nil
+	return &socketgtw.BroadcastGlobalRes{
+		ReqId: in.ReqId,
+	}, nil
 }

@@ -39,5 +39,7 @@ func (l *SendToMetaSessionLogic) SendToMetaSession(in *socketpush.SendToMetaSess
 			})
 		})
 	}
-	return &socketpush.SendToMetaSessionRes{}, nil
+	return &socketpush.SendToMetaSessionRes{
+		ReqId: in.ReqId,
+	}, nil
 }

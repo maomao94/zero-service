@@ -19,14 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SocketGtw_JoinRoom_FullMethodName          = "/socketgtw.SocketGtw/JoinRoom"
-	SocketGtw_LeaveRoom_FullMethodName         = "/socketgtw.SocketGtw/LeaveRoom"
-	SocketGtw_BroadcastRoom_FullMethodName     = "/socketgtw.SocketGtw/BroadcastRoom"
-	SocketGtw_BroadcastGlobal_FullMethodName   = "/socketgtw.SocketGtw/BroadcastGlobal"
-	SocketGtw_KickSession_FullMethodName       = "/socketgtw.SocketGtw/KickSession"
-	SocketGtw_KickMetaSession_FullMethodName   = "/socketgtw.SocketGtw/KickMetaSession"
-	SocketGtw_SendToSession_FullMethodName     = "/socketgtw.SocketGtw/SendToSession"
-	SocketGtw_SendToMetaSession_FullMethodName = "/socketgtw.SocketGtw/SendToMetaSession"
+	SocketGtw_JoinRoom_FullMethodName           = "/socketgtw.SocketGtw/JoinRoom"
+	SocketGtw_LeaveRoom_FullMethodName          = "/socketgtw.SocketGtw/LeaveRoom"
+	SocketGtw_BroadcastRoom_FullMethodName      = "/socketgtw.SocketGtw/BroadcastRoom"
+	SocketGtw_BroadcastGlobal_FullMethodName    = "/socketgtw.SocketGtw/BroadcastGlobal"
+	SocketGtw_KickSession_FullMethodName        = "/socketgtw.SocketGtw/KickSession"
+	SocketGtw_KickMetaSession_FullMethodName    = "/socketgtw.SocketGtw/KickMetaSession"
+	SocketGtw_SendToSession_FullMethodName      = "/socketgtw.SocketGtw/SendToSession"
+	SocketGtw_SendToSessions_FullMethodName     = "/socketgtw.SocketGtw/SendToSessions"
+	SocketGtw_SendToMetaSession_FullMethodName  = "/socketgtw.SocketGtw/SendToMetaSession"
+	SocketGtw_SendToMetaSessions_FullMethodName = "/socketgtw.SocketGtw/SendToMetaSessions"
 )
 
 // SocketGtwClient is the client API for SocketGtw service.
@@ -47,8 +49,12 @@ type SocketGtwClient interface {
 	KickMetaSession(ctx context.Context, in *KickMetaSessionReq, opts ...grpc.CallOption) (*KickMetaSessionRes, error)
 	// 向指定 session 发送消息
 	SendToSession(ctx context.Context, in *SendToSessionReq, opts ...grpc.CallOption) (*SendToSessionRes, error)
-	// 向指定元数据session 发送消息
+	// 向指定 session 批量发送消息
+	SendToSessions(ctx context.Context, in *SendToSessionsReq, opts ...grpc.CallOption) (*SendToSessionsRes, error)
+	// 向指定元数据 session 发送消息
 	SendToMetaSession(ctx context.Context, in *SendToMetaSessionReq, opts ...grpc.CallOption) (*SendToMetaSessionRes, error)
+	// 向指定元数据 session 批量发送消息
+	SendToMetaSessions(ctx context.Context, in *SendToMetaSessionsReq, opts ...grpc.CallOption) (*SendToMetaSessionsRes, error)
 }
 
 type socketGtwClient struct {
@@ -129,10 +135,30 @@ func (c *socketGtwClient) SendToSession(ctx context.Context, in *SendToSessionRe
 	return out, nil
 }
 
+func (c *socketGtwClient) SendToSessions(ctx context.Context, in *SendToSessionsReq, opts ...grpc.CallOption) (*SendToSessionsRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendToSessionsRes)
+	err := c.cc.Invoke(ctx, SocketGtw_SendToSessions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *socketGtwClient) SendToMetaSession(ctx context.Context, in *SendToMetaSessionReq, opts ...grpc.CallOption) (*SendToMetaSessionRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SendToMetaSessionRes)
 	err := c.cc.Invoke(ctx, SocketGtw_SendToMetaSession_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *socketGtwClient) SendToMetaSessions(ctx context.Context, in *SendToMetaSessionsReq, opts ...grpc.CallOption) (*SendToMetaSessionsRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendToMetaSessionsRes)
+	err := c.cc.Invoke(ctx, SocketGtw_SendToMetaSessions_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -157,8 +183,12 @@ type SocketGtwServer interface {
 	KickMetaSession(context.Context, *KickMetaSessionReq) (*KickMetaSessionRes, error)
 	// 向指定 session 发送消息
 	SendToSession(context.Context, *SendToSessionReq) (*SendToSessionRes, error)
-	// 向指定元数据session 发送消息
+	// 向指定 session 批量发送消息
+	SendToSessions(context.Context, *SendToSessionsReq) (*SendToSessionsRes, error)
+	// 向指定元数据 session 发送消息
 	SendToMetaSession(context.Context, *SendToMetaSessionReq) (*SendToMetaSessionRes, error)
+	// 向指定元数据 session 批量发送消息
+	SendToMetaSessions(context.Context, *SendToMetaSessionsReq) (*SendToMetaSessionsRes, error)
 	mustEmbedUnimplementedSocketGtwServer()
 }
 
@@ -190,8 +220,14 @@ func (UnimplementedSocketGtwServer) KickMetaSession(context.Context, *KickMetaSe
 func (UnimplementedSocketGtwServer) SendToSession(context.Context, *SendToSessionReq) (*SendToSessionRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendToSession not implemented")
 }
+func (UnimplementedSocketGtwServer) SendToSessions(context.Context, *SendToSessionsReq) (*SendToSessionsRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendToSessions not implemented")
+}
 func (UnimplementedSocketGtwServer) SendToMetaSession(context.Context, *SendToMetaSessionReq) (*SendToMetaSessionRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendToMetaSession not implemented")
+}
+func (UnimplementedSocketGtwServer) SendToMetaSessions(context.Context, *SendToMetaSessionsReq) (*SendToMetaSessionsRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendToMetaSessions not implemented")
 }
 func (UnimplementedSocketGtwServer) mustEmbedUnimplementedSocketGtwServer() {}
 func (UnimplementedSocketGtwServer) testEmbeddedByValue()                   {}
@@ -340,6 +376,24 @@ func _SocketGtw_SendToSession_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SocketGtw_SendToSessions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendToSessionsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SocketGtwServer).SendToSessions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SocketGtw_SendToSessions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SocketGtwServer).SendToSessions(ctx, req.(*SendToSessionsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _SocketGtw_SendToMetaSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SendToMetaSessionReq)
 	if err := dec(in); err != nil {
@@ -354,6 +408,24 @@ func _SocketGtw_SendToMetaSession_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SocketGtwServer).SendToMetaSession(ctx, req.(*SendToMetaSessionReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SocketGtw_SendToMetaSessions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendToMetaSessionsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SocketGtwServer).SendToMetaSessions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SocketGtw_SendToMetaSessions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SocketGtwServer).SendToMetaSessions(ctx, req.(*SendToMetaSessionsReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -394,8 +466,16 @@ var SocketGtw_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SocketGtw_SendToSession_Handler,
 		},
 		{
+			MethodName: "SendToSessions",
+			Handler:    _SocketGtw_SendToSessions_Handler,
+		},
+		{
 			MethodName: "SendToMetaSession",
 			Handler:    _SocketGtw_SendToMetaSession_Handler,
+		},
+		{
+			MethodName: "SendToMetaSessions",
+			Handler:    _SocketGtw_SendToMetaSessions_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

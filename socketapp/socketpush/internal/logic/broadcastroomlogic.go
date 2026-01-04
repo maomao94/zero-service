@@ -38,5 +38,7 @@ func (l *BroadcastRoomLogic) BroadcastRoom(in *socketpush.BroadcastRoomReq) (*so
 			})
 		})
 	}
-	return &socketpush.BroadcastRoomRes{}, nil
+	return &socketpush.BroadcastRoomRes{
+		ReqId: in.ReqId,
+	}, nil
 }

@@ -36,5 +36,7 @@ func (l *KickSessionLogic) KickSession(in *socketpush.KickSessionReq) (*socketpu
 			})
 		})
 	}
-	return &socketpush.KickSessionRes{}, nil
+	return &socketpush.KickSessionRes{
+		ReqId: in.ReqId,
+	}, nil
 }
