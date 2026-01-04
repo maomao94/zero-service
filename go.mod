@@ -4,7 +4,7 @@ go 1.25
 
 require (
 	github.com/ArtisanCloud/PowerLibs/v3 v3.3.2
-	github.com/ArtisanCloud/PowerWeChat/v3 v3.4.30
+	github.com/ArtisanCloud/PowerWeChat/v3 v3.4.32
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/brianvoe/gofakeit/v7 v7.14.0
 	github.com/disintegration/imaging v1.6.2
