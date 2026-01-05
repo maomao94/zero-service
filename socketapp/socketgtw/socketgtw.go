@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net/http"
 	interceptor "zero-service/common/Interceptor/rpcserver"
 	"zero-service/common/nacosx"
 	"zero-service/common/tool"
@@ -18,6 +19,7 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/rest"
+	"github.com/zeromicro/go-zero/rest/chain"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -43,7 +45,20 @@ func main() {
 		}
 	})
 	c.Http.Name = c.Name
-	httpServer := rest.MustNewServer(c.Http)
+	socketTicketMiddleware := func() func(http.Handler) http.Handler {
+		return func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if strutil.ContainsAny(r.URL.Path, []string{"/socket.io"}) {
+					ticket := r.URL.Query().Get("ticket")
+					if len(ticket) != 0 {
+						r.Header.Set("Authorization", ticket)
+					}
+				}
+				next.ServeHTTP(w, r)
+			})
+		}
+	}
+	httpServer := rest.MustNewServer(c.Http, rest.WithChain(chain.New(socketTicketMiddleware())))
 	handler.RegisterHandlers(httpServer, ctx)
 	// register service to nacos
 	if c.NacosConfig.IsRegister {

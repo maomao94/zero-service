@@ -260,6 +260,9 @@ func NewServer(opts ...Option) (*Server, error) {
 }
 
 func (srv *Server) bindEvents() {
+	srv.OnAuthentication(func(params map[string]string) bool {
+		return true
+	})
 	srv.OnConnection(func(socket *socketio.Socket) {
 		ctx := socket.Context
 		session := &Session{
@@ -556,7 +559,7 @@ func (srv *Server) bindEvents() {
 				}
 				return
 			}
-			if len(upReq.ReqId) == 0 || len(upReq.Payload) == 0 || len(upReq.Room) == 0 || len(upReq.Event) == 0 {
+			if len(upReq.ReqId) == 0 || len(upReq.Payload) == 0 || len(upReq.Event) == 0 {
 				logx.WithContext(ctx).Errorf("[socketio] missing required fields: conn=%s", socket.Id)
 				if payload.Ack != nil {
 					payload.Ack(string(BuildResp(CodeParamErr, "reqId|payload|event为必填项", "", upReq.ReqId)))
