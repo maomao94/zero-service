@@ -1153,6 +1153,86 @@ func (x *SendToMetaSessionsRes) GetReqId() string {
 	return ""
 }
 
+type SocketGtwStatReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SocketGtwStatReq) Reset() {
+	*x = SocketGtwStatReq{}
+	mi := &file_socketgtw_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SocketGtwStatReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SocketGtwStatReq) ProtoMessage() {}
+
+func (x *SocketGtwStatReq) ProtoReflect() protoreflect.Message {
+	mi := &file_socketgtw_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SocketGtwStatReq.ProtoReflect.Descriptor instead.
+func (*SocketGtwStatReq) Descriptor() ([]byte, []int) {
+	return file_socketgtw_proto_rawDescGZIP(), []int{21}
+}
+
+type SocketGtwStatRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Sessions      int64                  `protobuf:"varint,1,opt,name=sessions,proto3" json:"sessions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SocketGtwStatRes) Reset() {
+	*x = SocketGtwStatRes{}
+	mi := &file_socketgtw_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SocketGtwStatRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SocketGtwStatRes) ProtoMessage() {}
+
+func (x *SocketGtwStatRes) ProtoReflect() protoreflect.Message {
+	mi := &file_socketgtw_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SocketGtwStatRes.ProtoReflect.Descriptor instead.
+func (*SocketGtwStatRes) Descriptor() ([]byte, []int) {
+	return file_socketgtw_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *SocketGtwStatRes) GetSessions() int64 {
+	if x != nil {
+		return x.Sessions
+	}
+	return 0
+}
+
 var File_socketgtw_proto protoreflect.FileDescriptor
 
 const file_socketgtw_proto_rawDesc = "" +
@@ -1225,7 +1305,10 @@ const file_socketgtw_proto_rawDesc = "" +
 	"\x05event\x18\x03 \x01(\tR\x05event\x12\x18\n" +
 	"\apayload\x18\x04 \x01(\tR\apayload\"-\n" +
 	"\x15SendToMetaSessionsRes\x12\x14\n" +
-	"\x05reqId\x18\x01 \x01(\tR\x05reqId2\x82\x06\n" +
+	"\x05reqId\x18\x01 \x01(\tR\x05reqId\"\x12\n" +
+	"\x10SocketGtwStatReq\".\n" +
+	"\x10SocketGtwStatRes\x12\x1a\n" +
+	"\bsessions\x18\x01 \x01(\x03R\bsessions2\xcd\x06\n" +
 	"\tSocketGtw\x12:\n" +
 	"\bJoinRoom\x12\x16.socketgtw.JoinRoomReq\x1a\x16.socketgtw.JoinRoomRes\x12=\n" +
 	"\tLeaveRoom\x12\x17.socketgtw.LeaveRoomReq\x1a\x17.socketgtw.LeaveRoomRes\x12I\n" +
@@ -1236,7 +1319,8 @@ const file_socketgtw_proto_rawDesc = "" +
 	"\rSendToSession\x12\x1b.socketgtw.SendToSessionReq\x1a\x1b.socketgtw.SendToSessionRes\x12L\n" +
 	"\x0eSendToSessions\x12\x1c.socketgtw.SendToSessionsReq\x1a\x1c.socketgtw.SendToSessionsRes\x12U\n" +
 	"\x11SendToMetaSession\x12\x1f.socketgtw.SendToMetaSessionReq\x1a\x1f.socketgtw.SendToMetaSessionRes\x12X\n" +
-	"\x12SendToMetaSessions\x12 .socketgtw.SendToMetaSessionsReq\x1a .socketgtw.SendToMetaSessionsResB:\n" +
+	"\x12SendToMetaSessions\x12 .socketgtw.SendToMetaSessionsReq\x1a .socketgtw.SendToMetaSessionsRes\x12I\n" +
+	"\rSocketGtwStat\x12\x1b.socketgtw.SocketGtwStatReq\x1a\x1b.socketgtw.SocketGtwStatResB:\n" +
 	"\x19com.github.socketgtw.grpcB\x0eSocketGtwProtoP\x01Z\v./socketgtwb\x06proto3"
 
 var (
@@ -1251,7 +1335,7 @@ func file_socketgtw_proto_rawDescGZIP() []byte {
 	return file_socketgtw_proto_rawDescData
 }
 
-var file_socketgtw_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_socketgtw_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_socketgtw_proto_goTypes = []any{
 	(*PbMetaSession)(nil),         // 0: socketgtw.PbMetaSession
 	(*JoinRoomReq)(nil),           // 1: socketgtw.JoinRoomReq
@@ -1274,6 +1358,8 @@ var file_socketgtw_proto_goTypes = []any{
 	(*SendToMetaSessionRes)(nil),  // 18: socketgtw.SendToMetaSessionRes
 	(*SendToMetaSessionsReq)(nil), // 19: socketgtw.SendToMetaSessionsReq
 	(*SendToMetaSessionsRes)(nil), // 20: socketgtw.SendToMetaSessionsRes
+	(*SocketGtwStatReq)(nil),      // 21: socketgtw.SocketGtwStatReq
+	(*SocketGtwStatRes)(nil),      // 22: socketgtw.SocketGtwStatRes
 }
 var file_socketgtw_proto_depIdxs = []int32{
 	0,  // 0: socketgtw.SendToMetaSessionsReq.metaSessions:type_name -> socketgtw.PbMetaSession
@@ -1287,18 +1373,20 @@ var file_socketgtw_proto_depIdxs = []int32{
 	15, // 8: socketgtw.SocketGtw.SendToSessions:input_type -> socketgtw.SendToSessionsReq
 	17, // 9: socketgtw.SocketGtw.SendToMetaSession:input_type -> socketgtw.SendToMetaSessionReq
 	19, // 10: socketgtw.SocketGtw.SendToMetaSessions:input_type -> socketgtw.SendToMetaSessionsReq
-	2,  // 11: socketgtw.SocketGtw.JoinRoom:output_type -> socketgtw.JoinRoomRes
-	4,  // 12: socketgtw.SocketGtw.LeaveRoom:output_type -> socketgtw.LeaveRoomRes
-	6,  // 13: socketgtw.SocketGtw.BroadcastRoom:output_type -> socketgtw.BroadcastRoomRes
-	8,  // 14: socketgtw.SocketGtw.BroadcastGlobal:output_type -> socketgtw.BroadcastGlobalRes
-	10, // 15: socketgtw.SocketGtw.KickSession:output_type -> socketgtw.KickSessionRes
-	12, // 16: socketgtw.SocketGtw.KickMetaSession:output_type -> socketgtw.KickMetaSessionRes
-	14, // 17: socketgtw.SocketGtw.SendToSession:output_type -> socketgtw.SendToSessionRes
-	16, // 18: socketgtw.SocketGtw.SendToSessions:output_type -> socketgtw.SendToSessionsRes
-	18, // 19: socketgtw.SocketGtw.SendToMetaSession:output_type -> socketgtw.SendToMetaSessionRes
-	20, // 20: socketgtw.SocketGtw.SendToMetaSessions:output_type -> socketgtw.SendToMetaSessionsRes
-	11, // [11:21] is the sub-list for method output_type
-	1,  // [1:11] is the sub-list for method input_type
+	21, // 11: socketgtw.SocketGtw.SocketGtwStat:input_type -> socketgtw.SocketGtwStatReq
+	2,  // 12: socketgtw.SocketGtw.JoinRoom:output_type -> socketgtw.JoinRoomRes
+	4,  // 13: socketgtw.SocketGtw.LeaveRoom:output_type -> socketgtw.LeaveRoomRes
+	6,  // 14: socketgtw.SocketGtw.BroadcastRoom:output_type -> socketgtw.BroadcastRoomRes
+	8,  // 15: socketgtw.SocketGtw.BroadcastGlobal:output_type -> socketgtw.BroadcastGlobalRes
+	10, // 16: socketgtw.SocketGtw.KickSession:output_type -> socketgtw.KickSessionRes
+	12, // 17: socketgtw.SocketGtw.KickMetaSession:output_type -> socketgtw.KickMetaSessionRes
+	14, // 18: socketgtw.SocketGtw.SendToSession:output_type -> socketgtw.SendToSessionRes
+	16, // 19: socketgtw.SocketGtw.SendToSessions:output_type -> socketgtw.SendToSessionsRes
+	18, // 20: socketgtw.SocketGtw.SendToMetaSession:output_type -> socketgtw.SendToMetaSessionRes
+	20, // 21: socketgtw.SocketGtw.SendToMetaSessions:output_type -> socketgtw.SendToMetaSessionsRes
+	22, // 22: socketgtw.SocketGtw.SocketGtwStat:output_type -> socketgtw.SocketGtwStatRes
+	12, // [12:23] is the sub-list for method output_type
+	1,  // [1:12] is the sub-list for method input_type
 	1,  // [1:1] is the sub-list for extension type_name
 	1,  // [1:1] is the sub-list for extension extendee
 	0,  // [0:1] is the sub-list for field type_name
@@ -1315,7 +1403,7 @@ func file_socketgtw_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_socketgtw_proto_rawDesc), len(file_socketgtw_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   21,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

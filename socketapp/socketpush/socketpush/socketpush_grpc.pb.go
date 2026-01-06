@@ -30,6 +30,7 @@ const (
 	SocketPush_SendToSessions_FullMethodName     = "/socketpush.SocketPush/SendToSessions"
 	SocketPush_SendToMetaSession_FullMethodName  = "/socketpush.SocketPush/SendToMetaSession"
 	SocketPush_SendToMetaSessions_FullMethodName = "/socketpush.SocketPush/SendToMetaSessions"
+	SocketPush_SocketGtwStat_FullMethodName      = "/socketpush.SocketPush/SocketGtwStat"
 )
 
 // SocketPushClient is the client API for SocketPush service.
@@ -58,6 +59,8 @@ type SocketPushClient interface {
 	SendToMetaSession(ctx context.Context, in *SendToMetaSessionReq, opts ...grpc.CallOption) (*SendToMetaSessionRes, error)
 	// 向指定元数据 session 批量发送消息
 	SendToMetaSessions(ctx context.Context, in *SendToMetaSessionsReq, opts ...grpc.CallOption) (*SendToMetaSessionsRes, error)
+	// 获取网关统计信息
+	SocketGtwStat(ctx context.Context, in *SocketGtwStatReq, opts ...grpc.CallOption) (*SocketGtwStatRes, error)
 }
 
 type socketPushClient struct {
@@ -178,6 +181,16 @@ func (c *socketPushClient) SendToMetaSessions(ctx context.Context, in *SendToMet
 	return out, nil
 }
 
+func (c *socketPushClient) SocketGtwStat(ctx context.Context, in *SocketGtwStatReq, opts ...grpc.CallOption) (*SocketGtwStatRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SocketGtwStatRes)
+	err := c.cc.Invoke(ctx, SocketPush_SocketGtwStat_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SocketPushServer is the server API for SocketPush service.
 // All implementations must embed UnimplementedSocketPushServer
 // for forward compatibility.
@@ -204,6 +217,8 @@ type SocketPushServer interface {
 	SendToMetaSession(context.Context, *SendToMetaSessionReq) (*SendToMetaSessionRes, error)
 	// 向指定元数据 session 批量发送消息
 	SendToMetaSessions(context.Context, *SendToMetaSessionsReq) (*SendToMetaSessionsRes, error)
+	// 获取网关统计信息
+	SocketGtwStat(context.Context, *SocketGtwStatReq) (*SocketGtwStatRes, error)
 	mustEmbedUnimplementedSocketPushServer()
 }
 
@@ -246,6 +261,9 @@ func (UnimplementedSocketPushServer) SendToMetaSession(context.Context, *SendToM
 }
 func (UnimplementedSocketPushServer) SendToMetaSessions(context.Context, *SendToMetaSessionsReq) (*SendToMetaSessionsRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendToMetaSessions not implemented")
+}
+func (UnimplementedSocketPushServer) SocketGtwStat(context.Context, *SocketGtwStatReq) (*SocketGtwStatRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SocketGtwStat not implemented")
 }
 func (UnimplementedSocketPushServer) mustEmbedUnimplementedSocketPushServer() {}
 func (UnimplementedSocketPushServer) testEmbeddedByValue()                    {}
@@ -466,6 +484,24 @@ func _SocketPush_SendToMetaSessions_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SocketPush_SocketGtwStat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SocketGtwStatReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SocketPushServer).SocketGtwStat(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SocketPush_SocketGtwStat_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SocketPushServer).SocketGtwStat(ctx, req.(*SocketGtwStatReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SocketPush_ServiceDesc is the grpc.ServiceDesc for SocketPush service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -516,6 +552,10 @@ var SocketPush_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendToMetaSessions",
 			Handler:    _SocketPush_SendToMetaSessions_Handler,
+		},
+		{
+			MethodName: "SocketGtwStat",
+			Handler:    _SocketPush_SocketGtwStat_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

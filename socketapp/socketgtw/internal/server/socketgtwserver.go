@@ -82,3 +82,9 @@ func (s *SocketGtwServer) SendToMetaSessions(ctx context.Context, in *socketgtw.
 	l := logic.NewSendToMetaSessionsLogic(ctx, s.svcCtx)
 	return l.SendToMetaSessions(in)
 }
+
+// 获取网关统计信息
+func (s *SocketGtwServer) SocketGtwStat(ctx context.Context, in *socketgtw.SocketGtwStatReq) (*socketgtw.SocketGtwStatRes, error) {
+	l := logic.NewSocketGtwStatLogic(ctx, s.svcCtx)
+	return l.SocketGtwStat(in)
+}

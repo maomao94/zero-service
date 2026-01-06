@@ -29,6 +29,8 @@ service SocketPush {
   rpc SendToMetaSession(SendToMetaSessionReq) returns (SendToMetaSessionRes);
   // 向指定元数据 session 批量发送消息
   rpc SendToMetaSessions(SendToMetaSessionsReq) returns (SendToMetaSessionsRes);
+  // 获取网关统计信息
+  rpc SocketGtwStat(SocketGtwStatReq) returns (SocketGtwStatRes);
 }
 
 message PbMetaSession{
@@ -36,8 +38,14 @@ message PbMetaSession{
   string value = 2;
 }
 
+message PbSocketGtwStat{
+  string node = 1;
+  int64 sessions = 2;
+}
+
 message GenTokenReq{
   string uid = 1;
+  map<string, string> payload = 2;
 }
 
 message GenTokenRes{
@@ -149,4 +157,11 @@ message SendToMetaSessionsReq {
 
 message SendToMetaSessionsRes {
   string reqId = 1;
+}
+
+message SocketGtwStatReq {
+}
+
+message SocketGtwStatRes {
+  repeated PbSocketGtwStat stats = 1;
 }

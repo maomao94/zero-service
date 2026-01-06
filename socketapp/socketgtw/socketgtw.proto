@@ -27,6 +27,8 @@ service SocketGtw {
   rpc SendToMetaSession(SendToMetaSessionReq) returns (SendToMetaSessionRes);
   // 向指定元数据 session 批量发送消息
   rpc SendToMetaSessions(SendToMetaSessionsReq) returns (SendToMetaSessionsRes);
+  // 获取网关统计信息
+  rpc SocketGtwStat(SocketGtwStatReq) returns (SocketGtwStatRes);
 }
 
 message PbMetaSession{
@@ -137,4 +139,11 @@ message SendToMetaSessionsReq {
 
 message SendToMetaSessionsRes {
   string reqId = 1;
+}
+
+message SocketGtwStatReq {
+}
+
+message SocketGtwStatRes {
+  int64 sessions = 1;
 }
