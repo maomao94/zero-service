@@ -1157,6 +1157,13 @@
             logEntry.innerHTML = `<span class="timestamp">${timestamp}</span>${message}`;
             logsDiv.appendChild(logEntry);
             
+            // 限制日志条数，最多保留100条
+            const logEntries = logsDiv.querySelectorAll('.log-entry');
+            if (logEntries.length > 100) {
+                // 删除最早的日志条目
+                logsDiv.removeChild(logEntries[0]);
+            }
+            
             // 自动滚动到底部（如果启用）
             if (document.getElementById('autoScrollCheck').checked) {
                 logsDiv.scrollTop = logsDiv.scrollHeight;
@@ -1197,7 +1204,7 @@
 
             const socketOptions = {
                 transports: ['websocket'],
-                reconnection: true
+                reconnection: true,
             };
             
             if (authToken) {
@@ -1211,7 +1218,11 @@
             }
             
             socket = io(serverUrl, socketOptions);
-            
+
+            socket.io.on("ping", () => {
+                addLog('system', '收到服务器ping包');
+            });
+
             // 监听连接事件
             socket.on('connect', () => {
                 isConnected = true;
@@ -1263,8 +1274,6 @@
             socket.on('__stat_down__', (data) => {
                 addLog('receive', `收到__stat_down__事件: ${JSON.stringify(data, null, 2)}`);
             });
-            
-            // 不再需要硬编码的custom_event监听器，使用动态注册机制
         }
         
         // 断开连接

@@ -19,4 +19,5 @@ type Config struct {
 	} `json:",optional"`
 	MqttConfig      mqttx.MqttConfig
 	StreamEventConf zrpc.RpcClientConf
+	SocketPushConf  zrpc.RpcClientConf
 }

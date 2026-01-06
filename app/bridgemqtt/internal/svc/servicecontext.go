@@ -6,6 +6,7 @@ import (
 	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/mqttx"
 	"zero-service/facade/streamevent/streamevent"
+	"zero-service/socketapp/socketpush/socketpush"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/zrpc"
@@ -13,34 +14,47 @@ import (
 )
 
 type ServiceContext struct {
-	Config         config.Config
-	MqttClient     *mqttx.Client
-	StreamEventCli streamevent.StreamEventClient
+	Config     config.Config
+	MqttClient *mqttx.Client
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	logx.Must(logx.SetUp(c.Log))
-	streamEventCli := streamevent.NewStreamEventClient(zrpc.MustNewClient(c.StreamEventConf,
-		zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
-		// 添加最大消息配置
-		zrpc.WithDialOption(grpc.WithDefaultCallOptions(
-			//grpc.MaxCallSendMsgSize(math.MaxInt32), // 发送最大2GB
-			grpc.MaxCallSendMsgSize(50*1024*1024), // 发送最大50MB
-			//grpc.MaxCallRecvMsgSize(100 * 1024 * 1024),  // 接收最大100MB
-		)),
-	).Conn())
+	var streamEventCli streamevent.StreamEventClient
+	var socketPushCli socketpush.SocketPushClient
+	if len(c.StreamEventConf.Endpoints) > 0 || len(c.StreamEventConf.Target) > 0 {
+		streamEventCli = streamevent.NewStreamEventClient(zrpc.MustNewClient(c.StreamEventConf,
+			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
+			// 添加最大消息配置
+			zrpc.WithDialOption(grpc.WithDefaultCallOptions(
+				//grpc.MaxCallSendMsgSize(math.MaxInt32), // 发送最大2GB
+				grpc.MaxCallSendMsgSize(50*1024*1024), // 发送最大50MB
+				//grpc.MaxCallRecvMsgSize(100 * 1024 * 1024),  // 接收最大100MB
+			)),
+		).Conn())
+	}
+	if len(c.SocketPushConf.Endpoints) > 0 || len(c.SocketPushConf.Target) > 0 {
+		socketPushCli = socketpush.NewSocketPushClient(zrpc.MustNewClient(c.SocketPushConf,
+			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
+			// 添加最大消息配置
+			zrpc.WithDialOption(grpc.WithDefaultCallOptions(
+				//grpc.MaxCallSendMsgSize(math.MaxInt32), // 发送最大2GB
+				grpc.MaxCallSendMsgSize(50*1024*1024), // 发送最大50MB
+				//grpc.MaxCallRecvMsgSize(100 * 1024 * 1024),  // 接收最大100MB
+			)),
+		).Conn())
+	}
 	mqttCLi := mqttx.MustNewClient(c.MqttConfig,
 		mqttx.WithOnReady(func(cli *mqttx.Client) {
 			logx.Infof("[mqtt] OnReady, client=%s", cli.GetClientID())
 			// 注册转发 handler
 			for _, topic := range c.MqttConfig.SubscribeTopics {
-				cli.AddHandler(topic, handler.NewMqttStreamHandler(cli.GetClientID(), streamEventCli))
+				cli.AddHandler(topic, handler.NewMqttStreamHandler(cli.GetClientID(), streamEventCli, socketPushCli))
 			}
 		}),
 	)
 	return &ServiceContext{
-		Config:         c,
-		MqttClient:     mqttCLi,
-		StreamEventCli: streamEventCli,
+		Config:     c,
+		MqttClient: mqttCLi,
 	}
 }

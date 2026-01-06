@@ -18,7 +18,7 @@ NacosConfig:
   Username: nacos
   PassWord: nacos
   NamespaceId: public
-  ServiceName: streamevent
+  ServiceName: stream-event
 TaosDB:
   DataSource: root:taosdata@http(localhost:6041)/?timezone=Asia%2FShanghai
   # 默认采集库 default

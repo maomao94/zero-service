@@ -27,8 +27,15 @@ MqttConfig:
     - "iec/#"
 StreamEventConf:
   # nacos://[user:passwd]@host/service?param=value'
-  #  Target: nacos://nacos:nacos@127.0.0.1:8848/iec-stream?namespaceid=public&timeout=5000s
+  #  Target: nacos://nacos:nacos@127.0.0.1:8848/stream-event?namespaceid=public&timeout=5000s
   Endpoints:
-    - 127.0.0.1:27300
+    - 127.0.0.1:21009
   NonBlock: true
   Timeout: 10000
+#SocketPushConf:
+#  # nacos://[user:passwd]@host/service?param=value'
+#  #  Target: nacos://nacos:nacos@127.0.0.1:8848/socket-push?namespaceid=public&timeout=5000s
+#  Endpoints:
+#    - 127.0.0.1:25008
+#  NonBlock: true
+#  Timeout: 10000
