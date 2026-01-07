@@ -942,41 +942,7 @@
                     <h2>消息日志</h2>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                         <div style="display: flex; gap: 16px; align-items: center;">
-                            <!-- 现代化自动滚动开关 - 增强按钮颜色变化 -->
-                            <label for="autoScrollCheck" style="display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 500; color: #475569; cursor: pointer; user-select: none;">
-                                <span>自动滚动</span>
-                                <div style="position: relative; display: inline-block; cursor: pointer;">
-                                    <input type="checkbox" id="autoScrollCheck" checked style="opacity: 0; position: absolute; left: 0; top: 0; width: 100%; height: 100%; cursor: pointer; margin: 0;">
-                                    <div style="position: relative; width: 50px; height: 24px; background-color: #ef4444; border-radius: 25px; transition: all 0.3s ease; border: 2px solid #dc2626;"></div>
-                                    <div style="position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: white; border-radius: 50%; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); z-index: 2;"></div>
-                                    <style>
-                                        /* 关闭状态 - 红色主题 */
-                                        #autoScrollCheck + div {
-                                            background-color: #ef4444 !important;
-                                            border-color: #dc2626 !important;
-                                            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3) !important;
-                                        }
-                                        
-                                        /* 开启状态 - 绿色主题 */
-                                        #autoScrollCheck:checked + div {
-                                            background-color: #10b981 !important;
-                                            border-color: #059669 !important;
-                                            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3) !important;
-                                        }
-                                        
-                                        /* 滑块样式 */
-                                        #autoScrollCheck + div + div {
-                                            background: white !important;
-                                            border: 1px solid #e2e8f0 !important;
-                                        }
-                                        
-                                        /* 滑块位置 */
-                                        #autoScrollCheck:checked + div + div {
-                                            transform: translateX(26px) !important;
-                                        }
-                                    </style>
-                                </div>
-                            </label>
+                            <button id="autoScrollBtn" style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; font-size: 18px; border: 1px solid #10b981; border-radius: 8px; background: #10b981; color: white; cursor: pointer;" title="置底跟随">⌄</button>
                             <select id="logFilter" style="padding: 8px 12px; font-size: 13px; border: 1px solid #e2e8f0; border-radius: 6px; background: white; color: #2d3748; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                                 <option value="all">全部日志</option>
                                 <option value="connect">连接状态</option>
@@ -1149,10 +1115,19 @@
             return 'req-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
         }
         
+        let autoScrollEnabled = true;
+        document.getElementById('autoScrollBtn').onclick = function() {
+            autoScrollEnabled = !autoScrollEnabled;
+            this.style.background = autoScrollEnabled ? '#10b981' : '#f7fafc';
+            this.style.borderColor = autoScrollEnabled ? '#059669' : '#e2e8f0';
+            this.style.color = autoScrollEnabled ? 'white' : '#4a5568';
+        };
+        
         // 添加日志
         function addLog(type, message) {
             const logEntry = document.createElement('div');
             logEntry.className = `log-entry ${type}`;
+            logEntry.setAttribute('data-type', type);
             const timestamp = new Date().toLocaleTimeString();
             logEntry.innerHTML = `<span class="timestamp">${timestamp}</span>${message}`;
             logsDiv.appendChild(logEntry);
@@ -1160,12 +1135,11 @@
             // 限制日志条数，最多保留100条
             const logEntries = logsDiv.querySelectorAll('.log-entry');
             if (logEntries.length > 100) {
-                // 删除最早的日志条目
                 logsDiv.removeChild(logEntries[0]);
             }
             
             // 自动滚动到底部（如果启用）
-            if (document.getElementById('autoScrollCheck').checked) {
+            if (autoScrollEnabled) {
                 logsDiv.scrollTop = logsDiv.scrollHeight;
             }
             
@@ -1175,21 +1149,17 @@
         
         // 应用日志过滤
         function applyLogFilter() {
-            const filterValue = document.getElementById('logFilter').value;
-            const logEntries = logsDiv.querySelectorAll('.log-entry');
-            
-            logEntries.forEach(entry => {
-                if (filterValue === 'all') {
-                    entry.style.display = 'block';
+            const filter = document.getElementById('logFilter').value;
+            const entries = logsDiv.getElementsByClassName('log-entry');
+            for (let i = 0; i < entries.length; i++) {
+                const entry = entries[i];
+                const type = entry.getAttribute('data-type');
+                if (filter === 'all' || type === filter) {
+                    entry.style.display = '';
                 } else {
-                    const entryType = entry.className.split(' ')[1];
-                    if (entryType === filterValue) {
-                        entry.style.display = 'block';
-                    } else {
-                        entry.style.display = 'none';
-                    }
+                    entry.style.display = 'none';
                 }
-            });
+            }
         }
         
         // 绑定日志过滤事件
