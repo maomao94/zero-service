@@ -159,6 +159,7 @@ require (
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/redis/go-redis/v9 v9.17.2 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
+	github.com/reugn/async v0.9.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/savsgio/gotils v0.0.0-20230208104028-c358bd845dee // indirect
@@ -216,4 +217,4 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-replace github.com/doquangtan/socketio/v4 => github.com/maomao94/socket.io-golang/v4 v4.1.6-fork.2
+replace github.com/doquangtan/socketio/v4 => github.com/maomao94/socket.io-golang/v4 v4.1.6-fork.3

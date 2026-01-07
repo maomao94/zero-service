@@ -264,7 +264,7 @@ func (srv *Server) bindEvents() {
 		return true
 	})
 	srv.OnConnection(func(socket *socketio.Socket) {
-		ctx := socket.Context
+		ctx := socket.Ctx
 		session := &Session{
 			id:       socket.Id,
 			socket:   socket,
