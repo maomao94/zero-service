@@ -54,33 +54,30 @@ func (s *CronService) Stop() {
 
 func (s *CronService) scanLoop() {
 	for {
-		// Check if cancellation channel is closed
 		select {
 		case <-s.cancelChan:
-			// Channel closed, exit the loop
 			return
 		default:
-			// Continue with scan
 		}
 
-		threading.RunSafe(func() {
-			itemsProcessed := s.ScanPlanExecItem()
-			var sleepDuration time.Duration
-			if itemsProcessed {
-				sleepDuration = 100 * time.Millisecond
-			} else {
-				sleepDuration = time.Duration(1000+rand.Intn(1000)) * time.Millisecond
-			}
+		itemsProcessed := s.ScanPlanExecItem()
+		var sleepDuration time.Duration
+		if itemsProcessed {
+			sleepDuration = 100 * time.Millisecond
+		} else {
+			sleepDuration = time.Duration(1000+rand.Intn(1000)) * time.Millisecond
+		}
 
-			// Sleep with cancellation check
-			select {
-			case <-s.cancelChan:
-				// Channel closed during sleep, exit
-				return
-			case <-time.After(sleepDuration):
-				// Sleep completed normally
+		timer := time.NewTimer(sleepDuration)
+		defer timer.Stop()
+		select {
+		case <-s.cancelChan:
+			if !timer.Stop() {
+				<-timer.C
 			}
-		})
+			return
+		case <-timer.C:
+		}
 	}
 }
 
