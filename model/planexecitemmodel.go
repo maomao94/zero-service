@@ -86,10 +86,16 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 	}
 
 	ssql := fmt.Sprintf(
-		`SELECT %s FROM %s pei 
+		`SELECT pei.id, pei.create_time, pei.update_time, pei.delete_time, pei.del_state, pei.version, 
+		 pei.plan_id, pei.item_id, pei.item_name, pei.service_addr, pei.payload, 
+		 pei.request_timeout, pei.plan_trigger_time, pei.next_trigger_time, 
+		 pei.last_trigger_time, pei.trigger_count, pei.status, 
+		 pei.last_result, pei.last_error, pei.is_terminated, 
+		 pei.terminated_time, pei.terminated_reason, pei.is_paused, 
+		 pei.paused_time, pei.paused_reason 
+		 FROM %s pei 
 		 JOIN plan p ON p.plan_id = pei.plan_id 
 		 WHERE %s ORDER BY %s LIMIT 1`,
-		planExecItemRows,
 		m.table,
 		where,
 		randomFunc,

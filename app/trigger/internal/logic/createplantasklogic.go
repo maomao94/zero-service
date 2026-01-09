@@ -86,7 +86,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		RecurrenceRule:   string(rule),
 		StartTime:        rruleOption.Dtstart,
 		EndTime:          rruleOption.Until,
-		Status:           0,
+		Status:           1,
 		IsTerminated:     0,
 		IsPaused:         0,
 		TerminatedTime:   sql.NullTime{},
