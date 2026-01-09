@@ -33,7 +33,7 @@ func NewCronService(svcCtx *svc.ServiceContext) *CronService {
 	}
 
 	// Add scan table job to scan plan_exec_item every second
-	_, err := service.c.AddFunc("@every 10s", service.ScanPlanExecItem)
+	_, err := service.c.AddFunc("@every 1s", service.ScanPlanExecItem)
 	if err != nil {
 		log.Fatalf("Failed to add scan plan exec item job: %v", err)
 	}
