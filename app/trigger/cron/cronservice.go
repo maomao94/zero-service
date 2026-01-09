@@ -78,8 +78,9 @@ func (s *CronService) ScanPlanExecItem() {
 			execItem.NextTriggerTime,
 		)
 
+		plan, _ := s.svcCtx.PlanModel.FindOneByPlanId(ctx, execItem.PlanId)
 		// Execute the callback logic
-		s.ExecuteCallback(ctx, execItem)
+		s.ExecuteCallback(ctx, execItem, plan)
 	})
 }
 
@@ -104,7 +105,7 @@ func (cb rawCodec) Unmarshal(data []byte, v any) error {
 func (cb rawCodec) Name() string { return "proto_raw" }
 
 // ExecuteCallback executes the callback to the streamevent service
-func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanExecItem) {
+func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanExecItem, plan *model.Plan) {
 	grpcServer := tool.MayReplaceLocalhost(execItem.ServiceAddr)
 	logx.Infof("Executing callback for exec item %d with service: %s, planId: %s, itemId: %s",
 		execItem.Id, grpcServer, execItem.PlanId, execItem.ItemId)
@@ -174,8 +175,8 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	// Create request message
 	req := &streamevent.HandlerPlanTaskEventReq{
 		PlanId:   execItem.PlanId,
-		PlanName: "",
-		Type:     "",
+		PlanName: plan.PlanName,
+		Type:     plan.Type,
 		ItemId:   execItem.ItemId,
 		ItemName: execItem.ItemName,
 		Payload:  execItem.Payload,
