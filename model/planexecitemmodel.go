@@ -51,17 +51,25 @@ func (m *customPlanExecItemModel) withSession(session sqlx.Session) PlanExecItem
 func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn time.Duration) (*PlanExecItem, error) {
 	// 准备SQL查询，获取需要触发的执行项
 	// 条件：
-	// 1. 状态为待执行(0)或延期(4)
+	// 1. 执行项状态为待执行(0)或延期(4)
 	// 2. 下次触发时间 <= 当前时间
-	// 3. 未终止
-	// 4. 未暂停
+	// 3. 执行项未终止
+	// 4. 执行项未暂停
+	// 5. 关联的计划状态为启用(1)
+	// 6. 关联的计划未终止
+	// 7. 关联的计划未暂停
+	// 8. 关联的计划未删除
 	currentTime := time.Now()
 	// Calculate timeout threshold (30 minutes ago) for stuck running items
 	timeoutThreshold := currentTime.Add(-30 * time.Minute)
+
+	// Join with plan table and add plan status conditions
 	where := fmt.Sprintf(
-		`is_terminated = 0 AND is_paused = 0 AND (
-			(next_trigger_time <= '%s' AND status IN (0, 4)) OR
-			(status = 1 AND last_trigger_time IS NOT NULL AND last_trigger_time <= '%s')
+		`pei.is_terminated = 0 AND pei.is_paused = 0 AND 
+		 p.plan_id = pei.plan_id AND p.del_state = 0 AND p.status = 1 AND p.is_terminated = 0 AND p.is_paused = 0 AND
+		 (
+			(pei.next_trigger_time <= '%s' AND pei.status IN (0, 4)) OR
+			(pei.status = 1 AND pei.last_trigger_time IS NOT NULL AND pei.last_trigger_time <= '%s')
 		)`,
 		carbon.CreateFromStdTime(currentTime).ToDateTimeString(),
 		carbon.CreateFromStdTime(timeoutThreshold).ToDateTimeString(),
@@ -78,7 +86,9 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 	}
 
 	ssql := fmt.Sprintf(
-		`SELECT %s FROM %s WHERE %s ORDER BY %s LIMIT 1`,
+		`SELECT %s FROM %s pei 
+		 JOIN plan p ON p.plan_id = pei.plan_id 
+		 WHERE %s ORDER BY %s LIMIT 1`,
 		planExecItemRows,
 		m.table,
 		where,

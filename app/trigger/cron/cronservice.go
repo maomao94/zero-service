@@ -15,6 +15,7 @@ import (
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"github.com/zeromicro/go-zero/core/threading"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
@@ -51,33 +52,35 @@ func (s *CronService) Stop() {
 
 // ScanPlanExecItem scans the plan_exec_item table and triggers items that need execution
 func (s *CronService) ScanPlanExecItem() {
-	ctx := context.Background()
+	threading.GoSafe(func() {
+		ctx := context.Background()
 
-	// Try to lock one plan exec item that needs triggering
-	// Set an expiration of 10 seconds to prevent long-term locking
-	execItem, err := s.svcCtx.PlanExecItemModel.LockTriggerItem(ctx, 10*time.Second)
-	if err != nil {
-		if err == sqlx.ErrNotFound {
+		// Try to lock one plan exec item that needs triggering
+		// Set an expiration of 10 seconds to prevent long-term locking
+		execItem, err := s.svcCtx.PlanExecItemModel.LockTriggerItem(ctx, 10*time.Second)
+		if err != nil {
+			if err == sqlx.ErrNotFound {
+				return
+			}
+			logx.Errorf("Error locking plan exec item: %v", err)
 			return
 		}
-		logx.Errorf("Error locking plan exec item: %v", err)
-		return
-	}
 
-	if execItem == nil {
-		// No item needs triggering, just return
-		return
-	}
+		if execItem == nil {
+			// No item needs triggering, just return
+			return
+		}
 
-	logx.Infof("Found plan exec item to trigger: id=%d, planId=%s, itemId=%s, nextTriggerTime=%v",
-		execItem.Id,
-		execItem.PlanId,
-		execItem.ItemId,
-		execItem.NextTriggerTime,
-	)
+		logx.Infof("Found plan exec item to trigger: id=%d, planId=%s, itemId=%s, nextTriggerTime=%v",
+			execItem.Id,
+			execItem.PlanId,
+			execItem.ItemId,
+			execItem.NextTriggerTime,
+		)
 
-	// Execute the callback logic
-	s.ExecuteCallback(ctx, execItem)
+		// Execute the callback logic
+		s.ExecuteCallback(ctx, execItem)
+	})
 }
 
 // rawCodec is a custom codec for gRPC that handles raw protobuf bytes
