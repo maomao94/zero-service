@@ -21,5 +21,6 @@ type Config struct {
 	DB      struct {
 		DataSource string
 	}
-	GracePeriod time.Duration `json:",default=30s"`
+	DisableStmtLog bool          `json:",optional"`
+	GracePeriod    time.Duration `json:",default=30s"`
 }

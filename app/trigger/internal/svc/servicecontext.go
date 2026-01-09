@@ -9,6 +9,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/collection"
+	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"github.com/zeromicro/go-zero/rest/httpc"
 )
 
@@ -27,6 +28,9 @@ type ServiceContext struct {
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
+	if c.DisableStmtLog {
+		sqlx.DisableStmtLog()
+	}
 	return &ServiceContext{
 		Config:            c,
 		Validate:          validator.New(),

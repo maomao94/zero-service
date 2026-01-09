@@ -7,7 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"zero-service/common/tool"
+
 	"github.com/dromara/carbon/v2"
+	"github.com/zeromicro/go-zero/core/mathx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
@@ -24,16 +27,21 @@ type (
 		// 更新执行项状态为执行中
 		UpdateStatusToRunning(ctx context.Context, id int64) error
 		// 更新执行项状态为已完成
-		UpdateStatusToCompleted(ctx context.Context, id int64, result string) error
+		UpdateStatusToCompleted(ctx context.Context, id int64, lastResult, errMsg string) error
 		// 更新执行项状态为失败
-		UpdateStatusToFailed(ctx context.Context, id int64, errMsg string) error
+		UpdateStatusToFailed(ctx context.Context, id int64, lastResult, errMsg string) error
 		// 更新执行项状态为延期
-		UpdateStatusToDelayed(ctx context.Context, id int64, delayReason string, nextTriggerTime string) error
+		UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, errMsg string, nextTriggerTime string) error
 	}
 
 	customPlanExecItemModel struct {
 		*defaultPlanExecItemModel
+		unstableExpiry mathx.Unstable
 	}
+)
+
+const (
+	retryInterval = time.Second * 10
 )
 
 // NewPlanExecItemModel returns a model for the database table.
@@ -51,7 +59,7 @@ func (m *customPlanExecItemModel) withSession(session sqlx.Session) PlanExecItem
 func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn time.Duration) (*PlanExecItem, error) {
 	// 准备SQL查询，获取需要触发的执行项
 	// 条件：
-	// 1. 执行项状态为待执行(0)或延期(4)
+	// 1. 执行项状态为待执行(0)或失败(3)或延期(4)
 	// 2. 下次触发时间 <= 当前时间
 	// 3. 执行项未终止
 	// 4. 执行项未暂停
@@ -68,7 +76,7 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 		`pei.is_terminated = 0 AND pei.is_paused = 0 AND 
 		 p.plan_id = pei.plan_id AND p.del_state = 0 AND p.status = 1 AND p.is_terminated = 0 AND p.is_paused = 0 AND
 		 (
-			(pei.next_trigger_time <= '%s' AND pei.status IN (0, 4)) OR
+			(pei.next_trigger_time <= '%s' AND pei.status IN (0, 3, 4)) OR
 			(pei.status = 1 AND pei.last_trigger_time IS NOT NULL AND pei.last_trigger_time <= '%s')
 		)`,
 		carbon.CreateFromStdTime(currentTime).ToDateTimeString(),
@@ -131,7 +139,7 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 // UpdateStatusToRunning 更新执行项状态为执行中
 func (m *customPlanExecItemModel) UpdateStatusToRunning(ctx context.Context, id int64) error {
 	sql := fmt.Sprintf(
-		`UPDATE %s SET status = 1, last_trigger_time = '%s', trigger_count = trigger_count + 1 WHERE id = %d`,
+		`UPDATE %s SET status = 1, last_result = 'running', last_trigger_time = '%s', trigger_count = trigger_count + 1 WHERE id = %d`,
 		m.table,
 		carbon.Now().ToDateTimeString(),
 		id,
@@ -141,23 +149,11 @@ func (m *customPlanExecItemModel) UpdateStatusToRunning(ctx context.Context, id 
 }
 
 // UpdateStatusToCompleted 更新执行项状态为已完成
-func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, id int64, result string) error {
+func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, id int64, lastResult, errMsg string) error {
 	sql := fmt.Sprintf(
-		`UPDATE %s SET status = 2, last_result = '%s', last_trigger_time = '%s' WHERE id = %d`,
+		`UPDATE %s SET status = 2, last_result = '%s', last_error = '%s', last_trigger_time = '%s' WHERE id = %d`,
 		m.table,
-		result,
-		carbon.Now().ToDateTimeString(),
-		id,
-	)
-	_, err := m.conn.ExecCtx(ctx, sql)
-	return err
-}
-
-// UpdateStatusToFailed 更新执行项状态为失败
-func (m *customPlanExecItemModel) UpdateStatusToFailed(ctx context.Context, id int64, errMsg string) error {
-	sql := fmt.Sprintf(
-		`UPDATE %s SET status = 3, last_error = '%s', last_trigger_time = '%s' WHERE id = %d`,
-		m.table,
+		lastResult,
 		errMsg,
 		carbon.Now().ToDateTimeString(),
 		id,
@@ -166,12 +162,71 @@ func (m *customPlanExecItemModel) UpdateStatusToFailed(ctx context.Context, id i
 	return err
 }
 
-// UpdateStatusToDelayed 更新执行项状态为延期
-func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id int64, delayReason string, nextTriggerTime string) error {
-	sql := fmt.Sprintf(
-		`UPDATE %s SET status = 4, last_result = '%s', next_trigger_time = '%s', last_trigger_time = '%s' WHERE id = %d`,
+// UpdateStatusToFailed 更新执行项状态为失败
+// Implements exponential backoff strategy for failed tasks
+// Terminates the item if it has exceeded the 7-day maximum detection time
+func (m *customPlanExecItemModel) UpdateStatusToFailed(ctx context.Context, id int64, lastResult, errMsg string) error {
+	type ItemInfo struct {
+		TriggerCount int64 `db:"trigger_count"`
+	}
+	var itemInfo ItemInfo
+	getInfoSql := fmt.Sprintf(
+		`SELECT trigger_count FROM %s WHERE id = %d`,
 		m.table,
-		delayReason,
+		id,
+	)
+	if err := m.conn.QueryRowCtx(ctx, &itemInfo, getInfoSql); err != nil {
+		return err
+	}
+
+	triggerCount := itemInfo.TriggerCount
+	defaultTimeout := retryInterval
+
+	nextTriggerTime, isExceeded := tool.CalculateNextTriggerTime(triggerCount, defaultTimeout)
+	carbonNextTriggerTime := carbon.CreateFromStdTime(nextTriggerTime).ToDateTimeString()
+
+	var sql string
+	if isExceeded {
+		sql = fmt.Sprintf(
+			`UPDATE %s SET status = 5, last_result = '%s', last_error = '%s', 
+			 next_trigger_time = '%s', last_trigger_time = '%s', 
+			 trigger_count = trigger_count + 1, is_terminated = 1, 
+			 terminated_time = '%s', terminated_reason = '超过重试上限，自动终止' WHERE id = %d`,
+			m.table,
+			lastResult,
+			errMsg,
+			carbonNextTriggerTime,
+			carbon.Now().ToDateTimeString(),
+			carbon.Now().ToDateTimeString(),
+			id,
+		)
+	} else {
+		sql := fmt.Sprintf(
+			`UPDATE %s SET status = 3, last_result = '%s', last_error = '%s', 
+			 next_trigger_time = '%s', last_trigger_time = '%s', 
+			 trigger_count = trigger_count + 1 WHERE id = %d`,
+			m.table,
+			lastResult,
+			errMsg,
+			carbonNextTriggerTime,
+			carbon.Now().ToDateTimeString(),
+			id,
+		)
+		_, err := m.conn.ExecCtx(ctx, sql)
+		return err
+	}
+
+	_, err := m.conn.ExecCtx(ctx, sql)
+	return err
+}
+
+// UpdateStatusToDelayed 更新执行项状态为延期
+func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, errMsg string, nextTriggerTime string) error {
+	sql := fmt.Sprintf(
+		`UPDATE %s SET status = 4, last_result = '%s', last_error = '%s', next_trigger_time = '%s', last_trigger_time = '%s' WHERE id = %d`,
+		m.table,
+		lastResult,
+		errMsg,
 		nextTriggerTime,
 		carbon.Now().ToDateTimeString(),
 		id,

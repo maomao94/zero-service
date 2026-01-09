@@ -6,6 +6,7 @@ import (
 	"zero-service/facade/streamevent/internal/svc"
 	"zero-service/facade/streamevent/streamevent"
 
+	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -26,8 +27,11 @@ func NewHandlerPlanTaskEventLogic(ctx context.Context, svcCtx *svc.ServiceContex
 // 计划任务事件处理
 func (l *HandlerPlanTaskEventLogic) HandlerPlanTaskEvent(in *streamevent.HandlerPlanTaskEventReq) (*streamevent.HandlerPlanTaskEventRes, error) {
 	return &streamevent.HandlerPlanTaskEventRes{
-		ExecResult:  1,
-		Message:     "success",
-		DelayConfig: nil,
+		ExecResult: 2,
+		Message:    "延期",
+		DelayConfig: &streamevent.PbDelayConfig{
+			NextTriggerTime: carbon.Now().AddSeconds(500).ToDateTimeString(),
+			DelayReason:     "延时 500秒",
+		},
 	}, nil
 }
