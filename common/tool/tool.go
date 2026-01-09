@@ -53,20 +53,27 @@ func ToProtoBytes(v interface{}) ([]byte, error) {
 		return nil, fmt.Errorf("input is nil")
 	}
 
-	// 先判断接口实现，避免漏掉指针类型
-	if msg, ok := v.(proto.Message); ok {
-		return proto.Marshal(msg)
-	}
-
 	rv := reflect.ValueOf(v)
-	if rv.Kind() == reflect.Ptr {
+	var msg proto.Message
+	var ok bool
+	switch rv.Kind() {
+	case reflect.Ptr:
 		if rv.IsNil() {
 			return nil, fmt.Errorf("nil pointer")
 		}
-		return convertor.ToBytes(rv.Elem().Interface())
-	} else {
-		return convertor.ToBytes(v)
+		msg, ok = v.(proto.Message)
+	case reflect.Struct:
+		msg, ok = rv.Addr().Interface().(proto.Message)
+	default:
+		ok = false
 	}
+	if ok {
+		return proto.Marshal(msg)
+	}
+	if rv.Kind() == reflect.Ptr {
+		return convertor.ToBytes(rv.Elem().Interface())
+	}
+	return convertor.ToBytes(v)
 }
 
 func GenOssFilename(filename, pathPrefix string) string {

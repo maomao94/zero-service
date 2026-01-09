@@ -1,12 +1,12 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "trigger.proto",
+    "title": "mqttstream.proto",
     "version": "version not set"
   },
   "tags": [
     {
-      "name": "TriggerRpc"
+      "name": "MqttStream"
     }
   ],
   "consumes": [
@@ -17,6 +17,35 @@
   ],
   "paths": {},
   "definitions": {
+    "mqttstreamMqttMessage": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "title": "会话ID"
+        },
+        "msgId": {
+          "type": "string",
+          "title": "消息唯一标识"
+        },
+        "topic": {
+          "type": "string",
+          "title": "MQTT主题"
+        },
+        "payload": {
+          "type": "string",
+          "format": "byte",
+          "title": "消息体"
+        },
+        "sendTime": {
+          "type": "string",
+          "title": "消息发送时间"
+        }
+      }
+    },
+    "mqttstreamReceiveMessageRes": {
+      "type": "object"
+    },
     "protobufAny": {
       "type": "object",
       "properties": {

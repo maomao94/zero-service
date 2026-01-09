@@ -38,6 +38,17 @@ const (
 	TriggerRpc_ListArchivedTasks_FullMethodName       = "/trigger.TriggerRpc/ListArchivedTasks"
 	TriggerRpc_ListCompletedTasks_FullMethodName      = "/trigger.TriggerRpc/ListCompletedTasks"
 	TriggerRpc_RunTask_FullMethodName                 = "/trigger.TriggerRpc/RunTask"
+	TriggerRpc_CreatePlanTask_FullMethodName          = "/trigger.TriggerRpc/CreatePlanTask"
+	TriggerRpc_PausePlan_FullMethodName               = "/trigger.TriggerRpc/PausePlan"
+	TriggerRpc_TerminatePlan_FullMethodName           = "/trigger.TriggerRpc/TerminatePlan"
+	TriggerRpc_PausePlanExecItem_FullMethodName       = "/trigger.TriggerRpc/PausePlanExecItem"
+	TriggerRpc_TerminatePlanExecItem_FullMethodName   = "/trigger.TriggerRpc/TerminatePlanExecItem"
+	TriggerRpc_GetPlan_FullMethodName                 = "/trigger.TriggerRpc/GetPlan"
+	TriggerRpc_ListPlans_FullMethodName               = "/trigger.TriggerRpc/ListPlans"
+	TriggerRpc_GetPlanExecItem_FullMethodName         = "/trigger.TriggerRpc/GetPlanExecItem"
+	TriggerRpc_ListPlanExecItems_FullMethodName       = "/trigger.TriggerRpc/ListPlanExecItems"
+	TriggerRpc_GetPlanExecLog_FullMethodName          = "/trigger.TriggerRpc/GetPlanExecLog"
+	TriggerRpc_ListPlanExecLogs_FullMethodName        = "/trigger.TriggerRpc/ListPlanExecLogs"
 )
 
 // TriggerRpcClient is the client API for TriggerRpc service.
@@ -81,6 +92,28 @@ type TriggerRpcClient interface {
 	ListCompletedTasks(ctx context.Context, in *ListCompletedTasksReq, opts ...grpc.CallOption) (*ListCompletedTasksRes, error)
 	// 运行任务
 	RunTask(ctx context.Context, in *RunTaskReq, opts ...grpc.CallOption) (*RunTaskRes, error)
+	// 创建计划任务
+	CreatePlanTask(ctx context.Context, in *CreatePlanTaskReq, opts ...grpc.CallOption) (*CreatePlanTaskRes, error)
+	// 暂停计划
+	PausePlan(ctx context.Context, in *PausePlanReq, opts ...grpc.CallOption) (*PlanOperateRes, error)
+	// 终止计划
+	TerminatePlan(ctx context.Context, in *TerminatePlanReq, opts ...grpc.CallOption) (*TerminatePlanRes, error)
+	// 暂停执行项
+	PausePlanExecItem(ctx context.Context, in *PausePlanExecItemReq, opts ...grpc.CallOption) (*PausePlanExecItemRes, error)
+	// 终止执行项
+	TerminatePlanExecItem(ctx context.Context, in *TerminatePlanExecItemReq, opts ...grpc.CallOption) (*TerminatePlanExecItemRes, error)
+	// 获取计划详情
+	GetPlan(ctx context.Context, in *GetPlanReq, opts ...grpc.CallOption) (*GetPlanRes, error)
+	// 分页获取计划列表
+	ListPlans(ctx context.Context, in *ListPlansReq, opts ...grpc.CallOption) (*ListPlansRes, error)
+	// 获取执行项详情
+	GetPlanExecItem(ctx context.Context, in *GetPlanExecItemReq, opts ...grpc.CallOption) (*GetPlanExecItemRes, error)
+	// 分页获取执行项列表
+	ListPlanExecItems(ctx context.Context, in *ListPlanExecItemsReq, opts ...grpc.CallOption) (*ListPlanExecItemsRes, error)
+	// 获取计划触发日志详情
+	GetPlanExecLog(ctx context.Context, in *GetPlanExecLogReq, opts ...grpc.CallOption) (*GetPlanExecLogRes, error)
+	// 分页获取计划触发日志列表
+	ListPlanExecLogs(ctx context.Context, in *ListPlanExecLogsReq, opts ...grpc.CallOption) (*ListPlanExecLogsRes, error)
 }
 
 type triggerRpcClient struct {
@@ -281,6 +314,116 @@ func (c *triggerRpcClient) RunTask(ctx context.Context, in *RunTaskReq, opts ...
 	return out, nil
 }
 
+func (c *triggerRpcClient) CreatePlanTask(ctx context.Context, in *CreatePlanTaskReq, opts ...grpc.CallOption) (*CreatePlanTaskRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreatePlanTaskRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_CreatePlanTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) PausePlan(ctx context.Context, in *PausePlanReq, opts ...grpc.CallOption) (*PlanOperateRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PlanOperateRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_PausePlan_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) TerminatePlan(ctx context.Context, in *TerminatePlanReq, opts ...grpc.CallOption) (*TerminatePlanRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TerminatePlanRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_TerminatePlan_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) PausePlanExecItem(ctx context.Context, in *PausePlanExecItemReq, opts ...grpc.CallOption) (*PausePlanExecItemRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PausePlanExecItemRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_PausePlanExecItem_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) TerminatePlanExecItem(ctx context.Context, in *TerminatePlanExecItemReq, opts ...grpc.CallOption) (*TerminatePlanExecItemRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TerminatePlanExecItemRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_TerminatePlanExecItem_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) GetPlan(ctx context.Context, in *GetPlanReq, opts ...grpc.CallOption) (*GetPlanRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPlanRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_GetPlan_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) ListPlans(ctx context.Context, in *ListPlansReq, opts ...grpc.CallOption) (*ListPlansRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListPlansRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_ListPlans_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) GetPlanExecItem(ctx context.Context, in *GetPlanExecItemReq, opts ...grpc.CallOption) (*GetPlanExecItemRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPlanExecItemRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_GetPlanExecItem_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) ListPlanExecItems(ctx context.Context, in *ListPlanExecItemsReq, opts ...grpc.CallOption) (*ListPlanExecItemsRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListPlanExecItemsRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_ListPlanExecItems_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) GetPlanExecLog(ctx context.Context, in *GetPlanExecLogReq, opts ...grpc.CallOption) (*GetPlanExecLogRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPlanExecLogRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_GetPlanExecLog_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) ListPlanExecLogs(ctx context.Context, in *ListPlanExecLogsReq, opts ...grpc.CallOption) (*ListPlanExecLogsRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListPlanExecLogsRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_ListPlanExecLogs_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TriggerRpcServer is the server API for TriggerRpc service.
 // All implementations must embed UnimplementedTriggerRpcServer
 // for forward compatibility.
@@ -322,6 +465,28 @@ type TriggerRpcServer interface {
 	ListCompletedTasks(context.Context, *ListCompletedTasksReq) (*ListCompletedTasksRes, error)
 	// 运行任务
 	RunTask(context.Context, *RunTaskReq) (*RunTaskRes, error)
+	// 创建计划任务
+	CreatePlanTask(context.Context, *CreatePlanTaskReq) (*CreatePlanTaskRes, error)
+	// 暂停计划
+	PausePlan(context.Context, *PausePlanReq) (*PlanOperateRes, error)
+	// 终止计划
+	TerminatePlan(context.Context, *TerminatePlanReq) (*TerminatePlanRes, error)
+	// 暂停执行项
+	PausePlanExecItem(context.Context, *PausePlanExecItemReq) (*PausePlanExecItemRes, error)
+	// 终止执行项
+	TerminatePlanExecItem(context.Context, *TerminatePlanExecItemReq) (*TerminatePlanExecItemRes, error)
+	// 获取计划详情
+	GetPlan(context.Context, *GetPlanReq) (*GetPlanRes, error)
+	// 分页获取计划列表
+	ListPlans(context.Context, *ListPlansReq) (*ListPlansRes, error)
+	// 获取执行项详情
+	GetPlanExecItem(context.Context, *GetPlanExecItemReq) (*GetPlanExecItemRes, error)
+	// 分页获取执行项列表
+	ListPlanExecItems(context.Context, *ListPlanExecItemsReq) (*ListPlanExecItemsRes, error)
+	// 获取计划触发日志详情
+	GetPlanExecLog(context.Context, *GetPlanExecLogReq) (*GetPlanExecLogRes, error)
+	// 分页获取计划触发日志列表
+	ListPlanExecLogs(context.Context, *ListPlanExecLogsReq) (*ListPlanExecLogsRes, error)
 	mustEmbedUnimplementedTriggerRpcServer()
 }
 
@@ -388,6 +553,39 @@ func (UnimplementedTriggerRpcServer) ListCompletedTasks(context.Context, *ListCo
 }
 func (UnimplementedTriggerRpcServer) RunTask(context.Context, *RunTaskReq) (*RunTaskRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RunTask not implemented")
+}
+func (UnimplementedTriggerRpcServer) CreatePlanTask(context.Context, *CreatePlanTaskReq) (*CreatePlanTaskRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreatePlanTask not implemented")
+}
+func (UnimplementedTriggerRpcServer) PausePlan(context.Context, *PausePlanReq) (*PlanOperateRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PausePlan not implemented")
+}
+func (UnimplementedTriggerRpcServer) TerminatePlan(context.Context, *TerminatePlanReq) (*TerminatePlanRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TerminatePlan not implemented")
+}
+func (UnimplementedTriggerRpcServer) PausePlanExecItem(context.Context, *PausePlanExecItemReq) (*PausePlanExecItemRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PausePlanExecItem not implemented")
+}
+func (UnimplementedTriggerRpcServer) TerminatePlanExecItem(context.Context, *TerminatePlanExecItemReq) (*TerminatePlanExecItemRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TerminatePlanExecItem not implemented")
+}
+func (UnimplementedTriggerRpcServer) GetPlan(context.Context, *GetPlanReq) (*GetPlanRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPlan not implemented")
+}
+func (UnimplementedTriggerRpcServer) ListPlans(context.Context, *ListPlansReq) (*ListPlansRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListPlans not implemented")
+}
+func (UnimplementedTriggerRpcServer) GetPlanExecItem(context.Context, *GetPlanExecItemReq) (*GetPlanExecItemRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPlanExecItem not implemented")
+}
+func (UnimplementedTriggerRpcServer) ListPlanExecItems(context.Context, *ListPlanExecItemsReq) (*ListPlanExecItemsRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListPlanExecItems not implemented")
+}
+func (UnimplementedTriggerRpcServer) GetPlanExecLog(context.Context, *GetPlanExecLogReq) (*GetPlanExecLogRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPlanExecLog not implemented")
+}
+func (UnimplementedTriggerRpcServer) ListPlanExecLogs(context.Context, *ListPlanExecLogsReq) (*ListPlanExecLogsRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListPlanExecLogs not implemented")
 }
 func (UnimplementedTriggerRpcServer) mustEmbedUnimplementedTriggerRpcServer() {}
 func (UnimplementedTriggerRpcServer) testEmbeddedByValue()                    {}
@@ -752,6 +950,204 @@ func _TriggerRpc_RunTask_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TriggerRpc_CreatePlanTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreatePlanTaskReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).CreatePlanTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_CreatePlanTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).CreatePlanTask(ctx, req.(*CreatePlanTaskReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_PausePlan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PausePlanReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).PausePlan(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_PausePlan_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).PausePlan(ctx, req.(*PausePlanReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_TerminatePlan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TerminatePlanReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).TerminatePlan(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_TerminatePlan_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).TerminatePlan(ctx, req.(*TerminatePlanReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_PausePlanExecItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PausePlanExecItemReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).PausePlanExecItem(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_PausePlanExecItem_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).PausePlanExecItem(ctx, req.(*PausePlanExecItemReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_TerminatePlanExecItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TerminatePlanExecItemReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).TerminatePlanExecItem(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_TerminatePlanExecItem_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).TerminatePlanExecItem(ctx, req.(*TerminatePlanExecItemReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_GetPlan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPlanReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).GetPlan(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_GetPlan_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).GetPlan(ctx, req.(*GetPlanReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_ListPlans_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPlansReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).ListPlans(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_ListPlans_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).ListPlans(ctx, req.(*ListPlansReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_GetPlanExecItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPlanExecItemReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).GetPlanExecItem(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_GetPlanExecItem_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).GetPlanExecItem(ctx, req.(*GetPlanExecItemReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_ListPlanExecItems_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPlanExecItemsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).ListPlanExecItems(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_ListPlanExecItems_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).ListPlanExecItems(ctx, req.(*ListPlanExecItemsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_GetPlanExecLog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPlanExecLogReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).GetPlanExecLog(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_GetPlanExecLog_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).GetPlanExecLog(ctx, req.(*GetPlanExecLogReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_ListPlanExecLogs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPlanExecLogsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).ListPlanExecLogs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_ListPlanExecLogs_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).ListPlanExecLogs(ctx, req.(*ListPlanExecLogsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TriggerRpc_ServiceDesc is the grpc.ServiceDesc for TriggerRpc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -834,6 +1230,50 @@ var TriggerRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RunTask",
 			Handler:    _TriggerRpc_RunTask_Handler,
+		},
+		{
+			MethodName: "CreatePlanTask",
+			Handler:    _TriggerRpc_CreatePlanTask_Handler,
+		},
+		{
+			MethodName: "PausePlan",
+			Handler:    _TriggerRpc_PausePlan_Handler,
+		},
+		{
+			MethodName: "TerminatePlan",
+			Handler:    _TriggerRpc_TerminatePlan_Handler,
+		},
+		{
+			MethodName: "PausePlanExecItem",
+			Handler:    _TriggerRpc_PausePlanExecItem_Handler,
+		},
+		{
+			MethodName: "TerminatePlanExecItem",
+			Handler:    _TriggerRpc_TerminatePlanExecItem_Handler,
+		},
+		{
+			MethodName: "GetPlan",
+			Handler:    _TriggerRpc_GetPlan_Handler,
+		},
+		{
+			MethodName: "ListPlans",
+			Handler:    _TriggerRpc_ListPlans_Handler,
+		},
+		{
+			MethodName: "GetPlanExecItem",
+			Handler:    _TriggerRpc_GetPlanExecItem_Handler,
+		},
+		{
+			MethodName: "ListPlanExecItems",
+			Handler:    _TriggerRpc_ListPlanExecItems_Handler,
+		},
+		{
+			MethodName: "GetPlanExecLog",
+			Handler:    _TriggerRpc_GetPlanExecLog_Handler,
+		},
+		{
+			MethodName: "ListPlanExecLogs",
+			Handler:    _TriggerRpc_ListPlanExecLogs_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -1,9 +1,9 @@
 
 func (m *default{{.upperStartCamelObject}}Model) Update(ctx context.Context,session sqlx.Session, {{if .containsIndexCache}}newData{{else}}data{{end}} *{{.upperStartCamelObject}})  (sql.Result,error) {
-	newData.DeleteTime = sql.NullTime{
+	data.DeleteTime = sql.NullTime{
     		Valid: false,
     }
-    newData.DelState = 0
+    data.DelState = 0
 	{{if .withCache}}{{if .containsIndexCache}}data, err:=m.FindOne(ctx, newData.{{.upperStartCamelPrimaryKey}})
         if err!=nil{
             return nil,err

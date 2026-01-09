@@ -18,6 +18,8 @@ service StreamEvent {
   rpc PushChunkAsdu (PushChunkAsduReq) returns (PushChunkAsduRes);
   // 上行socket标准消息, 可以用于__up__和自定义up事件
   rpc UpSocketMessage (UpSocketMessageReq) returns (UpSocketMessageReq);
+  // 计划任务事件处理
+  rpc HandlerPlanTaskEvent (HandlerPlanTaskEventReq) returns (HandlerPlanTaskEventRes);
 }
 
 message ReceiveMQTTMessageReq {
@@ -451,4 +453,35 @@ message UpSocketMessageReq{
 }
 
 message UpSocketMessageRsp{
+}
+
+message HandlerPlanTaskEventReq{
+  // 计划任务ID
+  string planId = 1;
+  // 计划任务名称
+  string planName = 2;
+  // 任务类型
+  string type = 3;
+  // 执行项ID（必填）：业务实体唯一标识（设备ID/用户ID/转账订单ID等）
+  string itemId = 4;
+  // 执行项名称
+  string itemName = 5;
+  // 业务负载（必填）：序列化的业务专属参数（设备参数/转账金额/订单信息等）
+  string payload = 6;
+}
+
+message HandlerPlanTaskEventRes{
+  // 执行结果 1-成功,2-失败,3-延期
+  int32 execResult = 1;
+  // 结果描述（成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
+  string message = 2;
+  // 延期配置（仅当exec_result=3时生效，无需needDelay开关）
+  PbDelayConfig delayConfig = 3;
+}
+
+message PbDelayConfig {
+  // 下次触发时间（格式：yyyy-MM-dd HH:mm:ss，定时扫描的核心筛选条件）
+  string nextTriggerTime = 1;
+  // 延期原因
+  string delayReason = 2;
 }

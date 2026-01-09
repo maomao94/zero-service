@@ -2,6 +2,13 @@ package logic
 
 import (
 	"context"
+	"regexp"
+	"time"
+	"zero-service/app/trigger/internal/svc"
+	"zero-service/app/trigger/trigger"
+	"zero-service/common/asynqx"
+	"zero-service/common/ctxdata"
+
 	"github.com/dromara/carbon/v2"
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
@@ -10,17 +17,11 @@ import (
 	"github.com/zeromicro/go-zero/core/trace"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
-	"regexp"
-	"time"
-	"zero-service/app/trigger/internal/svc"
-	"zero-service/app/trigger/trigger"
-	"zero-service/common/asynqx"
-	"zero-service/common/ctxdata"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
-var looseRe = regexp.MustCompile(`^(?:(?:[a-zA-Z0-9\-_.]+\.)*[a-zA-Z0-9\-_.]+:\d+|direct://[^/]*/(?:[a-zA-Z0-9\-_.]+:\d+(?:,[a-zA-Z0-9\-_.]+:\d+)*)|nacos://(.+)@([a-zA-Z0-9\-_.]+:\d+)(/[^?\s]*)?(?:\?[^#\s]*)?)$`)
+var GrpcServerRegexp = regexp.MustCompile(`^(?:(?:[a-zA-Z0-9\-_.]+\.)*[a-zA-Z0-9\-_.]+:\d+|direct://[^/]*/(?:[a-zA-Z0-9\-_.]+:\d+(?:,[a-zA-Z0-9\-_.]+:\d+)*)|nacos://(.+)@([a-zA-Z0-9\-_.]+:\d+)(/[^?\s]*)?(?:\?[^#\s]*)?)$`)
 
 type SendProtoTriggerLogic struct {
 	ctx    context.Context
@@ -42,7 +43,7 @@ func (l *SendProtoTriggerLogic) SendProtoTrigger(in *trigger.SendProtoTriggerReq
 	defer span.End()
 	carrier := &propagation.HeaderCarrier{}
 	otel.GetTextMapPropagator().Inject(spanCtx, carrier)
-	matsh := looseRe.MatchString(in.GrpcServer)
+	matsh := GrpcServerRegexp.MatchString(in.GrpcServer)
 	if !matsh {
 		return nil, errors.New("grpcServer is invalid")
 	}

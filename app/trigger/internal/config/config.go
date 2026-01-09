@@ -1,6 +1,10 @@
 package config
 
-import "github.com/zeromicro/go-zero/zrpc"
+import (
+	"time"
+
+	"github.com/zeromicro/go-zero/zrpc"
+)
 
 type Config struct {
 	zrpc.RpcServerConf
@@ -14,4 +18,8 @@ type Config struct {
 		ServiceName string
 	} `json:",optional"`
 	RedisDB int `json:",optional"`
+	DB      struct {
+		DataSource string
+	}
+	GracePeriod time.Duration `json:",default=30s"`
 }

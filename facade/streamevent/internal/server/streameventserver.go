@@ -52,3 +52,9 @@ func (s *StreamEventServer) UpSocketMessage(ctx context.Context, in *streamevent
 	l := logic.NewUpSocketMessageLogic(ctx, s.svcCtx)
 	return l.UpSocketMessage(in)
 }
+
+// 计划任务事件处理
+func (s *StreamEventServer) HandlerPlanTaskEvent(ctx context.Context, in *streamevent.HandlerPlanTaskEventReq) (*streamevent.HandlerPlanTaskEventRes, error) {
+	l := logic.NewHandlerPlanTaskEventLogic(ctx, s.svcCtx)
+	return l.HandlerPlanTaskEvent(in)
+}

@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"zero-service/app/trigger/cron"
 	"zero-service/app/trigger/internal/task"
 	interceptor "zero-service/common/Interceptor/rpcserver"
 	"zero-service/common/asynqx"
@@ -11,6 +12,7 @@ import (
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/proc"
 
 	"zero-service/app/trigger/internal/config"
 	"zero-service/app/trigger/internal/server"
@@ -34,6 +36,7 @@ func main() {
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
+	proc.SetTimeToForceQuit(c.GracePeriod)
 
 	// Print Go version
 	tool.PrintGoVersion()
@@ -77,6 +80,8 @@ func main() {
 	scheduler := asynqx.NewSchedulerServer(ctx.Scheduler)
 	//scheduler.RegisterTest()
 	serviceGroup.Add(scheduler)
+	// cron
+	serviceGroup.Add(cron.NewCronService(ctx))
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
 	serviceGroup.Start()

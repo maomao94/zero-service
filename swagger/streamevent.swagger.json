@@ -1,12 +1,12 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "trigger.proto",
+    "title": "streamevent.proto",
     "version": "version not set"
   },
   "tags": [
     {
-      "name": "TriggerRpc"
+      "name": "StreamEvent"
     }
   ],
   "consumes": [

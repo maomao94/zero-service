@@ -10,6 +10,70 @@ option java_multiple_files = true;
 option java_package = "com.github.trigger.grpc";
 option java_outer_classname = "TriggerProto";
 
+service TriggerRpc {
+  rpc Ping (Req) returns (Res);
+  // 发送 http-post-json 回调
+  rpc SendTrigger(SendTriggerReq) returns(SendTriggerRes);
+  // 发送 grpc proto字节码 回调
+  rpc SendProtoTrigger(SendProtoTriggerReq) returns (SendProtoTriggerRes);
+  // 获取队列列表
+  rpc Queues(QueuesReq) returns (QueuesRes);
+  // 获取队列信息
+  rpc GetQueueInfo(GetQueueInfoReq) returns (GetQueueInfoRes);
+  // 归档任务
+  rpc ArchiveTask(ArchiveTaskReq) returns (ArchiveTaskRes);
+  // 删除任务
+  rpc DeleteTask(DeleteTaskReq) returns (DeleteTaskRes);
+  // 获取任务
+  rpc GetTaskInfo(GetTaskInfoReq) returns (GetTaskInfoRes);
+  // 删除所有已完成任务
+  rpc DeleteAllCompletedTasks(DeleteAllCompletedTasksReq) returns (DeleteAllCompletedTasksRes);
+  // 删除所有已归档任务
+  rpc DeleteAllArchivedTasks(DeleteAllArchivedTasksReq) returns (DeleteAllArchivedTasksRes);
+  // 获取任务历史统计
+  rpc HistoricalStats(HistoricalStatsReq) returns (HistoricalStatsRes);
+  // 获取活跃任务列表
+  rpc ListActiveTasks(ListActiveTasksReq) returns (ListActiveTasksRes);
+  // 获取待处理任务列表
+  rpc ListPendingTasks(ListPendingTasksReq) returns (ListPendingTasksRes);
+  // 获取聚合任务列表
+  rpc ListAggregatingTasks(ListAggregatingTasksReq) returns (ListAggregatingTasksRes);
+  // 获取预定任务列表
+  rpc ListScheduledTasks(ListScheduledTasksReq) returns (ListScheduledTasksRes);
+  // 获取重试任务列表
+  rpc ListRetryTasks(ListRetryTasksReq) returns (ListRetryTasksRes);
+  // 获取已归档任务列表
+  rpc ListArchivedTasks(ListArchivedTasksReq) returns (ListArchivedTasksRes);
+  // 获取已完成任务列表
+  rpc ListCompletedTasks(ListCompletedTasksReq) returns (ListCompletedTasksRes);
+  // 运行任务
+  rpc RunTask(RunTaskReq) returns (RunTaskRes);
+
+
+
+  // 创建计划任务
+  rpc CreatePlanTask(CreatePlanTaskReq) returns (CreatePlanTaskRes);
+  // 暂停计划
+  rpc PausePlan(PausePlanReq) returns (PlanOperateRes);
+  // 终止计划
+  rpc TerminatePlan(TerminatePlanReq) returns (TerminatePlanRes);
+  // 暂停执行项
+  rpc PausePlanExecItem(PausePlanExecItemReq) returns (PausePlanExecItemRes);
+  // 终止执行项
+  rpc TerminatePlanExecItem(TerminatePlanExecItemReq) returns (TerminatePlanExecItemRes);
+  // 获取计划详情
+  rpc GetPlan(GetPlanReq) returns (GetPlanRes);
+  // 分页获取计划列表
+  rpc ListPlans(ListPlansReq) returns (ListPlansRes);
+  // 获取执行项详情
+  rpc GetPlanExecItem(GetPlanExecItemReq) returns (GetPlanExecItemRes);
+  // 分页获取执行项列表
+  rpc ListPlanExecItems(ListPlanExecItemsReq) returns (ListPlanExecItemsRes);
+  // 获取计划触发日志详情
+  rpc GetPlanExecLog(GetPlanExecLogReq) returns (GetPlanExecLogRes);
+  // 分页获取计划触发日志列表
+  rpc ListPlanExecLogs(ListPlanExecLogsReq) returns (ListPlanExecLogsRes);
+}
 
 message PbTaskInfo {
   // ID is the identifier of the task.
@@ -378,42 +442,325 @@ message RunTaskReq {
 message RunTaskRes {
 }
 
-service TriggerRpc {
-  rpc Ping (Req) returns (Res);
-  // 发送 http-post-json 回调
-  rpc SendTrigger(SendTriggerReq) returns(SendTriggerRes);
-  // 发送 grpc proto字节码 回调
-  rpc SendProtoTrigger(SendProtoTriggerReq) returns (SendProtoTriggerRes);
-  // 获取队列列表
-  rpc Queues(QueuesReq) returns (QueuesRes);
-  // 获取队列信息
-  rpc GetQueueInfo(GetQueueInfoReq) returns (GetQueueInfoRes);
-  // 归档任务
-  rpc ArchiveTask(ArchiveTaskReq) returns (ArchiveTaskRes);
-  // 删除任务
-  rpc DeleteTask(DeleteTaskReq) returns (DeleteTaskRes);
-  // 获取任务
-  rpc GetTaskInfo(GetTaskInfoReq) returns (GetTaskInfoRes);
-  // 删除所有已完成任务
-  rpc DeleteAllCompletedTasks(DeleteAllCompletedTasksReq) returns (DeleteAllCompletedTasksRes);
-  // 删除所有已归档任务
-  rpc DeleteAllArchivedTasks(DeleteAllArchivedTasksReq) returns (DeleteAllArchivedTasksRes);
-  // 获取任务历史统计
-  rpc HistoricalStats(HistoricalStatsReq) returns (HistoricalStatsRes);
-  // 获取活跃任务列表
-  rpc ListActiveTasks(ListActiveTasksReq) returns (ListActiveTasksRes);
-  // 获取待处理任务列表
-  rpc ListPendingTasks(ListPendingTasksReq) returns (ListPendingTasksRes);
-  // 获取聚合任务列表
-  rpc ListAggregatingTasks(ListAggregatingTasksReq) returns (ListAggregatingTasksRes);
-  // 获取预定任务列表
-  rpc ListScheduledTasks(ListScheduledTasksReq) returns (ListScheduledTasksRes);
-  // 获取重试任务列表
-  rpc ListRetryTasks(ListRetryTasksReq) returns (ListRetryTasksRes);
-  // 获取已归档任务列表
-  rpc ListArchivedTasks(ListArchivedTasksReq) returns (ListArchivedTasksRes);
-  // 获取已完成任务列表
-  rpc ListCompletedTasks(ListCompletedTasksReq) returns (ListCompletedTasksRes);
-  // 运行任务
-  rpc RunTask(RunTaskReq) returns (RunTaskRes);
+message CreatePlanTaskReq {
+  extproto.CurrentUser currentUser = 100;
+  // 计划任务ID
+  string planId = 1 [(validate.rules).string = {min_len: 1}];
+  // 计划任务名称
+  string planName = 2 [(validate.rules).string = {min_len: 1}];
+  // 任务类型
+  string type = 3 [(validate.rules).string = {min_len: 1}];
+  // 任务分组名称
+  string groupName = 4;
+  // 描述
+  string description = 5 [(validate.rules).string = {max_len: 200}];
+  // 规则生效开始时间
+  // 不传默认本年
+  // 格式：yyyy-MM-dd HH:mm:ss
+  string startTime = 6;
+  // 规则生效结束时间
+  // 不传默认本年
+  // 格式：yyyy-MM-dd HH:mm:ss
+  string endTime = 7;
+  // 计划规则项
+  PbPlanRule rule = 8 [(validate.rules).message = {required: true}];
+  // 计划执行项
+  repeated PlanExecItem execItems = 9 [(validate.rules).repeated = {min_items: 1}];
+}
+
+message PbPlanRule {
+  // 月（1-12）
+  repeated int32 month = 2 [
+    (validate.rules).repeated = {
+      items: {int32: {gte: 1, lte: 12}}
+    }
+  ];
+  // 月中的第几天（1-31 / -1 表示倒数第 1 天）
+  repeated int32 day = 3 [
+    (validate.rules).repeated = {
+      items: {int32: {gte: -31, lte: 31, not_in: [0]}}
+    }
+  ];
+  // 星期（1-7，1=周一，7=周日）
+  repeated int32 week = 4 [
+    (validate.rules).repeated = {
+      items: {int32: {gte: 1, lte: 7}}
+    }
+  ];
+  // 执行小时（0-23）
+  int32 hour = 5 [(validate.rules).int32 = {gte: 0, lte: 23}];
+  // 执行分钟（0-59）
+  int32 minute = 6 [(validate.rules).int32 = {gte: 0, lte: 59}];
+}
+
+message PlanExecItem {
+  // 执行项ID（必填）：业务实体唯一标识（设备ID/用户ID/转账订单ID等）
+  string itemId = 1 [(validate.rules).string = {min_len: 1}];
+  // 执行项名称（可选）：可视化展示（设备名/用户名/转账订单名等）
+  string itemName = 2;
+  // 业务服务地址（必填）：执行该项的服务地址（grpc/http等）
+  string serviceAddr = 3 [(validate.rules).string = {min_len: 1}];
+  // 业务负载（必填）：序列化的业务专属参数（设备参数/转账金额/订单信息等）
+  string payload = 4;
+  // 请求超时时间 单位: 毫秒 可为空
+  int64 requestTimeout = 5;
+}
+
+message CreatePlanTaskRes {
+  // 唯一追踪 id
+  string traceId = 1;
+  int64 id = 2;
+  repeated string result = 4;
+}
+
+message PausePlanReq {
+  extproto.CurrentUser currentUser = 100;
+  // 计划ID
+  string planId = 1 [(validate.rules).string = {min_len: 1}];
+  // 暂停原因
+  string reason = 2 [(validate.rules).string = {max_len: 200}];
+}
+
+message PlanOperateRes {
+}
+
+message TerminatePlanReq {
+  extproto.CurrentUser currentUser = 100;
+  // 计划ID
+  string planId = 1 [(validate.rules).string = {min_len: 1}];
+  // 终止原因
+  string reason = 2 [(validate.rules).string = {max_len: 200}];
+}
+
+message TerminatePlanRes {
+}
+
+message PausePlanExecItemReq {
+  extproto.CurrentUser currentUser = 100;
+  // 计划ID
+  string planId = 1 [(validate.rules).string = {min_len: 1}];
+  // 执行项ID
+  string itemId = 2 [(validate.rules).string = {min_len: 1}];
+  // 暂停原因
+  string reason = 3 [(validate.rules).string = {max_len: 200}];
+}
+
+message PausePlanExecItemRes {
+}
+
+message TerminatePlanExecItemReq {
+  extproto.CurrentUser currentUser = 100;
+  // 计划ID
+  string planId = 1 [(validate.rules).string = {min_len: 1}];
+  // 执行项ID
+  string itemId = 2 [(validate.rules).string = {min_len: 1}];
+  // 终止原因
+  string reason = 3 [(validate.rules).string = {max_len: 200}];
+}
+
+message TerminatePlanExecItemRes {
+}
+
+message GetPlanReq {
+  extproto.CurrentUser currentUser = 100;
+  // 计划ID
+  string planId = 1 [(validate.rules).string = {min_len: 1}];
+}
+
+message GetPlanRes {
+  PbPlan plan = 1;
+}
+
+message PbPlan{
+  // 计划ID
+  string planId = 1;
+  // 计划名称
+  string planName = 2;
+  // 任务类型
+  string type = 3;
+  // 任务分组名称
+  string groupName = 4;
+  // 描述
+  string description = 5;
+  // 规则生效开始时间
+  string startTime = 6;
+  // 规则生效结束时间
+  string endTime = 7;
+  // 计划规则项
+  PbPlanRule rule = 8;
+  // 状态：0-禁用，1-启用，2-已终止，3-暂停
+  int32 status = 9;
+  // 是否已终止
+  bool isTerminated = 10;
+  // 终止时间
+  string terminatedTime = 11;
+  // 终止原因
+  string terminatedReason = 12;
+  // 是否已暂停
+  bool isPaused = 13;
+  // 暂停时间
+  string pausedTime = 14;
+  // 暂停原因
+  string pausedReason = 15;
+}
+
+message ListPlansReq {
+  extproto.CurrentUser currentUser = 100;
+  // 分页大小
+  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0}];
+  // 页码
+  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0}];
+  // 计划ID模糊查询
+  string planId = 3;
+  // 计划名称模糊查询
+  string planName = 4;
+  // 状态：0-禁用，1-启用，2-已终止，3-暂停
+  repeated int32 status = 5;
+  // 任务类型
+  string type = 6;
+}
+
+message ListPlansRes {
+  // 计划列表
+  repeated PbPlan plans = 1;
+  // 总记录数
+  int64 total = 2;
+}
+
+// 获取执行项详情请求
+message GetPlanExecItemReq {
+  extproto.CurrentUser currentUser = 100;
+  // 计划ID
+  string planId = 1 [(validate.rules).string = {min_len: 1}];
+  // 执行项ID
+  string itemId = 2 [(validate.rules).string = {min_len: 1}];
+}
+
+message GetPlanExecItemRes {
+  PbPlanExecItem planExecItem = 1;
+}
+
+message PbPlanExecItem {
+  // 计划ID
+  string planId = 1;
+  // 执行项ID
+  string itemId = 2;
+  // 执行项名称
+  string itemName = 3;
+  // 执行顺序
+  int32 execOrder = 4;
+  // 业务服务地址
+  string serviceAddr = 5;
+  // 业务负载
+  string payload = 6;
+  // 请求超时时间（毫秒）
+  int64 requestTimeout = 7;
+  // 计划触发时间
+  string planTriggerTime = 8;
+  // 下次触发时间
+  string nextTriggerTime = 9;
+  // 上次触发时间
+  string lastTriggerTime = 10;
+  // 触发次数
+  int32 triggerCount = 11;
+  // 状态：0-待执行，1-执行中，2-完成，3-失败，4-延期，5-已终止，6-暂停
+  int32 status = 12;
+  // 上次执行结果
+  string lastResult = 13;
+  // 上次错误信息
+  string lastError = 14;
+  // 是否已终止
+  bool isTerminated = 15;
+  // 终止时间
+  string terminatedTime = 16;
+  // 终止原因
+  string terminatedReason = 17;
+  // 是否已暂停
+  bool isPaused = 18;
+  // 暂停时间
+  string pausedTime = 19;
+  // 暂停原因
+  string pausedReason = 20;
+}
+
+message ListPlanExecItemsReq {
+  extproto.CurrentUser currentUser = 100;
+  // 分页大小
+  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0}];
+  // 页码
+  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0}];
+  // 计划ID
+  string planId = 3 [(validate.rules).string = {min_len: 1}];
+  // 执行项ID模糊查询
+  string itemId = 4;
+  // 执行项名称模糊查询
+  string itemName = 5;
+  // 状态：0-待执行，1-执行中，2-完成，3-失败，4-延期，5-已终止，6-暂停
+  repeated int32 status = 6;
+}
+
+message ListPlanExecItemsRes {
+  // 执行项列表
+  repeated PbPlanExecItem  planExecItems = 1;
+  // 总记录数
+  int64 total = 2;
+}
+
+message GetPlanExecLogReq {
+  extproto.CurrentUser currentUser = 100;
+  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
+}
+
+message GetPlanExecLogRes {
+  PbPlanExecLog planExecLog = 1;
+}
+
+message PbPlanExecLog {
+  // 日志ID
+  int64 logId = 1;
+  // 计划ID
+  string planId = 2;
+  // 计划名称
+  string planName = 3;
+  // 执行项ID
+  string itemId = 4;
+  // 执行项名称
+  string itemName = 5;
+  // 触发时间
+  string triggerTime = 6;
+  // 执行结果：1-成功，2-失败，3-延期
+  int32 execResult = 7;
+  // 结果描述
+  string message = 8;
+  // 业务负载
+  string payload = 9;
+  // 错误详情
+  string errorDetail = 10;
+}
+
+// 分页获取计划触发日志列表请求
+message ListPlanExecLogsReq {
+  extproto.CurrentUser currentUser = 100;
+  // 分页大小
+  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0}];
+  // 页码
+  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0}];
+  // 计划ID
+  string planId = 3;
+  // 执行项ID
+  string itemId = 4;
+  // 开始时间
+  string startTime = 5;
+  // 结束时间
+  string endTime = 6;
+  // 执行结果：1-成功，2-失败，3-延期
+  repeated int32 execResult = 7;
+}
+
+// 分页获取计划触发日志列表响应
+message ListPlanExecLogsRes {
+  // 日志列表
+  repeated PbPlanExecLog planExecLogs = 1;
+  // 总记录数
+  int64 total = 2;
 }

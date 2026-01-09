@@ -37,6 +37,7 @@ require (
 	github.com/songzhibin97/gkit v1.2.13
 	github.com/spf13/cast v1.10.0
 	github.com/taosdata/driver-go/v3 v3.7.7
+	github.com/teambition/rrule-go v1.8.2
 	github.com/tidwall/gjson v1.18.0
 	github.com/twpayne/go-geom v1.6.1
 	github.com/u2takey/ffmpeg-go v0.5.0
