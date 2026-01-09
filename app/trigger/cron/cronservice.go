@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"time"
 	"zero-service/app/trigger/internal/svc"
 	interceptor "zero-service/common/Interceptor/rpcclient"
@@ -11,7 +12,6 @@ import (
 	"zero-service/facade/streamevent/streamevent"
 	"zero-service/model"
 
-	"github.com/robfig/cron/v3"
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -22,51 +22,80 @@ import (
 )
 
 type CronService struct {
-	c      *cron.Cron
-	svcCtx *svc.ServiceContext
+	cancelChan chan struct{}
+	svcCtx     *svc.ServiceContext
 }
 
 func NewCronService(svcCtx *svc.ServiceContext) *CronService {
-	service := &CronService{
-		c:      cron.New(cron.WithSeconds()),
+	return &CronService{
 		svcCtx: svcCtx,
 	}
-
-	// Add scan table job to scan plan_exec_item every second
-	_, err := service.c.AddFunc("@every 1s", service.ScanPlanExecItem)
-	if err != nil {
-		log.Fatalf("Failed to add scan plan exec item job: %v", err)
-	}
-
-	return service
 }
 
 func (s *CronService) Start() {
-	s.c.Start()
-	log.Print("Starting cron server \n")
+	if s.cancelChan != nil {
+		return
+	}
+	// Create cancellation channel for proper goroutine termination
+	s.cancelChan = make(chan struct{})
+	log.Print("Starting cron service \n")
+
+	go s.scanLoop()
 }
 
 func (s *CronService) Stop() {
-	s.c.Stop()
+	if s.cancelChan != nil {
+		// Close the cancellation channel to signal goroutine termination
+		close(s.cancelChan)
+		s.cancelChan = nil
+		log.Print("Stopping cron service \n")
+	}
 }
 
-// ScanPlanExecItem scans the plan_exec_item table and triggers items that need execution
-func (s *CronService) ScanPlanExecItem() {
-	ctx := context.Background()
+func (s *CronService) scanLoop() {
+	for {
+		// Check if cancellation channel is closed
+		select {
+		case <-s.cancelChan:
+			// Channel closed, exit the loop
+			return
+		default:
+			// Continue with scan
+		}
 
-	// Try to lock one plan exec item that needs triggering
-	// Set an expiration of 10 seconds to prevent long-term locking
-	execItem, err := s.svcCtx.PlanExecItemModel.LockTriggerItem(ctx, 10*time.Second)
+		threading.RunSafe(func() {
+			itemsProcessed := s.ScanPlanExecItem()
+			var sleepDuration time.Duration
+			if itemsProcessed {
+				sleepDuration = 100 * time.Millisecond
+			} else {
+				sleepDuration = time.Duration(1000+rand.Intn(1000)) * time.Millisecond
+			}
+
+			// Sleep with cancellation check
+			select {
+			case <-s.cancelChan:
+				// Channel closed during sleep, exit
+				return
+			case <-time.After(sleepDuration):
+				// Sleep completed normally
+			}
+		})
+	}
+}
+
+func (s *CronService) ScanPlanExecItem() bool {
+	ctx := context.Background()
+	execItem, err := s.svcCtx.PlanExecItemModel.LockTriggerItem(ctx, 5*60*time.Second)
 	if err != nil {
 		if err == sqlx.ErrNotFound {
-			return
+			return false
 		}
 		logx.Errorf("Error locking plan exec item: %v", err)
-		return
+		return false
 	}
 	if execItem == nil {
-		// No item needs triggering, just return
-		return
+		return false
 	}
 	threading.GoSafe(func() {
 		logx.Infof("Found plan exec item to trigger: id=%d, planId=%s, itemId=%s, nextTriggerTime=%v",
@@ -77,13 +106,10 @@ func (s *CronService) ScanPlanExecItem() {
 		)
 
 		plan, _ := s.svcCtx.PlanModel.FindOneByPlanId(ctx, execItem.PlanId)
-		// Execute the callback logic
 		s.ExecuteCallback(ctx, execItem, plan)
 	})
+	return true
 }
-
-// rawCodec is a custom codec for gRPC that handles raw protobuf bytes
-// This is needed for compatibility with the existing codebase pattern
 
 type rawCodec struct{}
 
@@ -102,13 +128,11 @@ func (cb rawCodec) Unmarshal(data []byte, v any) error {
 
 func (cb rawCodec) Name() string { return "proto_raw" }
 
-// ExecuteCallback executes the callback to the streamevent service
 func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanExecItem, plan *model.Plan) {
 	grpcServer := tool.MayReplaceLocalhost(execItem.ServiceAddr)
 	logx.Infof("Executing callback for exec item %d with service: %s, planId: %s, itemId: %s",
 		execItem.Id, grpcServer, execItem.PlanId, execItem.ItemId)
 
-	// Update status to running before executing callback
 	if err := s.svcCtx.PlanExecItemModel.UpdateStatusToRunning(ctx, execItem.Id); err != nil {
 		logx.Errorf("Error updating plan exec item %d to running: %v", execItem.Id, err)
 		return
@@ -119,7 +143,6 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	clientConf.NonBlock = true
 	clientConf.Timeout = 60000
 
-	// Get existing connection from ConnMap or create new one
 	v, ok := s.svcCtx.ConnMap.Get(grpcServer)
 	if !ok {
 		conn, err := zrpc.NewClient(clientConf,
@@ -127,50 +150,42 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 			zrpc.WithDialOption(grpc.WithDefaultCallOptions(grpc.ForceCodec(rawCodec{}))))
 		if err != nil {
 			logx.Errorf("Failed to create gRPC client for %s: %v", grpcServer, err)
-			// Update status to failed
 			if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFailed(ctx, execItem.Id, "Failed to create gRPC client: "+err.Error()); updateErr != nil {
 				logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
 			}
 			return
 		}
-		// Store the connection in ConnMap for reuse
 		s.svcCtx.ConnMap.Set(grpcServer, conn)
 		v = conn
 		logx.Infof("gRPC client inited for %s", grpcServer)
 	}
 	if v == nil {
 		logx.Errorf("gRPC client is nil for %s", grpcServer)
-		// Update status to failed
 		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFailed(ctx, execItem.Id, "gRPC client is nil"); updateErr != nil {
 			logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
 		}
 		return
 	}
 
-	// Use the connection to create client
 	cli, ok := v.(*zrpc.RpcClient)
 	if !ok {
 		logx.Errorf("Invalid connection type in ConnMap for %s", grpcServer)
-		// Update status to failed
 		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFailed(ctx, execItem.Id, "Invalid connection type in ConnMap"); updateErr != nil {
 			logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
 		}
 		return
 	}
 
-	// Set request timeout
 	if execItem.RequestTimeout == 0 {
 		execItem.RequestTimeout = clientConf.Timeout
 	}
 
-	// Create context with timeout if needed
 	var cancel context.CancelFunc
 	if execItem.RequestTimeout > 0 {
 		ctx, cancel = context.WithTimeout(ctx, time.Duration(execItem.RequestTimeout)*time.Millisecond)
 		defer cancel()
 	}
 
-	// Create request message
 	req := &streamevent.HandlerPlanTaskEventReq{
 		PlanId:   execItem.PlanId,
 		PlanName: plan.PlanName,
@@ -183,7 +198,6 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	in, err := tool.ToProtoBytes(req)
 	if err != nil {
 		logx.Errorf("Error marshaling request for exec item %d: %v", execItem.Id, err)
-		// Update status to failed
 		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFailed(ctx, execItem.Id, "Error marshaling request: "+err.Error()); updateErr != nil {
 			logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
 		}
@@ -192,7 +206,6 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	err = cli.Conn().Invoke(ctx, streamevent.StreamEvent_HandlerPlanTaskEvent_FullMethodName, &in, &respBytes)
 	if err != nil {
 		logx.Errorf("gRPC call failed for exec item %d: %v", execItem.Id, err)
-		// Update status to failed
 		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFailed(ctx, execItem.Id, "gRPC call failed: "+err.Error()); updateErr != nil {
 			logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
 		}
@@ -202,13 +215,11 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	err = proto.Unmarshal(respBytes, res)
 	if err != nil {
 		logx.Errorf("Error unmarshaling response for exec item %d: %v", execItem.Id, err)
-		// Update status to failed
 		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFailed(ctx, execItem.Id, "Error unmarshaling response: "+err.Error()); updateErr != nil {
 			logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
 		}
 		return
 	}
-	// Handle response based on execResult
 	switch res.ExecResult {
 	case 1: // Success
 		logx.Infof("gRPC call succeeded for exec item %d", execItem.Id)
