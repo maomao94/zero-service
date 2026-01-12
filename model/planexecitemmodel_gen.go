@@ -29,8 +29,6 @@ type (
 	planExecItemModel interface {
 		Insert(ctx context.Context, session sqlx.Session, data *PlanExecItem) (sql.Result, error)
 		FindOne(ctx context.Context, id int64) (*PlanExecItem, error)
-		FindOneByItemId(ctx context.Context, itemId string) (*PlanExecItem, error)
-		FindOneByPlanIdItemId(ctx context.Context, planId string, itemId string) (*PlanExecItem, error)
 		Update(ctx context.Context, session sqlx.Session, data *PlanExecItem) (sql.Result, error)
 		UpdateWithVersion(ctx context.Context, session sqlx.Session, data *PlanExecItem) error
 		Trans(ctx context.Context, fn func(ctx context.Context, session sqlx.Session) error) error
@@ -72,7 +70,6 @@ type (
 		ItemName         string       `db:"item_name"`         // 执行项名称
 		PointId          string       `db:"point_id"`          // 点位id
 		ServiceAddr      string       `db:"service_addr"`      // 业务服务地址
-		Method           string       `db:"method"`            // 执行方法名称
 		Payload          string       `db:"payload"`           // 业务负载
 		RequestTimeout   int64        `db:"request_timeout"`   // 请求超时时间（毫秒）
 		PlanTriggerTime  time.Time    `db:"plan_trigger_time"` // 计划触发时间
@@ -121,72 +118,44 @@ func (m *defaultPlanExecItemModel) FindOne(ctx context.Context, id int64) (*Plan
 	}
 }
 
-func (m *defaultPlanExecItemModel) FindOneByItemId(ctx context.Context, itemId string) (*PlanExecItem, error) {
-	var resp PlanExecItem
-	query := fmt.Sprintf("select %s from %s where `item_id` = ?  and del_state = ? limit 1", planExecItemRows, m.table)
-	err := m.conn.QueryRowCtx(ctx, &resp, query, itemId, 0)
-	switch err {
-	case nil:
-		return &resp, nil
-	case sqlx.ErrNotFound:
-		return nil, ErrNotFound
-	default:
-		return nil, err
-	}
-}
-
-func (m *defaultPlanExecItemModel) FindOneByPlanIdItemId(ctx context.Context, planId string, itemId string) (*PlanExecItem, error) {
-	var resp PlanExecItem
-	query := fmt.Sprintf("select %s from %s where `plan_id` = ? and `item_id` = ?  and del_state = ? limit 1", planExecItemRows, m.table)
-	err := m.conn.QueryRowCtx(ctx, &resp, query, planId, itemId, 0)
-	switch err {
-	case nil:
-		return &resp, nil
-	case sqlx.ErrNotFound:
-		return nil, ErrNotFound
-	default:
-		return nil, err
-	}
-}
-
 func (m *defaultPlanExecItemModel) Insert(ctx context.Context, session sqlx.Session, data *PlanExecItem) (sql.Result, error) {
 	data.DeleteTime = sql.NullTime{
 		Valid: false,
 	}
 	data.DelState = 0
 
-	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, planExecItemRowsExpectAutoSet)
+	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, planExecItemRowsExpectAutoSet)
 	if session != nil {
-		return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.PlanId, data.ItemId, data.ItemName, data.PointId, data.ServiceAddr, data.Method, data.Payload, data.RequestTimeout, data.PlanTriggerTime, data.NextTriggerTime, data.LastTriggerTime, data.TriggerCount, data.Status, data.LastResult, data.LastMsg, data.IsTerminated, data.TerminatedTime, data.TerminatedReason, data.IsPaused, data.PausedTime, data.PausedReason)
+		return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.PlanId, data.ItemId, data.ItemName, data.PointId, data.ServiceAddr, data.Payload, data.RequestTimeout, data.PlanTriggerTime, data.NextTriggerTime, data.LastTriggerTime, data.TriggerCount, data.Status, data.LastResult, data.LastMsg, data.IsTerminated, data.TerminatedTime, data.TerminatedReason, data.IsPaused, data.PausedTime, data.PausedReason)
 	}
-	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.PlanId, data.ItemId, data.ItemName, data.PointId, data.ServiceAddr, data.Method, data.Payload, data.RequestTimeout, data.PlanTriggerTime, data.NextTriggerTime, data.LastTriggerTime, data.TriggerCount, data.Status, data.LastResult, data.LastMsg, data.IsTerminated, data.TerminatedTime, data.TerminatedReason, data.IsPaused, data.PausedTime, data.PausedReason)
+	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.PlanId, data.ItemId, data.ItemName, data.PointId, data.ServiceAddr, data.Payload, data.RequestTimeout, data.PlanTriggerTime, data.NextTriggerTime, data.LastTriggerTime, data.TriggerCount, data.Status, data.LastResult, data.LastMsg, data.IsTerminated, data.TerminatedTime, data.TerminatedReason, data.IsPaused, data.PausedTime, data.PausedReason)
 }
 
-func (m *defaultPlanExecItemModel) Update(ctx context.Context, session sqlx.Session, newData *PlanExecItem) (sql.Result, error) {
-	newData.DeleteTime = sql.NullTime{
+func (m *defaultPlanExecItemModel) Update(ctx context.Context, session sqlx.Session, data *PlanExecItem) (sql.Result, error) {
+	data.DeleteTime = sql.NullTime{
 		Valid: false,
 	}
-	newData.DelState = 0
+	data.DelState = 0
 	query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, planExecItemRowsWithPlaceHolder)
 	if session != nil {
-		return session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.PlanId, newData.ItemId, newData.ItemName, newData.PointId, newData.ServiceAddr, newData.Method, newData.Payload, newData.RequestTimeout, newData.PlanTriggerTime, newData.NextTriggerTime, newData.LastTriggerTime, newData.TriggerCount, newData.Status, newData.LastResult, newData.LastMsg, newData.IsTerminated, newData.TerminatedTime, newData.TerminatedReason, newData.IsPaused, newData.PausedTime, newData.PausedReason, newData.Id)
+		return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.PlanId, data.ItemId, data.ItemName, data.PointId, data.ServiceAddr, data.Payload, data.RequestTimeout, data.PlanTriggerTime, data.NextTriggerTime, data.LastTriggerTime, data.TriggerCount, data.Status, data.LastResult, data.LastMsg, data.IsTerminated, data.TerminatedTime, data.TerminatedReason, data.IsPaused, data.PausedTime, data.PausedReason, data.Id)
 	}
-	return m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.PlanId, newData.ItemId, newData.ItemName, newData.PointId, newData.ServiceAddr, newData.Method, newData.Payload, newData.RequestTimeout, newData.PlanTriggerTime, newData.NextTriggerTime, newData.LastTriggerTime, newData.TriggerCount, newData.Status, newData.LastResult, newData.LastMsg, newData.IsTerminated, newData.TerminatedTime, newData.TerminatedReason, newData.IsPaused, newData.PausedTime, newData.PausedReason, newData.Id)
+	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.PlanId, data.ItemId, data.ItemName, data.PointId, data.ServiceAddr, data.Payload, data.RequestTimeout, data.PlanTriggerTime, data.NextTriggerTime, data.LastTriggerTime, data.TriggerCount, data.Status, data.LastResult, data.LastMsg, data.IsTerminated, data.TerminatedTime, data.TerminatedReason, data.IsPaused, data.PausedTime, data.PausedReason, data.Id)
 }
 
-func (m *defaultPlanExecItemModel) UpdateWithVersion(ctx context.Context, session sqlx.Session, newData *PlanExecItem) error {
+func (m *defaultPlanExecItemModel) UpdateWithVersion(ctx context.Context, session sqlx.Session, data *PlanExecItem) error {
 
-	oldVersion := newData.Version
-	newData.Version += 1
+	oldVersion := data.Version
+	data.Version += 1
 
 	var sqlResult sql.Result
 	var err error
 
 	query := fmt.Sprintf("update %s set %s where `id` = ? and version = ? ", m.table, planExecItemRowsWithPlaceHolder)
 	if session != nil {
-		sqlResult, err = session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.PlanId, newData.ItemId, newData.ItemName, newData.PointId, newData.ServiceAddr, newData.Method, newData.Payload, newData.RequestTimeout, newData.PlanTriggerTime, newData.NextTriggerTime, newData.LastTriggerTime, newData.TriggerCount, newData.Status, newData.LastResult, newData.LastMsg, newData.IsTerminated, newData.TerminatedTime, newData.TerminatedReason, newData.IsPaused, newData.PausedTime, newData.PausedReason, newData.Id, oldVersion)
+		sqlResult, err = session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.PlanId, data.ItemId, data.ItemName, data.PointId, data.ServiceAddr, data.Payload, data.RequestTimeout, data.PlanTriggerTime, data.NextTriggerTime, data.LastTriggerTime, data.TriggerCount, data.Status, data.LastResult, data.LastMsg, data.IsTerminated, data.TerminatedTime, data.TerminatedReason, data.IsPaused, data.PausedTime, data.PausedReason, data.Id, oldVersion)
 	} else {
-		sqlResult, err = m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.PlanId, newData.ItemId, newData.ItemName, newData.PointId, newData.ServiceAddr, newData.Method, newData.Payload, newData.RequestTimeout, newData.PlanTriggerTime, newData.NextTriggerTime, newData.LastTriggerTime, newData.TriggerCount, newData.Status, newData.LastResult, newData.LastMsg, newData.IsTerminated, newData.TerminatedTime, newData.TerminatedReason, newData.IsPaused, newData.PausedTime, newData.PausedReason, newData.Id, oldVersion)
+		sqlResult, err = m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.PlanId, data.ItemId, data.ItemName, data.PointId, data.ServiceAddr, data.Payload, data.RequestTimeout, data.PlanTriggerTime, data.NextTriggerTime, data.LastTriggerTime, data.TriggerCount, data.Status, data.LastResult, data.LastMsg, data.IsTerminated, data.TerminatedTime, data.TerminatedReason, data.IsPaused, data.PausedTime, data.PausedReason, data.Id, oldVersion)
 	}
 
 	if err != nil {

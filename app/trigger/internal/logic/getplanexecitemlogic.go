@@ -34,7 +34,7 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 	}
 
 	// 查询执行项
-	execItem, err := l.svcCtx.PlanExecItemModel.FindOneByPlanIdItemId(l.ctx, in.PlanId, in.ItemId)
+	execItem, err := l.svcCtx.PlanExecItemModel.FindOne(l.ctx, in.Id)
 	if err != nil {
 		if err == sqlx.ErrNotFound {
 			return nil, err
@@ -53,7 +53,7 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 		PlanTriggerTime: carbon.CreateFromStdTime(execItem.PlanTriggerTime).ToDateTimeString(),
 		Status:          int32(execItem.Status),
 		LastResult:      execItem.LastResult,
-		LastError:       execItem.LastError,
+		LastMsg:         execItem.LastMsg,
 		IsTerminated:    execItem.IsTerminated == 1,
 		IsPaused:        execItem.IsPaused == 1,
 		TriggerCount:    int32(execItem.TriggerCount),
@@ -82,6 +82,6 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 	}
 
 	return &trigger.GetPlanExecItemRes{
-		PlanExecItem: pbExecItem,
+		PlanExecItem: []*trigger.PbPlanExecItem{pbExecItem},
 	}, nil
 }

@@ -75,7 +75,7 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 			PlanTriggerTime: carbon.CreateFromStdTime(execItem.PlanTriggerTime).ToDateTimeString(),
 			Status:          int32(execItem.Status),
 			LastResult:      execItem.LastResult,
-			LastError:       execItem.LastError,
+			LastMsg:         execItem.LastMsg,
 			IsTerminated:    execItem.IsTerminated == 1,
 			IsPaused:        execItem.IsPaused == 1,
 			TriggerCount:    int32(execItem.TriggerCount),

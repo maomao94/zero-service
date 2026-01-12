@@ -50,7 +50,6 @@ service TriggerRpc {
   rpc RunTask(RunTaskReq) returns (RunTaskRes);
 
 
-
   // 创建计划任务
   rpc CreatePlanTask(CreatePlanTaskReq) returns (CreatePlanTaskRes);
   // 暂停计划
@@ -61,6 +60,8 @@ service TriggerRpc {
   rpc PausePlanExecItem(PausePlanExecItemReq) returns (PausePlanExecItemRes);
   // 终止执行项
   rpc TerminatePlanExecItem(TerminatePlanExecItemReq) returns (TerminatePlanExecItemRes);
+
+
   // 获取计划详情
   rpc GetPlan(GetPlanReq) returns (GetPlanRes);
   // 分页获取计划列表
@@ -69,6 +70,8 @@ service TriggerRpc {
   rpc GetPlanExecItem(GetPlanExecItemReq) returns (GetPlanExecItemRes);
   // 分页获取执行项列表
   rpc ListPlanExecItems(ListPlanExecItemsReq) returns (ListPlanExecItemsRes);
+
+
   // 获取计划触发日志详情
   rpc GetPlanExecLog(GetPlanExecLogReq) returns (GetPlanExecLogRes);
   // 分页获取计划触发日志列表
@@ -444,7 +447,7 @@ message RunTaskRes {
 
 message CreatePlanTaskReq {
   extproto.CurrentUser currentUser = 100;
-  // 计划任务ID
+  // 计划任务ID,全局唯一
   string planId = 1 [(validate.rules).string = {min_len: 1}];
   // 计划任务名称
   string planName = 2 [(validate.rules).string = {min_len: 1}];
@@ -494,18 +497,18 @@ message PbPlanRule {
 }
 
 message PlanExecItem {
-  // 执行项ID（必填）：业务实体唯一标识（设备ID/用户ID/转账订单ID等）
+  // 执行项ID,业务字段
   string itemId = 1 [(validate.rules).string = {min_len: 1}];
-  // 执行项名称（可选）：可视化展示（设备名/用户名/转账订单名等）
+  // 执行项名称,业务字段
   string itemName = 2;
+  // 点位id,业务字段
+  string pointId = 3;
   // 业务服务地址（必填）：执行该项的grpc服务地址
-  string serviceAddr = 3 [(validate.rules).string = {min_len: 1}];
-  // 方法 不可为空
-  string method = 4 [(validate.rules).string = {min_len: 1}];
+  string serviceAddr = 4 [(validate.rules).string = {min_len: 1}];
   // 业务负载（必填）：序列化的业务专属参数（设备参数/转账金额/订单信息等）
-  string payload = 5;
+  string payload = 6;
   // 请求超时时间 单位: 毫秒 可为空
-  int64 requestTimeout = 6;
+  int64 requestTimeout = 7;
 }
 
 message CreatePlanTaskRes {
@@ -536,12 +539,9 @@ message TerminatePlanRes {
 
 message PausePlanExecItemReq {
   extproto.CurrentUser currentUser = 100;
-  // 计划ID
-  string planId = 1 [(validate.rules).string = {min_len: 1}];
-  // 执行项ID
-  string itemId = 2 [(validate.rules).string = {min_len: 1}];
+  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
   // 暂停原因
-  string reason = 3 [(validate.rules).string = {max_len: 200}];
+  string reason = 2 [(validate.rules).string = {max_len: 200}];
 }
 
 message PausePlanExecItemRes {
@@ -549,10 +549,7 @@ message PausePlanExecItemRes {
 
 message TerminatePlanExecItemReq {
   extproto.CurrentUser currentUser = 100;
-  // 计划ID
-  string planId = 1 [(validate.rules).string = {min_len: 1}];
-  // 执行项ID
-  string itemId = 2 [(validate.rules).string = {min_len: 1}];
+  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
   // 终止原因
   string reason = 3 [(validate.rules).string = {max_len: 200}];
 }
@@ -629,14 +626,11 @@ message ListPlansRes {
 // 获取执行项详情请求
 message GetPlanExecItemReq {
   extproto.CurrentUser currentUser = 100;
-  // 计划ID
-  string planId = 1 [(validate.rules).string = {min_len: 1}];
-  // 执行项ID
-  string itemId = 2 [(validate.rules).string = {min_len: 1}];
+  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
 }
 
 message GetPlanExecItemRes {
-  PbPlanExecItem planExecItem = 1;
+  repeated PbPlanExecItem planExecItem = 1;
 }
 
 message PbPlanExecItem {
@@ -666,8 +660,8 @@ message PbPlanExecItem {
   int32 status = 12;
   // 上次执行结果
   string lastResult = 13;
-  // 上次错误信息
-  string lastError = 14;
+  // 上次执行消息
+  string lastMsg = 14;
   // 是否已终止
   bool isTerminated = 15;
   // 终止时间

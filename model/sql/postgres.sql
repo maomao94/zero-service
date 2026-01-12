@@ -1,0 +1,296 @@
+-- PostgreSQL 兼容的 SQL 脚本
+-- 1. 创建插入时触发的函数
+CREATE OR REPLACE FUNCTION insert_modified_time()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+    NEW.create_time = date_trunc('second', NOW()); -- 格式: 2023-10-05 12:34:56
+    NEW.update_time = date_trunc('second', NOW());
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 2. 创建更新时触发的函数
+CREATE OR REPLACE FUNCTION update_modified_update_time()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+    NEW.update_time = date_trunc('second', NOW());
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 3. 创建设备与 IEC104 点位映射表
+CREATE TABLE IF NOT EXISTS device_point_mapping (
+    id BIGSERIAL PRIMARY KEY, 
+    create_time TIMESTAMP NOT NULL, 
+    update_time TIMESTAMP NOT NULL, 
+    delete_time TIMESTAMP NULL, 
+    del_state SMALLINT NOT NULL DEFAULT 0, 
+    version INT NOT NULL DEFAULT 0, 
+    tag_station VARCHAR(64) NOT NULL DEFAULT '', 
+    coa INT NOT NULL DEFAULT 0, 
+    ioa INT NOT NULL DEFAULT 0, 
+    device_id VARCHAR(64) NOT NULL DEFAULT '', 
+    device_name VARCHAR(128) NOT NULL DEFAULT '', 
+    td_table_type VARCHAR(255) NOT NULL DEFAULT '', 
+    enable_push SMALLINT NOT NULL DEFAULT 1, 
+    enable_raw_insert SMALLINT NOT NULL DEFAULT 1, 
+    description VARCHAR(256) NOT NULL DEFAULT '', 
+    ext_1 VARCHAR(64) NOT NULL DEFAULT '', 
+    ext_2 VARCHAR(64) NOT NULL DEFAULT '', 
+    ext_3 VARCHAR(64) NOT NULL DEFAULT '', 
+    ext_4 VARCHAR(64) NOT NULL DEFAULT '', 
+    ext_5 VARCHAR(64) NOT NULL DEFAULT '', 
+    CONSTRAINT uq_device_point_mapping_tag_station_coa_ioa UNIQUE (tag_station, coa, ioa)
+);
+
+-- 为 device_point_mapping 表添加注释
+COMMENT ON TABLE device_point_mapping IS '设备与 IEC104 点位映射表';
+
+-- 为 device_point_mapping 表的列添加注释
+COMMENT ON COLUMN device_point_mapping.id IS '自增主键ID';
+COMMENT ON COLUMN device_point_mapping.create_time IS '创建时间';
+COMMENT ON COLUMN device_point_mapping.update_time IS '更新时间';
+COMMENT ON COLUMN device_point_mapping.delete_time IS '删除时间（软删除标记）';
+COMMENT ON COLUMN device_point_mapping.del_state IS '删除状态：0-未删除，1-已删除';
+COMMENT ON COLUMN device_point_mapping.version IS '版本号（乐观锁）';
+COMMENT ON COLUMN device_point_mapping.tag_station IS '与 TDengine tag_station 对应';
+COMMENT ON COLUMN device_point_mapping.coa IS '与 TDengine coa 对应';
+COMMENT ON COLUMN device_point_mapping.ioa IS '与 TDengine ioa 对应';
+COMMENT ON COLUMN device_point_mapping.device_id IS '设备编号/ID';
+COMMENT ON COLUMN device_point_mapping.device_name IS '设备名称';
+COMMENT ON COLUMN device_point_mapping.td_table_type IS 'TDengine 表类型（遥信表/遥测表等，逗号分隔）';
+COMMENT ON COLUMN device_point_mapping.enable_push IS '是否允许caller服务推送数据：0-不允许，1-允许';
+COMMENT ON COLUMN device_point_mapping.enable_raw_insert IS '是否允许插入 raw 原生数据：0-否，1-是';
+COMMENT ON COLUMN device_point_mapping.description IS '备注信息';
+COMMENT ON COLUMN device_point_mapping.ext_1 IS '扩展字段1，如：alarm, normal, control等，用于主题拆分';
+COMMENT ON COLUMN device_point_mapping.ext_2 IS '扩展字段2';
+COMMENT ON COLUMN device_point_mapping.ext_3 IS '扩展字段3';
+COMMENT ON COLUMN device_point_mapping.ext_4 IS '扩展字段4';
+COMMENT ON COLUMN device_point_mapping.ext_5 IS '扩展字段5';
+
+-- 为 device_point_mapping 表创建触发器
+CREATE TRIGGER "trigger_insert_modified_time"
+    BEFORE INSERT
+    ON "public"."device_point_mapping"
+    FOR EACH ROW
+    EXECUTE PROCEDURE insert_modified_time();
+
+CREATE TRIGGER "trigger_update_modified_time"
+    BEFORE UPDATE
+    ON "public"."device_point_mapping"
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_modified_update_time();
+
+-- 4. 创建计划任务表
+CREATE TABLE IF NOT EXISTS plan (
+    id BIGSERIAL PRIMARY KEY, 
+    create_time TIMESTAMP NOT NULL,
+    update_time TIMESTAMP NOT NULL,
+    delete_time TIMESTAMP NULL, 
+    del_state SMALLINT NOT NULL DEFAULT 0, 
+    version INT NOT NULL DEFAULT 0, 
+    plan_id VARCHAR(64) NOT NULL DEFAULT '', 
+    plan_name VARCHAR(128) NOT NULL DEFAULT '', 
+    type VARCHAR(64) NOT NULL DEFAULT '', 
+    group_id VARCHAR(64) NOT NULL DEFAULT '', 
+    recurrence_rule JSONB NOT NULL DEFAULT '{}'::jsonb, 
+    start_time TIMESTAMP NOT NULL, 
+    end_time TIMESTAMP NOT NULL, 
+    status SMALLINT NOT NULL DEFAULT 0, 
+    is_terminated SMALLINT NOT NULL DEFAULT 0, 
+    is_paused SMALLINT NOT NULL DEFAULT 0, 
+    terminated_time TIMESTAMP NULL, 
+    terminated_reason VARCHAR(256) NOT NULL DEFAULT '', 
+    paused_time TIMESTAMP NULL, 
+    paused_reason VARCHAR(256) NOT NULL DEFAULT '', 
+    description VARCHAR(256) NOT NULL DEFAULT '', 
+    CONSTRAINT uq_plan_plan_id UNIQUE (plan_id)
+);
+
+-- 为 plan 表添加注释
+COMMENT ON TABLE plan IS '计划任务表';
+
+-- 为 plan 表的列添加注释
+COMMENT ON COLUMN plan.id IS '自增主键ID';
+COMMENT ON COLUMN plan.create_time IS '创建时间';
+COMMENT ON COLUMN plan.update_time IS '更新时间';
+COMMENT ON COLUMN plan.delete_time IS '删除时间（软删除标记）';
+COMMENT ON COLUMN plan.del_state IS '删除状态：0-未删除，1-已删除';
+COMMENT ON COLUMN plan.version IS '版本号（乐观锁）';
+COMMENT ON COLUMN plan.plan_id IS '计划唯一标识';
+COMMENT ON COLUMN plan.plan_name IS '计划任务名称';
+COMMENT ON COLUMN plan.type IS '任务类型';
+COMMENT ON COLUMN plan.group_id IS '计划组ID,用于分组管理计划任务';
+COMMENT ON COLUMN plan.recurrence_rule IS '重复规则，JSON格式存储';
+COMMENT ON COLUMN plan.start_time IS '规则生效开始时间';
+COMMENT ON COLUMN plan.end_time IS '规则生效结束时间';
+COMMENT ON COLUMN plan.status IS '状态：0-禁用，1-启用，2-已终止，3-暂停';
+COMMENT ON COLUMN plan.is_terminated IS '是否已终止：0-未终止，1-已终止';
+COMMENT ON COLUMN plan.is_paused IS '是否已暂停：0-未暂停，1-已暂停';
+COMMENT ON COLUMN plan.terminated_time IS '终止时间';
+COMMENT ON COLUMN plan.terminated_reason IS '终止原因';
+COMMENT ON COLUMN plan.paused_time IS '暂停时间';
+COMMENT ON COLUMN plan.paused_reason IS '暂停原因';
+COMMENT ON COLUMN plan.description IS '备注信息';
+
+-- 为 plan 表创建索引
+CREATE INDEX idx_plan_table_type ON plan (type);
+CREATE INDEX idx_plan_table_group_id ON plan (group_id);
+CREATE INDEX idx_plan_table_status ON plan (status);
+CREATE INDEX idx_plan_table_start_time ON plan (start_time);
+CREATE INDEX idx_plan_table_end_time ON plan (end_time);
+CREATE INDEX idx_plan_table_is_terminated ON plan (is_terminated);
+CREATE INDEX idx_plan_table_terminated_time ON plan (terminated_time);
+CREATE INDEX idx_plan_table_is_paused ON plan (is_paused);
+CREATE INDEX idx_plan_table_paused_time ON plan (paused_time);
+
+-- 为 plan 表创建触发器
+CREATE TRIGGER "trigger_insert_modified_time"
+    BEFORE INSERT
+    ON "public"."plan"
+    FOR EACH ROW
+    EXECUTE PROCEDURE insert_modified_time();
+
+CREATE TRIGGER "trigger_update_modified_time"
+    BEFORE UPDATE
+    ON "public"."plan"
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_modified_update_time();
+
+-- 5. 创建计划执行项表
+CREATE TABLE IF NOT EXISTS plan_exec_item (
+    id BIGSERIAL PRIMARY KEY, 
+    create_time TIMESTAMP NOT NULL,
+    update_time TIMESTAMP NOT NULL,
+    delete_time TIMESTAMP NULL, 
+    del_state SMALLINT NOT NULL DEFAULT 0, 
+    version INT NOT NULL DEFAULT 0, 
+    plan_id VARCHAR(64) NOT NULL DEFAULT '', 
+    item_id VARCHAR(64) NOT NULL DEFAULT '', 
+    item_name VARCHAR(128) NOT NULL DEFAULT '', 
+    point_id VARCHAR(64) NOT NULL DEFAULT '', 
+    service_addr VARCHAR(256) NOT NULL DEFAULT '', 
+    payload TEXT NOT NULL DEFAULT '', 
+    request_timeout INT NOT NULL DEFAULT 0, 
+    plan_trigger_time TIMESTAMP NOT NULL, 
+    next_trigger_time TIMESTAMP NOT NULL, 
+    last_trigger_time TIMESTAMP NULL, 
+    trigger_count INT NOT NULL DEFAULT 0, 
+    status SMALLINT NOT NULL DEFAULT 0, 
+    last_result TEXT NOT NULL DEFAULT '', 
+    last_msg TEXT NOT NULL DEFAULT '', 
+    is_terminated SMALLINT NOT NULL DEFAULT 0, 
+    terminated_time TIMESTAMP NULL, 
+    terminated_reason VARCHAR(256) NOT NULL DEFAULT '', 
+    is_paused SMALLINT NOT NULL DEFAULT 0, 
+    paused_time TIMESTAMP NULL, 
+    paused_reason VARCHAR(256) NOT NULL DEFAULT ''
+);
+
+-- 为 plan_exec_item 表添加注释
+COMMENT ON TABLE plan_exec_item IS '计划执行项表';
+
+-- 为 plan_exec_item 表的列添加注释
+COMMENT ON COLUMN plan_exec_item.id IS '自增主键ID';
+COMMENT ON COLUMN plan_exec_item.create_time IS '创建时间';
+COMMENT ON COLUMN plan_exec_item.update_time IS '更新时间';
+COMMENT ON COLUMN plan_exec_item.delete_time IS '删除时间（软删除标记）';
+COMMENT ON COLUMN plan_exec_item.del_state IS '删除状态：0-未删除，1-已删除';
+COMMENT ON COLUMN plan_exec_item.version IS '版本号（乐观锁）';
+COMMENT ON COLUMN plan_exec_item.plan_id IS '关联的计划ID';
+COMMENT ON COLUMN plan_exec_item.item_id IS '执行项ID';
+COMMENT ON COLUMN plan_exec_item.item_name IS '执行项名称';
+COMMENT ON COLUMN plan_exec_item.point_id IS '点位id';
+COMMENT ON COLUMN plan_exec_item.service_addr IS '业务服务地址';
+COMMENT ON COLUMN plan_exec_item.payload IS '业务负载';
+COMMENT ON COLUMN plan_exec_item.request_timeout IS '请求超时时间（毫秒）';
+COMMENT ON COLUMN plan_exec_item.plan_trigger_time IS '计划触发时间';
+COMMENT ON COLUMN plan_exec_item.next_trigger_time IS '下次触发时间（扫表核心字段）';
+COMMENT ON COLUMN plan_exec_item.last_trigger_time IS '上次触发时间';
+COMMENT ON COLUMN plan_exec_item.trigger_count IS '触发次数';
+COMMENT ON COLUMN plan_exec_item.status IS '状态：0-待执行，1-执行中，2-完成，3-失败，4-延期，5-已终止，6-暂停';
+COMMENT ON COLUMN plan_exec_item.last_result IS '上次执行结果';
+COMMENT ON COLUMN plan_exec_item.last_msg IS '上次执行消息';
+COMMENT ON COLUMN plan_exec_item.is_terminated IS '是否已终止：0-未终止，1-已终止';
+COMMENT ON COLUMN plan_exec_item.terminated_time IS '终止时间';
+COMMENT ON COLUMN plan_exec_item.terminated_reason IS '终止原因';
+COMMENT ON COLUMN plan_exec_item.is_paused IS '是否已暂停：0-未暂停，1-已暂停';
+COMMENT ON COLUMN plan_exec_item.paused_time IS '暂停时间';
+COMMENT ON COLUMN plan_exec_item.paused_reason IS '暂停原因';
+
+-- 为 plan_exec_item 表创建索引
+CREATE INDEX idx_plan_exec_item_plan_id_item_id ON plan_exec_item (plan_id, item_id);
+CREATE INDEX idx_plan_exec_item_point_id ON plan_exec_item (point_id);
+CREATE INDEX idx_plan_exec_item_core_scan ON plan_exec_item (next_trigger_time, status, is_terminated, is_paused, del_state);
+
+-- 为 plan_exec_item 表创建触发器
+CREATE TRIGGER "trigger_insert_modified_time"
+    BEFORE INSERT
+    ON "public"."plan_exec_item"
+    FOR EACH ROW
+    EXECUTE PROCEDURE insert_modified_time();
+
+CREATE TRIGGER "trigger_update_modified_time"
+    BEFORE UPDATE
+    ON "public"."plan_exec_item"
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_modified_update_time();
+
+-- 6. 创建计划任务执行日志表
+CREATE TABLE IF NOT EXISTS plan_exec_log (
+    id BIGSERIAL PRIMARY KEY, 
+    create_time TIMESTAMP NOT NULL,
+    update_time TIMESTAMP NOT NULL,
+    delete_time TIMESTAMP NULL, 
+    del_state SMALLINT NOT NULL DEFAULT 0, 
+    version INT NOT NULL DEFAULT 0, 
+    plan_id VARCHAR(64) NOT NULL DEFAULT '', 
+    plan_name VARCHAR(128) NOT NULL DEFAULT '', 
+    item_id VARCHAR(64) NOT NULL DEFAULT '', 
+    item_name VARCHAR(128) NOT NULL DEFAULT '', 
+    trigger_time TIMESTAMP NOT NULL, 
+    trace_id VARCHAR(64) NOT NULL DEFAULT '', 
+    exec_result SMALLINT NOT NULL DEFAULT 0, 
+    message TEXT NOT NULL DEFAULT ''
+);
+
+-- 为 plan_exec_log 表添加注释
+COMMENT ON TABLE plan_exec_log IS '计划任务执行日志表';
+
+-- 为 plan_exec_log 表的列添加注释
+COMMENT ON COLUMN plan_exec_log.id IS '自增主键ID';
+COMMENT ON COLUMN plan_exec_log.create_time IS '创建时间';
+COMMENT ON COLUMN plan_exec_log.update_time IS '更新时间';
+COMMENT ON COLUMN plan_exec_log.delete_time IS '删除时间（软删除标记）';
+COMMENT ON COLUMN plan_exec_log.del_state IS '删除状态：0-未删除，1-已删除';
+COMMENT ON COLUMN plan_exec_log.version IS '版本号（乐观锁）';
+COMMENT ON COLUMN plan_exec_log.plan_id IS '计划任务ID';
+COMMENT ON COLUMN plan_exec_log.plan_name IS '计划任务名称';
+COMMENT ON COLUMN plan_exec_log.item_id IS '执行项ID';
+COMMENT ON COLUMN plan_exec_log.item_name IS '执行项名称';
+COMMENT ON COLUMN plan_exec_log.trigger_time IS '触发时间';
+COMMENT ON COLUMN plan_exec_log.trace_id IS '唯一追踪ID';
+COMMENT ON COLUMN plan_exec_log.exec_result IS '执行结果：1-成功，2-失败，3-延期';
+COMMENT ON COLUMN plan_exec_log.message IS '结果描述';
+
+-- 为 plan_exec_log 表创建索引
+CREATE INDEX idx_plan_exec_log_plan_id ON plan_exec_log (plan_id);
+CREATE INDEX idx_plan_exec_log_item_id ON plan_exec_log (item_id);
+CREATE INDEX idx_plan_exec_log_trigger_time ON plan_exec_log (trigger_time);
+CREATE INDEX idx_plan_exec_log_trace_id ON plan_exec_log (trace_id);
+CREATE INDEX idx_plan_exec_log_exec_result ON plan_exec_log (exec_result);
+
+-- 为 plan_exec_log 表创建触发器
+CREATE TRIGGER "trigger_insert_modified_time"
+    BEFORE INSERT
+    ON "public"."plan_exec_log"
+    FOR EACH ROW
+    EXECUTE PROCEDURE insert_modified_time();
+
+CREATE TRIGGER "trigger_update_modified_time"
+    BEFORE UPDATE
+    ON "public"."plan_exec_log"
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_modified_update_time();

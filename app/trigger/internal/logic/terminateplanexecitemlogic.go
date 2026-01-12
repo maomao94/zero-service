@@ -35,7 +35,7 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 	}
 
 	// 查询执行项
-	execItem, err := l.svcCtx.PlanExecItemModel.FindOneByPlanIdItemId(l.ctx, in.PlanId, in.ItemId)
+	execItem, err := l.svcCtx.PlanExecItemModel.FindOne(l.ctx, in.Id)
 	if err != nil {
 		if err == sqlx.ErrNotFound {
 			return &trigger.TerminatePlanExecItemRes{}, nil

@@ -3418,11 +3418,25 @@ func (m *HandlerPlanTaskEventReq) validate(all bool) error {
 
 	// no validation rules for Type
 
+	// no validation rules for GroupId
+
+	// no validation rules for Description
+
+	// no validation rules for StartTime
+
+	// no validation rules for EndTime
+
 	// no validation rules for ItemId
 
 	// no validation rules for ItemName
 
+	// no validation rules for PointId
+
 	// no validation rules for Payload
+
+	// no validation rules for PlanTriggerTime
+
+	// no validation rules for TriggerTime
 
 	if len(errors) > 0 {
 		return HandlerPlanTaskEventReqMultiError(errors)

@@ -3,10 +3,9 @@ package model
 import (
 	"context"
 	"fmt"
-	"reflect"
-	"strings"
 	"time"
 
+	"zero-service/common/dbx"
 	"zero-service/common/tool"
 
 	"github.com/dromara/carbon/v2"
@@ -37,6 +36,8 @@ type (
 	customPlanExecItemModel struct {
 		*defaultPlanExecItemModel
 		unstableExpiry mathx.Unstable
+		// dbType 数据库类型，用于兼容不同数据库的SQL语法
+		dbType dbx.DatabaseType
 	}
 )
 
@@ -48,11 +49,22 @@ const (
 func NewPlanExecItemModel(conn sqlx.SqlConn) PlanExecItemModel {
 	return &customPlanExecItemModel{
 		defaultPlanExecItemModel: newPlanExecItemModel(conn),
+		// 默认数据库类型为MySQL
+		dbType: dbx.DatabaseTypeMySQL,
+	}
+}
+
+// NewPlanExecItemModelWithDBType returns a model for the database table with specified database type.
+func NewPlanExecItemModelWithDBType(conn sqlx.SqlConn, dbType dbx.DatabaseType) PlanExecItemModel {
+	return &customPlanExecItemModel{
+		defaultPlanExecItemModel: newPlanExecItemModel(conn),
+		dbType:                   dbType,
 	}
 }
 
 func (m *customPlanExecItemModel) withSession(session sqlx.Session) PlanExecItemModel {
-	return NewPlanExecItemModel(sqlx.NewSqlConnFromSession(session))
+	// 保持原有的数据库类型
+	return NewPlanExecItemModelWithDBType(sqlx.NewSqlConnFromSession(session), m.dbType)
 }
 
 // LockTriggerItem 锁定需要触发的执行项
@@ -68,31 +80,30 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 	// 7. 关联的计划未暂停
 	// 8. 关联的计划未删除
 	currentTime := time.Now()
-	// Calculate timeout threshold (30 minutes ago) for stuck running items
-	timeoutThreshold := currentTime.Add(-30 * time.Minute)
+	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeString()
 
-	// Join with plan table and add plan status conditions
+	updateWhere := fmt.Sprintf(
+		`is_terminated = 0 AND is_paused = 0 AND 
+		 (next_trigger_time <= '%s' AND status IN (0, 1, 3, 4))`,
+		currentTimeStr,
+	)
+
 	where := fmt.Sprintf(
 		`pei.is_terminated = 0 AND pei.is_paused = 0 AND 
 		 p.plan_id = pei.plan_id AND p.del_state = 0 AND p.status = 1 AND p.is_terminated = 0 AND p.is_paused = 0 AND
 		 (pei.next_trigger_time <= '%s' AND pei.status IN (0, 1, 3, 4))`,
-		carbon.CreateFromStdTime(currentTime).ToDateTimeString(),
-		carbon.CreateFromStdTime(timeoutThreshold).ToDateTimeString(),
+		currentTimeStr,
 	)
 
-	// 随机获取一个需要触发的执行项，兼容不同数据库
 	var randomFunc string
-	connType := reflect.TypeOf(m.conn).String()
-	if strings.Contains(connType, "postgres") {
+	if m.dbType == dbx.DatabaseTypePostgreSQL {
 		randomFunc = "RANDOM()"
 	} else {
-		// Default to MySQL RAND()
 		randomFunc = "RAND()"
 	}
-
 	ssql := fmt.Sprintf(
 		`SELECT pei.id, pei.create_time, pei.update_time, pei.delete_time, pei.del_state, pei.version, 
-		 pei.plan_id, pei.item_id, pei.item_name, pei.service_addr, pei.payload, 
+		 pei.plan_id, pei.item_id, pei.item_name, pei.point_id, pei.service_addr, pei.payload, 
 		 pei.request_timeout, pei.plan_trigger_time, pei.next_trigger_time, 
 		 pei.last_trigger_time, pei.trigger_count, pei.status, 
 		 pei.last_result, pei.last_msg, pei.is_terminated, 
@@ -112,15 +123,14 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 	case sqlx.ErrNotFound:
 		return nil, ErrNotFound
 	case nil:
-		// 更新下次触发时间，防止重复触发
 		nextTriggerTime := currentTime.Add(expireIn)
 		updateSQL := fmt.Sprintf(
-			`UPDATE %s SET status = 1, next_trigger_time = '%s', last_trigger_time = '%s' WHERE id = %d and %s`,
+			`UPDATE %s SET status = 1, next_trigger_time = '%s', last_trigger_time = '%s' WHERE id = %d AND %s`,
 			m.table,
 			carbon.CreateFromStdTime(nextTriggerTime).ToDateTimeString(),
-			carbon.CreateFromStdTime(currentTime).ToDateTimeString(),
+			currentTimeStr,
 			execItem.Id,
-			where,
+			updateWhere,
 		)
 
 		result, updateErr := m.conn.ExecCtx(ctx, updateSQL)
@@ -140,7 +150,7 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 // UpdateStatusToRunning 更新执行项状态为执行中
 func (m *customPlanExecItemModel) UpdateStatusToRunning(ctx context.Context, id int64) error {
 	sql := fmt.Sprintf(
-		`UPDATE %s SET status = 1, last_result = 'running', last_trigger_time = '%s', trigger_count = trigger_count + 1 WHERE id = %d`,
+		`UPDATE %s SET status = 1, last_result = 'running', last_trigger_time = '%s' WHERE id = %d`,
 		m.table,
 		carbon.Now().ToDateTimeString(),
 		id,
@@ -182,7 +192,7 @@ func (m *customPlanExecItemModel) UpdateStatusToFailed(ctx context.Context, id i
 	triggerCount := itemInfo.TriggerCount
 	defaultTimeout := retryInterval
 
-	nextTriggerTime, isExceeded := tool.CalculateNextTriggerTime(triggerCount, defaultTimeout)
+	nextTriggerTime, isExceeded := tool.CalculateNextTriggerTime(triggerCount+1, defaultTimeout)
 	carbonNextTriggerTime := carbon.CreateFromStdTime(nextTriggerTime).ToDateTimeString()
 
 	var sql string

@@ -462,12 +462,25 @@ message HandlerPlanTaskEventReq{
   string planName = 2;
   // 任务类型
   string type = 3;
-  // 执行项ID（必填）：业务实体唯一标识（设备ID/用户ID/转账订单ID等）
-  string itemId = 4;
+  // 计划组ID,用于分组管理计划任务
+  string groupId = 4;
+  // 描述
+  string description = 5;
+  // 规则生效开始时间
+  string startTime = 6;
+  // 规则生效结束时间
+  string endTime = 7;
+
+  // 执行项ID
+  string itemId = 8;
   // 执行项名称
-  string itemName = 5;
+  string itemName = 9;
+  // 点位id,业务字段
+  string pointId = 10;
   // 业务负载（必填）：序列化的业务专属参数（设备参数/转账金额/订单信息等）
-  string payload = 6;
+  string payload = 11;
+  // 计划触发时间
+  string PlanTriggerTime = 12;
 }
 
 message HandlerPlanTaskEventRes{

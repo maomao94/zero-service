@@ -31,6 +31,13 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	if c.DisableStmtLog {
 		sqlx.DisableStmtLog()
 	}
+
+	// 解析数据库类型
+	dbType := dbx.ParseDatabaseType(c.DB.DataSource)
+
+	// 创建数据库连接
+	dbConn := dbx.New(c.DB.DataSource)
+
 	return &ServiceContext{
 		Config:            c,
 		Validate:          validator.New(),
@@ -40,8 +47,8 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Scheduler:         asynqx.NewScheduler(c.Redis.Host, c.Redis.Pass),
 		Httpc:             httpc.NewService("httpc"),
 		ConnMap:           collection.NewSafeMap(),
-		PlanModel:         model.NewPlanModel(dbx.New(c.DB.DataSource)),
-		PlanExecItemModel: model.NewPlanExecItemModel(dbx.New(c.DB.DataSource)),
-		PlanExecLogModel:  model.NewPlanExecLogModel(dbx.New(c.DB.DataSource)),
+		PlanModel:         model.NewPlanModel(dbConn),
+		PlanExecItemModel: model.NewPlanExecItemModelWithDBType(dbConn, dbType),
+		PlanExecLogModel:  model.NewPlanExecLogModel(dbConn),
 	}
 }

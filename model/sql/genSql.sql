@@ -72,7 +72,6 @@ CREATE TABLE IF NOT EXISTS `plan_exec_item` (
     `item_name` VARCHAR(128) NOT NULL DEFAULT '' COMMENT '执行项名称',
     `point_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '点位id',
     `service_addr` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '业务服务地址',
-    `method` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '执行方法名称',
     `payload` TEXT NOT NULL COMMENT '业务负载',
     `request_timeout` INT NOT NULL DEFAULT 0 COMMENT '请求超时时间（毫秒）',
     `plan_trigger_time` DATETIME NOT NULL COMMENT '计划触发时间',
@@ -89,10 +88,9 @@ CREATE TABLE IF NOT EXISTS `plan_exec_item` (
     `paused_time` DATETIME NULL DEFAULT NULL COMMENT '暂停时间',
     `paused_reason` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '暂停原因',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_plan_id_item_id` (`plan_id`, `item_id`),
+    KEY `idx_plan_id_item_id` (`plan_id`, `item_id`),
     KEY `idx_point_id` (`point_id`),
-    KEY `idx_core_scan` (`next_trigger_time`, `status`, `is_terminated`, `is_paused`, `del_state`),
-    UNIQUE KEY `uk_item_id` (`item_id`)
+    KEY `idx_core_scan` (`next_trigger_time`, `status`, `is_terminated`, `is_paused`, `del_state`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='计划执行项表';
 
 -- 计划任务执行日志表

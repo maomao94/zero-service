@@ -12,6 +12,7 @@ import (
 	"zero-service/facade/streamevent/streamevent"
 	"zero-service/model"
 
+	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -128,6 +129,16 @@ func (cb rawCodec) Name() string { return "proto_raw" }
 
 func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanExecItem, plan *model.Plan) {
 	grpcServer := tool.MayReplaceLocalhost(execItem.ServiceAddr)
+	clientConf := zrpc.RpcClientConf{}
+	conf.FillDefault(&clientConf)
+	clientConf.Target = grpcServer
+	clientConf.NonBlock = true
+	clientConf.Timeout = 60000
+	if execItem.RequestTimeout == 0 {
+		execItem.RequestTimeout = clientConf.Timeout
+	}
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(execItem.RequestTimeout)*time.Millisecond+6*time.Second)
+	defer cancel()
 	logx.Infof("Executing callback for exec item %d with service: %s, planId: %s, itemId: %s",
 		execItem.Id, grpcServer, execItem.PlanId, execItem.ItemId)
 
@@ -135,11 +146,6 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		logx.Errorf("Error updating plan exec item %d to running: %v", execItem.Id, err)
 		return
 	}
-	clientConf := zrpc.RpcClientConf{}
-	conf.FillDefault(&clientConf)
-	clientConf.Target = grpcServer
-	clientConf.NonBlock = true
-	clientConf.Timeout = 60000
 
 	v, ok := s.svcCtx.ConnMap.Get(grpcServer)
 	if !ok {
@@ -174,23 +180,19 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		return
 	}
 
-	if execItem.RequestTimeout == 0 {
-		execItem.RequestTimeout = clientConf.Timeout
-	}
-
-	var cancel context.CancelFunc
-	if execItem.RequestTimeout > 0 {
-		ctx, cancel = context.WithTimeout(ctx, time.Duration(execItem.RequestTimeout)*time.Millisecond)
-		defer cancel()
-	}
-
 	req := &streamevent.HandlerPlanTaskEventReq{
-		PlanId:   execItem.PlanId,
-		PlanName: plan.PlanName,
-		Type:     plan.Type,
-		ItemId:   execItem.ItemId,
-		ItemName: execItem.ItemName,
-		Payload:  execItem.Payload,
+		PlanId:          execItem.PlanId,
+		PlanName:        plan.PlanName,
+		Type:            plan.Type,
+		GroupId:         plan.GroupId,
+		Description:     plan.Description,
+		StartTime:       carbon.NewCarbon(plan.StartTime).ToDateTimeString(),
+		EndTime:         carbon.NewCarbon(plan.EndTime).ToDateTimeString(),
+		ItemId:          execItem.ItemId,
+		ItemName:        execItem.ItemName,
+		PointId:         execItem.PointId,
+		Payload:         execItem.Payload,
+		PlanTriggerTime: carbon.NewCarbon(execItem.PlanTriggerTime).ToDateTimeString(),
 	}
 	var respBytes []byte
 	in, err := tool.ToProtoBytes(req)
@@ -201,7 +203,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		}
 		return
 	}
-	err = cli.Conn().Invoke(ctx, execItem.Method, &in, &respBytes)
+	err = cli.Conn().Invoke(ctx, streamevent.StreamEvent_HandlerPlanTaskEvent_FullMethodName, &in, &respBytes)
 	if err != nil {
 		logx.Errorf("gRPC call failed for exec item %d: %v", execItem.Id, err)
 		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFailed(ctx, execItem.Id, "fail", "gRPC call failed: "+err.Error()); updateErr != nil {

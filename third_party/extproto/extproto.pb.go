@@ -157,6 +157,240 @@ func (x *Dept) GetOrgName() string {
 	return ""
 }
 
+type HandlerPlanTaskEventReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 计划任务ID
+	PlanId string `protobuf:"bytes,1,opt,name=planId,proto3" json:"planId,omitempty"`
+	// 计划任务名称
+	PlanName string `protobuf:"bytes,2,opt,name=planName,proto3" json:"planName,omitempty"`
+	// 任务类型
+	Type string `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
+	// 计划组ID,用于分组管理计划任务
+	GroupId string `protobuf:"bytes,4,opt,name=groupId,proto3" json:"groupId,omitempty"`
+	// 描述
+	Description string `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
+	// 执行项ID
+	ItemId string `protobuf:"bytes,7,opt,name=itemId,proto3" json:"itemId,omitempty"`
+	// 执行项名称
+	ItemName string `protobuf:"bytes,8,opt,name=itemName,proto3" json:"itemName,omitempty"`
+	// 点位id,业务字段
+	PointId string `protobuf:"bytes,9,opt,name=pointId,proto3" json:"pointId,omitempty"`
+	// 业务负载（必填）：序列化的业务专属参数（设备参数/转账金额/订单信息等）
+	Payload       string `protobuf:"bytes,10,opt,name=payload,proto3" json:"payload,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HandlerPlanTaskEventReq) Reset() {
+	*x = HandlerPlanTaskEventReq{}
+	mi := &file_extproto_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HandlerPlanTaskEventReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HandlerPlanTaskEventReq) ProtoMessage() {}
+
+func (x *HandlerPlanTaskEventReq) ProtoReflect() protoreflect.Message {
+	mi := &file_extproto_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HandlerPlanTaskEventReq.ProtoReflect.Descriptor instead.
+func (*HandlerPlanTaskEventReq) Descriptor() ([]byte, []int) {
+	return file_extproto_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *HandlerPlanTaskEventReq) GetPlanId() string {
+	if x != nil {
+		return x.PlanId
+	}
+	return ""
+}
+
+func (x *HandlerPlanTaskEventReq) GetPlanName() string {
+	if x != nil {
+		return x.PlanName
+	}
+	return ""
+}
+
+func (x *HandlerPlanTaskEventReq) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *HandlerPlanTaskEventReq) GetGroupId() string {
+	if x != nil {
+		return x.GroupId
+	}
+	return ""
+}
+
+func (x *HandlerPlanTaskEventReq) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *HandlerPlanTaskEventReq) GetItemId() string {
+	if x != nil {
+		return x.ItemId
+	}
+	return ""
+}
+
+func (x *HandlerPlanTaskEventReq) GetItemName() string {
+	if x != nil {
+		return x.ItemName
+	}
+	return ""
+}
+
+func (x *HandlerPlanTaskEventReq) GetPointId() string {
+	if x != nil {
+		return x.PointId
+	}
+	return ""
+}
+
+func (x *HandlerPlanTaskEventReq) GetPayload() string {
+	if x != nil {
+		return x.Payload
+	}
+	return ""
+}
+
+type HandlerPlanTaskEventRes struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 执行结果 1-成功,2-失败,3-延期
+	ExecResult int32 `protobuf:"varint,1,opt,name=execResult,proto3" json:"execResult,omitempty"`
+	// 结果描述（成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
+	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	// 延期配置（仅当exec_result=3时生效，无需needDelay开关）
+	DelayConfig   *PbDelayConfig `protobuf:"bytes,3,opt,name=delayConfig,proto3" json:"delayConfig,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HandlerPlanTaskEventRes) Reset() {
+	*x = HandlerPlanTaskEventRes{}
+	mi := &file_extproto_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HandlerPlanTaskEventRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HandlerPlanTaskEventRes) ProtoMessage() {}
+
+func (x *HandlerPlanTaskEventRes) ProtoReflect() protoreflect.Message {
+	mi := &file_extproto_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HandlerPlanTaskEventRes.ProtoReflect.Descriptor instead.
+func (*HandlerPlanTaskEventRes) Descriptor() ([]byte, []int) {
+	return file_extproto_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *HandlerPlanTaskEventRes) GetExecResult() int32 {
+	if x != nil {
+		return x.ExecResult
+	}
+	return 0
+}
+
+func (x *HandlerPlanTaskEventRes) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *HandlerPlanTaskEventRes) GetDelayConfig() *PbDelayConfig {
+	if x != nil {
+		return x.DelayConfig
+	}
+	return nil
+}
+
+type PbDelayConfig struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 下次触发时间（格式：yyyy-MM-dd HH:mm:ss，定时扫描的核心筛选条件）
+	NextTriggerTime string `protobuf:"bytes,1,opt,name=nextTriggerTime,proto3" json:"nextTriggerTime,omitempty"`
+	// 延期原因
+	DelayReason   string `protobuf:"bytes,2,opt,name=delayReason,proto3" json:"delayReason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PbDelayConfig) Reset() {
+	*x = PbDelayConfig{}
+	mi := &file_extproto_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PbDelayConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PbDelayConfig) ProtoMessage() {}
+
+func (x *PbDelayConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_extproto_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PbDelayConfig.ProtoReflect.Descriptor instead.
+func (*PbDelayConfig) Descriptor() ([]byte, []int) {
+	return file_extproto_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *PbDelayConfig) GetNextTriggerTime() string {
+	if x != nil {
+		return x.NextTriggerTime
+	}
+	return ""
+}
+
+func (x *PbDelayConfig) GetDelayReason() string {
+	if x != nil {
+		return x.DelayReason
+	}
+	return ""
+}
+
 var File_extproto_proto protoreflect.FileDescriptor
 
 const file_extproto_proto_rawDesc = "" +
@@ -174,7 +408,27 @@ const file_extproto_proto_rawDesc = "" +
 	"\x04Dept\x12\x14\n" +
 	"\x05orgId\x18\x01 \x01(\tR\x05orgId\x12\x18\n" +
 	"\aorgCode\x18\x02 \x01(\tR\aorgCode\x12\x18\n" +
-	"\aorgName\x18\x03 \x01(\tR\aorgNameBM\n" +
+	"\aorgName\x18\x03 \x01(\tR\aorgName\"\x85\x02\n" +
+	"\x17HandlerPlanTaskEventReq\x12\x16\n" +
+	"\x06planId\x18\x01 \x01(\tR\x06planId\x12\x1a\n" +
+	"\bplanName\x18\x02 \x01(\tR\bplanName\x12\x12\n" +
+	"\x04type\x18\x03 \x01(\tR\x04type\x12\x18\n" +
+	"\agroupId\x18\x04 \x01(\tR\agroupId\x12 \n" +
+	"\vdescription\x18\x06 \x01(\tR\vdescription\x12\x16\n" +
+	"\x06itemId\x18\a \x01(\tR\x06itemId\x12\x1a\n" +
+	"\bitemName\x18\b \x01(\tR\bitemName\x12\x18\n" +
+	"\apointId\x18\t \x01(\tR\apointId\x12\x18\n" +
+	"\apayload\x18\n" +
+	" \x01(\tR\apayload\"\x8e\x01\n" +
+	"\x17HandlerPlanTaskEventRes\x12\x1e\n" +
+	"\n" +
+	"execResult\x18\x01 \x01(\x05R\n" +
+	"execResult\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x129\n" +
+	"\vdelayConfig\x18\x03 \x01(\v2\x17.extproto.PbDelayConfigR\vdelayConfig\"[\n" +
+	"\rPbDelayConfig\x12(\n" +
+	"\x0fnextTriggerTime\x18\x01 \x01(\tR\x0fnextTriggerTime\x12 \n" +
+	"\vdelayReason\x18\x02 \x01(\tR\vdelayReasonBM\n" +
 	"\x13com.github.extprotoB\bExtProtoP\x01Z*zero-service/third_party/extproto;extprotob\x06proto3"
 
 var (
@@ -189,20 +443,24 @@ func file_extproto_proto_rawDescGZIP() []byte {
 	return file_extproto_proto_rawDescData
 }
 
-var file_extproto_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_extproto_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_extproto_proto_goTypes = []any{
-	(*CurrentUser)(nil), // 0: extproto.CurrentUser
-	(*Dept)(nil),        // 1: extproto.Dept
-	nil,                 // 2: extproto.CurrentUser.MetadataEntry
+	(*CurrentUser)(nil),             // 0: extproto.CurrentUser
+	(*Dept)(nil),                    // 1: extproto.Dept
+	(*HandlerPlanTaskEventReq)(nil), // 2: extproto.HandlerPlanTaskEventReq
+	(*HandlerPlanTaskEventRes)(nil), // 3: extproto.HandlerPlanTaskEventRes
+	(*PbDelayConfig)(nil),           // 4: extproto.PbDelayConfig
+	nil,                             // 5: extproto.CurrentUser.MetadataEntry
 }
 var file_extproto_proto_depIdxs = []int32{
-	2, // 0: extproto.CurrentUser.metadata:type_name -> extproto.CurrentUser.MetadataEntry
+	5, // 0: extproto.CurrentUser.metadata:type_name -> extproto.CurrentUser.MetadataEntry
 	1, // 1: extproto.CurrentUser.dept:type_name -> extproto.Dept
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	4, // 2: extproto.HandlerPlanTaskEventRes.delayConfig:type_name -> extproto.PbDelayConfig
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_extproto_proto_init() }
@@ -216,7 +474,7 @@ func file_extproto_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_extproto_proto_rawDesc), len(file_extproto_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

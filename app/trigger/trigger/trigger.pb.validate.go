@@ -6219,20 +6219,11 @@ func (m *PlanExecItem) validate(all bool) error {
 
 	// no validation rules for ItemName
 
+	// no validation rules for PointId
+
 	if utf8.RuneCountInString(m.GetServiceAddr()) < 1 {
 		err := PlanExecItemValidationError{
 			field:  "ServiceAddr",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if utf8.RuneCountInString(m.GetMethod()) < 1 {
-		err := PlanExecItemValidationError{
-			field:  "Method",
 			reason: "value length must be at least 1 runes",
 		}
 		if !all {
@@ -6978,21 +6969,10 @@ func (m *PausePlanExecItemReq) validate(all bool) error {
 		}
 	}
 
-	if utf8.RuneCountInString(m.GetPlanId()) < 1 {
+	if m.GetId() < 1 {
 		err := PausePlanExecItemReqValidationError{
-			field:  "PlanId",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if utf8.RuneCountInString(m.GetItemId()) < 1 {
-		err := PausePlanExecItemReqValidationError{
-			field:  "ItemId",
-			reason: "value length must be at least 1 runes",
+			field:  "Id",
+			reason: "value must be greater than or equal to 1",
 		}
 		if !all {
 			return err
@@ -7244,21 +7224,10 @@ func (m *TerminatePlanExecItemReq) validate(all bool) error {
 		}
 	}
 
-	if utf8.RuneCountInString(m.GetPlanId()) < 1 {
+	if m.GetId() < 1 {
 		err := TerminatePlanExecItemReqValidationError{
-			field:  "PlanId",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if utf8.RuneCountInString(m.GetItemId()) < 1 {
-		err := TerminatePlanExecItemReqValidationError{
-			field:  "ItemId",
-			reason: "value length must be at least 1 runes",
+			field:  "Id",
+			reason: "value must be greater than or equal to 1",
 		}
 		if !all {
 			return err
@@ -8223,21 +8192,10 @@ func (m *GetPlanExecItemReq) validate(all bool) error {
 		}
 	}
 
-	if utf8.RuneCountInString(m.GetPlanId()) < 1 {
+	if m.GetId() < 1 {
 		err := GetPlanExecItemReqValidationError{
-			field:  "PlanId",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if utf8.RuneCountInString(m.GetItemId()) < 1 {
-		err := GetPlanExecItemReqValidationError{
-			field:  "ItemId",
-			reason: "value length must be at least 1 runes",
+			field:  "Id",
+			reason: "value must be greater than or equal to 1",
 		}
 		if !all {
 			return err
@@ -8347,33 +8305,38 @@ func (m *GetPlanExecItemRes) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetPlanExecItem()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, GetPlanExecItemResValidationError{
-					field:  "PlanExecItem",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
+	for idx, item := range m.GetPlanExecItem() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, GetPlanExecItemResValidationError{
+						field:  fmt.Sprintf("PlanExecItem[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, GetPlanExecItemResValidationError{
+						field:  fmt.Sprintf("PlanExecItem[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
 			}
-		case interface{ Validate() error }:
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				errors = append(errors, GetPlanExecItemResValidationError{
-					field:  "PlanExecItem",
+				return GetPlanExecItemResValidationError{
+					field:  fmt.Sprintf("PlanExecItem[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
-				})
+				}
 			}
 		}
-	} else if v, ok := interface{}(m.GetPlanExecItem()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return GetPlanExecItemResValidationError{
-				field:  "PlanExecItem",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
+
 	}
 
 	if len(errors) > 0 {
@@ -8504,7 +8467,7 @@ func (m *PbPlanExecItem) validate(all bool) error {
 
 	// no validation rules for LastResult
 
-	// no validation rules for LastError
+	// no validation rules for LastMsg
 
 	// no validation rules for IsTerminated
 

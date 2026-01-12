@@ -27,7 +27,7 @@ func NewHandlerPlanTaskEventLogic(ctx context.Context, svcCtx *svc.ServiceContex
 // 计划任务事件处理
 func (l *HandlerPlanTaskEventLogic) HandlerPlanTaskEvent(in *streamevent.HandlerPlanTaskEventReq) (*streamevent.HandlerPlanTaskEventRes, error) {
 	return &streamevent.HandlerPlanTaskEventRes{
-		ExecResult: 2,
+		ExecResult: 1,
 		Message:    "延期",
 		DelayConfig: &streamevent.PbDelayConfig{
 			NextTriggerTime: carbon.Now().AddSeconds(500).ToDateTimeString(),

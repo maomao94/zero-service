@@ -2587,12 +2587,26 @@ type HandlerPlanTaskEventReq struct {
 	PlanName string `protobuf:"bytes,2,opt,name=planName,proto3" json:"planName,omitempty"`
 	// 任务类型
 	Type string `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
-	// 执行项ID（必填）：业务实体唯一标识（设备ID/用户ID/转账订单ID等）
-	ItemId string `protobuf:"bytes,4,opt,name=itemId,proto3" json:"itemId,omitempty"`
+	// 计划组ID,用于分组管理计划任务
+	GroupId string `protobuf:"bytes,4,opt,name=groupId,proto3" json:"groupId,omitempty"`
+	// 描述
+	Description string `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
+	// 规则生效开始时间
+	StartTime string `protobuf:"bytes,6,opt,name=startTime,proto3" json:"startTime,omitempty"`
+	// 规则生效结束时间
+	EndTime string `protobuf:"bytes,7,opt,name=endTime,proto3" json:"endTime,omitempty"`
+	// 执行项ID
+	ItemId string `protobuf:"bytes,8,opt,name=itemId,proto3" json:"itemId,omitempty"`
 	// 执行项名称
-	ItemName string `protobuf:"bytes,5,opt,name=itemName,proto3" json:"itemName,omitempty"`
+	ItemName string `protobuf:"bytes,9,opt,name=itemName,proto3" json:"itemName,omitempty"`
+	// 点位id,业务字段
+	PointId string `protobuf:"bytes,10,opt,name=pointId,proto3" json:"pointId,omitempty"`
 	// 业务负载（必填）：序列化的业务专属参数（设备参数/转账金额/订单信息等）
-	Payload       string `protobuf:"bytes,6,opt,name=payload,proto3" json:"payload,omitempty"`
+	Payload string `protobuf:"bytes,11,opt,name=payload,proto3" json:"payload,omitempty"`
+	// 计划触发时间
+	PlanTriggerTime string `protobuf:"bytes,12,opt,name=PlanTriggerTime,proto3" json:"PlanTriggerTime,omitempty"`
+	// 触发时间
+	TriggerTime   string `protobuf:"bytes,13,opt,name=triggerTime,proto3" json:"triggerTime,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2648,6 +2662,34 @@ func (x *HandlerPlanTaskEventReq) GetType() string {
 	return ""
 }
 
+func (x *HandlerPlanTaskEventReq) GetGroupId() string {
+	if x != nil {
+		return x.GroupId
+	}
+	return ""
+}
+
+func (x *HandlerPlanTaskEventReq) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *HandlerPlanTaskEventReq) GetStartTime() string {
+	if x != nil {
+		return x.StartTime
+	}
+	return ""
+}
+
+func (x *HandlerPlanTaskEventReq) GetEndTime() string {
+	if x != nil {
+		return x.EndTime
+	}
+	return ""
+}
+
 func (x *HandlerPlanTaskEventReq) GetItemId() string {
 	if x != nil {
 		return x.ItemId
@@ -2662,9 +2704,30 @@ func (x *HandlerPlanTaskEventReq) GetItemName() string {
 	return ""
 }
 
+func (x *HandlerPlanTaskEventReq) GetPointId() string {
+	if x != nil {
+		return x.PointId
+	}
+	return ""
+}
+
 func (x *HandlerPlanTaskEventReq) GetPayload() string {
 	if x != nil {
 		return x.Payload
+	}
+	return ""
+}
+
+func (x *HandlerPlanTaskEventReq) GetPlanTriggerTime() string {
+	if x != nil {
+		return x.PlanTriggerTime
+	}
+	return ""
+}
+
+func (x *HandlerPlanTaskEventReq) GetTriggerTime() string {
+	if x != nil {
+		return x.TriggerTime
 	}
 	return ""
 }
@@ -3006,14 +3069,22 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x03sId\x18\x02 \x01(\tR\x03sId\x12\x14\n" +
 	"\x05event\x18\x03 \x01(\tR\x05event\x12\x18\n" +
 	"\apayload\x18\x04 \x01(\tR\apayload\"\x14\n" +
-	"\x12UpSocketMessageRsp\"\xaf\x01\n" +
+	"\x12UpSocketMessageRsp\"\x89\x03\n" +
 	"\x17HandlerPlanTaskEventReq\x12\x16\n" +
 	"\x06planId\x18\x01 \x01(\tR\x06planId\x12\x1a\n" +
 	"\bplanName\x18\x02 \x01(\tR\bplanName\x12\x12\n" +
-	"\x04type\x18\x03 \x01(\tR\x04type\x12\x16\n" +
-	"\x06itemId\x18\x04 \x01(\tR\x06itemId\x12\x1a\n" +
-	"\bitemName\x18\x05 \x01(\tR\bitemName\x12\x18\n" +
-	"\apayload\x18\x06 \x01(\tR\apayload\"\x91\x01\n" +
+	"\x04type\x18\x03 \x01(\tR\x04type\x12\x18\n" +
+	"\agroupId\x18\x04 \x01(\tR\agroupId\x12 \n" +
+	"\vdescription\x18\x05 \x01(\tR\vdescription\x12\x1c\n" +
+	"\tstartTime\x18\x06 \x01(\tR\tstartTime\x12\x18\n" +
+	"\aendTime\x18\a \x01(\tR\aendTime\x12\x16\n" +
+	"\x06itemId\x18\b \x01(\tR\x06itemId\x12\x1a\n" +
+	"\bitemName\x18\t \x01(\tR\bitemName\x12\x18\n" +
+	"\apointId\x18\n" +
+	" \x01(\tR\apointId\x12\x18\n" +
+	"\apayload\x18\v \x01(\tR\apayload\x12(\n" +
+	"\x0fPlanTriggerTime\x18\f \x01(\tR\x0fPlanTriggerTime\x12 \n" +
+	"\vtriggerTime\x18\r \x01(\tR\vtriggerTime\"\x91\x01\n" +
 	"\x17HandlerPlanTaskEventRes\x12\x1e\n" +
 	"\n" +
 	"execResult\x18\x01 \x01(\x05R\n" +

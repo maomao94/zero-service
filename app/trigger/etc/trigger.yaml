@@ -1,7 +1,7 @@
 Name: trigger.rpc
 ListenOn: 0.0.0.0:21006
 Mode: dev
-Timeout: 10000
+Timeout: 15000
 Log:
   Encoding: plain
   #  Mode: file

@@ -1,5 +1,5 @@
 
-¨*
+‚,
 streamevent.protostreamevent"M
 ReceiveMQTTMessageReq4
 messages (2.streamevent.MqttMessageRmessages"
@@ -216,14 +216,22 @@ isAdjusted
 sId (	RsId
 event (	Revent
 payload (	Rpayload"
-UpSocketMessageRsp"¯
+UpSocketMessageRsp"‰
 HandlerPlanTaskEventReq
 planId (	RplanId
 planName (	RplanName
-type (	Rtype
-itemId (	RitemId
-itemName (	RitemName
-payload (	Rpayload"‘
+type (	Rtype
+groupId (	RgroupId 
+description (	Rdescription
+	startTime (	R	startTime
+endTime (	RendTime
+itemId (	RitemId
+itemName	 (	RitemName
+pointId
+ (	RpointId
+payload (	Rpayload(
+PlanTriggerTime (	RPlanTriggerTime 
+triggerTime (	RtriggerTime"‘
 HandlerPlanTaskEventRes
 
 execResult (R
