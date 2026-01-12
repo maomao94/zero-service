@@ -105,6 +105,7 @@ CREATE TABLE IF NOT EXISTS `plan_exec_log` (
     `plan_name` VARCHAR(128) NOT NULL DEFAULT '' COMMENT '计划任务名称',
     `item_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '执行项ID',
     `item_name` VARCHAR(128) NOT NULL DEFAULT '' COMMENT '执行项名称',
+    `point_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '点位id',
     `trigger_time` DATETIME NOT NULL COMMENT '触发时间',
     `trace_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '唯一追踪ID',
     `exec_result` TINYINT NOT NULL DEFAULT 0 COMMENT '执行结果：1-成功，2-失败，3-延期',

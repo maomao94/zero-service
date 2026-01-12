@@ -2605,10 +2605,8 @@ type HandlerPlanTaskEventReq struct {
 	Payload string `protobuf:"bytes,11,opt,name=payload,proto3" json:"payload,omitempty"`
 	// 计划触发时间
 	PlanTriggerTime string `protobuf:"bytes,12,opt,name=PlanTriggerTime,proto3" json:"PlanTriggerTime,omitempty"`
-	// 触发时间
-	TriggerTime   string `protobuf:"bytes,13,opt,name=triggerTime,proto3" json:"triggerTime,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *HandlerPlanTaskEventReq) Reset() {
@@ -2721,13 +2719,6 @@ func (x *HandlerPlanTaskEventReq) GetPayload() string {
 func (x *HandlerPlanTaskEventReq) GetPlanTriggerTime() string {
 	if x != nil {
 		return x.PlanTriggerTime
-	}
-	return ""
-}
-
-func (x *HandlerPlanTaskEventReq) GetTriggerTime() string {
-	if x != nil {
-		return x.TriggerTime
 	}
 	return ""
 }
@@ -3069,7 +3060,7 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x03sId\x18\x02 \x01(\tR\x03sId\x12\x14\n" +
 	"\x05event\x18\x03 \x01(\tR\x05event\x12\x18\n" +
 	"\apayload\x18\x04 \x01(\tR\apayload\"\x14\n" +
-	"\x12UpSocketMessageRsp\"\x89\x03\n" +
+	"\x12UpSocketMessageRsp\"\xe7\x02\n" +
 	"\x17HandlerPlanTaskEventReq\x12\x16\n" +
 	"\x06planId\x18\x01 \x01(\tR\x06planId\x12\x1a\n" +
 	"\bplanName\x18\x02 \x01(\tR\bplanName\x12\x12\n" +
@@ -3083,8 +3074,7 @@ const file_streamevent_proto_rawDesc = "" +
 	"\apointId\x18\n" +
 	" \x01(\tR\apointId\x12\x18\n" +
 	"\apayload\x18\v \x01(\tR\apayload\x12(\n" +
-	"\x0fPlanTriggerTime\x18\f \x01(\tR\x0fPlanTriggerTime\x12 \n" +
-	"\vtriggerTime\x18\r \x01(\tR\vtriggerTime\"\x91\x01\n" +
+	"\x0fPlanTriggerTime\x18\f \x01(\tR\x0fPlanTriggerTime\"\x91\x01\n" +
 	"\x17HandlerPlanTaskEventRes\x12\x1e\n" +
 	"\n" +
 	"execResult\x18\x01 \x01(\x05R\n" +

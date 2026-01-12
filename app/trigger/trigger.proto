@@ -559,8 +559,7 @@ message TerminatePlanExecItemRes {
 
 message GetPlanReq {
   extproto.CurrentUser currentUser = 100;
-  // 计划ID
-  string planId = 1 [(validate.rules).string = {min_len: 1}];
+  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
 }
 
 message GetPlanRes {
@@ -682,14 +681,16 @@ message ListPlanExecItemsReq {
   int64 pageSize = 1 [(validate.rules).int64 = {gte: 0}];
   // 页码
   int64 pageNum = 2 [(validate.rules).int64 = {gte: 0}];
+  // 计划主键 id
+  int64 id = 3 [(validate.rules).int64 = {gte: 0}];
   // 计划ID
-  string planId = 3 [(validate.rules).string = {min_len: 1}];
+  string planId = 4;
   // 执行项ID模糊查询
-  string itemId = 4;
+  string itemId = 5;
   // 执行项名称模糊查询
-  string itemName = 5;
+  string itemName = 6;
   // 状态：0-待执行，1-执行中，2-完成，3-失败，4-延期，5-已终止，6-暂停
-  repeated int32 status = 6;
+  repeated int32 status = 7;
 }
 
 message ListPlanExecItemsRes {

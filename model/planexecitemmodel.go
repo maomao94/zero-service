@@ -2,12 +2,11 @@ package model
 
 import (
 	"context"
-	"fmt"
 	"time"
 
-	"zero-service/common/dbx"
 	"zero-service/common/tool"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/mathx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -36,8 +35,6 @@ type (
 	customPlanExecItemModel struct {
 		*defaultPlanExecItemModel
 		unstableExpiry mathx.Unstable
-		// dbType 数据库类型，用于兼容不同数据库的SQL语法
-		dbType dbx.DatabaseType
 	}
 )
 
@@ -45,25 +42,19 @@ const (
 	retryInterval = time.Second * 10
 )
 
-// NewPlanExecItemModel returns a model for the database table.
 func NewPlanExecItemModel(conn sqlx.SqlConn) PlanExecItemModel {
 	return &customPlanExecItemModel{
-		defaultPlanExecItemModel: newPlanExecItemModel(conn),
-		// 默认数据库类型为MySQL
-		dbType: dbx.DatabaseTypeMySQL,
+		defaultPlanExecItemModel: newPlanExecItemModel(conn, DatabaseTypeMySQL),
 	}
 }
 
-// NewPlanExecItemModelWithDBType returns a model for the database table with specified database type.
-func NewPlanExecItemModelWithDBType(conn sqlx.SqlConn, dbType dbx.DatabaseType) PlanExecItemModel {
+func NewPlanExecItemModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) PlanExecItemModel {
 	return &customPlanExecItemModel{
-		defaultPlanExecItemModel: newPlanExecItemModel(conn),
-		dbType:                   dbType,
+		defaultPlanExecItemModel: newPlanExecItemModel(conn, dbType),
 	}
 }
 
 func (m *customPlanExecItemModel) withSession(session sqlx.Session) PlanExecItemModel {
-	// 保持原有的数据库类型
 	return NewPlanExecItemModelWithDBType(sqlx.NewSqlConnFromSession(session), m.dbType)
 }
 
@@ -81,59 +72,62 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 	// 8. 关联的计划未删除
 	currentTime := time.Now()
 	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeString()
-
-	updateWhere := fmt.Sprintf(
-		`is_terminated = 0 AND is_paused = 0 AND 
-		 (next_trigger_time <= '%s' AND status IN (0, 1, 3, 4))`,
-		currentTimeStr,
-	)
-
-	where := fmt.Sprintf(
-		`pei.is_terminated = 0 AND pei.is_paused = 0 AND 
-		 p.plan_id = pei.plan_id AND p.del_state = 0 AND p.status = 1 AND p.is_terminated = 0 AND p.is_paused = 0 AND
-		 (pei.next_trigger_time <= '%s' AND pei.status IN (0, 1, 3, 4))`,
-		currentTimeStr,
-	)
-
-	var randomFunc string
-	if m.dbType == dbx.DatabaseTypePostgreSQL {
-		randomFunc = "RANDOM()"
+	nextTriggerTime := currentTime.Add(expireIn)
+	nextTriggerTimeStr := carbon.CreateFromStdTime(nextTriggerTime).ToDateTimeString()
+	selectBuilder := squirrel.Select(
+		"pei.id", "pei.create_time", "pei.update_time", "pei.delete_time", "pei.del_state", "pei.version",
+		"pei.plan_id", "pei.item_id", "pei.item_name", "pei.point_id", "pei.service_addr", "pei.payload",
+		"pei.request_timeout", "pei.plan_trigger_time", "pei.next_trigger_time",
+		"pei.last_trigger_time", "pei.trigger_count", "pei.status",
+		"pei.last_result", "pei.last_msg", "pei.is_terminated",
+		"pei.terminated_time", "pei.terminated_reason", "pei.is_paused",
+		"pei.paused_time", "pei.paused_reason",
+	).From(m.table+" pei").
+		Join("plan p ON p.plan_id = pei.plan_id").
+		Where("pei.is_terminated = ?", 0).
+		Where("pei.is_paused = ?", 0).
+		Where("p.del_state = ?", 0).
+		Where("p.status = ?", 1).
+		Where("p.is_terminated = ?", 0).
+		Where("p.is_paused = ?", 0).
+		Where("pei.next_trigger_time <= ?", currentTimeStr).
+		Where("pei.status IN (?, ?, ?, ?)", 0, 1, 3, 4)
+	if m.dbType == DatabaseTypePostgreSQL {
+		selectBuilder = selectBuilder.OrderBy("RANDOM()")
 	} else {
-		randomFunc = "RAND()"
+		selectBuilder = selectBuilder.OrderBy("RAND()")
 	}
-	ssql := fmt.Sprintf(
-		`SELECT pei.id, pei.create_time, pei.update_time, pei.delete_time, pei.del_state, pei.version, 
-		 pei.plan_id, pei.item_id, pei.item_name, pei.point_id, pei.service_addr, pei.payload, 
-		 pei.request_timeout, pei.plan_trigger_time, pei.next_trigger_time, 
-		 pei.last_trigger_time, pei.trigger_count, pei.status, 
-		 pei.last_result, pei.last_msg, pei.is_terminated, 
-		 pei.terminated_time, pei.terminated_reason, pei.is_paused, 
-		 pei.paused_time, pei.paused_reason 
-		 FROM %s pei 
-		 JOIN plan p ON p.plan_id = pei.plan_id 
-		 WHERE %s ORDER BY %s LIMIT 1`,
-		m.table,
-		where,
-		randomFunc,
-	)
-
+	selectBuilder = selectBuilder.Limit(1)
+	if m.dbType == DatabaseTypePostgreSQL {
+		selectBuilder = selectBuilder.PlaceholderFormat(squirrel.Dollar)
+	}
+	selectSQL, selectArgs, err := selectBuilder.ToSql()
+	if err != nil {
+		return nil, err
+	}
 	var execItem PlanExecItem
-	err := m.conn.QueryRowCtx(ctx, &execItem, ssql)
+	err = m.conn.QueryRowCtx(ctx, &execItem, selectSQL, selectArgs...)
 	switch err {
 	case sqlx.ErrNotFound:
 		return nil, ErrNotFound
 	case nil:
-		nextTriggerTime := currentTime.Add(expireIn)
-		updateSQL := fmt.Sprintf(
-			`UPDATE %s SET status = 1, next_trigger_time = '%s', last_trigger_time = '%s' WHERE id = %d AND %s`,
-			m.table,
-			carbon.CreateFromStdTime(nextTriggerTime).ToDateTimeString(),
-			currentTimeStr,
-			execItem.Id,
-			updateWhere,
-		)
-
-		result, updateErr := m.conn.ExecCtx(ctx, updateSQL)
+		updateBuilder := squirrel.Update(m.table).
+			Set("status", 1).
+			Set("next_trigger_time", nextTriggerTimeStr).
+			Set("last_trigger_time", currentTimeStr).
+			Where("id = ?", execItem.Id).
+			Where("is_terminated = ?", 0).
+			Where("is_paused = ?", 0).
+			Where("next_trigger_time <= ?", currentTimeStr).
+			Where("status IN (?, ?, ?, ?)", 0, 1, 3, 4)
+		if m.dbType == DatabaseTypePostgreSQL {
+			updateBuilder = updateBuilder.PlaceholderFormat(squirrel.Dollar)
+		}
+		updateSQL, updateArgs, updateErr := updateBuilder.ToSql()
+		if updateErr != nil {
+			return nil, updateErr
+		}
+		result, updateErr := m.conn.ExecCtx(ctx, updateSQL, updateArgs...)
 		if updateErr != nil {
 			return nil, updateErr
 		}
@@ -149,98 +143,123 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 
 // UpdateStatusToRunning 更新执行项状态为执行中
 func (m *customPlanExecItemModel) UpdateStatusToRunning(ctx context.Context, id int64) error {
-	sql := fmt.Sprintf(
-		`UPDATE %s SET status = 1, last_result = 'running', last_trigger_time = '%s' WHERE id = %d`,
-		m.table,
-		carbon.Now().ToDateTimeString(),
-		id,
-	)
-	_, err := m.conn.ExecCtx(ctx, sql)
+	// 使用squirrel构建UPDATE语句
+	updateBuilder := squirrel.Update(m.table).
+		Set("status", 1).
+		Set("last_result", "running").
+		Set("last_trigger_time", time.Now()).
+		Where("id = ?", id)
+	if m.dbType == DatabaseTypePostgreSQL {
+		updateBuilder = updateBuilder.PlaceholderFormat(squirrel.Dollar)
+	}
+	updateSQL, updateArgs, err := updateBuilder.ToSql()
+	if err != nil {
+		return err
+	}
+	_, err = m.conn.ExecCtx(ctx, updateSQL, updateArgs...)
 	return err
 }
 
 // UpdateStatusToCompleted 更新执行项状态为已完成
 func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, id int64, lastResult, lastMsg string) error {
-	sql := fmt.Sprintf(
-		`UPDATE %s SET status = 2, last_result = '%s', last_msg = '%s', last_trigger_time = '%s' WHERE id = %d`,
-		m.table,
-		lastResult,
-		lastMsg,
-		carbon.Now().ToDateTimeString(),
-		id,
-	)
-	_, err := m.conn.ExecCtx(ctx, sql)
+	currentTime := time.Now()
+	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeString()
+	updateBuilder := squirrel.Update(m.table).
+		Set("status", 2).
+		Set("last_result", lastResult).
+		Set("last_msg", lastMsg).
+		Set("last_trigger_time", currentTimeStr).
+		Where("id = ?", id)
+	if m.dbType == DatabaseTypePostgreSQL {
+		updateBuilder = updateBuilder.PlaceholderFormat(squirrel.Dollar)
+	}
+	updateSQL, updateArgs, err := updateBuilder.ToSql()
+	if err != nil {
+		return err
+	}
+	_, err = m.conn.ExecCtx(ctx, updateSQL, updateArgs...)
 	return err
 }
 
 // UpdateStatusToFailed 更新执行项状态为失败
 func (m *customPlanExecItemModel) UpdateStatusToFailed(ctx context.Context, id int64, lastResult, lastMsg string) error {
-	nowTime := carbon.Now().ToDateTimeString()
+	currentTime := time.Now()
+	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeString()
+	selectBuilder := squirrel.Select("trigger_count").From(m.table).Where("id = ?", id)
+	if m.dbType == DatabaseTypePostgreSQL {
+		selectBuilder = selectBuilder.PlaceholderFormat(squirrel.Dollar)
+	}
+	selectSQL, selectArgs, err := selectBuilder.ToSql()
+	if err != nil {
+		return err
+	}
 	type ItemInfo struct {
 		TriggerCount int64 `db:"trigger_count"`
 	}
 	var itemInfo ItemInfo
-	getInfoSql := fmt.Sprintf(
-		`SELECT trigger_count FROM %s WHERE id = %d`,
-		m.table,
-		id,
-	)
-	if err := m.conn.QueryRowCtx(ctx, &itemInfo, getInfoSql); err != nil {
+	if err := m.conn.QueryRowCtx(ctx, &itemInfo, selectSQL, selectArgs...); err != nil {
 		return err
 	}
-
 	triggerCount := itemInfo.TriggerCount
 	defaultTimeout := retryInterval
-
 	nextTriggerTime, isExceeded := tool.CalculateNextTriggerTime(triggerCount+1, defaultTimeout)
-	carbonNextTriggerTime := carbon.CreateFromStdTime(nextTriggerTime).ToDateTimeString()
-
-	var sql string
+	nextTriggerTimeStr := carbon.CreateFromStdTime(nextTriggerTime).ToDateTimeString()
+	var updateBuilder squirrel.UpdateBuilder
 	if isExceeded {
-		sql = fmt.Sprintf(
-			`UPDATE %s SET status = 5, last_result = '%s', last_msg = '%s', 
-			 next_trigger_time = '%s', last_trigger_time = '%s', 
-			 trigger_count = trigger_count + 1, is_terminated = 1, 
-			 terminated_time = '%s', terminated_reason = '超过重试上限，自动终止' WHERE id = %d`,
-			m.table,
-			lastResult,
-			lastMsg,
-			carbonNextTriggerTime,
-			nowTime,
-			nowTime,
-			id,
-		)
+		updateBuilder = squirrel.Update(m.table).
+			Set("status", 5).
+			Set("last_result", lastResult).
+			Set("last_msg", lastMsg).
+			Set("next_trigger_time", nextTriggerTimeStr).
+			Set("last_trigger_time", currentTimeStr).
+			Set("trigger_count", squirrel.Expr("trigger_count + 1")).
+			Set("is_terminated", 1).
+			Set("terminated_time", currentTimeStr).
+			Set("terminated_reason", "超过重试上限，自动终止").
+			Where("id = ?", id)
 	} else {
-		sql := fmt.Sprintf(
-			`UPDATE %s SET status = 3, last_result = '%s', last_msg = '%s', 
-			 next_trigger_time = '%s', last_trigger_time = '%s', 
-			 trigger_count = trigger_count + 1 WHERE id = %d`,
-			m.table,
-			lastResult,
-			lastMsg,
-			carbonNextTriggerTime,
-			nowTime,
-			id,
-		)
-		_, err := m.conn.ExecCtx(ctx, sql)
+		updateBuilder = squirrel.Update(m.table).
+			Set("status", 3).
+			Set("last_result", lastResult).
+			Set("last_msg", lastMsg).
+			Set("next_trigger_time", nextTriggerTimeStr).
+			Set("last_trigger_time", currentTimeStr).
+			Set("trigger_count", squirrel.Expr("trigger_count + 1")).
+			Where("id = ?", id)
+	}
+	if m.dbType == DatabaseTypePostgreSQL {
+		updateBuilder = updateBuilder.PlaceholderFormat(squirrel.Dollar)
+	}
+	updateSQL, updateArgs, err := updateBuilder.ToSql()
+	if err != nil {
 		return err
 	}
-
-	_, err := m.conn.ExecCtx(ctx, sql)
+	_, err = m.conn.ExecCtx(ctx, updateSQL, updateArgs...)
 	return err
 }
 
 // UpdateStatusToDelayed 更新执行项状态为延期
-func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, lastMsg string, nextTriggerTime string) error {
-	sql := fmt.Sprintf(
-		`UPDATE %s SET status = 4, last_result = '%s', last_msg = '%s', next_trigger_time = '%s', last_trigger_time = '%s' WHERE id = %d`,
-		m.table,
-		lastResult,
-		lastMsg,
-		nextTriggerTime,
-		carbon.Now().ToDateTimeString(),
-		id,
-	)
-	_, err := m.conn.ExecCtx(ctx, sql)
+func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, lastMsg string, nextTriggerTimeStr string) error {
+	ct := carbon.Parse(nextTriggerTimeStr)
+	if ct.Error != nil {
+		return ct.Error
+	}
+	currentTime := time.Now()
+	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeString()
+	updateBuilder := squirrel.Update(m.table).
+		Set("status", 4).
+		Set("last_result", lastResult).
+		Set("last_msg", lastMsg).
+		Set("next_trigger_time", nextTriggerTimeStr).
+		Set("last_trigger_time", currentTimeStr).
+		Where("id = ?", id)
+	if m.dbType == DatabaseTypePostgreSQL {
+		updateBuilder = updateBuilder.PlaceholderFormat(squirrel.Dollar)
+	}
+	updateSQL, updateArgs, err := updateBuilder.ToSql()
+	if err != nil {
+		return err
+	}
+	_, err = m.conn.ExecCtx(ctx, updateSQL, updateArgs...)
 	return err
 }

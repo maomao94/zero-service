@@ -23,6 +23,11 @@ var (
 	planExecLogRows                = strings.Join(planExecLogFieldNames, ",")
 	planExecLogRowsExpectAutoSet   = strings.Join(stringx.Remove(planExecLogFieldNames, "`id`", "`create_at`", "`create_time`", "`created_at`", "`update_at`", "`update_time`", "`updated_at`"), ",")
 	planExecLogRowsWithPlaceHolder = strings.Join(stringx.Remove(planExecLogFieldNames, "`id`", "`create_at`", "`create_time`", "`created_at`", "`update_at`", "`update_time`", "`updated_at`"), "=?,") + "=?"
+
+	planExecLogFieldNamesPg          = builder.RawFieldNames(&PlanExecLog{}, true)
+	planExecLogRowsPg                = strings.Join(planExecLogFieldNamesPg, ",")
+	planExecLogRowsExpectAutoSetPg   = strings.Join(stringx.Remove(planExecLogFieldNamesPg, "id", "create_at", "create_time", "created_at", "update_at", "update_time", "updated_at"), ",")
+	planExecLogRowsWithPlaceHolderPg = builder.PostgreSqlJoin(stringx.Remove(planExecLogFieldNamesPg, "id", "create_at", "create_time", "created_at", "update_at", "update_time", "updated_at"))
 )
 
 type (
@@ -54,8 +59,9 @@ type (
 	}
 
 	defaultPlanExecLogModel struct {
-		conn  sqlx.SqlConn
-		table string
+		conn   sqlx.SqlConn
+		table  string
+		dbType DatabaseType
 	}
 
 	PlanExecLog struct {
@@ -69,6 +75,7 @@ type (
 		PlanName    string       `db:"plan_name"`    // 计划任务名称
 		ItemId      string       `db:"item_id"`      // 执行项ID
 		ItemName    string       `db:"item_name"`    // 执行项名称
+		PointId     string       `db:"point_id"`     // 点位id
 		TriggerTime time.Time    `db:"trigger_time"` // 触发时间
 		TraceId     string       `db:"trace_id"`     // 唯一追踪ID
 		ExecResult  int64        `db:"exec_result"`  // 执行结果：1-成功，2-失败，3-延期
@@ -77,14 +84,28 @@ type (
 )
 
 func newPlanExecLogModel(conn sqlx.SqlConn) *defaultPlanExecLogModel {
+	return newPlanExecLogModelWithDBType(conn, DatabaseTypeMySQL)
+}
+
+func newPlanExecLogModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) *defaultPlanExecLogModel {
+	var table string = "`plan_exec_log`"
+	if dbType == DatabaseTypePostgreSQL {
+		table = "plan_exec_log"
+	}
 	return &defaultPlanExecLogModel{
-		conn:  conn,
-		table: "`plan_exec_log`",
+		conn:   conn,
+		table:  table,
+		dbType: dbType,
 	}
 }
 
 func (m *defaultPlanExecLogModel) Delete(ctx context.Context, session sqlx.Session, id int64) error {
-	query := fmt.Sprintf("delete from %s where `id` = ?", m.table)
+	var query string
+	if m.dbType == DatabaseTypePostgreSQL {
+		query = fmt.Sprintf("delete from %s where id = $1", m.table)
+	} else {
+		query = fmt.Sprintf("delete from %s where `id` = ?", m.table)
+	}
 	if session != nil {
 		_, err := session.ExecCtx(ctx, query, id)
 		return err
@@ -93,7 +114,12 @@ func (m *defaultPlanExecLogModel) Delete(ctx context.Context, session sqlx.Sessi
 	return err
 }
 func (m *defaultPlanExecLogModel) FindOne(ctx context.Context, id int64) (*PlanExecLog, error) {
-	query := fmt.Sprintf("select %s from %s where `id` = ? and del_state = ? limit 1", planExecLogRows, m.table)
+	var query string
+	if m.dbType == DatabaseTypePostgreSQL {
+		query = fmt.Sprintf("select %s from %s where id = $1 and del_state = $2 limit 1", planExecLogRowsPg, m.table)
+	} else {
+		query = fmt.Sprintf("select %s from %s where `id` = ? and del_state = ? limit 1", planExecLogRows, m.table)
+	}
 	var resp PlanExecLog
 	err := m.conn.QueryRowCtx(ctx, &resp, query, id, 0)
 	switch err {
@@ -112,11 +138,19 @@ func (m *defaultPlanExecLogModel) Insert(ctx context.Context, session sqlx.Sessi
 	}
 	data.DelState = 0
 
-	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, planExecLogRowsExpectAutoSet)
-	if session != nil {
-		return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.PlanId, data.PlanName, data.ItemId, data.ItemName, data.TriggerTime, data.TraceId, data.ExecResult, data.Message)
+	var query string
+	args := []any{data.DeleteTime, data.DelState, data.Version, data.PlanId, data.PlanName, data.ItemId, data.ItemName, data.PointId, data.TriggerTime, data.TraceId, data.ExecResult, data.Message}
+
+	if m.dbType == DatabaseTypePostgreSQL {
+		query = fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)", m.table, planExecLogRowsExpectAutoSetPg)
+	} else {
+		query = fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, planExecLogRowsExpectAutoSet)
 	}
-	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.PlanId, data.PlanName, data.ItemId, data.ItemName, data.TriggerTime, data.TraceId, data.ExecResult, data.Message)
+
+	if session != nil {
+		return session.ExecCtx(ctx, query, args...)
+	}
+	return m.conn.ExecCtx(ctx, query, args...)
 }
 
 func (m *defaultPlanExecLogModel) Update(ctx context.Context, session sqlx.Session, data *PlanExecLog) (sql.Result, error) {
@@ -124,11 +158,20 @@ func (m *defaultPlanExecLogModel) Update(ctx context.Context, session sqlx.Sessi
 		Valid: false,
 	}
 	data.DelState = 0
-	query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, planExecLogRowsWithPlaceHolder)
-	if session != nil {
-		return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.PlanId, data.PlanName, data.ItemId, data.ItemName, data.TriggerTime, data.TraceId, data.ExecResult, data.Message, data.Id)
+
+	var query string
+	args := []any{data.DeleteTime, data.DelState, data.Version, data.PlanId, data.PlanName, data.ItemId, data.ItemName, data.PointId, data.TriggerTime, data.TraceId, data.ExecResult, data.Message, data.Id}
+
+	if m.dbType == DatabaseTypePostgreSQL {
+		query = fmt.Sprintf("update %s set %s where id = $1", m.table, planExecLogRowsWithPlaceHolderPg)
+	} else {
+		query = fmt.Sprintf("update %s set %s where `id` = ?", m.table, planExecLogRowsWithPlaceHolder)
 	}
-	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.PlanId, data.PlanName, data.ItemId, data.ItemName, data.TriggerTime, data.TraceId, data.ExecResult, data.Message, data.Id)
+
+	if session != nil {
+		return session.ExecCtx(ctx, query, args...)
+	}
+	return m.conn.ExecCtx(ctx, query, args...)
 }
 
 func (m *defaultPlanExecLogModel) UpdateWithVersion(ctx context.Context, session sqlx.Session, data *PlanExecLog) error {
@@ -138,12 +181,20 @@ func (m *defaultPlanExecLogModel) UpdateWithVersion(ctx context.Context, session
 
 	var sqlResult sql.Result
 	var err error
+	var query string
 
-	query := fmt.Sprintf("update %s set %s where `id` = ? and version = ? ", m.table, planExecLogRowsWithPlaceHolder)
-	if session != nil {
-		sqlResult, err = session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.PlanId, data.PlanName, data.ItemId, data.ItemName, data.TriggerTime, data.TraceId, data.ExecResult, data.Message, data.Id, oldVersion)
+	args := []any{data.DeleteTime, data.DelState, data.Version, data.PlanId, data.PlanName, data.ItemId, data.ItemName, data.PointId, data.TriggerTime, data.TraceId, data.ExecResult, data.Message, data.Id, oldVersion}
+
+	if m.dbType == DatabaseTypePostgreSQL {
+		query = fmt.Sprintf("update %s set %s where id = $13 and version = $14 ", m.table, planExecLogRowsWithPlaceHolderPg)
 	} else {
-		sqlResult, err = m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.PlanId, data.PlanName, data.ItemId, data.ItemName, data.TriggerTime, data.TraceId, data.ExecResult, data.Message, data.Id, oldVersion)
+		query = fmt.Sprintf("update %s set %s where `id` = ? and version = ? ", m.table, planExecLogRowsWithPlaceHolder)
+	}
+
+	if session != nil {
+		sqlResult, err = session.ExecCtx(ctx, query, args...)
+	} else {
+		sqlResult, err = m.conn.ExecCtx(ctx, query, args...)
 	}
 
 	if err != nil {
@@ -182,7 +233,9 @@ func (m *defaultPlanExecLogModel) FindSum(ctx context.Context, builder squirrel.
 		return 0, errors.Wrapf(errors.New("FindSum Least One Field"), "FindSum Least One Field")
 	}
 
-	builder = builder.Columns("IFNULL(SUM(" + field + "),0)")
+	sumFunction := "COALESCE(SUM(" + field + "),0)"
+
+	builder = builder.Columns(sumFunction)
 
 	query, values, err := builder.Where("del_state = ?", 0).ToSql()
 	if err != nil {
@@ -450,19 +503,35 @@ func (m *defaultPlanExecLogModel) DeleteWithBuilder(ctx context.Context, session
 }
 
 func (m *defaultPlanExecLogModel) SelectBuilder() squirrel.SelectBuilder {
-	return squirrel.Select().From(m.table)
+	builder := squirrel.Select().From(m.table)
+	if m.dbType == DatabaseTypePostgreSQL {
+		builder = builder.PlaceholderFormat(squirrel.Dollar)
+	}
+	return builder
 }
 
 func (m *defaultPlanExecLogModel) UpdateBuilder() squirrel.UpdateBuilder {
-	return squirrel.Update(m.table)
+	builder := squirrel.Update(m.table)
+	if m.dbType == DatabaseTypePostgreSQL {
+		builder = builder.PlaceholderFormat(squirrel.Dollar)
+	}
+	return builder
 }
 
 func (m *defaultPlanExecLogModel) DeleteBuilder() squirrel.DeleteBuilder {
-	return squirrel.Delete(m.table)
+	builder := squirrel.Delete(m.table)
+	if m.dbType == DatabaseTypePostgreSQL {
+		builder = builder.PlaceholderFormat(squirrel.Dollar)
+	}
+	return builder
 }
 
 func (m *defaultPlanExecLogModel) InsertBuilder() squirrel.InsertBuilder {
-	return squirrel.Insert(m.table)
+	builder := squirrel.Insert(m.table)
+	if m.dbType == DatabaseTypePostgreSQL {
+		builder = builder.PlaceholderFormat(squirrel.Dollar)
+	}
+	return builder
 }
 
 func (m *defaultPlanExecLogModel) tableName() string {

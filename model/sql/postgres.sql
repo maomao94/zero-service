@@ -249,7 +249,8 @@ CREATE TABLE IF NOT EXISTS plan_exec_log (
     plan_id VARCHAR(64) NOT NULL DEFAULT '', 
     plan_name VARCHAR(128) NOT NULL DEFAULT '', 
     item_id VARCHAR(64) NOT NULL DEFAULT '', 
-    item_name VARCHAR(128) NOT NULL DEFAULT '', 
+    item_name VARCHAR(128) NOT NULL DEFAULT '',
+    point_id VARCHAR(64) NOT NULL DEFAULT '',
     trigger_time TIMESTAMP NOT NULL, 
     trace_id VARCHAR(64) NOT NULL DEFAULT '', 
     exec_result SMALLINT NOT NULL DEFAULT 0, 
@@ -270,6 +271,7 @@ COMMENT ON COLUMN plan_exec_log.plan_id IS '计划任务ID';
 COMMENT ON COLUMN plan_exec_log.plan_name IS '计划任务名称';
 COMMENT ON COLUMN plan_exec_log.item_id IS '执行项ID';
 COMMENT ON COLUMN plan_exec_log.item_name IS '执行项名称';
+COMMENT ON COLUMN plan_exec_log.point_id IS '点位id';
 COMMENT ON COLUMN plan_exec_log.trigger_time IS '触发时间';
 COMMENT ON COLUMN plan_exec_log.trace_id IS '唯一追踪ID';
 COMMENT ON COLUMN plan_exec_log.exec_result IS '执行结果：1-成功，2-失败，3-延期';

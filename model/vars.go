@@ -13,3 +13,12 @@ type CacheEntry[T any] struct {
 	Data  T
 	Valid bool
 }
+
+type DatabaseType string
+
+const (
+	DatabaseTypeMySQL      DatabaseType = "mysql"
+	DatabaseTypePostgreSQL DatabaseType = "postgresql"
+	DatabaseTypeSQLite     DatabaseType = "sqlite"
+	DatabaseTypeTAOS       DatabaseType = "taos"
+)

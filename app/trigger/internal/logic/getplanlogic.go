@@ -35,7 +35,7 @@ func (l *GetPlanLogic) GetPlan(in *trigger.GetPlanReq) (*trigger.GetPlanRes, err
 	}
 
 	// 查询计划
-	plan, err := l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, in.PlanId)
+	plan, err := l.svcCtx.PlanModel.FindOne(l.ctx, in.Id)
 	if err != nil {
 		if err == sqlx.ErrNotFound {
 			return nil, err

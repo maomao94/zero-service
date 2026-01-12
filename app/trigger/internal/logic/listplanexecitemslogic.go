@@ -34,6 +34,17 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 
 	// 构建查询条件
 	builder := l.svcCtx.PlanExecItemModel.SelectBuilder()
+
+	// 处理计划主键id
+	if in.Id > 0 {
+		// 根据计划主键id查询plan_id
+		plan, err := l.svcCtx.PlanModel.FindOne(l.ctx, in.Id)
+		if err != nil {
+			return nil, err
+		}
+		in.PlanId = plan.PlanId
+	}
+
 	if in.PlanId != "" {
 		builder = builder.Where("plan_id = ?", in.PlanId)
 	}

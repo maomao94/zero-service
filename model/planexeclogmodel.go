@@ -17,10 +17,15 @@ type (
 	}
 )
 
-// NewPlanExecLogModel returns a model for the database table.
 func NewPlanExecLogModel(conn sqlx.SqlConn) PlanExecLogModel {
 	return &customPlanExecLogModel{
 		defaultPlanExecLogModel: newPlanExecLogModel(conn),
+	}
+}
+
+func NewPlanExecLogModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) PlanExecLogModel {
+	return &customPlanExecLogModel{
+		defaultPlanExecLogModel: newPlanExecLogModelWithDBType(conn, dbType),
 	}
 }
 

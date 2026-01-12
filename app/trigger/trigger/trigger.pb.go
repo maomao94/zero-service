@@ -3400,10 +3400,9 @@ func (*TerminatePlanExecItemRes) Descriptor() ([]byte, []int) {
 }
 
 type GetPlanReq struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
-	// 计划ID
-	PlanId        string `protobuf:"bytes,1,opt,name=planId,proto3" json:"planId,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CurrentUser   *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3445,11 +3444,11 @@ func (x *GetPlanReq) GetCurrentUser() *extproto.CurrentUser {
 	return nil
 }
 
-func (x *GetPlanReq) GetPlanId() string {
+func (x *GetPlanReq) GetId() int64 {
 	if x != nil {
-		return x.PlanId
+		return x.Id
 	}
-	return ""
+	return 0
 }
 
 type GetPlanRes struct {
@@ -4139,14 +4138,16 @@ type ListPlanExecItemsReq struct {
 	PageSize int64 `protobuf:"varint,1,opt,name=pageSize,proto3" json:"pageSize,omitempty"`
 	// 页码
 	PageNum int64 `protobuf:"varint,2,opt,name=pageNum,proto3" json:"pageNum,omitempty"`
+	// 计划主键 id
+	Id int64 `protobuf:"varint,3,opt,name=id,proto3" json:"id,omitempty"`
 	// 计划ID
-	PlanId string `protobuf:"bytes,3,opt,name=planId,proto3" json:"planId,omitempty"`
+	PlanId string `protobuf:"bytes,4,opt,name=planId,proto3" json:"planId,omitempty"`
 	// 执行项ID模糊查询
-	ItemId string `protobuf:"bytes,4,opt,name=itemId,proto3" json:"itemId,omitempty"`
+	ItemId string `protobuf:"bytes,5,opt,name=itemId,proto3" json:"itemId,omitempty"`
 	// 执行项名称模糊查询
-	ItemName string `protobuf:"bytes,5,opt,name=itemName,proto3" json:"itemName,omitempty"`
+	ItemName string `protobuf:"bytes,6,opt,name=itemName,proto3" json:"itemName,omitempty"`
 	// 状态：0-待执行，1-执行中，2-完成，3-失败，4-延期，5-已终止，6-暂停
-	Status        []int32 `protobuf:"varint,6,rep,packed,name=status,proto3" json:"status,omitempty"`
+	Status        []int32 `protobuf:"varint,7,rep,packed,name=status,proto3" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4198,6 +4199,13 @@ func (x *ListPlanExecItemsReq) GetPageSize() int64 {
 func (x *ListPlanExecItemsReq) GetPageNum() int64 {
 	if x != nil {
 		return x.PageNum
+	}
+	return 0
+}
+
+func (x *ListPlanExecItemsReq) GetId() int64 {
+	if x != nil {
+		return x.Id
 	}
 	return 0
 }
@@ -4904,11 +4912,11 @@ const file_trigger_proto_rawDesc = "" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x01R\x02id\x12 \n" +
 	"\x06reason\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x1a\n" +
-	"\x18TerminatePlanExecItemRes\"f\n" +
+	"\x18TerminatePlanExecItemRes\"^\n" +
 	"\n" +
 	"GetPlanReq\x127\n" +
-	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x1f\n" +
-	"\x06planId\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06planId\"1\n" +
+	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x17\n" +
+	"\x02id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x01R\x02id\"1\n" +
 	"\n" +
 	"GetPlanRes\x12#\n" +
 	"\x04plan\x18\x01 \x01(\v2\x0f.trigger.PbPlanR\x04plan\"\xe1\x03\n" +
@@ -4972,15 +4980,16 @@ const file_trigger_proto_rawDesc = "" +
 	"\n" +
 	"pausedTime\x18\x13 \x01(\tR\n" +
 	"pausedTime\x12\"\n" +
-	"\fpausedReason\x18\x14 \x01(\tR\fpausedReason\"\x84\x02\n" +
+	"\fpausedReason\x18\x14 \x01(\tR\fpausedReason\"\x94\x02\n" +
 	"\x14ListPlanExecItemsReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12#\n" +
 	"\bpageSize\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bpageSize\x12!\n" +
-	"\apageNum\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\apageNum\x12\x1f\n" +
-	"\x06planId\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06planId\x12\x16\n" +
-	"\x06itemId\x18\x04 \x01(\tR\x06itemId\x12\x1a\n" +
-	"\bitemName\x18\x05 \x01(\tR\bitemName\x12\x16\n" +
-	"\x06status\x18\x06 \x03(\x05R\x06status\"k\n" +
+	"\apageNum\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\apageNum\x12\x17\n" +
+	"\x02id\x18\x03 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\x02id\x12\x16\n" +
+	"\x06planId\x18\x04 \x01(\tR\x06planId\x12\x16\n" +
+	"\x06itemId\x18\x05 \x01(\tR\x06itemId\x12\x1a\n" +
+	"\bitemName\x18\x06 \x01(\tR\bitemName\x12\x16\n" +
+	"\x06status\x18\a \x03(\x05R\x06status\"k\n" +
 	"\x14ListPlanExecItemsRes\x12=\n" +
 	"\rplanExecItems\x18\x01 \x03(\v2\x17.trigger.PbPlanExecItemR\rplanExecItems\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x03R\x05total\"e\n" +

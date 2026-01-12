@@ -17,10 +17,15 @@ type (
 	}
 )
 
-// NewPlanModel returns a model for the database table.
 func NewPlanModel(conn sqlx.SqlConn) PlanModel {
 	return &customPlanModel{
 		defaultPlanModel: newPlanModel(conn),
+	}
+}
+
+func NewPlanModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) PlanModel {
+	return &customPlanModel{
+		defaultPlanModel: newPlanModelWithDBType(conn, dbType),
 	}
 }
 

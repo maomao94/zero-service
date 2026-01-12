@@ -3436,8 +3436,6 @@ func (m *HandlerPlanTaskEventReq) validate(all bool) error {
 
 	// no validation rules for PlanTriggerTime
 
-	// no validation rules for TriggerTime
-
 	if len(errors) > 0 {
 		return HandlerPlanTaskEventReqMultiError(errors)
 	}

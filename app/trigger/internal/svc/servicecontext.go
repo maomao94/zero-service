@@ -47,8 +47,8 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Scheduler:         asynqx.NewScheduler(c.Redis.Host, c.Redis.Pass),
 		Httpc:             httpc.NewService("httpc"),
 		ConnMap:           collection.NewSafeMap(),
-		PlanModel:         model.NewPlanModel(dbConn),
-		PlanExecItemModel: model.NewPlanExecItemModelWithDBType(dbConn, dbType),
-		PlanExecLogModel:  model.NewPlanExecLogModel(dbConn),
+		PlanModel:         model.NewPlanModelWithDBType(dbConn, model.DatabaseType(dbType)),
+		PlanExecItemModel: model.NewPlanExecItemModelWithDBType(dbConn, model.DatabaseType(dbType)),
+		PlanExecLogModel:  model.NewPlanExecLogModelWithDBType(dbConn, model.DatabaseType(dbType)),
 	}
 }

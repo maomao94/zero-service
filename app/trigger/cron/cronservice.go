@@ -194,12 +194,28 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		Payload:         execItem.Payload,
 		PlanTriggerTime: carbon.NewCarbon(execItem.PlanTriggerTime).ToDateTimeString(),
 	}
+
 	var respBytes []byte
 	in, err := tool.ToProtoBytes(req)
 	if err != nil {
 		logx.Errorf("Error marshaling request for exec item %d: %v", execItem.Id, err)
 		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFailed(ctx, execItem.Id, "fail", "Error marshaling request: "+err.Error()); updateErr != nil {
 			logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
+		}
+
+		logEntry := &model.PlanExecLog{
+			PlanId:      execItem.PlanId,
+			PlanName:    plan.PlanName,
+			ItemId:      execItem.ItemId,
+			ItemName:    execItem.ItemName,
+			PointId:     execItem.PointId,
+			TriggerTime: time.Now(),
+			TraceId:     "",
+			ExecResult:  2, // 失败
+			Message:     "Error marshaling request: " + err.Error(),
+		}
+		if _, err := s.svcCtx.PlanExecLogModel.Insert(ctx, nil, logEntry); err != nil {
+			logx.Errorf("Error inserting plan exec log for item %d: %v", execItem.Id, err)
 		}
 		return
 	}
@@ -208,6 +224,22 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		logx.Errorf("gRPC call failed for exec item %d: %v", execItem.Id, err)
 		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFailed(ctx, execItem.Id, "fail", "gRPC call failed: "+err.Error()); updateErr != nil {
 			logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
+		}
+
+		// 记录执行日志
+		logEntry := &model.PlanExecLog{
+			PlanId:      execItem.PlanId,
+			PlanName:    plan.PlanName,
+			ItemId:      execItem.ItemId,
+			ItemName:    execItem.ItemName,
+			PointId:     execItem.PointId,
+			TriggerTime: time.Now(),
+			TraceId:     "",
+			ExecResult:  2, // 失败
+			Message:     "gRPC call failed: " + err.Error(),
+		}
+		if _, err := s.svcCtx.PlanExecLogModel.Insert(ctx, nil, logEntry); err != nil {
+			logx.Errorf("Error inserting plan exec log for item %d: %v", execItem.Id, err)
 		}
 		return
 	}
@@ -218,8 +250,38 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFailed(ctx, execItem.Id, "fail", "Error unmarshaling response: "+err.Error()); updateErr != nil {
 			logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
 		}
+
+		// 记录执行日志
+		logEntry := &model.PlanExecLog{
+			PlanId:      execItem.PlanId,
+			PlanName:    plan.PlanName,
+			ItemId:      execItem.ItemId,
+			ItemName:    execItem.ItemName,
+			PointId:     execItem.PointId,
+			TriggerTime: time.Now(),
+			TraceId:     "",
+			ExecResult:  2, // 失败
+			Message:     "Error unmarshaling response: " + err.Error(),
+		}
+		if _, err := s.svcCtx.PlanExecLogModel.Insert(ctx, nil, logEntry); err != nil {
+			logx.Errorf("Error inserting plan exec log for item %d: %v", execItem.Id, err)
+		}
 		return
 	}
+
+	// 记录执行日志
+	logEntry := &model.PlanExecLog{
+		PlanId:      execItem.PlanId,
+		PlanName:    plan.PlanName,
+		ItemId:      execItem.ItemId,
+		ItemName:    execItem.ItemName,
+		PointId:     execItem.PointId,
+		TriggerTime: time.Now(),
+		TraceId:     "",
+		ExecResult:  int64(res.ExecResult),
+		Message:     res.Message,
+	}
+
 	switch res.ExecResult {
 	case 1: // Success
 		logx.Infof("gRPC call succeeded for exec item %d", execItem.Id)
@@ -250,5 +312,10 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		}
 	}
 
-	logx.Infof("Successfully executed callback for plan exec item: ID=%d", execItem.Id)
+	// 插入执行日志
+	if _, err := s.svcCtx.PlanExecLogModel.Insert(ctx, nil, logEntry); err != nil {
+		logx.Errorf("Error inserting plan exec log for item %d: %v", execItem.Id, err)
+	}
+
+	logx.Infof("Successfully executed callback for plan exec item: id=%d, traceId=%s", execItem.Id, "")
 }
