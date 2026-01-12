@@ -2674,8 +2674,8 @@ type CreatePlanTaskReq struct {
 	PlanName string `protobuf:"bytes,2,opt,name=planName,proto3" json:"planName,omitempty"`
 	// 任务类型
 	Type string `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
-	// 任务分组名称
-	GroupName string `protobuf:"bytes,4,opt,name=groupName,proto3" json:"groupName,omitempty"`
+	// 计划组ID,用于分组管理计划任务
+	GroupId string `protobuf:"bytes,4,opt,name=groupId,proto3" json:"groupId,omitempty"`
 	// 描述
 	Description string `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
 	// 规则生效开始时间
@@ -2752,9 +2752,9 @@ func (x *CreatePlanTaskReq) GetType() string {
 	return ""
 }
 
-func (x *CreatePlanTaskReq) GetGroupName() string {
+func (x *CreatePlanTaskReq) GetGroupId() string {
 	if x != nil {
-		return x.GroupName
+		return x.GroupId
 	}
 	return ""
 }
@@ -4887,13 +4887,13 @@ const file_trigger_proto_rawDesc = "" +
 	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x17\n" +
 	"\x02id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"\f\n" +
 	"\n" +
-	"RunTaskRes\"\xa3\x03\n" +
+	"RunTaskRes\"\x9f\x03\n" +
 	"\x11CreatePlanTaskReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x1f\n" +
 	"\x06planId\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06planId\x12#\n" +
 	"\bplanName\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bplanName\x12\x1b\n" +
-	"\x04type\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04type\x12\x1c\n" +
-	"\tgroupName\x18\x04 \x01(\tR\tgroupName\x12*\n" +
+	"\x04type\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04type\x12\x18\n" +
+	"\agroupId\x18\x04 \x01(\tR\agroupId\x12*\n" +
 	"\vdescription\x18\x05 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\vdescription\x12\x1c\n" +
 	"\tstartTime\x18\x06 \x01(\tR\tstartTime\x12\x18\n" +
 	"\aendTime\x18\a \x01(\tR\aendTime\x121\n" +

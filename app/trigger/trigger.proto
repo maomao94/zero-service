@@ -450,8 +450,8 @@ message CreatePlanTaskReq {
   string planName = 2 [(validate.rules).string = {min_len: 1}];
   // 任务类型
   string type = 3 [(validate.rules).string = {min_len: 1}];
-  // 任务分组名称
-  string groupName = 4;
+  // 计划组ID,用于分组管理计划任务
+  string groupId = 4;
   // 描述
   string description = 5 [(validate.rules).string = {max_len: 200}];
   // 规则生效开始时间

@@ -5818,7 +5818,7 @@ func (m *CreatePlanTaskReq) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	// no validation rules for GroupName
+	// no validation rules for GroupId
 
 	if utf8.RuneCountInString(m.GetDescription()) > 200 {
 		err := CreatePlanTaskReqValidationError{
