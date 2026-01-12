@@ -164,9 +164,8 @@ func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, i
 }
 
 // UpdateStatusToFailed 更新执行项状态为失败
-// Implements exponential backoff strategy for failed tasks
-// Terminates the item if it has exceeded the 7-day maximum detection time
 func (m *customPlanExecItemModel) UpdateStatusToFailed(ctx context.Context, id int64, lastResult, lastMsg string) error {
+	nowTime := carbon.Now().ToDateTimeString()
 	type ItemInfo struct {
 		TriggerCount int64 `db:"trigger_count"`
 	}
@@ -197,8 +196,8 @@ func (m *customPlanExecItemModel) UpdateStatusToFailed(ctx context.Context, id i
 			lastResult,
 			lastMsg,
 			carbonNextTriggerTime,
-			carbon.Now().ToDateTimeString(),
-			carbon.Now().ToDateTimeString(),
+			nowTime,
+			nowTime,
 			id,
 		)
 	} else {
@@ -210,7 +209,7 @@ func (m *customPlanExecItemModel) UpdateStatusToFailed(ctx context.Context, id i
 			lastResult,
 			lastMsg,
 			carbonNextTriggerTime,
-			carbon.Now().ToDateTimeString(),
+			nowTime,
 			id,
 		)
 		_, err := m.conn.ExecCtx(ctx, sql)
