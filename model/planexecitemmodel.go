@@ -75,10 +75,7 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 	where := fmt.Sprintf(
 		`pei.is_terminated = 0 AND pei.is_paused = 0 AND 
 		 p.plan_id = pei.plan_id AND p.del_state = 0 AND p.status = 1 AND p.is_terminated = 0 AND p.is_paused = 0 AND
-		 (
-			(pei.next_trigger_time <= '%s' AND pei.status IN (0, 3, 4)) OR
-			(pei.status = 1 AND pei.last_trigger_time IS NOT NULL AND pei.last_trigger_time <= '%s')
-		)`,
+		 (pei.next_trigger_time <= '%s' AND pei.status IN (0, 1, 3, 4))`,
 		carbon.CreateFromStdTime(currentTime).ToDateTimeString(),
 		carbon.CreateFromStdTime(timeoutThreshold).ToDateTimeString(),
 	)
@@ -118,18 +115,22 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 		// 更新下次触发时间，防止重复触发
 		nextTriggerTime := currentTime.Add(expireIn)
 		updateSQL := fmt.Sprintf(
-			`UPDATE %s SET status = 1, next_trigger_time = '%s', last_trigger_time = '%s' WHERE id = %d`,
+			`UPDATE %s SET status = 1, next_trigger_time = '%s', last_trigger_time = '%s' WHERE id = %d and %s`,
 			m.table,
 			carbon.CreateFromStdTime(nextTriggerTime).ToDateTimeString(),
 			carbon.CreateFromStdTime(currentTime).ToDateTimeString(),
 			execItem.Id,
+			where,
 		)
 
-		_, err = m.conn.ExecCtx(ctx, updateSQL)
-		if err != nil {
-			return nil, err
+		result, updateErr := m.conn.ExecCtx(ctx, updateSQL)
+		if updateErr != nil {
+			return nil, updateErr
 		}
-
+		affected, _ := result.RowsAffected()
+		if affected == 0 {
+			return nil, ErrNotFound
+		}
 		return &execItem, nil
 	default:
 		return nil, err
