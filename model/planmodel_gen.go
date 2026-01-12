@@ -69,6 +69,7 @@ type (
 		PlanId           string       `db:"plan_id"`           // 计划唯一标识
 		PlanName         string       `db:"plan_name"`         // 计划任务名称
 		Type             string       `db:"type"`              // 任务类型
+		GroupId          string       `db:"group_id"`          // 计划组ID,用于分组管理计划任务
 		RecurrenceRule   string       `db:"recurrence_rule"`   // 重复规则，JSON格式存储
 		StartTime        time.Time    `db:"start_time"`        // 规则生效开始时间
 		EndTime          time.Time    `db:"end_time"`          // 规则生效结束时间
@@ -133,11 +134,11 @@ func (m *defaultPlanModel) Insert(ctx context.Context, session sqlx.Session, dat
 	}
 	data.DelState = 0
 
-	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, planRowsExpectAutoSet)
+	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, planRowsExpectAutoSet)
 	if session != nil {
-		return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.PlanId, data.PlanName, data.Type, data.RecurrenceRule, data.StartTime, data.EndTime, data.Status, data.IsTerminated, data.IsPaused, data.TerminatedTime, data.TerminatedReason, data.PausedTime, data.PausedReason, data.Description)
+		return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.PlanId, data.PlanName, data.Type, data.GroupId, data.RecurrenceRule, data.StartTime, data.EndTime, data.Status, data.IsTerminated, data.IsPaused, data.TerminatedTime, data.TerminatedReason, data.PausedTime, data.PausedReason, data.Description)
 	}
-	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.PlanId, data.PlanName, data.Type, data.RecurrenceRule, data.StartTime, data.EndTime, data.Status, data.IsTerminated, data.IsPaused, data.TerminatedTime, data.TerminatedReason, data.PausedTime, data.PausedReason, data.Description)
+	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.PlanId, data.PlanName, data.Type, data.GroupId, data.RecurrenceRule, data.StartTime, data.EndTime, data.Status, data.IsTerminated, data.IsPaused, data.TerminatedTime, data.TerminatedReason, data.PausedTime, data.PausedReason, data.Description)
 }
 
 func (m *defaultPlanModel) Update(ctx context.Context, session sqlx.Session, newData *Plan) (sql.Result, error) {
@@ -147,9 +148,9 @@ func (m *defaultPlanModel) Update(ctx context.Context, session sqlx.Session, new
 	newData.DelState = 0
 	query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, planRowsWithPlaceHolder)
 	if session != nil {
-		return session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.PlanId, newData.PlanName, newData.Type, newData.RecurrenceRule, newData.StartTime, newData.EndTime, newData.Status, newData.IsTerminated, newData.IsPaused, newData.TerminatedTime, newData.TerminatedReason, newData.PausedTime, newData.PausedReason, newData.Description, newData.Id)
+		return session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.PlanId, newData.PlanName, newData.Type, newData.GroupId, newData.RecurrenceRule, newData.StartTime, newData.EndTime, newData.Status, newData.IsTerminated, newData.IsPaused, newData.TerminatedTime, newData.TerminatedReason, newData.PausedTime, newData.PausedReason, newData.Description, newData.Id)
 	}
-	return m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.PlanId, newData.PlanName, newData.Type, newData.RecurrenceRule, newData.StartTime, newData.EndTime, newData.Status, newData.IsTerminated, newData.IsPaused, newData.TerminatedTime, newData.TerminatedReason, newData.PausedTime, newData.PausedReason, newData.Description, newData.Id)
+	return m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.PlanId, newData.PlanName, newData.Type, newData.GroupId, newData.RecurrenceRule, newData.StartTime, newData.EndTime, newData.Status, newData.IsTerminated, newData.IsPaused, newData.TerminatedTime, newData.TerminatedReason, newData.PausedTime, newData.PausedReason, newData.Description, newData.Id)
 }
 
 func (m *defaultPlanModel) UpdateWithVersion(ctx context.Context, session sqlx.Session, newData *Plan) error {
@@ -162,9 +163,9 @@ func (m *defaultPlanModel) UpdateWithVersion(ctx context.Context, session sqlx.S
 
 	query := fmt.Sprintf("update %s set %s where `id` = ? and version = ? ", m.table, planRowsWithPlaceHolder)
 	if session != nil {
-		sqlResult, err = session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.PlanId, newData.PlanName, newData.Type, newData.RecurrenceRule, newData.StartTime, newData.EndTime, newData.Status, newData.IsTerminated, newData.IsPaused, newData.TerminatedTime, newData.TerminatedReason, newData.PausedTime, newData.PausedReason, newData.Description, newData.Id, oldVersion)
+		sqlResult, err = session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.PlanId, newData.PlanName, newData.Type, newData.GroupId, newData.RecurrenceRule, newData.StartTime, newData.EndTime, newData.Status, newData.IsTerminated, newData.IsPaused, newData.TerminatedTime, newData.TerminatedReason, newData.PausedTime, newData.PausedReason, newData.Description, newData.Id, oldVersion)
 	} else {
-		sqlResult, err = m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.PlanId, newData.PlanName, newData.Type, newData.RecurrenceRule, newData.StartTime, newData.EndTime, newData.Status, newData.IsTerminated, newData.IsPaused, newData.TerminatedTime, newData.TerminatedReason, newData.PausedTime, newData.PausedReason, newData.Description, newData.Id, oldVersion)
+		sqlResult, err = m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.PlanId, newData.PlanName, newData.Type, newData.GroupId, newData.RecurrenceRule, newData.StartTime, newData.EndTime, newData.Status, newData.IsTerminated, newData.IsPaused, newData.TerminatedTime, newData.TerminatedReason, newData.PausedTime, newData.PausedReason, newData.Description, newData.Id, oldVersion)
 	}
 
 	if err != nil {
