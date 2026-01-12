@@ -95,7 +95,7 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 		 pei.plan_id, pei.item_id, pei.item_name, pei.service_addr, pei.payload, 
 		 pei.request_timeout, pei.plan_trigger_time, pei.next_trigger_time, 
 		 pei.last_trigger_time, pei.trigger_count, pei.status, 
-		 pei.last_result, pei.last_error, pei.is_terminated, 
+		 pei.last_result, pei.last_msg, pei.is_terminated, 
 		 pei.terminated_time, pei.terminated_reason, pei.is_paused, 
 		 pei.paused_time, pei.paused_reason 
 		 FROM %s pei 
@@ -152,7 +152,7 @@ func (m *customPlanExecItemModel) UpdateStatusToRunning(ctx context.Context, id 
 // UpdateStatusToCompleted 更新执行项状态为已完成
 func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, id int64, lastResult, lastMsg string) error {
 	sql := fmt.Sprintf(
-		`UPDATE %s SET status = 2, last_result = '%s', last_error = '%s', last_trigger_time = '%s' WHERE id = %d`,
+		`UPDATE %s SET status = 2, last_result = '%s', last_msg = '%s', last_trigger_time = '%s' WHERE id = %d`,
 		m.table,
 		lastResult,
 		lastMsg,
@@ -189,7 +189,7 @@ func (m *customPlanExecItemModel) UpdateStatusToFailed(ctx context.Context, id i
 	var sql string
 	if isExceeded {
 		sql = fmt.Sprintf(
-			`UPDATE %s SET status = 5, last_result = '%s', last_error = '%s', 
+			`UPDATE %s SET status = 5, last_result = '%s', last_msg = '%s', 
 			 next_trigger_time = '%s', last_trigger_time = '%s', 
 			 trigger_count = trigger_count + 1, is_terminated = 1, 
 			 terminated_time = '%s', terminated_reason = '超过重试上限，自动终止' WHERE id = %d`,
@@ -203,7 +203,7 @@ func (m *customPlanExecItemModel) UpdateStatusToFailed(ctx context.Context, id i
 		)
 	} else {
 		sql := fmt.Sprintf(
-			`UPDATE %s SET status = 3, last_result = '%s', last_error = '%s', 
+			`UPDATE %s SET status = 3, last_result = '%s', last_msg = '%s', 
 			 next_trigger_time = '%s', last_trigger_time = '%s', 
 			 trigger_count = trigger_count + 1 WHERE id = %d`,
 			m.table,
@@ -224,7 +224,7 @@ func (m *customPlanExecItemModel) UpdateStatusToFailed(ctx context.Context, id i
 // UpdateStatusToDelayed 更新执行项状态为延期
 func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, lastMsg string, nextTriggerTime string) error {
 	sql := fmt.Sprintf(
-		`UPDATE %s SET status = 4, last_result = '%s', last_error = '%s', next_trigger_time = '%s', last_trigger_time = '%s' WHERE id = %d`,
+		`UPDATE %s SET status = 4, last_result = '%s', last_msg = '%s', next_trigger_time = '%s', last_trigger_time = '%s' WHERE id = %d`,
 		m.table,
 		lastResult,
 		lastMsg,
