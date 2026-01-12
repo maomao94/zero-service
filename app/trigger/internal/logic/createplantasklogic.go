@@ -114,7 +114,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 					TriggerCount:     0,
 					Status:           0,
 					LastResult:       "",
-					LastError:        "",
+					LastMsg:          "",
 					IsTerminated:     0,
 					TerminatedTime:   sql.NullTime{},
 					TerminatedReason: "",
