@@ -16,7 +16,6 @@ import (
 	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
-	"github.com/zeromicro/go-zero/core/trace"
 )
 
 type CreatePlanTaskLogic struct {
@@ -35,7 +34,6 @@ func NewCreatePlanTaskLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Cr
 
 // 创建计划任务
 func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*trigger.CreatePlanTaskRes, error) {
-	traceID := trace.TraceIDFromContext(l.ctx)
 	err := in.Validate()
 	if err != nil {
 		return nil, err
@@ -136,8 +134,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		return nil, err
 	}
 	return &trigger.CreatePlanTaskRes{
-		TraceId: traceID,
-		Id:      insertPlan.Id,
+		Id: insertPlan.Id,
 	}, nil
 }
 

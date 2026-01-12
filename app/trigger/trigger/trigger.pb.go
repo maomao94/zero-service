@@ -2881,12 +2881,14 @@ type PlanExecItem struct {
 	ItemId string `protobuf:"bytes,1,opt,name=itemId,proto3" json:"itemId,omitempty"`
 	// 执行项名称（可选）：可视化展示（设备名/用户名/转账订单名等）
 	ItemName string `protobuf:"bytes,2,opt,name=itemName,proto3" json:"itemName,omitempty"`
-	// 业务服务地址（必填）：执行该项的服务地址（grpc/http等）
+	// 业务服务地址（必填）：执行该项的grpc服务地址
 	ServiceAddr string `protobuf:"bytes,3,opt,name=serviceAddr,proto3" json:"serviceAddr,omitempty"`
+	// 方法 不可为空
+	Method string `protobuf:"bytes,4,opt,name=method,proto3" json:"method,omitempty"`
 	// 业务负载（必填）：序列化的业务专属参数（设备参数/转账金额/订单信息等）
-	Payload string `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"`
+	Payload string `protobuf:"bytes,5,opt,name=payload,proto3" json:"payload,omitempty"`
 	// 请求超时时间 单位: 毫秒 可为空
-	RequestTimeout int64 `protobuf:"varint,5,opt,name=requestTimeout,proto3" json:"requestTimeout,omitempty"`
+	RequestTimeout int64 `protobuf:"varint,6,opt,name=requestTimeout,proto3" json:"requestTimeout,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -2942,6 +2944,13 @@ func (x *PlanExecItem) GetServiceAddr() string {
 	return ""
 }
 
+func (x *PlanExecItem) GetMethod() string {
+	if x != nil {
+		return x.Method
+	}
+	return ""
+}
+
 func (x *PlanExecItem) GetPayload() string {
 	if x != nil {
 		return x.Payload
@@ -2957,11 +2966,8 @@ func (x *PlanExecItem) GetRequestTimeout() int64 {
 }
 
 type CreatePlanTaskRes struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// 唯一追踪 id
-	TraceId       string   `protobuf:"bytes,1,opt,name=traceId,proto3" json:"traceId,omitempty"`
-	Id            int64    `protobuf:"varint,2,opt,name=id,proto3" json:"id,omitempty"`
-	Result        []string `protobuf:"bytes,4,rep,name=result,proto3" json:"result,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2996,25 +3002,11 @@ func (*CreatePlanTaskRes) Descriptor() ([]byte, []int) {
 	return file_trigger_proto_rawDescGZIP(), []int{44}
 }
 
-func (x *CreatePlanTaskRes) GetTraceId() string {
-	if x != nil {
-		return x.TraceId
-	}
-	return ""
-}
-
 func (x *CreatePlanTaskRes) GetId() int64 {
 	if x != nil {
 		return x.Id
 	}
 	return 0
-}
-
-func (x *CreatePlanTaskRes) GetResult() []string {
-	if x != nil {
-		return x.Result
-	}
-	return nil
 }
 
 type PausePlanReq struct {
@@ -4913,17 +4905,16 @@ const file_trigger_proto_rawDesc = "" +
 	"\x03day\x18\x03 \x03(\x05B\x19\xfaB\x16\x92\x01\x13\"\x11\x1a\x0f\x18\x1f(\xe1\xff\xff\xff\xff\xff\xff\xff\xff\x018\x00R\x03day\x12\"\n" +
 	"\x04week\x18\x04 \x03(\x05B\x0e\xfaB\v\x92\x01\b\"\x06\x1a\x04\x18\a(\x01R\x04week\x12\x1d\n" +
 	"\x04hour\x18\x05 \x01(\x05B\t\xfaB\x06\x1a\x04\x18\x17(\x00R\x04hour\x12!\n" +
-	"\x06minute\x18\x06 \x01(\x05B\t\xfaB\x06\x1a\x04\x18;(\x00R\x06minute\"\xb8\x01\n" +
+	"\x06minute\x18\x06 \x01(\x05B\t\xfaB\x06\x1a\x04\x18;(\x00R\x06minute\"\xd9\x01\n" +
 	"\fPlanExecItem\x12\x1f\n" +
 	"\x06itemId\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06itemId\x12\x1a\n" +
 	"\bitemName\x18\x02 \x01(\tR\bitemName\x12)\n" +
-	"\vserviceAddr\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\vserviceAddr\x12\x18\n" +
-	"\apayload\x18\x04 \x01(\tR\apayload\x12&\n" +
-	"\x0erequestTimeout\x18\x05 \x01(\x03R\x0erequestTimeout\"U\n" +
-	"\x11CreatePlanTaskRes\x12\x18\n" +
-	"\atraceId\x18\x01 \x01(\tR\atraceId\x12\x0e\n" +
-	"\x02id\x18\x02 \x01(\x03R\x02id\x12\x16\n" +
-	"\x06result\x18\x04 \x03(\tR\x06result\"\x8a\x01\n" +
+	"\vserviceAddr\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\vserviceAddr\x12\x1f\n" +
+	"\x06method\x18\x04 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06method\x12\x18\n" +
+	"\apayload\x18\x05 \x01(\tR\apayload\x12&\n" +
+	"\x0erequestTimeout\x18\x06 \x01(\x03R\x0erequestTimeout\"#\n" +
+	"\x11CreatePlanTaskRes\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\"\x8a\x01\n" +
 	"\fPausePlanReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x1f\n" +
 	"\x06planId\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06planId\x12 \n" +

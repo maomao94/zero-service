@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS `plan_exec_item` (
     `item_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '执行项ID',
     `item_name` VARCHAR(128) NOT NULL DEFAULT '' COMMENT '执行项名称',
     `service_addr` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '业务服务地址',
+    `method` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '执行方法名称',
     `payload` TEXT NOT NULL COMMENT '业务负载',
     `request_timeout` INT NOT NULL DEFAULT 0 COMMENT '请求超时时间（毫秒）',
     `plan_trigger_time` DATETIME NOT NULL COMMENT '计划触发时间',

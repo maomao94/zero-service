@@ -498,19 +498,18 @@ message PlanExecItem {
   string itemId = 1 [(validate.rules).string = {min_len: 1}];
   // 执行项名称（可选）：可视化展示（设备名/用户名/转账订单名等）
   string itemName = 2;
-  // 业务服务地址（必填）：执行该项的服务地址（grpc/http等）
+  // 业务服务地址（必填）：执行该项的grpc服务地址
   string serviceAddr = 3 [(validate.rules).string = {min_len: 1}];
+  // 方法 不可为空
+  string method = 4 [(validate.rules).string = {min_len: 1}];
   // 业务负载（必填）：序列化的业务专属参数（设备参数/转账金额/订单信息等）
-  string payload = 4;
+  string payload = 5;
   // 请求超时时间 单位: 毫秒 可为空
-  int64 requestTimeout = 5;
+  int64 requestTimeout = 6;
 }
 
 message CreatePlanTaskRes {
-  // 唯一追踪 id
-  string traceId = 1;
-  int64 id = 2;
-  repeated string result = 4;
+  int64 id = 1;
 }
 
 message PausePlanReq {

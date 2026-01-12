@@ -6230,6 +6230,17 @@ func (m *PlanExecItem) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if utf8.RuneCountInString(m.GetMethod()) < 1 {
+		err := PlanExecItemValidationError{
+			field:  "Method",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	// no validation rules for Payload
 
 	// no validation rules for RequestTimeout
@@ -6332,8 +6343,6 @@ func (m *CreatePlanTaskRes) validate(all bool) error {
 	}
 
 	var errors []error
-
-	// no validation rules for TraceId
 
 	// no validation rules for Id
 
