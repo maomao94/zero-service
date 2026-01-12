@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS `plan_exec_item` (
     `plan_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '关联的计划ID',
     `item_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '执行项ID',
     `item_name` VARCHAR(128) NOT NULL DEFAULT '' COMMENT '执行项名称',
+    `point_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '点位id',
     `service_addr` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '业务服务地址',
     `method` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '执行方法名称',
     `payload` TEXT NOT NULL COMMENT '业务负载',
@@ -88,15 +89,10 @@ CREATE TABLE IF NOT EXISTS `plan_exec_item` (
     `paused_time` DATETIME NULL DEFAULT NULL COMMENT '暂停时间',
     `paused_reason` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '暂停原因',
     PRIMARY KEY (`id`),
-    KEY `idx_plan_id` (`plan_id`),
-    KEY `idx_item_id` (`item_id`),
-    KEY `idx_next_trigger_time` (`next_trigger_time`),
-    KEY `idx_status` (`status`),
-    KEY `idx_last_trigger_time` (`last_trigger_time`),
-    KEY `idx_is_terminated` (`is_terminated`),
-    KEY `idx_terminated_time` (`terminated_time`),
-    KEY `idx_is_paused` (`is_paused`),
-    KEY `idx_paused_time` (`paused_time`)
+    UNIQUE KEY `uk_plan_id_item_id` (`plan_id`, `item_id`),
+    KEY `idx_point_id` (`point_id`),
+    KEY `idx_core_scan` (`next_trigger_time`, `status`, `is_terminated`, `is_paused`, `del_state`),
+    UNIQUE KEY `uk_item_id` (`item_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='计划执行项表';
 
 -- 计划任务执行日志表
