@@ -27,11 +27,11 @@ type (
 		// 更新执行项状态为执行中
 		UpdateStatusToRunning(ctx context.Context, id int64) error
 		// 更新执行项状态为已完成
-		UpdateStatusToCompleted(ctx context.Context, id int64, lastResult, errMsg string) error
+		UpdateStatusToCompleted(ctx context.Context, id int64, lastResult, lastMsg string) error
 		// 更新执行项状态为失败
-		UpdateStatusToFailed(ctx context.Context, id int64, lastResult, errMsg string) error
+		UpdateStatusToFailed(ctx context.Context, id int64, lastResult, lastMsg string) error
 		// 更新执行项状态为延期
-		UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, errMsg string, nextTriggerTime string) error
+		UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, lastMsg string, nextTriggerTime string) error
 	}
 
 	customPlanExecItemModel struct {
@@ -150,12 +150,12 @@ func (m *customPlanExecItemModel) UpdateStatusToRunning(ctx context.Context, id 
 }
 
 // UpdateStatusToCompleted 更新执行项状态为已完成
-func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, id int64, lastResult, errMsg string) error {
+func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, id int64, lastResult, lastMsg string) error {
 	sql := fmt.Sprintf(
 		`UPDATE %s SET status = 2, last_result = '%s', last_error = '%s', last_trigger_time = '%s' WHERE id = %d`,
 		m.table,
 		lastResult,
-		errMsg,
+		lastMsg,
 		carbon.Now().ToDateTimeString(),
 		id,
 	)
@@ -166,7 +166,7 @@ func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, i
 // UpdateStatusToFailed 更新执行项状态为失败
 // Implements exponential backoff strategy for failed tasks
 // Terminates the item if it has exceeded the 7-day maximum detection time
-func (m *customPlanExecItemModel) UpdateStatusToFailed(ctx context.Context, id int64, lastResult, errMsg string) error {
+func (m *customPlanExecItemModel) UpdateStatusToFailed(ctx context.Context, id int64, lastResult, lastMsg string) error {
 	type ItemInfo struct {
 		TriggerCount int64 `db:"trigger_count"`
 	}
@@ -195,7 +195,7 @@ func (m *customPlanExecItemModel) UpdateStatusToFailed(ctx context.Context, id i
 			 terminated_time = '%s', terminated_reason = '超过重试上限，自动终止' WHERE id = %d`,
 			m.table,
 			lastResult,
-			errMsg,
+			lastMsg,
 			carbonNextTriggerTime,
 			carbon.Now().ToDateTimeString(),
 			carbon.Now().ToDateTimeString(),
@@ -208,7 +208,7 @@ func (m *customPlanExecItemModel) UpdateStatusToFailed(ctx context.Context, id i
 			 trigger_count = trigger_count + 1 WHERE id = %d`,
 			m.table,
 			lastResult,
-			errMsg,
+			lastMsg,
 			carbonNextTriggerTime,
 			carbon.Now().ToDateTimeString(),
 			id,
@@ -222,12 +222,12 @@ func (m *customPlanExecItemModel) UpdateStatusToFailed(ctx context.Context, id i
 }
 
 // UpdateStatusToDelayed 更新执行项状态为延期
-func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, errMsg string, nextTriggerTime string) error {
+func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, lastMsg string, nextTriggerTime string) error {
 	sql := fmt.Sprintf(
 		`UPDATE %s SET status = 4, last_result = '%s', last_error = '%s', next_trigger_time = '%s', last_trigger_time = '%s' WHERE id = %d`,
 		m.table,
 		lastResult,
-		errMsg,
+		lastMsg,
 		nextTriggerTime,
 		carbon.Now().ToDateTimeString(),
 		id,
