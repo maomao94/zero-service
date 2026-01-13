@@ -2581,6 +2581,14 @@ func (*UpSocketMessageRsp) Descriptor() ([]byte, []int) {
 
 type HandlerPlanTaskEventReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// 创建时间 执行项创建时间
+	CreateTime string `protobuf:"bytes,101,opt,name=createTime,proto3" json:"createTime,omitempty"`
+	// 更新时间 执行项更新时间
+	UpdateTime string `protobuf:"bytes,102,opt,name=updateTime,proto3" json:"updateTime,omitempty"`
+	// 创建人 执行项创建人
+	CreateUser string `protobuf:"bytes,103,opt,name=createUser,proto3" json:"createUser,omitempty"`
+	// 更新人 执行项更新人
+	UpdateUser string `protobuf:"bytes,104,opt,name=updateUser,proto3" json:"updateUser,omitempty"`
 	// 计划任务ID
 	PlanId string `protobuf:"bytes,1,opt,name=planId,proto3" json:"planId,omitempty"`
 	// 计划任务名称
@@ -2595,16 +2603,18 @@ type HandlerPlanTaskEventReq struct {
 	StartTime string `protobuf:"bytes,6,opt,name=startTime,proto3" json:"startTime,omitempty"`
 	// 规则生效结束时间
 	EndTime string `protobuf:"bytes,7,opt,name=endTime,proto3" json:"endTime,omitempty"`
+	// 关联的计划主键ID
+	PlanPk int64 `protobuf:"varint,8,opt,name=planPk,proto3" json:"planPk,omitempty"`
 	// 执行项ID
-	ItemId string `protobuf:"bytes,8,opt,name=itemId,proto3" json:"itemId,omitempty"`
+	ItemId string `protobuf:"bytes,9,opt,name=itemId,proto3" json:"itemId,omitempty"`
 	// 执行项名称
-	ItemName string `protobuf:"bytes,9,opt,name=itemName,proto3" json:"itemName,omitempty"`
+	ItemName string `protobuf:"bytes,10,opt,name=itemName,proto3" json:"itemName,omitempty"`
 	// 点位id,业务字段
-	PointId string `protobuf:"bytes,10,opt,name=pointId,proto3" json:"pointId,omitempty"`
+	PointId string `protobuf:"bytes,11,opt,name=pointId,proto3" json:"pointId,omitempty"`
 	// 业务负载（必填）：序列化的业务专属参数（设备参数/转账金额/订单信息等）
-	Payload string `protobuf:"bytes,11,opt,name=payload,proto3" json:"payload,omitempty"`
+	Payload string `protobuf:"bytes,12,opt,name=payload,proto3" json:"payload,omitempty"`
 	// 计划触发时间
-	PlanTriggerTime string `protobuf:"bytes,12,opt,name=PlanTriggerTime,proto3" json:"PlanTriggerTime,omitempty"`
+	PlanTriggerTime string `protobuf:"bytes,13,opt,name=planTriggerTime,proto3" json:"planTriggerTime,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -2637,6 +2647,34 @@ func (x *HandlerPlanTaskEventReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use HandlerPlanTaskEventReq.ProtoReflect.Descriptor instead.
 func (*HandlerPlanTaskEventReq) Descriptor() ([]byte, []int) {
 	return file_streamevent_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *HandlerPlanTaskEventReq) GetCreateTime() string {
+	if x != nil {
+		return x.CreateTime
+	}
+	return ""
+}
+
+func (x *HandlerPlanTaskEventReq) GetUpdateTime() string {
+	if x != nil {
+		return x.UpdateTime
+	}
+	return ""
+}
+
+func (x *HandlerPlanTaskEventReq) GetCreateUser() string {
+	if x != nil {
+		return x.CreateUser
+	}
+	return ""
+}
+
+func (x *HandlerPlanTaskEventReq) GetUpdateUser() string {
+	if x != nil {
+		return x.UpdateUser
+	}
+	return ""
 }
 
 func (x *HandlerPlanTaskEventReq) GetPlanId() string {
@@ -2686,6 +2724,13 @@ func (x *HandlerPlanTaskEventReq) GetEndTime() string {
 		return x.EndTime
 	}
 	return ""
+}
+
+func (x *HandlerPlanTaskEventReq) GetPlanPk() int64 {
+	if x != nil {
+		return x.PlanPk
+	}
+	return 0
 }
 
 func (x *HandlerPlanTaskEventReq) GetItemId() string {
@@ -3060,8 +3105,20 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x03sId\x18\x02 \x01(\tR\x03sId\x12\x14\n" +
 	"\x05event\x18\x03 \x01(\tR\x05event\x12\x18\n" +
 	"\apayload\x18\x04 \x01(\tR\apayload\"\x14\n" +
-	"\x12UpSocketMessageRsp\"\xe7\x02\n" +
-	"\x17HandlerPlanTaskEventReq\x12\x16\n" +
+	"\x12UpSocketMessageRsp\"\xff\x03\n" +
+	"\x17HandlerPlanTaskEventReq\x12\x1e\n" +
+	"\n" +
+	"createTime\x18e \x01(\tR\n" +
+	"createTime\x12\x1e\n" +
+	"\n" +
+	"updateTime\x18f \x01(\tR\n" +
+	"updateTime\x12\x1e\n" +
+	"\n" +
+	"createUser\x18g \x01(\tR\n" +
+	"createUser\x12\x1e\n" +
+	"\n" +
+	"updateUser\x18h \x01(\tR\n" +
+	"updateUser\x12\x16\n" +
 	"\x06planId\x18\x01 \x01(\tR\x06planId\x12\x1a\n" +
 	"\bplanName\x18\x02 \x01(\tR\bplanName\x12\x12\n" +
 	"\x04type\x18\x03 \x01(\tR\x04type\x12\x18\n" +
@@ -3069,12 +3126,13 @@ const file_streamevent_proto_rawDesc = "" +
 	"\vdescription\x18\x05 \x01(\tR\vdescription\x12\x1c\n" +
 	"\tstartTime\x18\x06 \x01(\tR\tstartTime\x12\x18\n" +
 	"\aendTime\x18\a \x01(\tR\aendTime\x12\x16\n" +
-	"\x06itemId\x18\b \x01(\tR\x06itemId\x12\x1a\n" +
-	"\bitemName\x18\t \x01(\tR\bitemName\x12\x18\n" +
-	"\apointId\x18\n" +
-	" \x01(\tR\apointId\x12\x18\n" +
-	"\apayload\x18\v \x01(\tR\apayload\x12(\n" +
-	"\x0fPlanTriggerTime\x18\f \x01(\tR\x0fPlanTriggerTime\"\x91\x01\n" +
+	"\x06planPk\x18\b \x01(\x03R\x06planPk\x12\x16\n" +
+	"\x06itemId\x18\t \x01(\tR\x06itemId\x12\x1a\n" +
+	"\bitemName\x18\n" +
+	" \x01(\tR\bitemName\x12\x18\n" +
+	"\apointId\x18\v \x01(\tR\apointId\x12\x18\n" +
+	"\apayload\x18\f \x01(\tR\apayload\x12(\n" +
+	"\x0fplanTriggerTime\x18\r \x01(\tR\x0fplanTriggerTime\"\x91\x01\n" +
 	"\x17HandlerPlanTaskEventRes\x12\x1e\n" +
 	"\n" +
 	"execResult\x18\x01 \x01(\x05R\n" +

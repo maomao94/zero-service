@@ -456,6 +456,15 @@ message UpSocketMessageRsp{
 }
 
 message HandlerPlanTaskEventReq{
+  // 创建时间 执行项创建时间
+  string createTime = 101;
+  // 更新时间 执行项更新时间
+  string updateTime = 102;
+  // 创建人 执行项创建人
+  string createUser = 103;
+  // 更新人 执行项更新人
+  string updateUser = 104;
+
   // 计划任务ID
   string planId = 1;
   // 计划任务名称
@@ -471,16 +480,18 @@ message HandlerPlanTaskEventReq{
   // 规则生效结束时间
   string endTime = 7;
 
+  // 关联的计划主键ID
+  int64 planPk = 8;
   // 执行项ID
-  string itemId = 8;
+  string itemId = 9;
   // 执行项名称
-  string itemName = 9;
+  string itemName = 10;
   // 点位id,业务字段
-  string pointId = 10;
+  string pointId = 11;
   // 业务负载（必填）：序列化的业务专属参数（设备参数/转账金额/订单信息等）
-  string payload = 11;
+  string payload = 12;
   // 计划触发时间
-  string PlanTriggerTime = 12;
+  string planTriggerTime = 13;
 }
 
 message HandlerPlanTaskEventRes{

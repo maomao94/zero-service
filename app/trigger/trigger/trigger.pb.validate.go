@@ -6022,6 +6022,17 @@ func (m *PbPlanRule) validate(all bool) error {
 
 	var errors []error
 
+	if val := m.GetFreq(); val < 0 || val > 5 {
+		err := PbPlanRuleValidationError{
+			field:  "Freq",
+			reason: "value must be inside range [0, 5]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	for idx, item := range m.GetMonth() {
 		_, _ = idx, item
 
@@ -7716,6 +7727,16 @@ func (m *PbPlan) validate(all bool) error {
 
 	var errors []error
 
+	// no validation rules for CreateTime
+
+	// no validation rules for UpdateTime
+
+	// no validation rules for CreateUser
+
+	// no validation rules for UpdateUser
+
+	// no validation rules for Id
+
 	// no validation rules for PlanId
 
 	// no validation rules for PlanName
@@ -8441,6 +8462,18 @@ func (m *PbPlanExecItem) validate(all bool) error {
 
 	var errors []error
 
+	// no validation rules for CreateTime
+
+	// no validation rules for UpdateTime
+
+	// no validation rules for CreateUser
+
+	// no validation rules for UpdateUser
+
+	// no validation rules for Id
+
+	// no validation rules for PlanPk
+
 	// no validation rules for PlanId
 
 	// no validation rules for ItemId
@@ -9162,7 +9195,17 @@ func (m *PbPlanExecLog) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for LogId
+	// no validation rules for CreateTime
+
+	// no validation rules for UpdateTime
+
+	// no validation rules for CreateUser
+
+	// no validation rules for UpdateUser
+
+	// no validation rules for Id
+
+	// no validation rules for PlanPk
 
 	// no validation rules for PlanId
 
@@ -9172,15 +9215,13 @@ func (m *PbPlanExecLog) validate(all bool) error {
 
 	// no validation rules for ItemName
 
+	// no validation rules for PointId
+
 	// no validation rules for TriggerTime
 
 	// no validation rules for ExecResult
 
 	// no validation rules for Message
-
-	// no validation rules for Payload
-
-	// no validation rules for ErrorDetail
 
 	if len(errors) > 0 {
 		return PbPlanExecLogMultiError(errors)

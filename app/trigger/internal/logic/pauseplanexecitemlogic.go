@@ -43,13 +43,19 @@ func (l *PausePlanExecItemLogic) PausePlanExecItem(in *trigger.PausePlanExecItem
 		return nil, err
 	}
 
+	if execItem.Status == 1 || execItem.Status == 2 || execItem.Status == 5 {
+		return &trigger.PausePlanExecItemRes{}, nil
+	}
+
 	// 执行事务
 	err = l.svcCtx.PlanModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
 		// 更新执行项状态为暂停
 		execItem.Status = 6 // 6-暂停
 		execItem.IsPaused = 1
+		execItem.IsTerminated = 0
 		execItem.PausedTime = sql.NullTime{Time: time.Now(), Valid: true}
 		execItem.PausedReason = in.Reason
+		execItem.UpdateUser = in.CurrentUser.UserId
 
 		// 更新执行项
 		_, transErr := l.svcCtx.PlanExecItemModel.Update(ctx, tx, execItem)

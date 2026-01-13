@@ -465,13 +465,15 @@ message CreatePlanTaskReq {
   // 不传默认本年
   // 格式：yyyy-MM-dd HH:mm:ss
   string endTime = 7;
-  // 计划规则项
+  // 计划规则项 默认 规则项 MINUTELY
   PbPlanRule rule = 8 [(validate.rules).message = {required: true}];
   // 计划执行项
   repeated PlanExecItem execItems = 9 [(validate.rules).repeated = {min_items: 1}];
 }
 
 message PbPlanRule {
+  // 规则项 0-YEARLY 1-MONTHLY 2-WEEKLY 3-DAILY 4-HOURLY 5-MINUTELY
+  int32 freq = 1 [(validate.rules).int32 = {gte: 0, lte: 5}];
   // 月（1-12）
   repeated int32 month = 2 [
     (validate.rules).repeated = {
@@ -567,6 +569,17 @@ message GetPlanRes {
 }
 
 message PbPlan{
+  // 创建时间
+  string createTime = 101;
+  // 更新时间
+  string updateTime = 102;
+  // 创建人
+  string createUser = 103;
+  // 更新人
+  string updateUser = 104;
+
+  // 自增主键ID
+  int64 id = 50;
   // 计划ID
   string planId = 1;
   // 计划名称
@@ -633,46 +646,59 @@ message GetPlanExecItemRes {
 }
 
 message PbPlanExecItem {
+  // 创建时间
+  string createTime = 101;
+  // 更新时间
+  string updateTime = 102;
+  // 创建人
+  string createUser = 103;
+  // 更新人
+  string updateUser = 104;
+
+  // 自增主键ID
+  int64 id = 50;
+  // 关联的计划主键ID
+  int64 planPk = 1;
   // 计划ID
-  string planId = 1;
+  string planId = 2;
   // 执行项ID
-  string itemId = 2;
+  string itemId = 3;
   // 执行项名称
-  string itemName = 3;
+  string itemName = 4;
   // 执行顺序
-  int32 execOrder = 4;
+  int32 execOrder = 5;
   // 业务服务地址
-  string serviceAddr = 5;
+  string serviceAddr = 6;
   // 业务负载
-  string payload = 6;
+  string payload = 7;
   // 请求超时时间（毫秒）
-  int64 requestTimeout = 7;
+  int64 requestTimeout = 8;
   // 计划触发时间
-  string planTriggerTime = 8;
+  string planTriggerTime = 9;
   // 下次触发时间
-  string nextTriggerTime = 9;
+  string nextTriggerTime = 10;
   // 上次触发时间
-  string lastTriggerTime = 10;
+  string lastTriggerTime = 11;
   // 触发次数
-  int32 triggerCount = 11;
+  int32 triggerCount = 12;
   // 状态：0-待执行，1-执行中，2-完成，3-失败，4-延期，5-已终止，6-暂停
-  int32 status = 12;
+  int32 status = 13;
   // 上次执行结果
-  string lastResult = 13;
+  string lastResult = 14;
   // 上次执行消息
-  string lastMsg = 14;
+  string lastMsg = 15;
   // 是否已终止
-  bool isTerminated = 15;
+  bool isTerminated = 16;
   // 终止时间
-  string terminatedTime = 16;
+  string terminatedTime = 17;
   // 终止原因
-  string terminatedReason = 17;
+  string terminatedReason = 18;
   // 是否已暂停
-  bool isPaused = 18;
+  bool isPaused = 19;
   // 暂停时间
-  string pausedTime = 19;
+  string pausedTime = 20;
   // 暂停原因
-  string pausedReason = 20;
+  string pausedReason = 21;
 }
 
 message ListPlanExecItemsReq {
@@ -710,8 +736,19 @@ message GetPlanExecLogRes {
 }
 
 message PbPlanExecLog {
-  // 日志ID
-  int64 logId = 1;
+  // 创建时间
+  string createTime = 101;
+  // 更新时间
+  string updateTime = 102;
+  // 创建人
+  string createUser = 103;
+  // 更新人
+  string updateUser = 104;
+
+  // 自增主键ID
+  int64 id = 50;
+  // 关联的计划主键ID
+  int64 planPk = 1;
   // 计划ID
   string planId = 2;
   // 计划名称
@@ -720,16 +757,14 @@ message PbPlanExecLog {
   string itemId = 4;
   // 执行项名称
   string itemName = 5;
+  // 点位id
+  string pointId = 6;
   // 触发时间
-  string triggerTime = 6;
+  string triggerTime = 7;
   // 执行结果：1-成功，2-失败，3-延期
-  int32 execResult = 7;
+  int32 execResult = 8;
   // 结果描述
-  string message = 8;
-  // 业务负载
-  string payload = 9;
-  // 错误详情
-  string errorDetail = 10;
+  string message = 9;
 }
 
 // 分页获取计划触发日志列表请求

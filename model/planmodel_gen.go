@@ -7,7 +7,6 @@ package model
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"strings"
 	"time"
 
@@ -15,19 +14,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/stores/builder"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
-	"github.com/zeromicro/go-zero/core/stringx"
-)
-
-var (
-	planFieldNames          = builder.RawFieldNames(&Plan{})
-	planRows                = strings.Join(planFieldNames, ",")
-	planRowsExpectAutoSet   = strings.Join(stringx.Remove(planFieldNames, "`id`", "`create_at`", "`create_time`", "`created_at`", "`update_at`", "`update_time`", "`updated_at`"), ",")
-	planRowsWithPlaceHolder = strings.Join(stringx.Remove(planFieldNames, "`id`", "`create_at`", "`create_time`", "`created_at`", "`update_at`", "`update_time`", "`updated_at`"), "=?,") + "=?"
-
-	planFieldNamesPg          = builder.RawFieldNames(&Plan{}, true)
-	planRowsPg                = strings.Join(planFieldNamesPg, ",")
-	planRowsExpectAutoSetPg   = strings.Join(stringx.Remove(planFieldNamesPg, "id", "create_at", "create_time", "created_at", "update_at", "update_time", "updated_at"), ",")
-	planRowsWithPlaceHolderPg = builder.PostgreSqlJoin(stringx.Remove(planFieldNamesPg, "id", "create_at", "create_time", "created_at", "update_at", "update_time", "updated_at"))
 )
 
 type (
@@ -60,9 +46,10 @@ type (
 	}
 
 	defaultPlanModel struct {
-		conn   sqlx.SqlConn
-		table  string
-		dbType DatabaseType
+		conn     sqlx.SqlConn
+		table    string
+		dbType   DatabaseType
+		planRows string
 	}
 
 	Plan struct {
@@ -72,6 +59,8 @@ type (
 		DeleteTime       sql.NullTime `db:"delete_time"`       // 删除时间（软删除标记）
 		DelState         int64        `db:"del_state"`         // 删除状态：0-未删除，1-已删除
 		Version          int64        `db:"version"`           // 版本号（乐观锁）
+		CreateUser       string       `db:"create_user"`       // 创建人
+		UpdateUser       string       `db:"update_user"`       // 更新人
 		PlanId           string       `db:"plan_id"`           // 计划唯一标识
 		PlanName         string       `db:"plan_name"`         // 计划任务名称
 		Type             string       `db:"type"`              // 任务类型
@@ -95,40 +84,43 @@ func newPlanModel(conn sqlx.SqlConn) *defaultPlanModel {
 }
 
 func newPlanModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) *defaultPlanModel {
-	var table string = "`plan`"
-	if dbType == DatabaseTypePostgreSQL {
-		table = "plan"
-	}
+	isPostgreSQL := dbType == DatabaseTypePostgreSQL
+	tableName := "plan"
+	fieldNames := builder.RawFieldNames(&Plan{}, isPostgreSQL)
+	rows := strings.Join(fieldNames, ",")
 	return &defaultPlanModel{
-		conn:   conn,
-		table:  table,
-		dbType: dbType,
+		conn:     conn,
+		table:    tableName,
+		dbType:   dbType,
+		planRows: rows,
 	}
 }
 
 func (m *defaultPlanModel) Delete(ctx context.Context, session sqlx.Session, id int64) error {
-	var query string
-	if m.dbType == DatabaseTypePostgreSQL {
-		query = fmt.Sprintf("delete from %s where id = $1", m.table)
-	} else {
-		query = fmt.Sprintf("delete from %s where `id` = ?", m.table)
-	}
-	if session != nil {
-		_, err := session.ExecCtx(ctx, query, id)
+	deleteBuilder := m.DeleteBuilder().Where("id = ?", id)
+	query, args, err := deleteBuilder.ToSql()
+	if err != nil {
 		return err
 	}
-	_, err := m.conn.ExecCtx(ctx, query, id)
-	return err
+	var execErr error
+	if session != nil {
+		_, execErr = session.ExecCtx(ctx, query, args...)
+	} else {
+		_, execErr = m.conn.ExecCtx(ctx, query, args...)
+	}
+	return execErr
 }
 func (m *defaultPlanModel) FindOne(ctx context.Context, id int64) (*Plan, error) {
-	var query string
-	if m.dbType == DatabaseTypePostgreSQL {
-		query = fmt.Sprintf("select %s from %s where id = $1 and del_state = $2 limit 1", planRowsPg, m.table)
-	} else {
-		query = fmt.Sprintf("select %s from %s where `id` = ? and del_state = ? limit 1", planRows, m.table)
+	selectBuilder := m.SelectBuilder().Columns(m.planRows).
+		Where("id = ?", id).
+		Where("del_state = ?", 0).
+		Limit(1)
+	query, args, err := selectBuilder.ToSql()
+	if err != nil {
+		return nil, err
 	}
 	var resp Plan
-	err := m.conn.QueryRowCtx(ctx, &resp, query, id, 0)
+	err = m.conn.QueryRowCtx(ctx, &resp, query, args...)
 	switch err {
 	case nil:
 		return &resp, nil
@@ -140,14 +132,16 @@ func (m *defaultPlanModel) FindOne(ctx context.Context, id int64) (*Plan, error)
 }
 
 func (m *defaultPlanModel) FindOneByPlanId(ctx context.Context, planId string) (*Plan, error) {
-	var resp Plan
-	var query string
-	if m.dbType == DatabaseTypePostgreSQL {
-		query = fmt.Sprintf("select %s from %s where plan_id = $1 and del_state = $2 limit 1", planRowsPg, m.table)
-	} else {
-		query = fmt.Sprintf("select %s from %s where `plan_id` = ?  and del_state = ? limit 1", planRows, m.table)
+	selectBuilder := m.SelectBuilder().Columns(m.planRows).
+		Where("plan_id = ?", planId).
+		Where("del_state = ?", 0).
+		Limit(1)
+	query, args, err := selectBuilder.ToSql()
+	if err != nil {
+		return nil, err
 	}
-	err := m.conn.QueryRowCtx(ctx, &resp, query, planId, 0)
+	var resp Plan
+	err = m.conn.QueryRowCtx(ctx, &resp, query, args...)
 	switch err {
 	case nil:
 		return &resp, nil
@@ -163,46 +157,21 @@ func (m *defaultPlanModel) Insert(ctx context.Context, session sqlx.Session, dat
 		Valid: false,
 	}
 	data.DelState = 0
-
-	var query string
-	args := []any{data.DeleteTime, data.DelState, data.Version, data.PlanId, data.PlanName, data.Type, data.GroupId, data.RecurrenceRule, data.StartTime, data.EndTime, data.Status, data.IsTerminated, data.IsPaused, data.TerminatedTime, data.TerminatedReason, data.PausedTime, data.PausedReason, data.Description}
-
-	if m.dbType == DatabaseTypePostgreSQL {
-		query = fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING id", m.table, planRowsExpectAutoSetPg)
-		var id int64
-		var err error
-		if session != nil {
-			err = session.QueryRowCtx(ctx, &id, query, args...)
-		} else {
-			err = m.conn.QueryRowCtx(ctx, &id, query, args...)
-		}
-		if err != nil {
-			return nil, err
-		}
-		data.Id = id
-		return &postgresResult{id: id}, nil
-	} else {
-		query = fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, planRowsExpectAutoSet)
-
-		if session != nil {
-			return session.ExecCtx(ctx, query, args...)
-		}
-		return m.conn.ExecCtx(ctx, query, args...)
+	columns, values := generateColumnsAndValues(data, []string{})
+	insertBuilder := m.InsertBuilder().Columns(columns...).Values(values...)
+	query, args, err := insertBuilder.ToSql()
+	if err != nil {
+		return nil, err
 	}
-}
+	var result sql.Result
+	var execErr error
+	if session != nil {
+		result, execErr = session.ExecCtx(ctx, query, args...)
+	} else {
+		result, execErr = m.conn.ExecCtx(ctx, query, args...)
+	}
 
-// postgresResult is a custom sql.Result implementation for PostgreSQL that returns the inserted id
-type postgresResult struct {
-	id int64
-}
-
-func (r *postgresResult) LastInsertId() (int64, error) {
-	return r.id, nil
-}
-
-func (r *postgresResult) RowsAffected() (int64, error) {
-	// Assuming one row is inserted
-	return 1, nil
+	return result, execErr
 }
 
 func (m *defaultPlanModel) Update(ctx context.Context, session sqlx.Session, newData *Plan) (sql.Result, error) {
@@ -210,49 +179,48 @@ func (m *defaultPlanModel) Update(ctx context.Context, session sqlx.Session, new
 		Valid: false,
 	}
 	newData.DelState = 0
-
-	var query string
-	args := []any{newData.DeleteTime, newData.DelState, newData.Version, newData.PlanId, newData.PlanName, newData.Type, newData.GroupId, newData.RecurrenceRule, newData.StartTime, newData.EndTime, newData.Status, newData.IsTerminated, newData.IsPaused, newData.TerminatedTime, newData.TerminatedReason, newData.PausedTime, newData.PausedReason, newData.Description, newData.Id}
-
-	if m.dbType == DatabaseTypePostgreSQL {
-		// For PostgreSQL, use correct placeholder for id
-		query = fmt.Sprintf("update %s set %s where id = $19", m.table, planRowsWithPlaceHolderPg)
-	} else {
-		// For MySQL, use traditional placeholder
-		query = fmt.Sprintf("update %s set %s where `id` = ?", m.table, planRowsWithPlaceHolder)
+	columns, values := generateColumnsAndValues(newData, []string{})
+	updateBuilder := m.UpdateBuilder()
+	for i, column := range columns {
+		updateBuilder = updateBuilder.Set(column, values[i])
 	}
-
+	updateBuilder = updateBuilder.Where("id = ?", newData.Id)
+	query, args, err := updateBuilder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+	var result sql.Result
+	var execErr error
 	if session != nil {
-		return session.ExecCtx(ctx, query, args...)
+		result, execErr = session.ExecCtx(ctx, query, args...)
+	} else {
+		result, execErr = m.conn.ExecCtx(ctx, query, args...)
 	}
-	return m.conn.ExecCtx(ctx, query, args...)
+	return result, execErr
 }
 
 func (m *defaultPlanModel) UpdateWithVersion(ctx context.Context, session sqlx.Session, newData *Plan) error {
-
 	oldVersion := newData.Version
 	newData.Version += 1
-
-	var sqlResult sql.Result
-	var err error
-	var query string
-
-	args := []any{newData.DeleteTime, newData.DelState, newData.Version, newData.PlanId, newData.PlanName, newData.Type, newData.GroupId, newData.RecurrenceRule, newData.StartTime, newData.EndTime, newData.Status, newData.IsTerminated, newData.IsPaused, newData.TerminatedTime, newData.TerminatedReason, newData.PausedTime, newData.PausedReason, newData.Description, newData.Id, oldVersion}
-
-	if m.dbType == DatabaseTypePostgreSQL {
-		query = fmt.Sprintf("update %s set %s where id = $19 and version = $20 ", m.table, planRowsWithPlaceHolderPg)
-	} else {
-		query = fmt.Sprintf("update %s set %s where `id` = ? and version = ? ", m.table, planRowsWithPlaceHolder)
+	columns, values := generateColumnsAndValues(newData, []string{})
+	updateBuilder := m.UpdateBuilder()
+	for i, column := range columns {
+		updateBuilder = updateBuilder.Set(column, values[i])
 	}
-
-	if session != nil {
-		sqlResult, err = session.ExecCtx(ctx, query, args...)
-	} else {
-		sqlResult, err = m.conn.ExecCtx(ctx, query, args...)
-	}
-
+	updateBuilder = updateBuilder.Where("id = ?", newData.Id).Where("version = ?", oldVersion)
+	query, args, err := updateBuilder.ToSql()
 	if err != nil {
 		return err
+	}
+	var sqlResult sql.Result
+	var execErr error
+	if session != nil {
+		sqlResult, execErr = session.ExecCtx(ctx, query, args...)
+	} else {
+		sqlResult, execErr = m.conn.ExecCtx(ctx, query, args...)
+	}
+	if execErr != nil {
+		return execErr
 	}
 	updateCount, err := sqlResult.RowsAffected()
 	if err != nil {
@@ -261,7 +229,6 @@ func (m *defaultPlanModel) UpdateWithVersion(ctx context.Context, session sqlx.S
 	if updateCount == 0 {
 		return ErrNoRowsUpdate
 	}
-
 	return nil
 }
 
@@ -282,24 +249,17 @@ func (m *defaultPlanModel) DeleteSoft(ctx context.Context, session sqlx.Session,
 }
 
 func (m *defaultPlanModel) FindSum(ctx context.Context, builder squirrel.SelectBuilder, field string) (float64, error) {
-
 	if len(field) == 0 {
 		return 0, errors.Wrapf(errors.New("FindSum Least One Field"), "FindSum Least One Field")
 	}
-
 	sumFunction := "COALESCE(SUM(" + field + "),0)"
-
 	builder = builder.Columns(sumFunction)
-
 	query, values, err := builder.Where("del_state = ?", 0).ToSql()
 	if err != nil {
 		return 0, err
 	}
-
 	var resp float64
-
 	err = m.conn.QueryRowCtx(ctx, &resp, query, values...)
-
 	switch err {
 	case nil:
 		return resp, nil
@@ -309,22 +269,16 @@ func (m *defaultPlanModel) FindSum(ctx context.Context, builder squirrel.SelectB
 }
 
 func (m *defaultPlanModel) FindCount(ctx context.Context, builder squirrel.SelectBuilder, field string) (int64, error) {
-
 	if len(field) == 0 {
 		return 0, errors.Wrapf(errors.New("FindCount Least One Field"), "FindCount Least One Field")
 	}
-
 	builder = builder.Columns("COUNT(" + field + ")")
-
 	query, values, err := builder.Where("del_state = ?", 0).ToSql()
 	if err != nil {
 		return 0, err
 	}
-
 	var resp int64
-
 	err = m.conn.QueryRowCtx(ctx, &resp, query, values...)
-
 	switch err {
 	case nil:
 		return resp, nil
@@ -334,24 +288,18 @@ func (m *defaultPlanModel) FindCount(ctx context.Context, builder squirrel.Selec
 }
 
 func (m *defaultPlanModel) FindAll(ctx context.Context, builder squirrel.SelectBuilder, orderBy ...string) ([]*Plan, error) {
-
-	builder = builder.Columns(planRows)
-
+	builder = builder.Columns(m.planRows)
 	if len(orderBy) == 0 {
 		builder = builder.OrderBy("id DESC")
 	} else {
 		builder = builder.OrderBy(orderBy...)
 	}
-
 	query, values, err := builder.Where("del_state = ?", 0).ToSql()
 	if err != nil {
 		return nil, err
 	}
-
 	var resp []*Plan
-
 	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
-
 	switch err {
 	case nil:
 		return resp, nil
@@ -361,35 +309,22 @@ func (m *defaultPlanModel) FindAll(ctx context.Context, builder squirrel.SelectB
 }
 
 func (m *defaultPlanModel) FindPageListByPage(ctx context.Context, builder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*Plan, error) {
-
-	// Use appropriate rows variable based on database type
-	if m.dbType == DatabaseTypePostgreSQL {
-		builder = builder.Columns(planRowsPg)
-		builder = builder.PlaceholderFormat(squirrel.Dollar)
-	} else {
-		builder = builder.Columns(planRows)
-	}
-
+	builder = builder.Columns(m.planRows)
 	if len(orderBy) == 0 {
 		builder = builder.OrderBy("id DESC")
 	} else {
 		builder = builder.OrderBy(orderBy...)
 	}
-
 	if page < 1 {
 		page = 1
 	}
 	offset := (page - 1) * pageSize
-
 	query, values, err := builder.Where("del_state = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
-
 	var resp []*Plan
-
 	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
-
 	switch err {
 	case nil:
 		return resp, nil
@@ -399,40 +334,26 @@ func (m *defaultPlanModel) FindPageListByPage(ctx context.Context, builder squir
 }
 
 func (m *defaultPlanModel) FindPageListByPageWithTotal(ctx context.Context, builder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*Plan, int64, error) {
-
 	total, err := m.FindCount(ctx, builder, "id")
 	if err != nil {
 		return nil, 0, err
 	}
-
-	// Use appropriate rows variable based on database type
-	if m.dbType == DatabaseTypePostgreSQL {
-		builder = builder.Columns(planRowsPg)
-		builder = builder.PlaceholderFormat(squirrel.Dollar)
-	} else {
-		builder = builder.Columns(planRows)
-	}
-
+	builder = builder.Columns(m.planRows)
 	if len(orderBy) == 0 {
 		builder = builder.OrderBy("id DESC")
 	} else {
 		builder = builder.OrderBy(orderBy...)
 	}
-
 	if page < 1 {
 		page = 1
 	}
 	offset := (page - 1) * pageSize
-
 	query, values, err := builder.Where("del_state = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, total, err
 	}
-
 	var resp []*Plan
-
 	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
-
 	switch err {
 	case nil:
 		return resp, total, nil
@@ -442,28 +363,16 @@ func (m *defaultPlanModel) FindPageListByPageWithTotal(ctx context.Context, buil
 }
 
 func (m *defaultPlanModel) FindPageListByIdDESC(ctx context.Context, builder squirrel.SelectBuilder, preMinId, pageSize int64) ([]*Plan, error) {
-
-	// Use appropriate rows variable based on database type
-	if m.dbType == DatabaseTypePostgreSQL {
-		builder = builder.Columns(planRowsPg)
-		builder = builder.PlaceholderFormat(squirrel.Dollar)
-	} else {
-		builder = builder.Columns(planRows)
-	}
-
+	builder = builder.Columns(m.planRows)
 	if preMinId > 0 {
 		builder = builder.Where(" id < ? ", preMinId)
 	}
-
 	query, values, err := builder.Where("del_state = ?", 0).OrderBy("id DESC").Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
-
 	var resp []*Plan
-
 	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
-
 	switch err {
 	case nil:
 		return resp, nil
@@ -473,28 +382,16 @@ func (m *defaultPlanModel) FindPageListByIdDESC(ctx context.Context, builder squ
 }
 
 func (m *defaultPlanModel) FindPageListByIdASC(ctx context.Context, builder squirrel.SelectBuilder, preMaxId, pageSize int64) ([]*Plan, error) {
-
-	// Use appropriate rows variable based on database type
-	if m.dbType == DatabaseTypePostgreSQL {
-		builder = builder.Columns(planRowsPg)
-		builder = builder.PlaceholderFormat(squirrel.Dollar)
-	} else {
-		builder = builder.Columns(planRows)
-	}
-
+	builder = builder.Columns(m.planRows)
 	if preMaxId > 0 {
 		builder = builder.Where(" id > ? ", preMaxId)
 	}
-
 	query, values, err := builder.Where("del_state = ?", 0).OrderBy("id ASC").Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
-
 	var resp []*Plan
-
 	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
-
 	switch err {
 	case nil:
 		return resp, nil
@@ -523,9 +420,7 @@ func (m *defaultPlanModel) SelectWithBuilder(ctx context.Context, builder squirr
 	if err != nil {
 		return nil, err
 	}
-
 	var resp []*Plan
-
 	err = m.conn.QueryRowsPartialCtx(ctx, &resp, query, args...)
 	switch err {
 	case nil:
@@ -540,7 +435,6 @@ func (m *defaultPlanModel) SelectOneWithBuilder(ctx context.Context, builder squ
 	if err != nil {
 		return nil, err
 	}
-
 	var resp Plan
 	err = m.conn.QueryRowPartialCtx(ctx, &resp, query, args...)
 	switch err {
@@ -558,7 +452,6 @@ func (m *defaultPlanModel) InsertWithBuilder(ctx context.Context, session sqlx.S
 	if err != nil {
 		return nil, err
 	}
-
 	return m.ExecCtx(ctx, session, query, args...)
 }
 
@@ -567,7 +460,6 @@ func (m *defaultPlanModel) UpdateWithBuilder(ctx context.Context, session sqlx.S
 	if err != nil {
 		return nil, err
 	}
-
 	return m.ExecCtx(ctx, session, query, args...)
 }
 
@@ -576,7 +468,6 @@ func (m *defaultPlanModel) DeleteWithBuilder(ctx context.Context, session sqlx.S
 	if err != nil {
 		return nil, err
 	}
-
 	return m.ExecCtx(ctx, session, query, args...)
 }
 

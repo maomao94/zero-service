@@ -28,6 +28,8 @@ CREATE TABLE IF NOT EXISTS device_point_mapping (
     delete_time TIMESTAMP NULL, 
     del_state SMALLINT NOT NULL DEFAULT 0, 
     version INT NOT NULL DEFAULT 0, 
+    create_user VARCHAR(64) NOT NULL DEFAULT '', 
+    update_user VARCHAR(64) NOT NULL DEFAULT '', 
     tag_station VARCHAR(64) NOT NULL DEFAULT '', 
     coa INT NOT NULL DEFAULT 0, 
     ioa INT NOT NULL DEFAULT 0, 
@@ -55,6 +57,8 @@ COMMENT ON COLUMN device_point_mapping.update_time IS '更新时间';
 COMMENT ON COLUMN device_point_mapping.delete_time IS '删除时间（软删除标记）';
 COMMENT ON COLUMN device_point_mapping.del_state IS '删除状态：0-未删除，1-已删除';
 COMMENT ON COLUMN device_point_mapping.version IS '版本号（乐观锁）';
+COMMENT ON COLUMN device_point_mapping.create_user IS '创建人';
+COMMENT ON COLUMN device_point_mapping.update_user IS '更新人';
 COMMENT ON COLUMN device_point_mapping.tag_station IS '与 TDengine tag_station 对应';
 COMMENT ON COLUMN device_point_mapping.coa IS '与 TDengine coa 对应';
 COMMENT ON COLUMN device_point_mapping.ioa IS '与 TDengine ioa 对应';
@@ -91,6 +95,8 @@ CREATE TABLE IF NOT EXISTS plan (
     delete_time TIMESTAMP NULL, 
     del_state SMALLINT NOT NULL DEFAULT 0, 
     version INT NOT NULL DEFAULT 0, 
+    create_user VARCHAR(64) NOT NULL DEFAULT '', 
+    update_user VARCHAR(64) NOT NULL DEFAULT '', 
     plan_id VARCHAR(64) NOT NULL DEFAULT '', 
     plan_name VARCHAR(128) NOT NULL DEFAULT '', 
     type VARCHAR(64) NOT NULL DEFAULT '', 
@@ -119,6 +125,8 @@ COMMENT ON COLUMN plan.update_time IS '更新时间';
 COMMENT ON COLUMN plan.delete_time IS '删除时间（软删除标记）';
 COMMENT ON COLUMN plan.del_state IS '删除状态：0-未删除，1-已删除';
 COMMENT ON COLUMN plan.version IS '版本号（乐观锁）';
+COMMENT ON COLUMN plan.create_user IS '创建人';
+COMMENT ON COLUMN plan.update_user IS '更新人';
 COMMENT ON COLUMN plan.plan_id IS '计划唯一标识';
 COMMENT ON COLUMN plan.plan_name IS '计划任务名称';
 COMMENT ON COLUMN plan.type IS '任务类型';
@@ -167,7 +175,10 @@ CREATE TABLE IF NOT EXISTS plan_exec_item (
     delete_time TIMESTAMP NULL, 
     del_state SMALLINT NOT NULL DEFAULT 0, 
     version INT NOT NULL DEFAULT 0, 
+    create_user VARCHAR(64) NOT NULL DEFAULT '', 
+    update_user VARCHAR(64) NOT NULL DEFAULT '', 
     plan_id VARCHAR(64) NOT NULL DEFAULT '', 
+    plan_pk BIGINT NOT NULL DEFAULT 0, 
     item_id VARCHAR(64) NOT NULL DEFAULT '', 
     item_name VARCHAR(128) NOT NULL DEFAULT '', 
     point_id VARCHAR(64) NOT NULL DEFAULT '', 
@@ -199,7 +210,10 @@ COMMENT ON COLUMN plan_exec_item.update_time IS '更新时间';
 COMMENT ON COLUMN plan_exec_item.delete_time IS '删除时间（软删除标记）';
 COMMENT ON COLUMN plan_exec_item.del_state IS '删除状态：0-未删除，1-已删除';
 COMMENT ON COLUMN plan_exec_item.version IS '版本号（乐观锁）';
+COMMENT ON COLUMN plan_exec_item.create_user IS '创建人';
+COMMENT ON COLUMN plan_exec_item.update_user IS '更新人';
 COMMENT ON COLUMN plan_exec_item.plan_id IS '关联的计划ID';
+COMMENT ON COLUMN plan_exec_item.plan_pk IS '关联的计划主键ID';
 COMMENT ON COLUMN plan_exec_item.item_id IS '执行项ID';
 COMMENT ON COLUMN plan_exec_item.item_name IS '执行项名称';
 COMMENT ON COLUMN plan_exec_item.point_id IS '点位id';
@@ -221,6 +235,7 @@ COMMENT ON COLUMN plan_exec_item.paused_time IS '暂停时间';
 COMMENT ON COLUMN plan_exec_item.paused_reason IS '暂停原因';
 
 -- 为 plan_exec_item 表创建索引
+CREATE INDEX idx_plan_exec_item_plan_pk_item_id ON plan_exec_item (plan_pk, item_id);
 CREATE INDEX idx_plan_exec_item_plan_id_item_id ON plan_exec_item (plan_id, item_id);
 CREATE INDEX idx_plan_exec_item_point_id ON plan_exec_item (point_id);
 CREATE INDEX idx_plan_exec_item_core_scan ON plan_exec_item (next_trigger_time, status, is_terminated, is_paused, del_state);
@@ -246,7 +261,10 @@ CREATE TABLE IF NOT EXISTS plan_exec_log (
     delete_time TIMESTAMP NULL, 
     del_state SMALLINT NOT NULL DEFAULT 0, 
     version INT NOT NULL DEFAULT 0, 
+    create_user VARCHAR(64) NOT NULL DEFAULT '', 
+    update_user VARCHAR(64) NOT NULL DEFAULT '', 
     plan_id VARCHAR(64) NOT NULL DEFAULT '', 
+    plan_pk BIGINT NOT NULL DEFAULT 0, 
     plan_name VARCHAR(128) NOT NULL DEFAULT '', 
     item_id VARCHAR(64) NOT NULL DEFAULT '', 
     item_name VARCHAR(128) NOT NULL DEFAULT '',
@@ -267,7 +285,10 @@ COMMENT ON COLUMN plan_exec_log.update_time IS '更新时间';
 COMMENT ON COLUMN plan_exec_log.delete_time IS '删除时间（软删除标记）';
 COMMENT ON COLUMN plan_exec_log.del_state IS '删除状态：0-未删除，1-已删除';
 COMMENT ON COLUMN plan_exec_log.version IS '版本号（乐观锁）';
+COMMENT ON COLUMN plan_exec_log.create_user IS '创建人';
+COMMENT ON COLUMN plan_exec_log.update_user IS '更新人';
 COMMENT ON COLUMN plan_exec_log.plan_id IS '计划任务ID';
+COMMENT ON COLUMN plan_exec_log.plan_pk IS '关联的计划主键ID';
 COMMENT ON COLUMN plan_exec_log.plan_name IS '计划任务名称';
 COMMENT ON COLUMN plan_exec_log.item_id IS '执行项ID';
 COMMENT ON COLUMN plan_exec_log.item_name IS '执行项名称';
@@ -278,6 +299,7 @@ COMMENT ON COLUMN plan_exec_log.exec_result IS '执行结果：1-成功，2-失�
 COMMENT ON COLUMN plan_exec_log.message IS '结果描述';
 
 -- 为 plan_exec_log 表创建索引
+CREATE INDEX idx_plan_exec_log_plan_pk ON plan_exec_log (plan_pk);
 CREATE INDEX idx_plan_exec_log_plan_id ON plan_exec_log (plan_id);
 CREATE INDEX idx_plan_exec_log_item_id ON plan_exec_log (item_id);
 CREATE INDEX idx_plan_exec_log_trigger_time ON plan_exec_log (trigger_time);

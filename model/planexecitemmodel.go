@@ -71,18 +71,12 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 	// 7. 关联的计划未暂停
 	// 8. 关联的计划未删除
 	currentTime := time.Now()
-	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeString()
+	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
 	nextTriggerTime := currentTime.Add(expireIn)
-	nextTriggerTimeStr := carbon.CreateFromStdTime(nextTriggerTime).ToDateTimeString()
+	nextTriggerTimeStr := carbon.CreateFromStdTime(nextTriggerTime).ToDateTimeMicroString()
 	selectBuilder := squirrel.Select(
-		"pei.id", "pei.create_time", "pei.update_time", "pei.delete_time", "pei.del_state", "pei.version",
-		"pei.plan_id", "pei.item_id", "pei.item_name", "pei.point_id", "pei.service_addr", "pei.payload",
-		"pei.request_timeout", "pei.plan_trigger_time", "pei.next_trigger_time",
-		"pei.last_trigger_time", "pei.trigger_count", "pei.status",
-		"pei.last_result", "pei.last_msg", "pei.is_terminated",
-		"pei.terminated_time", "pei.terminated_reason", "pei.is_paused",
-		"pei.paused_time", "pei.paused_reason",
-	).From(m.table+" pei").
+		"pei.id", "pei.plan_pk", "pei.plan_id", "pei.item_id", "pei.item_name", "pei.point_id", "pei.next_trigger_time", "pei.service_addr", "pei.payload", "pei.plan_trigger_time", "pei.request_timeout",
+	).From(m.table+" as pei").
 		Join("plan p ON p.plan_id = pei.plan_id").
 		Where("pei.is_terminated = ?", 0).
 		Where("pei.is_paused = ?", 0).
@@ -106,7 +100,7 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 		return nil, err
 	}
 	var execItem PlanExecItem
-	err = m.conn.QueryRowCtx(ctx, &execItem, selectSQL, selectArgs...)
+	err = m.conn.QueryRowPartialCtx(ctx, &execItem, selectSQL, selectArgs...)
 	switch err {
 	case sqlx.ErrNotFound:
 		return nil, ErrNotFound
@@ -143,7 +137,6 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 
 // UpdateStatusToRunning 更新执行项状态为执行中
 func (m *customPlanExecItemModel) UpdateStatusToRunning(ctx context.Context, id int64) error {
-	// 使用squirrel构建UPDATE语句
 	updateBuilder := squirrel.Update(m.table).
 		Set("status", 1).
 		Set("last_result", "running").
@@ -163,7 +156,7 @@ func (m *customPlanExecItemModel) UpdateStatusToRunning(ctx context.Context, id 
 // UpdateStatusToCompleted 更新执行项状态为已完成
 func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, id int64, lastResult, lastMsg string) error {
 	currentTime := time.Now()
-	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeString()
+	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
 	updateBuilder := squirrel.Update(m.table).
 		Set("status", 2).
 		Set("last_result", lastResult).
@@ -184,7 +177,7 @@ func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, i
 // UpdateStatusToFailed 更新执行项状态为失败
 func (m *customPlanExecItemModel) UpdateStatusToFailed(ctx context.Context, id int64, lastResult, lastMsg string) error {
 	currentTime := time.Now()
-	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeString()
+	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
 	selectBuilder := squirrel.Select("trigger_count").From(m.table).Where("id = ?", id)
 	if m.dbType == DatabaseTypePostgreSQL {
 		selectBuilder = selectBuilder.PlaceholderFormat(squirrel.Dollar)
@@ -203,7 +196,7 @@ func (m *customPlanExecItemModel) UpdateStatusToFailed(ctx context.Context, id i
 	triggerCount := itemInfo.TriggerCount
 	defaultTimeout := retryInterval
 	nextTriggerTime, isExceeded := tool.CalculateNextTriggerTime(triggerCount+1, defaultTimeout)
-	nextTriggerTimeStr := carbon.CreateFromStdTime(nextTriggerTime).ToDateTimeString()
+	nextTriggerTimeStr := carbon.CreateFromStdTime(nextTriggerTime).ToDateTimeMicroString()
 	var updateBuilder squirrel.UpdateBuilder
 	if isExceeded {
 		updateBuilder = squirrel.Update(m.table).
@@ -245,7 +238,7 @@ func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id 
 		return ct.Error
 	}
 	currentTime := time.Now()
-	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeString()
+	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
 	updateBuilder := squirrel.Update(m.table).
 		Set("status", 4).
 		Set("last_result", lastResult).

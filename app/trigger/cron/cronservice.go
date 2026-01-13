@@ -97,14 +97,18 @@ func (s *CronService) ScanPlanExecItem() bool {
 		return false
 	}
 	threading.GoSafe(func() {
-		logx.Infof("Found plan exec item to trigger: id=%d, planId=%s, itemId=%s, nextTriggerTime=%v",
+		execItem, _ = s.svcCtx.PlanExecItemModel.FindOne(ctx, execItem.Id)
+		plan, _ := s.svcCtx.PlanModel.FindOneByPlanId(ctx, execItem.PlanId)
+		logx.Infof("Found plan exec item to trigger: id=%d, planPk=%d, planId=%s, planName=%s, itemId=%s, itemName=%s, pointId=%s, nextTriggerTime=%v",
 			execItem.Id,
+			execItem.PlanPk,
 			execItem.PlanId,
+			plan.PlanName,
 			execItem.ItemId,
+			execItem.ItemName,
+			execItem.PointId,
 			execItem.NextTriggerTime,
 		)
-
-		plan, _ := s.svcCtx.PlanModel.FindOneByPlanId(ctx, execItem.PlanId)
 		s.ExecuteCallback(ctx, execItem, plan)
 	})
 	return true
@@ -139,7 +143,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	}
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(execItem.RequestTimeout)*time.Millisecond+6*time.Second)
 	defer cancel()
-	logx.Infof("Executing callback for exec item %d with service: %s, planId: %s, itemId: %s",
+	logx.Debugf("Executing callback for exec item %d with service: %s, planId: %s, itemId: %s",
 		execItem.Id, grpcServer, execItem.PlanId, execItem.ItemId)
 
 	if err := s.svcCtx.PlanExecItemModel.UpdateStatusToRunning(ctx, execItem.Id); err != nil {
@@ -161,7 +165,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		}
 		s.svcCtx.ConnMap.Set(grpcServer, conn)
 		v = conn
-		logx.Infof("gRPC client inited for %s", grpcServer)
+		logx.Debugf("gRPC client inited for %s", grpcServer)
 	}
 	if v == nil {
 		logx.Errorf("gRPC client is nil for %s", grpcServer)
@@ -181,6 +185,10 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	}
 
 	req := &streamevent.HandlerPlanTaskEventReq{
+		CreateTime:      carbon.CreateFromStdTime(execItem.CreateTime).ToDateTimeString(),
+		UpdateTime:      carbon.CreateFromStdTime(execItem.UpdateTime).ToDateTimeString(),
+		CreateUser:      execItem.CreateUser,
+		UpdateUser:      execItem.UpdateUser,
 		PlanId:          execItem.PlanId,
 		PlanName:        plan.PlanName,
 		Type:            plan.Type,
@@ -188,6 +196,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		Description:     plan.Description,
 		StartTime:       carbon.NewCarbon(plan.StartTime).ToDateTimeString(),
 		EndTime:         carbon.NewCarbon(plan.EndTime).ToDateTimeString(),
+		PlanPk:          0,
 		ItemId:          execItem.ItemId,
 		ItemName:        execItem.ItemName,
 		PointId:         execItem.PointId,
@@ -296,14 +305,15 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	case 3: // Delay
 		logx.Infof("gRPC call requested delay for exec item %d: %s", execItem.Id, res.Message)
 		if res.DelayConfig != nil {
-			var delayReason = res.DelayConfig.DelayReason
-			if len(delayReason) == 0 {
-				delayReason = res.Message
+			var delayReason = res.Message
+			if len(res.DelayConfig.DelayReason) != 0 {
+				delayReason = fmt.Sprintf("reason: %s, message: %s", res.DelayConfig.DelayReason, res.Message)
 			}
-			// Update with next trigger time from delay config
 			if err := s.svcCtx.PlanExecItemModel.UpdateStatusToDelayed(ctx, execItem.Id, "delay", delayReason, res.DelayConfig.NextTriggerTime); err != nil {
 				logx.Errorf("Error updating plan exec item %d to delayed: %v", execItem.Id, err)
 			}
+		} else {
+			logx.Errorf("No delay config provided for exec item %d", execItem.Id)
 		}
 	default:
 		logx.Errorf("Unknown execResult %d for exec item %d", res.ExecResult, execItem.Id)
@@ -311,11 +321,9 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 			logx.Errorf("Error updating plan exec item %d to completed: %v", execItem.Id, err)
 		}
 	}
-
 	// 插入执行日志
 	if _, err := s.svcCtx.PlanExecLogModel.Insert(ctx, nil, logEntry); err != nil {
 		logx.Errorf("Error inserting plan exec log for item %d: %v", execItem.Id, err)
 	}
-
-	logx.Infof("Successfully executed callback for plan exec item: id=%d, traceId=%s", execItem.Id, "")
+	logx.Infof("Successfully executed callback for plan exec item: id=%d", execItem.Id)
 }

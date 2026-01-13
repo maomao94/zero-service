@@ -43,13 +43,19 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 		return nil, err
 	}
 
+	if execItem.Status == 1 || execItem.Status == 2 || execItem.Status == 5 {
+		return &trigger.TerminatePlanExecItemRes{}, nil
+	}
+
 	// 执行事务
 	err = l.svcCtx.PlanModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
 		// 更新执行项状态为已终止
 		execItem.Status = 5 // 5-已终止
 		execItem.IsTerminated = 1
+		execItem.IsPaused = 0
 		execItem.TerminatedTime = sql.NullTime{Time: time.Now(), Valid: true}
 		execItem.TerminatedReason = in.Reason
+		execItem.UpdateUser = in.CurrentUser.UserId
 
 		// 更新执行项
 		_, transErr := l.svcCtx.PlanExecItemModel.Update(ctx, tx, execItem)

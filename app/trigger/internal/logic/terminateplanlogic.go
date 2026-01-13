@@ -43,13 +43,19 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 		return nil, err
 	}
 
+	if plan.Status == 2 {
+		return &trigger.TerminatePlanRes{}, nil
+	}
+
 	// 执行事务
 	err = l.svcCtx.PlanModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
 		// 更新计划状态为已终止
 		plan.Status = 2 // 2-已终止
 		plan.IsTerminated = 1
+		plan.IsPaused = 0
 		plan.TerminatedTime = sql.NullTime{Time: time.Now(), Valid: true}
 		plan.TerminatedReason = in.Reason
+		plan.UpdateUser = in.CurrentUser.UserId
 
 		// 更新计划
 		_, transErr := l.svcCtx.PlanModel.Update(ctx, tx, plan)
@@ -57,13 +63,17 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 			return transErr
 		}
 
-		// 更新计划下所有执行项状态为已终止
 		builder := l.svcCtx.PlanExecItemModel.UpdateBuilder().
 			Set("status", 5).
 			Set("is_terminated", 1).
+			Set("is_paused", 0).
 			Set("terminated_time", time.Now()).
 			Set("terminated_reason", in.Reason).
-			Where("plan_id = ?", in.PlanId)
+			Set("update_user", in.CurrentUser.UserId).
+			Where("plan_id = ?", in.PlanId).
+			Where("status != ?", 2).
+			Where("is_terminated = ?", 0).
+			Where("status != ?", 5)
 
 		_, transErr = l.svcCtx.PlanExecItemModel.UpdateWithBuilder(ctx, tx, builder)
 		if transErr != nil {

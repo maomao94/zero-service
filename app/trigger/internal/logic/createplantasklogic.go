@@ -67,6 +67,12 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	if endTime.Error != nil {
 		return nil, endTime.Error
 	}
+	if endTime.Lt(startTime) {
+		return nil, errors.New("结束时间必须晚于开始时间")
+	}
+	if endTime.Gt(startTime.AddYears(3)) {
+		return nil, errors.New("计划时间跨度不能超过3年")
+	}
 	rruleOption, err := l.convertToRRuleOption(in.Rule, startTime, endTime)
 	if err != nil {
 		return nil, err
@@ -75,7 +81,20 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	if err != nil {
 		return nil, err
 	}
+	// 获取所有触发时间
 	dates := r.All()
+	// 过滤掉小于当前时间的触发时间
+	now := time.Now()
+	var validDates []time.Time = make([]time.Time, 0)
+	for _, d := range dates {
+		if !d.Before(now) {
+			validDates = append(validDates, d)
+		}
+	}
+	if len(dates) == 0 {
+		return nil, fmt.Errorf("计划任务时间段内没有触发时间")
+	}
+	dates = validDates
 	rule, _ := jsonx.Marshal(in.Rule)
 	var insertPlan = &model.Plan{
 		PlanId:           in.PlanId,
@@ -103,7 +122,10 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		for _, d := range dates {
 			for _, item := range in.ExecItems {
 				planItem := model.PlanExecItem{
+					CreateUser:       in.CurrentUser.UserId,
+					UpdateUser:       in.CurrentUser.UserId,
 					PlanId:           in.PlanId,
+					PlanPk:           insertPlan.Id,
 					ItemId:           item.ItemId,
 					ItemName:         item.ItemName,
 					PointId:          item.PointId,
@@ -143,7 +165,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 func (l *CreatePlanTaskLogic) convertToRRuleOption(planRule *trigger.PbPlanRule, startTime, endTime *carbon.Carbon) (rrule.ROption, error) {
 	// 设置默认的rrule选项
 	opts := rrule.ROption{
-		Freq:     rrule.YEARLY, // 默认每年执行
+		Freq:     rrule.Frequency(planRule.Freq),
 		Dtstart:  startTime.StdTime(),
 		Until:    endTime.StdTime(),
 		Byhour:   []int{int(planRule.Hour)},

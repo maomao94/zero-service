@@ -69,11 +69,17 @@ func (l *ListPlanExecLogsLogic) ListPlanExecLogs(in *trigger.ListPlanExecLogsReq
 	// 转换日志列表
 	for _, log := range logs {
 		pbLog := &trigger.PbPlanExecLog{
-			LogId:       log.Id,
+			CreateTime:  carbon.CreateFromStdTime(log.CreateTime).ToDateTimeString(),
+			UpdateTime:  carbon.CreateFromStdTime(log.UpdateTime).ToDateTimeString(),
+			CreateUser:  log.CreateUser,
+			UpdateUser:  log.UpdateUser,
+			Id:          log.Id,
+			PlanPk:      log.PlanPk,
 			PlanId:      log.PlanId,
 			PlanName:    log.PlanName,
 			ItemId:      log.ItemId,
 			ItemName:    log.ItemName,
+			PointId:     log.PointId,
 			TriggerTime: carbon.CreateFromStdTime(log.TriggerTime).ToDateTimeString(),
 			ExecResult:  int32(log.ExecResult),
 			Message:     log.Message,

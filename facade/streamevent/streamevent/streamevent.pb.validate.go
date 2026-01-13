@@ -3412,6 +3412,14 @@ func (m *HandlerPlanTaskEventReq) validate(all bool) error {
 
 	var errors []error
 
+	// no validation rules for CreateTime
+
+	// no validation rules for UpdateTime
+
+	// no validation rules for CreateUser
+
+	// no validation rules for UpdateUser
+
 	// no validation rules for PlanId
 
 	// no validation rules for PlanName
@@ -3425,6 +3433,8 @@ func (m *HandlerPlanTaskEventReq) validate(all bool) error {
 	// no validation rules for StartTime
 
 	// no validation rules for EndTime
+
+	// no validation rules for PlanPk
 
 	// no validation rules for ItemId
 
