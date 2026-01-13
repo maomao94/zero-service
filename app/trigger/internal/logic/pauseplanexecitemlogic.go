@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"time"
+	"zero-service/common/tool"
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
@@ -54,8 +55,8 @@ func (l *PausePlanExecItemLogic) PausePlanExecItem(in *trigger.PausePlanExecItem
 		execItem.IsPaused = 1
 		execItem.IsTerminated = 0
 		execItem.PausedTime = sql.NullTime{Time: time.Now(), Valid: true}
-		execItem.PausedReason = in.Reason
-		execItem.UpdateUser = in.CurrentUser.UserId
+		execItem.PausedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
+		execItem.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}
 
 		// 更新执行项
 		_, transErr := l.svcCtx.PlanExecItemModel.Update(ctx, tx, execItem)

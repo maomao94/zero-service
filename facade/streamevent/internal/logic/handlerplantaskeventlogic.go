@@ -30,8 +30,8 @@ func (l *HandlerPlanTaskEventLogic) HandlerPlanTaskEvent(in *streamevent.Handler
 		ExecResult: 3,
 		Message:    "延期",
 		DelayConfig: &streamevent.PbDelayConfig{
-			NextTriggerTime: carbon.Now().AddSeconds(500).ToDateTimeString(),
-			DelayReason:     "延时 120秒",
+			NextTriggerTime: carbon.Now().AddHours(1).ToDateTimeString(),
+			DelayReason:     "延时 1小时",
 		},
 	}, nil
 }

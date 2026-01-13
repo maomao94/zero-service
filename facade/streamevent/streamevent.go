@@ -20,6 +20,7 @@ import (
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	_ "zero-service/common/carbonx"
 )
 
 var configFile = flag.String("f", "etc/streamevent.yaml", "the config file")

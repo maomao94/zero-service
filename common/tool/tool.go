@@ -155,3 +155,53 @@ func ShortPath(randomBytesLen int) (shortPath string, uniqueID string, err error
 func PrintGoVersion() {
 	fmt.Printf("Go Version: %s\n", runtime.Version())
 }
+
+// GetCurrentUserId 安全获取当前用户ID，避免CurrentUser为nil时panic
+// 如果CurrentUser为nil或UserId为空，返回空字符串
+func GetCurrentUserId(currentUser interface{}) string {
+	if currentUser == nil {
+		return ""
+	}
+
+	// 使用反射获取CurrentUser对象的UserId字段
+	v := reflect.ValueOf(currentUser)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	if v.Kind() != reflect.Struct {
+		return ""
+	}
+	userIdField := v.FieldByName("UserId")
+	if !userIdField.IsValid() {
+		return ""
+	}
+	switch userIdField.Kind() {
+	case reflect.String:
+		return userIdField.String()
+	default:
+		return ""
+	}
+}
+
+func GetCurrentUserName(currentUser interface{}) string {
+	if currentUser == nil {
+		return ""
+	}
+	v := reflect.ValueOf(currentUser)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	if v.Kind() != reflect.Struct {
+		return ""
+	}
+	userNameField := v.FieldByName("UserName")
+	if !userNameField.IsValid() {
+		return ""
+	}
+	switch userNameField.Kind() {
+	case reflect.String:
+		return userNameField.String()
+	default:
+		return ""
+	}
+}

@@ -79,14 +79,14 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 		pbExecItem := &trigger.PbPlanExecItem{
 			PlanId:          execItem.PlanId,
 			ItemId:          execItem.ItemId,
-			ItemName:        execItem.ItemName,
+			ItemName:        execItem.ItemName.String,
 			ServiceAddr:     execItem.ServiceAddr,
 			Payload:         execItem.Payload,
 			RequestTimeout:  execItem.RequestTimeout,
 			PlanTriggerTime: carbon.CreateFromStdTime(execItem.PlanTriggerTime).ToDateTimeString(),
 			Status:          int32(execItem.Status),
-			LastResult:      execItem.LastResult,
-			LastMsg:         execItem.LastMsg,
+			LastResult:      execItem.LastResult.String,
+			LastMsg:         execItem.LastMsg.String,
 			IsTerminated:    execItem.IsTerminated == 1,
 			IsPaused:        execItem.IsPaused == 1,
 			TriggerCount:    int32(execItem.TriggerCount),
@@ -105,13 +105,13 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 		// 设置终止时间和原因
 		if execItem.IsTerminated == 1 && execItem.TerminatedTime.Valid {
 			pbExecItem.TerminatedTime = carbon.CreateFromStdTime(execItem.TerminatedTime.Time).ToDateTimeString()
-			pbExecItem.TerminatedReason = execItem.TerminatedReason
+			pbExecItem.TerminatedReason = execItem.TerminatedReason.String
 		}
 
 		// 设置暂停时间和原因
 		if execItem.IsPaused == 1 && execItem.PausedTime.Valid {
 			pbExecItem.PausedTime = carbon.CreateFromStdTime(execItem.PausedTime.Time).ToDateTimeString()
-			pbExecItem.PausedReason = execItem.PausedReason
+			pbExecItem.PausedReason = execItem.PausedReason.String
 		}
 
 		resp.PlanExecItems = append(resp.PlanExecItems, pbExecItem)

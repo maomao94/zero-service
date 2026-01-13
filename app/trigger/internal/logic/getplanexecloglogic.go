@@ -46,18 +46,18 @@ func (l *GetPlanExecLogLogic) GetPlanExecLog(in *trigger.GetPlanExecLogReq) (*tr
 	pbLog := &trigger.PbPlanExecLog{
 		CreateTime:  carbon.CreateFromStdTime(log.CreateTime).ToDateTimeString(),
 		UpdateTime:  carbon.CreateFromStdTime(log.UpdateTime).ToDateTimeString(),
-		CreateUser:  log.CreateUser,
-		UpdateUser:  log.UpdateUser,
+		CreateUser:  log.CreateUser.String,
+		UpdateUser:  log.UpdateUser.String,
 		Id:          log.Id,
 		PlanPk:      log.PlanPk,
 		PlanId:      log.PlanId,
-		PlanName:    log.PlanName,
+		PlanName:    log.PlanName.String,
 		ItemId:      log.ItemId,
-		ItemName:    log.ItemName,
-		PointId:     log.PointId,
+		ItemName:    log.ItemName.String,
+		PointId:     log.PointId.String,
 		TriggerTime: carbon.CreateFromStdTime(log.TriggerTime).ToDateTimeString(),
 		ExecResult:  int32(log.ExecResult),
-		Message:     log.Message,
+		Message:     log.Message.String,
 	}
 
 	return &trigger.GetPlanExecLogRes{

@@ -52,24 +52,25 @@ type (
 	}
 
 	PlanExecLog struct {
-		Id          int64        `db:"id"`           // 自增主键ID
-		CreateTime  time.Time    `db:"create_time"`  // 创建时间
-		UpdateTime  time.Time    `db:"update_time"`  // 更新时间
-		DeleteTime  sql.NullTime `db:"delete_time"`  // 删除时间（软删除标记）
-		DelState    int64        `db:"del_state"`    // 删除状态：0-未删除，1-已删除
-		Version     int64        `db:"version"`      // 版本号（乐观锁）
-		CreateUser  string       `db:"create_user"`  // 创建人
-		UpdateUser  string       `db:"update_user"`  // 更新人
-		PlanId      string       `db:"plan_id"`      // 计划任务ID
-		PlanPk      int64        `db:"plan_pk"`      // 关联的计划主键ID（冗余字段）
-		PlanName    string       `db:"plan_name"`    // 计划任务名称
-		ItemId      string       `db:"item_id"`      // 执行项ID
-		ItemName    string       `db:"item_name"`    // 执行项名称
-		PointId     string       `db:"point_id"`     // 点位id
-		TriggerTime time.Time    `db:"trigger_time"` // 触发时间
-		TraceId     string       `db:"trace_id"`     // 唯一追踪ID
-		ExecResult  int64        `db:"exec_result"`  // 执行结果：1-成功，2-失败，3-延期
-		Message     string       `db:"message"`      // 结果描述
+		Id          int64          `db:"id"`           // 自增主键ID
+		CreateTime  time.Time      `db:"create_time"`  // 创建时间
+		UpdateTime  time.Time      `db:"update_time"`  // 更新时间
+		DeleteTime  sql.NullTime   `db:"delete_time"`  // 删除时间（软删除标记）
+		DelState    int64          `db:"del_state"`    // 删除状态：0-未删除，1-已删除
+		Version     int64          `db:"version"`      // 版本号（乐观锁）
+		CreateUser  sql.NullString `db:"create_user"`  // 创建人
+		UpdateUser  sql.NullString `db:"update_user"`  // 更新人
+		PlanId      string         `db:"plan_id"`      // 计划任务ID
+		PlanPk      int64          `db:"plan_pk"`      // 关联的计划主键ID
+		PlanName    sql.NullString `db:"plan_name"`    // 计划任务名称
+		ItemPk      int64          `db:"item_pk"`      // 关联的执行项主键ID
+		ItemId      string         `db:"item_id"`      // 执行项ID
+		ItemName    sql.NullString `db:"item_name"`    // 执行项名称
+		PointId     sql.NullString `db:"point_id"`     // 点位id
+		TriggerTime time.Time      `db:"trigger_time"` // 触发时间
+		TraceId     sql.NullString `db:"trace_id"`     // 唯一追踪ID
+		ExecResult  int64          `db:"exec_result"`  // 执行结果：1-成功，2-失败，3-延期
+		Message     sql.NullString `db:"message"`      // 结果描述
 	}
 )
 

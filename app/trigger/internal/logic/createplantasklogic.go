@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"zero-service/common/tool"
 	"zero-service/model"
 
 	"zero-service/app/trigger/internal/svc"
@@ -96,11 +97,15 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	}
 	dates = validDates
 	rule, _ := jsonx.Marshal(in.Rule)
+	currentUserId := tool.GetCurrentUserId(in.CurrentUser)
+
 	var insertPlan = &model.Plan{
+		CreateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},
+		UpdateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},
 		PlanId:           in.PlanId,
-		PlanName:         in.PlanName,
-		Type:             in.Type,
-		GroupId:          in.GroupId,
+		PlanName:         sql.NullString{String: in.PlanName, Valid: in.PlanName != ""},
+		Type:             sql.NullString{String: in.Type, Valid: in.Type != ""},
+		GroupId:          sql.NullString{String: in.GroupId, Valid: in.GroupId != ""},
 		RecurrenceRule:   string(rule),
 		StartTime:        rruleOption.Dtstart,
 		EndTime:          rruleOption.Until,
@@ -108,10 +113,10 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		IsTerminated:     0,
 		IsPaused:         0,
 		TerminatedTime:   sql.NullTime{},
-		TerminatedReason: "",
+		TerminatedReason: sql.NullString{},
 		PausedTime:       sql.NullTime{},
-		PausedReason:     "",
-		Description:      in.Description,
+		PausedReason:     sql.NullString{},
+		Description:      sql.NullString{String: in.Description, Valid: in.Description != ""},
 	}
 	err = l.svcCtx.PlanModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
 		result, transErr := l.svcCtx.PlanModel.Insert(ctx, tx, insertPlan)
@@ -122,13 +127,13 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		for _, d := range dates {
 			for _, item := range in.ExecItems {
 				planItem := model.PlanExecItem{
-					CreateUser:       in.CurrentUser.UserId,
-					UpdateUser:       in.CurrentUser.UserId,
+					CreateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},
+					UpdateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},
 					PlanId:           in.PlanId,
 					PlanPk:           insertPlan.Id,
 					ItemId:           item.ItemId,
-					ItemName:         item.ItemName,
-					PointId:          item.PointId,
+					ItemName:         sql.NullString{String: item.ItemName, Valid: item.ItemName != ""},
+					PointId:          sql.NullString{String: item.PointId, Valid: item.PointId != ""},
 					ServiceAddr:      item.ServiceAddr,
 					Payload:          item.Payload,
 					RequestTimeout:   item.RequestTimeout,
@@ -137,14 +142,14 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 					LastTriggerTime:  sql.NullTime{},
 					TriggerCount:     0,
 					Status:           0,
-					LastResult:       "",
-					LastMsg:          "",
+					LastResult:       sql.NullString{},
+					LastMsg:          sql.NullString{},
 					IsTerminated:     0,
 					TerminatedTime:   sql.NullTime{},
-					TerminatedReason: "",
+					TerminatedReason: sql.NullString{},
 					IsPaused:         0,
 					PausedTime:       sql.NullTime{},
-					PausedReason:     "",
+					PausedReason:     sql.NullString{},
 				}
 				_, err = l.svcCtx.PlanExecItemModel.Insert(l.ctx, tx, &planItem)
 				if err != nil {

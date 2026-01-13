@@ -7,6 +7,7 @@ import (
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/tool"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -54,8 +55,8 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 		plan.IsTerminated = 1
 		plan.IsPaused = 0
 		plan.TerminatedTime = sql.NullTime{Time: time.Now(), Valid: true}
-		plan.TerminatedReason = in.Reason
-		plan.UpdateUser = in.CurrentUser.UserId
+		plan.TerminatedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
+		plan.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}
 
 		// 更新计划
 		_, transErr := l.svcCtx.PlanModel.Update(ctx, tx, plan)
@@ -68,8 +69,8 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 			Set("is_terminated", 1).
 			Set("is_paused", 0).
 			Set("terminated_time", time.Now()).
-			Set("terminated_reason", in.Reason).
-			Set("update_user", in.CurrentUser.UserId).
+			Set("terminated_reason", sql.NullString{String: in.Reason, Valid: in.Reason != ""}).
+			Set("update_user", sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}).
 			Where("plan_id = ?", in.PlanId).
 			Where("status != ?", 2).
 			Where("is_terminated = ?", 0).

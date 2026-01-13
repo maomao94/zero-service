@@ -114,6 +114,7 @@ CREATE TABLE IF NOT EXISTS `plan_exec_log` (
     `plan_pk` BIGINT NOT NULL DEFAULT 0 COMMENT '关联的计划主键ID',
     `plan_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '计划任务ID',
     `plan_name` VARCHAR(128) NOT NULL DEFAULT '' COMMENT '计划任务名称',
+    `item_pk` BIGINT NOT NULL DEFAULT 0 COMMENT '关联的执行项主键ID',
     `item_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '执行项ID',
     `item_name` VARCHAR(128) NOT NULL DEFAULT '' COMMENT '执行项名称',
     `point_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '点位id',

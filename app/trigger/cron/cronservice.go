@@ -2,6 +2,7 @@ package cron
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"math/rand"
@@ -97,19 +98,25 @@ func (s *CronService) ScanPlanExecItem() bool {
 		return false
 	}
 	threading.GoSafe(func() {
-		execItem, _ = s.svcCtx.PlanExecItemModel.FindOne(ctx, execItem.Id)
-		plan, _ := s.svcCtx.PlanModel.FindOneByPlanId(ctx, execItem.PlanId)
+		queryExecItem, queryErr := s.svcCtx.PlanExecItemModel.FindOne(ctx, execItem.Id)
+		if queryErr != nil {
+			logx.Errorf("Error querying plan exec item: %v", queryErr)
+		}
+		plan, queryErr := s.svcCtx.PlanModel.FindOneByPlanId(ctx, execItem.PlanId)
+		if queryErr != nil {
+			logx.Errorf("Error querying plan: %v", queryErr)
+		}
 		logx.Infof("Found plan exec item to trigger: id=%d, planPk=%d, planId=%s, planName=%s, itemId=%s, itemName=%s, pointId=%s, nextTriggerTime=%v",
 			execItem.Id,
 			execItem.PlanPk,
 			execItem.PlanId,
-			plan.PlanName,
+			plan.PlanName.String,
 			execItem.ItemId,
-			execItem.ItemName,
-			execItem.PointId,
+			execItem.ItemName.String,
+			execItem.PointId.String,
 			execItem.NextTriggerTime,
 		)
-		s.ExecuteCallback(ctx, execItem, plan)
+		s.ExecuteCallback(ctx, queryExecItem, plan)
 	})
 	return true
 }
@@ -187,19 +194,19 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	req := &streamevent.HandlerPlanTaskEventReq{
 		CreateTime:      carbon.CreateFromStdTime(execItem.CreateTime).ToDateTimeString(),
 		UpdateTime:      carbon.CreateFromStdTime(execItem.UpdateTime).ToDateTimeString(),
-		CreateUser:      execItem.CreateUser,
-		UpdateUser:      execItem.UpdateUser,
+		CreateUser:      execItem.CreateUser.String,
+		UpdateUser:      execItem.UpdateUser.String,
 		PlanId:          execItem.PlanId,
-		PlanName:        plan.PlanName,
-		Type:            plan.Type,
-		GroupId:         plan.GroupId,
-		Description:     plan.Description,
+		PlanName:        plan.PlanName.String,
+		Type:            plan.Type.String,
+		GroupId:         plan.GroupId.String,
+		Description:     plan.Description.String,
 		StartTime:       carbon.NewCarbon(plan.StartTime).ToDateTimeString(),
 		EndTime:         carbon.NewCarbon(plan.EndTime).ToDateTimeString(),
 		PlanPk:          0,
 		ItemId:          execItem.ItemId,
-		ItemName:        execItem.ItemName,
-		PointId:         execItem.PointId,
+		ItemName:        execItem.ItemName.String,
+		PointId:         execItem.PointId.String,
 		Payload:         execItem.Payload,
 		PlanTriggerTime: carbon.NewCarbon(execItem.PlanTriggerTime).ToDateTimeString(),
 	}
@@ -215,13 +222,14 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		logEntry := &model.PlanExecLog{
 			PlanId:      execItem.PlanId,
 			PlanName:    plan.PlanName,
+			ItemPk:      execItem.Id,
 			ItemId:      execItem.ItemId,
 			ItemName:    execItem.ItemName,
 			PointId:     execItem.PointId,
 			TriggerTime: time.Now(),
-			TraceId:     "",
+			TraceId:     sql.NullString{String: "", Valid: false},
 			ExecResult:  2, // 失败
-			Message:     "Error marshaling request: " + err.Error(),
+			Message:     sql.NullString{String: "Error marshaling request: " + err.Error(), Valid: true},
 		}
 		if _, err := s.svcCtx.PlanExecLogModel.Insert(ctx, nil, logEntry); err != nil {
 			logx.Errorf("Error inserting plan exec log for item %d: %v", execItem.Id, err)
@@ -239,13 +247,14 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		logEntry := &model.PlanExecLog{
 			PlanId:      execItem.PlanId,
 			PlanName:    plan.PlanName,
+			ItemPk:      execItem.Id,
 			ItemId:      execItem.ItemId,
 			ItemName:    execItem.ItemName,
 			PointId:     execItem.PointId,
 			TriggerTime: time.Now(),
-			TraceId:     "",
+			TraceId:     sql.NullString{String: "", Valid: false},
 			ExecResult:  2, // 失败
-			Message:     "gRPC call failed: " + err.Error(),
+			Message:     sql.NullString{String: "gRPC call failed: " + err.Error(), Valid: true},
 		}
 		if _, err := s.svcCtx.PlanExecLogModel.Insert(ctx, nil, logEntry); err != nil {
 			logx.Errorf("Error inserting plan exec log for item %d: %v", execItem.Id, err)
@@ -263,14 +272,15 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		// 记录执行日志
 		logEntry := &model.PlanExecLog{
 			PlanId:      execItem.PlanId,
-			PlanName:    plan.PlanName,
+			PlanName:    sql.NullString{String: plan.PlanName.String, Valid: plan.PlanName.Valid},
+			ItemPk:      execItem.Id,
 			ItemId:      execItem.ItemId,
-			ItemName:    execItem.ItemName,
-			PointId:     execItem.PointId,
+			ItemName:    sql.NullString{String: execItem.ItemName.String, Valid: execItem.ItemName.Valid},
+			PointId:     sql.NullString{String: execItem.PointId.String, Valid: execItem.PointId.Valid},
 			TriggerTime: time.Now(),
-			TraceId:     "",
+			TraceId:     sql.NullString{String: "", Valid: false},
 			ExecResult:  2, // 失败
-			Message:     "Error unmarshaling response: " + err.Error(),
+			Message:     sql.NullString{String: "Error unmarshaling response: " + err.Error(), Valid: true},
 		}
 		if _, err := s.svcCtx.PlanExecLogModel.Insert(ctx, nil, logEntry); err != nil {
 			logx.Errorf("Error inserting plan exec log for item %d: %v", execItem.Id, err)
@@ -282,13 +292,14 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	logEntry := &model.PlanExecLog{
 		PlanId:      execItem.PlanId,
 		PlanName:    plan.PlanName,
+		ItemPk:      execItem.Id,
 		ItemId:      execItem.ItemId,
 		ItemName:    execItem.ItemName,
 		PointId:     execItem.PointId,
 		TriggerTime: time.Now(),
-		TraceId:     "",
+		TraceId:     sql.NullString{String: "", Valid: false},
 		ExecResult:  int64(res.ExecResult),
-		Message:     res.Message,
+		Message:     sql.NullString{String: res.Message, Valid: res.Message != ""},
 	}
 
 	switch res.ExecResult {
@@ -308,6 +319,21 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 			var delayReason = res.Message
 			if len(res.DelayConfig.DelayReason) != 0 {
 				delayReason = fmt.Sprintf("reason: %s, message: %s", res.DelayConfig.DelayReason, res.Message)
+			}
+			var isDelayed = true
+			currentTime := carbon.Now()
+			delayTime := carbon.Parse(res.DelayConfig.NextTriggerTime)
+			if delayTime.Error != nil {
+				logx.Errorf("Invalid delay time format for exec item %d: %v", execItem.Id, delayTime.Error)
+				isDelayed = false
+			} else {
+				if delayTime.Lt(currentTime) {
+					logx.Errorf("Delay time for exec item %d is in the past: %v, current time: %v", execItem.Id, delayTime.ToDateTimeString(), currentTime.ToDateTimeString())
+					isDelayed = false
+				}
+			}
+			if !isDelayed {
+				res.DelayConfig.NextTriggerTime = currentTime.ToDateTimeString()
 			}
 			if err := s.svcCtx.PlanExecItemModel.UpdateStatusToDelayed(ctx, execItem.Id, "delay", delayReason, res.DelayConfig.NextTriggerTime); err != nil {
 				logx.Errorf("Error updating plan exec item %d to delayed: %v", execItem.Id, err)

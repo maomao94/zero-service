@@ -75,9 +75,9 @@ func (l *ListPlansLogic) ListPlans(in *trigger.ListPlansReq) (*trigger.ListPlans
 
 		pbPlan := &trigger.PbPlan{
 			PlanId:       plan.PlanId,
-			PlanName:     plan.PlanName,
-			Type:         plan.Type,
-			Description:  plan.Description,
+			PlanName:     plan.PlanName.String,
+			Type:         plan.Type.String,
+			Description:  plan.Description.String,
 			StartTime:    carbon.CreateFromStdTime(plan.StartTime).ToDateTimeString(),
 			EndTime:      carbon.CreateFromStdTime(plan.EndTime).ToDateTimeString(),
 			Rule:         &pbRule,
@@ -89,13 +89,13 @@ func (l *ListPlansLogic) ListPlans(in *trigger.ListPlansReq) (*trigger.ListPlans
 		// 设置终止时间和原因
 		if plan.IsTerminated == 1 && plan.TerminatedTime.Valid {
 			pbPlan.TerminatedTime = carbon.CreateFromStdTime(plan.TerminatedTime.Time).ToDateTimeString()
-			pbPlan.TerminatedReason = plan.TerminatedReason
+			pbPlan.TerminatedReason = plan.TerminatedReason.String
 		}
 
 		// 设置暂停时间和原因
 		if plan.IsPaused == 1 && plan.PausedTime.Valid {
 			pbPlan.PausedTime = carbon.CreateFromStdTime(plan.PausedTime.Time).ToDateTimeString()
-			pbPlan.PausedReason = plan.PausedReason
+			pbPlan.PausedReason = plan.PausedReason.String
 		}
 
 		resp.Plans = append(resp.Plans, pbPlan)

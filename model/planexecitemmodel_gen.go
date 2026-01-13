@@ -52,35 +52,35 @@ type (
 	}
 
 	PlanExecItem struct {
-		Id               int64        `db:"id"`                // 自增主键ID
-		CreateTime       time.Time    `db:"create_time"`       // 创建时间
-		UpdateTime       time.Time    `db:"update_time"`       // 更新时间
-		DeleteTime       sql.NullTime `db:"delete_time"`       // 删除时间（软删除标记）
-		DelState         int64        `db:"del_state"`         // 删除状态：0-未删除，1-已删除
-		Version          int64        `db:"version"`           // 版本号（乐观锁）
-		CreateUser       string       `db:"create_user"`       // 创建人
-		UpdateUser       string       `db:"update_user"`       // 更新人
-		PlanId           string       `db:"plan_id"`           // 关联的计划ID
-		PlanPk           int64        `db:"plan_pk"`           // 关联的计划主键ID
-		ItemId           string       `db:"item_id"`           // 执行项ID
-		ItemName         string       `db:"item_name"`         // 执行项名称
-		PointId          string       `db:"point_id"`          // 点位id
-		ServiceAddr      string       `db:"service_addr"`      // 业务服务地址
-		Payload          string       `db:"payload"`           // 业务负载
-		RequestTimeout   int64        `db:"request_timeout"`   // 请求超时时间（毫秒）
-		PlanTriggerTime  time.Time    `db:"plan_trigger_time"` // 计划触发时间
-		NextTriggerTime  time.Time    `db:"next_trigger_time"` // 下次触发时间（扫表核心字段）
-		LastTriggerTime  sql.NullTime `db:"last_trigger_time"` // 上次触发时间
-		TriggerCount     int64        `db:"trigger_count"`     // 触发次数
-		Status           int64        `db:"status"`            // 状态：0-待执行，1-执行中，2-完成，3-失败，4-延期，5-已终止，6-暂停
-		LastResult       string       `db:"last_result"`       // 上次执行结果
-		LastMsg          string       `db:"last_msg"`          // 上次执行消息
-		IsTerminated     int64        `db:"is_terminated"`     // 是否已终止：0-未终止，1-已终止
-		TerminatedTime   sql.NullTime `db:"terminated_time"`   // 终止时间
-		TerminatedReason string       `db:"terminated_reason"` // 终止原因
-		IsPaused         int64        `db:"is_paused"`         // 是否已暂停：0-未暂停，1-已暂停
-		PausedTime       sql.NullTime `db:"paused_time"`       // 暂停时间
-		PausedReason     string       `db:"paused_reason"`     // 暂停原因
+		Id               int64          `db:"id"`                // 自增主键ID
+		CreateTime       time.Time      `db:"create_time"`       // 创建时间
+		UpdateTime       time.Time      `db:"update_time"`       // 更新时间
+		DeleteTime       sql.NullTime   `db:"delete_time"`       // 删除时间（软删除标记）
+		DelState         int64          `db:"del_state"`         // 删除状态：0-未删除，1-已删除
+		Version          int64          `db:"version"`           // 版本号（乐观锁）
+		CreateUser       sql.NullString `db:"create_user"`       // 创建人
+		UpdateUser       sql.NullString `db:"update_user"`       // 更新人
+		PlanId           string         `db:"plan_id"`           // 关联的计划ID
+		PlanPk           int64          `db:"plan_pk"`           // 关联的计划主键ID
+		ItemId           string         `db:"item_id"`           // 执行项ID
+		ItemName         sql.NullString `db:"item_name"`         // 执行项名称
+		PointId          sql.NullString `db:"point_id"`          // 点位id
+		ServiceAddr      string         `db:"service_addr"`      // 业务服务地址
+		Payload          string         `db:"payload"`           // 业务负载
+		RequestTimeout   int64          `db:"request_timeout"`   // 请求超时时间（毫秒）
+		PlanTriggerTime  time.Time      `db:"plan_trigger_time"` // 计划触发时间
+		NextTriggerTime  time.Time      `db:"next_trigger_time"` // 下次触发时间（扫表核心字段）
+		LastTriggerTime  sql.NullTime   `db:"last_trigger_time"` // 上次触发时间
+		TriggerCount     int64          `db:"trigger_count"`     // 触发次数
+		Status           int64          `db:"status"`            // 状态：0-待执行，1-执行中，2-完成，3-失败，4-延期，5-已终止，6-暂停
+		LastResult       sql.NullString `db:"last_result"`       // 上次执行结果
+		LastMsg          sql.NullString `db:"last_msg"`          // 上次执行消息
+		IsTerminated     int64          `db:"is_terminated"`     // 是否已终止：0-未终止，1-已终止
+		TerminatedTime   sql.NullTime   `db:"terminated_time"`   // 终止时间
+		TerminatedReason sql.NullString `db:"terminated_reason"` // 终止原因
+		IsPaused         int64          `db:"is_paused"`         // 是否已暂停：0-未暂停，1-已暂停
+		PausedTime       sql.NullTime   `db:"paused_time"`       // 暂停时间
+		PausedReason     sql.NullString `db:"paused_reason"`     // 暂停原因
 	}
 )
 

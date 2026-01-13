@@ -28,22 +28,22 @@ CREATE TABLE IF NOT EXISTS device_point_mapping (
     delete_time TIMESTAMP NULL, 
     del_state SMALLINT NOT NULL DEFAULT 0, 
     version INT NOT NULL DEFAULT 0, 
-    create_user VARCHAR(64) NOT NULL DEFAULT '', 
-    update_user VARCHAR(64) NOT NULL DEFAULT '', 
-    tag_station VARCHAR(64) NOT NULL DEFAULT '', 
+    create_user VARCHAR(64) DEFAULT '',
+    update_user VARCHAR(64) DEFAULT '',
+    tag_station VARCHAR(64) DEFAULT '',
     coa INT NOT NULL DEFAULT 0, 
     ioa INT NOT NULL DEFAULT 0, 
-    device_id VARCHAR(64) NOT NULL DEFAULT '', 
-    device_name VARCHAR(128) NOT NULL DEFAULT '', 
-    td_table_type VARCHAR(255) NOT NULL DEFAULT '', 
+    device_id VARCHAR(64) DEFAULT '',
+    device_name VARCHAR(128) DEFAULT '',
+    td_table_type VARCHAR(255) DEFAULT '',
     enable_push SMALLINT NOT NULL DEFAULT 1, 
     enable_raw_insert SMALLINT NOT NULL DEFAULT 1, 
-    description VARCHAR(256) NOT NULL DEFAULT '', 
-    ext_1 VARCHAR(64) NOT NULL DEFAULT '', 
-    ext_2 VARCHAR(64) NOT NULL DEFAULT '', 
-    ext_3 VARCHAR(64) NOT NULL DEFAULT '', 
-    ext_4 VARCHAR(64) NOT NULL DEFAULT '', 
-    ext_5 VARCHAR(64) NOT NULL DEFAULT '', 
+    description VARCHAR(256) DEFAULT '',
+    ext_1 VARCHAR(64) DEFAULT '',
+    ext_2 VARCHAR(64) DEFAULT '',
+    ext_3 VARCHAR(64) DEFAULT '',
+    ext_4 VARCHAR(64) DEFAULT '',
+    ext_5 VARCHAR(64) DEFAULT '',
     CONSTRAINT uq_device_point_mapping_tag_station_coa_ioa UNIQUE (tag_station, coa, ioa)
 );
 
@@ -95,12 +95,12 @@ CREATE TABLE IF NOT EXISTS plan (
     delete_time TIMESTAMP NULL, 
     del_state SMALLINT NOT NULL DEFAULT 0, 
     version INT NOT NULL DEFAULT 0, 
-    create_user VARCHAR(64) NOT NULL DEFAULT '', 
-    update_user VARCHAR(64) NOT NULL DEFAULT '', 
-    plan_id VARCHAR(64) NOT NULL DEFAULT '', 
-    plan_name VARCHAR(128) NOT NULL DEFAULT '', 
-    type VARCHAR(64) NOT NULL DEFAULT '', 
-    group_id VARCHAR(64) NOT NULL DEFAULT '', 
+    create_user VARCHAR(64) DEFAULT '',
+    update_user VARCHAR(64) DEFAULT '',
+    plan_id VARCHAR(64) NOT NULL,
+    plan_name VARCHAR(128) DEFAULT '',
+    type VARCHAR(64) DEFAULT '',
+    group_id VARCHAR(64) DEFAULT '',
     recurrence_rule JSONB NOT NULL DEFAULT '{}'::jsonb, 
     start_time TIMESTAMP NOT NULL, 
     end_time TIMESTAMP NOT NULL, 
@@ -108,10 +108,10 @@ CREATE TABLE IF NOT EXISTS plan (
     is_terminated SMALLINT NOT NULL DEFAULT 0, 
     is_paused SMALLINT NOT NULL DEFAULT 0, 
     terminated_time TIMESTAMP NULL, 
-    terminated_reason VARCHAR(256) NOT NULL DEFAULT '', 
+    terminated_reason VARCHAR(256) DEFAULT '',
     paused_time TIMESTAMP NULL, 
-    paused_reason VARCHAR(256) NOT NULL DEFAULT '', 
-    description VARCHAR(256) NOT NULL DEFAULT '', 
+    paused_reason VARCHAR(256) DEFAULT '',
+    description VARCHAR(256) DEFAULT '',
     CONSTRAINT uq_plan_plan_id UNIQUE (plan_id)
 );
 
@@ -175,13 +175,13 @@ CREATE TABLE IF NOT EXISTS plan_exec_item (
     delete_time TIMESTAMP NULL, 
     del_state SMALLINT NOT NULL DEFAULT 0, 
     version INT NOT NULL DEFAULT 0, 
-    create_user VARCHAR(64) NOT NULL DEFAULT '', 
-    update_user VARCHAR(64) NOT NULL DEFAULT '', 
-    plan_id VARCHAR(64) NOT NULL DEFAULT '', 
+    create_user VARCHAR(64) DEFAULT '',
+    update_user VARCHAR(64) DEFAULT '',
+    plan_id VARCHAR(64) NOT NULL DEFAULT '',
     plan_pk BIGINT NOT NULL DEFAULT 0, 
     item_id VARCHAR(64) NOT NULL DEFAULT '', 
-    item_name VARCHAR(128) NOT NULL DEFAULT '', 
-    point_id VARCHAR(64) NOT NULL DEFAULT '', 
+    item_name VARCHAR(128) DEFAULT '',
+    point_id VARCHAR(64) DEFAULT '',
     service_addr VARCHAR(256) NOT NULL DEFAULT '', 
     payload TEXT NOT NULL DEFAULT '', 
     request_timeout INT NOT NULL DEFAULT 0, 
@@ -190,14 +190,14 @@ CREATE TABLE IF NOT EXISTS plan_exec_item (
     last_trigger_time TIMESTAMP NULL, 
     trigger_count INT NOT NULL DEFAULT 0, 
     status SMALLINT NOT NULL DEFAULT 0, 
-    last_result TEXT NOT NULL DEFAULT '', 
-    last_msg TEXT NOT NULL DEFAULT '', 
+    last_result TEXT DEFAULT '',
+    last_msg TEXT DEFAULT '',
     is_terminated SMALLINT NOT NULL DEFAULT 0, 
     terminated_time TIMESTAMP NULL, 
-    terminated_reason VARCHAR(256) NOT NULL DEFAULT '', 
+    terminated_reason VARCHAR(256) DEFAULT '',
     is_paused SMALLINT NOT NULL DEFAULT 0, 
     paused_time TIMESTAMP NULL, 
-    paused_reason VARCHAR(256) NOT NULL DEFAULT ''
+    paused_reason VARCHAR(256) DEFAULT ''
 );
 
 -- 为 plan_exec_item 表添加注释
@@ -261,18 +261,19 @@ CREATE TABLE IF NOT EXISTS plan_exec_log (
     delete_time TIMESTAMP NULL, 
     del_state SMALLINT NOT NULL DEFAULT 0, 
     version INT NOT NULL DEFAULT 0, 
-    create_user VARCHAR(64) NOT NULL DEFAULT '', 
-    update_user VARCHAR(64) NOT NULL DEFAULT '', 
+    create_user VARCHAR(64) DEFAULT '',
+    update_user VARCHAR(64) DEFAULT '',
     plan_id VARCHAR(64) NOT NULL DEFAULT '', 
     plan_pk BIGINT NOT NULL DEFAULT 0, 
-    plan_name VARCHAR(128) NOT NULL DEFAULT '', 
-    item_id VARCHAR(64) NOT NULL DEFAULT '', 
-    item_name VARCHAR(128) NOT NULL DEFAULT '',
-    point_id VARCHAR(64) NOT NULL DEFAULT '',
+    plan_name VARCHAR(128) DEFAULT '',
+    item_pk BIGINT NOT NULL DEFAULT 0,
+    item_id VARCHAR(64) DEFAULT '',
+    item_name VARCHAR(128) DEFAULT '',
+    point_id VARCHAR(64) DEFAULT '',
     trigger_time TIMESTAMP NOT NULL, 
-    trace_id VARCHAR(64) NOT NULL DEFAULT '', 
+    trace_id VARCHAR(64) DEFAULT '',
     exec_result SMALLINT NOT NULL DEFAULT 0, 
-    message TEXT NOT NULL DEFAULT ''
+    message TEXT DEFAULT ''
 );
 
 -- 为 plan_exec_log 表添加注释
@@ -290,6 +291,7 @@ COMMENT ON COLUMN plan_exec_log.update_user IS '更新人';
 COMMENT ON COLUMN plan_exec_log.plan_id IS '计划任务ID';
 COMMENT ON COLUMN plan_exec_log.plan_pk IS '关联的计划主键ID';
 COMMENT ON COLUMN plan_exec_log.plan_name IS '计划任务名称';
+COMMENT ON COLUMN plan_exec_log.item_pk IS '关联的执行项主键ID';
 COMMENT ON COLUMN plan_exec_log.item_id IS '执行项ID';
 COMMENT ON COLUMN plan_exec_log.item_name IS '执行项名称';
 COMMENT ON COLUMN plan_exec_log.point_id IS '点位id';

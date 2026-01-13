@@ -53,29 +53,29 @@ type (
 	}
 
 	Plan struct {
-		Id               int64        `db:"id"`                // 自增主键ID
-		CreateTime       time.Time    `db:"create_time"`       // 创建时间
-		UpdateTime       time.Time    `db:"update_time"`       // 更新时间
-		DeleteTime       sql.NullTime `db:"delete_time"`       // 删除时间（软删除标记）
-		DelState         int64        `db:"del_state"`         // 删除状态：0-未删除，1-已删除
-		Version          int64        `db:"version"`           // 版本号（乐观锁）
-		CreateUser       string       `db:"create_user"`       // 创建人
-		UpdateUser       string       `db:"update_user"`       // 更新人
-		PlanId           string       `db:"plan_id"`           // 计划唯一标识
-		PlanName         string       `db:"plan_name"`         // 计划任务名称
-		Type             string       `db:"type"`              // 任务类型
-		GroupId          string       `db:"group_id"`          // 计划组ID,用于分组管理计划任务
-		RecurrenceRule   string       `db:"recurrence_rule"`   // 重复规则，JSON格式存储
-		StartTime        time.Time    `db:"start_time"`        // 规则生效开始时间
-		EndTime          time.Time    `db:"end_time"`          // 规则生效结束时间
-		Status           int64        `db:"status"`            // 状态：0-禁用，1-启用，2-已终止，3-暂停
-		IsTerminated     int64        `db:"is_terminated"`     // 是否已终止：0-未终止，1-已终止
-		IsPaused         int64        `db:"is_paused"`         // 是否已暂停：0-未暂停，1-已暂停
-		TerminatedTime   sql.NullTime `db:"terminated_time"`   // 终止时间
-		TerminatedReason string       `db:"terminated_reason"` // 终止原因
-		PausedTime       sql.NullTime `db:"paused_time"`       // 暂停时间
-		PausedReason     string       `db:"paused_reason"`     // 暂停原因
-		Description      string       `db:"description"`       // 备注信息
+		Id               int64          `db:"id"`                // 自增主键ID
+		CreateTime       time.Time      `db:"create_time"`       // 创建时间
+		UpdateTime       time.Time      `db:"update_time"`       // 更新时间
+		DeleteTime       sql.NullTime   `db:"delete_time"`       // 删除时间（软删除标记）
+		DelState         int64          `db:"del_state"`         // 删除状态：0-未删除，1-已删除
+		Version          int64          `db:"version"`           // 版本号（乐观锁）
+		CreateUser       sql.NullString `db:"create_user"`       // 创建人
+		UpdateUser       sql.NullString `db:"update_user"`       // 更新人
+		PlanId           string         `db:"plan_id"`           // 计划唯一标识
+		PlanName         sql.NullString `db:"plan_name"`         // 计划任务名称
+		Type             sql.NullString `db:"type"`              // 任务类型
+		GroupId          sql.NullString `db:"group_id"`          // 计划组ID,用于分组管理计划任务
+		RecurrenceRule   string         `db:"recurrence_rule"`   // 重复规则，JSON格式存储
+		StartTime        time.Time      `db:"start_time"`        // 规则生效开始时间
+		EndTime          time.Time      `db:"end_time"`          // 规则生效结束时间
+		Status           int64          `db:"status"`            // 状态：0-禁用，1-启用，2-已终止，3-暂停
+		IsTerminated     int64          `db:"is_terminated"`     // 是否已终止：0-未终止，1-已终止
+		IsPaused         int64          `db:"is_paused"`         // 是否已暂停：0-未暂停，1-已暂停
+		TerminatedTime   sql.NullTime   `db:"terminated_time"`   // 终止时间
+		TerminatedReason sql.NullString `db:"terminated_reason"` // 终止原因
+		PausedTime       sql.NullTime   `db:"paused_time"`       // 暂停时间
+		PausedReason     sql.NullString `db:"paused_reason"`     // 暂停原因
+		Description      sql.NullString `db:"description"`       // 备注信息
 	}
 )
 
@@ -159,19 +159,39 @@ func (m *defaultPlanModel) Insert(ctx context.Context, session sqlx.Session, dat
 	data.DelState = 0
 	columns, values := generateColumnsAndValues(data, []string{})
 	insertBuilder := m.InsertBuilder().Columns(columns...).Values(values...)
-	query, args, err := insertBuilder.ToSql()
-	if err != nil {
-		return nil, err
-	}
-	var result sql.Result
-	var execErr error
-	if session != nil {
-		result, execErr = session.ExecCtx(ctx, query, args...)
-	} else {
-		result, execErr = m.conn.ExecCtx(ctx, query, args...)
-	}
 
-	return result, execErr
+	if m.dbType == DatabaseTypePostgreSQL {
+		insertBuilder = insertBuilder.Suffix("RETURNING id")
+		query, args, err := insertBuilder.ToSql()
+		if err != nil {
+			return nil, err
+		}
+		var id int64
+		var execErr error
+		if session != nil {
+			execErr = session.QueryRowCtx(ctx, &id, query, args...)
+		} else {
+			execErr = m.conn.QueryRowCtx(ctx, &id, query, args...)
+		}
+		if execErr != nil {
+			return nil, execErr
+		}
+		data.Id = id
+		return &postgresResult{id: id}, nil
+	} else {
+		query, args, err := insertBuilder.ToSql()
+		if err != nil {
+			return nil, err
+		}
+		var result sql.Result
+		var execErr error
+		if session != nil {
+			result, execErr = session.ExecCtx(ctx, query, args...)
+		} else {
+			result, execErr = m.conn.ExecCtx(ctx, query, args...)
+		}
+		return result, execErr
+	}
 }
 
 func (m *defaultPlanModel) Update(ctx context.Context, session sqlx.Session, newData *Plan) (sql.Result, error) {

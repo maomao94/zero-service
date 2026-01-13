@@ -7,6 +7,7 @@ import (
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/tool"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -54,8 +55,8 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 		execItem.IsTerminated = 1
 		execItem.IsPaused = 0
 		execItem.TerminatedTime = sql.NullTime{Time: time.Now(), Valid: true}
-		execItem.TerminatedReason = in.Reason
-		execItem.UpdateUser = in.CurrentUser.UserId
+		execItem.TerminatedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
+		execItem.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}
 
 		// 更新执行项
 		_, transErr := l.svcCtx.PlanExecItemModel.Update(ctx, tx, execItem)
