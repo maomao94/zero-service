@@ -58,54 +58,87 @@ func (l *ListPlanExecItemStatsLogic) ListPlanExecItemStats(in *trigger.ListPlanE
 		return nil, err
 	}
 
+	// 定义分组映射结构
+	type statusCountMap map[int64]int64
+	type statGroup struct {
+		planId          string
+		batchId         string
+		planTriggerTime string
+		total           int64
+		statusCounts    statusCountMap
+	}
+
 	// 按 plan_id, batch_id, plan_trigger_time 分组统计
-	statMap := make(map[string]*trigger.PbPlanExecItemStat)
+	statMap := make(map[string]*statGroup)
 	for _, item := range execItems {
 		// 构建分组键
-		key := fmt.Sprintf("%s_%s_%s", item.PlanId, item.BatchId, item.PlanTriggerTime.Format("2006-01-02 15:04:05"))
-		stat, exists := statMap[key]
+		triggerTimeStr := item.PlanTriggerTime.Format("2006-01-02 15:04:05")
+		key := fmt.Sprintf("%s_%s_%s", item.PlanId, item.BatchId, triggerTimeStr)
+		group, exists := statMap[key]
 		if !exists {
-			stat = &trigger.PbPlanExecItemStat{
-				PlanId:          item.PlanId,
-				BatchId:         item.BatchId,
-				PlanTriggerTime: item.PlanTriggerTime.Format("2006-01-02 15:04:05"),
-				Total:           0,
-				Success:         0,
-				Failed:          0,
-				Running:         0,
+			group = &statGroup{
+				planId:          item.PlanId,
+				batchId:         item.BatchId,
+				planTriggerTime: triggerTimeStr,
+				total:           0,
+				statusCounts:    make(statusCountMap),
 			}
-			statMap[key] = stat
+			statMap[key] = group
 		}
 
 		// 统计总数量
-		stat.Total++
+		group.total++
 
-		// 根据状态统计
-		switch item.Status {
-		case int64(model.StatusCompleted):
-			stat.Success++
-		case int64(model.StatusTerminated):
-			stat.Failed++
-		case int64(model.StatusRunning):
-			stat.Running++
-		}
+		// 统计各状态数量
+		group.statusCounts[item.Status]++
 	}
 
-	// 转换为切片
+	// 转换为响应格式
 	stats := make([]*trigger.PbPlanExecItemStat, 0, len(statMap))
-	for _, stat := range statMap {
+	for _, group := range statMap {
+		// 创建统计对象
+		stat := &trigger.PbPlanExecItemStat{
+			PlanId:          group.planId,
+			BatchId:         group.batchId,
+			PlanTriggerTime: group.planTriggerTime,
+			Total:           group.total,
+			StatusStats:     make([]*trigger.PbExecItemStatusCount, 0, len(group.statusCounts)),
+		}
+
+		// 遍历所有可能的状态，确保每个状态都有统计
+		allStatuses := []int64{
+			int64(model.StatusWaiting),
+			int64(model.StatusDelayed),
+			int64(model.StatusRunning),
+			int64(model.StatusPaused),
+			int64(model.StatusCompleted),
+			int64(model.StatusTerminated),
+		}
+
+		for _, status := range allStatuses {
+			count := group.statusCounts[status]
+			if count > 0 {
+				// 转换为proto响应格式
+				stat.StatusStats = append(stat.StatusStats, &trigger.PbExecItemStatusCount{
+					Status:     trigger.PbExecItemStatus(status),
+					StatusName: statusNames[status],
+					Count:      count,
+				})
+			}
+		}
+
 		stats = append(stats, stat)
 	}
 
 	// 计算分页参数
 	pageSize := in.PageSize
 	if pageSize <= 0 {
-		pageSize = 10
+		pageSize = 10 // 默认分页大小
 	}
 
 	pageNum := in.PageNum
 	if pageNum <= 0 {
-		pageNum = 1
+		pageNum = 1 // 默认页码
 	}
 
 	// 执行分页

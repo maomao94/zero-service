@@ -73,6 +73,16 @@ const (
 	StatusTerminated int = 300 // 人工/策略/超过重试次数终止，终态
 )
 
+// 状态名称映射
+var statusNames = map[int64]string{
+	int64(StatusWaiting):    "等待调度",
+	int64(StatusDelayed):    "延期等待",
+	int64(StatusRunning):    "执行中",
+	int64(StatusPaused):     "暂停",
+	int64(StatusCompleted):  "完成",
+	int64(StatusTerminated): "终止",
+}
+
 // ============================
 // 执行业务结果枚举
 // ============================
