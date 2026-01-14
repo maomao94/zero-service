@@ -29,7 +29,7 @@ func NewPausePlanLogic(ctx context.Context, svcCtx *svc.ServiceContext) *PausePl
 }
 
 // 暂停计划
-func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PlanOperateRes, error) {
+func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlanRes, error) {
 	// 验证请求
 	err := in.Validate()
 	if err != nil {
@@ -40,13 +40,13 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PlanOpera
 	plan, err := l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, in.PlanId)
 	if err != nil {
 		if err == sqlx.ErrNotFound {
-			return &trigger.PlanOperateRes{}, nil
+			return &trigger.PausePlanRes{}, nil
 		}
 		return nil, err
 	}
 
 	if plan.Status == int64(model.PlanStatusDisabled) || plan.Status == int64(model.PlanStatusTerminated) || plan.Status == int64(model.PlanStatusPaused) {
-		return &trigger.PlanOperateRes{}, nil
+		return &trigger.PausePlanRes{}, nil
 	}
 
 	// 执行事务
@@ -58,7 +58,7 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PlanOpera
 		plan.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}
 
 		// 更新计划
-		_, transErr := l.svcCtx.PlanModel.Update(ctx, tx, plan)
+		transErr := l.svcCtx.PlanModel.UpdateWithVersion(ctx, tx, plan)
 		if transErr != nil {
 			return transErr
 		}
@@ -79,8 +79,8 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PlanOpera
 	})
 
 	if err != nil {
-		return &trigger.PlanOperateRes{}, nil
+		return &trigger.PausePlanRes{}, nil
 	}
 
-	return &trigger.PlanOperateRes{}, nil
+	return &trigger.PausePlanRes{}, nil
 }

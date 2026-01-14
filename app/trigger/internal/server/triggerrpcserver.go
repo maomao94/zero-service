@@ -143,7 +143,7 @@ func (s *TriggerRpcServer) CreatePlanTask(ctx context.Context, in *trigger.Creat
 }
 
 // 暂停计划
-func (s *TriggerRpcServer) PausePlan(ctx context.Context, in *trigger.PausePlanReq) (*trigger.PlanOperateRes, error) {
+func (s *TriggerRpcServer) PausePlan(ctx context.Context, in *trigger.PausePlanReq) (*trigger.PausePlanRes, error) {
 	l := logic.NewPausePlanLogic(ctx, s.svcCtx)
 	return l.PausePlan(in)
 }
@@ -166,10 +166,22 @@ func (s *TriggerRpcServer) TerminatePlanExecItem(ctx context.Context, in *trigge
 	return l.TerminatePlanExecItem(in)
 }
 
-// 回调计划项
-func (s *TriggerRpcServer) CallbackPlanExecItem(ctx context.Context, in *trigger.CallbackPlanExecItemReq) (*trigger.CallbackPlanExecItemRes, error) {
-	l := logic.NewCallbackPlanExecItemLogic(ctx, s.svcCtx)
-	return l.CallbackPlanExecItem(in)
+// 立即执行计划项
+func (s *TriggerRpcServer) RunPlanExecItem(ctx context.Context, in *trigger.RunPlanExecItemReq) (*trigger.RunPlanExecItemRes, error) {
+	l := logic.NewRunPlanExecItemLogic(ctx, s.svcCtx)
+	return l.RunPlanExecItem(in)
+}
+
+// 恢复计划
+func (s *TriggerRpcServer) ResumePlan(ctx context.Context, in *trigger.ResumePlanReq) (*trigger.ResumePlanRes, error) {
+	l := logic.NewResumePlanLogic(ctx, s.svcCtx)
+	return l.ResumePlan(in)
+}
+
+// 恢复执行项
+func (s *TriggerRpcServer) ResumePlanExecItem(ctx context.Context, in *trigger.ResumePlanExecItemReq) (*trigger.ResumePlanExecItemRes, error) {
+	l := logic.NewResumePlanExecItemLogic(ctx, s.svcCtx)
+	return l.ResumePlanExecItem(in)
 }
 
 // 获取计划详情
@@ -206,4 +218,10 @@ func (s *TriggerRpcServer) GetPlanExecLog(ctx context.Context, in *trigger.GetPl
 func (s *TriggerRpcServer) ListPlanExecLogs(ctx context.Context, in *trigger.ListPlanExecLogsReq) (*trigger.ListPlanExecLogsRes, error) {
 	l := logic.NewListPlanExecLogsLogic(ctx, s.svcCtx)
 	return l.ListPlanExecLogs(in)
+}
+
+// 回调计划执行项
+func (s *TriggerRpcServer) CallbackPlanExecItem(ctx context.Context, in *trigger.CallbackPlanExecItemReq) (*trigger.CallbackPlanExecItemRes, error) {
+	l := logic.NewCallbackPlanExecItemLogic(ctx, s.svcCtx)
+	return l.CallbackPlanExecItem(in)
 }

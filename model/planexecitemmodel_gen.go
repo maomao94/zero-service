@@ -60,8 +60,8 @@ type (
 		Version          int64          `db:"version"`           // 版本号（乐观锁）
 		CreateUser       sql.NullString `db:"create_user"`       // 创建人
 		UpdateUser       sql.NullString `db:"update_user"`       // 更新人
-		PlanId           string         `db:"plan_id"`           // 关联的计划ID
 		PlanPk           int64          `db:"plan_pk"`           // 关联的计划主键ID
+		PlanId           string         `db:"plan_id"`           // 关联的计划ID
 		ItemId           string         `db:"item_id"`           // 执行项ID
 		ItemName         sql.NullString `db:"item_name"`         // 执行项名称
 		PointId          sql.NullString `db:"point_id"`          // 点位id
@@ -79,6 +79,11 @@ type (
 		TerminatedReason sql.NullString `db:"terminated_reason"` // 终止原因
 		PausedTime       sql.NullTime   `db:"paused_time"`       // 暂停时间
 		PausedReason     sql.NullString `db:"paused_reason"`     // 暂停原因
+		Ext1             sql.NullString `db:"ext_1"`             // 扩展字段1
+		Ext2             sql.NullString `db:"ext_2"`             // 扩展字段2
+		Ext3             sql.NullString `db:"ext_3"`             // 扩展字段3
+		Ext4             sql.NullString `db:"ext_4"`             // 扩展字段4
+		Ext5             sql.NullString `db:"ext_5"`             // 扩展字段5
 	}
 )
 

@@ -110,6 +110,11 @@ CREATE TABLE IF NOT EXISTS plan (
     paused_time TIMESTAMP NULL, 
     paused_reason VARCHAR(256) DEFAULT '',
     description VARCHAR(256) DEFAULT '',
+    ext_1 VARCHAR(256) DEFAULT '',
+    ext_2 VARCHAR(256) DEFAULT '',
+    ext_3 VARCHAR(256) DEFAULT '',
+    ext_4 VARCHAR(256) DEFAULT '',
+    ext_5 VARCHAR(256) DEFAULT '',
     CONSTRAINT uq_plan_plan_id UNIQUE (plan_id)
 );
 
@@ -138,6 +143,11 @@ COMMENT ON COLUMN plan.terminated_reason IS '终止原因';
 COMMENT ON COLUMN plan.paused_time IS '暂停时间';
 COMMENT ON COLUMN plan.paused_reason IS '暂停原因';
 COMMENT ON COLUMN plan.description IS '备注信息';
+COMMENT ON COLUMN plan.ext_1 IS '扩展字段1';
+COMMENT ON COLUMN plan.ext_2 IS '扩展字段2';
+COMMENT ON COLUMN plan.ext_3 IS '扩展字段3';
+COMMENT ON COLUMN plan.ext_4 IS '扩展字段4';
+COMMENT ON COLUMN plan.ext_5 IS '扩展字段5';
 
 -- 为 plan 表创建索引
 CREATE INDEX idx_plan_table_type ON plan (type);
@@ -189,7 +199,12 @@ CREATE TABLE IF NOT EXISTS plan_exec_item (
     terminated_time TIMESTAMP NULL, 
     terminated_reason VARCHAR(256) DEFAULT '',
     paused_time TIMESTAMP NULL, 
-    paused_reason VARCHAR(256) DEFAULT ''
+    paused_reason VARCHAR(256) DEFAULT '',
+    ext_1 VARCHAR(256) DEFAULT '',
+    ext_2 VARCHAR(256) DEFAULT '',
+    ext_3 VARCHAR(256) DEFAULT '',
+    ext_4 VARCHAR(256) DEFAULT '',
+    ext_5 VARCHAR(256) DEFAULT ''
 );
 
 -- 为 plan_exec_item 表添加注释
@@ -223,6 +238,11 @@ COMMENT ON COLUMN plan_exec_item.terminated_time IS '终止时间';
 COMMENT ON COLUMN plan_exec_item.terminated_reason IS '终止原因';
 COMMENT ON COLUMN plan_exec_item.paused_time IS '暂停时间';
 COMMENT ON COLUMN plan_exec_item.paused_reason IS '暂停原因';
+COMMENT ON COLUMN plan_exec_item.ext_1 IS '扩展字段1';
+COMMENT ON COLUMN plan_exec_item.ext_2 IS '扩展字段2';
+COMMENT ON COLUMN plan_exec_item.ext_3 IS '扩展字段3';
+COMMENT ON COLUMN plan_exec_item.ext_4 IS '扩展字段4';
+COMMENT ON COLUMN plan_exec_item.ext_5 IS '扩展字段5';
 
 -- 为 plan_exec_item 表创建索引
 CREATE INDEX idx_plan_exec_item_plan_pk_item_id ON plan_exec_item (plan_pk, item_id);

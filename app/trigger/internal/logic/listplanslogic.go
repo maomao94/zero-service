@@ -74,26 +74,37 @@ func (l *ListPlansLogic) ListPlans(in *trigger.ListPlansReq) (*trigger.ListPlans
 		}
 
 		pbPlan := &trigger.PbPlan{
-			PlanId:      plan.PlanId,
-			PlanName:    plan.PlanName.String,
-			Type:        plan.Type.String,
-			Description: plan.Description.String,
-			StartTime:   carbon.CreateFromStdTime(plan.StartTime).ToDateTimeString(),
-			EndTime:     carbon.CreateFromStdTime(plan.EndTime).ToDateTimeString(),
-			Rule:        &pbRule,
-			Status:      int32(plan.Status),
+			CreateTime:       carbon.CreateFromStdTime(plan.CreateTime).ToDateTimeString(),
+			UpdateTime:       carbon.CreateFromStdTime(plan.UpdateTime).ToDateTimeString(),
+			CreateUser:       plan.CreateUser.String,
+			UpdateUser:       plan.UpdateUser.String,
+			Id:               plan.Id,
+			PlanId:           plan.PlanId,
+			PlanName:         plan.PlanName.String,
+			Type:             plan.Type.String,
+			GroupId:          plan.GroupId.String,
+			Description:      plan.Description.String,
+			StartTime:        carbon.CreateFromStdTime(plan.StartTime).ToDateTimeString(),
+			EndTime:          carbon.CreateFromStdTime(plan.EndTime).ToDateTimeString(),
+			Rule:             &pbRule,
+			Status:           int32(plan.Status),
+			TerminatedReason: plan.TerminatedReason.String,
+			PausedReason:     plan.PausedReason.String,
+			Ext1:             plan.Ext1.String,
+			Ext2:             plan.Ext2.String,
+			Ext3:             plan.Ext3.String,
+			Ext4:             plan.Ext4.String,
+			Ext5:             plan.Ext5.String,
 		}
 
 		// 设置终止时间和原因
 		if plan.TerminatedTime.Valid {
 			pbPlan.TerminatedTime = carbon.CreateFromStdTime(plan.TerminatedTime.Time).ToDateTimeString()
-			pbPlan.TerminatedReason = plan.TerminatedReason.String
 		}
 
 		// 设置暂停时间和原因
 		if plan.PausedTime.Valid {
 			pbPlan.PausedTime = carbon.CreateFromStdTime(plan.PausedTime.Time).ToDateTimeString()
-			pbPlan.PausedReason = plan.PausedReason.String
 		}
 
 		resp.Plans = append(resp.Plans, pbPlan)

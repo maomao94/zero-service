@@ -118,6 +118,11 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		PausedTime:       sql.NullTime{},
 		PausedReason:     sql.NullString{},
 		Description:      sql.NullString{String: in.Description, Valid: in.Description != ""},
+		Ext1:             sql.NullString{String: in.Ext1, Valid: in.Ext1 != ""},
+		Ext2:             sql.NullString{String: in.Ext2, Valid: in.Ext2 != ""},
+		Ext3:             sql.NullString{String: in.Ext3, Valid: in.Ext3 != ""},
+		Ext4:             sql.NullString{String: in.Ext4, Valid: in.Ext4 != ""},
+		Ext5:             sql.NullString{String: in.Ext5, Valid: in.Ext5 != ""},
 	}
 	var execCnt int64 = 0
 	err = l.svcCtx.PlanModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
@@ -150,6 +155,11 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 					TerminatedReason: sql.NullString{},
 					PausedTime:       sql.NullTime{},
 					PausedReason:     sql.NullString{},
+					Ext1:             sql.NullString{String: item.Ext1, Valid: item.Ext1 != ""},
+					Ext2:             sql.NullString{String: item.Ext2, Valid: item.Ext2 != ""},
+					Ext3:             sql.NullString{String: item.Ext3, Valid: item.Ext3 != ""},
+					Ext4:             sql.NullString{String: item.Ext4, Valid: item.Ext4 != ""},
+					Ext5:             sql.NullString{String: item.Ext5, Valid: item.Ext5 != ""},
 				}
 				_, err = l.svcCtx.PlanExecItemModel.Insert(l.ctx, tx, &planItem)
 				if err != nil {

@@ -51,7 +51,7 @@ func (l *PausePlanExecItemLogic) PausePlanExecItem(in *trigger.PausePlanExecItem
 	}
 
 	if execItem.Status == int64(model.StatusRunning) {
-		return &trigger.PausePlanExecItemRes{}, errors.BadRequest("执行项正在运行中，请稍后再试", "失败")
+		return &trigger.PausePlanExecItemRes{}, errors.BadRequest("", "执行项正在运行中，请稍后再试")
 	}
 
 	// 执行事务

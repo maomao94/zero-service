@@ -58,7 +58,7 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 		plan.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}
 
 		// 更新计划
-		_, transErr := l.svcCtx.PlanModel.Update(ctx, tx, plan)
+		transErr := l.svcCtx.PlanModel.UpdateWithVersion(ctx, tx, plan)
 		if transErr != nil {
 			return transErr
 		}

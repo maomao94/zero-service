@@ -2689,7 +2689,12 @@ type CreatePlanTaskReq struct {
 	// 计划规则项 默认 规则项 MINUTELY
 	Rule *PbPlanRule `protobuf:"bytes,8,opt,name=rule,proto3" json:"rule,omitempty"`
 	// 计划执行项
-	ExecItems     []*PlanExecItem `protobuf:"bytes,9,rep,name=execItems,proto3" json:"execItems,omitempty"`
+	ExecItems     []*CreatePlanExecItem `protobuf:"bytes,9,rep,name=execItems,proto3" json:"execItems,omitempty"`
+	Ext1          string                `protobuf:"bytes,50,opt,name=ext1,proto3" json:"ext1,omitempty"`
+	Ext2          string                `protobuf:"bytes,51,opt,name=ext2,proto3" json:"ext2,omitempty"`
+	Ext3          string                `protobuf:"bytes,52,opt,name=ext3,proto3" json:"ext3,omitempty"`
+	Ext4          string                `protobuf:"bytes,53,opt,name=ext4,proto3" json:"ext4,omitempty"`
+	Ext5          string                `protobuf:"bytes,54,opt,name=ext5,proto3" json:"ext5,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2787,11 +2792,46 @@ func (x *CreatePlanTaskReq) GetRule() *PbPlanRule {
 	return nil
 }
 
-func (x *CreatePlanTaskReq) GetExecItems() []*PlanExecItem {
+func (x *CreatePlanTaskReq) GetExecItems() []*CreatePlanExecItem {
 	if x != nil {
 		return x.ExecItems
 	}
 	return nil
+}
+
+func (x *CreatePlanTaskReq) GetExt1() string {
+	if x != nil {
+		return x.Ext1
+	}
+	return ""
+}
+
+func (x *CreatePlanTaskReq) GetExt2() string {
+	if x != nil {
+		return x.Ext2
+	}
+	return ""
+}
+
+func (x *CreatePlanTaskReq) GetExt3() string {
+	if x != nil {
+		return x.Ext3
+	}
+	return ""
+}
+
+func (x *CreatePlanTaskReq) GetExt4() string {
+	if x != nil {
+		return x.Ext4
+	}
+	return ""
+}
+
+func (x *CreatePlanTaskReq) GetExt5() string {
+	if x != nil {
+		return x.Ext5
+	}
+	return ""
 }
 
 type PbPlanRule struct {
@@ -2884,7 +2924,7 @@ func (x *PbPlanRule) GetMinutes() []int32 {
 	return nil
 }
 
-type PlanExecItem struct {
+type CreatePlanExecItem struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 执行项ID,业务字段
 	ItemId string `protobuf:"bytes,1,opt,name=itemId,proto3" json:"itemId,omitempty"`
@@ -2897,25 +2937,30 @@ type PlanExecItem struct {
 	// 业务负载（必填）：序列化的业务专属参数（设备参数/转账金额/订单信息等）
 	Payload string `protobuf:"bytes,6,opt,name=payload,proto3" json:"payload,omitempty"`
 	// 请求超时时间 单位: 毫秒 可为空
-	RequestTimeout int64 `protobuf:"varint,7,opt,name=requestTimeout,proto3" json:"requestTimeout,omitempty"`
+	RequestTimeout int64  `protobuf:"varint,7,opt,name=requestTimeout,proto3" json:"requestTimeout,omitempty"`
+	Ext1           string `protobuf:"bytes,50,opt,name=ext1,proto3" json:"ext1,omitempty"`
+	Ext2           string `protobuf:"bytes,51,opt,name=ext2,proto3" json:"ext2,omitempty"`
+	Ext3           string `protobuf:"bytes,52,opt,name=ext3,proto3" json:"ext3,omitempty"`
+	Ext4           string `protobuf:"bytes,53,opt,name=ext4,proto3" json:"ext4,omitempty"`
+	Ext5           string `protobuf:"bytes,54,opt,name=ext5,proto3" json:"ext5,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
 
-func (x *PlanExecItem) Reset() {
-	*x = PlanExecItem{}
+func (x *CreatePlanExecItem) Reset() {
+	*x = CreatePlanExecItem{}
 	mi := &file_trigger_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PlanExecItem) String() string {
+func (x *CreatePlanExecItem) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PlanExecItem) ProtoMessage() {}
+func (*CreatePlanExecItem) ProtoMessage() {}
 
-func (x *PlanExecItem) ProtoReflect() protoreflect.Message {
+func (x *CreatePlanExecItem) ProtoReflect() protoreflect.Message {
 	mi := &file_trigger_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2927,51 +2972,86 @@ func (x *PlanExecItem) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PlanExecItem.ProtoReflect.Descriptor instead.
-func (*PlanExecItem) Descriptor() ([]byte, []int) {
+// Deprecated: Use CreatePlanExecItem.ProtoReflect.Descriptor instead.
+func (*CreatePlanExecItem) Descriptor() ([]byte, []int) {
 	return file_trigger_proto_rawDescGZIP(), []int{43}
 }
 
-func (x *PlanExecItem) GetItemId() string {
+func (x *CreatePlanExecItem) GetItemId() string {
 	if x != nil {
 		return x.ItemId
 	}
 	return ""
 }
 
-func (x *PlanExecItem) GetItemName() string {
+func (x *CreatePlanExecItem) GetItemName() string {
 	if x != nil {
 		return x.ItemName
 	}
 	return ""
 }
 
-func (x *PlanExecItem) GetPointId() string {
+func (x *CreatePlanExecItem) GetPointId() string {
 	if x != nil {
 		return x.PointId
 	}
 	return ""
 }
 
-func (x *PlanExecItem) GetServiceAddr() string {
+func (x *CreatePlanExecItem) GetServiceAddr() string {
 	if x != nil {
 		return x.ServiceAddr
 	}
 	return ""
 }
 
-func (x *PlanExecItem) GetPayload() string {
+func (x *CreatePlanExecItem) GetPayload() string {
 	if x != nil {
 		return x.Payload
 	}
 	return ""
 }
 
-func (x *PlanExecItem) GetRequestTimeout() int64 {
+func (x *CreatePlanExecItem) GetRequestTimeout() int64 {
 	if x != nil {
 		return x.RequestTimeout
 	}
 	return 0
+}
+
+func (x *CreatePlanExecItem) GetExt1() string {
+	if x != nil {
+		return x.Ext1
+	}
+	return ""
+}
+
+func (x *CreatePlanExecItem) GetExt2() string {
+	if x != nil {
+		return x.Ext2
+	}
+	return ""
+}
+
+func (x *CreatePlanExecItem) GetExt3() string {
+	if x != nil {
+		return x.Ext3
+	}
+	return ""
+}
+
+func (x *CreatePlanExecItem) GetExt4() string {
+	if x != nil {
+		return x.Ext4
+	}
+	return ""
+}
+
+func (x *CreatePlanExecItem) GetExt5() string {
+	if x != nil {
+		return x.Ext5
+	}
+	return ""
 }
 
 type CreatePlanTaskRes struct {
@@ -3099,26 +3179,26 @@ func (x *PausePlanReq) GetReason() string {
 	return ""
 }
 
-type PlanOperateRes struct {
+type PausePlanRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *PlanOperateRes) Reset() {
-	*x = PlanOperateRes{}
+func (x *PausePlanRes) Reset() {
+	*x = PausePlanRes{}
 	mi := &file_trigger_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PlanOperateRes) String() string {
+func (x *PausePlanRes) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PlanOperateRes) ProtoMessage() {}
+func (*PausePlanRes) ProtoMessage() {}
 
-func (x *PlanOperateRes) ProtoReflect() protoreflect.Message {
+func (x *PausePlanRes) ProtoReflect() protoreflect.Message {
 	mi := &file_trigger_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3130,8 +3210,8 @@ func (x *PlanOperateRes) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PlanOperateRes.ProtoReflect.Descriptor instead.
-func (*PlanOperateRes) Descriptor() ([]byte, []int) {
+// Deprecated: Use PausePlanRes.ProtoReflect.Descriptor instead.
+func (*PausePlanRes) Descriptor() ([]byte, []int) {
 	return file_trigger_proto_rawDescGZIP(), []int{46}
 }
 
@@ -3427,35 +3507,30 @@ func (*TerminatePlanExecItemRes) Descriptor() ([]byte, []int) {
 	return file_trigger_proto_rawDescGZIP(), []int{52}
 }
 
-type CallbackPlanExecItemReq struct {
+// 恢复计划请求
+type ResumePlanReq struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
-	// 执行项ID
-	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	// 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，running-业务正在执行（未回调或部分异步）
-	ExecResult string `protobuf:"bytes,2,opt,name=execResult,proto3" json:"execResult,omitempty"`
-	// 结果描述（成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
-	Message string `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
-	// 延期配置：delayed-自定义延期，running-自定义延期（默认30分钟,等待业务系统回调完成/延期触发闭环)
-	DelayConfig   *PbDelayConfig `protobuf:"bytes,4,opt,name=delayConfig,proto3" json:"delayConfig,omitempty"`
+	// 计划ID
+	PlanId        string `protobuf:"bytes,1,opt,name=planId,proto3" json:"planId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CallbackPlanExecItemReq) Reset() {
-	*x = CallbackPlanExecItemReq{}
+func (x *ResumePlanReq) Reset() {
+	*x = ResumePlanReq{}
 	mi := &file_trigger_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CallbackPlanExecItemReq) String() string {
+func (x *ResumePlanReq) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CallbackPlanExecItemReq) ProtoMessage() {}
+func (*ResumePlanReq) ProtoMessage() {}
 
-func (x *CallbackPlanExecItemReq) ProtoReflect() protoreflect.Message {
+func (x *ResumePlanReq) ProtoReflect() protoreflect.Message {
 	mi := &file_trigger_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3467,121 +3542,134 @@ func (x *CallbackPlanExecItemReq) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CallbackPlanExecItemReq.ProtoReflect.Descriptor instead.
-func (*CallbackPlanExecItemReq) Descriptor() ([]byte, []int) {
+// Deprecated: Use ResumePlanReq.ProtoReflect.Descriptor instead.
+func (*ResumePlanReq) Descriptor() ([]byte, []int) {
 	return file_trigger_proto_rawDescGZIP(), []int{53}
 }
 
-func (x *CallbackPlanExecItemReq) GetCurrentUser() *extproto.CurrentUser {
+func (x *ResumePlanReq) GetCurrentUser() *extproto.CurrentUser {
 	if x != nil {
 		return x.CurrentUser
 	}
 	return nil
 }
 
-func (x *CallbackPlanExecItemReq) GetId() int64 {
+func (x *ResumePlanReq) GetPlanId() string {
+	if x != nil {
+		return x.PlanId
+	}
+	return ""
+}
+
+type ResumePlanRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResumePlanRes) Reset() {
+	*x = ResumePlanRes{}
+	mi := &file_trigger_proto_msgTypes[54]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResumePlanRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResumePlanRes) ProtoMessage() {}
+
+func (x *ResumePlanRes) ProtoReflect() protoreflect.Message {
+	mi := &file_trigger_proto_msgTypes[54]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResumePlanRes.ProtoReflect.Descriptor instead.
+func (*ResumePlanRes) Descriptor() ([]byte, []int) {
+	return file_trigger_proto_rawDescGZIP(), []int{54}
+}
+
+type ResumePlanExecItemReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CurrentUser   *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResumePlanExecItemReq) Reset() {
+	*x = ResumePlanExecItemReq{}
+	mi := &file_trigger_proto_msgTypes[55]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResumePlanExecItemReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResumePlanExecItemReq) ProtoMessage() {}
+
+func (x *ResumePlanExecItemReq) ProtoReflect() protoreflect.Message {
+	mi := &file_trigger_proto_msgTypes[55]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResumePlanExecItemReq.ProtoReflect.Descriptor instead.
+func (*ResumePlanExecItemReq) Descriptor() ([]byte, []int) {
+	return file_trigger_proto_rawDescGZIP(), []int{55}
+}
+
+func (x *ResumePlanExecItemReq) GetCurrentUser() *extproto.CurrentUser {
+	if x != nil {
+		return x.CurrentUser
+	}
+	return nil
+}
+
+func (x *ResumePlanExecItemReq) GetId() int64 {
 	if x != nil {
 		return x.Id
 	}
 	return 0
 }
 
-func (x *CallbackPlanExecItemReq) GetExecResult() string {
-	if x != nil {
-		return x.ExecResult
-	}
-	return ""
-}
-
-func (x *CallbackPlanExecItemReq) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-func (x *CallbackPlanExecItemReq) GetDelayConfig() *PbDelayConfig {
-	if x != nil {
-		return x.DelayConfig
-	}
-	return nil
-}
-
-type PbDelayConfig struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// 下次触发时间（格式：yyyy-MM-dd HH:mm:ss，定时扫描的核心筛选条件）
-	NextTriggerTime string `protobuf:"bytes,1,opt,name=nextTriggerTime,proto3" json:"nextTriggerTime,omitempty"`
-	// 延期原因
-	DelayReason   string `protobuf:"bytes,2,opt,name=delayReason,proto3" json:"delayReason,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PbDelayConfig) Reset() {
-	*x = PbDelayConfig{}
-	mi := &file_trigger_proto_msgTypes[54]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PbDelayConfig) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PbDelayConfig) ProtoMessage() {}
-
-func (x *PbDelayConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[54]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PbDelayConfig.ProtoReflect.Descriptor instead.
-func (*PbDelayConfig) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{54}
-}
-
-func (x *PbDelayConfig) GetNextTriggerTime() string {
-	if x != nil {
-		return x.NextTriggerTime
-	}
-	return ""
-}
-
-func (x *PbDelayConfig) GetDelayReason() string {
-	if x != nil {
-		return x.DelayReason
-	}
-	return ""
-}
-
-type CallbackPlanExecItemRes struct {
+type ResumePlanExecItemRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CallbackPlanExecItemRes) Reset() {
-	*x = CallbackPlanExecItemRes{}
-	mi := &file_trigger_proto_msgTypes[55]
+func (x *ResumePlanExecItemRes) Reset() {
+	*x = ResumePlanExecItemRes{}
+	mi := &file_trigger_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CallbackPlanExecItemRes) String() string {
+func (x *ResumePlanExecItemRes) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CallbackPlanExecItemRes) ProtoMessage() {}
+func (*ResumePlanExecItemRes) ProtoMessage() {}
 
-func (x *CallbackPlanExecItemRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[55]
+func (x *ResumePlanExecItemRes) ProtoReflect() protoreflect.Message {
+	mi := &file_trigger_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3592,9 +3680,100 @@ func (x *CallbackPlanExecItemRes) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CallbackPlanExecItemRes.ProtoReflect.Descriptor instead.
-func (*CallbackPlanExecItemRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{55}
+// Deprecated: Use ResumePlanExecItemRes.ProtoReflect.Descriptor instead.
+func (*ResumePlanExecItemRes) Descriptor() ([]byte, []int) {
+	return file_trigger_proto_rawDescGZIP(), []int{56}
+}
+
+// 立即执行计划项请求
+type RunPlanExecItemReq struct {
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
+	// 执行项主键ID
+	Id            int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RunPlanExecItemReq) Reset() {
+	*x = RunPlanExecItemReq{}
+	mi := &file_trigger_proto_msgTypes[57]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RunPlanExecItemReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RunPlanExecItemReq) ProtoMessage() {}
+
+func (x *RunPlanExecItemReq) ProtoReflect() protoreflect.Message {
+	mi := &file_trigger_proto_msgTypes[57]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RunPlanExecItemReq.ProtoReflect.Descriptor instead.
+func (*RunPlanExecItemReq) Descriptor() ([]byte, []int) {
+	return file_trigger_proto_rawDescGZIP(), []int{57}
+}
+
+func (x *RunPlanExecItemReq) GetCurrentUser() *extproto.CurrentUser {
+	if x != nil {
+		return x.CurrentUser
+	}
+	return nil
+}
+
+func (x *RunPlanExecItemReq) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+// 立即执行计划项响应
+type RunPlanExecItemRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RunPlanExecItemRes) Reset() {
+	*x = RunPlanExecItemRes{}
+	mi := &file_trigger_proto_msgTypes[58]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RunPlanExecItemRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RunPlanExecItemRes) ProtoMessage() {}
+
+func (x *RunPlanExecItemRes) ProtoReflect() protoreflect.Message {
+	mi := &file_trigger_proto_msgTypes[58]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RunPlanExecItemRes.ProtoReflect.Descriptor instead.
+func (*RunPlanExecItemRes) Descriptor() ([]byte, []int) {
+	return file_trigger_proto_rawDescGZIP(), []int{58}
 }
 
 type GetPlanReq struct {
@@ -3607,7 +3786,7 @@ type GetPlanReq struct {
 
 func (x *GetPlanReq) Reset() {
 	*x = GetPlanReq{}
-	mi := &file_trigger_proto_msgTypes[56]
+	mi := &file_trigger_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3619,7 +3798,7 @@ func (x *GetPlanReq) String() string {
 func (*GetPlanReq) ProtoMessage() {}
 
 func (x *GetPlanReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[56]
+	mi := &file_trigger_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3632,7 +3811,7 @@ func (x *GetPlanReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlanReq.ProtoReflect.Descriptor instead.
 func (*GetPlanReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{56}
+	return file_trigger_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *GetPlanReq) GetCurrentUser() *extproto.CurrentUser {
@@ -3658,7 +3837,7 @@ type GetPlanRes struct {
 
 func (x *GetPlanRes) Reset() {
 	*x = GetPlanRes{}
-	mi := &file_trigger_proto_msgTypes[57]
+	mi := &file_trigger_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3670,7 +3849,7 @@ func (x *GetPlanRes) String() string {
 func (*GetPlanRes) ProtoMessage() {}
 
 func (x *GetPlanRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[57]
+	mi := &file_trigger_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3683,7 +3862,7 @@ func (x *GetPlanRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlanRes.ProtoReflect.Descriptor instead.
 func (*GetPlanRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{57}
+	return file_trigger_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *GetPlanRes) GetPlan() *PbPlan {
@@ -3711,8 +3890,8 @@ type PbPlan struct {
 	PlanName string `protobuf:"bytes,2,opt,name=planName,proto3" json:"planName,omitempty"`
 	// 任务类型
 	Type string `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
-	// 任务分组名称
-	GroupName string `protobuf:"bytes,4,opt,name=groupName,proto3" json:"groupName,omitempty"`
+	// 计划组ID,用于分组管理计划任务
+	GroupId string `protobuf:"bytes,4,opt,name=groupId,proto3" json:"groupId,omitempty"`
 	// 描述
 	Description string `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
 	// 规则生效开始时间
@@ -3723,25 +3902,31 @@ type PbPlan struct {
 	Rule *PbPlanRule `protobuf:"bytes,8,opt,name=rule,proto3" json:"rule,omitempty"`
 	// 状态：0-禁用，1-启用，2-已终止，3-暂停
 	Status int32 `protobuf:"varint,9,opt,name=status,proto3" json:"status,omitempty"`
-	// 是否已终止
-	IsTerminated bool `protobuf:"varint,10,opt,name=isTerminated,proto3" json:"isTerminated,omitempty"`
 	// 终止时间
-	TerminatedTime string `protobuf:"bytes,11,opt,name=terminatedTime,proto3" json:"terminatedTime,omitempty"`
+	TerminatedTime string `protobuf:"bytes,10,opt,name=terminatedTime,proto3" json:"terminatedTime,omitempty"`
 	// 终止原因
-	TerminatedReason string `protobuf:"bytes,12,opt,name=terminatedReason,proto3" json:"terminatedReason,omitempty"`
-	// 是否已暂停
-	IsPaused bool `protobuf:"varint,13,opt,name=isPaused,proto3" json:"isPaused,omitempty"`
+	TerminatedReason string `protobuf:"bytes,11,opt,name=terminatedReason,proto3" json:"terminatedReason,omitempty"`
 	// 暂停时间
-	PausedTime string `protobuf:"bytes,14,opt,name=pausedTime,proto3" json:"pausedTime,omitempty"`
+	PausedTime string `protobuf:"bytes,12,opt,name=pausedTime,proto3" json:"pausedTime,omitempty"`
 	// 暂停原因
-	PausedReason  string `protobuf:"bytes,15,opt,name=pausedReason,proto3" json:"pausedReason,omitempty"`
+	PausedReason string `protobuf:"bytes,13,opt,name=pausedReason,proto3" json:"pausedReason,omitempty"`
+	// 扩展字段1
+	Ext1 string `protobuf:"bytes,14,opt,name=ext1,proto3" json:"ext1,omitempty"`
+	// 扩展字段2
+	Ext2 string `protobuf:"bytes,15,opt,name=ext2,proto3" json:"ext2,omitempty"`
+	// 扩展字段3
+	Ext3 string `protobuf:"bytes,16,opt,name=ext3,proto3" json:"ext3,omitempty"`
+	// 扩展字段4
+	Ext4 string `protobuf:"bytes,17,opt,name=ext4,proto3" json:"ext4,omitempty"`
+	// 扩展字段5
+	Ext5          string `protobuf:"bytes,18,opt,name=ext5,proto3" json:"ext5,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PbPlan) Reset() {
 	*x = PbPlan{}
-	mi := &file_trigger_proto_msgTypes[58]
+	mi := &file_trigger_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3753,7 +3938,7 @@ func (x *PbPlan) String() string {
 func (*PbPlan) ProtoMessage() {}
 
 func (x *PbPlan) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[58]
+	mi := &file_trigger_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3766,7 +3951,7 @@ func (x *PbPlan) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PbPlan.ProtoReflect.Descriptor instead.
 func (*PbPlan) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{58}
+	return file_trigger_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *PbPlan) GetCreateTime() string {
@@ -3825,9 +4010,9 @@ func (x *PbPlan) GetType() string {
 	return ""
 }
 
-func (x *PbPlan) GetGroupName() string {
+func (x *PbPlan) GetGroupId() string {
 	if x != nil {
-		return x.GroupName
+		return x.GroupId
 	}
 	return ""
 }
@@ -3867,13 +4052,6 @@ func (x *PbPlan) GetStatus() int32 {
 	return 0
 }
 
-func (x *PbPlan) GetIsTerminated() bool {
-	if x != nil {
-		return x.IsTerminated
-	}
-	return false
-}
-
 func (x *PbPlan) GetTerminatedTime() string {
 	if x != nil {
 		return x.TerminatedTime
@@ -3888,13 +4066,6 @@ func (x *PbPlan) GetTerminatedReason() string {
 	return ""
 }
 
-func (x *PbPlan) GetIsPaused() bool {
-	if x != nil {
-		return x.IsPaused
-	}
-	return false
-}
-
 func (x *PbPlan) GetPausedTime() string {
 	if x != nil {
 		return x.PausedTime
@@ -3905,6 +4076,41 @@ func (x *PbPlan) GetPausedTime() string {
 func (x *PbPlan) GetPausedReason() string {
 	if x != nil {
 		return x.PausedReason
+	}
+	return ""
+}
+
+func (x *PbPlan) GetExt1() string {
+	if x != nil {
+		return x.Ext1
+	}
+	return ""
+}
+
+func (x *PbPlan) GetExt2() string {
+	if x != nil {
+		return x.Ext2
+	}
+	return ""
+}
+
+func (x *PbPlan) GetExt3() string {
+	if x != nil {
+		return x.Ext3
+	}
+	return ""
+}
+
+func (x *PbPlan) GetExt4() string {
+	if x != nil {
+		return x.Ext4
+	}
+	return ""
+}
+
+func (x *PbPlan) GetExt5() string {
+	if x != nil {
+		return x.Ext5
 	}
 	return ""
 }
@@ -3930,7 +4136,7 @@ type ListPlansReq struct {
 
 func (x *ListPlansReq) Reset() {
 	*x = ListPlansReq{}
-	mi := &file_trigger_proto_msgTypes[59]
+	mi := &file_trigger_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3942,7 +4148,7 @@ func (x *ListPlansReq) String() string {
 func (*ListPlansReq) ProtoMessage() {}
 
 func (x *ListPlansReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[59]
+	mi := &file_trigger_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3955,7 +4161,7 @@ func (x *ListPlansReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPlansReq.ProtoReflect.Descriptor instead.
 func (*ListPlansReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{59}
+	return file_trigger_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *ListPlansReq) GetCurrentUser() *extproto.CurrentUser {
@@ -4019,7 +4225,7 @@ type ListPlansRes struct {
 
 func (x *ListPlansRes) Reset() {
 	*x = ListPlansRes{}
-	mi := &file_trigger_proto_msgTypes[60]
+	mi := &file_trigger_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4031,7 +4237,7 @@ func (x *ListPlansRes) String() string {
 func (*ListPlansRes) ProtoMessage() {}
 
 func (x *ListPlansRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[60]
+	mi := &file_trigger_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4044,7 +4250,7 @@ func (x *ListPlansRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPlansRes.ProtoReflect.Descriptor instead.
 func (*ListPlansRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{60}
+	return file_trigger_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *ListPlansRes) GetPlans() []*PbPlan {
@@ -4072,7 +4278,7 @@ type GetPlanExecItemReq struct {
 
 func (x *GetPlanExecItemReq) Reset() {
 	*x = GetPlanExecItemReq{}
-	mi := &file_trigger_proto_msgTypes[61]
+	mi := &file_trigger_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4084,7 +4290,7 @@ func (x *GetPlanExecItemReq) String() string {
 func (*GetPlanExecItemReq) ProtoMessage() {}
 
 func (x *GetPlanExecItemReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[61]
+	mi := &file_trigger_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4097,7 +4303,7 @@ func (x *GetPlanExecItemReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlanExecItemReq.ProtoReflect.Descriptor instead.
 func (*GetPlanExecItemReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{61}
+	return file_trigger_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *GetPlanExecItemReq) GetCurrentUser() *extproto.CurrentUser {
@@ -4123,7 +4329,7 @@ type GetPlanExecItemRes struct {
 
 func (x *GetPlanExecItemRes) Reset() {
 	*x = GetPlanExecItemRes{}
-	mi := &file_trigger_proto_msgTypes[62]
+	mi := &file_trigger_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4135,7 +4341,7 @@ func (x *GetPlanExecItemRes) String() string {
 func (*GetPlanExecItemRes) ProtoMessage() {}
 
 func (x *GetPlanExecItemRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[62]
+	mi := &file_trigger_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4148,7 +4354,7 @@ func (x *GetPlanExecItemRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlanExecItemRes.ProtoReflect.Descriptor instead.
 func (*GetPlanExecItemRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{62}
+	return file_trigger_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *GetPlanExecItemRes) GetPlanExecItem() []*PbPlanExecItem {
@@ -4178,8 +4384,8 @@ type PbPlanExecItem struct {
 	ItemId string `protobuf:"bytes,3,opt,name=itemId,proto3" json:"itemId,omitempty"`
 	// 执行项名称
 	ItemName string `protobuf:"bytes,4,opt,name=itemName,proto3" json:"itemName,omitempty"`
-	// 执行顺序
-	ExecOrder int32 `protobuf:"varint,5,opt,name=execOrder,proto3" json:"execOrder,omitempty"`
+	// 点位id
+	PointId string `protobuf:"bytes,5,opt,name=PointId,proto3" json:"PointId,omitempty"`
 	// 业务服务地址
 	ServiceAddr string `protobuf:"bytes,6,opt,name=serviceAddr,proto3" json:"serviceAddr,omitempty"`
 	// 业务负载
@@ -4200,25 +4406,31 @@ type PbPlanExecItem struct {
 	LastResult string `protobuf:"bytes,14,opt,name=lastResult,proto3" json:"lastResult,omitempty"`
 	// 上次执行消息
 	LastMsg string `protobuf:"bytes,15,opt,name=lastMsg,proto3" json:"lastMsg,omitempty"`
-	// 是否已终止
-	IsTerminated bool `protobuf:"varint,16,opt,name=isTerminated,proto3" json:"isTerminated,omitempty"`
 	// 终止时间
-	TerminatedTime string `protobuf:"bytes,17,opt,name=terminatedTime,proto3" json:"terminatedTime,omitempty"`
+	TerminatedTime string `protobuf:"bytes,16,opt,name=terminatedTime,proto3" json:"terminatedTime,omitempty"`
 	// 终止原因
-	TerminatedReason string `protobuf:"bytes,18,opt,name=terminatedReason,proto3" json:"terminatedReason,omitempty"`
-	// 是否已暂停
-	IsPaused bool `protobuf:"varint,19,opt,name=isPaused,proto3" json:"isPaused,omitempty"`
+	TerminatedReason string `protobuf:"bytes,17,opt,name=terminatedReason,proto3" json:"terminatedReason,omitempty"`
 	// 暂停时间
-	PausedTime string `protobuf:"bytes,20,opt,name=pausedTime,proto3" json:"pausedTime,omitempty"`
+	PausedTime string `protobuf:"bytes,18,opt,name=pausedTime,proto3" json:"pausedTime,omitempty"`
 	// 暂停原因
-	PausedReason  string `protobuf:"bytes,21,opt,name=pausedReason,proto3" json:"pausedReason,omitempty"`
+	PausedReason string `protobuf:"bytes,19,opt,name=pausedReason,proto3" json:"pausedReason,omitempty"`
+	// 扩展字段1
+	Ext1 string `protobuf:"bytes,20,opt,name=ext1,proto3" json:"ext1,omitempty"`
+	// 扩展字段2
+	Ext2 string `protobuf:"bytes,21,opt,name=ext2,proto3" json:"ext2,omitempty"`
+	// 扩展字段3
+	Ext3 string `protobuf:"bytes,22,opt,name=ext3,proto3" json:"ext3,omitempty"`
+	// 扩展字段4
+	Ext4 string `protobuf:"bytes,23,opt,name=ext4,proto3" json:"ext4,omitempty"`
+	// 扩展字段5
+	Ext5          string `protobuf:"bytes,24,opt,name=ext5,proto3" json:"ext5,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PbPlanExecItem) Reset() {
 	*x = PbPlanExecItem{}
-	mi := &file_trigger_proto_msgTypes[63]
+	mi := &file_trigger_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4230,7 +4442,7 @@ func (x *PbPlanExecItem) String() string {
 func (*PbPlanExecItem) ProtoMessage() {}
 
 func (x *PbPlanExecItem) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[63]
+	mi := &file_trigger_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4243,7 +4455,7 @@ func (x *PbPlanExecItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PbPlanExecItem.ProtoReflect.Descriptor instead.
 func (*PbPlanExecItem) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{63}
+	return file_trigger_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *PbPlanExecItem) GetCreateTime() string {
@@ -4309,11 +4521,11 @@ func (x *PbPlanExecItem) GetItemName() string {
 	return ""
 }
 
-func (x *PbPlanExecItem) GetExecOrder() int32 {
+func (x *PbPlanExecItem) GetPointId() string {
 	if x != nil {
-		return x.ExecOrder
+		return x.PointId
 	}
-	return 0
+	return ""
 }
 
 func (x *PbPlanExecItem) GetServiceAddr() string {
@@ -4386,13 +4598,6 @@ func (x *PbPlanExecItem) GetLastMsg() string {
 	return ""
 }
 
-func (x *PbPlanExecItem) GetIsTerminated() bool {
-	if x != nil {
-		return x.IsTerminated
-	}
-	return false
-}
-
 func (x *PbPlanExecItem) GetTerminatedTime() string {
 	if x != nil {
 		return x.TerminatedTime
@@ -4407,13 +4612,6 @@ func (x *PbPlanExecItem) GetTerminatedReason() string {
 	return ""
 }
 
-func (x *PbPlanExecItem) GetIsPaused() bool {
-	if x != nil {
-		return x.IsPaused
-	}
-	return false
-}
-
 func (x *PbPlanExecItem) GetPausedTime() string {
 	if x != nil {
 		return x.PausedTime
@@ -4424,6 +4622,41 @@ func (x *PbPlanExecItem) GetPausedTime() string {
 func (x *PbPlanExecItem) GetPausedReason() string {
 	if x != nil {
 		return x.PausedReason
+	}
+	return ""
+}
+
+func (x *PbPlanExecItem) GetExt1() string {
+	if x != nil {
+		return x.Ext1
+	}
+	return ""
+}
+
+func (x *PbPlanExecItem) GetExt2() string {
+	if x != nil {
+		return x.Ext2
+	}
+	return ""
+}
+
+func (x *PbPlanExecItem) GetExt3() string {
+	if x != nil {
+		return x.Ext3
+	}
+	return ""
+}
+
+func (x *PbPlanExecItem) GetExt4() string {
+	if x != nil {
+		return x.Ext4
+	}
+	return ""
+}
+
+func (x *PbPlanExecItem) GetExt5() string {
+	if x != nil {
+		return x.Ext5
 	}
 	return ""
 }
@@ -4451,7 +4684,7 @@ type ListPlanExecItemsReq struct {
 
 func (x *ListPlanExecItemsReq) Reset() {
 	*x = ListPlanExecItemsReq{}
-	mi := &file_trigger_proto_msgTypes[64]
+	mi := &file_trigger_proto_msgTypes[67]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4463,7 +4696,7 @@ func (x *ListPlanExecItemsReq) String() string {
 func (*ListPlanExecItemsReq) ProtoMessage() {}
 
 func (x *ListPlanExecItemsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[64]
+	mi := &file_trigger_proto_msgTypes[67]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4476,7 +4709,7 @@ func (x *ListPlanExecItemsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPlanExecItemsReq.ProtoReflect.Descriptor instead.
 func (*ListPlanExecItemsReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{64}
+	return file_trigger_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *ListPlanExecItemsReq) GetCurrentUser() *extproto.CurrentUser {
@@ -4547,7 +4780,7 @@ type ListPlanExecItemsRes struct {
 
 func (x *ListPlanExecItemsRes) Reset() {
 	*x = ListPlanExecItemsRes{}
-	mi := &file_trigger_proto_msgTypes[65]
+	mi := &file_trigger_proto_msgTypes[68]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4559,7 +4792,7 @@ func (x *ListPlanExecItemsRes) String() string {
 func (*ListPlanExecItemsRes) ProtoMessage() {}
 
 func (x *ListPlanExecItemsRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[65]
+	mi := &file_trigger_proto_msgTypes[68]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4572,7 +4805,7 @@ func (x *ListPlanExecItemsRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPlanExecItemsRes.ProtoReflect.Descriptor instead.
 func (*ListPlanExecItemsRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{65}
+	return file_trigger_proto_rawDescGZIP(), []int{68}
 }
 
 func (x *ListPlanExecItemsRes) GetPlanExecItems() []*PbPlanExecItem {
@@ -4599,7 +4832,7 @@ type GetPlanExecLogReq struct {
 
 func (x *GetPlanExecLogReq) Reset() {
 	*x = GetPlanExecLogReq{}
-	mi := &file_trigger_proto_msgTypes[66]
+	mi := &file_trigger_proto_msgTypes[69]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4611,7 +4844,7 @@ func (x *GetPlanExecLogReq) String() string {
 func (*GetPlanExecLogReq) ProtoMessage() {}
 
 func (x *GetPlanExecLogReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[66]
+	mi := &file_trigger_proto_msgTypes[69]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4624,7 +4857,7 @@ func (x *GetPlanExecLogReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlanExecLogReq.ProtoReflect.Descriptor instead.
 func (*GetPlanExecLogReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{66}
+	return file_trigger_proto_rawDescGZIP(), []int{69}
 }
 
 func (x *GetPlanExecLogReq) GetCurrentUser() *extproto.CurrentUser {
@@ -4650,7 +4883,7 @@ type GetPlanExecLogRes struct {
 
 func (x *GetPlanExecLogRes) Reset() {
 	*x = GetPlanExecLogRes{}
-	mi := &file_trigger_proto_msgTypes[67]
+	mi := &file_trigger_proto_msgTypes[70]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4662,7 +4895,7 @@ func (x *GetPlanExecLogRes) String() string {
 func (*GetPlanExecLogRes) ProtoMessage() {}
 
 func (x *GetPlanExecLogRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[67]
+	mi := &file_trigger_proto_msgTypes[70]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4675,7 +4908,7 @@ func (x *GetPlanExecLogRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlanExecLogRes.ProtoReflect.Descriptor instead.
 func (*GetPlanExecLogRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{67}
+	return file_trigger_proto_rawDescGZIP(), []int{70}
 }
 
 func (x *GetPlanExecLogRes) GetPlanExecLog() *PbPlanExecLog {
@@ -4723,7 +4956,7 @@ type PbPlanExecLog struct {
 
 func (x *PbPlanExecLog) Reset() {
 	*x = PbPlanExecLog{}
-	mi := &file_trigger_proto_msgTypes[68]
+	mi := &file_trigger_proto_msgTypes[71]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4735,7 +4968,7 @@ func (x *PbPlanExecLog) String() string {
 func (*PbPlanExecLog) ProtoMessage() {}
 
 func (x *PbPlanExecLog) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[68]
+	mi := &file_trigger_proto_msgTypes[71]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4748,7 +4981,7 @@ func (x *PbPlanExecLog) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PbPlanExecLog.ProtoReflect.Descriptor instead.
 func (*PbPlanExecLog) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{68}
+	return file_trigger_proto_rawDescGZIP(), []int{71}
 }
 
 func (x *PbPlanExecLog) GetCreateTime() string {
@@ -4880,7 +5113,7 @@ type ListPlanExecLogsReq struct {
 
 func (x *ListPlanExecLogsReq) Reset() {
 	*x = ListPlanExecLogsReq{}
-	mi := &file_trigger_proto_msgTypes[69]
+	mi := &file_trigger_proto_msgTypes[72]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4892,7 +5125,7 @@ func (x *ListPlanExecLogsReq) String() string {
 func (*ListPlanExecLogsReq) ProtoMessage() {}
 
 func (x *ListPlanExecLogsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[69]
+	mi := &file_trigger_proto_msgTypes[72]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4905,7 +5138,7 @@ func (x *ListPlanExecLogsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPlanExecLogsReq.ProtoReflect.Descriptor instead.
 func (*ListPlanExecLogsReq) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{69}
+	return file_trigger_proto_rawDescGZIP(), []int{72}
 }
 
 func (x *ListPlanExecLogsReq) GetCurrentUser() *extproto.CurrentUser {
@@ -4977,7 +5210,7 @@ type ListPlanExecLogsRes struct {
 
 func (x *ListPlanExecLogsRes) Reset() {
 	*x = ListPlanExecLogsRes{}
-	mi := &file_trigger_proto_msgTypes[70]
+	mi := &file_trigger_proto_msgTypes[73]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4989,7 +5222,7 @@ func (x *ListPlanExecLogsRes) String() string {
 func (*ListPlanExecLogsRes) ProtoMessage() {}
 
 func (x *ListPlanExecLogsRes) ProtoReflect() protoreflect.Message {
-	mi := &file_trigger_proto_msgTypes[70]
+	mi := &file_trigger_proto_msgTypes[73]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5002,7 +5235,7 @@ func (x *ListPlanExecLogsRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPlanExecLogsRes.ProtoReflect.Descriptor instead.
 func (*ListPlanExecLogsRes) Descriptor() ([]byte, []int) {
-	return file_trigger_proto_rawDescGZIP(), []int{70}
+	return file_trigger_proto_rawDescGZIP(), []int{73}
 }
 
 func (x *ListPlanExecLogsRes) GetPlanExecLogs() []*PbPlanExecLog {
@@ -5017,6 +5250,176 @@ func (x *ListPlanExecLogsRes) GetTotal() int64 {
 		return x.Total
 	}
 	return 0
+}
+
+type CallbackPlanExecItemReq struct {
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
+	// 执行项ID
+	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，running-业务正在执行（未回调或部分异步）
+	ExecResult string `protobuf:"bytes,2,opt,name=execResult,proto3" json:"execResult,omitempty"`
+	// 结果描述（成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
+	Message string `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	// 延期配置：delayed-自定义延期，running-自定义延期（默认30分钟,等待业务系统回调完成/延期触发闭环)
+	DelayConfig   *PbDelayConfig `protobuf:"bytes,4,opt,name=delayConfig,proto3" json:"delayConfig,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CallbackPlanExecItemReq) Reset() {
+	*x = CallbackPlanExecItemReq{}
+	mi := &file_trigger_proto_msgTypes[74]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CallbackPlanExecItemReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CallbackPlanExecItemReq) ProtoMessage() {}
+
+func (x *CallbackPlanExecItemReq) ProtoReflect() protoreflect.Message {
+	mi := &file_trigger_proto_msgTypes[74]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CallbackPlanExecItemReq.ProtoReflect.Descriptor instead.
+func (*CallbackPlanExecItemReq) Descriptor() ([]byte, []int) {
+	return file_trigger_proto_rawDescGZIP(), []int{74}
+}
+
+func (x *CallbackPlanExecItemReq) GetCurrentUser() *extproto.CurrentUser {
+	if x != nil {
+		return x.CurrentUser
+	}
+	return nil
+}
+
+func (x *CallbackPlanExecItemReq) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *CallbackPlanExecItemReq) GetExecResult() string {
+	if x != nil {
+		return x.ExecResult
+	}
+	return ""
+}
+
+func (x *CallbackPlanExecItemReq) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *CallbackPlanExecItemReq) GetDelayConfig() *PbDelayConfig {
+	if x != nil {
+		return x.DelayConfig
+	}
+	return nil
+}
+
+type PbDelayConfig struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 下次触发时间（格式：yyyy-MM-dd HH:mm:ss，定时扫描的核心筛选条件）
+	NextTriggerTime string `protobuf:"bytes,1,opt,name=nextTriggerTime,proto3" json:"nextTriggerTime,omitempty"`
+	// 延期原因
+	DelayReason   string `protobuf:"bytes,2,opt,name=delayReason,proto3" json:"delayReason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PbDelayConfig) Reset() {
+	*x = PbDelayConfig{}
+	mi := &file_trigger_proto_msgTypes[75]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PbDelayConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PbDelayConfig) ProtoMessage() {}
+
+func (x *PbDelayConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_trigger_proto_msgTypes[75]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PbDelayConfig.ProtoReflect.Descriptor instead.
+func (*PbDelayConfig) Descriptor() ([]byte, []int) {
+	return file_trigger_proto_rawDescGZIP(), []int{75}
+}
+
+func (x *PbDelayConfig) GetNextTriggerTime() string {
+	if x != nil {
+		return x.NextTriggerTime
+	}
+	return ""
+}
+
+func (x *PbDelayConfig) GetDelayReason() string {
+	if x != nil {
+		return x.DelayReason
+	}
+	return ""
+}
+
+type CallbackPlanExecItemRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CallbackPlanExecItemRes) Reset() {
+	*x = CallbackPlanExecItemRes{}
+	mi := &file_trigger_proto_msgTypes[76]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CallbackPlanExecItemRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CallbackPlanExecItemRes) ProtoMessage() {}
+
+func (x *CallbackPlanExecItemRes) ProtoReflect() protoreflect.Message {
+	mi := &file_trigger_proto_msgTypes[76]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CallbackPlanExecItemRes.ProtoReflect.Descriptor instead.
+func (*CallbackPlanExecItemRes) Descriptor() ([]byte, []int) {
+	return file_trigger_proto_rawDescGZIP(), []int{76}
 }
 
 var File_trigger_proto protoreflect.FileDescriptor
@@ -5207,7 +5610,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x17\n" +
 	"\x02id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"\f\n" +
 	"\n" +
-	"RunTaskRes\"\x9f\x03\n" +
+	"RunTaskRes\"\x89\x04\n" +
 	"\x11CreatePlanTaskReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x1f\n" +
 	"\x06planId\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06planId\x12#\n" +
@@ -5217,8 +5620,13 @@ const file_trigger_proto_rawDesc = "" +
 	"\vdescription\x18\x05 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\vdescription\x12\x1c\n" +
 	"\tstartTime\x18\x06 \x01(\tR\tstartTime\x12\x18\n" +
 	"\aendTime\x18\a \x01(\tR\aendTime\x121\n" +
-	"\x04rule\x18\b \x01(\v2\x13.trigger.PbPlanRuleB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\x12=\n" +
-	"\texecItems\x18\t \x03(\v2\x15.trigger.PlanExecItemB\b\xfaB\x05\x92\x01\x02\b\x01R\texecItems\"\xf6\x01\n" +
+	"\x04rule\x18\b \x01(\v2\x13.trigger.PbPlanRuleB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\x12C\n" +
+	"\texecItems\x18\t \x03(\v2\x1b.trigger.CreatePlanExecItemB\b\xfaB\x05\x92\x01\x02\b\x01R\texecItems\x12\x12\n" +
+	"\x04ext1\x182 \x01(\tR\x04ext1\x12\x12\n" +
+	"\x04ext2\x183 \x01(\tR\x04ext2\x12\x12\n" +
+	"\x04ext3\x184 \x01(\tR\x04ext3\x12\x12\n" +
+	"\x04ext4\x185 \x01(\tR\x04ext4\x12\x12\n" +
+	"\x04ext5\x186 \x01(\tR\x04ext5\"\xf6\x01\n" +
 	"\n" +
 	"PbPlanRule\x12\x1d\n" +
 	"\x04freq\x18\x01 \x01(\x05B\t\xfaB\x06\x1a\x04\x18\x05(\x00R\x04freq\x12$\n" +
@@ -5228,14 +5636,19 @@ const file_trigger_proto_rawDesc = "" +
 	"\x05hours\x18\x05 \x03(\x05B\x10\xfaB\r\x92\x01\n" +
 	"\b\x01\"\x06\x1a\x04\x18\x17(\x00R\x05hours\x12*\n" +
 	"\aminutes\x18\x06 \x03(\x05B\x10\xfaB\r\x92\x01\n" +
-	"\b\x01\"\x06\x1a\x04\x18;(\x00R\aminutes\"\xd2\x01\n" +
-	"\fPlanExecItem\x12\x1f\n" +
+	"\b\x01\"\x06\x1a\x04\x18;(\x00R\aminutes\"\xbc\x02\n" +
+	"\x12CreatePlanExecItem\x12\x1f\n" +
 	"\x06itemId\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06itemId\x12\x1a\n" +
 	"\bitemName\x18\x02 \x01(\tR\bitemName\x12\x18\n" +
 	"\apointId\x18\x03 \x01(\tR\apointId\x12)\n" +
 	"\vserviceAddr\x18\x04 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\vserviceAddr\x12\x18\n" +
 	"\apayload\x18\x06 \x01(\tR\apayload\x12&\n" +
-	"\x0erequestTimeout\x18\a \x01(\x03R\x0erequestTimeout\"U\n" +
+	"\x0erequestTimeout\x18\a \x01(\x03R\x0erequestTimeout\x12\x12\n" +
+	"\x04ext1\x182 \x01(\tR\x04ext1\x12\x12\n" +
+	"\x04ext2\x183 \x01(\tR\x04ext2\x12\x12\n" +
+	"\x04ext3\x184 \x01(\tR\x04ext3\x12\x12\n" +
+	"\x04ext4\x185 \x01(\tR\x04ext4\x12\x12\n" +
+	"\x04ext5\x186 \x01(\tR\x04ext5\"U\n" +
 	"\x11CreatePlanTaskRes\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
 	"\x06planId\x18\x02 \x01(\tR\x06planId\x12\x18\n" +
@@ -5243,8 +5656,8 @@ const file_trigger_proto_rawDesc = "" +
 	"\fPausePlanReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x1f\n" +
 	"\x06planId\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06planId\x12 \n" +
-	"\x06reason\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x10\n" +
-	"\x0ePlanOperateRes\"\x8e\x01\n" +
+	"\x06reason\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x0e\n" +
+	"\fPausePlanRes\"\x8e\x01\n" +
 	"\x10TerminatePlanReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x1f\n" +
 	"\x06planId\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06planId\x12 \n" +
@@ -5259,26 +5672,26 @@ const file_trigger_proto_rawDesc = "" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x01R\x02id\x12 \n" +
 	"\x06reason\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x1a\n" +
-	"\x18TerminatePlanExecItemRes\"\xdf\x01\n" +
-	"\x17CallbackPlanExecItemReq\x127\n" +
+	"\x18TerminatePlanExecItemRes\"i\n" +
+	"\rResumePlanReq\x127\n" +
+	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x1f\n" +
+	"\x06planId\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06planId\"\x0f\n" +
+	"\rResumePlanRes\"i\n" +
+	"\x15ResumePlanExecItemReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x01R\x02id\x12\x1e\n" +
-	"\n" +
-	"execResult\x18\x02 \x01(\tR\n" +
-	"execResult\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\x128\n" +
-	"\vdelayConfig\x18\x04 \x01(\v2\x16.trigger.PbDelayConfigR\vdelayConfig\"[\n" +
-	"\rPbDelayConfig\x12(\n" +
-	"\x0fnextTriggerTime\x18\x01 \x01(\tR\x0fnextTriggerTime\x12 \n" +
-	"\vdelayReason\x18\x02 \x01(\tR\vdelayReason\"\x19\n" +
-	"\x17CallbackPlanExecItemRes\"^\n" +
+	"\x02id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x01R\x02id\"\x17\n" +
+	"\x15ResumePlanExecItemRes\"f\n" +
+	"\x12RunPlanExecItemReq\x127\n" +
+	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x17\n" +
+	"\x02id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x01R\x02id\"\x14\n" +
+	"\x12RunPlanExecItemRes\"^\n" +
 	"\n" +
 	"GetPlanReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x01R\x02id\"1\n" +
 	"\n" +
 	"GetPlanRes\x12#\n" +
-	"\x04plan\x18\x01 \x01(\v2\x0f.trigger.PbPlanR\x04plan\"\xf1\x04\n" +
+	"\x04plan\x18\x01 \x01(\v2\x0f.trigger.PbPlanR\x04plan\"\x91\x05\n" +
 	"\x06PbPlan\x12\x1e\n" +
 	"\n" +
 	"createTime\x18e \x01(\tR\n" +
@@ -5295,22 +5708,25 @@ const file_trigger_proto_rawDesc = "" +
 	"\x02id\x182 \x01(\x03R\x02id\x12\x16\n" +
 	"\x06planId\x18\x01 \x01(\tR\x06planId\x12\x1a\n" +
 	"\bplanName\x18\x02 \x01(\tR\bplanName\x12\x12\n" +
-	"\x04type\x18\x03 \x01(\tR\x04type\x12\x1c\n" +
-	"\tgroupName\x18\x04 \x01(\tR\tgroupName\x12 \n" +
+	"\x04type\x18\x03 \x01(\tR\x04type\x12\x18\n" +
+	"\agroupId\x18\x04 \x01(\tR\agroupId\x12 \n" +
 	"\vdescription\x18\x05 \x01(\tR\vdescription\x12\x1c\n" +
 	"\tstartTime\x18\x06 \x01(\tR\tstartTime\x12\x18\n" +
 	"\aendTime\x18\a \x01(\tR\aendTime\x12'\n" +
 	"\x04rule\x18\b \x01(\v2\x13.trigger.PbPlanRuleR\x04rule\x12\x16\n" +
-	"\x06status\x18\t \x01(\x05R\x06status\x12\"\n" +
-	"\fisTerminated\x18\n" +
-	" \x01(\bR\fisTerminated\x12&\n" +
-	"\x0eterminatedTime\x18\v \x01(\tR\x0eterminatedTime\x12*\n" +
-	"\x10terminatedReason\x18\f \x01(\tR\x10terminatedReason\x12\x1a\n" +
-	"\bisPaused\x18\r \x01(\bR\bisPaused\x12\x1e\n" +
+	"\x06status\x18\t \x01(\x05R\x06status\x12&\n" +
+	"\x0eterminatedTime\x18\n" +
+	" \x01(\tR\x0eterminatedTime\x12*\n" +
+	"\x10terminatedReason\x18\v \x01(\tR\x10terminatedReason\x12\x1e\n" +
 	"\n" +
-	"pausedTime\x18\x0e \x01(\tR\n" +
+	"pausedTime\x18\f \x01(\tR\n" +
 	"pausedTime\x12\"\n" +
-	"\fpausedReason\x18\x0f \x01(\tR\fpausedReason\"\xef\x01\n" +
+	"\fpausedReason\x18\r \x01(\tR\fpausedReason\x12\x12\n" +
+	"\x04ext1\x18\x0e \x01(\tR\x04ext1\x12\x12\n" +
+	"\x04ext2\x18\x0f \x01(\tR\x04ext2\x12\x12\n" +
+	"\x04ext3\x18\x10 \x01(\tR\x04ext3\x12\x12\n" +
+	"\x04ext4\x18\x11 \x01(\tR\x04ext4\x12\x12\n" +
+	"\x04ext5\x18\x12 \x01(\tR\x04ext5\"\xef\x01\n" +
 	"\fListPlansReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12#\n" +
 	"\bpageSize\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bpageSize\x12!\n" +
@@ -5326,7 +5742,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x01R\x02id\"Q\n" +
 	"\x12GetPlanExecItemRes\x12;\n" +
-	"\fplanExecItem\x18\x01 \x03(\v2\x17.trigger.PbPlanExecItemR\fplanExecItem\"\xd2\x06\n" +
+	"\fplanExecItem\x18\x01 \x03(\v2\x17.trigger.PbPlanExecItemR\fplanExecItem\"\xf2\x06\n" +
 	"\x0ePbPlanExecItem\x12\x1e\n" +
 	"\n" +
 	"createTime\x18e \x01(\tR\n" +
@@ -5344,8 +5760,8 @@ const file_trigger_proto_rawDesc = "" +
 	"\x06planPk\x18\x01 \x01(\x03R\x06planPk\x12\x16\n" +
 	"\x06planId\x18\x02 \x01(\tR\x06planId\x12\x16\n" +
 	"\x06itemId\x18\x03 \x01(\tR\x06itemId\x12\x1a\n" +
-	"\bitemName\x18\x04 \x01(\tR\bitemName\x12\x1c\n" +
-	"\texecOrder\x18\x05 \x01(\x05R\texecOrder\x12 \n" +
+	"\bitemName\x18\x04 \x01(\tR\bitemName\x12\x18\n" +
+	"\aPointId\x18\x05 \x01(\tR\aPointId\x12 \n" +
 	"\vserviceAddr\x18\x06 \x01(\tR\vserviceAddr\x12\x18\n" +
 	"\apayload\x18\a \x01(\tR\apayload\x12&\n" +
 	"\x0erequestTimeout\x18\b \x01(\x03R\x0erequestTimeout\x12(\n" +
@@ -5358,15 +5774,18 @@ const file_trigger_proto_rawDesc = "" +
 	"\n" +
 	"lastResult\x18\x0e \x01(\tR\n" +
 	"lastResult\x12\x18\n" +
-	"\alastMsg\x18\x0f \x01(\tR\alastMsg\x12\"\n" +
-	"\fisTerminated\x18\x10 \x01(\bR\fisTerminated\x12&\n" +
-	"\x0eterminatedTime\x18\x11 \x01(\tR\x0eterminatedTime\x12*\n" +
-	"\x10terminatedReason\x18\x12 \x01(\tR\x10terminatedReason\x12\x1a\n" +
-	"\bisPaused\x18\x13 \x01(\bR\bisPaused\x12\x1e\n" +
+	"\alastMsg\x18\x0f \x01(\tR\alastMsg\x12&\n" +
+	"\x0eterminatedTime\x18\x10 \x01(\tR\x0eterminatedTime\x12*\n" +
+	"\x10terminatedReason\x18\x11 \x01(\tR\x10terminatedReason\x12\x1e\n" +
 	"\n" +
-	"pausedTime\x18\x14 \x01(\tR\n" +
+	"pausedTime\x18\x12 \x01(\tR\n" +
 	"pausedTime\x12\"\n" +
-	"\fpausedReason\x18\x15 \x01(\tR\fpausedReason\"\x94\x02\n" +
+	"\fpausedReason\x18\x13 \x01(\tR\fpausedReason\x12\x12\n" +
+	"\x04ext1\x18\x14 \x01(\tR\x04ext1\x12\x12\n" +
+	"\x04ext2\x18\x15 \x01(\tR\x04ext2\x12\x12\n" +
+	"\x04ext3\x18\x16 \x01(\tR\x04ext3\x12\x12\n" +
+	"\x04ext4\x18\x17 \x01(\tR\x04ext4\x12\x12\n" +
+	"\x04ext5\x18\x18 \x01(\tR\x04ext5\"\x94\x02\n" +
 	"\x14ListPlanExecItemsReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12#\n" +
 	"\bpageSize\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bpageSize\x12!\n" +
@@ -5424,7 +5843,19 @@ const file_trigger_proto_rawDesc = "" +
 	"execResult\"g\n" +
 	"\x13ListPlanExecLogsRes\x12:\n" +
 	"\fplanExecLogs\x18\x01 \x03(\v2\x16.trigger.PbPlanExecLogR\fplanExecLogs\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x03R\x05total2\x88\x12\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total\"\xdf\x01\n" +
+	"\x17CallbackPlanExecItemReq\x127\n" +
+	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x17\n" +
+	"\x02id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x01R\x02id\x12\x1e\n" +
+	"\n" +
+	"execResult\x18\x02 \x01(\tR\n" +
+	"execResult\x12\x18\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\x128\n" +
+	"\vdelayConfig\x18\x04 \x01(\v2\x16.trigger.PbDelayConfigR\vdelayConfig\"[\n" +
+	"\rPbDelayConfig\x12(\n" +
+	"\x0fnextTriggerTime\x18\x01 \x01(\tR\x0fnextTriggerTime\x12 \n" +
+	"\vdelayReason\x18\x02 \x01(\tR\vdelayReason\"\x19\n" +
+	"\x17CallbackPlanExecItemRes2\xe7\x13\n" +
 	"\n" +
 	"TriggerRpc\x12\"\n" +
 	"\x04Ping\x12\f.trigger.Req\x1a\f.trigger.Res\x12?\n" +
@@ -5447,18 +5878,22 @@ const file_trigger_proto_rawDesc = "" +
 	"\x11ListArchivedTasks\x12\x1d.trigger.ListArchivedTasksReq\x1a\x1d.trigger.ListArchivedTasksRes\x12T\n" +
 	"\x12ListCompletedTasks\x12\x1e.trigger.ListCompletedTasksReq\x1a\x1e.trigger.ListCompletedTasksRes\x123\n" +
 	"\aRunTask\x12\x13.trigger.RunTaskReq\x1a\x13.trigger.RunTaskRes\x12H\n" +
-	"\x0eCreatePlanTask\x12\x1a.trigger.CreatePlanTaskReq\x1a\x1a.trigger.CreatePlanTaskRes\x12;\n" +
-	"\tPausePlan\x12\x15.trigger.PausePlanReq\x1a\x17.trigger.PlanOperateRes\x12E\n" +
+	"\x0eCreatePlanTask\x12\x1a.trigger.CreatePlanTaskReq\x1a\x1a.trigger.CreatePlanTaskRes\x129\n" +
+	"\tPausePlan\x12\x15.trigger.PausePlanReq\x1a\x15.trigger.PausePlanRes\x12E\n" +
 	"\rTerminatePlan\x12\x19.trigger.TerminatePlanReq\x1a\x19.trigger.TerminatePlanRes\x12Q\n" +
 	"\x11PausePlanExecItem\x12\x1d.trigger.PausePlanExecItemReq\x1a\x1d.trigger.PausePlanExecItemRes\x12]\n" +
-	"\x15TerminatePlanExecItem\x12!.trigger.TerminatePlanExecItemReq\x1a!.trigger.TerminatePlanExecItemRes\x12Z\n" +
-	"\x14CallbackPlanExecItem\x12 .trigger.CallbackPlanExecItemReq\x1a .trigger.CallbackPlanExecItemRes\x123\n" +
+	"\x15TerminatePlanExecItem\x12!.trigger.TerminatePlanExecItemReq\x1a!.trigger.TerminatePlanExecItemRes\x12K\n" +
+	"\x0fRunPlanExecItem\x12\x1b.trigger.RunPlanExecItemReq\x1a\x1b.trigger.RunPlanExecItemRes\x12<\n" +
+	"\n" +
+	"ResumePlan\x12\x16.trigger.ResumePlanReq\x1a\x16.trigger.ResumePlanRes\x12T\n" +
+	"\x12ResumePlanExecItem\x12\x1e.trigger.ResumePlanExecItemReq\x1a\x1e.trigger.ResumePlanExecItemRes\x123\n" +
 	"\aGetPlan\x12\x13.trigger.GetPlanReq\x1a\x13.trigger.GetPlanRes\x129\n" +
 	"\tListPlans\x12\x15.trigger.ListPlansReq\x1a\x15.trigger.ListPlansRes\x12K\n" +
 	"\x0fGetPlanExecItem\x12\x1b.trigger.GetPlanExecItemReq\x1a\x1b.trigger.GetPlanExecItemRes\x12Q\n" +
 	"\x11ListPlanExecItems\x12\x1d.trigger.ListPlanExecItemsReq\x1a\x1d.trigger.ListPlanExecItemsRes\x12H\n" +
 	"\x0eGetPlanExecLog\x12\x1a.trigger.GetPlanExecLogReq\x1a\x1a.trigger.GetPlanExecLogRes\x12N\n" +
-	"\x10ListPlanExecLogs\x12\x1c.trigger.ListPlanExecLogsReq\x1a\x1c.trigger.ListPlanExecLogsResB4\n" +
+	"\x10ListPlanExecLogs\x12\x1c.trigger.ListPlanExecLogsReq\x1a\x1c.trigger.ListPlanExecLogsRes\x12Z\n" +
+	"\x14CallbackPlanExecItem\x12 .trigger.CallbackPlanExecItemReq\x1a .trigger.CallbackPlanExecItemResB4\n" +
 	"\x17com.github.trigger.grpcB\fTriggerProtoP\x01Z\t./triggerb\x06proto3"
 
 var (
@@ -5473,7 +5908,7 @@ func file_trigger_proto_rawDescGZIP() []byte {
 	return file_trigger_proto_rawDescData
 }
 
-var file_trigger_proto_msgTypes = make([]protoimpl.MessageInfo, 71)
+var file_trigger_proto_msgTypes = make([]protoimpl.MessageInfo, 77)
 var file_trigger_proto_goTypes = []any{
 	(*PbTaskInfo)(nil),                 // 0: trigger.PbTaskInfo
 	(*PbDailyStats)(nil),               // 1: trigger.PbDailyStats
@@ -5518,161 +5953,176 @@ var file_trigger_proto_goTypes = []any{
 	(*RunTaskRes)(nil),                 // 40: trigger.RunTaskRes
 	(*CreatePlanTaskReq)(nil),          // 41: trigger.CreatePlanTaskReq
 	(*PbPlanRule)(nil),                 // 42: trigger.PbPlanRule
-	(*PlanExecItem)(nil),               // 43: trigger.PlanExecItem
+	(*CreatePlanExecItem)(nil),         // 43: trigger.CreatePlanExecItem
 	(*CreatePlanTaskRes)(nil),          // 44: trigger.CreatePlanTaskRes
 	(*PausePlanReq)(nil),               // 45: trigger.PausePlanReq
-	(*PlanOperateRes)(nil),             // 46: trigger.PlanOperateRes
+	(*PausePlanRes)(nil),               // 46: trigger.PausePlanRes
 	(*TerminatePlanReq)(nil),           // 47: trigger.TerminatePlanReq
 	(*TerminatePlanRes)(nil),           // 48: trigger.TerminatePlanRes
 	(*PausePlanExecItemReq)(nil),       // 49: trigger.PausePlanExecItemReq
 	(*PausePlanExecItemRes)(nil),       // 50: trigger.PausePlanExecItemRes
 	(*TerminatePlanExecItemReq)(nil),   // 51: trigger.TerminatePlanExecItemReq
 	(*TerminatePlanExecItemRes)(nil),   // 52: trigger.TerminatePlanExecItemRes
-	(*CallbackPlanExecItemReq)(nil),    // 53: trigger.CallbackPlanExecItemReq
-	(*PbDelayConfig)(nil),              // 54: trigger.PbDelayConfig
-	(*CallbackPlanExecItemRes)(nil),    // 55: trigger.CallbackPlanExecItemRes
-	(*GetPlanReq)(nil),                 // 56: trigger.GetPlanReq
-	(*GetPlanRes)(nil),                 // 57: trigger.GetPlanRes
-	(*PbPlan)(nil),                     // 58: trigger.PbPlan
-	(*ListPlansReq)(nil),               // 59: trigger.ListPlansReq
-	(*ListPlansRes)(nil),               // 60: trigger.ListPlansRes
-	(*GetPlanExecItemReq)(nil),         // 61: trigger.GetPlanExecItemReq
-	(*GetPlanExecItemRes)(nil),         // 62: trigger.GetPlanExecItemRes
-	(*PbPlanExecItem)(nil),             // 63: trigger.PbPlanExecItem
-	(*ListPlanExecItemsReq)(nil),       // 64: trigger.ListPlanExecItemsReq
-	(*ListPlanExecItemsRes)(nil),       // 65: trigger.ListPlanExecItemsRes
-	(*GetPlanExecLogReq)(nil),          // 66: trigger.GetPlanExecLogReq
-	(*GetPlanExecLogRes)(nil),          // 67: trigger.GetPlanExecLogRes
-	(*PbPlanExecLog)(nil),              // 68: trigger.PbPlanExecLog
-	(*ListPlanExecLogsReq)(nil),        // 69: trigger.ListPlanExecLogsReq
-	(*ListPlanExecLogsRes)(nil),        // 70: trigger.ListPlanExecLogsRes
-	(*extproto.CurrentUser)(nil),       // 71: extproto.CurrentUser
+	(*ResumePlanReq)(nil),              // 53: trigger.ResumePlanReq
+	(*ResumePlanRes)(nil),              // 54: trigger.ResumePlanRes
+	(*ResumePlanExecItemReq)(nil),      // 55: trigger.ResumePlanExecItemReq
+	(*ResumePlanExecItemRes)(nil),      // 56: trigger.ResumePlanExecItemRes
+	(*RunPlanExecItemReq)(nil),         // 57: trigger.RunPlanExecItemReq
+	(*RunPlanExecItemRes)(nil),         // 58: trigger.RunPlanExecItemRes
+	(*GetPlanReq)(nil),                 // 59: trigger.GetPlanReq
+	(*GetPlanRes)(nil),                 // 60: trigger.GetPlanRes
+	(*PbPlan)(nil),                     // 61: trigger.PbPlan
+	(*ListPlansReq)(nil),               // 62: trigger.ListPlansReq
+	(*ListPlansRes)(nil),               // 63: trigger.ListPlansRes
+	(*GetPlanExecItemReq)(nil),         // 64: trigger.GetPlanExecItemReq
+	(*GetPlanExecItemRes)(nil),         // 65: trigger.GetPlanExecItemRes
+	(*PbPlanExecItem)(nil),             // 66: trigger.PbPlanExecItem
+	(*ListPlanExecItemsReq)(nil),       // 67: trigger.ListPlanExecItemsReq
+	(*ListPlanExecItemsRes)(nil),       // 68: trigger.ListPlanExecItemsRes
+	(*GetPlanExecLogReq)(nil),          // 69: trigger.GetPlanExecLogReq
+	(*GetPlanExecLogRes)(nil),          // 70: trigger.GetPlanExecLogRes
+	(*PbPlanExecLog)(nil),              // 71: trigger.PbPlanExecLog
+	(*ListPlanExecLogsReq)(nil),        // 72: trigger.ListPlanExecLogsReq
+	(*ListPlanExecLogsRes)(nil),        // 73: trigger.ListPlanExecLogsRes
+	(*CallbackPlanExecItemReq)(nil),    // 74: trigger.CallbackPlanExecItemReq
+	(*PbDelayConfig)(nil),              // 75: trigger.PbDelayConfig
+	(*CallbackPlanExecItemRes)(nil),    // 76: trigger.CallbackPlanExecItemRes
+	(*extproto.CurrentUser)(nil),       // 77: extproto.CurrentUser
 }
 var file_trigger_proto_depIdxs = []int32{
-	71, // 0: trigger.SendTriggerReq.currentUser:type_name -> extproto.CurrentUser
-	71, // 1: trigger.SendProtoTriggerReq.currentUser:type_name -> extproto.CurrentUser
-	71, // 2: trigger.QueuesReq.currentUser:type_name -> extproto.CurrentUser
-	71, // 3: trigger.GetQueueInfoReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 0: trigger.SendTriggerReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 1: trigger.SendProtoTriggerReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 2: trigger.QueuesReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 3: trigger.GetQueueInfoReq.currentUser:type_name -> extproto.CurrentUser
 	2,  // 4: trigger.GetQueueInfoRes.queueInfo:type_name -> trigger.PbQueueInfo
-	71, // 5: trigger.ArchiveTaskReq.currentUser:type_name -> extproto.CurrentUser
-	71, // 6: trigger.DeleteTaskReq.currentUser:type_name -> extproto.CurrentUser
-	71, // 7: trigger.GetTaskInfoReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 5: trigger.ArchiveTaskReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 6: trigger.DeleteTaskReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 7: trigger.GetTaskInfoReq.currentUser:type_name -> extproto.CurrentUser
 	0,  // 8: trigger.GetTaskInfoRes.taskInfo:type_name -> trigger.PbTaskInfo
-	71, // 9: trigger.DeleteAllCompletedTasksReq.currentUser:type_name -> extproto.CurrentUser
-	71, // 10: trigger.DeleteAllArchivedTasksReq.currentUser:type_name -> extproto.CurrentUser
-	71, // 11: trigger.HistoricalStatsReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 9: trigger.DeleteAllCompletedTasksReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 10: trigger.DeleteAllArchivedTasksReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 11: trigger.HistoricalStatsReq.currentUser:type_name -> extproto.CurrentUser
 	1,  // 12: trigger.HistoricalStatsRes.dailyStat:type_name -> trigger.PbDailyStats
-	71, // 13: trigger.ListActiveTasksReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 13: trigger.ListActiveTasksReq.currentUser:type_name -> extproto.CurrentUser
 	2,  // 14: trigger.ListActiveTasksRes.queueInfo:type_name -> trigger.PbQueueInfo
 	0,  // 15: trigger.ListActiveTasksRes.tasksInfo:type_name -> trigger.PbTaskInfo
-	71, // 16: trigger.ListPendingTasksReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 16: trigger.ListPendingTasksReq.currentUser:type_name -> extproto.CurrentUser
 	2,  // 17: trigger.ListPendingTasksRes.queueInfo:type_name -> trigger.PbQueueInfo
 	0,  // 18: trigger.ListPendingTasksRes.tasksInfo:type_name -> trigger.PbTaskInfo
-	71, // 19: trigger.ListAggregatingTasksReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 19: trigger.ListAggregatingTasksReq.currentUser:type_name -> extproto.CurrentUser
 	2,  // 20: trigger.ListAggregatingTasksRes.queueInfo:type_name -> trigger.PbQueueInfo
 	0,  // 21: trigger.ListAggregatingTasksRes.tasksInfo:type_name -> trigger.PbTaskInfo
-	71, // 22: trigger.ListScheduledTasksReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 22: trigger.ListScheduledTasksReq.currentUser:type_name -> extproto.CurrentUser
 	2,  // 23: trigger.ListScheduledTasksRes.queueInfo:type_name -> trigger.PbQueueInfo
 	0,  // 24: trigger.ListScheduledTasksRes.tasksInfo:type_name -> trigger.PbTaskInfo
-	71, // 25: trigger.ListRetryTasksReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 25: trigger.ListRetryTasksReq.currentUser:type_name -> extproto.CurrentUser
 	2,  // 26: trigger.ListRetryTasksRes.queueInfo:type_name -> trigger.PbQueueInfo
 	0,  // 27: trigger.ListRetryTasksRes.tasksInfo:type_name -> trigger.PbTaskInfo
-	71, // 28: trigger.ListArchivedTasksReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 28: trigger.ListArchivedTasksReq.currentUser:type_name -> extproto.CurrentUser
 	2,  // 29: trigger.ListArchivedTasksRes.queueInfo:type_name -> trigger.PbQueueInfo
 	0,  // 30: trigger.ListArchivedTasksRes.tasksInfo:type_name -> trigger.PbTaskInfo
-	71, // 31: trigger.ListCompletedTasksReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 31: trigger.ListCompletedTasksReq.currentUser:type_name -> extproto.CurrentUser
 	2,  // 32: trigger.ListCompletedTasksRes.queueInfo:type_name -> trigger.PbQueueInfo
 	0,  // 33: trigger.ListCompletedTasksRes.tasksInfo:type_name -> trigger.PbTaskInfo
-	71, // 34: trigger.RunTaskReq.currentUser:type_name -> extproto.CurrentUser
-	71, // 35: trigger.CreatePlanTaskReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 34: trigger.RunTaskReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 35: trigger.CreatePlanTaskReq.currentUser:type_name -> extproto.CurrentUser
 	42, // 36: trigger.CreatePlanTaskReq.rule:type_name -> trigger.PbPlanRule
-	43, // 37: trigger.CreatePlanTaskReq.execItems:type_name -> trigger.PlanExecItem
-	71, // 38: trigger.PausePlanReq.currentUser:type_name -> extproto.CurrentUser
-	71, // 39: trigger.TerminatePlanReq.currentUser:type_name -> extproto.CurrentUser
-	71, // 40: trigger.PausePlanExecItemReq.currentUser:type_name -> extproto.CurrentUser
-	71, // 41: trigger.TerminatePlanExecItemReq.currentUser:type_name -> extproto.CurrentUser
-	71, // 42: trigger.CallbackPlanExecItemReq.currentUser:type_name -> extproto.CurrentUser
-	54, // 43: trigger.CallbackPlanExecItemReq.delayConfig:type_name -> trigger.PbDelayConfig
-	71, // 44: trigger.GetPlanReq.currentUser:type_name -> extproto.CurrentUser
-	58, // 45: trigger.GetPlanRes.plan:type_name -> trigger.PbPlan
-	42, // 46: trigger.PbPlan.rule:type_name -> trigger.PbPlanRule
-	71, // 47: trigger.ListPlansReq.currentUser:type_name -> extproto.CurrentUser
-	58, // 48: trigger.ListPlansRes.plans:type_name -> trigger.PbPlan
-	71, // 49: trigger.GetPlanExecItemReq.currentUser:type_name -> extproto.CurrentUser
-	63, // 50: trigger.GetPlanExecItemRes.planExecItem:type_name -> trigger.PbPlanExecItem
-	71, // 51: trigger.ListPlanExecItemsReq.currentUser:type_name -> extproto.CurrentUser
-	63, // 52: trigger.ListPlanExecItemsRes.planExecItems:type_name -> trigger.PbPlanExecItem
-	71, // 53: trigger.GetPlanExecLogReq.currentUser:type_name -> extproto.CurrentUser
-	68, // 54: trigger.GetPlanExecLogRes.planExecLog:type_name -> trigger.PbPlanExecLog
-	71, // 55: trigger.ListPlanExecLogsReq.currentUser:type_name -> extproto.CurrentUser
-	68, // 56: trigger.ListPlanExecLogsRes.planExecLogs:type_name -> trigger.PbPlanExecLog
-	3,  // 57: trigger.TriggerRpc.Ping:input_type -> trigger.Req
-	5,  // 58: trigger.TriggerRpc.SendTrigger:input_type -> trigger.SendTriggerReq
-	7,  // 59: trigger.TriggerRpc.SendProtoTrigger:input_type -> trigger.SendProtoTriggerReq
-	9,  // 60: trigger.TriggerRpc.Queues:input_type -> trigger.QueuesReq
-	11, // 61: trigger.TriggerRpc.GetQueueInfo:input_type -> trigger.GetQueueInfoReq
-	13, // 62: trigger.TriggerRpc.ArchiveTask:input_type -> trigger.ArchiveTaskReq
-	15, // 63: trigger.TriggerRpc.DeleteTask:input_type -> trigger.DeleteTaskReq
-	17, // 64: trigger.TriggerRpc.GetTaskInfo:input_type -> trigger.GetTaskInfoReq
-	19, // 65: trigger.TriggerRpc.DeleteAllCompletedTasks:input_type -> trigger.DeleteAllCompletedTasksReq
-	21, // 66: trigger.TriggerRpc.DeleteAllArchivedTasks:input_type -> trigger.DeleteAllArchivedTasksReq
-	23, // 67: trigger.TriggerRpc.HistoricalStats:input_type -> trigger.HistoricalStatsReq
-	25, // 68: trigger.TriggerRpc.ListActiveTasks:input_type -> trigger.ListActiveTasksReq
-	27, // 69: trigger.TriggerRpc.ListPendingTasks:input_type -> trigger.ListPendingTasksReq
-	29, // 70: trigger.TriggerRpc.ListAggregatingTasks:input_type -> trigger.ListAggregatingTasksReq
-	31, // 71: trigger.TriggerRpc.ListScheduledTasks:input_type -> trigger.ListScheduledTasksReq
-	33, // 72: trigger.TriggerRpc.ListRetryTasks:input_type -> trigger.ListRetryTasksReq
-	35, // 73: trigger.TriggerRpc.ListArchivedTasks:input_type -> trigger.ListArchivedTasksReq
-	37, // 74: trigger.TriggerRpc.ListCompletedTasks:input_type -> trigger.ListCompletedTasksReq
-	39, // 75: trigger.TriggerRpc.RunTask:input_type -> trigger.RunTaskReq
-	41, // 76: trigger.TriggerRpc.CreatePlanTask:input_type -> trigger.CreatePlanTaskReq
-	45, // 77: trigger.TriggerRpc.PausePlan:input_type -> trigger.PausePlanReq
-	47, // 78: trigger.TriggerRpc.TerminatePlan:input_type -> trigger.TerminatePlanReq
-	49, // 79: trigger.TriggerRpc.PausePlanExecItem:input_type -> trigger.PausePlanExecItemReq
-	51, // 80: trigger.TriggerRpc.TerminatePlanExecItem:input_type -> trigger.TerminatePlanExecItemReq
-	53, // 81: trigger.TriggerRpc.CallbackPlanExecItem:input_type -> trigger.CallbackPlanExecItemReq
-	56, // 82: trigger.TriggerRpc.GetPlan:input_type -> trigger.GetPlanReq
-	59, // 83: trigger.TriggerRpc.ListPlans:input_type -> trigger.ListPlansReq
-	61, // 84: trigger.TriggerRpc.GetPlanExecItem:input_type -> trigger.GetPlanExecItemReq
-	64, // 85: trigger.TriggerRpc.ListPlanExecItems:input_type -> trigger.ListPlanExecItemsReq
-	66, // 86: trigger.TriggerRpc.GetPlanExecLog:input_type -> trigger.GetPlanExecLogReq
-	69, // 87: trigger.TriggerRpc.ListPlanExecLogs:input_type -> trigger.ListPlanExecLogsReq
-	4,  // 88: trigger.TriggerRpc.Ping:output_type -> trigger.Res
-	6,  // 89: trigger.TriggerRpc.SendTrigger:output_type -> trigger.SendTriggerRes
-	8,  // 90: trigger.TriggerRpc.SendProtoTrigger:output_type -> trigger.SendProtoTriggerRes
-	10, // 91: trigger.TriggerRpc.Queues:output_type -> trigger.QueuesRes
-	12, // 92: trigger.TriggerRpc.GetQueueInfo:output_type -> trigger.GetQueueInfoRes
-	14, // 93: trigger.TriggerRpc.ArchiveTask:output_type -> trigger.ArchiveTaskRes
-	16, // 94: trigger.TriggerRpc.DeleteTask:output_type -> trigger.DeleteTaskRes
-	18, // 95: trigger.TriggerRpc.GetTaskInfo:output_type -> trigger.GetTaskInfoRes
-	20, // 96: trigger.TriggerRpc.DeleteAllCompletedTasks:output_type -> trigger.DeleteAllCompletedTasksRes
-	22, // 97: trigger.TriggerRpc.DeleteAllArchivedTasks:output_type -> trigger.DeleteAllArchivedTasksRes
-	24, // 98: trigger.TriggerRpc.HistoricalStats:output_type -> trigger.HistoricalStatsRes
-	26, // 99: trigger.TriggerRpc.ListActiveTasks:output_type -> trigger.ListActiveTasksRes
-	28, // 100: trigger.TriggerRpc.ListPendingTasks:output_type -> trigger.ListPendingTasksRes
-	30, // 101: trigger.TriggerRpc.ListAggregatingTasks:output_type -> trigger.ListAggregatingTasksRes
-	32, // 102: trigger.TriggerRpc.ListScheduledTasks:output_type -> trigger.ListScheduledTasksRes
-	34, // 103: trigger.TriggerRpc.ListRetryTasks:output_type -> trigger.ListRetryTasksRes
-	36, // 104: trigger.TriggerRpc.ListArchivedTasks:output_type -> trigger.ListArchivedTasksRes
-	38, // 105: trigger.TriggerRpc.ListCompletedTasks:output_type -> trigger.ListCompletedTasksRes
-	40, // 106: trigger.TriggerRpc.RunTask:output_type -> trigger.RunTaskRes
-	44, // 107: trigger.TriggerRpc.CreatePlanTask:output_type -> trigger.CreatePlanTaskRes
-	46, // 108: trigger.TriggerRpc.PausePlan:output_type -> trigger.PlanOperateRes
-	48, // 109: trigger.TriggerRpc.TerminatePlan:output_type -> trigger.TerminatePlanRes
-	50, // 110: trigger.TriggerRpc.PausePlanExecItem:output_type -> trigger.PausePlanExecItemRes
-	52, // 111: trigger.TriggerRpc.TerminatePlanExecItem:output_type -> trigger.TerminatePlanExecItemRes
-	55, // 112: trigger.TriggerRpc.CallbackPlanExecItem:output_type -> trigger.CallbackPlanExecItemRes
-	57, // 113: trigger.TriggerRpc.GetPlan:output_type -> trigger.GetPlanRes
-	60, // 114: trigger.TriggerRpc.ListPlans:output_type -> trigger.ListPlansRes
-	62, // 115: trigger.TriggerRpc.GetPlanExecItem:output_type -> trigger.GetPlanExecItemRes
-	65, // 116: trigger.TriggerRpc.ListPlanExecItems:output_type -> trigger.ListPlanExecItemsRes
-	67, // 117: trigger.TriggerRpc.GetPlanExecLog:output_type -> trigger.GetPlanExecLogRes
-	70, // 118: trigger.TriggerRpc.ListPlanExecLogs:output_type -> trigger.ListPlanExecLogsRes
-	88, // [88:119] is the sub-list for method output_type
-	57, // [57:88] is the sub-list for method input_type
-	57, // [57:57] is the sub-list for extension type_name
-	57, // [57:57] is the sub-list for extension extendee
-	0,  // [0:57] is the sub-list for field type_name
+	43, // 37: trigger.CreatePlanTaskReq.execItems:type_name -> trigger.CreatePlanExecItem
+	77, // 38: trigger.PausePlanReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 39: trigger.TerminatePlanReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 40: trigger.PausePlanExecItemReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 41: trigger.TerminatePlanExecItemReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 42: trigger.ResumePlanReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 43: trigger.ResumePlanExecItemReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 44: trigger.RunPlanExecItemReq.currentUser:type_name -> extproto.CurrentUser
+	77, // 45: trigger.GetPlanReq.currentUser:type_name -> extproto.CurrentUser
+	61, // 46: trigger.GetPlanRes.plan:type_name -> trigger.PbPlan
+	42, // 47: trigger.PbPlan.rule:type_name -> trigger.PbPlanRule
+	77, // 48: trigger.ListPlansReq.currentUser:type_name -> extproto.CurrentUser
+	61, // 49: trigger.ListPlansRes.plans:type_name -> trigger.PbPlan
+	77, // 50: trigger.GetPlanExecItemReq.currentUser:type_name -> extproto.CurrentUser
+	66, // 51: trigger.GetPlanExecItemRes.planExecItem:type_name -> trigger.PbPlanExecItem
+	77, // 52: trigger.ListPlanExecItemsReq.currentUser:type_name -> extproto.CurrentUser
+	66, // 53: trigger.ListPlanExecItemsRes.planExecItems:type_name -> trigger.PbPlanExecItem
+	77, // 54: trigger.GetPlanExecLogReq.currentUser:type_name -> extproto.CurrentUser
+	71, // 55: trigger.GetPlanExecLogRes.planExecLog:type_name -> trigger.PbPlanExecLog
+	77, // 56: trigger.ListPlanExecLogsReq.currentUser:type_name -> extproto.CurrentUser
+	71, // 57: trigger.ListPlanExecLogsRes.planExecLogs:type_name -> trigger.PbPlanExecLog
+	77, // 58: trigger.CallbackPlanExecItemReq.currentUser:type_name -> extproto.CurrentUser
+	75, // 59: trigger.CallbackPlanExecItemReq.delayConfig:type_name -> trigger.PbDelayConfig
+	3,  // 60: trigger.TriggerRpc.Ping:input_type -> trigger.Req
+	5,  // 61: trigger.TriggerRpc.SendTrigger:input_type -> trigger.SendTriggerReq
+	7,  // 62: trigger.TriggerRpc.SendProtoTrigger:input_type -> trigger.SendProtoTriggerReq
+	9,  // 63: trigger.TriggerRpc.Queues:input_type -> trigger.QueuesReq
+	11, // 64: trigger.TriggerRpc.GetQueueInfo:input_type -> trigger.GetQueueInfoReq
+	13, // 65: trigger.TriggerRpc.ArchiveTask:input_type -> trigger.ArchiveTaskReq
+	15, // 66: trigger.TriggerRpc.DeleteTask:input_type -> trigger.DeleteTaskReq
+	17, // 67: trigger.TriggerRpc.GetTaskInfo:input_type -> trigger.GetTaskInfoReq
+	19, // 68: trigger.TriggerRpc.DeleteAllCompletedTasks:input_type -> trigger.DeleteAllCompletedTasksReq
+	21, // 69: trigger.TriggerRpc.DeleteAllArchivedTasks:input_type -> trigger.DeleteAllArchivedTasksReq
+	23, // 70: trigger.TriggerRpc.HistoricalStats:input_type -> trigger.HistoricalStatsReq
+	25, // 71: trigger.TriggerRpc.ListActiveTasks:input_type -> trigger.ListActiveTasksReq
+	27, // 72: trigger.TriggerRpc.ListPendingTasks:input_type -> trigger.ListPendingTasksReq
+	29, // 73: trigger.TriggerRpc.ListAggregatingTasks:input_type -> trigger.ListAggregatingTasksReq
+	31, // 74: trigger.TriggerRpc.ListScheduledTasks:input_type -> trigger.ListScheduledTasksReq
+	33, // 75: trigger.TriggerRpc.ListRetryTasks:input_type -> trigger.ListRetryTasksReq
+	35, // 76: trigger.TriggerRpc.ListArchivedTasks:input_type -> trigger.ListArchivedTasksReq
+	37, // 77: trigger.TriggerRpc.ListCompletedTasks:input_type -> trigger.ListCompletedTasksReq
+	39, // 78: trigger.TriggerRpc.RunTask:input_type -> trigger.RunTaskReq
+	41, // 79: trigger.TriggerRpc.CreatePlanTask:input_type -> trigger.CreatePlanTaskReq
+	45, // 80: trigger.TriggerRpc.PausePlan:input_type -> trigger.PausePlanReq
+	47, // 81: trigger.TriggerRpc.TerminatePlan:input_type -> trigger.TerminatePlanReq
+	49, // 82: trigger.TriggerRpc.PausePlanExecItem:input_type -> trigger.PausePlanExecItemReq
+	51, // 83: trigger.TriggerRpc.TerminatePlanExecItem:input_type -> trigger.TerminatePlanExecItemReq
+	57, // 84: trigger.TriggerRpc.RunPlanExecItem:input_type -> trigger.RunPlanExecItemReq
+	53, // 85: trigger.TriggerRpc.ResumePlan:input_type -> trigger.ResumePlanReq
+	55, // 86: trigger.TriggerRpc.ResumePlanExecItem:input_type -> trigger.ResumePlanExecItemReq
+	59, // 87: trigger.TriggerRpc.GetPlan:input_type -> trigger.GetPlanReq
+	62, // 88: trigger.TriggerRpc.ListPlans:input_type -> trigger.ListPlansReq
+	64, // 89: trigger.TriggerRpc.GetPlanExecItem:input_type -> trigger.GetPlanExecItemReq
+	67, // 90: trigger.TriggerRpc.ListPlanExecItems:input_type -> trigger.ListPlanExecItemsReq
+	69, // 91: trigger.TriggerRpc.GetPlanExecLog:input_type -> trigger.GetPlanExecLogReq
+	72, // 92: trigger.TriggerRpc.ListPlanExecLogs:input_type -> trigger.ListPlanExecLogsReq
+	74, // 93: trigger.TriggerRpc.CallbackPlanExecItem:input_type -> trigger.CallbackPlanExecItemReq
+	4,  // 94: trigger.TriggerRpc.Ping:output_type -> trigger.Res
+	6,  // 95: trigger.TriggerRpc.SendTrigger:output_type -> trigger.SendTriggerRes
+	8,  // 96: trigger.TriggerRpc.SendProtoTrigger:output_type -> trigger.SendProtoTriggerRes
+	10, // 97: trigger.TriggerRpc.Queues:output_type -> trigger.QueuesRes
+	12, // 98: trigger.TriggerRpc.GetQueueInfo:output_type -> trigger.GetQueueInfoRes
+	14, // 99: trigger.TriggerRpc.ArchiveTask:output_type -> trigger.ArchiveTaskRes
+	16, // 100: trigger.TriggerRpc.DeleteTask:output_type -> trigger.DeleteTaskRes
+	18, // 101: trigger.TriggerRpc.GetTaskInfo:output_type -> trigger.GetTaskInfoRes
+	20, // 102: trigger.TriggerRpc.DeleteAllCompletedTasks:output_type -> trigger.DeleteAllCompletedTasksRes
+	22, // 103: trigger.TriggerRpc.DeleteAllArchivedTasks:output_type -> trigger.DeleteAllArchivedTasksRes
+	24, // 104: trigger.TriggerRpc.HistoricalStats:output_type -> trigger.HistoricalStatsRes
+	26, // 105: trigger.TriggerRpc.ListActiveTasks:output_type -> trigger.ListActiveTasksRes
+	28, // 106: trigger.TriggerRpc.ListPendingTasks:output_type -> trigger.ListPendingTasksRes
+	30, // 107: trigger.TriggerRpc.ListAggregatingTasks:output_type -> trigger.ListAggregatingTasksRes
+	32, // 108: trigger.TriggerRpc.ListScheduledTasks:output_type -> trigger.ListScheduledTasksRes
+	34, // 109: trigger.TriggerRpc.ListRetryTasks:output_type -> trigger.ListRetryTasksRes
+	36, // 110: trigger.TriggerRpc.ListArchivedTasks:output_type -> trigger.ListArchivedTasksRes
+	38, // 111: trigger.TriggerRpc.ListCompletedTasks:output_type -> trigger.ListCompletedTasksRes
+	40, // 112: trigger.TriggerRpc.RunTask:output_type -> trigger.RunTaskRes
+	44, // 113: trigger.TriggerRpc.CreatePlanTask:output_type -> trigger.CreatePlanTaskRes
+	46, // 114: trigger.TriggerRpc.PausePlan:output_type -> trigger.PausePlanRes
+	48, // 115: trigger.TriggerRpc.TerminatePlan:output_type -> trigger.TerminatePlanRes
+	50, // 116: trigger.TriggerRpc.PausePlanExecItem:output_type -> trigger.PausePlanExecItemRes
+	52, // 117: trigger.TriggerRpc.TerminatePlanExecItem:output_type -> trigger.TerminatePlanExecItemRes
+	58, // 118: trigger.TriggerRpc.RunPlanExecItem:output_type -> trigger.RunPlanExecItemRes
+	54, // 119: trigger.TriggerRpc.ResumePlan:output_type -> trigger.ResumePlanRes
+	56, // 120: trigger.TriggerRpc.ResumePlanExecItem:output_type -> trigger.ResumePlanExecItemRes
+	60, // 121: trigger.TriggerRpc.GetPlan:output_type -> trigger.GetPlanRes
+	63, // 122: trigger.TriggerRpc.ListPlans:output_type -> trigger.ListPlansRes
+	65, // 123: trigger.TriggerRpc.GetPlanExecItem:output_type -> trigger.GetPlanExecItemRes
+	68, // 124: trigger.TriggerRpc.ListPlanExecItems:output_type -> trigger.ListPlanExecItemsRes
+	70, // 125: trigger.TriggerRpc.GetPlanExecLog:output_type -> trigger.GetPlanExecLogRes
+	73, // 126: trigger.TriggerRpc.ListPlanExecLogs:output_type -> trigger.ListPlanExecLogsRes
+	76, // 127: trigger.TriggerRpc.CallbackPlanExecItem:output_type -> trigger.CallbackPlanExecItemRes
+	94, // [94:128] is the sub-list for method output_type
+	60, // [60:94] is the sub-list for method input_type
+	60, // [60:60] is the sub-list for extension type_name
+	60, // [60:60] is the sub-list for extension extendee
+	0,  // [0:60] is the sub-list for field type_name
 }
 
 func init() { file_trigger_proto_init() }
@@ -5686,7 +6136,7 @@ func file_trigger_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_trigger_proto_rawDesc), len(file_trigger_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   71,
+			NumMessages:   77,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

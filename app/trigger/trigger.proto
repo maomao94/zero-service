@@ -53,15 +53,19 @@ service TriggerRpc {
   // 创建计划任务
   rpc CreatePlanTask(CreatePlanTaskReq) returns (CreatePlanTaskRes);
   // 暂停计划
-  rpc PausePlan(PausePlanReq) returns (PlanOperateRes);
+  rpc PausePlan(PausePlanReq) returns (PausePlanRes);
   // 终止计划
   rpc TerminatePlan(TerminatePlanReq) returns (TerminatePlanRes);
   // 暂停执行项
   rpc PausePlanExecItem(PausePlanExecItemReq) returns (PausePlanExecItemRes);
   // 终止执行项
   rpc TerminatePlanExecItem(TerminatePlanExecItemReq) returns (TerminatePlanExecItemRes);
-  // 回调计划项
-  rpc CallbackPlanExecItem(CallbackPlanExecItemReq) returns (CallbackPlanExecItemRes);
+  // 立即执行计划项
+  rpc RunPlanExecItem(RunPlanExecItemReq) returns (RunPlanExecItemRes);
+  // 恢复计划
+  rpc ResumePlan(ResumePlanReq) returns (ResumePlanRes);
+  // 恢复执行项
+  rpc ResumePlanExecItem(ResumePlanExecItemReq) returns (ResumePlanExecItemRes);
 
 
   // 获取计划详情
@@ -78,6 +82,10 @@ service TriggerRpc {
   rpc GetPlanExecLog(GetPlanExecLogReq) returns (GetPlanExecLogRes);
   // 分页获取计划触发日志列表
   rpc ListPlanExecLogs(ListPlanExecLogsReq) returns (ListPlanExecLogsRes);
+
+
+  // 回调计划执行项
+  rpc CallbackPlanExecItem(CallbackPlanExecItemReq) returns (CallbackPlanExecItemRes);
 }
 
 message PbTaskInfo {
@@ -470,7 +478,13 @@ message CreatePlanTaskReq {
   // 计划规则项 默认 规则项 MINUTELY
   PbPlanRule rule = 8 [(validate.rules).message = {required: true}];
   // 计划执行项
-  repeated PlanExecItem execItems = 9 [(validate.rules).repeated = {min_items: 1}];
+  repeated CreatePlanExecItem execItems = 9 [(validate.rules).repeated = {min_items: 1}];
+
+  string ext1 = 50;
+  string ext2 = 51;
+  string ext3 = 52;
+  string ext4 = 53;
+  string ext5 = 54;
 }
 
 message PbPlanRule {
@@ -510,7 +524,7 @@ message PbPlanRule {
   ];
 }
 
-message PlanExecItem {
+message CreatePlanExecItem {
   // 执行项ID,业务字段
   string itemId = 1 [(validate.rules).string = {min_len: 1}];
   // 执行项名称,业务字段
@@ -523,6 +537,12 @@ message PlanExecItem {
   string payload = 6;
   // 请求超时时间 单位: 毫秒 可为空
   int64 requestTimeout = 7;
+
+  string ext1 = 50;
+  string ext2 = 51;
+  string ext3 = 52;
+  string ext4 = 53;
+  string ext5 = 54;
 }
 
 message CreatePlanTaskRes {
@@ -542,7 +562,7 @@ message PausePlanReq {
   string reason = 2 [(validate.rules).string = {max_len: 200}];
 }
 
-message PlanOperateRes {
+message PausePlanRes {
 }
 
 message TerminatePlanReq {
@@ -576,27 +596,33 @@ message TerminatePlanExecItemReq {
 message TerminatePlanExecItemRes {
 }
 
-message CallbackPlanExecItemReq {
+// 恢复计划请求
+message ResumePlanReq {
   extproto.CurrentUser currentUser = 100;
+  // 计划ID
+  string planId = 1 [(validate.rules).string = {min_len: 1}];
+}
 
-  // 执行项ID
+message ResumePlanRes {
+}
+
+message ResumePlanExecItemReq {
+  extproto.CurrentUser currentUser = 100;
   int64 id = 1 [(validate.rules).int64 = {gte: 1}];
-  // 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，running-业务正在执行（未回调或部分异步）
-  string execResult = 2;
-  // 结果描述（成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
-  string message = 3;
-  // 延期配置：delayed-自定义延期，running-自定义延期（默认30分钟,等待业务系统回调完成/延期触发闭环)
-  PbDelayConfig delayConfig = 4;
 }
 
-message PbDelayConfig {
-  // 下次触发时间（格式：yyyy-MM-dd HH:mm:ss，定时扫描的核心筛选条件）
-  string nextTriggerTime = 1;
-  // 延期原因
-  string delayReason = 2;
+message ResumePlanExecItemRes {
 }
 
-message CallbackPlanExecItemRes {
+// 立即执行计划项请求
+message RunPlanExecItemReq {
+  extproto.CurrentUser currentUser = 100;
+  // 执行项主键ID
+  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
+}
+
+// 立即执行计划项响应
+message RunPlanExecItemRes {
 }
 
 message GetPlanReq {
@@ -626,8 +652,8 @@ message PbPlan{
   string planName = 2;
   // 任务类型
   string type = 3;
-  // 任务分组名称
-  string groupName = 4;
+  // 计划组ID,用于分组管理计划任务
+  string groupId = 4;
   // 描述
   string description = 5;
   // 规则生效开始时间
@@ -638,18 +664,24 @@ message PbPlan{
   PbPlanRule rule = 8;
   // 状态：0-禁用，1-启用，2-已终止，3-暂停
   int32 status = 9;
-  // 是否已终止
-  bool isTerminated = 10;
   // 终止时间
-  string terminatedTime = 11;
+  string terminatedTime = 10;
   // 终止原因
-  string terminatedReason = 12;
-  // 是否已暂停
-  bool isPaused = 13;
+  string terminatedReason = 11;
   // 暂停时间
-  string pausedTime = 14;
+  string pausedTime = 12;
   // 暂停原因
-  string pausedReason = 15;
+  string pausedReason = 13;
+  // 扩展字段1
+  string ext1 = 14;
+  // 扩展字段2
+  string ext2 = 15;
+  // 扩展字段3
+  string ext3 = 16;
+  // 扩展字段4
+  string ext4 = 17;
+  // 扩展字段5
+  string ext5 = 18;
 }
 
 message ListPlansReq {
@@ -705,8 +737,8 @@ message PbPlanExecItem {
   string itemId = 3;
   // 执行项名称
   string itemName = 4;
-  // 执行顺序
-  int32 execOrder = 5;
+  // 点位id
+  string PointId = 5;
   // 业务服务地址
   string serviceAddr = 6;
   // 业务负载
@@ -727,18 +759,24 @@ message PbPlanExecItem {
   string lastResult = 14;
   // 上次执行消息
   string lastMsg = 15;
-  // 是否已终止
-  bool isTerminated = 16;
   // 终止时间
-  string terminatedTime = 17;
+  string terminatedTime = 16;
   // 终止原因
-  string terminatedReason = 18;
-  // 是否已暂停
-  bool isPaused = 19;
+  string terminatedReason = 17;
   // 暂停时间
-  string pausedTime = 20;
+  string pausedTime = 18;
   // 暂停原因
-  string pausedReason = 21;
+  string pausedReason = 19;
+  // 扩展字段1
+  string ext1 = 20;
+  // 扩展字段2
+  string ext2 = 21;
+  // 扩展字段3
+  string ext3 = 22;
+  // 扩展字段4
+  string ext4 = 23;
+  // 扩展字段5
+  string ext5 = 24;
 }
 
 message ListPlanExecItemsReq {
@@ -834,4 +872,27 @@ message ListPlanExecLogsRes {
   repeated PbPlanExecLog planExecLogs = 1;
   // 总记录数
   int64 total = 2;
+}
+
+message CallbackPlanExecItemReq {
+  extproto.CurrentUser currentUser = 100;
+
+  // 执行项ID
+  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
+  // 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，running-业务正在执行（未回调或部分异步）
+  string execResult = 2;
+  // 结果描述（成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
+  string message = 3;
+  // 延期配置：delayed-自定义延期，running-自定义延期（默认30分钟,等待业务系统回调完成/延期触发闭环)
+  PbDelayConfig delayConfig = 4;
+}
+
+message PbDelayConfig {
+  // 下次触发时间（格式：yyyy-MM-dd HH:mm:ss，定时扫描的核心筛选条件）
+  string nextTriggerTime = 1;
+  // 延期原因
+  string delayReason = 2;
+}
+
+message CallbackPlanExecItemRes {
 }

@@ -77,17 +77,32 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 	// 转换执行项列表
 	for _, execItem := range execItems {
 		pbExecItem := &trigger.PbPlanExecItem{
-			PlanId:          execItem.PlanId,
-			ItemId:          execItem.ItemId,
-			ItemName:        execItem.ItemName.String,
-			ServiceAddr:     execItem.ServiceAddr,
-			Payload:         execItem.Payload,
-			RequestTimeout:  execItem.RequestTimeout,
-			PlanTriggerTime: carbon.CreateFromStdTime(execItem.PlanTriggerTime).ToDateTimeString(),
-			Status:          int32(execItem.Status),
-			LastResult:      execItem.LastResult.String,
-			LastMsg:         execItem.LastMsg.String,
-			TriggerCount:    int32(execItem.TriggerCount),
+			CreateTime:       carbon.CreateFromStdTime(execItem.CreateTime).ToDateTimeString(),
+			UpdateTime:       carbon.CreateFromStdTime(execItem.UpdateTime).ToDateTimeString(),
+			CreateUser:       execItem.CreateUser.String,
+			UpdateUser:       execItem.UpdateUser.String,
+			Id:               execItem.Id,
+			PlanPk:           execItem.PlanPk,
+			PlanId:           execItem.PlanId,
+			ItemId:           execItem.ItemId,
+			ItemName:         execItem.ItemName.String,
+			PointId:          execItem.PointId.String,
+			ServiceAddr:      execItem.ServiceAddr,
+			Payload:          execItem.Payload,
+			RequestTimeout:   execItem.RequestTimeout,
+			PlanTriggerTime:  carbon.CreateFromStdTime(execItem.PlanTriggerTime).ToDateTimeString(),
+			NextTriggerTime:  carbon.CreateFromStdTime(execItem.NextTriggerTime).ToDateTimeString(),
+			TriggerCount:     int32(execItem.TriggerCount),
+			Status:           int32(execItem.Status),
+			LastResult:       execItem.LastResult.String,
+			LastMsg:          execItem.LastMsg.String,
+			TerminatedReason: execItem.TerminatedReason.String,
+			PausedReason:     execItem.PausedReason.String,
+			Ext1:             execItem.Ext1.String,
+			Ext2:             execItem.Ext2.String,
+			Ext3:             execItem.Ext3.String,
+			Ext4:             execItem.Ext4.String,
+			Ext5:             execItem.Ext5.String,
 		}
 
 		// 设置下次触发时间
@@ -103,13 +118,11 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 		// 设置终止时间和原因
 		if execItem.TerminatedTime.Valid {
 			pbExecItem.TerminatedTime = carbon.CreateFromStdTime(execItem.TerminatedTime.Time).ToDateTimeString()
-			pbExecItem.TerminatedReason = execItem.TerminatedReason.String
 		}
 
 		// 设置暂停时间和原因
 		if execItem.PausedTime.Valid {
 			pbExecItem.PausedTime = carbon.CreateFromStdTime(execItem.PausedTime.Time).ToDateTimeString()
-			pbExecItem.PausedReason = execItem.PausedReason.String
 		}
 
 		resp.PlanExecItems = append(resp.PlanExecItems, pbExecItem)
