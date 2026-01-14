@@ -10402,6 +10402,419 @@ var _ interface {
 	ErrorName() string
 } = ListPlanExecLogsResValidationError{}
 
+// Validate checks the field values on ListPlanExecItemStatsReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListPlanExecItemStatsReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListPlanExecItemStatsReq with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListPlanExecItemStatsReqMultiError, or nil if none found.
+func (m *ListPlanExecItemStatsReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListPlanExecItemStatsReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListPlanExecItemStatsReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListPlanExecItemStatsReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListPlanExecItemStatsReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetPageSize() < 0 {
+		err := ListPlanExecItemStatsReqValidationError{
+			field:  "PageSize",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetPageNum() < 0 {
+		err := ListPlanExecItemStatsReqValidationError{
+			field:  "PageNum",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for PlanId
+
+	// no validation rules for StartTime
+
+	// no validation rules for EndTime
+
+	if len(errors) > 0 {
+		return ListPlanExecItemStatsReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListPlanExecItemStatsReqMultiError is an error wrapping multiple validation
+// errors returned by ListPlanExecItemStatsReq.ValidateAll() if the designated
+// constraints aren't met.
+type ListPlanExecItemStatsReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListPlanExecItemStatsReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListPlanExecItemStatsReqMultiError) AllErrors() []error { return m }
+
+// ListPlanExecItemStatsReqValidationError is the validation error returned by
+// ListPlanExecItemStatsReq.Validate if the designated constraints aren't met.
+type ListPlanExecItemStatsReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListPlanExecItemStatsReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListPlanExecItemStatsReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListPlanExecItemStatsReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListPlanExecItemStatsReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListPlanExecItemStatsReqValidationError) ErrorName() string {
+	return "ListPlanExecItemStatsReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListPlanExecItemStatsReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListPlanExecItemStatsReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListPlanExecItemStatsReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListPlanExecItemStatsReqValidationError{}
+
+// Validate checks the field values on PbPlanExecItemStat with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *PbPlanExecItemStat) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PbPlanExecItemStat with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// PbPlanExecItemStatMultiError, or nil if none found.
+func (m *PbPlanExecItemStat) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PbPlanExecItemStat) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for PlanId
+
+	// no validation rules for BatchId
+
+	// no validation rules for PlanTriggerTime
+
+	// no validation rules for Total
+
+	// no validation rules for Success
+
+	// no validation rules for Failed
+
+	// no validation rules for Running
+
+	if len(errors) > 0 {
+		return PbPlanExecItemStatMultiError(errors)
+	}
+
+	return nil
+}
+
+// PbPlanExecItemStatMultiError is an error wrapping multiple validation errors
+// returned by PbPlanExecItemStat.ValidateAll() if the designated constraints
+// aren't met.
+type PbPlanExecItemStatMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PbPlanExecItemStatMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PbPlanExecItemStatMultiError) AllErrors() []error { return m }
+
+// PbPlanExecItemStatValidationError is the validation error returned by
+// PbPlanExecItemStat.Validate if the designated constraints aren't met.
+type PbPlanExecItemStatValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PbPlanExecItemStatValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PbPlanExecItemStatValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PbPlanExecItemStatValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PbPlanExecItemStatValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PbPlanExecItemStatValidationError) ErrorName() string {
+	return "PbPlanExecItemStatValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PbPlanExecItemStatValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPbPlanExecItemStat.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PbPlanExecItemStatValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PbPlanExecItemStatValidationError{}
+
+// Validate checks the field values on ListPlanExecItemStatsRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListPlanExecItemStatsRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListPlanExecItemStatsRes with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListPlanExecItemStatsResMultiError, or nil if none found.
+func (m *ListPlanExecItemStatsRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListPlanExecItemStatsRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetStats() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListPlanExecItemStatsResValidationError{
+						field:  fmt.Sprintf("Stats[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListPlanExecItemStatsResValidationError{
+						field:  fmt.Sprintf("Stats[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListPlanExecItemStatsResValidationError{
+					field:  fmt.Sprintf("Stats[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for Total
+
+	if len(errors) > 0 {
+		return ListPlanExecItemStatsResMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListPlanExecItemStatsResMultiError is an error wrapping multiple validation
+// errors returned by ListPlanExecItemStatsRes.ValidateAll() if the designated
+// constraints aren't met.
+type ListPlanExecItemStatsResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListPlanExecItemStatsResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListPlanExecItemStatsResMultiError) AllErrors() []error { return m }
+
+// ListPlanExecItemStatsResValidationError is the validation error returned by
+// ListPlanExecItemStatsRes.Validate if the designated constraints aren't met.
+type ListPlanExecItemStatsResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListPlanExecItemStatsResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListPlanExecItemStatsResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListPlanExecItemStatsResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListPlanExecItemStatsResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListPlanExecItemStatsResValidationError) ErrorName() string {
+	return "ListPlanExecItemStatsResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListPlanExecItemStatsResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListPlanExecItemStatsRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListPlanExecItemStatsResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListPlanExecItemStatsResValidationError{}
+
 // Validate checks the field values on CallbackPlanExecItemReq with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
