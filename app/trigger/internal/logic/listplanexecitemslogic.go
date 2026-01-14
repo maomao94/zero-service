@@ -84,6 +84,7 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 			Id:               execItem.Id,
 			PlanPk:           execItem.PlanPk,
 			PlanId:           execItem.PlanId,
+			BatchId:          execItem.BatchId,
 			ItemId:           execItem.ItemId,
 			ItemName:         execItem.ItemName.String,
 			PointId:          execItem.PointId.String,

@@ -733,50 +733,52 @@ message PbPlanExecItem {
   int64 planPk = 1;
   // 计划ID
   string planId = 2;
+  // 批ID
+  string batchId = 3;
   // 执行项ID
-  string itemId = 3;
+  string itemId = 4;
   // 执行项名称
-  string itemName = 4;
+  string itemName = 5;
   // 点位id
-  string PointId = 5;
+  string PointId = 6;
   // 业务服务地址
-  string serviceAddr = 6;
+  string serviceAddr = 7;
   // 业务负载
-  string payload = 7;
+  string payload = 8;
   // 请求超时时间（毫秒）
-  int64 requestTimeout = 8;
+  int64 requestTimeout = 9;
   // 计划触发时间
-  string planTriggerTime = 9;
+  string planTriggerTime = 10;
   // 下次触发时间
-  string nextTriggerTime = 10;
+  string nextTriggerTime = 11;
   // 上次触发时间
-  string lastTriggerTime = 11;
+  string lastTriggerTime = 12;
   // 触发次数
-  int32 triggerCount = 12;
+  int32 triggerCount = 13;
   // 状态：0-待执行，1-执行中，2-完成，3-失败，4-延期，5-已终止，6-暂停
-  int32 status = 13;
+  int32 status = 14;
   // 上次执行结果
-  string lastResult = 14;
+  string lastResult = 15;
   // 上次执行消息
-  string lastMsg = 15;
+  string lastMsg = 16;
   // 终止时间
-  string terminatedTime = 16;
+  string terminatedTime = 17;
   // 终止原因
-  string terminatedReason = 17;
+  string terminatedReason = 18;
   // 暂停时间
-  string pausedTime = 18;
+  string pausedTime = 19;
   // 暂停原因
-  string pausedReason = 19;
+  string pausedReason = 20;
   // 扩展字段1
-  string ext1 = 20;
+  string ext1 = 21;
   // 扩展字段2
-  string ext2 = 21;
+  string ext2 = 22;
   // 扩展字段3
-  string ext3 = 22;
+  string ext3 = 23;
   // 扩展字段4
-  string ext4 = 23;
+  string ext4 = 24;
   // 扩展字段5
-  string ext5 = 24;
+  string ext5 = 25;
 }
 
 message ListPlanExecItemsReq {

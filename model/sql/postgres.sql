@@ -183,6 +183,7 @@ CREATE TABLE IF NOT EXISTS plan_exec_item (
     update_user VARCHAR(64) DEFAULT '',
     plan_id VARCHAR(64) NOT NULL DEFAULT '',
     plan_pk BIGINT NOT NULL DEFAULT 0, 
+    batch_id VARCHAR(64) NOT NULL DEFAULT '', 
     item_id VARCHAR(64) NOT NULL DEFAULT '', 
     item_name VARCHAR(128) DEFAULT '',
     point_id VARCHAR(64) DEFAULT '',
@@ -221,6 +222,7 @@ COMMENT ON COLUMN plan_exec_item.create_user IS '创建人';
 COMMENT ON COLUMN plan_exec_item.update_user IS '更新人';
 COMMENT ON COLUMN plan_exec_item.plan_id IS '关联的计划ID';
 COMMENT ON COLUMN plan_exec_item.plan_pk IS '关联的计划主键ID';
+COMMENT ON COLUMN plan_exec_item.batch_id IS '批ID';
 COMMENT ON COLUMN plan_exec_item.item_id IS '执行项ID';
 COMMENT ON COLUMN plan_exec_item.item_name IS '执行项名称';
 COMMENT ON COLUMN plan_exec_item.point_id IS '点位id';
@@ -247,6 +249,7 @@ COMMENT ON COLUMN plan_exec_item.ext_5 IS '扩展字段5';
 -- 为 plan_exec_item 表创建索引
 CREATE INDEX idx_plan_exec_item_plan_pk_item_id ON plan_exec_item (plan_pk, item_id);
 CREATE INDEX idx_plan_exec_item_plan_id_item_id ON plan_exec_item (plan_id, item_id);
+CREATE INDEX idx_plan_exec_item_batch_id ON plan_exec_item (batch_id);
 CREATE INDEX idx_plan_exec_item_point_id ON plan_exec_item (point_id);
 CREATE INDEX idx_plan_exec_item_core_scan ON plan_exec_item (next_trigger_time, status, del_state);
 
@@ -276,6 +279,7 @@ CREATE TABLE IF NOT EXISTS plan_exec_log (
     plan_id VARCHAR(64) NOT NULL DEFAULT '', 
     plan_pk BIGINT NOT NULL DEFAULT 0, 
     plan_name VARCHAR(128) DEFAULT '',
+    batch_id VARCHAR(64) NOT NULL DEFAULT '', 
     item_pk BIGINT NOT NULL DEFAULT 0,
     item_id VARCHAR(64) DEFAULT '',
     item_name VARCHAR(128) DEFAULT '',
@@ -301,6 +305,7 @@ COMMENT ON COLUMN plan_exec_log.update_user IS '更新人';
 COMMENT ON COLUMN plan_exec_log.plan_id IS '计划任务ID';
 COMMENT ON COLUMN plan_exec_log.plan_pk IS '关联的计划主键ID';
 COMMENT ON COLUMN plan_exec_log.plan_name IS '计划任务名称';
+COMMENT ON COLUMN plan_exec_log.batch_id IS '批ID';
 COMMENT ON COLUMN plan_exec_log.item_pk IS '关联的执行项主键ID';
 COMMENT ON COLUMN plan_exec_log.item_id IS '执行项ID';
 COMMENT ON COLUMN plan_exec_log.item_name IS '执行项名称';
@@ -313,6 +318,7 @@ COMMENT ON COLUMN plan_exec_log.message IS '结果描述';
 -- 为 plan_exec_log 表创建索引
 CREATE INDEX idx_plan_exec_log_plan_pk ON plan_exec_log (plan_pk);
 CREATE INDEX idx_plan_exec_log_plan_id ON plan_exec_log (plan_id);
+CREATE INDEX idx_plan_exec_log_batch_id ON plan_exec_log (batch_id);
 CREATE INDEX idx_plan_exec_log_item_id ON plan_exec_log (item_id);
 CREATE INDEX idx_plan_exec_log_trigger_time ON plan_exec_log (trigger_time);
 CREATE INDEX idx_plan_exec_log_trace_id ON plan_exec_log (trace_id);
