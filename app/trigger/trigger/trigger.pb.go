@@ -5480,12 +5480,14 @@ type ListPlanExecItemStatsReq struct {
 	PageSize int64 `protobuf:"varint,1,opt,name=pageSize,proto3" json:"pageSize,omitempty"`
 	// 页码
 	PageNum int64 `protobuf:"varint,2,opt,name=pageNum,proto3" json:"pageNum,omitempty"`
-	// 计划ID
-	PlanId string `protobuf:"bytes,3,opt,name=planId,proto3" json:"planId,omitempty"`
 	// 开始时间
-	StartTime string `protobuf:"bytes,4,opt,name=startTime,proto3" json:"startTime,omitempty"`
+	StartTime string `protobuf:"bytes,3,opt,name=startTime,proto3" json:"startTime,omitempty"`
 	// 结束时间
-	EndTime       string `protobuf:"bytes,5,opt,name=endTime,proto3" json:"endTime,omitempty"`
+	EndTime string `protobuf:"bytes,4,opt,name=endTime,proto3" json:"endTime,omitempty"`
+	// 计划ID
+	PlanId string `protobuf:"bytes,5,opt,name=planId,proto3" json:"planId,omitempty"`
+	// 批ID
+	BatchId       string `protobuf:"bytes,6,opt,name=batchId,proto3" json:"batchId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5541,13 +5543,6 @@ func (x *ListPlanExecItemStatsReq) GetPageNum() int64 {
 	return 0
 }
 
-func (x *ListPlanExecItemStatsReq) GetPlanId() string {
-	if x != nil {
-		return x.PlanId
-	}
-	return ""
-}
-
 func (x *ListPlanExecItemStatsReq) GetStartTime() string {
 	if x != nil {
 		return x.StartTime
@@ -5558,6 +5553,20 @@ func (x *ListPlanExecItemStatsReq) GetStartTime() string {
 func (x *ListPlanExecItemStatsReq) GetEndTime() string {
 	if x != nil {
 		return x.EndTime
+	}
+	return ""
+}
+
+func (x *ListPlanExecItemStatsReq) GetPlanId() string {
+	if x != nil {
+		return x.PlanId
+	}
+	return ""
+}
+
+func (x *ListPlanExecItemStatsReq) GetBatchId() string {
+	if x != nil {
+		return x.BatchId
 	}
 	return ""
 }
@@ -6439,14 +6448,15 @@ const file_trigger_proto_rawDesc = "" +
 	"\abatchId\x18\x02 \x01(\tR\abatchId\x12(\n" +
 	"\x0fplanTriggerTime\x18\x03 \x01(\tR\x0fplanTriggerTime\x12\x14\n" +
 	"\x05total\x18\x04 \x01(\x03R\x05total\x12@\n" +
-	"\vstatusStats\x18\x05 \x03(\v2\x1e.trigger.PbExecItemStatusCountR\vstatusStats\"\xeb\x01\n" +
+	"\vstatusStats\x18\x05 \x03(\v2\x1e.trigger.PbExecItemStatusCountR\vstatusStats\"\x85\x02\n" +
 	"\x18ListPlanExecItemStatsReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12#\n" +
 	"\bpageSize\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bpageSize\x12!\n" +
-	"\apageNum\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\apageNum\x12\x16\n" +
-	"\x06planId\x18\x03 \x01(\tR\x06planId\x12\x1c\n" +
-	"\tstartTime\x18\x04 \x01(\tR\tstartTime\x12\x18\n" +
-	"\aendTime\x18\x05 \x01(\tR\aendTime\"c\n" +
+	"\apageNum\x18\x02 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\apageNum\x12\x1c\n" +
+	"\tstartTime\x18\x03 \x01(\tR\tstartTime\x12\x18\n" +
+	"\aendTime\x18\x04 \x01(\tR\aendTime\x12\x16\n" +
+	"\x06planId\x18\x05 \x01(\tR\x06planId\x12\x18\n" +
+	"\abatchId\x18\x06 \x01(\tR\abatchId\"c\n" +
 	"\x18ListPlanExecItemStatsRes\x121\n" +
 	"\x05stats\x18\x01 \x03(\v2\x1b.trigger.PbPlanExecItemStatR\x05stats\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x03R\x05total\"\xbd\x01\n" +

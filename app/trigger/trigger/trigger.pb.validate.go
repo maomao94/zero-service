@@ -10727,11 +10727,13 @@ func (m *ListPlanExecItemStatsReq) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	// no validation rules for PlanId
-
 	// no validation rules for StartTime
 
 	// no validation rules for EndTime
+
+	// no validation rules for PlanId
+
+	// no validation rules for BatchId
 
 	if len(errors) > 0 {
 		return ListPlanExecItemStatsReqMultiError(errors)
