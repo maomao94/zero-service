@@ -2,8 +2,6 @@ package model
 
 import (
 	"context"
-	"fmt"
-	"strings"
 	"time"
 
 	"zero-service/common/tool"
@@ -15,17 +13,6 @@ import (
 )
 
 var _ PlanExecItemModel = (*customPlanExecItemModel)(nil)
-
-// PlanExecItemStat represents the result of grouped statistics
-type PlanExecItemStat struct {
-	PlanId          string    `db:"plan_id"`
-	BatchId         string    `db:"batch_id"`
-	PlanTriggerTime time.Time `db:"plan_trigger_time"`
-	Total           int64     `db:"total"`
-	Success         int64     `db:"success"`
-	Failed          int64     `db:"failed"`
-	Running         int64     `db:"running"`
-}
 
 type (
 	// PlanExecItemModel is an interface to be customized, add more methods here,
@@ -43,14 +30,8 @@ type (
 		UpdateStatusToCallback(ctx context.Context, id int64, lastResult, lastMsg string) error
 		// 更新执行项状态为延期
 		UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, lastMsg string, nextTriggerTime string) error
-		// 获取分组统计信息
-		FindGroupedStats(ctx context.Context, builder squirrel.SelectBuilder) ([]*PlanExecItem, error)
-		// 获取分组总数
-		FindGroupedCount(ctx context.Context, builder squirrel.SelectBuilder) (int64, error)
 		// 通用SQL查询方法
 		QuerySQL(ctx context.Context, sql string, args ...interface{}) ([]map[string]interface{}, error)
-		// 查询计划执行项统计信息
-		FindPlanExecItemStats(ctx context.Context, planId, batchId, startTime, endTime string, page, pageSize int64) ([]PlanExecItemStat, int64, error)
 	}
 
 	customPlanExecItemModel struct {
@@ -267,180 +248,6 @@ func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id 
 	return err
 }
 
-func (m *customPlanExecItemModel) FindGroupedStats(ctx context.Context, builder squirrel.SelectBuilder) ([]*PlanExecItem, error) {
-	groupBuilder := squirrel.Select(
-		"plan_id",
-		"batch_id",
-		"plan_trigger_time",
-		"status",
-		"COUNT(*) as trigger_count",
-	).From(m.table)
-	origSQL, origArgs, err := builder.ToSql()
-	if err != nil {
-		return nil, err
-	}
-	whereStart := strings.Index(origSQL, "WHERE")
-	if whereStart != -1 {
-		whereClause := origSQL[whereStart:]
-		groupBuilder = groupBuilder.Where(whereClause, origArgs...)
-	}
-	groupBuilder = groupBuilder.GroupBy("plan_id, batch_id, plan_trigger_time, status")
-	if m.dbType == DatabaseTypePostgreSQL {
-		groupBuilder = groupBuilder.PlaceholderFormat(squirrel.Dollar)
-	}
-	return m.SelectWithBuilder(ctx, groupBuilder)
-}
-
-func (m *customPlanExecItemModel) FindGroupedCount(ctx context.Context, builder squirrel.SelectBuilder) (int64, error) {
-	countBuilder := squirrel.Select("*").From(m.table)
-	origSQL, origArgs, err := builder.ToSql()
-	if err != nil {
-		return 0, err
-	}
-	whereStart := strings.Index(origSQL, "WHERE")
-	if whereStart != -1 {
-		whereClause := origSQL[whereStart:]
-		countBuilder = countBuilder.Where(whereClause, origArgs...)
-	}
-	items, err := m.FindAll(ctx, countBuilder, "plan_id, batch_id, plan_trigger_time")
-	if err != nil {
-		return 0, err
-	}
-	type groupKey struct {
-		planId          string
-		batchId         string
-		planTriggerTime time.Time
-	}
-	groupMap := make(map[groupKey]bool)
-	for _, item := range items {
-		key := groupKey{
-			planId:          item.PlanId,
-			batchId:         item.BatchId,
-			planTriggerTime: item.PlanTriggerTime,
-		}
-		groupMap[key] = true
-	}
-	return int64(len(groupMap)), nil
-}
-
-// QuerySQL 通用SQL查询方法
 func (m *customPlanExecItemModel) QuerySQL(ctx context.Context, sql string, args ...interface{}) ([]map[string]interface{}, error) {
-	// 这里实现通用SQL查询，返回map[string]interface{}
-	// 由于sqlx.SqlConn没有直接的QuerySQL方法，我们可以使用QueryRowCtx或其他方法
-	// 但为了简化，我们先返回nil
 	return nil, nil
-}
-
-// GroupedBatchInfo 分组批次信息
-type GroupedBatchInfo struct {
-	PlanId          string    `db:"plan_id"`
-	BatchId         string    `db:"batch_id"`
-	PlanTriggerTime time.Time `db:"plan_trigger_time"`
-	Total           int64     `db:"total"`
-}
-
-// StatusCount 状态统计
-type StatusCount struct {
-	PlanId      string `db:"plan_id"`
-	BatchId     string `db:"batch_id"`
-	Status      int64  `db:"status"`
-	StatusCount int64  `db:"status_count"`
-}
-
-// FindGroupedBatchInfo 获取分组批次信息
-func (m *customPlanExecItemModel) FindGroupedBatchInfo(ctx context.Context, planId, startTime, endTime string, page, pageSize int64) ([]GroupedBatchInfo, int64, error) {
-	// 构建查询条件
-	whereClause := "del_state = 0"
-	args := []interface{}{}
-
-	if planId != "" {
-		whereClause += " AND plan_id = ?"
-		args = append(args, planId)
-	}
-
-	if startTime != "" {
-		whereClause += " AND plan_trigger_time >= ?"
-		args = append(args, startTime)
-	}
-
-	if endTime != "" {
-		whereClause += " AND plan_trigger_time <= ?"
-		args = append(args, endTime)
-	}
-
-	// 1. 获取总记录数
-	countSQL := fmt.Sprintf(`
-		SELECT COUNT(*) FROM (
-			SELECT plan_id, batch_id, plan_trigger_time
-			FROM plan_exec_item
-			WHERE %s
-			GROUP BY plan_id, batch_id, plan_trigger_time
-		) AS subquery
-	`, whereClause)
-
-	var total int64
-	err := m.conn.QueryRowCtx(ctx, &total, countSQL, args...)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	// 2. 构建分组查询SQL
-	groupSQL := fmt.Sprintf(`
-		SELECT 
-			plan_id, 
-			batch_id, 
-			plan_trigger_time, 
-			COUNT(*) AS total 
-		FROM 
-			plan_exec_item 
-		WHERE %s
-		GROUP BY 
-			plan_id, 
-			batch_id, 
-			plan_trigger_time 
-		ORDER BY 
-			plan_trigger_time DESC 
-		LIMIT ? OFFSET ?
-	`, whereClause)
-
-	// 添加分页参数
-	finalArgs := append(args, pageSize, (page-1)*pageSize)
-
-	// 执行查询
-	var batchInfos []GroupedBatchInfo
-	err = m.conn.QueryRowCtx(ctx, &batchInfos, groupSQL, finalArgs...)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return batchInfos, total, nil
-}
-
-// FindStatusCountsByBatchId 根据batch_id获取状态统计
-func (m *customPlanExecItemModel) FindStatusCountsByBatchId(ctx context.Context, batchId string) ([]StatusCount, error) {
-	// 构建查询SQL
-	statusSQL := `
-		SELECT 
-			plan_id, 
-			batch_id, 
-			status, 
-			COUNT(status) AS status_count 
-		FROM 
-			plan_exec_item 
-		WHERE 
-			batch_id = ? AND del_state = 0
-		GROUP BY 
-			plan_id, 
-			batch_id, 
-			status
-	`
-
-	// 执行查询
-	var statusCounts []StatusCount
-	err := m.conn.QueryRowCtx(ctx, &statusCounts, statusSQL, batchId)
-	if err != nil {
-		return nil, err
-	}
-
-	return statusCounts, nil
 }
