@@ -83,7 +83,8 @@ service TriggerRpc {
   // 分页获取计划触发日志列表
   rpc ListPlanExecLogs(ListPlanExecLogsReq) returns (ListPlanExecLogsRes);
 
-
+  // 分页获取计划执行项统计
+  rpc ListPlanExecItemStats(ListPlanExecItemStatsReq) returns (ListPlanExecItemStatsRes);
   // 回调计划执行项
   rpc CallbackPlanExecItem(CallbackPlanExecItemReq) returns (CallbackPlanExecItemRes);
 }
@@ -872,6 +873,106 @@ message ListPlanExecLogsReq {
 message ListPlanExecLogsRes {
   // 日志列表
   repeated PbPlanExecLog planExecLogs = 1;
+  // 总记录数
+  int64 total = 2;
+}
+
+// 执行项调度状态枚举定义
+enum PbExecItemStatus {
+  // 初始等待调度，可扫表触发
+  EXEC_ITEM_STATUS_WAITING = 0;
+  // 延期等待（业务失败重试或业务延期），可扫表触发
+  EXEC_ITEM_STATUS_DELAYED = 10;
+  // 已下发，等待业务回调，扫表时需判断超时
+  EXEC_ITEM_STATUS_RUNNING = 100;
+  // 执行项暂停（不扫表、不触发）
+  EXEC_ITEM_STATUS_PAUSED = 150;
+  // 执行完成终态，不再触发
+  EXEC_ITEM_STATUS_COMPLETED = 200;
+  // 人工/策略/超过重试次数终止，终态
+  EXEC_ITEM_STATUS_TERMINATED = 300;
+}
+
+// 执行项状态分组统计信息
+message PbExecItemStatusCount {
+  // 状态值
+  PbExecItemStatus status = 1;
+  // 状态名称
+  string statusName = 2;
+  // 数量
+  int64 count = 3;
+}
+
+// 按批ID和触发时间分组的计划执行项统计信息
+message PbPlanExecItemStat {
+  // 计划ID
+  string planId = 1;
+  // 批ID
+  string batchId = 2;
+  // 计划触发时间
+  string planTriggerTime = 3;
+  // 总执行项数
+  int64 total = 4;
+  // 各状态分组统计
+  repeated PbExecItemStatusCount statusStats = 5;
+}
+
+// 分页获取计划执行项统计请求
+message ListPlanExecItemStatsReq {
+  extproto.CurrentUser currentUser = 100;
+  // 分页大小
+  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0}];
+  // 页码
+  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0}];
+  // 开始时间
+  string startTime = 3;
+  // 结束时间
+  string endTime = 4;
+  // 计划ID
+  string planId = 5;
+  // 批ID
+  string batchId = 6;
+}
+
+// 分页获取计划执行项统计响应
+message ListPlanExecItemStatsRes {
+  // 统计列表
+  repeated PbPlanExecItemStat stats = 1;
+  // 总记录数
+  int64 total = 2;
+}
+
+// 按年和批ID分组的计划执行项统计信息
+message PbPlanExecItemStatByYearBatch {
+  // 年份
+  int32 year = 1;
+  // 批ID
+  string batchId = 2;
+  // 计划ID
+  string planId = 3;
+  // 总执行项数
+  int64 total = 4;
+  // 各状态分组统计
+  repeated PbExecItemStatusCount statusStats = 5;
+}
+
+// 分页获取按年和批ID分组的计划执行项统计请求
+message ListPlanExecItemStatsByYearBatchReq {
+  extproto.CurrentUser currentUser = 100;
+  // 分页大小
+  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0}];
+  // 页码
+  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0}];
+  // 计划ID
+  string planId = 3;
+  // 年份
+  int32 year = 4;
+}
+
+// 分页获取按年和批ID分组的计划执行项统计响应
+message ListPlanExecItemStatsByYearBatchRes {
+  // 统计列表
+  repeated PbPlanExecItemStatByYearBatch stats = 1;
   // 总记录数
   int64 total = 2;
 }
