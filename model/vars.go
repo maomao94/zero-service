@@ -74,13 +74,13 @@ const (
 )
 
 // 状态名称映射
-var statusNames = map[int64]string{
+var StatusNames = map[int64]string{
 	int64(StatusWaiting):    "等待调度",
 	int64(StatusDelayed):    "延期等待",
 	int64(StatusRunning):    "执行中",
-	int64(StatusPaused):     "暂停",
-	int64(StatusCompleted):  "完成",
-	int64(StatusTerminated): "终止",
+	int64(StatusPaused):     "已暂停",
+	int64(StatusCompleted):  "已完成",
+	int64(StatusTerminated): "已终止",
 }
 
 // ============================
