@@ -132,12 +132,14 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		}
 		insertPlan.Id, _ = result.LastInsertId()
 		for _, d := range dates {
+			batchId, _ := tool.SimpleUUID()
 			for _, item := range in.ExecItems {
 				planItem := model.PlanExecItem{
 					CreateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},
 					UpdateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},
-					PlanId:           in.PlanId,
 					PlanPk:           insertPlan.Id,
+					PlanId:           in.PlanId,
+					BatchId:          batchId,
 					ItemId:           item.ItemId,
 					ItemName:         sql.NullString{String: item.ItemName, Valid: item.ItemName != ""},
 					PointId:          sql.NullString{String: item.PointId, Valid: item.PointId != ""},
