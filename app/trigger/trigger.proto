@@ -525,7 +525,7 @@ message PbPlanRule {
 }
 
 message CreatePlanExecItem {
-  // 执行项ID,业务字段
+  // 执行项ID,业务字段,例如工单号
   string itemId = 1 [(validate.rules).string = {min_len: 1}];
   // 执行项名称,业务字段
   string itemName = 2;
