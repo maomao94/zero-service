@@ -107,6 +107,31 @@ CREATE TABLE IF NOT EXISTS `plan_exec_item` (
     KEY `idx_core_scan` (`next_trigger_time`, `status`, `del_state`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='计划执行项表';
 
+-- 计划批次表
+CREATE TABLE IF NOT EXISTS `plan_batch` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '自增主键ID',
+    `create_time` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
+    `update_time` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间',
+    `delete_time` DATETIME(6) NULL DEFAULT NULL COMMENT '删除时间（软删除标记）',
+    `del_state` TINYINT NOT NULL DEFAULT 0 COMMENT '删除状态：0-未删除，1-已删除',
+    `version` INT NOT NULL DEFAULT 0 COMMENT '版本号（乐观锁）',
+    `create_user` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '创建人',
+    `update_user` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '更新人',
+    `plan_pk` BIGINT NOT NULL DEFAULT 0 COMMENT '关联的计划主键ID',
+    `plan_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '关联的计划ID',
+    `batch_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '批ID',
+    `batch_name` VARCHAR(128) NOT NULL DEFAULT '' COMMENT '批次名称',
+    `ext_1` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '扩展字段1',
+    `ext_2` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '扩展字段2',
+    `ext_3` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '扩展字段3',
+    `ext_4` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '扩展字段4',
+    `ext_5` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '扩展字段5',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_batch_id` (`batch_id`),
+    KEY `idx_plan_id` (`plan_id`),
+    KEY `idx_plan_pk` (`plan_pk`),
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='计划批次表';
+
 -- 计划任务执行日志表
 CREATE TABLE IF NOT EXISTS `plan_exec_log` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '自增主键ID',
