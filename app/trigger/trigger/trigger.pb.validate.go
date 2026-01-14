@@ -9268,6 +9268,8 @@ func (m *PbPlanExecItem) validate(all bool) error {
 
 	// no validation rules for PlanId
 
+	// no validation rules for BatchId
+
 	// no validation rules for ItemId
 
 	// no validation rules for ItemName

@@ -197,6 +197,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		StartTime:       carbon.NewCarbon(plan.StartTime).ToDateTimeString(),
 		EndTime:         carbon.NewCarbon(plan.EndTime).ToDateTimeString(),
 		PlanPk:          plan.Id,
+		BatchId:         execItem.BatchId,
 		ItemId:          execItem.ItemId,
 		ItemName:        execItem.ItemName.String,
 		PointId:         execItem.PointId.String,

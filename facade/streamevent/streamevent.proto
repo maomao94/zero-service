@@ -482,16 +482,18 @@ message HandlerPlanTaskEventReq{
 
   // 关联的计划主键ID
   int64 planPk = 8;
+  // 批ID 同一时间具有相同批ID
+  string batchId = 9;
   // 执行项ID
-  string itemId = 9;
+  string itemId = 10;
   // 执行项名称
-  string itemName = 10;
+  string itemName = 11;
   // 点位id,业务字段
-  string pointId = 11;
+  string pointId = 12;
   // 业务负载（必填）：序列化的业务专属参数（设备参数/转账金额/订单信息等）
-  string payload = 12;
+  string payload = 13;
   // 计划触发时间
-  string planTriggerTime = 13;
+  string planTriggerTime = 14;
 }
 
 message HandlerPlanTaskEventRes{

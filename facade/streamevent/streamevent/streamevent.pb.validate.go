@@ -3436,6 +3436,8 @@ func (m *HandlerPlanTaskEventReq) validate(all bool) error {
 
 	// no validation rules for PlanPk
 
+	// no validation rules for BatchId
+
 	// no validation rules for ItemId
 
 	// no validation rules for ItemName
