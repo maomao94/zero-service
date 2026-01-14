@@ -62,6 +62,7 @@ type (
 		UpdateUser       sql.NullString `db:"update_user"`       // 更新人
 		PlanPk           int64          `db:"plan_pk"`           // 关联的计划主键ID
 		PlanId           string         `db:"plan_id"`           // 关联的计划ID
+		BatchId          string         `db:"batch_id"`          // 批ID
 		ItemId           string         `db:"item_id"`           // 执行项ID
 		ItemName         sql.NullString `db:"item_name"`         // 执行项名称
 		PointId          sql.NullString `db:"point_id"`          // 点位id

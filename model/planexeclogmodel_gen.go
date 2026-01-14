@@ -63,6 +63,7 @@ type (
 		PlanId      string         `db:"plan_id"`      // 计划任务ID
 		PlanPk      int64          `db:"plan_pk"`      // 关联的计划主键ID
 		PlanName    sql.NullString `db:"plan_name"`    // 计划任务名称
+		BatchId     string         `db:"batch_id"`     // 批ID
 		ItemPk      int64          `db:"item_pk"`      // 关联的执行项主键ID
 		ItemId      string         `db:"item_id"`      // 执行项ID
 		ItemName    sql.NullString `db:"item_name"`    // 执行项名称
