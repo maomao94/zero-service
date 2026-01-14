@@ -6092,10 +6092,10 @@ func (m *PbPlanRule) validate(all bool) error {
 
 	}
 
-	if val := m.GetHour(); val < 0 || val > 23 {
+	if len(m.GetHours()) < 1 {
 		err := PbPlanRuleValidationError{
-			field:  "Hour",
-			reason: "value must be inside range [0, 23]",
+			field:  "Hours",
+			reason: "value must contain at least 1 item(s)",
 		}
 		if !all {
 			return err
@@ -6103,15 +6103,47 @@ func (m *PbPlanRule) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if val := m.GetMinute(); val < 0 || val > 59 {
+	for idx, item := range m.GetHours() {
+		_, _ = idx, item
+
+		if val := item; val < 0 || val > 23 {
+			err := PbPlanRuleValidationError{
+				field:  fmt.Sprintf("Hours[%v]", idx),
+				reason: "value must be inside range [0, 23]",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(m.GetMinutes()) < 1 {
 		err := PbPlanRuleValidationError{
-			field:  "Minute",
-			reason: "value must be inside range [0, 59]",
+			field:  "Minutes",
+			reason: "value must contain at least 1 item(s)",
 		}
 		if !all {
 			return err
 		}
 		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetMinutes() {
+		_, _ = idx, item
+
+		if val := item; val < 0 || val > 59 {
+			err := PbPlanRuleValidationError{
+				field:  fmt.Sprintf("Minutes[%v]", idx),
+				reason: "value must be inside range [0, 59]",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
 	}
 
 	if len(errors) > 0 {
@@ -6347,6 +6379,10 @@ func (m *CreatePlanTaskRes) validate(all bool) error {
 	var errors []error
 
 	// no validation rules for Id
+
+	// no validation rules for PlanId
+
+	// no validation rules for ExecCnt
 
 	if len(errors) > 0 {
 		return CreatePlanTaskResMultiError(errors)
@@ -7438,6 +7474,387 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = TerminatePlanExecItemResValidationError{}
+
+// Validate checks the field values on CallbackPlanExecItemReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CallbackPlanExecItemReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CallbackPlanExecItemReq with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CallbackPlanExecItemReqMultiError, or nil if none found.
+func (m *CallbackPlanExecItemReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CallbackPlanExecItemReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CallbackPlanExecItemReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CallbackPlanExecItemReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CallbackPlanExecItemReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetId() < 1 {
+		err := CallbackPlanExecItemReqValidationError{
+			field:  "Id",
+			reason: "value must be greater than or equal to 1",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for ExecResult
+
+	// no validation rules for Message
+
+	if all {
+		switch v := interface{}(m.GetDelayConfig()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CallbackPlanExecItemReqValidationError{
+					field:  "DelayConfig",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CallbackPlanExecItemReqValidationError{
+					field:  "DelayConfig",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDelayConfig()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CallbackPlanExecItemReqValidationError{
+				field:  "DelayConfig",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return CallbackPlanExecItemReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// CallbackPlanExecItemReqMultiError is an error wrapping multiple validation
+// errors returned by CallbackPlanExecItemReq.ValidateAll() if the designated
+// constraints aren't met.
+type CallbackPlanExecItemReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CallbackPlanExecItemReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CallbackPlanExecItemReqMultiError) AllErrors() []error { return m }
+
+// CallbackPlanExecItemReqValidationError is the validation error returned by
+// CallbackPlanExecItemReq.Validate if the designated constraints aren't met.
+type CallbackPlanExecItemReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CallbackPlanExecItemReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CallbackPlanExecItemReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CallbackPlanExecItemReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CallbackPlanExecItemReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CallbackPlanExecItemReqValidationError) ErrorName() string {
+	return "CallbackPlanExecItemReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CallbackPlanExecItemReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCallbackPlanExecItemReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CallbackPlanExecItemReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CallbackPlanExecItemReqValidationError{}
+
+// Validate checks the field values on PbDelayConfig with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *PbDelayConfig) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PbDelayConfig with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in PbDelayConfigMultiError, or
+// nil if none found.
+func (m *PbDelayConfig) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PbDelayConfig) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for NextTriggerTime
+
+	// no validation rules for DelayReason
+
+	if len(errors) > 0 {
+		return PbDelayConfigMultiError(errors)
+	}
+
+	return nil
+}
+
+// PbDelayConfigMultiError is an error wrapping multiple validation errors
+// returned by PbDelayConfig.ValidateAll() if the designated constraints
+// aren't met.
+type PbDelayConfigMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PbDelayConfigMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PbDelayConfigMultiError) AllErrors() []error { return m }
+
+// PbDelayConfigValidationError is the validation error returned by
+// PbDelayConfig.Validate if the designated constraints aren't met.
+type PbDelayConfigValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PbDelayConfigValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PbDelayConfigValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PbDelayConfigValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PbDelayConfigValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PbDelayConfigValidationError) ErrorName() string { return "PbDelayConfigValidationError" }
+
+// Error satisfies the builtin error interface
+func (e PbDelayConfigValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPbDelayConfig.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PbDelayConfigValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PbDelayConfigValidationError{}
+
+// Validate checks the field values on CallbackPlanExecItemRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CallbackPlanExecItemRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CallbackPlanExecItemRes with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CallbackPlanExecItemResMultiError, or nil if none found.
+func (m *CallbackPlanExecItemRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CallbackPlanExecItemRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return CallbackPlanExecItemResMultiError(errors)
+	}
+
+	return nil
+}
+
+// CallbackPlanExecItemResMultiError is an error wrapping multiple validation
+// errors returned by CallbackPlanExecItemRes.ValidateAll() if the designated
+// constraints aren't met.
+type CallbackPlanExecItemResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CallbackPlanExecItemResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CallbackPlanExecItemResMultiError) AllErrors() []error { return m }
+
+// CallbackPlanExecItemResValidationError is the validation error returned by
+// CallbackPlanExecItemRes.Validate if the designated constraints aren't met.
+type CallbackPlanExecItemResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CallbackPlanExecItemResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CallbackPlanExecItemResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CallbackPlanExecItemResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CallbackPlanExecItemResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CallbackPlanExecItemResValidationError) ErrorName() string {
+	return "CallbackPlanExecItemResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CallbackPlanExecItemResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCallbackPlanExecItemRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CallbackPlanExecItemResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CallbackPlanExecItemResValidationError{}
 
 // Validate checks the field values on GetPlanReq with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
@@ -9210,6 +9627,8 @@ func (m *PbPlanExecLog) validate(all bool) error {
 	// no validation rules for PlanId
 
 	// no validation rules for PlanName
+
+	// no validation rules for ItemPk
 
 	// no validation rules for ItemId
 

@@ -2770,11 +2770,11 @@ func (x *HandlerPlanTaskEventReq) GetPlanTriggerTime() string {
 
 type HandlerPlanTaskEventRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 执行结果 1-成功,2-失败,3-延期
-	ExecResult int32 `protobuf:"varint,1,opt,name=execResult,proto3" json:"execResult,omitempty"`
+	// 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，running-业务正在执行（未回调或部分异步）
+	ExecResult string `protobuf:"bytes,1,opt,name=execResult,proto3" json:"execResult,omitempty"`
 	// 结果描述（成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
 	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	// 延期配置（仅当exec_result=3时生效，无需needDelay开关）
+	// 延期配置-默认延期5分钟：delayed-自定义延期，running-自定义延期,等待业务系统回调完成/延期触发)
 	DelayConfig   *PbDelayConfig `protobuf:"bytes,3,opt,name=delayConfig,proto3" json:"delayConfig,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2810,11 +2810,11 @@ func (*HandlerPlanTaskEventRes) Descriptor() ([]byte, []int) {
 	return file_streamevent_proto_rawDescGZIP(), []int{29}
 }
 
-func (x *HandlerPlanTaskEventRes) GetExecResult() int32 {
+func (x *HandlerPlanTaskEventRes) GetExecResult() string {
 	if x != nil {
 		return x.ExecResult
 	}
-	return 0
+	return ""
 }
 
 func (x *HandlerPlanTaskEventRes) GetMessage() string {
@@ -3135,7 +3135,7 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x0fplanTriggerTime\x18\r \x01(\tR\x0fplanTriggerTime\"\x91\x01\n" +
 	"\x17HandlerPlanTaskEventRes\x12\x1e\n" +
 	"\n" +
-	"execResult\x18\x01 \x01(\x05R\n" +
+	"execResult\x18\x01 \x01(\tR\n" +
 	"execResult\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12<\n" +
 	"\vdelayConfig\x18\x03 \x01(\v2\x1a.streamevent.PbDelayConfigR\vdelayConfig\"[\n" +

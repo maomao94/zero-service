@@ -6,14 +6,14 @@ import (
 	"github.com/dromara/carbon/v2"
 )
 
-func CalculateNextTriggerTime(failureCount int64, defaultTimeout time.Duration) (time.Time, bool) {
+func CalculateNextTriggerTime(failureCount int64, expiry time.Duration) (time.Time, bool) {
 	currentTime := time.Now()
 	var nextTriggerTime time.Time
 	if failureCount <= 30 {
-		nextTriggerTime = currentTime.Add(defaultTimeout)
+		nextTriggerTime = currentTime.Add(expiry)
 	} else if failureCount <= 60 {
 		exponent := failureCount - 30
-		backoff := defaultTimeout
+		backoff := expiry
 		for i := int64(0); i < exponent; i++ {
 			backoff *= 2
 			if backoff >= 30*time.Minute {

@@ -92,10 +92,13 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 			validDates = append(validDates, d)
 		}
 	}
+	dates = validDates
 	if len(dates) == 0 {
 		return nil, fmt.Errorf("计划任务时间段内没有触发时间")
 	}
-	dates = validDates
+	if len(dates) > 5000 {
+		return nil, fmt.Errorf("计划任务时间段内调度项过多")
+	}
 	rule, _ := jsonx.Marshal(in.Rule)
 	currentUserId := tool.GetCurrentUserId(in.CurrentUser)
 
@@ -109,15 +112,14 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		RecurrenceRule:   string(rule),
 		StartTime:        rruleOption.Dtstart,
 		EndTime:          rruleOption.Until,
-		Status:           1,
-		IsTerminated:     0,
-		IsPaused:         0,
+		Status:           int64(model.PlanStatusEnabled),
 		TerminatedTime:   sql.NullTime{},
 		TerminatedReason: sql.NullString{},
 		PausedTime:       sql.NullTime{},
 		PausedReason:     sql.NullString{},
 		Description:      sql.NullString{String: in.Description, Valid: in.Description != ""},
 	}
+	var execCnt int64 = 0
 	err = l.svcCtx.PlanModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
 		result, transErr := l.svcCtx.PlanModel.Insert(ctx, tx, insertPlan)
 		if transErr != nil {
@@ -141,13 +143,11 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 					NextTriggerTime:  d,
 					LastTriggerTime:  sql.NullTime{},
 					TriggerCount:     0,
-					Status:           0,
+					Status:           int64(model.StatusWaiting),
 					LastResult:       sql.NullString{},
 					LastMsg:          sql.NullString{},
-					IsTerminated:     0,
 					TerminatedTime:   sql.NullTime{},
 					TerminatedReason: sql.NullString{},
-					IsPaused:         0,
 					PausedTime:       sql.NullTime{},
 					PausedReason:     sql.NullString{},
 				}
@@ -155,6 +155,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 				if err != nil {
 					return err
 				}
+				execCnt++
 			}
 		}
 		return nil
@@ -163,7 +164,9 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		return nil, err
 	}
 	return &trigger.CreatePlanTaskRes{
-		Id: insertPlan.Id,
+		Id:      insertPlan.Id,
+		PlanId:  insertPlan.PlanId,
+		ExecCnt: execCnt,
 	}, nil
 }
 
@@ -173,9 +176,25 @@ func (l *CreatePlanTaskLogic) convertToRRuleOption(planRule *trigger.PbPlanRule,
 		Freq:     rrule.Frequency(planRule.Freq),
 		Dtstart:  startTime.StdTime(),
 		Until:    endTime.StdTime(),
-		Byhour:   []int{int(planRule.Hour)},
-		Byminute: []int{int(planRule.Minute)},
 		Bysecond: []int{0}, // 默认秒为0
+	}
+
+	// 设置小时
+	if len(planRule.Hours) > 0 {
+		byhour := make([]int, len(planRule.Hours))
+		for i, h := range planRule.Hours {
+			byhour[i] = int(h)
+		}
+		opts.Byhour = byhour
+	}
+
+	// 设置分钟
+	if len(planRule.Minutes) > 0 {
+		byminute := make([]int, len(planRule.Minutes))
+		for i, m := range planRule.Minutes {
+			byminute[i] = int(m)
+		}
+		opts.Byminute = byminute
 	}
 
 	// 设置月份

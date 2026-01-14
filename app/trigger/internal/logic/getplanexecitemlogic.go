@@ -54,8 +54,6 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 		Status:          int32(execItem.Status),
 		LastResult:      execItem.LastResult.String,
 		LastMsg:         execItem.LastMsg.String,
-		IsTerminated:    execItem.IsTerminated == 1,
-		IsPaused:        execItem.IsPaused == 1,
 		TriggerCount:    int32(execItem.TriggerCount),
 	}
 
@@ -70,13 +68,13 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 	}
 
 	// 设置终止时间和原因
-	if execItem.IsTerminated == 1 && execItem.TerminatedTime.Valid {
+	if execItem.TerminatedTime.Valid {
 		pbExecItem.TerminatedTime = carbon.CreateFromStdTime(execItem.TerminatedTime.Time).ToDateTimeString()
 		pbExecItem.TerminatedReason = execItem.TerminatedReason.String
 	}
 
 	// 设置暂停时间和原因
-	if execItem.IsPaused == 1 && execItem.PausedTime.Valid {
+	if execItem.PausedTime.Valid {
 		pbExecItem.PausedTime = carbon.CreateFromStdTime(execItem.PausedTime.Time).ToDateTimeString()
 		pbExecItem.PausedReason = execItem.PausedReason.String
 	}

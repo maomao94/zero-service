@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"time"
+	"zero-service/model"
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
@@ -44,22 +45,20 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 		return nil, err
 	}
 
-	if execItem.Status == 1 || execItem.Status == 2 || execItem.Status == 5 {
+	if execItem.Status == int64(model.StatusCompleted) || execItem.Status == int64(model.StatusTerminated) {
 		return &trigger.TerminatePlanExecItemRes{}, nil
 	}
 
 	// 执行事务
 	err = l.svcCtx.PlanModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
 		// 更新执行项状态为已终止
-		execItem.Status = 5 // 5-已终止
-		execItem.IsTerminated = 1
-		execItem.IsPaused = 0
+		execItem.Status = int64(model.StatusTerminated)
 		execItem.TerminatedTime = sql.NullTime{Time: time.Now(), Valid: true}
 		execItem.TerminatedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
 		execItem.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}
 
 		// 更新执行项
-		_, transErr := l.svcCtx.PlanExecItemModel.Update(ctx, tx, execItem)
+		transErr := l.svcCtx.PlanExecItemModel.UpdateWithVersion(ctx, tx, execItem)
 		if transErr != nil {
 			return transErr
 		}

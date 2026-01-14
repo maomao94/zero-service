@@ -25,9 +25,9 @@ type (
 		// 更新执行项状态为执行中
 		UpdateStatusToRunning(ctx context.Context, id int64) error
 		// 更新执行项状态为已完成
-		UpdateStatusToCompleted(ctx context.Context, id int64, lastResult, lastMsg string) error
-		// 更新执行项状态为失败
-		UpdateStatusToFailed(ctx context.Context, id int64, lastResult, lastMsg string) error
+		UpdateStatusToCompleted(ctx context.Context, id int64, lastMsg string) error
+		// 更新执行项状态为回调
+		UpdateStatusToCallback(ctx context.Context, id int64, lastResult, lastMsg string) error
 		// 更新执行项状态为延期
 		UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, lastMsg string, nextTriggerTime string) error
 	}
@@ -39,18 +39,21 @@ type (
 )
 
 const (
-	retryInterval = time.Second * 10
+	retryInterval   = time.Second * 10
+	expiryDeviation = 0.05
 )
 
 func NewPlanExecItemModel(conn sqlx.SqlConn) PlanExecItemModel {
 	return &customPlanExecItemModel{
 		defaultPlanExecItemModel: newPlanExecItemModel(conn, DatabaseTypeMySQL),
+		unstableExpiry:           mathx.NewUnstable(expiryDeviation),
 	}
 }
 
 func NewPlanExecItemModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) PlanExecItemModel {
 	return &customPlanExecItemModel{
 		defaultPlanExecItemModel: newPlanExecItemModel(conn, dbType),
+		unstableExpiry:           mathx.NewUnstable(expiryDeviation),
 	}
 }
 
@@ -58,18 +61,13 @@ func (m *customPlanExecItemModel) withSession(session sqlx.Session) PlanExecItem
 	return NewPlanExecItemModelWithDBType(sqlx.NewSqlConnFromSession(session), m.dbType)
 }
 
-// LockTriggerItem 锁定需要触发的执行项
 func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn time.Duration) (*PlanExecItem, error) {
 	// 准备SQL查询，获取需要触发的执行项
 	// 条件：
-	// 1. 执行项状态为待执行(0)或失败(3)或延期(4)
+	// 1. 执行项状态为待执行、延期等待或执行中
 	// 2. 下次触发时间 <= 当前时间
-	// 3. 执行项未终止
-	// 4. 执行项未暂停
-	// 5. 关联的计划状态为启用(1)
-	// 6. 关联的计划未终止
-	// 7. 关联的计划未暂停
-	// 8. 关联的计划未删除
+	// 3. 关联的计划状态为启用
+	// 4. 关联的计划未删除
 	currentTime := time.Now()
 	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
 	nextTriggerTime := currentTime.Add(expireIn)
@@ -78,14 +76,10 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 		"pei.id", "pei.plan_pk", "pei.plan_id", "pei.item_id", "pei.item_name", "pei.point_id", "pei.next_trigger_time", "pei.service_addr", "pei.payload", "pei.plan_trigger_time", "pei.request_timeout",
 	).From(m.table+" as pei").
 		Join("plan p ON p.plan_id = pei.plan_id").
-		Where("pei.is_terminated = ?", 0).
-		Where("pei.is_paused = ?", 0).
-		Where("p.del_state = ?", 0).
-		Where("p.status = ?", 1).
-		Where("p.is_terminated = ?", 0).
-		Where("p.is_paused = ?", 0).
 		Where("pei.next_trigger_time <= ?", currentTimeStr).
-		Where("pei.status IN (?, ?, ?, ?)", 0, 1, 3, 4)
+		Where("p.del_state = ?", 0).
+		Where("p.status = ?", PlanStatusEnabled).
+		Where("pei.status IN (?, ?, ?)", StatusWaiting, StatusDelayed, StatusRunning)
 	if m.dbType == DatabaseTypePostgreSQL {
 		selectBuilder = selectBuilder.OrderBy("RANDOM()")
 	} else {
@@ -106,14 +100,12 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 		return nil, ErrNotFound
 	case nil:
 		updateBuilder := squirrel.Update(m.table).
-			Set("status", 1).
+			Set("status", StatusRunning).
 			Set("next_trigger_time", nextTriggerTimeStr).
 			Set("last_trigger_time", currentTimeStr).
 			Where("id = ?", execItem.Id).
-			Where("is_terminated = ?", 0).
-			Where("is_paused = ?", 0).
 			Where("next_trigger_time <= ?", currentTimeStr).
-			Where("status IN (?, ?, ?, ?)", 0, 1, 3, 4)
+			Where("status IN (?, ?, ?)", StatusWaiting, StatusDelayed, StatusRunning)
 		if m.dbType == DatabaseTypePostgreSQL {
 			updateBuilder = updateBuilder.PlaceholderFormat(squirrel.Dollar)
 		}
@@ -135,11 +127,10 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 	}
 }
 
-// UpdateStatusToRunning 更新执行项状态为执行中
 func (m *customPlanExecItemModel) UpdateStatusToRunning(ctx context.Context, id int64) error {
 	updateBuilder := squirrel.Update(m.table).
-		Set("status", 1).
-		Set("last_result", "running").
+		Set("status", StatusRunning).
+		Set("last_result", ResultRunning).
 		Set("last_trigger_time", time.Now()).
 		Where("id = ?", id)
 	if m.dbType == DatabaseTypePostgreSQL {
@@ -153,13 +144,12 @@ func (m *customPlanExecItemModel) UpdateStatusToRunning(ctx context.Context, id 
 	return err
 }
 
-// UpdateStatusToCompleted 更新执行项状态为已完成
-func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, id int64, lastResult, lastMsg string) error {
+func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, id int64, lastMsg string) error {
 	currentTime := time.Now()
 	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
 	updateBuilder := squirrel.Update(m.table).
-		Set("status", 2).
-		Set("last_result", lastResult).
+		Set("status", StatusCompleted).
+		Set("last_result", ResultCompleted).
 		Set("last_msg", lastMsg).
 		Set("last_trigger_time", currentTimeStr).
 		Where("id = ?", id)
@@ -174,8 +164,7 @@ func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, i
 	return err
 }
 
-// UpdateStatusToFailed 更新执行项状态为失败
-func (m *customPlanExecItemModel) UpdateStatusToFailed(ctx context.Context, id int64, lastResult, lastMsg string) error {
+func (m *customPlanExecItemModel) UpdateStatusToCallback(ctx context.Context, id int64, lastResult, lastMsg string) error {
 	currentTime := time.Now()
 	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
 	selectBuilder := squirrel.Select("trigger_count").From(m.table).Where("id = ?", id)
@@ -194,30 +183,31 @@ func (m *customPlanExecItemModel) UpdateStatusToFailed(ctx context.Context, id i
 		return err
 	}
 	triggerCount := itemInfo.TriggerCount
-	defaultTimeout := retryInterval
-	nextTriggerTime, isExceeded := tool.CalculateNextTriggerTime(triggerCount+1, defaultTimeout)
+	expiry := m.unstableExpiry.AroundDuration(retryInterval)
+	nextTriggerTime, isExceeded := tool.CalculateNextTriggerTime(triggerCount+1, expiry)
 	nextTriggerTimeStr := carbon.CreateFromStdTime(nextTriggerTime).ToDateTimeMicroString()
 	var updateBuilder squirrel.UpdateBuilder
 	if isExceeded {
 		updateBuilder = squirrel.Update(m.table).
-			Set("status", 5).
-			Set("last_result", lastResult).
+			Set("status", StatusTerminated).
+			Set("last_result", ResultRunning).
 			Set("last_msg", lastMsg).
 			Set("next_trigger_time", nextTriggerTimeStr).
 			Set("last_trigger_time", currentTimeStr).
 			Set("trigger_count", squirrel.Expr("trigger_count + 1")).
-			Set("is_terminated", 1).
 			Set("terminated_time", currentTimeStr).
-			Set("terminated_reason", "超过重试上限，自动终止").
+			Set("terminated_reason", "超过重试上限，调度平台自动终止").
 			Where("id = ?", id)
 	} else {
 		updateBuilder = squirrel.Update(m.table).
-			Set("status", 3).
+			Set("status", StatusDelayed).
 			Set("last_result", lastResult).
 			Set("last_msg", lastMsg).
 			Set("next_trigger_time", nextTriggerTimeStr).
 			Set("last_trigger_time", currentTimeStr).
 			Set("trigger_count", squirrel.Expr("trigger_count + 1")).
+			Set("paused_time", currentTimeStr).
+			Set("paused_reason", "调度平台自动延期").
 			Where("id = ?", id)
 	}
 	if m.dbType == DatabaseTypePostgreSQL {
@@ -231,8 +221,7 @@ func (m *customPlanExecItemModel) UpdateStatusToFailed(ctx context.Context, id i
 	return err
 }
 
-// UpdateStatusToDelayed 更新执行项状态为延期
-func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, lastMsg string, nextTriggerTimeStr string) error {
+func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id int64, lastMsg string, lastResult, nextTriggerTimeStr string) error {
 	ct := carbon.Parse(nextTriggerTimeStr)
 	if ct.Error != nil {
 		return ct.Error
@@ -240,7 +229,7 @@ func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id 
 	currentTime := time.Now()
 	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
 	updateBuilder := squirrel.Update(m.table).
-		Set("status", 4).
+		Set("status", StatusDelayed).
 		Set("last_result", lastResult).
 		Set("last_msg", lastMsg).
 		Set("next_trigger_time", nextTriggerTimeStr).

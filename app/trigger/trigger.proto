@@ -60,6 +60,8 @@ service TriggerRpc {
   rpc PausePlanExecItem(PausePlanExecItemReq) returns (PausePlanExecItemRes);
   // 终止执行项
   rpc TerminatePlanExecItem(TerminatePlanExecItemReq) returns (TerminatePlanExecItemRes);
+  // 回调计划项
+  rpc CallbackPlanExecItem(CallbackPlanExecItemReq) returns (CallbackPlanExecItemRes);
 
 
   // 获取计划详情
@@ -493,9 +495,19 @@ message PbPlanRule {
     }
   ];
   // 执行小时（0-23）
-  int32 hour = 5 [(validate.rules).int32 = {gte: 0, lte: 23}];
+  repeated int32 hours = 5 [
+    (validate.rules).repeated = {
+      min_items: 1,
+      items: {int32: {gte: 0, lte: 23}}
+    }
+  ];
   // 执行分钟（0-59）
-  int32 minute = 6 [(validate.rules).int32 = {gte: 0, lte: 59}];
+  repeated int32 minutes = 6 [
+    (validate.rules).repeated = {
+      min_items: 1,
+      items: {int32: {gte: 0, lte: 59}}
+    }
+  ];
 }
 
 message PlanExecItem {
@@ -514,7 +526,12 @@ message PlanExecItem {
 }
 
 message CreatePlanTaskRes {
+  // 计划主键ID
   int64 id = 1;
+  // 计划ID
+  string planId = 2;
+  // 执行计划数
+  int64 execCnt = 3;
 }
 
 message PausePlanReq {
@@ -557,6 +574,29 @@ message TerminatePlanExecItemReq {
 }
 
 message TerminatePlanExecItemRes {
+}
+
+message CallbackPlanExecItemReq {
+  extproto.CurrentUser currentUser = 100;
+
+  // 执行项ID
+  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
+  // 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，running-业务正在执行（未回调或部分异步）
+  string execResult = 2;
+  // 结果描述（成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
+  string message = 3;
+  // 延期配置：delayed-自定义延期，running-自定义延期（默认30分钟,等待业务系统回调完成/延期触发闭环)
+  PbDelayConfig delayConfig = 4;
+}
+
+message PbDelayConfig {
+  // 下次触发时间（格式：yyyy-MM-dd HH:mm:ss，定时扫描的核心筛选条件）
+  string nextTriggerTime = 1;
+  // 延期原因
+  string delayReason = 2;
+}
+
+message CallbackPlanExecItemRes {
 }
 
 message GetPlanReq {
@@ -753,18 +793,20 @@ message PbPlanExecLog {
   string planId = 2;
   // 计划名称
   string planName = 3;
+  // 关联的执行项主键ID
+  int64 itemPk = 4;
   // 执行项ID
-  string itemId = 4;
+  string itemId = 5;
   // 执行项名称
-  string itemName = 5;
+  string itemName = 6;
   // 点位id
-  string pointId = 6;
+  string pointId = 7;
   // 触发时间
-  string triggerTime = 7;
-  // 执行结果：1-成功，2-失败，3-延期
-  int32 execResult = 8;
+  string triggerTime = 8;
+  // 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，running-业务正在执行
+  string execResult = 9;
   // 结果描述
-  string message = 9;
+  string message = 10;
 }
 
 // 分页获取计划触发日志列表请求

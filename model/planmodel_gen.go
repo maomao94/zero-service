@@ -69,8 +69,6 @@ type (
 		StartTime        time.Time      `db:"start_time"`        // 规则生效开始时间
 		EndTime          time.Time      `db:"end_time"`          // 规则生效结束时间
 		Status           int64          `db:"status"`            // 状态：0-禁用，1-启用，2-已终止，3-暂停
-		IsTerminated     int64          `db:"is_terminated"`     // 是否已终止：0-未终止，1-已终止
-		IsPaused         int64          `db:"is_paused"`         // 是否已暂停：0-未暂停，1-已暂停
 		TerminatedTime   sql.NullTime   `db:"terminated_time"`   // 终止时间
 		TerminatedReason sql.NullString `db:"terminated_reason"` // 终止原因
 		PausedTime       sql.NullTime   `db:"paused_time"`       // 暂停时间

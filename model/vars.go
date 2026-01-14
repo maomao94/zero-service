@@ -47,6 +47,42 @@ var defaultAutoFields = []string{
 	"update_at", "update_time", "updated_at",
 }
 
+// ============================
+// 计划状态枚举
+// ============================
+const (
+	PlanStatusDisabled   int = 0 // 计划禁用
+	PlanStatusEnabled    int = 1 // 计划启用，可调度
+	PlanStatusPaused     int = 2 // 计划暂停（不触发计划项）
+	PlanStatusTerminated int = 3 // 计划终止（人工/策略终止）
+)
+
+// ============================
+// 执行项调度状态枚举
+// ============================
+const (
+	StatusWaiting int = 0   // 初始等待调度，可扫表触发
+	StatusDelayed int = 10  // 延期等待（业务失败重试或业务延期），可扫表触发
+	StatusRunning int = 100 // 已下发，等待业务回调，扫表时需判断超时
+
+	// 暂停态
+	StatusPaused int = 150 // 执行项暂停（不扫表、不触发）
+
+	// 终态
+	StatusCompleted  int = 200 // 执行完成终态，不再触发
+	StatusTerminated int = 300 // 人工/策略/超过重试次数终止，终态
+)
+
+// ============================
+// 执行业务结果枚举
+// ============================
+const (
+	ResultCompleted string = "completed" // 业务执行完成
+	ResultFailed    string = "failed"    // 业务执行失败
+	ResultDelayed   string = "delayed"   // 业务执行延期
+	ResultRunning   string = "runnging"  // 业务正在执行（未回调或部分异步）
+)
+
 func insertColumnsAndPlaceholders(in any, excludeFields []string, pg ...bool) (columns []string, placeholders []string) {
 	v := reflect.ValueOf(in)
 	if v.Kind() == reflect.Ptr {

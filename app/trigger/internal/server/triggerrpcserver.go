@@ -166,6 +166,12 @@ func (s *TriggerRpcServer) TerminatePlanExecItem(ctx context.Context, in *trigge
 	return l.TerminatePlanExecItem(in)
 }
 
+// 回调计划项
+func (s *TriggerRpcServer) CallbackPlanExecItem(ctx context.Context, in *trigger.CallbackPlanExecItemReq) (*trigger.CallbackPlanExecItemRes, error) {
+	l := logic.NewCallbackPlanExecItemLogic(ctx, s.svcCtx)
+	return l.CallbackPlanExecItem(in)
+}
+
 // 获取计划详情
 func (s *TriggerRpcServer) GetPlan(ctx context.Context, in *trigger.GetPlanReq) (*trigger.GetPlanRes, error) {
 	l := logic.NewGetPlanLogic(ctx, s.svcCtx)

@@ -77,11 +77,12 @@ func (l *ListPlanExecLogsLogic) ListPlanExecLogs(in *trigger.ListPlanExecLogsReq
 			PlanPk:      log.PlanPk,
 			PlanId:      log.PlanId,
 			PlanName:    log.PlanName.String,
+			ItemPk:      log.ItemPk,
 			ItemId:      log.ItemId,
 			ItemName:    log.ItemName.String,
 			PointId:     log.PointId.String,
 			TriggerTime: carbon.CreateFromStdTime(log.TriggerTime).ToDateTimeString(),
-			ExecResult:  int32(log.ExecResult),
+			ExecResult:  log.ExecResult.String,
 			Message:     log.Message.String,
 		}
 

@@ -8,6 +8,7 @@ import (
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/tool"
+	"zero-service/model"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -44,16 +45,14 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 		return nil, err
 	}
 
-	if plan.Status == 2 {
+	if plan.Status == int64(model.PlanStatusTerminated) {
 		return &trigger.TerminatePlanRes{}, nil
 	}
 
 	// 执行事务
 	err = l.svcCtx.PlanModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
 		// 更新计划状态为已终止
-		plan.Status = 2 // 2-已终止
-		plan.IsTerminated = 1
-		plan.IsPaused = 0
+		plan.Status = int64(model.PlanStatusTerminated) // 终止
 		plan.TerminatedTime = sql.NullTime{Time: time.Now(), Valid: true}
 		plan.TerminatedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
 		plan.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}
@@ -65,22 +64,18 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 		}
 
 		builder := l.svcCtx.PlanExecItemModel.UpdateBuilder().
-			Set("status", 5).
-			Set("is_terminated", 1).
-			Set("is_paused", 0).
+			Set("status", int64(model.StatusTerminated)).
 			Set("terminated_time", time.Now()).
 			Set("terminated_reason", sql.NullString{String: in.Reason, Valid: in.Reason != ""}).
 			Set("update_user", sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}).
 			Where("plan_id = ?", in.PlanId).
-			Where("status != ?", 2).
-			Where("is_terminated = ?", 0).
-			Where("status != ?", 5)
+			Where("status != ?", int64(model.StatusCompleted)).
+			Where("status != ?", int64(model.StatusTerminated))
 
 		_, transErr = l.svcCtx.PlanExecItemModel.UpdateWithBuilder(ctx, tx, builder)
 		if transErr != nil {
 			return transErr
 		}
-
 		return nil
 	})
 

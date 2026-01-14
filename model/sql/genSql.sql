@@ -42,9 +42,7 @@ CREATE TABLE IF NOT EXISTS `plan` (
     `recurrence_rule` JSON NOT NULL COMMENT '重复规则，JSON格式存储',
     `start_time` DATETIME(6) NOT NULL COMMENT '规则生效开始时间',
     `end_time` DATETIME(6) NOT NULL COMMENT '规则生效结束时间',
-    `status` TINYINT NOT NULL DEFAULT 0 COMMENT '状态：0-禁用，1-启用，2-已终止，3-暂停',
-    `is_terminated` TINYINT NOT NULL DEFAULT 0 COMMENT '是否已终止：0-未终止，1-已终止',
-    `is_paused` TINYINT NOT NULL DEFAULT 0 COMMENT '是否已暂停：0-未暂停，1-已暂停',
+    `status` TINYINT NOT NULL DEFAULT 0 COMMENT '状态：0-禁用，1-启用，2-暂停，3-终止',
     `terminated_time` DATETIME(6) NULL DEFAULT NULL COMMENT '终止时间',
     `terminated_reason` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '终止原因',
     `paused_time` DATETIME(6) NULL DEFAULT NULL COMMENT '暂停时间',
@@ -57,9 +55,7 @@ CREATE TABLE IF NOT EXISTS `plan` (
     KEY `idx_status` (`status`),
     KEY `idx_start_time` (`start_time`),
     KEY `idx_end_time` (`end_time`),
-    KEY `idx_is_terminated` (`is_terminated`),
     KEY `idx_terminated_time` (`terminated_time`),
-    KEY `idx_is_paused` (`is_paused`),
     KEY `idx_paused_time` (`paused_time`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='计划任务表';
 
@@ -85,20 +81,18 @@ CREATE TABLE IF NOT EXISTS `plan_exec_item` (
     `next_trigger_time` DATETIME(6) NOT NULL COMMENT '下次触发时间（扫表核心字段）',
     `last_trigger_time` DATETIME(6) NULL DEFAULT NULL COMMENT '上次触发时间',
     `trigger_count` INT NOT NULL DEFAULT 0 COMMENT '触发次数',
-    `status` TINYINT NOT NULL DEFAULT 0 COMMENT '状态：0-待执行，1-执行中，2-完成，3-失败，4-延期，5-已终止，6-暂停',
-    `last_result` TEXT NOT NULL COMMENT '上次执行结果',
+    `status` TINYINT NOT NULL DEFAULT 0 COMMENT '状态：0-等待调度，10-延期等待，100-执行中，150-暂停，200-完成，300-终止',
+    `last_result` varchar(256) NOT NULL COMMENT '上次执行结果',
     `last_msg` TEXT NOT NULL COMMENT '上次执行消息',
-    `is_terminated` TINYINT NOT NULL DEFAULT 0 COMMENT '是否已终止：0-未终止，1-已终止',
     `terminated_time` DATETIME(6) NULL DEFAULT NULL COMMENT '终止时间',
     `terminated_reason` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '终止原因',
-    `is_paused` TINYINT NOT NULL DEFAULT 0 COMMENT '是否已暂停：0-未暂停，1-已暂停',
     `paused_time` DATETIME(6) NULL DEFAULT NULL COMMENT '暂停时间',
     `paused_reason` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '暂停原因',
     PRIMARY KEY (`id`),
     KEY `idx_plan_pk_item_id` (`plan_pk`, `item_id`),
     KEY `idx_plan_id_item_id` (`plan_id`, `item_id`),
     KEY `idx_point_id` (`point_id`),
-    KEY `idx_core_scan` (`next_trigger_time`, `status`, `is_terminated`, `is_paused`, `del_state`)
+    KEY `idx_core_scan` (`next_trigger_time`, `status`, `del_state`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='计划执行项表';
 
 -- 计划任务执行日志表
@@ -120,7 +114,7 @@ CREATE TABLE IF NOT EXISTS `plan_exec_log` (
     `point_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '点位id',
     `trigger_time` DATETIME(6) NOT NULL COMMENT '触发时间',
     `trace_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '唯一追踪ID',
-    `exec_result` TINYINT NOT NULL DEFAULT 0 COMMENT '执行结果：1-成功，2-失败，3-延期',
+    `exec_result` varchar(256) NOT NULL DEFAULT '' COMMENT '执行结果',
     `message` TEXT NOT NULL COMMENT '结果描述',
     PRIMARY KEY (`id`),
     KEY `idx_plan_pk` (`plan_pk`),

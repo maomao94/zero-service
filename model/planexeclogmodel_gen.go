@@ -69,7 +69,7 @@ type (
 		PointId     sql.NullString `db:"point_id"`     // 点位id
 		TriggerTime time.Time      `db:"trigger_time"` // 触发时间
 		TraceId     sql.NullString `db:"trace_id"`     // 唯一追踪ID
-		ExecResult  int64          `db:"exec_result"`  // 执行结果：1-成功，2-失败，3-延期
+		ExecResult  sql.NullString `db:"exec_result"`  // 执行结果：1-成功，2-失败，3-延期
 		Message     sql.NullString `db:"message"`      // 结果描述
 	}
 )

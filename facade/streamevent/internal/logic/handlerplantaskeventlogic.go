@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"zero-service/model"
 
 	"zero-service/facade/streamevent/internal/svc"
 	"zero-service/facade/streamevent/streamevent"
@@ -27,7 +28,7 @@ func NewHandlerPlanTaskEventLogic(ctx context.Context, svcCtx *svc.ServiceContex
 // 计划任务事件处理
 func (l *HandlerPlanTaskEventLogic) HandlerPlanTaskEvent(in *streamevent.HandlerPlanTaskEventReq) (*streamevent.HandlerPlanTaskEventRes, error) {
 	return &streamevent.HandlerPlanTaskEventRes{
-		ExecResult: 3,
+		ExecResult: model.ResultDelayed,
 		Message:    "延期",
 		DelayConfig: &streamevent.PbDelayConfig{
 			NextTriggerTime: carbon.Now().AddHours(1).ToDateTimeString(),

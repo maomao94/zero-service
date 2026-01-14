@@ -72,13 +72,11 @@ type (
 		NextTriggerTime  time.Time      `db:"next_trigger_time"` // 下次触发时间（扫表核心字段）
 		LastTriggerTime  sql.NullTime   `db:"last_trigger_time"` // 上次触发时间
 		TriggerCount     int64          `db:"trigger_count"`     // 触发次数
-		Status           int64          `db:"status"`            // 状态：0-待执行，1-执行中，2-完成，3-失败，4-延期，5-已终止，6-暂停
+		Status           int64          `db:"status"`            // 状态：0-等待调度，10-延期等待，100-执行中，150-暂停，200-完成，300-终止
 		LastResult       sql.NullString `db:"last_result"`       // 上次执行结果
 		LastMsg          sql.NullString `db:"last_msg"`          // 上次执行消息
-		IsTerminated     int64          `db:"is_terminated"`     // 是否已终止：0-未终止，1-已终止
 		TerminatedTime   sql.NullTime   `db:"terminated_time"`   // 终止时间
 		TerminatedReason sql.NullString `db:"terminated_reason"` // 终止原因
-		IsPaused         int64          `db:"is_paused"`         // 是否已暂停：0-未暂停，1-已暂停
 		PausedTime       sql.NullTime   `db:"paused_time"`       // 暂停时间
 		PausedReason     sql.NullString `db:"paused_reason"`     // 暂停原因
 	}

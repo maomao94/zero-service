@@ -105,8 +105,6 @@ CREATE TABLE IF NOT EXISTS plan (
     start_time TIMESTAMP NOT NULL, 
     end_time TIMESTAMP NOT NULL, 
     status SMALLINT NOT NULL DEFAULT 0, 
-    is_terminated SMALLINT NOT NULL DEFAULT 0, 
-    is_paused SMALLINT NOT NULL DEFAULT 0, 
     terminated_time TIMESTAMP NULL, 
     terminated_reason VARCHAR(256) DEFAULT '',
     paused_time TIMESTAMP NULL, 
@@ -134,9 +132,7 @@ COMMENT ON COLUMN plan.group_id IS '计划组ID,用于分组管理计划任务';
 COMMENT ON COLUMN plan.recurrence_rule IS '重复规则，JSON格式存储';
 COMMENT ON COLUMN plan.start_time IS '规则生效开始时间';
 COMMENT ON COLUMN plan.end_time IS '规则生效结束时间';
-COMMENT ON COLUMN plan.status IS '状态：0-禁用，1-启用，2-已终止，3-暂停';
-COMMENT ON COLUMN plan.is_terminated IS '是否已终止：0-未终止，1-已终止';
-COMMENT ON COLUMN plan.is_paused IS '是否已暂停：0-未暂停，1-已暂停';
+COMMENT ON COLUMN plan.status IS '状态：0-禁用，1-启用，2-暂停，3-终止';
 COMMENT ON COLUMN plan.terminated_time IS '终止时间';
 COMMENT ON COLUMN plan.terminated_reason IS '终止原因';
 COMMENT ON COLUMN plan.paused_time IS '暂停时间';
@@ -149,9 +145,7 @@ CREATE INDEX idx_plan_table_group_id ON plan (group_id);
 CREATE INDEX idx_plan_table_status ON plan (status);
 CREATE INDEX idx_plan_table_start_time ON plan (start_time);
 CREATE INDEX idx_plan_table_end_time ON plan (end_time);
-CREATE INDEX idx_plan_table_is_terminated ON plan (is_terminated);
 CREATE INDEX idx_plan_table_terminated_time ON plan (terminated_time);
-CREATE INDEX idx_plan_table_is_paused ON plan (is_paused);
 CREATE INDEX idx_plan_table_paused_time ON plan (paused_time);
 
 -- 为 plan 表创建触发器
@@ -190,12 +184,10 @@ CREATE TABLE IF NOT EXISTS plan_exec_item (
     last_trigger_time TIMESTAMP NULL, 
     trigger_count INT NOT NULL DEFAULT 0, 
     status SMALLINT NOT NULL DEFAULT 0, 
-    last_result TEXT DEFAULT '',
+    last_result VARCHAR(256) DEFAULT '',
     last_msg TEXT DEFAULT '',
-    is_terminated SMALLINT NOT NULL DEFAULT 0, 
     terminated_time TIMESTAMP NULL, 
     terminated_reason VARCHAR(256) DEFAULT '',
-    is_paused SMALLINT NOT NULL DEFAULT 0, 
     paused_time TIMESTAMP NULL, 
     paused_reason VARCHAR(256) DEFAULT ''
 );
@@ -224,13 +216,11 @@ COMMENT ON COLUMN plan_exec_item.plan_trigger_time IS '计划触发时间';
 COMMENT ON COLUMN plan_exec_item.next_trigger_time IS '下次触发时间（扫表核心字段）';
 COMMENT ON COLUMN plan_exec_item.last_trigger_time IS '上次触发时间';
 COMMENT ON COLUMN plan_exec_item.trigger_count IS '触发次数';
-COMMENT ON COLUMN plan_exec_item.status IS '状态：0-待执行，1-执行中，2-完成，3-失败，4-延期，5-已终止，6-暂停';
+COMMENT ON COLUMN plan_exec_item.status IS '状态：0-初始等待调度，10-延期等待，100-执行中，150-暂停，200-执行成功，300-已终止';
 COMMENT ON COLUMN plan_exec_item.last_result IS '上次执行结果';
 COMMENT ON COLUMN plan_exec_item.last_msg IS '上次执行消息';
-COMMENT ON COLUMN plan_exec_item.is_terminated IS '是否已终止：0-未终止，1-已终止';
 COMMENT ON COLUMN plan_exec_item.terminated_time IS '终止时间';
 COMMENT ON COLUMN plan_exec_item.terminated_reason IS '终止原因';
-COMMENT ON COLUMN plan_exec_item.is_paused IS '是否已暂停：0-未暂停，1-已暂停';
 COMMENT ON COLUMN plan_exec_item.paused_time IS '暂停时间';
 COMMENT ON COLUMN plan_exec_item.paused_reason IS '暂停原因';
 
@@ -238,7 +228,7 @@ COMMENT ON COLUMN plan_exec_item.paused_reason IS '暂停原因';
 CREATE INDEX idx_plan_exec_item_plan_pk_item_id ON plan_exec_item (plan_pk, item_id);
 CREATE INDEX idx_plan_exec_item_plan_id_item_id ON plan_exec_item (plan_id, item_id);
 CREATE INDEX idx_plan_exec_item_point_id ON plan_exec_item (point_id);
-CREATE INDEX idx_plan_exec_item_core_scan ON plan_exec_item (next_trigger_time, status, is_terminated, is_paused, del_state);
+CREATE INDEX idx_plan_exec_item_core_scan ON plan_exec_item (next_trigger_time, status, del_state);
 
 -- 为 plan_exec_item 表创建触发器
 CREATE TRIGGER "trigger_insert_modified_time"
@@ -272,7 +262,7 @@ CREATE TABLE IF NOT EXISTS plan_exec_log (
     point_id VARCHAR(64) DEFAULT '',
     trigger_time TIMESTAMP NOT NULL, 
     trace_id VARCHAR(64) DEFAULT '',
-    exec_result SMALLINT NOT NULL DEFAULT 0, 
+    exec_result VARCHAR(256) DEFAULT '',
     message TEXT DEFAULT ''
 );
 
@@ -297,7 +287,7 @@ COMMENT ON COLUMN plan_exec_log.item_name IS '执行项名称';
 COMMENT ON COLUMN plan_exec_log.point_id IS '点位id';
 COMMENT ON COLUMN plan_exec_log.trigger_time IS '触发时间';
 COMMENT ON COLUMN plan_exec_log.trace_id IS '唯一追踪ID';
-COMMENT ON COLUMN plan_exec_log.exec_result IS '执行结果：1-成功，2-失败，3-延期';
+COMMENT ON COLUMN plan_exec_log.exec_result IS '执行结果';
 COMMENT ON COLUMN plan_exec_log.message IS '结果描述';
 
 -- 为 plan_exec_log 表创建索引

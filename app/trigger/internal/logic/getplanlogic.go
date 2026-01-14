@@ -52,26 +52,24 @@ func (l *GetPlanLogic) GetPlan(in *trigger.GetPlanReq) (*trigger.GetPlanRes, err
 
 	// 构建响应
 	pbPlan := &trigger.PbPlan{
-		PlanId:       plan.PlanId,
-		PlanName:     plan.PlanName.String,
-		Type:         plan.Type.String,
-		Description:  plan.Description.String,
-		StartTime:    carbon.CreateFromStdTime(plan.StartTime).ToDateTimeString(),
-		EndTime:      carbon.CreateFromStdTime(plan.EndTime).ToDateTimeString(),
-		Rule:         &pbRule,
-		Status:       int32(plan.Status),
-		IsTerminated: plan.IsTerminated == 1,
-		IsPaused:     plan.IsPaused == 1,
+		PlanId:      plan.PlanId,
+		PlanName:    plan.PlanName.String,
+		Type:        plan.Type.String,
+		Description: plan.Description.String,
+		StartTime:   carbon.CreateFromStdTime(plan.StartTime).ToDateTimeString(),
+		EndTime:     carbon.CreateFromStdTime(plan.EndTime).ToDateTimeString(),
+		Rule:        &pbRule,
+		Status:      int32(plan.Status),
 	}
 
 	// 设置终止时间和原因
-	if plan.IsTerminated == 1 && plan.TerminatedTime.Valid {
+	if plan.TerminatedTime.Valid {
 		pbPlan.TerminatedTime = carbon.CreateFromStdTime(plan.TerminatedTime.Time).ToDateTimeString()
 		pbPlan.TerminatedReason = plan.TerminatedReason.String
 	}
 
 	// 设置暂停时间和原因
-	if plan.IsPaused == 1 && plan.PausedTime.Valid {
+	if plan.PausedTime.Valid {
 		pbPlan.PausedTime = carbon.CreateFromStdTime(plan.PausedTime.Time).ToDateTimeString()
 		pbPlan.PausedReason = plan.PausedReason.String
 	}
