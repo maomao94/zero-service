@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS `plan` (
     `terminated_reason` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '终止原因',
     `paused_time` DATETIME(6) NULL DEFAULT NULL COMMENT '暂停时间',
     `paused_reason` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '暂停原因',
+    `completed_time` DATETIME(6) NULL COMMENT '完成时间',
     `description` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '备注信息',
     `ext_1` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '扩展字段1',
     `ext_2` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '扩展字段2',
@@ -76,6 +77,7 @@ CREATE TABLE IF NOT EXISTS `plan_exec_item` (
     `update_user` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '更新人',
     `plan_pk` BIGINT NOT NULL DEFAULT 0 COMMENT '关联的计划主键ID',
     `plan_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '关联的计划ID',
+    `batch_pk` BIGINT NOT NULL DEFAULT 0 COMMENT '批主键ID',
     `batch_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '批ID',
     `item_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '执行项ID',
     `item_name` VARCHAR(128) NOT NULL DEFAULT '' COMMENT '执行项名称',
@@ -94,17 +96,20 @@ CREATE TABLE IF NOT EXISTS `plan_exec_item` (
     `terminated_reason` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '终止原因',
     `paused_time` DATETIME(6) NULL DEFAULT NULL COMMENT '暂停时间',
     `paused_reason` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '暂停原因',
+    `completed_time` DATETIME(6) NULL COMMENT '完成时间',
     `ext_1` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '扩展字段1',
     `ext_2` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '扩展字段2',
     `ext_3` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '扩展字段3',
     `ext_4` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '扩展字段4',
     `ext_5` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '扩展字段5',
     PRIMARY KEY (`id`),
+    KEY `idx_batch_pk` (`batch_pk`),
     KEY `idx_batch_id` (`batch_id`),
     KEY `idx_plan_pk_item_id` (`plan_pk`, `item_id`),
     KEY `idx_plan_id_item_id` (`plan_id`, `item_id`),
     KEY `idx_point_id` (`point_id`),
-    KEY `idx_core_scan` (`next_trigger_time`, `status`, `del_state`)
+    KEY `idx_status` (`status`),
+    KEY `idx_core_scan` (`del_state`, `next_trigger_time`, `status`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='计划执行项表';
 
 -- 计划批次表
@@ -121,6 +126,8 @@ CREATE TABLE IF NOT EXISTS `plan_batch` (
     `plan_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '关联的计划ID',
     `batch_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '批ID',
     `batch_name` VARCHAR(128) NOT NULL DEFAULT '' COMMENT '批次名称',
+    `status` TINYINT NOT NULL DEFAULT 0 COMMENT '状态：0-禁用，1-启用，2-暂停，3-终止',
+    `completed_time` DATETIME(6) NULL COMMENT '完成时间',
     `ext_1` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '扩展字段1',
     `ext_2` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '扩展字段2',
     `ext_3` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '扩展字段3',
@@ -130,6 +137,7 @@ CREATE TABLE IF NOT EXISTS `plan_batch` (
     UNIQUE KEY `uk_batch_id` (`batch_id`),
     KEY `idx_plan_id` (`plan_id`),
     KEY `idx_plan_pk` (`plan_pk`),
+    KEY `idx_status` (`status`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='计划批次表';
 
 -- 计划任务执行日志表
@@ -145,6 +153,7 @@ CREATE TABLE IF NOT EXISTS `plan_exec_log` (
     `plan_pk` BIGINT NOT NULL DEFAULT 0 COMMENT '关联的计划主键ID',
     `plan_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '计划任务ID',
     `plan_name` VARCHAR(128) NOT NULL DEFAULT '' COMMENT '计划任务名称',
+    `batch_pk` BIGINT NOT NULL DEFAULT 0 COMMENT '批主键ID',
     `batch_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '批ID',
     `item_pk` BIGINT NOT NULL DEFAULT 0 COMMENT '关联的执行项主键ID',
     `item_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '执行项ID',
@@ -156,8 +165,11 @@ CREATE TABLE IF NOT EXISTS `plan_exec_log` (
     `message` TEXT NOT NULL COMMENT '结果描述',
     PRIMARY KEY (`id`),
     KEY `idx_plan_pk` (`plan_pk`),
-    KEY `idx_batch_id` (`batch_id`),
     KEY `idx_plan_id` (`plan_id`),
+    KEY `idx_batch_pk` (`batch_pk`),
+    KEY `idx_batch_id` (`batch_id`),
+    KEY `idx_point_id` (`point_id`),
+    KEY `idx_item_pk` (`item_pk`),
     KEY `idx_item_id` (`item_id`),
     KEY `idx_trigger_time` (`trigger_time`),
     KEY `idx_trace_id` (`trace_id`),

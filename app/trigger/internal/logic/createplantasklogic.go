@@ -96,7 +96,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	if len(dates) == 0 {
 		return nil, fmt.Errorf("计划任务时间段内没有触发时间")
 	}
-	if len(dates) > 5000 {
+	if len(dates)*len(in.ExecItems) > 5000 {
 		return nil, fmt.Errorf("计划任务时间段内调度项过多")
 	}
 	rule, _ := jsonx.Marshal(in.Rule)
@@ -124,6 +124,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		Ext4:             sql.NullString{String: in.Ext4, Valid: in.Ext4 != ""},
 		Ext5:             sql.NullString{String: in.Ext5, Valid: in.Ext5 != ""},
 	}
+	var batchCnt int64 = 0
 	var execCnt int64 = 0
 	err = l.svcCtx.PlanModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
 		result, transErr := l.svcCtx.PlanModel.Insert(ctx, tx, insertPlan)
@@ -133,12 +134,36 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		insertPlan.Id, _ = result.LastInsertId()
 		for _, d := range dates {
 			batchId, _ := tool.SimpleUUID()
+			dStr := carbon.NewCarbon(d).ToDateTimeString()
+			batchName := fmt.Sprintf("%s-%s", in.PlanName, dStr)
+			batch := model.PlanBatch{
+				CreateUser:    sql.NullString{String: currentUserId, Valid: currentUserId != ""},
+				UpdateUser:    sql.NullString{String: currentUserId, Valid: currentUserId != ""},
+				PlanPk:        insertPlan.Id,
+				PlanId:        in.PlanId,
+				BatchId:       batchId,
+				BatchName:     sql.NullString{String: batchName, Valid: true},
+				Status:        int64(model.PlanStatusEnabled),
+				CompletedTime: sql.NullTime{},
+				Ext1:          sql.NullString{String: in.Ext1, Valid: in.Ext1 != ""},
+				Ext2:          sql.NullString{String: in.Ext2, Valid: in.Ext2 != ""},
+				Ext3:          sql.NullString{String: in.Ext3, Valid: in.Ext3 != ""},
+				Ext4:          sql.NullString{String: in.Ext4, Valid: in.Ext4 != ""},
+				Ext5:          sql.NullString{String: in.Ext5, Valid: in.Ext5 != ""},
+			}
+			batchResult, err := l.svcCtx.PlanBatchModel.Insert(ctx, tx, &batch)
+			if err != nil {
+				return err
+			}
+			batchPk, _ := batchResult.LastInsertId()
+			batchCnt++
 			for _, item := range in.ExecItems {
 				planItem := model.PlanExecItem{
 					CreateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},
 					UpdateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},
 					PlanPk:           insertPlan.Id,
 					PlanId:           in.PlanId,
+					BatchPk:          batchPk,
 					BatchId:          batchId,
 					ItemId:           item.ItemId,
 					ItemName:         sql.NullString{String: item.ItemName, Valid: item.ItemName != ""},
@@ -157,6 +182,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 					TerminatedReason: sql.NullString{},
 					PausedTime:       sql.NullTime{},
 					PausedReason:     sql.NullString{},
+					CompletedTime:    sql.NullTime{},
 					Ext1:             sql.NullString{String: item.Ext1, Valid: item.Ext1 != ""},
 					Ext2:             sql.NullString{String: item.Ext2, Valid: item.Ext2 != ""},
 					Ext3:             sql.NullString{String: item.Ext3, Valid: item.Ext3 != ""},
@@ -176,9 +202,10 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		return nil, err
 	}
 	return &trigger.CreatePlanTaskRes{
-		Id:      insertPlan.Id,
-		PlanId:  insertPlan.PlanId,
-		ExecCnt: execCnt,
+		Id:       insertPlan.Id,
+		PlanId:   insertPlan.PlanId,
+		BatchCnt: batchCnt,
+		ExecCnt:  execCnt,
 	}, nil
 }
 

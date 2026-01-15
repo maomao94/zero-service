@@ -51,6 +51,7 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 		Id:               execItem.Id,
 		PlanPk:           execItem.PlanPk,
 		PlanId:           execItem.PlanId,
+		BatchPk:          execItem.BatchPk,
 		BatchId:          execItem.BatchId,
 		ItemId:           execItem.ItemId,
 		ItemName:         execItem.ItemName.String,

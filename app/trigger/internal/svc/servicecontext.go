@@ -23,6 +23,7 @@ type ServiceContext struct {
 	Httpc             httpc.Service
 	ConnMap           *collection.SafeMap
 	PlanModel         model.PlanModel
+	PlanBatchModel    model.PlanBatchModel
 	PlanExecItemModel model.PlanExecItemModel
 	PlanExecLogModel  model.PlanExecLogModel
 }
@@ -48,6 +49,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Httpc:             httpc.NewService("httpc"),
 		ConnMap:           collection.NewSafeMap(),
 		PlanModel:         model.NewPlanModelWithDBType(dbConn, model.DatabaseType(dbType)),
+		PlanBatchModel:    model.NewPlanBatchModelWithDBType(dbConn, model.DatabaseType(dbType)),
 		PlanExecItemModel: model.NewPlanExecItemModelWithDBType(dbConn, model.DatabaseType(dbType)),
 		PlanExecLogModel:  model.NewPlanExecLogModelWithDBType(dbConn, model.DatabaseType(dbType)),
 	}

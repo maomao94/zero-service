@@ -26,8 +26,8 @@ type (
 		UpdateStatusToRunning(ctx context.Context, id int64) error
 		// 更新执行项状态为已完成
 		UpdateStatusToCompleted(ctx context.Context, id int64, lastMsg string) error
-		// 更新执行项状态为回调
-		UpdateStatusToCallback(ctx context.Context, id int64, lastResult, lastMsg string) error
+		// 更新执行项状态为失败延期
+		UpdateStatusToFail(ctx context.Context, id int64, lastResult, lastMsg string) error
 		// 更新执行项状态为延期
 		UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, lastMsg string, nextTriggerTime string) error
 		// 通用SQL查询方法
@@ -77,11 +77,15 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 	selectBuilder := squirrel.Select(
 		"pei.id", "pei.plan_pk", "pei.plan_id", "pei.item_id", "pei.item_name", "pei.point_id", "pei.next_trigger_time", "pei.service_addr", "pei.payload", "pei.plan_trigger_time", "pei.request_timeout",
 	).From(m.table+" as pei").
-		Join("plan p ON p.plan_id = pei.plan_id").
+		Join("plan p ON p.id = pei.plan_pk").
+		Join("plan_batch pb ON pb.id = pei.batch_pk").
+		Where("pei.del_state = ?", 0).
+		Where("pei.status IN (?, ?)", StatusWaiting, StatusDelayed).
 		Where("pei.next_trigger_time <= ?", currentTimeStr).
 		Where("p.del_state = ?", 0).
 		Where("p.status = ?", PlanStatusEnabled).
-		Where("pei.status IN (?, ?, ?)", StatusWaiting, StatusDelayed, StatusRunning)
+		Where("pb.del_state = ?", 0).
+		Where("pb.status = ?", PlanStatusEnabled)
 	if m.dbType == DatabaseTypePostgreSQL {
 		selectBuilder = selectBuilder.OrderBy("RANDOM()")
 	} else {
@@ -107,7 +111,7 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 			Set("last_trigger_time", currentTimeStr).
 			Where("id = ?", execItem.Id).
 			Where("next_trigger_time <= ?", currentTimeStr).
-			Where("status IN (?, ?, ?)", StatusWaiting, StatusDelayed, StatusRunning)
+			Where("status IN (?, ?)", StatusWaiting, StatusDelayed)
 		if m.dbType == DatabaseTypePostgreSQL {
 			updateBuilder = updateBuilder.PlaceholderFormat(squirrel.Dollar)
 		}
@@ -132,7 +136,7 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 func (m *customPlanExecItemModel) UpdateStatusToRunning(ctx context.Context, id int64) error {
 	updateBuilder := squirrel.Update(m.table).
 		Set("status", StatusRunning).
-		Set("last_result", ResultRunning).
+		Set("last_result", ResultOngoing).
 		Set("last_trigger_time", time.Now()).
 		Where("id = ?", id)
 	if m.dbType == DatabaseTypePostgreSQL {
@@ -166,7 +170,7 @@ func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, i
 	return err
 }
 
-func (m *customPlanExecItemModel) UpdateStatusToCallback(ctx context.Context, id int64, lastResult, lastMsg string) error {
+func (m *customPlanExecItemModel) UpdateStatusToFail(ctx context.Context, id int64, lastResult, lastMsg string) error {
 	currentTime := time.Now()
 	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
 	selectBuilder := squirrel.Select("trigger_count").From(m.table).Where("id = ?", id)
@@ -192,7 +196,7 @@ func (m *customPlanExecItemModel) UpdateStatusToCallback(ctx context.Context, id
 	if isExceeded {
 		updateBuilder = squirrel.Update(m.table).
 			Set("status", StatusTerminated).
-			Set("last_result", ResultRunning).
+			Set("last_result", ResultOngoing).
 			Set("last_msg", lastMsg).
 			Set("next_trigger_time", nextTriggerTimeStr).
 			Set("last_trigger_time", currentTimeStr).

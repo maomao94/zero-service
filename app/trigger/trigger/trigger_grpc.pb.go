@@ -52,7 +52,6 @@ const (
 	TriggerRpc_ListPlanExecItems_FullMethodName       = "/trigger.TriggerRpc/ListPlanExecItems"
 	TriggerRpc_GetPlanExecLog_FullMethodName          = "/trigger.TriggerRpc/GetPlanExecLog"
 	TriggerRpc_ListPlanExecLogs_FullMethodName        = "/trigger.TriggerRpc/ListPlanExecLogs"
-	TriggerRpc_ListPlanExecItemStats_FullMethodName   = "/trigger.TriggerRpc/ListPlanExecItemStats"
 	TriggerRpc_CallbackPlanExecItem_FullMethodName    = "/trigger.TriggerRpc/CallbackPlanExecItem"
 )
 
@@ -125,8 +124,6 @@ type TriggerRpcClient interface {
 	GetPlanExecLog(ctx context.Context, in *GetPlanExecLogReq, opts ...grpc.CallOption) (*GetPlanExecLogRes, error)
 	// 分页获取计划触发日志列表
 	ListPlanExecLogs(ctx context.Context, in *ListPlanExecLogsReq, opts ...grpc.CallOption) (*ListPlanExecLogsRes, error)
-	// 分页获取计划执行项统计
-	ListPlanExecItemStats(ctx context.Context, in *ListPlanExecItemStatsReq, opts ...grpc.CallOption) (*ListPlanExecItemStatsRes, error)
 	// 回调计划执行项
 	CallbackPlanExecItem(ctx context.Context, in *CallbackPlanExecItemReq, opts ...grpc.CallOption) (*CallbackPlanExecItemRes, error)
 }
@@ -469,16 +466,6 @@ func (c *triggerRpcClient) ListPlanExecLogs(ctx context.Context, in *ListPlanExe
 	return out, nil
 }
 
-func (c *triggerRpcClient) ListPlanExecItemStats(ctx context.Context, in *ListPlanExecItemStatsReq, opts ...grpc.CallOption) (*ListPlanExecItemStatsRes, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListPlanExecItemStatsRes)
-	err := c.cc.Invoke(ctx, TriggerRpc_ListPlanExecItemStats_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *triggerRpcClient) CallbackPlanExecItem(ctx context.Context, in *CallbackPlanExecItemReq, opts ...grpc.CallOption) (*CallbackPlanExecItemRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CallbackPlanExecItemRes)
@@ -558,8 +545,6 @@ type TriggerRpcServer interface {
 	GetPlanExecLog(context.Context, *GetPlanExecLogReq) (*GetPlanExecLogRes, error)
 	// 分页获取计划触发日志列表
 	ListPlanExecLogs(context.Context, *ListPlanExecLogsReq) (*ListPlanExecLogsRes, error)
-	// 分页获取计划执行项统计
-	ListPlanExecItemStats(context.Context, *ListPlanExecItemStatsReq) (*ListPlanExecItemStatsRes, error)
 	// 回调计划执行项
 	CallbackPlanExecItem(context.Context, *CallbackPlanExecItemReq) (*CallbackPlanExecItemRes, error)
 	mustEmbedUnimplementedTriggerRpcServer()
@@ -670,9 +655,6 @@ func (UnimplementedTriggerRpcServer) GetPlanExecLog(context.Context, *GetPlanExe
 }
 func (UnimplementedTriggerRpcServer) ListPlanExecLogs(context.Context, *ListPlanExecLogsReq) (*ListPlanExecLogsRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListPlanExecLogs not implemented")
-}
-func (UnimplementedTriggerRpcServer) ListPlanExecItemStats(context.Context, *ListPlanExecItemStatsReq) (*ListPlanExecItemStatsRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListPlanExecItemStats not implemented")
 }
 func (UnimplementedTriggerRpcServer) CallbackPlanExecItem(context.Context, *CallbackPlanExecItemReq) (*CallbackPlanExecItemRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CallbackPlanExecItem not implemented")
@@ -1292,24 +1274,6 @@ func _TriggerRpc_ListPlanExecLogs_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TriggerRpc_ListPlanExecItemStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListPlanExecItemStatsReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TriggerRpcServer).ListPlanExecItemStats(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TriggerRpc_ListPlanExecItemStats_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TriggerRpcServer).ListPlanExecItemStats(ctx, req.(*ListPlanExecItemStatsReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _TriggerRpc_CallbackPlanExecItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CallbackPlanExecItemReq)
 	if err := dec(in); err != nil {
@@ -1466,10 +1430,6 @@ var TriggerRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListPlanExecLogs",
 			Handler:    _TriggerRpc_ListPlanExecLogs_Handler,
-		},
-		{
-			MethodName: "ListPlanExecItemStats",
-			Handler:    _TriggerRpc_ListPlanExecItemStats_Handler,
 		},
 		{
 			MethodName: "CallbackPlanExecItem",

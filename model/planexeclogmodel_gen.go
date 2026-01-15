@@ -60,9 +60,10 @@ type (
 		Version     int64          `db:"version"`      // 版本号（乐观锁）
 		CreateUser  sql.NullString `db:"create_user"`  // 创建人
 		UpdateUser  sql.NullString `db:"update_user"`  // 更新人
-		PlanId      string         `db:"plan_id"`      // 计划任务ID
 		PlanPk      int64          `db:"plan_pk"`      // 关联的计划主键ID
+		PlanId      string         `db:"plan_id"`      // 计划任务ID
 		PlanName    sql.NullString `db:"plan_name"`    // 计划任务名称
+		BatchPk     int64          `db:"batch_pk"`     // 批主键ID
 		BatchId     string         `db:"batch_id"`     // 批ID
 		ItemPk      int64          `db:"item_pk"`      // 关联的执行项主键ID
 		ItemId      string         `db:"item_id"`      // 执行项ID

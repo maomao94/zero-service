@@ -158,7 +158,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 			zrpc.WithDialOption(grpc.WithDefaultCallOptions(grpc.ForceCodec(rawCodec{}))))
 		if err != nil {
 			logx.Errorf("Failed to create gRPC client for %s: %v", grpcServer, err)
-			if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToCallback(ctx, execItem.Id, model.ResultFailed, "Failed to create gRPC client: "+err.Error()); updateErr != nil {
+			if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, "Failed to create gRPC client: "+err.Error()); updateErr != nil {
 				logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
 			}
 			return
@@ -169,7 +169,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	}
 	if v == nil {
 		logx.Errorf("gRPC client is nil for %s", grpcServer)
-		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToCallback(ctx, execItem.Id, model.ResultFailed, "gRPC client is nil"); updateErr != nil {
+		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, "gRPC client is nil"); updateErr != nil {
 			logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
 		}
 		return
@@ -178,45 +178,60 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	cli, ok := v.(*zrpc.RpcClient)
 	if !ok {
 		logx.Errorf("Invalid connection type in ConnMap for %s", grpcServer)
-		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToCallback(ctx, execItem.Id, model.ResultFailed, "Invalid connection type in ConnMap"); updateErr != nil {
+		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, "Invalid connection type in ConnMap"); updateErr != nil {
 			logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
 		}
 		return
 	}
 
+	callPlan := &streamevent.PbPlan{
+		CreateTime:  carbon.CreateFromStdTime(plan.CreateTime).ToDateTimeString(),
+		UpdateTime:  carbon.CreateFromStdTime(plan.UpdateTime).ToDateTimeString(),
+		CreateUser:  plan.CreateUser.String,
+		UpdateUser:  plan.UpdateUser.String,
+		Id:          plan.Id,
+		PlanId:      plan.PlanId,
+		PlanName:    plan.PlanName.String,
+		Type:        plan.Type.String,
+		GroupId:     plan.GroupId.String,
+		Description: plan.Description.String,
+		StartTime:   carbon.CreateFromStdTime(plan.StartTime).ToDateTimeString(),
+		EndTime:     carbon.CreateFromStdTime(plan.EndTime).ToDateTimeString(),
+		Ext1:        plan.Ext1.String,
+		Ext2:        plan.Ext2.String,
+		Ext3:        plan.Ext3.String,
+		Ext4:        plan.Ext4.String,
+		Ext5:        plan.Ext5.String,
+	}
 	req := &streamevent.HandlerPlanTaskEventReq{
-		CreateTime:      carbon.CreateFromStdTime(execItem.CreateTime).ToDateTimeString(),
-		UpdateTime:      carbon.CreateFromStdTime(execItem.UpdateTime).ToDateTimeString(),
-		CreateUser:      execItem.CreateUser.String,
-		UpdateUser:      execItem.UpdateUser.String,
+		Plan:            callPlan,
+		Id:              execItem.Id,
+		PlanPk:          execItem.PlanPk,
 		PlanId:          execItem.PlanId,
-		PlanName:        plan.PlanName.String,
-		Type:            plan.Type.String,
-		GroupId:         plan.GroupId.String,
-		Description:     plan.Description.String,
-		StartTime:       carbon.NewCarbon(plan.StartTime).ToDateTimeString(),
-		EndTime:         carbon.NewCarbon(plan.EndTime).ToDateTimeString(),
-		PlanPk:          plan.Id,
+		BatchPk:         execItem.BatchPk,
 		BatchId:         execItem.BatchId,
 		ItemId:          execItem.ItemId,
 		ItemName:        execItem.ItemName.String,
 		PointId:         execItem.PointId.String,
 		Payload:         execItem.Payload,
 		PlanTriggerTime: carbon.NewCarbon(execItem.PlanTriggerTime).ToDateTimeString(),
+		LastResult:      execItem.LastResult.String,
+		LastMsg:         execItem.LastMsg.String,
 	}
 
 	var respBytes []byte
 	in, err := tool.ToProtoBytes(req)
 	if err != nil {
 		logx.Errorf("Error marshaling request for exec item %d: %v", execItem.Id, err)
-		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToCallback(ctx, execItem.Id, model.ResultFailed, "Error marshaling request: "+err.Error()); updateErr != nil {
+		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, "Error marshaling request: "+err.Error()); updateErr != nil {
 			logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
 		}
 
 		logEntry := &model.PlanExecLog{
-			PlanId:      execItem.PlanId,
 			PlanPk:      plan.Id,
+			PlanId:      execItem.PlanId,
 			PlanName:    plan.PlanName,
+			BatchPk:     execItem.BatchPk,
 			BatchId:     execItem.BatchId,
 			ItemPk:      execItem.Id,
 			ItemId:      execItem.ItemId,
@@ -235,15 +250,16 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	err = cli.Conn().Invoke(ctx, streamevent.StreamEvent_HandlerPlanTaskEvent_FullMethodName, &in, &respBytes)
 	if err != nil {
 		logx.Errorf("gRPC call failed for exec item %d: %v", execItem.Id, err)
-		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToCallback(ctx, execItem.Id, model.ResultFailed, "gRPC call failed: "+err.Error()); updateErr != nil {
+		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, "gRPC call failed: "+err.Error()); updateErr != nil {
 			logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
 		}
 
 		// 记录执行日志
 		logEntry := &model.PlanExecLog{
-			PlanId:      execItem.PlanId,
 			PlanPk:      plan.Id,
+			PlanId:      execItem.PlanId,
 			PlanName:    plan.PlanName,
+			BatchPk:     execItem.BatchPk,
 			BatchId:     execItem.BatchId,
 			ItemPk:      execItem.Id,
 			ItemId:      execItem.ItemId,
@@ -263,15 +279,16 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	err = proto.Unmarshal(respBytes, res)
 	if err != nil {
 		logx.Errorf("Error unmarshaling response for exec item %d: %v", execItem.Id, err)
-		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToCallback(ctx, execItem.Id, model.ResultFailed, "Error unmarshaling response: "+err.Error()); updateErr != nil {
+		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, "Error unmarshaling response: "+err.Error()); updateErr != nil {
 			logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
 		}
 
 		// 记录执行日志
 		logEntry := &model.PlanExecLog{
-			PlanId:      execItem.PlanId,
 			PlanPk:      plan.Id,
+			PlanId:      execItem.PlanId,
 			PlanName:    plan.PlanName,
+			BatchPk:     execItem.BatchPk,
 			BatchId:     execItem.BatchId,
 			ItemPk:      execItem.Id,
 			ItemId:      execItem.ItemId,
@@ -290,8 +307,10 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 
 	// 记录执行日志
 	logEntry := &model.PlanExecLog{
+		PlanPk:      plan.Id,
 		PlanId:      execItem.PlanId,
 		PlanName:    plan.PlanName,
+		BatchPk:     execItem.BatchPk,
 		BatchId:     execItem.BatchId,
 		ItemPk:      execItem.Id,
 		ItemId:      execItem.ItemId,
@@ -311,10 +330,10 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		}
 	case model.ResultFailed: // Failed
 		logx.Infof("gRPC call returned failure for exec item %d: %s", execItem.Id, res.Message)
-		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToCallback(ctx, execItem.Id, model.ResultFailed, res.Message); err != nil {
+		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, res.Message); err != nil {
 			logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, err)
 		}
-	case model.ResultDelayed, model.ResultRunning:
+	case model.ResultDelayed:
 		logx.Infof("gRPC call returned delayed for exec item %d: %s", execItem.Id, res.Message)
 		currentTime := carbon.Now()
 		delayTriggerTime := currentTime.AddMinutes(5).ToDateTimeString()
@@ -349,6 +368,8 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToDelayed(ctx, execItem.Id, res.ExecResult, delayReason, delayTriggerTime); err != nil {
 			logx.Errorf("Error updating plan exec item %d to delayed: %v", execItem.Id, err)
 		}
+	case model.ResultOngoing:
+		logx.Infof("gRPC call returned ongoing for exec item %d: %s", execItem.Id, res.Message)
 	default:
 		logx.Errorf("Unknown execResult %s for exec item %d", res.ExecResult, execItem.Id)
 		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToCompleted(ctx, execItem.Id, res.Message); err != nil {

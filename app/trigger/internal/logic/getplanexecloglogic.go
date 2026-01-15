@@ -52,6 +52,8 @@ func (l *GetPlanExecLogLogic) GetPlanExecLog(in *trigger.GetPlanExecLogReq) (*tr
 		PlanPk:      log.PlanPk,
 		PlanId:      log.PlanId,
 		PlanName:    log.PlanName.String,
+		BatchPk:     log.BatchPk,
+		BatchId:     log.BatchId,
 		ItemPk:      log.ItemPk,
 		ItemId:      log.ItemId,
 		ItemName:    log.ItemName.String,

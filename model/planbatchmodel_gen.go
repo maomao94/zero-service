@@ -16,17 +16,19 @@ import (
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
+var _ planBatchModel = (*defaultPlanBatchModel)(nil)
+
 type (
-	planModel interface {
-		Insert(ctx context.Context, session sqlx.Session, data *Plan) (sql.Result, error)
-		FindOne(ctx context.Context, id int64) (*Plan, error)
-		FindOneByPlanId(ctx context.Context, planId string) (*Plan, error)
-		Update(ctx context.Context, session sqlx.Session, data *Plan) (sql.Result, error)
-		UpdateWithVersion(ctx context.Context, session sqlx.Session, data *Plan) error
+	planBatchModel interface {
+		Insert(ctx context.Context, session sqlx.Session, data *PlanBatch) (sql.Result, error)
+		FindOne(ctx context.Context, id int64) (*PlanBatch, error)
+		FindOneByBatchId(ctx context.Context, batchId string) (*PlanBatch, error)
+		Update(ctx context.Context, session sqlx.Session, data *PlanBatch) (sql.Result, error)
+		UpdateWithVersion(ctx context.Context, session sqlx.Session, data *PlanBatch) error
 		Trans(ctx context.Context, fn func(ctx context.Context, session sqlx.Session) error) error
 		ExecCtx(ctx context.Context, session sqlx.Session, query string, args ...any) (sql.Result, error)
-		SelectWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) ([]*Plan, error)
-		SelectOneWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) (*Plan, error)
+		SelectWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) ([]*PlanBatch, error)
+		SelectOneWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) (*PlanBatch, error)
 		InsertWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.InsertBuilder) (sql.Result, error)
 		UpdateWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.UpdateBuilder) (sql.Result, error)
 		DeleteWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.DeleteBuilder) (sql.Result, error)
@@ -37,70 +39,62 @@ type (
 		DeleteSoft(ctx context.Context, session sqlx.Session, id int64) error
 		FindSum(ctx context.Context, sumBuilder squirrel.SelectBuilder, field string) (float64, error)
 		FindCount(ctx context.Context, countBuilder squirrel.SelectBuilder, field string) (int64, error)
-		FindAll(ctx context.Context, rowBuilder squirrel.SelectBuilder, orderBy ...string) ([]*Plan, error)
-		FindPageListByPage(ctx context.Context, rowBuilder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*Plan, error)
-		FindPageListByPageWithTotal(ctx context.Context, rowBuilder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*Plan, int64, error)
-		FindPageListByIdDESC(ctx context.Context, rowBuilder squirrel.SelectBuilder, preMinId, pageSize int64) ([]*Plan, error)
-		FindPageListByIdASC(ctx context.Context, rowBuilder squirrel.SelectBuilder, preMaxId, pageSize int64) ([]*Plan, error)
+		FindAll(ctx context.Context, rowBuilder squirrel.SelectBuilder, orderBy ...string) ([]*PlanBatch, error)
+		FindPageListByPage(ctx context.Context, rowBuilder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*PlanBatch, error)
+		FindPageListByPageWithTotal(ctx context.Context, rowBuilder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*PlanBatch, int64, error)
+		FindPageListByIdDESC(ctx context.Context, rowBuilder squirrel.SelectBuilder, preMinId, pageSize int64) ([]*PlanBatch, error)
+		FindPageListByIdASC(ctx context.Context, rowBuilder squirrel.SelectBuilder, preMaxId, pageSize int64) ([]*PlanBatch, error)
 		Delete(ctx context.Context, session sqlx.Session, id int64) error
 	}
 
-	defaultPlanModel struct {
-		conn     sqlx.SqlConn
-		table    string
-		dbType   DatabaseType
-		planRows string
+	defaultPlanBatchModel struct {
+		conn          sqlx.SqlConn
+		table         string
+		dbType        DatabaseType
+		planBatchRows string
 	}
 
-	Plan struct {
-		Id               int64          `db:"id"`                // 自增主键ID
-		CreateTime       time.Time      `db:"create_time"`       // 创建时间
-		UpdateTime       time.Time      `db:"update_time"`       // 更新时间
-		DeleteTime       sql.NullTime   `db:"delete_time"`       // 删除时间（软删除标记）
-		DelState         int64          `db:"del_state"`         // 删除状态：0-未删除，1-已删除
-		Version          int64          `db:"version"`           // 版本号（乐观锁）
-		CreateUser       sql.NullString `db:"create_user"`       // 创建人
-		UpdateUser       sql.NullString `db:"update_user"`       // 更新人
-		PlanId           string         `db:"plan_id"`           // 计划唯一标识
-		PlanName         sql.NullString `db:"plan_name"`         // 计划任务名称
-		Type             sql.NullString `db:"type"`              // 任务类型
-		GroupId          sql.NullString `db:"group_id"`          // 计划组ID,用于分组管理计划任务
-		RecurrenceRule   string         `db:"recurrence_rule"`   // 重复规则，JSON格式存储
-		StartTime        time.Time      `db:"start_time"`        // 规则生效开始时间
-		EndTime          time.Time      `db:"end_time"`          // 规则生效结束时间
-		Status           int64          `db:"status"`            // 状态：0-禁用，1-启用，2-已终止，3-暂停
-		TerminatedTime   sql.NullTime   `db:"terminated_time"`   // 终止时间
-		TerminatedReason sql.NullString `db:"terminated_reason"` // 终止原因
-		PausedTime       sql.NullTime   `db:"paused_time"`       // 暂停时间
-		PausedReason     sql.NullString `db:"paused_reason"`     // 暂停原因
-		CompletedTime    sql.NullTime   `db:"completed_time"`    // 完成时间
-		Description      sql.NullString `db:"description"`       // 备注信息
-		Ext1             sql.NullString `db:"ext_1"`             // 扩展字段1
-		Ext2             sql.NullString `db:"ext_2"`             // 扩展字段2
-		Ext3             sql.NullString `db:"ext_3"`             // 扩展字段3
-		Ext4             sql.NullString `db:"ext_4"`             // 扩展字段4
-		Ext5             sql.NullString `db:"ext_5"`             // 扩展字段5
+	PlanBatch struct {
+		Id            int64          `db:"id"`             // 自增主键ID
+		CreateTime    time.Time      `db:"create_time"`    // 创建时间
+		UpdateTime    time.Time      `db:"update_time"`    // 更新时间
+		DeleteTime    sql.NullTime   `db:"delete_time"`    // 删除时间（软删除标记）
+		DelState      int64          `db:"del_state"`      // 删除状态：0-未删除，1-已删除
+		Version       int64          `db:"version"`        // 版本号（乐观锁）
+		CreateUser    sql.NullString `db:"create_user"`    // 创建人
+		UpdateUser    sql.NullString `db:"update_user"`    // 更新人
+		PlanPk        int64          `db:"plan_pk"`        // 关联的计划主键ID
+		PlanId        string         `db:"plan_id"`        // 关联的计划ID
+		BatchId       string         `db:"batch_id"`       // 批ID
+		BatchName     sql.NullString `db:"batch_name"`     // 批次名称
+		Status        int64          `db:"status"`         // 状态：0-禁用，1-启用，2-暂停，3-终止
+		CompletedTime sql.NullTime   `db:"completed_time"` // 完成时间
+		Ext1          sql.NullString `db:"ext_1"`          // 扩展字段1
+		Ext2          sql.NullString `db:"ext_2"`          // 扩展字段2
+		Ext3          sql.NullString `db:"ext_3"`          // 扩展字段3
+		Ext4          sql.NullString `db:"ext_4"`          // 扩展字段4
+		Ext5          sql.NullString `db:"ext_5"`          // 扩展字段5
 	}
 )
 
-func newPlanModel(conn sqlx.SqlConn) *defaultPlanModel {
-	return newPlanModelWithDBType(conn, DatabaseTypeMySQL)
+func newPlanBatchModel(conn sqlx.SqlConn) *defaultPlanBatchModel {
+	return newPlanBatchModelWithDBType(conn, DatabaseTypeMySQL)
 }
 
-func newPlanModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) *defaultPlanModel {
+func newPlanBatchModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) *defaultPlanBatchModel {
 	isPostgreSQL := dbType == DatabaseTypePostgreSQL
-	tableName := "plan"
-	fieldNames := builder.RawFieldNames(&Plan{}, isPostgreSQL)
+	tableName := "plan_batch"
+	fieldNames := builder.RawFieldNames(&PlanBatch{}, isPostgreSQL)
 	rows := strings.Join(fieldNames, ",")
-	return &defaultPlanModel{
-		conn:     conn,
-		table:    tableName,
-		dbType:   dbType,
-		planRows: rows,
+	return &defaultPlanBatchModel{
+		conn:          conn,
+		table:         tableName,
+		dbType:        dbType,
+		planBatchRows: rows,
 	}
 }
 
-func (m *defaultPlanModel) Delete(ctx context.Context, session sqlx.Session, id int64) error {
+func (m *defaultPlanBatchModel) Delete(ctx context.Context, session sqlx.Session, id int64) error {
 	deleteBuilder := m.DeleteBuilder().Where("id = ?", id)
 	query, args, err := deleteBuilder.ToSql()
 	if err != nil {
@@ -114,8 +108,9 @@ func (m *defaultPlanModel) Delete(ctx context.Context, session sqlx.Session, id 
 	}
 	return execErr
 }
-func (m *defaultPlanModel) FindOne(ctx context.Context, id int64) (*Plan, error) {
-	selectBuilder := m.SelectBuilder().Columns(m.planRows).
+
+func (m *defaultPlanBatchModel) FindOne(ctx context.Context, id int64) (*PlanBatch, error) {
+	selectBuilder := m.SelectBuilder().Columns(m.planBatchRows).
 		Where("id = ?", id).
 		Where("del_state = ?", 0).
 		Limit(1)
@@ -123,7 +118,7 @@ func (m *defaultPlanModel) FindOne(ctx context.Context, id int64) (*Plan, error)
 	if err != nil {
 		return nil, err
 	}
-	var resp Plan
+	var resp PlanBatch
 	err = m.conn.QueryRowCtx(ctx, &resp, query, args...)
 	switch err {
 	case nil:
@@ -135,16 +130,16 @@ func (m *defaultPlanModel) FindOne(ctx context.Context, id int64) (*Plan, error)
 	}
 }
 
-func (m *defaultPlanModel) FindOneByPlanId(ctx context.Context, planId string) (*Plan, error) {
-	selectBuilder := m.SelectBuilder().Columns(m.planRows).
-		Where("plan_id = ?", planId).
+func (m *defaultPlanBatchModel) FindOneByBatchId(ctx context.Context, batchId string) (*PlanBatch, error) {
+	selectBuilder := m.SelectBuilder().Columns(m.planBatchRows).
+		Where("batch_id = ?", batchId).
 		Where("del_state = ?", 0).
 		Limit(1)
 	query, args, err := selectBuilder.ToSql()
 	if err != nil {
 		return nil, err
 	}
-	var resp Plan
+	var resp PlanBatch
 	err = m.conn.QueryRowCtx(ctx, &resp, query, args...)
 	switch err {
 	case nil:
@@ -156,7 +151,7 @@ func (m *defaultPlanModel) FindOneByPlanId(ctx context.Context, planId string) (
 	}
 }
 
-func (m *defaultPlanModel) Insert(ctx context.Context, session sqlx.Session, data *Plan) (sql.Result, error) {
+func (m *defaultPlanBatchModel) Insert(ctx context.Context, session sqlx.Session, data *PlanBatch) (sql.Result, error) {
 	data.DeleteTime = sql.NullTime{
 		Valid: false,
 	}
@@ -198,7 +193,7 @@ func (m *defaultPlanModel) Insert(ctx context.Context, session sqlx.Session, dat
 	}
 }
 
-func (m *defaultPlanModel) Update(ctx context.Context, session sqlx.Session, newData *Plan) (sql.Result, error) {
+func (m *defaultPlanBatchModel) Update(ctx context.Context, session sqlx.Session, newData *PlanBatch) (sql.Result, error) {
 	newData.DeleteTime = sql.NullTime{
 		Valid: false,
 	}
@@ -223,9 +218,13 @@ func (m *defaultPlanModel) Update(ctx context.Context, session sqlx.Session, new
 	return result, execErr
 }
 
-func (m *defaultPlanModel) UpdateWithVersion(ctx context.Context, session sqlx.Session, newData *Plan) error {
+func (m *defaultPlanBatchModel) UpdateWithVersion(ctx context.Context, session sqlx.Session, newData *PlanBatch) error {
 	oldVersion := newData.Version
 	newData.Version += 1
+	newData.DeleteTime = sql.NullTime{
+		Valid: false,
+	}
+	newData.DelState = 0
 	columns, values := generateColumnsAndValues(newData, []string{})
 	updateBuilder := m.UpdateBuilder()
 	for i, column := range columns {
@@ -256,7 +255,7 @@ func (m *defaultPlanModel) UpdateWithVersion(ctx context.Context, session sqlx.S
 	return nil
 }
 
-func (m *defaultPlanModel) DeleteSoft(ctx context.Context, session sqlx.Session, id int64) error {
+func (m *defaultPlanBatchModel) DeleteSoft(ctx context.Context, session sqlx.Session, id int64) error {
 	data, err := m.FindOne(ctx, id)
 	if err != nil {
 		return err
@@ -267,12 +266,12 @@ func (m *defaultPlanModel) DeleteSoft(ctx context.Context, session sqlx.Session,
 		Valid: true,
 	}
 	if err := m.UpdateWithVersion(ctx, session, data); err != nil {
-		return errors.Wrapf(errors.New("delete soft failed "), "PlanModel delete err : %+v", err)
+		return errors.Wrapf(errors.New("delete soft failed "), "PlanBatchModel delete err : %+v", err)
 	}
 	return nil
 }
 
-func (m *defaultPlanModel) FindSum(ctx context.Context, builder squirrel.SelectBuilder, field string) (float64, error) {
+func (m *defaultPlanBatchModel) FindSum(ctx context.Context, builder squirrel.SelectBuilder, field string) (float64, error) {
 	if len(field) == 0 {
 		return 0, errors.Wrapf(errors.New("FindSum Least One Field"), "FindSum Least One Field")
 	}
@@ -292,15 +291,18 @@ func (m *defaultPlanModel) FindSum(ctx context.Context, builder squirrel.SelectB
 	}
 }
 
-func (m *defaultPlanModel) FindCount(ctx context.Context, builder squirrel.SelectBuilder, field string) (int64, error) {
+func (m *defaultPlanBatchModel) FindCount(ctx context.Context, builder squirrel.SelectBuilder, field string) (int64, error) {
 	if len(field) == 0 {
 		return 0, errors.Wrapf(errors.New("FindCount Least One Field"), "FindCount Least One Field")
 	}
+
 	builder = builder.Columns("COUNT(" + field + ")")
+
 	query, values, err := builder.Where("del_state = ?", 0).ToSql()
 	if err != nil {
 		return 0, err
 	}
+
 	var resp int64
 	err = m.conn.QueryRowCtx(ctx, &resp, query, values...)
 	switch err {
@@ -311,18 +313,21 @@ func (m *defaultPlanModel) FindCount(ctx context.Context, builder squirrel.Selec
 	}
 }
 
-func (m *defaultPlanModel) FindAll(ctx context.Context, builder squirrel.SelectBuilder, orderBy ...string) ([]*Plan, error) {
-	builder = builder.Columns(m.planRows)
+func (m *defaultPlanBatchModel) FindAll(ctx context.Context, builder squirrel.SelectBuilder, orderBy ...string) ([]*PlanBatch, error) {
+	builder = builder.Columns(m.planBatchRows)
+
 	if len(orderBy) == 0 {
 		builder = builder.OrderBy("id DESC")
 	} else {
 		builder = builder.OrderBy(orderBy...)
 	}
+
 	query, values, err := builder.Where("del_state = ?", 0).ToSql()
 	if err != nil {
 		return nil, err
 	}
-	var resp []*Plan
+
+	var resp []*PlanBatch
 	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
 	switch err {
 	case nil:
@@ -332,22 +337,26 @@ func (m *defaultPlanModel) FindAll(ctx context.Context, builder squirrel.SelectB
 	}
 }
 
-func (m *defaultPlanModel) FindPageListByPage(ctx context.Context, builder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*Plan, error) {
-	builder = builder.Columns(m.planRows)
+func (m *defaultPlanBatchModel) FindPageListByPage(ctx context.Context, builder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*PlanBatch, error) {
+	builder = builder.Columns(m.planBatchRows)
+
 	if len(orderBy) == 0 {
 		builder = builder.OrderBy("id DESC")
 	} else {
 		builder = builder.OrderBy(orderBy...)
 	}
+
 	if page < 1 {
 		page = 1
 	}
 	offset := (page - 1) * pageSize
+
 	query, values, err := builder.Where("del_state = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
-	var resp []*Plan
+
+	var resp []*PlanBatch
 	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
 	switch err {
 	case nil:
@@ -357,26 +366,31 @@ func (m *defaultPlanModel) FindPageListByPage(ctx context.Context, builder squir
 	}
 }
 
-func (m *defaultPlanModel) FindPageListByPageWithTotal(ctx context.Context, builder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*Plan, int64, error) {
+func (m *defaultPlanBatchModel) FindPageListByPageWithTotal(ctx context.Context, builder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*PlanBatch, int64, error) {
 	total, err := m.FindCount(ctx, builder, "id")
 	if err != nil {
 		return nil, 0, err
 	}
-	builder = builder.Columns(m.planRows)
+
+	builder = builder.Columns(m.planBatchRows)
+
 	if len(orderBy) == 0 {
 		builder = builder.OrderBy("id DESC")
 	} else {
 		builder = builder.OrderBy(orderBy...)
 	}
+
 	if page < 1 {
 		page = 1
 	}
 	offset := (page - 1) * pageSize
+
 	query, values, err := builder.Where("del_state = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, total, err
 	}
-	var resp []*Plan
+
+	var resp []*PlanBatch
 	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
 	switch err {
 	case nil:
@@ -386,16 +400,19 @@ func (m *defaultPlanModel) FindPageListByPageWithTotal(ctx context.Context, buil
 	}
 }
 
-func (m *defaultPlanModel) FindPageListByIdDESC(ctx context.Context, builder squirrel.SelectBuilder, preMinId, pageSize int64) ([]*Plan, error) {
-	builder = builder.Columns(m.planRows)
+func (m *defaultPlanBatchModel) FindPageListByIdDESC(ctx context.Context, builder squirrel.SelectBuilder, preMinId, pageSize int64) ([]*PlanBatch, error) {
+	builder = builder.Columns(m.planBatchRows)
+
 	if preMinId > 0 {
-		builder = builder.Where(" id < ? ", preMinId)
+		builder = builder.Where("id < ?", preMinId)
 	}
+
 	query, values, err := builder.Where("del_state = ?", 0).OrderBy("id DESC").Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
-	var resp []*Plan
+
+	var resp []*PlanBatch
 	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
 	switch err {
 	case nil:
@@ -405,16 +422,19 @@ func (m *defaultPlanModel) FindPageListByIdDESC(ctx context.Context, builder squ
 	}
 }
 
-func (m *defaultPlanModel) FindPageListByIdASC(ctx context.Context, builder squirrel.SelectBuilder, preMaxId, pageSize int64) ([]*Plan, error) {
-	builder = builder.Columns(m.planRows)
+func (m *defaultPlanBatchModel) FindPageListByIdASC(ctx context.Context, builder squirrel.SelectBuilder, preMaxId, pageSize int64) ([]*PlanBatch, error) {
+	builder = builder.Columns(m.planBatchRows)
+
 	if preMaxId > 0 {
-		builder = builder.Where(" id > ? ", preMaxId)
+		builder = builder.Where("id > ?", preMaxId)
 	}
+
 	query, values, err := builder.Where("del_state = ?", 0).OrderBy("id ASC").Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
-	var resp []*Plan
+
+	var resp []*PlanBatch
 	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
 	switch err {
 	case nil:
@@ -424,27 +444,26 @@ func (m *defaultPlanModel) FindPageListByIdASC(ctx context.Context, builder squi
 	}
 }
 
-func (m *defaultPlanModel) Trans(ctx context.Context, fn func(ctx context.Context, session sqlx.Session) error) error {
-
+func (m *defaultPlanBatchModel) Trans(ctx context.Context, fn func(ctx context.Context, session sqlx.Session) error) error {
 	return m.conn.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
 		return fn(ctx, session)
 	})
-
 }
 
-func (m *defaultPlanModel) ExecCtx(ctx context.Context, session sqlx.Session, query string, args ...any) (sql.Result, error) {
+func (m *defaultPlanBatchModel) ExecCtx(ctx context.Context, session sqlx.Session, query string, args ...any) (sql.Result, error) {
 	if session != nil {
 		return session.ExecCtx(ctx, query, args...)
 	}
 	return m.conn.ExecCtx(ctx, query, args...)
 }
 
-func (m *defaultPlanModel) SelectWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) ([]*Plan, error) {
+func (m *defaultPlanBatchModel) SelectWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) ([]*PlanBatch, error) {
 	query, args, err := builder.ToSql()
 	if err != nil {
 		return nil, err
 	}
-	var resp []*Plan
+
+	var resp []*PlanBatch
 	err = m.conn.QueryRowsPartialCtx(ctx, &resp, query, args...)
 	switch err {
 	case nil:
@@ -454,12 +473,13 @@ func (m *defaultPlanModel) SelectWithBuilder(ctx context.Context, builder squirr
 	}
 }
 
-func (m *defaultPlanModel) SelectOneWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) (*Plan, error) {
+func (m *defaultPlanBatchModel) SelectOneWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) (*PlanBatch, error) {
 	query, args, err := builder.ToSql()
 	if err != nil {
 		return nil, err
 	}
-	var resp Plan
+
+	var resp PlanBatch
 	err = m.conn.QueryRowPartialCtx(ctx, &resp, query, args...)
 	switch err {
 	case nil:
@@ -471,7 +491,7 @@ func (m *defaultPlanModel) SelectOneWithBuilder(ctx context.Context, builder squ
 	}
 }
 
-func (m *defaultPlanModel) InsertWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.InsertBuilder) (sql.Result, error) {
+func (m *defaultPlanBatchModel) InsertWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.InsertBuilder) (sql.Result, error) {
 	query, args, err := builder.ToSql()
 	if err != nil {
 		return nil, err
@@ -479,7 +499,7 @@ func (m *defaultPlanModel) InsertWithBuilder(ctx context.Context, session sqlx.S
 	return m.ExecCtx(ctx, session, query, args...)
 }
 
-func (m *defaultPlanModel) UpdateWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.UpdateBuilder) (sql.Result, error) {
+func (m *defaultPlanBatchModel) UpdateWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.UpdateBuilder) (sql.Result, error) {
 	query, args, err := builder.ToSql()
 	if err != nil {
 		return nil, err
@@ -487,7 +507,7 @@ func (m *defaultPlanModel) UpdateWithBuilder(ctx context.Context, session sqlx.S
 	return m.ExecCtx(ctx, session, query, args...)
 }
 
-func (m *defaultPlanModel) DeleteWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.DeleteBuilder) (sql.Result, error) {
+func (m *defaultPlanBatchModel) DeleteWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.DeleteBuilder) (sql.Result, error) {
 	query, args, err := builder.ToSql()
 	if err != nil {
 		return nil, err
@@ -495,7 +515,7 @@ func (m *defaultPlanModel) DeleteWithBuilder(ctx context.Context, session sqlx.S
 	return m.ExecCtx(ctx, session, query, args...)
 }
 
-func (m *defaultPlanModel) SelectBuilder() squirrel.SelectBuilder {
+func (m *defaultPlanBatchModel) SelectBuilder() squirrel.SelectBuilder {
 	builder := squirrel.Select().From(m.table)
 	if m.dbType == DatabaseTypePostgreSQL {
 		builder = builder.PlaceholderFormat(squirrel.Dollar)
@@ -503,7 +523,7 @@ func (m *defaultPlanModel) SelectBuilder() squirrel.SelectBuilder {
 	return builder
 }
 
-func (m *defaultPlanModel) UpdateBuilder() squirrel.UpdateBuilder {
+func (m *defaultPlanBatchModel) UpdateBuilder() squirrel.UpdateBuilder {
 	builder := squirrel.Update(m.table)
 	if m.dbType == DatabaseTypePostgreSQL {
 		builder = builder.PlaceholderFormat(squirrel.Dollar)
@@ -511,7 +531,7 @@ func (m *defaultPlanModel) UpdateBuilder() squirrel.UpdateBuilder {
 	return builder
 }
 
-func (m *defaultPlanModel) DeleteBuilder() squirrel.DeleteBuilder {
+func (m *defaultPlanBatchModel) DeleteBuilder() squirrel.DeleteBuilder {
 	builder := squirrel.Delete(m.table)
 	if m.dbType == DatabaseTypePostgreSQL {
 		builder = builder.PlaceholderFormat(squirrel.Dollar)
@@ -519,7 +539,7 @@ func (m *defaultPlanModel) DeleteBuilder() squirrel.DeleteBuilder {
 	return builder
 }
 
-func (m *defaultPlanModel) InsertBuilder() squirrel.InsertBuilder {
+func (m *defaultPlanBatchModel) InsertBuilder() squirrel.InsertBuilder {
 	builder := squirrel.Insert(m.table)
 	if m.dbType == DatabaseTypePostgreSQL {
 		builder = builder.PlaceholderFormat(squirrel.Dollar)
@@ -527,6 +547,6 @@ func (m *defaultPlanModel) InsertBuilder() squirrel.InsertBuilder {
 	return builder
 }
 
-func (m *defaultPlanModel) tableName() string {
+func (m *defaultPlanBatchModel) tableName() string {
 	return m.table
 }

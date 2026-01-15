@@ -1,7 +1,7 @@
 Name: trigger.rpc
 ListenOn: 0.0.0.0:21006
 Mode: dev
-Timeout: 15000
+Timeout: 120000
 Log:
   Encoding: plain
   #  Mode: file
@@ -23,4 +23,5 @@ Redis:
 RedisDB: 0
 DB:
   DataSource: root:PXDN93VRKUm8TeE7@tcp(localhost:33069)/zero?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+#  DataSource: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable&TimeZone=Asia/Shanghai
 DisableStmtLog: true

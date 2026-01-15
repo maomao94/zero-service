@@ -57,8 +57,8 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToCompleted(ctx, execItem.Id, in.Message)
 		case model.ResultFailed:
 			// 更新执行项状态为失败
-			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToCallback(ctx, execItem.Id, model.ResultFailed, in.Message)
-		case model.ResultDelayed, model.ResultRunning:
+			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, in.Message)
+		case model.ResultDelayed:
 			currentTime := carbon.Now()
 			delayTriggerTime := currentTime.AddMinutes(5).ToDateTimeString()
 			delayReason := ""
@@ -68,7 +68,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 				delayReason = in.Message
 			}
 			if in.DelayConfig == nil {
-				logx.Errorf("No delay config provided for exec item %d", execItem.Id)
+				l.Errorf("No delay config provided for exec item %d", execItem.Id)
 			} else {
 				if len(in.DelayConfig.DelayReason) != 0 {
 					delayReason = fmt.Sprintf("reason: %s, message: %s", in.DelayConfig.DelayReason, in.Message)
@@ -76,11 +76,11 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 				delayTime := carbon.ParseByLayout(in.DelayConfig.NextTriggerTime, carbon.DateTimeLayout)
 				isTrue := true
 				if delayTime.Error != nil || delayTime.IsInvalid() {
-					logx.Errorf("Invalid delay time format for exec item %d: %s", execItem.Id, in.DelayConfig.NextTriggerTime)
+					l.Errorf("Invalid delay time format for exec item %d: %s", execItem.Id, in.DelayConfig.NextTriggerTime)
 					isTrue = false
 				} else {
 					if delayTime.Lt(currentTime) {
-						logx.Errorf("Delay time for exec item %d is in the past: %v, current time: %v", execItem.Id, delayTime.ToDateTimeString(), currentTime.ToDateTimeString())
+						l.Errorf("Delay time for exec item %d is in the past: %v, current time: %v", execItem.Id, delayTime.ToDateTimeString(), currentTime.ToDateTimeString())
 						isTrue = false
 					}
 				}
@@ -90,6 +90,8 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 			}
 			delayReason = fmt.Sprintf("%s, delay time: %s", delayReason, delayTriggerTime)
 			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToDelayed(ctx, execItem.Id, in.ExecResult, delayReason, delayTriggerTime)
+		case model.ResultOngoing:
+			l.Infof("Ongoing exec item %d", execItem.Id)
 		default:
 			return fmt.Errorf("invalid execResult: %s", in.GetExecResult())
 		}

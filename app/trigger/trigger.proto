@@ -82,9 +82,6 @@ service TriggerRpc {
   rpc GetPlanExecLog(GetPlanExecLogReq) returns (GetPlanExecLogRes);
   // 分页获取计划触发日志列表
   rpc ListPlanExecLogs(ListPlanExecLogsReq) returns (ListPlanExecLogsRes);
-
-  // 分页获取计划执行项统计
-  rpc ListPlanExecItemStats(ListPlanExecItemStatsReq) returns (ListPlanExecItemStatsRes);
   // 回调计划执行项
   rpc CallbackPlanExecItem(CallbackPlanExecItemReq) returns (CallbackPlanExecItemRes);
 }
@@ -478,9 +475,10 @@ message CreatePlanTaskReq {
   string endTime = 7;
   // 计划规则项 默认 规则项 MINUTELY
   PbPlanRule rule = 8 [(validate.rules).message = {required: true}];
-  // 计划执行项
+  // 计划执行项-根据规则项生成日期批次并生成对应批次执行项
   repeated CreatePlanExecItem execItems = 9 [(validate.rules).repeated = {min_items: 1}];
 
+  // 扩展字段
   string ext1 = 50;
   string ext2 = 51;
   string ext3 = 52;
@@ -539,6 +537,7 @@ message CreatePlanExecItem {
   // 请求超时时间 单位: 毫秒 可为空
   int64 requestTimeout = 7;
 
+  // 扩展字段
   string ext1 = 50;
   string ext2 = 51;
   string ext3 = 52;
@@ -551,8 +550,10 @@ message CreatePlanTaskRes {
   int64 id = 1;
   // 计划ID
   string planId = 2;
+  // 计划批次数
+  int64 batchCnt = 3;
   // 执行计划数
-  int64 execCnt = 3;
+  int64 execCnt = 4;
 }
 
 message PausePlanReq {
@@ -734,52 +735,54 @@ message PbPlanExecItem {
   int64 planPk = 1;
   // 计划ID
   string planId = 2;
+  // 批主键ID
+  int64 batchPk = 4;
   // 批ID
-  string batchId = 3;
+  string batchId = 5;
   // 执行项ID
-  string itemId = 4;
+  string itemId = 6;
   // 执行项名称
-  string itemName = 5;
+  string itemName = 7;
   // 点位id
-  string PointId = 6;
+  string PointId = 8;
   // 业务服务地址
-  string serviceAddr = 7;
+  string serviceAddr = 9;
   // 业务负载
-  string payload = 8;
+  string payload = 10;
   // 请求超时时间（毫秒）
-  int64 requestTimeout = 9;
+  int64 requestTimeout = 11;
   // 计划触发时间
-  string planTriggerTime = 10;
+  string planTriggerTime = 12;
   // 下次触发时间
-  string nextTriggerTime = 11;
+  string nextTriggerTime = 13;
   // 上次触发时间
-  string lastTriggerTime = 12;
+  string lastTriggerTime = 14;
   // 触发次数
-  int32 triggerCount = 13;
+  int32 triggerCount = 15;
   // 状态：0-待执行，1-执行中，2-完成，3-失败，4-延期，5-已终止，6-暂停
-  int32 status = 14;
+  int32 status = 16;
   // 上次执行结果
-  string lastResult = 15;
+  string lastResult = 17;
   // 上次执行消息
-  string lastMsg = 16;
+  string lastMsg = 18;
   // 终止时间
-  string terminatedTime = 17;
+  string terminatedTime = 19;
   // 终止原因
-  string terminatedReason = 18;
+  string terminatedReason = 20;
   // 暂停时间
-  string pausedTime = 19;
+  string pausedTime = 21;
   // 暂停原因
-  string pausedReason = 20;
+  string pausedReason = 22;
   // 扩展字段1
-  string ext1 = 21;
+  string ext1 = 23;
   // 扩展字段2
-  string ext2 = 22;
+  string ext2 = 24;
   // 扩展字段3
-  string ext3 = 23;
+  string ext3 = 25;
   // 扩展字段4
-  string ext4 = 24;
+  string ext4 = 26;
   // 扩展字段5
-  string ext5 = 25;
+  string ext5 = 27;
 }
 
 message ListPlanExecItemsReq {
@@ -816,39 +819,6 @@ message GetPlanExecLogRes {
   PbPlanExecLog planExecLog = 1;
 }
 
-message PbPlanExecLog {
-  // 创建时间
-  string createTime = 101;
-  // 更新时间
-  string updateTime = 102;
-  // 创建人
-  string createUser = 103;
-  // 更新人
-  string updateUser = 104;
-
-  // 自增主键ID
-  int64 id = 50;
-  // 关联的计划主键ID
-  int64 planPk = 1;
-  // 计划ID
-  string planId = 2;
-  // 计划名称
-  string planName = 3;
-  // 关联的执行项主键ID
-  int64 itemPk = 4;
-  // 执行项ID
-  string itemId = 5;
-  // 执行项名称
-  string itemName = 6;
-  // 点位id
-  string pointId = 7;
-  // 触发时间
-  string triggerTime = 8;
-  // 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，running-业务正在执行
-  string execResult = 9;
-  // 结果描述
-  string message = 10;
-}
 
 // 分页获取计划触发日志列表请求
 message ListPlanExecLogsReq {
@@ -877,6 +847,44 @@ message ListPlanExecLogsRes {
   int64 total = 2;
 }
 
+message PbPlanExecLog {
+  // 创建时间
+  string createTime = 101;
+  // 更新时间
+  string updateTime = 102;
+  // 创建人
+  string createUser = 103;
+  // 更新人
+  string updateUser = 104;
+
+  // 自增主键ID
+  int64 id = 50;
+  // 关联的计划主键ID
+  int64 planPk = 1;
+  // 计划ID
+  string planId = 2;
+  // 计划名称
+  string planName = 3;
+  // 批主键ID
+  int64 batchPk = 4;
+  // 批ID
+  string batchId = 5;
+  // 关联的执行项主键ID
+  int64 itemPk = 6;
+  // 执行项ID
+  string itemId = 7;
+  // 执行项名称
+  string itemName = 8;
+  // 点位id
+  string pointId = 9;
+  // 触发时间
+  string triggerTime = 10;
+  // 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，running-业务正在执行
+  string execResult = 11;
+  // 结果描述
+  string message = 12;
+}
+
 // 执行项调度状态枚举定义
 enum PbExecItemStatus {
   // 初始等待调度，可扫表触发
@@ -891,90 +899,6 @@ enum PbExecItemStatus {
   EXEC_ITEM_STATUS_COMPLETED = 200;
   // 人工/策略/超过重试次数终止，终态
   EXEC_ITEM_STATUS_TERMINATED = 300;
-}
-
-// 执行项状态分组统计信息
-message PbExecItemStatusCount {
-  // 状态值
-  PbExecItemStatus status = 1;
-  // 状态名称
-  string statusName = 2;
-  // 数量
-  int64 count = 3;
-}
-
-// 按批ID和触发时间分组的计划执行项统计信息
-message PbPlanExecItemStat {
-  // 计划ID
-  string planId = 1;
-  // 批ID
-  string batchId = 2;
-  // 计划触发时间
-  string planTriggerTime = 3;
-  // 总执行项数
-  int64 total = 4;
-  // 各状态分组统计
-  repeated PbExecItemStatusCount statusStats = 5;
-}
-
-// 分页获取计划执行项统计请求
-message ListPlanExecItemStatsReq {
-  extproto.CurrentUser currentUser = 100;
-  // 分页大小
-  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0}];
-  // 页码
-  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0}];
-  // 开始时间
-  string startTime = 3;
-  // 结束时间
-  string endTime = 4;
-  // 计划ID
-  string planId = 5;
-  // 批ID
-  string batchId = 6;
-}
-
-// 分页获取计划执行项统计响应
-message ListPlanExecItemStatsRes {
-  // 统计列表
-  repeated PbPlanExecItemStat stats = 1;
-  // 总记录数
-  int64 total = 2;
-}
-
-// 按年和批ID分组的计划执行项统计信息
-message PbPlanExecItemStatByYearBatch {
-  // 年份
-  int32 year = 1;
-  // 批ID
-  string batchId = 2;
-  // 计划ID
-  string planId = 3;
-  // 总执行项数
-  int64 total = 4;
-  // 各状态分组统计
-  repeated PbExecItemStatusCount statusStats = 5;
-}
-
-// 分页获取按年和批ID分组的计划执行项统计请求
-message ListPlanExecItemStatsByYearBatchReq {
-  extproto.CurrentUser currentUser = 100;
-  // 分页大小
-  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0}];
-  // 页码
-  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0}];
-  // 计划ID
-  string planId = 3;
-  // 年份
-  int32 year = 4;
-}
-
-// 分页获取按年和批ID分组的计划执行项统计响应
-message ListPlanExecItemStatsByYearBatchRes {
-  // 统计列表
-  repeated PbPlanExecItemStatByYearBatch stats = 1;
-  // 总记录数
-  int64 total = 2;
 }
 
 message CallbackPlanExecItemReq {

@@ -77,6 +77,8 @@ func (l *ListPlanExecLogsLogic) ListPlanExecLogs(in *trigger.ListPlanExecLogsReq
 			PlanPk:      log.PlanPk,
 			PlanId:      log.PlanId,
 			PlanName:    log.PlanName.String,
+			BatchPk:     log.BatchPk,
+			BatchId:     log.BatchId,
 			ItemPk:      log.ItemPk,
 			ItemId:      log.ItemId,
 			ItemName:    log.ItemName.String,

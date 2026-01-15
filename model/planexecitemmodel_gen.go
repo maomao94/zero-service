@@ -62,6 +62,7 @@ type (
 		UpdateUser       sql.NullString `db:"update_user"`       // 更新人
 		PlanPk           int64          `db:"plan_pk"`           // 关联的计划主键ID
 		PlanId           string         `db:"plan_id"`           // 关联的计划ID
+		BatchPk          int64          `db:"batch_pk"`          // 批主键ID
 		BatchId          string         `db:"batch_id"`          // 批ID
 		ItemId           string         `db:"item_id"`           // 执行项ID
 		ItemName         sql.NullString `db:"item_name"`         // 执行项名称
@@ -80,6 +81,7 @@ type (
 		TerminatedReason sql.NullString `db:"terminated_reason"` // 终止原因
 		PausedTime       sql.NullTime   `db:"paused_time"`       // 暂停时间
 		PausedReason     sql.NullString `db:"paused_reason"`     // 暂停原因
+		CompletedTime    sql.NullTime   `db:"completed_time"`    // 完成时间
 		Ext1             sql.NullString `db:"ext_1"`             // 扩展字段1
 		Ext2             sql.NullString `db:"ext_2"`             // 扩展字段2
 		Ext3             sql.NullString `db:"ext_3"`             // 扩展字段3

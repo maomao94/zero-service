@@ -220,12 +220,6 @@ func (s *TriggerRpcServer) ListPlanExecLogs(ctx context.Context, in *trigger.Lis
 	return l.ListPlanExecLogs(in)
 }
 
-// 分页获取计划执行项统计
-func (s *TriggerRpcServer) ListPlanExecItemStats(ctx context.Context, in *trigger.ListPlanExecItemStatsReq) (*trigger.ListPlanExecItemStatsRes, error) {
-	l := logic.NewListPlanExecItemStatsLogic(ctx, s.svcCtx)
-	return l.ListPlanExecItemStats(in)
-}
-
 // 回调计划执行项
 func (s *TriggerRpcServer) CallbackPlanExecItem(ctx context.Context, in *trigger.CallbackPlanExecItemReq) (*trigger.CallbackPlanExecItemRes, error) {
 	l := logic.NewCallbackPlanExecItemLogic(ctx, s.svcCtx)

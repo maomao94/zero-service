@@ -2579,19 +2579,21 @@ func (*UpSocketMessageRsp) Descriptor() ([]byte, []int) {
 	return file_streamevent_proto_rawDescGZIP(), []int{27}
 }
 
-type HandlerPlanTaskEventReq struct {
+type PbPlan struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 创建时间 执行项创建时间
+	// 创建时间
 	CreateTime string `protobuf:"bytes,101,opt,name=createTime,proto3" json:"createTime,omitempty"`
-	// 更新时间 执行项更新时间
+	// 更新时间
 	UpdateTime string `protobuf:"bytes,102,opt,name=updateTime,proto3" json:"updateTime,omitempty"`
-	// 创建人 执行项创建人
+	// 创建人
 	CreateUser string `protobuf:"bytes,103,opt,name=createUser,proto3" json:"createUser,omitempty"`
-	// 更新人 执行项更新人
+	// 更新人
 	UpdateUser string `protobuf:"bytes,104,opt,name=updateUser,proto3" json:"updateUser,omitempty"`
-	// 计划任务ID
+	// 自增主键ID
+	Id int64 `protobuf:"varint,50,opt,name=id,proto3" json:"id,omitempty"`
+	// 计划ID
 	PlanId string `protobuf:"bytes,1,opt,name=planId,proto3" json:"planId,omitempty"`
-	// 计划任务名称
+	// 计划名称
 	PlanName string `protobuf:"bytes,2,opt,name=planName,proto3" json:"planName,omitempty"`
 	// 任务类型
 	Type string `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
@@ -2603,10 +2605,182 @@ type HandlerPlanTaskEventReq struct {
 	StartTime string `protobuf:"bytes,6,opt,name=startTime,proto3" json:"startTime,omitempty"`
 	// 规则生效结束时间
 	EndTime string `protobuf:"bytes,7,opt,name=endTime,proto3" json:"endTime,omitempty"`
+	// 扩展字段1
+	Ext1 string `protobuf:"bytes,8,opt,name=ext1,proto3" json:"ext1,omitempty"`
+	// 扩展字段2
+	Ext2 string `protobuf:"bytes,9,opt,name=ext2,proto3" json:"ext2,omitempty"`
+	// 扩展字段3
+	Ext3 string `protobuf:"bytes,10,opt,name=ext3,proto3" json:"ext3,omitempty"`
+	// 扩展字段4
+	Ext4 string `protobuf:"bytes,11,opt,name=ext4,proto3" json:"ext4,omitempty"`
+	// 扩展字段5
+	Ext5          string `protobuf:"bytes,12,opt,name=ext5,proto3" json:"ext5,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PbPlan) Reset() {
+	*x = PbPlan{}
+	mi := &file_streamevent_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PbPlan) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PbPlan) ProtoMessage() {}
+
+func (x *PbPlan) ProtoReflect() protoreflect.Message {
+	mi := &file_streamevent_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PbPlan.ProtoReflect.Descriptor instead.
+func (*PbPlan) Descriptor() ([]byte, []int) {
+	return file_streamevent_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *PbPlan) GetCreateTime() string {
+	if x != nil {
+		return x.CreateTime
+	}
+	return ""
+}
+
+func (x *PbPlan) GetUpdateTime() string {
+	if x != nil {
+		return x.UpdateTime
+	}
+	return ""
+}
+
+func (x *PbPlan) GetCreateUser() string {
+	if x != nil {
+		return x.CreateUser
+	}
+	return ""
+}
+
+func (x *PbPlan) GetUpdateUser() string {
+	if x != nil {
+		return x.UpdateUser
+	}
+	return ""
+}
+
+func (x *PbPlan) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *PbPlan) GetPlanId() string {
+	if x != nil {
+		return x.PlanId
+	}
+	return ""
+}
+
+func (x *PbPlan) GetPlanName() string {
+	if x != nil {
+		return x.PlanName
+	}
+	return ""
+}
+
+func (x *PbPlan) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *PbPlan) GetGroupId() string {
+	if x != nil {
+		return x.GroupId
+	}
+	return ""
+}
+
+func (x *PbPlan) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *PbPlan) GetStartTime() string {
+	if x != nil {
+		return x.StartTime
+	}
+	return ""
+}
+
+func (x *PbPlan) GetEndTime() string {
+	if x != nil {
+		return x.EndTime
+	}
+	return ""
+}
+
+func (x *PbPlan) GetExt1() string {
+	if x != nil {
+		return x.Ext1
+	}
+	return ""
+}
+
+func (x *PbPlan) GetExt2() string {
+	if x != nil {
+		return x.Ext2
+	}
+	return ""
+}
+
+func (x *PbPlan) GetExt3() string {
+	if x != nil {
+		return x.Ext3
+	}
+	return ""
+}
+
+func (x *PbPlan) GetExt4() string {
+	if x != nil {
+		return x.Ext4
+	}
+	return ""
+}
+
+func (x *PbPlan) GetExt5() string {
+	if x != nil {
+		return x.Ext5
+	}
+	return ""
+}
+
+type HandlerPlanTaskEventReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Plan  *PbPlan                `protobuf:"bytes,100,opt,name=plan,proto3" json:"plan,omitempty"`
+	// 自增主键ID
+	Id int64 `protobuf:"varint,50,opt,name=id,proto3" json:"id,omitempty"`
 	// 关联的计划主键ID
-	PlanPk int64 `protobuf:"varint,8,opt,name=planPk,proto3" json:"planPk,omitempty"`
-	// 批ID 同一时间具有相同批ID
-	BatchId string `protobuf:"bytes,9,opt,name=batchId,proto3" json:"batchId,omitempty"`
+	PlanPk int64 `protobuf:"varint,1,opt,name=planPk,proto3" json:"planPk,omitempty"`
+	// 计划ID
+	PlanId string `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
+	// 批主键ID
+	BatchPk int64 `protobuf:"varint,4,opt,name=batchPk,proto3" json:"batchPk,omitempty"`
+	// 批ID
+	BatchId string `protobuf:"bytes,5,opt,name=batchId,proto3" json:"batchId,omitempty"`
 	// 执行项ID
 	ItemId string `protobuf:"bytes,10,opt,name=itemId,proto3" json:"itemId,omitempty"`
 	// 执行项名称
@@ -2617,13 +2791,17 @@ type HandlerPlanTaskEventReq struct {
 	Payload string `protobuf:"bytes,13,opt,name=payload,proto3" json:"payload,omitempty"`
 	// 计划触发时间
 	PlanTriggerTime string `protobuf:"bytes,14,opt,name=planTriggerTime,proto3" json:"planTriggerTime,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// 上次执行结果
+	LastResult string `protobuf:"bytes,17,opt,name=lastResult,proto3" json:"lastResult,omitempty"`
+	// 上次执行消息
+	LastMsg       string `protobuf:"bytes,18,opt,name=lastMsg,proto3" json:"lastMsg,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *HandlerPlanTaskEventReq) Reset() {
 	*x = HandlerPlanTaskEventReq{}
-	mi := &file_streamevent_proto_msgTypes[28]
+	mi := &file_streamevent_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2635,7 +2813,7 @@ func (x *HandlerPlanTaskEventReq) String() string {
 func (*HandlerPlanTaskEventReq) ProtoMessage() {}
 
 func (x *HandlerPlanTaskEventReq) ProtoReflect() protoreflect.Message {
-	mi := &file_streamevent_proto_msgTypes[28]
+	mi := &file_streamevent_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2648,35 +2826,28 @@ func (x *HandlerPlanTaskEventReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HandlerPlanTaskEventReq.ProtoReflect.Descriptor instead.
 func (*HandlerPlanTaskEventReq) Descriptor() ([]byte, []int) {
-	return file_streamevent_proto_rawDescGZIP(), []int{28}
+	return file_streamevent_proto_rawDescGZIP(), []int{29}
 }
 
-func (x *HandlerPlanTaskEventReq) GetCreateTime() string {
+func (x *HandlerPlanTaskEventReq) GetPlan() *PbPlan {
 	if x != nil {
-		return x.CreateTime
+		return x.Plan
 	}
-	return ""
+	return nil
 }
 
-func (x *HandlerPlanTaskEventReq) GetUpdateTime() string {
+func (x *HandlerPlanTaskEventReq) GetId() int64 {
 	if x != nil {
-		return x.UpdateTime
+		return x.Id
 	}
-	return ""
+	return 0
 }
 
-func (x *HandlerPlanTaskEventReq) GetCreateUser() string {
+func (x *HandlerPlanTaskEventReq) GetPlanPk() int64 {
 	if x != nil {
-		return x.CreateUser
+		return x.PlanPk
 	}
-	return ""
-}
-
-func (x *HandlerPlanTaskEventReq) GetUpdateUser() string {
-	if x != nil {
-		return x.UpdateUser
-	}
-	return ""
+	return 0
 }
 
 func (x *HandlerPlanTaskEventReq) GetPlanId() string {
@@ -2686,51 +2857,9 @@ func (x *HandlerPlanTaskEventReq) GetPlanId() string {
 	return ""
 }
 
-func (x *HandlerPlanTaskEventReq) GetPlanName() string {
+func (x *HandlerPlanTaskEventReq) GetBatchPk() int64 {
 	if x != nil {
-		return x.PlanName
-	}
-	return ""
-}
-
-func (x *HandlerPlanTaskEventReq) GetType() string {
-	if x != nil {
-		return x.Type
-	}
-	return ""
-}
-
-func (x *HandlerPlanTaskEventReq) GetGroupId() string {
-	if x != nil {
-		return x.GroupId
-	}
-	return ""
-}
-
-func (x *HandlerPlanTaskEventReq) GetDescription() string {
-	if x != nil {
-		return x.Description
-	}
-	return ""
-}
-
-func (x *HandlerPlanTaskEventReq) GetStartTime() string {
-	if x != nil {
-		return x.StartTime
-	}
-	return ""
-}
-
-func (x *HandlerPlanTaskEventReq) GetEndTime() string {
-	if x != nil {
-		return x.EndTime
-	}
-	return ""
-}
-
-func (x *HandlerPlanTaskEventReq) GetPlanPk() int64 {
-	if x != nil {
-		return x.PlanPk
+		return x.BatchPk
 	}
 	return 0
 }
@@ -2777,13 +2906,27 @@ func (x *HandlerPlanTaskEventReq) GetPlanTriggerTime() string {
 	return ""
 }
 
+func (x *HandlerPlanTaskEventReq) GetLastResult() string {
+	if x != nil {
+		return x.LastResult
+	}
+	return ""
+}
+
+func (x *HandlerPlanTaskEventReq) GetLastMsg() string {
+	if x != nil {
+		return x.LastMsg
+	}
+	return ""
+}
+
 type HandlerPlanTaskEventRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，running-业务正在执行（未回调或部分异步）
+	// 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，ongoing-业务正在执行（未回调或部分异步）
 	ExecResult string `protobuf:"bytes,1,opt,name=execResult,proto3" json:"execResult,omitempty"`
 	// 结果描述（成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
 	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	// 延期配置-默认延期5分钟：delayed-自定义延期，running-自定义延期,等待业务系统回调完成/延期触发)
+	// 延期配置-默认延期5分钟：delayed-自定义延期
 	DelayConfig   *PbDelayConfig `protobuf:"bytes,3,opt,name=delayConfig,proto3" json:"delayConfig,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2791,7 +2934,7 @@ type HandlerPlanTaskEventRes struct {
 
 func (x *HandlerPlanTaskEventRes) Reset() {
 	*x = HandlerPlanTaskEventRes{}
-	mi := &file_streamevent_proto_msgTypes[29]
+	mi := &file_streamevent_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2803,7 +2946,7 @@ func (x *HandlerPlanTaskEventRes) String() string {
 func (*HandlerPlanTaskEventRes) ProtoMessage() {}
 
 func (x *HandlerPlanTaskEventRes) ProtoReflect() protoreflect.Message {
-	mi := &file_streamevent_proto_msgTypes[29]
+	mi := &file_streamevent_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2816,7 +2959,7 @@ func (x *HandlerPlanTaskEventRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HandlerPlanTaskEventRes.ProtoReflect.Descriptor instead.
 func (*HandlerPlanTaskEventRes) Descriptor() ([]byte, []int) {
-	return file_streamevent_proto_rawDescGZIP(), []int{29}
+	return file_streamevent_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *HandlerPlanTaskEventRes) GetExecResult() string {
@@ -2852,7 +2995,7 @@ type PbDelayConfig struct {
 
 func (x *PbDelayConfig) Reset() {
 	*x = PbDelayConfig{}
-	mi := &file_streamevent_proto_msgTypes[30]
+	mi := &file_streamevent_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2864,7 +3007,7 @@ func (x *PbDelayConfig) String() string {
 func (*PbDelayConfig) ProtoMessage() {}
 
 func (x *PbDelayConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_streamevent_proto_msgTypes[30]
+	mi := &file_streamevent_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2877,7 +3020,7 @@ func (x *PbDelayConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PbDelayConfig.ProtoReflect.Descriptor instead.
 func (*PbDelayConfig) Descriptor() ([]byte, []int) {
-	return file_streamevent_proto_rawDescGZIP(), []int{30}
+	return file_streamevent_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *PbDelayConfig) GetNextTriggerTime() string {
@@ -3114,8 +3257,8 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x03sId\x18\x02 \x01(\tR\x03sId\x12\x14\n" +
 	"\x05event\x18\x03 \x01(\tR\x05event\x12\x18\n" +
 	"\apayload\x18\x04 \x01(\tR\apayload\"\x14\n" +
-	"\x12UpSocketMessageRsp\"\x99\x04\n" +
-	"\x17HandlerPlanTaskEventReq\x12\x1e\n" +
+	"\x12UpSocketMessageRsp\"\xb8\x03\n" +
+	"\x06PbPlan\x12\x1e\n" +
 	"\n" +
 	"createTime\x18e \x01(\tR\n" +
 	"createTime\x12\x1e\n" +
@@ -3127,22 +3270,38 @@ const file_streamevent_proto_rawDesc = "" +
 	"createUser\x12\x1e\n" +
 	"\n" +
 	"updateUser\x18h \x01(\tR\n" +
-	"updateUser\x12\x16\n" +
+	"updateUser\x12\x0e\n" +
+	"\x02id\x182 \x01(\x03R\x02id\x12\x16\n" +
 	"\x06planId\x18\x01 \x01(\tR\x06planId\x12\x1a\n" +
 	"\bplanName\x18\x02 \x01(\tR\bplanName\x12\x12\n" +
 	"\x04type\x18\x03 \x01(\tR\x04type\x12\x18\n" +
 	"\agroupId\x18\x04 \x01(\tR\agroupId\x12 \n" +
 	"\vdescription\x18\x05 \x01(\tR\vdescription\x12\x1c\n" +
 	"\tstartTime\x18\x06 \x01(\tR\tstartTime\x12\x18\n" +
-	"\aendTime\x18\a \x01(\tR\aendTime\x12\x16\n" +
-	"\x06planPk\x18\b \x01(\x03R\x06planPk\x12\x18\n" +
-	"\abatchId\x18\t \x01(\tR\abatchId\x12\x16\n" +
+	"\aendTime\x18\a \x01(\tR\aendTime\x12\x12\n" +
+	"\x04ext1\x18\b \x01(\tR\x04ext1\x12\x12\n" +
+	"\x04ext2\x18\t \x01(\tR\x04ext2\x12\x12\n" +
+	"\x04ext3\x18\n" +
+	" \x01(\tR\x04ext3\x12\x12\n" +
+	"\x04ext4\x18\v \x01(\tR\x04ext4\x12\x12\n" +
+	"\x04ext5\x18\f \x01(\tR\x04ext5\"\x82\x03\n" +
+	"\x17HandlerPlanTaskEventReq\x12'\n" +
+	"\x04plan\x18d \x01(\v2\x13.streamevent.PbPlanR\x04plan\x12\x0e\n" +
+	"\x02id\x182 \x01(\x03R\x02id\x12\x16\n" +
+	"\x06planPk\x18\x01 \x01(\x03R\x06planPk\x12\x16\n" +
+	"\x06planId\x18\x02 \x01(\tR\x06planId\x12\x18\n" +
+	"\abatchPk\x18\x04 \x01(\x03R\abatchPk\x12\x18\n" +
+	"\abatchId\x18\x05 \x01(\tR\abatchId\x12\x16\n" +
 	"\x06itemId\x18\n" +
 	" \x01(\tR\x06itemId\x12\x1a\n" +
 	"\bitemName\x18\v \x01(\tR\bitemName\x12\x18\n" +
 	"\apointId\x18\f \x01(\tR\apointId\x12\x18\n" +
 	"\apayload\x18\r \x01(\tR\apayload\x12(\n" +
-	"\x0fplanTriggerTime\x18\x0e \x01(\tR\x0fplanTriggerTime\"\x91\x01\n" +
+	"\x0fplanTriggerTime\x18\x0e \x01(\tR\x0fplanTriggerTime\x12\x1e\n" +
+	"\n" +
+	"lastResult\x18\x11 \x01(\tR\n" +
+	"lastResult\x12\x18\n" +
+	"\alastMsg\x18\x12 \x01(\tR\alastMsg\"\x91\x01\n" +
 	"\x17HandlerPlanTaskEventRes\x12\x1e\n" +
 	"\n" +
 	"execResult\x18\x01 \x01(\tR\n" +
@@ -3173,7 +3332,7 @@ func file_streamevent_proto_rawDescGZIP() []byte {
 	return file_streamevent_proto_rawDescData
 }
 
-var file_streamevent_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
+var file_streamevent_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
 var file_streamevent_proto_goTypes = []any{
 	(*ReceiveMQTTMessageReq)(nil),                      // 0: streamevent.ReceiveMQTTMessageReq
 	(*ReceiveMQTTMessageRes)(nil),                      // 1: streamevent.ReceiveMQTTMessageRes
@@ -3203,9 +3362,10 @@ var file_streamevent_proto_goTypes = []any{
 	(*PackedSinglePointWithSCDInfo)(nil),               // 25: streamevent.PackedSinglePointWithSCDInfo
 	(*UpSocketMessageReq)(nil),                         // 26: streamevent.UpSocketMessageReq
 	(*UpSocketMessageRsp)(nil),                         // 27: streamevent.UpSocketMessageRsp
-	(*HandlerPlanTaskEventReq)(nil),                    // 28: streamevent.HandlerPlanTaskEventReq
-	(*HandlerPlanTaskEventRes)(nil),                    // 29: streamevent.HandlerPlanTaskEventRes
-	(*PbDelayConfig)(nil),                              // 30: streamevent.PbDelayConfig
+	(*PbPlan)(nil),                                     // 28: streamevent.PbPlan
+	(*HandlerPlanTaskEventReq)(nil),                    // 29: streamevent.HandlerPlanTaskEventReq
+	(*HandlerPlanTaskEventRes)(nil),                    // 30: streamevent.HandlerPlanTaskEventRes
+	(*PbDelayConfig)(nil),                              // 31: streamevent.PbDelayConfig
 }
 var file_streamevent_proto_depIdxs = []int32{
 	2,  // 0: streamevent.ReceiveMQTTMessageReq.messages:type_name -> streamevent.MqttMessage
@@ -3214,24 +3374,25 @@ var file_streamevent_proto_depIdxs = []int32{
 	11, // 3: streamevent.MsgBody.pm:type_name -> streamevent.PointMapping
 	17, // 4: streamevent.StepPositionInfo.value:type_name -> streamevent.StepPosition
 	21, // 5: streamevent.BinaryCounterReadingInfo.value:type_name -> streamevent.BinaryCounterReading
-	30, // 6: streamevent.HandlerPlanTaskEventRes.delayConfig:type_name -> streamevent.PbDelayConfig
-	0,  // 7: streamevent.StreamEvent.ReceiveMQTTMessage:input_type -> streamevent.ReceiveMQTTMessageReq
-	3,  // 8: streamevent.StreamEvent.ReceiveWSMessage:input_type -> streamevent.ReceiveWSMessageReq
-	5,  // 9: streamevent.StreamEvent.ReceiveKafkaMessage:input_type -> streamevent.ReceiveKafkaMessageReq
-	8,  // 10: streamevent.StreamEvent.PushChunkAsdu:input_type -> streamevent.PushChunkAsduReq
-	26, // 11: streamevent.StreamEvent.UpSocketMessage:input_type -> streamevent.UpSocketMessageReq
-	28, // 12: streamevent.StreamEvent.HandlerPlanTaskEvent:input_type -> streamevent.HandlerPlanTaskEventReq
-	1,  // 13: streamevent.StreamEvent.ReceiveMQTTMessage:output_type -> streamevent.ReceiveMQTTMessageRes
-	4,  // 14: streamevent.StreamEvent.ReceiveWSMessage:output_type -> streamevent.ReceiveWSMessageRes
-	6,  // 15: streamevent.StreamEvent.ReceiveKafkaMessage:output_type -> streamevent.ReceiveKafkaMessageRes
-	9,  // 16: streamevent.StreamEvent.PushChunkAsdu:output_type -> streamevent.PushChunkAsduRes
-	26, // 17: streamevent.StreamEvent.UpSocketMessage:output_type -> streamevent.UpSocketMessageReq
-	29, // 18: streamevent.StreamEvent.HandlerPlanTaskEvent:output_type -> streamevent.HandlerPlanTaskEventRes
-	13, // [13:19] is the sub-list for method output_type
-	7,  // [7:13] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	28, // 6: streamevent.HandlerPlanTaskEventReq.plan:type_name -> streamevent.PbPlan
+	31, // 7: streamevent.HandlerPlanTaskEventRes.delayConfig:type_name -> streamevent.PbDelayConfig
+	0,  // 8: streamevent.StreamEvent.ReceiveMQTTMessage:input_type -> streamevent.ReceiveMQTTMessageReq
+	3,  // 9: streamevent.StreamEvent.ReceiveWSMessage:input_type -> streamevent.ReceiveWSMessageReq
+	5,  // 10: streamevent.StreamEvent.ReceiveKafkaMessage:input_type -> streamevent.ReceiveKafkaMessageReq
+	8,  // 11: streamevent.StreamEvent.PushChunkAsdu:input_type -> streamevent.PushChunkAsduReq
+	26, // 12: streamevent.StreamEvent.UpSocketMessage:input_type -> streamevent.UpSocketMessageReq
+	29, // 13: streamevent.StreamEvent.HandlerPlanTaskEvent:input_type -> streamevent.HandlerPlanTaskEventReq
+	1,  // 14: streamevent.StreamEvent.ReceiveMQTTMessage:output_type -> streamevent.ReceiveMQTTMessageRes
+	4,  // 15: streamevent.StreamEvent.ReceiveWSMessage:output_type -> streamevent.ReceiveWSMessageRes
+	6,  // 16: streamevent.StreamEvent.ReceiveKafkaMessage:output_type -> streamevent.ReceiveKafkaMessageRes
+	9,  // 17: streamevent.StreamEvent.PushChunkAsdu:output_type -> streamevent.PushChunkAsduRes
+	26, // 18: streamevent.StreamEvent.UpSocketMessage:output_type -> streamevent.UpSocketMessageReq
+	30, // 19: streamevent.StreamEvent.HandlerPlanTaskEvent:output_type -> streamevent.HandlerPlanTaskEventRes
+	14, // [14:20] is the sub-list for method output_type
+	8,  // [8:14] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_streamevent_proto_init() }
@@ -3245,7 +3406,7 @@ func file_streamevent_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_streamevent_proto_rawDesc), len(file_streamevent_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   31,
+			NumMessages:   32,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

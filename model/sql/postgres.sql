@@ -109,6 +109,7 @@ CREATE TABLE IF NOT EXISTS plan (
     terminated_reason VARCHAR(256) DEFAULT '',
     paused_time TIMESTAMP NULL, 
     paused_reason VARCHAR(256) DEFAULT '',
+    completed_time TIMESTAMP NULL, 
     description VARCHAR(256) DEFAULT '',
     ext_1 VARCHAR(256) DEFAULT '',
     ext_2 VARCHAR(256) DEFAULT '',
@@ -142,6 +143,7 @@ COMMENT ON COLUMN plan.terminated_time IS '终止时间';
 COMMENT ON COLUMN plan.terminated_reason IS '终止原因';
 COMMENT ON COLUMN plan.paused_time IS '暂停时间';
 COMMENT ON COLUMN plan.paused_reason IS '暂停原因';
+COMMENT ON COLUMN plan.completed_time IS '完成时间';
 COMMENT ON COLUMN plan.description IS '备注信息';
 COMMENT ON COLUMN plan.ext_1 IS '扩展字段1';
 COMMENT ON COLUMN plan.ext_2 IS '扩展字段2';
@@ -181,8 +183,9 @@ CREATE TABLE IF NOT EXISTS plan_exec_item (
     version INT NOT NULL DEFAULT 0, 
     create_user VARCHAR(64) DEFAULT '',
     update_user VARCHAR(64) DEFAULT '',
-    plan_id VARCHAR(64) NOT NULL DEFAULT '',
     plan_pk BIGINT NOT NULL DEFAULT 0, 
+    plan_id VARCHAR(64) NOT NULL DEFAULT '',
+    batch_pk BIGINT NOT NULL DEFAULT 0, 
     batch_id VARCHAR(64) NOT NULL DEFAULT '', 
     item_id VARCHAR(64) NOT NULL DEFAULT '', 
     item_name VARCHAR(128) DEFAULT '',
@@ -201,6 +204,7 @@ CREATE TABLE IF NOT EXISTS plan_exec_item (
     terminated_reason VARCHAR(256) DEFAULT '',
     paused_time TIMESTAMP NULL, 
     paused_reason VARCHAR(256) DEFAULT '',
+    completed_time TIMESTAMP NULL, 
     ext_1 VARCHAR(256) DEFAULT '',
     ext_2 VARCHAR(256) DEFAULT '',
     ext_3 VARCHAR(256) DEFAULT '',
@@ -220,8 +224,9 @@ COMMENT ON COLUMN plan_exec_item.del_state IS '删除状态：0-未删除，1-�
 COMMENT ON COLUMN plan_exec_item.version IS '版本号（乐观锁）';
 COMMENT ON COLUMN plan_exec_item.create_user IS '创建人';
 COMMENT ON COLUMN plan_exec_item.update_user IS '更新人';
-COMMENT ON COLUMN plan_exec_item.plan_id IS '关联的计划ID';
 COMMENT ON COLUMN plan_exec_item.plan_pk IS '关联的计划主键ID';
+COMMENT ON COLUMN plan_exec_item.plan_id IS '关联的计划ID';
+COMMENT ON COLUMN plan_exec_item.batch_pk IS '批主键ID';
 COMMENT ON COLUMN plan_exec_item.batch_id IS '批ID';
 COMMENT ON COLUMN plan_exec_item.item_id IS '执行项ID';
 COMMENT ON COLUMN plan_exec_item.item_name IS '执行项名称';
@@ -233,13 +238,14 @@ COMMENT ON COLUMN plan_exec_item.plan_trigger_time IS '计划触发时间';
 COMMENT ON COLUMN plan_exec_item.next_trigger_time IS '下次触发时间（扫表核心字段）';
 COMMENT ON COLUMN plan_exec_item.last_trigger_time IS '上次触发时间';
 COMMENT ON COLUMN plan_exec_item.trigger_count IS '触发次数';
-COMMENT ON COLUMN plan_exec_item.status IS '状态：0-初始等待调度，10-延期等待，100-执行中，150-暂停，200-执行成功，300-已终止';
+COMMENT ON COLUMN plan_exec_item.status IS '状态：0-等待调度，10-延期等待，100-执行中，150-暂停，200-完成，300-终止';
 COMMENT ON COLUMN plan_exec_item.last_result IS '上次执行结果';
 COMMENT ON COLUMN plan_exec_item.last_msg IS '上次执行消息';
 COMMENT ON COLUMN plan_exec_item.terminated_time IS '终止时间';
 COMMENT ON COLUMN plan_exec_item.terminated_reason IS '终止原因';
 COMMENT ON COLUMN plan_exec_item.paused_time IS '暂停时间';
 COMMENT ON COLUMN plan_exec_item.paused_reason IS '暂停原因';
+COMMENT ON COLUMN plan_exec_item.completed_time IS '完成时间';
 COMMENT ON COLUMN plan_exec_item.ext_1 IS '扩展字段1';
 COMMENT ON COLUMN plan_exec_item.ext_2 IS '扩展字段2';
 COMMENT ON COLUMN plan_exec_item.ext_3 IS '扩展字段3';
@@ -247,11 +253,13 @@ COMMENT ON COLUMN plan_exec_item.ext_4 IS '扩展字段4';
 COMMENT ON COLUMN plan_exec_item.ext_5 IS '扩展字段5';
 
 -- 为 plan_exec_item 表创建索引
+CREATE INDEX idx_plan_exec_item_batch_pk ON plan_exec_item (batch_pk);
+CREATE INDEX idx_plan_exec_item_batch_id ON plan_exec_item (batch_id);
 CREATE INDEX idx_plan_exec_item_plan_pk_item_id ON plan_exec_item (plan_pk, item_id);
 CREATE INDEX idx_plan_exec_item_plan_id_item_id ON plan_exec_item (plan_id, item_id);
-CREATE INDEX idx_plan_exec_item_batch_id ON plan_exec_item (batch_id);
 CREATE INDEX idx_plan_exec_item_point_id ON plan_exec_item (point_id);
-CREATE INDEX idx_plan_exec_item_core_scan ON plan_exec_item (next_trigger_time, status, del_state);
+CREATE INDEX idx_plan_exec_item_status ON plan_exec_item (status);
+CREATE INDEX idx_plan_exec_item_core_scan ON plan_exec_item (del_state, next_trigger_time, status);
 
 -- 为 plan_exec_item 表创建触发器
 CREATE TRIGGER "trigger_insert_modified_time"
@@ -279,9 +287,10 @@ CREATE TABLE IF NOT EXISTS plan_exec_log (
     plan_id VARCHAR(64) NOT NULL DEFAULT '', 
     plan_pk BIGINT NOT NULL DEFAULT 0, 
     plan_name VARCHAR(128) DEFAULT '',
+    batch_pk BIGINT NOT NULL DEFAULT 0,
     batch_id VARCHAR(64) NOT NULL DEFAULT '', 
     item_pk BIGINT NOT NULL DEFAULT 0,
-    item_id VARCHAR(64) DEFAULT '',
+    item_id VARCHAR(64) NOT NULL DEFAULT '',
     item_name VARCHAR(128) DEFAULT '',
     point_id VARCHAR(64) DEFAULT '',
     trigger_time TIMESTAMP NOT NULL, 
@@ -305,6 +314,7 @@ COMMENT ON COLUMN plan_exec_log.update_user IS '更新人';
 COMMENT ON COLUMN plan_exec_log.plan_id IS '计划任务ID';
 COMMENT ON COLUMN plan_exec_log.plan_pk IS '关联的计划主键ID';
 COMMENT ON COLUMN plan_exec_log.plan_name IS '计划任务名称';
+COMMENT ON COLUMN plan_exec_log.batch_pk IS '批主键ID';
 COMMENT ON COLUMN plan_exec_log.batch_id IS '批ID';
 COMMENT ON COLUMN plan_exec_log.item_pk IS '关联的执行项主键ID';
 COMMENT ON COLUMN plan_exec_log.item_id IS '执行项ID';
@@ -318,6 +328,7 @@ COMMENT ON COLUMN plan_exec_log.message IS '结果描述';
 -- 为 plan_exec_log 表创建索引
 CREATE INDEX idx_plan_exec_log_plan_pk ON plan_exec_log (plan_pk);
 CREATE INDEX idx_plan_exec_log_plan_id ON plan_exec_log (plan_id);
+CREATE INDEX idx_plan_exec_log_batch_pk ON plan_exec_log (batch_pk);
 CREATE INDEX idx_plan_exec_log_batch_id ON plan_exec_log (batch_id);
 CREATE INDEX idx_plan_exec_log_item_id ON plan_exec_log (item_id);
 CREATE INDEX idx_plan_exec_log_trigger_time ON plan_exec_log (trigger_time);
@@ -334,5 +345,71 @@ CREATE TRIGGER "trigger_insert_modified_time"
 CREATE TRIGGER "trigger_update_modified_time"
     BEFORE UPDATE
     ON "public"."plan_exec_log"
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_modified_update_time();
+
+-- 7. 创建计划批次表
+CREATE TABLE IF NOT EXISTS plan_batch (
+    id BIGSERIAL PRIMARY KEY, 
+    create_time TIMESTAMP NOT NULL, 
+    update_time TIMESTAMP NOT NULL, 
+    delete_time TIMESTAMP NULL, 
+    del_state SMALLINT NOT NULL DEFAULT 0, 
+    version INT NOT NULL DEFAULT 0, 
+    create_user VARCHAR(64) DEFAULT '',
+    update_user VARCHAR(64) DEFAULT '',
+    plan_pk BIGINT NOT NULL DEFAULT 0, 
+    plan_id VARCHAR(64) NOT NULL DEFAULT '', 
+    batch_id VARCHAR(64) NOT NULL DEFAULT '', 
+    batch_name VARCHAR(128) DEFAULT '',
+    status SMALLINT NOT NULL DEFAULT 0, 
+    completed_time TIMESTAMP NULL, 
+    ext_1 VARCHAR(256) DEFAULT '',
+    ext_2 VARCHAR(256) DEFAULT '',
+    ext_3 VARCHAR(256) DEFAULT '',
+    ext_4 VARCHAR(256) DEFAULT '',
+    ext_5 VARCHAR(256) DEFAULT '',
+    CONSTRAINT uq_plan_batch_batch_id UNIQUE (batch_id)
+);
+
+-- 为 plan_batch 表添加注释
+COMMENT ON TABLE plan_batch IS '计划批次表';
+
+-- 为 plan_batch 表的列添加注释
+COMMENT ON COLUMN plan_batch.id IS '自增主键ID';
+COMMENT ON COLUMN plan_batch.create_time IS '创建时间';
+COMMENT ON COLUMN plan_batch.update_time IS '更新时间';
+COMMENT ON COLUMN plan_batch.delete_time IS '删除时间（软删除标记）';
+COMMENT ON COLUMN plan_batch.del_state IS '删除状态：0-未删除，1-已删除';
+COMMENT ON COLUMN plan_batch.version IS '版本号（乐观锁）';
+COMMENT ON COLUMN plan_batch.create_user IS '创建人';
+COMMENT ON COLUMN plan_batch.update_user IS '更新人';
+COMMENT ON COLUMN plan_batch.plan_pk IS '关联的计划主键ID';
+COMMENT ON COLUMN plan_batch.plan_id IS '关联的计划ID';
+COMMENT ON COLUMN plan_batch.batch_id IS '批ID';
+COMMENT ON COLUMN plan_batch.batch_name IS '批次名称';
+COMMENT ON COLUMN plan_batch.status IS '状态：0-禁用，1-启用，2-暂停，3-终止';
+COMMENT ON COLUMN plan_batch.completed_time IS '完成时间';
+COMMENT ON COLUMN plan_batch.ext_1 IS '扩展字段1';
+COMMENT ON COLUMN plan_batch.ext_2 IS '扩展字段2';
+COMMENT ON COLUMN plan_batch.ext_3 IS '扩展字段3';
+COMMENT ON COLUMN plan_batch.ext_4 IS '扩展字段4';
+COMMENT ON COLUMN plan_batch.ext_5 IS '扩展字段5';
+
+-- 为 plan_batch 表创建索引
+CREATE INDEX idx_plan_batch_plan_id ON plan_batch (plan_id);
+CREATE INDEX idx_plan_batch_plan_pk ON plan_batch (plan_pk);
+CREATE INDEX idx_plan_batch_status ON plan_batch (status);
+
+-- 为 plan_batch 表创建触发器
+CREATE TRIGGER "trigger_insert_modified_time"
+    BEFORE INSERT
+    ON "public"."plan_batch"
+    FOR EACH ROW
+    EXECUTE PROCEDURE insert_modified_time();
+
+CREATE TRIGGER "trigger_update_modified_time"
+    BEFORE UPDATE
+    ON "public"."plan_batch"
     FOR EACH ROW
     EXECUTE PROCEDURE update_modified_update_time();

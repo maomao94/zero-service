@@ -455,19 +455,21 @@ message UpSocketMessageReq{
 message UpSocketMessageRsp{
 }
 
-message HandlerPlanTaskEventReq{
-  // 创建时间 执行项创建时间
+message PbPlan{
+  // 创建时间
   string createTime = 101;
-  // 更新时间 执行项更新时间
+  // 更新时间
   string updateTime = 102;
-  // 创建人 执行项创建人
+  // 创建人
   string createUser = 103;
-  // 更新人 执行项更新人
+  // 更新人
   string updateUser = 104;
 
-  // 计划任务ID
+  // 自增主键ID
+  int64 id = 50;
+  // 计划ID
   string planId = 1;
-  // 计划任务名称
+  // 计划名称
   string planName = 2;
   // 任务类型
   string type = 3;
@@ -479,11 +481,31 @@ message HandlerPlanTaskEventReq{
   string startTime = 6;
   // 规则生效结束时间
   string endTime = 7;
+  // 扩展字段1
+  string ext1 = 8;
+  // 扩展字段2
+  string ext2 = 9;
+  // 扩展字段3
+  string ext3 = 10;
+  // 扩展字段4
+  string ext4 = 11;
+  // 扩展字段5
+  string ext5 = 12;
+}
 
+message HandlerPlanTaskEventReq{
+  PbPlan plan = 100;
+
+  // 自增主键ID
+  int64 id = 50;
   // 关联的计划主键ID
-  int64 planPk = 8;
-  // 批ID 同一时间具有相同批ID
-  string batchId = 9;
+  int64 planPk = 1;
+  // 计划ID
+  string planId = 2;
+  // 批主键ID
+  int64 batchPk = 4;
+  // 批ID
+  string batchId = 5;
   // 执行项ID
   string itemId = 10;
   // 执行项名称
@@ -494,14 +516,18 @@ message HandlerPlanTaskEventReq{
   string payload = 13;
   // 计划触发时间
   string planTriggerTime = 14;
+  // 上次执行结果
+  string lastResult = 17;
+  // 上次执行消息
+  string lastMsg = 18;
 }
 
 message HandlerPlanTaskEventRes{
-  // 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，running-业务正在执行（未回调或部分异步）
+  // 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，ongoing-业务正在执行（未回调或部分异步）
   string execResult = 1;
   // 结果描述（成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
   string message = 2;
-  // 延期配置-默认延期5分钟：delayed-自定义延期，running-自定义延期,等待业务系统回调完成/延期触发)
+  // 延期配置-默认延期5分钟：delayed-自定义延期
   PbDelayConfig delayConfig = 3;
 }
 
