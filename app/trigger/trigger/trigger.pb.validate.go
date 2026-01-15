@@ -5734,6 +5734,283 @@ var _ interface {
 	ErrorName() string
 } = RunTaskResValidationError{}
 
+// Validate checks the field values on CalcPlanTaskDateReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CalcPlanTaskDateReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CalcPlanTaskDateReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CalcPlanTaskDateReqMultiError, or nil if none found.
+func (m *CalcPlanTaskDateReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CalcPlanTaskDateReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CalcPlanTaskDateReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CalcPlanTaskDateReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CalcPlanTaskDateReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for StartTime
+
+	// no validation rules for EndTime
+
+	if m.GetRule() == nil {
+		err := CalcPlanTaskDateReqValidationError{
+			field:  "Rule",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetRule()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CalcPlanTaskDateReqValidationError{
+					field:  "Rule",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CalcPlanTaskDateReqValidationError{
+					field:  "Rule",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetRule()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CalcPlanTaskDateReqValidationError{
+				field:  "Rule",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return CalcPlanTaskDateReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// CalcPlanTaskDateReqMultiError is an error wrapping multiple validation
+// errors returned by CalcPlanTaskDateReq.ValidateAll() if the designated
+// constraints aren't met.
+type CalcPlanTaskDateReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CalcPlanTaskDateReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CalcPlanTaskDateReqMultiError) AllErrors() []error { return m }
+
+// CalcPlanTaskDateReqValidationError is the validation error returned by
+// CalcPlanTaskDateReq.Validate if the designated constraints aren't met.
+type CalcPlanTaskDateReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CalcPlanTaskDateReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CalcPlanTaskDateReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CalcPlanTaskDateReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CalcPlanTaskDateReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CalcPlanTaskDateReqValidationError) ErrorName() string {
+	return "CalcPlanTaskDateReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CalcPlanTaskDateReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCalcPlanTaskDateReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CalcPlanTaskDateReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CalcPlanTaskDateReqValidationError{}
+
+// Validate checks the field values on CalcPlanTaskDateRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CalcPlanTaskDateRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CalcPlanTaskDateRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CalcPlanTaskDateResMultiError, or nil if none found.
+func (m *CalcPlanTaskDateRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CalcPlanTaskDateRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return CalcPlanTaskDateResMultiError(errors)
+	}
+
+	return nil
+}
+
+// CalcPlanTaskDateResMultiError is an error wrapping multiple validation
+// errors returned by CalcPlanTaskDateRes.ValidateAll() if the designated
+// constraints aren't met.
+type CalcPlanTaskDateResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CalcPlanTaskDateResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CalcPlanTaskDateResMultiError) AllErrors() []error { return m }
+
+// CalcPlanTaskDateResValidationError is the validation error returned by
+// CalcPlanTaskDateRes.Validate if the designated constraints aren't met.
+type CalcPlanTaskDateResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CalcPlanTaskDateResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CalcPlanTaskDateResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CalcPlanTaskDateResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CalcPlanTaskDateResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CalcPlanTaskDateResValidationError) ErrorName() string {
+	return "CalcPlanTaskDateResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CalcPlanTaskDateResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCalcPlanTaskDateRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CalcPlanTaskDateResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CalcPlanTaskDateResValidationError{}
+
 // Validate checks the field values on CreatePlanTaskReq with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.
@@ -6989,6 +7266,1000 @@ var _ interface {
 	ErrorName() string
 } = TerminatePlanResValidationError{}
 
+// Validate checks the field values on ResumePlanReq with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *ResumePlanReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ResumePlanReq with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in ResumePlanReqMultiError, or
+// nil if none found.
+func (m *ResumePlanReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ResumePlanReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ResumePlanReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ResumePlanReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ResumePlanReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if utf8.RuneCountInString(m.GetPlanId()) < 1 {
+		err := ResumePlanReqValidationError{
+			field:  "PlanId",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return ResumePlanReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// ResumePlanReqMultiError is an error wrapping multiple validation errors
+// returned by ResumePlanReq.ValidateAll() if the designated constraints
+// aren't met.
+type ResumePlanReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ResumePlanReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ResumePlanReqMultiError) AllErrors() []error { return m }
+
+// ResumePlanReqValidationError is the validation error returned by
+// ResumePlanReq.Validate if the designated constraints aren't met.
+type ResumePlanReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ResumePlanReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ResumePlanReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ResumePlanReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ResumePlanReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ResumePlanReqValidationError) ErrorName() string { return "ResumePlanReqValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ResumePlanReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sResumePlanReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ResumePlanReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ResumePlanReqValidationError{}
+
+// Validate checks the field values on ResumePlanRes with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *ResumePlanRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ResumePlanRes with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in ResumePlanResMultiError, or
+// nil if none found.
+func (m *ResumePlanRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ResumePlanRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return ResumePlanResMultiError(errors)
+	}
+
+	return nil
+}
+
+// ResumePlanResMultiError is an error wrapping multiple validation errors
+// returned by ResumePlanRes.ValidateAll() if the designated constraints
+// aren't met.
+type ResumePlanResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ResumePlanResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ResumePlanResMultiError) AllErrors() []error { return m }
+
+// ResumePlanResValidationError is the validation error returned by
+// ResumePlanRes.Validate if the designated constraints aren't met.
+type ResumePlanResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ResumePlanResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ResumePlanResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ResumePlanResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ResumePlanResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ResumePlanResValidationError) ErrorName() string { return "ResumePlanResValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ResumePlanResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sResumePlanRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ResumePlanResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ResumePlanResValidationError{}
+
+// Validate checks the field values on PausePlanBatchReq with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *PausePlanBatchReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PausePlanBatchReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// PausePlanBatchReqMultiError, or nil if none found.
+func (m *PausePlanBatchReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PausePlanBatchReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, PausePlanBatchReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, PausePlanBatchReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PausePlanBatchReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetId() < 1 {
+		err := PausePlanBatchReqValidationError{
+			field:  "Id",
+			reason: "value must be greater than or equal to 1",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetReason()) > 200 {
+		err := PausePlanBatchReqValidationError{
+			field:  "Reason",
+			reason: "value length must be at most 200 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return PausePlanBatchReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// PausePlanBatchReqMultiError is an error wrapping multiple validation errors
+// returned by PausePlanBatchReq.ValidateAll() if the designated constraints
+// aren't met.
+type PausePlanBatchReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PausePlanBatchReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PausePlanBatchReqMultiError) AllErrors() []error { return m }
+
+// PausePlanBatchReqValidationError is the validation error returned by
+// PausePlanBatchReq.Validate if the designated constraints aren't met.
+type PausePlanBatchReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PausePlanBatchReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PausePlanBatchReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PausePlanBatchReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PausePlanBatchReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PausePlanBatchReqValidationError) ErrorName() string {
+	return "PausePlanBatchReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PausePlanBatchReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPausePlanBatchReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PausePlanBatchReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PausePlanBatchReqValidationError{}
+
+// Validate checks the field values on PausePlanBatchRes with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *PausePlanBatchRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PausePlanBatchRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// PausePlanBatchResMultiError, or nil if none found.
+func (m *PausePlanBatchRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PausePlanBatchRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return PausePlanBatchResMultiError(errors)
+	}
+
+	return nil
+}
+
+// PausePlanBatchResMultiError is an error wrapping multiple validation errors
+// returned by PausePlanBatchRes.ValidateAll() if the designated constraints
+// aren't met.
+type PausePlanBatchResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PausePlanBatchResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PausePlanBatchResMultiError) AllErrors() []error { return m }
+
+// PausePlanBatchResValidationError is the validation error returned by
+// PausePlanBatchRes.Validate if the designated constraints aren't met.
+type PausePlanBatchResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PausePlanBatchResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PausePlanBatchResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PausePlanBatchResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PausePlanBatchResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PausePlanBatchResValidationError) ErrorName() string {
+	return "PausePlanBatchResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PausePlanBatchResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPausePlanBatchRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PausePlanBatchResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PausePlanBatchResValidationError{}
+
+// Validate checks the field values on TerminatePlanBatchReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *TerminatePlanBatchReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on TerminatePlanBatchReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// TerminatePlanBatchReqMultiError, or nil if none found.
+func (m *TerminatePlanBatchReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *TerminatePlanBatchReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TerminatePlanBatchReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TerminatePlanBatchReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TerminatePlanBatchReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetId() < 1 {
+		err := TerminatePlanBatchReqValidationError{
+			field:  "Id",
+			reason: "value must be greater than or equal to 1",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetReason()) > 200 {
+		err := TerminatePlanBatchReqValidationError{
+			field:  "Reason",
+			reason: "value length must be at most 200 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return TerminatePlanBatchReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// TerminatePlanBatchReqMultiError is an error wrapping multiple validation
+// errors returned by TerminatePlanBatchReq.ValidateAll() if the designated
+// constraints aren't met.
+type TerminatePlanBatchReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m TerminatePlanBatchReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m TerminatePlanBatchReqMultiError) AllErrors() []error { return m }
+
+// TerminatePlanBatchReqValidationError is the validation error returned by
+// TerminatePlanBatchReq.Validate if the designated constraints aren't met.
+type TerminatePlanBatchReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TerminatePlanBatchReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TerminatePlanBatchReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TerminatePlanBatchReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TerminatePlanBatchReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TerminatePlanBatchReqValidationError) ErrorName() string {
+	return "TerminatePlanBatchReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e TerminatePlanBatchReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTerminatePlanBatchReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TerminatePlanBatchReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TerminatePlanBatchReqValidationError{}
+
+// Validate checks the field values on TerminatePlanBatchRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *TerminatePlanBatchRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on TerminatePlanBatchRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// TerminatePlanBatchResMultiError, or nil if none found.
+func (m *TerminatePlanBatchRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *TerminatePlanBatchRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return TerminatePlanBatchResMultiError(errors)
+	}
+
+	return nil
+}
+
+// TerminatePlanBatchResMultiError is an error wrapping multiple validation
+// errors returned by TerminatePlanBatchRes.ValidateAll() if the designated
+// constraints aren't met.
+type TerminatePlanBatchResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m TerminatePlanBatchResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m TerminatePlanBatchResMultiError) AllErrors() []error { return m }
+
+// TerminatePlanBatchResValidationError is the validation error returned by
+// TerminatePlanBatchRes.Validate if the designated constraints aren't met.
+type TerminatePlanBatchResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TerminatePlanBatchResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TerminatePlanBatchResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TerminatePlanBatchResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TerminatePlanBatchResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TerminatePlanBatchResValidationError) ErrorName() string {
+	return "TerminatePlanBatchResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e TerminatePlanBatchResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTerminatePlanBatchRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TerminatePlanBatchResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TerminatePlanBatchResValidationError{}
+
+// Validate checks the field values on ResumePlanBatchReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ResumePlanBatchReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ResumePlanBatchReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ResumePlanBatchReqMultiError, or nil if none found.
+func (m *ResumePlanBatchReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ResumePlanBatchReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ResumePlanBatchReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ResumePlanBatchReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ResumePlanBatchReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetId() < 1 {
+		err := ResumePlanBatchReqValidationError{
+			field:  "Id",
+			reason: "value must be greater than or equal to 1",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return ResumePlanBatchReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// ResumePlanBatchReqMultiError is an error wrapping multiple validation errors
+// returned by ResumePlanBatchReq.ValidateAll() if the designated constraints
+// aren't met.
+type ResumePlanBatchReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ResumePlanBatchReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ResumePlanBatchReqMultiError) AllErrors() []error { return m }
+
+// ResumePlanBatchReqValidationError is the validation error returned by
+// ResumePlanBatchReq.Validate if the designated constraints aren't met.
+type ResumePlanBatchReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ResumePlanBatchReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ResumePlanBatchReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ResumePlanBatchReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ResumePlanBatchReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ResumePlanBatchReqValidationError) ErrorName() string {
+	return "ResumePlanBatchReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ResumePlanBatchReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sResumePlanBatchReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ResumePlanBatchReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ResumePlanBatchReqValidationError{}
+
+// Validate checks the field values on ResumePlanBatchRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ResumePlanBatchRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ResumePlanBatchRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ResumePlanBatchResMultiError, or nil if none found.
+func (m *ResumePlanBatchRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ResumePlanBatchRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return ResumePlanBatchResMultiError(errors)
+	}
+
+	return nil
+}
+
+// ResumePlanBatchResMultiError is an error wrapping multiple validation errors
+// returned by ResumePlanBatchRes.ValidateAll() if the designated constraints
+// aren't met.
+type ResumePlanBatchResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ResumePlanBatchResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ResumePlanBatchResMultiError) AllErrors() []error { return m }
+
+// ResumePlanBatchResValidationError is the validation error returned by
+// ResumePlanBatchRes.Validate if the designated constraints aren't met.
+type ResumePlanBatchResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ResumePlanBatchResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ResumePlanBatchResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ResumePlanBatchResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ResumePlanBatchResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ResumePlanBatchResValidationError) ErrorName() string {
+	return "ResumePlanBatchResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ResumePlanBatchResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sResumePlanBatchRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ResumePlanBatchResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ResumePlanBatchResValidationError{}
+
 // Validate checks the field values on PausePlanExecItemReq with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -7498,246 +8769,6 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = TerminatePlanExecItemResValidationError{}
-
-// Validate checks the field values on ResumePlanReq with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *ResumePlanReq) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on ResumePlanReq with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in ResumePlanReqMultiError, or
-// nil if none found.
-func (m *ResumePlanReq) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *ResumePlanReq) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ResumePlanReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, ResumePlanReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ResumePlanReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if utf8.RuneCountInString(m.GetPlanId()) < 1 {
-		err := ResumePlanReqValidationError{
-			field:  "PlanId",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(errors) > 0 {
-		return ResumePlanReqMultiError(errors)
-	}
-
-	return nil
-}
-
-// ResumePlanReqMultiError is an error wrapping multiple validation errors
-// returned by ResumePlanReq.ValidateAll() if the designated constraints
-// aren't met.
-type ResumePlanReqMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m ResumePlanReqMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m ResumePlanReqMultiError) AllErrors() []error { return m }
-
-// ResumePlanReqValidationError is the validation error returned by
-// ResumePlanReq.Validate if the designated constraints aren't met.
-type ResumePlanReqValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e ResumePlanReqValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e ResumePlanReqValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e ResumePlanReqValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e ResumePlanReqValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e ResumePlanReqValidationError) ErrorName() string { return "ResumePlanReqValidationError" }
-
-// Error satisfies the builtin error interface
-func (e ResumePlanReqValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sResumePlanReq.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = ResumePlanReqValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = ResumePlanReqValidationError{}
-
-// Validate checks the field values on ResumePlanRes with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *ResumePlanRes) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on ResumePlanRes with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in ResumePlanResMultiError, or
-// nil if none found.
-func (m *ResumePlanRes) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *ResumePlanRes) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if len(errors) > 0 {
-		return ResumePlanResMultiError(errors)
-	}
-
-	return nil
-}
-
-// ResumePlanResMultiError is an error wrapping multiple validation errors
-// returned by ResumePlanRes.ValidateAll() if the designated constraints
-// aren't met.
-type ResumePlanResMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m ResumePlanResMultiError) Error() string {
-	msgs := make([]string, 0, len(m))
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m ResumePlanResMultiError) AllErrors() []error { return m }
-
-// ResumePlanResValidationError is the validation error returned by
-// ResumePlanRes.Validate if the designated constraints aren't met.
-type ResumePlanResValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e ResumePlanResValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e ResumePlanResValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e ResumePlanResValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e ResumePlanResValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e ResumePlanResValidationError) ErrorName() string { return "ResumePlanResValidationError" }
-
-// Error satisfies the builtin error interface
-func (e ResumePlanResValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sResumePlanRes.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = ResumePlanResValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = ResumePlanResValidationError{}
 
 // Validate checks the field values on ResumePlanExecItemReq with the rules
 // defined in the proto definition for this message. If any rules are
@@ -8955,6 +9986,572 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListPlansResValidationError{}
+
+// Validate checks the field values on GetPlanBatchReq with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *GetPlanBatchReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetPlanBatchReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetPlanBatchReqMultiError, or nil if none found.
+func (m *GetPlanBatchReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetPlanBatchReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GetPlanBatchReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GetPlanBatchReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GetPlanBatchReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetId() < 1 {
+		err := GetPlanBatchReqValidationError{
+			field:  "Id",
+			reason: "value must be greater than or equal to 1",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return GetPlanBatchReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetPlanBatchReqMultiError is an error wrapping multiple validation errors
+// returned by GetPlanBatchReq.ValidateAll() if the designated constraints
+// aren't met.
+type GetPlanBatchReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetPlanBatchReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetPlanBatchReqMultiError) AllErrors() []error { return m }
+
+// GetPlanBatchReqValidationError is the validation error returned by
+// GetPlanBatchReq.Validate if the designated constraints aren't met.
+type GetPlanBatchReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetPlanBatchReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetPlanBatchReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetPlanBatchReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetPlanBatchReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetPlanBatchReqValidationError) ErrorName() string { return "GetPlanBatchReqValidationError" }
+
+// Error satisfies the builtin error interface
+func (e GetPlanBatchReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetPlanBatchReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetPlanBatchReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetPlanBatchReqValidationError{}
+
+// Validate checks the field values on GetPlanBatchRes with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *GetPlanBatchRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetPlanBatchRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetPlanBatchResMultiError, or nil if none found.
+func (m *GetPlanBatchRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetPlanBatchRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetPlanBatch()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GetPlanBatchResValidationError{
+					field:  "PlanBatch",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GetPlanBatchResValidationError{
+					field:  "PlanBatch",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPlanBatch()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GetPlanBatchResValidationError{
+				field:  "PlanBatch",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return GetPlanBatchResMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetPlanBatchResMultiError is an error wrapping multiple validation errors
+// returned by GetPlanBatchRes.ValidateAll() if the designated constraints
+// aren't met.
+type GetPlanBatchResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetPlanBatchResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetPlanBatchResMultiError) AllErrors() []error { return m }
+
+// GetPlanBatchResValidationError is the validation error returned by
+// GetPlanBatchRes.Validate if the designated constraints aren't met.
+type GetPlanBatchResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetPlanBatchResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetPlanBatchResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetPlanBatchResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetPlanBatchResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetPlanBatchResValidationError) ErrorName() string { return "GetPlanBatchResValidationError" }
+
+// Error satisfies the builtin error interface
+func (e GetPlanBatchResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetPlanBatchRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetPlanBatchResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetPlanBatchResValidationError{}
+
+// Validate checks the field values on ListPlanBatchesReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListPlanBatchesReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListPlanBatchesReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListPlanBatchesReqMultiError, or nil if none found.
+func (m *ListPlanBatchesReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListPlanBatchesReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ListPlanBatchesReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ListPlanBatchesReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListPlanBatchesReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetPageSize() < 0 {
+		err := ListPlanBatchesReqValidationError{
+			field:  "PageSize",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetPageNum() < 0 {
+		err := ListPlanBatchesReqValidationError{
+			field:  "PageNum",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for PlanPk
+
+	// no validation rules for PlanId
+
+	// no validation rules for BatchId
+
+	if len(errors) > 0 {
+		return ListPlanBatchesReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListPlanBatchesReqMultiError is an error wrapping multiple validation errors
+// returned by ListPlanBatchesReq.ValidateAll() if the designated constraints
+// aren't met.
+type ListPlanBatchesReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListPlanBatchesReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListPlanBatchesReqMultiError) AllErrors() []error { return m }
+
+// ListPlanBatchesReqValidationError is the validation error returned by
+// ListPlanBatchesReq.Validate if the designated constraints aren't met.
+type ListPlanBatchesReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListPlanBatchesReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListPlanBatchesReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListPlanBatchesReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListPlanBatchesReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListPlanBatchesReqValidationError) ErrorName() string {
+	return "ListPlanBatchesReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListPlanBatchesReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListPlanBatchesReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListPlanBatchesReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListPlanBatchesReqValidationError{}
+
+// Validate checks the field values on ListPlanBatchesRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListPlanBatchesRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListPlanBatchesRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListPlanBatchesResMultiError, or nil if none found.
+func (m *ListPlanBatchesRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListPlanBatchesRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetPlanBatches() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListPlanBatchesResValidationError{
+						field:  fmt.Sprintf("PlanBatches[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListPlanBatchesResValidationError{
+						field:  fmt.Sprintf("PlanBatches[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListPlanBatchesResValidationError{
+					field:  fmt.Sprintf("PlanBatches[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for Total
+
+	if len(errors) > 0 {
+		return ListPlanBatchesResMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListPlanBatchesResMultiError is an error wrapping multiple validation errors
+// returned by ListPlanBatchesRes.ValidateAll() if the designated constraints
+// aren't met.
+type ListPlanBatchesResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListPlanBatchesResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListPlanBatchesResMultiError) AllErrors() []error { return m }
+
+// ListPlanBatchesResValidationError is the validation error returned by
+// ListPlanBatchesRes.Validate if the designated constraints aren't met.
+type ListPlanBatchesResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListPlanBatchesResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListPlanBatchesResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListPlanBatchesResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListPlanBatchesResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListPlanBatchesResValidationError) ErrorName() string {
+	return "ListPlanBatchesResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListPlanBatchesResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListPlanBatchesRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListPlanBatchesResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListPlanBatchesResValidationError{}
 
 // Validate checks the field values on GetPlanExecItemReq with the rules
 // defined in the proto definition for this message. If any rules are
@@ -10409,6 +12006,139 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = PbPlanExecLogValidationError{}
+
+// Validate checks the field values on PbPlanBatch with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *PbPlanBatch) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PbPlanBatch with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in PbPlanBatchMultiError, or
+// nil if none found.
+func (m *PbPlanBatch) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PbPlanBatch) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for CreateTime
+
+	// no validation rules for UpdateTime
+
+	// no validation rules for CreateUser
+
+	// no validation rules for UpdateUser
+
+	// no validation rules for Id
+
+	// no validation rules for PlanPk
+
+	// no validation rules for PlanId
+
+	// no validation rules for BatchId
+
+	// no validation rules for BatchName
+
+	// no validation rules for Status
+
+	// no validation rules for PlanTriggerTime
+
+	// no validation rules for CompletedTime
+
+	// no validation rules for Ext1
+
+	// no validation rules for Ext2
+
+	// no validation rules for Ext3
+
+	// no validation rules for Ext4
+
+	// no validation rules for Ext5
+
+	if len(errors) > 0 {
+		return PbPlanBatchMultiError(errors)
+	}
+
+	return nil
+}
+
+// PbPlanBatchMultiError is an error wrapping multiple validation errors
+// returned by PbPlanBatch.ValidateAll() if the designated constraints aren't met.
+type PbPlanBatchMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PbPlanBatchMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PbPlanBatchMultiError) AllErrors() []error { return m }
+
+// PbPlanBatchValidationError is the validation error returned by
+// PbPlanBatch.Validate if the designated constraints aren't met.
+type PbPlanBatchValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PbPlanBatchValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PbPlanBatchValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PbPlanBatchValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PbPlanBatchValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PbPlanBatchValidationError) ErrorName() string { return "PbPlanBatchValidationError" }
+
+// Error satisfies the builtin error interface
+func (e PbPlanBatchValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPbPlanBatch.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PbPlanBatchValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PbPlanBatchValidationError{}
 
 // Validate checks the field values on CallbackPlanExecItemReq with the rules
 // defined in the proto definition for this message. If any rules are

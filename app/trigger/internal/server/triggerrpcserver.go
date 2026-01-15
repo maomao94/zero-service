@@ -136,6 +136,12 @@ func (s *TriggerRpcServer) RunTask(ctx context.Context, in *trigger.RunTaskReq) 
 	return l.RunTask(in)
 }
 
+// 计算计划任务日期
+func (s *TriggerRpcServer) CalcPlanTaskDate(ctx context.Context, in *trigger.CalcPlanTaskDateReq) (*trigger.CalcPlanTaskDateRes, error) {
+	l := logic.NewCalcPlanTaskDateLogic(ctx, s.svcCtx)
+	return l.CalcPlanTaskDate(in)
+}
+
 // 创建计划任务
 func (s *TriggerRpcServer) CreatePlanTask(ctx context.Context, in *trigger.CreatePlanTaskReq) (*trigger.CreatePlanTaskRes, error) {
 	l := logic.NewCreatePlanTaskLogic(ctx, s.svcCtx)
@@ -152,6 +158,30 @@ func (s *TriggerRpcServer) PausePlan(ctx context.Context, in *trigger.PausePlanR
 func (s *TriggerRpcServer) TerminatePlan(ctx context.Context, in *trigger.TerminatePlanReq) (*trigger.TerminatePlanRes, error) {
 	l := logic.NewTerminatePlanLogic(ctx, s.svcCtx)
 	return l.TerminatePlan(in)
+}
+
+// 恢复计划
+func (s *TriggerRpcServer) ResumePlan(ctx context.Context, in *trigger.ResumePlanReq) (*trigger.ResumePlanRes, error) {
+	l := logic.NewResumePlanLogic(ctx, s.svcCtx)
+	return l.ResumePlan(in)
+}
+
+// 暂停计划批次
+func (s *TriggerRpcServer) PausePlanBatch(ctx context.Context, in *trigger.PausePlanBatchReq) (*trigger.PausePlanBatchRes, error) {
+	l := logic.NewPausePlanBatchLogic(ctx, s.svcCtx)
+	return l.PausePlanBatch(in)
+}
+
+// 终止计划批次
+func (s *TriggerRpcServer) TerminatePlanBatch(ctx context.Context, in *trigger.TerminatePlanBatchReq) (*trigger.TerminatePlanBatchRes, error) {
+	l := logic.NewTerminatePlanBatchLogic(ctx, s.svcCtx)
+	return l.TerminatePlanBatch(in)
+}
+
+// 恢复计划批次
+func (s *TriggerRpcServer) ResumePlanBatch(ctx context.Context, in *trigger.ResumePlanBatchReq) (*trigger.ResumePlanBatchRes, error) {
+	l := logic.NewResumePlanBatchLogic(ctx, s.svcCtx)
+	return l.ResumePlanBatch(in)
 }
 
 // 暂停执行项
@@ -172,12 +202,6 @@ func (s *TriggerRpcServer) RunPlanExecItem(ctx context.Context, in *trigger.RunP
 	return l.RunPlanExecItem(in)
 }
 
-// 恢复计划
-func (s *TriggerRpcServer) ResumePlan(ctx context.Context, in *trigger.ResumePlanReq) (*trigger.ResumePlanRes, error) {
-	l := logic.NewResumePlanLogic(ctx, s.svcCtx)
-	return l.ResumePlan(in)
-}
-
 // 恢复执行项
 func (s *TriggerRpcServer) ResumePlanExecItem(ctx context.Context, in *trigger.ResumePlanExecItemReq) (*trigger.ResumePlanExecItemRes, error) {
 	l := logic.NewResumePlanExecItemLogic(ctx, s.svcCtx)
@@ -194,6 +218,18 @@ func (s *TriggerRpcServer) GetPlan(ctx context.Context, in *trigger.GetPlanReq) 
 func (s *TriggerRpcServer) ListPlans(ctx context.Context, in *trigger.ListPlansReq) (*trigger.ListPlansRes, error) {
 	l := logic.NewListPlansLogic(ctx, s.svcCtx)
 	return l.ListPlans(in)
+}
+
+// 获取计划批次详情
+func (s *TriggerRpcServer) GetPlanBatch(ctx context.Context, in *trigger.GetPlanBatchReq) (*trigger.GetPlanBatchRes, error) {
+	l := logic.NewGetPlanBatchLogic(ctx, s.svcCtx)
+	return l.GetPlanBatch(in)
+}
+
+// 分页获取计划批次列表
+func (s *TriggerRpcServer) ListPlanBatches(ctx context.Context, in *trigger.ListPlanBatchesReq) (*trigger.ListPlanBatchesRes, error) {
+	l := logic.NewListPlanBatchesLogic(ctx, s.svcCtx)
+	return l.ListPlanBatches(in)
 }
 
 // 获取执行项详情

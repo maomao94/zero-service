@@ -50,20 +50,29 @@ service TriggerRpc {
   rpc RunTask(RunTaskReq) returns (RunTaskRes);
 
 
+  // 计算计划任务日期
+  rpc CalcPlanTaskDate(CalcPlanTaskDateReq) returns (CalcPlanTaskDateRes);
   // 创建计划任务
   rpc CreatePlanTask(CreatePlanTaskReq) returns (CreatePlanTaskRes);
   // 暂停计划
   rpc PausePlan(PausePlanReq) returns (PausePlanRes);
   // 终止计划
   rpc TerminatePlan(TerminatePlanReq) returns (TerminatePlanRes);
+  // 恢复计划
+  rpc ResumePlan(ResumePlanReq) returns (ResumePlanRes);
+  // 暂停计划批次
+  rpc PausePlanBatch(PausePlanBatchReq) returns (PausePlanBatchRes);
+  // 终止计划批次
+  rpc TerminatePlanBatch(TerminatePlanBatchReq) returns (TerminatePlanBatchRes);
+  // 恢复计划批次
+  rpc ResumePlanBatch(ResumePlanBatchReq) returns (ResumePlanBatchRes);
+
   // 暂停执行项
   rpc PausePlanExecItem(PausePlanExecItemReq) returns (PausePlanExecItemRes);
   // 终止执行项
   rpc TerminatePlanExecItem(TerminatePlanExecItemReq) returns (TerminatePlanExecItemRes);
   // 立即执行计划项
   rpc RunPlanExecItem(RunPlanExecItemReq) returns (RunPlanExecItemRes);
-  // 恢复计划
-  rpc ResumePlan(ResumePlanReq) returns (ResumePlanRes);
   // 恢复执行项
   rpc ResumePlanExecItem(ResumePlanExecItemReq) returns (ResumePlanExecItemRes);
 
@@ -72,6 +81,10 @@ service TriggerRpc {
   rpc GetPlan(GetPlanReq) returns (GetPlanRes);
   // 分页获取计划列表
   rpc ListPlans(ListPlansReq) returns (ListPlansRes);
+  // 获取计划批次详情
+  rpc GetPlanBatch(GetPlanBatchReq) returns (GetPlanBatchRes);
+  // 分页获取计划批次列表
+  rpc ListPlanBatches(ListPlanBatchesReq) returns (ListPlanBatchesRes);
   // 获取执行项详情
   rpc GetPlanExecItem(GetPlanExecItemReq) returns (GetPlanExecItemRes);
   // 分页获取执行项列表
@@ -453,6 +466,24 @@ message RunTaskReq {
 message RunTaskRes {
 }
 
+message CalcPlanTaskDateReq {
+  extproto.CurrentUser currentUser = 100;
+  // 规则生效开始时间
+  // 不传默认本年
+  // 格式：yyyy-MM-dd HH:mm:ss
+  string startTime = 1;
+  // 规则生效结束时间
+  // 不传默认本年
+  // 格式：yyyy-MM-dd HH:mm:ss
+  string endTime = 2;
+  // 计划规则项 默认 规则项 MINUTELY
+  PbPlanRule rule = 3 [(validate.rules).message = {required: true}];
+}
+
+message CalcPlanTaskDateRes {
+  repeated string planDates = 1;
+}
+
 message CreatePlanTaskReq {
   extproto.CurrentUser currentUser = 100;
   // 计划任务ID,全局唯一
@@ -578,6 +609,43 @@ message TerminatePlanReq {
 message TerminatePlanRes {
 }
 
+message ResumePlanReq {
+  extproto.CurrentUser currentUser = 100;
+  // 计划ID
+  string planId = 1 [(validate.rules).string = {min_len: 1}];
+}
+
+message ResumePlanRes {
+}
+
+message PausePlanBatchReq {
+  extproto.CurrentUser currentUser = 100;
+  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
+  // 暂停原因
+  string reason = 2 [(validate.rules).string = {max_len: 200}];
+}
+
+message PausePlanBatchRes {
+}
+
+message TerminatePlanBatchReq {
+  extproto.CurrentUser currentUser = 100;
+  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
+  // 终止原因
+  string reason = 2 [(validate.rules).string = {max_len: 200}];
+}
+
+message TerminatePlanBatchRes {
+}
+
+message ResumePlanBatchReq {
+  extproto.CurrentUser currentUser = 100;
+  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
+}
+
+message ResumePlanBatchRes {
+}
+
 message PausePlanExecItemReq {
   extproto.CurrentUser currentUser = 100;
   int64 id = 1 [(validate.rules).int64 = {gte: 1}];
@@ -596,16 +664,6 @@ message TerminatePlanExecItemReq {
 }
 
 message TerminatePlanExecItemRes {
-}
-
-// 恢复计划请求
-message ResumePlanReq {
-  extproto.CurrentUser currentUser = 100;
-  // 计划ID
-  string planId = 1 [(validate.rules).string = {min_len: 1}];
-}
-
-message ResumePlanRes {
 }
 
 message ResumePlanExecItemReq {
@@ -709,7 +767,38 @@ message ListPlansRes {
   int64 total = 2;
 }
 
-// 获取执行项详情请求
+message GetPlanBatchReq {
+  extproto.CurrentUser currentUser = 100;
+  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
+}
+
+message GetPlanBatchRes {
+  PbPlanBatch planBatch = 1;
+}
+
+message ListPlanBatchesReq {
+  extproto.CurrentUser currentUser = 100;
+  // 分页大小
+  int64 pageSize = 1 [(validate.rules).int64 = {gte: 0}];
+  // 页码
+  int64 pageNum = 2 [(validate.rules).int64 = {gte: 0}];
+  // 计划主键ID
+  int64 planPk = 3;
+  // 计划ID
+  string planId = 4;
+  // 批次ID模糊查询
+  string batchId = 5;
+  // 状态：0-禁用，1-启用，2-已终止，3-暂停
+  repeated int32 status = 6;
+}
+
+message ListPlanBatchesRes {
+  // 批次列表
+  repeated PbPlanBatch planBatches = 1;
+  // 总记录数
+  int64 total = 2;
+}
+
 message GetPlanExecItemReq {
   extproto.CurrentUser currentUser = 100;
   int64 id = 1 [(validate.rules).int64 = {gte: 1}];
@@ -883,6 +972,45 @@ message PbPlanExecLog {
   string execResult = 11;
   // 结果描述
   string message = 12;
+}
+
+// 计划批次数据模型
+message PbPlanBatch {
+  // 创建时间
+  string createTime = 101;
+  // 更新时间
+  string updateTime = 102;
+  // 创建人
+  string createUser = 103;
+  // 更新人
+  string updateUser = 104;
+
+  // 自增主键ID
+  int64 id = 50;
+  // 关联的计划主键ID
+  int64 planPk = 1;
+  // 计划ID
+  string planId = 2;
+  // 批ID
+  string batchId = 3;
+  // 批次名称
+  string batchName = 4;
+  // 状态：0-禁用，1-启用，2-已终止，3-暂停
+  int32 status = 5;
+  // 计划触发时间
+  string planTriggerTime = 6;
+  // 完成时间
+  string completedTime = 7;
+  // 扩展字段1
+  string ext1 = 14;
+  // 扩展字段2
+  string ext2 = 15;
+  // 扩展字段3
+  string ext3 = 16;
+  // 扩展字段4
+  string ext4 = 17;
+  // 扩展字段5
+  string ext5 = 18;
 }
 
 // 执行项调度状态枚举定义

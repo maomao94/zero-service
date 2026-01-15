@@ -362,8 +362,9 @@ CREATE TABLE IF NOT EXISTS plan_batch (
     plan_id VARCHAR(64) NOT NULL DEFAULT '', 
     batch_id VARCHAR(64) NOT NULL DEFAULT '', 
     batch_name VARCHAR(128) DEFAULT '',
-    status SMALLINT NOT NULL DEFAULT 0, 
-    completed_time TIMESTAMP NULL, 
+    status SMALLINT NOT NULL DEFAULT 0,
+    plan_trigger_time TIMESTAMP NULL,
+    completed_time TIMESTAMP NULL,
     ext_1 VARCHAR(256) DEFAULT '',
     ext_2 VARCHAR(256) DEFAULT '',
     ext_3 VARCHAR(256) DEFAULT '',
@@ -389,6 +390,7 @@ COMMENT ON COLUMN plan_batch.plan_id IS '关联的计划ID';
 COMMENT ON COLUMN plan_batch.batch_id IS '批ID';
 COMMENT ON COLUMN plan_batch.batch_name IS '批次名称';
 COMMENT ON COLUMN plan_batch.status IS '状态：0-禁用，1-启用，2-暂停，3-终止';
+COMMENT ON COLUMN plan_batch.plan_trigger_time IS '计划触发时间';
 COMMENT ON COLUMN plan_batch.completed_time IS '完成时间';
 COMMENT ON COLUMN plan_batch.ext_1 IS '扩展字段1';
 COMMENT ON COLUMN plan_batch.ext_2 IS '扩展字段2';

@@ -55,25 +55,26 @@ type (
 	}
 
 	PlanBatch struct {
-		Id            int64          `db:"id"`             // 自增主键ID
-		CreateTime    time.Time      `db:"create_time"`    // 创建时间
-		UpdateTime    time.Time      `db:"update_time"`    // 更新时间
-		DeleteTime    sql.NullTime   `db:"delete_time"`    // 删除时间（软删除标记）
-		DelState      int64          `db:"del_state"`      // 删除状态：0-未删除，1-已删除
-		Version       int64          `db:"version"`        // 版本号（乐观锁）
-		CreateUser    sql.NullString `db:"create_user"`    // 创建人
-		UpdateUser    sql.NullString `db:"update_user"`    // 更新人
-		PlanPk        int64          `db:"plan_pk"`        // 关联的计划主键ID
-		PlanId        string         `db:"plan_id"`        // 关联的计划ID
-		BatchId       string         `db:"batch_id"`       // 批ID
-		BatchName     sql.NullString `db:"batch_name"`     // 批次名称
-		Status        int64          `db:"status"`         // 状态：0-禁用，1-启用，2-暂停，3-终止
-		CompletedTime sql.NullTime   `db:"completed_time"` // 完成时间
-		Ext1          sql.NullString `db:"ext_1"`          // 扩展字段1
-		Ext2          sql.NullString `db:"ext_2"`          // 扩展字段2
-		Ext3          sql.NullString `db:"ext_3"`          // 扩展字段3
-		Ext4          sql.NullString `db:"ext_4"`          // 扩展字段4
-		Ext5          sql.NullString `db:"ext_5"`          // 扩展字段5
+		Id              int64          `db:"id"`                // 自增主键ID
+		CreateTime      time.Time      `db:"create_time"`       // 创建时间
+		UpdateTime      time.Time      `db:"update_time"`       // 更新时间
+		DeleteTime      sql.NullTime   `db:"delete_time"`       // 删除时间（软删除标记）
+		DelState        int64          `db:"del_state"`         // 删除状态：0-未删除，1-已删除
+		Version         int64          `db:"version"`           // 版本号（乐观锁）
+		CreateUser      sql.NullString `db:"create_user"`       // 创建人
+		UpdateUser      sql.NullString `db:"update_user"`       // 更新人
+		PlanPk          int64          `db:"plan_pk"`           // 关联的计划主键ID
+		PlanId          string         `db:"plan_id"`           // 关联的计划ID
+		BatchId         string         `db:"batch_id"`          // 批ID
+		BatchName       sql.NullString `db:"batch_name"`        // 批次名称
+		Status          int64          `db:"status"`            // 状态：0-禁用，1-启用，2-暂停，3-终止
+		PlanTriggerTime sql.NullTime   `db:"plan_trigger_time"` // 计划触发时间
+		CompletedTime   sql.NullTime   `db:"completed_time"`    // 完成时间
+		Ext1            sql.NullString `db:"ext_1"`             // 扩展字段1
+		Ext2            sql.NullString `db:"ext_2"`             // 扩展字段2
+		Ext3            sql.NullString `db:"ext_3"`             // 扩展字段3
+		Ext4            sql.NullString `db:"ext_4"`             // 扩展字段4
+		Ext5            sql.NullString `db:"ext_5"`             // 扩展字段5
 	}
 )
 

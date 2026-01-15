@@ -127,6 +127,7 @@ CREATE TABLE IF NOT EXISTS `plan_batch` (
     `batch_id` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '批ID',
     `batch_name` VARCHAR(128) NOT NULL DEFAULT '' COMMENT '批次名称',
     `status` TINYINT NOT NULL DEFAULT 0 COMMENT '状态：0-禁用，1-启用，2-暂停，3-终止',
+    `plan_trigger_time` DATETIME(6) NULL COMMENT'计划触发时间',
     `completed_time` DATETIME(6) NULL COMMENT '完成时间',
     `ext_1` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '扩展字段1',
     `ext_2` VARCHAR(256) NOT NULL DEFAULT '' COMMENT '扩展字段2',

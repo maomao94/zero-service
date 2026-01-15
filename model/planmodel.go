@@ -1,6 +1,12 @@
 package model
 
-import "github.com/zeromicro/go-zero/core/stores/sqlx"
+import (
+	"context"
+	"time"
+
+	"github.com/Masterminds/squirrel"
+	"github.com/zeromicro/go-zero/core/stores/sqlx"
+)
 
 var _ PlanModel = (*customPlanModel)(nil)
 
@@ -10,6 +16,7 @@ type (
 	PlanModel interface {
 		planModel
 		withSession(session sqlx.Session) PlanModel
+		UpdatePlanCompletedTime(ctx context.Context, id int64) error
 	}
 
 	customPlanModel struct {
@@ -31,4 +38,24 @@ func NewPlanModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) PlanModel {
 
 func (m *customPlanModel) withSession(session sqlx.Session) PlanModel {
 	return NewPlanModel(sqlx.NewSqlConnFromSession(session))
+}
+
+func (m *customPlanModel) UpdatePlanCompletedTime(ctx context.Context, id int64) error {
+	now := time.Now()
+	subQuery := "SELECT 1 FROM plan_batch b WHERE b.del_state = 0 AND b.plan_pk = p.id AND b.completed_time IS NULL"
+	builder := squirrel.
+		Update(m.table+" AS p").
+		Set("completed_time", now).
+		Where("p.id = ?", id).
+		Where("p.completed_time IS NULL").
+		Where("NOT EXISTS (" + subQuery + ")")
+	if m.dbType == DatabaseTypePostgreSQL {
+		builder = builder.PlaceholderFormat(squirrel.Dollar)
+	}
+	sql, args, err := builder.ToSql()
+	if err != nil {
+		return err
+	}
+	_, err = m.conn.ExecCtx(ctx, sql, args...)
+	return err
 }

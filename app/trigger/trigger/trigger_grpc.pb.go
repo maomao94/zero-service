@@ -38,16 +38,22 @@ const (
 	TriggerRpc_ListArchivedTasks_FullMethodName       = "/trigger.TriggerRpc/ListArchivedTasks"
 	TriggerRpc_ListCompletedTasks_FullMethodName      = "/trigger.TriggerRpc/ListCompletedTasks"
 	TriggerRpc_RunTask_FullMethodName                 = "/trigger.TriggerRpc/RunTask"
+	TriggerRpc_CalcPlanTaskDate_FullMethodName        = "/trigger.TriggerRpc/CalcPlanTaskDate"
 	TriggerRpc_CreatePlanTask_FullMethodName          = "/trigger.TriggerRpc/CreatePlanTask"
 	TriggerRpc_PausePlan_FullMethodName               = "/trigger.TriggerRpc/PausePlan"
 	TriggerRpc_TerminatePlan_FullMethodName           = "/trigger.TriggerRpc/TerminatePlan"
+	TriggerRpc_ResumePlan_FullMethodName              = "/trigger.TriggerRpc/ResumePlan"
+	TriggerRpc_PausePlanBatch_FullMethodName          = "/trigger.TriggerRpc/PausePlanBatch"
+	TriggerRpc_TerminatePlanBatch_FullMethodName      = "/trigger.TriggerRpc/TerminatePlanBatch"
+	TriggerRpc_ResumePlanBatch_FullMethodName         = "/trigger.TriggerRpc/ResumePlanBatch"
 	TriggerRpc_PausePlanExecItem_FullMethodName       = "/trigger.TriggerRpc/PausePlanExecItem"
 	TriggerRpc_TerminatePlanExecItem_FullMethodName   = "/trigger.TriggerRpc/TerminatePlanExecItem"
 	TriggerRpc_RunPlanExecItem_FullMethodName         = "/trigger.TriggerRpc/RunPlanExecItem"
-	TriggerRpc_ResumePlan_FullMethodName              = "/trigger.TriggerRpc/ResumePlan"
 	TriggerRpc_ResumePlanExecItem_FullMethodName      = "/trigger.TriggerRpc/ResumePlanExecItem"
 	TriggerRpc_GetPlan_FullMethodName                 = "/trigger.TriggerRpc/GetPlan"
 	TriggerRpc_ListPlans_FullMethodName               = "/trigger.TriggerRpc/ListPlans"
+	TriggerRpc_GetPlanBatch_FullMethodName            = "/trigger.TriggerRpc/GetPlanBatch"
+	TriggerRpc_ListPlanBatches_FullMethodName         = "/trigger.TriggerRpc/ListPlanBatches"
 	TriggerRpc_GetPlanExecItem_FullMethodName         = "/trigger.TriggerRpc/GetPlanExecItem"
 	TriggerRpc_ListPlanExecItems_FullMethodName       = "/trigger.TriggerRpc/ListPlanExecItems"
 	TriggerRpc_GetPlanExecLog_FullMethodName          = "/trigger.TriggerRpc/GetPlanExecLog"
@@ -96,26 +102,38 @@ type TriggerRpcClient interface {
 	ListCompletedTasks(ctx context.Context, in *ListCompletedTasksReq, opts ...grpc.CallOption) (*ListCompletedTasksRes, error)
 	// 运行任务
 	RunTask(ctx context.Context, in *RunTaskReq, opts ...grpc.CallOption) (*RunTaskRes, error)
+	// 计算计划任务日期
+	CalcPlanTaskDate(ctx context.Context, in *CalcPlanTaskDateReq, opts ...grpc.CallOption) (*CalcPlanTaskDateRes, error)
 	// 创建计划任务
 	CreatePlanTask(ctx context.Context, in *CreatePlanTaskReq, opts ...grpc.CallOption) (*CreatePlanTaskRes, error)
 	// 暂停计划
 	PausePlan(ctx context.Context, in *PausePlanReq, opts ...grpc.CallOption) (*PausePlanRes, error)
 	// 终止计划
 	TerminatePlan(ctx context.Context, in *TerminatePlanReq, opts ...grpc.CallOption) (*TerminatePlanRes, error)
+	// 恢复计划
+	ResumePlan(ctx context.Context, in *ResumePlanReq, opts ...grpc.CallOption) (*ResumePlanRes, error)
+	// 暂停计划批次
+	PausePlanBatch(ctx context.Context, in *PausePlanBatchReq, opts ...grpc.CallOption) (*PausePlanBatchRes, error)
+	// 终止计划批次
+	TerminatePlanBatch(ctx context.Context, in *TerminatePlanBatchReq, opts ...grpc.CallOption) (*TerminatePlanBatchRes, error)
+	// 恢复计划批次
+	ResumePlanBatch(ctx context.Context, in *ResumePlanBatchReq, opts ...grpc.CallOption) (*ResumePlanBatchRes, error)
 	// 暂停执行项
 	PausePlanExecItem(ctx context.Context, in *PausePlanExecItemReq, opts ...grpc.CallOption) (*PausePlanExecItemRes, error)
 	// 终止执行项
 	TerminatePlanExecItem(ctx context.Context, in *TerminatePlanExecItemReq, opts ...grpc.CallOption) (*TerminatePlanExecItemRes, error)
 	// 立即执行计划项
 	RunPlanExecItem(ctx context.Context, in *RunPlanExecItemReq, opts ...grpc.CallOption) (*RunPlanExecItemRes, error)
-	// 恢复计划
-	ResumePlan(ctx context.Context, in *ResumePlanReq, opts ...grpc.CallOption) (*ResumePlanRes, error)
 	// 恢复执行项
 	ResumePlanExecItem(ctx context.Context, in *ResumePlanExecItemReq, opts ...grpc.CallOption) (*ResumePlanExecItemRes, error)
 	// 获取计划详情
 	GetPlan(ctx context.Context, in *GetPlanReq, opts ...grpc.CallOption) (*GetPlanRes, error)
 	// 分页获取计划列表
 	ListPlans(ctx context.Context, in *ListPlansReq, opts ...grpc.CallOption) (*ListPlansRes, error)
+	// 获取计划批次详情
+	GetPlanBatch(ctx context.Context, in *GetPlanBatchReq, opts ...grpc.CallOption) (*GetPlanBatchRes, error)
+	// 分页获取计划批次列表
+	ListPlanBatches(ctx context.Context, in *ListPlanBatchesReq, opts ...grpc.CallOption) (*ListPlanBatchesRes, error)
 	// 获取执行项详情
 	GetPlanExecItem(ctx context.Context, in *GetPlanExecItemReq, opts ...grpc.CallOption) (*GetPlanExecItemRes, error)
 	// 分页获取执行项列表
@@ -326,6 +344,16 @@ func (c *triggerRpcClient) RunTask(ctx context.Context, in *RunTaskReq, opts ...
 	return out, nil
 }
 
+func (c *triggerRpcClient) CalcPlanTaskDate(ctx context.Context, in *CalcPlanTaskDateReq, opts ...grpc.CallOption) (*CalcPlanTaskDateRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CalcPlanTaskDateRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_CalcPlanTaskDate_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *triggerRpcClient) CreatePlanTask(ctx context.Context, in *CreatePlanTaskReq, opts ...grpc.CallOption) (*CreatePlanTaskRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreatePlanTaskRes)
@@ -350,6 +378,46 @@ func (c *triggerRpcClient) TerminatePlan(ctx context.Context, in *TerminatePlanR
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(TerminatePlanRes)
 	err := c.cc.Invoke(ctx, TriggerRpc_TerminatePlan_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) ResumePlan(ctx context.Context, in *ResumePlanReq, opts ...grpc.CallOption) (*ResumePlanRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResumePlanRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_ResumePlan_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) PausePlanBatch(ctx context.Context, in *PausePlanBatchReq, opts ...grpc.CallOption) (*PausePlanBatchRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PausePlanBatchRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_PausePlanBatch_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) TerminatePlanBatch(ctx context.Context, in *TerminatePlanBatchReq, opts ...grpc.CallOption) (*TerminatePlanBatchRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TerminatePlanBatchRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_TerminatePlanBatch_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) ResumePlanBatch(ctx context.Context, in *ResumePlanBatchReq, opts ...grpc.CallOption) (*ResumePlanBatchRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResumePlanBatchRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_ResumePlanBatch_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -386,16 +454,6 @@ func (c *triggerRpcClient) RunPlanExecItem(ctx context.Context, in *RunPlanExecI
 	return out, nil
 }
 
-func (c *triggerRpcClient) ResumePlan(ctx context.Context, in *ResumePlanReq, opts ...grpc.CallOption) (*ResumePlanRes, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ResumePlanRes)
-	err := c.cc.Invoke(ctx, TriggerRpc_ResumePlan_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *triggerRpcClient) ResumePlanExecItem(ctx context.Context, in *ResumePlanExecItemReq, opts ...grpc.CallOption) (*ResumePlanExecItemRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ResumePlanExecItemRes)
@@ -420,6 +478,26 @@ func (c *triggerRpcClient) ListPlans(ctx context.Context, in *ListPlansReq, opts
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListPlansRes)
 	err := c.cc.Invoke(ctx, TriggerRpc_ListPlans_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) GetPlanBatch(ctx context.Context, in *GetPlanBatchReq, opts ...grpc.CallOption) (*GetPlanBatchRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPlanBatchRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_GetPlanBatch_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *triggerRpcClient) ListPlanBatches(ctx context.Context, in *ListPlanBatchesReq, opts ...grpc.CallOption) (*ListPlanBatchesRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListPlanBatchesRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_ListPlanBatches_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -517,26 +595,38 @@ type TriggerRpcServer interface {
 	ListCompletedTasks(context.Context, *ListCompletedTasksReq) (*ListCompletedTasksRes, error)
 	// 运行任务
 	RunTask(context.Context, *RunTaskReq) (*RunTaskRes, error)
+	// 计算计划任务日期
+	CalcPlanTaskDate(context.Context, *CalcPlanTaskDateReq) (*CalcPlanTaskDateRes, error)
 	// 创建计划任务
 	CreatePlanTask(context.Context, *CreatePlanTaskReq) (*CreatePlanTaskRes, error)
 	// 暂停计划
 	PausePlan(context.Context, *PausePlanReq) (*PausePlanRes, error)
 	// 终止计划
 	TerminatePlan(context.Context, *TerminatePlanReq) (*TerminatePlanRes, error)
+	// 恢复计划
+	ResumePlan(context.Context, *ResumePlanReq) (*ResumePlanRes, error)
+	// 暂停计划批次
+	PausePlanBatch(context.Context, *PausePlanBatchReq) (*PausePlanBatchRes, error)
+	// 终止计划批次
+	TerminatePlanBatch(context.Context, *TerminatePlanBatchReq) (*TerminatePlanBatchRes, error)
+	// 恢复计划批次
+	ResumePlanBatch(context.Context, *ResumePlanBatchReq) (*ResumePlanBatchRes, error)
 	// 暂停执行项
 	PausePlanExecItem(context.Context, *PausePlanExecItemReq) (*PausePlanExecItemRes, error)
 	// 终止执行项
 	TerminatePlanExecItem(context.Context, *TerminatePlanExecItemReq) (*TerminatePlanExecItemRes, error)
 	// 立即执行计划项
 	RunPlanExecItem(context.Context, *RunPlanExecItemReq) (*RunPlanExecItemRes, error)
-	// 恢复计划
-	ResumePlan(context.Context, *ResumePlanReq) (*ResumePlanRes, error)
 	// 恢复执行项
 	ResumePlanExecItem(context.Context, *ResumePlanExecItemReq) (*ResumePlanExecItemRes, error)
 	// 获取计划详情
 	GetPlan(context.Context, *GetPlanReq) (*GetPlanRes, error)
 	// 分页获取计划列表
 	ListPlans(context.Context, *ListPlansReq) (*ListPlansRes, error)
+	// 获取计划批次详情
+	GetPlanBatch(context.Context, *GetPlanBatchReq) (*GetPlanBatchRes, error)
+	// 分页获取计划批次列表
+	ListPlanBatches(context.Context, *ListPlanBatchesReq) (*ListPlanBatchesRes, error)
 	// 获取执行项详情
 	GetPlanExecItem(context.Context, *GetPlanExecItemReq) (*GetPlanExecItemRes, error)
 	// 分页获取执行项列表
@@ -614,6 +704,9 @@ func (UnimplementedTriggerRpcServer) ListCompletedTasks(context.Context, *ListCo
 func (UnimplementedTriggerRpcServer) RunTask(context.Context, *RunTaskReq) (*RunTaskRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RunTask not implemented")
 }
+func (UnimplementedTriggerRpcServer) CalcPlanTaskDate(context.Context, *CalcPlanTaskDateReq) (*CalcPlanTaskDateRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CalcPlanTaskDate not implemented")
+}
 func (UnimplementedTriggerRpcServer) CreatePlanTask(context.Context, *CreatePlanTaskReq) (*CreatePlanTaskRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreatePlanTask not implemented")
 }
@@ -622,6 +715,18 @@ func (UnimplementedTriggerRpcServer) PausePlan(context.Context, *PausePlanReq) (
 }
 func (UnimplementedTriggerRpcServer) TerminatePlan(context.Context, *TerminatePlanReq) (*TerminatePlanRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TerminatePlan not implemented")
+}
+func (UnimplementedTriggerRpcServer) ResumePlan(context.Context, *ResumePlanReq) (*ResumePlanRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResumePlan not implemented")
+}
+func (UnimplementedTriggerRpcServer) PausePlanBatch(context.Context, *PausePlanBatchReq) (*PausePlanBatchRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PausePlanBatch not implemented")
+}
+func (UnimplementedTriggerRpcServer) TerminatePlanBatch(context.Context, *TerminatePlanBatchReq) (*TerminatePlanBatchRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TerminatePlanBatch not implemented")
+}
+func (UnimplementedTriggerRpcServer) ResumePlanBatch(context.Context, *ResumePlanBatchReq) (*ResumePlanBatchRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResumePlanBatch not implemented")
 }
 func (UnimplementedTriggerRpcServer) PausePlanExecItem(context.Context, *PausePlanExecItemReq) (*PausePlanExecItemRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PausePlanExecItem not implemented")
@@ -632,9 +737,6 @@ func (UnimplementedTriggerRpcServer) TerminatePlanExecItem(context.Context, *Ter
 func (UnimplementedTriggerRpcServer) RunPlanExecItem(context.Context, *RunPlanExecItemReq) (*RunPlanExecItemRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RunPlanExecItem not implemented")
 }
-func (UnimplementedTriggerRpcServer) ResumePlan(context.Context, *ResumePlanReq) (*ResumePlanRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ResumePlan not implemented")
-}
 func (UnimplementedTriggerRpcServer) ResumePlanExecItem(context.Context, *ResumePlanExecItemReq) (*ResumePlanExecItemRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResumePlanExecItem not implemented")
 }
@@ -643,6 +745,12 @@ func (UnimplementedTriggerRpcServer) GetPlan(context.Context, *GetPlanReq) (*Get
 }
 func (UnimplementedTriggerRpcServer) ListPlans(context.Context, *ListPlansReq) (*ListPlansRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListPlans not implemented")
+}
+func (UnimplementedTriggerRpcServer) GetPlanBatch(context.Context, *GetPlanBatchReq) (*GetPlanBatchRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPlanBatch not implemented")
+}
+func (UnimplementedTriggerRpcServer) ListPlanBatches(context.Context, *ListPlanBatchesReq) (*ListPlanBatchesRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListPlanBatches not implemented")
 }
 func (UnimplementedTriggerRpcServer) GetPlanExecItem(context.Context, *GetPlanExecItemReq) (*GetPlanExecItemRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPlanExecItem not implemented")
@@ -1022,6 +1130,24 @@ func _TriggerRpc_RunTask_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TriggerRpc_CalcPlanTaskDate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CalcPlanTaskDateReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).CalcPlanTaskDate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_CalcPlanTaskDate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).CalcPlanTaskDate(ctx, req.(*CalcPlanTaskDateReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _TriggerRpc_CreatePlanTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreatePlanTaskReq)
 	if err := dec(in); err != nil {
@@ -1072,6 +1198,78 @@ func _TriggerRpc_TerminatePlan_Handler(srv interface{}, ctx context.Context, dec
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TriggerRpcServer).TerminatePlan(ctx, req.(*TerminatePlanReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_ResumePlan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResumePlanReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).ResumePlan(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_ResumePlan_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).ResumePlan(ctx, req.(*ResumePlanReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_PausePlanBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PausePlanBatchReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).PausePlanBatch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_PausePlanBatch_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).PausePlanBatch(ctx, req.(*PausePlanBatchReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_TerminatePlanBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TerminatePlanBatchReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).TerminatePlanBatch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_TerminatePlanBatch_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).TerminatePlanBatch(ctx, req.(*TerminatePlanBatchReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_ResumePlanBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResumePlanBatchReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).ResumePlanBatch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_ResumePlanBatch_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).ResumePlanBatch(ctx, req.(*ResumePlanBatchReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1130,24 +1328,6 @@ func _TriggerRpc_RunPlanExecItem_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TriggerRpc_ResumePlan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ResumePlanReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TriggerRpcServer).ResumePlan(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TriggerRpc_ResumePlan_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TriggerRpcServer).ResumePlan(ctx, req.(*ResumePlanReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _TriggerRpc_ResumePlanExecItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ResumePlanExecItemReq)
 	if err := dec(in); err != nil {
@@ -1198,6 +1378,42 @@ func _TriggerRpc_ListPlans_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TriggerRpcServer).ListPlans(ctx, req.(*ListPlansReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_GetPlanBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPlanBatchReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).GetPlanBatch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_GetPlanBatch_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).GetPlanBatch(ctx, req.(*GetPlanBatchReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TriggerRpc_ListPlanBatches_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPlanBatchesReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).ListPlanBatches(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_ListPlanBatches_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).ListPlanBatches(ctx, req.(*ListPlanBatchesReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1376,6 +1592,10 @@ var TriggerRpc_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _TriggerRpc_RunTask_Handler,
 		},
 		{
+			MethodName: "CalcPlanTaskDate",
+			Handler:    _TriggerRpc_CalcPlanTaskDate_Handler,
+		},
+		{
 			MethodName: "CreatePlanTask",
 			Handler:    _TriggerRpc_CreatePlanTask_Handler,
 		},
@@ -1386,6 +1606,22 @@ var TriggerRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "TerminatePlan",
 			Handler:    _TriggerRpc_TerminatePlan_Handler,
+		},
+		{
+			MethodName: "ResumePlan",
+			Handler:    _TriggerRpc_ResumePlan_Handler,
+		},
+		{
+			MethodName: "PausePlanBatch",
+			Handler:    _TriggerRpc_PausePlanBatch_Handler,
+		},
+		{
+			MethodName: "TerminatePlanBatch",
+			Handler:    _TriggerRpc_TerminatePlanBatch_Handler,
+		},
+		{
+			MethodName: "ResumePlanBatch",
+			Handler:    _TriggerRpc_ResumePlanBatch_Handler,
 		},
 		{
 			MethodName: "PausePlanExecItem",
@@ -1400,10 +1636,6 @@ var TriggerRpc_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _TriggerRpc_RunPlanExecItem_Handler,
 		},
 		{
-			MethodName: "ResumePlan",
-			Handler:    _TriggerRpc_ResumePlan_Handler,
-		},
-		{
 			MethodName: "ResumePlanExecItem",
 			Handler:    _TriggerRpc_ResumePlanExecItem_Handler,
 		},
@@ -1414,6 +1646,14 @@ var TriggerRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListPlans",
 			Handler:    _TriggerRpc_ListPlans_Handler,
+		},
+		{
+			MethodName: "GetPlanBatch",
+			Handler:    _TriggerRpc_GetPlanBatch_Handler,
+		},
+		{
+			MethodName: "ListPlanBatches",
+			Handler:    _TriggerRpc_ListPlanBatches_Handler,
 		},
 		{
 			MethodName: "GetPlanExecItem",

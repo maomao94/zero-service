@@ -62,19 +62,6 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 		if transErr != nil {
 			return transErr
 		}
-
-		builder := l.svcCtx.PlanExecItemModel.UpdateBuilder().
-			Set("status", int64(model.StatusPaused)).
-			Set("paused_time", time.Now()).
-			Set("paused_reason", sql.NullString{String: in.Reason, Valid: in.Reason != ""}).
-			Set("update_user", sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}).
-			Where("plan_id = ?", in.PlanId).
-			Where("status != ?", int64(model.StatusCompleted)).
-			Where("status != ?", int64(model.StatusTerminated))
-		_, transErr = l.svcCtx.PlanExecItemModel.UpdateWithBuilder(ctx, tx, builder)
-		if transErr != nil {
-			return transErr
-		}
 		return nil
 	})
 

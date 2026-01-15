@@ -74,7 +74,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	if endTime.Gt(startTime.AddYears(3)) {
 		return nil, errors.New("计划时间跨度不能超过3年")
 	}
-	rruleOption, err := l.convertToRRuleOption(in.Rule, startTime, endTime)
+	rruleOption, err := NewCalcPlanTaskDateLogic(l.ctx, l.svcCtx).ConvertToRRuleOption(in.Rule, startTime, endTime)
 	if err != nil {
 		return nil, err
 	}
@@ -135,21 +135,22 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		for _, d := range dates {
 			batchId, _ := tool.SimpleUUID()
 			dStr := carbon.NewCarbon(d).ToDateTimeString()
-			batchName := fmt.Sprintf("%s-%s", in.PlanName, dStr)
+			batchName := fmt.Sprintf("%s@%s", in.PlanName, dStr)
 			batch := model.PlanBatch{
-				CreateUser:    sql.NullString{String: currentUserId, Valid: currentUserId != ""},
-				UpdateUser:    sql.NullString{String: currentUserId, Valid: currentUserId != ""},
-				PlanPk:        insertPlan.Id,
-				PlanId:        in.PlanId,
-				BatchId:       batchId,
-				BatchName:     sql.NullString{String: batchName, Valid: true},
-				Status:        int64(model.PlanStatusEnabled),
-				CompletedTime: sql.NullTime{},
-				Ext1:          sql.NullString{String: in.Ext1, Valid: in.Ext1 != ""},
-				Ext2:          sql.NullString{String: in.Ext2, Valid: in.Ext2 != ""},
-				Ext3:          sql.NullString{String: in.Ext3, Valid: in.Ext3 != ""},
-				Ext4:          sql.NullString{String: in.Ext4, Valid: in.Ext4 != ""},
-				Ext5:          sql.NullString{String: in.Ext5, Valid: in.Ext5 != ""},
+				CreateUser:      sql.NullString{String: currentUserId, Valid: currentUserId != ""},
+				UpdateUser:      sql.NullString{String: currentUserId, Valid: currentUserId != ""},
+				PlanPk:          insertPlan.Id,
+				PlanId:          in.PlanId,
+				BatchId:         batchId,
+				BatchName:       sql.NullString{String: batchName, Valid: true},
+				Status:          int64(model.PlanStatusEnabled),
+				PlanTriggerTime: sql.NullTime{Time: d, Valid: true},
+				CompletedTime:   sql.NullTime{},
+				Ext1:            sql.NullString{String: in.Ext1, Valid: in.Ext1 != ""},
+				Ext2:            sql.NullString{String: in.Ext2, Valid: in.Ext2 != ""},
+				Ext3:            sql.NullString{String: in.Ext3, Valid: in.Ext3 != ""},
+				Ext4:            sql.NullString{String: in.Ext4, Valid: in.Ext4 != ""},
+				Ext5:            sql.NullString{String: in.Ext5, Valid: in.Ext5 != ""},
 			}
 			batchResult, err := l.svcCtx.PlanBatchModel.Insert(ctx, tx, &batch)
 			if err != nil {
@@ -207,78 +208,4 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		BatchCnt: batchCnt,
 		ExecCnt:  execCnt,
 	}, nil
-}
-
-func (l *CreatePlanTaskLogic) convertToRRuleOption(planRule *trigger.PbPlanRule, startTime, endTime *carbon.Carbon) (rrule.ROption, error) {
-	// 设置默认的rrule选项
-	opts := rrule.ROption{
-		Freq:     rrule.Frequency(planRule.Freq),
-		Dtstart:  startTime.StdTime(),
-		Until:    endTime.StdTime(),
-		Bysecond: []int{0}, // 默认秒为0
-	}
-
-	// 设置小时
-	if len(planRule.Hours) > 0 {
-		byhour := make([]int, len(planRule.Hours))
-		for i, h := range planRule.Hours {
-			byhour[i] = int(h)
-		}
-		opts.Byhour = byhour
-	}
-
-	// 设置分钟
-	if len(planRule.Minutes) > 0 {
-		byminute := make([]int, len(planRule.Minutes))
-		for i, m := range planRule.Minutes {
-			byminute[i] = int(m)
-		}
-		opts.Byminute = byminute
-	}
-
-	// 设置月份
-	if len(planRule.Month) > 0 {
-		bymonth := make([]int, len(planRule.Month))
-		for i, m := range planRule.Month {
-			bymonth[i] = int(m)
-		}
-		opts.Bymonth = bymonth
-	}
-
-	// 设置月中的天数
-	if len(planRule.Day) > 0 {
-		bymonthday := make([]int, len(planRule.Day))
-		for i, d := range planRule.Day {
-			bymonthday[i] = int(d)
-		}
-		opts.Bymonthday = bymonthday
-	}
-
-	// 设置星期几
-	if len(planRule.Week) > 0 {
-		byweekday := make([]rrule.Weekday, len(planRule.Week))
-		for i, w := range planRule.Week {
-			switch w {
-			case 1:
-				byweekday[i] = rrule.MO
-			case 2:
-				byweekday[i] = rrule.TU
-			case 3:
-				byweekday[i] = rrule.WE
-			case 4:
-				byweekday[i] = rrule.TH
-			case 5:
-				byweekday[i] = rrule.FR
-			case 6:
-				byweekday[i] = rrule.SA
-			case 7:
-				byweekday[i] = rrule.SU
-			default:
-				return rrule.ROption{}, fmt.Errorf("invalid week day: %d", w)
-			}
-		}
-		opts.Byweekday = byweekday
-	}
-
-	return opts, nil
 }
