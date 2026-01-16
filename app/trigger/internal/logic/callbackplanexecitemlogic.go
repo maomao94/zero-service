@@ -11,6 +11,8 @@ import (
 	"zero-service/model"
 
 	"github.com/dromara/carbon/v2"
+	"github.com/duke-git/lancet/v2/strutil"
+	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
@@ -36,13 +38,17 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 	if err != nil {
 		return nil, err
 	}
-
+	if in.Id <= 0 && strutil.IsBlank(in.ExecId) {
+		return nil, errors.BadRequest("", "参数错误")
+	}
 	// 查询执行项
-	execItem, err := l.svcCtx.PlanExecItemModel.FindOne(l.ctx, in.Id)
+	var execItem *model.PlanExecItem
+	if in.Id > 0 {
+		execItem, err = l.svcCtx.PlanExecItemModel.FindOne(l.ctx, in.Id)
+	} else {
+		execItem, err = l.svcCtx.PlanExecItemModel.FindOneByExecId(l.ctx, in.ExecId)
+	}
 	if err != nil {
-		if err == sqlx.ErrNotFound {
-			return &trigger.CallbackPlanExecItemRes{}, nil
-		}
 		return nil, err
 	}
 	// 查询计划项

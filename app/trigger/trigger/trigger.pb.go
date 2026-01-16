@@ -6336,8 +6336,10 @@ func (x *PbPlanBatch) GetExt5() string {
 type CallbackPlanExecItemReq struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
-	// 执行项ID
+	// 自增主键ID
 	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// 执行ID 全局唯一
+	ExecId string `protobuf:"bytes,7,opt,name=execId,proto3" json:"execId,omitempty"`
 	// 回调设计 参考 grpc status 用于分布式事务
 	// 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，ongoing-业务正在执行（未回调或部分异步）
 	ExecResult string `protobuf:"bytes,2,opt,name=execResult,proto3" json:"execResult,omitempty"`
@@ -6393,6 +6395,13 @@ func (x *CallbackPlanExecItemReq) GetId() int64 {
 		return x.Id
 	}
 	return 0
+}
+
+func (x *CallbackPlanExecItemReq) GetExecId() string {
+	if x != nil {
+		return x.ExecId
+	}
+	return ""
 }
 
 func (x *CallbackPlanExecItemReq) GetExecResult() string {
@@ -7019,12 +7028,13 @@ const file_trigger_proto_rawDesc = "" +
 	"\x04ext2\x18\x0f \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x18\x10 \x01(\tR\x04ext3\x12\x12\n" +
 	"\x04ext4\x18\x11 \x01(\tR\x04ext4\x12\x12\n" +
-	"\x04ext5\x18\x12 \x01(\tR\x04ext5\"\xf7\x01\n" +
+	"\x04ext5\x18\x12 \x01(\tR\x04ext5\"\xb2\x02\n" +
 	"\x17CallbackPlanExecItemReq\x127\n" +
-	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x01R\x02id\x12\x1e\n" +
+	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x06execId\x18\a \x01(\tR\x06execId\x12J\n" +
 	"\n" +
-	"execResult\x18\x02 \x01(\tR\n" +
+	"execResult\x18\x02 \x01(\tB*\xfaB'r%R\tcompletedR\x06failedR\adelayedR\aongoingR\n" +
 	"execResult\x12\x18\n" +
 	"\amessage\x18\x03 \x01(\tR\amessage\x12\x16\n" +
 	"\x06reason\x18\x04 \x01(\tR\x06reason\x128\n" +

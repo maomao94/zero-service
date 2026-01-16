@@ -12203,18 +12203,20 @@ func (m *CallbackPlanExecItemReq) validate(all bool) error {
 		}
 	}
 
-	if m.GetId() < 1 {
+	// no validation rules for Id
+
+	// no validation rules for ExecId
+
+	if _, ok := _CallbackPlanExecItemReq_ExecResult_InLookup[m.GetExecResult()]; !ok {
 		err := CallbackPlanExecItemReqValidationError{
-			field:  "Id",
-			reason: "value must be greater than or equal to 1",
+			field:  "ExecResult",
+			reason: "value must be in list [completed failed delayed ongoing]",
 		}
 		if !all {
 			return err
 		}
 		errors = append(errors, err)
 	}
-
-	// no validation rules for ExecResult
 
 	// no validation rules for Message
 
@@ -12328,6 +12330,13 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CallbackPlanExecItemReqValidationError{}
+
+var _CallbackPlanExecItemReq_ExecResult_InLookup = map[string]struct{}{
+	"completed": {},
+	"failed":    {},
+	"delayed":   {},
+	"ongoing":   {},
+}
 
 // Validate checks the field values on PbDelayConfig with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
