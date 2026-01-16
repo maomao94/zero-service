@@ -1,5 +1,5 @@
 
-Ô0
+ð0
 streamevent.protostreamevent"M
 ReceiveMQTTMessageReq4
 messages (2.streamevent.MqttMessageRmessages"
@@ -244,7 +244,7 @@ updateUser
 ext3
  (	Rext3
 ext4 (	Rext4
-ext5 (	Rext5"ì
+ext5 (	Rext5"ˆ
 HandlerPlanTaskEventReq'
 pland (2.streamevent.PbPlanRplan
 id2 (Rid
@@ -254,10 +254,12 @@ updateUser
 batchId (	RbatchId
 execId (	RexecId
 itemId (	RitemId
-itemName (	RitemName
-PointId	 (	RPointId
-payload (	Rpayload(
-planTriggerTime (	RplanTriggerTime(
+itemType (	RitemType
+itemName	 (	RitemName
+PointId
+ (	RPointId
+payload (	Rpayload(
+planTriggerTime (	RplanTriggerTime(
 lastTriggerTime (	RlastTriggerTime
 
 lastResult (	R

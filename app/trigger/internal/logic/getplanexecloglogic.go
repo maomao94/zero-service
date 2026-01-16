@@ -58,6 +58,7 @@ func (l *GetPlanExecLogLogic) GetPlanExecLog(in *trigger.GetPlanExecLogReq) (*tr
 		ItemPk:      log.ItemPk,
 		ExecId:      log.ExecId,
 		ItemId:      log.ItemId,
+		ItemType:    log.ItemType.String,
 		ItemName:    log.ItemName.String,
 		PointId:     log.PointId.String,
 		TriggerTime: carbon.CreateFromStdTime(log.TriggerTime).ToDateTimeString(),

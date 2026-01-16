@@ -560,12 +560,14 @@ message PbPlanRule {
 message CreatePlanExecItem {
   // 执行项ID,业务字段,例如工单号
   string itemId = 1 [(validate.rules).string = {min_len: 1}];
+  // 执行项类型,业务字段
+  string itemType = 2;
   // 执行项名称,业务字段
-  string itemName = 2;
+  string itemName = 3;
   // 点位id,业务字段
-  string pointId = 3;
+  string pointId = 4;
   // 业务服务地址（必填）：执行该项的grpc服务地址
-  string serviceAddr = 4 [(validate.rules).string = {min_len: 1}];
+  string serviceAddr = 5 [(validate.rules).string = {min_len: 1}];
   // 业务负载（必填）：序列化的业务专属参数（设备参数/转账金额/订单信息等）
   string payload = 6;
   // 请求超时时间 单位: 毫秒 可为空
@@ -842,50 +844,52 @@ message PbPlanExecItem {
   string execId = 6;
   // 执行项ID
   string itemId = 7;
+  // 执行项类型
+  string itemType = 8;
   // 执行项名称
-  string itemName = 8;
+  string itemName = 9;
   // 点位id
-  string PointId = 9;
+  string PointId = 10;
   // 业务服务地址
-  string serviceAddr = 10;
+  string serviceAddr = 11;
   // 业务负载
-  string payload = 11;
+  string payload = 12;
   // 请求超时时间（毫秒）
-  int64 requestTimeout = 12;
+  int64 requestTimeout = 13;
   // 计划触发时间
-  string planTriggerTime = 13;
+  string planTriggerTime = 14;
   // 下次触发时间
-  string nextTriggerTime = 14;
+  string nextTriggerTime = 15;
   // 上次触发时间
-  string lastTriggerTime = 15;
+  string lastTriggerTime = 16;
   // 触发次数
-  int32 triggerCount = 16;
+  int32 triggerCount = 17;
   // 状态：0-待执行，1-执行中，2-完成，3-失败，4-延期，5-已终止，6-暂停
-  int32 status = 17;
+  int32 status = 18;
   // 上次执行结果
-  string lastResult = 18;
+  string lastResult = 19;
   // 上次结果描述
-  string lastMessage = 19;
+  string lastMessage = 20;
   // 上次结果原因
-  string lastReason = 20;
+  string lastReason = 21;
   // 终止时间
-  string terminatedTime = 21;
+  string terminatedTime = 22;
   // 终止原因
-  string terminatedReason = 22;
+  string terminatedReason = 23;
   // 暂停时间
-  string pausedTime = 23;
+  string pausedTime = 24;
   // 暂停原因
-  string pausedReason = 24;
+  string pausedReason = 25;
   // 扩展字段1
-  string ext1 = 25;
+  string ext1 = 26;
   // 扩展字段2
-  string ext2 = 26;
+  string ext2 = 27;
   // 扩展字段3
-  string ext3 = 27;
+  string ext3 = 28;
   // 扩展字段4
-  string ext4 = 28;
+  string ext4 = 29;
   // 扩展字段5
-  string ext5 = 29;
+  string ext5 = 30;
 }
 
 message ListPlanExecItemsReq {
@@ -988,16 +992,18 @@ message PbPlanExecLog {
   string execId = 7;
   // 执行项ID
   string itemId = 8;
+  // 执行项类型
+  string itemType = 9;
   // 执行项名称
-  string itemName = 9;
+  string itemName = 10;
   // 点位id
-  string pointId = 10;
+  string pointId = 11;
   // 触发时间
-  string triggerTime = 11;
+  string triggerTime = 12;
   // 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，ongoing-业务正在执行
-  string execResult = 12;
+  string execResult = 13;
   // 结果描述
-  string message = 13;
+  string message = 14;
 }
 
 // 计划批次数据模型
@@ -1029,16 +1035,20 @@ message PbPlanBatch {
   string planTriggerTime = 6;
   // 完成时间
   string completedTime = 7;
+  // 状态统计map，key为状态值，value为对应数量
+  map<string, int64> statusCountMap = 8;
+  // 执行计划数
+  int64 execCnt = 9;
   // 扩展字段1
-  string ext1 = 14;
+  string ext1 = 20;
   // 扩展字段2
-  string ext2 = 15;
+  string ext2 = 21;
   // 扩展字段3
-  string ext3 = 16;
+  string ext3 = 22;
   // 扩展字段4
-  string ext4 = 17;
+  string ext4 = 23;
   // 扩展字段5
-  string ext5 = 18;
+  string ext5 = 24;
 }
 
 // 执行项调度状态枚举定义

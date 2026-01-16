@@ -89,9 +89,8 @@ func newPlanModel(conn sqlx.SqlConn) *defaultPlanModel {
 }
 
 func newPlanModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) *defaultPlanModel {
-	isPostgreSQL := dbType == DatabaseTypePostgreSQL
 	tableName := "plan"
-	fieldNames := builder.RawFieldNames(&Plan{}, isPostgreSQL)
+	fieldNames := builder.RawFieldNames(&Plan{}, true)
 	rows := strings.Join(fieldNames, ",")
 	return &defaultPlanModel{
 		conn:     conn,
@@ -165,7 +164,7 @@ func (m *defaultPlanModel) Insert(ctx context.Context, session sqlx.Session, dat
 	columns, values := generateColumnsAndValues(data, []string{})
 	insertBuilder := m.InsertBuilder().Columns(columns...).Values(values...)
 
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		insertBuilder = insertBuilder.Suffix("RETURNING id")
 		query, args, err := insertBuilder.ToSql()
 		if err != nil {
@@ -498,7 +497,7 @@ func (m *defaultPlanModel) DeleteWithBuilder(ctx context.Context, session sqlx.S
 
 func (m *defaultPlanModel) SelectBuilder() squirrel.SelectBuilder {
 	builder := squirrel.Select().From(m.table)
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		builder = builder.PlaceholderFormat(squirrel.Dollar)
 	}
 	return builder
@@ -506,7 +505,7 @@ func (m *defaultPlanModel) SelectBuilder() squirrel.SelectBuilder {
 
 func (m *defaultPlanModel) UpdateBuilder() squirrel.UpdateBuilder {
 	builder := squirrel.Update(m.table)
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		builder = builder.PlaceholderFormat(squirrel.Dollar)
 	}
 	return builder
@@ -514,7 +513,7 @@ func (m *defaultPlanModel) UpdateBuilder() squirrel.UpdateBuilder {
 
 func (m *defaultPlanModel) DeleteBuilder() squirrel.DeleteBuilder {
 	builder := squirrel.Delete(m.table)
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		builder = builder.PlaceholderFormat(squirrel.Dollar)
 	}
 	return builder
@@ -522,7 +521,7 @@ func (m *defaultPlanModel) DeleteBuilder() squirrel.DeleteBuilder {
 
 func (m *defaultPlanModel) InsertBuilder() squirrel.InsertBuilder {
 	builder := squirrel.Insert(m.table)
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		builder = builder.PlaceholderFormat(squirrel.Dollar)
 	}
 	return builder

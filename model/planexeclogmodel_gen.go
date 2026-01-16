@@ -69,6 +69,7 @@ type (
 		ItemPk      int64          `db:"item_pk"`      // 关联的执行项主键ID
 		ExecId      string         `db:"exec_id"`      // 执行ID
 		ItemId      string         `db:"item_id"`      // 执行项ID
+		ItemType    sql.NullString `db:"item_type"`    // 执行项类型
 		ItemName    sql.NullString `db:"item_name"`    // 执行项名称
 		PointId     sql.NullString `db:"point_id"`     // 点位id
 		TriggerTime time.Time      `db:"trigger_time"` // 触发时间
@@ -84,9 +85,8 @@ func newPlanExecLogModel(conn sqlx.SqlConn) *defaultPlanExecLogModel {
 }
 
 func newPlanExecLogModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) *defaultPlanExecLogModel {
-	isPostgreSQL := dbType == DatabaseTypePostgreSQL
 	tableName := "plan_exec_log"
-	fieldNames := builder.RawFieldNames(&PlanExecLog{}, isPostgreSQL)
+	fieldNames := builder.RawFieldNames(&PlanExecLog{}, true)
 	rows := strings.Join(fieldNames, ",")
 	return &defaultPlanExecLogModel{
 		conn:            conn,
@@ -453,7 +453,7 @@ func (m *defaultPlanExecLogModel) DeleteWithBuilder(ctx context.Context, session
 
 func (m *defaultPlanExecLogModel) SelectBuilder() squirrel.SelectBuilder {
 	builder := squirrel.Select().From(m.table)
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		builder = builder.PlaceholderFormat(squirrel.Dollar)
 	}
 	return builder
@@ -461,7 +461,7 @@ func (m *defaultPlanExecLogModel) SelectBuilder() squirrel.SelectBuilder {
 
 func (m *defaultPlanExecLogModel) UpdateBuilder() squirrel.UpdateBuilder {
 	builder := squirrel.Update(m.table)
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		builder = builder.PlaceholderFormat(squirrel.Dollar)
 	}
 	return builder
@@ -469,7 +469,7 @@ func (m *defaultPlanExecLogModel) UpdateBuilder() squirrel.UpdateBuilder {
 
 func (m *defaultPlanExecLogModel) DeleteBuilder() squirrel.DeleteBuilder {
 	builder := squirrel.Delete(m.table)
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		builder = builder.PlaceholderFormat(squirrel.Dollar)
 	}
 	return builder
@@ -477,7 +477,7 @@ func (m *defaultPlanExecLogModel) DeleteBuilder() squirrel.DeleteBuilder {
 
 func (m *defaultPlanExecLogModel) InsertBuilder() squirrel.InsertBuilder {
 	builder := squirrel.Insert(m.table)
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		builder = builder.PlaceholderFormat(squirrel.Dollar)
 	}
 	return builder

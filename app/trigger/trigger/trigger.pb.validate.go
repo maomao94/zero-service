@@ -6558,6 +6558,8 @@ func (m *CreatePlanExecItem) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	// no validation rules for ItemType
+
 	// no validation rules for ItemName
 
 	// no validation rules for PointId
@@ -10869,6 +10871,8 @@ func (m *PbPlanExecItem) validate(all bool) error {
 
 	// no validation rules for ItemId
 
+	// no validation rules for ItemType
+
 	// no validation rules for ItemName
 
 	// no validation rules for PointId
@@ -11929,6 +11933,8 @@ func (m *PbPlanExecLog) validate(all bool) error {
 
 	// no validation rules for ItemId
 
+	// no validation rules for ItemType
+
 	// no validation rules for ItemName
 
 	// no validation rules for PointId
@@ -12064,6 +12070,10 @@ func (m *PbPlanBatch) validate(all bool) error {
 	// no validation rules for PlanTriggerTime
 
 	// no validation rules for CompletedTime
+
+	// no validation rules for StatusCountMap
+
+	// no validation rules for ExecCnt
 
 	// no validation rules for Ext1
 

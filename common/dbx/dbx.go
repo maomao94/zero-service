@@ -3,8 +3,14 @@ package dbx
 import (
 	"strings"
 
+	"github.com/doug-martin/goqu/v9"
+	_ "github.com/doug-martin/goqu/v9/dialect/mysql"
+	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
+	_ "github.com/doug-martin/goqu/v9/dialect/sqlite3"
+	_ "github.com/doug-martin/goqu/v9/dialect/sqlserver"
 	_ "github.com/go-sql-driver/mysql" // MySQL驱动
 	_ "github.com/lib/pq"              // PostgreSQL驱动
+	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/postgres"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
@@ -12,10 +18,10 @@ import (
 type DatabaseType string
 
 const (
-	DatabaseTypeMySQL      DatabaseType = "mysql"
-	DatabaseTypePostgreSQL DatabaseType = "postgresql"
-	DatabaseTypeSQLite     DatabaseType = "sqlite"
-	DatabaseTypeTAOS       DatabaseType = "taos"
+	DatabaseTypeMySQL    DatabaseType = "mysql"
+	DatabaseTypePostgres DatabaseType = "postgres"
+	DatabaseTypeSQLite   DatabaseType = "sqlite"
+	DatabaseTypeTAOS     DatabaseType = "taos"
 )
 
 func ParseDatabaseType(datasource string) DatabaseType {
@@ -27,7 +33,7 @@ func ParseDatabaseType(datasource string) DatabaseType {
 	} else if strings.Contains(datasource, "@tcp(") {
 		return DatabaseTypeMySQL
 	} else if strings.HasPrefix(strings.ToLower(datasource), "postgres") {
-		return DatabaseTypePostgreSQL
+		return DatabaseTypePostgres
 	} else {
 		return DatabaseTypeMySQL
 	}
@@ -46,9 +52,35 @@ func New(datasource string, opts ...sqlx.SqlOption) sqlx.SqlConn {
 		return NewSqlite(datasource, opts...)
 	case DatabaseTypeTAOS:
 		return NewTaos(datasource, opts...)
-	case DatabaseTypePostgreSQL:
+	case DatabaseTypePostgres:
 		return postgres.New(datasource, opts...)
 	default: // DatabaseTypeMySQL and others
 		return sqlx.NewMysql(datasource, opts...)
 	}
+}
+
+func NewQoqu(datasource string, opts ...sqlx.SqlOption) *goqu.Database {
+	var conn sqlx.SqlConn
+	dbType := ParseDatabaseType(datasource)
+	switch dbType {
+	case DatabaseTypeSQLite:
+		conn = NewSqlite(datasource, opts...)
+	case DatabaseTypeTAOS:
+		conn = NewTaos(datasource, opts...)
+	case DatabaseTypePostgres:
+		conn = postgres.New(datasource, opts...)
+	default: // DatabaseTypeMySQL and others
+		conn = sqlx.NewMysql(datasource, opts...)
+	}
+	db, _ := conn.RawDB()
+	database := goqu.New(string(dbType), db)
+	database.Logger(&QoquLog{})
+	return database
+}
+
+type QoquLog struct {
+}
+
+func (log *QoquLog) Printf(format string, v ...any) {
+	logx.Infof(format, v...)
 }

@@ -61,6 +61,7 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 		BatchId:          execItem.BatchId,
 		ExecId:           execItem.ExecId,
 		ItemId:           execItem.ItemId,
+		ItemType:         execItem.ItemType.String,
 		ItemName:         execItem.ItemName.String,
 		PointId:          execItem.PointId.String,
 		ServiceAddr:      execItem.ServiceAddr,

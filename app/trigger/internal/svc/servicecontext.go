@@ -6,6 +6,7 @@ import (
 	"zero-service/common/dbx"
 	"zero-service/model"
 
+	"github.com/doug-martin/goqu/v9"
 	"github.com/go-playground/validator/v10"
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/collection"
@@ -26,6 +27,7 @@ type ServiceContext struct {
 	PlanBatchModel    model.PlanBatchModel
 	PlanExecItemModel model.PlanExecItemModel
 	PlanExecLogModel  model.PlanExecLogModel
+	Database          *goqu.Database
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -38,6 +40,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 
 	// 创建数据库连接
 	dbConn := dbx.New(c.DB.DataSource)
+	database := dbx.NewQoqu(c.DB.DataSource)
 
 	return &ServiceContext{
 		Config:            c,
@@ -52,5 +55,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		PlanBatchModel:    model.NewPlanBatchModelWithDBType(dbConn, model.DatabaseType(dbType)),
 		PlanExecItemModel: model.NewPlanExecItemModelWithDBType(dbConn, model.DatabaseType(dbType)),
 		PlanExecLogModel:  model.NewPlanExecLogModelWithDBType(dbConn, model.DatabaseType(dbType)),
+		Database:          database,
 	}
 }

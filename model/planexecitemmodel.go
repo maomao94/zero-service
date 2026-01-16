@@ -15,8 +15,6 @@ import (
 var _ PlanExecItemModel = (*customPlanExecItemModel)(nil)
 
 type (
-	// PlanExecItemModel is an interface to be customized, add more methods here,
-	// and implement the added methods in customPlanExecItemModel.
 	PlanExecItemModel interface {
 		planExecItemModel
 		withSession(session sqlx.Session) PlanExecItemModel
@@ -32,11 +30,20 @@ type (
 		UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, lastMessage, lastReason, nextTriggerTime string) error
 		// 通用SQL查询方法
 		QuerySQL(ctx context.Context, sql string, args ...interface{}) ([]map[string]interface{}, error)
+		// 获取批次执行项状态统计
+		GetBatchStatusCounts(ctx context.Context, batchPk int64) ([]ExecItemStatusCountEx, error)
+		// 获取批次总执行项数
+		GetBatchTotalExecItems(ctx context.Context, batchPk int64) (int64, error)
 	}
 
 	customPlanExecItemModel struct {
 		*defaultPlanExecItemModel
 		unstableExpiry mathx.Unstable
+	}
+
+	ExecItemStatusCountEx struct {
+		Status int32 `db:"status"`
+		Count  int64 `db:"count"`
 	}
 )
 
@@ -86,13 +93,13 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 		Where("p.status = ?", PlanStatusEnabled).
 		Where("pb.del_state = ?", 0).
 		Where("pb.status = ?", PlanStatusEnabled)
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		selectBuilder = selectBuilder.OrderBy("RANDOM()")
 	} else {
 		selectBuilder = selectBuilder.OrderBy("RAND()")
 	}
 	selectBuilder = selectBuilder.Limit(1)
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		selectBuilder = selectBuilder.PlaceholderFormat(squirrel.Dollar)
 	}
 	selectSQL, selectArgs, err := selectBuilder.ToSql()
@@ -112,7 +119,7 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 			Where("id = ?", execItem.Id).
 			Where("next_trigger_time <= ?", currentTimeStr).
 			Where("status IN (?, ?)", StatusWaiting, StatusDelayed)
-		if m.dbType == DatabaseTypePostgreSQL {
+		if m.dbType == DatabaseTypePostgres {
 			updateBuilder = updateBuilder.PlaceholderFormat(squirrel.Dollar)
 		}
 		updateSQL, updateArgs, updateErr := updateBuilder.ToSql()
@@ -139,7 +146,7 @@ func (m *customPlanExecItemModel) UpdateStatusToRunning(ctx context.Context, id 
 		Set("last_result", ResultOngoing).
 		Set("last_trigger_time", time.Now()).
 		Where("id = ?", id)
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		updateBuilder = updateBuilder.PlaceholderFormat(squirrel.Dollar)
 	}
 	updateSQL, updateArgs, err := updateBuilder.ToSql()
@@ -161,7 +168,7 @@ func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, i
 		Set("last_trigger_time", currentTimeStr).
 		Set("completed_time", currentTimeStr).
 		Where("id = ?", id)
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		updateBuilder = updateBuilder.PlaceholderFormat(squirrel.Dollar)
 	}
 	updateSQL, updateArgs, err := updateBuilder.ToSql()
@@ -176,7 +183,7 @@ func (m *customPlanExecItemModel) UpdateStatusToFail(ctx context.Context, id int
 	currentTime := time.Now()
 	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
 	selectBuilder := squirrel.Select("trigger_count").From(m.table).Where("id = ?", id)
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		selectBuilder = selectBuilder.PlaceholderFormat(squirrel.Dollar)
 	}
 	selectSQL, selectArgs, err := selectBuilder.ToSql()
@@ -220,7 +227,7 @@ func (m *customPlanExecItemModel) UpdateStatusToFail(ctx context.Context, id int
 			Set("paused_reason", "调度平台自动延期").
 			Where("id = ?", id)
 	}
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		updateBuilder = updateBuilder.PlaceholderFormat(squirrel.Dollar)
 	}
 	updateSQL, updateArgs, err := updateBuilder.ToSql()
@@ -246,7 +253,7 @@ func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id 
 		Set("next_trigger_time", nextTriggerTimeStr).
 		Set("last_trigger_time", currentTimeStr).
 		Where("id = ?", id)
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		updateBuilder = updateBuilder.PlaceholderFormat(squirrel.Dollar)
 	}
 	updateSQL, updateArgs, err := updateBuilder.ToSql()
@@ -255,6 +262,38 @@ func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id 
 	}
 	_, err = m.conn.ExecCtx(ctx, updateSQL, updateArgs...)
 	return err
+}
+
+func (m *customPlanExecItemModel) GetBatchStatusCounts(ctx context.Context, batchPk int64) ([]ExecItemStatusCountEx, error) {
+	selectBuilder := m.SelectBuilder().Columns("status", "COUNT(*) as count").
+		Where("batch_pk = ?", batchPk).
+		Where("del_state = ?", 0).
+		GroupBy("status")
+	selectSQL, selectArgs, err := selectBuilder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+	var statusCounts []ExecItemStatusCountEx
+	if err := m.conn.QueryRowsCtx(ctx, &statusCounts, selectSQL, selectArgs...); err != nil {
+		return nil, err
+	}
+	return statusCounts, nil
+}
+
+func (m *customPlanExecItemModel) GetBatchTotalExecItems(ctx context.Context, batchPk int64) (int64, error) {
+	selectBuilder := m.SelectBuilder().Columns("COUNT(*) as count").
+		From(m.table).
+		Where("batch_pk = ?", batchPk).
+		Where("del_state = ?", 0)
+	selectSQL, selectArgs, err := selectBuilder.ToSql()
+	if err != nil {
+		return 0, err
+	}
+	var count int64
+	if err := m.conn.QueryRowCtx(ctx, &count, selectSQL, selectArgs...); err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (m *customPlanExecItemModel) QuerySQL(ctx context.Context, sql string, args ...interface{}) ([]map[string]interface{}, error) {

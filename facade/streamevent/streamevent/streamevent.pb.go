@@ -2794,14 +2794,16 @@ type HandlerPlanTaskEventReq struct {
 	ExecId string `protobuf:"bytes,6,opt,name=execId,proto3" json:"execId,omitempty"`
 	// 执行项ID
 	ItemId string `protobuf:"bytes,7,opt,name=itemId,proto3" json:"itemId,omitempty"`
+	// 执行项类型
+	ItemType string `protobuf:"bytes,8,opt,name=itemType,proto3" json:"itemType,omitempty"`
 	// 执行项名称
-	ItemName string `protobuf:"bytes,8,opt,name=itemName,proto3" json:"itemName,omitempty"`
+	ItemName string `protobuf:"bytes,9,opt,name=itemName,proto3" json:"itemName,omitempty"`
 	// 点位id
-	PointId string `protobuf:"bytes,9,opt,name=PointId,proto3" json:"PointId,omitempty"`
+	PointId string `protobuf:"bytes,10,opt,name=PointId,proto3" json:"PointId,omitempty"`
 	// 业务负载
-	Payload string `protobuf:"bytes,11,opt,name=payload,proto3" json:"payload,omitempty"`
+	Payload string `protobuf:"bytes,12,opt,name=payload,proto3" json:"payload,omitempty"`
 	// 计划触发时间
-	PlanTriggerTime string `protobuf:"bytes,13,opt,name=planTriggerTime,proto3" json:"planTriggerTime,omitempty"`
+	PlanTriggerTime string `protobuf:"bytes,14,opt,name=planTriggerTime,proto3" json:"planTriggerTime,omitempty"`
 	// 上次触发时间
 	LastTriggerTime string `protobuf:"bytes,15,opt,name=lastTriggerTime,proto3" json:"lastTriggerTime,omitempty"`
 	// 上次执行结果
@@ -2896,6 +2898,13 @@ func (x *HandlerPlanTaskEventReq) GetExecId() string {
 func (x *HandlerPlanTaskEventReq) GetItemId() string {
 	if x != nil {
 		return x.ItemId
+	}
+	return ""
+}
+
+func (x *HandlerPlanTaskEventReq) GetItemType() string {
+	if x != nil {
+		return x.ItemType
 	}
 	return ""
 }
@@ -3331,7 +3340,7 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x04ext3\x18\n" +
 	" \x01(\tR\x04ext3\x12\x12\n" +
 	"\x04ext4\x18\v \x01(\tR\x04ext4\x12\x12\n" +
-	"\x04ext5\x18\f \x01(\tR\x04ext5\"\xec\x03\n" +
+	"\x04ext5\x18\f \x01(\tR\x04ext5\"\x88\x04\n" +
 	"\x17HandlerPlanTaskEventReq\x12'\n" +
 	"\x04plan\x18d \x01(\v2\x13.streamevent.PbPlanR\x04plan\x12\x0e\n" +
 	"\x02id\x182 \x01(\x03R\x02id\x12\x16\n" +
@@ -3341,10 +3350,12 @@ const file_streamevent_proto_rawDesc = "" +
 	"\abatchId\x18\x05 \x01(\tR\abatchId\x12\x16\n" +
 	"\x06execId\x18\x06 \x01(\tR\x06execId\x12\x16\n" +
 	"\x06itemId\x18\a \x01(\tR\x06itemId\x12\x1a\n" +
-	"\bitemName\x18\b \x01(\tR\bitemName\x12\x18\n" +
-	"\aPointId\x18\t \x01(\tR\aPointId\x12\x18\n" +
-	"\apayload\x18\v \x01(\tR\apayload\x12(\n" +
-	"\x0fplanTriggerTime\x18\r \x01(\tR\x0fplanTriggerTime\x12(\n" +
+	"\bitemType\x18\b \x01(\tR\bitemType\x12\x1a\n" +
+	"\bitemName\x18\t \x01(\tR\bitemName\x12\x18\n" +
+	"\aPointId\x18\n" +
+	" \x01(\tR\aPointId\x12\x18\n" +
+	"\apayload\x18\f \x01(\tR\apayload\x12(\n" +
+	"\x0fplanTriggerTime\x18\x0e \x01(\tR\x0fplanTriggerTime\x12(\n" +
 	"\x0flastTriggerTime\x18\x0f \x01(\tR\x0flastTriggerTime\x12\x1e\n" +
 	"\n" +
 	"lastResult\x18\x12 \x01(\tR\n" +

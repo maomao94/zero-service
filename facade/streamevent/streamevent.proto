@@ -512,14 +512,16 @@ message HandlerPlanTaskEventReq{
   string execId = 6;
   // 执行项ID
   string itemId = 7;
+  // 执行项类型
+  string itemType = 8;
   // 执行项名称
-  string itemName = 8;
+  string itemName = 9;
   // 点位id
-  string PointId = 9;
+  string PointId = 10;
   // 业务负载
-  string payload = 11;
+  string payload = 12;
   // 计划触发时间
-  string planTriggerTime = 13;
+  string planTriggerTime = 14;
   // 上次触发时间
   string lastTriggerTime = 15;
 

@@ -4,11 +4,12 @@ go 1.25
 
 require (
 	github.com/ArtisanCloud/PowerLibs/v3 v3.3.2
-	github.com/ArtisanCloud/PowerWeChat/v3 v3.4.33
+	github.com/ArtisanCloud/PowerWeChat/v3 v3.4.36
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/brianvoe/gofakeit/v7 v7.14.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/doquangtan/socketio/v4 v4.1.6
+	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/dromara/carbon/v2 v2.6.15
 	github.com/duke-git/lancet/v2 v2.3.8
 	github.com/eclipse/paho.mqtt.golang v1.5.1
@@ -48,9 +49,9 @@ require (
 	github.com/zeromicro/x v0.0.0-20240408115609-8224c482b07e
 	go.opentelemetry.io/otel v1.39.0
 	go.opentelemetry.io/otel/trace v1.39.0
-	golang.org/x/crypto v0.46.0
+	golang.org/x/crypto v0.47.0
 	golang.org/x/net v0.48.0
-	golang.org/x/term v0.38.0
+	golang.org/x/term v0.39.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20251222181119-0a764e51fe1b
 	google.golang.org/grpc v1.78.0
 	google.golang.org/protobuf v1.36.11
@@ -60,6 +61,7 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
+	github.com/ArtisanCloud/PowerSocialite/v3 v3.0.9 // indirect
 	github.com/alibabacloud-go/alibabacloud-gateway-pop v0.0.6 // indirect
 	github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.5 // indirect
 	github.com/alibabacloud-go/darabonba-array v0.1.0 // indirect
@@ -196,8 +198,8 @@ require (
 	golang.org/x/image v0.0.0-20191009234506-e7c1f5e7dbb8 // indirect
 	golang.org/x/oauth2 v0.34.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
-	golang.org/x/text v0.32.0 // indirect
+	golang.org/x/sys v0.40.0 // indirect
+	golang.org/x/text v0.33.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251222181119-0a764e51fe1b // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect

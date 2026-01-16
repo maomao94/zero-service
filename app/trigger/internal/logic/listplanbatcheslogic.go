@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"fmt"
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
@@ -62,6 +63,25 @@ func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (
 
 	// 转换计划批次列表
 	for _, planBatch := range planBatches {
+		// 获取批次执行项状态统计
+		statusCounts, err := l.svcCtx.PlanExecItemModel.GetBatchStatusCounts(l.ctx, planBatch.Id)
+		if err != nil {
+			return nil, err
+		}
+
+		// 获取批次总执行项数
+		totalExecItems, err := l.svcCtx.PlanExecItemModel.GetBatchTotalExecItems(l.ctx, planBatch.Id)
+		if err != nil {
+			return nil, err
+		}
+		statusCountMap := make(map[string]int64)
+
+		// 统计各状态数量
+		for _, sc := range statusCounts {
+			statusStr := fmt.Sprintf("%d", sc.Status)
+			statusCountMap[statusStr] = sc.Count
+		}
+
 		pbPlanBatch := &trigger.PbPlanBatch{
 			CreateTime:      carbon.CreateFromStdTime(planBatch.CreateTime).ToDateTimeString(),
 			UpdateTime:      carbon.CreateFromStdTime(planBatch.UpdateTime).ToDateTimeString(),
@@ -74,7 +94,9 @@ func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (
 			BatchId:         planBatch.BatchId,
 			BatchName:       planBatch.BatchName.String,
 			Status:          int32(planBatch.Status),
+			ExecCnt:         totalExecItems,
 			PlanTriggerTime: carbon.CreateFromStdTime(planBatch.PlanTriggerTime.Time).ToDateTimeString(),
+			StatusCountMap:  statusCountMap,
 			Ext1:            planBatch.Ext1.String,
 			Ext2:            planBatch.Ext2.String,
 			Ext3:            planBatch.Ext3.String,
@@ -89,6 +111,5 @@ func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (
 
 		resp.PlanBatches = append(resp.PlanBatches, pbPlanBatch)
 	}
-
 	return resp, nil
 }

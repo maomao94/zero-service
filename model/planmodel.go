@@ -49,7 +49,7 @@ func (m *customPlanModel) UpdatePlanCompletedTime(ctx context.Context, id int64)
 		Where("p.id = ?", id).
 		Where("p.completed_time IS NULL").
 		Where("NOT EXISTS (" + subQuery + ")")
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		builder = builder.PlaceholderFormat(squirrel.Dollar)
 	}
 	sql, args, err := builder.ToSql()

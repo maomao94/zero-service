@@ -193,7 +193,8 @@ CREATE TABLE IF NOT EXISTS plan_exec_item (
     batch_pk BIGINT NOT NULL DEFAULT 0, 
     batch_id VARCHAR(64) NOT NULL DEFAULT '', 
     exec_id VARCHAR(64) NOT NULL DEFAULT '', 
-    item_id VARCHAR(64) NOT NULL DEFAULT '', 
+    item_id VARCHAR(64) NOT NULL DEFAULT '',
+    item_type varchar(64) DEFAULT '',
     item_name VARCHAR(128) DEFAULT '',
     point_id VARCHAR(64) DEFAULT '',
     service_addr VARCHAR(256) NOT NULL DEFAULT '', 
@@ -238,6 +239,7 @@ COMMENT ON COLUMN plan_exec_item.batch_pk IS '批主键ID';
 COMMENT ON COLUMN plan_exec_item.batch_id IS '批ID';
 COMMENT ON COLUMN plan_exec_item.exec_id IS '执行ID';
 COMMENT ON COLUMN plan_exec_item.item_id IS '执行项ID';
+COMMENT ON COLUMN plan_exec_item.item_type IS '执行项类型';
 COMMENT ON COLUMN plan_exec_item.item_name IS '执行项名称';
 COMMENT ON COLUMN plan_exec_item.point_id IS '点位id';
 COMMENT ON COLUMN plan_exec_item.service_addr IS '业务服务地址';
@@ -304,6 +306,7 @@ CREATE TABLE IF NOT EXISTS plan_exec_log (
     item_pk BIGINT NOT NULL DEFAULT 0,
     exec_id VARCHAR(64) NOT NULL DEFAULT '',
     item_id VARCHAR(64) NOT NULL DEFAULT '',
+    item_type varchar(64) DEFAULT '',
     item_name VARCHAR(128) DEFAULT '',
     point_id VARCHAR(64) DEFAULT '',
     trigger_time TIMESTAMP NOT NULL, 
@@ -334,6 +337,7 @@ COMMENT ON COLUMN plan_exec_log.batch_id IS '批ID';
 COMMENT ON COLUMN plan_exec_log.item_pk IS '关联的执行项主键ID';
 COMMENT ON COLUMN plan_exec_log.exec_id IS '执行ID';
 COMMENT ON COLUMN plan_exec_log.item_id IS '执行项ID';
+COMMENT ON COLUMN plan_exec_log.item_type IS '执行项类型';
 COMMENT ON COLUMN plan_exec_log.item_name IS '执行项名称';
 COMMENT ON COLUMN plan_exec_log.point_id IS '点位id';
 COMMENT ON COLUMN plan_exec_log.trigger_time IS '触发时间';

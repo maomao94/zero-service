@@ -34,11 +34,11 @@ func (r *postgresResult) RowsAffected() (int64, error) {
 type DatabaseType string
 
 const (
-	dbTag                               = "db"
-	DatabaseTypeMySQL      DatabaseType = "mysql"
-	DatabaseTypePostgreSQL DatabaseType = "postgresql"
-	DatabaseTypeSQLite     DatabaseType = "sqlite"
-	DatabaseTypeTAOS       DatabaseType = "taos"
+	dbTag                             = "db"
+	DatabaseTypeMySQL    DatabaseType = "mysql"
+	DatabaseTypePostgres DatabaseType = "postgres"
+	DatabaseTypeSQLite   DatabaseType = "sqlite"
+	DatabaseTypeTAOS     DatabaseType = "taos"
 )
 
 var defaultAutoFields = []string{

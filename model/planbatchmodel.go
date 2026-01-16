@@ -49,7 +49,7 @@ func (m *customPlanBatchModel) UpdateBatchCompletedTime(ctx context.Context, id 
 		Where("b.id = ?", id).
 		Where("b.completed_time IS NULL").
 		Where("NOT EXISTS ("+subQuery+")", StatusCompleted, StatusTerminated)
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		builder = builder.PlaceholderFormat(squirrel.Dollar)
 	}
 	sql, args, err := builder.ToSql()

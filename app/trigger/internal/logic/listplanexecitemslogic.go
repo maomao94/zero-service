@@ -92,6 +92,7 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 			BatchId:          execItem.BatchId,
 			ExecId:           execItem.ExecId,
 			ItemId:           execItem.ItemId,
+			ItemType:         execItem.ItemType.String,
 			ItemName:         execItem.ItemName.String,
 			PointId:          execItem.PointId.String,
 			ServiceAddr:      execItem.ServiceAddr,

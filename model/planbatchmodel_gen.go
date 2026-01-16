@@ -84,9 +84,8 @@ func newPlanBatchModel(conn sqlx.SqlConn) *defaultPlanBatchModel {
 }
 
 func newPlanBatchModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) *defaultPlanBatchModel {
-	isPostgreSQL := dbType == DatabaseTypePostgreSQL
 	tableName := "plan_batch"
-	fieldNames := builder.RawFieldNames(&PlanBatch{}, isPostgreSQL)
+	fieldNames := builder.RawFieldNames(&PlanBatch{}, true)
 	rows := strings.Join(fieldNames, ",")
 	return &defaultPlanBatchModel{
 		conn:          conn,
@@ -161,7 +160,7 @@ func (m *defaultPlanBatchModel) Insert(ctx context.Context, session sqlx.Session
 	columns, values := generateColumnsAndValues(data, []string{})
 	insertBuilder := m.InsertBuilder().Columns(columns...).Values(values...)
 
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		insertBuilder = insertBuilder.Suffix("RETURNING id")
 		query, args, err := insertBuilder.ToSql()
 		if err != nil {
@@ -519,7 +518,7 @@ func (m *defaultPlanBatchModel) DeleteWithBuilder(ctx context.Context, session s
 
 func (m *defaultPlanBatchModel) SelectBuilder() squirrel.SelectBuilder {
 	builder := squirrel.Select().From(m.table)
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		builder = builder.PlaceholderFormat(squirrel.Dollar)
 	}
 	return builder
@@ -527,7 +526,7 @@ func (m *defaultPlanBatchModel) SelectBuilder() squirrel.SelectBuilder {
 
 func (m *defaultPlanBatchModel) UpdateBuilder() squirrel.UpdateBuilder {
 	builder := squirrel.Update(m.table)
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		builder = builder.PlaceholderFormat(squirrel.Dollar)
 	}
 	return builder
@@ -535,7 +534,7 @@ func (m *defaultPlanBatchModel) UpdateBuilder() squirrel.UpdateBuilder {
 
 func (m *defaultPlanBatchModel) DeleteBuilder() squirrel.DeleteBuilder {
 	builder := squirrel.Delete(m.table)
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		builder = builder.PlaceholderFormat(squirrel.Dollar)
 	}
 	return builder
@@ -543,7 +542,7 @@ func (m *defaultPlanBatchModel) DeleteBuilder() squirrel.DeleteBuilder {
 
 func (m *defaultPlanBatchModel) InsertBuilder() squirrel.InsertBuilder {
 	builder := squirrel.Insert(m.table)
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		builder = builder.PlaceholderFormat(squirrel.Dollar)
 	}
 	return builder

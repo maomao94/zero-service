@@ -68,6 +68,7 @@ type (
 		BatchId          string         `db:"batch_id"`          // 批ID
 		ExecId           string         `db:"exec_id"`           // 执行ID
 		ItemId           string         `db:"item_id"`           // 执行项ID
+		ItemType         sql.NullString `db:"item_type"`         // 执行项类型
 		ItemName         sql.NullString `db:"item_name"`         // 执行项名称
 		PointId          sql.NullString `db:"point_id"`          // 点位id
 		ServiceAddr      string         `db:"service_addr"`      // 业务服务地址
@@ -95,9 +96,8 @@ type (
 )
 
 func newPlanExecItemModel(conn sqlx.SqlConn, dbType DatabaseType) *defaultPlanExecItemModel {
-	isPostgreSQL := dbType == DatabaseTypePostgreSQL
 	tableName := "plan_exec_item"
-	fieldNames := builder.RawFieldNames(&PlanExecItem{}, isPostgreSQL)
+	fieldNames := builder.RawFieldNames(&PlanExecItem{}, true)
 	rows := strings.Join(fieldNames, ",")
 	return &defaultPlanExecItemModel{
 		conn:             conn,
@@ -480,28 +480,28 @@ func (m *defaultPlanExecItemModel) DeleteWithBuilder(ctx context.Context, sessio
 }
 
 func (m *defaultPlanExecItemModel) SelectBuilder() squirrel.SelectBuilder {
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		return squirrel.Select().From(m.table).PlaceholderFormat(squirrel.Dollar)
 	}
 	return squirrel.Select().From(m.table)
 }
 
 func (m *defaultPlanExecItemModel) UpdateBuilder() squirrel.UpdateBuilder {
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		return squirrel.Update(m.table).PlaceholderFormat(squirrel.Dollar)
 	}
 	return squirrel.Update(m.table)
 }
 
 func (m *defaultPlanExecItemModel) DeleteBuilder() squirrel.DeleteBuilder {
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		return squirrel.Delete(m.table).PlaceholderFormat(squirrel.Dollar)
 	}
 	return squirrel.Delete(m.table)
 }
 
 func (m *defaultPlanExecItemModel) InsertBuilder() squirrel.InsertBuilder {
-	if m.dbType == DatabaseTypePostgreSQL {
+	if m.dbType == DatabaseTypePostgres {
 		return squirrel.Insert(m.table).PlaceholderFormat(squirrel.Dollar)
 	}
 	return squirrel.Insert(m.table)
