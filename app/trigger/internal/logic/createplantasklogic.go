@@ -105,6 +105,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	var insertPlan = &model.Plan{
 		CreateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},
 		UpdateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},
+		DeptCode:         sql.NullString{String: in.DeptCode, Valid: in.DeptCode != ""},
 		PlanId:           in.PlanId,
 		PlanName:         sql.NullString{String: in.PlanName, Valid: in.PlanName != ""},
 		Type:             sql.NullString{String: in.Type, Valid: in.Type != ""},
@@ -139,6 +140,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 			batch := model.PlanBatch{
 				CreateUser:      sql.NullString{String: currentUserId, Valid: currentUserId != ""},
 				UpdateUser:      sql.NullString{String: currentUserId, Valid: currentUserId != ""},
+				DeptCode:        sql.NullString{String: in.DeptCode, Valid: in.DeptCode != ""},
 				PlanPk:          insertPlan.Id,
 				PlanId:          in.PlanId,
 				BatchId:         batchId,
@@ -159,13 +161,16 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 			batchPk, _ := batchResult.LastInsertId()
 			batchCnt++
 			for _, item := range in.ExecItems {
+				execId, _ := tool.SimpleUUID()
 				planItem := model.PlanExecItem{
 					CreateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},
 					UpdateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},
+					DeptCode:         sql.NullString{String: in.DeptCode, Valid: in.DeptCode != ""},
 					PlanPk:           insertPlan.Id,
 					PlanId:           in.PlanId,
 					BatchPk:          batchPk,
 					BatchId:          batchId,
+					ExecId:           execId,
 					ItemId:           item.ItemId,
 					ItemName:         sql.NullString{String: item.ItemName, Valid: item.ItemName != ""},
 					PointId:          sql.NullString{String: item.PointId, Valid: item.PointId != ""},
@@ -178,7 +183,8 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 					TriggerCount:     0,
 					Status:           int64(model.StatusWaiting),
 					LastResult:       sql.NullString{},
-					LastMsg:          sql.NullString{},
+					LastMessage:      sql.NullString{},
+					LastReason:       sql.NullString{},
 					TerminatedTime:   sql.NullTime{},
 					TerminatedReason: sql.NullString{},
 					PausedTime:       sql.NullTime{},

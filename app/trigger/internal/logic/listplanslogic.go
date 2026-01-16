@@ -78,6 +78,7 @@ func (l *ListPlansLogic) ListPlans(in *trigger.ListPlansReq) (*trigger.ListPlans
 			UpdateTime:       carbon.CreateFromStdTime(plan.UpdateTime).ToDateTimeString(),
 			CreateUser:       plan.CreateUser.String,
 			UpdateUser:       plan.UpdateUser.String,
+			DeptCode:         plan.DeptCode.String,
 			Id:               plan.Id,
 			PlanId:           plan.PlanId,
 			PlanName:         plan.PlanName.String,

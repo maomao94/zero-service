@@ -2,11 +2,14 @@ package logic
 
 import (
 	"context"
+	"zero-service/model"
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 
 	"github.com/dromara/carbon/v2"
+	"github.com/duke-git/lancet/v2/strutil"
+	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -32,18 +35,25 @@ func (l *GetPlanBatchLogic) GetPlanBatch(in *trigger.GetPlanBatchReq) (*trigger.
 		return nil, err
 	}
 
-	// 查询计划批次
-	planBatch, err := l.svcCtx.PlanBatchModel.FindOne(l.ctx, in.Id)
+	if in.Id <= 0 && strutil.IsBlank(in.BatchId) {
+		return nil, errors.BadRequest("", "参数错误")
+	}
+	var planBatch *model.PlanBatch
+	if in.Id > 0 {
+		planBatch, err = l.svcCtx.PlanBatchModel.FindOne(l.ctx, in.Id)
+	} else {
+		planBatch, err = l.svcCtx.PlanBatchModel.FindOneByBatchId(l.ctx, in.BatchId)
+	}
 	if err != nil {
 		return nil, err
 	}
-
 	// 构建响应
 	pbPlanBatch := &trigger.PbPlanBatch{
 		CreateTime:      carbon.CreateFromStdTime(planBatch.CreateTime).ToDateTimeString(),
 		UpdateTime:      carbon.CreateFromStdTime(planBatch.UpdateTime).ToDateTimeString(),
 		CreateUser:      planBatch.CreateUser.String,
 		UpdateUser:      planBatch.UpdateUser.String,
+		DeptCode:        planBatch.DeptCode.String,
 		Id:              planBatch.Id,
 		PlanPk:          planBatch.PlanPk,
 		PlanId:          planBatch.PlanId,

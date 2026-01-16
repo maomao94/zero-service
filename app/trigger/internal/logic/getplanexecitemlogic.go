@@ -2,13 +2,15 @@ package logic
 
 import (
 	"context"
+	"zero-service/model"
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 
 	"github.com/dromara/carbon/v2"
+	"github.com/duke-git/lancet/v2/strutil"
+	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
 type GetPlanExecItemLogic struct {
@@ -32,13 +34,16 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 	if err != nil {
 		return nil, err
 	}
-
-	// 查询执行项
-	execItem, err := l.svcCtx.PlanExecItemModel.FindOne(l.ctx, in.Id)
+	if in.Id <= 0 && strutil.IsBlank(in.ExecId) {
+		return nil, errors.BadRequest("", "参数错误")
+	}
+	var execItem *model.PlanExecItem
+	if in.Id > 0 {
+		execItem, err = l.svcCtx.PlanExecItemModel.FindOne(l.ctx, in.Id)
+	} else {
+		execItem, err = l.svcCtx.PlanExecItemModel.FindOneByExecId(l.ctx, in.ExecId)
+	}
 	if err != nil {
-		if err == sqlx.ErrNotFound {
-			return nil, err
-		}
 		return nil, err
 	}
 
@@ -48,11 +53,13 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 		UpdateTime:       carbon.CreateFromStdTime(execItem.UpdateTime).ToDateTimeString(),
 		CreateUser:       execItem.CreateUser.String,
 		UpdateUser:       execItem.UpdateUser.String,
+		DeptCode:         execItem.DeptCode.String,
 		Id:               execItem.Id,
 		PlanPk:           execItem.PlanPk,
 		PlanId:           execItem.PlanId,
 		BatchPk:          execItem.BatchPk,
 		BatchId:          execItem.BatchId,
+		ExecId:           execItem.ExecId,
 		ItemId:           execItem.ItemId,
 		ItemName:         execItem.ItemName.String,
 		PointId:          execItem.PointId.String,
@@ -64,7 +71,8 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 		TriggerCount:     int32(execItem.TriggerCount),
 		Status:           int32(execItem.Status),
 		LastResult:       execItem.LastResult.String,
-		LastMsg:          execItem.LastMsg.String,
+		LastMessage:      execItem.LastMessage.String,
+		LastReason:       execItem.LastReason.String,
 		TerminatedReason: execItem.TerminatedReason.String,
 		PausedReason:     execItem.PausedReason.String,
 		Ext1:             execItem.Ext1.String,
@@ -72,11 +80,6 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 		Ext3:             execItem.Ext3.String,
 		Ext4:             execItem.Ext4.String,
 		Ext5:             execItem.Ext5.String,
-	}
-
-	// 设置下次触发时间
-	if !execItem.NextTriggerTime.IsZero() {
-		pbExecItem.NextTriggerTime = carbon.CreateFromStdTime(execItem.NextTriggerTime).ToDateTimeString()
 	}
 
 	// 设置上次触发时间

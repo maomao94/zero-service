@@ -486,6 +486,9 @@ message CalcPlanTaskDateRes {
 
 message CreatePlanTaskReq {
   extproto.CurrentUser currentUser = 100;
+  // 机构code
+  string deptCode = 101 [(validate.rules).string = {min_len: 1}];
+
   // 计划任务ID,全局唯一
   string planId = 1 [(validate.rules).string = {min_len: 1}];
   // 计划任务名称
@@ -506,7 +509,7 @@ message CreatePlanTaskReq {
   string endTime = 7;
   // 计划规则项 默认 规则项 MINUTELY
   PbPlanRule rule = 8 [(validate.rules).message = {required: true}];
-  // 计划执行项-根据规则项生成日期批次并生成对应批次执行项
+  // 计划执行项-根据规则项生成日期批次-batchId 并生成对应批次执行项-execId
   repeated CreatePlanExecItem execItems = 9 [(validate.rules).repeated = {min_items: 1}];
 
   // 扩展字段
@@ -687,7 +690,8 @@ message RunPlanExecItemRes {
 
 message GetPlanReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
+  int64 id = 1;
+  string planId = 2;
 }
 
 message GetPlanRes {
@@ -703,6 +707,8 @@ message PbPlan{
   string createUser = 103;
   // 更新人
   string updateUser = 104;
+  // 机构code
+  string deptCode = 105;
 
   // 自增主键ID
   int64 id = 50;
@@ -769,7 +775,8 @@ message ListPlansRes {
 
 message GetPlanBatchReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
+  int64 id = 1;
+  string batchId = 2;
 }
 
 message GetPlanBatchRes {
@@ -786,7 +793,7 @@ message ListPlanBatchesReq {
   int64 planPk = 3;
   // 计划ID
   string planId = 4;
-  // 批次ID模糊查询
+  // 批次ID
   string batchId = 5;
   // 状态：0-禁用，1-启用，2-已终止，3-暂停
   repeated int32 status = 6;
@@ -801,7 +808,8 @@ message ListPlanBatchesRes {
 
 message GetPlanExecItemReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
+  int64 id = 1;
+  string execId = 2;
 }
 
 message GetPlanExecItemRes {
@@ -817,6 +825,8 @@ message PbPlanExecItem {
   string createUser = 103;
   // 更新人
   string updateUser = 104;
+  // 机构code
+  string deptCode = 105;
 
   // 自增主键ID
   int64 id = 50;
@@ -828,50 +838,54 @@ message PbPlanExecItem {
   int64 batchPk = 4;
   // 批ID
   string batchId = 5;
+  // 执行ID 全局唯一
+  string execId = 6;
   // 执行项ID
-  string itemId = 6;
+  string itemId = 7;
   // 执行项名称
-  string itemName = 7;
+  string itemName = 8;
   // 点位id
-  string PointId = 8;
+  string PointId = 9;
   // 业务服务地址
-  string serviceAddr = 9;
+  string serviceAddr = 10;
   // 业务负载
-  string payload = 10;
+  string payload = 11;
   // 请求超时时间（毫秒）
-  int64 requestTimeout = 11;
+  int64 requestTimeout = 12;
   // 计划触发时间
-  string planTriggerTime = 12;
+  string planTriggerTime = 13;
   // 下次触发时间
-  string nextTriggerTime = 13;
+  string nextTriggerTime = 14;
   // 上次触发时间
-  string lastTriggerTime = 14;
+  string lastTriggerTime = 15;
   // 触发次数
-  int32 triggerCount = 15;
+  int32 triggerCount = 16;
   // 状态：0-待执行，1-执行中，2-完成，3-失败，4-延期，5-已终止，6-暂停
-  int32 status = 16;
+  int32 status = 17;
   // 上次执行结果
-  string lastResult = 17;
-  // 上次执行消息
-  string lastMsg = 18;
+  string lastResult = 18;
+  // 上次结果描述
+  string lastMessage = 19;
+  // 上次结果原因
+  string lastReason = 20;
   // 终止时间
-  string terminatedTime = 19;
+  string terminatedTime = 21;
   // 终止原因
-  string terminatedReason = 20;
+  string terminatedReason = 22;
   // 暂停时间
-  string pausedTime = 21;
+  string pausedTime = 23;
   // 暂停原因
-  string pausedReason = 22;
+  string pausedReason = 24;
   // 扩展字段1
-  string ext1 = 23;
+  string ext1 = 25;
   // 扩展字段2
-  string ext2 = 24;
+  string ext2 = 26;
   // 扩展字段3
-  string ext3 = 25;
+  string ext3 = 27;
   // 扩展字段4
-  string ext4 = 26;
+  string ext4 = 28;
   // 扩展字段5
-  string ext5 = 27;
+  string ext5 = 29;
 }
 
 message ListPlanExecItemsReq {
@@ -882,14 +896,18 @@ message ListPlanExecItemsReq {
   int64 pageNum = 2 [(validate.rules).int64 = {gte: 0}];
   // 计划主键 id
   int64 id = 3 [(validate.rules).int64 = {gte: 0}];
+  // 执行ID（唯一索引）
+  string execId = 4;
   // 计划ID
-  string planId = 4;
+  string planId = 5;
+  // 批ID
+  string batchId = 6;
   // 执行项ID模糊查询
-  string itemId = 5;
+  string itemId = 7;
   // 执行项名称模糊查询
-  string itemName = 6;
+  string itemName = 8;
   // 状态：0-待执行，1-执行中，2-完成，3-失败，4-延期，5-已终止，6-暂停
-  repeated int32 status = 7;
+  repeated int32 status = 9;
 }
 
 message ListPlanExecItemsRes {
@@ -918,14 +936,18 @@ message ListPlanExecLogsReq {
   int64 pageNum = 2 [(validate.rules).int64 = {gte: 0}];
   // 计划ID
   string planId = 3;
+  // 批ID
+  string batchId = 4;
   // 执行项ID
-  string itemId = 4;
+  string itemId = 5;
+  // 执行ID
+  string execId = 6;
   // 开始时间
-  string startTime = 5;
+  string startTime = 7;
   // 结束时间
-  string endTime = 6;
+  string endTime = 8;
   // 执行结果：1-成功，2-失败，3-延期
-  repeated int32 execResult = 7;
+  repeated int32 execResult = 9;
 }
 
 // 分页获取计划触发日志列表响应
@@ -945,6 +967,8 @@ message PbPlanExecLog {
   string createUser = 103;
   // 更新人
   string updateUser = 104;
+  // 机构code
+  string deptCode = 105;
 
   // 自增主键ID
   int64 id = 50;
@@ -960,18 +984,20 @@ message PbPlanExecLog {
   string batchId = 5;
   // 关联的执行项主键ID
   int64 itemPk = 6;
+  // 执行ID 全局唯一
+  string execId = 7;
   // 执行项ID
-  string itemId = 7;
+  string itemId = 8;
   // 执行项名称
-  string itemName = 8;
+  string itemName = 9;
   // 点位id
-  string pointId = 9;
+  string pointId = 10;
   // 触发时间
-  string triggerTime = 10;
-  // 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，running-业务正在执行
-  string execResult = 11;
+  string triggerTime = 11;
+  // 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，ongoing-业务正在执行
+  string execResult = 12;
   // 结果描述
-  string message = 12;
+  string message = 13;
 }
 
 // 计划批次数据模型
@@ -984,6 +1010,8 @@ message PbPlanBatch {
   string createUser = 103;
   // 更新人
   string updateUser = 104;
+  // 机构code
+  string deptCode = 105;
 
   // 自增主键ID
   int64 id = 50;
@@ -1034,12 +1062,15 @@ message CallbackPlanExecItemReq {
 
   // 执行项ID
   int64 id = 1 [(validate.rules).int64 = {gte: 1}];
-  // 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，running-业务正在执行（未回调或部分异步）
+  // 回调设计 参考 grpc status 用于分布式事务
+  // 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，ongoing-业务正在执行（未回调或部分异步）
   string execResult = 2;
-  // 结果描述（成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
+  // 结果描述  可以定义自己状态码，等下次回调判断业务场景
   string message = 3;
-  // 延期配置：delayed-自定义延期，running-自定义延期（默认30分钟,等待业务系统回调完成/延期触发闭环)
-  PbDelayConfig delayConfig = 4;
+  // 结果原因 （成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
+  string reason = 4;
+  // 延期配置：delayed-自定义延期
+  PbDelayConfig delayConfig = 5;
 }
 
 message PbDelayConfig {

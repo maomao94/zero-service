@@ -38,7 +38,7 @@ func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (
 		builder = builder.Where("plan_id = ?", in.PlanId)
 	}
 	if in.BatchId != "" {
-		builder = builder.Where("batch_id LIKE ?", "%"+in.BatchId+"%")
+		builder = builder.Where("batch_id = ?", in.BatchId)
 	}
 	if len(in.Status) > 0 {
 		statusInts := make([]int64, len(in.Status))
@@ -67,6 +67,7 @@ func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (
 			UpdateTime:      carbon.CreateFromStdTime(planBatch.UpdateTime).ToDateTimeString(),
 			CreateUser:      planBatch.CreateUser.String,
 			UpdateUser:      planBatch.UpdateUser.String,
+			DeptCode:        planBatch.DeptCode.String,
 			Id:              planBatch.Id,
 			PlanPk:          planBatch.PlanPk,
 			PlanId:          planBatch.PlanId,

@@ -40,6 +40,9 @@ func (l *ListPlanExecLogsLogic) ListPlanExecLogs(in *trigger.ListPlanExecLogsReq
 	if in.ItemId != "" {
 		builder = builder.Where("item_id = ?", in.ItemId)
 	}
+	if in.ExecId != "" {
+		builder = builder.Where("exec_id = ?", in.ExecId)
+	}
 	if in.StartTime != "" {
 		builder = builder.Where("trigger_time >= ?", in.StartTime)
 	}
@@ -73,6 +76,7 @@ func (l *ListPlanExecLogsLogic) ListPlanExecLogs(in *trigger.ListPlanExecLogsReq
 			UpdateTime:  carbon.CreateFromStdTime(log.UpdateTime).ToDateTimeString(),
 			CreateUser:  log.CreateUser.String,
 			UpdateUser:  log.UpdateUser.String,
+			DeptCode:    log.DeptCode.String,
 			Id:          log.Id,
 			PlanPk:      log.PlanPk,
 			PlanId:      log.PlanId,
@@ -80,6 +84,7 @@ func (l *ListPlanExecLogsLogic) ListPlanExecLogs(in *trigger.ListPlanExecLogsReq
 			BatchPk:     log.BatchPk,
 			BatchId:     log.BatchId,
 			ItemPk:      log.ItemPk,
+			ExecId:      log.ExecId,
 			ItemId:      log.ItemId,
 			ItemName:    log.ItemName.String,
 			PointId:     log.PointId.String,

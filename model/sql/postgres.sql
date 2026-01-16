@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS device_point_mapping (
     version INT NOT NULL DEFAULT 0, 
     create_user VARCHAR(64) DEFAULT '',
     update_user VARCHAR(64) DEFAULT '',
+    dept_code VARCHAR(64) DEFAULT '',
     tag_station VARCHAR(64) DEFAULT '',
     coa INT NOT NULL DEFAULT 0, 
     ioa INT NOT NULL DEFAULT 0, 
@@ -59,6 +60,7 @@ COMMENT ON COLUMN device_point_mapping.del_state IS '删除状态：0-未删除�
 COMMENT ON COLUMN device_point_mapping.version IS '版本号（乐观锁）';
 COMMENT ON COLUMN device_point_mapping.create_user IS '创建人';
 COMMENT ON COLUMN device_point_mapping.update_user IS '更新人';
+COMMENT ON COLUMN device_point_mapping.dept_code IS '机构code';
 COMMENT ON COLUMN device_point_mapping.tag_station IS '与 TDengine tag_station 对应';
 COMMENT ON COLUMN device_point_mapping.coa IS '与 TDengine coa 对应';
 COMMENT ON COLUMN device_point_mapping.ioa IS '与 TDengine ioa 对应';
@@ -97,6 +99,7 @@ CREATE TABLE IF NOT EXISTS plan (
     version INT NOT NULL DEFAULT 0, 
     create_user VARCHAR(64) DEFAULT '',
     update_user VARCHAR(64) DEFAULT '',
+    dept_code VARCHAR(64) DEFAULT '',
     plan_id VARCHAR(64) NOT NULL,
     plan_name VARCHAR(128) DEFAULT '',
     type VARCHAR(64) DEFAULT '',
@@ -131,6 +134,7 @@ COMMENT ON COLUMN plan.del_state IS '删除状态：0-未删除，1-已删除';
 COMMENT ON COLUMN plan.version IS '版本号（乐观锁）';
 COMMENT ON COLUMN plan.create_user IS '创建人';
 COMMENT ON COLUMN plan.update_user IS '更新人';
+COMMENT ON COLUMN plan.dept_code IS '机构code';
 COMMENT ON COLUMN plan.plan_id IS '计划唯一标识';
 COMMENT ON COLUMN plan.plan_name IS '计划任务名称';
 COMMENT ON COLUMN plan.type IS '任务类型';
@@ -183,10 +187,12 @@ CREATE TABLE IF NOT EXISTS plan_exec_item (
     version INT NOT NULL DEFAULT 0, 
     create_user VARCHAR(64) DEFAULT '',
     update_user VARCHAR(64) DEFAULT '',
+    dept_code VARCHAR(64) DEFAULT '',
     plan_pk BIGINT NOT NULL DEFAULT 0, 
     plan_id VARCHAR(64) NOT NULL DEFAULT '',
     batch_pk BIGINT NOT NULL DEFAULT 0, 
     batch_id VARCHAR(64) NOT NULL DEFAULT '', 
+    exec_id VARCHAR(64) NOT NULL DEFAULT '', 
     item_id VARCHAR(64) NOT NULL DEFAULT '', 
     item_name VARCHAR(128) DEFAULT '',
     point_id VARCHAR(64) DEFAULT '',
@@ -199,7 +205,8 @@ CREATE TABLE IF NOT EXISTS plan_exec_item (
     trigger_count INT NOT NULL DEFAULT 0, 
     status SMALLINT NOT NULL DEFAULT 0, 
     last_result VARCHAR(256) DEFAULT '',
-    last_msg TEXT DEFAULT '',
+    last_message VARCHAR(1024) DEFAULT '',
+    last_reason TEXT DEFAULT '',
     terminated_time TIMESTAMP NULL, 
     terminated_reason VARCHAR(256) DEFAULT '',
     paused_time TIMESTAMP NULL, 
@@ -224,10 +231,12 @@ COMMENT ON COLUMN plan_exec_item.del_state IS '删除状态：0-未删除，1-�
 COMMENT ON COLUMN plan_exec_item.version IS '版本号（乐观锁）';
 COMMENT ON COLUMN plan_exec_item.create_user IS '创建人';
 COMMENT ON COLUMN plan_exec_item.update_user IS '更新人';
+COMMENT ON COLUMN plan_exec_item.dept_code IS '机构code';
 COMMENT ON COLUMN plan_exec_item.plan_pk IS '关联的计划主键ID';
 COMMENT ON COLUMN plan_exec_item.plan_id IS '关联的计划ID';
 COMMENT ON COLUMN plan_exec_item.batch_pk IS '批主键ID';
 COMMENT ON COLUMN plan_exec_item.batch_id IS '批ID';
+COMMENT ON COLUMN plan_exec_item.exec_id IS '执行ID';
 COMMENT ON COLUMN plan_exec_item.item_id IS '执行项ID';
 COMMENT ON COLUMN plan_exec_item.item_name IS '执行项名称';
 COMMENT ON COLUMN plan_exec_item.point_id IS '点位id';
@@ -240,7 +249,8 @@ COMMENT ON COLUMN plan_exec_item.last_trigger_time IS '上次触发时间';
 COMMENT ON COLUMN plan_exec_item.trigger_count IS '触发次数';
 COMMENT ON COLUMN plan_exec_item.status IS '状态：0-等待调度，10-延期等待，100-执行中，150-暂停，200-完成，300-终止';
 COMMENT ON COLUMN plan_exec_item.last_result IS '上次执行结果';
-COMMENT ON COLUMN plan_exec_item.last_msg IS '上次执行消息';
+COMMENT ON COLUMN plan_exec_item.last_message IS '上次结果描述';
+COMMENT ON COLUMN plan_exec_item.last_reason IS '上次结果原因';
 COMMENT ON COLUMN plan_exec_item.terminated_time IS '终止时间';
 COMMENT ON COLUMN plan_exec_item.terminated_reason IS '终止原因';
 COMMENT ON COLUMN plan_exec_item.paused_time IS '暂停时间';
@@ -253,6 +263,7 @@ COMMENT ON COLUMN plan_exec_item.ext_4 IS '扩展字段4';
 COMMENT ON COLUMN plan_exec_item.ext_5 IS '扩展字段5';
 
 -- 为 plan_exec_item 表创建索引
+CREATE UNIQUE INDEX uk_plan_exec_item_exec_id ON plan_exec_item (exec_id);
 CREATE INDEX idx_plan_exec_item_batch_pk ON plan_exec_item (batch_pk);
 CREATE INDEX idx_plan_exec_item_batch_id ON plan_exec_item (batch_id);
 CREATE INDEX idx_plan_exec_item_plan_pk_item_id ON plan_exec_item (plan_pk, item_id);
@@ -284,19 +295,22 @@ CREATE TABLE IF NOT EXISTS plan_exec_log (
     version INT NOT NULL DEFAULT 0, 
     create_user VARCHAR(64) DEFAULT '',
     update_user VARCHAR(64) DEFAULT '',
-    plan_id VARCHAR(64) NOT NULL DEFAULT '', 
+    dept_code VARCHAR(64) DEFAULT '',
     plan_pk BIGINT NOT NULL DEFAULT 0, 
+    plan_id VARCHAR(64) NOT NULL DEFAULT '',
     plan_name VARCHAR(128) DEFAULT '',
     batch_pk BIGINT NOT NULL DEFAULT 0,
     batch_id VARCHAR(64) NOT NULL DEFAULT '', 
     item_pk BIGINT NOT NULL DEFAULT 0,
+    exec_id VARCHAR(64) NOT NULL DEFAULT '',
     item_id VARCHAR(64) NOT NULL DEFAULT '',
     item_name VARCHAR(128) DEFAULT '',
     point_id VARCHAR(64) DEFAULT '',
     trigger_time TIMESTAMP NOT NULL, 
     trace_id VARCHAR(64) DEFAULT '',
     exec_result VARCHAR(256) DEFAULT '',
-    message TEXT DEFAULT ''
+    message VARCHAR(1024) DEFAULT '',
+    reason TEXT DEFAULT ''
 );
 
 -- 为 plan_exec_log 表添加注释
@@ -311,12 +325,14 @@ COMMENT ON COLUMN plan_exec_log.del_state IS '删除状态：0-未删除，1-已
 COMMENT ON COLUMN plan_exec_log.version IS '版本号（乐观锁）';
 COMMENT ON COLUMN plan_exec_log.create_user IS '创建人';
 COMMENT ON COLUMN plan_exec_log.update_user IS '更新人';
-COMMENT ON COLUMN plan_exec_log.plan_id IS '计划任务ID';
+COMMENT ON COLUMN plan_exec_log.dept_code IS '机构code';
 COMMENT ON COLUMN plan_exec_log.plan_pk IS '关联的计划主键ID';
+COMMENT ON COLUMN plan_exec_log.plan_id IS '计划任务ID';
 COMMENT ON COLUMN plan_exec_log.plan_name IS '计划任务名称';
 COMMENT ON COLUMN plan_exec_log.batch_pk IS '批主键ID';
 COMMENT ON COLUMN plan_exec_log.batch_id IS '批ID';
 COMMENT ON COLUMN plan_exec_log.item_pk IS '关联的执行项主键ID';
+COMMENT ON COLUMN plan_exec_log.exec_id IS '执行ID';
 COMMENT ON COLUMN plan_exec_log.item_id IS '执行项ID';
 COMMENT ON COLUMN plan_exec_log.item_name IS '执行项名称';
 COMMENT ON COLUMN plan_exec_log.point_id IS '点位id';
@@ -324,12 +340,15 @@ COMMENT ON COLUMN plan_exec_log.trigger_time IS '触发时间';
 COMMENT ON COLUMN plan_exec_log.trace_id IS '唯一追踪ID';
 COMMENT ON COLUMN plan_exec_log.exec_result IS '执行结果';
 COMMENT ON COLUMN plan_exec_log.message IS '结果描述';
+COMMENT ON COLUMN plan_exec_log.reason IS '结果原因';
 
 -- 为 plan_exec_log 表创建索引
 CREATE INDEX idx_plan_exec_log_plan_pk ON plan_exec_log (plan_pk);
 CREATE INDEX idx_plan_exec_log_plan_id ON plan_exec_log (plan_id);
 CREATE INDEX idx_plan_exec_log_batch_pk ON plan_exec_log (batch_pk);
 CREATE INDEX idx_plan_exec_log_batch_id ON plan_exec_log (batch_id);
+CREATE INDEX idx_plan_exec_log_item_pk ON plan_exec_log (item_pk);
+CREATE INDEX idx_plan_exec_log_exec_id ON plan_exec_log (exec_id);
 CREATE INDEX idx_plan_exec_log_item_id ON plan_exec_log (item_id);
 CREATE INDEX idx_plan_exec_log_trigger_time ON plan_exec_log (trigger_time);
 CREATE INDEX idx_plan_exec_log_trace_id ON plan_exec_log (trace_id);
@@ -358,6 +377,7 @@ CREATE TABLE IF NOT EXISTS plan_batch (
     version INT NOT NULL DEFAULT 0, 
     create_user VARCHAR(64) DEFAULT '',
     update_user VARCHAR(64) DEFAULT '',
+    dept_code VARCHAR(64) DEFAULT '',
     plan_pk BIGINT NOT NULL DEFAULT 0, 
     plan_id VARCHAR(64) NOT NULL DEFAULT '', 
     batch_id VARCHAR(64) NOT NULL DEFAULT '', 
@@ -385,6 +405,7 @@ COMMENT ON COLUMN plan_batch.del_state IS '删除状态：0-未删除，1-已删
 COMMENT ON COLUMN plan_batch.version IS '版本号（乐观锁）';
 COMMENT ON COLUMN plan_batch.create_user IS '创建人';
 COMMENT ON COLUMN plan_batch.update_user IS '更新人';
+COMMENT ON COLUMN plan_batch.dept_code IS '机构code';
 COMMENT ON COLUMN plan_batch.plan_pk IS '关联的计划主键ID';
 COMMENT ON COLUMN plan_batch.plan_id IS '关联的计划ID';
 COMMENT ON COLUMN plan_batch.batch_id IS '批ID';

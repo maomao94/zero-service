@@ -6062,6 +6062,17 @@ func (m *CreatePlanTaskReq) validate(all bool) error {
 		}
 	}
 
+	if utf8.RuneCountInString(m.GetDeptCode()) < 1 {
+		err := CreatePlanTaskReqValidationError{
+			field:  "DeptCode",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if utf8.RuneCountInString(m.GetPlanId()) < 1 {
 		err := CreatePlanTaskReqValidationError{
 			field:  "PlanId",
@@ -9309,16 +9320,9 @@ func (m *GetPlanReq) validate(all bool) error {
 		}
 	}
 
-	if m.GetId() < 1 {
-		err := GetPlanReqValidationError{
-			field:  "Id",
-			reason: "value must be greater than or equal to 1",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for Id
+
+	// no validation rules for PlanId
 
 	if len(errors) > 0 {
 		return GetPlanReqMultiError(errors)
@@ -9553,6 +9557,8 @@ func (m *PbPlan) validate(all bool) error {
 	// no validation rules for CreateUser
 
 	// no validation rules for UpdateUser
+
+	// no validation rules for DeptCode
 
 	// no validation rules for Id
 
@@ -10038,16 +10044,9 @@ func (m *GetPlanBatchReq) validate(all bool) error {
 		}
 	}
 
-	if m.GetId() < 1 {
-		err := GetPlanBatchReqValidationError{
-			field:  "Id",
-			reason: "value must be greater than or equal to 1",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for Id
+
+	// no validation rules for BatchId
 
 	if len(errors) > 0 {
 		return GetPlanBatchReqMultiError(errors)
@@ -10604,16 +10603,9 @@ func (m *GetPlanExecItemReq) validate(all bool) error {
 		}
 	}
 
-	if m.GetId() < 1 {
-		err := GetPlanExecItemReqValidationError{
-			field:  "Id",
-			reason: "value must be greater than or equal to 1",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for Id
+
+	// no validation rules for ExecId
 
 	if len(errors) > 0 {
 		return GetPlanExecItemReqMultiError(errors)
@@ -10861,6 +10853,8 @@ func (m *PbPlanExecItem) validate(all bool) error {
 
 	// no validation rules for UpdateUser
 
+	// no validation rules for DeptCode
+
 	// no validation rules for Id
 
 	// no validation rules for PlanPk
@@ -10870,6 +10864,8 @@ func (m *PbPlanExecItem) validate(all bool) error {
 	// no validation rules for BatchPk
 
 	// no validation rules for BatchId
+
+	// no validation rules for ExecId
 
 	// no validation rules for ItemId
 
@@ -10895,7 +10891,9 @@ func (m *PbPlanExecItem) validate(all bool) error {
 
 	// no validation rules for LastResult
 
-	// no validation rules for LastMsg
+	// no validation rules for LastMessage
+
+	// no validation rules for LastReason
 
 	// no validation rules for TerminatedTime
 
@@ -11077,7 +11075,11 @@ func (m *ListPlanExecItemsReq) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	// no validation rules for ExecId
+
 	// no validation rules for PlanId
+
+	// no validation rules for BatchId
 
 	// no validation rules for ItemId
 
@@ -11649,7 +11651,11 @@ func (m *ListPlanExecLogsReq) validate(all bool) error {
 
 	// no validation rules for PlanId
 
+	// no validation rules for BatchId
+
 	// no validation rules for ItemId
+
+	// no validation rules for ExecId
 
 	// no validation rules for StartTime
 
@@ -11903,6 +11909,8 @@ func (m *PbPlanExecLog) validate(all bool) error {
 
 	// no validation rules for UpdateUser
 
+	// no validation rules for DeptCode
+
 	// no validation rules for Id
 
 	// no validation rules for PlanPk
@@ -11916,6 +11924,8 @@ func (m *PbPlanExecLog) validate(all bool) error {
 	// no validation rules for BatchId
 
 	// no validation rules for ItemPk
+
+	// no validation rules for ExecId
 
 	// no validation rules for ItemId
 
@@ -12036,6 +12046,8 @@ func (m *PbPlanBatch) validate(all bool) error {
 	// no validation rules for CreateUser
 
 	// no validation rules for UpdateUser
+
+	// no validation rules for DeptCode
 
 	// no validation rules for Id
 
@@ -12205,6 +12217,8 @@ func (m *CallbackPlanExecItemReq) validate(all bool) error {
 	// no validation rules for ExecResult
 
 	// no validation rules for Message
+
+	// no validation rules for Reason
 
 	if all {
 		switch v := interface{}(m.GetDelayConfig()).(type) {

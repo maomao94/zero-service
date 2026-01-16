@@ -2,7 +2,9 @@ package logic
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"time"
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
@@ -43,6 +45,11 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 		}
 		return nil, err
 	}
+	// 查询计划项
+	plan, err := l.svcCtx.PlanModel.FindOne(l.ctx, execItem.PlanPk)
+	if err != nil {
+		return nil, err
+	}
 
 	// 检查执行项状态是否为终态
 	if execItem.Status == int64(model.StatusCompleted) || execItem.Status == int64(model.StatusTerminated) {
@@ -51,13 +58,14 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 	// 执行事务
 	err = l.svcCtx.PlanModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
 		var transErr error
+		var reason = in.Reason
 		switch in.GetExecResult() {
 		case model.ResultCompleted:
 			// 更新执行项状态为成功
-			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToCompleted(ctx, execItem.Id, in.Message)
+			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToCompleted(ctx, execItem.Id, in.Message, in.Message)
 		case model.ResultFailed:
 			// 更新执行项状态为失败
-			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, in.Message)
+			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, in.Message, "")
 		case model.ResultDelayed:
 			currentTime := carbon.Now()
 			delayTriggerTime := currentTime.AddMinutes(5).ToDateTimeString()
@@ -89,7 +97,8 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 				}
 			}
 			delayReason = fmt.Sprintf("%s, delay time: %s", delayReason, delayTriggerTime)
-			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToDelayed(ctx, execItem.Id, in.ExecResult, delayReason, delayTriggerTime)
+			reason = delayReason
+			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToDelayed(ctx, execItem.Id, in.ExecResult, in.Message, delayReason, delayTriggerTime)
 		case model.ResultOngoing:
 			l.Infof("Ongoing exec item %d", execItem.Id)
 		default:
@@ -105,6 +114,29 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 		transErr = l.svcCtx.PlanModel.UpdatePlanCompletedTime(ctx, execItem.PlanPk)
 		if transErr != nil {
 			return transErr
+		}
+
+		// 记录执行日志
+		logEntry := &model.PlanExecLog{
+			PlanPk:      execItem.PlanPk,
+			PlanId:      execItem.PlanId,
+			PlanName:    plan.PlanName,
+			BatchPk:     execItem.BatchPk,
+			BatchId:     execItem.BatchId,
+			ItemPk:      execItem.Id,
+			ExecId:      execItem.ExecId,
+			ItemId:      execItem.ItemId,
+			ItemName:    execItem.ItemName,
+			PointId:     execItem.PointId,
+			TriggerTime: time.Now(),
+			TraceId:     sql.NullString{String: "", Valid: false},
+			ExecResult:  sql.NullString{String: in.ExecResult, Valid: in.ExecResult != ""},
+			Message:     sql.NullString{String: in.Message, Valid: in.Message != ""},
+			Reason:      sql.NullString{String: reason, Valid: reason != ""},
+		}
+		// 插入执行日志
+		if _, err := l.svcCtx.PlanExecLogModel.Insert(ctx, nil, logEntry); err != nil {
+			logx.Errorf("Callback Error inserting plan exec log for item %d: %v", execItem.Id, err)
 		}
 		return nil
 	})

@@ -2589,6 +2589,8 @@ type PbPlan struct {
 	CreateUser string `protobuf:"bytes,103,opt,name=createUser,proto3" json:"createUser,omitempty"`
 	// 更新人
 	UpdateUser string `protobuf:"bytes,104,opt,name=updateUser,proto3" json:"updateUser,omitempty"`
+	// 机构code
+	DeptCode string `protobuf:"bytes,105,opt,name=deptCode,proto3" json:"deptCode,omitempty"`
 	// 自增主键ID
 	Id int64 `protobuf:"varint,50,opt,name=id,proto3" json:"id,omitempty"`
 	// 计划ID
@@ -2673,6 +2675,13 @@ func (x *PbPlan) GetCreateUser() string {
 func (x *PbPlan) GetUpdateUser() string {
 	if x != nil {
 		return x.UpdateUser
+	}
+	return ""
+}
+
+func (x *PbPlan) GetDeptCode() string {
+	if x != nil {
+		return x.DeptCode
 	}
 	return ""
 }
@@ -2775,26 +2784,32 @@ type HandlerPlanTaskEventReq struct {
 	Id int64 `protobuf:"varint,50,opt,name=id,proto3" json:"id,omitempty"`
 	// 关联的计划主键ID
 	PlanPk int64 `protobuf:"varint,1,opt,name=planPk,proto3" json:"planPk,omitempty"`
-	// 计划ID
+	// 计划ID 全局唯一
 	PlanId string `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
 	// 批主键ID
 	BatchPk int64 `protobuf:"varint,4,opt,name=batchPk,proto3" json:"batchPk,omitempty"`
 	// 批ID
 	BatchId string `protobuf:"bytes,5,opt,name=batchId,proto3" json:"batchId,omitempty"`
+	// 执行ID 全局唯一
+	ExecId string `protobuf:"bytes,6,opt,name=execId,proto3" json:"execId,omitempty"`
 	// 执行项ID
-	ItemId string `protobuf:"bytes,10,opt,name=itemId,proto3" json:"itemId,omitempty"`
+	ItemId string `protobuf:"bytes,7,opt,name=itemId,proto3" json:"itemId,omitempty"`
 	// 执行项名称
-	ItemName string `protobuf:"bytes,11,opt,name=itemName,proto3" json:"itemName,omitempty"`
-	// 点位id,业务字段
-	PointId string `protobuf:"bytes,12,opt,name=pointId,proto3" json:"pointId,omitempty"`
-	// 业务负载（必填）：序列化的业务专属参数（设备参数/转账金额/订单信息等）
-	Payload string `protobuf:"bytes,13,opt,name=payload,proto3" json:"payload,omitempty"`
+	ItemName string `protobuf:"bytes,8,opt,name=itemName,proto3" json:"itemName,omitempty"`
+	// 点位id
+	PointId string `protobuf:"bytes,9,opt,name=PointId,proto3" json:"PointId,omitempty"`
+	// 业务负载
+	Payload string `protobuf:"bytes,11,opt,name=payload,proto3" json:"payload,omitempty"`
 	// 计划触发时间
-	PlanTriggerTime string `protobuf:"bytes,14,opt,name=planTriggerTime,proto3" json:"planTriggerTime,omitempty"`
+	PlanTriggerTime string `protobuf:"bytes,13,opt,name=planTriggerTime,proto3" json:"planTriggerTime,omitempty"`
+	// 上次触发时间
+	LastTriggerTime string `protobuf:"bytes,15,opt,name=lastTriggerTime,proto3" json:"lastTriggerTime,omitempty"`
 	// 上次执行结果
-	LastResult string `protobuf:"bytes,17,opt,name=lastResult,proto3" json:"lastResult,omitempty"`
-	// 上次执行消息
-	LastMsg       string `protobuf:"bytes,18,opt,name=lastMsg,proto3" json:"lastMsg,omitempty"`
+	LastResult string `protobuf:"bytes,18,opt,name=lastResult,proto3" json:"lastResult,omitempty"`
+	// 上次结果描述
+	LastMessage string `protobuf:"bytes,19,opt,name=lastMessage,proto3" json:"lastMessage,omitempty"`
+	// 上次结果原因
+	LastReason    string `protobuf:"bytes,20,opt,name=lastReason,proto3" json:"lastReason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2871,6 +2886,13 @@ func (x *HandlerPlanTaskEventReq) GetBatchId() string {
 	return ""
 }
 
+func (x *HandlerPlanTaskEventReq) GetExecId() string {
+	if x != nil {
+		return x.ExecId
+	}
+	return ""
+}
+
 func (x *HandlerPlanTaskEventReq) GetItemId() string {
 	if x != nil {
 		return x.ItemId
@@ -2906,6 +2928,13 @@ func (x *HandlerPlanTaskEventReq) GetPlanTriggerTime() string {
 	return ""
 }
 
+func (x *HandlerPlanTaskEventReq) GetLastTriggerTime() string {
+	if x != nil {
+		return x.LastTriggerTime
+	}
+	return ""
+}
+
 func (x *HandlerPlanTaskEventReq) GetLastResult() string {
 	if x != nil {
 		return x.LastResult
@@ -2913,21 +2942,31 @@ func (x *HandlerPlanTaskEventReq) GetLastResult() string {
 	return ""
 }
 
-func (x *HandlerPlanTaskEventReq) GetLastMsg() string {
+func (x *HandlerPlanTaskEventReq) GetLastMessage() string {
 	if x != nil {
-		return x.LastMsg
+		return x.LastMessage
+	}
+	return ""
+}
+
+func (x *HandlerPlanTaskEventReq) GetLastReason() string {
+	if x != nil {
+		return x.LastReason
 	}
 	return ""
 }
 
 type HandlerPlanTaskEventRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// 回调设计 参考 grpc status 用于分布式事务
 	// 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，ongoing-业务正在执行（未回调或部分异步）
 	ExecResult string `protobuf:"bytes,1,opt,name=execResult,proto3" json:"execResult,omitempty"`
-	// 结果描述（成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
+	// 结果描述  可以定义自己状态码，等下次回调判断业务场景
 	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	// 结果原因 （成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
+	Reason string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
 	// 延期配置-默认延期5分钟：delayed-自定义延期
-	DelayConfig   *PbDelayConfig `protobuf:"bytes,3,opt,name=delayConfig,proto3" json:"delayConfig,omitempty"`
+	DelayConfig   *PbDelayConfig `protobuf:"bytes,4,opt,name=delayConfig,proto3" json:"delayConfig,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2972,6 +3011,13 @@ func (x *HandlerPlanTaskEventRes) GetExecResult() string {
 func (x *HandlerPlanTaskEventRes) GetMessage() string {
 	if x != nil {
 		return x.Message
+	}
+	return ""
+}
+
+func (x *HandlerPlanTaskEventRes) GetReason() string {
+	if x != nil {
+		return x.Reason
 	}
 	return ""
 }
@@ -3257,7 +3303,7 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x03sId\x18\x02 \x01(\tR\x03sId\x12\x14\n" +
 	"\x05event\x18\x03 \x01(\tR\x05event\x12\x18\n" +
 	"\apayload\x18\x04 \x01(\tR\apayload\"\x14\n" +
-	"\x12UpSocketMessageRsp\"\xb8\x03\n" +
+	"\x12UpSocketMessageRsp\"\xd4\x03\n" +
 	"\x06PbPlan\x12\x1e\n" +
 	"\n" +
 	"createTime\x18e \x01(\tR\n" +
@@ -3270,7 +3316,8 @@ const file_streamevent_proto_rawDesc = "" +
 	"createUser\x12\x1e\n" +
 	"\n" +
 	"updateUser\x18h \x01(\tR\n" +
-	"updateUser\x12\x0e\n" +
+	"updateUser\x12\x1a\n" +
+	"\bdeptCode\x18i \x01(\tR\bdeptCode\x12\x0e\n" +
 	"\x02id\x182 \x01(\x03R\x02id\x12\x16\n" +
 	"\x06planId\x18\x01 \x01(\tR\x06planId\x12\x1a\n" +
 	"\bplanName\x18\x02 \x01(\tR\bplanName\x12\x12\n" +
@@ -3284,7 +3331,7 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x04ext3\x18\n" +
 	" \x01(\tR\x04ext3\x12\x12\n" +
 	"\x04ext4\x18\v \x01(\tR\x04ext4\x12\x12\n" +
-	"\x04ext5\x18\f \x01(\tR\x04ext5\"\x82\x03\n" +
+	"\x04ext5\x18\f \x01(\tR\x04ext5\"\xec\x03\n" +
 	"\x17HandlerPlanTaskEventReq\x12'\n" +
 	"\x04plan\x18d \x01(\v2\x13.streamevent.PbPlanR\x04plan\x12\x0e\n" +
 	"\x02id\x182 \x01(\x03R\x02id\x12\x16\n" +
@@ -3292,22 +3339,27 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x06planId\x18\x02 \x01(\tR\x06planId\x12\x18\n" +
 	"\abatchPk\x18\x04 \x01(\x03R\abatchPk\x12\x18\n" +
 	"\abatchId\x18\x05 \x01(\tR\abatchId\x12\x16\n" +
-	"\x06itemId\x18\n" +
-	" \x01(\tR\x06itemId\x12\x1a\n" +
-	"\bitemName\x18\v \x01(\tR\bitemName\x12\x18\n" +
-	"\apointId\x18\f \x01(\tR\apointId\x12\x18\n" +
-	"\apayload\x18\r \x01(\tR\apayload\x12(\n" +
-	"\x0fplanTriggerTime\x18\x0e \x01(\tR\x0fplanTriggerTime\x12\x1e\n" +
+	"\x06execId\x18\x06 \x01(\tR\x06execId\x12\x16\n" +
+	"\x06itemId\x18\a \x01(\tR\x06itemId\x12\x1a\n" +
+	"\bitemName\x18\b \x01(\tR\bitemName\x12\x18\n" +
+	"\aPointId\x18\t \x01(\tR\aPointId\x12\x18\n" +
+	"\apayload\x18\v \x01(\tR\apayload\x12(\n" +
+	"\x0fplanTriggerTime\x18\r \x01(\tR\x0fplanTriggerTime\x12(\n" +
+	"\x0flastTriggerTime\x18\x0f \x01(\tR\x0flastTriggerTime\x12\x1e\n" +
 	"\n" +
-	"lastResult\x18\x11 \x01(\tR\n" +
-	"lastResult\x12\x18\n" +
-	"\alastMsg\x18\x12 \x01(\tR\alastMsg\"\x91\x01\n" +
+	"lastResult\x18\x12 \x01(\tR\n" +
+	"lastResult\x12 \n" +
+	"\vlastMessage\x18\x13 \x01(\tR\vlastMessage\x12\x1e\n" +
+	"\n" +
+	"lastReason\x18\x14 \x01(\tR\n" +
+	"lastReason\"\xa9\x01\n" +
 	"\x17HandlerPlanTaskEventRes\x12\x1e\n" +
 	"\n" +
 	"execResult\x18\x01 \x01(\tR\n" +
 	"execResult\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\x12<\n" +
-	"\vdelayConfig\x18\x03 \x01(\v2\x1a.streamevent.PbDelayConfigR\vdelayConfig\"[\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12\x16\n" +
+	"\x06reason\x18\x03 \x01(\tR\x06reason\x12<\n" +
+	"\vdelayConfig\x18\x04 \x01(\v2\x1a.streamevent.PbDelayConfigR\vdelayConfig\"[\n" +
 	"\rPbDelayConfig\x12(\n" +
 	"\x0fnextTriggerTime\x18\x01 \x01(\tR\x0fnextTriggerTime\x12 \n" +
 	"\vdelayReason\x18\x02 \x01(\tR\vdelayReason2\xac\x04\n" +

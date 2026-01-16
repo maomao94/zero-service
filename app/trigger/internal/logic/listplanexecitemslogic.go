@@ -48,6 +48,9 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 	if in.PlanId != "" {
 		builder = builder.Where("plan_id = ?", in.PlanId)
 	}
+	if in.ExecId != "" {
+		builder = builder.Where("exec_id = ?", in.ExecId)
+	}
 	if in.ItemId != "" {
 		builder = builder.Where("item_id LIKE ?", "%"+in.ItemId+"%")
 	}
@@ -81,11 +84,13 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 			UpdateTime:       carbon.CreateFromStdTime(execItem.UpdateTime).ToDateTimeString(),
 			CreateUser:       execItem.CreateUser.String,
 			UpdateUser:       execItem.UpdateUser.String,
+			DeptCode:         execItem.DeptCode.String,
 			Id:               execItem.Id,
 			PlanPk:           execItem.PlanPk,
 			PlanId:           execItem.PlanId,
 			BatchPk:          execItem.BatchPk,
 			BatchId:          execItem.BatchId,
+			ExecId:           execItem.ExecId,
 			ItemId:           execItem.ItemId,
 			ItemName:         execItem.ItemName.String,
 			PointId:          execItem.PointId.String,
@@ -97,7 +102,8 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 			TriggerCount:     int32(execItem.TriggerCount),
 			Status:           int32(execItem.Status),
 			LastResult:       execItem.LastResult.String,
-			LastMsg:          execItem.LastMsg.String,
+			LastMessage:      execItem.LastMessage.String,
+			LastReason:       execItem.LastReason.String,
 			TerminatedReason: execItem.TerminatedReason.String,
 			PausedReason:     execItem.PausedReason.String,
 			Ext1:             execItem.Ext1.String,
@@ -106,12 +112,6 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 			Ext4:             execItem.Ext4.String,
 			Ext5:             execItem.Ext5.String,
 		}
-
-		// 设置下次触发时间
-		if !execItem.NextTriggerTime.IsZero() {
-			pbExecItem.NextTriggerTime = carbon.CreateFromStdTime(execItem.NextTriggerTime).ToDateTimeString()
-		}
-
 		// 设置上次触发时间
 		if execItem.LastTriggerTime.Valid {
 			pbExecItem.LastTriggerTime = carbon.CreateFromStdTime(execItem.LastTriggerTime.Time).ToDateTimeString()

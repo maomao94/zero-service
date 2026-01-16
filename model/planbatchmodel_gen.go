@@ -63,6 +63,7 @@ type (
 		Version         int64          `db:"version"`           // 版本号（乐观锁）
 		CreateUser      sql.NullString `db:"create_user"`       // 创建人
 		UpdateUser      sql.NullString `db:"update_user"`       // 更新人
+		DeptCode        sql.NullString `db:"dept_code"`         // 机构code
 		PlanPk          int64          `db:"plan_pk"`           // 关联的计划主键ID
 		PlanId          string         `db:"plan_id"`           // 关联的计划ID
 		BatchId         string         `db:"batch_id"`          // 批ID

@@ -1,5 +1,5 @@
 
-¶/
+Ô0
 streamevent.protostreamevent"M
 ReceiveMQTTMessageReq4
 messages (2.streamevent.MqttMessageRmessages"
@@ -216,7 +216,7 @@ isAdjusted
 sId (	RsId
 event (	Revent
 payload (	Rpayload"
-UpSocketMessageRsp"¸
+UpSocketMessageRsp"Ô
 PbPlan
 
 createTimee (	R
@@ -229,7 +229,8 @@ createUserg (	R
 createUser
 
 updateUserh (	R
-updateUser
+updateUser
+deptCodei (	RdeptCode
 id2 (Rid
 planId (	RplanId
 planName (	RplanName
@@ -243,7 +244,7 @@ updateUser
 ext3
  (	Rext3
 ext4 (	Rext4
-ext5 (	Rext5"‚
+ext5 (	Rext5"ì
 HandlerPlanTaskEventReq'
 pland (2.streamevent.PbPlanRplan
 id2 (Rid
@@ -251,22 +252,27 @@ updateUser
 planId (	RplanId
 batchPk (RbatchPk
 batchId (	RbatchId
-itemId
- (	RitemId
-itemName (	RitemName
-pointId (	RpointId
-payload (	Rpayload(
-planTriggerTime (	RplanTriggerTime
+execId (	RexecId
+itemId (	RitemId
+itemName (	RitemName
+PointId	 (	RPointId
+payload (	Rpayload(
+planTriggerTime (	RplanTriggerTime(
+lastTriggerTime (	RlastTriggerTime
 
-lastResult (	R
-lastResult
-lastMsg (	RlastMsg"‘
+lastResult (	R
+lastResult 
+lastMessage (	RlastMessage
+
+lastReason (	R
+lastReason"©
 HandlerPlanTaskEventRes
 
 execResult (	R
 execResult
-message (	Rmessage<
-delayConfig (2.streamevent.PbDelayConfigRdelayConfig"[
+message (	Rmessage
+reason (	Rreason<
+delayConfig (2.streamevent.PbDelayConfigRdelayConfig"[
 PbDelayConfig(
 nextTriggerTime (	RnextTriggerTime 
 delayReason (	RdelayReason2¬

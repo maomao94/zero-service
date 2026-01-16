@@ -20,6 +20,7 @@ type (
 	planExecItemModel interface {
 		Insert(ctx context.Context, session sqlx.Session, data *PlanExecItem) (sql.Result, error)
 		FindOne(ctx context.Context, id int64) (*PlanExecItem, error)
+		FindOneByExecId(ctx context.Context, execId string) (*PlanExecItem, error)
 		Update(ctx context.Context, session sqlx.Session, data *PlanExecItem) (sql.Result, error)
 		UpdateWithVersion(ctx context.Context, session sqlx.Session, data *PlanExecItem) error
 		Trans(ctx context.Context, fn func(ctx context.Context, session sqlx.Session) error) error
@@ -60,10 +61,12 @@ type (
 		Version          int64          `db:"version"`           // 版本号（乐观锁）
 		CreateUser       sql.NullString `db:"create_user"`       // 创建人
 		UpdateUser       sql.NullString `db:"update_user"`       // 更新人
+		DeptCode         sql.NullString `db:"dept_code"`         // 机构code
 		PlanPk           int64          `db:"plan_pk"`           // 关联的计划主键ID
 		PlanId           string         `db:"plan_id"`           // 关联的计划ID
 		BatchPk          int64          `db:"batch_pk"`          // 批主键ID
 		BatchId          string         `db:"batch_id"`          // 批ID
+		ExecId           string         `db:"exec_id"`           // 执行ID
 		ItemId           string         `db:"item_id"`           // 执行项ID
 		ItemName         sql.NullString `db:"item_name"`         // 执行项名称
 		PointId          sql.NullString `db:"point_id"`          // 点位id
@@ -76,7 +79,8 @@ type (
 		TriggerCount     int64          `db:"trigger_count"`     // 触发次数
 		Status           int64          `db:"status"`            // 状态：0-等待调度，10-延期等待，100-执行中，150-暂停，200-完成，300-终止
 		LastResult       sql.NullString `db:"last_result"`       // 上次执行结果
-		LastMsg          sql.NullString `db:"last_msg"`          // 上次执行消息
+		LastMessage      sql.NullString `db:"last_message"`      // 上次结果描述
+		LastReason       sql.NullString `db:"last_reason"`       // 上次结果原因
 		TerminatedTime   sql.NullTime   `db:"terminated_time"`   // 终止时间
 		TerminatedReason sql.NullString `db:"terminated_reason"` // 终止原因
 		PausedTime       sql.NullTime   `db:"paused_time"`       // 暂停时间
@@ -121,6 +125,27 @@ func (m *defaultPlanExecItemModel) Delete(ctx context.Context, session sqlx.Sess
 func (m *defaultPlanExecItemModel) FindOne(ctx context.Context, id int64) (*PlanExecItem, error) {
 	selectBuilder := m.SelectBuilder().Columns(m.planExecItemRows).
 		Where("id = ?", id).
+		Where("del_state = ?", 0).
+		Limit(1)
+	query, args, err := selectBuilder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+	var resp PlanExecItem
+	err = m.conn.QueryRowCtx(ctx, &resp, query, args...)
+	switch err {
+	case nil:
+		return &resp, nil
+	case sqlx.ErrNotFound:
+		return nil, ErrNotFound
+	default:
+		return nil, err
+	}
+}
+
+func (m *defaultPlanExecItemModel) FindOneByExecId(ctx context.Context, execId string) (*PlanExecItem, error) {
+	selectBuilder := m.SelectBuilder().Columns(m.planExecItemRows).
+		Where("exec_id = ?", execId).
 		Where("del_state = ?", 0).
 		Limit(1)
 	query, args, err := selectBuilder.ToSql()

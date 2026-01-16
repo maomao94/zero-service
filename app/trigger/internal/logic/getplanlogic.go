@@ -3,13 +3,15 @@ package logic
 import (
 	"context"
 	"encoding/json"
+	"zero-service/model"
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 
 	"github.com/dromara/carbon/v2"
+	"github.com/duke-git/lancet/v2/strutil"
+	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
 type GetPlanLogic struct {
@@ -33,16 +35,18 @@ func (l *GetPlanLogic) GetPlan(in *trigger.GetPlanReq) (*trigger.GetPlanRes, err
 	if err != nil {
 		return nil, err
 	}
-
-	// 查询计划
-	plan, err := l.svcCtx.PlanModel.FindOne(l.ctx, in.Id)
+	if in.Id <= 0 && strutil.IsBlank(in.PlanId) {
+		return nil, errors.BadRequest("", "参数错误")
+	}
+	var plan *model.Plan
+	if in.Id > 0 {
+		plan, err = l.svcCtx.PlanModel.FindOne(l.ctx, in.Id)
+	} else {
+		plan, err = l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, in.PlanId)
+	}
 	if err != nil {
-		if err == sqlx.ErrNotFound {
-			return nil, err
-		}
 		return nil, err
 	}
-
 	// 解析规则
 	var pbRule trigger.PbPlanRule
 	err = json.Unmarshal([]byte(plan.RecurrenceRule), &pbRule)
@@ -56,6 +60,7 @@ func (l *GetPlanLogic) GetPlan(in *trigger.GetPlanReq) (*trigger.GetPlanRes, err
 		UpdateTime:       carbon.CreateFromStdTime(plan.UpdateTime).ToDateTimeString(),
 		CreateUser:       plan.CreateUser.String,
 		UpdateUser:       plan.UpdateUser.String,
+		DeptCode:         plan.DeptCode.String,
 		Id:               plan.Id,
 		PlanId:           plan.PlanId,
 		PlanName:         plan.PlanName.String,

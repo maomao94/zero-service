@@ -3419,6 +3419,8 @@ func (m *PbPlan) validate(all bool) error {
 
 	// no validation rules for UpdateUser
 
+	// no validation rules for DeptCode
+
 	// no validation rules for Id
 
 	// no validation rules for PlanId
@@ -3583,6 +3585,8 @@ func (m *HandlerPlanTaskEventReq) validate(all bool) error {
 
 	// no validation rules for BatchId
 
+	// no validation rules for ExecId
+
 	// no validation rules for ItemId
 
 	// no validation rules for ItemName
@@ -3593,9 +3597,13 @@ func (m *HandlerPlanTaskEventReq) validate(all bool) error {
 
 	// no validation rules for PlanTriggerTime
 
+	// no validation rules for LastTriggerTime
+
 	// no validation rules for LastResult
 
-	// no validation rules for LastMsg
+	// no validation rules for LastMessage
+
+	// no validation rules for LastReason
 
 	if len(errors) > 0 {
 		return HandlerPlanTaskEventReqMultiError(errors)
@@ -3702,6 +3710,8 @@ func (m *HandlerPlanTaskEventRes) validate(all bool) error {
 	// no validation rules for ExecResult
 
 	// no validation rules for Message
+
+	// no validation rules for Reason
 
 	if all {
 		switch v := interface{}(m.GetDelayConfig()).(type) {

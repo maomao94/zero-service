@@ -464,6 +464,8 @@ message PbPlan{
   string createUser = 103;
   // 更新人
   string updateUser = 104;
+  // 机构code
+  string deptCode = 105;
 
   // 自增主键ID
   int64 id = 50;
@@ -500,35 +502,45 @@ message HandlerPlanTaskEventReq{
   int64 id = 50;
   // 关联的计划主键ID
   int64 planPk = 1;
-  // 计划ID
+  // 计划ID 全局唯一
   string planId = 2;
   // 批主键ID
   int64 batchPk = 4;
   // 批ID
   string batchId = 5;
+  // 执行ID 全局唯一
+  string execId = 6;
   // 执行项ID
-  string itemId = 10;
+  string itemId = 7;
   // 执行项名称
-  string itemName = 11;
-  // 点位id,业务字段
-  string pointId = 12;
-  // 业务负载（必填）：序列化的业务专属参数（设备参数/转账金额/订单信息等）
-  string payload = 13;
+  string itemName = 8;
+  // 点位id
+  string PointId = 9;
+  // 业务负载
+  string payload = 11;
   // 计划触发时间
-  string planTriggerTime = 14;
+  string planTriggerTime = 13;
+  // 上次触发时间
+  string lastTriggerTime = 15;
+
   // 上次执行结果
-  string lastResult = 17;
-  // 上次执行消息
-  string lastMsg = 18;
+  string lastResult = 18;
+  // 上次结果描述
+  string lastMessage = 19;
+  // 上次结果原因
+  string lastReason = 20;
 }
 
 message HandlerPlanTaskEventRes{
+  // 回调设计 参考 grpc status 用于分布式事务
   // 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，ongoing-业务正在执行（未回调或部分异步）
   string execResult = 1;
-  // 结果描述（成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
+  // 结果描述  可以定义自己状态码，等下次回调判断业务场景
   string message = 2;
+  // 结果原因 （成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
+  string reason = 3;
   // 延期配置-默认延期5分钟：delayed-自定义延期
-  PbDelayConfig delayConfig = 3;
+  PbDelayConfig delayConfig = 4;
 }
 
 message PbDelayConfig {

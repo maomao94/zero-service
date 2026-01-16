@@ -25,11 +25,11 @@ type (
 		// 更新执行项状态为执行中
 		UpdateStatusToRunning(ctx context.Context, id int64) error
 		// 更新执行项状态为已完成
-		UpdateStatusToCompleted(ctx context.Context, id int64, lastMsg string) error
+		UpdateStatusToCompleted(ctx context.Context, id int64, lastMessage, lastReason string) error
 		// 更新执行项状态为失败延期
-		UpdateStatusToFail(ctx context.Context, id int64, lastResult, lastMsg string) error
+		UpdateStatusToFail(ctx context.Context, id int64, lastResult, lastMessage, lastReason string) error
 		// 更新执行项状态为延期
-		UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, lastMsg string, nextTriggerTime string) error
+		UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, lastMessage, lastReason, nextTriggerTime string) error
 		// 通用SQL查询方法
 		QuerySQL(ctx context.Context, sql string, args ...interface{}) ([]map[string]interface{}, error)
 	}
@@ -150,13 +150,14 @@ func (m *customPlanExecItemModel) UpdateStatusToRunning(ctx context.Context, id 
 	return err
 }
 
-func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, id int64, lastMsg string) error {
+func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, id int64, lastMessage, lastReason string) error {
 	currentTime := time.Now()
 	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
 	updateBuilder := squirrel.Update(m.table).
 		Set("status", StatusCompleted).
 		Set("last_result", ResultCompleted).
-		Set("last_msg", lastMsg).
+		Set("last_message", lastMessage).
+		Set("last_reason", lastReason).
 		Set("last_trigger_time", currentTimeStr).
 		Set("completed_time", currentTimeStr).
 		Where("id = ?", id)
@@ -171,7 +172,7 @@ func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, i
 	return err
 }
 
-func (m *customPlanExecItemModel) UpdateStatusToFail(ctx context.Context, id int64, lastResult, lastMsg string) error {
+func (m *customPlanExecItemModel) UpdateStatusToFail(ctx context.Context, id int64, lastResult, lastMessage, lastReason string) error {
 	currentTime := time.Now()
 	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
 	selectBuilder := squirrel.Select("trigger_count").From(m.table).Where("id = ?", id)
@@ -198,7 +199,8 @@ func (m *customPlanExecItemModel) UpdateStatusToFail(ctx context.Context, id int
 		updateBuilder = squirrel.Update(m.table).
 			Set("status", StatusTerminated).
 			Set("last_result", ResultOngoing).
-			Set("last_msg", lastMsg).
+			Set("last_message", lastMessage).
+			Set("last_reason", lastReason).
 			Set("next_trigger_time", nextTriggerTimeStr).
 			Set("last_trigger_time", currentTimeStr).
 			Set("trigger_count", squirrel.Expr("trigger_count + 1")).
@@ -209,7 +211,8 @@ func (m *customPlanExecItemModel) UpdateStatusToFail(ctx context.Context, id int
 		updateBuilder = squirrel.Update(m.table).
 			Set("status", StatusDelayed).
 			Set("last_result", lastResult).
-			Set("last_msg", lastMsg).
+			Set("last_message", lastMessage).
+			Set("last_reason", lastReason).
 			Set("next_trigger_time", nextTriggerTimeStr).
 			Set("last_trigger_time", currentTimeStr).
 			Set("trigger_count", squirrel.Expr("trigger_count + 1")).
@@ -228,7 +231,7 @@ func (m *customPlanExecItemModel) UpdateStatusToFail(ctx context.Context, id int
 	return err
 }
 
-func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id int64, lastMsg string, lastResult, nextTriggerTimeStr string) error {
+func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, lastMessage, lastReason, nextTriggerTimeStr string) error {
 	ct := carbon.Parse(nextTriggerTimeStr)
 	if ct.Error != nil {
 		return ct.Error
@@ -238,7 +241,8 @@ func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id 
 	updateBuilder := squirrel.Update(m.table).
 		Set("status", StatusDelayed).
 		Set("last_result", lastResult).
-		Set("last_msg", lastMsg).
+		Set("last_message", lastMessage).
+		Set("last_reason", lastReason).
 		Set("next_trigger_time", nextTriggerTimeStr).
 		Set("last_trigger_time", currentTimeStr).
 		Where("id = ?", id)

@@ -61,6 +61,7 @@ type (
 		Version          int64          `db:"version"`           // 版本号（乐观锁）
 		CreateUser       sql.NullString `db:"create_user"`       // 创建人
 		UpdateUser       sql.NullString `db:"update_user"`       // 更新人
+		DeptCode         sql.NullString `db:"dept_code"`         // 机构code
 		PlanId           string         `db:"plan_id"`           // 计划唯一标识
 		PlanName         sql.NullString `db:"plan_name"`         // 计划任务名称
 		Type             sql.NullString `db:"type"`              // 任务类型

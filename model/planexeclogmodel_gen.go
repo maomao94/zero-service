@@ -60,19 +60,22 @@ type (
 		Version     int64          `db:"version"`      // 版本号（乐观锁）
 		CreateUser  sql.NullString `db:"create_user"`  // 创建人
 		UpdateUser  sql.NullString `db:"update_user"`  // 更新人
+		DeptCode    sql.NullString `db:"dept_code"`    // 机构code
 		PlanPk      int64          `db:"plan_pk"`      // 关联的计划主键ID
 		PlanId      string         `db:"plan_id"`      // 计划任务ID
 		PlanName    sql.NullString `db:"plan_name"`    // 计划任务名称
 		BatchPk     int64          `db:"batch_pk"`     // 批主键ID
 		BatchId     string         `db:"batch_id"`     // 批ID
 		ItemPk      int64          `db:"item_pk"`      // 关联的执行项主键ID
+		ExecId      string         `db:"exec_id"`      // 执行ID
 		ItemId      string         `db:"item_id"`      // 执行项ID
 		ItemName    sql.NullString `db:"item_name"`    // 执行项名称
 		PointId     sql.NullString `db:"point_id"`     // 点位id
 		TriggerTime time.Time      `db:"trigger_time"` // 触发时间
 		TraceId     sql.NullString `db:"trace_id"`     // 唯一追踪ID
-		ExecResult  sql.NullString `db:"exec_result"`  // 执行结果：1-成功，2-失败，3-延期
+		ExecResult  sql.NullString `db:"exec_result"`  // 执行结果
 		Message     sql.NullString `db:"message"`      // 结果描述
+		Reason      sql.NullString `db:"reason"`       // 结果原因
 	}
 )
 
