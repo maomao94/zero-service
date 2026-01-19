@@ -135,7 +135,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		insertPlan.Id, _ = result.LastInsertId()
 		for _, d := range dates {
 			batchId, _ := tool.SimpleUUID()
-			dStr := carbon.NewCarbon(d).Format("2006-01-02 15:04")
+			dStr := carbon.NewCarbon(d).Format("Y-m-d H:i")
 			batchName := fmt.Sprintf("%s@%s", in.PlanName, dStr)
 			batch := model.PlanBatch{
 				CreateUser:      sql.NullString{String: currentUserId, Valid: currentUserId != ""},
