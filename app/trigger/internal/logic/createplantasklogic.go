@@ -160,12 +160,14 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 			}
 			batchPk, _ := batchResult.LastInsertId()
 			batchCnt++
+			itemIndex := 0
 			for _, item := range in.ExecItems {
 				execId, _ := tool.SimpleUUID()
 				nextTriggerTime := d
 				switch item.IntervalType {
 				case 1:
-					nextTriggerTime = d.Add(time.Duration(item.IntervalTime) * time.Millisecond)
+					nextTriggerTime = d.Add(time.Duration(itemIndex*int(item.IntervalTime)) * time.Millisecond)
+					itemIndex++
 				case 2:
 					if item.IntervalTime > 0 {
 						offset := l.svcCtx.UnstableExpiry.AroundDuration(time.Duration(item.IntervalTime) * time.Millisecond)
