@@ -268,17 +268,27 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		}
 		return
 	}
+	errCh := make(chan error, 1)
 	s.taskRunner.Schedule(func() {
+		defer close(errCh)
 		lockKey := fmt.Sprintf("trigger:lock:plan:exec:%d", execItem.ExecId)
 		lock := redis.NewRedisLock(s.svcCtx.Redis, lockKey)
-		b, _ := lock.AcquireCtx(ctx)
-		if !b {
-			err = fmt.Errorf("Error acquiring lock for plan exec item %d", execItem.Id)
+		b, taskErr := lock.AcquireCtx(ctx)
+		if taskErr != nil {
+			errCh <- fmt.Errorf("Error acquiring lock for plan exec item %d: %v", execItem.Id, taskErr)
 			return
 		}
-		defer lock.Release()
-		err = cli.Conn().Invoke(ctx, streamevent.StreamEvent_HandlerPlanTaskEvent_FullMethodName, &in, &respBytes)
+		if !b {
+			errCh <- fmt.Errorf("Error acquiring lock for plan exec item %d", execItem.Id)
+			return
+		}
+		defer func() {
+			lock.ReleaseCtx(ctx)
+		}()
+		taskErr = cli.Conn().Invoke(ctx, streamevent.StreamEvent_HandlerPlanTaskEvent_FullMethodName, &in, &respBytes)
+		errCh <- taskErr
 	})
+	err = <-errCh
 	if err != nil {
 		logx.Errorf("gRPC call failed for exec item %d: %v", execItem.Id, err)
 		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, "gRPC call failed: "+err.Error(), "",

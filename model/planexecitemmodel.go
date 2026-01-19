@@ -82,7 +82,7 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 	nextTriggerTime := currentTime.Add(expireIn)
 	nextTriggerTimeStr := carbon.CreateFromStdTime(nextTriggerTime).ToDateTimeMicroString()
 	selectBuilder := squirrel.Select(
-		"pei.id", "pei.plan_pk", "pei.plan_id", "pei.item_id", "pei.item_name", "pei.point_id", "pei.next_trigger_time", "pei.service_addr", "pei.payload", "pei.plan_trigger_time", "pei.request_timeout",
+		"pei.version", "pei.id", "pei.plan_pk", "pei.plan_id", "pei.item_id", "pei.item_name", "pei.point_id", "pei.next_trigger_time", "pei.service_addr", "pei.payload", "pei.plan_trigger_time", "pei.request_timeout",
 	).From(m.table+" AS pei").
 		Join("plan p ON p.id = pei.plan_pk").
 		Join("plan_batch pb ON pb.id = pei.batch_pk").
@@ -116,7 +116,7 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 			Set("status", StatusRunning).
 			Set("next_trigger_time", nextTriggerTimeStr).
 			Set("last_trigger_time", currentTimeStr).
-			Set("version = ?", execItem.Version+1).
+			Set("version", execItem.Version+1).
 			Where("id = ?", execItem.Id).
 			Where("next_trigger_time <= ?", currentTimeStr).
 			Where("status IN (?, ?)", StatusWaiting, StatusDelayed).
@@ -168,6 +168,7 @@ func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, i
 		Set("last_message", lastMessage).
 		Set("last_reason", lastReason).
 		Set("last_trigger_time", currentTimeStr).
+		Set("trigger_count", squirrel.Expr("trigger_count + 1")).
 		Set("completed_time", currentTimeStr).
 		Where("id = ?", id)
 	if len(statusIn) > 0 {
