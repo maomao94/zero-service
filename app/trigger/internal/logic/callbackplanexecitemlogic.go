@@ -14,6 +14,7 @@ import (
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
@@ -31,7 +32,7 @@ func NewCallbackPlanExecItemLogic(ctx context.Context, svcCtx *svc.ServiceContex
 	}
 }
 
-// 回调计划项
+// 回调计划执行项 ongoing 回执
 func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPlanExecItemReq) (*trigger.CallbackPlanExecItemRes, error) {
 	// 验证请求
 	err := in.Validate()
@@ -51,6 +52,19 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 	if err != nil {
 		return nil, err
 	}
+	lockKey := fmt.Sprintf("trigger:lock:plan:exec:%d", execItem.ExecId)
+	lock := redis.NewRedisLock(l.svcCtx.Redis, lockKey)
+	b, _ := lock.AcquireCtx(l.ctx)
+	if !b {
+		err = fmt.Errorf("Error acquiring lock for plan exec item %d", execItem.Id)
+		return nil, err
+	}
+	defer lock.Release()
+	// 补 查询一次
+	execItem, err = l.svcCtx.PlanExecItemModel.FindOne(l.ctx, execItem.Id)
+	if err != nil {
+		return nil, err
+	}
 	// 查询计划项
 	plan, err := l.svcCtx.PlanModel.FindOne(l.ctx, execItem.PlanPk)
 	if err != nil {
@@ -59,7 +73,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 
 	// 检查执行项状态是否为终态
 	if execItem.Status == int64(model.StatusCompleted) || execItem.Status == int64(model.StatusTerminated) {
-		return &trigger.CallbackPlanExecItemRes{}, nil
+		return nil, errors.BadRequest("", "执行项已结束")
 	}
 	// 执行事务
 	err = l.svcCtx.PlanModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
@@ -68,10 +82,14 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 		switch in.GetExecResult() {
 		case model.ResultCompleted:
 			// 更新执行项状态为成功
-			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToCompleted(ctx, execItem.Id, in.Message, in.Message)
+			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToCompleted(ctx, execItem.Id, in.Message, in.Message,
+				[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
+			)
 		case model.ResultFailed:
 			// 更新执行项状态为失败
-			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, in.Message, "")
+			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, in.Message, "",
+				[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
+			)
 		case model.ResultDelayed:
 			currentTime := carbon.Now()
 			delayTriggerTime := currentTime.AddMinutes(5).ToDateTimeString()
@@ -104,7 +122,9 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 			}
 			delayReason = fmt.Sprintf("%s, delay time: %s", delayReason, delayTriggerTime)
 			reason = delayReason
-			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToDelayed(ctx, execItem.Id, in.ExecResult, in.Message, delayReason, delayTriggerTime)
+			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToDelayed(ctx, execItem.Id, in.ExecResult, in.Message, delayReason, delayTriggerTime,
+				[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
+			)
 		case model.ResultOngoing:
 			l.Infof("Ongoing exec item %d", execItem.Id)
 		default:

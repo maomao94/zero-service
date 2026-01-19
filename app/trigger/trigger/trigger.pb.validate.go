@@ -6579,6 +6579,28 @@ func (m *CreatePlanExecItem) validate(all bool) error {
 
 	// no validation rules for RequestTimeout
 
+	if m.GetIntervalTime() < 0 {
+		err := CreatePlanExecItemValidationError{
+			field:  "IntervalTime",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if val := m.GetIntervalType(); val < 0 || val > 2 {
+		err := CreatePlanExecItemValidationError{
+			field:  "IntervalType",
+			reason: "value must be inside range [0, 2]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	// no validation rules for Ext1
 
 	// no validation rules for Ext2
@@ -9617,6 +9639,8 @@ func (m *PbPlan) validate(all bool) error {
 
 	// no validation rules for PausedReason
 
+	// no validation rules for Progress
+
 	// no validation rules for Ext1
 
 	// no validation rules for Ext2
@@ -10882,6 +10906,12 @@ func (m *PbPlanExecItem) validate(all bool) error {
 	// no validation rules for Payload
 
 	// no validation rules for RequestTimeout
+
+	// no validation rules for IntervalTime
+
+	// no validation rules for IntervalType
+
+	// no validation rules for OffsetPercent
 
 	// no validation rules for PlanTriggerTime
 
@@ -12220,7 +12250,7 @@ func (m *CallbackPlanExecItemReq) validate(all bool) error {
 	if _, ok := _CallbackPlanExecItemReq_ExecResult_InLookup[m.GetExecResult()]; !ok {
 		err := CallbackPlanExecItemReqValidationError{
 			field:  "ExecResult",
-			reason: "value must be in list [completed failed delayed ongoing]",
+			reason: "value must be in list [completed failed delayed]",
 		}
 		if !all {
 			return err
@@ -12345,7 +12375,6 @@ var _CallbackPlanExecItemReq_ExecResult_InLookup = map[string]struct{}{
 	"completed": {},
 	"failed":    {},
 	"delayed":   {},
-	"ongoing":   {},
 }
 
 // Validate checks the field values on PbDelayConfig with the rules defined in

@@ -10,8 +10,14 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/collection"
+	"github.com/zeromicro/go-zero/core/mathx"
+	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"github.com/zeromicro/go-zero/rest/httpc"
+)
+
+const (
+	expiryDeviation = 0.05
 )
 
 type ServiceContext struct {
@@ -28,13 +34,15 @@ type ServiceContext struct {
 	PlanExecItemModel model.PlanExecItemModel
 	PlanExecLogModel  model.PlanExecLogModel
 	Database          *goqu.Database
+	UnstableExpiry    mathx.Unstable
+	Redis             *redis.Redis
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	if c.DisableStmtLog {
 		sqlx.DisableStmtLog()
 	}
-
+	redisDb := redis.MustNewRedis(c.Redis.RedisConf)
 	// 解析数据库类型
 	dbType := dbx.ParseDatabaseType(c.DB.DataSource)
 
@@ -56,5 +64,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		PlanExecItemModel: model.NewPlanExecItemModelWithDBType(dbConn, model.DatabaseType(dbType)),
 		PlanExecLogModel:  model.NewPlanExecLogModelWithDBType(dbConn, model.DatabaseType(dbType)),
 		Database:          database,
+		Redis:             redisDb,
+		UnstableExpiry:    mathx.NewUnstable(expiryDeviation),
 	}
 }

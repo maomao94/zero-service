@@ -142,7 +142,7 @@ type TriggerRpcClient interface {
 	GetPlanExecLog(ctx context.Context, in *GetPlanExecLogReq, opts ...grpc.CallOption) (*GetPlanExecLogRes, error)
 	// 分页获取计划触发日志列表
 	ListPlanExecLogs(ctx context.Context, in *ListPlanExecLogsReq, opts ...grpc.CallOption) (*ListPlanExecLogsRes, error)
-	// 回调计划执行项
+	// 回调计划执行项 ongoing 回执
 	CallbackPlanExecItem(ctx context.Context, in *CallbackPlanExecItemReq, opts ...grpc.CallOption) (*CallbackPlanExecItemRes, error)
 }
 
@@ -635,7 +635,7 @@ type TriggerRpcServer interface {
 	GetPlanExecLog(context.Context, *GetPlanExecLogReq) (*GetPlanExecLogRes, error)
 	// 分页获取计划触发日志列表
 	ListPlanExecLogs(context.Context, *ListPlanExecLogsReq) (*ListPlanExecLogsRes, error)
-	// 回调计划执行项
+	// 回调计划执行项 ongoing 回执
 	CallbackPlanExecItem(context.Context, *CallbackPlanExecItemReq) (*CallbackPlanExecItemRes, error)
 	mustEmbedUnimplementedTriggerRpcServer()
 }

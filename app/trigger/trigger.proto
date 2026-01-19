@@ -95,7 +95,9 @@ service TriggerRpc {
   rpc GetPlanExecLog(GetPlanExecLogReq) returns (GetPlanExecLogRes);
   // 分页获取计划触发日志列表
   rpc ListPlanExecLogs(ListPlanExecLogsReq) returns (ListPlanExecLogsRes);
-  // 回调计划执行项
+
+
+  // 回调计划执行项 ongoing 回执
   rpc CallbackPlanExecItem(CallbackPlanExecItemReq) returns (CallbackPlanExecItemRes);
 }
 
@@ -572,6 +574,10 @@ message CreatePlanExecItem {
   string payload = 6;
   // 请求超时时间 单位: 毫秒 可为空
   int64 requestTimeout = 7;
+  // 间隔时间 单位: 毫秒
+  int64 intervalTime = 8 [(validate.rules).int64 = {gte: 0}];
+  // 间隔类型 0-不间隔（同时发起） 1-往后顺延 2-间隔时间内偏移
+  int32 intervalType = 9 [(validate.rules).int32 = {gte: 0, lte: 2}];
 
   // 扩展字段
   string ext1 = 50;
@@ -740,16 +746,18 @@ message PbPlan{
   string pausedTime = 12;
   // 暂停原因
   string pausedReason = 13;
+  // 执行进度 0.00-100.00
+  float progress = 14;
   // 扩展字段1
-  string ext1 = 14;
+  string ext1 = 15;
   // 扩展字段2
-  string ext2 = 15;
+  string ext2 = 16;
   // 扩展字段3
-  string ext3 = 16;
+  string ext3 = 17;
   // 扩展字段4
-  string ext4 = 17;
+  string ext4 = 18;
   // 扩展字段5
-  string ext5 = 18;
+  string ext5 = 19;
 }
 
 message ListPlansReq {
@@ -856,40 +864,46 @@ message PbPlanExecItem {
   string payload = 12;
   // 请求超时时间（毫秒）
   int64 requestTimeout = 13;
+  // 间隔时间 单位: 毫秒
+  int64 intervalTime = 14;
+  // 间隔类型 0-不间隔（同时发起） 1-往后顺延 2-间隔时间内偏移
+  int32 intervalType = 15;
+  // 偏移百分比（0-100），仅当 intervalType=2 时生效
+  int32 offsetPercent = 16;
   // 计划触发时间
-  string planTriggerTime = 14;
+  string planTriggerTime = 17;
   // 下次触发时间
-  string nextTriggerTime = 15;
+  string nextTriggerTime = 18;
   // 上次触发时间
-  string lastTriggerTime = 16;
+  string lastTriggerTime = 19;
   // 触发次数
-  int32 triggerCount = 17;
+  int32 triggerCount = 20;
   // 状态：0-待执行，1-执行中，2-完成，3-失败，4-延期，5-已终止，6-暂停
-  int32 status = 18;
+  int32 status = 21;
   // 上次执行结果
-  string lastResult = 19;
+  string lastResult = 22;
   // 上次结果描述
-  string lastMessage = 20;
+  string lastMessage = 23;
   // 上次结果原因
-  string lastReason = 21;
+  string lastReason = 24;
   // 终止时间
-  string terminatedTime = 22;
+  string terminatedTime = 25;
   // 终止原因
-  string terminatedReason = 23;
+  string terminatedReason = 26;
   // 暂停时间
-  string pausedTime = 24;
+  string pausedTime = 27;
   // 暂停原因
-  string pausedReason = 25;
+  string pausedReason = 28;
   // 扩展字段1
-  string ext1 = 26;
+  string ext1 = 29;
   // 扩展字段2
-  string ext2 = 27;
+  string ext2 = 30;
   // 扩展字段3
-  string ext3 = 28;
+  string ext3 = 31;
   // 扩展字段4
-  string ext4 = 29;
+  string ext4 = 32;
   // 扩展字段5
-  string ext5 = 30;
+  string ext5 = 33;
 }
 
 message ListPlanExecItemsReq {
@@ -1073,16 +1087,16 @@ message CallbackPlanExecItemReq {
   // 自增主键ID
   int64 id = 1;
   // 执行ID 全局唯一
-  string execId = 7;
+  string execId = 2;
   // 回调设计 参考 grpc status 用于分布式事务
-  // 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，ongoing-业务正在执行（未回调或部分异步）
-  string execResult = 2 [(validate.rules).string = {in: ["completed", "failed", "delayed", "ongoing"]}];
+  // 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期
+  string execResult = 3 [(validate.rules).string = {in: ["completed", "failed", "delayed"]}];
   // 结果描述  可以定义自己状态码，等下次回调判断业务场景
-  string message = 3;
+  string message = 4;
   // 结果原因 （成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
-  string reason = 4;
+  string reason = 5;
   // 延期配置：delayed-自定义延期
-  PbDelayConfig delayConfig = 5;
+  PbDelayConfig delayConfig = 6;
 }
 
 message PbDelayConfig {

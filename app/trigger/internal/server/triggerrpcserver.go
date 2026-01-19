@@ -256,7 +256,7 @@ func (s *TriggerRpcServer) ListPlanExecLogs(ctx context.Context, in *trigger.Lis
 	return l.ListPlanExecLogs(in)
 }
 
-// 回调计划执行项
+// 回调计划执行项 ongoing 回执
 func (s *TriggerRpcServer) CallbackPlanExecItem(ctx context.Context, in *trigger.CallbackPlanExecItemReq) (*trigger.CallbackPlanExecItemRes, error) {
 	l := logic.NewCallbackPlanExecItemLogic(ctx, s.svcCtx)
 	return l.CallbackPlanExecItem(in)

@@ -17,6 +17,7 @@ type (
 		planBatchModel
 		withSession(session sqlx.Session) PlanBatchModel
 		UpdateBatchCompletedTime(ctx context.Context, id int64) error
+		CalculatePlanProgress(ctx context.Context, planPk int64) (float32, error)
 	}
 
 	customPlanBatchModel struct {
@@ -58,4 +59,29 @@ func (m *customPlanBatchModel) UpdateBatchCompletedTime(ctx context.Context, id 
 	}
 	_, err = m.conn.ExecCtx(ctx, sql, args...)
 	return err
+}
+
+func (m *customPlanBatchModel) CalculatePlanProgress(ctx context.Context, planPk int64) (float32, error) {
+	batchBuilder := m.SelectBuilder().Columns("COUNT(*) as total, SUM(CASE WHEN completed_time IS NOT NULL THEN 1 ELSE 0 END) as completed").
+		From("plan_batch").
+		Where("plan_pk = ?", planPk).
+		Where("del_state = ?", 0)
+	sql, args, err := batchBuilder.ToSql()
+	if err != nil {
+		return 0.0, err
+	}
+	type BatchStats struct {
+		Total     int64 `db:"total"`
+		Completed int64 `db:"completed"`
+	}
+	var stats BatchStats
+	err = m.conn.QueryRowCtx(ctx, &stats, sql, args...)
+	if err != nil {
+		return 0.0, err
+	}
+	var progress float32 = 0.0
+	if stats.Total > 0 {
+		progress = float32(stats.Completed) / float32(stats.Total) * 100.0
+	}
+	return progress, nil
 }

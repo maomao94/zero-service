@@ -89,7 +89,11 @@ func (l *GetPlanLogic) GetPlan(in *trigger.GetPlanReq) (*trigger.GetPlanRes, err
 	if plan.PausedTime.Valid {
 		pbPlan.PausedTime = carbon.CreateFromStdTime(plan.PausedTime.Time).ToDateTimeString()
 	}
-
+	progress, err := l.svcCtx.PlanBatchModel.CalculatePlanProgress(l.ctx, plan.Id)
+	if err != nil {
+		return nil, err
+	}
+	pbPlan.Progress = progress
 	return &trigger.GetPlanRes{
 		Plan: pbPlan,
 	}, nil

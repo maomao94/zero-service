@@ -162,6 +162,16 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 			batchCnt++
 			for _, item := range in.ExecItems {
 				execId, _ := tool.SimpleUUID()
+				nextTriggerTime := d
+				switch item.IntervalType {
+				case 1:
+					nextTriggerTime = d.Add(time.Duration(item.IntervalTime) * time.Millisecond)
+				case 2:
+					if item.IntervalTime > 0 {
+						offset := l.svcCtx.UnstableExpiry.AroundDuration(time.Duration(item.IntervalTime) * time.Millisecond)
+						nextTriggerTime = d.Add(offset)
+					}
+				}
 				planItem := model.PlanExecItem{
 					CreateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},
 					UpdateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},
@@ -172,13 +182,14 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 					BatchId:          batchId,
 					ExecId:           execId,
 					ItemId:           item.ItemId,
+					ItemType:         sql.NullString{String: item.ItemType, Valid: item.ItemType != ""},
 					ItemName:         sql.NullString{String: item.ItemName, Valid: item.ItemName != ""},
 					PointId:          sql.NullString{String: item.PointId, Valid: item.PointId != ""},
 					ServiceAddr:      item.ServiceAddr,
 					Payload:          item.Payload,
 					RequestTimeout:   item.RequestTimeout,
 					PlanTriggerTime:  d,
-					NextTriggerTime:  d,
+					NextTriggerTime:  nextTriggerTime,
 					LastTriggerTime:  sql.NullTime{},
 					TriggerCount:     0,
 					Status:           int64(model.StatusWaiting),

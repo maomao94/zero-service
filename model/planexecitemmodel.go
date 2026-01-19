@@ -23,11 +23,11 @@ type (
 		// 更新执行项状态为执行中
 		UpdateStatusToRunning(ctx context.Context, id int64) error
 		// 更新执行项状态为已完成
-		UpdateStatusToCompleted(ctx context.Context, id int64, lastMessage, lastReason string) error
+		UpdateStatusToCompleted(ctx context.Context, id int64, lastMessage, lastReason string, statusIn []int, statusOut []int) error
 		// 更新执行项状态为失败延期
-		UpdateStatusToFail(ctx context.Context, id int64, lastResult, lastMessage, lastReason string) error
+		UpdateStatusToFail(ctx context.Context, id int64, lastResult, lastMessage, lastReason string, statusIn []int, statusOut []int) error
 		// 更新执行项状态为延期
-		UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, lastMessage, lastReason, nextTriggerTime string) error
+		UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, lastMessage, lastReason, nextTriggerTime string, statusIn []int, statusOut []int) error
 		// 通用SQL查询方法
 		QuerySQL(ctx context.Context, sql string, args ...interface{}) ([]map[string]interface{}, error)
 		// 获取批次执行项状态统计
@@ -116,9 +116,11 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 			Set("status", StatusRunning).
 			Set("next_trigger_time", nextTriggerTimeStr).
 			Set("last_trigger_time", currentTimeStr).
+			Set("version = ?", execItem.Version+1).
 			Where("id = ?", execItem.Id).
 			Where("next_trigger_time <= ?", currentTimeStr).
-			Where("status IN (?, ?)", StatusWaiting, StatusDelayed)
+			Where("status IN (?, ?)", StatusWaiting, StatusDelayed).
+			Where("version = ?", execItem.Version)
 		if m.dbType == DatabaseTypePostgres {
 			updateBuilder = updateBuilder.PlaceholderFormat(squirrel.Dollar)
 		}
@@ -157,7 +159,7 @@ func (m *customPlanExecItemModel) UpdateStatusToRunning(ctx context.Context, id 
 	return err
 }
 
-func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, id int64, lastMessage, lastReason string) error {
+func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, id int64, lastMessage, lastReason string, statusIn []int, statusOut []int) error {
 	currentTime := time.Now()
 	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
 	updateBuilder := squirrel.Update(m.table).
@@ -168,6 +170,12 @@ func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, i
 		Set("last_trigger_time", currentTimeStr).
 		Set("completed_time", currentTimeStr).
 		Where("id = ?", id)
+	if len(statusIn) > 0 {
+		updateBuilder = updateBuilder.Where(squirrel.Eq{"status": statusIn})
+	}
+	if len(statusOut) > 0 {
+		updateBuilder = updateBuilder.Where(squirrel.NotEq{"status": statusOut})
+	}
 	if m.dbType == DatabaseTypePostgres {
 		updateBuilder = updateBuilder.PlaceholderFormat(squirrel.Dollar)
 	}
@@ -179,7 +187,7 @@ func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, i
 	return err
 }
 
-func (m *customPlanExecItemModel) UpdateStatusToFail(ctx context.Context, id int64, lastResult, lastMessage, lastReason string) error {
+func (m *customPlanExecItemModel) UpdateStatusToFail(ctx context.Context, id int64, lastResult, lastMessage, lastReason string, statusIn []int, statusOut []int) error {
 	currentTime := time.Now()
 	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
 	selectBuilder := squirrel.Select("trigger_count").From(m.table).Where("id = ?", id)
@@ -227,6 +235,12 @@ func (m *customPlanExecItemModel) UpdateStatusToFail(ctx context.Context, id int
 			Set("paused_reason", "调度平台自动延期").
 			Where("id = ?", id)
 	}
+	if len(statusIn) > 0 {
+		updateBuilder = updateBuilder.Where(squirrel.Eq{"status": statusIn})
+	}
+	if len(statusOut) > 0 {
+		updateBuilder = updateBuilder.Where(squirrel.NotEq{"status": statusOut})
+	}
 	if m.dbType == DatabaseTypePostgres {
 		updateBuilder = updateBuilder.PlaceholderFormat(squirrel.Dollar)
 	}
@@ -238,7 +252,7 @@ func (m *customPlanExecItemModel) UpdateStatusToFail(ctx context.Context, id int
 	return err
 }
 
-func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, lastMessage, lastReason, nextTriggerTimeStr string) error {
+func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, lastMessage, lastReason, nextTriggerTimeStr string, statusIn []int, statusOut []int) error {
 	ct := carbon.Parse(nextTriggerTimeStr)
 	if ct.Error != nil {
 		return ct.Error
@@ -253,6 +267,12 @@ func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id 
 		Set("next_trigger_time", nextTriggerTimeStr).
 		Set("last_trigger_time", currentTimeStr).
 		Where("id = ?", id)
+	if len(statusIn) > 0 {
+		updateBuilder = updateBuilder.Where(squirrel.Eq{"status": statusIn})
+	}
+	if len(statusOut) > 0 {
+		updateBuilder = updateBuilder.Where(squirrel.NotEq{"status": statusOut})
+	}
 	if m.dbType == DatabaseTypePostgres {
 		updateBuilder = updateBuilder.PlaceholderFormat(squirrel.Dollar)
 	}

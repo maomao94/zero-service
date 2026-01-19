@@ -108,6 +108,12 @@ func (l *ListPlansLogic) ListPlans(in *trigger.ListPlansReq) (*trigger.ListPlans
 			pbPlan.PausedTime = carbon.CreateFromStdTime(plan.PausedTime.Time).ToDateTimeString()
 		}
 
+		progress, err := l.svcCtx.PlanBatchModel.CalculatePlanProgress(l.ctx, plan.Id)
+		if err != nil {
+			return nil, err
+		}
+		pbPlan.Progress = progress
+
 		resp.Plans = append(resp.Plans, pbPlan)
 	}
 
