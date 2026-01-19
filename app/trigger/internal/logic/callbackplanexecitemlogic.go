@@ -144,6 +144,9 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 
 		// 记录执行日志
 		logEntry := &model.PlanExecLog{
+			CreateUser:  sql.NullString{},
+			UpdateUser:  sql.NullString{},
+			DeptCode:    sql.NullString{},
 			PlanPk:      execItem.PlanPk,
 			PlanId:      execItem.PlanId,
 			PlanName:    plan.PlanName,
@@ -152,6 +155,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 			ItemPk:      execItem.Id,
 			ExecId:      execItem.ExecId,
 			ItemId:      execItem.ItemId,
+			ItemType:    execItem.ItemType,
 			ItemName:    execItem.ItemName,
 			PointId:     execItem.PointId,
 			TriggerTime: time.Now(),
