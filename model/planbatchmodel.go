@@ -63,7 +63,7 @@ func (m *customPlanBatchModel) UpdateBatchCompletedTime(ctx context.Context, id 
 
 func (m *customPlanBatchModel) CalculatePlanProgress(ctx context.Context, planPk int64) (float32, error) {
 	batchBuilder := m.SelectBuilder().Columns("COUNT(*) as total, SUM(CASE WHEN completed_time IS NOT NULL THEN 1 ELSE 0 END) as completed").
-		From("plan_batch").
+		From(m.table).
 		Where("plan_pk = ?", planPk).
 		Where("del_state = ?", 0)
 	sql, args, err := batchBuilder.ToSql()
