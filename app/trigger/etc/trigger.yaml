@@ -25,3 +25,10 @@ DB:
   DataSource: root:PXDN93VRKUm8TeE7@tcp(localhost:33069)/zero?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
 #  DataSource: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable&TimeZone=Asia/Shanghai
 DisableStmtLog: true
+StreamEventConf:
+  # nacos://[user:passwd]@host/service?param=value'
+  #  Target: nacos://nacos:nacos@127.0.0.1:8848/stream-event?namespaceid=public&timeout=5000s
+  Endpoints:
+    - 127.0.0.1:21009
+  NonBlock: true
+  Timeout: 120000
