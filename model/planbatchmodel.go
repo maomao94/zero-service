@@ -62,7 +62,7 @@ func (m *customPlanBatchModel) UpdateBatchFinishedTime(ctx context.Context, id i
 }
 
 func (m *customPlanBatchModel) CalculatePlanProgress(ctx context.Context, planPk int64) (float32, error) {
-	batchBuilder := m.SelectBuilder().Columns("COUNT(*) as total, SUM(CASE WHEN completed_time IS NOT NULL THEN 1 ELSE 0 END) as completed").
+	batchBuilder := m.SelectBuilder().Columns("COUNT(*) as total, SUM(CASE WHEN finished_time IS NOT NULL THEN 1 ELSE 0 END) as finished").
 		From(m.table).
 		Where("plan_pk = ?", planPk).
 		Where("del_state = ?", 0)
@@ -71,8 +71,8 @@ func (m *customPlanBatchModel) CalculatePlanProgress(ctx context.Context, planPk
 		return 0.0, err
 	}
 	type BatchStats struct {
-		Total     int64 `db:"total"`
-		Completed int64 `db:"completed"`
+		Total    int64 `db:"total"`
+		Finished int64 `db:"finished"`
 	}
 	var stats BatchStats
 	err = m.conn.QueryRowCtx(ctx, &stats, sql, args...)
@@ -81,7 +81,7 @@ func (m *customPlanBatchModel) CalculatePlanProgress(ctx context.Context, planPk
 	}
 	var progress float32 = 0.0
 	if stats.Total > 0 {
-		progress = float32(stats.Completed) / float32(stats.Total) * 100.0
+		progress = float32(stats.Finished) / float32(stats.Total) * 100.0
 	}
 	return progress, nil
 }
