@@ -3149,9 +3149,9 @@ type NotifyEventReq struct {
 	// 事件类型
 	EventType EventType `protobuf:"varint,2,opt,name=event_type,json=eventType,proto3,enum=streamevent.EventType" json:"event_type,omitempty"`
 	// 关联的计划ID
-	PlanId string `protobuf:"bytes,3,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
+	PlanId string `protobuf:"bytes,3,opt,name=planId,proto3" json:"planId,omitempty"`
 	// 关联的批次ID（可选，plan完成时可为空）
-	BatchId string `protobuf:"bytes,4,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
+	BatchId string `protobuf:"bytes,4,opt,name=batchId,proto3" json:"batchId,omitempty"`
 	// 扩展字段，给未来留空间
 	Attributes    map[string]string `protobuf:"bytes,5,rep,name=attributes,proto3" json:"attributes,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
@@ -3540,13 +3540,13 @@ const file_streamevent_proto_rawDesc = "" +
 	"\vdelayConfig\x18\x04 \x01(\v2\x1a.streamevent.PbDelayConfigR\vdelayConfig\"[\n" +
 	"\rPbDelayConfig\x12(\n" +
 	"\x0fnextTriggerTime\x18\x01 \x01(\tR\x0fnextTriggerTime\x12 \n" +
-	"\vdelayReason\x18\x02 \x01(\tR\vdelayReason\"\x99\x02\n" +
+	"\vdelayReason\x18\x02 \x01(\tR\vdelayReason\"\x97\x02\n" +
 	"\x0eNotifyEventReq\x12\x10\n" +
 	"\x03tId\x18\x01 \x01(\tR\x03tId\x125\n" +
 	"\n" +
-	"event_type\x18\x02 \x01(\x0e2\x16.streamevent.EventTypeR\teventType\x12\x17\n" +
-	"\aplan_id\x18\x03 \x01(\tR\x06planId\x12\x19\n" +
-	"\bbatch_id\x18\x04 \x01(\tR\abatchId\x12K\n" +
+	"event_type\x18\x02 \x01(\x0e2\x16.streamevent.EventTypeR\teventType\x12\x16\n" +
+	"\x06planId\x18\x03 \x01(\tR\x06planId\x12\x18\n" +
+	"\abatchId\x18\x04 \x01(\tR\abatchId\x12K\n" +
 	"\n" +
 	"attributes\x18\x05 \x03(\v2+.streamevent.NotifyEventReq.AttributesEntryR\n" +
 	"attributes\x1a=\n" +
