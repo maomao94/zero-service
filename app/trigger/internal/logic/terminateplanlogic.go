@@ -52,6 +52,8 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 		now := time.Now()
 		// 更新计划状态为已终止
 		plan.Status = int64(model.PlanStatusTerminated) // 终止
+		plan.PausedTime = sql.NullTime{Time: time.Now(), Valid: true}
+		plan.PausedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
 		plan.FinishedTime = sql.NullTime{Time: now, Valid: true}
 		plan.TerminatedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
 		plan.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}

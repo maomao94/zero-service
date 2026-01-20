@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"database/sql"
+	"time"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/tool"
@@ -63,6 +64,8 @@ func (l *PausePlanBatchLogic) PausePlanBatch(in *trigger.PausePlanBatchReq) (*tr
 	err = l.svcCtx.PlanBatchModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
 		// 更新计划批次状态为暂停
 		planBatch.Status = int64(model.PlanStatusPaused) // 暂停
+		planBatch.PausedTime = sql.NullTime{Time: time.Now(), Valid: true}
+		planBatch.PausedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
 		planBatch.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}
 
 		// 更新计划批次
