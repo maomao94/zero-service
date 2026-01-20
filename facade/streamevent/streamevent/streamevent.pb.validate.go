@@ -3928,22 +3928,22 @@ var _ interface {
 	ErrorName() string
 } = PbDelayConfigValidationError{}
 
-// Validate checks the field values on NotifyEventReq with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *NotifyEventReq) Validate() error {
+// Validate checks the field values on NotifyPlanEventReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *NotifyPlanEventReq) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on NotifyEventReq with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in NotifyEventReqMultiError,
-// or nil if none found.
-func (m *NotifyEventReq) ValidateAll() error {
+// ValidateAll checks the field values on NotifyPlanEventReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// NotifyPlanEventReqMultiError, or nil if none found.
+func (m *NotifyPlanEventReq) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *NotifyEventReq) validate(all bool) error {
+func (m *NotifyPlanEventReq) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -3961,19 +3961,19 @@ func (m *NotifyEventReq) validate(all bool) error {
 	// no validation rules for Attributes
 
 	if len(errors) > 0 {
-		return NotifyEventReqMultiError(errors)
+		return NotifyPlanEventReqMultiError(errors)
 	}
 
 	return nil
 }
 
-// NotifyEventReqMultiError is an error wrapping multiple validation errors
-// returned by NotifyEventReq.ValidateAll() if the designated constraints
+// NotifyPlanEventReqMultiError is an error wrapping multiple validation errors
+// returned by NotifyPlanEventReq.ValidateAll() if the designated constraints
 // aren't met.
-type NotifyEventReqMultiError []error
+type NotifyPlanEventReqMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m NotifyEventReqMultiError) Error() string {
+func (m NotifyPlanEventReqMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -3982,11 +3982,11 @@ func (m NotifyEventReqMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m NotifyEventReqMultiError) AllErrors() []error { return m }
+func (m NotifyPlanEventReqMultiError) AllErrors() []error { return m }
 
-// NotifyEventReqValidationError is the validation error returned by
-// NotifyEventReq.Validate if the designated constraints aren't met.
-type NotifyEventReqValidationError struct {
+// NotifyPlanEventReqValidationError is the validation error returned by
+// NotifyPlanEventReq.Validate if the designated constraints aren't met.
+type NotifyPlanEventReqValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -3994,22 +3994,24 @@ type NotifyEventReqValidationError struct {
 }
 
 // Field function returns field value.
-func (e NotifyEventReqValidationError) Field() string { return e.field }
+func (e NotifyPlanEventReqValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e NotifyEventReqValidationError) Reason() string { return e.reason }
+func (e NotifyPlanEventReqValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e NotifyEventReqValidationError) Cause() error { return e.cause }
+func (e NotifyPlanEventReqValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e NotifyEventReqValidationError) Key() bool { return e.key }
+func (e NotifyPlanEventReqValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e NotifyEventReqValidationError) ErrorName() string { return "NotifyEventReqValidationError" }
+func (e NotifyPlanEventReqValidationError) ErrorName() string {
+	return "NotifyPlanEventReqValidationError"
+}
 
 // Error satisfies the builtin error interface
-func (e NotifyEventReqValidationError) Error() string {
+func (e NotifyPlanEventReqValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -4021,14 +4023,14 @@ func (e NotifyEventReqValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sNotifyEventReq.%s: %s%s",
+		"invalid %sNotifyPlanEventReq.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = NotifyEventReqValidationError{}
+var _ error = NotifyPlanEventReqValidationError{}
 
 var _ interface {
 	Field() string
@@ -4036,24 +4038,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = NotifyEventReqValidationError{}
+} = NotifyPlanEventReqValidationError{}
 
-// Validate checks the field values on NotifyEventRes with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *NotifyEventRes) Validate() error {
+// Validate checks the field values on NotifyPlanEventRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *NotifyPlanEventRes) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on NotifyEventRes with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in NotifyEventResMultiError,
-// or nil if none found.
-func (m *NotifyEventRes) ValidateAll() error {
+// ValidateAll checks the field values on NotifyPlanEventRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// NotifyPlanEventResMultiError, or nil if none found.
+func (m *NotifyPlanEventRes) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *NotifyEventRes) validate(all bool) error {
+func (m *NotifyPlanEventRes) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -4061,19 +4063,19 @@ func (m *NotifyEventRes) validate(all bool) error {
 	var errors []error
 
 	if len(errors) > 0 {
-		return NotifyEventResMultiError(errors)
+		return NotifyPlanEventResMultiError(errors)
 	}
 
 	return nil
 }
 
-// NotifyEventResMultiError is an error wrapping multiple validation errors
-// returned by NotifyEventRes.ValidateAll() if the designated constraints
+// NotifyPlanEventResMultiError is an error wrapping multiple validation errors
+// returned by NotifyPlanEventRes.ValidateAll() if the designated constraints
 // aren't met.
-type NotifyEventResMultiError []error
+type NotifyPlanEventResMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m NotifyEventResMultiError) Error() string {
+func (m NotifyPlanEventResMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -4082,11 +4084,11 @@ func (m NotifyEventResMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m NotifyEventResMultiError) AllErrors() []error { return m }
+func (m NotifyPlanEventResMultiError) AllErrors() []error { return m }
 
-// NotifyEventResValidationError is the validation error returned by
-// NotifyEventRes.Validate if the designated constraints aren't met.
-type NotifyEventResValidationError struct {
+// NotifyPlanEventResValidationError is the validation error returned by
+// NotifyPlanEventRes.Validate if the designated constraints aren't met.
+type NotifyPlanEventResValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -4094,22 +4096,24 @@ type NotifyEventResValidationError struct {
 }
 
 // Field function returns field value.
-func (e NotifyEventResValidationError) Field() string { return e.field }
+func (e NotifyPlanEventResValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e NotifyEventResValidationError) Reason() string { return e.reason }
+func (e NotifyPlanEventResValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e NotifyEventResValidationError) Cause() error { return e.cause }
+func (e NotifyPlanEventResValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e NotifyEventResValidationError) Key() bool { return e.key }
+func (e NotifyPlanEventResValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e NotifyEventResValidationError) ErrorName() string { return "NotifyEventResValidationError" }
+func (e NotifyPlanEventResValidationError) ErrorName() string {
+	return "NotifyPlanEventResValidationError"
+}
 
 // Error satisfies the builtin error interface
-func (e NotifyEventResValidationError) Error() string {
+func (e NotifyPlanEventResValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -4121,14 +4125,14 @@ func (e NotifyEventResValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sNotifyEventRes.%s: %s%s",
+		"invalid %sNotifyPlanEventRes.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = NotifyEventResValidationError{}
+var _ error = NotifyPlanEventResValidationError{}
 
 var _ interface {
 	Field() string
@@ -4136,4 +4140,4 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = NotifyEventResValidationError{}
+} = NotifyPlanEventResValidationError{}

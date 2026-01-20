@@ -21,54 +21,54 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type EventType int32
+type PlanEventType int32
 
 const (
-	EventType_EVENT_TYPE_UNKNOWN EventType = 0
+	PlanEventType_EVENT_TYPE_UNKNOWN PlanEventType = 0
 	// 批次完成（成功 / 部分成功都算完成）
-	EventType_BATCH_FINISHED EventType = 1
+	PlanEventType_BATCH_FINISHED PlanEventType = 1
 	// 计划完成（生命周期结束）
-	EventType_PLAN_FINISHED EventType = 2
+	PlanEventType_PLAN_FINISHED PlanEventType = 2
 )
 
-// Enum value maps for EventType.
+// Enum value maps for PlanEventType.
 var (
-	EventType_name = map[int32]string{
+	PlanEventType_name = map[int32]string{
 		0: "EVENT_TYPE_UNKNOWN",
 		1: "BATCH_FINISHED",
 		2: "PLAN_FINISHED",
 	}
-	EventType_value = map[string]int32{
+	PlanEventType_value = map[string]int32{
 		"EVENT_TYPE_UNKNOWN": 0,
 		"BATCH_FINISHED":     1,
 		"PLAN_FINISHED":      2,
 	}
 )
 
-func (x EventType) Enum() *EventType {
-	p := new(EventType)
+func (x PlanEventType) Enum() *PlanEventType {
+	p := new(PlanEventType)
 	*p = x
 	return p
 }
 
-func (x EventType) String() string {
+func (x PlanEventType) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (EventType) Descriptor() protoreflect.EnumDescriptor {
+func (PlanEventType) Descriptor() protoreflect.EnumDescriptor {
 	return file_streamevent_proto_enumTypes[0].Descriptor()
 }
 
-func (EventType) Type() protoreflect.EnumType {
+func (PlanEventType) Type() protoreflect.EnumType {
 	return &file_streamevent_proto_enumTypes[0]
 }
 
-func (x EventType) Number() protoreflect.EnumNumber {
+func (x PlanEventType) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use EventType.Descriptor instead.
-func (EventType) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use PlanEventType.Descriptor instead.
+func (PlanEventType) EnumDescriptor() ([]byte, []int) {
 	return file_streamevent_proto_rawDescGZIP(), []int{0}
 }
 
@@ -3143,11 +3143,11 @@ func (x *PbDelayConfig) GetDelayReason() string {
 	return ""
 }
 
-type NotifyEventReq struct {
+type NotifyPlanEventReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	TId   string                 `protobuf:"bytes,1,opt,name=tId,proto3" json:"tId,omitempty"`
 	// 事件类型
-	EventType EventType `protobuf:"varint,2,opt,name=event_type,json=eventType,proto3,enum=streamevent.EventType" json:"event_type,omitempty"`
+	EventType PlanEventType `protobuf:"varint,2,opt,name=eventType,proto3,enum=streamevent.PlanEventType" json:"eventType,omitempty"`
 	// 关联的计划ID
 	PlanId string `protobuf:"bytes,3,opt,name=planId,proto3" json:"planId,omitempty"`
 	// 关联的批次ID（可选，plan完成时可为空）
@@ -3158,20 +3158,20 @@ type NotifyEventReq struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *NotifyEventReq) Reset() {
-	*x = NotifyEventReq{}
+func (x *NotifyPlanEventReq) Reset() {
+	*x = NotifyPlanEventReq{}
 	mi := &file_streamevent_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *NotifyEventReq) String() string {
+func (x *NotifyPlanEventReq) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*NotifyEventReq) ProtoMessage() {}
+func (*NotifyPlanEventReq) ProtoMessage() {}
 
-func (x *NotifyEventReq) ProtoReflect() protoreflect.Message {
+func (x *NotifyPlanEventReq) ProtoReflect() protoreflect.Message {
 	mi := &file_streamevent_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3183,66 +3183,66 @@ func (x *NotifyEventReq) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use NotifyEventReq.ProtoReflect.Descriptor instead.
-func (*NotifyEventReq) Descriptor() ([]byte, []int) {
+// Deprecated: Use NotifyPlanEventReq.ProtoReflect.Descriptor instead.
+func (*NotifyPlanEventReq) Descriptor() ([]byte, []int) {
 	return file_streamevent_proto_rawDescGZIP(), []int{32}
 }
 
-func (x *NotifyEventReq) GetTId() string {
+func (x *NotifyPlanEventReq) GetTId() string {
 	if x != nil {
 		return x.TId
 	}
 	return ""
 }
 
-func (x *NotifyEventReq) GetEventType() EventType {
+func (x *NotifyPlanEventReq) GetEventType() PlanEventType {
 	if x != nil {
 		return x.EventType
 	}
-	return EventType_EVENT_TYPE_UNKNOWN
+	return PlanEventType_EVENT_TYPE_UNKNOWN
 }
 
-func (x *NotifyEventReq) GetPlanId() string {
+func (x *NotifyPlanEventReq) GetPlanId() string {
 	if x != nil {
 		return x.PlanId
 	}
 	return ""
 }
 
-func (x *NotifyEventReq) GetBatchId() string {
+func (x *NotifyPlanEventReq) GetBatchId() string {
 	if x != nil {
 		return x.BatchId
 	}
 	return ""
 }
 
-func (x *NotifyEventReq) GetAttributes() map[string]string {
+func (x *NotifyPlanEventReq) GetAttributes() map[string]string {
 	if x != nil {
 		return x.Attributes
 	}
 	return nil
 }
 
-type NotifyEventRes struct {
+type NotifyPlanEventRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *NotifyEventRes) Reset() {
-	*x = NotifyEventRes{}
+func (x *NotifyPlanEventRes) Reset() {
+	*x = NotifyPlanEventRes{}
 	mi := &file_streamevent_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *NotifyEventRes) String() string {
+func (x *NotifyPlanEventRes) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*NotifyEventRes) ProtoMessage() {}
+func (*NotifyPlanEventRes) ProtoMessage() {}
 
-func (x *NotifyEventRes) ProtoReflect() protoreflect.Message {
+func (x *NotifyPlanEventRes) ProtoReflect() protoreflect.Message {
 	mi := &file_streamevent_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3254,8 +3254,8 @@ func (x *NotifyEventRes) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use NotifyEventRes.ProtoReflect.Descriptor instead.
-func (*NotifyEventRes) Descriptor() ([]byte, []int) {
+// Deprecated: Use NotifyPlanEventRes.ProtoReflect.Descriptor instead.
+func (*NotifyPlanEventRes) Descriptor() ([]byte, []int) {
 	return file_streamevent_proto_rawDescGZIP(), []int{33}
 }
 
@@ -3540,32 +3540,31 @@ const file_streamevent_proto_rawDesc = "" +
 	"\vdelayConfig\x18\x04 \x01(\v2\x1a.streamevent.PbDelayConfigR\vdelayConfig\"[\n" +
 	"\rPbDelayConfig\x12(\n" +
 	"\x0fnextTriggerTime\x18\x01 \x01(\tR\x0fnextTriggerTime\x12 \n" +
-	"\vdelayReason\x18\x02 \x01(\tR\vdelayReason\"\x97\x02\n" +
-	"\x0eNotifyEventReq\x12\x10\n" +
-	"\x03tId\x18\x01 \x01(\tR\x03tId\x125\n" +
-	"\n" +
-	"event_type\x18\x02 \x01(\x0e2\x16.streamevent.EventTypeR\teventType\x12\x16\n" +
+	"\vdelayReason\x18\x02 \x01(\tR\vdelayReason\"\xa2\x02\n" +
+	"\x12NotifyPlanEventReq\x12\x10\n" +
+	"\x03tId\x18\x01 \x01(\tR\x03tId\x128\n" +
+	"\teventType\x18\x02 \x01(\x0e2\x1a.streamevent.PlanEventTypeR\teventType\x12\x16\n" +
 	"\x06planId\x18\x03 \x01(\tR\x06planId\x12\x18\n" +
-	"\abatchId\x18\x04 \x01(\tR\abatchId\x12K\n" +
+	"\abatchId\x18\x04 \x01(\tR\abatchId\x12O\n" +
 	"\n" +
-	"attributes\x18\x05 \x03(\v2+.streamevent.NotifyEventReq.AttributesEntryR\n" +
+	"attributes\x18\x05 \x03(\v2/.streamevent.NotifyPlanEventReq.AttributesEntryR\n" +
 	"attributes\x1a=\n" +
 	"\x0fAttributesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x10\n" +
-	"\x0eNotifyEventRes*J\n" +
-	"\tEventType\x12\x16\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x14\n" +
+	"\x12NotifyPlanEventRes*N\n" +
+	"\rPlanEventType\x12\x16\n" +
 	"\x12EVENT_TYPE_UNKNOWN\x10\x00\x12\x12\n" +
 	"\x0eBATCH_FINISHED\x10\x01\x12\x11\n" +
-	"\rPLAN_FINISHED\x10\x022\xf9\x04\n" +
+	"\rPLAN_FINISHED\x10\x022\x81\x05\n" +
 	"\vStreamEvent\x12\\\n" +
 	"\x12ReceiveMQTTMessage\x12\".streamevent.ReceiveMQTTMessageReq\x1a\".streamevent.ReceiveMQTTMessageRes\x12V\n" +
 	"\x10ReceiveWSMessage\x12 .streamevent.ReceiveWSMessageReq\x1a .streamevent.ReceiveWSMessageRes\x12_\n" +
 	"\x13ReceiveKafkaMessage\x12#.streamevent.ReceiveKafkaMessageReq\x1a#.streamevent.ReceiveKafkaMessageRes\x12M\n" +
 	"\rPushChunkAsdu\x12\x1d.streamevent.PushChunkAsduReq\x1a\x1d.streamevent.PushChunkAsduRes\x12S\n" +
 	"\x0fUpSocketMessage\x12\x1f.streamevent.UpSocketMessageReq\x1a\x1f.streamevent.UpSocketMessageReq\x12b\n" +
-	"\x14HandlerPlanTaskEvent\x12$.streamevent.HandlerPlanTaskEventReq\x1a$.streamevent.HandlerPlanTaskEventRes\x12K\n" +
-	"\x0fNotifyPlanEvent\x12\x1b.streamevent.NotifyEventReq\x1a\x1b.streamevent.NotifyEventResB@\n" +
+	"\x14HandlerPlanTaskEvent\x12$.streamevent.HandlerPlanTaskEventReq\x1a$.streamevent.HandlerPlanTaskEventRes\x12S\n" +
+	"\x0fNotifyPlanEvent\x12\x1f.streamevent.NotifyPlanEventReq\x1a\x1f.streamevent.NotifyPlanEventResB@\n" +
 	"\x1bcom.github.streamevent.grpcB\x10StreamEventProtoP\x01Z\r./streameventb\x06proto3"
 
 var (
@@ -3583,7 +3582,7 @@ func file_streamevent_proto_rawDescGZIP() []byte {
 var file_streamevent_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_streamevent_proto_msgTypes = make([]protoimpl.MessageInfo, 35)
 var file_streamevent_proto_goTypes = []any{
-	(EventType)(0),                                     // 0: streamevent.EventType
+	(PlanEventType)(0),                                 // 0: streamevent.PlanEventType
 	(*ReceiveMQTTMessageReq)(nil),                      // 1: streamevent.ReceiveMQTTMessageReq
 	(*ReceiveMQTTMessageRes)(nil),                      // 2: streamevent.ReceiveMQTTMessageRes
 	(*MqttMessage)(nil),                                // 3: streamevent.MqttMessage
@@ -3616,9 +3615,9 @@ var file_streamevent_proto_goTypes = []any{
 	(*HandlerPlanTaskEventReq)(nil),                    // 30: streamevent.HandlerPlanTaskEventReq
 	(*HandlerPlanTaskEventRes)(nil),                    // 31: streamevent.HandlerPlanTaskEventRes
 	(*PbDelayConfig)(nil),                              // 32: streamevent.PbDelayConfig
-	(*NotifyEventReq)(nil),                             // 33: streamevent.NotifyEventReq
-	(*NotifyEventRes)(nil),                             // 34: streamevent.NotifyEventRes
-	nil,                                                // 35: streamevent.NotifyEventReq.AttributesEntry
+	(*NotifyPlanEventReq)(nil),                         // 33: streamevent.NotifyPlanEventReq
+	(*NotifyPlanEventRes)(nil),                         // 34: streamevent.NotifyPlanEventRes
+	nil,                                                // 35: streamevent.NotifyPlanEventReq.AttributesEntry
 }
 var file_streamevent_proto_depIdxs = []int32{
 	3,  // 0: streamevent.ReceiveMQTTMessageReq.messages:type_name -> streamevent.MqttMessage
@@ -3629,22 +3628,22 @@ var file_streamevent_proto_depIdxs = []int32{
 	22, // 5: streamevent.BinaryCounterReadingInfo.value:type_name -> streamevent.BinaryCounterReading
 	29, // 6: streamevent.HandlerPlanTaskEventReq.plan:type_name -> streamevent.PbPlan
 	32, // 7: streamevent.HandlerPlanTaskEventRes.delayConfig:type_name -> streamevent.PbDelayConfig
-	0,  // 8: streamevent.NotifyEventReq.event_type:type_name -> streamevent.EventType
-	35, // 9: streamevent.NotifyEventReq.attributes:type_name -> streamevent.NotifyEventReq.AttributesEntry
+	0,  // 8: streamevent.NotifyPlanEventReq.eventType:type_name -> streamevent.PlanEventType
+	35, // 9: streamevent.NotifyPlanEventReq.attributes:type_name -> streamevent.NotifyPlanEventReq.AttributesEntry
 	1,  // 10: streamevent.StreamEvent.ReceiveMQTTMessage:input_type -> streamevent.ReceiveMQTTMessageReq
 	4,  // 11: streamevent.StreamEvent.ReceiveWSMessage:input_type -> streamevent.ReceiveWSMessageReq
 	6,  // 12: streamevent.StreamEvent.ReceiveKafkaMessage:input_type -> streamevent.ReceiveKafkaMessageReq
 	9,  // 13: streamevent.StreamEvent.PushChunkAsdu:input_type -> streamevent.PushChunkAsduReq
 	27, // 14: streamevent.StreamEvent.UpSocketMessage:input_type -> streamevent.UpSocketMessageReq
 	30, // 15: streamevent.StreamEvent.HandlerPlanTaskEvent:input_type -> streamevent.HandlerPlanTaskEventReq
-	33, // 16: streamevent.StreamEvent.NotifyPlanEvent:input_type -> streamevent.NotifyEventReq
+	33, // 16: streamevent.StreamEvent.NotifyPlanEvent:input_type -> streamevent.NotifyPlanEventReq
 	2,  // 17: streamevent.StreamEvent.ReceiveMQTTMessage:output_type -> streamevent.ReceiveMQTTMessageRes
 	5,  // 18: streamevent.StreamEvent.ReceiveWSMessage:output_type -> streamevent.ReceiveWSMessageRes
 	7,  // 19: streamevent.StreamEvent.ReceiveKafkaMessage:output_type -> streamevent.ReceiveKafkaMessageRes
 	10, // 20: streamevent.StreamEvent.PushChunkAsdu:output_type -> streamevent.PushChunkAsduRes
 	27, // 21: streamevent.StreamEvent.UpSocketMessage:output_type -> streamevent.UpSocketMessageReq
 	31, // 22: streamevent.StreamEvent.HandlerPlanTaskEvent:output_type -> streamevent.HandlerPlanTaskEventRes
-	34, // 23: streamevent.StreamEvent.NotifyPlanEvent:output_type -> streamevent.NotifyEventRes
+	34, // 23: streamevent.StreamEvent.NotifyPlanEvent:output_type -> streamevent.NotifyPlanEventRes
 	17, // [17:24] is the sub-list for method output_type
 	10, // [10:17] is the sub-list for method input_type
 	10, // [10:10] is the sub-list for extension type_name

@@ -60,7 +60,7 @@ func (s *StreamEventServer) HandlerPlanTaskEvent(ctx context.Context, in *stream
 }
 
 // 通知计划任务事件
-func (s *StreamEventServer) NotifyPlanEvent(ctx context.Context, in *streamevent.NotifyEventReq) (*streamevent.NotifyEventRes, error) {
+func (s *StreamEventServer) NotifyPlanEvent(ctx context.Context, in *streamevent.NotifyPlanEventReq) (*streamevent.NotifyPlanEventRes, error) {
 	l := logic.NewNotifyPlanEventLogic(ctx, s.svcCtx)
 	return l.NotifyPlanEvent(in)
 }

@@ -45,7 +45,7 @@ type StreamEventClient interface {
 	// 计划任务事件处理
 	HandlerPlanTaskEvent(ctx context.Context, in *HandlerPlanTaskEventReq, opts ...grpc.CallOption) (*HandlerPlanTaskEventRes, error)
 	// 通知计划任务事件
-	NotifyPlanEvent(ctx context.Context, in *NotifyEventReq, opts ...grpc.CallOption) (*NotifyEventRes, error)
+	NotifyPlanEvent(ctx context.Context, in *NotifyPlanEventReq, opts ...grpc.CallOption) (*NotifyPlanEventRes, error)
 }
 
 type streamEventClient struct {
@@ -116,9 +116,9 @@ func (c *streamEventClient) HandlerPlanTaskEvent(ctx context.Context, in *Handle
 	return out, nil
 }
 
-func (c *streamEventClient) NotifyPlanEvent(ctx context.Context, in *NotifyEventReq, opts ...grpc.CallOption) (*NotifyEventRes, error) {
+func (c *streamEventClient) NotifyPlanEvent(ctx context.Context, in *NotifyPlanEventReq, opts ...grpc.CallOption) (*NotifyPlanEventRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(NotifyEventRes)
+	out := new(NotifyPlanEventRes)
 	err := c.cc.Invoke(ctx, StreamEvent_NotifyPlanEvent_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -143,7 +143,7 @@ type StreamEventServer interface {
 	// 计划任务事件处理
 	HandlerPlanTaskEvent(context.Context, *HandlerPlanTaskEventReq) (*HandlerPlanTaskEventRes, error)
 	// 通知计划任务事件
-	NotifyPlanEvent(context.Context, *NotifyEventReq) (*NotifyEventRes, error)
+	NotifyPlanEvent(context.Context, *NotifyPlanEventReq) (*NotifyPlanEventRes, error)
 	mustEmbedUnimplementedStreamEventServer()
 }
 
@@ -172,7 +172,7 @@ func (UnimplementedStreamEventServer) UpSocketMessage(context.Context, *UpSocket
 func (UnimplementedStreamEventServer) HandlerPlanTaskEvent(context.Context, *HandlerPlanTaskEventReq) (*HandlerPlanTaskEventRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HandlerPlanTaskEvent not implemented")
 }
-func (UnimplementedStreamEventServer) NotifyPlanEvent(context.Context, *NotifyEventReq) (*NotifyEventRes, error) {
+func (UnimplementedStreamEventServer) NotifyPlanEvent(context.Context, *NotifyPlanEventReq) (*NotifyPlanEventRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NotifyPlanEvent not implemented")
 }
 func (UnimplementedStreamEventServer) mustEmbedUnimplementedStreamEventServer() {}
@@ -305,7 +305,7 @@ func _StreamEvent_HandlerPlanTaskEvent_Handler(srv interface{}, ctx context.Cont
 }
 
 func _StreamEvent_NotifyPlanEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NotifyEventReq)
+	in := new(NotifyPlanEventReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -317,7 +317,7 @@ func _StreamEvent_NotifyPlanEvent_Handler(srv interface{}, ctx context.Context, 
 		FullMethod: StreamEvent_NotifyPlanEvent_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StreamEventServer).NotifyPlanEvent(ctx, req.(*NotifyEventReq))
+		return srv.(StreamEventServer).NotifyPlanEvent(ctx, req.(*NotifyPlanEventReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
