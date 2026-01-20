@@ -560,9 +560,9 @@ message NotifyEventReq {
   // 事件类型
   EventType event_type = 2;
   // 关联的计划ID
-  string plan_id = 3;
+  string planId = 3;
   // 关联的批次ID（可选，plan完成时可为空）
-  string batch_id = 4;
+  string batchId = 4;
   // 扩展字段，给未来留空间
   map<string, string> attributes = 5;
 }
