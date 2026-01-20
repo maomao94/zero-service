@@ -21,7 +21,7 @@ service StreamEvent {
   // 计划任务事件处理
   rpc HandlerPlanTaskEvent (HandlerPlanTaskEventReq) returns (HandlerPlanTaskEventRes);
   // 通知计划任务事件
-  rpc NotifyPlanEvent (NotifyEventReq) returns (NotifyEventRes);
+  rpc NotifyPlanEvent (NotifyPlanEventReq) returns (NotifyPlanEventRes);
 }
 
 message ReceiveMQTTMessageReq {
@@ -555,10 +555,10 @@ message PbDelayConfig {
 }
 
 
-message NotifyEventReq {
+message NotifyPlanEventReq {
   string tId = 1;
   // 事件类型
-  EventType event_type = 2;
+  PlanEventType eventType = 2;
   // 关联的计划ID
   string planId = 3;
   // 关联的批次ID（可选，plan完成时可为空）
@@ -567,7 +567,7 @@ message NotifyEventReq {
   map<string, string> attributes = 5;
 }
 
-enum EventType {
+enum PlanEventType {
   EVENT_TYPE_UNKNOWN = 0;
   // 批次完成（成功 / 部分成功都算完成）
   BATCH_FINISHED = 1;
@@ -575,5 +575,5 @@ enum EventType {
   PLAN_FINISHED = 2;
 }
 
-message NotifyEventRes {
+message NotifyPlanEventRes {
 }
