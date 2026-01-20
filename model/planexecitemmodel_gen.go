@@ -82,11 +82,9 @@ type (
 		LastResult       sql.NullString `db:"last_result"`       // 上次执行结果
 		LastMessage      sql.NullString `db:"last_message"`      // 上次结果描述
 		LastReason       sql.NullString `db:"last_reason"`       // 上次结果原因
-		TerminatedTime   sql.NullTime   `db:"terminated_time"`   // 终止时间
 		TerminatedReason sql.NullString `db:"terminated_reason"` // 终止原因
 		PausedTime       sql.NullTime   `db:"paused_time"`       // 暂停时间
 		PausedReason     sql.NullString `db:"paused_reason"`     // 暂停原因
-		CompletedTime    sql.NullTime   `db:"completed_time"`    // 完成时间
 		Ext1             sql.NullString `db:"ext_1"`             // 扩展字段1
 		Ext2             sql.NullString `db:"ext_2"`             // 扩展字段2
 		Ext3             sql.NullString `db:"ext_3"`             // 扩展字段3

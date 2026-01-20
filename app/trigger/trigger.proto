@@ -738,26 +738,24 @@ message PbPlan{
   PbPlanRule rule = 8;
   // 状态：0-禁用，1-启用，2-已终止，3-暂停
   int32 status = 9;
-  // 终止时间
-  string terminatedTime = 10;
   // 终止原因
-  string terminatedReason = 11;
+  string terminatedReason = 10;
   // 暂停时间
-  string pausedTime = 12;
+  string pausedTime = 11;
   // 暂停原因
-  string pausedReason = 13;
+  string pausedReason = 12;
   // 执行进度 0.00-100.00
-  float progress = 14;
+  float progress = 13;
   // 扩展字段1
-  string ext1 = 15;
+  string ext1 = 14;
   // 扩展字段2
-  string ext2 = 16;
+  string ext2 = 15;
   // 扩展字段3
-  string ext3 = 17;
+  string ext3 = 16;
   // 扩展字段4
-  string ext4 = 18;
+  string ext4 = 17;
   // 扩展字段5
-  string ext5 = 19;
+  string ext5 = 18;
 }
 
 message ListPlansReq {
@@ -886,14 +884,12 @@ message PbPlanExecItem {
   string lastMessage = 23;
   // 上次结果原因
   string lastReason = 24;
-  // 终止时间
-  string terminatedTime = 25;
   // 终止原因
-  string terminatedReason = 26;
+  string terminatedReason = 25;
   // 暂停时间
-  string pausedTime = 27;
+  string pausedTime = 26;
   // 暂停原因
-  string pausedReason = 28;
+  string pausedReason = 27;
   // 扩展字段1
   string ext1 = 29;
   // 扩展字段2
@@ -1047,22 +1043,28 @@ message PbPlanBatch {
   int32 status = 5;
   // 计划触发时间
   string planTriggerTime = 6;
-  // 完成时间
-  string completedTime = 7;
+  // 终止原因
+  string terminatedReason = 7;
+  // 暂停时间
+  string pausedTime = 8;
+  // 暂停原因
+  string pausedReason = 9;
+  // 结束时间
+  string finishedTime = 10;
   // 状态统计map，key为状态值，value为对应数量
-  map<string, int64> statusCountMap = 8;
+  map<string, int64> statusCountMap = 11;
   // 执行计划数
-  int64 execCnt = 9;
+  int64 execCnt = 12;
   // 扩展字段1
-  string ext1 = 20;
+  string ext1 = 13;
   // 扩展字段2
-  string ext2 = 21;
+  string ext2 = 14;
   // 扩展字段3
-  string ext3 = 22;
+  string ext3 = 15;
   // 扩展字段4
-  string ext4 = 23;
+  string ext4 = 16;
   // 扩展字段5
-  string ext5 = 24;
+  string ext5 = 17;
 }
 
 // 执行项调度状态枚举定义

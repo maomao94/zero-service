@@ -70,11 +70,10 @@ type (
 		StartTime        time.Time      `db:"start_time"`        // 规则生效开始时间
 		EndTime          time.Time      `db:"end_time"`          // 规则生效结束时间
 		Status           int64          `db:"status"`            // 状态：0-禁用，1-启用，2-已终止，3-暂停
-		TerminatedTime   sql.NullTime   `db:"terminated_time"`   // 终止时间
 		TerminatedReason sql.NullString `db:"terminated_reason"` // 终止原因
 		PausedTime       sql.NullTime   `db:"paused_time"`       // 暂停时间
 		PausedReason     sql.NullString `db:"paused_reason"`     // 暂停原因
-		CompletedTime    sql.NullTime   `db:"completed_time"`    // 完成时间
+		FinishedTime     sql.NullTime   `db:"finished_time"`     // 结束时间
 		Description      sql.NullString `db:"description"`       // 备注信息
 		Ext1             sql.NullString `db:"ext_1"`             // 扩展字段1
 		Ext2             sql.NullString `db:"ext_2"`             // 扩展字段2

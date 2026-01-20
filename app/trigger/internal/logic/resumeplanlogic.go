@@ -10,6 +10,7 @@ import (
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 
+	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
@@ -47,7 +48,7 @@ func (l *ResumePlanLogic) ResumePlan(in *trigger.ResumePlanReq) (*trigger.Resume
 
 	// 只有暂停状态的计划才能恢复，已终止的计划无法恢复
 	if plan.Status != int64(model.PlanStatusPaused) {
-		return &trigger.ResumePlanRes{}, nil
+		return nil, errors.BadRequest("", "计划非暂停,不可恢复")
 	}
 
 	// 执行事务
@@ -61,6 +62,18 @@ func (l *ResumePlanLogic) ResumePlan(in *trigger.ResumePlanReq) (*trigger.Resume
 
 		// 更新计划
 		transErr := l.svcCtx.PlanModel.UpdateWithVersion(ctx, tx, plan)
+		if transErr != nil {
+			return transErr
+		}
+
+		builder := l.svcCtx.PlanBatchModel.UpdateBuilder().
+			Set("status", int64(model.PlanStatusEnabled)).
+			Set("paused_time", sql.NullTime{}).
+			Set("paused_reason", sql.NullString{}).
+			Set("update_user", sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}).
+			Where("plan_id = ?", in.PlanId).
+			Where("status = ?", int64(model.PlanStatusPaused))
+		_, transErr = l.svcCtx.PlanBatchModel.UpdateWithBuilder(ctx, tx, builder)
 		if transErr != nil {
 			return transErr
 		}

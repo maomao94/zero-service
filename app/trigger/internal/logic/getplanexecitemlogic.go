@@ -88,16 +88,10 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 		pbExecItem.LastTriggerTime = carbon.CreateFromStdTime(execItem.LastTriggerTime.Time).ToDateTimeString()
 	}
 
-	// 设置终止时间和原因
-	if execItem.TerminatedTime.Valid {
-		pbExecItem.TerminatedTime = carbon.CreateFromStdTime(execItem.TerminatedTime.Time).ToDateTimeString()
-	}
-
 	// 设置暂停时间和原因
 	if execItem.PausedTime.Valid {
 		pbExecItem.PausedTime = carbon.CreateFromStdTime(execItem.PausedTime.Time).ToDateTimeString()
 	}
-
 	return &trigger.GetPlanExecItemRes{
 		PlanExecItem: []*trigger.PbPlanExecItem{pbExecItem},
 	}, nil

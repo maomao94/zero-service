@@ -4424,26 +4424,24 @@ type PbPlan struct {
 	Rule *PbPlanRule `protobuf:"bytes,8,opt,name=rule,proto3" json:"rule,omitempty"`
 	// 状态：0-禁用，1-启用，2-已终止，3-暂停
 	Status int32 `protobuf:"varint,9,opt,name=status,proto3" json:"status,omitempty"`
-	// 终止时间
-	TerminatedTime string `protobuf:"bytes,10,opt,name=terminatedTime,proto3" json:"terminatedTime,omitempty"`
 	// 终止原因
-	TerminatedReason string `protobuf:"bytes,11,opt,name=terminatedReason,proto3" json:"terminatedReason,omitempty"`
+	TerminatedReason string `protobuf:"bytes,10,opt,name=terminatedReason,proto3" json:"terminatedReason,omitempty"`
 	// 暂停时间
-	PausedTime string `protobuf:"bytes,12,opt,name=pausedTime,proto3" json:"pausedTime,omitempty"`
+	PausedTime string `protobuf:"bytes,11,opt,name=pausedTime,proto3" json:"pausedTime,omitempty"`
 	// 暂停原因
-	PausedReason string `protobuf:"bytes,13,opt,name=pausedReason,proto3" json:"pausedReason,omitempty"`
+	PausedReason string `protobuf:"bytes,12,opt,name=pausedReason,proto3" json:"pausedReason,omitempty"`
 	// 执行进度 0.00-100.00
-	Progress float32 `protobuf:"fixed32,14,opt,name=progress,proto3" json:"progress,omitempty"`
+	Progress float32 `protobuf:"fixed32,13,opt,name=progress,proto3" json:"progress,omitempty"`
 	// 扩展字段1
-	Ext1 string `protobuf:"bytes,15,opt,name=ext1,proto3" json:"ext1,omitempty"`
+	Ext1 string `protobuf:"bytes,14,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	// 扩展字段2
-	Ext2 string `protobuf:"bytes,16,opt,name=ext2,proto3" json:"ext2,omitempty"`
+	Ext2 string `protobuf:"bytes,15,opt,name=ext2,proto3" json:"ext2,omitempty"`
 	// 扩展字段3
-	Ext3 string `protobuf:"bytes,17,opt,name=ext3,proto3" json:"ext3,omitempty"`
+	Ext3 string `protobuf:"bytes,16,opt,name=ext3,proto3" json:"ext3,omitempty"`
 	// 扩展字段4
-	Ext4 string `protobuf:"bytes,18,opt,name=ext4,proto3" json:"ext4,omitempty"`
+	Ext4 string `protobuf:"bytes,17,opt,name=ext4,proto3" json:"ext4,omitempty"`
 	// 扩展字段5
-	Ext5          string `protobuf:"bytes,19,opt,name=ext5,proto3" json:"ext5,omitempty"`
+	Ext5          string `protobuf:"bytes,18,opt,name=ext5,proto3" json:"ext5,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4581,13 +4579,6 @@ func (x *PbPlan) GetStatus() int32 {
 		return x.Status
 	}
 	return 0
-}
-
-func (x *PbPlan) GetTerminatedTime() string {
-	if x != nil {
-		return x.TerminatedTime
-	}
-	return ""
 }
 
 func (x *PbPlan) GetTerminatedReason() string {
@@ -5225,14 +5216,12 @@ type PbPlanExecItem struct {
 	LastMessage string `protobuf:"bytes,23,opt,name=lastMessage,proto3" json:"lastMessage,omitempty"`
 	// 上次结果原因
 	LastReason string `protobuf:"bytes,24,opt,name=lastReason,proto3" json:"lastReason,omitempty"`
-	// 终止时间
-	TerminatedTime string `protobuf:"bytes,25,opt,name=terminatedTime,proto3" json:"terminatedTime,omitempty"`
 	// 终止原因
-	TerminatedReason string `protobuf:"bytes,26,opt,name=terminatedReason,proto3" json:"terminatedReason,omitempty"`
+	TerminatedReason string `protobuf:"bytes,25,opt,name=terminatedReason,proto3" json:"terminatedReason,omitempty"`
 	// 暂停时间
-	PausedTime string `protobuf:"bytes,27,opt,name=pausedTime,proto3" json:"pausedTime,omitempty"`
+	PausedTime string `protobuf:"bytes,26,opt,name=pausedTime,proto3" json:"pausedTime,omitempty"`
 	// 暂停原因
-	PausedReason string `protobuf:"bytes,28,opt,name=pausedReason,proto3" json:"pausedReason,omitempty"`
+	PausedReason string `protobuf:"bytes,27,opt,name=pausedReason,proto3" json:"pausedReason,omitempty"`
 	// 扩展字段1
 	Ext1 string `protobuf:"bytes,29,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	// 扩展字段2
@@ -5476,13 +5465,6 @@ func (x *PbPlanExecItem) GetLastMessage() string {
 func (x *PbPlanExecItem) GetLastReason() string {
 	if x != nil {
 		return x.LastReason
-	}
-	return ""
-}
-
-func (x *PbPlanExecItem) GetTerminatedTime() string {
-	if x != nil {
-		return x.TerminatedTime
 	}
 	return ""
 }
@@ -6242,22 +6224,28 @@ type PbPlanBatch struct {
 	Status int32 `protobuf:"varint,5,opt,name=status,proto3" json:"status,omitempty"`
 	// 计划触发时间
 	PlanTriggerTime string `protobuf:"bytes,6,opt,name=planTriggerTime,proto3" json:"planTriggerTime,omitempty"`
-	// 完成时间
-	CompletedTime string `protobuf:"bytes,7,opt,name=completedTime,proto3" json:"completedTime,omitempty"`
+	// 终止原因
+	TerminatedReason string `protobuf:"bytes,7,opt,name=terminatedReason,proto3" json:"terminatedReason,omitempty"`
+	// 暂停时间
+	PausedTime string `protobuf:"bytes,8,opt,name=pausedTime,proto3" json:"pausedTime,omitempty"`
+	// 暂停原因
+	PausedReason string `protobuf:"bytes,9,opt,name=pausedReason,proto3" json:"pausedReason,omitempty"`
+	// 结束时间
+	FinishedTime string `protobuf:"bytes,10,opt,name=finishedTime,proto3" json:"finishedTime,omitempty"`
 	// 状态统计map，key为状态值，value为对应数量
-	StatusCountMap map[string]int64 `protobuf:"bytes,8,rep,name=statusCountMap,proto3" json:"statusCountMap,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	StatusCountMap map[string]int64 `protobuf:"bytes,11,rep,name=statusCountMap,proto3" json:"statusCountMap,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
 	// 执行计划数
-	ExecCnt int64 `protobuf:"varint,9,opt,name=execCnt,proto3" json:"execCnt,omitempty"`
+	ExecCnt int64 `protobuf:"varint,12,opt,name=execCnt,proto3" json:"execCnt,omitempty"`
 	// 扩展字段1
-	Ext1 string `protobuf:"bytes,20,opt,name=ext1,proto3" json:"ext1,omitempty"`
+	Ext1 string `protobuf:"bytes,13,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	// 扩展字段2
-	Ext2 string `protobuf:"bytes,21,opt,name=ext2,proto3" json:"ext2,omitempty"`
+	Ext2 string `protobuf:"bytes,14,opt,name=ext2,proto3" json:"ext2,omitempty"`
 	// 扩展字段3
-	Ext3 string `protobuf:"bytes,22,opt,name=ext3,proto3" json:"ext3,omitempty"`
+	Ext3 string `protobuf:"bytes,15,opt,name=ext3,proto3" json:"ext3,omitempty"`
 	// 扩展字段4
-	Ext4 string `protobuf:"bytes,23,opt,name=ext4,proto3" json:"ext4,omitempty"`
+	Ext4 string `protobuf:"bytes,16,opt,name=ext4,proto3" json:"ext4,omitempty"`
 	// 扩展字段5
-	Ext5          string `protobuf:"bytes,24,opt,name=ext5,proto3" json:"ext5,omitempty"`
+	Ext5          string `protobuf:"bytes,17,opt,name=ext5,proto3" json:"ext5,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6376,9 +6364,30 @@ func (x *PbPlanBatch) GetPlanTriggerTime() string {
 	return ""
 }
 
-func (x *PbPlanBatch) GetCompletedTime() string {
+func (x *PbPlanBatch) GetTerminatedReason() string {
 	if x != nil {
-		return x.CompletedTime
+		return x.TerminatedReason
+	}
+	return ""
+}
+
+func (x *PbPlanBatch) GetPausedTime() string {
+	if x != nil {
+		return x.PausedTime
+	}
+	return ""
+}
+
+func (x *PbPlanBatch) GetPausedReason() string {
+	if x != nil {
+		return x.PausedReason
+	}
+	return ""
+}
+
+func (x *PbPlanBatch) GetFinishedTime() string {
+	if x != nil {
+		return x.FinishedTime
 	}
 	return ""
 }
@@ -6917,7 +6926,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\x06planId\x18\x02 \x01(\tR\x06planId\"1\n" +
 	"\n" +
 	"GetPlanRes\x12#\n" +
-	"\x04plan\x18\x01 \x01(\v2\x0f.trigger.PbPlanR\x04plan\"\xc9\x05\n" +
+	"\x04plan\x18\x01 \x01(\v2\x0f.trigger.PbPlanR\x04plan\"\xa1\x05\n" +
 	"\x06PbPlan\x12\x1e\n" +
 	"\n" +
 	"createTime\x18e \x01(\tR\n" +
@@ -6941,20 +6950,19 @@ const file_trigger_proto_rawDesc = "" +
 	"\tstartTime\x18\x06 \x01(\tR\tstartTime\x12\x18\n" +
 	"\aendTime\x18\a \x01(\tR\aendTime\x12'\n" +
 	"\x04rule\x18\b \x01(\v2\x13.trigger.PbPlanRuleR\x04rule\x12\x16\n" +
-	"\x06status\x18\t \x01(\x05R\x06status\x12&\n" +
-	"\x0eterminatedTime\x18\n" +
-	" \x01(\tR\x0eterminatedTime\x12*\n" +
-	"\x10terminatedReason\x18\v \x01(\tR\x10terminatedReason\x12\x1e\n" +
+	"\x06status\x18\t \x01(\x05R\x06status\x12*\n" +
+	"\x10terminatedReason\x18\n" +
+	" \x01(\tR\x10terminatedReason\x12\x1e\n" +
 	"\n" +
-	"pausedTime\x18\f \x01(\tR\n" +
+	"pausedTime\x18\v \x01(\tR\n" +
 	"pausedTime\x12\"\n" +
-	"\fpausedReason\x18\r \x01(\tR\fpausedReason\x12\x1a\n" +
-	"\bprogress\x18\x0e \x01(\x02R\bprogress\x12\x12\n" +
-	"\x04ext1\x18\x0f \x01(\tR\x04ext1\x12\x12\n" +
-	"\x04ext2\x18\x10 \x01(\tR\x04ext2\x12\x12\n" +
-	"\x04ext3\x18\x11 \x01(\tR\x04ext3\x12\x12\n" +
-	"\x04ext4\x18\x12 \x01(\tR\x04ext4\x12\x12\n" +
-	"\x04ext5\x18\x13 \x01(\tR\x04ext5\"\xef\x01\n" +
+	"\fpausedReason\x18\f \x01(\tR\fpausedReason\x12\x1a\n" +
+	"\bprogress\x18\r \x01(\x02R\bprogress\x12\x12\n" +
+	"\x04ext1\x18\x0e \x01(\tR\x04ext1\x12\x12\n" +
+	"\x04ext2\x18\x0f \x01(\tR\x04ext2\x12\x12\n" +
+	"\x04ext3\x18\x10 \x01(\tR\x04ext3\x12\x12\n" +
+	"\x04ext4\x18\x11 \x01(\tR\x04ext4\x12\x12\n" +
+	"\x04ext5\x18\x12 \x01(\tR\x04ext5\"\xef\x01\n" +
 	"\fListPlansReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12#\n" +
 	"\bpageSize\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bpageSize\x12!\n" +
@@ -6988,7 +6996,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
 	"\x06execId\x18\x02 \x01(\tR\x06execId\"Q\n" +
 	"\x12GetPlanExecItemRes\x12;\n" +
-	"\fplanExecItem\x18\x01 \x03(\v2\x17.trigger.PbPlanExecItemR\fplanExecItem\"\x8c\t\n" +
+	"\fplanExecItem\x18\x01 \x03(\v2\x17.trigger.PbPlanExecItemR\fplanExecItem\"\xe4\b\n" +
 	"\x0ePbPlanExecItem\x12\x1e\n" +
 	"\n" +
 	"createTime\x18e \x01(\tR\n" +
@@ -7031,13 +7039,12 @@ const file_trigger_proto_rawDesc = "" +
 	"\vlastMessage\x18\x17 \x01(\tR\vlastMessage\x12\x1e\n" +
 	"\n" +
 	"lastReason\x18\x18 \x01(\tR\n" +
-	"lastReason\x12&\n" +
-	"\x0eterminatedTime\x18\x19 \x01(\tR\x0eterminatedTime\x12*\n" +
-	"\x10terminatedReason\x18\x1a \x01(\tR\x10terminatedReason\x12\x1e\n" +
+	"lastReason\x12*\n" +
+	"\x10terminatedReason\x18\x19 \x01(\tR\x10terminatedReason\x12\x1e\n" +
 	"\n" +
-	"pausedTime\x18\x1b \x01(\tR\n" +
+	"pausedTime\x18\x1a \x01(\tR\n" +
 	"pausedTime\x12\"\n" +
-	"\fpausedReason\x18\x1c \x01(\tR\fpausedReason\x12\x12\n" +
+	"\fpausedReason\x18\x1b \x01(\tR\fpausedReason\x12\x12\n" +
 	"\x04ext1\x18\x1d \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x18\x1e \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x18\x1f \x01(\tR\x04ext3\x12\x12\n" +
@@ -7109,7 +7116,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\n" +
 	"execResult\x18\r \x01(\tR\n" +
 	"execResult\x12\x18\n" +
-	"\amessage\x18\x0e \x01(\tR\amessage\"\x9c\x05\n" +
+	"\amessage\x18\x0e \x01(\tR\amessage\"\x8a\x06\n" +
 	"\vPbPlanBatch\x12\x1e\n" +
 	"\n" +
 	"createTime\x18e \x01(\tR\n" +
@@ -7130,15 +7137,21 @@ const file_trigger_proto_rawDesc = "" +
 	"\abatchId\x18\x03 \x01(\tR\abatchId\x12\x1c\n" +
 	"\tbatchName\x18\x04 \x01(\tR\tbatchName\x12\x16\n" +
 	"\x06status\x18\x05 \x01(\x05R\x06status\x12(\n" +
-	"\x0fplanTriggerTime\x18\x06 \x01(\tR\x0fplanTriggerTime\x12$\n" +
-	"\rcompletedTime\x18\a \x01(\tR\rcompletedTime\x12P\n" +
-	"\x0estatusCountMap\x18\b \x03(\v2(.trigger.PbPlanBatch.StatusCountMapEntryR\x0estatusCountMap\x12\x18\n" +
-	"\aexecCnt\x18\t \x01(\x03R\aexecCnt\x12\x12\n" +
-	"\x04ext1\x18\x14 \x01(\tR\x04ext1\x12\x12\n" +
-	"\x04ext2\x18\x15 \x01(\tR\x04ext2\x12\x12\n" +
-	"\x04ext3\x18\x16 \x01(\tR\x04ext3\x12\x12\n" +
-	"\x04ext4\x18\x17 \x01(\tR\x04ext4\x12\x12\n" +
-	"\x04ext5\x18\x18 \x01(\tR\x04ext5\x1aA\n" +
+	"\x0fplanTriggerTime\x18\x06 \x01(\tR\x0fplanTriggerTime\x12*\n" +
+	"\x10terminatedReason\x18\a \x01(\tR\x10terminatedReason\x12\x1e\n" +
+	"\n" +
+	"pausedTime\x18\b \x01(\tR\n" +
+	"pausedTime\x12\"\n" +
+	"\fpausedReason\x18\t \x01(\tR\fpausedReason\x12\"\n" +
+	"\ffinishedTime\x18\n" +
+	" \x01(\tR\ffinishedTime\x12P\n" +
+	"\x0estatusCountMap\x18\v \x03(\v2(.trigger.PbPlanBatch.StatusCountMapEntryR\x0estatusCountMap\x12\x18\n" +
+	"\aexecCnt\x18\f \x01(\x03R\aexecCnt\x12\x12\n" +
+	"\x04ext1\x18\r \x01(\tR\x04ext1\x12\x12\n" +
+	"\x04ext2\x18\x0e \x01(\tR\x04ext2\x12\x12\n" +
+	"\x04ext3\x18\x0f \x01(\tR\x04ext3\x12\x12\n" +
+	"\x04ext4\x18\x10 \x01(\tR\x04ext4\x12\x12\n" +
+	"\x04ext5\x18\x11 \x01(\tR\x04ext5\x1aA\n" +
 	"\x13StatusCountMapEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\"\xa9\x02\n" +

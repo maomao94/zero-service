@@ -8,6 +8,7 @@ import (
 	"zero-service/common/tool"
 	"zero-service/model"
 
+	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
@@ -37,15 +38,25 @@ func (l *PausePlanBatchLogic) PausePlanBatch(in *trigger.PausePlanBatchReq) (*tr
 	// 查询计划批次
 	planBatch, err := l.svcCtx.PlanBatchModel.FindOne(l.ctx, in.Id)
 	if err != nil {
-		if err == sqlx.ErrNotFound {
-			return &trigger.PausePlanBatchRes{}, nil
-		}
+		return nil, err
+	}
+	// 查询计划
+	plan, err := l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, planBatch.PlanId)
+	if err != nil {
 		return nil, err
 	}
 
-	// 检查当前状态是否允许暂停操作
-	if planBatch.Status == int64(model.PlanStatusDisabled) || planBatch.Status == int64(model.PlanStatusTerminated) || planBatch.Status == int64(model.PlanStatusPaused) {
-		return &trigger.PausePlanBatchRes{}, nil
+	if plan.Status == int64(model.PlanStatusTerminated) || plan.FinishedTime.Valid {
+		return nil, errors.BadRequest("", "计划状态已结束,无需暂停")
+	}
+	if planBatch.Status == int64(model.PlanStatusTerminated) || plan.FinishedTime.Valid {
+		return nil, errors.BadRequest("", "计划批次状态已结束,无需暂停")
+	}
+	if planBatch.Status != int64(model.PlanStatusEnabled) {
+		return nil, errors.BadRequest("", "计划批次状态非启用状态,不可暂停")
+	}
+	if plan.Status != int64(model.PlanStatusEnabled) {
+		return nil, errors.BadRequest("", "计划状态非启用状态,无需暂停")
 	}
 
 	// 执行事务

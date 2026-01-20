@@ -9631,8 +9631,6 @@ func (m *PbPlan) validate(all bool) error {
 
 	// no validation rules for Status
 
-	// no validation rules for TerminatedTime
-
 	// no validation rules for TerminatedReason
 
 	// no validation rules for PausedTime
@@ -10929,8 +10927,6 @@ func (m *PbPlanExecItem) validate(all bool) error {
 
 	// no validation rules for LastReason
 
-	// no validation rules for TerminatedTime
-
 	// no validation rules for TerminatedReason
 
 	// no validation rules for PausedTime
@@ -12099,7 +12095,13 @@ func (m *PbPlanBatch) validate(all bool) error {
 
 	// no validation rules for PlanTriggerTime
 
-	// no validation rules for CompletedTime
+	// no validation rules for TerminatedReason
+
+	// no validation rules for PausedTime
+
+	// no validation rules for PausedReason
+
+	// no validation rules for FinishedTime
 
 	// no validation rules for StatusCountMap
 

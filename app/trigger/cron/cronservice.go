@@ -446,10 +446,10 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		logx.Errorf("Error inserting plan exec log for item %d: %v", execItem.Id, err)
 	}
 
-	if err := s.svcCtx.PlanBatchModel.UpdateBatchCompletedTime(ctx, execItem.BatchPk); err != nil {
+	if err := s.svcCtx.PlanBatchModel.UpdateBatchFinishedTime(ctx, execItem.BatchPk); err != nil {
 		logx.Errorf("Error updating batch %s completed time: %v", execItem.BatchId, err)
 	}
-	if err := s.svcCtx.PlanModel.UpdatePlanCompletedTime(ctx, execItem.PlanPk); err != nil {
+	if err := s.svcCtx.PlanModel.UpdateBatchFinishedTime(ctx, execItem.PlanPk); err != nil {
 		logx.Errorf("Error updating plan %s completed time: %v", execItem.PlanId, err)
 	}
 

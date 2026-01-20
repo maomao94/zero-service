@@ -98,11 +98,6 @@ func (l *ListPlansLogic) ListPlans(in *trigger.ListPlansReq) (*trigger.ListPlans
 			Ext5:             plan.Ext5.String,
 		}
 
-		// 设置终止时间和原因
-		if plan.TerminatedTime.Valid {
-			pbPlan.TerminatedTime = carbon.CreateFromStdTime(plan.TerminatedTime.Time).ToDateTimeString()
-		}
-
 		// 设置暂停时间和原因
 		if plan.PausedTime.Valid {
 			pbPlan.PausedTime = carbon.CreateFromStdTime(plan.PausedTime.Time).ToDateTimeString()

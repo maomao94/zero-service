@@ -51,7 +51,7 @@ var defaultAutoFields = []string{
 // 计划状态枚举
 // ============================
 const (
-	PlanStatusDisabled   int = 0 // 计划禁用
+	//PlanStatusDisabled   int = 0 // 计划禁用
 	PlanStatusEnabled    int = 1 // 计划启用，可调度
 	PlanStatusPaused     int = 2 // 计划暂停（不触发计划项）
 	PlanStatusTerminated int = 3 // 计划终止（人工/策略终止）

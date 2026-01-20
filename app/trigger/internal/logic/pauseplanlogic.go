@@ -10,6 +10,7 @@ import (
 	"zero-service/common/tool"
 	"zero-service/model"
 
+	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
@@ -44,9 +45,11 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 		}
 		return nil, err
 	}
-
-	if plan.Status == int64(model.PlanStatusDisabled) || plan.Status == int64(model.PlanStatusTerminated) || plan.Status == int64(model.PlanStatusPaused) {
-		return &trigger.PausePlanRes{}, nil
+	if plan.Status == int64(model.PlanStatusTerminated) || plan.FinishedTime.Valid {
+		return nil, errors.BadRequest("", "计划状态已结束,无需暂停")
+	}
+	if plan.Status != int64(model.PlanStatusEnabled) {
+		return nil, errors.BadRequest("", "计划状态非启用状态,无需暂停")
 	}
 
 	// 执行事务
@@ -62,6 +65,18 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 		if transErr != nil {
 			return transErr
 		}
+
+		builder := l.svcCtx.PlanBatchModel.UpdateBuilder().
+			Set("status", int64(model.PlanStatusPaused)).
+			Set("update_user", sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}).
+			Where("plan_id = ?", in.PlanId).
+			Where("status = ?", int64(model.PlanStatusEnabled)).
+			Where("finished_time IS NULL")
+		_, transErr = l.svcCtx.PlanBatchModel.UpdateWithBuilder(ctx, tx, builder)
+		if transErr != nil {
+			return transErr
+		}
+		return nil
 		return nil
 	})
 

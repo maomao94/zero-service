@@ -169,7 +169,7 @@ func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, i
 		Set("last_reason", lastReason).
 		Set("last_trigger_time", currentTimeStr).
 		Set("trigger_count", squirrel.Expr("trigger_count + 1")).
-		Set("completed_time", currentTimeStr).
+		Set("finished_time", currentTimeStr).
 		Where("id = ?", id)
 	if len(statusIn) > 0 {
 		updateBuilder = updateBuilder.Where(squirrel.Eq{"status": statusIn})
@@ -220,8 +220,8 @@ func (m *customPlanExecItemModel) UpdateStatusToFail(ctx context.Context, id int
 			Set("next_trigger_time", nextTriggerTimeStr).
 			Set("last_trigger_time", currentTimeStr).
 			Set("trigger_count", squirrel.Expr("trigger_count + 1")).
-			Set("terminated_time", currentTimeStr).
 			Set("terminated_reason", "超过重试上限，调度平台自动终止").
+			Set("finished_time", currentTimeStr).
 			Where("id = ?", id)
 	} else {
 		updateBuilder = squirrel.Update(m.table).

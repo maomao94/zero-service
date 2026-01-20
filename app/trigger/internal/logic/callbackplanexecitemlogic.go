@@ -133,11 +133,11 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 		if transErr != nil {
 			return transErr
 		}
-		transErr = l.svcCtx.PlanBatchModel.UpdateBatchCompletedTime(ctx, execItem.BatchPk)
+		transErr = l.svcCtx.PlanBatchModel.UpdateBatchFinishedTime(ctx, execItem.BatchPk)
 		if transErr != nil {
 			return transErr
 		}
-		transErr = l.svcCtx.PlanModel.UpdatePlanCompletedTime(ctx, execItem.PlanPk)
+		transErr = l.svcCtx.PlanModel.UpdateBatchFinishedTime(ctx, execItem.PlanPk)
 		if transErr != nil {
 			return transErr
 		}

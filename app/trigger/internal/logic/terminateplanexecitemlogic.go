@@ -3,13 +3,13 @@ package logic
 import (
 	"context"
 	"database/sql"
-	"time"
 	"zero-service/model"
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/tool"
 
+	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
@@ -39,22 +39,41 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 	// 查询执行项
 	execItem, err := l.svcCtx.PlanExecItemModel.FindOne(l.ctx, in.Id)
 	if err != nil {
-		if err == sqlx.ErrNotFound {
-			return &trigger.TerminatePlanExecItemRes{}, nil
-		}
 		return nil, err
 	}
 
+	// 查询计划批次
+	planBatch, err := l.svcCtx.PlanBatchModel.FindOne(l.ctx, execItem.BatchPk)
+	if err != nil {
+		return nil, err
+	}
+
+	// 查询计划
+	plan, err := l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, execItem.PlanId)
+	if err != nil {
+		return nil, err
+	}
+
+	// 检查当前状态是否允许终止操作
+	if plan.Status == int64(model.PlanStatusTerminated) || plan.FinishedTime.Valid {
+		return nil, errors.BadRequest("", "计划状态已结束,无需终止")
+	}
+
+	if planBatch.Status == int64(model.PlanStatusTerminated) || planBatch.FinishedTime.Valid {
+		return nil, errors.BadRequest("", "计划批次状态已结束,无需终止")
+	}
+
 	if execItem.Status == int64(model.StatusCompleted) || execItem.Status == int64(model.StatusTerminated) {
-		return &trigger.TerminatePlanExecItemRes{}, nil
+		return nil, errors.BadRequest("", "执行项状态已结束,无需终止")
 	}
 
 	// 执行事务
 	err = l.svcCtx.PlanModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
 		// 更新执行项状态为已终止
 		execItem.Status = int64(model.StatusTerminated)
-		execItem.TerminatedTime = sql.NullTime{Time: time.Now(), Valid: true}
 		execItem.TerminatedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
+		execItem.PausedTime = sql.NullTime{}
+		execItem.PausedReason = sql.NullString{}
 		execItem.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}
 
 		// 更新执行项
@@ -62,13 +81,14 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 		if transErr != nil {
 			return transErr
 		}
-
 		return nil
 	})
 
 	if err != nil {
-		return &trigger.TerminatePlanExecItemRes{}, nil
+		return nil, err
 	}
+	l.svcCtx.PlanBatchModel.UpdateBatchFinishedTime(l.ctx, execItem.BatchPk)
+	l.svcCtx.PlanModel.UpdateBatchFinishedTime(l.ctx, execItem.PlanPk)
 
 	return &trigger.TerminatePlanExecItemRes{}, nil
 }

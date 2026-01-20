@@ -9,6 +9,7 @@ import (
 	"zero-service/app/trigger/trigger"
 	"zero-service/model"
 
+	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -38,6 +39,26 @@ func (l *RunPlanExecItemLogic) RunPlanExecItem(in *trigger.RunPlanExecItemReq) (
 	}
 	if execItem.Status != int64(model.StatusWaiting) && execItem.Status != int64(model.StatusDelayed) {
 		return nil, fmt.Errorf("执行项当前状态为%d，无法立即执行，仅支持等待调度(0)或延期等待(10)状态", execItem.Status)
+	}
+	// 查询计划批次
+	planBatch, err := l.svcCtx.PlanBatchModel.FindOne(l.ctx, execItem.BatchPk)
+	if err != nil {
+		return nil, err
+	}
+
+	// 查询计划
+	plan, err := l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, execItem.PlanId)
+	if err != nil {
+		return nil, err
+	}
+
+	// 检查当前状态是否允许终止操作
+	if plan.Status == int64(model.PlanStatusTerminated) || plan.FinishedTime.Valid {
+		return nil, errors.BadRequest("", "计划状态已结束,不可终止")
+	}
+
+	if planBatch.Status == int64(model.PlanStatusTerminated) || planBatch.FinishedTime.Valid {
+		return nil, errors.BadRequest("", "计划批次状态已结束,不可终止")
 	}
 
 	// 更新下次触发时间为当前时间，使其立即执行

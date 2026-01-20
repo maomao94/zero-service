@@ -72,30 +72,33 @@ func (l *GetPlanBatchLogic) GetPlanBatch(in *trigger.GetPlanBatchReq) (*trigger.
 
 	// 构建响应
 	pbPlanBatch := &trigger.PbPlanBatch{
-		CreateTime:      carbon.CreateFromStdTime(planBatch.CreateTime).ToDateTimeString(),
-		UpdateTime:      carbon.CreateFromStdTime(planBatch.UpdateTime).ToDateTimeString(),
-		CreateUser:      planBatch.CreateUser.String,
-		UpdateUser:      planBatch.UpdateUser.String,
-		DeptCode:        planBatch.DeptCode.String,
-		Id:              planBatch.Id,
-		PlanPk:          planBatch.PlanPk,
-		PlanId:          planBatch.PlanId,
-		BatchId:         planBatch.BatchId,
-		BatchName:       planBatch.BatchName.String,
-		Status:          int32(planBatch.Status),
-		ExecCnt:         totalExecItems,
-		PlanTriggerTime: carbon.CreateFromStdTime(planBatch.PlanTriggerTime.Time).ToDateTimeString(),
-		StatusCountMap:  statusCountMap,
-		Ext1:            planBatch.Ext1.String,
-		Ext2:            planBatch.Ext2.String,
-		Ext3:            planBatch.Ext3.String,
-		Ext4:            planBatch.Ext4.String,
-		Ext5:            planBatch.Ext5.String,
+		CreateTime:       carbon.CreateFromStdTime(planBatch.CreateTime).ToDateTimeString(),
+		UpdateTime:       carbon.CreateFromStdTime(planBatch.UpdateTime).ToDateTimeString(),
+		CreateUser:       planBatch.CreateUser.String,
+		UpdateUser:       planBatch.UpdateUser.String,
+		DeptCode:         planBatch.DeptCode.String,
+		Id:               planBatch.Id,
+		PlanPk:           planBatch.PlanPk,
+		PlanId:           planBatch.PlanId,
+		BatchId:          planBatch.BatchId,
+		BatchName:        planBatch.BatchName.String,
+		Status:           int32(planBatch.Status),
+		PlanTriggerTime:  carbon.CreateFromStdTime(planBatch.PlanTriggerTime.Time).ToDateTimeString(),
+		TerminatedReason: planBatch.TerminatedReason.String,
+		PausedReason:     planBatch.PausedReason.String,
+		StatusCountMap:   statusCountMap,
+		ExecCnt:          totalExecItems,
+		Ext1:             planBatch.Ext1.String,
+		Ext2:             planBatch.Ext2.String,
+		Ext3:             planBatch.Ext3.String,
+		Ext4:             planBatch.Ext4.String,
+		Ext5:             planBatch.Ext5.String,
 	}
-
-	// 设置完成时间
-	if planBatch.CompletedTime.Valid {
-		pbPlanBatch.CompletedTime = carbon.CreateFromStdTime(planBatch.CompletedTime.Time).ToDateTimeString()
+	if planBatch.PausedTime.Valid {
+		pbPlanBatch.PausedTime = carbon.CreateFromStdTime(planBatch.PausedTime.Time).ToDateTimeString()
+	}
+	if planBatch.FinishedTime.Valid {
+		pbPlanBatch.FinishedTime = carbon.CreateFromStdTime(planBatch.FinishedTime.Time).ToDateTimeString()
 	}
 
 	return &trigger.GetPlanBatchRes{
