@@ -68,6 +68,8 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 
 		builder := l.svcCtx.PlanBatchModel.UpdateBuilder().
 			Set("status", int64(model.PlanStatusPaused)).
+			Set("paused_time", sql.NullTime{Time: time.Now(), Valid: true}).
+			Set("paused_reason", sql.NullString{String: in.Reason, Valid: in.Reason != ""}).
 			Set("update_user", sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}).
 			Where("plan_id = ?", in.PlanId).
 			Where("status = ?", int64(model.PlanStatusEnabled)).
