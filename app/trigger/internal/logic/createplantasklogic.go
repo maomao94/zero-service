@@ -39,12 +39,6 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	if err != nil {
 		return nil, err
 	}
-	for _, item := range in.ExecItems {
-		matsh := GrpcServerRegexp.MatchString(item.ServiceAddr)
-		if !matsh {
-			return nil, errors.New("grpcServer is invalid")
-		}
-	}
 	querPlan, err := l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, in.PlanId)
 	if err != nil {
 		if err != sqlx.ErrNotFound {
@@ -186,7 +180,6 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 					ItemType:         sql.NullString{String: item.ItemType, Valid: item.ItemType != ""},
 					ItemName:         sql.NullString{String: item.ItemName, Valid: item.ItemName != ""},
 					PointId:          sql.NullString{String: item.PointId, Valid: item.PointId != ""},
-					ServiceAddr:      item.ServiceAddr,
 					Payload:          item.Payload,
 					RequestTimeout:   item.RequestTimeout,
 					PlanTriggerTime:  d,

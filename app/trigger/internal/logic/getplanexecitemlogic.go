@@ -64,7 +64,6 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 		ItemType:         execItem.ItemType.String,
 		ItemName:         execItem.ItemName.String,
 		PointId:          execItem.PointId.String,
-		ServiceAddr:      execItem.ServiceAddr,
 		Payload:          execItem.Payload,
 		RequestTimeout:   execItem.RequestTimeout,
 		PlanTriggerTime:  carbon.CreateFromStdTime(execItem.PlanTriggerTime).ToDateTimeString(),
