@@ -75,6 +75,8 @@ func (l *ResumePlanBatchLogic) ResumePlanBatch(in *trigger.ResumePlanBatchReq) (
 		// 更新计划启用
 		builder := l.svcCtx.PlanModel.UpdateBuilder().
 			Set("status", int64(model.PlanStatusEnabled)).
+			Set("paused_time", sql.NullTime{}).
+			Set("paused_reason", sql.NullString{}).
 			Set("update_user", sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}).
 			Where("id = ?", planBatch.PlanPk).
 			Where("status = ?", int64(model.PlanStatusPaused))
