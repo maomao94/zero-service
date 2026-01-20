@@ -3927,3 +3927,213 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = PbDelayConfigValidationError{}
+
+// Validate checks the field values on NotifyEventReq with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *NotifyEventReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on NotifyEventReq with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in NotifyEventReqMultiError,
+// or nil if none found.
+func (m *NotifyEventReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *NotifyEventReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for TId
+
+	// no validation rules for EventType
+
+	// no validation rules for PlanId
+
+	// no validation rules for BatchId
+
+	// no validation rules for Attributes
+
+	if len(errors) > 0 {
+		return NotifyEventReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// NotifyEventReqMultiError is an error wrapping multiple validation errors
+// returned by NotifyEventReq.ValidateAll() if the designated constraints
+// aren't met.
+type NotifyEventReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m NotifyEventReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m NotifyEventReqMultiError) AllErrors() []error { return m }
+
+// NotifyEventReqValidationError is the validation error returned by
+// NotifyEventReq.Validate if the designated constraints aren't met.
+type NotifyEventReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e NotifyEventReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e NotifyEventReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e NotifyEventReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e NotifyEventReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e NotifyEventReqValidationError) ErrorName() string { return "NotifyEventReqValidationError" }
+
+// Error satisfies the builtin error interface
+func (e NotifyEventReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sNotifyEventReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = NotifyEventReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = NotifyEventReqValidationError{}
+
+// Validate checks the field values on NotifyEventRes with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *NotifyEventRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on NotifyEventRes with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in NotifyEventResMultiError,
+// or nil if none found.
+func (m *NotifyEventRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *NotifyEventRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return NotifyEventResMultiError(errors)
+	}
+
+	return nil
+}
+
+// NotifyEventResMultiError is an error wrapping multiple validation errors
+// returned by NotifyEventRes.ValidateAll() if the designated constraints
+// aren't met.
+type NotifyEventResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m NotifyEventResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m NotifyEventResMultiError) AllErrors() []error { return m }
+
+// NotifyEventResValidationError is the validation error returned by
+// NotifyEventRes.Validate if the designated constraints aren't met.
+type NotifyEventResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e NotifyEventResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e NotifyEventResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e NotifyEventResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e NotifyEventResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e NotifyEventResValidationError) ErrorName() string { return "NotifyEventResValidationError" }
+
+// Error satisfies the builtin error interface
+func (e NotifyEventResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sNotifyEventRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = NotifyEventResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = NotifyEventResValidationError{}

@@ -20,6 +20,8 @@ service StreamEvent {
   rpc UpSocketMessage (UpSocketMessageReq) returns (UpSocketMessageReq);
   // 计划任务事件处理
   rpc HandlerPlanTaskEvent (HandlerPlanTaskEventReq) returns (HandlerPlanTaskEventRes);
+  // 通知计划任务事件
+  rpc NotifyPlanEvent (NotifyEventReq) returns (NotifyEventRes);
 }
 
 message ReceiveMQTTMessageReq {
@@ -505,32 +507,32 @@ message HandlerPlanTaskEventReq{
   // 计划ID 全局唯一
   string planId = 2;
   // 批主键ID
-  int64 batchPk = 4;
+  int64 batchPk = 3;
   // 批ID
-  string batchId = 5;
+  string batchId = 4;
   // 执行ID 全局唯一
-  string execId = 6;
+  string execId = 5;
   // 执行项ID
-  string itemId = 7;
+  string itemId = 6;
   // 执行项类型
-  string itemType = 8;
+  string itemType = 7;
   // 执行项名称
-  string itemName = 9;
+  string itemName = 8;
   // 点位id
-  string PointId = 10;
+  string PointId = 9;
   // 业务负载
-  string payload = 12;
+  string payload = 10;
   // 计划触发时间
-  string planTriggerTime = 14;
+  string planTriggerTime = 11;
   // 上次触发时间
-  string lastTriggerTime = 15;
+  string lastTriggerTime = 12;
 
   // 上次执行结果
-  string lastResult = 18;
+  string lastResult = 13;
   // 上次结果描述
-  string lastMessage = 19;
+  string lastMessage = 14;
   // 上次结果原因
-  string lastReason = 20;
+  string lastReason = 15;
 }
 
 message HandlerPlanTaskEventRes{
@@ -550,4 +552,28 @@ message PbDelayConfig {
   string nextTriggerTime = 1;
   // 延期原因
   string delayReason = 2;
+}
+
+
+message NotifyEventReq {
+  string tId = 1;
+  // 事件类型
+  EventType event_type = 2;
+  // 关联的计划ID
+  string plan_id = 3;
+  // 关联的批次ID（可选，plan完成时可为空）
+  string batch_id = 4;
+  // 扩展字段，给未来留空间
+  map<string, string> attributes = 5;
+}
+
+enum EventType {
+  EVENT_TYPE_UNKNOWN = 0;
+  // 批次完成（成功 / 部分成功都算完成）
+  BATCH_FINISHED = 1;
+  // 计划完成（生命周期结束）
+  PLAN_FINISHED = 2;
+}
+
+message NotifyEventRes {
 }

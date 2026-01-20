@@ -21,6 +21,7 @@ type Config struct {
 	DB      struct {
 		DataSource string
 	}
-	DisableStmtLog bool          `json:",optional"`
-	GracePeriod    time.Duration `json:",default=30s"`
+	DisableStmtLog  bool          `json:",optional"`
+	GracePeriod     time.Duration `json:",default=30s"`
+	StreamEventConf zrpc.RpcClientConf
 }

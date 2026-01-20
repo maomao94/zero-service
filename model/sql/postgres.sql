@@ -194,8 +194,7 @@ CREATE TABLE IF NOT EXISTS plan_exec_item (
     item_type varchar(64) DEFAULT '',
     item_name VARCHAR(128) DEFAULT '',
     point_id VARCHAR(64) DEFAULT '',
-    service_addr VARCHAR(256) NOT NULL DEFAULT '', 
-    payload TEXT NOT NULL DEFAULT '', 
+    payload TEXT NOT NULL DEFAULT '',
     request_timeout INT NOT NULL DEFAULT 0, 
     plan_trigger_time TIMESTAMP NOT NULL, 
     next_trigger_time TIMESTAMP NOT NULL, 
@@ -237,7 +236,6 @@ COMMENT ON COLUMN plan_exec_item.item_id IS '执行项ID';
 COMMENT ON COLUMN plan_exec_item.item_type IS '执行项类型';
 COMMENT ON COLUMN plan_exec_item.item_name IS '执行项名称';
 COMMENT ON COLUMN plan_exec_item.point_id IS '点位id';
-COMMENT ON COLUMN plan_exec_item.service_addr IS '业务服务地址';
 COMMENT ON COLUMN plan_exec_item.payload IS '业务负载';
 COMMENT ON COLUMN plan_exec_item.request_timeout IS '请求超时时间（毫秒）';
 COMMENT ON COLUMN plan_exec_item.plan_trigger_time IS '计划触发时间';

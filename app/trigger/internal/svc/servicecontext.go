@@ -1,9 +1,12 @@
 package svc
 
 import (
+	"math"
 	"zero-service/app/trigger/internal/config"
+	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/asynqx"
 	"zero-service/common/dbx"
+	"zero-service/facade/streamevent/streamevent"
 	"zero-service/model"
 
 	"github.com/doug-martin/goqu/v9"
@@ -14,6 +17,8 @@ import (
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"github.com/zeromicro/go-zero/rest/httpc"
+	"github.com/zeromicro/go-zero/zrpc"
+	"google.golang.org/grpc"
 )
 
 const (
@@ -36,6 +41,7 @@ type ServiceContext struct {
 	Database          *goqu.Database
 	UnstableExpiry    mathx.Unstable
 	Redis             *redis.Redis
+	StreamEventCli    streamevent.StreamEventClient
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -66,5 +72,14 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Database:          database,
 		Redis:             redisDb,
 		UnstableExpiry:    mathx.NewUnstable(expiryDeviation),
+		StreamEventCli: streamevent.NewStreamEventClient(zrpc.MustNewClient(c.StreamEventConf,
+			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
+			// 添加最大消息配置
+			zrpc.WithDialOption(grpc.WithDefaultCallOptions(
+				grpc.MaxCallSendMsgSize(math.MaxInt32), // 发送最大2GB
+				//grpc.MaxCallSendMsgSize(50 * 1024 * 1024),   // 发送最大50MB
+				//grpc.MaxCallRecvMsgSize(100 * 1024 * 1024),  // 接收最大100MB
+			)),
+		).Conn()),
 	}
 }

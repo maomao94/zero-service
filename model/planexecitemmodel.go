@@ -82,7 +82,7 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 	nextTriggerTime := currentTime.Add(expireIn)
 	nextTriggerTimeStr := carbon.CreateFromStdTime(nextTriggerTime).ToDateTimeMicroString()
 	selectBuilder := squirrel.Select(
-		"pei.version", "pei.id", "pei.plan_pk", "pei.plan_id", "pei.item_id", "pei.item_name", "pei.point_id", "pei.next_trigger_time", "pei.service_addr", "pei.payload", "pei.plan_trigger_time", "pei.request_timeout",
+		"pei.version", "pei.id", "pei.plan_pk", "pei.plan_id", "pei.item_id", "pei.item_name", "pei.point_id", "pei.next_trigger_time", "pei.payload", "pei.plan_trigger_time", "pei.request_timeout",
 	).From(m.table+" AS pei").
 		Join("plan p ON p.id = pei.plan_pk").
 		Join("plan_batch pb ON pb.id = pei.batch_pk").

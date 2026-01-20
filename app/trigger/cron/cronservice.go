@@ -8,20 +8,15 @@ import (
 	"math/rand"
 	"time"
 	"zero-service/app/trigger/internal/svc"
-	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
 	"zero-service/model"
 
 	"github.com/dromara/carbon/v2"
-	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"github.com/zeromicro/go-zero/core/threading"
-	"github.com/zeromicro/go-zero/zrpc"
-	"google.golang.org/grpc"
-	"google.golang.org/protobuf/proto"
 )
 
 type CronService struct {
@@ -133,64 +128,18 @@ func (cb rawCodec) Unmarshal(data []byte, v any) error {
 func (cb rawCodec) Name() string { return "proto_raw" }
 
 func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanExecItem, plan *model.Plan) {
-	grpcServer := tool.MayReplaceLocalhost(execItem.ServiceAddr)
-	clientConf := zrpc.RpcClientConf{}
-	conf.FillDefault(&clientConf)
-	clientConf.Target = grpcServer
-	clientConf.NonBlock = true
-	clientConf.Timeout = 60000
 	if execItem.RequestTimeout == 0 {
-		execItem.RequestTimeout = clientConf.Timeout
+		execItem.RequestTimeout = s.svcCtx.Config.StreamEventConf.Timeout
 	}
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(execItem.RequestTimeout)*time.Millisecond+120*time.Second)
 	defer cancel()
-	logx.Debugf("Executing callback for exec item %d with service: %s, planId: %s, itemId: %s",
-		execItem.Id, grpcServer, execItem.PlanId, execItem.ItemId)
+	logx.Debugf("Executing callback for exec item %d, planId: %s, itemId: %s",
+		execItem.Id, execItem.PlanId, execItem.ItemId)
 
 	if err := s.svcCtx.PlanExecItemModel.UpdateStatusToRunning(ctx, execItem.Id); err != nil {
 		logx.Errorf("Error updating plan exec item %d to running: %v", execItem.Id, err)
 		return
 	}
-
-	v, ok := s.svcCtx.ConnMap.Get(grpcServer)
-	if !ok {
-		conn, err := zrpc.NewClient(clientConf,
-			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
-			zrpc.WithDialOption(grpc.WithDefaultCallOptions(grpc.ForceCodec(rawCodec{}))))
-		if err != nil {
-			logx.Errorf("Failed to create gRPC client for %s: %v", grpcServer, err)
-			if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, "Failed to create gRPC client: "+err.Error(), "",
-				[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
-			); updateErr != nil {
-				logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
-			}
-			return
-		}
-		s.svcCtx.ConnMap.Set(grpcServer, conn)
-		v = conn
-		logx.Debugf("gRPC client inited for %s", grpcServer)
-	}
-	if v == nil {
-		logx.Errorf("gRPC client is nil for %s", grpcServer)
-		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, "gRPC client is nil", "",
-			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
-		); updateErr != nil {
-			logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
-		}
-		return
-	}
-
-	cli, ok := v.(*zrpc.RpcClient)
-	if !ok {
-		logx.Errorf("Invalid connection type in ConnMap for %s", grpcServer)
-		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, "Invalid connection type in ConnMap", "",
-			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
-		); updateErr != nil {
-			logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
-		}
-		return
-	}
-
 	callPlan := &streamevent.PbPlan{
 		CreateTime:  carbon.CreateFromStdTime(plan.CreateTime).ToDateTimeString(),
 		UpdateTime:  carbon.CreateFromStdTime(plan.UpdateTime).ToDateTimeString(),
@@ -233,42 +182,9 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	if execItem.LastTriggerTime.Valid {
 		req.LastTriggerTime = carbon.NewCarbon(execItem.LastTriggerTime.Time).ToDateTimeString()
 	}
-
-	var respBytes []byte
-	in, err := tool.ToProtoBytes(req)
-	if err != nil {
-		logx.Errorf("Error marshaling request for exec item %d: %v", execItem.Id, err)
-		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, "Error marshaling request: "+err.Error(), "",
-			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
-		); updateErr != nil {
-			logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
-		}
-
-		logEntry := &model.PlanExecLog{
-			DeptCode:    execItem.DeptCode,
-			PlanPk:      plan.Id,
-			PlanId:      execItem.PlanId,
-			PlanName:    plan.PlanName,
-			BatchPk:     execItem.BatchPk,
-			BatchId:     execItem.BatchId,
-			ItemPk:      execItem.Id,
-			ExecId:      execItem.ExecId,
-			ItemId:      execItem.ItemId,
-			ItemType:    execItem.ItemType,
-			ItemName:    execItem.ItemName,
-			PointId:     execItem.PointId,
-			TriggerTime: time.Now(),
-			TraceId:     sql.NullString{String: "", Valid: false},
-			ExecResult:  sql.NullString{String: model.ResultFailed, Valid: true}, // 失败
-			Message:     sql.NullString{String: "Error marshaling request: " + err.Error(), Valid: true},
-			Reason:      sql.NullString{},
-		}
-		if _, err := s.svcCtx.PlanExecLogModel.Insert(ctx, nil, logEntry); err != nil {
-			logx.Errorf("Error inserting plan exec log for item %d: %v", execItem.Id, err)
-		}
-		return
-	}
 	errCh := make(chan error, 1)
+	var err error
+	var res *streamevent.HandlerPlanTaskEventRes
 	s.taskRunner.Schedule(func() {
 		defer close(errCh)
 		lockKey := fmt.Sprintf("trigger:lock:plan:exec:%d", execItem.ExecId)
@@ -285,7 +201,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		defer func() {
 			lock.ReleaseCtx(ctx)
 		}()
-		taskErr = cli.Conn().Invoke(ctx, streamevent.StreamEvent_HandlerPlanTaskEvent_FullMethodName, &in, &respBytes)
+		res, taskErr = s.svcCtx.StreamEventCli.HandlerPlanTaskEvent(ctx, req)
 		errCh <- taskErr
 	})
 	err = <-errCh
@@ -321,8 +237,6 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		}
 		return
 	}
-	res := &streamevent.HandlerPlanTaskEventRes{}
-	err = proto.Unmarshal(respBytes, res)
 	if err != nil {
 		logx.Errorf("Error unmarshaling response for exec item %d: %v", execItem.Id, err)
 		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, "Error unmarshaling response: "+err.Error(), "",

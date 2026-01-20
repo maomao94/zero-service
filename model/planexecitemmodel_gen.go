@@ -71,7 +71,6 @@ type (
 		ItemType         sql.NullString `db:"item_type"`         // 执行项类型
 		ItemName         sql.NullString `db:"item_name"`         // 执行项名称
 		PointId          sql.NullString `db:"point_id"`          // 点位id
-		ServiceAddr      string         `db:"service_addr"`      // 业务服务地址
 		Payload          string         `db:"payload"`           // 业务负载
 		RequestTimeout   int64          `db:"request_timeout"`   // 请求超时时间（毫秒）
 		PlanTriggerTime  time.Time      `db:"plan_trigger_time"` // 计划触发时间

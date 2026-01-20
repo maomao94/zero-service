@@ -21,6 +21,57 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type EventType int32
+
+const (
+	EventType_EVENT_TYPE_UNKNOWN EventType = 0
+	// 批次完成（成功 / 部分成功都算完成）
+	EventType_BATCH_FINISHED EventType = 1
+	// 计划完成（生命周期结束）
+	EventType_PLAN_FINISHED EventType = 2
+)
+
+// Enum value maps for EventType.
+var (
+	EventType_name = map[int32]string{
+		0: "EVENT_TYPE_UNKNOWN",
+		1: "BATCH_FINISHED",
+		2: "PLAN_FINISHED",
+	}
+	EventType_value = map[string]int32{
+		"EVENT_TYPE_UNKNOWN": 0,
+		"BATCH_FINISHED":     1,
+		"PLAN_FINISHED":      2,
+	}
+)
+
+func (x EventType) Enum() *EventType {
+	p := new(EventType)
+	*p = x
+	return p
+}
+
+func (x EventType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (EventType) Descriptor() protoreflect.EnumDescriptor {
+	return file_streamevent_proto_enumTypes[0].Descriptor()
+}
+
+func (EventType) Type() protoreflect.EnumType {
+	return &file_streamevent_proto_enumTypes[0]
+}
+
+func (x EventType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use EventType.Descriptor instead.
+func (EventType) EnumDescriptor() ([]byte, []int) {
+	return file_streamevent_proto_rawDescGZIP(), []int{0}
+}
+
 type ReceiveMQTTMessageReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// MQTT消息 数据量大 考虑聚合
@@ -2787,31 +2838,31 @@ type HandlerPlanTaskEventReq struct {
 	// 计划ID 全局唯一
 	PlanId string `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
 	// 批主键ID
-	BatchPk int64 `protobuf:"varint,4,opt,name=batchPk,proto3" json:"batchPk,omitempty"`
+	BatchPk int64 `protobuf:"varint,3,opt,name=batchPk,proto3" json:"batchPk,omitempty"`
 	// 批ID
-	BatchId string `protobuf:"bytes,5,opt,name=batchId,proto3" json:"batchId,omitempty"`
+	BatchId string `protobuf:"bytes,4,opt,name=batchId,proto3" json:"batchId,omitempty"`
 	// 执行ID 全局唯一
-	ExecId string `protobuf:"bytes,6,opt,name=execId,proto3" json:"execId,omitempty"`
+	ExecId string `protobuf:"bytes,5,opt,name=execId,proto3" json:"execId,omitempty"`
 	// 执行项ID
-	ItemId string `protobuf:"bytes,7,opt,name=itemId,proto3" json:"itemId,omitempty"`
+	ItemId string `protobuf:"bytes,6,opt,name=itemId,proto3" json:"itemId,omitempty"`
 	// 执行项类型
-	ItemType string `protobuf:"bytes,8,opt,name=itemType,proto3" json:"itemType,omitempty"`
+	ItemType string `protobuf:"bytes,7,opt,name=itemType,proto3" json:"itemType,omitempty"`
 	// 执行项名称
-	ItemName string `protobuf:"bytes,9,opt,name=itemName,proto3" json:"itemName,omitempty"`
+	ItemName string `protobuf:"bytes,8,opt,name=itemName,proto3" json:"itemName,omitempty"`
 	// 点位id
-	PointId string `protobuf:"bytes,10,opt,name=PointId,proto3" json:"PointId,omitempty"`
+	PointId string `protobuf:"bytes,9,opt,name=PointId,proto3" json:"PointId,omitempty"`
 	// 业务负载
-	Payload string `protobuf:"bytes,12,opt,name=payload,proto3" json:"payload,omitempty"`
+	Payload string `protobuf:"bytes,10,opt,name=payload,proto3" json:"payload,omitempty"`
 	// 计划触发时间
-	PlanTriggerTime string `protobuf:"bytes,14,opt,name=planTriggerTime,proto3" json:"planTriggerTime,omitempty"`
+	PlanTriggerTime string `protobuf:"bytes,11,opt,name=planTriggerTime,proto3" json:"planTriggerTime,omitempty"`
 	// 上次触发时间
-	LastTriggerTime string `protobuf:"bytes,15,opt,name=lastTriggerTime,proto3" json:"lastTriggerTime,omitempty"`
+	LastTriggerTime string `protobuf:"bytes,12,opt,name=lastTriggerTime,proto3" json:"lastTriggerTime,omitempty"`
 	// 上次执行结果
-	LastResult string `protobuf:"bytes,18,opt,name=lastResult,proto3" json:"lastResult,omitempty"`
+	LastResult string `protobuf:"bytes,13,opt,name=lastResult,proto3" json:"lastResult,omitempty"`
 	// 上次结果描述
-	LastMessage string `protobuf:"bytes,19,opt,name=lastMessage,proto3" json:"lastMessage,omitempty"`
+	LastMessage string `protobuf:"bytes,14,opt,name=lastMessage,proto3" json:"lastMessage,omitempty"`
 	// 上次结果原因
-	LastReason    string `protobuf:"bytes,20,opt,name=lastReason,proto3" json:"lastReason,omitempty"`
+	LastReason    string `protobuf:"bytes,15,opt,name=lastReason,proto3" json:"lastReason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3092,6 +3143,122 @@ func (x *PbDelayConfig) GetDelayReason() string {
 	return ""
 }
 
+type NotifyEventReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	TId   string                 `protobuf:"bytes,1,opt,name=tId,proto3" json:"tId,omitempty"`
+	// 事件类型
+	EventType EventType `protobuf:"varint,2,opt,name=event_type,json=eventType,proto3,enum=streamevent.EventType" json:"event_type,omitempty"`
+	// 关联的计划ID
+	PlanId string `protobuf:"bytes,3,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
+	// 关联的批次ID（可选，plan完成时可为空）
+	BatchId string `protobuf:"bytes,4,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
+	// 扩展字段，给未来留空间
+	Attributes    map[string]string `protobuf:"bytes,5,rep,name=attributes,proto3" json:"attributes,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NotifyEventReq) Reset() {
+	*x = NotifyEventReq{}
+	mi := &file_streamevent_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NotifyEventReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NotifyEventReq) ProtoMessage() {}
+
+func (x *NotifyEventReq) ProtoReflect() protoreflect.Message {
+	mi := &file_streamevent_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NotifyEventReq.ProtoReflect.Descriptor instead.
+func (*NotifyEventReq) Descriptor() ([]byte, []int) {
+	return file_streamevent_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *NotifyEventReq) GetTId() string {
+	if x != nil {
+		return x.TId
+	}
+	return ""
+}
+
+func (x *NotifyEventReq) GetEventType() EventType {
+	if x != nil {
+		return x.EventType
+	}
+	return EventType_EVENT_TYPE_UNKNOWN
+}
+
+func (x *NotifyEventReq) GetPlanId() string {
+	if x != nil {
+		return x.PlanId
+	}
+	return ""
+}
+
+func (x *NotifyEventReq) GetBatchId() string {
+	if x != nil {
+		return x.BatchId
+	}
+	return ""
+}
+
+func (x *NotifyEventReq) GetAttributes() map[string]string {
+	if x != nil {
+		return x.Attributes
+	}
+	return nil
+}
+
+type NotifyEventRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NotifyEventRes) Reset() {
+	*x = NotifyEventRes{}
+	mi := &file_streamevent_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NotifyEventRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NotifyEventRes) ProtoMessage() {}
+
+func (x *NotifyEventRes) ProtoReflect() protoreflect.Message {
+	mi := &file_streamevent_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NotifyEventRes.ProtoReflect.Descriptor instead.
+func (*NotifyEventRes) Descriptor() ([]byte, []int) {
+	return file_streamevent_proto_rawDescGZIP(), []int{33}
+}
+
 var File_streamevent_proto protoreflect.FileDescriptor
 
 const file_streamevent_proto_rawDesc = "" +
@@ -3346,23 +3513,23 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x02id\x182 \x01(\x03R\x02id\x12\x16\n" +
 	"\x06planPk\x18\x01 \x01(\x03R\x06planPk\x12\x16\n" +
 	"\x06planId\x18\x02 \x01(\tR\x06planId\x12\x18\n" +
-	"\abatchPk\x18\x04 \x01(\x03R\abatchPk\x12\x18\n" +
-	"\abatchId\x18\x05 \x01(\tR\abatchId\x12\x16\n" +
-	"\x06execId\x18\x06 \x01(\tR\x06execId\x12\x16\n" +
-	"\x06itemId\x18\a \x01(\tR\x06itemId\x12\x1a\n" +
-	"\bitemType\x18\b \x01(\tR\bitemType\x12\x1a\n" +
-	"\bitemName\x18\t \x01(\tR\bitemName\x12\x18\n" +
-	"\aPointId\x18\n" +
-	" \x01(\tR\aPointId\x12\x18\n" +
-	"\apayload\x18\f \x01(\tR\apayload\x12(\n" +
-	"\x0fplanTriggerTime\x18\x0e \x01(\tR\x0fplanTriggerTime\x12(\n" +
-	"\x0flastTriggerTime\x18\x0f \x01(\tR\x0flastTriggerTime\x12\x1e\n" +
+	"\abatchPk\x18\x03 \x01(\x03R\abatchPk\x12\x18\n" +
+	"\abatchId\x18\x04 \x01(\tR\abatchId\x12\x16\n" +
+	"\x06execId\x18\x05 \x01(\tR\x06execId\x12\x16\n" +
+	"\x06itemId\x18\x06 \x01(\tR\x06itemId\x12\x1a\n" +
+	"\bitemType\x18\a \x01(\tR\bitemType\x12\x1a\n" +
+	"\bitemName\x18\b \x01(\tR\bitemName\x12\x18\n" +
+	"\aPointId\x18\t \x01(\tR\aPointId\x12\x18\n" +
+	"\apayload\x18\n" +
+	" \x01(\tR\apayload\x12(\n" +
+	"\x0fplanTriggerTime\x18\v \x01(\tR\x0fplanTriggerTime\x12(\n" +
+	"\x0flastTriggerTime\x18\f \x01(\tR\x0flastTriggerTime\x12\x1e\n" +
 	"\n" +
-	"lastResult\x18\x12 \x01(\tR\n" +
+	"lastResult\x18\r \x01(\tR\n" +
 	"lastResult\x12 \n" +
-	"\vlastMessage\x18\x13 \x01(\tR\vlastMessage\x12\x1e\n" +
+	"\vlastMessage\x18\x0e \x01(\tR\vlastMessage\x12\x1e\n" +
 	"\n" +
-	"lastReason\x18\x14 \x01(\tR\n" +
+	"lastReason\x18\x0f \x01(\tR\n" +
 	"lastReason\"\xa9\x01\n" +
 	"\x17HandlerPlanTaskEventRes\x12\x1e\n" +
 	"\n" +
@@ -3373,14 +3540,32 @@ const file_streamevent_proto_rawDesc = "" +
 	"\vdelayConfig\x18\x04 \x01(\v2\x1a.streamevent.PbDelayConfigR\vdelayConfig\"[\n" +
 	"\rPbDelayConfig\x12(\n" +
 	"\x0fnextTriggerTime\x18\x01 \x01(\tR\x0fnextTriggerTime\x12 \n" +
-	"\vdelayReason\x18\x02 \x01(\tR\vdelayReason2\xac\x04\n" +
+	"\vdelayReason\x18\x02 \x01(\tR\vdelayReason\"\x99\x02\n" +
+	"\x0eNotifyEventReq\x12\x10\n" +
+	"\x03tId\x18\x01 \x01(\tR\x03tId\x125\n" +
+	"\n" +
+	"event_type\x18\x02 \x01(\x0e2\x16.streamevent.EventTypeR\teventType\x12\x17\n" +
+	"\aplan_id\x18\x03 \x01(\tR\x06planId\x12\x19\n" +
+	"\bbatch_id\x18\x04 \x01(\tR\abatchId\x12K\n" +
+	"\n" +
+	"attributes\x18\x05 \x03(\v2+.streamevent.NotifyEventReq.AttributesEntryR\n" +
+	"attributes\x1a=\n" +
+	"\x0fAttributesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x10\n" +
+	"\x0eNotifyEventRes*J\n" +
+	"\tEventType\x12\x16\n" +
+	"\x12EVENT_TYPE_UNKNOWN\x10\x00\x12\x12\n" +
+	"\x0eBATCH_FINISHED\x10\x01\x12\x11\n" +
+	"\rPLAN_FINISHED\x10\x022\xf9\x04\n" +
 	"\vStreamEvent\x12\\\n" +
 	"\x12ReceiveMQTTMessage\x12\".streamevent.ReceiveMQTTMessageReq\x1a\".streamevent.ReceiveMQTTMessageRes\x12V\n" +
 	"\x10ReceiveWSMessage\x12 .streamevent.ReceiveWSMessageReq\x1a .streamevent.ReceiveWSMessageRes\x12_\n" +
 	"\x13ReceiveKafkaMessage\x12#.streamevent.ReceiveKafkaMessageReq\x1a#.streamevent.ReceiveKafkaMessageRes\x12M\n" +
 	"\rPushChunkAsdu\x12\x1d.streamevent.PushChunkAsduReq\x1a\x1d.streamevent.PushChunkAsduRes\x12S\n" +
 	"\x0fUpSocketMessage\x12\x1f.streamevent.UpSocketMessageReq\x1a\x1f.streamevent.UpSocketMessageReq\x12b\n" +
-	"\x14HandlerPlanTaskEvent\x12$.streamevent.HandlerPlanTaskEventReq\x1a$.streamevent.HandlerPlanTaskEventResB@\n" +
+	"\x14HandlerPlanTaskEvent\x12$.streamevent.HandlerPlanTaskEventReq\x1a$.streamevent.HandlerPlanTaskEventRes\x12K\n" +
+	"\x0fNotifyPlanEvent\x12\x1b.streamevent.NotifyEventReq\x1a\x1b.streamevent.NotifyEventResB@\n" +
 	"\x1bcom.github.streamevent.grpcB\x10StreamEventProtoP\x01Z\r./streameventb\x06proto3"
 
 var (
@@ -3395,67 +3580,76 @@ func file_streamevent_proto_rawDescGZIP() []byte {
 	return file_streamevent_proto_rawDescData
 }
 
-var file_streamevent_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
+var file_streamevent_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_streamevent_proto_msgTypes = make([]protoimpl.MessageInfo, 35)
 var file_streamevent_proto_goTypes = []any{
-	(*ReceiveMQTTMessageReq)(nil),                      // 0: streamevent.ReceiveMQTTMessageReq
-	(*ReceiveMQTTMessageRes)(nil),                      // 1: streamevent.ReceiveMQTTMessageRes
-	(*MqttMessage)(nil),                                // 2: streamevent.MqttMessage
-	(*ReceiveWSMessageReq)(nil),                        // 3: streamevent.ReceiveWSMessageReq
-	(*ReceiveWSMessageRes)(nil),                        // 4: streamevent.ReceiveWSMessageRes
-	(*ReceiveKafkaMessageReq)(nil),                     // 5: streamevent.ReceiveKafkaMessageReq
-	(*ReceiveKafkaMessageRes)(nil),                     // 6: streamevent.ReceiveKafkaMessageRes
-	(*KafkaMessage)(nil),                               // 7: streamevent.KafkaMessage
-	(*PushChunkAsduReq)(nil),                           // 8: streamevent.PushChunkAsduReq
-	(*PushChunkAsduRes)(nil),                           // 9: streamevent.PushChunkAsduRes
-	(*MsgBody)(nil),                                    // 10: streamevent.MsgBody
-	(*PointMapping)(nil),                               // 11: streamevent.PointMapping
-	(*SinglePointInfo)(nil),                            // 12: streamevent.SinglePointInfo
-	(*DoublePointInfo)(nil),                            // 13: streamevent.DoublePointInfo
-	(*MeasuredValueScaledInfo)(nil),                    // 14: streamevent.MeasuredValueScaledInfo
-	(*MeasuredValueNormalInfo)(nil),                    // 15: streamevent.MeasuredValueNormalInfo
-	(*StepPositionInfo)(nil),                           // 16: streamevent.StepPositionInfo
-	(*StepPosition)(nil),                               // 17: streamevent.StepPosition
-	(*BitString32Info)(nil),                            // 18: streamevent.BitString32Info
-	(*MeasuredValueFloatInfo)(nil),                     // 19: streamevent.MeasuredValueFloatInfo
-	(*BinaryCounterReadingInfo)(nil),                   // 20: streamevent.BinaryCounterReadingInfo
-	(*BinaryCounterReading)(nil),                       // 21: streamevent.BinaryCounterReading
-	(*EventOfProtectionEquipmentInfo)(nil),             // 22: streamevent.EventOfProtectionEquipmentInfo
-	(*PackedStartEventsOfProtectionEquipmentInfo)(nil), // 23: streamevent.PackedStartEventsOfProtectionEquipmentInfo
-	(*PackedOutputCircuitInfo)(nil),                    // 24: streamevent.PackedOutputCircuitInfo
-	(*PackedSinglePointWithSCDInfo)(nil),               // 25: streamevent.PackedSinglePointWithSCDInfo
-	(*UpSocketMessageReq)(nil),                         // 26: streamevent.UpSocketMessageReq
-	(*UpSocketMessageRsp)(nil),                         // 27: streamevent.UpSocketMessageRsp
-	(*PbPlan)(nil),                                     // 28: streamevent.PbPlan
-	(*HandlerPlanTaskEventReq)(nil),                    // 29: streamevent.HandlerPlanTaskEventReq
-	(*HandlerPlanTaskEventRes)(nil),                    // 30: streamevent.HandlerPlanTaskEventRes
-	(*PbDelayConfig)(nil),                              // 31: streamevent.PbDelayConfig
+	(EventType)(0),                                     // 0: streamevent.EventType
+	(*ReceiveMQTTMessageReq)(nil),                      // 1: streamevent.ReceiveMQTTMessageReq
+	(*ReceiveMQTTMessageRes)(nil),                      // 2: streamevent.ReceiveMQTTMessageRes
+	(*MqttMessage)(nil),                                // 3: streamevent.MqttMessage
+	(*ReceiveWSMessageReq)(nil),                        // 4: streamevent.ReceiveWSMessageReq
+	(*ReceiveWSMessageRes)(nil),                        // 5: streamevent.ReceiveWSMessageRes
+	(*ReceiveKafkaMessageReq)(nil),                     // 6: streamevent.ReceiveKafkaMessageReq
+	(*ReceiveKafkaMessageRes)(nil),                     // 7: streamevent.ReceiveKafkaMessageRes
+	(*KafkaMessage)(nil),                               // 8: streamevent.KafkaMessage
+	(*PushChunkAsduReq)(nil),                           // 9: streamevent.PushChunkAsduReq
+	(*PushChunkAsduRes)(nil),                           // 10: streamevent.PushChunkAsduRes
+	(*MsgBody)(nil),                                    // 11: streamevent.MsgBody
+	(*PointMapping)(nil),                               // 12: streamevent.PointMapping
+	(*SinglePointInfo)(nil),                            // 13: streamevent.SinglePointInfo
+	(*DoublePointInfo)(nil),                            // 14: streamevent.DoublePointInfo
+	(*MeasuredValueScaledInfo)(nil),                    // 15: streamevent.MeasuredValueScaledInfo
+	(*MeasuredValueNormalInfo)(nil),                    // 16: streamevent.MeasuredValueNormalInfo
+	(*StepPositionInfo)(nil),                           // 17: streamevent.StepPositionInfo
+	(*StepPosition)(nil),                               // 18: streamevent.StepPosition
+	(*BitString32Info)(nil),                            // 19: streamevent.BitString32Info
+	(*MeasuredValueFloatInfo)(nil),                     // 20: streamevent.MeasuredValueFloatInfo
+	(*BinaryCounterReadingInfo)(nil),                   // 21: streamevent.BinaryCounterReadingInfo
+	(*BinaryCounterReading)(nil),                       // 22: streamevent.BinaryCounterReading
+	(*EventOfProtectionEquipmentInfo)(nil),             // 23: streamevent.EventOfProtectionEquipmentInfo
+	(*PackedStartEventsOfProtectionEquipmentInfo)(nil), // 24: streamevent.PackedStartEventsOfProtectionEquipmentInfo
+	(*PackedOutputCircuitInfo)(nil),                    // 25: streamevent.PackedOutputCircuitInfo
+	(*PackedSinglePointWithSCDInfo)(nil),               // 26: streamevent.PackedSinglePointWithSCDInfo
+	(*UpSocketMessageReq)(nil),                         // 27: streamevent.UpSocketMessageReq
+	(*UpSocketMessageRsp)(nil),                         // 28: streamevent.UpSocketMessageRsp
+	(*PbPlan)(nil),                                     // 29: streamevent.PbPlan
+	(*HandlerPlanTaskEventReq)(nil),                    // 30: streamevent.HandlerPlanTaskEventReq
+	(*HandlerPlanTaskEventRes)(nil),                    // 31: streamevent.HandlerPlanTaskEventRes
+	(*PbDelayConfig)(nil),                              // 32: streamevent.PbDelayConfig
+	(*NotifyEventReq)(nil),                             // 33: streamevent.NotifyEventReq
+	(*NotifyEventRes)(nil),                             // 34: streamevent.NotifyEventRes
+	nil,                                                // 35: streamevent.NotifyEventReq.AttributesEntry
 }
 var file_streamevent_proto_depIdxs = []int32{
-	2,  // 0: streamevent.ReceiveMQTTMessageReq.messages:type_name -> streamevent.MqttMessage
-	7,  // 1: streamevent.ReceiveKafkaMessageReq.messages:type_name -> streamevent.KafkaMessage
-	10, // 2: streamevent.PushChunkAsduReq.msgBody:type_name -> streamevent.MsgBody
-	11, // 3: streamevent.MsgBody.pm:type_name -> streamevent.PointMapping
-	17, // 4: streamevent.StepPositionInfo.value:type_name -> streamevent.StepPosition
-	21, // 5: streamevent.BinaryCounterReadingInfo.value:type_name -> streamevent.BinaryCounterReading
-	28, // 6: streamevent.HandlerPlanTaskEventReq.plan:type_name -> streamevent.PbPlan
-	31, // 7: streamevent.HandlerPlanTaskEventRes.delayConfig:type_name -> streamevent.PbDelayConfig
-	0,  // 8: streamevent.StreamEvent.ReceiveMQTTMessage:input_type -> streamevent.ReceiveMQTTMessageReq
-	3,  // 9: streamevent.StreamEvent.ReceiveWSMessage:input_type -> streamevent.ReceiveWSMessageReq
-	5,  // 10: streamevent.StreamEvent.ReceiveKafkaMessage:input_type -> streamevent.ReceiveKafkaMessageReq
-	8,  // 11: streamevent.StreamEvent.PushChunkAsdu:input_type -> streamevent.PushChunkAsduReq
-	26, // 12: streamevent.StreamEvent.UpSocketMessage:input_type -> streamevent.UpSocketMessageReq
-	29, // 13: streamevent.StreamEvent.HandlerPlanTaskEvent:input_type -> streamevent.HandlerPlanTaskEventReq
-	1,  // 14: streamevent.StreamEvent.ReceiveMQTTMessage:output_type -> streamevent.ReceiveMQTTMessageRes
-	4,  // 15: streamevent.StreamEvent.ReceiveWSMessage:output_type -> streamevent.ReceiveWSMessageRes
-	6,  // 16: streamevent.StreamEvent.ReceiveKafkaMessage:output_type -> streamevent.ReceiveKafkaMessageRes
-	9,  // 17: streamevent.StreamEvent.PushChunkAsdu:output_type -> streamevent.PushChunkAsduRes
-	26, // 18: streamevent.StreamEvent.UpSocketMessage:output_type -> streamevent.UpSocketMessageReq
-	30, // 19: streamevent.StreamEvent.HandlerPlanTaskEvent:output_type -> streamevent.HandlerPlanTaskEventRes
-	14, // [14:20] is the sub-list for method output_type
-	8,  // [8:14] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	3,  // 0: streamevent.ReceiveMQTTMessageReq.messages:type_name -> streamevent.MqttMessage
+	8,  // 1: streamevent.ReceiveKafkaMessageReq.messages:type_name -> streamevent.KafkaMessage
+	11, // 2: streamevent.PushChunkAsduReq.msgBody:type_name -> streamevent.MsgBody
+	12, // 3: streamevent.MsgBody.pm:type_name -> streamevent.PointMapping
+	18, // 4: streamevent.StepPositionInfo.value:type_name -> streamevent.StepPosition
+	22, // 5: streamevent.BinaryCounterReadingInfo.value:type_name -> streamevent.BinaryCounterReading
+	29, // 6: streamevent.HandlerPlanTaskEventReq.plan:type_name -> streamevent.PbPlan
+	32, // 7: streamevent.HandlerPlanTaskEventRes.delayConfig:type_name -> streamevent.PbDelayConfig
+	0,  // 8: streamevent.NotifyEventReq.event_type:type_name -> streamevent.EventType
+	35, // 9: streamevent.NotifyEventReq.attributes:type_name -> streamevent.NotifyEventReq.AttributesEntry
+	1,  // 10: streamevent.StreamEvent.ReceiveMQTTMessage:input_type -> streamevent.ReceiveMQTTMessageReq
+	4,  // 11: streamevent.StreamEvent.ReceiveWSMessage:input_type -> streamevent.ReceiveWSMessageReq
+	6,  // 12: streamevent.StreamEvent.ReceiveKafkaMessage:input_type -> streamevent.ReceiveKafkaMessageReq
+	9,  // 13: streamevent.StreamEvent.PushChunkAsdu:input_type -> streamevent.PushChunkAsduReq
+	27, // 14: streamevent.StreamEvent.UpSocketMessage:input_type -> streamevent.UpSocketMessageReq
+	30, // 15: streamevent.StreamEvent.HandlerPlanTaskEvent:input_type -> streamevent.HandlerPlanTaskEventReq
+	33, // 16: streamevent.StreamEvent.NotifyPlanEvent:input_type -> streamevent.NotifyEventReq
+	2,  // 17: streamevent.StreamEvent.ReceiveMQTTMessage:output_type -> streamevent.ReceiveMQTTMessageRes
+	5,  // 18: streamevent.StreamEvent.ReceiveWSMessage:output_type -> streamevent.ReceiveWSMessageRes
+	7,  // 19: streamevent.StreamEvent.ReceiveKafkaMessage:output_type -> streamevent.ReceiveKafkaMessageRes
+	10, // 20: streamevent.StreamEvent.PushChunkAsdu:output_type -> streamevent.PushChunkAsduRes
+	27, // 21: streamevent.StreamEvent.UpSocketMessage:output_type -> streamevent.UpSocketMessageReq
+	31, // 22: streamevent.StreamEvent.HandlerPlanTaskEvent:output_type -> streamevent.HandlerPlanTaskEventRes
+	34, // 23: streamevent.StreamEvent.NotifyPlanEvent:output_type -> streamevent.NotifyEventRes
+	17, // [17:24] is the sub-list for method output_type
+	10, // [10:17] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_streamevent_proto_init() }
@@ -3468,13 +3662,14 @@ func file_streamevent_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_streamevent_proto_rawDesc), len(file_streamevent_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   32,
+			NumEnums:      1,
+			NumMessages:   35,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_streamevent_proto_goTypes,
 		DependencyIndexes: file_streamevent_proto_depIdxs,
+		EnumInfos:         file_streamevent_proto_enumTypes,
 		MessageInfos:      file_streamevent_proto_msgTypes,
 	}.Build()
 	File_streamevent_proto = out.File

@@ -568,16 +568,14 @@ message CreatePlanExecItem {
   string itemName = 3;
   // 点位id,业务字段
   string pointId = 4;
-  // 业务服务地址（必填）：执行该项的grpc服务地址
-  string serviceAddr = 5 [(validate.rules).string = {min_len: 1}];
   // 业务负载（必填）：序列化的业务专属参数（设备参数/转账金额/订单信息等）
-  string payload = 6;
+  string payload = 5;
   // 请求超时时间 单位: 毫秒 可为空
-  int64 requestTimeout = 7;
+  int64 requestTimeout = 6;
   // 间隔时间 单位: 毫秒
-  int64 intervalTime = 8 [(validate.rules).int64 = {gte: 0}];
+  int64 intervalTime = 7 [(validate.rules).int64 = {gte: 0}];
   // 间隔类型 0-不间隔（同时发起） 1-往后顺延 2-间隔时间内偏移
-  int32 intervalType = 9 [(validate.rules).int32 = {gte: 0, lte: 2}];
+  int32 intervalType = 8 [(validate.rules).int32 = {gte: 0, lte: 2}];
 
   // 扩展字段
   string ext1 = 50;
@@ -856,50 +854,48 @@ message PbPlanExecItem {
   string itemName = 9;
   // 点位id
   string PointId = 10;
-  // 业务服务地址
-  string serviceAddr = 11;
   // 业务负载
-  string payload = 12;
+  string payload = 11;
   // 请求超时时间（毫秒）
-  int64 requestTimeout = 13;
+  int64 requestTimeout = 12;
   // 间隔时间 单位: 毫秒
-  int64 intervalTime = 14;
+  int64 intervalTime = 13;
   // 间隔类型 0-不间隔（同时发起） 1-往后顺延 2-间隔时间内偏移
-  int32 intervalType = 15;
+  int32 intervalType = 14;
   // 偏移百分比（0-100），仅当 intervalType=2 时生效
-  int32 offsetPercent = 16;
+  int32 offsetPercent = 15;
   // 计划触发时间
-  string planTriggerTime = 17;
+  string planTriggerTime = 16;
   // 下次触发时间
-  string nextTriggerTime = 18;
+  string nextTriggerTime = 17;
   // 上次触发时间
-  string lastTriggerTime = 19;
+  string lastTriggerTime = 18;
   // 触发次数
-  int32 triggerCount = 20;
+  int32 triggerCount = 19;
   // 状态：0-待执行，1-执行中，2-完成，3-失败，4-延期，5-已终止，6-暂停
-  int32 status = 21;
+  int32 status = 20;
   // 上次执行结果
-  string lastResult = 22;
+  string lastResult = 21;
   // 上次结果描述
-  string lastMessage = 23;
+  string lastMessage = 22;
   // 上次结果原因
-  string lastReason = 24;
+  string lastReason = 23;
   // 终止原因
-  string terminatedReason = 25;
+  string terminatedReason = 24;
   // 暂停时间
-  string pausedTime = 26;
+  string pausedTime = 25;
   // 暂停原因
-  string pausedReason = 27;
+  string pausedReason = 26;
   // 扩展字段1
-  string ext1 = 29;
+  string ext1 = 51;
   // 扩展字段2
-  string ext2 = 30;
+  string ext2 = 52;
   // 扩展字段3
-  string ext3 = 31;
+  string ext3 = 53;
   // 扩展字段4
-  string ext4 = 32;
+  string ext4 = 54;
   // 扩展字段5
-  string ext5 = 33;
+  string ext5 = 55;
 }
 
 message ListPlanExecItemsReq {

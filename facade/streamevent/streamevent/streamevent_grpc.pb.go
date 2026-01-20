@@ -25,6 +25,7 @@ const (
 	StreamEvent_PushChunkAsdu_FullMethodName        = "/streamevent.StreamEvent/PushChunkAsdu"
 	StreamEvent_UpSocketMessage_FullMethodName      = "/streamevent.StreamEvent/UpSocketMessage"
 	StreamEvent_HandlerPlanTaskEvent_FullMethodName = "/streamevent.StreamEvent/HandlerPlanTaskEvent"
+	StreamEvent_NotifyPlanEvent_FullMethodName      = "/streamevent.StreamEvent/NotifyPlanEvent"
 )
 
 // StreamEventClient is the client API for StreamEvent service.
@@ -43,6 +44,8 @@ type StreamEventClient interface {
 	UpSocketMessage(ctx context.Context, in *UpSocketMessageReq, opts ...grpc.CallOption) (*UpSocketMessageReq, error)
 	// 计划任务事件处理
 	HandlerPlanTaskEvent(ctx context.Context, in *HandlerPlanTaskEventReq, opts ...grpc.CallOption) (*HandlerPlanTaskEventRes, error)
+	// 通知计划任务事件
+	NotifyPlanEvent(ctx context.Context, in *NotifyEventReq, opts ...grpc.CallOption) (*NotifyEventRes, error)
 }
 
 type streamEventClient struct {
@@ -113,6 +116,16 @@ func (c *streamEventClient) HandlerPlanTaskEvent(ctx context.Context, in *Handle
 	return out, nil
 }
 
+func (c *streamEventClient) NotifyPlanEvent(ctx context.Context, in *NotifyEventReq, opts ...grpc.CallOption) (*NotifyEventRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(NotifyEventRes)
+	err := c.cc.Invoke(ctx, StreamEvent_NotifyPlanEvent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StreamEventServer is the server API for StreamEvent service.
 // All implementations must embed UnimplementedStreamEventServer
 // for forward compatibility.
@@ -129,6 +142,8 @@ type StreamEventServer interface {
 	UpSocketMessage(context.Context, *UpSocketMessageReq) (*UpSocketMessageReq, error)
 	// 计划任务事件处理
 	HandlerPlanTaskEvent(context.Context, *HandlerPlanTaskEventReq) (*HandlerPlanTaskEventRes, error)
+	// 通知计划任务事件
+	NotifyPlanEvent(context.Context, *NotifyEventReq) (*NotifyEventRes, error)
 	mustEmbedUnimplementedStreamEventServer()
 }
 
@@ -156,6 +171,9 @@ func (UnimplementedStreamEventServer) UpSocketMessage(context.Context, *UpSocket
 }
 func (UnimplementedStreamEventServer) HandlerPlanTaskEvent(context.Context, *HandlerPlanTaskEventReq) (*HandlerPlanTaskEventRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HandlerPlanTaskEvent not implemented")
+}
+func (UnimplementedStreamEventServer) NotifyPlanEvent(context.Context, *NotifyEventReq) (*NotifyEventRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NotifyPlanEvent not implemented")
 }
 func (UnimplementedStreamEventServer) mustEmbedUnimplementedStreamEventServer() {}
 func (UnimplementedStreamEventServer) testEmbeddedByValue()                     {}
@@ -286,6 +304,24 @@ func _StreamEvent_HandlerPlanTaskEvent_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _StreamEvent_NotifyPlanEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NotifyEventReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StreamEventServer).NotifyPlanEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StreamEvent_NotifyPlanEvent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StreamEventServer).NotifyPlanEvent(ctx, req.(*NotifyEventReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // StreamEvent_ServiceDesc is the grpc.ServiceDesc for StreamEvent service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -316,6 +352,10 @@ var StreamEvent_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "HandlerPlanTaskEvent",
 			Handler:    _StreamEvent_HandlerPlanTaskEvent_Handler,
+		},
+		{
+			MethodName: "NotifyPlanEvent",
+			Handler:    _StreamEvent_NotifyPlanEvent_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

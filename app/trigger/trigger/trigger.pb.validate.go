@@ -6564,17 +6564,6 @@ func (m *CreatePlanExecItem) validate(all bool) error {
 
 	// no validation rules for PointId
 
-	if utf8.RuneCountInString(m.GetServiceAddr()) < 1 {
-		err := CreatePlanExecItemValidationError{
-			field:  "ServiceAddr",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
 	// no validation rules for Payload
 
 	// no validation rules for RequestTimeout
@@ -10898,8 +10887,6 @@ func (m *PbPlanExecItem) validate(all bool) error {
 	// no validation rules for ItemName
 
 	// no validation rules for PointId
-
-	// no validation rules for ServiceAddr
 
 	// no validation rules for Payload
 
