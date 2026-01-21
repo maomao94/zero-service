@@ -91,6 +91,14 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 	if err != nil {
 		return nil, err
 	}
+	batchNotifyReq := streamevent.NotifyPlanEventReq{
+		EventType:  streamevent.PlanEventType_BATCH_FINISHED,
+		PlanId:     planBatch.PlanId,
+		PlanType:   plan.Type.String,
+		BatchId:    planBatch.BatchId,
+		Attributes: map[string]string{},
+	}
+	l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &batchNotifyReq)
 	planCount, err := l.svcCtx.PlanModel.UpdateBatchFinishedTime(l.ctx, planBatch.PlanPk)
 	if err != nil {
 		l.Errorf("Error updating plan %s completed time: %v", planBatch.PlanId, err)
