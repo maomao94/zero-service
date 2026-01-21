@@ -50,7 +50,7 @@ func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (
 	}
 
 	// 查询计划批次列表
-	planBatches, total, err := l.svcCtx.PlanBatchModel.FindPageListByPageWithTotal(l.ctx, builder, in.PageNum, in.PageSize, "plan_trigger_time DESC", "id DESC")
+	planBatches, total, err := l.svcCtx.PlanBatchModel.FindPageListByPageWithTotal(l.ctx, builder, in.PageNum, in.PageSize, "plan_trigger_time ASC", "id DESC")
 	if err != nil {
 		return nil, err
 	}
