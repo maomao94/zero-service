@@ -17,6 +17,7 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"github.com/zeromicro/go-zero/core/trace"
 )
 
 type CallbackPlanExecItemLogic struct {
@@ -35,6 +36,7 @@ func NewCallbackPlanExecItemLogic(ctx context.Context, svcCtx *svc.ServiceContex
 
 // 回调计划执行项 ongoing 回执
 func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPlanExecItemReq) (*trigger.CallbackPlanExecItemRes, error) {
+	traceID := trace.TraceIDFromContext(l.ctx)
 	// 验证请求
 	err := in.Validate()
 	if err != nil {
@@ -152,7 +154,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 			ItemName:    execItem.ItemName,
 			PointId:     execItem.PointId,
 			TriggerTime: time.Now(),
-			TraceId:     sql.NullString{String: "", Valid: false},
+			TraceId:     sql.NullString{String: traceID, Valid: traceID != ""},
 			ExecResult:  sql.NullString{String: in.ExecResult, Valid: in.ExecResult != ""},
 			Message:     sql.NullString{String: in.Message, Valid: in.Message != ""},
 			Reason:      sql.NullString{String: reason, Valid: reason != ""},
