@@ -97,7 +97,7 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 	}
 	if planCount > 0 {
 		planPlanReq := streamevent.NotifyPlanEventReq{
-			EventType: 0,
+			EventType: streamevent.PlanEventType_PLAN_FINISHED,
 			PlanId:    planBatch.PlanId,
 			PlanType:  plan.Type.String,
 			//BatchId:    planBatch.BatchId,

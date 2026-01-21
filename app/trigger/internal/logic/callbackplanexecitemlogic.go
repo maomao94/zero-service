@@ -173,7 +173,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 	}
 	if batchCount > 0 {
 		batchNotifyReq := streamevent.NotifyPlanEventReq{
-			EventType:  1,
+			EventType:  streamevent.PlanEventType_BATCH_FINISHED,
 			PlanId:     execItem.PlanId,
 			PlanType:   plan.Type.String,
 			BatchId:    execItem.BatchId,
@@ -188,7 +188,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 	}
 	if planCount > 0 {
 		planPlanReq := streamevent.NotifyPlanEventReq{
-			EventType: 0,
+			EventType: streamevent.PlanEventType_PLAN_FINISHED,
 			PlanId:    execItem.PlanId,
 			PlanType:  plan.Type.String,
 			//BatchId:    execItem.BatchId,

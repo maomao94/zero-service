@@ -95,7 +95,7 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 		return nil, err
 	}
 	planPlanReq := streamevent.NotifyPlanEventReq{
-		EventType: 0,
+		EventType: streamevent.PlanEventType_PLAN_FINISHED,
 		PlanId:    plan.PlanId,
 		PlanType:  plan.Type.String,
 		//BatchId:    execItem.BatchId,
