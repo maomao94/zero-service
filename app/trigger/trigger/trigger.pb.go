@@ -6507,7 +6507,7 @@ type CallbackPlanExecItemReq struct {
 	// 执行ID 全局唯一
 	ExecId string `protobuf:"bytes,2,opt,name=execId,proto3" json:"execId,omitempty"`
 	// 回调设计 参考 grpc status 用于分布式事务
-	// 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期
+	// 执行结果：completed-业务执行完成, terminated-业务终止, failed-业务执行失败, delayed-业务执行延期, ongoing-业务正在执行（未回调或部分异步）
 	ExecResult string `protobuf:"bytes,3,opt,name=execResult,proto3" json:"execResult,omitempty"`
 	// 结果描述  可以定义自己状态码，等下次回调判断业务场景
 	Message string `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
@@ -7220,13 +7220,14 @@ const file_trigger_proto_rawDesc = "" +
 	"\x04ext5\x18\x11 \x01(\tR\x04ext5\x1aA\n" +
 	"\x13StatusCountMapEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\"\xa9\x02\n" +
+	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\"\xb5\x02\n" +
 	"\x17CallbackPlanExecItemReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
-	"\x06execId\x18\x02 \x01(\tR\x06execId\x12A\n" +
+	"\x06execId\x18\x02 \x01(\tR\x06execId\x12M\n" +
 	"\n" +
-	"execResult\x18\x03 \x01(\tB!\xfaB\x1er\x1cR\tcompletedR\x06failedR\adelayedR\n" +
+	"execResult\x18\x03 \x01(\tB-\xfaB*r(R\tcompletedR\n" +
+	"terminatedR\x06failedR\adelayedR\n" +
 	"execResult\x12\x18\n" +
 	"\amessage\x18\x04 \x01(\tR\amessage\x12\x16\n" +
 	"\x06reason\x18\x05 \x01(\tR\x06reason\x128\n" +

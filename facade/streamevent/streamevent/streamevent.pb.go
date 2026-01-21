@@ -3019,7 +3019,7 @@ func (x *HandlerPlanTaskEventReq) GetLastReason() string {
 type HandlerPlanTaskEventRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 回调设计 参考 grpc status 用于分布式事务
-	// 执行结果：completed-业务执行完成，failed-业务执行失败，delayed-业务执行延期，ongoing-业务正在执行（未回调或部分异步）
+	// 执行结果：completed-业务执行完成, terminated-业务终止, failed-业务执行失败, delayed-业务执行延期, ongoing-业务正在执行（未回调或部分异步）
 	ExecResult string `protobuf:"bytes,1,opt,name=execResult,proto3" json:"execResult,omitempty"`
 	// 结果描述  可以定义自己状态码，等下次回调判断业务场景
 	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
