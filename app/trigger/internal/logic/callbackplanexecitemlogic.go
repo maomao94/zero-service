@@ -130,6 +130,10 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 			)
 		case model.ResultOngoing:
 			l.Infof("Ongoing exec item %d", execItem.Id)
+		case model.ResultTerminated:
+			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToTerminated(ctx, execItem.Id, in.Message, in.Reason,
+				[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
+			)
 		default:
 			return fmt.Errorf("invalid execResult: %s", in.GetExecResult())
 		}

@@ -48,6 +48,9 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 	if in.PlanId != "" {
 		builder = builder.Where("plan_id = ?", in.PlanId)
 	}
+	if in.BatchId != "" {
+		builder = builder.Where("batch_id = ?", in.BatchId)
+	}
 	if in.ExecId != "" {
 		builder = builder.Where("exec_id = ?", in.ExecId)
 	}
