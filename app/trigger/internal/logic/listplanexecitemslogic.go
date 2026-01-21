@@ -66,7 +66,7 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 	}
 
 	// 查询执行项列表
-	execItems, total, err := l.svcCtx.PlanExecItemModel.FindPageListByPageWithTotal(l.ctx, builder, in.PageNum, in.PageSize, "next_trigger_time ASC", "id DESC")
+	execItems, total, err := l.svcCtx.PlanExecItemModel.FindPageListByPageWithTotal(l.ctx, builder, in.PageNum, in.PageSize, "next_trigger_time ASC", "Status ASC", "id DESC")
 	if err != nil {
 		return nil, err
 	}
