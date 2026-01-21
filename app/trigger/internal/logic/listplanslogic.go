@@ -53,7 +53,7 @@ func (l *ListPlansLogic) ListPlans(in *trigger.ListPlansReq) (*trigger.ListPlans
 	}
 
 	// 查询计划列表
-	plans, total, err := l.svcCtx.PlanModel.FindPageListByPageWithTotal(l.ctx, builder, in.PageNum, in.PageSize, "id DESC")
+	plans, total, err := l.svcCtx.PlanModel.FindPageListByPageWithTotal(l.ctx, builder, in.PageNum, in.PageSize, "create_time DESC", "id DESC")
 	if err != nil {
 		return nil, err
 	}
