@@ -10,6 +10,7 @@ import (
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 
+	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -37,8 +38,18 @@ func (l *ResumePlanLogic) ResumePlan(in *trigger.ResumePlanReq) (*trigger.Resume
 		return nil, err
 	}
 
+	// 检查参数
+	if in.Id <= 0 && strutil.IsBlank(in.PlanId) {
+		return nil, errors.BadRequest("", "参数错误")
+	}
+
 	// 查询计划
-	plan, err := l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, in.PlanId)
+	var plan *model.Plan
+	if in.Id > 0 {
+		plan, err = l.svcCtx.PlanModel.FindOne(l.ctx, in.Id)
+	} else {
+		plan, err = l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, in.PlanId)
+	}
 	if err != nil {
 		if err == sqlx.ErrNotFound {
 			return &trigger.ResumePlanRes{}, nil
@@ -71,7 +82,7 @@ func (l *ResumePlanLogic) ResumePlan(in *trigger.ResumePlanReq) (*trigger.Resume
 			Set("paused_time", sql.NullTime{}).
 			Set("paused_reason", sql.NullString{}).
 			Set("update_user", sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}).
-			Where("plan_id = ?", in.PlanId).
+			Where("plan_id = ?", plan.PlanId).
 			Where("status = ?", int64(model.PlanStatusPaused))
 		_, transErr = l.svcCtx.PlanBatchModel.UpdateWithBuilder(ctx, tx, builder)
 		if transErr != nil {

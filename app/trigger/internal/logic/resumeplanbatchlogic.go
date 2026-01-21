@@ -8,6 +8,7 @@ import (
 	"zero-service/common/tool"
 	"zero-service/model"
 
+	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -35,8 +36,18 @@ func (l *ResumePlanBatchLogic) ResumePlanBatch(in *trigger.ResumePlanBatchReq) (
 		return nil, err
 	}
 
+	// 检查参数
+	if in.Id <= 0 && strutil.IsBlank(in.BatchId) {
+		return nil, errors.BadRequest("", "参数错误")
+	}
+
 	// 查询计划批次
-	planBatch, err := l.svcCtx.PlanBatchModel.FindOne(l.ctx, in.Id)
+	var planBatch *model.PlanBatch
+	if in.Id > 0 {
+		planBatch, err = l.svcCtx.PlanBatchModel.FindOne(l.ctx, in.Id)
+	} else {
+		planBatch, err = l.svcCtx.PlanBatchModel.FindOneByBatchId(l.ctx, in.BatchId)
+	}
 	if err != nil {
 		if err == sqlx.ErrNotFound {
 			return &trigger.ResumePlanBatchRes{}, nil

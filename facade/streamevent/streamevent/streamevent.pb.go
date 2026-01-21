@@ -3145,11 +3145,11 @@ func (x *PbDelayConfig) GetDelayReason() string {
 
 type NotifyPlanEventReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	TId   string                 `protobuf:"bytes,1,opt,name=tId,proto3" json:"tId,omitempty"`
 	// 事件类型
-	EventType PlanEventType `protobuf:"varint,2,opt,name=eventType,proto3,enum=streamevent.PlanEventType" json:"eventType,omitempty"`
+	EventType PlanEventType `protobuf:"varint,1,opt,name=eventType,proto3,enum=streamevent.PlanEventType" json:"eventType,omitempty"`
 	// 关联的计划ID
-	PlanId string `protobuf:"bytes,3,opt,name=planId,proto3" json:"planId,omitempty"`
+	PlanId   string `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
+	PlanType string `protobuf:"bytes,3,opt,name=planType,proto3" json:"planType,omitempty"`
 	// 关联的批次ID（可选，plan完成时可为空）
 	BatchId string `protobuf:"bytes,4,opt,name=batchId,proto3" json:"batchId,omitempty"`
 	// 扩展字段，给未来留空间
@@ -3188,13 +3188,6 @@ func (*NotifyPlanEventReq) Descriptor() ([]byte, []int) {
 	return file_streamevent_proto_rawDescGZIP(), []int{32}
 }
 
-func (x *NotifyPlanEventReq) GetTId() string {
-	if x != nil {
-		return x.TId
-	}
-	return ""
-}
-
 func (x *NotifyPlanEventReq) GetEventType() PlanEventType {
 	if x != nil {
 		return x.EventType
@@ -3205,6 +3198,13 @@ func (x *NotifyPlanEventReq) GetEventType() PlanEventType {
 func (x *NotifyPlanEventReq) GetPlanId() string {
 	if x != nil {
 		return x.PlanId
+	}
+	return ""
+}
+
+func (x *NotifyPlanEventReq) GetPlanType() string {
+	if x != nil {
+		return x.PlanType
 	}
 	return ""
 }
@@ -3540,11 +3540,11 @@ const file_streamevent_proto_rawDesc = "" +
 	"\vdelayConfig\x18\x04 \x01(\v2\x1a.streamevent.PbDelayConfigR\vdelayConfig\"[\n" +
 	"\rPbDelayConfig\x12(\n" +
 	"\x0fnextTriggerTime\x18\x01 \x01(\tR\x0fnextTriggerTime\x12 \n" +
-	"\vdelayReason\x18\x02 \x01(\tR\vdelayReason\"\xa2\x02\n" +
-	"\x12NotifyPlanEventReq\x12\x10\n" +
-	"\x03tId\x18\x01 \x01(\tR\x03tId\x128\n" +
-	"\teventType\x18\x02 \x01(\x0e2\x1a.streamevent.PlanEventTypeR\teventType\x12\x16\n" +
-	"\x06planId\x18\x03 \x01(\tR\x06planId\x12\x18\n" +
+	"\vdelayReason\x18\x02 \x01(\tR\vdelayReason\"\xac\x02\n" +
+	"\x12NotifyPlanEventReq\x128\n" +
+	"\teventType\x18\x01 \x01(\x0e2\x1a.streamevent.PlanEventTypeR\teventType\x12\x16\n" +
+	"\x06planId\x18\x02 \x01(\tR\x06planId\x12\x1a\n" +
+	"\bplanType\x18\x03 \x01(\tR\bplanType\x12\x18\n" +
 	"\abatchId\x18\x04 \x01(\tR\abatchId\x12O\n" +
 	"\n" +
 	"attributes\x18\x05 \x03(\v2/.streamevent.NotifyPlanEventReq.AttributesEntryR\n" +

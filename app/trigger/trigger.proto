@@ -598,10 +598,10 @@ message CreatePlanTaskRes {
 
 message PausePlanReq {
   extproto.CurrentUser currentUser = 100;
-  // 计划ID
-  string planId = 1 [(validate.rules).string = {min_len: 1}];
+  int64 id = 1;
+  string planId = 2;
   // 暂停原因
-  string reason = 2 [(validate.rules).string = {max_len: 200}];
+  string reason = 3 [(validate.rules).string = {max_len: 200}];
 }
 
 message PausePlanRes {
@@ -609,10 +609,10 @@ message PausePlanRes {
 
 message TerminatePlanReq {
   extproto.CurrentUser currentUser = 100;
-  // 计划ID
-  string planId = 1 [(validate.rules).string = {min_len: 1}];
+  int64 id = 1;
+  string planId = 2;
   // 终止原因
-  string reason = 2 [(validate.rules).string = {max_len: 200}];
+  string reason = 3 [(validate.rules).string = {max_len: 200}];
 }
 
 message TerminatePlanRes {
@@ -620,8 +620,8 @@ message TerminatePlanRes {
 
 message ResumePlanReq {
   extproto.CurrentUser currentUser = 100;
-  // 计划ID
-  string planId = 1 [(validate.rules).string = {min_len: 1}];
+  int64 id = 1;
+  string planId = 2;
 }
 
 message ResumePlanRes {
@@ -629,9 +629,10 @@ message ResumePlanRes {
 
 message PausePlanBatchReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
+  int64 id = 1;
+  string batchId = 2;
   // 暂停原因
-  string reason = 2 [(validate.rules).string = {max_len: 200}];
+  string reason = 3 [(validate.rules).string = {max_len: 200}];
 }
 
 message PausePlanBatchRes {
@@ -639,9 +640,10 @@ message PausePlanBatchRes {
 
 message TerminatePlanBatchReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
+  int64 id = 1;
+  string batchId = 2;
   // 终止原因
-  string reason = 2 [(validate.rules).string = {max_len: 200}];
+  string reason = 3 [(validate.rules).string = {max_len: 200}];
 }
 
 message TerminatePlanBatchRes {
@@ -649,7 +651,8 @@ message TerminatePlanBatchRes {
 
 message ResumePlanBatchReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
+  int64 id = 1;
+  string batchId = 2;
 }
 
 message ResumePlanBatchRes {
@@ -657,9 +660,10 @@ message ResumePlanBatchRes {
 
 message PausePlanExecItemReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
+  int64 id = 1;
+  string execId = 2;
   // 暂停原因
-  string reason = 2 [(validate.rules).string = {max_len: 200}];
+  string reason = 3 [(validate.rules).string = {max_len: 200}];
 }
 
 message PausePlanExecItemRes {
@@ -667,7 +671,8 @@ message PausePlanExecItemRes {
 
 message TerminatePlanExecItemReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
+  int64 id = 1;
+  string execId = 2;
   // 终止原因
   string reason = 3 [(validate.rules).string = {max_len: 200}];
 }
@@ -677,7 +682,8 @@ message TerminatePlanExecItemRes {
 
 message ResumePlanExecItemReq {
   extproto.CurrentUser currentUser = 100;
-  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
+  int64 id = 1;
+  string execId = 2;
 }
 
 message ResumePlanExecItemRes {
@@ -686,8 +692,8 @@ message ResumePlanExecItemRes {
 // 立即执行计划项请求
 message RunPlanExecItemReq {
   extproto.CurrentUser currentUser = 100;
-  // 执行项主键ID
-  int64 id = 1 [(validate.rules).int64 = {gte: 1}];
+  int64 id = 1;
+  string execId = 2;
 }
 
 // 立即执行计划项响应

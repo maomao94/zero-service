@@ -3,12 +3,13 @@ package logic
 import (
 	"context"
 	"database/sql"
-	"zero-service/model"
-
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/tool"
+	"zero-service/facade/streamevent/streamevent"
+	"zero-service/model"
 
+	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -36,8 +37,18 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 		return nil, err
 	}
 
+	// 检查参数
+	if in.Id <= 0 && strutil.IsBlank(in.ExecId) {
+		return nil, errors.BadRequest("", "参数错误")
+	}
+
 	// 查询执行项
-	execItem, err := l.svcCtx.PlanExecItemModel.FindOne(l.ctx, in.Id)
+	var execItem *model.PlanExecItem
+	if in.Id > 0 {
+		execItem, err = l.svcCtx.PlanExecItemModel.FindOne(l.ctx, in.Id)
+	} else {
+		execItem, err = l.svcCtx.PlanExecItemModel.FindOneByExecId(l.ctx, in.ExecId)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -87,8 +98,35 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 	if err != nil {
 		return nil, err
 	}
-	l.svcCtx.PlanBatchModel.UpdateBatchFinishedTime(l.ctx, execItem.BatchPk)
-	l.svcCtx.PlanModel.UpdateBatchFinishedTime(l.ctx, execItem.PlanPk)
+	batchCount, err := l.svcCtx.PlanBatchModel.UpdateBatchFinishedTime(l.ctx, execItem.BatchPk)
+	if err != nil {
+		l.Errorf("Error updating batch %s completed time: %v", execItem.BatchId, err)
+	}
+	if batchCount > 0 {
+		batchNotifyReq := streamevent.NotifyPlanEventReq{
+			EventType:  1,
+			PlanId:     execItem.PlanId,
+			PlanType:   plan.Type.String,
+			BatchId:    execItem.BatchId,
+			Attributes: map[string]string{},
+		}
+		l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &batchNotifyReq)
+	}
+
+	planCount, err := l.svcCtx.PlanModel.UpdateBatchFinishedTime(l.ctx, execItem.PlanPk)
+	if err != nil {
+		l.Errorf("Error updating plan %s completed time: %v", execItem.PlanId, err)
+	}
+	if planCount > 0 {
+		planPlanReq := streamevent.NotifyPlanEventReq{
+			EventType: 0,
+			PlanId:    execItem.PlanId,
+			PlanType:  plan.Type.String,
+			//BatchId:    execItem.BatchId,
+			Attributes: map[string]string{},
+		}
+		l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq)
+	}
 
 	return &trigger.TerminatePlanExecItemRes{}, nil
 }

@@ -3342,10 +3342,10 @@ func (x *CreatePlanTaskRes) GetExecCnt() int64 {
 type PausePlanReq struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
-	// 计划ID
-	PlanId string `protobuf:"bytes,1,opt,name=planId,proto3" json:"planId,omitempty"`
+	Id          int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	PlanId      string                 `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
 	// 暂停原因
-	Reason        string `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	Reason        string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3385,6 +3385,13 @@ func (x *PausePlanReq) GetCurrentUser() *extproto.CurrentUser {
 		return x.CurrentUser
 	}
 	return nil
+}
+
+func (x *PausePlanReq) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
 }
 
 func (x *PausePlanReq) GetPlanId() string {
@@ -3440,10 +3447,10 @@ func (*PausePlanRes) Descriptor() ([]byte, []int) {
 type TerminatePlanReq struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
-	// 计划ID
-	PlanId string `protobuf:"bytes,1,opt,name=planId,proto3" json:"planId,omitempty"`
+	Id          int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	PlanId      string                 `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
 	// 终止原因
-	Reason        string `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	Reason        string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3483,6 +3490,13 @@ func (x *TerminatePlanReq) GetCurrentUser() *extproto.CurrentUser {
 		return x.CurrentUser
 	}
 	return nil
+}
+
+func (x *TerminatePlanReq) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
 }
 
 func (x *TerminatePlanReq) GetPlanId() string {
@@ -3536,10 +3550,10 @@ func (*TerminatePlanRes) Descriptor() ([]byte, []int) {
 }
 
 type ResumePlanReq struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
-	// 计划ID
-	PlanId        string `protobuf:"bytes,1,opt,name=planId,proto3" json:"planId,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CurrentUser   *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	PlanId        string                 `protobuf:"bytes,2,opt,name=planId,proto3" json:"planId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3579,6 +3593,13 @@ func (x *ResumePlanReq) GetCurrentUser() *extproto.CurrentUser {
 		return x.CurrentUser
 	}
 	return nil
+}
+
+func (x *ResumePlanReq) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
 }
 
 func (x *ResumePlanReq) GetPlanId() string {
@@ -3628,8 +3649,9 @@ type PausePlanBatchReq struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
 	Id          int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	BatchId     string                 `protobuf:"bytes,2,opt,name=batchId,proto3" json:"batchId,omitempty"`
 	// 暂停原因
-	Reason        string `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	Reason        string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3676,6 +3698,13 @@ func (x *PausePlanBatchReq) GetId() int64 {
 		return x.Id
 	}
 	return 0
+}
+
+func (x *PausePlanBatchReq) GetBatchId() string {
+	if x != nil {
+		return x.BatchId
+	}
+	return ""
 }
 
 func (x *PausePlanBatchReq) GetReason() string {
@@ -3725,8 +3754,9 @@ type TerminatePlanBatchReq struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
 	Id          int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	BatchId     string                 `protobuf:"bytes,2,opt,name=batchId,proto3" json:"batchId,omitempty"`
 	// 终止原因
-	Reason        string `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	Reason        string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3773,6 +3803,13 @@ func (x *TerminatePlanBatchReq) GetId() int64 {
 		return x.Id
 	}
 	return 0
+}
+
+func (x *TerminatePlanBatchReq) GetBatchId() string {
+	if x != nil {
+		return x.BatchId
+	}
+	return ""
 }
 
 func (x *TerminatePlanBatchReq) GetReason() string {
@@ -3822,6 +3859,7 @@ type ResumePlanBatchReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser   *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	BatchId       string                 `protobuf:"bytes,2,opt,name=batchId,proto3" json:"batchId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3870,6 +3908,13 @@ func (x *ResumePlanBatchReq) GetId() int64 {
 	return 0
 }
 
+func (x *ResumePlanBatchReq) GetBatchId() string {
+	if x != nil {
+		return x.BatchId
+	}
+	return ""
+}
+
 type ResumePlanBatchRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -3910,8 +3955,9 @@ type PausePlanExecItemReq struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
 	Id          int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	ExecId      string                 `protobuf:"bytes,2,opt,name=execId,proto3" json:"execId,omitempty"`
 	// 暂停原因
-	Reason        string `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	Reason        string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3958,6 +4004,13 @@ func (x *PausePlanExecItemReq) GetId() int64 {
 		return x.Id
 	}
 	return 0
+}
+
+func (x *PausePlanExecItemReq) GetExecId() string {
+	if x != nil {
+		return x.ExecId
+	}
+	return ""
 }
 
 func (x *PausePlanExecItemReq) GetReason() string {
@@ -4007,6 +4060,7 @@ type TerminatePlanExecItemReq struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
 	Id          int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	ExecId      string                 `protobuf:"bytes,2,opt,name=execId,proto3" json:"execId,omitempty"`
 	// 终止原因
 	Reason        string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -4057,6 +4111,13 @@ func (x *TerminatePlanExecItemReq) GetId() int64 {
 	return 0
 }
 
+func (x *TerminatePlanExecItemReq) GetExecId() string {
+	if x != nil {
+		return x.ExecId
+	}
+	return ""
+}
+
 func (x *TerminatePlanExecItemReq) GetReason() string {
 	if x != nil {
 		return x.Reason
@@ -4104,6 +4165,7 @@ type ResumePlanExecItemReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CurrentUser   *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	ExecId        string                 `protobuf:"bytes,2,opt,name=execId,proto3" json:"execId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4152,6 +4214,13 @@ func (x *ResumePlanExecItemReq) GetId() int64 {
 	return 0
 }
 
+func (x *ResumePlanExecItemReq) GetExecId() string {
+	if x != nil {
+		return x.ExecId
+	}
+	return ""
+}
+
 type ResumePlanExecItemRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -4190,10 +4259,10 @@ func (*ResumePlanExecItemRes) Descriptor() ([]byte, []int) {
 
 // 立即执行计划项请求
 type RunPlanExecItemReq struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	CurrentUser *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
-	// 执行项主键ID
-	Id            int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CurrentUser   *extproto.CurrentUser  `protobuf:"bytes,100,opt,name=currentUser,proto3" json:"currentUser,omitempty"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	ExecId        string                 `protobuf:"bytes,2,opt,name=execId,proto3" json:"execId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4240,6 +4309,13 @@ func (x *RunPlanExecItemReq) GetId() int64 {
 		return x.Id
 	}
 	return 0
+}
+
+func (x *RunPlanExecItemReq) GetExecId() string {
+	if x != nil {
+		return x.ExecId
+	}
+	return ""
 }
 
 // 立即执行计划项响应
@@ -6853,52 +6929,62 @@ const file_trigger_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
 	"\x06planId\x18\x02 \x01(\tR\x06planId\x12\x1a\n" +
 	"\bbatchCnt\x18\x03 \x01(\x03R\bbatchCnt\x12\x18\n" +
-	"\aexecCnt\x18\x04 \x01(\x03R\aexecCnt\"\x8a\x01\n" +
+	"\aexecCnt\x18\x04 \x01(\x03R\aexecCnt\"\x91\x01\n" +
 	"\fPausePlanReq\x127\n" +
-	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x1f\n" +
-	"\x06planId\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06planId\x12 \n" +
-	"\x06reason\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x0e\n" +
-	"\fPausePlanRes\"\x8e\x01\n" +
+	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x06planId\x18\x02 \x01(\tR\x06planId\x12 \n" +
+	"\x06reason\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x0e\n" +
+	"\fPausePlanRes\"\x95\x01\n" +
 	"\x10TerminatePlanReq\x127\n" +
-	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x1f\n" +
-	"\x06planId\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06planId\x12 \n" +
-	"\x06reason\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x12\n" +
-	"\x10TerminatePlanRes\"i\n" +
+	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x06planId\x18\x02 \x01(\tR\x06planId\x12 \n" +
+	"\x06reason\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x12\n" +
+	"\x10TerminatePlanRes\"p\n" +
 	"\rResumePlanReq\x127\n" +
-	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x1f\n" +
-	"\x06planId\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06planId\"\x0f\n" +
-	"\rResumePlanRes\"\x87\x01\n" +
+	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x06planId\x18\x02 \x01(\tR\x06planId\"\x0f\n" +
+	"\rResumePlanRes\"\x98\x01\n" +
 	"\x11PausePlanBatchReq\x127\n" +
-	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x01R\x02id\x12 \n" +
-	"\x06reason\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x13\n" +
-	"\x11PausePlanBatchRes\"\x8b\x01\n" +
+	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x18\n" +
+	"\abatchId\x18\x02 \x01(\tR\abatchId\x12 \n" +
+	"\x06reason\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x13\n" +
+	"\x11PausePlanBatchRes\"\x9c\x01\n" +
 	"\x15TerminatePlanBatchReq\x127\n" +
-	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x01R\x02id\x12 \n" +
-	"\x06reason\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x17\n" +
-	"\x15TerminatePlanBatchRes\"f\n" +
+	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x18\n" +
+	"\abatchId\x18\x02 \x01(\tR\abatchId\x12 \n" +
+	"\x06reason\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x17\n" +
+	"\x15TerminatePlanBatchRes\"w\n" +
 	"\x12ResumePlanBatchReq\x127\n" +
-	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x01R\x02id\"\x14\n" +
-	"\x12ResumePlanBatchRes\"\x8a\x01\n" +
+	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x18\n" +
+	"\abatchId\x18\x02 \x01(\tR\abatchId\"\x14\n" +
+	"\x12ResumePlanBatchRes\"\x99\x01\n" +
 	"\x14PausePlanExecItemReq\x127\n" +
-	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x01R\x02id\x12 \n" +
-	"\x06reason\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x16\n" +
-	"\x14PausePlanExecItemRes\"\x8e\x01\n" +
+	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x06execId\x18\x02 \x01(\tR\x06execId\x12 \n" +
+	"\x06reason\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x16\n" +
+	"\x14PausePlanExecItemRes\"\x9d\x01\n" +
 	"\x18TerminatePlanExecItemReq\x127\n" +
-	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x01R\x02id\x12 \n" +
+	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x06execId\x18\x02 \x01(\tR\x06execId\x12 \n" +
 	"\x06reason\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x06reason\"\x1a\n" +
-	"\x18TerminatePlanExecItemRes\"i\n" +
+	"\x18TerminatePlanExecItemRes\"x\n" +
 	"\x15ResumePlanExecItemReq\x127\n" +
-	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x01R\x02id\"\x17\n" +
-	"\x15ResumePlanExecItemRes\"f\n" +
+	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x06execId\x18\x02 \x01(\tR\x06execId\"\x17\n" +
+	"\x15ResumePlanExecItemRes\"u\n" +
 	"\x12RunPlanExecItemReq\x127\n" +
-	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x01R\x02id\"\x14\n" +
+	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x06execId\x18\x02 \x01(\tR\x06execId\"\x14\n" +
 	"\x12RunPlanExecItemRes\"m\n" +
 	"\n" +
 	"GetPlanReq\x127\n" +

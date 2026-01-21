@@ -556,11 +556,11 @@ message PbDelayConfig {
 
 
 message NotifyPlanEventReq {
-  string tId = 1;
   // 事件类型
-  PlanEventType eventType = 2;
+  PlanEventType eventType = 1;
   // 关联的计划ID
-  string planId = 3;
+  string planId = 2;
+  string planType = 3;
   // 关联的批次ID（可选，plan完成时可为空）
   string batchId = 4;
   // 扩展字段，给未来留空间

@@ -8,6 +8,7 @@ import (
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
+	"zero-service/facade/streamevent/streamevent"
 	"zero-service/model"
 
 	"github.com/dromara/carbon/v2"
@@ -52,7 +53,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 	if err != nil {
 		return nil, err
 	}
-	lockKey := fmt.Sprintf("trigger:lock:plan:exec:%d", execItem.ExecId)
+	lockKey := fmt.Sprintf("trigger:lock:plan:exec:%s", execItem.ExecId)
 	lock := redis.NewRedisLock(l.svcCtx.Redis, lockKey)
 	b, _ := lock.AcquireCtx(l.ctx)
 	if !b {
@@ -133,14 +134,6 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 		if transErr != nil {
 			return transErr
 		}
-		transErr = l.svcCtx.PlanBatchModel.UpdateBatchFinishedTime(ctx, execItem.BatchPk)
-		if transErr != nil {
-			return transErr
-		}
-		transErr = l.svcCtx.PlanModel.UpdateBatchFinishedTime(ctx, execItem.PlanPk)
-		if transErr != nil {
-			return transErr
-		}
 
 		// 记录执行日志
 		logEntry := &model.PlanExecLog{
@@ -173,5 +166,36 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 	if err != nil {
 		return nil, err
 	}
+
+	batchCount, err := l.svcCtx.PlanBatchModel.UpdateBatchFinishedTime(l.ctx, execItem.BatchPk)
+	if err != nil {
+		l.Errorf("Error updating batch %s completed time: %v", execItem.BatchId, err)
+	}
+	if batchCount > 0 {
+		batchNotifyReq := streamevent.NotifyPlanEventReq{
+			EventType:  1,
+			PlanId:     execItem.PlanId,
+			PlanType:   plan.Type.String,
+			BatchId:    execItem.BatchId,
+			Attributes: map[string]string{},
+		}
+		l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &batchNotifyReq)
+	}
+
+	planCount, err := l.svcCtx.PlanModel.UpdateBatchFinishedTime(l.ctx, execItem.PlanPk)
+	if err != nil {
+		l.Errorf("Error updating plan %s completed time: %v", execItem.PlanId, err)
+	}
+	if planCount > 0 {
+		planPlanReq := streamevent.NotifyPlanEventReq{
+			EventType: 0,
+			PlanId:    execItem.PlanId,
+			PlanType:  plan.Type.String,
+			//BatchId:    execItem.BatchId,
+			Attributes: map[string]string{},
+		}
+		l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq)
+	}
+
 	return &trigger.CallbackPlanExecItemRes{}, nil
 }

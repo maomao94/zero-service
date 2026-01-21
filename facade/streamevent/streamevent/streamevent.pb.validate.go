@@ -3950,11 +3950,11 @@ func (m *NotifyPlanEventReq) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for TId
-
 	// no validation rules for EventType
 
 	// no validation rules for PlanId
+
+	// no validation rules for PlanType
 
 	// no validation rules for BatchId
 

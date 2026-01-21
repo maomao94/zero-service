@@ -10,6 +10,7 @@ import (
 	"zero-service/common/tool"
 	"zero-service/model"
 
+	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -37,12 +38,19 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 		return nil, err
 	}
 
+	// 检查参数
+	if in.Id <= 0 && strutil.IsBlank(in.PlanId) {
+		return nil, errors.BadRequest("", "参数错误")
+	}
+
 	// 查询计划
-	plan, err := l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, in.PlanId)
+	var plan *model.Plan
+	if in.Id > 0 {
+		plan, err = l.svcCtx.PlanModel.FindOne(l.ctx, in.Id)
+	} else {
+		plan, err = l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, in.PlanId)
+	}
 	if err != nil {
-		if err == sqlx.ErrNotFound {
-			return &trigger.PausePlanRes{}, nil
-		}
 		return nil, err
 	}
 	if plan.Status == int64(model.PlanStatusTerminated) || plan.FinishedTime.Valid {
@@ -71,7 +79,7 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 			Set("paused_time", sql.NullTime{Time: time.Now(), Valid: true}).
 			Set("paused_reason", sql.NullString{String: in.Reason, Valid: in.Reason != ""}).
 			Set("update_user", sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}).
-			Where("plan_id = ?", in.PlanId).
+			Where("plan_id = ?", plan.PlanId).
 			Where("status = ?", int64(model.PlanStatusEnabled)).
 			Where("finished_time IS NULL")
 		_, transErr = l.svcCtx.PlanBatchModel.UpdateWithBuilder(ctx, tx, builder)

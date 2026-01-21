@@ -9,6 +9,7 @@ import (
 	"zero-service/app/trigger/trigger"
 	"zero-service/model"
 
+	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -33,7 +34,17 @@ func (l *RunPlanExecItemLogic) RunPlanExecItem(in *trigger.RunPlanExecItemReq) (
 	if err != nil {
 		return nil, err
 	}
-	execItem, err := l.svcCtx.PlanExecItemModel.FindOne(l.ctx, in.Id)
+	// 检查参数
+	if in.Id <= 0 && strutil.IsBlank(in.ExecId) {
+		return nil, errors.BadRequest("", "参数错误")
+	}
+	// 查询执行项
+	var execItem *model.PlanExecItem
+	if in.Id > 0 {
+		execItem, err = l.svcCtx.PlanExecItemModel.FindOne(l.ctx, in.Id)
+	} else {
+		execItem, err = l.svcCtx.PlanExecItemModel.FindOneByExecId(l.ctx, in.ExecId)
+	}
 	if err != nil {
 		return nil, err
 	}

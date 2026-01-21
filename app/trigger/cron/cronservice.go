@@ -360,12 +360,33 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		logx.Errorf("Error inserting plan exec log for item %d: %v", execItem.Id, err)
 	}
 
-	if err := s.svcCtx.PlanBatchModel.UpdateBatchFinishedTime(ctx, execItem.BatchPk); err != nil {
+	batchCount, err := s.svcCtx.PlanBatchModel.UpdateBatchFinishedTime(ctx, execItem.BatchPk)
+	if err != nil {
 		logx.Errorf("Error updating batch %s completed time: %v", execItem.BatchId, err)
 	}
-	if err := s.svcCtx.PlanModel.UpdateBatchFinishedTime(ctx, execItem.PlanPk); err != nil {
+	if batchCount > 0 {
+		batchNotifyReq := streamevent.NotifyPlanEventReq{
+			EventType:  1,
+			PlanId:     execItem.PlanId,
+			PlanType:   plan.Type.String,
+			BatchId:    execItem.BatchId,
+			Attributes: map[string]string{},
+		}
+		s.svcCtx.StreamEventCli.NotifyPlanEvent(ctx, &batchNotifyReq)
+	}
+	planCount, err := s.svcCtx.PlanModel.UpdateBatchFinishedTime(ctx, execItem.PlanPk)
+	if err != nil {
 		logx.Errorf("Error updating plan %s completed time: %v", execItem.PlanId, err)
 	}
-
+	if planCount > 0 {
+		planPlanReq := streamevent.NotifyPlanEventReq{
+			EventType: 0,
+			PlanId:    execItem.PlanId,
+			PlanType:  plan.Type.String,
+			//BatchId:    execItem.BatchId,
+			Attributes: map[string]string{},
+		}
+		s.svcCtx.StreamEventCli.NotifyPlanEvent(ctx, &planPlanReq)
+	}
 	logx.Infof("Successfully executed callback for plan exec item: id=%d", execItem.Id)
 }

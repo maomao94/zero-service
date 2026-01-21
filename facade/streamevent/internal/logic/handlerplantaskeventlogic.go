@@ -28,11 +28,11 @@ func NewHandlerPlanTaskEventLogic(ctx context.Context, svcCtx *svc.ServiceContex
 // 计划任务事件处理
 func (l *HandlerPlanTaskEventLogic) HandlerPlanTaskEvent(in *streamevent.HandlerPlanTaskEventReq) (*streamevent.HandlerPlanTaskEventRes, error) {
 	return &streamevent.HandlerPlanTaskEventRes{
-		ExecResult: model.ResultOngoing,
-		Message:    "ongoing",
+		ExecResult: model.ResultCompleted,
+		Message:    "",
 		DelayConfig: &streamevent.PbDelayConfig{
 			NextTriggerTime: carbon.Now().AddHours(1).ToDateTimeString(),
-			DelayReason:     "ongoing",
+			DelayReason:     "",
 		},
 	}, nil
 }

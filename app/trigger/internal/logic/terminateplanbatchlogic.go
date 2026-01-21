@@ -4,11 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"time"
+	"zero-service/facade/streamevent/streamevent"
+
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/tool"
 	"zero-service/model"
 
+	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -36,8 +39,18 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 		return nil, err
 	}
 
+	// 检查参数
+	if in.Id <= 0 && strutil.IsBlank(in.BatchId) {
+		return nil, errors.BadRequest("", "参数错误")
+	}
+
 	// 查询计划批次
-	planBatch, err := l.svcCtx.PlanBatchModel.FindOne(l.ctx, in.Id)
+	var planBatch *model.PlanBatch
+	if in.Id > 0 {
+		planBatch, err = l.svcCtx.PlanBatchModel.FindOne(l.ctx, in.Id)
+	} else {
+		planBatch, err = l.svcCtx.PlanBatchModel.FindOneByBatchId(l.ctx, in.BatchId)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -78,6 +91,19 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 	if err != nil {
 		return nil, err
 	}
-	l.svcCtx.PlanModel.UpdateBatchFinishedTime(l.ctx, planBatch.PlanPk)
+	planCount, err := l.svcCtx.PlanModel.UpdateBatchFinishedTime(l.ctx, planBatch.PlanPk)
+	if err != nil {
+		l.Errorf("Error updating plan %s completed time: %v", planBatch.PlanId, err)
+	}
+	if planCount > 0 {
+		planPlanReq := streamevent.NotifyPlanEventReq{
+			EventType: 0,
+			PlanId:    planBatch.PlanId,
+			PlanType:  plan.Type.String,
+			//BatchId:    planBatch.BatchId,
+			Attributes: map[string]string{},
+		}
+		l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq)
+	}
 	return &trigger.TerminatePlanBatchRes{}, nil
 }

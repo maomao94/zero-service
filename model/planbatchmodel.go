@@ -16,7 +16,7 @@ type (
 	PlanBatchModel interface {
 		planBatchModel
 		withSession(session sqlx.Session) PlanBatchModel
-		UpdateBatchFinishedTime(ctx context.Context, id int64) error
+		UpdateBatchFinishedTime(ctx context.Context, id int64) (int64, error)
 		CalculatePlanProgress(ctx context.Context, planPk int64) (float32, error)
 	}
 
@@ -41,7 +41,7 @@ func (m *customPlanBatchModel) withSession(session sqlx.Session) PlanBatchModel 
 	return NewPlanBatchModelWithDBType(sqlx.NewSqlConnFromSession(session), m.dbType)
 }
 
-func (m *customPlanBatchModel) UpdateBatchFinishedTime(ctx context.Context, id int64) error {
+func (m *customPlanBatchModel) UpdateBatchFinishedTime(ctx context.Context, id int64) (int64, error) {
 	now := time.Now()
 	subQuery := "SELECT 1 FROM plan_exec_item i WHERE i.del_state = 0 AND i.batch_pk = b.id AND i.status NOT IN (?, ?)"
 	builder := squirrel.
@@ -55,10 +55,17 @@ func (m *customPlanBatchModel) UpdateBatchFinishedTime(ctx context.Context, id i
 	}
 	sql, args, err := builder.ToSql()
 	if err != nil {
-		return err
+		return 0, err
 	}
-	_, err = m.conn.ExecCtx(ctx, sql, args...)
-	return err
+	sqlResult, err := m.conn.ExecCtx(ctx, sql, args...)
+	if err != nil {
+		return 0, err
+	}
+	updateCount, err := sqlResult.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+	return updateCount, err
 }
 
 func (m *customPlanBatchModel) CalculatePlanProgress(ctx context.Context, planPk int64) (float32, error) {

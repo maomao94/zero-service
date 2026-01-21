@@ -4,12 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"time"
+	"zero-service/facade/streamevent/streamevent"
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/tool"
 	"zero-service/model"
 
+	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -37,8 +39,18 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 		return nil, err
 	}
 
+	// 检查参数
+	if in.Id <= 0 && strutil.IsBlank(in.PlanId) {
+		return nil, errors.BadRequest("", "参数错误")
+	}
+
 	// 查询计划
-	plan, err := l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, in.PlanId)
+	var plan *model.Plan
+	if in.Id > 0 {
+		plan, err = l.svcCtx.PlanModel.FindOne(l.ctx, in.Id)
+	} else {
+		plan, err = l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, in.PlanId)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +81,7 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 			Set("terminated_reason", sql.NullString{String: in.Reason, Valid: in.Reason != ""}).
 			Set("finished_time", now).
 			Set("update_user", sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}).
-			Where("plan_id = ?", in.PlanId).
+			Where("plan_id = ?", plan.PlanId).
 			Where("status != ?", int64(model.PlanStatusTerminated)).
 			Where("finished_time IS NULL")
 		_, transErr = l.svcCtx.PlanBatchModel.UpdateWithBuilder(ctx, tx, builder)
@@ -80,8 +92,16 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 	})
 
 	if err != nil {
-		return &trigger.TerminatePlanRes{}, nil
+		return nil, err
 	}
+	planPlanReq := streamevent.NotifyPlanEventReq{
+		EventType: 0,
+		PlanId:    plan.PlanId,
+		PlanType:  plan.Type.String,
+		//BatchId:    execItem.BatchId,
+		Attributes: map[string]string{},
+	}
+	l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq)
 
 	return &trigger.TerminatePlanRes{}, nil
 }
