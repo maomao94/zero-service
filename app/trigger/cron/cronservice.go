@@ -309,14 +309,14 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	}
 
 	switch res.ExecResult {
-	case model.ResultCompleted: // completed
-		logx.WithContext(ctx).Infof("gRPC call succeeded for exec item %d", execItem.Id)
+	case model.ResultCompleted:
+		logx.WithContext(ctx).Infof("gRPC call completed for exec item %d", execItem.Id)
 		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToCompleted(ctx, execItem.Id, res.Message, res.Reason,
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 		); err != nil {
 			logx.WithContext(ctx).Errorf("Error updating plan exec item %d to completed: %v", execItem.Id, err)
 		}
-	case model.ResultFailed: // Failed
+	case model.ResultFailed:
 		logx.WithContext(ctx).Infof("gRPC call returned failure for exec item %d: %s", execItem.Id, res.Message)
 		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, res.Message, res.Reason,
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
@@ -362,6 +362,13 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		}
 	case model.ResultOngoing:
 		logx.WithContext(ctx).Infof("gRPC call returned ongoing for exec item %d: %s", execItem.Id, res.Message)
+	case model.ResultTerminated:
+		logx.WithContext(ctx).Infof("gRPC call returned terminated for exec item %d: %s", execItem.Id, res.Message)
+		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultTerminated, res.Message, res.Reason,
+			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
+		); err != nil {
+			logx.WithContext(ctx).Errorf("Error updating plan exec item %d to terminated: %v", execItem.Id, err)
+		}
 	default:
 		logx.WithContext(ctx).Errorf("Unknown execResult %s for exec item %d", res.ExecResult, execItem.Id)
 		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToCompleted(ctx, execItem.Id, res.Message, res.Reason,

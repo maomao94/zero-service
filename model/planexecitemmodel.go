@@ -28,6 +28,8 @@ type (
 		UpdateStatusToFail(ctx context.Context, id int64, lastResult, lastMessage, lastReason string, statusIn []int, statusOut []int) error
 		// 更新执行项状态为延期
 		UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, lastMessage, lastReason, nextTriggerTime string, statusIn []int, statusOut []int) error
+		// 更新执行项状态为已终止
+		UpdateStatusToTerminated(ctx context.Context, id int64, lastMessage, lastReason string, statusIn []int, statusOut []int) error
 		// 通用SQL查询方法
 		QuerySQL(ctx context.Context, sql string, args ...interface{}) ([]map[string]interface{}, error)
 		// 获取批次执行项状态统计
@@ -265,6 +267,35 @@ func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id 
 		Set("last_reason", lastReason).
 		Set("next_trigger_time", nextTriggerTimeStr).
 		Set("last_trigger_time", currentTimeStr).
+		Set("trigger_count", squirrel.Expr("trigger_count + 1")).
+		Where("id = ?", id)
+	if len(statusIn) > 0 {
+		updateBuilder = updateBuilder.Where(squirrel.Eq{"status": statusIn})
+	}
+	if len(statusOut) > 0 {
+		updateBuilder = updateBuilder.Where(squirrel.NotEq{"status": statusOut})
+	}
+	if m.dbType == DatabaseTypePostgres {
+		updateBuilder = updateBuilder.PlaceholderFormat(squirrel.Dollar)
+	}
+	updateSQL, updateArgs, err := updateBuilder.ToSql()
+	if err != nil {
+		return err
+	}
+	_, err = m.conn.ExecCtx(ctx, updateSQL, updateArgs...)
+	return err
+}
+
+func (m *customPlanExecItemModel) UpdateStatusToTerminated(ctx context.Context, id int64, lastMessage, lastReason string, statusIn []int, statusOut []int) error {
+	currentTime := time.Now()
+	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
+	updateBuilder := squirrel.Update(m.table).
+		Set("status", StatusTerminated).
+		Set("last_result", ResultTerminated).
+		Set("last_message", lastMessage).
+		Set("last_reason", lastReason).
+		Set("last_trigger_time", currentTimeStr).
+		Set("trigger_count", squirrel.Expr("trigger_count + 1")).
 		Where("id = ?", id)
 	if len(statusIn) > 0 {
 		updateBuilder = updateBuilder.Where(squirrel.Eq{"status": statusIn})
