@@ -17,6 +17,9 @@ import (
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"github.com/zeromicro/go-zero/core/threading"
+	"github.com/zeromicro/go-zero/core/trace"
+	"go.opentelemetry.io/otel"
+	oteltrace "go.opentelemetry.io/otel/trace"
 )
 
 type CronService struct {
@@ -77,35 +80,48 @@ func (s *CronService) scanLoop() {
 
 func (s *CronService) ScanPlanExecItem() bool {
 	ctx := context.Background()
+	tracer := otel.Tracer(trace.TraceName)
+	ctx, span := tracer.Start(ctx, "cron-scan", oteltrace.WithSpanKind(oteltrace.SpanKindProducer))
+	defer span.End()
 	execItem, err := s.svcCtx.PlanExecItemModel.LockTriggerItem(ctx, 5*60*time.Second)
 	if err != nil {
 		if err == sqlx.ErrNotFound {
 			return false
 		}
-		logx.Errorf("Error locking plan exec item: %v", err)
+		logx.WithContext(ctx).Errorf("Error locking plan exec item: %v", err)
 		return false
 	}
 	if execItem == nil {
 		return false
 	}
+
 	queryExecItem, queryErr := s.svcCtx.PlanExecItemModel.FindOne(ctx, execItem.Id)
 	if queryErr != nil {
-		logx.Errorf("Error querying plan exec item: %v", queryErr)
+		logx.WithContext(ctx).Errorf("Error querying plan exec item: %v", queryErr)
 	}
 	plan, queryErr := s.svcCtx.PlanModel.FindOneByPlanId(ctx, execItem.PlanId)
 	if queryErr != nil {
-		logx.Errorf("Error querying plan: %v", queryErr)
+		logx.WithContext(ctx).Errorf("Error querying plan: %v", queryErr)
 	}
-	logx.Infof("Found plan exec item to trigger: id=%d, planPk=%d, planId=%s, planName=%s, itemId=%s, itemName=%s, pointId=%s, nextTriggerTime=%v",
-		execItem.Id,
-		execItem.PlanPk,
-		execItem.PlanId,
+
+	logx.WithContext(ctx).Infof("Found plan exec item to trigger: id=%d, planPk=%d, planId=%s, planName=%s, batchPk=%d, batchId=%s, itemPk=%d, itemId=%s, itemName=%s, pointId=%s, nextTriggerTime=%v",
+		queryExecItem.Id,
+		queryExecItem.PlanPk,
+		queryExecItem.PlanId,
 		plan.PlanName.String,
-		execItem.ItemId,
-		execItem.ItemName.String,
-		execItem.PointId.String,
-		execItem.NextTriggerTime,
+		queryExecItem.BatchPk,
+		queryExecItem.BatchId,
+		queryExecItem.Id,
+		queryExecItem.ItemId,
+		queryExecItem.ItemName.String,
+		queryExecItem.PointId.String,
+		queryExecItem.NextTriggerTime,
 	)
+
+	ctx = logx.ContextWithFields(ctx, logx.Field("planId", queryExecItem.PlanId), logx.Field("planType", plan.Type.String),
+		logx.Field("batchId", queryExecItem.BatchId),
+		logx.Field("itemId", queryExecItem.ItemId),
+		logx.Field("execId", queryExecItem.ExecId))
 	s.ExecuteCallback(ctx, queryExecItem, plan)
 	return true
 }
@@ -128,16 +144,17 @@ func (cb rawCodec) Unmarshal(data []byte, v any) error {
 func (cb rawCodec) Name() string { return "proto_raw" }
 
 func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanExecItem, plan *model.Plan) {
+	traceID := trace.TraceIDFromContext(ctx)
 	if execItem.RequestTimeout == 0 {
 		execItem.RequestTimeout = s.svcCtx.Config.StreamEventConf.Timeout
 	}
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(execItem.RequestTimeout)*time.Millisecond+120*time.Second)
 	defer cancel()
-	logx.Debugf("Executing callback for exec item %d, planId: %s, itemId: %s",
+	logx.WithContext(ctx).Debugf("Executing callback for exec item %d, planId: %s, itemId: %s",
 		execItem.Id, execItem.PlanId, execItem.ItemId)
 
 	if err := s.svcCtx.PlanExecItemModel.UpdateStatusToRunning(ctx, execItem.Id); err != nil {
-		logx.Errorf("Error updating plan exec item %d to running: %v", execItem.Id, err)
+		logx.WithContext(ctx).Errorf("Error updating plan exec item %d to running: %v", execItem.Id, err)
 		return
 	}
 	callPlan := &streamevent.PbPlan{
@@ -187,7 +204,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	var res *streamevent.HandlerPlanTaskEventRes
 	s.taskRunner.Schedule(func() {
 		defer close(errCh)
-		lockKey := fmt.Sprintf("trigger:lock:plan:exec:%d", execItem.ExecId)
+		lockKey := fmt.Sprintf("trigger:lock:plan:exec:%s", execItem.ExecId)
 		lock := redis.NewRedisLock(s.svcCtx.Redis, lockKey)
 		b, taskErr := lock.AcquireCtx(ctx)
 		if taskErr != nil {
@@ -206,11 +223,11 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	})
 	err = <-errCh
 	if err != nil {
-		logx.Errorf("gRPC call failed for exec item %d: %v", execItem.Id, err)
+		logx.WithContext(ctx).Errorf("gRPC call failed for exec item %d: %v", execItem.Id, err)
 		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, "gRPC call failed: "+err.Error(), "",
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 		); updateErr != nil {
-			logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
+			logx.WithContext(ctx).Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
 		}
 
 		// 记录执行日志
@@ -228,21 +245,21 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 			ItemName:    execItem.ItemName,
 			PointId:     execItem.PointId,
 			TriggerTime: time.Now(),
-			TraceId:     sql.NullString{String: "", Valid: false},
+			TraceId:     sql.NullString{String: traceID, Valid: traceID != ""},
 			ExecResult:  sql.NullString{String: model.ResultFailed, Valid: true}, // 失败
 			Message:     sql.NullString{String: "gRPC call failed: " + err.Error(), Valid: true},
 		}
 		if _, err := s.svcCtx.PlanExecLogModel.Insert(ctx, nil, logEntry); err != nil {
-			logx.Errorf("Error inserting plan exec log for item %d: %v", execItem.Id, err)
+			logx.WithContext(ctx).Errorf("Error inserting plan exec log for item %d: %v", execItem.Id, err)
 		}
 		return
 	}
 	if err != nil {
-		logx.Errorf("Error unmarshaling response for exec item %d: %v", execItem.Id, err)
+		logx.WithContext(ctx).Errorf("Error unmarshaling response for exec item %d: %v", execItem.Id, err)
 		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, "Error unmarshaling response: "+err.Error(), "",
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 		); updateErr != nil {
-			logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
+			logx.WithContext(ctx).Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
 		}
 
 		// 记录执行日志
@@ -260,12 +277,12 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 			ItemName:    execItem.ItemName,
 			PointId:     execItem.PointId,
 			TriggerTime: time.Now(),
-			TraceId:     sql.NullString{String: "", Valid: false},
+			TraceId:     sql.NullString{String: traceID, Valid: traceID != ""},
 			ExecResult:  sql.NullString{String: model.ResultFailed, Valid: true}, // 失败
 			Message:     sql.NullString{String: "Error unmarshaling response: " + err.Error(), Valid: true},
 		}
 		if _, err := s.svcCtx.PlanExecLogModel.Insert(ctx, nil, logEntry); err != nil {
-			logx.Errorf("Error inserting plan exec log for item %d: %v", execItem.Id, err)
+			logx.WithContext(ctx).Errorf("Error inserting plan exec log for item %d: %v", execItem.Id, err)
 		}
 		return
 	}
@@ -285,7 +302,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		ItemName:    execItem.ItemName,
 		PointId:     execItem.PointId,
 		TriggerTime: time.Now(),
-		TraceId:     sql.NullString{String: "", Valid: false},
+		TraceId:     sql.NullString{String: traceID, Valid: traceID != ""},
 		ExecResult:  sql.NullString{String: res.ExecResult, Valid: res.ExecResult != ""},
 		Message:     sql.NullString{String: res.Message, Valid: res.Message != ""},
 		Reason:      sql.NullString{String: res.Reason, Valid: res.Reason != ""},
@@ -293,21 +310,21 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 
 	switch res.ExecResult {
 	case model.ResultCompleted: // completed
-		logx.Infof("gRPC call succeeded for exec item %d", execItem.Id)
+		logx.WithContext(ctx).Infof("gRPC call succeeded for exec item %d", execItem.Id)
 		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToCompleted(ctx, execItem.Id, res.Message, res.Reason,
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 		); err != nil {
-			logx.Errorf("Error updating plan exec item %d to completed: %v", execItem.Id, err)
+			logx.WithContext(ctx).Errorf("Error updating plan exec item %d to completed: %v", execItem.Id, err)
 		}
 	case model.ResultFailed: // Failed
-		logx.Infof("gRPC call returned failure for exec item %d: %s", execItem.Id, res.Message)
+		logx.WithContext(ctx).Infof("gRPC call returned failure for exec item %d: %s", execItem.Id, res.Message)
 		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, res.Message, res.Reason,
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 		); err != nil {
-			logx.Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, err)
+			logx.WithContext(ctx).Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, err)
 		}
 	case model.ResultDelayed:
-		logx.Infof("gRPC call returned delayed for exec item %d: %s", execItem.Id, res.Message)
+		logx.WithContext(ctx).Infof("gRPC call returned delayed for exec item %d: %s", execItem.Id, res.Message)
 		currentTime := carbon.Now()
 		delayTriggerTime := currentTime.AddMinutes(5).ToDateTimeString()
 		delayReason := ""
@@ -317,7 +334,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 			delayReason = res.Message
 		}
 		if res.DelayConfig == nil {
-			logx.Errorf("No delay config provided for exec item %d", execItem.Id)
+			logx.WithContext(ctx).Errorf("No delay config provided for exec item %d", execItem.Id)
 		} else {
 			if len(res.DelayConfig.DelayReason) != 0 {
 				delayReason = fmt.Sprintf("reason: %s, message: %s", res.DelayConfig.DelayReason, res.Message)
@@ -325,11 +342,11 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 			delayTime := carbon.ParseByLayout(res.DelayConfig.NextTriggerTime, carbon.DateTimeLayout)
 			isTrue := true
 			if delayTime.Error != nil || delayTime.IsInvalid() {
-				logx.Errorf("Invalid delay time format for exec item %d: %s", execItem.Id, res.DelayConfig.NextTriggerTime)
+				logx.WithContext(ctx).Errorf("Invalid delay time format for exec item %d: %s", execItem.Id, res.DelayConfig.NextTriggerTime)
 				isTrue = false
 			} else {
 				if delayTime.Lt(currentTime) {
-					logx.Errorf("Delay time for exec item %d is in the past: %v, current time: %v", execItem.Id, delayTime.ToDateTimeString(), currentTime.ToDateTimeString())
+					logx.WithContext(ctx).Errorf("Delay time for exec item %d is in the past: %v, current time: %v", execItem.Id, delayTime.ToDateTimeString(), currentTime.ToDateTimeString())
 					isTrue = false
 				}
 			}
@@ -337,32 +354,30 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 				delayTriggerTime = delayTime.ToDateTimeString()
 			}
 		}
-		delayReason = fmt.Sprintf("%s, delay time: %s", delayReason, delayTriggerTime,
-			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
-		)
+		delayReason = fmt.Sprintf("%s, delay time: %s", delayReason, delayTriggerTime)
 		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToDelayed(ctx, execItem.Id, res.ExecResult, res.Message, delayReason, delayTriggerTime,
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 		); err != nil {
-			logx.Errorf("Error updating plan exec item %d to delayed: %v", execItem.Id, err)
+			logx.WithContext(ctx).Errorf("Error updating plan exec item %d to delayed: %v", execItem.Id, err)
 		}
 	case model.ResultOngoing:
-		logx.Infof("gRPC call returned ongoing for exec item %d: %s", execItem.Id, res.Message)
+		logx.WithContext(ctx).Infof("gRPC call returned ongoing for exec item %d: %s", execItem.Id, res.Message)
 	default:
-		logx.Errorf("Unknown execResult %s for exec item %d", res.ExecResult, execItem.Id)
+		logx.WithContext(ctx).Errorf("Unknown execResult %s for exec item %d", res.ExecResult, execItem.Id)
 		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToCompleted(ctx, execItem.Id, res.Message, res.Reason,
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 		); err != nil {
-			logx.Errorf("Error updating plan exec item %d to completed: %v", execItem.Id, err)
+			logx.WithContext(ctx).Errorf("Error updating plan exec item %d to completed: %v", execItem.Id, err)
 		}
 	}
 	// 插入执行日志
 	if _, err := s.svcCtx.PlanExecLogModel.Insert(ctx, nil, logEntry); err != nil {
-		logx.Errorf("Error inserting plan exec log for item %d: %v", execItem.Id, err)
+		logx.WithContext(ctx).Errorf("Error inserting plan exec log for item %d: %v", execItem.Id, err)
 	}
 
 	batchCount, err := s.svcCtx.PlanBatchModel.UpdateBatchFinishedTime(ctx, execItem.BatchPk)
 	if err != nil {
-		logx.Errorf("Error updating batch %s completed time: %v", execItem.BatchId, err)
+		logx.WithContext(ctx).Errorf("Error updating batch %s completed time: %v", execItem.BatchId, err)
 	}
 	if batchCount > 0 {
 		batchNotifyReq := streamevent.NotifyPlanEventReq{
@@ -376,7 +391,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	}
 	planCount, err := s.svcCtx.PlanModel.UpdateBatchFinishedTime(ctx, execItem.PlanPk)
 	if err != nil {
-		logx.Errorf("Error updating plan %s completed time: %v", execItem.PlanId, err)
+		logx.WithContext(ctx).Errorf("Error updating plan %s completed time: %v", execItem.PlanId, err)
 	}
 	if planCount > 0 {
 		planPlanReq := streamevent.NotifyPlanEventReq{
@@ -388,5 +403,5 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		}
 		s.svcCtx.StreamEventCli.NotifyPlanEvent(ctx, &planPlanReq)
 	}
-	logx.Infof("Successfully executed callback for plan exec item: id=%d", execItem.Id)
+	logx.WithContext(ctx).Infof("Successfully executed callback for plan exec item: id=%d", execItem.Id)
 }
