@@ -58,7 +58,7 @@ func (l *ListPlanExecLogsLogic) ListPlanExecLogs(in *trigger.ListPlanExecLogsReq
 	}
 
 	// 查询日志列表
-	logs, total, err := l.svcCtx.PlanExecLogModel.FindPageListByPageWithTotal(l.ctx, builder, in.PageNum, in.PageSize, "id DESC")
+	logs, total, err := l.svcCtx.PlanExecLogModel.FindPageListByPageWithTotal(l.ctx, builder, in.PageNum, in.PageSize, "create_time DESC", "id DESC")
 	if err != nil {
 		return nil, err
 	}
