@@ -101,6 +101,22 @@ service TriggerRpc {
   rpc CallbackPlanExecItem(CallbackPlanExecItemReq) returns (CallbackPlanExecItemRes);
 }
 
+// 执行项调度状态枚举定义
+enum PbExecItemStatus {
+  // 初始等待调度，可扫表触发
+  EXEC_ITEM_STATUS_WAITING = 0;
+  // 延期等待（业务失败重试或业务延期），可扫表触发
+  EXEC_ITEM_STATUS_DELAYED = 10;
+  // 已下发，等待业务回调，扫表时需判断超时
+  EXEC_ITEM_STATUS_RUNNING = 100;
+  // 执行项暂停（不扫表、不触发）
+  EXEC_ITEM_STATUS_PAUSED = 150;
+  // 执行完成终态，不再触发
+  EXEC_ITEM_STATUS_COMPLETED = 200;
+  // 人工/策略/超过重试次数终止，终态
+  EXEC_ITEM_STATUS_TERMINATED = 300;
+}
+
 message PbTaskInfo {
   // ID is the identifier of the task.
   string id = 1;
@@ -740,7 +756,7 @@ message PbPlan{
   string endTime = 7;
   // 计划规则项
   PbPlanRule rule = 8;
-  // 状态：0-禁用，1-启用，2-已终止，3-暂停
+  // 状态：1-启用，2-暂停，3-终止
   int32 status = 9;
   // 终止原因
   string terminatedReason = 10;
@@ -772,7 +788,7 @@ message ListPlansReq {
   string planId = 3;
   // 计划名称模糊查询
   string planName = 4;
-  // 状态：0-禁用，1-启用，2-已终止，3-暂停
+  // 状态：1-启用，2-暂停，3-终止
   repeated int32 status = 5;
   // 任务类型
   string type = 6;
@@ -807,7 +823,7 @@ message ListPlanBatchesReq {
   string planId = 4;
   // 批次ID
   string batchId = 5;
-  // 状态：0-禁用，1-启用，2-已终止，3-暂停
+  // 状态：1-启用，2-暂停，3-终止
   repeated int32 status = 6;
 }
 
@@ -878,8 +894,8 @@ message PbPlanExecItem {
   string lastTriggerTime = 18;
   // 触发次数
   int32 triggerCount = 19;
-  // 状态：0-待执行，1-执行中，2-完成，3-失败，4-延期，5-已终止，6-暂停
-  int32 status = 20;
+  // 状态
+  PbExecItemStatus status = 20;
   // 上次执行结果
   string lastResult = 21;
   // 上次结果描述
@@ -922,8 +938,7 @@ message ListPlanExecItemsReq {
   string itemId = 7;
   // 执行项名称模糊查询
   string itemName = 8;
-  // 状态：0-待执行，1-执行中，2-完成，3-失败，4-延期，5-已终止，6-暂停
-  repeated int32 status = 9;
+  repeated PbExecItemStatus status = 9;
 }
 
 message ListPlanExecItemsRes {
@@ -1041,7 +1056,7 @@ message PbPlanBatch {
   string batchId = 3;
   // 批次名称
   string batchName = 4;
-  // 状态：0-禁用，1-启用，2-已终止，3-暂停
+  // 状态：1-启用，2-暂停，3-终止
   int32 status = 5;
   // 计划触发时间
   string planTriggerTime = 6;
@@ -1067,22 +1082,6 @@ message PbPlanBatch {
   string ext4 = 16;
   // 扩展字段5
   string ext5 = 17;
-}
-
-// 执行项调度状态枚举定义
-enum PbExecItemStatus {
-  // 初始等待调度，可扫表触发
-  EXEC_ITEM_STATUS_WAITING = 0;
-  // 延期等待（业务失败重试或业务延期），可扫表触发
-  EXEC_ITEM_STATUS_DELAYED = 10;
-  // 已下发，等待业务回调，扫表时需判断超时
-  EXEC_ITEM_STATUS_RUNNING = 100;
-  // 执行项暂停（不扫表、不触发）
-  EXEC_ITEM_STATUS_PAUSED = 150;
-  // 执行完成终态，不再触发
-  EXEC_ITEM_STATUS_COMPLETED = 200;
-  // 人工/策略/超过重试次数终止，终态
-  EXEC_ITEM_STATUS_TERMINATED = 300;
 }
 
 message CallbackPlanExecItemReq {
