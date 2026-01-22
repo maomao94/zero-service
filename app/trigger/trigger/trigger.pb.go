@@ -2874,8 +2874,12 @@ type CreatePlanTaskReq struct {
 	EndTime string `protobuf:"bytes,7,opt,name=endTime,proto3" json:"endTime,omitempty"`
 	// 计划规则项 默认 规则项 MINUTELY
 	Rule *PbPlanRule `protobuf:"bytes,8,opt,name=rule,proto3" json:"rule,omitempty"`
+	// 间隔时间 单位: 毫秒
+	IntervalTime int64 `protobuf:"varint,9,opt,name=intervalTime,proto3" json:"intervalTime,omitempty"`
+	// 间隔类型 0-不间隔（同时发起） 1-往后顺延 2-间隔时间内偏移
+	IntervalType int32 `protobuf:"varint,10,opt,name=intervalType,proto3" json:"intervalType,omitempty"`
 	// 计划执行项-根据规则项生成日期批次-batchId 并生成对应批次执行项-execId
-	ExecItems []*CreatePlanExecItem `protobuf:"bytes,9,rep,name=execItems,proto3" json:"execItems,omitempty"`
+	ExecItems []*CreatePlanExecItem `protobuf:"bytes,11,rep,name=execItems,proto3" json:"execItems,omitempty"`
 	// 扩展字段
 	Ext1          string `protobuf:"bytes,50,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	Ext2          string `protobuf:"bytes,51,opt,name=ext2,proto3" json:"ext2,omitempty"`
@@ -2984,6 +2988,20 @@ func (x *CreatePlanTaskReq) GetRule() *PbPlanRule {
 		return x.Rule
 	}
 	return nil
+}
+
+func (x *CreatePlanTaskReq) GetIntervalTime() int64 {
+	if x != nil {
+		return x.IntervalTime
+	}
+	return 0
+}
+
+func (x *CreatePlanTaskReq) GetIntervalType() int32 {
+	if x != nil {
+		return x.IntervalType
+	}
+	return 0
 }
 
 func (x *CreatePlanTaskReq) GetExecItems() []*CreatePlanExecItem {
@@ -3132,10 +3150,6 @@ type CreatePlanExecItem struct {
 	Payload string `protobuf:"bytes,5,opt,name=payload,proto3" json:"payload,omitempty"`
 	// 请求超时时间 单位: 毫秒 可为空
 	RequestTimeout int64 `protobuf:"varint,6,opt,name=requestTimeout,proto3" json:"requestTimeout,omitempty"`
-	// 间隔时间 单位: 毫秒
-	IntervalTime int64 `protobuf:"varint,7,opt,name=intervalTime,proto3" json:"intervalTime,omitempty"`
-	// 间隔类型 0-不间隔（同时发起） 1-往后顺延 2-间隔时间内偏移
-	IntervalType int32 `protobuf:"varint,8,opt,name=intervalType,proto3" json:"intervalType,omitempty"`
 	// 扩展字段
 	Ext1          string `protobuf:"bytes,50,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	Ext2          string `protobuf:"bytes,51,opt,name=ext2,proto3" json:"ext2,omitempty"`
@@ -3214,20 +3228,6 @@ func (x *CreatePlanExecItem) GetPayload() string {
 func (x *CreatePlanExecItem) GetRequestTimeout() int64 {
 	if x != nil {
 		return x.RequestTimeout
-	}
-	return 0
-}
-
-func (x *CreatePlanExecItem) GetIntervalTime() int64 {
-	if x != nil {
-		return x.IntervalTime
-	}
-	return 0
-}
-
-func (x *CreatePlanExecItem) GetIntervalType() int32 {
-	if x != nil {
-		return x.IntervalType
 	}
 	return 0
 }
@@ -6883,7 +6883,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\aendTime\x18\x02 \x01(\tR\aendTime\x121\n" +
 	"\x04rule\x18\x03 \x01(\v2\x13.trigger.PbPlanRuleB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\"3\n" +
 	"\x13CalcPlanTaskDateRes\x12\x1c\n" +
-	"\tplanDates\x18\x01 \x03(\tR\tplanDates\"\xae\x04\n" +
+	"\tplanDates\x18\x01 \x03(\tR\tplanDates\"\x8a\x05\n" +
 	"\x11CreatePlanTaskReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12#\n" +
 	"\bdeptCode\x18e \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bdeptCode\x12\x1f\n" +
@@ -6894,8 +6894,11 @@ const file_trigger_proto_rawDesc = "" +
 	"\vdescription\x18\x05 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\vdescription\x12\x1c\n" +
 	"\tstartTime\x18\x06 \x01(\tR\tstartTime\x12\x18\n" +
 	"\aendTime\x18\a \x01(\tR\aendTime\x121\n" +
-	"\x04rule\x18\b \x01(\v2\x13.trigger.PbPlanRuleB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\x12C\n" +
-	"\texecItems\x18\t \x03(\v2\x1b.trigger.CreatePlanExecItemB\b\xfaB\x05\x92\x01\x02\b\x01R\texecItems\x12\x12\n" +
+	"\x04rule\x18\b \x01(\v2\x13.trigger.PbPlanRuleB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\x12+\n" +
+	"\fintervalTime\x18\t \x01(\x03B\a\xfaB\x04\"\x02(\x00R\fintervalTime\x12-\n" +
+	"\fintervalType\x18\n" +
+	" \x01(\x05B\t\xfaB\x06\x1a\x04\x18\x02(\x00R\fintervalType\x12C\n" +
+	"\texecItems\x18\v \x03(\v2\x1b.trigger.CreatePlanExecItemB\b\xfaB\x05\x92\x01\x02\b\x01R\texecItems\x12\x12\n" +
 	"\x04ext1\x182 \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x183 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x184 \x01(\tR\x04ext3\x12\x12\n" +
@@ -6910,16 +6913,14 @@ const file_trigger_proto_rawDesc = "" +
 	"\x05hours\x18\x05 \x03(\x05B\x10\xfaB\r\x92\x01\n" +
 	"\b\x01\"\x06\x1a\x04\x18\x17(\x00R\x05hours\x12*\n" +
 	"\aminutes\x18\x06 \x03(\x05B\x10\xfaB\r\x92\x01\n" +
-	"\b\x01\"\x06\x1a\x04\x18;(\x00R\aminutes\"\x89\x03\n" +
+	"\b\x01\"\x06\x1a\x04\x18;(\x00R\aminutes\"\xad\x02\n" +
 	"\x12CreatePlanExecItem\x12\x1f\n" +
 	"\x06itemId\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x06itemId\x12\x1a\n" +
 	"\bitemType\x18\x02 \x01(\tR\bitemType\x12\x1a\n" +
 	"\bitemName\x18\x03 \x01(\tR\bitemName\x12\x18\n" +
 	"\apointId\x18\x04 \x01(\tR\apointId\x12\x18\n" +
 	"\apayload\x18\x05 \x01(\tR\apayload\x12&\n" +
-	"\x0erequestTimeout\x18\x06 \x01(\x03R\x0erequestTimeout\x12+\n" +
-	"\fintervalTime\x18\a \x01(\x03B\a\xfaB\x04\"\x02(\x00R\fintervalTime\x12-\n" +
-	"\fintervalType\x18\b \x01(\x05B\t\xfaB\x06\x1a\x04\x18\x02(\x00R\fintervalType\x12\x12\n" +
+	"\x0erequestTimeout\x18\x06 \x01(\x03R\x0erequestTimeout\x12\x12\n" +
 	"\x04ext1\x182 \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x183 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x184 \x01(\tR\x04ext3\x12\x12\n" +

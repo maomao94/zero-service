@@ -511,8 +511,12 @@ message CreatePlanTaskReq {
   string endTime = 7;
   // 计划规则项 默认 规则项 MINUTELY
   PbPlanRule rule = 8 [(validate.rules).message = {required: true}];
+  // 间隔时间 单位: 毫秒
+  int64 intervalTime = 9 [(validate.rules).int64 = {gte: 0}];
+  // 间隔类型 0-不间隔（同时发起） 1-往后顺延 2-间隔时间内偏移
+  int32 intervalType = 10 [(validate.rules).int32 = {gte: 0, lte: 2}];
   // 计划执行项-根据规则项生成日期批次-batchId 并生成对应批次执行项-execId
-  repeated CreatePlanExecItem execItems = 9 [(validate.rules).repeated = {min_items: 1}];
+  repeated CreatePlanExecItem execItems = 11 [(validate.rules).repeated = {min_items: 1}];
 
   // 扩展字段
   string ext1 = 50;
@@ -572,10 +576,6 @@ message CreatePlanExecItem {
   string payload = 5;
   // 请求超时时间 单位: 毫秒 可为空
   int64 requestTimeout = 6;
-  // 间隔时间 单位: 毫秒
-  int64 intervalTime = 7 [(validate.rules).int64 = {gte: 0}];
-  // 间隔类型 0-不间隔（同时发起） 1-往后顺延 2-间隔时间内偏移
-  int32 intervalType = 8 [(validate.rules).int32 = {gte: 0, lte: 2}];
 
   // 扩展字段
   string ext1 = 50;

@@ -6163,6 +6163,28 @@ func (m *CreatePlanTaskReq) validate(all bool) error {
 		}
 	}
 
+	if m.GetIntervalTime() < 0 {
+		err := CreatePlanTaskReqValidationError{
+			field:  "IntervalTime",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if val := m.GetIntervalType(); val < 0 || val > 2 {
+		err := CreatePlanTaskReqValidationError{
+			field:  "IntervalType",
+			reason: "value must be inside range [0, 2]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(m.GetExecItems()) < 1 {
 		err := CreatePlanTaskReqValidationError{
 			field:  "ExecItems",
@@ -6567,28 +6589,6 @@ func (m *CreatePlanExecItem) validate(all bool) error {
 	// no validation rules for Payload
 
 	// no validation rules for RequestTimeout
-
-	if m.GetIntervalTime() < 0 {
-		err := CreatePlanExecItemValidationError{
-			field:  "IntervalTime",
-			reason: "value must be greater than or equal to 0",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if val := m.GetIntervalType(); val < 0 || val > 2 {
-		err := CreatePlanExecItemValidationError{
-			field:  "IntervalType",
-			reason: "value must be inside range [0, 2]",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
 
 	// no validation rules for Ext1
 
