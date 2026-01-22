@@ -157,16 +157,16 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 			for _, item := range in.ExecItems {
 				execId, _ := tool.SimpleUUID()
 				nextTriggerTime := d
-				switch item.IntervalType {
+				switch in.IntervalType {
 				case 1:
-					nextTriggerTime = d.Add(time.Duration(itemIndex*int(item.IntervalTime)) * time.Millisecond)
-					itemIndex++
+					nextTriggerTime = d.Add(time.Duration(itemIndex*int(in.IntervalTime)) * time.Millisecond)
 				case 2:
-					if item.IntervalTime > 0 {
-						offset := l.svcCtx.UnstableExpiry.AroundDuration(time.Duration(item.IntervalTime) * time.Millisecond)
+					if in.IntervalTime > 0 {
+						offset := l.svcCtx.UnstableExpiry.AroundDuration(time.Duration(in.IntervalTime) * time.Millisecond)
 						nextTriggerTime = d.Add(offset)
 					}
 				}
+				itemIndex++
 				planItem := model.PlanExecItem{
 					CreateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},
 					UpdateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},
