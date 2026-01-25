@@ -362,9 +362,14 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		}
 	case model.ResultOngoing:
 		logx.WithContext(ctx).Infof("gRPC call returned ongoing for exec item %d: %s", execItem.Id, res.Message)
+		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToOngoing(ctx, execItem.Id, res.Message, res.Reason, true,
+			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
+		); err != nil {
+			logx.WithContext(ctx).Errorf("Error updating plan exec item %d to ongoing: %v", execItem.Id, err)
+		}
 	case model.ResultTerminated:
 		logx.WithContext(ctx).Infof("gRPC call returned terminated for exec item %d: %s", execItem.Id, res.Message)
-		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultTerminated, res.Message, res.Reason,
+		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToTerminated(ctx, execItem.Id, res.Message, res.Reason,
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 		); err != nil {
 			logx.WithContext(ctx).Errorf("Error updating plan exec item %d to terminated: %v", execItem.Id, err)

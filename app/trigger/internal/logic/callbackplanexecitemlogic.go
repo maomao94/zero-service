@@ -78,6 +78,9 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 	if execItem.Status == int64(model.StatusCompleted) || execItem.Status == int64(model.StatusTerminated) {
 		return nil, errors.BadRequest("", "执行项已结束")
 	}
+	if execItem.Status != int64(model.StatusRunning) {
+		return nil, errors.BadRequest("", "执行项状态错误")
+	}
 	// 执行事务
 	err = l.svcCtx.PlanModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
 		var transErr error
@@ -129,7 +132,9 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 				[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 			)
 		case model.ResultOngoing:
-			l.Infof("Ongoing exec item %d", execItem.Id)
+			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToOngoing(ctx, execItem.Id, in.Message, in.Reason, false,
+				[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
+			)
 		case model.ResultTerminated:
 			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToTerminated(ctx, execItem.Id, in.Message, in.Reason,
 				[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
