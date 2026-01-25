@@ -12169,7 +12169,7 @@ func (m *CallbackPlanExecItemReq) validate(all bool) error {
 	if _, ok := _CallbackPlanExecItemReq_ExecResult_InLookup[m.GetExecResult()]; !ok {
 		err := CallbackPlanExecItemReqValidationError{
 			field:  "ExecResult",
-			reason: "value must be in list [completed terminated failed delayed]",
+			reason: "value must be in list [completed terminated failed delayed ongoing]",
 		}
 		if !all {
 			return err
@@ -12295,6 +12295,7 @@ var _CallbackPlanExecItemReq_ExecResult_InLookup = map[string]struct{}{
 	"terminated": {},
 	"failed":     {},
 	"delayed":    {},
+	"ongoing":    {},
 }
 
 // Validate checks the field values on PbDelayConfig with the rules defined in

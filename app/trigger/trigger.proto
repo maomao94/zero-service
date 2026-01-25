@@ -1093,7 +1093,7 @@ message CallbackPlanExecItemReq {
   string execId = 2;
   // 回调设计 参考 grpc status 用于分布式事务
   // 执行结果：completed-业务执行完成, terminated-业务终止, failed-业务执行失败, delayed-业务执行延期, ongoing-业务正在执行（未回调或部分异步）
-  string execResult = 3 [(validate.rules).string = {in: ["completed", "terminated", "failed", "delayed"]}];
+  string execResult = 3 [(validate.rules).string = {in: ["completed", "terminated", "failed", "delayed","ongoing"]}];
   // 结果描述  可以定义自己状态码，等下次回调判断业务场景
   string message = 4;
   // 结果原因 （成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）

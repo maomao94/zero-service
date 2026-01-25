@@ -7220,14 +7220,14 @@ const file_trigger_proto_rawDesc = "" +
 	"\x04ext5\x18\x11 \x01(\tR\x04ext5\x1aA\n" +
 	"\x13StatusCountMapEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\"\xb5\x02\n" +
+	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\"\xbe\x02\n" +
 	"\x17CallbackPlanExecItemReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
-	"\x06execId\x18\x02 \x01(\tR\x06execId\x12M\n" +
+	"\x06execId\x18\x02 \x01(\tR\x06execId\x12V\n" +
 	"\n" +
-	"execResult\x18\x03 \x01(\tB-\xfaB*r(R\tcompletedR\n" +
-	"terminatedR\x06failedR\adelayedR\n" +
+	"execResult\x18\x03 \x01(\tB6\xfaB3r1R\tcompletedR\n" +
+	"terminatedR\x06failedR\adelayedR\aongoingR\n" +
 	"execResult\x12\x18\n" +
 	"\amessage\x18\x04 \x01(\tR\amessage\x12\x16\n" +
 	"\x06reason\x18\x05 \x01(\tR\x06reason\x128\n" +
