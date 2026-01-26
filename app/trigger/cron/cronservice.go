@@ -355,6 +355,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 			}
 		}
 		delayReason = fmt.Sprintf("%s, delay time: %s", delayReason, delayTriggerTime)
+		logEntry.Reason = sql.NullString{String: delayReason, Valid: true}
 		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToDelayed(ctx, execItem.Id, res.ExecResult, res.Message, delayReason, delayTriggerTime,
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 		); err != nil {
@@ -392,6 +393,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 			}
 		}
 		delayReason = fmt.Sprintf("%s, delay time: %s", delayReason, delayTriggerTime)
+		logEntry.Reason = sql.NullString{String: delayReason, Valid: true}
 		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToOngoing(ctx, execItem.Id, res.ExecResult, delayReason, true, delayTriggerTime,
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 		); err != nil {
