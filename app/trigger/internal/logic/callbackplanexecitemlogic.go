@@ -132,7 +132,38 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 				[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 			)
 		case model.ResultOngoing:
-			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToOngoing(ctx, execItem.Id, in.Message, in.Reason, false,
+			currentTime := carbon.Now()
+			delayTriggerTime := currentTime.AddMinutes(5).ToDateTimeString()
+			delayReason := ""
+			if len(in.Message) == 0 {
+				delayReason = in.GetExecResult()
+			} else {
+				delayReason = in.Message
+			}
+			if in.DelayConfig == nil {
+				l.Debugf("No delay config provided for exec item %d", execItem.Id)
+			} else {
+				if len(in.DelayConfig.DelayReason) != 0 {
+					delayReason = fmt.Sprintf("reason: %s, message: %s", in.DelayConfig.DelayReason, in.Message)
+				}
+				delayTime := carbon.ParseByLayout(in.DelayConfig.NextTriggerTime, carbon.DateTimeLayout)
+				isTrue := true
+				if delayTime.Error != nil || delayTime.IsInvalid() {
+					l.Errorf("Invalid delay time format for exec item %d: %s", execItem.Id, in.DelayConfig.NextTriggerTime)
+					isTrue = false
+				} else {
+					if delayTime.Lt(currentTime) {
+						l.Errorf("Delay time for exec item %d is in the past: %v, current time: %v", execItem.Id, delayTime.ToDateTimeString(), currentTime.ToDateTimeString())
+						isTrue = false
+					}
+				}
+				if isTrue {
+					delayTriggerTime = delayTime.ToDateTimeString()
+				}
+			}
+			delayReason = fmt.Sprintf("%s, delay time: %s", delayReason, delayTriggerTime)
+			reason = delayReason
+			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToOngoing(ctx, execItem.Id, in.Message, in.Reason, false, delayTriggerTime,
 				[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 			)
 		case model.ResultTerminated:

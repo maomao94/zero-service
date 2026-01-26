@@ -3025,7 +3025,7 @@ type HandlerPlanTaskEventRes struct {
 	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	// 结果原因 （成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
 	Reason string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
-	// 延期配置-默认延期5分钟：delayed-自定义延期
+	// 延期配置-默认延期5分钟：delayed,ongoing-自定义延期
 	DelayConfig   *PbDelayConfig `protobuf:"bytes,4,opt,name=delayConfig,proto3" json:"delayConfig,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

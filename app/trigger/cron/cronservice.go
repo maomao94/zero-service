@@ -362,7 +362,37 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		}
 	case model.ResultOngoing:
 		logx.WithContext(ctx).Infof("gRPC call returned ongoing for exec item %d: %s", execItem.Id, res.Message)
-		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToOngoing(ctx, execItem.Id, res.Message, res.Reason, true,
+		currentTime := carbon.Now()
+		delayTriggerTime := currentTime.AddMinutes(5).ToDateTimeString()
+		delayReason := ""
+		if len(res.Message) == 0 {
+			delayReason = res.ExecResult
+		} else {
+			delayReason = res.Message
+		}
+		if res.DelayConfig == nil {
+			logx.WithContext(ctx).Debugf("No delay config provided for exec item %d", execItem.Id)
+		} else {
+			if len(res.DelayConfig.DelayReason) != 0 {
+				delayReason = fmt.Sprintf("reason: %s, message: %s", res.DelayConfig.DelayReason, res.Message)
+			}
+			delayTime := carbon.ParseByLayout(res.DelayConfig.NextTriggerTime, carbon.DateTimeLayout)
+			isTrue := true
+			if delayTime.Error != nil || delayTime.IsInvalid() {
+				logx.WithContext(ctx).Errorf("Invalid delay time format for exec item %d: %s", execItem.Id, res.DelayConfig.NextTriggerTime)
+				isTrue = false
+			} else {
+				if delayTime.Lt(currentTime) {
+					logx.WithContext(ctx).Errorf("Delay time for exec item %d is in the past: %v, current time: %v", execItem.Id, delayTime.ToDateTimeString(), currentTime.ToDateTimeString())
+					isTrue = false
+				}
+			}
+			if isTrue {
+				delayTriggerTime = delayTime.ToDateTimeString()
+			}
+		}
+		delayReason = fmt.Sprintf("%s, delay time: %s", delayReason, delayTriggerTime)
+		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToOngoing(ctx, execItem.Id, res.ExecResult, delayReason, true, delayTriggerTime,
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 		); err != nil {
 			logx.WithContext(ctx).Errorf("Error updating plan exec item %d to ongoing: %v", execItem.Id, err)

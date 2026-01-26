@@ -543,7 +543,7 @@ message HandlerPlanTaskEventRes{
   string message = 2;
   // 结果原因 （成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
   string reason = 3;
-  // 延期配置-默认延期5分钟：delayed-自定义延期
+  // 延期配置-默认延期5分钟：delayed,ongoing-自定义延期
   PbDelayConfig delayConfig = 4;
 }
 

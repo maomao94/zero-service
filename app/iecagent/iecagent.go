@@ -9,7 +9,7 @@ import (
 	"zero-service/app/iecagent/internal/server"
 	"zero-service/app/iecagent/internal/svc"
 	interceptor "zero-service/common/Interceptor/rpcserver"
-	iec104server2 "zero-service/common/iec104/iec104server"
+	server2 "zero-service/common/iec104/server"
 	"zero-service/common/tool"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -50,7 +50,7 @@ func main() {
 	defer serviceGroup.Stop()
 	logx.AddGlobalFields(logx.Field("app", c.Name))
 	serviceGroup.Add(s)
-	iecServer := iec104server2.NewIecServer(c.IecSetting.Host, c.IecSetting.Port, c.IecSetting.LogMode, iec104server2.NewServerHandler(iec.NewIecHandler(ctx)))
+	iecServer := server2.NewIecServer(c.IecSetting.Host, c.IecSetting.Port, c.IecSetting.LogMode, server2.NewServerHandler(iec.NewIecHandler(ctx)))
 	serviceGroup.Add(iecServer)
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)

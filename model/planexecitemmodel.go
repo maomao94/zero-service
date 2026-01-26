@@ -31,10 +31,7 @@ type (
 		// 更新执行项状态为已终止
 		UpdateStatusToTerminated(ctx context.Context, id int64, lastMessage, lastReason string, statusIn []int, statusOut []int) error
 		// 更新执行项为进行中状态并补充回调数据
-		// updateTriggerInfo: 是否更新触发相关信息（last_trigger_time 和 trigger_count）
-		// - cron触发：true
-		// - 异步RPC回调：false
-		UpdateStatusToOngoing(ctx context.Context, id int64, lastMessage, lastReason string, updateTriggerInfo bool, statusIn []int, statusOut []int) error
+		UpdateStatusToOngoing(ctx context.Context, id int64, lastMessage, lastReason string, updateTriggerInfo bool, nextTriggerTime string, statusIn []int, statusOut []int) error
 		// 通用SQL查询方法
 		QuerySQL(ctx context.Context, sql string, args ...interface{}) ([]map[string]interface{}, error)
 		// 获取批次执行项状态统计
@@ -94,7 +91,7 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 		Join("plan p ON p.id = pei.plan_pk").
 		Join("plan_batch pb ON pb.id = pei.batch_pk").
 		Where("pei.del_state = ?", 0).
-		Where("pei.status IN (?, ?)", StatusWaiting, StatusDelayed).
+		Where("pei.status IN (?, ?,?)", StatusWaiting, StatusDelayed, StatusRunning).
 		Where("pei.next_trigger_time <= ?", currentTimeStr).
 		Where("p.del_state = ?", 0).
 		Where("p.status = ?", PlanStatusEnabled).
@@ -126,7 +123,7 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 			Set("version", execItem.Version+1).
 			Where("id = ?", execItem.Id).
 			Where("next_trigger_time <= ?", currentTimeStr).
-			Where("status IN (?, ?)", StatusWaiting, StatusDelayed).
+			Where("status IN (?, ?,?)", StatusWaiting, StatusDelayed, StatusRunning).
 			Where("version = ?", execItem.Version)
 		if m.dbType == DatabaseTypePostgres {
 			updateBuilder = updateBuilder.PlaceholderFormat(squirrel.Dollar)
@@ -319,11 +316,7 @@ func (m *customPlanExecItemModel) UpdateStatusToTerminated(ctx context.Context, 
 	return err
 }
 
-// UpdateStatusToOngoing 更新执行项为进行中状态并补充回调数据
-// updateTriggerInfo: 是否更新触发相关信息（last_trigger_time 和 trigger_count）
-// - cron触发：true
-// - 异步RPC回调：false
-func (m *customPlanExecItemModel) UpdateStatusToOngoing(ctx context.Context, id int64, lastMessage, lastReason string, updateTriggerInfo bool, statusIn []int, statusOut []int) error {
+func (m *customPlanExecItemModel) UpdateStatusToOngoing(ctx context.Context, id int64, lastMessage, lastReason string, updateTriggerInfo bool, nextTriggerTime string, statusIn []int, statusOut []int) error {
 	currentTime := time.Now()
 	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
 	updateBuilder := squirrel.Update(m.table).
@@ -337,6 +330,10 @@ func (m *customPlanExecItemModel) UpdateStatusToOngoing(ctx context.Context, id 
 		updateBuilder = updateBuilder.
 			Set("last_trigger_time", currentTimeStr).
 			Set("trigger_count", squirrel.Expr("trigger_count + 1"))
+	}
+
+	if nextTriggerTime != "" {
+		updateBuilder = updateBuilder.Set("next_trigger_time", nextTriggerTime)
 	}
 
 	updateBuilder = updateBuilder.Where("id = ?", id)
