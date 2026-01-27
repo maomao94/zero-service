@@ -97,6 +97,7 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 			ItemId:           execItem.ItemId,
 			ItemType:         execItem.ItemType.String,
 			ItemName:         execItem.ItemName.String,
+			ItemRowId:        execItem.ItemRowId,
 			PointId:          execItem.PointId.String,
 			Payload:          execItem.Payload,
 			RequestTimeout:   execItem.RequestTimeout,

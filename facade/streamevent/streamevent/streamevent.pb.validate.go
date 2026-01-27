@@ -3593,6 +3593,8 @@ func (m *HandlerPlanTaskEventReq) validate(all bool) error {
 
 	// no validation rules for ItemName
 
+	// no validation rules for ItemRowId
+
 	// no validation rules for PointId
 
 	// no validation rules for Payload

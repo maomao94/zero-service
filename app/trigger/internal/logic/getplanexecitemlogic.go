@@ -63,6 +63,7 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 		ItemId:           execItem.ItemId,
 		ItemType:         execItem.ItemType.String,
 		ItemName:         execItem.ItemName.String,
+		ItemRowId:        execItem.ItemRowId,
 		PointId:          execItem.PointId.String,
 		Payload:          execItem.Payload,
 		RequestTimeout:   execItem.RequestTimeout,

@@ -518,21 +518,22 @@ message HandlerPlanTaskEventReq{
   string itemType = 7;
   // 执行项名称
   string itemName = 8;
+  // 执行项行ID
+  int64 itemRowId = 9;
   // 点位id
-  string PointId = 9;
+  string PointId = 10;
   // 业务负载
-  string payload = 10;
+  string payload = 11;
   // 计划触发时间
-  string planTriggerTime = 11;
+  string planTriggerTime = 12;
   // 上次触发时间
-  string lastTriggerTime = 12;
-
+  string lastTriggerTime = 13;
   // 上次执行结果
-  string lastResult = 13;
+  string lastResult = 14;
   // 上次结果描述
-  string lastMessage = 14;
+  string lastMessage = 15;
   // 上次结果原因
-  string lastReason = 15;
+  string lastReason = 16;
 }
 
 message HandlerPlanTaskEventRes{

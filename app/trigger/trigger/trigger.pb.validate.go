@@ -10818,17 +10818,13 @@ func (m *PbPlanExecItem) validate(all bool) error {
 
 	// no validation rules for ItemName
 
+	// no validation rules for ItemRowId
+
 	// no validation rules for PointId
 
 	// no validation rules for Payload
 
 	// no validation rules for RequestTimeout
-
-	// no validation rules for IntervalTime
-
-	// no validation rules for IntervalType
-
-	// no validation rules for OffsetPercent
 
 	// no validation rules for PlanTriggerTime
 

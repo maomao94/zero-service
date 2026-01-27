@@ -188,10 +188,10 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		ItemId:          execItem.ItemId,
 		ItemType:        execItem.ItemType.String,
 		ItemName:        execItem.ItemName.String,
+		ItemRowId:       execItem.ItemRowId,
 		PointId:         execItem.PointId.String,
 		Payload:         execItem.Payload,
 		PlanTriggerTime: carbon.NewCarbon(execItem.PlanTriggerTime).ToDateTimeString(),
-		LastTriggerTime: "",
 		LastResult:      execItem.LastResult.String,
 		LastMessage:     execItem.LastMessage.String,
 		LastReason:      execItem.LastReason.String,
@@ -254,39 +254,6 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		}
 		return
 	}
-	if err != nil {
-		logx.WithContext(ctx).Errorf("Error unmarshaling response for exec item %d: %v", execItem.Id, err)
-		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, "Error unmarshaling response: "+err.Error(), "",
-			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
-		); updateErr != nil {
-			logx.WithContext(ctx).Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
-		}
-
-		// 记录执行日志
-		logEntry := &model.PlanExecLog{
-			DeptCode:    execItem.DeptCode,
-			PlanPk:      plan.Id,
-			PlanId:      execItem.PlanId,
-			PlanName:    plan.PlanName,
-			BatchPk:     execItem.BatchPk,
-			BatchId:     execItem.BatchId,
-			ItemPk:      execItem.Id,
-			ExecId:      execItem.ExecId,
-			ItemId:      execItem.ItemId,
-			ItemType:    execItem.ItemType,
-			ItemName:    execItem.ItemName,
-			PointId:     execItem.PointId,
-			TriggerTime: time.Now(),
-			TraceId:     sql.NullString{String: traceID, Valid: traceID != ""},
-			ExecResult:  sql.NullString{String: model.ResultFailed, Valid: true}, // 失败
-			Message:     sql.NullString{String: "Error unmarshaling response: " + err.Error(), Valid: true},
-		}
-		if _, err := s.svcCtx.PlanExecLogModel.Insert(ctx, nil, logEntry); err != nil {
-			logx.WithContext(ctx).Errorf("Error inserting plan exec log for item %d: %v", execItem.Id, err)
-		}
-		return
-	}
-
 	// 记录执行日志
 	logEntry := &model.PlanExecLog{
 		DeptCode:    execItem.DeptCode,

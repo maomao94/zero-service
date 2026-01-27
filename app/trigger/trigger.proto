@@ -876,40 +876,36 @@ message PbPlanExecItem {
   string itemType = 8;
   // 执行项名称
   string itemName = 9;
+  // 执行项行ID
+  int64 itemRowId = 10;
   // 点位id
-  string PointId = 10;
+  string PointId = 11;
   // 业务负载
-  string payload = 11;
+  string payload = 12;
   // 请求超时时间（毫秒）
-  int64 requestTimeout = 12;
-  // 间隔时间 单位: 毫秒
-  int64 intervalTime = 13;
-  // 间隔类型 0-不间隔（同时发起） 1-往后顺延 2-间隔时间内偏移
-  int32 intervalType = 14;
-  // 偏移百分比（0-100），仅当 intervalType=2 时生效
-  int32 offsetPercent = 15;
+  int64 requestTimeout = 13;
   // 计划触发时间
-  string planTriggerTime = 16;
+  string planTriggerTime = 14;
   // 下次触发时间
-  string nextTriggerTime = 17;
+  string nextTriggerTime = 15;
   // 上次触发时间
-  string lastTriggerTime = 18;
+  string lastTriggerTime = 16;
   // 触发次数
-  int32 triggerCount = 19;
+  int32 triggerCount = 17;
   // 状态
-  PbExecItemStatus status = 20;
+  PbExecItemStatus status = 18;
   // 上次执行结果
-  string lastResult = 21;
+  string lastResult = 19;
   // 上次结果描述
-  string lastMessage = 22;
+  string lastMessage = 20;
   // 上次结果原因
-  string lastReason = 23;
+  string lastReason = 21;
   // 终止原因
-  string terminatedReason = 24;
+  string terminatedReason = 22;
   // 暂停时间
-  string pausedTime = 25;
+  string pausedTime = 23;
   // 暂停原因
-  string pausedReason = 26;
+  string pausedReason = 24;
   // 扩展字段1
   string ext1 = 51;
   // 扩展字段2

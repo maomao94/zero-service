@@ -2849,20 +2849,22 @@ type HandlerPlanTaskEventReq struct {
 	ItemType string `protobuf:"bytes,7,opt,name=itemType,proto3" json:"itemType,omitempty"`
 	// 执行项名称
 	ItemName string `protobuf:"bytes,8,opt,name=itemName,proto3" json:"itemName,omitempty"`
+	// 执行项行ID
+	ItemRowId int64 `protobuf:"varint,9,opt,name=itemRowId,proto3" json:"itemRowId,omitempty"`
 	// 点位id
-	PointId string `protobuf:"bytes,9,opt,name=PointId,proto3" json:"PointId,omitempty"`
+	PointId string `protobuf:"bytes,10,opt,name=PointId,proto3" json:"PointId,omitempty"`
 	// 业务负载
-	Payload string `protobuf:"bytes,10,opt,name=payload,proto3" json:"payload,omitempty"`
+	Payload string `protobuf:"bytes,11,opt,name=payload,proto3" json:"payload,omitempty"`
 	// 计划触发时间
-	PlanTriggerTime string `protobuf:"bytes,11,opt,name=planTriggerTime,proto3" json:"planTriggerTime,omitempty"`
+	PlanTriggerTime string `protobuf:"bytes,12,opt,name=planTriggerTime,proto3" json:"planTriggerTime,omitempty"`
 	// 上次触发时间
-	LastTriggerTime string `protobuf:"bytes,12,opt,name=lastTriggerTime,proto3" json:"lastTriggerTime,omitempty"`
+	LastTriggerTime string `protobuf:"bytes,13,opt,name=lastTriggerTime,proto3" json:"lastTriggerTime,omitempty"`
 	// 上次执行结果
-	LastResult string `protobuf:"bytes,13,opt,name=lastResult,proto3" json:"lastResult,omitempty"`
+	LastResult string `protobuf:"bytes,14,opt,name=lastResult,proto3" json:"lastResult,omitempty"`
 	// 上次结果描述
-	LastMessage string `protobuf:"bytes,14,opt,name=lastMessage,proto3" json:"lastMessage,omitempty"`
+	LastMessage string `protobuf:"bytes,15,opt,name=lastMessage,proto3" json:"lastMessage,omitempty"`
 	// 上次结果原因
-	LastReason    string `protobuf:"bytes,15,opt,name=lastReason,proto3" json:"lastReason,omitempty"`
+	LastReason    string `protobuf:"bytes,16,opt,name=lastReason,proto3" json:"lastReason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2965,6 +2967,13 @@ func (x *HandlerPlanTaskEventReq) GetItemName() string {
 		return x.ItemName
 	}
 	return ""
+}
+
+func (x *HandlerPlanTaskEventReq) GetItemRowId() int64 {
+	if x != nil {
+		return x.ItemRowId
+	}
+	return 0
 }
 
 func (x *HandlerPlanTaskEventReq) GetPointId() string {
@@ -3507,7 +3516,7 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x04ext3\x18\n" +
 	" \x01(\tR\x04ext3\x12\x12\n" +
 	"\x04ext4\x18\v \x01(\tR\x04ext4\x12\x12\n" +
-	"\x04ext5\x18\f \x01(\tR\x04ext5\"\x88\x04\n" +
+	"\x04ext5\x18\f \x01(\tR\x04ext5\"\xa6\x04\n" +
 	"\x17HandlerPlanTaskEventReq\x12'\n" +
 	"\x04plan\x18d \x01(\v2\x13.streamevent.PbPlanR\x04plan\x12\x0e\n" +
 	"\x02id\x182 \x01(\x03R\x02id\x12\x16\n" +
@@ -3518,18 +3527,19 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x06execId\x18\x05 \x01(\tR\x06execId\x12\x16\n" +
 	"\x06itemId\x18\x06 \x01(\tR\x06itemId\x12\x1a\n" +
 	"\bitemType\x18\a \x01(\tR\bitemType\x12\x1a\n" +
-	"\bitemName\x18\b \x01(\tR\bitemName\x12\x18\n" +
-	"\aPointId\x18\t \x01(\tR\aPointId\x12\x18\n" +
-	"\apayload\x18\n" +
-	" \x01(\tR\apayload\x12(\n" +
-	"\x0fplanTriggerTime\x18\v \x01(\tR\x0fplanTriggerTime\x12(\n" +
-	"\x0flastTriggerTime\x18\f \x01(\tR\x0flastTriggerTime\x12\x1e\n" +
+	"\bitemName\x18\b \x01(\tR\bitemName\x12\x1c\n" +
+	"\titemRowId\x18\t \x01(\x03R\titemRowId\x12\x18\n" +
+	"\aPointId\x18\n" +
+	" \x01(\tR\aPointId\x12\x18\n" +
+	"\apayload\x18\v \x01(\tR\apayload\x12(\n" +
+	"\x0fplanTriggerTime\x18\f \x01(\tR\x0fplanTriggerTime\x12(\n" +
+	"\x0flastTriggerTime\x18\r \x01(\tR\x0flastTriggerTime\x12\x1e\n" +
 	"\n" +
-	"lastResult\x18\r \x01(\tR\n" +
+	"lastResult\x18\x0e \x01(\tR\n" +
 	"lastResult\x12 \n" +
-	"\vlastMessage\x18\x0e \x01(\tR\vlastMessage\x12\x1e\n" +
+	"\vlastMessage\x18\x0f \x01(\tR\vlastMessage\x12\x1e\n" +
 	"\n" +
-	"lastReason\x18\x0f \x01(\tR\n" +
+	"lastReason\x18\x10 \x01(\tR\n" +
 	"lastReason\"\xa9\x01\n" +
 	"\x17HandlerPlanTaskEventRes\x12\x1e\n" +
 	"\n" +
