@@ -130,11 +130,9 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 			batchId, _ := tool.SimpleUUID()
 			dStr := carbon.NewCarbon(d).Format("Y-m-d H:i")
 			batchName := fmt.Sprintf("%s@%s", in.PlanName, dStr)
-			var batchNum string
+			batchNum := l.svcCtx.IdUtil.NextId("P", l.svcCtx.Config.Name)
 			if len(in.BatchNumPrefix) >= 0 {
-				batchNum = l.svcCtx.IdUtil.NextId(in.BatchNumPrefix, l.svcCtx.Config.Name)
-			} else {
-				batchNum = l.svcCtx.IdUtil.NextId("P", l.svcCtx.Config.Name)
+				batchNum = fmt.Sprintf("%s-%s", in.BatchNumPrefix, batchNum)
 			}
 			batch := model.PlanBatch{
 				CreateUser:      sql.NullString{String: currentUserId, Valid: currentUserId != ""},
