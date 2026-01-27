@@ -132,7 +132,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 			batchName := fmt.Sprintf("%s@%s", in.PlanName, dStr)
 			batchNum := l.svcCtx.IdUtil.NextId("P", l.svcCtx.Config.Name)
 			if len(in.BatchNumPrefix) >= 0 {
-				batchNum = fmt.Sprintf("%s-%s", in.BatchNumPrefix, batchNum)
+				batchNum = fmt.Sprintf("%s%s", in.BatchNumPrefix, batchNum)
 			}
 			batch := model.PlanBatch{
 				CreateUser:      sql.NullString{String: currentUserId, Valid: currentUserId != ""},
