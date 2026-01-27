@@ -193,6 +193,7 @@ CREATE TABLE IF NOT EXISTS plan_exec_item (
     item_id VARCHAR(64) NOT NULL DEFAULT '',
     item_type varchar(64) DEFAULT '',
     item_name VARCHAR(128) DEFAULT '',
+    item_row_id BIGINT NOT NULL DEFAULT 0, 
     point_id VARCHAR(64) DEFAULT '',
     payload TEXT NOT NULL DEFAULT '',
     request_timeout INT NOT NULL DEFAULT 0, 
@@ -235,6 +236,7 @@ COMMENT ON COLUMN plan_exec_item.exec_id IS '执行ID';
 COMMENT ON COLUMN plan_exec_item.item_id IS '执行项ID';
 COMMENT ON COLUMN plan_exec_item.item_type IS '执行项类型';
 COMMENT ON COLUMN plan_exec_item.item_name IS '执行项名称';
+COMMENT ON COLUMN plan_exec_item.item_row_id IS '执行项行ID';
 COMMENT ON COLUMN plan_exec_item.point_id IS '点位id';
 COMMENT ON COLUMN plan_exec_item.payload IS '业务负载';
 COMMENT ON COLUMN plan_exec_item.request_timeout IS '请求超时时间（毫秒）';
@@ -377,6 +379,7 @@ CREATE TABLE IF NOT EXISTS plan_batch (
     plan_id VARCHAR(64) NOT NULL DEFAULT '', 
     batch_id VARCHAR(64) NOT NULL DEFAULT '', 
     batch_name VARCHAR(128) DEFAULT '',
+    batch_num VARCHAR(128) NOT NULL DEFAULT '',
     status SMALLINT NOT NULL DEFAULT 0,
     plan_trigger_time TIMESTAMP NULL,
     terminated_reason VARCHAR(256) DEFAULT '',
@@ -408,6 +411,7 @@ COMMENT ON COLUMN plan_batch.plan_pk IS '关联的计划主键ID';
 COMMENT ON COLUMN plan_batch.plan_id IS '关联的计划ID';
 COMMENT ON COLUMN plan_batch.batch_id IS '批ID';
 COMMENT ON COLUMN plan_batch.batch_name IS '批次名称';
+COMMENT ON COLUMN plan_batch.batch_num IS '批次序号';
 COMMENT ON COLUMN plan_batch.status IS '状态：0-禁用，1-启用，2-暂停，3-终止';
 COMMENT ON COLUMN plan_batch.plan_trigger_time IS '计划触发时间';
 COMMENT ON COLUMN plan_batch.terminated_reason IS '终止原因';
@@ -424,6 +428,7 @@ COMMENT ON COLUMN plan_batch.ext_5 IS '扩展字段5';
 CREATE INDEX idx_plan_batch_plan_id ON plan_batch (plan_id);
 CREATE INDEX idx_plan_batch_plan_pk ON plan_batch (plan_pk);
 CREATE INDEX idx_plan_batch_status ON plan_batch (status);
+CREATE UNIQUE INDEX uk_plan_batch_batch_num ON plan_batch (batch_num);
 
 -- 为 plan_batch 表创建触发器
 CREATE TRIGGER "trigger_insert_modified_time"

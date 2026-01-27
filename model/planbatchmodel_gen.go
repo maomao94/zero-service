@@ -68,6 +68,7 @@ type (
 		PlanId           string         `db:"plan_id"`           // 关联的计划ID
 		BatchId          string         `db:"batch_id"`          // 批ID
 		BatchName        sql.NullString `db:"batch_name"`        // 批次名称
+		BatchNum         sql.NullString `db:"batch_num"`         // 批次序号
 		Status           int64          `db:"status"`            // 状态：0-禁用，1-启用，2-暂停，3-终止
 		PlanTriggerTime  sql.NullTime   `db:"plan_trigger_time"` // 计划触发时间
 		TerminatedReason sql.NullString `db:"terminated_reason"` // 终止原因

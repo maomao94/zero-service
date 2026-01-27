@@ -2880,6 +2880,8 @@ type CreatePlanTaskReq struct {
 	IntervalType int32 `protobuf:"varint,10,opt,name=intervalType,proto3" json:"intervalType,omitempty"`
 	// 计划执行项-根据规则项生成日期批次-batchId 并生成对应批次执行项-execId
 	ExecItems []*CreatePlanExecItem `protobuf:"bytes,11,rep,name=execItems,proto3" json:"execItems,omitempty"`
+	// batchNum 前缀
+	BatchNumPrefix string `protobuf:"bytes,12,opt,name=batchNumPrefix,proto3" json:"batchNumPrefix,omitempty"`
 	// 扩展字段
 	Ext1          string `protobuf:"bytes,50,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	Ext2          string `protobuf:"bytes,51,opt,name=ext2,proto3" json:"ext2,omitempty"`
@@ -3009,6 +3011,13 @@ func (x *CreatePlanTaskReq) GetExecItems() []*CreatePlanExecItem {
 		return x.ExecItems
 	}
 	return nil
+}
+
+func (x *CreatePlanTaskReq) GetBatchNumPrefix() string {
+	if x != nil {
+		return x.BatchNumPrefix
+	}
+	return ""
 }
 
 func (x *CreatePlanTaskReq) GetExt1() string {
@@ -6277,32 +6286,34 @@ type PbPlanBatch struct {
 	BatchId string `protobuf:"bytes,3,opt,name=batchId,proto3" json:"batchId,omitempty"`
 	// 批次名称
 	BatchName string `protobuf:"bytes,4,opt,name=batchName,proto3" json:"batchName,omitempty"`
+	// 批次序号
+	BatchNum string `protobuf:"bytes,5,opt,name=batchNum,proto3" json:"batchNum,omitempty"`
 	// 状态：1-启用，2-暂停，3-终止
-	Status int32 `protobuf:"varint,5,opt,name=status,proto3" json:"status,omitempty"`
+	Status int32 `protobuf:"varint,6,opt,name=status,proto3" json:"status,omitempty"`
 	// 计划触发时间
-	PlanTriggerTime string `protobuf:"bytes,6,opt,name=planTriggerTime,proto3" json:"planTriggerTime,omitempty"`
+	PlanTriggerTime string `protobuf:"bytes,7,opt,name=planTriggerTime,proto3" json:"planTriggerTime,omitempty"`
 	// 终止原因
-	TerminatedReason string `protobuf:"bytes,7,opt,name=terminatedReason,proto3" json:"terminatedReason,omitempty"`
+	TerminatedReason string `protobuf:"bytes,8,opt,name=terminatedReason,proto3" json:"terminatedReason,omitempty"`
 	// 暂停时间
-	PausedTime string `protobuf:"bytes,8,opt,name=pausedTime,proto3" json:"pausedTime,omitempty"`
+	PausedTime string `protobuf:"bytes,9,opt,name=pausedTime,proto3" json:"pausedTime,omitempty"`
 	// 暂停原因
-	PausedReason string `protobuf:"bytes,9,opt,name=pausedReason,proto3" json:"pausedReason,omitempty"`
+	PausedReason string `protobuf:"bytes,10,opt,name=pausedReason,proto3" json:"pausedReason,omitempty"`
 	// 结束时间
-	FinishedTime string `protobuf:"bytes,10,opt,name=finishedTime,proto3" json:"finishedTime,omitempty"`
+	FinishedTime string `protobuf:"bytes,11,opt,name=finishedTime,proto3" json:"finishedTime,omitempty"`
 	// 状态统计map，key为状态值，value为对应数量
-	StatusCountMap map[string]int64 `protobuf:"bytes,11,rep,name=statusCountMap,proto3" json:"statusCountMap,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	StatusCountMap map[string]int64 `protobuf:"bytes,12,rep,name=statusCountMap,proto3" json:"statusCountMap,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
 	// 执行计划数
-	ExecCnt int64 `protobuf:"varint,12,opt,name=execCnt,proto3" json:"execCnt,omitempty"`
+	ExecCnt int64 `protobuf:"varint,51,opt,name=execCnt,proto3" json:"execCnt,omitempty"`
 	// 扩展字段1
-	Ext1 string `protobuf:"bytes,13,opt,name=ext1,proto3" json:"ext1,omitempty"`
+	Ext1 string `protobuf:"bytes,52,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	// 扩展字段2
-	Ext2 string `protobuf:"bytes,14,opt,name=ext2,proto3" json:"ext2,omitempty"`
+	Ext2 string `protobuf:"bytes,53,opt,name=ext2,proto3" json:"ext2,omitempty"`
 	// 扩展字段3
-	Ext3 string `protobuf:"bytes,15,opt,name=ext3,proto3" json:"ext3,omitempty"`
+	Ext3 string `protobuf:"bytes,54,opt,name=ext3,proto3" json:"ext3,omitempty"`
 	// 扩展字段4
-	Ext4 string `protobuf:"bytes,16,opt,name=ext4,proto3" json:"ext4,omitempty"`
+	Ext4 string `protobuf:"bytes,55,opt,name=ext4,proto3" json:"ext4,omitempty"`
 	// 扩展字段5
-	Ext5          string `protobuf:"bytes,17,opt,name=ext5,proto3" json:"ext5,omitempty"`
+	Ext5          string `protobuf:"bytes,56,opt,name=ext5,proto3" json:"ext5,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6403,6 +6414,13 @@ func (x *PbPlanBatch) GetBatchId() string {
 func (x *PbPlanBatch) GetBatchName() string {
 	if x != nil {
 		return x.BatchName
+	}
+	return ""
+}
+
+func (x *PbPlanBatch) GetBatchNum() string {
+	if x != nil {
+		return x.BatchNum
 	}
 	return ""
 }
@@ -6882,7 +6900,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\aendTime\x18\x02 \x01(\tR\aendTime\x121\n" +
 	"\x04rule\x18\x03 \x01(\v2\x13.trigger.PbPlanRuleB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\"3\n" +
 	"\x13CalcPlanTaskDateRes\x12\x1c\n" +
-	"\tplanDates\x18\x01 \x03(\tR\tplanDates\"\x8a\x05\n" +
+	"\tplanDates\x18\x01 \x03(\tR\tplanDates\"\xb2\x05\n" +
 	"\x11CreatePlanTaskReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12#\n" +
 	"\bdeptCode\x18e \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bdeptCode\x12\x1f\n" +
@@ -6897,7 +6915,8 @@ const file_trigger_proto_rawDesc = "" +
 	"\fintervalTime\x18\t \x01(\x03B\a\xfaB\x04\"\x02(\x00R\fintervalTime\x12-\n" +
 	"\fintervalType\x18\n" +
 	" \x01(\x05B\t\xfaB\x06\x1a\x04\x18\x02(\x00R\fintervalType\x12C\n" +
-	"\texecItems\x18\v \x03(\v2\x1b.trigger.CreatePlanExecItemB\b\xfaB\x05\x92\x01\x02\b\x01R\texecItems\x12\x12\n" +
+	"\texecItems\x18\v \x03(\v2\x1b.trigger.CreatePlanExecItemB\b\xfaB\x05\x92\x01\x02\b\x01R\texecItems\x12&\n" +
+	"\x0ebatchNumPrefix\x18\f \x01(\tR\x0ebatchNumPrefix\x12\x12\n" +
 	"\x04ext1\x182 \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x183 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x184 \x01(\tR\x04ext3\x12\x12\n" +
@@ -7182,7 +7201,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\n" +
 	"execResult\x18\r \x01(\tR\n" +
 	"execResult\x12\x18\n" +
-	"\amessage\x18\x0e \x01(\tR\amessage\"\x8a\x06\n" +
+	"\amessage\x18\x0e \x01(\tR\amessage\"\xa6\x06\n" +
 	"\vPbPlanBatch\x12\x1e\n" +
 	"\n" +
 	"createTime\x18e \x01(\tR\n" +
@@ -7201,23 +7220,24 @@ const file_trigger_proto_rawDesc = "" +
 	"\x06planPk\x18\x01 \x01(\x03R\x06planPk\x12\x16\n" +
 	"\x06planId\x18\x02 \x01(\tR\x06planId\x12\x18\n" +
 	"\abatchId\x18\x03 \x01(\tR\abatchId\x12\x1c\n" +
-	"\tbatchName\x18\x04 \x01(\tR\tbatchName\x12\x16\n" +
-	"\x06status\x18\x05 \x01(\x05R\x06status\x12(\n" +
-	"\x0fplanTriggerTime\x18\x06 \x01(\tR\x0fplanTriggerTime\x12*\n" +
-	"\x10terminatedReason\x18\a \x01(\tR\x10terminatedReason\x12\x1e\n" +
+	"\tbatchName\x18\x04 \x01(\tR\tbatchName\x12\x1a\n" +
+	"\bbatchNum\x18\x05 \x01(\tR\bbatchNum\x12\x16\n" +
+	"\x06status\x18\x06 \x01(\x05R\x06status\x12(\n" +
+	"\x0fplanTriggerTime\x18\a \x01(\tR\x0fplanTriggerTime\x12*\n" +
+	"\x10terminatedReason\x18\b \x01(\tR\x10terminatedReason\x12\x1e\n" +
 	"\n" +
-	"pausedTime\x18\b \x01(\tR\n" +
+	"pausedTime\x18\t \x01(\tR\n" +
 	"pausedTime\x12\"\n" +
-	"\fpausedReason\x18\t \x01(\tR\fpausedReason\x12\"\n" +
-	"\ffinishedTime\x18\n" +
-	" \x01(\tR\ffinishedTime\x12P\n" +
-	"\x0estatusCountMap\x18\v \x03(\v2(.trigger.PbPlanBatch.StatusCountMapEntryR\x0estatusCountMap\x12\x18\n" +
-	"\aexecCnt\x18\f \x01(\x03R\aexecCnt\x12\x12\n" +
-	"\x04ext1\x18\r \x01(\tR\x04ext1\x12\x12\n" +
-	"\x04ext2\x18\x0e \x01(\tR\x04ext2\x12\x12\n" +
-	"\x04ext3\x18\x0f \x01(\tR\x04ext3\x12\x12\n" +
-	"\x04ext4\x18\x10 \x01(\tR\x04ext4\x12\x12\n" +
-	"\x04ext5\x18\x11 \x01(\tR\x04ext5\x1aA\n" +
+	"\fpausedReason\x18\n" +
+	" \x01(\tR\fpausedReason\x12\"\n" +
+	"\ffinishedTime\x18\v \x01(\tR\ffinishedTime\x12P\n" +
+	"\x0estatusCountMap\x18\f \x03(\v2(.trigger.PbPlanBatch.StatusCountMapEntryR\x0estatusCountMap\x12\x18\n" +
+	"\aexecCnt\x183 \x01(\x03R\aexecCnt\x12\x12\n" +
+	"\x04ext1\x184 \x01(\tR\x04ext1\x12\x12\n" +
+	"\x04ext2\x185 \x01(\tR\x04ext2\x12\x12\n" +
+	"\x04ext3\x186 \x01(\tR\x04ext3\x12\x12\n" +
+	"\x04ext4\x187 \x01(\tR\x04ext4\x12\x12\n" +
+	"\x04ext5\x188 \x01(\tR\x04ext5\x1aA\n" +
 	"\x13StatusCountMapEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\"\xbe\x02\n" +

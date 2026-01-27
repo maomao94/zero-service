@@ -37,6 +37,7 @@ require (
 	github.com/shopspring/decimal v1.4.0
 	github.com/songzhibin97/gkit v1.2.13
 	github.com/spf13/cast v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/taosdata/driver-go/v3 v3.7.8
 	github.com/teambition/rrule-go v1.8.2
 	github.com/tidwall/gjson v1.18.0
@@ -155,6 +156,7 @@ require (
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.21.1 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.62.0 // indirect

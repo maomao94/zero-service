@@ -130,6 +130,12 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 			batchId, _ := tool.SimpleUUID()
 			dStr := carbon.NewCarbon(d).Format("Y-m-d H:i")
 			batchName := fmt.Sprintf("%s@%s", in.PlanName, dStr)
+			var batchNum string
+			if len(in.BatchNumPrefix) >= 0 {
+				batchNum = l.svcCtx.IdUtil.NextId(in.BatchNumPrefix, l.svcCtx.Config.Name)
+			} else {
+				batchNum = l.svcCtx.IdUtil.NextId("P", l.svcCtx.Config.Name)
+			}
 			batch := model.PlanBatch{
 				CreateUser:      sql.NullString{String: currentUserId, Valid: currentUserId != ""},
 				UpdateUser:      sql.NullString{String: currentUserId, Valid: currentUserId != ""},
@@ -138,6 +144,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 				PlanId:          in.PlanId,
 				BatchId:         batchId,
 				BatchName:       sql.NullString{String: batchName, Valid: true},
+				BatchNum:        sql.NullString{String: batchNum, Valid: true},
 				Status:          int64(model.PlanStatusEnabled),
 				PlanTriggerTime: sql.NullTime{Time: d, Valid: true},
 				FinishedTime:    sql.NullTime{},
@@ -166,7 +173,6 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 						nextTriggerTime = d.Add(offset)
 					}
 				}
-				itemIndex++
 				planItem := model.PlanExecItem{
 					CreateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},
 					UpdateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},
@@ -179,6 +185,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 					ItemId:           item.ItemId,
 					ItemType:         sql.NullString{String: item.ItemType, Valid: item.ItemType != ""},
 					ItemName:         sql.NullString{String: item.ItemName, Valid: item.ItemName != ""},
+					ItemRowId:        int64(itemIndex),
 					PointId:          sql.NullString{String: item.PointId, Valid: item.PointId != ""},
 					Payload:          item.Payload,
 					RequestTimeout:   item.RequestTimeout,
@@ -199,6 +206,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 					Ext4:             sql.NullString{String: item.Ext4, Valid: item.Ext4 != ""},
 					Ext5:             sql.NullString{String: item.Ext5, Valid: item.Ext5 != ""},
 				}
+				itemIndex++
 				_, err = l.svcCtx.PlanExecItemModel.Insert(l.ctx, tx, &planItem)
 				if err != nil {
 					return err

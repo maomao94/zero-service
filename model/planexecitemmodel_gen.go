@@ -70,6 +70,7 @@ type (
 		ItemId           string         `db:"item_id"`           // 执行项ID
 		ItemType         sql.NullString `db:"item_type"`         // 执行项类型
 		ItemName         sql.NullString `db:"item_name"`         // 执行项名称
+		ItemRowId        int64          `db:"item_row_id"`       // 执行项行ID
 		PointId          sql.NullString `db:"point_id"`          // 点位id
 		Payload          string         `db:"payload"`           // 业务负载
 		RequestTimeout   int64          `db:"request_timeout"`   // 请求超时时间（毫秒）

@@ -533,6 +533,8 @@ message CreatePlanTaskReq {
   int32 intervalType = 10 [(validate.rules).int32 = {gte: 0, lte: 2}];
   // 计划执行项-根据规则项生成日期批次-batchId 并生成对应批次执行项-execId
   repeated CreatePlanExecItem execItems = 11 [(validate.rules).repeated = {min_items: 1}];
+  // batchNum 前缀
+  string batchNumPrefix = 12;
 
   // 扩展字段
   string ext1 = 50;
@@ -1056,32 +1058,34 @@ message PbPlanBatch {
   string batchId = 3;
   // 批次名称
   string batchName = 4;
+  // 批次序号
+  string batchNum = 5;
   // 状态：1-启用，2-暂停，3-终止
-  int32 status = 5;
+  int32 status = 6;
   // 计划触发时间
-  string planTriggerTime = 6;
+  string planTriggerTime = 7;
   // 终止原因
-  string terminatedReason = 7;
+  string terminatedReason = 8;
   // 暂停时间
-  string pausedTime = 8;
+  string pausedTime = 9;
   // 暂停原因
-  string pausedReason = 9;
+  string pausedReason = 10;
   // 结束时间
-  string finishedTime = 10;
+  string finishedTime = 11;
   // 状态统计map，key为状态值，value为对应数量
-  map<string, int64> statusCountMap = 11;
+  map<string, int64> statusCountMap = 12;
   // 执行计划数
-  int64 execCnt = 12;
+  int64 execCnt = 51;
   // 扩展字段1
-  string ext1 = 13;
+  string ext1 = 52;
   // 扩展字段2
-  string ext2 = 14;
+  string ext2 = 53;
   // 扩展字段3
-  string ext3 = 15;
+  string ext3 = 54;
   // 扩展字段4
-  string ext4 = 16;
+  string ext4 = 55;
   // 扩展字段5
-  string ext5 = 17;
+  string ext5 = 56;
 }
 
 message CallbackPlanExecItemReq {
