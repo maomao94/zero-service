@@ -13,6 +13,7 @@ import (
 	"zero-service/app/trigger/trigger"
 
 	"github.com/dromara/carbon/v2"
+	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/teambition/rrule-go"
 	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -132,7 +133,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 			batchName := fmt.Sprintf("%s@%s", in.PlanName, dStr)
 			batchNum := l.svcCtx.IdUtil.NextId("P", l.svcCtx.Config.Name)
 			if len(in.BatchNumPrefix) >= 0 {
-				batchNum = fmt.Sprintf("%s%s", in.BatchNumPrefix, batchNum)
+				batchNum = fmt.Sprintf("%s%s", in.BatchNumPrefix, strutil.After(batchNum, "P"))
 			}
 			batch := model.PlanBatch{
 				CreateUser:      sql.NullString{String: currentUserId, Valid: currentUserId != ""},
