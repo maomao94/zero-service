@@ -47,7 +47,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		}
 	}
 	if querPlan != nil {
-		return nil, fmt.Errorf("计划任务已存在")
+		return nil, fmt.Errorf("计划任务已存在,不可创建")
 	}
 	if len(in.StartTime) == 0 {
 		in.StartTime = fmt.Sprintf("%d-1-1 00:00:00", time.Now().Year())
