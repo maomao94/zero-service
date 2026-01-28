@@ -75,8 +75,9 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 		now := time.Now()
 		// 更新计划批次状态为终止
 		planBatch.Status = int64(model.PlanStatusTerminated) // 终止
-		planBatch.PausedTime = sql.NullTime{Time: time.Now(), Valid: true}
-		planBatch.PausedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
+		planBatch.TerminatedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
+		planBatch.PausedTime = sql.NullTime{}
+		planBatch.PausedReason = sql.NullString{}
 		planBatch.FinishedTime = sql.NullTime{Time: now, Valid: true}
 		planBatch.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}
 
