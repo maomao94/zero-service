@@ -62,7 +62,7 @@ func (l *PausePlanBatchLogic) PausePlanBatch(in *trigger.PausePlanBatchReq) (*tr
 	if plan.Status == int64(model.PlanStatusTerminated) || plan.FinishedTime.Valid {
 		return nil, errors.BadRequest("", "计划状态已结束,无需暂停")
 	}
-	if planBatch.Status == int64(model.PlanStatusTerminated) || plan.FinishedTime.Valid {
+	if planBatch.Status == int64(model.PlanStatusTerminated) || planBatch.FinishedTime.Valid {
 		return nil, errors.BadRequest("", "计划批次状态已结束,无需暂停")
 	}
 	if planBatch.Status != int64(model.PlanStatusEnabled) {
