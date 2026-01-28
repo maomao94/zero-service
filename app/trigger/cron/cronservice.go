@@ -223,35 +223,38 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	})
 	err = <-errCh
 	if err != nil {
-		logx.WithContext(ctx).Errorf("gRPC call failed for exec item %d: %v", execItem.Id, err)
-		if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, "gRPC call failed: "+err.Error(), "",
-			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
-		); updateErr != nil {
-			logx.WithContext(ctx).Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
-		}
-
 		// 记录执行日志
-		logEntry := &model.PlanExecLog{
-			DeptCode:    execItem.DeptCode,
-			PlanPk:      plan.Id,
-			PlanId:      execItem.PlanId,
-			PlanName:    plan.PlanName,
-			BatchPk:     execItem.BatchPk,
-			BatchId:     execItem.BatchId,
-			ItemPk:      execItem.Id,
-			ExecId:      execItem.ExecId,
-			ItemId:      execItem.ItemId,
-			ItemType:    execItem.ItemType,
-			ItemName:    execItem.ItemName,
-			PointId:     execItem.PointId,
-			TriggerTime: time.Now(),
-			TraceId:     sql.NullString{String: traceID, Valid: traceID != ""},
-			ExecResult:  sql.NullString{String: model.ResultFailed, Valid: true}, // 失败
-			Message:     sql.NullString{String: "gRPC call failed: " + err.Error(), Valid: true},
-		}
-		if _, err := s.svcCtx.PlanExecLogModel.Insert(ctx, nil, logEntry); err != nil {
-			logx.WithContext(ctx).Errorf("Error inserting plan exec log for item %d: %v", execItem.Id, err)
-		}
+		//logEntry := &model.PlanExecLog{
+		//	DeptCode:    execItem.DeptCode,
+		//	PlanPk:      plan.Id,
+		//	PlanId:      execItem.PlanId,
+		//	PlanName:    plan.PlanName,
+		//	BatchPk:     execItem.BatchPk,
+		//	BatchId:     execItem.BatchId,
+		//	ItemPk:      execItem.Id,
+		//	ExecId:      execItem.ExecId,
+		//	ItemId:      execItem.ItemId,
+		//	ItemType:    execItem.ItemType,
+		//	ItemName:    execItem.ItemName,
+		//	PointId:     execItem.PointId,
+		//	TriggerTime: time.Now(),
+		//	TraceId:     sql.NullString{String: traceID, Valid: traceID != ""},
+		//	ExecResult:  sql.NullString{String: model.ResultFailed, Valid: true}, // 失败
+		//	Message:     sql.NullString{String: "gRPC call failed: " + err.Error(), Valid: true},
+		//}
+		logx.WithContext(ctx).Errorf("gRPC call failed for exec item %d: %v", execItem.Id, err)
+		//if len(lastResullt.String) == 0 || lastResullt.String != model.ResultOngoing {
+		//	if updateErr := s.svcCtx.PlanExecItemModel.UpdateStatusToFail(ctx, execItem.Id, model.ResultFailed, "gRPC call failed: "+err.Error(), "",
+		//		[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
+		//	); updateErr != nil {
+		//		logx.WithContext(ctx).Errorf("Error updating plan exec item %d to failed: %v", execItem.Id, updateErr)
+		//	}
+		//} else {
+		//	logEntry.ExecResult = sql.NullString{String: model.ResultOngoing, Valid: true}
+		//}
+		//if _, err := s.svcCtx.PlanExecLogModel.Insert(ctx, nil, logEntry); err != nil {
+		//	logx.WithContext(ctx).Errorf("Error inserting plan exec log for item %d: %v", execItem.Id, err)
+		//}
 		return
 	}
 	// 记录执行日志
