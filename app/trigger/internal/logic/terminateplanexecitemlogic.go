@@ -58,14 +58,11 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 	if err != nil {
 		return nil, err
 	}
-
 	// 查询计划
 	plan, err := l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, execItem.PlanId)
 	if err != nil {
 		return nil, err
 	}
-
-	// 检查当前状态是否允许终止操作
 	if plan.Status == int64(model.PlanStatusTerminated) || plan.FinishedTime.Valid {
 		return nil, errors.BadRequest("", "计划状态已结束,无需终止")
 	}

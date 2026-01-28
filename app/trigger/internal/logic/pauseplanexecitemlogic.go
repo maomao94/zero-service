@@ -54,14 +54,21 @@ func (l *PausePlanExecItemLogic) PausePlanExecItem(in *trigger.PausePlanExecItem
 		return nil, err
 	}
 	// 查询计划批次
-	_, err = l.svcCtx.PlanBatchModel.FindOne(l.ctx, execItem.BatchPk)
+	planBatch, err := l.svcCtx.PlanBatchModel.FindOne(l.ctx, execItem.BatchPk)
 	if err != nil {
 		return nil, err
 	}
 	// 查询计划
-	_, err = l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, execItem.PlanId)
+	plan, err := l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, execItem.PlanId)
 	if err != nil {
 		return nil, err
+	}
+	if plan.Status == int64(model.PlanStatusTerminated) || plan.FinishedTime.Valid {
+		return nil, errors.BadRequest("", "计划状态已结束,无需暂停")
+	}
+
+	if planBatch.Status == int64(model.PlanStatusTerminated) || planBatch.FinishedTime.Valid {
+		return nil, errors.BadRequest("", "计划批次状态已结束,无需暂停")
 	}
 
 	if execItem.Status == int64(model.StatusCompleted) || execItem.Status == int64(model.StatusTerminated) || execItem.Status == int64(model.StatusPaused) {
