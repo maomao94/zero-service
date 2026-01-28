@@ -3288,22 +3288,22 @@ var _ interface {
 	ErrorName() string
 } = UpSocketMessageReqValidationError{}
 
-// Validate checks the field values on UpSocketMessageRsp with the rules
+// Validate checks the field values on UpSocketMessageRes with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *UpSocketMessageRsp) Validate() error {
+func (m *UpSocketMessageRes) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on UpSocketMessageRsp with the rules
+// ValidateAll checks the field values on UpSocketMessageRes with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// UpSocketMessageRspMultiError, or nil if none found.
-func (m *UpSocketMessageRsp) ValidateAll() error {
+// UpSocketMessageResMultiError, or nil if none found.
+func (m *UpSocketMessageRes) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *UpSocketMessageRsp) validate(all bool) error {
+func (m *UpSocketMessageRes) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -3311,19 +3311,19 @@ func (m *UpSocketMessageRsp) validate(all bool) error {
 	var errors []error
 
 	if len(errors) > 0 {
-		return UpSocketMessageRspMultiError(errors)
+		return UpSocketMessageResMultiError(errors)
 	}
 
 	return nil
 }
 
-// UpSocketMessageRspMultiError is an error wrapping multiple validation errors
-// returned by UpSocketMessageRsp.ValidateAll() if the designated constraints
+// UpSocketMessageResMultiError is an error wrapping multiple validation errors
+// returned by UpSocketMessageRes.ValidateAll() if the designated constraints
 // aren't met.
-type UpSocketMessageRspMultiError []error
+type UpSocketMessageResMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m UpSocketMessageRspMultiError) Error() string {
+func (m UpSocketMessageResMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -3332,11 +3332,11 @@ func (m UpSocketMessageRspMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m UpSocketMessageRspMultiError) AllErrors() []error { return m }
+func (m UpSocketMessageResMultiError) AllErrors() []error { return m }
 
-// UpSocketMessageRspValidationError is the validation error returned by
-// UpSocketMessageRsp.Validate if the designated constraints aren't met.
-type UpSocketMessageRspValidationError struct {
+// UpSocketMessageResValidationError is the validation error returned by
+// UpSocketMessageRes.Validate if the designated constraints aren't met.
+type UpSocketMessageResValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -3344,24 +3344,24 @@ type UpSocketMessageRspValidationError struct {
 }
 
 // Field function returns field value.
-func (e UpSocketMessageRspValidationError) Field() string { return e.field }
+func (e UpSocketMessageResValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e UpSocketMessageRspValidationError) Reason() string { return e.reason }
+func (e UpSocketMessageResValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e UpSocketMessageRspValidationError) Cause() error { return e.cause }
+func (e UpSocketMessageResValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e UpSocketMessageRspValidationError) Key() bool { return e.key }
+func (e UpSocketMessageResValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e UpSocketMessageRspValidationError) ErrorName() string {
-	return "UpSocketMessageRspValidationError"
+func (e UpSocketMessageResValidationError) ErrorName() string {
+	return "UpSocketMessageResValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e UpSocketMessageRspValidationError) Error() string {
+func (e UpSocketMessageResValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -3373,14 +3373,14 @@ func (e UpSocketMessageRspValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sUpSocketMessageRsp.%s: %s%s",
+		"invalid %sUpSocketMessageRes.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = UpSocketMessageRspValidationError{}
+var _ error = UpSocketMessageResValidationError{}
 
 var _ interface {
 	Field() string
@@ -3388,7 +3388,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = UpSocketMessageRspValidationError{}
+} = UpSocketMessageResValidationError{}
 
 // Validate checks the field values on PbPlan with the rules defined in the
 // proto definition for this message. If any rules are violated, the first

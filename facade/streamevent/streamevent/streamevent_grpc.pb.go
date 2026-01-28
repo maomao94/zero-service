@@ -41,7 +41,7 @@ type StreamEventClient interface {
 	// 推送 chunk asdu 104协议消息
 	PushChunkAsdu(ctx context.Context, in *PushChunkAsduReq, opts ...grpc.CallOption) (*PushChunkAsduRes, error)
 	// 上行socket标准消息, 可以用于__up__和自定义up事件
-	UpSocketMessage(ctx context.Context, in *UpSocketMessageReq, opts ...grpc.CallOption) (*UpSocketMessageReq, error)
+	UpSocketMessage(ctx context.Context, in *UpSocketMessageReq, opts ...grpc.CallOption) (*UpSocketMessageRes, error)
 	// 计划任务事件处理
 	HandlerPlanTaskEvent(ctx context.Context, in *HandlerPlanTaskEventReq, opts ...grpc.CallOption) (*HandlerPlanTaskEventRes, error)
 	// 通知计划任务事件
@@ -96,9 +96,9 @@ func (c *streamEventClient) PushChunkAsdu(ctx context.Context, in *PushChunkAsdu
 	return out, nil
 }
 
-func (c *streamEventClient) UpSocketMessage(ctx context.Context, in *UpSocketMessageReq, opts ...grpc.CallOption) (*UpSocketMessageReq, error) {
+func (c *streamEventClient) UpSocketMessage(ctx context.Context, in *UpSocketMessageReq, opts ...grpc.CallOption) (*UpSocketMessageRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UpSocketMessageReq)
+	out := new(UpSocketMessageRes)
 	err := c.cc.Invoke(ctx, StreamEvent_UpSocketMessage_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -139,7 +139,7 @@ type StreamEventServer interface {
 	// 推送 chunk asdu 104协议消息
 	PushChunkAsdu(context.Context, *PushChunkAsduReq) (*PushChunkAsduRes, error)
 	// 上行socket标准消息, 可以用于__up__和自定义up事件
-	UpSocketMessage(context.Context, *UpSocketMessageReq) (*UpSocketMessageReq, error)
+	UpSocketMessage(context.Context, *UpSocketMessageReq) (*UpSocketMessageRes, error)
 	// 计划任务事件处理
 	HandlerPlanTaskEvent(context.Context, *HandlerPlanTaskEventReq) (*HandlerPlanTaskEventRes, error)
 	// 通知计划任务事件
@@ -166,7 +166,7 @@ func (UnimplementedStreamEventServer) ReceiveKafkaMessage(context.Context, *Rece
 func (UnimplementedStreamEventServer) PushChunkAsdu(context.Context, *PushChunkAsduReq) (*PushChunkAsduRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PushChunkAsdu not implemented")
 }
-func (UnimplementedStreamEventServer) UpSocketMessage(context.Context, *UpSocketMessageReq) (*UpSocketMessageReq, error) {
+func (UnimplementedStreamEventServer) UpSocketMessage(context.Context, *UpSocketMessageReq) (*UpSocketMessageRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpSocketMessage not implemented")
 }
 func (UnimplementedStreamEventServer) HandlerPlanTaskEvent(context.Context, *HandlerPlanTaskEventReq) (*HandlerPlanTaskEventRes, error) {

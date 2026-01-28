@@ -17,7 +17,7 @@ service StreamEvent {
   // 推送 chunk asdu 104协议消息
   rpc PushChunkAsdu (PushChunkAsduReq) returns (PushChunkAsduRes);
   // 上行socket标准消息, 可以用于__up__和自定义up事件
-  rpc UpSocketMessage (UpSocketMessageReq) returns (UpSocketMessageReq);
+  rpc UpSocketMessage (UpSocketMessageReq) returns (UpSocketMessageRes);
   // 计划任务事件处理
   rpc HandlerPlanTaskEvent (HandlerPlanTaskEventReq) returns (HandlerPlanTaskEventRes);
   // 通知计划任务事件
@@ -454,7 +454,7 @@ message UpSocketMessageReq{
   string payload = 4;
 }
 
-message UpSocketMessageRsp{
+message UpSocketMessageRes{
 }
 
 message PbPlan{

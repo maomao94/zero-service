@@ -2594,26 +2594,26 @@ func (x *UpSocketMessageReq) GetPayload() string {
 	return ""
 }
 
-type UpSocketMessageRsp struct {
+type UpSocketMessageRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *UpSocketMessageRsp) Reset() {
-	*x = UpSocketMessageRsp{}
+func (x *UpSocketMessageRes) Reset() {
+	*x = UpSocketMessageRes{}
 	mi := &file_streamevent_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *UpSocketMessageRsp) String() string {
+func (x *UpSocketMessageRes) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UpSocketMessageRsp) ProtoMessage() {}
+func (*UpSocketMessageRes) ProtoMessage() {}
 
-func (x *UpSocketMessageRsp) ProtoReflect() protoreflect.Message {
+func (x *UpSocketMessageRes) ProtoReflect() protoreflect.Message {
 	mi := &file_streamevent_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2625,8 +2625,8 @@ func (x *UpSocketMessageRsp) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UpSocketMessageRsp.ProtoReflect.Descriptor instead.
-func (*UpSocketMessageRsp) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpSocketMessageRes.ProtoReflect.Descriptor instead.
+func (*UpSocketMessageRes) Descriptor() ([]byte, []int) {
 	return file_streamevent_proto_rawDescGZIP(), []int{27}
 }
 
@@ -3488,7 +3488,7 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x03sId\x18\x02 \x01(\tR\x03sId\x12\x14\n" +
 	"\x05event\x18\x03 \x01(\tR\x05event\x12\x18\n" +
 	"\apayload\x18\x04 \x01(\tR\apayload\"\x14\n" +
-	"\x12UpSocketMessageRsp\"\xd4\x03\n" +
+	"\x12UpSocketMessageRes\"\xd4\x03\n" +
 	"\x06PbPlan\x12\x1e\n" +
 	"\n" +
 	"createTime\x18e \x01(\tR\n" +
@@ -3572,7 +3572,7 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x10ReceiveWSMessage\x12 .streamevent.ReceiveWSMessageReq\x1a .streamevent.ReceiveWSMessageRes\x12_\n" +
 	"\x13ReceiveKafkaMessage\x12#.streamevent.ReceiveKafkaMessageReq\x1a#.streamevent.ReceiveKafkaMessageRes\x12M\n" +
 	"\rPushChunkAsdu\x12\x1d.streamevent.PushChunkAsduReq\x1a\x1d.streamevent.PushChunkAsduRes\x12S\n" +
-	"\x0fUpSocketMessage\x12\x1f.streamevent.UpSocketMessageReq\x1a\x1f.streamevent.UpSocketMessageReq\x12b\n" +
+	"\x0fUpSocketMessage\x12\x1f.streamevent.UpSocketMessageReq\x1a\x1f.streamevent.UpSocketMessageRes\x12b\n" +
 	"\x14HandlerPlanTaskEvent\x12$.streamevent.HandlerPlanTaskEventReq\x1a$.streamevent.HandlerPlanTaskEventRes\x12S\n" +
 	"\x0fNotifyPlanEvent\x12\x1f.streamevent.NotifyPlanEventReq\x1a\x1f.streamevent.NotifyPlanEventResB@\n" +
 	"\x1bcom.github.streamevent.grpcB\x10StreamEventProtoP\x01Z\r./streameventb\x06proto3"
@@ -3620,7 +3620,7 @@ var file_streamevent_proto_goTypes = []any{
 	(*PackedOutputCircuitInfo)(nil),                    // 25: streamevent.PackedOutputCircuitInfo
 	(*PackedSinglePointWithSCDInfo)(nil),               // 26: streamevent.PackedSinglePointWithSCDInfo
 	(*UpSocketMessageReq)(nil),                         // 27: streamevent.UpSocketMessageReq
-	(*UpSocketMessageRsp)(nil),                         // 28: streamevent.UpSocketMessageRsp
+	(*UpSocketMessageRes)(nil),                         // 28: streamevent.UpSocketMessageRes
 	(*PbPlan)(nil),                                     // 29: streamevent.PbPlan
 	(*HandlerPlanTaskEventReq)(nil),                    // 30: streamevent.HandlerPlanTaskEventReq
 	(*HandlerPlanTaskEventRes)(nil),                    // 31: streamevent.HandlerPlanTaskEventRes
@@ -3651,7 +3651,7 @@ var file_streamevent_proto_depIdxs = []int32{
 	5,  // 18: streamevent.StreamEvent.ReceiveWSMessage:output_type -> streamevent.ReceiveWSMessageRes
 	7,  // 19: streamevent.StreamEvent.ReceiveKafkaMessage:output_type -> streamevent.ReceiveKafkaMessageRes
 	10, // 20: streamevent.StreamEvent.PushChunkAsdu:output_type -> streamevent.PushChunkAsduRes
-	27, // 21: streamevent.StreamEvent.UpSocketMessage:output_type -> streamevent.UpSocketMessageReq
+	28, // 21: streamevent.StreamEvent.UpSocketMessage:output_type -> streamevent.UpSocketMessageRes
 	31, // 22: streamevent.StreamEvent.HandlerPlanTaskEvent:output_type -> streamevent.HandlerPlanTaskEventRes
 	34, // 23: streamevent.StreamEvent.NotifyPlanEvent:output_type -> streamevent.NotifyPlanEventRes
 	17, // [17:24] is the sub-list for method output_type

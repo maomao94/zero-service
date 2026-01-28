@@ -24,6 +24,8 @@ func NewUpSocketMessageLogic(ctx context.Context, svcCtx *svc.ServiceContext) *U
 }
 
 // 上行socket标准消息, 可以用于__up__和自定义up事件
-func (l *UpSocketMessageLogic) UpSocketMessage(in *streamevent.UpSocketMessageReq) (*streamevent.UpSocketMessageReq, error) {
-	return &streamevent.UpSocketMessageReq{}, nil
+func (l *UpSocketMessageLogic) UpSocketMessage(in *streamevent.UpSocketMessageReq) (*streamevent.UpSocketMessageRes, error) {
+	// todo: add your logic here and delete this line
+
+	return &streamevent.UpSocketMessageRes{}, nil
 }
