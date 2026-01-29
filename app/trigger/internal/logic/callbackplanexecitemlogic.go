@@ -99,12 +99,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 		case model.ResultDelayed:
 			currentTime := carbon.Now()
 			delayTriggerTime := currentTime.AddMinutes(5).ToDateTimeString()
-			delayReason := ""
-			if len(in.Message) == 0 {
-				delayReason = in.GetExecResult()
-			} else {
-				delayReason = in.Message
-			}
+			delayReason := in.Reason
 			if in.DelayConfig == nil {
 				l.Errorf("No delay config provided for exec item %d", execItem.Id)
 			} else {
@@ -134,12 +129,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 		case model.ResultOngoing:
 			currentTime := carbon.Now()
 			delayTriggerTime := currentTime.AddMinutes(5).ToDateTimeString()
-			delayReason := ""
-			if len(in.Message) == 0 {
-				delayReason = in.GetExecResult()
-			} else {
-				delayReason = in.Message
-			}
+			delayReason := in.Reason
 			if in.DelayConfig == nil {
 				l.Debugf("No delay config provided for exec item %d", execItem.Id)
 			} else {

@@ -297,12 +297,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		logx.WithContext(ctx).Infof("gRPC call returned delayed for exec item %d: %s", execItem.Id, res.Message)
 		currentTime := carbon.Now()
 		delayTriggerTime := currentTime.AddMinutes(5).ToDateTimeString()
-		delayReason := ""
-		if len(res.Message) == 0 {
-			delayReason = res.ExecResult
-		} else {
-			delayReason = res.Message
-		}
+		delayReason := res.Reason
 		if res.DelayConfig == nil {
 			logx.WithContext(ctx).Errorf("No delay config provided for exec item %d", execItem.Id)
 		} else {
@@ -335,12 +330,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		logx.WithContext(ctx).Infof("gRPC call returned ongoing for exec item %d: %s", execItem.Id, res.Message)
 		currentTime := carbon.Now()
 		delayTriggerTime := currentTime.AddMinutes(5).ToDateTimeString()
-		delayReason := ""
-		if len(res.Message) == 0 {
-			delayReason = res.ExecResult
-		} else {
-			delayReason = res.Message
-		}
+		delayReason := res.Reason
 		if res.DelayConfig == nil {
 			logx.WithContext(ctx).Debugf("No delay config provided for exec item %d", execItem.Id)
 		} else {
