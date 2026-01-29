@@ -22,7 +22,7 @@ type (
 		// 锁定需要触发的执行项
 		LockTriggerItem(ctx context.Context, expireIn time.Duration) (*PlanExecItem, error)
 		// 更新执行项状态为执行中
-		UpdateStatusToRunning(ctx context.Context, id int64) error
+		UpdateStatusToRunning(ctx context.Context, id int64, lastResult string) error
 		// 更新执行项状态为已完成
 		UpdateStatusToCompleted(ctx context.Context, id int64, lastMessage, lastReason string, statusIn []int, statusOut []int) error
 		// 更新执行项状态为失败延期
@@ -147,12 +147,14 @@ func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn 
 	}
 }
 
-func (m *customPlanExecItemModel) UpdateStatusToRunning(ctx context.Context, id int64) error {
+func (m *customPlanExecItemModel) UpdateStatusToRunning(ctx context.Context, id int64, lastResult string) error {
 	updateBuilder := squirrel.Update(m.table).
 		Set("status", StatusRunning).
-		Set("last_result", ResultOngoing).
 		Set("last_trigger_time", time.Now()).
 		Where("id = ?", id)
+	if lastResult != "" {
+		updateBuilder = updateBuilder.Set("last_result", lastResult)
+	}
 	if m.dbType == DatabaseTypePostgres {
 		updateBuilder = updateBuilder.PlaceholderFormat(squirrel.Dollar)
 	}

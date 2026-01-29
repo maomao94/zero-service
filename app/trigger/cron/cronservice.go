@@ -153,7 +153,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 	logx.WithContext(ctx).Debugf("Executing callback for exec item %d, planId: %s, itemId: %s",
 		execItem.Id, execItem.PlanId, execItem.ItemId)
 
-	if err := s.svcCtx.PlanExecItemModel.UpdateStatusToRunning(ctx, execItem.Id); err != nil {
+	if err := s.svcCtx.PlanExecItemModel.UpdateStatusToRunning(ctx, execItem.Id, ""); err != nil {
 		logx.WithContext(ctx).Errorf("Error updating plan exec item %d to running: %v", execItem.Id, err)
 		return
 	}
