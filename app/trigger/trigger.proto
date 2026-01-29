@@ -1095,9 +1095,9 @@ message CallbackPlanExecItemReq {
   // 执行结果：completed-业务执行完成, terminated-业务终止, failed-业务执行失败, delayed-业务执行延期, ongoing-业务正在执行（未回调或部分异步）
   string execResult = 3 [(validate.rules).string = {in: ["completed", "terminated", "failed", "delayed","ongoing"]}];
   // 结果描述  可以定义自己状态码，等下次回调判断业务场景
-  string message = 4;
+  string message = 4 [(validate.rules).string = {max_len: 255}];
   // 结果原因 （成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
-  string reason = 5;
+  string reason = 5 [(validate.rules).string = {max_len: 100}];
   // 延期配置-默认延期5分钟：delayed,ongoing-自定义延期
   PbDelayConfig delayConfig = 6;
 }
@@ -1106,7 +1106,7 @@ message PbDelayConfig {
   // 下次触发时间（格式：yyyy-MM-dd HH:mm:ss，定时扫描的核心筛选条件）
   string nextTriggerTime = 1;
   // 延期原因
-  string delayReason = 2;
+  string delayReason = 2 [(validate.rules).string = {max_len: 100}];
 }
 
 message CallbackPlanExecItemRes {

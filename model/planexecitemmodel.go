@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"time"
+	"unicode/utf8"
 
 	"zero-service/common/tool"
 
@@ -164,6 +165,15 @@ func (m *customPlanExecItemModel) UpdateStatusToRunning(ctx context.Context, id 
 }
 
 func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, id int64, lastMessage, lastReason string, statusIn []int, statusOut []int) error {
+	// 检查并截取字段长度
+	if utf8.RuneCountInString(lastReason) > 255 {
+		runes := []rune(lastReason)
+		lastReason = string(runes[:255])
+	}
+	if utf8.RuneCountInString(lastMessage) > 1024 {
+		runes := []rune(lastMessage)
+		lastMessage = string(runes[:1024])
+	}
 	currentTime := time.Now()
 	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
 	updateBuilder := squirrel.Update(m.table).
@@ -192,6 +202,15 @@ func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, i
 }
 
 func (m *customPlanExecItemModel) UpdateStatusToFail(ctx context.Context, id int64, lastResult, lastMessage, lastReason string, statusIn []int, statusOut []int) error {
+	// 检查并截取字段长度
+	if utf8.RuneCountInString(lastReason) > 255 {
+		runes := []rune(lastReason)
+		lastReason = string(runes[:255])
+	}
+	if utf8.RuneCountInString(lastMessage) > 1024 {
+		runes := []rune(lastMessage)
+		lastMessage = string(runes[:1024])
+	}
 	currentTime := time.Now()
 	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
 	selectBuilder := squirrel.Select("trigger_count").From(m.table).Where("id = ?", id)
@@ -234,8 +253,6 @@ func (m *customPlanExecItemModel) UpdateStatusToFail(ctx context.Context, id int
 			Set("next_trigger_time", nextTriggerTimeStr).
 			Set("last_trigger_time", currentTimeStr).
 			Set("trigger_count", squirrel.Expr("trigger_count + 1")).
-			Set("paused_time", currentTimeStr).
-			Set("paused_reason", "调度平台自动延期").
 			Where("id = ?", id)
 	}
 	if len(statusIn) > 0 {
@@ -256,6 +273,15 @@ func (m *customPlanExecItemModel) UpdateStatusToFail(ctx context.Context, id int
 }
 
 func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, lastMessage, lastReason, nextTriggerTimeStr string, statusIn []int, statusOut []int) error {
+	// 检查并截取字段长度
+	if utf8.RuneCountInString(lastReason) > 255 {
+		runes := []rune(lastReason)
+		lastReason = string(runes[:255])
+	}
+	if utf8.RuneCountInString(lastMessage) > 1024 {
+		runes := []rune(lastMessage)
+		lastMessage = string(runes[:1024])
+	}
 	ct := carbon.Parse(nextTriggerTimeStr)
 	if ct.Error != nil {
 		return ct.Error
@@ -289,6 +315,15 @@ func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id 
 }
 
 func (m *customPlanExecItemModel) UpdateStatusToTerminated(ctx context.Context, id int64, lastMessage, lastReason string, statusIn []int, statusOut []int) error {
+	// 检查并截取字段长度
+	if utf8.RuneCountInString(lastReason) > 255 {
+		runes := []rune(lastReason)
+		lastReason = string(runes[:255])
+	}
+	if utf8.RuneCountInString(lastMessage) > 1024 {
+		runes := []rune(lastMessage)
+		lastMessage = string(runes[:1024])
+	}
 	currentTime := time.Now()
 	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
 	updateBuilder := squirrel.Update(m.table).
@@ -298,6 +333,7 @@ func (m *customPlanExecItemModel) UpdateStatusToTerminated(ctx context.Context, 
 		Set("last_reason", lastReason).
 		Set("last_trigger_time", currentTimeStr).
 		Set("trigger_count", squirrel.Expr("trigger_count + 1")).
+		Set("terminated_reason", lastReason).
 		Where("id = ?", id)
 	if len(statusIn) > 0 {
 		updateBuilder = updateBuilder.Where(squirrel.Eq{"status": statusIn})
@@ -317,6 +353,15 @@ func (m *customPlanExecItemModel) UpdateStatusToTerminated(ctx context.Context, 
 }
 
 func (m *customPlanExecItemModel) UpdateStatusToOngoing(ctx context.Context, id int64, lastMessage, lastReason string, updateTriggerInfo bool, nextTriggerTime string, statusIn []int, statusOut []int) error {
+	// 检查并截取字段长度
+	if utf8.RuneCountInString(lastReason) > 255 {
+		runes := []rune(lastReason)
+		lastReason = string(runes[:255])
+	}
+	if utf8.RuneCountInString(lastMessage) > 1024 {
+		runes := []rune(lastMessage)
+		lastMessage = string(runes[:1024])
+	}
 	currentTime := time.Now()
 	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
 	updateBuilder := squirrel.Update(m.table).
