@@ -24,7 +24,7 @@ func (u *IdUtil) NextId(outDescType string, category string) string {
 	now := time.Now()
 	yy := now.Format("06")               // 2位年份
 	dateTime := now.Format("0102150405") // MMddHHmmss
-	seq := fmt.Sprintf("%02d", id%100)
+	seq := fmt.Sprintf("%04d", id%10000)
 	return fmt.Sprintf("%s%s%s%s", outDescType, yy, dateTime, seq)
 }
 
@@ -34,7 +34,7 @@ func (u *IdUtil) getNextId(key string, category string) int64 {
 	if err != nil {
 		return 0
 	}
-	if id <= 1 || id >= 100 {
+	if id <= 1 || id >= 10000 {
 		err = u.Redis.Expire(fKey, 3600) // 1小时 = 3600秒
 		if err != nil {
 			return 0
