@@ -8,6 +8,7 @@ import (
 	"time"
 	"zero-service/common/tool"
 	"zero-service/model"
+	"zero-service/third_party/extproto"
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
@@ -47,7 +48,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		}
 	}
 	if querPlan != nil {
-		return nil, fmt.Errorf("计划任务已存在,不可创建")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_ALREADY_EXIST)
 	}
 	if len(in.StartTime) == 0 {
 		in.StartTime = fmt.Sprintf("%d-1-1 00:00:00", time.Now().Year())

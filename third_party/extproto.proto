@@ -6,6 +6,8 @@ option java_multiple_files = true;
 option java_package = "com.github.extproto";
 option java_outer_classname = "ExtProto";
 
+import "google/protobuf/descriptor.proto";
+
 message CurrentUser {
   string userId = 1 [json_name = "userId"];
   string userName = 2 [json_name = "userName"];
@@ -18,4 +20,56 @@ message Dept {
   string orgId = 1 [json_name = "orgId"];
   string orgCode = 2 [json_name = "orgCode"];
   string orgName = 3 [json_name = "orgName"];
+}
+
+extend google.protobuf.EnumValueOptions {
+  string name = 5001;
+  int32 httpCode = 5002;
+}
+
+/**
+ * Code 表示系统统一错误码定义
+ *
+ * 错误码整体为 “ABCDEF” 六位数字：
+ *   - A     ：错误来源（当前统一为 1，表示平台/服务端）
+ *   - BC    ：功能模块
+ *   - DEF   ：模块内自定义错误
+ */
+enum Code {
+  // ===== proto3 兜底 =====
+  CODE_UNSPECIFIED = 0 [(name) = "未指定错误码", (httpCode) = 500];
+
+  // ===== 通用系统错误（A=1, BC=00）=====
+  _1_00_UNKNOWN = 100999 [(name) = "未知错误", (httpCode) = 500];
+  _1_00_INTERNAL = 100998 [(name) = "系统内部错误", (httpCode) = 500];
+  _1_00_TIMEOUT = 100997 [(name) = "系统超时", (httpCode) = 504];
+
+  // ===== 参数 / 校验错误（A=1, BC=01）=====
+  _1_01_PARAM = 100101 [(name) = "参数错误", (httpCode) = 400];
+  _1_01_PARAM_MISSING = 100102 [(name) = "缺少必要参数", (httpCode) = 400];
+  _1_01_PARAM_INVALID = 100103 [(name) = "参数不合法", (httpCode) = 400];
+
+  // ===== 数据相关错误（A=1, BC=02）=====
+  _1_02_DB = 100201 [(name) = "数据库错误", (httpCode) = 500];
+  _1_02_RECORD_NOT_EXIST = 100202 [(name) = "记录不存在", (httpCode) = 404];
+  _1_02_RECORD_ALREADY_EXIST = 100203 [(name) = "记录已存在", (httpCode) = 409];
+  _1_02_DATA_CONFLICT = 100204 [(name) = "数据冲突", (httpCode) = 409];
+
+  // ===== 缓存 / 中间件错误（A=1, BC=03）=====
+  _1_03_CACHE = 100301 [(name) = "缓存错误", (httpCode) = 500];
+  _1_03_CACHE_MISS = 100302 [(name) = "缓存未命中", (httpCode) = 500];
+  _1_03_MQ = 100303 [(name) = "消息队列错误", (httpCode) = 503];
+
+  // ===== 权限 / 认证错误（A=1, BC=04）=====
+  _1_03_UNAUTHORIZED = 100401 [(name) = "未认证", (httpCode) = 401];
+  _1_03_FORBIDDEN = 100403 [(name) = "无权限访问", (httpCode) = 403];
+
+  // ===== 业务通用错误（A=1, BC=05）=====
+  _1_05_BIZ = 100500 [(name) = "业务处理失败", (httpCode) = 400];
+  _1_05_BIZ_STATE = 100501 [(name) = "业务状态不允许", (httpCode) = 409];
+  _1_05_BIZ_REPEAT = 100502 [(name) = "重复操作", (httpCode) = 409];
+
+  // ===== 外部依赖错误（A=1, BC=06）=====
+  _1_06_RPC = 100601 [(name) = "远程调用失败", (httpCode) = 503];
+  _1_06_THIRD_PARTY = 100602 [(name) = "第三方服务异常", (httpCode) = 503];
 }

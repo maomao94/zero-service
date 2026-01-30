@@ -3,7 +3,9 @@ package logic
 import (
 	"context"
 	"encoding/json"
+	"zero-service/common/tool"
 	"zero-service/model"
+	"zero-service/third_party/extproto"
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
@@ -12,6 +14,7 @@ import (
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
 type GetPlanLogic struct {
@@ -45,6 +48,9 @@ func (l *GetPlanLogic) GetPlan(in *trigger.GetPlanReq) (*trigger.GetPlanRes, err
 		plan, err = l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, in.PlanId)
 	}
 	if err != nil {
+		if err == sqlx.ErrNotFound {
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST)
+		}
 		return nil, err
 	}
 	// 解析规则

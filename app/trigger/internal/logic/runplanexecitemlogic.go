@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"time"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
@@ -12,6 +14,7 @@ import (
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
 type RunPlanExecItemLogic struct {
@@ -46,6 +49,9 @@ func (l *RunPlanExecItemLogic) RunPlanExecItem(in *trigger.RunPlanExecItemReq) (
 		execItem, err = l.svcCtx.PlanExecItemModel.FindOneByExecId(l.ctx, in.ExecId)
 	}
 	if err != nil {
+		if err == sqlx.ErrNotFound {
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST)
+		}
 		return nil, err
 	}
 	if execItem.Status != int64(model.StatusWaiting) && execItem.Status != int64(model.StatusDelayed) {

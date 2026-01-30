@@ -9,6 +9,7 @@ package extproto
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	descriptorpb "google.golang.org/protobuf/types/descriptorpb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -20,6 +21,124 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+// *
+// Code 表示系统统一错误码定义
+//
+// 错误码整体为 “ABCDEF” 六位数字：
+//   - A     ：错误来源（当前统一为 1，表示平台/服务端）
+//   - BC    ：功能模块
+//   - DEF   ：模块内自定义错误
+type Code int32
+
+const (
+	// ===== proto3 兜底 =====
+	Code_CODE_UNSPECIFIED Code = 0
+	// ===== 通用系统错误（A=1, BC=00）=====
+	Code__1_00_UNKNOWN  Code = 100999
+	Code__1_00_INTERNAL Code = 100998
+	Code__1_00_TIMEOUT  Code = 100997
+	// ===== 参数 / 校验错误（A=1, BC=01）=====
+	Code__1_01_PARAM         Code = 100101
+	Code__1_01_PARAM_MISSING Code = 100102
+	Code__1_01_PARAM_INVALID Code = 100103
+	// ===== 数据相关错误（A=1, BC=02）=====
+	Code__1_02_DB                   Code = 100201
+	Code__1_02_RECORD_NOT_EXIST     Code = 100202
+	Code__1_02_RECORD_ALREADY_EXIST Code = 100203
+	Code__1_02_DATA_CONFLICT        Code = 100204
+	// ===== 缓存 / 中间件错误（A=1, BC=03）=====
+	Code__1_03_CACHE      Code = 100301
+	Code__1_03_CACHE_MISS Code = 100302
+	Code__1_03_MQ         Code = 100303
+	// ===== 权限 / 认证错误（A=1, BC=04）=====
+	Code__1_03_UNAUTHORIZED Code = 100401
+	Code__1_03_FORBIDDEN    Code = 100403
+	// ===== 业务通用错误（A=1, BC=05）=====
+	Code__1_05_BIZ        Code = 100500
+	Code__1_05_BIZ_STATE  Code = 100501
+	Code__1_05_BIZ_REPEAT Code = 100502
+	// ===== 外部依赖错误（A=1, BC=06）=====
+	Code__1_06_RPC         Code = 100601
+	Code__1_06_THIRD_PARTY Code = 100602
+)
+
+// Enum value maps for Code.
+var (
+	Code_name = map[int32]string{
+		0:      "CODE_UNSPECIFIED",
+		100999: "_1_00_UNKNOWN",
+		100998: "_1_00_INTERNAL",
+		100997: "_1_00_TIMEOUT",
+		100101: "_1_01_PARAM",
+		100102: "_1_01_PARAM_MISSING",
+		100103: "_1_01_PARAM_INVALID",
+		100201: "_1_02_DB",
+		100202: "_1_02_RECORD_NOT_EXIST",
+		100203: "_1_02_RECORD_ALREADY_EXIST",
+		100204: "_1_02_DATA_CONFLICT",
+		100301: "_1_03_CACHE",
+		100302: "_1_03_CACHE_MISS",
+		100303: "_1_03_MQ",
+		100401: "_1_03_UNAUTHORIZED",
+		100403: "_1_03_FORBIDDEN",
+		100500: "_1_05_BIZ",
+		100501: "_1_05_BIZ_STATE",
+		100502: "_1_05_BIZ_REPEAT",
+		100601: "_1_06_RPC",
+		100602: "_1_06_THIRD_PARTY",
+	}
+	Code_value = map[string]int32{
+		"CODE_UNSPECIFIED":           0,
+		"_1_00_UNKNOWN":              100999,
+		"_1_00_INTERNAL":             100998,
+		"_1_00_TIMEOUT":              100997,
+		"_1_01_PARAM":                100101,
+		"_1_01_PARAM_MISSING":        100102,
+		"_1_01_PARAM_INVALID":        100103,
+		"_1_02_DB":                   100201,
+		"_1_02_RECORD_NOT_EXIST":     100202,
+		"_1_02_RECORD_ALREADY_EXIST": 100203,
+		"_1_02_DATA_CONFLICT":        100204,
+		"_1_03_CACHE":                100301,
+		"_1_03_CACHE_MISS":           100302,
+		"_1_03_MQ":                   100303,
+		"_1_03_UNAUTHORIZED":         100401,
+		"_1_03_FORBIDDEN":            100403,
+		"_1_05_BIZ":                  100500,
+		"_1_05_BIZ_STATE":            100501,
+		"_1_05_BIZ_REPEAT":           100502,
+		"_1_06_RPC":                  100601,
+		"_1_06_THIRD_PARTY":          100602,
+	}
+)
+
+func (x Code) Enum() *Code {
+	p := new(Code)
+	*p = x
+	return p
+}
+
+func (x Code) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Code) Descriptor() protoreflect.EnumDescriptor {
+	return file_extproto_proto_enumTypes[0].Descriptor()
+}
+
+func (Code) Type() protoreflect.EnumType {
+	return &file_extproto_proto_enumTypes[0]
+}
+
+func (x Code) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Code.Descriptor instead.
+func (Code) EnumDescriptor() ([]byte, []int) {
+	return file_extproto_proto_rawDescGZIP(), []int{0}
+}
 
 type CurrentUser struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -157,245 +276,38 @@ func (x *Dept) GetOrgName() string {
 	return ""
 }
 
-type HandlerPlanTaskEventReq struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// 计划任务ID
-	PlanId string `protobuf:"bytes,1,opt,name=planId,proto3" json:"planId,omitempty"`
-	// 计划任务名称
-	PlanName string `protobuf:"bytes,2,opt,name=planName,proto3" json:"planName,omitempty"`
-	// 任务类型
-	Type string `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
-	// 计划组ID,用于分组管理计划任务
-	GroupId string `protobuf:"bytes,4,opt,name=groupId,proto3" json:"groupId,omitempty"`
-	// 描述
-	Description string `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
-	// 执行项ID
-	ItemId string `protobuf:"bytes,7,opt,name=itemId,proto3" json:"itemId,omitempty"`
-	// 执行项名称
-	ItemName string `protobuf:"bytes,8,opt,name=itemName,proto3" json:"itemName,omitempty"`
-	// 点位id,业务字段
-	PointId string `protobuf:"bytes,9,opt,name=pointId,proto3" json:"pointId,omitempty"`
-	// 业务负载（必填）：序列化的业务专属参数（设备参数/转账金额/订单信息等）
-	Payload       string `protobuf:"bytes,10,opt,name=payload,proto3" json:"payload,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+var file_extproto_proto_extTypes = []protoimpl.ExtensionInfo{
+	{
+		ExtendedType:  (*descriptorpb.EnumValueOptions)(nil),
+		ExtensionType: (*string)(nil),
+		Field:         5001,
+		Name:          "extproto.name",
+		Tag:           "bytes,5001,opt,name=name",
+		Filename:      "extproto.proto",
+	},
+	{
+		ExtendedType:  (*descriptorpb.EnumValueOptions)(nil),
+		ExtensionType: (*int32)(nil),
+		Field:         5002,
+		Name:          "extproto.httpCode",
+		Tag:           "varint,5002,opt,name=httpCode",
+		Filename:      "extproto.proto",
+	},
 }
 
-func (x *HandlerPlanTaskEventReq) Reset() {
-	*x = HandlerPlanTaskEventReq{}
-	mi := &file_extproto_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *HandlerPlanTaskEventReq) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*HandlerPlanTaskEventReq) ProtoMessage() {}
-
-func (x *HandlerPlanTaskEventReq) ProtoReflect() protoreflect.Message {
-	mi := &file_extproto_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use HandlerPlanTaskEventReq.ProtoReflect.Descriptor instead.
-func (*HandlerPlanTaskEventReq) Descriptor() ([]byte, []int) {
-	return file_extproto_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *HandlerPlanTaskEventReq) GetPlanId() string {
-	if x != nil {
-		return x.PlanId
-	}
-	return ""
-}
-
-func (x *HandlerPlanTaskEventReq) GetPlanName() string {
-	if x != nil {
-		return x.PlanName
-	}
-	return ""
-}
-
-func (x *HandlerPlanTaskEventReq) GetType() string {
-	if x != nil {
-		return x.Type
-	}
-	return ""
-}
-
-func (x *HandlerPlanTaskEventReq) GetGroupId() string {
-	if x != nil {
-		return x.GroupId
-	}
-	return ""
-}
-
-func (x *HandlerPlanTaskEventReq) GetDescription() string {
-	if x != nil {
-		return x.Description
-	}
-	return ""
-}
-
-func (x *HandlerPlanTaskEventReq) GetItemId() string {
-	if x != nil {
-		return x.ItemId
-	}
-	return ""
-}
-
-func (x *HandlerPlanTaskEventReq) GetItemName() string {
-	if x != nil {
-		return x.ItemName
-	}
-	return ""
-}
-
-func (x *HandlerPlanTaskEventReq) GetPointId() string {
-	if x != nil {
-		return x.PointId
-	}
-	return ""
-}
-
-func (x *HandlerPlanTaskEventReq) GetPayload() string {
-	if x != nil {
-		return x.Payload
-	}
-	return ""
-}
-
-type HandlerPlanTaskEventRes struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// 执行结果 1-成功,2-失败,3-延期
-	ExecResult int32 `protobuf:"varint,1,opt,name=execResult,proto3" json:"execResult,omitempty"`
-	// 结果描述（成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
-	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	// 延期配置（仅当exec_result=3时生效，无需needDelay开关）
-	DelayConfig   *PbDelayConfig `protobuf:"bytes,3,opt,name=delayConfig,proto3" json:"delayConfig,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *HandlerPlanTaskEventRes) Reset() {
-	*x = HandlerPlanTaskEventRes{}
-	mi := &file_extproto_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *HandlerPlanTaskEventRes) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*HandlerPlanTaskEventRes) ProtoMessage() {}
-
-func (x *HandlerPlanTaskEventRes) ProtoReflect() protoreflect.Message {
-	mi := &file_extproto_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use HandlerPlanTaskEventRes.ProtoReflect.Descriptor instead.
-func (*HandlerPlanTaskEventRes) Descriptor() ([]byte, []int) {
-	return file_extproto_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *HandlerPlanTaskEventRes) GetExecResult() int32 {
-	if x != nil {
-		return x.ExecResult
-	}
-	return 0
-}
-
-func (x *HandlerPlanTaskEventRes) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-func (x *HandlerPlanTaskEventRes) GetDelayConfig() *PbDelayConfig {
-	if x != nil {
-		return x.DelayConfig
-	}
-	return nil
-}
-
-type PbDelayConfig struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// 下次触发时间（格式：yyyy-MM-dd HH:mm:ss，定时扫描的核心筛选条件）
-	NextTriggerTime string `protobuf:"bytes,1,opt,name=nextTriggerTime,proto3" json:"nextTriggerTime,omitempty"`
-	// 延期原因
-	DelayReason   string `protobuf:"bytes,2,opt,name=delayReason,proto3" json:"delayReason,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PbDelayConfig) Reset() {
-	*x = PbDelayConfig{}
-	mi := &file_extproto_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PbDelayConfig) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PbDelayConfig) ProtoMessage() {}
-
-func (x *PbDelayConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_extproto_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PbDelayConfig.ProtoReflect.Descriptor instead.
-func (*PbDelayConfig) Descriptor() ([]byte, []int) {
-	return file_extproto_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *PbDelayConfig) GetNextTriggerTime() string {
-	if x != nil {
-		return x.NextTriggerTime
-	}
-	return ""
-}
-
-func (x *PbDelayConfig) GetDelayReason() string {
-	if x != nil {
-		return x.DelayReason
-	}
-	return ""
-}
+// Extension fields to descriptorpb.EnumValueOptions.
+var (
+	// optional string name = 5001;
+	E_Name = &file_extproto_proto_extTypes[0]
+	// optional int32 httpCode = 5002;
+	E_HttpCode = &file_extproto_proto_extTypes[1]
+)
 
 var File_extproto_proto protoreflect.FileDescriptor
 
 const file_extproto_proto_rawDesc = "" +
 	"\n" +
-	"\x0eextproto.proto\x12\bextproto\"\xff\x01\n" +
+	"\x0eextproto.proto\x12\bextproto\x1a google/protobuf/descriptor.proto\"\xff\x01\n" +
 	"\vCurrentUser\x12\x16\n" +
 	"\x06userId\x18\x01 \x01(\tR\x06userId\x12\x1a\n" +
 	"\buserName\x18\x02 \x01(\tR\buserName\x12\x1a\n" +
@@ -408,27 +320,31 @@ const file_extproto_proto_rawDesc = "" +
 	"\x04Dept\x12\x14\n" +
 	"\x05orgId\x18\x01 \x01(\tR\x05orgId\x12\x18\n" +
 	"\aorgCode\x18\x02 \x01(\tR\aorgCode\x12\x18\n" +
-	"\aorgName\x18\x03 \x01(\tR\aorgName\"\x85\x02\n" +
-	"\x17HandlerPlanTaskEventReq\x12\x16\n" +
-	"\x06planId\x18\x01 \x01(\tR\x06planId\x12\x1a\n" +
-	"\bplanName\x18\x02 \x01(\tR\bplanName\x12\x12\n" +
-	"\x04type\x18\x03 \x01(\tR\x04type\x12\x18\n" +
-	"\agroupId\x18\x04 \x01(\tR\agroupId\x12 \n" +
-	"\vdescription\x18\x06 \x01(\tR\vdescription\x12\x16\n" +
-	"\x06itemId\x18\a \x01(\tR\x06itemId\x12\x1a\n" +
-	"\bitemName\x18\b \x01(\tR\bitemName\x12\x18\n" +
-	"\apointId\x18\t \x01(\tR\apointId\x12\x18\n" +
-	"\apayload\x18\n" +
-	" \x01(\tR\apayload\"\x8e\x01\n" +
-	"\x17HandlerPlanTaskEventRes\x12\x1e\n" +
-	"\n" +
-	"execResult\x18\x01 \x01(\x05R\n" +
-	"execResult\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\x129\n" +
-	"\vdelayConfig\x18\x03 \x01(\v2\x17.extproto.PbDelayConfigR\vdelayConfig\"[\n" +
-	"\rPbDelayConfig\x12(\n" +
-	"\x0fnextTriggerTime\x18\x01 \x01(\tR\x0fnextTriggerTime\x12 \n" +
-	"\vdelayReason\x18\x02 \x01(\tR\vdelayReasonBM\n" +
+	"\aorgName\x18\x03 \x01(\tR\aorgName*\x8e\b\n" +
+	"\x04Code\x121\n" +
+	"\x10CODE_UNSPECIFIED\x10\x00\x1a\x1bʸ\x02\x12未指定错误码и\x02\xf4\x03\x12*\n" +
+	"\r_1_00_UNKNOWN\x10\x87\x95\x06\x1a\x15ʸ\x02\f未知错误и\x02\xf4\x03\x121\n" +
+	"\x0e_1_00_INTERNAL\x10\x86\x95\x06\x1a\x1bʸ\x02\x12系统内部错误и\x02\xf4\x03\x12*\n" +
+	"\r_1_00_TIMEOUT\x10\x85\x95\x06\x1a\x15ʸ\x02\f系统超时и\x02\xf8\x03\x12(\n" +
+	"\v_1_01_PARAM\x10\x85\x8e\x06\x1a\x15ʸ\x02\f参数错误и\x02\x90\x03\x126\n" +
+	"\x13_1_01_PARAM_MISSING\x10\x86\x8e\x06\x1a\x1bʸ\x02\x12缺少必要参数и\x02\x90\x03\x123\n" +
+	"\x13_1_01_PARAM_INVALID\x10\x87\x8e\x06\x1a\x18ʸ\x02\x0f参数不合法и\x02\x90\x03\x12(\n" +
+	"\b_1_02_DB\x10\xe9\x8e\x06\x1a\x18ʸ\x02\x0f数据库错误и\x02\xf4\x03\x126\n" +
+	"\x16_1_02_RECORD_NOT_EXIST\x10\xea\x8e\x06\x1a\x18ʸ\x02\x0f记录不存在и\x02\x94\x03\x12:\n" +
+	"\x1a_1_02_RECORD_ALREADY_EXIST\x10\xeb\x8e\x06\x1a\x18ʸ\x02\x0f记录已存在и\x02\x99\x03\x120\n" +
+	"\x13_1_02_DATA_CONFLICT\x10\xec\x8e\x06\x1a\x15ʸ\x02\f数据冲突и\x02\x99\x03\x12(\n" +
+	"\v_1_03_CACHE\x10͏\x06\x1a\x15ʸ\x02\f缓存错误и\x02\xf4\x03\x120\n" +
+	"\x10_1_03_CACHE_MISS\x10Ώ\x06\x1a\x18ʸ\x02\x0f缓存未命中и\x02\xf4\x03\x12+\n" +
+	"\b_1_03_MQ\x10Ϗ\x06\x1a\x1bʸ\x02\x12消息队列错误и\x02\xf7\x03\x12,\n" +
+	"\x12_1_03_UNAUTHORIZED\x10\xb1\x90\x06\x1a\x12ʸ\x02\t未认证и\x02\x91\x03\x12/\n" +
+	"\x0f_1_03_FORBIDDEN\x10\xb3\x90\x06\x1a\x18ʸ\x02\x0f无权限访问и\x02\x93\x03\x12,\n" +
+	"\t_1_05_BIZ\x10\x94\x91\x06\x1a\x1bʸ\x02\x12业务处理失败и\x02\x90\x03\x125\n" +
+	"\x0f_1_05_BIZ_STATE\x10\x95\x91\x06\x1a\x1eʸ\x02\x15业务状态不允许и\x02\x99\x03\x12-\n" +
+	"\x10_1_05_BIZ_REPEAT\x10\x96\x91\x06\x1a\x15ʸ\x02\f重复操作и\x02\x99\x03\x12,\n" +
+	"\t_1_06_RPC\x10\xf9\x91\x06\x1a\x1bʸ\x02\x12远程调用失败и\x02\xf7\x03\x127\n" +
+	"\x11_1_06_THIRD_PARTY\x10\xfa\x91\x06\x1a\x1eʸ\x02\x15第三方服务异常и\x02\xf7\x03:6\n" +
+	"\x04name\x12!.google.protobuf.EnumValueOptions\x18\x89' \x01(\tR\x04name:>\n" +
+	"\bhttpCode\x12!.google.protobuf.EnumValueOptions\x18\x8a' \x01(\x05R\bhttpCodeBM\n" +
 	"\x13com.github.extprotoB\bExtProtoP\x01Z*zero-service/third_party/extproto;extprotob\x06proto3"
 
 var (
@@ -443,24 +359,25 @@ func file_extproto_proto_rawDescGZIP() []byte {
 	return file_extproto_proto_rawDescData
 }
 
-var file_extproto_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_extproto_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_extproto_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_extproto_proto_goTypes = []any{
-	(*CurrentUser)(nil),             // 0: extproto.CurrentUser
-	(*Dept)(nil),                    // 1: extproto.Dept
-	(*HandlerPlanTaskEventReq)(nil), // 2: extproto.HandlerPlanTaskEventReq
-	(*HandlerPlanTaskEventRes)(nil), // 3: extproto.HandlerPlanTaskEventRes
-	(*PbDelayConfig)(nil),           // 4: extproto.PbDelayConfig
-	nil,                             // 5: extproto.CurrentUser.MetadataEntry
+	(Code)(0),                             // 0: extproto.Code
+	(*CurrentUser)(nil),                   // 1: extproto.CurrentUser
+	(*Dept)(nil),                          // 2: extproto.Dept
+	nil,                                   // 3: extproto.CurrentUser.MetadataEntry
+	(*descriptorpb.EnumValueOptions)(nil), // 4: google.protobuf.EnumValueOptions
 }
 var file_extproto_proto_depIdxs = []int32{
-	5, // 0: extproto.CurrentUser.metadata:type_name -> extproto.CurrentUser.MetadataEntry
-	1, // 1: extproto.CurrentUser.dept:type_name -> extproto.Dept
-	4, // 2: extproto.HandlerPlanTaskEventRes.delayConfig:type_name -> extproto.PbDelayConfig
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	3, // 0: extproto.CurrentUser.metadata:type_name -> extproto.CurrentUser.MetadataEntry
+	2, // 1: extproto.CurrentUser.dept:type_name -> extproto.Dept
+	4, // 2: extproto.name:extendee -> google.protobuf.EnumValueOptions
+	4, // 3: extproto.httpCode:extendee -> google.protobuf.EnumValueOptions
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	2, // [2:4] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_extproto_proto_init() }
@@ -473,14 +390,16 @@ func file_extproto_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_extproto_proto_rawDesc), len(file_extproto_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   6,
-			NumExtensions: 0,
+			NumEnums:      1,
+			NumMessages:   3,
+			NumExtensions: 2,
 			NumServices:   0,
 		},
 		GoTypes:           file_extproto_proto_goTypes,
 		DependencyIndexes: file_extproto_proto_depIdxs,
+		EnumInfos:         file_extproto_proto_enumTypes,
 		MessageInfos:      file_extproto_proto_msgTypes,
+		ExtensionInfos:    file_extproto_proto_extTypes,
 	}.Build()
 	File_extproto_proto = out.File
 	file_extproto_proto_goTypes = nil
