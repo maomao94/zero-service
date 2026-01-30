@@ -302,7 +302,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 			logx.WithContext(ctx).Errorf("No delay config provided for exec item %d", execItem.Id)
 		} else {
 			if len(res.DelayConfig.DelayReason) != 0 {
-				delayReason = fmt.Sprintf("reason: %s, message: %s", res.DelayConfig.DelayReason, res.Message)
+				delayReason = fmt.Sprintf("%s, %s", res.DelayConfig.DelayReason, res.Message)
 			}
 			delayTime := carbon.ParseByLayout(res.DelayConfig.NextTriggerTime, carbon.DateTimeLayout)
 			isTrue := true
@@ -319,7 +319,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 				delayTriggerTime = delayTime.ToDateTimeString()
 			}
 		}
-		delayReason = fmt.Sprintf("%s, delay time: %s", delayReason, delayTriggerTime)
+		delayReason = fmt.Sprintf("%s, 下次触发时间: %s", delayReason, delayTriggerTime)
 		logEntry.Reason = sql.NullString{String: delayReason, Valid: true}
 		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToDelayed(ctx, execItem.Id, res.ExecResult, res.Message, delayReason, delayTriggerTime,
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
@@ -335,7 +335,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 			logx.WithContext(ctx).Debugf("No delay config provided for exec item %d", execItem.Id)
 		} else {
 			if len(res.DelayConfig.DelayReason) != 0 {
-				delayReason = fmt.Sprintf("reason: %s, message: %s", res.DelayConfig.DelayReason, res.Message)
+				delayReason = fmt.Sprintf("%s, %s", res.DelayConfig.DelayReason, res.Message)
 			}
 			delayTime := carbon.ParseByLayout(res.DelayConfig.NextTriggerTime, carbon.DateTimeLayout)
 			isTrue := true
@@ -352,7 +352,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 				delayTriggerTime = delayTime.ToDateTimeString()
 			}
 		}
-		delayReason = fmt.Sprintf("%s, delay time: %s", delayReason, delayTriggerTime)
+		delayReason = fmt.Sprintf("%s, 下次触发时间: %s", delayReason, delayTriggerTime)
 		logEntry.Reason = sql.NullString{String: delayReason, Valid: true}
 		if err := s.svcCtx.PlanExecItemModel.UpdateStatusToOngoing(ctx, execItem.Id, res.ExecResult, delayReason, true, delayTriggerTime,
 			[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},

@@ -109,7 +109,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 				l.Errorf("No delay config provided for exec item %d", execItem.Id)
 			} else {
 				if len(in.DelayConfig.DelayReason) != 0 {
-					delayReason = fmt.Sprintf("reason: %s, message: %s", in.DelayConfig.DelayReason, in.Message)
+					delayReason = fmt.Sprintf("%s, %s", in.DelayConfig.DelayReason, in.Message)
 				}
 				delayTime := carbon.ParseByLayout(in.DelayConfig.NextTriggerTime, carbon.DateTimeLayout)
 				isTrue := true
@@ -126,7 +126,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 					delayTriggerTime = delayTime.ToDateTimeString()
 				}
 			}
-			delayReason = fmt.Sprintf("%s, delay time: %s", delayReason, delayTriggerTime)
+			delayReason = fmt.Sprintf("%s, 下次触发时间: %s", delayReason, delayTriggerTime)
 			reason = delayReason
 			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToDelayed(ctx, execItem.Id, in.ExecResult, in.Message, delayReason, delayTriggerTime,
 				[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
@@ -139,7 +139,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 				l.Debugf("No delay config provided for exec item %d", execItem.Id)
 			} else {
 				if len(in.DelayConfig.DelayReason) != 0 {
-					delayReason = fmt.Sprintf("reason: %s, message: %s", in.DelayConfig.DelayReason, in.Message)
+					delayReason = fmt.Sprintf("%s, %s", in.DelayConfig.DelayReason, in.Message)
 				}
 				delayTime := carbon.ParseByLayout(in.DelayConfig.NextTriggerTime, carbon.DateTimeLayout)
 				isTrue := true
@@ -156,7 +156,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 					delayTriggerTime = delayTime.ToDateTimeString()
 				}
 			}
-			delayReason = fmt.Sprintf("%s, delay time: %s", delayReason, delayTriggerTime)
+			delayReason = fmt.Sprintf("%s, 下次触发时间: %s", delayReason, delayTriggerTime)
 			reason = delayReason
 			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToOngoing(ctx, execItem.Id, in.Message, in.Reason, false, delayTriggerTime,
 				[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
