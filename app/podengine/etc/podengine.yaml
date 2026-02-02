@@ -1,0 +1,17 @@
+Name: podengine.rpc
+ListenOn: 0.0.0.0:21010
+Mode: dev
+Timeout: 120000
+Log:
+  Encoding: plain
+  #  Mode: file
+  Path: /opt/logs/podengine.rpc
+  Level: info
+NacosConfig:
+  IsRegister: false
+  Host: 127.0.0.1
+  Port: 8848
+  Username: nacos
+  PassWord: nacos
+  NamespaceId: public
+  ServiceName: pod-engine

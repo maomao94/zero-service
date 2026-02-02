@@ -1,0 +1,241 @@
+syntax = "proto3";
+
+package podengine;
+
+import "validate/validate.proto";
+//import "extproto.proto";
+
+option go_package = "./podengine";
+option java_multiple_files = true;
+option java_package = "com.github.podengine.grpc";
+option java_outer_classname = "PodEngineProto";
+
+
+// PodEngine 提供 Pod 生命周期管理能力
+// 抽象 Pod / Container 运行模型，可适配 Docker / Kubernetes 等运行时
+service PodEngine {
+  rpc StartPod(StartPodReq) returns (StartPodRes);
+  rpc StopPod(StopPodReq) returns (StopPodRes);
+  rpc RestartPod(RestartPodReq) returns (RestartPodRes);
+  rpc GetPod(GetPodReq) returns (GetPodRes);
+  rpc ListPods(ListPodsReq) returns (ListPodsRes);
+  rpc DeletePod(DeletePodReq) returns (DeletePodRes);
+}
+
+
+// =======================
+// Pod & Container Status
+// =======================
+
+// PodPhase 表示 Pod 的整体运行阶段（调度视角）
+enum PodPhase {
+  POD_PHASE_UNKNOWN = 0;
+  POD_PHASE_PENDING = 1; // 已创建但尚未进入运行态（拉取镜像 / 创建中）
+  POD_PHASE_RUNNING = 2; // 至少一个容器运行中
+  POD_PHASE_SUCCEEDED = 3; // 所有容器正常完成（退出码 0）
+  POD_PHASE_FAILED = 4; // 至少一个容器异常退出
+  POD_PHASE_STOPPED = 5; // 被用户或系统显式停止
+}
+
+
+// PodConditionType 表示 Pod 在生命周期中的关键条件
+// 主要用于表达“是否就绪 / 是否可服务”等状态
+enum PodConditionType {
+  POD_CONDITION_TYPE_UNKNOWN = 0;
+  POD_CONDITION_TYPE_POD_SCHEDULED = 1; // Pod 已被调度到运行节点
+  POD_CONDITION_TYPE_CONTAINERS_READY = 2; // 所有容器就绪
+  POD_CONDITION_TYPE_INITIALIZED = 3; // 初始化完成
+  POD_CONDITION_TYPE_READY = 4; // Pod 可对外提供服务
+}
+
+
+// PodCondition 描述某一条件的当前状态 todo
+message PodCondition {
+  PodConditionType type = 1;
+  bool status = 2;
+  string reason = 3;
+  string message = 4;
+  string lastTransitionTime = 5;
+}
+
+
+// ContainerState 表示单个容器的运行状态
+message ContainerState {
+  bool running = 1;        // 运行中
+  bool terminated = 2;     // 已终止
+  bool waiting = 3;        // 等待中（创建 / 重启等）
+  string reason = 4;       // 状态原因
+  string message = 5;      // 状态描述
+  string startedTime = 6;    // 启动时间
+  string finishedTime = 7;   // 结束时间
+  string exitCode = 8;     // 退出码
+}
+
+
+// =======================
+// Container Model
+// =======================
+
+// Container 表示实际运行中的容器实例
+message Container {
+  string name = 1;                 // 容器名称
+  string image = 2;                // 镜像名称
+  ContainerState state = 3;        // 当前状态
+
+  // 端口声明
+  // Docker: "8080:80", "80/tcp"
+  // K8s: 映射为 containerPort / service
+  repeated string ports = 4;
+
+  map<string, string> env = 5;     // 环境变量
+  repeated string args = 6;        // 启动参数
+
+  // 资源限制（CPU / Memory 等，由 runtime 解释）
+  map<string, string> resources = 7;
+
+  // 卷挂载信息
+  repeated string volumeMounts = 8;
+}
+
+
+// =======================
+// Spec (Desired State)
+// =======================
+
+// ContainerSpec 描述期望运行的容器规格
+message ContainerSpec {
+  string name = 1 [(validate.rules).string.min_len = 1];
+  string image = 2 [(validate.rules).string.min_len = 1];
+
+  repeated string args = 3;
+  map<string, string> env = 4;
+
+  repeated string ports = 5;
+  map<string, string> resources = 6;
+
+  // 卷挂载声明（runtime 自行解析）
+  repeated string volumeMounts = 7;
+}
+
+
+// PodSpec 描述 Pod 的期望状态
+message PodSpec {
+  string name = 1 [(validate.rules).string.min_len = 1];   // Pod 逻辑名称
+
+  // 期望运行的容器列表（支持多容器）
+  repeated ContainerSpec containers = 2 [(validate.rules).repeated = {min_items: 1}];
+
+  // 资源标签（元数据）
+  // Docker: container labels
+  // K8s: metadata.labels
+  map<string, string> labels = 3;
+
+  // 扩展注解信息
+  // Docker: labels（约定前缀）
+  // K8s: metadata.annotations
+  map<string, string> annotations = 4;
+
+  // 重启策略：no / onFailure / always
+  string restartPolicy = 5 [(validate.rules).string = {in: ["no", "onFailure", "always"]}];
+
+  // 优雅终止时间（秒）
+  int32 terminationGracePeriodSeconds = 6;
+
+  // 网络模式：bridge / host / none / 自定义网络名称
+  string networkMode = 7 [(validate.rules).string = {in: ["bridge", "host", "none"]}];
+
+  // 网络名称：指定要使用的自定义网络名称
+  string networkName = 8;
+
+  // 网络配置：额外的网络配置参数
+  map<string, string> networkConfig = 9;
+}
+
+
+// =======================
+// Pod Model (Observed State)
+// =======================
+
+// Pod 表示系统中一个已创建或运行中的 Pod 实例
+message Pod {
+  string id = 1;               // Pod ID（runtime 生成）
+  string name = 2;             // Pod 名称
+  PodPhase phase = 3;          // 当前阶段
+
+  repeated PodCondition conditions = 4;
+  repeated Container containers = 5;
+
+  map<string, string> labels = 6;
+  map<string, string> annotations = 7;
+
+  string creationTime = 8;  // 创建时间
+  string startTime = 9;          // 启动时间
+  string deletionTime = 10; // 删除时间
+}
+
+
+// =======================
+// RPC Messages
+// =======================
+
+message StartPodReq {
+  string name = 1 [(validate.rules).string.min_len = 1];
+  PodSpec spec = 2 [(validate.rules).message.required = true];
+}
+
+message StartPodRes {
+  Pod pod = 1;
+}
+
+message StopPodReq {
+  string id = 1 [(validate.rules).string.min_len = 1];
+  bool force = 2;
+}
+
+message StopPodRes {
+}
+
+message RestartPodReq {
+  string id = 1 [(validate.rules).string.min_len = 1];
+}
+
+message RestartPodRes {
+  Pod pod = 1;
+}
+
+message GetPodReq {
+  string id = 1 [(validate.rules).string.min_len = 1];
+}
+
+message GetPodRes {
+  Pod pod = 1;
+}
+
+message ListPodsReq {
+  int32 limit = 1 [(validate.rules).int32.lte = 1000];
+  int32 offset = 2 [(validate.rules).int32.lte = 1000];
+  string name = 3;
+  string id = 4;
+  map<string, string> labels = 5;
+}
+
+message ListPodsRes {
+  repeated ListPodItem items = 1;
+  int32 total = 2;
+}
+
+message ListPodItem {
+  string id = 1;
+  string name = 2;
+  PodPhase phase = 3;
+  string createTime = 4;
+  string startTime = 5;
+}
+
+message DeletePodReq {
+  string id = 1 [(validate.rules).string.min_len = 1];
+  bool force = 2;
+}
+
+message DeletePodRes {
+}

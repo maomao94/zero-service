@@ -12177,9 +12177,27 @@ func (m *CallbackPlanExecItemReq) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	// no validation rules for Message
+	if utf8.RuneCountInString(m.GetMessage()) > 255 {
+		err := CallbackPlanExecItemReqValidationError{
+			field:  "Message",
+			reason: "value length must be at most 255 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for Reason
+	if utf8.RuneCountInString(m.GetReason()) > 100 {
+		err := CallbackPlanExecItemReqValidationError{
+			field:  "Reason",
+			reason: "value length must be at most 100 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if all {
 		switch v := interface{}(m.GetDelayConfig()).(type) {
@@ -12322,7 +12340,16 @@ func (m *PbDelayConfig) validate(all bool) error {
 
 	// no validation rules for NextTriggerTime
 
-	// no validation rules for DelayReason
+	if utf8.RuneCountInString(m.GetDelayReason()) > 100 {
+		err := PbDelayConfigValidationError{
+			field:  "DelayReason",
+			reason: "value length must be at most 100 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if len(errors) > 0 {
 		return PbDelayConfigMultiError(errors)
