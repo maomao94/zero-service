@@ -33,7 +33,7 @@ func (l *DeletePodLogic) DeletePod(in *podengine.DeletePodReq) (*podengine.Delet
 
 	removeOptions := container.RemoveOptions{
 		RemoveVolumes: in.RemoveVolumes,
-		RemoveLinks:   true,
+		RemoveLinks:   false,
 		Force:         in.Force,
 	}
 
