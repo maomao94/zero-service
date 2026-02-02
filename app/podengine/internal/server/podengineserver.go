@@ -23,6 +23,11 @@ func NewPodEngineServer(svcCtx *svc.ServiceContext) *PodEngineServer {
 	}
 }
 
+func (s *PodEngineServer) CreatePod(ctx context.Context, in *podengine.CreatePodReq) (*podengine.CreatePodRes, error) {
+	l := logic.NewCreatePodLogic(ctx, s.svcCtx)
+	return l.CreatePod(in)
+}
+
 func (s *PodEngineServer) StartPod(ctx context.Context, in *podengine.StartPodReq) (*podengine.StartPodRes, error) {
 	l := logic.NewStartPodLogic(ctx, s.svcCtx)
 	return l.StartPod(in)

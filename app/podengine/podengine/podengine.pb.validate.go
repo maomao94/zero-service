@@ -902,6 +902,284 @@ var _ interface {
 	ErrorName() string
 } = PodValidationError{}
 
+// Validate checks the field values on CreatePodReq with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *CreatePodReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CreatePodReq with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in CreatePodReqMultiError, or
+// nil if none found.
+func (m *CreatePodReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CreatePodReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetName()) < 1 {
+		err := CreatePodReqValidationError{
+			field:  "Name",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetSpec() == nil {
+		err := CreatePodReqValidationError{
+			field:  "Spec",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetSpec()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CreatePodReqValidationError{
+					field:  "Spec",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CreatePodReqValidationError{
+					field:  "Spec",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSpec()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CreatePodReqValidationError{
+				field:  "Spec",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return CreatePodReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// CreatePodReqMultiError is an error wrapping multiple validation errors
+// returned by CreatePodReq.ValidateAll() if the designated constraints aren't met.
+type CreatePodReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CreatePodReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CreatePodReqMultiError) AllErrors() []error { return m }
+
+// CreatePodReqValidationError is the validation error returned by
+// CreatePodReq.Validate if the designated constraints aren't met.
+type CreatePodReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CreatePodReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CreatePodReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CreatePodReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CreatePodReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CreatePodReqValidationError) ErrorName() string { return "CreatePodReqValidationError" }
+
+// Error satisfies the builtin error interface
+func (e CreatePodReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCreatePodReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CreatePodReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CreatePodReqValidationError{}
+
+// Validate checks the field values on CreatePodRes with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *CreatePodRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CreatePodRes with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in CreatePodResMultiError, or
+// nil if none found.
+func (m *CreatePodRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CreatePodRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetPod()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CreatePodResValidationError{
+					field:  "Pod",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CreatePodResValidationError{
+					field:  "Pod",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPod()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CreatePodResValidationError{
+				field:  "Pod",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return CreatePodResMultiError(errors)
+	}
+
+	return nil
+}
+
+// CreatePodResMultiError is an error wrapping multiple validation errors
+// returned by CreatePodRes.ValidateAll() if the designated constraints aren't met.
+type CreatePodResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CreatePodResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CreatePodResMultiError) AllErrors() []error { return m }
+
+// CreatePodResValidationError is the validation error returned by
+// CreatePodRes.Validate if the designated constraints aren't met.
+type CreatePodResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CreatePodResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CreatePodResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CreatePodResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CreatePodResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CreatePodResValidationError) ErrorName() string { return "CreatePodResValidationError" }
+
+// Error satisfies the builtin error interface
+func (e CreatePodResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCreatePodRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CreatePodResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CreatePodResValidationError{}
+
 // Validate checks the field values on StartPodReq with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -924,55 +1202,15 @@ func (m *StartPodReq) validate(all bool) error {
 
 	var errors []error
 
-	if utf8.RuneCountInString(m.GetName()) < 1 {
+	if utf8.RuneCountInString(m.GetId()) < 1 {
 		err := StartPodReqValidationError{
-			field:  "Name",
+			field:  "Id",
 			reason: "value length must be at least 1 runes",
 		}
 		if !all {
 			return err
 		}
 		errors = append(errors, err)
-	}
-
-	if m.GetSpec() == nil {
-		err := StartPodReqValidationError{
-			field:  "Spec",
-			reason: "value is required",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if all {
-		switch v := interface{}(m.GetSpec()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, StartPodReqValidationError{
-					field:  "Spec",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, StartPodReqValidationError{
-					field:  "Spec",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetSpec()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return StartPodReqValidationError{
-				field:  "Spec",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
 	}
 
 	if len(errors) > 0 {
@@ -2160,8 +2398,6 @@ func (m *ListPodItem) validate(all bool) error {
 	// no validation rules for Phase
 
 	// no validation rules for CreateTime
-
-	// no validation rules for StartTime
 
 	if len(errors) > 0 {
 		return ListPodItemMultiError(errors)

@@ -19,6 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	PodEngine_CreatePod_FullMethodName  = "/podengine.PodEngine/CreatePod"
 	PodEngine_StartPod_FullMethodName   = "/podengine.PodEngine/StartPod"
 	PodEngine_StopPod_FullMethodName    = "/podengine.PodEngine/StopPod"
 	PodEngine_RestartPod_FullMethodName = "/podengine.PodEngine/RestartPod"
@@ -34,6 +35,7 @@ const (
 // PodEngine 提供 Pod 生命周期管理能力
 // 抽象 Pod / Container 运行模型，可适配 Docker / Kubernetes 等运行时
 type PodEngineClient interface {
+	CreatePod(ctx context.Context, in *CreatePodReq, opts ...grpc.CallOption) (*CreatePodRes, error)
 	StartPod(ctx context.Context, in *StartPodReq, opts ...grpc.CallOption) (*StartPodRes, error)
 	StopPod(ctx context.Context, in *StopPodReq, opts ...grpc.CallOption) (*StopPodRes, error)
 	RestartPod(ctx context.Context, in *RestartPodReq, opts ...grpc.CallOption) (*RestartPodRes, error)
@@ -48,6 +50,16 @@ type podEngineClient struct {
 
 func NewPodEngineClient(cc grpc.ClientConnInterface) PodEngineClient {
 	return &podEngineClient{cc}
+}
+
+func (c *podEngineClient) CreatePod(ctx context.Context, in *CreatePodReq, opts ...grpc.CallOption) (*CreatePodRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreatePodRes)
+	err := c.cc.Invoke(ctx, PodEngine_CreatePod_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *podEngineClient) StartPod(ctx context.Context, in *StartPodReq, opts ...grpc.CallOption) (*StartPodRes, error) {
@@ -117,6 +129,7 @@ func (c *podEngineClient) DeletePod(ctx context.Context, in *DeletePodReq, opts 
 // PodEngine 提供 Pod 生命周期管理能力
 // 抽象 Pod / Container 运行模型，可适配 Docker / Kubernetes 等运行时
 type PodEngineServer interface {
+	CreatePod(context.Context, *CreatePodReq) (*CreatePodRes, error)
 	StartPod(context.Context, *StartPodReq) (*StartPodRes, error)
 	StopPod(context.Context, *StopPodReq) (*StopPodRes, error)
 	RestartPod(context.Context, *RestartPodReq) (*RestartPodRes, error)
@@ -133,6 +146,9 @@ type PodEngineServer interface {
 // pointer dereference when methods are called.
 type UnimplementedPodEngineServer struct{}
 
+func (UnimplementedPodEngineServer) CreatePod(context.Context, *CreatePodReq) (*CreatePodRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreatePod not implemented")
+}
 func (UnimplementedPodEngineServer) StartPod(context.Context, *StartPodReq) (*StartPodRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StartPod not implemented")
 }
@@ -170,6 +186,24 @@ func RegisterPodEngineServer(s grpc.ServiceRegistrar, srv PodEngineServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&PodEngine_ServiceDesc, srv)
+}
+
+func _PodEngine_CreatePod_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreatePodReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PodEngineServer).CreatePod(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PodEngine_CreatePod_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PodEngineServer).CreatePod(ctx, req.(*CreatePodReq))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _PodEngine_StartPod_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -287,6 +321,10 @@ var PodEngine_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "podengine.PodEngine",
 	HandlerType: (*PodEngineServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreatePod",
+			Handler:    _PodEngine_CreatePod_Handler,
+		},
 		{
 			MethodName: "StartPod",
 			Handler:    _PodEngine_StartPod_Handler,

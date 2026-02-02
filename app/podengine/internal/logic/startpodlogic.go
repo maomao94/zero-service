@@ -3,16 +3,11 @@ package logic
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	"zero-service/app/podengine/internal/svc"
 	"zero-service/app/podengine/podengine"
 	"zero-service/common/dockerx"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/mount"
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/go-connections/nat"
 	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -36,83 +31,30 @@ func (l *StartPodLogic) StartPod(in *podengine.StartPodReq) (*podengine.StartPod
 	if err != nil {
 		return nil, err
 	}
-	if len(in.Spec.Containers) == 0 {
-		return nil, fmt.Errorf("pod spec must have at least one container")
-	}
 
-	containerSpec := in.Spec.Containers[0]
-
-	config := &container.Config{
-		Image:        containerSpec.Image,
-		Env:          dockerx.BuildEnvList(containerSpec.Env),
-		Cmd:          containerSpec.Args,
-		Labels:       in.Spec.Labels,
-		AttachStdin:  false,
-		AttachStdout: false,
-		AttachStderr: false,
-		Tty:          false,
-		OpenStdin:    false,
-		StdinOnce:    false,
-	}
-
-	networkMode := in.Spec.NetworkMode
-	if networkMode == "" {
-		networkMode = "bridge"
-	}
-
-	var portBindings nat.PortMap
-	if networkMode != "host" && networkMode != "none" {
-		portBindings = parsePorts(containerSpec.Ports)
-	}
-
-	// Parse resource limits
-	resources := parseResources(containerSpec.Resources)
-
-	// Parse volume mounts
-	mounts := parseVolumeMounts(containerSpec.VolumeMounts)
-
-	hostConfig := &container.HostConfig{
-		PortBindings:  portBindings,
-		RestartPolicy: parseRestartPolicy(in.Spec.RestartPolicy),
-		AutoRemove:    false,
-		NetworkMode:   container.NetworkMode(networkMode),
-		Privileged:    false,
-		Resources:     resources,
-		Mounts:        mounts,
-	}
-
-	networkConfig := &network.NetworkingConfig{}
-
-	if in.Spec.NetworkName != "" {
-		hostConfig.NetworkMode = container.NetworkMode(in.Spec.NetworkName)
-	}
-
-	containerName := fmt.Sprintf("%s-%s", in.Name, strings.ToLower(containerSpec.Name))
-	resp, err := l.svcCtx.DockerClient.ContainerCreate(l.ctx, config, hostConfig, networkConfig, nil, containerName)
+	// Start the container
+	err = l.svcCtx.DockerClient.ContainerStart(l.ctx, in.Id, container.StartOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create container: %w", err)
-	}
-
-	err = l.svcCtx.DockerClient.ContainerStart(l.ctx, resp.ID, container.StartOptions{})
-	if err != nil {
-		l.Errorf("Failed to start container %s: %v", resp.ID, err)
-		_ = l.svcCtx.DockerClient.ContainerRemove(l.ctx, resp.ID, container.RemoveOptions{Force: true})
+		l.Errorf("Failed to start container %s: %v", in.Id, err)
 		return nil, fmt.Errorf("failed to start container: %w", err)
 	}
 
-	containerInfo, err := l.svcCtx.DockerClient.ContainerInspect(l.ctx, resp.ID)
+	// Inspect the container to get updated information
+	containerInfo, err := l.svcCtx.DockerClient.ContainerInspect(l.ctx, in.Id)
 	if err != nil {
+		l.Errorf("Failed to inspect container %s: %v", in.Id, err)
 		return nil, fmt.Errorf("failed to inspect container: %w", err)
 	}
 
+	// Build the pod response
 	pod := &podengine.Pod{
 		Id:    containerInfo.ID,
-		Name:  in.Name,
+		Name:  containerInfo.Name[1:], // Remove leading slash
 		Phase: podengine.PodPhase_POD_PHASE_RUNNING,
 		Containers: []*podengine.Container{
 			{
-				Name:  containerSpec.Name,
-				Image: containerSpec.Image,
+				Name:  containerInfo.Name[1:],
+				Image: containerInfo.Config.Image,
 				State: &podengine.ContainerState{
 					Running:      true,
 					Terminated:   false,
@@ -124,14 +66,13 @@ func (l *StartPodLogic) StartPod(in *podengine.StartPodReq) (*podengine.StartPod
 					ExitCode:     "0",
 				},
 				Ports:        dockerx.ExtractContainerPorts(containerInfo.NetworkSettings),
-				Env:          containerSpec.Env,
-				Args:         containerSpec.Args,
-				Resources:    containerSpec.Resources,
-				VolumeMounts: containerSpec.VolumeMounts,
+				Env:          dockerx.ParseContainerEnv(containerInfo.Config.Env),
+				Args:         containerInfo.Config.Cmd,
+				Resources:    dockerx.ParseContainerResources(containerInfo.HostConfig.Resources),
+				VolumeMounts: dockerx.ExtractContainerVolumeMounts(containerInfo.Mounts),
 			},
 		},
-		Labels:       in.Spec.Labels,
-		Annotations:  in.Spec.Annotations,
+		Labels:       containerInfo.Config.Labels,
 		CreationTime: carbon.Parse(containerInfo.Created).ToDateTimeString(),
 		StartTime:    carbon.Parse(containerInfo.State.StartedAt).ToDateTimeString(),
 	}
@@ -139,139 +80,4 @@ func (l *StartPodLogic) StartPod(in *podengine.StartPodReq) (*podengine.StartPod
 	return &podengine.StartPodRes{
 		Pod: pod,
 	}, nil
-}
-
-func parsePorts(ports []string) nat.PortMap {
-	portMap := make(nat.PortMap)
-	for _, port := range ports {
-		parts := strings.Split(port, ":")
-		if len(parts) == 2 {
-			hostPort := parts[0]
-			containerPort := parts[1]
-			portMap[nat.Port(containerPort+"/tcp")] = []nat.PortBinding{
-				{
-					HostIP:   "0.0.0.0",
-					HostPort: hostPort,
-				},
-			}
-		}
-	}
-	return portMap
-}
-
-func parseRestartPolicy(policy string) container.RestartPolicy {
-	switch strings.ToLower(policy) {
-	case "always":
-		return container.RestartPolicy{
-			Name: "always",
-		}
-	case "onfailure":
-		return container.RestartPolicy{
-			Name: "on-failure",
-		}
-	default:
-		return container.RestartPolicy{
-			Name: "no",
-		}
-	}
-}
-
-func parseResources(resourceMap map[string]string) container.Resources {
-	resources := container.Resources{}
-
-	if cpuLimit, ok := resourceMap["cpu"]; ok {
-		cpuQuota := parseCpuLimit(cpuLimit)
-		if cpuQuota > 0 {
-			resources.CPUQuota = cpuQuota
-			resources.CPUPeriod = 100000 // 100ms period
-		}
-	}
-
-	if memoryLimit, ok := resourceMap["memory"]; ok {
-		memoryBytes := parseMemoryLimit(memoryLimit)
-		if memoryBytes > 0 {
-			resources.Memory = memoryBytes
-		}
-	}
-
-	if cpuRequest, ok := resourceMap["cpuRequest"]; ok {
-		cpuShares := parseCpuShares(cpuRequest)
-		if cpuShares > 0 {
-			resources.CPUShares = cpuShares
-		}
-	}
-
-	if memoryRequest, ok := resourceMap["memoryRequest"]; ok {
-		memoryBytes := parseMemoryLimit(memoryRequest)
-		if memoryBytes > 0 {
-			resources.MemoryReservation = memoryBytes
-		}
-	}
-
-	return resources
-}
-
-func parseCpuLimit(cpuLimit string) int64 {
-	var cpu float64
-	_, err := fmt.Sscanf(cpuLimit, "%f", &cpu)
-	if err != nil {
-		return 0
-	}
-	return int64(cpu * 100000)
-}
-
-func parseMemoryLimit(memoryLimit string) int64 {
-	var value int64
-	var unit string
-	_, err := fmt.Sscanf(memoryLimit, "%d%s", &value, &unit)
-	if err != nil {
-		_, err = fmt.Sscanf(memoryLimit, "%d", &value)
-		if err != nil {
-			return 0
-		}
-		return value
-	}
-	switch strings.ToLower(unit) {
-	case "k", "kb":
-		return value * 1024
-	case "m", "mb":
-		return value * 1024 * 1024
-	case "g", "gb":
-		return value * 1024 * 1024 * 1024
-	case "t", "tb":
-		return value * 1024 * 1024 * 1024 * 1024
-	default:
-		return value
-	}
-}
-
-func parseCpuShares(cpuRequest string) int64 {
-	var cpu float64
-	_, err := fmt.Sscanf(cpuRequest, "%f", &cpu)
-	if err != nil {
-		return 0
-	}
-	return int64(cpu * 1024)
-}
-
-func parseVolumeMounts(volumeMounts []string) []mount.Mount {
-	var mounts []mount.Mount
-	for _, mountStr := range volumeMounts {
-		parts := strings.Split(mountStr, ":")
-		if len(parts) >= 2 {
-			hostPath := parts[0]
-			containerPath := parts[1]
-			readOnly := false
-			if len(parts) == 3 && parts[2] == "ro" {
-				readOnly = true
-			}
-			mounts = append(mounts, mount.Mount{
-				Type:     mount.TypeBind,
-				Source:   hostPath,
-				Target:   containerPath,
-				ReadOnly: readOnly,
-			})
-		}
-	}
-	return mounts
 }

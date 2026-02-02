@@ -54,11 +54,17 @@ func (l *GetPodLogic) GetPod(in *podengine.GetPodReq) (*podengine.GetPodRes, err
 				VolumeMounts: dockerx.ExtractContainerVolumeMounts(container.Mounts),
 			},
 		},
-		CreationTime: carbon.Parse(container.Created).ToDateTimeString(),
+	}
+	createTime := carbon.Parse(container.Created)
+	if createTime.IsValid() {
+		pod.CreationTime = createTime.ToDateTimeString()
 	}
 
 	if container.State.Running {
-		pod.StartTime = carbon.Parse(container.State.StartedAt).ToDateTimeString()
+		startTime := carbon.Parse(container.State.StartedAt)
+		if startTime.IsValid() {
+			pod.StartTime = startTime.ToDateTimeString()
+		}
 	}
 
 	return &podengine.GetPodRes{

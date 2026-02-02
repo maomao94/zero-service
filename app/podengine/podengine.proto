@@ -14,6 +14,7 @@ option java_outer_classname = "PodEngineProto";
 // PodEngine 提供 Pod 生命周期管理能力
 // 抽象 Pod / Container 运行模型，可适配 Docker / Kubernetes 等运行时
 service PodEngine {
+  rpc CreatePod(CreatePodReq) returns (CreatePodRes);
   rpc StartPod(StartPodReq) returns (StartPodRes);
   rpc StopPod(StopPodReq) returns (StopPodRes);
   rpc RestartPod(RestartPodReq) returns (RestartPodRes);
@@ -178,9 +179,17 @@ message Pod {
 // RPC Messages
 // =======================
 
-message StartPodReq {
+message CreatePodReq {
   string name = 1 [(validate.rules).string.min_len = 1];
   PodSpec spec = 2 [(validate.rules).message.required = true];
+}
+
+message CreatePodRes {
+  Pod pod = 1;
+}
+
+message StartPodReq {
+  string id = 1 [(validate.rules).string.min_len = 1];
 }
 
 message StartPodRes {
@@ -229,7 +238,6 @@ message ListPodItem {
   string name = 2;
   PodPhase phase = 3;
   string createTime = 4;
-  string startTime = 5;
 }
 
 message DeletePodReq {

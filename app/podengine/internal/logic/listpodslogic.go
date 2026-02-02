@@ -80,9 +80,11 @@ func (l *ListPodsLogic) ListPods(in *podengine.ListPodsReq) (*podengine.ListPods
 			Phase:      phase,
 			CreateTime: carbon.Parse(time.Unix(container.Created, 0).Format(time.RFC3339)).ToDateTimeString(),
 		}
-
-		if container.State == "running" {
-			item.StartTime = carbon.Parse(time.Unix(container.Created, 0).Format(time.RFC3339)).ToDateTimeString()
+		if container.Created > 0 {
+			creatTime := carbon.Parse(time.Unix(container.Created, 0).Format(time.RFC3339))
+			if creatTime.IsValid() {
+				item.CreateTime = creatTime.ToDateTimeString()
+			}
 		}
 		items = append(items, item)
 	}
