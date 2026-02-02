@@ -32,7 +32,9 @@ func (l *DeletePodLogic) DeletePod(in *podengine.DeletePodReq) (*podengine.Delet
 	}
 
 	removeOptions := container.RemoveOptions{
-		Force: in.Force,
+		RemoveVolumes: in.RemoveVolumes,
+		RemoveLinks:   true,
+		Force:         in.Force,
 	}
 
 	err = l.svcCtx.DockerClient.ContainerRemove(l.ctx, in.Id, removeOptions)

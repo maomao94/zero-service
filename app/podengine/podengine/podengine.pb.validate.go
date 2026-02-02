@@ -2511,6 +2511,8 @@ func (m *DeletePodReq) validate(all bool) error {
 
 	// no validation rules for Force
 
+	// no validation rules for RemoveVolumes
+
 	if len(errors) > 0 {
 		return DeletePodReqMultiError(errors)
 	}

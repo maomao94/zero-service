@@ -243,6 +243,7 @@ message ListPodItem {
 message DeletePodReq {
   string id = 1 [(validate.rules).string.min_len = 1];
   bool force = 2;
+  bool removeVolumes = 3;
 }
 
 message DeletePodRes {

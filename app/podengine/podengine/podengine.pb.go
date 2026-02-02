@@ -1402,6 +1402,7 @@ type DeletePodReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Force         bool                   `protobuf:"varint,2,opt,name=force,proto3" json:"force,omitempty"`
+	RemoveVolumes bool                   `protobuf:"varint,3,opt,name=removeVolumes,proto3" json:"removeVolumes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1446,6 +1447,13 @@ func (x *DeletePodReq) GetId() string {
 func (x *DeletePodReq) GetForce() bool {
 	if x != nil {
 		return x.Force
+	}
+	return false
+}
+
+func (x *DeletePodReq) GetRemoveVolumes() bool {
+	if x != nil {
+		return x.RemoveVolumes
 	}
 	return false
 }
@@ -1621,10 +1629,11 @@ const file_podengine_proto_rawDesc = "" +
 	"\x05phase\x18\x03 \x01(\x0e2\x13.podengine.PodPhaseR\x05phase\x12\x1e\n" +
 	"\n" +
 	"createTime\x18\x04 \x01(\tR\n" +
-	"createTime\"=\n" +
+	"createTime\"c\n" +
 	"\fDeletePodReq\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12\x14\n" +
-	"\x05force\x18\x02 \x01(\bR\x05force\"\x0e\n" +
+	"\x05force\x18\x02 \x01(\bR\x05force\x12$\n" +
+	"\rremoveVolumes\x18\x03 \x01(\bR\rremoveVolumes\"\x0e\n" +
 	"\fDeletePodRes*\x95\x01\n" +
 	"\bPodPhase\x12\x15\n" +
 	"\x11POD_PHASE_UNKNOWN\x10\x00\x12\x15\n" +
