@@ -32,13 +32,17 @@ func (l *RestartPodLogic) RestartPod(in *podengine.RestartPodReq) (*podengine.Re
 	if err != nil {
 		return nil, err
 	}
+	dockerClient, ok := l.svcCtx.GetDockerClient(in.Node)
+	if !ok {
+		return nil, fmt.Errorf("node %s not found", in.Node)
+	}
 
-	err = l.svcCtx.DockerClient.ContainerRestart(l.ctx, in.Id, container.StopOptions{})
+	err = dockerClient.ContainerRestart(l.ctx, in.Id, container.StopOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to restart container: %w", err)
 	}
 
-	containerInfo, err := l.svcCtx.DockerClient.ContainerInspect(l.ctx, in.Id)
+	containerInfo, err := dockerClient.ContainerInspect(l.ctx, in.Id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to inspect container: %w", err)
 	}

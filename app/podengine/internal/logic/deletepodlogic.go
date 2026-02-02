@@ -30,14 +30,17 @@ func (l *DeletePodLogic) DeletePod(in *podengine.DeletePodReq) (*podengine.Delet
 	if err != nil {
 		return nil, err
 	}
-
+	dockerClient, ok := l.svcCtx.GetDockerClient(in.Node)
+	if !ok {
+		return nil, fmt.Errorf("node %s not found", in.Node)
+	}
 	removeOptions := container.RemoveOptions{
 		RemoveVolumes: in.RemoveVolumes,
 		RemoveLinks:   false,
 		Force:         in.Force,
 	}
 
-	err = l.svcCtx.DockerClient.ContainerRemove(l.ctx, in.Id, removeOptions)
+	err = dockerClient.ContainerRemove(l.ctx, in.Id, removeOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to delete container: %w", err)
 	}

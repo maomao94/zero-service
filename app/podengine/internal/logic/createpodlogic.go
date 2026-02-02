@@ -39,6 +39,10 @@ func (l *CreatePodLogic) CreatePod(in *podengine.CreatePodReq) (*podengine.Creat
 	if len(in.Spec.Containers) == 0 {
 		return nil, fmt.Errorf("pod spec must have at least one container")
 	}
+	dockerClient, ok := l.svcCtx.GetDockerClient(in.Node)
+	if !ok {
+		return nil, fmt.Errorf("node %s not found", in.Node)
+	}
 
 	containerSpec := in.Spec.Containers[0]
 
@@ -88,14 +92,14 @@ func (l *CreatePodLogic) CreatePod(in *podengine.CreatePodReq) (*podengine.Creat
 	}
 
 	containerName := fmt.Sprintf("%s-%s", in.Name, strings.ToLower(containerSpec.Name))
-	resp, err := l.svcCtx.DockerClient.ContainerCreate(l.ctx, config, hostConfig, networkConfig, nil, containerName)
+	resp, err := dockerClient.ContainerCreate(l.ctx, config, hostConfig, networkConfig, nil, containerName)
 	if err != nil {
 		l.Errorf("Failed to create container: %v", err)
 		return nil, fmt.Errorf("failed to create container: %w", err)
 	}
 
 	// Inspect the container to get information
-	containerInfo, err := l.svcCtx.DockerClient.ContainerInspect(l.ctx, resp.ID)
+	containerInfo, err := dockerClient.ContainerInspect(l.ctx, resp.ID)
 	if err != nil {
 		l.Errorf("Failed to inspect container %s: %v", resp.ID, err)
 		return nil, fmt.Errorf("failed to inspect container: %w", err)

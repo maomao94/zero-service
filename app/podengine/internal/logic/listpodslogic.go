@@ -34,6 +34,10 @@ func (l *ListPodsLogic) ListPods(in *podengine.ListPodsReq) (*podengine.ListPods
 	if err != nil {
 		return nil, err
 	}
+	dockerClient, ok := l.svcCtx.GetDockerClient(in.Node)
+	if !ok {
+		return nil, fmt.Errorf("node %s not found", in.Node)
+	}
 	filter := filters.NewArgs()
 
 	// Add id filter if provided (exact match)
@@ -51,7 +55,7 @@ func (l *ListPodsLogic) ListPods(in *podengine.ListPodsReq) (*podengine.ListPods
 		filter.Add("label", fmt.Sprintf("%s=%s", key, value))
 	}
 
-	containers, err := l.svcCtx.DockerClient.ContainerList(l.ctx, container.ListOptions{
+	containers, err := dockerClient.ContainerList(l.ctx, container.ListOptions{
 		All:     true,
 		Filters: filter,
 	})

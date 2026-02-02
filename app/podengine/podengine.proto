@@ -180,6 +180,7 @@ message Pod {
 // =======================
 
 message CreatePodReq {
+  string node = 50; // docker 运行节点 默认-local
   string name = 1 [(validate.rules).string.min_len = 1];
   PodSpec spec = 2 [(validate.rules).message.required = true];
 }
@@ -189,6 +190,7 @@ message CreatePodRes {
 }
 
 message StartPodReq {
+  string node = 50; // docker 运行节点 默认-local
   string id = 1 [(validate.rules).string.min_len = 1];
 }
 
@@ -197,6 +199,7 @@ message StartPodRes {
 }
 
 message StopPodReq {
+  string node = 50; // docker 运行节点 默认-local
   string id = 1 [(validate.rules).string.min_len = 1];
   bool force = 2;
 }
@@ -205,6 +208,7 @@ message StopPodRes {
 }
 
 message RestartPodReq {
+  string node = 50; // docker 运行节点 默认-local
   string id = 1 [(validate.rules).string.min_len = 1];
 }
 
@@ -213,6 +217,7 @@ message RestartPodRes {
 }
 
 message GetPodReq {
+  string node = 50; // docker 运行节点 默认-local
   string id = 1 [(validate.rules).string.min_len = 1];
 }
 
@@ -221,6 +226,7 @@ message GetPodRes {
 }
 
 message ListPodsReq {
+  string node = 50; // docker 运行节点 默认-local
   int32 limit = 1 [(validate.rules).int32.lte = 1000];
   int32 offset = 2 [(validate.rules).int32.lte = 1000];
   string name = 3;
@@ -241,6 +247,7 @@ message ListPodItem {
 }
 
 message DeletePodReq {
+  string node = 50; // docker 运行节点 默认-local
   string id = 1 [(validate.rules).string.min_len = 1];
   bool force = 2;
   bool removeVolumes = 3;

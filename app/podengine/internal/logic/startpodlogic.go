@@ -31,16 +31,20 @@ func (l *StartPodLogic) StartPod(in *podengine.StartPodReq) (*podengine.StartPod
 	if err != nil {
 		return nil, err
 	}
+	dockerClient, ok := l.svcCtx.GetDockerClient(in.Node)
+	if !ok {
+		return nil, fmt.Errorf("node %s not found", in.Node)
+	}
 
 	// Start the container
-	err = l.svcCtx.DockerClient.ContainerStart(l.ctx, in.Id, container.StartOptions{})
+	err = dockerClient.ContainerStart(l.ctx, in.Id, container.StartOptions{})
 	if err != nil {
 		l.Errorf("Failed to start container %s: %v", in.Id, err)
 		return nil, fmt.Errorf("failed to start container: %w", err)
 	}
 
 	// Inspect the container to get updated information
-	containerInfo, err := l.svcCtx.DockerClient.ContainerInspect(l.ctx, in.Id)
+	containerInfo, err := dockerClient.ContainerInspect(l.ctx, in.Id)
 	if err != nil {
 		l.Errorf("Failed to inspect container %s: %v", in.Id, err)
 		return nil, fmt.Errorf("failed to inspect container: %w", err)

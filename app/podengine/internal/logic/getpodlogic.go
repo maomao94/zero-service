@@ -33,7 +33,11 @@ func (l *GetPodLogic) GetPod(in *podengine.GetPodReq) (*podengine.GetPodRes, err
 	if err != nil {
 		return nil, err
 	}
-	container, err := l.svcCtx.DockerClient.ContainerInspect(l.ctx, in.Id)
+	dockerClient, ok := l.svcCtx.GetDockerClient(in.Node)
+	if !ok {
+		return nil, fmt.Errorf("node %s not found", in.Node)
+	}
+	container, err := dockerClient.ContainerInspect(l.ctx, in.Id)
 	if err != nil {
 		return nil, fmt.Errorf("container not found: %s", in.Id)
 	}

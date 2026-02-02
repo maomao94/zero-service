@@ -15,3 +15,5 @@ NacosConfig:
   PassWord: nacos
   NamespaceId: public
   ServiceName: pod-engine
+DockerConfig:
+  config_1: tcp://127.0.0.1:2375

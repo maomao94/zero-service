@@ -30,13 +30,17 @@ func (l *StopPodLogic) StopPod(in *podengine.StopPodReq) (*podengine.StopPodRes,
 	if err != nil {
 		return nil, err
 	}
+	dockerClient, ok := l.svcCtx.GetDockerClient(in.Node)
+	if !ok {
+		return nil, fmt.Errorf("node %s not found", in.Node)
+	}
 
-	err = l.svcCtx.DockerClient.ContainerStop(l.ctx, in.Id, container.StopOptions{})
+	err = dockerClient.ContainerStop(l.ctx, in.Id, container.StopOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to stop container: %w", err)
 	}
 
-	_, err = l.svcCtx.DockerClient.ContainerInspect(l.ctx, in.Id)
+	_, err = dockerClient.ContainerInspect(l.ctx, in.Id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to inspect container: %w", err)
 	}

@@ -13,4 +13,5 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
+	DockerConfig map[string]string `json:",optional"`
 }
