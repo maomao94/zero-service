@@ -5,9 +5,11 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
+	"go.opentelemetry.io/otel"
 )
 
 func MustNewClient(ops ...client.Opt) *client.Client {
+	ops = append(ops, client.WithTraceProvider(otel.GetTracerProvider()))
 	cli, err := client.NewClientWithOpts(ops...)
 	if err != nil {
 		panic(err)
