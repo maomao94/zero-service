@@ -34,30 +34,20 @@ func (l *GetPodStatsLogic) GetPodStats(in *podengine.GetPodStatsReq) (*podengine
 	if err != nil {
 		return nil, err
 	}
-
-	// Get Docker client based on node
-	node := in.Node
-	if node == "" {
-		node = "local"
-	}
-
-	dockerClient, ok := l.svcCtx.GetDockerClient(node)
+	dockerClient, ok := l.svcCtx.GetDockerClient(in.Node)
 	if !ok {
-		// Fallback to default client (using local)
-		dockerClient, _ = l.svcCtx.GetDockerClient("local")
+		return nil, fmt.Errorf("node %s not found", in.Node)
 	}
 
 	// Inspect container to get basic info
 	containerInfo, err := dockerClient.ContainerInspect(l.ctx, in.Id)
 	if err != nil {
-		l.Errorf("Failed to inspect container: %v", err)
 		return nil, err
 	}
 
 	// Get container stats
 	stats, err := dockerClient.ContainerStats(l.ctx, in.Id, false) // false = non-stream
 	if err != nil {
-		l.Errorf("Failed to get container stats: %v", err)
 		return nil, err
 	}
 	defer stats.Body.Close()
@@ -65,7 +55,6 @@ func (l *GetPodStatsLogic) GetPodStats(in *podengine.GetPodStatsReq) (*podengine
 	var v container.StatsResponse
 	err = json.NewDecoder(stats.Body).Decode(&v)
 	if err != nil {
-		l.Errorf("Failed to decode container stats: %v", err)
 		return nil, err
 	}
 
