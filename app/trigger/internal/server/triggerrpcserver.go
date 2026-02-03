@@ -261,3 +261,8 @@ func (s *TriggerRpcServer) CallbackPlanExecItem(ctx context.Context, in *trigger
 	l := logic.NewCallbackPlanExecItemLogic(ctx, s.svcCtx)
 	return l.CallbackPlanExecItem(in)
 }
+
+func (s *TriggerRpcServer) NextId(ctx context.Context, in *trigger.NextIdReq) (*trigger.NextIdRes, error) {
+	l := logic.NewNextIdLogic(ctx, s.svcCtx)
+	return l.NextId(in)
+}

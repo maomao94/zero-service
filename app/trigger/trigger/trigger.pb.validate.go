@@ -12530,3 +12530,216 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CallbackPlanExecItemResValidationError{}
+
+// Validate checks the field values on NextIdReq with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *NextIdReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on NextIdReq with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in NextIdReqMultiError, or nil
+// if none found.
+func (m *NextIdReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *NextIdReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetOutDescType()) > 64 {
+		err := NextIdReqValidationError{
+			field:  "OutDescType",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Separate
+
+	if len(errors) > 0 {
+		return NextIdReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// NextIdReqMultiError is an error wrapping multiple validation errors returned
+// by NextIdReq.ValidateAll() if the designated constraints aren't met.
+type NextIdReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m NextIdReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m NextIdReqMultiError) AllErrors() []error { return m }
+
+// NextIdReqValidationError is the validation error returned by
+// NextIdReq.Validate if the designated constraints aren't met.
+type NextIdReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e NextIdReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e NextIdReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e NextIdReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e NextIdReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e NextIdReqValidationError) ErrorName() string { return "NextIdReqValidationError" }
+
+// Error satisfies the builtin error interface
+func (e NextIdReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sNextIdReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = NextIdReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = NextIdReqValidationError{}
+
+// Validate checks the field values on NextIdRes with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *NextIdRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on NextIdRes with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in NextIdResMultiError, or nil
+// if none found.
+func (m *NextIdRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *NextIdRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for NextId
+
+	if len(errors) > 0 {
+		return NextIdResMultiError(errors)
+	}
+
+	return nil
+}
+
+// NextIdResMultiError is an error wrapping multiple validation errors returned
+// by NextIdRes.ValidateAll() if the designated constraints aren't met.
+type NextIdResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m NextIdResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m NextIdResMultiError) AllErrors() []error { return m }
+
+// NextIdResValidationError is the validation error returned by
+// NextIdRes.Validate if the designated constraints aren't met.
+type NextIdResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e NextIdResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e NextIdResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e NextIdResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e NextIdResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e NextIdResValidationError) ErrorName() string { return "NextIdResValidationError" }
+
+// Error satisfies the builtin error interface
+func (e NextIdResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sNextIdRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = NextIdResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = NextIdResValidationError{}

@@ -59,6 +59,7 @@ const (
 	TriggerRpc_GetPlanExecLog_FullMethodName          = "/trigger.TriggerRpc/GetPlanExecLog"
 	TriggerRpc_ListPlanExecLogs_FullMethodName        = "/trigger.TriggerRpc/ListPlanExecLogs"
 	TriggerRpc_CallbackPlanExecItem_FullMethodName    = "/trigger.TriggerRpc/CallbackPlanExecItem"
+	TriggerRpc_NextId_FullMethodName                  = "/trigger.TriggerRpc/NextId"
 )
 
 // TriggerRpcClient is the client API for TriggerRpc service.
@@ -144,6 +145,7 @@ type TriggerRpcClient interface {
 	ListPlanExecLogs(ctx context.Context, in *ListPlanExecLogsReq, opts ...grpc.CallOption) (*ListPlanExecLogsRes, error)
 	// 回调计划执行项 ongoing 回执
 	CallbackPlanExecItem(ctx context.Context, in *CallbackPlanExecItemReq, opts ...grpc.CallOption) (*CallbackPlanExecItemRes, error)
+	NextId(ctx context.Context, in *NextIdReq, opts ...grpc.CallOption) (*NextIdRes, error)
 }
 
 type triggerRpcClient struct {
@@ -554,6 +556,16 @@ func (c *triggerRpcClient) CallbackPlanExecItem(ctx context.Context, in *Callbac
 	return out, nil
 }
 
+func (c *triggerRpcClient) NextId(ctx context.Context, in *NextIdReq, opts ...grpc.CallOption) (*NextIdRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(NextIdRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_NextId_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TriggerRpcServer is the server API for TriggerRpc service.
 // All implementations must embed UnimplementedTriggerRpcServer
 // for forward compatibility.
@@ -637,6 +649,7 @@ type TriggerRpcServer interface {
 	ListPlanExecLogs(context.Context, *ListPlanExecLogsReq) (*ListPlanExecLogsRes, error)
 	// 回调计划执行项 ongoing 回执
 	CallbackPlanExecItem(context.Context, *CallbackPlanExecItemReq) (*CallbackPlanExecItemRes, error)
+	NextId(context.Context, *NextIdReq) (*NextIdRes, error)
 	mustEmbedUnimplementedTriggerRpcServer()
 }
 
@@ -766,6 +779,9 @@ func (UnimplementedTriggerRpcServer) ListPlanExecLogs(context.Context, *ListPlan
 }
 func (UnimplementedTriggerRpcServer) CallbackPlanExecItem(context.Context, *CallbackPlanExecItemReq) (*CallbackPlanExecItemRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CallbackPlanExecItem not implemented")
+}
+func (UnimplementedTriggerRpcServer) NextId(context.Context, *NextIdReq) (*NextIdRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NextId not implemented")
 }
 func (UnimplementedTriggerRpcServer) mustEmbedUnimplementedTriggerRpcServer() {}
 func (UnimplementedTriggerRpcServer) testEmbeddedByValue()                    {}
@@ -1508,6 +1524,24 @@ func _TriggerRpc_CallbackPlanExecItem_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TriggerRpc_NextId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NextIdReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).NextId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_NextId_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).NextId(ctx, req.(*NextIdReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TriggerRpc_ServiceDesc is the grpc.ServiceDesc for TriggerRpc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1674,6 +1708,10 @@ var TriggerRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CallbackPlanExecItem",
 			Handler:    _TriggerRpc_CallbackPlanExecItem_Handler,
+		},
+		{
+			MethodName: "NextId",
+			Handler:    _TriggerRpc_NextId_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

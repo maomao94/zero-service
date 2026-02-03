@@ -132,7 +132,10 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 			batchId, _ := tool.SimpleUUID()
 			dStr := carbon.NewCarbon(d).Format("Y-m-d H:i")
 			batchName := fmt.Sprintf("%s@%s", in.PlanName, dStr)
-			batchNum := l.svcCtx.IdUtil.NextId("P", l.svcCtx.Config.Name)
+			batchNum, nextIdErr := l.svcCtx.IdUtil.NextId("P", l.svcCtx.Config.Name)
+			if nextIdErr != nil {
+				return nextIdErr
+			}
 			if len(in.BatchNumPrefix) >= 0 {
 				batchNum = fmt.Sprintf("%s%s", in.BatchNumPrefix, strutil.After(batchNum, "P"))
 			}
