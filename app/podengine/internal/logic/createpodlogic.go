@@ -75,6 +75,12 @@ func (l *CreatePodLogic) CreatePod(in *podengine.CreatePodReq) (*podengine.Creat
 	// Parse volume mounts
 	mounts := parseVolumeMounts(containerSpec.VolumeMounts)
 
+	// Set termination grace period
+	terminationGracePeriodSeconds := int(in.Spec.TerminationGracePeriodSeconds)
+	if terminationGracePeriodSeconds <= 0 {
+		terminationGracePeriodSeconds = 60 // Default 10 seconds
+	}
+
 	hostConfig := &container.HostConfig{
 		PortBindings:  portBindings,
 		RestartPolicy: parseRestartPolicy(in.Spec.RestartPolicy),
@@ -84,6 +90,9 @@ func (l *CreatePodLogic) CreatePod(in *podengine.CreatePodReq) (*podengine.Creat
 		Resources:     resources,
 		Mounts:        mounts,
 	}
+
+	// Set termination grace period in config
+	config.StopTimeout = &terminationGracePeriodSeconds
 
 	networkConfig := &network.NetworkingConfig{}
 
