@@ -22,7 +22,7 @@ func NewIdUtil(redis *redis.Redis) *IdUtil {
 func (u *IdUtil) NextId(outDescType string, category string) string {
 	id := u.getNextId(outDescType, category)
 	now := time.Now()
-	yy := now.Format("06")               // 2位年份
+	yy := now.Format("2006")             // 2位年份
 	dateTime := now.Format("0102150405") // MMddHHmmss
 	seq := fmt.Sprintf("%04d", id%10000)
 	return fmt.Sprintf("%s%s%s%s", outDescType, yy, dateTime, seq)
