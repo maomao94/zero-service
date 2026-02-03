@@ -1855,6 +1855,227 @@ func (x *ContainerStats) GetTimestamp() string {
 	return ""
 }
 
+type ListImagesReq struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Node           string                 `protobuf:"bytes,50,opt,name=node,proto3" json:"node,omitempty"` // docker 运行节点 默认-local
+	Limit          int32                  `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset         int32                  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	References     []string               `protobuf:"bytes,3,rep,name=references,proto3" json:"references,omitempty"`
+	IncludeDigests bool                   `protobuf:"varint,4,opt,name=includeDigests,proto3" json:"includeDigests,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ListImagesReq) Reset() {
+	*x = ListImagesReq{}
+	mi := &file_podengine_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListImagesReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListImagesReq) ProtoMessage() {}
+
+func (x *ListImagesReq) ProtoReflect() protoreflect.Message {
+	mi := &file_podengine_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListImagesReq.ProtoReflect.Descriptor instead.
+func (*ListImagesReq) Descriptor() ([]byte, []int) {
+	return file_podengine_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *ListImagesReq) GetNode() string {
+	if x != nil {
+		return x.Node
+	}
+	return ""
+}
+
+func (x *ListImagesReq) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *ListImagesReq) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+func (x *ListImagesReq) GetReferences() []string {
+	if x != nil {
+		return x.References
+	}
+	return nil
+}
+
+func (x *ListImagesReq) GetIncludeDigests() bool {
+	if x != nil {
+		return x.IncludeDigests
+	}
+	return false
+}
+
+type ListImagesRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Items         []*Image               `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	Total         int32                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListImagesRes) Reset() {
+	*x = ListImagesRes{}
+	mi := &file_podengine_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListImagesRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListImagesRes) ProtoMessage() {}
+
+func (x *ListImagesRes) ProtoReflect() protoreflect.Message {
+	mi := &file_podengine_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListImagesRes.ProtoReflect.Descriptor instead.
+func (*ListImagesRes) Descriptor() ([]byte, []int) {
+	return file_podengine_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *ListImagesRes) GetItems() []*Image {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+func (x *ListImagesRes) GetTotal() int32 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+// Image 表示系统中的镜像信息
+type Image struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                                                                   // 镜像 ID
+	References    []string               `protobuf:"bytes,2,rep,name=references,proto3" json:"references,omitempty"`                                                                   // 镜像标签列表（完整引用，如 ubuntu:latest）
+	Digests       []string               `protobuf:"bytes,3,rep,name=digests,proto3" json:"digests,omitempty"`                                                                         // 镜像摘要列表
+	Size          int64                  `protobuf:"varint,4,opt,name=size,proto3" json:"size,omitempty"`                                                                              // 镜像大小（字节）
+	SizeDisplay   string                 `protobuf:"bytes,5,opt,name=sizeDisplay,proto3" json:"sizeDisplay,omitempty"`                                                                 // 用于展示的大小
+	CreatedAt     string                 `protobuf:"bytes,6,opt,name=createdAt,proto3" json:"createdAt,omitempty"`                                                                     // 创建时间
+	Labels        map[string]string      `protobuf:"bytes,7,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // 镜像标签
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Image) Reset() {
+	*x = Image{}
+	mi := &file_podengine_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Image) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Image) ProtoMessage() {}
+
+func (x *Image) ProtoReflect() protoreflect.Message {
+	mi := &file_podengine_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Image.ProtoReflect.Descriptor instead.
+func (*Image) Descriptor() ([]byte, []int) {
+	return file_podengine_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *Image) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Image) GetReferences() []string {
+	if x != nil {
+		return x.References
+	}
+	return nil
+}
+
+func (x *Image) GetDigests() []string {
+	if x != nil {
+		return x.Digests
+	}
+	return nil
+}
+
+func (x *Image) GetSize() int64 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+func (x *Image) GetSizeDisplay() string {
+	if x != nil {
+		return x.SizeDisplay
+	}
+	return ""
+}
+
+func (x *Image) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
+}
+
+func (x *Image) GetLabels() map[string]string {
+	if x != nil {
+		return x.Labels
+	}
+	return nil
+}
+
 var File_podengine_proto protoreflect.FileDescriptor
 
 const file_podengine_proto_rawDesc = "" +
@@ -2030,7 +2251,31 @@ const file_podengine_proto_rawDesc = "" +
 	"\x17storageReadBytesDisplay\x18\x12 \x01(\tR\x17storageReadBytesDisplay\x12,\n" +
 	"\x11storageWriteBytes\x18\x13 \x01(\x03R\x11storageWriteBytes\x12:\n" +
 	"\x18storageWriteBytesDisplay\x18\x14 \x01(\tR\x18storageWriteBytesDisplay\x12\x1c\n" +
-	"\ttimestamp\x18\x15 \x01(\tR\ttimestamp*\x95\x01\n" +
+	"\ttimestamp\x18\x15 \x01(\tR\ttimestamp\"\xad\x01\n" +
+	"\rListImagesReq\x12\x12\n" +
+	"\x04node\x182 \x01(\tR\x04node\x12\x1e\n" +
+	"\x05limit\x18\x01 \x01(\x05B\b\xfaB\x05\x1a\x03\x18\xe8\aR\x05limit\x12 \n" +
+	"\x06offset\x18\x02 \x01(\x05B\b\xfaB\x05\x1a\x03\x18\xe8\aR\x06offset\x12\x1e\n" +
+	"\n" +
+	"references\x18\x03 \x03(\tR\n" +
+	"references\x12&\n" +
+	"\x0eincludeDigests\x18\x04 \x01(\bR\x0eincludeDigests\"M\n" +
+	"\rListImagesRes\x12&\n" +
+	"\x05items\x18\x01 \x03(\v2\x10.podengine.ImageR\x05items\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x05R\x05total\"\x96\x02\n" +
+	"\x05Image\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1e\n" +
+	"\n" +
+	"references\x18\x02 \x03(\tR\n" +
+	"references\x12\x18\n" +
+	"\adigests\x18\x03 \x03(\tR\adigests\x12\x12\n" +
+	"\x04size\x18\x04 \x01(\x03R\x04size\x12 \n" +
+	"\vsizeDisplay\x18\x05 \x01(\tR\vsizeDisplay\x12\x1c\n" +
+	"\tcreatedAt\x18\x06 \x01(\tR\tcreatedAt\x124\n" +
+	"\x06labels\x18\a \x03(\v2\x1c.podengine.Image.LabelsEntryR\x06labels\x1a9\n" +
+	"\vLabelsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01*\x95\x01\n" +
 	"\bPodPhase\x12\x15\n" +
 	"\x11POD_PHASE_UNKNOWN\x10\x00\x12\x15\n" +
 	"\x11POD_PHASE_PENDING\x10\x01\x12\x15\n" +
@@ -2043,7 +2288,7 @@ const file_podengine_proto_rawDesc = "" +
 	" POD_CONDITION_TYPE_POD_SCHEDULED\x10\x01\x12'\n" +
 	"#POD_CONDITION_TYPE_CONTAINERS_READY\x10\x02\x12\"\n" +
 	"\x1ePOD_CONDITION_TYPE_INITIALIZED\x10\x03\x12\x1c\n" +
-	"\x18POD_CONDITION_TYPE_READY\x10\x042\xf7\x03\n" +
+	"\x18POD_CONDITION_TYPE_READY\x10\x042\xb9\x04\n" +
 	"\tPodEngine\x12=\n" +
 	"\tCreatePod\x12\x17.podengine.CreatePodReq\x1a\x17.podengine.CreatePodRes\x12:\n" +
 	"\bStartPod\x12\x16.podengine.StartPodReq\x1a\x16.podengine.StartPodRes\x127\n" +
@@ -2053,7 +2298,9 @@ const file_podengine_proto_rawDesc = "" +
 	"\x06GetPod\x12\x14.podengine.GetPodReq\x1a\x14.podengine.GetPodRes\x12:\n" +
 	"\bListPods\x12\x16.podengine.ListPodsReq\x1a\x16.podengine.ListPodsRes\x12=\n" +
 	"\tDeletePod\x12\x17.podengine.DeletePodReq\x1a\x17.podengine.DeletePodRes\x12C\n" +
-	"\vGetPodStats\x12\x19.podengine.GetPodStatsReq\x1a\x19.podengine.GetPodStatsResB:\n" +
+	"\vGetPodStats\x12\x19.podengine.GetPodStatsReq\x1a\x19.podengine.GetPodStatsRes\x12@\n" +
+	"\n" +
+	"ListImages\x12\x18.podengine.ListImagesReq\x1a\x18.podengine.ListImagesResB:\n" +
 	"\x19com.github.podengine.grpcB\x0ePodEngineProtoP\x01Z\v./podengineb\x06proto3"
 
 var (
@@ -2069,7 +2316,7 @@ func file_podengine_proto_rawDescGZIP() []byte {
 }
 
 var file_podengine_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_podengine_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
+var file_podengine_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
 var file_podengine_proto_goTypes = []any{
 	(PodPhase)(0),          // 0: podengine.PodPhase
 	(PodConditionType)(0),  // 1: podengine.PodConditionType
@@ -2097,63 +2344,71 @@ var file_podengine_proto_goTypes = []any{
 	(*GetPodStatsReq)(nil), // 23: podengine.GetPodStatsReq
 	(*GetPodStatsRes)(nil), // 24: podengine.GetPodStatsRes
 	(*ContainerStats)(nil), // 25: podengine.ContainerStats
-	nil,                    // 26: podengine.Container.EnvEntry
-	nil,                    // 27: podengine.Container.ResourcesEntry
-	nil,                    // 28: podengine.ContainerSpec.EnvEntry
-	nil,                    // 29: podengine.ContainerSpec.ResourcesEntry
-	nil,                    // 30: podengine.PodSpec.LabelsEntry
-	nil,                    // 31: podengine.PodSpec.AnnotationsEntry
-	nil,                    // 32: podengine.PodSpec.NetworkConfigEntry
-	nil,                    // 33: podengine.Pod.LabelsEntry
-	nil,                    // 34: podengine.Pod.AnnotationsEntry
-	nil,                    // 35: podengine.ListPodsReq.LabelsEntry
+	(*ListImagesReq)(nil),  // 26: podengine.ListImagesReq
+	(*ListImagesRes)(nil),  // 27: podengine.ListImagesRes
+	(*Image)(nil),          // 28: podengine.Image
+	nil,                    // 29: podengine.Container.EnvEntry
+	nil,                    // 30: podengine.Container.ResourcesEntry
+	nil,                    // 31: podengine.ContainerSpec.EnvEntry
+	nil,                    // 32: podengine.ContainerSpec.ResourcesEntry
+	nil,                    // 33: podengine.PodSpec.LabelsEntry
+	nil,                    // 34: podengine.PodSpec.AnnotationsEntry
+	nil,                    // 35: podengine.PodSpec.NetworkConfigEntry
+	nil,                    // 36: podengine.Pod.LabelsEntry
+	nil,                    // 37: podengine.Pod.AnnotationsEntry
+	nil,                    // 38: podengine.ListPodsReq.LabelsEntry
+	nil,                    // 39: podengine.Image.LabelsEntry
 }
 var file_podengine_proto_depIdxs = []int32{
 	1,  // 0: podengine.PodCondition.type:type_name -> podengine.PodConditionType
 	3,  // 1: podengine.Container.state:type_name -> podengine.ContainerState
-	26, // 2: podengine.Container.env:type_name -> podengine.Container.EnvEntry
-	27, // 3: podengine.Container.resources:type_name -> podengine.Container.ResourcesEntry
-	28, // 4: podengine.ContainerSpec.env:type_name -> podengine.ContainerSpec.EnvEntry
-	29, // 5: podengine.ContainerSpec.resources:type_name -> podengine.ContainerSpec.ResourcesEntry
+	29, // 2: podengine.Container.env:type_name -> podengine.Container.EnvEntry
+	30, // 3: podengine.Container.resources:type_name -> podengine.Container.ResourcesEntry
+	31, // 4: podengine.ContainerSpec.env:type_name -> podengine.ContainerSpec.EnvEntry
+	32, // 5: podengine.ContainerSpec.resources:type_name -> podengine.ContainerSpec.ResourcesEntry
 	5,  // 6: podengine.PodSpec.containers:type_name -> podengine.ContainerSpec
-	30, // 7: podengine.PodSpec.labels:type_name -> podengine.PodSpec.LabelsEntry
-	31, // 8: podengine.PodSpec.annotations:type_name -> podengine.PodSpec.AnnotationsEntry
-	32, // 9: podengine.PodSpec.networkConfig:type_name -> podengine.PodSpec.NetworkConfigEntry
+	33, // 7: podengine.PodSpec.labels:type_name -> podengine.PodSpec.LabelsEntry
+	34, // 8: podengine.PodSpec.annotations:type_name -> podengine.PodSpec.AnnotationsEntry
+	35, // 9: podengine.PodSpec.networkConfig:type_name -> podengine.PodSpec.NetworkConfigEntry
 	0,  // 10: podengine.Pod.phase:type_name -> podengine.PodPhase
 	2,  // 11: podengine.Pod.conditions:type_name -> podengine.PodCondition
 	4,  // 12: podengine.Pod.containers:type_name -> podengine.Container
-	33, // 13: podengine.Pod.labels:type_name -> podengine.Pod.LabelsEntry
-	34, // 14: podengine.Pod.annotations:type_name -> podengine.Pod.AnnotationsEntry
+	36, // 13: podengine.Pod.labels:type_name -> podengine.Pod.LabelsEntry
+	37, // 14: podengine.Pod.annotations:type_name -> podengine.Pod.AnnotationsEntry
 	6,  // 15: podengine.CreatePodReq.spec:type_name -> podengine.PodSpec
 	7,  // 16: podengine.CreatePodRes.pod:type_name -> podengine.Pod
 	7,  // 17: podengine.StartPodRes.pod:type_name -> podengine.Pod
 	7,  // 18: podengine.RestartPodRes.pod:type_name -> podengine.Pod
 	7,  // 19: podengine.GetPodRes.pod:type_name -> podengine.Pod
-	35, // 20: podengine.ListPodsReq.labels:type_name -> podengine.ListPodsReq.LabelsEntry
+	38, // 20: podengine.ListPodsReq.labels:type_name -> podengine.ListPodsReq.LabelsEntry
 	20, // 21: podengine.ListPodsRes.items:type_name -> podengine.ListPodItem
 	0,  // 22: podengine.ListPodItem.phase:type_name -> podengine.PodPhase
 	25, // 23: podengine.GetPodStatsRes.stats:type_name -> podengine.ContainerStats
-	8,  // 24: podengine.PodEngine.CreatePod:input_type -> podengine.CreatePodReq
-	10, // 25: podengine.PodEngine.StartPod:input_type -> podengine.StartPodReq
-	12, // 26: podengine.PodEngine.StopPod:input_type -> podengine.StopPodReq
-	14, // 27: podengine.PodEngine.RestartPod:input_type -> podengine.RestartPodReq
-	16, // 28: podengine.PodEngine.GetPod:input_type -> podengine.GetPodReq
-	18, // 29: podengine.PodEngine.ListPods:input_type -> podengine.ListPodsReq
-	21, // 30: podengine.PodEngine.DeletePod:input_type -> podengine.DeletePodReq
-	23, // 31: podengine.PodEngine.GetPodStats:input_type -> podengine.GetPodStatsReq
-	9,  // 32: podengine.PodEngine.CreatePod:output_type -> podengine.CreatePodRes
-	11, // 33: podengine.PodEngine.StartPod:output_type -> podengine.StartPodRes
-	13, // 34: podengine.PodEngine.StopPod:output_type -> podengine.StopPodRes
-	15, // 35: podengine.PodEngine.RestartPod:output_type -> podengine.RestartPodRes
-	17, // 36: podengine.PodEngine.GetPod:output_type -> podengine.GetPodRes
-	19, // 37: podengine.PodEngine.ListPods:output_type -> podengine.ListPodsRes
-	22, // 38: podengine.PodEngine.DeletePod:output_type -> podengine.DeletePodRes
-	24, // 39: podengine.PodEngine.GetPodStats:output_type -> podengine.GetPodStatsRes
-	32, // [32:40] is the sub-list for method output_type
-	24, // [24:32] is the sub-list for method input_type
-	24, // [24:24] is the sub-list for extension type_name
-	24, // [24:24] is the sub-list for extension extendee
-	0,  // [0:24] is the sub-list for field type_name
+	28, // 24: podengine.ListImagesRes.items:type_name -> podengine.Image
+	39, // 25: podengine.Image.labels:type_name -> podengine.Image.LabelsEntry
+	8,  // 26: podengine.PodEngine.CreatePod:input_type -> podengine.CreatePodReq
+	10, // 27: podengine.PodEngine.StartPod:input_type -> podengine.StartPodReq
+	12, // 28: podengine.PodEngine.StopPod:input_type -> podengine.StopPodReq
+	14, // 29: podengine.PodEngine.RestartPod:input_type -> podengine.RestartPodReq
+	16, // 30: podengine.PodEngine.GetPod:input_type -> podengine.GetPodReq
+	18, // 31: podengine.PodEngine.ListPods:input_type -> podengine.ListPodsReq
+	21, // 32: podengine.PodEngine.DeletePod:input_type -> podengine.DeletePodReq
+	23, // 33: podengine.PodEngine.GetPodStats:input_type -> podengine.GetPodStatsReq
+	26, // 34: podengine.PodEngine.ListImages:input_type -> podengine.ListImagesReq
+	9,  // 35: podengine.PodEngine.CreatePod:output_type -> podengine.CreatePodRes
+	11, // 36: podengine.PodEngine.StartPod:output_type -> podengine.StartPodRes
+	13, // 37: podengine.PodEngine.StopPod:output_type -> podengine.StopPodRes
+	15, // 38: podengine.PodEngine.RestartPod:output_type -> podengine.RestartPodRes
+	17, // 39: podengine.PodEngine.GetPod:output_type -> podengine.GetPodRes
+	19, // 40: podengine.PodEngine.ListPods:output_type -> podengine.ListPodsRes
+	22, // 41: podengine.PodEngine.DeletePod:output_type -> podengine.DeletePodRes
+	24, // 42: podengine.PodEngine.GetPodStats:output_type -> podengine.GetPodStatsRes
+	27, // 43: podengine.PodEngine.ListImages:output_type -> podengine.ListImagesRes
+	35, // [35:44] is the sub-list for method output_type
+	26, // [26:35] is the sub-list for method input_type
+	26, // [26:26] is the sub-list for extension type_name
+	26, // [26:26] is the sub-list for extension extendee
+	0,  // [0:26] is the sub-list for field type_name
 }
 
 func init() { file_podengine_proto_init() }
@@ -2167,7 +2422,7 @@ func file_podengine_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_podengine_proto_rawDesc), len(file_podengine_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   34,
+			NumMessages:   38,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

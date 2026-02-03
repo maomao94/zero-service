@@ -27,6 +27,7 @@ const (
 	PodEngine_ListPods_FullMethodName    = "/podengine.PodEngine/ListPods"
 	PodEngine_DeletePod_FullMethodName   = "/podengine.PodEngine/DeletePod"
 	PodEngine_GetPodStats_FullMethodName = "/podengine.PodEngine/GetPodStats"
+	PodEngine_ListImages_FullMethodName  = "/podengine.PodEngine/ListImages"
 )
 
 // PodEngineClient is the client API for PodEngine service.
@@ -44,6 +45,7 @@ type PodEngineClient interface {
 	ListPods(ctx context.Context, in *ListPodsReq, opts ...grpc.CallOption) (*ListPodsRes, error)
 	DeletePod(ctx context.Context, in *DeletePodReq, opts ...grpc.CallOption) (*DeletePodRes, error)
 	GetPodStats(ctx context.Context, in *GetPodStatsReq, opts ...grpc.CallOption) (*GetPodStatsRes, error)
+	ListImages(ctx context.Context, in *ListImagesReq, opts ...grpc.CallOption) (*ListImagesRes, error)
 }
 
 type podEngineClient struct {
@@ -134,6 +136,16 @@ func (c *podEngineClient) GetPodStats(ctx context.Context, in *GetPodStatsReq, o
 	return out, nil
 }
 
+func (c *podEngineClient) ListImages(ctx context.Context, in *ListImagesReq, opts ...grpc.CallOption) (*ListImagesRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListImagesRes)
+	err := c.cc.Invoke(ctx, PodEngine_ListImages_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PodEngineServer is the server API for PodEngine service.
 // All implementations must embed UnimplementedPodEngineServer
 // for forward compatibility.
@@ -149,6 +161,7 @@ type PodEngineServer interface {
 	ListPods(context.Context, *ListPodsReq) (*ListPodsRes, error)
 	DeletePod(context.Context, *DeletePodReq) (*DeletePodRes, error)
 	GetPodStats(context.Context, *GetPodStatsReq) (*GetPodStatsRes, error)
+	ListImages(context.Context, *ListImagesReq) (*ListImagesRes, error)
 	mustEmbedUnimplementedPodEngineServer()
 }
 
@@ -182,6 +195,9 @@ func (UnimplementedPodEngineServer) DeletePod(context.Context, *DeletePodReq) (*
 }
 func (UnimplementedPodEngineServer) GetPodStats(context.Context, *GetPodStatsReq) (*GetPodStatsRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPodStats not implemented")
+}
+func (UnimplementedPodEngineServer) ListImages(context.Context, *ListImagesReq) (*ListImagesRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListImages not implemented")
 }
 func (UnimplementedPodEngineServer) mustEmbedUnimplementedPodEngineServer() {}
 func (UnimplementedPodEngineServer) testEmbeddedByValue()                   {}
@@ -348,6 +364,24 @@ func _PodEngine_GetPodStats_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PodEngine_ListImages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListImagesReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PodEngineServer).ListImages(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PodEngine_ListImages_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PodEngineServer).ListImages(ctx, req.(*ListImagesReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PodEngine_ServiceDesc is the grpc.ServiceDesc for PodEngine service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -386,6 +420,10 @@ var PodEngine_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPodStats",
 			Handler:    _PodEngine_GetPodStats_Handler,
+		},
+		{
+			MethodName: "ListImages",
+			Handler:    _PodEngine_ListImages_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

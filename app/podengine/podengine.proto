@@ -22,6 +22,7 @@ service PodEngine {
   rpc ListPods(ListPodsReq) returns (ListPodsRes);
   rpc DeletePod(DeletePodReq) returns (DeletePodRes);
   rpc GetPodStats(GetPodStatsReq) returns (GetPodStatsRes);
+  rpc ListImages(ListImagesReq) returns (ListImagesRes);
 }
 
 
@@ -298,4 +299,28 @@ message ContainerStats {
 
   // 统计时间
   string timestamp = 21;
+}
+
+message ListImagesReq {
+  string node = 50; // docker 运行节点 默认-local
+  int32 limit = 1 [(validate.rules).int32.lte = 1000];
+  int32 offset = 2 [(validate.rules).int32.lte = 1000];
+  repeated string references = 3;
+  bool includeDigests = 4;
+}
+
+message ListImagesRes {
+  repeated Image items = 1;
+  int32 total = 2;
+}
+
+// Image 表示系统中的镜像信息
+message Image {
+  string id = 1;               // 镜像 ID
+  repeated string references = 2;    // 镜像标签列表（完整引用，如 ubuntu:latest）
+  repeated string digests = 3; // 镜像摘要列表
+  int64 size = 4;              // 镜像大小（字节）
+  string sizeDisplay = 5;      // 用于展示的大小
+  string createdAt = 6;        // 创建时间
+  map<string, string> labels = 7; // 镜像标签
 }

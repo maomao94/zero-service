@@ -62,3 +62,8 @@ func (s *PodEngineServer) GetPodStats(ctx context.Context, in *podengine.GetPodS
 	l := logic.NewGetPodStatsLogic(ctx, s.svcCtx)
 	return l.GetPodStats(in)
 }
+
+func (s *PodEngineServer) ListImages(ctx context.Context, in *podengine.ListImagesReq) (*podengine.ListImagesRes, error) {
+	l := logic.NewListImagesLogic(ctx, s.svcCtx)
+	return l.ListImages(in)
+}
