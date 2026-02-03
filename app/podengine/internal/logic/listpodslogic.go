@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
-
 	"zero-service/app/podengine/internal/svc"
 	"zero-service/app/podengine/podengine"
 
@@ -41,13 +39,17 @@ func (l *ListPodsLogic) ListPods(in *podengine.ListPodsReq) (*podengine.ListPods
 	filter := filters.NewArgs()
 
 	// Add id filter if provided (exact match)
-	if in.Id != "" {
-		filter.Add("id", in.Id)
+	if len(in.Ids) > 0 {
+		for _, id := range in.Ids {
+			filter.Add("id", id)
+		}
 	}
 
 	// Add name filter if provided (exact match)
-	if in.Name != "" {
-		filter.Add("name", in.Name)
+	if len(in.Names) > 0 {
+		for _, name := range in.Names {
+			filter.Add("name", name)
+		}
 	}
 
 	// Add label filters if provided
@@ -79,16 +81,12 @@ func (l *ListPodsLogic) ListPods(in *podengine.ListPodsReq) (*podengine.ListPods
 		}
 
 		item := &podengine.ListPodItem{
-			Id:         container.ID,
-			Name:       containerName,
-			Phase:      phase,
-			CreateTime: carbon.Parse(time.Unix(container.Created, 0).Format(time.RFC3339)).ToDateTimeString(),
+			Id:    container.ID,
+			Name:  containerName,
+			Phase: phase,
 		}
 		if container.Created > 0 {
-			creatTime := carbon.Parse(time.Unix(container.Created, 0).Format(time.RFC3339))
-			if creatTime.IsValid() {
-				item.CreateTime = creatTime.ToDateTimeString()
-			}
+			item.CreateTime = carbon.CreateFromTimestamp(container.Created).ToDateTimeString()
 		}
 		items = append(items, item)
 	}

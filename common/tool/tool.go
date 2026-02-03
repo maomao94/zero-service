@@ -37,7 +37,11 @@ func Yuan2Fen(yuan float64) int64 {
 }
 
 func DecimalBytes(size int64, precision ...int) string {
-	return formatter.DecimalBytes(float64(size))
+	return formatter.DecimalBytes(float64(size), precision...)
+}
+
+func BinaryBytes(size int64, precision ...int) string {
+	return formatter.BinaryBytes(float64(size), precision...)
 }
 
 func MayReplaceLocalhost(host string) string {

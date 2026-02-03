@@ -19,13 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PodEngine_CreatePod_FullMethodName  = "/podengine.PodEngine/CreatePod"
-	PodEngine_StartPod_FullMethodName   = "/podengine.PodEngine/StartPod"
-	PodEngine_StopPod_FullMethodName    = "/podengine.PodEngine/StopPod"
-	PodEngine_RestartPod_FullMethodName = "/podengine.PodEngine/RestartPod"
-	PodEngine_GetPod_FullMethodName     = "/podengine.PodEngine/GetPod"
-	PodEngine_ListPods_FullMethodName   = "/podengine.PodEngine/ListPods"
-	PodEngine_DeletePod_FullMethodName  = "/podengine.PodEngine/DeletePod"
+	PodEngine_CreatePod_FullMethodName   = "/podengine.PodEngine/CreatePod"
+	PodEngine_StartPod_FullMethodName    = "/podengine.PodEngine/StartPod"
+	PodEngine_StopPod_FullMethodName     = "/podengine.PodEngine/StopPod"
+	PodEngine_RestartPod_FullMethodName  = "/podengine.PodEngine/RestartPod"
+	PodEngine_GetPod_FullMethodName      = "/podengine.PodEngine/GetPod"
+	PodEngine_ListPods_FullMethodName    = "/podengine.PodEngine/ListPods"
+	PodEngine_DeletePod_FullMethodName   = "/podengine.PodEngine/DeletePod"
+	PodEngine_GetPodStats_FullMethodName = "/podengine.PodEngine/GetPodStats"
 )
 
 // PodEngineClient is the client API for PodEngine service.
@@ -42,6 +43,7 @@ type PodEngineClient interface {
 	GetPod(ctx context.Context, in *GetPodReq, opts ...grpc.CallOption) (*GetPodRes, error)
 	ListPods(ctx context.Context, in *ListPodsReq, opts ...grpc.CallOption) (*ListPodsRes, error)
 	DeletePod(ctx context.Context, in *DeletePodReq, opts ...grpc.CallOption) (*DeletePodRes, error)
+	GetPodStats(ctx context.Context, in *GetPodStatsReq, opts ...grpc.CallOption) (*GetPodStatsRes, error)
 }
 
 type podEngineClient struct {
@@ -122,6 +124,16 @@ func (c *podEngineClient) DeletePod(ctx context.Context, in *DeletePodReq, opts 
 	return out, nil
 }
 
+func (c *podEngineClient) GetPodStats(ctx context.Context, in *GetPodStatsReq, opts ...grpc.CallOption) (*GetPodStatsRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPodStatsRes)
+	err := c.cc.Invoke(ctx, PodEngine_GetPodStats_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PodEngineServer is the server API for PodEngine service.
 // All implementations must embed UnimplementedPodEngineServer
 // for forward compatibility.
@@ -136,6 +148,7 @@ type PodEngineServer interface {
 	GetPod(context.Context, *GetPodReq) (*GetPodRes, error)
 	ListPods(context.Context, *ListPodsReq) (*ListPodsRes, error)
 	DeletePod(context.Context, *DeletePodReq) (*DeletePodRes, error)
+	GetPodStats(context.Context, *GetPodStatsReq) (*GetPodStatsRes, error)
 	mustEmbedUnimplementedPodEngineServer()
 }
 
@@ -166,6 +179,9 @@ func (UnimplementedPodEngineServer) ListPods(context.Context, *ListPodsReq) (*Li
 }
 func (UnimplementedPodEngineServer) DeletePod(context.Context, *DeletePodReq) (*DeletePodRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeletePod not implemented")
+}
+func (UnimplementedPodEngineServer) GetPodStats(context.Context, *GetPodStatsReq) (*GetPodStatsRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPodStats not implemented")
 }
 func (UnimplementedPodEngineServer) mustEmbedUnimplementedPodEngineServer() {}
 func (UnimplementedPodEngineServer) testEmbeddedByValue()                   {}
@@ -314,6 +330,24 @@ func _PodEngine_DeletePod_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PodEngine_GetPodStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPodStatsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PodEngineServer).GetPodStats(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PodEngine_GetPodStats_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PodEngineServer).GetPodStats(ctx, req.(*GetPodStatsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PodEngine_ServiceDesc is the grpc.ServiceDesc for PodEngine service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -348,6 +382,10 @@ var PodEngine_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeletePod",
 			Handler:    _PodEngine_DeletePod_Handler,
+		},
+		{
+			MethodName: "GetPodStats",
+			Handler:    _PodEngine_GetPodStats_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

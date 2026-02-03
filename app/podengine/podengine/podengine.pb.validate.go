@@ -823,7 +823,7 @@ func (m *Pod) validate(all bool) error {
 
 	// no validation rules for StartTime
 
-	// no validation rules for DeletionTime
+	// no validation rules for DeletedTime
 
 	if len(errors) > 0 {
 		return PodMultiError(errors)
@@ -2163,10 +2163,6 @@ func (m *ListPodsReq) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	// no validation rules for Name
-
-	// no validation rules for Id
-
 	// no validation rules for Labels
 
 	if len(errors) > 0 {
@@ -2702,3 +2698,392 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = DeletePodResValidationError{}
+
+// Validate checks the field values on GetPodStatsReq with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *GetPodStatsReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetPodStatsReq with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in GetPodStatsReqMultiError,
+// or nil if none found.
+func (m *GetPodStatsReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetPodStatsReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Node
+
+	if utf8.RuneCountInString(m.GetId()) < 1 {
+		err := GetPodStatsReqValidationError{
+			field:  "Id",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return GetPodStatsReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetPodStatsReqMultiError is an error wrapping multiple validation errors
+// returned by GetPodStatsReq.ValidateAll() if the designated constraints
+// aren't met.
+type GetPodStatsReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetPodStatsReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetPodStatsReqMultiError) AllErrors() []error { return m }
+
+// GetPodStatsReqValidationError is the validation error returned by
+// GetPodStatsReq.Validate if the designated constraints aren't met.
+type GetPodStatsReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetPodStatsReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetPodStatsReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetPodStatsReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetPodStatsReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetPodStatsReqValidationError) ErrorName() string { return "GetPodStatsReqValidationError" }
+
+// Error satisfies the builtin error interface
+func (e GetPodStatsReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetPodStatsReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetPodStatsReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetPodStatsReqValidationError{}
+
+// Validate checks the field values on GetPodStatsRes with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *GetPodStatsRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetPodStatsRes with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in GetPodStatsResMultiError,
+// or nil if none found.
+func (m *GetPodStatsRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetPodStatsRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetStats() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, GetPodStatsResValidationError{
+						field:  fmt.Sprintf("Stats[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, GetPodStatsResValidationError{
+						field:  fmt.Sprintf("Stats[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return GetPodStatsResValidationError{
+					field:  fmt.Sprintf("Stats[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return GetPodStatsResMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetPodStatsResMultiError is an error wrapping multiple validation errors
+// returned by GetPodStatsRes.ValidateAll() if the designated constraints
+// aren't met.
+type GetPodStatsResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetPodStatsResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetPodStatsResMultiError) AllErrors() []error { return m }
+
+// GetPodStatsResValidationError is the validation error returned by
+// GetPodStatsRes.Validate if the designated constraints aren't met.
+type GetPodStatsResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetPodStatsResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetPodStatsResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetPodStatsResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetPodStatsResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetPodStatsResValidationError) ErrorName() string { return "GetPodStatsResValidationError" }
+
+// Error satisfies the builtin error interface
+func (e GetPodStatsResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetPodStatsRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetPodStatsResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetPodStatsResValidationError{}
+
+// Validate checks the field values on ContainerStats with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *ContainerStats) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ContainerStats with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in ContainerStatsMultiError,
+// or nil if none found.
+func (m *ContainerStats) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ContainerStats) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ContainerId
+
+	// no validation rules for ContainerName
+
+	// no validation rules for CpuUsagePercent
+
+	// no validation rules for CpuUsagePercentDisplay
+
+	// no validation rules for CpuUsageTotal
+
+	// no validation rules for CpuUsageTotalDisplay
+
+	// no validation rules for MemoryUsage
+
+	// no validation rules for MemoryUsageDisplay
+
+	// no validation rules for MemoryLimit
+
+	// no validation rules for MemoryLimitDisplay
+
+	// no validation rules for MemoryUsagePercent
+
+	// no validation rules for MemoryUsagePercentDisplay
+
+	// no validation rules for NetworkRxBytes
+
+	// no validation rules for NetworkRxBytesDisplay
+
+	// no validation rules for NetworkTxBytes
+
+	// no validation rules for NetworkTxBytesDisplay
+
+	// no validation rules for StorageReadBytes
+
+	// no validation rules for StorageReadBytesDisplay
+
+	// no validation rules for StorageWriteBytes
+
+	// no validation rules for StorageWriteBytesDisplay
+
+	// no validation rules for Timestamp
+
+	if len(errors) > 0 {
+		return ContainerStatsMultiError(errors)
+	}
+
+	return nil
+}
+
+// ContainerStatsMultiError is an error wrapping multiple validation errors
+// returned by ContainerStats.ValidateAll() if the designated constraints
+// aren't met.
+type ContainerStatsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ContainerStatsMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ContainerStatsMultiError) AllErrors() []error { return m }
+
+// ContainerStatsValidationError is the validation error returned by
+// ContainerStats.Validate if the designated constraints aren't met.
+type ContainerStatsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ContainerStatsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ContainerStatsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ContainerStatsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ContainerStatsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ContainerStatsValidationError) ErrorName() string { return "ContainerStatsValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ContainerStatsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sContainerStats.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ContainerStatsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ContainerStatsValidationError{}

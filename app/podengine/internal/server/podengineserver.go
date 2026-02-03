@@ -57,3 +57,8 @@ func (s *PodEngineServer) DeletePod(ctx context.Context, in *podengine.DeletePod
 	l := logic.NewDeletePodLogic(ctx, s.svcCtx)
 	return l.DeletePod(in)
 }
+
+func (s *PodEngineServer) GetPodStats(ctx context.Context, in *podengine.GetPodStatsReq) (*podengine.GetPodStatsRes, error) {
+	l := logic.NewGetPodStatsLogic(ctx, s.svcCtx)
+	return l.GetPodStats(in)
+}

@@ -21,6 +21,7 @@ service PodEngine {
   rpc GetPod(GetPodReq) returns (GetPodRes);
   rpc ListPods(ListPodsReq) returns (ListPodsRes);
   rpc DeletePod(DeletePodReq) returns (DeletePodRes);
+  rpc GetPodStats(GetPodStatsReq) returns (GetPodStatsRes);
 }
 
 
@@ -171,7 +172,7 @@ message Pod {
 
   string creationTime = 8;  // 创建时间
   string startTime = 9;          // 启动时间
-  string deletionTime = 10; // 删除时间
+  string deletedTime = 10; // 删除时间
 }
 
 
@@ -229,8 +230,8 @@ message ListPodsReq {
   string node = 50; // docker 运行节点 默认-local
   int32 limit = 1 [(validate.rules).int32.lte = 1000];
   int32 offset = 2 [(validate.rules).int32.lte = 1000];
-  string name = 3;
-  string id = 4;
+  repeated string names = 3;
+  repeated string ids = 4;
   map<string, string> labels = 5;
 }
 
@@ -254,4 +255,47 @@ message DeletePodReq {
 }
 
 message DeletePodRes {
+}
+
+message GetPodStatsReq {
+  string node = 50; // docker 运行节点 默认-local
+  string id = 1 [(validate.rules).string.min_len = 1];
+}
+
+message GetPodStatsRes {
+  repeated ContainerStats stats = 1;
+}
+
+message ContainerStats {
+  string containerId = 1;
+  string containerName = 2;
+
+  // CPU 统计信息
+  double cpuUsagePercent = 3;
+  string cpuUsagePercentDisplay = 4; // 用于展示
+  int64 cpuUsageTotal = 5;
+  string cpuUsageTotalDisplay = 6; // 用于展示
+
+  // 内存统计信息
+  int64 memoryUsage = 7;
+  string memoryUsageDisplay = 8; // 用于展示
+  int64 memoryLimit = 9;
+  string memoryLimitDisplay = 10; // 用于展示
+  double memoryUsagePercent = 11;
+  string memoryUsagePercentDisplay = 12; // 用于展示
+
+  // 网络统计信息
+  int64 networkRxBytes = 13;
+  string networkRxBytesDisplay = 14; // 用于展示
+  int64 networkTxBytes = 15;
+  string networkTxBytesDisplay = 16; // 用于展示
+
+  // 存储统计信息
+  int64 storageReadBytes = 17;
+  string storageReadBytesDisplay = 18; // 用于展示
+  int64 storageWriteBytes = 19;
+  string storageWriteBytesDisplay = 20; // 用于展示
+
+  // 统计时间
+  string timestamp = 21;
 }

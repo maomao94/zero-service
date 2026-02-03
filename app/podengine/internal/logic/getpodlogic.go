@@ -94,14 +94,22 @@ func getPodPhase(state *container.State) podengine.PodPhase {
 }
 
 func getContainerState(state *container.State) *podengine.ContainerState {
-	return &podengine.ContainerState{
+	containerState := &podengine.ContainerState{
 		Running:      state.Running,
 		Terminated:   state.Status == "exited",
 		Waiting:      state.Status == "created" || state.Status == "restarting",
 		Reason:       state.Status,
 		Message:      state.Error,
-		StartedTime:  carbon.Parse(state.StartedAt).ToDateTimeString(),
 		FinishedTime: carbon.Parse(state.FinishedAt).ToDateTimeString(),
 		ExitCode:     strconv.Itoa(state.ExitCode),
 	}
+	StartedTime := carbon.Parse(state.StartedAt)
+	if StartedTime.IsValid() {
+		containerState.StartedTime = StartedTime.ToDateTimeString()
+	}
+	FinishedTime := carbon.Parse(state.FinishedAt)
+	if FinishedTime.IsValid() {
+		containerState.FinishedTime = FinishedTime.ToDateTimeString()
+	}
+	return containerState
 }
