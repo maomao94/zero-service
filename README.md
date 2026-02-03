@@ -38,7 +38,7 @@
 `file` 模块提供文件服务功能，支持通过 gRPC 实现分片流上传，并集成了对象存储（OSS）上传能力。
 
 #### 2.3 服务 `trigger` 异步任务调度服务
-- ⏱️ 基于 `https://github.com/hibiken/asynq` ，实现定时/延时任务调度
+- ⏱️ 基于 `https://github.com/hibiken/asynq` ，实现定时/延时任务调度/计划任务拆分调度
 - 📦 使用 Redis 存储任务队列，支持多节点部署与高可用
 - 🔁 支持 HTTP/gRPC 回调，适配多种业务场景
 - 🔧 支持任务归档、删除与自动重试等管理能力
@@ -76,6 +76,13 @@
 - 🔗 集成 GRPC 服务
 - 📄 协议定义：[`bridgemqtt.proto`](app/bridgemqtt/bridgemqtt.proto)
 - 📄 转发协议定义：[`streamevent.proto`](facade/streamevent/streamevent.proto)
+
+#### 2.9 服务 `podengine` 容器管理服务
+- 📦 提供 Docker 容器管理能力，支持容器的创建、启动、停止、重启、删除和列表查询
+- 🔗 集成 GRPC 服务，提供 Kubernetes-like 的 Pod 管理接口
+- 📊 支持容器统计信息获取，包括 CPU、内存、网络和存储使用情况
+- 🖼️ 支持镜像管理，包括镜像列表查询
+- 📄 协议定义：[`podengine.proto`](app/podengine/podengine.proto)
 
 ### 3. 对外接口层 (`facade`)
 `facade` 模块提供了系统的对外接口，基于 gRPC 协议，支持多语言客户端。
