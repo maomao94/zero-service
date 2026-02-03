@@ -64,7 +64,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		AsynqClient:       asynqx.NewAsynqClient(c.Redis.Host, c.Redis.Pass, c.RedisDB),
 		AsynqInspector:    asynqx.NewAsynqInspector(c.Redis.Host, c.Redis.Pass, c.RedisDB),
 		AsynqServer:       asynqx.NewAsynqServer(c.Redis.Host, c.Redis.Pass, c.RedisDB),
-		Scheduler:         asynqx.NewScheduler(c.Redis.Host, c.Redis.Pass),
+		Scheduler:         asynqx.NewScheduler(c.Redis.Host, c.Redis.Pass, c.RedisDB),
 		Httpc:             httpc.NewService("httpc"),
 		ConnMap:           collection.NewSafeMap(),
 		PlanModel:         model.NewPlanModelWithDBType(dbConn, model.DatabaseType(dbType)),

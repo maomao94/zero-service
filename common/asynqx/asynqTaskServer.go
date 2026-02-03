@@ -2,6 +2,7 @@ package asynqx
 
 import (
 	"context"
+	"time"
 
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -37,7 +38,15 @@ func (q *TaskServer) Stop() {
 
 func NewAsynqServer(addr, pass string, db int) *asynq.Server {
 	return asynq.NewServer(
-		asynq.RedisClientOpt{Addr: addr, Password: pass, DB: db},
+		asynq.RedisClientOpt{
+			Addr:         addr,
+			Password:     pass,
+			DB:           db,
+			DialTimeout:  5 * time.Second,
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 5 * time.Second,
+			PoolSize:     50,
+		},
 		asynq.Config{
 			IsFailure: func(err error) bool {
 				//logx.Infof("asynq server exec task err:%+v", err)

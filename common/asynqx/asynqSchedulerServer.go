@@ -2,9 +2,10 @@ package asynqx
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/logx"
-	"time"
 )
 
 type SchedulerServer struct {
@@ -28,12 +29,17 @@ func (q *SchedulerServer) Stop() {
 	q.Scheduler.Shutdown()
 }
 
-func NewScheduler(addr, pass string) *asynq.Scheduler {
+func NewScheduler(addr, pass string, db int) *asynq.Scheduler {
 	location, _ := time.LoadLocation("Asia/Shanghai")
 	return asynq.NewScheduler(
 		asynq.RedisClientOpt{
-			Addr:     addr,
-			Password: pass,
+			Addr:         addr,
+			Password:     pass,
+			DB:           db,
+			DialTimeout:  5 * time.Second,
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 5 * time.Second,
+			PoolSize:     50,
 		}, &asynq.SchedulerOpts{
 			Location: location,
 			PostEnqueueFunc: func(info *asynq.TaskInfo, err error) {
