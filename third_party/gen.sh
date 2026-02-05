@@ -6,6 +6,7 @@ OUT_DIR="../third_party"
 # 清理旧生成
 rm -rf ${OUT_DIR}/zero-service
 rm -rf ${OUT_DIR}/extproto
+rm -rf ${OUT_DIR}/dji_error_code
 
 # 执行生成
 protoc \

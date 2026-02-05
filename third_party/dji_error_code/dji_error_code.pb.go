@@ -21,675 +21,1391 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// DJIErrorCode 表示大疆上云错误码
+// 大疆上云平台错误码枚举（ABCDEF格式）
+// 首位A：上报来源（3=设备端、5=云端/网关/直播等）；BC=功能模块；DEF=模块自定义错误
+// v1.15
 type DJIErrorCode int32
 
 const (
-	// 通用错误
-	DJIErrorCode_DJI_ERROR_CODE_UNKNOWN DJIErrorCode = 0
-	// 设备升级相关错误
-	DJIErrorCode_DJI_ERROR_CODE_DEVICE_UPGRADING                           DJIErrorCode = 312014 // 设备升级中，请勿重复操作
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_BUSY                               DJIErrorCode = 312015 // 机场：{dock_org_name} 业务繁忙无法进行设备升级，请等待机场处于空闲中后再试
-	DJIErrorCode_DJI_ERROR_CODE_UPGRADE_FAILED_LINK_ERROR                  DJIErrorCode = 312016 // 升级失败，机场和飞行器图传链路异常，请重启机场和飞行器后重试
-	DJIErrorCode_DJI_ERROR_CODE_DEVICE_POWER_ON_FAILED                     DJIErrorCode = 312022 // 飞行器开机失败或未连接，请检查飞行器是否在舱内，是否安装电池，机场和飞行器是否已对频
-	DJIErrorCode_DJI_ERROR_CODE_PUSH_ROD_CLOSE_FAILED                      DJIErrorCode = 312023 // 推杆闭合失败无法升级飞行器，请检查急停按钮是否被按下，推杆是否有异物卡住
-	DJIErrorCode_DJI_ERROR_CODE_UPGRADE_FAILED_NO_AIRCRAFT                 DJIErrorCode = 312027 // 升级失败，机场未检测到飞行器
-	DJIErrorCode_DJI_ERROR_CODE_UPGRADE_FAILED_REBOOT                      DJIErrorCode = 312028 // 升级失败，设备升级过程中设备被重启
-	DJIErrorCode_DJI_ERROR_CODE_DEVICE_REBOOTING                           DJIErrorCode = 312029 // 设备重启中无法进行设备升级，请等待设备重启完成后重试
-	DJIErrorCode_DJI_ERROR_CODE_UPGRADE_FAILED_ENHANCED_IMAGE_TRANSMISSION DJIErrorCode = 312030 // 升级失败，飞行器增强图传开启后无法升级，请关闭飞行器增强图传后重试
-	DJIErrorCode_DJI_ERROR_CODE_LOW_BATTERY                                DJIErrorCode = 312704 // 设备电量过低，请充电至20%以上后重试
-	// 飞行任务相关错误
-	DJIErrorCode_DJI_ERROR_CODE_DEVICE_OPERATION_NOT_SUPPORTED                    DJIErrorCode = 314000 // 设备当前无法支持该操作，建议检查设备当前工作状态
-	DJIErrorCode_DJI_ERROR_CODE_TASK_SUBMIT_FAILED                                DJIErrorCode = 314001 // 飞行任务下发失败，请稍后重试
-	DJIErrorCode_DJI_ERROR_CODE_ROUTE_FILE_FORMAT_INCOMPATIBLE                    DJIErrorCode = 314003 // 航线文件格式不兼容，请检查航线文件是否正确
-	DJIErrorCode_DJI_ERROR_CODE_AIRCRAFT_INIT_FAILED                              DJIErrorCode = 314006 // 飞行器初始化失败，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_ROUTE_TRANSMISSION_FAILED                         DJIErrorCode = 314007 // 机场传输航线至飞行器失败，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_PREPARE_TIMEOUT                                   DJIErrorCode = 314008 // 飞行器起飞前准备超时，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_ROUTE_EXECUTION_FAILED                            DJIErrorCode = 314010 // 航线执行失败，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_SYSTEM_ERROR                              DJIErrorCode = 314011 // 机场系统异常，无法获取飞行任务执行结果
-	DJIErrorCode_DJI_ERROR_CODE_PREPARE_FAILED                                    DJIErrorCode = 314012 // 飞行器起飞前准备失败，无法执行飞行任务，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_NO_ROUTE_FOUND                                    DJIErrorCode = 314013 // 飞行任务下发失败，机场无法获取到本次飞行任务的航线，无法执行飞行任务，请稍后重试
-	DJIErrorCode_DJI_ERROR_CODE_PRECISION_REPHOTOGRAPHY_ROUTE_TRANSMISSION_FAILED DJIErrorCode = 314015 // 机场传输精准复拍航线至飞行器失败，无法执行飞行任务，请稍后重试或重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_ROUTE_FILE_PARSE_FAILED                           DJIErrorCode = 314016 // 航线文件解析失败，无法执行飞行任务，请检查航线文件
-	DJIErrorCode_DJI_ERROR_CODE_AIRCRAFT_RTK_ERROR                                DJIErrorCode = 314018 // 飞行器 RTK 定位异常，无法执行飞行任务，请稍后重试或重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_AIRCRAFT_RTK_CONVERGENCE_FAILED                   DJIErrorCode = 314019 // 飞行器 RTK 收敛失败，无法执行飞行任务，请稍后重试或重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_AIRCRAFT_POSITION_ERROR                           DJIErrorCode = 314020 // 飞行器不在停机坪正中间或飞行器朝向不正确，无法执行飞行任务，请检查飞行器位置和朝向
-	DJIErrorCode_DJI_ERROR_CODE_AIRCRAFT_RTK_ERROR_AGAIN                          DJIErrorCode = 314021 // 飞行器 RTK 定位异常，无法执行飞行任务，请稍后重试或重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_DEPARTURE_ARRIVAL_ROUTE_SUBMIT_FAILED             DJIErrorCode = 314024 // 进离场航线下发失败，请稍后重试或重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_RTK_CONVERGENCE_TIMEOUT                           DJIErrorCode = 314025 // RTK收敛超时，用户手动取消任务
-	DJIErrorCode_DJI_ERROR_CODE_NETWORK_DISCONNECTED                              DJIErrorCode = 314200 // 任务失败，由于机场网络断开，飞行器已自动返航，请确保机场已连接网络后再试
-	// 机场通信相关错误
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR                 DJIErrorCode = 315000 // 机场通信异常，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_REMOTE_POWER_ON DJIErrorCode = 315001 // 机场通信异常，请远程开启飞机并等待 1min 后，再次下发任务重试
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_REBOOT          DJIErrorCode = 315002 // 机场通信异常，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_AGAIN           DJIErrorCode = 315003 // 机场通信异常，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_BOTH_AIRPORTS_BUSY                          DJIErrorCode = 315004 // 任务失败，请等待两个机场都空闲后，再次下发任务重试
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_FOUR            DJIErrorCode = 315005 // 机场通信异常，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_FIVE            DJIErrorCode = 315006 // 机场通信异常，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_UPGRADE         DJIErrorCode = 315007 // 机场通信异常，请将机场升级到最新版本或重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_CALIBRATION_INFO_INCONSISTENT               DJIErrorCode = 315008 // 降落机场和起飞机场标定信息不一致，请确认两个机场均链路通畅且使用了相同的网络信息标定
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_SIX             DJIErrorCode = 315009 // 机场通信异常，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_CANNOT_STOP_TASK                            DJIErrorCode = 315010 // 无法停止飞行任务，请稍后重试，如果仍报错请联系大疆售后
-	DJIErrorCode_DJI_ERROR_CODE_CANNOT_STOP_TASK_AGAIN                      DJIErrorCode = 315011 // 无法停止飞行任务，请稍后重试，如果仍报错请联系大疆售后
-	DJIErrorCode_DJI_ERROR_CODE_CANNOT_STOP_TASK_THREE                      DJIErrorCode = 315012 // 无法停止飞行任务，请稍后重试，如果仍报错请联系大疆售后
-	DJIErrorCode_DJI_ERROR_CODE_TASK_SUBMIT_FAILED_CONTACT_SUPPORT          DJIErrorCode = 315013 // 飞行任务下发失败，请稍后重试，如果仍报错请联系大疆售后
-	DJIErrorCode_DJI_ERROR_CODE_TASK_TYPE_DOES_NOT_SUPPORT_RETURN_POINT     DJIErrorCode = 315014 // 当前任务类型不支持设置返航点
-	DJIErrorCode_DJI_ERROR_CODE_RETURN_POINT_SET_FAILED                     DJIErrorCode = 315015 // 返航点设置失败，请稍后重试，如果仍报错请联系大疆售后
-	DJIErrorCode_DJI_ERROR_CODE_TASK_SUBMIT_FAILED_CONTACT_SUPPORT_AGAIN    DJIErrorCode = 315016 // 飞行任务下发失败，请稍后重试，如果仍报错请联系大疆售后
-	DJIErrorCode_DJI_ERROR_CODE_TASK_SUBMIT_FAILED_CONTACT_SUPPORT_THREE    DJIErrorCode = 315017 // 飞行任务下发失败，请稍后重试，如果仍报错请联系大疆售后
-	DJIErrorCode_DJI_ERROR_CODE_BOTH_AIRPORTS_BUSY_AGAIN                    DJIErrorCode = 315018 // 任务失败，请等待两个机场都空闲后，再次下发任务重试
-	DJIErrorCode_DJI_ERROR_CODE_POOR_DEPLOYMENT_LOCATION                    DJIErrorCode = 315019 // 设备部署位置不佳，无法执行蛙跳任务，请选择其它机场再试
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_SYSTEM_ERROR_REBOOT                 DJIErrorCode = 315050 // 机场系统异常，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_TASK_FAILED_REBOOT                          DJIErrorCode = 315051 // 任务失败，请重启机场并再次下发任务后重试，如果仍报错请联系大疆售后
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_POSITION_NOT_CONVERGED              DJIErrorCode = 315052 // 机场位置未收敛，请等待一段时间后重试
-	// 飞行器参数配置相关错误
-	DJIErrorCode_DJI_ERROR_CODE_PARAMETER_SET_FAILED                           DJIErrorCode = 316001 // 飞行器参数配置失败，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_PARAMETER_SET_FAILED_AGAIN                     DJIErrorCode = 316002 // 飞行器参数配置失败，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_PARAMETER_SET_FAILED_THREE                     DJIErrorCode = 316003 // 飞行器参数配置失败，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_PARAMETER_SET_FAILED_FOUR                      DJIErrorCode = 316004 // 飞行器参数配置失败，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_RTK_CONVERGENCE_FAILED_PARAMETER               DJIErrorCode = 316005 // 飞行器 RTK 收敛失败，无法执行飞行任务，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_TASK_TIMEOUT                                   DJIErrorCode = 316006 // 任务超时，飞行器已丢失或降落时机场未开启舱盖或展开推杆，飞行器无法降落回机场，请尽快至机场部署现场检查飞行器状况
-	DJIErrorCode_DJI_ERROR_CODE_AIRCRAFT_INIT_FAILED_PARAMETER                 DJIErrorCode = 316007 // 飞行器初始化失败，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_CONTROL_ACQUISITION_FAILED                     DJIErrorCode = 316008 // 机场获取飞行器控制权失败，无法执行飞行任务，请确认遥控器未锁定控制权
-	DJIErrorCode_DJI_ERROR_CODE_LOW_BATTERY_CANNOT_EXECUTE                     DJIErrorCode = 316009 // 飞行器电量低于30%，无法执行飞行任务，请充电后重试（建议电量≥50%）
-	DJIErrorCode_DJI_ERROR_CODE_NO_AIRCRAFT_DETECTED                           DJIErrorCode = 316010 // 机场未检测到飞行器，无法执行飞行任务，请检查舱内是否有飞行器，机场与飞行器是否已对频，或重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_LANDING_POSITION_OFFSET                        DJIErrorCode = 316011 // 飞行器降落位置偏移过大，请检查飞行器是否需要现场摆正
-	DJIErrorCode_DJI_ERROR_CODE_PREPARE_FAILED_AGAIN                           DJIErrorCode = 316012 // 飞行器起飞前准备失败，无法执行飞行任务，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_PREPARE_FAILED_THREE                           DJIErrorCode = 316013 // 飞行器起飞前准备失败，无法执行飞行任务，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_PREPARE_FAILED_FOUR                            DJIErrorCode = 316014 // 飞行器起飞前准备失败，无法执行飞行任务，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_RTK_CONVERGENCE_POSITION_TOO_FAR               DJIErrorCode = 316015 // 飞行器 RTK 收敛位置距离机场过远，无法执行飞行任务，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_LANDING_TIMEOUT                                DJIErrorCode = 316016 // 飞行器降落至机场超时，可能是机场与飞行器断连导致，请通过直播查看飞行器是否降落至舱内
-	DJIErrorCode_DJI_ERROR_CODE_MEDIA_COUNT_TIMEOUT                            DJIErrorCode = 316017 // 获取飞行器媒体数量超时，可能是机场与飞行器断连导致，请通过直播查看飞行器是否降落至舱内
-	DJIErrorCode_DJI_ERROR_CODE_TASK_EXECUTION_TIMEOUT                         DJIErrorCode = 316018 // 飞行任务执行超时，可能是机场与飞行器断连导致，请通过直播查看飞行器是否降落至舱内
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_SYSTEM_ERROR_TASK                      DJIErrorCode = 316019 // 机场系统错误，无法执行飞行任务，请稍后重试
-	DJIErrorCode_DJI_ERROR_CODE_RTK_SIGNAL_SOURCE_ERROR                        DJIErrorCode = 316020 // 飞行器使用的 RTK 信号源错误，请稍后重试
-	DJIErrorCode_DJI_ERROR_CODE_RTK_SIGNAL_CHECK_TIMEOUT                       DJIErrorCode = 316021 // 飞行器 RTK 信号源检查超时，请稍后重试
-	DJIErrorCode_DJI_ERROR_CODE_CANNOT_EXECUTE_RETURN_HOME                     DJIErrorCode = 316022 // 飞行器无法执行返航指令，请检查飞行器是否已开机，机场与飞行器是否已断连，请确认无以上问题后重试
-	DJIErrorCode_DJI_ERROR_CODE_CANNOT_EXECUTE_RETURN_HOME_B_CONTROL           DJIErrorCode = 316023 // 飞行器无法执行返航指令，飞行器已被 B 控接管，请在 B 控操控飞行器，或关闭 B 控后重试
-	DJIErrorCode_DJI_ERROR_CODE_CANNOT_EXECUTE_RETURN_HOME_NOT_TAKEOFF         DJIErrorCode = 316024 // 飞行器无法执行返航指令，飞行器已被 B 控接管，请在 B 控操控飞行器，或关闭 B 控后重试
-	DJIErrorCode_DJI_ERROR_CODE_PARAMETER_SET_FAILED_FIVE                      DJIErrorCode = 316025 // 飞行器参数配置失败，请稍后重试或重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_EMERGENCY_STOP_PRESSED                         DJIErrorCode = 316026 // 机场急停按钮被按下，无法执行飞行任务，请释放急停按钮后重试
-	DJIErrorCode_DJI_ERROR_CODE_PARAMETER_SET_TIMEOUT                          DJIErrorCode = 316027 // 飞行器参数配置超时，请稍后重试或重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_EMERGENCY_STOP_PRESSED_LANDING                 DJIErrorCode = 316029 // 机场急停按钮被按下，飞行器将飞往备降点降落，请立即检查飞行器是否已安全降落并将飞行器放回至机场
-	DJIErrorCode_DJI_ERROR_CODE_BATTERY_DATA_TIMEOUT                           DJIErrorCode = 316032 // 获取电池数据超时，请稍后重试或重启飞行器后重试
-	DJIErrorCode_DJI_ERROR_CODE_BATTERY_CYCLE_COUNT_TOO_HIGH                   DJIErrorCode = 316033 // 飞行器电池循环次数过高，为保证飞行安全，已自动终止任务，建议更换该电池
-	DJIErrorCode_DJI_ERROR_CODE_FIRMWARE_VERSION_MISMATCH                      DJIErrorCode = 316034 // 无法起飞，飞行器固件版本与机场固件版本不匹配，为保证飞行安全请升级固件后再试
-	DJIErrorCode_DJI_ERROR_CODE_DEPARTURE_ARRIVAL_ROUTE_SUBMIT_FAILED_FIRMWARE DJIErrorCode = 316035 // 进离场航线下发失败，请确保设备固件为最新版本后重新下发任务，如果持续报错，请联系大疆售后。
-	// 相机相关错误
-	DJIErrorCode_DJI_ERROR_CODE_CAMERA_SUMMARY_INFO_FAILED         DJIErrorCode = 316100 // 获取相机概要信息失败，请重试
-	DJIErrorCode_DJI_ERROR_CODE_SET_SINGLE_SHOT_MODE_FAILED        DJIErrorCode = 316101 // 设置相机为单拍模式失败，请重试
-	DJIErrorCode_DJI_ERROR_CODE_CLOSE_WATERMARK_FAILED             DJIErrorCode = 316102 // 关闭相机水印失败，请重试
-	DJIErrorCode_DJI_ERROR_CODE_SET_METERING_MODE_FAILED           DJIErrorCode = 316103 // 设置测光模式到平均测光失败，请重试
-	DJIErrorCode_DJI_ERROR_CODE_SWITCH_TO_WIDE_ANGLE_FAILED        DJIErrorCode = 316104 // 切换镜头到广角镜头失败，请重试
-	DJIErrorCode_DJI_ERROR_CODE_SET_PHOTO_STORAGE_FAILED           DJIErrorCode = 316105 // 设置相机存储照片失败，请重试
-	DJIErrorCode_DJI_ERROR_CODE_SET_IR_ZOOM_FAILED                 DJIErrorCode = 316106 // 红外变焦倍数设置失败，请重试
-	DJIErrorCode_DJI_ERROR_CODE_SET_PHOTO_SIZE_FAILED              DJIErrorCode = 316107 // 照片尺寸设置4k失败，请重试
-	DJIErrorCode_DJI_ERROR_CODE_SET_PHOTO_FORMAT_FAILED            DJIErrorCode = 316108 // 设置照片存储格式为jpeg格式失败，请重试
-	DJIErrorCode_DJI_ERROR_CODE_CLOSE_DISTORTION_CORRECTION_FAILED DJIErrorCode = 316109 // 关闭相机畸变矫正失败，请重试
-	DJIErrorCode_DJI_ERROR_CODE_OPEN_MECHANICAL_SHUTTER_FAILED     DJIErrorCode = 316110 // 打开相机机械快门失败，请重试
-	DJIErrorCode_DJI_ERROR_CODE_SET_FOCUS_MODE_FAILED              DJIErrorCode = 316111 // 设置对焦模式失败，请重试
-	// 媒体文件相关错误
-	DJIErrorCode_DJI_ERROR_CODE_MEDIA_COUNT_FAILED                 DJIErrorCode = 317001 // 获取飞行器媒体文件数量失败，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_STORAGE_FORMAT_FAILED              DJIErrorCode = 317002 // 飞行器存储格式化失败，飞行器未开机、未连接或未检测到相机，请确认无以上问题后重试，或重启飞行器后重试
-	DJIErrorCode_DJI_ERROR_CODE_STORAGE_FORMAT_FAILED_REBOOT       DJIErrorCode = 317003 // 飞行器存储格式化失败，请重启飞行器后重试
-	DJIErrorCode_DJI_ERROR_CODE_MEDIA_FORMAT_FAILED                DJIErrorCode = 317004 // 机场媒体文件格式化失败，请稍后重试或重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_END_RECORDING_FAILED               DJIErrorCode = 317005 // 飞行器结束录像失败，本次飞行任务的媒体文件可能无法上传
-	DJIErrorCode_DJI_ERROR_CODE_CANNOT_FORMAT                      DJIErrorCode = 317006 // 无法格式化，请等待当前飞行器媒体文件下载完成后再试
-	DJIErrorCode_DJI_ERROR_CODE_MEDIA_COUNT_FAILED_CONTACT_SUPPORT DJIErrorCode = 317007 // 获取媒体文件数量失败，请稍后重试，如本架次任务有媒体文件且持续报错可联系大疆售后
-	// 机场系统运行异常相关错误
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_BUSY_OR_UPLOADING_LOGS         DJIErrorCode = 319001 // 机场作业中或设备异常反馈上传日志中，无法执行飞行任务，请等待当前飞行任务或操作执行完成后重试
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_SYSTEM_RUNNING_ERROR           DJIErrorCode = 319002 // 机场系统运行异常，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_SYSTEM_RUNNING_ERROR_REISSUE   DJIErrorCode = 319003 // 机场系统运行异常，请重新下发任务
-	DJIErrorCode_DJI_ERROR_CODE_TASK_EXECUTION_TIMEOUT_AUTO_TERMINATED DJIErrorCode = 319004 // 飞行任务执行超时，已自动终止本次飞行任务
-	DJIErrorCode_DJI_ERROR_CODE_CLOUD_AIRPORT_COMMUNICATION_ERROR      DJIErrorCode = 319005 // 云端与机场通信异常，无法执行飞行任务
-	DJIErrorCode_DJI_ERROR_CODE_CANCEL_TASK_FAILED                     DJIErrorCode = 319006 // 取消飞行任务失败，飞行任务已经在执行中
-	DJIErrorCode_DJI_ERROR_CODE_MODIFY_TASK_FAILED                     DJIErrorCode = 319007 // 修改飞行任务失败，飞行任务已经在执行中
-	DJIErrorCode_DJI_ERROR_CODE_TIME_NOT_SYNCED                        DJIErrorCode = 319008 // 机场时间与云端时间不同步，机场无法执行飞行任务
-	DJIErrorCode_DJI_ERROR_CODE_FIRMWARE_VERSION_TOO_LOW               DJIErrorCode = 319010 // 机场固件版本过低，无法执行飞行任务，请升级机场固件为最新版本后重试
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_INITIALIZING                   DJIErrorCode = 319015 // 机场正在初始化中，无法执行飞行任务，请等待机场初始化完成后重试
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_IN_OPERATION                   DJIErrorCode = 319016 // 机场正在执行其他飞行任务，无法执行本次飞行任务
-	DJIErrorCode_DJI_ERROR_CODE_PROCESSING_MEDIA_FILES                 DJIErrorCode = 319017 // 机场正在处理上次飞行任务媒体文件，无法执行本次飞行任务，请稍后重试
-	DJIErrorCode_DJI_ERROR_CODE_AUTO_EXPORTING_LOGS                    DJIErrorCode = 319018 // 机场正在自动导出日志中（设备异常反馈），无法执行飞行任务，请稍后重试
-	DJIErrorCode_DJI_ERROR_CODE_PULLING_LOGS                           DJIErrorCode = 319019 // 机场正在拉取日志中（设备异常反馈），无法执行飞行任务，请稍后重试
-	// 航线执行相关错误
-	DJIErrorCode_DJI_ERROR_CODE_ROUTE_EXECUTION_ERROR             DJIErrorCode = 321000 // 航线执行异常，请稍后重试或重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_ROUTE_FILE_PARSE_FAILED_ROUTE     DJIErrorCode = 321004 // 航线文件解析失败，无法执行飞行任务，请检查航线文件
-	DJIErrorCode_DJI_ERROR_CODE_ROUTE_MISSING_BREAKPOINT_INFO     DJIErrorCode = 321005 // 航线缺少断点信息，机场无法执行飞行任务
-	DJIErrorCode_DJI_ERROR_CODE_TASK_ALREADY_EXECUTING            DJIErrorCode = 321257 // 飞行任务已在执行中，请勿重复执行
-	DJIErrorCode_DJI_ERROR_CODE_CANNOT_TERMINATE_TASK             DJIErrorCode = 321258 // 飞行任务无法终止，请检查飞行器状态
-	DJIErrorCode_DJI_ERROR_CODE_TASK_NOT_STARTED_CANNOT_TERMINATE DJIErrorCode = 321259 // 飞行任务未开始执行，无法终止飞行任务
-	DJIErrorCode_DJI_ERROR_CODE_TASK_NOT_STARTED_CANNOT_INTERRUPT DJIErrorCode = 321260 // 飞行任务未开始执行，无法中断飞行任务
-	DJIErrorCode_DJI_ERROR_CODE_ROUTE_PLANNING_HEIGHT_EXCEEDED    DJIErrorCode = 321513 // 航线规划高度已超过飞行器限高，机场无法执行飞行任务
-	DJIErrorCode_DJI_ERROR_CODE_TASK_FAILED_BUFFER_ZONE           DJIErrorCode = 321514 // 任务失败，起点或终点位于限远区域的缓冲区内或超过了限远距离
-	DJIErrorCode_DJI_ERROR_CODE_ROUTE_PASSES_RESTRICTED_AREA      DJIErrorCode = 321515 // 航线穿过限飞区，机场无法执行飞行任务
-	DJIErrorCode_DJI_ERROR_CODE_FLIGHT_HEIGHT_TOO_LOW             DJIErrorCode = 321516 // 飞行器飞行高度过低，飞行任务执行被终止
-	DJIErrorCode_DJI_ERROR_CODE_OBSTACLE_AVOIDANCE_TRIGGERED      DJIErrorCode = 321517 // 飞行器触发避障，飞行任务执行被终止。为保证飞行安全，请勿用当前航线执行断点续飞任务
-	DJIErrorCode_DJI_ERROR_CODE_APPROACHING_RESTRICTED_AREA       DJIErrorCode = 321519 // 飞行器接近限飞区或限远距离自动返航，无法完成航线飞行
-	// 直播相关错误
-	DJIErrorCode_DJI_ERROR_CODE_LIVE_STREAM_FAILED_CAMERA_NOT_EXIST       DJIErrorCode = 513002 // 直播失败，相机不存在或相机类型错误
-	DJIErrorCode_DJI_ERROR_CODE_LIVE_STREAM_ALREADY_RUNNING               DJIErrorCode = 513003 // 相机已经在直播中，请勿重复开启直播
-	DJIErrorCode_DJI_ERROR_CODE_LIVE_STREAM_FAILED_PARAMETER_ERROR        DJIErrorCode = 513005 // 直播失败，直播参数（清晰度）设置错误
-	DJIErrorCode_DJI_ERROR_CODE_LIVE_STREAM_FAILED_REFRESH                DJIErrorCode = 513006 // 直播启动失败，请刷新重试
-	DJIErrorCode_DJI_ERROR_CODE_LIVE_STREAM_FAILED_VIDEO_DATA_ERROR       DJIErrorCode = 513008 // 直播失败，设备端图传数据异常
-	DJIErrorCode_DJI_ERROR_CODE_LIVE_STREAM_FAILED_NO_NETWORK             DJIErrorCode = 513010 // 直播失败，设备无法联网
-	DJIErrorCode_DJI_ERROR_CODE_OPERATION_FAILED_NOT_LIVE_STREAMING       DJIErrorCode = 513011 // 操作失败，设备未开启直播
-	DJIErrorCode_DJI_ERROR_CODE_OPERATION_FAILED_CANNOT_SWITCH_CAMERA     DJIErrorCode = 513012 // 操作失败，设备已在直播中，不支持切换镜头
-	DJIErrorCode_DJI_ERROR_CODE_LIVE_STREAM_FAILED_PROTOCOL_NOT_SUPPORTED DJIErrorCode = 513013 // 直播失败，直播使用的视频传输协议不支持
-	DJIErrorCode_DJI_ERROR_CODE_LIVE_STREAM_FAILED_PARAMETER_ERROR_AGAIN  DJIErrorCode = 513014 // 直播失败，直播参数错误或者不完整
-	DJIErrorCode_DJI_ERROR_CODE_LIVE_STREAM_ERROR_NETWORK_CONGestion      DJIErrorCode = 513015 // 直播异常，网络卡顿, 请刷新后重试
-	DJIErrorCode_DJI_ERROR_CODE_LIVE_STREAM_ERROR_DECODE_FAILED           DJIErrorCode = 513016 // 直播异常，视频解码失败
-	DJIErrorCode_DJI_ERROR_CODE_LIVE_STREAM_PAUSED                        DJIErrorCode = 513017 // 直播已暂停，请等待当前飞行器媒体文件下载完成后再试
-	DJIErrorCode_DJI_ERROR_CODE_LIVE_STREAM_FAILED_RETRY                  DJIErrorCode = 513099 // 直播失败，请稍后重试
-	// 机场运行异常相关错误
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_OPERATION_ERROR                  DJIErrorCode = 514100 // 机场运行异常，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_PUSH_ROD_CLOSE_FAILED_OPERATION          DJIErrorCode = 514101 // 推杆闭合失败，请检查停机坪上是否存在异物，飞行器方向是否放反，或重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_PUSH_ROD_OPEN_FAILED                     DJIErrorCode = 514102 // 推杆展开失败，请检查停机坪上是否存在异物，或重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_LOW_BATTERY_CANNOT_EXECUTE_OPERATION     DJIErrorCode = 514103 // 飞行器电量低于30%，无法执行飞行任务，请充电后重试（建议电量≥50%）
-	DJIErrorCode_DJI_ERROR_CODE_BATTERY_CHARGING_START_FAILED            DJIErrorCode = 514104 // 飞行器电池开始充电失败，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_BATTERY_CHARGING_STOP_FAILED             DJIErrorCode = 514105 // 飞行器电池停止充电失败，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_POWER_CONTROL_ERROR                      DJIErrorCode = 514106 // 飞行器电源控制异常，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_HATCH_OPEN_FAILED                        DJIErrorCode = 514107 // 舱盖开启失败，请检查舱盖周围是否存在异物，或重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_HATCH_CLOSE_FAILED                       DJIErrorCode = 514108 // 舱盖关闭失败，请检查舱盖周围是否存在异物，或重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_AIRCRAFT_POWER_ON_FAILED                 DJIErrorCode = 514109 // 飞行器开机失败，请检查飞行器是否在舱和飞机电量是否正常，或重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_AIRCRAFT_POWER_OFF_FAILED                DJIErrorCode = 514110 // 飞行器关机失败，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_SLOW_ROTATION_STOP_FAILED                DJIErrorCode = 514111 // 飞行器慢转收桨控制异常，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_SLOW_ROTATION_STOP_FAILED_AGAIN          DJIErrorCode = 514112 // 飞行器慢转收桨控制异常，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_PUSH_ROD_CONNECTION_FAILED               DJIErrorCode = 514113 // 机场推杆与飞行器无法连接，请检查飞行器是否在舱内，推杆闭合时是否被卡住，充电连接器是否脏污或损坏
-	DJIErrorCode_DJI_ERROR_CODE_POWER_STATUS_FAILED                      DJIErrorCode = 514114 // 获取飞行器电源状态失败，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_OPERATION_IN_PROGRESS                    DJIErrorCode = 514116 // 无法执行当前操作，机场正在执行其他控制指令，请稍后重试
-	DJIErrorCode_DJI_ERROR_CODE_HATCH_NOT_IN_PLACE                       DJIErrorCode = 514117 // 舱盖开启或关闭未到位，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_PUSH_ROD_NOT_IN_PLACE                    DJIErrorCode = 514118 // 推杆展开或闭合未到位，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_AIRCRAFT_DISCONNECTED            DJIErrorCode = 514120 // 机场与飞行器断连，请重启机场后重试或重新对频
-	DJIErrorCode_DJI_ERROR_CODE_EMERGENCY_STOP_PRESSED_AIRPORT           DJIErrorCode = 514121 // 机场急停按钮被按下，请释放急停按钮
-	DJIErrorCode_DJI_ERROR_CODE_CHARGING_STATUS_FAILED                   DJIErrorCode = 514122 // 获取飞行器充电状态失败，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_BATTERY_TOO_LOW_TO_POWER_ON              DJIErrorCode = 514123 // 飞行器电池电量过低无法开机
-	DJIErrorCode_DJI_ERROR_CODE_BATTERY_INFO_FAILED                      DJIErrorCode = 514124 // 获取飞行器电池信息失败，无法执行飞行任务，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_BATTERY_ALMOST_FULL                      DJIErrorCode = 514125 // 飞行器电池电量已接近满电状态，无法开始充电，请使用至95%以下再进行充电
-	DJIErrorCode_DJI_ERROR_CODE_TOO_MUCH_RAIN                            DJIErrorCode = 514134 // 雨量过大，机场无法执行飞行任务，请稍后重试
-	DJIErrorCode_DJI_ERROR_CODE_TOO_MUCH_WIND                            DJIErrorCode = 514135 // 风速过大，机场无法执行飞行任务，请稍后重试
-	DJIErrorCode_DJI_ERROR_CODE_POWER_DISCONNECTED                       DJIErrorCode = 514136 // 机场供电断开，机场无法执行飞行任务，请恢复机场供电后重试
-	DJIErrorCode_DJI_ERROR_CODE_TEMPERATURE_TOO_LOW                      DJIErrorCode = 514137 // 环境温度过低于-20℃ (-4°F)，机场无法执行飞行任务，请稍后重试
-	DJIErrorCode_DJI_ERROR_CODE_BATTERY_MAINTAINING                      DJIErrorCode = 514138 // 飞行器电池正在保养中，机场无法执行飞行任务，请等待保养结束后重试
-	DJIErrorCode_DJI_ERROR_CODE_BATTERY_MAINTENANCE_NOT_NEEDED           DJIErrorCode = 514139 // 飞行器电池无法执行保养指令，飞行器电池无需保养
-	DJIErrorCode_DJI_ERROR_CODE_BATTERY_MAINTENANCE_NOT_NEEDED_AGAIN     DJIErrorCode = 514140 // 飞行器电池无法执行保养指令，飞行器电池无需保养
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_SYSTEM_OPERATION_ERROR           DJIErrorCode = 514141 // 机场系统运行异常，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_PUSH_ROD_CONNECTION_FAILED_TAKEOFF       DJIErrorCode = 514142 // 飞行器起飞前，机场推杆与飞行器无法连接，请检查飞行器是否在舱内，推杆闭合时是否被卡住，充电连接器是否脏污或损坏
-	DJIErrorCode_DJI_ERROR_CODE_PUSH_ROD_NOT_CLOSED                      DJIErrorCode = 514143 // 推杆未闭合或闭合不到位，请稍后重试或重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_HATCH_NOT_CLOSED                         DJIErrorCode = 514144 // 舱盖未关闭或关闭不到位，请稍后重试或重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_IN_FIELD_TEST                    DJIErrorCode = 514145 // 机场处于现场调试中，无法执行当前操作或执行飞行任务，请断开遥控器和机场的数据线连接后重试
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_IN_REMOTE_TEST                   DJIErrorCode = 514146 // 机场处于远程调试中，无法执行飞行任务，请退出远程调试后重试
-	DJIErrorCode_DJI_ERROR_CODE_DEVICE_UPGRADING_CANNOT_TEST             DJIErrorCode = 514147 // 设备升级中，无法进行远程调试或执行飞行任务，请等待升级完成后重试
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_IN_OPERATION_CANNOT_TEST         DJIErrorCode = 514148 // 机场已经在作业中，无法进行远程调试或再次执行飞行任务，请等待当前任务执行完成后重试
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_SYSTEM_OPERATION_ERROR_REBOOT    DJIErrorCode = 514149 // 机场系统运行异常，无法执行飞行任务，请重启机场后重试
-	DJIErrorCode_DJI_ERROR_CODE_DEVICE_REBOOTING_CANNOT_EXECUTE          DJIErrorCode = 514150 // 设备重启中，无法执行飞行任务，请等待重启完成后重试
-	DJIErrorCode_DJI_ERROR_CODE_UPGRADING_CANNOT_REBOOT                  DJIErrorCode = 514151 // 设备升级中，无法执行设备重启指令，请等待升级完成后重试
-	DJIErrorCode_DJI_ERROR_CODE_REMOTE_TEST_EXITED                       DJIErrorCode = 514153 // 机场已退出远程调试模式，无法执行当前操作
-	DJIErrorCode_DJI_ERROR_CODE_INNER_CIRCULATION_TEMPERATURE_FAILED     DJIErrorCode = 514154 // 获取内循环出风口温度失败，请稍后再试
-	DJIErrorCode_DJI_ERROR_CODE_AIRCRAFT_NOT_IN_HATCH                    DJIErrorCode = 514155 // 飞机不在舱内，无法执行飞行任务，请将飞行器放回至机场
-	DJIErrorCode_DJI_ERROR_CODE_AIRCRAFT_NOT_IN_HATCH_CHECK              DJIErrorCode = 514156 // 飞机不在舱内，请立即检查飞行器是否已安全降落并将飞行器放回至机场
-	DJIErrorCode_DJI_ERROR_CODE_WIRELESS_CHARGING_BUSY                   DJIErrorCode = 514157 // 执行开机失败，无线充电线圈业务繁忙，请重启机场后再试复
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_RTK_ERROR                        DJIErrorCode = 514158 // 无法起飞，机场 RTK 业务异常，请重启机场后再试
-	DJIErrorCode_DJI_ERROR_CODE_LANDING_AIRPORT_DETECTED_AIRCRAFT        DJIErrorCode = 514159 // 任务失败，降落机场检测到飞行器，请确保降落机场没有飞行器后再试
-	DJIErrorCode_DJI_ERROR_CODE_AIRCRAFT_CONNECTION_FAILED               DJIErrorCode = 514162 // 飞行器和机场连接失败，请关闭机场舱盖或重启机场后再试
-	DJIErrorCode_DJI_ERROR_CODE_BATTERY_FUNCTION_ERROR                   DJIErrorCode = 514163 // 电池功能异常，请确保飞行器电池插入到位或重启飞行器后再试
-	DJIErrorCode_DJI_ERROR_CODE_DEVICE_REBOOT_FAILED                     DJIErrorCode = 514164 // 设备重启失败，请稍后重试，如果仍报错请联系大疆售后
-	DJIErrorCode_DJI_ERROR_CODE_DEVICE_REBOOT_FAILED_AGAIN               DJIErrorCode = 514165 // 设备重启失败，请稍后重试，如果仍报错请联系大疆售后
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_INITIALIZING_CANNOT_EXECUTE      DJIErrorCode = 514170 // 机场系统初始化中，无法执行当前操作或指令，请等待机场系统初始化完成后重试
-	DJIErrorCode_DJI_ERROR_CODE_COMMAND_FORMAT_ERROR                     DJIErrorCode = 514171 // 云端下发给机场的命令不符合格式要求，机场无法执行
-	DJIErrorCode_DJI_ERROR_CODE_CANNOT_POWER_OFF_BLUETOOTH_DISCONNECTED  DJIErrorCode = 514172 // 飞行器无法关机，蓝牙连接状态为未连接，请尝试重启飞行器和机场，或去现场重新对频飞行器与机场后再试
-	DJIErrorCode_DJI_ERROR_CODE_BAD_WEATHER                              DJIErrorCode = 514173 // 由于天气原因（环境温度低于5度并且降雨大于等于中雨），可能导致桨叶结冰影响作业安全，暂无法执行任务
-	DJIErrorCode_DJI_ERROR_CODE_CHARGING_FAILED_HATCH_NOT_IN_PLACE       DJIErrorCode = 514174 // 飞行器充电失败，机场舱盖开启或关闭未到位，请关闭舱盖后再试
-	DJIErrorCode_DJI_ERROR_CODE_AIR_CONDITIONING_CONTROL_FAILED          DJIErrorCode = 514180 // 停止空调制冷或停止空调制热失败，请稍后重试
-	DJIErrorCode_DJI_ERROR_CODE_AIR_CONDITIONING_COOLING_FAILED          DJIErrorCode = 514181 // 开启空调制冷失败，请稍后重试
-	DJIErrorCode_DJI_ERROR_CODE_AIR_CONDITIONING_HEATING_FAILED          DJIErrorCode = 514182 // 开启空调制热失败，请稍后重试
-	DJIErrorCode_DJI_ERROR_CODE_AIR_CONDITIONING_DEHUMIDIFICATION_FAILED DJIErrorCode = 514183 // 开启空调除湿失败，请稍后重试
-	DJIErrorCode_DJI_ERROR_CODE_CANNOT_COOL_WHEN_TOO_COLD                DJIErrorCode = 514184 // 当前温度低于 0 ℃（32°F），无法开启空调制冷
-	DJIErrorCode_DJI_ERROR_CODE_CANNOT_HEAT_WHEN_TOO_HOT                 DJIErrorCode = 514185 // 当前温度高于 45 ℃（115°F），无法开启空调制热
-	// 网关异常相关错误
-	DJIErrorCode_DJI_ERROR_CODE_GATEWAY_ERROR             DJIErrorCode = 514300 // 网关异常
-	DJIErrorCode_DJI_ERROR_CODE_REQUEST_TIMEOUT           DJIErrorCode = 514301 // 请求超时，连接断开
-	DJIErrorCode_DJI_ERROR_CODE_NETWORK_CERTIFICATE_ERROR DJIErrorCode = 514302 // 网络证书异常，连接失败
-	DJIErrorCode_DJI_ERROR_CODE_NETWORK_ERROR             DJIErrorCode = 514303 // 网络异常，连接断开
-	DJIErrorCode_DJI_ERROR_CODE_REQUEST_REJECTED          DJIErrorCode = 514304 // 请求被拒，连接失败
-	// 机场未标定相关错误
-	DJIErrorCode_DJI_ERROR_CODE_AIRPORT_NOT_CALIBRATED DJIErrorCode = 514168 // 机场未标定，机场无法执行飞行任务，请标定机场
+	DJIErrorCode_v_1_15 DJIErrorCode = 0
+	// ************************ 设备升级模块（312段）************************
+	DJIErrorCode_DJI_DEVICE_UPGRADING                        DJIErrorCode = 312014 // 设备升级中，请勿重复操作 | Device is being upgraded, do not repeat the operation
+	DJIErrorCode_DJI_DOCK_BUSY_CANNOT_UPGRADE                DJIErrorCode = 312015 // 机场：{dock_org_name} 业务繁忙无法进行设备升级，请等待机场处于空闲中后再试 | Dock {dock_org_name} is busy, unable to upgrade device, please wait until the dock is idle
+	DJIErrorCode_DJI_UPGRADE_FAILED_LINK_ERROR               DJIErrorCode = 312016 // 升级失败，机场和飞行器图传链路异常，请重启机场和飞行器后重试 | Upgrade failed, video transmission link between dock and aircraft is abnormal, restart dock and aircraft and try again
+	DJIErrorCode_DJI_AIRCRAFT_START_FAILED_DISCONNECTED      DJIErrorCode = 312022 // 飞行器开机失败或未连接，请检查飞行器是否在舱内，是否安装电池，机场和飞行器是否已对频 | Aircraft start failed or disconnected, check if aircraft is in dock, battery is installed, and dock is paired with aircraft
+	DJIErrorCode_DJI_PUSH_ROD_CLOSED_FAILED_CANNOT_UPGRADE   DJIErrorCode = 312023 // 推杆闭合失败无法升级飞行器，请检查急停按钮是否被按下，推杆是否有异物卡住 | Push rod closing failed, unable to upgrade aircraft, check if emergency stop button is pressed or push rod is jammed
+	DJIErrorCode_DJI_UPGRADE_FAILED_AIRCRAFT_NOT_DETECTED    DJIErrorCode = 312027 // 升级失败，机场未检测到飞行器 | Upgrade failed, dock did not detect the aircraft
+	DJIErrorCode_DJI_UPGRADE_FAILED_DEVICE_RESTARTED         DJIErrorCode = 312028 // 升级失败，设备升级过程中设备被重启 | Upgrade failed, device was restarted during the upgrade process
+	DJIErrorCode_DJI_DEVICE_RESTARTING_CANNOT_UPGRADE        DJIErrorCode = 312029 // 设备重启中无法进行设备升级，请等待设备重启完成后重试 | Device is restarting, unable to upgrade, please wait for restart to complete and try again
+	DJIErrorCode_DJI_UPGRADE_FAILED_ENHANCED_TRANSMISSION_ON DJIErrorCode = 312030 // 升级失败，飞行器增强图传开启后无法升级，请关闭飞行器增强图传后重试 | Upgrade failed, enhanced video transmission is on, turn it off and try again
+	DJIErrorCode_DJI_DEVICE_LOW_BATTERY_REQUIRE_CHARGE_20PCT DJIErrorCode = 312704 // 设备电量过低，请充电至20%以上后重试 | Device battery is too low, charge to no less than 20% and try again
+	// ************************ 飞行任务模块（314段）************************
+	DJIErrorCode_DJI_DEVICE_UNSUPPORT_OPERATION              DJIErrorCode = 314000 // 设备当前无法支持该操作，建议检查设备当前工作状态 | Device does not support the current operation, check device working status
+	DJIErrorCode_DJI_FLIGHT_TASK_DELIVER_FAILED_RETRY        DJIErrorCode = 314001 // 飞行任务下发失败，请稍后重试 | Flight task delivery failed, please try again later
+	DJIErrorCode_DJI_FLIGHT_TASK_DELIVER_FAILED_RETRY_AGAIN  DJIErrorCode = 314002 // 飞行任务下发失败，请稍后重试 | Flight task delivery failed, please try again later
+	DJIErrorCode_DJI_ROUTE_FILE_FORMAT_INCOMPATIBLE          DJIErrorCode = 314003 // 航线文件格式不兼容，请检查航线文件是否正确 | Route file format is incompatible, check the route file for correctness
+	DJIErrorCode_DJI_FLIGHT_TASK_DELIVER_FAILED_RESTART_DOCK DJIErrorCode = 314005 // 飞行任务下发失败，请稍后重试或重启机场后重试 | Flight task delivery failed, try again later or restart the dock
+	DJIErrorCode_DJI_AIRCRAFT_INIT_FAILED_RESTART_DOCK       DJIErrorCode = 314006 // 飞行器初始化失败，请重启机场后重试 | Aircraft initialization failed, restart the dock and try again
+	DJIErrorCode_DJI_ROUTE_TRANSMIT_FAILED_RESTART_DOCK      DJIErrorCode = 314007 // 机场传输航线至飞行器失败，请重启机场后重试 | Dock failed to transmit route to aircraft, restart the dock and try again
+	DJIErrorCode_DJI_AIRCRAFT_PREPARE_TIMEOUT_RESTART_DOCK   DJIErrorCode = 314008 // 飞行器起飞前准备超时，请重启机场后重试 | Aircraft pre-takeoff preparation timed out, restart the dock and try again
+	DJIErrorCode_DJI_AIRCRAFT_INIT_FAILED_RESTART_DOCK_AGAIN DJIErrorCode = 314009 // 飞行器初始化失败，请重启机场后重试 | Aircraft initialization failed, restart the dock and try again
+	DJIErrorCode_DJI_ROUTE_EXECUTE_FAILED_RESTART_DOCK       DJIErrorCode = 314010 // 航线执行失败，请重启机场后重试 | Route execution failed, restart the dock and try again
+	DJIErrorCode_DJI_DOCK_SYSTEM_ERROR_NO_TASK_RESULT        DJIErrorCode = 314011 // 机场系统异常，无法获取飞行任务执行结果 | Dock system abnormal, unable to get flight task execution result
+	DJIErrorCode_DJI_AIRCRAFT_PREPARE_FAILED_CANNOT_FLY      DJIErrorCode = 314012 // 飞行器起飞前准备失败，无法执行飞行任务，请重启机场后重试 | Aircraft pre-takeoff preparation failed, unable to perform flight task, restart the dock
+	DJIErrorCode_DJI_FLIGHT_TASK_DELIVER_FAILED_NO_ROUTE     DJIErrorCode = 314013 // 飞行任务下发失败，机场无法获取到本次飞行任务的航线，无法执行飞行任务，请稍后重试 | Flight task delivery failed, dock cannot get the route, unable to perform flight task, try again later
+	DJIErrorCode_DJI_DOCK_SYSTEM_ERROR_TASK_FAILED           DJIErrorCode = 314014 // 机场系统异常，飞行任务执行失败，请稍后重试 | Dock system abnormal, flight task execution failed, try again later
+	DJIErrorCode_DJI_PRECISE_SHOOT_ROUTE_TRANSMIT_FAILED     DJIErrorCode = 314015 // 机场传输精准复拍航线至飞行器失败，无法执行飞行任务，请稍后重试或重启机场后重试 | Dock failed to transmit precise shoot route, unable to fly, try again or restart dock
+	DJIErrorCode_DJI_ROUTE_FILE_PARSE_FAILED_CANNOT_FLY      DJIErrorCode = 314016 // 航线文件解析失败，无法执行飞行任务，请检查航线文件 | Route file parsing failed, unable to perform flight task, check the route file
+	DJIErrorCode_DJI_ROUTE_FILE_PARSE_FAILED_CHECK_ROUTE     DJIErrorCode = 314017 // 航线文件解析失败，请检查航线后再试 | Route file parsing failed, check the route and try again
+	DJIErrorCode_DJI_AIRCRAFT_RTK_POSITION_ERROR             DJIErrorCode = 314018 // 飞行器 RTK 定位异常，无法执行飞行任务，请稍后重试或重启机场后重试 | Aircraft RTK positioning abnormal, unable to fly, try again or restart dock
+	DJIErrorCode_DJI_AIRCRAFT_RTK_CONVERGENCE_FAILED         DJIErrorCode = 314019 // 飞行器 RTK 收敛失败，无法执行飞行任务，请稍后重试或重启机场后重试 | Aircraft RTK convergence failed, unable to fly, try again or restart dock
+	DJIErrorCode_DJI_AIRCRAFT_POSITION_WRONG_CANNOT_FLY      DJIErrorCode = 314020 // 飞行器不在停机坪正中间或飞行器朝向不正确，无法执行飞行任务，请检查飞行器位置和朝向 | Aircraft is not in the center of tarmac or direction is wrong, check position and direction
+	DJIErrorCode_DJI_AIRCRAFT_RTK_POSITION_ERROR_AGAIN       DJIErrorCode = 314021 // 飞行器 RTK 定位异常，无法执行飞行任务，请稍后重试或重启机场后重试 | Aircraft RTK positioning abnormal, unable to fly, try again or restart dock
+	DJIErrorCode_DJI_TAKEOFF_LAND_ROUTE_DELIVER_FAILED       DJIErrorCode = 314024 // 进离场航线下发失败，请稍后重试或重启机场后重试 | Takeoff and landing route delivery failed, try again or restart dock
+	DJIErrorCode_DJI_RTK_CONVERGENCE_TIMEOUT_USER_CANCEL     DJIErrorCode = 314025 // RTK收敛超时，用户手动取消任务 | RTK convergence timed out, user canceled the task manually
+	DJIErrorCode_DJI_TASK_FAILED_NET_DISCONNECT_RETURN       DJIErrorCode = 314200 // 任务失败，由于机场网络断开，飞行器已自动返航，请确保机场已连接网络后再试 | Task failed, aircraft returned automatically due to dock network disconnection, ensure dock is online
+	// ************************ 机场通信模块（315段）************************
+	DJIErrorCode_DJI_AIRPORT_COMM_ERROR_RESTART                          DJIErrorCode = 315000 // 机场通信异常，请重启机场后重试 | Airport communication abnormal, restart the dock and try again
+	DJIErrorCode_DJI_AIRPORT_COMM_ERROR_REMOTE_START_AIRCRAFT            DJIErrorCode = 315001 // 机场通信异常，请远程开启飞机并等待 1min 后，再次下发任务重试 | Airport communication abnormal, start aircraft remotely, wait 1 minute and re-deliver task
+	DJIErrorCode_DJI_AIRPORT_COMM_ERROR_RESTART_AGAIN                    DJIErrorCode = 315002 // 机场通信异常，请重启机场后重试 | Airport communication abnormal, restart the dock and try again
+	DJIErrorCode_DJI_AIRPORT_COMM_ERROR_RESTART_THIRD                    DJIErrorCode = 315003 // 机场通信异常，请重启机场后重试 | Airport communication abnormal, restart the dock and try again
+	DJIErrorCode_DJI_TASK_FAILED_TWO_DOCKS_BUSY                          DJIErrorCode = 315004 // 任务失败，请等待两个机场都空闲后，再次下发任务重试 | Task failed, two docks are busy, wait until idle and re-deliver task
+	DJIErrorCode_DJI_AIRPORT_COMM_ERROR_RESTART_FOURTH                   DJIErrorCode = 315005 // 机场通信异常，请重启机场后重试 | Airport communication abnormal, restart the dock and try again
+	DJIErrorCode_DJI_AIRPORT_COMM_ERROR_RESTART_FIFTH                    DJIErrorCode = 315006 // 机场通信异常，请重启机场后重试 | Airport communication abnormal, restart the dock and try again
+	DJIErrorCode_DJI_AIRPORT_COMM_ERROR_UPGRADE_DOCK                     DJIErrorCode = 315007 // 机场通信异常，请将机场升级到最新版本或重启机场后重试 | Airport communication abnormal, upgrade dock to latest version or restart it
+	DJIErrorCode_DJI_DOCK_CALIBRATION_INFO_INCONSISTENT                  DJIErrorCode = 315008 // 降落机场和起飞机场标定信息不一致，请确认两个机场均链路通畅且使用了相同的网络信息标定 | Takeoff and landing dock calibration info inconsistent, ensure both docks are online and calibrated with same network info
+	DJIErrorCode_DJI_AIRPORT_COMM_ERROR_RESTART_SIXTH                    DJIErrorCode = 315009 // 机场通信异常，请重启机场后重试 | Airport communication abnormal, restart the dock and try again
+	DJIErrorCode_DJI_CANNOT_STOP_FLIGHT_TASK_RETRY                       DJIErrorCode = 315010 // 无法停止飞行任务，请稍后重试，如果仍报错请联系大疆售后 | Cannot stop flight task, try again later, contact DJI support if error persists
+	DJIErrorCode_DJI_CANNOT_STOP_FLIGHT_TASK_RETRY_AGAIN                 DJIErrorCode = 315011 // 无法停止飞行任务，请稍后重试，如果仍报错请联系大疆售后 | Cannot stop flight task, try again later, contact DJI support if error persists
+	DJIErrorCode_DJI_CANNOT_STOP_FLIGHT_TASK_RETRY_THIRD                 DJIErrorCode = 315012 // 无法停止飞行任务，请稍后重试，如果仍报错请联系大疆售后 | Cannot stop flight task, try again later, contact DJI support if error persists
+	DJIErrorCode_DJI_FLIGHT_TASK_DELIVER_FAILED_CONTACT_SUPPORT          DJIErrorCode = 315013 // 飞行任务下发失败，请稍后重试，如果仍报错请联系大疆售后 | Flight task delivery failed, try again later, contact DJI support if error persists
+	DJIErrorCode_DJI_TASK_TYPE_NOT_SUPPORT_RETURN_POINT                  DJIErrorCode = 315014 // 当前任务类型不支持设置返航点 | Current task type does not support setting return point
+	DJIErrorCode_DJI_RETURN_POINT_SET_FAILED_CONTACT_SUPPORT             DJIErrorCode = 315015 // 返航点设置失败，请稍后重试，如果仍报错请联系大疆售后 | Return point setting failed, try again later, contact DJI support if error persists
+	DJIErrorCode_DJI_FLIGHT_TASK_DELIVER_FAILED_CONTACT_SUPPORT_AGAIN    DJIErrorCode = 315016 // 飞行任务下发失败，请稍后重试，如果仍报错请联系大疆售后 | Flight task delivery failed, try again later, contact DJI support if error persists
+	DJIErrorCode_DJI_FLIGHT_TASK_DELIVER_FAILED_CONTACT_SUPPORT_THIRD    DJIErrorCode = 315017 // 飞行任务下发失败，请稍后重试，如果仍报错请联系大疆售后 | Flight task delivery failed, try again later, contact DJI support if error persists
+	DJIErrorCode_DJI_TASK_FAILED_TWO_DOCKS_BUSY_AGAIN                    DJIErrorCode = 315018 // 任务失败，请等待两个机场都空闲后，再次下发任务重试 | Task failed, two docks are busy, wait until idle and re-deliver task
+	DJIErrorCode_DJI_DOCK_POSITION_BAD_CANNOT_FROG_JUMP                  DJIErrorCode = 315019 // 设备部署位置不佳，无法执行蛙跳任务，请选择其它机场再试 | Dock position is poor, unable to perform frog jump task, choose another dock
+	DJIErrorCode_DJI_DOCK_SYSTEM_ERROR_RESTART                           DJIErrorCode = 315050 // 机场系统异常，请重启机场后重试 | Dock system abnormal, restart the dock and try again
+	DJIErrorCode_DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT            DJIErrorCode = 315051 // 任务失败，请重启机场并再次下发任务后重试，如果仍报错请联系大疆售后 | Task failed, restart dock and re-deliver task, contact DJI support if error persists
+	DJIErrorCode_DJI_DOCK_POSITION_NOT_CONVERGED_WAIT                    DJIErrorCode = 315052 // 机场位置未收敛，请等待一段时间后重试 | Dock position not converged, wait for a while and try again
+	DJIErrorCode_DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_AGAIN      DJIErrorCode = 315053 // 任务失败，请重启机场并再次下发任务后重试，如果仍报错请联系大疆售后 | Task failed, restart dock and re-deliver task, contact DJI support if error persists
+	DJIErrorCode_DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_THIRD      DJIErrorCode = 315054 // 任务失败，请重启机场并再次下发任务后重试，如果仍报错请联系大疆售后 | Task failed, restart dock and re-deliver task, contact DJI support if error persists
+	DJIErrorCode_DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_FOURTH     DJIErrorCode = 315055 // 任务失败，请重启机场并再次下发任务后重试，如果仍报错请联系大疆售后 | Task failed, restart dock and re-deliver task, contact DJI support if error persists
+	DJIErrorCode_DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_FIFTH      DJIErrorCode = 315056 // 任务失败，请重启机场并再次下发任务后重试，如果仍报错请联系大疆售后 | Task failed, restart dock and re-deliver task, contact DJI support if error persists
+	DJIErrorCode_DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_SIXTH      DJIErrorCode = 315057 // 任务失败，请重启机场并再次下发任务后重试，如果仍报错请联系大疆售后 | Task failed, restart dock and re-deliver task, contact DJI support if error persists
+	DJIErrorCode_DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_SEVENTH    DJIErrorCode = 315058 // 任务失败，请重启机场并再次下发任务后重试，如果仍报错请联系大疆售后 | Task failed, restart dock and re-deliver task, contact DJI support if error persists
+	DJIErrorCode_DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_EIGHTH     DJIErrorCode = 315059 // 任务失败，请重启机场并再次下发任务后重试，如果仍报错请联系大疆售后 | Task failed, restart dock and re-deliver task, contact DJI support if error persists
+	DJIErrorCode_DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_NINTH      DJIErrorCode = 315060 // 任务失败，请重启机场并再次下发任务后重试，如果仍报错请联系大疆售后 | Task failed, restart dock and re-deliver task, contact DJI support if error persists
+	DJIErrorCode_DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_TENTH      DJIErrorCode = 315061 // 任务失败，请重启机场并再次下发任务后重试，如果仍报错请联系大疆售后 | Task failed, restart dock and re-deliver task, contact DJI support if error persists
+	DJIErrorCode_DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_ELEVENTH   DJIErrorCode = 315062 // 任务失败，请重启机场并再次下发任务后重试，如果仍报错请联系大疆售后 | Task failed, restart dock and re-deliver task, contact DJI support if error persists
+	DJIErrorCode_DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_TWELFTH    DJIErrorCode = 315063 // 任务失败，请重启机场并再次下发任务后重试，如果仍报错请联系大疆售后 | Task failed, restart dock and re-deliver task, contact DJI support if error persists
+	DJIErrorCode_DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_THIRTEENTH DJIErrorCode = 315064 // 任务失败，请重启机场并再次下发任务后重试，如果仍报错请联系大疆售后 | Task failed, restart dock and re-deliver task, contact DJI support if error persists
+	DJIErrorCode_DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_FOURTEENTH DJIErrorCode = 315065 // 任务失败，请重启机场并再次下发任务后重试，如果仍报错请联系大疆售后 | Task failed, restart dock and re-deliver task, contact DJI support if error persists
+	// ************************ 飞行器参数配置模块（316段）************************
+	DJIErrorCode_DJI_AIRCRAFT_PARAM_SET_FAILED_RESTART          DJIErrorCode = 316001 // 飞行器参数配置失败，请重启机场后重试 | Aircraft parameter setting failed, restart the dock and try again
+	DJIErrorCode_DJI_AIRCRAFT_PARAM_SET_FAILED_RESTART_AGAIN    DJIErrorCode = 316002 // 飞行器参数配置失败，请重启机场后重试 | Aircraft parameter setting failed, restart the dock and try again
+	DJIErrorCode_DJI_AIRCRAFT_PARAM_SET_FAILED_RESTART_THIRD    DJIErrorCode = 316003 // 飞行器参数配置失败，请重启机场后重试 | Aircraft parameter setting failed, restart the dock and try again
+	DJIErrorCode_DJI_AIRCRAFT_PARAM_SET_FAILED_RESTART_FOURTH   DJIErrorCode = 316004 // 飞行器参数配置失败，请重启机场后重试 | Aircraft parameter setting failed, restart the dock and try again
+	DJIErrorCode_DJI_AIRCRAFT_RTK_CONVERGENCE_FAILED_RESTART    DJIErrorCode = 316005 // 飞行器 RTK 收敛失败，无法执行飞行任务，请重启机场后重试 | Aircraft RTK convergence failed, unable to fly, restart the dock
+	DJIErrorCode_DJI_TASK_TIMEOUT_AIRCRAFT_LOST                 DJIErrorCode = 316006 // 任务超时，飞行器已丢失或降落时机场未开启舱盖或展开推杆，飞行器无法降落回机场，请尽快至机场部署现场检查飞行器状况 | Task timed out, aircraft lost or unable to land (dock cover/rod not open), check aircraft on site immediately
+	DJIErrorCode_DJI_AIRCRAFT_INIT_FAILED_RESTART_DOCK_FOURTH   DJIErrorCode = 316007 // 飞行器初始化失败，请重启机场后重试 | Aircraft initialization failed, restart the dock and try again
+	DJIErrorCode_DJI_DOCK_GET_CONTROL_FAILED_REMOTE_LOCKED      DJIErrorCode = 316008 // 机场获取飞行器控制权失败，无法执行飞行任务，请确认遥控器未锁定控制权 | Dock failed to get aircraft control, ensure remote controller is not locked
+	DJIErrorCode_DJI_AIRCRAFT_LOW_BATTERY_BELOW_30PCT           DJIErrorCode = 316009 // 飞行器电量低于30%，无法执行飞行任务，请充电后重试（建议电量≥50%） | Aircraft battery below 30%, unable to fly, charge it (recommend ≥50%)
+	DJIErrorCode_DJI_DOCK_NO_AIRCRAFT_DETECTED_CANNOT_FLY       DJIErrorCode = 316010 // 机场未检测到飞行器，无法执行飞行任务，请检查舱内是否有飞行器，机场与飞行器是否已对频，或重启机场后重试 | Dock no aircraft detected, check if aircraft is in dock, paired, or restart dock
+	DJIErrorCode_DJI_AIRCRAFT_LAND_POSITION_OFFSET              DJIErrorCode = 316011 // 飞行器降落位置偏移过大，请检查飞行器是否需要现场摆正 | Aircraft landing position offset too much, check and adjust aircraft on site
+	DJIErrorCode_DJI_AIRCRAFT_PREPARE_FAILED_CANNOT_FLY_AGAIN   DJIErrorCode = 316012 // 飞行器起飞前准备失败，无法执行飞行任务，请重启机场后重试 | Aircraft pre-takeoff preparation failed, unable to fly, restart the dock
+	DJIErrorCode_DJI_AIRCRAFT_PREPARE_FAILED_CANNOT_FLY_THIRD   DJIErrorCode = 316013 // 飞行器起飞前准备失败，无法执行飞行任务，请重启机场后重试 | Aircraft pre-takeoff preparation failed, unable to fly, restart the dock
+	DJIErrorCode_DJI_AIRCRAFT_PREPARE_FAILED_CANNOT_FLY_FOURTH  DJIErrorCode = 316014 // 飞行器起飞前准备失败，无法执行飞行任务，请重启机场后重试 | Aircraft pre-takeoff preparation failed, unable to fly, restart the dock
+	DJIErrorCode_DJI_AIRCRAFT_RTK_CONVERGENCE_TOO_FAR           DJIErrorCode = 316015 // 飞行器 RTK 收敛位置距离机场过远，无法执行飞行任务，请重启机场后重试 | Aircraft RTK convergence position is too far from dock, unable to fly, restart dock
+	DJIErrorCode_DJI_AIRCRAFT_LAND_TIMEOUT_DISCONNECTED         DJIErrorCode = 316016 // 飞行器降落至机场超时，可能是机场与飞行器断连导致，请通过直播查看飞行器是否降落至舱内 | Aircraft landing timed out, possibly disconnected, check landing status via live stream
+	DJIErrorCode_DJI_MEDIA_COUNT_GET_TIMEOUT_DISCONNECTED       DJIErrorCode = 316017 // 获取飞行器媒体数量超时，可能是机场与飞行器断连导致，请通过直播查看飞行器是否降落至舱内 | Aircraft media count get timed out, possibly disconnected, check landing status via live stream
+	DJIErrorCode_DJI_FLIGHT_TASK_TIMEOUT_DISCONNECTED           DJIErrorCode = 316018 // 飞行任务执行超时，可能是机场与飞行器断连导致，请通过直播查看飞行器是否降落至舱内 | Flight task execution timed out, possibly disconnected, check landing status via live stream
+	DJIErrorCode_DJI_DOCK_SYSTEM_ERROR_CANNOT_FLY               DJIErrorCode = 316019 // 机场系统错误，无法执行飞行任务，请稍后重试 | Dock system error, unable to perform flight task, try again later
+	DJIErrorCode_DJI_AIRCRAFT_RTK_SOURCE_ERROR                  DJIErrorCode = 316020 // 飞行器使用的 RTK 信号源错误，请稍后重试 | Aircraft uses wrong RTK signal source, try again later
+	DJIErrorCode_DJI_AIRCRAFT_RTK_SOURCE_CHECK_TIMEOUT          DJIErrorCode = 316021 // 飞行器 RTK 信号源检查超时，请稍后重试 | Aircraft RTK signal source check timed out, try again later
+	DJIErrorCode_DJI_AIRCRAFT_CANNOT_RETURN_DISCONNECTED        DJIErrorCode = 316022 // 飞行器无法执行返航指令，请检查飞行器是否已开机，机场与飞行器是否已断连，请确认无以上问题后重试 | Aircraft cannot execute return command, check if aircraft is on or disconnected
+	DJIErrorCode_DJI_AIRCRAFT_CANNOT_RETURN_CONTROLLED_BY_B     DJIErrorCode = 316023 // 飞行器无法执行返航指令，飞行器已被 B 控接管，请在 B 控操控飞行器，或关闭 B 控后重试 | Aircraft cannot return, controlled by B controller, operate via B controller or turn it off
+	DJIErrorCode_DJI_AIRCRAFT_RETURN_FAILED_NOT_TAKEN_OFF       DJIErrorCode = 316024 // 飞行器执行返航指令失败，请检查飞行器是否已起飞，确认飞行器已起飞后请重试 | Aircraft return failed, check if aircraft has taken off, try again after takeoff
+	DJIErrorCode_DJI_AIRCRAFT_PARAM_SET_FAILED_RETRY_RESTART    DJIErrorCode = 316025 // 飞行器参数配置失败，请稍后重试或重启机场后重试 | Aircraft parameter setting failed, try again later or restart dock
+	DJIErrorCode_DJI_DOCK_EMERGENCY_STOP_PRESSED                DJIErrorCode = 316026 // 机场急停按钮被按下，无法执行飞行任务，请释放急停按钮后重试 | Dock emergency stop button pressed, unable to fly, release the button and try again
+	DJIErrorCode_DJI_AIRCRAFT_PARAM_SET_TIMEOUT_RETRY_RESTART   DJIErrorCode = 316027 // 飞行器参数配置超时，请稍后重试或重启机场后重试 | Aircraft parameter setting timed out, try again later or restart dock
+	DJIErrorCode_DJI_DOCK_EMERGENCY_STOP_PRESSED_RETURN_ALT     DJIErrorCode = 316029 // 机场急停按钮被按下，飞行器将飞往备降点降落，请立即检查飞行器是否已安全降落并将飞行器放回至机场 | Dock emergency stop pressed, aircraft will land at alternate point, check and retrieve aircraft immediately
+	DJIErrorCode_DJI_BATTERY_DATA_GET_TIMEOUT_RETRY             DJIErrorCode = 316032 // 获取电池数据超时，请稍后重试或重启飞行器后重试 | Battery data get timed out, try again later or restart aircraft
+	DJIErrorCode_DJI_AIRCRAFT_BATTERY_CYCLE_TOO_MANY            DJIErrorCode = 316033 // 飞行器电池循环次数过高，为保证飞行安全，已自动终止任务，建议更换该电池 | Aircraft battery cycle count too high, task terminated automatically for safety, recommend battery replacement
+	DJIErrorCode_DJI_AIRCRAFT_DOCK_FIRMWARE_MISMATCH            DJIErrorCode = 316034 // 无法起飞，飞行器固件版本与机场固件版本不匹配，为保证飞行安全请升级固件后再试 | Cannot take off, aircraft and dock firmware version mismatch, upgrade firmware for safety
+	DJIErrorCode_DJI_TAKEOFF_LAND_ROUTE_FAILED_UPGRADE_FIRMWARE DJIErrorCode = 316035 // 进离场航线下发失败，请确保设备固件为最新版本后重新下发任务，如果持续报错，请联系大疆售后 | Takeoff/landing route failed, upgrade firmware to latest version, contact DJI support if error persists
+	DJIErrorCode_DJI_AIRCRAFT_LOW_BATTERY_LANDED_OUTSIDE        DJIErrorCode = 316050 // 飞行器因电量过低在舱外降落，请立即检查飞行器是否已安全降落并将飞行器放回至机场 | Aircraft landed outside due to low battery, check and retrieve aircraft immediately
+	DJIErrorCode_DJI_FLIGHT_TASK_ABNORMAL_LANDED_OUTSIDE        DJIErrorCode = 316051 // 飞行任务异常，飞行器在舱外降落，请立即检查飞行器是否已安全降落并将飞行器放回至机场 | Flight task abnormal, aircraft landed outside, check and retrieve aircraft immediately
+	DJIErrorCode_DJI_FLIGHT_TASK_ABNORMAL_RETURN_ALT            DJIErrorCode = 316052 // 飞行任务异常，飞行器将飞往备降点降落，请立即检查飞行器是否已安全降落并将飞行器放回至机场 | Flight task abnormal, aircraft fly to alternate point, check and retrieve aircraft immediately
+	DJIErrorCode_DJI_USER_CONTROLLED_AIRCRAFT_LANDED            DJIErrorCode = 316053 // 用户已操控飞行器降落，请立即检查飞行器是否已安全降落并将飞行器放回至机场 | User controlled aircraft to land, check and retrieve aircraft immediately
+	// ************************ 相机功能模块（3161段）************************
+	DJIErrorCode_DJI_CAMERA_INFO_GET_FAILED_RETRY              DJIErrorCode = 316100 // 获取相机概要信息失败，请重试 | Get camera basic info failed, try again
+	DJIErrorCode_DJI_CAMERA_SET_SINGLE_SHOOT_FAILED            DJIErrorCode = 316101 // 设置相机为单拍模式失败，请重试 | Set camera to single shoot mode failed, try again
+	DJIErrorCode_DJI_CAMERA_WATERMARK_CLOSE_FAILED             DJIErrorCode = 316102 // 关闭相机水印失败，请重试 | Close camera watermark failed, try again
+	DJIErrorCode_DJI_CAMERA_SET_METERING_MODE_FAILED           DJIErrorCode = 316103 // 设置测光模式到平均测光失败，请重试 | Set camera metering mode to average failed, try again
+	DJIErrorCode_DJI_CAMERA_SWITCH_WIDE_LENS_FAILED            DJIErrorCode = 316104 // 切换镜头到广角镜头失败，请重试 | Switch camera lens to wide angle failed, try again
+	DJIErrorCode_DJI_CAMERA_SET_PHOTO_STORAGE_FAILED           DJIErrorCode = 316105 // 设置相机存储照片失败，请重试 | Set camera photo storage failed, try again
+	DJIErrorCode_DJI_CAMERA_IR_ZOOM_FAILED                     DJIErrorCode = 316106 // 红外变焦倍数设置失败，请重试 | Set camera IR zoom multiple failed, try again
+	DJIErrorCode_DJI_CAMERA_SET_4K_RESOLUTION_FAILED           DJIErrorCode = 316107 // 照片尺寸设置4k失败，请重试 | Set camera photo resolution to 4K failed, try again
+	DJIErrorCode_DJI_CAMERA_SET_JPEG_FORMAT_FAILED             DJIErrorCode = 316108 // 设置照片存储格式为jpeg格式失败，请重试 | Set camera photo format to JPEG failed, try again
+	DJIErrorCode_DJI_CAMERA_DISTORTION_CORRECTION_CLOSE_FAILED DJIErrorCode = 316109 // 关闭相机畸变矫正失败，请重试 | Close camera distortion correction failed, try again
+	DJIErrorCode_DJI_CAMERA_MECHANICAL_SHUTTER_OPEN_FAILED     DJIErrorCode = 316110 // 打开相机机械快门失败，请重试 | Open camera mechanical shutter failed, try again
+	DJIErrorCode_DJI_CAMERA_SET_FOCUS_MODE_FAILED              DJIErrorCode = 316111 // 设置对焦模式失败，请重试 | Set camera focus mode failed, try again
+	// ************************ 媒体文件管理模块（317段）************************
+	DJIErrorCode_DJI_AIRCRAFT_MEDIA_COUNT_GET_FAILED             DJIErrorCode = 317001 // 获取飞行器媒体文件数量失败，请重启机场后重试 | Get aircraft media file count failed, restart the dock
+	DJIErrorCode_DJI_AIRCRAFT_STORAGE_FORMAT_FAILED_DISCONNECTED DJIErrorCode = 317002 // 飞行器存储格式化失败，飞行器未开机、未连接或未检测到相机，请确认无以上问题后重试，或重启飞行器后重试 | Aircraft storage format failed, check if aircraft is on/connected or camera detected, or restart aircraft
+	DJIErrorCode_DJI_AIRCRAFT_STORAGE_FORMAT_FAILED_RESTART      DJIErrorCode = 317003 // 飞行器存储格式化失败，请重启飞行器后重试 | Aircraft storage format failed, restart the aircraft
+	DJIErrorCode_DJI_DOCK_MEDIA_FORMAT_FAILED_RETRY              DJIErrorCode = 317004 // 机场媒体文件格式化失败，请稍后重试或重启机场后重试 | Dock media format failed, try again later or restart dock
+	DJIErrorCode_DJI_AIRCRAFT_STOP_RECORD_FAILED_MEDIA_LOST      DJIErrorCode = 317005 // 飞行器结束录像失败，本次飞行任务的媒体文件可能无法上传 | Aircraft stop record failed, media files of this task may not be uploaded
+	DJIErrorCode_DJI_CANNOT_FORMAT_MEDIA_DOWNLOADING             DJIErrorCode = 317006 // 无法格式化，请等待当前飞行器媒体文件下载完成后再试 | Cannot format, wait for aircraft media file download to complete
+	DJIErrorCode_DJI_MEDIA_COUNT_GET_FAILED_CONTACT_SUPPORT      DJIErrorCode = 317007 // 获取媒体文件数量失败，请稍后重试，如本架次任务有媒体文件且持续报错可联系大疆售后 | Get media count failed, try again later, contact DJI support if media exists
+	// ************************ 机场系统运行模块（319段）************************
+	DJIErrorCode_DJI_DOCK_BUSY_CANNOT_FLY                     DJIErrorCode = 319001 // 机场作业中或设备异常反馈上传日志中，无法执行飞行任务，请等待当前飞行任务或操作执行完成后重试 | Dock is busy (working/log uploading), unable to fly, wait for operation to complete
+	DJIErrorCode_DJI_DOCK_SYSTEM_RUN_ERROR_RESTART            DJIErrorCode = 319002 // 机场系统运行异常，请重启机场后重试 | Dock system running abnormal, restart the dock
+	DJIErrorCode_DJI_DOCK_SYSTEM_RUN_ERROR_REDELIVER_TASK     DJIErrorCode = 319003 // 机场系统运行异常，请重新下发任务 | Dock system running abnormal, re-deliver the flight task
+	DJIErrorCode_DJI_FLIGHT_TASK_TIMEOUT_AUTOMATIC_STOP       DJIErrorCode = 319004 // 飞行任务执行超时，已自动终止本次飞行任务 | Flight task execution timed out, task terminated automatically
+	DJIErrorCode_DJI_CLOUD_DOCK_COMM_ERROR_CANNOT_FLY         DJIErrorCode = 319005 // 云端与机场通信异常，无法执行飞行任务 | Cloud and dock communication abnormal, unable to perform flight task
+	DJIErrorCode_DJI_CANCEL_FLIGHT_TASK_FAILED_RUNNING        DJIErrorCode = 319006 // 取消飞行任务失败，飞行任务已经在执行中 | Cancel flight task failed, task is already running
+	DJIErrorCode_DJI_MODIFY_FLIGHT_TASK_FAILED_RUNNING        DJIErrorCode = 319007 // 修改飞行任务失败，飞行任务已经在执行中 | Modify flight task failed, task is already running
+	DJIErrorCode_DJI_DOCK_CLOUD_TIME_NOT_SYNC                 DJIErrorCode = 319008 // 机场时间与云端时间不同步，机场无法执行飞行任务 | Dock and cloud time not synchronized, unable to fly
+	DJIErrorCode_DJI_FLIGHT_TASK_DELIVER_FAILED_RETRY_RESTART DJIErrorCode = 319009 // 飞行任务下发失败，请稍后重试或重启机场后重试 | Flight task delivery failed, try again later or restart dock
+	DJIErrorCode_DJI_DOCK_FIRMWARE_TOO_OLD_UPGRADE            DJIErrorCode = 319010 // 机场固件版本过低，无法执行飞行任务，请升级机场固件为最新版本后重试 | Dock firmware version too old, unable to fly, upgrade to latest version
+	DJIErrorCode_DJI_DOCK_INITIALIZING_CANNOT_FLY             DJIErrorCode = 319015 // 机场正在初始化中，无法执行飞行任务，请等待机场初始化完成后重试 | Dock is initializing, unable to fly, wait for initialization to complete
+	DJIErrorCode_DJI_DOCK_EXECUTING_OTHER_TASK                DJIErrorCode = 319016 // 机场正在执行其他飞行任务，无法执行本次飞行任务 | Dock is executing other flight task, unable to perform current task
+	DJIErrorCode_DJI_DOCK_PROCESSING_MEDIA_CANNOT_FLY         DJIErrorCode = 319017 // 机场正在处理上次飞行任务媒体文件，无法执行本次飞行任务，请稍后重试 | Dock is processing last task media, unable to fly, try again later
+	DJIErrorCode_DJI_DOCK_EXPORTING_LOG_CANNOT_FLY            DJIErrorCode = 319018 // 机场正在自动导出日志中（设备异常反馈），无法执行飞行任务，请稍后重试 | Dock is exporting log (device error feedback), unable to fly, try again later
+	DJIErrorCode_DJI_DOCK_PULLING_LOG_CANNOT_FLY              DJIErrorCode = 319019 // 机场正在拉取日志中（设备异常反馈），无法执行飞行任务，请稍后重试 | Dock is pulling log (device error feedback), unable to fly, try again later
+	DJIErrorCode_DJI_ROUTE_INTERRUPT_FAILED_RETRY             DJIErrorCode = 319020 // 航线中断失败，请稍后重试 | Route interrupt failed, try again later
+	DJIErrorCode_DJI_REMOTE_CONTROL_EXIT_FAILED_RETRY         DJIErrorCode = 319021 // 退出远程控制失败，请稍后重试 | Exit remote control failed, try again later
+	DJIErrorCode_DJI_POINT_FLIGHT_FAILED_RETRY                DJIErrorCode = 319022 // 指点飞行失败，请稍后重试 | Point flight failed, try again later
+	DJIErrorCode_DJI_POINT_FLIGHT_STOP_FAILED_RETRY           DJIErrorCode = 319023 // 指点飞行停止失败，请稍后重试 | Point flight stop failed, try again later
+	DJIErrorCode_DJI_ONE_KEY_TAKEOFF_FAILED_RETRY             DJIErrorCode = 319024 // 一键起飞失败，请稍后重试 | One-key takeoff failed, try again later
+	DJIErrorCode_DJI_DOCK_NOT_READY_CANNOT_FLY                DJIErrorCode = 319025 // 机场未准备完成，无法执行云端下发的飞行任务，请稍后重试 | Dock is not ready, unable to execute cloud flight task, try again later
+	DJIErrorCode_DJI_AIRCRAFT_BATTERY_BELOW_USER_SETTING      DJIErrorCode = 319026 // 飞行器电池电量低于用户设置的任务开始执行的电量，请等待充电完成后再执行飞行任务 | Aircraft battery below user-set threshold, wait for full charge to start task
+	DJIErrorCode_DJI_DOCK_AIRCRAFT_STORAGE_FULL               DJIErrorCode = 319027 // 机场或飞行器剩余存储容量过低，无法执行飞行任务，请等待媒体文件上传，机场和飞行器存储容量释放后再执行飞行任务 | Dock/aircraft storage is low, unable to fly, wait for media upload to free up space
+	DJIErrorCode_DJI_CUSTOM_FLIGHT_AREA_UPDATING              DJIErrorCode = 319028 // 正在更新自定义飞行区 | Custom flight area is being updated
+	DJIErrorCode_DJI_OFFLINE_MAP_UPDATING                     DJIErrorCode = 319029 // 正在更新离线地图 | Offline map is being updated
+	DJIErrorCode_DJI_OPERATION_FAILED_NO_AIRCRAFT_CONTROL     DJIErrorCode = 319030 // 操作失败，无飞行器控制权 | Operation failed, no aircraft control right
+	DJIErrorCode_DJI_CONTROL_RIGHT_ABNORMAL_REFRESH           DJIErrorCode = 319031 // 控制权异常，请刷新重试 | Control right abnormal, refresh and try again
+	DJIErrorCode_DJI_POINT_FLIGHT_FAILED_RETRY_AGAIN          DJIErrorCode = 319032 // 指点飞行失败，请稍后重试 | Point flight failed, try again later
+	DJIErrorCode_DJI_VIRTUAL_JOYSTICK_OP_FAILED               DJIErrorCode = 319033 // 虚拟摇杆操作失败，请稍后重试 | Virtual joystick operation failed, try again later
+	DJIErrorCode_DJI_VIRTUAL_JOYSTICK_OP_FAILED_AGAIN         DJIErrorCode = 319034 // 虚拟摇杆操作失败，请稍后重试 | Virtual joystick operation failed, try again later
+	DJIErrorCode_DJI_EMERGENCY_STOP_FAILED_RETRY              DJIErrorCode = 319035 // 急停失败，请稍后重试 | Emergency stop failed, try again later
+	DJIErrorCode_DJI_DEVICE_REMOTE_DEBUGGING                  DJIErrorCode = 319036 // 设备远程调试中，请稍后重试 | Device is in remote debugging, try again later
+	DJIErrorCode_DJI_DEVICE_LOCAL_DEBUGGING                   DJIErrorCode = 319037 // 设备本地调试中，请稍后重试 | Device is in local debugging, try again later
+	DJIErrorCode_DJI_DEVICE_UPGRADING_CANNOT_OPERATE          DJIErrorCode = 319038 // 设备正在升级，请稍后重试 | Device is being upgraded, try again later
+	DJIErrorCode_DJI_ROUTE_RECOVER_FAILED_RETRY               DJIErrorCode = 319042 // 航线恢复失败，请稍后重试 | Route recover failed, try again later
+	DJIErrorCode_DJI_CANCEL_RETURN_FAILED_RETRY               DJIErrorCode = 319043 // 取消返航失败，请稍后重试 | Cancel return failed, try again later
+	DJIErrorCode_DJI_ROUTE_TASK_ENDED_CANNOT_RECOVER          DJIErrorCode = 319044 // 航线任务已结束，无法恢复 | Route task has ended, cannot be recovered
+	DJIErrorCode_DJI_EMERGENCY_STOP_SUCCESS_REPRESS           DJIErrorCode = 319045 // 急停成功，请重新按键操作 | Emergency stop succeeded, press the button again to operate
+	DJIErrorCode_DJI_CANNOT_PAUSE_ROUTE_NOT_ENTERED           DJIErrorCode = 319046 // 无法暂停航线，飞行器尚未进入航线或已退出航线 | Cannot pause route, aircraft not entered or exited the route
+	DJIErrorCode_DJI_DOCK_SYSTEM_RUN_ERROR_RESTART_AGAIN      DJIErrorCode = 319999 // 机场系统运行异常，请重启机场后重试 | Dock system running abnormal, restart the dock
+	// ************************ 航线执行模块（321段）************************
+	DJIErrorCode_DJI_ROUTE_EXECUTE_ABNORMAL_RETRY                    DJIErrorCode = 321000 // 航线执行异常，请稍后重试或重启机场后重试 | Route execution abnormal, try again later or restart dock
+	DJIErrorCode_DJI_ROUTE_FILE_PARSE_FAILED_CANNOT_EXECUTE          DJIErrorCode = 321004 // 航线文件解析失败，无法执行飞行任务，请检查航线文件 | Route file parsing failed, unable to execute flight task, check the route file
+	DJIErrorCode_DJI_ROUTE_NO_BREAKPOINT_INFO_CANNOT_FLY             DJIErrorCode = 321005 // 航线缺少断点信息，机场无法执行飞行任务 | Route missing breakpoint info, dock unable to perform flight task
+	DJIErrorCode_DJI_FLIGHT_TASK_ALREADY_RUNNING                     DJIErrorCode = 321257 // 飞行任务已在执行中，请勿重复执行 | Flight task is already running, do not repeat execution
+	DJIErrorCode_DJI_CANNOT_TERMINATE_FLIGHT_TASK_CHECK_STATUS       DJIErrorCode = 321258 // 飞行任务无法终止，请检查飞行器状态 | Cannot terminate flight task, check aircraft status
+	DJIErrorCode_DJI_CANNOT_TERMINATE_TASK_NOT_STARTED               DJIErrorCode = 321259 // 飞行任务未开始执行，无法终止飞行任务 | Cannot terminate flight task, task not started
+	DJIErrorCode_DJI_CANNOT_INTERRUPT_TASK_NOT_STARTED               DJIErrorCode = 321260 // 飞行任务未开始执行，无法中断飞行任务 | Cannot interrupt flight task, task not started
+	DJIErrorCode_DJI_ROUTE_HEIGHT_EXCEED_MAX_LIMIT                   DJIErrorCode = 321513 // 航线规划高度已超过飞行器限高，机场无法执行飞行任务 | Route planned height exceeds aircraft max limit, unable to fly
+	DJIErrorCode_DJI_TASK_FAILED_POINT_EXCEED_RANGE                  DJIErrorCode = 321514 // 任务失败，起点或终点位于限远区域的缓冲区内或超过了限远距离 | Task failed, start/end point exceeds distance limit or buffer zone
+	DJIErrorCode_DJI_ROUTE_CROSS_NO_FLY_ZONE                         DJIErrorCode = 321515 // 航线穿过限飞区，机场无法执行飞行任务 | Route crosses no-fly zone, unable to perform flight task
+	DJIErrorCode_DJI_AIRCRAFT_HEIGHT_TOO_LOW_TASK_STOPPED            DJIErrorCode = 321516 // 飞行器飞行高度过低，飞行任务执行被终止 | Aircraft flight height too low, flight task terminated
+	DJIErrorCode_DJI_AIRCRAFT_OBSTACLE_AVOID_TASK_STOPPED            DJIErrorCode = 321517 // 飞行器触发避障，飞行任务执行被终止。为保证飞行安全，请勿用当前航线执行断点续飞任务 | Aircraft triggered obstacle avoidance, task terminated, do not resume with current route for safety
+	DJIErrorCode_DJI_AIRCRAFT_APPROACH_LIMIT_RETURN                  DJIErrorCode = 321519 // 飞行器接近限飞区或限远距离自动返航，无法完成航线飞行 | Aircraft approaches no-fly/distance limit, returns automatically, unable to complete route
+	DJIErrorCode_DJI_AIRCRAFT_TAKEOFF_FAILED_CONTACT_SUPPORT         DJIErrorCode = 321523 // 飞行器起飞失败，请稍后重试，如果仍报错请联系大疆售后 | Aircraft takeoff failed, try again later, contact DJI support if error persists
+	DJIErrorCode_DJI_AIRCRAFT_PREPARE_FAILED_POSITION_GEAR           DJIErrorCode = 321524 // 飞行器起飞前准备失败，可能是飞行器无法定位或档位错误导致，请检查飞行器状态 | Aircraft pre-takeoff failed, possibly positioning/gear error, check aircraft status
+	DJIErrorCode_DJI_CUSTOM_FLIGHT_AREA_BOUNDARY_TASK_PAUSED         DJIErrorCode = 321528 // 触碰自定义飞行区边界，航线任务已暂停 | Touch custom flight area boundary, route task paused
+	DJIErrorCode_DJI_TARGET_IN_NO_FLY_ZONE_TASK_PAUSED               DJIErrorCode = 321529 // 目标点位于禁飞区域或者障碍物内，无法到达，航线任务已暂停，请重新规划后再试 | Target in no-fly/obstacle zone, unreachable, route task paused, re-plan and try again
+	DJIErrorCode_DJI_ROUTE_TRACK_PLAN_FAILED_TASK_PAUSED             DJIErrorCode = 321530 // 飞行器飞行航线过程中轨迹规划失败，航线任务已暂停 | Aircraft route track planning failed, route task paused
+	DJIErrorCode_DJI_TAKEOFF_LAND_ROUTE_FAILED_CONTACT_SUPPORT       DJIErrorCode = 321531 // 进离场航线执行失败，请联系大疆售后 | Takeoff/landing route execution failed, contact DJI support
+	DJIErrorCode_DJI_TAKEOFF_LAND_ROUTE_FAILED_CONTACT_SUPPORT_AGAIN DJIErrorCode = 321532 // 进离场航线执行失败，请联系大疆售后 | Takeoff/landing route execution failed, contact DJI support
+	DJIErrorCode_DJI_TAKEOFF_LAND_ROUTE_FAILED_CONTACT_SUPPORT_THIRD DJIErrorCode = 321533 // 进离场航线执行失败，请联系大疆售后 | Takeoff/landing route execution failed, contact DJI support
+	DJIErrorCode_DJI_AIRCRAFT_SATELLITE_SIGNAL_WEAK                  DJIErrorCode = 321769 // 飞行器卫星定位信号差，无法执行飞行任务，请重启机场后重试 | Aircraft satellite signal weak, unable to fly, restart the dock
+	DJIErrorCode_DJI_AIRCRAFT_GEAR_ERROR_CANNOT_FLY                  DJIErrorCode = 321770 // 飞行器挡位错误，无法执行飞行任务，请重启机场后重试 | Aircraft gear error, unable to fly, restart the dock
+	DJIErrorCode_DJI_AIRCRAFT_NO_RETURN_POINT_CANNOT_FLY             DJIErrorCode = 321771 // 飞行器返航点未设置，无法执行飞行任务，请重启机场后重试 | Aircraft no return point set, unable to fly, restart the dock
+	DJIErrorCode_DJI_AIRCRAFT_LOW_BATTERY_BELOW_30PCT_AGAIN          DJIErrorCode = 321772 // 飞行器电量低于30%，无法执行飞行任务，请充电后重试（建议电量≥50%） | Aircraft battery below 30%, unable to fly, charge it (recommend ≥50%)
+	DJIErrorCode_DJI_AIRCRAFT_LOW_BATTERY_RETURN_DURING_FLIGHT       DJIErrorCode = 321773 // 飞行器执行飞行任务过程中低电量返航，无法完成航线飞行 | Aircraft returns due to low battery during flight, unable to complete route
+	DJIErrorCode_DJI_AIRCRAFT_DISCONNECTED_DURING_FLIGHT             DJIErrorCode = 321775 // 飞行器航线飞行过程中失联，无法完成航线飞行 | Aircraft disconnected during route flight, unable to complete route
+	DJIErrorCode_DJI_AIRCRAFT_RTK_CONVERGENCE_FAILED_RESTART_AGAIN   DJIErrorCode = 321776 // 飞行器 RTK 收敛失败，无法执行飞行任务，请重启机场后重试 | Aircraft RTK convergence failed, unable to fly, restart the dock
+	DJIErrorCode_DJI_AIRCRAFT_NOT_HOVER_CANNOT_START                 DJIErrorCode = 321777 // 飞行器未悬停，无法开始执行飞行任务 | Aircraft not hovering, unable to start flight task
+	DJIErrorCode_DJI_AIRCRAFT_CONTROLLED_BY_B_NO_DOCK_FLY            DJIErrorCode = 321778 // 用户使用 B 控操控飞行器起桨，机场无法执行飞行任务 | User started propeller via B controller, dock unable to perform flight task
+	DJIErrorCode_DJI_TASK_EMERGENCY_RETURN_WIND                      DJIErrorCode = 321784 // 任务过程中遇到大风紧急返航 | Emergency return due to strong wind during task
+	DJIErrorCode_DJI_TASK_FAILED_RETURN_SIGNAL_INTERFERENCE          DJIErrorCode = 321788 // 任务失败，由于信号受到干扰，导致异常返航 | Task failed, abnormal return due to signal interference
+	// ************************ 任务中断模块（322段）************************
+	DJIErrorCode_DJI_TASK_FAILED_MANUAL_INTERRUPTED         DJIErrorCode = 322281 // 任务失败，机场执行飞行任务过程被手动打断或异常终止 | Task failed, flight task interrupted manually or abnormally
+	DJIErrorCode_DJI_TASK_INTERRUPTED_AIRCRAFT_TAKEN_OVER   DJIErrorCode = 322282 // 机场执行飞行任务过程中被中断，飞行器被云端用户或遥控器接管 | Task interrupted, aircraft taken over by cloud user/remote controller
+	DJIErrorCode_DJI_TASK_INTERRUPTED_USER_RETURN           DJIErrorCode = 322283 // 机场执行飞行任务过程中被用户触发返航，无法完成航线飞行 | Task interrupted by user return, unable to complete route
+	DJIErrorCode_DJI_ROUTE_BREAKPOINT_INFO_ERROR_CANNOT_FLY DJIErrorCode = 322539 // 航线的断点信息错误，机场无法执行飞行任务 | Route breakpoint info error, dock unable to perform flight task
+	DJIErrorCode_DJI_ROUTE_TRACK_GENERATE_FAILED_CLEAN_LENS DJIErrorCode = 322563 // 航线轨迹生成失败，请检查飞行器视觉镜头是否存在脏污或重启飞行器后再试，如果仍报错请联系大疆售后 | Route track generate failed, clean vision lens/restart aircraft, contact DJI support if error persists
+	// ************************ 日志媒体上传模块（324段）************************
+	DJIErrorCode_DJI_LOG_COMPRESS_TIMEOUT_TOO_MANY         DJIErrorCode = 324012 // 日志压缩过程超时，所选日志过多，请减少选择的日志后重试 | Log compress timed out, too many logs selected, reduce and try again
+	DJIErrorCode_DJI_DEVICE_LOG_LIST_GET_FAILED_RETRY      DJIErrorCode = 324013 // 设备日志列表获取失败，请稍后重试 | Get device log list failed, try again later
+	DJIErrorCode_DJI_DEVICE_LOG_LIST_EMPTY_REFRESH         DJIErrorCode = 324014 // 设备日志列表为空，请刷新页面或重启机场后重试 | Device log list is empty, refresh page or restart dock
+	DJIErrorCode_DJI_AIRCRAFT_OFFLINE_NO_LOG_LIST          DJIErrorCode = 324015 // 飞行器已关机或未连接，无法获取日志列表，请确认飞行器在舱内，通过远程调试将飞行器开机后重试 | Aircraft off/disconnected, no log list, turn on aircraft via remote debugging in dock
+	DJIErrorCode_DJI_DOCK_STORAGE_FULL_LOG_COMPRESS_FAILED DJIErrorCode = 324016 // 机场存储空间不足，日志压缩失败，请清理机场存储空间或稍后重试 | Dock storage full, log compress failed, clean storage or try again later
+	DJIErrorCode_DJI_LOG_COMPRESS_FAILED_REFRESH_RESTART   DJIErrorCode = 324017 // 日志压缩失败，无法获取所选飞行器日志，请刷新页面或重启机场后重试 | Log compress failed, cannot get aircraft log, refresh or restart dock
+	DJIErrorCode_DJI_LOG_PULL_FAILED_FEEDBACK_UPLOAD       DJIErrorCode = 324018 // 日志文件拉取失败，导致本次设备异常反馈上传失败，请稍后重试或重启机场后重试 | Log pull failed, device error feedback upload failed, try again or restart dock
+	DJIErrorCode_DJI_LOG_UPLOAD_FAILED_NET_ERROR           DJIErrorCode = 324019 // 因机场网络异常，日志上传失败，请稍后重试。如果连续多次出现该问题，请联系代理商或大疆售后进行网络排障 | Log upload failed due to dock network error, try again, contact agent/DJI for network troubleshooting if frequent
+	DJIErrorCode_DJI_LOG_EXPORT_INTERRUPTED_POWER_OFF      DJIErrorCode = 324021 // 因机场断电或重启导致日志导出中断，日志导出失败，请稍后重试 | Log export interrupted by dock power off/restart, export failed, try again later
+	DJIErrorCode_DJI_MEDIA_UPLOAD_FAILED_NET_LINK_ERROR    DJIErrorCode = 324030 // 因机场网络异常、飞行器图传链路异常等原因，媒体文件暂时无法上传或文件已上传但云端读取失败 | Media upload failed due to dock network/video link error, or cloud cannot read uploaded file
+	// ************************ 云端指令模块（325段）************************
+	DJIErrorCode_DJI_CLOUD_COMMAND_FORMAT_ERROR       DJIErrorCode = 325001 // 云端下发命令不符合格式要求，设备无法执行 | Cloud command format error, device unable to execute
+	DJIErrorCode_DJI_COMMAND_RESPONSE_FAILED_RETRY    DJIErrorCode = 325003 // 指令响应失败，请重试 | Command response failed, try again
+	DJIErrorCode_DJI_DEVICE_COMMAND_REQUEST_TIMEOUT   DJIErrorCode = 325004 // 设备端命令请求已超时，请重试 | Device command request timed out, try again
+	DJIErrorCode_DJI_DOCK_UNABLE_RESPONSE_TASK_RETRY  DJIErrorCode = 325005 // 当前机场无法响应任务，请稍后重试 | Current dock unable to respond to task, try again later
+	DJIErrorCode_DJI_DOCK_START_CHECKING_RETRY        DJIErrorCode = 325006 // 当前机场启动检查中，请稍后重试 | Current dock is starting check, try again later
+	DJIErrorCode_DJI_DOCK_EXECUTING_TASK_RETRY        DJIErrorCode = 325007 // 当前机场执行作业任务中，请稍后重试 | Current dock is executing task, try again later
+	DJIErrorCode_DJI_DOCK_PROCESSING_TASK_RESULT      DJIErrorCode = 325008 // 当前机场处理作业任务结果中，请稍后重试 | Current dock is processing task result, try again later
+	DJIErrorCode_DJI_DOCK_EXPORTING_REMOTE_LOG        DJIErrorCode = 325009 // 当前机场执行远程日志导出中，请稍后重试 | Current dock is exporting remote log, try again later
+	DJIErrorCode_DJI_DOCK_UPDATING_CUSTOM_FLIGHT_AREA DJIErrorCode = 325010 // 当前机场更新自定义飞行区中，请稍后重试 | Current dock is updating custom flight area, try again later
+	DJIErrorCode_DJI_DOCK_UPDATING_OFFLINE_MAP        DJIErrorCode = 325011 // 当前机场更新离线地图中，请稍后重试 | Current dock is updating offline map, try again later
+	DJIErrorCode_DJI_AIRCRAFT_DISCONNECTED_RETRY      DJIErrorCode = 325012 // 当前飞机未连接，请稍后重试 | Current aircraft is disconnected, try again later
+	// ************************ 4G/增强图传模块（326段）************************
+	DJIErrorCode_DJI_AIRCRAFT_NO_CELLULAR_MODULE          DJIErrorCode = 326002 // 飞行器未安装 DJI Cellualr 模块 | Aircraft no DJI Cellular module installed
+	DJIErrorCode_DJI_AIRCRAFT_CELLULAR_NO_SIM             DJIErrorCode = 326003 // 飞行器 DJI Cellualr 模块中未安装 SIM 卡 | No SIM card in aircraft DJI Cellular module
+	DJIErrorCode_DJI_AIRCRAFT_CELLULAR_FORCE_UPGRADE      DJIErrorCode = 326004 // 飞行器 DJI Cellualr 模块需要强制升级，否则无法使用 | Aircraft DJI Cellular module needs forced upgrade, unusable otherwise
+	DJIErrorCode_DJI_ENHANCED_TRANSMISSION_CONNECT_FAILED DJIErrorCode = 326005 // 操作失败，增强图传无法建立连接，请检查 4G 信号强度，或咨询运营商查询套餐流量和 APN 设置 | Enhanced transmission connect failed, check 4G signal, operator traffic/APN setting
+	DJIErrorCode_DJI_ENHANCED_TRANSMISSION_SWITCH_FAILED  DJIErrorCode = 326006 // 增强图传开关切换失败，请稍后重试 | Enhanced transmission switch failed, try again later
+	DJIErrorCode_DJI_DOCK_NO_CELLULAR_MODULE              DJIErrorCode = 326008 // 机场未安装 DJI Cellualr 模块 | Dock no DJI Cellular module installed
+	DJIErrorCode_DJI_DOCK_CELLULAR_NO_SIM                 DJIErrorCode = 326009 // 机场 DJI Cellualr 模块中未安装 SIM 卡 | No SIM card in dock DJI Cellular module
+	DJIErrorCode_DJI_DOCK_CELLULAR_FORCE_UPGRADE          DJIErrorCode = 326010 // 机场 DJI Cellualr 模块需要强制升级，否则无法使用 | Dock DJI Cellular module needs forced upgrade, unusable otherwise
+	DJIErrorCode_DJI_ESIM_ACTIVATING_RETRY                DJIErrorCode = 326103 // 当前 eSIM 正在激活中，请稍后再试 | Current eSIM is activating, try again later
+	DJIErrorCode_DJI_ESIM_SWITCHING_OPERATOR              DJIErrorCode = 326104 // 当前 eSIM 正在切换运营商中，请稍后再试 | Current eSIM is switching operator, try again later
+	DJIErrorCode_DJI_ENHANCED_MODULE_SWITCHING_MODE       DJIErrorCode = 326105 // DJI 增强图传模块正在切换模式中，请稍后再试 | DJI enhanced transmission module is switching mode, try again later
+	DJIErrorCode_DJI_ENHANCED_MODULE_ABNORMAL_RESTART     DJIErrorCode = 326106 // DJI 增强图传模块异常，请重启设备后再试，如果仍报错请联系大疆售后 | DJI enhanced transmission module abnormal, restart device, contact DJI support if error persists
+	DJIErrorCode_DJI_ENHANCED_MODULE_ACTIVATE_ESIM_SIM    DJIErrorCode = 326107 // 请在设备管理 > 机场 > 设备运维中激活DJI增强图传模块的 eSIM 或插入 SIM 卡后再试 | Activate eSIM or insert SIM card for DJI enhanced module in Device Management > Dock > O&M
+	// ************************ 远程控制/云台/直播模块（327段）************************
+	DJIErrorCode_DJI_PARAM_SET_FAILED_RETRY               DJIErrorCode = 327000 // 参数设置失败，请稍后重试 | Parameter setting failed, try again later
+	DJIErrorCode_DJI_PARAM_SET_FAILED_RETRY_AGAIN         DJIErrorCode = 327001 // 参数设置失败，请稍后重试 | Parameter setting failed, try again later
+	DJIErrorCode_DJI_GET_CONTROL_FAILED_RETRY             DJIErrorCode = 327002 // 获取控制权失败，请稍后重试 | Get control right failed, try again later
+	DJIErrorCode_DJI_GET_CONTROL_FAILED_RETRY_AGAIN       DJIErrorCode = 327003 // 获取控制权失败，请稍后重试 | Get control right failed, try again later
+	DJIErrorCode_DJI_SCREEN_DRAG_FAILED_RETRY             DJIErrorCode = 327004 // 画面拖动失败，请重试 | Screen drag failed, try again
+	DJIErrorCode_DJI_DOUBLE_CLICK_CENTER_FAILED           DJIErrorCode = 327005 // 双击画面归中失败 | Double click screen to center failed
+	DJIErrorCode_DJI_TAKE_PHOTO_FAILED                    DJIErrorCode = 327006 // 拍照失败 | Take photo failed
+	DJIErrorCode_DJI_START_RECORD_FAILED                  DJIErrorCode = 327007 // 开始录像失败 | Start record failed
+	DJIErrorCode_DJI_STOP_RECORD_FAILED                   DJIErrorCode = 327008 // 停止录像失败 | Stop record failed
+	DJIErrorCode_DJI_SWITCH_CAMERA_MODE_FAILED            DJIErrorCode = 327009 // 切换相机模式失败 | Switch camera mode failed
+	DJIErrorCode_DJI_ZOOM_CAMERA_ZOOM_FAILED              DJIErrorCode = 327010 // ZOOM相机变焦失败 | ZOOM camera zoom failed
+	DJIErrorCode_DJI_IR_CAMERA_ZOOM_FAILED                DJIErrorCode = 327011 // IR相机变焦失败 | IR camera zoom failed
+	DJIErrorCode_DJI_GET_CONTROL_FAILED_RETRY_THIRD       DJIErrorCode = 327012 // 获取控制权失败，请稍后重试 | Get control right failed, try again later
+	DJIErrorCode_DJI_PARAM_SET_FAILED_RETRY_THIRD         DJIErrorCode = 327013 // 参数设置失败，请稍后重试 | Parameter setting failed, try again later
+	DJIErrorCode_DJI_GIMBAL_REACH_LIMIT                   DJIErrorCode = 327014 // 云台已达限位 | Gimbal has reached limit position
+	DJIErrorCode_DJI_LIVE_STREAM_START_FAILED_REFRESH     DJIErrorCode = 327015 // 直播启动失败，建议刷新直播或重新打开设备小窗 | Live stream start failed, refresh stream or re-open device window
+	DJIErrorCode_DJI_LOST_CONNECT_ACTION_SET_FAILED       DJIErrorCode = 327016 // 失联动作设置失败，请重试 | Lost connect action setting failed, try again
+	DJIErrorCode_DJI_POINT_FLIGHT_HEIGHT_SET_FAILED       DJIErrorCode = 327017 // 指点飞行高度设置失败，请重试 | Point flight height setting failed, try again
+	DJIErrorCode_DJI_POINT_FLIGHT_MODE_SWITCH_FAILED      DJIErrorCode = 327018 // 指点飞行模式切换失败，请重试 | Point flight mode switch failed, try again
+	DJIErrorCode_DJI_CANNOT_LOOK_AT_MARK_POINT            DJIErrorCode = 327019 // 当前状态无法看向标注点 | Cannot look at mark point in current state
+	DJIErrorCode_DJI_PANORAMA_STOP_COMMAND_TIMEOUT        DJIErrorCode = 327020 // 全景拍照停止命令超时 | Panorama stop command timed out
+	DJIErrorCode_DJI_PANORAMA_STOP_NOT_SUPPORT            DJIErrorCode = 327022 // 全景拍照停止在当前状态不支持 | Panorama stop not supported in current state
+	DJIErrorCode_DJI_AUDIO_PLAY_NOT_SUPPORT               DJIErrorCode = 327050 // 当前设备状态不支持播放音频 | Audio play not supported in current device state
+	DJIErrorCode_DJI_AUDIO_FILE_DOWNLOAD_FAILED           DJIErrorCode = 327051 // 下载音频文件失败 | Audio file download failed
+	DJIErrorCode_DJI_SPEAKER_MODE_SWITCH_FAILED           DJIErrorCode = 327052 // 喊话器处理模式切换失败 | Speaker mode switch failed
+	DJIErrorCode_DJI_AUDIO_FILE_UPLOAD_FAILED             DJIErrorCode = 327053 // 上传音频文件失败 | Audio file upload failed
+	DJIErrorCode_DJI_AUDIO_PLAY_FAILED                    DJIErrorCode = 327054 // 播放音频失败 | Audio play failed
+	DJIErrorCode_DJI_WORK_MODE_SET_FAILED                 DJIErrorCode = 327055 // 设置工作模式失败 | Work mode setting failed
+	DJIErrorCode_DJI_TEXT_UPLOAD_FAILED                   DJIErrorCode = 327056 // 上传文本失败 | Text upload failed
+	DJIErrorCode_DJI_PLAY_STOP_FAILED                     DJIErrorCode = 327057 // 停止播放失败 | Play stop failed
+	DJIErrorCode_DJI_PLAY_MODE_SET_FAILED                 DJIErrorCode = 327058 // 设置播放模式失败 | Play mode setting failed
+	DJIErrorCode_DJI_VOLUME_SET_FAILED                    DJIErrorCode = 327059 // 设置音量失败 | Volume setting failed
+	DJIErrorCode_DJI_CONTROL_VALUE_SET_FAILED             DJIErrorCode = 327060 // 设置控件值失败 | Control value setting failed
+	DJIErrorCode_DJI_TEXT_VALUE_SEND_FAILED               DJIErrorCode = 327061 // 发送文本值失败 | Text value send failed
+	DJIErrorCode_DJI_SYSTEM_LANGUAGE_SWITCH_FAILED        DJIErrorCode = 327062 // 切换系统语言失败 | System language switch failed
+	DJIErrorCode_DJI_DEVICE_FUNC_LIST_GET_FAILED          DJIErrorCode = 327063 // 获取设备功能列表失败 | Get device function list failed
+	DJIErrorCode_DJI_DEVICE_CONFIG_GET_FAILED             DJIErrorCode = 327064 // 获取设备配置文件失败 | Get device config file failed
+	DJIErrorCode_DJI_DEVICE_IMAGE_GET_FAILED              DJIErrorCode = 327065 // 获取设备图片文件失败 | Get device image file failed
+	DJIErrorCode_DJI_DEVICE_FILE_COMPRESS_FAILED          DJIErrorCode = 327066 // 设备文件压缩失败 | Device file compress failed
+	DJIErrorCode_DJI_DEVICE_FILE_UPLOAD_FAILED            DJIErrorCode = 327067 // 设备文件上传失败 | Device file upload failed
+	DJIErrorCode_DJI_AUDIO_UPLOAD_FAILED_MD5_ERROR        DJIErrorCode = 327068 // 上传音频文件失败，md5校验失败 | Audio upload failed, MD5 verification error
+	DJIErrorCode_DJI_AUDIO_UPLOAD_FAILED_AGAIN            DJIErrorCode = 327069 // 上传音频文件失败 | Audio file upload failed
+	DJIErrorCode_DJI_AUDIO_UPLOAD_FAILED_ABNORMAL_STOP    DJIErrorCode = 327070 // 上传音频文件失败，异常终止 | Audio upload failed, abnormally terminated
+	DJIErrorCode_DJI_TTS_TEXT_UPLOAD_FAILED_MD5_ERROR     DJIErrorCode = 327071 // 上传TTS文本失败，md5校验失败 | TTS text upload failed, MD5 verification error
+	DJIErrorCode_DJI_TTS_TEXT_UPLOAD_FAILED               DJIErrorCode = 327072 // 上传TTS文本失败 | TTS text upload failed
+	DJIErrorCode_DJI_TTS_TEXT_UPLOAD_FAILED_ABNORMAL_STOP DJIErrorCode = 327073 // 上传TTS文本失败，异常终止 | TTS text upload failed, abnormally terminated
+	DJIErrorCode_DJI_SPEAKER_REPLAY_FAILED                DJIErrorCode = 327074 // 喊话器重播失败 | Speaker replay failed
+	DJIErrorCode_DJI_SPEAKER_ENCODE_FAILED                DJIErrorCode = 327075 // 喊话器编码失败 | Speaker encode failed
+	// ************************ 全景拍照模块（3272段）************************
+	DJIErrorCode_DJI_PANORAMA_SHOOT_FAILED                DJIErrorCode = 327201 // 全景拍照失败 | Panorama shoot failed
+	DJIErrorCode_DJI_PANORAMA_SHOOT_TERMINATED            DJIErrorCode = 327202 // 全景拍摄终止 | Panorama shoot terminated
+	DJIErrorCode_DJI_DEVICE_NOT_SUPPORT_PANORAMA          DJIErrorCode = 327203 // 当前设备不支持全景拍照 | Current device does not support panorama shoot
+	DJIErrorCode_DJI_SYSTEM_BUSY_NO_PANORAMA              DJIErrorCode = 327204 // 系统繁忙，无法全景拍照 | System busy, unable to take panorama
+	DJIErrorCode_DJI_REQUEST_FAILED_NO_PANORAMA           DJIErrorCode = 327205 // 请求失败，无法全景拍照 | Request failed, unable to take panorama
+	DJIErrorCode_DJI_AIRCRAFT_NOT_TAKEN_OFF_NO_PANORAMA   DJIErrorCode = 327206 // 飞机未起飞，无法开始全景拍摄 | Aircraft not taken off, unable to start panorama shoot
+	DJIErrorCode_DJI_GET_CONTROL_FAILED_PANORAMA_STOP     DJIErrorCode = 327207 // 控制权获取失败，全景拍摄终止 | Get control right failed, panorama shoot terminated
+	DJIErrorCode_DJI_UNKNOWN_CAMERA_ERROR_NO_PANORAMA     DJIErrorCode = 327208 // 未知相机错误，无法开始全景拍摄 | Unknown camera error, unable to start panorama shoot
+	DJIErrorCode_DJI_CAMERA_TIMEOUT_PANORAMA_STOP         DJIErrorCode = 327209 // 相机超时，全景拍摄终止 | Camera timed out, panorama shoot terminated
+	DJIErrorCode_DJI_CANNOT_TAKE_PANORAMA                 DJIErrorCode = 327210 // 无法全景拍照 | Unable to take panorama
+	DJIErrorCode_DJI_STORAGE_FULL_PANORAMA_STOP           DJIErrorCode = 327211 // 存储空间不足，全景拍摄终止 | Storage full, panorama shoot terminated
+	DJIErrorCode_DJI_AIRCRAFT_MOVING_NO_PANORAMA          DJIErrorCode = 327212 // 飞机运动中，无法开始全景拍摄 | Aircraft is moving, unable to start panorama shoot
+	DJIErrorCode_DJI_GIMBAL_MOVING_NO_PANORAMA            DJIErrorCode = 327213 // 云台运动中，无法开始全景拍摄 | Gimbal is moving, unable to start panorama shoot
+	DJIErrorCode_DJI_USER_OPERATE_JOYSTICK_PANORAMA_STOP  DJIErrorCode = 327214 // 用户操作摇杆，全景拍摄终止 | User operated joystick, panorama shoot terminated
+	DJIErrorCode_DJI_TOUCH_NO_FLY_ZONE_PANORAMA_STOP      DJIErrorCode = 327215 // 碰到限飞区，全景拍摄终止 | Touched no-fly zone, panorama shoot terminated
+	DJIErrorCode_DJI_TRIGGER_DISTANCE_LIMIT_PANORAMA_STOP DJIErrorCode = 327216 // 触发距离限制，全景拍摄终止 | Triggered distance limit, panorama shoot terminated
+	DJIErrorCode_DJI_GIMBAL_BLOCKED_PANORAMA_STOP         DJIErrorCode = 327217 // 云台受阻，全景拍摄终止 | Gimbal blocked, panorama shoot terminated
+	DJIErrorCode_DJI_TAKE_PHOTO_FAILED_PANORAMA_STOP      DJIErrorCode = 327218 // 拍照失败，全景拍摄终止 | Take photo failed, panorama shoot terminated
+	DJIErrorCode_DJI_PANORAMA_IMAGE_STITCH_FAILED         DJIErrorCode = 327219 // 全景图片拼接失败 | Panorama image stitch failed
+	DJIErrorCode_DJI_CALIBRATION_PARAM_LOAD_FAILED        DJIErrorCode = 327220 // 加载标定参数失败，全景拍摄终止 | Calibration parameter load failed, panorama shoot terminated
+	DJIErrorCode_DJI_CAMERA_PARAM_ADJUST_FAILED           DJIErrorCode = 327221 // 调整相机参数失败，全景拍摄终止 | Camera parameter adjust failed, panorama shoot terminated
+	// ************************ 飞行器维护模块（3275段）************************
+	DJIErrorCode_DJI_AIRCRAFT_LENS_DEFOG_FAILED DJIErrorCode = 327500 // 飞行器镜头除雾失败，请稍后重试 | Aircraft lens defog failed, try again later
+	// ************************ 实名登记模块（328段）************************
+	DJIErrorCode_DJI_AIRCRAFT_NO_REAL_NAME_REGISTER DJIErrorCode = 328051 // 飞机未完成实名登记，请连接遥控器，按照指引完成、实名登记后飞行 | Aircraft no real-name registration, connect remote controller and complete registration
+	DJIErrorCode_DJI_AIRCRAFT_REAL_NAME_CANCELED    DJIErrorCode = 328052 // 飞机实名登记状态已注销，请连接遥控器，按照指引完成实名登记后飞行 | Aircraft real-name registration canceled, connect remote controller and re-register
+	// ************************ 指点飞行模块（336段）************************
+	DJIErrorCode_DJI_POINT_FLIGHT_CMD_SEND_FAILED            DJIErrorCode = 336000 // 指点飞行命令发送失败，请重试 | Point flight command send failed, try again
+	DJIErrorCode_DJI_AIRCRAFT_DATA_ABNORMAL_NO_RESPONSE      DJIErrorCode = 336001 // 飞行器数据异常，无法响应指令 | Aircraft data abnormal, unable to respond to command
+	DJIErrorCode_DJI_AIRCRAFT_GPS_SIGNAL_WEAK                DJIErrorCode = 336002 // 飞行器GPS信号差 | Aircraft GPS signal weak
+	DJIErrorCode_DJI_AIRCRAFT_POSITION_INVALID_NO_RESPONSE   DJIErrorCode = 336003 // 飞行器定位失效，无法响应指令 | Aircraft positioning invalid, unable to respond to command
+	DJIErrorCode_DJI_POINT_FLIGHT_PLAN_FAILED                DJIErrorCode = 336004 // 指点飞行自主规划失败 | Point flight auto planning failed
+	DJIErrorCode_DJI_AIRCRAFT_RETURN_POINT_NOT_UPDATED       DJIErrorCode = 336005 // 飞行器返航点未更新 | Aircraft return point not updated
+	DJIErrorCode_DJI_AIRCRAFT_DISCONNECTED_EXIT_POINT_FLIGHT DJIErrorCode = 336006 // 飞行器已失联，已退出指点飞行 | Aircraft disconnected, exited point flight
+	DJIErrorCode_DJI_AIRCRAFT_LOW_BATTERY_NO_TASK            DJIErrorCode = 336017 // 飞行器电量不足以完成当前任务 | Aircraft battery insufficient to complete current task
+	DJIErrorCode_DJI_AIRCRAFT_PLAN_MODE_SWITCHED             DJIErrorCode = 336018 // 已切换飞行器规划模式 | Aircraft planning mode switched
+	DJIErrorCode_DJI_POINT_FLIGHT_HEIGHT_ADJUSTED_LIMIT      DJIErrorCode = 336019 // 指点飞行因限高自动调整飞行高度 | Point flight height adjusted automatically due to height limit
+	DJIErrorCode_DJI_TARGET_IN_NO_FLY_ZONE                   DJIErrorCode = 336513 // 目标点在禁飞区内 | Target point is in no-fly zone
+	DJIErrorCode_DJI_TARGET_EXCEED_DISTANCE_LIMIT            DJIErrorCode = 336514 // 目标点超出飞行器限远 | Target point exceeds aircraft distance limit
+	DJIErrorCode_DJI_TARGET_IN_NO_FLY_ZONE_AGAIN             DJIErrorCode = 336515 // 目标点在禁飞区内 | Target point is in no-fly zone
+	DJIErrorCode_DJI_TARGET_EXCEED_HEIGHT_LIMIT              DJIErrorCode = 336516 // 目标点超出飞行器限高 | Target point exceeds aircraft height limit
+	DJIErrorCode_DJI_TARGET_BELOW_LOWEST_HEIGHT              DJIErrorCode = 336517 // 目标点超出飞行器限低 | Target point is below aircraft lowest height limit
+	// ************************ 指令飞行模块（337段）************************
+	DJIErrorCode_DJI_AIRCRAFT_CANNOT_TAKEOFF               DJIErrorCode = 337025 // 飞行器无法起飞 | Aircraft cannot take off
+	DJIErrorCode_DJI_TARGET_POINT_ABNORMAL_RETRY           DJIErrorCode = 337026 // 目标点异常，请重试 | Target point abnormal, try again
+	DJIErrorCode_DJI_AIRCRAFT_SPEED_SET_ABNORMAL           DJIErrorCode = 337027 // 飞行器速度设置异常，请重试 | Aircraft speed setting abnormal, try again
+	DJIErrorCode_DJI_AIRCRAFT_VERSION_ABNORMAL_CHECK       DJIErrorCode = 337028 // 飞行器版本异常，请检查飞行器版本 | Aircraft version abnormal, check the version
+	DJIErrorCode_DJI_AIRCRAFT_UNABLE_RESPONSE_TASK         DJIErrorCode = 337029 // 飞行器无法响应当前任务，请稍后重试 | Aircraft unable to respond to current task, try again later
+	DJIErrorCode_DJI_COMMAND_FLIGHT_TAKEOFF_HEIGHT_TOO_LOW DJIErrorCode = 337030 // 指令飞行安全离场高过低 | Command flight safe takeoff height is too low
+	DJIErrorCode_DJI_TOUCHED_NO_FLY_ZONE                   DJIErrorCode = 337537 // 已触碰禁飞区 | Touched no-fly zone
+	DJIErrorCode_DJI_TOUCHED_DISTANCE_LIMIT                DJIErrorCode = 337538 // 已触碰飞行器限远 | Touched aircraft distance limit
+	DJIErrorCode_DJI_TOUCHED_NO_FLY_ZONE_AGAIN             DJIErrorCode = 337539 // 已触碰禁飞区 | Touched no-fly zone
+	DJIErrorCode_DJI_TOUCHED_HEIGHT_LIMIT                  DJIErrorCode = 337540 // 已触碰飞行器限高或限高区 | Touched aircraft height limit/zone
+	DJIErrorCode_DJI_TOUCHED_LOWEST_HEIGHT                 DJIErrorCode = 337541 // 已触碰飞行器限低 | Touched aircraft lowest height limit
+	DJIErrorCode_DJI_AIRCRAFT_TAKEOFF_FAILED_RETRY         DJIErrorCode = 337542 // 飞行器起飞失败，请重试 | Aircraft takeoff failed, try again
+	DJIErrorCode_DJI_TARGET_IN_OBSTACLE_ZONE_CHECK         DJIErrorCode = 337543 // 目标点可能在障碍物内，请检查周边环境 | Target may be in obstacle zone, check surrounding environment
+	DJIErrorCode_DJI_OBSTACLE_DETECTED_CHECK_ENV           DJIErrorCode = 337544 // 检测到障碍物，请检查周边环境 | Obstacle detected, check surrounding environment
+	DJIErrorCode_DJI_AIRCRAFT_PLAN_ABNORMAL_RETRY          DJIErrorCode = 337545 // 飞行器规划异常，请重试 | Aircraft planning abnormal, try again
+	DJIErrorCode_DJI_TOUCHED_CUSTOM_FLIGHT_AREA            DJIErrorCode = 337546 // 已触碰自定义飞行区边界 | Touched custom flight area boundary
+	// ************************ 跨机场/蛙跳任务模块（338段）************************
+	DJIErrorCode_DJI_AIRCRAFT_COMM_ERROR_RESTART_BOTH          DJIErrorCode = 338001 // 飞行器通信异常，无法执行飞行任务，请重启飞行器与机场后重试 | Aircraft communication abnormal, restart both aircraft and dock
+	DJIErrorCode_DJI_AIRCRAFT_COMM_ERROR_RESTART_BOTH_AGAIN    DJIErrorCode = 338002 // 飞行器通信异常，无法执行飞行任务，请重启飞行器与机场后重试 | Aircraft communication abnormal, restart both aircraft and dock
+	DJIErrorCode_DJI_AIRCRAFT_COMM_ERROR_RESTART_BOTH_THIRD    DJIErrorCode = 338003 // 飞行器通信异常，无法执行飞行任务，请重启飞行器与机场后重试 | Aircraft communication abnormal, restart both aircraft and dock
+	DJIErrorCode_DJI_AIRCRAFT_COMM_ERROR_RESTART_BOTH_FOURTH   DJIErrorCode = 338004 // 飞行器通信异常，无法执行飞行任务，请重启飞行器与机场后重试 | Aircraft communication abnormal, restart both aircraft and dock
+	DJIErrorCode_DJI_DOCK_DISTANCE_EXCEED_15KM                 DJIErrorCode = 338005 // 起飞机场与降落机场部署距离超出限制，无法执行飞行任务，请选择两个部署距离不超过 15km 的机场执行任务 | Takeoff/landing dock distance over 15km limit, choose docks within 15 kilometers
+	DJIErrorCode_DJI_CANNOT_FLY_CHECK_DOCK_CERTIFICATE         DJIErrorCode = 338006 // 无法执行飞行任务，请检查降落机场是否已申请解禁证书、是否位于自定义禁飞区或是否位于自定义飞行区外 | Unable to fly, check landing dock for unban certificate, custom no-fly/flight area
+	DJIErrorCode_DJI_LAND_DOCK_EXCEED_HEIGHT_LIMIT             DJIErrorCode = 338007 // 目标降落机场部署突破限高区限高，无法执行任务，请申请解禁证书后再试 | Landing dock exceeds height limit zone, apply for unban certificate to fly
+	DJIErrorCode_DJI_LAND_DOCK_EXCEED_USER_HEIGHT_LIMIT        DJIErrorCode = 338008 // 目标降落机场部署突破飞行器设置的限高，无法执行任务，请调整限高后重试 | Landing dock exceeds user-set height limit, adjust limit and try again
+	DJIErrorCode_DJI_AIRCRAFT_GPS_SIGNAL_WEAK_RESTART          DJIErrorCode = 338009 // 飞行器 GPS 定位信号差，无法执行任务，请重启飞行器后重试 | Aircraft GPS signal weak, restart aircraft and try again
+	DJIErrorCode_DJI_AIRCRAFT_POSITION_INVALID_RESTART         DJIErrorCode = 338010 // 飞行器定位失效，无法执行任务，请重启飞行器后重试 | Aircraft positioning invalid, restart aircraft and try again
+	DJIErrorCode_DJI_TASK_FAILED_DOCK_OUT_OF_GEO_FENCE         DJIErrorCode = 338011 // 任务失败，目标机场处于地理鸟笼作业区域外，请重新规划任务后再试 | Task failed, target dock is out of geo-fence, re-plan task and try again
+	DJIErrorCode_DJI_AIRCRAFT_DATA_UPDATE_FAILED_RESTART       DJIErrorCode = 338017 // 飞行器数据更新失败，无法执行任务，请重启飞行器后重试 | Aircraft data update failed, restart aircraft and try again
+	DJIErrorCode_DJI_AIRCRAFT_DATA_UPDATE_FAILED_RESTART_AGAIN DJIErrorCode = 338018 // 飞行器数据更新失败，无法执行任务，请重启飞行器后重试 | Aircraft data update failed, restart aircraft and try again
+	DJIErrorCode_DJI_RETURN_ROUTE_PLANNING_RETRY               DJIErrorCode = 338019 // 飞行器到目标机场的返航路线正在规划中，无法执行任务，请重启飞行器后重试 | Aircraft return route to target dock is planning, restart aircraft and try again
+	DJIErrorCode_DJI_AIRCRAFT_CANNOT_REACH_LAND_DOCK           DJIErrorCode = 338020 // 飞行器无法根据规划的路径到达目标降落机场，无法执行任务，请重新选择降落机场后再试 | Aircraft cannot reach landing dock via planned route, choose another dock
+	DJIErrorCode_DJI_AIRCRAFT_LOW_BATTERY_CANNOT_REACH         DJIErrorCode = 338021 // 飞行器当前电量不足以到达目标降落机场，无法执行任务，请给飞行器充电后重试 | Aircraft battery insufficient to reach landing dock, charge and try again
+	DJIErrorCode_DJI_RESPOND_JOYSTICK_EXIT_POINT_FLIGHT        DJIErrorCode = 338049 // 响应遥控器杆量，已退出指点飞行 | Respond to joystick operation, exited point flight
+	DJIErrorCode_DJI_RESPOND_STOP_CMD_EXIT_POINT_FLIGHT        DJIErrorCode = 338050 // 响应终止指令，已退出指点飞行 | Respond to stop command, exited point flight
+	DJIErrorCode_DJI_LOW_BATTERY_RETURN_EXIT_POINT_FLIGHT      DJIErrorCode = 338051 // 飞行器低电量返航，已退出指点飞行 | Aircraft low battery return, exited point flight
+	DJIErrorCode_DJI_LOW_BATTERY_LAND_EXIT_POINT_FLIGHT        DJIErrorCode = 338052 // 飞行器低电量降落，已退出指点飞行 | Aircraft low battery land, exited point flight
+	DJIErrorCode_DJI_MANNING_AIRCRAFT_NEAR_EXIT_POINT_FLIGHT   DJIErrorCode = 338053 // 附近有载人机，已退出指点飞行 | Manned aircraft nearby, exited point flight
+	DJIErrorCode_DJI_HIGH_PRIORITY_TASK_EXIT_POINT_FLIGHT      DJIErrorCode = 338054 // 响应其他高优先级任务，已退出指点飞行 | Respond to high priority task, exited point flight
+	DJIErrorCode_DJI_AIRCRAFT_COMM_ERROR_RESTART_BOTH_FIFTH    DJIErrorCode = 338255 // 飞行器通信异常，无法执行飞行任务，请重启飞行器与机场后重试 | Aircraft communication abnormal, restart both aircraft and dock
+	// ************************ 机场定位模块（341段）************************
+	DJIErrorCode_DJI_DOCK_POSITION_NOT_CONVERGED_CHECK DJIErrorCode = 341002 // 机场位置未收敛，请等待机场位置收敛后再试 | Dock position not converged, wait for convergence and try again
+	// ************************ 航线执行补充模块（386段）************************
+	DJIErrorCode_DJI_ROUTE_EXECUTE_ABNORMAL_RETRY_AGAIN DJIErrorCode = 386535 // 航线执行异常，请稍后重试或重启机场后重试 | Route execution abnormal, try again later or restart dock
+	// ************************ 直播功能模块（513段）************************
+	DJIErrorCode_DJI_LIVE_STREAM_FAILED_CAMERA_ERROR         DJIErrorCode = 513002 // 直播失败，相机不存在或相机类型错误 | Live stream failed, camera not found or type error
+	DJIErrorCode_DJI_LIVE_STREAM_FAILED_ALREADY_RUNNING      DJIErrorCode = 513003 // 相机已经在直播中，请勿重复开启直播 | Camera is already live streaming, do not start again
+	DJIErrorCode_DJI_LIVE_STREAM_FAILED_PARAM_ERROR          DJIErrorCode = 513005 // 直播失败，直播参数（清晰度）设置错误 | Live stream failed, parameter (definition) setting error
+	DJIErrorCode_DJI_LIVE_STREAM_START_FAILED_REFRESH_AGAIN  DJIErrorCode = 513006 // 直播启动失败，请刷新重试 | Live stream start failed, refresh and try again
+	DJIErrorCode_DJI_LIVE_STREAM_FAILED_VIDEO_DATA_ERROR     DJIErrorCode = 513008 // 直播失败，设备端图传数据异常 | Live stream failed, device video transmission data abnormal
+	DJIErrorCode_DJI_LIVE_STREAM_FAILED_DEVICE_OFFLINE       DJIErrorCode = 513010 // 直播失败，设备无法联网 | Live stream failed, device is offline
+	DJIErrorCode_DJI_LIVE_STREAM_OP_FAILED_NOT_STARTED       DJIErrorCode = 513011 // 操作失败，设备未开启直播 | Live stream operation failed, stream not started
+	DJIErrorCode_DJI_LIVE_STREAM_OP_FAILED_SWITCH_LENS       DJIErrorCode = 513012 // 操作失败，设备已在直播中，不支持切换镜头 | Live stream operation failed, lens switch not supported during streaming
+	DJIErrorCode_DJI_LIVE_STREAM_FAILED_PROTOCOL_NOT_SUPPORT DJIErrorCode = 513013 // 直播失败，直播使用的视频传输协议不支持 | Live stream failed, video transmission protocol not supported
+	DJIErrorCode_DJI_LIVE_STREAM_FAILED_PARAM_ERROR_AGAIN    DJIErrorCode = 513014 // 直播失败，直播参数错误或者不完整 | Live stream failed, parameters error or incomplete
+	DJIErrorCode_DJI_LIVE_STREAM_ABNORMAL_NET_LAG            DJIErrorCode = 513015 // 直播异常，网络卡顿, 请刷新后重试 | Live stream abnormal, network lag, refresh and try again
+	DJIErrorCode_DJI_LIVE_STREAM_ABNORMAL_DECODE_ERROR       DJIErrorCode = 513016 // 直播异常，视频解码失败 | Live stream abnormal, video decode failed
+	DJIErrorCode_DJI_LIVE_STREAM_PAUSED_MEDIA_DOWNLOADING    DJIErrorCode = 513017 // 直播已暂停，请等待当前飞行器媒体文件下载完成后再试 | Live stream paused, wait for aircraft media download to complete
+	DJIErrorCode_DJI_LIVE_STREAM_FAILED_RETRY_AGAIN          DJIErrorCode = 513099 // 直播失败，请稍后重试 | Live stream failed, try again later
+	// ************************ 机场运行异常模块（5141段）************************
+	DJIErrorCode_DJI_DOCK_OPERATION_ABNORMAL_RESTART             DJIErrorCode = 514100 // 机场运行异常，请重启机场后重试 | Dock operation abnormal, restart the dock
+	DJIErrorCode_DJI_PUSH_ROD_CLOSE_FAILED_CHECK_OBSTACLE        DJIErrorCode = 514101 // 推杆闭合失败，请检查停机坪上是否存在异物，飞行器方向是否放反，或重启机场后重试 | Push rod close failed, check for obstacle/aircraft direction, or restart dock
+	DJIErrorCode_DJI_PUSH_ROD_OPEN_FAILED_CHECK_OBSTACLE         DJIErrorCode = 514102 // 推杆展开失败，请检查停机坪上是否存在异物，或重启机场后重试 | Push rod open failed, check for obstacle or restart dock
+	DJIErrorCode_DJI_AIRCRAFT_LOW_BATTERY_BELOW_30PCT_THIRD      DJIErrorCode = 514103 // 飞行器电量低于30%，无法执行飞行任务，请充电后重试（建议电量≥50%） | Aircraft battery below 30%, unable to fly, charge it (recommend ≥50%)
+	DJIErrorCode_DJI_AIRCRAFT_BATTERY_CHARGE_START_FAILED        DJIErrorCode = 514104 // 飞行器电池开始充电失败，请重启机场后重试 | Aircraft battery charge start failed, restart the dock
+	DJIErrorCode_DJI_AIRCRAFT_BATTERY_CHARGE_STOP_FAILED         DJIErrorCode = 514105 // 飞行器电池停止充电失败，请重启机场后重试 | Aircraft battery charge stop failed, restart the dock
+	DJIErrorCode_DJI_AIRCRAFT_POWER_CONTROL_ABNORMAL             DJIErrorCode = 514106 // 飞行器电源控制异常，请重启机场后重试 | Aircraft power control abnormal, restart the dock
+	DJIErrorCode_DJI_DOCK_COVER_OPEN_FAILED_CHECK_OBSTACLE       DJIErrorCode = 514107 // 舱盖开启失败，请检查舱盖周围是否存在异物，或重启机场后重试 | Dock cover open failed, check for obstacle or restart dock
+	DJIErrorCode_DJI_DOCK_COVER_CLOSE_FAILED_CHECK_OBSTACLE      DJIErrorCode = 514108 // 舱盖关闭失败，请检查舱盖周围是否存在异物，或重启机场后重试 | Dock cover close failed, check for obstacle or restart dock
+	DJIErrorCode_DJI_AIRCRAFT_START_FAILED_CHECK_DOCK            DJIErrorCode = 514109 // 飞行器开机失败，请检查飞行器是否在舱和飞机电量是否正常，或重启机场后重试 | Aircraft start failed, check if in dock/battery, or restart dock
+	DJIErrorCode_DJI_AIRCRAFT_STOP_FAILED_RESTART_DOCK           DJIErrorCode = 514110 // 飞行器关机失败，请重启机场后重试 | Aircraft stop failed, restart the dock
+	DJIErrorCode_DJI_AIRCRAFT_PROPELLER_STOP_ABNORMAL            DJIErrorCode = 514111 // 飞行器慢转收桨控制异常，请重启机场后重试 | Aircraft propeller slow stop abnormal, restart the dock
+	DJIErrorCode_DJI_AIRCRAFT_PROPELLER_STOP_ABNORMAL_AGAIN      DJIErrorCode = 514112 // 飞行器慢转收桨控制异常，请重启机场后重试 | Aircraft propeller slow stop abnormal, restart the dock
+	DJIErrorCode_DJI_PUSH_ROD_CONNECT_FAILED_CHECK_DOCK          DJIErrorCode = 514113 // 机场推杆与飞行器无法连接，请检查飞行器是否在舱内，推杆闭合时是否被卡住，充电连接器是否脏污或损坏 | Push rod connect failed, check aircraft in dock/rod jam/connector condition
+	DJIErrorCode_DJI_AIRCRAFT_POWER_STATUS_GET_FAILED            DJIErrorCode = 514114 // 获取飞行器电源状态失败，请重启机场后重试 | Get aircraft power status failed, restart the dock
+	DJIErrorCode_DJI_DOCK_EXECUTING_CMD_CANNOT_OPERATE           DJIErrorCode = 514116 // 无法执行当前操作，机场正在执行其他控制指令，请稍后重试 | Cannot operate, dock is executing other command, try again later
+	DJIErrorCode_DJI_DOCK_COVER_POSITION_ABNORMAL                DJIErrorCode = 514117 // 舱盖开启或关闭未到位，请重启机场后重试 | Dock cover not fully open/closed, restart the dock
+	DJIErrorCode_DJI_PUSH_ROD_POSITION_ABNORMAL                  DJIErrorCode = 514118 // 推杆展开或闭合未到位，请重启机场后重试 | Push rod not fully open/closed, restart the dock
+	DJIErrorCode_DJI_DOCK_AIRCRAFT_DISCONNECTED_REPAIR           DJIErrorCode = 514120 // 机场与飞行器断连，请重启机场后重试或重新对频 | Dock and aircraft disconnected, restart dock or re-pair
+	DJIErrorCode_DJI_DOCK_EMERGENCY_STOP_PRESSED_RELEASE         DJIErrorCode = 514121 // 机场急停按钮被按下，请释放急停按钮 | Dock emergency stop button pressed, release the button
+	DJIErrorCode_DJI_AIRCRAFT_CHARGE_STATUS_GET_FAILED           DJIErrorCode = 514122 // 获取飞行器充电状态失败，请重启机场后重试 | Get aircraft charge status failed, restart the dock
+	DJIErrorCode_DJI_AIRCRAFT_BATTERY_TOO_LOW_CANNOT_START       DJIErrorCode = 514123 // 飞行器电池电量过低无法开机 | Aircraft battery too low to start
+	DJIErrorCode_DJI_AIRCRAFT_BATTERY_INFO_GET_FAILED            DJIErrorCode = 514124 // 获取飞行器电池信息失败，无法执行飞行任务，请重启机场后重试 | Get aircraft battery info failed, unable to fly, restart the dock
+	DJIErrorCode_DJI_AIRCRAFT_BATTERY_FULL_CANNOT_CHARGE         DJIErrorCode = 514125 // 飞行器电池电量已接近满电状态，无法开始充电，请使用至95%以下再进行充电 | Aircraft battery nearly full (≥95%), cannot charge, use to below 95%
+	DJIErrorCode_DJI_DOCK_RAIN_TOO_HEAVY_CANNOT_FLY              DJIErrorCode = 514134 // 雨量过大，机场无法执行飞行任务，请稍后重试 | Heavy rain, dock unable to fly, try again later
+	DJIErrorCode_DJI_DOCK_WIND_TOO_STRONG_CANNOT_FLY             DJIErrorCode = 514135 // 风速过大，机场无法执行飞行任务，请稍后重试 | Strong wind, dock unable to fly, try again later
+	DJIErrorCode_DJI_DOCK_POWER_OFF_CANNOT_FLY                   DJIErrorCode = 514136 // 机场供电断开，机场无法执行飞行任务，请恢复机场供电后重试 | Dock power off, unable to fly, restore power and try again
+	DJIErrorCode_DJI_DOCK_TEMP_TOO_LOW_CANNOT_FLY                DJIErrorCode = 514137 // 环境温度过低于-20℃ (-4°F)，机场无法执行飞行任务，请稍后重试 | Env temperature below -20℃ (-4°F), dock unable to fly, try again later
+	DJIErrorCode_DJI_AIRCRAFT_BATTERY_MAINTAINING_CANNOT_FLY     DJIErrorCode = 514138 // 飞行器电池正在保养中，机场无法执行飞行任务，请等待保养结束后重试 | Aircraft battery is maintaining, dock unable to fly, wait for completion
+	DJIErrorCode_DJI_AIRCRAFT_BATTERY_NO_MAINTAIN_NEEDED         DJIErrorCode = 514139 // 飞行器电池无法执行保养指令，飞行器电池无需保养 | Aircraft battery maintain command failed, no maintain needed
+	DJIErrorCode_DJI_AIRCRAFT_BATTERY_NO_MAINTAIN_NEEDED_AGAIN   DJIErrorCode = 514140 // 飞行器电池无法执行保养指令，飞行器电池无需保养 | Aircraft battery maintain command failed, no maintain needed
+	DJIErrorCode_DJI_DOCK_SYSTEM_OP_ERROR_RESTART                DJIErrorCode = 514141 // 机场系统运行异常，请重启机场后重试 | Dock system operation abnormal, restart the dock
+	DJIErrorCode_DJI_PUSH_ROD_CONNECT_FAILED_BEFORE_TAKEOFF      DJIErrorCode = 514142 // 飞行器起飞前，机场推杆与飞行器无法连接，请检查飞行器是否在舱内，推杆闭合时是否被卡住，充电连接器是否脏污或损坏 | Push rod connect failed before takeoff, check aircraft in dock/rod jam/connector
+	DJIErrorCode_DJI_PUSH_ROD_NOT_CLOSED_RETRY_RESTART           DJIErrorCode = 514143 // 推杆未闭合或闭合不到位，请稍后重试或重启机场后重试 | Push rod not closed, try again later or restart dock
+	DJIErrorCode_DJI_DOCK_COVER_NOT_CLOSED_RETRY_RESTART         DJIErrorCode = 514144 // 舱盖未关闭或关闭不到位，请稍后重试或重启机场后重试 | Dock cover not closed, try again later or restart dock
+	DJIErrorCode_DJI_DOCK_LOCAL_DEBUGGING_CANNOT_OPERATE         DJIErrorCode = 514145 // 机场处于现场调试中，无法执行当前操作或执行飞行任务，请断开遥控器和机场的数据线连接后重试 | Dock in local debugging, disconnect remote controller cable and try again
+	DJIErrorCode_DJI_DOCK_REMOTE_DEBUGGING_CANNOT_FLY            DJIErrorCode = 514146 // 机场处于远程调试中，无法执行飞行任务，请退出远程调试后重试 | Dock in remote debugging, exit debugging and try again
+	DJIErrorCode_DJI_DEVICE_UPGRADING_CANNOT_DEBUG               DJIErrorCode = 514147 // 设备升级中，无法进行远程调试或执行飞行任务，请等待升级完成后重试 | Device is upgrading, no debugging/flying, wait for completion
+	DJIErrorCode_DJI_DOCK_WORKING_CANNOT_DEBUG                   DJIErrorCode = 514148 // 机场已经在作业中，无法进行远程调试或再次执行飞行任务，请等待当前任务执行完成后重试 | Dock is working, no debugging/flying, wait for task completion
+	DJIErrorCode_DJI_DOCK_SYSTEM_OP_ERROR_CANNOT_FLY             DJIErrorCode = 514149 // 机场系统运行异常，无法执行飞行任务，请重启机场后重试 | Dock system operation abnormal, unable to fly, restart the dock
+	DJIErrorCode_DJI_DEVICE_RESTARTING_CANNOT_FLY                DJIErrorCode = 514150 // 设备重启中，无法执行飞行任务，请等待重启完成后重试 | Device is restarting, unable to fly, wait for completion
+	DJIErrorCode_DJI_DEVICE_UPGRADING_CANNOT_RESTART             DJIErrorCode = 514151 // 设备升级中，无法执行设备重启指令，请等待升级完成后重试 | Device is upgrading, cannot restart, wait for completion
+	DJIErrorCode_DJI_DOCK_EXIT_DEBUGGING_CANNOT_OPERATE          DJIErrorCode = 514153 // 机场已退出远程调试模式，无法执行当前操作 | Dock exited remote debugging, unable to perform current operation
+	DJIErrorCode_DJI_DOCK_TEMP_GET_FAILED_RETRY                  DJIErrorCode = 514154 // 获取内循环出风口温度失败，请稍后再试 | Get inner circulation air outlet temp failed, try again later
+	DJIErrorCode_DJI_AIRCRAFT_NOT_IN_DOCK_CANNOT_FLY             DJIErrorCode = 514155 // 飞机不在舱内，无法执行飞行任务，请将飞行器放回至机场 | Aircraft not in dock, unable to fly, put it back to dock
+	DJIErrorCode_DJI_AIRCRAFT_NOT_IN_DOCK_CHECK_RETRIEVE         DJIErrorCode = 514156 // 飞机不在舱内，请立即检查飞行器是否已安全降落并将飞行器放回至机场 | Aircraft not in dock, check and retrieve it immediately
+	DJIErrorCode_DJI_AIRCRAFT_START_FAILED_WIRELESS_CHARGE_BUSY  DJIErrorCode = 514157 // 执行开机失败，无线充电线圈业务繁忙，请重启机场后再试 | Aircraft start failed, wireless charge coil busy, restart the dock
+	DJIErrorCode_DJI_DOCK_RTK_ERROR_CANNOT_TAKEOFF               DJIErrorCode = 514158 // 无法起飞，机场 RTK 业务异常，请重启机场后再试 | Cannot take off, dock RTK abnormal, restart the dock
+	DJIErrorCode_DJI_TASK_FAILED_LAND_DOCK_HAS_AIRCRAFT          DJIErrorCode = 514159 // 任务失败，降落机场检测到飞行器，请确保降落机场没有飞行器后再试 | Task failed, landing dock has aircraft, ensure it's empty and try again
+	DJIErrorCode_DJI_AIRCRAFT_DOCK_CONNECT_FAILED_RETRY          DJIErrorCode = 514162 // 飞行器和机场连接失败，请关闭机场舱盖或重启机场后再试 | Aircraft and dock connect failed, close cover or restart dock
+	DJIErrorCode_DJI_BATTERY_FUNC_ABNORMAL_CHECK_INSTALL         DJIErrorCode = 514163 // 电池功能异常，请确保飞行器电池插入到位或重启飞行器后再试 | Battery function abnormal, check installation or restart aircraft
+	DJIErrorCode_DJI_DEVICE_RESTART_FAILED_CONTACT_SUPPORT       DJIErrorCode = 514164 // 设备重启失败，请稍后重试，如果仍报错请联系大疆售后 | Device restart failed, try again later, contact DJI support if error persists
+	DJIErrorCode_DJI_DEVICE_RESTART_FAILED_CONTACT_SUPPORT_AGAIN DJIErrorCode = 514165 // 设备重启失败，请稍后重试，如果仍报错请联系大疆售后 | Device restart failed, try again later, contact DJI support if error persists
+	DJIErrorCode_DJI_DOCK_INITIALIZING_CANNOT_OPERATE            DJIErrorCode = 514170 // 机场系统初始化中，无法执行当前操作或指令，请等待机场系统初始化完成后重试 | Dock is initializing, unable to operate, wait for completion
+	DJIErrorCode_DJI_CLOUD_COMMAND_FORMAT_ERROR_DOCK             DJIErrorCode = 514171 // 云端下发给机场的命令不符合格式要求，机场无法执行 | Cloud command format error for dock, unable to execute
+	DJIErrorCode_DJI_AIRCRAFT_CANNOT_STOP_BLUETOOTH_DISCONNECT   DJIErrorCode = 514172 // 飞行器无法关机，蓝牙连接状态为未连接，请尝试重启飞行器和机场，或去现场重新对频飞行器与机场后再试 | Aircraft cannot stop, Bluetooth disconnected, restart/re-pair on site
+	DJIErrorCode_DJI_DOCK_WEATHER_BAD_CANNOT_FLY                 DJIErrorCode = 514173 // 由于天气原因（环境温度低于5度并且降雨大于等于中雨），可能导致桨叶结冰影响作业安全，暂无法执行任务 | Bad weather (≤5℃ + moderate/heavy rain), propeller icing risk, task suspended
+	DJIErrorCode_DJI_AIRCRAFT_CHARGE_FAILED_COVER_POSITION       DJIErrorCode = 514174 // 飞行器充电失败，机场舱盖开启或关闭未到位，请关闭舱盖后再试 | Aircraft charge failed, dock cover not closed, close it and try again
+	DJIErrorCode_DJI_DOCK_AC_CONTROL_STOP_FAILED                 DJIErrorCode = 514180 // 停止空调制冷或停止空调制热失败，请稍后重试 | Dock AC cool/heat stop failed, try again later
+	DJIErrorCode_DJI_DOCK_AC_COOL_START_FAILED                   DJIErrorCode = 514181 // 开启空调制冷失败，请稍后重试 | Dock AC cool start failed, try again later
+	DJIErrorCode_DJI_DOCK_AC_HEAT_START_FAILED                   DJIErrorCode = 514182 // 开启空调制热失败，请稍后重试 | Dock AC heat start failed, try again later
+	DJIErrorCode_DJI_DOCK_AC_DEHUMIDIFY_START_FAILED             DJIErrorCode = 514183 // 开启空调除湿失败，请稍后重试 | Dock AC dehumidify start failed, try again later
+	DJIErrorCode_DJI_DOCK_AC_COOL_TOO_LOW                        DJIErrorCode = 514184 // 当前温度低于 0 ℃（32°F），无法开启空调制冷 | Env temp below 0℃ (32°F), cannot start AC cool
+	DJIErrorCode_DJI_DOCK_AC_HEAT_TOO_HIGH                       DJIErrorCode = 514185 // 当前温度高于 45 ℃（115°F），无法开启空调制热 | Env temp above 45℃ (115°F), cannot start AC heat
+	// ************************ 网关异常模块（5143段）************************
+	DJIErrorCode_DJI_GATEWAY_ABNORMAL                DJIErrorCode = 514300 // 网关异常 | Gateway abnormal
+	DJIErrorCode_DJI_REQUEST_TIMEOUT_CONNECT_CLOSED  DJIErrorCode = 514301 // 请求超时，连接断开 | Request timed out, connection closed
+	DJIErrorCode_DJI_NETWORK_CERTIFICATE_ERROR       DJIErrorCode = 514302 // 网络证书异常，连接失败 | Network certificate abnormal, connection failed
+	DJIErrorCode_DJI_NETWORK_ABNORMAL_CONNECT_CLOSED DJIErrorCode = 514303 // 网络异常，连接断开 | Network abnormal, connection closed
+	DJIErrorCode_DJI_REQUEST_REJECTED_CONNECT_FAILED DJIErrorCode = 514304 // 请求被拒，连接失败 | Request rejected, connection failed
+	// ************************ 机场标定模块（514168）************************
+	DJIErrorCode_DJI_DOCK_NOT_CALIBRATED_CANNOT_FLY DJIErrorCode = 514168 // 机场未标定，机场无法执行飞行任务，请标定机场 | Dock not calibrated, unable to fly, calibrate the dock first
 )
 
 // Enum value maps for DJIErrorCode.
 var (
 	DJIErrorCode_name = map[int32]string{
-		0:      "DJI_ERROR_CODE_UNKNOWN",
-		312014: "DJI_ERROR_CODE_DEVICE_UPGRADING",
-		312015: "DJI_ERROR_CODE_AIRPORT_BUSY",
-		312016: "DJI_ERROR_CODE_UPGRADE_FAILED_LINK_ERROR",
-		312022: "DJI_ERROR_CODE_DEVICE_POWER_ON_FAILED",
-		312023: "DJI_ERROR_CODE_PUSH_ROD_CLOSE_FAILED",
-		312027: "DJI_ERROR_CODE_UPGRADE_FAILED_NO_AIRCRAFT",
-		312028: "DJI_ERROR_CODE_UPGRADE_FAILED_REBOOT",
-		312029: "DJI_ERROR_CODE_DEVICE_REBOOTING",
-		312030: "DJI_ERROR_CODE_UPGRADE_FAILED_ENHANCED_IMAGE_TRANSMISSION",
-		312704: "DJI_ERROR_CODE_LOW_BATTERY",
-		314000: "DJI_ERROR_CODE_DEVICE_OPERATION_NOT_SUPPORTED",
-		314001: "DJI_ERROR_CODE_TASK_SUBMIT_FAILED",
-		314003: "DJI_ERROR_CODE_ROUTE_FILE_FORMAT_INCOMPATIBLE",
-		314006: "DJI_ERROR_CODE_AIRCRAFT_INIT_FAILED",
-		314007: "DJI_ERROR_CODE_ROUTE_TRANSMISSION_FAILED",
-		314008: "DJI_ERROR_CODE_PREPARE_TIMEOUT",
-		314010: "DJI_ERROR_CODE_ROUTE_EXECUTION_FAILED",
-		314011: "DJI_ERROR_CODE_AIRPORT_SYSTEM_ERROR",
-		314012: "DJI_ERROR_CODE_PREPARE_FAILED",
-		314013: "DJI_ERROR_CODE_NO_ROUTE_FOUND",
-		314015: "DJI_ERROR_CODE_PRECISION_REPHOTOGRAPHY_ROUTE_TRANSMISSION_FAILED",
-		314016: "DJI_ERROR_CODE_ROUTE_FILE_PARSE_FAILED",
-		314018: "DJI_ERROR_CODE_AIRCRAFT_RTK_ERROR",
-		314019: "DJI_ERROR_CODE_AIRCRAFT_RTK_CONVERGENCE_FAILED",
-		314020: "DJI_ERROR_CODE_AIRCRAFT_POSITION_ERROR",
-		314021: "DJI_ERROR_CODE_AIRCRAFT_RTK_ERROR_AGAIN",
-		314024: "DJI_ERROR_CODE_DEPARTURE_ARRIVAL_ROUTE_SUBMIT_FAILED",
-		314025: "DJI_ERROR_CODE_RTK_CONVERGENCE_TIMEOUT",
-		314200: "DJI_ERROR_CODE_NETWORK_DISCONNECTED",
-		315000: "DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR",
-		315001: "DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_REMOTE_POWER_ON",
-		315002: "DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_REBOOT",
-		315003: "DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_AGAIN",
-		315004: "DJI_ERROR_CODE_BOTH_AIRPORTS_BUSY",
-		315005: "DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_FOUR",
-		315006: "DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_FIVE",
-		315007: "DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_UPGRADE",
-		315008: "DJI_ERROR_CODE_CALIBRATION_INFO_INCONSISTENT",
-		315009: "DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_SIX",
-		315010: "DJI_ERROR_CODE_CANNOT_STOP_TASK",
-		315011: "DJI_ERROR_CODE_CANNOT_STOP_TASK_AGAIN",
-		315012: "DJI_ERROR_CODE_CANNOT_STOP_TASK_THREE",
-		315013: "DJI_ERROR_CODE_TASK_SUBMIT_FAILED_CONTACT_SUPPORT",
-		315014: "DJI_ERROR_CODE_TASK_TYPE_DOES_NOT_SUPPORT_RETURN_POINT",
-		315015: "DJI_ERROR_CODE_RETURN_POINT_SET_FAILED",
-		315016: "DJI_ERROR_CODE_TASK_SUBMIT_FAILED_CONTACT_SUPPORT_AGAIN",
-		315017: "DJI_ERROR_CODE_TASK_SUBMIT_FAILED_CONTACT_SUPPORT_THREE",
-		315018: "DJI_ERROR_CODE_BOTH_AIRPORTS_BUSY_AGAIN",
-		315019: "DJI_ERROR_CODE_POOR_DEPLOYMENT_LOCATION",
-		315050: "DJI_ERROR_CODE_AIRPORT_SYSTEM_ERROR_REBOOT",
-		315051: "DJI_ERROR_CODE_TASK_FAILED_REBOOT",
-		315052: "DJI_ERROR_CODE_AIRPORT_POSITION_NOT_CONVERGED",
-		316001: "DJI_ERROR_CODE_PARAMETER_SET_FAILED",
-		316002: "DJI_ERROR_CODE_PARAMETER_SET_FAILED_AGAIN",
-		316003: "DJI_ERROR_CODE_PARAMETER_SET_FAILED_THREE",
-		316004: "DJI_ERROR_CODE_PARAMETER_SET_FAILED_FOUR",
-		316005: "DJI_ERROR_CODE_RTK_CONVERGENCE_FAILED_PARAMETER",
-		316006: "DJI_ERROR_CODE_TASK_TIMEOUT",
-		316007: "DJI_ERROR_CODE_AIRCRAFT_INIT_FAILED_PARAMETER",
-		316008: "DJI_ERROR_CODE_CONTROL_ACQUISITION_FAILED",
-		316009: "DJI_ERROR_CODE_LOW_BATTERY_CANNOT_EXECUTE",
-		316010: "DJI_ERROR_CODE_NO_AIRCRAFT_DETECTED",
-		316011: "DJI_ERROR_CODE_LANDING_POSITION_OFFSET",
-		316012: "DJI_ERROR_CODE_PREPARE_FAILED_AGAIN",
-		316013: "DJI_ERROR_CODE_PREPARE_FAILED_THREE",
-		316014: "DJI_ERROR_CODE_PREPARE_FAILED_FOUR",
-		316015: "DJI_ERROR_CODE_RTK_CONVERGENCE_POSITION_TOO_FAR",
-		316016: "DJI_ERROR_CODE_LANDING_TIMEOUT",
-		316017: "DJI_ERROR_CODE_MEDIA_COUNT_TIMEOUT",
-		316018: "DJI_ERROR_CODE_TASK_EXECUTION_TIMEOUT",
-		316019: "DJI_ERROR_CODE_AIRPORT_SYSTEM_ERROR_TASK",
-		316020: "DJI_ERROR_CODE_RTK_SIGNAL_SOURCE_ERROR",
-		316021: "DJI_ERROR_CODE_RTK_SIGNAL_CHECK_TIMEOUT",
-		316022: "DJI_ERROR_CODE_CANNOT_EXECUTE_RETURN_HOME",
-		316023: "DJI_ERROR_CODE_CANNOT_EXECUTE_RETURN_HOME_B_CONTROL",
-		316024: "DJI_ERROR_CODE_CANNOT_EXECUTE_RETURN_HOME_NOT_TAKEOFF",
-		316025: "DJI_ERROR_CODE_PARAMETER_SET_FAILED_FIVE",
-		316026: "DJI_ERROR_CODE_EMERGENCY_STOP_PRESSED",
-		316027: "DJI_ERROR_CODE_PARAMETER_SET_TIMEOUT",
-		316029: "DJI_ERROR_CODE_EMERGENCY_STOP_PRESSED_LANDING",
-		316032: "DJI_ERROR_CODE_BATTERY_DATA_TIMEOUT",
-		316033: "DJI_ERROR_CODE_BATTERY_CYCLE_COUNT_TOO_HIGH",
-		316034: "DJI_ERROR_CODE_FIRMWARE_VERSION_MISMATCH",
-		316035: "DJI_ERROR_CODE_DEPARTURE_ARRIVAL_ROUTE_SUBMIT_FAILED_FIRMWARE",
-		316100: "DJI_ERROR_CODE_CAMERA_SUMMARY_INFO_FAILED",
-		316101: "DJI_ERROR_CODE_SET_SINGLE_SHOT_MODE_FAILED",
-		316102: "DJI_ERROR_CODE_CLOSE_WATERMARK_FAILED",
-		316103: "DJI_ERROR_CODE_SET_METERING_MODE_FAILED",
-		316104: "DJI_ERROR_CODE_SWITCH_TO_WIDE_ANGLE_FAILED",
-		316105: "DJI_ERROR_CODE_SET_PHOTO_STORAGE_FAILED",
-		316106: "DJI_ERROR_CODE_SET_IR_ZOOM_FAILED",
-		316107: "DJI_ERROR_CODE_SET_PHOTO_SIZE_FAILED",
-		316108: "DJI_ERROR_CODE_SET_PHOTO_FORMAT_FAILED",
-		316109: "DJI_ERROR_CODE_CLOSE_DISTORTION_CORRECTION_FAILED",
-		316110: "DJI_ERROR_CODE_OPEN_MECHANICAL_SHUTTER_FAILED",
-		316111: "DJI_ERROR_CODE_SET_FOCUS_MODE_FAILED",
-		317001: "DJI_ERROR_CODE_MEDIA_COUNT_FAILED",
-		317002: "DJI_ERROR_CODE_STORAGE_FORMAT_FAILED",
-		317003: "DJI_ERROR_CODE_STORAGE_FORMAT_FAILED_REBOOT",
-		317004: "DJI_ERROR_CODE_MEDIA_FORMAT_FAILED",
-		317005: "DJI_ERROR_CODE_END_RECORDING_FAILED",
-		317006: "DJI_ERROR_CODE_CANNOT_FORMAT",
-		317007: "DJI_ERROR_CODE_MEDIA_COUNT_FAILED_CONTACT_SUPPORT",
-		319001: "DJI_ERROR_CODE_AIRPORT_BUSY_OR_UPLOADING_LOGS",
-		319002: "DJI_ERROR_CODE_AIRPORT_SYSTEM_RUNNING_ERROR",
-		319003: "DJI_ERROR_CODE_AIRPORT_SYSTEM_RUNNING_ERROR_REISSUE",
-		319004: "DJI_ERROR_CODE_TASK_EXECUTION_TIMEOUT_AUTO_TERMINATED",
-		319005: "DJI_ERROR_CODE_CLOUD_AIRPORT_COMMUNICATION_ERROR",
-		319006: "DJI_ERROR_CODE_CANCEL_TASK_FAILED",
-		319007: "DJI_ERROR_CODE_MODIFY_TASK_FAILED",
-		319008: "DJI_ERROR_CODE_TIME_NOT_SYNCED",
-		319010: "DJI_ERROR_CODE_FIRMWARE_VERSION_TOO_LOW",
-		319015: "DJI_ERROR_CODE_AIRPORT_INITIALIZING",
-		319016: "DJI_ERROR_CODE_AIRPORT_IN_OPERATION",
-		319017: "DJI_ERROR_CODE_PROCESSING_MEDIA_FILES",
-		319018: "DJI_ERROR_CODE_AUTO_EXPORTING_LOGS",
-		319019: "DJI_ERROR_CODE_PULLING_LOGS",
-		321000: "DJI_ERROR_CODE_ROUTE_EXECUTION_ERROR",
-		321004: "DJI_ERROR_CODE_ROUTE_FILE_PARSE_FAILED_ROUTE",
-		321005: "DJI_ERROR_CODE_ROUTE_MISSING_BREAKPOINT_INFO",
-		321257: "DJI_ERROR_CODE_TASK_ALREADY_EXECUTING",
-		321258: "DJI_ERROR_CODE_CANNOT_TERMINATE_TASK",
-		321259: "DJI_ERROR_CODE_TASK_NOT_STARTED_CANNOT_TERMINATE",
-		321260: "DJI_ERROR_CODE_TASK_NOT_STARTED_CANNOT_INTERRUPT",
-		321513: "DJI_ERROR_CODE_ROUTE_PLANNING_HEIGHT_EXCEEDED",
-		321514: "DJI_ERROR_CODE_TASK_FAILED_BUFFER_ZONE",
-		321515: "DJI_ERROR_CODE_ROUTE_PASSES_RESTRICTED_AREA",
-		321516: "DJI_ERROR_CODE_FLIGHT_HEIGHT_TOO_LOW",
-		321517: "DJI_ERROR_CODE_OBSTACLE_AVOIDANCE_TRIGGERED",
-		321519: "DJI_ERROR_CODE_APPROACHING_RESTRICTED_AREA",
-		513002: "DJI_ERROR_CODE_LIVE_STREAM_FAILED_CAMERA_NOT_EXIST",
-		513003: "DJI_ERROR_CODE_LIVE_STREAM_ALREADY_RUNNING",
-		513005: "DJI_ERROR_CODE_LIVE_STREAM_FAILED_PARAMETER_ERROR",
-		513006: "DJI_ERROR_CODE_LIVE_STREAM_FAILED_REFRESH",
-		513008: "DJI_ERROR_CODE_LIVE_STREAM_FAILED_VIDEO_DATA_ERROR",
-		513010: "DJI_ERROR_CODE_LIVE_STREAM_FAILED_NO_NETWORK",
-		513011: "DJI_ERROR_CODE_OPERATION_FAILED_NOT_LIVE_STREAMING",
-		513012: "DJI_ERROR_CODE_OPERATION_FAILED_CANNOT_SWITCH_CAMERA",
-		513013: "DJI_ERROR_CODE_LIVE_STREAM_FAILED_PROTOCOL_NOT_SUPPORTED",
-		513014: "DJI_ERROR_CODE_LIVE_STREAM_FAILED_PARAMETER_ERROR_AGAIN",
-		513015: "DJI_ERROR_CODE_LIVE_STREAM_ERROR_NETWORK_CONGestion",
-		513016: "DJI_ERROR_CODE_LIVE_STREAM_ERROR_DECODE_FAILED",
-		513017: "DJI_ERROR_CODE_LIVE_STREAM_PAUSED",
-		513099: "DJI_ERROR_CODE_LIVE_STREAM_FAILED_RETRY",
-		514100: "DJI_ERROR_CODE_AIRPORT_OPERATION_ERROR",
-		514101: "DJI_ERROR_CODE_PUSH_ROD_CLOSE_FAILED_OPERATION",
-		514102: "DJI_ERROR_CODE_PUSH_ROD_OPEN_FAILED",
-		514103: "DJI_ERROR_CODE_LOW_BATTERY_CANNOT_EXECUTE_OPERATION",
-		514104: "DJI_ERROR_CODE_BATTERY_CHARGING_START_FAILED",
-		514105: "DJI_ERROR_CODE_BATTERY_CHARGING_STOP_FAILED",
-		514106: "DJI_ERROR_CODE_POWER_CONTROL_ERROR",
-		514107: "DJI_ERROR_CODE_HATCH_OPEN_FAILED",
-		514108: "DJI_ERROR_CODE_HATCH_CLOSE_FAILED",
-		514109: "DJI_ERROR_CODE_AIRCRAFT_POWER_ON_FAILED",
-		514110: "DJI_ERROR_CODE_AIRCRAFT_POWER_OFF_FAILED",
-		514111: "DJI_ERROR_CODE_SLOW_ROTATION_STOP_FAILED",
-		514112: "DJI_ERROR_CODE_SLOW_ROTATION_STOP_FAILED_AGAIN",
-		514113: "DJI_ERROR_CODE_PUSH_ROD_CONNECTION_FAILED",
-		514114: "DJI_ERROR_CODE_POWER_STATUS_FAILED",
-		514116: "DJI_ERROR_CODE_OPERATION_IN_PROGRESS",
-		514117: "DJI_ERROR_CODE_HATCH_NOT_IN_PLACE",
-		514118: "DJI_ERROR_CODE_PUSH_ROD_NOT_IN_PLACE",
-		514120: "DJI_ERROR_CODE_AIRPORT_AIRCRAFT_DISCONNECTED",
-		514121: "DJI_ERROR_CODE_EMERGENCY_STOP_PRESSED_AIRPORT",
-		514122: "DJI_ERROR_CODE_CHARGING_STATUS_FAILED",
-		514123: "DJI_ERROR_CODE_BATTERY_TOO_LOW_TO_POWER_ON",
-		514124: "DJI_ERROR_CODE_BATTERY_INFO_FAILED",
-		514125: "DJI_ERROR_CODE_BATTERY_ALMOST_FULL",
-		514134: "DJI_ERROR_CODE_TOO_MUCH_RAIN",
-		514135: "DJI_ERROR_CODE_TOO_MUCH_WIND",
-		514136: "DJI_ERROR_CODE_POWER_DISCONNECTED",
-		514137: "DJI_ERROR_CODE_TEMPERATURE_TOO_LOW",
-		514138: "DJI_ERROR_CODE_BATTERY_MAINTAINING",
-		514139: "DJI_ERROR_CODE_BATTERY_MAINTENANCE_NOT_NEEDED",
-		514140: "DJI_ERROR_CODE_BATTERY_MAINTENANCE_NOT_NEEDED_AGAIN",
-		514141: "DJI_ERROR_CODE_AIRPORT_SYSTEM_OPERATION_ERROR",
-		514142: "DJI_ERROR_CODE_PUSH_ROD_CONNECTION_FAILED_TAKEOFF",
-		514143: "DJI_ERROR_CODE_PUSH_ROD_NOT_CLOSED",
-		514144: "DJI_ERROR_CODE_HATCH_NOT_CLOSED",
-		514145: "DJI_ERROR_CODE_AIRPORT_IN_FIELD_TEST",
-		514146: "DJI_ERROR_CODE_AIRPORT_IN_REMOTE_TEST",
-		514147: "DJI_ERROR_CODE_DEVICE_UPGRADING_CANNOT_TEST",
-		514148: "DJI_ERROR_CODE_AIRPORT_IN_OPERATION_CANNOT_TEST",
-		514149: "DJI_ERROR_CODE_AIRPORT_SYSTEM_OPERATION_ERROR_REBOOT",
-		514150: "DJI_ERROR_CODE_DEVICE_REBOOTING_CANNOT_EXECUTE",
-		514151: "DJI_ERROR_CODE_UPGRADING_CANNOT_REBOOT",
-		514153: "DJI_ERROR_CODE_REMOTE_TEST_EXITED",
-		514154: "DJI_ERROR_CODE_INNER_CIRCULATION_TEMPERATURE_FAILED",
-		514155: "DJI_ERROR_CODE_AIRCRAFT_NOT_IN_HATCH",
-		514156: "DJI_ERROR_CODE_AIRCRAFT_NOT_IN_HATCH_CHECK",
-		514157: "DJI_ERROR_CODE_WIRELESS_CHARGING_BUSY",
-		514158: "DJI_ERROR_CODE_AIRPORT_RTK_ERROR",
-		514159: "DJI_ERROR_CODE_LANDING_AIRPORT_DETECTED_AIRCRAFT",
-		514162: "DJI_ERROR_CODE_AIRCRAFT_CONNECTION_FAILED",
-		514163: "DJI_ERROR_CODE_BATTERY_FUNCTION_ERROR",
-		514164: "DJI_ERROR_CODE_DEVICE_REBOOT_FAILED",
-		514165: "DJI_ERROR_CODE_DEVICE_REBOOT_FAILED_AGAIN",
-		514170: "DJI_ERROR_CODE_AIRPORT_INITIALIZING_CANNOT_EXECUTE",
-		514171: "DJI_ERROR_CODE_COMMAND_FORMAT_ERROR",
-		514172: "DJI_ERROR_CODE_CANNOT_POWER_OFF_BLUETOOTH_DISCONNECTED",
-		514173: "DJI_ERROR_CODE_BAD_WEATHER",
-		514174: "DJI_ERROR_CODE_CHARGING_FAILED_HATCH_NOT_IN_PLACE",
-		514180: "DJI_ERROR_CODE_AIR_CONDITIONING_CONTROL_FAILED",
-		514181: "DJI_ERROR_CODE_AIR_CONDITIONING_COOLING_FAILED",
-		514182: "DJI_ERROR_CODE_AIR_CONDITIONING_HEATING_FAILED",
-		514183: "DJI_ERROR_CODE_AIR_CONDITIONING_DEHUMIDIFICATION_FAILED",
-		514184: "DJI_ERROR_CODE_CANNOT_COOL_WHEN_TOO_COLD",
-		514185: "DJI_ERROR_CODE_CANNOT_HEAT_WHEN_TOO_HOT",
-		514300: "DJI_ERROR_CODE_GATEWAY_ERROR",
-		514301: "DJI_ERROR_CODE_REQUEST_TIMEOUT",
-		514302: "DJI_ERROR_CODE_NETWORK_CERTIFICATE_ERROR",
-		514303: "DJI_ERROR_CODE_NETWORK_ERROR",
-		514304: "DJI_ERROR_CODE_REQUEST_REJECTED",
-		514168: "DJI_ERROR_CODE_AIRPORT_NOT_CALIBRATED",
+		0:      "v_1_15",
+		312014: "DJI_DEVICE_UPGRADING",
+		312015: "DJI_DOCK_BUSY_CANNOT_UPGRADE",
+		312016: "DJI_UPGRADE_FAILED_LINK_ERROR",
+		312022: "DJI_AIRCRAFT_START_FAILED_DISCONNECTED",
+		312023: "DJI_PUSH_ROD_CLOSED_FAILED_CANNOT_UPGRADE",
+		312027: "DJI_UPGRADE_FAILED_AIRCRAFT_NOT_DETECTED",
+		312028: "DJI_UPGRADE_FAILED_DEVICE_RESTARTED",
+		312029: "DJI_DEVICE_RESTARTING_CANNOT_UPGRADE",
+		312030: "DJI_UPGRADE_FAILED_ENHANCED_TRANSMISSION_ON",
+		312704: "DJI_DEVICE_LOW_BATTERY_REQUIRE_CHARGE_20PCT",
+		314000: "DJI_DEVICE_UNSUPPORT_OPERATION",
+		314001: "DJI_FLIGHT_TASK_DELIVER_FAILED_RETRY",
+		314002: "DJI_FLIGHT_TASK_DELIVER_FAILED_RETRY_AGAIN",
+		314003: "DJI_ROUTE_FILE_FORMAT_INCOMPATIBLE",
+		314005: "DJI_FLIGHT_TASK_DELIVER_FAILED_RESTART_DOCK",
+		314006: "DJI_AIRCRAFT_INIT_FAILED_RESTART_DOCK",
+		314007: "DJI_ROUTE_TRANSMIT_FAILED_RESTART_DOCK",
+		314008: "DJI_AIRCRAFT_PREPARE_TIMEOUT_RESTART_DOCK",
+		314009: "DJI_AIRCRAFT_INIT_FAILED_RESTART_DOCK_AGAIN",
+		314010: "DJI_ROUTE_EXECUTE_FAILED_RESTART_DOCK",
+		314011: "DJI_DOCK_SYSTEM_ERROR_NO_TASK_RESULT",
+		314012: "DJI_AIRCRAFT_PREPARE_FAILED_CANNOT_FLY",
+		314013: "DJI_FLIGHT_TASK_DELIVER_FAILED_NO_ROUTE",
+		314014: "DJI_DOCK_SYSTEM_ERROR_TASK_FAILED",
+		314015: "DJI_PRECISE_SHOOT_ROUTE_TRANSMIT_FAILED",
+		314016: "DJI_ROUTE_FILE_PARSE_FAILED_CANNOT_FLY",
+		314017: "DJI_ROUTE_FILE_PARSE_FAILED_CHECK_ROUTE",
+		314018: "DJI_AIRCRAFT_RTK_POSITION_ERROR",
+		314019: "DJI_AIRCRAFT_RTK_CONVERGENCE_FAILED",
+		314020: "DJI_AIRCRAFT_POSITION_WRONG_CANNOT_FLY",
+		314021: "DJI_AIRCRAFT_RTK_POSITION_ERROR_AGAIN",
+		314024: "DJI_TAKEOFF_LAND_ROUTE_DELIVER_FAILED",
+		314025: "DJI_RTK_CONVERGENCE_TIMEOUT_USER_CANCEL",
+		314200: "DJI_TASK_FAILED_NET_DISCONNECT_RETURN",
+		315000: "DJI_AIRPORT_COMM_ERROR_RESTART",
+		315001: "DJI_AIRPORT_COMM_ERROR_REMOTE_START_AIRCRAFT",
+		315002: "DJI_AIRPORT_COMM_ERROR_RESTART_AGAIN",
+		315003: "DJI_AIRPORT_COMM_ERROR_RESTART_THIRD",
+		315004: "DJI_TASK_FAILED_TWO_DOCKS_BUSY",
+		315005: "DJI_AIRPORT_COMM_ERROR_RESTART_FOURTH",
+		315006: "DJI_AIRPORT_COMM_ERROR_RESTART_FIFTH",
+		315007: "DJI_AIRPORT_COMM_ERROR_UPGRADE_DOCK",
+		315008: "DJI_DOCK_CALIBRATION_INFO_INCONSISTENT",
+		315009: "DJI_AIRPORT_COMM_ERROR_RESTART_SIXTH",
+		315010: "DJI_CANNOT_STOP_FLIGHT_TASK_RETRY",
+		315011: "DJI_CANNOT_STOP_FLIGHT_TASK_RETRY_AGAIN",
+		315012: "DJI_CANNOT_STOP_FLIGHT_TASK_RETRY_THIRD",
+		315013: "DJI_FLIGHT_TASK_DELIVER_FAILED_CONTACT_SUPPORT",
+		315014: "DJI_TASK_TYPE_NOT_SUPPORT_RETURN_POINT",
+		315015: "DJI_RETURN_POINT_SET_FAILED_CONTACT_SUPPORT",
+		315016: "DJI_FLIGHT_TASK_DELIVER_FAILED_CONTACT_SUPPORT_AGAIN",
+		315017: "DJI_FLIGHT_TASK_DELIVER_FAILED_CONTACT_SUPPORT_THIRD",
+		315018: "DJI_TASK_FAILED_TWO_DOCKS_BUSY_AGAIN",
+		315019: "DJI_DOCK_POSITION_BAD_CANNOT_FROG_JUMP",
+		315050: "DJI_DOCK_SYSTEM_ERROR_RESTART",
+		315051: "DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT",
+		315052: "DJI_DOCK_POSITION_NOT_CONVERGED_WAIT",
+		315053: "DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_AGAIN",
+		315054: "DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_THIRD",
+		315055: "DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_FOURTH",
+		315056: "DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_FIFTH",
+		315057: "DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_SIXTH",
+		315058: "DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_SEVENTH",
+		315059: "DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_EIGHTH",
+		315060: "DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_NINTH",
+		315061: "DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_TENTH",
+		315062: "DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_ELEVENTH",
+		315063: "DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_TWELFTH",
+		315064: "DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_THIRTEENTH",
+		315065: "DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_FOURTEENTH",
+		316001: "DJI_AIRCRAFT_PARAM_SET_FAILED_RESTART",
+		316002: "DJI_AIRCRAFT_PARAM_SET_FAILED_RESTART_AGAIN",
+		316003: "DJI_AIRCRAFT_PARAM_SET_FAILED_RESTART_THIRD",
+		316004: "DJI_AIRCRAFT_PARAM_SET_FAILED_RESTART_FOURTH",
+		316005: "DJI_AIRCRAFT_RTK_CONVERGENCE_FAILED_RESTART",
+		316006: "DJI_TASK_TIMEOUT_AIRCRAFT_LOST",
+		316007: "DJI_AIRCRAFT_INIT_FAILED_RESTART_DOCK_FOURTH",
+		316008: "DJI_DOCK_GET_CONTROL_FAILED_REMOTE_LOCKED",
+		316009: "DJI_AIRCRAFT_LOW_BATTERY_BELOW_30PCT",
+		316010: "DJI_DOCK_NO_AIRCRAFT_DETECTED_CANNOT_FLY",
+		316011: "DJI_AIRCRAFT_LAND_POSITION_OFFSET",
+		316012: "DJI_AIRCRAFT_PREPARE_FAILED_CANNOT_FLY_AGAIN",
+		316013: "DJI_AIRCRAFT_PREPARE_FAILED_CANNOT_FLY_THIRD",
+		316014: "DJI_AIRCRAFT_PREPARE_FAILED_CANNOT_FLY_FOURTH",
+		316015: "DJI_AIRCRAFT_RTK_CONVERGENCE_TOO_FAR",
+		316016: "DJI_AIRCRAFT_LAND_TIMEOUT_DISCONNECTED",
+		316017: "DJI_MEDIA_COUNT_GET_TIMEOUT_DISCONNECTED",
+		316018: "DJI_FLIGHT_TASK_TIMEOUT_DISCONNECTED",
+		316019: "DJI_DOCK_SYSTEM_ERROR_CANNOT_FLY",
+		316020: "DJI_AIRCRAFT_RTK_SOURCE_ERROR",
+		316021: "DJI_AIRCRAFT_RTK_SOURCE_CHECK_TIMEOUT",
+		316022: "DJI_AIRCRAFT_CANNOT_RETURN_DISCONNECTED",
+		316023: "DJI_AIRCRAFT_CANNOT_RETURN_CONTROLLED_BY_B",
+		316024: "DJI_AIRCRAFT_RETURN_FAILED_NOT_TAKEN_OFF",
+		316025: "DJI_AIRCRAFT_PARAM_SET_FAILED_RETRY_RESTART",
+		316026: "DJI_DOCK_EMERGENCY_STOP_PRESSED",
+		316027: "DJI_AIRCRAFT_PARAM_SET_TIMEOUT_RETRY_RESTART",
+		316029: "DJI_DOCK_EMERGENCY_STOP_PRESSED_RETURN_ALT",
+		316032: "DJI_BATTERY_DATA_GET_TIMEOUT_RETRY",
+		316033: "DJI_AIRCRAFT_BATTERY_CYCLE_TOO_MANY",
+		316034: "DJI_AIRCRAFT_DOCK_FIRMWARE_MISMATCH",
+		316035: "DJI_TAKEOFF_LAND_ROUTE_FAILED_UPGRADE_FIRMWARE",
+		316050: "DJI_AIRCRAFT_LOW_BATTERY_LANDED_OUTSIDE",
+		316051: "DJI_FLIGHT_TASK_ABNORMAL_LANDED_OUTSIDE",
+		316052: "DJI_FLIGHT_TASK_ABNORMAL_RETURN_ALT",
+		316053: "DJI_USER_CONTROLLED_AIRCRAFT_LANDED",
+		316100: "DJI_CAMERA_INFO_GET_FAILED_RETRY",
+		316101: "DJI_CAMERA_SET_SINGLE_SHOOT_FAILED",
+		316102: "DJI_CAMERA_WATERMARK_CLOSE_FAILED",
+		316103: "DJI_CAMERA_SET_METERING_MODE_FAILED",
+		316104: "DJI_CAMERA_SWITCH_WIDE_LENS_FAILED",
+		316105: "DJI_CAMERA_SET_PHOTO_STORAGE_FAILED",
+		316106: "DJI_CAMERA_IR_ZOOM_FAILED",
+		316107: "DJI_CAMERA_SET_4K_RESOLUTION_FAILED",
+		316108: "DJI_CAMERA_SET_JPEG_FORMAT_FAILED",
+		316109: "DJI_CAMERA_DISTORTION_CORRECTION_CLOSE_FAILED",
+		316110: "DJI_CAMERA_MECHANICAL_SHUTTER_OPEN_FAILED",
+		316111: "DJI_CAMERA_SET_FOCUS_MODE_FAILED",
+		317001: "DJI_AIRCRAFT_MEDIA_COUNT_GET_FAILED",
+		317002: "DJI_AIRCRAFT_STORAGE_FORMAT_FAILED_DISCONNECTED",
+		317003: "DJI_AIRCRAFT_STORAGE_FORMAT_FAILED_RESTART",
+		317004: "DJI_DOCK_MEDIA_FORMAT_FAILED_RETRY",
+		317005: "DJI_AIRCRAFT_STOP_RECORD_FAILED_MEDIA_LOST",
+		317006: "DJI_CANNOT_FORMAT_MEDIA_DOWNLOADING",
+		317007: "DJI_MEDIA_COUNT_GET_FAILED_CONTACT_SUPPORT",
+		319001: "DJI_DOCK_BUSY_CANNOT_FLY",
+		319002: "DJI_DOCK_SYSTEM_RUN_ERROR_RESTART",
+		319003: "DJI_DOCK_SYSTEM_RUN_ERROR_REDELIVER_TASK",
+		319004: "DJI_FLIGHT_TASK_TIMEOUT_AUTOMATIC_STOP",
+		319005: "DJI_CLOUD_DOCK_COMM_ERROR_CANNOT_FLY",
+		319006: "DJI_CANCEL_FLIGHT_TASK_FAILED_RUNNING",
+		319007: "DJI_MODIFY_FLIGHT_TASK_FAILED_RUNNING",
+		319008: "DJI_DOCK_CLOUD_TIME_NOT_SYNC",
+		319009: "DJI_FLIGHT_TASK_DELIVER_FAILED_RETRY_RESTART",
+		319010: "DJI_DOCK_FIRMWARE_TOO_OLD_UPGRADE",
+		319015: "DJI_DOCK_INITIALIZING_CANNOT_FLY",
+		319016: "DJI_DOCK_EXECUTING_OTHER_TASK",
+		319017: "DJI_DOCK_PROCESSING_MEDIA_CANNOT_FLY",
+		319018: "DJI_DOCK_EXPORTING_LOG_CANNOT_FLY",
+		319019: "DJI_DOCK_PULLING_LOG_CANNOT_FLY",
+		319020: "DJI_ROUTE_INTERRUPT_FAILED_RETRY",
+		319021: "DJI_REMOTE_CONTROL_EXIT_FAILED_RETRY",
+		319022: "DJI_POINT_FLIGHT_FAILED_RETRY",
+		319023: "DJI_POINT_FLIGHT_STOP_FAILED_RETRY",
+		319024: "DJI_ONE_KEY_TAKEOFF_FAILED_RETRY",
+		319025: "DJI_DOCK_NOT_READY_CANNOT_FLY",
+		319026: "DJI_AIRCRAFT_BATTERY_BELOW_USER_SETTING",
+		319027: "DJI_DOCK_AIRCRAFT_STORAGE_FULL",
+		319028: "DJI_CUSTOM_FLIGHT_AREA_UPDATING",
+		319029: "DJI_OFFLINE_MAP_UPDATING",
+		319030: "DJI_OPERATION_FAILED_NO_AIRCRAFT_CONTROL",
+		319031: "DJI_CONTROL_RIGHT_ABNORMAL_REFRESH",
+		319032: "DJI_POINT_FLIGHT_FAILED_RETRY_AGAIN",
+		319033: "DJI_VIRTUAL_JOYSTICK_OP_FAILED",
+		319034: "DJI_VIRTUAL_JOYSTICK_OP_FAILED_AGAIN",
+		319035: "DJI_EMERGENCY_STOP_FAILED_RETRY",
+		319036: "DJI_DEVICE_REMOTE_DEBUGGING",
+		319037: "DJI_DEVICE_LOCAL_DEBUGGING",
+		319038: "DJI_DEVICE_UPGRADING_CANNOT_OPERATE",
+		319042: "DJI_ROUTE_RECOVER_FAILED_RETRY",
+		319043: "DJI_CANCEL_RETURN_FAILED_RETRY",
+		319044: "DJI_ROUTE_TASK_ENDED_CANNOT_RECOVER",
+		319045: "DJI_EMERGENCY_STOP_SUCCESS_REPRESS",
+		319046: "DJI_CANNOT_PAUSE_ROUTE_NOT_ENTERED",
+		319999: "DJI_DOCK_SYSTEM_RUN_ERROR_RESTART_AGAIN",
+		321000: "DJI_ROUTE_EXECUTE_ABNORMAL_RETRY",
+		321004: "DJI_ROUTE_FILE_PARSE_FAILED_CANNOT_EXECUTE",
+		321005: "DJI_ROUTE_NO_BREAKPOINT_INFO_CANNOT_FLY",
+		321257: "DJI_FLIGHT_TASK_ALREADY_RUNNING",
+		321258: "DJI_CANNOT_TERMINATE_FLIGHT_TASK_CHECK_STATUS",
+		321259: "DJI_CANNOT_TERMINATE_TASK_NOT_STARTED",
+		321260: "DJI_CANNOT_INTERRUPT_TASK_NOT_STARTED",
+		321513: "DJI_ROUTE_HEIGHT_EXCEED_MAX_LIMIT",
+		321514: "DJI_TASK_FAILED_POINT_EXCEED_RANGE",
+		321515: "DJI_ROUTE_CROSS_NO_FLY_ZONE",
+		321516: "DJI_AIRCRAFT_HEIGHT_TOO_LOW_TASK_STOPPED",
+		321517: "DJI_AIRCRAFT_OBSTACLE_AVOID_TASK_STOPPED",
+		321519: "DJI_AIRCRAFT_APPROACH_LIMIT_RETURN",
+		321523: "DJI_AIRCRAFT_TAKEOFF_FAILED_CONTACT_SUPPORT",
+		321524: "DJI_AIRCRAFT_PREPARE_FAILED_POSITION_GEAR",
+		321528: "DJI_CUSTOM_FLIGHT_AREA_BOUNDARY_TASK_PAUSED",
+		321529: "DJI_TARGET_IN_NO_FLY_ZONE_TASK_PAUSED",
+		321530: "DJI_ROUTE_TRACK_PLAN_FAILED_TASK_PAUSED",
+		321531: "DJI_TAKEOFF_LAND_ROUTE_FAILED_CONTACT_SUPPORT",
+		321532: "DJI_TAKEOFF_LAND_ROUTE_FAILED_CONTACT_SUPPORT_AGAIN",
+		321533: "DJI_TAKEOFF_LAND_ROUTE_FAILED_CONTACT_SUPPORT_THIRD",
+		321769: "DJI_AIRCRAFT_SATELLITE_SIGNAL_WEAK",
+		321770: "DJI_AIRCRAFT_GEAR_ERROR_CANNOT_FLY",
+		321771: "DJI_AIRCRAFT_NO_RETURN_POINT_CANNOT_FLY",
+		321772: "DJI_AIRCRAFT_LOW_BATTERY_BELOW_30PCT_AGAIN",
+		321773: "DJI_AIRCRAFT_LOW_BATTERY_RETURN_DURING_FLIGHT",
+		321775: "DJI_AIRCRAFT_DISCONNECTED_DURING_FLIGHT",
+		321776: "DJI_AIRCRAFT_RTK_CONVERGENCE_FAILED_RESTART_AGAIN",
+		321777: "DJI_AIRCRAFT_NOT_HOVER_CANNOT_START",
+		321778: "DJI_AIRCRAFT_CONTROLLED_BY_B_NO_DOCK_FLY",
+		321784: "DJI_TASK_EMERGENCY_RETURN_WIND",
+		321788: "DJI_TASK_FAILED_RETURN_SIGNAL_INTERFERENCE",
+		322281: "DJI_TASK_FAILED_MANUAL_INTERRUPTED",
+		322282: "DJI_TASK_INTERRUPTED_AIRCRAFT_TAKEN_OVER",
+		322283: "DJI_TASK_INTERRUPTED_USER_RETURN",
+		322539: "DJI_ROUTE_BREAKPOINT_INFO_ERROR_CANNOT_FLY",
+		322563: "DJI_ROUTE_TRACK_GENERATE_FAILED_CLEAN_LENS",
+		324012: "DJI_LOG_COMPRESS_TIMEOUT_TOO_MANY",
+		324013: "DJI_DEVICE_LOG_LIST_GET_FAILED_RETRY",
+		324014: "DJI_DEVICE_LOG_LIST_EMPTY_REFRESH",
+		324015: "DJI_AIRCRAFT_OFFLINE_NO_LOG_LIST",
+		324016: "DJI_DOCK_STORAGE_FULL_LOG_COMPRESS_FAILED",
+		324017: "DJI_LOG_COMPRESS_FAILED_REFRESH_RESTART",
+		324018: "DJI_LOG_PULL_FAILED_FEEDBACK_UPLOAD",
+		324019: "DJI_LOG_UPLOAD_FAILED_NET_ERROR",
+		324021: "DJI_LOG_EXPORT_INTERRUPTED_POWER_OFF",
+		324030: "DJI_MEDIA_UPLOAD_FAILED_NET_LINK_ERROR",
+		325001: "DJI_CLOUD_COMMAND_FORMAT_ERROR",
+		325003: "DJI_COMMAND_RESPONSE_FAILED_RETRY",
+		325004: "DJI_DEVICE_COMMAND_REQUEST_TIMEOUT",
+		325005: "DJI_DOCK_UNABLE_RESPONSE_TASK_RETRY",
+		325006: "DJI_DOCK_START_CHECKING_RETRY",
+		325007: "DJI_DOCK_EXECUTING_TASK_RETRY",
+		325008: "DJI_DOCK_PROCESSING_TASK_RESULT",
+		325009: "DJI_DOCK_EXPORTING_REMOTE_LOG",
+		325010: "DJI_DOCK_UPDATING_CUSTOM_FLIGHT_AREA",
+		325011: "DJI_DOCK_UPDATING_OFFLINE_MAP",
+		325012: "DJI_AIRCRAFT_DISCONNECTED_RETRY",
+		326002: "DJI_AIRCRAFT_NO_CELLULAR_MODULE",
+		326003: "DJI_AIRCRAFT_CELLULAR_NO_SIM",
+		326004: "DJI_AIRCRAFT_CELLULAR_FORCE_UPGRADE",
+		326005: "DJI_ENHANCED_TRANSMISSION_CONNECT_FAILED",
+		326006: "DJI_ENHANCED_TRANSMISSION_SWITCH_FAILED",
+		326008: "DJI_DOCK_NO_CELLULAR_MODULE",
+		326009: "DJI_DOCK_CELLULAR_NO_SIM",
+		326010: "DJI_DOCK_CELLULAR_FORCE_UPGRADE",
+		326103: "DJI_ESIM_ACTIVATING_RETRY",
+		326104: "DJI_ESIM_SWITCHING_OPERATOR",
+		326105: "DJI_ENHANCED_MODULE_SWITCHING_MODE",
+		326106: "DJI_ENHANCED_MODULE_ABNORMAL_RESTART",
+		326107: "DJI_ENHANCED_MODULE_ACTIVATE_ESIM_SIM",
+		327000: "DJI_PARAM_SET_FAILED_RETRY",
+		327001: "DJI_PARAM_SET_FAILED_RETRY_AGAIN",
+		327002: "DJI_GET_CONTROL_FAILED_RETRY",
+		327003: "DJI_GET_CONTROL_FAILED_RETRY_AGAIN",
+		327004: "DJI_SCREEN_DRAG_FAILED_RETRY",
+		327005: "DJI_DOUBLE_CLICK_CENTER_FAILED",
+		327006: "DJI_TAKE_PHOTO_FAILED",
+		327007: "DJI_START_RECORD_FAILED",
+		327008: "DJI_STOP_RECORD_FAILED",
+		327009: "DJI_SWITCH_CAMERA_MODE_FAILED",
+		327010: "DJI_ZOOM_CAMERA_ZOOM_FAILED",
+		327011: "DJI_IR_CAMERA_ZOOM_FAILED",
+		327012: "DJI_GET_CONTROL_FAILED_RETRY_THIRD",
+		327013: "DJI_PARAM_SET_FAILED_RETRY_THIRD",
+		327014: "DJI_GIMBAL_REACH_LIMIT",
+		327015: "DJI_LIVE_STREAM_START_FAILED_REFRESH",
+		327016: "DJI_LOST_CONNECT_ACTION_SET_FAILED",
+		327017: "DJI_POINT_FLIGHT_HEIGHT_SET_FAILED",
+		327018: "DJI_POINT_FLIGHT_MODE_SWITCH_FAILED",
+		327019: "DJI_CANNOT_LOOK_AT_MARK_POINT",
+		327020: "DJI_PANORAMA_STOP_COMMAND_TIMEOUT",
+		327022: "DJI_PANORAMA_STOP_NOT_SUPPORT",
+		327050: "DJI_AUDIO_PLAY_NOT_SUPPORT",
+		327051: "DJI_AUDIO_FILE_DOWNLOAD_FAILED",
+		327052: "DJI_SPEAKER_MODE_SWITCH_FAILED",
+		327053: "DJI_AUDIO_FILE_UPLOAD_FAILED",
+		327054: "DJI_AUDIO_PLAY_FAILED",
+		327055: "DJI_WORK_MODE_SET_FAILED",
+		327056: "DJI_TEXT_UPLOAD_FAILED",
+		327057: "DJI_PLAY_STOP_FAILED",
+		327058: "DJI_PLAY_MODE_SET_FAILED",
+		327059: "DJI_VOLUME_SET_FAILED",
+		327060: "DJI_CONTROL_VALUE_SET_FAILED",
+		327061: "DJI_TEXT_VALUE_SEND_FAILED",
+		327062: "DJI_SYSTEM_LANGUAGE_SWITCH_FAILED",
+		327063: "DJI_DEVICE_FUNC_LIST_GET_FAILED",
+		327064: "DJI_DEVICE_CONFIG_GET_FAILED",
+		327065: "DJI_DEVICE_IMAGE_GET_FAILED",
+		327066: "DJI_DEVICE_FILE_COMPRESS_FAILED",
+		327067: "DJI_DEVICE_FILE_UPLOAD_FAILED",
+		327068: "DJI_AUDIO_UPLOAD_FAILED_MD5_ERROR",
+		327069: "DJI_AUDIO_UPLOAD_FAILED_AGAIN",
+		327070: "DJI_AUDIO_UPLOAD_FAILED_ABNORMAL_STOP",
+		327071: "DJI_TTS_TEXT_UPLOAD_FAILED_MD5_ERROR",
+		327072: "DJI_TTS_TEXT_UPLOAD_FAILED",
+		327073: "DJI_TTS_TEXT_UPLOAD_FAILED_ABNORMAL_STOP",
+		327074: "DJI_SPEAKER_REPLAY_FAILED",
+		327075: "DJI_SPEAKER_ENCODE_FAILED",
+		327201: "DJI_PANORAMA_SHOOT_FAILED",
+		327202: "DJI_PANORAMA_SHOOT_TERMINATED",
+		327203: "DJI_DEVICE_NOT_SUPPORT_PANORAMA",
+		327204: "DJI_SYSTEM_BUSY_NO_PANORAMA",
+		327205: "DJI_REQUEST_FAILED_NO_PANORAMA",
+		327206: "DJI_AIRCRAFT_NOT_TAKEN_OFF_NO_PANORAMA",
+		327207: "DJI_GET_CONTROL_FAILED_PANORAMA_STOP",
+		327208: "DJI_UNKNOWN_CAMERA_ERROR_NO_PANORAMA",
+		327209: "DJI_CAMERA_TIMEOUT_PANORAMA_STOP",
+		327210: "DJI_CANNOT_TAKE_PANORAMA",
+		327211: "DJI_STORAGE_FULL_PANORAMA_STOP",
+		327212: "DJI_AIRCRAFT_MOVING_NO_PANORAMA",
+		327213: "DJI_GIMBAL_MOVING_NO_PANORAMA",
+		327214: "DJI_USER_OPERATE_JOYSTICK_PANORAMA_STOP",
+		327215: "DJI_TOUCH_NO_FLY_ZONE_PANORAMA_STOP",
+		327216: "DJI_TRIGGER_DISTANCE_LIMIT_PANORAMA_STOP",
+		327217: "DJI_GIMBAL_BLOCKED_PANORAMA_STOP",
+		327218: "DJI_TAKE_PHOTO_FAILED_PANORAMA_STOP",
+		327219: "DJI_PANORAMA_IMAGE_STITCH_FAILED",
+		327220: "DJI_CALIBRATION_PARAM_LOAD_FAILED",
+		327221: "DJI_CAMERA_PARAM_ADJUST_FAILED",
+		327500: "DJI_AIRCRAFT_LENS_DEFOG_FAILED",
+		328051: "DJI_AIRCRAFT_NO_REAL_NAME_REGISTER",
+		328052: "DJI_AIRCRAFT_REAL_NAME_CANCELED",
+		336000: "DJI_POINT_FLIGHT_CMD_SEND_FAILED",
+		336001: "DJI_AIRCRAFT_DATA_ABNORMAL_NO_RESPONSE",
+		336002: "DJI_AIRCRAFT_GPS_SIGNAL_WEAK",
+		336003: "DJI_AIRCRAFT_POSITION_INVALID_NO_RESPONSE",
+		336004: "DJI_POINT_FLIGHT_PLAN_FAILED",
+		336005: "DJI_AIRCRAFT_RETURN_POINT_NOT_UPDATED",
+		336006: "DJI_AIRCRAFT_DISCONNECTED_EXIT_POINT_FLIGHT",
+		336017: "DJI_AIRCRAFT_LOW_BATTERY_NO_TASK",
+		336018: "DJI_AIRCRAFT_PLAN_MODE_SWITCHED",
+		336019: "DJI_POINT_FLIGHT_HEIGHT_ADJUSTED_LIMIT",
+		336513: "DJI_TARGET_IN_NO_FLY_ZONE",
+		336514: "DJI_TARGET_EXCEED_DISTANCE_LIMIT",
+		336515: "DJI_TARGET_IN_NO_FLY_ZONE_AGAIN",
+		336516: "DJI_TARGET_EXCEED_HEIGHT_LIMIT",
+		336517: "DJI_TARGET_BELOW_LOWEST_HEIGHT",
+		337025: "DJI_AIRCRAFT_CANNOT_TAKEOFF",
+		337026: "DJI_TARGET_POINT_ABNORMAL_RETRY",
+		337027: "DJI_AIRCRAFT_SPEED_SET_ABNORMAL",
+		337028: "DJI_AIRCRAFT_VERSION_ABNORMAL_CHECK",
+		337029: "DJI_AIRCRAFT_UNABLE_RESPONSE_TASK",
+		337030: "DJI_COMMAND_FLIGHT_TAKEOFF_HEIGHT_TOO_LOW",
+		337537: "DJI_TOUCHED_NO_FLY_ZONE",
+		337538: "DJI_TOUCHED_DISTANCE_LIMIT",
+		337539: "DJI_TOUCHED_NO_FLY_ZONE_AGAIN",
+		337540: "DJI_TOUCHED_HEIGHT_LIMIT",
+		337541: "DJI_TOUCHED_LOWEST_HEIGHT",
+		337542: "DJI_AIRCRAFT_TAKEOFF_FAILED_RETRY",
+		337543: "DJI_TARGET_IN_OBSTACLE_ZONE_CHECK",
+		337544: "DJI_OBSTACLE_DETECTED_CHECK_ENV",
+		337545: "DJI_AIRCRAFT_PLAN_ABNORMAL_RETRY",
+		337546: "DJI_TOUCHED_CUSTOM_FLIGHT_AREA",
+		338001: "DJI_AIRCRAFT_COMM_ERROR_RESTART_BOTH",
+		338002: "DJI_AIRCRAFT_COMM_ERROR_RESTART_BOTH_AGAIN",
+		338003: "DJI_AIRCRAFT_COMM_ERROR_RESTART_BOTH_THIRD",
+		338004: "DJI_AIRCRAFT_COMM_ERROR_RESTART_BOTH_FOURTH",
+		338005: "DJI_DOCK_DISTANCE_EXCEED_15KM",
+		338006: "DJI_CANNOT_FLY_CHECK_DOCK_CERTIFICATE",
+		338007: "DJI_LAND_DOCK_EXCEED_HEIGHT_LIMIT",
+		338008: "DJI_LAND_DOCK_EXCEED_USER_HEIGHT_LIMIT",
+		338009: "DJI_AIRCRAFT_GPS_SIGNAL_WEAK_RESTART",
+		338010: "DJI_AIRCRAFT_POSITION_INVALID_RESTART",
+		338011: "DJI_TASK_FAILED_DOCK_OUT_OF_GEO_FENCE",
+		338017: "DJI_AIRCRAFT_DATA_UPDATE_FAILED_RESTART",
+		338018: "DJI_AIRCRAFT_DATA_UPDATE_FAILED_RESTART_AGAIN",
+		338019: "DJI_RETURN_ROUTE_PLANNING_RETRY",
+		338020: "DJI_AIRCRAFT_CANNOT_REACH_LAND_DOCK",
+		338021: "DJI_AIRCRAFT_LOW_BATTERY_CANNOT_REACH",
+		338049: "DJI_RESPOND_JOYSTICK_EXIT_POINT_FLIGHT",
+		338050: "DJI_RESPOND_STOP_CMD_EXIT_POINT_FLIGHT",
+		338051: "DJI_LOW_BATTERY_RETURN_EXIT_POINT_FLIGHT",
+		338052: "DJI_LOW_BATTERY_LAND_EXIT_POINT_FLIGHT",
+		338053: "DJI_MANNING_AIRCRAFT_NEAR_EXIT_POINT_FLIGHT",
+		338054: "DJI_HIGH_PRIORITY_TASK_EXIT_POINT_FLIGHT",
+		338255: "DJI_AIRCRAFT_COMM_ERROR_RESTART_BOTH_FIFTH",
+		341002: "DJI_DOCK_POSITION_NOT_CONVERGED_CHECK",
+		386535: "DJI_ROUTE_EXECUTE_ABNORMAL_RETRY_AGAIN",
+		513002: "DJI_LIVE_STREAM_FAILED_CAMERA_ERROR",
+		513003: "DJI_LIVE_STREAM_FAILED_ALREADY_RUNNING",
+		513005: "DJI_LIVE_STREAM_FAILED_PARAM_ERROR",
+		513006: "DJI_LIVE_STREAM_START_FAILED_REFRESH_AGAIN",
+		513008: "DJI_LIVE_STREAM_FAILED_VIDEO_DATA_ERROR",
+		513010: "DJI_LIVE_STREAM_FAILED_DEVICE_OFFLINE",
+		513011: "DJI_LIVE_STREAM_OP_FAILED_NOT_STARTED",
+		513012: "DJI_LIVE_STREAM_OP_FAILED_SWITCH_LENS",
+		513013: "DJI_LIVE_STREAM_FAILED_PROTOCOL_NOT_SUPPORT",
+		513014: "DJI_LIVE_STREAM_FAILED_PARAM_ERROR_AGAIN",
+		513015: "DJI_LIVE_STREAM_ABNORMAL_NET_LAG",
+		513016: "DJI_LIVE_STREAM_ABNORMAL_DECODE_ERROR",
+		513017: "DJI_LIVE_STREAM_PAUSED_MEDIA_DOWNLOADING",
+		513099: "DJI_LIVE_STREAM_FAILED_RETRY_AGAIN",
+		514100: "DJI_DOCK_OPERATION_ABNORMAL_RESTART",
+		514101: "DJI_PUSH_ROD_CLOSE_FAILED_CHECK_OBSTACLE",
+		514102: "DJI_PUSH_ROD_OPEN_FAILED_CHECK_OBSTACLE",
+		514103: "DJI_AIRCRAFT_LOW_BATTERY_BELOW_30PCT_THIRD",
+		514104: "DJI_AIRCRAFT_BATTERY_CHARGE_START_FAILED",
+		514105: "DJI_AIRCRAFT_BATTERY_CHARGE_STOP_FAILED",
+		514106: "DJI_AIRCRAFT_POWER_CONTROL_ABNORMAL",
+		514107: "DJI_DOCK_COVER_OPEN_FAILED_CHECK_OBSTACLE",
+		514108: "DJI_DOCK_COVER_CLOSE_FAILED_CHECK_OBSTACLE",
+		514109: "DJI_AIRCRAFT_START_FAILED_CHECK_DOCK",
+		514110: "DJI_AIRCRAFT_STOP_FAILED_RESTART_DOCK",
+		514111: "DJI_AIRCRAFT_PROPELLER_STOP_ABNORMAL",
+		514112: "DJI_AIRCRAFT_PROPELLER_STOP_ABNORMAL_AGAIN",
+		514113: "DJI_PUSH_ROD_CONNECT_FAILED_CHECK_DOCK",
+		514114: "DJI_AIRCRAFT_POWER_STATUS_GET_FAILED",
+		514116: "DJI_DOCK_EXECUTING_CMD_CANNOT_OPERATE",
+		514117: "DJI_DOCK_COVER_POSITION_ABNORMAL",
+		514118: "DJI_PUSH_ROD_POSITION_ABNORMAL",
+		514120: "DJI_DOCK_AIRCRAFT_DISCONNECTED_REPAIR",
+		514121: "DJI_DOCK_EMERGENCY_STOP_PRESSED_RELEASE",
+		514122: "DJI_AIRCRAFT_CHARGE_STATUS_GET_FAILED",
+		514123: "DJI_AIRCRAFT_BATTERY_TOO_LOW_CANNOT_START",
+		514124: "DJI_AIRCRAFT_BATTERY_INFO_GET_FAILED",
+		514125: "DJI_AIRCRAFT_BATTERY_FULL_CANNOT_CHARGE",
+		514134: "DJI_DOCK_RAIN_TOO_HEAVY_CANNOT_FLY",
+		514135: "DJI_DOCK_WIND_TOO_STRONG_CANNOT_FLY",
+		514136: "DJI_DOCK_POWER_OFF_CANNOT_FLY",
+		514137: "DJI_DOCK_TEMP_TOO_LOW_CANNOT_FLY",
+		514138: "DJI_AIRCRAFT_BATTERY_MAINTAINING_CANNOT_FLY",
+		514139: "DJI_AIRCRAFT_BATTERY_NO_MAINTAIN_NEEDED",
+		514140: "DJI_AIRCRAFT_BATTERY_NO_MAINTAIN_NEEDED_AGAIN",
+		514141: "DJI_DOCK_SYSTEM_OP_ERROR_RESTART",
+		514142: "DJI_PUSH_ROD_CONNECT_FAILED_BEFORE_TAKEOFF",
+		514143: "DJI_PUSH_ROD_NOT_CLOSED_RETRY_RESTART",
+		514144: "DJI_DOCK_COVER_NOT_CLOSED_RETRY_RESTART",
+		514145: "DJI_DOCK_LOCAL_DEBUGGING_CANNOT_OPERATE",
+		514146: "DJI_DOCK_REMOTE_DEBUGGING_CANNOT_FLY",
+		514147: "DJI_DEVICE_UPGRADING_CANNOT_DEBUG",
+		514148: "DJI_DOCK_WORKING_CANNOT_DEBUG",
+		514149: "DJI_DOCK_SYSTEM_OP_ERROR_CANNOT_FLY",
+		514150: "DJI_DEVICE_RESTARTING_CANNOT_FLY",
+		514151: "DJI_DEVICE_UPGRADING_CANNOT_RESTART",
+		514153: "DJI_DOCK_EXIT_DEBUGGING_CANNOT_OPERATE",
+		514154: "DJI_DOCK_TEMP_GET_FAILED_RETRY",
+		514155: "DJI_AIRCRAFT_NOT_IN_DOCK_CANNOT_FLY",
+		514156: "DJI_AIRCRAFT_NOT_IN_DOCK_CHECK_RETRIEVE",
+		514157: "DJI_AIRCRAFT_START_FAILED_WIRELESS_CHARGE_BUSY",
+		514158: "DJI_DOCK_RTK_ERROR_CANNOT_TAKEOFF",
+		514159: "DJI_TASK_FAILED_LAND_DOCK_HAS_AIRCRAFT",
+		514162: "DJI_AIRCRAFT_DOCK_CONNECT_FAILED_RETRY",
+		514163: "DJI_BATTERY_FUNC_ABNORMAL_CHECK_INSTALL",
+		514164: "DJI_DEVICE_RESTART_FAILED_CONTACT_SUPPORT",
+		514165: "DJI_DEVICE_RESTART_FAILED_CONTACT_SUPPORT_AGAIN",
+		514170: "DJI_DOCK_INITIALIZING_CANNOT_OPERATE",
+		514171: "DJI_CLOUD_COMMAND_FORMAT_ERROR_DOCK",
+		514172: "DJI_AIRCRAFT_CANNOT_STOP_BLUETOOTH_DISCONNECT",
+		514173: "DJI_DOCK_WEATHER_BAD_CANNOT_FLY",
+		514174: "DJI_AIRCRAFT_CHARGE_FAILED_COVER_POSITION",
+		514180: "DJI_DOCK_AC_CONTROL_STOP_FAILED",
+		514181: "DJI_DOCK_AC_COOL_START_FAILED",
+		514182: "DJI_DOCK_AC_HEAT_START_FAILED",
+		514183: "DJI_DOCK_AC_DEHUMIDIFY_START_FAILED",
+		514184: "DJI_DOCK_AC_COOL_TOO_LOW",
+		514185: "DJI_DOCK_AC_HEAT_TOO_HIGH",
+		514300: "DJI_GATEWAY_ABNORMAL",
+		514301: "DJI_REQUEST_TIMEOUT_CONNECT_CLOSED",
+		514302: "DJI_NETWORK_CERTIFICATE_ERROR",
+		514303: "DJI_NETWORK_ABNORMAL_CONNECT_CLOSED",
+		514304: "DJI_REQUEST_REJECTED_CONNECT_FAILED",
+		514168: "DJI_DOCK_NOT_CALIBRATED_CANNOT_FLY",
 	}
 	DJIErrorCode_value = map[string]int32{
-		"DJI_ERROR_CODE_UNKNOWN":                                           0,
-		"DJI_ERROR_CODE_DEVICE_UPGRADING":                                  312014,
-		"DJI_ERROR_CODE_AIRPORT_BUSY":                                      312015,
-		"DJI_ERROR_CODE_UPGRADE_FAILED_LINK_ERROR":                         312016,
-		"DJI_ERROR_CODE_DEVICE_POWER_ON_FAILED":                            312022,
-		"DJI_ERROR_CODE_PUSH_ROD_CLOSE_FAILED":                             312023,
-		"DJI_ERROR_CODE_UPGRADE_FAILED_NO_AIRCRAFT":                        312027,
-		"DJI_ERROR_CODE_UPGRADE_FAILED_REBOOT":                             312028,
-		"DJI_ERROR_CODE_DEVICE_REBOOTING":                                  312029,
-		"DJI_ERROR_CODE_UPGRADE_FAILED_ENHANCED_IMAGE_TRANSMISSION":        312030,
-		"DJI_ERROR_CODE_LOW_BATTERY":                                       312704,
-		"DJI_ERROR_CODE_DEVICE_OPERATION_NOT_SUPPORTED":                    314000,
-		"DJI_ERROR_CODE_TASK_SUBMIT_FAILED":                                314001,
-		"DJI_ERROR_CODE_ROUTE_FILE_FORMAT_INCOMPATIBLE":                    314003,
-		"DJI_ERROR_CODE_AIRCRAFT_INIT_FAILED":                              314006,
-		"DJI_ERROR_CODE_ROUTE_TRANSMISSION_FAILED":                         314007,
-		"DJI_ERROR_CODE_PREPARE_TIMEOUT":                                   314008,
-		"DJI_ERROR_CODE_ROUTE_EXECUTION_FAILED":                            314010,
-		"DJI_ERROR_CODE_AIRPORT_SYSTEM_ERROR":                              314011,
-		"DJI_ERROR_CODE_PREPARE_FAILED":                                    314012,
-		"DJI_ERROR_CODE_NO_ROUTE_FOUND":                                    314013,
-		"DJI_ERROR_CODE_PRECISION_REPHOTOGRAPHY_ROUTE_TRANSMISSION_FAILED": 314015,
-		"DJI_ERROR_CODE_ROUTE_FILE_PARSE_FAILED":                           314016,
-		"DJI_ERROR_CODE_AIRCRAFT_RTK_ERROR":                                314018,
-		"DJI_ERROR_CODE_AIRCRAFT_RTK_CONVERGENCE_FAILED":                   314019,
-		"DJI_ERROR_CODE_AIRCRAFT_POSITION_ERROR":                           314020,
-		"DJI_ERROR_CODE_AIRCRAFT_RTK_ERROR_AGAIN":                          314021,
-		"DJI_ERROR_CODE_DEPARTURE_ARRIVAL_ROUTE_SUBMIT_FAILED":             314024,
-		"DJI_ERROR_CODE_RTK_CONVERGENCE_TIMEOUT":                           314025,
-		"DJI_ERROR_CODE_NETWORK_DISCONNECTED":                              314200,
-		"DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR":                       315000,
-		"DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_REMOTE_POWER_ON":       315001,
-		"DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_REBOOT":                315002,
-		"DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_AGAIN":                 315003,
-		"DJI_ERROR_CODE_BOTH_AIRPORTS_BUSY":                                315004,
-		"DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_FOUR":                  315005,
-		"DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_FIVE":                  315006,
-		"DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_UPGRADE":               315007,
-		"DJI_ERROR_CODE_CALIBRATION_INFO_INCONSISTENT":                     315008,
-		"DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_SIX":                   315009,
-		"DJI_ERROR_CODE_CANNOT_STOP_TASK":                                  315010,
-		"DJI_ERROR_CODE_CANNOT_STOP_TASK_AGAIN":                            315011,
-		"DJI_ERROR_CODE_CANNOT_STOP_TASK_THREE":                            315012,
-		"DJI_ERROR_CODE_TASK_SUBMIT_FAILED_CONTACT_SUPPORT":                315013,
-		"DJI_ERROR_CODE_TASK_TYPE_DOES_NOT_SUPPORT_RETURN_POINT":           315014,
-		"DJI_ERROR_CODE_RETURN_POINT_SET_FAILED":                           315015,
-		"DJI_ERROR_CODE_TASK_SUBMIT_FAILED_CONTACT_SUPPORT_AGAIN":          315016,
-		"DJI_ERROR_CODE_TASK_SUBMIT_FAILED_CONTACT_SUPPORT_THREE":          315017,
-		"DJI_ERROR_CODE_BOTH_AIRPORTS_BUSY_AGAIN":                          315018,
-		"DJI_ERROR_CODE_POOR_DEPLOYMENT_LOCATION":                          315019,
-		"DJI_ERROR_CODE_AIRPORT_SYSTEM_ERROR_REBOOT":                       315050,
-		"DJI_ERROR_CODE_TASK_FAILED_REBOOT":                                315051,
-		"DJI_ERROR_CODE_AIRPORT_POSITION_NOT_CONVERGED":                    315052,
-		"DJI_ERROR_CODE_PARAMETER_SET_FAILED":                              316001,
-		"DJI_ERROR_CODE_PARAMETER_SET_FAILED_AGAIN":                        316002,
-		"DJI_ERROR_CODE_PARAMETER_SET_FAILED_THREE":                        316003,
-		"DJI_ERROR_CODE_PARAMETER_SET_FAILED_FOUR":                         316004,
-		"DJI_ERROR_CODE_RTK_CONVERGENCE_FAILED_PARAMETER":                  316005,
-		"DJI_ERROR_CODE_TASK_TIMEOUT":                                      316006,
-		"DJI_ERROR_CODE_AIRCRAFT_INIT_FAILED_PARAMETER":                    316007,
-		"DJI_ERROR_CODE_CONTROL_ACQUISITION_FAILED":                        316008,
-		"DJI_ERROR_CODE_LOW_BATTERY_CANNOT_EXECUTE":                        316009,
-		"DJI_ERROR_CODE_NO_AIRCRAFT_DETECTED":                              316010,
-		"DJI_ERROR_CODE_LANDING_POSITION_OFFSET":                           316011,
-		"DJI_ERROR_CODE_PREPARE_FAILED_AGAIN":                              316012,
-		"DJI_ERROR_CODE_PREPARE_FAILED_THREE":                              316013,
-		"DJI_ERROR_CODE_PREPARE_FAILED_FOUR":                               316014,
-		"DJI_ERROR_CODE_RTK_CONVERGENCE_POSITION_TOO_FAR":                  316015,
-		"DJI_ERROR_CODE_LANDING_TIMEOUT":                                   316016,
-		"DJI_ERROR_CODE_MEDIA_COUNT_TIMEOUT":                               316017,
-		"DJI_ERROR_CODE_TASK_EXECUTION_TIMEOUT":                            316018,
-		"DJI_ERROR_CODE_AIRPORT_SYSTEM_ERROR_TASK":                         316019,
-		"DJI_ERROR_CODE_RTK_SIGNAL_SOURCE_ERROR":                           316020,
-		"DJI_ERROR_CODE_RTK_SIGNAL_CHECK_TIMEOUT":                          316021,
-		"DJI_ERROR_CODE_CANNOT_EXECUTE_RETURN_HOME":                        316022,
-		"DJI_ERROR_CODE_CANNOT_EXECUTE_RETURN_HOME_B_CONTROL":              316023,
-		"DJI_ERROR_CODE_CANNOT_EXECUTE_RETURN_HOME_NOT_TAKEOFF":            316024,
-		"DJI_ERROR_CODE_PARAMETER_SET_FAILED_FIVE":                         316025,
-		"DJI_ERROR_CODE_EMERGENCY_STOP_PRESSED":                            316026,
-		"DJI_ERROR_CODE_PARAMETER_SET_TIMEOUT":                             316027,
-		"DJI_ERROR_CODE_EMERGENCY_STOP_PRESSED_LANDING":                    316029,
-		"DJI_ERROR_CODE_BATTERY_DATA_TIMEOUT":                              316032,
-		"DJI_ERROR_CODE_BATTERY_CYCLE_COUNT_TOO_HIGH":                      316033,
-		"DJI_ERROR_CODE_FIRMWARE_VERSION_MISMATCH":                         316034,
-		"DJI_ERROR_CODE_DEPARTURE_ARRIVAL_ROUTE_SUBMIT_FAILED_FIRMWARE":    316035,
-		"DJI_ERROR_CODE_CAMERA_SUMMARY_INFO_FAILED":                        316100,
-		"DJI_ERROR_CODE_SET_SINGLE_SHOT_MODE_FAILED":                       316101,
-		"DJI_ERROR_CODE_CLOSE_WATERMARK_FAILED":                            316102,
-		"DJI_ERROR_CODE_SET_METERING_MODE_FAILED":                          316103,
-		"DJI_ERROR_CODE_SWITCH_TO_WIDE_ANGLE_FAILED":                       316104,
-		"DJI_ERROR_CODE_SET_PHOTO_STORAGE_FAILED":                          316105,
-		"DJI_ERROR_CODE_SET_IR_ZOOM_FAILED":                                316106,
-		"DJI_ERROR_CODE_SET_PHOTO_SIZE_FAILED":                             316107,
-		"DJI_ERROR_CODE_SET_PHOTO_FORMAT_FAILED":                           316108,
-		"DJI_ERROR_CODE_CLOSE_DISTORTION_CORRECTION_FAILED":                316109,
-		"DJI_ERROR_CODE_OPEN_MECHANICAL_SHUTTER_FAILED":                    316110,
-		"DJI_ERROR_CODE_SET_FOCUS_MODE_FAILED":                             316111,
-		"DJI_ERROR_CODE_MEDIA_COUNT_FAILED":                                317001,
-		"DJI_ERROR_CODE_STORAGE_FORMAT_FAILED":                             317002,
-		"DJI_ERROR_CODE_STORAGE_FORMAT_FAILED_REBOOT":                      317003,
-		"DJI_ERROR_CODE_MEDIA_FORMAT_FAILED":                               317004,
-		"DJI_ERROR_CODE_END_RECORDING_FAILED":                              317005,
-		"DJI_ERROR_CODE_CANNOT_FORMAT":                                     317006,
-		"DJI_ERROR_CODE_MEDIA_COUNT_FAILED_CONTACT_SUPPORT":                317007,
-		"DJI_ERROR_CODE_AIRPORT_BUSY_OR_UPLOADING_LOGS":                    319001,
-		"DJI_ERROR_CODE_AIRPORT_SYSTEM_RUNNING_ERROR":                      319002,
-		"DJI_ERROR_CODE_AIRPORT_SYSTEM_RUNNING_ERROR_REISSUE":              319003,
-		"DJI_ERROR_CODE_TASK_EXECUTION_TIMEOUT_AUTO_TERMINATED":            319004,
-		"DJI_ERROR_CODE_CLOUD_AIRPORT_COMMUNICATION_ERROR":                 319005,
-		"DJI_ERROR_CODE_CANCEL_TASK_FAILED":                                319006,
-		"DJI_ERROR_CODE_MODIFY_TASK_FAILED":                                319007,
-		"DJI_ERROR_CODE_TIME_NOT_SYNCED":                                   319008,
-		"DJI_ERROR_CODE_FIRMWARE_VERSION_TOO_LOW":                          319010,
-		"DJI_ERROR_CODE_AIRPORT_INITIALIZING":                              319015,
-		"DJI_ERROR_CODE_AIRPORT_IN_OPERATION":                              319016,
-		"DJI_ERROR_CODE_PROCESSING_MEDIA_FILES":                            319017,
-		"DJI_ERROR_CODE_AUTO_EXPORTING_LOGS":                               319018,
-		"DJI_ERROR_CODE_PULLING_LOGS":                                      319019,
-		"DJI_ERROR_CODE_ROUTE_EXECUTION_ERROR":                             321000,
-		"DJI_ERROR_CODE_ROUTE_FILE_PARSE_FAILED_ROUTE":                     321004,
-		"DJI_ERROR_CODE_ROUTE_MISSING_BREAKPOINT_INFO":                     321005,
-		"DJI_ERROR_CODE_TASK_ALREADY_EXECUTING":                            321257,
-		"DJI_ERROR_CODE_CANNOT_TERMINATE_TASK":                             321258,
-		"DJI_ERROR_CODE_TASK_NOT_STARTED_CANNOT_TERMINATE":                 321259,
-		"DJI_ERROR_CODE_TASK_NOT_STARTED_CANNOT_INTERRUPT":                 321260,
-		"DJI_ERROR_CODE_ROUTE_PLANNING_HEIGHT_EXCEEDED":                    321513,
-		"DJI_ERROR_CODE_TASK_FAILED_BUFFER_ZONE":                           321514,
-		"DJI_ERROR_CODE_ROUTE_PASSES_RESTRICTED_AREA":                      321515,
-		"DJI_ERROR_CODE_FLIGHT_HEIGHT_TOO_LOW":                             321516,
-		"DJI_ERROR_CODE_OBSTACLE_AVOIDANCE_TRIGGERED":                      321517,
-		"DJI_ERROR_CODE_APPROACHING_RESTRICTED_AREA":                       321519,
-		"DJI_ERROR_CODE_LIVE_STREAM_FAILED_CAMERA_NOT_EXIST":               513002,
-		"DJI_ERROR_CODE_LIVE_STREAM_ALREADY_RUNNING":                       513003,
-		"DJI_ERROR_CODE_LIVE_STREAM_FAILED_PARAMETER_ERROR":                513005,
-		"DJI_ERROR_CODE_LIVE_STREAM_FAILED_REFRESH":                        513006,
-		"DJI_ERROR_CODE_LIVE_STREAM_FAILED_VIDEO_DATA_ERROR":               513008,
-		"DJI_ERROR_CODE_LIVE_STREAM_FAILED_NO_NETWORK":                     513010,
-		"DJI_ERROR_CODE_OPERATION_FAILED_NOT_LIVE_STREAMING":               513011,
-		"DJI_ERROR_CODE_OPERATION_FAILED_CANNOT_SWITCH_CAMERA":             513012,
-		"DJI_ERROR_CODE_LIVE_STREAM_FAILED_PROTOCOL_NOT_SUPPORTED":         513013,
-		"DJI_ERROR_CODE_LIVE_STREAM_FAILED_PARAMETER_ERROR_AGAIN":          513014,
-		"DJI_ERROR_CODE_LIVE_STREAM_ERROR_NETWORK_CONGestion":              513015,
-		"DJI_ERROR_CODE_LIVE_STREAM_ERROR_DECODE_FAILED":                   513016,
-		"DJI_ERROR_CODE_LIVE_STREAM_PAUSED":                                513017,
-		"DJI_ERROR_CODE_LIVE_STREAM_FAILED_RETRY":                          513099,
-		"DJI_ERROR_CODE_AIRPORT_OPERATION_ERROR":                           514100,
-		"DJI_ERROR_CODE_PUSH_ROD_CLOSE_FAILED_OPERATION":                   514101,
-		"DJI_ERROR_CODE_PUSH_ROD_OPEN_FAILED":                              514102,
-		"DJI_ERROR_CODE_LOW_BATTERY_CANNOT_EXECUTE_OPERATION":              514103,
-		"DJI_ERROR_CODE_BATTERY_CHARGING_START_FAILED":                     514104,
-		"DJI_ERROR_CODE_BATTERY_CHARGING_STOP_FAILED":                      514105,
-		"DJI_ERROR_CODE_POWER_CONTROL_ERROR":                               514106,
-		"DJI_ERROR_CODE_HATCH_OPEN_FAILED":                                 514107,
-		"DJI_ERROR_CODE_HATCH_CLOSE_FAILED":                                514108,
-		"DJI_ERROR_CODE_AIRCRAFT_POWER_ON_FAILED":                          514109,
-		"DJI_ERROR_CODE_AIRCRAFT_POWER_OFF_FAILED":                         514110,
-		"DJI_ERROR_CODE_SLOW_ROTATION_STOP_FAILED":                         514111,
-		"DJI_ERROR_CODE_SLOW_ROTATION_STOP_FAILED_AGAIN":                   514112,
-		"DJI_ERROR_CODE_PUSH_ROD_CONNECTION_FAILED":                        514113,
-		"DJI_ERROR_CODE_POWER_STATUS_FAILED":                               514114,
-		"DJI_ERROR_CODE_OPERATION_IN_PROGRESS":                             514116,
-		"DJI_ERROR_CODE_HATCH_NOT_IN_PLACE":                                514117,
-		"DJI_ERROR_CODE_PUSH_ROD_NOT_IN_PLACE":                             514118,
-		"DJI_ERROR_CODE_AIRPORT_AIRCRAFT_DISCONNECTED":                     514120,
-		"DJI_ERROR_CODE_EMERGENCY_STOP_PRESSED_AIRPORT":                    514121,
-		"DJI_ERROR_CODE_CHARGING_STATUS_FAILED":                            514122,
-		"DJI_ERROR_CODE_BATTERY_TOO_LOW_TO_POWER_ON":                       514123,
-		"DJI_ERROR_CODE_BATTERY_INFO_FAILED":                               514124,
-		"DJI_ERROR_CODE_BATTERY_ALMOST_FULL":                               514125,
-		"DJI_ERROR_CODE_TOO_MUCH_RAIN":                                     514134,
-		"DJI_ERROR_CODE_TOO_MUCH_WIND":                                     514135,
-		"DJI_ERROR_CODE_POWER_DISCONNECTED":                                514136,
-		"DJI_ERROR_CODE_TEMPERATURE_TOO_LOW":                               514137,
-		"DJI_ERROR_CODE_BATTERY_MAINTAINING":                               514138,
-		"DJI_ERROR_CODE_BATTERY_MAINTENANCE_NOT_NEEDED":                    514139,
-		"DJI_ERROR_CODE_BATTERY_MAINTENANCE_NOT_NEEDED_AGAIN":              514140,
-		"DJI_ERROR_CODE_AIRPORT_SYSTEM_OPERATION_ERROR":                    514141,
-		"DJI_ERROR_CODE_PUSH_ROD_CONNECTION_FAILED_TAKEOFF":                514142,
-		"DJI_ERROR_CODE_PUSH_ROD_NOT_CLOSED":                               514143,
-		"DJI_ERROR_CODE_HATCH_NOT_CLOSED":                                  514144,
-		"DJI_ERROR_CODE_AIRPORT_IN_FIELD_TEST":                             514145,
-		"DJI_ERROR_CODE_AIRPORT_IN_REMOTE_TEST":                            514146,
-		"DJI_ERROR_CODE_DEVICE_UPGRADING_CANNOT_TEST":                      514147,
-		"DJI_ERROR_CODE_AIRPORT_IN_OPERATION_CANNOT_TEST":                  514148,
-		"DJI_ERROR_CODE_AIRPORT_SYSTEM_OPERATION_ERROR_REBOOT":             514149,
-		"DJI_ERROR_CODE_DEVICE_REBOOTING_CANNOT_EXECUTE":                   514150,
-		"DJI_ERROR_CODE_UPGRADING_CANNOT_REBOOT":                           514151,
-		"DJI_ERROR_CODE_REMOTE_TEST_EXITED":                                514153,
-		"DJI_ERROR_CODE_INNER_CIRCULATION_TEMPERATURE_FAILED":              514154,
-		"DJI_ERROR_CODE_AIRCRAFT_NOT_IN_HATCH":                             514155,
-		"DJI_ERROR_CODE_AIRCRAFT_NOT_IN_HATCH_CHECK":                       514156,
-		"DJI_ERROR_CODE_WIRELESS_CHARGING_BUSY":                            514157,
-		"DJI_ERROR_CODE_AIRPORT_RTK_ERROR":                                 514158,
-		"DJI_ERROR_CODE_LANDING_AIRPORT_DETECTED_AIRCRAFT":                 514159,
-		"DJI_ERROR_CODE_AIRCRAFT_CONNECTION_FAILED":                        514162,
-		"DJI_ERROR_CODE_BATTERY_FUNCTION_ERROR":                            514163,
-		"DJI_ERROR_CODE_DEVICE_REBOOT_FAILED":                              514164,
-		"DJI_ERROR_CODE_DEVICE_REBOOT_FAILED_AGAIN":                        514165,
-		"DJI_ERROR_CODE_AIRPORT_INITIALIZING_CANNOT_EXECUTE":               514170,
-		"DJI_ERROR_CODE_COMMAND_FORMAT_ERROR":                              514171,
-		"DJI_ERROR_CODE_CANNOT_POWER_OFF_BLUETOOTH_DISCONNECTED":           514172,
-		"DJI_ERROR_CODE_BAD_WEATHER":                                       514173,
-		"DJI_ERROR_CODE_CHARGING_FAILED_HATCH_NOT_IN_PLACE":                514174,
-		"DJI_ERROR_CODE_AIR_CONDITIONING_CONTROL_FAILED":                   514180,
-		"DJI_ERROR_CODE_AIR_CONDITIONING_COOLING_FAILED":                   514181,
-		"DJI_ERROR_CODE_AIR_CONDITIONING_HEATING_FAILED":                   514182,
-		"DJI_ERROR_CODE_AIR_CONDITIONING_DEHUMIDIFICATION_FAILED":          514183,
-		"DJI_ERROR_CODE_CANNOT_COOL_WHEN_TOO_COLD":                         514184,
-		"DJI_ERROR_CODE_CANNOT_HEAT_WHEN_TOO_HOT":                          514185,
-		"DJI_ERROR_CODE_GATEWAY_ERROR":                                     514300,
-		"DJI_ERROR_CODE_REQUEST_TIMEOUT":                                   514301,
-		"DJI_ERROR_CODE_NETWORK_CERTIFICATE_ERROR":                         514302,
-		"DJI_ERROR_CODE_NETWORK_ERROR":                                     514303,
-		"DJI_ERROR_CODE_REQUEST_REJECTED":                                  514304,
-		"DJI_ERROR_CODE_AIRPORT_NOT_CALIBRATED":                            514168,
+		"v_1_15":                                                  0,
+		"DJI_DEVICE_UPGRADING":                                    312014,
+		"DJI_DOCK_BUSY_CANNOT_UPGRADE":                            312015,
+		"DJI_UPGRADE_FAILED_LINK_ERROR":                           312016,
+		"DJI_AIRCRAFT_START_FAILED_DISCONNECTED":                  312022,
+		"DJI_PUSH_ROD_CLOSED_FAILED_CANNOT_UPGRADE":               312023,
+		"DJI_UPGRADE_FAILED_AIRCRAFT_NOT_DETECTED":                312027,
+		"DJI_UPGRADE_FAILED_DEVICE_RESTARTED":                     312028,
+		"DJI_DEVICE_RESTARTING_CANNOT_UPGRADE":                    312029,
+		"DJI_UPGRADE_FAILED_ENHANCED_TRANSMISSION_ON":             312030,
+		"DJI_DEVICE_LOW_BATTERY_REQUIRE_CHARGE_20PCT":             312704,
+		"DJI_DEVICE_UNSUPPORT_OPERATION":                          314000,
+		"DJI_FLIGHT_TASK_DELIVER_FAILED_RETRY":                    314001,
+		"DJI_FLIGHT_TASK_DELIVER_FAILED_RETRY_AGAIN":              314002,
+		"DJI_ROUTE_FILE_FORMAT_INCOMPATIBLE":                      314003,
+		"DJI_FLIGHT_TASK_DELIVER_FAILED_RESTART_DOCK":             314005,
+		"DJI_AIRCRAFT_INIT_FAILED_RESTART_DOCK":                   314006,
+		"DJI_ROUTE_TRANSMIT_FAILED_RESTART_DOCK":                  314007,
+		"DJI_AIRCRAFT_PREPARE_TIMEOUT_RESTART_DOCK":               314008,
+		"DJI_AIRCRAFT_INIT_FAILED_RESTART_DOCK_AGAIN":             314009,
+		"DJI_ROUTE_EXECUTE_FAILED_RESTART_DOCK":                   314010,
+		"DJI_DOCK_SYSTEM_ERROR_NO_TASK_RESULT":                    314011,
+		"DJI_AIRCRAFT_PREPARE_FAILED_CANNOT_FLY":                  314012,
+		"DJI_FLIGHT_TASK_DELIVER_FAILED_NO_ROUTE":                 314013,
+		"DJI_DOCK_SYSTEM_ERROR_TASK_FAILED":                       314014,
+		"DJI_PRECISE_SHOOT_ROUTE_TRANSMIT_FAILED":                 314015,
+		"DJI_ROUTE_FILE_PARSE_FAILED_CANNOT_FLY":                  314016,
+		"DJI_ROUTE_FILE_PARSE_FAILED_CHECK_ROUTE":                 314017,
+		"DJI_AIRCRAFT_RTK_POSITION_ERROR":                         314018,
+		"DJI_AIRCRAFT_RTK_CONVERGENCE_FAILED":                     314019,
+		"DJI_AIRCRAFT_POSITION_WRONG_CANNOT_FLY":                  314020,
+		"DJI_AIRCRAFT_RTK_POSITION_ERROR_AGAIN":                   314021,
+		"DJI_TAKEOFF_LAND_ROUTE_DELIVER_FAILED":                   314024,
+		"DJI_RTK_CONVERGENCE_TIMEOUT_USER_CANCEL":                 314025,
+		"DJI_TASK_FAILED_NET_DISCONNECT_RETURN":                   314200,
+		"DJI_AIRPORT_COMM_ERROR_RESTART":                          315000,
+		"DJI_AIRPORT_COMM_ERROR_REMOTE_START_AIRCRAFT":            315001,
+		"DJI_AIRPORT_COMM_ERROR_RESTART_AGAIN":                    315002,
+		"DJI_AIRPORT_COMM_ERROR_RESTART_THIRD":                    315003,
+		"DJI_TASK_FAILED_TWO_DOCKS_BUSY":                          315004,
+		"DJI_AIRPORT_COMM_ERROR_RESTART_FOURTH":                   315005,
+		"DJI_AIRPORT_COMM_ERROR_RESTART_FIFTH":                    315006,
+		"DJI_AIRPORT_COMM_ERROR_UPGRADE_DOCK":                     315007,
+		"DJI_DOCK_CALIBRATION_INFO_INCONSISTENT":                  315008,
+		"DJI_AIRPORT_COMM_ERROR_RESTART_SIXTH":                    315009,
+		"DJI_CANNOT_STOP_FLIGHT_TASK_RETRY":                       315010,
+		"DJI_CANNOT_STOP_FLIGHT_TASK_RETRY_AGAIN":                 315011,
+		"DJI_CANNOT_STOP_FLIGHT_TASK_RETRY_THIRD":                 315012,
+		"DJI_FLIGHT_TASK_DELIVER_FAILED_CONTACT_SUPPORT":          315013,
+		"DJI_TASK_TYPE_NOT_SUPPORT_RETURN_POINT":                  315014,
+		"DJI_RETURN_POINT_SET_FAILED_CONTACT_SUPPORT":             315015,
+		"DJI_FLIGHT_TASK_DELIVER_FAILED_CONTACT_SUPPORT_AGAIN":    315016,
+		"DJI_FLIGHT_TASK_DELIVER_FAILED_CONTACT_SUPPORT_THIRD":    315017,
+		"DJI_TASK_FAILED_TWO_DOCKS_BUSY_AGAIN":                    315018,
+		"DJI_DOCK_POSITION_BAD_CANNOT_FROG_JUMP":                  315019,
+		"DJI_DOCK_SYSTEM_ERROR_RESTART":                           315050,
+		"DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT":            315051,
+		"DJI_DOCK_POSITION_NOT_CONVERGED_WAIT":                    315052,
+		"DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_AGAIN":      315053,
+		"DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_THIRD":      315054,
+		"DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_FOURTH":     315055,
+		"DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_FIFTH":      315056,
+		"DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_SIXTH":      315057,
+		"DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_SEVENTH":    315058,
+		"DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_EIGHTH":     315059,
+		"DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_NINTH":      315060,
+		"DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_TENTH":      315061,
+		"DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_ELEVENTH":   315062,
+		"DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_TWELFTH":    315063,
+		"DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_THIRTEENTH": 315064,
+		"DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_FOURTEENTH": 315065,
+		"DJI_AIRCRAFT_PARAM_SET_FAILED_RESTART":                   316001,
+		"DJI_AIRCRAFT_PARAM_SET_FAILED_RESTART_AGAIN":             316002,
+		"DJI_AIRCRAFT_PARAM_SET_FAILED_RESTART_THIRD":             316003,
+		"DJI_AIRCRAFT_PARAM_SET_FAILED_RESTART_FOURTH":            316004,
+		"DJI_AIRCRAFT_RTK_CONVERGENCE_FAILED_RESTART":             316005,
+		"DJI_TASK_TIMEOUT_AIRCRAFT_LOST":                          316006,
+		"DJI_AIRCRAFT_INIT_FAILED_RESTART_DOCK_FOURTH":            316007,
+		"DJI_DOCK_GET_CONTROL_FAILED_REMOTE_LOCKED":               316008,
+		"DJI_AIRCRAFT_LOW_BATTERY_BELOW_30PCT":                    316009,
+		"DJI_DOCK_NO_AIRCRAFT_DETECTED_CANNOT_FLY":                316010,
+		"DJI_AIRCRAFT_LAND_POSITION_OFFSET":                       316011,
+		"DJI_AIRCRAFT_PREPARE_FAILED_CANNOT_FLY_AGAIN":            316012,
+		"DJI_AIRCRAFT_PREPARE_FAILED_CANNOT_FLY_THIRD":            316013,
+		"DJI_AIRCRAFT_PREPARE_FAILED_CANNOT_FLY_FOURTH":           316014,
+		"DJI_AIRCRAFT_RTK_CONVERGENCE_TOO_FAR":                    316015,
+		"DJI_AIRCRAFT_LAND_TIMEOUT_DISCONNECTED":                  316016,
+		"DJI_MEDIA_COUNT_GET_TIMEOUT_DISCONNECTED":                316017,
+		"DJI_FLIGHT_TASK_TIMEOUT_DISCONNECTED":                    316018,
+		"DJI_DOCK_SYSTEM_ERROR_CANNOT_FLY":                        316019,
+		"DJI_AIRCRAFT_RTK_SOURCE_ERROR":                           316020,
+		"DJI_AIRCRAFT_RTK_SOURCE_CHECK_TIMEOUT":                   316021,
+		"DJI_AIRCRAFT_CANNOT_RETURN_DISCONNECTED":                 316022,
+		"DJI_AIRCRAFT_CANNOT_RETURN_CONTROLLED_BY_B":              316023,
+		"DJI_AIRCRAFT_RETURN_FAILED_NOT_TAKEN_OFF":                316024,
+		"DJI_AIRCRAFT_PARAM_SET_FAILED_RETRY_RESTART":             316025,
+		"DJI_DOCK_EMERGENCY_STOP_PRESSED":                         316026,
+		"DJI_AIRCRAFT_PARAM_SET_TIMEOUT_RETRY_RESTART":            316027,
+		"DJI_DOCK_EMERGENCY_STOP_PRESSED_RETURN_ALT":              316029,
+		"DJI_BATTERY_DATA_GET_TIMEOUT_RETRY":                      316032,
+		"DJI_AIRCRAFT_BATTERY_CYCLE_TOO_MANY":                     316033,
+		"DJI_AIRCRAFT_DOCK_FIRMWARE_MISMATCH":                     316034,
+		"DJI_TAKEOFF_LAND_ROUTE_FAILED_UPGRADE_FIRMWARE":          316035,
+		"DJI_AIRCRAFT_LOW_BATTERY_LANDED_OUTSIDE":                 316050,
+		"DJI_FLIGHT_TASK_ABNORMAL_LANDED_OUTSIDE":                 316051,
+		"DJI_FLIGHT_TASK_ABNORMAL_RETURN_ALT":                     316052,
+		"DJI_USER_CONTROLLED_AIRCRAFT_LANDED":                     316053,
+		"DJI_CAMERA_INFO_GET_FAILED_RETRY":                        316100,
+		"DJI_CAMERA_SET_SINGLE_SHOOT_FAILED":                      316101,
+		"DJI_CAMERA_WATERMARK_CLOSE_FAILED":                       316102,
+		"DJI_CAMERA_SET_METERING_MODE_FAILED":                     316103,
+		"DJI_CAMERA_SWITCH_WIDE_LENS_FAILED":                      316104,
+		"DJI_CAMERA_SET_PHOTO_STORAGE_FAILED":                     316105,
+		"DJI_CAMERA_IR_ZOOM_FAILED":                               316106,
+		"DJI_CAMERA_SET_4K_RESOLUTION_FAILED":                     316107,
+		"DJI_CAMERA_SET_JPEG_FORMAT_FAILED":                       316108,
+		"DJI_CAMERA_DISTORTION_CORRECTION_CLOSE_FAILED":           316109,
+		"DJI_CAMERA_MECHANICAL_SHUTTER_OPEN_FAILED":               316110,
+		"DJI_CAMERA_SET_FOCUS_MODE_FAILED":                        316111,
+		"DJI_AIRCRAFT_MEDIA_COUNT_GET_FAILED":                     317001,
+		"DJI_AIRCRAFT_STORAGE_FORMAT_FAILED_DISCONNECTED":         317002,
+		"DJI_AIRCRAFT_STORAGE_FORMAT_FAILED_RESTART":              317003,
+		"DJI_DOCK_MEDIA_FORMAT_FAILED_RETRY":                      317004,
+		"DJI_AIRCRAFT_STOP_RECORD_FAILED_MEDIA_LOST":              317005,
+		"DJI_CANNOT_FORMAT_MEDIA_DOWNLOADING":                     317006,
+		"DJI_MEDIA_COUNT_GET_FAILED_CONTACT_SUPPORT":              317007,
+		"DJI_DOCK_BUSY_CANNOT_FLY":                                319001,
+		"DJI_DOCK_SYSTEM_RUN_ERROR_RESTART":                       319002,
+		"DJI_DOCK_SYSTEM_RUN_ERROR_REDELIVER_TASK":                319003,
+		"DJI_FLIGHT_TASK_TIMEOUT_AUTOMATIC_STOP":                  319004,
+		"DJI_CLOUD_DOCK_COMM_ERROR_CANNOT_FLY":                    319005,
+		"DJI_CANCEL_FLIGHT_TASK_FAILED_RUNNING":                   319006,
+		"DJI_MODIFY_FLIGHT_TASK_FAILED_RUNNING":                   319007,
+		"DJI_DOCK_CLOUD_TIME_NOT_SYNC":                            319008,
+		"DJI_FLIGHT_TASK_DELIVER_FAILED_RETRY_RESTART":            319009,
+		"DJI_DOCK_FIRMWARE_TOO_OLD_UPGRADE":                       319010,
+		"DJI_DOCK_INITIALIZING_CANNOT_FLY":                        319015,
+		"DJI_DOCK_EXECUTING_OTHER_TASK":                           319016,
+		"DJI_DOCK_PROCESSING_MEDIA_CANNOT_FLY":                    319017,
+		"DJI_DOCK_EXPORTING_LOG_CANNOT_FLY":                       319018,
+		"DJI_DOCK_PULLING_LOG_CANNOT_FLY":                         319019,
+		"DJI_ROUTE_INTERRUPT_FAILED_RETRY":                        319020,
+		"DJI_REMOTE_CONTROL_EXIT_FAILED_RETRY":                    319021,
+		"DJI_POINT_FLIGHT_FAILED_RETRY":                           319022,
+		"DJI_POINT_FLIGHT_STOP_FAILED_RETRY":                      319023,
+		"DJI_ONE_KEY_TAKEOFF_FAILED_RETRY":                        319024,
+		"DJI_DOCK_NOT_READY_CANNOT_FLY":                           319025,
+		"DJI_AIRCRAFT_BATTERY_BELOW_USER_SETTING":                 319026,
+		"DJI_DOCK_AIRCRAFT_STORAGE_FULL":                          319027,
+		"DJI_CUSTOM_FLIGHT_AREA_UPDATING":                         319028,
+		"DJI_OFFLINE_MAP_UPDATING":                                319029,
+		"DJI_OPERATION_FAILED_NO_AIRCRAFT_CONTROL":                319030,
+		"DJI_CONTROL_RIGHT_ABNORMAL_REFRESH":                      319031,
+		"DJI_POINT_FLIGHT_FAILED_RETRY_AGAIN":                     319032,
+		"DJI_VIRTUAL_JOYSTICK_OP_FAILED":                          319033,
+		"DJI_VIRTUAL_JOYSTICK_OP_FAILED_AGAIN":                    319034,
+		"DJI_EMERGENCY_STOP_FAILED_RETRY":                         319035,
+		"DJI_DEVICE_REMOTE_DEBUGGING":                             319036,
+		"DJI_DEVICE_LOCAL_DEBUGGING":                              319037,
+		"DJI_DEVICE_UPGRADING_CANNOT_OPERATE":                     319038,
+		"DJI_ROUTE_RECOVER_FAILED_RETRY":                          319042,
+		"DJI_CANCEL_RETURN_FAILED_RETRY":                          319043,
+		"DJI_ROUTE_TASK_ENDED_CANNOT_RECOVER":                     319044,
+		"DJI_EMERGENCY_STOP_SUCCESS_REPRESS":                      319045,
+		"DJI_CANNOT_PAUSE_ROUTE_NOT_ENTERED":                      319046,
+		"DJI_DOCK_SYSTEM_RUN_ERROR_RESTART_AGAIN":                 319999,
+		"DJI_ROUTE_EXECUTE_ABNORMAL_RETRY":                        321000,
+		"DJI_ROUTE_FILE_PARSE_FAILED_CANNOT_EXECUTE":              321004,
+		"DJI_ROUTE_NO_BREAKPOINT_INFO_CANNOT_FLY":                 321005,
+		"DJI_FLIGHT_TASK_ALREADY_RUNNING":                         321257,
+		"DJI_CANNOT_TERMINATE_FLIGHT_TASK_CHECK_STATUS":           321258,
+		"DJI_CANNOT_TERMINATE_TASK_NOT_STARTED":                   321259,
+		"DJI_CANNOT_INTERRUPT_TASK_NOT_STARTED":                   321260,
+		"DJI_ROUTE_HEIGHT_EXCEED_MAX_LIMIT":                       321513,
+		"DJI_TASK_FAILED_POINT_EXCEED_RANGE":                      321514,
+		"DJI_ROUTE_CROSS_NO_FLY_ZONE":                             321515,
+		"DJI_AIRCRAFT_HEIGHT_TOO_LOW_TASK_STOPPED":                321516,
+		"DJI_AIRCRAFT_OBSTACLE_AVOID_TASK_STOPPED":                321517,
+		"DJI_AIRCRAFT_APPROACH_LIMIT_RETURN":                      321519,
+		"DJI_AIRCRAFT_TAKEOFF_FAILED_CONTACT_SUPPORT":             321523,
+		"DJI_AIRCRAFT_PREPARE_FAILED_POSITION_GEAR":               321524,
+		"DJI_CUSTOM_FLIGHT_AREA_BOUNDARY_TASK_PAUSED":             321528,
+		"DJI_TARGET_IN_NO_FLY_ZONE_TASK_PAUSED":                   321529,
+		"DJI_ROUTE_TRACK_PLAN_FAILED_TASK_PAUSED":                 321530,
+		"DJI_TAKEOFF_LAND_ROUTE_FAILED_CONTACT_SUPPORT":           321531,
+		"DJI_TAKEOFF_LAND_ROUTE_FAILED_CONTACT_SUPPORT_AGAIN":     321532,
+		"DJI_TAKEOFF_LAND_ROUTE_FAILED_CONTACT_SUPPORT_THIRD":     321533,
+		"DJI_AIRCRAFT_SATELLITE_SIGNAL_WEAK":                      321769,
+		"DJI_AIRCRAFT_GEAR_ERROR_CANNOT_FLY":                      321770,
+		"DJI_AIRCRAFT_NO_RETURN_POINT_CANNOT_FLY":                 321771,
+		"DJI_AIRCRAFT_LOW_BATTERY_BELOW_30PCT_AGAIN":              321772,
+		"DJI_AIRCRAFT_LOW_BATTERY_RETURN_DURING_FLIGHT":           321773,
+		"DJI_AIRCRAFT_DISCONNECTED_DURING_FLIGHT":                 321775,
+		"DJI_AIRCRAFT_RTK_CONVERGENCE_FAILED_RESTART_AGAIN":       321776,
+		"DJI_AIRCRAFT_NOT_HOVER_CANNOT_START":                     321777,
+		"DJI_AIRCRAFT_CONTROLLED_BY_B_NO_DOCK_FLY":                321778,
+		"DJI_TASK_EMERGENCY_RETURN_WIND":                          321784,
+		"DJI_TASK_FAILED_RETURN_SIGNAL_INTERFERENCE":              321788,
+		"DJI_TASK_FAILED_MANUAL_INTERRUPTED":                      322281,
+		"DJI_TASK_INTERRUPTED_AIRCRAFT_TAKEN_OVER":                322282,
+		"DJI_TASK_INTERRUPTED_USER_RETURN":                        322283,
+		"DJI_ROUTE_BREAKPOINT_INFO_ERROR_CANNOT_FLY":              322539,
+		"DJI_ROUTE_TRACK_GENERATE_FAILED_CLEAN_LENS":              322563,
+		"DJI_LOG_COMPRESS_TIMEOUT_TOO_MANY":                       324012,
+		"DJI_DEVICE_LOG_LIST_GET_FAILED_RETRY":                    324013,
+		"DJI_DEVICE_LOG_LIST_EMPTY_REFRESH":                       324014,
+		"DJI_AIRCRAFT_OFFLINE_NO_LOG_LIST":                        324015,
+		"DJI_DOCK_STORAGE_FULL_LOG_COMPRESS_FAILED":               324016,
+		"DJI_LOG_COMPRESS_FAILED_REFRESH_RESTART":                 324017,
+		"DJI_LOG_PULL_FAILED_FEEDBACK_UPLOAD":                     324018,
+		"DJI_LOG_UPLOAD_FAILED_NET_ERROR":                         324019,
+		"DJI_LOG_EXPORT_INTERRUPTED_POWER_OFF":                    324021,
+		"DJI_MEDIA_UPLOAD_FAILED_NET_LINK_ERROR":                  324030,
+		"DJI_CLOUD_COMMAND_FORMAT_ERROR":                          325001,
+		"DJI_COMMAND_RESPONSE_FAILED_RETRY":                       325003,
+		"DJI_DEVICE_COMMAND_REQUEST_TIMEOUT":                      325004,
+		"DJI_DOCK_UNABLE_RESPONSE_TASK_RETRY":                     325005,
+		"DJI_DOCK_START_CHECKING_RETRY":                           325006,
+		"DJI_DOCK_EXECUTING_TASK_RETRY":                           325007,
+		"DJI_DOCK_PROCESSING_TASK_RESULT":                         325008,
+		"DJI_DOCK_EXPORTING_REMOTE_LOG":                           325009,
+		"DJI_DOCK_UPDATING_CUSTOM_FLIGHT_AREA":                    325010,
+		"DJI_DOCK_UPDATING_OFFLINE_MAP":                           325011,
+		"DJI_AIRCRAFT_DISCONNECTED_RETRY":                         325012,
+		"DJI_AIRCRAFT_NO_CELLULAR_MODULE":                         326002,
+		"DJI_AIRCRAFT_CELLULAR_NO_SIM":                            326003,
+		"DJI_AIRCRAFT_CELLULAR_FORCE_UPGRADE":                     326004,
+		"DJI_ENHANCED_TRANSMISSION_CONNECT_FAILED":                326005,
+		"DJI_ENHANCED_TRANSMISSION_SWITCH_FAILED":                 326006,
+		"DJI_DOCK_NO_CELLULAR_MODULE":                             326008,
+		"DJI_DOCK_CELLULAR_NO_SIM":                                326009,
+		"DJI_DOCK_CELLULAR_FORCE_UPGRADE":                         326010,
+		"DJI_ESIM_ACTIVATING_RETRY":                               326103,
+		"DJI_ESIM_SWITCHING_OPERATOR":                             326104,
+		"DJI_ENHANCED_MODULE_SWITCHING_MODE":                      326105,
+		"DJI_ENHANCED_MODULE_ABNORMAL_RESTART":                    326106,
+		"DJI_ENHANCED_MODULE_ACTIVATE_ESIM_SIM":                   326107,
+		"DJI_PARAM_SET_FAILED_RETRY":                              327000,
+		"DJI_PARAM_SET_FAILED_RETRY_AGAIN":                        327001,
+		"DJI_GET_CONTROL_FAILED_RETRY":                            327002,
+		"DJI_GET_CONTROL_FAILED_RETRY_AGAIN":                      327003,
+		"DJI_SCREEN_DRAG_FAILED_RETRY":                            327004,
+		"DJI_DOUBLE_CLICK_CENTER_FAILED":                          327005,
+		"DJI_TAKE_PHOTO_FAILED":                                   327006,
+		"DJI_START_RECORD_FAILED":                                 327007,
+		"DJI_STOP_RECORD_FAILED":                                  327008,
+		"DJI_SWITCH_CAMERA_MODE_FAILED":                           327009,
+		"DJI_ZOOM_CAMERA_ZOOM_FAILED":                             327010,
+		"DJI_IR_CAMERA_ZOOM_FAILED":                               327011,
+		"DJI_GET_CONTROL_FAILED_RETRY_THIRD":                      327012,
+		"DJI_PARAM_SET_FAILED_RETRY_THIRD":                        327013,
+		"DJI_GIMBAL_REACH_LIMIT":                                  327014,
+		"DJI_LIVE_STREAM_START_FAILED_REFRESH":                    327015,
+		"DJI_LOST_CONNECT_ACTION_SET_FAILED":                      327016,
+		"DJI_POINT_FLIGHT_HEIGHT_SET_FAILED":                      327017,
+		"DJI_POINT_FLIGHT_MODE_SWITCH_FAILED":                     327018,
+		"DJI_CANNOT_LOOK_AT_MARK_POINT":                           327019,
+		"DJI_PANORAMA_STOP_COMMAND_TIMEOUT":                       327020,
+		"DJI_PANORAMA_STOP_NOT_SUPPORT":                           327022,
+		"DJI_AUDIO_PLAY_NOT_SUPPORT":                              327050,
+		"DJI_AUDIO_FILE_DOWNLOAD_FAILED":                          327051,
+		"DJI_SPEAKER_MODE_SWITCH_FAILED":                          327052,
+		"DJI_AUDIO_FILE_UPLOAD_FAILED":                            327053,
+		"DJI_AUDIO_PLAY_FAILED":                                   327054,
+		"DJI_WORK_MODE_SET_FAILED":                                327055,
+		"DJI_TEXT_UPLOAD_FAILED":                                  327056,
+		"DJI_PLAY_STOP_FAILED":                                    327057,
+		"DJI_PLAY_MODE_SET_FAILED":                                327058,
+		"DJI_VOLUME_SET_FAILED":                                   327059,
+		"DJI_CONTROL_VALUE_SET_FAILED":                            327060,
+		"DJI_TEXT_VALUE_SEND_FAILED":                              327061,
+		"DJI_SYSTEM_LANGUAGE_SWITCH_FAILED":                       327062,
+		"DJI_DEVICE_FUNC_LIST_GET_FAILED":                         327063,
+		"DJI_DEVICE_CONFIG_GET_FAILED":                            327064,
+		"DJI_DEVICE_IMAGE_GET_FAILED":                             327065,
+		"DJI_DEVICE_FILE_COMPRESS_FAILED":                         327066,
+		"DJI_DEVICE_FILE_UPLOAD_FAILED":                           327067,
+		"DJI_AUDIO_UPLOAD_FAILED_MD5_ERROR":                       327068,
+		"DJI_AUDIO_UPLOAD_FAILED_AGAIN":                           327069,
+		"DJI_AUDIO_UPLOAD_FAILED_ABNORMAL_STOP":                   327070,
+		"DJI_TTS_TEXT_UPLOAD_FAILED_MD5_ERROR":                    327071,
+		"DJI_TTS_TEXT_UPLOAD_FAILED":                              327072,
+		"DJI_TTS_TEXT_UPLOAD_FAILED_ABNORMAL_STOP":                327073,
+		"DJI_SPEAKER_REPLAY_FAILED":                               327074,
+		"DJI_SPEAKER_ENCODE_FAILED":                               327075,
+		"DJI_PANORAMA_SHOOT_FAILED":                               327201,
+		"DJI_PANORAMA_SHOOT_TERMINATED":                           327202,
+		"DJI_DEVICE_NOT_SUPPORT_PANORAMA":                         327203,
+		"DJI_SYSTEM_BUSY_NO_PANORAMA":                             327204,
+		"DJI_REQUEST_FAILED_NO_PANORAMA":                          327205,
+		"DJI_AIRCRAFT_NOT_TAKEN_OFF_NO_PANORAMA":                  327206,
+		"DJI_GET_CONTROL_FAILED_PANORAMA_STOP":                    327207,
+		"DJI_UNKNOWN_CAMERA_ERROR_NO_PANORAMA":                    327208,
+		"DJI_CAMERA_TIMEOUT_PANORAMA_STOP":                        327209,
+		"DJI_CANNOT_TAKE_PANORAMA":                                327210,
+		"DJI_STORAGE_FULL_PANORAMA_STOP":                          327211,
+		"DJI_AIRCRAFT_MOVING_NO_PANORAMA":                         327212,
+		"DJI_GIMBAL_MOVING_NO_PANORAMA":                           327213,
+		"DJI_USER_OPERATE_JOYSTICK_PANORAMA_STOP":                 327214,
+		"DJI_TOUCH_NO_FLY_ZONE_PANORAMA_STOP":                     327215,
+		"DJI_TRIGGER_DISTANCE_LIMIT_PANORAMA_STOP":                327216,
+		"DJI_GIMBAL_BLOCKED_PANORAMA_STOP":                        327217,
+		"DJI_TAKE_PHOTO_FAILED_PANORAMA_STOP":                     327218,
+		"DJI_PANORAMA_IMAGE_STITCH_FAILED":                        327219,
+		"DJI_CALIBRATION_PARAM_LOAD_FAILED":                       327220,
+		"DJI_CAMERA_PARAM_ADJUST_FAILED":                          327221,
+		"DJI_AIRCRAFT_LENS_DEFOG_FAILED":                          327500,
+		"DJI_AIRCRAFT_NO_REAL_NAME_REGISTER":                      328051,
+		"DJI_AIRCRAFT_REAL_NAME_CANCELED":                         328052,
+		"DJI_POINT_FLIGHT_CMD_SEND_FAILED":                        336000,
+		"DJI_AIRCRAFT_DATA_ABNORMAL_NO_RESPONSE":                  336001,
+		"DJI_AIRCRAFT_GPS_SIGNAL_WEAK":                            336002,
+		"DJI_AIRCRAFT_POSITION_INVALID_NO_RESPONSE":               336003,
+		"DJI_POINT_FLIGHT_PLAN_FAILED":                            336004,
+		"DJI_AIRCRAFT_RETURN_POINT_NOT_UPDATED":                   336005,
+		"DJI_AIRCRAFT_DISCONNECTED_EXIT_POINT_FLIGHT":             336006,
+		"DJI_AIRCRAFT_LOW_BATTERY_NO_TASK":                        336017,
+		"DJI_AIRCRAFT_PLAN_MODE_SWITCHED":                         336018,
+		"DJI_POINT_FLIGHT_HEIGHT_ADJUSTED_LIMIT":                  336019,
+		"DJI_TARGET_IN_NO_FLY_ZONE":                               336513,
+		"DJI_TARGET_EXCEED_DISTANCE_LIMIT":                        336514,
+		"DJI_TARGET_IN_NO_FLY_ZONE_AGAIN":                         336515,
+		"DJI_TARGET_EXCEED_HEIGHT_LIMIT":                          336516,
+		"DJI_TARGET_BELOW_LOWEST_HEIGHT":                          336517,
+		"DJI_AIRCRAFT_CANNOT_TAKEOFF":                             337025,
+		"DJI_TARGET_POINT_ABNORMAL_RETRY":                         337026,
+		"DJI_AIRCRAFT_SPEED_SET_ABNORMAL":                         337027,
+		"DJI_AIRCRAFT_VERSION_ABNORMAL_CHECK":                     337028,
+		"DJI_AIRCRAFT_UNABLE_RESPONSE_TASK":                       337029,
+		"DJI_COMMAND_FLIGHT_TAKEOFF_HEIGHT_TOO_LOW":               337030,
+		"DJI_TOUCHED_NO_FLY_ZONE":                                 337537,
+		"DJI_TOUCHED_DISTANCE_LIMIT":                              337538,
+		"DJI_TOUCHED_NO_FLY_ZONE_AGAIN":                           337539,
+		"DJI_TOUCHED_HEIGHT_LIMIT":                                337540,
+		"DJI_TOUCHED_LOWEST_HEIGHT":                               337541,
+		"DJI_AIRCRAFT_TAKEOFF_FAILED_RETRY":                       337542,
+		"DJI_TARGET_IN_OBSTACLE_ZONE_CHECK":                       337543,
+		"DJI_OBSTACLE_DETECTED_CHECK_ENV":                         337544,
+		"DJI_AIRCRAFT_PLAN_ABNORMAL_RETRY":                        337545,
+		"DJI_TOUCHED_CUSTOM_FLIGHT_AREA":                          337546,
+		"DJI_AIRCRAFT_COMM_ERROR_RESTART_BOTH":                    338001,
+		"DJI_AIRCRAFT_COMM_ERROR_RESTART_BOTH_AGAIN":              338002,
+		"DJI_AIRCRAFT_COMM_ERROR_RESTART_BOTH_THIRD":              338003,
+		"DJI_AIRCRAFT_COMM_ERROR_RESTART_BOTH_FOURTH":             338004,
+		"DJI_DOCK_DISTANCE_EXCEED_15KM":                           338005,
+		"DJI_CANNOT_FLY_CHECK_DOCK_CERTIFICATE":                   338006,
+		"DJI_LAND_DOCK_EXCEED_HEIGHT_LIMIT":                       338007,
+		"DJI_LAND_DOCK_EXCEED_USER_HEIGHT_LIMIT":                  338008,
+		"DJI_AIRCRAFT_GPS_SIGNAL_WEAK_RESTART":                    338009,
+		"DJI_AIRCRAFT_POSITION_INVALID_RESTART":                   338010,
+		"DJI_TASK_FAILED_DOCK_OUT_OF_GEO_FENCE":                   338011,
+		"DJI_AIRCRAFT_DATA_UPDATE_FAILED_RESTART":                 338017,
+		"DJI_AIRCRAFT_DATA_UPDATE_FAILED_RESTART_AGAIN":           338018,
+		"DJI_RETURN_ROUTE_PLANNING_RETRY":                         338019,
+		"DJI_AIRCRAFT_CANNOT_REACH_LAND_DOCK":                     338020,
+		"DJI_AIRCRAFT_LOW_BATTERY_CANNOT_REACH":                   338021,
+		"DJI_RESPOND_JOYSTICK_EXIT_POINT_FLIGHT":                  338049,
+		"DJI_RESPOND_STOP_CMD_EXIT_POINT_FLIGHT":                  338050,
+		"DJI_LOW_BATTERY_RETURN_EXIT_POINT_FLIGHT":                338051,
+		"DJI_LOW_BATTERY_LAND_EXIT_POINT_FLIGHT":                  338052,
+		"DJI_MANNING_AIRCRAFT_NEAR_EXIT_POINT_FLIGHT":             338053,
+		"DJI_HIGH_PRIORITY_TASK_EXIT_POINT_FLIGHT":                338054,
+		"DJI_AIRCRAFT_COMM_ERROR_RESTART_BOTH_FIFTH":              338255,
+		"DJI_DOCK_POSITION_NOT_CONVERGED_CHECK":                   341002,
+		"DJI_ROUTE_EXECUTE_ABNORMAL_RETRY_AGAIN":                  386535,
+		"DJI_LIVE_STREAM_FAILED_CAMERA_ERROR":                     513002,
+		"DJI_LIVE_STREAM_FAILED_ALREADY_RUNNING":                  513003,
+		"DJI_LIVE_STREAM_FAILED_PARAM_ERROR":                      513005,
+		"DJI_LIVE_STREAM_START_FAILED_REFRESH_AGAIN":              513006,
+		"DJI_LIVE_STREAM_FAILED_VIDEO_DATA_ERROR":                 513008,
+		"DJI_LIVE_STREAM_FAILED_DEVICE_OFFLINE":                   513010,
+		"DJI_LIVE_STREAM_OP_FAILED_NOT_STARTED":                   513011,
+		"DJI_LIVE_STREAM_OP_FAILED_SWITCH_LENS":                   513012,
+		"DJI_LIVE_STREAM_FAILED_PROTOCOL_NOT_SUPPORT":             513013,
+		"DJI_LIVE_STREAM_FAILED_PARAM_ERROR_AGAIN":                513014,
+		"DJI_LIVE_STREAM_ABNORMAL_NET_LAG":                        513015,
+		"DJI_LIVE_STREAM_ABNORMAL_DECODE_ERROR":                   513016,
+		"DJI_LIVE_STREAM_PAUSED_MEDIA_DOWNLOADING":                513017,
+		"DJI_LIVE_STREAM_FAILED_RETRY_AGAIN":                      513099,
+		"DJI_DOCK_OPERATION_ABNORMAL_RESTART":                     514100,
+		"DJI_PUSH_ROD_CLOSE_FAILED_CHECK_OBSTACLE":                514101,
+		"DJI_PUSH_ROD_OPEN_FAILED_CHECK_OBSTACLE":                 514102,
+		"DJI_AIRCRAFT_LOW_BATTERY_BELOW_30PCT_THIRD":              514103,
+		"DJI_AIRCRAFT_BATTERY_CHARGE_START_FAILED":                514104,
+		"DJI_AIRCRAFT_BATTERY_CHARGE_STOP_FAILED":                 514105,
+		"DJI_AIRCRAFT_POWER_CONTROL_ABNORMAL":                     514106,
+		"DJI_DOCK_COVER_OPEN_FAILED_CHECK_OBSTACLE":               514107,
+		"DJI_DOCK_COVER_CLOSE_FAILED_CHECK_OBSTACLE":              514108,
+		"DJI_AIRCRAFT_START_FAILED_CHECK_DOCK":                    514109,
+		"DJI_AIRCRAFT_STOP_FAILED_RESTART_DOCK":                   514110,
+		"DJI_AIRCRAFT_PROPELLER_STOP_ABNORMAL":                    514111,
+		"DJI_AIRCRAFT_PROPELLER_STOP_ABNORMAL_AGAIN":              514112,
+		"DJI_PUSH_ROD_CONNECT_FAILED_CHECK_DOCK":                  514113,
+		"DJI_AIRCRAFT_POWER_STATUS_GET_FAILED":                    514114,
+		"DJI_DOCK_EXECUTING_CMD_CANNOT_OPERATE":                   514116,
+		"DJI_DOCK_COVER_POSITION_ABNORMAL":                        514117,
+		"DJI_PUSH_ROD_POSITION_ABNORMAL":                          514118,
+		"DJI_DOCK_AIRCRAFT_DISCONNECTED_REPAIR":                   514120,
+		"DJI_DOCK_EMERGENCY_STOP_PRESSED_RELEASE":                 514121,
+		"DJI_AIRCRAFT_CHARGE_STATUS_GET_FAILED":                   514122,
+		"DJI_AIRCRAFT_BATTERY_TOO_LOW_CANNOT_START":               514123,
+		"DJI_AIRCRAFT_BATTERY_INFO_GET_FAILED":                    514124,
+		"DJI_AIRCRAFT_BATTERY_FULL_CANNOT_CHARGE":                 514125,
+		"DJI_DOCK_RAIN_TOO_HEAVY_CANNOT_FLY":                      514134,
+		"DJI_DOCK_WIND_TOO_STRONG_CANNOT_FLY":                     514135,
+		"DJI_DOCK_POWER_OFF_CANNOT_FLY":                           514136,
+		"DJI_DOCK_TEMP_TOO_LOW_CANNOT_FLY":                        514137,
+		"DJI_AIRCRAFT_BATTERY_MAINTAINING_CANNOT_FLY":             514138,
+		"DJI_AIRCRAFT_BATTERY_NO_MAINTAIN_NEEDED":                 514139,
+		"DJI_AIRCRAFT_BATTERY_NO_MAINTAIN_NEEDED_AGAIN":           514140,
+		"DJI_DOCK_SYSTEM_OP_ERROR_RESTART":                        514141,
+		"DJI_PUSH_ROD_CONNECT_FAILED_BEFORE_TAKEOFF":              514142,
+		"DJI_PUSH_ROD_NOT_CLOSED_RETRY_RESTART":                   514143,
+		"DJI_DOCK_COVER_NOT_CLOSED_RETRY_RESTART":                 514144,
+		"DJI_DOCK_LOCAL_DEBUGGING_CANNOT_OPERATE":                 514145,
+		"DJI_DOCK_REMOTE_DEBUGGING_CANNOT_FLY":                    514146,
+		"DJI_DEVICE_UPGRADING_CANNOT_DEBUG":                       514147,
+		"DJI_DOCK_WORKING_CANNOT_DEBUG":                           514148,
+		"DJI_DOCK_SYSTEM_OP_ERROR_CANNOT_FLY":                     514149,
+		"DJI_DEVICE_RESTARTING_CANNOT_FLY":                        514150,
+		"DJI_DEVICE_UPGRADING_CANNOT_RESTART":                     514151,
+		"DJI_DOCK_EXIT_DEBUGGING_CANNOT_OPERATE":                  514153,
+		"DJI_DOCK_TEMP_GET_FAILED_RETRY":                          514154,
+		"DJI_AIRCRAFT_NOT_IN_DOCK_CANNOT_FLY":                     514155,
+		"DJI_AIRCRAFT_NOT_IN_DOCK_CHECK_RETRIEVE":                 514156,
+		"DJI_AIRCRAFT_START_FAILED_WIRELESS_CHARGE_BUSY":          514157,
+		"DJI_DOCK_RTK_ERROR_CANNOT_TAKEOFF":                       514158,
+		"DJI_TASK_FAILED_LAND_DOCK_HAS_AIRCRAFT":                  514159,
+		"DJI_AIRCRAFT_DOCK_CONNECT_FAILED_RETRY":                  514162,
+		"DJI_BATTERY_FUNC_ABNORMAL_CHECK_INSTALL":                 514163,
+		"DJI_DEVICE_RESTART_FAILED_CONTACT_SUPPORT":               514164,
+		"DJI_DEVICE_RESTART_FAILED_CONTACT_SUPPORT_AGAIN":         514165,
+		"DJI_DOCK_INITIALIZING_CANNOT_OPERATE":                    514170,
+		"DJI_CLOUD_COMMAND_FORMAT_ERROR_DOCK":                     514171,
+		"DJI_AIRCRAFT_CANNOT_STOP_BLUETOOTH_DISCONNECT":           514172,
+		"DJI_DOCK_WEATHER_BAD_CANNOT_FLY":                         514173,
+		"DJI_AIRCRAFT_CHARGE_FAILED_COVER_POSITION":               514174,
+		"DJI_DOCK_AC_CONTROL_STOP_FAILED":                         514180,
+		"DJI_DOCK_AC_COOL_START_FAILED":                           514181,
+		"DJI_DOCK_AC_HEAT_START_FAILED":                           514182,
+		"DJI_DOCK_AC_DEHUMIDIFY_START_FAILED":                     514183,
+		"DJI_DOCK_AC_COOL_TOO_LOW":                                514184,
+		"DJI_DOCK_AC_HEAT_TOO_HIGH":                               514185,
+		"DJI_GATEWAY_ABNORMAL":                                    514300,
+		"DJI_REQUEST_TIMEOUT_CONNECT_CLOSED":                      514301,
+		"DJI_NETWORK_CERTIFICATE_ERROR":                           514302,
+		"DJI_NETWORK_ABNORMAL_CONNECT_CLOSED":                     514303,
+		"DJI_REQUEST_REJECTED_CONNECT_FAILED":                     514304,
+		"DJI_DOCK_NOT_CALIBRATED_CANNOT_FLY":                      514168,
 	}
 )
 
@@ -724,223 +1440,458 @@ var File_dji_error_code_proto protoreflect.FileDescriptor
 
 const file_dji_error_code_proto_rawDesc = "" +
 	"\n" +
-	"\x14dji_error_code.proto\x12\x03dji*\x9aQ\n" +
-	"\fDJIErrorCode\x12\x1a\n" +
-	"\x16DJI_ERROR_CODE_UNKNOWN\x10\x00\x12%\n" +
-	"\x1fDJI_ERROR_CODE_DEVICE_UPGRADING\x10΅\x13\x12!\n" +
-	"\x1bDJI_ERROR_CODE_AIRPORT_BUSY\x10υ\x13\x12.\n" +
-	"(DJI_ERROR_CODE_UPGRADE_FAILED_LINK_ERROR\x10Ѕ\x13\x12+\n" +
-	"%DJI_ERROR_CODE_DEVICE_POWER_ON_FAILED\x10օ\x13\x12*\n" +
-	"$DJI_ERROR_CODE_PUSH_ROD_CLOSE_FAILED\x10ׅ\x13\x12/\n" +
-	")DJI_ERROR_CODE_UPGRADE_FAILED_NO_AIRCRAFT\x10ۅ\x13\x12*\n" +
-	"$DJI_ERROR_CODE_UPGRADE_FAILED_REBOOT\x10܅\x13\x12%\n" +
-	"\x1fDJI_ERROR_CODE_DEVICE_REBOOTING\x10݅\x13\x12?\n" +
-	"9DJI_ERROR_CODE_UPGRADE_FAILED_ENHANCED_IMAGE_TRANSMISSION\x10ޅ\x13\x12 \n" +
-	"\x1aDJI_ERROR_CODE_LOW_BATTERY\x10\x80\x8b\x13\x123\n" +
-	"-DJI_ERROR_CODE_DEVICE_OPERATION_NOT_SUPPORTED\x10\x90\x95\x13\x12'\n" +
-	"!DJI_ERROR_CODE_TASK_SUBMIT_FAILED\x10\x91\x95\x13\x123\n" +
-	"-DJI_ERROR_CODE_ROUTE_FILE_FORMAT_INCOMPATIBLE\x10\x93\x95\x13\x12)\n" +
-	"#DJI_ERROR_CODE_AIRCRAFT_INIT_FAILED\x10\x96\x95\x13\x12.\n" +
-	"(DJI_ERROR_CODE_ROUTE_TRANSMISSION_FAILED\x10\x97\x95\x13\x12$\n" +
-	"\x1eDJI_ERROR_CODE_PREPARE_TIMEOUT\x10\x98\x95\x13\x12+\n" +
-	"%DJI_ERROR_CODE_ROUTE_EXECUTION_FAILED\x10\x9a\x95\x13\x12)\n" +
-	"#DJI_ERROR_CODE_AIRPORT_SYSTEM_ERROR\x10\x9b\x95\x13\x12#\n" +
-	"\x1dDJI_ERROR_CODE_PREPARE_FAILED\x10\x9c\x95\x13\x12#\n" +
-	"\x1dDJI_ERROR_CODE_NO_ROUTE_FOUND\x10\x9d\x95\x13\x12F\n" +
-	"@DJI_ERROR_CODE_PRECISION_REPHOTOGRAPHY_ROUTE_TRANSMISSION_FAILED\x10\x9f\x95\x13\x12,\n" +
-	"&DJI_ERROR_CODE_ROUTE_FILE_PARSE_FAILED\x10\xa0\x95\x13\x12'\n" +
-	"!DJI_ERROR_CODE_AIRCRAFT_RTK_ERROR\x10\xa2\x95\x13\x124\n" +
-	".DJI_ERROR_CODE_AIRCRAFT_RTK_CONVERGENCE_FAILED\x10\xa3\x95\x13\x12,\n" +
-	"&DJI_ERROR_CODE_AIRCRAFT_POSITION_ERROR\x10\xa4\x95\x13\x12-\n" +
-	"'DJI_ERROR_CODE_AIRCRAFT_RTK_ERROR_AGAIN\x10\xa5\x95\x13\x12:\n" +
-	"4DJI_ERROR_CODE_DEPARTURE_ARRIVAL_ROUTE_SUBMIT_FAILED\x10\xa8\x95\x13\x12,\n" +
-	"&DJI_ERROR_CODE_RTK_CONVERGENCE_TIMEOUT\x10\xa9\x95\x13\x12)\n" +
-	"#DJI_ERROR_CODE_NETWORK_DISCONNECTED\x10ؖ\x13\x120\n" +
-	"*DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR\x10\xf8\x9c\x13\x12@\n" +
-	":DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_REMOTE_POWER_ON\x10\xf9\x9c\x13\x127\n" +
-	"1DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_REBOOT\x10\xfa\x9c\x13\x126\n" +
-	"0DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_AGAIN\x10\xfb\x9c\x13\x12'\n" +
-	"!DJI_ERROR_CODE_BOTH_AIRPORTS_BUSY\x10\xfc\x9c\x13\x125\n" +
-	"/DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_FOUR\x10\xfd\x9c\x13\x125\n" +
-	"/DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_FIVE\x10\xfe\x9c\x13\x128\n" +
-	"2DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_UPGRADE\x10\xff\x9c\x13\x122\n" +
-	",DJI_ERROR_CODE_CALIBRATION_INFO_INCONSISTENT\x10\x80\x9d\x13\x124\n" +
-	".DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_SIX\x10\x81\x9d\x13\x12%\n" +
-	"\x1fDJI_ERROR_CODE_CANNOT_STOP_TASK\x10\x82\x9d\x13\x12+\n" +
-	"%DJI_ERROR_CODE_CANNOT_STOP_TASK_AGAIN\x10\x83\x9d\x13\x12+\n" +
-	"%DJI_ERROR_CODE_CANNOT_STOP_TASK_THREE\x10\x84\x9d\x13\x127\n" +
-	"1DJI_ERROR_CODE_TASK_SUBMIT_FAILED_CONTACT_SUPPORT\x10\x85\x9d\x13\x12<\n" +
-	"6DJI_ERROR_CODE_TASK_TYPE_DOES_NOT_SUPPORT_RETURN_POINT\x10\x86\x9d\x13\x12,\n" +
-	"&DJI_ERROR_CODE_RETURN_POINT_SET_FAILED\x10\x87\x9d\x13\x12=\n" +
-	"7DJI_ERROR_CODE_TASK_SUBMIT_FAILED_CONTACT_SUPPORT_AGAIN\x10\x88\x9d\x13\x12=\n" +
-	"7DJI_ERROR_CODE_TASK_SUBMIT_FAILED_CONTACT_SUPPORT_THREE\x10\x89\x9d\x13\x12-\n" +
-	"'DJI_ERROR_CODE_BOTH_AIRPORTS_BUSY_AGAIN\x10\x8a\x9d\x13\x12-\n" +
-	"'DJI_ERROR_CODE_POOR_DEPLOYMENT_LOCATION\x10\x8b\x9d\x13\x120\n" +
-	"*DJI_ERROR_CODE_AIRPORT_SYSTEM_ERROR_REBOOT\x10\xaa\x9d\x13\x12'\n" +
-	"!DJI_ERROR_CODE_TASK_FAILED_REBOOT\x10\xab\x9d\x13\x123\n" +
-	"-DJI_ERROR_CODE_AIRPORT_POSITION_NOT_CONVERGED\x10\xac\x9d\x13\x12)\n" +
-	"#DJI_ERROR_CODE_PARAMETER_SET_FAILED\x10\xe1\xa4\x13\x12/\n" +
-	")DJI_ERROR_CODE_PARAMETER_SET_FAILED_AGAIN\x10\xe2\xa4\x13\x12/\n" +
-	")DJI_ERROR_CODE_PARAMETER_SET_FAILED_THREE\x10\xe3\xa4\x13\x12.\n" +
-	"(DJI_ERROR_CODE_PARAMETER_SET_FAILED_FOUR\x10\xe4\xa4\x13\x125\n" +
-	"/DJI_ERROR_CODE_RTK_CONVERGENCE_FAILED_PARAMETER\x10\xe5\xa4\x13\x12!\n" +
-	"\x1bDJI_ERROR_CODE_TASK_TIMEOUT\x10\xe6\xa4\x13\x123\n" +
-	"-DJI_ERROR_CODE_AIRCRAFT_INIT_FAILED_PARAMETER\x10\xe7\xa4\x13\x12/\n" +
-	")DJI_ERROR_CODE_CONTROL_ACQUISITION_FAILED\x10\xe8\xa4\x13\x12/\n" +
-	")DJI_ERROR_CODE_LOW_BATTERY_CANNOT_EXECUTE\x10\xe9\xa4\x13\x12)\n" +
-	"#DJI_ERROR_CODE_NO_AIRCRAFT_DETECTED\x10\xea\xa4\x13\x12,\n" +
-	"&DJI_ERROR_CODE_LANDING_POSITION_OFFSET\x10\xeb\xa4\x13\x12)\n" +
-	"#DJI_ERROR_CODE_PREPARE_FAILED_AGAIN\x10\xec\xa4\x13\x12)\n" +
-	"#DJI_ERROR_CODE_PREPARE_FAILED_THREE\x10\xed\xa4\x13\x12(\n" +
-	"\"DJI_ERROR_CODE_PREPARE_FAILED_FOUR\x10\xee\xa4\x13\x125\n" +
-	"/DJI_ERROR_CODE_RTK_CONVERGENCE_POSITION_TOO_FAR\x10\xef\xa4\x13\x12$\n" +
-	"\x1eDJI_ERROR_CODE_LANDING_TIMEOUT\x10\xf0\xa4\x13\x12(\n" +
-	"\"DJI_ERROR_CODE_MEDIA_COUNT_TIMEOUT\x10\xf1\xa4\x13\x12+\n" +
-	"%DJI_ERROR_CODE_TASK_EXECUTION_TIMEOUT\x10\xf2\xa4\x13\x12.\n" +
-	"(DJI_ERROR_CODE_AIRPORT_SYSTEM_ERROR_TASK\x10\xf3\xa4\x13\x12,\n" +
-	"&DJI_ERROR_CODE_RTK_SIGNAL_SOURCE_ERROR\x10\xf4\xa4\x13\x12-\n" +
-	"'DJI_ERROR_CODE_RTK_SIGNAL_CHECK_TIMEOUT\x10\xf5\xa4\x13\x12/\n" +
-	")DJI_ERROR_CODE_CANNOT_EXECUTE_RETURN_HOME\x10\xf6\xa4\x13\x129\n" +
-	"3DJI_ERROR_CODE_CANNOT_EXECUTE_RETURN_HOME_B_CONTROL\x10\xf7\xa4\x13\x12;\n" +
-	"5DJI_ERROR_CODE_CANNOT_EXECUTE_RETURN_HOME_NOT_TAKEOFF\x10\xf8\xa4\x13\x12.\n" +
-	"(DJI_ERROR_CODE_PARAMETER_SET_FAILED_FIVE\x10\xf9\xa4\x13\x12+\n" +
-	"%DJI_ERROR_CODE_EMERGENCY_STOP_PRESSED\x10\xfa\xa4\x13\x12*\n" +
-	"$DJI_ERROR_CODE_PARAMETER_SET_TIMEOUT\x10\xfb\xa4\x13\x123\n" +
-	"-DJI_ERROR_CODE_EMERGENCY_STOP_PRESSED_LANDING\x10\xfd\xa4\x13\x12)\n" +
-	"#DJI_ERROR_CODE_BATTERY_DATA_TIMEOUT\x10\x80\xa5\x13\x121\n" +
-	"+DJI_ERROR_CODE_BATTERY_CYCLE_COUNT_TOO_HIGH\x10\x81\xa5\x13\x12.\n" +
-	"(DJI_ERROR_CODE_FIRMWARE_VERSION_MISMATCH\x10\x82\xa5\x13\x12C\n" +
-	"=DJI_ERROR_CODE_DEPARTURE_ARRIVAL_ROUTE_SUBMIT_FAILED_FIRMWARE\x10\x83\xa5\x13\x12/\n" +
-	")DJI_ERROR_CODE_CAMERA_SUMMARY_INFO_FAILED\x10ĥ\x13\x120\n" +
-	"*DJI_ERROR_CODE_SET_SINGLE_SHOT_MODE_FAILED\x10ť\x13\x12+\n" +
-	"%DJI_ERROR_CODE_CLOSE_WATERMARK_FAILED\x10ƥ\x13\x12-\n" +
-	"'DJI_ERROR_CODE_SET_METERING_MODE_FAILED\x10ǥ\x13\x120\n" +
-	"*DJI_ERROR_CODE_SWITCH_TO_WIDE_ANGLE_FAILED\x10ȥ\x13\x12-\n" +
-	"'DJI_ERROR_CODE_SET_PHOTO_STORAGE_FAILED\x10ɥ\x13\x12'\n" +
-	"!DJI_ERROR_CODE_SET_IR_ZOOM_FAILED\x10ʥ\x13\x12*\n" +
-	"$DJI_ERROR_CODE_SET_PHOTO_SIZE_FAILED\x10˥\x13\x12,\n" +
-	"&DJI_ERROR_CODE_SET_PHOTO_FORMAT_FAILED\x10̥\x13\x127\n" +
-	"1DJI_ERROR_CODE_CLOSE_DISTORTION_CORRECTION_FAILED\x10ͥ\x13\x123\n" +
-	"-DJI_ERROR_CODE_OPEN_MECHANICAL_SHUTTER_FAILED\x10Υ\x13\x12*\n" +
-	"$DJI_ERROR_CODE_SET_FOCUS_MODE_FAILED\x10ϥ\x13\x12'\n" +
-	"!DJI_ERROR_CODE_MEDIA_COUNT_FAILED\x10ɬ\x13\x12*\n" +
-	"$DJI_ERROR_CODE_STORAGE_FORMAT_FAILED\x10ʬ\x13\x121\n" +
-	"+DJI_ERROR_CODE_STORAGE_FORMAT_FAILED_REBOOT\x10ˬ\x13\x12(\n" +
-	"\"DJI_ERROR_CODE_MEDIA_FORMAT_FAILED\x10̬\x13\x12)\n" +
-	"#DJI_ERROR_CODE_END_RECORDING_FAILED\x10ͬ\x13\x12\"\n" +
-	"\x1cDJI_ERROR_CODE_CANNOT_FORMAT\x10ά\x13\x127\n" +
-	"1DJI_ERROR_CODE_MEDIA_COUNT_FAILED_CONTACT_SUPPORT\x10Ϭ\x13\x123\n" +
-	"-DJI_ERROR_CODE_AIRPORT_BUSY_OR_UPLOADING_LOGS\x10\x99\xbc\x13\x121\n" +
-	"+DJI_ERROR_CODE_AIRPORT_SYSTEM_RUNNING_ERROR\x10\x9a\xbc\x13\x129\n" +
-	"3DJI_ERROR_CODE_AIRPORT_SYSTEM_RUNNING_ERROR_REISSUE\x10\x9b\xbc\x13\x12;\n" +
-	"5DJI_ERROR_CODE_TASK_EXECUTION_TIMEOUT_AUTO_TERMINATED\x10\x9c\xbc\x13\x126\n" +
-	"0DJI_ERROR_CODE_CLOUD_AIRPORT_COMMUNICATION_ERROR\x10\x9d\xbc\x13\x12'\n" +
-	"!DJI_ERROR_CODE_CANCEL_TASK_FAILED\x10\x9e\xbc\x13\x12'\n" +
-	"!DJI_ERROR_CODE_MODIFY_TASK_FAILED\x10\x9f\xbc\x13\x12$\n" +
-	"\x1eDJI_ERROR_CODE_TIME_NOT_SYNCED\x10\xa0\xbc\x13\x12-\n" +
-	"'DJI_ERROR_CODE_FIRMWARE_VERSION_TOO_LOW\x10\xa2\xbc\x13\x12)\n" +
-	"#DJI_ERROR_CODE_AIRPORT_INITIALIZING\x10\xa7\xbc\x13\x12)\n" +
-	"#DJI_ERROR_CODE_AIRPORT_IN_OPERATION\x10\xa8\xbc\x13\x12+\n" +
-	"%DJI_ERROR_CODE_PROCESSING_MEDIA_FILES\x10\xa9\xbc\x13\x12(\n" +
-	"\"DJI_ERROR_CODE_AUTO_EXPORTING_LOGS\x10\xaa\xbc\x13\x12!\n" +
-	"\x1bDJI_ERROR_CODE_PULLING_LOGS\x10\xab\xbc\x13\x12*\n" +
-	"$DJI_ERROR_CODE_ROUTE_EXECUTION_ERROR\x10\xe8\xcb\x13\x122\n" +
-	",DJI_ERROR_CODE_ROUTE_FILE_PARSE_FAILED_ROUTE\x10\xec\xcb\x13\x122\n" +
-	",DJI_ERROR_CODE_ROUTE_MISSING_BREAKPOINT_INFO\x10\xed\xcb\x13\x12+\n" +
-	"%DJI_ERROR_CODE_TASK_ALREADY_EXECUTING\x10\xe9\xcd\x13\x12*\n" +
-	"$DJI_ERROR_CODE_CANNOT_TERMINATE_TASK\x10\xea\xcd\x13\x126\n" +
-	"0DJI_ERROR_CODE_TASK_NOT_STARTED_CANNOT_TERMINATE\x10\xeb\xcd\x13\x126\n" +
-	"0DJI_ERROR_CODE_TASK_NOT_STARTED_CANNOT_INTERRUPT\x10\xec\xcd\x13\x123\n" +
-	"-DJI_ERROR_CODE_ROUTE_PLANNING_HEIGHT_EXCEEDED\x10\xe9\xcf\x13\x12,\n" +
-	"&DJI_ERROR_CODE_TASK_FAILED_BUFFER_ZONE\x10\xea\xcf\x13\x121\n" +
-	"+DJI_ERROR_CODE_ROUTE_PASSES_RESTRICTED_AREA\x10\xeb\xcf\x13\x12*\n" +
-	"$DJI_ERROR_CODE_FLIGHT_HEIGHT_TOO_LOW\x10\xec\xcf\x13\x121\n" +
-	"+DJI_ERROR_CODE_OBSTACLE_AVOIDANCE_TRIGGERED\x10\xed\xcf\x13\x120\n" +
-	"*DJI_ERROR_CODE_APPROACHING_RESTRICTED_AREA\x10\xef\xcf\x13\x128\n" +
-	"2DJI_ERROR_CODE_LIVE_STREAM_FAILED_CAMERA_NOT_EXIST\x10\xea\xa7\x1f\x120\n" +
-	"*DJI_ERROR_CODE_LIVE_STREAM_ALREADY_RUNNING\x10\xeb\xa7\x1f\x127\n" +
-	"1DJI_ERROR_CODE_LIVE_STREAM_FAILED_PARAMETER_ERROR\x10\xed\xa7\x1f\x12/\n" +
-	")DJI_ERROR_CODE_LIVE_STREAM_FAILED_REFRESH\x10\xee\xa7\x1f\x128\n" +
-	"2DJI_ERROR_CODE_LIVE_STREAM_FAILED_VIDEO_DATA_ERROR\x10\xf0\xa7\x1f\x122\n" +
-	",DJI_ERROR_CODE_LIVE_STREAM_FAILED_NO_NETWORK\x10\xf2\xa7\x1f\x128\n" +
-	"2DJI_ERROR_CODE_OPERATION_FAILED_NOT_LIVE_STREAMING\x10\xf3\xa7\x1f\x12:\n" +
-	"4DJI_ERROR_CODE_OPERATION_FAILED_CANNOT_SWITCH_CAMERA\x10\xf4\xa7\x1f\x12>\n" +
-	"8DJI_ERROR_CODE_LIVE_STREAM_FAILED_PROTOCOL_NOT_SUPPORTED\x10\xf5\xa7\x1f\x12=\n" +
-	"7DJI_ERROR_CODE_LIVE_STREAM_FAILED_PARAMETER_ERROR_AGAIN\x10\xf6\xa7\x1f\x129\n" +
-	"3DJI_ERROR_CODE_LIVE_STREAM_ERROR_NETWORK_CONGestion\x10\xf7\xa7\x1f\x124\n" +
-	".DJI_ERROR_CODE_LIVE_STREAM_ERROR_DECODE_FAILED\x10\xf8\xa7\x1f\x12'\n" +
-	"!DJI_ERROR_CODE_LIVE_STREAM_PAUSED\x10\xf9\xa7\x1f\x12-\n" +
-	"'DJI_ERROR_CODE_LIVE_STREAM_FAILED_RETRY\x10˨\x1f\x12,\n" +
-	"&DJI_ERROR_CODE_AIRPORT_OPERATION_ERROR\x10\xb4\xb0\x1f\x124\n" +
-	".DJI_ERROR_CODE_PUSH_ROD_CLOSE_FAILED_OPERATION\x10\xb5\xb0\x1f\x12)\n" +
-	"#DJI_ERROR_CODE_PUSH_ROD_OPEN_FAILED\x10\xb6\xb0\x1f\x129\n" +
-	"3DJI_ERROR_CODE_LOW_BATTERY_CANNOT_EXECUTE_OPERATION\x10\xb7\xb0\x1f\x122\n" +
-	",DJI_ERROR_CODE_BATTERY_CHARGING_START_FAILED\x10\xb8\xb0\x1f\x121\n" +
-	"+DJI_ERROR_CODE_BATTERY_CHARGING_STOP_FAILED\x10\xb9\xb0\x1f\x12(\n" +
-	"\"DJI_ERROR_CODE_POWER_CONTROL_ERROR\x10\xba\xb0\x1f\x12&\n" +
-	" DJI_ERROR_CODE_HATCH_OPEN_FAILED\x10\xbb\xb0\x1f\x12'\n" +
-	"!DJI_ERROR_CODE_HATCH_CLOSE_FAILED\x10\xbc\xb0\x1f\x12-\n" +
-	"'DJI_ERROR_CODE_AIRCRAFT_POWER_ON_FAILED\x10\xbd\xb0\x1f\x12.\n" +
-	"(DJI_ERROR_CODE_AIRCRAFT_POWER_OFF_FAILED\x10\xbe\xb0\x1f\x12.\n" +
-	"(DJI_ERROR_CODE_SLOW_ROTATION_STOP_FAILED\x10\xbf\xb0\x1f\x124\n" +
-	".DJI_ERROR_CODE_SLOW_ROTATION_STOP_FAILED_AGAIN\x10\xc0\xb0\x1f\x12/\n" +
-	")DJI_ERROR_CODE_PUSH_ROD_CONNECTION_FAILED\x10\xc1\xb0\x1f\x12(\n" +
-	"\"DJI_ERROR_CODE_POWER_STATUS_FAILED\x10°\x1f\x12*\n" +
-	"$DJI_ERROR_CODE_OPERATION_IN_PROGRESS\x10İ\x1f\x12'\n" +
-	"!DJI_ERROR_CODE_HATCH_NOT_IN_PLACE\x10Ű\x1f\x12*\n" +
-	"$DJI_ERROR_CODE_PUSH_ROD_NOT_IN_PLACE\x10ư\x1f\x122\n" +
-	",DJI_ERROR_CODE_AIRPORT_AIRCRAFT_DISCONNECTED\x10Ȱ\x1f\x123\n" +
-	"-DJI_ERROR_CODE_EMERGENCY_STOP_PRESSED_AIRPORT\x10ɰ\x1f\x12+\n" +
-	"%DJI_ERROR_CODE_CHARGING_STATUS_FAILED\x10ʰ\x1f\x120\n" +
-	"*DJI_ERROR_CODE_BATTERY_TOO_LOW_TO_POWER_ON\x10˰\x1f\x12(\n" +
-	"\"DJI_ERROR_CODE_BATTERY_INFO_FAILED\x10̰\x1f\x12(\n" +
-	"\"DJI_ERROR_CODE_BATTERY_ALMOST_FULL\x10Ͱ\x1f\x12\"\n" +
-	"\x1cDJI_ERROR_CODE_TOO_MUCH_RAIN\x10ְ\x1f\x12\"\n" +
-	"\x1cDJI_ERROR_CODE_TOO_MUCH_WIND\x10װ\x1f\x12'\n" +
-	"!DJI_ERROR_CODE_POWER_DISCONNECTED\x10ذ\x1f\x12(\n" +
-	"\"DJI_ERROR_CODE_TEMPERATURE_TOO_LOW\x10ٰ\x1f\x12(\n" +
-	"\"DJI_ERROR_CODE_BATTERY_MAINTAINING\x10ڰ\x1f\x123\n" +
-	"-DJI_ERROR_CODE_BATTERY_MAINTENANCE_NOT_NEEDED\x10۰\x1f\x129\n" +
-	"3DJI_ERROR_CODE_BATTERY_MAINTENANCE_NOT_NEEDED_AGAIN\x10ܰ\x1f\x123\n" +
-	"-DJI_ERROR_CODE_AIRPORT_SYSTEM_OPERATION_ERROR\x10ݰ\x1f\x127\n" +
-	"1DJI_ERROR_CODE_PUSH_ROD_CONNECTION_FAILED_TAKEOFF\x10ް\x1f\x12(\n" +
-	"\"DJI_ERROR_CODE_PUSH_ROD_NOT_CLOSED\x10߰\x1f\x12%\n" +
-	"\x1fDJI_ERROR_CODE_HATCH_NOT_CLOSED\x10\xe0\xb0\x1f\x12*\n" +
-	"$DJI_ERROR_CODE_AIRPORT_IN_FIELD_TEST\x10\xe1\xb0\x1f\x12+\n" +
-	"%DJI_ERROR_CODE_AIRPORT_IN_REMOTE_TEST\x10\xe2\xb0\x1f\x121\n" +
-	"+DJI_ERROR_CODE_DEVICE_UPGRADING_CANNOT_TEST\x10\xe3\xb0\x1f\x125\n" +
-	"/DJI_ERROR_CODE_AIRPORT_IN_OPERATION_CANNOT_TEST\x10\xe4\xb0\x1f\x12:\n" +
-	"4DJI_ERROR_CODE_AIRPORT_SYSTEM_OPERATION_ERROR_REBOOT\x10\xe5\xb0\x1f\x124\n" +
-	".DJI_ERROR_CODE_DEVICE_REBOOTING_CANNOT_EXECUTE\x10\xe6\xb0\x1f\x12,\n" +
-	"&DJI_ERROR_CODE_UPGRADING_CANNOT_REBOOT\x10\xe7\xb0\x1f\x12'\n" +
-	"!DJI_ERROR_CODE_REMOTE_TEST_EXITED\x10\xe9\xb0\x1f\x129\n" +
-	"3DJI_ERROR_CODE_INNER_CIRCULATION_TEMPERATURE_FAILED\x10\xea\xb0\x1f\x12*\n" +
-	"$DJI_ERROR_CODE_AIRCRAFT_NOT_IN_HATCH\x10\xeb\xb0\x1f\x120\n" +
-	"*DJI_ERROR_CODE_AIRCRAFT_NOT_IN_HATCH_CHECK\x10\xec\xb0\x1f\x12+\n" +
-	"%DJI_ERROR_CODE_WIRELESS_CHARGING_BUSY\x10\xed\xb0\x1f\x12&\n" +
-	" DJI_ERROR_CODE_AIRPORT_RTK_ERROR\x10\xee\xb0\x1f\x126\n" +
-	"0DJI_ERROR_CODE_LANDING_AIRPORT_DETECTED_AIRCRAFT\x10\xef\xb0\x1f\x12/\n" +
-	")DJI_ERROR_CODE_AIRCRAFT_CONNECTION_FAILED\x10\xf2\xb0\x1f\x12+\n" +
-	"%DJI_ERROR_CODE_BATTERY_FUNCTION_ERROR\x10\xf3\xb0\x1f\x12)\n" +
-	"#DJI_ERROR_CODE_DEVICE_REBOOT_FAILED\x10\xf4\xb0\x1f\x12/\n" +
-	")DJI_ERROR_CODE_DEVICE_REBOOT_FAILED_AGAIN\x10\xf5\xb0\x1f\x128\n" +
-	"2DJI_ERROR_CODE_AIRPORT_INITIALIZING_CANNOT_EXECUTE\x10\xfa\xb0\x1f\x12)\n" +
-	"#DJI_ERROR_CODE_COMMAND_FORMAT_ERROR\x10\xfb\xb0\x1f\x12<\n" +
-	"6DJI_ERROR_CODE_CANNOT_POWER_OFF_BLUETOOTH_DISCONNECTED\x10\xfc\xb0\x1f\x12 \n" +
-	"\x1aDJI_ERROR_CODE_BAD_WEATHER\x10\xfd\xb0\x1f\x127\n" +
-	"1DJI_ERROR_CODE_CHARGING_FAILED_HATCH_NOT_IN_PLACE\x10\xfe\xb0\x1f\x124\n" +
-	".DJI_ERROR_CODE_AIR_CONDITIONING_CONTROL_FAILED\x10\x84\xb1\x1f\x124\n" +
-	".DJI_ERROR_CODE_AIR_CONDITIONING_COOLING_FAILED\x10\x85\xb1\x1f\x124\n" +
-	".DJI_ERROR_CODE_AIR_CONDITIONING_HEATING_FAILED\x10\x86\xb1\x1f\x12=\n" +
-	"7DJI_ERROR_CODE_AIR_CONDITIONING_DEHUMIDIFICATION_FAILED\x10\x87\xb1\x1f\x12.\n" +
-	"(DJI_ERROR_CODE_CANNOT_COOL_WHEN_TOO_COLD\x10\x88\xb1\x1f\x12-\n" +
-	"'DJI_ERROR_CODE_CANNOT_HEAT_WHEN_TOO_HOT\x10\x89\xb1\x1f\x12\"\n" +
-	"\x1cDJI_ERROR_CODE_GATEWAY_ERROR\x10\xfc\xb1\x1f\x12$\n" +
-	"\x1eDJI_ERROR_CODE_REQUEST_TIMEOUT\x10\xfd\xb1\x1f\x12.\n" +
-	"(DJI_ERROR_CODE_NETWORK_CERTIFICATE_ERROR\x10\xfe\xb1\x1f\x12\"\n" +
-	"\x1cDJI_ERROR_CODE_NETWORK_ERROR\x10\xff\xb1\x1f\x12%\n" +
-	"\x1fDJI_ERROR_CODE_REQUEST_REJECTED\x10\x80\xb2\x1f\x12+\n" +
-	"%DJI_ERROR_CODE_AIRPORT_NOT_CALIBRATED\x10\xf8\xb0\x1fB\\\n" +
+	"\x14dji_error_code.proto\x12\x03dji*\xa8\x98\x01\n" +
+	"\fDJIErrorCode\x12\n" +
+	"\n" +
+	"\x06v_1_15\x10\x00\x12\x1a\n" +
+	"\x14DJI_DEVICE_UPGRADING\x10΅\x13\x12\"\n" +
+	"\x1cDJI_DOCK_BUSY_CANNOT_UPGRADE\x10υ\x13\x12#\n" +
+	"\x1dDJI_UPGRADE_FAILED_LINK_ERROR\x10Ѕ\x13\x12,\n" +
+	"&DJI_AIRCRAFT_START_FAILED_DISCONNECTED\x10օ\x13\x12/\n" +
+	")DJI_PUSH_ROD_CLOSED_FAILED_CANNOT_UPGRADE\x10ׅ\x13\x12.\n" +
+	"(DJI_UPGRADE_FAILED_AIRCRAFT_NOT_DETECTED\x10ۅ\x13\x12)\n" +
+	"#DJI_UPGRADE_FAILED_DEVICE_RESTARTED\x10܅\x13\x12*\n" +
+	"$DJI_DEVICE_RESTARTING_CANNOT_UPGRADE\x10݅\x13\x121\n" +
+	"+DJI_UPGRADE_FAILED_ENHANCED_TRANSMISSION_ON\x10ޅ\x13\x121\n" +
+	"+DJI_DEVICE_LOW_BATTERY_REQUIRE_CHARGE_20PCT\x10\x80\x8b\x13\x12$\n" +
+	"\x1eDJI_DEVICE_UNSUPPORT_OPERATION\x10\x90\x95\x13\x12*\n" +
+	"$DJI_FLIGHT_TASK_DELIVER_FAILED_RETRY\x10\x91\x95\x13\x120\n" +
+	"*DJI_FLIGHT_TASK_DELIVER_FAILED_RETRY_AGAIN\x10\x92\x95\x13\x12(\n" +
+	"\"DJI_ROUTE_FILE_FORMAT_INCOMPATIBLE\x10\x93\x95\x13\x121\n" +
+	"+DJI_FLIGHT_TASK_DELIVER_FAILED_RESTART_DOCK\x10\x95\x95\x13\x12+\n" +
+	"%DJI_AIRCRAFT_INIT_FAILED_RESTART_DOCK\x10\x96\x95\x13\x12,\n" +
+	"&DJI_ROUTE_TRANSMIT_FAILED_RESTART_DOCK\x10\x97\x95\x13\x12/\n" +
+	")DJI_AIRCRAFT_PREPARE_TIMEOUT_RESTART_DOCK\x10\x98\x95\x13\x121\n" +
+	"+DJI_AIRCRAFT_INIT_FAILED_RESTART_DOCK_AGAIN\x10\x99\x95\x13\x12+\n" +
+	"%DJI_ROUTE_EXECUTE_FAILED_RESTART_DOCK\x10\x9a\x95\x13\x12*\n" +
+	"$DJI_DOCK_SYSTEM_ERROR_NO_TASK_RESULT\x10\x9b\x95\x13\x12,\n" +
+	"&DJI_AIRCRAFT_PREPARE_FAILED_CANNOT_FLY\x10\x9c\x95\x13\x12-\n" +
+	"'DJI_FLIGHT_TASK_DELIVER_FAILED_NO_ROUTE\x10\x9d\x95\x13\x12'\n" +
+	"!DJI_DOCK_SYSTEM_ERROR_TASK_FAILED\x10\x9e\x95\x13\x12-\n" +
+	"'DJI_PRECISE_SHOOT_ROUTE_TRANSMIT_FAILED\x10\x9f\x95\x13\x12,\n" +
+	"&DJI_ROUTE_FILE_PARSE_FAILED_CANNOT_FLY\x10\xa0\x95\x13\x12-\n" +
+	"'DJI_ROUTE_FILE_PARSE_FAILED_CHECK_ROUTE\x10\xa1\x95\x13\x12%\n" +
+	"\x1fDJI_AIRCRAFT_RTK_POSITION_ERROR\x10\xa2\x95\x13\x12)\n" +
+	"#DJI_AIRCRAFT_RTK_CONVERGENCE_FAILED\x10\xa3\x95\x13\x12,\n" +
+	"&DJI_AIRCRAFT_POSITION_WRONG_CANNOT_FLY\x10\xa4\x95\x13\x12+\n" +
+	"%DJI_AIRCRAFT_RTK_POSITION_ERROR_AGAIN\x10\xa5\x95\x13\x12+\n" +
+	"%DJI_TAKEOFF_LAND_ROUTE_DELIVER_FAILED\x10\xa8\x95\x13\x12-\n" +
+	"'DJI_RTK_CONVERGENCE_TIMEOUT_USER_CANCEL\x10\xa9\x95\x13\x12+\n" +
+	"%DJI_TASK_FAILED_NET_DISCONNECT_RETURN\x10ؖ\x13\x12$\n" +
+	"\x1eDJI_AIRPORT_COMM_ERROR_RESTART\x10\xf8\x9c\x13\x122\n" +
+	",DJI_AIRPORT_COMM_ERROR_REMOTE_START_AIRCRAFT\x10\xf9\x9c\x13\x12*\n" +
+	"$DJI_AIRPORT_COMM_ERROR_RESTART_AGAIN\x10\xfa\x9c\x13\x12*\n" +
+	"$DJI_AIRPORT_COMM_ERROR_RESTART_THIRD\x10\xfb\x9c\x13\x12$\n" +
+	"\x1eDJI_TASK_FAILED_TWO_DOCKS_BUSY\x10\xfc\x9c\x13\x12+\n" +
+	"%DJI_AIRPORT_COMM_ERROR_RESTART_FOURTH\x10\xfd\x9c\x13\x12*\n" +
+	"$DJI_AIRPORT_COMM_ERROR_RESTART_FIFTH\x10\xfe\x9c\x13\x12)\n" +
+	"#DJI_AIRPORT_COMM_ERROR_UPGRADE_DOCK\x10\xff\x9c\x13\x12,\n" +
+	"&DJI_DOCK_CALIBRATION_INFO_INCONSISTENT\x10\x80\x9d\x13\x12*\n" +
+	"$DJI_AIRPORT_COMM_ERROR_RESTART_SIXTH\x10\x81\x9d\x13\x12'\n" +
+	"!DJI_CANNOT_STOP_FLIGHT_TASK_RETRY\x10\x82\x9d\x13\x12-\n" +
+	"'DJI_CANNOT_STOP_FLIGHT_TASK_RETRY_AGAIN\x10\x83\x9d\x13\x12-\n" +
+	"'DJI_CANNOT_STOP_FLIGHT_TASK_RETRY_THIRD\x10\x84\x9d\x13\x124\n" +
+	".DJI_FLIGHT_TASK_DELIVER_FAILED_CONTACT_SUPPORT\x10\x85\x9d\x13\x12,\n" +
+	"&DJI_TASK_TYPE_NOT_SUPPORT_RETURN_POINT\x10\x86\x9d\x13\x121\n" +
+	"+DJI_RETURN_POINT_SET_FAILED_CONTACT_SUPPORT\x10\x87\x9d\x13\x12:\n" +
+	"4DJI_FLIGHT_TASK_DELIVER_FAILED_CONTACT_SUPPORT_AGAIN\x10\x88\x9d\x13\x12:\n" +
+	"4DJI_FLIGHT_TASK_DELIVER_FAILED_CONTACT_SUPPORT_THIRD\x10\x89\x9d\x13\x12*\n" +
+	"$DJI_TASK_FAILED_TWO_DOCKS_BUSY_AGAIN\x10\x8a\x9d\x13\x12,\n" +
+	"&DJI_DOCK_POSITION_BAD_CANNOT_FROG_JUMP\x10\x8b\x9d\x13\x12#\n" +
+	"\x1dDJI_DOCK_SYSTEM_ERROR_RESTART\x10\xaa\x9d\x13\x122\n" +
+	",DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT\x10\xab\x9d\x13\x12*\n" +
+	"$DJI_DOCK_POSITION_NOT_CONVERGED_WAIT\x10\xac\x9d\x13\x128\n" +
+	"2DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_AGAIN\x10\xad\x9d\x13\x128\n" +
+	"2DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_THIRD\x10\xae\x9d\x13\x129\n" +
+	"3DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_FOURTH\x10\xaf\x9d\x13\x128\n" +
+	"2DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_FIFTH\x10\xb0\x9d\x13\x128\n" +
+	"2DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_SIXTH\x10\xb1\x9d\x13\x12:\n" +
+	"4DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_SEVENTH\x10\xb2\x9d\x13\x129\n" +
+	"3DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_EIGHTH\x10\xb3\x9d\x13\x128\n" +
+	"2DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_NINTH\x10\xb4\x9d\x13\x128\n" +
+	"2DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_TENTH\x10\xb5\x9d\x13\x12;\n" +
+	"5DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_ELEVENTH\x10\xb6\x9d\x13\x12:\n" +
+	"4DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_TWELFTH\x10\xb7\x9d\x13\x12=\n" +
+	"7DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_THIRTEENTH\x10\xb8\x9d\x13\x12=\n" +
+	"7DJI_TASK_FAILED_RESTART_DOCK_CONTACT_SUPPORT_FOURTEENTH\x10\xb9\x9d\x13\x12+\n" +
+	"%DJI_AIRCRAFT_PARAM_SET_FAILED_RESTART\x10\xe1\xa4\x13\x121\n" +
+	"+DJI_AIRCRAFT_PARAM_SET_FAILED_RESTART_AGAIN\x10\xe2\xa4\x13\x121\n" +
+	"+DJI_AIRCRAFT_PARAM_SET_FAILED_RESTART_THIRD\x10\xe3\xa4\x13\x122\n" +
+	",DJI_AIRCRAFT_PARAM_SET_FAILED_RESTART_FOURTH\x10\xe4\xa4\x13\x121\n" +
+	"+DJI_AIRCRAFT_RTK_CONVERGENCE_FAILED_RESTART\x10\xe5\xa4\x13\x12$\n" +
+	"\x1eDJI_TASK_TIMEOUT_AIRCRAFT_LOST\x10\xe6\xa4\x13\x122\n" +
+	",DJI_AIRCRAFT_INIT_FAILED_RESTART_DOCK_FOURTH\x10\xe7\xa4\x13\x12/\n" +
+	")DJI_DOCK_GET_CONTROL_FAILED_REMOTE_LOCKED\x10\xe8\xa4\x13\x12*\n" +
+	"$DJI_AIRCRAFT_LOW_BATTERY_BELOW_30PCT\x10\xe9\xa4\x13\x12.\n" +
+	"(DJI_DOCK_NO_AIRCRAFT_DETECTED_CANNOT_FLY\x10\xea\xa4\x13\x12'\n" +
+	"!DJI_AIRCRAFT_LAND_POSITION_OFFSET\x10\xeb\xa4\x13\x122\n" +
+	",DJI_AIRCRAFT_PREPARE_FAILED_CANNOT_FLY_AGAIN\x10\xec\xa4\x13\x122\n" +
+	",DJI_AIRCRAFT_PREPARE_FAILED_CANNOT_FLY_THIRD\x10\xed\xa4\x13\x123\n" +
+	"-DJI_AIRCRAFT_PREPARE_FAILED_CANNOT_FLY_FOURTH\x10\xee\xa4\x13\x12*\n" +
+	"$DJI_AIRCRAFT_RTK_CONVERGENCE_TOO_FAR\x10\xef\xa4\x13\x12,\n" +
+	"&DJI_AIRCRAFT_LAND_TIMEOUT_DISCONNECTED\x10\xf0\xa4\x13\x12.\n" +
+	"(DJI_MEDIA_COUNT_GET_TIMEOUT_DISCONNECTED\x10\xf1\xa4\x13\x12*\n" +
+	"$DJI_FLIGHT_TASK_TIMEOUT_DISCONNECTED\x10\xf2\xa4\x13\x12&\n" +
+	" DJI_DOCK_SYSTEM_ERROR_CANNOT_FLY\x10\xf3\xa4\x13\x12#\n" +
+	"\x1dDJI_AIRCRAFT_RTK_SOURCE_ERROR\x10\xf4\xa4\x13\x12+\n" +
+	"%DJI_AIRCRAFT_RTK_SOURCE_CHECK_TIMEOUT\x10\xf5\xa4\x13\x12-\n" +
+	"'DJI_AIRCRAFT_CANNOT_RETURN_DISCONNECTED\x10\xf6\xa4\x13\x120\n" +
+	"*DJI_AIRCRAFT_CANNOT_RETURN_CONTROLLED_BY_B\x10\xf7\xa4\x13\x12.\n" +
+	"(DJI_AIRCRAFT_RETURN_FAILED_NOT_TAKEN_OFF\x10\xf8\xa4\x13\x121\n" +
+	"+DJI_AIRCRAFT_PARAM_SET_FAILED_RETRY_RESTART\x10\xf9\xa4\x13\x12%\n" +
+	"\x1fDJI_DOCK_EMERGENCY_STOP_PRESSED\x10\xfa\xa4\x13\x122\n" +
+	",DJI_AIRCRAFT_PARAM_SET_TIMEOUT_RETRY_RESTART\x10\xfb\xa4\x13\x120\n" +
+	"*DJI_DOCK_EMERGENCY_STOP_PRESSED_RETURN_ALT\x10\xfd\xa4\x13\x12(\n" +
+	"\"DJI_BATTERY_DATA_GET_TIMEOUT_RETRY\x10\x80\xa5\x13\x12)\n" +
+	"#DJI_AIRCRAFT_BATTERY_CYCLE_TOO_MANY\x10\x81\xa5\x13\x12)\n" +
+	"#DJI_AIRCRAFT_DOCK_FIRMWARE_MISMATCH\x10\x82\xa5\x13\x124\n" +
+	".DJI_TAKEOFF_LAND_ROUTE_FAILED_UPGRADE_FIRMWARE\x10\x83\xa5\x13\x12-\n" +
+	"'DJI_AIRCRAFT_LOW_BATTERY_LANDED_OUTSIDE\x10\x92\xa5\x13\x12-\n" +
+	"'DJI_FLIGHT_TASK_ABNORMAL_LANDED_OUTSIDE\x10\x93\xa5\x13\x12)\n" +
+	"#DJI_FLIGHT_TASK_ABNORMAL_RETURN_ALT\x10\x94\xa5\x13\x12)\n" +
+	"#DJI_USER_CONTROLLED_AIRCRAFT_LANDED\x10\x95\xa5\x13\x12&\n" +
+	" DJI_CAMERA_INFO_GET_FAILED_RETRY\x10ĥ\x13\x12(\n" +
+	"\"DJI_CAMERA_SET_SINGLE_SHOOT_FAILED\x10ť\x13\x12'\n" +
+	"!DJI_CAMERA_WATERMARK_CLOSE_FAILED\x10ƥ\x13\x12)\n" +
+	"#DJI_CAMERA_SET_METERING_MODE_FAILED\x10ǥ\x13\x12(\n" +
+	"\"DJI_CAMERA_SWITCH_WIDE_LENS_FAILED\x10ȥ\x13\x12)\n" +
+	"#DJI_CAMERA_SET_PHOTO_STORAGE_FAILED\x10ɥ\x13\x12\x1f\n" +
+	"\x19DJI_CAMERA_IR_ZOOM_FAILED\x10ʥ\x13\x12)\n" +
+	"#DJI_CAMERA_SET_4K_RESOLUTION_FAILED\x10˥\x13\x12'\n" +
+	"!DJI_CAMERA_SET_JPEG_FORMAT_FAILED\x10̥\x13\x123\n" +
+	"-DJI_CAMERA_DISTORTION_CORRECTION_CLOSE_FAILED\x10ͥ\x13\x12/\n" +
+	")DJI_CAMERA_MECHANICAL_SHUTTER_OPEN_FAILED\x10Υ\x13\x12&\n" +
+	" DJI_CAMERA_SET_FOCUS_MODE_FAILED\x10ϥ\x13\x12)\n" +
+	"#DJI_AIRCRAFT_MEDIA_COUNT_GET_FAILED\x10ɬ\x13\x125\n" +
+	"/DJI_AIRCRAFT_STORAGE_FORMAT_FAILED_DISCONNECTED\x10ʬ\x13\x120\n" +
+	"*DJI_AIRCRAFT_STORAGE_FORMAT_FAILED_RESTART\x10ˬ\x13\x12(\n" +
+	"\"DJI_DOCK_MEDIA_FORMAT_FAILED_RETRY\x10̬\x13\x120\n" +
+	"*DJI_AIRCRAFT_STOP_RECORD_FAILED_MEDIA_LOST\x10ͬ\x13\x12)\n" +
+	"#DJI_CANNOT_FORMAT_MEDIA_DOWNLOADING\x10ά\x13\x120\n" +
+	"*DJI_MEDIA_COUNT_GET_FAILED_CONTACT_SUPPORT\x10Ϭ\x13\x12\x1e\n" +
+	"\x18DJI_DOCK_BUSY_CANNOT_FLY\x10\x99\xbc\x13\x12'\n" +
+	"!DJI_DOCK_SYSTEM_RUN_ERROR_RESTART\x10\x9a\xbc\x13\x12.\n" +
+	"(DJI_DOCK_SYSTEM_RUN_ERROR_REDELIVER_TASK\x10\x9b\xbc\x13\x12,\n" +
+	"&DJI_FLIGHT_TASK_TIMEOUT_AUTOMATIC_STOP\x10\x9c\xbc\x13\x12*\n" +
+	"$DJI_CLOUD_DOCK_COMM_ERROR_CANNOT_FLY\x10\x9d\xbc\x13\x12+\n" +
+	"%DJI_CANCEL_FLIGHT_TASK_FAILED_RUNNING\x10\x9e\xbc\x13\x12+\n" +
+	"%DJI_MODIFY_FLIGHT_TASK_FAILED_RUNNING\x10\x9f\xbc\x13\x12\"\n" +
+	"\x1cDJI_DOCK_CLOUD_TIME_NOT_SYNC\x10\xa0\xbc\x13\x122\n" +
+	",DJI_FLIGHT_TASK_DELIVER_FAILED_RETRY_RESTART\x10\xa1\xbc\x13\x12'\n" +
+	"!DJI_DOCK_FIRMWARE_TOO_OLD_UPGRADE\x10\xa2\xbc\x13\x12&\n" +
+	" DJI_DOCK_INITIALIZING_CANNOT_FLY\x10\xa7\xbc\x13\x12#\n" +
+	"\x1dDJI_DOCK_EXECUTING_OTHER_TASK\x10\xa8\xbc\x13\x12*\n" +
+	"$DJI_DOCK_PROCESSING_MEDIA_CANNOT_FLY\x10\xa9\xbc\x13\x12'\n" +
+	"!DJI_DOCK_EXPORTING_LOG_CANNOT_FLY\x10\xaa\xbc\x13\x12%\n" +
+	"\x1fDJI_DOCK_PULLING_LOG_CANNOT_FLY\x10\xab\xbc\x13\x12&\n" +
+	" DJI_ROUTE_INTERRUPT_FAILED_RETRY\x10\xac\xbc\x13\x12*\n" +
+	"$DJI_REMOTE_CONTROL_EXIT_FAILED_RETRY\x10\xad\xbc\x13\x12#\n" +
+	"\x1dDJI_POINT_FLIGHT_FAILED_RETRY\x10\xae\xbc\x13\x12(\n" +
+	"\"DJI_POINT_FLIGHT_STOP_FAILED_RETRY\x10\xaf\xbc\x13\x12&\n" +
+	" DJI_ONE_KEY_TAKEOFF_FAILED_RETRY\x10\xb0\xbc\x13\x12#\n" +
+	"\x1dDJI_DOCK_NOT_READY_CANNOT_FLY\x10\xb1\xbc\x13\x12-\n" +
+	"'DJI_AIRCRAFT_BATTERY_BELOW_USER_SETTING\x10\xb2\xbc\x13\x12$\n" +
+	"\x1eDJI_DOCK_AIRCRAFT_STORAGE_FULL\x10\xb3\xbc\x13\x12%\n" +
+	"\x1fDJI_CUSTOM_FLIGHT_AREA_UPDATING\x10\xb4\xbc\x13\x12\x1e\n" +
+	"\x18DJI_OFFLINE_MAP_UPDATING\x10\xb5\xbc\x13\x12.\n" +
+	"(DJI_OPERATION_FAILED_NO_AIRCRAFT_CONTROL\x10\xb6\xbc\x13\x12(\n" +
+	"\"DJI_CONTROL_RIGHT_ABNORMAL_REFRESH\x10\xb7\xbc\x13\x12)\n" +
+	"#DJI_POINT_FLIGHT_FAILED_RETRY_AGAIN\x10\xb8\xbc\x13\x12$\n" +
+	"\x1eDJI_VIRTUAL_JOYSTICK_OP_FAILED\x10\xb9\xbc\x13\x12*\n" +
+	"$DJI_VIRTUAL_JOYSTICK_OP_FAILED_AGAIN\x10\xba\xbc\x13\x12%\n" +
+	"\x1fDJI_EMERGENCY_STOP_FAILED_RETRY\x10\xbb\xbc\x13\x12!\n" +
+	"\x1bDJI_DEVICE_REMOTE_DEBUGGING\x10\xbc\xbc\x13\x12 \n" +
+	"\x1aDJI_DEVICE_LOCAL_DEBUGGING\x10\xbd\xbc\x13\x12)\n" +
+	"#DJI_DEVICE_UPGRADING_CANNOT_OPERATE\x10\xbe\xbc\x13\x12$\n" +
+	"\x1eDJI_ROUTE_RECOVER_FAILED_RETRY\x10¼\x13\x12$\n" +
+	"\x1eDJI_CANCEL_RETURN_FAILED_RETRY\x10ü\x13\x12)\n" +
+	"#DJI_ROUTE_TASK_ENDED_CANNOT_RECOVER\x10ļ\x13\x12(\n" +
+	"\"DJI_EMERGENCY_STOP_SUCCESS_REPRESS\x10ż\x13\x12(\n" +
+	"\"DJI_CANNOT_PAUSE_ROUTE_NOT_ENTERED\x10Ƽ\x13\x12-\n" +
+	"'DJI_DOCK_SYSTEM_RUN_ERROR_RESTART_AGAIN\x10\xff\xc3\x13\x12&\n" +
+	" DJI_ROUTE_EXECUTE_ABNORMAL_RETRY\x10\xe8\xcb\x13\x120\n" +
+	"*DJI_ROUTE_FILE_PARSE_FAILED_CANNOT_EXECUTE\x10\xec\xcb\x13\x12-\n" +
+	"'DJI_ROUTE_NO_BREAKPOINT_INFO_CANNOT_FLY\x10\xed\xcb\x13\x12%\n" +
+	"\x1fDJI_FLIGHT_TASK_ALREADY_RUNNING\x10\xe9\xcd\x13\x123\n" +
+	"-DJI_CANNOT_TERMINATE_FLIGHT_TASK_CHECK_STATUS\x10\xea\xcd\x13\x12+\n" +
+	"%DJI_CANNOT_TERMINATE_TASK_NOT_STARTED\x10\xeb\xcd\x13\x12+\n" +
+	"%DJI_CANNOT_INTERRUPT_TASK_NOT_STARTED\x10\xec\xcd\x13\x12'\n" +
+	"!DJI_ROUTE_HEIGHT_EXCEED_MAX_LIMIT\x10\xe9\xcf\x13\x12(\n" +
+	"\"DJI_TASK_FAILED_POINT_EXCEED_RANGE\x10\xea\xcf\x13\x12!\n" +
+	"\x1bDJI_ROUTE_CROSS_NO_FLY_ZONE\x10\xeb\xcf\x13\x12.\n" +
+	"(DJI_AIRCRAFT_HEIGHT_TOO_LOW_TASK_STOPPED\x10\xec\xcf\x13\x12.\n" +
+	"(DJI_AIRCRAFT_OBSTACLE_AVOID_TASK_STOPPED\x10\xed\xcf\x13\x12(\n" +
+	"\"DJI_AIRCRAFT_APPROACH_LIMIT_RETURN\x10\xef\xcf\x13\x121\n" +
+	"+DJI_AIRCRAFT_TAKEOFF_FAILED_CONTACT_SUPPORT\x10\xf3\xcf\x13\x12/\n" +
+	")DJI_AIRCRAFT_PREPARE_FAILED_POSITION_GEAR\x10\xf4\xcf\x13\x121\n" +
+	"+DJI_CUSTOM_FLIGHT_AREA_BOUNDARY_TASK_PAUSED\x10\xf8\xcf\x13\x12+\n" +
+	"%DJI_TARGET_IN_NO_FLY_ZONE_TASK_PAUSED\x10\xf9\xcf\x13\x12-\n" +
+	"'DJI_ROUTE_TRACK_PLAN_FAILED_TASK_PAUSED\x10\xfa\xcf\x13\x123\n" +
+	"-DJI_TAKEOFF_LAND_ROUTE_FAILED_CONTACT_SUPPORT\x10\xfb\xcf\x13\x129\n" +
+	"3DJI_TAKEOFF_LAND_ROUTE_FAILED_CONTACT_SUPPORT_AGAIN\x10\xfc\xcf\x13\x129\n" +
+	"3DJI_TAKEOFF_LAND_ROUTE_FAILED_CONTACT_SUPPORT_THIRD\x10\xfd\xcf\x13\x12(\n" +
+	"\"DJI_AIRCRAFT_SATELLITE_SIGNAL_WEAK\x10\xe9\xd1\x13\x12(\n" +
+	"\"DJI_AIRCRAFT_GEAR_ERROR_CANNOT_FLY\x10\xea\xd1\x13\x12-\n" +
+	"'DJI_AIRCRAFT_NO_RETURN_POINT_CANNOT_FLY\x10\xeb\xd1\x13\x120\n" +
+	"*DJI_AIRCRAFT_LOW_BATTERY_BELOW_30PCT_AGAIN\x10\xec\xd1\x13\x123\n" +
+	"-DJI_AIRCRAFT_LOW_BATTERY_RETURN_DURING_FLIGHT\x10\xed\xd1\x13\x12-\n" +
+	"'DJI_AIRCRAFT_DISCONNECTED_DURING_FLIGHT\x10\xef\xd1\x13\x127\n" +
+	"1DJI_AIRCRAFT_RTK_CONVERGENCE_FAILED_RESTART_AGAIN\x10\xf0\xd1\x13\x12)\n" +
+	"#DJI_AIRCRAFT_NOT_HOVER_CANNOT_START\x10\xf1\xd1\x13\x12.\n" +
+	"(DJI_AIRCRAFT_CONTROLLED_BY_B_NO_DOCK_FLY\x10\xf2\xd1\x13\x12$\n" +
+	"\x1eDJI_TASK_EMERGENCY_RETURN_WIND\x10\xf8\xd1\x13\x120\n" +
+	"*DJI_TASK_FAILED_RETURN_SIGNAL_INTERFERENCE\x10\xfc\xd1\x13\x12(\n" +
+	"\"DJI_TASK_FAILED_MANUAL_INTERRUPTED\x10\xe9\xd5\x13\x12.\n" +
+	"(DJI_TASK_INTERRUPTED_AIRCRAFT_TAKEN_OVER\x10\xea\xd5\x13\x12&\n" +
+	" DJI_TASK_INTERRUPTED_USER_RETURN\x10\xeb\xd5\x13\x120\n" +
+	"*DJI_ROUTE_BREAKPOINT_INFO_ERROR_CANNOT_FLY\x10\xeb\xd7\x13\x120\n" +
+	"*DJI_ROUTE_TRACK_GENERATE_FAILED_CLEAN_LENS\x10\x83\xd8\x13\x12'\n" +
+	"!DJI_LOG_COMPRESS_TIMEOUT_TOO_MANY\x10\xac\xe3\x13\x12*\n" +
+	"$DJI_DEVICE_LOG_LIST_GET_FAILED_RETRY\x10\xad\xe3\x13\x12'\n" +
+	"!DJI_DEVICE_LOG_LIST_EMPTY_REFRESH\x10\xae\xe3\x13\x12&\n" +
+	" DJI_AIRCRAFT_OFFLINE_NO_LOG_LIST\x10\xaf\xe3\x13\x12/\n" +
+	")DJI_DOCK_STORAGE_FULL_LOG_COMPRESS_FAILED\x10\xb0\xe3\x13\x12-\n" +
+	"'DJI_LOG_COMPRESS_FAILED_REFRESH_RESTART\x10\xb1\xe3\x13\x12)\n" +
+	"#DJI_LOG_PULL_FAILED_FEEDBACK_UPLOAD\x10\xb2\xe3\x13\x12%\n" +
+	"\x1fDJI_LOG_UPLOAD_FAILED_NET_ERROR\x10\xb3\xe3\x13\x12*\n" +
+	"$DJI_LOG_EXPORT_INTERRUPTED_POWER_OFF\x10\xb5\xe3\x13\x12,\n" +
+	"&DJI_MEDIA_UPLOAD_FAILED_NET_LINK_ERROR\x10\xbe\xe3\x13\x12$\n" +
+	"\x1eDJI_CLOUD_COMMAND_FORMAT_ERROR\x10\x89\xeb\x13\x12'\n" +
+	"!DJI_COMMAND_RESPONSE_FAILED_RETRY\x10\x8b\xeb\x13\x12(\n" +
+	"\"DJI_DEVICE_COMMAND_REQUEST_TIMEOUT\x10\x8c\xeb\x13\x12)\n" +
+	"#DJI_DOCK_UNABLE_RESPONSE_TASK_RETRY\x10\x8d\xeb\x13\x12#\n" +
+	"\x1dDJI_DOCK_START_CHECKING_RETRY\x10\x8e\xeb\x13\x12#\n" +
+	"\x1dDJI_DOCK_EXECUTING_TASK_RETRY\x10\x8f\xeb\x13\x12%\n" +
+	"\x1fDJI_DOCK_PROCESSING_TASK_RESULT\x10\x90\xeb\x13\x12#\n" +
+	"\x1dDJI_DOCK_EXPORTING_REMOTE_LOG\x10\x91\xeb\x13\x12*\n" +
+	"$DJI_DOCK_UPDATING_CUSTOM_FLIGHT_AREA\x10\x92\xeb\x13\x12#\n" +
+	"\x1dDJI_DOCK_UPDATING_OFFLINE_MAP\x10\x93\xeb\x13\x12%\n" +
+	"\x1fDJI_AIRCRAFT_DISCONNECTED_RETRY\x10\x94\xeb\x13\x12%\n" +
+	"\x1fDJI_AIRCRAFT_NO_CELLULAR_MODULE\x10\xf2\xf2\x13\x12\"\n" +
+	"\x1cDJI_AIRCRAFT_CELLULAR_NO_SIM\x10\xf3\xf2\x13\x12)\n" +
+	"#DJI_AIRCRAFT_CELLULAR_FORCE_UPGRADE\x10\xf4\xf2\x13\x12.\n" +
+	"(DJI_ENHANCED_TRANSMISSION_CONNECT_FAILED\x10\xf5\xf2\x13\x12-\n" +
+	"'DJI_ENHANCED_TRANSMISSION_SWITCH_FAILED\x10\xf6\xf2\x13\x12!\n" +
+	"\x1bDJI_DOCK_NO_CELLULAR_MODULE\x10\xf8\xf2\x13\x12\x1e\n" +
+	"\x18DJI_DOCK_CELLULAR_NO_SIM\x10\xf9\xf2\x13\x12%\n" +
+	"\x1fDJI_DOCK_CELLULAR_FORCE_UPGRADE\x10\xfa\xf2\x13\x12\x1f\n" +
+	"\x19DJI_ESIM_ACTIVATING_RETRY\x10\xd7\xf3\x13\x12!\n" +
+	"\x1bDJI_ESIM_SWITCHING_OPERATOR\x10\xd8\xf3\x13\x12(\n" +
+	"\"DJI_ENHANCED_MODULE_SWITCHING_MODE\x10\xd9\xf3\x13\x12*\n" +
+	"$DJI_ENHANCED_MODULE_ABNORMAL_RESTART\x10\xda\xf3\x13\x12+\n" +
+	"%DJI_ENHANCED_MODULE_ACTIVATE_ESIM_SIM\x10\xdb\xf3\x13\x12 \n" +
+	"\x1aDJI_PARAM_SET_FAILED_RETRY\x10\xd8\xfa\x13\x12&\n" +
+	" DJI_PARAM_SET_FAILED_RETRY_AGAIN\x10\xd9\xfa\x13\x12\"\n" +
+	"\x1cDJI_GET_CONTROL_FAILED_RETRY\x10\xda\xfa\x13\x12(\n" +
+	"\"DJI_GET_CONTROL_FAILED_RETRY_AGAIN\x10\xdb\xfa\x13\x12\"\n" +
+	"\x1cDJI_SCREEN_DRAG_FAILED_RETRY\x10\xdc\xfa\x13\x12$\n" +
+	"\x1eDJI_DOUBLE_CLICK_CENTER_FAILED\x10\xdd\xfa\x13\x12\x1b\n" +
+	"\x15DJI_TAKE_PHOTO_FAILED\x10\xde\xfa\x13\x12\x1d\n" +
+	"\x17DJI_START_RECORD_FAILED\x10\xdf\xfa\x13\x12\x1c\n" +
+	"\x16DJI_STOP_RECORD_FAILED\x10\xe0\xfa\x13\x12#\n" +
+	"\x1dDJI_SWITCH_CAMERA_MODE_FAILED\x10\xe1\xfa\x13\x12!\n" +
+	"\x1bDJI_ZOOM_CAMERA_ZOOM_FAILED\x10\xe2\xfa\x13\x12\x1f\n" +
+	"\x19DJI_IR_CAMERA_ZOOM_FAILED\x10\xe3\xfa\x13\x12(\n" +
+	"\"DJI_GET_CONTROL_FAILED_RETRY_THIRD\x10\xe4\xfa\x13\x12&\n" +
+	" DJI_PARAM_SET_FAILED_RETRY_THIRD\x10\xe5\xfa\x13\x12\x1c\n" +
+	"\x16DJI_GIMBAL_REACH_LIMIT\x10\xe6\xfa\x13\x12*\n" +
+	"$DJI_LIVE_STREAM_START_FAILED_REFRESH\x10\xe7\xfa\x13\x12(\n" +
+	"\"DJI_LOST_CONNECT_ACTION_SET_FAILED\x10\xe8\xfa\x13\x12(\n" +
+	"\"DJI_POINT_FLIGHT_HEIGHT_SET_FAILED\x10\xe9\xfa\x13\x12)\n" +
+	"#DJI_POINT_FLIGHT_MODE_SWITCH_FAILED\x10\xea\xfa\x13\x12#\n" +
+	"\x1dDJI_CANNOT_LOOK_AT_MARK_POINT\x10\xeb\xfa\x13\x12'\n" +
+	"!DJI_PANORAMA_STOP_COMMAND_TIMEOUT\x10\xec\xfa\x13\x12#\n" +
+	"\x1dDJI_PANORAMA_STOP_NOT_SUPPORT\x10\xee\xfa\x13\x12 \n" +
+	"\x1aDJI_AUDIO_PLAY_NOT_SUPPORT\x10\x8a\xfb\x13\x12$\n" +
+	"\x1eDJI_AUDIO_FILE_DOWNLOAD_FAILED\x10\x8b\xfb\x13\x12$\n" +
+	"\x1eDJI_SPEAKER_MODE_SWITCH_FAILED\x10\x8c\xfb\x13\x12\"\n" +
+	"\x1cDJI_AUDIO_FILE_UPLOAD_FAILED\x10\x8d\xfb\x13\x12\x1b\n" +
+	"\x15DJI_AUDIO_PLAY_FAILED\x10\x8e\xfb\x13\x12\x1e\n" +
+	"\x18DJI_WORK_MODE_SET_FAILED\x10\x8f\xfb\x13\x12\x1c\n" +
+	"\x16DJI_TEXT_UPLOAD_FAILED\x10\x90\xfb\x13\x12\x1a\n" +
+	"\x14DJI_PLAY_STOP_FAILED\x10\x91\xfb\x13\x12\x1e\n" +
+	"\x18DJI_PLAY_MODE_SET_FAILED\x10\x92\xfb\x13\x12\x1b\n" +
+	"\x15DJI_VOLUME_SET_FAILED\x10\x93\xfb\x13\x12\"\n" +
+	"\x1cDJI_CONTROL_VALUE_SET_FAILED\x10\x94\xfb\x13\x12 \n" +
+	"\x1aDJI_TEXT_VALUE_SEND_FAILED\x10\x95\xfb\x13\x12'\n" +
+	"!DJI_SYSTEM_LANGUAGE_SWITCH_FAILED\x10\x96\xfb\x13\x12%\n" +
+	"\x1fDJI_DEVICE_FUNC_LIST_GET_FAILED\x10\x97\xfb\x13\x12\"\n" +
+	"\x1cDJI_DEVICE_CONFIG_GET_FAILED\x10\x98\xfb\x13\x12!\n" +
+	"\x1bDJI_DEVICE_IMAGE_GET_FAILED\x10\x99\xfb\x13\x12%\n" +
+	"\x1fDJI_DEVICE_FILE_COMPRESS_FAILED\x10\x9a\xfb\x13\x12#\n" +
+	"\x1dDJI_DEVICE_FILE_UPLOAD_FAILED\x10\x9b\xfb\x13\x12'\n" +
+	"!DJI_AUDIO_UPLOAD_FAILED_MD5_ERROR\x10\x9c\xfb\x13\x12#\n" +
+	"\x1dDJI_AUDIO_UPLOAD_FAILED_AGAIN\x10\x9d\xfb\x13\x12+\n" +
+	"%DJI_AUDIO_UPLOAD_FAILED_ABNORMAL_STOP\x10\x9e\xfb\x13\x12*\n" +
+	"$DJI_TTS_TEXT_UPLOAD_FAILED_MD5_ERROR\x10\x9f\xfb\x13\x12 \n" +
+	"\x1aDJI_TTS_TEXT_UPLOAD_FAILED\x10\xa0\xfb\x13\x12.\n" +
+	"(DJI_TTS_TEXT_UPLOAD_FAILED_ABNORMAL_STOP\x10\xa1\xfb\x13\x12\x1f\n" +
+	"\x19DJI_SPEAKER_REPLAY_FAILED\x10\xa2\xfb\x13\x12\x1f\n" +
+	"\x19DJI_SPEAKER_ENCODE_FAILED\x10\xa3\xfb\x13\x12\x1f\n" +
+	"\x19DJI_PANORAMA_SHOOT_FAILED\x10\xa1\xfc\x13\x12#\n" +
+	"\x1dDJI_PANORAMA_SHOOT_TERMINATED\x10\xa2\xfc\x13\x12%\n" +
+	"\x1fDJI_DEVICE_NOT_SUPPORT_PANORAMA\x10\xa3\xfc\x13\x12!\n" +
+	"\x1bDJI_SYSTEM_BUSY_NO_PANORAMA\x10\xa4\xfc\x13\x12$\n" +
+	"\x1eDJI_REQUEST_FAILED_NO_PANORAMA\x10\xa5\xfc\x13\x12,\n" +
+	"&DJI_AIRCRAFT_NOT_TAKEN_OFF_NO_PANORAMA\x10\xa6\xfc\x13\x12*\n" +
+	"$DJI_GET_CONTROL_FAILED_PANORAMA_STOP\x10\xa7\xfc\x13\x12*\n" +
+	"$DJI_UNKNOWN_CAMERA_ERROR_NO_PANORAMA\x10\xa8\xfc\x13\x12&\n" +
+	" DJI_CAMERA_TIMEOUT_PANORAMA_STOP\x10\xa9\xfc\x13\x12\x1e\n" +
+	"\x18DJI_CANNOT_TAKE_PANORAMA\x10\xaa\xfc\x13\x12$\n" +
+	"\x1eDJI_STORAGE_FULL_PANORAMA_STOP\x10\xab\xfc\x13\x12%\n" +
+	"\x1fDJI_AIRCRAFT_MOVING_NO_PANORAMA\x10\xac\xfc\x13\x12#\n" +
+	"\x1dDJI_GIMBAL_MOVING_NO_PANORAMA\x10\xad\xfc\x13\x12-\n" +
+	"'DJI_USER_OPERATE_JOYSTICK_PANORAMA_STOP\x10\xae\xfc\x13\x12)\n" +
+	"#DJI_TOUCH_NO_FLY_ZONE_PANORAMA_STOP\x10\xaf\xfc\x13\x12.\n" +
+	"(DJI_TRIGGER_DISTANCE_LIMIT_PANORAMA_STOP\x10\xb0\xfc\x13\x12&\n" +
+	" DJI_GIMBAL_BLOCKED_PANORAMA_STOP\x10\xb1\xfc\x13\x12)\n" +
+	"#DJI_TAKE_PHOTO_FAILED_PANORAMA_STOP\x10\xb2\xfc\x13\x12&\n" +
+	" DJI_PANORAMA_IMAGE_STITCH_FAILED\x10\xb3\xfc\x13\x12'\n" +
+	"!DJI_CALIBRATION_PARAM_LOAD_FAILED\x10\xb4\xfc\x13\x12$\n" +
+	"\x1eDJI_CAMERA_PARAM_ADJUST_FAILED\x10\xb5\xfc\x13\x12$\n" +
+	"\x1eDJI_AIRCRAFT_LENS_DEFOG_FAILED\x10\xcc\xfe\x13\x12(\n" +
+	"\"DJI_AIRCRAFT_NO_REAL_NAME_REGISTER\x10\xf3\x82\x14\x12%\n" +
+	"\x1fDJI_AIRCRAFT_REAL_NAME_CANCELED\x10\xf4\x82\x14\x12&\n" +
+	" DJI_POINT_FLIGHT_CMD_SEND_FAILED\x10\x80\xc1\x14\x12,\n" +
+	"&DJI_AIRCRAFT_DATA_ABNORMAL_NO_RESPONSE\x10\x81\xc1\x14\x12\"\n" +
+	"\x1cDJI_AIRCRAFT_GPS_SIGNAL_WEAK\x10\x82\xc1\x14\x12/\n" +
+	")DJI_AIRCRAFT_POSITION_INVALID_NO_RESPONSE\x10\x83\xc1\x14\x12\"\n" +
+	"\x1cDJI_POINT_FLIGHT_PLAN_FAILED\x10\x84\xc1\x14\x12+\n" +
+	"%DJI_AIRCRAFT_RETURN_POINT_NOT_UPDATED\x10\x85\xc1\x14\x121\n" +
+	"+DJI_AIRCRAFT_DISCONNECTED_EXIT_POINT_FLIGHT\x10\x86\xc1\x14\x12&\n" +
+	" DJI_AIRCRAFT_LOW_BATTERY_NO_TASK\x10\x91\xc1\x14\x12%\n" +
+	"\x1fDJI_AIRCRAFT_PLAN_MODE_SWITCHED\x10\x92\xc1\x14\x12,\n" +
+	"&DJI_POINT_FLIGHT_HEIGHT_ADJUSTED_LIMIT\x10\x93\xc1\x14\x12\x1f\n" +
+	"\x19DJI_TARGET_IN_NO_FLY_ZONE\x10\x81\xc5\x14\x12&\n" +
+	" DJI_TARGET_EXCEED_DISTANCE_LIMIT\x10\x82\xc5\x14\x12%\n" +
+	"\x1fDJI_TARGET_IN_NO_FLY_ZONE_AGAIN\x10\x83\xc5\x14\x12$\n" +
+	"\x1eDJI_TARGET_EXCEED_HEIGHT_LIMIT\x10\x84\xc5\x14\x12$\n" +
+	"\x1eDJI_TARGET_BELOW_LOWEST_HEIGHT\x10\x85\xc5\x14\x12!\n" +
+	"\x1bDJI_AIRCRAFT_CANNOT_TAKEOFF\x10\x81\xc9\x14\x12%\n" +
+	"\x1fDJI_TARGET_POINT_ABNORMAL_RETRY\x10\x82\xc9\x14\x12%\n" +
+	"\x1fDJI_AIRCRAFT_SPEED_SET_ABNORMAL\x10\x83\xc9\x14\x12)\n" +
+	"#DJI_AIRCRAFT_VERSION_ABNORMAL_CHECK\x10\x84\xc9\x14\x12'\n" +
+	"!DJI_AIRCRAFT_UNABLE_RESPONSE_TASK\x10\x85\xc9\x14\x12/\n" +
+	")DJI_COMMAND_FLIGHT_TAKEOFF_HEIGHT_TOO_LOW\x10\x86\xc9\x14\x12\x1d\n" +
+	"\x17DJI_TOUCHED_NO_FLY_ZONE\x10\x81\xcd\x14\x12 \n" +
+	"\x1aDJI_TOUCHED_DISTANCE_LIMIT\x10\x82\xcd\x14\x12#\n" +
+	"\x1dDJI_TOUCHED_NO_FLY_ZONE_AGAIN\x10\x83\xcd\x14\x12\x1e\n" +
+	"\x18DJI_TOUCHED_HEIGHT_LIMIT\x10\x84\xcd\x14\x12\x1f\n" +
+	"\x19DJI_TOUCHED_LOWEST_HEIGHT\x10\x85\xcd\x14\x12'\n" +
+	"!DJI_AIRCRAFT_TAKEOFF_FAILED_RETRY\x10\x86\xcd\x14\x12'\n" +
+	"!DJI_TARGET_IN_OBSTACLE_ZONE_CHECK\x10\x87\xcd\x14\x12%\n" +
+	"\x1fDJI_OBSTACLE_DETECTED_CHECK_ENV\x10\x88\xcd\x14\x12&\n" +
+	" DJI_AIRCRAFT_PLAN_ABNORMAL_RETRY\x10\x89\xcd\x14\x12$\n" +
+	"\x1eDJI_TOUCHED_CUSTOM_FLIGHT_AREA\x10\x8a\xcd\x14\x12*\n" +
+	"$DJI_AIRCRAFT_COMM_ERROR_RESTART_BOTH\x10\xd1\xd0\x14\x120\n" +
+	"*DJI_AIRCRAFT_COMM_ERROR_RESTART_BOTH_AGAIN\x10\xd2\xd0\x14\x120\n" +
+	"*DJI_AIRCRAFT_COMM_ERROR_RESTART_BOTH_THIRD\x10\xd3\xd0\x14\x121\n" +
+	"+DJI_AIRCRAFT_COMM_ERROR_RESTART_BOTH_FOURTH\x10\xd4\xd0\x14\x12#\n" +
+	"\x1dDJI_DOCK_DISTANCE_EXCEED_15KM\x10\xd5\xd0\x14\x12+\n" +
+	"%DJI_CANNOT_FLY_CHECK_DOCK_CERTIFICATE\x10\xd6\xd0\x14\x12'\n" +
+	"!DJI_LAND_DOCK_EXCEED_HEIGHT_LIMIT\x10\xd7\xd0\x14\x12,\n" +
+	"&DJI_LAND_DOCK_EXCEED_USER_HEIGHT_LIMIT\x10\xd8\xd0\x14\x12*\n" +
+	"$DJI_AIRCRAFT_GPS_SIGNAL_WEAK_RESTART\x10\xd9\xd0\x14\x12+\n" +
+	"%DJI_AIRCRAFT_POSITION_INVALID_RESTART\x10\xda\xd0\x14\x12+\n" +
+	"%DJI_TASK_FAILED_DOCK_OUT_OF_GEO_FENCE\x10\xdb\xd0\x14\x12-\n" +
+	"'DJI_AIRCRAFT_DATA_UPDATE_FAILED_RESTART\x10\xe1\xd0\x14\x123\n" +
+	"-DJI_AIRCRAFT_DATA_UPDATE_FAILED_RESTART_AGAIN\x10\xe2\xd0\x14\x12%\n" +
+	"\x1fDJI_RETURN_ROUTE_PLANNING_RETRY\x10\xe3\xd0\x14\x12)\n" +
+	"#DJI_AIRCRAFT_CANNOT_REACH_LAND_DOCK\x10\xe4\xd0\x14\x12+\n" +
+	"%DJI_AIRCRAFT_LOW_BATTERY_CANNOT_REACH\x10\xe5\xd0\x14\x12,\n" +
+	"&DJI_RESPOND_JOYSTICK_EXIT_POINT_FLIGHT\x10\x81\xd1\x14\x12,\n" +
+	"&DJI_RESPOND_STOP_CMD_EXIT_POINT_FLIGHT\x10\x82\xd1\x14\x12.\n" +
+	"(DJI_LOW_BATTERY_RETURN_EXIT_POINT_FLIGHT\x10\x83\xd1\x14\x12,\n" +
+	"&DJI_LOW_BATTERY_LAND_EXIT_POINT_FLIGHT\x10\x84\xd1\x14\x121\n" +
+	"+DJI_MANNING_AIRCRAFT_NEAR_EXIT_POINT_FLIGHT\x10\x85\xd1\x14\x12.\n" +
+	"(DJI_HIGH_PRIORITY_TASK_EXIT_POINT_FLIGHT\x10\x86\xd1\x14\x120\n" +
+	"*DJI_AIRCRAFT_COMM_ERROR_RESTART_BOTH_FIFTH\x10\xcf\xd2\x14\x12+\n" +
+	"%DJI_DOCK_POSITION_NOT_CONVERGED_CHECK\x10\x8a\xe8\x14\x12,\n" +
+	"&DJI_ROUTE_EXECUTE_ABNORMAL_RETRY_AGAIN\x10\xe7\xcb\x17\x12)\n" +
+	"#DJI_LIVE_STREAM_FAILED_CAMERA_ERROR\x10\xea\xa7\x1f\x12,\n" +
+	"&DJI_LIVE_STREAM_FAILED_ALREADY_RUNNING\x10\xeb\xa7\x1f\x12(\n" +
+	"\"DJI_LIVE_STREAM_FAILED_PARAM_ERROR\x10\xed\xa7\x1f\x120\n" +
+	"*DJI_LIVE_STREAM_START_FAILED_REFRESH_AGAIN\x10\xee\xa7\x1f\x12-\n" +
+	"'DJI_LIVE_STREAM_FAILED_VIDEO_DATA_ERROR\x10\xf0\xa7\x1f\x12+\n" +
+	"%DJI_LIVE_STREAM_FAILED_DEVICE_OFFLINE\x10\xf2\xa7\x1f\x12+\n" +
+	"%DJI_LIVE_STREAM_OP_FAILED_NOT_STARTED\x10\xf3\xa7\x1f\x12+\n" +
+	"%DJI_LIVE_STREAM_OP_FAILED_SWITCH_LENS\x10\xf4\xa7\x1f\x121\n" +
+	"+DJI_LIVE_STREAM_FAILED_PROTOCOL_NOT_SUPPORT\x10\xf5\xa7\x1f\x12.\n" +
+	"(DJI_LIVE_STREAM_FAILED_PARAM_ERROR_AGAIN\x10\xf6\xa7\x1f\x12&\n" +
+	" DJI_LIVE_STREAM_ABNORMAL_NET_LAG\x10\xf7\xa7\x1f\x12+\n" +
+	"%DJI_LIVE_STREAM_ABNORMAL_DECODE_ERROR\x10\xf8\xa7\x1f\x12.\n" +
+	"(DJI_LIVE_STREAM_PAUSED_MEDIA_DOWNLOADING\x10\xf9\xa7\x1f\x12(\n" +
+	"\"DJI_LIVE_STREAM_FAILED_RETRY_AGAIN\x10˨\x1f\x12)\n" +
+	"#DJI_DOCK_OPERATION_ABNORMAL_RESTART\x10\xb4\xb0\x1f\x12.\n" +
+	"(DJI_PUSH_ROD_CLOSE_FAILED_CHECK_OBSTACLE\x10\xb5\xb0\x1f\x12-\n" +
+	"'DJI_PUSH_ROD_OPEN_FAILED_CHECK_OBSTACLE\x10\xb6\xb0\x1f\x120\n" +
+	"*DJI_AIRCRAFT_LOW_BATTERY_BELOW_30PCT_THIRD\x10\xb7\xb0\x1f\x12.\n" +
+	"(DJI_AIRCRAFT_BATTERY_CHARGE_START_FAILED\x10\xb8\xb0\x1f\x12-\n" +
+	"'DJI_AIRCRAFT_BATTERY_CHARGE_STOP_FAILED\x10\xb9\xb0\x1f\x12)\n" +
+	"#DJI_AIRCRAFT_POWER_CONTROL_ABNORMAL\x10\xba\xb0\x1f\x12/\n" +
+	")DJI_DOCK_COVER_OPEN_FAILED_CHECK_OBSTACLE\x10\xbb\xb0\x1f\x120\n" +
+	"*DJI_DOCK_COVER_CLOSE_FAILED_CHECK_OBSTACLE\x10\xbc\xb0\x1f\x12*\n" +
+	"$DJI_AIRCRAFT_START_FAILED_CHECK_DOCK\x10\xbd\xb0\x1f\x12+\n" +
+	"%DJI_AIRCRAFT_STOP_FAILED_RESTART_DOCK\x10\xbe\xb0\x1f\x12*\n" +
+	"$DJI_AIRCRAFT_PROPELLER_STOP_ABNORMAL\x10\xbf\xb0\x1f\x120\n" +
+	"*DJI_AIRCRAFT_PROPELLER_STOP_ABNORMAL_AGAIN\x10\xc0\xb0\x1f\x12,\n" +
+	"&DJI_PUSH_ROD_CONNECT_FAILED_CHECK_DOCK\x10\xc1\xb0\x1f\x12*\n" +
+	"$DJI_AIRCRAFT_POWER_STATUS_GET_FAILED\x10°\x1f\x12+\n" +
+	"%DJI_DOCK_EXECUTING_CMD_CANNOT_OPERATE\x10İ\x1f\x12&\n" +
+	" DJI_DOCK_COVER_POSITION_ABNORMAL\x10Ű\x1f\x12$\n" +
+	"\x1eDJI_PUSH_ROD_POSITION_ABNORMAL\x10ư\x1f\x12+\n" +
+	"%DJI_DOCK_AIRCRAFT_DISCONNECTED_REPAIR\x10Ȱ\x1f\x12-\n" +
+	"'DJI_DOCK_EMERGENCY_STOP_PRESSED_RELEASE\x10ɰ\x1f\x12+\n" +
+	"%DJI_AIRCRAFT_CHARGE_STATUS_GET_FAILED\x10ʰ\x1f\x12/\n" +
+	")DJI_AIRCRAFT_BATTERY_TOO_LOW_CANNOT_START\x10˰\x1f\x12*\n" +
+	"$DJI_AIRCRAFT_BATTERY_INFO_GET_FAILED\x10̰\x1f\x12-\n" +
+	"'DJI_AIRCRAFT_BATTERY_FULL_CANNOT_CHARGE\x10Ͱ\x1f\x12(\n" +
+	"\"DJI_DOCK_RAIN_TOO_HEAVY_CANNOT_FLY\x10ְ\x1f\x12)\n" +
+	"#DJI_DOCK_WIND_TOO_STRONG_CANNOT_FLY\x10װ\x1f\x12#\n" +
+	"\x1dDJI_DOCK_POWER_OFF_CANNOT_FLY\x10ذ\x1f\x12&\n" +
+	" DJI_DOCK_TEMP_TOO_LOW_CANNOT_FLY\x10ٰ\x1f\x121\n" +
+	"+DJI_AIRCRAFT_BATTERY_MAINTAINING_CANNOT_FLY\x10ڰ\x1f\x12-\n" +
+	"'DJI_AIRCRAFT_BATTERY_NO_MAINTAIN_NEEDED\x10۰\x1f\x123\n" +
+	"-DJI_AIRCRAFT_BATTERY_NO_MAINTAIN_NEEDED_AGAIN\x10ܰ\x1f\x12&\n" +
+	" DJI_DOCK_SYSTEM_OP_ERROR_RESTART\x10ݰ\x1f\x120\n" +
+	"*DJI_PUSH_ROD_CONNECT_FAILED_BEFORE_TAKEOFF\x10ް\x1f\x12+\n" +
+	"%DJI_PUSH_ROD_NOT_CLOSED_RETRY_RESTART\x10߰\x1f\x12-\n" +
+	"'DJI_DOCK_COVER_NOT_CLOSED_RETRY_RESTART\x10\xe0\xb0\x1f\x12-\n" +
+	"'DJI_DOCK_LOCAL_DEBUGGING_CANNOT_OPERATE\x10\xe1\xb0\x1f\x12*\n" +
+	"$DJI_DOCK_REMOTE_DEBUGGING_CANNOT_FLY\x10\xe2\xb0\x1f\x12'\n" +
+	"!DJI_DEVICE_UPGRADING_CANNOT_DEBUG\x10\xe3\xb0\x1f\x12#\n" +
+	"\x1dDJI_DOCK_WORKING_CANNOT_DEBUG\x10\xe4\xb0\x1f\x12)\n" +
+	"#DJI_DOCK_SYSTEM_OP_ERROR_CANNOT_FLY\x10\xe5\xb0\x1f\x12&\n" +
+	" DJI_DEVICE_RESTARTING_CANNOT_FLY\x10\xe6\xb0\x1f\x12)\n" +
+	"#DJI_DEVICE_UPGRADING_CANNOT_RESTART\x10\xe7\xb0\x1f\x12,\n" +
+	"&DJI_DOCK_EXIT_DEBUGGING_CANNOT_OPERATE\x10\xe9\xb0\x1f\x12$\n" +
+	"\x1eDJI_DOCK_TEMP_GET_FAILED_RETRY\x10\xea\xb0\x1f\x12)\n" +
+	"#DJI_AIRCRAFT_NOT_IN_DOCK_CANNOT_FLY\x10\xeb\xb0\x1f\x12-\n" +
+	"'DJI_AIRCRAFT_NOT_IN_DOCK_CHECK_RETRIEVE\x10\xec\xb0\x1f\x124\n" +
+	".DJI_AIRCRAFT_START_FAILED_WIRELESS_CHARGE_BUSY\x10\xed\xb0\x1f\x12'\n" +
+	"!DJI_DOCK_RTK_ERROR_CANNOT_TAKEOFF\x10\xee\xb0\x1f\x12,\n" +
+	"&DJI_TASK_FAILED_LAND_DOCK_HAS_AIRCRAFT\x10\xef\xb0\x1f\x12,\n" +
+	"&DJI_AIRCRAFT_DOCK_CONNECT_FAILED_RETRY\x10\xf2\xb0\x1f\x12-\n" +
+	"'DJI_BATTERY_FUNC_ABNORMAL_CHECK_INSTALL\x10\xf3\xb0\x1f\x12/\n" +
+	")DJI_DEVICE_RESTART_FAILED_CONTACT_SUPPORT\x10\xf4\xb0\x1f\x125\n" +
+	"/DJI_DEVICE_RESTART_FAILED_CONTACT_SUPPORT_AGAIN\x10\xf5\xb0\x1f\x12*\n" +
+	"$DJI_DOCK_INITIALIZING_CANNOT_OPERATE\x10\xfa\xb0\x1f\x12)\n" +
+	"#DJI_CLOUD_COMMAND_FORMAT_ERROR_DOCK\x10\xfb\xb0\x1f\x123\n" +
+	"-DJI_AIRCRAFT_CANNOT_STOP_BLUETOOTH_DISCONNECT\x10\xfc\xb0\x1f\x12%\n" +
+	"\x1fDJI_DOCK_WEATHER_BAD_CANNOT_FLY\x10\xfd\xb0\x1f\x12/\n" +
+	")DJI_AIRCRAFT_CHARGE_FAILED_COVER_POSITION\x10\xfe\xb0\x1f\x12%\n" +
+	"\x1fDJI_DOCK_AC_CONTROL_STOP_FAILED\x10\x84\xb1\x1f\x12#\n" +
+	"\x1dDJI_DOCK_AC_COOL_START_FAILED\x10\x85\xb1\x1f\x12#\n" +
+	"\x1dDJI_DOCK_AC_HEAT_START_FAILED\x10\x86\xb1\x1f\x12)\n" +
+	"#DJI_DOCK_AC_DEHUMIDIFY_START_FAILED\x10\x87\xb1\x1f\x12\x1e\n" +
+	"\x18DJI_DOCK_AC_COOL_TOO_LOW\x10\x88\xb1\x1f\x12\x1f\n" +
+	"\x19DJI_DOCK_AC_HEAT_TOO_HIGH\x10\x89\xb1\x1f\x12\x1a\n" +
+	"\x14DJI_GATEWAY_ABNORMAL\x10\xfc\xb1\x1f\x12(\n" +
+	"\"DJI_REQUEST_TIMEOUT_CONNECT_CLOSED\x10\xfd\xb1\x1f\x12#\n" +
+	"\x1dDJI_NETWORK_CERTIFICATE_ERROR\x10\xfe\xb1\x1f\x12)\n" +
+	"#DJI_NETWORK_ABNORMAL_CONNECT_CLOSED\x10\xff\xb1\x1f\x12)\n" +
+	"#DJI_REQUEST_REJECTED_CONNECT_FAILED\x10\x80\xb2\x1f\x12(\n" +
+	"\"DJI_DOCK_NOT_CALIBRATED_CANNOT_FLY\x10\xf8\xb0\x1fB\\\n" +
 	"\rcom.dji.errorB\x11DJIErrorCodeProtoP\x01Z6zero-service/third_party/dji_error_code;dji_error_codeb\x06proto3"
 
 var (
