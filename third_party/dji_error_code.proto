@@ -145,7 +145,7 @@ enum DJIErrorCode {
   
   // 航线执行相关错误
   DJI_ERROR_CODE_ROUTE_EXECUTION_ERROR = 321000; // 航线执行异常，请稍后重试或重启机场后重试
-  DJI_ERROR_CODE_ROUTE_FILE_PARSE_FAILED = 321004; // 航线文件解析失败，无法执行飞行任务，请检查航线文件
+  DJI_ERROR_CODE_ROUTE_FILE_PARSE_FAILED_ROUTE = 321004; // 航线文件解析失败，无法执行飞行任务，请检查航线文件
   DJI_ERROR_CODE_ROUTE_MISSING_BREAKPOINT_INFO = 321005; // 航线缺少断点信息，机场无法执行飞行任务
   DJI_ERROR_CODE_TASK_ALREADY_EXECUTING = 321257; // 飞行任务已在执行中，请勿重复执行
   DJI_ERROR_CODE_CANNOT_TERMINATE_TASK = 321258; // 飞行任务无法终止，请检查飞行器状态
@@ -194,7 +194,7 @@ enum DJIErrorCode {
   DJI_ERROR_CODE_HATCH_NOT_IN_PLACE = 514117; // 舱盖开启或关闭未到位，请重启机场后重试
   DJI_ERROR_CODE_PUSH_ROD_NOT_IN_PLACE = 514118; // 推杆展开或闭合未到位，请重启机场后重试
   DJI_ERROR_CODE_AIRPORT_AIRCRAFT_DISCONNECTED = 514120; // 机场与飞行器断连，请重启机场后重试或重新对频
-  DJI_ERROR_CODE_EMERGENCY_STOP_PRESSED = 514121; // 机场急停按钮被按下，请释放急停按钮
+  DJI_ERROR_CODE_EMERGENCY_STOP_PRESSED_AIRPORT = 514121; // 机场急停按钮被按下，请释放急停按钮
   DJI_ERROR_CODE_CHARGING_STATUS_FAILED = 514122; // 获取飞行器充电状态失败，请重启机场后重试
   DJI_ERROR_CODE_BATTERY_TOO_LOW_TO_POWER_ON = 514123; // 飞行器电池电量过低无法开机
   DJI_ERROR_CODE_BATTERY_INFO_FAILED = 514124; // 获取飞行器电池信息失败，无法执行飞行任务，请重启机场后重试
