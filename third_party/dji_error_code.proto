@@ -10,8 +10,8 @@ option java_outer_classname = "DJIErrorCodeProto";
 // DJIErrorCode 表示大疆上云错误码
 enum DJIErrorCode {
   // 通用错误
-  DJI_ERROR_CODE_UNKNOWN = 0;
-  
+  _ = 0;
+
   // 设备升级相关错误
   DJI_ERROR_CODE_DEVICE_UPGRADING = 312014; // 设备升级中，请勿重复操作
   DJI_ERROR_CODE_AIRPORT_BUSY = 312015; // 机场：{dock_org_name} 业务繁忙无法进行设备升级，请等待机场处于空闲中后再试
@@ -23,7 +23,7 @@ enum DJIErrorCode {
   DJI_ERROR_CODE_DEVICE_REBOOTING = 312029; // 设备重启中无法进行设备升级，请等待设备重启完成后重试
   DJI_ERROR_CODE_UPGRADE_FAILED_ENHANCED_IMAGE_TRANSMISSION = 312030; // 升级失败，飞行器增强图传开启后无法升级，请关闭飞行器增强图传后重试
   DJI_ERROR_CODE_LOW_BATTERY = 312704; // 设备电量过低，请充电至20%以上后重试
-  
+
   // 飞行任务相关错误
   DJI_ERROR_CODE_DEVICE_OPERATION_NOT_SUPPORTED = 314000; // 设备当前无法支持该操作，建议检查设备当前工作状态
   DJI_ERROR_CODE_TASK_SUBMIT_FAILED = 314001; // 飞行任务下发失败，请稍后重试
@@ -44,7 +44,7 @@ enum DJIErrorCode {
   DJI_ERROR_CODE_DEPARTURE_ARRIVAL_ROUTE_SUBMIT_FAILED = 314024; // 进离场航线下发失败，请稍后重试或重启机场后重试
   DJI_ERROR_CODE_RTK_CONVERGENCE_TIMEOUT = 314025; // RTK收敛超时，用户手动取消任务
   DJI_ERROR_CODE_NETWORK_DISCONNECTED = 314200; // 任务失败，由于机场网络断开，飞行器已自动返航，请确保机场已连接网络后再试
-  
+
   // 机场通信相关错误
   DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR = 315000; // 机场通信异常，请重启机场后重试
   DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_REMOTE_POWER_ON = 315001; // 机场通信异常，请远程开启飞机并等待 1min 后，再次下发任务重试
@@ -69,7 +69,7 @@ enum DJIErrorCode {
   DJI_ERROR_CODE_AIRPORT_SYSTEM_ERROR_REBOOT = 315050; // 机场系统异常，请重启机场后重试
   DJI_ERROR_CODE_TASK_FAILED_REBOOT = 315051; // 任务失败，请重启机场并再次下发任务后重试，如果仍报错请联系大疆售后
   DJI_ERROR_CODE_AIRPORT_POSITION_NOT_CONVERGED = 315052; // 机场位置未收敛，请等待一段时间后重试
-  
+
   // 飞行器参数配置相关错误
   DJI_ERROR_CODE_PARAMETER_SET_FAILED = 316001; // 飞行器参数配置失败，请重启机场后重试
   DJI_ERROR_CODE_PARAMETER_SET_FAILED_AGAIN = 316002; // 飞行器参数配置失败，请重启机场后重试
@@ -103,7 +103,7 @@ enum DJIErrorCode {
   DJI_ERROR_CODE_BATTERY_CYCLE_COUNT_TOO_HIGH = 316033; // 飞行器电池循环次数过高，为保证飞行安全，已自动终止任务，建议更换该电池
   DJI_ERROR_CODE_FIRMWARE_VERSION_MISMATCH = 316034; // 无法起飞，飞行器固件版本与机场固件版本不匹配，为保证飞行安全请升级固件后再试
   DJI_ERROR_CODE_DEPARTURE_ARRIVAL_ROUTE_SUBMIT_FAILED_FIRMWARE = 316035; // 进离场航线下发失败，请确保设备固件为最新版本后重新下发任务，如果持续报错，请联系大疆售后。
-  
+
   // 相机相关错误
   DJI_ERROR_CODE_CAMERA_SUMMARY_INFO_FAILED = 316100; // 获取相机概要信息失败，请重试
   DJI_ERROR_CODE_SET_SINGLE_SHOT_MODE_FAILED = 316101; // 设置相机为单拍模式失败，请重试
@@ -117,7 +117,7 @@ enum DJIErrorCode {
   DJI_ERROR_CODE_CLOSE_DISTORTION_CORRECTION_FAILED = 316109; // 关闭相机畸变矫正失败，请重试
   DJI_ERROR_CODE_OPEN_MECHANICAL_SHUTTER_FAILED = 316110; // 打开相机机械快门失败，请重试
   DJI_ERROR_CODE_SET_FOCUS_MODE_FAILED = 316111; // 设置对焦模式失败，请重试
-  
+
   // 媒体文件相关错误
   DJI_ERROR_CODE_MEDIA_COUNT_FAILED = 317001; // 获取飞行器媒体文件数量失败，请重启机场后重试
   DJI_ERROR_CODE_STORAGE_FORMAT_FAILED = 317002; // 飞行器存储格式化失败，飞行器未开机、未连接或未检测到相机，请确认无以上问题后重试，或重启飞行器后重试
@@ -126,7 +126,7 @@ enum DJIErrorCode {
   DJI_ERROR_CODE_END_RECORDING_FAILED = 317005; // 飞行器结束录像失败，本次飞行任务的媒体文件可能无法上传
   DJI_ERROR_CODE_CANNOT_FORMAT = 317006; // 无法格式化，请等待当前飞行器媒体文件下载完成后再试
   DJI_ERROR_CODE_MEDIA_COUNT_FAILED_CONTACT_SUPPORT = 317007; // 获取媒体文件数量失败，请稍后重试，如本架次任务有媒体文件且持续报错可联系大疆售后
-  
+
   // 机场系统运行异常相关错误
   DJI_ERROR_CODE_AIRPORT_BUSY_OR_UPLOADING_LOGS = 319001; // 机场作业中或设备异常反馈上传日志中，无法执行飞行任务，请等待当前飞行任务或操作执行完成后重试
   DJI_ERROR_CODE_AIRPORT_SYSTEM_RUNNING_ERROR = 319002; // 机场系统运行异常，请重启机场后重试
@@ -142,7 +142,7 @@ enum DJIErrorCode {
   DJI_ERROR_CODE_PROCESSING_MEDIA_FILES = 319017; // 机场正在处理上次飞行任务媒体文件，无法执行本次飞行任务，请稍后重试
   DJI_ERROR_CODE_AUTO_EXPORTING_LOGS = 319018; // 机场正在自动导出日志中（设备异常反馈），无法执行飞行任务，请稍后重试
   DJI_ERROR_CODE_PULLING_LOGS = 319019; // 机场正在拉取日志中（设备异常反馈），无法执行飞行任务，请稍后重试
-  
+
   // 航线执行相关错误
   DJI_ERROR_CODE_ROUTE_EXECUTION_ERROR = 321000; // 航线执行异常，请稍后重试或重启机场后重试
   DJI_ERROR_CODE_ROUTE_FILE_PARSE_FAILED_ROUTE = 321004; // 航线文件解析失败，无法执行飞行任务，请检查航线文件
@@ -157,7 +157,7 @@ enum DJIErrorCode {
   DJI_ERROR_CODE_FLIGHT_HEIGHT_TOO_LOW = 321516; // 飞行器飞行高度过低，飞行任务执行被终止
   DJI_ERROR_CODE_OBSTACLE_AVOIDANCE_TRIGGERED = 321517; // 飞行器触发避障，飞行任务执行被终止。为保证飞行安全，请勿用当前航线执行断点续飞任务
   DJI_ERROR_CODE_APPROACHING_RESTRICTED_AREA = 321519; // 飞行器接近限飞区或限远距离自动返航，无法完成航线飞行
-  
+
   // 直播相关错误
   DJI_ERROR_CODE_LIVE_STREAM_FAILED_CAMERA_NOT_EXIST = 513002; // 直播失败，相机不存在或相机类型错误
   DJI_ERROR_CODE_LIVE_STREAM_ALREADY_RUNNING = 513003; // 相机已经在直播中，请勿重复开启直播
@@ -169,11 +169,11 @@ enum DJIErrorCode {
   DJI_ERROR_CODE_OPERATION_FAILED_CANNOT_SWITCH_CAMERA = 513012; // 操作失败，设备已在直播中，不支持切换镜头
   DJI_ERROR_CODE_LIVE_STREAM_FAILED_PROTOCOL_NOT_SUPPORTED = 513013; // 直播失败，直播使用的视频传输协议不支持
   DJI_ERROR_CODE_LIVE_STREAM_FAILED_PARAMETER_ERROR_AGAIN = 513014; // 直播失败，直播参数错误或者不完整
-  DJI_ERROR_CODE_LIVE_STREAM_ERROR_NETWORK_CONGestion = 513015; // 直播异常，网络卡顿, 请刷新后重试 
+  DJI_ERROR_CODE_LIVE_STREAM_ERROR_NETWORK_CONGestion = 513015; // 直播异常，网络卡顿, 请刷新后重试
   DJI_ERROR_CODE_LIVE_STREAM_ERROR_DECODE_FAILED = 513016; // 直播异常，视频解码失败
   DJI_ERROR_CODE_LIVE_STREAM_PAUSED = 513017; // 直播已暂停，请等待当前飞行器媒体文件下载完成后再试
   DJI_ERROR_CODE_LIVE_STREAM_FAILED_RETRY = 513099; // 直播失败，请稍后重试
-  
+
   // 机场运行异常相关错误
   DJI_ERROR_CODE_AIRPORT_OPERATION_ERROR = 514100; // 机场运行异常，请重启机场后重试
   DJI_ERROR_CODE_PUSH_ROD_CLOSE_FAILED_OPERATION = 514101; // 推杆闭合失败，请检查停机坪上是否存在异物，飞行器方向是否放反，或重启机场后重试
@@ -239,14 +239,14 @@ enum DJIErrorCode {
   DJI_ERROR_CODE_AIR_CONDITIONING_DEHUMIDIFICATION_FAILED = 514183; // 开启空调除湿失败，请稍后重试
   DJI_ERROR_CODE_CANNOT_COOL_WHEN_TOO_COLD = 514184; // 当前温度低于 0 ℃（32°F），无法开启空调制冷
   DJI_ERROR_CODE_CANNOT_HEAT_WHEN_TOO_HOT = 514185; // 当前温度高于 45 ℃（115°F），无法开启空调制热
-  
+
   // 网关异常相关错误
   DJI_ERROR_CODE_GATEWAY_ERROR = 514300; // 网关异常
   DJI_ERROR_CODE_REQUEST_TIMEOUT = 514301; // 请求超时，连接断开
   DJI_ERROR_CODE_NETWORK_CERTIFICATE_ERROR = 514302; // 网络证书异常，连接失败
   DJI_ERROR_CODE_NETWORK_ERROR = 514303; // 网络异常，连接断开
   DJI_ERROR_CODE_REQUEST_REJECTED = 514304; // 请求被拒，连接失败
-  
+
   // 机场未标定相关错误
   DJI_ERROR_CODE_AIRPORT_NOT_CALIBRATED = 514168; // 机场未标定，机场无法执行飞行任务，请标定机场
 }
