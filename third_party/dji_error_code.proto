@@ -12,7 +12,7 @@ option java_outer_classname = "DJIErrorCodeProto";
 // v1.15
 enum DJIErrorCode {
   // 通用默认值（proto3枚举首字段必须为0，无实际业务意义）
-  _ = 0;
+  v_1_15 = 0;
 
   // ************************ 设备升级相关（312段）************************
   DJI_ERROR_CODE_312014 = 312014; // 设备升级中，请勿重复操作
