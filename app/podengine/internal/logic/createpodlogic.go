@@ -64,8 +64,14 @@ func (l *CreatePodLogic) CreatePod(in *podengine.CreatePodReq) (*podengine.Creat
 		networkMode = "bridge"
 	}
 
+	// Use NetworkName if provided
+	actualNetworkMode := networkMode
+	if in.Spec.NetworkName != "" {
+		actualNetworkMode = in.Spec.NetworkName
+	}
+
 	var portBindings nat.PortMap
-	if networkMode != "host" && networkMode != "none" {
+	if actualNetworkMode != "host" && actualNetworkMode != "none" {
 		portBindings = parsePorts(containerSpec.Ports)
 	}
 
@@ -85,7 +91,7 @@ func (l *CreatePodLogic) CreatePod(in *podengine.CreatePodReq) (*podengine.Creat
 		PortBindings:  portBindings,
 		RestartPolicy: parseRestartPolicy(in.Spec.RestartPolicy),
 		AutoRemove:    false,
-		NetworkMode:   container.NetworkMode(networkMode),
+		NetworkMode:   container.NetworkMode(actualNetworkMode),
 		Privileged:    false,
 		Resources:     resources,
 		Mounts:        mounts,
@@ -95,10 +101,6 @@ func (l *CreatePodLogic) CreatePod(in *podengine.CreatePodReq) (*podengine.Creat
 	config.StopTimeout = &terminationGracePeriodSeconds
 
 	networkConfig := &network.NetworkingConfig{}
-
-	if in.Spec.NetworkName != "" {
-		hostConfig.NetworkMode = container.NetworkMode(in.Spec.NetworkName)
-	}
 
 	containerName := fmt.Sprintf("%s-%s", in.Name, strings.ToLower(containerSpec.Name))
 	resp, err := dockerClient.ContainerCreate(l.ctx, config, hostConfig, networkConfig, nil, containerName)
