@@ -168,13 +168,13 @@ func (m *customPlanExecItemModel) UpdateStatusToRunning(ctx context.Context, id 
 
 func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, id int64, lastMessage, lastReason string, statusIn []int, statusOut []int) error {
 	// 检查并截取字段长度
-	if utf8.RuneCountInString(lastReason) > 255 {
+	if utf8.RuneCountInString(lastReason) > 1000 {
 		runes := []rune(lastReason)
-		lastReason = string(runes[:255])
+		lastReason = string(runes[:1000])
 	}
-	if utf8.RuneCountInString(lastMessage) > 1024 {
+	if utf8.RuneCountInString(lastMessage) > 1000 {
 		runes := []rune(lastMessage)
-		lastMessage = string(runes[:1024])
+		lastMessage = string(runes[:1000])
 	}
 	currentTime := time.Now()
 	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
@@ -205,13 +205,13 @@ func (m *customPlanExecItemModel) UpdateStatusToCompleted(ctx context.Context, i
 
 func (m *customPlanExecItemModel) UpdateStatusToFail(ctx context.Context, id int64, lastResult, lastMessage, lastReason string, statusIn []int, statusOut []int) error {
 	// 检查并截取字段长度
-	if utf8.RuneCountInString(lastReason) > 255 {
+	if utf8.RuneCountInString(lastReason) > 1000 {
 		runes := []rune(lastReason)
-		lastReason = string(runes[:255])
+		lastReason = string(runes[:1000])
 	}
-	if utf8.RuneCountInString(lastMessage) > 1024 {
+	if utf8.RuneCountInString(lastMessage) > 1000 {
 		runes := []rune(lastMessage)
-		lastMessage = string(runes[:1024])
+		lastMessage = string(runes[:1000])
 	}
 	currentTime := time.Now()
 	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
@@ -276,13 +276,13 @@ func (m *customPlanExecItemModel) UpdateStatusToFail(ctx context.Context, id int
 
 func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id int64, lastResult, lastMessage, lastReason, nextTriggerTimeStr string, statusIn []int, statusOut []int) error {
 	// 检查并截取字段长度
-	if utf8.RuneCountInString(lastReason) > 255 {
+	if utf8.RuneCountInString(lastReason) > 1000 {
 		runes := []rune(lastReason)
-		lastReason = string(runes[:255])
+		lastReason = string(runes[:1000])
 	}
-	if utf8.RuneCountInString(lastMessage) > 1024 {
+	if utf8.RuneCountInString(lastMessage) > 1000 {
 		runes := []rune(lastMessage)
-		lastMessage = string(runes[:1024])
+		lastMessage = string(runes[:1000])
 	}
 	ct := carbon.Parse(nextTriggerTimeStr)
 	if ct.Error != nil {
@@ -318,13 +318,13 @@ func (m *customPlanExecItemModel) UpdateStatusToDelayed(ctx context.Context, id 
 
 func (m *customPlanExecItemModel) UpdateStatusToTerminated(ctx context.Context, id int64, lastMessage, lastReason string, statusIn []int, statusOut []int) error {
 	// 检查并截取字段长度
-	if utf8.RuneCountInString(lastReason) > 255 {
+	if utf8.RuneCountInString(lastReason) > 1000 {
 		runes := []rune(lastReason)
-		lastReason = string(runes[:255])
+		lastReason = string(runes[:1000])
 	}
-	if utf8.RuneCountInString(lastMessage) > 1024 {
+	if utf8.RuneCountInString(lastMessage) > 1000 {
 		runes := []rune(lastMessage)
-		lastMessage = string(runes[:1024])
+		lastMessage = string(runes[:1000])
 	}
 	currentTime := time.Now()
 	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()
@@ -356,13 +356,13 @@ func (m *customPlanExecItemModel) UpdateStatusToTerminated(ctx context.Context, 
 
 func (m *customPlanExecItemModel) UpdateStatusToOngoing(ctx context.Context, id int64, lastMessage, lastReason string, updateTriggerInfo bool, nextTriggerTime string, statusIn []int, statusOut []int) error {
 	// 检查并截取字段长度
-	if utf8.RuneCountInString(lastReason) > 255 {
+	if utf8.RuneCountInString(lastReason) > 1000 {
 		runes := []rune(lastReason)
-		lastReason = string(runes[:255])
+		lastReason = string(runes[:1000])
 	}
-	if utf8.RuneCountInString(lastMessage) > 1024 {
+	if utf8.RuneCountInString(lastMessage) > 1000 {
 		runes := []rune(lastMessage)
-		lastMessage = string(runes[:1024])
+		lastMessage = string(runes[:1000])
 	}
 	currentTime := time.Now()
 	currentTimeStr := carbon.CreateFromStdTime(currentTime).ToDateTimeMicroString()

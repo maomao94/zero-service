@@ -12177,10 +12177,10 @@ func (m *CallbackPlanExecItemReq) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetMessage()) > 255 {
+	if utf8.RuneCountInString(m.GetMessage()) > 1000 {
 		err := CallbackPlanExecItemReqValidationError{
 			field:  "Message",
-			reason: "value length must be at most 255 runes",
+			reason: "value length must be at most 1000 runes",
 		}
 		if !all {
 			return err
@@ -12188,10 +12188,10 @@ func (m *CallbackPlanExecItemReq) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetReason()) > 100 {
+	if utf8.RuneCountInString(m.GetReason()) > 1000 {
 		err := CallbackPlanExecItemReqValidationError{
 			field:  "Reason",
-			reason: "value length must be at most 100 runes",
+			reason: "value length must be at most 1000 runes",
 		}
 		if !all {
 			return err
@@ -12340,10 +12340,10 @@ func (m *PbDelayConfig) validate(all bool) error {
 
 	// no validation rules for NextTriggerTime
 
-	if utf8.RuneCountInString(m.GetDelayReason()) > 100 {
+	if utf8.RuneCountInString(m.GetDelayReason()) > 1000 {
 		err := PbDelayConfigValidationError{
 			field:  "DelayReason",
-			reason: "value length must be at most 100 runes",
+			reason: "value length must be at most 1000 runes",
 		}
 		if !all {
 			return err

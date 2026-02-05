@@ -202,8 +202,8 @@ CREATE TABLE IF NOT EXISTS plan_exec_item (
     last_trigger_time TIMESTAMP NULL, 
     trigger_count INT NOT NULL DEFAULT 0, 
     status SMALLINT NOT NULL DEFAULT 0, 
-    last_result VARCHAR(256) DEFAULT '',
-    last_message VARCHAR(1024) DEFAULT '',
+    last_result VARCHAR(2000) DEFAULT '',
+    last_message VARCHAR(2000) DEFAULT '',
     last_reason TEXT DEFAULT '',
     terminated_reason VARCHAR(256) DEFAULT '',
     paused_time TIMESTAMP NULL, 
@@ -304,8 +304,8 @@ CREATE TABLE IF NOT EXISTS plan_exec_log (
     point_id VARCHAR(64) DEFAULT '',
     trigger_time TIMESTAMP NOT NULL, 
     trace_id VARCHAR(64) DEFAULT '',
-    exec_result VARCHAR(256) DEFAULT '',
-    message VARCHAR(1024) DEFAULT '',
+    exec_result VARCHAR(2000) DEFAULT '',
+    message VARCHAR(2000) DEFAULT '',
     reason TEXT DEFAULT ''
 );
 
