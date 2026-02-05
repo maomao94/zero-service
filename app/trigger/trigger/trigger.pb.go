@@ -7319,7 +7319,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\x04ext5\x188 \x01(\tR\x04ext5\x1aA\n" +
 	"\x13StatusCountMapEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\"\xd1\x02\n" +
+	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\"\xd2\x02\n" +
 	"\x17CallbackPlanExecItemReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
@@ -7328,12 +7328,12 @@ const file_trigger_proto_rawDesc = "" +
 	"execResult\x18\x03 \x01(\tB6\xfaB3r1R\tcompletedR\n" +
 	"terminatedR\x06failedR\adelayedR\aongoingR\n" +
 	"execResult\x12\"\n" +
-	"\amessage\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\amessage\x12\x1f\n" +
-	"\x06reason\x18\x05 \x01(\tB\a\xfaB\x04r\x02\x18dR\x06reason\x128\n" +
-	"\vdelayConfig\x18\x06 \x01(\v2\x16.trigger.PbDelayConfigR\vdelayConfig\"d\n" +
+	"\amessage\x18\x04 \x01(\tB\b\xfaB\x05r\x03\x18\xe8\aR\amessage\x12 \n" +
+	"\x06reason\x18\x05 \x01(\tB\b\xfaB\x05r\x03\x18\xe8\aR\x06reason\x128\n" +
+	"\vdelayConfig\x18\x06 \x01(\v2\x16.trigger.PbDelayConfigR\vdelayConfig\"e\n" +
 	"\rPbDelayConfig\x12(\n" +
-	"\x0fnextTriggerTime\x18\x01 \x01(\tR\x0fnextTriggerTime\x12)\n" +
-	"\vdelayReason\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x18dR\vdelayReason\"\x19\n" +
+	"\x0fnextTriggerTime\x18\x01 \x01(\tR\x0fnextTriggerTime\x12*\n" +
+	"\vdelayReason\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xe8\aR\vdelayReason\"\x19\n" +
 	"\x17CallbackPlanExecItemRes\"R\n" +
 	"\tNextIdReq\x12)\n" +
 	"\voutDescType\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x18@R\voutDescType\x12\x1a\n" +
