@@ -2,9 +2,7 @@ syntax = "proto3";
 
 package dji;
 
-// Go语言包路径（兼容原有工程配置，可按需修改）
 option go_package = "zero-service/third_party/dji_error_code;dji_error_code";
-// Java多文件编译配置（兼容原有工程配置，可按需修改）
 option java_multiple_files = true;
 option java_package = "com.dji.error";
 option java_outer_classname = "DJIErrorCodeProto";
