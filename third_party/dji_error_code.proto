@@ -1,0 +1,252 @@
+syntax = "proto3";
+
+package dji;
+
+option go_package = "zero-service/third_party/dji_error_code;dji_error_code";
+option java_multiple_files = true;
+option java_package = "com.dji.error";
+option java_outer_classname = "DJIErrorCodeProto";
+
+// DJIErrorCode 表示大疆上云错误码
+enum DJIErrorCode {
+  // 通用错误
+  DJI_ERROR_CODE_UNKNOWN = 0;
+  
+  // 设备升级相关错误
+  DJI_ERROR_CODE_DEVICE_UPGRADING = 312014; // 设备升级中，请勿重复操作
+  DJI_ERROR_CODE_AIRPORT_BUSY = 312015; // 机场：{dock_org_name} 业务繁忙无法进行设备升级，请等待机场处于空闲中后再试
+  DJI_ERROR_CODE_UPGRADE_FAILED_LINK_ERROR = 312016; // 升级失败，机场和飞行器图传链路异常，请重启机场和飞行器后重试
+  DJI_ERROR_CODE_DEVICE_POWER_ON_FAILED = 312022; // 飞行器开机失败或未连接，请检查飞行器是否在舱内，是否安装电池，机场和飞行器是否已对频
+  DJI_ERROR_CODE_PUSH_ROD_CLOSE_FAILED = 312023; // 推杆闭合失败无法升级飞行器，请检查急停按钮是否被按下，推杆是否有异物卡住
+  DJI_ERROR_CODE_UPGRADE_FAILED_NO_AIRCRAFT = 312027; // 升级失败，机场未检测到飞行器
+  DJI_ERROR_CODE_UPGRADE_FAILED_REBOOT = 312028; // 升级失败，设备升级过程中设备被重启
+  DJI_ERROR_CODE_DEVICE_REBOOTING = 312029; // 设备重启中无法进行设备升级，请等待设备重启完成后重试
+  DJI_ERROR_CODE_UPGRADE_FAILED_ENHANCED_IMAGE_TRANSMISSION = 312030; // 升级失败，飞行器增强图传开启后无法升级，请关闭飞行器增强图传后重试
+  DJI_ERROR_CODE_LOW_BATTERY = 312704; // 设备电量过低，请充电至20%以上后重试
+  
+  // 飞行任务相关错误
+  DJI_ERROR_CODE_DEVICE_OPERATION_NOT_SUPPORTED = 314000; // 设备当前无法支持该操作，建议检查设备当前工作状态
+  DJI_ERROR_CODE_TASK_SUBMIT_FAILED = 314001; // 飞行任务下发失败，请稍后重试
+  DJI_ERROR_CODE_ROUTE_FILE_FORMAT_INCOMPATIBLE = 314003; // 航线文件格式不兼容，请检查航线文件是否正确
+  DJI_ERROR_CODE_AIRCRAFT_INIT_FAILED = 314006; // 飞行器初始化失败，请重启机场后重试
+  DJI_ERROR_CODE_ROUTE_TRANSMISSION_FAILED = 314007; // 机场传输航线至飞行器失败，请重启机场后重试
+  DJI_ERROR_CODE_PREPARE_TIMEOUT = 314008; // 飞行器起飞前准备超时，请重启机场后重试
+  DJI_ERROR_CODE_ROUTE_EXECUTION_FAILED = 314010; // 航线执行失败，请重启机场后重试
+  DJI_ERROR_CODE_AIRPORT_SYSTEM_ERROR = 314011; // 机场系统异常，无法获取飞行任务执行结果
+  DJI_ERROR_CODE_PREPARE_FAILED = 314012; // 飞行器起飞前准备失败，无法执行飞行任务，请重启机场后重试
+  DJI_ERROR_CODE_NO_ROUTE_FOUND = 314013; // 飞行任务下发失败，机场无法获取到本次飞行任务的航线，无法执行飞行任务，请稍后重试
+  DJI_ERROR_CODE_PRECISION_REPHOTOGRAPHY_ROUTE_TRANSMISSION_FAILED = 314015; // 机场传输精准复拍航线至飞行器失败，无法执行飞行任务，请稍后重试或重启机场后重试
+  DJI_ERROR_CODE_ROUTE_FILE_PARSE_FAILED = 314016; // 航线文件解析失败，无法执行飞行任务，请检查航线文件
+  DJI_ERROR_CODE_AIRCRAFT_RTK_ERROR = 314018; // 飞行器 RTK 定位异常，无法执行飞行任务，请稍后重试或重启机场后重试
+  DJI_ERROR_CODE_AIRCRAFT_RTK_CONVERGENCE_FAILED = 314019; // 飞行器 RTK 收敛失败，无法执行飞行任务，请稍后重试或重启机场后重试
+  DJI_ERROR_CODE_AIRCRAFT_POSITION_ERROR = 314020; // 飞行器不在停机坪正中间或飞行器朝向不正确，无法执行飞行任务，请检查飞行器位置和朝向
+  DJI_ERROR_CODE_AIRCRAFT_RTK_ERROR_AGAIN = 314021; // 飞行器 RTK 定位异常，无法执行飞行任务，请稍后重试或重启机场后重试
+  DJI_ERROR_CODE_DEPARTURE_ARRIVAL_ROUTE_SUBMIT_FAILED = 314024; // 进离场航线下发失败，请稍后重试或重启机场后重试
+  DJI_ERROR_CODE_RTK_CONVERGENCE_TIMEOUT = 314025; // RTK收敛超时，用户手动取消任务
+  DJI_ERROR_CODE_NETWORK_DISCONNECTED = 314200; // 任务失败，由于机场网络断开，飞行器已自动返航，请确保机场已连接网络后再试
+  
+  // 机场通信相关错误
+  DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR = 315000; // 机场通信异常，请重启机场后重试
+  DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_REMOTE_POWER_ON = 315001; // 机场通信异常，请远程开启飞机并等待 1min 后，再次下发任务重试
+  DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_REBOOT = 315002; // 机场通信异常，请重启机场后重试
+  DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_AGAIN = 315003; // 机场通信异常，请重启机场后重试
+  DJI_ERROR_CODE_BOTH_AIRPORTS_BUSY = 315004; // 任务失败，请等待两个机场都空闲后，再次下发任务重试
+  DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_FOUR = 315005; // 机场通信异常，请重启机场后重试
+  DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_FIVE = 315006; // 机场通信异常，请重启机场后重试
+  DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_UPGRADE = 315007; // 机场通信异常，请将机场升级到最新版本或重启机场后重试
+  DJI_ERROR_CODE_CALIBRATION_INFO_INCONSISTENT = 315008; // 降落机场和起飞机场标定信息不一致，请确认两个机场均链路通畅且使用了相同的网络信息标定
+  DJI_ERROR_CODE_AIRPORT_COMMUNICATION_ERROR_SIX = 315009; // 机场通信异常，请重启机场后重试
+  DJI_ERROR_CODE_CANNOT_STOP_TASK = 315010; // 无法停止飞行任务，请稍后重试，如果仍报错请联系大疆售后
+  DJI_ERROR_CODE_CANNOT_STOP_TASK_AGAIN = 315011; // 无法停止飞行任务，请稍后重试，如果仍报错请联系大疆售后
+  DJI_ERROR_CODE_CANNOT_STOP_TASK_THREE = 315012; // 无法停止飞行任务，请稍后重试，如果仍报错请联系大疆售后
+  DJI_ERROR_CODE_TASK_SUBMIT_FAILED_CONTACT_SUPPORT = 315013; // 飞行任务下发失败，请稍后重试，如果仍报错请联系大疆售后
+  DJI_ERROR_CODE_TASK_TYPE_DOES_NOT_SUPPORT_RETURN_POINT = 315014; // 当前任务类型不支持设置返航点
+  DJI_ERROR_CODE_RETURN_POINT_SET_FAILED = 315015; // 返航点设置失败，请稍后重试，如果仍报错请联系大疆售后
+  DJI_ERROR_CODE_TASK_SUBMIT_FAILED_CONTACT_SUPPORT_AGAIN = 315016; // 飞行任务下发失败，请稍后重试，如果仍报错请联系大疆售后
+  DJI_ERROR_CODE_TASK_SUBMIT_FAILED_CONTACT_SUPPORT_THREE = 315017; // 飞行任务下发失败，请稍后重试，如果仍报错请联系大疆售后
+  DJI_ERROR_CODE_BOTH_AIRPORTS_BUSY_AGAIN = 315018; // 任务失败，请等待两个机场都空闲后，再次下发任务重试
+  DJI_ERROR_CODE_POOR_DEPLOYMENT_LOCATION = 315019; // 设备部署位置不佳，无法执行蛙跳任务，请选择其它机场再试
+  DJI_ERROR_CODE_AIRPORT_SYSTEM_ERROR_REBOOT = 315050; // 机场系统异常，请重启机场后重试
+  DJI_ERROR_CODE_TASK_FAILED_REBOOT = 315051; // 任务失败，请重启机场并再次下发任务后重试，如果仍报错请联系大疆售后
+  DJI_ERROR_CODE_AIRPORT_POSITION_NOT_CONVERGED = 315052; // 机场位置未收敛，请等待一段时间后重试
+  
+  // 飞行器参数配置相关错误
+  DJI_ERROR_CODE_PARAMETER_SET_FAILED = 316001; // 飞行器参数配置失败，请重启机场后重试
+  DJI_ERROR_CODE_PARAMETER_SET_FAILED_AGAIN = 316002; // 飞行器参数配置失败，请重启机场后重试
+  DJI_ERROR_CODE_PARAMETER_SET_FAILED_THREE = 316003; // 飞行器参数配置失败，请重启机场后重试
+  DJI_ERROR_CODE_PARAMETER_SET_FAILED_FOUR = 316004; // 飞行器参数配置失败，请重启机场后重试
+  DJI_ERROR_CODE_RTK_CONVERGENCE_FAILED_PARAMETER = 316005; // 飞行器 RTK 收敛失败，无法执行飞行任务，请重启机场后重试
+  DJI_ERROR_CODE_TASK_TIMEOUT = 316006; // 任务超时，飞行器已丢失或降落时机场未开启舱盖或展开推杆，飞行器无法降落回机场，请尽快至机场部署现场检查飞行器状况
+  DJI_ERROR_CODE_AIRCRAFT_INIT_FAILED_PARAMETER = 316007; // 飞行器初始化失败，请重启机场后重试
+  DJI_ERROR_CODE_CONTROL_ACQUISITION_FAILED = 316008; // 机场获取飞行器控制权失败，无法执行飞行任务，请确认遥控器未锁定控制权
+  DJI_ERROR_CODE_LOW_BATTERY_CANNOT_EXECUTE = 316009; // 飞行器电量低于30%，无法执行飞行任务，请充电后重试（建议电量≥50%）
+  DJI_ERROR_CODE_NO_AIRCRAFT_DETECTED = 316010; // 机场未检测到飞行器，无法执行飞行任务，请检查舱内是否有飞行器，机场与飞行器是否已对频，或重启机场后重试
+  DJI_ERROR_CODE_LANDING_POSITION_OFFSET = 316011; // 飞行器降落位置偏移过大，请检查飞行器是否需要现场摆正
+  DJI_ERROR_CODE_PREPARE_FAILED_AGAIN = 316012; // 飞行器起飞前准备失败，无法执行飞行任务，请重启机场后重试
+  DJI_ERROR_CODE_PREPARE_FAILED_THREE = 316013; // 飞行器起飞前准备失败，无法执行飞行任务，请重启机场后重试
+  DJI_ERROR_CODE_PREPARE_FAILED_FOUR = 316014; // 飞行器起飞前准备失败，无法执行飞行任务，请重启机场后重试
+  DJI_ERROR_CODE_RTK_CONVERGENCE_POSITION_TOO_FAR = 316015; // 飞行器 RTK 收敛位置距离机场过远，无法执行飞行任务，请重启机场后重试
+  DJI_ERROR_CODE_LANDING_TIMEOUT = 316016; // 飞行器降落至机场超时，可能是机场与飞行器断连导致，请通过直播查看飞行器是否降落至舱内
+  DJI_ERROR_CODE_MEDIA_COUNT_TIMEOUT = 316017; // 获取飞行器媒体数量超时，可能是机场与飞行器断连导致，请通过直播查看飞行器是否降落至舱内
+  DJI_ERROR_CODE_TASK_EXECUTION_TIMEOUT = 316018; // 飞行任务执行超时，可能是机场与飞行器断连导致，请通过直播查看飞行器是否降落至舱内
+  DJI_ERROR_CODE_AIRPORT_SYSTEM_ERROR_TASK = 316019; // 机场系统错误，无法执行飞行任务，请稍后重试
+  DJI_ERROR_CODE_RTK_SIGNAL_SOURCE_ERROR = 316020; // 飞行器使用的 RTK 信号源错误，请稍后重试
+  DJI_ERROR_CODE_RTK_SIGNAL_CHECK_TIMEOUT = 316021; // 飞行器 RTK 信号源检查超时，请稍后重试
+  DJI_ERROR_CODE_CANNOT_EXECUTE_RETURN_HOME = 316022; // 飞行器无法执行返航指令，请检查飞行器是否已开机，机场与飞行器是否已断连，请确认无以上问题后重试
+  DJI_ERROR_CODE_CANNOT_EXECUTE_RETURN_HOME_B_CONTROL = 316023; // 飞行器无法执行返航指令，飞行器已被 B 控接管，请在 B 控操控飞行器，或关闭 B 控后重试
+  DJI_ERROR_CODE_CANNOT_EXECUTE_RETURN_HOME_NOT_TAKEOFF = 316024; // 飞行器无法执行返航指令，飞行器已被 B 控接管，请在 B 控操控飞行器，或关闭 B 控后重试
+  DJI_ERROR_CODE_PARAMETER_SET_FAILED_FIVE = 316025; // 飞行器参数配置失败，请稍后重试或重启机场后重试
+  DJI_ERROR_CODE_EMERGENCY_STOP_PRESSED = 316026; // 机场急停按钮被按下，无法执行飞行任务，请释放急停按钮后重试
+  DJI_ERROR_CODE_PARAMETER_SET_TIMEOUT = 316027; // 飞行器参数配置超时，请稍后重试或重启机场后重试
+  DJI_ERROR_CODE_EMERGENCY_STOP_PRESSED_LANDING = 316029; // 机场急停按钮被按下，飞行器将飞往备降点降落，请立即检查飞行器是否已安全降落并将飞行器放回至机场
+  DJI_ERROR_CODE_BATTERY_DATA_TIMEOUT = 316032; // 获取电池数据超时，请稍后重试或重启飞行器后重试
+  DJI_ERROR_CODE_BATTERY_CYCLE_COUNT_TOO_HIGH = 316033; // 飞行器电池循环次数过高，为保证飞行安全，已自动终止任务，建议更换该电池
+  DJI_ERROR_CODE_FIRMWARE_VERSION_MISMATCH = 316034; // 无法起飞，飞行器固件版本与机场固件版本不匹配，为保证飞行安全请升级固件后再试
+  DJI_ERROR_CODE_DEPARTURE_ARRIVAL_ROUTE_SUBMIT_FAILED_FIRMWARE = 316035; // 进离场航线下发失败，请确保设备固件为最新版本后重新下发任务，如果持续报错，请联系大疆售后。
+  
+  // 相机相关错误
+  DJI_ERROR_CODE_CAMERA_SUMMARY_INFO_FAILED = 316100; // 获取相机概要信息失败，请重试
+  DJI_ERROR_CODE_SET_SINGLE_SHOT_MODE_FAILED = 316101; // 设置相机为单拍模式失败，请重试
+  DJI_ERROR_CODE_CLOSE_WATERMARK_FAILED = 316102; // 关闭相机水印失败，请重试
+  DJI_ERROR_CODE_SET_METERING_MODE_FAILED = 316103; // 设置测光模式到平均测光失败，请重试
+  DJI_ERROR_CODE_SWITCH_TO_WIDE_ANGLE_FAILED = 316104; // 切换镜头到广角镜头失败，请重试
+  DJI_ERROR_CODE_SET_PHOTO_STORAGE_FAILED = 316105; // 设置相机存储照片失败，请重试
+  DJI_ERROR_CODE_SET_IR_ZOOM_FAILED = 316106; // 红外变焦倍数设置失败，请重试
+  DJI_ERROR_CODE_SET_PHOTO_SIZE_FAILED = 316107; // 照片尺寸设置4k失败，请重试
+  DJI_ERROR_CODE_SET_PHOTO_FORMAT_FAILED = 316108; // 设置照片存储格式为jpeg格式失败，请重试
+  DJI_ERROR_CODE_CLOSE_DISTORTION_CORRECTION_FAILED = 316109; // 关闭相机畸变矫正失败，请重试
+  DJI_ERROR_CODE_OPEN_MECHANICAL_SHUTTER_FAILED = 316110; // 打开相机机械快门失败，请重试
+  DJI_ERROR_CODE_SET_FOCUS_MODE_FAILED = 316111; // 设置对焦模式失败，请重试
+  
+  // 媒体文件相关错误
+  DJI_ERROR_CODE_MEDIA_COUNT_FAILED = 317001; // 获取飞行器媒体文件数量失败，请重启机场后重试
+  DJI_ERROR_CODE_STORAGE_FORMAT_FAILED = 317002; // 飞行器存储格式化失败，飞行器未开机、未连接或未检测到相机，请确认无以上问题后重试，或重启飞行器后重试
+  DJI_ERROR_CODE_STORAGE_FORMAT_FAILED_REBOOT = 317003; // 飞行器存储格式化失败，请重启飞行器后重试
+  DJI_ERROR_CODE_MEDIA_FORMAT_FAILED = 317004; // 机场媒体文件格式化失败，请稍后重试或重启机场后重试
+  DJI_ERROR_CODE_END_RECORDING_FAILED = 317005; // 飞行器结束录像失败，本次飞行任务的媒体文件可能无法上传
+  DJI_ERROR_CODE_CANNOT_FORMAT = 317006; // 无法格式化，请等待当前飞行器媒体文件下载完成后再试
+  DJI_ERROR_CODE_MEDIA_COUNT_FAILED_CONTACT_SUPPORT = 317007; // 获取媒体文件数量失败，请稍后重试，如本架次任务有媒体文件且持续报错可联系大疆售后
+  
+  // 机场系统运行异常相关错误
+  DJI_ERROR_CODE_AIRPORT_BUSY_OR_UPLOADING_LOGS = 319001; // 机场作业中或设备异常反馈上传日志中，无法执行飞行任务，请等待当前飞行任务或操作执行完成后重试
+  DJI_ERROR_CODE_AIRPORT_SYSTEM_RUNNING_ERROR = 319002; // 机场系统运行异常，请重启机场后重试
+  DJI_ERROR_CODE_AIRPORT_SYSTEM_RUNNING_ERROR_REISSUE = 319003; // 机场系统运行异常，请重新下发任务
+  DJI_ERROR_CODE_TASK_EXECUTION_TIMEOUT_AUTO_TERMINATED = 319004; // 飞行任务执行超时，已自动终止本次飞行任务
+  DJI_ERROR_CODE_CLOUD_AIRPORT_COMMUNICATION_ERROR = 319005; // 云端与机场通信异常，无法执行飞行任务
+  DJI_ERROR_CODE_CANCEL_TASK_FAILED = 319006; // 取消飞行任务失败，飞行任务已经在执行中
+  DJI_ERROR_CODE_MODIFY_TASK_FAILED = 319007; // 修改飞行任务失败，飞行任务已经在执行中
+  DJI_ERROR_CODE_TIME_NOT_SYNCED = 319008; // 机场时间与云端时间不同步，机场无法执行飞行任务
+  DJI_ERROR_CODE_FIRMWARE_VERSION_TOO_LOW = 319010; // 机场固件版本过低，无法执行飞行任务，请升级机场固件为最新版本后重试
+  DJI_ERROR_CODE_AIRPORT_INITIALIZING = 319015; // 机场正在初始化中，无法执行飞行任务，请等待机场初始化完成后重试
+  DJI_ERROR_CODE_AIRPORT_IN_OPERATION = 319016; // 机场正在执行其他飞行任务，无法执行本次飞行任务
+  DJI_ERROR_CODE_PROCESSING_MEDIA_FILES = 319017; // 机场正在处理上次飞行任务媒体文件，无法执行本次飞行任务，请稍后重试
+  DJI_ERROR_CODE_AUTO_EXPORTING_LOGS = 319018; // 机场正在自动导出日志中（设备异常反馈），无法执行飞行任务，请稍后重试
+  DJI_ERROR_CODE_PULLING_LOGS = 319019; // 机场正在拉取日志中（设备异常反馈），无法执行飞行任务，请稍后重试
+  
+  // 航线执行相关错误
+  DJI_ERROR_CODE_ROUTE_EXECUTION_ERROR = 321000; // 航线执行异常，请稍后重试或重启机场后重试
+  DJI_ERROR_CODE_ROUTE_FILE_PARSE_FAILED = 321004; // 航线文件解析失败，无法执行飞行任务，请检查航线文件
+  DJI_ERROR_CODE_ROUTE_MISSING_BREAKPOINT_INFO = 321005; // 航线缺少断点信息，机场无法执行飞行任务
+  DJI_ERROR_CODE_TASK_ALREADY_EXECUTING = 321257; // 飞行任务已在执行中，请勿重复执行
+  DJI_ERROR_CODE_CANNOT_TERMINATE_TASK = 321258; // 飞行任务无法终止，请检查飞行器状态
+  DJI_ERROR_CODE_TASK_NOT_STARTED_CANNOT_TERMINATE = 321259; // 飞行任务未开始执行，无法终止飞行任务
+  DJI_ERROR_CODE_TASK_NOT_STARTED_CANNOT_INTERRUPT = 321260; // 飞行任务未开始执行，无法中断飞行任务
+  DJI_ERROR_CODE_ROUTE_PLANNING_HEIGHT_EXCEEDED = 321513; // 航线规划高度已超过飞行器限高，机场无法执行飞行任务
+  DJI_ERROR_CODE_TASK_FAILED_BUFFER_ZONE = 321514; // 任务失败，起点或终点位于限远区域的缓冲区内或超过了限远距离
+  DJI_ERROR_CODE_ROUTE_PASSES_RESTRICTED_AREA = 321515; // 航线穿过限飞区，机场无法执行飞行任务
+  DJI_ERROR_CODE_FLIGHT_HEIGHT_TOO_LOW = 321516; // 飞行器飞行高度过低，飞行任务执行被终止
+  DJI_ERROR_CODE_OBSTACLE_AVOIDANCE_TRIGGERED = 321517; // 飞行器触发避障，飞行任务执行被终止。为保证飞行安全，请勿用当前航线执行断点续飞任务
+  DJI_ERROR_CODE_APPROACHING_RESTRICTED_AREA = 321519; // 飞行器接近限飞区或限远距离自动返航，无法完成航线飞行
+  
+  // 直播相关错误
+  DJI_ERROR_CODE_LIVE_STREAM_FAILED_CAMERA_NOT_EXIST = 513002; // 直播失败，相机不存在或相机类型错误
+  DJI_ERROR_CODE_LIVE_STREAM_ALREADY_RUNNING = 513003; // 相机已经在直播中，请勿重复开启直播
+  DJI_ERROR_CODE_LIVE_STREAM_FAILED_PARAMETER_ERROR = 513005; // 直播失败，直播参数（清晰度）设置错误
+  DJI_ERROR_CODE_LIVE_STREAM_FAILED_REFRESH = 513006; // 直播启动失败，请刷新重试
+  DJI_ERROR_CODE_LIVE_STREAM_FAILED_VIDEO_DATA_ERROR = 513008; // 直播失败，设备端图传数据异常
+  DJI_ERROR_CODE_LIVE_STREAM_FAILED_NO_NETWORK = 513010; // 直播失败，设备无法联网
+  DJI_ERROR_CODE_OPERATION_FAILED_NOT_LIVE_STREAMING = 513011; // 操作失败，设备未开启直播
+  DJI_ERROR_CODE_OPERATION_FAILED_CANNOT_SWITCH_CAMERA = 513012; // 操作失败，设备已在直播中，不支持切换镜头
+  DJI_ERROR_CODE_LIVE_STREAM_FAILED_PROTOCOL_NOT_SUPPORTED = 513013; // 直播失败，直播使用的视频传输协议不支持
+  DJI_ERROR_CODE_LIVE_STREAM_FAILED_PARAMETER_ERROR_AGAIN = 513014; // 直播失败，直播参数错误或者不完整
+  DJI_ERROR_CODE_LIVE_STREAM_ERROR_NETWORK_CONGestion = 513015; // 直播异常，网络卡顿, 请刷新后重试 
+  DJI_ERROR_CODE_LIVE_STREAM_ERROR_DECODE_FAILED = 513016; // 直播异常，视频解码失败
+  DJI_ERROR_CODE_LIVE_STREAM_PAUSED = 513017; // 直播已暂停，请等待当前飞行器媒体文件下载完成后再试
+  DJI_ERROR_CODE_LIVE_STREAM_FAILED_RETRY = 513099; // 直播失败，请稍后重试
+  
+  // 机场运行异常相关错误
+  DJI_ERROR_CODE_AIRPORT_OPERATION_ERROR = 514100; // 机场运行异常，请重启机场后重试
+  DJI_ERROR_CODE_PUSH_ROD_CLOSE_FAILED_OPERATION = 514101; // 推杆闭合失败，请检查停机坪上是否存在异物，飞行器方向是否放反，或重启机场后重试
+  DJI_ERROR_CODE_PUSH_ROD_OPEN_FAILED = 514102; // 推杆展开失败，请检查停机坪上是否存在异物，或重启机场后重试
+  DJI_ERROR_CODE_LOW_BATTERY_CANNOT_EXECUTE_OPERATION = 514103; // 飞行器电量低于30%，无法执行飞行任务，请充电后重试（建议电量≥50%）
+  DJI_ERROR_CODE_BATTERY_CHARGING_START_FAILED = 514104; // 飞行器电池开始充电失败，请重启机场后重试
+  DJI_ERROR_CODE_BATTERY_CHARGING_STOP_FAILED = 514105; // 飞行器电池停止充电失败，请重启机场后重试
+  DJI_ERROR_CODE_POWER_CONTROL_ERROR = 514106; // 飞行器电源控制异常，请重启机场后重试
+  DJI_ERROR_CODE_HATCH_OPEN_FAILED = 514107; // 舱盖开启失败，请检查舱盖周围是否存在异物，或重启机场后重试
+  DJI_ERROR_CODE_HATCH_CLOSE_FAILED = 514108; // 舱盖关闭失败，请检查舱盖周围是否存在异物，或重启机场后重试
+  DJI_ERROR_CODE_AIRCRAFT_POWER_ON_FAILED = 514109; // 飞行器开机失败，请检查飞行器是否在舱和飞机电量是否正常，或重启机场后重试
+  DJI_ERROR_CODE_AIRCRAFT_POWER_OFF_FAILED = 514110; // 飞行器关机失败，请重启机场后重试
+  DJI_ERROR_CODE_SLOW_ROTATION_STOP_FAILED = 514111; // 飞行器慢转收桨控制异常，请重启机场后重试
+  DJI_ERROR_CODE_SLOW_ROTATION_STOP_FAILED_AGAIN = 514112; // 飞行器慢转收桨控制异常，请重启机场后重试
+  DJI_ERROR_CODE_PUSH_ROD_CONNECTION_FAILED = 514113; // 机场推杆与飞行器无法连接，请检查飞行器是否在舱内，推杆闭合时是否被卡住，充电连接器是否脏污或损坏
+  DJI_ERROR_CODE_POWER_STATUS_FAILED = 514114; // 获取飞行器电源状态失败，请重启机场后重试
+  DJI_ERROR_CODE_OPERATION_IN_PROGRESS = 514116; // 无法执行当前操作，机场正在执行其他控制指令，请稍后重试
+  DJI_ERROR_CODE_HATCH_NOT_IN_PLACE = 514117; // 舱盖开启或关闭未到位，请重启机场后重试
+  DJI_ERROR_CODE_PUSH_ROD_NOT_IN_PLACE = 514118; // 推杆展开或闭合未到位，请重启机场后重试
+  DJI_ERROR_CODE_AIRPORT_AIRCRAFT_DISCONNECTED = 514120; // 机场与飞行器断连，请重启机场后重试或重新对频
+  DJI_ERROR_CODE_EMERGENCY_STOP_PRESSED = 514121; // 机场急停按钮被按下，请释放急停按钮
+  DJI_ERROR_CODE_CHARGING_STATUS_FAILED = 514122; // 获取飞行器充电状态失败，请重启机场后重试
+  DJI_ERROR_CODE_BATTERY_TOO_LOW_TO_POWER_ON = 514123; // 飞行器电池电量过低无法开机
+  DJI_ERROR_CODE_BATTERY_INFO_FAILED = 514124; // 获取飞行器电池信息失败，无法执行飞行任务，请重启机场后重试
+  DJI_ERROR_CODE_BATTERY_ALMOST_FULL = 514125; // 飞行器电池电量已接近满电状态，无法开始充电，请使用至95%以下再进行充电
+  DJI_ERROR_CODE_TOO_MUCH_RAIN = 514134; // 雨量过大，机场无法执行飞行任务，请稍后重试
+  DJI_ERROR_CODE_TOO_MUCH_WIND = 514135; // 风速过大，机场无法执行飞行任务，请稍后重试
+  DJI_ERROR_CODE_POWER_DISCONNECTED = 514136; // 机场供电断开，机场无法执行飞行任务，请恢复机场供电后重试
+  DJI_ERROR_CODE_TEMPERATURE_TOO_LOW = 514137; // 环境温度过低于-20℃ (-4°F)，机场无法执行飞行任务，请稍后重试
+  DJI_ERROR_CODE_BATTERY_MAINTAINING = 514138; // 飞行器电池正在保养中，机场无法执行飞行任务，请等待保养结束后重试
+  DJI_ERROR_CODE_BATTERY_MAINTENANCE_NOT_NEEDED = 514139; // 飞行器电池无法执行保养指令，飞行器电池无需保养
+  DJI_ERROR_CODE_BATTERY_MAINTENANCE_NOT_NEEDED_AGAIN = 514140; // 飞行器电池无法执行保养指令，飞行器电池无需保养
+  DJI_ERROR_CODE_AIRPORT_SYSTEM_OPERATION_ERROR = 514141; // 机场系统运行异常，请重启机场后重试
+  DJI_ERROR_CODE_PUSH_ROD_CONNECTION_FAILED_TAKEOFF = 514142; // 飞行器起飞前，机场推杆与飞行器无法连接，请检查飞行器是否在舱内，推杆闭合时是否被卡住，充电连接器是否脏污或损坏
+  DJI_ERROR_CODE_PUSH_ROD_NOT_CLOSED = 514143; // 推杆未闭合或闭合不到位，请稍后重试或重启机场后重试
+  DJI_ERROR_CODE_HATCH_NOT_CLOSED = 514144; // 舱盖未关闭或关闭不到位，请稍后重试或重启机场后重试
+  DJI_ERROR_CODE_AIRPORT_IN_FIELD_TEST = 514145; // 机场处于现场调试中，无法执行当前操作或执行飞行任务，请断开遥控器和机场的数据线连接后重试
+  DJI_ERROR_CODE_AIRPORT_IN_REMOTE_TEST = 514146; // 机场处于远程调试中，无法执行飞行任务，请退出远程调试后重试
+  DJI_ERROR_CODE_DEVICE_UPGRADING_CANNOT_TEST = 514147; // 设备升级中，无法进行远程调试或执行飞行任务，请等待升级完成后重试
+  DJI_ERROR_CODE_AIRPORT_IN_OPERATION_CANNOT_TEST = 514148; // 机场已经在作业中，无法进行远程调试或再次执行飞行任务，请等待当前任务执行完成后重试
+  DJI_ERROR_CODE_AIRPORT_SYSTEM_OPERATION_ERROR_REBOOT = 514149; // 机场系统运行异常，无法执行飞行任务，请重启机场后重试
+  DJI_ERROR_CODE_DEVICE_REBOOTING_CANNOT_EXECUTE = 514150; // 设备重启中，无法执行飞行任务，请等待重启完成后重试
+  DJI_ERROR_CODE_UPGRADING_CANNOT_REBOOT = 514151; // 设备升级中，无法执行设备重启指令，请等待升级完成后重试
+  DJI_ERROR_CODE_REMOTE_TEST_EXITED = 514153; // 机场已退出远程调试模式，无法执行当前操作
+  DJI_ERROR_CODE_INNER_CIRCULATION_TEMPERATURE_FAILED = 514154; // 获取内循环出风口温度失败，请稍后再试
+  DJI_ERROR_CODE_AIRCRAFT_NOT_IN_HATCH = 514155; // 飞机不在舱内，无法执行飞行任务，请将飞行器放回至机场
+  DJI_ERROR_CODE_AIRCRAFT_NOT_IN_HATCH_CHECK = 514156; // 飞机不在舱内，请立即检查飞行器是否已安全降落并将飞行器放回至机场
+  DJI_ERROR_CODE_WIRELESS_CHARGING_BUSY = 514157; // 执行开机失败，无线充电线圈业务繁忙，请重启机场后再试复
+  DJI_ERROR_CODE_AIRPORT_RTK_ERROR = 514158; // 无法起飞，机场 RTK 业务异常，请重启机场后再试
+  DJI_ERROR_CODE_LANDING_AIRPORT_DETECTED_AIRCRAFT = 514159; // 任务失败，降落机场检测到飞行器，请确保降落机场没有飞行器后再试
+  DJI_ERROR_CODE_AIRCRAFT_CONNECTION_FAILED = 514162; // 飞行器和机场连接失败，请关闭机场舱盖或重启机场后再试
+  DJI_ERROR_CODE_BATTERY_FUNCTION_ERROR = 514163; // 电池功能异常，请确保飞行器电池插入到位或重启飞行器后再试
+  DJI_ERROR_CODE_DEVICE_REBOOT_FAILED = 514164; // 设备重启失败，请稍后重试，如果仍报错请联系大疆售后
+  DJI_ERROR_CODE_DEVICE_REBOOT_FAILED_AGAIN = 514165; // 设备重启失败，请稍后重试，如果仍报错请联系大疆售后
+  DJI_ERROR_CODE_AIRPORT_INITIALIZING_CANNOT_EXECUTE = 514170; // 机场系统初始化中，无法执行当前操作或指令，请等待机场系统初始化完成后重试
+  DJI_ERROR_CODE_COMMAND_FORMAT_ERROR = 514171; // 云端下发给机场的命令不符合格式要求，机场无法执行
+  DJI_ERROR_CODE_CANNOT_POWER_OFF_BLUETOOTH_DISCONNECTED = 514172; // 飞行器无法关机，蓝牙连接状态为未连接，请尝试重启飞行器和机场，或去现场重新对频飞行器与机场后再试
+  DJI_ERROR_CODE_BAD_WEATHER = 514173; // 由于天气原因（环境温度低于5度并且降雨大于等于中雨），可能导致桨叶结冰影响作业安全，暂无法执行任务
+  DJI_ERROR_CODE_CHARGING_FAILED_HATCH_NOT_IN_PLACE = 514174; // 飞行器充电失败，机场舱盖开启或关闭未到位，请关闭舱盖后再试
+  DJI_ERROR_CODE_AIR_CONDITIONING_CONTROL_FAILED = 514180; // 停止空调制冷或停止空调制热失败，请稍后重试
+  DJI_ERROR_CODE_AIR_CONDITIONING_COOLING_FAILED = 514181; // 开启空调制冷失败，请稍后重试
+  DJI_ERROR_CODE_AIR_CONDITIONING_HEATING_FAILED = 514182; // 开启空调制热失败，请稍后重试
+  DJI_ERROR_CODE_AIR_CONDITIONING_DEHUMIDIFICATION_FAILED = 514183; // 开启空调除湿失败，请稍后重试
+  DJI_ERROR_CODE_CANNOT_COOL_WHEN_TOO_COLD = 514184; // 当前温度低于 0 ℃（32°F），无法开启空调制冷
+  DJI_ERROR_CODE_CANNOT_HEAT_WHEN_TOO_HOT = 514185; // 当前温度高于 45 ℃（115°F），无法开启空调制热
+  
+  // 网关异常相关错误
+  DJI_ERROR_CODE_GATEWAY_ERROR = 514300; // 网关异常
+  DJI_ERROR_CODE_REQUEST_TIMEOUT = 514301; // 请求超时，连接断开
+  DJI_ERROR_CODE_NETWORK_CERTIFICATE_ERROR = 514302; // 网络证书异常，连接失败
+  DJI_ERROR_CODE_NETWORK_ERROR = 514303; // 网络异常，连接断开
+  DJI_ERROR_CODE_REQUEST_REJECTED = 514304; // 请求被拒，连接失败
+  
+  // 机场未标定相关错误
+  DJI_ERROR_CODE_AIRPORT_NOT_CALIBRATED = 514168; // 机场未标定，机场无法执行飞行任务，请标定机场
+}
