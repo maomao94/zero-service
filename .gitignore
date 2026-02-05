@@ -11,6 +11,5 @@ app/*/env/
 facade/*/env/
 gtw/env/
 
-# Trae and Claude directories
-.trae/
+# Claude directories
 .claude/
