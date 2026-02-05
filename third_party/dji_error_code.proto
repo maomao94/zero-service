@@ -11,7 +11,7 @@ option java_outer_classname = "DJIErrorCodeProto";
 // 首位A：上报来源（3=设备端、5=云端/网关/直播等）；BC=功能模块；DEF=模块自定义错误
 // v1.15
 enum DJIErrorCode {
-  v_1_15 = 0;
+  DJI_V_1_15 = 0;
 
   // ************************ 设备升级模块（312段）************************
   DJI_DEVICE_UPGRADING = 312014; // 设备升级中，请勿重复操作 | Device is being upgraded, do not repeat the operation
