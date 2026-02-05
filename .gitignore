@@ -5,3 +5,12 @@
 **/.DS_Store
 *.DS_Store
 /.vscode
+
+# Local environment files
+app/*/env/
+facade/*/env/
+gtw/env/
+
+# Trae and Claude directories
+.trae/
+.claude/
