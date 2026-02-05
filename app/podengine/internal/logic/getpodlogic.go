@@ -42,10 +42,11 @@ func (l *GetPodLogic) GetPod(in *podengine.GetPodReq) (*podengine.GetPodRes, err
 		return nil, fmt.Errorf("container not found: %s", in.Id)
 	}
 	pod := &podengine.Pod{
-		Id:     container.ID,
-		Name:   container.Name[1:], // Remove leading slash
-		Labels: container.Config.Labels,
-		Phase:  getPodPhase(container.State),
+		Id:          container.ID,
+		Name:        container.Name[1:], // Remove leading slash
+		Labels:      container.Config.Labels,
+		Phase:       getPodPhase(container.State),
+		NetworkMode: string(container.HostConfig.NetworkMode),
 		Containers: []*podengine.Container{
 			{
 				Name:         container.Name[1:],

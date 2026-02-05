@@ -36,7 +36,7 @@ func ExtractContainerPorts(networkSettings *container.NetworkSettings) []string 
 	var ports []string
 	for port, bindings := range networkSettings.Ports {
 		for _, binding := range bindings {
-			ports = append(ports, fmt.Sprintf("%s->%s:%s", port.Port(), binding.HostIP, binding.HostPort))
+			ports = append(ports, fmt.Sprintf("%s:%s->%s/%s", binding.HostIP, binding.HostPort, port.Port(), port.Proto()))
 		}
 	}
 	return ports

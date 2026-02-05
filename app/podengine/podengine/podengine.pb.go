@@ -647,9 +647,10 @@ type Pod struct {
 	Containers    []*Container           `protobuf:"bytes,5,rep,name=containers,proto3" json:"containers,omitempty"`
 	Labels        map[string]string      `protobuf:"bytes,6,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Annotations   map[string]string      `protobuf:"bytes,7,rep,name=annotations,proto3" json:"annotations,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	CreationTime  string                 `protobuf:"bytes,8,opt,name=creationTime,proto3" json:"creationTime,omitempty"` // 创建时间
-	StartTime     string                 `protobuf:"bytes,9,opt,name=startTime,proto3" json:"startTime,omitempty"`       // 启动时间
-	DeletedTime   string                 `protobuf:"bytes,10,opt,name=deletedTime,proto3" json:"deletedTime,omitempty"`  // 删除时间
+	NetworkMode   string                 `protobuf:"bytes,8,opt,name=networkMode,proto3" json:"networkMode,omitempty"`   // 网络模式
+	CreationTime  string                 `protobuf:"bytes,9,opt,name=creationTime,proto3" json:"creationTime,omitempty"` // 创建时间
+	StartTime     string                 `protobuf:"bytes,10,opt,name=startTime,proto3" json:"startTime,omitempty"`      // 启动时间
+	DeletedTime   string                 `protobuf:"bytes,11,opt,name=deletedTime,proto3" json:"deletedTime,omitempty"`  // 删除时间
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -731,6 +732,13 @@ func (x *Pod) GetAnnotations() map[string]string {
 		return x.Annotations
 	}
 	return nil
+}
+
+func (x *Pod) GetNetworkMode() string {
+	if x != nil {
+		return x.NetworkMode
+	}
+	return ""
 }
 
 func (x *Pod) GetCreationTime() string {
@@ -1384,6 +1392,17 @@ type ListPodItem struct {
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Phase         PodPhase               `protobuf:"varint,3,opt,name=phase,proto3,enum=podengine.PodPhase" json:"phase,omitempty"`
 	CreateTime    string                 `protobuf:"bytes,4,opt,name=createTime,proto3" json:"createTime,omitempty"`
+	Image         string                 `protobuf:"bytes,5,opt,name=image,proto3" json:"image,omitempty"`
+	ImageId       string                 `protobuf:"bytes,6,opt,name=imageId,proto3" json:"imageId,omitempty"`
+	Command       string                 `protobuf:"bytes,7,opt,name=command,proto3" json:"command,omitempty"`
+	Ports         []string               `protobuf:"bytes,8,rep,name=ports,proto3" json:"ports,omitempty"`
+	SizeRw        int64                  `protobuf:"varint,9,opt,name=sizeRw,proto3" json:"sizeRw,omitempty"`
+	SizeRootFs    int64                  `protobuf:"varint,10,opt,name=sizeRootFs,proto3" json:"sizeRootFs,omitempty"`
+	Labels        map[string]string      `protobuf:"bytes,11,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	State         string                 `protobuf:"bytes,12,opt,name=state,proto3" json:"state,omitempty"`
+	Status        string                 `protobuf:"bytes,13,opt,name=status,proto3" json:"status,omitempty"`
+	NetworkMode   string                 `protobuf:"bytes,14,opt,name=networkMode,proto3" json:"networkMode,omitempty"`
+	Mounts        []string               `protobuf:"bytes,15,rep,name=mounts,proto3" json:"mounts,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1444,6 +1463,83 @@ func (x *ListPodItem) GetCreateTime() string {
 		return x.CreateTime
 	}
 	return ""
+}
+
+func (x *ListPodItem) GetImage() string {
+	if x != nil {
+		return x.Image
+	}
+	return ""
+}
+
+func (x *ListPodItem) GetImageId() string {
+	if x != nil {
+		return x.ImageId
+	}
+	return ""
+}
+
+func (x *ListPodItem) GetCommand() string {
+	if x != nil {
+		return x.Command
+	}
+	return ""
+}
+
+func (x *ListPodItem) GetPorts() []string {
+	if x != nil {
+		return x.Ports
+	}
+	return nil
+}
+
+func (x *ListPodItem) GetSizeRw() int64 {
+	if x != nil {
+		return x.SizeRw
+	}
+	return 0
+}
+
+func (x *ListPodItem) GetSizeRootFs() int64 {
+	if x != nil {
+		return x.SizeRootFs
+	}
+	return 0
+}
+
+func (x *ListPodItem) GetLabels() map[string]string {
+	if x != nil {
+		return x.Labels
+	}
+	return nil
+}
+
+func (x *ListPodItem) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
+func (x *ListPodItem) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *ListPodItem) GetNetworkMode() string {
+	if x != nil {
+		return x.NetworkMode
+	}
+	return ""
+}
+
+func (x *ListPodItem) GetMounts() []string {
+	if x != nil {
+		return x.Mounts
+	}
+	return nil
 }
 
 type DeletePodReq struct {
@@ -2147,7 +2243,7 @@ const file_podengine_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a@\n" +
 	"\x12NetworkConfigEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x99\x04\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xbb\x04\n" +
 	"\x03Pod\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12)\n" +
@@ -2159,11 +2255,12 @@ const file_podengine_proto_rawDesc = "" +
 	"containers\x18\x05 \x03(\v2\x14.podengine.ContainerR\n" +
 	"containers\x122\n" +
 	"\x06labels\x18\x06 \x03(\v2\x1a.podengine.Pod.LabelsEntryR\x06labels\x12A\n" +
-	"\vannotations\x18\a \x03(\v2\x1f.podengine.Pod.AnnotationsEntryR\vannotations\x12\"\n" +
-	"\fcreationTime\x18\b \x01(\tR\fcreationTime\x12\x1c\n" +
-	"\tstartTime\x18\t \x01(\tR\tstartTime\x12 \n" +
-	"\vdeletedTime\x18\n" +
-	" \x01(\tR\vdeletedTime\x1a9\n" +
+	"\vannotations\x18\a \x03(\v2\x1f.podengine.Pod.AnnotationsEntryR\vannotations\x12 \n" +
+	"\vnetworkMode\x18\b \x01(\tR\vnetworkMode\x12\"\n" +
+	"\fcreationTime\x18\t \x01(\tR\fcreationTime\x12\x1c\n" +
+	"\tstartTime\x18\n" +
+	" \x01(\tR\tstartTime\x12 \n" +
+	"\vdeletedTime\x18\v \x01(\tR\vdeletedTime\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a>\n" +
@@ -2210,14 +2307,31 @@ const file_podengine_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"Q\n" +
 	"\vListPodsRes\x12,\n" +
 	"\x05items\x18\x01 \x03(\v2\x16.podengine.ListPodItemR\x05items\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x05R\x05total\"|\n" +
+	"\x05total\x18\x02 \x01(\x05R\x05total\"\xf3\x03\n" +
 	"\vListPodItem\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12)\n" +
 	"\x05phase\x18\x03 \x01(\x0e2\x13.podengine.PodPhaseR\x05phase\x12\x1e\n" +
 	"\n" +
 	"createTime\x18\x04 \x01(\tR\n" +
-	"createTime\"w\n" +
+	"createTime\x12\x14\n" +
+	"\x05image\x18\x05 \x01(\tR\x05image\x12\x18\n" +
+	"\aimageId\x18\x06 \x01(\tR\aimageId\x12\x18\n" +
+	"\acommand\x18\a \x01(\tR\acommand\x12\x14\n" +
+	"\x05ports\x18\b \x03(\tR\x05ports\x12\x16\n" +
+	"\x06sizeRw\x18\t \x01(\x03R\x06sizeRw\x12\x1e\n" +
+	"\n" +
+	"sizeRootFs\x18\n" +
+	" \x01(\x03R\n" +
+	"sizeRootFs\x12:\n" +
+	"\x06labels\x18\v \x03(\v2\".podengine.ListPodItem.LabelsEntryR\x06labels\x12\x14\n" +
+	"\x05state\x18\f \x01(\tR\x05state\x12\x16\n" +
+	"\x06status\x18\r \x01(\tR\x06status\x12 \n" +
+	"\vnetworkMode\x18\x0e \x01(\tR\vnetworkMode\x12\x16\n" +
+	"\x06mounts\x18\x0f \x03(\tR\x06mounts\x1a9\n" +
+	"\vLabelsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"w\n" +
 	"\fDeletePodReq\x12\x12\n" +
 	"\x04node\x182 \x01(\tR\x04node\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12\x14\n" +
@@ -2316,7 +2430,7 @@ func file_podengine_proto_rawDescGZIP() []byte {
 }
 
 var file_podengine_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_podengine_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
+var file_podengine_proto_msgTypes = make([]protoimpl.MessageInfo, 39)
 var file_podengine_proto_goTypes = []any{
 	(PodPhase)(0),          // 0: podengine.PodPhase
 	(PodConditionType)(0),  // 1: podengine.PodConditionType
@@ -2357,7 +2471,8 @@ var file_podengine_proto_goTypes = []any{
 	nil,                    // 36: podengine.Pod.LabelsEntry
 	nil,                    // 37: podengine.Pod.AnnotationsEntry
 	nil,                    // 38: podengine.ListPodsReq.LabelsEntry
-	nil,                    // 39: podengine.Image.LabelsEntry
+	nil,                    // 39: podengine.ListPodItem.LabelsEntry
+	nil,                    // 40: podengine.Image.LabelsEntry
 }
 var file_podengine_proto_depIdxs = []int32{
 	1,  // 0: podengine.PodCondition.type:type_name -> podengine.PodConditionType
@@ -2383,32 +2498,33 @@ var file_podengine_proto_depIdxs = []int32{
 	38, // 20: podengine.ListPodsReq.labels:type_name -> podengine.ListPodsReq.LabelsEntry
 	20, // 21: podengine.ListPodsRes.items:type_name -> podengine.ListPodItem
 	0,  // 22: podengine.ListPodItem.phase:type_name -> podengine.PodPhase
-	25, // 23: podengine.GetPodStatsRes.stats:type_name -> podengine.ContainerStats
-	28, // 24: podengine.ListImagesRes.items:type_name -> podengine.Image
-	39, // 25: podengine.Image.labels:type_name -> podengine.Image.LabelsEntry
-	8,  // 26: podengine.PodEngine.CreatePod:input_type -> podengine.CreatePodReq
-	10, // 27: podengine.PodEngine.StartPod:input_type -> podengine.StartPodReq
-	12, // 28: podengine.PodEngine.StopPod:input_type -> podengine.StopPodReq
-	14, // 29: podengine.PodEngine.RestartPod:input_type -> podengine.RestartPodReq
-	16, // 30: podengine.PodEngine.GetPod:input_type -> podengine.GetPodReq
-	18, // 31: podengine.PodEngine.ListPods:input_type -> podengine.ListPodsReq
-	21, // 32: podengine.PodEngine.DeletePod:input_type -> podengine.DeletePodReq
-	23, // 33: podengine.PodEngine.GetPodStats:input_type -> podengine.GetPodStatsReq
-	26, // 34: podengine.PodEngine.ListImages:input_type -> podengine.ListImagesReq
-	9,  // 35: podengine.PodEngine.CreatePod:output_type -> podengine.CreatePodRes
-	11, // 36: podengine.PodEngine.StartPod:output_type -> podengine.StartPodRes
-	13, // 37: podengine.PodEngine.StopPod:output_type -> podengine.StopPodRes
-	15, // 38: podengine.PodEngine.RestartPod:output_type -> podengine.RestartPodRes
-	17, // 39: podengine.PodEngine.GetPod:output_type -> podengine.GetPodRes
-	19, // 40: podengine.PodEngine.ListPods:output_type -> podengine.ListPodsRes
-	22, // 41: podengine.PodEngine.DeletePod:output_type -> podengine.DeletePodRes
-	24, // 42: podengine.PodEngine.GetPodStats:output_type -> podengine.GetPodStatsRes
-	27, // 43: podengine.PodEngine.ListImages:output_type -> podengine.ListImagesRes
-	35, // [35:44] is the sub-list for method output_type
-	26, // [26:35] is the sub-list for method input_type
-	26, // [26:26] is the sub-list for extension type_name
-	26, // [26:26] is the sub-list for extension extendee
-	0,  // [0:26] is the sub-list for field type_name
+	39, // 23: podengine.ListPodItem.labels:type_name -> podengine.ListPodItem.LabelsEntry
+	25, // 24: podengine.GetPodStatsRes.stats:type_name -> podengine.ContainerStats
+	28, // 25: podengine.ListImagesRes.items:type_name -> podengine.Image
+	40, // 26: podengine.Image.labels:type_name -> podengine.Image.LabelsEntry
+	8,  // 27: podengine.PodEngine.CreatePod:input_type -> podengine.CreatePodReq
+	10, // 28: podengine.PodEngine.StartPod:input_type -> podengine.StartPodReq
+	12, // 29: podengine.PodEngine.StopPod:input_type -> podengine.StopPodReq
+	14, // 30: podengine.PodEngine.RestartPod:input_type -> podengine.RestartPodReq
+	16, // 31: podengine.PodEngine.GetPod:input_type -> podengine.GetPodReq
+	18, // 32: podengine.PodEngine.ListPods:input_type -> podengine.ListPodsReq
+	21, // 33: podengine.PodEngine.DeletePod:input_type -> podengine.DeletePodReq
+	23, // 34: podengine.PodEngine.GetPodStats:input_type -> podengine.GetPodStatsReq
+	26, // 35: podengine.PodEngine.ListImages:input_type -> podengine.ListImagesReq
+	9,  // 36: podengine.PodEngine.CreatePod:output_type -> podengine.CreatePodRes
+	11, // 37: podengine.PodEngine.StartPod:output_type -> podengine.StartPodRes
+	13, // 38: podengine.PodEngine.StopPod:output_type -> podengine.StopPodRes
+	15, // 39: podengine.PodEngine.RestartPod:output_type -> podengine.RestartPodRes
+	17, // 40: podengine.PodEngine.GetPod:output_type -> podengine.GetPodRes
+	19, // 41: podengine.PodEngine.ListPods:output_type -> podengine.ListPodsRes
+	22, // 42: podengine.PodEngine.DeletePod:output_type -> podengine.DeletePodRes
+	24, // 43: podengine.PodEngine.GetPodStats:output_type -> podengine.GetPodStatsRes
+	27, // 44: podengine.PodEngine.ListImages:output_type -> podengine.ListImagesRes
+	36, // [36:45] is the sub-list for method output_type
+	27, // [27:36] is the sub-list for method input_type
+	27, // [27:27] is the sub-list for extension type_name
+	27, // [27:27] is the sub-list for extension extendee
+	0,  // [0:27] is the sub-list for field type_name
 }
 
 func init() { file_podengine_proto_init() }
@@ -2422,7 +2538,7 @@ func file_podengine_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_podengine_proto_rawDesc), len(file_podengine_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   38,
+			NumMessages:   39,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

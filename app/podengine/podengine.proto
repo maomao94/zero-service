@@ -170,10 +170,11 @@ message Pod {
 
   map<string, string> labels = 6;
   map<string, string> annotations = 7;
+  string networkMode = 8; // 网络模式
 
-  string creationTime = 8;  // 创建时间
-  string startTime = 9;          // 启动时间
-  string deletedTime = 10; // 删除时间
+  string creationTime = 9;  // 创建时间
+  string startTime = 10;          // 启动时间
+  string deletedTime = 11; // 删除时间
 }
 
 
@@ -246,6 +247,17 @@ message ListPodItem {
   string name = 2;
   PodPhase phase = 3;
   string createTime = 4;
+  string image = 5;
+  string imageId = 6;
+  string command = 7;
+  repeated string ports = 8;
+  int64 sizeRw = 9;
+  int64 sizeRootFs = 10;
+  map<string, string> labels = 11;
+  string state = 12;
+  string status = 13;
+  string networkMode = 14;
+  repeated string mounts = 15;
 }
 
 message DeletePodReq {

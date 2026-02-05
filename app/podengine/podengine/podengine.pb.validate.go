@@ -819,6 +819,8 @@ func (m *Pod) validate(all bool) error {
 
 	// no validation rules for Annotations
 
+	// no validation rules for NetworkMode
+
 	// no validation rules for CreationTime
 
 	// no validation rules for StartTime
@@ -2406,6 +2408,24 @@ func (m *ListPodItem) validate(all bool) error {
 	// no validation rules for Phase
 
 	// no validation rules for CreateTime
+
+	// no validation rules for Image
+
+	// no validation rules for ImageId
+
+	// no validation rules for Command
+
+	// no validation rules for SizeRw
+
+	// no validation rules for SizeRootFs
+
+	// no validation rules for Labels
+
+	// no validation rules for State
+
+	// no validation rules for Status
+
+	// no validation rules for NetworkMode
 
 	if len(errors) > 0 {
 		return ListPodItemMultiError(errors)

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"zero-service/app/podengine/internal/svc"
 	"zero-service/app/podengine/podengine"
+	"zero-service/common/dockerx"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
@@ -69,24 +70,39 @@ func (l *ListPodsLogic) ListPods(in *podengine.ListPodsReq) (*podengine.ListPods
 	var items []*podengine.ListPodItem
 	for _, container := range containers {
 		containerName := strings.TrimPrefix(container.Names[0], "/")
-		phase := podengine.PodPhase_POD_PHASE_UNKNOWN
-		if container.State == "running" {
-			phase = podengine.PodPhase_POD_PHASE_RUNNING
-		} else if container.State == "exited" {
-			phase = podengine.PodPhase_POD_PHASE_SUCCEEDED
-		} else if container.State == "created" {
-			phase = podengine.PodPhase_POD_PHASE_PENDING
-		} else if container.State == "stopped" {
-			phase = podengine.PodPhase_POD_PHASE_STOPPED
+		phase := getPodPhaseFromStatus(container.State)
+
+		// 构建端口字符串
+		var ports []string
+		for _, port := range container.Ports {
+			if port.PublicPort > 0 {
+				ports = append(ports, fmt.Sprintf("%s:%d->%d/%s", port.IP, port.PublicPort, port.PrivatePort, port.Type))
+			} else {
+				ports = append(ports, fmt.Sprintf("%d/%s", port.PrivatePort, port.Type))
+			}
 		}
 
 		item := &podengine.ListPodItem{
-			Id:    container.ID,
-			Name:  containerName,
-			Phase: phase,
+			Id:          container.ID,
+			Name:        containerName,
+			Phase:       phase,
+			Image:       container.Image,
+			ImageId:     container.ImageID,
+			Command:     container.Command,
+			Ports:       ports,
+			SizeRw:      container.SizeRw,
+			SizeRootFs:  container.SizeRootFs,
+			Labels:      container.Labels,
+			State:       container.State,
+			Status:      container.Status,
+			NetworkMode: container.HostConfig.NetworkMode,
+			Mounts:      dockerx.ExtractContainerVolumeMounts(container.Mounts),
 		}
 		if container.Created > 0 {
-			item.CreateTime = carbon.CreateFromTimestamp(container.Created).ToDateTimeString()
+			createTime := carbon.CreateFromTimestamp(container.Created)
+			if createTime.IsValid() {
+				item.CreateTime = createTime.ToDateTimeString()
+			}
 		}
 		items = append(items, item)
 	}
@@ -105,4 +121,19 @@ func (l *ListPodsLogic) ListPods(in *podengine.ListPodsReq) (*podengine.ListPods
 		Items: items,
 		Total: int32(total),
 	}, nil
+}
+
+func getPodPhaseFromStatus(state string) podengine.PodPhase {
+	switch state {
+	case "running":
+		return podengine.PodPhase_POD_PHASE_RUNNING
+	case "exited":
+		return podengine.PodPhase_POD_PHASE_SUCCEEDED
+	case "created":
+		return podengine.PodPhase_POD_PHASE_PENDING
+	case "stopped":
+		return podengine.PodPhase_POD_PHASE_STOPPED
+	default:
+		return podengine.PodPhase_POD_PHASE_UNKNOWN
+	}
 }
