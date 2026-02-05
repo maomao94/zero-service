@@ -27,7 +27,7 @@ const (
 type DJIErrorCode int32
 
 const (
-	DJIErrorCode_v_1_15 DJIErrorCode = 0
+	DJIErrorCode_DJI_V_1_15 DJIErrorCode = 0
 	// ************************ 设备升级模块（312段）************************
 	DJIErrorCode_DJI_DEVICE_UPGRADING                        DJIErrorCode = 312014 // 设备升级中，请勿重复操作 | Device is being upgraded, do not repeat the operation
 	DJIErrorCode_DJI_DOCK_BUSY_CANNOT_UPGRADE                DJIErrorCode = 312015 // 机场：{dock_org_name} 业务繁忙无法进行设备升级，请等待机场处于空闲中后再试 | Dock {dock_org_name} is busy, unable to upgrade device, please wait until the dock is idle
@@ -506,7 +506,7 @@ const (
 // Enum value maps for DJIErrorCode.
 var (
 	DJIErrorCode_name = map[int32]string{
-		0:      "v_1_15",
+		0:      "DJI_V_1_15",
 		312014: "DJI_DEVICE_UPGRADING",
 		312015: "DJI_DOCK_BUSY_CANNOT_UPGRADE",
 		312016: "DJI_UPGRADE_FAILED_LINK_ERROR",
@@ -957,7 +957,7 @@ var (
 		514168: "DJI_DOCK_NOT_CALIBRATED_CANNOT_FLY",
 	}
 	DJIErrorCode_value = map[string]int32{
-		"v_1_15":                                                  0,
+		"DJI_V_1_15":                                              0,
 		"DJI_DEVICE_UPGRADING":                                    312014,
 		"DJI_DOCK_BUSY_CANNOT_UPGRADE":                            312015,
 		"DJI_UPGRADE_FAILED_LINK_ERROR":                           312016,
@@ -1440,10 +1440,10 @@ var File_dji_error_code_proto protoreflect.FileDescriptor
 
 const file_dji_error_code_proto_rawDesc = "" +
 	"\n" +
-	"\x14dji_error_code.proto\x12\x03dji*\xa8\x98\x01\n" +
-	"\fDJIErrorCode\x12\n" +
+	"\x14dji_error_code.proto\x12\x03dji*\xac\x98\x01\n" +
+	"\fDJIErrorCode\x12\x0e\n" +
 	"\n" +
-	"\x06v_1_15\x10\x00\x12\x1a\n" +
+	"DJI_V_1_15\x10\x00\x12\x1a\n" +
 	"\x14DJI_DEVICE_UPGRADING\x10΅\x13\x12\"\n" +
 	"\x1cDJI_DOCK_BUSY_CANNOT_UPGRADE\x10υ\x13\x12#\n" +
 	"\x1dDJI_UPGRADE_FAILED_LINK_ERROR\x10Ѕ\x13\x12,\n" +
