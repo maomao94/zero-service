@@ -9,6 +9,7 @@ option java_outer_classname = "DJIErrorCodeProto";
 
 // DJIErrorCode 严格对应大疆上云平台公开的设备端错误码（ABCDEF格式）
 // 首位A：上报来源（3=设备端、5=云端/网关等）；BC：功能模块；DEF：模块自定义错误
+// v1.15
 enum DJIErrorCode {
   // 通用默认值（proto3枚举首字段必须为0，无实际业务意义）
   _ = 0;
