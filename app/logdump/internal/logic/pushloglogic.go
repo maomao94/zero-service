@@ -50,9 +50,11 @@ func (l *PushLogLogic) PushLog(in *logdump.PushLogReq) (*logdump.PushLogRes, err
 		extraStr := strings.Join(extraParts, ", ")
 
 		// 拼接最终日志消息
-		msg := fmt.Sprintf("[%s] %s", logEntry.Service, logEntry.Message)
+		msg := fmt.Sprintf("#[%s] %s", logEntry.Service, logEntry.Message)
 		if extraStr != "" {
-			msg = fmt.Sprintf("%s | %s", msg, extraStr)
+			msg = fmt.Sprintf("%s | %s#", msg, extraStr)
+		} else {
+			msg = fmt.Sprintf("%s#", msg)
 		}
 
 		// 输出日志
