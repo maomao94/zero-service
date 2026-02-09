@@ -89,6 +89,7 @@ func (l *ListPlansLogic) ListPlans(in *trigger.ListPlansReq) (*trigger.ListPlans
 			EndTime:          carbon.CreateFromStdTime(plan.EndTime).ToDateTimeString(),
 			Rule:             &pbRule,
 			Status:           int32(plan.Status),
+			ScanFlg:          int32(plan.ScanFlg),
 			TerminatedReason: plan.TerminatedReason.String,
 			PausedReason:     plan.PausedReason.String,
 			Ext1:             plan.Ext1.String,

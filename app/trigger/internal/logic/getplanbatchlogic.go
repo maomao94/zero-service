@@ -90,6 +90,7 @@ func (l *GetPlanBatchLogic) GetPlanBatch(in *trigger.GetPlanBatchReq) (*trigger.
 		BatchName:        planBatch.BatchName.String,
 		BatchNum:         planBatch.BatchNum.String,
 		Status:           int32(planBatch.Status),
+		ScanFlg:          int32(planBatch.ScanFlg),
 		PlanTriggerTime:  carbon.CreateFromStdTime(planBatch.PlanTriggerTime.Time).ToDateTimeString(),
 		TerminatedReason: planBatch.TerminatedReason.String,
 		PausedReason:     planBatch.PausedReason.String,

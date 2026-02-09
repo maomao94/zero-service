@@ -77,6 +77,7 @@ func (l *GetPlanLogic) GetPlan(in *trigger.GetPlanReq) (*trigger.GetPlanRes, err
 		EndTime:          carbon.CreateFromStdTime(plan.EndTime).ToDateTimeString(),
 		Rule:             &pbRule,
 		Status:           int32(plan.Status),
+		ScanFlg:          int32(plan.ScanFlg),
 		TerminatedReason: plan.TerminatedReason.String,
 		PausedReason:     plan.PausedReason.String,
 		Ext1:             plan.Ext1.String,
