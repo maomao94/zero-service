@@ -122,6 +122,20 @@ func (s *CronService) ScanPlanExecItem() bool {
 		logx.Field("batchId", queryExecItem.BatchId),
 		logx.Field("itemId", queryExecItem.ItemId),
 		logx.Field("execId", queryExecItem.ExecId))
+
+	// 更新扫表标记为已扫表
+	// 更新 plan 表的扫表标记
+	planUpdateBuilder := s.svcCtx.PlanModel.UpdateBuilder().Set("scan_flg", 1).Where("id = ?", plan.Id)
+	if _, err := s.svcCtx.PlanModel.UpdateWithBuilder(ctx, nil, planUpdateBuilder); err != nil {
+		logx.WithContext(ctx).Errorf("Error updating plan scan_flg: %v", err)
+	}
+
+	// 更新 plan_batch 表的扫表标记
+	batchUpdateBuilder := s.svcCtx.PlanBatchModel.UpdateBuilder().Set("scan_flg", 1).Where("id = ?", queryExecItem.BatchPk)
+	if _, err := s.svcCtx.PlanBatchModel.UpdateWithBuilder(ctx, nil, batchUpdateBuilder); err != nil {
+		logx.WithContext(ctx).Errorf("Error updating plan_batch scan_flg: %v", err)
+	}
+
 	s.ExecuteCallback(ctx, queryExecItem, plan)
 	return true
 }
