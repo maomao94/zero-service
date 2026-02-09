@@ -9584,6 +9584,8 @@ func (m *PbPlan) validate(all bool) error {
 
 	// no validation rules for Status
 
+	// no validation rules for ScanFlg
+
 	// no validation rules for TerminatedReason
 
 	// no validation rules for PausedTime
@@ -12041,6 +12043,8 @@ func (m *PbPlanBatch) validate(all bool) error {
 	// no validation rules for BatchNum
 
 	// no validation rules for Status
+
+	// no validation rules for ScanFlg
 
 	// no validation rules for PlanTriggerTime
 

@@ -768,24 +768,26 @@ message PbPlan{
   PbPlanRule rule = 8;
   // 状态：1-启用，2-暂停，3-终止
   int32 status = 9;
+  // 扫表标记, 0-未扫表, 1-已扫表
+  int32 scanFlg = 10;
   // 终止原因
-  string terminatedReason = 10;
+  string terminatedReason = 11;
   // 暂停时间
-  string pausedTime = 11;
+  string pausedTime = 12;
   // 暂停原因
-  string pausedReason = 12;
+  string pausedReason = 13;
   // 执行进度 0.00-100.00
-  float progress = 13;
+  float progress = 14;
   // 扩展字段1
-  string ext1 = 14;
+  string ext1 = 15;
   // 扩展字段2
-  string ext2 = 15;
+  string ext2 = 16;
   // 扩展字段3
-  string ext3 = 16;
+  string ext3 = 17;
   // 扩展字段4
-  string ext4 = 17;
+  string ext4 = 18;
   // 扩展字段5
-  string ext5 = 18;
+  string ext5 = 19;
 }
 
 message ListPlansReq {
@@ -1066,18 +1068,20 @@ message PbPlanBatch {
   string batchNum = 5;
   // 状态：1-启用，2-暂停，3-终止
   int32 status = 6;
+  // 扫表标记, 0-未扫表, 1-已扫表
+  int32 scanFlg = 7;
   // 计划触发时间
-  string planTriggerTime = 7;
+  string planTriggerTime = 8;
   // 终止原因
-  string terminatedReason = 8;
+  string terminatedReason = 9;
   // 暂停时间
-  string pausedTime = 9;
+  string pausedTime = 10;
   // 暂停原因
-  string pausedReason = 10;
+  string pausedReason = 11;
   // 结束时间
-  string finishedTime = 11;
+  string finishedTime = 12;
   // 状态统计map，key为状态值，value为对应数量
-  map<string, int64> statusCountMap = 12;
+  map<string, int64> statusCountMap = 13;
   // 执行计划数
   int64 execCnt = 51;
   // 扩展字段1
