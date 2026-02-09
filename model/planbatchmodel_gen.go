@@ -70,6 +70,7 @@ type (
 		BatchName        sql.NullString `db:"batch_name"`        // 批次名称
 		BatchNum         sql.NullString `db:"batch_num"`         // 批次序号
 		Status           int64          `db:"status"`            // 状态：0-禁用，1-启用，2-暂停，3-终止
+		ScanFlg          int64          `db:"scan_flg"`          // 扫表标记, 0-未扫表, 1-已扫表
 		PlanTriggerTime  sql.NullTime   `db:"plan_trigger_time"` // 计划触发时间
 		TerminatedReason sql.NullString `db:"terminated_reason"` // 终止原因
 		PausedTime       sql.NullTime   `db:"paused_time"`       // 暂停时间

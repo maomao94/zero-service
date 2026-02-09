@@ -70,6 +70,7 @@ type (
 		StartTime        time.Time      `db:"start_time"`        // 规则生效开始时间
 		EndTime          time.Time      `db:"end_time"`          // 规则生效结束时间
 		Status           int64          `db:"status"`            // 状态：0-禁用，1-启用，2-已终止，3-暂停
+		ScanFlg          int64          `db:"scan_flg"`          // 扫表标记, 0-未扫表, 1-已扫表
 		TerminatedReason sql.NullString `db:"terminated_reason"` // 终止原因
 		PausedTime       sql.NullTime   `db:"paused_time"`       // 暂停时间
 		PausedReason     sql.NullString `db:"paused_reason"`     // 暂停原因
