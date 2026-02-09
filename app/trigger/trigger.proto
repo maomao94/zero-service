@@ -498,6 +498,9 @@ message CalcPlanTaskDateReq {
   string endTime = 2;
   // 计划规则项 默认 规则项 MINUTELY
   PbPlanRule rule = 3 [(validate.rules).message = {required: true}];
+  // 排除日期列表
+  // 格式：yyyy-MM-dd
+  repeated string excludeDates = 4;
 }
 
 message CalcPlanTaskDateRes {
@@ -529,6 +532,9 @@ message CreatePlanTaskReq {
   string endTime = 7;
   // 计划规则项 默认 规则项 MINUTELY
   PbPlanRule rule = 8 [(validate.rules).message = {required: true}];
+  // 排除日期列表
+  // 格式：yyyy-MM-dd
+  repeated string excludeDates = 13;
   // 间隔时间 单位: 毫秒
   int64 intervalTime = 9 [(validate.rules).int64 = {gte: 0}];
   // 间隔类型 0-不间隔（同时发起） 1-往后顺延 2-间隔时间内偏移

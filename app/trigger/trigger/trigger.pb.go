@@ -2742,7 +2742,10 @@ type CalcPlanTaskDateReq struct {
 	// 格式：yyyy-MM-dd HH:mm:ss
 	EndTime string `protobuf:"bytes,2,opt,name=endTime,proto3" json:"endTime,omitempty"`
 	// 计划规则项 默认 规则项 MINUTELY
-	Rule          *PbPlanRule `protobuf:"bytes,3,opt,name=rule,proto3" json:"rule,omitempty"`
+	Rule *PbPlanRule `protobuf:"bytes,3,opt,name=rule,proto3" json:"rule,omitempty"`
+	// 排除日期列表
+	// 格式：yyyy-MM-dd
+	ExcludeDates  []string `protobuf:"bytes,4,rep,name=excludeDates,proto3" json:"excludeDates,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2801,6 +2804,13 @@ func (x *CalcPlanTaskDateReq) GetEndTime() string {
 func (x *CalcPlanTaskDateReq) GetRule() *PbPlanRule {
 	if x != nil {
 		return x.Rule
+	}
+	return nil
+}
+
+func (x *CalcPlanTaskDateReq) GetExcludeDates() []string {
+	if x != nil {
+		return x.ExcludeDates
 	}
 	return nil
 }
@@ -2874,6 +2884,9 @@ type CreatePlanTaskReq struct {
 	EndTime string `protobuf:"bytes,7,opt,name=endTime,proto3" json:"endTime,omitempty"`
 	// 计划规则项 默认 规则项 MINUTELY
 	Rule *PbPlanRule `protobuf:"bytes,8,opt,name=rule,proto3" json:"rule,omitempty"`
+	// 排除日期列表
+	// 格式：yyyy-MM-dd
+	ExcludeDates []string `protobuf:"bytes,13,rep,name=excludeDates,proto3" json:"excludeDates,omitempty"`
 	// 间隔时间 单位: 毫秒
 	IntervalTime int64 `protobuf:"varint,9,opt,name=intervalTime,proto3" json:"intervalTime,omitempty"`
 	// 间隔类型 0-不间隔（同时发起） 1-往后顺延 2-间隔时间内偏移
@@ -2988,6 +3001,13 @@ func (x *CreatePlanTaskReq) GetEndTime() string {
 func (x *CreatePlanTaskReq) GetRule() *PbPlanRule {
 	if x != nil {
 		return x.Rule
+	}
+	return nil
+}
+
+func (x *CreatePlanTaskReq) GetExcludeDates() []string {
+	if x != nil {
+		return x.ExcludeDates
 	}
 	return nil
 }
@@ -6974,14 +6994,15 @@ const file_trigger_proto_rawDesc = "" +
 	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x17\n" +
 	"\x02id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"\f\n" +
 	"\n" +
-	"RunTaskRes\"\xb9\x01\n" +
+	"RunTaskRes\"\xdd\x01\n" +
 	"\x13CalcPlanTaskDateReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x1c\n" +
 	"\tstartTime\x18\x01 \x01(\tR\tstartTime\x12\x18\n" +
 	"\aendTime\x18\x02 \x01(\tR\aendTime\x121\n" +
-	"\x04rule\x18\x03 \x01(\v2\x13.trigger.PbPlanRuleB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\"3\n" +
+	"\x04rule\x18\x03 \x01(\v2\x13.trigger.PbPlanRuleB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\x12\"\n" +
+	"\fexcludeDates\x18\x04 \x03(\tR\fexcludeDates\"3\n" +
 	"\x13CalcPlanTaskDateRes\x12\x1c\n" +
-	"\tplanDates\x18\x01 \x03(\tR\tplanDates\"\xb2\x05\n" +
+	"\tplanDates\x18\x01 \x03(\tR\tplanDates\"\xd6\x05\n" +
 	"\x11CreatePlanTaskReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12#\n" +
 	"\bdeptCode\x18e \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bdeptCode\x12\x1f\n" +
@@ -6992,7 +7013,8 @@ const file_trigger_proto_rawDesc = "" +
 	"\vdescription\x18\x05 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\vdescription\x12\x1c\n" +
 	"\tstartTime\x18\x06 \x01(\tR\tstartTime\x12\x18\n" +
 	"\aendTime\x18\a \x01(\tR\aendTime\x121\n" +
-	"\x04rule\x18\b \x01(\v2\x13.trigger.PbPlanRuleB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\x12+\n" +
+	"\x04rule\x18\b \x01(\v2\x13.trigger.PbPlanRuleB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\x12\"\n" +
+	"\fexcludeDates\x18\r \x03(\tR\fexcludeDates\x12+\n" +
 	"\fintervalTime\x18\t \x01(\x03B\a\xfaB\x04\"\x02(\x00R\fintervalTime\x12-\n" +
 	"\fintervalType\x18\n" +
 	" \x01(\x05B\t\xfaB\x06\x1a\x04\x18\x02(\x00R\fintervalType\x12C\n" +

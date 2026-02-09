@@ -74,12 +74,28 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	if err != nil {
 		return nil, err
 	}
+	set := rrule.Set{}
 	r, err := rrule.NewRRule(rruleOption)
 	if err != nil {
 		return nil, err
 	}
+	set.RRule(r)
+	// 添加排除日期
+	for _, excludeDate := range in.ExcludeDates {
+		excludeTime := carbon.ParseByFormat(excludeDate, carbon.DateFormat)
+		if excludeTime.Error != nil {
+			return nil, excludeTime.Error
+		}
+		// 为每个排除日期添加一天中的所有小时分钟组合
+		for _, hour := range in.Rule.Hours {
+			for _, minute := range in.Rule.Minutes {
+				excludeDateTime := excludeTime.SetHour(int(hour)).SetMinute(int(minute)).SetSecond(0)
+				set.ExDate(excludeDateTime.StdTime())
+			}
+		}
+	}
 	// 获取所有触发时间
-	dates := r.All()
+	dates := set.All()
 	// 过滤掉小于当前时间的触发时间
 	now := time.Now()
 	var validDates []time.Time = make([]time.Time, 0)
