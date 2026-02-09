@@ -63,8 +63,8 @@ func (l *CalcPlanTaskDateLogic) CalcPlanTaskDate(in *trigger.CalcPlanTaskDateReq
 	// 添加排除日期
 	for _, excludeDate := range in.ExcludeDates {
 		excludeTime := carbon.ParseByFormat(excludeDate, carbon.DateFormat)
-		if excludeTime.Error != nil {
-			return nil, excludeTime.Error
+		if excludeTime.Error != nil || excludeTime.IsInvalid() {
+			return nil, fmt.Errorf("排除日期格式错误: %s", excludeDate)
 		}
 		// 为每个排除日期添加一天中的所有小时分钟组合
 		for _, hour := range in.Rule.Hours {
