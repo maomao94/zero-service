@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS plan (
     start_time TIMESTAMP NOT NULL, 
     end_time TIMESTAMP NOT NULL, 
     status SMALLINT NOT NULL DEFAULT 0, 
+    scan_flg SMALLINT NOT NULL DEFAULT 0, 
     terminated_reason VARCHAR(256) DEFAULT '',
     paused_time TIMESTAMP NULL, 
     paused_reason VARCHAR(256) DEFAULT '',
@@ -142,6 +143,7 @@ COMMENT ON COLUMN plan.recurrence_rule IS '重复规则，JSON格式存储';
 COMMENT ON COLUMN plan.start_time IS '规则生效开始时间';
 COMMENT ON COLUMN plan.end_time IS '规则生效结束时间';
 COMMENT ON COLUMN plan.status IS '状态：0-禁用，1-启用，2-暂停，3-终止';
+COMMENT ON COLUMN plan.scan_flg IS '扫表标记, 0-未扫表, 1-已扫表';
 COMMENT ON COLUMN plan.terminated_reason IS '终止原因';
 COMMENT ON COLUMN plan.paused_time IS '暂停时间';
 COMMENT ON COLUMN plan.paused_reason IS '暂停原因';
@@ -381,6 +383,7 @@ CREATE TABLE IF NOT EXISTS plan_batch (
     batch_name VARCHAR(128) DEFAULT '',
     batch_num VARCHAR(128) NOT NULL DEFAULT '',
     status SMALLINT NOT NULL DEFAULT 0,
+    scan_flg SMALLINT NOT NULL DEFAULT 0,
     plan_trigger_time TIMESTAMP NULL,
     terminated_reason VARCHAR(256) DEFAULT '',
     paused_time TIMESTAMP NULL,
@@ -413,6 +416,7 @@ COMMENT ON COLUMN plan_batch.batch_id IS '批ID';
 COMMENT ON COLUMN plan_batch.batch_name IS '批次名称';
 COMMENT ON COLUMN plan_batch.batch_num IS '批次序号';
 COMMENT ON COLUMN plan_batch.status IS '状态：0-禁用，1-启用，2-暂停，3-终止';
+COMMENT ON COLUMN plan_batch.scan_flg IS '扫表标记, 0-未扫表, 1-已扫表';
 COMMENT ON COLUMN plan_batch.plan_trigger_time IS '计划触发时间';
 COMMENT ON COLUMN plan_batch.terminated_reason IS '终止原因';
 COMMENT ON COLUMN plan_batch.paused_time IS '暂停时间';
