@@ -176,7 +176,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 		logEntry := &model.PlanExecLog{
 			CreateUser:  sql.NullString{},
 			UpdateUser:  sql.NullString{},
-			DeptCode:    sql.NullString{},
+			DeptCode:    execItem.DeptCode,
 			PlanPk:      execItem.PlanPk,
 			PlanId:      execItem.PlanId,
 			PlanName:    plan.PlanName,
