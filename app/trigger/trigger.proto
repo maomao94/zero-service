@@ -500,7 +500,7 @@ message CalcPlanTaskDateReq {
   PbPlanRule rule = 3 [(validate.rules).message = {required: true}];
   // 排除日期列表
   // 格式：yyyy-MM-dd
-  repeated string excludeDates = 4;
+  repeated string excludeDates = 4 [(validate.rules).repeated = {items: {string: {min_len: 1}}}];
 }
 
 message CalcPlanTaskDateRes {
@@ -534,15 +534,15 @@ message CreatePlanTaskReq {
   PbPlanRule rule = 8 [(validate.rules).message = {required: true}];
   // 排除日期列表
   // 格式：yyyy-MM-dd
-  repeated string excludeDates = 13;
+  repeated string excludeDates = 9 [(validate.rules).repeated = {items: {string: {min_len: 1}}}];
   // 间隔时间 单位: 毫秒
-  int64 intervalTime = 9 [(validate.rules).int64 = {gte: 0}];
+  int64 intervalTime = 10 [(validate.rules).int64 = {gte: 0}];
   // 间隔类型 0-不间隔（同时发起） 1-往后顺延 2-间隔时间内偏移
-  int32 intervalType = 10 [(validate.rules).int32 = {gte: 0, lte: 2}];
+  int32 intervalType = 11 [(validate.rules).int32 = {gte: 0, lte: 2}];
   // 计划执行项-根据规则项生成日期批次-batchId 并生成对应批次执行项-execId
-  repeated CreatePlanExecItem execItems = 11 [(validate.rules).repeated = {min_items: 1}];
+  repeated CreatePlanExecItem execItems = 12 [(validate.rules).repeated = {min_items: 1}];
   // batchNum 前缀
-  string batchNumPrefix = 12;
+  string batchNumPrefix = 13;
 
   // 扩展字段
   string ext1 = 50;

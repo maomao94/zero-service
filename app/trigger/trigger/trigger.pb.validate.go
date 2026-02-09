@@ -5829,6 +5829,22 @@ func (m *CalcPlanTaskDateReq) validate(all bool) error {
 		}
 	}
 
+	for idx, item := range m.GetExcludeDates() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) < 1 {
+			err := CalcPlanTaskDateReqValidationError{
+				field:  fmt.Sprintf("ExcludeDates[%v]", idx),
+				reason: "value length must be at least 1 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
 	if len(errors) > 0 {
 		return CalcPlanTaskDateReqMultiError(errors)
 	}
@@ -6161,6 +6177,22 @@ func (m *CreatePlanTaskReq) validate(all bool) error {
 				cause:  err,
 			}
 		}
+	}
+
+	for idx, item := range m.GetExcludeDates() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) < 1 {
+			err := CreatePlanTaskReqValidationError{
+				field:  fmt.Sprintf("ExcludeDates[%v]", idx),
+				reason: "value length must be at least 1 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
 	}
 
 	if m.GetIntervalTime() < 0 {

@@ -2886,15 +2886,15 @@ type CreatePlanTaskReq struct {
 	Rule *PbPlanRule `protobuf:"bytes,8,opt,name=rule,proto3" json:"rule,omitempty"`
 	// 排除日期列表
 	// 格式：yyyy-MM-dd
-	ExcludeDates []string `protobuf:"bytes,13,rep,name=excludeDates,proto3" json:"excludeDates,omitempty"`
+	ExcludeDates []string `protobuf:"bytes,9,rep,name=excludeDates,proto3" json:"excludeDates,omitempty"`
 	// 间隔时间 单位: 毫秒
-	IntervalTime int64 `protobuf:"varint,9,opt,name=intervalTime,proto3" json:"intervalTime,omitempty"`
+	IntervalTime int64 `protobuf:"varint,10,opt,name=intervalTime,proto3" json:"intervalTime,omitempty"`
 	// 间隔类型 0-不间隔（同时发起） 1-往后顺延 2-间隔时间内偏移
-	IntervalType int32 `protobuf:"varint,10,opt,name=intervalType,proto3" json:"intervalType,omitempty"`
+	IntervalType int32 `protobuf:"varint,11,opt,name=intervalType,proto3" json:"intervalType,omitempty"`
 	// 计划执行项-根据规则项生成日期批次-batchId 并生成对应批次执行项-execId
-	ExecItems []*CreatePlanExecItem `protobuf:"bytes,11,rep,name=execItems,proto3" json:"execItems,omitempty"`
+	ExecItems []*CreatePlanExecItem `protobuf:"bytes,12,rep,name=execItems,proto3" json:"execItems,omitempty"`
 	// batchNum 前缀
-	BatchNumPrefix string `protobuf:"bytes,12,opt,name=batchNumPrefix,proto3" json:"batchNumPrefix,omitempty"`
+	BatchNumPrefix string `protobuf:"bytes,13,opt,name=batchNumPrefix,proto3" json:"batchNumPrefix,omitempty"`
 	// 扩展字段
 	Ext1          string `protobuf:"bytes,50,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	Ext2          string `protobuf:"bytes,51,opt,name=ext2,proto3" json:"ext2,omitempty"`
@@ -6994,15 +6994,15 @@ const file_trigger_proto_rawDesc = "" +
 	"\x05queue\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05queue\x12\x17\n" +
 	"\x02id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"\f\n" +
 	"\n" +
-	"RunTaskRes\"\xdd\x01\n" +
+	"RunTaskRes\"\xeb\x01\n" +
 	"\x13CalcPlanTaskDateReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12\x1c\n" +
 	"\tstartTime\x18\x01 \x01(\tR\tstartTime\x12\x18\n" +
 	"\aendTime\x18\x02 \x01(\tR\aendTime\x121\n" +
-	"\x04rule\x18\x03 \x01(\v2\x13.trigger.PbPlanRuleB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\x12\"\n" +
-	"\fexcludeDates\x18\x04 \x03(\tR\fexcludeDates\"3\n" +
+	"\x04rule\x18\x03 \x01(\v2\x13.trigger.PbPlanRuleB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\x120\n" +
+	"\fexcludeDates\x18\x04 \x03(\tB\f\xfaB\t\x92\x01\x06\"\x04r\x02\x10\x01R\fexcludeDates\"3\n" +
 	"\x13CalcPlanTaskDateRes\x12\x1c\n" +
-	"\tplanDates\x18\x01 \x03(\tR\tplanDates\"\xd6\x05\n" +
+	"\tplanDates\x18\x01 \x03(\tR\tplanDates\"\xe4\x05\n" +
 	"\x11CreatePlanTaskReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12#\n" +
 	"\bdeptCode\x18e \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bdeptCode\x12\x1f\n" +
@@ -7013,13 +7013,13 @@ const file_trigger_proto_rawDesc = "" +
 	"\vdescription\x18\x05 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\vdescription\x12\x1c\n" +
 	"\tstartTime\x18\x06 \x01(\tR\tstartTime\x12\x18\n" +
 	"\aendTime\x18\a \x01(\tR\aendTime\x121\n" +
-	"\x04rule\x18\b \x01(\v2\x13.trigger.PbPlanRuleB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\x12\"\n" +
-	"\fexcludeDates\x18\r \x03(\tR\fexcludeDates\x12+\n" +
-	"\fintervalTime\x18\t \x01(\x03B\a\xfaB\x04\"\x02(\x00R\fintervalTime\x12-\n" +
-	"\fintervalType\x18\n" +
-	" \x01(\x05B\t\xfaB\x06\x1a\x04\x18\x02(\x00R\fintervalType\x12C\n" +
-	"\texecItems\x18\v \x03(\v2\x1b.trigger.CreatePlanExecItemB\b\xfaB\x05\x92\x01\x02\b\x01R\texecItems\x12&\n" +
-	"\x0ebatchNumPrefix\x18\f \x01(\tR\x0ebatchNumPrefix\x12\x12\n" +
+	"\x04rule\x18\b \x01(\v2\x13.trigger.PbPlanRuleB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\x120\n" +
+	"\fexcludeDates\x18\t \x03(\tB\f\xfaB\t\x92\x01\x06\"\x04r\x02\x10\x01R\fexcludeDates\x12+\n" +
+	"\fintervalTime\x18\n" +
+	" \x01(\x03B\a\xfaB\x04\"\x02(\x00R\fintervalTime\x12-\n" +
+	"\fintervalType\x18\v \x01(\x05B\t\xfaB\x06\x1a\x04\x18\x02(\x00R\fintervalType\x12C\n" +
+	"\texecItems\x18\f \x03(\v2\x1b.trigger.CreatePlanExecItemB\b\xfaB\x05\x92\x01\x02\b\x01R\texecItems\x12&\n" +
+	"\x0ebatchNumPrefix\x18\r \x01(\tR\x0ebatchNumPrefix\x12\x12\n" +
 	"\x04ext1\x182 \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x183 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x184 \x01(\tR\x04ext3\x12\x12\n" +

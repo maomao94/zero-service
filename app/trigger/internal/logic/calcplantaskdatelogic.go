@@ -30,6 +30,10 @@ func NewCalcPlanTaskDateLogic(ctx context.Context, svcCtx *svc.ServiceContext) *
 
 // 计算计划任务日期
 func (l *CalcPlanTaskDateLogic) CalcPlanTaskDate(in *trigger.CalcPlanTaskDateReq) (*trigger.CalcPlanTaskDateRes, error) {
+	err := in.Validate()
+	if err != nil {
+		return nil, err
+	}
 	if len(in.StartTime) == 0 {
 		in.StartTime = fmt.Sprintf("%d-1-1 00:00:00", time.Now().Year())
 	}
