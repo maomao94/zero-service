@@ -9,6 +9,7 @@
 # Local environment files
 app/*/env/
 facade/*/env/
+socketapp/*/env/
 gtw/env/
 
 # Claude directories
