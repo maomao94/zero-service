@@ -51,27 +51,47 @@ socket.on('__down__', (data) => {
 
 ### 3.3 使用ticket连接
 
-使用SocketIO的`query`选项传递`ticket`参数，SocketIO客户端会自动将其添加到连接URL中：
+使用SocketIO的`query`选项传递`ticket`参数，**ticket必须使用Base64编码**，SocketIO客户端会自动将其添加到连接URL中：
 
 ```javascript
 // 携带ticket建立连接
 const socket = io('http://your-server-url:port', {
   transports: ['websocket', 'polling'],
   reconnection: true,
-  // 使用query选项传递ticket参数
+  // 使用query选项传递Base64编码的ticket参数
   query: {
-    ticket: 'your-ticket-value' // 替换为实际的ticket
+    ticket: btoa('your-ticket-value') // 替换为实际的ticket，并使用btoa()进行Base64编码
+  }
+});
+```
+
+**编码示例**：
+```javascript
+// 原始ticket
+const originalTicket = 'bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+
+// Base64编码
+const encodedTicket = btoa(originalTicket);
+
+// 使用编码后的ticket
+const socket = io('http://your-server-url:port', {
+  query: {
+    ticket: encodedTicket
   }
 });
 ```
 
 ### 3.4 连接URL示例
 
-使用ticket参数后，SocketIO客户端会生成类似以下格式的连接URL：
+使用Base64编码的ticket参数后，SocketIO客户端会生成类似以下格式的连接URL：
 
 ```
-/socket.io/?ticket=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&EIO=4&transport=websocket
+/socket.io/?ticket=YmVhcmVyIGV5SmhiR2NpOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&EIO=4&transport=websocket
 ```
+
+**说明**：
+- `YmVhcmVyIGV5SmhiR2NpOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` 是 `bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` 的Base64编码结果
+- 后端服务会自动解码Base64编码的ticket，无需客户端额外处理
 
 ## 4. 核心事件体系
 
