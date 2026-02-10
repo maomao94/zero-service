@@ -13,6 +13,7 @@ import (
 	"zero-service/socketapp/socketgtw/internal/svc"
 	"zero-service/socketapp/socketgtw/socketgtw"
 
+	"github.com/duke-git/lancet/v2/cryptor"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	"github.com/zeromicro/go-zero/core/conf"
@@ -51,7 +52,10 @@ func main() {
 				if strutil.ContainsAny(r.URL.Path, []string{"/socket.io"}) {
 					ticket := r.URL.Query().Get("ticket")
 					if len(ticket) != 0 {
-						r.Header.Set("Authorization", ticket)
+						token := cryptor.Base64StdDecode(ticket)
+						logx.WithContext(r.Context()).Infof("ticket: %s,token: %s", ticket, token)
+						r.Header.Set("Authorization", token)
+						r.Header.Set("Connection", "Upgrade")
 					}
 				}
 				next.ServeHTTP(w, r)
