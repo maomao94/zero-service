@@ -219,7 +219,7 @@ const socket = io('http://your-server-url:port', {
 |------------|---------------------|-----------|
 | `sId`      | `string`            | 会话ID      |
 | `rooms`    | `[]string`          | 当前加入的房间列表 |
-| `nps`      | `string`            | 网络性能分数    |
+| `nps`      | `string`            | 命名空间      |
 | `metadata` | `map[string]string` | 会话元数据     |
 
 **示例**：
@@ -231,7 +231,7 @@ const socket = io('http://your-server-url:port', {
     "room1",
     "room2"
   ],
-  "nps": "85",
+  "nps": "/",
   "metadata": {
     "userId": "user123",
     "deviceId": "device456"
@@ -301,8 +301,7 @@ SocketIO 推送给前端客户端。不同的 MQTT topic 会映射到不同的 S
 
 ### 9.2 桥接消息格式
 
-桥接的 MQTT 消息会转换为统一的格式，遵循通用的 `event`、`payload`、`reqId` 结构。以下示例基于 IEC 104
-协议桥接，详细协议定义请参考 [`iec104.md`](iec104.md) 文件：
+桥接的 MQTT 消息会转换为统一的格式，遵循通用的 `event`、`payload`、`reqId` 结构。以下示例基于 IEC 104 协议桥接，详细协议定义请参考 [`iec104-protocol.md`](iec104-protocol.md) 文件：
 
 ```json
 {
@@ -361,14 +360,14 @@ SocketIO 推送给前端客户端。不同的 MQTT topic 会映射到不同的 S
 
 ### 9.4 前端处理示例
 
-前端可以通过监听 "mqtt" 事件来处理桥接的消息。以下是处理 IEC 104 协议数据的示例（基于 [`iec104.md`](iec104.md) 定义）：
+前端可以通过监听 "mqtt" 事件来处理桥接的消息。以下是处理 IEC 104 协议数据的示例（基于 [`iec104-protocol.md`](iec104-protocol.md) 定义）：
 
 ```javascript
 // 监听 MQTT 桥接消息
 socket.on('mqtt', (data) => {
     console.log('收到 MQTT 桥接消息:', data);
 
-    // 处理 IEC 104 协议数据（示例，基于 iec104.md 定义）
+    // 处理 IEC 104 协议数据（示例，基于 iec104-protocol.md 定义）
     const payload = data.payload;
     if (payload.asdu === 'M_SP_NA_1') {
         // 处理单点信息
