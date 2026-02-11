@@ -16,23 +16,23 @@
 ```javascript
 // 建立连接
 const socket = io('http://your-server-url:port', {
-  transports: ['websocket', 'polling'],
-  reconnection: true
+    transports: ['websocket', 'polling'],
+    reconnection: true
 });
 
 // 监听连接事件
 socket.on('connect', () => {
-  console.log('连接成功，socket ID:', socket.id);
+    console.log('连接成功，socket ID:', socket.id);
 });
 
 // 监听断开事件
 socket.on('disconnect', (reason) => {
-  console.log('连接断开:', reason);
+    console.log('连接断开:', reason);
 });
 
 // 监听服务器推送消息
 socket.on('__down__', (data) => {
-  console.log('收到服务器消息:', data);
+    console.log('收到服务器消息:', data);
 });
 ```
 
@@ -56,12 +56,12 @@ socket.on('__down__', (data) => {
 ```javascript
 // 携带auth建立连接
 const socket = io('http://your-server-url:port', {
-  transports: ['websocket', 'polling'],
-  reconnection: true,
-  // 使用auth选项传递令牌对象
-  auth: {
-    token: 'your-token-value' // 替换为实际的令牌
-  }
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    // 使用auth选项传递令牌对象
+    auth: {
+        token: 'your-token-value' // 替换为实际的令牌
+    }
 });
 ```
 
@@ -69,34 +69,35 @@ const socket = io('http://your-server-url:port', {
 
 ### 4.1 客户端发送事件
 
-| 事件名称 | 描述 | 数据格式 |
-|---------|------|---------|
-| `__up__` | 客户端上行消息 | `SocketUpReq` |
-| `__join_room_up__` | 加入房间 | `SocketUpRoomReq` |
-| `__leave_room_up__` | 离开房间 | `SocketUpRoomReq` |
-| `__room_broadcast_up__` | 房间广播 | `SocketUpReq` |
-| `__global_broadcast_up__` | 全局广播 | `SocketUpReq` |
+| 事件名称                      | 描述      | 数据格式              |
+|---------------------------|---------|-------------------|
+| `__up__`                  | 客户端上行消息 | `SocketUpReq`     |
+| `__join_room_up__`        | 加入房间    | `SocketUpRoomReq` |
+| `__leave_room_up__`       | 离开房间    | `SocketUpRoomReq` |
+| `__room_broadcast_up__`   | 房间广播    | `SocketUpReq`     |
+| `__global_broadcast_up__` | 全局广播    | `SocketUpReq`     |
 
 ### 4.2 服务器推送事件
 
-| 事件名称 | 描述 | 数据格式 |
-|---------|------|---------|
-| `__down__` | 服务器响应消息 | `SocketResp` |
-| `__stat_down__` | 统计信息推送 | `StatDown` |
-| 自定义事件 | 业务事件推送 | `SocketDown` |
+| 事件名称            | 描述      | 数据格式         |
+|-----------------|---------|--------------|
+| `__down__`      | 服务器响应消息 | `SocketResp` |
+| `__stat_down__` | 统计信息推送  | `StatDown`   |
+| 自定义事件           | 业务事件推送  | `SocketDown` |
 
 ## 5. 数据结构定义
 
 ### 5.1 SocketUpReq（客户端上行请求）
 
-| 字段名 | 类型 | 必填 | 描述 |
-|-------|------|------|------|
-| `payload` | `object` | ✅ | 业务数据 |
-| `reqId` | `string` | ✅ | 请求唯一标识，建议使用UUID |
-| `room` | `string` | ❌ | 房间名称（用于广播） |
-| `event` | `string` | ❌ | 自定义事件名称（用于广播） |
+| 字段名       | 类型       | 必填 | 描述              |
+|-----------|----------|----|-----------------|
+| `payload` | `object` | ✅  | 业务数据            |
+| `reqId`   | `string` | ✅  | 请求唯一标识，建议使用UUID |
+| `room`    | `string` | ❌  | 房间名称（用于广播）      |
+| `event`   | `string` | ❌  | 自定义事件名称（用于广播）   |
 
 **示例**：
+
 ```json
 {
   "event": "custom_event",
@@ -150,12 +151,13 @@ const socket = io('http://your-server-url:port', {
 
 ### 5.2 SocketUpRoomReq（房间操作请求）
 
-| 字段名 | 类型 | 必填 | 描述 |
-|-------|------|------|------|
-| `reqId` | `string` | ✅ | 请求唯一标识 |
-| `room` | `string` | ✅ | 房间名称 |
+| 字段名     | 类型       | 必填 | 描述     |
+|---------|----------|----|--------|
+| `reqId` | `string` | ✅  | 请求唯一标识 |
+| `room`  | `string` | ✅  | 房间名称   |
 
 **示例**：
+
 ```json
 {
   "reqId": "uuid-12345",
@@ -165,14 +167,15 @@ const socket = io('http://your-server-url:port', {
 
 ### 5.3 SocketResp（服务器响应消息）
 
-| 字段名 | 类型 | 描述 |
-|-------|------|------|
-| `code` | `int` | 状态码，200为成功 |
-| `msg` | `string` | 状态描述 |
-| `payload` | `object` | 业务数据 |
-| `reqId` | `string` | 对应请求的reqId |
+| 字段名       | 类型       | 描述         |
+|-----------|----------|------------|
+| `code`    | `int`    | 状态码，200为成功 |
+| `msg`     | `string` | 状态描述       |
+| `payload` | `object` | 业务数据       |
+| `reqId`   | `string` | 对应请求的reqId |
 
 **示例**：
+
 ```json
 {
   "code": 200,
@@ -190,13 +193,14 @@ const socket = io('http://your-server-url:port', {
 
 ### 5.4 SocketDown（自定义事件推送）
 
-| 字段名 | 类型 | 描述 |
-|-------|------|------|
-| `event` | `string` | 事件名称 |
-| `payload` | `object` | 业务数据 |
-| `reqId` | `string` | 对应请求的reqId |
+| 字段名       | 类型       | 描述         |
+|-----------|----------|------------|
+| `event`   | `string` | 事件名称       |
+| `payload` | `object` | 业务数据       |
+| `reqId`   | `string` | 对应请求的reqId |
 
 **示例**：
+
 ```json
 {
   "event": "chat_message",
@@ -211,18 +215,22 @@ const socket = io('http://your-server-url:port', {
 
 ### 5.5 StatDown（统计信息）
 
-| 字段名 | 类型 | 描述 |
-|-------|------|------|
-| `sId` | `string` | 会话ID |
-| `rooms` | `[]string` | 当前加入的房间列表 |
-| `nps` | `string` | 网络性能分数 |
-| `metadata` | `map[string]string` | 会话元数据 |
+| 字段名        | 类型                  | 描述        |
+|------------|---------------------|-----------|
+| `sId`      | `string`            | 会话ID      |
+| `rooms`    | `[]string`          | 当前加入的房间列表 |
+| `nps`      | `string`            | 网络性能分数    |
+| `metadata` | `map[string]string` | 会话元数据     |
 
 **示例**：
+
 ```json
 {
   "sId": "socket-123",
-  "rooms": ["room1", "room2"],
+  "rooms": [
+    "room1",
+    "room2"
+  ],
   "nps": "85",
   "metadata": {
     "userId": "user123",
@@ -250,48 +258,51 @@ const socket = io('http://your-server-url:port', {
 - **用途**：用于实时通知、推送和事件驱动场景
 
 **示例**：
+
 ```javascript
 // 监听自定义事件
 socket.on('chat_message', (data) => {
-  console.log('收到聊天消息:', data);
+    console.log('收到聊天消息:', data);
 });
 
 // 监听订单状态变化
 socket.on('order_status_change', (data) => {
-  console.log('订单状态变化:', data);
+    console.log('订单状态变化:', data);
 });
 ```
 
 ## 7. 错误码体系
 
-| 错误码 | 描述 | 处理建议 |
-|-------|------|---------|
-| 200 | 成功 | 正常处理响应数据 |
-| 400 | 参数错误 | 检查请求参数格式和必填字段 |
+| 错误码 | 描述   | 处理建议                  |
+|-----|------|-----------------------|
+| 200 | 成功   | 正常处理响应数据              |
+| 400 | 参数错误 | 检查请求参数格式和必填字段         |
 | 500 | 业务错误 | 查看msg字段获取详细错误信息，必要时重试 |
 
 ## 8. 最佳实践
 
 1. **请求ID管理**：每次请求必须生成唯一的`reqId`，建议使用UUID
 2. **事件命名规范**：
-   - 系统事件使用`__`前缀，如`__up__`、`__down__`
-   - 自定义事件使用驼峰命名，如`chatMessage`、`orderStatusChange`
-   - 避免使用特殊字符和空格
+    - 系统事件使用`__`前缀，如`__up__`、`__down__`
+    - 自定义事件使用驼峰命名，如`chatMessage`、`orderStatusChange`
+    - 避免使用特殊字符和空格
 3. **数据格式**：
-   - `payload`使用JSON对象格式，无需转换为字符串
-   - 支持各种数据类型，包括字符串、数字、布尔值、数组、对象等
+    - `payload`使用JSON对象格式，无需转换为字符串
+    - 支持各种数据类型，包括字符串、数字、布尔值、数组、对象等
 4. **鉴权方式**：
-   - 使用SocketIO原生的`auth`选项传递令牌，不要使用其他方式
+    - 使用SocketIO原生的`auth`选项传递令牌，不要使用其他方式
 
 ## 9. MQTT 桥接指导
 
 ### 9.1 概述
 
-SocketIO 消息网关支持通过 MQTT 协议桥接其他系统的消息，例如 IEC 104 协议的工业设备数据。桥接后，这些消息会以统一的格式通过 SocketIO 推送给前端客户端。不同的 MQTT topic 会映射到不同的 SocketIO room，确保消息准确路由到对应的客户端。
+SocketIO 消息网关支持通过 MQTT 协议桥接其他系统的消息，例如 IEC 104 协议的工业设备数据。桥接后，这些消息会以统一的格式通过
+SocketIO 推送给前端客户端。不同的 MQTT topic 会映射到不同的 SocketIO room，确保消息准确路由到对应的客户端。
 
 ### 9.2 桥接消息格式
 
-桥接的 MQTT 消息会转换为统一的格式，遵循通用的 `event`、`payload`、`reqId` 结构。以下示例基于 IEC 104 协议桥接，详细协议定义请参考 [`iec104.md`](iec104.md) 文件：
+桥接的 MQTT 消息会转换为统一的格式，遵循通用的 `event`、`payload`、`reqId` 结构。以下示例基于 IEC 104
+协议桥接，详细协议定义请参考 [`iec104.md`](iec104.md) 文件：
 
 ```json
 {
@@ -332,21 +343,21 @@ SocketIO 消息网关支持通过 MQTT 协议桥接其他系统的消息，例�
 
 ### 9.3 字段说明
 
-| 字段名 | 类型 | 描述 |
-|-------|------|------|
-| `event` | `string` | 固定为 "mqtt"，标识这是一个桥接的 MQTT 消息 |
-| `payload` | `object` | 桥接的消息内容，包含原始协议的数据。以下是基于 IEC 104 协议的示例结构，详细定义请参考 [`iec104.md`](iec104.md)。 |
-| `payload.msgId` | `string` | 消息唯一标识 |
-| `payload.host` | `string` | 设备主机地址 |
-| `payload.port` | `number` | 设备端口号 |
-| `payload.asdu` | `string` | 应用服务数据单元类型（如 IEC 104 协议中的类型） |
-| `payload.typeId` | `number` | 类型 ID |
-| `payload.dataType` | `number` | 数据类型 |
-| `payload.coa` | `number` | 公共地址 |
-| `payload.body` | `object` | 消息主体，包含具体的设备数据 |
-| `payload.time` | `string` | 消息时间戳 |
-| `payload.metaData` | `object` | 消息元数据，包含额外的信息 |
-| `reqId` | `string` | 请求唯一标识 |
+| 字段名                | 类型       | 描述                                      |
+|--------------------|----------|-----------------------------------------|
+| `event`            | `string` | 固定为 "mqtt"，标识这是一个桥接的 MQTT 消息            |
+| `payload`          | `object` | 桥接的消息内容，包含原始协议的数据。以下是基于 IEC 104 协议的示例结构 |
+| `payload.msgId`    | `string` | 消息唯一标识                                  |
+| `payload.host`     | `string` | 设备主机地址                                  |
+| `payload.port`     | `number` | 设备端口号                                   |
+| `payload.asdu`     | `string` | 应用服务数据单元类型（如 IEC 104 协议中的类型）            |
+| `payload.typeId`   | `number` | 类型 ID                                   |
+| `payload.dataType` | `number` | 数据类型                                    |
+| `payload.coa`      | `number` | 公共地址                                    |
+| `payload.body`     | `object` | 消息主体，包含具体的设备数据                          |
+| `payload.time`     | `string` | 消息时间戳                                   |
+| `payload.metaData` | `object` | 消息元数据，包含额外的信息                           |
+| `reqId`            | `string` | 请求唯一标识                                  |
 
 ### 9.4 前端处理示例
 
@@ -355,15 +366,15 @@ SocketIO 消息网关支持通过 MQTT 协议桥接其他系统的消息，例�
 ```javascript
 // 监听 MQTT 桥接消息
 socket.on('mqtt', (data) => {
-  console.log('收到 MQTT 桥接消息:', data);
-  
-  // 处理 IEC 104 协议数据（示例，基于 iec104.md 定义）
-  const payload = data.payload;
-  if (payload.asdu === 'M_SP_NA_1') {
-    // 处理单点信息
-    const body = payload.body;
-    console.log(`设备 ${payload.host}:${payload.port} 状态变化: 点号=${body.ioa}, 值=${body.value}, 时间=${payload.time}`);
-  }
+    console.log('收到 MQTT 桥接消息:', data);
+
+    // 处理 IEC 104 协议数据（示例，基于 iec104.md 定义）
+    const payload = data.payload;
+    if (payload.asdu === 'M_SP_NA_1') {
+        // 处理单点信息
+        const body = payload.body;
+        console.log(`设备 ${payload.host}:${payload.port} 状态变化: 点号=${body.ioa}, 值=${body.value}, 时间=${payload.time}`);
+    }
 });
 ```
 
@@ -378,8 +389,8 @@ socket.on('mqtt', (data) => {
 
 ## 10. 版本历史
 
-| 版本 | 日期 | 说明 |
-|------|------|------|
-| 2.1 | 2026-02-11 | 添加 MQTT 桥接指导 |
+| 版本  | 日期         | 说明                                        |
+|-----|------------|-------------------------------------------|
+| 2.1 | 2026-02-11 | 添加 MQTT 桥接指导                              |
 | 2.0 | 2026-02-11 | 重写版本，支持SocketIO原生auth鉴权，payload使用object类型 |
-| 1.0 | 2025-12-30 | 初始版本 |
+| 1.0 | 2025-12-30 | 初始版本                                      |
