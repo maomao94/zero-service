@@ -30,10 +30,31 @@ func (l *BroadcastGlobalLogic) BroadcastGlobal(in *socketpush.BroadcastGlobalReq
 	baseCtx := context.WithoutCancel(l.ctx)
 	for _, cli := range l.svcCtx.SocketContainer.GetClients() {
 		threading.GoSafe(func() {
-			cli.BroadcastGlobal(baseCtx, &socketgtw.BroadcastGlobalReq{
-				ReqId:   in.ReqId,
-				Event:   in.Event,
-				Payload: in.Payload,
+			//testpayload := map[string]any{}
+			//testpayload["string"] = "string"
+			//testpayload["list"] = []string{"1", "2", "3"}
+			//testpayload["map"] = map[string]string{"1": "1", "2": "2", "3": "3"}
+			//testpayload["int"] = 1
+			//testpayload["float"] = 1.1
+			//testpayload["bool"] = true
+			//testpayload["nil"] = nil
+			//testpayload["struct"] = struct {
+			//	Name string
+			//	Age  int
+			//}{
+			//	Name: "test",
+			//	Age:  1,
+			//}
+			//list := []map[string]any{}
+			//list = append(list, testpayload)
+			//list = append(list, testpayload)
+			//b, _ := jsonx.Marshal(list)
+			threading.GoSafe(func() {
+				cli.BroadcastGlobal(baseCtx, &socketgtw.BroadcastGlobalReq{
+					ReqId:   in.ReqId,
+					Event:   in.Event,
+					Payload: in.Payload,
+				})
 			})
 		})
 	}

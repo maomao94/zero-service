@@ -9,6 +9,7 @@ Log:
   KeepDays: 300
 JwtAuth:
   AccessSecret: 629c6233-1a76-471b-bd25-b87208762219
+  PrevAccessSecret: 629c6233-1a76-471b-bd25-b87208762219
   AccessExpire: 31536000
 NacosConfig:
   IsRegister: false

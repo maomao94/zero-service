@@ -14,12 +14,35 @@ import (
 	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/duke-git/lancet/v2/formatter"
 	"github.com/duke-git/lancet/v2/random"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"google.golang.org/protobuf/proto"
 )
 
 var oneHundredDecimal decimal.Decimal = decimal.NewFromInt(100)
+
+// ParseToken 解析并验证JWT token，支持所有签名算法，与go-zero保持一致
+func ParseToken(tokenString string, secrets ...string) (jwt.MapClaims, error) {
+	if len(secrets) == 0 {
+		return nil, fmt.Errorf("at least one secret is required")
+	}
+	for _, secret := range secrets {
+		token, err := jwt.ParseWithClaims(tokenString, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return []byte(secret), nil
+		})
+
+		if err == nil && token.Valid {
+			if claims, ok := token.Claims.(jwt.MapClaims); ok {
+				return claims, nil
+			}
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+	return nil, fmt.Errorf("invalid token")
+}
 
 // Base62 编码实现
 var base62Chars = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")

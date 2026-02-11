@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/doquangtan/socketio/v4"
+	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/google/uuid"
 	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -35,7 +36,7 @@ const (
 )
 
 type SocketUpReq struct {
-	Payload string `json:"payload"`
+	Payload any    `json:"payload"`
 	ReqId   string `json:"reqId"`
 	Room    string `json:"room,omitempty"`
 	Event   string `json:"event,omitempty"`
@@ -49,13 +50,13 @@ type SocketUpRoomReq struct {
 type SocketResp struct {
 	Code    int    `json:"code"`
 	Msg     string `json:"msg"`
-	Payload string `json:"payload,omitempty"`
+	Payload any    `json:"payload,omitempty"`
 	ReqId   string `json:"reqId,omitempty"`
 }
 
 type SocketDown struct {
 	Event   string `json:"event"`
-	Payload string `json:"payload,omitempty"`
+	Payload any    `json:"payload,omitempty"`
 	ReqId   string `json:"reqId,omitempty"`
 }
 
@@ -66,7 +67,7 @@ type StatDown struct {
 	MetaData map[string]string `json:"metadata,omitempty"`
 }
 
-func BuildResp(code int, msg string, payload string, reqId string) []byte {
+func buildRespJson(code int, msg string, payload any, reqId string) []byte {
 	resp := SocketResp{
 		Code:    code,
 		Msg:     msg,
@@ -77,7 +78,7 @@ func BuildResp(code int, msg string, payload string, reqId string) []byte {
 	return bytes
 }
 
-func BuildDown(event string, payload string, reqId string) []byte {
+func buildDownJson(event string, payload any, reqId string) []byte {
 	down := SocketDown{
 		Event:   event,
 		Payload: payload,
@@ -129,20 +130,20 @@ func (s *Session) EmitAny(event string, payload any) error {
 	return s.socket.Emit(event, payload)
 }
 
-func (s *Session) EmitString(event string, payload string) error {
+func (s *Session) EmitString(event string, message string) error {
 	ok := s.checkSocketNil()
 	if ok {
 		return fmt.Errorf("socket is nil")
 	}
-	return s.socket.Emit(event, payload)
+	return s.socket.Emit(event, message)
 }
 
-func (s *Session) EmitDown(event string, payload string, reqId string) error {
+func (s *Session) EmitDown(event string, payload any, reqId string) error {
 	ok := s.checkSocketNil()
 	if ok {
 		return fmt.Errorf("socket is nil")
 	}
-	data := BuildDown(event, payload, reqId)
+	data := buildDownJson(event, payload, reqId)
 	if len(event) == 0 {
 		return errors.New("event name is empty")
 	}
@@ -152,12 +153,12 @@ func (s *Session) EmitDown(event string, payload string, reqId string) error {
 	return s.socket.Emit(event, string(data))
 }
 
-func (s *Session) EmitEventDown(data string) error {
-	return s.EmitString(EventDown, data)
+func (s *Session) EmitEventDown(data any) error {
+	return s.EmitAny(EventDown, data)
 }
 
-func (s *Session) ReplyEventDown(code int, msg string, payload string, reqId string) error {
-	data := BuildResp(code, msg, payload, reqId)
+func (s *Session) ReplyEventDown(code int, msg string, payload any, reqId string) error {
+	data := buildRespJson(code, msg, payload, reqId)
 	return s.EmitEventDown(string(data))
 }
 
@@ -203,6 +204,10 @@ func (f EventHandlerFunc) Handle(ctx context.Context, event string, payload *soc
 
 type EventHandlers map[string]EventHandler
 
+type TokenValidator func(token string) bool
+
+type TokenValidatorWithClaims func(token string) (map[string]interface{}, bool)
+
 type Option func(s *Server)
 
 func WithEventHandlers(handlers EventHandlers) Option {
@@ -226,14 +231,24 @@ func WithHandler(event string, handler EventHandler) Option {
 	}
 }
 
+func WithTokenValidator(validator TokenValidator) Option {
+	return func(s *Server) { s.tokenValidator = validator }
+}
+
+func WithTokenValidatorWithClaims(validator TokenValidatorWithClaims) Option {
+	return func(s *Server) { s.tokenValidatorWithClaims = validator }
+}
+
 type Server struct {
 	*socketio.Io
-	eventHandlers EventHandlers
-	sessions      map[string]*Session
-	lock          sync.RWMutex
-	statInterval  time.Duration
-	stopChan      chan struct{}
-	contextKeys   []string // 从上下文提取的键列表
+	eventHandlers            EventHandlers
+	sessions                 map[string]*Session
+	lock                     sync.RWMutex
+	statInterval             time.Duration
+	stopChan                 chan struct{}
+	contextKeys              []string // 从上下文提取的键列表
+	tokenValidator           TokenValidator
+	tokenValidatorWithClaims TokenValidatorWithClaims
 }
 
 func MustServer(opts ...Option) *Server {
@@ -261,20 +276,37 @@ func NewServer(opts ...Option) (*Server, error) {
 
 func (srv *Server) bindEvents() {
 	srv.OnAuthentication(func(params map[string]string) bool {
+		token := params["token"]
+		logx.Infof("[socketio] new connection auth: token=%s", token)
+		if srv.tokenValidator != nil {
+			valid := srv.tokenValidator(token)
+			if !valid {
+				logx.Errorf("[socketio] token validation failed: token=%s", token)
+				return false
+			}
+		}
 		return true
 	})
 	srv.OnConnection(func(socket *socketio.Socket) {
-		ctx := socket.Ctx
+		token := socket.Handshake["token"]
+		logx.Infof("[socketio] new connection: token=%s", token)
 		session := &Session{
 			id:       socket.Id,
 			socket:   socket,
 			metadata: make(map[string]string),
 		}
 		srv.lock.Lock()
-		if ctx != nil && len(srv.contextKeys) > 0 {
-			for _, key := range srv.contextKeys {
-				if value := ctx.Value(key); value != nil {
-					session.SetMetadata(key, value)
+		if srv.tokenValidatorWithClaims != nil && token != "" {
+			claims, valid := srv.tokenValidatorWithClaims(token)
+			if valid {
+				if len(srv.contextKeys) > 0 {
+					for _, key := range srv.contextKeys {
+						if v, ok := claims[key]; ok {
+							if str, ok := v.(string); ok && str != "" {
+								session.SetMetadata(key, convertor.ToString(v))
+							}
+						}
+					}
 				}
 			}
 		}
@@ -296,9 +328,9 @@ func (srv *Server) bindEvents() {
 					if err != nil {
 						logx.WithContext(ctx).Errorf("[socketio] failed to marshal data for event %s: conn=%s, err=%v", EventUp, socket.Id, err)
 						if payload.Ack != nil {
-							payload.Ack(string(BuildResp(CodeParamErr, "数据格式错误", "", "")))
+							payload.Ack(string(buildRespJson(CodeParamErr, "数据格式错误", nil, "")))
 						} else {
-							_ = session.ReplyEventDown(CodeParamErr, "数据格式错误", "", "")
+							_ = session.ReplyEventDown(CodeParamErr, "数据格式错误", nil, "")
 						}
 						return
 					}
@@ -309,18 +341,18 @@ func (srv *Server) bindEvents() {
 			if err := jsonx.Unmarshal(handlerPayload, &upReq); err != nil {
 				logx.WithContext(ctx).Errorf("[socketio] failed to parse request: conn=%s, err=%v, raw_data=%s", socket.Id, err, string(handlerPayload))
 				if payload.Ack != nil {
-					payload.Ack(string(BuildResp(CodeParamErr, "参数解析失败", "", upReq.ReqId)))
+					payload.Ack(string(buildRespJson(CodeParamErr, "参数解析失败", nil, upReq.ReqId)))
 				} else {
-					_ = session.ReplyEventDown(CodeParamErr, "参数解析失败", "", upReq.ReqId)
+					_ = session.ReplyEventDown(CodeParamErr, "参数解析失败", nil, upReq.ReqId)
 				}
 				return
 			}
 			if len(upReq.ReqId) == 0 || len(upReq.Room) == 0 {
 				logx.WithContext(ctx).Errorf("[socketio] missing required fields: conn=%s", socket.Id)
 				if payload.Ack != nil {
-					payload.Ack(string(BuildResp(CodeParamErr, "reqId|room为必填项", "", upReq.ReqId)))
+					payload.Ack(string(buildRespJson(CodeParamErr, "reqId|room为必填项", nil, upReq.ReqId)))
 				} else {
-					_ = session.ReplyEventDown(CodeParamErr, "reqId|room为必填项", "", upReq.ReqId)
+					_ = session.ReplyEventDown(CodeParamErr, "reqId|room为必填项", nil, upReq.ReqId)
 				}
 				return
 			}
@@ -328,9 +360,9 @@ func (srv *Server) bindEvents() {
 				ack := payload.Ack
 				session.JoinRoom(upReq.Room)
 				if ack != nil {
-					ack(string(BuildResp(CodeSuccess, "处理成功", "", upReq.ReqId)))
+					ack(string(buildRespJson(CodeSuccess, "处理成功", nil, upReq.ReqId)))
 				} else {
-					_ = session.ReplyEventDown(CodeSuccess, "处理成功", "", upReq.ReqId)
+					_ = session.ReplyEventDown(CodeSuccess, "处理成功", nil, upReq.ReqId)
 				}
 			})
 		})
@@ -349,9 +381,9 @@ func (srv *Server) bindEvents() {
 					if err != nil {
 						logx.WithContext(ctx).Errorf("[socketio] failed to marshal data for event %s: conn=%s, err=%v", EventUp, socket.Id, err)
 						if payload.Ack != nil {
-							payload.Ack(string(BuildResp(CodeParamErr, "数据格式错误", "", "")))
+							payload.Ack(string(buildRespJson(CodeParamErr, "数据格式错误", nil, "")))
 						} else {
-							_ = session.ReplyEventDown(CodeParamErr, "数据格式错误", "", "")
+							_ = session.ReplyEventDown(CodeParamErr, "数据格式错误", nil, "")
 						}
 						return
 					}
@@ -362,18 +394,18 @@ func (srv *Server) bindEvents() {
 			if err := jsonx.Unmarshal(handlerPayload, &upReq); err != nil {
 				logx.WithContext(ctx).Errorf("[socketio] failed to parse request: conn=%s, err=%v, raw_data=%s", socket.Id, err, string(handlerPayload))
 				if payload.Ack != nil {
-					payload.Ack(string(BuildResp(CodeParamErr, "参数解析失败", "", upReq.ReqId)))
+					payload.Ack(string(buildRespJson(CodeParamErr, "参数解析失败", nil, upReq.ReqId)))
 				} else {
-					_ = session.ReplyEventDown(CodeParamErr, "参数解析失败", "", upReq.ReqId)
+					_ = session.ReplyEventDown(CodeParamErr, "参数解析失败", nil, upReq.ReqId)
 				}
 				return
 			}
 			if len(upReq.ReqId) == 0 || len(upReq.Room) == 0 {
 				logx.WithContext(ctx).Errorf("[socketio] missing required fields: conn=%s", socket.Id)
 				if payload.Ack != nil {
-					payload.Ack(string(BuildResp(CodeParamErr, "reqId|room为必填项", "", upReq.ReqId)))
+					payload.Ack(string(buildRespJson(CodeParamErr, "reqId|room为必填项", nil, upReq.ReqId)))
 				} else {
-					_ = session.ReplyEventDown(CodeParamErr, "reqId|room为必填项", "", upReq.ReqId)
+					_ = session.ReplyEventDown(CodeParamErr, "reqId|room为必填项", nil, upReq.ReqId)
 				}
 				return
 			}
@@ -381,9 +413,9 @@ func (srv *Server) bindEvents() {
 				ack := payload.Ack
 				session.LeaveRoom(upReq.Room)
 				if ack != nil {
-					ack(string(BuildResp(CodeSuccess, "处理成功", "", upReq.ReqId)))
+					ack(string(buildRespJson(CodeSuccess, "处理成功", nil, upReq.ReqId)))
 				} else {
-					_ = session.ReplyEventDown(CodeSuccess, "处理成功", "", upReq.ReqId)
+					_ = session.ReplyEventDown(CodeSuccess, "处理成功", nil, upReq.ReqId)
 				}
 			})
 		})
@@ -402,9 +434,9 @@ func (srv *Server) bindEvents() {
 					if err != nil {
 						logx.WithContext(ctx).Errorf("[socketio] failed to marshal data for event %s: conn=%s, err=%v", EventUp, socket.Id, err)
 						if payload.Ack != nil {
-							payload.Ack(string(BuildResp(CodeParamErr, "数据格式错误", "", "")))
+							payload.Ack(string(buildRespJson(CodeParamErr, "数据格式错误", nil, "")))
 						} else {
-							_ = session.ReplyEventDown(CodeParamErr, "数据格式错误", "", "")
+							_ = session.ReplyEventDown(CodeParamErr, "数据格式错误", nil, "")
 						}
 						return
 					}
@@ -416,18 +448,18 @@ func (srv *Server) bindEvents() {
 			if err := jsonx.Unmarshal(handlerPayload, &upReq); err != nil {
 				logx.WithContext(ctx).Errorf("[socketio] failed to parse request: conn=%s, err=%v, raw_data=%s", socket.Id, err, string(handlerPayload))
 				if payload.Ack != nil {
-					payload.Ack(string(BuildResp(CodeParamErr, "参数解析失败", "", upReq.ReqId)))
+					payload.Ack(string(buildRespJson(CodeParamErr, "参数解析失败", nil, upReq.ReqId)))
 				} else {
-					_ = session.ReplyEventDown(CodeParamErr, "参数解析失败", "", upReq.ReqId)
+					_ = session.ReplyEventDown(CodeParamErr, "参数解析失败", nil, upReq.ReqId)
 				}
 				return
 			}
-			if len(upReq.ReqId) == 0 || len(upReq.Payload) == 0 {
+			if len(upReq.ReqId) == 0 || upReq.Payload == nil {
 				logx.WithContext(ctx).Errorf("[socketio] missing required fields: conn=%s", socket.Id)
 				if payload.Ack != nil {
-					payload.Ack(string(BuildResp(CodeParamErr, "reqId|payload为必填项", "", upReq.ReqId)))
+					payload.Ack(string(buildRespJson(CodeParamErr, "reqId|payload为必填项", nil, upReq.ReqId)))
 				} else {
-					_ = session.ReplyEventDown(CodeParamErr, "reqId|payload为必填项", "", upReq.ReqId)
+					_ = session.ReplyEventDown(CodeParamErr, "reqId|payload为必填项", nil, upReq.ReqId)
 				}
 				return
 			}
@@ -439,23 +471,23 @@ func (srv *Server) bindEvents() {
 					if err != nil {
 						logx.WithContext(ctx).Errorf("[socketio] failed to process request: conn=%s, err=%v", socket.Id, err)
 						if ack != nil {
-							ack(string(BuildResp(CodeBizErr, "业务处理失败", "", upReq.ReqId)))
+							ack(string(buildRespJson(CodeBizErr, "业务处理失败", nil, upReq.ReqId)))
 						} else {
-							_ = session.ReplyEventDown(CodeBizErr, "业务处理失败", "", upReq.ReqId)
+							_ = session.ReplyEventDown(CodeBizErr, "业务处理失败", nil, upReq.ReqId)
 						}
 					} else {
 						if ack != nil {
-							ack(string(BuildResp(CodeSuccess, "处理成功", "", upReq.ReqId)))
+							ack(string(buildRespJson(CodeSuccess, "处理成功", nil, upReq.ReqId)))
 						} else {
-							_ = session.ReplyEventDown(CodeSuccess, "处理成功", "", upReq.ReqId)
+							_ = session.ReplyEventDown(CodeSuccess, "处理成功", nil, upReq.ReqId)
 						}
 					}
 				} else {
 					logx.WithContext(ctx).Debugf("[socketio] no handler registered for EventUp: conn=%s", socket.Id)
 					if ack != nil {
-						ack(string(BuildResp(CodeBizErr, "未配置处理器", "", upReq.ReqId)))
+						ack(string(buildRespJson(CodeBizErr, "未配置处理器", nil, upReq.ReqId)))
 					} else {
-						_ = session.ReplyEventDown(CodeBizErr, "未配置处理器", "", upReq.ReqId)
+						_ = session.ReplyEventDown(CodeBizErr, "未配置处理器", nil, upReq.ReqId)
 					}
 				}
 			})
@@ -475,9 +507,9 @@ func (srv *Server) bindEvents() {
 					if err != nil {
 						logx.WithContext(ctx).Errorf("[socketio] failed to marshal data for event %s: conn=%s, err=%v", EventUp, socket.Id, err)
 						if payload.Ack != nil {
-							payload.Ack(string(BuildResp(CodeParamErr, "数据格式错误", "", "")))
+							payload.Ack(string(buildRespJson(CodeParamErr, "数据格式错误", nil, "")))
 						} else {
-							_ = session.ReplyEventDown(CodeParamErr, "数据格式错误", "", "")
+							_ = session.ReplyEventDown(CodeParamErr, "数据格式错误", nil, "")
 						}
 						return
 					}
@@ -489,18 +521,18 @@ func (srv *Server) bindEvents() {
 			if err := jsonx.Unmarshal(handlerPayload, &upReq); err != nil {
 				logx.WithContext(ctx).Errorf("[socketio] failed to parse request: conn=%s, err=%v, raw_data=%s", socket.Id, err, string(handlerPayload))
 				if payload.Ack != nil {
-					payload.Ack(string(BuildResp(CodeParamErr, "参数解析失败", "", upReq.ReqId)))
+					payload.Ack(string(buildRespJson(CodeParamErr, "参数解析失败", nil, upReq.ReqId)))
 				} else {
-					_ = session.ReplyEventDown(CodeParamErr, "参数解析失败", "", upReq.ReqId)
+					_ = session.ReplyEventDown(CodeParamErr, "参数解析失败", nil, upReq.ReqId)
 				}
 				return
 			}
-			if len(upReq.ReqId) == 0 || len(upReq.Payload) == 0 || len(upReq.Room) == 0 || len(upReq.Event) == 0 {
+			if len(upReq.ReqId) == 0 || upReq.Payload == nil || len(upReq.Room) == 0 || len(upReq.Event) == 0 {
 				logx.WithContext(ctx).Errorf("[socketio] missing required fields: conn=%s", socket.Id)
 				if payload.Ack != nil {
-					payload.Ack(string(BuildResp(CodeParamErr, "reqId|payload|room|event为必填项", "", upReq.ReqId)))
+					payload.Ack(string(buildRespJson(CodeParamErr, "reqId|payload|room|event为必填项", nil, upReq.ReqId)))
 				} else {
-					_ = session.ReplyEventDown(CodeParamErr, "reqId|payload|room|event为必填项", "", upReq.ReqId)
+					_ = session.ReplyEventDown(CodeParamErr, "reqId|payload|room|event为必填项", nil, upReq.ReqId)
 				}
 				return
 			}
@@ -511,15 +543,15 @@ func (srv *Server) bindEvents() {
 				if err != nil {
 					logx.WithContext(ctx).Errorf("[socketio] failed to process request: conn=%s, err=%v", socket.Id, err)
 					if ack != nil {
-						ack(string(BuildResp(CodeBizErr, "业务处理失败", "", upReq.ReqId)))
+						ack(string(buildRespJson(CodeBizErr, "业务处理失败", nil, upReq.ReqId)))
 					} else {
-						_ = session.ReplyEventDown(CodeBizErr, "业务处理失败", "", upReq.ReqId)
+						_ = session.ReplyEventDown(CodeBizErr, "业务处理失败", nil, upReq.ReqId)
 					}
 				} else {
 					if ack != nil {
-						ack(string(BuildResp(CodeSuccess, "处理成功", "", upReq.ReqId)))
+						ack(string(buildRespJson(CodeSuccess, "处理成功", nil, upReq.ReqId)))
 					} else {
-						_ = session.ReplyEventDown(CodeSuccess, "处理成功", "", upReq.ReqId)
+						_ = session.ReplyEventDown(CodeSuccess, "处理成功", nil, upReq.ReqId)
 					}
 				}
 			})
@@ -539,9 +571,9 @@ func (srv *Server) bindEvents() {
 					if err != nil {
 						logx.WithContext(ctx).Errorf("[socketio] failed to marshal data for event %s: conn=%s, err=%v", EventUp, socket.Id, err)
 						if payload.Ack != nil {
-							payload.Ack(string(BuildResp(CodeParamErr, "数据格式错误", "", "")))
+							payload.Ack(string(buildRespJson(CodeParamErr, "数据格式错误", nil, "")))
 						} else {
-							_ = session.ReplyEventDown(CodeParamErr, "数据格式错误", "", "")
+							_ = session.ReplyEventDown(CodeParamErr, "数据格式错误", nil, "")
 						}
 						return
 					}
@@ -553,18 +585,18 @@ func (srv *Server) bindEvents() {
 			if err := jsonx.Unmarshal(handlerPayload, &upReq); err != nil {
 				logx.WithContext(ctx).Errorf("[socketio] failed to parse request: conn=%s, err=%v, raw_data=%s", socket.Id, err, string(handlerPayload))
 				if payload.Ack != nil {
-					payload.Ack(string(BuildResp(CodeParamErr, "参数解析失败", "", upReq.ReqId)))
+					payload.Ack(string(buildRespJson(CodeParamErr, "参数解析失败", nil, upReq.ReqId)))
 				} else {
-					_ = session.ReplyEventDown(CodeParamErr, "参数解析失败", "", upReq.ReqId)
+					_ = session.ReplyEventDown(CodeParamErr, "参数解析失败", nil, upReq.ReqId)
 				}
 				return
 			}
-			if len(upReq.ReqId) == 0 || len(upReq.Payload) == 0 || len(upReq.Event) == 0 {
+			if len(upReq.ReqId) == 0 || upReq.Payload == nil || len(upReq.Event) == 0 {
 				logx.WithContext(ctx).Errorf("[socketio] missing required fields: conn=%s", socket.Id)
 				if payload.Ack != nil {
-					payload.Ack(string(BuildResp(CodeParamErr, "reqId|payload|event为必填项", "", upReq.ReqId)))
+					payload.Ack(string(buildRespJson(CodeParamErr, "reqId|payload|event为必填项", nil, upReq.ReqId)))
 				} else {
-					_ = session.ReplyEventDown(CodeParamErr, "reqId|payload|event为必填项", "", upReq.ReqId)
+					_ = session.ReplyEventDown(CodeParamErr, "reqId|payload|event为必填项", nil, upReq.ReqId)
 				}
 				return
 			}
@@ -575,15 +607,15 @@ func (srv *Server) bindEvents() {
 				if err != nil {
 					logx.WithContext(ctx).Errorf("[socketio] failed to process request: conn=%s, err=%v", socket.Id, err)
 					if ack != nil {
-						ack(string(BuildResp(CodeBizErr, "业务处理失败", "", upReq.ReqId)))
+						ack(string(buildRespJson(CodeBizErr, "业务处理失败", nil, upReq.ReqId)))
 					} else {
-						_ = session.ReplyEventDown(CodeBizErr, "业务处理失败", "", upReq.ReqId)
+						_ = session.ReplyEventDown(CodeBizErr, "业务处理失败", nil, upReq.ReqId)
 					}
 				} else {
 					if ack != nil {
-						ack(string(BuildResp(CodeSuccess, "处理成功", "", upReq.ReqId)))
+						ack(string(buildRespJson(CodeSuccess, "处理成功", nil, upReq.ReqId)))
 					} else {
-						_ = session.ReplyEventDown(CodeSuccess, "处理成功", "", upReq.ReqId)
+						_ = session.ReplyEventDown(CodeSuccess, "处理成功", nil, upReq.ReqId)
 					}
 				}
 			})
@@ -632,8 +664,8 @@ func (srv *Server) bindEvents() {
 	})
 }
 
-func (srv *Server) BroadcastRoom(room, event string, payload string, reqId string) error {
-	data := BuildDown(event, payload, reqId)
+func (srv *Server) BroadcastRoom(room, event string, payload any, reqId string) error {
+	data := buildDownJson(event, payload, reqId)
 	if len(event) == 0 {
 		return errors.New("event name is empty")
 	}
@@ -644,8 +676,8 @@ func (srv *Server) BroadcastRoom(room, event string, payload string, reqId strin
 	return nil
 }
 
-func (s *Server) BroadcastGlobal(event string, payload string, reqId string) error {
-	data := BuildDown(event, payload, reqId)
+func (s *Server) BroadcastGlobal(event string, payload any, reqId string) error {
+	data := buildDownJson(event, payload, reqId)
 	if len(event) == 0 {
 		return errors.New("event name is empty")
 	}
@@ -685,8 +717,8 @@ func (srv *Server) statLoop() {
 						Nps:      sess.socket.Nps,
 						MetaData: sess.metadata,
 					}
-					payload, _ := jsonx.Marshal(&stat)
-					sess.EmitString(EventStatDown, string(payload))
+					b, _ := jsonx.Marshal(&stat)
+					sess.EmitString(EventStatDown, string(b))
 				})
 			}
 		case <-srv.stopChan:

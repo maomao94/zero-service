@@ -96,7 +96,7 @@
 #### 4.1 socketgtw 服务 - SocketIO 网关
 `socketgtw` 是 SocketIO 网关服务，负责处理客户端连接、房间管理、消息路由和 Token 认证。
 
-**前端对接文档**：[SocketIO 消息网关客户端对接文档](./common/socketiox/client-documentation.md)
+**前端对接文档**：[SocketIO 消息网关客户端对接文档](docs/socketiox-documentation.md)
 
 #### 4.2 socketpush 服务 - SocketIO 推送服务
 `socketpush` 是 SocketIO 推送服务，负责 Token 生成和提供 SocketIO 推送相关的 gRPC 接口，支持房间广播、全局广播、消息推送等功能。

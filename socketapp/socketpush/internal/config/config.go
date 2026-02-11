@@ -5,8 +5,9 @@ import "github.com/zeromicro/go-zero/zrpc"
 type Config struct {
 	zrpc.RpcServerConf
 	JwtAuth struct {
-		AccessSecret string
-		AccessExpire int64
+		AccessSecret     string
+		PrevAccessSecret string `json:",optional"`
+		AccessExpire     int64
 	}
 	NacosConfig struct {
 		IsRegister  bool

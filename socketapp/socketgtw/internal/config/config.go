@@ -9,8 +9,8 @@ type Config struct {
 	zrpc.RpcServerConf
 	Http    rest.RestConf
 	JwtAuth struct {
-		AccessSecret string
-		AccessExpire int64
+		AccessSecret     string
+		PrevAccessSecret string `json:",optional"`
 	} `json:",optional"`
 	NacosConfig struct {
 		IsRegister  bool

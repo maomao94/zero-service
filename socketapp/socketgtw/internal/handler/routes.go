@@ -17,8 +17,8 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 		},
 	}
 	var opts []rest.RouteOption
-	if len(serverCtx.Config.JwtAuth.AccessSecret) != 0 {
-		opts = append(opts, rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret))
-	}
+	//if len(serverCtx.Config.JwtAuth.AccessSecret) != 0 {
+	//	opts = append(opts, rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret))
+	//}
 	server.AddRoutes(routes, opts...)
 }

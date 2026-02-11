@@ -29,6 +29,12 @@ func (s *SocketPushServer) GenToken(ctx context.Context, in *socketpush.GenToken
 	return l.GenToken(in)
 }
 
+// 验证token
+func (s *SocketPushServer) VerifyToken(ctx context.Context, in *socketpush.VerifyTokenReq) (*socketpush.VerifyTokenRes, error) {
+	l := logic.NewVerifyTokenLogic(ctx, s.svcCtx)
+	return l.VerifyToken(in)
+}
+
 // 加入房间
 func (s *SocketPushServer) JoinRoom(ctx context.Context, in *socketpush.JoinRoomReq) (*socketpush.JoinRoomRes, error) {
 	l := logic.NewJoinRoomLogic(ctx, s.svcCtx)

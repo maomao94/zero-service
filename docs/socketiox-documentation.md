@@ -40,58 +40,30 @@ socket.on('__down__', (data) => {
 
 ### 3.1 鉴权概述
 
-当SocketIO网关开启鉴权后，客户端必须携带有效的`ticket`参数才能建立连接。`ticket`是由认证服务颁发的令牌，用于验证客户端身份。
+当SocketIO网关开启鉴权后，客户端必须携带有效的令牌才能建立连接。服务器只支持SocketIO原生的`auth`方式传递令牌。
 
-### 3.2 获取ticket
+### 3.2 获取令牌
 
-客户端需要通过认证服务获取有效的`ticket`，获取方式取决于具体的认证体系：
+客户端需要通过认证服务获取有效的令牌，获取方式取决于具体的认证体系：
 
-- **前端直接获取**：通过调用认证API获取ticket
-- **后端传递**：由后端服务通过接口返回ticket
+- **前端直接获取**：通过调用认证API获取令牌
+- **后端传递**：由后端服务通过接口返回令牌
 
-### 3.3 使用ticket连接
+### 3.3 使用令牌连接
 
-使用SocketIO的`query`选项传递`ticket`参数，**ticket必须使用Base64编码**，SocketIO客户端会自动将其添加到连接URL中：
+使用SocketIO的`auth`选项传递令牌对象：
 
 ```javascript
-// 携带ticket建立连接
+// 携带auth建立连接
 const socket = io('http://your-server-url:port', {
   transports: ['websocket', 'polling'],
   reconnection: true,
-  // 使用query选项传递Base64编码的ticket参数
-  query: {
-    ticket: btoa('your-ticket-value') // 替换为实际的ticket，并使用btoa()进行Base64编码
+  // 使用auth选项传递令牌对象
+  auth: {
+    token: 'your-token-value' // 替换为实际的令牌
   }
 });
 ```
-
-**编码示例**：
-```javascript
-// 原始ticket
-const originalTicket = 'bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
-
-// Base64编码
-const encodedTicket = btoa(originalTicket);
-
-// 使用编码后的ticket
-const socket = io('http://your-server-url:port', {
-  query: {
-    ticket: encodedTicket
-  }
-});
-```
-
-### 3.4 连接URL示例
-
-使用Base64编码的ticket参数后，SocketIO客户端会生成类似以下格式的连接URL：
-
-```
-/socket.io/?ticket=YmVhcmVyIGV5SmhiR2NpOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&EIO=4&transport=websocket
-```
-
-**说明**：
-- `YmVhcmVyIGV5SmhiR2NpOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` 是 `bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` 的Base64编码结果
-- 后端服务会自动解码Base64编码的ticket，无需客户端额外处理
 
 ## 4. 核心事件体系
 
@@ -119,7 +91,7 @@ const socket = io('http://your-server-url:port', {
 
 | 字段名 | 类型 | 必填 | 描述 |
 |-------|------|------|------|
-| `payload` | `string` | ✅ | 业务数据，JSON字符串格式 |
+| `payload` | `object` | ✅ | 业务数据 |
 | `reqId` | `string` | ✅ | 请求唯一标识，建议使用UUID |
 | `room` | `string` | ❌ | 房间名称（用于广播） |
 | `event` | `string` | ❌ | 自定义事件名称（用于广播） |
@@ -127,10 +99,52 @@ const socket = io('http://your-server-url:port', {
 **示例**：
 ```json
 {
-  "payload": "{\"type\": \"chat\", \"content\": \"Hello\"}",
-  "reqId": "uuid-12345",
-  "room": "room1",
-  "event": "chat_message"
+  "event": "custom_event",
+  "payload": [
+    {
+      "bool": true,
+      "float": 1.1,
+      "int": 1,
+      "list": [
+        "1",
+        "2",
+        "3"
+      ],
+      "map": {
+        "1": "1",
+        "2": "2",
+        "3": "3"
+      },
+      "nil": null,
+      "string": "string",
+      "struct": {
+        "Name": "test",
+        "Age": 1
+      }
+    },
+    {
+      "bool": true,
+      "float": 1.1,
+      "int": 1,
+      "list": [
+        "1",
+        "2",
+        "3"
+      ],
+      "map": {
+        "1": "1",
+        "2": "2",
+        "3": "3"
+      },
+      "nil": null,
+      "string": "string",
+      "struct": {
+        "Name": "test",
+        "Age": 1
+      }
+    }
+  ],
+  "reqId": "6fb17fd2-d2a7-447c-a679-8aa07b44665a"
 }
 ```
 
@@ -155,7 +169,7 @@ const socket = io('http://your-server-url:port', {
 |-------|------|------|
 | `code` | `int` | 状态码，200为成功 |
 | `msg` | `string` | 状态描述 |
-| `payload` | `string` | 返回数据，JSON字符串格式 |
+| `payload` | `object` | 业务数据 |
 | `reqId` | `string` | 对应请求的reqId |
 
 **示例**：
@@ -163,7 +177,13 @@ const socket = io('http://your-server-url:port', {
 {
   "code": 200,
   "msg": "处理成功",
-  "payload": "{\"result\": \"ok\"}",
+  "payload": {
+    "result": "ok",
+    "data": {
+      "name": "test",
+      "age": 18
+    }
+  },
   "reqId": "uuid-12345"
 }
 ```
@@ -173,14 +193,18 @@ const socket = io('http://your-server-url:port', {
 | 字段名 | 类型 | 描述 |
 |-------|------|------|
 | `event` | `string` | 事件名称 |
-| `payload` | `string` | 业务数据，JSON字符串格式 |
+| `payload` | `object` | 业务数据 |
 | `reqId` | `string` | 对应请求的reqId |
 
 **示例**：
 ```json
 {
   "event": "chat_message",
-  "payload": "{\"content\": \"Hello from server\"}",
+  "payload": {
+    "content": "Hello from server",
+    "sender": "server",
+    "timestamp": 1633046400
+  },
   "reqId": "uuid-12345"
 }
 ```
@@ -254,10 +278,14 @@ socket.on('order_status_change', (data) => {
    - 自定义事件使用驼峰命名，如`chatMessage`、`orderStatusChange`
    - 避免使用特殊字符和空格
 3. **数据格式**：
-   - `payload`必须是JSON字符串格式
+   - `payload`使用JSON对象格式，无需转换为字符串
+   - 支持各种数据类型，包括字符串、数字、布尔值、数组、对象等
+4. **鉴权方式**：
+   - 使用SocketIO原生的`auth`选项传递令牌，不要使用其他方式
 
 ## 9. 版本历史
 
 | 版本 | 日期 | 说明 |
 |------|------|------|
+| 2.0 | 2026-02-11 | 重写版本，支持SocketIO原生auth鉴权，payload使用object类型 |
 | 1.0 | 2025-12-30 | 初始版本 |

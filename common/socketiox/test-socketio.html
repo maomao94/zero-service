@@ -1178,16 +1178,13 @@
             };
             
             if (authToken) {
-                // 对 token 进行 Base64 编码，处理长 token
-                const encodedToken = btoa(authToken);
-                socketOptions.query = {
-                    ticket: encodedToken
-                };
+                // socketOptions.query = {
+                //     ticket: encodedToken
+                // };
                 socketOptions.auth = {
-                    token: encodedToken
+                    token: authToken
                 };
-                addLog('system', `使用query选项传递Base64编码的ticket参数: ${encodedToken}`);
-                addLog('system', `原始token长度: ${authToken.length}, 编码后长度: ${encodedToken.length}`);
+                addLog('system', `auh.token: ${authToken}`);
             }
             
             socket = io(serverUrl, socketOptions);
