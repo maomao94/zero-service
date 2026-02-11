@@ -283,9 +283,103 @@ socket.on('order_status_change', (data) => {
 4. **鉴权方式**：
    - 使用SocketIO原生的`auth`选项传递令牌，不要使用其他方式
 
-## 9. 版本历史
+## 9. MQTT 桥接指导
+
+### 9.1 概述
+
+SocketIO 消息网关支持通过 MQTT 协议桥接其他系统的消息，例如 104 协议的工业设备数据。桥接后，这些消息会以统一的格式通过 SocketIO 推送给前端客户端。不同的 MQTT topic 会映射到不同的 SocketIO room，确保消息准确路由到对应的客户端。
+
+### 9.2 桥接消息格式
+
+桥接的 MQTT 消息会转换为统一的格式，遵循通用的 `event`、`payload`、`reqId` 结构：
+
+```json
+{
+  "event": "mqtt",
+  "payload": {
+    "msgId": "f5871b411ded48c39c0438633e4e33c9",
+    "host": "127.0.0.1",
+    "port": 2404,
+    "asdu": "M_SP_NA_1",
+    "typeId": 1,
+    "dataType": 0,
+    "coa": 1,
+    "body": {
+      "ioa": 5,
+      "value": false,
+      "qds": 0,
+      "qdsDesc": "QDS(00000000)[QDSGood]",
+      "ov": false,
+      "bl": false,
+      "sb": false,
+      "nt": false,
+      "iv": false,
+      "time": ""
+    },
+    "time": "2026-02-11 13:15:52.13621",
+    "metaData": {
+      "arrayId": [
+        1,
+        2,
+        3
+      ],
+      "stationId": "330KV"
+    }
+  },
+  "reqId": "d30749eef0b14de4b26d8e3e6e69ead7"
+}
+```
+
+### 9.3 字段说明
+
+| 字段名 | 类型 | 描述 |
+|-------|------|------|
+| `event` | `string` | 固定为 "mqtt"，标识这是一个桥接的 MQTT 消息 |
+| `payload` | `object` | 桥接的消息内容，包含原始协议的数据。不同协议的 payload 结构会有所不同，以下是 104 协议的示例结构。 |
+| `payload.msgId` | `string` | 消息唯一标识 |
+| `payload.host` | `string` | 设备主机地址 |
+| `payload.port` | `number` | 设备端口号 |
+| `payload.asdu` | `string` | 应用服务数据单元类型（如 104 协议中的类型） |
+| `payload.typeId` | `number` | 类型 ID |
+| `payload.dataType` | `number` | 数据类型 |
+| `payload.coa` | `number` | 公共地址 |
+| `payload.body` | `object` | 消息主体，包含具体的设备数据 |
+| `payload.time` | `string` | 消息时间戳 |
+| `payload.metaData` | `object` | 消息元数据，包含额外的信息 |
+| `reqId` | `string` | 请求唯一标识 |
+
+### 9.4 前端处理示例
+
+前端可以通过监听 "mqtt" 事件来处理桥接的消息。以下是处理 104 协议数据的示例：
+
+```javascript
+// 监听 MQTT 桥接消息
+socket.on('mqtt', (data) => {
+  console.log('收到 MQTT 桥接消息:', data);
+  
+  // 处理 104 协议数据（示例）
+  const payload = data.payload;
+  if (payload.asdu === 'M_SP_NA_1') {
+    // 处理单点信息
+    const body = payload.body;
+    console.log(`设备 ${payload.host}:${payload.port} 状态变化: 点号=${body.ioa}, 值=${body.value}, 时间=${payload.time}`);
+  }
+});
+```
+
+### 9.5 注意事项
+
+1. **通用格式**：无论原始协议是什么，桥接后的消息都会遵循通用的 `event`、`payload`、`reqId` 格式，便于前端统一处理。
+2. **Topic 与 Room 映射**：不同的 MQTT topic 会映射到不同的 SocketIO room，确保消息准确路由。
+3. **Payload 结构**：不同协议的 `payload` 结构会有所不同，前端需要根据具体协议类型进行处理。
+4. **事件名称**：桥接消息的事件名称固定为 "mqtt"，前端需要通过这个事件名来监听。
+5. **数据类型**：前端需要注意 payload 中不同字段的数据类型，例如 port 是数字类型，而 host 是字符串类型。
+6. **时间格式**：时间戳字段的格式可能因原始协议不同而有所差异，前端需要进行适当的处理。
+
+## 10. 版本历史
 
 | 版本 | 日期 | 说明 |
 |------|------|------|
+| 2.1 | 2026-02-11 | 添加 MQTT 桥接指导 |
 | 2.0 | 2026-02-11 | 重写版本，支持SocketIO原生auth鉴权，payload使用object类型 |
 | 1.0 | 2025-12-30 | 初始版本 |
