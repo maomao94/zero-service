@@ -6264,6 +6264,8 @@ func (m *CreatePlanTaskReq) validate(all bool) error {
 
 	// no validation rules for BatchNumPrefix
 
+	// no validation rules for SkipTimeFilter
+
 	// no validation rules for Ext1
 
 	// no validation rules for Ext2

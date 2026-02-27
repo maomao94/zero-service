@@ -19,7 +19,6 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TriggerRpc_Ping_FullMethodName                    = "/trigger.TriggerRpc/Ping"
 	TriggerRpc_SendTrigger_FullMethodName             = "/trigger.TriggerRpc/SendTrigger"
 	TriggerRpc_SendProtoTrigger_FullMethodName        = "/trigger.TriggerRpc/SendProtoTrigger"
 	TriggerRpc_Queues_FullMethodName                  = "/trigger.TriggerRpc/Queues"
@@ -66,7 +65,6 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TriggerRpcClient interface {
-	Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error)
 	// 发送 http-post-json 回调
 	SendTrigger(ctx context.Context, in *SendTriggerReq, opts ...grpc.CallOption) (*SendTriggerRes, error)
 	// 发送 grpc proto字节码 回调
@@ -154,16 +152,6 @@ type triggerRpcClient struct {
 
 func NewTriggerRpcClient(cc grpc.ClientConnInterface) TriggerRpcClient {
 	return &triggerRpcClient{cc}
-}
-
-func (c *triggerRpcClient) Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Res)
-	err := c.cc.Invoke(ctx, TriggerRpc_Ping_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *triggerRpcClient) SendTrigger(ctx context.Context, in *SendTriggerReq, opts ...grpc.CallOption) (*SendTriggerRes, error) {
@@ -570,7 +558,6 @@ func (c *triggerRpcClient) NextId(ctx context.Context, in *NextIdReq, opts ...gr
 // All implementations must embed UnimplementedTriggerRpcServer
 // for forward compatibility.
 type TriggerRpcServer interface {
-	Ping(context.Context, *Req) (*Res, error)
 	// 发送 http-post-json 回调
 	SendTrigger(context.Context, *SendTriggerReq) (*SendTriggerRes, error)
 	// 发送 grpc proto字节码 回调
@@ -660,9 +647,6 @@ type TriggerRpcServer interface {
 // pointer dereference when methods are called.
 type UnimplementedTriggerRpcServer struct{}
 
-func (UnimplementedTriggerRpcServer) Ping(context.Context, *Req) (*Res, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
-}
 func (UnimplementedTriggerRpcServer) SendTrigger(context.Context, *SendTriggerReq) (*SendTriggerRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendTrigger not implemented")
 }
@@ -802,24 +786,6 @@ func RegisterTriggerRpcServer(s grpc.ServiceRegistrar, srv TriggerRpcServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&TriggerRpc_ServiceDesc, srv)
-}
-
-func _TriggerRpc_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Req)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TriggerRpcServer).Ping(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TriggerRpc_Ping_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TriggerRpcServer).Ping(ctx, req.(*Req))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _TriggerRpc_SendTrigger_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -1549,10 +1515,6 @@ var TriggerRpc_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "trigger.TriggerRpc",
 	HandlerType: (*TriggerRpcServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Ping",
-			Handler:    _TriggerRpc_Ping_Handler,
-		},
 		{
 			MethodName: "SendTrigger",
 			Handler:    _TriggerRpc_SendTrigger_Handler,

@@ -23,11 +23,6 @@ func NewTriggerRpcServer(svcCtx *svc.ServiceContext) *TriggerRpcServer {
 	}
 }
 
-func (s *TriggerRpcServer) Ping(ctx context.Context, in *trigger.Req) (*trigger.Res, error) {
-	l := logic.NewPingLogic(ctx, s.svcCtx)
-	return l.Ping(in)
-}
-
 // 发送 http-post-json 回调
 func (s *TriggerRpcServer) SendTrigger(ctx context.Context, in *trigger.SendTriggerReq) (*trigger.SendTriggerRes, error) {
 	l := logic.NewSendTriggerLogic(ctx, s.svcCtx)

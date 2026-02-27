@@ -97,16 +97,18 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	// 获取所有触发时间
 	dates := set.All()
 	// 过滤掉小于当前时间的触发时间
-	now := time.Now()
-	var validDates []time.Time = make([]time.Time, 0)
-	for _, d := range dates {
-		if !d.Before(now) {
-			validDates = append(validDates, d)
+	if !in.SkipTimeFilter {
+		now := time.Now()
+		var validDates []time.Time = make([]time.Time, 0)
+		for _, d := range dates {
+			if !d.Before(now) {
+				validDates = append(validDates, d)
+			}
 		}
-	}
-	dates = validDates
-	if len(dates) == 0 {
-		return nil, fmt.Errorf("计划任务时间段内没有触发时间")
+		dates = validDates
+		if len(dates) == 0 {
+			return nil, fmt.Errorf("计划任务时间段内没有触发时间")
+		}
 	}
 	if len(dates)*len(in.ExecItems) > 5000 {
 		return nil, fmt.Errorf("计划任务时间段内调度项过多")

@@ -2895,6 +2895,8 @@ type CreatePlanTaskReq struct {
 	ExecItems []*CreatePlanExecItem `protobuf:"bytes,12,rep,name=execItems,proto3" json:"execItems,omitempty"`
 	// batchNum 前缀
 	BatchNumPrefix string `protobuf:"bytes,13,opt,name=batchNumPrefix,proto3" json:"batchNumPrefix,omitempty"`
+	// 是否跳过时间过滤，用于立即执行的计划
+	SkipTimeFilter bool `protobuf:"varint,14,opt,name=skipTimeFilter,proto3" json:"skipTimeFilter,omitempty"`
 	// 扩展字段
 	Ext1          string `protobuf:"bytes,50,opt,name=ext1,proto3" json:"ext1,omitempty"`
 	Ext2          string `protobuf:"bytes,51,opt,name=ext2,proto3" json:"ext2,omitempty"`
@@ -3038,6 +3040,13 @@ func (x *CreatePlanTaskReq) GetBatchNumPrefix() string {
 		return x.BatchNumPrefix
 	}
 	return ""
+}
+
+func (x *CreatePlanTaskReq) GetSkipTimeFilter() bool {
+	if x != nil {
+		return x.SkipTimeFilter
+	}
+	return false
 }
 
 func (x *CreatePlanTaskReq) GetExt1() string {
@@ -7020,7 +7029,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\x04rule\x18\x03 \x01(\v2\x13.trigger.PbPlanRuleB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04rule\x120\n" +
 	"\fexcludeDates\x18\x04 \x03(\tB\f\xfaB\t\x92\x01\x06\"\x04r\x02\x10\x01R\fexcludeDates\"3\n" +
 	"\x13CalcPlanTaskDateRes\x12\x1c\n" +
-	"\tplanDates\x18\x01 \x03(\tR\tplanDates\"\xe4\x05\n" +
+	"\tplanDates\x18\x01 \x03(\tR\tplanDates\"\x8c\x06\n" +
 	"\x11CreatePlanTaskReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12#\n" +
 	"\bdeptCode\x18e \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bdeptCode\x12\x1f\n" +
@@ -7037,7 +7046,8 @@ const file_trigger_proto_rawDesc = "" +
 	" \x01(\x03B\a\xfaB\x04\"\x02(\x00R\fintervalTime\x12-\n" +
 	"\fintervalType\x18\v \x01(\x05B\t\xfaB\x06\x1a\x04\x18\x02(\x00R\fintervalType\x12C\n" +
 	"\texecItems\x18\f \x03(\v2\x1b.trigger.CreatePlanExecItemB\b\xfaB\x05\x92\x01\x02\b\x01R\texecItems\x12&\n" +
-	"\x0ebatchNumPrefix\x18\r \x01(\tR\x0ebatchNumPrefix\x12\x12\n" +
+	"\x0ebatchNumPrefix\x18\r \x01(\tR\x0ebatchNumPrefix\x12&\n" +
+	"\x0eskipTimeFilter\x18\x0e \x01(\bR\x0eskipTimeFilter\x12\x12\n" +
 	"\x04ext1\x182 \x01(\tR\x04ext1\x12\x12\n" +
 	"\x04ext2\x183 \x01(\tR\x04ext2\x12\x12\n" +
 	"\x04ext3\x184 \x01(\tR\x04ext3\x12\x12\n" +
@@ -7389,10 +7399,9 @@ const file_trigger_proto_rawDesc = "" +
 	"\x18EXEC_ITEM_STATUS_RUNNING\x10d\x12\x1c\n" +
 	"\x17EXEC_ITEM_STATUS_PAUSED\x10\x96\x01\x12\x1f\n" +
 	"\x1aEXEC_ITEM_STATUS_COMPLETED\x10\xc8\x01\x12 \n" +
-	"\x1bEXEC_ITEM_STATUS_TERMINATED\x10\xac\x022\xe7\x17\n" +
+	"\x1bEXEC_ITEM_STATUS_TERMINATED\x10\xac\x022\xc3\x17\n" +
 	"\n" +
-	"TriggerRpc\x12\"\n" +
-	"\x04Ping\x12\f.trigger.Req\x1a\f.trigger.Res\x12?\n" +
+	"TriggerRpc\x12?\n" +
 	"\vSendTrigger\x12\x17.trigger.SendTriggerReq\x1a\x17.trigger.SendTriggerRes\x12N\n" +
 	"\x10SendProtoTrigger\x12\x1c.trigger.SendProtoTriggerReq\x1a\x1c.trigger.SendProtoTriggerRes\x120\n" +
 	"\x06Queues\x12\x12.trigger.QueuesReq\x1a\x12.trigger.QueuesRes\x12B\n" +
@@ -7621,90 +7630,88 @@ var file_trigger_proto_depIdxs = []int32{
 	93,  // 69: trigger.PbPlanBatch.statusCountMap:type_name -> trigger.PbPlanBatch.StatusCountMapEntry
 	94,  // 70: trigger.CallbackPlanExecItemReq.currentUser:type_name -> extproto.CurrentUser
 	89,  // 71: trigger.CallbackPlanExecItemReq.delayConfig:type_name -> trigger.PbDelayConfig
-	4,   // 72: trigger.TriggerRpc.Ping:input_type -> trigger.Req
-	6,   // 73: trigger.TriggerRpc.SendTrigger:input_type -> trigger.SendTriggerReq
-	8,   // 74: trigger.TriggerRpc.SendProtoTrigger:input_type -> trigger.SendProtoTriggerReq
-	10,  // 75: trigger.TriggerRpc.Queues:input_type -> trigger.QueuesReq
-	12,  // 76: trigger.TriggerRpc.GetQueueInfo:input_type -> trigger.GetQueueInfoReq
-	14,  // 77: trigger.TriggerRpc.ArchiveTask:input_type -> trigger.ArchiveTaskReq
-	16,  // 78: trigger.TriggerRpc.DeleteTask:input_type -> trigger.DeleteTaskReq
-	18,  // 79: trigger.TriggerRpc.GetTaskInfo:input_type -> trigger.GetTaskInfoReq
-	20,  // 80: trigger.TriggerRpc.DeleteAllCompletedTasks:input_type -> trigger.DeleteAllCompletedTasksReq
-	22,  // 81: trigger.TriggerRpc.DeleteAllArchivedTasks:input_type -> trigger.DeleteAllArchivedTasksReq
-	24,  // 82: trigger.TriggerRpc.HistoricalStats:input_type -> trigger.HistoricalStatsReq
-	26,  // 83: trigger.TriggerRpc.ListActiveTasks:input_type -> trigger.ListActiveTasksReq
-	28,  // 84: trigger.TriggerRpc.ListPendingTasks:input_type -> trigger.ListPendingTasksReq
-	30,  // 85: trigger.TriggerRpc.ListAggregatingTasks:input_type -> trigger.ListAggregatingTasksReq
-	32,  // 86: trigger.TriggerRpc.ListScheduledTasks:input_type -> trigger.ListScheduledTasksReq
-	34,  // 87: trigger.TriggerRpc.ListRetryTasks:input_type -> trigger.ListRetryTasksReq
-	36,  // 88: trigger.TriggerRpc.ListArchivedTasks:input_type -> trigger.ListArchivedTasksReq
-	38,  // 89: trigger.TriggerRpc.ListCompletedTasks:input_type -> trigger.ListCompletedTasksReq
-	40,  // 90: trigger.TriggerRpc.RunTask:input_type -> trigger.RunTaskReq
-	42,  // 91: trigger.TriggerRpc.CalcPlanTaskDate:input_type -> trigger.CalcPlanTaskDateReq
-	44,  // 92: trigger.TriggerRpc.CreatePlanTask:input_type -> trigger.CreatePlanTaskReq
-	48,  // 93: trigger.TriggerRpc.PausePlan:input_type -> trigger.PausePlanReq
-	50,  // 94: trigger.TriggerRpc.TerminatePlan:input_type -> trigger.TerminatePlanReq
-	52,  // 95: trigger.TriggerRpc.ResumePlan:input_type -> trigger.ResumePlanReq
-	54,  // 96: trigger.TriggerRpc.PausePlanBatch:input_type -> trigger.PausePlanBatchReq
-	56,  // 97: trigger.TriggerRpc.TerminatePlanBatch:input_type -> trigger.TerminatePlanBatchReq
-	58,  // 98: trigger.TriggerRpc.ResumePlanBatch:input_type -> trigger.ResumePlanBatchReq
-	60,  // 99: trigger.TriggerRpc.PausePlanExecItem:input_type -> trigger.PausePlanExecItemReq
-	62,  // 100: trigger.TriggerRpc.TerminatePlanExecItem:input_type -> trigger.TerminatePlanExecItemReq
-	66,  // 101: trigger.TriggerRpc.RunPlanExecItem:input_type -> trigger.RunPlanExecItemReq
-	64,  // 102: trigger.TriggerRpc.ResumePlanExecItem:input_type -> trigger.ResumePlanExecItemReq
-	68,  // 103: trigger.TriggerRpc.GetPlan:input_type -> trigger.GetPlanReq
-	71,  // 104: trigger.TriggerRpc.ListPlans:input_type -> trigger.ListPlansReq
-	73,  // 105: trigger.TriggerRpc.GetPlanBatch:input_type -> trigger.GetPlanBatchReq
-	75,  // 106: trigger.TriggerRpc.ListPlanBatches:input_type -> trigger.ListPlanBatchesReq
-	77,  // 107: trigger.TriggerRpc.GetPlanExecItem:input_type -> trigger.GetPlanExecItemReq
-	80,  // 108: trigger.TriggerRpc.ListPlanExecItems:input_type -> trigger.ListPlanExecItemsReq
-	82,  // 109: trigger.TriggerRpc.GetPlanExecLog:input_type -> trigger.GetPlanExecLogReq
-	84,  // 110: trigger.TriggerRpc.ListPlanExecLogs:input_type -> trigger.ListPlanExecLogsReq
-	88,  // 111: trigger.TriggerRpc.CallbackPlanExecItem:input_type -> trigger.CallbackPlanExecItemReq
-	91,  // 112: trigger.TriggerRpc.NextId:input_type -> trigger.NextIdReq
-	5,   // 113: trigger.TriggerRpc.Ping:output_type -> trigger.Res
-	7,   // 114: trigger.TriggerRpc.SendTrigger:output_type -> trigger.SendTriggerRes
-	9,   // 115: trigger.TriggerRpc.SendProtoTrigger:output_type -> trigger.SendProtoTriggerRes
-	11,  // 116: trigger.TriggerRpc.Queues:output_type -> trigger.QueuesRes
-	13,  // 117: trigger.TriggerRpc.GetQueueInfo:output_type -> trigger.GetQueueInfoRes
-	15,  // 118: trigger.TriggerRpc.ArchiveTask:output_type -> trigger.ArchiveTaskRes
-	17,  // 119: trigger.TriggerRpc.DeleteTask:output_type -> trigger.DeleteTaskRes
-	19,  // 120: trigger.TriggerRpc.GetTaskInfo:output_type -> trigger.GetTaskInfoRes
-	21,  // 121: trigger.TriggerRpc.DeleteAllCompletedTasks:output_type -> trigger.DeleteAllCompletedTasksRes
-	23,  // 122: trigger.TriggerRpc.DeleteAllArchivedTasks:output_type -> trigger.DeleteAllArchivedTasksRes
-	25,  // 123: trigger.TriggerRpc.HistoricalStats:output_type -> trigger.HistoricalStatsRes
-	27,  // 124: trigger.TriggerRpc.ListActiveTasks:output_type -> trigger.ListActiveTasksRes
-	29,  // 125: trigger.TriggerRpc.ListPendingTasks:output_type -> trigger.ListPendingTasksRes
-	31,  // 126: trigger.TriggerRpc.ListAggregatingTasks:output_type -> trigger.ListAggregatingTasksRes
-	33,  // 127: trigger.TriggerRpc.ListScheduledTasks:output_type -> trigger.ListScheduledTasksRes
-	35,  // 128: trigger.TriggerRpc.ListRetryTasks:output_type -> trigger.ListRetryTasksRes
-	37,  // 129: trigger.TriggerRpc.ListArchivedTasks:output_type -> trigger.ListArchivedTasksRes
-	39,  // 130: trigger.TriggerRpc.ListCompletedTasks:output_type -> trigger.ListCompletedTasksRes
-	41,  // 131: trigger.TriggerRpc.RunTask:output_type -> trigger.RunTaskRes
-	43,  // 132: trigger.TriggerRpc.CalcPlanTaskDate:output_type -> trigger.CalcPlanTaskDateRes
-	47,  // 133: trigger.TriggerRpc.CreatePlanTask:output_type -> trigger.CreatePlanTaskRes
-	49,  // 134: trigger.TriggerRpc.PausePlan:output_type -> trigger.PausePlanRes
-	51,  // 135: trigger.TriggerRpc.TerminatePlan:output_type -> trigger.TerminatePlanRes
-	53,  // 136: trigger.TriggerRpc.ResumePlan:output_type -> trigger.ResumePlanRes
-	55,  // 137: trigger.TriggerRpc.PausePlanBatch:output_type -> trigger.PausePlanBatchRes
-	57,  // 138: trigger.TriggerRpc.TerminatePlanBatch:output_type -> trigger.TerminatePlanBatchRes
-	59,  // 139: trigger.TriggerRpc.ResumePlanBatch:output_type -> trigger.ResumePlanBatchRes
-	61,  // 140: trigger.TriggerRpc.PausePlanExecItem:output_type -> trigger.PausePlanExecItemRes
-	63,  // 141: trigger.TriggerRpc.TerminatePlanExecItem:output_type -> trigger.TerminatePlanExecItemRes
-	67,  // 142: trigger.TriggerRpc.RunPlanExecItem:output_type -> trigger.RunPlanExecItemRes
-	65,  // 143: trigger.TriggerRpc.ResumePlanExecItem:output_type -> trigger.ResumePlanExecItemRes
-	69,  // 144: trigger.TriggerRpc.GetPlan:output_type -> trigger.GetPlanRes
-	72,  // 145: trigger.TriggerRpc.ListPlans:output_type -> trigger.ListPlansRes
-	74,  // 146: trigger.TriggerRpc.GetPlanBatch:output_type -> trigger.GetPlanBatchRes
-	76,  // 147: trigger.TriggerRpc.ListPlanBatches:output_type -> trigger.ListPlanBatchesRes
-	78,  // 148: trigger.TriggerRpc.GetPlanExecItem:output_type -> trigger.GetPlanExecItemRes
-	81,  // 149: trigger.TriggerRpc.ListPlanExecItems:output_type -> trigger.ListPlanExecItemsRes
-	83,  // 150: trigger.TriggerRpc.GetPlanExecLog:output_type -> trigger.GetPlanExecLogRes
-	85,  // 151: trigger.TriggerRpc.ListPlanExecLogs:output_type -> trigger.ListPlanExecLogsRes
-	90,  // 152: trigger.TriggerRpc.CallbackPlanExecItem:output_type -> trigger.CallbackPlanExecItemRes
-	92,  // 153: trigger.TriggerRpc.NextId:output_type -> trigger.NextIdRes
-	113, // [113:154] is the sub-list for method output_type
-	72,  // [72:113] is the sub-list for method input_type
+	6,   // 72: trigger.TriggerRpc.SendTrigger:input_type -> trigger.SendTriggerReq
+	8,   // 73: trigger.TriggerRpc.SendProtoTrigger:input_type -> trigger.SendProtoTriggerReq
+	10,  // 74: trigger.TriggerRpc.Queues:input_type -> trigger.QueuesReq
+	12,  // 75: trigger.TriggerRpc.GetQueueInfo:input_type -> trigger.GetQueueInfoReq
+	14,  // 76: trigger.TriggerRpc.ArchiveTask:input_type -> trigger.ArchiveTaskReq
+	16,  // 77: trigger.TriggerRpc.DeleteTask:input_type -> trigger.DeleteTaskReq
+	18,  // 78: trigger.TriggerRpc.GetTaskInfo:input_type -> trigger.GetTaskInfoReq
+	20,  // 79: trigger.TriggerRpc.DeleteAllCompletedTasks:input_type -> trigger.DeleteAllCompletedTasksReq
+	22,  // 80: trigger.TriggerRpc.DeleteAllArchivedTasks:input_type -> trigger.DeleteAllArchivedTasksReq
+	24,  // 81: trigger.TriggerRpc.HistoricalStats:input_type -> trigger.HistoricalStatsReq
+	26,  // 82: trigger.TriggerRpc.ListActiveTasks:input_type -> trigger.ListActiveTasksReq
+	28,  // 83: trigger.TriggerRpc.ListPendingTasks:input_type -> trigger.ListPendingTasksReq
+	30,  // 84: trigger.TriggerRpc.ListAggregatingTasks:input_type -> trigger.ListAggregatingTasksReq
+	32,  // 85: trigger.TriggerRpc.ListScheduledTasks:input_type -> trigger.ListScheduledTasksReq
+	34,  // 86: trigger.TriggerRpc.ListRetryTasks:input_type -> trigger.ListRetryTasksReq
+	36,  // 87: trigger.TriggerRpc.ListArchivedTasks:input_type -> trigger.ListArchivedTasksReq
+	38,  // 88: trigger.TriggerRpc.ListCompletedTasks:input_type -> trigger.ListCompletedTasksReq
+	40,  // 89: trigger.TriggerRpc.RunTask:input_type -> trigger.RunTaskReq
+	42,  // 90: trigger.TriggerRpc.CalcPlanTaskDate:input_type -> trigger.CalcPlanTaskDateReq
+	44,  // 91: trigger.TriggerRpc.CreatePlanTask:input_type -> trigger.CreatePlanTaskReq
+	48,  // 92: trigger.TriggerRpc.PausePlan:input_type -> trigger.PausePlanReq
+	50,  // 93: trigger.TriggerRpc.TerminatePlan:input_type -> trigger.TerminatePlanReq
+	52,  // 94: trigger.TriggerRpc.ResumePlan:input_type -> trigger.ResumePlanReq
+	54,  // 95: trigger.TriggerRpc.PausePlanBatch:input_type -> trigger.PausePlanBatchReq
+	56,  // 96: trigger.TriggerRpc.TerminatePlanBatch:input_type -> trigger.TerminatePlanBatchReq
+	58,  // 97: trigger.TriggerRpc.ResumePlanBatch:input_type -> trigger.ResumePlanBatchReq
+	60,  // 98: trigger.TriggerRpc.PausePlanExecItem:input_type -> trigger.PausePlanExecItemReq
+	62,  // 99: trigger.TriggerRpc.TerminatePlanExecItem:input_type -> trigger.TerminatePlanExecItemReq
+	66,  // 100: trigger.TriggerRpc.RunPlanExecItem:input_type -> trigger.RunPlanExecItemReq
+	64,  // 101: trigger.TriggerRpc.ResumePlanExecItem:input_type -> trigger.ResumePlanExecItemReq
+	68,  // 102: trigger.TriggerRpc.GetPlan:input_type -> trigger.GetPlanReq
+	71,  // 103: trigger.TriggerRpc.ListPlans:input_type -> trigger.ListPlansReq
+	73,  // 104: trigger.TriggerRpc.GetPlanBatch:input_type -> trigger.GetPlanBatchReq
+	75,  // 105: trigger.TriggerRpc.ListPlanBatches:input_type -> trigger.ListPlanBatchesReq
+	77,  // 106: trigger.TriggerRpc.GetPlanExecItem:input_type -> trigger.GetPlanExecItemReq
+	80,  // 107: trigger.TriggerRpc.ListPlanExecItems:input_type -> trigger.ListPlanExecItemsReq
+	82,  // 108: trigger.TriggerRpc.GetPlanExecLog:input_type -> trigger.GetPlanExecLogReq
+	84,  // 109: trigger.TriggerRpc.ListPlanExecLogs:input_type -> trigger.ListPlanExecLogsReq
+	88,  // 110: trigger.TriggerRpc.CallbackPlanExecItem:input_type -> trigger.CallbackPlanExecItemReq
+	91,  // 111: trigger.TriggerRpc.NextId:input_type -> trigger.NextIdReq
+	7,   // 112: trigger.TriggerRpc.SendTrigger:output_type -> trigger.SendTriggerRes
+	9,   // 113: trigger.TriggerRpc.SendProtoTrigger:output_type -> trigger.SendProtoTriggerRes
+	11,  // 114: trigger.TriggerRpc.Queues:output_type -> trigger.QueuesRes
+	13,  // 115: trigger.TriggerRpc.GetQueueInfo:output_type -> trigger.GetQueueInfoRes
+	15,  // 116: trigger.TriggerRpc.ArchiveTask:output_type -> trigger.ArchiveTaskRes
+	17,  // 117: trigger.TriggerRpc.DeleteTask:output_type -> trigger.DeleteTaskRes
+	19,  // 118: trigger.TriggerRpc.GetTaskInfo:output_type -> trigger.GetTaskInfoRes
+	21,  // 119: trigger.TriggerRpc.DeleteAllCompletedTasks:output_type -> trigger.DeleteAllCompletedTasksRes
+	23,  // 120: trigger.TriggerRpc.DeleteAllArchivedTasks:output_type -> trigger.DeleteAllArchivedTasksRes
+	25,  // 121: trigger.TriggerRpc.HistoricalStats:output_type -> trigger.HistoricalStatsRes
+	27,  // 122: trigger.TriggerRpc.ListActiveTasks:output_type -> trigger.ListActiveTasksRes
+	29,  // 123: trigger.TriggerRpc.ListPendingTasks:output_type -> trigger.ListPendingTasksRes
+	31,  // 124: trigger.TriggerRpc.ListAggregatingTasks:output_type -> trigger.ListAggregatingTasksRes
+	33,  // 125: trigger.TriggerRpc.ListScheduledTasks:output_type -> trigger.ListScheduledTasksRes
+	35,  // 126: trigger.TriggerRpc.ListRetryTasks:output_type -> trigger.ListRetryTasksRes
+	37,  // 127: trigger.TriggerRpc.ListArchivedTasks:output_type -> trigger.ListArchivedTasksRes
+	39,  // 128: trigger.TriggerRpc.ListCompletedTasks:output_type -> trigger.ListCompletedTasksRes
+	41,  // 129: trigger.TriggerRpc.RunTask:output_type -> trigger.RunTaskRes
+	43,  // 130: trigger.TriggerRpc.CalcPlanTaskDate:output_type -> trigger.CalcPlanTaskDateRes
+	47,  // 131: trigger.TriggerRpc.CreatePlanTask:output_type -> trigger.CreatePlanTaskRes
+	49,  // 132: trigger.TriggerRpc.PausePlan:output_type -> trigger.PausePlanRes
+	51,  // 133: trigger.TriggerRpc.TerminatePlan:output_type -> trigger.TerminatePlanRes
+	53,  // 134: trigger.TriggerRpc.ResumePlan:output_type -> trigger.ResumePlanRes
+	55,  // 135: trigger.TriggerRpc.PausePlanBatch:output_type -> trigger.PausePlanBatchRes
+	57,  // 136: trigger.TriggerRpc.TerminatePlanBatch:output_type -> trigger.TerminatePlanBatchRes
+	59,  // 137: trigger.TriggerRpc.ResumePlanBatch:output_type -> trigger.ResumePlanBatchRes
+	61,  // 138: trigger.TriggerRpc.PausePlanExecItem:output_type -> trigger.PausePlanExecItemRes
+	63,  // 139: trigger.TriggerRpc.TerminatePlanExecItem:output_type -> trigger.TerminatePlanExecItemRes
+	67,  // 140: trigger.TriggerRpc.RunPlanExecItem:output_type -> trigger.RunPlanExecItemRes
+	65,  // 141: trigger.TriggerRpc.ResumePlanExecItem:output_type -> trigger.ResumePlanExecItemRes
+	69,  // 142: trigger.TriggerRpc.GetPlan:output_type -> trigger.GetPlanRes
+	72,  // 143: trigger.TriggerRpc.ListPlans:output_type -> trigger.ListPlansRes
+	74,  // 144: trigger.TriggerRpc.GetPlanBatch:output_type -> trigger.GetPlanBatchRes
+	76,  // 145: trigger.TriggerRpc.ListPlanBatches:output_type -> trigger.ListPlanBatchesRes
+	78,  // 146: trigger.TriggerRpc.GetPlanExecItem:output_type -> trigger.GetPlanExecItemRes
+	81,  // 147: trigger.TriggerRpc.ListPlanExecItems:output_type -> trigger.ListPlanExecItemsRes
+	83,  // 148: trigger.TriggerRpc.GetPlanExecLog:output_type -> trigger.GetPlanExecLogRes
+	85,  // 149: trigger.TriggerRpc.ListPlanExecLogs:output_type -> trigger.ListPlanExecLogsRes
+	90,  // 150: trigger.TriggerRpc.CallbackPlanExecItem:output_type -> trigger.CallbackPlanExecItemRes
+	92,  // 151: trigger.TriggerRpc.NextId:output_type -> trigger.NextIdRes
+	112, // [112:152] is the sub-list for method output_type
+	72,  // [72:112] is the sub-list for method input_type
 	72,  // [72:72] is the sub-list for extension type_name
 	72,  // [72:72] is the sub-list for extension extendee
 	0,   // [0:72] is the sub-list for field type_name
