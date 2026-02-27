@@ -210,14 +210,6 @@ message PbQueueInfo  {
   string timestamp = 18;
 }
 
-message Req {
-  string ping = 1;
-}
-
-message Res {
-  string pong = 1;
-}
-
 message SendTriggerReq {
   extproto.CurrentUser currentUser = 100;
 
