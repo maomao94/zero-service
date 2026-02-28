@@ -1,6 +1,8 @@
 package dbx
 
 import (
+	"context"
+	"database/sql"
 	"strings"
 
 	"github.com/doug-martin/goqu/v9"
@@ -59,6 +61,46 @@ func New(datasource string, opts ...sqlx.SqlOption) sqlx.SqlConn {
 	}
 }
 
+type SqlConnAdapter struct {
+	conn sqlx.SqlConn
+	db   *sql.DB
+}
+
+func NewSqlConnAdapter(conn sqlx.SqlConn) (*SqlConnAdapter, error) {
+	db, err := conn.RawDB()
+	if err != nil {
+		return nil, err
+	}
+	return &SqlConnAdapter{
+		conn: conn,
+		db:   db,
+	}, nil
+}
+
+func (a *SqlConnAdapter) Begin() (*sql.Tx, error) {
+	return a.db.Begin()
+}
+
+func (a *SqlConnAdapter) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
+	return a.db.BeginTx(ctx, opts)
+}
+
+func (a *SqlConnAdapter) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+	return a.conn.ExecCtx(ctx, query, args...)
+}
+
+func (a *SqlConnAdapter) PrepareContext(ctx context.Context, query string) (*sql.Stmt, error) {
+	return a.db.PrepareContext(ctx, query)
+}
+
+func (a *SqlConnAdapter) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+	return a.db.QueryContext(ctx, query, args...)
+}
+
+func (a *SqlConnAdapter) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+	return a.db.QueryRowContext(ctx, query, args...)
+}
+
 func NewQoqu(datasource string, opts ...sqlx.SqlOption) *goqu.Database {
 	var conn sqlx.SqlConn
 	dbType := ParseDatabaseType(datasource)
@@ -72,8 +114,15 @@ func NewQoqu(datasource string, opts ...sqlx.SqlOption) *goqu.Database {
 	default: // DatabaseTypeMySQL and others
 		conn = sqlx.NewMysql(datasource, opts...)
 	}
-	db, _ := conn.RawDB()
-	database := goqu.New(string(dbType), db)
+	adapter, err := NewSqlConnAdapter(conn)
+	if err != nil {
+		logx.Errorf("Failed to create SqlConnAdapter: %v", err)
+		db, _ := conn.RawDB()
+		database := goqu.New(string(dbType), db)
+		database.Logger(&QoquLog{})
+		return database
+	}
+	database := goqu.New(string(dbType), adapter)
 	database.Logger(&QoquLog{})
 	return database
 }
