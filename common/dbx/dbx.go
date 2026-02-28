@@ -86,7 +86,7 @@ func (a *SqlConnAdapter) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql
 }
 
 func (a *SqlConnAdapter) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
-	return a.conn.ExecCtx(ctx, query, args...)
+	return a.db.ExecContext(ctx, query, args...)
 }
 
 func (a *SqlConnAdapter) PrepareContext(ctx context.Context, query string) (*sql.Stmt, error) {

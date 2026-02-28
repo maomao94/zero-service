@@ -83,6 +83,49 @@ func (s *CronService) ScanPlanExecItem() bool {
 	tracer := otel.Tracer(trace.TraceName)
 	ctx, span := tracer.Start(ctx, "cron-scan", oteltrace.WithSpanKind(oteltrace.SpanKindProducer))
 	defer span.End()
+
+	// 添加 goqu 查询示例
+	//go func() {
+	//	// 从服务上下文获取数据库连接字符串
+	//	dsn := s.svcCtx.Config.DB.DataSource
+	//	// 创建 goqu 数据库实例
+	//	db := dbx.NewQoqu(dsn)
+	//
+	//	// 构建一个简单的查询
+	//	query := db.From("plan").Select("id", "plan_id", "plan_name").Where(goqu.C("status").Eq(1)).Limit(5)
+	//
+	//	// 获取 SQL 语句和参数
+	//	sql, args, err := query.ToSQL()
+	//	if err != nil {
+	//		logx.WithContext(ctx).Errorf("Error generating SQL: %v", err)
+	//		return
+	//	}
+	//
+	//	// 执行查询并打印日志
+	//	logx.WithContext(ctx).Infof("Executing goqu query: %s", sql)
+	//	logx.WithContext(ctx).Infof("Query arguments: %v", args)
+	//
+	//	// 执行查询
+	//	type Plan struct {
+	//		Id       int64  `db:"id"`
+	//		PlanId   string `db:"plan_id"`
+	//		PlanName string `db:"plan_name"`
+	//	}
+	//
+	//	var plans []Plan
+	//	err = query.ScanStructs(&plans)
+	//	if err != nil {
+	//		logx.WithContext(ctx).Errorf("Error executing query: %v", err)
+	//		return
+	//	}
+	//
+	//	// 打印查询结果
+	//	logx.WithContext(ctx).Infof("Found %d plans", len(plans))
+	//	for i, plan := range plans {
+	//		logx.WithContext(ctx).Infof("Plan %d: id=%d, plan_id=%s, plan_name=%s", i+1, plan.Id, plan.PlanId, plan.PlanName)
+	//	}
+	//}()
+
 	execItem, err := s.svcCtx.PlanExecItemModel.LockTriggerItem(ctx, 5*60*time.Second)
 	if err != nil {
 		if err == sqlx.ErrNotFound {
