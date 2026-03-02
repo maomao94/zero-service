@@ -63,9 +63,9 @@ StreamEventConf:
   NonBlock: true
   Timeout: 10000
 # 数据库配置, 配置后将根据点位表推送数据
-DB:
+#DB:
 #  DataSource: file:./model/sql/default.db?_busy_timeout=5000&_journal_mode=WAL
-  DataSource: root:PXDN93VRKUm8TeE7@tcp(localhost:33069)/zero?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+#  DataSource: root:PXDN93VRKUm8TeE7@tcp(localhost:33069)/zero?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
 #  DataSource: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable&TimeZone=Asia/Shanghai
 DisableStmtLog: false
 # 指令推送间隔
