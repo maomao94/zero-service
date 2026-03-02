@@ -55,26 +55,26 @@ type (
 	}
 
 	DevicePointMapping struct {
-		Id              int64        `db:"id"`                // 自增主键ID
-		CreateTime      time.Time    `db:"create_time"`       // 创建时间
-		UpdateTime      time.Time    `db:"update_time"`       // 更新时间
-		DeleteTime      sql.NullTime `db:"delete_time"`       // 删除时间（软删除标记）
-		DelState        int64        `db:"del_state"`         // 删除状态：0-未删除，1-已删除
-		Version         int64        `db:"version"`           // 版本号（乐观锁）
-		TagStation      string       `db:"tag_station"`       // 与 TDengine tag_station 对应
-		Coa             int64        `db:"coa"`               // 与 TDengine coa 对应
-		Ioa             int64        `db:"ioa"`               // 与 TDengine ioa 对应
-		DeviceId        string       `db:"device_id"`         // 设备编号/ID
-		DeviceName      string       `db:"device_name"`       // 设备名称
-		TdTableType     string       `db:"td_table_type"`     // TDengine 表类型（遥信表/遥测表等，逗号分隔）
-		EnablePush      int64        `db:"enable_push"`       // 是否允许caller服务推送数据：0-不允许，1-允许
-		EnableRawInsert int64        `db:"enable_raw_insert"` // 是否允许插入 raw 原生数据：0-否，1-是
-		Description     string       `db:"description"`       // 备注信息
-		Ext1            string       `db:"ext_1"`             // 扩展字段1，如：alarm, normal, control等，用于主题拆分
-		Ext2            string       `db:"ext_2"`             // 扩展字段2
-		Ext3            string       `db:"ext_3"`             // 扩展字段3
-		Ext4            string       `db:"ext_4"`             // 扩展字段4
-		Ext5            string       `db:"ext_5"`             // 扩展字段5
+		Id              int64          `db:"id"`                // 自增主键ID
+		CreateTime      time.Time      `db:"create_time"`       // 创建时间
+		UpdateTime      time.Time      `db:"update_time"`       // 更新时间
+		DeleteTime      sql.NullTime   `db:"delete_time"`       // 删除时间（软删除标记）
+		DelState        int64          `db:"del_state"`         // 删除状态：0-未删除，1-已删除
+		Version         int64          `db:"version"`           // 版本号（乐观锁）
+		TagStation      string         `db:"tag_station"`       // 与 TDengine tag_station 对应
+		Coa             int64          `db:"coa"`               // 与 TDengine coa 对应
+		Ioa             int64          `db:"ioa"`               // 与 TDengine ioa 对应
+		DeviceId        string         `db:"device_id"`         // 设备编号/ID
+		DeviceName      string         `db:"device_name"`       // 设备名称
+		TdTableType     string         `db:"td_table_type"`     // TDengine 表类型（遥信表/遥测表等，逗号分隔）
+		EnablePush      int64          `db:"enable_push"`       // 是否允许caller服务推送数据：0-不允许，1-允许
+		EnableRawInsert int64          `db:"enable_raw_insert"` // 是否允许插入 raw 原生数据：0-否，1-是
+		Description     sql.NullString `db:"description"`       // 备注信息
+		Ext1            sql.NullString `db:"ext_1"`             // 扩展字段1，如：alarm, normal, control等，用于主题拆分
+		Ext2            sql.NullString `db:"ext_2"`             // 扩展字段2
+		Ext3            sql.NullString `db:"ext_3"`             // 扩展字段3
+		Ext4            sql.NullString `db:"ext_4"`             // 扩展字段4
+		Ext5            sql.NullString `db:"ext_5"`             // 扩展字段5
 	}
 )
 
