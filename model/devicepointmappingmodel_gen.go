@@ -7,7 +7,6 @@ package model
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"strings"
 	"time"
 
@@ -15,15 +14,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/stores/builder"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
-	"github.com/zeromicro/go-zero/core/stringx"
 )
 
-var (
-	devicePointMappingFieldNames          = builder.RawFieldNames(&DevicePointMapping{})
-	devicePointMappingRows                = strings.Join(devicePointMappingFieldNames, ",")
-	devicePointMappingRowsExpectAutoSet   = strings.Join(stringx.Remove(devicePointMappingFieldNames, "`id`", "`create_at`", "`create_time`", "`created_at`", "`update_at`", "`update_time`", "`updated_at`"), ",")
-	devicePointMappingRowsWithPlaceHolder = strings.Join(stringx.Remove(devicePointMappingFieldNames, "`id`", "`create_at`", "`create_time`", "`created_at`", "`update_at`", "`update_time`", "`updated_at`"), "=?,") + "=?"
-)
+var _ devicePointMappingModel = (*defaultDevicePointMappingModel)(nil)
 
 type (
 	devicePointMappingModel interface {
@@ -55,8 +48,10 @@ type (
 	}
 
 	defaultDevicePointMappingModel struct {
-		conn  sqlx.SqlConn
-		table string
+		conn                   sqlx.SqlConn
+		table                  string
+		dbType                 DatabaseType
+		devicePointMappingRows string
 	}
 
 	DevicePointMapping struct {
@@ -84,25 +79,46 @@ type (
 )
 
 func newDevicePointMappingModel(conn sqlx.SqlConn) *defaultDevicePointMappingModel {
+	return newDevicePointMappingModelWithDBType(conn, DatabaseTypeMySQL)
+}
+
+func newDevicePointMappingModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) *defaultDevicePointMappingModel {
+	tableName := "device_point_mapping"
+	fieldNames := builder.RawFieldNames(&PlanBatch{}, true)
+	rows := strings.Join(fieldNames, ",")
 	return &defaultDevicePointMappingModel{
-		conn:  conn,
-		table: "`device_point_mapping`",
+		conn:                   conn,
+		table:                  tableName,
+		dbType:                 dbType,
+		devicePointMappingRows: rows,
 	}
 }
 
 func (m *defaultDevicePointMappingModel) Delete(ctx context.Context, session sqlx.Session, id int64) error {
-	query := fmt.Sprintf("delete from %s where `id` = ?", m.table)
-	if session != nil {
-		_, err := session.ExecCtx(ctx, query, id)
+	deleteBuilder := m.DeleteBuilder().Where("id = ?", id)
+	query, args, err := deleteBuilder.ToSql()
+	if err != nil {
 		return err
 	}
-	_, err := m.conn.ExecCtx(ctx, query, id)
-	return err
+	var execErr error
+	if session != nil {
+		_, execErr = session.ExecCtx(ctx, query, args...)
+	} else {
+		_, execErr = m.conn.ExecCtx(ctx, query, args...)
+	}
+	return execErr
 }
 func (m *defaultDevicePointMappingModel) FindOne(ctx context.Context, id int64) (*DevicePointMapping, error) {
-	query := fmt.Sprintf("select %s from %s where `id` = ? and del_state = ? limit 1", devicePointMappingRows, m.table)
+	selectBuilder := m.SelectBuilder().Columns(m.devicePointMappingRows).
+		Where("id = ?", id).
+		Where("del_state = ?", 0).
+		Limit(1)
+	query, args, err := selectBuilder.ToSql()
+	if err != nil {
+		return nil, err
+	}
 	var resp DevicePointMapping
-	err := m.conn.QueryRowCtx(ctx, &resp, query, id, 0)
+	err = m.conn.QueryRowCtx(ctx, &resp, query, args...)
 	switch err {
 	case nil:
 		return &resp, nil
@@ -114,9 +130,18 @@ func (m *defaultDevicePointMappingModel) FindOne(ctx context.Context, id int64) 
 }
 
 func (m *defaultDevicePointMappingModel) FindOneByTagStationCoaIoa(ctx context.Context, tagStation string, coa int64, ioa int64) (*DevicePointMapping, error) {
+	selectBuilder := m.SelectBuilder().Columns(m.devicePointMappingRows).
+		Where("tag_station = ?", tagStation).
+		Where("coa = ?", coa).
+		Where("ioa = ?", ioa).
+		Where("del_state = ?", 0).
+		Limit(1)
+	query, args, err := selectBuilder.ToSql()
+	if err != nil {
+		return nil, err
+	}
 	var resp DevicePointMapping
-	query := fmt.Sprintf("select %s from %s where `tag_station` = ? and `coa` = ? and `ioa` = ?  and del_state = ? limit 1", devicePointMappingRows, m.table)
-	err := m.conn.QueryRowCtx(ctx, &resp, query, tagStation, coa, ioa, 0)
+	err = m.conn.QueryRowCtx(ctx, &resp, query, args...)
 	switch err {
 	case nil:
 		return &resp, nil
@@ -132,12 +157,41 @@ func (m *defaultDevicePointMappingModel) Insert(ctx context.Context, session sql
 		Valid: false,
 	}
 	data.DelState = 0
+	columns, values := generateColumnsAndValues(data, []string{})
+	insertBuilder := m.InsertBuilder().Columns(columns...).Values(values...)
 
-	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, devicePointMappingRowsExpectAutoSet)
-	if session != nil {
-		return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.TagStation, data.Coa, data.Ioa, data.DeviceId, data.DeviceName, data.TdTableType, data.EnablePush, data.EnableRawInsert, data.Description, data.Ext1, data.Ext2, data.Ext3, data.Ext4, data.Ext5)
+	if m.dbType == DatabaseTypePostgres {
+		insertBuilder = insertBuilder.Suffix("RETURNING id")
+		query, args, err := insertBuilder.ToSql()
+		if err != nil {
+			return nil, err
+		}
+		var id int64
+		var execErr error
+		if session != nil {
+			execErr = session.QueryRowCtx(ctx, &id, query, args...)
+		} else {
+			execErr = m.conn.QueryRowCtx(ctx, &id, query, args...)
+		}
+		if execErr != nil {
+			return nil, execErr
+		}
+		data.Id = id
+		return &postgresResult{id: id}, nil
+	} else {
+		query, args, err := insertBuilder.ToSql()
+		if err != nil {
+			return nil, err
+		}
+		var result sql.Result
+		var execErr error
+		if session != nil {
+			result, execErr = session.ExecCtx(ctx, query, args...)
+		} else {
+			result, execErr = m.conn.ExecCtx(ctx, query, args...)
+		}
+		return result, execErr
 	}
-	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.TagStation, data.Coa, data.Ioa, data.DeviceId, data.DeviceName, data.TdTableType, data.EnablePush, data.EnableRawInsert, data.Description, data.Ext1, data.Ext2, data.Ext3, data.Ext4, data.Ext5)
 }
 
 func (m *defaultDevicePointMappingModel) Update(ctx context.Context, session sqlx.Session, newData *DevicePointMapping) (sql.Result, error) {
@@ -145,30 +199,48 @@ func (m *defaultDevicePointMappingModel) Update(ctx context.Context, session sql
 		Valid: false,
 	}
 	newData.DelState = 0
-	query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, devicePointMappingRowsWithPlaceHolder)
-	if session != nil {
-		return session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TagStation, newData.Coa, newData.Ioa, newData.DeviceId, newData.DeviceName, newData.TdTableType, newData.EnablePush, newData.EnableRawInsert, newData.Description, newData.Ext1, newData.Ext2, newData.Ext3, newData.Ext4, newData.Ext5, newData.Id)
+	columns, values := generateColumnsAndValues(newData, []string{})
+	updateBuilder := m.UpdateBuilder()
+	for i, column := range columns {
+		updateBuilder = updateBuilder.Set(column, values[i])
 	}
-	return m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TagStation, newData.Coa, newData.Ioa, newData.DeviceId, newData.DeviceName, newData.TdTableType, newData.EnablePush, newData.EnableRawInsert, newData.Description, newData.Ext1, newData.Ext2, newData.Ext3, newData.Ext4, newData.Ext5, newData.Id)
+	updateBuilder = updateBuilder.Where("id = ?", newData.Id)
+	query, args, err := updateBuilder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+	var result sql.Result
+	var execErr error
+	if session != nil {
+		result, execErr = session.ExecCtx(ctx, query, args...)
+	} else {
+		result, execErr = m.conn.ExecCtx(ctx, query, args...)
+	}
+	return result, execErr
 }
 
 func (m *defaultDevicePointMappingModel) UpdateWithVersion(ctx context.Context, session sqlx.Session, newData *DevicePointMapping) error {
-
 	oldVersion := newData.Version
 	newData.Version += 1
-
-	var sqlResult sql.Result
-	var err error
-
-	query := fmt.Sprintf("update %s set %s where `id` = ? and version = ? ", m.table, devicePointMappingRowsWithPlaceHolder)
-	if session != nil {
-		sqlResult, err = session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TagStation, newData.Coa, newData.Ioa, newData.DeviceId, newData.DeviceName, newData.TdTableType, newData.EnablePush, newData.EnableRawInsert, newData.Description, newData.Ext1, newData.Ext2, newData.Ext3, newData.Ext4, newData.Ext5, newData.Id, oldVersion)
-	} else {
-		sqlResult, err = m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.TagStation, newData.Coa, newData.Ioa, newData.DeviceId, newData.DeviceName, newData.TdTableType, newData.EnablePush, newData.EnableRawInsert, newData.Description, newData.Ext1, newData.Ext2, newData.Ext3, newData.Ext4, newData.Ext5, newData.Id, oldVersion)
+	columns, values := generateColumnsAndValues(newData, []string{})
+	updateBuilder := m.UpdateBuilder()
+	for i, column := range columns {
+		updateBuilder = updateBuilder.Set(column, values[i])
 	}
-
+	updateBuilder = updateBuilder.Where("id = ?", newData.Id).Where("version = ?", oldVersion)
+	query, args, err := updateBuilder.ToSql()
 	if err != nil {
 		return err
+	}
+	var sqlResult sql.Result
+	var execErr error
+	if session != nil {
+		sqlResult, execErr = session.ExecCtx(ctx, query, args...)
+	} else {
+		sqlResult, execErr = m.conn.ExecCtx(ctx, query, args...)
+	}
+	if execErr != nil {
+		return execErr
 	}
 	updateCount, err := sqlResult.RowsAffected()
 	if err != nil {
@@ -177,7 +249,6 @@ func (m *defaultDevicePointMappingModel) UpdateWithVersion(ctx context.Context, 
 	if updateCount == 0 {
 		return ErrNoRowsUpdate
 	}
-
 	return nil
 }
 
@@ -198,22 +269,17 @@ func (m *defaultDevicePointMappingModel) DeleteSoft(ctx context.Context, session
 }
 
 func (m *defaultDevicePointMappingModel) FindSum(ctx context.Context, builder squirrel.SelectBuilder, field string) (float64, error) {
-
 	if len(field) == 0 {
 		return 0, errors.Wrapf(errors.New("FindSum Least One Field"), "FindSum Least One Field")
 	}
-
-	builder = builder.Columns("IFNULL(SUM(" + field + "),0)")
-
+	sumFunction := "COALESCE(SUM(" + field + "),0)"
+	builder = builder.Columns(sumFunction)
 	query, values, err := builder.Where("del_state = ?", 0).ToSql()
 	if err != nil {
 		return 0, err
 	}
-
 	var resp float64
-
 	err = m.conn.QueryRowCtx(ctx, &resp, query, values...)
-
 	switch err {
 	case nil:
 		return resp, nil
@@ -223,7 +289,6 @@ func (m *defaultDevicePointMappingModel) FindSum(ctx context.Context, builder sq
 }
 
 func (m *defaultDevicePointMappingModel) FindCount(ctx context.Context, builder squirrel.SelectBuilder, field string) (int64, error) {
-
 	if len(field) == 0 {
 		return 0, errors.Wrapf(errors.New("FindCount Least One Field"), "FindCount Least One Field")
 	}
@@ -236,9 +301,7 @@ func (m *defaultDevicePointMappingModel) FindCount(ctx context.Context, builder 
 	}
 
 	var resp int64
-
 	err = m.conn.QueryRowCtx(ctx, &resp, query, values...)
-
 	switch err {
 	case nil:
 		return resp, nil
@@ -248,24 +311,19 @@ func (m *defaultDevicePointMappingModel) FindCount(ctx context.Context, builder 
 }
 
 func (m *defaultDevicePointMappingModel) FindAll(ctx context.Context, builder squirrel.SelectBuilder, orderBy ...string) ([]*DevicePointMapping, error) {
-
-	builder = builder.Columns(devicePointMappingRows)
+	builder = builder.Columns(m.devicePointMappingRows)
 
 	if len(orderBy) == 0 {
 		builder = builder.OrderBy("id DESC")
 	} else {
 		builder = builder.OrderBy(orderBy...)
 	}
-
 	query, values, err := builder.Where("del_state = ?", 0).ToSql()
 	if err != nil {
 		return nil, err
 	}
-
 	var resp []*DevicePointMapping
-
 	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
-
 	switch err {
 	case nil:
 		return resp, nil
@@ -275,29 +333,22 @@ func (m *defaultDevicePointMappingModel) FindAll(ctx context.Context, builder sq
 }
 
 func (m *defaultDevicePointMappingModel) FindPageListByPage(ctx context.Context, builder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*DevicePointMapping, error) {
-
-	builder = builder.Columns(devicePointMappingRows)
-
+	builder = builder.Columns(m.devicePointMappingRows)
 	if len(orderBy) == 0 {
 		builder = builder.OrderBy("id DESC")
 	} else {
 		builder = builder.OrderBy(orderBy...)
 	}
-
 	if page < 1 {
 		page = 1
 	}
 	offset := (page - 1) * pageSize
-
 	query, values, err := builder.Where("del_state = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
-
 	var resp []*DevicePointMapping
-
 	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
-
 	switch err {
 	case nil:
 		return resp, nil
@@ -307,34 +358,26 @@ func (m *defaultDevicePointMappingModel) FindPageListByPage(ctx context.Context,
 }
 
 func (m *defaultDevicePointMappingModel) FindPageListByPageWithTotal(ctx context.Context, builder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*DevicePointMapping, int64, error) {
-
 	total, err := m.FindCount(ctx, builder, "id")
 	if err != nil {
 		return nil, 0, err
 	}
-
-	builder = builder.Columns(devicePointMappingRows)
-
+	builder = builder.Columns(m.devicePointMappingRows)
 	if len(orderBy) == 0 {
 		builder = builder.OrderBy("id DESC")
 	} else {
 		builder = builder.OrderBy(orderBy...)
 	}
-
 	if page < 1 {
 		page = 1
 	}
 	offset := (page - 1) * pageSize
-
 	query, values, err := builder.Where("del_state = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, total, err
 	}
-
 	var resp []*DevicePointMapping
-
 	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
-
 	switch err {
 	case nil:
 		return resp, total, nil
@@ -344,22 +387,16 @@ func (m *defaultDevicePointMappingModel) FindPageListByPageWithTotal(ctx context
 }
 
 func (m *defaultDevicePointMappingModel) FindPageListByIdDESC(ctx context.Context, builder squirrel.SelectBuilder, preMinId, pageSize int64) ([]*DevicePointMapping, error) {
-
-	builder = builder.Columns(devicePointMappingRows)
-
+	builder = builder.Columns(m.devicePointMappingRows)
 	if preMinId > 0 {
 		builder = builder.Where(" id < ? ", preMinId)
 	}
-
 	query, values, err := builder.Where("del_state = ?", 0).OrderBy("id DESC").Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
-
 	var resp []*DevicePointMapping
-
 	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
-
 	switch err {
 	case nil:
 		return resp, nil
@@ -369,22 +406,16 @@ func (m *defaultDevicePointMappingModel) FindPageListByIdDESC(ctx context.Contex
 }
 
 func (m *defaultDevicePointMappingModel) FindPageListByIdASC(ctx context.Context, builder squirrel.SelectBuilder, preMaxId, pageSize int64) ([]*DevicePointMapping, error) {
-
-	builder = builder.Columns(devicePointMappingRows)
-
+	builder = builder.Columns(m.devicePointMappingRows)
 	if preMaxId > 0 {
 		builder = builder.Where(" id > ? ", preMaxId)
 	}
-
 	query, values, err := builder.Where("del_state = ?", 0).OrderBy("id ASC").Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
-
 	var resp []*DevicePointMapping
-
 	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
-
 	switch err {
 	case nil:
 		return resp, nil
@@ -471,19 +502,35 @@ func (m *defaultDevicePointMappingModel) DeleteWithBuilder(ctx context.Context, 
 }
 
 func (m *defaultDevicePointMappingModel) SelectBuilder() squirrel.SelectBuilder {
-	return squirrel.Select().From(m.table)
+	builder := squirrel.Select().From(m.table)
+	if m.dbType == DatabaseTypePostgres {
+		builder = builder.PlaceholderFormat(squirrel.Dollar)
+	}
+	return builder
 }
 
 func (m *defaultDevicePointMappingModel) UpdateBuilder() squirrel.UpdateBuilder {
-	return squirrel.Update(m.table)
+	builder := squirrel.Update(m.table)
+	if m.dbType == DatabaseTypePostgres {
+		builder = builder.PlaceholderFormat(squirrel.Dollar)
+	}
+	return builder
 }
 
 func (m *defaultDevicePointMappingModel) DeleteBuilder() squirrel.DeleteBuilder {
-	return squirrel.Delete(m.table)
+	builder := squirrel.Delete(m.table)
+	if m.dbType == DatabaseTypePostgres {
+		builder = builder.PlaceholderFormat(squirrel.Dollar)
+	}
+	return builder
 }
 
 func (m *defaultDevicePointMappingModel) InsertBuilder() squirrel.InsertBuilder {
-	return squirrel.Insert(m.table)
+	builder := squirrel.Insert(m.table)
+	if m.dbType == DatabaseTypePostgres {
+		builder = builder.PlaceholderFormat(squirrel.Dollar)
+	}
+	return builder
 }
 
 func (m *defaultDevicePointMappingModel) tableName() string {
