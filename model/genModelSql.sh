@@ -2,4 +2,5 @@ goctl model mysql ddl \
   -src=./sql/genSql.sql \
   -dir=./genModel \
   -cache=false \
-  --style=gozero
+  --style=gozero \
+  --home=../1.7.1

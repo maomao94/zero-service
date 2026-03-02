@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -40,6 +41,14 @@ const (
 	DatabaseTypeSQLite   DatabaseType = "sqlite"
 	DatabaseTypeTAOS     DatabaseType = "taos"
 )
+
+func adaptSQLPlaceholders(sqlTemplate string, dbType DatabaseType) string {
+	if !strings.EqualFold(string(dbType), string(DatabaseTypePostgres)) {
+		re := regexp.MustCompile(`\$\d+`)
+		sqlTemplate = re.ReplaceAllString(sqlTemplate, "?")
+	}
+	return sqlTemplate
+}
 
 var defaultAutoFields = []string{
 	"id",

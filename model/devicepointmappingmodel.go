@@ -40,7 +40,7 @@ func NewDevicePointMappingModel(conn sqlx.SqlConn) DevicePointMappingModel {
 	return NewDevicePointMappingModelWithDBType(conn, DatabaseTypeMySQL)
 }
 
-// NewDevicePointMappingModelWithDBType returns a model for the database table with specified database type.
+// NewDevicePointMappingModelWithDBType returns a model for the database table with db type.
 func NewDevicePointMappingModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) DevicePointMappingModel {
 	pmc, _ := collection.NewCache(defaultExpiration, collection.WithName("pm-cache"))
 	return &customDevicePointMappingModel{

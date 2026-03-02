@@ -3,11 +3,18 @@ func (m *default{{.upperStartCamelObject}}Model) FindOneBy{{.upperField}}(ctx co
 {{if .withCache}}{{.cacheKey}}
 	var resp {{.upperStartCamelObject}}
 	err := m.QueryRowIndexCtx(ctx, &resp, {{.cacheKeyVariable}}, m.formatPrimary, func(ctx context.Context, conn sqlx.SqlConn, v any) (i any, e error) {
-	query := fmt.Sprintf("select %s from %s where {{.originalField}} and del_state = ? limit 1", {{.lowerStartCamelObject}}Rows, m.table)
-	if err := conn.QueryRowCtx(ctx, &resp, query, {{.lowerStartCamelField}}, 0); err != nil {
-		return nil, err
-	}
-	return resp.{{.upperStartCamelPrimaryKey}}, nil
+		selectBuilder := m.SelectBuilder().Columns(m.rows).
+			Where(adaptSQLPlaceholders("{{.originalField}}", m.dbType), {{.lowerStartCamelField}}).
+			Where("del_state = 0").
+			Limit(1)
+		query, args, err := selectBuilder.ToSql()
+		if err != nil {
+			return nil, err
+		}
+		if err := conn.QueryRowCtx(ctx, &resp, query, args...); err != nil {
+			return nil, err
+		}
+		return resp.{{.upperStartCamelPrimaryKey}}, nil
 	}, m.queryPrimary)
 	switch err {
 	case nil:
@@ -17,9 +24,16 @@ func (m *default{{.upperStartCamelObject}}Model) FindOneBy{{.upperField}}(ctx co
 	default:
 		return nil, err
 	}
-}{{else}}var resp {{.upperStartCamelObject}}
-	query := fmt.Sprintf("select %s from %s where {{.originalField}}  and del_state = ? limit 1", {{.lowerStartCamelObject}}Rows, m.table )
-	err := m.conn.QueryRowCtx(ctx, &resp, query, {{.lowerStartCamelField}}, 0)
+}{{else}}selectBuilder := m.SelectBuilder().Columns(m.rows).
+		Where(adaptSQLPlaceholders("{{.originalField}}", m.dbType), {{.lowerStartCamelField}}).
+		Where("del_state = 0").
+		Limit(1)
+	query, args, err := selectBuilder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+	var resp {{.upperStartCamelObject}}
+	err = m.conn.QueryRowCtx(ctx, &resp, query, args...)
 	switch err {
 	case nil:
 		return &resp, nil

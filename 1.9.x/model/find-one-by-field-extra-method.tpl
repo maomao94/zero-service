@@ -2,6 +2,13 @@ func (m *default{{.upperStartCamelObject}}Model) formatPrimary(primary any) stri
 	return fmt.Sprintf("%s%v", {{.primaryKeyLeft}}, primary)
 }
 func (m *default{{.upperStartCamelObject}}Model) queryPrimary(ctx context.Context, conn sqlx.SqlConn, v, primary any) error {
-	query := fmt.Sprintf("select %s from %s where {{.originalPrimaryField}} = {{if .postgreSql}}$1{{else}}?{{end}} and del_state = ? limit 1", {{.lowerStartCamelObject}}Rows, m.table )
-	return conn.QueryRowCtx(ctx, v, query, primary, 0)
+	selectBuilder := m.SelectBuilder().Columns(m.rows).
+		Where(adaptSQLPlaceholders("{{.originalPrimaryField}} = $1", m.dbType), primary).
+		Where("del_state = 0").
+		Limit(1)
+	query, args, err := selectBuilder.ToSql()
+	if err != nil {
+		return err
+	}
+	return conn.QueryRowCtx(ctx, v, query, args...)
 }

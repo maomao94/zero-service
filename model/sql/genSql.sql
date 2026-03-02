@@ -28,8 +28,8 @@ CREATE TABLE IF NOT EXISTS `device_point_mapping` (
 
 -- 计划任务表
 CREATE TABLE IF NOT EXISTS `plan` (
-    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '自增主键ID',
-    `create_time` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
+                                      `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '自增主键ID',
+                                      `create_time` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
     `update_time` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间',
     `delete_time` DATETIME(6) NULL DEFAULT NULL COMMENT '删除时间（软删除标记）',
     `del_state` TINYINT NOT NULL DEFAULT 0 COMMENT '删除状态：0-未删除，1-已删除',
@@ -68,8 +68,8 @@ CREATE TABLE IF NOT EXISTS `plan` (
 
 -- 计划执行项表
 CREATE TABLE IF NOT EXISTS `plan_exec_item` (
-    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '自增主键ID',
-    `create_time` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
+                                                `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '自增主键ID',
+                                                `create_time` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
     `update_time` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间',
     `delete_time` DATETIME(6) NULL DEFAULT NULL COMMENT '删除时间（软删除标记）',
     `del_state` TINYINT NOT NULL DEFAULT 0 COMMENT '删除状态：0-未删除，1-已删除',
@@ -118,8 +118,8 @@ CREATE TABLE IF NOT EXISTS `plan_exec_item` (
 
 -- 计划批次表
 CREATE TABLE IF NOT EXISTS `plan_batch` (
-    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '自增主键ID',
-    `create_time` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
+                                            `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '自增主键ID',
+                                            `create_time` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
     `update_time` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间',
     `delete_time` DATETIME(6) NULL DEFAULT NULL COMMENT '删除时间（软删除标记）',
     `del_state` TINYINT NOT NULL DEFAULT 0 COMMENT '删除状态：0-未删除，1-已删除',
@@ -154,8 +154,8 @@ CREATE TABLE IF NOT EXISTS `plan_batch` (
 
 -- 计划任务执行日志表
 CREATE TABLE IF NOT EXISTS `plan_exec_log` (
-    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '自增主键ID',
-    `create_time` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
+                                               `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '自增主键ID',
+                                               `create_time` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
     `update_time` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间',
     `delete_time` DATETIME(6) NULL DEFAULT NULL COMMENT '删除时间（软删除标记）',
     `del_state` TINYINT NOT NULL DEFAULT 0 COMMENT '删除状态：0-未删除，1-已删除',

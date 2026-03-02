@@ -23,4 +23,5 @@ goctl model pg datasource \
   -dir="${modeldir}" \
   -cache=false \
   -schema=${schema} \
-  --style=gozero
+  --style=gozero \
+  --home=../1.9.x

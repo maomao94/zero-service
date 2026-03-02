@@ -131,7 +131,12 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	}
 
 	if len(c.DB.DataSource) > 0 {
-		svcCtx.DevicePointMappingModel = model.NewDevicePointMappingModel(dbx.New(c.DB.DataSource))
+		// 解析数据库类型
+		dbType := dbx.ParseDatabaseType(c.DB.DataSource)
+		// 创建数据库连接
+		dbConn := dbx.New(c.DB.DataSource)
+		_ = dbx.NewQoqu(c.DB.DataSource)
+		svcCtx.DevicePointMappingModel = model.NewDevicePointMappingModelWithDBType(dbConn, model.DatabaseType(dbType))
 	}
 	return svcCtx
 }
@@ -164,11 +169,11 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 					DeviceId:    query.DeviceId,
 					DeviceName:  query.DeviceName,
 					TdTableType: query.TdTableType,
-					Ext1:        query.Ext1,
-					Ext2:        query.Ext2,
-					Ext3:        query.Ext3,
-					Ext4:        query.Ext4,
-					Ext5:        query.Ext5,
+					Ext1:        query.Ext1.String,
+					Ext2:        query.Ext2.String,
+					Ext3:        query.Ext3.String,
+					Ext4:        query.Ext4.String,
+					Ext5:        query.Ext5.String,
 				}
 			}
 		}
