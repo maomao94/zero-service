@@ -89,3 +89,41 @@ CREATE TABLE `order_txn`
     UNIQUE KEY `idx_txn_id` (`txn_id`),
     UNIQUE KEY `idx_mch_id_order_no` (`mch_id`, `mch_order_no`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='交易订单表';
+
+
+
+-- 任务统计查询（综合考虑所有完成因素）
+SELECT
+    p.type AS "计划类型",
+    COUNT(pei.id) AS "当前任务总数",
+    COUNT(CASE
+              WHEN pei.status IN (200, 300) THEN 1  -- 执行项已结束（完成或终止）
+              WHEN p.finished_time IS NOT NULL THEN 1  -- 计划有完成时间
+              WHEN pb.finished_time IS NOT NULL THEN 1  -- 批次有完成时间
+        END) AS "已结束任务数",
+    COUNT(CASE
+              WHEN pei.status != 200  and pei.status != 300
+        AND p.finished_time IS NULL
+        AND pb.finished_time IS NULL
+        THEN 1  -- 执行项未完成且计划和批次都无完成时间
+        END) AS "待完成任务总数",
+    COUNT(CASE WHEN pei.status = 10
+        AND p.finished_time IS NULL  -- 计划未完成
+        AND pb.finished_time IS NULL  -- 批次未完成
+                   THEN 1 END) AS "其中延期任务数",
+    COUNT(CASE
+              WHEN pei.status = 300 THEN 1  -- 执行项终止状态
+              WHEN (p.status = 3 OR pb.status = 3) THEN 1  -- 计划或批次终止状态
+        END) AS "其中终止任务数"
+FROM plan_exec_item pei
+         JOIN plan_batch pb ON pei.batch_pk = pb.id
+         JOIN plan p ON pb.plan_pk = p.id
+WHERE
+    pei.del_state = 0  -- 未删除的执行项
+  AND pb.del_state = 0  -- 未删除的批次
+  AND p.del_state = 0  -- 未删除的计划
+-- 可根据需要添加部门或用户过滤条件
+-- AND p.dept_code = :dept_code
+-- AND p.create_user = :user_id
+GROUP BY p.type
+ORDER BY p.type;
