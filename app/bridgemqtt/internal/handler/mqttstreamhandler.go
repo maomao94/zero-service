@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"zero-service/common/mqttx"
 	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
 	"zero-service/socketapp/socketpush/socketpush"
@@ -17,15 +18,28 @@ type MqttStreamHandler struct {
 	streamEventCli streamevent.StreamEventClient
 	socketPushCli  socketpush.SocketPushClient
 	taskRunner     *threading.TaskRunner
+	eventMapping   []mqttx.EventMapping
+	defaultEvent   string
 }
 
-func NewMqttStreamHandler(clientID string, streamEventCli streamevent.StreamEventClient, socketPushCli socketpush.SocketPushClient) *MqttStreamHandler {
+func NewMqttStreamHandler(clientID string, streamEventCli streamevent.StreamEventClient, socketPushCli socketpush.SocketPushClient, eventMapping []mqttx.EventMapping, defaultEvent string) *MqttStreamHandler {
 	return &MqttStreamHandler{
 		clientID:       clientID,
 		streamEventCli: streamEventCli,
 		socketPushCli:  socketPushCli,
 		taskRunner:     threading.NewTaskRunner(16),
+		eventMapping:   eventMapping,
+		defaultEvent:   defaultEvent,
 	}
+}
+
+func (h *MqttStreamHandler) matchEvent(topicTemplate string) string {
+	for _, mapping := range h.eventMapping {
+		if topicTemplate == mapping.Match {
+			return mapping.Event
+		}
+	}
+	return h.defaultEvent
 }
 
 func (h *MqttStreamHandler) Consume(ctx context.Context, payload []byte, topic string, topicTemplate string) error {
@@ -60,17 +74,18 @@ func (h *MqttStreamHandler) Consume(ctx context.Context, payload []byte, topic s
 			sendTime := carbon.Now().ToDateTimeMicroString()
 			startTime := timex.Now()
 			duration := timex.Since(startTime)
+			event := h.matchEvent(topicTemplate)
 			_, err := h.socketPushCli.BroadcastRoom(ctx, &socketpush.BroadcastRoomReq{
 				ReqId:   reqId,
 				Room:    topicTemplate,
-				Event:   "mqtt",
+				Event:   event,
 				Payload: string(payload),
 			})
 			var invokeflg = "success"
 			if err != nil {
 				invokeflg = "fail"
 			}
-			logx.WithContext(ctx).WithDuration(duration).Infof("push mqtt BroadcastRoom, reqId: %s, room: %s, event: %s, time: %s - %s", reqId, topicTemplate, "mqtt", sendTime, invokeflg)
+			logx.WithContext(ctx).WithDuration(duration).Infof("push mqtt BroadcastRoom, reqId: %s, room: %s, event: %s, time: %s - %s", reqId, topicTemplate, event, sendTime, invokeflg)
 		})
 	}
 	return nil

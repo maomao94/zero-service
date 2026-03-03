@@ -25,6 +25,11 @@ MqttConfig:
     - "test"
     - "test/topic2"
     - "iec/#"
+#  EventMapping:
+#    - match: "iec/#"
+#      event: "iecEvent"
+#    - match: "test/topic2"
+#      event: "testTopic2Event"
 #StreamEventConf:
 #  # nacos://[user:passwd]@host/service?param=value'
 #  #  Target: nacos://nacos:nacos@127.0.0.1:8848/stream-event?namespaceid=public&timeout=5000s

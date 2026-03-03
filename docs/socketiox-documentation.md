@@ -428,16 +428,83 @@ socket.on('mqtt', (data) => {
 ### 10.5 注意事项
 
 1. **通用格式**：无论原始协议是什么，桥接后的消息都会遵循通用的 `event`、`payload`、`reqId` 格式，便于前端统一处理。
-2. **Topic 与 Room 映射**：不同的 MQTT topic 会映射到不同的 SocketIO room，确保消息准确路由。
+2. **Topic 与 Room 映射**：不同的 MQTT topic 会映射到不同的 SocketIO room，确保消息准确路由。具体来说，MQTT 的 topic 模板会直接作为 SocketIO 的 room 名称。
 3. **Payload 结构**：不同协议的 `payload` 结构会有所不同，前端需要根据具体协议类型进行处理。
-4. **事件名称**：桥接消息的事件名称固定为 "mqtt"，前端需要通过这个事件名来监听。
+4. **事件名称**：默认情况下，桥接消息的事件名称固定为 "mqtt"，但可以通过配置文件自定义事件映射。
 5. **数据类型**：前端需要注意 payload 中不同字段的数据类型，例如 port 是数字类型，而 host 是字符串类型。
 6. **时间格式**：时间戳字段的格式可能因原始协议不同而有所差异，前端需要进行适当的处理。
+7. **前端区分不同 room**：前端可以通过以下方式区分不同的 MQTT topic：
+   - 首先，前端需要加入对应的 room（topic）
+   - 然后，在监听相应的事件时，通过消息中的原始 topic 信息来区分不同的 MQTT 主题
+   - 或者，根据业务需求，为不同的 room 设置不同的处理逻辑
+
+### 10.6 事件映射配置
+
+#### 10.6.1 配置示例
+
+在配置文件中，可以通过 `EventMapping` 配置项来定义 MQTT 主题到 SocketIO 事件的映射规则：
+
+```yaml
+MqttConfig:
+  # 其他配置项...
+  EventMapping:
+    - match: "iec104/#"
+      event: "iec104"
+    - match: "alarm/#"
+      event: "alarm"
+    - match: "device/+/status"
+      event: "deviceStatus"
+    - match: "heartbeat/#"
+      event: "heartbeat"
+  DefaultEvent: "mqtt"  # 默认事件名称
+```
+
+#### 10.6.2 前端处理示例
+
+前端可以根据配置的事件名称来监听不同类型的消息：
+
+```javascript
+// 监听IEC104设备消息
+socket.on('iec104', (data) => {
+    console.log('收到IEC104设备消息:', data);
+});
+
+// 监听告警消息
+socket.on('alarm', (data) => {
+    console.log('收到告警消息:', data);
+});
+
+// 监听设备状态消息
+socket.on('deviceStatus', (data) => {
+    console.log('收到设备状态消息:', data);
+});
+
+// 监听心跳消息
+socket.on('heartbeat', (data) => {
+    console.log('收到心跳消息:', data);
+});
+
+// 监听默认MQTT消息（未匹配到映射规则的消息）
+socket.on('mqtt', (data) => {
+    console.log('收到其他MQTT消息:', data);
+});
+```
+
+#### 10.6.3 通配符支持
+
+事件映射配置支持 MQTT 主题通配符：
+- `+`：匹配单个主题层级
+- `#`：匹配多个主题层级（必须放在主题末尾）
+
+例如：
+- `device/+/status` 可以匹配 `device/1/status`、`device/2/status` 等
+- `iec104/#` 可以匹配 `iec104/device1`、`iec104/device2/data` 等
 
 ## 11. 版本历史
 
 | 版本  | 日期         | 说明                                        |
 |-----|------------|-------------------------------------------|
+| 2.3 | 2026-03-03 | 添加MQTT事件映射配置，支持自定义事件名称和通配符匹配        |
 | 2.2 | 2026-03-03 | 明确__down__事件为异步响应事件，添加非ack模式处理章节        |
 | 2.1 | 2026-02-11 | 添加 MQTT 桥接指导                              |
 | 2.0 | 2026-02-11 | 重写版本，支持SocketIO原生auth鉴权，payload使用object类型 |

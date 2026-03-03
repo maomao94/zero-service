@@ -42,17 +42,25 @@ func (f ConsumeHandlerFunc) Consume(ctx context.Context, payload []byte, topic s
 	return f(ctx, payload, topic, topicTemplate)
 }
 
+// EventMapping 定义 MQTT 主题到事件的映射
+type EventMapping struct {
+	Match string `json:"match"`
+	Event string `json:"event"`
+}
+
 // MqttConfig 定义 MQTT 客户端基础配置
 type MqttConfig struct {
-	Broker          []string
-	ClientID        string `json:",optional"`
-	Username        string `json:",optional"`
-	Password        string `json:",optional"`
+	Broker          []string `json:",optional"`
+	ClientID        string   `json:",optional"`
+	Username        string   `json:",optional"`
+	Password        string   `json:",optional"`
 	Qos             byte
-	Timeout         int      `json:",default=30"`   // 操作超时时间（秒）
-	KeepAlive       int      `json:",default=60"`   // 心跳间隔（秒）
-	AutoSubscribe   bool     `json:",default=true"` // 是否自动订阅已添加处理器的主题
-	SubscribeTopics []string `json:",optional"`     // 初始需要订阅的主题
+	Timeout         int            `json:",default=30"`   // 操作超时时间（秒）
+	KeepAlive       int            `json:",default=60"`   // 心跳间隔（秒）
+	AutoSubscribe   bool           `json:",default=true"` // 是否自动订阅已添加处理器的主题
+	SubscribeTopics []string       `json:",optional"`     // 初始需要订阅的主题
+	EventMapping    []EventMapping `json:",optional"`     // 主题到事件的映射
+	DefaultEvent    string         `json:",default=mqtt"` // 默认事件名称
 }
 
 // Option 定义可选配置函数
