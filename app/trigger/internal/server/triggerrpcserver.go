@@ -251,12 +251,19 @@ func (s *TriggerRpcServer) ListPlanExecLogs(ctx context.Context, in *trigger.Lis
 	return l.ListPlanExecLogs(in)
 }
 
+// 获取执行项仪表板统计信息
+func (s *TriggerRpcServer) GetExecItemDashboard(ctx context.Context, in *trigger.GetExecItemDashboardReq) (*trigger.GetExecItemDashboardRes, error) {
+	l := logic.NewGetExecItemDashboardLogic(ctx, s.svcCtx)
+	return l.GetExecItemDashboard(in)
+}
+
 // 回调计划执行项 ongoing 回执
 func (s *TriggerRpcServer) CallbackPlanExecItem(ctx context.Context, in *trigger.CallbackPlanExecItemReq) (*trigger.CallbackPlanExecItemRes, error) {
 	l := logic.NewCallbackPlanExecItemLogic(ctx, s.svcCtx)
 	return l.CallbackPlanExecItem(in)
 }
 
+// 生成自增ID
 func (s *TriggerRpcServer) NextId(ctx context.Context, in *trigger.NextIdReq) (*trigger.NextIdRes, error) {
 	l := logic.NewNextIdLogic(ctx, s.svcCtx)
 	return l.NextId(in)

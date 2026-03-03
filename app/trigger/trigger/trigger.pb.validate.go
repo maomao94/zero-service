@@ -11949,6 +11949,393 @@ var _ interface {
 	ErrorName() string
 } = PbPlanBatchValidationError{}
 
+// Validate checks the field values on GetExecItemDashboardReq with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetExecItemDashboardReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetExecItemDashboardReq with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetExecItemDashboardReqMultiError, or nil if none found.
+func (m *GetExecItemDashboardReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetExecItemDashboardReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, GetExecItemDashboardReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, GetExecItemDashboardReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GetExecItemDashboardReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for DeptCode
+
+	// no validation rules for UserId
+
+	// no validation rules for PlanType
+
+	if len(errors) > 0 {
+		return GetExecItemDashboardReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetExecItemDashboardReqMultiError is an error wrapping multiple validation
+// errors returned by GetExecItemDashboardReq.ValidateAll() if the designated
+// constraints aren't met.
+type GetExecItemDashboardReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetExecItemDashboardReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetExecItemDashboardReqMultiError) AllErrors() []error { return m }
+
+// GetExecItemDashboardReqValidationError is the validation error returned by
+// GetExecItemDashboardReq.Validate if the designated constraints aren't met.
+type GetExecItemDashboardReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetExecItemDashboardReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetExecItemDashboardReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetExecItemDashboardReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetExecItemDashboardReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetExecItemDashboardReqValidationError) ErrorName() string {
+	return "GetExecItemDashboardReqValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetExecItemDashboardReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetExecItemDashboardReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetExecItemDashboardReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetExecItemDashboardReqValidationError{}
+
+// Validate checks the field values on GetExecItemDashboardRes with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetExecItemDashboardRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetExecItemDashboardRes with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetExecItemDashboardResMultiError, or nil if none found.
+func (m *GetExecItemDashboardRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetExecItemDashboardRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetStats() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, GetExecItemDashboardResValidationError{
+						field:  fmt.Sprintf("Stats[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, GetExecItemDashboardResValidationError{
+						field:  fmt.Sprintf("Stats[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return GetExecItemDashboardResValidationError{
+					field:  fmt.Sprintf("Stats[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return GetExecItemDashboardResMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetExecItemDashboardResMultiError is an error wrapping multiple validation
+// errors returned by GetExecItemDashboardRes.ValidateAll() if the designated
+// constraints aren't met.
+type GetExecItemDashboardResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetExecItemDashboardResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetExecItemDashboardResMultiError) AllErrors() []error { return m }
+
+// GetExecItemDashboardResValidationError is the validation error returned by
+// GetExecItemDashboardRes.Validate if the designated constraints aren't met.
+type GetExecItemDashboardResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetExecItemDashboardResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetExecItemDashboardResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetExecItemDashboardResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetExecItemDashboardResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetExecItemDashboardResValidationError) ErrorName() string {
+	return "GetExecItemDashboardResValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetExecItemDashboardResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetExecItemDashboardRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetExecItemDashboardResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetExecItemDashboardResValidationError{}
+
+// Validate checks the field values on ExecItemDashboardItem with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ExecItemDashboardItem) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ExecItemDashboardItem with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ExecItemDashboardItemMultiError, or nil if none found.
+func (m *ExecItemDashboardItem) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ExecItemDashboardItem) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for PlanType
+
+	// no validation rules for TotalTasks
+
+	// no validation rules for FinishedTasks
+
+	// no validation rules for PendingTasks
+
+	// no validation rules for DelayedTasks
+
+	// no validation rules for TerminatedTasks
+
+	if len(errors) > 0 {
+		return ExecItemDashboardItemMultiError(errors)
+	}
+
+	return nil
+}
+
+// ExecItemDashboardItemMultiError is an error wrapping multiple validation
+// errors returned by ExecItemDashboardItem.ValidateAll() if the designated
+// constraints aren't met.
+type ExecItemDashboardItemMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ExecItemDashboardItemMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ExecItemDashboardItemMultiError) AllErrors() []error { return m }
+
+// ExecItemDashboardItemValidationError is the validation error returned by
+// ExecItemDashboardItem.Validate if the designated constraints aren't met.
+type ExecItemDashboardItemValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ExecItemDashboardItemValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ExecItemDashboardItemValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ExecItemDashboardItemValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ExecItemDashboardItemValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ExecItemDashboardItemValidationError) ErrorName() string {
+	return "ExecItemDashboardItemValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ExecItemDashboardItemValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sExecItemDashboardItem.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ExecItemDashboardItemValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ExecItemDashboardItemValidationError{}
+
 // Validate checks the field values on CallbackPlanExecItemReq with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.

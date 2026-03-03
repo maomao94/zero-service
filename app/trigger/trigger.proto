@@ -94,11 +94,14 @@ service TriggerRpc {
   rpc GetPlanExecLog(GetPlanExecLogReq) returns (GetPlanExecLogRes);
   // 分页获取计划触发日志列表
   rpc ListPlanExecLogs(ListPlanExecLogsReq) returns (ListPlanExecLogsRes);
+  // 获取执行项仪表板统计信息
+  rpc GetExecItemDashboard(GetExecItemDashboardReq) returns (GetExecItemDashboardRes);
 
 
   // 回调计划执行项 ongoing 回执
   rpc CallbackPlanExecItem(CallbackPlanExecItemReq) returns (CallbackPlanExecItemRes);
 
+  // 生成自增ID
   rpc NextId (NextIdReq) returns (NextIdRes);
 }
 
@@ -1087,6 +1090,40 @@ message PbPlanBatch {
   string ext4 = 55;
   // 扩展字段5
   string ext5 = 56;
+}
+
+
+// 获取执行项仪表板统计信息请求
+message GetExecItemDashboardReq {
+  extproto.CurrentUser currentUser = 100;
+  // 部门code，可选
+  string deptCode = 1;
+  // 用户ID，可选
+  string userId = 2;
+  // 计划类型，可选，为空时统计所有类型
+  string planType = 3;
+}
+
+// 执行项仪表板统计信息响应
+message GetExecItemDashboardRes {
+  // 统计结果列表
+  repeated ExecItemDashboardItem stats = 1;
+}
+
+// 执行项仪表板统计项
+message ExecItemDashboardItem {
+  // 计划类型
+  string planType = 1;
+  // 当前任务总数
+  int64 totalTasks = 2;
+  // 已结束任务数
+  int64 finishedTasks = 3;
+  // 待完成任务总数
+  int64 pendingTasks = 4;
+  // 其中延期任务数
+  int64 delayedTasks = 5;
+  // 其中终止任务数
+  int64 terminatedTasks = 6;
 }
 
 message CallbackPlanExecItemReq {
