@@ -14,7 +14,7 @@ func UnaryMetadataInterceptor(ctx context.Context, method string, req, reply any
 	if !ok {
 		md = metadata.MD{}
 	}
-	md.Set(ctxdata.CtxKeyUserId, strconv.FormatInt(ctxdata.GetUserIdFromCtx(ctx, false), 10))
+	md.Set(ctxdata.CtxKeyUserId, ctxdata.GetUserIdFromCtx(ctx, false))
 	metaCtx := metadata.NewOutgoingContext(ctx, md)
 	return invoker(metaCtx, method, req, reply, cc, opts...)
 }
@@ -25,7 +25,7 @@ func StreamTracingInterceptor(ctx context.Context, desc *grpc.StreamDesc, cc *gr
 	if !ok {
 		md = metadata.MD{}
 	}
-	md.Set(ctxdata.CtxKeyUserId, strconv.FormatInt(ctxdata.GetUserIdFromCtx(ctx, false), 10))
+	md.Set(ctxdata.CtxKeyUserId, ctxdata.GetUserIdFromCtx(ctx, false))
 	metaCtx := metadata.NewOutgoingContext(ctx, md)
 	return streamer(metaCtx, desc, cc, method, opts...)
 }

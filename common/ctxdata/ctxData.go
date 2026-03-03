@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/zeromicro/go-zero/core/logx"
 	"go.opentelemetry.io/otel/propagation"
 	"google.golang.org/grpc/metadata"
 )
@@ -29,29 +28,29 @@ type ProtoMsgBody struct {
 	RequestTimeout int64                      `json:"requestTimeout"`
 }
 
-func GetUserIdFromCtx(ctx context.Context, bool bool) int64 {
-	var uid int64
-	if userId, ok := ctx.Value(CtxKeyUserId).(json.Number); ok {
-		if int64UserId, err := userId.Int64(); err == nil {
-			uid = int64UserId
-		} else {
-			if bool {
-				logx.WithContext(ctx).Errorf("GetUserIdFromCtx err : %+v", err)
-			}
-		}
+func GetUserIdFromCtx(ctx context.Context, logError bool) string {
+	var uid string
+	if userId, ok := ctx.Value(CtxKeyUserId).(string); ok {
+		uid = userId
+	} else if userId, ok := ctx.Value(CtxKeyUserId).(json.Number); ok {
+		uid = userId.String()
+	} else if userId, ok := ctx.Value(CtxKeyUserId).(int64); ok {
+		uid = strconv.FormatInt(userId, 10)
+	} else if userId, ok := ctx.Value(CtxKeyUserId).(int); ok {
+		uid = strconv.Itoa(userId)
 	}
 	return uid
 }
 
-func GetUserIdFromMetadata(ctx context.Context) int64 {
-	var uid int64
+func GetUserIdFromMetadata(ctx context.Context) string {
+	var uid string
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		md = metadata.MD{}
 	}
 	values := md.Get(CtxKeyUserId)
-	if values != nil {
-		uid, _ = strconv.ParseInt(values[0], 10, 64)
+	if len(values) > 0 {
+		uid = values[0]
 	}
 	return uid
 }
