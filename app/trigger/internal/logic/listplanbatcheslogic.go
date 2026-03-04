@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"fmt"
+	"zero-service/common/tool"
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
@@ -70,7 +71,7 @@ func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (
 	dataQuery := query.Select(goqu.I("pb.*")).
 		Order(goqu.I("pb.plan_trigger_time").Asc(), goqu.I("pb.id").Desc()).
 		Limit(uint(in.PageSize)).
-		Offset(uint((in.PageNum - 1) * in.PageSize))
+		Offset(tool.CalculateOffset(in.PageNum, in.PageSize))
 
 	dataSQL, dataArgs, err := dataQuery.ToSQL()
 	if err != nil {

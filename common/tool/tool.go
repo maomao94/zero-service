@@ -232,3 +232,10 @@ func GetCurrentUserName(currentUser interface{}) string {
 		return ""
 	}
 }
+
+func CalculateOffset(page, pageSize int64) uint {
+	if page < 1 {
+		page = 1
+	}
+	return uint((page - 1) * pageSize)
+}
