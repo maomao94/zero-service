@@ -16,7 +16,7 @@ service StreamEvent {
   rpc ReceiveKafkaMessage (ReceiveKafkaMessageReq) returns (ReceiveKafkaMessageRes);
   // 推送 chunk asdu 104协议消息
   rpc PushChunkAsdu (PushChunkAsduReq) returns (PushChunkAsduRes);
-  // 上行socket标准消息, 可以用于__connection__/__up__/__join_room_up__和自定义up事件
+  // 上行socket标准消息, 可以用于__connection__/__disconnect__/__join_room_up__/__up__/和自定义up事件
   rpc UpSocketMessage (UpSocketMessageReq) returns (UpSocketMessageRes);
   // 计划任务事件处理
   rpc HandlerPlanTaskEvent (HandlerPlanTaskEventReq) returns (HandlerPlanTaskEventRes);

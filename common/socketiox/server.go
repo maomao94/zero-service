@@ -18,6 +18,7 @@ import (
 
 const (
 	EventConnection      = "__connection__"
+	EventDisconnect      = "__disconnect__"
 	EventUp              = "__up__"
 	EventJoinRoom        = "__join_room_up__"
 	EventLeaveRoom       = "__leave_room_up__"

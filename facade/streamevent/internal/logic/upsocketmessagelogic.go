@@ -24,7 +24,7 @@ func NewUpSocketMessageLogic(ctx context.Context, svcCtx *svc.ServiceContext) *U
 	}
 }
 
-// 上行socket标准消息, 可以用于__connection__/__up__/__join_room_up__和自定义up事件
+// 上行socket标准消息, 可以用于__connection__/__disconnect__/__join_room_up__/__up__/和自定义up事件
 func (l *UpSocketMessageLogic) UpSocketMessage(in *streamevent.UpSocketMessageReq) (*streamevent.UpSocketMessageRes, error) {
 	// 给一个 json  string  测试
 	var downPayload = struct {
