@@ -35,6 +35,7 @@ type ServiceContext struct {
 	Scheduler         *asynq.Scheduler
 	Httpc             httpc.Service
 	ConnMap           *collection.SafeMap
+	SqlConn           sqlx.SqlConn
 	PlanModel         model.PlanModel
 	PlanBatchModel    model.PlanBatchModel
 	PlanExecItemModel model.PlanExecItemModel
@@ -67,6 +68,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Scheduler:         asynqx.NewScheduler(c.Redis.Host, c.Redis.Pass, c.RedisDB),
 		Httpc:             httpc.NewService("httpc"),
 		ConnMap:           collection.NewSafeMap(),
+		SqlConn:           dbConn,
 		PlanModel:         model.NewPlanModelWithDBType(dbConn, model.DatabaseType(dbType)),
 		PlanBatchModel:    model.NewPlanBatchModelWithDBType(dbConn, model.DatabaseType(dbType)),
 		PlanExecItemModel: model.NewPlanExecItemModelWithDBType(dbConn, model.DatabaseType(dbType)),

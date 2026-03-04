@@ -27,8 +27,6 @@ type (
 		UpdateWithVersion(ctx context.Context, session sqlx.Session, data *PlanBatch) error
 		Trans(ctx context.Context, fn func(ctx context.Context, session sqlx.Session) error) error
 		ExecCtx(ctx context.Context, session sqlx.Session, query string, args ...any) (sql.Result, error)
-		QueryRowCtx(ctx context.Context, v any, query string, args ...any) error
-		QueryRowPartialCtx(ctx context.Context, v any, query string, args ...any) error
 		SelectWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) ([]*PlanBatch, error)
 		SelectOneWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) (*PlanBatch, error)
 		InsertWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.InsertBuilder) (sql.Result, error)
@@ -463,14 +461,6 @@ func (m *defaultPlanBatchModel) ExecCtx(ctx context.Context, session sqlx.Sessio
 		return session.ExecCtx(ctx, query, args...)
 	}
 	return m.conn.ExecCtx(ctx, query, args...)
-}
-
-func (m *defaultPlanBatchModel) QueryRowCtx(ctx context.Context, v any, query string, args ...any) error {
-	return m.conn.QueryRowCtx(ctx, v, query, args...)
-}
-
-func (m *defaultPlanBatchModel) QueryRowPartialCtx(ctx context.Context, v any, query string, args ...any) error {
-	return m.conn.QueryRowPartialCtx(ctx, v, query, args...)
 }
 
 func (m *defaultPlanBatchModel) SelectWithBuilder(ctx context.Context, builder squirrel.SelectBuilder) ([]*PlanBatch, error) {
