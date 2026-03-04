@@ -78,7 +78,7 @@ func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (
 		return nil, err
 	}
 	var planBatches []*model.PlanBatch
-	err = l.svcCtx.SqlConn.QueryRowPartialCtx(l.ctx, &planBatches, dataSQL, dataArgs...)
+	err = l.svcCtx.SqlConn.QueryRowsPartialCtx(l.ctx, &planBatches, dataSQL, dataArgs...)
 	if err != nil {
 		return nil, err
 	}
