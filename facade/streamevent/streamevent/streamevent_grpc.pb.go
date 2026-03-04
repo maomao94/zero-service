@@ -40,7 +40,7 @@ type StreamEventClient interface {
 	ReceiveKafkaMessage(ctx context.Context, in *ReceiveKafkaMessageReq, opts ...grpc.CallOption) (*ReceiveKafkaMessageRes, error)
 	// 推送 chunk asdu 104协议消息
 	PushChunkAsdu(ctx context.Context, in *PushChunkAsduReq, opts ...grpc.CallOption) (*PushChunkAsduRes, error)
-	// 上行socket标准消息, 可以用于__up__和自定义up事件
+	// 上行socket标准消息, 可以用于__connection__/__up__/__join_room_up__和自定义up事件
 	UpSocketMessage(ctx context.Context, in *UpSocketMessageReq, opts ...grpc.CallOption) (*UpSocketMessageRes, error)
 	// 计划任务事件处理
 	HandlerPlanTaskEvent(ctx context.Context, in *HandlerPlanTaskEventReq, opts ...grpc.CallOption) (*HandlerPlanTaskEventRes, error)
@@ -138,7 +138,7 @@ type StreamEventServer interface {
 	ReceiveKafkaMessage(context.Context, *ReceiveKafkaMessageReq) (*ReceiveKafkaMessageRes, error)
 	// 推送 chunk asdu 104协议消息
 	PushChunkAsdu(context.Context, *PushChunkAsduReq) (*PushChunkAsduRes, error)
-	// 上行socket标准消息, 可以用于__up__和自定义up事件
+	// 上行socket标准消息, 可以用于__connection__/__up__/__join_room_up__和自定义up事件
 	UpSocketMessage(context.Context, *UpSocketMessageReq) (*UpSocketMessageRes, error)
 	// 计划任务事件处理
 	HandlerPlanTaskEvent(context.Context, *HandlerPlanTaskEventReq) (*HandlerPlanTaskEventRes, error)

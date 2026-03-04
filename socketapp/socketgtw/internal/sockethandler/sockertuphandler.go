@@ -20,25 +20,25 @@ func NewSocketUpHandler(cli streamevent.StreamEventClient) *SocketUpHandler {
 	}
 }
 
-func (l *SocketUpHandler) Handle(ctx context.Context, event string, payload *socketio.EventPayload) error {
-	data, err := convertor.ToBytes(payload.Data[0])
+func (l *SocketUpHandler) Handle(ctx context.Context, event string, upPayload *socketio.EventPayload) (downPayload string, error error) {
+	data, err := convertor.ToBytes(upPayload.Data[0])
 	if err != nil {
-		return err
+		return "", err
 	}
 	var upReq socketiox.SocketUpReq
 	err = jsonx.Unmarshal(data, &upReq)
 	if err != nil {
-		return err
+		return "", err
 	}
 	jsonx.Marshal(upReq.Payload)
-	_, err = l.cli.UpSocketMessage(ctx, &streamevent.UpSocketMessageReq{
+	res, err := l.cli.UpSocketMessage(ctx, &streamevent.UpSocketMessageReq{
 		ReqId:   upReq.ReqId,
-		SId:     payload.SID,
+		SId:     upPayload.SID,
 		Event:   event,
 		Payload: string(data),
 	})
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	return res.Payload, nil
 }

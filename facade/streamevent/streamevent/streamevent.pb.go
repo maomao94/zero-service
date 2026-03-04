@@ -2596,6 +2596,7 @@ func (x *UpSocketMessageReq) GetPayload() string {
 
 type UpSocketMessageRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Payload       string                 `protobuf:"bytes,1,opt,name=payload,proto3" json:"payload,omitempty"` // 返回数据
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2628,6 +2629,13 @@ func (x *UpSocketMessageRes) ProtoReflect() protoreflect.Message {
 // Deprecated: Use UpSocketMessageRes.ProtoReflect.Descriptor instead.
 func (*UpSocketMessageRes) Descriptor() ([]byte, []int) {
 	return file_streamevent_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *UpSocketMessageRes) GetPayload() string {
+	if x != nil {
+		return x.Payload
+	}
+	return ""
 }
 
 type PbPlan struct {
@@ -3487,8 +3495,9 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x10\n" +
 	"\x03sId\x18\x02 \x01(\tR\x03sId\x12\x14\n" +
 	"\x05event\x18\x03 \x01(\tR\x05event\x12\x18\n" +
-	"\apayload\x18\x04 \x01(\tR\apayload\"\x14\n" +
-	"\x12UpSocketMessageRes\"\xd4\x03\n" +
+	"\apayload\x18\x04 \x01(\tR\apayload\".\n" +
+	"\x12UpSocketMessageRes\x12\x18\n" +
+	"\apayload\x18\x01 \x01(\tR\apayload\"\xd4\x03\n" +
 	"\x06PbPlan\x12\x1e\n" +
 	"\n" +
 	"createTime\x18e \x01(\tR\n" +

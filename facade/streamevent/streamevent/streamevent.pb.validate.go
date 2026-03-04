@@ -3310,6 +3310,8 @@ func (m *UpSocketMessageRes) validate(all bool) error {
 
 	var errors []error
 
+	// no validation rules for Payload
+
 	if len(errors) > 0 {
 		return UpSocketMessageResMultiError(errors)
 	}

@@ -17,6 +17,7 @@ import (
 )
 
 const (
+	EventConnection      = "__connection__"
 	EventUp              = "__up__"
 	EventJoinRoom        = "__join_room_up__"
 	EventLeaveRoom       = "__leave_room_up__"
@@ -111,6 +112,10 @@ func (s *Session) GetMetadata(key string) interface{} {
 	return s.metadata[key]
 }
 
+func (s *Session) AllMetadata() map[string]string {
+	return s.metadata
+}
+
 func (s *Session) SetMetadata(key string, val interface{}) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
@@ -193,12 +198,12 @@ func (s *Session) LeaveRoom(room string) error {
 }
 
 type EventHandler interface {
-	Handle(ctx context.Context, event string, payload *socketio.EventPayload) error
+	Handle(ctx context.Context, event string, payload *socketio.EventPayload) (string, error)
 }
 
-type EventHandlerFunc func(ctx context.Context, event string, payload *socketio.EventPayload) error
+type EventHandlerFunc func(ctx context.Context, event string, payload *socketio.EventPayload) (string, error)
 
-func (f EventHandlerFunc) Handle(ctx context.Context, event string, payload *socketio.EventPayload) error {
+func (f EventHandlerFunc) Handle(ctx context.Context, event string, payload *socketio.EventPayload) (string, error) {
 	return f(ctx, event, payload)
 }
 
@@ -207,6 +212,10 @@ type EventHandlers map[string]EventHandler
 type TokenValidator func(token string) bool
 
 type TokenValidatorWithClaims func(token string) (map[string]interface{}, bool)
+
+type ConnectHook func(ctx context.Context, session *Session) ([]string, error)
+
+type PreJoinRoomHook func(ctx context.Context, session *Session, reqId, room string) error
 
 type Option func(s *Server)
 
@@ -239,6 +248,14 @@ func WithTokenValidatorWithClaims(validator TokenValidatorWithClaims) Option {
 	return func(s *Server) { s.tokenValidatorWithClaims = validator }
 }
 
+func WithConnectHook(hook ConnectHook) Option {
+	return func(s *Server) { s.connectHook = hook }
+}
+
+func WithPreJoinRoomHook(hook PreJoinRoomHook) Option {
+	return func(s *Server) { s.preJoinRoomHook = hook }
+}
+
 type Server struct {
 	*socketio.Io
 	eventHandlers            EventHandlers
@@ -249,6 +266,8 @@ type Server struct {
 	contextKeys              []string // 从上下文提取的键列表
 	tokenValidator           TokenValidator
 	tokenValidatorWithClaims TokenValidatorWithClaims
+	connectHook              ConnectHook
+	preJoinRoomHook          PreJoinRoomHook
 }
 
 func MustServer(opts ...Option) *Server {
@@ -312,7 +331,19 @@ func (srv *Server) bindEvents() {
 		}
 		srv.sessions[socket.Id] = session
 		srv.lock.Unlock()
-		logx.Infof("[socketio] new connection established: conn=%s", socket.Id)
+		ctx := logx.WithFields(context.WithValue(context.Background(), "SID", socket.Id),
+			logx.Field("SID", socket.Id),
+			logx.Field("EVENT", "connection"),
+		)
+		if srv.connectHook != nil {
+			rooms, err := srv.connectHook(ctx, session)
+			if err == nil {
+				for _, r := range rooms {
+					session.JoinRoom(r)
+				}
+			}
+		}
+		logx.WithContext(ctx).Infof("[socketio] new connection established: conn=%s", socket.Id)
 		socket.On(EventJoinRoom, func(payload *socketio.EventPayload) {
 			ctx := logx.WithFields(context.WithValue(context.Background(), "SID", payload.SID),
 				logx.Field("SID", payload.SID),
@@ -358,6 +389,17 @@ func (srv *Server) bindEvents() {
 			}
 			threading.GoSafe(func() {
 				ack := payload.Ack
+				// 执行加入房间前的钩子
+				if srv.preJoinRoomHook != nil {
+					if err := srv.preJoinRoomHook(ctx, session, upReq.ReqId, upReq.Room); err != nil {
+						if ack != nil {
+							ack(string(buildRespJson(CodeBizErr, err.Error(), nil, upReq.ReqId)))
+						} else {
+							_ = session.ReplyEventDown(CodeBizErr, err.Error(), nil, upReq.ReqId)
+						}
+						return
+					}
+				}
 				session.JoinRoom(upReq.Room)
 				if ack != nil {
 					ack(string(buildRespJson(CodeSuccess, "处理成功", nil, upReq.ReqId)))
@@ -467,7 +509,7 @@ func (srv *Server) bindEvents() {
 			threading.GoSafe(func() {
 				ack := payload.Ack
 				if upHandler := srv.eventHandlers[EventUp]; upHandler != nil {
-					err := upHandler.Handle(ctx, EventUp, payload)
+					downPayload, err := upHandler.Handle(ctx, EventUp, payload)
 					if err != nil {
 						logx.WithContext(ctx).Errorf("[socketio] failed to process request: conn=%s, err=%v", socket.Id, err)
 						if ack != nil {
@@ -476,10 +518,20 @@ func (srv *Server) bindEvents() {
 							_ = session.ReplyEventDown(CodeBizErr, "业务处理失败", nil, upReq.ReqId)
 						}
 					} else {
+						var payloadData any
+						if downPayload != "" {
+							raw := []byte(downPayload)
+							var js json.RawMessage
+							if jsonx.Unmarshal(raw, &js) == nil {
+								payloadData = json.RawMessage(raw)
+							} else {
+								payloadData = downPayload
+							}
+						}
 						if ack != nil {
-							ack(string(buildRespJson(CodeSuccess, "处理成功", nil, upReq.ReqId)))
+							ack(string(buildRespJson(CodeSuccess, "处理成功", payloadData, upReq.ReqId)))
 						} else {
-							_ = session.ReplyEventDown(CodeSuccess, "处理成功", nil, upReq.ReqId)
+							_ = session.ReplyEventDown(CodeSuccess, "处理成功", payloadData, upReq.ReqId)
 						}
 					}
 				} else {
@@ -620,6 +672,17 @@ func (srv *Server) bindEvents() {
 				}
 			})
 		})
+		socket.On("disconnect", func(payload *socketio.EventPayload) {
+			reason := "client disconnect"
+			if payload.Data != nil && len(payload.Data) > 0 {
+				if r, ok := payload.Data[0].(string); ok {
+					reason = r
+				}
+			}
+			logx.Infof("[socketio] disconnecting: conn=%s, reason=%s", socket.Id, reason)
+			srv.cleanInvalidSession(socket.Id)
+		})
+
 		for eventName, handler := range srv.eventHandlers {
 			if eventName == EventDown || eventName == EventUp {
 				continue
@@ -647,20 +710,10 @@ func (srv *Server) bindEvents() {
 				}
 				logx.WithContext(ctx).Debugf("[socketio] received event: %s from conn: %s, payload length: %d", currentEvent, socket.Id, len(handlerPayload))
 				threading.GoSafe(func() {
-					currentHandler.Handle(ctx, currentEvent, payload)
+					_, _ = currentHandler.Handle(ctx, currentEvent, payload)
 				})
 			})
 		}
-		socket.On("disconnect", func(payload *socketio.EventPayload) {
-			reason := "client disconnect"
-			if payload.Data != nil && len(payload.Data) > 0 {
-				if r, ok := payload.Data[0].(string); ok {
-					reason = r
-				}
-			}
-			logx.Infof("[socketio] disconnecting: conn=%s, reason=%s", socket.Id, reason)
-			srv.cleanInvalidSession(socket.Id)
-		})
 	})
 }
 

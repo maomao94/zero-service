@@ -149,7 +149,7 @@ const socket = io('http://your-server-url:port', {
 }
 ```
 
-### 5.2 SocketUpRoomReq（房间操作请求）
+### 5.2 SocketUpRoomReq（客户端房间操作请求）
 
 | 字段名     | 类型       | 必填 | 描述     |
 |---------|----------|----|--------|
@@ -191,7 +191,7 @@ const socket = io('http://your-server-url:port', {
 }
 ```
 
-### 5.4 SocketDown（自定义事件推送）
+### 5.4 SocketDown（服务器自定义事件推送）
 
 | 字段名       | 类型       | 描述         |
 |-----------|----------|------------|
@@ -213,7 +213,7 @@ const socket = io('http://your-server-url:port', {
 }
 ```
 
-### 5.5 StatDown（统计信息）
+### 5.5 StatDown（服务器统计信息）
 
 | 字段名        | 类型                  | 描述        |
 |------------|---------------------|-----------|

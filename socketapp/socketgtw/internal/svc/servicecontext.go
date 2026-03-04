@@ -1,6 +1,7 @@
 package svc
 
 import (
+	"context"
 	"math"
 	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/socketiox"
@@ -9,6 +10,7 @@ import (
 	"zero-service/socketapp/socketgtw/internal/config"
 	"zero-service/socketapp/socketgtw/internal/sockethandler"
 
+	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
 )
@@ -20,17 +22,18 @@ type ServiceContext struct {
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
+	streamEventCli := streamevent.NewStreamEventClient(zrpc.MustNewClient(c.StreamEventConf,
+		zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
+		// 添加最大消息配置
+		zrpc.WithDialOption(grpc.WithDefaultCallOptions(
+			grpc.MaxCallSendMsgSize(math.MaxInt32), // 发送最大2GB
+			//grpc.MaxCallSendMsgSize(50 * 1024 * 1024),   // 发送最大50MB
+			//grpc.MaxCallRecvMsgSize(100 * 1024 * 1024),  // 接收最大100MB
+		)),
+	).Conn())
 	svcCtx := &ServiceContext{
-		Config: c,
-		StreamEventCli: streamevent.NewStreamEventClient(zrpc.MustNewClient(c.StreamEventConf,
-			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
-			// 添加最大消息配置
-			zrpc.WithDialOption(grpc.WithDefaultCallOptions(
-				grpc.MaxCallSendMsgSize(math.MaxInt32), // 发送最大2GB
-				//grpc.MaxCallSendMsgSize(50 * 1024 * 1024),   // 发送最大50MB
-				//grpc.MaxCallRecvMsgSize(100 * 1024 * 1024),  // 接收最大100MB
-			)),
-		).Conn()),
+		Config:         c,
+		StreamEventCli: streamEventCli,
 	}
 	svcCtx.SocketServer = socketiox.MustServer(
 		socketiox.WithContextKeys(c.SocketMetaData),
@@ -68,6 +71,34 @@ func NewServiceContext(c config.Config) *ServiceContext {
 				return nil, false
 			}
 			return claims, true
+		}),
+		socketiox.WithConnectHook(func(ctx context.Context, session *socketiox.Session) ([]string, error) {
+			reqId, _ := tool.SimpleUUID()
+			metadataJson, _ := jsonx.Marshal(session.AllMetadata())
+			// 调用 streamevent 接口处理连接事件
+			_, err := svcCtx.StreamEventCli.UpSocketMessage(ctx, &streamevent.UpSocketMessageReq{
+				ReqId:   reqId,
+				SId:     session.ID(),
+				Event:   socketiox.EventConnection,
+				Payload: string(metadataJson),
+			})
+			if err != nil {
+				return nil, err
+			}
+			return nil, nil
+		}),
+		socketiox.WithPreJoinRoomHook(func(ctx context.Context, session *socketiox.Session, reqId, room string) error {
+			// 调用 streamevent 接口处理加入房间事件
+			_, err := svcCtx.StreamEventCli.UpSocketMessage(ctx, &streamevent.UpSocketMessageReq{
+				ReqId:   reqId,
+				SId:     session.ID(),
+				Event:   socketiox.EventJoinRoom,
+				Payload: room,
+			})
+			if err != nil {
+				return err
+			}
+			return nil
 		}),
 	)
 	return svcCtx
