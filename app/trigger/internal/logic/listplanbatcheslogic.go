@@ -6,7 +6,9 @@ import (
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
+	"zero-service/model"
 
+	"github.com/doug-martin/goqu/v9"
 	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -33,27 +35,49 @@ func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (
 		return nil, err
 	}
 
-	// 构建查询条件
-	builder := l.svcCtx.PlanBatchModel.SelectBuilder()
+	query := l.svcCtx.Database.From(goqu.I("plan_batch").As("pb"))
+	if len(in.PlanType) > 0 {
+		query = query.LeftJoin(goqu.I("plan").As("p"), goqu.On(goqu.I("pb.plan_pk").Eq(goqu.I("p.id")))).
+			Where(goqu.I("p.plan_type").Eq(in.PlanType))
+	}
 	if in.PlanId != "" {
-		builder = builder.Where("plan_id = ?", in.PlanId)
+		query = query.Where(goqu.I("pb.plan_id").Eq(in.PlanId))
 	}
 	if in.BatchId != "" {
-		builder = builder.Where("batch_id = ?", in.BatchId)
+		query = query.Where(goqu.I("pb.batch_id").Eq(in.BatchId))
 	}
 	if len(in.Status) > 0 {
-		statusInts := make([]int64, len(in.Status))
+		statusInterface := make([]interface{}, len(in.Status))
 		for i, status := range in.Status {
-			statusInts[i] = int64(status)
+			statusInterface[i] = int64(status)
 		}
-		builder = builder.Where("status IN (?)", statusInts)
+		query = query.Where(goqu.I("pb.status").In(statusInterface...))
 	}
-	if len(in.PlanType) > 0 {
-		builder = builder.Join("plan p ON p.id = plan_batch.plan_pk").Where("p.plan_type = ?", in.PlanType)
+	query = query.Where(goqu.I("pb.del_state").Eq(0))
+
+	countQuery := query.Select(goqu.COUNT("pb.id"))
+	countSQL, countArgs, err := countQuery.ToSQL()
+	if err != nil {
+		return nil, err
+	}
+	var total int64
+	err = l.svcCtx.SqlConn.QueryRowCtx(l.ctx, &total, countSQL, countArgs...)
+	if err != nil {
+		return nil, err
 	}
 
-	// 查询计划批次列表
-	planBatches, total, err := l.svcCtx.PlanBatchModel.FindPageListByPageWithTotal(l.ctx, builder, in.PageNum, in.PageSize, "plan_trigger_time ASC", "id DESC")
+	// 构建分页查询
+	dataQuery := query.Select(goqu.I("pb.*")).
+		Order(goqu.I("pb.plan_trigger_time").Asc(), goqu.I("pb.id").Desc()).
+		Limit(uint(in.PageSize)).
+		Offset(uint((in.PageNum - 1) * in.PageSize))
+
+	dataSQL, dataArgs, err := dataQuery.ToSQL()
+	if err != nil {
+		return nil, err
+	}
+	var planBatches []*model.PlanBatch
+	err = l.svcCtx.SqlConn.QueryRowPartialCtx(l.ctx, &planBatches, dataSQL, dataArgs...)
 	if err != nil {
 		return nil, err
 	}
