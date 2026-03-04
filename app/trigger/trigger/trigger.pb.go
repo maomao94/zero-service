@@ -4940,7 +4940,9 @@ type ListPlanBatchesReq struct {
 	// 批次ID
 	BatchId string `protobuf:"bytes,5,opt,name=batchId,proto3" json:"batchId,omitempty"`
 	// 状态：1-启用，2-暂停，3-终止
-	Status        []int32 `protobuf:"varint,6,rep,packed,name=status,proto3" json:"status,omitempty"`
+	Status []int32 `protobuf:"varint,6,rep,packed,name=status,proto3" json:"status,omitempty"`
+	// 计划类型
+	PlanType      string `protobuf:"bytes,7,opt,name=planType,proto3" json:"planType,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5022,6 +5024,13 @@ func (x *ListPlanBatchesReq) GetStatus() []int32 {
 		return x.Status
 	}
 	return nil
+}
+
+func (x *ListPlanBatchesReq) GetPlanType() string {
+	if x != nil {
+		return x.PlanType
+	}
+	return ""
 }
 
 type ListPlanBatchesRes struct {
@@ -7314,7 +7323,7 @@ const file_trigger_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x18\n" +
 	"\abatchId\x18\x02 \x01(\tR\abatchId\"E\n" +
 	"\x0fGetPlanBatchRes\x122\n" +
-	"\tplanBatch\x18\x01 \x01(\v2\x14.trigger.PbPlanBatchR\tplanBatch\"\xf7\x01\n" +
+	"\tplanBatch\x18\x01 \x01(\v2\x14.trigger.PbPlanBatchR\tplanBatch\"\x93\x02\n" +
 	"\x12ListPlanBatchesReq\x127\n" +
 	"\vcurrentUser\x18d \x01(\v2\x15.extproto.CurrentUserR\vcurrentUser\x12#\n" +
 	"\bpageSize\x18\x01 \x01(\x03B\a\xfaB\x04\"\x02(\x00R\bpageSize\x12!\n" +
@@ -7322,7 +7331,8 @@ const file_trigger_proto_rawDesc = "" +
 	"\x06planPk\x18\x03 \x01(\x03R\x06planPk\x12\x16\n" +
 	"\x06planId\x18\x04 \x01(\tR\x06planId\x12\x18\n" +
 	"\abatchId\x18\x05 \x01(\tR\abatchId\x12\x16\n" +
-	"\x06status\x18\x06 \x03(\x05R\x06status\"b\n" +
+	"\x06status\x18\x06 \x03(\x05R\x06status\x12\x1a\n" +
+	"\bplanType\x18\a \x01(\tR\bplanType\"b\n" +
 	"\x12ListPlanBatchesRes\x126\n" +
 	"\vplanBatches\x18\x01 \x03(\v2\x14.trigger.PbPlanBatchR\vplanBatches\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x03R\x05total\"u\n" +

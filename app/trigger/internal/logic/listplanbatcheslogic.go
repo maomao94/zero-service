@@ -48,6 +48,9 @@ func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (
 		}
 		builder = builder.Where("status IN (?)", statusInts)
 	}
+	if len(in.PlanType) > 0 {
+		builder = builder.Join("plan p ON p.id = plan_batch.plan_pk").Where("p.plan_type = ?", in.PlanType)
+	}
 
 	// 查询计划批次列表
 	planBatches, total, err := l.svcCtx.PlanBatchModel.FindPageListByPageWithTotal(l.ctx, builder, in.PageNum, in.PageSize, "plan_trigger_time ASC", "id DESC")

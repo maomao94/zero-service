@@ -833,6 +833,8 @@ message ListPlanBatchesReq {
   string batchId = 5;
   // 状态：1-启用，2-暂停，3-终止
   repeated int32 status = 6;
+  // 计划类型
+  string planType = 7;
 }
 
 message ListPlanBatchesRes {

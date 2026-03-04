@@ -10115,6 +10115,8 @@ func (m *ListPlanBatchesReq) validate(all bool) error {
 
 	// no validation rules for BatchId
 
+	// no validation rules for PlanType
+
 	if len(errors) > 0 {
 		return ListPlanBatchesReqMultiError(errors)
 	}
