@@ -38,7 +38,7 @@ func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (
 	query := l.svcCtx.Database.From(goqu.I("plan_batch").As("pb"))
 	if len(in.PlanType) > 0 {
 		query = query.LeftJoin(goqu.I("plan").As("p"), goqu.On(goqu.I("pb.plan_pk").Eq(goqu.I("p.id")))).
-			Where(goqu.I("p.plan_type").Eq(in.PlanType))
+			Where(goqu.I("p.type").Eq(in.PlanType))
 	}
 	if in.PlanId != "" {
 		query = query.Where(goqu.I("pb.plan_id").Eq(in.PlanId))
