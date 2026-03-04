@@ -74,12 +74,15 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		}),
 		socketiox.WithConnectHook(func(ctx context.Context, session *socketiox.Session) ([]string, error) {
 			reqId, _ := tool.SimpleUUID()
-			metadataJson, _ := jsonx.Marshal(session.AllMetadata())
+			payloadData := map[string]interface{}{
+				"metadata": session.AllMetadata(),
+			}
+			downJson, _ := jsonx.Marshal(payloadData)
 			res, err := svcCtx.StreamEventCli.UpSocketMessage(ctx, &streamevent.UpSocketMessageReq{
 				ReqId:   reqId,
 				SId:     session.ID(),
 				Event:   socketiox.EventConnection,
-				Payload: string(metadataJson),
+				Payload: string(downJson),
 			})
 			if err != nil {
 				return nil, err
@@ -93,12 +96,15 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		}),
 		socketiox.WithDisconnectHook(func(ctx context.Context, session *socketiox.Session, reason string) error {
 			reqId, _ := tool.SimpleUUID()
-			metadataJson, _ := jsonx.Marshal(session.AllMetadata())
+			payloadData := map[string]interface{}{
+				"metadata": session.AllMetadata(),
+			}
+			downJson, _ := jsonx.Marshal(payloadData)
 			_, err := svcCtx.StreamEventCli.UpSocketMessage(ctx, &streamevent.UpSocketMessageReq{
 				ReqId:   reqId,
 				SId:     session.ID(),
 				Event:   socketiox.EventDisconnect,
-				Payload: string(metadataJson),
+				Payload: string(downJson),
 			})
 			if err != nil {
 				return err
@@ -106,11 +112,16 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			return nil
 		}),
 		socketiox.WithPreJoinRoomHook(func(ctx context.Context, session *socketiox.Session, reqId, room string) error {
+			payloadData := map[string]interface{}{
+				"metadata": session.AllMetadata(),
+				"room":     room,
+			}
+			downJson, _ := jsonx.Marshal(payloadData)
 			_, err := svcCtx.StreamEventCli.UpSocketMessage(ctx, &streamevent.UpSocketMessageReq{
 				ReqId:   reqId,
 				SId:     session.ID(),
 				Event:   socketiox.EventJoinRoom,
-				Payload: room,
+				Payload: string(downJson),
 			})
 			if err != nil {
 				return err
