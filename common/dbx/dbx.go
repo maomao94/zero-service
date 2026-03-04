@@ -6,8 +6,10 @@ import (
 	"strings"
 
 	"github.com/doug-martin/goqu/v9"
+	"github.com/doug-martin/goqu/v9/dialect/mysql"
 	_ "github.com/doug-martin/goqu/v9/dialect/mysql"
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
+	goqupostgres "github.com/doug-martin/goqu/v9/dialect/postgres"
 	_ "github.com/doug-martin/goqu/v9/dialect/sqlite3"
 	_ "github.com/doug-martin/goqu/v9/dialect/sqlserver"
 	_ "github.com/go-sql-driver/mysql" // MySQL驱动
@@ -132,4 +134,15 @@ type QoquLog struct {
 
 func (log *QoquLog) Printf(format string, v ...any) {
 	logx.Infof(format, v...)
+}
+
+// 注册一个无反引号的 mysql dialect
+func init() {
+	opts := mysql.DialectOptions()
+	opts.QuoteRune = 0
+	goqu.RegisterDialect(string(DatabaseTypeMySQL), opts)
+
+	optspostgres := goqupostgres.DialectOptions()
+	optspostgres.QuoteRune = 0
+	goqu.RegisterDialect(string(DatabaseTypePostgres), optspostgres)
 }
