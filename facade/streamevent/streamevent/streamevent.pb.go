@@ -2596,7 +2596,7 @@ func (x *UpSocketMessageReq) GetPayload() string {
 
 type UpSocketMessageRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Payload       string                 `protobuf:"bytes,1,opt,name=payload,proto3" json:"payload,omitempty"` // 返回数据
+	Payload       string                 `protobuf:"bytes,1,opt,name=payload,proto3" json:"payload,omitempty"` // 返回数据, __connection__ 返回 room 数组
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

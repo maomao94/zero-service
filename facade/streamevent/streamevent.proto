@@ -455,7 +455,7 @@ message UpSocketMessageReq{
 }
 
 message UpSocketMessageRes{
-  string payload = 1; // 返回数据
+  string payload = 1; // 返回数据, __connection__ 返回 room 数组
 }
 
 message PbPlan{

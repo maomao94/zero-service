@@ -75,8 +75,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		socketiox.WithConnectHook(func(ctx context.Context, session *socketiox.Session) ([]string, error) {
 			reqId, _ := tool.SimpleUUID()
 			metadataJson, _ := jsonx.Marshal(session.AllMetadata())
-			// 调用 streamevent 接口处理连接事件
-			_, err := svcCtx.StreamEventCli.UpSocketMessage(ctx, &streamevent.UpSocketMessageReq{
+			res, err := svcCtx.StreamEventCli.UpSocketMessage(ctx, &streamevent.UpSocketMessageReq{
 				ReqId:   reqId,
 				SId:     session.ID(),
 				Event:   socketiox.EventConnection,
@@ -85,10 +84,28 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			if err != nil {
 				return nil, err
 			}
+			var rooms []string
+			jsonx.Unmarshal([]byte(res.Payload), &rooms)
+			for _, room := range rooms {
+				session.JoinRoom(room)
+			}
 			return nil, nil
 		}),
+		socketiox.WithDisconnectHook(func(ctx context.Context, session *socketiox.Session, reason string) error {
+			reqId, _ := tool.SimpleUUID()
+			metadataJson, _ := jsonx.Marshal(session.AllMetadata())
+			_, err := svcCtx.StreamEventCli.UpSocketMessage(ctx, &streamevent.UpSocketMessageReq{
+				ReqId:   reqId,
+				SId:     session.ID(),
+				Event:   socketiox.EventDisconnect,
+				Payload: string(metadataJson),
+			})
+			if err != nil {
+				return err
+			}
+			return nil
+		}),
 		socketiox.WithPreJoinRoomHook(func(ctx context.Context, session *socketiox.Session, reqId, room string) error {
-			// 调用 streamevent 接口处理加入房间事件
 			_, err := svcCtx.StreamEventCli.UpSocketMessage(ctx, &streamevent.UpSocketMessageReq{
 				ReqId:   reqId,
 				SId:     session.ID(),

@@ -216,6 +216,8 @@ type TokenValidatorWithClaims func(token string) (map[string]interface{}, bool)
 
 type ConnectHook func(ctx context.Context, session *Session) ([]string, error)
 
+type DisconnectHook func(ctx context.Context, session *Session, reason string) error
+
 type PreJoinRoomHook func(ctx context.Context, session *Session, reqId, room string) error
 
 type Option func(s *Server)
@@ -257,6 +259,10 @@ func WithPreJoinRoomHook(hook PreJoinRoomHook) Option {
 	return func(s *Server) { s.preJoinRoomHook = hook }
 }
 
+func WithDisconnectHook(hook DisconnectHook) Option {
+	return func(s *Server) { s.disconnectHook = hook }
+}
+
 type Server struct {
 	*socketio.Io
 	eventHandlers            EventHandlers
@@ -268,6 +274,7 @@ type Server struct {
 	tokenValidator           TokenValidator
 	tokenValidatorWithClaims TokenValidatorWithClaims
 	connectHook              ConnectHook
+	disconnectHook           DisconnectHook
 	preJoinRoomHook          PreJoinRoomHook
 }
 
@@ -679,6 +686,17 @@ func (srv *Server) bindEvents() {
 				if r, ok := payload.Data[0].(string); ok {
 					reason = r
 				}
+			}
+			// 执行断开连接钩子
+			ctx := logx.WithFields(context.WithValue(context.Background(), "SID", socket.Id),
+				logx.Field("SID", socket.Id),
+				logx.Field("EVENT", "disconnect"),
+			)
+			srv.lock.RLock()
+			deleteSession, ok := srv.sessions[socket.Id]
+			srv.lock.RUnlock()
+			if ok && srv.disconnectHook != nil {
+				srv.disconnectHook(ctx, deleteSession, reason)
 			}
 			logx.Infof("[socketio] disconnecting: conn=%s, reason=%s", socket.Id, reason)
 			srv.cleanInvalidSession(socket.Id)
