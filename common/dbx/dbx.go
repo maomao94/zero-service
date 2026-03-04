@@ -139,10 +139,8 @@ func (log *QoquLog) Printf(format string, v ...any) {
 // 注册一个无反引号的 mysql dialect
 func init() {
 	opts := mysql.DialectOptions()
-	opts.QuoteRune = 0
 	goqu.RegisterDialect(string(DatabaseTypeMySQL), opts)
 
 	optspostgres := goqupostgres.DialectOptions()
-	optspostgres.QuoteRune = 0
 	goqu.RegisterDialect(string(DatabaseTypePostgres), optspostgres)
 }
