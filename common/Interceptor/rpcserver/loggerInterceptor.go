@@ -19,13 +19,6 @@ func LoggerInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo,
 	}
 	if v := md.Get(ctxdata.HeaderAuthorization); len(v) > 0 {
 		ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, v[0])
-		ctx = logx.WithFields(ctx,
-			logx.Field("header-auth", true),
-		)
-	} else {
-		ctx = logx.WithFields(ctx,
-			logx.Field("header-auth", false),
-		)
 	}
 	if v := md.Get(ctxdata.HeaderTraceId); len(v) > 0 {
 		ctx = context.WithValue(ctx, ctxdata.CtxTraceIdKey, v[0])
