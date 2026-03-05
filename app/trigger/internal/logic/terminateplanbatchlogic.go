@@ -79,7 +79,7 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 		planBatch.PausedTime = sql.NullTime{}
 		planBatch.PausedReason = sql.NullString{}
 		planBatch.FinishedTime = sql.NullTime{Time: now, Valid: true}
-		planBatch.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}
+		planBatch.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, in.CurrentUser), Valid: tool.GetCurrentUserId(l.ctx, in.CurrentUser) != ""}
 
 		// 更新计划批次
 		transErr := l.svcCtx.PlanBatchModel.UpdateWithVersion(ctx, tx, planBatch)

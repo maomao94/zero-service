@@ -114,7 +114,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		return nil, fmt.Errorf("计划任务时间段内调度项过多")
 	}
 	rule, _ := jsonx.Marshal(in.Rule)
-	currentUserId := tool.GetCurrentUserId(in.CurrentUser)
+	currentUserId := tool.GetCurrentUserId(l.ctx, in.CurrentUser)
 
 	var insertPlan = &model.Plan{
 		CreateUser:       sql.NullString{String: currentUserId, Valid: currentUserId != ""},

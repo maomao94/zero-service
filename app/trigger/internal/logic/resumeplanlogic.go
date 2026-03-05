@@ -68,7 +68,7 @@ func (l *ResumePlanLogic) ResumePlan(in *trigger.ResumePlanReq) (*trigger.Resume
 		plan.Status = int64(model.PlanStatusEnabled)
 		plan.PausedTime = sql.NullTime{}
 		plan.PausedReason = sql.NullString{}
-		plan.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}
+		plan.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, in.CurrentUser), Valid: tool.GetCurrentUserId(l.ctx, in.CurrentUser) != ""}
 		plan.UpdateTime = time.Now()
 
 		// 更新计划
@@ -81,7 +81,7 @@ func (l *ResumePlanLogic) ResumePlan(in *trigger.ResumePlanReq) (*trigger.Resume
 			Set("status", int64(model.PlanStatusEnabled)).
 			Set("paused_time", sql.NullTime{}).
 			Set("paused_reason", sql.NullString{}).
-			Set("update_user", sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}).
+			Set("update_user", sql.NullString{String: tool.GetCurrentUserId(l.ctx, in.CurrentUser), Valid: tool.GetCurrentUserId(l.ctx, in.CurrentUser) != ""}).
 			Where("plan_id = ?", plan.PlanId).
 			Where("status = ?", int64(model.PlanStatusPaused))
 		_, transErr = l.svcCtx.PlanBatchModel.UpdateWithBuilder(ctx, tx, builder)

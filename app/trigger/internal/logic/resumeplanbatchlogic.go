@@ -75,7 +75,7 @@ func (l *ResumePlanBatchLogic) ResumePlanBatch(in *trigger.ResumePlanBatchReq) (
 	err = l.svcCtx.PlanBatchModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
 		// 更新计划批次状态为启用
 		planBatch.Status = int64(model.PlanStatusEnabled) // 启用
-		planBatch.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}
+		planBatch.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, in.CurrentUser), Valid: tool.GetCurrentUserId(l.ctx, in.CurrentUser) != ""}
 
 		// 更新计划批次
 		transErr := l.svcCtx.PlanBatchModel.UpdateWithVersion(ctx, tx, planBatch)
@@ -88,7 +88,7 @@ func (l *ResumePlanBatchLogic) ResumePlanBatch(in *trigger.ResumePlanBatchReq) (
 			Set("status", int64(model.PlanStatusEnabled)).
 			Set("paused_time", sql.NullTime{}).
 			Set("paused_reason", sql.NullString{}).
-			Set("update_user", sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}).
+			Set("update_user", sql.NullString{String: tool.GetCurrentUserId(l.ctx, in.CurrentUser), Valid: tool.GetCurrentUserId(l.ctx, in.CurrentUser) != ""}).
 			Where("id = ?", planBatch.PlanPk).
 			Where("status = ?", int64(model.PlanStatusPaused))
 		_, transErr = l.svcCtx.PlanModel.UpdateWithBuilder(ctx, tx, builder)

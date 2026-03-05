@@ -78,7 +78,7 @@ func (l *PausePlanBatchLogic) PausePlanBatch(in *trigger.PausePlanBatchReq) (*tr
 		planBatch.Status = int64(model.PlanStatusPaused) // 暂停
 		planBatch.PausedTime = sql.NullTime{Time: time.Now(), Valid: true}
 		planBatch.PausedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
-		planBatch.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}
+		planBatch.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, in.CurrentUser), Valid: tool.GetCurrentUserId(l.ctx, in.CurrentUser) != ""}
 
 		// 更新计划批次
 		transErr := l.svcCtx.PlanBatchModel.UpdateWithVersion(ctx, tx, planBatch)

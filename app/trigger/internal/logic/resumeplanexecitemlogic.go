@@ -70,7 +70,7 @@ func (l *ResumePlanExecItemLogic) ResumePlanExecItem(in *trigger.ResumePlanExecI
 		execItem.Status = int64(model.StatusWaiting)
 		execItem.PausedTime = sql.NullTime{}
 		execItem.PausedReason = sql.NullString{}
-		execItem.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}
+		execItem.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, in.CurrentUser), Valid: tool.GetCurrentUserId(l.ctx, in.CurrentUser) != ""}
 		execItem.UpdateTime = time.Now()
 
 		// 更新执行项

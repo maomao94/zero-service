@@ -66,7 +66,7 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 		plan.Status = int64(model.PlanStatusPaused) // 暂停
 		plan.PausedTime = sql.NullTime{Time: time.Now(), Valid: true}
 		plan.PausedReason = sql.NullString{String: in.Reason, Valid: in.Reason != ""}
-		plan.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}
+		plan.UpdateUser = sql.NullString{String: tool.GetCurrentUserId(l.ctx, in.CurrentUser), Valid: tool.GetCurrentUserId(l.ctx, in.CurrentUser) != ""}
 
 		// 更新计划
 		transErr := l.svcCtx.PlanModel.UpdateWithVersion(ctx, tx, plan)
@@ -78,7 +78,7 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 			Set("status", int64(model.PlanStatusPaused)).
 			Set("paused_time", sql.NullTime{Time: time.Now(), Valid: true}).
 			Set("paused_reason", sql.NullString{String: in.Reason, Valid: in.Reason != ""}).
-			Set("update_user", sql.NullString{String: tool.GetCurrentUserId(in.CurrentUser), Valid: tool.GetCurrentUserId(in.CurrentUser) != ""}).
+			Set("update_user", sql.NullString{String: tool.GetCurrentUserId(l.ctx, in.CurrentUser), Valid: tool.GetCurrentUserId(l.ctx, in.CurrentUser) != ""}).
 			Where("plan_id = ?", plan.PlanId).
 			Where("status = ?", int64(model.PlanStatusEnabled)).
 			Where("finished_time IS NULL")
