@@ -9,18 +9,18 @@ import (
 const (
 	CtxUserIdKey        = "user-id"
 	CtxUserNameKey      = "user-name"
+	CtxDeptCodeKey      = "dept-code"
 	CtxAuthorizationKey = "authorization"
 	CtxTraceIdKey       = "trace-id"
-	CtxDeptCodeKey      = "dept-code"
 )
 
 // gRPC metadata header key（必须小写）
 const (
 	HeaderUserId        = "x-user-id"
 	HeaderUserName      = "x-user-name"
+	HeaderDeptCode      = "x-dept-code"
 	HeaderAuthorization = "authorization"
 	HeaderTraceId       = "x-trace-id"
-	HeaderDeptCode      = "x-dept-code"
 )
 
 type MsgBody struct {
