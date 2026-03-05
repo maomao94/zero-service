@@ -17,6 +17,9 @@ func LoggerInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo,
 	if v := md.Get(ctxdata.HeaderUserName); len(v) > 0 {
 		ctx = context.WithValue(ctx, ctxdata.CtxUserNameKey, v[0])
 	}
+	if v := md.Get(ctxdata.HeaderDeptCode); len(v) > 0 {
+		ctx = context.WithValue(ctx, ctxdata.CtxDeptCodeKey, v[0])
+	}
 	if v := md.Get(ctxdata.HeaderAuthorization); len(v) > 0 {
 		ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, v[0])
 	}

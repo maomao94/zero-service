@@ -11,6 +11,7 @@ const (
 	CtxUserNameKey      = "user-name"
 	CtxAuthorizationKey = "authorization"
 	CtxTraceIdKey       = "trace-id"
+	CtxDeptCodeKey      = "dept-code"
 )
 
 // gRPC metadata header key（必须小写）
@@ -19,6 +20,7 @@ const (
 	HeaderUserName      = "x-user-name"
 	HeaderAuthorization = "authorization"
 	HeaderTraceId       = "x-trace-id"
+	HeaderDeptCode      = "x-dept-code"
 )
 
 type MsgBody struct {
@@ -60,6 +62,13 @@ func GetAuthorization(ctx context.Context) string {
 
 func GetTraceId(ctx context.Context) string {
 	if v, ok := ctx.Value(CtxTraceIdKey).(string); ok {
+		return v
+	}
+	return ""
+}
+
+func GetDeptCode(ctx context.Context) string {
+	if v, ok := ctx.Value(CtxDeptCodeKey).(string); ok {
 		return v
 	}
 	return ""

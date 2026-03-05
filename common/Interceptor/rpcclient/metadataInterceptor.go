@@ -18,6 +18,9 @@ func UnaryMetadataInterceptor(ctx context.Context, method string, req, reply any
 	if userName := ctxdata.GetUserName(ctx); userName != "" {
 		md.Set(ctxdata.HeaderUserName, userName)
 	}
+	if deptCode := ctxdata.GetDeptCode(ctx); deptCode != "" {
+		md.Set(ctxdata.HeaderDeptCode, deptCode)
+	}
 	if auth := ctxdata.GetAuthorization(ctx); auth != "" {
 		md.Set(ctxdata.HeaderAuthorization, auth)
 	}
@@ -37,6 +40,9 @@ func StreamTracingInterceptor(ctx context.Context, desc *grpc.StreamDesc, cc *gr
 	}
 	if userName := ctxdata.GetUserName(ctx); userName != "" {
 		md.Set(ctxdata.HeaderUserName, userName)
+	}
+	if deptCode := ctxdata.GetDeptCode(ctx); deptCode != "" {
+		md.Set(ctxdata.HeaderDeptCode, deptCode)
 	}
 	if auth := ctxdata.GetAuthorization(ctx); auth != "" {
 		md.Set(ctxdata.HeaderAuthorization, auth)
