@@ -58,14 +58,14 @@ func (l *GenTokenLogic) getJwtToken(secretKey string, iat, seconds int64, uid st
 	claims := make(jwt.MapClaims)
 	claims["exp"] = iat + seconds
 	claims["iat"] = iat
-	claims[ctxdata.CtxKeyUID] = uid
+	claims[ctxdata.CtxUserIdKey] = uid
 	if payload != nil && len(payload) > 0 {
 		for k, v := range payload {
 			if k == "" {
 				continue
 			}
 			switch k {
-			case jwtAudience, jwtExpire, jwtId, jwtIssueAt, jwtIssuer, jwtNotBefore, jwtSubject, ctxdata.CtxKeyUID:
+			case jwtAudience, jwtExpire, jwtId, jwtIssueAt, jwtIssuer, jwtNotBefore, jwtSubject, ctxdata.CtxUserIdKey:
 				// ignore the standard claims
 			default:
 				claims[k] = v
