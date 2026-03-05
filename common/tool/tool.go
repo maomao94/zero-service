@@ -204,82 +204,90 @@ func PrintGoVersion() {
 }
 
 func GetCurrentUserId(ctx context.Context, currentUser interface{}) string {
-	if currentUser == nil {
-		return ctxdata.GetUserId(ctx)
+	if userId := ctxdata.GetUserId(ctx); userId != "" {
+		return userId
 	}
-	// 使用反射获取CurrentUser对象的UserId字段
-	v := reflect.ValueOf(currentUser)
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
+	if currentUser != nil {
+		v := reflect.ValueOf(currentUser)
+		if v.Kind() == reflect.Ptr {
+			v = v.Elem()
+		}
+		if v.Kind() != reflect.Struct {
+			return ""
+		}
+		userIdField := v.FieldByName("UserId")
+		if !userIdField.IsValid() {
+			return ""
+		}
+		switch userIdField.Kind() {
+		case reflect.String:
+			return userIdField.String()
+		default:
+			return ""
+		}
 	}
-	if v.Kind() != reflect.Struct {
-		return ""
-	}
-	userIdField := v.FieldByName("UserId")
-	if !userIdField.IsValid() {
-		return ""
-	}
-	switch userIdField.Kind() {
-	case reflect.String:
-		return userIdField.String()
-	default:
-		return ""
-	}
+	return ""
 }
 
 func GetCurrentUserName(ctx context.Context, currentUser interface{}) string {
-	if currentUser == nil {
-		return ctxdata.GetUserName(ctx)
+	if userName := ctxdata.GetUserName(ctx); userName != "" {
+		return userName
 	}
-	v := reflect.ValueOf(currentUser)
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
+	if currentUser != nil {
+		v := reflect.ValueOf(currentUser)
+		if v.Kind() == reflect.Ptr {
+			v = v.Elem()
+		}
+		if v.Kind() != reflect.Struct {
+			return ""
+		}
+		userNameField := v.FieldByName("UserName")
+		if !userNameField.IsValid() {
+			return ""
+		}
+		switch userNameField.Kind() {
+		case reflect.String:
+			return userNameField.String()
+		default:
+			return ""
+		}
 	}
-	if v.Kind() != reflect.Struct {
-		return ""
-	}
-	userNameField := v.FieldByName("UserName")
-	if !userNameField.IsValid() {
-		return ""
-	}
-	switch userNameField.Kind() {
-	case reflect.String:
-		return userNameField.String()
-	default:
-		return ""
-	}
+	return ""
 }
 
 func GetCurrentDeptCode(ctx context.Context, currentUser interface{}) string {
-	if currentUser == nil {
-		return ctxdata.GetDeptCode(ctx)
+	if deptCode := ctxdata.GetDeptCode(ctx); deptCode != "" {
+		return deptCode
 	}
-	v := reflect.ValueOf(currentUser)
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
+	if currentUser != nil {
+		v := reflect.ValueOf(currentUser)
+		if v.Kind() == reflect.Ptr {
+			v = v.Elem()
+		}
+		if v.Kind() != reflect.Struct {
+			return ""
+		}
+		deptField := v.FieldByName("Dept")
+		if !deptField.IsValid() {
+			return ""
+		}
+		if deptField.Kind() != reflect.Slice && deptField.Kind() != reflect.Array {
+			return ""
+		}
+		if deptField.Len() == 0 {
+			return ""
+		}
+		firstDept := deptField.Index(0)
+		if firstDept.Kind() == reflect.Ptr {
+			firstDept = firstDept.Elem()
+		}
+		deptCodeField := firstDept.FieldByName("DeptCode")
+		if !deptCodeField.IsValid() || deptCodeField.Kind() != reflect.String {
+			return ""
+		}
+		return deptCodeField.String()
 	}
-	if v.Kind() != reflect.Struct {
-		return ""
-	}
-	deptField := v.FieldByName("Dept")
-	if !deptField.IsValid() {
-		return ""
-	}
-	if deptField.Kind() != reflect.Slice && deptField.Kind() != reflect.Array {
-		return ""
-	}
-	if deptField.Len() == 0 {
-		return ""
-	}
-	firstDept := deptField.Index(0)
-	if firstDept.Kind() == reflect.Ptr {
-		firstDept = firstDept.Elem()
-	}
-	deptCodeField := firstDept.FieldByName("DeptCode")
-	if !deptCodeField.IsValid() || deptCodeField.Kind() != reflect.String {
-		return ""
-	}
-	return deptCodeField.String()
+	return ""
 }
 
 func CalculateOffset(page, pageSize int64) uint {
