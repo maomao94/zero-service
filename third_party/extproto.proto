@@ -17,9 +17,9 @@ message CurrentUser {
 }
 
 message Dept {
-  string orgId = 1 [json_name = "orgId"];
-  string orgCode = 2 [json_name = "orgCode"];
-  string orgName = 3 [json_name = "orgName"];
+  string deptId = 1 [json_name = "deptId"];
+  string deptCode = 2 [json_name = "deptCode"];
+  string deptName = 3 [json_name = "deptName"];
 }
 
 extend google.protobuf.EnumValueOptions {

@@ -1,6 +1,7 @@
 package tool
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -10,6 +11,7 @@ import (
 	"runtime"
 	"strings"
 	"time"
+	"zero-service/common/ctxdata"
 
 	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/duke-git/lancet/v2/formatter"
@@ -201,13 +203,10 @@ func PrintGoVersion() {
 	fmt.Printf("Go Version: %s\n", runtime.Version())
 }
 
-// GetCurrentUserId 安全获取当前用户ID，避免CurrentUser为nil时panic
-// 如果CurrentUser为nil或UserId为空，返回空字符串
-func GetCurrentUserId(currentUser interface{}) string {
+func GetCurrentUserId(ctx context.Context, currentUser interface{}) string {
 	if currentUser == nil {
-		return ""
+		return ctxdata.GetUserId(ctx)
 	}
-
 	// 使用反射获取CurrentUser对象的UserId字段
 	v := reflect.ValueOf(currentUser)
 	if v.Kind() == reflect.Ptr {
@@ -228,9 +227,9 @@ func GetCurrentUserId(currentUser interface{}) string {
 	}
 }
 
-func GetCurrentUserName(currentUser interface{}) string {
+func GetCurrentUserName(ctx context.Context, currentUser interface{}) string {
 	if currentUser == nil {
-		return ""
+		return ctxdata.GetUserName(ctx)
 	}
 	v := reflect.ValueOf(currentUser)
 	if v.Kind() == reflect.Ptr {
@@ -249,6 +248,38 @@ func GetCurrentUserName(currentUser interface{}) string {
 	default:
 		return ""
 	}
+}
+
+func GetCurrentDeptCode(ctx context.Context, currentUser interface{}) string {
+	if currentUser == nil {
+		return ctxdata.GetDeptCode(ctx)
+	}
+	v := reflect.ValueOf(currentUser)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	if v.Kind() != reflect.Struct {
+		return ""
+	}
+	deptField := v.FieldByName("Dept")
+	if !deptField.IsValid() {
+		return ""
+	}
+	if deptField.Kind() != reflect.Slice && deptField.Kind() != reflect.Array {
+		return ""
+	}
+	if deptField.Len() == 0 {
+		return ""
+	}
+	firstDept := deptField.Index(0)
+	if firstDept.Kind() == reflect.Ptr {
+		firstDept = firstDept.Elem()
+	}
+	deptCodeField := firstDept.FieldByName("DeptCode")
+	if !deptCodeField.IsValid() || deptCodeField.Kind() != reflect.String {
+		return ""
+	}
+	return deptCodeField.String()
 }
 
 func CalculateOffset(page, pageSize int64) uint {

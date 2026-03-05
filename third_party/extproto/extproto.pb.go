@@ -218,9 +218,9 @@ func (x *CurrentUser) GetDept() []*Dept {
 
 type Dept struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	OrgId         string                 `protobuf:"bytes,1,opt,name=orgId,proto3" json:"orgId,omitempty"`
-	OrgCode       string                 `protobuf:"bytes,2,opt,name=orgCode,proto3" json:"orgCode,omitempty"`
-	OrgName       string                 `protobuf:"bytes,3,opt,name=orgName,proto3" json:"orgName,omitempty"`
+	DeptId        string                 `protobuf:"bytes,1,opt,name=deptId,proto3" json:"deptId,omitempty"`
+	DeptCode      string                 `protobuf:"bytes,2,opt,name=deptCode,proto3" json:"deptCode,omitempty"`
+	DeptName      string                 `protobuf:"bytes,3,opt,name=deptName,proto3" json:"deptName,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -255,23 +255,23 @@ func (*Dept) Descriptor() ([]byte, []int) {
 	return file_extproto_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *Dept) GetOrgId() string {
+func (x *Dept) GetDeptId() string {
 	if x != nil {
-		return x.OrgId
+		return x.DeptId
 	}
 	return ""
 }
 
-func (x *Dept) GetOrgCode() string {
+func (x *Dept) GetDeptCode() string {
 	if x != nil {
-		return x.OrgCode
+		return x.DeptCode
 	}
 	return ""
 }
 
-func (x *Dept) GetOrgName() string {
+func (x *Dept) GetDeptName() string {
 	if x != nil {
-		return x.OrgName
+		return x.DeptName
 	}
 	return ""
 }
@@ -316,11 +316,11 @@ const file_extproto_proto_rawDesc = "" +
 	"\x04dept\x18e \x03(\v2\x0e.extproto.DeptR\x04dept\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"P\n" +
-	"\x04Dept\x12\x14\n" +
-	"\x05orgId\x18\x01 \x01(\tR\x05orgId\x12\x18\n" +
-	"\aorgCode\x18\x02 \x01(\tR\aorgCode\x12\x18\n" +
-	"\aorgName\x18\x03 \x01(\tR\aorgName*\x8e\b\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"V\n" +
+	"\x04Dept\x12\x16\n" +
+	"\x06deptId\x18\x01 \x01(\tR\x06deptId\x12\x1a\n" +
+	"\bdeptCode\x18\x02 \x01(\tR\bdeptCode\x12\x1a\n" +
+	"\bdeptName\x18\x03 \x01(\tR\bdeptName*\x8e\b\n" +
 	"\x04Code\x121\n" +
 	"\x10CODE_UNSPECIFIED\x10\x00\x1a\x1bʸ\x02\x12未指定错误码и\x02\xf4\x03\x12*\n" +
 	"\r_1_00_UNKNOWN\x10\x87\x95\x06\x1a\x15ʸ\x02\f未知错误и\x02\xf4\x03\x121\n" +
