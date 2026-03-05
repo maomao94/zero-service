@@ -2,15 +2,24 @@ package ctxdata
 
 import (
 	"context"
-	"encoding/json"
-	"strconv"
 
 	"go.opentelemetry.io/otel/propagation"
-	"google.golang.org/grpc/metadata"
 )
 
-var CtxKeyUserId = "userId"
-var CtxKeyUID = "uid"
+const (
+	CtxUserIdKey        = "user-id"
+	CtxUserNameKey      = "user-name"
+	CtxAuthorizationKey = "authorization"
+	CtxTraceIdKey       = "trace-id"
+)
+
+// gRPC metadata header key（必须小写）
+const (
+	HeaderUserId        = "x-user-id"
+	HeaderUserName      = "x-user-name"
+	HeaderAuthorization = "authorization"
+	HeaderTraceId       = "x-trace-id"
+)
 
 type MsgBody struct {
 	MsgId   string                     `json:"msgId,omitempty"`
@@ -28,29 +37,30 @@ type ProtoMsgBody struct {
 	RequestTimeout int64                      `json:"requestTimeout"`
 }
 
-func GetUserIdFromCtx(ctx context.Context, logError bool) string {
-	var uid string
-	if userId, ok := ctx.Value(CtxKeyUserId).(string); ok {
-		uid = userId
-	} else if userId, ok := ctx.Value(CtxKeyUserId).(json.Number); ok {
-		uid = userId.String()
-	} else if userId, ok := ctx.Value(CtxKeyUserId).(int64); ok {
-		uid = strconv.FormatInt(userId, 10)
-	} else if userId, ok := ctx.Value(CtxKeyUserId).(int); ok {
-		uid = strconv.Itoa(userId)
+func GetUserId(ctx context.Context) string {
+	if v, ok := ctx.Value(CtxUserIdKey).(string); ok {
+		return v
 	}
-	return uid
+	return ""
 }
 
-func GetUserIdFromMetadata(ctx context.Context) string {
-	var uid string
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		md = metadata.MD{}
+func GetUserName(ctx context.Context) string {
+	if v, ok := ctx.Value(CtxUserNameKey).(string); ok {
+		return v
 	}
-	values := md.Get(CtxKeyUserId)
-	if len(values) > 0 {
-		uid = values[0]
+	return ""
+}
+
+func GetAuthorization(ctx context.Context) string {
+	if v, ok := ctx.Value(CtxAuthorizationKey).(string); ok {
+		return v
 	}
-	return uid
+	return ""
+}
+
+func GetTraceId(ctx context.Context) string {
+	if v, ok := ctx.Value(CtxTraceIdKey).(string); ok {
+		return v
+	}
+	return ""
 }

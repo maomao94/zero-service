@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"zero-service/common/ctxdata"
 
 	"zero-service/facade/streamevent/internal/svc"
 	"zero-service/facade/streamevent/streamevent"
@@ -26,6 +27,8 @@ func NewUpSocketMessageLogic(ctx context.Context, svcCtx *svc.ServiceContext) *U
 
 // 上行socket标准消息, 可以用于__connection__/__disconnect__/__join_room_up__/__up__/和自定义up事件
 func (l *UpSocketMessageLogic) UpSocketMessage(in *streamevent.UpSocketMessageReq) (*streamevent.UpSocketMessageRes, error) {
+	token := ctxdata.GetAuthorization(l.ctx)
+	l.Logger.Infof("token: %s", token)
 	// 给一个 json  string  测试
 	var downPayload = struct {
 		Str_0   string            `json:"str"`

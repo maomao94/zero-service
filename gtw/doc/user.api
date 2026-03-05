@@ -30,7 +30,7 @@ type (
 		User User `json:"user"`
 	}
 	User {
-		id       int64  `json:"id"`
+		id       string `json:"id"`
 		mobile   string `json:"mobile"`
 		nickname string `json:"nickname"`
 		sex      int64  `json:"sex"`

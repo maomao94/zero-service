@@ -185,7 +185,7 @@ type UploadFileRequest struct {
 }
 
 type User struct {
-	Id       int64  `json:"id"`
+	Id       string `json:"id"`
 	Mobile   string `json:"mobile"`
 	Nickname string `json:"nickname"`
 	Sex      int64  `json:"sex"`

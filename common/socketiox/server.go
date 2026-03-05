@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sync"
 	"time"
+	"zero-service/common/ctxdata"
 
 	"github.com/doquangtan/socketio/v4"
 	"github.com/duke-git/lancet/v2/convertor"
@@ -339,24 +340,26 @@ func (srv *Server) bindEvents() {
 		}
 		srv.sessions[socket.Id] = session
 		srv.lock.Unlock()
-		ctx := logx.WithFields(context.WithValue(context.Background(), "SID", socket.Id),
+		connectCtx := logx.WithFields(context.WithValue(context.Background(), "SID", socket.Id),
 			logx.Field("SID", socket.Id),
 			logx.Field("EVENT", "connection"),
 		)
+		connectCtx = context.WithValue(connectCtx, ctxdata.CtxAuthorizationKey, token)
 		if srv.connectHook != nil {
-			rooms, err := srv.connectHook(ctx, session)
+			rooms, err := srv.connectHook(connectCtx, session)
 			if err == nil {
 				for _, r := range rooms {
 					session.JoinRoom(r)
 				}
 			}
 		}
-		logx.WithContext(ctx).Infof("[socketio] new connection established: conn=%s", socket.Id)
+		logx.WithContext(connectCtx).Infof("[socketio] new connection established: conn=%s", socket.Id)
 		socket.On(EventJoinRoom, func(payload *socketio.EventPayload) {
 			ctx := logx.WithFields(context.WithValue(context.Background(), "SID", payload.SID),
 				logx.Field("SID", payload.SID),
 				logx.Field("EVENT", EventJoinRoom),
 			)
+			ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
 			var handlerPayload []byte
 			if payload.Data != nil && len(payload.Data) > 0 && payload.Data[0] != nil {
 				switch data := payload.Data[0].(type) {
@@ -421,6 +424,7 @@ func (srv *Server) bindEvents() {
 				logx.Field("SID", payload.SID),
 				logx.Field("EVENT", EventLeaveRoom),
 			)
+			ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
 			var handlerPayload []byte
 			if payload.Data != nil && len(payload.Data) > 0 && payload.Data[0] != nil {
 				switch data := payload.Data[0].(type) {
@@ -474,6 +478,7 @@ func (srv *Server) bindEvents() {
 				logx.Field("SID", payload.SID),
 				logx.Field("EVENT", EventUp),
 			)
+			ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
 			var handlerPayload []byte
 			if payload.Data != nil && len(payload.Data) > 0 && payload.Data[0] != nil {
 				switch data := payload.Data[0].(type) {
@@ -557,6 +562,7 @@ func (srv *Server) bindEvents() {
 				logx.Field("SID", payload.SID),
 				logx.Field("EVENT", EventRoomBroadcast),
 			)
+			ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
 			var handlerPayload []byte
 			if payload.Data != nil && len(payload.Data) > 0 && payload.Data[0] != nil {
 				switch data := payload.Data[0].(type) {
@@ -621,6 +627,7 @@ func (srv *Server) bindEvents() {
 				logx.Field("SID", payload.SID),
 				logx.Field("EVENT", EventGlobalBroadcast),
 			)
+			ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
 			var handlerPayload []byte
 			if payload.Data != nil && len(payload.Data) > 0 && payload.Data[0] != nil {
 				switch data := payload.Data[0].(type) {
@@ -692,6 +699,7 @@ func (srv *Server) bindEvents() {
 				logx.Field("SID", socket.Id),
 				logx.Field("EVENT", "disconnect"),
 			)
+			ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
 			srv.lock.RLock()
 			deleteSession, ok := srv.sessions[socket.Id]
 			srv.lock.RUnlock()
@@ -713,6 +721,7 @@ func (srv *Server) bindEvents() {
 					logx.Field("SID", payload.SID),
 					logx.Field("EVENT", currentEvent),
 				)
+				ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
 				var handlerPayload []byte
 				if payload.Data != nil && len(payload.Data) > 0 && payload.Data[0] != nil {
 					switch data := payload.Data[0].(type) {

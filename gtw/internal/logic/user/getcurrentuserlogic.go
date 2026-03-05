@@ -2,10 +2,11 @@ package user
 
 import (
 	"context"
-	"github.com/jinzhu/copier"
-	"github.com/pkg/errors"
 	"zero-service/common/ctxdata"
 	"zero-service/zerorpc/zerorpc"
+
+	"github.com/jinzhu/copier"
+	"github.com/pkg/errors"
 
 	"zero-service/gtw/internal/svc"
 	"zero-service/gtw/internal/types"
@@ -30,7 +31,7 @@ func NewGetCurrentUserLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Ge
 
 func (l *GetCurrentUserLogic) GetCurrentUser(req *types.GetCurrentUserRequest) (resp *types.GetCurrentUserReply, err error) {
 	userId := ctxdata.GetUserIdFromCtx(l.ctx, true)
-	if userId > 0 {
+	if len(userId) > 0 {
 		res, err := l.svcCtx.ZeroRpcCli.GetUserInfo(l.ctx, &zerorpc.GetUserInfoReq{
 			Id: userId,
 		})
