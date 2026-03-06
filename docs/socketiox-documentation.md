@@ -221,6 +221,7 @@ const socket = io('http://your-server-url:port', {
 | `rooms`    | `[]string`          | 当前加入的房间列表 |
 | `nps`      | `string`            | 命名空间      |
 | `metadata` | `map[string]string` | 会话元数据     |
+| `roomLoadError` | `string`        | 房间加载错误信息，为空表示加载成功 |
 
 **示例**：
 
@@ -235,7 +236,19 @@ const socket = io('http://your-server-url:port', {
   "metadata": {
     "userId": "user123",
     "deviceId": "device456"
-  }
+  },
+  "roomLoadError": ""
+}
+```
+
+**错误示例**：
+
+```json
+{
+  "sId": "3fcd4875-cbfb-4d93-85b6-6f00540e9d45",
+  "rooms": [],
+  "nps": "/",
+  "roomLoadError": "rpc error: code = Unavailable desc = last connection error: connection error: desc = \"transport: Error while dialing: dial tcp 127.0.0.1:21009: connect: connection refused\""
 }
 ```
 
@@ -319,7 +332,43 @@ socket.on('__down__', (response) => {
 - **响应格式**：`__down__`事件的响应格式为`SocketResp`，包含状态码、消息和业务数据
 - **错误处理**：客户端需要根据响应中的`code`字段判断请求是否成功
 
-## 8. 错误码体系
+## 8. 房间加载错误处理
+
+### 8.1 错误检测
+
+客户端可以通过监听`__stat_down__`事件来检测房间加载错误：
+
+```javascript
+// 监听 __stat_down__ 事件
+socket.on('__stat_down__', (data) => {
+    console.log('收到统计信息:', data);
+    
+    // 检查房间加载错误
+    if (data.roomLoadError) {
+        console.error('房间加载失败:', data.roomLoadError);
+        
+        // 根据业务需求决定处理方式
+        // 方式1：断联重连
+        socket.disconnect();
+        setTimeout(() => {
+            socket.connect();
+        }, 1000);
+        
+        // 方式2：显示错误提示
+        // showErrorMessage('房间加载失败，请刷新页面重试');
+    } else {
+        // 房间加载成功，处理其他逻辑
+        console.log('房间加载成功，当前房间:', data.rooms);
+    }
+});
+```
+
+### 8.2 错误处理建议
+
+1. **断联重连**：如果房间加载失败，客户端可以选择断联后重新连接，重新尝试加载房间
+2. **错误提示**：显示错误提示给用户，告知房间加载失败的原因
+
+## 9. 错误码体系
 
 | 错误码 | 描述   | 处理建议                  |
 |-----|------|-----------------------|
@@ -327,7 +376,7 @@ socket.on('__down__', (response) => {
 | 400 | 参数错误 | 检查请求参数格式和必填字段         |
 | 500 | 业务错误 | 查看msg字段获取详细错误信息，必要时重试 |
 
-## 9. 最佳实践
+## 10. 最佳实践
 
 1. **请求ID管理**：每次请求必须生成唯一的`reqId`，建议使用UUID
 2. **事件命名规范**：
@@ -340,14 +389,14 @@ socket.on('__down__', (response) => {
 4. **鉴权方式**：
     - 使用SocketIO原生的`auth`选项传递令牌，不要使用其他方式
 
-## 10. MQTT 桥接指导
+## 11. MQTT 桥接指导
 
-### 10.1 概述
+### 11.1 概述
 
 SocketIO 消息网关支持通过 MQTT 协议桥接其他系统的消息，例如 IEC 104 协议的工业设备数据。桥接后，这些消息会以统一的格式通过
 SocketIO 推送给前端客户端。不同的 MQTT topic 会映射到不同的 SocketIO room，确保消息准确路由到对应的客户端。
 
-### 10.2 桥接消息格式
+### 11.2 桥接消息格式
 
 桥接的 MQTT 消息会转换为统一的格式，遵循通用的 `event`、`payload`、`reqId` 结构。以下示例基于 IEC 104 协议桥接，详细协议定义请参考 [`iec104-protocol.md`](iec104-protocol.md) 文件：
 
@@ -388,7 +437,7 @@ SocketIO 推送给前端客户端。不同的 MQTT topic 会映射到不同的 S
 }
 ```
 
-### 10.3 字段说明
+### 11.3 字段说明
 
 | 字段名                | 类型       | 描述                                      |
 |--------------------|----------|-----------------------------------------|
@@ -406,7 +455,7 @@ SocketIO 推送给前端客户端。不同的 MQTT topic 会映射到不同的 S
 | `payload.metaData` | `object` | 消息元数据，包含额外的信息                           |
 | `reqId`            | `string` | 请求唯一标识                                  |
 
-### 10.4 前端处理示例
+### 11.4 前端处理示例
 
 前端可以通过监听 "mqtt" 事件来处理桥接的消息。以下是处理 IEC 104 协议数据的示例（基于 [`iec104-protocol.md`](iec104-protocol.md) 定义）：
 
@@ -425,7 +474,7 @@ socket.on('mqtt', (data) => {
 });
 ```
 
-### 10.5 注意事项
+### 11.5 注意事项
 
 1. **通用格式**：无论原始协议是什么，桥接后的消息都会遵循通用的 `event`、`payload`、`reqId` 格式，便于前端统一处理。
 2. **Topic 与 Room 映射**：不同的 MQTT topic 会映射到不同的 SocketIO room，确保消息准确路由。具体来说，MQTT 的 topic 模板会直接作为 SocketIO 的 room 名称。
@@ -438,9 +487,9 @@ socket.on('mqtt', (data) => {
    - 然后，在监听相应的事件时，通过消息中的原始 topic 信息来区分不同的 MQTT 主题
    - 或者，根据业务需求，为不同的 room 设置不同的处理逻辑
 
-### 10.6 事件映射配置
+### 11.6 事件映射配置
 
-#### 10.6.1 配置示例
+#### 11.6.1 配置示例
 
 在配置文件中，可以通过 `EventMapping` 配置项来定义 MQTT 主题到 SocketIO 事件的映射规则：
 
@@ -459,7 +508,7 @@ MqttConfig:
   DefaultEvent: "mqtt"  # 默认事件名称
 ```
 
-#### 10.6.2 前端处理示例
+#### 11.6.2 前端处理示例
 
 前端可以根据配置的事件名称来监听不同类型的消息：
 
@@ -490,7 +539,7 @@ socket.on('mqtt', (data) => {
 });
 ```
 
-#### 10.6.3 通配符支持
+#### 11.6.3 通配符支持
 
 事件映射配置支持 MQTT 主题通配符：
 - `+`：匹配单个主题层级
@@ -500,12 +549,13 @@ socket.on('mqtt', (data) => {
 - `device/+/status` 可以匹配 `device/1/status`、`device/2/status` 等
 - `iec104/#` 可以匹配 `iec104/device1`、`iec104/device2/data` 等
 
-## 11. 版本历史
+## 12. 版本历史
 
 | 版本  | 日期         | 说明                                        |
 |-----|------------|-------------------------------------------|
-| 2.3 | 2026-03-03 | 添加MQTT事件映射配置，支持自定义事件名称和通配符匹配        |
-| 2.2 | 2026-03-03 | 明确__down__事件为异步响应事件，添加非ack模式处理章节        |
+| 2.4 | 2026-03-06 | 添加房间加载错误处理机制，在 `__stat_down__` 事件中包含 `roomLoadError` 字段 |
+| 2.3 | 2026-03-03 | 添加MQTT事件映射配置，支持自定义事件名称和通配符匹配 |
+| 2.2 | 2026-03-03 | 明确__down__事件为异步响应事件，添加非ack模式处理章节 |
 | 2.1 | 2026-02-11 | 添加 MQTT 桥接指导                              |
 | 2.0 | 2026-02-11 | 重写版本，支持SocketIO原生auth鉴权，payload使用object类型 |
 | 1.0 | 2025-12-30 | 初始版本                                      |
