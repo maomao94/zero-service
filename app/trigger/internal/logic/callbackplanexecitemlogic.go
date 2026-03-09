@@ -73,11 +73,18 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 	if err != nil {
 		return nil, err
 	}
-	// 查询计划项
+	// 查询计划
 	plan, err := l.svcCtx.PlanModel.FindOne(l.ctx, execItem.PlanPk)
 	if err != nil {
 		return nil, err
 	}
+	// 查询计划批次
+	batch, err := l.svcCtx.PlanBatchModel.FindOne(l.ctx, execItem.BatchPk)
+	if err != nil {
+		return nil, err
+	}
+	l.Logger.Infof("CallbackPlanExecItem: planId=%s, planPk=%d, execId=%s, batchId=%s, batchPk= %s, batchNum=%s, itemId=%s, status=%d",
+		execItem.PlanId, execItem.PlanPk, execItem.ExecId, execItem.BatchId, batch.Id, batch.BatchNum, execItem.ItemId, execItem.Status)
 
 	// 检查执行项状态是否为终态
 	if execItem.Status == int64(model.StatusCompleted) || execItem.Status == int64(model.StatusTerminated) {
