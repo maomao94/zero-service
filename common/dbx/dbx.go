@@ -103,7 +103,13 @@ func (a *SqlConnAdapter) QueryRowContext(ctx context.Context, query string, args
 	return a.db.QueryRowContext(ctx, query, args...)
 }
 
-func NewQoqu(datasource string, opts ...sqlx.SqlOption) *goqu.Database {
+func MustNewQoqu(datasource string, opts ...sqlx.SqlOption) *goqu.Database {
+	database, err := NewQoqu(datasource, opts...)
+	logx.Must(err)
+	return database
+}
+
+func NewQoqu(datasource string, opts ...sqlx.SqlOption) (*goqu.Database, error) {
 	var conn sqlx.SqlConn
 	dbType := ParseDatabaseType(datasource)
 	switch dbType {
@@ -118,15 +124,17 @@ func NewQoqu(datasource string, opts ...sqlx.SqlOption) *goqu.Database {
 	}
 	adapter, err := NewSqlConnAdapter(conn)
 	if err != nil {
-		logx.Errorf("Failed to create SqlConnAdapter: %v", err)
-		db, _ := conn.RawDB()
+		db, rawErr := conn.RawDB()
+		if rawErr != nil {
+			return nil, err
+		}
 		database := goqu.New(string(dbType), db)
 		database.Logger(&QoquLog{})
-		return database
+		return database, nil
 	}
 	database := goqu.New(string(dbType), adapter)
 	database.Logger(&QoquLog{})
-	return database
+	return database, nil
 }
 
 type QoquLog struct {

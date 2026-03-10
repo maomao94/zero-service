@@ -57,7 +57,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 
 	// 创建数据库连接
 	dbConn := dbx.New(c.DB.DataSource)
-	database := dbx.NewQoqu(c.DB.DataSource)
+	database := dbx.MustNewQoqu(c.DB.DataSource)
 
 	return &ServiceContext{
 		Config:            c,

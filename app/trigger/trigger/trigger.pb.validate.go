@@ -11973,35 +11973,6 @@ func (m *GetExecItemDashboardReq) validate(all bool) error {
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetCurrentUser()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, GetExecItemDashboardReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, GetExecItemDashboardReqValidationError{
-					field:  "CurrentUser",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return GetExecItemDashboardReqValidationError{
-				field:  "CurrentUser",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	// no validation rules for DeptCode
 
 	// no validation rules for UserId
@@ -12087,6 +12058,218 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = GetExecItemDashboardReqValidationError{}
+
+// Validate checks the field values on FinishedItemsStats with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *FinishedItemsStats) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on FinishedItemsStats with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// FinishedItemsStatsMultiError, or nil if none found.
+func (m *FinishedItemsStats) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *FinishedItemsStats) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Total
+
+	// no validation rules for Terminated
+
+	if len(errors) > 0 {
+		return FinishedItemsStatsMultiError(errors)
+	}
+
+	return nil
+}
+
+// FinishedItemsStatsMultiError is an error wrapping multiple validation errors
+// returned by FinishedItemsStats.ValidateAll() if the designated constraints
+// aren't met.
+type FinishedItemsStatsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m FinishedItemsStatsMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m FinishedItemsStatsMultiError) AllErrors() []error { return m }
+
+// FinishedItemsStatsValidationError is the validation error returned by
+// FinishedItemsStats.Validate if the designated constraints aren't met.
+type FinishedItemsStatsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e FinishedItemsStatsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e FinishedItemsStatsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e FinishedItemsStatsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e FinishedItemsStatsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e FinishedItemsStatsValidationError) ErrorName() string {
+	return "FinishedItemsStatsValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e FinishedItemsStatsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sFinishedItemsStats.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = FinishedItemsStatsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = FinishedItemsStatsValidationError{}
+
+// Validate checks the field values on PendingItemsStats with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *PendingItemsStats) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PendingItemsStats with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// PendingItemsStatsMultiError, or nil if none found.
+func (m *PendingItemsStats) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PendingItemsStats) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Total
+
+	// no validation rules for Delayed
+
+	if len(errors) > 0 {
+		return PendingItemsStatsMultiError(errors)
+	}
+
+	return nil
+}
+
+// PendingItemsStatsMultiError is an error wrapping multiple validation errors
+// returned by PendingItemsStats.ValidateAll() if the designated constraints
+// aren't met.
+type PendingItemsStatsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PendingItemsStatsMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PendingItemsStatsMultiError) AllErrors() []error { return m }
+
+// PendingItemsStatsValidationError is the validation error returned by
+// PendingItemsStats.Validate if the designated constraints aren't met.
+type PendingItemsStatsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PendingItemsStatsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PendingItemsStatsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PendingItemsStatsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PendingItemsStatsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PendingItemsStatsValidationError) ErrorName() string {
+	return "PendingItemsStatsValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PendingItemsStatsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPendingItemsStats.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PendingItemsStatsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PendingItemsStatsValidationError{}
 
 // Validate checks the field values on GetExecItemDashboardRes with the rules
 // defined in the proto definition for this message. If any rules are
@@ -12248,15 +12431,65 @@ func (m *ExecItemDashboardItem) validate(all bool) error {
 
 	// no validation rules for PlanType
 
-	// no validation rules for TotalTasks
+	// no validation rules for Total
 
-	// no validation rules for FinishedTasks
+	if all {
+		switch v := interface{}(m.GetFinished()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ExecItemDashboardItemValidationError{
+					field:  "Finished",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ExecItemDashboardItemValidationError{
+					field:  "Finished",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetFinished()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ExecItemDashboardItemValidationError{
+				field:  "Finished",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
-	// no validation rules for PendingTasks
-
-	// no validation rules for DelayedTasks
-
-	// no validation rules for TerminatedTasks
+	if all {
+		switch v := interface{}(m.GetPending()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ExecItemDashboardItemValidationError{
+					field:  "Pending",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ExecItemDashboardItemValidationError{
+					field:  "Pending",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPending()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ExecItemDashboardItemValidationError{
+				field:  "Pending",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	if len(errors) > 0 {
 		return ExecItemDashboardItemMultiError(errors)
