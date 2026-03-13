@@ -30,7 +30,7 @@ require (
 	github.com/minio/minio-go/v7 v7.0.99
 	github.com/mmcloughlin/geohash v0.10.0
 	github.com/nacos-group/nacos-sdk-go/v2 v2.3.5
-	github.com/panjf2000/ants/v2 v2.11.5
+	github.com/panjf2000/ants/v2 v2.11.6
 	github.com/paulmach/orb v0.12.0
 	github.com/pkg/errors v0.9.1
 	github.com/qichengzx/coordtransform v0.0.0-20220708113031-010878418826
@@ -51,10 +51,10 @@ require (
 	github.com/zeromicro/x v0.0.0-20240408115609-8224c482b07e
 	go.opentelemetry.io/otel v1.42.0
 	go.opentelemetry.io/otel/trace v1.42.0
-	golang.org/x/crypto v0.48.0
-	golang.org/x/net v0.51.0
-	golang.org/x/term v0.40.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20260226221140-a57be14db171
+	golang.org/x/crypto v0.49.0
+	golang.org/x/net v0.52.0
+	golang.org/x/term v0.41.0
+	google.golang.org/genproto/googleapis/api v0.0.0-20260311181403-84a4fc48630c
 	google.golang.org/grpc v1.79.2
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v2 v2.4.0
@@ -217,9 +217,9 @@ require (
 	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa // indirect
 	golang.org/x/image v0.0.0-20191009234506-e7c1f5e7dbb8 // indirect
 	golang.org/x/oauth2 v0.35.0 // indirect
-	golang.org/x/sync v0.19.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/text v0.34.0 // indirect
+	golang.org/x/text v0.35.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260226221140-a57be14db171 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
