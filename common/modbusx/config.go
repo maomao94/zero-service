@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"zero-service/common/tool"
 
 	"github.com/duke-git/lancet/v2/cryptor"
 	"github.com/grid-x/modbus"
@@ -69,6 +70,7 @@ type ModbusClientConf struct {
 }
 
 type ModbusClient struct {
+	sid     string
 	client  modbus.Client
 	handler *modbus.TCPClientHandler
 }
@@ -166,8 +168,10 @@ func NewModbusClient(c *ModbusClientConf) (*ModbusClient, error) {
 	h.LinkRecoveryTimeout = time.Millisecond * time.Duration(c.LinkRecoveryTimeout)
 	h.ProtocolRecoveryTimeout = time.Millisecond * time.Duration(c.ProtocolRecoveryTimeout)
 	h.ConnectDelay = time.Millisecond * time.Duration(c.ConnectDelay)
-	h.Logger = &ModbusLogger{conf: c}
+	sid, _ := tool.SimpleUUID()
+	h.Logger = &ModbusLogger{conf: c, sid: sid}
 	return &ModbusClient{
+		sid:     sid,
 		client:  modbus.NewClient(h),
 		handler: h,
 	}, nil
@@ -192,13 +196,13 @@ func NewModbusClientPool(conf *ModbusClientConf, size int) *ModbusClientPool {
 	p.pool = syncx.NewPool(
 		size,
 		func() any {
-			logx.Debugf("create modbus client: %s", conf.Address)
+			logx.Infof("create modbus client: %s", conf.Address)
 			cli, err := NewModbusClient(conf)
 			logx.Must(err)
 			return cli
 		},
 		func(x any) {
-			logx.Debugf("close modbus client: %s", conf.Address)
+			logx.Infof("close modbus client: %s", conf.Address)
 			if h, ok := x.(*ModbusClient); ok {
 				h.handler.Close()
 			}
@@ -222,11 +226,13 @@ func (p *ModbusClientPool) Put(cli *ModbusClient) {
 
 type ModbusLogger struct {
 	conf *ModbusClientConf
+	sid  string
 }
 
 func (l *ModbusLogger) Printf(format string, v ...any) {
 	ctx := logx.ContextWithFields(context.Background(), logx.Field("address", l.conf.Address))
-	ctx = logx.ContextWithFields(ctx, logx.Field("session", cryptor.Md5String(l.conf.Address)))
+	ctx = logx.ContextWithFields(ctx, logx.Field("addressMd5", cryptor.Md5String(l.conf.Address)))
+	ctx = logx.ContextWithFields(ctx, logx.Field("session", l.sid))
 	for _, val := range v {
 		if err, ok := val.(error); ok && err != nil {
 			logx.Error(err)
