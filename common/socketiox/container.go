@@ -121,7 +121,7 @@ func (p *SocketContainer) getConn4Etcd(c zrpc.RpcClientConf) error {
 		for _, val := range remove {
 			delete(p.ClientMap, val)
 		}
-		logx.Infof("update len(pubMap)=%d", len(p.ClientMap))
+		logx.Infof("[SocketContainer] ETCD update: added=%d, removed=%d, total=%d", len(add), len(remove), len(p.ClientMap))
 		p.lock.Unlock()
 	}
 	sub.AddListener(update)
@@ -311,26 +311,36 @@ func (p *SocketContainer) updateClientMap(addrs []string, c zrpc.RpcClientConf) 
 	for _, val := range remove {
 		delete(p.ClientMap, val)
 	}
-	logx.Infof("update nacos len=%d", len(p.ClientMap))
+	logx.Infof("[SocketContainer] NACOS update: added=%d, removed=%d, total=%d", len(add), len(remove), len(p.ClientMap))
 	p.lock.Unlock()
 }
 
 func extractHealthyGRPCInstances(instances []model.Instance) []string {
 	addrs := make([]string, 0, len(instances))
+	healthyCount := 0
+	ignoredCount := 0
+
 	for _, s := range instances {
 		if s.Metadata == nil || s.Metadata["gRPC_port"] == "" {
-			logx.Errorf("[Nacos] 忽略实例: %s:%d (无gRPC_port配置)", s.Ip, s.Port)
+			logx.Debugf("[SocketContainer] NACOS 忽略实例: %s:%d (无gRPC_port配置)", s.Ip, s.Port)
+			ignoredCount++
 			continue
 		}
 
 		if !s.Healthy || !s.Enable {
-			logx.Debugf("[Nacos] 忽略实例: %s:%s (健康: %t, 启用: %t)",
+			logx.Debugf("[SocketContainer] NACOS 忽略实例: %s:%s (健康: %t, 启用: %t)",
 				s.Ip, s.Metadata["gRPC_port"], s.Healthy, s.Enable)
+			ignoredCount++
 			continue
 		}
-		logx.Debugf("[Nacos] 发现健康实例: %s|%s:%s (权重: %.1f)",
+		logx.Debugf("[SocketContainer] NACOS 发现健康实例: %s|%s:%s (权重: %.1f)",
 			s.InstanceId, s.Ip, s.Metadata["gRPC_port"], s.Weight)
 		addrs = append(addrs, fmt.Sprintf("%s:%s", s.Ip, s.Metadata["gRPC_port"]))
+		healthyCount++
+	}
+
+	if len(instances) > 0 {
+		logx.Infof("[SocketContainer] NACOS 实例扫描 Figure: 总实例数=%d, 健康实例数=%d, 忽略实例数=%d", len(instances), healthyCount, ignoredCount)
 	}
 	return addrs
 }
