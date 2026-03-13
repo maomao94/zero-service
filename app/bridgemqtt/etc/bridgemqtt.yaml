@@ -1,5 +1,6 @@
 Name: bridgemqtt.rpc
 ListenOn: 0.0.0.0:25004
+Timeout: 10000
 Mode: dev
 Log:
   Encoding: plain
