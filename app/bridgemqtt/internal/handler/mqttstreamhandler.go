@@ -42,12 +42,33 @@ func (c *TopicLogConfig) ShouldLogPayload() bool {
 	return c.LogPayload.Load()
 }
 
-type TopicLogManager struct {
-	configs sync.Map
+func (c *TopicLogConfig) SetLogPayload(enabled bool) {
+	c.LogPayload.Store(enabled)
 }
 
-func NewTopicLogManager() *TopicLogManager {
-	return &TopicLogManager{}
+type TopicLogManagerOption func(*TopicLogManager)
+
+type TopicLogManager struct {
+	configs           sync.Map
+	defaultLogPayload atomic.Bool
+}
+
+func NewTopicLogManager(opts ...TopicLogManagerOption) *TopicLogManager {
+	manager := &TopicLogManager{}
+	for _, opt := range opts {
+		opt(manager)
+	}
+	return manager
+}
+
+func WithDefaultLogPayload(enabled bool) TopicLogManagerOption {
+	return func(m *TopicLogManager) {
+		m.defaultLogPayload.Store(enabled)
+	}
+}
+
+func (m *TopicLogManager) SetDefaultLogPayload(enabled bool) {
+	m.defaultLogPayload.Store(enabled)
 }
 
 func (m *TopicLogManager) GetConfig(topic string) *TopicLogConfig {
@@ -55,6 +76,7 @@ func (m *TopicLogManager) GetConfig(topic string) *TopicLogConfig {
 		return v.(*TopicLogConfig)
 	}
 	config := NewTopicLogConfig()
+	config.SetLogPayload(m.defaultLogPayload.Load())
 	actual, _ := m.configs.LoadOrStore(topic, config)
 	return actual.(*TopicLogConfig)
 }
@@ -67,6 +89,11 @@ func (m *TopicLogManager) ShouldLog(topic string) bool {
 func (m *TopicLogManager) ShouldLogPayload(topic string) bool {
 	config := m.GetConfig(topic)
 	return config.ShouldLogPayload()
+}
+
+func (m *TopicLogManager) SetLogPayload(topic string, enabled bool) {
+	config := m.GetConfig(topic)
+	config.SetLogPayload(enabled)
 }
 
 type MqttStreamHandler struct {
@@ -87,7 +114,7 @@ func NewMqttStreamHandler(clientID string, streamEventCli streamevent.StreamEven
 		taskRunner:     threading.NewTaskRunner(16),
 		eventMapping:   eventMapping,
 		defaultEvent:   defaultEvent,
-		logManager:     NewTopicLogManager(),
+		logManager:     NewTopicLogManager(WithDefaultLogPayload(true)),
 	}
 }
 
@@ -103,6 +130,13 @@ func (h *MqttStreamHandler) matchEvent(topicTemplate string) string {
 func (h *MqttStreamHandler) Consume(ctx context.Context, payload []byte, topic string, topicTemplate string) error {
 	shouldLog := h.logManager.ShouldLog(topicTemplate)
 	shouldLogPayload := h.logManager.ShouldLogPayload(topicTemplate)
+	if shouldLog {
+		if shouldLogPayload {
+			logx.WithContext(ctx).Infof("receive mqtt message, topic: %s, topicTemplate: %s, payload: %s", topic, topicTemplate, string(payload))
+		} else {
+			logx.WithContext(ctx).Infof("receive mqtt message, topic: %s, topicTemplate: %s", topic, topicTemplate)
+		}
+	}
 	if h.streamEventCli != nil {
 		h.taskRunner.Schedule(func() {
 			msgId, _ := tool.SimpleUUID()
@@ -125,38 +159,8 @@ func (h *MqttStreamHandler) Consume(ctx context.Context, payload []byte, topic s
 			if err != nil {
 				invokeflg = "fail"
 			}
-			if shouldLog {
-				logger := logx.WithContext(ctx).WithDuration(duration)
-				if shouldLogPayload {
-					logger.Infof(
-						"push mqtt to grpc, msgId: %s, topic: %s, topicTemplate: %s, payload: %s, time: %s - %s",
-						msgId,
-						topic,
-						topicTemplate,
-						string(payload),
-						sendTime,
-						invokeflg,
-					)
-				} else {
-					logger.Infof(
-						"push mqtt to grpc, msgId: %s, topic: %s, topicTemplate: %s, time: %s - %s",
-						msgId,
-						topic,
-						topicTemplate,
-						sendTime,
-						invokeflg,
-					)
-				}
-
-			} else if err != nil {
-				logx.WithContext(ctx).Errorf(
-					"push mqtt to grpc failed, msgId: %s, topic: %s, topicTemplate: %s, error: %v",
-					msgId,
-					topic,
-					topicTemplate,
-					err,
-				)
-			}
+			logger := logx.WithContext(ctx).WithDuration(duration)
+			logger.Infof("push mqtt to grpc, msgId: %s, topic: %s, topicTemplate: %s, time: %s - %s", msgId, topic, topicTemplate, sendTime, invokeflg)
 		})
 	}
 	if h.socketPushCli != nil {
@@ -176,38 +180,8 @@ func (h *MqttStreamHandler) Consume(ctx context.Context, payload []byte, topic s
 			if err != nil {
 				invokeflg = "fail"
 			}
-			if shouldLog {
-				logger := logx.WithContext(ctx).WithDuration(duration)
-				if shouldLogPayload {
-					logger.Infof(
-						"push mqtt to socketio, reqId: %s, room: %s, event: %s, payload: %s, time: %s - %s",
-						reqId,
-						topicTemplate,
-						event,
-						string(payload),
-						sendTime,
-						invokeflg,
-					)
-				} else {
-					logger.Infof(
-						"push mqtt to socketio, reqId: %s, room: %s, event: %s, time: %s - %s",
-						reqId,
-						topicTemplate,
-						event,
-						sendTime,
-						invokeflg,
-					)
-				}
-
-			} else if err != nil {
-				logx.WithContext(ctx).Errorf(
-					"push mqtt to socketio failed, reqId: %s, room: %s, event: %s, error: %v",
-					reqId,
-					topicTemplate,
-					event,
-					err,
-				)
-			}
+			logger := logx.WithContext(ctx).WithDuration(duration)
+			logger.Infof("push mqtt to socket, reqId: %s, topic: %s, topicTemplate: %s, time: %s - %s", reqId, topic, topicTemplate, sendTime, invokeflg)
 		})
 	}
 	return nil
