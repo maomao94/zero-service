@@ -19,7 +19,6 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	BridgeModbus_Ping_FullMethodName                                   = "/bridgemodbus.BridgeModbus/Ping"
 	BridgeModbus_SaveConfig_FullMethodName                             = "/bridgemodbus.BridgeModbus/SaveConfig"
 	BridgeModbus_DeleteConfig_FullMethodName                           = "/bridgemodbus.BridgeModbus/DeleteConfig"
 	BridgeModbus_PageListConfig_FullMethodName                         = "/bridgemodbus.BridgeModbus/PageListConfig"
@@ -46,7 +45,6 @@ const (
 //
 // Modbus 协议桥接服务
 type BridgeModbusClient interface {
-	Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error)
 	// 保存（新增或更新）配置
 	SaveConfig(ctx context.Context, in *SaveConfigReq, opts ...grpc.CallOption) (*SaveConfigRes, error)
 	// 删除配置（支持批量）
@@ -91,16 +89,6 @@ type bridgeModbusClient struct {
 
 func NewBridgeModbusClient(cc grpc.ClientConnInterface) BridgeModbusClient {
 	return &bridgeModbusClient{cc}
-}
-
-func (c *bridgeModbusClient) Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Res)
-	err := c.cc.Invoke(ctx, BridgeModbus_Ping_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *bridgeModbusClient) SaveConfig(ctx context.Context, in *SaveConfigReq, opts ...grpc.CallOption) (*SaveConfigRes, error) {
@@ -289,7 +277,6 @@ func (c *bridgeModbusClient) ReadDeviceIdentificationSpecificObject(ctx context.
 //
 // Modbus 协议桥接服务
 type BridgeModbusServer interface {
-	Ping(context.Context, *Req) (*Res, error)
 	// 保存（新增或更新）配置
 	SaveConfig(context.Context, *SaveConfigReq) (*SaveConfigRes, error)
 	// 删除配置（支持批量）
@@ -336,9 +323,6 @@ type BridgeModbusServer interface {
 // pointer dereference when methods are called.
 type UnimplementedBridgeModbusServer struct{}
 
-func (UnimplementedBridgeModbusServer) Ping(context.Context, *Req) (*Res, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
-}
 func (UnimplementedBridgeModbusServer) SaveConfig(context.Context, *SaveConfigReq) (*SaveConfigRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SaveConfig not implemented")
 }
@@ -412,24 +396,6 @@ func RegisterBridgeModbusServer(s grpc.ServiceRegistrar, srv BridgeModbusServer)
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&BridgeModbus_ServiceDesc, srv)
-}
-
-func _BridgeModbus_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Req)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BridgeModbusServer).Ping(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: BridgeModbus_Ping_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BridgeModbusServer).Ping(ctx, req.(*Req))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _BridgeModbus_SaveConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -763,10 +729,6 @@ var BridgeModbus_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "bridgemodbus.BridgeModbus",
 	HandlerType: (*BridgeModbusServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Ping",
-			Handler:    _BridgeModbus_Ping_Handler,
-		},
 		{
 			MethodName: "SaveConfig",
 			Handler:    _BridgeModbus_SaveConfig_Handler,

@@ -2,9 +2,10 @@ package logic
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"zero-service/common/modbusx"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/app/bridgemodbus/internal/svc"
@@ -38,11 +39,11 @@ func (l *ReadHoldingRegistersLogic) ReadHoldingRegisters(in *bridgemodbus.ReadHo
 		if !ok {
 			mdCliPool, err = l.svcCtx.AddPool(l.ctx, in.ModbusCode)
 			if err != nil {
-				return nil, fmt.Errorf("创建Modbus连接池失败: %w", err)
+				return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "创建Modbus连接池失败")
 			}
 		}
 		if mdCliPool == nil {
-			return nil, errors.New("获取的Modbus连接池为空")
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "获取的Modbus连接池为空")
 		}
 	}
 	mbCli := mdCliPool.Get()

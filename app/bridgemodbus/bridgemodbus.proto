@@ -8,8 +8,6 @@ option java_outer_classname = "BridgeModbusProto";
 
 // Modbus 协议桥接服务
 service BridgeModbus {
-  rpc Ping(Req) returns (Res);
-
   // -------------------- 配置管理 --------------------
 
   // 保存（新增或更新）配置
@@ -71,16 +69,6 @@ service BridgeModbus {
 
   // 读取特定 Object ID 的设备标识 (Function Code 0x2B / 0x0E)
   rpc ReadDeviceIdentificationSpecificObject(ReadDeviceIdentificationSpecificObjectReq) returns (ReadDeviceIdentificationSpecificObjectRes);
-}
-
-// -------------------- 通用请求/响应 --------------------
-
-message Req {
-  string ping = 1; // 健康检查请求内容
-}
-
-message Res {
-  string pong = 1; // 健康检查返回内容
 }
 
 // -------------------- 请求与响应定义 --------------------

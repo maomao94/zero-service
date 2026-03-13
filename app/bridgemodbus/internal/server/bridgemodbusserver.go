@@ -23,11 +23,6 @@ func NewBridgeModbusServer(svcCtx *svc.ServiceContext) *BridgeModbusServer {
 	}
 }
 
-func (s *BridgeModbusServer) Ping(ctx context.Context, in *bridgemodbus.Req) (*bridgemodbus.Res, error) {
-	l := logic.NewPingLogic(ctx, s.svcCtx)
-	return l.Ping(in)
-}
-
 // 保存（新增或更新）配置
 func (s *BridgeModbusServer) SaveConfig(ctx context.Context, in *bridgemodbus.SaveConfigReq) (*bridgemodbus.SaveConfigRes, error) {
 	l := logic.NewSaveConfigLogic(ctx, s.svcCtx)
