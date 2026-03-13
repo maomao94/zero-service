@@ -39,28 +39,28 @@ const (
 	Code__1_00_INTERNAL Code = 100998
 	Code__1_00_TIMEOUT  Code = 100997
 	// ===== 参数 / 校验错误（A=1, BC=01）=====
-	Code__1_01_PARAM         Code = 100101
-	Code__1_01_PARAM_MISSING Code = 100102
-	Code__1_01_PARAM_INVALID Code = 100103
+	Code__1_01_PARAM         Code = 101101
+	Code__1_01_PARAM_MISSING Code = 101102
+	Code__1_01_PARAM_INVALID Code = 101103
 	// ===== 数据相关错误（A=1, BC=02）=====
-	Code__1_02_DB                   Code = 100201
-	Code__1_02_RECORD_NOT_EXIST     Code = 100202
-	Code__1_02_RECORD_ALREADY_EXIST Code = 100203
-	Code__1_02_DATA_CONFLICT        Code = 100204
+	Code__1_02_DB                   Code = 102101
+	Code__1_02_RECORD_NOT_EXIST     Code = 102102
+	Code__1_02_RECORD_ALREADY_EXIST Code = 102103
+	Code__1_02_DATA_CONFLICT        Code = 102104
 	// ===== 缓存 / 中间件错误（A=1, BC=03）=====
-	Code__1_03_CACHE      Code = 100301
-	Code__1_03_CACHE_MISS Code = 100302
-	Code__1_03_MQ         Code = 100303
+	Code__1_03_CACHE      Code = 103101
+	Code__1_03_CACHE_MISS Code = 103102
+	Code__1_03_MQ         Code = 103103
 	// ===== 权限 / 认证错误（A=1, BC=04）=====
-	Code__1_03_UNAUTHORIZED Code = 100401
-	Code__1_03_FORBIDDEN    Code = 100403
+	Code__1_03_UNAUTHORIZED Code = 104101
+	Code__1_03_FORBIDDEN    Code = 104102
 	// ===== 业务通用错误（A=1, BC=05）=====
-	Code__1_05_BIZ        Code = 100500
-	Code__1_05_BIZ_STATE  Code = 100501
-	Code__1_05_BIZ_REPEAT Code = 100502
+	Code__1_05_BIZ        Code = 105101
+	Code__1_05_BIZ_STATE  Code = 105102
+	Code__1_05_BIZ_REPEAT Code = 105103
 	// ===== 外部依赖错误（A=1, BC=06）=====
-	Code__1_06_RPC         Code = 100601
-	Code__1_06_THIRD_PARTY Code = 100602
+	Code__1_06_RPC         Code = 106101
+	Code__1_06_THIRD_PARTY Code = 106102
 )
 
 // Enum value maps for Code.
@@ -70,46 +70,46 @@ var (
 		100999: "_1_00_UNKNOWN",
 		100998: "_1_00_INTERNAL",
 		100997: "_1_00_TIMEOUT",
-		100101: "_1_01_PARAM",
-		100102: "_1_01_PARAM_MISSING",
-		100103: "_1_01_PARAM_INVALID",
-		100201: "_1_02_DB",
-		100202: "_1_02_RECORD_NOT_EXIST",
-		100203: "_1_02_RECORD_ALREADY_EXIST",
-		100204: "_1_02_DATA_CONFLICT",
-		100301: "_1_03_CACHE",
-		100302: "_1_03_CACHE_MISS",
-		100303: "_1_03_MQ",
-		100401: "_1_03_UNAUTHORIZED",
-		100403: "_1_03_FORBIDDEN",
-		100500: "_1_05_BIZ",
-		100501: "_1_05_BIZ_STATE",
-		100502: "_1_05_BIZ_REPEAT",
-		100601: "_1_06_RPC",
-		100602: "_1_06_THIRD_PARTY",
+		101101: "_1_01_PARAM",
+		101102: "_1_01_PARAM_MISSING",
+		101103: "_1_01_PARAM_INVALID",
+		102101: "_1_02_DB",
+		102102: "_1_02_RECORD_NOT_EXIST",
+		102103: "_1_02_RECORD_ALREADY_EXIST",
+		102104: "_1_02_DATA_CONFLICT",
+		103101: "_1_03_CACHE",
+		103102: "_1_03_CACHE_MISS",
+		103103: "_1_03_MQ",
+		104101: "_1_03_UNAUTHORIZED",
+		104102: "_1_03_FORBIDDEN",
+		105101: "_1_05_BIZ",
+		105102: "_1_05_BIZ_STATE",
+		105103: "_1_05_BIZ_REPEAT",
+		106101: "_1_06_RPC",
+		106102: "_1_06_THIRD_PARTY",
 	}
 	Code_value = map[string]int32{
 		"CODE_UNSPECIFIED":           0,
 		"_1_00_UNKNOWN":              100999,
 		"_1_00_INTERNAL":             100998,
 		"_1_00_TIMEOUT":              100997,
-		"_1_01_PARAM":                100101,
-		"_1_01_PARAM_MISSING":        100102,
-		"_1_01_PARAM_INVALID":        100103,
-		"_1_02_DB":                   100201,
-		"_1_02_RECORD_NOT_EXIST":     100202,
-		"_1_02_RECORD_ALREADY_EXIST": 100203,
-		"_1_02_DATA_CONFLICT":        100204,
-		"_1_03_CACHE":                100301,
-		"_1_03_CACHE_MISS":           100302,
-		"_1_03_MQ":                   100303,
-		"_1_03_UNAUTHORIZED":         100401,
-		"_1_03_FORBIDDEN":            100403,
-		"_1_05_BIZ":                  100500,
-		"_1_05_BIZ_STATE":            100501,
-		"_1_05_BIZ_REPEAT":           100502,
-		"_1_06_RPC":                  100601,
-		"_1_06_THIRD_PARTY":          100602,
+		"_1_01_PARAM":                101101,
+		"_1_01_PARAM_MISSING":        101102,
+		"_1_01_PARAM_INVALID":        101103,
+		"_1_02_DB":                   102101,
+		"_1_02_RECORD_NOT_EXIST":     102102,
+		"_1_02_RECORD_ALREADY_EXIST": 102103,
+		"_1_02_DATA_CONFLICT":        102104,
+		"_1_03_CACHE":                103101,
+		"_1_03_CACHE_MISS":           103102,
+		"_1_03_MQ":                   103103,
+		"_1_03_UNAUTHORIZED":         104101,
+		"_1_03_FORBIDDEN":            104102,
+		"_1_05_BIZ":                  105101,
+		"_1_05_BIZ_STATE":            105102,
+		"_1_05_BIZ_REPEAT":           105103,
+		"_1_06_RPC":                  106101,
+		"_1_06_THIRD_PARTY":          106102,
 	}
 )
 
@@ -326,23 +326,23 @@ const file_extproto_proto_rawDesc = "" +
 	"\r_1_00_UNKNOWN\x10\x87\x95\x06\x1a\x15ʸ\x02\f未知错误и\x02\xf4\x03\x121\n" +
 	"\x0e_1_00_INTERNAL\x10\x86\x95\x06\x1a\x1bʸ\x02\x12系统内部错误и\x02\xf4\x03\x12*\n" +
 	"\r_1_00_TIMEOUT\x10\x85\x95\x06\x1a\x15ʸ\x02\f系统超时и\x02\xf8\x03\x12(\n" +
-	"\v_1_01_PARAM\x10\x85\x8e\x06\x1a\x15ʸ\x02\f参数错误и\x02\x90\x03\x126\n" +
-	"\x13_1_01_PARAM_MISSING\x10\x86\x8e\x06\x1a\x1bʸ\x02\x12缺少必要参数и\x02\x90\x03\x123\n" +
-	"\x13_1_01_PARAM_INVALID\x10\x87\x8e\x06\x1a\x18ʸ\x02\x0f参数不合法и\x02\x90\x03\x12(\n" +
-	"\b_1_02_DB\x10\xe9\x8e\x06\x1a\x18ʸ\x02\x0f数据库错误и\x02\xf4\x03\x126\n" +
-	"\x16_1_02_RECORD_NOT_EXIST\x10\xea\x8e\x06\x1a\x18ʸ\x02\x0f记录不存在и\x02\x94\x03\x12:\n" +
-	"\x1a_1_02_RECORD_ALREADY_EXIST\x10\xeb\x8e\x06\x1a\x18ʸ\x02\x0f记录已存在и\x02\x99\x03\x120\n" +
-	"\x13_1_02_DATA_CONFLICT\x10\xec\x8e\x06\x1a\x15ʸ\x02\f数据冲突и\x02\x99\x03\x12(\n" +
-	"\v_1_03_CACHE\x10͏\x06\x1a\x15ʸ\x02\f缓存错误и\x02\xf4\x03\x120\n" +
-	"\x10_1_03_CACHE_MISS\x10Ώ\x06\x1a\x18ʸ\x02\x0f缓存未命中и\x02\xf4\x03\x12+\n" +
-	"\b_1_03_MQ\x10Ϗ\x06\x1a\x1bʸ\x02\x12消息队列错误и\x02\xf7\x03\x12,\n" +
-	"\x12_1_03_UNAUTHORIZED\x10\xb1\x90\x06\x1a\x12ʸ\x02\t未认证и\x02\x91\x03\x12/\n" +
-	"\x0f_1_03_FORBIDDEN\x10\xb3\x90\x06\x1a\x18ʸ\x02\x0f无权限访问и\x02\x93\x03\x12,\n" +
-	"\t_1_05_BIZ\x10\x94\x91\x06\x1a\x1bʸ\x02\x12业务处理失败и\x02\x90\x03\x125\n" +
-	"\x0f_1_05_BIZ_STATE\x10\x95\x91\x06\x1a\x1eʸ\x02\x15业务状态不允许и\x02\x99\x03\x12-\n" +
-	"\x10_1_05_BIZ_REPEAT\x10\x96\x91\x06\x1a\x15ʸ\x02\f重复操作и\x02\x99\x03\x12,\n" +
-	"\t_1_06_RPC\x10\xf9\x91\x06\x1a\x1bʸ\x02\x12远程调用失败и\x02\xf7\x03\x127\n" +
-	"\x11_1_06_THIRD_PARTY\x10\xfa\x91\x06\x1a\x1eʸ\x02\x15第三方服务异常и\x02\xf7\x03:6\n" +
+	"\v_1_01_PARAM\x10\xed\x95\x06\x1a\x15ʸ\x02\f参数错误и\x02\x90\x03\x126\n" +
+	"\x13_1_01_PARAM_MISSING\x10\xee\x95\x06\x1a\x1bʸ\x02\x12缺少必要参数и\x02\x90\x03\x123\n" +
+	"\x13_1_01_PARAM_INVALID\x10\xef\x95\x06\x1a\x18ʸ\x02\x0f参数不合法и\x02\x90\x03\x12(\n" +
+	"\b_1_02_DB\x10՝\x06\x1a\x18ʸ\x02\x0f数据库错误и\x02\xf4\x03\x126\n" +
+	"\x16_1_02_RECORD_NOT_EXIST\x10֝\x06\x1a\x18ʸ\x02\x0f记录不存在и\x02\x94\x03\x12:\n" +
+	"\x1a_1_02_RECORD_ALREADY_EXIST\x10ם\x06\x1a\x18ʸ\x02\x0f记录已存在и\x02\x99\x03\x120\n" +
+	"\x13_1_02_DATA_CONFLICT\x10؝\x06\x1a\x15ʸ\x02\f数据冲突и\x02\x99\x03\x12(\n" +
+	"\v_1_03_CACHE\x10\xbd\xa5\x06\x1a\x15ʸ\x02\f缓存错误и\x02\xf4\x03\x120\n" +
+	"\x10_1_03_CACHE_MISS\x10\xbe\xa5\x06\x1a\x18ʸ\x02\x0f缓存未命中и\x02\xf4\x03\x12+\n" +
+	"\b_1_03_MQ\x10\xbf\xa5\x06\x1a\x1bʸ\x02\x12消息队列错误и\x02\xf7\x03\x12,\n" +
+	"\x12_1_03_UNAUTHORIZED\x10\xa5\xad\x06\x1a\x12ʸ\x02\t未认证и\x02\x91\x03\x12/\n" +
+	"\x0f_1_03_FORBIDDEN\x10\xa6\xad\x06\x1a\x18ʸ\x02\x0f无权限访问и\x02\x93\x03\x12,\n" +
+	"\t_1_05_BIZ\x10\x8d\xb5\x06\x1a\x1bʸ\x02\x12业务处理失败и\x02\x90\x03\x125\n" +
+	"\x0f_1_05_BIZ_STATE\x10\x8e\xb5\x06\x1a\x1eʸ\x02\x15业务状态不允许и\x02\x99\x03\x12-\n" +
+	"\x10_1_05_BIZ_REPEAT\x10\x8f\xb5\x06\x1a\x15ʸ\x02\f重复操作и\x02\x99\x03\x12,\n" +
+	"\t_1_06_RPC\x10\xf5\xbc\x06\x1a\x1bʸ\x02\x12远程调用失败и\x02\xf7\x03\x127\n" +
+	"\x11_1_06_THIRD_PARTY\x10\xf6\xbc\x06\x1a\x1eʸ\x02\x15第三方服务异常и\x02\xf7\x03:6\n" +
 	"\x04name\x12!.google.protobuf.EnumValueOptions\x18\x89' \x01(\tR\x04name:>\n" +
 	"\bhttpCode\x12!.google.protobuf.EnumValueOptions\x18\x8a' \x01(\x05R\bhttpCodeBM\n" +
 	"\x13com.github.extprotoB\bExtProtoP\x01Z*zero-service/third_party/extproto;extprotob\x06proto3"
