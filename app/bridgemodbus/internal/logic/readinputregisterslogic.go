@@ -81,7 +81,8 @@ func (l *ReadInputRegistersLogic) ReadInputRegisters(in *bridgemodbus.ReadInputR
 		hexValues = append(hexValues, fmt.Sprintf("0x%04X", val)) // 转 16 进制字符串
 	}
 	return &bridgemodbus.ReadInputRegistersRes{
-		Results: results,
-		Values:  hexValues,
+		Results:   results,
+		Values:    hexValues,
+		DecValues: tool.BytesToUint32Slice(results),
 	}, nil
 }

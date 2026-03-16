@@ -1196,8 +1196,9 @@ func (x *ReadInputRegistersReq) GetQuantity() uint32 {
 
 type ReadInputRegistersRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Results       []byte                 `protobuf:"bytes,1,opt,name=results,proto3" json:"results,omitempty"` // 输入寄存器数据，每寄存器 2 字节，高字节在前
-	Values        []string               `protobuf:"bytes,2,rep,name=values,proto3" json:"values,omitempty"`   // 每个寄存器值按 16 进制字符串返回，例如 "0xFF01"
+	Results       []byte                 `protobuf:"bytes,1,opt,name=results,proto3" json:"results,omitempty"`             // 输入寄存器数据，每寄存器 2 字节，高字节在前
+	Values        []string               `protobuf:"bytes,2,rep,name=values,proto3" json:"values,omitempty"`               // 每个寄存器值按 16 进制字符串返回，例如 "0xFF01"
+	DecValues     []uint32               `protobuf:"varint,3,rep,packed,name=decValues,proto3" json:"decValues,omitempty"` // 每个寄存器值按 10 进制返回
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1242,6 +1243,13 @@ func (x *ReadInputRegistersRes) GetResults() []byte {
 func (x *ReadInputRegistersRes) GetValues() []string {
 	if x != nil {
 		return x.Values
+	}
+	return nil
+}
+
+func (x *ReadInputRegistersRes) GetDecValues() []uint32 {
+	if x != nil {
+		return x.DecValues
 	}
 	return nil
 }
@@ -1308,8 +1316,9 @@ func (x *ReadHoldingRegistersReq) GetQuantity() uint32 {
 
 type ReadHoldingRegistersRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Results       []byte                 `protobuf:"bytes,1,opt,name=results,proto3" json:"results,omitempty"` // 保持寄存器数据，每寄存器 2 字节
-	Values        []string               `protobuf:"bytes,2,rep,name=values,proto3" json:"values,omitempty"`   // 每个寄存器值按 16 进制字符串返回，例如 "0xFF01"
+	Results       []byte                 `protobuf:"bytes,1,opt,name=results,proto3" json:"results,omitempty"`             // 保持寄存器数据，每寄存器 2 字节
+	Values        []string               `protobuf:"bytes,2,rep,name=values,proto3" json:"values,omitempty"`               // 每个寄存器值按 16 进制字符串返回，例如 "0xFF01"
+	DecValues     []uint32               `protobuf:"varint,3,rep,packed,name=decValues,proto3" json:"decValues,omitempty"` // 每个寄存器值按 10 进制返回
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1354,6 +1363,13 @@ func (x *ReadHoldingRegistersRes) GetResults() []byte {
 func (x *ReadHoldingRegistersRes) GetValues() []string {
 	if x != nil {
 		return x.Values
+	}
+	return nil
+}
+
+func (x *ReadHoldingRegistersRes) GetDecValues() []uint32 {
+	if x != nil {
+		return x.DecValues
 	}
 	return nil
 }
@@ -2252,19 +2268,21 @@ const file_bridgemodbus_proto_rawDesc = "" +
 	"modbusCode\x18\x01 \x01(\tR\n" +
 	"modbusCode\x12\x18\n" +
 	"\aaddress\x18\x02 \x01(\rR\aaddress\x12\x1a\n" +
-	"\bquantity\x18\x03 \x01(\rR\bquantity\"I\n" +
+	"\bquantity\x18\x03 \x01(\rR\bquantity\"g\n" +
 	"\x15ReadInputRegistersRes\x12\x18\n" +
 	"\aresults\x18\x01 \x01(\fR\aresults\x12\x16\n" +
-	"\x06values\x18\x02 \x03(\tR\x06values\"o\n" +
+	"\x06values\x18\x02 \x03(\tR\x06values\x12\x1c\n" +
+	"\tdecValues\x18\x03 \x03(\rR\tdecValues\"o\n" +
 	"\x17ReadHoldingRegistersReq\x12\x1e\n" +
 	"\n" +
 	"modbusCode\x18\x01 \x01(\tR\n" +
 	"modbusCode\x12\x18\n" +
 	"\aaddress\x18\x02 \x01(\rR\aaddress\x12\x1a\n" +
-	"\bquantity\x18\x03 \x01(\rR\bquantity\"K\n" +
+	"\bquantity\x18\x03 \x01(\rR\bquantity\"i\n" +
 	"\x17ReadHoldingRegistersRes\x12\x18\n" +
 	"\aresults\x18\x01 \x01(\fR\aresults\x12\x16\n" +
-	"\x06values\x18\x02 \x03(\tR\x06values\"h\n" +
+	"\x06values\x18\x02 \x03(\tR\x06values\x12\x1c\n" +
+	"\tdecValues\x18\x03 \x03(\rR\tdecValues\"h\n" +
 	"\x16WriteSingleRegisterReq\x12\x1e\n" +
 	"\n" +
 	"modbusCode\x18\x01 \x01(\tR\n" +

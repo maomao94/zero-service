@@ -63,7 +63,8 @@ func (l *ReadHoldingRegistersLogic) ReadHoldingRegisters(in *bridgemodbus.ReadHo
 		hexValues = append(hexValues, fmt.Sprintf("0x%04X", val)) // 转 16 进制字符串
 	}
 	return &bridgemodbus.ReadHoldingRegistersRes{
-		Results: results,
-		Values:  hexValues,
+		Results:   results,
+		Values:    hexValues,
+		DecValues: tool.BytesToUint32Slice(results),
 	}, nil
 }

@@ -296,3 +296,39 @@ func CalculateOffset(page, pageSize int64) uint {
 	}
 	return uint((page - 1) * pageSize)
 }
+
+// BytesToUint16Slice 将字节数组每两个字节解析成 uint16（BigEndian）
+func BytesToUint16Slice(data []byte) []uint16 {
+	n := len(data) / 2
+	result := make([]uint16, 0, n)
+	for i := 0; i+1 < len(data); i += 2 {
+		val := uint16(data[i])<<8 | uint16(data[i+1])
+		result = append(result, val)
+	}
+	return result
+}
+
+func BytesToUint32Slice(data []byte) []uint32 {
+	uint16Vals := BytesToUint16Slice(data)
+	uint32Vals := make([]uint32, len(uint16Vals))
+	for i, v := range uint16Vals {
+		uint32Vals[i] = uint32(v)
+	}
+	return uint32Vals
+}
+
+// Uint16SliceToHex 将 uint16 切片转换为十六进制字符串切片
+func Uint16SliceToHex(values []uint16) []string {
+	hexVals := make([]string, len(values))
+	for i, v := range values {
+		hexVals[i] = fmt.Sprintf("0x%04X", v)
+	}
+	return hexVals
+}
+
+// BytesToHexAndUint16 直接返回字节数组对应的十六进制字符串和十进制数值
+func BytesToHexAndUint16(data []byte) ([]string, []uint16) {
+	uint16Vals := BytesToUint16Slice(data)
+	hexVals := Uint16SliceToHex(uint16Vals)
+	return hexVals, uint16Vals
+}
