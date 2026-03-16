@@ -297,7 +297,34 @@ func CalculateOffset(page, pageSize int64) uint {
 	return uint((page - 1) * pageSize)
 }
 
-// BytesToUint16Slice 将字节数组每两个字节解析成 uint16（BigEndian）
+type BinaryValues struct {
+	Hex  []string // 十六进制表示
+	Uint []uint32 // 无符号整数表示
+	Int  []int32  // 有符号整数表示
+}
+
+// BytesToBinaryValues 将字节数组每两个字节解析成整数（BigEndian）
+func BytesToBinaryValues(data []byte) *BinaryValues {
+	n := len(data) / 2
+	hexVals := make([]string, n)
+	uintVals := make([]uint32, n)
+	intVals := make([]int32, n)
+
+	for i := 0; i < n; i++ {
+		val := uint16(data[2*i])<<8 | uint16(data[2*i+1])
+		hexVals[i] = fmt.Sprintf("0x%04X", val)
+		uintVals[i] = uint32(val)
+		intVals[i] = int32(int16(val))
+	}
+
+	return &BinaryValues{
+		Hex:  hexVals,
+		Uint: uintVals,
+		Int:  intVals,
+	}
+}
+
+// BytesToUint16Slice 将字节数组每两个字节解析成 uint16 切片
 func BytesToUint16Slice(data []byte) []uint16 {
 	n := len(data) / 2
 	result := make([]uint16, 0, n)
@@ -308,6 +335,7 @@ func BytesToUint16Slice(data []byte) []uint16 {
 	return result
 }
 
+// BytesToUint32Slice 将字节数组每两个字节解析成 uint32 切片
 func BytesToUint32Slice(data []byte) []uint32 {
 	uint16Vals := BytesToUint16Slice(data)
 	uint32Vals := make([]uint32, len(uint16Vals))
@@ -326,9 +354,25 @@ func Uint16SliceToHex(values []uint16) []string {
 	return hexVals
 }
 
-// BytesToHexAndUint16 直接返回字节数组对应的十六进制字符串和十进制数值
-func BytesToHexAndUint16(data []byte) ([]string, []uint16) {
-	uint16Vals := BytesToUint16Slice(data)
-	hexVals := Uint16SliceToHex(uint16Vals)
-	return hexVals, uint16Vals
+// BytesToBools 将字节数组按位解析成布尔值切片
+func BytesToBools(data []byte, quantity int) []bool {
+	bools := make([]bool, quantity)
+	for i := 0; i < quantity; i++ {
+		byteIndex := i / 8
+		bitIndex := i % 8
+		bools[i] = (data[byteIndex] & (1 << bitIndex)) != 0
+	}
+	return bools
+}
+
+// BoolsToBytes 将布尔值切片打包成字节数组（每 8 位一字节）
+func BoolsToBytes(bools []bool) []byte {
+	n := (len(bools) + 7) / 8
+	data := make([]byte, n)
+	for i, b := range bools {
+		if b {
+			data[i/8] |= 1 << (i % 8)
+		}
+	}
+	return data
 }

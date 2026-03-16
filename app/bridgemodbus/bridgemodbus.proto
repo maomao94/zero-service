@@ -214,8 +214,9 @@ message ReadInputRegistersReq {
 
 message ReadInputRegistersRes {
   bytes results = 1;    // 输入寄存器数据，每寄存器 2 字节，高字节在前
-  repeated string values = 2; // 每个寄存器值按 16 进制字符串返回，例如 "0xFF01"
-  repeated uint32 decValues = 3; // 每个寄存器值按 10 进制返回
+  repeated uint32 uintValues = 2;   // 无符号整数，用于业务计算
+  repeated int32 intValues = 3;  // 有符号整数，用于解释负数
+  repeated string hexValues = 4;    // 十六进制字符串表示, 例如 "0xFF01"
 }
 
 message ReadHoldingRegistersReq {
@@ -226,8 +227,9 @@ message ReadHoldingRegistersReq {
 
 message ReadHoldingRegistersRes {
   bytes results = 1;    // 保持寄存器数据，每寄存器 2 字节
-  repeated string values = 2; // 每个寄存器值按 16 进制字符串返回，例如 "0xFF01"
-  repeated uint32 decValues = 3; // 每个寄存器值按 10 进制返回
+  repeated uint32 uintValues = 2;   // 无符号整数，用于业务计算
+  repeated int32 intValues = 3;  // 有符号整数，用于解释负数
+  repeated string hexValues = 4;    // 十六进制字符串表示, 例如 "0xFF01"
 }
 
 message WriteSingleRegisterReq {

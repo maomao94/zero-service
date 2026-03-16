@@ -1196,9 +1196,10 @@ func (x *ReadInputRegistersReq) GetQuantity() uint32 {
 
 type ReadInputRegistersRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Results       []byte                 `protobuf:"bytes,1,opt,name=results,proto3" json:"results,omitempty"`             // 输入寄存器数据，每寄存器 2 字节，高字节在前
-	Values        []string               `protobuf:"bytes,2,rep,name=values,proto3" json:"values,omitempty"`               // 每个寄存器值按 16 进制字符串返回，例如 "0xFF01"
-	DecValues     []uint32               `protobuf:"varint,3,rep,packed,name=decValues,proto3" json:"decValues,omitempty"` // 每个寄存器值按 10 进制返回
+	Results       []byte                 `protobuf:"bytes,1,opt,name=results,proto3" json:"results,omitempty"`               // 输入寄存器数据，每寄存器 2 字节，高字节在前
+	UintValues    []uint32               `protobuf:"varint,2,rep,packed,name=uintValues,proto3" json:"uintValues,omitempty"` // 无符号整数，用于业务计算
+	IntValues     []int32                `protobuf:"varint,3,rep,packed,name=intValues,proto3" json:"intValues,omitempty"`   // 有符号整数，用于解释负数
+	HexValues     []string               `protobuf:"bytes,4,rep,name=hexValues,proto3" json:"hexValues,omitempty"`           // 十六进制字符串表示, 例如 "0xFF01"
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1240,16 +1241,23 @@ func (x *ReadInputRegistersRes) GetResults() []byte {
 	return nil
 }
 
-func (x *ReadInputRegistersRes) GetValues() []string {
+func (x *ReadInputRegistersRes) GetUintValues() []uint32 {
 	if x != nil {
-		return x.Values
+		return x.UintValues
 	}
 	return nil
 }
 
-func (x *ReadInputRegistersRes) GetDecValues() []uint32 {
+func (x *ReadInputRegistersRes) GetIntValues() []int32 {
 	if x != nil {
-		return x.DecValues
+		return x.IntValues
+	}
+	return nil
+}
+
+func (x *ReadInputRegistersRes) GetHexValues() []string {
+	if x != nil {
+		return x.HexValues
 	}
 	return nil
 }
@@ -1316,9 +1324,10 @@ func (x *ReadHoldingRegistersReq) GetQuantity() uint32 {
 
 type ReadHoldingRegistersRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Results       []byte                 `protobuf:"bytes,1,opt,name=results,proto3" json:"results,omitempty"`             // 保持寄存器数据，每寄存器 2 字节
-	Values        []string               `protobuf:"bytes,2,rep,name=values,proto3" json:"values,omitempty"`               // 每个寄存器值按 16 进制字符串返回，例如 "0xFF01"
-	DecValues     []uint32               `protobuf:"varint,3,rep,packed,name=decValues,proto3" json:"decValues,omitempty"` // 每个寄存器值按 10 进制返回
+	Results       []byte                 `protobuf:"bytes,1,opt,name=results,proto3" json:"results,omitempty"`               // 保持寄存器数据，每寄存器 2 字节
+	UintValues    []uint32               `protobuf:"varint,2,rep,packed,name=uintValues,proto3" json:"uintValues,omitempty"` // 无符号整数，用于业务计算
+	IntValues     []int32                `protobuf:"varint,3,rep,packed,name=intValues,proto3" json:"intValues,omitempty"`   // 有符号整数，用于解释负数
+	HexValues     []string               `protobuf:"bytes,4,rep,name=hexValues,proto3" json:"hexValues,omitempty"`           // 十六进制字符串表示, 例如 "0xFF01"
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1360,16 +1369,23 @@ func (x *ReadHoldingRegistersRes) GetResults() []byte {
 	return nil
 }
 
-func (x *ReadHoldingRegistersRes) GetValues() []string {
+func (x *ReadHoldingRegistersRes) GetUintValues() []uint32 {
 	if x != nil {
-		return x.Values
+		return x.UintValues
 	}
 	return nil
 }
 
-func (x *ReadHoldingRegistersRes) GetDecValues() []uint32 {
+func (x *ReadHoldingRegistersRes) GetIntValues() []int32 {
 	if x != nil {
-		return x.DecValues
+		return x.IntValues
+	}
+	return nil
+}
+
+func (x *ReadHoldingRegistersRes) GetHexValues() []string {
+	if x != nil {
+		return x.HexValues
 	}
 	return nil
 }
@@ -2268,21 +2284,27 @@ const file_bridgemodbus_proto_rawDesc = "" +
 	"modbusCode\x18\x01 \x01(\tR\n" +
 	"modbusCode\x12\x18\n" +
 	"\aaddress\x18\x02 \x01(\rR\aaddress\x12\x1a\n" +
-	"\bquantity\x18\x03 \x01(\rR\bquantity\"g\n" +
+	"\bquantity\x18\x03 \x01(\rR\bquantity\"\x8d\x01\n" +
 	"\x15ReadInputRegistersRes\x12\x18\n" +
-	"\aresults\x18\x01 \x01(\fR\aresults\x12\x16\n" +
-	"\x06values\x18\x02 \x03(\tR\x06values\x12\x1c\n" +
-	"\tdecValues\x18\x03 \x03(\rR\tdecValues\"o\n" +
+	"\aresults\x18\x01 \x01(\fR\aresults\x12\x1e\n" +
+	"\n" +
+	"uintValues\x18\x02 \x03(\rR\n" +
+	"uintValues\x12\x1c\n" +
+	"\tintValues\x18\x03 \x03(\x05R\tintValues\x12\x1c\n" +
+	"\thexValues\x18\x04 \x03(\tR\thexValues\"o\n" +
 	"\x17ReadHoldingRegistersReq\x12\x1e\n" +
 	"\n" +
 	"modbusCode\x18\x01 \x01(\tR\n" +
 	"modbusCode\x12\x18\n" +
 	"\aaddress\x18\x02 \x01(\rR\aaddress\x12\x1a\n" +
-	"\bquantity\x18\x03 \x01(\rR\bquantity\"i\n" +
+	"\bquantity\x18\x03 \x01(\rR\bquantity\"\x8f\x01\n" +
 	"\x17ReadHoldingRegistersRes\x12\x18\n" +
-	"\aresults\x18\x01 \x01(\fR\aresults\x12\x16\n" +
-	"\x06values\x18\x02 \x03(\tR\x06values\x12\x1c\n" +
-	"\tdecValues\x18\x03 \x03(\rR\tdecValues\"h\n" +
+	"\aresults\x18\x01 \x01(\fR\aresults\x12\x1e\n" +
+	"\n" +
+	"uintValues\x18\x02 \x03(\rR\n" +
+	"uintValues\x12\x1c\n" +
+	"\tintValues\x18\x03 \x03(\x05R\tintValues\x12\x1c\n" +
+	"\thexValues\x18\x04 \x03(\tR\thexValues\"h\n" +
 	"\x16WriteSingleRegisterReq\x12\x1e\n" +
 	"\n" +
 	"modbusCode\x18\x01 \x01(\tR\n" +

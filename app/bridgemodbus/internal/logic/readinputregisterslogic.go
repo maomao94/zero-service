@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"fmt"
 	"zero-service/common/modbusx"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
@@ -54,7 +53,7 @@ func (l *ReadInputRegistersLogic) ReadInputRegisters(in *bridgemodbus.ReadInputR
 	}
 
 	// 每个寄存器占 2 个字节，所以寄存器数量 = bytes 长度 / 2
-	n := len(results) / 2
+	//n := len(results) / 2
 
 	// 创建切片用于存放每个寄存器的 16 进制字符串表示
 	//hexValues := make([]string, n)
@@ -72,17 +71,19 @@ func (l *ReadInputRegistersLogic) ReadInputRegisters(in *bridgemodbus.ReadInputR
 	//}
 
 	// 第二种解析 方法
-	hexValues := make([]string, 0, n)
-	for i := 0; i < len(results); i += 2 {
-		hi := results[i]   // 高字节
-		lo := results[i+1] // 低字节
-
-		val := uint16(hi)<<8 | uint16(lo)                         // 拼成 16 位寄存器值
-		hexValues = append(hexValues, fmt.Sprintf("0x%04X", val)) // 转 16 进制字符串
-	}
+	//hexValues := make([]string, 0, n)
+	//for i := 0; i < len(results); i += 2 {
+	//	hi := results[i]   // 高字节
+	//	lo := results[i+1] // 低字节
+	//
+	//	val := uint16(hi)<<8 | uint16(lo)                         // 拼成 16 位寄存器值
+	//	hexValues = append(hexValues, fmt.Sprintf("0x%04X", val)) // 转 16 进制字符串
+	//}
+	bv := tool.BytesToBinaryValues(results)
 	return &bridgemodbus.ReadInputRegistersRes{
-		Results:   results,
-		Values:    hexValues,
-		DecValues: tool.BytesToUint32Slice(results),
+		Results:    results,
+		UintValues: bv.Uint,
+		IntValues:  bv.Int,
+		HexValues:  bv.Hex,
 	}, nil
 }
