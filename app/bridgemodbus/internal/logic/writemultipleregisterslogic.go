@@ -48,6 +48,7 @@ func (l *WriteMultipleRegistersLogic) WriteMultipleRegisters(in *bridgemodbus.Wr
 	mbCli := mdCliPool.Get()
 	defer mdCliPool.Put(mbCli)
 
+	l.Infof("写多个保持寄存器: 0x%X", in.Values)
 	results, err := mbCli.WriteMultipleRegisters(l.ctx, uint16(in.Address), uint16(in.Quantity), in.Values)
 	if err != nil {
 		return nil, err

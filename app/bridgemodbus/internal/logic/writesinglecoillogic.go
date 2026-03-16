@@ -48,6 +48,7 @@ func (l *WriteSingleCoilLogic) WriteSingleCoil(in *bridgemodbus.WriteSingleCoilR
 	mbCli := mdCliPool.Get()
 	defer mdCliPool.Put(mbCli)
 
+	l.Infof("写单个线圈: 0x%X", in.Value)
 	results, err := mbCli.WriteSingleCoil(l.ctx, uint16(in.Address), uint16(in.Value))
 	if err != nil {
 		return nil, err

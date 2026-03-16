@@ -47,7 +47,7 @@ func (l *WriteSingleRegisterLogic) WriteSingleRegister(in *bridgemodbus.WriteSin
 	}
 	mbCli := mdCliPool.Get()
 	defer mdCliPool.Put(mbCli)
-
+	l.Infof("写单个保持寄存器: 0x%X", in.Value)
 	results, err := mbCli.WriteSingleRegister(l.ctx, uint16(in.Address), uint16(in.Value))
 	if err != nil {
 		return nil, err

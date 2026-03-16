@@ -48,6 +48,7 @@ func (l *WriteMultipleCoilsLogic) WriteMultipleCoils(in *bridgemodbus.WriteMulti
 	mbCli := mdCliPool.Get()
 	defer mdCliPool.Put(mbCli)
 
+	l.Infof("写多个线圈: 0x%X", in.Values)
 	results, err := mbCli.WriteMultipleCoils(l.ctx, uint16(in.Address), uint16(in.Quantity), in.Values)
 	if err != nil {
 		return nil, err
