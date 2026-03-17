@@ -32,9 +32,9 @@ func (c *ModbusConfigConverter) ToClientConf(model *ModbusSlaveConfig) *modbusx.
 	// TLS配置（根据数据库字段判断是否启用）
 	conf.TLS.Enable = model.EnableTls == 1
 	if conf.TLS.Enable {
-		conf.TLS.CertFile = model.TlsCertFile
-		conf.TLS.KeyFile = model.TlsKeyFile
-		conf.TLS.CAFile = model.TlsCaFile
+		conf.TLS.CertFile = model.TlsCertFile.String
+		conf.TLS.KeyFile = model.TlsKeyFile.String
+		conf.TLS.CAFile = model.TlsCaFile.String
 	}
 
 	return conf

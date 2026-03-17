@@ -44,8 +44,7 @@ CREATE TABLE IF NOT EXISTS device_point_mapping (
     ext_2 VARCHAR(64) DEFAULT '',
     ext_3 VARCHAR(64) DEFAULT '',
     ext_4 VARCHAR(64) DEFAULT '',
-    ext_5 VARCHAR(64) DEFAULT '',
-    CONSTRAINT uq_device_point_mapping_tag_station_coa_ioa UNIQUE (tag_station, coa, ioa)
+    ext_5 VARCHAR(64) DEFAULT ''
 );
 
 -- 为 device_point_mapping 表添加注释
@@ -75,6 +74,9 @@ COMMENT ON COLUMN device_point_mapping.ext_2 IS '扩展字段2';
 COMMENT ON COLUMN device_point_mapping.ext_3 IS '扩展字段3';
 COMMENT ON COLUMN device_point_mapping.ext_4 IS '扩展字段4';
 COMMENT ON COLUMN device_point_mapping.ext_5 IS '扩展字段5';
+
+-- 为 device_point_mapping 表创建索引
+CREATE UNIQUE INDEX uq_device_point_mapping_tag_station_coa_ioa ON device_point_mapping (tag_station, coa, ioa);
 
 -- 为 device_point_mapping 表创建触发器
 CREATE TRIGGER "trigger_insert_modified_time"
@@ -446,3 +448,78 @@ CREATE TRIGGER "trigger_update_modified_time"
     ON "public"."plan_batch"
     FOR EACH ROW
     EXECUTE PROCEDURE update_modified_update_time();
+
+-- 8. 创建 Modbus 从站连接配置表
+CREATE TABLE IF NOT EXISTS modbus_slave_config (
+    id BIGSERIAL PRIMARY KEY,
+    create_time TIMESTAMP NOT NULL,
+    update_time TIMESTAMP NOT NULL,
+    delete_time TIMESTAMP NULL,
+    del_state SMALLINT NOT NULL DEFAULT 0,
+    version INT NOT NULL DEFAULT 0,
+    modbus_code VARCHAR(32) NOT NULL DEFAULT '',
+    slave_address VARCHAR(64) NOT NULL DEFAULT '',
+    slave INTEGER NOT NULL DEFAULT 1,
+    timeout INTEGER NOT NULL DEFAULT 10000,
+    idle_timeout INTEGER NOT NULL DEFAULT 60000,
+    link_recovery_timeout INTEGER NOT NULL DEFAULT 3000,
+    protocol_recovery_timeout INTEGER NOT NULL DEFAULT 2000,
+    connect_delay INTEGER NOT NULL DEFAULT 100,
+    enable_tls SMALLINT NOT NULL DEFAULT 0,
+    tls_cert_file VARCHAR(255) NULL DEFAULT '',
+    tls_key_file VARCHAR(255) NULL DEFAULT '',
+    tls_ca_file VARCHAR(255) NULL DEFAULT '',
+    status SMALLINT NOT NULL DEFAULT 1,
+    remark VARCHAR(255) NULL DEFAULT '',
+    CONSTRAINT uq_modbus_code UNIQUE (modbus_code)
+);
+
+-- 为 modbus_slave_config 表添加注释
+COMMENT ON TABLE modbus_slave_config IS 'Modbus从站连接配置表';
+
+-- 为 modbus_slave_config 表的列添加注释
+COMMENT ON COLUMN modbus_slave_config.id IS '主键ID';
+COMMENT ON COLUMN modbus_slave_config.create_time IS '创建时间';
+COMMENT ON COLUMN modbus_slave_config.update_time IS '更新时间';
+COMMENT ON COLUMN modbus_slave_config.delete_time IS '删除时间（软删除标记）';
+COMMENT ON COLUMN modbus_slave_config.del_state IS '删除状态：0-未删除，1-已删除';
+COMMENT ON COLUMN modbus_slave_config.version IS '版本号（乐观锁，防并发修改）';
+COMMENT ON COLUMN modbus_slave_config.modbus_code IS 'Modbus配置唯一编码（如：modbus-192.168.1.100）';
+COMMENT ON COLUMN modbus_slave_config.slave_address IS 'TCP设备地址（格式：IP:Port，对应结构体 Address）';
+COMMENT ON COLUMN modbus_slave_config.slave IS 'Modbus从站地址（Slave ID/Unit ID，对应结构体 Slave）';
+COMMENT ON COLUMN modbus_slave_config.timeout IS '发送/接收超时（单位：毫秒，对应结构体 Timeout，默认10000）';
+COMMENT ON COLUMN modbus_slave_config.idle_timeout IS '空闲连接自动关闭时间（单位：毫秒，对应结构体 IdleTimeout，默认60000）';
+COMMENT ON COLUMN modbus_slave_config.link_recovery_timeout IS 'TCP连接出错重连间隔（单位：毫秒，对应结构体 LinkRecoveryTimeout，默认3000）';
+COMMENT ON COLUMN modbus_slave_config.protocol_recovery_timeout IS '协议异常重试间隔（单位：毫秒，对应结构体 ProtocolRecoveryTimeout，默认2000）';
+COMMENT ON COLUMN modbus_slave_config.connect_delay IS '连接建立后等待时间（单位：毫秒，对应结构体 ConnectDelay，默认100）';
+COMMENT ON COLUMN modbus_slave_config.enable_tls IS '是否启用TLS（对应结构体 TLS.Enable：0-不启用，1-启用）';
+COMMENT ON COLUMN modbus_slave_config.tls_cert_file IS 'TLS客户端证书路径（对应结构体 TLS.CertFile，enable_tls=1时生效）';
+COMMENT ON COLUMN modbus_slave_config.tls_key_file IS 'TLS客户端密钥路径（对应结构体 TLS.KeyFile，enable_tls=1时生效）';
+COMMENT ON COLUMN modbus_slave_config.tls_ca_file IS 'TLS根证书路径（对应结构体 TLS.CAFile，enable_tls=1时生效）';
+COMMENT ON COLUMN modbus_slave_config.status IS '配置状态：1-启用（可初始化连接池），2-禁用（不加载）';
+COMMENT ON COLUMN modbus_slave_config.remark IS '备注（如：生产车间A-水泵控制从站）';
+
+-- 为 modbus_slave_config 表创建索引
+CREATE UNIQUE INDEX uk_modbus_slave_config_modbus_code ON modbus_slave_config (modbus_code);
+
+-- 为 modbus_slave_config 表创建触发器
+CREATE TRIGGER "trigger_insert_modified_time"
+    BEFORE INSERT
+    ON "public"."modbus_slave_config"
+    FOR EACH ROW
+    EXECUTE PROCEDURE insert_modified_time();
+
+CREATE TRIGGER "trigger_update_modified_time"
+    BEFORE UPDATE
+    ON "public"."modbus_slave_config"
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_modified_update_time();
+
+-- 插入初始数据
+INSERT INTO modbus_slave_config (delete_time, modbus_code, slave_address, slave, status, remark)
+VALUES ( '1970-01-01 08:00:00',
+        'local', -- 唯一配置编码
+        '127.0.0.1:5020', -- 从站地址（IP:Port）
+        1, -- 从站ID（非默认值，区分同网段其他设备）
+        1, -- 启用状态
+        '备注');

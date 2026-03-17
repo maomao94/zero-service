@@ -19,11 +19,16 @@ type (
 
 // NewModbusSlaveConfigModel returns a model for the database table.
 func NewModbusSlaveConfigModel(conn sqlx.SqlConn) ModbusSlaveConfigModel {
+	return NewModbusSlaveConfigModelWithDBType(conn, DatabaseTypeMySQL)
+}
+
+// NewModbusSlaveConfigModelWithDBType returns a model for the database table with db type.
+func NewModbusSlaveConfigModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) ModbusSlaveConfigModel {
 	return &customModbusSlaveConfigModel{
-		defaultModbusSlaveConfigModel: newModbusSlaveConfigModel(conn),
+		defaultModbusSlaveConfigModel: newModbusSlaveConfigModelWithDBType(conn, dbType),
 	}
 }
 
 func (m *customModbusSlaveConfigModel) withSession(session sqlx.Session) ModbusSlaveConfigModel {
-	return NewModbusSlaveConfigModel(sqlx.NewSqlConnFromSession(session))
+	return NewModbusSlaveConfigModelWithDBType(sqlx.NewSqlConnFromSession(session), m.defaultModbusSlaveConfigModel.dbType)
 }

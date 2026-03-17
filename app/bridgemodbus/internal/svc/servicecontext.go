@@ -4,10 +4,9 @@ import (
 	"context"
 	"errors"
 	"zero-service/app/bridgemodbus/internal/config"
+	"zero-service/common/dbx"
 	"zero-service/common/modbusx"
 	"zero-service/model"
-
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
 type ServiceContext struct {
@@ -19,9 +18,11 @@ type ServiceContext struct {
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
+	// 解析数据库类型
+	dbType := dbx.ParseDatabaseType(c.DB.DataSource)
 	return &ServiceContext{
 		Config:                 c,
-		ModbusSlaveConfigModel: model.NewModbusSlaveConfigModel(sqlx.NewMysql(c.DB.DataSource)),
+		ModbusSlaveConfigModel: model.NewModbusSlaveConfigModelWithDBType(dbx.New(c.DB.DataSource), model.DatabaseType(dbType)),
 		ModbusConfigConverter:  model.NewModbusConfigConverter(),
 		ModbusClientPool:       modbusx.NewModbusClientPool(&c.ModbusClientConf, c.ModbusPool),
 		Manager:                modbusx.NewPoolManager(),

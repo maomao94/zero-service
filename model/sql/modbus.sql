@@ -1,11 +1,11 @@
 CREATE TABLE `modbus_slave_config`
 (
-    `id`                        bigint       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-    `create_time`               datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time`               datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `delete_time`               datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '删除时间（软删除标记）',
-    `del_state`                 tinyint      NOT NULL DEFAULT '0' COMMENT '删除状态：0-未删除，1-已删除',
-    `version`                   bigint       NOT NULL DEFAULT '0' COMMENT '版本号（乐观锁，防并发修改）',
+    `id`                        BIGINT       NOT NULL AUTO_INCREMENT COMMENT '自增主键ID',
+    `create_time`               DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
+    `update_time`               DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间',
+    `delete_time`               DATETIME(6) NULL DEFAULT NULL COMMENT '删除时间（软删除标记）',
+    `del_state`                 TINYINT      NOT NULL DEFAULT 0 COMMENT '删除状态：0-未删除，1-已删除',
+    `version`                   INT          NOT NULL DEFAULT 0 COMMENT '版本号（乐观锁）',
     `modbus_code`               varchar(32)  NOT NULL DEFAULT '' COMMENT 'Modbus配置唯一编码（如：modbus-192.168.1.100）',
     `slave_address`             varchar(64)  NOT NULL DEFAULT '' COMMENT 'TCP设备地址（格式：IP:Port，对应结构体 Address）',
     `slave`                     int          NOT NULL DEFAULT '1' COMMENT 'Modbus从站地址（Slave ID/Unit ID，对应结构体 Slave）',
@@ -24,9 +24,8 @@ CREATE TABLE `modbus_slave_config`
     UNIQUE KEY `idx_modbus_code` (`modbus_code`) COMMENT '配置编码唯一索引（避免重复配置）'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Modbus从站连接配置表';
 
-INSERT INTO `modbus_slave_config` (`delete_time`, `modbus_code`, `slave_address`, `slave`, `status`, `remark`)
-VALUES ( '1970-01-01 08:00:00',
-        'local', -- 唯一配置编码
+INSERT INTO `modbus_slave_config` (`modbus_code`, `slave_address`, `slave`, `status`, `remark`)
+VALUES ('local', -- 唯一配置编码
         '127.0.0.1:5020', -- 从站地址（IP:Port）
         1, -- 从站ID（非默认值，区分同网段其他设备）
         1, -- 启用状态

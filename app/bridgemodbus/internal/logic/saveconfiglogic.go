@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"time"
 	"zero-service/model"
 
 	"zero-service/app/bridgemodbus/bridgemodbus"
@@ -45,8 +44,8 @@ func (l *SaveConfigLogic) SaveConfig(in *bridgemodbus.SaveConfigReq) (*bridgemod
 		var lastId int64
 		insertBuilder := l.svcCtx.ModbusSlaveConfigModel.InsertBuilder()
 		insertBuilder = insertBuilder.
-			Columns("delete_time", "modbus_code", "slave_address", "slave").
-			Values(time.Unix(0, 0), in.ModbusCode, in.SlaveAddress, in.Slave)
+			Columns("modbus_code", "slave_address", "slave").
+			Values(in.ModbusCode, in.SlaveAddress, in.Slave)
 		result, err := l.svcCtx.ModbusSlaveConfigModel.InsertWithBuilder(l.ctx, nil, insertBuilder)
 		if err != nil {
 			return nil, err

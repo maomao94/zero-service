@@ -7,7 +7,6 @@ package model
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"strings"
 	"time"
 
@@ -15,14 +14,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/stores/builder"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
-	"github.com/zeromicro/go-zero/core/stringx"
 )
 
 var (
-	modbusSlaveConfigFieldNames          = builder.RawFieldNames(&ModbusSlaveConfig{})
-	modbusSlaveConfigRows                = strings.Join(modbusSlaveConfigFieldNames, ",")
-	modbusSlaveConfigRowsExpectAutoSet   = strings.Join(stringx.Remove(modbusSlaveConfigFieldNames, "`id`", "`create_at`", "`create_time`", "`created_at`", "`update_at`", "`update_time`", "`updated_at`"), ",")
-	modbusSlaveConfigRowsWithPlaceHolder = strings.Join(stringx.Remove(modbusSlaveConfigFieldNames, "`id`", "`create_at`", "`create_time`", "`created_at`", "`update_at`", "`update_time`", "`updated_at`"), "=?,") + "=?"
+	_ modbusSlaveConfigModel = (*defaultModbusSlaveConfigModel)(nil)
 )
 
 type (
@@ -55,54 +50,77 @@ type (
 	}
 
 	defaultModbusSlaveConfigModel struct {
-		conn  sqlx.SqlConn
-		table string
+		conn   sqlx.SqlConn
+		table  string
+		dbType DatabaseType
+		rows   string
 	}
 
 	ModbusSlaveConfig struct {
-		Id                      int64     `db:"id"`                        // 主键ID
-		CreateTime              time.Time `db:"create_time"`               // 创建时间
-		UpdateTime              time.Time `db:"update_time"`               // 更新时间
-		DeleteTime              time.Time `db:"delete_time"`               // 删除时间（软删除标记）
-		DelState                int64     `db:"del_state"`                 // 删除状态：0-未删除，1-已删除
-		Version                 int64     `db:"version"`                   // 版本号（乐观锁，防并发修改）
-		ModbusCode              string    `db:"modbus_code"`               // Modbus配置唯一编码（如：modbus-192.168.1.100）
-		SlaveAddress            string    `db:"slave_address"`             // TCP设备地址（格式：IP:Port，对应结构体 Address）
-		Slave                   int64     `db:"slave"`                     // Modbus从站地址（Slave ID/Unit ID，对应结构体 Slave）
-		Timeout                 int64     `db:"timeout"`                   // 发送/接收超时（单位：毫秒，对应结构体 Timeout，默认10000）
-		IdleTimeout             int64     `db:"idle_timeout"`              // 空闲连接自动关闭时间（单位：毫秒，对应结构体 IdleTimeout，默认60000）
-		LinkRecoveryTimeout     int64     `db:"link_recovery_timeout"`     // TCP连接出错重连间隔（单位：毫秒，对应结构体 LinkRecoveryTimeout，默认3000）
-		ProtocolRecoveryTimeout int64     `db:"protocol_recovery_timeout"` // 协议异常重试间隔（单位：毫秒，对应结构体 ProtocolRecoveryTimeout，默认2000）
-		ConnectDelay            int64     `db:"connect_delay"`             // 连接建立后等待时间（单位：毫秒，对应结构体 ConnectDelay，默认100）
-		EnableTls               int64     `db:"enable_tls"`                // 是否启用TLS（对应结构体 TLS.Enable：0-不启用，1-启用）
-		TlsCertFile             string    `db:"tls_cert_file"`             // TLS客户端证书路径（对应结构体 TLS.CertFile，enable_tls=1时生效）
-		TlsKeyFile              string    `db:"tls_key_file"`              // TLS客户端密钥路径（对应结构体 TLS.KeyFile，enable_tls=1时生效）
-		TlsCaFile               string    `db:"tls_ca_file"`               // TLS根证书路径（对应结构体 TLS.CAFile，enable_tls=1时生效）
-		Status                  int64     `db:"status"`                    // 配置状态：1-启用（可初始化连接池），2-禁用（不加载）
-		Remark                  string    `db:"remark"`                    // 备注（如：生产车间A-水泵控制从站）
+		Id                      int64          `db:"id"`                        // 主键ID
+		CreateTime              time.Time      `db:"create_time"`               // 创建时间
+		UpdateTime              time.Time      `db:"update_time"`               // 更新时间
+		DeleteTime              sql.NullTime   `db:"delete_time"`               // 删除时间（软删除标记）
+		DelState                int64          `db:"del_state"`                 // 删除状态：0-未删除，1-已删除
+		Version                 int64          `db:"version"`                   // 版本号（乐观锁，防并发修改）
+		ModbusCode              string         `db:"modbus_code"`               // Modbus配置唯一编码（如：modbus-192.168.1.100）
+		SlaveAddress            string         `db:"slave_address"`             // TCP设备地址（格式：IP:Port，对应结构体 Address）
+		Slave                   int64          `db:"slave"`                     // Modbus从站地址（Slave ID/Unit ID，对应结构体 Slave）
+		Timeout                 int64          `db:"timeout"`                   // 发送/接收超时（单位：毫秒，对应结构体 Timeout，默认10000）
+		IdleTimeout             int64          `db:"idle_timeout"`              // 空闲连接自动关闭时间（单位：毫秒，对应结构体 IdleTimeout，默认60000）
+		LinkRecoveryTimeout     int64          `db:"link_recovery_timeout"`     // TCP连接出错重连间隔（单位：毫秒，对应结构体 LinkRecoveryTimeout，默认3000）
+		ProtocolRecoveryTimeout int64          `db:"protocol_recovery_timeout"` // 协议异常重试间隔（单位：毫秒，对应结构体 ProtocolRecoveryTimeout，默认2000）
+		ConnectDelay            int64          `db:"connect_delay"`             // 连接建立后等待时间（单位：毫秒，对应结构体 ConnectDelay，默认100）
+		EnableTls               int64          `db:"enable_tls"`                // 是否启用TLS（对应结构体 TLS.Enable：0-不启用，1-启用）
+		TlsCertFile             sql.NullString `db:"tls_cert_file"`             // TLS客户端证书路径（对应结构体 TLS.CertFile，enable_tls=1时生效）
+		TlsKeyFile              sql.NullString `db:"tls_key_file"`              // TLS客户端密钥路径（对应结构体 TLS.KeyFile，enable_tls=1时生效）
+		TlsCaFile               sql.NullString `db:"tls_ca_file"`               // TLS根证书路径（对应结构体 TLS.CAFile，enable_tls=1时生效）
+		Status                  int64          `db:"status"`                    // 配置状态：1-启用（可初始化连接池），2-禁用（不加载）
+		Remark                  sql.NullString `db:"remark"`                    // 备注（如：生产车间A-水泵控制从站）
 	}
 )
 
 func newModbusSlaveConfigModel(conn sqlx.SqlConn) *defaultModbusSlaveConfigModel {
+	return newModbusSlaveConfigModelWithDBType(conn, DatabaseTypeMySQL)
+}
+
+func newModbusSlaveConfigModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) *defaultModbusSlaveConfigModel {
+	tableName := "modbus_slave_config"
+	fieldNames := builder.RawFieldNames(&ModbusSlaveConfig{}, true)
+	rows := strings.Join(fieldNames, ",")
 	return &defaultModbusSlaveConfigModel{
-		conn:  conn,
-		table: "`modbus_slave_config`",
+		conn:   conn,
+		table:  tableName,
+		dbType: dbType,
+		rows:   rows,
 	}
 }
 
 func (m *defaultModbusSlaveConfigModel) Delete(ctx context.Context, session sqlx.Session, id int64) error {
-	query := fmt.Sprintf("delete from %s where `id` = ?", m.table)
-	if session != nil {
-		_, err := session.ExecCtx(ctx, query, id)
+	deleteBuilder := m.DeleteBuilder().Where("id = ?", id)
+	query, args, err := deleteBuilder.ToSql()
+	if err != nil {
 		return err
 	}
-	_, err := m.conn.ExecCtx(ctx, query, id)
-	return err
+	var execErr error
+	if session != nil {
+		_, execErr = session.ExecCtx(ctx, query, args...)
+	} else {
+		_, execErr = m.conn.ExecCtx(ctx, query, args...)
+	}
+	return execErr
 }
 func (m *defaultModbusSlaveConfigModel) FindOne(ctx context.Context, id int64) (*ModbusSlaveConfig, error) {
-	query := fmt.Sprintf("select %s from %s where `id` = ? and del_state = ? limit 1", modbusSlaveConfigRows, m.table)
+	selectBuilder := m.SelectBuilder().Columns(m.rows).
+		Where("id = ?", id).
+		Where("del_state = ?", 0).
+		Limit(1)
+	query, args, err := selectBuilder.ToSql()
+	if err != nil {
+		return nil, err
+	}
 	var resp ModbusSlaveConfig
-	err := m.conn.QueryRowCtx(ctx, &resp, query, id, 0)
+	err = m.conn.QueryRowCtx(ctx, &resp, query, args...)
 	switch err {
 	case nil:
 		return &resp, nil
@@ -114,9 +132,16 @@ func (m *defaultModbusSlaveConfigModel) FindOne(ctx context.Context, id int64) (
 }
 
 func (m *defaultModbusSlaveConfigModel) FindOneByModbusCode(ctx context.Context, modbusCode string) (*ModbusSlaveConfig, error) {
+	selectBuilder := m.SelectBuilder().Columns(m.rows).
+		Where(adaptSQLPlaceholders("modbus_code = $1", m.dbType), modbusCode).
+		Where("del_state = 0").
+		Limit(1)
+	query, args, err := selectBuilder.ToSql()
+	if err != nil {
+		return nil, err
+	}
 	var resp ModbusSlaveConfig
-	query := fmt.Sprintf("select %s from %s where `modbus_code` = ?  and del_state = ? limit 1", modbusSlaveConfigRows, m.table)
-	err := m.conn.QueryRowCtx(ctx, &resp, query, modbusCode, 0)
+	err = m.conn.QueryRowCtx(ctx, &resp, query, args...)
 	switch err {
 	case nil:
 		return &resp, nil
@@ -128,43 +153,100 @@ func (m *defaultModbusSlaveConfigModel) FindOneByModbusCode(ctx context.Context,
 }
 
 func (m *defaultModbusSlaveConfigModel) Insert(ctx context.Context, session sqlx.Session, data *ModbusSlaveConfig) (sql.Result, error) {
-	data.DeleteTime = time.Unix(0, 0)
-	data.DelState = 0
-
-	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, modbusSlaveConfigRowsExpectAutoSet)
-	if session != nil {
-		return session.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.ModbusCode, data.SlaveAddress, data.Slave, data.Timeout, data.IdleTimeout, data.LinkRecoveryTimeout, data.ProtocolRecoveryTimeout, data.ConnectDelay, data.EnableTls, data.TlsCertFile, data.TlsKeyFile, data.TlsCaFile, data.Status, data.Remark)
+	data.DeleteTime = sql.NullTime{
+		Valid: false,
 	}
-	return m.conn.ExecCtx(ctx, query, data.DeleteTime, data.DelState, data.Version, data.ModbusCode, data.SlaveAddress, data.Slave, data.Timeout, data.IdleTimeout, data.LinkRecoveryTimeout, data.ProtocolRecoveryTimeout, data.ConnectDelay, data.EnableTls, data.TlsCertFile, data.TlsKeyFile, data.TlsCaFile, data.Status, data.Remark)
+	data.DelState = 0
+	columns, values := generateColumnsAndValues(data, []string{})
+	insertBuilder := m.InsertBuilder().Columns(columns...).Values(values...)
+
+	if m.dbType == DatabaseTypePostgres {
+		insertBuilder = insertBuilder.Suffix("RETURNING id")
+		query, args, err := insertBuilder.ToSql()
+		if err != nil {
+			return nil, err
+		}
+		var id int64
+		var execErr error
+		if session != nil {
+			execErr = session.QueryRowCtx(ctx, &id, query, args...)
+		} else {
+			execErr = m.conn.QueryRowCtx(ctx, &id, query, args...)
+		}
+		if execErr != nil {
+			return nil, execErr
+		}
+		data.Id = id
+		return &postgresResult{id: id}, nil
+	} else {
+		query, args, err := insertBuilder.ToSql()
+		if err != nil {
+			return nil, err
+		}
+		var result sql.Result
+		var execErr error
+		if session != nil {
+			result, execErr = session.ExecCtx(ctx, query, args...)
+		} else {
+			result, execErr = m.conn.ExecCtx(ctx, query, args...)
+		}
+		return result, execErr
+	}
 }
 
 func (m *defaultModbusSlaveConfigModel) Update(ctx context.Context, session sqlx.Session, newData *ModbusSlaveConfig) (sql.Result, error) {
-	newData.DeleteTime = time.Unix(0, 0)
-	newData.DelState = 0
-	query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, modbusSlaveConfigRowsWithPlaceHolder)
-	if session != nil {
-		return session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.ModbusCode, newData.SlaveAddress, newData.Slave, newData.Timeout, newData.IdleTimeout, newData.LinkRecoveryTimeout, newData.ProtocolRecoveryTimeout, newData.ConnectDelay, newData.EnableTls, newData.TlsCertFile, newData.TlsKeyFile, newData.TlsCaFile, newData.Status, newData.Remark, newData.Id)
+	data := newData
+	data.DeleteTime = sql.NullTime{
+		Valid: false,
 	}
-	return m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.ModbusCode, newData.SlaveAddress, newData.Slave, newData.Timeout, newData.IdleTimeout, newData.LinkRecoveryTimeout, newData.ProtocolRecoveryTimeout, newData.ConnectDelay, newData.EnableTls, newData.TlsCertFile, newData.TlsKeyFile, newData.TlsCaFile, newData.Status, newData.Remark, newData.Id)
+	data.DelState = 0
+	columns, values := generateColumnsAndValues(data, []string{})
+	updateBuilder := m.UpdateBuilder()
+	for i, column := range columns {
+		updateBuilder = updateBuilder.Set(column, values[i])
+	}
+	updateBuilder = updateBuilder.Where("id = ?", data.Id)
+	query, args, err := updateBuilder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+	var result sql.Result
+	var execErr error
+	if session != nil {
+		result, execErr = session.ExecCtx(ctx, query, args...)
+	} else {
+		result, execErr = m.conn.ExecCtx(ctx, query, args...)
+	}
+	return result, execErr
 }
 
 func (m *defaultModbusSlaveConfigModel) UpdateWithVersion(ctx context.Context, session sqlx.Session, newData *ModbusSlaveConfig) error {
-
-	oldVersion := newData.Version
-	newData.Version += 1
-
-	var sqlResult sql.Result
-	var err error
-
-	query := fmt.Sprintf("update %s set %s where `id` = ? and version = ? ", m.table, modbusSlaveConfigRowsWithPlaceHolder)
-	if session != nil {
-		sqlResult, err = session.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.ModbusCode, newData.SlaveAddress, newData.Slave, newData.Timeout, newData.IdleTimeout, newData.LinkRecoveryTimeout, newData.ProtocolRecoveryTimeout, newData.ConnectDelay, newData.EnableTls, newData.TlsCertFile, newData.TlsKeyFile, newData.TlsCaFile, newData.Status, newData.Remark, newData.Id, oldVersion)
-	} else {
-		sqlResult, err = m.conn.ExecCtx(ctx, query, newData.DeleteTime, newData.DelState, newData.Version, newData.ModbusCode, newData.SlaveAddress, newData.Slave, newData.Timeout, newData.IdleTimeout, newData.LinkRecoveryTimeout, newData.ProtocolRecoveryTimeout, newData.ConnectDelay, newData.EnableTls, newData.TlsCertFile, newData.TlsKeyFile, newData.TlsCaFile, newData.Status, newData.Remark, newData.Id, oldVersion)
+	data := newData
+	oldVersion := data.Version
+	data.Version += 1
+	data.DeleteTime = sql.NullTime{
+		Valid: false,
 	}
-
+	data.DelState = 0
+	columns, values := generateColumnsAndValues(data, []string{})
+	updateBuilder := m.UpdateBuilder()
+	for i, column := range columns {
+		updateBuilder = updateBuilder.Set(column, values[i])
+	}
+	updateBuilder = updateBuilder.Where("id = ?", data.Id).Where("version = ?", oldVersion)
+	query, args, err := updateBuilder.ToSql()
 	if err != nil {
 		return err
+	}
+	var sqlResult sql.Result
+	var execErr error
+	if session != nil {
+		sqlResult, execErr = session.ExecCtx(ctx, query, args...)
+	} else {
+		sqlResult, execErr = m.conn.ExecCtx(ctx, query, args...)
+	}
+	if execErr != nil {
+		return execErr
 	}
 	updateCount, err := sqlResult.RowsAffected()
 	if err != nil {
@@ -173,7 +255,6 @@ func (m *defaultModbusSlaveConfigModel) UpdateWithVersion(ctx context.Context, s
 	if updateCount == 0 {
 		return ErrNoRowsUpdate
 	}
-
 	return nil
 }
 
@@ -183,7 +264,10 @@ func (m *defaultModbusSlaveConfigModel) DeleteSoft(ctx context.Context, session 
 		return err
 	}
 	data.DelState = 1
-	data.DeleteTime = time.Now()
+	data.DeleteTime = sql.NullTime{
+		Time:  time.Now(),
+		Valid: true,
+	}
 	if err := m.UpdateWithVersion(ctx, session, data); err != nil {
 		return errors.Wrapf(errors.New("delete soft failed "), "ModbusSlaveConfigModel delete err : %+v", err)
 	}
@@ -191,18 +275,15 @@ func (m *defaultModbusSlaveConfigModel) DeleteSoft(ctx context.Context, session 
 }
 
 func (m *defaultModbusSlaveConfigModel) FindSum(ctx context.Context, builder squirrel.SelectBuilder, field string) (float64, error) {
-
 	if len(field) == 0 {
 		return 0, errors.Wrapf(errors.New("FindSum Least One Field"), "FindSum Least One Field")
 	}
-
-	builder = builder.Columns("IFNULL(SUM(" + field + "),0)")
-
+	sumFunction := "COALESCE(SUM(" + field + "),0)"
+	builder = builder.Columns(sumFunction)
 	query, values, err := builder.Where("del_state = ?", 0).ToSql()
 	if err != nil {
 		return 0, err
 	}
-
 	var resp float64
 
 	err = m.conn.QueryRowCtx(ctx, &resp, query, values...)
@@ -216,18 +297,14 @@ func (m *defaultModbusSlaveConfigModel) FindSum(ctx context.Context, builder squ
 }
 
 func (m *defaultModbusSlaveConfigModel) FindCount(ctx context.Context, builder squirrel.SelectBuilder, field string) (int64, error) {
-
 	if len(field) == 0 {
 		return 0, errors.Wrapf(errors.New("FindCount Least One Field"), "FindCount Least One Field")
 	}
-
 	builder = builder.Columns("COUNT(" + field + ")")
-
 	query, values, err := builder.Where("del_state = ?", 0).ToSql()
 	if err != nil {
 		return 0, err
 	}
-
 	var resp int64
 
 	err = m.conn.QueryRowCtx(ctx, &resp, query, values...)
@@ -241,20 +318,16 @@ func (m *defaultModbusSlaveConfigModel) FindCount(ctx context.Context, builder s
 }
 
 func (m *defaultModbusSlaveConfigModel) FindAll(ctx context.Context, builder squirrel.SelectBuilder, orderBy ...string) ([]*ModbusSlaveConfig, error) {
-
-	builder = builder.Columns(modbusSlaveConfigRows)
-
+	builder = builder.Columns(m.rows)
 	if len(orderBy) == 0 {
 		builder = builder.OrderBy("id DESC")
 	} else {
 		builder = builder.OrderBy(orderBy...)
 	}
-
 	query, values, err := builder.Where("del_state = ?", 0).ToSql()
 	if err != nil {
 		return nil, err
 	}
-
 	var resp []*ModbusSlaveConfig
 
 	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
@@ -268,25 +341,20 @@ func (m *defaultModbusSlaveConfigModel) FindAll(ctx context.Context, builder squ
 }
 
 func (m *defaultModbusSlaveConfigModel) FindPageListByPage(ctx context.Context, builder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*ModbusSlaveConfig, error) {
-
-	builder = builder.Columns(modbusSlaveConfigRows)
-
+	builder = builder.Columns(m.rows)
 	if len(orderBy) == 0 {
 		builder = builder.OrderBy("id DESC")
 	} else {
 		builder = builder.OrderBy(orderBy...)
 	}
-
 	if page < 1 {
 		page = 1
 	}
 	offset := (page - 1) * pageSize
-
 	query, values, err := builder.Where("del_state = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
-
 	var resp []*ModbusSlaveConfig
 
 	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
@@ -300,30 +368,24 @@ func (m *defaultModbusSlaveConfigModel) FindPageListByPage(ctx context.Context, 
 }
 
 func (m *defaultModbusSlaveConfigModel) FindPageListByPageWithTotal(ctx context.Context, builder squirrel.SelectBuilder, page, pageSize int64, orderBy ...string) ([]*ModbusSlaveConfig, int64, error) {
-
 	total, err := m.FindCount(ctx, builder, "id")
 	if err != nil {
 		return nil, 0, err
 	}
-
-	builder = builder.Columns(modbusSlaveConfigRows)
-
+	builder = builder.Columns(m.rows)
 	if len(orderBy) == 0 {
 		builder = builder.OrderBy("id DESC")
 	} else {
 		builder = builder.OrderBy(orderBy...)
 	}
-
 	if page < 1 {
 		page = 1
 	}
 	offset := (page - 1) * pageSize
-
 	query, values, err := builder.Where("del_state = ?", 0).Offset(uint64(offset)).Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, total, err
 	}
-
 	var resp []*ModbusSlaveConfig
 
 	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
@@ -337,18 +399,14 @@ func (m *defaultModbusSlaveConfigModel) FindPageListByPageWithTotal(ctx context.
 }
 
 func (m *defaultModbusSlaveConfigModel) FindPageListByIdDESC(ctx context.Context, builder squirrel.SelectBuilder, preMinId, pageSize int64) ([]*ModbusSlaveConfig, error) {
-
-	builder = builder.Columns(modbusSlaveConfigRows)
-
+	builder = builder.Columns(m.rows)
 	if preMinId > 0 {
-		builder = builder.Where(" id < ? ", preMinId)
+		builder = builder.Where("id < ?", preMinId)
 	}
-
 	query, values, err := builder.Where("del_state = ?", 0).OrderBy("id DESC").Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
-
 	var resp []*ModbusSlaveConfig
 
 	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
@@ -362,18 +420,14 @@ func (m *defaultModbusSlaveConfigModel) FindPageListByIdDESC(ctx context.Context
 }
 
 func (m *defaultModbusSlaveConfigModel) FindPageListByIdASC(ctx context.Context, builder squirrel.SelectBuilder, preMaxId, pageSize int64) ([]*ModbusSlaveConfig, error) {
-
-	builder = builder.Columns(modbusSlaveConfigRows)
-
+	builder = builder.Columns(m.rows)
 	if preMaxId > 0 {
-		builder = builder.Where(" id > ? ", preMaxId)
+		builder = builder.Where("id > ?", preMaxId)
 	}
-
 	query, values, err := builder.Where("del_state = ?", 0).OrderBy("id ASC").Limit(uint64(pageSize)).ToSql()
 	if err != nil {
 		return nil, err
 	}
-
 	var resp []*ModbusSlaveConfig
 
 	err = m.conn.QueryRowsCtx(ctx, &resp, query, values...)
@@ -406,11 +460,8 @@ func (m *defaultModbusSlaveConfigModel) SelectWithBuilder(ctx context.Context, b
 	if err != nil {
 		return nil, err
 	}
-
 	var resp []*ModbusSlaveConfig
-
 	err = m.conn.QueryRowsPartialCtx(ctx, &resp, query, args...)
-
 	switch err {
 	case nil:
 		return resp, nil
@@ -424,7 +475,6 @@ func (m *defaultModbusSlaveConfigModel) SelectOneWithBuilder(ctx context.Context
 	if err != nil {
 		return nil, err
 	}
-
 	var resp ModbusSlaveConfig
 	err = m.conn.QueryRowPartialCtx(ctx, &resp, query, args...)
 	switch err {
@@ -438,12 +488,30 @@ func (m *defaultModbusSlaveConfigModel) SelectOneWithBuilder(ctx context.Context
 }
 
 func (m *defaultModbusSlaveConfigModel) InsertWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.InsertBuilder) (sql.Result, error) {
-	query, args, err := builder.ToSql()
-	if err != nil {
-		return nil, err
+	if m.dbType == DatabaseTypePostgres {
+		builder = builder.Suffix("RETURNING id")
+		query, args, err := builder.ToSql()
+		if err != nil {
+			return nil, err
+		}
+		var id int64
+		var execErr error
+		if session != nil {
+			execErr = session.QueryRowCtx(ctx, &id, query, args...)
+		} else {
+			execErr = m.conn.QueryRowCtx(ctx, &id, query, args...)
+		}
+		if execErr != nil {
+			return nil, execErr
+		}
+		return &postgresResult{id: id}, nil
+	} else {
+		query, args, err := builder.ToSql()
+		if err != nil {
+			return nil, err
+		}
+		return m.ExecCtx(ctx, session, query, args...)
 	}
-
-	return m.ExecCtx(ctx, session, query, args...)
 }
 
 func (m *defaultModbusSlaveConfigModel) UpdateWithBuilder(ctx context.Context, session sqlx.Session, builder squirrel.UpdateBuilder) (sql.Result, error) {
@@ -451,7 +519,6 @@ func (m *defaultModbusSlaveConfigModel) UpdateWithBuilder(ctx context.Context, s
 	if err != nil {
 		return nil, err
 	}
-
 	return m.ExecCtx(ctx, session, query, args...)
 }
 
@@ -460,24 +527,39 @@ func (m *defaultModbusSlaveConfigModel) DeleteWithBuilder(ctx context.Context, s
 	if err != nil {
 		return nil, err
 	}
-
 	return m.ExecCtx(ctx, session, query, args...)
 }
 
 func (m *defaultModbusSlaveConfigModel) SelectBuilder() squirrel.SelectBuilder {
-	return squirrel.Select().From(m.table)
+	builder := squirrel.Select().From(m.table)
+	if m.dbType == DatabaseTypePostgres {
+		builder = builder.PlaceholderFormat(squirrel.Dollar)
+	}
+	return builder
 }
 
 func (m *defaultModbusSlaveConfigModel) UpdateBuilder() squirrel.UpdateBuilder {
-	return squirrel.Update(m.table)
+	builder := squirrel.Update(m.table)
+	if m.dbType == DatabaseTypePostgres {
+		builder = builder.PlaceholderFormat(squirrel.Dollar)
+	}
+	return builder
 }
 
 func (m *defaultModbusSlaveConfigModel) DeleteBuilder() squirrel.DeleteBuilder {
-	return squirrel.Delete(m.table)
+	builder := squirrel.Delete(m.table)
+	if m.dbType == DatabaseTypePostgres {
+		builder = builder.PlaceholderFormat(squirrel.Dollar)
+	}
+	return builder
 }
 
 func (m *defaultModbusSlaveConfigModel) InsertBuilder() squirrel.InsertBuilder {
-	return squirrel.Insert(m.table)
+	builder := squirrel.Insert(m.table)
+	if m.dbType == DatabaseTypePostgres {
+		builder = builder.PlaceholderFormat(squirrel.Dollar)
+	}
+	return builder
 }
 
 func (m *defaultModbusSlaveConfigModel) tableName() string {
