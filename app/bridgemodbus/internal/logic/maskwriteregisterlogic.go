@@ -48,6 +48,14 @@ func (l *MaskWriteRegisterLogic) MaskWriteRegister(in *bridgemodbus.MaskWriteReg
 	mbCli := mdCliPool.Get()
 	defer mdCliPool.Put(mbCli)
 
+	// 检查值是否超过 16 位寄存器的最大值
+	if in.AndMask > 65535 {
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "AND 掩码超过 16 位寄存器的最大值 (65535)")
+	}
+	if in.OrMask > 65535 {
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "OR 掩码超过 16 位寄存器的最大值 (65535)")
+	}
+
 	results, err := mbCli.MaskWriteRegister(l.ctx, uint16(in.Address), uint16(in.AndMask), uint16(in.OrMask))
 	if err != nil {
 		return nil, err

@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"zero-service/common/bytex"
 	"zero-service/common/modbusx"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
@@ -51,8 +52,18 @@ func (l *WriteMultipleRegistersLogic) WriteMultipleRegisters(in *bridgemodbus.Wr
 	mbCli := mdCliPool.Get()
 	defer mdCliPool.Put(mbCli)
 
-	binaryValues := tool.Uint32SliceToBinaryValues(in.Values)
-	l.Infof("写多个保持寄存器: 0x%X, hex=%v, uint=%v, int=%v, binary=%v", binaryValues.Bytes, binaryValues.Hex, binaryValues.Uint, binaryValues.Int, binaryValues.Binary)
+	for i, v := range in.Values {
+		if v > 65535 {
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "第 %d 个值超过 16 位寄存器的最大值 (65535)", i+1)
+		}
+	}
+
+	uint16Values := make([]uint16, len(in.Values))
+	for i, v := range in.Values {
+		uint16Values[i] = uint16(v)
+	}
+	binaryValues := bytex.Uint16SliceToBinaryValues(uint16Values)
+	l.Infof("写多个保持寄存器: 0x%X, hex=%v, uint16=%v, int16=%v, binary=%v", binaryValues.Bytes, binaryValues.Hex, binaryValues.Uint16, binaryValues.Int16, binaryValues.Binary)
 	results, err := mbCli.WriteMultipleRegisters(l.ctx, uint16(in.Address), uint16(in.Quantity), binaryValues.Bytes)
 	if err != nil {
 		return nil, err

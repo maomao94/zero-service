@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"zero-service/common/bytex"
 	"zero-service/common/modbusx"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
@@ -61,11 +62,11 @@ func (l *ReadHoldingRegistersLogic) ReadHoldingRegisters(in *bridgemodbus.ReadHo
 	//	val := uint16(hi)<<8 | uint16(lo)                         // 拼成 16 位寄存器值
 	//	hexValues = append(hexValues, fmt.Sprintf("0x%04X", val)) // 转 16 进制字符串
 	//}
-	bv := tool.BytesToBinaryValues(results)
+	bv := bytex.BytesToBinaryValues(results)
 	return &bridgemodbus.ReadHoldingRegistersRes{
 		Results:      results,
-		UintValues:   bv.Uint,
-		IntValues:    bv.Int,
+		UintValues:   bytex.Uint16SliceToUint32Slice(bv.Uint16),
+		IntValues:    bytex.Int16SliceToInt32Slice(bv.Int16),
 		HexValues:    bv.Hex,
 		BinaryValues: bv.Binary,
 	}, nil

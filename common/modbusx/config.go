@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"zero-service/common/bytex"
 	"zero-service/common/tool"
 
 	"github.com/duke-git/lancet/v2/cryptor"
@@ -248,14 +249,9 @@ func (l *ModbusLogger) Printf(format string, v ...any) {
 	}
 }
 
+// BytesToBools 将字节数组按位解析成布尔值切片
 func BytesToBools(data []byte, quantity int) []bool {
-	bools := make([]bool, quantity)
-	for i := 0; i < quantity; i++ {
-		byteIndex := i / 8
-		bitIndex := i % 8
-		bools[i] = (data[byteIndex] & (1 << bitIndex)) != 0
-	}
-	return bools
+	return bytex.BytesToBools(data, quantity)
 }
 
 // PoolManager 连接池管理器：管理多个 Modbus 连接池（按 modbusCode 区分）
