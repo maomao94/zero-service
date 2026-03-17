@@ -237,7 +237,7 @@ message ReadHoldingRegistersRes {
 message WriteSingleRegisterReq {
   string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
   uint32 address = 2;   // 寄存器地址
-  uint32 value = 3;     // 写入的 16-bit 值
+  uint32 value = 3;     // 写入的值,每个寄存器2字节
 }
 message WriteSingleRegisterRes {
   bytes results = 1;    // 回显写入后的寄存器值
