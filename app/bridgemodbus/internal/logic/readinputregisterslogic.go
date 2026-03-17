@@ -81,9 +81,10 @@ func (l *ReadInputRegistersLogic) ReadInputRegisters(in *bridgemodbus.ReadInputR
 	//}
 	bv := tool.BytesToBinaryValues(results)
 	return &bridgemodbus.ReadInputRegistersRes{
-		Results:    results,
-		UintValues: bv.Uint,
-		IntValues:  bv.Int,
-		HexValues:  bv.Hex,
+		Results:      results,
+		UintValues:   bv.Uint,
+		IntValues:    bv.Int,
+		HexValues:    bv.Hex,
+		BinaryValues: bv.Binary,
 	}, nil
 }

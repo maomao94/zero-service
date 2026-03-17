@@ -56,9 +56,10 @@ func (l *ReadWriteMultipleRegistersLogic) ReadWriteMultipleRegisters(in *bridgem
 	}
 	binaryValues = tool.BytesToBinaryValues(results)
 	return &bridgemodbus.ReadWriteMultipleRegistersRes{
-		Results:    results,
-		UintValues: binaryValues.Uint,
-		IntValues:  binaryValues.Int,
-		HexValues:  binaryValues.Hex,
+		Results:      results,
+		UintValues:   binaryValues.Uint,
+		IntValues:    binaryValues.Int,
+		HexValues:    binaryValues.Hex,
+		BinaryValues: binaryValues.Binary,
 	}, nil
 }

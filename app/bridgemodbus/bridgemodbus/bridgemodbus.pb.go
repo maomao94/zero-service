@@ -1200,6 +1200,7 @@ type ReadInputRegistersRes struct {
 	UintValues    []uint32               `protobuf:"varint,2,rep,packed,name=uintValues,proto3" json:"uintValues,omitempty"` // 无符号整数，用于业务计算
 	IntValues     []int32                `protobuf:"varint,3,rep,packed,name=intValues,proto3" json:"intValues,omitempty"`   // 有符号整数，用于解释负数
 	HexValues     []string               `protobuf:"bytes,4,rep,name=hexValues,proto3" json:"hexValues,omitempty"`           // 十六进制字符串表示, 例如 "0xFF01"
+	BinaryValues  []string               `protobuf:"bytes,5,rep,name=binaryValues,proto3" json:"binaryValues,omitempty"`     // 二进制字符串表示, 例如 "0b1010101011111111"
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1258,6 +1259,13 @@ func (x *ReadInputRegistersRes) GetIntValues() []int32 {
 func (x *ReadInputRegistersRes) GetHexValues() []string {
 	if x != nil {
 		return x.HexValues
+	}
+	return nil
+}
+
+func (x *ReadInputRegistersRes) GetBinaryValues() []string {
+	if x != nil {
+		return x.BinaryValues
 	}
 	return nil
 }
@@ -1328,6 +1336,7 @@ type ReadHoldingRegistersRes struct {
 	UintValues    []uint32               `protobuf:"varint,2,rep,packed,name=uintValues,proto3" json:"uintValues,omitempty"` // 无符号整数，用于业务计算
 	IntValues     []int32                `protobuf:"varint,3,rep,packed,name=intValues,proto3" json:"intValues,omitempty"`   // 有符号整数，用于解释负数
 	HexValues     []string               `protobuf:"bytes,4,rep,name=hexValues,proto3" json:"hexValues,omitempty"`           // 十六进制字符串表示, 例如 "0xFF01"
+	BinaryValues  []string               `protobuf:"bytes,5,rep,name=binaryValues,proto3" json:"binaryValues,omitempty"`     // 二进制字符串表示, 例如 "0b1010101011111111"
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1386,6 +1395,13 @@ func (x *ReadHoldingRegistersRes) GetIntValues() []int32 {
 func (x *ReadHoldingRegistersRes) GetHexValues() []string {
 	if x != nil {
 		return x.HexValues
+	}
+	return nil
+}
+
+func (x *ReadHoldingRegistersRes) GetBinaryValues() []string {
+	if x != nil {
+		return x.BinaryValues
 	}
 	return nil
 }
@@ -1696,6 +1712,7 @@ type ReadWriteMultipleRegistersRes struct {
 	UintValues    []uint32               `protobuf:"varint,2,rep,packed,name=uintValues,proto3" json:"uintValues,omitempty"` // 无符号整数，用于业务计算
 	IntValues     []int32                `protobuf:"varint,3,rep,packed,name=intValues,proto3" json:"intValues,omitempty"`   // 有符号整数，用于解释负数
 	HexValues     []string               `protobuf:"bytes,4,rep,name=hexValues,proto3" json:"hexValues,omitempty"`           // 十六进制字符串表示, 例如 "0xFF01"
+	BinaryValues  []string               `protobuf:"bytes,5,rep,name=binaryValues,proto3" json:"binaryValues,omitempty"`     // 二进制字符串表示, 例如 "0b1010101011111111"
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1754,6 +1771,13 @@ func (x *ReadWriteMultipleRegistersRes) GetIntValues() []int32 {
 func (x *ReadWriteMultipleRegistersRes) GetHexValues() []string {
 	if x != nil {
 		return x.HexValues
+	}
+	return nil
+}
+
+func (x *ReadWriteMultipleRegistersRes) GetBinaryValues() []string {
+	if x != nil {
+		return x.BinaryValues
 	}
 	return nil
 }
@@ -2308,27 +2332,29 @@ const file_bridgemodbus_proto_rawDesc = "" +
 	"modbusCode\x18\x01 \x01(\tR\n" +
 	"modbusCode\x12\x18\n" +
 	"\aaddress\x18\x02 \x01(\rR\aaddress\x12\x1a\n" +
-	"\bquantity\x18\x03 \x01(\rR\bquantity\"\x8d\x01\n" +
+	"\bquantity\x18\x03 \x01(\rR\bquantity\"\xb1\x01\n" +
 	"\x15ReadInputRegistersRes\x12\x18\n" +
 	"\aresults\x18\x01 \x01(\fR\aresults\x12\x1e\n" +
 	"\n" +
 	"uintValues\x18\x02 \x03(\rR\n" +
 	"uintValues\x12\x1c\n" +
 	"\tintValues\x18\x03 \x03(\x05R\tintValues\x12\x1c\n" +
-	"\thexValues\x18\x04 \x03(\tR\thexValues\"o\n" +
+	"\thexValues\x18\x04 \x03(\tR\thexValues\x12\"\n" +
+	"\fbinaryValues\x18\x05 \x03(\tR\fbinaryValues\"o\n" +
 	"\x17ReadHoldingRegistersReq\x12\x1e\n" +
 	"\n" +
 	"modbusCode\x18\x01 \x01(\tR\n" +
 	"modbusCode\x12\x18\n" +
 	"\aaddress\x18\x02 \x01(\rR\aaddress\x12\x1a\n" +
-	"\bquantity\x18\x03 \x01(\rR\bquantity\"\x8f\x01\n" +
+	"\bquantity\x18\x03 \x01(\rR\bquantity\"\xb3\x01\n" +
 	"\x17ReadHoldingRegistersRes\x12\x18\n" +
 	"\aresults\x18\x01 \x01(\fR\aresults\x12\x1e\n" +
 	"\n" +
 	"uintValues\x18\x02 \x03(\rR\n" +
 	"uintValues\x12\x1c\n" +
 	"\tintValues\x18\x03 \x03(\x05R\tintValues\x12\x1c\n" +
-	"\thexValues\x18\x04 \x03(\tR\thexValues\"h\n" +
+	"\thexValues\x18\x04 \x03(\tR\thexValues\x12\"\n" +
+	"\fbinaryValues\x18\x05 \x03(\tR\fbinaryValues\"h\n" +
 	"\x16WriteSingleRegisterReq\x12\x1e\n" +
 	"\n" +
 	"modbusCode\x18\x01 \x01(\tR\n" +
@@ -2354,14 +2380,15 @@ const file_bridgemodbus_proto_rawDesc = "" +
 	"\freadQuantity\x18\x03 \x01(\rR\freadQuantity\x12\"\n" +
 	"\fwriteAddress\x18\x04 \x01(\rR\fwriteAddress\x12$\n" +
 	"\rwriteQuantity\x18\x05 \x01(\rR\rwriteQuantity\x12\x16\n" +
-	"\x06values\x18\x06 \x03(\rR\x06values\"\x95\x01\n" +
+	"\x06values\x18\x06 \x03(\rR\x06values\"\xb9\x01\n" +
 	"\x1dReadWriteMultipleRegistersRes\x12\x18\n" +
 	"\aresults\x18\x01 \x01(\fR\aresults\x12\x1e\n" +
 	"\n" +
 	"uintValues\x18\x02 \x03(\rR\n" +
 	"uintValues\x12\x1c\n" +
 	"\tintValues\x18\x03 \x03(\x05R\tintValues\x12\x1c\n" +
-	"\thexValues\x18\x04 \x03(\tR\thexValues\"\x82\x01\n" +
+	"\thexValues\x18\x04 \x03(\tR\thexValues\x12\"\n" +
+	"\fbinaryValues\x18\x05 \x03(\tR\fbinaryValues\"\x82\x01\n" +
 	"\x14MaskWriteRegisterReq\x12\x1e\n" +
 	"\n" +
 	"modbusCode\x18\x01 \x01(\tR\n" +

@@ -63,9 +63,10 @@ func (l *ReadHoldingRegistersLogic) ReadHoldingRegisters(in *bridgemodbus.ReadHo
 	//}
 	bv := tool.BytesToBinaryValues(results)
 	return &bridgemodbus.ReadHoldingRegistersRes{
-		Results:    results,
-		UintValues: bv.Uint,
-		IntValues:  bv.Int,
-		HexValues:  bv.Hex,
+		Results:      results,
+		UintValues:   bv.Uint,
+		IntValues:    bv.Int,
+		HexValues:    bv.Hex,
+		BinaryValues: bv.Binary,
 	}, nil
 }
