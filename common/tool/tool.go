@@ -2,6 +2,7 @@ package tool
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -298,38 +299,54 @@ func CalculateOffset(page, pageSize int64) uint {
 }
 
 type BinaryValues struct {
-	Hex  []string // 十六进制表示
-	Uint []uint32 // 无符号整数表示
-	Int  []int32  // 有符号整数表示
+	Hex    []string // 十六进制表示
+	Uint   []uint32 // 无符号整数表示
+	Int    []int32  // 有符号整数表示
+	Bytes  []byte   // 字节数组表示
+	Binary []string // 二进制表示
 }
 
 // BytesToBinaryValues 将字节数组每两个字节解析成整数（BigEndian）
 func BytesToBinaryValues(data []byte) *BinaryValues {
-	n := len(data) / 2
+	n := (len(data) + 1) / 2
 	hexVals := make([]string, n)
 	uintVals := make([]uint32, n)
 	intVals := make([]int32, n)
+	binaryVals := make([]string, n)
 
 	for i := 0; i < n; i++ {
-		val := uint16(data[2*i])<<8 | uint16(data[2*i+1])
+		var val uint16
+		if 2*i+1 < len(data) {
+			val = uint16(data[2*i])<<8 | uint16(data[2*i+1])
+		} else {
+			val = uint16(data[2*i]) << 8
+		}
 		hexVals[i] = fmt.Sprintf("0x%04X", val)
 		uintVals[i] = uint32(val)
 		intVals[i] = int32(int16(val))
+		binaryVals[i] = fmt.Sprintf("%016b", val)
 	}
 
 	return &BinaryValues{
-		Hex:  hexVals,
-		Uint: uintVals,
-		Int:  intVals,
+		Hex:    hexVals,
+		Uint:   uintVals,
+		Int:    intVals,
+		Bytes:  data,
+		Binary: binaryVals,
 	}
 }
 
 // BytesToUint16Slice 将字节数组每两个字节解析成 uint16 切片
 func BytesToUint16Slice(data []byte) []uint16 {
-	n := len(data) / 2
+	n := (len(data) + 1) / 2
 	result := make([]uint16, 0, n)
-	for i := 0; i+1 < len(data); i += 2 {
-		val := uint16(data[i])<<8 | uint16(data[i+1])
+	for i := 0; i < n; i++ {
+		var val uint16
+		if 2*i+1 < len(data) {
+			val = uint16(data[2*i])<<8 | uint16(data[2*i+1])
+		} else {
+			val = uint16(data[2*i]) << 8
+		}
 		result = append(result, val)
 	}
 	return result
@@ -375,4 +392,53 @@ func BoolsToBytes(bools []bool) []byte {
 		}
 	}
 	return data
+}
+
+// Uint32ToBinaryValues 将单个 uint32 值转换为多种表示形式
+func Uint32ToBinaryValues(value uint32) *BinaryValues {
+	hexVals := []string{fmt.Sprintf("0x%04X", value)}
+	uintVals := []uint32{value}
+	intVals := []int32{int32(value)}
+	binaryVals := []string{fmt.Sprintf("%016b", value)}
+
+	// 计算字节数组表示，只使用低 16 位
+	bytes := make([]byte, 2)
+	binary.BigEndian.PutUint16(bytes, uint16(value))
+
+	return &BinaryValues{
+		Hex:    hexVals,
+		Uint:   uintVals,
+		Int:    intVals,
+		Bytes:  bytes,
+		Binary: binaryVals,
+	}
+}
+
+// Uint32SliceToBinaryValues 将 uint32 切片转换为多种表示形式
+func Uint32SliceToBinaryValues(values []uint32) *BinaryValues {
+	hexVals := make([]string, len(values))
+	uintVals := make([]uint32, len(values))
+	intVals := make([]int32, len(values))
+	binaryVals := make([]string, len(values))
+
+	// 计算字节数组表示，每个 uint32 值只使用低 16 位
+	bytes := make([]byte, len(values)*2)
+
+	for i, v := range values {
+		hexVals[i] = fmt.Sprintf("0x%04X", v)
+		uintVals[i] = v
+		intVals[i] = int32(v)
+		binaryVals[i] = fmt.Sprintf("%016b", v)
+
+		// 使用标准库的 BigEndian 方法转换为字节数组
+		binary.BigEndian.PutUint16(bytes[2*i:], uint16(v))
+	}
+
+	return &BinaryValues{
+		Hex:    hexVals,
+		Uint:   uintVals,
+		Int:    intVals,
+		Bytes:  bytes,
+		Binary: binaryVals,
+	}
 }

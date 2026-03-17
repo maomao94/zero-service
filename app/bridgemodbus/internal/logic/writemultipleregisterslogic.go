@@ -30,6 +30,9 @@ func NewWriteMultipleRegistersLogic(ctx context.Context, svcCtx *svc.ServiceCont
 func (l *WriteMultipleRegistersLogic) WriteMultipleRegisters(in *bridgemodbus.WriteMultipleRegistersReq) (*bridgemodbus.WriteMultipleRegistersRes, error) {
 	var mdCliPool *modbusx.ModbusClientPool
 	var err error
+	if int(in.Quantity) != len(in.Values) {
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "数量与值数量不一致")
+	}
 	if len(in.ModbusCode) == 0 {
 		mdCliPool = l.svcCtx.ModbusClientPool
 	} else {
@@ -48,8 +51,9 @@ func (l *WriteMultipleRegistersLogic) WriteMultipleRegisters(in *bridgemodbus.Wr
 	mbCli := mdCliPool.Get()
 	defer mdCliPool.Put(mbCli)
 
-	l.Infof("写多个保持寄存器: 0x%X", in.Values)
-	results, err := mbCli.WriteMultipleRegisters(l.ctx, uint16(in.Address), uint16(in.Quantity), in.Values)
+	binaryValues := tool.Uint32SliceToBinaryValues(in.Values)
+	l.Infof("写多个保持寄存器: 0x%X, hex=%v, uint=%v, int=%v, binary=%v", binaryValues.Bytes, binaryValues.Hex, binaryValues.Uint, binaryValues.Int, binaryValues.Binary)
+	results, err := mbCli.WriteMultipleRegisters(l.ctx, uint16(in.Address), uint16(in.Quantity), binaryValues.Bytes)
 	if err != nil {
 		return nil, err
 	}

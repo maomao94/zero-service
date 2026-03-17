@@ -186,7 +186,7 @@ message ReadDiscreteInputsRes {
 message WriteSingleCoilReq {
   string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
   uint32 address = 2;   // 线圈地址
-  uint32 value = 3;     // 写入值：0x0000=OFF, 0xFF00=ON
+  bool value = 3;     // 写入值：false=OFF, true=ON
 }
 
 message WriteSingleCoilRes {
@@ -197,7 +197,7 @@ message WriteMultipleCoilsReq {
   string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
   uint32 address = 2;   // 起始线圈地址
   uint32 quantity = 3;  // 写入数量
-  bytes values = 4;     // 每 bit 对应一个线圈状态，0=OFF，1=ON
+  repeated bool values = 4;     // 每个元素对应一个线圈状态，false=OFF，true=ON
 }
 
 message WriteMultipleCoilsRes {
@@ -245,7 +245,7 @@ message WriteMultipleRegistersReq {
   string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
   uint32 address = 2;   // 起始寄存器地址
   uint32 quantity = 3;  // 写入数量
-  bytes values = 4;     // 按寄存器顺序的字节数组，每寄存器 2 字节
+  repeated uint32 values = 4;     // 按寄存器顺序的 uint32 值，每个值对应一个寄存器,每个寄存器2字节
 }
 
 message WriteMultipleRegistersRes {
@@ -258,11 +258,14 @@ message ReadWriteMultipleRegistersReq {
   uint32 readQuantity = 3;    // 读取数量
   uint32 writeAddress = 4;    // 写入起始寄存器地址
   uint32 writeQuantity = 5;   // 写入数量
-  bytes values = 6;            // 写入数据，每寄存器 2 字节
+  repeated uint32 values = 6;            // 写入数据，每个值对应一个寄存器,每个寄存器2字节
 }
 
 message ReadWriteMultipleRegistersRes {
   bytes results = 1;           // 读取到的寄存器数据
+  repeated uint32 uintValues = 2;   // 无符号整数，用于业务计算
+  repeated int32 intValues = 3;  // 有符号整数，用于解释负数
+  repeated string hexValues = 4;    // 十六进制字符串表示, 例如 "0xFF01"
 }
 
 message MaskWriteRegisterReq {

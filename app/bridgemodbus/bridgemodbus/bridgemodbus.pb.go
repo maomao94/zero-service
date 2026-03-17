@@ -922,7 +922,7 @@ type WriteSingleCoilReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ModbusCode    string                 `protobuf:"bytes,1,opt,name=modbusCode,proto3" json:"modbusCode,omitempty"` // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
 	Address       uint32                 `protobuf:"varint,2,opt,name=address,proto3" json:"address,omitempty"`      // 线圈地址
-	Value         uint32                 `protobuf:"varint,3,opt,name=value,proto3" json:"value,omitempty"`          // 写入值：0x0000=OFF, 0xFF00=ON
+	Value         bool                   `protobuf:"varint,3,opt,name=value,proto3" json:"value,omitempty"`          // 写入值：false=OFF, true=ON
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -971,11 +971,11 @@ func (x *WriteSingleCoilReq) GetAddress() uint32 {
 	return 0
 }
 
-func (x *WriteSingleCoilReq) GetValue() uint32 {
+func (x *WriteSingleCoilReq) GetValue() bool {
 	if x != nil {
 		return x.Value
 	}
-	return 0
+	return false
 }
 
 type WriteSingleCoilRes struct {
@@ -1027,7 +1027,7 @@ type WriteMultipleCoilsReq struct {
 	ModbusCode    string                 `protobuf:"bytes,1,opt,name=modbusCode,proto3" json:"modbusCode,omitempty"` // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
 	Address       uint32                 `protobuf:"varint,2,opt,name=address,proto3" json:"address,omitempty"`      // 起始线圈地址
 	Quantity      uint32                 `protobuf:"varint,3,opt,name=quantity,proto3" json:"quantity,omitempty"`    // 写入数量
-	Values        []byte                 `protobuf:"bytes,4,opt,name=values,proto3" json:"values,omitempty"`         // 每 bit 对应一个线圈状态，0=OFF，1=ON
+	Values        []bool                 `protobuf:"varint,4,rep,packed,name=values,proto3" json:"values,omitempty"` // 每个元素对应一个线圈状态，false=OFF，true=ON
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1083,7 +1083,7 @@ func (x *WriteMultipleCoilsReq) GetQuantity() uint32 {
 	return 0
 }
 
-func (x *WriteMultipleCoilsReq) GetValues() []byte {
+func (x *WriteMultipleCoilsReq) GetValues() []bool {
 	if x != nil {
 		return x.Values
 	}
@@ -1499,7 +1499,7 @@ type WriteMultipleRegistersReq struct {
 	ModbusCode    string                 `protobuf:"bytes,1,opt,name=modbusCode,proto3" json:"modbusCode,omitempty"` // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
 	Address       uint32                 `protobuf:"varint,2,opt,name=address,proto3" json:"address,omitempty"`      // 起始寄存器地址
 	Quantity      uint32                 `protobuf:"varint,3,opt,name=quantity,proto3" json:"quantity,omitempty"`    // 写入数量
-	Values        []byte                 `protobuf:"bytes,4,opt,name=values,proto3" json:"values,omitempty"`         // 按寄存器顺序的字节数组，每寄存器 2 字节
+	Values        []uint32               `protobuf:"varint,4,rep,packed,name=values,proto3" json:"values,omitempty"` // 按寄存器顺序的 uint32 值，每个值对应一个寄存器,每个寄存器2字节
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1555,7 +1555,7 @@ func (x *WriteMultipleRegistersReq) GetQuantity() uint32 {
 	return 0
 }
 
-func (x *WriteMultipleRegistersReq) GetValues() []byte {
+func (x *WriteMultipleRegistersReq) GetValues() []uint32 {
 	if x != nil {
 		return x.Values
 	}
@@ -1613,7 +1613,7 @@ type ReadWriteMultipleRegistersReq struct {
 	ReadQuantity  uint32                 `protobuf:"varint,3,opt,name=readQuantity,proto3" json:"readQuantity,omitempty"`   // 读取数量
 	WriteAddress  uint32                 `protobuf:"varint,4,opt,name=writeAddress,proto3" json:"writeAddress,omitempty"`   // 写入起始寄存器地址
 	WriteQuantity uint32                 `protobuf:"varint,5,opt,name=writeQuantity,proto3" json:"writeQuantity,omitempty"` // 写入数量
-	Values        []byte                 `protobuf:"bytes,6,opt,name=values,proto3" json:"values,omitempty"`                // 写入数据，每寄存器 2 字节
+	Values        []uint32               `protobuf:"varint,6,rep,packed,name=values,proto3" json:"values,omitempty"`        // 写入数据，每个值对应一个寄存器,每个寄存器2字节
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1683,7 +1683,7 @@ func (x *ReadWriteMultipleRegistersReq) GetWriteQuantity() uint32 {
 	return 0
 }
 
-func (x *ReadWriteMultipleRegistersReq) GetValues() []byte {
+func (x *ReadWriteMultipleRegistersReq) GetValues() []uint32 {
 	if x != nil {
 		return x.Values
 	}
@@ -1692,7 +1692,10 @@ func (x *ReadWriteMultipleRegistersReq) GetValues() []byte {
 
 type ReadWriteMultipleRegistersRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Results       []byte                 `protobuf:"bytes,1,opt,name=results,proto3" json:"results,omitempty"` // 读取到的寄存器数据
+	Results       []byte                 `protobuf:"bytes,1,opt,name=results,proto3" json:"results,omitempty"`               // 读取到的寄存器数据
+	UintValues    []uint32               `protobuf:"varint,2,rep,packed,name=uintValues,proto3" json:"uintValues,omitempty"` // 无符号整数，用于业务计算
+	IntValues     []int32                `protobuf:"varint,3,rep,packed,name=intValues,proto3" json:"intValues,omitempty"`   // 有符号整数，用于解释负数
+	HexValues     []string               `protobuf:"bytes,4,rep,name=hexValues,proto3" json:"hexValues,omitempty"`           // 十六进制字符串表示, 例如 "0xFF01"
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1730,6 +1733,27 @@ func (*ReadWriteMultipleRegistersRes) Descriptor() ([]byte, []int) {
 func (x *ReadWriteMultipleRegistersRes) GetResults() []byte {
 	if x != nil {
 		return x.Results
+	}
+	return nil
+}
+
+func (x *ReadWriteMultipleRegistersRes) GetUintValues() []uint32 {
+	if x != nil {
+		return x.UintValues
+	}
+	return nil
+}
+
+func (x *ReadWriteMultipleRegistersRes) GetIntValues() []int32 {
+	if x != nil {
+		return x.IntValues
+	}
+	return nil
+}
+
+func (x *ReadWriteMultipleRegistersRes) GetHexValues() []string {
+	if x != nil {
+		return x.HexValues
 	}
 	return nil
 }
@@ -2267,7 +2291,7 @@ const file_bridgemodbus_proto_rawDesc = "" +
 	"modbusCode\x18\x01 \x01(\tR\n" +
 	"modbusCode\x12\x18\n" +
 	"\aaddress\x18\x02 \x01(\rR\aaddress\x12\x14\n" +
-	"\x05value\x18\x03 \x01(\rR\x05value\".\n" +
+	"\x05value\x18\x03 \x01(\bR\x05value\".\n" +
 	"\x12WriteSingleCoilRes\x12\x18\n" +
 	"\aresults\x18\x01 \x01(\fR\aresults\"\x85\x01\n" +
 	"\x15WriteMultipleCoilsReq\x12\x1e\n" +
@@ -2276,7 +2300,7 @@ const file_bridgemodbus_proto_rawDesc = "" +
 	"modbusCode\x12\x18\n" +
 	"\aaddress\x18\x02 \x01(\rR\aaddress\x12\x1a\n" +
 	"\bquantity\x18\x03 \x01(\rR\bquantity\x12\x16\n" +
-	"\x06values\x18\x04 \x01(\fR\x06values\"1\n" +
+	"\x06values\x18\x04 \x03(\bR\x06values\"1\n" +
 	"\x15WriteMultipleCoilsRes\x12\x18\n" +
 	"\aresults\x18\x01 \x01(\fR\aresults\"m\n" +
 	"\x15ReadInputRegistersReq\x12\x1e\n" +
@@ -2319,7 +2343,7 @@ const file_bridgemodbus_proto_rawDesc = "" +
 	"modbusCode\x12\x18\n" +
 	"\aaddress\x18\x02 \x01(\rR\aaddress\x12\x1a\n" +
 	"\bquantity\x18\x03 \x01(\rR\bquantity\x12\x16\n" +
-	"\x06values\x18\x04 \x01(\fR\x06values\"5\n" +
+	"\x06values\x18\x04 \x03(\rR\x06values\"5\n" +
 	"\x19WriteMultipleRegistersRes\x12\x18\n" +
 	"\aresults\x18\x01 \x01(\fR\aresults\"\xe7\x01\n" +
 	"\x1dReadWriteMultipleRegistersReq\x12\x1e\n" +
@@ -2330,9 +2354,14 @@ const file_bridgemodbus_proto_rawDesc = "" +
 	"\freadQuantity\x18\x03 \x01(\rR\freadQuantity\x12\"\n" +
 	"\fwriteAddress\x18\x04 \x01(\rR\fwriteAddress\x12$\n" +
 	"\rwriteQuantity\x18\x05 \x01(\rR\rwriteQuantity\x12\x16\n" +
-	"\x06values\x18\x06 \x01(\fR\x06values\"9\n" +
+	"\x06values\x18\x06 \x03(\rR\x06values\"\x95\x01\n" +
 	"\x1dReadWriteMultipleRegistersRes\x12\x18\n" +
-	"\aresults\x18\x01 \x01(\fR\aresults\"\x82\x01\n" +
+	"\aresults\x18\x01 \x01(\fR\aresults\x12\x1e\n" +
+	"\n" +
+	"uintValues\x18\x02 \x03(\rR\n" +
+	"uintValues\x12\x1c\n" +
+	"\tintValues\x18\x03 \x03(\x05R\tintValues\x12\x1c\n" +
+	"\thexValues\x18\x04 \x03(\tR\thexValues\"\x82\x01\n" +
 	"\x14MaskWriteRegisterReq\x12\x1e\n" +
 	"\n" +
 	"modbusCode\x18\x01 \x01(\tR\n" +

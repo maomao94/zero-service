@@ -48,11 +48,17 @@ func (l *ReadWriteMultipleRegistersLogic) ReadWriteMultipleRegisters(in *bridgem
 	mbCli := mdCliPool.Get()
 	defer mdCliPool.Put(mbCli)
 
-	results, err := mbCli.ReadWriteMultipleRegisters(l.ctx, uint16(in.ReadAddress), uint16(in.ReadQuantity), uint16(in.WriteAddress), uint16(in.WriteQuantity), in.Values)
+	binaryValues := tool.Uint32SliceToBinaryValues(in.Values)
+	l.Infof("读写多个保持寄存器: 写值=0x%X, hex=%v, uint=%v, int=%v, binary=%v", binaryValues.Bytes, binaryValues.Hex, binaryValues.Uint, binaryValues.Int, binaryValues.Binary)
+	results, err := mbCli.ReadWriteMultipleRegisters(l.ctx, uint16(in.ReadAddress), uint16(in.ReadQuantity), uint16(in.WriteAddress), uint16(in.WriteQuantity), binaryValues.Bytes)
 	if err != nil {
 		return nil, err
 	}
+	binaryValues = tool.BytesToBinaryValues(results)
 	return &bridgemodbus.ReadWriteMultipleRegistersRes{
-		Results: results,
+		Results:    results,
+		UintValues: binaryValues.Uint,
+		IntValues:  binaryValues.Int,
+		HexValues:  binaryValues.Hex,
 	}, nil
 }

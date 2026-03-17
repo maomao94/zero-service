@@ -30,6 +30,9 @@ func NewWriteMultipleCoilsLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 func (l *WriteMultipleCoilsLogic) WriteMultipleCoils(in *bridgemodbus.WriteMultipleCoilsReq) (*bridgemodbus.WriteMultipleCoilsRes, error) {
 	var mdCliPool *modbusx.ModbusClientPool
 	var err error
+	if int(in.Quantity) != len(in.Values) {
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "数量与值数量不一致")
+	}
 	if len(in.ModbusCode) == 0 {
 		mdCliPool = l.svcCtx.ModbusClientPool
 	} else {
@@ -48,8 +51,19 @@ func (l *WriteMultipleCoilsLogic) WriteMultipleCoils(in *bridgemodbus.WriteMulti
 	mbCli := mdCliPool.Get()
 	defer mdCliPool.Put(mbCli)
 
-	l.Infof("写多个线圈: 0x%X", in.Values)
-	results, err := mbCli.WriteMultipleCoils(l.ctx, uint16(in.Address), uint16(in.Quantity), in.Values)
+	// 将 repeated bool 转换为 bytes
+	// 每字节包含 8 个线圈的状态，按位存储
+	// (count + N - 1) / N
+	byteCount := (len(in.Values) + 7) / 8
+	valuesBytes := make([]byte, byteCount)
+	for i, b := range in.Values {
+		if b {
+			valuesBytes[i/8] |= 1 << (i % 8)
+		}
+	}
+	binaryValues := tool.BytesToBinaryValues(valuesBytes)
+	l.Infof("写多个线圈: 0x%X, hex=%v, uint=%v, int=%v, binary=%v", binaryValues.Bytes, binaryValues.Hex, binaryValues.Uint, binaryValues.Int, binaryValues.Binary)
+	results, err := mbCli.WriteMultipleCoils(l.ctx, uint16(in.Address), uint16(in.Quantity), binaryValues.Bytes)
 	if err != nil {
 		return nil, err
 	}
