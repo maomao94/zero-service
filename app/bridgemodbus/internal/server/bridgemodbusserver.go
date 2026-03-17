@@ -95,10 +95,22 @@ func (s *BridgeModbusServer) WriteSingleRegister(ctx context.Context, in *bridge
 	return l.WriteSingleRegister(in)
 }
 
+// 写单个保持寄存器（使用十进制数值）
+func (s *BridgeModbusServer) WriteSingleRegisterWithDecimal(ctx context.Context, in *bridgemodbus.WriteSingleRegisterWithDecimalReq) (*bridgemodbus.WriteSingleRegisterWithDecimalRes, error) {
+	l := logic.NewWriteSingleRegisterWithDecimalLogic(ctx, s.svcCtx)
+	return l.WriteSingleRegisterWithDecimal(in)
+}
+
 // 写多个保持寄存器 (Function Code 0x10)
 func (s *BridgeModbusServer) WriteMultipleRegisters(ctx context.Context, in *bridgemodbus.WriteMultipleRegistersReq) (*bridgemodbus.WriteMultipleRegistersRes, error) {
 	l := logic.NewWriteMultipleRegistersLogic(ctx, s.svcCtx)
 	return l.WriteMultipleRegisters(in)
+}
+
+// 写多个保持寄存器（使用十进制数值）
+func (s *BridgeModbusServer) WriteMultipleRegistersWithDecimal(ctx context.Context, in *bridgemodbus.WriteMultipleRegistersWithDecimalReq) (*bridgemodbus.WriteMultipleRegistersWithDecimalRes, error) {
+	l := logic.NewWriteMultipleRegistersWithDecimalLogic(ctx, s.svcCtx)
+	return l.WriteMultipleRegistersWithDecimal(in)
 }
 
 // 读写多个保持寄存器 (Function Code 0x17)
@@ -129,4 +141,10 @@ func (s *BridgeModbusServer) ReadDeviceIdentification(ctx context.Context, in *b
 func (s *BridgeModbusServer) ReadDeviceIdentificationSpecificObject(ctx context.Context, in *bridgemodbus.ReadDeviceIdentificationSpecificObjectReq) (*bridgemodbus.ReadDeviceIdentificationSpecificObjectRes, error) {
 	l := logic.NewReadDeviceIdentificationSpecificObjectLogic(ctx, s.svcCtx)
 	return l.ReadDeviceIdentificationSpecificObject(in)
+}
+
+// 批量转换十进制数值为Modbus寄存器格式
+func (s *BridgeModbusServer) BatchConvertDecimalToRegister(ctx context.Context, in *bridgemodbus.BatchConvertDecimalToRegisterReq) (*bridgemodbus.BatchConvertDecimalToRegisterRes, error) {
+	l := logic.NewBatchConvertDecimalToRegisterLogic(ctx, s.svcCtx)
+	return l.BatchConvertDecimalToRegister(in)
 }

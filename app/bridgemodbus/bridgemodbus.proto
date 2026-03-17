@@ -50,8 +50,14 @@ service BridgeModbus {
   // 写单个保持寄存器 (Function Code 0x06)
   rpc WriteSingleRegister(WriteSingleRegisterReq) returns (WriteSingleRegisterRes);
 
+  // 写单个保持寄存器（使用十进制数值）
+  rpc WriteSingleRegisterWithDecimal(WriteSingleRegisterWithDecimalReq) returns (WriteSingleRegisterWithDecimalRes);
+
   // 写多个保持寄存器 (Function Code 0x10)
   rpc WriteMultipleRegisters(WriteMultipleRegistersReq) returns (WriteMultipleRegistersRes);
+
+  // 写多个保持寄存器（使用十进制数值）
+  rpc WriteMultipleRegistersWithDecimal(WriteMultipleRegistersWithDecimalReq) returns (WriteMultipleRegistersWithDecimalRes);
 
   // 读写多个保持寄存器 (Function Code 0x17)
   rpc ReadWriteMultipleRegisters(ReadWriteMultipleRegistersReq) returns (ReadWriteMultipleRegistersRes);
@@ -69,55 +75,37 @@ service BridgeModbus {
 
   // 读取特定 Object ID 的设备标识 (Function Code 0x2B / 0x0E)
   rpc ReadDeviceIdentificationSpecificObject(ReadDeviceIdentificationSpecificObjectReq) returns (ReadDeviceIdentificationSpecificObjectRes);
+
+  // 批量转换十进制数值为Modbus寄存器格式
+  // 功能：将输入的十进制整数（支持正负）转换为Modbus寄存器使用的两字节格式
+  // 输出：提供无符号值、有符号值、十六进制、二进制和字节数组多种表示形式
+  rpc BatchConvertDecimalToRegister(BatchConvertDecimalToRegisterReq) returns (BatchConvertDecimalToRegisterRes);
 }
 
-// -------------------- 请求与响应定义 --------------------
-
-// Modbus 从站配置结构
 message PbModbusConfig {
-  // 主键ID
-  int64 id = 1;
-  // 创建时间
-  string createTime = 2;
-  // 更新时间
-  string updateTime = 3;
-  // Modbus链路编号
-  string modbusCode = 4;
-  // 从站通信地址（如TCP地址或串口）
-  string slaveAddress = 5;
-  // 从站地址（Slave ID）
-  uint32 slave = 6;
-  // 通信超时时间（毫秒）
-  uint32 timeout = 7;
-  // 空闲超时时间（毫秒）
-  uint32 idleTimeout = 8;
-  // 链路重连超时时间（毫秒）
-  uint32 linkRecoveryTimeout = 9;
-  // 协议恢复超时时间（毫秒）
-  uint32 protocolRecoveryTimeout = 10;
-  // 建链延迟时间（毫秒）
-  uint32 connectDelay = 11;
-  // 是否启用TLS加密
-  uint32 enableTls = 12;
-  // TLS证书文件路径
-  string tlsCertFile = 13;
-  // TLS私钥文件路径
-  string tlsKeyFile = 14;
-  // TLS CA证书文件路径
-  string tlsCaFile = 15;
-  // 当前状态（0=禁用，1=启用）
-  uint32 status = 16;
-  // 备注信息
-  string remark = 17;
+  int64 id = 1; // 主键ID
+  string createTime = 2; // 创建时间
+  string updateTime = 3; // 更新时间
+  string modbusCode = 4; // Modbus链路编号
+  string slaveAddress = 5; // 从站通信地址（如TCP地址或串口）
+  uint32 slave = 6; // 从站地址（Slave ID）
+  uint32 timeout = 7; // 通信超时时间（毫秒）
+  uint32 idleTimeout = 8; // 空闲超时时间（毫秒）
+  uint32 linkRecoveryTimeout = 9; // 链路重连超时时间（毫秒）
+  uint32 protocolRecoveryTimeout = 10; // 协议恢复超时时间（毫秒）
+  uint32 connectDelay = 11; // 建链延迟时间（毫秒）
+  uint32 enableTls = 12; // 是否启用TLS加密
+  string tlsCertFile = 13; // TLS证书文件路径
+  string tlsKeyFile = 14; // TLS私钥文件路径
+  string tlsCaFile = 15; // TLS CA证书文件路径
+  uint32 status = 16; // 当前状态（0=禁用，1=启用）
+  string remark = 17; // 备注信息
 }
 
 message SaveConfigReq {
-  // Modbus链路编号
-  string modbusCode = 1;
-  // 从站通信地址（如TCP地址或串口）
-  string slaveAddress = 2;
-  // 从站地址（Slave ID）
-  uint32 slave = 3;
+  string modbusCode = 1; // Modbus链路编号
+  string slaveAddress = 2; // 从站通信地址（如TCP地址或串口）
+  uint32 slave = 3; // 从站地址（Slave ID）
 }
 
 message SaveConfigRes {
@@ -163,132 +151,156 @@ message BatchGetConfigByCodeRes {
 
 message ReadCoilsReq {
   string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 address = 2;   // 起始线圈地址
-  uint32 quantity = 3;  // 读取数量（1–2000）
+  uint32 address = 2; // 起始线圈地址
+  uint32 quantity = 3; // 读取数量（1–2000）
 }
 
 message ReadCoilsRes {
-  bytes results = 1;    // 按位表示的线圈状态（bit0 对应起始地址）
-  repeated bool values = 2;  // 每个元素对应一个线圈状态
+  bytes results = 1; // 按位表示的线圈状态（bit0 对应起始地址）
+  repeated bool values = 2; // 每个元素对应一个线圈状态
 }
 
 message ReadDiscreteInputsReq {
   string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 address = 2;   // 起始离散输入地址
-  uint32 quantity = 3;  // 读取数量（1–2000）
+  uint32 address = 2; // 起始离散输入地址
+  uint32 quantity = 3; // 读取数量（1–2000）
 }
 
 message ReadDiscreteInputsRes {
-  bytes results = 1;    // 按位表示的离散输入状态
-  repeated bool values = 2;  // 每个元素对应一个离散输入
+  bytes results = 1; // 按位表示的离散输入状态
+  repeated bool values = 2; // 每个元素对应一个离散输入
 }
 
 message WriteSingleCoilReq {
   string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 address = 2;   // 线圈地址
-  bool value = 3;     // 写入值：false=OFF, true=ON
+  uint32 address = 2; // 线圈地址
+  bool value = 3; // 写入值：false=OFF, true=ON
 }
 
 message WriteSingleCoilRes {
-  bytes results = 1;    // 回显写入后的线圈值
+  bytes results = 1; // 回显写入后的线圈值
 }
 
 message WriteMultipleCoilsReq {
   string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 address = 2;   // 起始线圈地址
-  uint32 quantity = 3;  // 写入数量
-  repeated bool values = 4;     // 每个元素对应一个线圈状态，false=OFF，true=ON
+  uint32 address = 2; // 起始线圈地址
+  uint32 quantity = 3; // 写入数量
+  repeated bool values = 4; // 每个元素对应一个线圈状态，false=OFF，true=ON
 }
 
 message WriteMultipleCoilsRes {
-  bytes results = 1;    // 回显写入的数量
+  bytes results = 1; // 回显写入的数量
 }
 
 // -------------------- 16-bit Register Access --------------------
 
 message ReadInputRegistersReq {
   string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 address = 2;   // 起始寄存器地址
-  uint32 quantity = 3;  // 读取数量（1–125）
+  uint32 address = 2; // 起始寄存器地址
+  uint32 quantity = 3; // 读取数量（1–125）
 }
 
 message ReadInputRegistersRes {
-  bytes results = 1;    // 输入寄存器数据，每寄存器 2 字节，高字节在前
-  repeated uint32 uintValues = 2;   // 无符号整数，用于业务计算
-  repeated int32 intValues = 3;  // 有符号整数，用于解释负数
-  repeated string hexValues = 4;    // 十六进制字符串表示, 例如 "0xFF01"
+  bytes results = 1; // 输入寄存器数据，每寄存器 2 字节，高字节在前
+  repeated uint32 uintValues = 2; // 无符号整数，用于业务计算
+  repeated int32 intValues = 3; // 有符号整数，用于解释负数
+  repeated string hexValues = 4; // 十六进制字符串表示, 例如 "0xFF01"
   repeated string binaryValues = 5; // 二进制字符串表示, 例如 "0b1010101011111111"
 }
 
 message ReadHoldingRegistersReq {
   string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 address = 2;   // 起始寄存器地址
-  uint32 quantity = 3;  // 读取数量（1–125）
+  uint32 address = 2; // 起始寄存器地址
+  uint32 quantity = 3; // 读取数量（1–125）
 }
 
 message ReadHoldingRegistersRes {
-  bytes results = 1;    // 保持寄存器数据，每寄存器 2 字节
-  repeated uint32 uintValues = 2;   // 无符号整数，用于业务计算
-  repeated int32 intValues = 3;  // 有符号整数，用于解释负数
-  repeated string hexValues = 4;    // 十六进制字符串表示, 例如 "0xFF01"
+  bytes results = 1; // 保持寄存器数据，每寄存器 2 字节
+  repeated uint32 uintValues = 2; // 无符号整数，用于业务计算
+  repeated int32 intValues = 3; // 有符号整数，用于解释负数
+  repeated string hexValues = 4; // 十六进制字符串表示, 例如 "0xFF01"
   repeated string binaryValues = 5; // 二进制字符串表示, 例如 "0b1010101011111111"
 }
 
 message WriteSingleRegisterReq {
   string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 address = 2;   // 寄存器地址
-  uint32 value = 3;     // 写入的值,每个寄存器2字节
+  uint32 address = 2; // 寄存器地址
+  uint32 value = 3; // 写入的值,每个寄存器2字节
 }
 message WriteSingleRegisterRes {
-  bytes results = 1;    // 回显写入后的寄存器值
+  bytes results = 1; // 回显写入后的寄存器值
+}
+
+message WriteSingleRegisterWithDecimalReq {
+  string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+  uint32 address = 2; // 寄存器地址
+  int32 value = 3; // 要写入的十进制数值
+  bool unsigned = 4; // 是否为无符号整数（true: 无符号，false: 有符号）
+}
+
+message WriteSingleRegisterWithDecimalRes {
+  bytes results = 1; // 回显写入后的寄存器值
 }
 
 message WriteMultipleRegistersReq {
   string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 address = 2;   // 起始寄存器地址
-  uint32 quantity = 3;  // 写入数量
-  repeated uint32 values = 4;     // 按寄存器顺序的 uint32 值，每个值对应一个寄存器,每个寄存器2字节
+  uint32 address = 2; // 起始寄存器地址
+  uint32 quantity = 3; // 写入数量
+  repeated uint32 values = 4; // 按寄存器顺序的 uint32 值，每个值对应一个寄存器,每个寄存器2字节
 }
 
 message WriteMultipleRegistersRes {
-  bytes results = 1;    // 回显写入的数量
+  bytes results = 1; // 回显写入的数量
+}
+
+message WriteMultipleRegistersWithDecimalReq {
+  string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
+  uint32 address = 2; // 起始寄存器地址
+  uint32 quantity = 3; // 写入数量
+  repeated int32 values = 4; // 十进制数值列表
+  bool unsigned = 5; // 是否为无符号整数（true: 无符号，false: 有符号）
+}
+
+// 写多个保持寄存器（使用十进制数值）响应
+message WriteMultipleRegistersWithDecimalRes {
+  bytes results = 1; // 回显写入的数量
 }
 
 message ReadWriteMultipleRegistersReq {
   string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 readAddress = 2;     // 读取起始寄存器地址
-  uint32 readQuantity = 3;    // 读取数量
-  uint32 writeAddress = 4;    // 写入起始寄存器地址
-  uint32 writeQuantity = 5;   // 写入数量
-  repeated uint32 values = 6;            // 写入数据，每个值对应一个寄存器,每个寄存器2字节
+  uint32 readAddress = 2; // 读取起始寄存器地址
+  uint32 readQuantity = 3; // 读取数量
+  uint32 writeAddress = 4; // 写入起始寄存器地址
+  uint32 writeQuantity = 5; // 写入数量
+  repeated uint32 values = 6; // 写入数据，每个值对应一个寄存器,每个寄存器2字节
 }
 
 message ReadWriteMultipleRegistersRes {
-  bytes results = 1;           // 读取到的寄存器数据
-  repeated uint32 uintValues = 2;   // 无符号整数，用于业务计算
-  repeated int32 intValues = 3;  // 有符号整数，用于解释负数
-  repeated string hexValues = 4;    // 十六进制字符串表示, 例如 "0xFF01"
+  bytes results = 1; // 读取到的寄存器数据
+  repeated uint32 uintValues = 2; // 无符号整数，用于业务计算
+  repeated int32 intValues = 3; // 有符号整数，用于解释负数
+  repeated string hexValues = 4; // 十六进制字符串表示, 例如 "0xFF01"
   repeated string binaryValues = 5; // 二进制字符串表示, 例如 "0b1010101011111111"
 }
 
 message MaskWriteRegisterReq {
   string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 address = 2;   // 寄存器地址
-  uint32 andMask = 3;  // AND 掩码
-  uint32 orMask = 4;   // OR 掩码
+  uint32 address = 2; // 寄存器地址
+  uint32 andMask = 3; // AND 掩码
+  uint32 orMask = 4; // OR 掩码
 }
 
 message MaskWriteRegisterRes {
-  bytes results = 1;    // 回显写入后的寄存器值
+  bytes results = 1; // 回显写入后的寄存器值
 }
 
 message ReadFIFOQueueReq {
   string modbusCode = 1; // Modbus配置唯一编码 空-默认文件配置 否则为自定义配置
-  uint32 address = 2;   // FIFO 队列寄存器地址
+  uint32 address = 2; // FIFO 队列寄存器地址
 }
 
 message ReadFIFOQueueRes {
-  bytes results = 1;    // FIFO 队列内容
+  bytes results = 1; // FIFO 队列内容
 }
 
 // -------------------- Device Identification --------------------
@@ -317,7 +329,7 @@ message ReadDeviceIdentificationSpecificObjectReq {
   //   0x04 = 产品名称 (ProductName)
   //   0x05 = 型号名称 (ModelName)
   //   0x06 = 用户应用名称 (UserApplicationName)
-  uint32 objectId = 2;   // 要读取的对象 ID (例如 0x00~0xFF)
+  uint32 objectId = 2; // 要读取的对象 ID (例如 0x00~0xFF)
 }
 
 message ReadDeviceIdentificationSpecificObjectRes {
@@ -327,4 +339,17 @@ message ReadDeviceIdentificationSpecificObjectRes {
   map<string, string> hexResults = 2;
   // 语义化映射 (如果对象 ID 有标准含义，就用名字；否则 fallback 成 Object_0xXX)
   map<string, string> semanticResults = 3;
+}
+
+message BatchConvertDecimalToRegisterReq {
+  repeated int32 values = 1; // 整数数值列表，支持正数和负数, 注意浮点数需要放大到整数倍
+  bool unsigned = 2; // 是否为无符号整数（true: 无符号，false: 有符号）
+}
+
+message BatchConvertDecimalToRegisterRes {
+  repeated uint32 uint16Values = 1; // 无符号两字节数值列表（范围：0-65535）
+  repeated int32 int16Values = 2; // 有符号数值列表（范围：-32768-32767）
+  repeated string hexValues = 3; // 十六进制表示列表（格式：0xXXXX）
+  repeated string binaryValues = 4; // 二进制表示列表（格式：16位二进制字符串）
+  bytes bytes = 5; // 字节数组表示（大端序，每两个字节对应一个值）
 }

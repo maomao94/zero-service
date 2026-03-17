@@ -97,6 +97,34 @@ func Int16SliceToInt32Slice(values []int16) []int32 {
 }
 
 // ------------------------------
+// uint32 / int32 → uint16 / int16
+// 从 gRPC 类型转换回核心类型
+// ------------------------------
+func Uint32ToUint16(u uint32) uint16 {
+	return uint16(u)
+}
+
+func Int32ToInt16(i int32) int16 {
+	return int16(i)
+}
+
+func Uint32SliceToUint16Slice(values []uint32) []uint16 {
+	res := make([]uint16, len(values))
+	for i, v := range values {
+		res[i] = Uint32ToUint16(v)
+	}
+	return res
+}
+
+func Int32SliceToInt16Slice(values []int32) []int16 {
+	res := make([]int16, len(values))
+	for i, v := range values {
+		res[i] = Int32ToInt16(v)
+	}
+	return res
+}
+
+// ------------------------------
 // 字节 → 完整 BinaryValues
 // ------------------------------
 func BytesToBinaryValues(data []byte) *BinaryValues {

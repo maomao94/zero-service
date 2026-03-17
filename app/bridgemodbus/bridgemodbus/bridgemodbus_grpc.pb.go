@@ -31,12 +31,15 @@ const (
 	BridgeModbus_ReadInputRegisters_FullMethodName                     = "/bridgemodbus.BridgeModbus/ReadInputRegisters"
 	BridgeModbus_ReadHoldingRegisters_FullMethodName                   = "/bridgemodbus.BridgeModbus/ReadHoldingRegisters"
 	BridgeModbus_WriteSingleRegister_FullMethodName                    = "/bridgemodbus.BridgeModbus/WriteSingleRegister"
+	BridgeModbus_WriteSingleRegisterWithDecimal_FullMethodName         = "/bridgemodbus.BridgeModbus/WriteSingleRegisterWithDecimal"
 	BridgeModbus_WriteMultipleRegisters_FullMethodName                 = "/bridgemodbus.BridgeModbus/WriteMultipleRegisters"
+	BridgeModbus_WriteMultipleRegistersWithDecimal_FullMethodName      = "/bridgemodbus.BridgeModbus/WriteMultipleRegistersWithDecimal"
 	BridgeModbus_ReadWriteMultipleRegisters_FullMethodName             = "/bridgemodbus.BridgeModbus/ReadWriteMultipleRegisters"
 	BridgeModbus_MaskWriteRegister_FullMethodName                      = "/bridgemodbus.BridgeModbus/MaskWriteRegister"
 	BridgeModbus_ReadFIFOQueue_FullMethodName                          = "/bridgemodbus.BridgeModbus/ReadFIFOQueue"
 	BridgeModbus_ReadDeviceIdentification_FullMethodName               = "/bridgemodbus.BridgeModbus/ReadDeviceIdentification"
 	BridgeModbus_ReadDeviceIdentificationSpecificObject_FullMethodName = "/bridgemodbus.BridgeModbus/ReadDeviceIdentificationSpecificObject"
+	BridgeModbus_BatchConvertDecimalToRegister_FullMethodName          = "/bridgemodbus.BridgeModbus/BatchConvertDecimalToRegister"
 )
 
 // BridgeModbusClient is the client API for BridgeModbus service.
@@ -69,8 +72,12 @@ type BridgeModbusClient interface {
 	ReadHoldingRegisters(ctx context.Context, in *ReadHoldingRegistersReq, opts ...grpc.CallOption) (*ReadHoldingRegistersRes, error)
 	// 写单个保持寄存器 (Function Code 0x06)
 	WriteSingleRegister(ctx context.Context, in *WriteSingleRegisterReq, opts ...grpc.CallOption) (*WriteSingleRegisterRes, error)
+	// 写单个保持寄存器（使用十进制数值）
+	WriteSingleRegisterWithDecimal(ctx context.Context, in *WriteSingleRegisterWithDecimalReq, opts ...grpc.CallOption) (*WriteSingleRegisterWithDecimalRes, error)
 	// 写多个保持寄存器 (Function Code 0x10)
 	WriteMultipleRegisters(ctx context.Context, in *WriteMultipleRegistersReq, opts ...grpc.CallOption) (*WriteMultipleRegistersRes, error)
+	// 写多个保持寄存器（使用十进制数值）
+	WriteMultipleRegistersWithDecimal(ctx context.Context, in *WriteMultipleRegistersWithDecimalReq, opts ...grpc.CallOption) (*WriteMultipleRegistersWithDecimalRes, error)
 	// 读写多个保持寄存器 (Function Code 0x17)
 	ReadWriteMultipleRegisters(ctx context.Context, in *ReadWriteMultipleRegistersReq, opts ...grpc.CallOption) (*ReadWriteMultipleRegistersRes, error)
 	// 屏蔽写保持寄存器 (Function Code 0x16)
@@ -81,6 +88,10 @@ type BridgeModbusClient interface {
 	ReadDeviceIdentification(ctx context.Context, in *ReadDeviceIdentificationReq, opts ...grpc.CallOption) (*ReadDeviceIdentificationRes, error)
 	// 读取特定 Object ID 的设备标识 (Function Code 0x2B / 0x0E)
 	ReadDeviceIdentificationSpecificObject(ctx context.Context, in *ReadDeviceIdentificationSpecificObjectReq, opts ...grpc.CallOption) (*ReadDeviceIdentificationSpecificObjectRes, error)
+	// 批量转换十进制数值为Modbus寄存器格式
+	// 功能：将输入的十进制整数（支持正负）转换为Modbus寄存器使用的两字节格式
+	// 输出：提供无符号值、有符号值、十六进制、二进制和字节数组多种表示形式
+	BatchConvertDecimalToRegister(ctx context.Context, in *BatchConvertDecimalToRegisterReq, opts ...grpc.CallOption) (*BatchConvertDecimalToRegisterRes, error)
 }
 
 type bridgeModbusClient struct {
@@ -211,10 +222,30 @@ func (c *bridgeModbusClient) WriteSingleRegister(ctx context.Context, in *WriteS
 	return out, nil
 }
 
+func (c *bridgeModbusClient) WriteSingleRegisterWithDecimal(ctx context.Context, in *WriteSingleRegisterWithDecimalReq, opts ...grpc.CallOption) (*WriteSingleRegisterWithDecimalRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(WriteSingleRegisterWithDecimalRes)
+	err := c.cc.Invoke(ctx, BridgeModbus_WriteSingleRegisterWithDecimal_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *bridgeModbusClient) WriteMultipleRegisters(ctx context.Context, in *WriteMultipleRegistersReq, opts ...grpc.CallOption) (*WriteMultipleRegistersRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(WriteMultipleRegistersRes)
 	err := c.cc.Invoke(ctx, BridgeModbus_WriteMultipleRegisters_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bridgeModbusClient) WriteMultipleRegistersWithDecimal(ctx context.Context, in *WriteMultipleRegistersWithDecimalReq, opts ...grpc.CallOption) (*WriteMultipleRegistersWithDecimalRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(WriteMultipleRegistersWithDecimalRes)
+	err := c.cc.Invoke(ctx, BridgeModbus_WriteMultipleRegistersWithDecimal_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -271,6 +302,16 @@ func (c *bridgeModbusClient) ReadDeviceIdentificationSpecificObject(ctx context.
 	return out, nil
 }
 
+func (c *bridgeModbusClient) BatchConvertDecimalToRegister(ctx context.Context, in *BatchConvertDecimalToRegisterReq, opts ...grpc.CallOption) (*BatchConvertDecimalToRegisterRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BatchConvertDecimalToRegisterRes)
+	err := c.cc.Invoke(ctx, BridgeModbus_BatchConvertDecimalToRegister_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BridgeModbusServer is the server API for BridgeModbus service.
 // All implementations must embed UnimplementedBridgeModbusServer
 // for forward compatibility.
@@ -301,8 +342,12 @@ type BridgeModbusServer interface {
 	ReadHoldingRegisters(context.Context, *ReadHoldingRegistersReq) (*ReadHoldingRegistersRes, error)
 	// 写单个保持寄存器 (Function Code 0x06)
 	WriteSingleRegister(context.Context, *WriteSingleRegisterReq) (*WriteSingleRegisterRes, error)
+	// 写单个保持寄存器（使用十进制数值）
+	WriteSingleRegisterWithDecimal(context.Context, *WriteSingleRegisterWithDecimalReq) (*WriteSingleRegisterWithDecimalRes, error)
 	// 写多个保持寄存器 (Function Code 0x10)
 	WriteMultipleRegisters(context.Context, *WriteMultipleRegistersReq) (*WriteMultipleRegistersRes, error)
+	// 写多个保持寄存器（使用十进制数值）
+	WriteMultipleRegistersWithDecimal(context.Context, *WriteMultipleRegistersWithDecimalReq) (*WriteMultipleRegistersWithDecimalRes, error)
 	// 读写多个保持寄存器 (Function Code 0x17)
 	ReadWriteMultipleRegisters(context.Context, *ReadWriteMultipleRegistersReq) (*ReadWriteMultipleRegistersRes, error)
 	// 屏蔽写保持寄存器 (Function Code 0x16)
@@ -313,6 +358,10 @@ type BridgeModbusServer interface {
 	ReadDeviceIdentification(context.Context, *ReadDeviceIdentificationReq) (*ReadDeviceIdentificationRes, error)
 	// 读取特定 Object ID 的设备标识 (Function Code 0x2B / 0x0E)
 	ReadDeviceIdentificationSpecificObject(context.Context, *ReadDeviceIdentificationSpecificObjectReq) (*ReadDeviceIdentificationSpecificObjectRes, error)
+	// 批量转换十进制数值为Modbus寄存器格式
+	// 功能：将输入的十进制整数（支持正负）转换为Modbus寄存器使用的两字节格式
+	// 输出：提供无符号值、有符号值、十六进制、二进制和字节数组多种表示形式
+	BatchConvertDecimalToRegister(context.Context, *BatchConvertDecimalToRegisterReq) (*BatchConvertDecimalToRegisterRes, error)
 	mustEmbedUnimplementedBridgeModbusServer()
 }
 
@@ -359,8 +408,14 @@ func (UnimplementedBridgeModbusServer) ReadHoldingRegisters(context.Context, *Re
 func (UnimplementedBridgeModbusServer) WriteSingleRegister(context.Context, *WriteSingleRegisterReq) (*WriteSingleRegisterRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WriteSingleRegister not implemented")
 }
+func (UnimplementedBridgeModbusServer) WriteSingleRegisterWithDecimal(context.Context, *WriteSingleRegisterWithDecimalReq) (*WriteSingleRegisterWithDecimalRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method WriteSingleRegisterWithDecimal not implemented")
+}
 func (UnimplementedBridgeModbusServer) WriteMultipleRegisters(context.Context, *WriteMultipleRegistersReq) (*WriteMultipleRegistersRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WriteMultipleRegisters not implemented")
+}
+func (UnimplementedBridgeModbusServer) WriteMultipleRegistersWithDecimal(context.Context, *WriteMultipleRegistersWithDecimalReq) (*WriteMultipleRegistersWithDecimalRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method WriteMultipleRegistersWithDecimal not implemented")
 }
 func (UnimplementedBridgeModbusServer) ReadWriteMultipleRegisters(context.Context, *ReadWriteMultipleRegistersReq) (*ReadWriteMultipleRegistersRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReadWriteMultipleRegisters not implemented")
@@ -376,6 +431,9 @@ func (UnimplementedBridgeModbusServer) ReadDeviceIdentification(context.Context,
 }
 func (UnimplementedBridgeModbusServer) ReadDeviceIdentificationSpecificObject(context.Context, *ReadDeviceIdentificationSpecificObjectReq) (*ReadDeviceIdentificationSpecificObjectRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReadDeviceIdentificationSpecificObject not implemented")
+}
+func (UnimplementedBridgeModbusServer) BatchConvertDecimalToRegister(context.Context, *BatchConvertDecimalToRegisterReq) (*BatchConvertDecimalToRegisterRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BatchConvertDecimalToRegister not implemented")
 }
 func (UnimplementedBridgeModbusServer) mustEmbedUnimplementedBridgeModbusServer() {}
 func (UnimplementedBridgeModbusServer) testEmbeddedByValue()                      {}
@@ -614,6 +672,24 @@ func _BridgeModbus_WriteSingleRegister_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BridgeModbus_WriteSingleRegisterWithDecimal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WriteSingleRegisterWithDecimalReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BridgeModbusServer).WriteSingleRegisterWithDecimal(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BridgeModbus_WriteSingleRegisterWithDecimal_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BridgeModbusServer).WriteSingleRegisterWithDecimal(ctx, req.(*WriteSingleRegisterWithDecimalReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _BridgeModbus_WriteMultipleRegisters_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(WriteMultipleRegistersReq)
 	if err := dec(in); err != nil {
@@ -628,6 +704,24 @@ func _BridgeModbus_WriteMultipleRegisters_Handler(srv interface{}, ctx context.C
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BridgeModbusServer).WriteMultipleRegisters(ctx, req.(*WriteMultipleRegistersReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BridgeModbus_WriteMultipleRegistersWithDecimal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WriteMultipleRegistersWithDecimalReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BridgeModbusServer).WriteMultipleRegistersWithDecimal(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BridgeModbus_WriteMultipleRegistersWithDecimal_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BridgeModbusServer).WriteMultipleRegistersWithDecimal(ctx, req.(*WriteMultipleRegistersWithDecimalReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -722,6 +816,24 @@ func _BridgeModbus_ReadDeviceIdentificationSpecificObject_Handler(srv interface{
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BridgeModbus_BatchConvertDecimalToRegister_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BatchConvertDecimalToRegisterReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BridgeModbusServer).BatchConvertDecimalToRegister(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BridgeModbus_BatchConvertDecimalToRegister_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BridgeModbusServer).BatchConvertDecimalToRegister(ctx, req.(*BatchConvertDecimalToRegisterReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BridgeModbus_ServiceDesc is the grpc.ServiceDesc for BridgeModbus service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -778,8 +890,16 @@ var BridgeModbus_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _BridgeModbus_WriteSingleRegister_Handler,
 		},
 		{
+			MethodName: "WriteSingleRegisterWithDecimal",
+			Handler:    _BridgeModbus_WriteSingleRegisterWithDecimal_Handler,
+		},
+		{
 			MethodName: "WriteMultipleRegisters",
 			Handler:    _BridgeModbus_WriteMultipleRegisters_Handler,
+		},
+		{
+			MethodName: "WriteMultipleRegistersWithDecimal",
+			Handler:    _BridgeModbus_WriteMultipleRegistersWithDecimal_Handler,
 		},
 		{
 			MethodName: "ReadWriteMultipleRegisters",
@@ -800,6 +920,10 @@ var BridgeModbus_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReadDeviceIdentificationSpecificObject",
 			Handler:    _BridgeModbus_ReadDeviceIdentificationSpecificObject_Handler,
+		},
+		{
+			MethodName: "BatchConvertDecimalToRegister",
+			Handler:    _BridgeModbus_BatchConvertDecimalToRegister_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
