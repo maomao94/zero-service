@@ -13,6 +13,12 @@ type BinaryValues struct {
 	Binary []string `json:"binary"` // 16位二进制
 }
 
+type BitValues struct {
+	Bytes  []byte   `json:"bytes"`  // 原始字节数组
+	Bools  []bool   `json:"bools"`  // 每个元素对应一个线圈/bit
+	Binary []string `json:"binary"` // 可读二进制字符串，每个 byte
+}
+
 // ------------------------------
 // 字节 → uint16
 // ------------------------------
@@ -199,6 +205,9 @@ func BytesToBools(data []byte, quantity int) []bool {
 // 布尔位 ↔ 字节
 // ------------------------------------------------------
 func BoolsToBytes(bools []bool) []byte {
+	// 将 repeated bool 转换为 bytes
+	// 每字节包含 8 个线圈的状态，按位存储
+	// (count + N - 1) / N
 	n := (len(bools) + 7) / 8
 	data := make([]byte, n)
 	for i, b := range bools {
@@ -207,4 +216,23 @@ func BoolsToBytes(bools []bool) []byte {
 		}
 	}
 	return data
+}
+
+func BytesToBitValues(data []byte, quantity int) *BitValues {
+	bools := BytesToBools(data, quantity)
+	n := len(data)
+	binaryStr := make([]string, n)
+	for i, b := range data {
+		binaryStr[i] = fmt.Sprintf("%08b", b) // 按 byte 打印 LSB-first
+	}
+	return &BitValues{
+		Bytes:  data,
+		Bools:  bools,
+		Binary: binaryStr,
+	}
+}
+
+func BoolsToBitValues(bools []bool) *BitValues {
+	bytes := BoolsToBytes(bools)
+	return BytesToBitValues(bytes, len(bools))
 }

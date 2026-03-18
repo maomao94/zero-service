@@ -52,18 +52,8 @@ func (l *WriteMultipleCoilsLogic) WriteMultipleCoils(in *bridgemodbus.WriteMulti
 	mbCli := mdCliPool.Get()
 	defer mdCliPool.Put(mbCli)
 
-	// 将 repeated bool 转换为 bytes
-	// 每字节包含 8 个线圈的状态，按位存储
-	// (count + N - 1) / N
-	byteCount := (len(in.Values) + 7) / 8
-	valuesBytes := make([]byte, byteCount)
-	for i, b := range in.Values {
-		if b {
-			valuesBytes[i/8] |= 1 << (i % 8)
-		}
-	}
-	binaryValues := bytex.BytesToBinaryValues(valuesBytes)
-	l.Infof("写多个线圈: 0x%X, hex=%v, uint16=%v, int16=%v, binary=%v", binaryValues.Bytes, binaryValues.Hex, binaryValues.Uint16, binaryValues.Int16, binaryValues.Binary)
+	binaryValues := bytex.BoolsToBitValues(in.Values)
+	l.Infof("写多个线圈: 0x%X, bools=%v, binary=%v", binaryValues.Bytes, binaryValues.Bools, binaryValues.Binary)
 	results, err := mbCli.WriteMultipleCoils(l.ctx, uint16(in.Address), uint16(in.Quantity), binaryValues.Bytes)
 	if err != nil {
 		return nil, err
