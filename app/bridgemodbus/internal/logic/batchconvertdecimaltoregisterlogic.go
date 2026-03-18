@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"zero-service/common/bytex"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/app/bridgemodbus/internal/svc"
@@ -32,12 +34,12 @@ func (l *BatchConvertDecimalToRegisterLogic) BatchConvertDecimalToRegister(in *b
 		if in.Unsigned {
 			// 无符号整数范围：0-65535
 			if v < 0 || v > 65535 {
-				return nil, fmt.Errorf("第 %d 个无符号值 %d 超出 16 位寄存器范围 [0, 65535]", i+1, v)
+				return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, fmt.Errorf("第 %d 个无符号值 %d 超出 16 位寄存器范围 [0, 65535]", i+1, v))
 			}
 		} else {
 			// 有符号整数范围：-32768-32767
 			if v > 32767 || v < -32768 {
-				return nil, fmt.Errorf("第 %d 个有符号值 %d 超出 16 位寄存器范围 [-32768, 32767]", i+1, v)
+				return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, fmt.Errorf("第 %d 个有符号值 %d 超出 16 位寄存器范围 [-32768, 32767]", i+1, v))
 			}
 		}
 	}

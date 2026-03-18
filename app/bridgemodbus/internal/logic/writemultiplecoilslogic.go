@@ -32,7 +32,7 @@ func (l *WriteMultipleCoilsLogic) WriteMultipleCoils(in *bridgemodbus.WriteMulti
 	var mdCliPool *modbusx.ModbusClientPool
 	var err error
 	if int(in.Quantity) != len(in.Values) {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "数量与值数量不一致")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "数量与值数量不一致")
 	}
 	if len(in.ModbusCode) == 0 {
 		mdCliPool = l.svcCtx.ModbusClientPool

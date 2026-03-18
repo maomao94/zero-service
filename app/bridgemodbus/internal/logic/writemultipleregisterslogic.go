@@ -32,7 +32,7 @@ func (l *WriteMultipleRegistersLogic) WriteMultipleRegisters(in *bridgemodbus.Wr
 	var mdCliPool *modbusx.ModbusClientPool
 	var err error
 	if int(in.Quantity) != len(in.Values) {
-		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "数量与值数量不一致")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "数量与值数量不一致")
 	}
 	if len(in.ModbusCode) == 0 {
 		mdCliPool = l.svcCtx.ModbusClientPool
@@ -54,7 +54,7 @@ func (l *WriteMultipleRegistersLogic) WriteMultipleRegisters(in *bridgemodbus.Wr
 
 	for i, v := range in.Values {
 		if v > 65535 {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "第 %d 个值超过 16 位寄存器的最大值 (65535)", i+1)
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "第 %d 个值超过 16 位寄存器的最大值 (65535)", i+1)
 		}
 	}
 

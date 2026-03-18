@@ -51,7 +51,7 @@ func (l *ReadWriteMultipleRegistersLogic) ReadWriteMultipleRegisters(in *bridgem
 
 	for i, v := range in.Values {
 		if v > 65535 {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "第 %d 个值超过 16 位寄存器的最大值 (65535)", i+1)
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "第 %d 个值超过 16 位寄存器的最大值 (65535)", i+1)
 		}
 	}
 
