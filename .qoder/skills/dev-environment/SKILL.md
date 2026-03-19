@@ -81,12 +81,24 @@ l     # ls -CF
 
 ### 多远程仓库同步
 
-项目配置了多个远程仓库（通过 `git remote -v` 查看），日常需要保持所有远程仓库同步。
-提交后向所有 remote 推送：
-```bash
-git push origin master
-git push allcore master
-```
+项目配置了多个远程仓库（通过 `git remote -v` 查看），**所有远程仓库必须保持一致**。
+
+### 提交与推送流程（严格遵守）
+
+1. **先完成所有改动，不要中途推送**。一个任务的多次 commit 先留在本地。
+2. **推送前压缩**：将本次任务的多个 commit 压缩成 1 个，优化提交描述。
+   ```bash
+   # 假设本次任务产生了 N 个 commit，压缩为 1 个
+   git reset --soft HEAD~N
+   git commit -m "优化后的提交描述"
+   ```
+3. **一次性推送到所有远程仓库**：
+   ```bash
+   git push origin master
+   git push allcore master
+   ```
+4. **绝对禁止：已经推送到任何远程仓库的 commit 不能再压缩**。压缩只能在推送前做，否则会导致历史分叉，且 GitLab master 分支保护不允许 force push。
+5. **如果某个远程推送失败**（如 GitHub 凭据问题），提示用户手动推送，不要继续对已推送到其他远程的 commit 做任何修改。
 
 ## 常用工作流
 
