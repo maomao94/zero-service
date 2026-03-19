@@ -55,7 +55,7 @@ func ParseToken(tokenString string, secrets ...string) (jwt.MapClaims, error) {
 				return claims, nil
 			}
 		}
-		lastErr = fmt.Errorf("invalid token with secret: %s", secret)
+		lastErr = fmt.Errorf("invalid token")
 	}
 
 	if lastErr != nil {
