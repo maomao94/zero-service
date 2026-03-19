@@ -2,6 +2,8 @@ package logic
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/zeromicro/go-zero/core/logx"
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
@@ -30,9 +32,14 @@ func (l *RemoveFilesLogic) RemoveFiles(in *file.RemoveFilesReq) (*file.RemoveFil
 	if err != nil {
 		return nil, err
 	}
-	err = ossTemplate.RemoveFiles(l.ctx, in.TenantId, in.BucketName, in.Filename)
+	results, err := ossTemplate.RemoveFiles(l.ctx, in.TenantId, in.BucketName, in.Filename)
 	if err != nil {
 		return nil, err
+	}
+	for _, r := range results {
+		if r.Err != nil {
+			return nil, fmt.Errorf("failed to remove file %s: %w", r.Filename, r.Err)
+		}
 	}
 	return &file.RemoveFileRes{}, nil
 }

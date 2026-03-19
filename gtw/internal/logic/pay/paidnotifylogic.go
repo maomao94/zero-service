@@ -51,8 +51,11 @@ func (l *PaidNotifyLogic) PaidNotify() error {
 		},
 	)
 	if err != nil {
-		panic(err)
+		l.Errorf("HandlePaidNotify error: %v", err)
+		return err
 	}
-	res.Write(l.w)
+	if res != nil {
+		res.Write(l.w)
+	}
 	return nil
 }

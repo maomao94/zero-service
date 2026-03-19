@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net/url"
@@ -170,9 +171,9 @@ func (m MinioTemplate) RemoveFile(ctx context.Context, tenantId, bucketName, fil
 	return m.client.RemoveObject(ctx, m.ossRule.bucketName(tenantId, bucketName), filename, minio.RemoveObjectOptions{})
 }
 
-func (m MinioTemplate) RemoveFiles(ctx context.Context, tenantId string, bucketName string, filenames []string) error {
+func (m MinioTemplate) RemoveFiles(ctx context.Context, tenantId string, bucketName string, filenames []string) ([]RemoveFileResult, error) {
 	if err := validateClient(m.client); err != nil {
-		return err
+		return nil, err
 	}
 	if len(bucketName) == 0 {
 		bucketName = m.ossProperties.BucketName
@@ -181,19 +182,25 @@ func (m MinioTemplate) RemoveFiles(ctx context.Context, tenantId string, bucketN
 	go func() {
 		defer close(objectsCh)
 		for _, f := range filenames {
-			// 构造 ObjectInfo 对象
-			objectInfo := minio.ObjectInfo{
-				Key: f,
-			}
-			objectsCh <- objectInfo
+			objectsCh <- minio.ObjectInfo{Key: f}
 		}
 	}()
 	errorCh := m.client.RemoveObjects(ctx, m.ossRule.bucketName(tenantId, bucketName), objectsCh, minio.RemoveObjectsOptions{})
-	select {
-	case err := <-errorCh:
-		return err.Err
+
+	// 收集失败的文件
+	errMap := make(map[string]error)
+	for e := range errorCh {
+		if e.Err != nil {
+			errMap[e.ObjectName] = e.Err
+		}
 	}
-	return nil
+
+	// 按输入顺序组装结果
+	results := make([]RemoveFileResult, len(filenames))
+	for i, f := range filenames {
+		results[i] = RemoveFileResult{Filename: f, Err: errMap[f]}
+	}
+	return results, nil
 }
 
 func (m MinioTemplate) getOssHost(tenantId, bucketName string) string {
@@ -204,7 +211,7 @@ func (m MinioTemplate) fileLink(tenantId, bucketName, filename string) string {
 	return m.ossProperties.Endpoint + "/" + m.ossRule.bucketName(tenantId, bucketName) + "/" + filename
 }
 
-func NewMinioTemplate(Oss *model.Oss, ossRule OssRule) *MinioTemplate {
+func NewMinioTemplate(Oss *model.Oss, ossRule OssRule) (*MinioTemplate, error) {
 	ossProperties := OssProperties{
 		Endpoint:   Oss.Endpoint,
 		AccessKey:  Oss.AccessKey,
@@ -212,16 +219,19 @@ func NewMinioTemplate(Oss *model.Oss, ossRule OssRule) *MinioTemplate {
 		BucketName: Oss.BucketName,
 		Args:       nil,
 	}
-	// 初使化 minio client对象。
-	minioClient, _ := minio.New(Oss.Endpoint, &minio.Options{
+	// 初始化 minio client对象
+	minioClient, err := minio.New(Oss.Endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(Oss.AccessKey, Oss.SecretKey, ""),
 		Secure: false,
 	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create minio client (endpoint=%s): %w", Oss.Endpoint, err)
+	}
 	return &MinioTemplate{
 		client:        minioClient,
 		ossProperties: ossProperties,
 		ossRule:       ossRule,
-	}
+	}, nil
 }
 
 func validateClient(client *minio.Client) error {

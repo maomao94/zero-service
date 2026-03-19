@@ -35,7 +35,7 @@ type OssTemplate interface {
 	PutObject(ctx context.Context, tenantId, bucketName, filename, contentType string, reader io.Reader, objectSize int64, pathPrefix ...string) (*File, error) // 上传文件
 	SignUrl(ctx context.Context, tenantId, bucketName, filename string, expires time.Duration) (string, error)                                                  // 生成文件url
 	RemoveFile(ctx context.Context, tenantId, bucketName, filename string) error                                                                                // 删除文件
-	RemoveFiles(ctx context.Context, tenantId string, bucketName string, filenames []string) error                                                              // 批量删除文件
+	RemoveFiles(ctx context.Context, tenantId string, bucketName string, filenames []string) ([]RemoveFileResult, error) // 批量删除文件
 }
 
 var _ OssTemplate = (*MinioTemplate)(nil)
@@ -75,6 +75,11 @@ type File struct {
 	FormatSize   string // 格式化文件大小
 	OriginalName string // 初始文件名
 	AttachId     string // 附件表ID
+}
+
+type RemoveFileResult struct {
+	Filename string
+	Err      error
 }
 
 type OssFile struct {
@@ -129,7 +134,10 @@ func Template(TenantId, Code string, tenantMode bool, getOss GetOssFn) (ossTempl
 					}
 				}
 				if oss.Category == Category_Minio {
-					ossTemplate = NewMinioTemplate(oss, ossRule)
+					ossTemplate, err = NewMinioTemplate(oss, ossRule)
+					if err != nil {
+						return nil, err
+					}
 				} else {
 					return nil, errors.New("oss type error")
 				}
