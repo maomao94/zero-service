@@ -79,6 +79,24 @@ l     # ls -CF
 
 典型的 ignore 文件：`app/*/etc/*.yaml`、`socketapp/*/etc/*.yaml` 等环境配置文件。
 
+### 敏感信息保护（最高优先级）
+
+**提交前必须检查 diff 内容，以下信息绝对不能提交到远程仓库**：
+- 内网 IP 地址（如 `10.x.x.x`、`192.168.x.x`、`172.16-31.x.x`）
+- 数据库连接字符串（含密码的 DSN）
+- 用户名、密码、Secret、Token 等凭据
+- Nacos / Redis / Kafka 等中间件的生产/测试环境地址
+- 公司内部域名和仓库地址
+- remote 名称等可推断公司信息的内容
+
+**检查方法**：
+```bash
+# 提交前扫描 staged diff 中是否包含敏感信息
+git diff --cached | grep -iE '(password|passwd|secret|token|10\.\d+\.\d+\.\d+|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)'
+```
+
+如果扫描命中，**停止提交**，提示用户确认。这些文件通常应放入 Goland 的 ignore changelist。
+
 ### 多远程仓库同步
 
 项目配置了多个远程仓库（通过 `git remote -v` 查看），**所有远程仓库必须保持一致**。
