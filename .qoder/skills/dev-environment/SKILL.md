@@ -62,9 +62,31 @@ l     # ls -CF
 | brew | Homebrew | macOS 包管理 |
 | sshpass | - | SSH 密码自动输入 (部署用) |
 
-## Git 推送习惯
+## Git 提交规则
+
+### Goland Changelist 感知
+
+项目使用 Goland 的 Changelist 功能管理本地改动。**提交前必须读取 `.idea/workspace.xml` 中的 `ChangeListManager` 节点**，识别哪些文件在 ignore changelist 中。
+
+- **默认 changelist（"更改"）**中的文件：正常提交
+- **"ignore" changelist** 中的文件：**绝对不提交、不推送**，这些是本地环境配置（数据库地址、密码、Nacos IP 等）
+
+检查方法：
+```bash
+# 读取 .idea/workspace.xml 中 ChangeListManager 部分
+# <list name="ignore"> 下的文件不提交
+```
+
+典型的 ignore 文件：`app/*/etc/*.yaml`、`socketapp/*/etc/*.yaml` 等环境配置文件。
+
+### 多远程仓库同步
 
 项目配置了多个远程仓库（通过 `git remote -v` 查看），日常需要保持所有远程仓库同步。
+提交后向所有 remote 推送：
+```bash
+git push origin master
+git push allcore master
+```
 
 ## 常用工作流
 
