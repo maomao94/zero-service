@@ -45,7 +45,7 @@ func (m *customPlanModel) UpdateBatchFinishedTime(ctx context.Context, id int64)
 	subQuery := "SELECT 1 FROM plan_batch b WHERE b.del_state = 0 AND b.plan_pk = p.id AND b.finished_time IS NULL"
 	builder := squirrel.
 		Update(m.table+" AS p").
-		Set("p.finished_time", now).
+		Set("finished_time", now).
 		Where("p.id = ?", id).
 		Where("p.finished_time IS NULL").
 		Where("NOT EXISTS (" + subQuery + ")")

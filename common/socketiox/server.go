@@ -143,7 +143,11 @@ func (s *Session) GetMetadata(key string) interface{} {
 func (s *Session) AllMetadata() map[string]string {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	return s.metadata
+	cp := make(map[string]string, len(s.metadata))
+	for k, v := range s.metadata {
+		cp[k] = v
+	}
+	return cp
 }
 
 func (s *Session) SetMetadata(key string, val interface{}) {
@@ -722,7 +726,7 @@ func (srv *Server) statLoop() {
 						SId:           sess.id,
 						Rooms:         sess.socket.Rooms(),
 						Nps:           sess.socket.Nps,
-						MetaData:      sess.metadata,
+						MetaData:      sess.AllMetadata(),
 						RoomLoadError: sess.roomLoadError,
 					}
 					b, _ := jsonx.Marshal(&stat)

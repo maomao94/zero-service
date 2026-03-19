@@ -46,7 +46,7 @@ func (m *customPlanBatchModel) UpdateBatchFinishedTime(ctx context.Context, id i
 	subQuery := "SELECT 1 FROM plan_exec_item i WHERE i.del_state = 0 AND i.batch_pk = b.id AND i.status NOT IN (?, ?)"
 	builder := squirrel.
 		Update(m.table+" AS b").
-		Set("b.finished_time", now).
+		Set("finished_time", now).
 		Where("b.id = ?", id).
 		Where("b.finished_time IS NULL").
 		Where("NOT EXISTS ("+subQuery+")", StatusCompleted, StatusTerminated)

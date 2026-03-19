@@ -326,12 +326,12 @@ func (c *client) Connect() error {
 
 // Send 发送消息到服务器
 func (c *client) Send(message []byte) error {
-	if !c.IsConnected() {
-		return errors.New("not connected to server")
-	}
-
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	if c.conn == nil || !c.isRunning() {
+		return errors.New("not connected to server")
+	}
 
 	// 设置写入超时
 	if err := c.conn.SetWriteDeadline(time.Now().Add(c.heartbeatInterval)); err != nil {
@@ -352,12 +352,12 @@ func (c *client) Send(message []byte) error {
 
 // SendJSON 发送JSON消息到服务器
 func (c *client) SendJSON(data interface{}) error {
-	if !c.IsConnected() {
-		return errors.New("not connected to server")
-	}
-
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	if c.conn == nil || !c.isRunning() {
+		return errors.New("not connected to server")
+	}
 
 	// 设置写入超时
 	if err := c.conn.SetWriteDeadline(time.Now().Add(c.heartbeatInterval)); err != nil {
