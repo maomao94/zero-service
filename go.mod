@@ -26,7 +26,7 @@ require (
 	github.com/hibiken/asynq v0.26.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/larksuite/oapi-sdk-go/v3 v3.5.3
-	github.com/lib/pq v1.11.2
+	github.com/lib/pq v1.12.0
 	github.com/minio/minio-go/v7 v7.0.99
 	github.com/mmcloughlin/geohash v0.10.0
 	github.com/nacos-group/nacos-sdk-go/v2 v2.3.5
