@@ -6,7 +6,9 @@ import (
 	"zero-service/app/bridgemodbus/internal/config"
 	"zero-service/common/dbx"
 	"zero-service/common/modbusx"
+	"zero-service/common/tool"
 	"zero-service/model"
+	"zero-service/third_party/extproto"
 )
 
 type ServiceContext struct {
@@ -49,4 +51,30 @@ func (s *ServiceContext) AddPool(ctx context.Context, modbusCode string) (*modbu
 		return nil, err
 	}
 	return pool, nil
+}
+
+// GetModbusClientPool 获取 Modbus 连接池
+// 如果 modbusCode 为空，返回默认连接池
+// 如果 modbusCode 不为空，尝试从管理器获取连接池，如果不存在则创建新的连接池
+func (s *ServiceContext) GetModbusClientPool(ctx context.Context, modbusCode string) (*modbusx.ModbusClientPool, error) {
+	if len(modbusCode) == 0 {
+		return s.ModbusClientPool, nil
+	}
+
+	var mdCliPool *modbusx.ModbusClientPool
+	var ok bool
+	mdCliPool, ok = s.Manager.GetPool(modbusCode)
+	if !ok {
+		var err error
+		mdCliPool, err = s.AddPool(ctx, modbusCode)
+		if err != nil {
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "创建Modbus连接池失败")
+		}
+	}
+
+	if mdCliPool == nil {
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "获取的Modbus连接池为空")
+	}
+
+	return mdCliPool, nil
 }

@@ -2,9 +2,6 @@ package logic
 
 import (
 	"context"
-	"zero-service/common/modbusx"
-	"zero-service/common/tool"
-	"zero-service/third_party/extproto"
 
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/app/bridgemodbus/internal/svc"
@@ -28,22 +25,9 @@ func NewReadFIFOQueueLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Rea
 
 // 读取 FIFO 队列 (Function Code 0x18)
 func (l *ReadFIFOQueueLogic) ReadFIFOQueue(in *bridgemodbus.ReadFIFOQueueReq) (*bridgemodbus.ReadFIFOQueueRes, error) {
-	var mdCliPool *modbusx.ModbusClientPool
-	var err error
-	if len(in.ModbusCode) == 0 {
-		mdCliPool = l.svcCtx.ModbusClientPool
-	} else {
-		var ok bool
-		mdCliPool, ok = l.svcCtx.Manager.GetPool(in.ModbusCode) // 关键：用=而不是:=，避免局部变量
-		if !ok {
-			mdCliPool, err = l.svcCtx.AddPool(l.ctx, in.ModbusCode)
-			if err != nil {
-				return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "创建Modbus连接池失败")
-			}
-		}
-		if mdCliPool == nil {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "获取的Modbus连接池为空")
-		}
+	mdCliPool, err := l.svcCtx.GetModbusClientPool(l.ctx, in.ModbusCode)
+	if err != nil {
+		return nil, err
 	}
 	mbCli := mdCliPool.Get()
 	defer mdCliPool.Put(mbCli)

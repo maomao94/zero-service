@@ -3,7 +3,6 @@ package logic
 import (
 	"context"
 	"zero-service/common/bytex"
-	"zero-service/common/modbusx"
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
@@ -29,25 +28,13 @@ func NewWriteMultipleRegistersLogic(ctx context.Context, svcCtx *svc.ServiceCont
 
 // 写多个保持寄存器 (Function Code 0x10)
 func (l *WriteMultipleRegistersLogic) WriteMultipleRegisters(in *bridgemodbus.WriteMultipleRegistersReq) (*bridgemodbus.WriteMultipleRegistersRes, error) {
-	var mdCliPool *modbusx.ModbusClientPool
-	var err error
 	if int(in.Quantity) != len(in.Values) {
 		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "数量与值数量不一致")
 	}
-	if len(in.ModbusCode) == 0 {
-		mdCliPool = l.svcCtx.ModbusClientPool
-	} else {
-		var ok bool
-		mdCliPool, ok = l.svcCtx.Manager.GetPool(in.ModbusCode) // 关键：用=而不是:=，避免局部变量
-		if !ok {
-			mdCliPool, err = l.svcCtx.AddPool(l.ctx, in.ModbusCode)
-			if err != nil {
-				return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "创建Modbus连接池失败")
-			}
-		}
-		if mdCliPool == nil {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "获取的Modbus连接池为空")
-		}
+
+	mdCliPool, err := l.svcCtx.GetModbusClientPool(l.ctx, in.ModbusCode)
+	if err != nil {
+		return nil, err
 	}
 	mbCli := mdCliPool.Get()
 	defer mdCliPool.Put(mbCli)

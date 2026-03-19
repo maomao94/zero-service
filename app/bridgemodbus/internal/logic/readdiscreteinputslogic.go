@@ -2,12 +2,9 @@ package logic
 
 import (
 	"context"
-	"zero-service/common/modbusx"
-	"zero-service/common/tool"
-	"zero-service/third_party/extproto"
-
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/app/bridgemodbus/internal/svc"
+	"zero-service/common/bytex"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -28,22 +25,9 @@ func NewReadDiscreteInputsLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 
 // 读取离散输入状态 (Function Code 0x02)
 func (l *ReadDiscreteInputsLogic) ReadDiscreteInputs(in *bridgemodbus.ReadDiscreteInputsReq) (*bridgemodbus.ReadDiscreteInputsRes, error) {
-	var mdCliPool *modbusx.ModbusClientPool
-	var err error
-	if len(in.ModbusCode) == 0 {
-		mdCliPool = l.svcCtx.ModbusClientPool
-	} else {
-		var ok bool
-		mdCliPool, ok = l.svcCtx.Manager.GetPool(in.ModbusCode) // 关键：用=而不是:=，避免局部变量
-		if !ok {
-			mdCliPool, err = l.svcCtx.AddPool(l.ctx, in.ModbusCode)
-			if err != nil {
-				return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "创建Modbus连接池失败")
-			}
-		}
-		if mdCliPool == nil {
-			return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "获取的Modbus连接池为空")
-		}
+	mdCliPool, err := l.svcCtx.GetModbusClientPool(l.ctx, in.ModbusCode)
+	if err != nil {
+		return nil, err
 	}
 	mbCli := mdCliPool.Get()
 	defer mdCliPool.Put(mbCli)
@@ -53,6 +37,6 @@ func (l *ReadDiscreteInputsLogic) ReadDiscreteInputs(in *bridgemodbus.ReadDiscre
 	}
 	return &bridgemodbus.ReadDiscreteInputsRes{
 		Results: results,
-		Values:  modbusx.BytesToBools(results, int(in.Quantity)),
+		Values:  bytex.BytesToBools(results, int(in.Quantity)),
 	}, nil
 }
