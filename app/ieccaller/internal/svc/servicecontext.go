@@ -136,7 +136,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		// 创建数据库连接
 		dbConn := dbx.New(c.DB.DataSource)
 		_ = dbx.MustNewQoqu(c.DB.DataSource)
-		svcCtx.DevicePointMappingModel = model.NewDevicePointMappingModelWithDBType(dbConn, model.DatabaseType(dbType))
+		svcCtx.DevicePointMappingModel = model.NewDevicePointMappingModel(dbConn, model.WithDBType(dbType))
 	}
 	return svcCtx
 }

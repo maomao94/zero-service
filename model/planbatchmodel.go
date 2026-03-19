@@ -26,19 +26,16 @@ type (
 )
 
 // NewPlanBatchModel returns a model for the database table.
-func NewPlanBatchModel(conn sqlx.SqlConn) PlanBatchModel {
-	return NewPlanBatchModelWithDBType(conn, DatabaseTypeMySQL)
-}
-
-// NewPlanBatchModelWithDBType returns a model for the database table with db type.
-func NewPlanBatchModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) PlanBatchModel {
+func NewPlanBatchModel(conn sqlx.SqlConn, opts ...ModelOption) PlanBatchModel {
 	return &customPlanBatchModel{
-		defaultPlanBatchModel: newPlanBatchModelWithDBType(conn, dbType),
+		defaultPlanBatchModel: newPlanBatchModel(conn, opts...),
 	}
 }
 
 func (m *customPlanBatchModel) withSession(session sqlx.Session) PlanBatchModel {
-	return NewPlanBatchModelWithDBType(sqlx.NewSqlConnFromSession(session), m.dbType)
+	return &customPlanBatchModel{
+		defaultPlanBatchModel: newPlanBatchModel(sqlx.NewSqlConnFromSession(session), WithDBType(m.dbType)),
+	}
 }
 
 func (m *customPlanBatchModel) UpdateBatchFinishedTime(ctx context.Context, id int64) (int64, error) {

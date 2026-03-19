@@ -47,8 +47,9 @@ type (
 	}
 
 	defaultOrderTxnModel struct {
-		conn  sqlx.SqlConn
-		table string
+		conn   sqlx.SqlConn
+		table  string
+		dbType DatabaseType
 	}
 
 	OrderTxn struct {
@@ -87,10 +88,12 @@ type (
 	}
 )
 
-func newOrderTxnModel(conn sqlx.SqlConn) *defaultOrderTxnModel {
+func newOrderTxnModel(conn sqlx.SqlConn, opts ...ModelOption) *defaultOrderTxnModel {
+	o := applyModelOptions(opts)
 	return &defaultOrderTxnModel{
-		conn:  conn,
-		table: "`order_txn`",
+		conn:   conn,
+		table:  "`order_txn`",
+		dbType: o.dbType,
 	}
 }
 

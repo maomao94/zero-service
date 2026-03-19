@@ -36,21 +36,19 @@ type (
 const defaultExpiration = time.Hour * 24
 
 // NewDevicePointMappingModel returns a model for the database table.
-func NewDevicePointMappingModel(conn sqlx.SqlConn) DevicePointMappingModel {
-	return NewDevicePointMappingModelWithDBType(conn, DatabaseTypeMySQL)
-}
-
-// NewDevicePointMappingModelWithDBType returns a model for the database table with db type.
-func NewDevicePointMappingModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) DevicePointMappingModel {
+func NewDevicePointMappingModel(conn sqlx.SqlConn, opts ...ModelOption) DevicePointMappingModel {
 	pmc, _ := collection.NewCache(defaultExpiration, collection.WithName("pm-cache"))
 	return &customDevicePointMappingModel{
-		defaultDevicePointMappingModel: newDevicePointMappingModelWithDBType(conn, dbType),
+		defaultDevicePointMappingModel: newDevicePointMappingModel(conn, opts...),
 		pointMappingCache:              pmc,
 	}
 }
 
 func (m *customDevicePointMappingModel) withSession(session sqlx.Session) DevicePointMappingModel {
-	return NewDevicePointMappingModelWithDBType(sqlx.NewSqlConnFromSession(session), m.defaultDevicePointMappingModel.dbType)
+	return &customDevicePointMappingModel{
+		defaultDevicePointMappingModel: newDevicePointMappingModel(sqlx.NewSqlConnFromSession(session), WithDBType(m.defaultDevicePointMappingModel.dbType)),
+		pointMappingCache:              m.pointMappingCache,
+	}
 }
 
 func (s *customDevicePointMappingModel) RemoveCache(ctx context.Context, keys ...string) error {

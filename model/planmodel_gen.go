@@ -84,18 +84,15 @@ type (
 	}
 )
 
-func newPlanModel(conn sqlx.SqlConn) *defaultPlanModel {
-	return newPlanModelWithDBType(conn, DatabaseTypeMySQL)
-}
-
-func newPlanModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) *defaultPlanModel {
+func newPlanModel(conn sqlx.SqlConn, opts ...ModelOption) *defaultPlanModel {
+	o := applyModelOptions(opts)
 	tableName := "plan"
 	fieldNames := builder.RawFieldNames(&Plan{}, true)
 	rows := strings.Join(fieldNames, ",")
 	return &defaultPlanModel{
 		conn:     conn,
 		table:    tableName,
-		dbType:   dbType,
+		dbType:   o.dbType,
 		planRows: rows,
 	}
 }

@@ -24,20 +24,16 @@ type (
 	}
 )
 
-func NewPlanModel(conn sqlx.SqlConn) PlanModel {
+func NewPlanModel(conn sqlx.SqlConn, opts ...ModelOption) PlanModel {
 	return &customPlanModel{
-		defaultPlanModel: newPlanModel(conn),
-	}
-}
-
-func NewPlanModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) PlanModel {
-	return &customPlanModel{
-		defaultPlanModel: newPlanModelWithDBType(conn, dbType),
+		defaultPlanModel: newPlanModel(conn, opts...),
 	}
 }
 
 func (m *customPlanModel) withSession(session sqlx.Session) PlanModel {
-	return NewPlanModel(sqlx.NewSqlConnFromSession(session))
+	return &customPlanModel{
+		defaultPlanModel: newPlanModel(sqlx.NewSqlConnFromSession(session), WithDBType(m.dbType)),
+	}
 }
 
 func (m *customPlanModel) UpdateBatchFinishedTime(ctx context.Context, id int64) (int64, error) {

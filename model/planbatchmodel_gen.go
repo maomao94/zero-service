@@ -84,18 +84,15 @@ type (
 	}
 )
 
-func newPlanBatchModel(conn sqlx.SqlConn) *defaultPlanBatchModel {
-	return newPlanBatchModelWithDBType(conn, DatabaseTypeMySQL)
-}
-
-func newPlanBatchModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) *defaultPlanBatchModel {
+func newPlanBatchModel(conn sqlx.SqlConn, opts ...ModelOption) *defaultPlanBatchModel {
+	o := applyModelOptions(opts)
 	tableName := "plan_batch"
 	fieldNames := builder.RawFieldNames(&PlanBatch{}, true)
 	rows := strings.Join(fieldNames, ",")
 	return &defaultPlanBatchModel{
 		conn:          conn,
 		table:         tableName,
-		dbType:        dbType,
+		dbType:        o.dbType,
 		planBatchRows: rows,
 	}
 }

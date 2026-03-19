@@ -55,8 +55,9 @@ type (
 	}
 
 	defaultOssModel struct {
-		conn  sqlx.SqlConn
-		table string
+		conn   sqlx.SqlConn
+		table  string
+		dbType DatabaseType
 	}
 
 	Oss struct {
@@ -80,10 +81,12 @@ type (
 	}
 )
 
-func newOssModel(conn sqlx.SqlConn) *defaultOssModel {
+func newOssModel(conn sqlx.SqlConn, opts ...ModelOption) *defaultOssModel {
+	o := applyModelOptions(opts)
 	return &defaultOssModel{
-		conn:  conn,
-		table: "`oss`",
+		conn:   conn,
+		table:  "`oss`",
+		dbType: o.dbType,
 	}
 }
 

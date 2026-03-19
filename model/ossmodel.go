@@ -18,12 +18,14 @@ type (
 )
 
 // NewOssModel returns a model for the database table.
-func NewOssModel(conn sqlx.SqlConn) OssModel {
+func NewOssModel(conn sqlx.SqlConn, opts ...ModelOption) OssModel {
 	return &customOssModel{
-		defaultOssModel: newOssModel(conn),
+		defaultOssModel: newOssModel(conn, opts...),
 	}
 }
 
 func (m *customOssModel) withSession(session sqlx.Session) OssModel {
-	return NewOssModel(sqlx.NewSqlConnFromSession(session))
+	return &customOssModel{
+		defaultOssModel: newOssModel(sqlx.NewSqlConnFromSession(session), WithDBType(m.dbType)),
+	}
 }

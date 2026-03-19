@@ -80,18 +80,15 @@ type (
 	}
 )
 
-func newPlanExecLogModel(conn sqlx.SqlConn) *defaultPlanExecLogModel {
-	return newPlanExecLogModelWithDBType(conn, DatabaseTypeMySQL)
-}
-
-func newPlanExecLogModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) *defaultPlanExecLogModel {
+func newPlanExecLogModel(conn sqlx.SqlConn, opts ...ModelOption) *defaultPlanExecLogModel {
+	o := applyModelOptions(opts)
 	tableName := "plan_exec_log"
 	fieldNames := builder.RawFieldNames(&PlanExecLog{}, true)
 	rows := strings.Join(fieldNames, ",")
 	return &defaultPlanExecLogModel{
 		conn:            conn,
 		table:           tableName,
-		dbType:          dbType,
+		dbType:          o.dbType,
 		planExecLogRows: rows,
 	}
 }

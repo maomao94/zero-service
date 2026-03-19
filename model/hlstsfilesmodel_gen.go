@@ -46,8 +46,9 @@ type (
 	}
 
 	defaultHlsTsFilesModel struct {
-		conn  sqlx.SqlConn
-		table string
+		conn   sqlx.SqlConn
+		table  string
+		dbType DatabaseType
 	}
 
 	HlsTsFiles struct {
@@ -70,10 +71,12 @@ type (
 	}
 )
 
-func newHlsTsFilesModel(conn sqlx.SqlConn) *defaultHlsTsFilesModel {
+func newHlsTsFilesModel(conn sqlx.SqlConn, opts ...ModelOption) *defaultHlsTsFilesModel {
+	o := applyModelOptions(opts)
 	return &defaultHlsTsFilesModel{
-		conn:  conn,
-		table: "`hls_ts_files`",
+		conn:   conn,
+		table:  "`hls_ts_files`",
+		dbType: o.dbType,
 	}
 }
 

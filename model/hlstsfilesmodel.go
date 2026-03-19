@@ -18,12 +18,14 @@ type (
 )
 
 // NewHlsTsFilesModel returns a model for the database table.
-func NewHlsTsFilesModel(conn sqlx.SqlConn) HlsTsFilesModel {
+func NewHlsTsFilesModel(conn sqlx.SqlConn, opts ...ModelOption) HlsTsFilesModel {
 	return &customHlsTsFilesModel{
-		defaultHlsTsFilesModel: newHlsTsFilesModel(conn),
+		defaultHlsTsFilesModel: newHlsTsFilesModel(conn, opts...),
 	}
 }
 
 func (m *customHlsTsFilesModel) withSession(session sqlx.Session) HlsTsFilesModel {
-	return NewHlsTsFilesModel(sqlx.NewSqlConnFromSession(session))
+	return &customHlsTsFilesModel{
+		defaultHlsTsFilesModel: newHlsTsFilesModel(sqlx.NewSqlConnFromSession(session), WithDBType(m.dbType)),
+	}
 }

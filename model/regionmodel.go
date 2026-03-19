@@ -18,12 +18,14 @@ type (
 )
 
 // NewRegionModel returns a model for the database table.
-func NewRegionModel(conn sqlx.SqlConn) RegionModel {
+func NewRegionModel(conn sqlx.SqlConn, opts ...ModelOption) RegionModel {
 	return &customRegionModel{
-		defaultRegionModel: newRegionModel(conn),
+		defaultRegionModel: newRegionModel(conn, opts...),
 	}
 }
 
 func (m *customRegionModel) withSession(session sqlx.Session) RegionModel {
-	return NewRegionModel(sqlx.NewSqlConnFromSession(session))
+	return &customRegionModel{
+		defaultRegionModel: newRegionModel(sqlx.NewSqlConnFromSession(session), WithDBType(m.dbType)),
+	}
 }

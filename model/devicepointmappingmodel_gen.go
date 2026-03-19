@@ -83,18 +83,15 @@ type (
 	}
 )
 
-func newDevicePointMappingModel(conn sqlx.SqlConn) *defaultDevicePointMappingModel {
-	return newDevicePointMappingModelWithDBType(conn, DatabaseTypeMySQL)
-}
-
-func newDevicePointMappingModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) *defaultDevicePointMappingModel {
+func newDevicePointMappingModel(conn sqlx.SqlConn, opts ...ModelOption) *defaultDevicePointMappingModel {
+	o := applyModelOptions(opts)
 	tableName := "device_point_mapping"
 	fieldNames := builder.RawFieldNames(&DevicePointMapping{}, true)
 	rows := strings.Join(fieldNames, ",")
 	return &defaultDevicePointMappingModel{
 		conn:   conn,
 		table:  tableName,
-		dbType: dbType,
+		dbType: o.dbType,
 		rows:   rows,
 	}
 }

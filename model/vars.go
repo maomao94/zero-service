@@ -55,6 +55,38 @@ const (
 	DatabaseTypeTAOS     DatabaseType = "taos"
 )
 
+// ============================
+// Model Option 模式
+// ============================
+type modelOptions struct {
+	dbType DatabaseType
+}
+
+// ModelOption 用于配置 model 构造参数
+type ModelOption func(*modelOptions)
+
+// WithDBType 设置数据库类型，支持传入任意 ~string 类型（如 dbx.DatabaseType）。
+func WithDBType[T ~string](dbType T) ModelOption {
+	return func(o *modelOptions) {
+		switch DatabaseType(dbType) {
+		case DatabaseTypeMySQL, DatabaseTypePostgres, DatabaseTypeSQLite, DatabaseTypeTAOS:
+			o.dbType = DatabaseType(dbType)
+		default:
+			o.dbType = DatabaseTypeMySQL
+		}
+	}
+}
+
+func applyModelOptions(opts []ModelOption) modelOptions {
+	o := modelOptions{
+		dbType: DatabaseTypeMySQL,
+	}
+	for _, opt := range opts {
+		opt(&o)
+	}
+	return o
+}
+
 const dbTag = "db"
 
 // ============================

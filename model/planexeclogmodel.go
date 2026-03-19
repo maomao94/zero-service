@@ -17,18 +17,14 @@ type (
 	}
 )
 
-func NewPlanExecLogModel(conn sqlx.SqlConn) PlanExecLogModel {
+func NewPlanExecLogModel(conn sqlx.SqlConn, opts ...ModelOption) PlanExecLogModel {
 	return &customPlanExecLogModel{
-		defaultPlanExecLogModel: newPlanExecLogModel(conn),
-	}
-}
-
-func NewPlanExecLogModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) PlanExecLogModel {
-	return &customPlanExecLogModel{
-		defaultPlanExecLogModel: newPlanExecLogModelWithDBType(conn, dbType),
+		defaultPlanExecLogModel: newPlanExecLogModel(conn, opts...),
 	}
 }
 
 func (m *customPlanExecLogModel) withSession(session sqlx.Session) PlanExecLogModel {
-	return NewPlanExecLogModel(sqlx.NewSqlConnFromSession(session))
+	return &customPlanExecLogModel{
+		defaultPlanExecLogModel: newPlanExecLogModel(sqlx.NewSqlConnFromSession(session), WithDBType(m.dbType)),
+	}
 }

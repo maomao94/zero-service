@@ -46,8 +46,9 @@ type (
 	}
 
 	defaultRegionModel struct {
-		conn  sqlx.SqlConn
-		table string
+		conn   sqlx.SqlConn
+		table  string
+		dbType DatabaseType
 	}
 
 	Region struct {
@@ -77,10 +78,12 @@ type (
 	}
 )
 
-func newRegionModel(conn sqlx.SqlConn) *defaultRegionModel {
+func newRegionModel(conn sqlx.SqlConn, opts ...ModelOption) *defaultRegionModel {
+	o := applyModelOptions(opts)
 	return &defaultRegionModel{
-		conn:  conn,
-		table: "`region`",
+		conn:   conn,
+		table:  "`region`",
+		dbType: o.dbType,
 	}
 }
 

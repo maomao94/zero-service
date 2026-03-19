@@ -80,18 +80,15 @@ type (
 	}
 )
 
-func newModbusSlaveConfigModel(conn sqlx.SqlConn) *defaultModbusSlaveConfigModel {
-	return newModbusSlaveConfigModelWithDBType(conn, DatabaseTypeMySQL)
-}
-
-func newModbusSlaveConfigModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) *defaultModbusSlaveConfigModel {
+func newModbusSlaveConfigModel(conn sqlx.SqlConn, opts ...ModelOption) *defaultModbusSlaveConfigModel {
+	o := applyModelOptions(opts)
 	tableName := "modbus_slave_config"
 	fieldNames := builder.RawFieldNames(&ModbusSlaveConfig{}, true)
 	rows := strings.Join(fieldNames, ",")
 	return &defaultModbusSlaveConfigModel{
 		conn:   conn,
 		table:  tableName,
-		dbType: dbType,
+		dbType: o.dbType,
 		rows:   rows,
 	}
 }

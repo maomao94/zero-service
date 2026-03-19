@@ -57,22 +57,18 @@ const (
 	expiryDeviation = 0.05
 )
 
-func NewPlanExecItemModel(conn sqlx.SqlConn) PlanExecItemModel {
+func NewPlanExecItemModel(conn sqlx.SqlConn, opts ...ModelOption) PlanExecItemModel {
 	return &customPlanExecItemModel{
-		defaultPlanExecItemModel: newPlanExecItemModel(conn, DatabaseTypeMySQL),
-		unstableExpiry:           mathx.NewUnstable(expiryDeviation),
-	}
-}
-
-func NewPlanExecItemModelWithDBType(conn sqlx.SqlConn, dbType DatabaseType) PlanExecItemModel {
-	return &customPlanExecItemModel{
-		defaultPlanExecItemModel: newPlanExecItemModel(conn, dbType),
+		defaultPlanExecItemModel: newPlanExecItemModel(conn, opts...),
 		unstableExpiry:           mathx.NewUnstable(expiryDeviation),
 	}
 }
 
 func (m *customPlanExecItemModel) withSession(session sqlx.Session) PlanExecItemModel {
-	return NewPlanExecItemModelWithDBType(sqlx.NewSqlConnFromSession(session), m.dbType)
+	return &customPlanExecItemModel{
+		defaultPlanExecItemModel: newPlanExecItemModel(sqlx.NewSqlConnFromSession(session), WithDBType(m.dbType)),
+		unstableExpiry:           mathx.NewUnstable(expiryDeviation),
+	}
 }
 
 func (m *customPlanExecItemModel) LockTriggerItem(ctx context.Context, expireIn time.Duration) (*PlanExecItem, error) {
@@ -420,7 +416,6 @@ func (m *customPlanExecItemModel) GetBatchStatusCounts(ctx context.Context, batc
 
 func (m *customPlanExecItemModel) GetBatchTotalExecItems(ctx context.Context, batchPk int64) (int64, error) {
 	selectBuilder := m.SelectBuilder().Columns("COUNT(*) as count").
-		From(m.table).
 		Where("batch_pk = ?", batchPk).
 		Where("del_state = ?", 0)
 	selectSQL, selectArgs, err := selectBuilder.ToSql()

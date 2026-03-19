@@ -24,7 +24,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	dbType := dbx.ParseDatabaseType(c.DB.DataSource)
 	return &ServiceContext{
 		Config:                 c,
-		ModbusSlaveConfigModel: model.NewModbusSlaveConfigModelWithDBType(dbx.New(c.DB.DataSource), model.DatabaseType(dbType)),
+		ModbusSlaveConfigModel: model.NewModbusSlaveConfigModel(dbx.New(c.DB.DataSource), model.WithDBType(dbType)),
 		ModbusConfigConverter:  model.NewModbusConfigConverter(),
 		ModbusClientPool:       modbusx.NewModbusClientPool(&c.ModbusClientConf, c.ModbusPool),
 		Manager:                modbusx.NewPoolManager(),

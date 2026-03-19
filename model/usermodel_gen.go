@@ -46,8 +46,9 @@ type (
 	}
 
 	defaultUserModel struct {
-		conn  sqlx.SqlConn
-		table string
+		conn   sqlx.SqlConn
+		table  string
+		dbType DatabaseType
 	}
 
 	User struct {
@@ -66,10 +67,12 @@ type (
 	}
 )
 
-func newUserModel(conn sqlx.SqlConn) *defaultUserModel {
+func newUserModel(conn sqlx.SqlConn, opts ...ModelOption) *defaultUserModel {
+	o := applyModelOptions(opts)
 	return &defaultUserModel{
-		conn:  conn,
-		table: "`user`",
+		conn:   conn,
+		table:  "`user`",
+		dbType: o.dbType,
 	}
 }
 

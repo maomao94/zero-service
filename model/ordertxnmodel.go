@@ -18,12 +18,14 @@ type (
 )
 
 // NewOrderTxnModel returns a model for the database table.
-func NewOrderTxnModel(conn sqlx.SqlConn) OrderTxnModel {
+func NewOrderTxnModel(conn sqlx.SqlConn, opts ...ModelOption) OrderTxnModel {
 	return &customOrderTxnModel{
-		defaultOrderTxnModel: newOrderTxnModel(conn),
+		defaultOrderTxnModel: newOrderTxnModel(conn, opts...),
 	}
 }
 
 func (m *customOrderTxnModel) withSession(session sqlx.Session) OrderTxnModel {
-	return NewOrderTxnModel(sqlx.NewSqlConnFromSession(session))
+	return &customOrderTxnModel{
+		defaultOrderTxnModel: newOrderTxnModel(sqlx.NewSqlConnFromSession(session), WithDBType(m.dbType)),
+	}
 }

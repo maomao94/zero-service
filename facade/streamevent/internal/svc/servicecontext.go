@@ -22,10 +22,11 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	if c.DisableStmtLog {
 		sqlx.DisableStmtLog()
 	}
+	dbType := dbx.ParseDatabaseType(c.DB.DataSource)
 	svcCtx := &ServiceContext{
 		Config: c,
 	}
 	svcCtx.TaosConn = dbx.New(c.TaosDB.DataSource)
-	svcCtx.DevicePointMappingModel = model.NewDevicePointMappingModel(dbx.New(c.DB.DataSource))
+	svcCtx.DevicePointMappingModel = model.NewDevicePointMappingModel(dbx.New(c.DB.DataSource), model.WithDBType(dbType))
 	return svcCtx
 }

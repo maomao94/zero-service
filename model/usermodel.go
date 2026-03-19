@@ -18,12 +18,14 @@ type (
 )
 
 // NewUserModel returns a model for the database table.
-func NewUserModel(conn sqlx.SqlConn) UserModel {
+func NewUserModel(conn sqlx.SqlConn, opts ...ModelOption) UserModel {
 	return &customUserModel{
-		defaultUserModel: newUserModel(conn),
+		defaultUserModel: newUserModel(conn, opts...),
 	}
 }
 
 func (m *customUserModel) withSession(session sqlx.Session) UserModel {
-	return NewUserModel(sqlx.NewSqlConnFromSession(session))
+	return &customUserModel{
+		defaultUserModel: newUserModel(sqlx.NewSqlConnFromSession(session), WithDBType(m.dbType)),
+	}
 }

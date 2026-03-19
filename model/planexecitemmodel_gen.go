@@ -93,14 +93,15 @@ type (
 	}
 )
 
-func newPlanExecItemModel(conn sqlx.SqlConn, dbType DatabaseType) *defaultPlanExecItemModel {
+func newPlanExecItemModel(conn sqlx.SqlConn, opts ...ModelOption) *defaultPlanExecItemModel {
+	o := applyModelOptions(opts)
 	tableName := "plan_exec_item"
 	fieldNames := builder.RawFieldNames(&PlanExecItem{}, true)
 	rows := strings.Join(fieldNames, ",")
 	return &defaultPlanExecItemModel{
 		conn:             conn,
 		table:            tableName,
-		dbType:           dbType,
+		dbType:           o.dbType,
 		planExecItemRows: rows,
 	}
 }
