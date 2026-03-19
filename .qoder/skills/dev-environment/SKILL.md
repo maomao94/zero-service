@@ -92,13 +92,14 @@ l     # ls -CF
    git reset --soft HEAD~N
    git commit -m "优化后的提交描述"
    ```
-3. **一次性推送到所有远程仓库**：
+3. **一次性推送到所有远程仓库**（通过 `git remote -v` 获取实际 remote 名称）：
    ```bash
-   git push origin master
-   git push allcore master
+   # 遍历所有 remote 逐一推送，不要硬编码 remote 名称
+   git remote | xargs -I {} git push {} master
    ```
-4. **绝对禁止：已经推送到任何远程仓库的 commit 不能再压缩**。压缩只能在推送前做，否则会导致历史分叉，且 GitLab master 分支保护不允许 force push。
-5. **如果某个远程推送失败**（如 GitHub 凭据问题），提示用户手动推送，不要继续对已推送到其他远程的 commit 做任何修改。
+4. **绝对禁止：已经推送到任何远程仓库的 commit 不能再压缩**。压缩只能在推送前做，否则会导致历史分叉，且内网 GitLab master 分支保护不允许 force push。
+5. **如果某个远程推送失败**（如凭据问题），提示用户手动推送，不要继续对已推送到其他远程的 commit 做任何修改。
+6. **敏感信息**：skill 文档中不要出现内网仓库地址、remote 名称等敏感信息，统一用 `git remote -v` 动态获取。
 
 ## 常用工作流
 
