@@ -1,323 +1,349 @@
-# zero-service
+# Zero-Service
 
-## 项目简介
+基于 [go-zero](https://github.com/zeromicro/go-zero) 的工业级微服务脚手架，面向物联网数采、异步任务调度、实时通信等场景，提供开箱即用的多协议接入和高性能数据处理能力。
 
-`zero-service` 是一个基于 [go-zero](https://github.com/zeromicro/go-zero) 的微服务脚手架，旨在帮助开发者快速搭建高性能、可扩展的微服务应用。
+## 特性
 
-- 🚀 基于 go-zero 框架，提供高性能的微服务架构
-- 📦 集成多种协议处理能力，包括 gRPC、HTTP、IEC 104、Modbus、MQTT
-- ⏱️ 支持异步任务调度和计划任务管理
-- 📊 提供完整的数采平台解决方案
-- 🔧 内置多种工具和组件，简化开发流程
-- 📱 支持实时通信和消息推送
+- **多协议接入** -- IEC 60870-5-104 / Modbus TCP/RTU / MQTT / gRPC / HTTP，覆盖电力、工业自动化、物联网等场景
+- **数采平台** -- 完整的 IEC 104 主站实现，支持 Kafka/MQTT/gRPC 三协议并行推送，内嵌 SQLite 轻量化配置管理
+- **异步任务调度** -- 基于 asynq 的分布式任务队列 + 自研计划任务管理引擎，支持 HTTP/gRPC 回调
+- **实时通信** -- SocketIO 消息网关，支持房间管理、广播推送、MQTT 桥接和 Token 鉴权
+- **容器管理** -- Docker 容器生命周期管理，提供 Kubernetes-like 的 Pod 抽象接口
+- **地理信息** -- H3 网格、GeoHash 编解码、电子围栏、坐标系转换
+- **BFF 网关** -- 统一的 API 入口，聚合 gRPC 后端服务并提供 grpc-gateway HTTP 访问
 
 ## 系统架构
 
-### 1. 整体架构
+```
+                    +-----------------+
+                    |   Frontend/App  |
+                    +--------+--------+
+                             |
+              +--------------+--------------+
+              |                             |
+     +--------v--------+         +---------v---------+
+     |   gtw (BFF)     |         | socketgtw/push    |
+     | HTTP + gRPC-GW  |         | SocketIO 实时通信  |
+     +--------+--------+         +---------+---------+
+              |                             |
+    +---------+---------+         +---------+---------+
+    |  gRPC Service Mesh |        |   MQTT Broker     |
+    +----+----+----+----+        +-------------------+
+         |    |    |
+   +-----+ +--+--+ +------+
+   |       |      |        |
++--v--+ +--v--+ +-v----+ +-v---------+
+|trig | |file | |alarm | |bridgeXxx  |
+|ger  | |     | |      | |modbus/mqtt|
++-----+ +-----+ +------+ +-----------+
+                                |
+        +--------+---------+----+
+        |        |         |
+   +----v---+ +--v----+ +-v--------+
+   |ieccaller| |iecstash| |streamevent|
+   |IEC 104 | |Kafka消费| |数据落库   |
+   +----+---+ +--+----+ +----+-----+
+        |        |            |
+   +----v--------v------------v----+
+   |       Kafka / Redis / DB      |
+   |  TDengine / OSS / SQLite      |
+   +-------------------------------+
+```
 
-项目采用分层架构设计，主要包括以下几层：
-
-- **接入层**：包括 BFF 网关和 SocketIO 实时通信，负责处理外部请求和实时消息
-- **核心服务层**：包含多个微服务，如 IEC 104 数采平台、异步任务调度服务、文件服务等
-- **对外接口层**：提供统一的 gRPC 接口，支持多语言客户端
-- **基础设施层**：包括 Kafka 消息队列、Redis 缓存、数据库和 Docker 容器等
-
-### 2. 数采平台架构
+### 数采平台架构
 
 <div align="center">
   <img src="docs/images/iec-architecture.png" alt="IEC 104 数采平台架构图" style="max-width: 80%; height: auto;" />
 </div>
 
-### 3. Trigger 服务架构
+## 项目结构
 
-Trigger 服务提供两种核心业务模式：
-- **异步任务调度**：基于 asynq 实现的分布式任务队列，支持 HTTP/gRPC 回调
-- **计划任务管理**：基于数据库扫描的定时巡检任务调度，支持计划、批次、执行项的全生命周期管理
+```
+zero-service/
+├── app/                          # 核心微服务
+│   ├── ieccaller/                # IEC 104 主站 - 多从站通信、三协议推送
+│   ├── iecstash/                 # IEC 104 数据合并 - Kafka 消费、ASDU 压缩
+│   ├── iecagent/                 # IEC 104 代理管理
+│   ├── trigger/                  # 异步任务调度 + 计划任务管理
+│   ├── file/                     # 文件服务 - 分片流上传、OSS 集成
+│   ├── gis/                      # 地理信息 - H3/GeoHash/围栏/坐标转换
+│   ├── alarm/                    # 告警服务 - 多级告警、钉钉/飞书集成
+│   ├── podengine/                # 容器管理 - Docker 容器生命周期管理
+│   ├── bridgemodbus/             # Modbus TCP/RTU 协议桥接
+│   ├── bridgemqtt/               # MQTT 协议桥接
+│   ├── bridgegtw/                # HTTP 代理转发网关
+│   ├── bridgedump/               # 南瑞反向隔离装置文件生成
+│   ├── lalhook/                  # LAL 流媒体回调服务
+│   ├── lalproxy/                 # LAL 代理服务
+│   ├── logdump/                  # 日志导出服务
+│   ├── xfusionmock/              # 融合模拟服务
+│   └── mcpserver/                # MCP 服务器
+├── socketapp/                    # 实时通信模块
+│   ├── socketgtw/                # SocketIO 网关 - 连接管理、房间、消息路由
+│   └── socketpush/               # SocketIO 推送 - Token 生成、gRPC 推送接口
+├── gtw/                          # BFF 网关 - HTTP/gRPC 聚合入口
+├── facade/                       # 对外接口层
+│   └── streamevent/              # 统一流数据事件协议（跨语言 gRPC）
+├── common/                       # 公共组件库
+│   ├── iec104/                   # IEC 104 协议完整实现
+│   ├── socketiox/                # SocketIO 服务器封装
+│   ├── asynqx/                   # asynq 任务队列扩展
+│   ├── nacosx/                   # Nacos 服务注册/发现
+│   ├── modbusx/                  # Modbus 协议扩展
+│   ├── mqttx/                    # MQTT 协议扩展
+│   ├── ossx/                     # 对象存储（MinIO/阿里OSS/腾讯COS）
+│   ├── dbx/                      # 数据库扩展（多库支持）
+│   ├── gisx/                     # GIS 地理信息处理
+│   ├── dockerx/                  # Docker 操作封装
+│   ├── imagex/                   # 图像处理和 EXIF 提取
+│   ├── tool/                     # 通用工具函数
+│   ├── Interceptor/              # gRPC 拦截器
+│   └── ...                       # 更多组件
+├── model/                        # 数据库模型和 SQL 脚本
+├── deploy/                       # Docker Compose 编排配置
+├── docs/                         # 详细文档
+├── swagger/                      # Swagger API 文档
+├── third_party/                  # 第三方 Proto 定义
+└── util/                         # 工具集
+```
 
-详细介绍请查看：[Trigger 服务架构](./docs/trigger.md)
+## 核心服务
 
-## 核心功能模块
+### IEC 104 数采平台
 
-### 1. BFF 网关 (`gtw`)
+完整的 IEC 60870-5-104 数据采集解决方案，由三个服务组件协同工作：
 
-- 🔗 项目的 BFF 层网关，负责聚合后端微服务并为前端提供统一接口
-- 📡 作为 gRPC 服务的入口，同时支持 grpc-gateway 功能
-- 🌐 提供 HTTP 和 gRPC 两种访问方式
-- 🛡️ 内置认证和授权机制，保障 API 安全
-- 📊 提供请求监控和统计功能
+| 服务 | 职责 | 关键能力 |
+|------|------|----------|
+| **ieccaller** | IEC 104 主站 | 多从站并行通信、Kafka/MQTT/gRPC 三协议推送、内嵌 SQLite 动态配置、弱校验模式 |
+| **iecstash** | 数据合并 | Kafka 消费、ASDU 压缩合并、Chunk 批量处理、下游 RPC 转发 |
+| **streamevent** | 数据落库 | gRPC 接收、点位配置管理、TDengine 时序存储、多协议消息聚合 |
 
-### 2. 核心服务 (`app`)
+**数据流**：
+```
+IEC 104 从站 --> ieccaller --> Kafka --> iecstash --> streamevent --> TDengine
+                          |-> MQTT --> 自定义系统
+                          |-> gRPC --> streamevent --> TDengine
+```
 
-#### 2.1 IEC 104 数采平台 (`iec104`)
+支持 12 种 ASDU 信息体类型：单点遥信、双点遥信、标度化遥测值、短浮点数遥测值、累计量等。
 
-- 📊 完整的 IEC 104 数采平台解决方案
-- **ieccaller 服务**：对接 104 从站，实现 IEC 104 主站功能，支持多协议数据推送
-- **iecstash 服务**：消费 Kafka 消息，对 ASDU 数据进行压缩合并处理
-- **streamevent 服务**：接收压缩合并后的 ASDU 数据，使用 gRPC 实现
-- 📄 详细文档：[IEC 104 数采平台](./docs/iec104.md)
-- 📋 协议文档：[IEC 104 消息对接文档](./docs/iec104-protocol.md)
+详细文档：[IEC 104 数采平台](./docs/iec104.md) | [IEC 104 消息对接文档](./docs/iec104-protocol.md)
 
-#### 2.2 异步任务调度服务 (`trigger`)
+### Trigger 异步任务调度
 
-- ⏱️ 基于 asynq 实现定时/延时任务调度
-- 📅 基于数据库扫描的计划任务管理（自定义实现）
-- 🔁 支持 HTTP/gRPC 回调，确保任务的最终一致性
-- 📦 使用 Redis 存储任务队列，支持多节点部署与高可用
-- 🔧 支持任务归档、删除与自动重试等管理能力
-- 📊 提供执行项仪表板统计信息
-- 📄 协议定义：[`trigger.proto`](app/trigger/trigger.proto)
+提供两种核心业务模式：
 
-#### 2.3 文件服务 (`file`)
+**1. 异步任务调度（基于 asynq）**
+- 分布式任务队列，Redis 存储
+- 支持定时/延时任务
+- HTTP POST JSON 和 gRPC 两种回调方式
+- 自动重试、归档、删除等生命周期管理
+- 任务历史统计和仪表板
 
-- 📁 提供文件服务功能
-- 📤 支持通过 gRPC 实现分片流上传
-- ☁️ 集成对象存储（OSS）上传能力
-- 📱 支持视频流捕获和处理
-- 🔒 提供文件访问控制和权限管理
+<div align="center">
+  <img src="docs/images/trigger-flow.png" alt="Trigger 异步任务回调流程" style="max-width: 80%; height: auto;" />
+</div>
 
-#### 2.4 流媒体钩子服务 (`lalhook`)
+**2. 计划任务管理（自研引擎）**
+- 基于数据库扫描的定时巡检调度
+- Plan -> Batch -> ExecItem 三级模型
+- 完整的状态机：WAITING -> RUNNING -> COMPLETED/FAILED/DELAYED/ONGOING/TERMINATED
+- 分布式锁防重、执行日志追踪、批次/计划自动状态聚合
 
-- 🔧 集成 LAL 回调接口
-- 📦 集成 ts 录制记录回调，提供分片播放能力
-- 📱 支持直播推流和拉流事件处理
-- 📊 提供流媒体事件统计和监控
+详细文档：[Trigger 服务架构](./docs/trigger.md)
 
-#### 2.5 HTTP 代理转发网关 (`bridgegtw`)
+### SocketIO 实时通信
 
-- 🌉 提供高性能的 HTTP 请求代理转发功能
-- 🔀 支持多后端服务负载均衡与请求路由
-- 🔒 内置访问控制与安全防护机制
-- 📊 提供请求监控与统计功能
-- 🚀 支持高并发处理和低延迟转发
+由 socketgtw + socketpush 两个服务组成：
 
-#### 2.6 南瑞反向隔离装置文件生成服务 (`bridgedump`)
+| 服务 | 职责 |
+|------|------|
+| **socketgtw** | 网关服务 -- 客户端连接管理、房间管理、消息路由、Token 认证 |
+| **socketpush** | 推送服务 -- Token 生成/验证、gRPC 推送接口、后端服务调用入口 |
 
-- 📄 生成符合南瑞反向隔离装置要求的文本文件
-- 📑 支持多种数据类型的文件生成
-- 📤 与 filebeat 无缝集成，自动采集生成的 txt 文件
-- 📥 通过 filebeat 将数据分类发送至不同的 Kafka topic
-- 🔧 提供文件生成状态监控和错误处理
+核心能力：
+- 房间加入/离开/广播、全局广播
+- 单播/批量推送（按 Session 或 Metadata 寻址）
+- 会话剔除和元数据管理
+- MQTT 桥接 -- 将 MQTT Topic 映射到 SocketIO Room，支持事件映射配置
+- 统计信息推送和房间加载错误检测
 
-#### 2.7 Modbus 协议处理服务 (`bridgemodbus`)
+前端对接文档：[SocketIO 消息网关客户端对接文档](./docs/socketiox-documentation.md)
 
-- 📦 提供 Modbus TCP/RTU 协议处理能力
-- 🔗 集成 GRPC 服务
-- 📄 协议定义：[`bridgemodbus.proto`](app/bridgemodbus/bridgemodbus.proto)
-- 🔧 支持寄存器读写、线圈操作等 Modbus 标准功能
-- 📊 提供 Modbus 设备通信状态监控
+### 其他服务
 
-#### 2.8 MQTT 协议处理服务 (`bridgemqtt`)
+| 服务 | 描述 |
+|------|------|
+| **file** | 文件服务 -- gRPC 分片流上传、OSS 集成（MinIO/阿里OSS/腾讯COS）、视频流捕获 |
+| **gis** | 地理信息服务 -- H3 网格编解码、GeoHash、电子围栏生成和检测、坐标系转换（WGS84/GCJ02/BD09） |
+| **alarm** | 告警服务 -- 多级告警（P0-P3）、钉钉/飞书通知集成 |
+| **podengine** | 容器管理 -- Docker 容器 CRUD、Pod 抽象模型、资源统计（CPU/内存/网络/存储）、镜像管理 |
+| **bridgemodbus** | Modbus TCP/RTU 协议桥接 -- 线圈和寄存器读写、设备配置管理、gRPC 集成 |
+| **bridgemqtt** | MQTT 协议桥接 -- 消息发布/订阅、带追踪的推送、gRPC 集成 |
+| **bridgegtw** | HTTP 代理转发网关 -- 多后端负载均衡、请求路由 |
+| **bridgedump** | 南瑞反向隔离装置文件生成 -- 文本文件生成、Filebeat 集成、Kafka 分类发送 |
+| **lalhook** | LAL 流媒体回调 -- TS 录制回调、推流/拉流事件处理、分片播放 |
+| **logdump** | 日志导出服务 |
 
-- 📦 提供 MQTT 协议处理能力
-- 🔗 集成 GRPC 服务
-- 📄 协议定义：[`bridgemqtt.proto`](app/bridgemqtt/bridgemqtt.proto)
-- 📄 转发协议定义：[`streamevent.proto`](facade/streamevent/streamevent.proto)
-- 🔧 支持 MQTT 消息发布和订阅
-- 📊 提供 MQTT 消息传输状态监控
+### BFF 网关 (gtw)
 
-#### 2.9 容器管理服务 (`podengine`)
+项目的统一 API 入口，功能包括：
+- gRPC 服务聚合，同时支持 grpc-gateway 提供 HTTP 访问
+- 用户认证（JWT）、微信支付回调、短信验证码
+- 文件上传（单文件/分片/流式）、文件下载
+- CORS 跨域支持
 
-- 📦 提供 Docker 容器管理能力
-- 🔗 集成 GRPC 服务，提供 Kubernetes-like 的 Pod 管理接口
-- 📊 支持容器统计信息获取，包括 CPU、内存、网络和存储使用情况
-- 🖼️ 支持镜像管理，包括镜像列表查询
-- 📄 协议定义：[`podengine.proto`](app/podengine/podengine.proto)
-- 🔧 支持容器的创建、启动、停止、重启、删除等操作
+### 对外接口层 (facade/streamevent)
 
-### 3. 对外接口层 (`facade`)
+统一的跨语言流数据事件协议，基于 gRPC 定义，支持：
+- MQTT / WebSocket / Kafka 消息接收
+- IEC 104 ASDU 消息推送（PushChunkAsdu）
+- Socket 上行消息处理
+- 计划任务事件处理和通知
 
-- 🌐 提供系统的对外接口，基于 gRPC 协议
-- 🔄 支持多语言客户端
-- 📡 **streamevent 协议**：用于处理流式数据事件，支持与语言无关的数据推送
-- 📦 提供统一的接口规范和错误处理机制
-- 🔧 支持接口版本管理和向后兼容
-
-### 4. SocketIO 实时通信模块 (`socketapp`)
-
-- 📱 提供简单的 SocketIO 实时通信解决方案
-- **socketgtw 服务**：SocketIO 网关服务，负责处理客户端连接、房间管理、消息路由和 Token 认证
-- **socketpush 服务**：SocketIO 推送服务，负责 Token 生成和提供 SocketIO 推送相关的 gRPC 接口
-- 📄 前端对接文档：[SocketIO 消息网关客户端对接文档](docs/socketiox-documentation.md)
-- 🔧 支持集群部署和负载均衡
-- 📊 提供连接状态监控和消息统计
+任何语言实现 `streamevent.proto` 即可与数采平台交互。
 
 ## 技术栈
 
-| 类别 | 技术/框架 | 用途 |
-|------|-----------|------|
-| **基础框架** | go-zero | 微服务框架，提供高性能的 RPC 和 HTTP 服务 |
-| **任务调度** | asynq | 异步任务调度，支持定时/延时任务 |
-| **消息队列** | Kafka | 高吞吐量的分布式消息队列 |
-| **缓存** | Redis | 用于任务队列存储和缓存 |
-| **数据库** | SQLite、MySQL、PostgreSQL | 关系型数据库，用于存储业务数据 |
-| **时序数据库** | TDengine | 用于存储时序数据，如采集的传感器数据 |
-| **容器** | Docker | 容器化部署和管理 |
-| **实时通信** | SocketIO | 实时双向通信，支持浏览器和移动端 |
-| **RPC 框架** | gRPC | 高性能的远程过程调用框架 |
-| **协议** | HTTP、IEC 104、Modbus、MQTT | 支持多种通信协议 |
-| **云存储** | OSS | 对象存储服务，用于存储文件 |
-| **地理位置** | H3、GeoHash | 地理位置索引和计算 |
-| **监控** | OpenTelemetry | 分布式追踪和监控 |
+| 类别 | 技术 |
+|------|------|
+| **微服务框架** | go-zero |
+| **RPC** | gRPC + grpc-gateway + Protocol Buffers |
+| **消息队列** | Kafka (go-queue) |
+| **任务队列** | asynq + Redis |
+| **实时通信** | SocketIO (fork of socket.io-golang) |
+| **工业协议** | IEC 60870-5-104 (go-iecp5) / Modbus (grid-x/modbus) / MQTT (paho.mqtt) |
+| **关系数据库** | MySQL / PostgreSQL / SQLite |
+| **时序数据库** | TDengine |
+| **对象存储** | MinIO / 阿里 OSS / 腾讯 COS |
+| **服务发现** | Nacos |
+| **地理计算** | H3 (uber/h3-go) / GeoHash / orb / go-geom |
+| **容器管理** | Docker SDK |
+| **监控追踪** | OpenTelemetry / Prometheus |
+| **容器编排** | Docker Compose / Kubernetes (可选) |
 
 ## 快速开始
 
-### 1. 环境要求
+### 环境要求
 
-- Go 1.18+ 
-- Docker (可选，用于容器管理)
-- Kafka (可选，用于消息队列)
-- Redis (可选，用于任务队列和缓存)
-- MySQL/PostgreSQL (可选，用于持久化存储)
+- Go 1.25+
+- Redis（任务队列和缓存）
+- 可选：Kafka / MySQL / PostgreSQL / TDengine / Docker
 
-### 2. 安装依赖
+### 安装
 
 ```bash
+git clone https://github.com/maomao94/zero-service.git
+cd zero-service
 go mod tidy
 ```
 
-### 3. 配置文件
-
-各服务的配置文件位于 `app/{service}/etc/` 目录下，根据实际环境修改配置。
-
-### 4. 启动服务
-
-#### 启动单个服务
+### 启动服务
 
 ```bash
-# 启动 trigger 服务
+# 启动单个服务（以 trigger 为例）
 cd app/trigger
 go run trigger.go -f etc/trigger.yaml
-```
 
-#### 启动多个服务
-
-可以使用 Docker Compose 启动多个服务：
-
-```bash
+# 或使用 Docker Compose 启动
 cd deploy
 docker-compose up -d
 ```
 
+### 配置
+
+各服务配置文件位于 `app/{service}/etc/` 目录下。典型配置项包括：
+- 服务监听地址和端口
+- Redis / Kafka / 数据库连接
+- Nacos 服务注册配置
+- 协议特定配置（IEC 104 从站列表、MQTT Broker 等）
+
 ## 开发指南
 
-### 1. 代码结构
+### 新增服务流程
 
+1. 在 `app/` 下创建服务目录
+2. 编写 `.proto` 文件定义服务接口
+3. 运行 `gen.sh` 生成代码框架
+4. 在 `internal/logic/` 实现业务逻辑
+5. 在 `etc/` 下创建配置文件
+6. 编写入口 `main` 文件启动服务
+
+### 代码生成
+
+```bash
+# 进入服务目录
+cd app/{service}
+
+# 执行代码生成
+./gen.sh
 ```
-zero-service/
-├── app/             # 核心服务
-│   ├── iec104/      # IEC 104 数采平台
-│   ├── trigger/     # 异步任务调度服务
-│   ├── file/        # 文件服务
-│   └── ...          # 其他服务
-├── common/          # 公共组件和工具
-│   ├── asynqx/      # asynq 扩展
-│   ├── socketiox/   # SocketIO 扩展
-│   ├── tool/        # 工具函数
-│   └── ...          # 其他组件
-├── docs/            # 文档
-├── facade/          # 对外接口
-└── deploy/          # 部署配置
+
+项目提供数据库模型生成脚本：
+- `model/genModel.sh` -- 通用模型生成
+- `model/genPgModel.sh` -- PostgreSQL 专用
+- `model/genModelSql.sh` -- SQL 脚本生成
+
+### gRPC API
+
+各服务的 Proto 文件即 API 定义，位于 `app/{service}/{service}.proto`，Swagger 文档位于 `swagger/` 目录：
+- `trigger.swagger.json`
+- `podengine.swagger.json`
+- `streamevent.swagger.json`
+- 更多见 swagger 目录
+
+### 错误码规范
+
+项目遵循 `google.rpc.Code` 错误码标准，HTTP 和 gRPC 错误码映射关系参见 [code.md](./code.md)。
+
+## 部署
+
+### Docker 部署
+
+```bash
+cd deploy
+# 按需修改 docker-compose.yml
+docker-compose up -d
 ```
 
-### 2. 服务开发流程
+Docker Compose 默认包含：Kafka、Filebeat、ieccaller、bridgegtw、bridgedump 等核心服务。
 
-1. **定义服务协议**：在 `.proto` 文件中定义服务接口
-2. **生成代码**：使用 `gen.sh` 脚本生成服务代码
-3. **实现业务逻辑**：在 `internal/logic/` 目录下实现业务逻辑
-4. **配置服务**：在 `etc/` 目录下配置服务参数
-5. **启动服务**：运行服务主文件
+各服务目录下提供独立的 `Dockerfile`，支持单独构建：
 
-### 3. 代码规范
+```bash
+cd app/{service}
+docker build -t zero-service/{service}:latest .
+```
 
-- 遵循 Go 语言规范和最佳实践
-- 使用 go-zero 框架的代码风格
-- 保持代码简洁、可读性强
-- 适当添加注释，特别是公共接口和复杂逻辑
+### 集群部署
 
-## 部署指南
+- **服务发现**：通过 Nacos 实现服务注册与发现
+- **负载均衡**：Nginx / gRPC 内置负载均衡
+- **高可用**：Redis Cluster + Kafka 集群 + 数据库主从
+- **监控**：OpenTelemetry -> Prometheus -> Grafana
 
-### 1. 单机部署
+## 文档
 
-1. **安装依赖**：安装所需的外部服务（Kafka、Redis、数据库等）
-2. **配置服务**：修改各服务的配置文件
-3. **启动服务**：按顺序启动各个服务
-
-### 2. Docker 部署
-
-1. **构建镜像**：使用各服务目录下的 Dockerfile 构建镜像
-2. **配置 Docker Compose**：修改 `deploy/docker-compose.yml` 文件
-3. **启动服务**：运行 `docker-compose up -d` 启动所有服务
-
-### 3. 集群部署
-
-1. **负载均衡**：使用 Nginx 或其他负载均衡器分发请求
-2. **服务发现**：使用 Nacos 等服务发现机制
-3. **数据一致性**：确保 Redis、Kafka 等服务的高可用
-4. **监控告警**：部署监控系统，及时发现和处理问题
-
-## API 文档
-
-### 1. gRPC API
-
-各服务的 gRPC API 定义在对应的 `.proto` 文件中，可使用 gRPC 客户端工具生成对应语言的客户端代码。
-
-### 2. HTTP API
-
-对于启用了 grpc-gateway 的服务，可以通过 HTTP 请求访问 gRPC API。
-
-### 3. 接口文档
-
-- [IEC 104 数采平台](./docs/iec104.md)
-- [IEC 104 消息对接文档](./docs/iec104-protocol.md)
-- [SocketIO 消息网关客户端对接文档](docs/socketiox-documentation.md)
-
-## 监控与运维
-
-### 1. 日志管理
-
-- 各服务的日志默认输出到 `logs/` 目录
-- 可以配置日志级别和输出格式
-- 推荐使用 ELK 等日志收集和分析系统
-
-### 2. 指标监控
-
-- 集成 OpenTelemetry 进行分布式追踪
-- 可以使用 Prometheus 采集和监控指标
-- 可以使用 Grafana 展示监控面板
-
-### 3. 常见问题排查
-
-- **服务启动失败**：检查配置文件和依赖服务
-- **任务执行失败**：查看日志和任务状态
-- **消息传递延迟**：检查 Kafka 集群状态
-- **性能问题**：分析系统资源使用情况和瓶颈
-
-## 贡献指南
-
-1. **Fork 仓库**：在 GitHub 上 Fork 项目仓库
-2. **创建分支**：创建特性分支或修复分支
-3. **提交代码**：提交代码并编写清晰的提交信息
-4. **运行测试**：确保代码通过测试
-5. **创建 Pull Request**：提交 Pull Request 并描述更改内容
+| 文档 | 描述 |
+|------|------|
+| [IEC 104 数采平台](./docs/iec104.md) | 数采平台架构设计、服务组件、数据流、TDengine 表结构、配置管理 |
+| [IEC 104 消息对接文档](./docs/iec104-protocol.md) | IEC 104 协议详细对接规范、ASDU 类型、消息格式、多协议推送配置 |
+| [Trigger 服务架构](./docs/trigger.md) | 异步任务调度和计划任务管理的架构设计、API、状态流转、部署 |
+| [SocketIO 客户端对接文档](./docs/socketiox-documentation.md) | 前端 SocketIO 对接指南、事件体系、数据结构、MQTT 桥接、鉴权 |
+| [KML/KMZ 文件指南](./docs/kml-kmz-guide.md) | 无人机航点任务 KML 文件结构和使用指南 |
+| [错误码规范](./code.md) | google.rpc.Code 错误码映射和使用规范 |
 
 ## 许可证
 
-本项目采用 MIT 许可证，详见 [LICENSE](LICENSE) 文件。
+[MIT License](LICENSE)
 
 Copyright (c) 2026 zero-service
 
-## 联系方式
+## 链接
 
-- 项目地址：[https://github.com/maomao94/zero-service](https://github.com/yourusername/zero-service)
-- 问题反馈：[GitHub Issues](https://github.com/maomao94/zero-service/issues)
-
-## 鸣谢
-
-- [go-zero](https://github.com/zeromicro/go-zero) - 高性能的微服务框架
-- [asynq](https://github.com/hibiken/asynq/) - 可靠的异步任务队列
-- [IEC104协议实现包](https://github.com/wendy512/iec104) - IEC 104 协议实现
-- 所有贡献者和支持者
-
----
-
-**零服务，无限可能！** 🚀
+- GitHub: [https://github.com/maomao94/zero-service](https://github.com/maomao94/zero-service)
+- Issues: [https://github.com/maomao94/zero-service/issues](https://github.com/maomao94/zero-service/issues)
+- go-zero: [https://github.com/zeromicro/go-zero](https://github.com/zeromicro/go-zero)
+- asynq: [https://github.com/hibiken/asynq](https://github.com/hibiken/asynq)
+- go-iecp5: [https://github.com/wendy512/iec104](https://github.com/wendy512/iec104)

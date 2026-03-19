@@ -2,7 +2,66 @@
 
 ## 1. 概述
 
-本文档用于指导前端浏览器客户端对接SocketIO消息网关服务，实现实时双向通信，包括默认事件和自定义事件，支持ack回调和事件返回机制。
+本文档用于指导前端浏览器客户端对接 SocketIO 消息网关服务，实现实时双向通信，包括默认事件和自定义事件，支持 ack 回调和事件返回机制。
+
+### 1.1 架构概览
+
+SocketIO 消息网关由两个服务组成：
+
+| 服务 | 目录 | 职责 |
+|------|------|------|
+| **socketgtw** | `socketapp/socketgtw` | 网关服务 -- WebSocket 连接管理、房间管理、消息路由、Token 认证 |
+| **socketpush** | `socketapp/socketpush` | 推送服务 -- Token 生成/验证、gRPC 推送接口（后端服务调用入口） |
+
+**工作流程**：
+
+```
+前端客户端 ──WebSocket──> socketgtw ──gRPC──> StreamEvent（业务处理）
+                                  <──gRPC──
+后端服务 ──gRPC──> socketpush ──gRPC──> socketgtw ──WebSocket──> 前端客户端
+```
+
+- 前端通过 WebSocket 连接 socketgtw，发送/接收消息
+- 后端通过 gRPC 调用 socketpush，向前端推送消息
+- socketgtw 连接时通过 StreamEvent 服务加载用户初始房间列表
+
+### 1.2 服务端配置参考
+
+**socketgtw 配置** (socketgtw.yaml)：
+
+```yaml
+Name: socketgtw
+ListenOn: 0.0.0.0:25007           # gRPC 监听地址
+http:                              # WebSocket 服务
+  Name: socketgtw-wss
+  Host: 0.0.0.0
+  Port: 11003                      # 前端连接端口
+JwtAuth:
+  AccessSecret: your-secret
+  AccessExpire: 31536000           # Token 过期时间（秒）
+SocketMetaData:                    # 从 Token 声明中提取的元数据字段
+  - userId
+  - deviceId
+StreamEventConf:                   # 业务处理服务
+  Endpoints:
+    - 127.0.0.1:21009
+```
+
+**socketpush 配置** (socketpush.yaml)：
+
+```yaml
+Name: socketpush.rpc
+ListenOn: 0.0.0.0:25008           # gRPC 监听地址
+JwtAuth:
+  AccessSecret: your-secret
+  PrevAccessSecret: ""             # 前一个密钥（密钥轮换时使用）
+  AccessExpire: 31536000
+SocketGtwConf:                     # socketgtw 连接配置
+  Endpoints:
+    - 127.0.0.1:25007
+```
+
+> `SocketMetaData` 配置决定了哪些 Token 声明字段会被提取为会话元数据，可用于 `SendToMetaSession` / `KickMetaSession` 等按元数据寻址的操作。
 
 ## 2. 快速开始
 
@@ -44,10 +103,27 @@ socket.on('__down__', (data) => {
 
 ### 3.2 获取令牌
 
-客户端需要通过认证服务获取有效的令牌，获取方式取决于具体的认证体系：
+客户端需要通过后端服务获取有效的令牌。后端调用 socketpush 的 `GenToken` gRPC 接口生成令牌：
 
-- **前端直接获取**：通过调用认证API获取令牌
-- **后端传递**：由后端服务通过接口返回令牌
+```protobuf
+// socketpush.proto
+rpc GenToken(GenTokenReq) returns (GenTokenRes);
+
+message GenTokenReq {
+  string uid = 1;                        // 用户标识
+  map<string, string> payload = 2;       // 自定义声明（会成为会话元数据）
+}
+
+message GenTokenRes {
+  string accessToken = 1;
+  int64 accessExpire = 2;
+  int64 refreshAfter = 3;
+}
+```
+
+获取方式：
+- **后端传递**（推荐）：后端服务调用 `GenToken` 生成令牌，通过 HTTP 接口返回给前端
+- **前端直接获取**：通过 BFF 网关封装的认证 API 获取
 
 ### 3.3 使用令牌连接
 
@@ -549,10 +625,29 @@ socket.on('mqtt', (data) => {
 - `device/+/status` 可以匹配 `device/1/status`、`device/2/status` 等
 - `iec104/#` 可以匹配 `iec104/device1`、`iec104/device2/data` 等
 
-## 12. 版本历史
+## 12. 后端推送 API 参考
+
+后端服务通过 gRPC 调用 socketpush 向前端推送消息，以下为核心接口：
+
+| 方法 | 说明 |
+|------|------|
+| `GenToken` | 生成连接令牌 |
+| `VerifyToken` | 验证令牌有效性 |
+| `JoinRoom` / `LeaveRoom` | 服务端控制房间加入/离开 |
+| `BroadcastRoom` | 向指定房间广播消息 |
+| `BroadcastGlobal` | 全局广播消息 |
+| `SendToSession` / `SendToSessions` | 按 Session ID 单播/批量推送 |
+| `SendToMetaSession` / `SendToMetaSessions` | 按元数据（如 userId）寻址推送 |
+| `KickSession` / `KickMetaSession` | 剔除会话 |
+| `SocketGtwStat` | 获取网关统计信息 |
+
+协议定义：[`socketpush.proto`](../socketapp/socketpush/socketpush.proto) | [`socketgtw.proto`](../socketapp/socketgtw/socketgtw.proto)
+
+## 13. 版本历史
 
 | 版本  | 日期         | 说明                                        |
 |-----|------------|-------------------------------------------|
+| 2.5 | 2026-03-19 | 添加架构概览、服务端配置参考、GenToken 接口说明、后端推送 API 参考 |
 | 2.4 | 2026-03-06 | 添加房间加载错误处理机制，在 `__stat_down__` 事件中包含 `roomLoadError` 字段 |
 | 2.3 | 2026-03-03 | 添加MQTT事件映射配置，支持自定义事件名称和通配符匹配 |
 | 2.2 | 2026-03-03 | 明确__down__事件为异步响应事件，添加非ack模式处理章节 |
