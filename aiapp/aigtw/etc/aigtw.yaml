@@ -1,0 +1,31 @@
+Name: aigtw
+Host: 0.0.0.0
+Port: 11004
+Timeout: 3000
+Mode: dev
+Log:
+  Encoding: plain
+  Path: /opt/logs/aigtw
+ZeroRpcConf:
+  Endpoints:
+    - 127.0.0.1:21001
+  NonBlock: true
+  Timeout: 3000
+Abilities:
+  - Id: "aigtw-chat"
+    Ability: "chat"
+    DisplayName: "通用对话"
+    Description: "通用 AI 对话助手"
+  - Id: "aigtw-coding"
+    Ability: "coding"
+    DisplayName: "代码助手"
+    Description: "代码生成、审查和重构"
+  - Id: "aigtw-spec"
+    Ability: "spec"
+    DisplayName: "架构设计"
+    Description: "需求规格与架构设计"
+  - Id: "aigtw-image-gen"
+    Ability: "image-gen"
+    DisplayName: "图片生成"
+    Description: "AI 图片生成"
+    SupportsStreaming: false

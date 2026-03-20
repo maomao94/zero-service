@@ -1,0 +1,47 @@
+syntax = "v1"
+
+import "doc/base.api"
+import "doc/openai_types.api"
+
+info (
+	title:   "AI网关服务"
+	desc:    "OpenAI 兼容 AI 网关"
+	author:  "hehanpeng"
+	email:   "hehanpengyy@163.com"
+	version: "v1"
+)
+
+// 通用组 - 健康检查
+@server (
+	prefix: aigtw/v1
+	group:  aigtw
+)
+service aigtw {
+	@doc "ping"
+	@handler ping
+	get /ping returns (PingReply)
+}
+
+// AI 组 - 普通接口（模型列表）
+@server (
+	prefix: aigtw/v1
+	group:  ai
+)
+service aigtw {
+	@doc "列出可用模型"
+	@handler listModels
+	get /models returns (ListModelsResponse)
+}
+
+// AI 组 - SSE 流式接口 (生成后需在 routes.go 中手动添加 rest.WithSSE())
+@server (
+	prefix:  aigtw/v1
+	group:   ai
+	timeout: 0s
+)
+service aigtw {
+	@doc "对话补全"
+	@handler chatCompletions
+	post /chat/completions (ChatCompletionRequest) returns (ChatCompletionResponse)
+}
+

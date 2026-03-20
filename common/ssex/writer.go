@@ -1,6 +1,7 @@
 package ssex
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 )
@@ -51,4 +52,27 @@ func (sw *Writer) WriteComment(comment string) {
 // WriteKeepAlive 写入心跳保活注释
 func (sw *Writer) WriteKeepAlive() {
 	sw.WriteComment("keepalive")
+}
+
+// WriteJSON 将结构体序列化为 JSON 并以 data: {json} 格式写出（OpenAI SSE 标准格式）
+//
+//	data: {"id":"chatcmpl-xxx","choices":[...]}\n
+//	\n
+func (sw *Writer) WriteJSON(v any) error {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(sw.w, "data: %s\n\n", data)
+	sw.flusher.Flush()
+	return nil
+}
+
+// WriteDone 写入 OpenAI 流结束标记
+//
+//	data: [DONE]\n
+//	\n
+func (sw *Writer) WriteDone() {
+	fmt.Fprint(sw.w, "data: [DONE]\n\n")
+	sw.flusher.Flush()
 }
