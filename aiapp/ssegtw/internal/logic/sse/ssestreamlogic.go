@@ -11,6 +11,7 @@ import (
 
 	"zero-service/aiapp/ssegtw/internal/svc"
 	"zero-service/aiapp/ssegtw/internal/types"
+	"zero-service/common/ssex"
 	"zero-service/common/tool"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -36,9 +37,9 @@ func NewSseStreamLogic(ctx context.Context, svcCtx *svc.ServiceContext, w http.R
 }
 
 func (l *SseStreamLogic) SseStream(req *types.SSEStreamRequest) error {
-	flusher, ok := l.w.(http.Flusher)
-	if !ok {
-		return fmt.Errorf("streaming not supported")
+	sw, err := ssex.NewWriter(l.w)
+	if err != nil {
+		return err
 	}
 
 	// 确定 channel，未指定则生成唯一 ID
@@ -60,8 +61,7 @@ func (l *SseStreamLogic) SseStream(req *types.SSEStreamRequest) error {
 	defer cancel()
 
 	// 3. 发送连接成功事件
-	fmt.Fprintf(l.w, "event: connected\ndata: {\"channel\":\"%s\"}\n\n", channel)
-	flusher.Flush()
+	sw.WriteEvent("connected", fmt.Sprintf(`{"channel":"%s"}`, channel))
 
 	// 4. 启动模拟 worker：推送一组通知事件，最后 Resolve 完成信号
 	go func() {
@@ -105,14 +105,12 @@ func (l *SseStreamLogic) SseStream(req *types.SSEStreamRequest) error {
 				return nil
 			}
 			if len(msg.Event) > 0 {
-				fmt.Fprintf(l.w, "event: %s\ndata: %s\n\n", msg.Event, msg.Data)
+				sw.WriteEvent(msg.Event, msg.Data)
 			} else {
-				fmt.Fprintf(l.w, "data: %s\n\n", msg.Data)
+				sw.WriteData(msg.Data)
 			}
-			flusher.Flush()
 		case <-ticker.C:
-			fmt.Fprintf(l.w, ": keepalive\n\n")
-			flusher.Flush()
+			sw.WriteKeepAlive()
 		}
 	}
 }
