@@ -47,28 +47,56 @@ func (l *ChatStreamLogic) ChatStream(req *types.ChatStreamRequest) error {
 		channel, _ = tool.SimpleUUID()
 	}
 
-	l.Infof("chat stream connected, channel: %s, prompt: %s", channel, req.Prompt)
+	prompt := req.Prompt
+	if len(prompt) == 0 {
+		prompt = "Hello World"
+	}
 
-	// 订阅事件
+	l.Infof("chat stream connected, channel: %s, prompt: %s", channel, prompt)
+
+	// 1. 注册完成信号（PendingRegistry）
+	donePromise, err := l.svcCtx.PendingReg.Register(channel, 60*time.Second)
+	if err != nil {
+		return fmt.Errorf("register pending failed: %w", err)
+	}
+
+	// 2. 订阅事件流（EventEmitter）
 	msgChan, cancel := l.svcCtx.Emitter.Subscribe(channel)
 	defer cancel()
+
+	// 3. 发送连接成功事件
+	fmt.Fprintf(l.w, "event: connected\ndata: {\"channel\":\"%s\"}\n\n", channel)
+	flusher.Flush()
+
+	// 4. 启动模拟 worker：逐字符输出 token，最后 Resolve 完成信号
+	go func() {
+		tokens := []rune(prompt)
+		for _, token := range tokens {
+			time.Sleep(500 * time.Millisecond)
+			l.svcCtx.Emitter.Emit(channel, svc.SSEEvent{
+				Event: "token",
+				Data:  string(token),
+			})
+		}
+		time.Sleep(300 * time.Millisecond)
+		l.svcCtx.Emitter.Emit(channel, svc.SSEEvent{
+			Event: "done",
+			Data:  "生成完毕",
+		})
+		l.svcCtx.PendingReg.Resolve(channel, "completed")
+	}()
+
+	// 5. 用独立 goroutine 等待完成信号，触发 cancel 关闭 msgChan
+	go func() {
+		donePromise.Await(l.r.Context())
+		cancel()
+	}()
 
 	// 心跳定时器
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
-	// 发送连接成功事件
-	fmt.Fprintf(l.w, "event: connected\ndata: {\"channel\":\"%s\"}\n\n", channel)
-	flusher.Flush()
-
-	// TODO: 这里未来会发起后端 RPC/MQ 调用，触发大模型推理
-	// 后端服务通过 Emitter.Emit(channel, event) 推送流式结果
-	// 例如:
-	// go func() {
-	//     res, err := l.svcCtx.ZeroRpcCli.ChatCompletion(l.ctx, &zerorpc.ChatReq{Prompt: req.Prompt})
-	//     ...
-	// }()
-
+	// 6. 主循环：转发事件到客户端
 	for {
 		select {
 		case <-l.r.Context().Done():
@@ -76,6 +104,7 @@ func (l *ChatStreamLogic) ChatStream(req *types.ChatStreamRequest) error {
 			return nil
 		case msg, ok := <-msgChan:
 			if !ok {
+				l.Infof("chat stream completed, channel: %s", channel)
 				return nil
 			}
 			if len(msg.Event) > 0 {

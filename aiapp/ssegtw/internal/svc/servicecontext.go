@@ -4,6 +4,8 @@
 package svc
 
 import (
+	"time"
+
 	"zero-service/aiapp/ssegtw/internal/config"
 	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/antsx"
@@ -22,6 +24,7 @@ type ServiceContext struct {
 	Config     config.Config
 	ZeroRpcCli zerorpc.ZerorpcClient
 	Emitter    *antsx.EventEmitter[SSEEvent]
+	PendingReg *antsx.PendingRegistry[string]
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -29,6 +32,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Config: c,
 		ZeroRpcCli: zerorpc.NewZerorpcClient(zrpc.MustNewClient(c.ZeroRpcConf,
 			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor)).Conn()),
-		Emitter: antsx.NewEventEmitter[SSEEvent](),
+		Emitter:    antsx.NewEventEmitter[SSEEvent](),
+		PendingReg: antsx.NewPendingRegistry[string](antsx.WithDefaultTTL(60 * time.Second)),
 	}
 }
