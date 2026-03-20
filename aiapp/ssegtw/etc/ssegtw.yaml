@@ -1,0 +1,13 @@
+Name: ssegtw
+Host: 0.0.0.0
+Port: 11004
+Timeout: 0
+Mode: dev
+Log:
+  Encoding: plain
+  Path: /opt/logs/ssegtw
+ZeroRpcConf:
+  Endpoints:
+    - 127.0.0.1:21001
+  NonBlock: true
+  Timeout: 3000

@@ -4,10 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sync"
-
-	"github.com/zeromicro/go-zero/core/logx"
-
-	"github.com/panjf2000/ants/v2"
 )
 
 // ---------------------- Promise ----------------------
@@ -40,7 +36,7 @@ func NewPromise[T any](id string) *Promise[T] {
 	}
 }
 
-// Await 等待结果，支持多次调用
+// Await 等待结果，支持多次调用（并发安全）
 func (p *Promise[T]) Await(ctx context.Context) (T, error) {
 	// 先检查缓存
 	p.mu.Lock()
@@ -51,13 +47,15 @@ func (p *Promise[T]) Await(ctx context.Context) (T, error) {
 	}
 	p.mu.Unlock()
 
+	// 用 channel 作为信号，不使用接收到的值
+	// Resolve/Reject 在发送前已将结果写入 p.val/p.err，
+	// 这样多个并发 Await 都能正确读取缓存值
 	select {
-	case r := <-p.result:
+	case <-p.result:
 		p.mu.Lock()
-		p.val, p.err = r.val, r.err
-		p.done = true
+		val, err := p.val, p.err
 		p.mu.Unlock()
-		return r.val, r.err
+		return val, err
 	case <-ctx.Done():
 		var zero T
 		return zero, ctx.Err()
@@ -69,6 +67,12 @@ func Then[T, U any](ctx context.Context, p *Promise[T], fn func(T) (U, error)) *
 	newPromise := NewPromise[U](p.id)
 
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				newPromise.Reject(fmt.Errorf("antsx: Then panicked: %v", r))
+			}
+		}()
+
 		val, err := p.Await(ctx)
 		if err != nil {
 			newPromise.Reject(err)
@@ -109,15 +113,10 @@ func (p *Promise[T]) Resolve(val T) {
 		p.val = val
 		p.err = nil
 		p.done = true
-		catchFn := p.catchFunc
 		p.mu.Unlock()
 
 		p.result <- result[T]{val: val}
 		close(p.result)
-
-		if catchFn != nil {
-			// 成功不触发 catch
-		}
 	})
 }
 
@@ -144,70 +143,4 @@ func (p *Promise[T]) FireAndForget(ctx context.Context) {
 	go func() {
 		_, _ = p.Await(ctx)
 	}()
-}
-
-// ---------------------- Reactor ----------------------
-
-type Reactor struct {
-	pool     *ants.Pool
-	registry *sync.Map
-}
-
-// NewReactor 创建 Reactor
-func NewReactor(size int) (*Reactor, error) {
-	pool, err := ants.NewPool(size)
-	if err != nil {
-		return nil, err
-	}
-	return &Reactor{
-		pool:     pool,
-		registry: &sync.Map{},
-	}, nil
-}
-
-// Submit 提交带 id 的任务，返回 Promise[T]
-func Submit[T any](ctx context.Context, r *Reactor, id string, task func(ctx context.Context) (T, error)) (*Promise[T], error) {
-	if _, loaded := r.registry.LoadOrStore(id, struct{}{}); loaded {
-		return nil, fmt.Errorf("promise id %s already exists", id)
-	}
-
-	promise := NewPromise[T](id)
-
-	err := r.pool.Submit(func() {
-		defer r.registry.Delete(id)
-
-		val, err := task(ctx)
-		if err != nil {
-			promise.Reject(err)
-		} else {
-			promise.Resolve(val)
-		}
-	})
-
-	if err != nil {
-		r.registry.Delete(id)
-		return nil, err
-	}
-
-	return promise, nil
-}
-
-// Post 提交 fire-and-forget 任务
-func Post[T any](ctx context.Context, r *Reactor, task func(ctx context.Context) (T, error)) error {
-	return r.pool.Submit(func() {
-		_, err := task(ctx)
-		if err != nil {
-			logx.WithContext(ctx).Errorf("task error: %v", err)
-		}
-	})
-}
-
-// Release 释放池
-func (r *Reactor) Release() {
-	r.pool.Release()
-}
-
-// ActiveCount 当前运行任务数
-func (r *Reactor) ActiveCount() int {
-	return r.pool.Running()
 }

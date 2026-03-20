@@ -1,0 +1,15 @@
+syntax = "v1"
+
+type (
+	PingReply {
+		Msg string `json:"msg"`
+	}
+	SSEStreamRequest {
+		Channel string `json:"channel,optional"`
+	}
+	ChatStreamRequest {
+		Channel string `json:"channel,optional"`
+		Prompt  string `json:"prompt,optional"`
+	}
+)
+

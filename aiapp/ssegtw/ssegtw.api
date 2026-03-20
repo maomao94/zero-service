@@ -1,0 +1,39 @@
+syntax = "v1"
+
+import "doc/base.api"
+
+info (
+	title:   "SSE网关服务"
+	desc:    "Server-Sent Events 网关"
+	author:  "hehanpeng"
+	email:   "hehanpengyy@163.com"
+	version: "v1"
+)
+
+// 普通路由组 - 健康检查
+@server (
+	prefix: ssegtw/v1
+	group:  ssegtw
+)
+service ssegtw {
+	@doc "ping"
+	@handler ping
+	get /ping returns (PingReply)
+}
+
+// SSE 路由组 - 事件流 (生成后需在 routes.go 中手动添加 rest.WithSSE())
+@server (
+	prefix:  ssegtw/v1/sse
+	group:   sse
+	timeout: 0s
+)
+service ssegtw {
+	@doc "SSE事件流"
+	@handler sseStream
+	post /stream (SSEStreamRequest) returns (PingReply)
+
+	@doc "AI对话流"
+	@handler chatStream
+	post /chat/stream (ChatStreamRequest) returns (PingReply)
+}
+
