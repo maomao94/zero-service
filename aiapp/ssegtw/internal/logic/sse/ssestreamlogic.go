@@ -49,18 +49,51 @@ func (l *SseStreamLogic) SseStream(req *types.SSEStreamRequest) error {
 
 	l.Infof("sse stream connected, channel: %s", channel)
 
-	// 订阅事件
+	// 1. 注册完成信号（PendingRegistry）
+	donePromise, err := l.svcCtx.PendingReg.Register(channel, 60*time.Second)
+	if err != nil {
+		return fmt.Errorf("register pending failed: %w", err)
+	}
+
+	// 2. 订阅事件流（EventEmitter）
 	msgChan, cancel := l.svcCtx.Emitter.Subscribe(channel)
 	defer cancel()
+
+	// 3. 发送连接成功事件
+	fmt.Fprintf(l.w, "event: connected\ndata: {\"channel\":\"%s\"}\n\n", channel)
+	flusher.Flush()
+
+	// 4. 启动模拟 worker：推送一组通知事件，最后 Resolve 完成信号
+	go func() {
+		messages := []svc.SSEEvent{
+			{Event: "notification", Data: `{"type":"info","text":"系统初始化完成"}`},
+			{Event: "notification", Data: `{"type":"progress","text":"正在加载数据..."}`},
+			{Event: "notification", Data: `{"type":"progress","text":"数据处理中..."}`},
+			{Event: "notification", Data: `{"type":"success","text":"数据加载完毕"}`},
+		}
+		for _, msg := range messages {
+			time.Sleep(500 * time.Millisecond)
+			l.svcCtx.Emitter.Emit(channel, msg)
+		}
+		time.Sleep(300 * time.Millisecond)
+		l.svcCtx.Emitter.Emit(channel, svc.SSEEvent{
+			Event: "done",
+			Data:  "推送完毕",
+		})
+		l.svcCtx.PendingReg.Resolve(channel, "completed")
+	}()
+
+	// 5. 用独立 goroutine 等待完成信号，触发 cancel 关闭 msgChan
+	go func() {
+		donePromise.Await(l.r.Context())
+		cancel()
+	}()
 
 	// 心跳定时器
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
-	// 发送连接成功事件
-	fmt.Fprintf(l.w, "event: connected\ndata: {\"channel\":\"%s\"}\n\n", channel)
-	flusher.Flush()
-
+	// 6. 主循环：转发事件到客户端
 	for {
 		select {
 		case <-l.r.Context().Done():
@@ -68,6 +101,7 @@ func (l *SseStreamLogic) SseStream(req *types.SSEStreamRequest) error {
 			return nil
 		case msg, ok := <-msgChan:
 			if !ok {
+				l.Infof("sse stream completed, channel: %s", channel)
 				return nil
 			}
 			if len(msg.Event) > 0 {
