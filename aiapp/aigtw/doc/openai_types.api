@@ -17,7 +17,6 @@ type (
 	ChatMessage {
 		Role    string `json:"role"` // 角色: system / user / assistant
 		Content string `json:"content"` // 消息内容
-		Name    string `json:"name,optional"` // 发送者名称（可选）
 	}
 )
 

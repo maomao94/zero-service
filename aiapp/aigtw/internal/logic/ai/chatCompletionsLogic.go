@@ -2,14 +2,13 @@ package ai
 
 import (
 	"context"
-	"fmt"
+	"io"
 	"net/http"
-	"time"
 
+	"zero-service/aiapp/aichat/aichat"
 	"zero-service/aiapp/aigtw/internal/svc"
 	"zero-service/aiapp/aigtw/internal/types"
 	"zero-service/common/ssex"
-	"zero-service/common/tool"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -34,130 +33,142 @@ func NewChatCompletionsLogic(ctx context.Context, svcCtx *svc.ServiceContext, w 
 
 // ChatCompletions 统一入口，根据 req.Stream 判断流式/非流式
 func (l *ChatCompletionsLogic) ChatCompletions(req *types.ChatCompletionRequest) (*types.ChatCompletionResponse, error) {
-	if err := l.validateModel(req.Model); err != nil {
-		return nil, err
-	}
-
 	if req.Stream {
 		return nil, l.handleStream(req)
 	}
 	return l.handleSync(req)
 }
 
-// handleSync 非流式处理
+// handleSync 非流式处理：调用 aichat RPC
 func (l *ChatCompletionsLogic) handleSync(req *types.ChatCompletionRequest) (*types.ChatCompletionResponse, error) {
-	id, _ := tool.SimpleUUID()
-	completionId := "chatcmpl-" + id
-	prompt := l.getLastUserMessage(req.Messages)
-	content := fmt.Sprintf("Echo [%s]: %s", req.Model, prompt)
+	protoReq := toProtoRequest(req)
 
-	return &types.ChatCompletionResponse{
-		Id:      completionId,
-		Object:  "chat.completion",
-		Created: time.Now().Unix(),
-		Model:   req.Model,
-		Choices: []types.Choice{
-			{
-				Index: 0,
-				Message: types.ChatMessage{
-					Role:    "assistant",
-					Content: content,
-				},
-				FinishReason: "stop",
-			},
-		},
-		Usage: types.Usage{
-			PromptTokens:     len([]rune(prompt)),
-			CompletionTokens: len([]rune(content)),
-			TotalTokens:      len([]rune(prompt)) + len([]rune(content)),
-		},
-	}, nil
+	resp, err := l.svcCtx.AiChatCli.ChatCompletion(l.ctx, protoReq)
+	if err != nil {
+		return nil, err
+	}
+
+	return toHTTPResponse(resp), nil
 }
 
-// handleStream 流式处理
+// handleStream 流式处理：gRPC server-side stream → SSE 桥接
 func (l *ChatCompletionsLogic) handleStream(req *types.ChatCompletionRequest) error {
 	sw, err := ssex.NewWriter(l.w)
 	if err != nil {
 		return err
 	}
 
-	id, _ := tool.SimpleUUID()
-	completionId := "chatcmpl-" + id
-	now := time.Now().Unix()
-	prompt := l.getLastUserMessage(req.Messages)
-	content := fmt.Sprintf("Echo [%s]: %s", req.Model, prompt)
-	tokens := []rune(content)
+	protoReq := toProtoRequest(req)
 
-	l.Infof("chat completions stream started, id: %s", completionId)
+	grpcStream, err := l.svcCtx.AiChatCli.ChatCompletionStream(l.ctx, protoReq)
+	if err != nil {
+		return err
+	}
 
-	// 发送首个 chunk：role
-	sw.WriteJSON(types.ChatCompletionChunk{
-		Id:      completionId,
-		Object:  "chat.completion.chunk",
-		Created: now,
-		Model:   req.Model,
-		Choices: []types.ChunkChoice{
-			{Index: 0, Delta: types.ChatDelta{Role: "assistant"}},
-		},
-	})
+	l.Infof("chat completions stream started, model: %s", req.Model)
 
-	// 逐 token 发送
-	for _, token := range tokens {
+	for {
+		chunk, err := grpcStream.Recv()
+		if err == io.EOF {
+			sw.WriteDone()
+			l.Infof("stream completed, model: %s", req.Model)
+			return nil
+		}
+		if err != nil {
+			l.Errorf("stream recv error: %v", err)
+			return err
+		}
+
+		// 检查 HTTP 客户端是否断开
 		select {
 		case <-l.r.Context().Done():
-			l.Infof("stream disconnected")
+			l.Infof("stream client disconnected")
 			return nil
 		default:
-			time.Sleep(50 * time.Millisecond)
-			sw.WriteJSON(types.ChatCompletionChunk{
-				Id:      completionId,
-				Object:  "chat.completion.chunk",
-				Created: now,
-				Model:   req.Model,
-				Choices: []types.ChunkChoice{
-					{Index: 0, Delta: types.ChatDelta{Content: string(token)}},
-				},
-			})
 		}
+
+		httpChunk := toHTTPChunk(chunk)
+		sw.WriteJSON(httpChunk)
 	}
-
-	// 发送结束 chunk
-	finishReason := "stop"
-	sw.WriteJSON(types.ChatCompletionChunk{
-		Id:      completionId,
-		Object:  "chat.completion.chunk",
-		Created: now,
-		Model:   req.Model,
-		Choices: []types.ChunkChoice{
-			{Index: 0, Delta: types.ChatDelta{}, FinishReason: &finishReason},
-		},
-	})
-
-	sw.WriteDone()
-	l.Infof("stream completed, id: %s", completionId)
-	return nil
 }
 
-// validateModel 校验模型
-func (l *ChatCompletionsLogic) validateModel(model string) error {
-	for _, ab := range l.svcCtx.Config.Abilities {
-		if ab.Id == model {
-			return nil
+// toProtoRequest 将 HTTP 请求转为 proto 请求
+func toProtoRequest(req *types.ChatCompletionRequest) *aichat.ChatCompletionReq {
+	messages := make([]*aichat.ChatMessage, len(req.Messages))
+	for i, m := range req.Messages {
+		messages[i] = &aichat.ChatMessage{
+			Role:    m.Role,
+			Content: m.Content,
 		}
 	}
-	var available []string
-	for _, ab := range l.svcCtx.Config.Abilities {
-		available = append(available, ab.Id)
+
+	return &aichat.ChatCompletionReq{
+		Model:       req.Model,
+		Messages:    messages,
+		Temperature: req.Temperature,
+		TopP:        req.TopP,
+		MaxTokens:   int32(req.MaxTokens),
+		Stop:        req.Stop,
+		User:        req.User,
 	}
-	return types.NewModelNotFoundError(model, available)
 }
 
-// getLastUserMessage 获取最后一条 user 消息
-func (l *ChatCompletionsLogic) getLastUserMessage(messages []types.ChatMessage) string {
-	for i := len(messages) - 1; i >= 0; i-- {
-		if messages[i].Role == "user" {
-			return messages[i].Content
+// toHTTPResponse 将 proto 响应转为 HTTP JSON 响应
+func toHTTPResponse(resp *aichat.ChatCompletionRes) *types.ChatCompletionResponse {
+	choices := make([]types.Choice, len(resp.Choices))
+	for i, c := range resp.Choices {
+		choices[i] = types.Choice{
+			Index: int(c.Index),
+			Message: types.ChatMessage{
+				Role:    c.Message.Role,
+				Content: c.Message.Content,
+			},
+			FinishReason: c.FinishReason,
 		}
 	}
-	return "Hello World"
+
+	result := &types.ChatCompletionResponse{
+		Id:      resp.Id,
+		Object:  resp.Object,
+		Created: resp.Created,
+		Model:   resp.Model,
+		Choices: choices,
+	}
+
+	if resp.Usage != nil {
+		result.Usage = types.Usage{
+			PromptTokens:     int(resp.Usage.PromptTokens),
+			CompletionTokens: int(resp.Usage.CompletionTokens),
+			TotalTokens:      int(resp.Usage.TotalTokens),
+		}
+	}
+
+	return result
+}
+
+// toHTTPChunk 将 proto 流式 chunk 转为 HTTP SSE chunk
+func toHTTPChunk(chunk *aichat.ChatCompletionStreamChunk) types.ChatCompletionChunk {
+	choices := make([]types.ChunkChoice, len(chunk.Choices))
+	for i, c := range chunk.Choices {
+		cc := types.ChunkChoice{
+			Index: int(c.Index),
+			Delta: types.ChatDelta{
+				Role:    c.Delta.Role,
+				Content: c.Delta.Content,
+			},
+		}
+		if c.FinishReason != "" {
+			reason := c.FinishReason
+			cc.FinishReason = &reason
+		}
+		choices[i] = cc
+	}
+
+	return types.ChatCompletionChunk{
+		Id:      chunk.Id,
+		Object:  chunk.Object,
+		Created: chunk.Created,
+		Model:   chunk.Model,
+		Choices: choices,
+	}
 }

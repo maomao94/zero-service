@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Gateway - OpenAI 兼容 API 测试面板</title>
+    <title>AI Chat - 对话测试</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -17,242 +17,104 @@
             --accent: #6c5ce7;
             --accent-light: #a29bfe;
             --green: #00cec9;
-            --green-dim: rgba(0, 206, 201, 0.15);
             --red: #ff6b6b;
-            --red-dim: rgba(255, 107, 107, 0.15);
-            --yellow: #feca57;
-            --yellow-dim: rgba(254, 202, 87, 0.15);
-            --blue: #74b9ff;
+            --user-bg: #2d2b55;
+            --assistant-bg: #1e2130;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
             background: var(--bg);
             color: var(--text);
-            min-height: 100vh;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
+        /* 顶部栏 */
         .header {
-            padding: 24px 32px;
+            padding: 12px 24px;
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 12px;
+            flex-shrink: 0;
         }
 
         .header-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
+            width: 32px; height: 32px; border-radius: 8px;
             background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            display: flex; align-items: center; justify-content: center; font-size: 16px;
+        }
+
+        .header h1 { font-size: 16px; font-weight: 600; }
+        .header .badge {
+            font-size: 10px; padding: 2px 6px; border-radius: 4px;
+            background: var(--surface-2); color: var(--text-secondary); font-weight: 500;
+        }
+
+        .header-controls {
+            margin-left: auto;
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 20px;
+            gap: 10px;
         }
 
-        .header h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
-
-        .header .badge {
-            font-size: 11px;
-            padding: 3px 8px;
-            border-radius: 4px;
-            background: var(--surface-2);
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 24px 32px;
-            display: grid;
-            grid-template-columns: 340px 1fr;
-            gap: 24px;
-            height: calc(100vh - 89px);
-        }
-
-        .panel {
+        .header-controls select, .header-controls input {
+            padding: 6px 10px;
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .panel-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--border);
-            font-size: 13px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .panel-header .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
-
-        .panel-body { padding: 20px; flex: 1; overflow-y: auto; }
-
-        .form-group { margin-bottom: 16px; }
-
-        .form-group label {
-            display: block;
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        .form-group input, .form-group textarea, .form-group select {
-            width: 100%;
-            padding: 10px 14px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 6px;
             color: var(--text);
-            font-size: 14px;
-            font-family: inherit;
+            font-size: 12px;
             outline: none;
-            transition: border-color 0.2s;
         }
 
-        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
-            border-color: var(--accent);
-        }
+        .header-controls select { cursor: pointer; min-width: 160px; }
+        .header-controls input { width: 200px; }
 
-        .form-group textarea { resize: vertical; min-height: 80px; }
-
-        .form-group select {
-            cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b8fa7' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            padding-right: 32px;
-        }
-
-        .toggle-row {
+        .header-controls .toggle-row {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            margin-bottom: 16px;
-        }
-
-        .toggle-row label { margin-bottom: 0; }
-
-        .toggle {
-            position: relative;
-            width: 40px;
-            height: 22px;
-        }
-
-        .toggle input { opacity: 0; width: 0; height: 0; }
-
-        .toggle .slider {
-            position: absolute;
-            inset: 0;
-            background: var(--border);
-            border-radius: 11px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .toggle .slider::before {
-            content: '';
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            left: 3px;
-            bottom: 3px;
-            background: white;
-            border-radius: 50%;
-            transition: transform 0.3s;
-        }
-
-        .toggle input:checked + .slider { background: var(--accent); }
-        .toggle input:checked + .slider::before { transform: translateX(18px); }
-
-        .btn-group { display: flex; gap: 8px; margin-top: 20px; }
-
-        .btn {
-            flex: 1;
-            padding: 10px 16px;
-            border: none;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-
-        .btn-primary { background: var(--accent); color: white; }
-        .btn-primary:hover { background: var(--accent-light); }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        .btn-danger {
-            background: var(--red-dim);
-            color: var(--red);
-            border: 1px solid rgba(255, 107, 107, 0.2);
-        }
-        .btn-danger:hover { background: rgba(255, 107, 107, 0.25); }
-        .btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        .btn-secondary {
-            background: var(--surface-2);
-            color: var(--text-secondary);
-            border: 1px solid var(--border);
-        }
-        .btn-secondary:hover { color: var(--text); border-color: var(--text-secondary); }
-
-        .status-bar {
-            padding: 12px 20px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            gap: 6px;
             font-size: 12px;
             color: var(--text-secondary);
         }
 
-        .status-indicator {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--text-secondary);
-            transition: background 0.3s;
+        .toggle { position: relative; width: 32px; height: 18px; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle .slider {
+            position: absolute; inset: 0; background: var(--border);
+            border-radius: 9px; cursor: pointer; transition: background 0.3s;
         }
+        .toggle .slider::before {
+            content: ''; position: absolute; width: 14px; height: 14px;
+            left: 2px; bottom: 2px; background: white; border-radius: 50%; transition: transform 0.3s;
+        }
+        .toggle input:checked + .slider { background: var(--accent); }
+        .toggle input:checked + .slider::before { transform: translateX(14px); }
 
-        .status-indicator.connected { background: var(--green); box-shadow: 0 0 8px rgba(0, 206, 201, 0.5); }
-        .status-indicator.error { background: var(--red); box-shadow: 0 0 8px rgba(255, 107, 107, 0.5); }
+        .stats-bar {
+            display: flex; align-items: center; gap: 12px;
+            font-size: 11px; color: var(--text-secondary);
+        }
+        .stats-bar .num { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
 
-        .messages {
+        /* 对话区域 */
+        .chat-area {
             flex: 1;
             overflow-y: auto;
-            padding: 16px 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
+            padding: 20px 0;
         }
 
-        .messages::-webkit-scrollbar { width: 4px; }
-        .messages::-webkit-scrollbar-track { background: transparent; }
-        .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+        .chat-area::-webkit-scrollbar { width: 4px; }
+        .chat-area::-webkit-scrollbar-track { background: transparent; }
+        .chat-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-        .msg {
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            line-height: 1.5;
-            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
-            word-break: break-all;
+        .message {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 16px 24px;
             animation: fadeIn 0.2s ease;
         }
 
@@ -261,149 +123,163 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .msg-chunk { background: var(--surface-2); border-left: 3px solid var(--accent); }
-        .msg-chunk .msg-label { color: var(--accent-light); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px; }
-        .msg-chunk .msg-data { color: var(--text); }
-
-        .msg-system { background: var(--green-dim); border-left: 3px solid var(--green); color: var(--green); }
-        .msg-error { background: var(--red-dim); border-left: 3px solid var(--red); color: var(--red); }
-        .msg-keepalive { background: var(--yellow-dim); border-left: 3px solid var(--yellow); color: var(--yellow); font-size: 12px; opacity: 0.7; }
-        .msg-done { background: rgba(116, 185, 255, 0.1); border-left: 3px solid var(--blue); color: var(--blue); }
-
-        .msg-time { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
-
-        /* 流式输出实时预览 */
-        .stream-preview {
-            padding: 16px 20px;
-            border-top: 1px solid var(--border);
-            background: var(--bg);
-            min-height: 60px;
-            max-height: 200px;
-            overflow-y: auto;
-            font-size: 14px;
-            line-height: 1.6;
-            white-space: pre-wrap;
-            word-break: break-all;
+        .message .role {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
         }
 
-        .stream-preview .cursor {
-            display: inline-block;
-            width: 2px;
-            height: 1em;
-            background: var(--accent);
-            animation: blink 1s infinite;
-            vertical-align: text-bottom;
+        .message.user .role { color: var(--accent-light); }
+        .message.assistant .role { color: var(--green); }
+        .message.system-msg .role { color: var(--text-secondary); }
+
+        .message .content {
+            font-size: 14px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .message.user { background: var(--user-bg); border-radius: 12px; margin-bottom: 4px; }
+        .message.assistant { background: var(--assistant-bg); border-radius: 12px; margin-bottom: 4px; }
+        .message.system-msg {
+            background: transparent; font-size: 12px; text-align: center;
+            color: var(--text-secondary); padding: 8px 24px;
+        }
+
+        .message .meta {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        .cursor {
+            display: inline-block; width: 2px; height: 1em;
+            background: var(--accent); animation: blink 1s infinite; vertical-align: text-bottom;
         }
 
         @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
 
-        .toolbar {
-            padding: 12px 20px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+        /* 输入区域 */
+        .input-area {
+            border-top: 1px solid var(--border);
+            padding: 16px 24px;
+            flex-shrink: 0;
         }
 
-        .toolbar .stats {
-            font-size: 12px;
-            color: var(--text-secondary);
+        .input-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
             display: flex;
-            gap: 16px;
+            gap: 10px;
+            align-items: flex-end;
         }
 
-        .toolbar .stats span { display: flex; align-items: center; gap: 4px; }
-        .toolbar .stats .num { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
-
-        .btn-sm {
-            padding: 5px 10px;
-            font-size: 11px;
-            border-radius: 6px;
+        .input-wrapper textarea {
+            flex: 1;
+            padding: 12px 16px;
+            background: var(--surface);
             border: 1px solid var(--border);
-            background: var(--surface-2);
-            color: var(--text-secondary);
-            cursor: pointer;
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 14px;
             font-family: inherit;
-            font-weight: 500;
-            transition: all 0.2s;
+            outline: none;
+            resize: none;
+            min-height: 44px;
+            max-height: 160px;
+            line-height: 1.5;
+            transition: border-color 0.2s;
         }
 
-        .btn-sm:hover { color: var(--text); border-color: var(--text-secondary); }
+        .input-wrapper textarea:focus { border-color: var(--accent); }
 
-        .section-divider { height: 1px; background: var(--border); margin: 20px 0; }
+        .input-wrapper textarea::placeholder { color: var(--text-secondary); }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            height: 44px;
+            white-space: nowrap;
+        }
+
+        .btn-send { background: var(--accent); color: white; }
+        .btn-send:hover { background: var(--accent-light); }
+        .btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .btn-stop { background: rgba(255,107,107,0.15); color: var(--red); border: 1px solid rgba(255,107,107,0.2); }
+        .btn-stop:hover { background: rgba(255,107,107,0.25); }
+
+        .btn-clear {
+            background: var(--surface-2); color: var(--text-secondary);
+            border: 1px solid var(--border); padding: 10px 14px;
+        }
+        .btn-clear:hover { color: var(--text); border-color: var(--text-secondary); }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+        .empty-state h2 { font-size: 18px; font-weight: 500; margin-bottom: 8px; color: var(--text); }
+        .empty-state p { font-size: 13px; }
 
         @media (max-width: 768px) {
-            .container { grid-template-columns: 1fr; height: auto; padding: 16px; }
+            .header { flex-wrap: wrap; gap: 8px; }
+            .header-controls { width: 100%; }
+            .message { padding: 12px 16px; }
+            .input-area { padding: 12px 16px; }
         }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div class="header-icon">&#x26A1;</div>
-    <h1>AI Gateway</h1>
+    <div class="header-icon">&#x2728;</div>
+    <h1>AI Chat</h1>
     <span class="badge">OpenAI Compatible</span>
-</div>
-
-<div class="container">
-    <!-- 左侧控制面板 -->
-    <div class="panel">
-        <div class="panel-header">
-            <span class="dot"></span>
-            请求配置
+    <div class="header-controls">
+        <input type="text" id="baseUrl" value="http://localhost:11004" placeholder="Base URL">
+        <select id="model"><option value="">加载中...</option></select>
+        <div class="toggle-row">
+            Stream
+            <label class="toggle">
+                <input type="checkbox" id="streamToggle" checked>
+                <span class="slider"></span>
+            </label>
         </div>
-        <div class="panel-body">
-            <div class="form-group">
-                <label>Base URL</label>
-                <input type="text" id="baseUrl" value="http://localhost:11004" placeholder="http://localhost:11004">
-            </div>
-            <div class="form-group">
-                <label>Model</label>
-                <select id="model">
-                    <option value="">加载模型列表...</option>
-                </select>
-            </div>
-            <div class="toggle-row">
-                <label>STREAM 模式</label>
-                <label class="toggle">
-                    <input type="checkbox" id="streamToggle" checked>
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="form-group">
-                <label>Messages</label>
-                <textarea id="messages" placeholder='输入对话内容...'>你好，请介绍一下你自己</textarea>
-            </div>
-            <div class="btn-group">
-                <button class="btn btn-secondary" onclick="loadModels()">刷新模型</button>
-            </div>
-            <div class="btn-group">
-                <button class="btn btn-primary" id="btnSend" onclick="sendRequest()">发送</button>
-                <button class="btn btn-danger" id="btnStop" onclick="stopStream()" disabled>停止</button>
-            </div>
-        </div>
-        <div class="status-bar">
-            <span class="status-indicator" id="statusDot"></span>
-            <span id="statusText">就绪</span>
+        <div class="stats-bar">
+            <span>Chunks <b class="num" id="chunkCount">0</b></span>
+            <span>耗时 <b class="num" id="elapsed">-</b></span>
         </div>
     </div>
+</div>
 
-    <!-- 右侧消息面板 -->
-    <div class="panel">
-        <div class="panel-header">
-            <span class="dot"></span>
-            响应
-        </div>
-        <div class="toolbar">
-            <div class="stats">
-                <span>Chunks <b class="num" id="chunkCount">0</b></span>
-                <span>耗时 <b class="num" id="elapsed">0s</b></span>
-            </div>
-            <button class="btn-sm" onclick="clearAll()">清空</button>
-        </div>
-        <div class="stream-preview" id="streamPreview"></div>
-        <div class="messages" id="messages-log">
-        </div>
+<div class="chat-area" id="chatArea">
+    <div class="empty-state" id="emptyState">
+        <div class="icon">&#x1F4AC;</div>
+        <h2>AI 对话测试</h2>
+        <p>选择模型，输入消息开始对话</p>
+    </div>
+</div>
+
+<div class="input-area">
+    <div class="input-wrapper">
+        <textarea id="userInput" placeholder="输入消息... (Enter 发送, Shift+Enter 换行)" rows="1"></textarea>
+        <button class="btn btn-send" id="btnSend" onclick="sendMessage()">发送</button>
+        <button class="btn btn-stop" id="btnStop" onclick="stopStream()" style="display:none">停止</button>
+        <button class="btn btn-clear" onclick="clearChat()">清空</button>
     </div>
 </div>
 
@@ -412,18 +288,24 @@
     let chunkCountVal = 0;
     let startTime = null;
     let elapsedTimer = null;
+    let conversationHistory = [];
 
-    // 页面加载时自动获取模型列表
     window.addEventListener('load', () => loadModels());
 
-    function setStatus(state, text) {
-        document.getElementById('statusDot').className = 'status-indicator ' + state;
-        document.getElementById('statusText').textContent = text;
-    }
+    // 自动调整输入框高度
+    const userInput = document.getElementById('userInput');
+    userInput.addEventListener('input', () => {
+        userInput.style.height = 'auto';
+        userInput.style.height = Math.min(userInput.scrollHeight, 160) + 'px';
+    });
 
-    function now() {
-        return new Date().toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
-    }
+    // Enter 发送，Shift+Enter 换行
+    userInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (!document.getElementById('btnSend').disabled) sendMessage();
+        }
+    });
 
     function escapeHtml(str) {
         const d = document.createElement('div');
@@ -431,47 +313,42 @@
         return d.innerHTML;
     }
 
-    function addLog(type, content, label) {
-        const container = document.getElementById('messages-log');
-        const el = document.createElement('div');
-        el.className = 'msg msg-' + type;
-        const ts = now();
+    function addChatMessage(role, content, meta) {
+        const emptyState = document.getElementById('emptyState');
+        if (emptyState) emptyState.remove();
 
-        if (type === 'chunk') {
-            el.innerHTML = '<div class="msg-label">' + (label || 'chunk') + '</div><div class="msg-data">' + escapeHtml(content) + '</div><div class="msg-time">' + ts + '</div>';
-            chunkCountVal++;
-            document.getElementById('chunkCount').textContent = chunkCountVal;
-        } else if (type === 'done') {
-            el.innerHTML = 'data: [DONE] <span class="msg-time" style="margin-left:8px">' + ts + '</span>';
-        } else if (type === 'keepalive') {
-            el.innerHTML = ': keepalive <span class="msg-time" style="margin-left:8px">' + ts + '</span>';
+        const area = document.getElementById('chatArea');
+        const el = document.createElement('div');
+        el.className = 'message ' + role;
+
+        if (role === 'system-msg') {
+            el.innerHTML = '<div class="content">' + escapeHtml(content) + '</div>';
         } else {
-            el.textContent = content;
+            const roleLabel = role === 'user' ? 'You' : 'Assistant';
+            el.innerHTML = '<div class="role">' + roleLabel + '</div>' +
+                '<div class="content" id="' + (el.id = 'msg-' + Date.now()) + '-content">' +
+                escapeHtml(content) + '</div>' +
+                (meta ? '<div class="meta">' + escapeHtml(meta) + '</div>' : '');
         }
 
-        container.appendChild(el);
-        container.scrollTop = container.scrollHeight;
-    }
-
-    function clearAll() {
-        document.getElementById('messages-log').innerHTML = '';
-        document.getElementById('streamPreview').innerHTML = '';
-        chunkCountVal = 0;
-        document.getElementById('chunkCount').textContent = '0';
-        document.getElementById('elapsed').textContent = '0s';
+        area.appendChild(el);
+        area.scrollTop = area.scrollHeight;
+        return el;
     }
 
     function startTimer() {
         startTime = Date.now();
+        chunkCountVal = 0;
+        document.getElementById('chunkCount').textContent = '0';
         elapsedTimer = setInterval(() => {
             const ms = Date.now() - startTime;
-            const s = Math.floor(ms / 1000);
-            document.getElementById('elapsed').textContent = s > 0 ? s + '.' + String(ms % 1000).padStart(3, '0').slice(0, 1) + 's' : ms + 'ms';
+            const s = (ms / 1000).toFixed(1);
+            document.getElementById('elapsed').textContent = s + 's';
         }, 100);
     }
 
     function stopTimer() {
-        if (elapsedTimer) clearInterval(elapsedTimer);
+        if (elapsedTimer) { clearInterval(elapsedTimer); elapsedTimer = null; }
     }
 
     async function loadModels() {
@@ -486,44 +363,52 @@
                     const opt = document.createElement('option');
                     opt.value = m.id;
                     const meta = m.metadata;
-                    opt.textContent = m.id + (meta ? ' - ' + meta.display_name : '');
+                    opt.textContent = meta ? meta.display_name + ' (' + m.id + ')' : m.id;
                     select.appendChild(opt);
                 });
-                addLog('system', '已加载 ' + data.data.length + ' 个模型');
             } else {
                 select.innerHTML = '<option value="">无可用模型</option>';
             }
         } catch (err) {
-            addLog('error', '加载模型失败: ' + err.message);
+            const select = document.getElementById('model');
+            select.innerHTML = '<option value="">连接失败</option>';
         }
     }
 
-    async function sendRequest() {
-        const base = document.getElementById('baseUrl').value.replace(/\/$/, '');
+    async function sendMessage() {
         const model = document.getElementById('model').value;
         const stream = document.getElementById('streamToggle').checked;
-        const userMsg = document.getElementById('messages').value;
+        const text = userInput.value.trim();
 
-        if (!model) { addLog('error', '请先选择模型'); return; }
-        if (!userMsg) { addLog('error', '请输入消息内容'); return; }
+        if (!model) { alert('请先选择模型'); return; }
+        if (!text) return;
 
+        // 添加用户消息到历史
+        conversationHistory.push({ role: 'user', content: text });
+        addChatMessage('user', text);
+
+        // 清空输入框
+        userInput.value = '';
+        userInput.style.height = 'auto';
+
+        // UI 状态切换
+        document.getElementById('btnSend').disabled = true;
+        document.getElementById('btnSend').style.display = 'none';
+        document.getElementById('btnStop').style.display = '';
+        startTimer();
+
+        const base = document.getElementById('baseUrl').value.replace(/\/$/, '');
         const body = {
             model: model,
-            messages: [{ role: 'user', content: userMsg }],
+            messages: conversationHistory.slice(),
             stream: stream
         };
 
-        document.getElementById('btnSend').disabled = true;
-        document.getElementById('btnStop').disabled = false;
-        document.getElementById('streamPreview').innerHTML = '';
-        chunkCountVal = 0;
-        document.getElementById('chunkCount').textContent = '0';
-
-        setStatus('connected', stream ? '流式请求中...' : '请求中...');
-        addLog('system', 'POST /aigtw/v1/chat/completions  model=' + model + '  stream=' + stream);
-        startTimer();
-
         controller = new AbortController();
+
+        // 预建助手消息占位
+        const assistantEl = addChatMessage('assistant', '');
+        const contentEl = assistantEl.querySelector('.content');
 
         try {
             const resp = await fetch(base + '/aigtw/v1/chat/completions', {
@@ -539,30 +424,43 @@
             }
 
             if (stream) {
-                await handleStream(resp);
+                const fullContent = await handleStream(resp, contentEl);
+                conversationHistory.push({ role: 'assistant', content: fullContent });
+                const ms = Date.now() - startTime;
+                assistantEl.querySelector('.meta')?.remove();
+                const metaDiv = document.createElement('div');
+                metaDiv.className = 'meta';
+                metaDiv.textContent = chunkCountVal + ' chunks | ' + (ms / 1000).toFixed(1) + 's';
+                assistantEl.appendChild(metaDiv);
             } else {
                 const data = await resp.json();
+                const content = data.choices[0].message.content;
+                contentEl.textContent = content;
+                conversationHistory.push({ role: 'assistant', content: content });
                 stopTimer();
-                document.getElementById('streamPreview').textContent = data.choices[0].message.content;
-                addLog('chunk', JSON.stringify(data, null, 2), 'response');
-                addLog('system', '完成 (tokens: ' + data.usage.total_tokens + ')');
+                const ms = Date.now() - startTime;
+                const metaDiv = document.createElement('div');
+                metaDiv.className = 'meta';
+                metaDiv.textContent = 'tokens: ' + data.usage.total_tokens + ' | ' + (ms / 1000).toFixed(1) + 's';
+                assistantEl.appendChild(metaDiv);
             }
         } catch (err) {
-            if (err.name !== 'AbortError') {
-                addLog('error', '请求错误: ' + err.message);
-                setStatus('error', '请求失败');
+            if (err.name === 'AbortError') {
+                contentEl.textContent += '\n[已停止]';
+            } else {
+                contentEl.innerHTML = '<span style="color:var(--red)">' + escapeHtml(err.message) + '</span>';
             }
         } finally {
             cleanup();
         }
     }
 
-    async function handleStream(resp) {
+    async function handleStream(resp, contentEl) {
         const reader = resp.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
         let fullContent = '';
-        const preview = document.getElementById('streamPreview');
+        const area = document.getElementById('chatArea');
 
         while (true) {
             const { done, value } = await reader.read();
@@ -577,51 +475,61 @@
                 if (!trimmed) continue;
 
                 if (trimmed === 'data: [DONE]') {
-                    addLog('done', '');
                     stopTimer();
-                    setStatus('', '完成');
-                    preview.innerHTML = escapeHtml(fullContent);
-                    return;
+                    contentEl.innerHTML = escapeHtml(fullContent);
+                    return fullContent;
                 }
 
-                if (trimmed.startsWith('data: ')) {
-                    const jsonStr = trimmed.substring(6);
+                if (trimmed.startsWith('data: ') || trimmed.startsWith('data:')) {
+                    const jsonStr = trimmed.startsWith('data: ') ? trimmed.substring(6) : trimmed.substring(5);
                     try {
                         const chunk = JSON.parse(jsonStr);
-                        const delta = chunk.choices[0].delta;
-                        const finish = chunk.choices[0].finish_reason;
+                        const delta = chunk.choices[0]?.delta;
 
-                        if (delta.content) {
+                        if (delta?.content) {
                             fullContent += delta.content;
-                            preview.innerHTML = escapeHtml(fullContent) + '<span class="cursor"></span>';
+                            contentEl.innerHTML = escapeHtml(fullContent) + '<span class="cursor"></span>';
+                            area.scrollTop = area.scrollHeight;
+                            chunkCountVal++;
+                            document.getElementById('chunkCount').textContent = chunkCountVal;
                         }
-
-                        addLog('chunk', jsonStr, finish ? 'finish: ' + finish : (delta.role ? 'role' : 'delta'));
                     } catch (e) {
-                        addLog('chunk', jsonStr, 'raw');
+                        // 忽略解析错误
                     }
-                } else if (trimmed.startsWith(': keepalive')) {
-                    addLog('keepalive', '');
                 }
             }
         }
+
+        stopTimer();
+        contentEl.innerHTML = escapeHtml(fullContent);
+        return fullContent;
     }
 
     function stopStream() {
         if (controller) {
             controller.abort();
-            addLog('system', '已手动停止');
         }
     }
 
     function cleanup() {
         controller = null;
         document.getElementById('btnSend').disabled = false;
-        document.getElementById('btnStop').disabled = true;
+        document.getElementById('btnSend').style.display = '';
+        document.getElementById('btnStop').style.display = 'none';
         stopTimer();
-        if (document.getElementById('statusDot').className.includes('connected')) {
-            setStatus('', '就绪');
-        }
+        userInput.focus();
+    }
+
+    function clearChat() {
+        conversationHistory = [];
+        const area = document.getElementById('chatArea');
+        area.innerHTML = '<div class="empty-state" id="emptyState">' +
+            '<div class="icon">&#x1F4AC;</div>' +
+            '<h2>AI 对话测试</h2>' +
+            '<p>选择模型，输入消息开始对话</p></div>';
+        chunkCountVal = 0;
+        document.getElementById('chunkCount').textContent = '0';
+        document.getElementById('elapsed').textContent = '-';
     }
 </script>
 

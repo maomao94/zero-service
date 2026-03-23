@@ -23,6 +23,8 @@ import (
 	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/rest"
 	"github.com/zeromicro/go-zero/rest/httpx"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var configFile = flag.String("f", "etc/aigtw.yaml", "the config file")
@@ -36,6 +38,20 @@ func main() {
 		if errors.As(err, &openAIErr) {
 			return openAIErr.HTTPStatus, openAIErr
 		}
+
+		// 处理 gRPC status error
+		if st, ok := status.FromError(err); ok {
+			httpStatus, errType, errCode := grpcStatusToHTTP(st.Code())
+			return httpStatus, &types.OpenAIError{
+				HTTPStatus: httpStatus,
+				ErrorMsg: types.ErrorDetail{
+					Type:    errType,
+					Message: st.Message(),
+					Code:    errCode,
+				},
+			}
+		}
+
 		return http.StatusInternalServerError, &types.OpenAIError{
 			HTTPStatus: http.StatusInternalServerError,
 			ErrorMsg: types.ErrorDetail{
@@ -75,4 +91,24 @@ func main() {
 
 	fmt.Printf("Starting server at %s:%d...\n", c.Host, c.Port)
 	serviceGroup.Start()
+}
+
+// grpcStatusToHTTP 将 gRPC status code 映射为 HTTP status + OpenAI error type/code
+func grpcStatusToHTTP(code codes.Code) (httpStatus int, errType string, errCode string) {
+	switch code {
+	case codes.NotFound:
+		return http.StatusNotFound, "invalid_request_error", "model_not_found"
+	case codes.InvalidArgument:
+		return http.StatusBadRequest, "invalid_request_error", "invalid_request"
+	case codes.ResourceExhausted:
+		return http.StatusTooManyRequests, "rate_limit_error", "rate_limit_exceeded"
+	case codes.PermissionDenied, codes.Unauthenticated:
+		return http.StatusForbidden, "permission_error", "permission_denied"
+	case codes.DeadlineExceeded:
+		return http.StatusGatewayTimeout, "timeout_error", "timeout"
+	case codes.Unavailable:
+		return http.StatusBadGateway, "upstream_error", "upstream_unavailable"
+	default:
+		return http.StatusInternalServerError, "internal_error", ""
+	}
 }

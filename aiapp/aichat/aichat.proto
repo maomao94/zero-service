@@ -1,0 +1,94 @@
+syntax = "proto3";
+package aichat;
+
+option go_package = "./aichat";
+
+// --- 通用 ---
+message PingReq {
+  string ping = 1;
+}
+
+message PingRes {
+  string pong = 1;
+}
+
+// --- 对话消息 ---
+message ChatMessage {
+  string role = 1;     // system / user / assistant
+  string content = 2;
+}
+
+// --- 对话补全请求 ---
+message ChatCompletionReq {
+  string model = 1;
+  repeated ChatMessage messages = 2;
+  double temperature = 3;
+  double top_p = 4;
+  int32 max_tokens = 5;
+  repeated string stop = 6;
+  string user = 7;
+}
+
+// --- 非流式响应 ---
+message Choice {
+  int32 index = 1;
+  ChatMessage message = 2;
+  string finish_reason = 3;
+}
+
+message Usage {
+  int32 prompt_tokens = 1;
+  int32 completion_tokens = 2;
+  int32 total_tokens = 3;
+}
+
+message ChatCompletionRes {
+  string id = 1;
+  string object = 2;
+  int64 created = 3;
+  string model = 4;
+  repeated Choice choices = 5;
+  Usage usage = 6;
+}
+
+// --- 流式响应 chunk ---
+message ChatDelta {
+  string role = 1;
+  string content = 2;
+}
+
+message ChunkChoice {
+  int32 index = 1;
+  ChatDelta delta = 2;
+  string finish_reason = 3;
+}
+
+message ChatCompletionStreamChunk {
+  string id = 1;
+  string object = 2;
+  int64 created = 3;
+  string model = 4;
+  repeated ChunkChoice choices = 5;
+}
+
+// --- 模型列表 ---
+message ListModelsReq {}
+
+message ModelObject {
+  string id = 1;
+  string object = 2;
+  int64 created = 3;
+  string owned_by = 4;
+}
+
+message ListModelsRes {
+  repeated ModelObject data = 1;
+}
+
+// --- Service ---
+service AiChat {
+  rpc Ping(PingReq) returns(PingRes);
+  rpc ChatCompletion(ChatCompletionReq) returns(ChatCompletionRes);
+  rpc ChatCompletionStream(ChatCompletionReq) returns(stream ChatCompletionStreamChunk);
+  rpc ListModels(ListModelsReq) returns(ListModelsRes);
+}

@@ -1,0 +1,32 @@
+Name: aichat.rpc
+ListenOn: 0.0.0.0:21004
+Mode: dev
+Log:
+  Encoding: plain
+
+Providers:
+  - Name: "zhipu"
+    Type: "openai_compatible"
+    Endpoint: "https://open.bigmodel.cn/api/paas/v4"
+    ApiKey: "77ee63b46003482eb52036188b4bdb9c.YTsJNSOwSmKg3TYw"
+  - Name: "siliconflow"
+    Type: "openai_compatible"
+    Endpoint: "https://api.siliconflow.cn/v1"
+    ApiKey: "${SILICONFLOW_API_KEY}"
+
+Models:
+  - Id: "aigtw-chat"
+    Provider: "zhipu"
+    BackendModel: "glm-4-flash"
+    DisplayName: "智谱对话"
+    Description: "智谱 GLM-4-Flash 免费模型"
+  - Id: "aigtw-coding"
+    Provider: "siliconflow"
+    BackendModel: "deepseek-ai/DeepSeek-V2.5"
+    DisplayName: "代码助手"
+    Description: "代码生成、审查和重构"
+  - Id: "aigtw-qwen"
+    Provider: "siliconflow"
+    BackendModel: "Qwen/Qwen2.5-7B-Instruct"
+    DisplayName: "通义千问"
+    Description: "通义千问开源模型"
