@@ -3,6 +3,14 @@
 
 package types
 
+type ChatCompletionChunk struct {
+	Id      string        `json:"id"`      // 补全ID
+	Object  string        `json:"object"`  // 固定值 "chat.completion.chunk"
+	Created int64         `json:"created"` // 创建时间
+	Model   string        `json:"model"`   // 模型ID
+	Choices []ChunkChoice `json:"choices"` // 选项列表
+}
+
 type ChatCompletionRequest struct {
 	Model       string        `json:"model"`                              // 模型ID，对应能力（如 aigtw-chat, aigtw-coding）
 	Messages    []ChatMessage `json:"messages"`                           // 对话消息列表
@@ -23,6 +31,11 @@ type ChatCompletionResponse struct {
 	Usage   Usage    `json:"usage"`   // Token 用量统计
 }
 
+type ChatDelta struct {
+	Role    string `json:"role,optional"`    // 角色
+	Content string `json:"content,optional"` // 内容
+}
+
 type ChatMessage struct {
 	Role    string `json:"role"`          // 角色: system / user / assistant
 	Content string `json:"content"`       // 消息内容
@@ -33,6 +46,12 @@ type Choice struct {
 	Index        int         `json:"index"`         // 选项索引
 	Message      ChatMessage `json:"message"`       // 完整的助手消息
 	FinishReason string      `json:"finish_reason"` // 结束原因: stop / length / content_filter
+}
+
+type ChunkChoice struct {
+	Index        int       `json:"index"`                  // 选项索引
+	Delta        ChatDelta `json:"delta"`                  // 增量内容
+	FinishReason *string   `json:"finish_reason,optional"` // 结束原因
 }
 
 type ListModelsResponse struct {

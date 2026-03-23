@@ -70,3 +70,26 @@ type (
 	}
 )
 
+// ==================== 流式响应 Chunk ====================
+type (
+	// ChatCompletionChunk SSE 流式 chunk
+	ChatCompletionChunk {
+		Id      string        `json:"id"` // 补全ID
+		Object  string        `json:"object"` // 固定值 "chat.completion.chunk"
+		Created int64         `json:"created"` // 创建时间
+		Model   string        `json:"model"` // 模型ID
+		Choices []ChunkChoice `json:"choices"` // 选项列表
+	}
+	// ChunkChoice 流式选项
+	ChunkChoice {
+		Index        int       `json:"index"` // 选项索引
+		Delta        ChatDelta `json:"delta"` // 增量内容
+		FinishReason *string   `json:"finish_reason,optional"` // 结束原因
+	}
+	// ChatDelta 增量消息
+	ChatDelta {
+		Role    string `json:"role,optional"` // 角色
+		Content string `json:"content,optional"` // 内容
+	}
+)
+

@@ -38,6 +38,7 @@ service aigtw {
 	prefix:  aigtw/v1
 	group:   ai
 	timeout: 0s
+	sse:     true
 )
 service aigtw {
 	@doc "对话补全"

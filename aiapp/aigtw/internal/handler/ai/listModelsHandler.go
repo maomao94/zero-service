@@ -1,6 +1,3 @@
-// Code scaffolded by goctl. Safe to edit.
-// goctl 1.9.2
-
 package ai
 
 import (
@@ -17,7 +14,7 @@ func ListModelsHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		l := ai.NewListModelsLogic(r.Context(), svcCtx)
 		resp, err := l.ListModels()
 		if err != nil {
-			writeOpenAIError(w, http.StatusInternalServerError, "internal_error", "internal_error", err.Error())
+			httpx.ErrorCtx(r.Context(), w, err)
 		} else {
 			httpx.OkJsonCtx(r.Context(), w, resp)
 		}
