@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"errors"
 
 	"zero-service/aiapp/aichat/aichat"
 	"zero-service/aiapp/aichat/internal/provider"
@@ -60,19 +61,15 @@ func toProviderRequest(in *aichat.ChatCompletionReq, backendModel, providerName 
 	}
 
 	req := &provider.ChatRequest{
-		Model:    backendModel,
-		Messages: messages,
+		Model:       backendModel,
+		Messages:    messages,
+		Temperature: in.Temperature,
+		TopP:        in.TopP,
 	}
 	// 若启用深度思考模式，根据厂商名称构建对应的扩展参数并注入 ExtraBody。
 	// ExtraBody 会在 provider 层的 marshalWithExtraBody() 中合并到 JSON 请求体顶层。
 	if in.EnableThinking {
 		req.ExtraBody = buildThinkingParams(providerName, true)
-	}
-	if in.Temperature != 0 {
-		req.Temperature = in.Temperature
-	}
-	if in.TopP != 0 {
-		req.TopP = in.TopP
 	}
 	if in.MaxTokens != 0 {
 		req.MaxTokens = int(in.MaxTokens)
@@ -155,7 +152,8 @@ func toProtoResponse(resp *provider.ChatResponse, modelId string) *aichat.ChatCo
 
 // toGrpcError 将 provider 错误转为 gRPC status error
 func toGrpcError(err error) error {
-	if apiErr, ok := err.(*provider.APIError); ok {
+	var apiErr *provider.APIError
+	if errors.As(err, &apiErr) {
 		switch {
 		case apiErr.StatusCode == 401 || apiErr.StatusCode == 403:
 			return status.Errorf(codes.PermissionDenied, "upstream auth error: %s", apiErr.Body)

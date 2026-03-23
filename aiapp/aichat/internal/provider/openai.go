@@ -73,8 +73,11 @@ func (o *OpenAICompatible) ChatCompletionStream(ctx context.Context, req *ChatRe
 		return nil, o.parseError(resp)
 	}
 
+	scanner := bufio.NewScanner(resp.Body)
+	scanner.Buffer(make([]byte, 0, 256*1024), 256*1024) // 256KB，防止大 chunk 截断
+
 	return &sseStreamReader{
-		scanner: bufio.NewScanner(resp.Body),
+		scanner: scanner,
 		body:    resp.Body,
 	}, nil
 }
@@ -94,7 +97,11 @@ func (o *OpenAICompatible) buildRequest(ctx context.Context, req *ChatRequest) (
 
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("Authorization", "Bearer "+o.apiKey)
-	httpReq.Header.Set("Accept", "text/event-stream")
+	if req.Stream {
+		httpReq.Header.Set("Accept", "text/event-stream")
+	} else {
+		httpReq.Header.Set("Accept", "application/json")
+	}
 
 	return httpReq, nil
 }
@@ -129,7 +136,7 @@ func marshalWithExtraBody(req *ChatRequest) ([]byte, error) {
 
 // parseError 解析大模型 API 的错误响应
 func (o *OpenAICompatible) parseError(resp *http.Response) error {
-	body, _ := io.ReadAll(resp.Body)
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
 	return &APIError{
 		StatusCode: resp.StatusCode,
 		Body:       string(body),

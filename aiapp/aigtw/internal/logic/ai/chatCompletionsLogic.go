@@ -2,6 +2,7 @@ package ai
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 
@@ -65,30 +66,36 @@ func (l *ChatCompletionsLogic) handleStream(req *types.ChatCompletionRequest) er
 		return err
 	}
 
-	l.Infof("chat completions stream started, model: %s", req.Model)
+	l.Logger.Infof("chat completions stream started, model: %s", req.Model)
 
 	for {
 		chunk, err := grpcStream.Recv()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			sw.WriteDone()
-			l.Infof("stream completed, model: %s", req.Model)
+			l.Logger.Infof("stream completed, model: %s", req.Model)
 			return nil
 		}
 		if err != nil {
-			l.Errorf("stream recv error: %v", err)
-			return err
+			l.Logger.Errorf("stream recv error: %v", err)
+			// SSE 已开始写入（HTTP 200 已提交），不能再返回 error 给 handler 写 JSON 错误，
+			// 否则客户端 SSE parser 无法解析混入的 JSON 错误体。
+			// 直接返回 nil，让连接正常关闭，客户端通过未收到 [DONE] 检测异常。
+			return nil
 		}
 
 		// 检查 HTTP 客户端是否断开
 		select {
 		case <-l.r.Context().Done():
-			l.Infof("stream client disconnected")
+			l.Logger.Infof("stream client disconnected")
 			return nil
 		default:
 		}
 
 		httpChunk := toHTTPChunk(chunk)
-		sw.WriteJSON(httpChunk)
+		if err := sw.WriteJSON(httpChunk); err != nil {
+			l.Logger.Errorf("write sse chunk error: %v", err)
+			return nil
+		}
 	}
 }
 

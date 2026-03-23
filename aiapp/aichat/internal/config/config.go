@@ -1,6 +1,10 @@
 package config
 
-import "github.com/zeromicro/go-zero/zrpc"
+import (
+	"time"
+
+	"github.com/zeromicro/go-zero/zrpc"
+)
 
 type ProviderConfig struct {
 	Name     string
@@ -21,6 +25,8 @@ type ModelConfig struct {
 
 type Config struct {
 	zrpc.RpcServerConf
-	Providers []ProviderConfig
-	Models    []ModelConfig
+	StreamTimeout     time.Duration `json:",default=10m"` // 单次流的总时长上限
+	StreamIdleTimeout time.Duration `json:",default=90s"` // chunk 间最大空闲时间
+	Providers         []ProviderConfig
+	Models            []ModelConfig
 }

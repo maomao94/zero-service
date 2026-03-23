@@ -7,8 +7,8 @@ type (
 		Model       string        `json:"model"` // 模型ID，对应能力（如 aigtw-chat, aigtw-coding）
 		Messages    []ChatMessage `json:"messages"` // 对话消息列表
 		Stream      bool          `json:"stream,optional"` // 是否启用 SSE 流式输出
-		Temperature float64       `json:"temperature,optional,range=[0:2.0]"` // 采样温度，越高越随机
-		TopP        float64       `json:"top_p,optional,range=[0:1.0]"` // 核采样概率
+		Temperature float64       `json:"temperature,optional,default=1,range=[0:2.0]"` // 采样温度，越高越随机
+		TopP        float64       `json:"top_p,optional,default=1,range=[0:1.0]"` // 核采样概率
 		MaxTokens   int           `json:"max_tokens,optional"` // 最大生成 token 数
 		Stop        []string      `json:"stop,optional"` // 停止生成的标记序列
 		User        string        `json:"user,optional"` // 终端用户标识

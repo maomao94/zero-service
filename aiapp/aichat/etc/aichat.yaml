@@ -2,6 +2,8 @@ Name: aichat.rpc
 ListenOn: 0.0.0.0:23001
 Mode: dev
 Timeout: 60000
+StreamTimeout: 600s
+StreamIdleTimeout: 90s
 Log:
   Encoding: plain
 
