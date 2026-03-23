@@ -28,14 +28,14 @@ func NewChatCompletionStreamLogic(ctx context.Context, svcCtx *svc.ServiceContex
 }
 
 func (l *ChatCompletionStreamLogic) ChatCompletionStream(in *aichat.ChatCompletionReq, stream aichat.AiChat_ChatCompletionStreamServer) error {
-	p, backendModel, err := l.svcCtx.Registry.GetProvider(in.Model)
+	p, backendModel, providerName, err := l.svcCtx.Registry.GetProvider(in.Model)
 	if err != nil {
 		return status.Errorf(codes.NotFound, "model %s not found", in.Model)
 	}
 
-	req := toProviderRequest(in, backendModel)
+	req := toProviderRequest(in, backendModel, providerName)
 
-	l.Infof("chat completion stream, model: %s -> %s", in.Model, backendModel)
+	l.Infof("chat completion stream, model: %s -> %s (%s)", in.Model, backendModel, providerName)
 
 	reader, err := p.ChatCompletionStream(l.ctx, req)
 	if err != nil {
@@ -79,8 +79,9 @@ func toProtoStreamChunk(chunk *provider.StreamChunk, modelId string) *aichat.Cha
 		choices[i] = &aichat.ChunkChoice{
 			Index: int32(c.Index),
 			Delta: &aichat.ChatDelta{
-				Role:    c.Delta.Role,
-				Content: c.Delta.Content,
+				Role:             c.Delta.Role,
+				Content:          c.Delta.Content,
+				ReasoningContent: c.Delta.ReasoningContent,
 			},
 			FinishReason: c.FinishReason,
 		}

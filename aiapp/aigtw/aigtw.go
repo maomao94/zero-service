@@ -43,16 +43,16 @@ func main() {
 	ctx := svc.NewServiceContext(c)
 	handler.RegisterHandlers(server, ctx)
 
-	// Demo page 静态文件路由
+	// Chat 页面静态文件路由
 	server.AddRoute(rest.Route{
 		Method: http.MethodGet,
-		Path:   "/aigtw/demo",
+		Path:   "/aigtw/chat",
 		Handler: func(w http.ResponseWriter, r *http.Request) {
 			candidates := []string{}
 			if exe, err := os.Executable(); err == nil {
-				candidates = append(candidates, filepath.Join(filepath.Dir(exe), "sse_demo.html"))
+				candidates = append(candidates, filepath.Join(filepath.Dir(exe), "chat.html"))
 			}
-			candidates = append(candidates, "sse_demo.html", "aiapp/aigtw/sse_demo.html")
+			candidates = append(candidates, "chat.html", "aiapp/aigtw/chat.html")
 
 			for _, p := range candidates {
 				if _, err := os.Stat(p); err == nil {

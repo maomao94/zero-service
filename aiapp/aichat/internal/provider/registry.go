@@ -48,17 +48,24 @@ func NewRegistry(providers []config.ProviderConfig, models []config.ModelConfig)
 	return r, nil
 }
 
-// GetProvider 根据模型 ID 获取 provider 和后端模型名
-func (r *Registry) GetProvider(modelId string) (Provider, string, error) {
+// GetProvider 根据模型 ID 查找对应的 provider 实例、后端模型名和 provider 名称。
+//
+// 返回值：
+//   - Provider: 模型对应的 provider 实例（如 OpenAICompatible）
+//   - backendModel: 厂商侧真实模型名（如 "qwen-plus"），用于替换请求中的 model 字段
+//   - providerName: provider 名称（如 "dashscope"、"zhipu"），用于 logic 层根据厂商
+//     构建特有参数（如 buildThinkingParams 根据 providerName 生成不同的 thinking 参数格式）
+//   - error: 模型或 provider 未找到时返回错误
+func (r *Registry) GetProvider(modelId string) (Provider, string, string, error) {
 	mapping, ok := r.models[modelId]
 	if !ok {
-		return nil, "", fmt.Errorf("model %s not found", modelId)
+		return nil, "", "", fmt.Errorf("model %s not found", modelId)
 	}
 	p, ok := r.providers[mapping.ProviderName]
 	if !ok {
-		return nil, "", fmt.Errorf("provider %s not found", mapping.ProviderName)
+		return nil, "", "", fmt.Errorf("provider %s not found", mapping.ProviderName)
 	}
-	return p, mapping.BackendModel, nil
+	return p, mapping.BackendModel, mapping.ProviderName, nil
 }
 
 // ModelIds 返回所有已注册的模型 ID

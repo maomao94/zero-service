@@ -1,6 +1,7 @@
 Name: aichat.rpc
 ListenOn: 0.0.0.0:23001
 Mode: dev
+Timeout: 60000
 Log:
   Encoding: plain
 
@@ -13,6 +14,10 @@ Providers:
     Type: "openai_compatible"
     Endpoint: "https://api.siliconflow.cn/v1"
     ApiKey: "${SILICONFLOW_API_KEY}"
+  - Name: "dashscope"
+    Type: "openai_compatible"
+    Endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    ApiKey: "sk-bb4bb9c4b3bd4a0b96baecde19c878d3"
 
 Models:
   - Id: "aigtw-chat"
@@ -30,3 +35,8 @@ Models:
     BackendModel: "Qwen/Qwen2.5-7B-Instruct"
     DisplayName: "通义千问"
     Description: "通义千问开源模型"
+  - Id: "aigtw-qwen3"
+    Provider: "dashscope"
+    BackendModel: "qwen3-plus"
+    DisplayName: "千问深思"
+    Description: "通义千问3-plus，支持深度思考模式"

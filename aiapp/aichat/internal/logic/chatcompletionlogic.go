@@ -27,15 +27,15 @@ func NewChatCompletionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Ch
 }
 
 func (l *ChatCompletionLogic) ChatCompletion(in *aichat.ChatCompletionReq) (*aichat.ChatCompletionRes, error) {
-	p, backendModel, err := l.svcCtx.Registry.GetProvider(in.Model)
+	p, backendModel, providerName, err := l.svcCtx.Registry.GetProvider(in.Model)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "model %s not found", in.Model)
 	}
 
 	// 构建 provider 请求
-	req := toProviderRequest(in, backendModel)
+	req := toProviderRequest(in, backendModel, providerName)
 
-	l.Infof("chat completion, model: %s -> %s", in.Model, backendModel)
+	l.Infof("chat completion, model: %s -> %s (%s)", in.Model, backendModel, providerName)
 
 	resp, err := p.ChatCompletion(l.ctx, req)
 	if err != nil {
@@ -47,19 +47,26 @@ func (l *ChatCompletionLogic) ChatCompletion(in *aichat.ChatCompletionReq) (*aic
 	return toProtoResponse(resp, in.Model), nil
 }
 
-// toProviderRequest 将 proto 请求转为 provider 内部请求
-func toProviderRequest(in *aichat.ChatCompletionReq, backendModel string) *provider.ChatRequest {
+// toProviderRequest 将 gRPC proto 请求转为 provider 内部请求。
+// 接收 providerName 参数，用于根据厂商名称构建特有的扩展参数（如 thinking 模式参数）。
+func toProviderRequest(in *aichat.ChatCompletionReq, backendModel, providerName string) *provider.ChatRequest {
 	messages := make([]provider.ChatMessage, len(in.Messages))
 	for i, m := range in.Messages {
 		messages[i] = provider.ChatMessage{
-			Role:    m.Role,
-			Content: m.Content,
+			Role:             m.Role,
+			Content:          m.Content,
+			ReasoningContent: m.ReasoningContent,
 		}
 	}
 
 	req := &provider.ChatRequest{
 		Model:    backendModel,
 		Messages: messages,
+	}
+	// 若启用深度思考模式，根据厂商名称构建对应的扩展参数并注入 ExtraBody。
+	// ExtraBody 会在 provider 层的 marshalWithExtraBody() 中合并到 JSON 请求体顶层。
+	if in.EnableThinking {
+		req.ExtraBody = buildThinkingParams(providerName, true)
 	}
 	if in.Temperature != 0 {
 		req.Temperature = in.Temperature
@@ -79,6 +86,44 @@ func toProviderRequest(in *aichat.ChatCompletionReq, backendModel string) *provi
 	return req
 }
 
+// buildThinkingParams 根据 provider 名称构建厂商特有的深度思考（thinking）参数。
+//
+// 不同大模型厂商启用 thinking 模式的请求参数格式不同：
+//
+//   - dashscope（千问/通义）: 在请求体顶层添加 {"enable_thinking": true}
+//     文档: https://help.aliyun.com/zh/model-studio/developer-reference/openai-sdk
+//
+//   - openai / zhipu（智谱）及其他兼容厂商（默认）:
+//     在请求体顶层添加 {"thinking": {"type": "enabled", "clear_thinking": true}}
+//     其中 clear_thinking 表示自动清除历史 messages 中的 reasoning_content，
+//     避免思考内容占用 token 额度。
+//     文档: https://docs.bigmodel.cn/api-reference
+//
+// 返回的 map 会赋值给 ChatRequest.ExtraBody，最终由 marshalWithExtraBody() 合并到 JSON 顶层。
+func buildThinkingParams(providerName string, enable bool) map[string]any {
+	switch providerName {
+	case "dashscope":
+		// 千问格式: {"enable_thinking": true}
+		return map[string]any{
+			"enable_thinking": enable,
+		}
+	default:
+		// OpenAI 标准格式（智谱等）:
+		// {"thinking": {"type": "enabled", "clear_thinking": true}}
+		// clear_thinking: 自动清除历史消息中的 reasoning_content，避免额外占用 token
+		t := "disabled"
+		if enable {
+			t = "enabled"
+		}
+		return map[string]any{
+			"thinking": map[string]any{
+				"type":           t,
+				"clear_thinking": true,
+			},
+		}
+	}
+}
+
 // toProtoResponse 将 provider 响应转为 proto 响应
 func toProtoResponse(resp *provider.ChatResponse, modelId string) *aichat.ChatCompletionRes {
 	choices := make([]*aichat.Choice, len(resp.Choices))
@@ -86,8 +131,9 @@ func toProtoResponse(resp *provider.ChatResponse, modelId string) *aichat.ChatCo
 		choices[i] = &aichat.Choice{
 			Index: int32(c.Index),
 			Message: &aichat.ChatMessage{
-				Role:    c.Message.Role,
-				Content: c.Message.Content,
+				Role:             c.Message.Role,
+				Content:          c.Message.Content,
+				ReasoningContent: c.Message.ReasoningContent,
 			},
 			FinishReason: c.FinishReason,
 		}

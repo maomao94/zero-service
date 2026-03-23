@@ -13,9 +13,15 @@ message PingRes {
 }
 
 // --- 对话消息 ---
+// ChatMessage 单条对话消息，兼容 OpenAI Chat Completion 消息格式。
+// 当模型启用深度思考（thinking）时，assistant 消息会包含 reasoning_content 字段，
+// 用于携带模型的推理/思考过程文本，与最终回答 content 分离。
 message ChatMessage {
-  string role = 1;     // system / user / assistant
-  string content = 2;
+  string role = 1;     // 消息角色: system（系统提示）/ user（用户输入）/ assistant（模型回复）
+  string content = 2;  // 消息正文内容
+  // 模型的推理思考过程（仅 assistant 角色有值）。
+  // 不同厂商返回字段名相同（reasoning_content），但启用方式不同，参见 enable_thinking。
+  string reasoning_content = 3;
 }
 
 // --- 对话补全请求 ---
@@ -27,6 +33,7 @@ message ChatCompletionReq {
   int32 max_tokens = 5;
   repeated string stop = 6;
   string user = 7;
+  bool enable_thinking = 8; // 是否启用深度思考模式
 }
 
 // --- 非流式响应 ---
@@ -52,9 +59,14 @@ message ChatCompletionRes {
 }
 
 // --- 流式响应 chunk ---
+// ChatDelta 流式增量消息。在 thinking 模式下，模型会先通过 reasoning_content
+// 逐 chunk 输出推理过程，再通过 content 输出最终回答。前端可根据两字段分别渲染。
 message ChatDelta {
-  string role = 1;
-  string content = 2;
+  string role = 1;               // 角色（仅首个 chunk 包含）
+  string content = 2;            // 正文增量内容
+  // 推理思考过程的增量内容。流式场景下先于 content 输出，
+  // 当 reasoning_content 结束、content 开始时，表示模型已从思考阶段切换到回答阶段。
+  string reasoning_content = 3;
 }
 
 message ChunkChoice {

@@ -12,14 +12,15 @@ type ChatCompletionChunk struct {
 }
 
 type ChatCompletionRequest struct {
-	Model       string        `json:"model"`                              // 模型ID，对应能力（如 aigtw-chat, aigtw-coding）
-	Messages    []ChatMessage `json:"messages"`                           // 对话消息列表
-	Stream      bool          `json:"stream,optional"`                    // 是否启用 SSE 流式输出
-	Temperature float64       `json:"temperature,optional,range=[0:2.0]"` // 采样温度，越高越随机
-	TopP        float64       `json:"top_p,optional,range=[0:1.0]"`       // 核采样概率
-	MaxTokens   int           `json:"max_tokens,optional"`                // 最大生成 token 数
-	Stop        []string      `json:"stop,optional"`                      // 停止生成的标记序列
-	User        string        `json:"user,optional"`                      // 终端用户标识
+	Model       string         `json:"model"`                              // 模型ID，对应能力（如 aigtw-chat, aigtw-coding）
+	Messages    []ChatMessage  `json:"messages"`                           // 对话消息列表
+	Stream      bool           `json:"stream,optional"`                    // 是否启用 SSE 流式输出
+	Temperature float64        `json:"temperature,optional,range=[0:2.0]"` // 采样温度，越高越随机
+	TopP        float64        `json:"top_p,optional,range=[0:1.0]"`       // 核采样概率
+	MaxTokens   int            `json:"max_tokens,optional"`                // 最大生成 token 数
+	Stop        []string       `json:"stop,optional"`                      // 停止生成的标记序列
+	User        string         `json:"user,optional"`                      // 终端用户标识
+	Thinking    *ThinkingParam `json:"thinking,optional"`
 }
 
 type ChatCompletionResponse struct {
@@ -32,14 +33,15 @@ type ChatCompletionResponse struct {
 }
 
 type ChatDelta struct {
-	Role    string `json:"role,optional"`    // 角色
-	Content string `json:"content,optional"` // 内容
+	Role             string `json:"role,optional"`    // 角色
+	Content          string `json:"content,optional"` // 内容增量
+	ReasoningContent string `json:"reasoning_content,optional"`
 }
 
 type ChatMessage struct {
-	Role    string `json:"role"`          // 角色: system / user / assistant
-	Content string `json:"content"`       // 消息内容
-	Name    string `json:"name,optional"` // 发送者名称（可选）
+	Role             string `json:"role"`    // 角色: system / user / assistant
+	Content          string `json:"content"` // 消息内容
+	ReasoningContent string `json:"reasoning_content,optional"`
 }
 
 type Choice struct {
@@ -75,6 +77,10 @@ type ModelObject struct {
 
 type PingReply struct {
 	Msg string `json:"msg"`
+}
+
+type ThinkingParam struct {
+	Type string `json:"type"` // "enabled" 启用 / "disabled" 禁用
 }
 
 type Usage struct {

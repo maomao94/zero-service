@@ -112,11 +112,12 @@ func (x *PingRes) GetPong() string {
 
 // --- 对话消息 ---
 type ChatMessage struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Role          string                 `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"` // system / user / assistant
-	Content       string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Role             string                 `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"` // system / user / assistant
+	Content          string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
+	ReasoningContent string                 `protobuf:"bytes,3,opt,name=reasoning_content,json=reasoningContent,proto3" json:"reasoning_content,omitempty"` // 思考过程（千问 thinking 模式）
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *ChatMessage) Reset() {
@@ -163,18 +164,26 @@ func (x *ChatMessage) GetContent() string {
 	return ""
 }
 
+func (x *ChatMessage) GetReasoningContent() string {
+	if x != nil {
+		return x.ReasoningContent
+	}
+	return ""
+}
+
 // --- 对话补全请求 ---
 type ChatCompletionReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Model         string                 `protobuf:"bytes,1,opt,name=model,proto3" json:"model,omitempty"`
-	Messages      []*ChatMessage         `protobuf:"bytes,2,rep,name=messages,proto3" json:"messages,omitempty"`
-	Temperature   float64                `protobuf:"fixed64,3,opt,name=temperature,proto3" json:"temperature,omitempty"`
-	TopP          float64                `protobuf:"fixed64,4,opt,name=top_p,json=topP,proto3" json:"top_p,omitempty"`
-	MaxTokens     int32                  `protobuf:"varint,5,opt,name=max_tokens,json=maxTokens,proto3" json:"max_tokens,omitempty"`
-	Stop          []string               `protobuf:"bytes,6,rep,name=stop,proto3" json:"stop,omitempty"`
-	User          string                 `protobuf:"bytes,7,opt,name=user,proto3" json:"user,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Model          string                 `protobuf:"bytes,1,opt,name=model,proto3" json:"model,omitempty"`
+	Messages       []*ChatMessage         `protobuf:"bytes,2,rep,name=messages,proto3" json:"messages,omitempty"`
+	Temperature    float64                `protobuf:"fixed64,3,opt,name=temperature,proto3" json:"temperature,omitempty"`
+	TopP           float64                `protobuf:"fixed64,4,opt,name=top_p,json=topP,proto3" json:"top_p,omitempty"`
+	MaxTokens      int32                  `protobuf:"varint,5,opt,name=max_tokens,json=maxTokens,proto3" json:"max_tokens,omitempty"`
+	Stop           []string               `protobuf:"bytes,6,rep,name=stop,proto3" json:"stop,omitempty"`
+	User           string                 `protobuf:"bytes,7,opt,name=user,proto3" json:"user,omitempty"`
+	EnableThinking bool                   `protobuf:"varint,8,opt,name=enable_thinking,json=enableThinking,proto3" json:"enable_thinking,omitempty"` // 是否启用深度思考模式
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *ChatCompletionReq) Reset() {
@@ -254,6 +263,13 @@ func (x *ChatCompletionReq) GetUser() string {
 		return x.User
 	}
 	return ""
+}
+
+func (x *ChatCompletionReq) GetEnableThinking() bool {
+	if x != nil {
+		return x.EnableThinking
+	}
+	return false
 }
 
 // --- 非流式响应 ---
@@ -463,11 +479,12 @@ func (x *ChatCompletionRes) GetUsage() *Usage {
 
 // --- 流式响应 chunk ---
 type ChatDelta struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Role          string                 `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
-	Content       string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Role             string                 `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
+	Content          string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
+	ReasoningContent string                 `protobuf:"bytes,3,opt,name=reasoning_content,json=reasoningContent,proto3" json:"reasoning_content,omitempty"` // 思考过程增量
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *ChatDelta) Reset() {
@@ -510,6 +527,13 @@ func (x *ChatDelta) GetRole() string {
 func (x *ChatDelta) GetContent() string {
 	if x != nil {
 		return x.Content
+	}
+	return ""
+}
+
+func (x *ChatDelta) GetReasoningContent() string {
+	if x != nil {
+		return x.ReasoningContent
 	}
 	return ""
 }
@@ -839,10 +863,11 @@ const file_aichat_proto_rawDesc = "" +
 	"\aPingReq\x12\x12\n" +
 	"\x04ping\x18\x01 \x01(\tR\x04ping\"\x1d\n" +
 	"\aPingRes\x12\x12\n" +
-	"\x04pong\x18\x01 \x01(\tR\x04pong\";\n" +
+	"\x04pong\x18\x01 \x01(\tR\x04pong\"h\n" +
 	"\vChatMessage\x12\x12\n" +
 	"\x04role\x18\x01 \x01(\tR\x04role\x12\x18\n" +
-	"\acontent\x18\x02 \x01(\tR\acontent\"\xd8\x01\n" +
+	"\acontent\x18\x02 \x01(\tR\acontent\x12+\n" +
+	"\x11reasoning_content\x18\x03 \x01(\tR\x10reasoningContent\"\x81\x02\n" +
 	"\x11ChatCompletionReq\x12\x14\n" +
 	"\x05model\x18\x01 \x01(\tR\x05model\x12/\n" +
 	"\bmessages\x18\x02 \x03(\v2\x13.aichat.ChatMessageR\bmessages\x12 \n" +
@@ -851,7 +876,8 @@ const file_aichat_proto_rawDesc = "" +
 	"\n" +
 	"max_tokens\x18\x05 \x01(\x05R\tmaxTokens\x12\x12\n" +
 	"\x04stop\x18\x06 \x03(\tR\x04stop\x12\x12\n" +
-	"\x04user\x18\a \x01(\tR\x04user\"r\n" +
+	"\x04user\x18\a \x01(\tR\x04user\x12'\n" +
+	"\x0fenable_thinking\x18\b \x01(\bR\x0eenableThinking\"r\n" +
 	"\x06Choice\x12\x14\n" +
 	"\x05index\x18\x01 \x01(\x05R\x05index\x12-\n" +
 	"\amessage\x18\x02 \x01(\v2\x13.aichat.ChatMessageR\amessage\x12#\n" +
@@ -866,10 +892,11 @@ const file_aichat_proto_rawDesc = "" +
 	"\acreated\x18\x03 \x01(\x03R\acreated\x12\x14\n" +
 	"\x05model\x18\x04 \x01(\tR\x05model\x12(\n" +
 	"\achoices\x18\x05 \x03(\v2\x0e.aichat.ChoiceR\achoices\x12#\n" +
-	"\x05usage\x18\x06 \x01(\v2\r.aichat.UsageR\x05usage\"9\n" +
+	"\x05usage\x18\x06 \x01(\v2\r.aichat.UsageR\x05usage\"f\n" +
 	"\tChatDelta\x12\x12\n" +
 	"\x04role\x18\x01 \x01(\tR\x04role\x12\x18\n" +
-	"\acontent\x18\x02 \x01(\tR\acontent\"q\n" +
+	"\acontent\x18\x02 \x01(\tR\acontent\x12+\n" +
+	"\x11reasoning_content\x18\x03 \x01(\tR\x10reasoningContent\"q\n" +
 	"\vChunkChoice\x12\x14\n" +
 	"\x05index\x18\x01 \x01(\x05R\x05index\x12'\n" +
 	"\x05delta\x18\x02 \x01(\v2\x11.aichat.ChatDeltaR\x05delta\x12#\n" +

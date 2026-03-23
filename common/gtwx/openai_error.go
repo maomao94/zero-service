@@ -28,6 +28,12 @@ func (e *OpenAIError) Error() string {
 	return e.ErrorMsg.Message
 }
 
+// openAIErrorBody 是纯 JSON 序列化用的响应结构体。
+// 不实现 error 接口，确保 go-zero 的 doHandleError 走 writeJson 分支而非 http.Error 纯文本分支。
+type openAIErrorBody struct {
+	ErrorMsg OpenAIErrorDetail `json:"error"`
+}
+
 // NewModelNotFoundError 模型未找到错误
 func NewModelNotFoundError(model string, available []string) *OpenAIError {
 	return &OpenAIError{
@@ -70,14 +76,13 @@ func SetOpenAIErrorHandler() {
 		// 已经是 OpenAIError，直接返回
 		var openAIErr *OpenAIError
 		if errors.As(err, &openAIErr) {
-			return openAIErr.HTTPStatus, openAIErr
+			return openAIErr.HTTPStatus, &openAIErrorBody{ErrorMsg: openAIErr.ErrorMsg}
 		}
 
 		// gRPC status error -> OpenAI error
 		if st, ok := status.FromError(err); ok {
 			httpStatus := GrpcCodeToHTTPStatus(st.Code())
-			return httpStatus, &OpenAIError{
-				HTTPStatus: httpStatus,
+			return httpStatus, &openAIErrorBody{
 				ErrorMsg: OpenAIErrorDetail{
 					Type:    grpcCodeToOpenAIType(st.Code()),
 					Message: st.Message(),
@@ -87,8 +92,7 @@ func SetOpenAIErrorHandler() {
 		}
 
 		// 其他错误 -> internal_error
-		return http.StatusInternalServerError, &OpenAIError{
-			HTTPStatus: http.StatusInternalServerError,
+		return http.StatusInternalServerError, &openAIErrorBody{
 			ErrorMsg: OpenAIErrorDetail{
 				Type:    "internal_error",
 				Message: err.Error(),

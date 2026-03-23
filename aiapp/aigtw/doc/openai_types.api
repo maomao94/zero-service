@@ -12,11 +12,23 @@ type (
 		MaxTokens   int           `json:"max_tokens,optional"` // 最大生成 token 数
 		Stop        []string      `json:"stop,optional"` // 停止生成的标记序列
 		User        string        `json:"user,optional"` // 终端用户标识
+		// Thinking 深度思考（thinking）模式控制参数，遵循 OpenAI 标准格式。
+		// 请求示例: {"thinking": {"type": "enabled"}}
+		// aichat RPC 层会根据实际 provider（千问/智谱等）将其转换为厂商特有参数格式。
+		// 启用后，模型响应中的 reasoning_content 字段将携带推理思考过程。
+		Thinking *ThinkingParam `json:"thinking,optional"`
 	}
-	// ChatMessage 对话消息
+	// ThinkingParam 深度思考模式参数（OpenAI 标准格式）
+	ThinkingParam {
+		Type string `json:"type"` // "enabled" 启用 / "disabled" 禁用
+	}
+	// ChatMessage 对话消息，兼容 OpenAI 格式，扩展 reasoning_content 支持思考模式。
 	ChatMessage {
 		Role    string `json:"role"` // 角色: system / user / assistant
 		Content string `json:"content"` // 消息内容
+		// ReasoningContent 模型推理思考过程（仅 assistant 角色有值）。
+		// thinking 模式启用时，模型在生成最终回答前会先输出推理过程到此字段。
+		ReasoningContent string `json:"reasoning_content,optional"`
 	}
 )
 
@@ -84,10 +96,14 @@ type (
 		Delta        ChatDelta `json:"delta"` // 增量内容
 		FinishReason *string   `json:"finish_reason,optional"` // 结束原因
 	}
-	// ChatDelta 增量消息
+	// ChatDelta 增量消息，流式 SSE 场景使用。
+	// thinking 模式下，reasoning_content 先于 content 输出，前端可据此分阶段渲染。
 	ChatDelta {
 		Role    string `json:"role,optional"` // 角色
-		Content string `json:"content,optional"` // 内容
+		Content string `json:"content,optional"` // 内容增量
+		// ReasoningContent 推理思考过程增量。当此字段停止输出且 Content 开始时，
+		// 表示模型已从思考阶段转入回答阶段。
+		ReasoningContent string `json:"reasoning_content,optional"`
 	}
 )
 

@@ -536,6 +536,89 @@
         }
 
         /* ============================================
+           THINKING BLOCK
+           ============================================ */
+        .thinking-block {
+            margin-bottom: 12px;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--surface);
+        }
+
+        .thinking-block summary {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            user-select: none;
+            list-style: none;
+        }
+
+        .thinking-block summary::-webkit-details-marker { display: none; }
+
+        .thinking-block summary .thinking-icon {
+            width: 16px; height: 16px;
+            flex-shrink: 0;
+        }
+
+        .thinking-block summary .thinking-arrow {
+            margin-left: auto;
+            transition: transform 0.2s;
+            width: 12px; height: 12px;
+            flex-shrink: 0;
+        }
+
+        .thinking-block[open] summary .thinking-arrow {
+            transform: rotate(90deg);
+        }
+
+        .thinking-block[open] summary {
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .thinking-content {
+            padding: 10px 12px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .thinking-block.thinking-active summary {
+            color: var(--accent);
+        }
+
+        .thinking-block.thinking-active summary::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: thinkingPulse 1s ease-in-out infinite;
+            margin-left: 6px;
+            flex-shrink: 0;
+        }
+
+        @keyframes thinkingPulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        .thinking-timer {
+            font-variant-numeric: tabular-nums;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        /* ============================================
            INPUT AREA
            ============================================ */
         .input-area {
@@ -871,19 +954,19 @@
         </div>
         <button class="btn-new-chat" onclick="clearChat()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            New Chat
+            <span data-i18n="new_chat">New Chat</span>
         </button>
     </div>
 
     <div class="sidebar-content">
-        <div class="sidebar-section-label">Current Session</div>
+        <div class="sidebar-section-label" data-i18n="current_session">Current Session</div>
         <div class="sidebar-info">
             <div class="sidebar-info-row">
-                <span class="sidebar-info-label">Model</span>
+                <span class="sidebar-info-label" data-i18n="model">Model</span>
                 <span class="sidebar-info-value" id="sidebarModel">-</span>
             </div>
             <div class="sidebar-info-row" style="margin-top:6px">
-                <span class="sidebar-info-label">Messages</span>
+                <span class="sidebar-info-label" data-i18n="messages">Messages</span>
                 <span class="sidebar-info-value" id="sidebarMsgCount">0</span>
             </div>
         </div>
@@ -894,11 +977,14 @@
             <button class="btn-icon" onclick="toggleTheme()" id="btnTheme" title="Toggle Theme">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             </button>
+            <button class="btn-icon" onclick="toggleLang()" id="btnLang" title="Language">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </button>
             <button class="btn-icon" onclick="openSettings()" id="btnSettings" title="Settings">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             </button>
             <div style="flex:1"></div>
-            <span style="font-size:11px;color:var(--text-tertiary)">OpenAI Compatible</span>
+            <span id="langLabel" style="font-size:11px;color:var(--text-tertiary)">EN</span>
         </div>
     </div>
 </aside>
@@ -922,8 +1008,8 @@
             <div class="empty-logo">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
             </div>
-            <h2 class="empty-title">How can I help you?</h2>
-            <p class="empty-desc">Select a model below and start chatting. Supports streaming responses with real-time output.</p>
+            <h2 class="empty-title" data-i18n="how_can_i_help"></h2>
+            <p class="empty-desc" data-i18n="empty_desc"></p>
         </div>
     </div>
 
@@ -932,21 +1018,21 @@
         <div class="input-container">
             <div class="input-toolbar">
                 <select id="model" class="model-select">
-                    <option value="">Loading...</option>
+                    <option value="" data-i18n="loading">Loading...</option>
                 </select>
             </div>
             <div class="input-box">
-                <textarea id="userInput" placeholder="Send a message..." rows="1"></textarea>
-                <button class="btn-send" id="btnSend" onclick="sendMessage()" title="Send">
+                <textarea id="userInput" rows="1"></textarea>
+                <button class="btn-send" id="btnSend" onclick="sendMessage()">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
                 </button>
-                <button class="btn-stop" id="btnStop" onclick="stopStream()" style="display:none" title="Stop">
+                <button class="btn-stop" id="btnStop" onclick="stopStream()" style="display:none">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
                 </button>
             </div>
             <div class="status-bar" id="statusBar">
-                <span>Chunks <b class="val" id="chunkCount">0</b></span>
-                <span>Elapsed <b class="val" id="elapsed">-</b></span>
+                <span><span data-i18n="chunks">Chunks</span> <b class="val" id="chunkCount">0</b></span>
+                <span><span data-i18n="elapsed">Elapsed</span> <b class="val" id="elapsed">-</b></span>
             </div>
         </div>
     </div>
@@ -956,35 +1042,43 @@
 <div class="settings-overlay" id="settingsOverlay">
     <div class="settings-panel" onclick="event.stopPropagation()">
         <div class="settings-header">
-            <span class="settings-title">Settings</span>
+            <span class="settings-title" data-i18n="settings">Settings</span>
             <button class="btn-close" onclick="closeSettings()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
         <div class="settings-body">
             <div class="settings-group">
-                <label>Base URL</label>
-                <input type="text" id="baseUrl" value="" placeholder="Leave empty for same-origin">
-                <div class="hint">Leave empty to use relative paths (same server). Set for remote testing.</div>
+                <label data-i18n="base_url">Base URL</label>
+                <input type="text" id="baseUrl" value="">
+                <div class="hint" data-i18n="base_url_hint">Leave empty to use relative paths (same server). Set for remote testing.</div>
             </div>
             <div class="settings-row">
-                <span class="settings-row-label">Stream Mode</span>
+                <span class="settings-row-label" data-i18n="stream_mode">Stream Mode</span>
                 <label class="toggle">
                     <input type="checkbox" id="streamToggle" checked>
                     <span class="toggle-track"></span>
                     <span class="toggle-thumb"></span>
                 </label>
             </div>
+            <div class="settings-row">
+                <span class="settings-row-label" data-i18n="enable_thinking">Enable Thinking</span>
+                <label class="toggle">
+                    <input type="checkbox" id="enableThinkingToggle">
+                    <span class="toggle-track"></span>
+                    <span class="toggle-thumb"></span>
+                </label>
+            </div>
             <div class="settings-group">
-                <label>Debug Stats</label>
+                <label data-i18n="debug_stats">Debug Stats</label>
                 <div class="settings-stats">
                     <div class="stat-card">
                         <div class="stat-value" id="statChunks">0</div>
-                        <div class="stat-label">Chunks</div>
+                        <div class="stat-label" data-i18n="chunks">Chunks</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value" id="statElapsed">-</div>
-                        <div class="stat-label">Elapsed</div>
+                        <div class="stat-label" data-i18n="elapsed">Elapsed</div>
                     </div>
                 </div>
             </div>
@@ -993,6 +1087,96 @@
 </div>
 
 <script>
+/* ============================================
+   I18N
+   ============================================ */
+const i18nData = {
+    zh: {
+        new_chat: '新对话',
+        current_session: '当前会话',
+        model: '模型',
+        messages: '消息',
+        settings: '设置',
+        stream_mode: '流式模式',
+        enable_thinking: '深度思考',
+        base_url: '接口地址',
+        base_url_hint: '留空使用相对路径（同源服务器），远程测试时填写。',
+        how_can_i_help: '有什么可以帮您？',
+        empty_desc: '选择下方模型开始对话，支持流式实时输出。',
+        send_placeholder: '输入消息...',
+        chunks: '分块',
+        elapsed: '耗时',
+        debug_stats: '调试统计',
+        you: '你',
+        assistant: '助手',
+        copy: '复制',
+        copied: '已复制！',
+        stopped: '[已停止]',
+        no_models: '无可用模型',
+        loading: '加载中...',
+        connection_failed: '连接失败',
+        select_model_first: '请先选择模型',
+        thinking: '思考过程',
+        thinking_active: '思考中',
+        thinking_done: '已深度思考',
+        thinking_seconds: '秒',
+    },
+    en: {
+        new_chat: 'New Chat',
+        current_session: 'Current Session',
+        model: 'Model',
+        messages: 'Messages',
+        settings: 'Settings',
+        stream_mode: 'Stream Mode',
+        enable_thinking: 'Enable Thinking',
+        base_url: 'Base URL',
+        base_url_hint: 'Leave empty to use relative paths (same server). Set for remote testing.',
+        how_can_i_help: 'How can I help you?',
+        empty_desc: 'Select a model below and start chatting. Supports streaming responses with real-time output.',
+        send_placeholder: 'Send a message...',
+        chunks: 'Chunks',
+        elapsed: 'Elapsed',
+        debug_stats: 'Debug Stats',
+        you: 'You',
+        assistant: 'Assistant',
+        copy: 'Copy',
+        copied: 'Copied!',
+        stopped: '[Stopped]',
+        no_models: 'No models',
+        loading: 'Loading...',
+        connection_failed: 'Connection failed',
+        select_model_first: 'Please select a model first',
+        thinking: 'Thinking',
+        thinking_active: 'Thinking',
+        thinking_done: 'Thought deeply',
+        thinking_seconds: 's',
+    }
+};
+
+let currentLang = localStorage.getItem('aigtw-lang') || 'en';
+
+function t(key) {
+    return (i18nData[currentLang] && i18nData[currentLang][key]) || i18nData.en[key] || key;
+}
+
+function applyI18n() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.textContent = t(el.getAttribute('data-i18n'));
+    });
+    // Placeholder
+    const ta = document.getElementById('userInput');
+    if (ta) ta.placeholder = t('send_placeholder');
+    // Lang label
+    const ll = document.getElementById('langLabel');
+    if (ll) ll.textContent = currentLang.toUpperCase();
+}
+
+function toggleLang() {
+    currentLang = currentLang === 'zh' ? 'en' : 'zh';
+    localStorage.setItem('aigtw-lang', currentLang);
+    applyI18n();
+}
+
 /* ============================================
    STATE
    ============================================ */
@@ -1003,12 +1187,20 @@ let elapsedTimer = null;
 let conversationHistory = [];
 let pendingRender = false;
 let fullStreamContent = '';
+let fullReasoningContent = '';
+let isThinkingPhase = false;
+let thinkParseState = 'normal'; // 'normal' | 'in_think' | 'after_think'
+let thinkTagBuffer = '';
+let thinkingStartTime = null;
+let thinkingElapsedTimer = null;
+let thinkingDuration = 0;
 
 /* ============================================
    INIT
    ============================================ */
 window.addEventListener('load', () => {
     initTheme();
+    applyI18n();
     loadModels();
     setupTextarea();
 });
@@ -1166,7 +1358,7 @@ function renderMarkdown(text) {
     processed = processed.replace(/\x00CODEBLOCK_(\d+)\x00/g, (_, idx) => {
         const block = codeBlocks[parseInt(idx)];
         const id = 'code-' + Date.now() + '-' + idx;
-        return '<pre><div class="code-header"><span>' + escapeHtml(block.lang) + '</span><button class="btn-copy-code" onclick="copyCode(\'' + id + '\')">Copy</button></div><code id="' + id + '">' + block.code + '</code></pre>';
+        return '<pre><div class="code-header"><span>' + escapeHtml(block.lang) + '</span><button class="btn-copy-code" onclick="copyCode(\'' + id + '\')">' + t('copy') + '</button></div><code id="' + id + '">' + block.code + '</code></pre>';
     });
 
     return processed;
@@ -1178,10 +1370,100 @@ function copyCode(id) {
     navigator.clipboard.writeText(el.textContent).then(() => {
         const btn = el.parentElement.querySelector('.btn-copy-code');
         if (btn) {
-            btn.textContent = 'Copied!';
-            setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+            btn.textContent = t('copied');
+            setTimeout(() => { btn.textContent = t('copy'); }, 1500);
         }
     });
+}
+
+/* ============================================
+   THINKING BLOCK RENDERER
+   ============================================ */
+function renderThinkingBlock(reasoning, isActive, elapsedSeconds) {
+    if (!reasoning) return '';
+    const openAttr = isActive ? ' open' : '';
+    const activeClass = isActive ? ' thinking-active' : '';
+    var label;
+    if (isActive) {
+        label = t('thinking_active') + ' ' + elapsedSeconds + t('thinking_seconds') + '...';
+    } else {
+        label = t('thinking_done') + ' (' + elapsedSeconds + t('thinking_seconds') + ')';
+    }
+    return '<details class="thinking-block' + activeClass + '"' + openAttr + '>' +
+        '<summary>' +
+            '<svg class="thinking-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/><line x1="9" y1="21" x2="15" y2="21"/></svg>' +
+            '<span class="thinking-timer">' + label + '</span>' +
+            '<svg class="thinking-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>' +
+        '</summary>' +
+        '<div class="thinking-content">' + escapeHtml(reasoning) + '</div>' +
+    '</details>';
+}
+
+/* ============================================
+   THINK TAG STREAM PARSER (STATE MACHINE)
+   ============================================ */
+function processContentDelta(text) {
+    thinkTagBuffer += text;
+    var OPEN_TAG = '<think>';
+    var CLOSE_TAG = '</think>';
+
+    while (thinkTagBuffer.length > 0) {
+        if (thinkParseState === 'normal') {
+            var idx = thinkTagBuffer.indexOf(OPEN_TAG);
+            if (idx !== -1) {
+                // Found <think> tag
+                if (idx > 0) fullStreamContent += thinkTagBuffer.substring(0, idx);
+                thinkTagBuffer = thinkTagBuffer.substring(idx + OPEN_TAG.length);
+                thinkParseState = 'in_think';
+                isThinkingPhase = true;
+            } else {
+                // Check if buffer ends with a partial <think> prefix
+                var held = 0;
+                for (var k = 1; k < OPEN_TAG.length && k <= thinkTagBuffer.length; k++) {
+                    if (thinkTagBuffer.endsWith(OPEN_TAG.substring(0, k))) {
+                        held = k;
+                    }
+                }
+                if (held > 0) {
+                    fullStreamContent += thinkTagBuffer.substring(0, thinkTagBuffer.length - held);
+                    thinkTagBuffer = thinkTagBuffer.substring(thinkTagBuffer.length - held);
+                    return; // Wait for more data
+                } else {
+                    fullStreamContent += thinkTagBuffer;
+                    thinkTagBuffer = '';
+                }
+            }
+        } else if (thinkParseState === 'in_think') {
+            var idx2 = thinkTagBuffer.indexOf(CLOSE_TAG);
+            if (idx2 !== -1) {
+                // Found </think> tag
+                if (idx2 > 0) fullReasoningContent += thinkTagBuffer.substring(0, idx2);
+                thinkTagBuffer = thinkTagBuffer.substring(idx2 + CLOSE_TAG.length);
+                thinkParseState = 'after_think';
+                isThinkingPhase = false;
+            } else {
+                // Check for partial </think> prefix
+                var held2 = 0;
+                for (var k2 = 1; k2 < CLOSE_TAG.length && k2 <= thinkTagBuffer.length; k2++) {
+                    if (thinkTagBuffer.endsWith(CLOSE_TAG.substring(0, k2))) {
+                        held2 = k2;
+                    }
+                }
+                if (held2 > 0) {
+                    fullReasoningContent += thinkTagBuffer.substring(0, thinkTagBuffer.length - held2);
+                    thinkTagBuffer = thinkTagBuffer.substring(thinkTagBuffer.length - held2);
+                    return;
+                } else {
+                    fullReasoningContent += thinkTagBuffer;
+                    thinkTagBuffer = '';
+                }
+            }
+        } else {
+            // after_think: everything goes to content
+            fullStreamContent += thinkTagBuffer;
+            thinkTagBuffer = '';
+        }
+    }
 }
 
 /* ============================================
@@ -1204,10 +1486,10 @@ async function loadModels() {
             });
             updateSidebarInfo();
         } else {
-            select.innerHTML = '<option value="">No models</option>';
+            select.innerHTML = '<option value="">' + t('no_models') + '</option>';
         }
     } catch {
-        document.getElementById('model').innerHTML = '<option value="">Connection failed</option>';
+        document.getElementById('model').innerHTML = '<option value="">' + t('connection_failed') + '</option>';
     }
 }
 
@@ -1237,7 +1519,7 @@ function addMessage(role, content, meta) {
     const isUser = role === 'user';
     const avatarClass = isUser ? 'avatar-user' : 'avatar-assistant';
     const avatarText = isUser ? 'U' : 'AI';
-    const roleLabel = isUser ? 'You' : 'Assistant';
+    const roleLabel = isUser ? t('you') : t('assistant');
     const contentId = 'msg-content-' + Date.now();
 
     const rendered = isUser ? escapeHtml(content).replace(/\n/g, '<br>') : renderMarkdown(content);
@@ -1289,9 +1571,10 @@ function updateStats() {
 async function sendMessage() {
     const model = document.getElementById('model').value;
     const stream = document.getElementById('streamToggle').checked;
+    const enableThinking = document.getElementById('enableThinkingToggle').checked;
     const text = document.getElementById('userInput').value.trim();
 
-    if (!model) { alert('Please select a model first'); return; }
+    if (!model) { alert(t('select_model_first')); return; }
     if (!text) return;
 
     conversationHistory.push({ role: 'user', content: text });
@@ -1310,6 +1593,9 @@ async function sendMessage() {
 
     const base = document.getElementById('baseUrl').value.replace(/\/$/, '');
     const body = { model, messages: conversationHistory.slice(), stream };
+    if (enableThinking) {
+        body.thinking = { type: 'enabled' };
+    }
     controller = new AbortController();
 
     const assistantEl = addMessage('assistant', '');
@@ -1329,11 +1615,11 @@ async function sendMessage() {
         }
 
         if (stream) {
-            const fullContent = await handleStream(resp, contentEl);
-            conversationHistory.push({ role: 'assistant', content: fullContent });
+            const result = await handleStream(resp, contentEl);
+            conversationHistory.push({ role: 'assistant', content: result.content });
             const ms = Date.now() - startTime;
             // Final render
-            contentEl.innerHTML = renderMarkdown(fullContent);
+            contentEl.innerHTML = renderThinkingBlock(result.reasoning, false, thinkingDuration) + renderMarkdown(result.content);
             // Add meta
             let existingMeta = assistantEl.querySelector('.message-meta');
             if (existingMeta) existingMeta.remove();
@@ -1344,7 +1630,8 @@ async function sendMessage() {
         } else {
             const data = await resp.json();
             const content = data.choices[0].message.content;
-            contentEl.innerHTML = renderMarkdown(content);
+            const reasoning = data.choices[0].message.reasoning_content || '';
+            contentEl.innerHTML = renderThinkingBlock(reasoning, false, 0) + renderMarkdown(content);
             conversationHistory.push({ role: 'assistant', content: content });
             stopTimer();
             const ms = Date.now() - startTime;
@@ -1357,7 +1644,10 @@ async function sendMessage() {
         if (err.name === 'AbortError') {
             const cur = contentEl.querySelector('.streaming-cursor');
             if (cur) cur.remove();
-            contentEl.innerHTML += '<span style="color:var(--text-tertiary)"> [Stopped]</span>';
+            // Keep accumulated content
+            contentEl.innerHTML = renderThinkingBlock(fullReasoningContent, false, thinkingDuration) +
+                (fullStreamContent ? renderMarkdown(fullStreamContent) : '') +
+                '<span style="color:var(--text-tertiary)"> ' + t('stopped') + '</span>';
         } else {
             contentEl.innerHTML = '<span style="color:var(--danger)">' + escapeHtml(err.message) + '</span>';
         }
@@ -1376,6 +1666,13 @@ async function handleStream(resp, contentEl) {
     const decoder = new TextDecoder();
     let buffer = '';
     fullStreamContent = '';
+    fullReasoningContent = '';
+    isThinkingPhase = false;
+    thinkParseState = 'normal';
+    thinkTagBuffer = '';
+    thinkingStartTime = null;
+    thinkingDuration = 0;
+    if (thinkingElapsedTimer) { clearInterval(thinkingElapsedTimer); thinkingElapsedTimer = null; }
     const area = document.getElementById('chatArea');
 
     while (true) {
@@ -1393,7 +1690,7 @@ async function handleStream(resp, contentEl) {
             if (trimmed === 'data: [DONE]') {
                 stopTimer();
                 updateStats();
-                return fullStreamContent;
+                return { content: fullStreamContent, reasoning: fullReasoningContent };
             }
 
             if (trimmed.startsWith('data: ') || trimmed.startsWith('data:')) {
@@ -1401,8 +1698,53 @@ async function handleStream(resp, contentEl) {
                 try {
                     const chunk = JSON.parse(jsonStr);
                     const delta = chunk.choices[0]?.delta;
-                    if (delta?.content) {
-                        fullStreamContent += delta.content;
+                    if (!delta) continue;
+
+                    let changed = false;
+
+                    // Collect reasoning_content (standard path: Qwen/Zhipu)
+                    if (delta.reasoning_content) {
+                        fullReasoningContent += delta.reasoning_content;
+                        if (!isThinkingPhase) {
+                            isThinkingPhase = true;
+                        }
+                        // Start thinking timer on first reasoning content
+                        if (!thinkingStartTime) {
+                            thinkingStartTime = Date.now();
+                            thinkingElapsedTimer = setInterval(function() { scheduleRender(contentEl, area); }, 1000);
+                        }
+                        changed = true;
+                    }
+
+                    // Collect content (may contain <think> tags from GLM-4.5V)
+                    if (delta.content) {
+                        if (delta.reasoning_content) {
+                            // If reasoning_content is present, content goes directly (standard path)
+                            if (isThinkingPhase) {
+                                isThinkingPhase = false;
+                                thinkingDuration = thinkingStartTime ? Math.round((Date.now() - thinkingStartTime) / 1000) : 0;
+                                if (thinkingElapsedTimer) { clearInterval(thinkingElapsedTimer); thinkingElapsedTimer = null; }
+                            }
+                            fullStreamContent += delta.content;
+                        } else {
+                            // No reasoning_content field - check for <think> tags (GLM-4.5V path)
+                            var prevReasoning = fullReasoningContent.length;
+                            processContentDelta(delta.content);
+                            // If processContentDelta started thinking, start timer
+                            if (fullReasoningContent.length > prevReasoning && !thinkingStartTime) {
+                                thinkingStartTime = Date.now();
+                                thinkingElapsedTimer = setInterval(function() { scheduleRender(contentEl, area); }, 1000);
+                            }
+                            // If thinking phase ended via </think>
+                            if (!isThinkingPhase && thinkingStartTime && !thinkingDuration) {
+                                thinkingDuration = Math.round((Date.now() - thinkingStartTime) / 1000);
+                                if (thinkingElapsedTimer) { clearInterval(thinkingElapsedTimer); thinkingElapsedTimer = null; }
+                            }
+                        }
+                        changed = true;
+                    }
+
+                    if (changed) {
                         chunkCountVal++;
                         updateStats();
                         scheduleRender(contentEl, area);
@@ -1414,15 +1756,24 @@ async function handleStream(resp, contentEl) {
 
     stopTimer();
     updateStats();
-    return fullStreamContent;
+    return { content: fullStreamContent, reasoning: fullReasoningContent };
 }
 
 /* rAF-throttled rendering */
 function scheduleRender(contentEl, area) {
     if (pendingRender) return;
     pendingRender = true;
-    requestAnimationFrame(() => {
-        contentEl.innerHTML = renderMarkdown(fullStreamContent) + '<span class="streaming-cursor"></span>';
+    requestAnimationFrame(function() {
+        var html = '';
+        if (fullReasoningContent) {
+            var elapsed = thinkingStartTime ? Math.round((Date.now() - thinkingStartTime) / 1000) : 0;
+            html += renderThinkingBlock(fullReasoningContent, isThinkingPhase, isThinkingPhase ? elapsed : (thinkingDuration || elapsed));
+        }
+        if (fullStreamContent) {
+            html += renderMarkdown(fullStreamContent);
+        }
+        html += '<span class="streaming-cursor"></span>';
+        contentEl.innerHTML = html;
         area.scrollTop = area.scrollHeight;
         pendingRender = false;
     });
@@ -1448,6 +1799,13 @@ function clearChat() {
     conversationHistory = [];
     chunkCountVal = 0;
     fullStreamContent = '';
+    fullReasoningContent = '';
+    isThinkingPhase = false;
+    thinkParseState = 'normal';
+    thinkTagBuffer = '';
+    thinkingStartTime = null;
+    thinkingDuration = 0;
+    if (thinkingElapsedTimer) { clearInterval(thinkingElapsedTimer); thinkingElapsedTimer = null; }
     updateStats();
     document.getElementById('elapsed').textContent = '-';
     document.getElementById('statElapsed').textContent = '-';
@@ -1458,8 +1816,8 @@ function clearChat() {
             '<div class="empty-logo">' +
                 '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>' +
             '</div>' +
-            '<h2 class="empty-title">How can I help you?</h2>' +
-            '<p class="empty-desc">Select a model below and start chatting. Supports streaming responses with real-time output.</p>' +
+            '<h2 class="empty-title" data-i18n="how_can_i_help">' + t('how_can_i_help') + '</h2>' +
+            '<p class="empty-desc" data-i18n="empty_desc">' + t('empty_desc') + '</p>' +
         '</div>';
 
     updateSidebarInfo();

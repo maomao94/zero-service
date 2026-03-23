@@ -81,7 +81,7 @@ func (o *OpenAICompatible) ChatCompletionStream(ctx context.Context, req *ChatRe
 
 // buildRequest 构建 HTTP 请求
 func (o *OpenAICompatible) buildRequest(ctx context.Context, req *ChatRequest) (*http.Request, error) {
-	body, err := json.Marshal(req)
+	body, err := marshalWithExtraBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("marshal request: %w", err)
 	}
@@ -97,6 +97,34 @@ func (o *OpenAICompatible) buildRequest(ctx context.Context, req *ChatRequest) (
 	httpReq.Header.Set("Accept", "text/event-stream")
 
 	return httpReq, nil
+}
+
+// marshalWithExtraBody 序列化请求体，将 ExtraBody 中的厂商扩展参数合并到 JSON 顶层。
+//
+// 工作流程：
+//  1. 先用标准 json.Marshal 序列化 ChatRequest（ExtraBody 因 json:"-" 被忽略）
+//  2. 若 ExtraBody 非空，反序列化为 map，将 ExtraBody 的 key-value 逐一合并到顶层
+//  3. 重新序列化为最终 JSON 发送给厂商 API
+//
+// 这样既保留了标准 OpenAI 字段，又能注入厂商特有参数（如千问的 enable_thinking、智谱的 thinking 对象），
+// 实现了一套代码兼容多个大模型厂商的扩展需求。
+func marshalWithExtraBody(req *ChatRequest) ([]byte, error) {
+	data, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+	if len(req.ExtraBody) == 0 {
+		return data, nil
+	}
+	// 反序列化为 map，合并 ExtraBody，再序列化
+	var m map[string]any
+	if err := json.Unmarshal(data, &m); err != nil {
+		return nil, err
+	}
+	for k, v := range req.ExtraBody {
+		m[k] = v
+	}
+	return json.Marshal(m)
 }
 
 // parseError 解析大模型 API 的错误响应
