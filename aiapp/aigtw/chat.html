@@ -1186,6 +1186,7 @@ let startTime = null;
 let elapsedTimer = null;
 let conversationHistory = [];
 let pendingRender = false;
+let isStreaming = false;
 let fullStreamContent = '';
 let fullReasoningContent = '';
 let isThinkingPhase = false;
@@ -1673,6 +1674,7 @@ async function handleStream(resp, contentEl) {
     thinkingStartTime = null;
     thinkingDuration = 0;
     if (thinkingElapsedTimer) { clearInterval(thinkingElapsedTimer); thinkingElapsedTimer = null; }
+    isStreaming = true;
     const area = document.getElementById('chatArea');
 
     while (true) {
@@ -1688,6 +1690,7 @@ async function handleStream(resp, contentEl) {
             if (!trimmed) continue;
 
             if (trimmed === 'data: [DONE]') {
+                isStreaming = false;
                 stopTimer();
                 updateStats();
                 return { content: fullStreamContent, reasoning: fullReasoningContent };
@@ -1754,6 +1757,7 @@ async function handleStream(resp, contentEl) {
         }
     }
 
+    isStreaming = false;
     stopTimer();
     updateStats();
     return { content: fullStreamContent, reasoning: fullReasoningContent };
@@ -1764,6 +1768,8 @@ function scheduleRender(contentEl, area) {
     if (pendingRender) return;
     pendingRender = true;
     requestAnimationFrame(function() {
+        pendingRender = false;
+        if (!isStreaming) return;
         var html = '';
         if (fullReasoningContent) {
             var elapsed = thinkingStartTime ? Math.round((Date.now() - thinkingStartTime) / 1000) : 0;
@@ -1775,7 +1781,6 @@ function scheduleRender(contentEl, area) {
         html += '<span class="streaming-cursor"></span>';
         contentEl.innerHTML = html;
         area.scrollTop = area.scrollHeight;
-        pendingRender = false;
     });
 }
 
@@ -1798,6 +1803,7 @@ function cleanup() {
 function clearChat() {
     conversationHistory = [];
     chunkCountVal = 0;
+    isStreaming = false;
     fullStreamContent = '';
     fullReasoningContent = '';
     isThinkingPhase = false;
