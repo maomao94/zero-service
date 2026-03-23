@@ -40,7 +40,7 @@ func (l *ChatCompletionLogic) ChatCompletion(in *aichat.ChatCompletionReq) (*aic
 
 	resp, err := p.ChatCompletion(l.ctx, req)
 	if err != nil {
-		l.Errorf("chat completion error: %v", err)
+		l.Logger.Errorf("chat completion error: %v", err)
 		return nil, toGrpcError(err)
 	}
 

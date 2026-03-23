@@ -56,9 +56,9 @@ func (l *ChatCompletionStreamLogic) ChatCompletionStream(in *aichat.ChatCompleti
 		// 将阻塞的 Recv 包装到 Promise，使其可被超时中断
 		recv := antsx.NewPromise[*provider.StreamChunk]("stream-recv")
 		go func() {
-			chunk, err := reader.Recv()
-			if err != nil {
-				recv.Reject(err)
+			chunk, recvErr := reader.Recv()
+			if recvErr != nil {
+				recv.Reject(recvErr)
 			} else {
 				recv.Resolve(chunk)
 			}
@@ -66,34 +66,49 @@ func (l *ChatCompletionStreamLogic) ChatCompletionStream(in *aichat.ChatCompleti
 
 		// 空闲超时 ctx：继承 streamCtx（总超时 + 客户端断开），叠加 chunk 间空闲超时
 		idleCtx, idleCancel := context.WithTimeout(streamCtx, idleTimeout)
-		chunk, err := recv.Await(idleCtx)
+		chunk, awaitErr := recv.Await(idleCtx)
 		idleCancel()
 
-		if err != nil {
-			if errors.Is(err, io.EOF) {
+		if awaitErr != nil {
+			if errors.Is(awaitErr, io.EOF) {
 				l.Logger.Infof("stream completed, model: %s", in.Model)
 				return nil
 			}
-			// 优先检查客户端是否断开（l.ctx 来自 stream.Context()，gRPC 客户端断开时被取消）
-			// 不依赖 error 类型判断，避免竞态：gRPC 取消传播有网络延迟，
-			// 且 reader.Recv() 返回的错误不一定包装了 context 错误
-			if l.ctx.Err() != nil {
-				l.Logger.Infof("stream client disconnected, model: %s", in.Model)
+			// 按优先级判断：客户端断开 > 总超时 > 空闲超时 > 上游错误
+			switch {
+			case l.ctx.Err() != nil:
+				// gRPC 客户端断开（浏览器关闭 SSE → aigtw 取消 gRPC 调用 → l.ctx 取消）
+				l.Logger.Infof("stream client disconnected, model: %s, awaitErr: %v",
+					in.Model, awaitErr)
 				return nil
+			case streamCtx.Err() != nil:
+				// streamCtx 超时但 l.ctx 未取消 → 总超时到期
+				l.Logger.Errorf("stream total timeout (%v), model: %s, awaitErr: %v",
+					l.svcCtx.Config.StreamTimeout, in.Model, awaitErr)
+				return status.Errorf(codes.DeadlineExceeded, "stream total timeout")
+			case errors.Is(awaitErr, context.DeadlineExceeded):
+				// streamCtx 正常但 awaitErr 是 DeadlineExceeded → idleCtx 空闲超时
+				l.Logger.Errorf("stream idle timeout (%v), model: %s, awaitErr: %v",
+					idleTimeout, in.Model, awaitErr)
+				return status.Errorf(codes.DeadlineExceeded, "stream idle timeout")
+			default:
+				// 上游 provider 返回的业务错误
+				l.Logger.Errorf("stream recv error: %v, model: %s", awaitErr, in.Model)
+				return toGrpcError(awaitErr)
 			}
-			if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-				l.Logger.Errorf("stream timeout (idle=%v, total=%v), model: %s",
-					idleTimeout, l.svcCtx.Config.StreamTimeout, in.Model)
-				return status.Errorf(codes.DeadlineExceeded, "stream timeout")
-			}
-			l.Logger.Errorf("stream recv error: %v", err)
-			return toGrpcError(err)
+		}
+
+		// select 竞态：Resolve 和 ctx.Done 同时 ready 时可能选中 Resolve，
+		// 此时 awaitErr == nil 但 l.ctx 已取消，提前退出避免无意义的 Send
+		if l.ctx.Err() != nil {
+			l.Logger.Infof("stream client disconnected, model: %s", in.Model)
+			return nil
 		}
 
 		protoChunk := toProtoStreamChunk(chunk, in.Model)
-		if err := stream.Send(protoChunk); err != nil {
-			l.Logger.Errorf("stream send error: %v", err)
-			return err
+		if sendErr := stream.Send(protoChunk); sendErr != nil {
+			l.Logger.Errorf("stream send error: %v", sendErr)
+			return sendErr
 		}
 	}
 }
