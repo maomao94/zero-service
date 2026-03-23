@@ -4,8 +4,6 @@
 package main
 
 import (
-	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"net/http"
@@ -15,7 +13,6 @@ import (
 	"zero-service/aiapp/aigtw/internal/config"
 	"zero-service/aiapp/aigtw/internal/handler"
 	"zero-service/aiapp/aigtw/internal/svc"
-	"zero-service/aiapp/aigtw/internal/types"
 
 	"zero-service/common/gtwx"
 	_ "zero-service/common/nacosx"
@@ -25,9 +22,6 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/rest"
-	"github.com/zeromicro/go-zero/rest/httpx"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 var configFile = flag.String("f", "etc/aigtw.yaml", "the config file")
@@ -36,33 +30,7 @@ func main() {
 	flag.Parse()
 
 	// 设置 OpenAI 风格错误处理器
-	httpx.SetErrorHandlerCtx(func(ctx context.Context, err error) (int, any) {
-		var openAIErr *types.OpenAIError
-		if errors.As(err, &openAIErr) {
-			return openAIErr.HTTPStatus, openAIErr
-		}
-
-		// 处理 gRPC status error
-		if st, ok := status.FromError(err); ok {
-			httpStatus := gtwx.GrpcCodeToHTTPStatus(st.Code())
-			return httpStatus, &types.OpenAIError{
-				HTTPStatus: httpStatus,
-				ErrorMsg: types.ErrorDetail{
-					Type:    grpcCodeToOpenAIType(st.Code()),
-					Message: st.Message(),
-					Code:    grpcCodeToOpenAICode(st.Code()),
-				},
-			}
-		}
-
-		return http.StatusInternalServerError, &types.OpenAIError{
-			HTTPStatus: http.StatusInternalServerError,
-			ErrorMsg: types.ErrorDetail{
-				Type:    "internal_error",
-				Message: err.Error(),
-			},
-		}
-	})
+	gtwx.SetOpenAIErrorHandler()
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
@@ -104,52 +72,4 @@ func main() {
 
 	fmt.Printf("Starting server at %s:%d...\n", c.Host, c.Port)
 	serviceGroup.Start()
-}
-
-// grpcCodeToOpenAIType 将 gRPC status code 映射为 OpenAI error type
-func grpcCodeToOpenAIType(code codes.Code) string {
-	switch code {
-	case codes.NotFound:
-		return "invalid_request_error"
-	case codes.InvalidArgument, codes.FailedPrecondition, codes.OutOfRange:
-		return "invalid_request_error"
-	case codes.Unauthenticated:
-		return "authentication_error"
-	case codes.PermissionDenied:
-		return "permission_error"
-	case codes.ResourceExhausted:
-		return "rate_limit_error"
-	case codes.DeadlineExceeded, codes.Canceled:
-		return "timeout_error"
-	case codes.Unavailable:
-		return "upstream_error"
-	case codes.AlreadyExists, codes.Aborted:
-		return "conflict_error"
-	default:
-		return "internal_error"
-	}
-}
-
-// grpcCodeToOpenAICode 将 gRPC status code 映射为 OpenAI error code
-func grpcCodeToOpenAICode(code codes.Code) string {
-	switch code {
-	case codes.NotFound:
-		return "model_not_found"
-	case codes.InvalidArgument, codes.FailedPrecondition, codes.OutOfRange:
-		return "invalid_request"
-	case codes.Unauthenticated:
-		return "invalid_api_key"
-	case codes.PermissionDenied:
-		return "permission_denied"
-	case codes.ResourceExhausted:
-		return "rate_limit_exceeded"
-	case codes.DeadlineExceeded, codes.Canceled:
-		return "timeout"
-	case codes.Unavailable:
-		return "upstream_unavailable"
-	case codes.AlreadyExists, codes.Aborted:
-		return "conflict"
-	default:
-		return ""
-	}
 }
