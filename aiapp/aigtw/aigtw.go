@@ -9,12 +9,15 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"zero-service/aiapp/aigtw/internal/config"
 	"zero-service/aiapp/aigtw/internal/handler"
 	"zero-service/aiapp/aigtw/internal/svc"
 	"zero-service/aiapp/aigtw/internal/types"
 
+	"zero-service/common/gtwx"
 	_ "zero-service/common/nacosx"
 	"zero-service/common/tool"
 
@@ -41,13 +44,13 @@ func main() {
 
 		// 处理 gRPC status error
 		if st, ok := status.FromError(err); ok {
-			httpStatus, errType, errCode := grpcStatusToHTTP(st.Code())
+			httpStatus := gtwx.GrpcCodeToHTTPStatus(st.Code())
 			return httpStatus, &types.OpenAIError{
 				HTTPStatus: httpStatus,
 				ErrorMsg: types.ErrorDetail{
-					Type:    errType,
+					Type:    grpcCodeToOpenAIType(st.Code()),
 					Message: st.Message(),
-					Code:    errCode,
+					Code:    grpcCodeToOpenAICode(st.Code()),
 				},
 			}
 		}
@@ -67,21 +70,31 @@ func main() {
 	// Print Go version
 	tool.PrintGoVersion()
 
-	server := rest.MustNewServer(c.RestConf, rest.WithCustomCors(func(header http.Header) {
-		origin := header.Get("Origin")
-		if origin != "" {
-			header.Set("Access-Control-Allow-Origin", origin)
-		}
-		header.Set("Vary", "Origin")
-
-		header.Set("Access-Control-Allow-Credentials", "true")
-		header.Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
-		header.Set("Access-Control-Allow-Headers", "Content-Type, AccessToken, X-CSRF-Token, Authorization, Token, X-Token, X-User-Id")
-		header.Set("Access-Control-Expose-Headers", "Content-Length, Content-Type")
-	}, nil, "*"))
+	server := rest.MustNewServer(c.RestConf, gtwx.CorsOption())
 
 	ctx := svc.NewServiceContext(c)
 	handler.RegisterHandlers(server, ctx)
+
+	// Demo page 静态文件路由
+	server.AddRoute(rest.Route{
+		Method: http.MethodGet,
+		Path:   "/aigtw/demo",
+		Handler: func(w http.ResponseWriter, r *http.Request) {
+			candidates := []string{}
+			if exe, err := os.Executable(); err == nil {
+				candidates = append(candidates, filepath.Join(filepath.Dir(exe), "sse_demo.html"))
+			}
+			candidates = append(candidates, "sse_demo.html", "aiapp/aigtw/sse_demo.html")
+
+			for _, p := range candidates {
+				if _, err := os.Stat(p); err == nil {
+					http.ServeFile(w, r, p)
+					return
+				}
+			}
+			http.NotFound(w, r)
+		},
+	})
 
 	serviceGroup := service.NewServiceGroup()
 	defer serviceGroup.Stop()
@@ -93,22 +106,50 @@ func main() {
 	serviceGroup.Start()
 }
 
-// grpcStatusToHTTP 将 gRPC status code 映射为 HTTP status + OpenAI error type/code
-func grpcStatusToHTTP(code codes.Code) (httpStatus int, errType string, errCode string) {
+// grpcCodeToOpenAIType 将 gRPC status code 映射为 OpenAI error type
+func grpcCodeToOpenAIType(code codes.Code) string {
 	switch code {
 	case codes.NotFound:
-		return http.StatusNotFound, "invalid_request_error", "model_not_found"
-	case codes.InvalidArgument:
-		return http.StatusBadRequest, "invalid_request_error", "invalid_request"
+		return "invalid_request_error"
+	case codes.InvalidArgument, codes.FailedPrecondition, codes.OutOfRange:
+		return "invalid_request_error"
+	case codes.Unauthenticated:
+		return "authentication_error"
+	case codes.PermissionDenied:
+		return "permission_error"
 	case codes.ResourceExhausted:
-		return http.StatusTooManyRequests, "rate_limit_error", "rate_limit_exceeded"
-	case codes.PermissionDenied, codes.Unauthenticated:
-		return http.StatusForbidden, "permission_error", "permission_denied"
-	case codes.DeadlineExceeded:
-		return http.StatusGatewayTimeout, "timeout_error", "timeout"
+		return "rate_limit_error"
+	case codes.DeadlineExceeded, codes.Canceled:
+		return "timeout_error"
 	case codes.Unavailable:
-		return http.StatusBadGateway, "upstream_error", "upstream_unavailable"
+		return "upstream_error"
+	case codes.AlreadyExists, codes.Aborted:
+		return "conflict_error"
 	default:
-		return http.StatusInternalServerError, "internal_error", ""
+		return "internal_error"
+	}
+}
+
+// grpcCodeToOpenAICode 将 gRPC status code 映射为 OpenAI error code
+func grpcCodeToOpenAICode(code codes.Code) string {
+	switch code {
+	case codes.NotFound:
+		return "model_not_found"
+	case codes.InvalidArgument, codes.FailedPrecondition, codes.OutOfRange:
+		return "invalid_request"
+	case codes.Unauthenticated:
+		return "invalid_api_key"
+	case codes.PermissionDenied:
+		return "permission_denied"
+	case codes.ResourceExhausted:
+		return "rate_limit_exceeded"
+	case codes.DeadlineExceeded, codes.Canceled:
+		return "timeout"
+	case codes.Unavailable:
+		return "upstream_unavailable"
+	case codes.AlreadyExists, codes.Aborted:
+		return "conflict"
+	default:
+		return ""
 	}
 }

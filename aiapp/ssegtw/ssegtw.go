@@ -6,12 +6,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"net/http"
 
 	"zero-service/aiapp/ssegtw/internal/config"
 	"zero-service/aiapp/ssegtw/internal/handler"
 	"zero-service/aiapp/ssegtw/internal/svc"
 
+	"zero-service/common/gtwx"
 	_ "zero-service/common/nacosx"
 	"zero-service/common/tool"
 
@@ -32,18 +32,7 @@ func main() {
 	// Print Go version
 	tool.PrintGoVersion()
 
-	server := rest.MustNewServer(c.RestConf, rest.WithCustomCors(func(header http.Header) {
-		origin := header.Get("Origin")
-		if origin != "" {
-			header.Set("Access-Control-Allow-Origin", origin)
-		}
-		header.Set("Vary", "Origin")
-
-		header.Set("Access-Control-Allow-Credentials", "true")
-		header.Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
-		header.Set("Access-Control-Allow-Headers", "Content-Type, AccessToken, X-CSRF-Token, Authorization, Token, X-Token, X-User-Id")
-		header.Set("Access-Control-Expose-Headers", "Content-Length, Content-Type")
-	}, nil, "*"))
+	server := rest.MustNewServer(c.RestConf, gtwx.CorsOption())
 
 	ctx := svc.NewServiceContext(c)
 	handler.RegisterHandlers(server, ctx)

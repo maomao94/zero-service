@@ -37,5 +37,6 @@ WORKDIR /app
 COPY --from=builder /build /app/build
 COPY etc /app/etc
 COPY app/aigtw /app/aigtw
+COPY sse_demo.html /app/sse_demo.html
 
 CMD ["./aigtw", "-f", "etc/aigtw.yaml"]
