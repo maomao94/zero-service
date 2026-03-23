@@ -1,6 +1,6 @@
 Name: bridgeGtw
 Host: 0.0.0.0
-Port: 15002
+Port: 15001
 Mode: dev
 Log:
   Encoding: plain
@@ -24,7 +24,7 @@ Upstreams:
 #        Path: /api/abandoned/external/cable/faultWave
   - grpc:
       Endpoints:
-        - 127.0.0.1:25002
+        - 127.0.0.1:25003
       NonBlock: true
     ProtoSets:
       - app/bridgedump/bridgedump.pb

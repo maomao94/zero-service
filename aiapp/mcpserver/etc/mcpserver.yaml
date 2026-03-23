@@ -1,6 +1,6 @@
 Name: mcpserver
 Host: 0.0.0.0
-Port: 8888
+Port: 13003
 mcp:
 #  name: my-mcp-server
   messageTimeout: 30s # 工具调用的超时时间

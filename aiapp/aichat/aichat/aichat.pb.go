@@ -688,13 +688,17 @@ func (*ListModelsReq) Descriptor() ([]byte, []int) {
 }
 
 type ModelObject struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Object        string                 `protobuf:"bytes,2,opt,name=object,proto3" json:"object,omitempty"`
-	Created       int64                  `protobuf:"varint,3,opt,name=created,proto3" json:"created,omitempty"`
-	OwnedBy       string                 `protobuf:"bytes,4,opt,name=owned_by,json=ownedBy,proto3" json:"owned_by,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Id                string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Object            string                 `protobuf:"bytes,2,opt,name=object,proto3" json:"object,omitempty"`
+	Created           int64                  `protobuf:"varint,3,opt,name=created,proto3" json:"created,omitempty"`
+	OwnedBy           string                 `protobuf:"bytes,4,opt,name=owned_by,json=ownedBy,proto3" json:"owned_by,omitempty"`                                // provider 名称（zhipu/siliconflow）
+	DisplayName       string                 `protobuf:"bytes,5,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`                    // 显示名称
+	Description       string                 `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`                                       // 模型描述
+	SupportsStreaming bool                   `protobuf:"varint,7,opt,name=supports_streaming,json=supportsStreaming,proto3" json:"supports_streaming,omitempty"` // 是否支持流式
+	MaxTokens         int32                  `protobuf:"varint,8,opt,name=max_tokens,json=maxTokens,proto3" json:"max_tokens,omitempty"`                         // 最大 token 数
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *ModelObject) Reset() {
@@ -753,6 +757,34 @@ func (x *ModelObject) GetOwnedBy() string {
 		return x.OwnedBy
 	}
 	return ""
+}
+
+func (x *ModelObject) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
+func (x *ModelObject) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *ModelObject) GetSupportsStreaming() bool {
+	if x != nil {
+		return x.SupportsStreaming
+	}
+	return false
+}
+
+func (x *ModelObject) GetMaxTokens() int32 {
+	if x != nil {
+		return x.MaxTokens
+	}
+	return 0
 }
 
 type ListModelsRes struct {
@@ -848,12 +880,17 @@ const file_aichat_proto_rawDesc = "" +
 	"\acreated\x18\x03 \x01(\x03R\acreated\x12\x14\n" +
 	"\x05model\x18\x04 \x01(\tR\x05model\x12-\n" +
 	"\achoices\x18\x05 \x03(\v2\x13.aichat.ChunkChoiceR\achoices\"\x0f\n" +
-	"\rListModelsReq\"j\n" +
+	"\rListModelsReq\"\xfd\x01\n" +
 	"\vModelObject\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06object\x18\x02 \x01(\tR\x06object\x12\x18\n" +
 	"\acreated\x18\x03 \x01(\x03R\acreated\x12\x19\n" +
-	"\bowned_by\x18\x04 \x01(\tR\aownedBy\"8\n" +
+	"\bowned_by\x18\x04 \x01(\tR\aownedBy\x12!\n" +
+	"\fdisplay_name\x18\x05 \x01(\tR\vdisplayName\x12 \n" +
+	"\vdescription\x18\x06 \x01(\tR\vdescription\x12-\n" +
+	"\x12supports_streaming\x18\a \x01(\bR\x11supportsStreaming\x12\x1d\n" +
+	"\n" +
+	"max_tokens\x18\b \x01(\x05R\tmaxTokens\"8\n" +
 	"\rListModelsRes\x12'\n" +
 	"\x04data\x18\x01 \x03(\v2\x13.aichat.ModelObjectR\x04data2\x8e\x02\n" +
 	"\x06AiChat\x12(\n" +

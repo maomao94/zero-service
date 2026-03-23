@@ -1,5 +1,5 @@
 Name: bridgemqtt.rpc
-ListenOn: 0.0.0.0:25004
+ListenOn: 0.0.0.0:25005
 Timeout: 10000
 Mode: dev
 Log:
@@ -43,6 +43,6 @@ SocketPushConf:
   # nacos://[user:passwd]@host/service?param=value'
   #  Target: nacos://nacos:nacos@127.0.0.1:8848/socket-push?namespaceid=public&timeout=5000s
   Endpoints:
-    - 127.0.0.1:25008
+    - 127.0.0.1:25002
   NonBlock: true
   Timeout: 10000

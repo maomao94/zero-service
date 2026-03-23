@@ -5,8 +5,8 @@ package ai
 
 import (
 	"context"
-	"time"
 
+	"zero-service/aiapp/aichat/aichat"
 	"zero-service/aiapp/aigtw/internal/svc"
 	"zero-service/aiapp/aigtw/internal/types"
 
@@ -29,21 +29,22 @@ func NewListModelsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ListMo
 }
 
 func (l *ListModelsLogic) ListModels() (resp *types.ListModelsResponse, err error) {
-	abilities := l.svcCtx.Config.Abilities
-	now := time.Now().Unix()
+	rpcResp, err := l.svcCtx.AiChatCli.ListModels(l.ctx, &aichat.ListModelsReq{})
+	if err != nil {
+		return nil, err
+	}
 
-	models := make([]types.ModelObject, 0, len(abilities))
-	for _, ab := range abilities {
+	models := make([]types.ModelObject, 0, len(rpcResp.Data))
+	for _, m := range rpcResp.Data {
 		models = append(models, types.ModelObject{
-			Id:      ab.Id,
-			Object:  "model",
-			Created: now,
-			OwnedBy: "aigtw",
+			Id:      m.Id,
+			Object:  m.Object,
+			Created: m.Created,
+			OwnedBy: m.OwnedBy,
 			Metadata: &types.ModelMetadata{
-				Ability:          ab.Ability,
-				DisplayName:      ab.DisplayName,
-				Description:      ab.Description,
-				SupportsStreaming: ab.SupportsStreaming,
+				DisplayName:       m.DisplayName,
+				Description:       m.Description,
+				SupportsStreaming: m.SupportsStreaming,
 			},
 		})
 	}

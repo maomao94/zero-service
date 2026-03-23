@@ -60,7 +60,6 @@ type ListModelsResponse struct {
 }
 
 type ModelMetadata struct {
-	Ability           string `json:"ability"`            // 能力标识: chat / coding / spec / image-gen
 	DisplayName       string `json:"display_name"`       // 能力显示名称
 	Description       string `json:"description"`        // 能力描述
 	SupportsStreaming bool   `json:"supports_streaming"` // 是否支持流式输出

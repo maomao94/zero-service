@@ -1,5 +1,5 @@
 Name: logdump.rpc
-ListenOn: 0.0.0.0:25006
+ListenOn: 0.0.0.0:25007
 Timeout: 10000
 Middlewares:
   StatConf:

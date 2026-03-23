@@ -1,17 +1,34 @@
 # 服务端口清单
 
-## 网关 / HTTP 服务
+> 端口规则：统一 5 位数字，**1xxxx** = HTTP，**2xxxx** = gRPC。
+
+## HTTP 服务（1xxxx）
+
+### 11xxx — 通用网关
 
 | 服务 | 目录 | HTTP 端口 | 说明 |
 |------|------|-----------|------|
 | gtw | `gtw/` | 11001 | BFF API 网关 |
 | lalhook | `app/lalhook/` | 11002 | LAL 流媒体回调 |
 | socketgtw | `socketapp/socketgtw/` | 11003 | Socket.IO 网关（混合型，同时有 gRPC） |
-| ssegtw | `aiapp/ssegtw/` | 11004 | SSE 网关 |
-| bridgeGtw | `app/bridgegtw/` | 15002 | gRPC-Gateway 代理转发 |
-| mcpserver | `aiapp/mcpserver/` | 8888 | MCP 服务器 |
 
-## gRPC 服务
+### 13xxx — AI 应用
+
+| 服务 | 目录 | HTTP 端口 | 说明 |
+|------|------|-----------|------|
+| aigtw | `aiapp/aigtw/` | 13001 | AI 网关（OpenAI 兼容） |
+| ssegtw | `aiapp/ssegtw/` | 13002 | SSE 网关 |
+| mcpserver | `aiapp/mcpserver/` | 13003 | MCP 服务器 |
+
+### 15xxx — 桥接网关
+
+| 服务 | 目录 | HTTP 端口 | 说明 |
+|------|------|-----------|------|
+| bridgegtw | `app/bridgegtw/` | 15001 | gRPC-Gateway 代理转发 |
+
+## gRPC 服务（2xxxx）
+
+### 21xxx — 核心业务
 
 | 服务 | 目录 | gRPC 端口 | 说明 |
 |------|------|-----------|------|
@@ -25,28 +42,38 @@
 | iecstash.rpc | `app/iecstash/` | 21008 | IEC 104 数据合并 |
 | streamevent.rpc | `facade/streamevent/` | 21009 | 流事件服务 |
 | podengine.rpc | `app/podengine/` | 21010 | 容器管理引擎 |
-| bridgedump.rpc | `app/bridgedump/` | 25002 | 南瑞反向隔离装置 |
-| bridgemodbus.rpc | `app/bridgemodbus/` | 25003 | Modbus TCP/RTU 桥接 |
-| bridgemqtt.rpc | `app/bridgemqtt/` | 25004 | MQTT 桥接 |
-| gis.rpc | `app/gis/` | 25005 | 地理信息服务 |
-| logdump.rpc | `app/logdump/` | 25006 | 日志导出 |
-| socketgtw | `socketapp/socketgtw/` | 25007 | Socket.IO 网关 gRPC 端 |
-| socketpush.rpc | `socketapp/socketpush/` | 25008 | Socket 推送服务 |
-| alarm.rpc | `app/alarm/` | 8080 | 告警服务 |
+| alarm.rpc | `app/alarm/` | 21011 | 告警服务 |
+
+### 23xxx — AI 应用
+
+| 服务 | 目录 | gRPC 端口 | 说明 |
+|------|------|-----------|------|
+| aichat.rpc | `aiapp/aichat/` | 23001 | AI 对话 RPC |
+
+### 25xxx — Socket / 桥接 / 扩展
+
+| 服务 | 目录 | gRPC 端口 | 说明 |
+|------|------|-----------|------|
+| socketgtw | `socketapp/socketgtw/` | 25001 | Socket.IO 网关 gRPC 端 |
+| socketpush.rpc | `socketapp/socketpush/` | 25002 | Socket 推送服务 |
+| bridgedump.rpc | `app/bridgedump/` | 25003 | 南瑞反向隔离装置 |
+| bridgemodbus.rpc | `app/bridgemodbus/` | 25004 | Modbus TCP/RTU 桥接 |
+| bridgemqtt.rpc | `app/bridgemqtt/` | 25005 | MQTT 桥接 |
+| gis.rpc | `app/gis/` | 25006 | 地理信息服务 |
+| logdump.rpc | `app/logdump/` | 25007 | 日志导出 |
 
 ## 端口段规划
 
 | 端口段 | 用途 |
 |--------|------|
-| 8080 | 告警服务（待统一） |
-| 8888 | MCP 服务 |
-| 11001 – 11004 | HTTP 网关层 |
-| 15002 | gRPC-Gateway 代理 |
-| 21001 – 21010 | 核心业务 gRPC 服务 |
-| 25002 – 25008 | 桥接 / 扩展 gRPC 服务 |
+| 11001 – 11003 | 通用 HTTP 网关 |
+| 13001 – 13003 | AI 应用 HTTP 服务 |
+| 15001 | 桥接 HTTP 网关 |
+| 21001 – 21011 | 核心业务 gRPC 服务 |
+| 23001 | AI 应用 gRPC 服务 |
+| 25001 – 25007 | Socket / 桥接 / 扩展 gRPC 服务 |
 
 ## 备注
 
-- **socketgtw** 是混合型服务，同时暴露 HTTP 11003 和 gRPC 25007
+- **socketgtw** 是混合型服务，同时暴露 HTTP 11003 和 gRPC 25001
 - **iecagent** 额外监听 12404 端口用于 IEC 104 设备通信
-- **alarm.rpc** 端口 8080 与其他 gRPC 服务不在同一段，后续可考虑统一

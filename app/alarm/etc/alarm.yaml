@@ -1,5 +1,5 @@
 Name: alarm.rpc
-ListenOn: 0.0.0.0:8080
+ListenOn: 0.0.0.0:21011
 Mode: dev
 Log:
   Encoding: plain

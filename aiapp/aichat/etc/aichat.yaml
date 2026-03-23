@@ -1,5 +1,5 @@
 Name: aichat.rpc
-ListenOn: 0.0.0.0:21004
+ListenOn: 0.0.0.0:23001
 Mode: dev
 Log:
   Encoding: plain

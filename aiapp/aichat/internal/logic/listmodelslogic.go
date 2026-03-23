@@ -26,12 +26,17 @@ func NewListModelsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ListMo
 
 func (l *ListModelsLogic) ListModels(in *aichat.ListModelsReq) (*aichat.ListModelsRes, error) {
 	var data []*aichat.ModelObject
+	now := time.Now().Unix()
 	for _, mc := range l.svcCtx.Config.Models {
 		data = append(data, &aichat.ModelObject{
-			Id:      mc.Id,
-			Object:  "model",
-			Created: time.Now().Unix(),
-			OwnedBy: mc.Provider,
+			Id:                mc.Id,
+			Object:            "model",
+			Created:           now,
+			OwnedBy:           mc.Provider,
+			DisplayName:       mc.DisplayName,
+			Description:       mc.Description,
+			SupportsStreaming: mc.SupportsStreaming,
+			MaxTokens:         int32(mc.MaxTokens),
 		})
 	}
 	return &aichat.ListModelsRes{Data: data}, nil

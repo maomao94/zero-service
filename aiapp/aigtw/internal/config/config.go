@@ -19,7 +19,6 @@ type AbilityConfig struct {
 
 type Config struct {
 	rest.RestConf
-	ZeroRpcConf   zrpc.RpcClientConf
 	AiChatRpcConf zrpc.RpcClientConf
 	Abilities     []AbilityConfig `json:",optional"`
 }

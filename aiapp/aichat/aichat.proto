@@ -78,7 +78,11 @@ message ModelObject {
   string id = 1;
   string object = 2;
   int64 created = 3;
-  string owned_by = 4;
+  string owned_by = 4;         // provider 名称（zhipu/siliconflow）
+  string display_name = 5;     // 显示名称
+  string description = 6;      // 模型描述
+  bool supports_streaming = 7; // 是否支持流式
+  int32 max_tokens = 8;        // 最大 token 数
 }
 
 message ListModelsRes {
