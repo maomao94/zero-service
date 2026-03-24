@@ -4,18 +4,15 @@ Port: 13003
 Mode: dev
 Log:
   Encoding: plain
+  #  Mode: file
   Path: /opt/logs/mcpserver
+  Level: info
+  KeepDays: 300
 
 Auth:
   JwtSecrets:
     - "629c6233-1a76-471b-bd25-b87208762219"
   ServiceToken: "mcp-internal-service-token-2026"
-
-mcp:
-  useStreamable: true
-  messageTimeout: 30s
-  cors:
-    - "*"
 
 BridgeModbusRpcConf:
   Endpoints:
