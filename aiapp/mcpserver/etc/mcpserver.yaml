@@ -5,11 +5,17 @@ Mode: dev
 Log:
   Encoding: plain
   Path: /opt/logs/mcpserver
-mcp:
-#  name: my-mcp-server
-  messageTimeout: 30s # 工具调用的超时时间
-  cors:
-    - http://localhost:3000 # 可选的 CORS 配置
+
+Auth:
+  JwtSecrets:
+    - "629c6233-1a76-471b-bd25-b87208762219"
+  ServiceToken: "mcp-internal-service-token-2026"
+
+Mcp:
+  Name: mcpserver
+  MessageEndpoint: /message
+  Cors:
+    - "*"
 
 BridgeModbusRpcConf:
   Endpoints:

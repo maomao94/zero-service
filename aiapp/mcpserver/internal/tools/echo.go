@@ -3,7 +3,7 @@ package tools
 import (
 	"context"
 
-	"github.com/zeromicro/go-zero/mcp"
+	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 // EchoArgs echo 工具参数
@@ -13,24 +13,24 @@ type EchoArgs struct {
 }
 
 // RegisterEcho 注册 echo 工具
-func RegisterEcho(server mcp.McpServer) {
-	echoTool := &mcp.Tool{
+func RegisterEcho(server *sdkmcp.Server) {
+	echoTool := &sdkmcp.Tool{
 		Name:        "echo",
 		Description: "回显用户提供的消息",
 	}
 
-	echoHandler := func(ctx context.Context, req *mcp.CallToolRequest, args EchoArgs) (*mcp.CallToolResult, any, error) {
+	echoHandler := func(ctx context.Context, req *sdkmcp.CallToolRequest, args EchoArgs) (*sdkmcp.CallToolResult, any, error) {
 		prefix := "Echo: "
 		if len(args.Prefix) > 0 {
 			prefix = args.Prefix
 		}
 
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{
-				&mcp.TextContent{Text: prefix + args.Message},
+		return &sdkmcp.CallToolResult{
+			Content: []sdkmcp.Content{
+				&sdkmcp.TextContent{Text: prefix + args.Message},
 			},
 		}, nil, nil
 	}
 
-	mcp.AddTool(server, echoTool, echoHandler)
+	sdkmcp.AddTool(server, echoTool, echoHandler)
 }

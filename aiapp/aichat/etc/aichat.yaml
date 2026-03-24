@@ -9,7 +9,8 @@ MaxToolRounds: 10
 Mcpx:
   Servers:
     - Name: "mcpserver"
-      Endpoint: "http://localhost:13003/sse"
+      Endpoint: "http://localhost:13003/message"
+      ServiceToken: "mcp-internal-service-token-2026"
   RefreshInterval: 30s
   ConnectTimeout: 10s
 Log:

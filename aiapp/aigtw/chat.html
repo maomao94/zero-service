@@ -817,7 +817,8 @@
             margin-bottom: 6px;
         }
 
-        .settings-group input[type="text"] {
+        .settings-group input[type="text"],
+        .settings-group input[type="password"] {
             width: 100%;
             padding: 8px 12px;
             background: var(--input-bg);
@@ -830,7 +831,8 @@
             transition: border-color 0.2s;
         }
 
-        .settings-group input[type="text"]:focus { border-color: var(--accent); }
+        .settings-group input[type="text"]:focus,
+        .settings-group input[type="password"]:focus { border-color: var(--accent); }
 
         .settings-group .hint {
             font-size: 11px;
@@ -1053,6 +1055,11 @@
                 <input type="text" id="baseUrl" value="">
                 <div class="hint" data-i18n="base_url_hint">Leave empty to use relative paths (same server). Set for remote testing.</div>
             </div>
+            <div class="settings-group">
+                <label data-i18n="jwt_token">JWT Token</label>
+                <input type="password" id="jwtToken" value="">
+                <div class="hint" data-i18n="jwt_token_hint">Auth token for aigtw identity verification.</div>
+            </div>
             <div class="settings-row">
                 <span class="settings-row-label" data-i18n="stream_mode">Stream Mode</span>
                 <label class="toggle">
@@ -1101,6 +1108,8 @@ const i18nData = {
         enable_thinking: '深度思考',
         base_url: '接口地址',
         base_url_hint: '留空使用相对路径（同源服务器），远程测试时填写。',
+        jwt_token: 'JWT Token',
+        jwt_token_hint: '填写鉴权 token，aigtw 需要此 token 验证身份。',
         how_can_i_help: '有什么可以帮您？',
         empty_desc: '选择下方模型开始对话，支持流式实时输出。',
         send_placeholder: '输入消息...',
@@ -1131,6 +1140,8 @@ const i18nData = {
         enable_thinking: 'Enable Thinking',
         base_url: 'Base URL',
         base_url_hint: 'Leave empty to use relative paths (same server). Set for remote testing.',
+        jwt_token: 'JWT Token',
+        jwt_token_hint: 'Auth token for aigtw identity verification.',
         how_can_i_help: 'How can I help you?',
         empty_desc: 'Select a model below and start chatting. Supports streaming responses with real-time output.',
         send_placeholder: 'Send a message...',
@@ -1202,6 +1213,9 @@ let thinkingDuration = 0;
 window.addEventListener('load', () => {
     initTheme();
     applyI18n();
+    // 恢复 localStorage 中保存的 token
+    const savedToken = localStorage.getItem('aigtw-token');
+    if (savedToken) document.getElementById('jwtToken').value = savedToken;
     loadModels();
     setupTextarea();
 });
@@ -1252,7 +1266,14 @@ function openSettings() {
 function closeSettings() {
     const overlay = document.getElementById('settingsOverlay');
     overlay.classList.remove('show');
-    loadModels(); // reload in case base URL changed
+    // 保存 token 到 localStorage
+    const token = document.getElementById('jwtToken').value.trim();
+    if (token) {
+        localStorage.setItem('aigtw-token', token);
+    } else {
+        localStorage.removeItem('aigtw-token');
+    }
+    loadModels(); // reload in case base URL or token changed
 }
 
 document.getElementById('settingsOverlay').addEventListener('click', (e) => {
@@ -1468,12 +1489,22 @@ function processContentDelta(text) {
 }
 
 /* ============================================
+   AUTH HEADERS
+   ============================================ */
+function getAuthHeaders() {
+    const h = { 'Content-Type': 'application/json' };
+    const token = document.getElementById('jwtToken').value.trim();
+    if (token) h['Authorization'] = 'Bearer ' + token;
+    return h;
+}
+
+/* ============================================
    LOAD MODELS
    ============================================ */
 async function loadModels() {
     const base = document.getElementById('baseUrl').value.replace(/\/$/, '');
     try {
-        const resp = await fetch(base + '/ai/v1/models');
+        const resp = await fetch(base + '/ai/v1/models', { headers: getAuthHeaders() });
         const data = await resp.json();
         const select = document.getElementById('model');
         select.innerHTML = '';
@@ -1605,7 +1636,7 @@ async function sendMessage() {
     try {
         const resp = await fetch(base + '/ai/v1/chat/completions', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify(body),
             signal: controller.signal
         });

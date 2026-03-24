@@ -9,8 +9,9 @@ const (
 )
 
 type ServerConfig struct {
-	Name     string `json:",optional"` // 工具名前缀，为空自动生成 mcp0, mcp1...
-	Endpoint string // MCP SSE endpoint
+	Name         string `json:",optional"` // 工具名前缀，为空自动生成 mcp0, mcp1...
+	Endpoint     string // MCP Streamable HTTP endpoint
+	ServiceToken string `json:",optional"` // 连接级鉴权 token
 }
 
 type Config struct {

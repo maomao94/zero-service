@@ -7,8 +7,9 @@ import (
 
 	"zero-service/aiapp/mcpserver/internal/svc"
 	"zero-service/app/bridgemodbus/bridgemodbus"
+	"zero-service/common/mcpx"
 
-	"github.com/zeromicro/go-zero/mcp"
+	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 // ReadHoldingRegistersArgs 读保持寄存器参数
@@ -26,12 +27,12 @@ type ReadCoilsArgs struct {
 }
 
 // RegisterModbus 注册 Modbus 读操作工具
-func RegisterModbus(server mcp.McpServer, svcCtx *svc.ServiceContext) {
+func RegisterModbus(server *sdkmcp.Server, svcCtx *svc.ServiceContext) {
 	// 读保持寄存器
-	mcp.AddTool(server, &mcp.Tool{
+	sdkmcp.AddTool(server, &sdkmcp.Tool{
 		Name:        "read_holding_registers",
 		Description: "读取 Modbus 保持寄存器 (Function Code 0x03)，返回寄存器值的多种表示形式（无符号整数、有符号整数、十六进制）",
-	}, func(ctx context.Context, req *mcp.CallToolRequest, args ReadHoldingRegistersArgs) (*mcp.CallToolResult, any, error) {
+	}, mcpx.WithCtxProp(func(ctx context.Context, req *sdkmcp.CallToolRequest, args ReadHoldingRegistersArgs) (*sdkmcp.CallToolResult, any, error) {
 		resp, err := svcCtx.BridgeModbusCli.ReadHoldingRegisters(ctx, &bridgemodbus.ReadHoldingRegistersReq{
 			ModbusCode: args.ModbusCode,
 			Address:    args.Address,
@@ -42,16 +43,16 @@ func RegisterModbus(server mcp.McpServer, svcCtx *svc.ServiceContext) {
 		}
 
 		text := formatRegistersResult(args.Address, resp.UintValues, resp.IntValues, resp.HexValues)
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{&mcp.TextContent{Text: text}},
+		return &sdkmcp.CallToolResult{
+			Content: []sdkmcp.Content{&sdkmcp.TextContent{Text: text}},
 		}, nil, nil
-	})
+	}))
 
 	// 读线圈
-	mcp.AddTool(server, &mcp.Tool{
+	sdkmcp.AddTool(server, &sdkmcp.Tool{
 		Name:        "read_coils",
 		Description: "读取 Modbus 线圈状态 (Function Code 0x01)，返回每个线圈的开关状态（true=ON, false=OFF）",
-	}, func(ctx context.Context, req *mcp.CallToolRequest, args ReadCoilsArgs) (*mcp.CallToolResult, any, error) {
+	}, mcpx.WithCtxProp(func(ctx context.Context, req *sdkmcp.CallToolRequest, args ReadCoilsArgs) (*sdkmcp.CallToolResult, any, error) {
 		resp, err := svcCtx.BridgeModbusCli.ReadCoils(ctx, &bridgemodbus.ReadCoilsReq{
 			ModbusCode: args.ModbusCode,
 			Address:    args.Address,
@@ -62,10 +63,10 @@ func RegisterModbus(server mcp.McpServer, svcCtx *svc.ServiceContext) {
 		}
 
 		text := formatCoilsResult(args.Address, resp.Values)
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{&mcp.TextContent{Text: text}},
+		return &sdkmcp.CallToolResult{
+			Content: []sdkmcp.Content{&sdkmcp.TextContent{Text: text}},
 		}, nil, nil
-	})
+	}))
 }
 
 type registerEntry struct {
