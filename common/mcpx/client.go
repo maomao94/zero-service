@@ -189,10 +189,12 @@ func (sc *serverConn) run() {
 			sc.mu.Unlock()
 			sc.onChange()
 		}
+		t := time.NewTimer(sc.cfg.RefreshInterval)
 		select {
 		case <-sc.ctx.Done():
+			t.Stop()
 			return
-		case <-time.After(sc.cfg.RefreshInterval):
+		case <-t.C:
 		}
 	}
 }
