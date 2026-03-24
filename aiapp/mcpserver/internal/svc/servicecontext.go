@@ -19,6 +19,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		BridgeModbusCli: bridgemodbus.NewBridgeModbusClient(
 			zrpc.MustNewClient(c.BridgeModbusRpcConf,
 				zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
+				zrpc.WithStreamClientInterceptor(interceptor.StreamTracingInterceptor),
 			).Conn()),
 	}
 }

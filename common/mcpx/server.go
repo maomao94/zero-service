@@ -90,11 +90,16 @@ func (s *McpServer) Stop() {
 }
 
 // setupSSETransport 配置 SSE transport（2024-11-05 spec）。
+// 使用自定义 authSSEHandler 替代 SDK 的 SSEHandler，
+// 以支持从 POST 请求中捕获 JWT TokenInfo 并注入到 tool handler 的 req.Extra。
 func (s *McpServer) setupSSETransport() {
-	handler := sdkmcp.NewSSEHandler(func(r *http.Request) *sdkmcp.Server {
-		logx.Infof("New SSE connection from %s", r.RemoteAddr)
+	//handler := sdkmcp.NewSSEHandler(func(r *http.Request) *sdkmcp.Server {
+	//	logx.Infof("New SSE connection from %s", r.RemoteAddr)
+	//	return s.sdkServer
+	//}, nil)
+	handler := newAuthSSEHandler(func(r *http.Request) *sdkmcp.Server {
 		return s.sdkServer
-	}, nil)
+	})
 
 	s.registerRoutes(s.wrapAuth(handler), s.conf.Mcp.SseEndpoint)
 }

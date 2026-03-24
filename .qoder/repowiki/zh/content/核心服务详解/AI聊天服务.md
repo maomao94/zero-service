@@ -1,3 +1,5 @@
+现在我已经收集了足够的信息来更新文档。基于我的分析，我发现AI聊天服务确实已经添加了流式拦截器，增强了流式gRPC操作的可观测性。让我更新文档：
+
 <docs>
 # AI聊天服务
 
@@ -25,14 +27,19 @@
 - [gen.sh](file://aiapp/aichat/gen.sh)
 - [mcpserver.yaml](file://aiapp/mcpserver/etc/mcpserver.yaml)
 - [server.go](file://common/mcpx/server.go)
+- [loggerInterceptor.go](file://common/Interceptor/rpcserver/loggerInterceptor.go)
+- [metadataInterceptor.go](file://common/Interceptor/rpcclient/metadataInterceptor.go)
+- [grpc.go](file://common/ctxprop/grpc.go)
+- [http.go](file://common/ctxprop/http.go)
 </cite>
 
 ## 更新摘要
 **所做更改**
-- 配置系统更新：新增UseStreamable字段，默认false，支持MCP传输协议切换
-- MCP服务器端点变更：从/message更新为/sse，适配SSE传输协议
-- 传输协议支持：同时支持SSE（/sse）和Streamable HTTP（/message）两种协议
-- 默认协议选择：保持向后兼容，默认使用SSE协议（UseStreamable=false）
+- **新增** 流式gRPC拦截器：添加了StreamLoggerInterceptor，增强了流式操作的可观测性
+- **上下文传播增强**：通过ctxprop模块实现gRPC元数据与上下文的双向传播
+- **拦截器集成**：在服务启动时集成了LoggerInterceptor和StreamLoggerInterceptor
+- **流式超时管理**：改进了流式gRPC操作的超时控制和错误处理机制
+- **结构化日志支持**：通过logx.WithContext(ctx)实现带有上下文信息的日志记录
 
 ## 目录
 1. [简介](#简介)
@@ -41,10 +48,11 @@
 4. [架构概览](#架构概览)
 5. [详细组件分析](#详细组件分析)
 6. [MCP工具调用系统](#mcp工具调用系统)
-7. [依赖关系分析](#依赖关系分析)
-8. [性能考虑](#性能考虑)
-9. [故障排除指南](#故障排除指南)
-10. [结论](#结论)
+7. [拦截器系统](#拦截器系统)
+8. [依赖关系分析](#依赖关系分析)
+9. [性能考虑](#性能考虑)
+10. [故障排除指南](#故障排除指南)
+11. [结论](#结论)
 
 ## 简介
 
@@ -61,6 +69,7 @@ AI聊天服务是一个基于GoZero框架构建的RPC服务，提供统一的大
 - 优化的流式处理：256KB scanner缓冲区，防止大块SSE数据截断
 - 增强的日志基础设施：结构化日志输出和性能监控
 - **新增** 传输协议支持：同时支持SSE和Streamable HTTP两种MCP传输协议
+- **新增** 流式拦截器：增强了流式gRPC操作的可观测性和上下文传播
 
 ## 项目结构
 
@@ -71,6 +80,7 @@ graph TB
 subgraph "应用入口层"
 A[aichat.go] --> B[配置加载]
 A --> C[服务启动]
+A --> W[拦截器集成]
 end
 subgraph "配置层"
 D[aichat.yaml] --> E[Provider配置]
@@ -110,6 +120,12 @@ YY[工具名称前缀] --> ZZ[serverName__toolName]
 AAA[传输协议支持] --> BBB[SSE/Streamable切换]
 CCC[端点配置] --> DDD[/sse vs /message]
 end
+subgraph "拦截器系统"
+EE[common/Interceptor/] --> FF[LoggerInterceptor]
+GG[common/Interceptor/] --> HH[StreamLoggerInterceptor]
+II[common/Interceptor/] --> JJ[MetadataInterceptor]
+KK[common/ctxprop/] --> LL[上下文传播]
+end
 A --> D
 A --> J
 M --> N
@@ -136,11 +152,14 @@ WW --> XX
 YY --> ZZ
 AAA --> CCC
 CCC --> DDD
+W --> FF
+W --> GG
+W --> HH
 ```
 
 **图表来源**
-- [aichat.go:1-49](file://aiapp/aichat/aichat.go#L1-L49)
-- [aichat.yaml:1-49](file://aiapp/aichat/etc/aichat.yaml#L1-L49)
+- [aichat.go:1-50](file://aiapp/aichat/aichat.go#L1-L50)
+- [aichat.yaml:1-50](file://aiapp/aichat/etc/aichat.yaml#L1-L50)
 - [aichat.proto:1-115](file://aiapp/aichat/aichat.proto#L1-L115)
 - [client.go:1-348](file://common/mcpx/client.go#L1-L348)
 - [config.go:1-22](file://common/mcpx/config.go#L1-L22)
@@ -148,10 +167,12 @@ CCC --> DDD
 - [ctxData.go:1-76](file://common/ctxdata/ctxData.go#L1-L76)
 - [mcpserver.yaml:1-24](file://aiapp/mcpserver/etc/mcpserver.yaml#L1-L24)
 - [server.go:1-141](file://common/mcpx/server.go#L1-L141)
+- [loggerInterceptor.go:1-43](file://common/Interceptor/rpcserver/loggerInterceptor.go#L1-L43)
+- [metadataInterceptor.go:1-19](file://common/Interceptor/rpcclient/metadataInterceptor.go#L1-L19)
 
 **章节来源**
-- [aichat.go:1-49](file://aiapp/aichat/aichat.go#L1-L49)
-- [aichat.yaml:1-49](file://aiapp/aichat/etc/aichat.yaml#L1-L49)
+- [aichat.go:1-50](file://aiapp/aichat/aichat.go#L1-L50)
+- [aichat.yaml:1-50](file://aiapp/aichat/etc/aichat.yaml#L1-L50)
 - [config.go:1-62](file://aiapp/aichat/internal/config/config.go#L1-L62)
 
 ## 核心组件
@@ -163,6 +184,7 @@ CCC --> DDD
 - 配置文件加载和验证
 - 服务上下文初始化
 - gRPC服务器启动和反射注册
+- **新增** 拦截器集成：添加LoggerInterceptor和StreamLoggerInterceptor
 
 ### 2. 配置管理系统
 
@@ -235,35 +257,41 @@ subgraph "服务层"
 F[AiChatServer]
 G[服务上下文]
 H[重构后的MCP客户端]
+I[拦截器系统]
 end
 subgraph "业务逻辑层"
-I[对话补全逻辑]
-J[流式对话逻辑]
-K[模型管理逻辑]
-L[Ping健康检查]
-M[增强的工具调用循环]
-N[上下文属性传播]
+J[对话补全逻辑]
+K[流式对话逻辑]
+L[模型管理逻辑]
+M[Ping健康检查]
+N[增强的工具调用循环]
+O[上下文属性传播]
+P[流式拦截器]
+Q[结构化日志]
 end
 subgraph "提供者层"
-O[注册表]
-P[OpenAI兼容实现]
-Q[其他提供者扩展]
-R[多服务器连接管理]
-S[工具聚合和路由]
-T[动态刷新机制]
-U[内存泄漏修复]
-V[连接生命周期管理]
-W[性能监控]
-X[结构化日志]
+R[注册表]
+S[OpenAI兼容实现]
+T[其他提供者扩展]
+U[多服务器连接管理]
+V[工具聚合和路由]
+W[动态刷新机制]
+X[内存泄漏修复]
+Y[连接生命周期管理]
+Z[性能监控]
+AA[结构化日志]
+BB[上下文传播]
 end
 subgraph "数据层"
-Y[配置存储]
-Z[模型元数据]
-AA[工具定义缓存]
-BB[多服务器连接池]
-CC[上下文数据]
-DD[日志基础设施]
-EE[性能指标]
+CC[配置存储]
+DD[模型元数据]
+EE[工具定义缓存]
+FF[多服务器连接池]
+GG[上下文数据]
+HH[日志基础设施]
+II[性能指标]
+JJ[拦截器日志]
+KK[流式超时控制]
 end
 A --> D
 B --> D
@@ -276,26 +304,29 @@ G --> J
 G --> K
 G --> L
 G --> M
-M --> N
-I --> O
-J --> O
-M --> H
-O --> P
-O --> Q
-H --> R
+G --> N
+N --> O
+J --> R
+K --> R
+N --> H
 R --> S
-S --> T
-T --> U
+R --> T
+H --> U
 U --> V
 V --> W
 W --> X
-H --> BB
-R --> AA
-P --> Y
-K --> Z
-N --> CC
-X --> DD
-W --> EE
+X --> Y
+Y --> Z
+Z --> AA
+H --> FF
+U --> EE
+S --> CC
+L --> DD
+O --> GG
+AA --> HH
+Z --> II
+I --> JJ
+K --> KK
 ```
 
 **图表来源**
@@ -306,6 +337,7 @@ W --> EE
 - [config.go:1-22](file://common/mcpx/config.go#L1-L22)
 - [ctxprop.go:1-59](file://common/mcpx/ctxprop.go#L1-L59)
 - [ctxData.go:1-76](file://common/ctxdata/ctxData.go#L1-L76)
+- [loggerInterceptor.go:1-43](file://common/Interceptor/rpcserver/loggerInterceptor.go#L1-L43)
 
 该架构的主要优势：
 - **解耦合**：各层职责明确，便于独立开发和测试
@@ -318,6 +350,9 @@ W --> EE
 - **性能监控**：内置mcpx.metrics统计工具调用性能和成功率
 - **结构化日志**：通过slog桥接go-zero logx，支持结构化日志输出
 - **传输协议支持**：同时支持SSE和Streamable HTTP两种MCP传输协议
+- **拦截器系统**：通过LoggerInterceptor和StreamLoggerInterceptor增强可观测性
+- **流式超时控制**：改进的流式gRPC操作超时管理和错误处理
+- **上下文传播增强**：通过ctxprop模块实现gRPC元数据与上下文的双向传播
 
 ## 详细组件分析
 
@@ -773,6 +808,132 @@ McpxClient-->>Client : 返回结果
 - [ctxprop.go:1-59](file://common/mcpx/ctxprop.go#L1-L59)
 - [ctxData.go:9-24](file://common/ctxdata/ctxData.go#L9-L24)
 
+## 拦截器系统
+
+**新增** 拦截器系统是AI聊天服务可观测性的重要组成部分，提供了完整的gRPC请求处理链路监控。
+
+### 拦截器架构
+
+```mermaid
+classDiagram
+class InterceptorSystem {
++LoggerInterceptor(ctx, req, info, handler) resp, err
++StreamLoggerInterceptor(srv, ss, info, handler) error
++UnaryMetadataInterceptor(ctx, method, req, reply, cc, invoker, opts) error
++StreamTracingInterceptor(ctx, desc, cc, method, streamer, opts) ClientStream, error
+}
+class LoggerInterceptor {
++从gRPC incoming metadata提取上下文字段
++注入到handler的context中
++错误时记录结构化日志
+}
+class StreamLoggerInterceptor {
++从gRPC incoming metadata提取上下文字段
++包装stream.Context()增强上下文
++解决流式RPC中context values丢失问题
++错误时记录结构化日志
+}
+class MetadataInterceptor {
++UnaryMetadataInterceptor：一元RPC客户端拦截器
++StreamTracingInterceptor：流式RPC客户端拦截器
++将上下文字段传播到下游RPC服务
+}
+class CtxProp {
++InjectToGrpcMD(ctx) context.Context
++ExtractFromGrpcMD(ctx) context.Context
+}
+class WrappedStream {
++ServerStream
++ctx context.Context
++Context() context.Context
+}
+InterceptorSystem --> LoggerInterceptor : implements
+InterceptorSystem --> StreamLoggerInterceptor : implements
+InterceptorSystem --> MetadataInterceptor : implements
+LoggerInterceptor --> CtxProp : uses
+StreamLoggerInterceptor --> CtxProp : uses
+StreamLoggerInterceptor --> WrappedStream : creates
+```
+
+**图表来源**
+- [loggerInterceptor.go:1-43](file://common/Interceptor/rpcserver/loggerInterceptor.go#L1-L43)
+- [metadataInterceptor.go:1-19](file://common/Interceptor/rpcclient/metadataInterceptor.go#L1-L19)
+- [grpc.go:1-35](file://common/ctxprop/grpc.go#L1-L35)
+
+### 服务启动时的拦截器集成
+
+在服务启动过程中，拦截器通过以下方式集成：
+
+```mermaid
+sequenceDiagram
+participant Main as 主程序
+participant Server as gRPC服务器
+participant Interceptor as 拦截器系统
+Main->>Server : MustNewServer(config, handler)
+Server->>Interceptor : AddUnaryInterceptors(LoggerInterceptor)
+Server->>Interceptor : AddStreamInterceptors(StreamLoggerInterceptor)
+Main->>Server : Start()
+```
+
+**图表来源**
+- [aichat.go:34-42](file://aiapp/aichat/aichat.go#L34-L42)
+
+### 流式拦截器的工作原理
+
+**更新** StreamLoggerInterceptor解决了流式RPC中上下文丢失的关键问题：
+
+```mermaid
+sequenceDiagram
+participant Client as 客户端
+participant Server as gRPC服务器
+participant StreamLogger as 流式拦截器
+participant Handler as 业务处理器
+Client->>Server : ChatCompletionStream请求
+Server->>StreamLogger : StreamLoggerInterceptor
+StreamLogger->>StreamLogger : ExtractFromGrpcMD(ss.Context())
+StreamLogger->>Handler : handler(srv, wrappedStream)
+Handler->>Handler : ChatCompletionStream逻辑
+Handler-->>Client : 流式响应
+```
+
+**图表来源**
+- [loggerInterceptor.go:23-33](file://common/Interceptor/rpcserver/loggerInterceptor.go#L23-L33)
+
+### 上下文传播机制
+
+**更新** 通过ctxprop模块实现的双向上下文传播：
+
+```mermaid
+flowchart TD
+Start([请求进入]) --> Extract[ExtractFromGrpcMD<br/>从gRPC metadata提取字段]
+Extract --> Inject[InjectToGrpcMD<br/>向下游RPC注入字段]
+Inject --> Business[业务逻辑处理]
+Business --> Error{是否有错误?}
+Error --> |是| Log[logx.WithContext(ctx)<br/>记录结构化日志]
+Error --> |否| Success[返回成功响应]
+Log --> End([结束])
+Success --> End
+```
+
+**图表来源**
+- [grpc.go:11-34](file://common/ctxprop/grpc.go#L11-L34)
+- [loggerInterceptor.go:12-32](file://common/Interceptor/rpcserver/loggerInterceptor.go#L12-L32)
+
+### 结构化日志记录
+
+**更新** 拦截器系统提供了完整的结构化日志记录能力：
+
+- **错误日志**：使用`logx.WithContext(ctx).Errorf()`记录带有上下文信息的错误
+- **请求日志**：记录RPC方法名、请求参数和响应状态
+- **上下文字段**：自动提取和记录用户ID、用户名、部门代码、授权信息、跟踪ID等
+- **流式超时**：专门处理流式RPC的超时和断开连接场景
+
+**章节来源**
+- [loggerInterceptor.go:1-43](file://common/Interceptor/rpcserver/loggerInterceptor.go#L1-L43)
+- [metadataInterceptor.go:1-19](file://common/Interceptor/rpcclient/metadataInterceptor.go#L1-L19)
+- [grpc.go:1-35](file://common/ctxprop/grpc.go#L1-L35)
+- [http.go:1-33](file://common/ctxprop/http.go#L1-L33)
+
 ## 依赖关系分析
 
 AI聊天服务的依赖关系清晰明确，遵循依赖倒置原则：
@@ -793,48 +954,64 @@ J[ctxdata上下文]
 K[slog结构化日志]
 L[bufio扫描器]
 M[json解析器]
+N[google.golang.org/grpc]
+O[google.golang.org/grpc/reflection]
+P[google.golang.org/grpc/metadata]
 end
 subgraph "内部模块"
-N[aichat.go] --> O[config]
-N --> P[svc]
-N --> Q[server]
-Q --> R[logic]
-R --> S[provider]
-S --> T[types]
-O --> U[config.go]
-P --> V[servicecontext.go]
-Q --> W[aichatserver.go]
-R --> X[chatcompletionlogic.go]
-S --> Y[registry.go]
-S --> Z[openai.go]
-S --> AA[mcpx/client.go]
-BB[ctxprop.go] --> AA
-CC[ctxData.go] --> BB
-DD[logger.go] --> AA
-EE[config.go] --> AA
-FF[ctxData.go] --> GG[ctxHeaderTransport]
-HH[bufio.Scanner] --> Z
-II[json.Unmarshal] --> Z
-JJ[传输协议支持] --> KK[UseStreamable配置]
-LL[SSE端点配置] --> MM[/sse端点]
-NN[Streamable端点配置] --> OO[/message端点]
+Q[aichat.go] --> R[config]
+Q --> S[svc]
+Q --> T[server]
+T --> U[logic]
+U --> V[provider]
+V --> W[types]
+R --> X[config.go]
+S --> Y[servicecontext.go]
+T --> Z[aichatserver.go]
+U --> AA[chatcompletionlogic.go]
+V --> AB[registry.go]
+V --> AC[openai.go]
+V --> AD[mcpx/client.go]
+AE[ctxprop.go] --> AD
+AF[ctxData.go] --> AE
+AG[logger.go] --> AD
+AH[config.go] --> AD
+AI[bufio.Scanner] --> AC
+AJ[json.Unmarshal] --> AC
+AK[传输协议支持] --> AL[UseStreamable配置]
+AM[SSE端点配置] --> AN[/sse端点]
+AO[Streamable端点配置] --> AP[/message端点]
+AQ[拦截器系统] --> AR[LoggerInterceptor]
+AS[拦截器系统] --> AT[StreamLoggerInterceptor]
+AU[拦截器系统] --> AV[MetadataInterceptor]
+AW[上下文传播] --> AX[ctxprop模块]
+AY[结构化日志] --> AZ[logx.WithContext]
 end
-N --> A
-N --> B
-C --> AA
-D --> AA
-E --> AA
-F --> AA
-G --> AA
-H --> AA
-I --> X
-J --> BB
-K --> DD
-L --> HH
-M --> II
-JJ --> KK
-KK --> LL
-KK --> OO
+Q --> A
+Q --> B
+B --> N
+N --> P
+O --> B
+C --> AD
+D --> AD
+E --> AD
+F --> AD
+G --> AD
+H --> AD
+I --> AA
+J --> AE
+K --> AG
+L --> AI
+M --> AJ
+AK --> AL
+AL --> AM
+AL --> AO
+AQ --> AR
+AQ --> AS
+AQ --> AT
+AQ --> AU
+AW --> AX
+AY --> AZ
 ```
 
 **图表来源**
@@ -846,6 +1023,8 @@ KK --> OO
 - [openai.go:3-14](file://aiapp/aichat/internal/provider/openai.go#L3-L14)
 - [config.go:11-16](file://common/mcpx/config.go#L11-L16)
 - [server.go:92-110](file://common/mcpx/server.go#L92-L110)
+- [loggerInterceptor.go:1-43](file://common/Interceptor/rpcserver/loggerInterceptor.go#L1-L43)
+- [metadataInterceptor.go:1-19](file://common/Interceptor/rpcclient/metadataInterceptor.go#L1-L19)
 
 ### 关键依赖特性
 
@@ -861,6 +1040,9 @@ KK --> OO
 10. **流式优化**：256KB scanner缓冲区，防止大块SSE数据截断
 11. **传输协议支持**：同时支持SSE和Streamable HTTP两种MCP传输协议
 12. **端点配置**：MCP服务器端点从/message更新为/sse，保持向后兼容
+13. **拦截器系统**：通过LoggerInterceptor和StreamLoggerInterceptor增强可观测性
+14. **上下文传播增强**：通过ctxprop模块实现gRPC元数据与上下文的双向传播
+15. **流式超时管理**：改进的流式gRPC操作超时控制和错误处理机制
 
 **更新** 新增的MCP依赖：
 - `github.com/modelcontextprotocol/go-sdk/mcp`：MCP协议实现
@@ -875,6 +1057,9 @@ KK --> OO
 - 上下文属性的自动注入和提取
 - 结构化日志的slog桥接
 - **新增** 传输协议选择机制，支持UseStreamable配置
+- **新增** 拦截器系统，增强流式gRPC操作的可观测性
+- **新增** 上下文传播增强，解决流式RPC中上下文丢失问题
+- **新增** 结构化日志记录，提供完整的错误追踪能力
 
 **章节来源**
 - [aichat.proto:1-115](file://aiapp/aichat/aichat.proto#L1-L115)
@@ -919,6 +1104,7 @@ KK --> OO
 - **连接缓存**：多服务器连接复用，减少握手开销
 - **工具结果缓存**：工具调用结果按参数缓存，避免重复执行
 - **传输协议缓存**：根据UseStreamable标志缓存传输协议类型
+- **拦截器缓存**：拦截器状态和上下文传播缓存
 
 **更新** 资源管理优化：
 - scanner缓冲区从64KB增加到256KB
@@ -929,6 +1115,8 @@ KK --> OO
 - **更新** 异步Promise模式减少阻塞等待
 - **更新** 性能监控：mcpx.metrics统计工具调用延迟和成功率
 - **新增** 传输协议选择优化：根据UseStreamable标志快速选择协议
+- **新增** 拦截器性能优化：减少上下文传播开销
+- **新增** 结构化日志性能优化：异步日志记录机制
 
 ### 工具调用性能
 
@@ -940,6 +1128,7 @@ KK --> OO
 - **上下文传播优化**：只传递必要的上下文属性，减少传输开销
 - **性能监控**：内置mcpx.metrics统计工具调用成功率和延迟
 - **传输协议优化**：根据UseStreamable标志选择最适合的传输协议
+- **拦截器性能优化**：通过上下文缓存减少重复提取和注入开销
 
 ## 故障排除指南
 
@@ -959,8 +1148,10 @@ KK --> OO
 | 工具路由错误 | NOT_FOUND | 工具名称未找到 | 确认MCP服务器上已注册相应工具 |
 | 上下文传播错误 | INVALID_ARGUMENT | 上下文属性无效 | 检查ctxdata中的用户信息完整性 |
 | 结构化日志错误 | INTERNAL | 日志系统异常 | 检查logx配置和权限 |
-| **新增** 传输协议错误 | **UNAVAILABLE** | **MCP传输协议不匹配** | **检查UseStreamable配置和服务器端点** |
-| **新增** 端点配置错误 | **NOT_FOUND** | **MCP端点不存在** | **确认服务器端点为/sse或/message** |
+| **新增** 传输协议错误 | **UNAVAILABLE** | MCP传输协议不匹配 | 检查UseStreamable配置和服务器端点 |
+| **新增** 端点配置错误 | **NOT_FOUND** | MCP端点不存在 | 确认服务器端点为/sse或/message |
+| **新增** 拦截器错误 | **INTERNAL** | 拦截器处理异常 | 检查LoggerInterceptor和StreamLoggerInterceptor配置 |
+| **新增** 上下文丢失错误 | **DEADLINE_EXCEEDED** | 流式RPC上下文丢失 | 检查StreamLoggerInterceptor配置 |
 
 **更新** 新增的MCP相关错误：
 - MCP连接失败：检查Mcpx.Servers配置和SSE端点可达性
@@ -972,6 +1163,8 @@ KK --> OO
 - 性能监控异常：检查mcpx.metrics配置和权限
 - **新增** 传输协议不匹配：确认客户端UseStreamable与服务器端点配置一致
 - **新增** 端点不存在：检查MCP服务器端点配置，确保使用正确的端点路径
+- **新增** 拦截器配置错误：检查LoggerInterceptor和StreamLoggerInterceptor的集成
+- **新增** 上下文传播失败：检查ctxprop模块的上下文字段配置
 
 ### 日志分析
 
@@ -985,6 +1178,8 @@ KK --> OO
 - **更新** 结构化日志：通过logx.SetUp配置支持JSON和plain格式
 - **更新** 上下文属性日志：显示用户身份信息的传递和提取
 - **更新** 性能监控日志：显示mcpx.metrics统计的工具调用性能
+- **新增** 拦截器日志：记录拦截器处理过程和上下文传播信息
+- **新增** 流式超时日志：显示流式RPC的超时控制和错误处理
 - **新增** 传输协议日志：显示使用的MCP传输协议类型
 - **新增** 端点配置日志：显示MCP服务器端点配置信息
 
@@ -1006,6 +1201,10 @@ KK --> OO
 14. **更新** 流式处理调试：检查scanner缓冲区大小和超时设置
 15. **新增** 传输协议调试：检查UseStreamable配置与服务器端点一致性
 16. **新增** 端点配置调试：验证MCP服务器端点路径正确性
+17. **新增** 拦截器调试：检查LoggerInterceptor和StreamLoggerInterceptor的集成
+18. **新增** 上下文传播调试：验证流式RPC中上下文的正确传递
+19. **新增** 拦截器性能调试：监控拦截器处理的性能开销
+20. **新增** 结构化日志调试：验证拦截器产生的日志信息
 
 **更新** 新增调试技巧：
 - 调整超时配置：根据实际需求调整StreamTimeout、StreamIdleTimeout和MaxToolRounds
@@ -1020,6 +1219,8 @@ KK --> OO
 - **更新** 流式处理优化：监控256KB scanner缓冲区使用情况
 - **新增** 传输协议测试：验证UseStreamable配置与服务器端点匹配
 - **新增** 端点连通性测试：检查/sse和/message端点的可达性
+- **新增** 拦截器集成测试：验证LoggerInterceptor和StreamLoggerInterceptor的正确集成
+- **新增** 上下文传播测试：验证流式RPC中上下文的完整传递和恢复
 
 **章节来源**
 - [chatcompletionlogic.go:190-206](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L190-L206)
@@ -1027,7 +1228,7 @@ KK --> OO
 
 ## 结论
 
-AI聊天服务是一个设计精良的微服务架构示例，经过MCP客户端重构后具有以下突出特点：
+AI聊天服务是一个设计精良的微服务架构示例，经过MCP客户端重构和拦截器系统增强后具有以下突出特点：
 
 ### 技术优势
 - **架构清晰**：分层设计确保了良好的可维护性
@@ -1044,6 +1245,9 @@ AI聊天服务是一个设计精良的微服务架构示例，经过MCP客户端
 - **流式优化**：256KB scanner缓冲区，防止大块SSE数据截断
 - **传输协议支持**：同时支持SSE和Streamable HTTP两种MCP传输协议
 - **端点兼容性**：MCP服务器端点从/message更新为/sse，保持向后兼容
+- **拦截器系统**：通过LoggerInterceptor和StreamLoggerInterceptor增强可观测性
+- **上下文传播增强**：通过ctxprop模块实现gRPC元数据与上下文的双向传播
+- **流式超时管理**：改进的流式gRPC操作超时控制和错误处理机制
 
 **更新** 新增的技术改进：
 - **重构后的MCP客户端**：支持多服务器连接管理和工具聚合
@@ -1061,6 +1265,10 @@ AI聊天服务是一个设计精良的微服务架构示例，经过MCP客户端
 - **性能监控增强**：内置mcpx.metrics统计工具调用延迟和成功率
 - **传输协议选择**：通过UseStreamable配置灵活选择SSE或Streamable HTTP协议
 - **端点配置优化**：MCP服务器端点从/message更新为/sse，提升兼容性
+- **拦截器系统**：通过LoggerInterceptor和StreamLoggerInterceptor增强可观测性
+- **上下文传播增强**：解决流式RPC中上下文丢失的关键问题
+- **流式超时管理**：改进的流式gRPC操作超时控制和错误处理机制
+- **结构化日志记录**：提供完整的错误追踪和性能监控能力
 
 ### 业务价值
 - **多供应商支持**：为用户提供最佳的AI服务选择
@@ -1074,6 +1282,8 @@ AI聊天服务是一个设计精良的微服务架构示例，经过MCP客户端
 - **监控能力**：内置性能指标和错误统计
 - **传输协议灵活性**：支持多种MCP传输协议，适应不同部署环境
 - **向后兼容性**：MCP服务器端点更新保持现有配置的兼容性
+- **拦截器可观测性**：通过拦截器系统提供完整的请求处理链路监控
+- **上下文完整性**：确保流式RPC中上下文信息的完整传递和恢复
 
 ### 发展建议
 1. **增加缓存层**：为频繁访问的模型元数据和MCP工具定义增加缓存
@@ -1091,6 +1301,11 @@ AI聊天服务是一个设计精良的微服务架构示例，经过MCP客户端
 13. **异步处理扩展**：支持更多的异步操作模式和错误恢复策略
 14. **传输协议优化**：根据网络环境和性能要求动态选择最优传输协议
 15. **端点配置管理**：提供更灵活的MCP服务器端点配置选项
+16. **拦截器性能优化**：监控和优化拦截器处理的性能开销
+17. **上下文传播监控**：实时监控流式RPC中上下文的传递和恢复状态
+18. **拦截器日志分析**：利用拦截器产生的日志信息进行性能分析和故障排查
+19. **流式超时策略优化**：根据不同业务场景调整超时策略和阈值
+20. **拦截器扩展性**：支持自定义拦截器的动态加载和配置
 
 **更新** 建议的进一步优化：
 - **动态超时调整**：根据模型复杂度和工具调用类型动态调整超时设置
@@ -1105,5 +1320,138 @@ AI聊天服务是一个设计精良的微服务架构示例，经过MCP客户端
 - **异步处理扩展**：支持更多的异步操作模式和错误恢复策略
 - **传输协议智能选择**：根据网络条件和性能要求自动选择最优传输协议
 - **端点配置自动化**：提供MCP服务器端点配置的自动化检测和修复功能
+- **拦截器性能监控**：实时监控拦截器处理的性能指标和错误率
+- **上下文传播质量监控**：监控流式RPC中上下文传播的完整性和准确性
+- **拦截器日志聚合**：提供拦截器日志的集中管理和分析功能
+- **流式超时策略学习**：基于历史数据自动优化超时策略和阈值设置
 
-该服务为构建企业级AI应用提供了坚实的基础，其设计原则和实现模式值得在类似项目中借鉴和参考。重构后的MCP工具调用能力和增强的日志基础设施使其成为了一个真正的智能代理系统，能够与外部世界进行智能交互和自动化操作。多服务器连接管理和内存泄漏修复进一步提升了系统的稳定性和可靠性。上下文属性传播功能则为构建安全的企业级应用提供了重要的基础支撑。性能监控和结构化日志系统为运维和故障排查提供了强有力的支持。新增的传输协议支持和端点配置优化使得系统更加灵活和兼容，能够适应不同的部署环境和网络条件。
+该服务为构建企业级AI应用提供了坚实的基础，其设计原则和实现模式值得在类似项目中借鉴和参考。重构后的MCP工具调用能力和增强的日志基础设施使其成为了一个真正的智能代理系统，能够与外部世界进行智能交互和自动化操作。多服务器连接管理和内存泄漏修复进一步提升了系统的稳定性和可靠性。上下文属性传播功能则为构建安全的企业级应用提供了重要的基础支撑。性能监控和结构化日志系统为运维和故障排查提供了强有力的支持。新增的传输协议支持、拦截器系统和流式超时管理使得系统在可观测性和稳定性方面达到了新的高度。拦截器系统通过LoggerInterceptor和StreamLoggerInterceptor的集成，为流式gRPC操作提供了完整的可观测性，确保了系统的可维护性和可调试性。上下文传播增强通过ctxprop模块解决了流式RPC中的关键问题，保证了用户身份信息在整个请求处理链路中的完整传递。这些改进使得AI聊天服务不仅是一个功能强大的AI接入平台，更是一个设计精良、可观测性良好、易于维护的企业级微服务系统。
+</existing_wiki_content>
+
+<updated_section>
+### 拦截器系统
+
+**新增** 拦截器系统是AI聊天服务可观测性的重要组成部分，提供了完整的gRPC请求处理链路监控。
+
+#### 拦截器架构
+
+```mermaid
+classDiagram
+class InterceptorSystem {
++LoggerInterceptor(ctx, req, info, handler) resp, err
++StreamLoggerInterceptor(srv, ss, info, handler) error
++UnaryMetadataInterceptor(ctx, method, req, reply, cc, invoker, opts) error
++StreamTracingInterceptor(ctx, desc, cc, method, streamer, opts) ClientStream, error
+}
+class LoggerInterceptor {
++从gRPC incoming metadata提取上下文字段
++注入到handler的context中
++错误时记录结构化日志
+}
+class StreamLoggerInterceptor {
++从gRPC incoming metadata提取上下文字段
++包装stream.Context()增强上下文
++解决流式RPC中context values丢失问题
++错误时记录结构化日志
+}
+class MetadataInterceptor {
++UnaryMetadataInterceptor：一元RPC客户端拦截器
++StreamTracingInterceptor：流式RPC客户端拦截器
++将上下文字段传播到下游RPC服务
+}
+class CtxProp {
++InjectToGrpcMD(ctx) context.Context
++ExtractFromGrpcMD(ctx) context.Context
+}
+class WrappedStream {
++ServerStream
++ctx context.Context
++Context() context.Context
+}
+InterceptorSystem --> LoggerInterceptor : implements
+InterceptorSystem --> StreamLoggerInterceptor : implements
+InterceptorSystem --> MetadataInterceptor : implements
+LoggerInterceptor --> CtxProp : uses
+StreamLoggerInterceptor --> CtxProp : uses
+StreamLoggerInterceptor --> WrappedStream : creates
+```
+
+**图表来源**
+- [loggerInterceptor.go:1-43](file://common/Interceptor/rpcserver/loggerInterceptor.go#L1-L43)
+- [metadataInterceptor.go:1-19](file://common/Interceptor/rpcclient/metadataInterceptor.go#L1-L19)
+- [grpc.go:1-35](file://common/ctxprop/grpc.go#L1-L35)
+
+#### 服务启动时的拦截器集成
+
+在服务启动过程中，拦截器通过以下方式集成：
+
+```mermaid
+sequenceDiagram
+participant Main as 主程序
+participant Server as gRPC服务器
+participant Interceptor as 拦截器系统
+Main->>Server : MustNewServer(config, handler)
+Server->>Interceptor : AddUnaryInterceptors(LoggerInterceptor)
+Server->>Interceptor : AddStreamInterceptors(StreamLoggerInterceptor)
+Main->>Server : Start()
+```
+
+**图表来源**
+- [aichat.go:34-42](file://aiapp/aichat/aichat.go#L34-L42)
+
+#### 流式拦截器的工作原理
+
+**更新** StreamLoggerInterceptor解决了流式RPC中上下文丢失的关键问题：
+
+```mermaid
+sequenceDiagram
+participant Client as 客户端
+participant Server as gRPC服务器
+participant StreamLogger as 流式拦截器
+participant Handler as 业务处理器
+Client->>Server : ChatCompletionStream请求
+Server->>StreamLogger : StreamLoggerInterceptor
+StreamLogger->>StreamLogger : ExtractFromGrpcMD(ss.Context())
+StreamLogger->>Handler : handler(srv, wrappedStream)
+Handler->>Handler : ChatCompletionStream逻辑
+Handler-->>Client : 流式响应
+```
+
+**图表来源**
+- [loggerInterceptor.go:23-33](file://common/Interceptor/rpcserver/loggerInterceptor.go#L23-L33)
+
+#### 上下文传播机制
+
+**更新** 通过ctxprop模块实现的双向上下文传播：
+
+```mermaid
+flowchart TD
+Start([请求进入]) --> Extract[ExtractFromGrpcMD<br/>从gRPC metadata提取字段]
+Extract --> Inject[InjectToGrpcMD<br/>向下游RPC注入字段]
+Inject --> Business[业务逻辑处理]
+Business --> Error{是否有错误?}
+Error --> |是| Log[logx.WithContext(ctx)<br/>记录结构化日志]
+Error --> |否| Success[返回成功响应]
+Log --> End([结束])
+Success --> End
+```
+
+**图表来源**
+- [grpc.go:11-34](file://common/ctxprop/grpc.go#L11-L34)
+- [loggerInterceptor.go:12-32](file://common/Interceptor/rpcserver/loggerInterceptor.go#L12-L32)
+
+#### 结构化日志记录
+
+**更新** 拦截器系统提供了完整的结构化日志记录能力：
+
+- **错误日志**：使用`logx.WithContext(ctx).Errorf()`记录带有上下文信息的错误
+- **请求日志**：记录RPC方法名、请求参数和响应状态
+- **上下文字段**：自动提取和记录用户ID、用户名、部门代码、授权信息、跟踪ID等
+- **流式超时**：专门处理流式RPC的超时和断开连接场景
+
+**章节来源**
+- [loggerInterceptor.go:1-43](file://common/Interceptor/rpcserver/loggerInterceptor.go#L1-L43)
+- [metadataInterceptor.go:1-19](file://common/Interceptor/rpcclient/metadataInterceptor.go#L1-L19)
+- [grpc.go:1-35](file://common/ctxprop/grpc.go#L1-L35)
+- [http.go:1-33](file://common/ctxprop/http.go#L1-L33)
+</updated_section>

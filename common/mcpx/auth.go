@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"zero-service/common/ctxdata"
+	"zero-service/common/ctxprop"
 	"zero-service/common/tool"
 
 	"github.com/modelcontextprotocol/go-sdk/auth"
@@ -13,9 +15,9 @@ import (
 )
 
 // NewDualTokenVerifier 创建双模式 Token 验证器。
-// 优先常量时间比较 serviceToken（连接级鉴权），
-// 失败则尝试 JWT 解析（调用级鉴权）。
-// UserID 始终为空，因为 mcpx 是多用户共享 session。
+// 优先常量时间比较 serviceToken（连接级/服务侧鉴权），
+// 失败则尝试 JWT 解析（调用级/用户侧鉴权，UserID 从 claims 提取）。
+// TokenInfo.Extra["type"] 标识认证来源："service" 或 "user"。
 func NewDualTokenVerifier(jwtSecrets []string, serviceToken string) auth.TokenVerifier {
 	return func(ctx context.Context, token string, req *http.Request) (*auth.TokenInfo, error) {
 		// 1. ServiceToken 常量时间比较
@@ -27,18 +29,28 @@ func NewDualTokenVerifier(jwtSecrets []string, serviceToken string) auth.TokenVe
 			}, nil
 		}
 
-		// 2. JWT 解析
+		// 2. JWT 解析（用户侧认证）
 		if len(jwtSecrets) > 0 {
 			claims, err := tool.ParseToken(token, jwtSecrets...)
 			if err != nil {
 				logx.Debugf("[mcpx-auth] jwt parse failed: %v", err)
 				return nil, auth.ErrInvalidToken
 			}
-			info := &auth.TokenInfo{Extra: map[string]any(claims)}
+
+			// 构建 Extra：type=user + 全量 claims（供 WithCtxProp 提取）
+			extra := map[string]any{"type": "user"}
+			for k, v := range claims {
+				extra[k] = v
+			}
+
+			info := &auth.TokenInfo{
+				UserID: ctxprop.ClaimString(claims, ctxdata.CtxUserIdKey),
+				Extra:  extra,
+			}
 			if exp, ok := claims["exp"].(float64); ok {
 				info.Expiration = time.Unix(int64(exp), 0)
 			}
-			logx.Debugf("[mcpx-auth] jwt verified, claims keys=%v", mapKeys(claims))
+			logx.Debugf("[mcpx-auth] jwt verified, userId=%s, claims keys=%v", info.UserID, mapKeys(claims))
 			return info, nil
 		}
 

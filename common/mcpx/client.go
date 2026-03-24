@@ -333,11 +333,12 @@ type ctxHeaderTransport struct {
 
 func (t *ctxHeaderTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	ctxprop.InjectToHTTPHeader(r.Context(), r.Header)
+	authType := "user"
 	// Authorization 降级：ctx 中无用户 JWT 时使用 ServiceToken
 	if r.Header.Get("Authorization") == "" && t.serviceToken != "" {
 		r.Header.Set("Authorization", "Bearer "+t.serviceToken)
+		authType = "system"
 	}
-	logx.Debugf("[mcpx] transport headers: Authorization=%s, X-User-Id=%s",
-		maskToken(r.Header.Get("Authorization")), r.Header.Get("X-User-Id"))
+	logx.Debugf("[mcpx] transport: authType=%s, method=%s, path=%s, token=%s", authType, r.Method, r.URL.Path, r.Header.Get("Authorization"))
 	return t.base.RoundTrip(r)
 }

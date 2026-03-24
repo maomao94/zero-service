@@ -2,8 +2,11 @@ package tools
 
 import (
 	"context"
+	"zero-service/common/ctxdata"
+	"zero-service/common/mcpx"
 
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 // EchoArgs echo 工具参数
@@ -20,6 +23,8 @@ func RegisterEcho(server *sdkmcp.Server) {
 	}
 
 	echoHandler := func(ctx context.Context, req *sdkmcp.CallToolRequest, args EchoArgs) (*sdkmcp.CallToolResult, any, error) {
+		auth := ctxdata.GetAuthorization(ctx)
+		logx.Debugf("token %s", auth)
 		prefix := "Echo: "
 		if len(args.Prefix) > 0 {
 			prefix = args.Prefix
@@ -32,5 +37,5 @@ func RegisterEcho(server *sdkmcp.Server) {
 		}, nil, nil
 	}
 
-	sdkmcp.AddTool(server, echoTool, echoHandler)
+	sdkmcp.AddTool(server, echoTool, mcpx.WithCtxProp(echoHandler))
 }

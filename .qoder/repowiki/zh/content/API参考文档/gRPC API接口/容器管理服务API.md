@@ -16,19 +16,31 @@
 - [podengine.go](file://app/podengine/podengine.go)
 - [podengine.yaml](file://app/podengine/etc/podengine.yaml)
 - [podengine.swagger.json](file://swagger/podengine.swagger.json)
+- [msgbody.go](file://common/msgbody/msgbody.go)
+- [ctxdata.go](file://common/ctxdata/ctxData.go)
+- [grpc.go](file://common/ctxprop/grpc.go)
+- [http.go](file://common/ctxprop/http.go)
 </cite>
+
+## 更新摘要
+**所做更改**
+- 新增消息体结构章节，详细介绍从ctxdata到msgbody的消息体抽象迁移
+- 更新上下文传播机制，说明ProtoMsgBody结构在gRPC服务间的使用
+- 增强跨服务通信的标准化流程说明
+- 完善消息体验证和错误处理机制的文档
 
 ## 目录
 1. [简介](#简介)
 2. [项目结构](#项目结构)
 3. [核心组件](#核心组件)
 4. [架构总览](#架构总览)
-5. [详细组件分析](#详细组件分析)
-6. [依赖关系分析](#依赖关系分析)
-7. [性能考虑](#性能考虑)
-8. [故障排查指南](#故障排查指南)
-9. [结论](#结论)
-10. [附录](#附录)
+5. [消息体结构与上下文传播](#消息体结构与上下文传播)
+6. [详细组件分析](#详细组件分析)
+7. [依赖关系分析](#依赖关系分析)
+8. [性能考虑](#性能考虑)
+9. [故障排查指南](#故障排查指南)
+10. [结论](#结论)
+11. [附录](#附录)
 
 ## 简介
 本文件面向容器管理服务的gRPC API，聚焦于基于Docker的Pod生命周期管理、容器状态监控与镜像操作能力。文档覆盖以下内容：
@@ -39,6 +51,7 @@
 - Go客户端调用示例路径与注意事项
 - 容器状态枚举、错误处理与异常机制
 - 资源限制、网络配置、存储挂载等参数说明
+- **新增**：消息体结构从ctxdata到msgbody的迁移与标准化
 
 ## 项目结构
 容器管理服务位于应用目录 app/podengine 下，采用标准的Go Zero微服务分层：
@@ -46,6 +59,8 @@
 - 服务端实现：internal/server/podengineserver.go（gRPC处理器）
 - 业务逻辑：internal/logic/*（各接口逻辑实现）
 - 通用工具：common/dockerx/dockerx.go（Docker相关解析与转换）
+- **新增**：消息体抽象：common/msgbody/msgbody.go（统一消息体结构）
+- **新增**：上下文传播：common/ctxdata/ctxData.go、common/ctxprop/*（跨服务通信）
 - 启动入口：app/podengine/podengine.go（gRPC服务器启动、注册服务）
 - 配置文件：app/podengine/etc/podengine.yaml（监听地址、日志、Docker节点配置）
 
@@ -65,6 +80,9 @@ LogicImages["listimageslogic.go<br/>镜像列表逻辑"]
 DockerX["dockerx.go<br/>Docker工具"]
 Entry["podengine.go<br/>服务启动"]
 Cfg["podengine.yaml<br/>服务配置"]
+MsgBody["msgbody.go<br/>消息体抽象"]
+CtxData["ctxData.go<br/>上下文字段定义"]
+CtxProp["ctxprop/*<br/>上下文传播"]
 end
 Proto --> Server
 Server --> LogicCreate
@@ -85,6 +103,8 @@ LogicStats --> DockerX
 LogicImages --> DockerX
 Entry --> Server
 Entry --> Cfg
+MsgBody --> CtxData
+CtxData --> CtxProp
 ```
 
 **图表来源**
@@ -101,23 +121,35 @@ Entry --> Cfg
 - [dockerx.go:1-95](file://common/dockerx/dockerx.go#L1-L95)
 - [podengine.go:27-69](file://app/podengine/podengine.go#L27-L69)
 - [podengine.yaml:1-20](file://app/podengine/etc/podengine.yaml#L1-L20)
+- [msgbody.go:1-20](file://common/msgbody/msgbody.go#L1-L20)
+- [ctxdata.go:1-74](file://common/ctxdata/ctxData.go#L1-L74)
+- [grpc.go:1-35](file://common/ctxprop/grpc.go#L1-L35)
+- [http.go:1-33](file://common/ctxprop/http.go#L1-L33)
 
 **章节来源**
 - [podengine.proto:1-338](file://app/podengine/podengine.proto#L1-L338)
 - [podengineserver.go:1-70](file://app/podengine/internal/server/podengineserver.go#L1-L70)
 - [podengine.go:1-69](file://app/podengine/podengine.go#L1-L69)
 - [podengine.yaml:1-20](file://app/podengine/etc/podengine.yaml#L1-L20)
+- [msgbody.go:1-20](file://common/msgbody/msgbody.go#L1-L20)
+- [ctxdata.go:1-74](file://common/ctxdata/ctxData.go#L1-L74)
+- [grpc.go:1-35](file://common/ctxprop/grpc.go#L1-L35)
+- [http.go:1-33](file://common/ctxprop/http.go#L1-L33)
 
 ## 核心组件
 - 服务接口：PodEngine（8个方法）
 - 数据模型：Pod、Container、ContainerSpec、PodSpec、ContainerState、PodCondition、ContainerStats、Image
 - 状态枚举：PodPhase、PodConditionType、ContainerState
 - Docker集成：通过common/dockerx工具进行环境变量、端口、卷挂载、资源限制等解析与转换
+- **新增**：消息体抽象：统一的MsgBody和ProtoMsgBody结构，支持gRPC服务间的标准消息传递
+- **新增**：上下文传播：标准化的ctxdata字段定义和ctxprop工具，确保跨服务通信的一致性
 
 **章节来源**
 - [podengine.proto:16-26](file://app/podengine/podengine.proto#L16-L26)
 - [podengine.proto:33-178](file://app/podengine/podengine.proto#L33-L178)
 - [dockerx.go:20-86](file://common/dockerx/dockerx.go#L20-L86)
+- [msgbody.go:5-19](file://common/msgbody/msgbody.go#L5-L19)
+- [ctxdata.go:5-38](file://common/ctxdata/ctxData.go#L5-L38)
 
 ## 架构总览
 服务采用gRPC + Go Zero框架，服务端在启动时注册PodEngine服务，并根据配置决定是否开启反射与Nacos注册。请求经由gRPC路由至对应逻辑层，逻辑层通过dockerx工具与Docker API交互。
@@ -144,6 +176,85 @@ GRPC-->>Client : "返回结果"
 - [podengineserver.go:26-69](file://app/podengine/internal/server/podengineserver.go#L26-L69)
 - [createpodlogic.go:34-152](file://app/podengine/internal/logic/createpodlogic.go#L34-L152)
 - [dockerx.go:11-18](file://common/dockerx/dockerx.go#L11-L18)
+
+## 消息体结构与上下文传播
+
+### 消息体抽象迁移概述
+**更新** 容器管理服务已从传统的ctxdata消息体结构迁移到统一的msgbody消息体抽象，提供更标准化的服务间通信机制。
+
+### ProtoMsgBody结构详解
+ProtoMsgBody是gRPC服务间通信的核心消息体结构：
+
+```mermaid
+classDiagram
+class ProtoMsgBody {
++MsgId string
++Carrier HeaderCarrier
++GrpcServer string
++Method string
++Payload string
++RequestTimeout int64
+}
+```
+
+**字段说明**：
+- MsgId：消息唯一标识符
+- Carrier：OpenTelemetry传播载体，用于分布式追踪
+- GrpcServer：目标gRPC服务器地址
+- Method：目标方法名称
+- Payload：序列化的请求负载
+- RequestTimeout：请求超时时间（毫秒）
+
+**章节来源**
+- [msgbody.go:12-19](file://common/msgbody/msgbody.go#L12-L19)
+
+### 上下文传播机制
+**更新** 新增标准化的上下文传播机制，确保跨服务通信时用户身份和追踪信息的一致传递。
+
+#### 上下文字段定义
+```mermaid
+classDiagram
+class PropField {
++CtxKey string
++GrpcHeader string
++HttpHeader string
++Sensitive bool
+}
+```
+
+**标准字段**：
+- 用户ID：user-id → x-user-id → X-User-Id
+- 用户名：user-name → x-user-name → X-User-Name
+- 部门编码：dept-code → x-dept-code → X-Dept-Code
+- 授权信息：authorization → authorization → Authorization
+- 追踪ID：trace-id → x-trace-id → X-Trace-Id
+
+**章节来源**
+- [ctxdata.go:5-38](file://common/ctxdata/ctxData.go#L5-L38)
+
+#### gRPC上下文传播
+```mermaid
+sequenceDiagram
+participant Client as "客户端"
+participant ClientInterceptor as "客户端拦截器"
+participant ServerInterceptor as "服务端拦截器"
+participant Service as "服务实现"
+Client->>ClientInterceptor : "发起RPC调用"
+ClientInterceptor->>ClientInterceptor : "InjectToGrpcMD()"
+ClientInterceptor->>ServerInterceptor : "传播metadata"
+ServerInterceptor->>ServerInterceptor : "ExtractFromGrpcMD()"
+ServerInterceptor->>Service : "注入到context"
+Service-->>Client : "返回响应"
+```
+
+**章节来源**
+- [grpc.go:13-34](file://common/ctxprop/grpc.go#L13-L34)
+
+#### HTTP上下文传播
+HTTP请求同样支持上下文字段传播，确保RESTful接口与gRPC服务的一致性。
+
+**章节来源**
+- [http.go:12-32](file://common/ctxprop/http.go#L12-L32)
 
 ## 详细组件分析
 
@@ -349,6 +460,7 @@ Handler-->>Client : "GetPodStatsRes"
 - 节点检查：若node不存在，返回明确错误
 - Docker操作错误：容器创建/启动/停止/删除失败时，返回包装后的错误
 - 统一错误格式：gRPC状态码与消息遵循标准格式（Swagger定义了rpcStatus结构）
+- **新增**：消息体验证：ProtoMsgBody结构包含完整的验证规则，确保跨服务通信的数据完整性
 
 **章节来源**
 - [createpodlogic.go:34-45](file://app/podengine/internal/logic/createpodlogic.go#L34-L45)
@@ -360,6 +472,7 @@ Handler-->>Client : "GetPodStatsRes"
 - [getpodstatslogic.go:32-59](file://app/podengine/internal/logic/getpodstatslogic.go#L32-L59)
 - [listimageslogic.go:30-55](file://app/podengine/internal/logic/listimageslogic.go#L30-L55)
 - [podengine.swagger.json:29-47](file://swagger/podengine.swagger.json#L29-L47)
+- [msgbody.go:12-19](file://common/msgbody/msgbody.go#L12-L19)
 
 ### 资源限制、网络配置与存储挂载
 
@@ -443,6 +556,28 @@ class DockerX {
 +ParseContainerResources(resources) map
 +BuildEnvList(envMap) []string
 }
+class MsgBody {
++MsgId string
++Carrier HeaderCarrier
++Msg string
++Url string
+}
+class ProtoMsgBody {
++MsgId string
++Carrier HeaderCarrier
++GrpcServer string
++Method string
++Payload string
++RequestTimeout int64
+}
+class CtxData {
++PropFields []PropField
++GetUserId(ctx) string
++GetUserName(ctx) string
++GetAuthorization(ctx) string
++GetTraceId(ctx) string
++GetDeptCode(ctx) string
+}
 PodEngineServer --> CreatePodLogic
 PodEngineServer --> StartPodLogic
 PodEngineServer --> StopPodLogic
@@ -460,6 +595,8 @@ GetPodLogic --> DockerX
 ListPodsLogic --> DockerX
 GetPodStatsLogic --> DockerX
 ListImagesLogic --> DockerX
+MsgBody --> ProtoMsgBody
+ProtoMsgBody --> CtxData
 ```
 
 **图表来源**
@@ -473,10 +610,14 @@ ListImagesLogic --> DockerX
 - [getpodstatslogic.go:18-30](file://app/podengine/internal/logic/getpodstatslogic.go#L18-L30)
 - [listimageslogic.go:16-28](file://app/podengine/internal/logic/listimageslogic.go#L16-L28)
 - [dockerx.go:20-86](file://common/dockerx/dockerx.go#L20-L86)
+- [msgbody.go:5-19](file://common/msgbody/msgbody.go#L5-L19)
+- [ctxdata.go:32-38](file://common/ctxdata/ctxData.go#L32-L38)
 
 **章节来源**
 - [podengineserver.go:1-70](file://app/podengine/internal/server/podengineserver.go#L1-L70)
 - [dockerx.go:1-95](file://common/dockerx/dockerx.go#L1-L95)
+- [msgbody.go:1-20](file://common/msgbody/msgbody.go#L1-L20)
+- [ctxdata.go:1-74](file://common/ctxdata/ctxData.go#L1-L74)
 
 ## 性能考虑
 - 统计查询：GetPodStats使用非流式统计接口，避免长连接开销；建议按需调用，避免频繁轮询
@@ -484,6 +625,8 @@ ListImagesLogic --> DockerX
 - 资源解析：资源限制解析为Docker原生字段，注意单位换算（CPU配额与内存字节）以避免过度限制或宽松
 - 网络模式：host模式无端口映射，bridge模式需要解析端口绑定；none模式不暴露网络
 - 日志与追踪：服务端启用日志拦截器，生产环境建议合理设置日志级别与保留天数
+- **新增**：消息体优化：ProtoMsgBody结构支持高效的序列化和反序列化，减少跨服务通信的开销
+- **新增**：上下文传播：标准化的上下文字段传播机制，避免重复的元数据处理逻辑
 
 ## 故障排查指南
 - 参数校验失败：检查请求字段（如name非空、ids/labels过滤格式正确、limit/offset范围）
@@ -494,6 +637,8 @@ ListImagesLogic --> DockerX
   - StopPod/DeletePod：确认容器ID有效、权限足够
 - 统计为空：确认容器正在运行且Docker统计可用
 - 镜像列表为空：确认镜像引用过滤条件与仓库配置
+- **新增**：消息体验证失败：检查ProtoMsgBody字段完整性，特别是grpcServer、method、payload字段
+- **新增**：上下文传播问题：确认gRPC metadata头正确设置，检查ctxdata.PropFields配置
 
 **章节来源**
 - [createpodlogic.go:34-45](file://app/podengine/internal/logic/createpodlogic.go#L34-L45)
@@ -504,9 +649,15 @@ ListImagesLogic --> DockerX
 - [getpodlogic.go:31-43](file://app/podengine/internal/logic/getpodlogic.go#L31-L43)
 - [getpodstatslogic.go:32-59](file://app/podengine/internal/logic/getpodstatslogic.go#L32-L59)
 - [listimageslogic.go:30-55](file://app/podengine/internal/logic/listimageslogic.go#L30-L55)
+- [msgbody.go:12-19](file://common/msgbody/msgbody.go#L12-L19)
+- [grpc.go:26-33](file://common/ctxprop/grpc.go#L26-L33)
 
 ## 结论
-该容器管理服务通过gRPC提供了完整的Docker容器生命周期管理能力，涵盖创建、启动、停止、重启、删除、查询与监控，并支持镜像列表管理。服务采用清晰的分层设计与参数校验，结合dockerx工具实现与Docker API的高效对接。生产部署时建议关注资源限制、网络模式与日志配置，确保稳定与可观测性。
+该容器管理服务通过gRPC提供了完整的Docker容器生命周期管理能力，涵盖创建、启动、停止、重启、删除、查询与监控，并支持镜像列表管理。服务采用清晰的分层设计与参数校验，结合dockerx工具实现与Docker API的高效对接。
+
+**重要更新**：服务现已完成从ctxdata到msgbody的消息体抽象迁移，建立了标准化的跨服务通信机制。通过ProtoMsgBody结构和ctxprop工具，实现了统一的上下文传播和消息体验证，显著提升了服务间通信的可靠性和一致性。
+
+生产部署时建议关注资源限制、网络模式与日志配置，确保稳定与可观测性。同时充分利用新的消息体抽象机制，提升系统的可维护性和扩展性。
 
 ## 附录
 
@@ -519,3 +670,21 @@ ListImagesLogic --> DockerX
 - [podengine.go:27-69](file://app/podengine/podengine.go#L27-L69)
 - [podengine.yaml:1-20](file://app/podengine/etc/podengine.yaml#L1-L20)
 - [podengine.swagger.json:1-50](file://swagger/podengine.swagger.json#L1-L50)
+
+### 消息体结构标准化流程
+**新增** 容器管理服务采用标准化的消息体结构，确保跨服务通信的一致性：
+
+```mermaid
+flowchart TD
+A[业务请求] --> B[ProtoMsgBody封装]
+B --> C[上下文字段注入]
+C --> D[gRPC传输]
+D --> E[服务端解包]
+E --> F[业务逻辑处理]
+F --> G[响应封装]
+G --> H[返回客户端]
+```
+
+**章节来源**
+- [msgbody.go:12-19](file://common/msgbody/msgbody.go#L12-L19)
+- [grpc.go:13-34](file://common/ctxprop/grpc.go#L13-L34)
