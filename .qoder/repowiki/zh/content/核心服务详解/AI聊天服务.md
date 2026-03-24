@@ -22,6 +22,9 @@
 
 ## 更新摘要
 **所做更改**
+- 增强了日志基础设施集成，在servicecontext.go中添加了logx.Must(logx.SetUp(c.Log))初始化
+- 改进了错误处理实践，在chatcompletionlogic.go和chatcompletionstreamlogic.go中使用errors.As进行类型安全的错误检查
+- 优化了工具调用循环的错误变量命名，提高了代码可读性和调试效率
 - 新增MCP工具调用能力，包括MCP客户端集成、工具调用循环、最大工具轮次限制(默认10轮)
 - 增强OpenAI函数调用格式兼容性，支持工具定义转换和参数解析
 - 新增MCP服务器配置支持，包括SSE端点配置和工具刷新机制
@@ -49,6 +52,7 @@ AI聊天服务是一个基于GoZero框架构建的RPC服务，提供统一的大
 - OpenAI函数调用格式兼容，无缝集成现有工具定义
 - 动态工具列表刷新，实时同步MCP服务器的可用工具
 - 完整的工具调用错误处理和超时控制
+- 增强的日志基础设施集成，支持结构化日志输出
 
 ## 项目结构
 
@@ -109,14 +113,14 @@ MM --> LL
 
 **图表来源**
 - [aichat.go:1-47](file://aiapp/aichat/aichat.go#L1-L47)
-- [aichat.yaml:1-41](file://aiapp/aichat/etc/aichat.yaml#L1-L41)
+- [aichat.yaml:1-44](file://aiapp/aichat/etc/aichat.yaml#L1-L44)
 - [aichat.proto:1-115](file://aiapp/aichat/aichat.proto#L1-L115)
-- [client.go:1-136](file://aiapp/aichat/internal/mcpclient/client.go#L1-L136)
+- [client.go:1-165](file://aiapp/aichat/internal/mcpclient/client.go#L1-L165)
 
 **章节来源**
 - [aichat.go:1-47](file://aiapp/aichat/aichat.go#L1-L47)
-- [aichat.yaml:1-41](file://aiapp/aichat/etc/aichat.yaml#L1-L41)
-- [config.go:1-40](file://aiapp/aichat/internal/config/config.go#L1-L40)
+- [aichat.yaml:1-44](file://aiapp/aichat/etc/aichat.yaml#L1-L44)
+- [config.go:1-62](file://aiapp/aichat/internal/config/config.go#L1-L62)
 
 ## 核心组件
 
@@ -137,10 +141,11 @@ MM --> LL
 - **运行时配置**：包括超时设置、日志配置、工具轮次限制等
 
 **更新** 新增MCP配置项：
-- `McpServers`: MCP服务器列表配置
+- `McpServers`: MCP服务器列表配置（已弃用，推荐使用Mcpx）
 - `MaxToolRounds`: 工具调用最大轮次限制，默认10轮
 - `StreamTimeout`: 单次流的总时长上限，默认10分钟
 - `StreamIdleTimeout`: chunk间最大空闲时间，默认90秒
+- `Mcpx`: 新的MCP客户端配置结构
 
 ### 3. 提供者抽象层
 
@@ -162,11 +167,12 @@ MM --> LL
 - 自动注入MCP工具定义到请求中
 - 处理工具调用结果并继续对话流程
 - 完善的错误处理和超时控制
+- 使用`errors.As`进行类型安全的错误检查
 
 **章节来源**
 - [provider.go:1-20](file://aiapp/aichat/internal/provider/provider.go#L1-L20)
-- [chatcompletionlogic.go:1-206](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L1-L206)
-- [chatcompletionstreamlogic.go:1-121](file://aiapp/aichat/internal/logic/chatcompletionstreamlogic.go#L1-L121)
+- [chatcompletionlogic.go:1-223](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L1-L223)
+- [chatcompletionstreamlogic.go:1-185](file://aiapp/aichat/internal/logic/chatcompletionstreamlogic.go#L1-L185)
 
 ## 架构概览
 
@@ -239,9 +245,9 @@ J --> V
 
 **图表来源**
 - [aichatserver.go:1-45](file://aiapp/aichat/internal/server/aichatserver.go#L1-L45)
-- [servicecontext.go:1-39](file://aiapp/aichat/internal/svc/servicecontext.go#L1-L39)
+- [servicecontext.go:1-36](file://aiapp/aichat/internal/svc/servicecontext.go#L1-L36)
 - [registry.go:1-89](file://aiapp/aichat/internal/provider/registry.go#L1-L89)
-- [client.go:1-136](file://aiapp/aichat/internal/mcpclient/client.go#L1-L136)
+- [client.go:1-165](file://aiapp/aichat/internal/mcpclient/client.go#L1-L165)
 
 该架构的主要优势：
 - **解耦合**：各层职责明确，便于独立开发和测试
@@ -340,7 +346,7 @@ Server-->>Client : ResourceExhausted错误
 ```
 
 **图表来源**
-- [chatcompletionlogic.go:32-85](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L32-L85)
+- [chatcompletionlogic.go:33-86](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L33-L86)
 - [openai.go:30-55](file://aiapp/aichat/internal/provider/openai.go#L30-L55)
 - [client.go:74-118](file://aiapp/aichat/internal/mcpclient/client.go#L74-L118)
 
@@ -369,7 +375,7 @@ ReturnSuccess --> End
 ```
 
 **图表来源**
-- [chatcompletionstreamlogic.go:32-96](file://aiapp/aichat/internal/logic/chatcompletionstreamlogic.go#L32-L96)
+- [chatcompletionstreamlogic.go:34-160](file://aiapp/aichat/internal/logic/chatcompletionstreamlogic.go#L34-L160)
 
 **更新** 超时控制机制改进：
 - 总超时：从15秒增加到10分钟
@@ -386,7 +392,7 @@ ReturnSuccess --> End
 | openai/zhipu | `{"thinking": {"type": "enabled", "clear_thinking": true}}` | 自动清理reasoning_content |
 
 **章节来源**
-- [chatcompletionlogic.go:122-158](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L122-L158)
+- [chatcompletionlogic.go:123-159](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L123-L159)
 - [openai.go:109-135](file://aiapp/aichat/internal/provider/openai.go#L109-L135)
 
 ## MCP工具调用系统
@@ -460,7 +466,7 @@ ReturnError --> End
 ```
 
 **图表来源**
-- [chatcompletionlogic.go:48-85](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L48-L85)
+- [chatcompletionlogic.go:49-86](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L49-L86)
 
 ### OpenAI函数调用格式兼容
 
@@ -514,7 +520,7 @@ E --> S
 
 **图表来源**
 - [aichat.go:3-18](file://aiapp/aichat/aichat.go#L3-L18)
-- [servicecontext.go:1-39](file://aiapp/aichat/internal/svc/servicecontext.go#L1-L39)
+- [servicecontext.go:1-36](file://aiapp/aichat/internal/svc/servicecontext.go#L1-L36)
 - [client.go:3-14](file://aiapp/aichat/internal/mcpclient/client.go#L3-L14)
 
 ### 关键依赖特性
@@ -612,6 +618,7 @@ E --> S
 - 错误详情：包含上游服务的原始错误信息
 - 性能指标：响应时间和资源使用情况
 - **更新** MCP工具调用日志：记录工具调用过程和结果
+- **更新** 结构化日志：通过logx.SetUp配置支持JSON和plain格式
 
 ### 调试技巧
 
@@ -619,18 +626,21 @@ E --> S
 2. **检查配置**：验证Provider、Model和MCP服务器配置的正确性
 3. **监控网络**：使用工具检查与AI服务和MCP服务器的连接状态
 4. **查看日志**：关注错误级别日志和上下文信息
-5. ****更新** 调试MCP工具**：使用MCP服务器的echo工具测试连接
+5. **更新** 调试MCP工具：使用MCP服务器的echo工具测试连接
 6. **监控工具调用**：观察工具调用循环的执行过程和性能
+7. **更新** 错误类型检查：使用errors.As进行精确的错误类型判断
+8. **更新** 日志配置：通过aichat.yaml中的Log配置调整日志格式和级别
 
 **更新** 新增调试技巧：
 - 调整超时配置：根据实际需求调整StreamTimeout、StreamIdleTimeout和MaxToolRounds
 - 监控资源使用：关注scanner缓冲区使用情况和MCP连接状态
-- 错误类型检查：使用errors.As进行精确的错误类型判断
+- 错误类型检查：使用errors.As进行类型安全的错误检查
 - 工具调用测试：使用简单的echo工具验证MCP集成
+- **更新** 日志基础设施：利用logx.Must(logx.SetUp(c.Log))初始化的日志系统
 
 **章节来源**
-- [chatcompletionlogic.go:189-206](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L189-L206)
-- [chatcompletionstreamlogic.go:77-87](file://aiapp/aichat/internal/logic/chatcompletionstreamlogic.go#L77-L87)
+- [chatcompletionlogic.go:190-206](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L190-L206)
+- [chatcompletionstreamlogic.go:123-144](file://aiapp/aichat/internal/logic/chatcompletionstreamlogic.go#L123-L144)
 
 ## 结论
 
@@ -641,7 +651,8 @@ AI聊天服务是一个设计精良的微服务架构示例，具有以下突出
 - **扩展性强**：通过Provider接口轻松集成新的AI服务
 - **配置灵活**：完全基于配置的模型、服务和MCP工具管理
 - **错误处理完善**：统一的错误转换和超时控制
-- ****更新** 智能工具集成**：通过MCP协议实现AI与外部系统的智能交互
+- **智能工具集成**：通过MCP协议实现AI与外部系统的智能交互
+- **日志基础设施**：通过logx.Must(logx.SetUp(c.Log))实现结构化日志输出
 
 **更新** 新增的技术改进：
 - **MCP工具调用**：10轮工具调用循环，支持智能工具集成
@@ -651,20 +662,21 @@ AI聊天服务是一个设计精良的微服务架构示例，具有以下突出
 - **改进的错误处理**：使用errors.As进行类型安全的错误检查
 - **优化的资源管理**：256KB scanner缓冲区，防止大块数据截断
 - **完善的配置管理**：支持自定义流式超时设置和MCP服务器配置
+- **结构化日志系统**：通过logx.SetUp实现JSON和plain格式的日志输出
 
 ### 业务价值
 - **多供应商支持**：为用户提供最佳的AI服务选择
 - **标准化接口**：简化了客户端集成复杂度
 - **性能优化**：合理的超时管理和并发控制
 - **可观测性**：完整的日志和监控支持
-- ****更新** 智能自动化**：通过MCP工具实现业务流程自动化
+- **智能自动化**：通过MCP工具实现业务流程自动化
 
 ### 发展建议
 1. **增加缓存层**：为频繁访问的模型元数据和MCP工具定义增加缓存
 2. **实现熔断器**：在上游服务不稳定时提供降级策略
 3. **增强监控**：添加更详细的性能指标和告警机制
 4. **支持更多格式**：扩展对其他AI服务格式的支持
-5. ****更新** 扩展MCP工具生态**：开发更多实用的MCP工具，如数据库查询、文件操作等**
+5. **扩展MCP工具生态**：开发更多实用的MCP工具，如数据库查询、文件操作等
 
 **更新** 建议的进一步优化：
 - **动态超时调整**：根据模型复杂度和工具调用类型动态调整超时设置
@@ -672,5 +684,6 @@ AI聊天服务是一个设计精良的微服务架构示例，具有以下突出
 - **错误预测**：基于历史数据预测和预防常见错误
 - **工具调用优化**：实现工具调用结果的智能缓存和去重
 - **性能监控增强**：添加MCP工具调用的详细性能指标
+- **日志分析增强**：利用结构化日志进行更深入的性能分析和故障诊断
 
-该服务为构建企业级AI应用提供了坚实的基础，其设计原则和实现模式值得在类似项目中借鉴和参考。新增的MCP工具调用能力使其成为了一个真正的智能代理系统，能够与外部世界进行智能交互和自动化操作。
+该服务为构建企业级AI应用提供了坚实的基础，其设计原则和实现模式值得在类似项目中借鉴和参考。新增的MCP工具调用能力和增强的日志基础设施使其成为了一个真正的智能代理系统，能够与外部世界进行智能交互和自动化操作。
