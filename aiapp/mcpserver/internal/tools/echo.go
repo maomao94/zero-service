@@ -33,7 +33,7 @@ func RegisterEcho(server *sdkmcp.Server) {
 
 		return &sdkmcp.CallToolResult{
 			Content: []sdkmcp.Content{
-				&sdkmcp.TextContent{Text: prefix + args.Message + ", username " + username},
+				&sdkmcp.TextContent{Text: prefix + args.Message + ", 用户名: " + username},
 			},
 		}, nil, nil
 	}
