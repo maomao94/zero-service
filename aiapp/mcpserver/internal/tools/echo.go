@@ -24,6 +24,7 @@ func RegisterEcho(server *sdkmcp.Server) {
 
 	echoHandler := func(ctx context.Context, req *sdkmcp.CallToolRequest, args EchoArgs) (*sdkmcp.CallToolResult, any, error) {
 		auth := ctxdata.GetAuthorization(ctx)
+		username := ctxdata.GetUserName(ctx)
 		logx.Debugf("token %s", auth)
 		prefix := "Echo: "
 		if len(args.Prefix) > 0 {
@@ -32,7 +33,7 @@ func RegisterEcho(server *sdkmcp.Server) {
 
 		return &sdkmcp.CallToolResult{
 			Content: []sdkmcp.Content{
-				&sdkmcp.TextContent{Text: prefix + args.Message},
+				&sdkmcp.TextContent{Text: prefix + args.Message + "@" + username},
 			},
 		}, nil, nil
 	}

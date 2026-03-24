@@ -20,15 +20,10 @@ func ExtractCtxFromHeader(ctx context.Context, header http.Header) context.Conte
 
 // WithCtxProp 包装 MCP tool handler，自动从请求中提取用户上下文注入 ctx。
 //
-// 支持两种认证模式：
-//   - 服务侧（ServiceToken）：用户上下文由网关通过 HTTP header 透传，
-//     从 req.Extra.Header 提取（X-User-Id, X-User-Name 等）。
-//   - 用户侧（JWT）：用户身份在 JWT claims 中（user-id, user-name 等），
-//     从 req.Extra.TokenInfo.Extra 提取，覆盖 header 中的同名字段。
-//
-// 兼容 Streamable 和 SSE 两种 transport：
-//   - Streamable：req.Extra 由 SDK 填充，直接使用。
-//   - SSE：req.Extra 为 nil，从 session context 中提取 TokenInfo 作为 fallback。
+// 支持三种认证路径（按优先级）：
+//  1. Streamable transport：req.Extra 由 SDK 填充，从 Header/TokenInfo 提取。
+//  2. SSE + mcpx.Client：用户上下文由客户端注入 _meta 字段，从 req.Params._meta 提取。
+//  3. SSE 直连 JWT：req.Extra 为 nil 且无 _meta，从连接级 TokenInfo 提取（fallback）。
 //
 // 使用方式：mcp.AddTool(server, tool, mcpx.WithCtxProp(handler))
 func WithCtxProp[In, Out any](
@@ -36,21 +31,21 @@ func WithCtxProp[In, Out any](
 ) func(context.Context, *mcp.CallToolRequest, In) (*mcp.CallToolResult, Out, error) {
 	return func(ctx context.Context, req *mcp.CallToolRequest, args In) (*mcp.CallToolResult, Out, error) {
 		if req.Extra != nil {
-			// Streamable transport: Extra 已填充，走原有路径
-			// 1. 始终从 HTTP header 提取（服务侧透传的用户上下文）
+			// Path 1: Streamable transport — SDK fills Extra with TokenInfo + Header.
 			ctx = ctxprop.ExtractFromHTTPHeader(ctx, req.Extra.Header)
-
-			// 2. 用户侧 JWT 认证：从 TokenInfo claims 提取，覆盖 header 值
 			if ti := req.Extra.TokenInfo; ti != nil {
 				if authType, _ := ti.Extra["type"].(string); authType == "user" {
 					ctx = ctxprop.ExtractFromClaims(ctx, ti.Extra)
 				}
 			}
-
 			logx.Debugf("[mcpx] WithCtxProp: userId=%s, authType=%s",
 				ctxdata.GetUserId(ctx), getAuthType(req))
+		} else if meta := req.Params.GetMeta(); len(meta) > 0 {
+			// Path 2: SSE with _meta — mcpx.Client injects user context per-message.
+			ctx = ctxprop.ExtractFromMeta(ctx, meta)
+			logx.Debugf("[mcpx] WithCtxProp(meta): userId=%s", ctxdata.GetUserId(ctx))
 		} else {
-			// SSE transport fallback: req.Extra 为 nil，从 session context 中提取 TokenInfo
+			// Path 3: SSE direct user JWT — use GET request's TokenInfo in ctx.
 			if ti := auth.TokenInfoFromContext(ctx); ti != nil {
 				if authType, _ := ti.Extra["type"].(string); authType == "user" {
 					ctx = ctxprop.ExtractFromClaims(ctx, ti.Extra)

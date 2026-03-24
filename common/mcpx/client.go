@@ -288,6 +288,11 @@ func (sc *serverConn) callTool(ctx context.Context, name string, args map[string
 
 	params := &mcp.CallToolParams{Name: name, Arguments: args}
 
+	// Inject user context into _meta for per-message auth (SSE transport).
+	if meta := ctxprop.CollectFromCtx(ctx); len(meta) > 0 {
+		params.SetMeta(meta)
+	}
+
 	result, err := session.CallTool(ctx, params)
 	if err != nil {
 		return "", fmt.Errorf("[mcpx] call %q on %s: %w", name, sc.name, err)
