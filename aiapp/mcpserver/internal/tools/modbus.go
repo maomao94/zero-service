@@ -1,0 +1,127 @@
+package tools
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+
+	"zero-service/aiapp/mcpserver/internal/svc"
+	"zero-service/app/bridgemodbus/bridgemodbus"
+
+	"github.com/zeromicro/go-zero/mcp"
+)
+
+// ReadHoldingRegistersArgs 读保持寄存器参数
+type ReadHoldingRegistersArgs struct {
+	ModbusCode string `json:"modbusCode,omitempty" jsonschema:"Modbus配置编码,空则使用默认配置"`
+	Address    uint32 `json:"address" jsonschema:"起始寄存器地址"`
+	Quantity   uint32 `json:"quantity" jsonschema:"读取数量(1-125)"`
+}
+
+// ReadCoilsArgs 读线圈参数
+type ReadCoilsArgs struct {
+	ModbusCode string `json:"modbusCode,omitempty" jsonschema:"Modbus配置编码,空则使用默认配置"`
+	Address    uint32 `json:"address" jsonschema:"起始线圈地址"`
+	Quantity   uint32 `json:"quantity" jsonschema:"读取数量(1-2000)"`
+}
+
+// RegisterModbus 注册 Modbus 读操作工具
+func RegisterModbus(server mcp.McpServer, svcCtx *svc.ServiceContext) {
+	// 读保持寄存器
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "read_holding_registers",
+		Description: "读取 Modbus 保持寄存器 (Function Code 0x03)，返回寄存器值的多种表示形式（无符号整数、有符号整数、十六进制）",
+	}, func(ctx context.Context, req *mcp.CallToolRequest, args ReadHoldingRegistersArgs) (*mcp.CallToolResult, any, error) {
+		resp, err := svcCtx.BridgeModbusCli.ReadHoldingRegisters(ctx, &bridgemodbus.ReadHoldingRegistersReq{
+			ModbusCode: args.ModbusCode,
+			Address:    args.Address,
+			Quantity:   args.Quantity,
+		})
+		if err != nil {
+			return nil, nil, err
+		}
+
+		text := formatRegistersResult(args.Address, resp.UintValues, resp.IntValues, resp.HexValues)
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{&mcp.TextContent{Text: text}},
+		}, nil, nil
+	})
+
+	// 读线圈
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "read_coils",
+		Description: "读取 Modbus 线圈状态 (Function Code 0x01)，返回每个线圈的开关状态（true=ON, false=OFF）",
+	}, func(ctx context.Context, req *mcp.CallToolRequest, args ReadCoilsArgs) (*mcp.CallToolResult, any, error) {
+		resp, err := svcCtx.BridgeModbusCli.ReadCoils(ctx, &bridgemodbus.ReadCoilsReq{
+			ModbusCode: args.ModbusCode,
+			Address:    args.Address,
+			Quantity:   args.Quantity,
+		})
+		if err != nil {
+			return nil, nil, err
+		}
+
+		text := formatCoilsResult(args.Address, resp.Values)
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{&mcp.TextContent{Text: text}},
+		}, nil, nil
+	})
+}
+
+type registerEntry struct {
+	Address   uint32 `json:"address"`
+	UintValue uint32 `json:"uint_value"`
+	IntValue  int32  `json:"int_value"`
+	HexValue  string `json:"hex_value"`
+}
+
+// formatRegistersResult 格式化寄存器读取结果为 JSON 文本
+func formatRegistersResult(startAddr uint32, uintValues []uint32, intValues []int32, hexValues []string) string {
+	entries := make([]registerEntry, len(uintValues))
+	for i := range uintValues {
+		entries[i] = registerEntry{
+			Address:   startAddr + uint32(i),
+			UintValue: uintValues[i],
+		}
+		if i < len(intValues) {
+			entries[i].IntValue = intValues[i]
+		}
+		if i < len(hexValues) {
+			entries[i].HexValue = hexValues[i]
+		}
+	}
+
+	data, err := json.MarshalIndent(entries, "", "  ")
+	if err != nil {
+		return fmt.Sprintf("格式化失败: %v", err)
+	}
+	return string(data)
+}
+
+type coilEntry struct {
+	Address uint32 `json:"address"`
+	Value   bool   `json:"value"`
+	Status  string `json:"status"`
+}
+
+// formatCoilsResult 格式化线圈读取结果
+func formatCoilsResult(startAddr uint32, values []bool) string {
+	entries := make([]coilEntry, len(values))
+	for i, v := range values {
+		status := "OFF"
+		if v {
+			status = "ON"
+		}
+		entries[i] = coilEntry{
+			Address: startAddr + uint32(i),
+			Value:   v,
+			Status:  status,
+		}
+	}
+
+	data, err := json.MarshalIndent(entries, "", "  ")
+	if err != nil {
+		return fmt.Sprintf("格式化失败: %v", err)
+	}
+	return string(data)
+}

@@ -6,3 +6,9 @@ mcp:
   messageTimeout: 30s # 工具调用的超时时间
   cors:
     - http://localhost:3000 # 可选的 CORS 配置
+
+BridgeModbusRpcConf:
+  Endpoints:
+    - 127.0.0.1:25004
+  NonBlock: true
+  Timeout: 10000

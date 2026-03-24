@@ -11,6 +11,7 @@ type ChatRequest struct {
 	Stop        []string      `json:"stop,omitempty"`
 	User        string        `json:"user,omitempty"`
 	Stream      bool          `json:"stream"`
+	Tools       []ToolDef     `json:"tools,omitempty"`
 	// ExtraBody 厂商特有扩展参数，序列化时会合并到 JSON 请求体顶层。
 	// 使用 json:"-" 标签使其不参与标准 json.Marshal，由 marshalWithExtraBody() 单独处理合并。
 	// 示例：
@@ -20,9 +21,11 @@ type ChatRequest struct {
 }
 
 type ChatMessage struct {
-	Role             string `json:"role"`
-	Content          string `json:"content"`
-	ReasoningContent string `json:"reasoning_content,omitempty"`
+	Role             string     `json:"role"`
+	Content          string     `json:"content"`
+	ReasoningContent string     `json:"reasoning_content,omitempty"`
+	ToolCalls        []ToolCall `json:"tool_calls,omitempty"`
+	ToolCallId       string     `json:"tool_call_id,omitempty"`
 }
 
 // ChatResponse 非流式完整响应
@@ -71,4 +74,28 @@ type ChatDelta struct {
 	// 流式场景中先于 Content 输出，当 ReasoningContent 停止且 Content 开始时，
 	// 表示模型已从思考阶段切换到回答阶段。
 	ReasoningContent string `json:"reasoning_content,omitempty"`
+}
+
+// ToolDef OpenAI tools 请求格式
+type ToolDef struct {
+	Type     string       `json:"type"` // "function"
+	Function ToolFunction `json:"function"`
+}
+
+type ToolFunction struct {
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	Parameters  any    `json:"parameters,omitempty"`
+}
+
+// ToolCall LLM 响应中的工具调用
+type ToolCall struct {
+	Id       string           `json:"id"`
+	Type     string           `json:"type"` // "function"
+	Function ToolCallFunction `json:"function"`
+}
+
+type ToolCallFunction struct {
+	Name      string `json:"name"`
+	Arguments string `json:"arguments"` // JSON string
 }

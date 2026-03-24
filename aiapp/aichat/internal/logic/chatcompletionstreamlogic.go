@@ -3,9 +3,11 @@ package logic
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 
 	"zero-service/aiapp/aichat/aichat"
+	"zero-service/aiapp/aichat/internal/mcpclient"
 	"zero-service/aiapp/aichat/internal/provider"
 	"zero-service/aiapp/aichat/internal/svc"
 	"zero-service/common/antsx"
@@ -37,11 +39,55 @@ func (l *ChatCompletionStreamLogic) ChatCompletionStream(in *aichat.ChatCompleti
 
 	req := toProviderRequest(in, backendModel, providerName)
 
-	l.Logger.Infof("chat completion stream, model: %s -> %s (%s)", in.Model, backendModel, providerName)
+	// 注入 MCP 工具
+	if l.svcCtx.McpClient != nil {
+		req.Tools = l.svcCtx.McpClient.ToOpenAITools()
+	}
+
+	l.Logger.Infof("chat completion stream, model: %s -> %s (%s), tools: %d", in.Model, backendModel, providerName, len(req.Tools))
 
 	// 总超时：包裹整个 stream 生命周期，超时后 HTTP body 自动关闭
 	streamCtx, streamCancel := context.WithTimeout(l.ctx, l.svcCtx.Config.StreamTimeout)
 	defer streamCancel()
+
+	// 如果有工具，先用非流式完成 tool-calling 循环
+	if len(req.Tools) > 0 {
+		for round := 0; round < l.svcCtx.Config.MaxToolRounds; round++ {
+			resp, err := p.ChatCompletion(streamCtx, req)
+			if err != nil {
+				l.Logger.Errorf("tool-calling round %d error: %v", round+1, err)
+				return toGrpcError(err)
+			}
+
+			if len(resp.Choices) == 0 || resp.Choices[0].FinishReason != "tool_calls" {
+				break // 没有更多工具调用
+			}
+
+			if l.svcCtx.McpClient == nil {
+				break
+			}
+
+			// 执行工具调用，追加消息
+			assistantMsg := resp.Choices[0].Message
+			req.Messages = append(req.Messages, assistantMsg)
+
+			for _, tc := range assistantMsg.ToolCalls {
+				l.Infof("stream tool call round %d: %s(%s)", round+1, tc.Function.Name, tc.Function.Arguments)
+				result, callErr := l.svcCtx.McpClient.CallTool(streamCtx, tc.Function.Name, mcpclient.ParseArgs(tc.Function.Arguments))
+				if callErr != nil {
+					l.Logger.Errorf("tool call %s error: %v", tc.Function.Name, callErr)
+					result = fmt.Sprintf("tool error: %v", callErr)
+				}
+				req.Messages = append(req.Messages, provider.ChatMessage{
+					Role:       "tool",
+					Content:    result,
+					ToolCallId: tc.Id,
+				})
+			}
+		}
+		// 清除 tools，最终流式调用不再触发工具
+		req.Tools = nil
+	}
 
 	reader, err := p.ChatCompletionStream(streamCtx, req)
 	if err != nil {

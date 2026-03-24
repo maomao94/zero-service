@@ -27,6 +27,13 @@ type Config struct {
 	zrpc.RpcServerConf
 	StreamTimeout     time.Duration `json:",default=10m"` // 单次流的总时长上限
 	StreamIdleTimeout time.Duration `json:",default=90s"` // chunk 间最大空闲时间
+	MaxToolRounds     int           `json:",default=10"`  // tool-calling 最大循环轮次
 	Providers         []ProviderConfig
 	Models            []ModelConfig
+	McpServers        []McpServerConfig `json:",optional"` // MCP Server 列表
+}
+
+type McpServerConfig struct {
+	Name     string `json:",optional"`
+	Endpoint string // MCP SSE endpoint, e.g. "http://localhost:13003/sse"
 }

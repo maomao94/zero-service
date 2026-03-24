@@ -4,6 +4,11 @@ Mode: dev
 Timeout: 60000
 StreamTimeout: 600s
 StreamIdleTimeout: 90s
+MaxToolRounds: 10
+
+McpServers:
+  - Name: "mcpserver"
+    Endpoint: "http://localhost:13003/sse"
 Log:
   Encoding: plain
 

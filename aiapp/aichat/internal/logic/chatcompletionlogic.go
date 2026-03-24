@@ -3,8 +3,10 @@ package logic
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"zero-service/aiapp/aichat/aichat"
+	"zero-service/aiapp/aichat/internal/mcpclient"
 	"zero-service/aiapp/aichat/internal/provider"
 	"zero-service/aiapp/aichat/internal/svc"
 
@@ -36,16 +38,50 @@ func (l *ChatCompletionLogic) ChatCompletion(in *aichat.ChatCompletionReq) (*aic
 	// 构建 provider 请求
 	req := toProviderRequest(in, backendModel, providerName)
 
-	l.Infof("chat completion, model: %s -> %s (%s)", in.Model, backendModel, providerName)
-
-	resp, err := p.ChatCompletion(l.ctx, req)
-	if err != nil {
-		l.Logger.Errorf("chat completion error: %v", err)
-		return nil, toGrpcError(err)
+	// 注入 MCP 工具
+	if l.svcCtx.McpClient != nil {
+		req.Tools = l.svcCtx.McpClient.ToOpenAITools()
 	}
 
-	// 转换为 proto 响应，model 替换回原始 ID
-	return toProtoResponse(resp, in.Model), nil
+	l.Infof("chat completion, model: %s -> %s (%s), tools: %d", in.Model, backendModel, providerName, len(req.Tools))
+
+	for round := 0; round < l.svcCtx.Config.MaxToolRounds; round++ {
+		resp, err := p.ChatCompletion(l.ctx, req)
+		if err != nil {
+			l.Logger.Errorf("chat completion error: %v", err)
+			return nil, toGrpcError(err)
+		}
+
+		// 检查是否需要工具调用
+		if len(resp.Choices) == 0 || resp.Choices[0].FinishReason != "tool_calls" {
+			return toProtoResponse(resp, in.Model), nil
+		}
+
+		// 执行工具调用
+		if l.svcCtx.McpClient == nil {
+			l.Logger.Errorf("LLM returned tool_calls but no MCP client available")
+			return toProtoResponse(resp, in.Model), nil
+		}
+
+		assistantMsg := resp.Choices[0].Message
+		req.Messages = append(req.Messages, assistantMsg)
+
+		for _, tc := range assistantMsg.ToolCalls {
+			l.Infof("tool call round %d: %s(%s)", round+1, tc.Function.Name, tc.Function.Arguments)
+			result, callErr := l.svcCtx.McpClient.CallTool(l.ctx, tc.Function.Name, mcpclient.ParseArgs(tc.Function.Arguments))
+			if callErr != nil {
+				l.Logger.Errorf("tool call %s error: %v", tc.Function.Name, callErr)
+				result = fmt.Sprintf("tool error: %v", callErr)
+			}
+			req.Messages = append(req.Messages, provider.ChatMessage{
+				Role:       "tool",
+				Content:    result,
+				ToolCallId: tc.Id,
+			})
+		}
+	}
+
+	return nil, status.Errorf(codes.ResourceExhausted, "max tool rounds (%d) exceeded", l.svcCtx.Config.MaxToolRounds)
 }
 
 // toProviderRequest 将 gRPC proto 请求转为 provider 内部请求。
