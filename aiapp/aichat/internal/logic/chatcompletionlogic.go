@@ -6,10 +6,11 @@ import (
 	"fmt"
 
 	"zero-service/aiapp/aichat/aichat"
-	"zero-service/aiapp/aichat/internal/mcpclient"
 	"zero-service/aiapp/aichat/internal/provider"
 	"zero-service/aiapp/aichat/internal/svc"
+	"zero-service/common/mcpx"
 
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/zeromicro/go-zero/core/logx"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -39,8 +40,8 @@ func (l *ChatCompletionLogic) ChatCompletion(in *aichat.ChatCompletionReq) (*aic
 	req := toProviderRequest(in, backendModel, providerName)
 
 	// 注入 MCP 工具
-	if l.svcCtx.McpClient != nil {
-		req.Tools = l.svcCtx.McpClient.ToOpenAITools()
+	if l.svcCtx.McpClient != nil && l.svcCtx.McpClient.HasTools() {
+		req.Tools = mcpToolsToOpenAI(l.svcCtx.McpClient.Tools())
 	}
 
 	l.Infof("chat completion, model: %s -> %s (%s), tools: %d", in.Model, backendModel, providerName, len(req.Tools))
@@ -68,7 +69,7 @@ func (l *ChatCompletionLogic) ChatCompletion(in *aichat.ChatCompletionReq) (*aic
 
 		for _, tc := range assistantMsg.ToolCalls {
 			l.Infof("tool call round %d: %s(%s)", round+1, tc.Function.Name, tc.Function.Arguments)
-			result, callErr := l.svcCtx.McpClient.CallTool(l.ctx, tc.Function.Name, mcpclient.ParseArgs(tc.Function.Arguments))
+			result, callErr := l.svcCtx.McpClient.CallTool(l.ctx, tc.Function.Name, mcpx.ParseArgs(tc.Function.Arguments))
 			if callErr != nil {
 				l.Logger.Errorf("tool call %s error: %v", tc.Function.Name, callErr)
 				result = fmt.Sprintf("tool error: %v", callErr)
@@ -202,4 +203,20 @@ func toGrpcError(err error) error {
 		}
 	}
 	return status.Errorf(codes.Internal, "internal error: %v", err)
+}
+
+// mcpToolsToOpenAI 将 MCP 工具转换为 OpenAI function calling 格式。
+func mcpToolsToOpenAI(tools []*mcp.Tool) []provider.ToolDef {
+	defs := make([]provider.ToolDef, len(tools))
+	for i, t := range tools {
+		defs[i] = provider.ToolDef{
+			Type: "function",
+			Function: provider.ToolFunction{
+				Name:        t.Name,
+				Description: t.Description,
+				Parameters:  t.InputSchema,
+			},
+		}
+	}
+	return defs
 }

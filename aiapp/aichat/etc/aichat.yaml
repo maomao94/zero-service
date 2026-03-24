@@ -6,9 +6,12 @@ StreamTimeout: 600s
 StreamIdleTimeout: 90s
 MaxToolRounds: 10
 
-McpServers:
-  - Name: "mcpserver"
-    Endpoint: "http://localhost:13003/sse"
+Mcpx:
+  Servers:
+    - Name: "mcpserver"
+      Endpoint: "http://localhost:13003/sse"
+  RefreshInterval: 30s
+  ConnectTimeout: 10s
 Log:
   Encoding: plain
 

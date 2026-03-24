@@ -7,10 +7,10 @@ import (
 	"io"
 
 	"zero-service/aiapp/aichat/aichat"
-	"zero-service/aiapp/aichat/internal/mcpclient"
 	"zero-service/aiapp/aichat/internal/provider"
 	"zero-service/aiapp/aichat/internal/svc"
 	"zero-service/common/antsx"
+	"zero-service/common/mcpx"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"google.golang.org/grpc/codes"
@@ -40,8 +40,8 @@ func (l *ChatCompletionStreamLogic) ChatCompletionStream(in *aichat.ChatCompleti
 	req := toProviderRequest(in, backendModel, providerName)
 
 	// 注入 MCP 工具
-	if l.svcCtx.McpClient != nil {
-		req.Tools = l.svcCtx.McpClient.ToOpenAITools()
+	if l.svcCtx.McpClient != nil && l.svcCtx.McpClient.HasTools() {
+		req.Tools = mcpToolsToOpenAI(l.svcCtx.McpClient.Tools())
 	}
 
 	l.Logger.Infof("chat completion stream, model: %s -> %s (%s), tools: %d", in.Model, backendModel, providerName, len(req.Tools))
@@ -73,7 +73,7 @@ func (l *ChatCompletionStreamLogic) ChatCompletionStream(in *aichat.ChatCompleti
 
 			for _, tc := range assistantMsg.ToolCalls {
 				l.Infof("stream tool call round %d: %s(%s)", round+1, tc.Function.Name, tc.Function.Arguments)
-				result, callErr := l.svcCtx.McpClient.CallTool(streamCtx, tc.Function.Name, mcpclient.ParseArgs(tc.Function.Arguments))
+				result, callErr := l.svcCtx.McpClient.CallTool(streamCtx, tc.Function.Name, mcpx.ParseArgs(tc.Function.Arguments))
 				if callErr != nil {
 					l.Logger.Errorf("tool call %s error: %v", tc.Function.Name, callErr)
 					result = fmt.Sprintf("tool error: %v", callErr)
