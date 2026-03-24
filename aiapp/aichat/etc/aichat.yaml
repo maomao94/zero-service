@@ -5,7 +5,6 @@ Timeout: 60000
 StreamTimeout: 600s
 StreamIdleTimeout: 90s
 MaxToolRounds: 10
-
 Mcpx:
   Servers:
     - Name: "mcpserver"
@@ -13,8 +12,13 @@ Mcpx:
       ServiceToken: "mcp-internal-service-token-2026"
   RefreshInterval: 30s
   ConnectTimeout: 10s
+
 Log:
   Encoding: plain
+  #  Mode: file
+  Path: /opt/logs/aichat
+  Level: info
+  KeepDays: 300
 
 Providers:
   - Name: "zhipu"

@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 	"zero-service/aiapp/aigtw/internal/handler"
 	"zero-service/aiapp/aigtw/internal/svc"
 
+	"zero-service/common/ctxdata"
 	"zero-service/common/gtwx"
 	_ "zero-service/common/nacosx"
 	"zero-service/common/tool"
@@ -39,6 +41,20 @@ func main() {
 	tool.PrintGoVersion()
 
 	server := rest.MustNewServer(c.RestConf, gtwx.CorsOption())
+
+	// 全局中间件：将 Authorization header 注入 context，
+	// 确保 gRPC 拦截器可通过 ctxdata.GetAuthorization(ctx) 传递原始 token。
+	server.Use(func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			auth := r.Header.Get("Authorization")
+			if auth != "" {
+				c := context.WithValue(r.Context(), ctxdata.CtxAuthorizationKey, auth)
+				next(w, r.WithContext(c))
+				return
+			}
+			next(w, r)
+		}
+	})
 
 	ctx := svc.NewServiceContext(c)
 	handler.RegisterHandlers(server, ctx)

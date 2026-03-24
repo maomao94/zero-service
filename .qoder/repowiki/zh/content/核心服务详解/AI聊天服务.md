@@ -1,3 +1,4 @@
+<docs>
 # AI聊天服务
 
 <cite>
@@ -16,19 +17,24 @@
 - [chatcompletionstreamlogic.go](file://aiapp/aichat/internal/logic/chatcompletionstreamlogic.go)
 - [listmodelslogic.go](file://aiapp/aichat/internal/logic/listmodelslogic.go)
 - [pinglogic.go](file://aiapp/aichat/internal/logic/pinglogic.go)
-- [client.go](file://aiapp/aichat/internal/mcpclient/client.go)
+- [client.go](file://common/mcpx/client.go)
+- [config.go](file://common/mcpx/config.go)
+- [logger.go](file://common/mcpx/logger.go)
+- [ctxprop.go](file://common/mcpx/ctxprop.go)
+- [ctxData.go](file://common/ctxdata/ctxData.go)
 - [gen.sh](file://aiapp/aichat/gen.sh)
 </cite>
 
 ## 更新摘要
 **所做更改**
-- 增强了日志基础设施集成，在servicecontext.go中添加了logx.Must(logx.SetUp(c.Log))初始化
-- 改进了错误处理实践，在chatcompletionlogic.go和chatcompletionstreamlogic.go中使用errors.As进行类型安全的错误检查
-- 优化了工具调用循环的错误变量命名，提高了代码可读性和调试效率
-- 新增MCP工具调用能力，包括MCP客户端集成、工具调用循环、最大工具轮次限制(默认10轮)
-- 增强OpenAI函数调用格式兼容性，支持工具定义转换和参数解析
-- 新增MCP服务器配置支持，包括SSE端点配置和工具刷新机制
-- 扩展对话补全逻辑以支持工具调用循环和错误处理
+- MCP客户端重构：原有mcpclient包已迁移至common/mcpx，实现多服务器连接管理和内存泄漏修复
+- 新增多服务器连接管理：支持同时连接多个MCP服务器，工具名称自动前缀标识
+- 配置系统重构：Mcpx.Config替代McpServers配置，支持服务器名称和端点配置
+- 内存泄漏修复：改进连接管理和工具缓存机制
+- 增强工具调用循环：支持多服务器工具路由和动态刷新
+- 上下文属性传播：支持用户身份信息在MCP工具调用中的传递
+- 优化流式处理：256KB scanner缓冲区，防止大块SSE数据截断
+- 增强日志基础设施：结构化日志输出和性能监控
 
 ## 目录
 1. [简介](#简介)
@@ -46,13 +52,16 @@
 
 AI聊天服务是一个基于GoZero框架构建的RPC服务，提供统一的大语言模型接入接口。该服务支持多种AI模型提供商（如智谱、通义千问等），通过统一的gRPC接口对外提供对话补全、流式对话补全和模型列表查询功能。
 
-**更新** 新增了MCP（Model Context Protocol）工具调用能力，使AI聊天服务能够与外部工具和系统进行智能交互。该系统支持：
-- MCP客户端集成，通过SSE连接到MCP服务器
-- 自动化的工具调用循环，支持最多10轮工具调用
-- OpenAI函数调用格式兼容，无缝集成现有工具定义
-- 动态工具列表刷新，实时同步MCP服务器的可用工具
+**更新** 新增了重构后的MCP（Model Context Protocol）工具调用能力，使AI聊天服务能够与外部工具和系统进行智能交互。新版本的MCP客户端具有以下增强特性：
+- 多服务器连接管理：支持同时连接多个MCP服务器，自动工具聚合和路由
+- 内存泄漏修复：改进的连接生命周期管理和资源清理机制
+- 配置系统重构：Mcpx.Config结构替代原有的McpServers配置
+- 增强的工具调用循环：支持多服务器工具路由和动态刷新
 - 完整的工具调用错误处理和超时控制
 - 增强的日志基础设施集成，支持结构化日志输出
+- 上下文属性传播：支持用户身份信息在MCP工具调用中的传递
+- 优化的流式处理：256KB scanner缓冲区，防止大块SSE数据截断
+- 性能监控：内置mcpx.metrics统计工具调用性能
 
 ## 项目结构
 
@@ -67,7 +76,7 @@ end
 subgraph "配置层"
 D[aichat.yaml] --> E[Provider配置]
 D --> F[Model配置]
-D --> G[MCP服务器配置]
+D --> G[Mcpx配置]
 H[config.go] --> I[类型定义]
 end
 subgraph "服务层"
@@ -86,12 +95,19 @@ X[openai.go] --> Y[OpenAI兼容实现]
 Z[types.go] --> AA[数据类型定义]
 BB[provider.go] --> CC[Provider接口]
 end
-subgraph "MCP工具层"
-DD[client.go] --> EE[MCP客户端]
-FF[servicecontext.go] --> GG[服务上下文集成]
-HH[tools/registry.go] --> II[MCP工具注册]
-JJ[tools/echo.go] --> KK[Echo工具]
-LL[tools/modbus.go] --> MM[Modbus工具]
+subgraph "重构后的MCP工具层"
+DD[common/mcpx/client.go] --> EE[多服务器MCP客户端]
+FF[common/mcpx/config.go] --> GG[配置管理]
+HH[common/mcpx/logger.go] --> II[日志系统]
+JJ[common/mcpx/ctxprop.go] --> KK[上下文属性传播]
+LL[servicecontext.go] --> MM[服务上下文集成]
+EE --> NN[serverConn管理]
+OO[工具聚合和路由] --> PP[动态刷新机制]
+QQ[内存泄漏修复] --> RR[连接生命周期管理]
+SS[上下文属性传播] --> TT[用户身份传递]
+UU[性能监控] --> VV[mcpx.metrics]
+WW[结构化日志] --> XX[slog桥接]
+YY[工具名称前缀] --> ZZ[serverName__toolName]
 end
 A --> D
 A --> J
@@ -105,21 +121,32 @@ R --> H
 V --> X
 X --> BB
 EE --> DD
-GG --> FF
-II --> HH
-KK --> JJ
-MM --> LL
+FF --> GG
+HH --> II
+JJ --> KK
+LL --> MM
+NN --> OO
+PP --> QQ
+QQ --> RR
+RR --> SS
+SS --> TT
+UU --> VV
+WW --> XX
+YY --> ZZ
 ```
 
 **图表来源**
-- [aichat.go:1-47](file://aiapp/aichat/aichat.go#L1-L47)
-- [aichat.yaml:1-44](file://aiapp/aichat/etc/aichat.yaml#L1-L44)
+- [aichat.go:1-49](file://aiapp/aichat/aichat.go#L1-L49)
+- [aichat.yaml:1-45](file://aiapp/aichat/etc/aichat.yaml#L1-L45)
 - [aichat.proto:1-115](file://aiapp/aichat/aichat.proto#L1-L115)
-- [client.go:1-165](file://aiapp/aichat/internal/mcpclient/client.go#L1-L165)
+- [client.go:1-348](file://common/mcpx/client.go#L1-L348)
+- [config.go:1-22](file://common/mcpx/config.go#L1-L22)
+- [ctxprop.go:1-59](file://common/mcpx/ctxprop.go#L1-L59)
+- [ctxData.go:1-76](file://common/ctxdata/ctxData.go#L1-L76)
 
 **章节来源**
-- [aichat.go:1-47](file://aiapp/aichat/aichat.go#L1-L47)
-- [aichat.yaml:1-44](file://aiapp/aichat/etc/aichat.yaml#L1-L44)
+- [aichat.go:1-49](file://aiapp/aichat/aichat.go#L1-L49)
+- [aichat.yaml:1-45](file://aiapp/aichat/etc/aichat.yaml#L1-L45)
 - [config.go:1-62](file://aiapp/aichat/internal/config/config.go#L1-L62)
 
 ## 核心组件
@@ -134,18 +161,25 @@ MM --> LL
 
 ### 2. 配置管理系统
 
-配置系统采用分层设计：
+**更新** 配置系统已重构，采用Mcpx.Config结构：
+
 - **Provider配置**：定义AI模型提供商的连接信息
 - **Model配置**：定义可用模型及其属性
-- **MCP服务器配置**：定义MCP服务器连接信息和工具配置
+- **Mcpx配置**：新的MCP客户端配置结构，支持多服务器连接
 - **运行时配置**：包括超时设置、日志配置、工具轮次限制等
 
-**更新** 新增MCP配置项：
-- `McpServers`: MCP服务器列表配置（已弃用，推荐使用Mcpx）
+**更新** 新增Mcpx配置项：
+- `Servers`: MCP服务器列表配置，支持服务器名称和端点
+- `RefreshInterval`: 服务器重连和KeepAlive间隔，默认30秒
+- `ConnectTimeout`: 单次连接超时，默认10秒
 - `MaxToolRounds`: 工具调用最大轮次限制，默认10轮
 - `StreamTimeout`: 单次流的总时长上限，默认10分钟
 - `StreamIdleTimeout`: chunk间最大空闲时间，默认90秒
-- `Mcpx`: 新的MCP客户端配置结构
+
+**更新** 配置兼容性：
+- 支持从旧的McpServers配置自动迁移
+- Mcpx.Config优先级高于McpServers配置
+- 自动生成服务器名称（mcp0, mcp1...）
 
 ### 3. 提供者抽象层
 
@@ -158,16 +192,17 @@ MM --> LL
 
 包含四个核心业务逻辑：
 - **对话补全逻辑**：处理单次对话请求，支持MCP工具调用循环
-- **流式对话逻辑**：处理持续对话流
+- **流式对话逻辑**：处理持续对话流，包含优化的超时管理和错误恢复
 - **模型列表逻辑**：提供可用模型信息
 - **Ping逻辑**：健康检查服务
 
 **更新** 对话补全逻辑增强：
-- 支持MCP工具调用循环，最多10轮
+- 支持重构后的MCP客户端工具调用循环
 - 自动注入MCP工具定义到请求中
 - 处理工具调用结果并继续对话流程
 - 完善的错误处理和超时控制
 - 使用`errors.As`进行类型安全的错误检查
+- 优化的流式处理，256KB scanner缓冲区防止大块数据截断
 
 **章节来源**
 - [provider.go:1-20](file://aiapp/aichat/internal/provider/provider.go#L1-L20)
@@ -192,31 +227,36 @@ end
 subgraph "服务层"
 F[AiChatServer]
 G[服务上下文]
+H[重构后的MCP客户端]
 end
 subgraph "业务逻辑层"
-H[对话补全逻辑]
-I[流式对话逻辑]
-J[模型管理逻辑]
-K[Ping健康检查]
-L[MCP工具调用循环]
+I[对话补全逻辑]
+J[流式对话逻辑]
+K[模型管理逻辑]
+L[Ping健康检查]
+M[增强的工具调用循环]
+N[上下文属性传播]
 end
 subgraph "提供者层"
-M[注册表]
-N[OpenAI兼容实现]
-O[其他提供者扩展]
-P[MCP客户端]
-end
-subgraph "工具层"
-Q[MCP服务器]
-R[Echo工具]
-S[Modbus工具]
-T[自定义工具]
+O[注册表]
+P[OpenAI兼容实现]
+Q[其他提供者扩展]
+R[多服务器连接管理]
+S[工具聚合和路由]
+T[动态刷新机制]
+U[内存泄漏修复]
+V[连接生命周期管理]
+W[性能监控]
+X[结构化日志]
 end
 subgraph "数据层"
-U[配置存储]
-V[模型元数据]
-W[工具定义缓存]
-X[MCP连接池]
+Y[配置存储]
+Z[模型元数据]
+AA[工具定义缓存]
+BB[多服务器连接池]
+CC[上下文数据]
+DD[日志基础设施]
+EE[性能指标]
 end
 A --> D
 B --> D
@@ -228,35 +268,124 @@ G --> I
 G --> J
 G --> K
 G --> L
-H --> M
-I --> M
-L --> P
+G --> M
 M --> N
-M --> O
-P --> Q
-Q --> R
-Q --> S
-Q --> T
-P --> W
-Q --> X
-N --> U
-J --> V
+I --> O
+J --> O
+M --> H
+O --> P
+O --> Q
+H --> R
+R --> S
+S --> T
+T --> U
+U --> V
+V --> W
+W --> X
+H --> BB
+R --> AA
+P --> Y
+K --> Z
+N --> CC
+X --> DD
+W --> EE
 ```
 
 **图表来源**
 - [aichatserver.go:1-45](file://aiapp/aichat/internal/server/aichatserver.go#L1-L45)
 - [servicecontext.go:1-36](file://aiapp/aichat/internal/svc/servicecontext.go#L1-L36)
 - [registry.go:1-89](file://aiapp/aichat/internal/provider/registry.go#L1-L89)
-- [client.go:1-165](file://aiapp/aichat/internal/mcpclient/client.go#L1-L165)
+- [client.go:1-348](file://common/mcpx/client.go#L1-L348)
+- [config.go:1-22](file://common/mcpx/config.go#L1-L22)
+- [ctxprop.go:1-59](file://common/mcpx/ctxprop.go#L1-L59)
+- [ctxData.go:1-76](file://common/ctxdata/ctxData.go#L1-L76)
 
 该架构的主要优势：
 - **解耦合**：各层职责明确，便于独立开发和测试
 - **可扩展**：新增AI提供者只需实现Provider接口
-- **可配置**：通过配置文件灵活管理模型、提供者和MCP工具
+- **可配置**：通过重构后的Mcpx.Config灵活管理模型、提供者和MCP工具
 - **可观测**：完整的日志记录和错误处理机制
-- **智能化**：支持MCP工具调用，实现AI与外部系统的智能交互
+- **智能化**：支持重构后的MCP工具调用，实现AI与外部系统的智能交互
+- **多服务器支持**：同时连接多个MCP服务器，提高可用性和功能丰富度
+- **上下文传播**：支持用户身份信息在工具调用中的传递和使用
+- **性能监控**：内置mcpx.metrics统计工具调用性能和成功率
+- **结构化日志**：通过slog桥接go-zero logx，支持结构化日志输出
 
 ## 详细组件分析
+
+### 重构后的MCP客户端架构
+
+**更新** MCP客户端已重构为多服务器架构：
+
+```mermaid
+classDiagram
+class Client {
++conns []*serverConn
++mu sync.RWMutex
++tools []*mcp.Tool
++toolRoutes map[string]*serverConn
++metrics *stat.Metrics
++ctx context.Context
++cancel context.CancelFunc
++NewClient(cfg Config) Client
++Tools() []*mcp.Tool
++HasTools() bool
++CallTool(ctx, name, args) string
++Close()
++rebuildTools()
+}
+class serverConn {
++name string
++endpoint string
++serviceToken string
++client *mcp.Client
++session *mcp.ClientSession
++tools []*mcp.Tool
++mu sync.RWMutex
++cfg Config
++onChange func()
++ctx context.Context
++cancel context.CancelFunc
++run()
++tryConnect() *mcp.ClientSession
++refreshTools() error
++getTools() []*mcp.Tool
++callTool(ctx, name, args) string
++close()
+}
+class Config {
++Servers []ServerConfig
++RefreshInterval time.Duration
++ConnectTimeout time.Duration
+}
+class ServerConfig {
++Name string
++Endpoint string
++ServiceToken string
+}
+class CtxProp {
++InjectCtxToMeta(ctx) map[string]any
++ExtractCtxFromMeta(ctx, meta) context.Context
++WithCtxProp(handler) handler
+}
+class CtxHeaderTransport {
++base http.RoundTripper
++serviceToken string
++RoundTrip(r) *http.Response
+}
+Client --> serverConn : manages
+Client --> mcp.Tool : aggregates
+serverConn --> mcp.Tool : manages
+Config --> ServerConfig : contains
+CtxProp --> Client : uses
+CtxProp --> CtxHeaderTransport : uses
+```
+
+**图表来源**
+- [client.go:19-176](file://common/mcpx/client.go#L19-L176)
+- [client.go:30-348](file://common/mcpx/client.go#L30-L348)
+- [config.go:11-22](file://common/mcpx/config.go#L11-L22)
+- [ctxprop.go:25-59](file://common/mcpx/ctxprop.go#L25-L59)
 
 ### 服务注册表组件
 
@@ -286,29 +415,32 @@ class ModelMapping {
 +string ProviderName
 +string BackendModel
 }
-class McpClient {
--client *mcp.Client
--session *mcp.ClientSession
--tools []*mcp.Tool
-+ToOpenAITools() []ToolDef
-+CallTool(name, args) string
-+refreshTools() error
+class McpxClient {
+-conns []*serverConn
++tools []*mcp.Tool
++toolRoutes map[string]*serverConn
++NewClient(cfg Config) McpxClient
++Tools() []*mcp.Tool
++HasTools() bool
++CallTool(ctx, name, args) string
++Close()
++rebuildTools()
 }
 Registry --> Provider : manages
 Registry --> ModelMapping : maps
 OpenAICompatible ..|> Provider : implements
-McpClient --> mcp.Tool : manages
+McpxClient --> serverConn : manages
 ```
 
 **图表来源**
 - [registry.go:15-89](file://aiapp/aichat/internal/provider/registry.go#L15-L89)
 - [provider.go:5-20](file://aiapp/aichat/internal/provider/provider.go#L5-L20)
 - [openai.go:16-28](file://aiapp/aichat/internal/provider/openai.go#L16-L28)
-- [client.go:16-22](file://aiapp/aichat/internal/mcpclient/client.go#L16-L22)
+- [client.go:19-176](file://common/mcpx/client.go#L19-L176)
 
 ### 对话补全流程
 
-**更新** 非流式对话补全现在支持MCP工具调用循环：
+**更新** 非流式对话补全现在支持重构后的MCP工具调用循环：
 
 ```mermaid
 sequenceDiagram
@@ -317,14 +449,14 @@ participant Server as AiChatServer
 participant Logic as ChatCompletionLogic
 participant Registry as Registry
 participant Provider as OpenAICompatible
-participant McpClient as MCP客户端
+participant McpxClient as 重构后的MCP客户端
 participant Upstream as 上游AI服务
 Client->>Server : ChatCompletion请求
 Server->>Logic : NewChatCompletionLogic()
 Logic->>Registry : GetProvider(modelId)
 Registry-->>Logic : Provider实例
-Logic->>McpClient : ToOpenAITools()
-McpClient-->>Logic : 工具定义数组
+Logic->>McpxClient : Tools()
+McpxClient-->>Logic : 工具定义数组带服务器前缀
 Logic->>Logic : 构建ChatRequest(含工具)
 loop 最多10轮工具调用
 Logic->>Provider : ChatCompletion()
@@ -332,9 +464,9 @@ Provider->>Upstream : HTTP请求
 Upstream-->>Provider : AI响应
 Provider-->>Logic : ChatResponse
 alt 需要工具调用
-Logic->>McpClient : CallTool()
-McpClient->>McpClient : 工具执行
-McpClient-->>Logic : 工具结果
+Logic->>McpxClient : CallTool()
+McpxClient->>McpxClient : 工具路由和执行
+McpxClient-->>Logic : 工具结果
 Logic->>Logic : 添加工具结果到消息
 else 正常回复
 Logic-->>Server : ChatCompletionRes
@@ -348,7 +480,7 @@ Server-->>Client : ResourceExhausted错误
 **图表来源**
 - [chatcompletionlogic.go:33-86](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L33-L86)
 - [openai.go:30-55](file://aiapp/aichat/internal/provider/openai.go#L30-L55)
-- [client.go:74-118](file://aiapp/aichat/internal/mcpclient/client.go#L74-L118)
+- [client.go:123-148](file://common/mcpx/client.go#L123-L148)
 
 ### 流式对话处理
 
@@ -381,6 +513,7 @@ ReturnSuccess --> End
 - 总超时：从15秒增加到10分钟
 - 空闲超时：从5秒增加到90秒
 - 支持客户端断开检测和优雅取消
+- 256KB scanner缓冲区，防止大块SSE数据截断
 
 ### 深度思考模式实现
 
@@ -397,46 +530,101 @@ ReturnSuccess --> End
 
 ## MCP工具调用系统
 
-### MCP客户端架构
+### 重构后的MCP客户端架构
 
-**更新** 新增的MCP客户端提供了完整的工具调用能力：
+**更新** 新的MCP客户端提供了完整的多服务器工具调用能力：
 
 ```mermaid
 classDiagram
-class McpClient {
+class McpxClient {
++conns []*serverConn
++mu sync.RWMutex
++tools []*mcp.Tool
++toolRoutes map[string]*serverConn
++metrics *stat.Metrics
++ctx context.Context
++cancel context.CancelFunc
++NewClient(cfg Config) McpxClient
++Tools() []*mcp.Tool
++HasTools() bool
++CallTool(ctx, name, args) string
++Close()
++rebuildTools()
+}
+class ServerConn {
++name string
++endpoint string
++serviceToken string
 +client *mcp.Client
 +session *mcp.ClientSession
 +tools []*mcp.Tool
 +mu sync.RWMutex
-+NewMcpClient(ctx, endpoint) McpClient
-+refreshTools(ctx) error
-+ToOpenAITools() []ToolDef
-+CallTool(ctx, name, args) string
-+Close() error
-+ParseArgs(argsJSON) map[string]any
++cfg Config
++onChange func()
++ctx context.Context
++cancel context.CancelFunc
++run()
++tryConnect() *mcp.ClientSession
++refreshTools() error
++getTools() []*mcp.Tool
++callTool(ctx, name, args) string
++close()
 }
-class Tool {
+class Config {
++Servers []ServerConfig
++RefreshInterval time.Duration
++ConnectTimeout time.Duration
+}
+class ServerConfig {
 +Name string
-+Description string
-+InputSchema any
++Endpoint string
++ServiceToken string
 }
-class ToolDef {
-+Type string
-+Function ToolFunction
+class CtxProp {
++InjectCtxToMeta(ctx) map[string]any
++ExtractCtxFromMeta(ctx, meta) context.Context
++WithCtxProp(handler) handler
 }
-class ToolFunction {
-+Name string
-+Description string
-+Parameters any
+class CtxHeaderTransport {
++base http.RoundTripper
++serviceToken string
++RoundTrip(r) *http.Response
 }
-McpClient --> Tool : manages
-McpClient --> ToolDef : converts
-ToolDef --> ToolFunction : contains
+McpxClient --> ServerConn : manages
+McpxClient --> mcp.Tool : aggregates
+ServerConn --> mcp.Tool : manages
+Config --> ServerConfig : contains
+CtxProp --> McpxClient : uses
+CtxProp --> CtxHeaderTransport : uses
 ```
 
 **图表来源**
-- [client.go:16-22](file://aiapp/aichat/internal/mcpclient/client.go#L16-L22)
-- [types.go](file://aiapp/aichat/internal/provider/types.go)
+- [client.go:19-176](file://common/mcpx/client.go#L19-L176)
+- [client.go:30-348](file://common/mcpx/client.go#L30-L348)
+- [config.go:11-22](file://common/mcpx/config.go#L11-L22)
+- [ctxprop.go:25-59](file://common/mcpx/ctxprop.go#L25-L59)
+
+### 多服务器连接管理
+
+**更新** 新增的多服务器连接管理机制：
+
+```mermaid
+flowchart TD
+Start([启动MCP客户端]) --> InitConfig[初始化配置]
+InitConfig --> CreateConns[创建serverConn列表]
+CreateConns --> StartWorkers[启动后台工作线程]
+StartWorkers --> MonitorLoop{监控循环}
+MonitorLoop --> TryConnect[尝试连接]
+TryConnect --> LoadTools[加载工具列表]
+LoadTools --> RebuildTools[重建工具路由]
+RebuildTools --> MonitorLoop
+TryConnect --> WaitTimer[等待重连]
+WaitTimer --> MonitorLoop
+```
+
+**图表来源**
+- [client.go:46-107](file://common/mcpx/client.go#L46-L107)
+- [client.go:184-204](file://common/mcpx/client.go#L184-L204)
 
 ### 工具调用循环机制
 
@@ -474,14 +662,49 @@ ReturnError --> End
 
 | MCP字段 | OpenAI字段 | 转换规则 |
 |---------|------------|----------|
-| `Name` | `function.name` | 直接映射 |
+| `Name` | `function.name` | 直接映射（带服务器前缀） |
 | `Description` | `function.description` | 直接映射 |
 | `InputSchema` | `function.parameters` | 直接映射 |
 | `Type` | `type` | 固定为"function" |
 
+**更新** 工具名称前缀机制：
+- 自动为每个工具名称添加服务器名称前缀
+- 格式：`serverName__toolName`
+- 支持工具名称冲突避免和服务器标识
+
+### 上下文属性传播机制
+
+**更新** 新增的上下文属性传播功能：
+
+```mermaid
+sequenceDiagram
+participant Client as 客户端
+participant McpxClient as MCP客户端
+participant Server as MCP服务器
+Client->>McpxClient : CallTool(ctx, name, args)
+McpxClient->>McpxClient : InjectCtxToMeta(ctx)
+McpxClient->>Server : CallTool(name, args, _meta)
+Server->>Server : ExtractCtxFromMeta(_meta)
+Server->>Server : WithCtxProp(handler)
+Server-->>McpxClient : 工具结果
+McpxClient-->>Client : 返回结果
+```
+
+**图表来源**
+- [ctxprop.go:25-59](file://common/mcpx/ctxprop.go#L25-L59)
+
+**更新** 支持的上下文属性：
+- 用户ID：`CtxUserIdKey`
+- 用户名：`CtxUserNameKey`
+- 部门代码：`CtxDeptCodeKey`
+- 授权信息：`CtxAuthorizationKey`
+- 跟踪ID：`CtxTraceIdKey`
+
 **章节来源**
-- [client.go:74-95](file://aiapp/aichat/internal/mcpclient/client.go#L74-L95)
+- [client.go:123-176](file://common/mcpx/client.go#L123-L176)
 - [types.go:79-102](file://aiapp/aichat/internal/provider/types.go#L79-L102)
+- [ctxprop.go:1-59](file://common/mcpx/ctxprop.go#L1-L59)
+- [ctxData.go:9-24](file://common/ctxdata/ctxData.go#L9-L24)
 
 ## 依赖关系分析
 
@@ -495,46 +718,84 @@ B[gRPC框架]
 C[HTTP客户端]
 D[MCP SDK]
 E[modelcontextprotocol/go-sdk]
+F[stat监控]
+G[timex时间]
+H[logx日志]
+I[antsx异步]
+J[ctxdata上下文]
+K[slog结构化日志]
+L[bufio扫描器]
+M[json解析器]
 end
 subgraph "内部模块"
-F[aichat.go] --> G[config]
-F --> H[svc]
-F --> I[server]
-I --> J[logic]
-J --> K[provider]
-K --> L[types]
-G --> M[config.go]
-H --> N[servicecontext.go]
-I --> O[aichatserver.go]
-J --> P[chatcompletionlogic.go]
-K --> Q[registry.go]
-K --> R[openai.go]
-K --> S[mcpclient/client.go]
+N[aichat.go] --> O[config]
+N --> P[svc]
+N --> Q[server]
+Q --> R[logic]
+R --> S[provider]
+S --> T[types]
+O --> U[config.go]
+P --> V[servicecontext.go]
+Q --> W[aichatserver.go]
+R --> X[chatcompletionlogic.go]
+S --> Y[registry.go]
+S --> Z[openai.go]
+S --> AA[mcpx/client.go]
+BB[ctxprop.go] --> AA
+CC[ctxData.go] --> BB
+DD[logger.go] --> AA
+EE[config.go] --> AA
+FF[ctxData.go] --> GG[ctxHeaderTransport]
+HH[bufio.Scanner] --> Z
+II[json.Unmarshal] --> Z
 end
-F --> A
-F --> B
-C --> R
-D --> S
-E --> S
+N --> A
+N --> B
+C --> AA
+D --> AA
+E --> AA
+F --> AA
+G --> AA
+H --> AA
+I --> X
+J --> BB
+K --> DD
+L --> HH
+M --> II
 ```
 
 **图表来源**
 - [aichat.go:3-18](file://aiapp/aichat/aichat.go#L3-L18)
 - [servicecontext.go:1-36](file://aiapp/aichat/internal/svc/servicecontext.go#L1-L36)
-- [client.go:3-14](file://aiapp/aichat/internal/mcpclient/client.go#L3-L14)
+- [client.go:3-17](file://common/mcpx/client.go#L3-L17)
+- [ctxprop.go:3-11](file://common/mcpx/ctxprop.go#L3-L11)
+- [ctxData.go:1-7](file://common/ctxdata/ctxData.go#L1-L7)
+- [openai.go:3-14](file://aiapp/aichat/internal/provider/openai.go#L3-L14)
 
 ### 关键依赖特性
 
-1. **配置驱动**：所有AI提供者、模型和MCP服务器都通过配置文件管理
+1. **配置驱动**：所有AI提供者、模型和MCP服务器都通过重构后的Mcpx.Config管理
 2. **接口抽象**：Provider接口隔离了具体的AI服务实现
 3. **类型安全**：完整的protobuf定义确保了类型安全
 4. **错误处理**：统一的错误转换和gRPC状态码映射
-5. **MCP集成**：通过MCP SDK实现与外部工具的智能交互
+5. **MCP集成**：通过重构后的MCP SDK实现与外部工具的智能交互
+6. **异步处理**：使用antsx库处理流式响应的异步接收
+7. **上下文传播**：通过ctxprop模块实现用户身份信息的跨服务传递
+8. **结构化日志**：通过slog桥接go-zero logx，支持结构化日志输出
+9. **性能监控**：内置mcpx.metrics统计工具调用性能和成功率
+10. **流式优化**：256KB scanner缓冲区，防止大块SSE数据截断
 
 **更新** 新增的MCP依赖：
 - `github.com/modelcontextprotocol/go-sdk/mcp`：MCP协议实现
+- `github.com/zeromicro/go-zero/core/stat`：性能监控
+- `github.com/zeromicro/go-zero/core/timex`：时间处理
+- `github.com/zeromicro/go-zero/core/logx`：日志系统
+- `github.com/zeromicro/go-zero/core/antsx`：异步处理
 - 支持SSE传输协议和工具发现机制
 - 自动化的工具列表刷新和缓存管理
+- 改进的连接生命周期管理
+- 上下文属性的自动注入和提取
+- 结构化日志的slog桥接
 
 **章节来源**
 - [aichat.proto:1-115](file://aiapp/aichat/aichat.proto#L1-L115)
@@ -550,8 +811,9 @@ E --> S
 |----------|--------|------|----------|
 | 总流超时 | 10分钟 | 整个流生命周期限制 | StreamTimeout |
 | 空闲超时 | 90秒 | 单个chunk间的最大等待时间 | StreamIdleTimeout |
-| 工具调用超时 | 30秒 | 单个MCP工具调用的最大时间 | McpServers.messageTimeout |
+| 工具调用超时 | 30秒 | 单个MCP工具调用的最大时间 | Mcpx.ConnectTimeout |
 | 请求超时 | 60秒 | 单次API调用超时 | RpcServerConf.Timeout |
+| 服务器重连间隔 | 30秒 | 断开后重连间隔 | Mcpx.RefreshInterval |
 
 **更新** 超时优先级判断：
 1. 客户端断开（浏览器关闭SSE→aigtw取消gRPC调用→l.ctx取消）
@@ -567,6 +829,7 @@ E --> S
 - 支持超时中断和优雅取消
 - 自动资源清理和错误传播
 - MCP工具调用使用独立的上下文和超时控制
+- **更新** 异步处理使用antsx.Promise实现非阻塞接收
 
 ### 缓存策略
 
@@ -574,12 +837,17 @@ E --> S
 - **模型映射缓存**：快速查找模型对应的提供者
 - **MCP工具缓存**：缓存工具定义以减少转换开销
 - **配置缓存**：避免重复解析配置文件
+- **连接缓存**：多服务器连接复用，减少握手开销
+- **工具结果缓存**：工具调用结果按参数缓存，避免重复执行
 
 **更新** 资源管理优化：
 - scanner缓冲区从64KB增加到256KB
 - 防止大块SSE数据截断
 - MCP工具列表的并发安全访问
 - 自动化的工具刷新机制
+- 改进的连接生命周期管理
+- **更新** 异步Promise模式减少阻塞等待
+- **更新** 性能监控：mcpx.metrics统计工具调用延迟和成功率
 
 ### 工具调用性能
 
@@ -587,6 +855,9 @@ E --> S
 - **批量工具调用**：同一轮次内并行执行多个工具调用
 - **结果缓存**：工具调用结果按参数缓存，避免重复执行
 - **连接复用**：MCP客户端连接复用，减少握手开销
+- **服务器前缀优化**：工具名称前缀避免冲突，提高路由效率
+- **上下文传播优化**：只传递必要的上下文属性，减少传输开销
+- **性能监控**：内置mcpx.metrics统计工具调用成功率和延迟
 
 ## 故障排除指南
 
@@ -602,13 +873,19 @@ E --> S
 | 上游错误 | 5xx | AI服务暂时不可用 | 重试请求或检查服务状态 |
 | 超时错误 | DEADLINE_EXCEEDED | 流式连接超时 | 检查网络连接和超时配置 |
 | 工具调用错误 | RESOURCE_EXHAUSTED | 工具调用轮次超限 | 检查MaxToolRounds配置 |
-| MCP连接错误 | UNAVAILABLE | 无法连接到MCP服务器 | 检查McpServers配置和网络连通性 |
+| MCP连接错误 | UNAVAILABLE | 无法连接到MCP服务器 | 检查Mcpx配置和网络连通性 |
+| 工具路由错误 | NOT_FOUND | 工具名称未找到 | 确认MCP服务器上已注册相应工具 |
+| 上下文传播错误 | INVALID_ARGUMENT | 上下文属性无效 | 检查ctxdata中的用户信息完整性 |
+| 结构化日志错误 | INTERNAL | 日志系统异常 | 检查logx配置和权限 |
 
 **更新** 新增的MCP相关错误：
-- MCP连接失败：检查McpServers配置和SSE端点可达性
-- 工具调用超时：调整McpServers.messageTimeout配置
+- MCP连接失败：检查Mcpx.Servers配置和SSE端点可达性
+- 工具调用超时：调整Mcpx.ConnectTimeout配置
 - 工具不存在：确认MCP服务器上已注册相应工具
 - 参数解析错误：验证工具调用参数的JSON格式
+- 服务器名称冲突：检查Mcpx.Servers中服务器名称唯一性
+- 上下文属性缺失：确认客户端请求中包含必要的用户信息
+- 性能监控异常：检查mcpx.metrics配置和权限
 
 ### 日志分析
 
@@ -618,18 +895,27 @@ E --> S
 - 错误详情：包含上游服务的原始错误信息
 - 性能指标：响应时间和资源使用情况
 - **更新** MCP工具调用日志：记录工具调用过程和结果
+- **更新** 多服务器连接日志：显示服务器连接状态和工具聚合信息
 - **更新** 结构化日志：通过logx.SetUp配置支持JSON和plain格式
+- **更新** 上下文属性日志：显示用户身份信息的传递和提取
+- **更新** 性能监控日志：显示mcpx.metrics统计的工具调用性能
 
 ### 调试技巧
 
 1. **启用开发模式**：在配置中设置`Mode: dev`以启用gRPC反射
-2. **检查配置**：验证Provider、Model和MCP服务器配置的正确性
+2. **检查配置**：验证Provider、Model和Mcpx配置的正确性
 3. **监控网络**：使用工具检查与AI服务和MCP服务器的连接状态
 4. **查看日志**：关注错误级别日志和上下文信息
 5. **更新** 调试MCP工具：使用MCP服务器的echo工具测试连接
 6. **监控工具调用**：观察工具调用循环的执行过程和性能
 7. **更新** 错误类型检查：使用errors.As进行精确的错误类型判断
 8. **更新** 日志配置：通过aichat.yaml中的Log配置调整日志格式和级别
+9. **更新** 多服务器调试：检查服务器名称前缀和工具路由
+10. **更新** 内存泄漏排查：监控连接生命周期和资源清理
+11. **更新** 上下文调试：使用logx.WithContext(ctx)记录关键上下文信息
+12. **更新** 性能监控：关注mcpx.metrics中的工具调用统计信息
+13. **更新** 结构化日志调试：验证slog桥接和logx.SetUp配置
+14. **更新** 流式处理调试：检查scanner缓冲区大小和超时设置
 
 **更新** 新增调试技巧：
 - 调整超时配置：根据实际需求调整StreamTimeout、StreamIdleTimeout和MaxToolRounds
@@ -637,6 +923,11 @@ E --> S
 - 错误类型检查：使用errors.As进行类型安全的错误检查
 - 工具调用测试：使用简单的echo工具验证MCP集成
 - **更新** 日志基础设施：利用logx.Must(logx.SetUp(c.Log))初始化的日志系统
+- **更新** 多服务器监控：检查服务器连接状态和工具聚合情况
+- **更新** 上下文传播测试：验证用户身份信息在工具调用中的正确传递
+- **更新** 性能分析：使用mcpx.metrics监控工具调用延迟和成功率
+- **更新** 结构化日志分析：验证slog桥接和日志格式配置
+- **更新** 流式处理优化：监控256KB scanner缓冲区使用情况
 
 **章节来源**
 - [chatcompletionlogic.go:190-206](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L190-L206)
@@ -644,32 +935,47 @@ E --> S
 
 ## 结论
 
-AI聊天服务是一个设计精良的微服务架构示例，具有以下突出特点：
+AI聊天服务是一个设计精良的微服务架构示例，经过MCP客户端重构后具有以下突出特点：
 
 ### 技术优势
 - **架构清晰**：分层设计确保了良好的可维护性
 - **扩展性强**：通过Provider接口轻松集成新的AI服务
-- **配置灵活**：完全基于配置的模型、服务和MCP工具管理
+- **配置灵活**：完全基于重构后的Mcpx.Config的模型、服务和MCP工具管理
 - **错误处理完善**：统一的错误转换和超时控制
-- **智能工具集成**：通过MCP协议实现AI与外部系统的智能交互
+- **智能工具集成**：通过重构后的MCP协议实现AI与外部系统的智能交互
 - **日志基础设施**：通过logx.Must(logx.SetUp(c.Log))实现结构化日志输出
+- **多服务器支持**：同时连接多个MCP服务器，提高可用性和功能丰富度
+- **内存泄漏修复**：改进的连接生命周期管理和资源清理机制
+- **上下文传播**：支持用户身份信息在MCP工具调用中的传递和使用
+- **性能监控**：内置mcpx.metrics统计工具调用性能和成功率
+- **结构化日志**：通过slog桥接go-zero logx，支持结构化日志输出
+- **流式优化**：256KB scanner缓冲区，防止大块SSE数据截断
 
 **更新** 新增的技术改进：
-- **MCP工具调用**：10轮工具调用循环，支持智能工具集成
-- **OpenAI兼容**：完整的函数调用格式支持
+- **重构后的MCP客户端**：支持多服务器连接管理和工具聚合
+- **内存泄漏修复**：改进的连接生命周期管理和资源清理
+- **配置系统重构**：Mcpx.Config替代原有的McpServers配置
+- **工具名称前缀**：避免工具名称冲突，支持多服务器工具路由
 - **动态工具管理**：自动化的工具列表刷新和缓存
 - **增强的超时控制**：10分钟总超时和90秒空闲超时，支持更复杂的流式对话场景
 - **改进的错误处理**：使用errors.As进行类型安全的错误检查
 - **优化的资源管理**：256KB scanner缓冲区，防止大块数据截断
 - **完善的配置管理**：支持自定义流式超时设置和MCP服务器配置
 - **结构化日志系统**：通过logx.SetUp实现JSON和plain格式的日志输出
+- **上下文属性传播**：支持用户身份信息在MCP工具调用中的自动传递
+- **异步处理优化**：使用antsx.Promise提升流式响应处理性能
+- **性能监控增强**：内置mcpx.metrics统计工具调用延迟和成功率
 
 ### 业务价值
 - **多供应商支持**：为用户提供最佳的AI服务选择
 - **标准化接口**：简化了客户端集成复杂度
 - **性能优化**：合理的超时管理和并发控制
 - **可观测性**：完整的日志和监控支持
-- **智能自动化**：通过MCP工具实现业务流程自动化
+- **智能自动化**：通过重构后的MCP工具实现业务流程自动化
+- **高可用性**：多服务器连接提高系统稳定性
+- **安全性**：通过上下文传播机制实现细粒度的用户身份管理
+- **可扩展性**：支持动态工具发现和路由
+- **监控能力**：内置性能指标和错误统计
 
 ### 发展建议
 1. **增加缓存层**：为频繁访问的模型元数据和MCP工具定义增加缓存
@@ -677,6 +983,14 @@ AI聊天服务是一个设计精良的微服务架构示例，具有以下突出
 3. **增强监控**：添加更详细的性能指标和告警机制
 4. **支持更多格式**：扩展对其他AI服务格式的支持
 5. **扩展MCP工具生态**：开发更多实用的MCP工具，如数据库查询、文件操作等
+6. **优化多服务器负载均衡**：实现智能的工具路由和负载分配
+7. **增强上下文管理**：支持更丰富的用户属性和权限控制
+8. **性能优化**：进一步优化异步处理和资源管理机制
+9. **日志分析增强**：利用结构化日志进行更深入的性能分析和故障诊断
+10. **多服务器智能路由**：根据工具类型和服务器负载实现智能路由
+11. **内存使用监控**：监控重构后的MCP客户端内存使用情况
+12. **上下文传播优化**：实现更高效的上下文属性传递机制
+13. **异步处理扩展**：支持更多的异步操作模式和错误恢复策略
 
 **更新** 建议的进一步优化：
 - **动态超时调整**：根据模型复杂度和工具调用类型动态调整超时设置
@@ -685,5 +999,9 @@ AI聊天服务是一个设计精良的微服务架构示例，具有以下突出
 - **工具调用优化**：实现工具调用结果的智能缓存和去重
 - **性能监控增强**：添加MCP工具调用的详细性能指标
 - **日志分析增强**：利用结构化日志进行更深入的性能分析和故障诊断
+- **多服务器智能路由**：根据工具类型和服务器负载实现智能路由
+- **内存使用监控**：监控重构后的MCP客户端内存使用情况
+- **上下文传播优化**：实现更高效的上下文属性传递机制
+- **异步处理扩展**：支持更多的异步操作模式和错误恢复策略
 
-该服务为构建企业级AI应用提供了坚实的基础，其设计原则和实现模式值得在类似项目中借鉴和参考。新增的MCP工具调用能力和增强的日志基础设施使其成为了一个真正的智能代理系统，能够与外部世界进行智能交互和自动化操作。
+该服务为构建企业级AI应用提供了坚实的基础，其设计原则和实现模式值得在类似项目中借鉴和参考。重构后的MCP工具调用能力和增强的日志基础设施使其成为了一个真正的智能代理系统，能够与外部世界进行智能交互和自动化操作。多服务器连接管理和内存泄漏修复进一步提升了系统的稳定性和可靠性。上下文属性传播功能则为构建安全的企业级应用提供了重要的基础支撑。性能监控和结构化日志系统为运维和故障排查提供了强有力的支持。

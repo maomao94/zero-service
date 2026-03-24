@@ -19,6 +19,9 @@ type AbilityConfig struct {
 
 type Config struct {
 	rest.RestConf
+	JwtAuth struct {
+		AccessSecret string
+	}
 	AiChatRpcConf zrpc.RpcClientConf
 	Abilities     []AbilityConfig `json:",optional"`
 }
