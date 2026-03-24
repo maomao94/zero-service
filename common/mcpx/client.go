@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"zero-service/common/ctxdata"
 	"zero-service/common/ctxprop"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -290,7 +292,12 @@ func (sc *serverConn) callTool(ctx context.Context, name string, args map[string
 
 	// Inject user context into _meta for per-message auth (SSE transport).
 	if meta := ctxprop.CollectFromCtx(ctx); len(meta) > 0 {
+		if meta[ctxdata.CtxAuthTypeKey] == nil {
+			meta[ctxdata.CtxAuthTypeKey] = "user"
+		}
 		params.SetMeta(meta)
+	} else {
+		params.SetMeta(map[string]any{ctxdata.CtxAuthTypeKey: "service"})
 	}
 
 	result, err := session.CallTool(ctx, params)
@@ -342,8 +349,9 @@ func (t *ctxHeaderTransport) RoundTrip(r *http.Request) (*http.Response, error) 
 	// Authorization 降级：ctx 中无用户 JWT 时使用 ServiceToken
 	if r.Header.Get("Authorization") == "" && t.serviceToken != "" {
 		r.Header.Set("Authorization", "Bearer "+t.serviceToken)
-		authType = "system"
+		authType = "service"
 	}
+	r.Header.Set("X-Auth-Type", authType)
 	logx.Debugf("[mcpx] transport: authType=%s, method=%s, path=%s, token=%s", authType, r.Method, r.URL.Path, r.Header.Get("Authorization"))
 	return t.base.RoundTrip(r)
 }

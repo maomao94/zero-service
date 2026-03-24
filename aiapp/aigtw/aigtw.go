@@ -43,17 +43,15 @@ func main() {
 
 	server := rest.MustNewServer(c.RestConf, gtwx.CorsOption())
 
-	// 全局中间件：将 Authorization header 注入 context，
+	// 全局中间件：将 Authorization header 注入 context，标记 auth-type=user，
 	// 确保 gRPC 拦截器可通过 ctxdata.GetAuthorization(ctx) 传递原始 token。
 	server.Use(func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			auth := r.Header.Get("Authorization")
-			if auth != "" {
-				c := context.WithValue(r.Context(), ctxdata.CtxAuthorizationKey, auth)
-				next(w, r.WithContext(c))
-				return
+			ctx := context.WithValue(r.Context(), ctxdata.CtxAuthTypeKey, "user")
+			if auth := r.Header.Get("Authorization"); auth != "" {
+				ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, auth)
 			}
-			next(w, r)
+			next(w, r.WithContext(ctx))
 		}
 	})
 

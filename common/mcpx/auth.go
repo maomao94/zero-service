@@ -17,7 +17,7 @@ import (
 // NewDualTokenVerifier 创建双模式 Token 验证器。
 // 优先常量时间比较 serviceToken（连接级/服务侧鉴权），
 // 失败则尝试 JWT 解析（调用级/用户侧鉴权，UserID 从 claims 提取）。
-// TokenInfo.Extra["type"] 标识认证来源："service" 或 "user"。
+// TokenInfo.Extra[ctxdata.CtxAuthTypeKey] 标识认证来源："service" 或 "user"。
 // claimMapping 支持将外部 JWT claim key 映射为内部标准 key（如 "user-id" -> "user_id"）。
 func NewDualTokenVerifier(jwtSecrets []string, serviceToken string, claimMapping map[string]string) auth.TokenVerifier {
 	return func(ctx context.Context, token string, req *http.Request) (*auth.TokenInfo, error) {
@@ -26,7 +26,7 @@ func NewDualTokenVerifier(jwtSecrets []string, serviceToken string, claimMapping
 			logx.Debugf("[mcpx-auth] service token matched")
 			return &auth.TokenInfo{
 				Expiration: time.Now().Add(24 * time.Hour),
-				Extra:      map[string]any{"type": "service"},
+				Extra:      map[string]any{ctxdata.CtxAuthTypeKey: "service"},
 			}, nil
 		}
 
@@ -41,10 +41,16 @@ func NewDualTokenVerifier(jwtSecrets []string, serviceToken string, claimMapping
 			// 应用外部 claim key 映射（如 "user_id" -> "user-id"）
 			ctxprop.ApplyClaimMapping(claims, claimMapping)
 
-			// 构建 Extra：type=user + 全量 claims（供 WithCtxProp 提取）
-			extra := map[string]any{"type": "user"}
-			for k, v := range claims {
-				extra[k] = v
+			// 构建 Extra：只收集 PropFields + exp（供 WithCtxProp 提取）
+			extra := make(map[string]any, len(ctxdata.PropFields)+2)
+			extra[ctxdata.CtxAuthTypeKey] = "user"
+			for _, f := range ctxdata.PropFields {
+				if v, ok := claims[f.CtxKey]; ok {
+					extra[f.CtxKey] = v
+				}
+			}
+			if v, ok := claims["exp"]; ok {
+				extra["exp"] = v
 			}
 
 			info := &auth.TokenInfo{
@@ -54,7 +60,7 @@ func NewDualTokenVerifier(jwtSecrets []string, serviceToken string, claimMapping
 			if exp, ok := claims["exp"].(float64); ok {
 				info.Expiration = time.Unix(int64(exp), 0)
 			}
-			logx.Debugf("[mcpx-auth] jwt verified, userId=%s, claims keys=%v", info.UserID, mapKeys(claims))
+			logx.Debugf("[mcpx-auth] jwt verified, userId=%s, extra keys=%v", info.UserID, mapKeys(extra))
 			return info, nil
 		}
 

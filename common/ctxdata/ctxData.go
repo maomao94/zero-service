@@ -8,6 +8,7 @@ const (
 	CtxDeptCodeKey      = "dept-code"
 	CtxAuthorizationKey = "authorization"
 	CtxTraceIdKey       = "trace-id"
+	CtxAuthTypeKey      = "auth-type" // TokenInfo.Extra 中的认证来源标识，值为 "service" 或 "user"
 )
 
 // gRPC metadata header key（必须小写）
@@ -17,6 +18,7 @@ const (
 	HeaderDeptCode      = "x-dept-code"
 	HeaderAuthorization = "authorization"
 	HeaderTraceId       = "x-trace-id"
+	HeaderAuthType      = "x-auth-type"
 )
 
 // PropField 定义单个上下文传递字段在三种传输层中的 key。
@@ -35,6 +37,7 @@ var PropFields = []PropField{
 	{CtxUserNameKey, HeaderUserName, "X-User-Name", false},
 	{CtxDeptCodeKey, HeaderDeptCode, "X-Dept-Code", false},
 	{CtxTraceIdKey, HeaderTraceId, "X-Trace-Id", false},
+	{CtxAuthTypeKey, HeaderAuthType, "X-Auth-Type", false},
 }
 
 func GetUserId(ctx context.Context) string {

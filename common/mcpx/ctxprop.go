@@ -34,7 +34,7 @@ func WithCtxProp[In, Out any](
 			// Path 1: Streamable transport — SDK fills Extra with TokenInfo + Header.
 			ctx = ctxprop.ExtractFromHTTPHeader(ctx, req.Extra.Header)
 			if ti := req.Extra.TokenInfo; ti != nil {
-				if authType, _ := ti.Extra["type"].(string); authType == "user" {
+				if authType, _ := ti.Extra[ctxdata.CtxAuthTypeKey].(string); authType == "user" {
 					ctx = ctxprop.ExtractFromClaims(ctx, ti.Extra)
 				}
 			}
@@ -47,7 +47,7 @@ func WithCtxProp[In, Out any](
 		} else {
 			// Path 3: SSE direct user JWT — use GET request's TokenInfo in ctx.
 			if ti := auth.TokenInfoFromContext(ctx); ti != nil {
-				if authType, _ := ti.Extra["type"].(string); authType == "user" {
+				if authType, _ := ti.Extra[ctxdata.CtxAuthTypeKey].(string); authType == "user" {
 					ctx = ctxprop.ExtractFromClaims(ctx, ti.Extra)
 				}
 				logx.Debugf("[mcpx] WithCtxProp(fallback): userId=%s, authType=%s",
@@ -71,7 +71,7 @@ func getAuthTypeFromTokenInfo(ti *auth.TokenInfo) string {
 	if ti == nil {
 		return "none"
 	}
-	if t, ok := ti.Extra["type"].(string); ok {
+	if t, ok := ti.Extra[ctxdata.CtxAuthTypeKey].(string); ok {
 		return t
 	}
 	return "unknown"

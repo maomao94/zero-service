@@ -1,24 +1,25 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net/http"
 	"path/filepath"
+
+	"zero-service/common/ctxdata"
+	"zero-service/common/gtwx"
+	_ "zero-service/common/nacosx"
+	"zero-service/common/tool"
 	"zero-service/gtw/internal/config"
 	"zero-service/gtw/internal/handler"
 	"zero-service/gtw/internal/svc"
 
+	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/rest"
 	"github.com/zeromicro/go-zero/rest/httpx"
-
-	"zero-service/common/gtwx"
-	_ "zero-service/common/nacosx"
-	"zero-service/common/tool"
-
-	"github.com/zeromicro/go-zero/core/conf"
 )
 
 var configFile = flag.String("f", "etc/gtw.yaml", "the config file")
@@ -52,6 +53,15 @@ func main() {
 	gtwx.SetGrpcErrorHandler()
 
 	server := rest.MustNewServer(c.RestConf, gtwx.CorsOption())
+
+	// 全局中间件：网关入口请求均来自浏览器，标记 auth-type=user。
+	server.Use(func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			ctx := context.WithValue(r.Context(), ctxdata.CtxAuthTypeKey, "user")
+			next(w, r.WithContext(ctx))
+		}
+	})
+
 	ctx := svc.NewServiceContext(c)
 	handler.RegisterHandlers(server, ctx)
 	serviceGroup := service.NewServiceGroup()

@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net/http"
+
 	interceptor "zero-service/common/Interceptor/rpcserver"
+	"zero-service/common/ctxdata"
 	"zero-service/common/nacosx"
 	"zero-service/common/tool"
 	"zero-service/socketapp/socketgtw/internal/config"
@@ -58,6 +61,15 @@ func main() {
 		}
 	}
 	httpServer := rest.MustNewServer(c.Http, rest.WithChain(chain.New(socketTicketMiddleware())))
+
+	// 全局中间件：网关入口请求均来自浏览器，标记 auth-type=user。
+	httpServer.Use(func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			rctx := context.WithValue(r.Context(), ctxdata.CtxAuthTypeKey, "user")
+			next(w, r.WithContext(rctx))
+		}
+	})
+
 	handler.RegisterHandlers(httpServer, ctx)
 	// register service to nacos
 	if c.NacosConfig.IsRegister {
