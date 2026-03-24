@@ -1,6 +1,10 @@
 Name: mcpserver
 Host: 0.0.0.0
 Port: 13003
+Mode: dev
+Log:
+  Encoding: plain
+  Path: /opt/logs/mcpserver
 mcp:
 #  name: my-mcp-server
   messageTimeout: 30s # 工具调用的超时时间

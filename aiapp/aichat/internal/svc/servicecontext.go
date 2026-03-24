@@ -17,6 +17,7 @@ type ServiceContext struct {
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
+	logx.Must(logx.SetUp(c.Log))
 	registry, err := provider.NewRegistry(c.Providers, c.Models)
 	if err != nil {
 		panic(err)

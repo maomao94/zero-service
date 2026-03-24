@@ -46,7 +46,7 @@ func main() {
 	// Chat 页面静态文件路由
 	server.AddRoute(rest.Route{
 		Method: http.MethodGet,
-		Path:   "/aigtw/chat",
+		Path:   "/pass/chat",
 		Handler: func(w http.ResponseWriter, r *http.Request) {
 			candidates := []string{}
 			if exe, err := os.Executable(); err == nil {

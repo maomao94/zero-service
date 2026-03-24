@@ -16,6 +16,10 @@
 - [aiapp/ssegtw/deploy.sh](file://aiapp/ssegtw/deploy.sh)
 - [aiapp/mcpserver/mcpserver.go](file://aiapp/mcpserver/mcpserver.go)
 - [aiapp/mcpserver/etc/mcpserver.yaml](file://aiapp/mcpserver/etc/mcpserver.yaml)
+- [aiapp/mcpserver/internal/tools/echo.go](file://aiapp/mcpserver/internal/tools/echo.go)
+- [aiapp/mcpserver/internal/tools/modbus.go](file://aiapp/mcpserver/internal/tools/modbus.go)
+- [aiapp/mcpserver/internal/tools/registry.go](file://aiapp/mcpserver/internal/tools/registry.go)
+- [aiapp/mcpserver/internal/svc/servicecontext.go](file://aiapp/mcpserver/internal/svc/servicecontext.go)
 - [aiapp/ssegtw/ssegtw.api](file://aiapp/ssegtw/ssegtw.api)
 - [aiapp/aichat/aichat.go](file://aiapp/aichat/aichat.go)
 - [aiapp/aichat/aichat.proto](file://aiapp/aichat/aichat.proto)
@@ -24,7 +28,11 @@
 - [aiapp/aichat/internal/logic/chatcompletionlogic.go](file://aiapp/aichat/internal/logic/chatcompletionlogic.go)
 - [aiapp/aichat/internal/logic/chatcompletionstreamlogic.go](file://aiapp/aichat/internal/logic/chatcompletionstreamlogic.go)
 - [aiapp/aichat/internal/logic/listmodelslogic.go](file://aiapp/aichat/internal/logic/listmodelslogic.go)
+- [aiapp/aichat/internal/mcpclient/client.go](file://aiapp/aichat/internal/mcpclient/client.go)
 - [aiapp/aichat/internal/provider/openai.go](file://aiapp/aichat/internal/provider/openai.go)
+- [aiapp/aichat/internal/provider/registry.go](file://aiapp/aichat/internal/provider/registry.go)
+- [aiapp/aichat/internal/provider/types.go](file://aiapp/aichat/internal/provider/types.go)
+- [aiapp/aichat/internal/svc/servicecontext.go](file://aiapp/aichat/internal/svc/servicecontext.go)
 - [aiapp/aigtw/aigtw.go](file://aiapp/aigtw/aigtw.go)
 - [aiapp/aigtw/aigtw.api](file://aiapp/aigtw/aigtw.api)
 - [aiapp/aigtw/etc/aigtw.yaml](file://aiapp/aigtw/etc/aigtw.yaml)
@@ -35,13 +43,12 @@
 
 ## 更新摘要
 **所做更改**
-- 新增AiChat服务章节，详细介绍AI聊天RPC服务的实现
-- 新增AIGTW网关章节，说明OpenAI兼容网关的设计架构
-- 新增深度思考模式支持章节，阐述thinking模式的实现原理
-- 新增新的聊天界面章节，介绍现代化的Web聊天界面
-- 更新架构总览图，反映新增的服务组件
-- 扩展API接口文档，包含新的RPC和HTTP接口
-- 更新部署和运维策略，涵盖新增服务的配置
+- 新增MCP客户端集成章节，详细介绍AI聊天服务对MCP协议的支持
+- 新增工具调用能力章节，阐述MCP工具注册与调用机制
+- 更新架构总览图，反映MCP客户端与工具调用的架构重构
+- 扩展AI聊天服务章节，包含工具调用循环和多轮对话管理
+- 更新配置管理章节，新增MCP服务器配置和工具轮次限制
+- 扩展API接口文档，包含工具调用相关的请求响应格式
 
 ## 目录
 1. [简介](#简介)
@@ -56,11 +63,11 @@
 10. [附录](#附录)
 
 ## 简介
-本技术文档聚焦Zero-Service的AI应用模块，围绕三个核心子系统展开：
+本技术文档聚焦Zero-Service的AI应用模块，围绕四个核心子系统展开：
 - SSE网关服务（ssegtw）：基于Server-Sent Events的事件流网关，支持AI对话流与通用事件流，具备心跳保活、通道隔离、完成信号注册等能力。
 - MCP服务器（mcpserver）：提供标准化的AI工具调用接口，支持工具注册与跨域配置。
-- **新增** AiChat服务：基于gRPC的AI聊天RPC服务，支持深度思考模式和多厂商模型接入。
-- **新增** AIGTW网关：OpenAI兼容的AI网关服务，提供REST接口与SSE流式响应能力。
+- **新增** MCP客户端集成：AI聊天服务通过MCP客户端实现与MCP服务器的连接，支持工具列表缓存和动态刷新。
+- **新增** 工具调用能力：AI聊天服务支持多轮工具调用循环，实现智能代理功能，提升AI应用的实用性。
 
 文档将从架构设计、数据流、处理逻辑、集成方式、部署运维、API接口、客户端示例、性能优化与最佳实践等方面进行系统性阐述，帮助开发者快速理解并稳定交付AI应用。
 
@@ -68,8 +75,8 @@
 AI应用模块位于aiapp目录下，包含四个主要子工程：
 - ssegtw：SSE网关服务，提供REST接口与SSE事件流能力，内置前端测试页面。
 - mcpserver：MCP协议服务器，提供工具注册与调用能力。
-- **新增** aichat：AI聊天RPC服务，基于gRPC提供聊天补全和模型列表功能。
-- **新增** aigtw：AI网关服务，提供OpenAI兼容的REST接口和SSE流式响应。
+- aichat：AI聊天RPC服务，基于gRPC提供聊天补全和模型列表功能，支持MCP工具集成。
+- aigtw：AI网关服务，提供OpenAI兼容的REST接口和SSE流式响应。
 
 ```mermaid
 graph TB
@@ -85,14 +92,15 @@ F["common/antsx<br/>事件发射器/等待注册"]
 G["zerorpc 客户端<br/>RPC客户端"]
 H["HTTP客户端<br/>httpc"]
 I["模型提供商<br/>OpenAI兼容"]
+J["MCP客户端<br/>MCP SDK客户端"]
+K["工具注册表<br/>工具注册与管理"]
 end
 A --> E
 A --> F
 A --> G
-B --> B1["MCP配置"]
-B --> B2["工具注册"]
+B --> K
 C --> I
-C --> H
+C --> J
 D --> C
 D --> E
 ```
@@ -101,12 +109,14 @@ D --> E
 - [aiapp/ssegtw/ssegtw.go:26-59](file://aiapp/ssegtw/ssegtw.go#L26-L59)
 - [aiapp/mcpserver/mcpserver.go:19-75](file://aiapp/mcpserver/mcpserver.go#L19-L75)
 - [aiapp/aichat/aichat.go:23-46](file://aiapp/aichat/aichat.go#L23-L46)
+- [aiapp/aichat/internal/mcpclient/client.go:24-54](file://aiapp/aichat/internal/mcpclient/client.go#L24-L54)
 - [aiapp/aigtw/aigtw.go:29-75](file://aiapp/aigtw/aigtw.go#L29-L75)
 
 **章节来源**
 - [aiapp/ssegtw/ssegtw.go:1-60](file://aiapp/ssegtw/ssegtw.go#L1-L60)
 - [aiapp/mcpserver/mcpserver.go:1-76](file://aiapp/mcpserver/mcpserver.go#L1-L76)
 - [aiapp/aichat/aichat.go:1-47](file://aiapp/aichat/aichat.go#L1-L47)
+- [aiapp/aichat/internal/mcpclient/client.go:1-136](file://aiapp/aichat/internal/mcpclient/client.go#L1-L136)
 - [aiapp/aigtw/aigtw.go:1-76](file://aiapp/aigtw/aigtw.go#L1-L76)
 
 ## 核心组件
@@ -118,18 +128,19 @@ D --> E
   - 服务上下文：事件发射器、等待注册、RPC客户端
 - MCP服务器（mcpserver）
   - MCP服务启动与配置
-  - 工具注册（示例：echo工具）
+  - 工具注册（示例：echo工具、Modbus工具）
   - 跨域配置与消息超时设置
-- **新增** AiChat服务（aichat）
-  - gRPC服务入口与反射支持
-  - 模型配置管理（多厂商支持）
-  - 深度思考模式支持
-  - OpenAI兼容的聊天补全和流式响应
-- **新增** AIGTW网关（aigtw）
-  - OpenAI兼容的REST接口
-  - SSE流式响应桥接
-  - 聊天界面静态文件服务
-  - CORS配置与错误处理
+  - Modbus设备桥接功能
+- **新增** MCP客户端集成（aichat）
+  - SSE客户端传输层连接MCP服务器
+  - 工具列表缓存与动态刷新
+  - OpenAI工具格式转换
+  - 工具调用执行与参数解析
+- **新增** 工具调用能力（aichat）
+  - 多轮工具调用循环管理
+  - 工具调用结果处理与消息追加
+  - 最大工具轮次限制配置
+  - 工具调用错误处理与降级
 
 **章节来源**
 - [aiapp/ssegtw/internal/handler/routes.go:17-50](file://aiapp/ssegtw/internal/handler/routes.go#L17-L50)
@@ -138,12 +149,13 @@ D --> E
 - [common/ssex/writer.go:14-54](file://common/ssex/writer.go#L14-L54)
 - [aiapp/ssegtw/internal/svc/servicecontext.go:23-38](file://aiapp/ssegtw/internal/svc/servicecontext.go#L23-L38)
 - [aiapp/mcpserver/mcpserver.go:28-75](file://aiapp/mcpserver/mcpserver.go#L28-L75)
-- [aiapp/aichat/aichat.go:23-46](file://aiapp/aichat/aichat.go#L23-L46)
-- [aiapp/aichat/etc/aichat.yaml:8-34](file://aiapp/aichat/etc/aichat.yaml#L8-L34)
-- [aiapp/aigtw/aigtw.go:29-75](file://aiapp/aigtw/aigtw.go#L29-L75)
+- [aiapp/mcpserver/internal/tools/echo.go:15-37](file://aiapp/mcpserver/internal/tools/echo.go#L15-L37)
+- [aiapp/mcpserver/internal/tools/modbus.go:28-69](file://aiapp/mcpserver/internal/tools/modbus.go#L28-L69)
+- [aiapp/aichat/internal/mcpclient/client.go:16-136](file://aiapp/aichat/internal/mcpclient/client.go#L16-L136)
+- [aiapp/aichat/internal/logic/chatcompletionlogic.go:48-85](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L48-L85)
 
 ## 架构总览
-AI应用模块采用分层架构设计，包含网关层、服务层和模型层：
+AI应用模块采用分层架构设计，包含网关层、服务层、模型层和工具层：
 
 ```mermaid
 graph TB
@@ -151,14 +163,14 @@ Client["客户端/浏览器"] --> Gateway["AIGTW网关"]
 Gateway --> RPC["AiChat RPC服务"]
 RPC --> Provider["模型提供商"]
 Provider --> Model["AI模型"]
+RPC --> MCPClient["MCP客户端"]
+MCPClient --> MCP["MCP服务器"]
+MCP --> Tools["工具注册表"]
+Tools --> Modbus["Modbus桥接"]
 subgraph "传统SSE服务"
 Client2["客户端"] --> SSE["SSE网关服务"]
 SSE --> Logic["事件流逻辑"]
 Logic --> Writer["SSE写入器"]
-end
-subgraph "MCP服务"
-Client3["外部工具"] --> MCP["MCP服务器"]
-MCP --> Tool["工具注册"]
 end
 classDef default fill:#fff,stroke:#333,color:#000
 ```
@@ -166,6 +178,7 @@ classDef default fill:#fff,stroke:#333,color:#000
 **图表来源**
 - [aiapp/aigtw/aigtw.go:41-75](file://aiapp/aigtw/aigtw.go#L41-L75)
 - [aiapp/aichat/aichat.go:33-39](file://aiapp/aichat/aichat.go#L33-L39)
+- [aiapp/aichat/internal/mcpclient/client.go:24-54](file://aiapp/aichat/internal/mcpclient/client.go#L24-L54)
 - [aiapp/aichat/internal/provider/openai.go:16-28](file://aiapp/aichat/internal/provider/openai.go#L16-L28)
 
 ## 详细组件分析
@@ -302,11 +315,11 @@ end
 #### 服务启动与配置
 - 加载MCP配置（主机、端口、消息超时、CORS）
 - 创建MCP服务，可选禁用统计日志
-- 注册工具（示例：echo工具），启动服务
+- 注册工具（示例：echo工具、Modbus工具），启动服务
 
 **章节来源**
 - [aiapp/mcpserver/mcpserver.go:19-75](file://aiapp/mcpserver/mcpserver.go#L19-L75)
-- [aiapp/mcpserver/etc/mcpserver.yaml:1-9](file://aiapp/mcpserver/etc/mcpserver.yaml#L1-L9)
+- [aiapp/mcpserver/etc/mcpserver.yaml:1-15](file://aiapp/mcpserver/etc/mcpserver.yaml#L1-L15)
 
 #### 工具注册流程
 - 定义工具名称、描述、输入Schema（属性与必填字段）
@@ -319,12 +332,147 @@ Start(["启动MCP服务"]) --> LoadCfg["加载MCP配置"]
 LoadCfg --> CreateServer["创建MCP服务"]
 CreateServer --> DefineTool["定义工具Schema与处理器"]
 DefineTool --> RegisterTool["注册工具"]
-RegisterTool --> StartSrv["启动服务"]
+RegisterTool --> BridgeModbus["桥接Modbus客户端"]
+BridgeModbus --> StartSrv["启动服务"]
 StartSrv --> End(["运行中"])
 ```
 
 **图表来源**
 - [aiapp/mcpserver/mcpserver.go:28-75](file://aiapp/mcpserver/mcpserver.go#L28-L75)
+- [aiapp/mcpserver/internal/tools/registry.go:9-13](file://aiapp/mcpserver/internal/tools/registry.go#L9-L13)
+
+#### 工具注册表
+- RegisterAll：统一注册所有工具（echo、Modbus）
+- 支持工具扩展和插件化管理
+
+**章节来源**
+- [aiapp/mcpserver/internal/tools/registry.go:9-13](file://aiapp/mcpserver/internal/tools/registry.go#L9-L13)
+
+#### Echo工具实现
+- 参数：message（必填）、prefix（可选）
+- 功能：回显用户提供的消息，支持自定义前缀
+
+**章节来源**
+- [aiapp/mcpserver/internal/tools/echo.go:9-37](file://aiapp/mcpserver/internal/tools/echo.go#L9-L37)
+
+#### Modbus工具实现
+- 读保持寄存器工具：支持多种数值格式输出
+- 读线圈工具：返回线圈开关状态
+- 参数校验：地址范围和数量限制
+- 结果格式化：JSON结构化输出
+
+**章节来源**
+- [aiapp/mcpserver/internal/tools/modbus.go:14-128](file://aiapp/mcpserver/internal/tools/modbus.go#L14-L128)
+
+### MCP客户端集成（aichat）
+
+#### 客户端连接与初始化
+- SSE客户端传输层：通过SSE端点连接MCP服务器
+- 工具列表缓存：初始化时获取并缓存工具列表
+- 动态刷新机制：监听工具列表变化事件
+
+```mermaid
+sequenceDiagram
+participant AC as "AiChat服务"
+participant MC as "MCP客户端"
+participant MS as "MCP服务器"
+AC->>MC : "NewMcpClient(endpoint)"
+MC->>MS : "SSE连接"
+MS-->>MC : "建立会话"
+MC->>MS : "获取工具列表"
+MS-->>MC : "返回工具定义"
+MC->>MC : "缓存工具列表"
+MC-->>AC : "连接成功"
+```
+
+**图表来源**
+- [aiapp/aichat/internal/mcpclient/client.go:24-54](file://aiapp/aichat/internal/mcpclient/client.go#L24-L54)
+
+**章节来源**
+- [aiapp/aichat/internal/mcpclient/client.go:24-54](file://aiapp/aichat/internal/mcpclient/client.go#L24-L54)
+
+#### 工具列表管理
+- refreshTools：刷新工具缓存，支持动态更新
+- 并发安全：读写锁保护工具列表访问
+- 日志记录：连接状态和工具数量统计
+
+**章节来源**
+- [aiapp/aichat/internal/mcpclient/client.go:56-72](file://aiapp/aichat/internal/mcpclient/client.go#L56-L72)
+
+#### OpenAI工具格式转换
+- ToOpenAITools：将MCP工具转换为OpenAI function calling格式
+- Schema映射：工具名称、描述、输入参数Schema
+- 兼容性：支持标准OpenAI工具调用协议
+
+**章节来源**
+- [aiapp/aichat/internal/mcpclient/client.go:74-95](file://aiapp/aichat/internal/mcpclient/client.go#L74-L95)
+
+#### 工具调用执行
+- CallTool：执行MCP工具调用，返回文本结果
+- 参数解析：ParseArgs将JSON字符串解析为map
+- 结果处理：拼接多内容块为文本
+
+**章节来源**
+- [aiapp/aichat/internal/mcpclient/client.go:97-118](file://aiapp/aichat/internal/mcpclient/client.go#L97-L118)
+
+#### 连接管理
+- Close：关闭MCP会话连接
+- 资源清理：确保连接正确释放
+
+**章节来源**
+- [aiapp/aichat/internal/mcpclient/client.go:120-126](file://aiapp/aichat/internal/mcpclient/client.go#L120-L126)
+
+### 工具调用能力（aichat）
+
+#### 多轮工具调用循环
+- 循环控制：MaxToolRounds配置限制最大轮次
+- 条件判断：检查FinishReason是否为tool_calls
+- 消息管理：将工具调用结果追加到消息历史
+
+```mermaid
+flowchart TD
+Start(["开始聊天"]) --> Req["构建请求"]
+Req --> Call["调用模型"]
+Call --> Check{"FinishReason == tool_calls?"}
+Check --> |否| Return["返回结果"]
+Check --> |是| ToolLoop["工具调用循环"]
+ToolLoop --> CallTool["调用工具"]
+CallTool --> Append["追加工具结果"]
+Append --> More{"还有工具调用?"}
+More --> |是| ToolLoop
+More --> |否| Return
+```
+
+**图表来源**
+- [aiapp/aichat/internal/logic/chatcompletionlogic.go:48-85](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L48-L85)
+
+**章节来源**
+- [aiapp/aichat/internal/logic/chatcompletionlogic.go:48-85](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L48-L85)
+
+#### 工具调用循环实现
+- 非流式调用：先完成所有工具调用，再进行最终回答
+- 流式调用：在流式响应中处理工具调用
+- 错误处理：工具调用失败时返回错误信息
+
+**章节来源**
+- [aiapp/aichat/internal/logic/chatcompletionstreamlogic.go:53-90](file://aiapp/aichat/internal/logic/chatcompletionstreamlogic.go#L53-L90)
+
+#### 最大工具轮次配置
+- MaxToolRounds：默认10轮，防止无限循环
+- 超时控制：总超时和空闲超时双重保障
+- 资源保护：避免工具调用导致的资源耗尽
+
+**章节来源**
+- [aiapp/aichat/etc/aichat.yaml:7](file://aiapp/aichat/etc/aichat.yaml#L7)
+- [aiapp/aichat/internal/config/config.go:26-34](file://aiapp/aichat/internal/config/config.go#L26-L34)
+
+#### 工具调用参数解析
+- ParseArgs：将JSON字符串参数解析为map
+- 错误恢复：解析失败时返回空map
+- 类型安全：支持任意类型的参数值
+
+**章节来源**
+- [aiapp/aichat/internal/mcpclient/client.go:128-136](file://aiapp/aichat/internal/mcpclient/client.go#L128-L136)
 
 ### AiChat服务（aichat）
 
@@ -335,7 +483,7 @@ StartSrv --> End(["运行中"])
 
 **章节来源**
 - [aiapp/aichat/aichat.go:23-46](file://aiapp/aichat/aichat.go#L23-L46)
-- [aiapp/aichat/etc/aichat.yaml:1-34](file://aiapp/aichat/etc/aichat.yaml#L1-L34)
+- [aiapp/aichat/etc/aichat.yaml:1-41](file://aiapp/aichat/etc/aichat.yaml#L1-L41)
 
 #### gRPC接口定义
 - Ping：健康检查接口
@@ -355,7 +503,7 @@ StartSrv --> End(["运行中"])
 
 **章节来源**
 - [aiapp/aichat/aichat.proto:16-37](file://aiapp/aichat/aichat.proto#L16-L37)
-- [aiapp/aichat/internal/logic/chatcompletionlogic.go:89-125](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L89-L125)
+- [aiapp/aichat/internal/logic/chatcompletionlogic.go:122-158](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L122-L158)
 
 #### 模型配置管理
 - Providers：支持多个模型提供商（Zhipu、DashScope）
@@ -363,7 +511,7 @@ StartSrv --> End(["运行中"])
 - 配置示例：GLM-4-Flash、GLM-5、Qwen3-Plus
 
 **章节来源**
-- [aiapp/aichat/etc/aichat.yaml:8-34](file://aiapp/aichat/etc/aichat.yaml#L8-L34)
+- [aiapp/aichat/etc/aichat.yaml:15-41](file://aiapp/aichat/etc/aichat.yaml#L15-L41)
 - [aiapp/aichat/internal/config/config.go:9-30](file://aiapp/aichat/internal/config/config.go#L9-L30)
 
 #### OpenAI兼容实现
@@ -384,6 +532,14 @@ StartSrv --> End(["运行中"])
 - [aiapp/aichat/internal/logic/chatcompletionlogic.go:29-48](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L29-L48)
 - [aiapp/aichat/internal/logic/chatcompletionstreamlogic.go:30-73](file://aiapp/aichat/internal/logic/chatcompletionstreamlogic.go#L30-L73)
 - [aiapp/aichat/internal/logic/listmodelslogic.go:27-43](file://aiapp/aichat/internal/logic/listmodelslogic.go#L27-L43)
+
+#### 服务上下文集成
+- ServiceContext：整合配置、注册表、MCP客户端
+- 动态MCP连接：根据配置决定是否启用MCP客户端
+- 错误降级：MCP连接失败时继续提供基础服务
+
+**章节来源**
+- [aiapp/aichat/internal/svc/servicecontext.go:13-39](file://aiapp/aichat/internal/svc/servicecontext.go#L13-L39)
 
 ### AIGTW网关（aigtw）
 
@@ -441,14 +597,15 @@ StartSrv --> End(["运行中"])
 - MCP服务器依赖
   - MCP框架：服务创建与工具注册
   - 配置：主机、端口、消息超时、CORS
-- **新增** AiChat服务依赖
-  - gRPC框架：服务注册与反射
-  - HTTP客户端：调用外部模型提供商
-  - 配置管理：提供商和模型配置
-- **新增** AIGTW网关依赖
-  - REST框架：OpenAI兼容接口
-  - SSE写入器：流式响应
-  - gRPC客户端：调用AiChat服务
+  - Modbus桥接：设备通信功能
+- **新增** MCP客户端依赖
+  - MCP SDK：SSE客户端传输层
+  - 并发控制：读写锁保护工具列表
+  - 日志系统：连接状态和错误记录
+- **新增** 工具调用依赖
+  - 事件循环：多轮工具调用管理
+  - 超时控制：总超时和空闲超时
+  - 错误处理：工具调用失败降级
 
 ```mermaid
 graph LR
@@ -459,10 +616,17 @@ SSE --> WR["SSE写入器"]
 SSE --> RPC["RPC客户端(zero-rpc)"]
 MCP["MCP服务器"] --> MCPCFG["MCP配置"]
 MCP --> TOOL["工具注册"]
+MCP --> BRIDGE["Modbus桥接"]
 AICHAT["AiChat服务"] --> GRPC["gRPC框架"]
 AICHAT --> HTTPC["HTTP客户端"]
 AICHAT --> CFG["配置管理"]
 AICHAT --> PROV["模型提供商"]
+AICHAT --> MCPCLI["MCP客户端"]
+MCPCLI --> MCPSDK["MCP SDK"]
+MCPCLI --> LOCK["读写锁"]
+AICHAT --> LOOP["事件循环"]
+AICHAT --> TIMEOUT["超时控制"]
+AICHAT --> ERR["错误处理"]
 AIGTW["AIGTW网关"] --> REST2["REST框架"]
 AIGTW --> SSEX["SSE写入器"]
 AIGTW --> GRPCCLI["gRPC客户端"]
@@ -473,12 +637,14 @@ AIGTW --> HTML["聊天界面"]
 - [aiapp/ssegtw/internal/svc/servicecontext.go:30-38](file://aiapp/ssegtw/internal/svc/servicecontext.go#L30-L38)
 - [aiapp/mcpserver/mcpserver.go:28-75](file://aiapp/mcpserver/mcpserver.go#L28-L75)
 - [aiapp/aichat/aichat.go:33-39](file://aiapp/aichat/aichat.go#L33-L39)
+- [aiapp/aichat/internal/mcpclient/client.go:12-14](file://aiapp/aichat/internal/mcpclient/client.go#L12-L14)
 - [aiapp/aigtw/aigtw.go:41-44](file://aiapp/aigtw/aigtw.go#L41-L44)
 
 **章节来源**
 - [aiapp/ssegtw/internal/svc/servicecontext.go:30-38](file://aiapp/ssegtw/internal/svc/servicecontext.go#L30-L38)
 - [aiapp/mcpserver/mcpserver.go:28-75](file://aiapp/mcpserver/mcpserver.go#L28-L75)
 - [aiapp/aichat/aichat.go:33-39](file://aiapp/aichat/aichat.go#L33-L39)
+- [aiapp/aichat/internal/mcpclient/client.go:12-14](file://aiapp/aichat/internal/mcpclient/client.go#L12-L14)
 - [aiapp/aigtw/aigtw.go:41-44](file://aiapp/aigtw/aigtw.go#L41-L44)
 
 ## 性能考量
@@ -487,8 +653,9 @@ AIGTW --> HTML["聊天界面"]
 - 完成信号注册（默认TTL 60秒）用于优雅结束事件流，防止资源泄漏
 - 事件发射器与等待注册为内存级组件，适合短时事件流；若需持久化或跨实例共享，应引入外部存储或分布式事件总线
 - RPC客户端超时与非阻塞配置需结合下游服务性能调整
-- **新增** AiChat服务的流式响应需要高效的SSE写入和客户端断开检测
-- **新增** 多厂商模型提供商的并发调用需要合理的超时和重试机制
+- **新增** MCP客户端连接池：支持多个MCP服务器配置
+- **新增** 工具调用超时控制：总超时和空闲超时双重保障
+- **新增** 工具列表缓存：减少频繁查询MCP服务器的开销
 
 ## 故障排查指南
 - SSE连接异常
@@ -502,6 +669,14 @@ AIGTW --> HTML["聊天界面"]
   - 校验工具Schema与必填字段
   - 查看工具处理器参数解析与返回值
   - 检查消息超时与跨域配置
+- **新增** MCP客户端连接问题
+  - 检查MCP服务器SSE端点可达性
+  - 验证工具列表缓存是否正确初始化
+  - 查看工具调用参数解析错误
+- **新增** 工具调用循环异常
+  - 检查MaxToolRounds配置是否合理
+  - 验证工具调用结果是否正确追加到消息历史
+  - 查看工具调用超时和错误处理
 - **新增** AiChat服务问题
   - 检查模型配置是否正确
   - 验证提供商API密钥和端点
@@ -516,15 +691,17 @@ AIGTW --> HTML["聊天界面"]
 - [aiapp/ssegtw/internal/logic/sse/chatstreamlogic.go:59-93](file://aiapp/ssegtw/internal/logic/sse/chatstreamlogic.go#L59-L93)
 - [aiapp/ssegtw/internal/logic/sse/ssestreamlogic.go:54-90](file://aiapp/ssegtw/internal/logic/sse/ssestreamlogic.go#L54-L90)
 - [aiapp/mcpserver/mcpserver.go:52-69](file://aiapp/mcpserver/mcpserver.go#L52-L69)
+- [aiapp/aichat/internal/mcpclient/client.go:46-53](file://aiapp/aichat/internal/mcpclient/client.go#L46-L53)
+- [aiapp/aichat/internal/logic/chatcompletionlogic.go:61-84](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L61-L84)
 
 ## 结论
 AI应用模块通过四个核心子系统实现了完整的AI服务能力：
 - SSE网关服务提供事件驱动的低延迟通信能力
 - MCP服务器提供标准化的工具调用接口
-- **新增** AiChat服务提供高性能的gRPC聊天服务，支持深度思考模式和多厂商模型
-- **新增** AIGTW网关提供OpenAI兼容的REST接口，集成现代化的聊天界面
+- **新增** MCP客户端集成实现AI聊天服务与MCP服务器的连接
+- **新增** 工具调用能力支持多轮对话和智能代理功能
 
-这些组件协同工作，形成了从网关到服务再到模型的完整AI应用架构，支持企业级的部署和运维需求。
+这些组件协同工作，形成了从网关到服务再到模型和工具的完整AI应用架构，支持企业级的部署和运维需求。
 
 ## 附录
 
@@ -549,6 +726,18 @@ AI应用模块通过四个核心子系统实现了完整的AI服务能力：
   - 请求体：ChatStreamRequest
   - 返回：PingReply
   - 事件：connected、token、done
+
+#### **新增** MCP客户端API
+- 工具列表获取
+  - 方法：GET
+  - 路径：/mcp/v1/tools
+  - 返回：工具定义数组
+
+- 工具调用
+  - 方法：POST
+  - 路径：/mcp/v1/tools/{name}
+  - 请求体：工具参数JSON
+  - 返回：工具执行结果
 
 #### **新增** AiChat服务API
 - 健康检查
@@ -596,17 +785,20 @@ AI应用模块通过四个核心子系统实现了完整的AI服务能力：
 - [aiapp/ssegtw/ssegtw.api:13-38](file://aiapp/ssegtw/ssegtw.api#L13-L38)
 - [aiapp/ssegtw/internal/types/types.go:6-17](file://aiapp/ssegtw/internal/types/types.go#L6-L17)
 - [aiapp/aichat/aichat.proto:105-114](file://aiapp/aichat/aichat.proto#L105-L114)
+- [aiapp/aichat/internal/mcpclient/client.go:74-95](file://aiapp/aichat/internal/mcpclient/client.go#L74-L95)
 - [aiapp/aigtw/aigtw.api:14-49](file://aiapp/aigtw/aigtw.api#L14-L49)
 
 ### 客户端集成示例
 - 使用前端Demo页面连接SSE端点，选择端点与输入参数，实时查看事件流
 - 使用fetch建立SSE连接，解析事件名与数据，实现自定义UI
-- **新增** 使用gRPC客户端调用AiChat服务，支持深度思考模式
+- **新增** 使用gRPC客户端调用AiChat服务，支持深度思考模式和工具调用
 - **新增** 通过AIGTW网关的REST接口访问AI服务，兼容OpenAI SDK
+- **新增** 配置MCP服务器端点，实现智能工具调用功能
 
 **章节来源**
 - [aiapp/ssegtw/sse_demo.html:558-635](file://aiapp/ssegtw/sse_demo.html#L558-L635)
 - [aiapp/aichat/aichat.proto:16-37](file://aiapp/aichat/aichat.proto#L16-L37)
+- [aiapp/aichat/etc/aichat.yaml:9-11](file://aiapp/aichat/etc/aichat.yaml#L9-L11)
 - [aiapp/aigtw/chat.html:1-800](file://aiapp/aigtw/chat.html#L1-L800)
 
 ### 部署与运维策略
@@ -618,14 +810,21 @@ AI应用模块通过四个核心子系统实现了完整的AI服务能力：
   - 通过docker-compose启动服务
 - **新增** 多服务协调
   - AIGTW网关依赖AiChat服务的RPC端点
+  - MCP客户端依赖MCP服务器的SSE端点
   - 配置正确的服务发现和负载均衡
   - 监控各服务的健康状态和性能指标
+- **新增** MCP服务器部署
+  - 支持Modbus设备桥接配置
+  - CORS跨域配置管理
+  - 工具注册与动态更新
 
 **章节来源**
 - [aiapp/ssegtw/Dockerfile:1-42](file://aiapp/ssegtw/Dockerfile#L1-L42)
 - [aiapp/ssegtw/deploy.sh:1-170](file://aiapp/ssegtw/deploy.sh#L1-L170)
 - [aiapp/aichat/etc/aichat.yaml:18-34](file://aiapp/aichat/etc/aichat.yaml#L18-L34)
+- [aiapp/aichat/internal/config/config.go:36-39](file://aiapp/aichat/internal/config/config.go#L36-L39)
 - [aiapp/aigtw/etc/aigtw.yaml:9-14](file://aiapp/aigtw/etc/aigtw.yaml#L9-L14)
+- [aiapp/mcpserver/etc/mcpserver.yaml:4-9](file://aiapp/mcpserver/etc/mcpserver.yaml#L4-L9)
 
 ### 最佳实践与安全考虑
 - SSE
@@ -636,6 +835,14 @@ AI应用模块通过四个核心子系统实现了完整的AI服务能力：
   - 工具Schema严格校验输入，必要时增加参数校验与限流
   - 控制消息超时，避免长时间占用连接
   - 限制跨域来源，仅开放可信域名
+- **新增** MCP客户端
+  - SSE端点配置验证，确保连接稳定性
+  - 工具列表缓存失效策略，支持动态刷新
+  - 并发访问控制，避免竞态条件
+- **新增** 工具调用
+  - 最大工具轮次限制，防止无限循环
+  - 超时控制与错误处理，提升系统稳定性
+  - 工具调用结果验证，确保数据完整性
 - **新增** AiChat服务
   - 严格验证模型配置和提供商密钥
   - 实现合理的超时和重试机制
