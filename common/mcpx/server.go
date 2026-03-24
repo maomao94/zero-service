@@ -15,8 +15,9 @@ import (
 type McpServerConf struct {
 	mcp.McpConf
 	Auth struct {
-		JwtSecrets   []string `json:",optional"`
-		ServiceToken string   `json:",optional"`
+		JwtSecrets   []string          `json:",optional"`
+		ServiceToken string            `json:",optional"`
+		ClaimMapping map[string]string `json:",optional"` // 外部 JWT claim key 映射为内部 key（如 "user-id" -> "user_id"）
 	}
 }
 
@@ -119,7 +120,7 @@ func (s *McpServer) wrapAuth(handler http.Handler) http.Handler {
 	if len(s.conf.Auth.JwtSecrets) == 0 && s.conf.Auth.ServiceToken == "" {
 		return handler
 	}
-	verifier := NewDualTokenVerifier(s.conf.Auth.JwtSecrets, s.conf.Auth.ServiceToken)
+	verifier := NewDualTokenVerifier(s.conf.Auth.JwtSecrets, s.conf.Auth.ServiceToken, s.conf.Auth.ClaimMapping)
 	return auth.RequireBearerToken(verifier, nil)(handler)
 }
 

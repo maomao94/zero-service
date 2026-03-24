@@ -18,7 +18,8 @@ import (
 // 优先常量时间比较 serviceToken（连接级/服务侧鉴权），
 // 失败则尝试 JWT 解析（调用级/用户侧鉴权，UserID 从 claims 提取）。
 // TokenInfo.Extra["type"] 标识认证来源："service" 或 "user"。
-func NewDualTokenVerifier(jwtSecrets []string, serviceToken string) auth.TokenVerifier {
+// claimMapping 支持将外部 JWT claim key 映射为内部标准 key（如 "user-id" -> "user_id"）。
+func NewDualTokenVerifier(jwtSecrets []string, serviceToken string, claimMapping map[string]string) auth.TokenVerifier {
 	return func(ctx context.Context, token string, req *http.Request) (*auth.TokenInfo, error) {
 		// 1. ServiceToken 常量时间比较
 		if serviceToken != "" && subtle.ConstantTimeCompare([]byte(token), []byte(serviceToken)) == 1 {
@@ -36,6 +37,9 @@ func NewDualTokenVerifier(jwtSecrets []string, serviceToken string) auth.TokenVe
 				logx.Debugf("[mcpx-auth] jwt parse failed: %v", err)
 				return nil, auth.ErrInvalidToken
 			}
+
+			// 应用外部 claim key 映射（如 "user_id" -> "user-id"）
+			ctxprop.ApplyClaimMapping(claims, claimMapping)
 
 			// 构建 Extra：type=user + 全量 claims（供 WithCtxProp 提取）
 			extra := map[string]any{"type": "user"}

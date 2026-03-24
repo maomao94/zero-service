@@ -16,6 +16,7 @@ import (
 	"zero-service/aiapp/aigtw/internal/svc"
 
 	"zero-service/common/ctxdata"
+	"zero-service/common/ctxprop"
 	"zero-service/common/gtwx"
 	_ "zero-service/common/nacosx"
 	"zero-service/common/tool"
@@ -55,6 +56,19 @@ func main() {
 			next(w, r)
 		}
 	})
+
+	// 全局中间件：将外部 JWT claim key 映射为内部标准 key。
+	// server.Use 中间件在 go-zero JWT 中间件之后执行（见 rest/engine.go bindRoute），
+	// 此时 JWT claims 已注入 context，可安全读取外部 key 并写入内部 key。
+	if len(c.JwtAuth.ClaimMapping) > 0 {
+		claimMapping := c.JwtAuth.ClaimMapping
+		server.Use(func(next http.HandlerFunc) http.HandlerFunc {
+			return func(w http.ResponseWriter, r *http.Request) {
+				ctx := ctxprop.ApplyClaimMappingToCtx(r.Context(), claimMapping)
+				next(w, r.WithContext(ctx))
+			}
+		})
+	}
 
 	ctx := svc.NewServiceContext(c)
 	handler.RegisterHandlers(server, ctx)

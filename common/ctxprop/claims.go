@@ -22,6 +22,31 @@ func ExtractFromClaims(ctx context.Context, claims map[string]any) context.Conte
 	return ctx
 }
 
+// ApplyClaimMapping 将外部 JWT claim key 映射为内部标准 key。
+// mapping 格式：internalKey -> externalKey（如 "user-id" -> "user_id"）。
+// 映射结果直接写入 claims map（覆盖已有值），原始 key 保留。
+func ApplyClaimMapping(claims map[string]any, mapping map[string]string) {
+	for internalKey, externalKey := range mapping {
+		if v, ok := claims[externalKey]; ok {
+			claims[internalKey] = v
+		}
+	}
+}
+
+// ApplyClaimMappingToCtx 从 context 中读取外部 claim key 的值，
+// 以内部标准 key 重新写入 context。
+// 适用于 go-zero WithJwt 场景：JWT claims 已由框架注入 context.Value，
+// 此函数将外部 key 的值复制到内部 key，使下游 ctxdata.GetUserId 等可正常工作。
+// mapping 格式：internalKey -> externalKey（如 "user-id" -> "user_id"）。
+func ApplyClaimMappingToCtx(ctx context.Context, mapping map[string]string) context.Context {
+	for internalKey, externalKey := range mapping {
+		if v := ctx.Value(externalKey); v != nil {
+			ctx = context.WithValue(ctx, internalKey, v)
+		}
+	}
+	return ctx
+}
+
 // ClaimString 从 claims map 中提取指定 key 的字符串值。
 // 自动处理 JWT 常见类型：string 直接返回，float64（JSON number）转为整数字符串。
 func ClaimString(claims map[string]any, key string) string {
