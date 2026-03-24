@@ -22,7 +22,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	}
 
 	var mc *mcpx.Client
-	mcpCfg := c.GetMcpxConfig()
+	mcpCfg := c.Mcpx
 	if len(mcpCfg.Servers) > 0 {
 		mc = mcpx.NewClient(mcpCfg)
 	}

@@ -23,18 +23,16 @@
 - [ctxprop.go](file://common/mcpx/ctxprop.go)
 - [ctxData.go](file://common/ctxdata/ctxData.go)
 - [gen.sh](file://aiapp/aichat/gen.sh)
+- [mcpserver.yaml](file://aiapp/mcpserver/etc/mcpserver.yaml)
+- [server.go](file://common/mcpx/server.go)
 </cite>
 
 ## 更新摘要
 **所做更改**
-- MCP客户端重构：原有mcpclient包已迁移至common/mcpx，实现多服务器连接管理和内存泄漏修复
-- 新增多服务器连接管理：支持同时连接多个MCP服务器，工具名称自动前缀标识
-- 配置系统重构：Mcpx.Config替代McpServers配置，支持服务器名称和端点配置
-- 内存泄漏修复：改进连接管理和工具缓存机制
-- 增强工具调用循环：支持多服务器工具路由和动态刷新
-- 上下文属性传播：支持用户身份信息在MCP工具调用中的传递
-- 优化流式处理：256KB scanner缓冲区，防止大块SSE数据截断
-- 增强日志基础设施：结构化日志输出和性能监控
+- 配置系统更新：新增UseStreamable字段，默认false，支持MCP传输协议切换
+- MCP服务器端点变更：从/message更新为/sse，适配SSE传输协议
+- 传输协议支持：同时支持SSE（/sse）和Streamable HTTP（/message）两种协议
+- 默认协议选择：保持向后兼容，默认使用SSE协议（UseStreamable=false）
 
 ## 目录
 1. [简介](#简介)
@@ -55,13 +53,14 @@ AI聊天服务是一个基于GoZero框架构建的RPC服务，提供统一的大
 **更新** 新增了重构后的MCP（Model Context Protocol）工具调用能力，使AI聊天服务能够与外部工具和系统进行智能交互。新版本的MCP客户端具有以下增强特性：
 - 多服务器连接管理：支持同时连接多个MCP服务器，自动工具聚合和路由
 - 内存泄漏修复：改进的连接生命周期管理和资源清理机制
-- 配置系统重构：Mcpx.Config结构替代原有的McpServers配置
+- 配置系统重构：Mcpx.Config替代McpServers配置，支持服务器名称和端点配置
 - 增强的工具调用循环：支持多服务器工具路由和动态刷新
 - 完整的工具调用错误处理和超时控制
 - 增强的日志基础设施集成，支持结构化日志输出
 - 上下文属性传播：支持用户身份信息在MCP工具调用中的传递
 - 优化的流式处理：256KB scanner缓冲区，防止大块SSE数据截断
-- 性能监控：内置mcpx.metrics统计工具调用性能
+- 增强的日志基础设施：结构化日志输出和性能监控
+- **新增** 传输协议支持：同时支持SSE和Streamable HTTP两种MCP传输协议
 
 ## 项目结构
 
@@ -108,6 +107,8 @@ SS[上下文属性传播] --> TT[用户身份传递]
 UU[性能监控] --> VV[mcpx.metrics]
 WW[结构化日志] --> XX[slog桥接]
 YY[工具名称前缀] --> ZZ[serverName__toolName]
+AAA[传输协议支持] --> BBB[SSE/Streamable切换]
+CCC[端点配置] --> DDD[/sse vs /message]
 end
 A --> D
 A --> J
@@ -133,20 +134,24 @@ SS --> TT
 UU --> VV
 WW --> XX
 YY --> ZZ
+AAA --> CCC
+CCC --> DDD
 ```
 
 **图表来源**
 - [aichat.go:1-49](file://aiapp/aichat/aichat.go#L1-L49)
-- [aichat.yaml:1-45](file://aiapp/aichat/etc/aichat.yaml#L1-L45)
+- [aichat.yaml:1-49](file://aiapp/aichat/etc/aichat.yaml#L1-L49)
 - [aichat.proto:1-115](file://aiapp/aichat/aichat.proto#L1-L115)
 - [client.go:1-348](file://common/mcpx/client.go#L1-L348)
 - [config.go:1-22](file://common/mcpx/config.go#L1-L22)
 - [ctxprop.go:1-59](file://common/mcpx/ctxprop.go#L1-L59)
 - [ctxData.go:1-76](file://common/ctxdata/ctxData.go#L1-L76)
+- [mcpserver.yaml:1-24](file://aiapp/mcpserver/etc/mcpserver.yaml#L1-L24)
+- [server.go:1-141](file://common/mcpx/server.go#L1-L141)
 
 **章节来源**
 - [aichat.go:1-49](file://aiapp/aichat/aichat.go#L1-L49)
-- [aichat.yaml:1-45](file://aiapp/aichat/etc/aichat.yaml#L1-L45)
+- [aichat.yaml:1-49](file://aiapp/aichat/etc/aichat.yaml#L1-L49)
 - [config.go:1-62](file://aiapp/aichat/internal/config/config.go#L1-L62)
 
 ## 核心组件
@@ -175,11 +180,13 @@ YY --> ZZ
 - `MaxToolRounds`: 工具调用最大轮次限制，默认10轮
 - `StreamTimeout`: 单次流的总时长上限，默认10分钟
 - `StreamIdleTimeout`: chunk间最大空闲时间，默认90秒
+- **新增** `UseStreamable`: MCP传输协议选择，默认false（使用SSE）
 
 **更新** 配置兼容性：
 - 支持从旧的McpServers配置自动迁移
 - Mcpx.Config优先级高于McpServers配置
 - 自动生成服务器名称（mcp0, mcp1...）
+- **新增** 默认UseStreamable=false，保持向后兼容
 
 ### 3. 提供者抽象层
 
@@ -310,6 +317,7 @@ W --> EE
 - **上下文传播**：支持用户身份信息在工具调用中的传递和使用
 - **性能监控**：内置mcpx.metrics统计工具调用性能和成功率
 - **结构化日志**：通过slog桥接go-zero logx，支持结构化日志输出
+- **传输协议支持**：同时支持SSE和Streamable HTTP两种MCP传输协议
 
 ## 详细组件分析
 
@@ -338,6 +346,7 @@ class serverConn {
 +name string
 +endpoint string
 +serviceToken string
++useStreamable bool
 +client *mcp.Client
 +session *mcp.ClientSession
 +tools []*mcp.Tool
@@ -362,6 +371,7 @@ class ServerConfig {
 +Name string
 +Endpoint string
 +ServiceToken string
++UseStreamable bool
 }
 class CtxProp {
 +InjectCtxToMeta(ctx) map[string]any
@@ -386,6 +396,38 @@ CtxProp --> CtxHeaderTransport : uses
 - [client.go:30-348](file://common/mcpx/client.go#L30-L348)
 - [config.go:11-22](file://common/mcpx/config.go#L11-L22)
 - [ctxprop.go:25-59](file://common/mcpx/ctxprop.go#L25-L59)
+
+### 传输协议支持架构
+
+**更新** 新增的传输协议支持机制：
+
+```mermaid
+classDiagram
+class TransportSelector {
++useStreamable bool
++selectTransport(endpoint) Transport
++SSEClientTransport
++StreamableClientTransport
+}
+class SSEClientTransport {
++Endpoint string
++HTTPClient *http.Client
++Connect() *mcp.ClientSession
++CallTool() *mcp.ToolResult
+}
+class StreamableClientTransport {
++Endpoint string
++HTTPClient *http.Client
++Connect() *mcp.ClientSession
++CallTool() *mcp.ToolResult
+}
+TransportSelector --> SSEClientTransport : when UseStreamable=false
+TransportSelector --> StreamableClientTransport : when UseStreamable=true
+```
+
+**图表来源**
+- [client.go:208-222](file://common/mcpx/client.go#L208-L222)
+- [config.go:11-16](file://common/mcpx/config.go#L11-L16)
 
 ### 服务注册表组件
 
@@ -555,6 +597,7 @@ class ServerConn {
 +name string
 +endpoint string
 +serviceToken string
++useStreamable bool
 +client *mcp.Client
 +session *mcp.ClientSession
 +tools []*mcp.Tool
@@ -579,6 +622,7 @@ class ServerConfig {
 +Name string
 +Endpoint string
 +ServiceToken string
++UseStreamable bool
 }
 class CtxProp {
 +InjectCtxToMeta(ctx) map[string]any
@@ -603,6 +647,29 @@ CtxProp --> CtxHeaderTransport : uses
 - [client.go:30-348](file://common/mcpx/client.go#L30-L348)
 - [config.go:11-22](file://common/mcpx/config.go#L11-L22)
 - [ctxprop.go:25-59](file://common/mcpx/ctxprop.go#L25-L59)
+
+### 传输协议选择机制
+
+**更新** 新增的传输协议选择机制：
+
+```mermaid
+flowchart TD
+Start([MCP连接建立]) --> CheckUseStreamable{检查UseStreamable标志}
+CheckUseStreamable --> |true| UseStreamable[使用Streamable HTTP协议]
+CheckUseStreamable --> |false| UseSSE[使用SSE协议]
+UseStreamable --> SetupStreamable[配置Streamable HTTP传输]
+SetupStreamable --> ConnectStreamable[连接Streamable端点<br/>/message]
+UseSSE --> SetupSSE[配置SSE传输]
+SetupSSE --> ConnectSSE[连接SSE端点<br/>/sse]
+ConnectStreamable --> Success[连接成功]
+ConnectSSE --> Success
+Success --> End([传输建立])
+```
+
+**图表来源**
+- [client.go:208-222](file://common/mcpx/client.go#L208-L222)
+- [server.go:64-68](file://common/mcpx/server.go#L64-L68)
+- [server.go:92-110](file://common/mcpx/server.go#L92-L110)
 
 ### 多服务器连接管理
 
@@ -748,6 +815,9 @@ EE[config.go] --> AA
 FF[ctxData.go] --> GG[ctxHeaderTransport]
 HH[bufio.Scanner] --> Z
 II[json.Unmarshal] --> Z
+JJ[传输协议支持] --> KK[UseStreamable配置]
+LL[SSE端点配置] --> MM[/sse端点]
+NN[Streamable端点配置] --> OO[/message端点]
 end
 N --> A
 N --> B
@@ -762,6 +832,9 @@ J --> BB
 K --> DD
 L --> HH
 M --> II
+JJ --> KK
+KK --> LL
+KK --> OO
 ```
 
 **图表来源**
@@ -771,6 +844,8 @@ M --> II
 - [ctxprop.go:3-11](file://common/mcpx/ctxprop.go#L3-L11)
 - [ctxData.go:1-7](file://common/ctxdata/ctxData.go#L1-L7)
 - [openai.go:3-14](file://aiapp/aichat/internal/provider/openai.go#L3-L14)
+- [config.go:11-16](file://common/mcpx/config.go#L11-L16)
+- [server.go:92-110](file://common/mcpx/server.go#L92-L110)
 
 ### 关键依赖特性
 
@@ -784,6 +859,8 @@ M --> II
 8. **结构化日志**：通过slog桥接go-zero logx，支持结构化日志输出
 9. **性能监控**：内置mcpx.metrics统计工具调用性能和成功率
 10. **流式优化**：256KB scanner缓冲区，防止大块SSE数据截断
+11. **传输协议支持**：同时支持SSE和Streamable HTTP两种MCP传输协议
+12. **端点配置**：MCP服务器端点从/message更新为/sse，保持向后兼容
 
 **更新** 新增的MCP依赖：
 - `github.com/modelcontextprotocol/go-sdk/mcp`：MCP协议实现
@@ -792,10 +869,12 @@ M --> II
 - `github.com/zeromicro/go-zero/core/logx`：日志系统
 - `github.com/zeromicro/go-zero/core/antsx`：异步处理
 - 支持SSE传输协议和工具发现机制
+- 支持Streamable HTTP传输协议和工具发现机制
 - 自动化的工具列表刷新和缓存管理
 - 改进的连接生命周期管理
 - 上下文属性的自动注入和提取
 - 结构化日志的slog桥接
+- **新增** 传输协议选择机制，支持UseStreamable配置
 
 **章节来源**
 - [aichat.proto:1-115](file://aiapp/aichat/aichat.proto#L1-L115)
@@ -839,6 +918,7 @@ M --> II
 - **配置缓存**：避免重复解析配置文件
 - **连接缓存**：多服务器连接复用，减少握手开销
 - **工具结果缓存**：工具调用结果按参数缓存，避免重复执行
+- **传输协议缓存**：根据UseStreamable标志缓存传输协议类型
 
 **更新** 资源管理优化：
 - scanner缓冲区从64KB增加到256KB
@@ -848,6 +928,7 @@ M --> II
 - 改进的连接生命周期管理
 - **更新** 异步Promise模式减少阻塞等待
 - **更新** 性能监控：mcpx.metrics统计工具调用延迟和成功率
+- **新增** 传输协议选择优化：根据UseStreamable标志快速选择协议
 
 ### 工具调用性能
 
@@ -858,6 +939,7 @@ M --> II
 - **服务器前缀优化**：工具名称前缀避免冲突，提高路由效率
 - **上下文传播优化**：只传递必要的上下文属性，减少传输开销
 - **性能监控**：内置mcpx.metrics统计工具调用成功率和延迟
+- **传输协议优化**：根据UseStreamable标志选择最适合的传输协议
 
 ## 故障排除指南
 
@@ -877,6 +959,8 @@ M --> II
 | 工具路由错误 | NOT_FOUND | 工具名称未找到 | 确认MCP服务器上已注册相应工具 |
 | 上下文传播错误 | INVALID_ARGUMENT | 上下文属性无效 | 检查ctxdata中的用户信息完整性 |
 | 结构化日志错误 | INTERNAL | 日志系统异常 | 检查logx配置和权限 |
+| **新增** 传输协议错误 | **UNAVAILABLE** | **MCP传输协议不匹配** | **检查UseStreamable配置和服务器端点** |
+| **新增** 端点配置错误 | **NOT_FOUND** | **MCP端点不存在** | **确认服务器端点为/sse或/message** |
 
 **更新** 新增的MCP相关错误：
 - MCP连接失败：检查Mcpx.Servers配置和SSE端点可达性
@@ -884,8 +968,10 @@ M --> II
 - 工具不存在：确认MCP服务器上已注册相应工具
 - 参数解析错误：验证工具调用参数的JSON格式
 - 服务器名称冲突：检查Mcpx.Servers中服务器名称唯一性
-- 上下文属性缺失：确认客户端请求中包含必要的用户信息
+- 上下文属性缺失：检查客户端请求中包含必要的用户信息
 - 性能监控异常：检查mcpx.metrics配置和权限
+- **新增** 传输协议不匹配：确认客户端UseStreamable与服务器端点配置一致
+- **新增** 端点不存在：检查MCP服务器端点配置，确保使用正确的端点路径
 
 ### 日志分析
 
@@ -899,6 +985,8 @@ M --> II
 - **更新** 结构化日志：通过logx.SetUp配置支持JSON和plain格式
 - **更新** 上下文属性日志：显示用户身份信息的传递和提取
 - **更新** 性能监控日志：显示mcpx.metrics统计的工具调用性能
+- **新增** 传输协议日志：显示使用的MCP传输协议类型
+- **新增** 端点配置日志：显示MCP服务器端点配置信息
 
 ### 调试技巧
 
@@ -916,6 +1004,8 @@ M --> II
 12. **更新** 性能监控：关注mcpx.metrics中的工具调用统计信息
 13. **更新** 结构化日志调试：验证slog桥接和logx.SetUp配置
 14. **更新** 流式处理调试：检查scanner缓冲区大小和超时设置
+15. **新增** 传输协议调试：检查UseStreamable配置与服务器端点一致性
+16. **新增** 端点配置调试：验证MCP服务器端点路径正确性
 
 **更新** 新增调试技巧：
 - 调整超时配置：根据实际需求调整StreamTimeout、StreamIdleTimeout和MaxToolRounds
@@ -928,6 +1018,8 @@ M --> II
 - **更新** 性能分析：使用mcpx.metrics监控工具调用延迟和成功率
 - **更新** 结构化日志分析：验证slog桥接和日志格式配置
 - **更新** 流式处理优化：监控256KB scanner缓冲区使用情况
+- **新增** 传输协议测试：验证UseStreamable配置与服务器端点匹配
+- **新增** 端点连通性测试：检查/sse和/message端点的可达性
 
 **章节来源**
 - [chatcompletionlogic.go:190-206](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L190-L206)
@@ -950,6 +1042,8 @@ AI聊天服务是一个设计精良的微服务架构示例，经过MCP客户端
 - **性能监控**：内置mcpx.metrics统计工具调用性能和成功率
 - **结构化日志**：通过slog桥接go-zero logx，支持结构化日志输出
 - **流式优化**：256KB scanner缓冲区，防止大块SSE数据截断
+- **传输协议支持**：同时支持SSE和Streamable HTTP两种MCP传输协议
+- **端点兼容性**：MCP服务器端点从/message更新为/sse，保持向后兼容
 
 **更新** 新增的技术改进：
 - **重构后的MCP客户端**：支持多服务器连接管理和工具聚合
@@ -965,6 +1059,8 @@ AI聊天服务是一个设计精良的微服务架构示例，经过MCP客户端
 - **上下文属性传播**：支持用户身份信息在MCP工具调用中的自动传递
 - **异步处理优化**：使用antsx.Promise提升流式响应处理性能
 - **性能监控增强**：内置mcpx.metrics统计工具调用延迟和成功率
+- **传输协议选择**：通过UseStreamable配置灵活选择SSE或Streamable HTTP协议
+- **端点配置优化**：MCP服务器端点从/message更新为/sse，提升兼容性
 
 ### 业务价值
 - **多供应商支持**：为用户提供最佳的AI服务选择
@@ -976,6 +1072,8 @@ AI聊天服务是一个设计精良的微服务架构示例，经过MCP客户端
 - **安全性**：通过上下文传播机制实现细粒度的用户身份管理
 - **可扩展性**：支持动态工具发现和路由
 - **监控能力**：内置性能指标和错误统计
+- **传输协议灵活性**：支持多种MCP传输协议，适应不同部署环境
+- **向后兼容性**：MCP服务器端点更新保持现有配置的兼容性
 
 ### 发展建议
 1. **增加缓存层**：为频繁访问的模型元数据和MCP工具定义增加缓存
@@ -991,6 +1089,8 @@ AI聊天服务是一个设计精良的微服务架构示例，经过MCP客户端
 11. **内存使用监控**：监控重构后的MCP客户端内存使用情况
 12. **上下文传播优化**：实现更高效的上下文属性传递机制
 13. **异步处理扩展**：支持更多的异步操作模式和错误恢复策略
+14. **传输协议优化**：根据网络环境和性能要求动态选择最优传输协议
+15. **端点配置管理**：提供更灵活的MCP服务器端点配置选项
 
 **更新** 建议的进一步优化：
 - **动态超时调整**：根据模型复杂度和工具调用类型动态调整超时设置
@@ -1003,5 +1103,7 @@ AI聊天服务是一个设计精良的微服务架构示例，经过MCP客户端
 - **内存使用监控**：监控重构后的MCP客户端内存使用情况
 - **上下文传播优化**：实现更高效的上下文属性传递机制
 - **异步处理扩展**：支持更多的异步操作模式和错误恢复策略
+- **传输协议智能选择**：根据网络条件和性能要求自动选择最优传输协议
+- **端点配置自动化**：提供MCP服务器端点配置的自动化检测和修复功能
 
-该服务为构建企业级AI应用提供了坚实的基础，其设计原则和实现模式值得在类似项目中借鉴和参考。重构后的MCP工具调用能力和增强的日志基础设施使其成为了一个真正的智能代理系统，能够与外部世界进行智能交互和自动化操作。多服务器连接管理和内存泄漏修复进一步提升了系统的稳定性和可靠性。上下文属性传播功能则为构建安全的企业级应用提供了重要的基础支撑。性能监控和结构化日志系统为运维和故障排查提供了强有力的支持。
+该服务为构建企业级AI应用提供了坚实的基础，其设计原则和实现模式值得在类似项目中借鉴和参考。重构后的MCP工具调用能力和增强的日志基础设施使其成为了一个真正的智能代理系统，能够与外部世界进行智能交互和自动化操作。多服务器连接管理和内存泄漏修复进一步提升了系统的稳定性和可靠性。上下文属性传播功能则为构建安全的企业级应用提供了重要的基础支撑。性能监控和结构化日志系统为运维和故障排查提供了强有力的支持。新增的传输协议支持和端点配置优化使得系统更加灵活和兼容，能够适应不同的部署环境和网络条件。

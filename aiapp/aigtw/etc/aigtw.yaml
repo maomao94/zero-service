@@ -7,10 +7,10 @@ Log:
   Encoding: plain
   #  Mode: file
   Path: /opt/logs/aigtw
-  Level: info
+  Level: debug
   KeepDays: 300
 JwtAuth:
-  AccessSecret: 629c6233-1a76-471b-bd25-b87208762219
+  AccessSecret: allcoreisapowerfulmicroservicearchitectureupgradedandoptimizedfromacommercialproject
 AiChatRpcConf:
   Endpoints:
     - 127.0.0.1:23001

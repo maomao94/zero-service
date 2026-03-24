@@ -8,7 +8,7 @@ import (
 	"time"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/common/asynqx"
-	"zero-service/common/ctxdata"
+	"zero-service/common/msgbody"
 
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -34,7 +34,7 @@ func (l *DeferTriggerTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task
 	defer l.metrics.Add(stat.Task{
 		Duration: timex.Since(startTime),
 	})
-	var msg ctxdata.MsgBody
+	var msg msgbody.MsgBody
 	if err := json.Unmarshal([]byte(t.Payload()), &msg); err != nil {
 		return err
 	} else {

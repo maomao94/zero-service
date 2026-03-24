@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 	"zero-service/app/alarm/alarm"
-	"zero-service/common/ctxdata"
+	"zero-service/common/msgbody"
 	"zero-service/zerorpc/internal/svc"
 
 	"github.com/dromara/carbon/v2"
@@ -29,7 +29,7 @@ func NewDeferForwardTask(svcCtx *svc.ServiceContext) *DeferForwardTaskHandler {
 }
 
 func (l *DeferForwardTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task) error {
-	var msg ctxdata.MsgBody
+	var msg msgbody.MsgBody
 	if err := json.Unmarshal([]byte(t.Payload()), &msg); err != nil {
 		return err
 	} else {

@@ -2,15 +2,16 @@ package logic
 
 import (
 	"context"
+	"time"
+	"zero-service/common/asynqx"
+	"zero-service/common/msgbody"
+	"zero-service/zerorpc/internal/svc"
+	"zero-service/zerorpc/zerorpc"
+
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/jsonx"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
-	"time"
-	"zero-service/common/asynqx"
-	"zero-service/common/ctxdata"
-	"zero-service/zerorpc/internal/svc"
-	"zero-service/zerorpc/zerorpc"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -35,7 +36,7 @@ func (l *SendDelayTaskLogic) SendDelayTask(in *zerorpc.SendDelayTaskReq) (*zeror
 	defer span.End()
 	carrier := &propagation.HeaderCarrier{}
 	otel.GetTextMapPropagator().Inject(spanCtx, carrier)
-	msg := &ctxdata.MsgBody{
+	msg := &msgbody.MsgBody{
 		MsgId:   in.MsgId,
 		Carrier: carrier,
 		Msg:     in.Body,

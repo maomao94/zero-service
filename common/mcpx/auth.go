@@ -47,12 +47,11 @@ func NewDualTokenVerifier(jwtSecrets []string, serviceToken string) auth.TokenVe
 	}
 }
 
-// maskToken 脱敏显示 token，仅保留前 8 个字符。
 func maskToken(token string) string {
 	if len(token) <= 8 {
 		return token
 	}
-	return token[:8] + "..."
+	return token[:12] + "..."
 }
 
 // mapKeys 提取 map 的所有 key。

@@ -9,7 +9,7 @@ import (
 	"zero-service/app/trigger/internal/svc"
 	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/asynqx"
-	"zero-service/common/ctxdata"
+	"zero-service/common/msgbody"
 	"zero-service/common/tool"
 
 	"github.com/hibiken/asynq"
@@ -40,7 +40,7 @@ func (l *DeferTriggerProtoTaskHandler) ProcessTask(ctx context.Context, t *asynq
 	defer l.metrics.Add(stat.Task{
 		Duration: timex.Since(startTime),
 	})
-	var msg ctxdata.ProtoMsgBody
+	var msg msgbody.ProtoMsgBody
 	if err := json.Unmarshal([]byte(t.Payload()), &msg); err != nil {
 		return err
 	} else {

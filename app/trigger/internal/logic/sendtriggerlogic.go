@@ -2,7 +2,14 @@ package logic
 
 import (
 	"context"
+
 	"github.com/google/uuid"
+
+	"time"
+	"zero-service/app/trigger/internal/svc"
+	"zero-service/app/trigger/trigger"
+	"zero-service/common/asynqx"
+	"zero-service/common/msgbody"
 
 	"github.com/dromara/carbon/v2"
 	"github.com/hibiken/asynq"
@@ -11,11 +18,6 @@ import (
 	"github.com/zeromicro/go-zero/core/trace"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
-	"time"
-	"zero-service/app/trigger/internal/svc"
-	"zero-service/app/trigger/trigger"
-	"zero-service/common/asynqx"
-	"zero-service/common/ctxdata"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -40,7 +42,7 @@ func (l *SendTriggerLogic) SendTrigger(in *trigger.SendTriggerReq) (*trigger.Sen
 	defer span.End()
 	carrier := &propagation.HeaderCarrier{}
 	otel.GetTextMapPropagator().Inject(spanCtx, carrier)
-	msg := &ctxdata.MsgBody{
+	msg := &msgbody.MsgBody{
 		MsgId:   in.MsgId,
 		Carrier: carrier,
 		Msg:     in.Body,

@@ -2,11 +2,13 @@ Name: mcpserver
 Host: 0.0.0.0
 Port: 13003
 Mode: dev
+Mcp:
+  UseStreamable: false
 Log:
   Encoding: plain
   #  Mode: file
   Path: /opt/logs/mcpserver
-  Level: info
+  Level: debug
   KeepDays: 300
 
 Auth:

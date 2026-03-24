@@ -7,7 +7,7 @@ import (
 	"time"
 	"zero-service/app/alarm/alarm"
 	"zero-service/common/asynqx"
-	"zero-service/common/ctxdata"
+	"zero-service/common/msgbody"
 	"zero-service/zerorpc/internal/svc"
 	"zero-service/zerorpc/zerorpc"
 
@@ -43,7 +43,7 @@ func (l *ForwardTaskLogic) ForwardTask(in *zerorpc.ForwardTaskReq) (*zerorpc.For
 	defer span.End()
 	carrier := &propagation.HeaderCarrier{}
 	otel.GetTextMapPropagator().Inject(spanCtx, carrier)
-	msg := &ctxdata.MsgBody{
+	msg := &msgbody.MsgBody{
 		MsgId:   in.MsgId,
 		Carrier: carrier,
 		Msg:     in.Body,

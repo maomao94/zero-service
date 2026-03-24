@@ -3,11 +3,12 @@ package task
 import (
 	"context"
 	"encoding/json"
+	"zero-service/common/msgbody"
+	"zero-service/zerorpc/internal/svc"
+
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/logx"
 	"go.opentelemetry.io/otel"
-	"zero-service/common/ctxdata"
-	"zero-service/zerorpc/internal/svc"
 )
 
 type DeferDelayTaskHandler struct {
@@ -21,7 +22,7 @@ func NewDeferDelayTask(svcCtx *svc.ServiceContext) *DeferDelayTaskHandler {
 }
 
 func (l *DeferDelayTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task) error {
-	var msg ctxdata.MsgBody
+	var msg msgbody.MsgBody
 	if err := json.Unmarshal([]byte(t.Payload()), &msg); err != nil {
 		logx.Errorf(" processTask %s 失败 err:%+v", t.Type(), err)
 		return err

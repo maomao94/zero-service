@@ -21,11 +21,12 @@
 
 ## 更新摘要
 **所做更改**
-- 新增双层认证系统：引入JWT令牌和连接级服务令牌的双重验证机制
-- 新增Streamable HTTP传输协议：支持2025年3月26日规范的流式HTTP传输
-- 新增上下文传播机制：实现HTTP头部与上下文的双向映射和自动传播
-- 更新配置管理：新增Auth配置段落和useStreamable标志
-- 更新工具注册：Modbus工具现在使用WithCtxProp包装器自动传播上下文
+- **日志级别提升**：将MCP服务器日志级别从默认值提升到debug级别，提供更详细的调试信息
+- **启动优化**：在服务启动时禁用统计日志，减少启动阶段的日志开销
+- **配置结构现代化**：简化MCP配置结构，移除冗余的Mcp字段嵌套，采用更直观的配置层次
+- **认证系统增强**：保持双层认证系统的完整性，支持JWT令牌和连接级服务令牌的双重验证
+- **传输协议支持**：继续支持Streamable HTTP传输协议和SSE传输协议的选择
+- **上下文传播机制**：维持完整的HTTP头部与上下文的双向映射和自动传播
 
 ## 目录
 1. [简介](#简介)
@@ -38,11 +39,12 @@
 8. [上下文传播机制](#上下文传播机制)
 9. [工具实现详解](#工具实现详解)
 10. [配置管理增强](#配置管理增强)
-11. [依赖分析](#依赖分析)
-12. [性能考量](#性能考量)
-13. [故障排查指南](#故障排查指南)
-14. [结论](#结论)
-15. [附录](#附录)
+11. [日志配置优化](#日志配置优化)
+12. [依赖分析](#依赖分析)
+13. [性能考量](#性能考量)
+14. [故障排查指南](#故障排查指南)
+15. [结论](#结论)
+16. [附录](#附录)
 
 ## 简介
 本文件为MCP（Model Context Protocol）服务器的技术文档，围绕在本仓库中的MCP服务器实现进行系统化说明。该实现基于go-zero框架和最新的MCP协议规范，提供模块化的MCP服务器示例，包含：
@@ -56,12 +58,13 @@
 - **工具注册系统**：统一的工具注册机制，支持多个工具的动态注册
 - **增强工具实现**：包含echo回显工具和Modbus协议工具，支持上下文传播
 - **与AI生态的深度集成**：支持与Claude Code、Copilot等AI代理的技能集成
+- **现代化配置结构**：采用简化的配置层次，提供更好的可读性和维护性
 
 本仓库中MCP服务器属于aiapp子模块，当前实现展示了如何通过go-zero的mcp包快速搭建模块化的MCP服务，并注册多个工具供外部AI代理调用。
 
 **章节来源**
 - [mcpserver.go:19-38](file://aiapp/mcpserver/mcpserver.go#L19-L38)
-- [mcpserver.yaml:1-25](file://aiapp/mcpserver/etc/mcpserver.yaml#L1-L25)
+- [mcpserver.yaml:1-24](file://aiapp/mcpserver/etc/mcpserver.yaml#L1-L24)
 
 ## 项目结构
 MCP服务器位于aiapp/mcpserver目录，采用完全模块化的go-zero合规布局：
@@ -85,7 +88,7 @@ aiapp/mcpserver/
 **章节来源**
 - [README.md:59-108](file://README.md#L59-L108)
 - [mcpserver.go:1-39](file://aiapp/mcpserver/mcpserver.go#L1-L39)
-- [mcpserver.yaml:1-25](file://aiapp/mcpserver/etc/mcpserver.yaml#L1-L25)
+- [mcpserver.yaml:1-24](file://aiapp/mcpserver/etc/mcpserver.yaml#L1-L24)
 
 ## 核心组件
 
@@ -126,6 +129,7 @@ CONF["配置文件<br/>etc/mcpserver.yaml"]
 AUTH["双层认证系统<br/>common/mcpx/auth.go"]
 STREAM["Streamable传输<br/>common/mcpx/server.go"]
 CTXPROP["上下文传播<br/>common/mcpx/ctxprop.go"]
+LOG["日志配置<br/>logx.Debug"]
 end
 ENTRY --> CFG
 ENTRY --> CTX
@@ -136,6 +140,7 @@ CTX --> MODBUS
 CFG --> CONF
 AUTH --> STREAM
 STREAM --> CTXPROP
+ENTRY --> LOG
 ```
 
 **图表来源**
@@ -150,14 +155,14 @@ STREAM --> CTXPROP
 - **配置项**
   - Name/Host/Port：服务基本监听信息
   - Mode: dev：开发环境标识
+  - Mcp.UseStreamable: false：启用Streamable HTTP传输协议
+  - Log：日志配置，包含Encoding、Path、Level: debug、KeepDays
   - Auth：认证配置段落，包含JwtSecrets和ServiceToken
-  - mcp.useStreamable: true：启用Streamable HTTP传输协议
-  - mcp.messageTimeout：工具调用消息超时
-  - mcp.cors：允许的跨域来源列表
   - BridgeModbusRpcConf：Modbus服务RPC客户端配置
 - **启动流程**
   - 解析配置文件路径
   - 加载配置并打印Go版本
+  - 禁用统计日志以优化启动性能
   - 创建服务上下文
   - 创建MCP服务器实例（使用mcpx.NewMcpServer）
   - 统一注册所有工具
@@ -168,12 +173,14 @@ sequenceDiagram
 participant CLI as "命令行"
 participant Main as "mcpserver.go"
 participant Conf as "配置加载"
+participant Log as "日志配置"
 participant Ctx as "服务上下文"
 participant Reg as "工具注册"
 participant Srv as "MCP服务器"
 CLI->>Main : 传入配置文件路径
 Main->>Conf : conf.MustLoad(配置文件)
 Main->>Main : 打印Go版本
+Main->>Log : logx.DisableStat()
 Main->>Ctx : NewServiceContext(c)
 Main->>Srv : mcpx.NewMcpServer(c.McpServerConf)
 Main->>Reg : RegisterAll(server.Server(), svcCtx)
@@ -191,7 +198,7 @@ Srv-->>CLI : 服务就绪
 
 **章节来源**
 - [mcpserver.go:19-38](file://aiapp/mcpserver/mcpserver.go#L19-L38)
-- [mcpserver.yaml:1-25](file://aiapp/mcpserver/etc/mcpserver.yaml#L1-L25)
+- [mcpserver.yaml:1-24](file://aiapp/mcpserver/etc/mcpserver.yaml#L1-L24)
 
 ### 工具注册与调用流程
 - **统一注册机制**：RegisterAll函数统一管理所有工具的注册
@@ -271,7 +278,7 @@ end
 
 **章节来源**
 - [auth.go:15-48](file://common/mcpx/auth.go#L15-L48)
-- [mcpserver.yaml:9-12](file://aiapp/mcpserver/etc/mcpserver.yaml#L9-L12)
+- [mcpserver.yaml:14-17](file://aiapp/mcpserver/etc/mcpserver.yaml#L14-L17)
 
 ## Streamable HTTP传输协议
 
@@ -281,7 +288,7 @@ MCP服务器支持两种传输协议：
 ```mermaid
 graph TB
 subgraph "传输协议选择"
-A["McpServerConf.useStreamable"] --> B{"useStreamable=true?"}
+A["Mcp.UseStreamable"] --> B{"UseStreamable=true?"}
 B --> |是| C["setupStreamableTransport()"]
 B --> |否| D["setupSSETransport()"]
 C --> E["NewStreamableHTTPHandler"]
@@ -307,7 +314,7 @@ end
 
 **章节来源**
 - [server.go:64-140](file://common/mcpx/server.go#L64-L140)
-- [mcpserver.yaml:14-18](file://aiapp/mcpserver/etc/mcpserver.yaml#L14-L18)
+- [mcpserver.yaml:6](file://aiapp/mcpserver/etc/mcpserver.yaml#L6)
 
 ## 上下文传播机制
 
@@ -408,17 +415,57 @@ end
 - **配置验证**：支持空配置，无认证时跳过认证中间件
 
 ### 传输协议配置
-- **useStreamable**：启用Streamable HTTP传输协议
-- **messageTimeout**：工具调用消息超时时间
-- **cors**：允许的跨域来源列表
+- **UseStreamable**：启用Streamable HTTP传输协议
+- **MessageTimeout**：工具调用消息超时时间
+- **Cors**：允许的跨域来源列表
 
 ### 配置文件结构更新
 - **YAML结构**：支持多层嵌套配置
-- **配置层次**：Name、Host、Port、Mode、Auth、mcp、BridgeModbusRpcConf等配置项
+- **配置层次**：Name、Host、Port、Mode、Mcp、Log、Auth、BridgeModbusRpcConf等配置项
 - **配置验证**：确保配置项的完整性和正确性
 
 **章节来源**
-- [mcpserver.yaml:9-25](file://aiapp/mcpserver/etc/mcpserver.yaml#L9-L25)
+- [mcpserver.yaml:5-24](file://aiapp/mcpserver/etc/mcpserver.yaml#L5-L24)
+
+## 日志配置优化
+
+### 日志级别提升
+MCP服务器采用了更详细的日志记录策略：
+
+```mermaid
+graph TB
+subgraph "日志配置优化"
+A["配置文件"] --> B["Log.Level: debug"]
+A --> C["Log.Encoding: plain"]
+A --> D["Log.Path: /opt/logs/mcpserver"]
+A --> E["Log.KeepDays: 300"]
+F["启动流程"] --> G["logx.DisableStat()"]
+G --> H["禁用统计日志"]
+B --> I["启用详细调试日志"]
+C --> J["纯文本格式"]
+D --> K["标准日志路径"]
+E --> L["长期保留策略"]
+```
+
+**图表来源**
+- [mcpserver.go:25-26](file://aiapp/mcpserver/mcpserver.go#L25-L26)
+- [mcpserver.yaml:7-12](file://aiapp/mcpserver/etc/mcpserver.yaml#L7-L12)
+
+### 日志配置特性
+- **Debug级别**：提供详细的调试信息，便于问题诊断
+- **纯文本格式**：使用plain编码，便于日志分析和处理
+- **标准路径**：日志文件保存在/opt/logs/mcpserver目录
+- **长期保留**：保留300天的日志，支持长期审计需求
+- **启动优化**：禁用统计日志，减少启动阶段的性能开销
+
+### 启动流程优化
+- **统计日志禁用**：在服务启动时调用logx.DisableStat()，避免统计信息干扰
+- **Go版本显示**：启动时显示Go运行时版本信息
+- **资源清理**：服务停止时自动清理资源
+
+**章节来源**
+- [mcpserver.go:25-26](file://aiapp/mcpserver/mcpserver.go#L25-L26)
+- [mcpserver.yaml:7-12](file://aiapp/mcpserver/etc/mcpserver.yaml#L7-L12)
 
 ## 依赖分析
 - **go-zero mcp包**：核心MCP服务器功能
@@ -461,10 +508,11 @@ SDK --> CTX["上下文传播"]
 - **上下文传播优化**：高效的头部映射和上下文注入机制
 - **日志管理优化**：启动前可选择关闭统计日志，降低启动阶段开销
 - **环境配置优化**：开发环境标识便于调试和性能分析
+- **日志级别优化**：debug级别提供详细信息，同时通过禁用统计日志优化性能
 
 **章节来源**
 - [mcpserver.go:25-26](file://aiapp/mcpserver/mcpserver.go#L25-L26)
-- [mcpserver.yaml:6](file://aiapp/mcpserver/etc/mcpserver.yaml#L6)
+- [mcpserver.yaml:4](file://aiapp/mcpserver/etc/mcpserver.yaml#L4)
 - [servicecontext.go:15-24](file://aiapp/mcpserver/internal/svc/servicecontext.go#L15-L24)
 
 ## 故障排查指南
@@ -484,8 +532,8 @@ SDK --> CTX["上下文传播"]
   - 对于Modbus工具，检查Modbus设备连接状态
   - 验证上下文传播是否正常工作
 - **传输协议问题**
-  - 确认useStreamable配置与客户端兼容
-  - 检查messageTimeout和cors配置
+  - 确认UseStreamable配置与客户端兼容
+  - 检查MessageTimeout和Cors配置
   - 验证Streamable HTTP和SSE端点配置
 - **RPC调用失败**
   - 检查bridgemodbus服务是否正常运行
@@ -499,6 +547,11 @@ SDK --> CTX["上下文传播"]
   - 检查Log.Encoding配置的编码格式是否支持
   - 验证Log.Path目录的可写权限
   - 确认开发环境标识Mode: dev的正确性
+  - 验证日志级别是否为debug以获取详细信息
+- **启动性能问题**
+  - 确认logx.DisableStat()调用是否正确执行
+  - 检查日志文件权限和磁盘空间
+  - 验证配置文件的语法正确性
 
 **章节来源**
 - [mcpserver.go:22-23](file://aiapp/mcpserver/mcpserver.go#L22-L23)
@@ -513,10 +566,11 @@ SDK --> CTX["上下文传播"]
 - **上下文传播机制**：实现HTTP头部与上下文的双向映射和自动传播
 - **模块化架构**：完全符合go-zero合规布局，便于维护和扩展
 - **增强配置管理**：支持Auth配置段落和useStreamable标志
+- **现代化配置结构**：采用简化的配置层次，提供更好的可读性和维护性
+- **优化日志配置**：debug级别日志提供详细信息，同时通过禁用统计日志优化启动性能
 - **工具丰富性**：包含基础的echo工具和实用的Modbus工具
 - **服务集成**：与bridgemodbus服务深度集成，提供工业协议支持
 - **配置灵活**：支持MCP配置和RPC配置的统一管理
-- **易于扩展**：模块化设计使得新增工具变得简单直观
 
 后续演进方向：
 - 增强工具安全策略（如鉴权、限流）
@@ -533,17 +587,19 @@ SDK --> CTX["上下文传播"]
 - **Host**：监听主机
 - **Port**：监听端口
 - **Mode**：开发环境标识（dev）
+- **Mcp.UseStreamable**：启用Streamable HTTP传输协议
+- **Log.Encoding**：日志编码格式（plain）
+- **Log.Path**：日志文件路径（/opt/logs/mcpserver）
+- **Log.Level**：日志级别（debug）
+- **Log.KeepDays**：日志保留天数（300）
 - **Auth.JwtSecrets**：JWT密钥数组
 - **Auth.ServiceToken**：服务令牌
-- **mcp.useStreamable**：启用Streamable HTTP传输协议
-- **mcp.messageTimeout**：消息超时时间
-- **mcp.cors**：允许的跨域来源列表
 - **BridgeModbusRpcConf.Endpoints**：Modbus服务RPC端点
 - **BridgeModbusRpcConf.NonBlock**：非阻塞模式
 - **BridgeModbusRpcConf.Timeout**：RPC调用超时时间
 
 **章节来源**
-- [mcpserver.yaml:1-25](file://aiapp/mcpserver/etc/mcpserver.yaml#L1-L25)
+- [mcpserver.yaml:1-24](file://aiapp/mcpserver/etc/mcpserver.yaml#L1-L24)
 
 ### 工具参数说明
 
@@ -573,6 +629,7 @@ SDK --> CTX["上下文传播"]
 - **工具注册**：通过统一的RegisterAll函数管理工具注册
 - **错误处理**：为每个工具实现完善的错误处理机制
 - **性能优化**：利用服务上下文复用资源，减少初始化开销
+- **日志管理**：合理配置日志级别和保留策略，平衡调试需求和存储成本
 
 **章节来源**
 - [mcpserver.go:17](file://aiapp/mcpserver/mcpserver.go#L17)

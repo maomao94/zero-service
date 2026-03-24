@@ -9,9 +9,10 @@ const (
 )
 
 type ServerConfig struct {
-	Name         string `json:",optional"` // 工具名前缀，为空自动生成 mcp0, mcp1...
-	Endpoint     string // MCP Streamable HTTP endpoint
-	ServiceToken string `json:",optional"` // 连接级鉴权 token
+	Name          string `json:",optional"` // 工具名前缀，为空自动生成 mcp0, mcp1...
+	Endpoint      string // MCP server endpoint
+	ServiceToken  string `json:",optional"`               // 连接级鉴权 token
+	UseStreamable bool   `json:",optional,default=false"` // true: Streamable HTTP (2025-03-26), false: SSE (2024-11-05)
 }
 
 type Config struct {

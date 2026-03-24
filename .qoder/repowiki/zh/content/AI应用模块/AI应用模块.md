@@ -1,7 +1,7 @@
 # AI应用模块
 
 <cite>
-**本文引用的文件**
+**本文档引用的文件**
 - [aiapp/ssegtw/ssegtw.go](file://aiapp/ssegtw/ssegtw.go)
 - [aiapp/ssegtw/etc/ssegtw.yaml](file://aiapp/ssegtw/etc/ssegtw.yaml)
 - [aiapp/ssegtw/internal/config/config.go](file://aiapp/ssegtw/internal/config/config.go)
@@ -40,16 +40,20 @@
 - [aiapp/aigtw/internal/handler/pass/chatcompletionshandler.go](file://aiapp/aigtw/internal/handler/pass/chatcompletionshandler.go)
 - [aiapp/aigtw/internal/logic/pass/chatcompletionslogic.go](file://aiapp/aigtw/internal/logic/pass/chatcompletionslogic.go)
 - [aiapp/aigtw/internal/handler/routes.go](file://aiapp/aigtw/internal/handler/routes.go)
+- [aiapp/aigtw/internal/svc/servicecontext.go](file://aiapp/aigtw/internal/svc/servicecontext.go)
 - [common/mcpx/client.go](file://common/mcpx/client.go)
 - [common/mcpx/config.go](file://common/mcpx/config.go)
+- [common/ctxdata/ctxData.go](file://common/ctxdata/ctxData.go)
+- [common/gtwx/cors.go](file://common/gtwx/cors.go)
 </cite>
 
 ## 更新摘要
 **所做更改**
-- 更新了AIGTW聊天端点路由配置，从/aigtw/chat改为/pass/chat
-- 增强了MCP服务器配置，添加了Mode: dev环境标识和Log配置段落
-- 更新了工具调用能力和MCP客户端集成的文档内容
-- 新增了MCP客户端配置和多服务器连接管理章节
+- 新增JWT认证系统集成，包括AIGTW网关的JWT中间件配置和用户上下文传递
+- 更新MCP客户端配置，支持多服务器连接管理和工具名前缀路由
+- 增强配置标准化，统一日志编码格式和路径配置
+- 优化AIGTW网关路由结构，使用/jwt中间件和/ai/v1前缀
+- 新增ctxdata包中的用户上下文键常量定义
 
 ## 目录
 1. [简介](#简介)
@@ -67,6 +71,7 @@
 本技术文档聚焦Zero-Service的AI应用模块，围绕四个核心子系统展开：
 - SSE网关服务（ssegtw）：基于Server-Sent Events的事件流网关，支持AI对话流与通用事件流，具备心跳保活、通道隔离、完成信号注册等能力。
 - MCP服务器（mcpserver）：提供标准化的AI工具调用接口，支持工具注册与跨域配置。
+- **新增** JWT认证系统：AIGTW网关集成JWT中间件，实现用户身份认证和授权管理。
 - **新增** MCP客户端集成：AI聊天服务通过MCP客户端实现与MCP服务器的连接，支持工具列表缓存和动态刷新。
 - **新增** 工具调用能力：AI聊天服务支持多轮工具调用循环，实现智能代理功能，提升AI应用的实用性。
 
@@ -77,7 +82,7 @@ AI应用模块位于aiapp目录下，包含四个主要子工程：
 - ssegtw：SSE网关服务，提供REST接口与SSE事件流能力，内置前端测试页面。
 - mcpserver：MCP协议服务器，提供工具注册与调用能力。
 - aichat：AI聊天RPC服务，基于gRPC提供聊天补全和模型列表功能，支持MCP工具集成。
-- aigtw：AI网关服务，提供OpenAI兼容的REST接口和SSE流式响应。
+- aigtw：AI网关服务，提供OpenAI兼容的REST接口和SSE流式响应，集成JWT认证。
 
 ```mermaid
 graph TB
@@ -85,7 +90,7 @@ subgraph "AI 应用模块"
 A["ssegtw<br/>SSE网关服务"]
 B["mcpserver<br/>MCP服务器"]
 C["aichat<br/>AI聊天RPC服务"]
-D["aigtw<br/>AI网关服务"]
+D["aigtw<br/>AI网关服务<br/>JWT认证"]
 end
 subgraph "公共组件"
 E["common/ssex<br/>SSE写入器"]
@@ -96,6 +101,8 @@ I["模型提供商<br/>OpenAI兼容"]
 J["MCP客户端<br/>MCP SDK客户端"]
 K["工具注册表<br/>工具注册与管理"]
 L["MCP客户端配置<br/>多服务器连接管理"]
+M["JWT认证中间件<br/>用户上下文传递"]
+N["ctxdata上下文键<br/>用户信息常量"]
 end
 A --> E
 A --> F
@@ -105,7 +112,9 @@ C --> I
 C --> J
 D --> C
 D --> E
+D --> M
 J --> L
+M --> N
 ```
 
 **图表来源**
@@ -115,6 +124,7 @@ J --> L
 - [aiapp/aichat/internal/mcpclient/client.go:24-54](file://aiapp/aichat/internal/mcpclient/client.go#L24-L54)
 - [aiapp/aigtw/aigtw.go:29-75](file://aiapp/aigtw/aigtw.go#L29-L75)
 - [common/mcpx/client.go:29-70](file://common/mcpx/client.go#L29-L70)
+- [common/ctxdata/ctxData.go:9-24](file://common/ctxdata/ctxData.go#L9-L24)
 
 **章节来源**
 - [aiapp/ssegtw/ssegtw.go:1-60](file://aiapp/ssegtw/ssegtw.go#L1-L60)
@@ -123,6 +133,7 @@ J --> L
 - [aiapp/aichat/internal/mcpclient/client.go:1-136](file://aiapp/aichat/internal/mcpclient/client.go#L1-L136)
 - [aiapp/aigtw/aigtw.go:1-76](file://aiapp/aigtw/aigtw.go#L1-L76)
 - [common/mcpx/client.go:1-165](file://common/mcpx/client.go#L1-L165)
+- [common/ctxdata/ctxData.go:1-76](file://common/ctxdata/ctxData.go#L1-L76)
 
 ## 核心组件
 - SSE网关服务（ssegtw）
@@ -137,6 +148,11 @@ J --> L
   - 跨域配置与消息超时设置
   - Modbus设备桥接功能
   - **更新** 增强的日志配置：Encoding: plain和Path: /opt/logs/mcpserver
+- **新增** JWT认证系统（aigtw）
+  - JWT中间件集成：rest.WithJwt配置访问密钥
+  - 用户上下文传递：Authorization、User-Id、User-Name等头信息
+  - 路由前缀管理：/ai/v1统一前缀
+  - 超时配置：支持0纳秒超时的SSE流
 - **新增** MCP客户端集成（aichat）
   - SSE客户端传输层连接MCP服务器
   - 工具列表缓存与动态刷新
@@ -162,13 +178,16 @@ J --> L
 - [aiapp/aichat/internal/mcpclient/client.go:16-136](file://aiapp/aichat/internal/mcpclient/client.go#L16-L136)
 - [aiapp/aichat/internal/logic/chatcompletionlogic.go:48-85](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L48-L85)
 - [common/mcpx/client.go:16-70](file://common/mcpx/client.go#L16-L70)
+- [aiapp/aigtw/internal/handler/routes.go:26-43](file://aiapp/aigtw/internal/handler/routes.go#L26-L43)
+- [common/ctxdata/ctxData.go:9-24](file://common/ctxdata/ctxData.go#L9-L24)
 
 ## 架构总览
 AI应用模块采用分层架构设计，包含网关层、服务层、模型层和工具层：
 
 ```mermaid
 graph TB
-Client["客户端/浏览器"] --> Gateway["AIGTW网关"]
+Client["客户端/浏览器"] --> JWT["JWT认证中间件"]
+JWT --> Gateway["AIGTW网关"]
 Gateway --> RPC["AiChat RPC服务"]
 RPC --> Provider["模型提供商"]
 Provider --> Model["AI模型"]
@@ -359,6 +378,10 @@ StartSrv --> End(["运行中"])
 - [aiapp/mcpserver/mcpserver.go:28-75](file://aiapp/mcpserver/mcpserver.go#L28-L75)
 - [aiapp/mcpserver/internal/tools/registry.go:9-13](file://aiapp/mcpserver/internal/tools/registry.go#L9-L13)
 
+**章节来源**
+- [aiapp/mcpserver/mcpserver.go:28-75](file://aiapp/mcpserver/mcpserver.go#L28-L75)
+- [aiapp/mcpserver/internal/tools/registry.go:9-13](file://aiapp/mcpserver/internal/tools/registry.go#L9-L13)
+
 #### 工具注册表
 - RegisterAll：统一注册所有工具（echo、Modbus）
 - 支持工具扩展和插件化管理
@@ -381,6 +404,43 @@ StartSrv --> End(["运行中"])
 
 **章节来源**
 - [aiapp/mcpserver/internal/tools/modbus.go:14-128](file://aiapp/mcpserver/internal/tools/modbus.go#L14-L128)
+
+### JWT认证系统（aigtw）
+
+#### JWT中间件集成
+- 配置JWT访问密钥：AccessSecret用于令牌验证
+- 应用JWT中间件：rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret)
+- 路由保护：所有/ai/v1路径下的接口都需要JWT认证
+
+**章节来源**
+- [aiapp/aigtw/internal/handler/routes.go:26-43](file://aiapp/aigtw/internal/handler/routes.go#L26-L43)
+- [aiapp/aigtw/etc/aigtw.yaml:12-13](file://aiapp/aigtw/etc/aigtw.yaml#L12-L13)
+
+#### 用户上下文传递
+- 上下文键定义：CtxUserIdKey、CtxUserNameKey、CtxAuthorizationKey等
+- HTTP头映射：Authorization、X-User-Id、X-User-Name等头信息
+- 服务间传递：通过gRPC元数据在服务链路中传递用户信息
+
+**章节来源**
+- [common/ctxdata/ctxData.go:9-24](file://common/ctxdata/ctxData.go#L9-L24)
+- [common/mcpx/client.go:323-347](file://common/mcpx/client.go#L323-L347)
+
+#### 路由结构优化
+- 统一前缀：/ai/v1作为所有AI相关接口的前缀
+- 模型列表：/ai/v1/models
+- 聊天接口：/ai/v1/chat/completions（支持SSE流式响应）
+- 超时配置：支持0纳秒超时的SSE流式对话
+
+**章节来源**
+- [aiapp/aigtw/internal/handler/routes.go:16-44](file://aiapp/aigtw/internal/handler/routes.go#L16-L44)
+
+#### CORS配置
+- 动态Origin支持：根据请求Origin设置允许来源
+- 凭证支持：允许携带Cookie和认证头
+- 头部白名单：Content-Type、AccessToken、Authorization等
+
+**章节来源**
+- [common/gtwx/cors.go:9-24](file://common/gtwx/cors.go#L9-L24)
 
 ### MCP客户端集成（aichat）
 
@@ -513,7 +573,7 @@ More --> |否| Return
 
 **章节来源**
 - [aiapp/aichat/aichat.go:23-46](file://aiapp/aichat/aichat.go#L23-L46)
-- [aiapp/aichat/etc/aichat.yaml:1-44](file://aiapp/aichat/etc/aichat.yaml#L1-L44)
+- [aiapp/aichat/etc/aichat.yaml:1-49](file://aiapp/aichat/etc/aichat.yaml#L1-L49)
 
 #### gRPC接口定义
 - Ping：健康检查接口
@@ -541,7 +601,7 @@ More --> |否| Return
 - 配置示例：GLM-4-Flash、GLM-5、Qwen3-Plus
 
 **章节来源**
-- [aiapp/aichat/etc/aichat.yaml:18-44](file://aiapp/aichat/etc/aichat.yaml#L18-L44)
+- [aiapp/aichat/etc/aichat.yaml:23-49](file://aiapp/aichat/etc/aichat.yaml#L23-L49)
 - [aiapp/aichat/internal/config/config.go:9-30](file://aiapp/aichat/internal/config/config.go#L9-L30)
 
 #### OpenAI兼容实现
@@ -581,18 +641,18 @@ More --> |否| Return
 
 **章节来源**
 - [aiapp/aigtw/aigtw.go:29-75](file://aiapp/aigtw/aigtw.go#L29-L75)
-- [aiapp/aigtw/etc/aigtw.yaml:1-15](file://aiapp/aigtw/etc/aigtw.yaml#L1-L15)
+- [aiapp/aigtw/etc/aigtw.yaml:1-20](file://aiapp/aigtw/etc/aigtw.yaml#L1-L20)
 
 #### OpenAI兼容接口
 - Health Check：/aigtw/v1/ping
 - List Models：/aigtw/v1/models
 - Chat Completions：/aigtw/v1/chat/completions（支持流式）
 
-**更新** 端点路由配置已更新为/pass/chat，符合新的路由规范
+**更新** 端点路由配置已更新为/jwt中间件和/ai/v1前缀，符合新的路由规范
 
 **章节来源**
 - [aiapp/aigtw/aigtw.api:14-49](file://aiapp/aigtw/aigtw.api#L14-L49)
-- [aiapp/aigtw/internal/handler/routes.go:29-41](file://aiapp/aigtw/internal/handler/routes.go#L29-L41)
+- [aiapp/aigtw/internal/handler/routes.go:16-44](file://aiapp/aigtw/internal/handler/routes.go#L16-L44)
 
 #### 聊天界面集成
 - 提供现代化的Web聊天界面
@@ -626,8 +686,17 @@ More --> |否| Return
 - 动态工具路由：根据工具名前缀路由到对应服务器
 
 **章节来源**
-- [aiapp/aichat/etc/aichat.yaml:9-13](file://aiapp/aichat/etc/aichat.yaml#L9-L13)
+- [aiapp/aichat/etc/aichat.yaml:8-14](file://aiapp/aichat/etc/aichat.yaml#L8-L14)
 - [common/mcpx/config.go:11-22](file://common/mcpx/config.go#L11-L22)
+
+#### **新增** 用户上下文传递
+- JWT令牌验证：使用AccessSecret验证请求头中的Authorization
+- 用户信息提取：从JWT令牌中提取用户ID、用户名等信息
+- 服务间传递：通过gRPC元数据在服务链路中传递用户上下文
+
+**章节来源**
+- [aiapp/aigtw/etc/aigtw.yaml:12-13](file://aiapp/aigtw/etc/aigtw.yaml#L12-L13)
+- [common/ctxdata/ctxData.go:56-61](file://common/ctxdata/ctxData.go#L56-L61)
 
 ## 依赖分析
 - SSE网关服务依赖
@@ -641,6 +710,10 @@ More --> |否| Return
   - 配置：主机、端口、消息超时、CORS
   - Modbus桥接：设备通信功能
   - **更新** 增强的日志配置：Encoding和Path设置
+- **新增** JWT认证依赖
+  - JWT中间件：rest.WithJwt配置访问密钥
+  - 用户上下文：ctxdata包中的用户信息常量
+  - CORS配置：动态Origin支持
 - **新增** MCP客户端依赖
   - MCP SDK：SSE客户端传输层
   - 并发控制：读写锁保护工具列表
@@ -658,6 +731,9 @@ SSE --> EVT["事件发射器"]
 SSE --> REG["等待注册"]
 SSE --> WR["SSE写入器"]
 SSE --> RPC["RPC客户端(zero-rpc)"]
+JWT["JWT认证系统"] --> JWTMW["JWT中间件"]
+JWT --> CTX["用户上下文"]
+JWT --> CORS["CORS配置"]
 MCP["MCP服务器"] --> MCPCFG["MCP配置"]
 MCP --> LOGCFG["日志配置(Encoding/Path)"]
 MCP --> TOOL["工具注册"]
@@ -674,6 +750,7 @@ AICHAT --> LOOP["事件循环"]
 AICHAT --> TIMEOUT["超时控制"]
 AICHAT --> ERR["错误处理"]
 AIGTW["AIGTW网关"] --> REST2["REST框架"]
+AIGTW --> JWT2["JWT中间件"]
 AIGTW --> SSEX["SSE写入器"]
 AIGTW --> GRPCCLI["gRPC客户端"]
 AIGTW --> HTML["聊天界面"]
@@ -687,6 +764,7 @@ AIGTW --> HTML["聊天界面"]
 - [aiapp/aigtw/aigtw.go:41-44](file://aiapp/aigtw/aigtw.go#L41-L44)
 - [aiapp/mcpserver/etc/mcpserver.yaml:4-7](file://aiapp/mcpserver/etc/mcpserver.yaml#L4-L7)
 - [common/mcpx/client.go:29-70](file://common/mcpx/client.go#L29-L70)
+- [common/ctxdata/ctxData.go:9-24](file://common/ctxdata/ctxData.go#L9-L24)
 
 **章节来源**
 - [aiapp/ssegtw/internal/svc/servicecontext.go:30-38](file://aiapp/ssegtw/internal/svc/servicecontext.go#L30-L38)
@@ -696,6 +774,7 @@ AIGTW --> HTML["聊天界面"]
 - [aiapp/aigtw/aigtw.go:41-44](file://aiapp/aigtw/aigtw.go#L41-L44)
 - [aiapp/mcpserver/etc/mcpserver.yaml:4-7](file://aiapp/mcpserver/etc/mcpserver.yaml#L4-L7)
 - [common/mcpx/client.go:29-70](file://common/mcpx/client.go#L29-L70)
+- [common/ctxdata/ctxData.go:9-24](file://common/ctxdata/ctxData.go#L9-L24)
 
 ## 性能考量
 - SSE写入器强制Flush，确保低延迟；在高并发场景下注意I/O压力
@@ -703,6 +782,7 @@ AIGTW --> HTML["聊天界面"]
 - 完成信号注册（默认TTL 60秒）用于优雅结束事件流，防止资源泄漏
 - 事件发射器与等待注册为内存级组件，适合短时事件流；若需持久化或跨实例共享，应引入外部存储或分布式事件总线
 - RPC客户端超时与非阻塞配置需结合下游服务性能调整
+- **新增** JWT认证性能：使用轻量级JWT中间件，避免额外的数据库查询
 - **新增** MCP客户端连接池：支持多个MCP服务器配置
 - **新增** 工具调用超时控制：总超时和空闲超时双重保障
 - **新增** 工具列表缓存：减少频繁查询MCP服务器的开销
@@ -716,6 +796,14 @@ AIGTW --> HTML["聊天界面"]
 - 事件流中断
   - 关注完成信号是否被Resolve
   - 检查订阅取消逻辑与上下文取消
+- **新增** JWT认证问题
+  - 验证AccessSecret配置是否正确
+  - 检查Authorization头格式是否符合Bearer Token规范
+  - 确认JWT令牌未过期且签名有效
+- **新增** 用户上下文传递问题
+  - 检查ctxdata包中的上下文键是否匹配
+  - 验证HTTP头映射是否正确传递到MCP服务器
+  - 确认gRPC元数据拦截器正常工作
 - MCP工具调用失败
   - 校验工具Schema与必填字段
   - 查看工具处理器参数解析与返回值
@@ -750,11 +838,13 @@ AIGTW --> HTML["聊天界面"]
 - [aiapp/aichat/internal/mcpclient/client.go:46-53](file://aiapp/aichat/internal/mcpclient/client.go#L46-L53)
 - [aiapp/aichat/internal/logic/chatcompletionlogic.go:61-84](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L61-L84)
 - [aiapp/mcpserver/etc/mcpserver.yaml:4-7](file://aiapp/mcpserver/etc/mcpserver.yaml#L4-L7)
+- [common/ctxdata/ctxData.go:323-347](file://common/ctxdata/ctxData.go#L323-L347)
 
 ## 结论
 AI应用模块通过四个核心子系统实现了完整的AI服务能力：
 - SSE网关服务提供事件驱动的低延迟通信能力
 - MCP服务器提供标准化的工具调用接口
+- **新增** JWT认证系统实现用户身份认证和授权管理
 - **新增** MCP客户端集成实现AI聊天服务与MCP服务器的连接
 - **新增** 工具调用能力支持多轮对话和智能代理功能
 
@@ -783,6 +873,12 @@ AI应用模块通过四个核心子系统实现了完整的AI服务能力：
   - 请求体：ChatStreamRequest
   - 返回：PingReply
   - 事件：connected、token、done
+
+#### **新增** JWT认证API
+- JWT令牌验证
+  - 方法：所有受保护接口
+  - 头部：Authorization: Bearer <JWT_TOKEN>
+  - 验证：AccessSecret密钥验证
 
 #### **新增** MCP客户端API
 - 工具列表获取
@@ -837,6 +933,7 @@ AI应用模块通过四个核心子系统实现了完整的AI服务能力：
   - 路径：/aigtw/v1/chat/completions
   - 请求体：ChatCompletionRequest
   - 返回：ChatCompletionResponse（支持流式SSE）
+  - 认证：需要JWT令牌
 
 **章节来源**
 - [aiapp/ssegtw/ssegtw.api:13-38](file://aiapp/ssegtw/ssegtw.api#L13-L38)
@@ -844,20 +941,23 @@ AI应用模块通过四个核心子系统实现了完整的AI服务能力：
 - [aiapp/aichat/aichat.proto:105-114](file://aiapp/aichat/aichat.proto#L105-L114)
 - [aiapp/aichat/internal/mcpclient/client.go:74-95](file://aiapp/aichat/internal/mcpclient/client.go#L74-L95)
 - [aiapp/aigtw/aigtw.api:14-49](file://aiapp/aigtw/aigtw.api#L14-L49)
+- [aiapp/aigtw/internal/handler/routes.go:26-43](file://aiapp/aigtw/internal/handler/routes.go#L26-L43)
 
 ### 客户端集成示例
 - 使用前端Demo页面连接SSE端点，选择端点与输入参数，实时查看事件流
 - 使用fetch建立SSE连接，解析事件名与数据，实现自定义UI
 - **新增** 使用gRPC客户端调用AiChat服务，支持深度思考模式和工具调用
-- **新增** 通过AIGTW网关的REST接口访问AI服务，兼容OpenAI SDK
+- **新增** 通过AIGTW网关的REST接口访问AI服务，兼容OpenAI SDK，需要JWT认证
+- **新增** 配置JWT令牌，实现用户身份认证和授权
 - **新增** 配置MCP服务器端点，实现智能工具调用功能
-- **更新** 使用新的/pass/chat端点进行聊天对话
+- **更新** 使用新的/ai/v1前缀进行聊天对话
 
 **章节来源**
 - [aiapp/ssegtw/sse_demo.html:558-635](file://aiapp/ssegtw/sse_demo.html#L558-L635)
 - [aiapp/aichat/aichat.proto:16-37](file://aiapp/aichat/aichat.proto#L16-L37)
 - [aiapp/aichat/etc/aichat.yaml:9-11](file://aiapp/aichat/etc/aichat.yaml#L9-L11)
 - [aiapp/aigtw/chat.html:1-800](file://aiapp/aigtw/chat.html#L1-L800)
+- [aiapp/aigtw/etc/aigtw.yaml:12-13](file://aiapp/aigtw/etc/aigtw.yaml#L12-L13)
 
 ### 部署与运维策略
 - 容器化
@@ -869,6 +969,7 @@ AI应用模块通过四个核心子系统实现了完整的AI服务能力：
 - **新增** 多服务协调
   - AIGTW网关依赖AiChat服务的RPC端点
   - MCP客户端依赖MCP服务器的SSE端点
+  - JWT认证需要AccessSecret配置
   - 配置正确的服务发现和负载均衡
   - 监控各服务的健康状态和性能指标
 - **新增** MCP服务器部署
@@ -876,13 +977,17 @@ AI应用模块通过四个核心子系统实现了完整的AI服务能力：
   - CORS跨域配置管理
   - 工具注册与动态更新
   - **更新** 开发环境配置：Mode: dev和增强日志配置
+- **新增** JWT认证部署
+  - 配置AccessSecret密钥
+  - 确保JWT令牌生成和验证的一致性
+  - 监控认证失败率和令牌有效性
 
 **章节来源**
 - [aiapp/ssegtw/Dockerfile:1-42](file://aiapp/ssegtw/Dockerfile#L1-L42)
 - [aiapp/ssegtw/deploy.sh:1-170](file://aiapp/ssegtw/deploy.sh#L1-L170)
 - [aiapp/aichat/etc/aichat.yaml:18-34](file://aiapp/aichat/etc/aichat.yaml#L18-L34)
 - [aiapp/aichat/internal/config/config.go:36-39](file://aiapp/aichat/internal/config/config.go#L36-L39)
-- [aiapp/aigtw/etc/aigtw.yaml:9-14](file://aiapp/aigtw/etc/aigtw.yaml#L9-L14)
+- [aiapp/aigtw/etc/aigtw.yaml:9-19](file://aiapp/aigtw/etc/aigtw.yaml#L9-L19)
 - [aiapp/mcpserver/etc/mcpserver.yaml:4-7](file://aiapp/mcpserver/etc/mcpserver.yaml#L4-L7)
 
 ### 最佳实践与安全考虑
@@ -890,10 +995,19 @@ AI应用模块通过四个核心子系统实现了完整的AI服务能力：
   - 明确事件语义与数据格式，避免在data中传输敏感信息
   - 合理设置心跳间隔与完成信号TTL，防止资源泄漏
   - 在生产环境开启严格的CORS白名单
+- JWT认证
+  - 使用强随机AccessSecret密钥
+  - 实施令牌过期和刷新机制
+  - 监控认证失败和可疑活动
+  - 避免在JWT中存储敏感信息
 - MCP
   - 工具Schema严格校验输入，必要时增加参数校验与限流
   - 控制消息超时，避免长时间占用连接
   - 限制跨域来源，仅开放可信域名
+- **新增** 用户上下文传递
+  - 确保ctxdata包中的上下文键与HTTP头映射一致
+  - 验证gRPC元数据拦截器正确传递用户信息
+  - 实施最小权限原则，只传递必要的用户信息
 - **新增** MCP客户端
   - SSE端点配置验证，确保连接稳定性
   - 工具列表缓存失效策略，支持动态刷新
@@ -911,6 +1025,7 @@ AI应用模块通过四个核心子系统实现了完整的AI服务能力：
   - 配置适当的CORS策略
   - 实现错误处理和降级机制
   - 保护静态文件访问权限
+  - 实施JWT中间件的性能优化
 - **更新** MCP服务器
   - 开发环境使用Mode: dev标识
   - 配置纯文本日志编码和指定日志路径
@@ -919,3 +1034,4 @@ AI应用模块通过四个核心子系统实现了完整的AI服务能力：
   - 通过RPC客户端与核心业务系统解耦
   - 在网关层统一鉴权与审计，避免将鉴权逻辑下沉至事件流
   - 实现服务间的依赖管理和故障隔离
+  - **新增** 确保JWT认证与MCP工具调用的安全一致性

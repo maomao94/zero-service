@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"zero-service/common/ctxdata"
+	"zero-service/common/ctxprop"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -29,17 +29,18 @@ type Client struct {
 
 // serverConn 单个 MCP server 的连接。
 type serverConn struct {
-	name         string
-	endpoint     string
-	serviceToken string
-	client       *mcp.Client
-	session      *mcp.ClientSession
-	tools        []*mcp.Tool
-	mu           sync.RWMutex
-	cfg          Config
-	onChange     func()
-	ctx          context.Context
-	cancel       context.CancelFunc
+	name          string
+	endpoint      string
+	serviceToken  string
+	useStreamable bool
+	client        *mcp.Client
+	session       *mcp.ClientSession
+	tools         []*mcp.Tool
+	mu            sync.RWMutex
+	cfg           Config
+	onChange      func()
+	ctx           context.Context
+	cancel        context.CancelFunc
 }
 
 // NewClient 创建 mcpx 客户端，非阻塞，后台自动连接。
@@ -75,13 +76,14 @@ func NewClient(cfg Config) *Client {
 
 		connCtx, connCancel := context.WithCancel(ctx)
 		conn := &serverConn{
-			name:         name,
-			endpoint:     sc.Endpoint,
-			serviceToken: sc.ServiceToken,
-			cfg:          cfg,
-			onChange:     c.rebuildTools,
-			ctx:          connCtx,
-			cancel:       connCancel,
+			name:          name,
+			endpoint:      sc.Endpoint,
+			serviceToken:  sc.ServiceToken,
+			useStreamable: sc.UseStreamable,
+			cfg:           cfg,
+			onChange:      c.rebuildTools,
+			ctx:           connCtx,
+			cancel:        connCancel,
 		}
 		conn.client = mcp.NewClient(&mcp.Implementation{
 			Name:    "mcpx-" + name,
@@ -204,10 +206,22 @@ func (sc *serverConn) run() {
 }
 
 func (sc *serverConn) tryConnect() *mcp.ClientSession {
-	session, err := sc.client.Connect(sc.ctx, &mcp.StreamableClientTransport{
-		Endpoint:   sc.endpoint,
-		HTTPClient: &http.Client{Transport: &ctxHeaderTransport{base: http.DefaultTransport, serviceToken: sc.serviceToken}},
-	}, nil)
+	httpClient := &http.Client{Transport: &ctxHeaderTransport{base: http.DefaultTransport, serviceToken: sc.serviceToken}}
+
+	var transport mcp.Transport
+	if sc.useStreamable {
+		transport = &mcp.StreamableClientTransport{
+			Endpoint:   sc.endpoint,
+			HTTPClient: httpClient,
+		}
+	} else {
+		transport = &mcp.SSEClientTransport{
+			Endpoint:   sc.endpoint,
+			HTTPClient: httpClient,
+		}
+	}
+
+	session, err := sc.client.Connect(sc.ctx, transport, nil)
 	if err != nil {
 		logx.Errorf("[mcpx] %s connect: %v", sc.name, err)
 		return nil
@@ -312,31 +326,13 @@ func ParseArgs(argsJSON string) map[string]any {
 
 // ctxHeaderTransport 是自定义 http.RoundTripper，
 // 从请求 context 提取用户上下文，注入为 HTTP 头。
-// Streamable HTTP transport 每次 CallTool 发独立 POST，
-// MCP server 在 RequestExtra.Header 中接收这些头。
 type ctxHeaderTransport struct {
 	base         http.RoundTripper
 	serviceToken string
 }
 
-// ctxHeaderMapping 定义 context key → HTTP header 映射。
-var ctxHeaderMapping = []struct {
-	ctxKey string
-	header string
-}{
-	{ctxdata.CtxAuthorizationKey, "Authorization"},
-	{ctxdata.CtxUserIdKey, "X-User-Id"},
-	{ctxdata.CtxUserNameKey, "X-User-Name"},
-	{ctxdata.CtxDeptCodeKey, "X-Dept-Code"},
-	{ctxdata.CtxTraceIdKey, "X-Trace-Id"},
-}
-
 func (t *ctxHeaderTransport) RoundTrip(r *http.Request) (*http.Response, error) {
-	for _, m := range ctxHeaderMapping {
-		if v, ok := r.Context().Value(m.ctxKey).(string); ok && v != "" {
-			r.Header.Set(m.header, v)
-		}
-	}
+	ctxprop.InjectToHTTPHeader(r.Context(), r.Header)
 	// Authorization 降级：ctx 中无用户 JWT 时使用 ServiceToken
 	if r.Header.Get("Authorization") == "" && t.serviceToken != "" {
 		r.Header.Set("Authorization", "Bearer "+t.serviceToken)

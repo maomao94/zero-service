@@ -1,10 +1,6 @@
 package ctxdata
 
-import (
-	"context"
-
-	"go.opentelemetry.io/otel/propagation"
-)
+import "context"
 
 const (
 	CtxUserIdKey        = "user-id"
@@ -23,20 +19,22 @@ const (
 	HeaderTraceId       = "x-trace-id"
 )
 
-type MsgBody struct {
-	MsgId   string                     `json:"msgId,omitempty"`
-	Carrier *propagation.HeaderCarrier `json:"carrier"`
-	Msg     string                     `json:"msg,omitempty"`
-	Url     string                     `json:"url" validate:"required"`
+// PropField 定义单个上下文传递字段在三种传输层中的 key。
+type PropField struct {
+	CtxKey     string // context.WithValue 的 key
+	GrpcHeader string // gRPC metadata key（全小写）
+	HttpHeader string // HTTP header key（canonical form）
+	Sensitive  bool   // 日志中是否脱敏
 }
 
-type ProtoMsgBody struct {
-	MsgId          string                     `json:"msgId,omitempty"`
-	Carrier        *propagation.HeaderCarrier `json:"carrier"`
-	GrpcServer     string                     `json:"grpcServer" validate:"required"`
-	Method         string                     `json:"method" validate:"required"`
-	Payload        string                     `json:"payload" validate:"required"`
-	RequestTimeout int64                      `json:"requestTimeout"`
+// PropFields 全量传递字段列表（唯一数据源）。
+// 新增传递字段只需在此追加，所有 gRPC/HTTP 转换自动生效。
+var PropFields = []PropField{
+	{CtxAuthorizationKey, HeaderAuthorization, "Authorization", true},
+	{CtxUserIdKey, HeaderUserId, "X-User-Id", false},
+	{CtxUserNameKey, HeaderUserName, "X-User-Name", false},
+	{CtxDeptCodeKey, HeaderDeptCode, "X-Dept-Code", false},
+	{CtxTraceIdKey, HeaderTraceId, "X-Trace-Id", false},
 }
 
 func GetUserId(ctx context.Context) string {

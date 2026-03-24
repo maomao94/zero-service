@@ -39,6 +39,7 @@ func main() {
 		}
 	})
 	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
+	s.AddStreamInterceptors(interceptor.StreamLoggerInterceptor)
 	defer s.Stop()
 
 	logx.AddGlobalFields(logx.Field("app", c.Name))
