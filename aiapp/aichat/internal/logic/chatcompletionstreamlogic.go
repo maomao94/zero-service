@@ -53,10 +53,10 @@ func (l *ChatCompletionStreamLogic) ChatCompletionStream(in *aichat.ChatCompleti
 	// 如果有工具，先用非流式完成 tool-calling 循环
 	if len(req.Tools) > 0 {
 		for round := 0; round < l.svcCtx.Config.MaxToolRounds; round++ {
-			resp, err := p.ChatCompletion(streamCtx, req)
-			if err != nil {
-				l.Logger.Errorf("tool-calling round %d error: %v", round+1, err)
-				return toGrpcError(err)
+			resp, chatErr := p.ChatCompletion(streamCtx, req)
+			if chatErr != nil {
+				l.Logger.Errorf("tool-calling round %d error: %v", round+1, chatErr)
+				return toGrpcError(chatErr)
 			}
 
 			if len(resp.Choices) == 0 || resp.Choices[0].FinishReason != "tool_calls" {

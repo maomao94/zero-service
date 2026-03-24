@@ -46,10 +46,10 @@ func (l *ChatCompletionLogic) ChatCompletion(in *aichat.ChatCompletionReq) (*aic
 	l.Infof("chat completion, model: %s -> %s (%s), tools: %d", in.Model, backendModel, providerName, len(req.Tools))
 
 	for round := 0; round < l.svcCtx.Config.MaxToolRounds; round++ {
-		resp, err := p.ChatCompletion(l.ctx, req)
-		if err != nil {
-			l.Logger.Errorf("chat completion error: %v", err)
-			return nil, toGrpcError(err)
+		resp, chatErr := p.ChatCompletion(l.ctx, req)
+		if chatErr != nil {
+			l.Logger.Errorf("chat completion error: %v", chatErr)
+			return nil, toGrpcError(chatErr)
 		}
 
 		// 检查是否需要工具调用
