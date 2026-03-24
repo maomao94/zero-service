@@ -1473,7 +1473,7 @@ function processContentDelta(text) {
 async function loadModels() {
     const base = document.getElementById('baseUrl').value.replace(/\/$/, '');
     try {
-        const resp = await fetch(base + '/aigtw/v1/models');
+        const resp = await fetch(base + '/ai/v1/models');
         const data = await resp.json();
         const select = document.getElementById('model');
         select.innerHTML = '';
@@ -1603,7 +1603,7 @@ async function sendMessage() {
     const contentEl = assistantEl.querySelector('.message-content');
 
     try {
-        const resp = await fetch(base + '/aigtw/v1/chat/completions', {
+        const resp = await fetch(base + '/ai/v1/chat/completions', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),

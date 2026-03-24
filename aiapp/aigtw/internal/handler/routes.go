@@ -7,8 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	ai "zero-service/aiapp/aigtw/internal/handler/ai"
-	aigtw "zero-service/aiapp/aigtw/internal/handler/aigtw"
+	pass "zero-service/aiapp/aigtw/internal/handler/pass"
 	"zero-service/aiapp/aigtw/internal/svc"
 
 	"github.com/zeromicro/go-zero/rest"
@@ -21,10 +20,10 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				// 列出可用模型
 				Method:  http.MethodGet,
 				Path:    "/models",
-				Handler: ai.ListModelsHandler(serverCtx),
+				Handler: pass.ListModelsHandler(serverCtx),
 			},
 		},
-		rest.WithPrefix("/aigtw/v1"),
+		rest.WithPrefix("/ai/v1"),
 	)
 
 	server.AddRoutes(
@@ -33,23 +32,11 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				// 对话补全
 				Method:  http.MethodPost,
 				Path:    "/chat/completions",
-				Handler: ai.ChatCompletionsHandler(serverCtx),
+				Handler: pass.ChatCompletionsHandler(serverCtx),
 			},
 		},
-		rest.WithPrefix("/aigtw/v1"),
+		rest.WithPrefix("/ai/v1"),
 		rest.WithTimeout(0*time.Nanosecond),
 		rest.WithSSE(),
-	)
-
-	server.AddRoutes(
-		[]rest.Route{
-			{
-				// ping
-				Method:  http.MethodGet,
-				Path:    "/ping",
-				Handler: aigtw.PingHandler(serverCtx),
-			},
-		},
-		rest.WithPrefix("/aigtw/v1"),
 	)
 }

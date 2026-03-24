@@ -1,8 +1,2 @@
 syntax = "v1"
 
-type (
-	PingReply {
-		Msg string `json:"msg"`
-	}
-)
-

@@ -11,21 +11,10 @@ info (
 	version: "v1"
 )
 
-// 通用组 - 健康检查
+// pass 组 - 普通接口（模型列表）
 @server (
-	prefix: aigtw/v1
-	group:  aigtw
-)
-service aigtw {
-	@doc "ping"
-	@handler ping
-	get /ping returns (PingReply)
-}
-
-// AI 组 - 普通接口（模型列表）
-@server (
-	prefix: aigtw/v1
-	group:  ai
+	prefix: ai/v1
+	group:  pass
 )
 service aigtw {
 	@doc "列出可用模型"
@@ -33,10 +22,10 @@ service aigtw {
 	get /models returns (ListModelsResponse)
 }
 
-// AI 组 - SSE 流式接口 (生成后需在 routes.go 中手动添加 rest.WithSSE())
+// pass 组 - SSE 流式接口
 @server (
-	prefix:  aigtw/v1
-	group:   ai
+	prefix:  ai/v1
+	group:   pass
 	timeout: 0s
 	sse:     true
 )

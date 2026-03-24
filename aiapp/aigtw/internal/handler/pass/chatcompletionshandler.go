@@ -1,12 +1,13 @@
-package ai
+package pass
 
 import (
 	"net/http"
 
-	"github.com/zeromicro/go-zero/rest/httpx"
-	"zero-service/aiapp/aigtw/internal/logic/ai"
+	"zero-service/aiapp/aigtw/internal/logic/pass"
 	"zero-service/aiapp/aigtw/internal/svc"
 	"zero-service/aiapp/aigtw/internal/types"
+
+	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
 func ChatCompletionsHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
@@ -17,7 +18,7 @@ func ChatCompletionsHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 			return
 		}
 
-		l := ai.NewChatCompletionsLogic(r.Context(), svcCtx, w, r)
+		l := pass.NewChatCompletionsLogic(r.Context(), svcCtx, w, r)
 		resp, err := l.ChatCompletions(&req)
 		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)

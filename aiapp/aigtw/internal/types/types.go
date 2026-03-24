@@ -75,10 +75,6 @@ type ModelObject struct {
 	Metadata *ModelMetadata `json:"metadata,optional"` // 扩展元数据（能力详情）
 }
 
-type PingReply struct {
-	Msg string `json:"msg"`
-}
-
 type ThinkingParam struct {
 	Type string `json:"type"` // "enabled" 启用 / "disabled" 禁用
 }
