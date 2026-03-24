@@ -24,10 +24,11 @@
 
 ## 更新摘要
 **所做更改**
-- **服务器端SSE传输处理改进**：新增authSSEHandler和authSSETransport类，专门处理SSE传输中的认证上下文提取
-- **新增认证上下文提取功能**：WithCtxProp函数支持SSE传输的回退机制，能够从会话上下文中提取TokenInfo
-- **增强SSE传输协议支持**：完善了SSE协议的会话管理和认证上下文传播机制
-- **改进工具调用链路**：确保SSE和Streamable两种传输协议下的认证上下文一致性
+- **日志增强功能**：echo工具现在同时捕获token和username信息，提供更详细的调试日志输出
+- **响应消息增强**：在响应消息中支持中文用户名显示，提升用户体验
+- **上下文传播机制**：通过ctxdata包的GetAuthorization和GetUserName函数获取用户认证信息
+- **调试日志优化**：改进了调试日志输出格式，包含token和username信息
+- **中文用户名支持**：响应消息中直接显示中文用户名，无需额外转换
 
 ## 目录
 1. [简介](#简介)
@@ -40,16 +41,17 @@
 8. [SSE传输协议改进](#sse传输协议改进)
 9. [上下文传播机制](#上下文传播机制)
 10. [工具实现详解](#工具实现详解)
-11. [配置管理增强](#配置管理增强)
-12. [多服务器连接管理](#多服务器连接管理)
-13. [JWT密钥配置增强](#jwt密钥配置增强)
-14. [工具名前缀路由](#工具名前缀路由)
-15. [日志配置优化](#日志配置优化)
-16. [依赖分析](#依赖分析)
-17. [性能考量](#性能考量)
-18. [故障排查指南](#故障排查指南)
-19. [结论](#结论)
-20. [附录](#附录)
+11. [日志增强功能](#日志增强功能)
+12. [配置管理增强](#配置管理增强)
+13. [多服务器连接管理](#多服务器连接管理)
+14. [JWT密钥配置增强](#jwt密钥配置增强)
+15. [工具名前缀路由](#工具名前缀路由)
+16. [日志配置优化](#日志配置优化)
+17. [依赖分析](#依赖分析)
+18. [性能考量](#性能考量)
+19. [故障排查指南](#故障排查指南)
+20. [结论](#结论)
+21. [附录](#附录)
 
 ## 简介
 本文件为MCP（Model Context Protocol）服务器的技术文档，围绕在本仓库中的MCP服务器实现进行系统化说明。该实现基于go-zero框架和最新的MCP协议规范，提供模块化的MCP服务器示例，包含：
@@ -63,6 +65,8 @@
 - **服务上下文**：集中管理服务依赖和服务生命周期
 - **工具注册系统**：统一的工具注册机制，支持多个工具的动态注册
 - **增强工具实现**：包含echo回显工具和Modbus协议工具，支持上下文传播
+- **日志增强功能**：改进的调试日志输出，同时捕获token和username信息
+- **响应消息增强**：在响应消息中支持中文用户名显示
 - **与AI生态的深度集成**：支持与Claude Code、Copilot等AI代理的技能集成
 - **现代化配置结构**：采用简化的配置层次，提供更好的可读性和维护性
 - **多服务器连接管理**：支持多MCP服务器连接和工具名前缀路由
@@ -89,7 +93,7 @@ aiapp/mcpserver/
     ├── svc/
     │   └── servicecontext.go # 服务上下文管理
     └── tools/
-        ├── echo.go           # echo工具实现
+        ├── echo.go           # echo工具实现（含日志增强）
         ├── modbus.go         # Modbus工具实现
         └── registry.go       # 工具注册中心
 ```
@@ -142,6 +146,8 @@ SSEAUTH["SSE认证处理<br/>common/mcpx/sse_auth.go"]
 MSERVER["多服务器配置<br/>common/mcpx/config.go"]
 MCPCFG["MCP配置结构<br/>common/mcpx/config.go"]
 ENDPOINT["工具名前缀<br/>ToolNameSeparator"]
+LOGENHANCE["日志增强<br/>token+username"]
+RESPONSE["响应增强<br/>中文用户名"]
 end
 ENTRY --> CFG
 ENTRY --> CTX
@@ -153,7 +159,8 @@ CFG --> CONF
 AUTH --> STREAM
 STREAM --> CTXPROP
 CTXPROP --> SSEAUTH
-ENTRY --> LOG
+ENTRY --> LOGENHANCE
+LOGENHANCE --> RESPONSE
 MSERVER --> MCPCFG
 MCPCFG --> ENDPOINT
 ```
@@ -230,7 +237,8 @@ Check --> |echo| Echo["Echo工具处理"]
 Check --> |read_holding_registers| Modbus1["Modbus读保持寄存器"]
 Check --> |read_coils| Modbus2["Modbus读线圈"]
 Echo --> Parse1["解析Echo参数"]
-Parse1 --> Format1["格式化回显消息"]
+Parse1 --> LogEnhance["日志增强：捕获token和username"]
+LogEnhance --> Format1["格式化回显消息含中文用户名"]
 Format1 --> Return1["返回结果"]
 Modbus1 --> Wrap["WithCtxProp包装器"]
 Wrap --> Extract["ExtractCtxFromHeader提取上下文"]
@@ -445,7 +453,8 @@ end
 ### Echo工具实现
 - **参数结构**：包含message（必填）和prefix（可选）参数
 - **功能特性**：支持自定义前缀的回显功能
-- **响应格式**：返回TextContent格式的文本内容
+- **日志增强**：**新增** 改进了调试日志输出，同时捕获token和username信息
+- **响应格式**：返回TextContent格式的文本内容，**更新** 在响应消息中支持中文用户名显示
 - **使用场景**：测试工具调用链路和验证MCP协议实现
 
 ### Modbus工具实现
@@ -482,6 +491,46 @@ end
 **章节来源**
 - [echo.go:9-37](file://aiapp/mcpserver/internal/tools/echo.go#L9-L37)
 - [modbus.go:14-129](file://aiapp/mcpserver/internal/tools/modbus.go#L14-L129)
+
+## 日志增强功能
+
+### 日志增强架构
+**更新** MCP服务器的echo工具现在具备了增强的日志功能：
+
+```mermaid
+graph LR
+subgraph "日志增强功能"
+A["Echo工具调用"] --> B["获取Authorization"]
+B --> C["获取UserName"]
+C --> D["日志输出：token: %s,username: %s"]
+D --> E["返回增强响应"]
+E --> F["中文用户名显示"]
+end
+```
+
+**图表来源**
+- [echo.go:25-38](file://aiapp/mcpserver/internal/tools/echo.go#L25-L38)
+
+### 日志增强特性
+- **token捕获**：通过ctxdata.GetAuthorization(ctx)获取用户认证令牌
+- **username捕获**：通过ctxdata.GetUserName(ctx)获取用户名信息
+- **调试输出**：使用logx.Debugf输出详细的调试信息
+- **格式化输出**：采用统一的日志格式"token: %s,username: %s"
+- **中文支持**：响应消息中直接显示中文用户名
+
+### 日志输出格式
+- **调试级别**：使用debug级别日志，便于开发和调试
+- **统一格式**：所有日志输出采用相同的格式规范
+- **敏感信息**：Authorization令牌在日志中可能需要脱敏处理
+
+### 响应消息增强
+- **中文用户名**：在响应消息中直接显示中文用户名
+- **用户友好**：提升用户体验，无需额外的用户名转换
+- **国际化支持**：支持中文用户的本地化体验
+
+**章节来源**
+- [echo.go:25-38](file://aiapp/mcpserver/internal/tools/echo.go#L25-L38)
+- [ctxData.go:47-59](file://common/ctxdata/ctxData.go#L47-L59)
 
 ## 配置管理增强
 
@@ -706,6 +755,8 @@ SDK --> CTX["上下文传播"]
 SDK --> MSERVER["多服务器管理"]
 SDK --> PREFIX["工具名前缀"]
 SDK --> SSEAUTH["SSE认证处理"]
+SDK --> LOGENHANCE["日志增强"]
+SDK --> RESPONSE["响应增强"]
 ```
 
 **图表来源**
@@ -735,6 +786,8 @@ SDK --> SSEAUTH["SSE认证处理"]
 - **多服务器连接优化**：支持连接池和自动重连，提升系统可用性
 - **JWT密钥优化**：多密钥支持允许平滑密钥轮换，不影响系统运行
 - **工具路由优化**：前缀路由避免工具名冲突，提升工具管理效率
+- **日志增强优化**：**新增** 日志增强功能提供更详细的调试信息，但需注意日志开销
+- **响应增强优化**：**新增** 中文用户名显示提升用户体验，无需额外处理开销
 
 **章节来源**
 - [mcpserver.go:25-26](file://aiapp/mcpserver/mcpserver.go#L25-L26)
@@ -794,10 +847,16 @@ SDK --> SSEAUTH["SSE认证处理"]
   - 验证Log.Path目录的可写权限
   - 确认开发环境标识Mode: dev的正确性
   - 验证日志级别是否为debug以获取详细信息
+  - **新增** 检查日志增强功能是否正常工作
+  - **新增** 验证token和username日志输出格式
 - **启动性能问题**
   - 确认logx.DisableStat()调用是否正确执行
   - 检查日志文件权限和磁盘空间
   - 验证配置文件的语法正确性
+- **响应消息问题**
+  - **新增** 检查中文用户名显示是否正常
+  - **新增** 验证响应消息格式是否符合预期
+  - **新增** 确认用户名编码和字符集支持
 
 **章节来源**
 - [mcpserver.go:22-23](file://aiapp/mcpserver/mcpserver.go#L22-L23)
@@ -822,13 +881,16 @@ SDK --> SSEAUTH["SSE认证处理"]
 - **多服务器连接管理**：支持多MCP服务器连接和工具名前缀路由
 - **JWT密钥配置增强**：支持多JWT密钥配置，提升安全性和密钥轮换能力
 - **认证上下文提取**：新增的SSE传输认证上下文提取功能，确保工具调用的一致性
+- **日志增强功能**：**新增** echo工具现在同时捕获token和username信息，提供更详细的调试日志输出
+- **响应消息增强**：**新增** 在响应消息中支持中文用户名显示，提升用户体验
 
-**新增** 本次更新特别增强了SSE传输协议的认证处理能力，通过authSSEHandler和authSSETransport类实现了：
+**新增** 本次更新特别增强了MCP服务器的echo工具功能，通过以下改进提升了调试能力和用户体验：
 
-- **会话管理**：每个SSE连接创建独立的会话，支持并发处理
-- **认证信息捕获**：在POST请求中捕获TokenInfo和HTTP头部信息
-- **上下文传播**：通过RequestExtra确保工具处理器获得完整的认证上下文
-- **回退机制**：SSE传输下的认证上下文提取回退到会话上下文
+- **日志增强**：在echo工具中同时捕获token和username信息，提供更详细的调试日志输出
+- **响应增强**：在响应消息中直接显示中文用户名，无需额外的用户名转换处理
+- **上下文传播**：通过ctxdata包的GetAuthorization和GetUserName函数获取用户认证信息
+- **用户体验**：中文用户名显示提升了本地化用户体验
+- **调试效率**：详细的日志输出帮助开发者快速定位问题
 
 后续演进方向：
 - 增强工具安全策略（如鉴权、限流）
@@ -839,6 +901,8 @@ SDK --> SSEAUTH["SSE认证处理"]
 - 支持多服务器连接和负载均衡
 - 实现更精细的工具路由和权限控制
 - 增密集成自动化密钥轮换工具
+- **新增** 扩展日志增强功能到其他工具
+- **新增** 增强响应消息的国际化支持
 
 ## 附录
 
@@ -854,6 +918,7 @@ SDK --> SSEAUTH["SSE认证处理"]
 - **Log.KeepDays**：日志保留天数（300）
 - **Auth.JwtSecrets**：JWT密钥数组
 - **Auth.ServiceToken**：服务令牌
+- **Auth.ClaimMapping**：**新增** JWT声明映射配置
 - **BridgeModbusRpcConf.Endpoints**：Modbus服务RPC端点
 - **BridgeModbusRpcConf.NonBlock**：非阻塞模式
 - **BridgeModbusRpcConf.Timeout**：RPC调用超时时间
@@ -866,6 +931,8 @@ SDK --> SSEAUTH["SSE认证处理"]
 #### Echo工具参数
 - **message**：必填字符串，要回显的消息
 - **prefix**：可选字符串，添加到回显消息前的前缀，默认"Echo: "
+- **日志增强**：**新增** 自动捕获并记录token和username信息
+- **响应增强**：**新增** 在响应消息中显示中文用户名
 
 #### Modbus工具参数
 
@@ -899,6 +966,10 @@ Auth:
     - "629c6233-1a76-471b-bd25-b87208762219"
     - "allcoreisapowerfulmicroservicearchitectureupgradedandoptimizedfromacommercialproject"
   ServiceToken: "mcp-internal-service-token-2026"
+  ClaimMapping:
+    user-id: "user_id"
+    user-name: "user_name"
+    dept-code: "dept_code"
 BridgeModbusRpcConf:
   Endpoints:
     - 127.0.0.1:25004
@@ -940,6 +1011,9 @@ Mcpx:
 - **JWT密钥管理**：定期轮换密钥，确保系统安全
 - **工具路由设计**：合理设计工具名前缀，便于多服务器工具管理
 - **SSE传输优化**：充分利用新增的SSE认证处理机制，确保工具调用的一致性
+- **日志增强实践**：**新增** 利用增强的日志功能提升调试效率
+- **响应增强实践**：**新增** 利用中文用户名显示提升用户体验
+- **上下文传播最佳实践**：**新增** 确保token和username信息的正确传播
 
 **章节来源**
 - [mcpserver.go:17](file://aiapp/mcpserver/mcpserver.go#L17)
