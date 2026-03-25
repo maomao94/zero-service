@@ -1491,10 +1491,11 @@ function processContentDelta(text) {
 /* ============================================
    AUTH HEADERS
    ============================================ */
-function getAuthHeaders() {
+function getAuthHeaders(stream = false) {
     const h = { 'Content-Type': 'application/json' };
     const token = document.getElementById('jwtToken').value.trim();
     if (token) h['Authorization'] = 'Bearer ' + token;
+    if (stream) h['Accept'] = 'text/event-stream';
     return h;
 }
 
@@ -1636,7 +1637,7 @@ async function sendMessage() {
     try {
         const resp = await fetch(base + '/ai/v1/chat/completions', {
             method: 'POST',
-            headers: getAuthHeaders(),
+            headers: getAuthHeaders(stream),
             body: JSON.stringify(body),
             signal: controller.signal
         });

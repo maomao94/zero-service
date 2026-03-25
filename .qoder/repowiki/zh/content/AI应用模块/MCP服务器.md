@@ -9,12 +9,11 @@
 - [registry.go](file://aiapp/mcpserver/internal/tools/registry.go)
 - [echo.go](file://aiapp/mcpserver/internal/tools/echo.go)
 - [modbus.go](file://aiapp/mcpserver/internal/tools/modbus.go)
+- [wrapper.go](file://common/mcpx/wrapper.go)
 - [server.go](file://common/mcpx/server.go)
 - [auth.go](file://common/mcpx/auth.go)
 - [client.go](file://common/mcpx/client.go)
-- [ctxprop.go](file://common/mcpx/ctxprop.go)
-- [config.go](file://common/mcpx/config.go)
-- [sse_auth.go](file://common/mcpx/sse_auth.go)
+- [ctxprop.go](file://common/ctxprop/ctx.go)
 - [ctxData.go](file://common/ctxdata/ctxData.go)
 - [aichat.yaml](file://aiapp/aichat/etc/aichat.yaml)
 - [servicecontext.go](file://aiapp/aichat/internal/svc/servicecontext.go)
@@ -24,11 +23,11 @@
 
 ## 更新摘要
 **所做更改**
-- **日志增强功能**：echo工具现在同时捕获token和username信息，提供更详细的调试日志输出
-- **响应消息增强**：在响应消息中支持中文用户名显示，提升用户体验
-- **上下文传播机制**：通过ctxdata包的GetAuthorization和GetUserName函数获取用户认证信息
-- **调试日志优化**：改进了调试日志输出格式，包含token和username信息
-- **中文用户名支持**：响应消息中直接显示中文用户名，无需额外转换
+- **工具注册系统现代化**：工具注册系统已从WithCtxProp迁移到CallToolWrapper，提供更好的日志记录、上下文提取和错误处理能力
+- **统一工具包装器**：所有工具现在使用CallToolWrapper进行统一的上下文处理和日志记录
+- **增强的错误处理**：CallToolWrapper提供统一的错误处理和性能监控
+- **改进的日志记录**：自动记录工具调用的成功和失败情况，包含执行时间和参数信息
+- **现代化的上下文传播**：通过CallToolWrapper实现更可靠的上下文提取和传播机制
 
 ## 目录
 1. [简介](#简介)
@@ -41,21 +40,23 @@
 8. [SSE传输协议改进](#sse传输协议改进)
 9. [上下文传播机制](#上下文传播机制)
 10. [工具实现详解](#工具实现详解)
-11. [日志增强功能](#日志增强功能)
-12. [配置管理增强](#配置管理增强)
-13. [多服务器连接管理](#多服务器连接管理)
-14. [JWT密钥配置增强](#jwt密钥配置增强)
-15. [工具名前缀路由](#工具名前缀路由)
-16. [日志配置优化](#日志配置优化)
-17. [依赖分析](#依赖分析)
-18. [性能考量](#性能考量)
-19. [故障排查指南](#故障排查指南)
-20. [结论](#结论)
-21. [附录](#附录)
+11. [CallToolWrapper现代化工具处理](#calltoolwrapper现代化工具处理)
+12. [日志增强功能](#日志增强功能)
+13. [配置管理增强](#配置管理增强)
+14. [多服务器连接管理](#多服务器连接管理)
+15. [JWT密钥配置增强](#jwt密钥配置增强)
+16. [工具名前缀路由](#工具名前缀路由)
+17. [日志配置优化](#日志配置优化)
+18. [依赖分析](#依赖分析)
+19. [性能考量](#性能考量)
+20. [故障排查指南](#故障排查指南)
+21. [结论](#结论)
+22. [附录](#附录)
 
 ## 简介
 本文件为MCP（Model Context Protocol）服务器的技术文档，围绕在本仓库中的MCP服务器实现进行系统化说明。该实现基于go-zero框架和最新的MCP协议规范，提供模块化的MCP服务器示例，包含：
 
+- **现代化工具处理机制**：采用CallToolWrapper统一包装所有工具，提供更好的日志记录、上下文提取和错误处理能力
 - **双层认证系统**：支持JWT令牌和连接级服务令牌的双重验证机制
 - **Streamable HTTP传输协议**：实现2025年3月26日规范的流式HTTP传输
 - **SSE传输协议改进**：增强的Server-Sent Events支持，包含认证上下文提取机制
@@ -93,8 +94,8 @@ aiapp/mcpserver/
     ├── svc/
     │   └── servicecontext.go # 服务上下文管理
     └── tools/
-        ├── echo.go           # echo工具实现（含日志增强）
-        ├── modbus.go         # Modbus工具实现
+        ├── echo.go           # echo工具实现（使用CallToolWrapper）
+        ├── modbus.go         # Modbus工具实现（使用CallToolWrapper）
         └── registry.go       # 工具注册中心
 ```
 
@@ -141,12 +142,14 @@ ENTRY["入口点<br/>mcpserver.go"]
 CONF["配置文件<br/>etc/mcpserver.yaml"]
 AUTH["双层认证系统<br/>common/mcpx/auth.go"]
 STREAM["Streamable传输<br/>common/mcpx/server.go"]
-CTXPROP["上下文传播<br/>common/mcpx/ctxprop.go"]
+WRAPPER["CallToolWrapper<br/>common/mcpx/wrapper.go"]
+CTXPROP["上下文传播<br/>common/ctxprop/ctx.go"]
+CTXDATA["上下文数据<br/>common/ctxdata/ctxData.go"]
 SSEAUTH["SSE认证处理<br/>common/mcpx/sse_auth.go"]
 MSERVER["多服务器配置<br/>common/mcpx/config.go"]
 MCPCFG["MCP配置结构<br/>common/mcpx/config.go"]
 ENDPOINT["工具名前缀<br/>ToolNameSeparator"]
-LOGENHANCE["日志增强<br/>token+username"]
+LOGENHANCE["日志增强<br/>统一错误处理"]
 RESPONSE["响应增强<br/>中文用户名"]
 end
 ENTRY --> CFG
@@ -157,8 +160,10 @@ REG --> MODBUS
 CTX --> MODBUS
 CFG --> CONF
 AUTH --> STREAM
-STREAM --> CTXPROP
-CTXPROP --> SSEAUTH
+STREAM --> WRAPPER
+WRAPPER --> CTXPROP
+CTXPROP --> CTXDATA
+CTXDATA --> SSEAUTH
 ENTRY --> LOGENHANCE
 LOGENHANCE --> RESPONSE
 MSERVER --> MCPCFG
@@ -170,7 +175,7 @@ MCPCFG --> ENDPOINT
 - [config.go:8-12](file://aiapp/mcpserver/internal/config/config.go#L8-L12)
 - [servicecontext.go:15-24](file://aiapp/mcpserver/internal/svc/servicecontext.go#L15-L24)
 - [registry.go:10-12](file://aiapp/mcpserver/internal/tools/registry.go#L10-L12)
-- [config.go:1-23](file://common/mcpx/config.go#L1-L23)
+- [wrapper.go:23-70](file://common/mcpx/wrapper.go#L23-L70)
 
 ## 详细组件分析
 
@@ -228,7 +233,7 @@ Srv-->>CLI : 服务就绪
 - **工具隔离设计**：每个工具独立实现，便于维护和扩展
 - **参数验证**：每个工具都有明确的参数结构定义
 - **错误处理**：工具调用包含完善的错误处理机制
-- **上下文传播**：Modbus工具使用WithCtxProp包装器自动传播上下文
+- **上下文传播**：所有工具现在使用CallToolWrapper进行统一的上下文处理
 
 ```mermaid
 flowchart TD
@@ -236,17 +241,17 @@ Start(["收到工具调用"]) --> Check{"工具类型？"}
 Check --> |echo| Echo["Echo工具处理"]
 Check --> |read_holding_registers| Modbus1["Modbus读保持寄存器"]
 Check --> |read_coils| Modbus2["Modbus读线圈"]
-Echo --> Parse1["解析Echo参数"]
-Parse1 --> LogEnhance["日志增强：捕获token和username"]
+Echo --> Wrapper["CallToolWrapper包装器"]
+Wrapper --> LogEnhance["统一日志记录：捕获token和username"]
 LogEnhance --> Format1["格式化回显消息含中文用户名"]
 Format1 --> Return1["返回结果"]
-Modbus1 --> Wrap["WithCtxProp包装器"]
-Wrap --> Extract["ExtractCtxFromHeader提取上下文"]
+Modbus1 --> Wrapper2["CallToolWrapper包装器"]
+Wrapper2 --> Extract["自动上下文提取"]
 Extract --> Call1["调用BridgeModbusCli"]
 Call1 --> Format2["格式化寄存器结果"]
 Format2 --> Return2["返回结果"]
-Modbus2 --> Wrap2["WithCtxProp包装器"]
-Wrap2 --> Extract2["ExtractCtxFromHeader提取上下文"]
+Modbus2 --> Wrapper3["CallToolWrapper包装器"]
+Wrapper3 --> Extract2["自动上下文提取"]
 Extract2 --> Call2["调用BridgeModbusCli"]
 Call2 --> Format3["格式化线圈结果"]
 Format3 --> Return3["返回结果"]
@@ -257,13 +262,13 @@ Return3 --> End
 
 **图表来源**
 - [registry.go:10-12](file://aiapp/mcpserver/internal/tools/registry.go#L10-L12)
-- [echo.go:22-36](file://aiapp/mcpserver/internal/tools/echo.go#L22-L36)
-- [modbus.go:34-69](file://aiapp/mcpserver/internal/tools/modbus.go#L34-L69)
-- [ctxprop.go:48-58](file://common/mcpx/ctxprop.go#L48-L58)
+- [echo.go:25-42](file://aiapp/mcpserver/internal/tools/echo.go#L25-L42)
+- [modbus.go:35-69](file://aiapp/mcpserver/internal/tools/modbus.go#L35-L69)
+- [wrapper.go:31-70](file://common/mcpx/wrapper.go#L31-L70)
 
 **章节来源**
 - [registry.go:9-13](file://aiapp/mcpserver/internal/tools/registry.go#L9-L13)
-- [echo.go:15-37](file://aiapp/mcpserver/internal/tools/echo.go#L15-L37)
+- [echo.go:15-42](file://aiapp/mcpserver/internal/tools/echo.go#L15-L42)
 - [modbus.go:28-129](file://aiapp/mcpserver/internal/tools/modbus.go#L28-L129)
 
 ## 双层认证系统
@@ -361,7 +366,7 @@ end
 ```
 
 **图表来源**
-- [sse_auth.go:50-129](file://common/mcpx/sse_auth.go#L50-L129)
+- [server.go:93-103](file://common/mcpx/server.go#L93-L103)
 
 ### SSE认证处理机制
 1. **会话管理**：每个SSE连接创建独立的authSSESession
@@ -376,8 +381,7 @@ end
 - **并发安全**：支持多会话并发处理
 
 **章节来源**
-- [sse_auth.go:16-48](file://common/mcpx/sse_auth.go#L16-L48)
-- [sse_auth.go:98-129](file://common/mcpx/sse_auth.go#L98-L129)
+- [server.go:93-103](file://common/mcpx/server.go#L93-L103)
 
 ## 上下文传播机制
 
@@ -390,70 +394,62 @@ subgraph "上下文传播流程"
 A["客户端请求"] --> B["ctxHeaderTransport"]
 B --> C["HTTP头部注入"]
 C --> D["MCP服务器接收"]
-D --> E["ExtractCtxFromHeader"]
-E --> F["context.Context注入"]
-F --> G["工具处理器"]
-G --> H["WithCtxProp包装器"]
-H --> I["SSE回退机制"]
-I --> J["从TokenInfo提取上下文"]
-J --> K["自动传播用户上下文"]
+D --> E["CallToolWrapper"]
+E --> F["ExtractCtxFromHeader"]
+F --> G["context.Context注入"]
+G --> H["工具处理器"]
+H --> I["统一错误处理"]
+I --> J["性能监控"]
+J --> K["自动日志记录"]
 end
 ```
 
 **图表来源**
-- [client.go:313-347](file://common/mcpx/client.go#L313-L347)
-- [ctxprop.go:25-58](file://common/mcpx/ctxprop.go#L25-L58)
+- [client.go:684-705](file://common/mcpx/client.go#L684-L705)
+- [wrapper.go:31-70](file://common/mcpx/wrapper.go#L31-L70)
 
-### SSE传输回退机制
-**更新** 新增的SSE传输回退机制确保了认证上下文的一致性：
+### CallToolWrapper现代化处理机制
+**更新** MCP服务器现在使用CallToolWrapper进行统一的工具处理：
 
 ```mermaid
 graph LR
-subgraph "SSE传输回退机制"
-A["req.Extra为nil"] --> B{"SSE传输？"}
-B --> |是| C["从session context提取TokenInfo"]
-C --> D["ctxprop.ExtractFromClaims"]
-D --> E["覆盖HTTP头部上下文"]
-B --> |否| F["使用原有Streamable路径"]
+subgraph "CallToolWrapper现代化处理"
+A["原始工具处理器"] --> B["CallToolWrapper包装器"]
+B --> C["统一日志记录"]
+C --> D["自动上下文提取"]
+D --> E["性能监控"]
+E --> F["错误处理"]
+F --> G["返回结果"]
 end
 ```
 
 **图表来源**
-- [ctxprop.go:52-61](file://common/mcpx/ctxprop.go#L52-L61)
+- [wrapper.go:31-70](file://common/mcpx/wrapper.go#L31-L70)
 
-### 头部映射关系
-支持的上下文字段映射：
+### 上下文提取机制
+1. **Streamable传输**：从req.Extra.Header和TokenInfo提取上下文
+2. **SSE传输**：从req.Params._meta提取用户上下文
+3. **SSE直连JWT**：从连接级TokenInfo提取上下文
+4. **自动传播**：将提取的上下文注入到工具处理器的context中
 
-| HTTP头部 | 上下文键 | 描述 |
-|---------|---------|------|
-| Authorization | CtxAuthorizationKey | 用户认证令牌 |
-| X-User-Id | CtxUserIdKey | 用户ID |
-| X-User-Name | CtxUserNameKey | 用户名 |
-| X-Dept-Code | CtxDeptCodeKey | 部门编码 |
-| X-Trace-Id | CtxTraceIdKey | 跟踪ID |
-
-### 传播机制
-1. **客户端侧**：ctxHeaderTransport从context提取用户上下文，注入HTTP头部
-2. **服务端侧**：ExtractCtxFromHeader从HTTP头部提取用户上下文，注入context
-3. **工具侧**：WithCtxProp包装器自动传播上下文到工具处理器
-4. **SSE回退**：当req.Extra为nil时，从session context提取TokenInfo
-
-### 降级机制
-- **Authorization降级**：当context中没有用户JWT时，使用ServiceToken
-- **空上下文处理**：当HTTP头部为空时，直接返回原context
-- **SSE认证回退**：确保SSE传输下的认证上下文一致性
+### 错误处理和日志记录
+- **统一错误处理**：所有工具调用都经过CallToolWrapper的错误处理
+- **性能监控**：自动记录工具调用的执行时间和参数
+- **日志记录**：成功和失败的工具调用都会被记录
+- **参数序列化**：自动序列化工具参数用于日志记录
 
 **章节来源**
-- [ctxprop.go:13-58](file://common/mcpx/ctxprop.go#L13-L58)
-- [client.go:313-347](file://common/mcpx/client.go#L313-L347)
-- [ctxData.go:9-24](file://common/ctxdata/ctxData.go#L9-L24)
+- [wrapper.go:23-80](file://common/mcpx/wrapper.go#L23-L80)
+- [client.go:684-705](file://common/mcpx/client.go#L684-L705)
+- [ctxprop.go:12-78](file://common/ctxprop/ctx.go#L12-L78)
+- [ctxData.go:5-67](file://common/ctxdata/ctxData.go#L5-L67)
 
 ## 工具实现详解
 
 ### Echo工具实现
 - **参数结构**：包含message（必填）和prefix（可选）参数
 - **功能特性**：支持自定义前缀的回显功能
-- **日志增强**：**新增** 改进了调试日志输出，同时捕获token和username信息
+- **日志增强**：**新增** 通过CallToolWrapper提供统一的日志记录，同时捕获token和username信息
 - **响应格式**：返回TextContent格式的文本内容，**更新** 在响应消息中支持中文用户名显示
 - **使用场景**：测试工具调用链路和验证MCP协议实现
 
@@ -463,19 +459,19 @@ end
 - **参数验证**：包含地址范围和数量限制验证
 - **结果格式化**：提供JSON格式的结果输出
 - **错误处理**：完善的RPC调用错误处理机制
-- **上下文传播**：使用WithCtxProp包装器自动传播用户上下文
+- **上下文传播**：使用CallToolWrapper进行统一的上下文处理
 
 ```mermaid
 graph LR
 subgraph "Modbus工具架构"
 A["ReadHoldingRegistersArgs"] --> B["RegisterModbus"]
-B --> C["WithCtxProp包装器"]
+B --> C["CallToolWrapper包装器"]
 C --> D["ReadHoldingRegisters工具"]
 D --> E["BridgeModbusCli"]
 E --> F["formatRegistersResult"]
 F --> G["JSON格式化输出"]
 A2["ReadCoilsArgs"] --> B
-B --> H["WithCtxProp包装器"]
+B --> H["CallToolWrapper包装器"]
 H --> I["ReadCoils工具"]
 I --> E
 E --> J["formatCoilsResult"]
@@ -486,41 +482,86 @@ end
 **图表来源**
 - [modbus.go:14-27](file://aiapp/mcpserver/internal/tools/modbus.go#L14-L27)
 - [modbus.go:29-69](file://aiapp/mcpserver/internal/tools/modbus.go#L29-L69)
-- [ctxprop.go:48-58](file://common/mcpx/ctxprop.go#L48-L58)
+- [wrapper.go:31-70](file://common/mcpx/wrapper.go#L31-L70)
 
 **章节来源**
-- [echo.go:9-37](file://aiapp/mcpserver/internal/tools/echo.go#L9-L37)
+- [echo.go:9-42](file://aiapp/mcpserver/internal/tools/echo.go#L9-L42)
 - [modbus.go:14-129](file://aiapp/mcpserver/internal/tools/modbus.go#L14-L129)
+
+## CallToolWrapper现代化工具处理
+
+### CallToolWrapper架构
+**更新** MCP服务器现在使用CallToolWrapper提供现代化的工具处理机制：
+
+```mermaid
+graph LR
+subgraph "CallToolWrapper现代化处理机制"
+A["原始工具处理器"] --> B["CallToolWrapper(h)"]
+B --> C["统一日志记录"]
+C --> D["性能监控"]
+D --> E["自动上下文提取"]
+E --> F["错误处理"]
+F --> G["返回结果"]
+end
+```
+
+**图表来源**
+- [wrapper.go:31-70](file://common/mcpx/wrapper.go#L31-L70)
+
+### 日志记录增强
+- **统一日志格式**：所有工具调用都经过统一的日志记录机制
+- **执行时间监控**：自动记录工具调用的执行时间
+- **参数序列化**：自动序列化工具参数用于日志记录
+- **错误分类**：区分成功和失败的日志记录
+- **上下文信息**：记录工具名称和执行上下文
+
+### 上下文提取机制
+- **Streamable传输路径**：从req.Extra.Header和TokenInfo提取上下文
+- **SSE传输路径**：从req.Params._meta提取用户上下文
+- **SSE直连JWT路径**：从连接级TokenInfo提取上下文
+- **自动传播**：将提取的上下文注入到工具处理器的context中
+
+### 错误处理机制
+- **统一错误处理**：所有工具调用都经过CallToolWrapper的错误处理
+- **性能监控**：自动记录工具调用的执行时间和参数
+- **日志记录**：成功和失败的工具调用都会被记录
+- **参数序列化**：自动序列化工具参数用于日志记录
+
+**章节来源**
+- [wrapper.go:23-80](file://common/mcpx/wrapper.go#L23-L80)
 
 ## 日志增强功能
 
 ### 日志增强架构
-**更新** MCP服务器的echo工具现在具备了增强的日志功能：
+**更新** MCP服务器的echo工具现在通过CallToolWrapper具备了增强的日志功能：
 
 ```mermaid
 graph LR
 subgraph "日志增强功能"
-A["Echo工具调用"] --> B["获取Authorization"]
-B --> C["获取UserName"]
-C --> D["日志输出：token: %s,username: %s"]
+A["Echo工具调用"] --> B["CallToolWrapper包装器"]
+B --> C["统一日志记录"]
+C --> D["token: %s,username: %s"]
 D --> E["返回增强响应"]
 E --> F["中文用户名显示"]
 end
 ```
 
 **图表来源**
-- [echo.go:25-38](file://aiapp/mcpserver/internal/tools/echo.go#L25-L38)
+- [echo.go:25-42](file://aiapp/mcpserver/internal/tools/echo.go#L25-L42)
+- [wrapper.go:37-44](file://common/mcpx/wrapper.go#L37-L44)
 
 ### 日志增强特性
+- **统一日志记录**：通过CallToolWrapper提供统一的日志记录机制
 - **token捕获**：通过ctxdata.GetAuthorization(ctx)获取用户认证令牌
 - **username捕获**：通过ctxdata.GetUserName(ctx)获取用户名信息
-- **调试输出**：使用logx.Debugf输出详细的调试信息
+- **调试输出**：使用logx.WithContext(ctx).WithDuration记录详细信息
 - **格式化输出**：采用统一的日志格式"token: %s,username: %s"
 - **中文支持**：响应消息中直接显示中文用户名
 
 ### 日志输出格式
 - **调试级别**：使用debug级别日志，便于开发和调试
 - **统一格式**：所有日志输出采用相同的格式规范
+- **性能监控**：记录工具调用的执行时间和参数
 - **敏感信息**：Authorization令牌在日志中可能需要脱敏处理
 
 ### 响应消息增强
@@ -529,7 +570,8 @@ end
 - **国际化支持**：支持中文用户的本地化体验
 
 **章节来源**
-- [echo.go:25-38](file://aiapp/mcpserver/internal/tools/echo.go#L25-L38)
+- [echo.go:25-42](file://aiapp/mcpserver/internal/tools/echo.go#L25-L42)
+- [wrapper.go:37-44](file://common/mcpx/wrapper.go#L37-L44)
 - [ctxData.go:47-59](file://common/ctxdata/ctxData.go#L47-L59)
 
 ## 配置管理增强
@@ -574,7 +616,7 @@ end
 ```
 
 **图表来源**
-- [config.go:11-22](file://common/mcpx/config.go#L11-L22)
+- [server.go:11-22](file://common/mcpx/server.go#L11-L22)
 - [client.go:208-247](file://common/mcpx/client.go#L208-L247)
 
 ### 服务器连接流程
@@ -607,7 +649,7 @@ end
 - [servicecontext.go:24-28](file://aiapp/aichat/internal/svc/servicecontext.go#L24-L28)
 
 **章节来源**
-- [config.go:11-22](file://common/mcpx/config.go#L11-L22)
+- [server.go:11-22](file://common/mcpx/server.go#L11-L22)
 - [client.go:208-247](file://common/mcpx/client.go#L208-L247)
 - [aichat.yaml:8-15](file://aiapp/aichat/etc/aichat.yaml#L8-L15)
 - [servicecontext.go:24-28](file://aiapp/aichat/internal/svc/servicecontext.go#L24-L28)
@@ -675,7 +717,7 @@ end
 ```
 
 **图表来源**
-- [config.go:8](file://common/mcpx/config.go#L8)
+- [server.go:8](file://common/mcpx/server.go#L8)
 - [client.go:178-182](file://common/mcpx/client.go#L178-L182)
 
 ### 前缀生成规则
@@ -690,7 +732,7 @@ end
 - **工具调用**：AI代理通过前缀路由调用指定服务器的工具
 
 **章节来源**
-- [config.go:8](file://common/mcpx/config.go#L8)
+- [server.go:8](file://common/mcpx/server.go#L8)
 - [client.go:178-182](file://common/mcpx/client.go#L178-L182)
 
 ## 日志配置优化
@@ -757,19 +799,20 @@ SDK --> PREFIX["工具名前缀"]
 SDK --> SSEAUTH["SSE认证处理"]
 SDK --> LOGENHANCE["日志增强"]
 SDK --> RESPONSE["响应增强"]
+SDK --> WRAPPER["CallToolWrapper"]
 ```
 
 **图表来源**
 - [go.mod:50](file://go.mod#L50)
 - [mcpserver.go:12-14](file://aiapp/mcpserver/mcpserver.go#L12-L14)
 - [servicecontext.go:18-23](file://aiapp/mcpserver/internal/svc/servicecontext.go#L18-L23)
-- [config.go:1-23](file://common/mcpx/config.go#L1-L23)
+- [wrapper.go:1-15](file://common/mcpx/wrapper.go#L1-L15)
 
 **章节来源**
 - [go.mod:50](file://go.mod#L50)
 - [mcpserver.go:12-14](file://aiapp/mcpserver/mcpserver.go#L12-L14)
 - [servicecontext.go:18-23](file://aiapp/mcpserver/internal/svc/servicecontext.go#L18-L23)
-- [config.go:1-23](file://common/mcpx/config.go#L1-L23)
+- [wrapper.go:1-15](file://common/mcpx/wrapper.go#L1-L15)
 
 ## 性能考量
 - **模块化优势**：清晰的职责分离，便于性能优化和资源管理
@@ -786,14 +829,16 @@ SDK --> RESPONSE["响应增强"]
 - **多服务器连接优化**：支持连接池和自动重连，提升系统可用性
 - **JWT密钥优化**：多密钥支持允许平滑密钥轮换，不影响系统运行
 - **工具路由优化**：前缀路由避免工具名冲突，提升工具管理效率
-- **日志增强优化**：**新增** 日志增强功能提供更详细的调试信息，但需注意日志开销
+- **日志增强优化**：**新增** 通过CallToolWrapper提供统一的日志记录机制，提升调试效率
 - **响应增强优化**：**新增** 中文用户名显示提升用户体验，无需额外处理开销
+- **CallToolWrapper优化**：**新增** 统一的工具处理机制，提供更好的性能监控和错误处理
+- **上下文提取优化**：**新增** 三种认证路径的自动上下文提取，提升工具调用可靠性
 
 **章节来源**
 - [mcpserver.go:25-26](file://aiapp/mcpserver/mcpserver.go#L25-L26)
 - [mcpserver.yaml:4](file://aiapp/mcpserver/etc/mcpserver.yaml#L4)
 - [servicecontext.go:15-24](file://aiapp/mcpserver/internal/svc/servicecontext.go#L15-L24)
-- [config.go:11-22](file://common/mcpx/config.go#L11-L22)
+- [wrapper.go:31-70](file://common/mcpx/wrapper.go#L31-L70)
 
 ## 故障排查指南
 - **配置加载失败**
@@ -811,6 +856,7 @@ SDK --> RESPONSE["响应增强"]
   - 查看参数解析与处理逻辑，定位错误分支
   - 对于Modbus工具，检查Modbus设备连接状态
   - 验证上下文传播是否正常工作
+  - **新增** 检查CallToolWrapper是否正确包装工具处理器
 - **传输协议问题**
   - 确认UseStreamable配置与客户端兼容
   - 检查MessageTimeout和Cors配置
@@ -827,8 +873,8 @@ SDK --> RESPONSE["响应增强"]
 - **上下文传播问题**
   - 检查HTTP头部是否正确注入
   - 验证context键值对的映射关系
-  - 确认WithCtxProp包装器是否正确使用
-  - **新增** 验证SSE传输的回退机制
+  - 确认CallToolWrapper包装器是否正确使用
+  - **新增** 验证三种认证路径的上下文提取机制
 - **多服务器连接问题**
   - 检查Config.Servers配置格式
   - 验证服务器Endpoint可达性
@@ -847,8 +893,8 @@ SDK --> RESPONSE["响应增强"]
   - 验证Log.Path目录的可写权限
   - 确认开发环境标识Mode: dev的正确性
   - 验证日志级别是否为debug以获取详细信息
-  - **新增** 检查日志增强功能是否正常工作
-  - **新增** 验证token和username日志输出格式
+  - **新增** 检查CallToolWrapper的日志记录功能
+  - **新增** 验证统一日志输出格式
 - **启动性能问题**
   - 确认logx.DisableStat()调用是否正确执行
   - 检查日志文件权限和磁盘空间
@@ -857,16 +903,21 @@ SDK --> RESPONSE["响应增强"]
   - **新增** 检查中文用户名显示是否正常
   - **新增** 验证响应消息格式是否符合预期
   - **新增** 确认用户名编码和字符集支持
+- **CallToolWrapper问题**
+  - **新增** 检查工具处理器是否正确使用CallToolWrapper包装
+  - **新增** 验证上下文提取机制是否正常工作
+  - **新增** 确认日志记录和错误处理功能正常
 
 **章节来源**
 - [mcpserver.go:22-23](file://aiapp/mcpserver/mcpserver.go#L22-L23)
 - [mcpserver.yaml:7-8](file://aiapp/mcpserver/etc/mcpserver.yaml#L7-L8)
 - [mcpserver.yaml:10-18](file://aiapp/mcpserver/etc/mcpserver.yaml#L10-L18)
-- [config.go:11-22](file://common/mcpx/config.go#L11-L22)
+- [wrapper.go:31-70](file://common/mcpx/wrapper.go#L31-L70)
 
 ## 结论
 本MCP服务器在本仓库中提供了高度模块化的实现范例，展示了如何基于go-zero构建企业级的MCP服务。当前实现具有以下特点：
 
+- **现代化工具处理机制**：采用CallToolWrapper统一包装所有工具，提供更好的日志记录、上下文提取和错误处理能力
 - **双层认证系统**：支持JWT令牌和连接级服务令牌的双重验证机制
 - **Streamable HTTP传输协议**：实现2025年3月26日规范的流式HTTP传输
 - **SSE传输协议改进**：新增的SSE认证处理机制，确保认证上下文的一致性
@@ -881,16 +932,18 @@ SDK --> RESPONSE["响应增强"]
 - **多服务器连接管理**：支持多MCP服务器连接和工具名前缀路由
 - **JWT密钥配置增强**：支持多JWT密钥配置，提升安全性和密钥轮换能力
 - **认证上下文提取**：新增的SSE传输认证上下文提取功能，确保工具调用的一致性
-- **日志增强功能**：**新增** echo工具现在同时捕获token和username信息，提供更详细的调试日志输出
+- **日志增强功能**：**新增** 通过CallToolWrapper提供统一的日志记录机制，提升调试效率
 - **响应消息增强**：**新增** 在响应消息中支持中文用户名显示，提升用户体验
 
-**新增** 本次更新特别增强了MCP服务器的echo工具功能，通过以下改进提升了调试能力和用户体验：
+**新增** 本次更新特别增强了MCP服务器的工具处理机制，通过以下改进提升了系统的现代化程度：
 
-- **日志增强**：在echo工具中同时捕获token和username信息，提供更详细的调试日志输出
-- **响应增强**：在响应消息中直接显示中文用户名，无需额外的用户名转换处理
-- **上下文传播**：通过ctxdata包的GetAuthorization和GetUserName函数获取用户认证信息
-- **用户体验**：中文用户名显示提升了本地化用户体验
-- **调试效率**：详细的日志输出帮助开发者快速定位问题
+- **CallToolWrapper现代化**：工具注册系统已从WithCtxProp迁移到CallToolWrapper，提供更好的日志记录、上下文提取和错误处理能力
+- **统一工具包装器**：所有工具现在使用CallToolWrapper进行统一的上下文处理和日志记录
+- **增强的错误处理**：CallToolWrapper提供统一的错误处理和性能监控
+- **改进的日志记录**：自动记录工具调用的成功和失败情况，包含执行时间和参数信息
+- **现代化的上下文传播**：通过CallToolWrapper实现更可靠的上下文提取和传播机制
+- **三种认证路径支持**：支持Streamable传输、SSE + mcpx.Client和SSE直连JWT三种认证路径
+- **自动上下文提取**：根据不同的传输协议自动提取和传播用户上下文
 
 后续演进方向：
 - 增强工具安全策略（如鉴权、限流）
@@ -901,8 +954,9 @@ SDK --> RESPONSE["响应增强"]
 - 支持多服务器连接和负载均衡
 - 实现更精细的工具路由和权限控制
 - 增密集成自动化密钥轮换工具
-- **新增** 扩展日志增强功能到其他工具
+- **新增** 扩展CallToolWrapper功能到其他工具类型
 - **新增** 增强响应消息的国际化支持
+- **新增** 优化CallToolWrapper的性能监控和错误处理机制
 
 ## 附录
 
@@ -931,7 +985,7 @@ SDK --> RESPONSE["响应增强"]
 #### Echo工具参数
 - **message**：必填字符串，要回显的消息
 - **prefix**：可选字符串，添加到回显消息前的前缀，默认"Echo: "
-- **日志增强**：**新增** 自动捕获并记录token和username信息
+- **日志增强**：**新增** 通过CallToolWrapper提供统一的日志记录，自动捕获并记录token和username信息
 - **响应增强**：**新增** 在响应消息中显示中文用户名
 
 #### Modbus工具参数
@@ -1011,9 +1065,11 @@ Mcpx:
 - **JWT密钥管理**：定期轮换密钥，确保系统安全
 - **工具路由设计**：合理设计工具名前缀，便于多服务器工具管理
 - **SSE传输优化**：充分利用新增的SSE认证处理机制，确保工具调用的一致性
-- **日志增强实践**：**新增** 利用增强的日志功能提升调试效率
+- **日志增强实践**：**新增** 利用CallToolWrapper提供的统一日志记录功能提升调试效率
 - **响应增强实践**：**新增** 利用中文用户名显示提升用户体验
-- **上下文传播最佳实践**：**新增** 确保token和username信息的正确传播
+- **上下文传播最佳实践**：**新增** 确保三种认证路径下的上下文提取和传播机制正常工作
+- **CallToolWrapper最佳实践**：**新增** 正确使用CallToolWrapper包装工具处理器，确保统一的日志记录和错误处理
+- **现代化工具处理**：**新增** 采用CallToolWrapper替代传统的WithCtxProp，提升工具处理的可靠性和可维护性
 
 **章节来源**
 - [mcpserver.go:17](file://aiapp/mcpserver/mcpserver.go#L17)
@@ -1021,3 +1077,4 @@ Mcpx:
 - [registry.go:9-13](file://aiapp/mcpserver/internal/tools/registry.go#L9-L13)
 - [mcpserver.yaml:4-7](file://aiapp/mcpserver/etc/mcpserver.yaml#L4-L7)
 - [aichat.yaml:8-15](file://aiapp/aichat/etc/aichat.yaml#L8-L15)
+- [wrapper.go:23-70](file://common/mcpx/wrapper.go#L23-L70)

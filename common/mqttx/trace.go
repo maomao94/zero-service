@@ -2,7 +2,6 @@ package mqttx
 
 import "go.opentelemetry.io/otel/propagation"
 
-// 确保实现接口
 var _ propagation.TextMapCarrier = (*MessageCarrier)(nil)
 
 type MessageCarrier struct {

@@ -93,10 +93,12 @@ HANDLER --> SP
   - 会话状态：通过内部map维护订阅状态，断线清空后恢复。
 - Trace追踪机制
   - 生产者/消费者Span：分别标记Producer/Consumer，设置客户端ID、主题、消息ID、QoS、动作等属性。
-  - 文本映射传播：通过MessageCarrier注入/提取trace上下文。
+  - 文本映射传播：通过MessageCarrier正确实现OpenTelemetry TextMapCarrier接口进行trace上下文注入/提取。
   - 指标统计：基于stat.Metrics记录处理耗时。
 - 桥接服务集成
   - 将MQTT消息转发至流事件服务与Socket推送服务，支持事件映射与日志控制。
+
+**更新** MessageCarrier现在正确实现了OpenTelemetry TextMapCarrier接口，确保与OpenTelemetry传播标准的一致性，消除了之前的接口实现注释问题。
 
 **章节来源**
 - [common/mqttx/mqttx.go:98-178](file://common/mqttx/mqttx.go#L98-L178)
@@ -105,7 +107,7 @@ HANDLER --> SP
 - [common/mqttx/mqttx.go:309-333](file://common/mqttx/mqttx.go#L309-L333)
 - [common/mqttx/mqttx.go:361-388](file://common/mqttx/mqttx.go#L361-L388)
 - [common/mqttx/message.go:3-7](file://common/mqttx/message.go#L3-L7)
-- [common/mqttx/trace.go:8-30](file://common/mqttx/trace.go#L8-L30)
+- [common/mqttx/trace.go:5-30](file://common/mqttx/trace.go#L5-L30)
 - [app/bridgemqtt/internal/handler/mqttstreamhandler.go:99-188](file://app/bridgemqtt/internal/handler/mqttstreamhandler.go#L99-L188)
 
 ## 架构总览
@@ -335,8 +337,6 @@ G --> F
   - 合理设置KeepAlive与Timeout，平衡资源占用与稳定性。
   - AutoSubscribe在大量主题场景下可减少重复订阅开销。
 
-[本节为通用性能建议，不直接分析具体文件]
-
 ## 故障排查指南
 - 连接问题
   - 检查Broker地址、认证信息与网络连通性。
@@ -361,8 +361,6 @@ G --> F
 
 ## 结论
 该MQTT协议处理组件以简洁的接口与完善的可观测性为核心，既满足轻量接入需求，又具备桥接转发与跨服务追踪能力。通过合理配置与并发优化，可在高吞吐场景下稳定运行。建议在生产环境中启用Trace与指标采集，并结合日志策略进行持续监控。
-
-[本节为总结性内容，不直接分析具体文件]
 
 ## 附录
 
@@ -406,12 +404,16 @@ G --> F
   - 嵌入Message：包含topic、payload、headers（用于传播）。
 - 交互流程
   - 订阅消息到达后，先尝试解包Message结构体，提取payload与Headers。
+  - 通过正确实现的MessageCarrier进行OpenTelemetry上下文提取。
   - 启动Span并记录属性，随后调用所有注册处理器。
   - 处理完成后异步转发至下游服务。
+
+**更新** MessageCarrier现在正确实现了OpenTelemetry TextMapCarrier接口，确保与OpenTelemetry传播标准的一致性，消除了之前的接口实现注释问题。
 
 **章节来源**
 - [common/mqttx/message.go:3-7](file://common/mqttx/message.go#L3-L7)
 - [common/mqttx/mqttx.go:257-307](file://common/mqttx/mqttx.go#L257-L307)
+- [common/mqttx/trace.go:5-30](file://common/mqttx/trace.go#L5-L30)
 - [app/bridgemqtt/internal/handler/mqttstreamhandler.go:130-188](file://app/bridgemqtt/internal/handler/mqttstreamhandler.go#L130-L188)
 
 ### 常见问题与解决方案
@@ -426,8 +428,10 @@ G --> F
 - 问题：Trace未传播
   - 解决：确认使用Message结构体并正确注入Headers。
 
+**更新** MessageCarrier现在正确实现了OpenTelemetry TextMapCarrier接口，确保与OpenTelemetry传播标准的一致性，消除了之前的接口实现注释问题。
+
 **章节来源**
 - [common/mqttx/mqttx.go:100-110](file://common/mqttx/mqttx.go#L100-L110)
 - [common/mqttx/mqttx.go:215-233](file://common/mqttx/mqttx.go#L215-L233)
 - [common/mqttx/mqttx.go:309-333](file://common/mqttx/mqttx.go#L309-L333)
-- [common/mqttx/trace.go:16-30](file://common/mqttx/trace.go#L16-L30)
+- [common/mqttx/trace.go:5-30](file://common/mqttx/trace.go#L5-L30)

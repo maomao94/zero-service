@@ -41,7 +41,7 @@ func NewDualTokenVerifier(jwtSecrets []string, serviceToken string, claimMapping
 			// 应用外部 claim key 映射（如 "user_id" -> "user-id"）
 			ctxprop.ApplyClaimMapping(claims, claimMapping)
 
-			// 构建 Extra：只收集 PropFields + exp（供 WithCtxProp 提取）
+			// 构建 Extra：只收集 PropFields + exp（供 CallToolWrapper 提取）
 			extra := make(map[string]any, len(ctxdata.PropFields)+2)
 			extra[ctxdata.CtxAuthTypeKey] = "user"
 			for _, f := range ctxdata.PropFields {
@@ -57,6 +57,7 @@ func NewDualTokenVerifier(jwtSecrets []string, serviceToken string, claimMapping
 				UserID: ctxprop.ClaimString(claims, ctxdata.CtxUserIdKey),
 				Extra:  extra,
 			}
+			extra[ctxdata.CtxAuthorizationKey] = token
 			if exp, ok := claims["exp"].(float64); ok {
 				info.Expiration = time.Unix(int64(exp), 0)
 			}

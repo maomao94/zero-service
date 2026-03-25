@@ -33,6 +33,8 @@ func main() {
 	svcCtx := svc.NewServiceContext(c)
 	tools.RegisterAll(server.Server(), svcCtx)
 
+	logx.AddGlobalFields(logx.Field("app", c.Name))
+
 	fmt.Printf("Starting MCP server at %s:%d ...\n", c.Host, c.Port)
 	server.Start()
 }

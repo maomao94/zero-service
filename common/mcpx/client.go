@@ -16,6 +16,8 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stat"
 	"github.com/zeromicro/go-zero/core/timex"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 )
 
 // Client MCP 客户端，专注于连接管理和 MCP 协议完整支持
@@ -504,7 +506,7 @@ func (conn *Connection) tryConnect(opts *mcp.ClientOptions) *mcp.ClientSession {
 	conn.transport = transport
 	conn.mu.Unlock()
 
-	if err := conn.loadAll(); err != nil {
+	if err := conn.loadAllWithRetry(); err != nil {
 		logx.WithContext(conn.ctx).Errorf("[mcpx] %s load resources: %v", conn.name, err)
 		_ = session.Close()
 		return nil
@@ -528,6 +530,29 @@ func (conn *Connection) loadAll() error {
 		return err
 	}
 	return nil
+}
+
+// loadAllWithRetry 带重试机制的加载所有 MCP 资源
+// 在 session 初始化期间，tools/list 可能会失败，需要重试
+func (conn *Connection) loadAllWithRetry() error {
+	maxRetries := 3
+	retryDelay := 100 * time.Millisecond
+
+	for i := 0; i < maxRetries; i++ {
+		err := conn.loadAll()
+		if err == nil {
+			return nil
+		}
+
+		if i < maxRetries-1 {
+			logx.WithContext(conn.ctx).Debugf("[mcpx] %s load resources failed (attempt %d/%d): %v, retrying in %v...",
+				conn.name, i+1, maxRetries, err, retryDelay)
+			time.Sleep(retryDelay)
+			retryDelay *= 2
+		}
+	}
+
+	return fmt.Errorf("load resources failed after %d retries: %w", maxRetries, conn.loadAll())
 }
 
 // loadTools 从服务器加载工具列表
@@ -656,15 +681,21 @@ func (conn *Connection) callTool(ctx context.Context, name string, args map[stri
 
 	params := &mcp.CallToolParams{Name: realName, Arguments: args}
 
-	if meta := ctxprop.CollectFromCtx(ctx); len(meta) > 0 {
+	meta := make(map[string]any)
+	if userMeta := ctxprop.CollectFromCtx(ctx); len(userMeta) > 0 {
+		for k, v := range userMeta {
+			meta[k] = v
+		}
 		if meta[ctxdata.CtxAuthTypeKey] == nil {
 			meta[ctxdata.CtxAuthTypeKey] = "user"
 		}
-		params.SetMeta(meta)
 	} else {
-		params.SetMeta(map[string]any{ctxdata.CtxAuthTypeKey: "service"})
+		meta[ctxdata.CtxAuthTypeKey] = "service"
 	}
 
+	otel.GetTextMapPropagator().Inject(ctx, NewMapMetaCarrier(meta))
+
+	params.SetMeta(meta)
 	result, err := session.CallTool(ctx, params)
 	if err != nil {
 		return "", fmt.Errorf("[mcpx] call %q on %s: %w", realName, conn.name, err)
@@ -793,6 +824,40 @@ func stripServerPrefix(name string) string {
 type ctxHeaderTransport struct {
 	base         http.RoundTripper
 	serviceToken string
+}
+
+var _ propagation.TextMapCarrier = (*MapMetaCarrier)(nil)
+
+// MapMetaCarrier MCP _meta 的 TextMapCarrier 实现，用于 OTel 链路注入
+type MapMetaCarrier struct {
+	meta map[string]any
+}
+
+// NewMapMetaCarrier 创建 MapMetaCarrier
+func NewMapMetaCarrier(meta map[string]any) MapMetaCarrier {
+	return MapMetaCarrier{meta: meta}
+}
+
+// Get 获取值
+func (c MapMetaCarrier) Get(key string) string {
+	if v, ok := c.meta[key].(string); ok {
+		return v
+	}
+	return ""
+}
+
+// Set 设置值
+func (c MapMetaCarrier) Set(key string, value string) {
+	c.meta[key] = value
+}
+
+// Keys 返回所有键
+func (c MapMetaCarrier) Keys() []string {
+	keys := make([]string, 0, len(c.meta))
+	for k := range c.meta {
+		keys = append(keys, k)
+	}
+	return keys
 }
 
 // RoundTrip 实现 http.RoundTripper 接口，在请求中注入用户上下文和鉴权信息

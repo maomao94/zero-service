@@ -160,7 +160,6 @@ JwtAuth:
 Auth:
   JwtSecrets:
     - "629c6233-1a76-471b-bd25-b87208762219"
-    - "allcoreisapowerfulmicroservicearchitectureupgradedandoptimizedfromacommercialproject"
   ServiceToken: "mcp-internal-service-token-2026"
   # ClaimMapping: 外部 JWT claim key -> 内部标准 key（按需配置）
   ClaimMapping:

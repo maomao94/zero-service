@@ -2,8 +2,10 @@ package common
 
 import (
 	"encoding/json"
-	"github.com/dromara/carbon/v2"
 	"time"
+
+	"github.com/dromara/carbon/v2"
+	"go.opentelemetry.io/otel/propagation"
 )
 
 const (
@@ -41,4 +43,42 @@ func (t *DateTime) UnmarshalJSON(data []byte) error {
 	c := carbon.Parse(s)
 	*t = DateTime(c.StdTime())
 	return nil
+}
+
+var _ propagation.TextMapCarrier = (*MapCarrier)(nil)
+
+type MapCarrier struct {
+	data map[string]string
+}
+
+func NewMapCarrier(data map[string]string) MapCarrier {
+	if data == nil {
+		data = make(map[string]string)
+	}
+	return MapCarrier{data: data}
+}
+
+func (c MapCarrier) Get(key string) string {
+	if c.data == nil {
+		return ""
+	}
+	return c.data[key]
+}
+
+func (c MapCarrier) Set(key string, value string) {
+	if c.data == nil {
+		c.data = make(map[string]string)
+	}
+	c.data[key] = value
+}
+
+func (c MapCarrier) Keys() []string {
+	if c.data == nil {
+		return []string{}
+	}
+	keys := make([]string, 0, len(c.data))
+	for k := range c.data {
+		keys = append(keys, k)
+	}
+	return keys
 }

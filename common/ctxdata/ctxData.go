@@ -7,8 +7,7 @@ const (
 	CtxUserNameKey      = "user-name"
 	CtxDeptCodeKey      = "dept-code"
 	CtxAuthorizationKey = "authorization"
-	CtxTraceIdKey       = "trace-id"
-	CtxAuthTypeKey      = "auth-type" // TokenInfo.Extra 中的认证来源标识，值为 "service" 或 "user"
+	CtxAuthTypeKey      = "auth-type"
 )
 
 // gRPC metadata header key（必须小写）
@@ -17,7 +16,6 @@ const (
 	HeaderUserName      = "x-user-name"
 	HeaderDeptCode      = "x-dept-code"
 	HeaderAuthorization = "authorization"
-	HeaderTraceId       = "x-trace-id"
 	HeaderAuthType      = "x-auth-type"
 )
 
@@ -36,7 +34,6 @@ var PropFields = []PropField{
 	{CtxUserIdKey, HeaderUserId, "X-User-Id", false},
 	{CtxUserNameKey, HeaderUserName, "X-User-Name", false},
 	{CtxDeptCodeKey, HeaderDeptCode, "X-Dept-Code", false},
-	{CtxTraceIdKey, HeaderTraceId, "X-Trace-Id", false},
 	{CtxAuthTypeKey, HeaderAuthType, "X-Auth-Type", false},
 }
 
@@ -56,13 +53,6 @@ func GetUserName(ctx context.Context) string {
 
 func GetAuthorization(ctx context.Context) string {
 	if v, ok := ctx.Value(CtxAuthorizationKey).(string); ok {
-		return v
-	}
-	return ""
-}
-
-func GetTraceId(ctx context.Context) string {
-	if v, ok := ctx.Value(CtxTraceIdKey).(string); ok {
 		return v
 	}
 	return ""
