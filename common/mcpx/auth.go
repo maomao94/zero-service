@@ -23,7 +23,7 @@ func NewDualTokenVerifier(jwtSecrets []string, serviceToken string, claimMapping
 	return func(ctx context.Context, token string, req *http.Request) (*auth.TokenInfo, error) {
 		// 1. ServiceToken 常量时间比较
 		if serviceToken != "" && subtle.ConstantTimeCompare([]byte(token), []byte(serviceToken)) == 1 {
-			logx.Debugf("[mcpx-auth] service token matched")
+			logx.WithContext(ctx).Debugf("[mcpx-auth] service token matched")
 			return &auth.TokenInfo{
 				Expiration: time.Now().Add(24 * time.Hour),
 				Extra:      map[string]any{ctxdata.CtxAuthTypeKey: "service"},
@@ -34,7 +34,7 @@ func NewDualTokenVerifier(jwtSecrets []string, serviceToken string, claimMapping
 		if len(jwtSecrets) > 0 {
 			claims, err := tool.ParseToken(token, jwtSecrets...)
 			if err != nil {
-				logx.Debugf("[mcpx-auth] jwt parse failed: %v", err)
+				logx.WithContext(ctx).Debugf("[mcpx-auth] jwt parse failed: %v", err)
 				return nil, auth.ErrInvalidToken
 			}
 
@@ -60,27 +60,11 @@ func NewDualTokenVerifier(jwtSecrets []string, serviceToken string, claimMapping
 			if exp, ok := claims["exp"].(float64); ok {
 				info.Expiration = time.Unix(int64(exp), 0)
 			}
-			logx.Debugf("[mcpx-auth] jwt verified, userId=%s, extra keys=%v", info.UserID, mapKeys(extra))
+			logx.WithContext(ctx).Debugf("[mcpx-auth] jwt verified, userId=%s, extra=%v", info.UserID, extra)
 			return info, nil
 		}
 
-		logx.Debugf("[mcpx-auth] no verifier matched")
+		logx.WithContext(ctx).Debugf("[mcpx-auth] no verifier matched")
 		return nil, auth.ErrInvalidToken
 	}
-}
-
-func maskToken(token string) string {
-	if len(token) <= 8 {
-		return token
-	}
-	return token[:12] + "..."
-}
-
-// mapKeys 提取 map 的所有 key。
-func mapKeys(m map[string]any) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	return keys
 }

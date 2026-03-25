@@ -38,19 +38,19 @@ func WithCtxProp[In, Out any](
 					ctx = ctxprop.ExtractFromClaims(ctx, ti.Extra)
 				}
 			}
-			logx.Debugf("[mcpx] WithCtxProp: userId=%s, authType=%s",
+			logx.WithContext(ctx).Debugf("[mcpx] WithCtxProp: userId=%s, authType=%s",
 				ctxdata.GetUserId(ctx), getAuthType(req))
 		} else if meta := req.Params.GetMeta(); len(meta) > 0 {
 			// Path 2: SSE with _meta — mcpx.Client injects user context per-message.
 			ctx = ctxprop.ExtractFromMeta(ctx, meta)
-			logx.Debugf("[mcpx] WithCtxProp(meta): userId=%s", ctxdata.GetUserId(ctx))
+			logx.WithContext(ctx).Debugf("[mcpx] WithCtxProp(meta): userId=%s", ctxdata.GetUserId(ctx))
 		} else {
 			// Path 3: SSE direct user JWT — use GET request's TokenInfo in ctx.
 			if ti := auth.TokenInfoFromContext(ctx); ti != nil {
 				if authType, _ := ti.Extra[ctxdata.CtxAuthTypeKey].(string); authType == "user" {
 					ctx = ctxprop.ExtractFromClaims(ctx, ti.Extra)
 				}
-				logx.Debugf("[mcpx] WithCtxProp(fallback): userId=%s, authType=%s",
+				logx.WithContext(ctx).Debugf("[mcpx] WithCtxProp(fallback): userId=%s, authType=%s",
 					ctxdata.GetUserId(ctx), getAuthTypeFromTokenInfo(ti))
 			}
 		}
