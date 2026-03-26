@@ -21,108 +21,29 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// --- 通用 ---
-type PingReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ping          string                 `protobuf:"bytes,1,opt,name=ping,proto3" json:"ping,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PingReq) Reset() {
-	*x = PingReq{}
-	mi := &file_aichat_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PingReq) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PingReq) ProtoMessage() {}
-
-func (x *PingReq) ProtoReflect() protoreflect.Message {
-	mi := &file_aichat_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PingReq.ProtoReflect.Descriptor instead.
-func (*PingReq) Descriptor() ([]byte, []int) {
-	return file_aichat_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *PingReq) GetPing() string {
-	if x != nil {
-		return x.Ping
-	}
-	return ""
-}
-
-type PingRes struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Pong          string                 `protobuf:"bytes,1,opt,name=pong,proto3" json:"pong,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PingRes) Reset() {
-	*x = PingRes{}
-	mi := &file_aichat_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PingRes) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PingRes) ProtoMessage() {}
-
-func (x *PingRes) ProtoReflect() protoreflect.Message {
-	mi := &file_aichat_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PingRes.ProtoReflect.Descriptor instead.
-func (*PingRes) Descriptor() ([]byte, []int) {
-	return file_aichat_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *PingRes) GetPong() string {
-	if x != nil {
-		return x.Pong
-	}
-	return ""
-}
-
-// --- 对话消息 ---
+// ChatMessage 单条对话消息，兼容 OpenAI Chat Completion 消息格式。
+//
+// 当模型启用深度思考（thinking）时，assistant 消息会包含 reasoning_content 字段，
+// 用于携带模型的推理/思考过程文本，与最终回答 content 分离。
 type ChatMessage struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	Role             string                 `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"` // system / user / assistant
-	Content          string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
-	ReasoningContent string                 `protobuf:"bytes,3,opt,name=reasoning_content,json=reasoningContent,proto3" json:"reasoning_content,omitempty"` // 思考过程（千问 thinking 模式）
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 消息角色，有效值：
+	// - system: 系统提示，用于设定 AI 行为和上下文
+	// - user: 用户输入
+	// - assistant: AI 模型回复
+	Role string `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
+	// 消息正文内容，即实际的对话文本
+	Content string `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
+	// 模型的推理思考过程（仅 assistant 角色有值）。
+	// 不同厂商返回字段名相同（reasoning_content），但启用方式不同，参见 enable_thinking。
+	ReasoningContent string `protobuf:"bytes,3,opt,name=reasoning_content,json=reasoningContent,proto3" json:"reasoning_content,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
 
 func (x *ChatMessage) Reset() {
 	*x = ChatMessage{}
-	mi := &file_aichat_proto_msgTypes[2]
+	mi := &file_aichat_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -134,7 +55,7 @@ func (x *ChatMessage) String() string {
 func (*ChatMessage) ProtoMessage() {}
 
 func (x *ChatMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_aichat_proto_msgTypes[2]
+	mi := &file_aichat_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -147,7 +68,7 @@ func (x *ChatMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChatMessage.ProtoReflect.Descriptor instead.
 func (*ChatMessage) Descriptor() ([]byte, []int) {
-	return file_aichat_proto_rawDescGZIP(), []int{2}
+	return file_aichat_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *ChatMessage) GetRole() string {
@@ -171,24 +92,43 @@ func (x *ChatMessage) GetReasoningContent() string {
 	return ""
 }
 
-// --- 对话补全请求 ---
+// ChatCompletionReq 对话补全请求参数，对标 OpenAI Chat Completion API。
 type ChatCompletionReq struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Model          string                 `protobuf:"bytes,1,opt,name=model,proto3" json:"model,omitempty"`
-	Messages       []*ChatMessage         `protobuf:"bytes,2,rep,name=messages,proto3" json:"messages,omitempty"`
-	Temperature    float64                `protobuf:"fixed64,3,opt,name=temperature,proto3" json:"temperature,omitempty"`
-	TopP           float64                `protobuf:"fixed64,4,opt,name=top_p,json=topP,proto3" json:"top_p,omitempty"`
-	MaxTokens      int32                  `protobuf:"varint,5,opt,name=max_tokens,json=maxTokens,proto3" json:"max_tokens,omitempty"`
-	Stop           []string               `protobuf:"bytes,6,rep,name=stop,proto3" json:"stop,omitempty"`
-	User           string                 `protobuf:"bytes,7,opt,name=user,proto3" json:"user,omitempty"`
-	EnableThinking bool                   `protobuf:"varint,8,opt,name=enable_thinking,json=enableThinking,proto3" json:"enable_thinking,omitempty"` // 是否启用深度思考模式
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 模型标识符，用于指定使用哪个 AI 模型进行对话
+	// 例如：glm-4、glm-4-flash、qwen-max 等
+	Model string `protobuf:"bytes,1,opt,name=model,proto3" json:"model,omitempty"`
+	// 消息历史列表，按时间顺序排列的消息数组。
+	// 建议包含 system 消息作为系统提示，user 消息作为用户输入
+	Messages []*ChatMessage `protobuf:"bytes,2,rep,name=messages,proto3" json:"messages,omitempty"`
+	// 生成文本的随机性参数，取值范围 0.0~2.0。
+	// - 较低值：输出更确定、更聚焦
+	// - 较高值：输出更多样、更创造性
+	// - 0.0 时模型总是选择最高概率的 token（贪婪解码）
+	Temperature float64 `protobuf:"fixed64,3,opt,name=temperature,proto3" json:"temperature,omitempty"`
+	// 核采样参数，取值范围 0.0~1.0。
+	// 模型只从累计概率质量达到 top_p 的最小 token 集合中采样。
+	// 建议与 temperature 二选一使用，不同时调整
+	TopP float64 `protobuf:"fixed64,4,opt,name=top_p,json=topP,proto3" json:"top_p,omitempty"`
+	// 单次回复的最大 token 数限制。
+	// 用于控制回复长度，防止生成过长内容
+	MaxTokens int32 `protobuf:"varint,5,opt,name=max_tokens,json=maxTokens,proto3" json:"max_tokens,omitempty"`
+	// 停止序列，当模型生成这些字符串时停止输出。
+	// 可指定多个停止词，用于精确控制生成结束位置
+	Stop []string `protobuf:"bytes,6,rep,name=stop,proto3" json:"stop,omitempty"`
+	// 用户标识，用于追踪和统计特定用户的请求
+	User string `protobuf:"bytes,7,opt,name=user,proto3" json:"user,omitempty"`
+	// 是否启用深度思考模式。
+	// 启用后模型会先生成推理过程（reasoning_content），再给出最终回答。
+	// 不同厂商启用方式可能不同
+	EnableThinking bool `protobuf:"varint,8,opt,name=enable_thinking,json=enableThinking,proto3" json:"enable_thinking,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
 
 func (x *ChatCompletionReq) Reset() {
 	*x = ChatCompletionReq{}
-	mi := &file_aichat_proto_msgTypes[3]
+	mi := &file_aichat_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -200,7 +140,7 @@ func (x *ChatCompletionReq) String() string {
 func (*ChatCompletionReq) ProtoMessage() {}
 
 func (x *ChatCompletionReq) ProtoReflect() protoreflect.Message {
-	mi := &file_aichat_proto_msgTypes[3]
+	mi := &file_aichat_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -213,7 +153,7 @@ func (x *ChatCompletionReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChatCompletionReq.ProtoReflect.Descriptor instead.
 func (*ChatCompletionReq) Descriptor() ([]byte, []int) {
-	return file_aichat_proto_rawDescGZIP(), []int{3}
+	return file_aichat_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ChatCompletionReq) GetModel() string {
@@ -272,19 +212,26 @@ func (x *ChatCompletionReq) GetEnableThinking() bool {
 	return false
 }
 
-// --- 非流式响应 ---
+// Choice 对话补全的单个候选回复。
 type Choice struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Index         int32                  `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`
-	Message       *ChatMessage           `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	FinishReason  string                 `protobuf:"bytes,3,opt,name=finish_reason,json=finishReason,proto3" json:"finish_reason,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 候选回复的索引，从 0 开始。
+	// 当 n > 1 时用于区分不同候选
+	Index int32 `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`
+	// 完整的 assistant 回复消息，包含 role 和 content
+	Message *ChatMessage `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	// 生成结束原因，有效值：
+	// - stop: 模型自然停止（遇到 stop 序列或达到 max_tokens）
+	// - length: 达到 max_tokens 限制
+	// - content_filter: 内容被过滤
+	FinishReason  string `protobuf:"bytes,3,opt,name=finish_reason,json=finishReason,proto3" json:"finish_reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Choice) Reset() {
 	*x = Choice{}
-	mi := &file_aichat_proto_msgTypes[4]
+	mi := &file_aichat_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -296,7 +243,7 @@ func (x *Choice) String() string {
 func (*Choice) ProtoMessage() {}
 
 func (x *Choice) ProtoReflect() protoreflect.Message {
-	mi := &file_aichat_proto_msgTypes[4]
+	mi := &file_aichat_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -309,7 +256,7 @@ func (x *Choice) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Choice.ProtoReflect.Descriptor instead.
 func (*Choice) Descriptor() ([]byte, []int) {
-	return file_aichat_proto_rawDescGZIP(), []int{4}
+	return file_aichat_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Choice) GetIndex() int32 {
@@ -333,18 +280,22 @@ func (x *Choice) GetFinishReason() string {
 	return ""
 }
 
+// Usage token 使用量统计信息。
 type Usage struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	PromptTokens     int32                  `protobuf:"varint,1,opt,name=prompt_tokens,json=promptTokens,proto3" json:"prompt_tokens,omitempty"`
-	CompletionTokens int32                  `protobuf:"varint,2,opt,name=completion_tokens,json=completionTokens,proto3" json:"completion_tokens,omitempty"`
-	TotalTokens      int32                  `protobuf:"varint,3,opt,name=total_tokens,json=totalTokens,proto3" json:"total_tokens,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 输入 prompt 消耗的 token 数量
+	PromptTokens int32 `protobuf:"varint,1,opt,name=prompt_tokens,json=promptTokens,proto3" json:"prompt_tokens,omitempty"`
+	// 输出 completion 消耗的 token 数量
+	CompletionTokens int32 `protobuf:"varint,2,opt,name=completion_tokens,json=completionTokens,proto3" json:"completion_tokens,omitempty"`
+	// 总消耗 token 数量 = prompt_tokens + completion_tokens
+	TotalTokens   int32 `protobuf:"varint,3,opt,name=total_tokens,json=totalTokens,proto3" json:"total_tokens,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Usage) Reset() {
 	*x = Usage{}
-	mi := &file_aichat_proto_msgTypes[5]
+	mi := &file_aichat_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -356,7 +307,7 @@ func (x *Usage) String() string {
 func (*Usage) ProtoMessage() {}
 
 func (x *Usage) ProtoReflect() protoreflect.Message {
-	mi := &file_aichat_proto_msgTypes[5]
+	mi := &file_aichat_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -369,7 +320,7 @@ func (x *Usage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Usage.ProtoReflect.Descriptor instead.
 func (*Usage) Descriptor() ([]byte, []int) {
-	return file_aichat_proto_rawDescGZIP(), []int{5}
+	return file_aichat_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Usage) GetPromptTokens() int32 {
@@ -393,21 +344,28 @@ func (x *Usage) GetTotalTokens() int32 {
 	return 0
 }
 
+// ChatCompletionRes 非流式对话补全响应。
 type ChatCompletionRes struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Object        string                 `protobuf:"bytes,2,opt,name=object,proto3" json:"object,omitempty"`
-	Created       int64                  `protobuf:"varint,3,opt,name=created,proto3" json:"created,omitempty"`
-	Model         string                 `protobuf:"bytes,4,opt,name=model,proto3" json:"model,omitempty"`
-	Choices       []*Choice              `protobuf:"bytes,5,rep,name=choices,proto3" json:"choices,omitempty"`
-	Usage         *Usage                 `protobuf:"bytes,6,opt,name=usage,proto3" json:"usage,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 本次对话的唯一标识符，用于追踪和关联请求
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// 响应对象类型，固定为 "chat.completion"
+	Object string `protobuf:"bytes,2,opt,name=object,proto3" json:"object,omitempty"`
+	// Unix 时间戳（秒），表示请求创建时间
+	Created int64 `protobuf:"varint,3,opt,name=created,proto3" json:"created,omitempty"`
+	// 本次请求使用的模型标识符
+	Model string `protobuf:"bytes,4,opt,name=model,proto3" json:"model,omitempty"`
+	// 候选回复列表，通常只有一个（除非请求时指定 n > 1）
+	Choices []*Choice `protobuf:"bytes,5,rep,name=choices,proto3" json:"choices,omitempty"`
+	// token 使用量统计
+	Usage         *Usage `protobuf:"bytes,6,opt,name=usage,proto3" json:"usage,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ChatCompletionRes) Reset() {
 	*x = ChatCompletionRes{}
-	mi := &file_aichat_proto_msgTypes[6]
+	mi := &file_aichat_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -419,7 +377,7 @@ func (x *ChatCompletionRes) String() string {
 func (*ChatCompletionRes) ProtoMessage() {}
 
 func (x *ChatCompletionRes) ProtoReflect() protoreflect.Message {
-	mi := &file_aichat_proto_msgTypes[6]
+	mi := &file_aichat_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -432,7 +390,7 @@ func (x *ChatCompletionRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChatCompletionRes.ProtoReflect.Descriptor instead.
 func (*ChatCompletionRes) Descriptor() ([]byte, []int) {
-	return file_aichat_proto_rawDescGZIP(), []int{6}
+	return file_aichat_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ChatCompletionRes) GetId() string {
@@ -477,19 +435,24 @@ func (x *ChatCompletionRes) GetUsage() *Usage {
 	return nil
 }
 
-// --- 流式响应 chunk ---
+// ChatDelta 流式增量消息。在 thinking 模式下，模型会先通过 reasoning_content
+// 逐 chunk 输出推理过程，再通过 content 输出最终回答。前端可根据两字段分别渲染。
 type ChatDelta struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	Role             string                 `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
-	Content          string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
-	ReasoningContent string                 `protobuf:"bytes,3,opt,name=reasoning_content,json=reasoningContent,proto3" json:"reasoning_content,omitempty"` // 思考过程增量
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 角色标识（仅首个 chunk 包含），固定为 "assistant"
+	Role string `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
+	// 正文增量内容，即最终回答的文本片段
+	Content string `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
+	// 推理思考过程的增量内容。流式场景下先于 content 输出，
+	// 当 reasoning_content 结束、content 开始时，表示模型已从思考阶段切换到回答阶段
+	ReasoningContent string `protobuf:"bytes,3,opt,name=reasoning_content,json=reasoningContent,proto3" json:"reasoning_content,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
 
 func (x *ChatDelta) Reset() {
 	*x = ChatDelta{}
-	mi := &file_aichat_proto_msgTypes[7]
+	mi := &file_aichat_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -501,7 +464,7 @@ func (x *ChatDelta) String() string {
 func (*ChatDelta) ProtoMessage() {}
 
 func (x *ChatDelta) ProtoReflect() protoreflect.Message {
-	mi := &file_aichat_proto_msgTypes[7]
+	mi := &file_aichat_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -514,7 +477,7 @@ func (x *ChatDelta) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChatDelta.ProtoReflect.Descriptor instead.
 func (*ChatDelta) Descriptor() ([]byte, []int) {
-	return file_aichat_proto_rawDescGZIP(), []int{7}
+	return file_aichat_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ChatDelta) GetRole() string {
@@ -538,18 +501,22 @@ func (x *ChatDelta) GetReasoningContent() string {
 	return ""
 }
 
+// ChunkChoice 流式响应的单个增量片段。
 type ChunkChoice struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Index         int32                  `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`
-	Delta         *ChatDelta             `protobuf:"bytes,2,opt,name=delta,proto3" json:"delta,omitempty"`
-	FinishReason  string                 `protobuf:"bytes,3,opt,name=finish_reason,json=finishReason,proto3" json:"finish_reason,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 片段索引，从 0 开始
+	Index int32 `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`
+	// 增量消息内容，包含 role、content、reasoning_content
+	Delta *ChatDelta `protobuf:"bytes,2,opt,name=delta,proto3" json:"delta,omitempty"`
+	// 片段结束原因，有效值：stop、length、content_filter
+	FinishReason  string `protobuf:"bytes,3,opt,name=finish_reason,json=finishReason,proto3" json:"finish_reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ChunkChoice) Reset() {
 	*x = ChunkChoice{}
-	mi := &file_aichat_proto_msgTypes[8]
+	mi := &file_aichat_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -561,7 +528,7 @@ func (x *ChunkChoice) String() string {
 func (*ChunkChoice) ProtoMessage() {}
 
 func (x *ChunkChoice) ProtoReflect() protoreflect.Message {
-	mi := &file_aichat_proto_msgTypes[8]
+	mi := &file_aichat_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -574,7 +541,7 @@ func (x *ChunkChoice) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChunkChoice.ProtoReflect.Descriptor instead.
 func (*ChunkChoice) Descriptor() ([]byte, []int) {
-	return file_aichat_proto_rawDescGZIP(), []int{8}
+	return file_aichat_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ChunkChoice) GetIndex() int32 {
@@ -598,20 +565,27 @@ func (x *ChunkChoice) GetFinishReason() string {
 	return ""
 }
 
+// ChatCompletionStreamChunk 流式对话补全的 SSE chunk 格式，
+// 对标 OpenAI Server-Sent Events 格式。
 type ChatCompletionStreamChunk struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Object        string                 `protobuf:"bytes,2,opt,name=object,proto3" json:"object,omitempty"`
-	Created       int64                  `protobuf:"varint,3,opt,name=created,proto3" json:"created,omitempty"`
-	Model         string                 `protobuf:"bytes,4,opt,name=model,proto3" json:"model,omitempty"`
-	Choices       []*ChunkChoice         `protobuf:"bytes,5,rep,name=choices,proto3" json:"choices,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 本次对话的唯一标识符
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// chunk 对象类型，固定为 "chat.completion.chunk"
+	Object string `protobuf:"bytes,2,opt,name=object,proto3" json:"object,omitempty"`
+	// Unix 时间戳（秒）
+	Created int64 `protobuf:"varint,3,opt,name=created,proto3" json:"created,omitempty"`
+	// 使用的模型标识符
+	Model string `protobuf:"bytes,4,opt,name=model,proto3" json:"model,omitempty"`
+	// 增量片段列表
+	Choices       []*ChunkChoice `protobuf:"bytes,5,rep,name=choices,proto3" json:"choices,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ChatCompletionStreamChunk) Reset() {
 	*x = ChatCompletionStreamChunk{}
-	mi := &file_aichat_proto_msgTypes[9]
+	mi := &file_aichat_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -623,7 +597,7 @@ func (x *ChatCompletionStreamChunk) String() string {
 func (*ChatCompletionStreamChunk) ProtoMessage() {}
 
 func (x *ChatCompletionStreamChunk) ProtoReflect() protoreflect.Message {
-	mi := &file_aichat_proto_msgTypes[9]
+	mi := &file_aichat_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -636,7 +610,7 @@ func (x *ChatCompletionStreamChunk) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChatCompletionStreamChunk.ProtoReflect.Descriptor instead.
 func (*ChatCompletionStreamChunk) Descriptor() ([]byte, []int) {
-	return file_aichat_proto_rawDescGZIP(), []int{9}
+	return file_aichat_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ChatCompletionStreamChunk) GetId() string {
@@ -674,7 +648,7 @@ func (x *ChatCompletionStreamChunk) GetChoices() []*ChunkChoice {
 	return nil
 }
 
-// --- 模型列表 ---
+// ListModelsReq 获取模型列表请求
 type ListModelsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -683,7 +657,7 @@ type ListModelsReq struct {
 
 func (x *ListModelsReq) Reset() {
 	*x = ListModelsReq{}
-	mi := &file_aichat_proto_msgTypes[10]
+	mi := &file_aichat_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -695,7 +669,7 @@ func (x *ListModelsReq) String() string {
 func (*ListModelsReq) ProtoMessage() {}
 
 func (x *ListModelsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_aichat_proto_msgTypes[10]
+	mi := &file_aichat_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -708,26 +682,35 @@ func (x *ListModelsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListModelsReq.ProtoReflect.Descriptor instead.
 func (*ListModelsReq) Descriptor() ([]byte, []int) {
-	return file_aichat_proto_rawDescGZIP(), []int{10}
+	return file_aichat_proto_rawDescGZIP(), []int{8}
 }
 
+// ModelObject 模型对象，包含模型的基本信息和能力描述。
 type ModelObject struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	Id                string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Object            string                 `protobuf:"bytes,2,opt,name=object,proto3" json:"object,omitempty"`
-	Created           int64                  `protobuf:"varint,3,opt,name=created,proto3" json:"created,omitempty"`
-	OwnedBy           string                 `protobuf:"bytes,4,opt,name=owned_by,json=ownedBy,proto3" json:"owned_by,omitempty"`                                // provider 名称（zhipu/siliconflow）
-	DisplayName       string                 `protobuf:"bytes,5,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`                    // 显示名称
-	Description       string                 `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`                                       // 模型描述
-	SupportsStreaming bool                   `protobuf:"varint,7,opt,name=supports_streaming,json=supportsStreaming,proto3" json:"supports_streaming,omitempty"` // 是否支持流式
-	MaxTokens         int32                  `protobuf:"varint,8,opt,name=max_tokens,json=maxTokens,proto3" json:"max_tokens,omitempty"`                         // 最大 token 数
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 模型唯一标识符，用于 API 调用时指定模型
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// 对象类型，固定为 "model"
+	Object string `protobuf:"bytes,2,opt,name=object,proto3" json:"object,omitempty"`
+	// 模型创建时间的 Unix 时间戳
+	Created int64 `protobuf:"varint,3,opt,name=created,proto3" json:"created,omitempty"`
+	// 模型所属的 provider 名称，如 zhipu、dashscope
+	OwnedBy string `protobuf:"bytes,4,opt,name=owned_by,json=ownedBy,proto3" json:"owned_by,omitempty"`
+	// 模型的友好显示名称，用于 UI 展示
+	DisplayName string `protobuf:"bytes,5,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	// 模型的详细描述，说明模型的能力和适用场景
+	Description string `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
+	// 是否支持流式输出（SSE）
+	SupportsStreaming bool `protobuf:"varint,7,opt,name=supports_streaming,json=supportsStreaming,proto3" json:"supports_streaming,omitempty"`
+	// 模型支持的最大 token 数（输入+输出）
+	MaxTokens     int32 `protobuf:"varint,8,opt,name=max_tokens,json=maxTokens,proto3" json:"max_tokens,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ModelObject) Reset() {
 	*x = ModelObject{}
-	mi := &file_aichat_proto_msgTypes[11]
+	mi := &file_aichat_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -739,7 +722,7 @@ func (x *ModelObject) String() string {
 func (*ModelObject) ProtoMessage() {}
 
 func (x *ModelObject) ProtoReflect() protoreflect.Message {
-	mi := &file_aichat_proto_msgTypes[11]
+	mi := &file_aichat_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -752,7 +735,7 @@ func (x *ModelObject) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ModelObject.ProtoReflect.Descriptor instead.
 func (*ModelObject) Descriptor() ([]byte, []int) {
-	return file_aichat_proto_rawDescGZIP(), []int{11}
+	return file_aichat_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ModelObject) GetId() string {
@@ -811,16 +794,18 @@ func (x *ModelObject) GetMaxTokens() int32 {
 	return 0
 }
 
+// ListModelsRes 模型列表响应
 type ListModelsRes struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Data          []*ModelObject         `protobuf:"bytes,1,rep,name=data,proto3" json:"data,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 可用模型数组
+	Data          []*ModelObject `protobuf:"bytes,1,rep,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListModelsRes) Reset() {
 	*x = ListModelsRes{}
-	mi := &file_aichat_proto_msgTypes[12]
+	mi := &file_aichat_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -832,7 +817,7 @@ func (x *ListModelsRes) String() string {
 func (*ListModelsRes) ProtoMessage() {}
 
 func (x *ListModelsRes) ProtoReflect() protoreflect.Message {
-	mi := &file_aichat_proto_msgTypes[12]
+	mi := &file_aichat_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -845,7 +830,7 @@ func (x *ListModelsRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListModelsRes.ProtoReflect.Descriptor instead.
 func (*ListModelsRes) Descriptor() ([]byte, []int) {
-	return file_aichat_proto_rawDescGZIP(), []int{12}
+	return file_aichat_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ListModelsRes) GetData() []*ModelObject {
@@ -855,15 +840,279 @@ func (x *ListModelsRes) GetData() []*ModelObject {
 	return nil
 }
 
+// AsyncToolCallReq 异步调用 MCP 工具的请求。
+//
+// 使用流程：
+// 1. 调用 AsyncToolCall 提交任务，获取 task_id
+// 2. 轮询 AsyncToolResult 查询执行状态和结果
+// 3. 状态变为 completed 时获取最终结果
+type AsyncToolCallReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// MCP 服务器名称，对应配置中的 server key
+	// 例如：filesystem、github、database 等
+	Server string `protobuf:"bytes,1,opt,name=server,proto3" json:"server,omitempty"`
+	// MCP 工具名称，在对应服务器中定义的工具唯一标识
+	// 例如：read_file、create_pull_request、query 等
+	Tool string `protobuf:"bytes,2,opt,name=tool,proto3" json:"tool,omitempty"`
+	// 工具参数的 JSON 格式字符串。
+	// 工具参数类型为 map[string]any，JSON 示例：
+	//
+	//	{"path": "/tmp/test.txt", "content": "hello"}
+	//
+	// - 必填参数由工具定义决定
+	// - 可选参数可省略
+	// - 参数类型需符合工具 schema 定义
+	Args          string `protobuf:"bytes,3,opt,name=args,proto3" json:"args,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AsyncToolCallReq) Reset() {
+	*x = AsyncToolCallReq{}
+	mi := &file_aichat_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AsyncToolCallReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AsyncToolCallReq) ProtoMessage() {}
+
+func (x *AsyncToolCallReq) ProtoReflect() protoreflect.Message {
+	mi := &file_aichat_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AsyncToolCallReq.ProtoReflect.Descriptor instead.
+func (*AsyncToolCallReq) Descriptor() ([]byte, []int) {
+	return file_aichat_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *AsyncToolCallReq) GetServer() string {
+	if x != nil {
+		return x.Server
+	}
+	return ""
+}
+
+func (x *AsyncToolCallReq) GetTool() string {
+	if x != nil {
+		return x.Tool
+	}
+	return ""
+}
+
+func (x *AsyncToolCallReq) GetArgs() string {
+	if x != nil {
+		return x.Args
+	}
+	return ""
+}
+
+// AsyncToolCallRes 异步调用 MCP 工具的响应。
+type AsyncToolCallRes struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 任务唯一标识符，用于后续查询任务状态和结果
+	TaskId string `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	// 任务初始状态，固定为 "pending"
+	Status        string `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AsyncToolCallRes) Reset() {
+	*x = AsyncToolCallRes{}
+	mi := &file_aichat_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AsyncToolCallRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AsyncToolCallRes) ProtoMessage() {}
+
+func (x *AsyncToolCallRes) ProtoReflect() protoreflect.Message {
+	mi := &file_aichat_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AsyncToolCallRes.ProtoReflect.Descriptor instead.
+func (*AsyncToolCallRes) Descriptor() ([]byte, []int) {
+	return file_aichat_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *AsyncToolCallRes) GetTaskId() string {
+	if x != nil {
+		return x.TaskId
+	}
+	return ""
+}
+
+func (x *AsyncToolCallRes) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+// AsyncToolResultReq 查询异步工具调用结果的请求。
+type AsyncToolResultReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 任务标识符，即 AsyncToolCall 返回的 task_id
+	TaskId        string `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AsyncToolResultReq) Reset() {
+	*x = AsyncToolResultReq{}
+	mi := &file_aichat_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AsyncToolResultReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AsyncToolResultReq) ProtoMessage() {}
+
+func (x *AsyncToolResultReq) ProtoReflect() protoreflect.Message {
+	mi := &file_aichat_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AsyncToolResultReq.ProtoReflect.Descriptor instead.
+func (*AsyncToolResultReq) Descriptor() ([]byte, []int) {
+	return file_aichat_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *AsyncToolResultReq) GetTaskId() string {
+	if x != nil {
+		return x.TaskId
+	}
+	return ""
+}
+
+// AsyncToolResultRes 查询异步工具调用结果响应。
+type AsyncToolResultRes struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 任务标识符
+	TaskId string `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	// 任务状态，有效值：
+	// - pending: 任务等待执行
+	// - running: 任务执行中
+	// - completed: 任务已完成，可获取 result
+	// - failed: 任务执行失败，可获取 error
+	Status string `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	// 执行进度百分比，取值范围 0.0~100.0。
+	// 部分工具支持实时进度反馈
+	Progress float64 `protobuf:"fixed64,3,opt,name=progress,proto3" json:"progress,omitempty"`
+	// 任务成功完成时的执行结果（JSON 格式字符串）。
+	// 仅当 status 为 "completed" 时有值
+	Result string `protobuf:"bytes,4,opt,name=result,proto3" json:"result,omitempty"`
+	// 任务失败时的错误信息。
+	// 仅当 status 为 "failed" 时有值
+	Error         string `protobuf:"bytes,5,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AsyncToolResultRes) Reset() {
+	*x = AsyncToolResultRes{}
+	mi := &file_aichat_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AsyncToolResultRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AsyncToolResultRes) ProtoMessage() {}
+
+func (x *AsyncToolResultRes) ProtoReflect() protoreflect.Message {
+	mi := &file_aichat_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AsyncToolResultRes.ProtoReflect.Descriptor instead.
+func (*AsyncToolResultRes) Descriptor() ([]byte, []int) {
+	return file_aichat_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *AsyncToolResultRes) GetTaskId() string {
+	if x != nil {
+		return x.TaskId
+	}
+	return ""
+}
+
+func (x *AsyncToolResultRes) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *AsyncToolResultRes) GetProgress() float64 {
+	if x != nil {
+		return x.Progress
+	}
+	return 0
+}
+
+func (x *AsyncToolResultRes) GetResult() string {
+	if x != nil {
+		return x.Result
+	}
+	return ""
+}
+
+func (x *AsyncToolResultRes) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
 var File_aichat_proto protoreflect.FileDescriptor
 
 const file_aichat_proto_rawDesc = "" +
 	"\n" +
-	"\faichat.proto\x12\x06aichat\"\x1d\n" +
-	"\aPingReq\x12\x12\n" +
-	"\x04ping\x18\x01 \x01(\tR\x04ping\"\x1d\n" +
-	"\aPingRes\x12\x12\n" +
-	"\x04pong\x18\x01 \x01(\tR\x04pong\"h\n" +
+	"\faichat.proto\x12\x06aichat\"h\n" +
 	"\vChatMessage\x12\x12\n" +
 	"\x04role\x18\x01 \x01(\tR\x04role\x12\x18\n" +
 	"\acontent\x18\x02 \x01(\tR\acontent\x12+\n" +
@@ -919,13 +1168,29 @@ const file_aichat_proto_rawDesc = "" +
 	"\n" +
 	"max_tokens\x18\b \x01(\x05R\tmaxTokens\"8\n" +
 	"\rListModelsRes\x12'\n" +
-	"\x04data\x18\x01 \x03(\v2\x13.aichat.ModelObjectR\x04data2\x8e\x02\n" +
-	"\x06AiChat\x12(\n" +
-	"\x04Ping\x12\x0f.aichat.PingReq\x1a\x0f.aichat.PingRes\x12F\n" +
+	"\x04data\x18\x01 \x03(\v2\x13.aichat.ModelObjectR\x04data\"R\n" +
+	"\x10AsyncToolCallReq\x12\x16\n" +
+	"\x06server\x18\x01 \x01(\tR\x06server\x12\x12\n" +
+	"\x04tool\x18\x02 \x01(\tR\x04tool\x12\x12\n" +
+	"\x04args\x18\x03 \x01(\tR\x04args\"C\n" +
+	"\x10AsyncToolCallRes\x12\x17\n" +
+	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\"-\n" +
+	"\x12AsyncToolResultReq\x12\x17\n" +
+	"\atask_id\x18\x01 \x01(\tR\x06taskId\"\x8f\x01\n" +
+	"\x12AsyncToolResultRes\x12\x17\n" +
+	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\x12\x1a\n" +
+	"\bprogress\x18\x03 \x01(\x01R\bprogress\x12\x16\n" +
+	"\x06result\x18\x04 \x01(\tR\x06result\x12\x14\n" +
+	"\x05error\x18\x05 \x01(\tR\x05error2\xf4\x02\n" +
+	"\x06AiChat\x12F\n" +
 	"\x0eChatCompletion\x12\x19.aichat.ChatCompletionReq\x1a\x19.aichat.ChatCompletionRes\x12V\n" +
 	"\x14ChatCompletionStream\x12\x19.aichat.ChatCompletionReq\x1a!.aichat.ChatCompletionStreamChunk0\x01\x12:\n" +
 	"\n" +
-	"ListModels\x12\x15.aichat.ListModelsReq\x1a\x15.aichat.ListModelsResB\n" +
+	"ListModels\x12\x15.aichat.ListModelsReq\x1a\x15.aichat.ListModelsRes\x12C\n" +
+	"\rAsyncToolCall\x12\x18.aichat.AsyncToolCallReq\x1a\x18.aichat.AsyncToolCallRes\x12I\n" +
+	"\x0fAsyncToolResult\x12\x1a.aichat.AsyncToolResultReq\x1a\x1a.aichat.AsyncToolResultResB\n" +
 	"Z\b./aichatb\x06proto3"
 
 var (
@@ -940,40 +1205,44 @@ func file_aichat_proto_rawDescGZIP() []byte {
 	return file_aichat_proto_rawDescData
 }
 
-var file_aichat_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_aichat_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_aichat_proto_goTypes = []any{
-	(*PingReq)(nil),                   // 0: aichat.PingReq
-	(*PingRes)(nil),                   // 1: aichat.PingRes
-	(*ChatMessage)(nil),               // 2: aichat.ChatMessage
-	(*ChatCompletionReq)(nil),         // 3: aichat.ChatCompletionReq
-	(*Choice)(nil),                    // 4: aichat.Choice
-	(*Usage)(nil),                     // 5: aichat.Usage
-	(*ChatCompletionRes)(nil),         // 6: aichat.ChatCompletionRes
-	(*ChatDelta)(nil),                 // 7: aichat.ChatDelta
-	(*ChunkChoice)(nil),               // 8: aichat.ChunkChoice
-	(*ChatCompletionStreamChunk)(nil), // 9: aichat.ChatCompletionStreamChunk
-	(*ListModelsReq)(nil),             // 10: aichat.ListModelsReq
-	(*ModelObject)(nil),               // 11: aichat.ModelObject
-	(*ListModelsRes)(nil),             // 12: aichat.ListModelsRes
+	(*ChatMessage)(nil),               // 0: aichat.ChatMessage
+	(*ChatCompletionReq)(nil),         // 1: aichat.ChatCompletionReq
+	(*Choice)(nil),                    // 2: aichat.Choice
+	(*Usage)(nil),                     // 3: aichat.Usage
+	(*ChatCompletionRes)(nil),         // 4: aichat.ChatCompletionRes
+	(*ChatDelta)(nil),                 // 5: aichat.ChatDelta
+	(*ChunkChoice)(nil),               // 6: aichat.ChunkChoice
+	(*ChatCompletionStreamChunk)(nil), // 7: aichat.ChatCompletionStreamChunk
+	(*ListModelsReq)(nil),             // 8: aichat.ListModelsReq
+	(*ModelObject)(nil),               // 9: aichat.ModelObject
+	(*ListModelsRes)(nil),             // 10: aichat.ListModelsRes
+	(*AsyncToolCallReq)(nil),          // 11: aichat.AsyncToolCallReq
+	(*AsyncToolCallRes)(nil),          // 12: aichat.AsyncToolCallRes
+	(*AsyncToolResultReq)(nil),        // 13: aichat.AsyncToolResultReq
+	(*AsyncToolResultRes)(nil),        // 14: aichat.AsyncToolResultRes
 }
 var file_aichat_proto_depIdxs = []int32{
-	2,  // 0: aichat.ChatCompletionReq.messages:type_name -> aichat.ChatMessage
-	2,  // 1: aichat.Choice.message:type_name -> aichat.ChatMessage
-	4,  // 2: aichat.ChatCompletionRes.choices:type_name -> aichat.Choice
-	5,  // 3: aichat.ChatCompletionRes.usage:type_name -> aichat.Usage
-	7,  // 4: aichat.ChunkChoice.delta:type_name -> aichat.ChatDelta
-	8,  // 5: aichat.ChatCompletionStreamChunk.choices:type_name -> aichat.ChunkChoice
-	11, // 6: aichat.ListModelsRes.data:type_name -> aichat.ModelObject
-	0,  // 7: aichat.AiChat.Ping:input_type -> aichat.PingReq
-	3,  // 8: aichat.AiChat.ChatCompletion:input_type -> aichat.ChatCompletionReq
-	3,  // 9: aichat.AiChat.ChatCompletionStream:input_type -> aichat.ChatCompletionReq
-	10, // 10: aichat.AiChat.ListModels:input_type -> aichat.ListModelsReq
-	1,  // 11: aichat.AiChat.Ping:output_type -> aichat.PingRes
-	6,  // 12: aichat.AiChat.ChatCompletion:output_type -> aichat.ChatCompletionRes
-	9,  // 13: aichat.AiChat.ChatCompletionStream:output_type -> aichat.ChatCompletionStreamChunk
-	12, // 14: aichat.AiChat.ListModels:output_type -> aichat.ListModelsRes
-	11, // [11:15] is the sub-list for method output_type
-	7,  // [7:11] is the sub-list for method input_type
+	0,  // 0: aichat.ChatCompletionReq.messages:type_name -> aichat.ChatMessage
+	0,  // 1: aichat.Choice.message:type_name -> aichat.ChatMessage
+	2,  // 2: aichat.ChatCompletionRes.choices:type_name -> aichat.Choice
+	3,  // 3: aichat.ChatCompletionRes.usage:type_name -> aichat.Usage
+	5,  // 4: aichat.ChunkChoice.delta:type_name -> aichat.ChatDelta
+	6,  // 5: aichat.ChatCompletionStreamChunk.choices:type_name -> aichat.ChunkChoice
+	9,  // 6: aichat.ListModelsRes.data:type_name -> aichat.ModelObject
+	1,  // 7: aichat.AiChat.ChatCompletion:input_type -> aichat.ChatCompletionReq
+	1,  // 8: aichat.AiChat.ChatCompletionStream:input_type -> aichat.ChatCompletionReq
+	8,  // 9: aichat.AiChat.ListModels:input_type -> aichat.ListModelsReq
+	11, // 10: aichat.AiChat.AsyncToolCall:input_type -> aichat.AsyncToolCallReq
+	13, // 11: aichat.AiChat.AsyncToolResult:input_type -> aichat.AsyncToolResultReq
+	4,  // 12: aichat.AiChat.ChatCompletion:output_type -> aichat.ChatCompletionRes
+	7,  // 13: aichat.AiChat.ChatCompletionStream:output_type -> aichat.ChatCompletionStreamChunk
+	10, // 14: aichat.AiChat.ListModels:output_type -> aichat.ListModelsRes
+	12, // 15: aichat.AiChat.AsyncToolCall:output_type -> aichat.AsyncToolCallRes
+	14, // 16: aichat.AiChat.AsyncToolResult:output_type -> aichat.AsyncToolResultRes
+	12, // [12:17] is the sub-list for method output_type
+	7,  // [7:12] is the sub-list for method input_type
 	7,  // [7:7] is the sub-list for extension type_name
 	7,  // [7:7] is the sub-list for extension extendee
 	0,  // [0:7] is the sub-list for field type_name
@@ -990,7 +1259,7 @@ func file_aichat_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_aichat_proto_rawDesc), len(file_aichat_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

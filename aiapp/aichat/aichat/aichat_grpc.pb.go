@@ -19,22 +19,35 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AiChat_Ping_FullMethodName                 = "/aichat.AiChat/Ping"
 	AiChat_ChatCompletion_FullMethodName       = "/aichat.AiChat/ChatCompletion"
 	AiChat_ChatCompletionStream_FullMethodName = "/aichat.AiChat/ChatCompletionStream"
 	AiChat_ListModels_FullMethodName           = "/aichat.AiChat/ListModels"
+	AiChat_AsyncToolCall_FullMethodName        = "/aichat.AiChat/AsyncToolCall"
+	AiChat_AsyncToolResult_FullMethodName      = "/aichat.AiChat/AsyncToolResult"
 )
 
 // AiChatClient is the client API for AiChat service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// --- Service ---
+// AiChat AI 对话服务，兼容 OpenAI Chat Completion API。
 type AiChatClient interface {
-	Ping(ctx context.Context, in *PingReq, opts ...grpc.CallOption) (*PingRes, error)
+	// ChatCompletion 非流式对话补全，一次性返回完整回答。
+	// 适用于短对话、简单查询等场景
 	ChatCompletion(ctx context.Context, in *ChatCompletionReq, opts ...grpc.CallOption) (*ChatCompletionRes, error)
+	// ChatCompletionStream 流式对话补全，通过 server-side stream 逐 chunk 返回。
+	// 适用于长文本生成、实时展示打字效果等场景
+	// 客户端通过 SSE（Server-Sent Events）接收增量数据
 	ChatCompletionStream(ctx context.Context, in *ChatCompletionReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ChatCompletionStreamChunk], error)
+	// ListModels 列出所有可用模型及其能力信息。
+	// 返回模型列表包含模型 ID、描述、最大 token 数等
 	ListModels(ctx context.Context, in *ListModelsReq, opts ...grpc.CallOption) (*ListModelsRes, error)
+	// AsyncToolCall 异步调用 MCP 工具，提交任务后立即返回 task_id。
+	// 用于执行耗时较长的工具操作，避免阻塞请求
+	AsyncToolCall(ctx context.Context, in *AsyncToolCallReq, opts ...grpc.CallOption) (*AsyncToolCallRes, error)
+	// AsyncToolResult 查询异步工具调用的执行状态和结果。
+	// 建议轮询间隔 1~2 秒，直到状态变为 completed 或 failed
+	AsyncToolResult(ctx context.Context, in *AsyncToolResultReq, opts ...grpc.CallOption) (*AsyncToolResultRes, error)
 }
 
 type aiChatClient struct {
@@ -43,16 +56,6 @@ type aiChatClient struct {
 
 func NewAiChatClient(cc grpc.ClientConnInterface) AiChatClient {
 	return &aiChatClient{cc}
-}
-
-func (c *aiChatClient) Ping(ctx context.Context, in *PingReq, opts ...grpc.CallOption) (*PingRes, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(PingRes)
-	err := c.cc.Invoke(ctx, AiChat_Ping_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *aiChatClient) ChatCompletion(ctx context.Context, in *ChatCompletionReq, opts ...grpc.CallOption) (*ChatCompletionRes, error) {
@@ -94,16 +97,48 @@ func (c *aiChatClient) ListModels(ctx context.Context, in *ListModelsReq, opts .
 	return out, nil
 }
 
+func (c *aiChatClient) AsyncToolCall(ctx context.Context, in *AsyncToolCallReq, opts ...grpc.CallOption) (*AsyncToolCallRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AsyncToolCallRes)
+	err := c.cc.Invoke(ctx, AiChat_AsyncToolCall_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aiChatClient) AsyncToolResult(ctx context.Context, in *AsyncToolResultReq, opts ...grpc.CallOption) (*AsyncToolResultRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AsyncToolResultRes)
+	err := c.cc.Invoke(ctx, AiChat_AsyncToolResult_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AiChatServer is the server API for AiChat service.
 // All implementations must embed UnimplementedAiChatServer
 // for forward compatibility.
 //
-// --- Service ---
+// AiChat AI 对话服务，兼容 OpenAI Chat Completion API。
 type AiChatServer interface {
-	Ping(context.Context, *PingReq) (*PingRes, error)
+	// ChatCompletion 非流式对话补全，一次性返回完整回答。
+	// 适用于短对话、简单查询等场景
 	ChatCompletion(context.Context, *ChatCompletionReq) (*ChatCompletionRes, error)
+	// ChatCompletionStream 流式对话补全，通过 server-side stream 逐 chunk 返回。
+	// 适用于长文本生成、实时展示打字效果等场景
+	// 客户端通过 SSE（Server-Sent Events）接收增量数据
 	ChatCompletionStream(*ChatCompletionReq, grpc.ServerStreamingServer[ChatCompletionStreamChunk]) error
+	// ListModels 列出所有可用模型及其能力信息。
+	// 返回模型列表包含模型 ID、描述、最大 token 数等
 	ListModels(context.Context, *ListModelsReq) (*ListModelsRes, error)
+	// AsyncToolCall 异步调用 MCP 工具，提交任务后立即返回 task_id。
+	// 用于执行耗时较长的工具操作，避免阻塞请求
+	AsyncToolCall(context.Context, *AsyncToolCallReq) (*AsyncToolCallRes, error)
+	// AsyncToolResult 查询异步工具调用的执行状态和结果。
+	// 建议轮询间隔 1~2 秒，直到状态变为 completed 或 failed
+	AsyncToolResult(context.Context, *AsyncToolResultReq) (*AsyncToolResultRes, error)
 	mustEmbedUnimplementedAiChatServer()
 }
 
@@ -114,9 +149,6 @@ type AiChatServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAiChatServer struct{}
 
-func (UnimplementedAiChatServer) Ping(context.Context, *PingReq) (*PingRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
-}
 func (UnimplementedAiChatServer) ChatCompletion(context.Context, *ChatCompletionReq) (*ChatCompletionRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChatCompletion not implemented")
 }
@@ -125,6 +157,12 @@ func (UnimplementedAiChatServer) ChatCompletionStream(*ChatCompletionReq, grpc.S
 }
 func (UnimplementedAiChatServer) ListModels(context.Context, *ListModelsReq) (*ListModelsRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListModels not implemented")
+}
+func (UnimplementedAiChatServer) AsyncToolCall(context.Context, *AsyncToolCallReq) (*AsyncToolCallRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AsyncToolCall not implemented")
+}
+func (UnimplementedAiChatServer) AsyncToolResult(context.Context, *AsyncToolResultReq) (*AsyncToolResultRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AsyncToolResult not implemented")
 }
 func (UnimplementedAiChatServer) mustEmbedUnimplementedAiChatServer() {}
 func (UnimplementedAiChatServer) testEmbeddedByValue()                {}
@@ -145,24 +183,6 @@ func RegisterAiChatServer(s grpc.ServiceRegistrar, srv AiChatServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&AiChat_ServiceDesc, srv)
-}
-
-func _AiChat_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PingReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AiChatServer).Ping(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AiChat_Ping_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AiChatServer).Ping(ctx, req.(*PingReq))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _AiChat_ChatCompletion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -212,6 +232,42 @@ func _AiChat_ListModels_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AiChat_AsyncToolCall_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AsyncToolCallReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AiChatServer).AsyncToolCall(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AiChat_AsyncToolCall_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AiChatServer).AsyncToolCall(ctx, req.(*AsyncToolCallReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AiChat_AsyncToolResult_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AsyncToolResultReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AiChatServer).AsyncToolResult(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AiChat_AsyncToolResult_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AiChatServer).AsyncToolResult(ctx, req.(*AsyncToolResultReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AiChat_ServiceDesc is the grpc.ServiceDesc for AiChat service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -220,16 +276,20 @@ var AiChat_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AiChatServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Ping",
-			Handler:    _AiChat_Ping_Handler,
-		},
-		{
 			MethodName: "ChatCompletion",
 			Handler:    _AiChat_ChatCompletion_Handler,
 		},
 		{
 			MethodName: "ListModels",
 			Handler:    _AiChat_ListModels_Handler,
+		},
+		{
+			MethodName: "AsyncToolCall",
+			Handler:    _AiChat_AsyncToolCall_Handler,
+		},
+		{
+			MethodName: "AsyncToolResult",
+			Handler:    _AiChat_AsyncToolResult_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

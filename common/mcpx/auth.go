@@ -65,7 +65,7 @@ func NewDualTokenVerifier(jwtSecrets []string, serviceToken string, claimMapping
 			return info, nil
 		}
 
-		logx.WithContext(ctx).Debugf("[mcpx-auth] no verifier matched")
+		logx.WithContext(ctx).Errorf("[mcpx-auth] no verifier matched")
 		return nil, auth.ErrInvalidToken
 	}
 }

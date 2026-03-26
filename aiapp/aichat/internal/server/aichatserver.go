@@ -23,22 +23,32 @@ func NewAiChatServer(svcCtx *svc.ServiceContext) *AiChatServer {
 	}
 }
 
-func (s *AiChatServer) Ping(ctx context.Context, in *aichat.PingReq) (*aichat.PingRes, error) {
-	l := logic.NewPingLogic(ctx, s.svcCtx)
-	return l.Ping(in)
-}
-
+// ChatCompletion 非流式对话补全，一次性返回完整回答。
 func (s *AiChatServer) ChatCompletion(ctx context.Context, in *aichat.ChatCompletionReq) (*aichat.ChatCompletionRes, error) {
 	l := logic.NewChatCompletionLogic(ctx, s.svcCtx)
 	return l.ChatCompletion(in)
 }
 
+// ChatCompletionStream 流式对话补全，通过 server-side stream 逐 chunk 返回。
 func (s *AiChatServer) ChatCompletionStream(in *aichat.ChatCompletionReq, stream aichat.AiChat_ChatCompletionStreamServer) error {
 	l := logic.NewChatCompletionStreamLogic(stream.Context(), s.svcCtx)
 	return l.ChatCompletionStream(in, stream)
 }
 
+// ListModels 列出所有可用模型及其能力信息。
 func (s *AiChatServer) ListModels(ctx context.Context, in *aichat.ListModelsReq) (*aichat.ListModelsRes, error) {
 	l := logic.NewListModelsLogic(ctx, s.svcCtx)
 	return l.ListModels(in)
+}
+
+// AsyncToolCall 异步调用 MCP 工具，提交任务后立即返回 task_id。
+func (s *AiChatServer) AsyncToolCall(ctx context.Context, in *aichat.AsyncToolCallReq) (*aichat.AsyncToolCallRes, error) {
+	l := logic.NewAsyncToolCallLogic(ctx, s.svcCtx)
+	return l.AsyncToolCall(in)
+}
+
+// AsyncToolResult 查询异步工具调用的执行状态和结果。
+func (s *AiChatServer) AsyncToolResult(ctx context.Context, in *aichat.AsyncToolResultReq) (*aichat.AsyncToolResultRes, error) {
+	l := logic.NewAsyncToolResultLogic(ctx, s.svcCtx)
+	return l.AsyncToolResult(in)
 }

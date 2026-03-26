@@ -46,7 +46,7 @@ func RegisterModbus(server *sdkmcp.Server, svcCtx *svc.ServiceContext) {
 		return &sdkmcp.CallToolResult{
 			Content: []sdkmcp.Content{&sdkmcp.TextContent{Text: text}},
 		}, nil, nil
-	}))
+	}, mcpx.WithExtractUserCtx()))
 
 	// 读线圈
 	sdkmcp.AddTool(server, &sdkmcp.Tool{
@@ -66,7 +66,7 @@ func RegisterModbus(server *sdkmcp.Server, svcCtx *svc.ServiceContext) {
 		return &sdkmcp.CallToolResult{
 			Content: []sdkmcp.Content{&sdkmcp.TextContent{Text: text}},
 		}, nil, nil
-	}))
+	}, mcpx.WithExtractUserCtx()))
 }
 
 type registerEntry struct {

@@ -73,11 +73,23 @@ func (l *ChatCompletionStreamLogic) ChatCompletionStream(in *aichat.ChatCompleti
 
 			for _, tc := range assistantMsg.ToolCalls {
 				l.Infof("stream tool call round %d: %s(%s)", round+1, tc.Function.Name, tc.Function.Arguments)
-				result, callErr := l.svcCtx.McpClient.CallTool(streamCtx, tc.Function.Name, mcpx.ParseArgs(tc.Function.Arguments))
+
+				// 使用带进度通知的工具调用
+				progressCallback := func(info *mcpx.ProgressInfo) {
+					l.Logger.Infof("tool callback %s, %s progress: %.1f/%.1f - %s",
+						info.Token, tc.Function.Name, info.Progress, info.Total, info.Message)
+				}
+
+				result, callErr := l.svcCtx.McpClient.CallToolWithProgress(streamCtx, &mcpx.CallToolWithProgressRequest{
+					Name:       tc.Function.Name,
+					Args:       mcpx.ParseArgs(tc.Function.Arguments),
+					OnProgress: progressCallback,
+				})
 				if callErr != nil {
 					l.Logger.Errorf("tool call %s error: %v", tc.Function.Name, callErr)
 					result = fmt.Sprintf("tool error: %v", callErr)
 				}
+				l.Logger.Debugf("tool call %s result: %s", result)
 				req.Messages = append(req.Messages, provider.ChatMessage{
 					Role:       "tool",
 					Content:    result,

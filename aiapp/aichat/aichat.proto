@@ -3,112 +3,305 @@ package aichat;
 
 option go_package = "./aichat";
 
-// --- 通用 ---
-message PingReq {
-  string ping = 1;
-}
+// ============================================================
+// 通用消息
+// ============================================================
 
-message PingRes {
-  string pong = 1;
-}
+// ============================================================
+// 对话消息
+// ============================================================
 
-// --- 对话消息 ---
 // ChatMessage 单条对话消息，兼容 OpenAI Chat Completion 消息格式。
+//
 // 当模型启用深度思考（thinking）时，assistant 消息会包含 reasoning_content 字段，
 // 用于携带模型的推理/思考过程文本，与最终回答 content 分离。
 message ChatMessage {
-  string role = 1;     // 消息角色: system（系统提示）/ user（用户输入）/ assistant（模型回复）
-  string content = 2;  // 消息正文内容
+  // 消息角色，有效值：
+  // - system: 系统提示，用于设定 AI 行为和上下文
+  // - user: 用户输入
+  // - assistant: AI 模型回复
+  string role = 1;
+
+  // 消息正文内容，即实际的对话文本
+  string content = 2;
+
   // 模型的推理思考过程（仅 assistant 角色有值）。
   // 不同厂商返回字段名相同（reasoning_content），但启用方式不同，参见 enable_thinking。
   string reasoning_content = 3;
 }
 
-// --- 对话补全请求 ---
+// ============================================================
+// 对话补全请求与响应
+// ============================================================
+
+// ChatCompletionReq 对话补全请求参数，对标 OpenAI Chat Completion API。
 message ChatCompletionReq {
+  // 模型标识符，用于指定使用哪个 AI 模型进行对话
+  // 例如：glm-4、glm-4-flash、qwen-max 等
   string model = 1;
+
+  // 消息历史列表，按时间顺序排列的消息数组。
+  // 建议包含 system 消息作为系统提示，user 消息作为用户输入
   repeated ChatMessage messages = 2;
+
+  // 生成文本的随机性参数，取值范围 0.0~2.0。
+  // - 较低值：输出更确定、更聚焦
+  // - 较高值：输出更多样、更创造性
+  // - 0.0 时模型总是选择最高概率的 token（贪婪解码）
   double temperature = 3;
+
+  // 核采样参数，取值范围 0.0~1.0。
+  // 模型只从累计概率质量达到 top_p 的最小 token 集合中采样。
+  // 建议与 temperature 二选一使用，不同时调整
   double top_p = 4;
+
+  // 单次回复的最大 token 数限制。
+  // 用于控制回复长度，防止生成过长内容
   int32 max_tokens = 5;
+
+  // 停止序列，当模型生成这些字符串时停止输出。
+  // 可指定多个停止词，用于精确控制生成结束位置
   repeated string stop = 6;
+
+  // 用户标识，用于追踪和统计特定用户的请求
   string user = 7;
-  bool enable_thinking = 8; // 是否启用深度思考模式
+
+  // 是否启用深度思考模式。
+  // 启用后模型会先生成推理过程（reasoning_content），再给出最终回答。
+  // 不同厂商启用方式可能不同
+  bool enable_thinking = 8;
 }
 
-// --- 非流式响应 ---
+// Choice 对话补全的单个候选回复。
 message Choice {
+  // 候选回复的索引，从 0 开始。
+  // 当 n > 1 时用于区分不同候选
   int32 index = 1;
+
+  // 完整的 assistant 回复消息，包含 role 和 content
   ChatMessage message = 2;
+
+  // 生成结束原因，有效值：
+  // - stop: 模型自然停止（遇到 stop 序列或达到 max_tokens）
+  // - length: 达到 max_tokens 限制
+  // - content_filter: 内容被过滤
   string finish_reason = 3;
 }
 
+// Usage token 使用量统计信息。
 message Usage {
+  // 输入 prompt 消耗的 token 数量
   int32 prompt_tokens = 1;
+
+  // 输出 completion 消耗的 token 数量
   int32 completion_tokens = 2;
+
+  // 总消耗 token 数量 = prompt_tokens + completion_tokens
   int32 total_tokens = 3;
 }
 
+// ChatCompletionRes 非流式对话补全响应。
 message ChatCompletionRes {
+  // 本次对话的唯一标识符，用于追踪和关联请求
   string id = 1;
+
+  // 响应对象类型，固定为 "chat.completion"
   string object = 2;
+
+  // Unix 时间戳（秒），表示请求创建时间
   int64 created = 3;
+
+  // 本次请求使用的模型标识符
   string model = 4;
+
+  // 候选回复列表，通常只有一个（除非请求时指定 n > 1）
   repeated Choice choices = 5;
+
+  // token 使用量统计
   Usage usage = 6;
 }
 
-// --- 流式响应 chunk ---
+// ============================================================
+// 流式响应
+// ============================================================
+
 // ChatDelta 流式增量消息。在 thinking 模式下，模型会先通过 reasoning_content
 // 逐 chunk 输出推理过程，再通过 content 输出最终回答。前端可根据两字段分别渲染。
 message ChatDelta {
-  string role = 1;               // 角色（仅首个 chunk 包含）
-  string content = 2;            // 正文增量内容
+  // 角色标识（仅首个 chunk 包含），固定为 "assistant"
+  string role = 1;
+
+  // 正文增量内容，即最终回答的文本片段
+  string content = 2;
+
   // 推理思考过程的增量内容。流式场景下先于 content 输出，
-  // 当 reasoning_content 结束、content 开始时，表示模型已从思考阶段切换到回答阶段。
+  // 当 reasoning_content 结束、content 开始时，表示模型已从思考阶段切换到回答阶段
   string reasoning_content = 3;
 }
 
+// ChunkChoice 流式响应的单个增量片段。
 message ChunkChoice {
+  // 片段索引，从 0 开始
   int32 index = 1;
+
+  // 增量消息内容，包含 role、content、reasoning_content
   ChatDelta delta = 2;
+
+  // 片段结束原因，有效值：stop、length、content_filter
   string finish_reason = 3;
 }
 
+// ChatCompletionStreamChunk 流式对话补全的 SSE chunk 格式，
+// 对标 OpenAI Server-Sent Events 格式。
 message ChatCompletionStreamChunk {
+  // 本次对话的唯一标识符
   string id = 1;
+
+  // chunk 对象类型，固定为 "chat.completion.chunk"
   string object = 2;
+
+  // Unix 时间戳（秒）
   int64 created = 3;
+
+  // 使用的模型标识符
   string model = 4;
+
+  // 增量片段列表
   repeated ChunkChoice choices = 5;
 }
 
-// --- 模型列表 ---
+// ============================================================
+// 模型列表
+// ============================================================
+
+// ListModelsReq 获取模型列表请求
 message ListModelsReq {}
 
+// ModelObject 模型对象，包含模型的基本信息和能力描述。
 message ModelObject {
+  // 模型唯一标识符，用于 API 调用时指定模型
   string id = 1;
+
+  // 对象类型，固定为 "model"
   string object = 2;
+
+  // 模型创建时间的 Unix 时间戳
   int64 created = 3;
-  string owned_by = 4;         // provider 名称（zhipu/dashscope）
-  string display_name = 5;     // 显示名称
-  string description = 6;      // 模型描述
-  bool supports_streaming = 7; // 是否支持流式
-  int32 max_tokens = 8;        // 最大 token 数
+
+  // 模型所属的 provider 名称，如 zhipu、dashscope
+  string owned_by = 4;
+
+  // 模型的友好显示名称，用于 UI 展示
+  string display_name = 5;
+
+  // 模型的详细描述，说明模型的能力和适用场景
+  string description = 6;
+
+  // 是否支持流式输出（SSE）
+  bool supports_streaming = 7;
+
+  // 模型支持的最大 token 数（输入+输出）
+  int32 max_tokens = 8;
 }
 
+// ListModelsRes 模型列表响应
 message ListModelsRes {
+  // 可用模型数组
   repeated ModelObject data = 1;
 }
 
-// --- Service ---
+// ============================================================
+// 异步工具调用（MCP）
+// ============================================================
+
+// AsyncToolCallReq 异步调用 MCP 工具的请求。
+//
+// 使用流程：
+// 1. 调用 AsyncToolCall 提交任务，获取 task_id
+// 2. 轮询 AsyncToolResult 查询执行状态和结果
+// 3. 状态变为 completed 时获取最终结果
+message AsyncToolCallReq {
+  // MCP 服务器名称，对应配置中的 server key
+  // 例如：filesystem、github、database 等
+  string server = 1;
+
+  // MCP 工具名称，在对应服务器中定义的工具唯一标识
+  // 例如：read_file、create_pull_request、query 等
+  string tool = 2;
+
+  // 工具参数的 JSON 格式字符串。
+  // 工具参数类型为 map[string]any，JSON 示例：
+  //   {"path": "/tmp/test.txt", "content": "hello"}
+  // - 必填参数由工具定义决定
+  // - 可选参数可省略
+  // - 参数类型需符合工具 schema 定义
+  string args = 3;
+}
+
+// AsyncToolCallRes 异步调用 MCP 工具的响应。
+message AsyncToolCallRes {
+  // 任务唯一标识符，用于后续查询任务状态和结果
+  string task_id = 1;
+
+  // 任务初始状态，固定为 "pending"
+  string status = 2;
+}
+
+// AsyncToolResultReq 查询异步工具调用结果的请求。
+message AsyncToolResultReq {
+  // 任务标识符，即 AsyncToolCall 返回的 task_id
+  string task_id = 1;
+}
+
+// AsyncToolResultRes 查询异步工具调用结果响应。
+message AsyncToolResultRes {
+  // 任务标识符
+  string task_id = 1;
+
+  // 任务状态，有效值：
+  // - pending: 任务等待执行
+  // - running: 任务执行中
+  // - completed: 任务已完成，可获取 result
+  // - failed: 任务执行失败，可获取 error
+  string status = 2;
+
+  // 执行进度百分比，取值范围 0.0~100.0。
+  // 部分工具支持实时进度反馈
+  double progress = 3;
+
+  // 任务成功完成时的执行结果（JSON 格式字符串）。
+  // 仅当 status 为 "completed" 时有值
+  string result = 4;
+
+  // 任务失败时的错误信息。
+  // 仅当 status 为 "failed" 时有值
+  string error = 5;
+}
+
+// ============================================================
+// RPC 服务定义
+// ============================================================
+
+// AiChat AI 对话服务，兼容 OpenAI Chat Completion API。
 service AiChat {
-  // Ping 健康检查
-  rpc Ping(PingReq) returns(PingRes);
-  // ChatCompletion 非流式对话补全，一次性返回完整回答
+  // ChatCompletion 非流式对话补全，一次性返回完整回答。
+  // 适用于短对话、简单查询等场景
   rpc ChatCompletion(ChatCompletionReq) returns(ChatCompletionRes);
-  // ChatCompletionStream 流式对话补全，通过 server-side stream 逐 chunk 返回
+
+  // ChatCompletionStream 流式对话补全，通过 server-side stream 逐 chunk 返回。
+  // 适用于长文本生成、实时展示打字效果等场景
+  // 客户端通过 SSE（Server-Sent Events）接收增量数据
   rpc ChatCompletionStream(ChatCompletionReq) returns(stream ChatCompletionStreamChunk);
-  // ListModels 列出所有可用模型及其能力信息
+
+  // ListModels 列出所有可用模型及其能力信息。
+  // 返回模型列表包含模型 ID、描述、最大 token 数等
   rpc ListModels(ListModelsReq) returns(ListModelsRes);
+
+  // AsyncToolCall 异步调用 MCP 工具，提交任务后立即返回 task_id。
+  // 用于执行耗时较长的工具操作，避免阻塞请求
+  rpc AsyncToolCall(AsyncToolCallReq) returns(AsyncToolCallRes);
+
+  // AsyncToolResult 查询异步工具调用的执行状态和结果。
+  // 建议轮询间隔 1~2 秒，直到状态变为 completed 或 failed
+  rpc AsyncToolResult(AsyncToolResultReq) returns(AsyncToolResultRes);
 }

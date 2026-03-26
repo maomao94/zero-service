@@ -3,6 +3,29 @@
 
 package types
 
+type AsyncToolCallRequest struct {
+	Server string                 `json:"server"`
+	Tool   string                 `json:"tool"`
+	Args   map[string]interface{} `json:"args"`
+}
+
+type AsyncToolCallResponse struct {
+	TaskID string `json:"task_id"`
+	Status string `json:"status"`
+}
+
+type AsyncToolResultRequest struct {
+	TaskID string `path:"task_id"`
+}
+
+type AsyncToolResultResponse struct {
+	TaskID   string  `json:"task_id"`
+	Status   string  `json:"status"`
+	Progress float64 `json:"progress"`
+	Result   string  `json:"result,omitempty"`
+	Error    string  `json:"error,omitempty"`
+}
+
 type ChatCompletionChunk struct {
 	Id      string        `json:"id"`      // 补全ID
 	Object  string        `json:"object"`  // 固定值 "chat.completion.chunk"

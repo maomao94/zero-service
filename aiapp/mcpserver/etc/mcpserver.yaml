@@ -4,11 +4,13 @@ Port: 13003
 Mode: dev
 Mcp:
   UseStreamable: true
+  SseTimeout: 24h           # SSE 连接超时
+  MessageTimeout: 300s      # 工具执行超时，默认 30s，改为 5 分钟
 Log:
   Encoding: plain
   #  Mode: file
   Path: /opt/logs/mcpserver
-  Level: info
+  Level: debug
   KeepDays: 300
 
 Auth:

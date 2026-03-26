@@ -9,9 +9,10 @@ import (
 )
 
 type ServiceContext struct {
-	Config    config.Config
-	Registry  *provider.Registry
-	McpClient *mcpx.Client
+	Config             config.Config
+	Registry           *provider.Registry
+	McpClient          *mcpx.Client
+	AsyncResultHandler mcpx.AsyncResultHandler // 异步结果处理器，二开注入
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -28,8 +29,9 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	}
 
 	return &ServiceContext{
-		Config:    c,
-		Registry:  registry,
-		McpClient: mc,
+		Config:             c,
+		Registry:           registry,
+		McpClient:          mc,
+		AsyncResultHandler: mcpx.NewMemoryAsyncResultHandler(),
 	}
 }

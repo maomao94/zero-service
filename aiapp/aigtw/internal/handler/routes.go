@@ -17,7 +17,7 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	server.AddRoutes(
 		[]rest.Route{
 			{
-				// 列出可用模型
+				// 列出所有可用模型
 				Method:  http.MethodGet,
 				Path:    "/models",
 				Handler: pass.ListModelsHandler(serverCtx),
@@ -40,5 +40,24 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 		rest.WithPrefix("/ai/v1"),
 		rest.WithTimeout(0*time.Nanosecond),
 		rest.WithSSE(),
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				// 异步调用 MCP 工具，提交任务后立即返回 task_id
+				Method:  http.MethodPost,
+				Path:    "/async/tool/call",
+				Handler: pass.AsyncToolCallHandler(serverCtx),
+			},
+			{
+				// 查询异步工具调用的执行状态和结果，建议轮询间隔 1~2 秒
+				Method:  http.MethodGet,
+				Path:    "/async/tool/result/:task_id",
+				Handler: pass.AsyncToolResultHandler(serverCtx),
+			},
+		},
+		rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret),
+		rest.WithPrefix("/ai/v1"),
 	)
 }

@@ -10,4 +10,5 @@ import (
 func RegisterAll(server *sdkmcp.Server, svcCtx *svc.ServiceContext) {
 	RegisterEcho(server)
 	RegisterModbus(server, svcCtx)
+	RegisterTestProgress(server)
 }

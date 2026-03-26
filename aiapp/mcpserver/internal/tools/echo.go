@@ -38,5 +38,5 @@ func RegisterEcho(server *sdkmcp.Server) {
 		}, nil, nil
 	}
 
-	sdkmcp.AddTool(server, echoTool, mcpx.CallToolWrapper(echoHandler))
+	sdkmcp.AddTool(server, echoTool, mcpx.CallToolWrapper(echoHandler, mcpx.WithExtractUserCtx()))
 }

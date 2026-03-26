@@ -8,13 +8,15 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"zero-service/common/tool"
 
-	"zero-service/common/ctxdata"
+	"zero-service/common/antsx"
 	"zero-service/common/ctxprop"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stat"
+	"github.com/zeromicro/go-zero/core/threading"
 	"github.com/zeromicro/go-zero/core/timex"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
@@ -43,6 +45,9 @@ type Client struct {
 	metrics *stat.Metrics
 
 	options *mcp.ClientOptions
+
+	// 进度事件发射器，按 token 分发进度
+	progressEmitter *antsx.EventEmitter[ProgressInfo]
 }
 
 // Connection 单个 MCP 服务连接
@@ -63,6 +68,27 @@ type Connection struct {
 
 	ctx    context.Context
 	cancel context.CancelFunc
+
+	// 引用 Client，用于访问 progressEmitter
+	clientRef *Client
+}
+
+// ProgressInfo 进度信息
+type ProgressInfo struct {
+	Token    string  // ProgressToken
+	Progress float64 // 当前进度
+	Total    float64 // 总进度
+	Message  string  // 进度消息
+}
+
+// ProgressCallback 进度回调函数
+type ProgressCallback func(info *ProgressInfo)
+
+// CallToolWithProgressRequest 带进度通知的工具调用请求
+type CallToolWithProgressRequest struct {
+	Name       string           // 工具名称
+	Args       map[string]any   // 工具参数
+	OnProgress ProgressCallback // 进度回调
 }
 
 // NewClient 创建 MCP 客户端
@@ -83,15 +109,16 @@ func NewClient(cfg Config, opts ...*mcp.ClientOptions) *Client {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	c := &Client{
-		config:         cfg,
-		connections:    make(map[string]*Connection),
-		toolRoutes:     make(map[string]*Connection),
-		promptRoutes:   make(map[string]*Connection),
-		resourceRoutes: make(map[string]*Connection),
-		metrics:        stat.NewMetrics("mcpx"),
-		ctx:            ctx,
-		cancel:         cancel,
-		options:        clientOpts,
+		config:          cfg,
+		connections:     make(map[string]*Connection),
+		toolRoutes:      make(map[string]*Connection),
+		promptRoutes:    make(map[string]*Connection),
+		resourceRoutes:  make(map[string]*Connection),
+		metrics:         stat.NewMetrics("mcpx"),
+		ctx:             ctx,
+		cancel:          cancel,
+		options:         clientOpts,
+		progressEmitter: antsx.NewEventEmitter[ProgressInfo](),
 	}
 
 	names := make(map[string]bool)
@@ -115,6 +142,7 @@ func NewClient(cfg Config, opts ...*mcp.ClientOptions) *Client {
 			onChange:     c.rebuildAll,
 			ctx:          connCtx,
 			cancel:       connCancel,
+			clientRef:    c,
 		}
 
 		c.connections[name] = conn
@@ -219,6 +247,18 @@ func (c *Client) buildClientOptions() *mcp.ClientOptions {
 		}
 	}
 
+	// 进度通知处理器：通过 emitter 分发进度
+	// 调用方通过订阅 token topic 来接收进度
+	opts.ProgressNotificationHandler = func(ctx context.Context, req *mcp.ProgressNotificationClientRequest) {
+		token := fmt.Sprintf("%v", req.Params.ProgressToken)
+		c.progressEmitter.Emit(token, ProgressInfo{
+			Token:    token,
+			Progress: req.Params.Progress,
+			Total:    req.Params.Total,
+			Message:  req.Params.Message,
+		})
+	}
+
 	return opts
 }
 
@@ -277,6 +317,29 @@ func (c *Client) CallTool(ctx context.Context, name string, args map[string]any)
 	}
 
 	result, err := conn.callTool(ctx, name, args)
+	if err != nil {
+		c.metrics.AddDrop()
+		return "", err
+	}
+
+	c.metrics.Add(stat.Task{Duration: timex.Since(start)})
+	return result, nil
+}
+
+// CallToolWithProgress 带进度通知的工具调用
+// 进度会通过 SSE EventEmitter 推送到浏览器
+func (c *Client) CallToolWithProgress(ctx context.Context, req *CallToolWithProgressRequest) (string, error) {
+	start := timex.Now()
+
+	c.mu.RLock()
+	conn, ok := c.toolRoutes[req.Name]
+	c.mu.RUnlock()
+	if !ok {
+		c.metrics.AddDrop()
+		return "", fmt.Errorf("[mcpx] tool %q not found", req.Name)
+	}
+
+	result, err := conn.callToolWithProgress(ctx, req)
 	if err != nil {
 		c.metrics.AddDrop()
 		return "", err
@@ -681,21 +744,56 @@ func (conn *Connection) callTool(ctx context.Context, name string, args map[stri
 
 	params := &mcp.CallToolParams{Name: realName, Arguments: args}
 
-	meta := make(map[string]any)
-	if userMeta := ctxprop.CollectFromCtx(ctx); len(userMeta) > 0 {
-		for k, v := range userMeta {
-			meta[k] = v
-		}
-		if meta[ctxdata.CtxAuthTypeKey] == nil {
-			meta[ctxdata.CtxAuthTypeKey] = "user"
-		}
-	} else {
-		meta[ctxdata.CtxAuthTypeKey] = "service"
+	// 从 ctx 收集用户上下文，注入 trace 到 _meta
+	meta := ctxprop.CollectFromCtx(ctx)
+	otel.GetTextMapPropagator().Inject(ctx, NewMapMetaCarrier(meta))
+	params.SetMeta(meta)
+	result, err := session.CallTool(ctx, params)
+	if err != nil {
+		return "", fmt.Errorf("[mcpx] call %q on %s: %w", realName, conn.name, err)
 	}
 
-	otel.GetTextMapPropagator().Inject(ctx, NewMapMetaCarrier(meta))
+	return conn.formatToolResult(result), nil
+}
 
+// callToolWithProgress 带进度通知的工具调用
+func (conn *Connection) callToolWithProgress(ctx context.Context, req *CallToolWithProgressRequest) (string, error) {
+	conn.mu.RLock()
+	session := conn.session
+	conn.mu.RUnlock()
+	if session == nil {
+		return "", fmt.Errorf("[mcpx] %s not connected", conn.name)
+	}
+
+	realName := stripServerPrefix(req.Name)
+
+	params := &mcp.CallToolParams{Name: realName, Arguments: req.Args}
+	// 生成唯一的 progress token
+	token, _ := tool.SimpleUUID()
+
+	// 订阅进度事件
+	var cancel func()
+	var progressCh <-chan ProgressInfo
+	if req.OnProgress != nil {
+		progressCh, cancel = conn.clientRef.progressEmitter.Subscribe(token)
+		defer cancel()
+	}
+
+	// 从 ctx 收集用户上下文，注入 trace 到 _meta
+	meta := ctxprop.CollectFromCtx(ctx)
+	otel.GetTextMapPropagator().Inject(ctx, NewMapMetaCarrier(meta))
+	// 设置meta
 	params.SetMeta(meta)
+	// 启动 goroutine 监听进度
+	if req.OnProgress != nil && progressCh != nil {
+		// 设置 ProgressToken
+		params.SetProgressToken(token)
+		threading.GoSafe(func() {
+			for info := range progressCh {
+				req.OnProgress(&info)
+			}
+		})
+	}
 	result, err := session.CallTool(ctx, params)
 	if err != nil {
 		return "", fmt.Errorf("[mcpx] call %q on %s: %w", realName, conn.name, err)
@@ -812,6 +910,71 @@ func ParseArgs(argsJSON string) map[string]any {
 	return args
 }
 
+// CallToolAsync 异步调用工具，立即返回 task_id
+// 工具在后台 goroutine 执行，结果通过 ResultHandler 存储
+func (c *Client) CallToolAsync(ctx context.Context, req *CallToolAsyncRequest) (string, error) {
+	taskID, _ := tool.SimpleUUID()
+
+	// 立即保存 pending 状态
+	now := time.Now().Unix()
+	result := &AsyncToolResult{
+		TaskID:    taskID,
+		Status:    "pending",
+		Progress:  0,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+	if req.ResultHandler != nil {
+		req.ResultHandler.Save(ctx, result)
+	}
+
+	// 创建独立 context，继承原 ctx 的值（ctxprop、OTel trace 等）
+	// 但不继承 cancel，请求结束后原 ctx 会被 cancel，这里创建的不受影响
+	asyncCtx := context.WithoutCancel(ctx)
+
+	// 后台执行
+	threading.GoSafe(func() {
+		// 调用同步方法（带进度）
+		res, callErr := c.CallToolWithProgress(asyncCtx, &CallToolWithProgressRequest{
+			Name: req.Name,
+			Args: req.Args,
+			OnProgress: func(info *ProgressInfo) {
+				if req.ResultHandler != nil {
+					progress := 0.0
+					if info.Total > 0 {
+						progress = info.Progress / info.Total * 100
+					}
+					req.ResultHandler.UpdateProgress(asyncCtx, taskID, progress, "pending")
+				}
+				if req.OnProgress != nil {
+					req.OnProgress(info)
+				}
+			},
+		})
+
+		// 保存最终结果
+		finalResult := &AsyncToolResult{
+			TaskID:    taskID,
+			CreatedAt: result.CreatedAt,
+			UpdatedAt: time.Now().Unix(),
+		}
+		if callErr != nil {
+			finalResult.Status = "failed"
+			finalResult.Error = callErr.Error()
+		} else {
+			finalResult.Status = "completed"
+			finalResult.Result = res
+			finalResult.Progress = 100
+		}
+
+		if req.ResultHandler != nil {
+			req.ResultHandler.Save(asyncCtx, finalResult)
+		}
+	})
+
+	return taskID, nil
+}
+
 // stripServerPrefix 从名称中移除服务器前缀（serverName__）
 func stripServerPrefix(name string) string {
 	if idx := strings.Index(name, ToolNameSeparator); idx >= 0 {
@@ -860,24 +1023,15 @@ func (c MapMetaCarrier) Keys() []string {
 	return keys
 }
 
-// RoundTrip 实现 http.RoundTripper 接口，在请求中注入用户上下文和鉴权信息
+// RoundTrip 实现 http.RoundTripper 接口，在请求中注入服务 Token
 func (t *ctxHeaderTransport) RoundTrip(r *http.Request) (*http.Response, error) {
-	ctxprop.InjectToHTTPHeader(r.Context(), r.Header)
+	// 注入 trace 等上下文到 Header
+	//ctxprop.InjectToHTTPHeader(r.Context(), r.Header)
 
-	var authType string
-	token := r.Header.Get("Authorization")
-
-	if token != "" {
-		authType = "user"
-	} else if t.serviceToken != "" {
+	// 设置服务 Token（连接和调用都用服务 Token）
+	if t.serviceToken != "" {
 		r.Header.Set("Authorization", "Bearer "+t.serviceToken)
-		authType = "service"
-	} else {
-		authType = "none"
 	}
 
-	r.Header.Set("X-Auth-Type", authType)
-	logx.WithContext(r.Context()).Debugf("[mcpx] transport: authType=%s, method=%s, path=%s",
-		authType, r.Method, r.URL.Path)
 	return t.base.RoundTrip(r)
 }

@@ -8,6 +8,7 @@ const (
 	CtxDeptCodeKey      = "dept-code"
 	CtxAuthorizationKey = "authorization"
 	CtxAuthTypeKey      = "auth-type"
+	CtxMetaKey          = "_meta" // MCP _meta 透传 key，存储原始 _meta 数据供业务层使用
 )
 
 // gRPC metadata header key（必须小写）
@@ -63,4 +64,13 @@ func GetDeptCode(ctx context.Context) string {
 		return v
 	}
 	return ""
+}
+
+// GetMeta 获取 MCP _meta 透传数据。
+// 返回原始 _meta map[string]any，业务层自行解析。
+func GetMeta(ctx context.Context) map[string]any {
+	if v, ok := ctx.Value(CtxMetaKey).(map[string]any); ok {
+		return v
+	}
+	return nil
 }

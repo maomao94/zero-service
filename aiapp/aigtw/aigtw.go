@@ -47,8 +47,9 @@ func main() {
 	// 确保 gRPC 拦截器可通过 ctxdata.GetAuthorization(ctx) 传递原始 token。
 	server.Use(func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), ctxdata.CtxAuthTypeKey, "user")
+			ctx := r.Context()
 			if auth := r.Header.Get("Authorization"); auth != "" {
+				ctx = context.WithValue(ctx, ctxdata.CtxAuthTypeKey, "user")
 				ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, auth)
 			}
 			next(w, r.WithContext(ctx))
@@ -81,6 +82,27 @@ func main() {
 				candidates = append(candidates, filepath.Join(filepath.Dir(exe), "chat.html"))
 			}
 			candidates = append(candidates, "chat.html", "aiapp/aigtw/chat.html")
+
+			for _, p := range candidates {
+				if _, err := os.Stat(p); err == nil {
+					http.ServeFile(w, r, p)
+					return
+				}
+			}
+			http.NotFound(w, r)
+		},
+	})
+
+	// Tool 页面静态文件路由 - MCP 异步工具调用测试
+	server.AddRoute(rest.Route{
+		Method: http.MethodGet,
+		Path:   "/pass/tool",
+		Handler: func(w http.ResponseWriter, r *http.Request) {
+			candidates := []string{}
+			if exe, err := os.Executable(); err == nil {
+				candidates = append(candidates, filepath.Join(filepath.Dir(exe), "tool.html"))
+			}
+			candidates = append(candidates, "tool.html", "aiapp/aigtw/tool.html")
 
 			for _, p := range candidates {
 				if _, err := os.Stat(p); err == nil {
