@@ -39,11 +39,23 @@ func (l *AsyncToolResultLogic) AsyncToolResult(req *types.AsyncToolResultRequest
 		return nil, err
 	}
 
+	// 转换 messages
+	messages := make([]types.ProgressMessage, len(rpcResp.Messages))
+	for i, msg := range rpcResp.Messages {
+		messages[i] = types.ProgressMessage{
+			Progress: msg.Progress,
+			Total:    msg.Total,
+			Message:  msg.Message,
+			Time:     msg.Time,
+		}
+	}
+
 	return &types.AsyncToolResultResponse{
 		TaskID:   rpcResp.TaskId,
 		Status:   rpcResp.Status,
 		Progress: rpcResp.Progress,
 		Result:   rpcResp.Result,
 		Error:    rpcResp.Error,
+		Messages: messages,
 	}, nil
 }

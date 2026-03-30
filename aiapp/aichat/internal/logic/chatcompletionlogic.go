@@ -9,6 +9,7 @@ import (
 	"zero-service/aiapp/aichat/internal/provider"
 	"zero-service/aiapp/aichat/internal/svc"
 	"zero-service/common/mcpx"
+	"zero-service/common/tool"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -68,12 +69,26 @@ func (l *ChatCompletionLogic) ChatCompletion(in *aichat.ChatCompletionReq) (*aic
 		req.Messages = append(req.Messages, assistantMsg)
 
 		for _, tc := range assistantMsg.ToolCalls {
+			taskId, _ := tool.SimpleUUID()
 			l.Infof("tool call round %d: %s(%s)", round+1, tc.Function.Name, tc.Function.Arguments)
-			result, callErr := l.svcCtx.McpClient.CallTool(l.ctx, tc.Function.Name, mcpx.ParseArgs(tc.Function.Arguments))
+
+			// 使用带进度通知的工具调用
+			progressCallback := func(info *mcpx.ProgressInfo) {
+				l.Logger.Infof("tool callback %s, %s progress: %.1f/%.1f - %s",
+					info.Token, tc.Function.Name, info.Progress, info.Total, info.Message)
+			}
+
+			result, callErr := l.svcCtx.McpClient.CallToolWithProgress(l.ctx, &mcpx.CallToolWithProgressRequest{
+				Token:      taskId,
+				Name:       tc.Function.Name,
+				Args:       mcpx.ParseArgs(tc.Function.Arguments),
+				OnProgress: progressCallback,
+			})
 			if callErr != nil {
 				l.Logger.Errorf("tool call %s error: %v", tc.Function.Name, callErr)
 				result = fmt.Sprintf("tool error: %v", callErr)
 			}
+			l.Logger.Debugf("tool call %s result: %s", tc.Function.Name, result)
 			req.Messages = append(req.Messages, provider.ChatMessage{
 				Role:       "tool",
 				Content:    result,

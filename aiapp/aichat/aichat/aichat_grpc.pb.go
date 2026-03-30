@@ -24,6 +24,8 @@ const (
 	AiChat_ListModels_FullMethodName           = "/aichat.AiChat/ListModels"
 	AiChat_AsyncToolCall_FullMethodName        = "/aichat.AiChat/AsyncToolCall"
 	AiChat_AsyncToolResult_FullMethodName      = "/aichat.AiChat/AsyncToolResult"
+	AiChat_ListAsyncResults_FullMethodName     = "/aichat.AiChat/ListAsyncResults"
+	AiChat_AsyncResultStats_FullMethodName     = "/aichat.AiChat/AsyncResultStats"
 )
 
 // AiChatClient is the client API for AiChat service.
@@ -48,6 +50,12 @@ type AiChatClient interface {
 	// AsyncToolResult 查询异步工具调用的执行状态和结果。
 	// 建议轮询间隔 1~2 秒，直到状态变为 completed 或 failed
 	AsyncToolResult(ctx context.Context, in *AsyncToolResultReq, opts ...grpc.CallOption) (*AsyncToolResultRes, error)
+	// ListAsyncResults 分页查询异步结果列表。
+	// 支持按状态、时间范围过滤，支持多字段排序
+	ListAsyncResults(ctx context.Context, in *ListAsyncResultsReq, opts ...grpc.CallOption) (*ListAsyncResultsResp, error)
+	// AsyncResultStats 获取异步结果统计信息。
+	// 返回任务总数、各状态数量及成功率
+	AsyncResultStats(ctx context.Context, in *EmptyReq, opts ...grpc.CallOption) (*AsyncResultStat, error)
 }
 
 type aiChatClient struct {
@@ -117,6 +125,26 @@ func (c *aiChatClient) AsyncToolResult(ctx context.Context, in *AsyncToolResultR
 	return out, nil
 }
 
+func (c *aiChatClient) ListAsyncResults(ctx context.Context, in *ListAsyncResultsReq, opts ...grpc.CallOption) (*ListAsyncResultsResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListAsyncResultsResp)
+	err := c.cc.Invoke(ctx, AiChat_ListAsyncResults_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aiChatClient) AsyncResultStats(ctx context.Context, in *EmptyReq, opts ...grpc.CallOption) (*AsyncResultStat, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AsyncResultStat)
+	err := c.cc.Invoke(ctx, AiChat_AsyncResultStats_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AiChatServer is the server API for AiChat service.
 // All implementations must embed UnimplementedAiChatServer
 // for forward compatibility.
@@ -139,6 +167,12 @@ type AiChatServer interface {
 	// AsyncToolResult 查询异步工具调用的执行状态和结果。
 	// 建议轮询间隔 1~2 秒，直到状态变为 completed 或 failed
 	AsyncToolResult(context.Context, *AsyncToolResultReq) (*AsyncToolResultRes, error)
+	// ListAsyncResults 分页查询异步结果列表。
+	// 支持按状态、时间范围过滤，支持多字段排序
+	ListAsyncResults(context.Context, *ListAsyncResultsReq) (*ListAsyncResultsResp, error)
+	// AsyncResultStats 获取异步结果统计信息。
+	// 返回任务总数、各状态数量及成功率
+	AsyncResultStats(context.Context, *EmptyReq) (*AsyncResultStat, error)
 	mustEmbedUnimplementedAiChatServer()
 }
 
@@ -163,6 +197,12 @@ func (UnimplementedAiChatServer) AsyncToolCall(context.Context, *AsyncToolCallRe
 }
 func (UnimplementedAiChatServer) AsyncToolResult(context.Context, *AsyncToolResultReq) (*AsyncToolResultRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AsyncToolResult not implemented")
+}
+func (UnimplementedAiChatServer) ListAsyncResults(context.Context, *ListAsyncResultsReq) (*ListAsyncResultsResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAsyncResults not implemented")
+}
+func (UnimplementedAiChatServer) AsyncResultStats(context.Context, *EmptyReq) (*AsyncResultStat, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AsyncResultStats not implemented")
 }
 func (UnimplementedAiChatServer) mustEmbedUnimplementedAiChatServer() {}
 func (UnimplementedAiChatServer) testEmbeddedByValue()                {}
@@ -268,6 +308,42 @@ func _AiChat_AsyncToolResult_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AiChat_ListAsyncResults_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAsyncResultsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AiChatServer).ListAsyncResults(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AiChat_ListAsyncResults_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AiChatServer).ListAsyncResults(ctx, req.(*ListAsyncResultsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AiChat_AsyncResultStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EmptyReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AiChatServer).AsyncResultStats(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AiChat_AsyncResultStats_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AiChatServer).AsyncResultStats(ctx, req.(*EmptyReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AiChat_ServiceDesc is the grpc.ServiceDesc for AiChat service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -290,6 +366,14 @@ var AiChat_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AsyncToolResult",
 			Handler:    _AiChat_AsyncToolResult_Handler,
+		},
+		{
+			MethodName: "ListAsyncResults",
+			Handler:    _AiChat_ListAsyncResults_Handler,
+		},
+		{
+			MethodName: "AsyncResultStats",
+			Handler:    _AiChat_AsyncResultStats_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

@@ -86,6 +86,7 @@ type ProgressCallback func(info *ProgressInfo)
 
 // CallToolWithProgressRequest 带进度通知的工具调用请求
 type CallToolWithProgressRequest struct {
+	Token      string
 	Name       string           // 工具名称
 	Args       map[string]any   // 工具参数
 	OnProgress ProgressCallback // 进度回调
@@ -218,12 +219,6 @@ func (c *Client) buildClientOptions() *mcp.ClientOptions {
 		if c.options.LoggingMessageHandler != nil {
 			opts.LoggingMessageHandler = c.options.LoggingMessageHandler
 		}
-
-		// ProgressNotificationHandler: 处理进度通知（notifications/progress）
-		// 用于接收长时间运行操作的进度更新
-		if c.options.ProgressNotificationHandler != nil {
-			opts.ProgressNotificationHandler = c.options.ProgressNotificationHandler
-		}
 	}
 
 	// 默认处理工具列表变更：刷新所有连接的工具列表
@@ -247,8 +242,8 @@ func (c *Client) buildClientOptions() *mcp.ClientOptions {
 		}
 	}
 
-	// 进度通知处理器：通过 emitter 分发进度
-	// 调用方通过订阅 token topic 来接收进度
+	// 进度通知处理器（内部实现，不允许覆盖）
+	// 通过 emitter 分发进度，调用方通过订阅 token topic 来接收进度
 	opts.ProgressNotificationHandler = func(ctx context.Context, req *mcp.ProgressNotificationClientRequest) {
 		token := fmt.Sprintf("%v", req.Params.ProgressToken)
 		c.progressEmitter.Emit(token, ProgressInfo{
@@ -768,8 +763,11 @@ func (conn *Connection) callToolWithProgress(ctx context.Context, req *CallToolW
 	realName := stripServerPrefix(req.Name)
 
 	params := &mcp.CallToolParams{Name: realName, Arguments: req.Args}
-	// 生成唯一的 progress token
-	token, _ := tool.SimpleUUID()
+	token := req.Token
+	if len(token) == 0 {
+		// 生成唯一的 progress token
+		token, _ = tool.SimpleUUID()
+	}
 
 	// 订阅进度事件
 	var cancel func()
@@ -911,22 +909,9 @@ func ParseArgs(argsJSON string) map[string]any {
 }
 
 // CallToolAsync 异步调用工具，立即返回 task_id
-// 工具在后台 goroutine 执行，结果通过 ResultHandler 存储
+// 工具在后台 goroutine 执行，进度通过 TaskObserver 观察
 func (c *Client) CallToolAsync(ctx context.Context, req *CallToolAsyncRequest) (string, error) {
 	taskID, _ := tool.SimpleUUID()
-
-	// 立即保存 pending 状态
-	now := time.Now().Unix()
-	result := &AsyncToolResult{
-		TaskID:    taskID,
-		Status:    "pending",
-		Progress:  0,
-		CreatedAt: now,
-		UpdatedAt: now,
-	}
-	if req.ResultHandler != nil {
-		req.ResultHandler.Save(ctx, result)
-	}
 
 	// 创建独立 context，继承原 ctx 的值（ctxprop、OTel trace 等）
 	// 但不继承 cancel，请求结束后原 ctx 会被 cancel，这里创建的不受影响
@@ -936,39 +921,46 @@ func (c *Client) CallToolAsync(ctx context.Context, req *CallToolAsyncRequest) (
 	threading.GoSafe(func() {
 		// 调用同步方法（带进度）
 		res, callErr := c.CallToolWithProgress(asyncCtx, &CallToolWithProgressRequest{
-			Name: req.Name,
-			Args: req.Args,
+			Token: taskID,
+			Name:  req.Name,
+			Args:  req.Args,
 			OnProgress: func(info *ProgressInfo) {
-				if req.ResultHandler != nil {
+				if req.TaskObserver != nil {
 					progress := 0.0
+					total := 100.0
 					if info.Total > 0 {
 						progress = info.Progress / info.Total * 100
+						total = 100.0
 					}
-					req.ResultHandler.UpdateProgress(asyncCtx, taskID, progress, "pending")
-				}
-				if req.OnProgress != nil {
-					req.OnProgress(info)
+					req.TaskObserver.OnProgress(taskID, progress, total, info.Message)
 				}
 			},
 		})
 
-		// 保存最终结果
+		// 构建最终结果
 		finalResult := &AsyncToolResult{
 			TaskID:    taskID,
-			CreatedAt: result.CreatedAt,
+			CreatedAt: time.Now().Unix(),
 			UpdatedAt: time.Now().Unix(),
 		}
+
+		// MCP 最终消息，用于通知
+		finalMessage := ""
 		if callErr != nil {
 			finalResult.Status = "failed"
 			finalResult.Error = callErr.Error()
+			finalResult.Progress = 0
+			finalMessage = callErr.Error()
 		} else {
 			finalResult.Status = "completed"
 			finalResult.Result = res
 			finalResult.Progress = 100
+			finalMessage = "completed"
 		}
 
-		if req.ResultHandler != nil {
-			req.ResultHandler.Save(asyncCtx, finalResult)
+		// 调用 OnComplete 保存最终结果，传入 MCP 最终消息
+		if req.TaskObserver != nil {
+			req.TaskObserver.OnComplete(taskID, finalMessage, finalResult)
 		}
 	})
 

@@ -138,7 +138,10 @@ func (p *Promise[T]) Reject(err error) {
 	})
 }
 
-// FireAndForget 异步消费结果，不关心返回值
+// FireAndForget 异步消费结果，不关心返回值。
+// goroutine 会持续运行直到 ctx.Done() 或 Promise 被 resolve/reject。
+// 注意：如果 ctx 永不取消且 Promise 永不完成，goroutine 将永不退出。
+// 这是预期行为，用于不需要等待结果的场景。
 func (p *Promise[T]) FireAndForget(ctx context.Context) {
 	go func() {
 		_, _ = p.Await(ctx)

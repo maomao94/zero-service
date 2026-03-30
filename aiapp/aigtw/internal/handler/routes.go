@@ -56,6 +56,18 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/async/tool/result/:task_id",
 				Handler: pass.AsyncToolResultHandler(serverCtx),
 			},
+			{
+				// 分页查询异步结果列表，支持按状态、时间范围过滤，支持多字段排序
+				Method:  http.MethodGet,
+				Path:    "/async/tool/results",
+				Handler: pass.ListAsyncResultsHandler(serverCtx),
+			},
+			{
+				// 获取异步结果统计信息
+				Method:  http.MethodGet,
+				Path:    "/async/tool/stats",
+				Handler: pass.AsyncResultStatsHandler(serverCtx),
+			},
 		},
 		rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret),
 		rest.WithPrefix("/ai/v1"),

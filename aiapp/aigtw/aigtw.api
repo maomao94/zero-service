@@ -75,6 +75,14 @@ service aigtw {
 	@doc "查询异步工具调用的执行状态和结果，建议轮询间隔 1~2 秒"
 	@handler asyncToolResult
 	get /async/tool/result/:task_id (AsyncToolResultRequest) returns (AsyncToolResultResponse)
+
+	@doc "分页查询异步结果列表，支持按状态、时间范围过滤，支持多字段排序"
+	@handler listAsyncResults
+	get /async/tool/results (ListAsyncResultsRequest) returns (ListAsyncResultsResponse)
+
+	@doc "获取异步结果统计信息"
+	@handler asyncResultStats
+	get /async/tool/stats returns (AsyncResultStatsResponse)
 }
 
 // ============================================================
@@ -133,6 +141,63 @@ type (
 		// 任务失败时的错误信息
 		// 仅当 status 为 "failed" 时有值
 		Error string `json:"error,omitempty"`
+		// 进度消息历史
+		Messages []ProgressMessage `json:"messages,omitempty"`
+	}
+	// ProgressMessage 进度消息
+	// 记录 MCP 服务器发送的所有进度通知，用于前端展示消息历史
+	ProgressMessage {
+		// 当前进度百分比，取值范围 0.0~100.0
+		Progress float64 `json:"progress"`
+		// 进度总值（参考值）
+		Total float64 `json:"total"`
+		// 消息内容，MCP 服务器返回的原始消息
+		Message string `json:"message"`
+		// 时间戳，Unix 秒级时间戳
+		Time int64 `json:"time"`
+	}
+	// ListAsyncResultsRequest 分页查询异步结果请求
+	ListAsyncResultsRequest {
+		// 过滤状态：pending/completed/failed（空字符串表示全部）
+		Status string `form:"status,optional"`
+		// 开始时间戳（毫秒），0 表示不限制
+		StartTime int64 `form:"start_time,optional"`
+		// 结束时间戳（毫秒），0 表示不限制
+		EndTime int64 `form:"end_time,optional"`
+		// 页码，从 1 开始，默认 1
+		Page int `form:"page,optional"`
+		// 每页数量，默认 10，最大 100
+		PageSize int `form:"page_size,optional"`
+		// 排序字段：created_at/updated_at/progress
+		SortField string `form:"sort_field,optional"`
+		// 排序方向：asc/desc
+		SortOrder string `form:"sort_order,optional"`
+	}
+	// ListAsyncResultsResponse 分页查询异步结果响应
+	ListAsyncResultsResponse {
+		// 任务列表
+		Items []AsyncToolResultResponse `json:"items"`
+		// 总数
+		Total int64 `json:"total"`
+		// 当前页
+		Page int `json:"page"`
+		// 每页数量
+		PageSize int `json:"page_size"`
+		// 总页数
+		TotalPages int `json:"total_pages"`
+	}
+	// AsyncResultStatsResponse 异步结果统计响应
+	AsyncResultStatsResponse {
+		// 任务总数
+		Total int64 `json:"total"`
+		// 待处理任务数
+		Pending int64 `json:"pending"`
+		// 已完成任务数
+		Completed int64 `json:"completed"`
+		// 失败任务数
+		Failed int64 `json:"failed"`
+		// 成功率（百分比）
+		SuccessRate float64 `json:"success_rate"`
 	}
 )
 

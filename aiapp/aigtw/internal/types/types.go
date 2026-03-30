@@ -3,6 +3,14 @@
 
 package types
 
+type AsyncResultStatsResponse struct {
+	Total       int64   `json:"total"`
+	Pending     int64   `json:"pending"`
+	Completed   int64   `json:"completed"`
+	Failed      int64   `json:"failed"`
+	SuccessRate float64 `json:"success_rate"`
+}
+
 type AsyncToolCallRequest struct {
 	Server string                 `json:"server"`
 	Tool   string                 `json:"tool"`
@@ -19,11 +27,12 @@ type AsyncToolResultRequest struct {
 }
 
 type AsyncToolResultResponse struct {
-	TaskID   string  `json:"task_id"`
-	Status   string  `json:"status"`
-	Progress float64 `json:"progress"`
-	Result   string  `json:"result,omitempty"`
-	Error    string  `json:"error,omitempty"`
+	TaskID   string            `json:"task_id"`
+	Status   string            `json:"status"`
+	Progress float64           `json:"progress"`
+	Result   string            `json:"result,omitempty"`
+	Error    string            `json:"error,omitempty"`
+	Messages []ProgressMessage `json:"messages,omitempty"`
 }
 
 type ChatCompletionChunk struct {
@@ -79,6 +88,24 @@ type ChunkChoice struct {
 	FinishReason *string   `json:"finish_reason,optional"` // 结束原因
 }
 
+type ListAsyncResultsRequest struct {
+	Status    string `form:"status,optional"`
+	StartTime int64  `form:"start_time,optional"`
+	EndTime   int64  `form:"end_time,optional"`
+	Page      int    `form:"page,optional"`
+	PageSize  int    `form:"page_size,optional"`
+	SortField string `form:"sort_field,optional"`
+	SortOrder string `form:"sort_order,optional"`
+}
+
+type ListAsyncResultsResponse struct {
+	Items      []AsyncToolResultResponse `json:"items"`
+	Total      int64                     `json:"total"`
+	Page       int                       `json:"page"`
+	PageSize   int                       `json:"page_size"`
+	TotalPages int                       `json:"total_pages"`
+}
+
 type ListModelsResponse struct {
 	Object string        `json:"object"` // 固定值 "list"
 	Data   []ModelObject `json:"data"`   // 模型列表
@@ -96,6 +123,13 @@ type ModelObject struct {
 	Created  int64          `json:"created"`           // 创建时间（Unix 时间戳）
 	OwnedBy  string         `json:"owned_by"`          // 所属方，固定 "aigtw"
 	Metadata *ModelMetadata `json:"metadata,optional"` // 扩展元数据（能力详情）
+}
+
+type ProgressMessage struct {
+	Progress float64 `json:"progress"`
+	Total    float64 `json:"total"`
+	Message  string  `json:"message"`
+	Time     int64   `json:"time"`
 }
 
 type ThinkingParam struct {

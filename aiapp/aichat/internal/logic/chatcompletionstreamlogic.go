@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"zero-service/common/tool"
 
 	"zero-service/aiapp/aichat/aichat"
 	"zero-service/aiapp/aichat/internal/provider"
@@ -72,6 +73,7 @@ func (l *ChatCompletionStreamLogic) ChatCompletionStream(in *aichat.ChatCompleti
 			req.Messages = append(req.Messages, assistantMsg)
 
 			for _, tc := range assistantMsg.ToolCalls {
+				taskId, _ := tool.SimpleUUID()
 				l.Infof("stream tool call round %d: %s(%s)", round+1, tc.Function.Name, tc.Function.Arguments)
 
 				// 使用带进度通知的工具调用
@@ -81,6 +83,7 @@ func (l *ChatCompletionStreamLogic) ChatCompletionStream(in *aichat.ChatCompleti
 				}
 
 				result, callErr := l.svcCtx.McpClient.CallToolWithProgress(streamCtx, &mcpx.CallToolWithProgressRequest{
+					Token:      taskId,
 					Name:       tc.Function.Name,
 					Args:       mcpx.ParseArgs(tc.Function.Arguments),
 					OnProgress: progressCallback,
@@ -89,7 +92,7 @@ func (l *ChatCompletionStreamLogic) ChatCompletionStream(in *aichat.ChatCompleti
 					l.Logger.Errorf("tool call %s error: %v", tc.Function.Name, callErr)
 					result = fmt.Sprintf("tool error: %v", callErr)
 				}
-				l.Logger.Debugf("tool call %s result: %s", result)
+				l.Logger.Debugf("tool call %s result: %s", tc.Function.Name, result)
 				req.Messages = append(req.Messages, provider.ChatMessage{
 					Role:       "tool",
 					Content:    result,

@@ -2,6 +2,8 @@ package antsx
 
 import (
 	"sync"
+
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 // Subscriber 订阅者
@@ -51,7 +53,18 @@ func (e *EventEmitter[T]) Subscribe(topic string, bufSize ...int) (<-chan T, fun
 			subs := e.subscribers[topic]
 			for i, s := range subs {
 				if s == sub {
-					e.subscribers[topic] = append(subs[:i], subs[i+1:]...)
+					logx.Debugf("unsubscribe topic: %s, index: %d", topic, i)
+					// 使用 copy 方式删除，避免底层数组保留对已删除元素的引用
+					if i == 0 {
+						e.subscribers[topic] = subs[1:]
+					} else if i == len(subs)-1 {
+						e.subscribers[topic] = subs[:i]
+					} else {
+						newSubs := make([]*Subscriber[T], len(subs)-1)
+						copy(newSubs, subs[:i])
+						copy(newSubs[i:], subs[i+1:])
+						e.subscribers[topic] = newSubs
+					}
 					break
 				}
 			}
@@ -72,7 +85,9 @@ func (e *EventEmitter[T]) Emit(topic string, value T) {
 	subs := make([]*Subscriber[T], len(e.subscribers[topic]))
 	copy(subs, e.subscribers[topic])
 	e.mu.RUnlock()
-
+	if len(subs) == 0 {
+		logx.Debugf("no subscriber for topic: %s", topic)
+	}
 	for _, sub := range subs {
 		select {
 		case sub.ch <- value:
@@ -107,11 +122,13 @@ func (e *EventEmitter[T]) Close() {
 	e.closed = true
 
 	for topic, subs := range e.subscribers {
+		// 先从 map 中删除，阻止新的 emit 操作访问到这些订阅者
+		delete(e.subscribers, topic)
+		// 再关闭 channel
 		for _, sub := range subs {
 			sub.once.Do(func() {
 				close(sub.ch)
 			})
 		}
-		delete(e.subscribers, topic)
 	}
 }

@@ -8,10 +8,10 @@ MaxToolRounds: 10
 Mcpx:
   Servers:
     - Name: "mcpserver"
-#      Endpoint: "http://localhost:13003/sse"
-#      UseStreamable: false
-      Endpoint: "http://localhost:13003/message"
-      UseStreamable: true
+      Endpoint: "http://localhost:13003/sse"
+      UseStreamable: false
+#      Endpoint: "http://localhost:13003/message"
+#      UseStreamable: true
       ServiceToken: "mcp-internal-service-token-2026"
   RefreshInterval: 30s
   ConnectTimeout: 10s
@@ -20,7 +20,7 @@ Log:
   Encoding: plain
   #  Mode: file
   Path: /opt/logs/aichat
-  Level: info
+  Level: debug
   KeepDays: 300
 
 Providers:

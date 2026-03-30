@@ -30,9 +30,9 @@ func (l *AsyncToolCallLogic) AsyncToolCall(in *aichat.AsyncToolCallReq) (*aichat
 		return nil, ErrMcpClientNotConfigured
 	}
 
-	// 获取 ResultHandler
-	handler := l.svcCtx.AsyncResultHandler
-	if handler == nil {
+	// 获取 AsyncResultStore
+	store := l.svcCtx.AsyncResultStore
+	if store == nil {
 		return nil, ErrAsyncResultHandlerNotConfigured
 	}
 
@@ -48,11 +48,15 @@ func (l *AsyncToolCallLogic) AsyncToolCall(in *aichat.AsyncToolCallReq) (*aichat
 	// 构建工具名称（带服务器前缀）
 	toolName := in.Server + mcpx.ToolNameSeparator + in.Tool
 
+	// 创建任务观察者（存储 + 外部通知回调）
+	taskObserver := mcpx.NewDefaultTaskObserver(store, nil)
+
 	// 调用异步方法
 	taskID, err := mcpClient.CallToolAsync(l.ctx, &mcpx.CallToolAsyncRequest{
-		Name:          toolName,
-		Args:          args,
-		ResultHandler: handler,
+		Name:         toolName,
+		Args:         args,
+		ResultStore:  store,
+		TaskObserver: taskObserver,
 	})
 	if err != nil {
 		logx.WithContext(l.ctx).Errorf("[AsyncToolCall] call tool async error: %v", err)

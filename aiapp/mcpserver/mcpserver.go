@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"zero-service/aiapp/mcpserver/internal/config"
+	"zero-service/aiapp/mcpserver/internal/skills"
 	"zero-service/aiapp/mcpserver/internal/svc"
 	"zero-service/aiapp/mcpserver/internal/tools"
 	"zero-service/common/mcpx"
@@ -29,8 +30,27 @@ func main() {
 	server := mcpx.NewMcpServer(c.McpServerConf)
 	defer server.Stop()
 
+	// 创建 ServiceContext（包含 skills loader）
+	svcCtx, err := svc.NewServiceContext(c)
+	if err != nil {
+		logx.Errorf("创建 ServiceContext 失败: %v", err)
+		return
+	}
+
+	// 注册 Skills Resources 和 Prompts
+	if svcCtx.SkillsLoader != nil {
+		skills.RegisterResources(server.Server(), svcCtx.SkillsLoader)
+		skills.RegisterPrompts(server.Server(), svcCtx.SkillsLoader)
+		logx.Infof("已注册 %d 个 skills", len(svcCtx.SkillsLoader.ListSkills()))
+
+		// 启动热加载
+		if err := svcCtx.SkillsLoader.StartWatcher(); err != nil {
+			logx.Errorf("启动 skills 热加载失败: %v", err)
+		}
+		defer svcCtx.SkillsLoader.Stop()
+	}
+
 	// 注册所有工具
-	svcCtx := svc.NewServiceContext(c)
 	tools.RegisterAll(server.Server(), svcCtx)
 
 	logx.AddGlobalFields(logx.Field("app", c.Name))

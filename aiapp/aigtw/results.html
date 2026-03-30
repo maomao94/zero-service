@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>异步任务管理</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --surface: #f7f7f8;
+            --surface-hover: #ececec;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --accent: #6c5ce7;
+            --accent-hover: #5b4bd6;
+            --success: #10a37f;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --border: #e5e5ea;
+            --code-bg: #f4f4f4;
+        }
+        [data-theme="dark"] {
+            --bg: #1a1a1a;
+            --surface: #2a2a2e;
+            --surface-hover: #3a3a3e;
+            --text-primary: #ececf1;
+            --text-secondary: #a0a0b0;
+            --accent: #6c5ce7;
+            --accent-hover: #7d6ff0;
+            --success: #10a37f;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --border: #4e4f60;
+            --code-bg: #2a2a2e;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* ============================================
+           UNIFORM NAVIGATION HEADER
+           ============================================ */
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .nav-brand {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--surface);
+            padding: 4px;
+            border-radius: 10px;
+        }
+
+        .nav-tab {
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-tab:hover {
+            color: var(--text-primary);
+            background: var(--surface-hover);
+        }
+
+        .nav-tab.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s;
+            color: var(--text-primary);
+        }
+
+        .icon-btn:hover {
+            background: var(--surface-hover);
+            border-color: var(--accent);
+        }
+
+        /* ============================================
+           LAYOUT
+           ============================================ */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px 20px;
+        }
+
+        h1 { margin-bottom: 20px; font-size: 24px; }
+        h2 { margin-bottom: 12px; font-size: 16px; color: var(--text-secondary); }
+        .card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .theme-toggle { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; cursor: pointer; }
+
+        /* 统计卡片 */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .stat-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+        .stat-value { font-size: 32px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+        .stat-label { font-size: 14px; color: var(--text-secondary); }
+        .stat-card.success .stat-value { color: var(--success); }
+        .stat-card.warning .stat-value { color: var(--warning); }
+        .stat-card.danger .stat-value { color: var(--danger); }
+
+        /* 筛选表单 */
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            padding: 16px;
+            background: var(--bg);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+        .form-group input, .form-group select {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--surface);
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent); }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-secondary { background: var(--surface-hover); color: var(--text-primary); }
+        .btn-secondary:hover { background: var(--border); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+        /* 表格 */
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: var(--bg); font-weight: 600; font-size: 12px; color: var(--text-secondary); text-transform: uppercase; }
+        td { font-size: 13px; }
+        tr:hover { background: var(--surface-hover); }
+        .task-id { font-family: monospace; font-size: 12px; color: var(--text-secondary); }
+
+        /* 状态标签 */
+        .status { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .status-pending { background: #fef3cd; color: #856404; }
+        .status-completed { background: #d4edda; color: #155724; }
+        .status-failed { background: #f8d7da; color: #721c24; }
+        .status-running { background: #cce5ff; color: #004085; }
+
+        /* 分页 */
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 20px; }
+        .pagination button { padding: 8px 12px; border: 1px solid var(--border); background: var(--surface); border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .pagination button:hover:not(:disabled) { background: var(--surface-hover); }
+        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .pagination .page-info { font-size: 13px; color: var(--text-secondary); padding: 0 16px; }
+
+        /* 进度条 */
+        .progress-mini { width: 100px; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; display: inline-block; vertical-align: middle; }
+        .progress-mini-fill { height: 100%; background: var(--accent); transition: width 0.3s; }
+        .progress-mini-fill.completed { background: var(--success); }
+        .progress-mini-fill.failed { background: var(--danger); }
+
+        /* 结果展示 */
+        .result-preview {
+            max-width: 200px;
+            max-height: 60px;
+            overflow: hidden;
+            font-family: monospace;
+            font-size: 11px;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* 加载状态 */
+        .loading { text-align: center; padding: 40px; color: var(--text-secondary); }
+        .empty { text-align: center; padding: 60px; color: var(--text-secondary); }
+
+        /* 服务状态 */
+        .service-status { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); margin-bottom: 16px; }
+        .service-status.connected { border-color: var(--success); }
+        .service-status.disconnected { border-color: var(--danger); }
+        .service-status .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .service-status.connected .dot { background: var(--success); }
+        .service-status.disconnected .dot { background: var(--danger); }
+        .service-status .text { flex: 1; font-size: 13px; }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 20px; right: 20px;
+            padding: 12px 20px; border-radius: 8px;
+            background: var(--success); color: white;
+            font-size: 13px; font-weight: 500;
+            animation: slideIn 0.3s ease, fadeOut 0.3s ease 2s forwards;
+            z-index: 1000;
+        }
+        @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+        /* 详情模态框 */
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: var(--bg); border-radius: 12px; padding: 24px; max-width: 800px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .modal-header h3 { font-size: 18px; }
+        .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary); }
+        .result-full { background: var(--code-bg); padding: 16px; border-radius: 8px; font-family: monospace; font-size: 13px; white-space: pre-wrap; word-break: break-all; }
+
+        /* 消息列表 */
+        .messages-list { max-height: 300px; overflow-y: auto; margin-top: 12px; }
+        .message-item { display: flex; align-items: flex-start; padding: 10px; border-radius: 8px; background: var(--surface); margin-bottom: 8px; }
+        .message-icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; margin-right: 10px; flex-shrink: 0; }
+        .message-icon.progress { background: var(--info); color: white; }
+        .message-icon.complete { background: var(--success); color: white; }
+        .message-icon.error { background: var(--danger); color: white; }
+        .message-text { flex: 1; font-size: 12px; }
+        .message-meta { font-size: 10px; color: var(--text-secondary); margin-top: 4px; }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .app-header {
+                padding: 0 12px;
+            }
+
+            .nav-brand span {
+                display: none;
+            }
+
+            .nav-tabs {
+                gap: 2px;
+                padding: 3px;
+            }
+
+            .nav-tab {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+
+            .nav-tab span {
+                display: none;
+            }
+
+            .container {
+                padding: 16px 12px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-bar .form-group {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Uniform Navigation Header -->
+<header class="app-header">
+    <div class="nav-brand">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+        </svg>
+        AI GTW
+    </div>
+    <nav class="nav-tabs">
+        <a href="chat.html" class="nav-tab">💬 聊天</a>
+        <a href="tool.html" class="nav-tab">🔧 工具调用</a>
+        <a href="results.html" class="nav-tab active">📊 任务管理</a>
+    </nav>
+    <div class="nav-actions">
+        <button class="icon-btn" onclick="toggleTheme()" title="切换主题">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+    </div>
+</header>
+
+<!-- Main Content -->
+<div class="container">
+        <!-- 服务状态 -->
+        <div class="service-status" id="serviceStatus">
+            <span class="dot"></span>
+            <span class="text" id="serviceStatusText">检查服务连接...</span>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-value" id="statTotal">-</div>
+                <div class="stat-label">任务总数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statPending">-</div>
+                <div class="stat-label">待处理</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-value" id="statCompleted">-</div>
+                <div class="stat-label">已完成</div>
+            </div>
+            <div class="stat-card danger">
+                <div class="stat-value" id="statFailed">-</div>
+                <div class="stat-label">失败</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statSuccessRate">-</div>
+                <div class="stat-label">成功率</div>
+            </div>
+        </div>
+
+        <!-- 筛选表单 -->
+        <div class="filter-bar">
+            <div class="form-group">
+                <label>状态筛选</label>
+                <select id="filterStatus">
+                    <option value="">全部</option>
+                    <option value="pending">待处理</option>
+                    <option value="completed">已完成</option>
+                    <option value="failed">失败</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>开始时间</label>
+                <input type="datetime-local" id="filterStartTime">
+            </div>
+            <div class="form-group">
+                <label>结束时间</label>
+                <input type="datetime-local" id="filterEndTime">
+            </div>
+            <div class="form-group">
+                <label>排序字段</label>
+                <select id="filterSortField">
+                    <option value="created_at">创建时间</option>
+                    <option value="updated_at">更新时间</option>
+                    <option value="progress">进度</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>排序方向</label>
+                <select id="filterSortOrder">
+                    <option value="desc">降序</option>
+                    <option value="asc">升序</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>每页数量</label>
+                <select id="filterPageSize">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="searchTasks()">查询</button>
+            <button class="btn btn-secondary" onclick="resetFilters()">重置</button>
+        </div>
+
+        <!-- 任务列表 -->
+        <div class="card">
+            <h2>任务列表</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Task ID</th>
+                            <th>状态</th>
+                            <th>进度</th>
+                            <th>创建时间</th>
+                            <th>更新时间</th>
+                            <th>结果预览</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="taskTableBody">
+                        <tr><td colspan="7" class="loading">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 分页 -->
+            <div class="pagination">
+                <button id="btnPrev" onclick="prevPage()">上一页</button>
+                <span class="page-info" id="pageInfo">第 1 页 / 共 1 页</span>
+                <button id="btnNext" onclick="nextPage()">下一页</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 详情模态框 -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>任务详情</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // 配置
+        const API_BASE = localStorage.getItem('mcp_api_base') || 'http://localhost:13001/ai/v1';
+        const JWT_TOKEN = localStorage.getItem('mcp_jwt_token') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXB0X2NvZGUiOiIxMDAwMSIsImRlcHRfaWQiOiIxMDAwMSIsImV4cCI6MTgwNjAyNDYxNywiaWF0IjoxNzc0NDg4NjE3LCJ1c2VyLWlkIjoidXNlcjoyMTIxIiwidXNlcl9pZCI6InVzZXJpZDFpMWpqazFuIiwidXNlcl9uYW1lIjoi5rWL6K-V55So5oi355uK5rW3In0.0l-eFx7sq8HMuAG_Amf_heCzs6LPUVlUzl4JSheCpGE';
+
+        let currentPage = 1;
+        let totalPages = 1;
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const newTheme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // 加载主题
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+
+            // 加载数据
+            loadData();
+        });
+
+        async function loadData() {
+            await Promise.all([loadStats(), loadTasks()]);
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch(API_BASE + '/async/tool/stats', {
+                    headers: { 'Authorization': 'Bearer ' + JWT_TOKEN }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('statTotal').textContent = data.total || 0;
+                    document.getElementById('statPending').textContent = data.pending || 0;
+                    document.getElementById('statCompleted').textContent = data.completed || 0;
+                    document.getElementById('statFailed').textContent = data.failed || 0;
+                    document.getElementById('statSuccessRate').textContent = (data.success_rate || 0).toFixed(1) + '%';
+                    document.getElementById('serviceStatus').className = 'service-status connected';
+                    document.getElementById('serviceStatusText').textContent = '服务已连接';
+                } else {
+                    throw new Error('HTTP ' + response.status);
+                }
+            } catch (error) {
+                document.getElementById('serviceStatus').className = 'service-status disconnected';
+                document.getElementById('serviceStatusText').textContent = '服务连接失败: ' + error.message;
+            }
+        }
+
+        async function loadTasks() {
+            const tbody = document.getElementById('taskTableBody');
+            tbody.innerHTML = '<tr><td colspan="7" class="loading">加载中...</td></tr>';
+
+            const params = new URLSearchParams({
+                page: currentPage,
+                page_size: document.getElementById('filterPageSize').value,
+                sort_field: document.getElementById('filterSortField').value,
+                sort_order: document.getElementById('filterSortOrder').value
+            });
+
+            const status = document.getElementById('filterStatus').value;
+            if (status) params.append('status', status);
+
+            const startTime = document.getElementById('filterStartTime').value;
+            const endTime = document.getElementById('filterEndTime').value;
+            if (startTime) params.append('start_time', new Date(startTime).getTime());
+            if (endTime) params.append('end_time', new Date(endTime).getTime());
+
+            try {
+                const response = await fetch(API_BASE + '/async/tool/results?' + params.toString(), {
+                    headers: { 'Authorization': 'Bearer ' + JWT_TOKEN }
+                });
+                const data = await response.json();
+
+                if (data.items && data.items.length > 0) {
+                    totalPages = data.total_pages || 1;
+                    renderTasks(data.items);
+                    updatePagination(data);
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="7" class="empty">暂无数据</td></tr>';
+                    totalPages = 1;
+                    updatePagination({ page: 1, total_pages: 1 });
+                }
+            } catch (error) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty">加载失败: ' + error.message + '</td></tr>';
+            }
+        }
+
+        function renderTasks(items) {
+            const tbody = document.getElementById('taskTableBody');
+            tbody.innerHTML = items.map(item => {
+                const statusClass = 'status-' + item.status;
+                const statusText = { pending: '待处理', completed: '已完成', failed: '失败' }[item.status] || item.status;
+                const progressClass = item.status === 'completed' ? 'completed' : (item.status === 'failed' ? 'failed' : '');
+                const resultPreview = item.result ? truncate(item.result, 50) : (item.error ? '错误: ' + truncate(item.error, 30) : '-');
+
+                return '<tr>' +
+                    '<td class="task-id">' + item.task_id + '</td>' +
+                    '<td><span class="status ' + statusClass + '">' + statusText + '</span></td>' +
+                    '<td><div class="progress-mini"><div class="progress-mini-fill ' + progressClass + '" style="width: ' + Math.round(item.progress) + '%"></div></div> ' + Math.round(item.progress) + '%</td>' +
+                    '<td>' + formatTime(item.messages && item.messages.length > 0 ? item.messages[0].time : 0) + '</td>' +
+                    '<td>' + formatTime(item.messages && item.messages.length > 0 ? item.messages[item.messages.length - 1].time : 0) + '</td>' +
+                    '<td><div class="result-preview">' + escapeHtml(resultPreview) + '</div></td>' +
+                    '<td><button class="btn btn-sm btn-secondary" onclick="showDetail(\'' + item.task_id + '\')">详情</button></td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function updatePagination(data) {
+            document.getElementById('pageInfo').textContent = '第 ' + data.page + ' 页 / 共 ' + data.total_pages + ' 页 (共 ' + data.total + ' 条)';
+            document.getElementById('btnPrev').disabled = data.page <= 1;
+            document.getElementById('btnNext').disabled = data.page >= data.total_pages;
+        }
+
+        function searchTasks() {
+            currentPage = 1;
+            loadTasks();
+        }
+
+        function resetFilters() {
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterStartTime').value = '';
+            document.getElementById('filterEndTime').value = '';
+            document.getElementById('filterSortField').value = 'created_at';
+            document.getElementById('filterSortOrder').value = 'desc';
+            document.getElementById('filterPageSize').value = '10';
+            searchTasks();
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                loadTasks();
+            }
+        }
+
+        function nextPage() {
+            if (currentPage < totalPages) {
+                currentPage++;
+                loadTasks();
+            }
+        }
+
+        async function showDetail(taskId) {
+            try {
+                const response = await fetch(API_BASE + '/async/tool/result/' + taskId, {
+                    headers: { 'Authorization': 'Bearer ' + JWT_TOKEN }
+                });
+                const data = await response.json();
+
+                const statusClass = 'status-' + data.status;
+                const statusText = { pending: '待处理', completed: '已完成', failed: '失败' }[data.status] || data.status;
+
+                let messagesHtml = '';
+                if (data.messages && data.messages.length > 0) {
+                    messagesHtml = '<h4 style="margin: 16px 0 8px;">消息历史</h4><div class="messages-list">' +
+                        data.messages.map(msg => {
+                            const iconClass = msg.progress >= 100 ? 'complete' : 'progress';
+                            return '<div class="message-item">' +
+                                '<div class="message-icon ' + iconClass + '">' + Math.round(msg.progress) + '%</div>' +
+                                '<div class="message-text">' + escapeHtml(msg.message) + '<div class="message-meta">' + formatTime(msg.time) + '</div></div>' +
+                                '</div>';
+                        }).join('') + '</div>';
+                }
+
+                let resultHtml = '';
+                if (data.result) {
+                    try {
+                        resultHtml = '<h4 style="margin: 16px 0 8px;">执行结果</h4><div class="result-full">' + escapeHtml(JSON.stringify(JSON.parse(data.result), null, 2)) + '</div>';
+                    } catch {
+                        resultHtml = '<h4 style="margin: 16px 0 8px;">执行结果</h4><div class="result-full">' + escapeHtml(data.result) + '</div>';
+                    }
+                }
+                if (data.error) {
+                    resultHtml += '<h4 style="margin: 16px 0 8px; color: var(--danger);">错误信息</h4><div class="result-full" style="color: var(--danger);">' + escapeHtml(data.error) + '</div>';
+                }
+
+                document.getElementById('modalContent').innerHTML =
+                    '<div><span class="status ' + statusClass + '">' + statusText + '</span> 进度: ' + Math.round(data.progress) + '%</div>' +
+                    '<div style="margin-top: 12px; font-size: 13px; color: var(--text-secondary);">Task ID: <code>' + data.task_id + '</code></div>' +
+                    messagesHtml +
+                    resultHtml;
+
+                document.getElementById('detailModal').classList.add('show');
+            } catch (error) {
+                alert('加载详情失败: ' + error.message);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('detailModal').classList.remove('show');
+        }
+
+        // 点击模态框外部关闭
+        document.getElementById('detailModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '-';
+            return new Date(timestamp * 1000).toLocaleString('zh-CN');
+        }
+
+        function truncate(str, maxLen) {
+            if (!str) return '';
+            return str.length > maxLen ? str.substring(0, maxLen) + '...' : str;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

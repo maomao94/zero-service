@@ -10,15 +10,22 @@ import (
 	"github.com/zeromicro/go-zero/rest"
 )
 
-// McpServerConf 扩展 go-zero McpConf，添加鉴权配置。
+// SkillsConfig skills 目录配置
+type SkillsConfig struct {
+	Dir        string `json:",optional"` // skills 目录路径
+	AutoReload bool   `json:",optional"` // 是否热加载
+}
+
+// McpServerConf 扩展 go-zero McpConf，添加鉴权和 skills 配置。
 // 当 go-zero 原生支持 auth 后，可直接切回 mcp.McpConf。
 type McpServerConf struct {
 	mcp.McpConf
 	Auth struct {
 		JwtSecrets   []string          `json:",optional"`
 		ServiceToken string            `json:",optional"`
-		ClaimMapping map[string]string `json:",optional"` // 外部 JWT claim key 映射为内部 key（如 "user-id" -> "user_id"）
+		ClaimMapping map[string]string `json:",optional"`
 	}
+	Skills SkillsConfig `json:",optional"`
 }
 
 // McpServer 带鉴权的 MCP 服务器封装。

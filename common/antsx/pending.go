@@ -5,13 +5,17 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/zeromicro/go-zero/core/collection"
 )
 
 // RegistryOption 配置 PendingRegistry 的函数式选项
 type RegistryOption func(*registryConfig)
 
 type registryConfig struct {
-	defaultTTL time.Duration
+	defaultTTL     time.Duration
+	timingInterval time.Duration
+	numSlots       int
 }
 
 // WithDefaultTTL 设置默认超时时间，默认 30s
@@ -21,32 +25,81 @@ func WithDefaultTTL(d time.Duration) RegistryOption {
 	}
 }
 
-type entry[T any] struct {
+// WithTimingWheel 设置 TimingWheel 参数
+// interval: 时间轮刻度间隔，建议设为 timeout/numSlots
+// numSlots: 时间轮槽数，建议设为 20-60
+func WithTimingWheel(interval time.Duration, numSlots int) RegistryOption {
+	return func(c *registryConfig) {
+		c.timingInterval = interval
+		c.numSlots = numSlots
+	}
+}
+
+type pendingEntry[T any] struct {
 	promise *Promise[T]
-	timer   *time.Timer
+	removed bool // 是否已被主动移除（resolve/reject）
 }
 
 // PendingRegistry 关联 ID 注册表，用于异步请求-响应匹配
 // 典型场景：MQ correlationId 匹配、TCP sendNo 匹配
+// 使用 go-zero TimingWheel 实现，所有定时器共享一个 ticker，避免内存泄漏
 type PendingRegistry[T any] struct {
 	mu      sync.Mutex
-	pending map[string]*entry[T]
+	pending map[string]*pendingEntry[T]
 	closed  bool
 	cfg     registryConfig
+
+	tw *collection.TimingWheel
 }
 
 // NewPendingRegistry 创建关联 ID 注册表
 func NewPendingRegistry[T any](opts ...RegistryOption) *PendingRegistry[T] {
 	cfg := registryConfig{
-		defaultTTL: 30 * time.Second,
+		defaultTTL:     30 * time.Second,
+		timingInterval: time.Millisecond * 100, // 默认 100ms 刻度
+		numSlots:       60,                     // 默认 60 槽，约 6 秒一轮
 	}
 	for _, opt := range opts {
 		opt(&cfg)
 	}
-	return &PendingRegistry[T]{
-		pending: make(map[string]*entry[T]),
+
+	r := &PendingRegistry[T]{
+		pending: make(map[string]*pendingEntry[T]),
 		cfg:     cfg,
 	}
+
+	// 创建 TimingWheel，timeout 回调处理过期
+	tw, err := collection.NewTimingWheel(cfg.timingInterval, cfg.numSlots, func(key, value any) {
+		id, ok := key.(string)
+		if !ok {
+			return
+		}
+		r.handleTimeout(id)
+	})
+	if err != nil {
+		// 如果创建失败，使用降级方案（虽然不太可能发生）
+		panic("failed to create timing wheel: " + err.Error())
+	}
+	r.tw = tw
+
+	return r
+}
+
+// handleTimeout 处理定时器超时
+func (r *PendingRegistry[T]) handleTimeout(id string) {
+	r.mu.Lock()
+	entry, ok := r.pending[id]
+	if !ok {
+		// 已被 resolve/reject 或已被移除
+		r.mu.Unlock()
+		return
+	}
+	// 标记为已移除，防止再次被调用
+	entry.removed = true
+	delete(r.pending, id)
+	r.mu.Unlock()
+
+	entry.promise.Reject(ErrPendingExpired)
 }
 
 // Register 注册一个待匹配的请求，返回 Promise 用于等待响应
@@ -68,23 +121,20 @@ func (r *PendingRegistry[T]) Register(id string, ttl ...time.Duration) (*Promise
 	}
 
 	promise := NewPromise[T](id)
-
-	timer := time.AfterFunc(effectiveTTL, func() {
-		r.mu.Lock()
-		if _, ok := r.pending[id]; ok {
-			delete(r.pending, id)
-			r.mu.Unlock()
-			promise.Reject(ErrPendingExpired)
-		} else {
-			r.mu.Unlock()
-		}
-	})
-
-	r.pending[id] = &entry[T]{
+	entry := &pendingEntry[T]{
 		promise: promise,
-		timer:   timer,
+		removed: false,
 	}
+	r.pending[id] = entry
 	r.mu.Unlock()
+
+	// 使用 TimingWheel 设置定时器
+	if err := r.tw.SetTimer(id, nil, effectiveTTL); err != nil {
+		r.mu.Lock()
+		delete(r.pending, id)
+		r.mu.Unlock()
+		return nil, fmt.Errorf("failed to set timer: %w", err)
+	}
 
 	return promise, nil
 }
@@ -93,16 +143,20 @@ func (r *PendingRegistry[T]) Register(id string, ttl ...time.Duration) (*Promise
 // 返回 false 表示 ID 不存在（已被解决、拒绝或过期）
 func (r *PendingRegistry[T]) Resolve(id string, val T) bool {
 	r.mu.Lock()
-	e, ok := r.pending[id]
+	entry, ok := r.pending[id]
 	if !ok {
 		r.mu.Unlock()
 		return false
 	}
+	// 标记为已移除，防止 handleTimeout 再次调用
+	entry.removed = true
 	delete(r.pending, id)
-	e.timer.Stop()
 	r.mu.Unlock()
 
-	e.promise.Resolve(val)
+	// 移除 TimingWheel 中的定时器
+	r.tw.RemoveTimer(id)
+
+	entry.promise.Resolve(val)
 	return true
 }
 
@@ -110,16 +164,20 @@ func (r *PendingRegistry[T]) Resolve(id string, val T) bool {
 // 返回 false 表示 ID 不存在
 func (r *PendingRegistry[T]) Reject(id string, err error) bool {
 	r.mu.Lock()
-	e, ok := r.pending[id]
+	entry, ok := r.pending[id]
 	if !ok {
 		r.mu.Unlock()
 		return false
 	}
+	// 标记为已移除，防止 handleTimeout 再次调用
+	entry.removed = true
 	delete(r.pending, id)
-	e.timer.Stop()
 	r.mu.Unlock()
 
-	e.promise.Reject(err)
+	// 移除 TimingWheel 中的定时器
+	r.tw.RemoveTimer(id)
+
+	entry.promise.Reject(err)
 	return true
 }
 
@@ -149,16 +207,18 @@ func (r *PendingRegistry[T]) Close() {
 	r.closed = true
 
 	// 快照并清空
-	snapshot := make(map[string]*entry[T], len(r.pending))
+	snapshot := make(map[string]*pendingEntry[T], len(r.pending))
 	for k, v := range r.pending {
 		snapshot[k] = v
 	}
-	r.pending = nil
+	r.pending = make(map[string]*pendingEntry[T])
 	r.mu.Unlock()
 
-	// 解锁后逐个 reject，避免长时间持锁
+	// 停止 TimingWheel
+	r.tw.Stop()
+
+	// 逐个 reject，避免长时间持锁
 	for _, e := range snapshot {
-		e.timer.Stop()
 		e.promise.Reject(ErrRegistryClosed)
 	}
 }

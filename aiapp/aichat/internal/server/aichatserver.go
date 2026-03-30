@@ -52,3 +52,15 @@ func (s *AiChatServer) AsyncToolResult(ctx context.Context, in *aichat.AsyncTool
 	l := logic.NewAsyncToolResultLogic(ctx, s.svcCtx)
 	return l.AsyncToolResult(in)
 }
+
+// ListAsyncResults 分页查询异步结果列表。
+func (s *AiChatServer) ListAsyncResults(ctx context.Context, in *aichat.ListAsyncResultsReq) (*aichat.ListAsyncResultsResp, error) {
+	l := logic.NewListAsyncResultsLogic(ctx, s.svcCtx)
+	return l.ListAsyncResults(in)
+}
+
+// AsyncResultStats 获取异步结果统计信息。
+func (s *AiChatServer) AsyncResultStats(ctx context.Context, in *aichat.EmptyReq) (*aichat.AsyncResultStat, error) {
+	l := logic.NewAsyncResultStatsLogic(ctx, s.svcCtx)
+	return l.AsyncResultStats(in)
+}

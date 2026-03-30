@@ -58,7 +58,9 @@ func PromiseRace[T any](ctx context.Context, promises ...*Promise[T]) (T, error)
 			val, err := pr.Await(ctx)
 			select {
 			case ch <- raceResult{val: val, err: err}:
+				return // 发送成功，显式退出
 			default:
+				return // 非阻塞发送失败（可能已被接收），显式退出
 			}
 		}(p)
 	}

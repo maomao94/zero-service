@@ -91,6 +91,7 @@
             background: var(--main-bg);
             color: var(--text-primary);
             display: flex;
+            flex-direction: column;
             transition: background 0.3s ease, color 0.3s ease;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
@@ -101,6 +102,99 @@
         ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
         ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+        /* ============================================
+           UNIFORM NAVIGATION HEADER
+           ============================================ */
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--main-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        .nav-brand {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--surface);
+            padding: 4px;
+            border-radius: 10px;
+        }
+
+        .nav-tab {
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-tab:hover {
+            color: var(--text-primary);
+            background: var(--hover);
+        }
+
+        .nav-tab.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s;
+            color: var(--text-primary);
+        }
+
+        .icon-btn:hover {
+            background: var(--hover);
+            border-color: var(--accent);
+        }
+
+        /* ============================================
+           APP WRAPPER & MAIN CONTENT
+           ============================================ */
+        .app-wrapper {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
 
         /* ============================================
            SIDEBAR
@@ -442,6 +536,43 @@
         @keyframes cursorBlink {
             0%, 50% { opacity: 1; }
             51%, 100% { opacity: 0; }
+        }
+
+        /* Tool Error Display */
+        .tool-error-container {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+        .tool-error {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 12px 16px;
+            background: var(--surface-elevated, #fff);
+            border: 1px solid var(--danger, #dc3545);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-size: 14px;
+            color: var(--text-primary, #333);
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .tool-error-icon {
+            color: var(--danger, #dc3545);
+            font-size: 16px;
+        }
+        .tool-error-name {
+            font-weight: 600;
+            color: var(--danger, #dc3545);
+        }
+        .tool-error-msg {
+            color: var(--text-secondary, #666);
         }
 
         /* Markdown Styles */
@@ -923,9 +1054,34 @@
            RESPONSIVE
            ============================================ */
         @media (max-width: 768px) {
+            .app-header {
+                padding: 0 12px;
+            }
+
+            .nav-brand span {
+                display: none;
+            }
+
+            .nav-tabs {
+                gap: 2px;
+                padding: 3px;
+            }
+
+            .nav-tab {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+
+            .nav-tab span {
+                display: none;
+            }
+
             .sidebar {
                 position: fixed;
-                left: 0; top: 0; bottom: 0;
+                left: 0;
+                top: 60px;
+                bottom: 0;
+                width: 280px;
                 transform: translateX(-100%);
                 z-index: 50;
                 box-shadow: var(--shadow-lg);
@@ -934,7 +1090,8 @@
             .sidebar.open { transform: translateX(0); }
             .sidebar.open ~ .sidebar-overlay { display: block; }
 
-            .mobile-header { display: flex; }
+            /* Hide mobile header since we have uniform header */
+            .mobile-header { display: none !important; }
 
             .message-inner { padding: 0 16px; }
 
@@ -945,6 +1102,31 @@
     </style>
 </head>
 <body>
+
+<!-- Uniform Navigation Header -->
+<header class="app-header">
+    <div class="nav-brand">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+        </svg>
+        AI GTW
+    </div>
+    <nav class="nav-tabs">
+        <a href="chat.html" class="nav-tab active">💬 聊天</a>
+        <a href="tool.html" class="nav-tab">🔧 工具调用</a>
+        <a href="results.html" class="nav-tab">📊 任务管理</a>
+    </nav>
+    <div class="nav-actions">
+        <button class="icon-btn" onclick="toggleTheme()" id="btnTheme" title="切换主题">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+    </div>
+</header>
+
+<!-- Main Content Wrapper -->
+<div class="app-wrapper">
 
 <!-- Sidebar -->
 <aside class="sidebar" id="sidebar">
@@ -1014,6 +1196,9 @@
             <p class="empty-desc" data-i18n="empty_desc"></p>
         </div>
     </div>
+
+    <!-- Tool Error Container -->
+    <div class="tool-error-container" id="toolError"></div>
 
     <!-- Input Area -->
     <div class="input-area">
@@ -1698,6 +1883,7 @@ async function handleStream(resp, contentEl) {
     const reader = resp.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
+    let currentEvent = '';  // 当前 SSE 事件类型
     fullStreamContent = '';
     fullReasoningContent = '';
     isThinkingPhase = false;
@@ -1728,8 +1914,30 @@ async function handleStream(resp, contentEl) {
                 return { content: fullStreamContent, reasoning: fullReasoningContent };
             }
 
+            // 检测事件类型行: event: tool_error
+            if (trimmed.startsWith('event: ')) {
+                currentEvent = trimmed.substring(7).trim();
+                continue;
+            }
+
             if (trimmed.startsWith('data: ') || trimmed.startsWith('data:')) {
                 const jsonStr = trimmed.startsWith('data: ') ? trimmed.substring(6) : trimmed.substring(5);
+
+                // 处理 tool_error 事件
+                if (currentEvent === 'tool_error') {
+                    currentEvent = '';
+                    try {
+                        const errorData = JSON.parse(jsonStr);
+                        const errorMsg = `[Tool Error] ${errorData.tool_name}: ${errorData.error}`;
+                        // 在消息区域显示错误
+                        showToolError(errorData.tool_name, errorData.error);
+                        console.error(errorMsg);
+                    } catch (e) {
+                        console.error('Failed to parse tool_error:', e);
+                    }
+                    continue;
+                }
+
                 try {
                     const chunk = JSON.parse(jsonStr);
                     const delta = chunk.choices[0]?.delta;
@@ -1860,6 +2068,28 @@ function clearChat() {
 
     updateSidebarInfo();
     closeSidebar();
+}
+
+// 显示工具调用错误
+function showToolError(toolName, errorMsg) {
+    const toolErrorEl = document.getElementById('toolError');
+    if (!toolErrorEl) return;
+
+    // 创建错误消息元素
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'tool-error';
+    errorDiv.innerHTML = `<span class="tool-error-icon">⚠</span><span class="tool-error-name">${escapeHtml(toolName)}</span>: <span class="tool-error-msg">${escapeHtml(errorMsg)}</span>`;
+
+    // 清除之前的错误（可选：保留历史错误）
+    toolErrorEl.innerHTML = '';
+    toolErrorEl.appendChild(errorDiv);
+
+    // 3秒后自动隐藏
+    setTimeout(() => {
+        if (errorDiv.parentNode) {
+            errorDiv.remove();
+        }
+    }, 5000);
 }
 </script>
 

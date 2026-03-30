@@ -15,6 +15,8 @@
             --accent-hover: #5b4bd6;
             --success: #10a37f;
             --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
             --border: #e5e5ea;
             --code-bg: #f4f4f4;
         }
@@ -28,6 +30,8 @@
             --accent-hover: #7d6ff0;
             --success: #10a37f;
             --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
             --border: #4e4f60;
             --code-bg: #2a2a2e;
         }
@@ -37,10 +41,107 @@
             background: var(--bg);
             color: var(--text-primary);
             min-height: 100vh;
-            padding: 20px;
         }
-        .container { max-width: 800px; margin: 0 auto; }
+
+        /* ============================================
+           UNIFORM NAVIGATION HEADER
+           ============================================ */
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .nav-brand {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--surface);
+            padding: 4px;
+            border-radius: 10px;
+        }
+
+        .nav-tab {
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-tab:hover {
+            color: var(--text-primary);
+            background: var(--surface-hover);
+        }
+
+        .nav-tab.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s;
+            color: var(--text-primary);
+        }
+
+        .icon-btn:hover {
+            background: var(--surface-hover);
+            border-color: var(--accent);
+        }
+
+        /* ============================================
+           LAYOUT
+           ============================================ */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 24px 20px;
+        }
+
         h1 { margin-bottom: 20px; font-size: 24px; }
+        h2 { margin-bottom: 12px; font-size: 16px; color: var(--text-secondary); }
+        h3 { margin-bottom: 8px; font-size: 14px; color: var(--text-primary); }
+
+        /* ============================================
+           CARD
+           ============================================ */
         .card {
             background: var(--surface);
             border-radius: 12px;
@@ -49,442 +150,847 @@
             border: 1px solid var(--border);
         }
         .form-group { margin-bottom: 16px; }
-        label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 500;
-            color: var(--text-primary);
-        }
+        label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px; }
         input, select, textarea {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: var(--bg);
-            color: var(--text-primary);
-            font-size: 14px;
-            transition: border-color 0.2s;
+            width: 100%; padding: 10px 12px;
+            border: 1px solid var(--border); border-radius: 8px;
+            background: var(--bg); color: var(--text-primary);
+            font-size: 14px; transition: border-color 0.2s;
         }
-        input:focus, textarea:focus, select:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-        textarea {
-            font-family: 'Monaco', 'Menlo', monospace;
-            resize: vertical;
-            min-height: 120px;
-        }
+        input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+        textarea { font-family: 'Monaco', 'Menlo', monospace; resize: vertical; min-height: 80px; }
         .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
+            padding: 10px 20px; border: none; border-radius: 8px;
+            cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s;
         }
-        .btn-primary {
-            background: var(--accent);
-            color: white;
-        }
+        .btn-primary { background: var(--accent); color: white; }
         .btn-primary:hover { background: var(--accent-hover); }
         .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn-secondary {
-            background: var(--surface-hover);
-            color: var(--text-primary);
-            margin-left: 10px;
-        }
-        .btn-secondary:hover { opacity: 0.8; }
+        .btn-secondary { background: var(--surface-hover); color: var(--text-primary); }
+        .btn-secondary:hover { background: var(--border); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-icon { padding: 6px 10px; font-size: 12px; }
         .result {
-            background: var(--code-bg);
-            border-radius: 8px;
-            padding: 16px;
-            margin-top: 16px;
-            font-family: 'Monaco', 'Menlo', monospace;
-            font-size: 13px;
-            white-space: pre-wrap;
-            word-break: break-all;
-            max-height: 400px;
-            overflow-y: auto;
+            background: var(--code-bg); border-radius: 8px; padding: 16px; margin-top: 16px;
+            font-family: 'Monaco', 'Menlo', monospace; font-size: 13px;
+            white-space: pre-wrap; word-break: break-all; max-height: 400px; overflow-y: auto;
         }
-        .status {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
-        }
+        .status { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
         .status-pending { background: #fef3cd; color: #856404; }
         .status-completed { background: #d4edda; color: #155724; }
         .status-failed { background: #f8d7da; color: #721c24; }
-        .progress-bar {
-            width: 100%;
-            height: 20px;
-            background: var(--border);
-            border-radius: 10px;
-            overflow: hidden;
-            margin-top: 10px;
-        }
+        .status-running { background: #cce5ff; color: #004085; }
+        .progress-bar { width: 100%; height: 20px; background: var(--border); border-radius: 10px; overflow: hidden; margin-top: 10px; }
         .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--accent), var(--success));
-            transition: width 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 12px;
-            font-weight: 500;
+            height: 100%; background: linear-gradient(90deg, var(--accent), var(--success));
+            transition: width 0.3s ease; display: flex; align-items: center;
+            justify-content: center; color: white; font-size: 12px; font-weight: 500;
         }
-        .error { color: var(--danger); }
-        .success { color: var(--success); }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .theme-toggle {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 8px 16px;
-            cursor: pointer;
-            color: var(--text-primary);
-        }
-        .task-info {
-            display: flex;
-            gap: 20px;
-            margin-top: 10px;
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
+        .error { color: var(--danger); } .success { color: var(--success); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .theme-toggle { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; cursor: pointer; }
+        .task-info { display: flex; gap: 20px; margin-top: 10px; font-size: 13px; color: var(--text-secondary); flex-wrap: wrap; }
         .task-info span { display: flex; align-items: center; gap: 4px; }
-        .step-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: var(--accent);
-            color: white;
-            font-weight: 600;
-            font-size: 14px;
-            margin-right: 10px;
+        .messages-section { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px; }
+        .messages-list { max-height: 350px; overflow-y: auto; margin-top: 10px; }
+        .message-item {
+            display: flex; align-items: flex-start; padding: 12px; border-radius: 8px;
+            background: var(--bg); margin-bottom: 8px; border: 1px solid var(--border);
+            animation: fadeIn 0.3s ease;
         }
-        .step-header {
-            display: flex;
-            align-items: center;
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .message-icon {
+            width: 32px; height: 32px; border-radius: 50%; color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; margin-right: 12px; flex-shrink: 0; font-weight: 600;
+        }
+        .message-icon.progress { background: #17a2b8; }
+        .message-icon.complete { background: var(--success); }
+        .message-icon.start { background: var(--accent); }
+        .message-content { flex: 1; min-width: 0; }
+        .message-text { font-size: 13px; word-break: break-word; margin-top: 4px; }
+        .message-meta { font-size: 11px; color: var(--text-secondary); margin-top: 6px; display: flex; gap: 12px; flex-wrap: wrap; }
+        .messages-empty { text-align: center; padding: 30px; color: var(--text-secondary); font-size: 13px; }
+        .server-config { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (max-width: 600px) { .server-config { grid-template-columns: 1fr; } }
+        .live-indicator { display: inline-flex; align-items: center; gap: 6px; color: var(--success); font-size: 12px; }
+        .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        /* 优化样式 */
+        .service-status {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 16px; border-radius: 8px;
+            background: var(--bg); border: 1px solid var(--border);
             margin-bottom: 16px;
         }
-        .step-header h3 { margin: 0; }
-        .step-desc {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-top: 4px;
+        .service-status.connected { border-color: var(--success); }
+        .service-status.disconnected { border-color: var(--danger); }
+        .service-status .dot {
+            width: 10px; height: 10px; border-radius: 50%;
         }
-        .history-item {
+        .service-status.connected .dot { background: var(--success); }
+        .service-status.disconnected .dot { background: var(--danger); }
+        .service-status .text { flex: 1; font-size: 13px; }
+        .quick-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .quick-tools .btn { border: 1px solid var(--border); background: var(--bg); }
+        .quick-tools .btn:hover { background: var(--surface-hover); border-color: var(--accent); }
+        .quick-tools .btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .api-config {
+            display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end;
+            padding: 12px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+        .result-header { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+        .result-actions { display: flex; gap: 8px; }
+        .help-section { background: var(--bg); border-radius: 8px; padding: 16px; border: 1px solid var(--border); }
+        .help-section summary { cursor: pointer; font-weight: 500; user-select: none; }
+        .help-content { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 13px; line-height: 1.6; }
+        .help-content code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+        .help-content pre { background: var(--code-bg); padding: 12px; border-radius: 8px; overflow-x: auto; margin: 8px 0; }
+        .help-content ul { margin: 8px 0; padding-left: 20px; }
+        .help-content li { margin-bottom: 4px; }
+        .btn-group { display: flex; gap: 8px; }
+        .toast {
+            position: fixed; bottom: 20px; right: 20px;
+            padding: 12px 20px; border-radius: 8px;
+            background: var(--success); color: white;
+            font-size: 13px; font-weight: 500;
+            animation: slideIn 0.3s ease, fadeOut 0.3s ease 2s forwards;
+            z-index: 1000;
+        }
+        @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+        .inline-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
+
+        /* 步骤时间线 */
+        .step-timeline {
             display: flex;
             align-items: center;
-            padding: 12px;
-            border-radius: 8px;
-            background: var(--code-bg);
+            gap: 0;
+            padding: 16px 0;
+            margin: 12px 0;
+            position: relative;
+        }
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            position: relative;
+            z-index: 1;
+        }
+        .step-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 16px;
+            left: calc(50% + 20px);
+            right: calc(-50% + 20px);
+            height: 2px;
+            background: var(--border);
+            z-index: 0;
+        }
+        .step-item.active:not(:last-child)::after,
+        .step-item.completed:not(:last-child)::after {
+            background: var(--accent);
+        }
+        .step-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
             margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+        .step-item.pending .step-dot { background: var(--border); color: var(--text-secondary); }
+        .step-item.active .step-dot { background: var(--accent); color: white; }
+        .step-item.completed .step-dot { background: var(--success); color: white); }
+        .step-item.error .step-dot { background: var(--danger); color: white; }
+        .step-item.active .step-dot {
+            animation: pulse-dot 1.5s infinite;
+        }
+        @keyframes pulse-dot { 0%, 100% { box-shadow: 0 0 0 0 rgba(108, 92, 231, 0.4); } 50% { box-shadow: 0 0 0 8px rgba(108, 92, 231, 0); } }
+        .step-label { font-size: 12px; color: var(--text-secondary); text-align: center; }
+        .step-item.active .step-label { color: var(--accent); font-weight: 500; }
+        .step-item.completed .step-label { color: var(--success); }
+        .step-item.error .step-label { color: var(--danger); }
+
+        /* 报文详情 */
+        .detail-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .detail-header:hover { opacity: 0.8; }
+        .detail-count {
+            background: var(--accent);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .toggle-icon { transition: transform 0.2s; font-size: 10px; }
+        .toggle-icon.collapsed { transform: rotate(-90deg); }
+        .request-list { max-height: 400px; overflow-y: auto; margin-top: 12px; }
+        .request-item {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+        .request-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: var(--bg);
             cursor: pointer;
             transition: background 0.2s;
+            flex-wrap: wrap;
         }
-        .history-item:hover { background: var(--surface-hover); }
-        .history-info { flex: 1; }
-        .history-tool { font-weight: 500; font-size: 13px; }
-        .history-task { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
-        .history-time { font-size: 11px; color: var(--text-secondary); }
-        .history-empty { text-align: center; padding: 30px; color: var(--text-secondary); }
+        .request-header:hover { background: var(--surface-hover); }
+        .request-index {
+            background: var(--surface);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .request-method {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            background: var(--accent);
+            color: white;
+        }
+        .request-url {
+            flex: 1;
+            font-size: 12px;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .request-status {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .request-status.status-2xx { background: var(--success); color: white; }
+        .request-status.status-4xx { background: var(--warning); color: white; }
+        .request-status.status-5xx { background: var(--danger); color: white; }
+        .request-status.status-other { background: var(--text-secondary); color: white; }
+        .request-time { font-size: 11px; color: var(--text-secondary); }
+        .request-elapsed { font-size: 11px; color: var(--text-secondary); font-weight: 500; }
+        .request-body { padding: 12px; background: var(--code-bg); border-top: 1px solid var(--border); }
+        .request-body pre {
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 0;
+        }
+        .request-section { margin-bottom: 12px; }
+        .request-section:last-child { margin-bottom: 0; }
+        .request-section h4 { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; font-weight: 500; }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .app-header {
+                padding: 0 12px;
+            }
+
+            .nav-brand span {
+                display: none;
+            }
+
+            .nav-tabs {
+                gap: 2px;
+                padding: 3px;
+            }
+
+            .nav-tab {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+
+            .nav-tab span {
+                display: none;
+            }
+
+            .container {
+                padding: 16px 12px;
+            }
+
+            .api-config {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 16px;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>MCP 异步工具调用测试</h1>
-            <button class="theme-toggle" onclick="toggleTheme()">切换主题</button>
+
+<!-- Uniform Navigation Header -->
+<header class="app-header">
+    <div class="nav-brand">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+        </svg>
+        AI GTW
+    </div>
+    <nav class="nav-tabs">
+        <a href="chat.html" class="nav-tab">💬 聊天</a>
+        <a href="tool.html" class="nav-tab active">🔧 工具调用</a>
+        <a href="results.html" class="nav-tab">📊 任务管理</a>
+    </nav>
+    <div class="nav-actions">
+        <button class="icon-btn" onclick="toggleTheme()" title="切换主题">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+    </div>
+</header>
+
+<!-- Main Content -->
+<div class="container">
+        <!-- 服务状态 -->
+        <div class="service-status" id="serviceStatus">
+            <span class="dot"></span>
+            <span class="text" id="serviceStatusText">检查服务连接...</span>
+            <button class="btn btn-sm btn-secondary" onclick="checkService()">刷新</button>
         </div>
 
-        <!-- 步骤1: 提交异步任务 -->
+        <!-- API 配置 -->
         <div class="card">
-            <h3 style="margin-bottom: 16px;">1. 提交异步任务</h3>
-            <div class="form-group">
-                <label>服务器</label>
-                <select id="server">
-                    <option value="mcpserver">mcpserver</option>
-                </select>
+            <h2>1. API 配置</h2>
+            <div class="api-config">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>API 地址</label>
+                    <input type="text" id="apiBase" value="http://localhost:13001/ai/v1" placeholder="http://localhost:13001/ai/v1">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>JWT Token</label>
+                    <input type="text" id="jwtToken" style="width: 300px;" placeholder="输入 JWT Token">
+                </div>
+                <button class="btn btn-secondary" onclick="saveConfig()" style="height: 40px;">保存配置</button>
             </div>
-            <div class="form-group">
-                <label>工具名称</label>
-                <input type="text" id="tool" value="test_progress" placeholder="如: test_progress">
+        </div>
+
+        <!-- 提交任务 -->
+        <div class="card">
+            <h2>2. 提交异步任务</h2>
+            <div class="server-config">
+                <div class="form-group">
+                    <label>服务器</label>
+                    <select id="server">
+                        <option value="mcpserver">mcpserver</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>工具名称</label>
+                    <input type="text" id="tool" value="test_progress" placeholder="如: test_progress">
+                </div>
             </div>
+
+            <!-- 快捷工具 -->
+            <div>
+                <label>快捷工具</label>
+                <div class="quick-tools">
+                    <button class="btn btn-sm" onclick="selectTool('test_progress', {'steps': 5, 'interval': 200})">test_progress</button>
+                    <button class="btn btn-sm" onclick="selectTool('test_download', {'url': 'https://example.com/file.zip'})">test_download</button>
+                    <button class="btn btn-sm" onclick="selectTool('get_weather', {'city': '北京'})">get_weather</button>
+                    <button class="btn btn-sm" onclick="selectTool('search_news', {'keyword': 'AI', 'limit': 10})">search_news</button>
+                </div>
+            </div>
+
             <div class="form-group">
                 <label>参数 (JSON)</label>
-                <textarea id="args" placeholder='{"steps": 100, "interval": 100}'>{"steps": 100, "interval": 100}</textarea>
+                <textarea id="args">{"steps": 5, "interval": 200}</textarea>
             </div>
-            <div>
+            <div class="btn-group">
                 <button class="btn btn-primary" id="submitBtn" onclick="submitTask()">提交任务</button>
                 <button class="btn btn-secondary" onclick="clearResult()">清空</button>
             </div>
         </div>
 
-        <!-- 步骤2: 任务状态显示 -->
+        <!-- 任务状态 -->
         <div class="card" id="resultCard" style="display: none;">
-            <h3 style="margin-bottom: 16px;">2. 任务状态</h3>
+            <h2>3. 任务状态</h2>
             <div>
-                <!-- 状态徽章: pending=处理中, completed=已完成, failed=失败 -->
                 <span class="status" id="statusBadge">-</span>
                 <div class="task-info">
                     <span>Task ID: <code id="taskId">-</code></span>
                     <span>进度: <span id="progressText">0%</span></span>
+                    <span>消息: <span id="messageCount">0</span> 条</span>
+                    <span id="liveIndicator" class="live-indicator" style="display: none;"><span class="live-dot"></span> 执行中</span>
                 </div>
             </div>
-            <!-- 进度条: 显示 0-100% 进度 -->
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill" style="width: 0%">0%</div>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 0%">0%</div></div>
+
+            <!-- 步骤时间线 -->
+            <div class="step-timeline" id="stepTimeline">
+                <div class="step-item pending" id="stepInit">
+                    <span class="step-dot">1</span>
+                    <span class="step-label">初始化</span>
+                </div>
+                <div class="step-item pending" id="stepRunning">
+                    <span class="step-dot">2</span>
+                    <span class="step-label">执行中</span>
+                </div>
+                <div class="step-item pending" id="stepComplete">
+                    <span class="step-dot">3</span>
+                    <span class="step-label">完成</span>
+                </div>
             </div>
-            <!-- 结果展示区: 显示最终结果或错误信息 -->
+
+            <!-- 消息历史 -->
+            <div class="messages-section">
+                <h2>4. 消息历史</h2>
+                <div class="messages-list" id="messagesList"><div class="messages-empty" id="messagesEmpty">暂无消息</div></div>
+            </div>
+
+            <!-- 报文详情 -->
+            <div class="card" style="margin-top: 16px; margin-bottom: 0; background: var(--bg); border: 1px solid var(--border);">
+                <div class="detail-header" onclick="toggleRequestDetail()">
+                    <h2 style="margin: 0;">5. 报文详情</h2>
+                    <span class="detail-count" id="detailCount">0</span>
+                    <span class="toggle-icon" id="detailToggleIcon">▼</span>
+                </div>
+                <div class="request-list" id="requestList" style="display: none;"></div>
+            </div>
+
+            <!-- 结果 -->
+            <div class="result-header">
+                <h2 style="margin: 0;">6. 执行结果</h2>
+                <div class="result-actions">
+                    <button class="btn btn-sm btn-secondary btn-icon" onclick="copyResult()" title="复制结果">复制</button>
+                </div>
+            </div>
             <div class="result" id="result"></div>
+        </div>
+
+        <!-- 使用说明 -->
+        <div class="card">
+            <details>
+                <summary>使用说明</summary>
+                <div class="help-content">
+                    <h3>接口说明</h3>
+                    <ul>
+                        <li><strong>提交任务:</strong> <code>POST /async/tool/call</code> - 提交异步工具调用任务</li>
+                        <li><strong>查询结果:</strong> <code>GET /async/tool/result/{task_id}</code> - 轮询查询任务状态和结果</li>
+                    </ul>
+
+                    <h3>请求示例</h3>
+                    <pre>{
+  "server": "mcpserver",
+  "tool": "test_progress",
+  "args": {"steps": 5, "interval": 200}
+}</pre>
+
+                    <h3>响应示例</h3>
+                    <pre>{
+  "task_id": "uuid-xxx",
+  "status": "completed",
+  "progress": 100,
+  "messages": [
+    {"progress": 0, "message": "开始执行...", "time": 1711234567},
+    {"progress": 33.33, "message": "步骤 1/3", "time": 1711234568},
+    {"progress": 100, "message": "执行完成", "time": 1711234570}
+  ],
+  "result": "{\"success\": true, \"data\": \"...\"}"
+}</pre>
+
+                    <h3>消息说明</h3>
+                    <ul>
+                        <li>前端根据进度推断显示：▶ 开始（0%）→ 进度更新 → ✓ 完成（100%）</li>
+                        <li>进度范围 0.0~100.0</li>
+                    </ul>
+                </div>
+            </details>
         </div>
     </div>
 
     <script>
-        // ============================================================
-        // 配置
-        // ============================================================
-
-        /**
-         * API 基础地址
-         * 对应 go-zero aigtw 服务的监听地址
-         */
-        const API_BASE = 'http://localhost:13001/ai/v1';
-
-        // ============================================================
-        // JWT Token 管理
-        // ============================================================
-
-        /**
-         * 从 localStorage 获取 JWT Token
-         * Token 用于 API 认证，需要在请求头中携带
-         * @returns {string} JWT Token 字符串
-         */
-        function getToken() {
-            return localStorage.getItem('jwt_token') || '';
-        }
-
-        /**
-         * 将 JWT Token 保存到 localStorage
-         * @param {string} token - JWT Token 字符串
-         */
-        function setToken(token) {
-            localStorage.setItem('jwt_token', token);
-        }
-
-        // ============================================================
-        // 主题切换
-        // ============================================================
-
-        /**
-         * 切换页面主题（亮色/暗色）
-         * 主题状态保存在 HTML 元素的 data-theme 属性中
-         */
+        function getAPIBase() { return localStorage.getItem('mcp_api_base') || 'http://localhost:13001/ai/v1'; }
+        function setAPIBase(base) { localStorage.setItem('mcp_api_base', base); }
+        function getToken() { return localStorage.getItem('mcp_jwt_token') || ''; }
+        function setToken(token) { localStorage.setItem('mcp_jwt_token', token); }
         function toggleTheme() {
             const html = document.documentElement;
-            const current = html.getAttribute('data-theme');
-            html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+            const newTheme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
         }
 
-        // ============================================================
-        // 任务提交
-        // ============================================================
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 加载保存的主题
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
 
-        /**
-         * 提交异步工具调用任务
-         *
-         * 调用流程:
-         * 1. 收集表单数据（服务器、工具名、参数）
-         * 2. 验证参数 JSON 格式
-         * 3. POST 请求提交到 /async/tool/call
-         * 4. 获取 task_id 后启动轮询
-         */
+            // 加载保存的配置
+            document.getElementById('apiBase').value = getAPIBase();
+            const savedToken = getToken();
+            if (savedToken) {
+                document.getElementById('jwtToken').value = savedToken;
+            } else {
+                // 默认测试 token
+                document.getElementById('jwtToken').value = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXB0X2NvZGUiOiIxMDAwMSIsImRlcHRfaWQiOiIxMDAwMSIsImV4cCI6MTgwNjAyNDYxNywiaWF0IjoxNzc0NDg4NjE3LCJ1c2VyLWlkIjoidXNlcjoyMTIxIiwidXNlcl9pZCI6InVzZXJpZDFpMWpqazFuIiwidXNlcl9uYW1lIjoi5rWL6K-V55So5oi355uK5rW3In0.0l-eFx7sq8HMuAG_Amf_heCzs6LPUVlUzl4JSheCpGE';
+                setToken(document.getElementById('jwtToken').value);
+            }
+
+            // 检查服务状态
+            checkService();
+        });
+
+        async function checkService() {
+            const statusEl = document.getElementById('serviceStatus');
+            const textEl = document.getElementById('serviceStatusText');
+            statusEl.className = 'service-status';
+
+            try {
+                const response = await fetch(getAPIBase() + '/async/tool/result/test', {
+                    method: 'GET',
+                    headers: { 'Authorization': 'Bearer ' + getToken() }
+                });
+                // 即使返回 404 也说明服务可达
+                statusEl.classList.add('connected');
+                textEl.textContent = '服务已连接 (' + getAPIBase() + ')';
+            } catch (error) {
+                statusEl.classList.add('disconnected');
+                textEl.textContent = '服务连接失败: ' + error.message;
+            }
+        }
+
+        function saveConfig() {
+            setAPIBase(document.getElementById('apiBase').value);
+            setToken(document.getElementById('jwtToken').value);
+            showToast('配置已保存');
+            checkService();
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2500);
+        }
+
+        function selectTool(toolName, args) {
+            document.getElementById('tool').value = toolName;
+            document.getElementById('args').value = JSON.stringify(args, null, 2);
+
+            // 高亮选中的按钮
+            document.querySelectorAll('.quick-tools .btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent === toolName) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        let messageSet = new Set();
+
+        function addMessage(progress, total, message, time) {
+            // 根据进度推断类型
+            let iconClass = 'progress';
+            let iconText = Math.round(progress) + '%';
+            if (progress >= 100) {
+                iconClass = 'complete';
+                iconText = '\u2713'; // ✓
+            } else if (message.includes('开始执行') || progress === 0) {
+                iconClass = 'start';
+                iconText = '\u25B6'; // ▶
+            }
+
+            const key = iconClass + '-' + progress + '-' + message;
+            if (messageSet.has(key)) return;
+            messageSet.add(key);
+
+            const list = document.getElementById('messagesList');
+            const empty = document.getElementById('messagesEmpty');
+            if (empty) empty.style.display = 'none';
+
+            const item = document.createElement('div');
+            item.className = 'message-item';
+
+            const timeStr = time ? new Date(time * 1000).toLocaleTimeString() : new Date().toLocaleTimeString();
+            item.innerHTML = '<div class="message-icon ' + iconClass + '">' + iconText + '</div>' +
+                '<div class="message-content">' +
+                '<div class="message-text">' + escapeHtml(message) + '</div>' +
+                '<div class="message-meta"><span>进度: ' + progress.toFixed(1) + '%</span>' +
+                (total ? '<span>总计: ' + total.toFixed(0) + '</span>' : '') +
+                '<span>' + timeStr + '</span></div></div>';
+            list.appendChild(item);
+            list.scrollTop = list.scrollHeight;
+            document.getElementById('messageCount').textContent = messageSet.size;
+        }
+
+        function clearMessages() {
+            messageSet.clear();
+            document.getElementById('messagesList').innerHTML = '<div class="messages-empty" id="messagesEmpty">暂无消息</div>';
+            document.getElementById('messageCount').textContent = '0';
+        }
+        function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+
+        // 报文记录
+        let requestRecords = [];
+        const MAX_RECORDS = 50;
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+        }
+
+        function addRequestRecord(request, response, timestamp, elapsed) {
+            const record = {
+                id: generateId(),
+                request: request,
+                response: response,
+                timestamp: timestamp,
+                elapsed: elapsed,
+                expanded: false
+            };
+            requestRecords.push(record);
+            // 限制记录数
+            if (requestRecords.length > MAX_RECORDS) {
+                requestRecords = requestRecords.slice(-MAX_RECORDS);
+            }
+            updateRequestDetail();
+        }
+
+        function updateRequestDetail() {
+            const list = document.getElementById('requestList');
+            const count = document.getElementById('detailCount');
+            if (count) count.textContent = requestRecords.length;
+
+            list.innerHTML = requestRecords.map((record, index) => {
+                const statusClass = record.response.status >= 200 && record.response.status < 300 ? 'status-2xx' :
+                    record.response.status >= 400 && record.response.status < 500 ? 'status-4xx' :
+                    record.response.status >= 500 ? 'status-5xx' : 'status-other';
+                const timeStr = new Date(record.timestamp).toLocaleTimeString();
+                const displayUrl = truncateUrl(record.request.url);
+
+                return '<div class="request-item">' +
+                    '<div class="request-header" onclick="toggleRecord(\'' + record.id + '\')">' +
+                    '<span class="request-index">#' + (index + 1) + '</span>' +
+                    '<span class="request-method">' + record.request.method + '</span>' +
+                    '<span class="request-url" title="' + escapeHtml(record.request.url) + '">' + escapeHtml(displayUrl) + '</span>' +
+                    '<span class="request-status ' + statusClass + '">' + record.response.status + '</span>' +
+                    '<span class="request-time">' + timeStr + '</span>' +
+                    '<span class="request-elapsed">' + record.elapsed + 'ms</span>' +
+                    '<span class="toggle-icon">' + (record.expanded ? '▲' : '▼') + '</span>' +
+                    '</div>' +
+                    '<div class="request-body" style="display: ' + (record.expanded ? 'block' : 'none') + ';">' +
+                    '<div class="request-section">' +
+                    '<h4>请求报文</h4>' +
+                    '<pre>' + escapeHtml(JSON.stringify(record.request, null, 2)) + '</pre>' +
+                    '</div>' +
+                    '<div class="request-section">' +
+                    '<h4>响应报文</h4>' +
+                    '<pre>' + escapeHtml(JSON.stringify(record.response.body || record.response, null, 2)) + '</pre>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>';
+            }).join('');
+        }
+
+        function toggleRecord(id) {
+            const record = requestRecords.find(r => r.id === id);
+            if (record) {
+                record.expanded = !record.expanded;
+                updateRequestDetail();
+            }
+        }
+
+        function toggleRequestDetail() {
+            const list = document.getElementById('requestList');
+            const icon = document.getElementById('detailToggleIcon');
+            if (list.style.display === 'none') {
+                list.style.display = 'block';
+                if (icon) icon.textContent = '▲';
+            } else {
+                list.style.display = 'none';
+                if (icon) icon.textContent = '▼';
+            }
+        }
+
+        function truncateUrl(url) {
+            if (!url) return '';
+            // 移除协议前缀，保留路径
+            const urlObj = new URL(url, 'http://localhost');
+            return urlObj.pathname + urlObj.search;
+        }
+
+        // 步骤时间线更新（根据 status 直接更新）
+        function updateStepTimeline(status) {
+            const stepInit = document.getElementById('stepInit');
+            const stepRunning = document.getElementById('stepRunning');
+            const stepComplete = document.getElementById('stepComplete');
+
+            if (!stepInit || !stepRunning || !stepComplete) return;
+
+            // 重置所有步骤
+            stepInit.className = 'step-item pending';
+            stepRunning.className = 'step-item pending';
+            stepComplete.className = 'step-item pending';
+
+            switch (status) {
+                case 'pending':
+                    // 保持初始状态
+                    break;
+                case 'running':
+                    stepInit.className = 'step-item completed';
+                    stepRunning.className = 'step-item active';
+                    break;
+                case 'completed':
+                    stepInit.className = 'step-item completed';
+                    stepRunning.className = 'step-item completed';
+                    stepComplete.className = 'step-item completed';
+                    break;
+                case 'failed':
+                    stepInit.className = 'step-item completed';
+                    stepRunning.className = 'step-item error';
+                    stepComplete.className = 'step-item pending';
+                    break;
+            }
+        }
+
+        let pollingInterval = null;
+
         async function submitTask() {
-            // 获取表单数据
             const server = document.getElementById('server').value;
             const tool = document.getElementById('tool').value;
             const argsText = document.getElementById('args').value;
-
-            // 验证工具名称必填
-            if (!tool) {
-                alert('请输入工具名称');
-                return;
-            }
-
-            // 解析 JSON 参数，支持空参数 {}
+            if (!tool) { alert('请输入工具名称'); return; }
             let args = {};
-            try {
-                args = JSON.parse(argsText || '{}');
-            } catch (e) {
-                alert('参数 JSON 格式错误');
-                return;
-            }
+            try { args = JSON.parse(argsText || '{}'); } catch (e) { alert('参数 JSON 格式错误'); return; }
 
-            // 禁用按钮，防止重复提交
             const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            btn.textContent = '提交中...';
-
+            btn.disabled = true; btn.textContent = '提交中...';
             try {
-                // 发送 POST 请求到异步工具调用接口
-                const response = await fetch(`${API_BASE}/async/tool/call`, {
+                const response = await fetch(getAPIBase() + '/async/tool/call', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${getToken()}`
-                    },
-                    body: JSON.stringify({
-                        server: server,
-                        tool: tool,
-                        args: args
-                    })
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+                    body: JSON.stringify({ server, tool, args })
                 });
-
                 const data = await response.json();
-                console.log('提交结果:', data);
-
-                // 请求成功且返回 task_id
                 if (response.ok && data.task_id) {
-                    // 显示结果卡片
                     document.getElementById('resultCard').style.display = 'block';
                     document.getElementById('taskId').textContent = data.task_id;
-                    updateStatus('pending');
-                    // 启动轮询获取结果
+                    document.getElementById('liveIndicator').style.display = 'inline-flex';
+                    clearMessages();
+                    updateStepTimeline('pending');
+                    requestRecords = []; // 清空报文记录
+                    updateRequestDetail();
+                    updateStatus('pending'); updateProgress(0);
+                    document.getElementById('result').textContent = '';
+                    document.getElementById('result').className = 'result';
                     startPolling(data.task_id);
                 } else {
-                    // 显示错误信息
                     document.getElementById('result').textContent = '提交失败: ' + JSON.stringify(data, null, 2);
+                    document.getElementById('result').className = 'result error';
                 }
             } catch (error) {
-                // 网络错误或其他异常
                 document.getElementById('result').textContent = '请求错误: ' + error.message;
-            } finally {
-                // 恢复按钮状态
-                btn.disabled = false;
-                btn.textContent = '提交任务';
+                document.getElementById('result').className = 'result error';
             }
+            finally { btn.disabled = false; btn.textContent = '提交任务'; }
         }
 
-        // ============================================================
-        // 结果轮询
-        // ============================================================
-
-        /** 全局轮询定时器 ID，用于停止轮询 */
-        let pollingInterval = null;
-
-        /**
-         * 启动轮询查询任务结果
-         * @param {string} taskId - 任务 ID，从 submitTask 获取
-         *
-         * 轮询机制:
-         * - 每 500ms 查询一次结果
-         * - 状态为 completed 时停止轮询，显示结果
-         * - 状态为 failed 时停止轮询，显示错误
-         * - pending/running 状态继续轮询
-         */
         async function startPolling(taskId) {
-            // 先清除可能存在的旧轮询
             if (pollingInterval) clearInterval(pollingInterval);
-
-            // 设置定时器，每 500ms 查询一次
             pollingInterval = setInterval(async () => {
+                const startTime = Date.now();
                 try {
-                    // GET 请求查询任务结果
-                    const response = await fetch(`${API_BASE}/async/tool/result/${taskId}`, {
-                        headers: {
-                            'Authorization': `Bearer ${getToken()}`
-                        }
+                    const response = await fetch(getAPIBase() + '/async/tool/result/' + taskId, {
+                        headers: { 'Authorization': 'Bearer ' + getToken() }
                     });
-
+                    const elapsed = Date.now() - startTime;
                     const data = await response.json();
-                    console.log('查询结果:', data);
 
-                    // 更新 UI 显示
-                    updateStatus(data.status);
-                    updateProgress(data.progress);
+                    // 记录报文
+                    addRequestRecord(
+                        { url: getAPIBase() + '/async/tool/result/' + taskId, method: 'GET', headers: { 'Authorization': 'Bearer ' + getToken() } },
+                        { status: response.status, statusText: response.statusText, body: data },
+                        startTime,
+                        elapsed
+                    );
 
-                    // 根据状态处理结果
-                    if (data.status === 'completed') {
-                        // 任务完成，停止轮询，显示结果
-                        clearInterval(pollingInterval);
-                        document.getElementById('result').textContent = data.result || '(无返回结果)';
-                    } else if (data.status === 'failed') {
-                        // 任务失败，停止轮询，显示错误
-                        clearInterval(pollingInterval);
-                        document.getElementById('result').textContent = '错误: ' + (data.error || '未知错误');
+                    updateStatus(data.status); updateProgress(data.progress);
+                    updateStepTimeline(data.status);
+
+                    // 处理业务消息
+                    if (data.messages && data.messages.length > 0) {
+                        data.messages.forEach(msg => addMessage(msg.progress || 0, msg.total || 100, msg.message || '', msg.time));
                     }
-                    // pending/running 状态继续轮询，不做处理
+
+                    if (data.status === 'completed') {
+                        clearInterval(pollingInterval);
+                        document.getElementById('liveIndicator').style.display = 'none';
+                        const resultEl = document.getElementById('result');
+                        try { resultEl.textContent = JSON.stringify(JSON.parse(data.result), null, 2); resultEl.className = 'result success'; }
+                        catch { resultEl.textContent = data.result || '(无返回结果)'; resultEl.className = 'result success'; }
+                    } else if (data.status === 'failed') {
+                        clearInterval(pollingInterval);
+                        document.getElementById('liveIndicator').style.display = 'none';
+                        document.getElementById('result').textContent = '错误: ' + (data.error || '未知错误');
+                        document.getElementById('result').className = 'result error';
+                    }
                 } catch (error) {
                     console.error('轮询错误:', error);
                 }
             }, 500);
         }
 
-        /**
-         * 更新状态徽章显示
-         * @param {string} status - 任务状态 (pending/running/completed/failed)
-         */
         function updateStatus(status) {
             const badge = document.getElementById('statusBadge');
             badge.className = 'status status-' + status;
-            badge.textContent = {
-                'pending': '处理中',
-                'running': '执行中',
-                'completed': '已完成',
-                'failed': '失败'
-            }[status] || status;
+            const statusMap = { 'pending': '待处理', 'running': '执行中', 'completed': '已完成', 'failed': '失败' };
+            badge.textContent = statusMap[status] || status;
         }
-
-        /**
-         * 更新进度条显示
-         * @param {number} progress - 进度百分比 (0-100)
-         */
         function updateProgress(progress) {
             const fill = document.getElementById('progressFill');
             const text = document.getElementById('progressText');
             const pct = Math.round(progress || 0);
-            fill.style.width = pct + '%';
-            fill.textContent = pct + '%';
-            text.textContent = pct + '%';
+            fill.style.width = pct + '%'; fill.textContent = pct + '%'; text.textContent = pct + '%';
         }
-
-        /**
-         * 清空结果，重置界面状态
-         * 停止轮询，隐藏结果卡片，清空结果显示
-         */
         function clearResult() {
             if (pollingInterval) clearInterval(pollingInterval);
             document.getElementById('resultCard').style.display = 'none';
             document.getElementById('result').textContent = '';
+            document.getElementById('liveIndicator').style.display = 'none';
+            clearMessages();
+            updateStepTimeline('pending');
+            requestRecords = [];
+            updateRequestDetail();
         }
-
-        // ============================================================
-        // 初始化
-        // ============================================================
-
-        /**
-         * 页面初始化
-         * 设置默认 JWT Token（示例 token）
-         *
-         * 注意: 生产环境应从登录流程获取真实 token
-         * 示例 token 格式: {header}.{payload}.{signature}
-         */
-        if (!getToken()) {
-            // 示例 JWT token（base64 编码的 payload）
-            // Payload 示例: {"user_id":"user:2121","exp":1806024617}
-            setToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXB0X2NvZGUiOiIxMDAwMSIsImRlcHRfaWQiOiIxMDAwMSIsImV4cCI6MTgwNjAyNDYxNywiaWF0IjoxNzc0NDg4NjE3LCJ1c2VyLWlkIjoidXNlcjoyMTIxIiwidXNlcl9pZCI6InVzZXJpZDFpMWpqazFuIiwidXNlcl9uYW1lIjoi5rWL6K-V55So5oi355uK5rW3In0.0l-eFx7sq8HMuAG_Amf_heCzs6LPUVlUzl4JSheCpGE');
+        function copyResult() {
+            const result = document.getElementById('result').textContent;
+            if (result) {
+                navigator.clipboard.writeText(result).then(() => showToast('结果已复制'));
+            }
         }
     </script>
 </body>

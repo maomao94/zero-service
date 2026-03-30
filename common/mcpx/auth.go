@@ -25,6 +25,7 @@ func NewDualTokenVerifier(jwtSecrets []string, serviceToken string, claimMapping
 		if serviceToken != "" && subtle.ConstantTimeCompare([]byte(token), []byte(serviceToken)) == 1 {
 			logx.WithContext(ctx).Debugf("[mcpx-auth] service token matched")
 			return &auth.TokenInfo{
+				UserID:     "service",
 				Expiration: time.Now().Add(24 * time.Hour),
 				Extra:      map[string]any{ctxdata.CtxAuthTypeKey: "service"},
 			}, nil

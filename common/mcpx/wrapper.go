@@ -40,6 +40,10 @@ type ProgressSender struct {
 	cancel  func()
 }
 
+func (p *ProgressSender) GetToken() string {
+	return p.token
+}
+
 // Emit 发送进度到 emitter，携带 ctx 以传递链路信息
 func (p *ProgressSender) Emit(progress, total float64, message string) {
 	logx.WithContext(p.ctx).Debugf("[mcpx] progress emit: token=%s, progress=%.0f/%.0f, msg=%s", p.token, progress, total, message)
@@ -61,12 +65,15 @@ func (p *ProgressSender) Start() {
 		start := timex.Now()
 		defer logx.WithContext(p.ctx).WithDuration(timex.Since(start)).Infof("[mcpx] progress stopped chan: token=%s", p.token)
 		for event := range ch {
-			p.session.NotifyProgress(event.Ctx, &mcp.ProgressNotificationParams{
+			notifyErr := p.session.NotifyProgress(event.Ctx, &mcp.ProgressNotificationParams{
 				ProgressToken: event.Token,
 				Progress:      event.Progress,
 				Total:         event.Total,
 				Message:       event.Message,
 			})
+			if notifyErr != nil {
+				logx.WithContext(p.ctx).Errorf("[mcpx] progress notify error: token=%s, err=%v", event.Token, notifyErr)
+			}
 		}
 	})
 }

@@ -2,36 +2,70 @@ package mcpx
 
 import (
 	"context"
+	"errors"
+	"sort"
 	"sync"
 	"time"
 
-	"github.com/zeromicro/go-zero/core/collection"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
-const (
-	defaultExpiration = time.Hour * 24 // 默认过期时间 24 小时
-)
-
-// MemoryAsyncResultHandler 内存版异步结果处理器
-// 使用 go-zero 的 collection.Cache 实现，适合开发测试和小规模部署
-type MemoryAsyncResultHandler struct {
-	cache *collection.Cache
-	mu    sync.RWMutex
+// MemoryAsyncResultStore 内存版异步结果存储
+// 使用 sync.RWMutex + map 实现，适合开发测试和小规模部署
+// 支持遍历查询，支持 TTL 过期清理
+type MemoryAsyncResultStore struct {
+	mu       sync.RWMutex
+	data     map[string]*AsyncToolResult
+	expiries map[string]int64 // 过期时间戳，0 表示永不过期
 }
 
-// NewMemoryAsyncResultHandler 创建内存版异步结果处理器
-func NewMemoryAsyncResultHandler() *MemoryAsyncResultHandler {
-	cache, _ := collection.NewCache(defaultExpiration, collection.WithName("async-result"))
-	return &MemoryAsyncResultHandler{
-		cache: cache,
+// NewMemoryAsyncResultStore 创建内存版异步结果存储
+func NewMemoryAsyncResultStore() *MemoryAsyncResultStore {
+	store := &MemoryAsyncResultStore{
+		data:     make(map[string]*AsyncToolResult),
+		expiries: make(map[string]int64),
+	}
+	// 启动过期清理 goroutine
+	go store.cleanupLoop()
+	return store
+}
+
+// cleanupLoop 定期清理过期数据
+func (h *MemoryAsyncResultStore) cleanupLoop() {
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+	for range ticker.C {
+		h.cleanup()
+	}
+}
+
+// cleanup 清理过期数据
+func (h *MemoryAsyncResultStore) cleanup() {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	now := time.Now().Unix()
+	for taskID, expiry := range h.expiries {
+		if expiry > 0 && expiry < now {
+			delete(h.data, taskID)
+			delete(h.expiries, taskID)
+		}
 	}
 }
 
 // Save 保存异步结果到内存
-func (h *MemoryAsyncResultHandler) Save(ctx context.Context, result *AsyncToolResult) error {
+// 如果已存在，则合并更新（保留 Messages 历史）
+func (h *MemoryAsyncResultStore) Save(ctx context.Context, result *AsyncToolResult) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
+
+	// 先获取现有记录，用于合并
+	if existing, ok := h.data[result.TaskID]; ok {
+		// 合并：保留 Messages 历史
+		if len(existing.Messages) > 0 && len(result.Messages) == 0 {
+			result.Messages = existing.Messages
+		}
+	}
 
 	// 设置创建和更新时间
 	now := time.Now().Unix()
@@ -39,66 +73,219 @@ func (h *MemoryAsyncResultHandler) Save(ctx context.Context, result *AsyncToolRe
 		result.CreatedAt = now
 	}
 	result.UpdatedAt = now
-	logx.WithContext(ctx).Debugf("save async result: %+v", result)
-	h.cache.Set(result.TaskID, result)
+	logx.WithContext(ctx).Debugf("[MemoryAsyncResultStore] Save: taskID=%s, messages=%d", result.TaskID, len(result.Messages))
+	h.data[result.TaskID] = result
+	// 默认 24 小时过期
+	if h.expiries[result.TaskID] == 0 {
+		h.expiries[result.TaskID] = now + 86400
+	}
 	return nil
 }
 
 // Get 根据 task_id 获取结果
-func (h *MemoryAsyncResultHandler) Get(ctx context.Context, taskID string) (*AsyncToolResult, error) {
+func (h *MemoryAsyncResultStore) Get(ctx context.Context, taskID string) (*AsyncToolResult, error) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
-	val, ok := h.cache.Get(taskID)
+	result, ok := h.data[taskID]
 	if !ok {
-		return nil, nil
-	}
-	result, ok := val.(*AsyncToolResult)
-	if !ok {
-		return nil, nil
+		return nil, errors.New("async result not found")
 	}
 	return result, nil
 }
 
-// UpdateProgress 更新进度
-func (h *MemoryAsyncResultHandler) UpdateProgress(ctx context.Context, taskID string, progress float64, status string) error {
+// UpdateProgress 更新进度，追加消息到历史
+func (h *MemoryAsyncResultStore) UpdateProgress(ctx context.Context, taskID string, progress, total float64, message string) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	val, ok := h.cache.Get(taskID)
+	result, ok := h.data[taskID]
 	if !ok {
-		return nil
-	}
-	result, ok := val.(*AsyncToolResult)
-	if !ok {
-		return nil
+		return errors.New("async result not found")
 	}
 
 	result.Progress = progress
-	result.Status = status
+	result.Total = total
 	result.UpdatedAt = time.Now().Unix()
 
-	h.cache.Set(taskID, result)
+	// 保存消息到历史
+	result.Messages = append(result.Messages, ProgressMessage{
+		Progress: progress,
+		Total:    total,
+		Message:  message,
+		Time:     time.Now().Unix(),
+	})
+
+	logx.WithContext(ctx).Debugf("[MemoryAsyncResultStore] UpdateProgress: taskID=%s, progress=%.2f, message=%s, totalMessages=%d",
+		taskID, progress, message, len(result.Messages))
+
 	return nil
 }
 
-// SetStatus 设置任务状态
-func (h *MemoryAsyncResultHandler) SetStatus(ctx context.Context, taskID string, status string) error {
-	return h.UpdateProgress(ctx, taskID, 0, status)
+// Exists 检查任务是否存在
+func (h *MemoryAsyncResultStore) Exists(ctx context.Context, taskID string) bool {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	_, ok := h.data[taskID]
+	return ok
 }
 
-// SetResult 设置任务结果
-func (h *MemoryAsyncResultHandler) SetResult(ctx context.Context, taskID string, result string) error {
+// Delete 删除任务结果
+func (h *MemoryAsyncResultStore) Delete(ctx context.Context, taskID string) error {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	delete(h.data, taskID)
+	delete(h.expiries, taskID)
+	return nil
+}
+
+// List 分页列表查询
+func (h *MemoryAsyncResultStore) List(ctx context.Context, req *ListAsyncResultsReq) (*ListAsyncResultsResp, error) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	// 设置默认值
+	if req.Page < 1 {
+		req.Page = 1
+	}
+	if req.PageSize < 1 {
+		req.PageSize = 10
+	}
+	if req.PageSize > 100 {
+		req.PageSize = 100 // 最大每页100条
+	}
+	if req.SortField == "" {
+		req.SortField = "created_at"
+	}
+	if req.SortOrder == "" {
+		req.SortOrder = "desc"
+	}
+
+	// 收集所有结果
+	allResults := make([]*AsyncToolResult, 0, len(h.data))
+	for _, result := range h.data {
+		// 状态过滤
+		if req.Status != "" && result.Status != req.Status {
+			continue
+		}
+		// 时间范围过滤（使用创建时间）
+		if req.StartTime > 0 && result.CreatedAt < req.StartTime {
+			continue
+		}
+		if req.EndTime > 0 && result.CreatedAt > req.EndTime {
+			continue
+		}
+		allResults = append(allResults, result)
+	}
+
+	// 排序
+	sortFunc := getSortFunc(req.SortField, req.SortOrder == "asc")
+	sort.Slice(allResults, func(i, j int) bool {
+		return sortFunc(allResults[i], allResults[j])
+	})
+
+	// 计算分页
+	total := int64(len(allResults))
+	totalPages := int(total) / req.PageSize
+	if int(total)%req.PageSize > 0 {
+		totalPages++
+	}
+
+	start := (req.Page - 1) * req.PageSize
+	end := start + req.PageSize
+	if start >= len(allResults) {
+		start = len(allResults)
+	}
+	if end > len(allResults) {
+		end = len(allResults)
+	}
+
+	items := make([]*AsyncToolResult, 0)
+	if start < end {
+		items = allResults[start:end]
+	}
+
+	return &ListAsyncResultsResp{
+		Items:      items,
+		Total:      total,
+		Page:       req.Page,
+		PageSize:   req.PageSize,
+		TotalPages: totalPages,
+	}, nil
+}
+
+// Stats 统计查询
+func (h *MemoryAsyncResultStore) Stats(ctx context.Context) (*AsyncResultStats, error) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	stats := &AsyncResultStats{}
+
+	for _, result := range h.data {
+		stats.Total++
+		switch result.Status {
+		case "pending":
+			stats.Pending++
+		case "completed":
+			stats.Completed++
+		case "failed":
+			stats.Failed++
+		}
+	}
+
+	// 计算成功率
+	if stats.Total > 0 {
+		stats.SuccessRate = float64(stats.Completed) / float64(stats.Total) * 100
+	}
+
+	return stats, nil
+}
+
+// getSortFunc 根据排序字段和方向返回排序函数
+func getSortFunc(field string, ascending bool) func(a, b *AsyncToolResult) bool {
+	return func(a, b *AsyncToolResult) bool {
+		var less bool
+		switch field {
+		case "created_at":
+			less = a.CreatedAt < b.CreatedAt
+		case "updated_at":
+			less = a.UpdatedAt < b.UpdatedAt
+		case "progress":
+			less = a.Progress < b.Progress
+		default:
+			less = a.CreatedAt < b.CreatedAt
+		}
+		if ascending {
+			return less
+		}
+		return !less
+	}
+}
+
+// SetStatus 设置任务状态
+func (h *MemoryAsyncResultStore) SetStatus(ctx context.Context, taskID string, status string) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	val, ok := h.cache.Get(taskID)
+	result, ok := h.data[taskID]
 	if !ok {
-		return nil
+		return errors.New("async result not found")
 	}
-	r, ok := val.(*AsyncToolResult)
+
+	result.Status = status
+	result.UpdatedAt = time.Now().Unix()
+
+	return nil
+}
+
+// SetResult 设置任务结果
+func (h *MemoryAsyncResultStore) SetResult(ctx context.Context, taskID string, result string) error {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	r, ok := h.data[taskID]
 	if !ok {
-		return nil
+		return errors.New("async result not found")
 	}
 
 	r.Result = result
@@ -106,40 +293,121 @@ func (h *MemoryAsyncResultHandler) SetResult(ctx context.Context, taskID string,
 	r.Progress = 100
 	r.UpdatedAt = time.Now().Unix()
 
-	h.cache.Set(taskID, r)
 	return nil
 }
 
 // SetError 设置任务错误
-func (h *MemoryAsyncResultHandler) SetError(ctx context.Context, taskID string, errMsg string) error {
+func (h *MemoryAsyncResultStore) SetError(ctx context.Context, taskID string, errMsg string) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	val, ok := h.cache.Get(taskID)
+	r, ok := h.data[taskID]
 	if !ok {
-		return nil
-	}
-	r, ok := val.(*AsyncToolResult)
-	if !ok {
-		return nil
+		return errors.New("async result not found")
 	}
 
 	r.Error = errMsg
 	r.Status = "failed"
 	r.UpdatedAt = time.Now().Unix()
 
-	h.cache.Set(taskID, r)
 	return nil
 }
 
-// Delete 删除任务结果
-func (h *MemoryAsyncResultHandler) Delete(ctx context.Context, taskID string) error {
-	h.cache.Del(taskID)
-	return nil
+// DefaultTaskObserver 默认任务观察者
+// 将任务状态变化通知到外部（如 WebSocket、Server-Sent Events 等）
+type DefaultTaskObserver struct {
+	store    AsyncResultStore
+	callback ProgressCallback // 外部回调
 }
 
-// Exists 检查任务是否存在
-func (h *MemoryAsyncResultHandler) Exists(ctx context.Context, taskID string) bool {
-	_, ok := h.cache.Get(taskID)
-	return ok
+// NewDefaultTaskObserver 创建默认任务观察者
+// - store: 异步结果存储
+// - callback: 外部回调，用于实时通知（如 WebSocket 推送）
+func NewDefaultTaskObserver(store AsyncResultStore, callback ProgressCallback) *DefaultTaskObserver {
+	return &DefaultTaskObserver{
+		store:    store,
+		callback: callback,
+	}
+}
+
+// OnProgress 进度更新回调
+// 1. 保存进度到存储
+// 2. 触发外部回调
+func (h *DefaultTaskObserver) OnProgress(taskID string, progress, total float64, message string) {
+	ctx := context.Background()
+
+	// 如果任务不存在，先创建（幂等操作）
+	if !h.store.Exists(ctx, taskID) {
+		initialResult := &AsyncToolResult{
+			TaskID:    taskID,
+			Status:    "pending",
+			Progress:  0,
+			CreatedAt: time.Now().Unix(),
+			UpdatedAt: time.Now().Unix(),
+		}
+		if err := h.store.Save(ctx, initialResult); err != nil {
+			logx.Debugf("[DefaultTaskObserver] OnProgress: failed to create task %s: %v", taskID, err)
+		}
+	}
+
+	// 保存进度到存储
+	if err := h.store.UpdateProgress(ctx, taskID, progress, total, message); err != nil {
+		logx.Debugf("[DefaultTaskObserver] OnProgress: failed to update progress %s: %v", taskID, err)
+		return
+	}
+
+	// 触发外部回调
+	if h.callback != nil {
+		h.callback(&ProgressInfo{
+			Token:    taskID,
+			Progress: progress,
+			Total:    total,
+			Message:  message,
+		})
+	}
+}
+
+// OnComplete 任务完成回调
+// 1. 获取已有消息历史
+// 2. 追加完成消息
+// 3. 保存最终结果
+// 4. 触发外部回调
+func (h *DefaultTaskObserver) OnComplete(taskID string, message string, result *AsyncToolResult) {
+	ctx := context.Background()
+
+	// 获取已有消息历史
+	existing, err := h.store.Get(ctx, taskID)
+	if err == nil && existing != nil {
+		logx.Debugf("[DefaultTaskObserver] OnComplete: found %d existing messages for task %s", len(existing.Messages), taskID)
+		result.Messages = existing.Messages
+	}
+
+	// 追加完成消息
+	now := time.Now().Unix()
+	result.Messages = append(result.Messages, ProgressMessage{
+		Progress: 100,
+		Total:    100,
+		Message:  message,
+		Time:     now,
+	})
+	result.Progress = 100
+	result.UpdatedAt = now
+
+	logx.Debugf("[DefaultTaskObserver] OnComplete: taskID=%s, finalMessages=%d, result=%s",
+		taskID, len(result.Messages), result.Result)
+
+	// 保存最终结果
+	if err := h.store.Save(ctx, result); err != nil {
+		logx.Debugf("[DefaultTaskObserver] OnComplete: failed to save result %s: %v", taskID, err)
+	}
+
+	// 触发外部回调
+	if h.callback != nil {
+		h.callback(&ProgressInfo{
+			Token:    taskID,
+			Progress: 100,
+			Total:    100,
+			Message:  message,
+		})
+	}
 }

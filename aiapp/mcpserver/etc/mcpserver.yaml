@@ -3,9 +3,10 @@ Host: 0.0.0.0
 Port: 13003
 Mode: dev
 Mcp:
-  UseStreamable: true
+  UseStreamable: false
   SseTimeout: 24h           # SSE 连接超时
-  MessageTimeout: 300s      # 工具执行超时，默认 30s，改为 5 分钟
+#  MessageTimeout: 300s      # 工具执行超时，默认 30s，改为 5 分钟
+  MessageTimeout: 18000s      # 工具执行超时，默认 30s，改为 30 分钟
 Log:
   Encoding: plain
   #  Mode: file
@@ -28,3 +29,8 @@ BridgeModbusRpcConf:
     - 127.0.0.1:25004
   NonBlock: true
   Timeout: 10000
+
+# Skills 配置 - 可选
+Skills:
+  Dir: "./skills"          # skills 目录路径
+  AutoReload: true         # 是否热加载（修改 SKILL.md 后自动重载）

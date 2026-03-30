@@ -23,15 +23,26 @@ func NewAsyncToolResultLogic(ctx context.Context, svcCtx *svc.ServiceContext) *A
 
 // AsyncToolResult 查询异步工具调用结果
 func (l *AsyncToolResultLogic) AsyncToolResult(in *aichat.AsyncToolResultReq) (*aichat.AsyncToolResultRes, error) {
-	handler := l.svcCtx.AsyncResultHandler
-	if handler == nil {
+	store := l.svcCtx.AsyncResultStore
+	if store == nil {
 		return nil, ErrAsyncResultHandlerNotConfigured
 	}
 
-	result, err := handler.Get(l.ctx, in.TaskId)
+	result, err := store.Get(l.ctx, in.TaskId)
 	if err != nil {
 		logx.WithContext(l.ctx).Errorf("[AsyncToolResult] get result error: %v", err)
 		return nil, err
+	}
+
+	// 转换 messages
+	messages := make([]*aichat.ProgressMessage, len(result.Messages))
+	for i, msg := range result.Messages {
+		messages[i] = &aichat.ProgressMessage{
+			Progress: msg.Progress,
+			Total:    msg.Total,
+			Message:  msg.Message,
+			Time:     msg.Time,
+		}
 	}
 
 	return &aichat.AsyncToolResultRes{
@@ -40,5 +51,6 @@ func (l *AsyncToolResultLogic) AsyncToolResult(in *aichat.AsyncToolResultReq) (*
 		Progress: result.Progress,
 		Result:   result.Result,
 		Error:    result.Error,
+		Messages: messages,
 	}, nil
 }

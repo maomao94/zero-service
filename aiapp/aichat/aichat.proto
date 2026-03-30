@@ -7,6 +7,9 @@ option go_package = "./aichat";
 // 通用消息
 // ============================================================
 
+// EmptyReq 空请求，用于不需要参数的 RPC 调用
+message EmptyReq {}
+
 // ============================================================
 // 对话消息
 // ============================================================
@@ -276,6 +279,89 @@ message AsyncToolResultRes {
   // 任务失败时的错误信息。
   // 仅当 status 为 "failed" 时有值
   string error = 5;
+
+  // 进度消息历史
+  repeated ProgressMessage messages = 6;
+}
+
+// ProgressMessage 进度消息
+// 记录 MCP 服务器发送的所有进度通知，用于前端展示消息历史
+message ProgressMessage {
+  // 当前进度百分比，取值范围 0.0~100.0
+  double progress = 1;
+
+  // 进度总值（参考值）
+  double total = 2;
+
+  // 消息内容，MCP 服务器返回的原始消息
+  string message = 3;
+
+  // 时间戳，Unix 秒级时间戳
+  int64 time = 4;
+}
+
+// ============================================================
+// 异步结果业务查询
+// ============================================================
+
+// ListAsyncResultsReq 分页查询异步结果请求
+message ListAsyncResultsReq {
+  // 过滤状态：pending/completed/failed（空字符串表示全部）
+  string status = 1;
+
+  // 开始时间戳（毫秒），0 表示不限制
+  int64 start_time = 2;
+
+  // 结束时间戳（毫秒），0 表示不限制
+  int64 end_time = 3;
+
+  // 页码，从 1 开始
+  int32 page = 4;
+
+  // 每页数量
+  int32 page_size = 5;
+
+  // 排序字段：created_at/updated_at/progress
+  string sort_field = 6;
+
+  // 排序方向：asc/desc
+  string sort_order = 7;
+}
+
+// ListAsyncResultsResp 分页查询异步结果响应
+message ListAsyncResultsResp {
+  // 任务列表
+  repeated AsyncToolResultRes items = 1;
+
+  // 总数
+  int64 total = 2;
+
+  // 当前页
+  int32 page = 3;
+
+  // 每页数量
+  int32 page_size = 4;
+
+  // 总页数
+  int32 total_pages = 5;
+}
+
+// AsyncResultStat 异步结果统计
+message AsyncResultStat {
+  // 任务总数
+  int64 total = 1;
+
+  // 待处理任务数
+  int64 pending = 2;
+
+  // 已完成任务数
+  int64 completed = 3;
+
+  // 失败任务数
+  int64 failed = 4;
+
+  // 成功率（百分比）
+  double success_rate = 5;
 }
 
 // ============================================================
@@ -304,4 +390,12 @@ service AiChat {
   // AsyncToolResult 查询异步工具调用的执行状态和结果。
   // 建议轮询间隔 1~2 秒，直到状态变为 completed 或 failed
   rpc AsyncToolResult(AsyncToolResultReq) returns(AsyncToolResultRes);
+
+  // ListAsyncResults 分页查询异步结果列表。
+  // 支持按状态、时间范围过滤，支持多字段排序
+  rpc ListAsyncResults(ListAsyncResultsReq) returns(ListAsyncResultsResp);
+
+  // AsyncResultStats 获取异步结果统计信息。
+  // 返回任务总数、各状态数量及成功率
+  rpc AsyncResultStats(EmptyReq) returns(AsyncResultStat);
 }

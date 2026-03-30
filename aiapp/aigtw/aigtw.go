@@ -29,6 +29,18 @@ import (
 
 var configFile = flag.String("f", "etc/aigtw.yaml", "the config file")
 
+// serveStaticFile 返回一个静态文件服务 Handler
+func serveStaticFile(baseDir, filename string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		filePath := filepath.Join(baseDir, filename)
+		if _, err := os.Stat(filePath); err == nil {
+			http.ServeFile(w, r, filePath)
+			return
+		}
+		http.NotFound(w, r)
+	}
+}
+
 func main() {
 	flag.Parse()
 
@@ -72,45 +84,35 @@ func main() {
 	ctx := svc.NewServiceContext(c)
 	handler.RegisterHandlers(server, ctx)
 
-	// Chat 页面静态文件路由
-	server.AddRoute(rest.Route{
-		Method: http.MethodGet,
-		Path:   "/pass/chat",
-		Handler: func(w http.ResponseWriter, r *http.Request) {
-			candidates := []string{}
-			if exe, err := os.Executable(); err == nil {
-				candidates = append(candidates, filepath.Join(filepath.Dir(exe), "chat.html"))
-			}
-			candidates = append(candidates, "chat.html", "aiapp/aigtw/chat.html")
+	// 获取当前工作目录
+	wd, _ := os.Getwd()
+	staticDir := filepath.Join(wd, "aiapp", "aigtw")
 
-			for _, p := range candidates {
-				if _, err := os.Stat(p); err == nil {
-					http.ServeFile(w, r, p)
-					return
-				}
-			}
-			http.NotFound(w, r)
-		},
+	// 静态文件服务 - 支持 /chat.html, /tool.html, /results.html 等
+	server.AddRoute(rest.Route{
+		Method:  http.MethodGet,
+		Path:    "/chat.html",
+		Handler: serveStaticFile(staticDir, "chat.html"),
 	})
 
-	// Tool 页面静态文件路由 - MCP 异步工具调用测试
+	server.AddRoute(rest.Route{
+		Method:  http.MethodGet,
+		Path:    "/tool.html",
+		Handler: serveStaticFile(staticDir, "tool.html"),
+	})
+
+	server.AddRoute(rest.Route{
+		Method:  http.MethodGet,
+		Path:    "/results.html",
+		Handler: serveStaticFile(staticDir, "results.html"),
+	})
+
+	// 根路径重定向到 chat.html
 	server.AddRoute(rest.Route{
 		Method: http.MethodGet,
-		Path:   "/pass/tool",
+		Path:   "/",
 		Handler: func(w http.ResponseWriter, r *http.Request) {
-			candidates := []string{}
-			if exe, err := os.Executable(); err == nil {
-				candidates = append(candidates, filepath.Join(filepath.Dir(exe), "tool.html"))
-			}
-			candidates = append(candidates, "tool.html", "aiapp/aigtw/tool.html")
-
-			for _, p := range candidates {
-				if _, err := os.Stat(p); err == nil {
-					http.ServeFile(w, r, p)
-					return
-				}
-			}
-			http.NotFound(w, r)
+			http.ServeFile(w, r, filepath.Join(staticDir, "chat.html"))
 		},
 	})
 
