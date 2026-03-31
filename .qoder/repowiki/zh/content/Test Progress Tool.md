@@ -13,15 +13,18 @@
 - [tool.html](file://aiapp/aigtw/tool.html)
 - [echo.go](file://aiapp/mcpserver/internal/tools/echo.go)
 - [modbus.go](file://aiapp/mcpserver/internal/tools/modbus.go)
+- [waitgroup.go](file://common/iec104/waitgroup/waitgroup.go)
 </cite>
 
 ## 更新摘要
 **变更内容**
-- **异步安全执行模式**：测试进度工具从同步执行改为使用 `threading.RunSafe` 的异步安全执行模式，增强了线程安全性
-- **进度令牌获取功能**：添加了 `sender.GetToken()` 方法获取进度令牌，并在工具执行结果中显示
-- **增强的线程安全保障**：使用 Go-Zero 的 `threading` 包提供的安全执行机制，防止 goroutine 泄漏和异常传播
-- **改进的进度发送机制**：通过 `mcpx.GetProgressSender(ctx)` 获取进度发送器，支持带 trace 信息的日志记录
-- **优化的工具包装器**：工具包装器现在自动管理进度发送器的生命周期，包括启动和停止订阅
+- **同步机制改进**：测试进度工具的同步机制得到显著改进，从简单的WaitGroup同步升级为基于EventEmitter的异步进度通知系统
+- **完全移除WaitGroup同步机制**：原有的WaitGroup同步机制已被完全移除，采用更高效的EventEmitter架构
+- **自动进度累积系统**：使用ProgressSender.Emit()的增量进度发射方法，实现自动进度累积
+- **线程安全执行升级**：从threading.RunSafe升级为threading.GoSafe，提供更好的错误处理和恢复机制
+- **增强的错误处理**：GoSafe提供panic捕获和错误传播，确保工具执行的稳定性
+- **改进的资源管理**：通过EventEmitter确保goroutine正确退出，避免资源泄漏
+- **竞态条件消除**：异步任务完成后才返回结果，确保进度报告的准确性
 
 ## 目录
 1. [简介](#简介)
@@ -41,21 +44,28 @@
 
 测试进度工具是零服务（Zero Service）项目中的一个专门工具，用于测试和演示 MCP（Model Context Protocol）协议的进度通知功能。该工具模拟长时间运行的任务，通过定期发送进度更新来展示 MCP 协议的异步通信能力和进度跟踪机制。
 
-**重要更新**：该工具现已从同步执行模式升级为异步安全执行模式，使用 `threading.RunSafe` 包装执行逻辑，增强了线程安全性。同时，工具现在支持进度令牌获取功能，可以在执行结果中显示进度令牌信息，为调试和监控提供更好的支持。
+**重要更新**：该工具现已从手动进度计算模式升级为基于EventEmitter的自动进度累积系统，移除了复杂的手动进度计算代码，使用 `ProgressSender.Emit()` 的增量进度发射方法。同时，工具的线程安全执行机制得到显著增强，从threading.RunSafe升级为threading.GoSafe，并完全移除了WaitGroup同步机制，采用更高效的EventEmitter架构。
 
 **关键特性更新**：
-- **异步安全执行**：使用 `threading.RunSafe` 包装工具执行逻辑，防止 goroutine 泄漏和异常传播
-- **进度令牌管理**：通过 `sender.GetToken()` 获取进度令牌，支持更精细的进度跟踪和调试
-- **增强的线程安全性**：基于 Go-Zero 的 `threading` 包，提供更好的 goroutine 生命周期管理
-- **改进的工具包装器**：自动管理进度发送器的启动和停止，确保资源正确释放
-- **带 trace 信息的日志记录**：支持链路追踪信息的传递和记录
+- **同步机制改进**：从简单的WaitGroup同步升级为基于EventEmitter的异步进度通知系统
+- **完全移除WaitGroup同步机制**：原有的WaitGroup同步机制已被完全移除
+- **自动进度累积**：使用 `ProgressSender.Emit()` 自动管理进度累积，无需手动计算
+- **线程安全执行升级**：使用threading.GoSafe替代threading.RunSafe，提供更好的错误处理和恢复机制
+- **增强的错误处理**：GoSafe捕获panic并进行错误传播，提升工具执行稳定性
+- **改进的资源管理**：EventEmitter确保goroutine正确退出，避免资源泄漏
+- **竞态条件消除**：异步任务完成后才返回结果，确保进度报告的准确性
+- **简化进度计算**：只需计算每步增量值，工具自动处理累积逻辑
+- **增强的增量进度发射**：支持基于 `sender.Emit(increment, msg)` 的增量进度发射方法
+- **改进的工具包装器**：自动管理进度发送器生命周期，包括启动、停止订阅和自动完成通知
+- **线程安全的进度管理**：通过互斥锁和 `lastTotal` 字段确保进度累积的线程安全
 
 该工具的核心价值在于：
 - 提供完整的 MCP 进度通知实现示例
-- 展示如何在实际应用中集成异步安全的进度跟踪功能
+- 展示如何在实际应用中集成自动进度累积功能
 - 为开发者提供测试和调试进度相关功能的参考实现
 - 演示 MCP 协议在复杂任务处理中的应用场景
 - 支持现代化的步骤式用户界面展示
+- 确保异步任务执行的线程安全性和资源管理
 
 ## 项目结构
 
@@ -103,10 +113,10 @@ U --> AA
 ```
 
 **图表来源**
-- [mcpserver.go:1-41](file://aiapp/mcpserver/mcpserver.go#L1-L41)
-- [testprogress.go:1-80](file://aiapp/mcpserver/internal/tools/testprogress.go#L1-L80)
+- [mcpserver.go:1-61](file://aiapp/mcpserver/mcpserver.go#L1-L61)
+- [testprogress.go:1-91](file://aiapp/mcpserver/internal/tools/testprogress.go#L1-L91)
 - [registry.go:1-15](file://aiapp/mcpserver/internal/tools/registry.go#L1-L15)
-- [tool.html:1-845](file://aiapp/aigtw/tool.html#L1-L845)
+- [tool.html:1-200](file://aiapp/aigtw/tool.html#L1-L200)
 
 ## 核心组件
 
@@ -115,12 +125,13 @@ U --> AA
 ### 主要组件概述
 
 1. **工具注册器（Tool Registry）** - 负责注册和管理所有 MCP 工具，包括测试进度工具
-2. **异步安全执行器（Async Safe Executor）** - 使用 `threading.RunSafe` 包装工具执行逻辑，确保线程安全
-3. **进度发送器（Progress Sender）** - 处理进度通知的发送和管理，基于新的 EventEmitter 架构
-4. **工具包装器（Tool Wrapper）** - 提供工具调用的上下文包装和处理，自动管理进度发送器生命周期
-5. **MCP 服务器（MCP Server）** - 提供 MCP 协议的服务端实现
-6. **配置管理（Configuration）** - 管理工具的各种配置参数
-7. **前端UI组件（Frontend UI）** - 提供进度显示和状态管理的完整界面，包含步骤时间线
+2. **线程安全执行器（GoSafe Executor）** - 使用 `threading.GoSafe` 替代 `threading.RunSafe`，提供更好的错误处理和恢复机制
+3. **自动进度累积执行器（Auto Progress Accumulator）** - 使用 `ProgressSender.Emit()` 自动管理进度累积，移除了手动进度计算
+4. **进度发送器（Progress Sender）** - 处理进度通知的发送和管理，基于新的 EventEmitter 架构
+5. **工具包装器（Tool Wrapper）** - 提供工具调用的上下文包装和处理，自动管理进度发送器生命周期
+6. **MCP 服务器（MCP Server）** - 提供 MCP 协议的服务端实现
+7. **配置管理（Configuration）** - 管理工具的各种配置参数
+8. **前端UI组件（Frontend UI）** - 提供进度显示和状态管理的完整界面，包含步骤时间线
 
 ### 组件交互流程
 
@@ -130,28 +141,33 @@ participant Client as 客户端
 participant Server as MCP 服务器
 participant Wrapper as 工具包装器
 participant Tool as Test Progress 工具
-participant AsyncExec as 异步安全执行器
+participant GoSafe as GoSafe 执行器
 participant Sender as 进度发送器
-participant Emitter as EventEmitter
+participant Accumulator as 自动进度累积器
+participant EventEmitter as EventEmitter
 participant UI as 前端UI
 Client->>Server : 调用 test_progress 工具
 Server->>Wrapper : 包装工具调用
 Wrapper->>Wrapper : 提取用户上下文
 Wrapper->>Wrapper : 创建进度发送器
-Wrapper->>AsyncExec : 包装工具执行逻辑
-AsyncExec->>Tool : 执行工具逻辑
-Tool->>Sender : 发送进度通知
-Sender->>Emitter : 发布进度事件
-Emitter->>Client : 自动转发进度更新
-Emitter->>UI : 更新进度显示
-AsyncExec->>Wrapper : 返回执行结果
+Wrapper->>Sender : 启动进度订阅
+Sender->>Accumulator : 计算每步增量
+Tool->>GoSafe : 使用 GoSafe 包装执行
+GoSafe->>Tool : 执行异步任务
+Tool->>Sender : 发送增量进度
+Sender->>Accumulator : 自动累积进度
+Accumulator->>EventEmitter : 发布进度事件
+EventEmitter->>Client : 自动转发进度更新
+EventEmitter->>UI : 更新进度显示
+Tool->>Wrapper : 返回执行结果
+Wrapper->>Sender : 自动发送100%完成
 Wrapper->>Server : 返回最终结果
 Server->>Client : 最终响应
 ```
 
 **图表来源**
-- [testprogress.go:45-64](file://aiapp/mcpserver/internal/tools/testprogress.go#L45-L64)
-- [wrapper.go:175-197](file://common/mcpx/wrapper.go#L175-L197)
+- [testprogress.go:31-87](file://aiapp/mcpserver/internal/tools/testprogress.go#L31-L87)
+- [wrapper.go:234-265](file://common/mcpx/wrapper.go#L234-L265)
 
 ## 架构概览
 
@@ -175,7 +191,7 @@ ToolRegistry[工具注册器]
 end
 subgraph "业务逻辑层"
 TestProgress[Test Progress 工具]
-AsyncExecutor[异步安全执行器]
+GoSafeExecutor[GoSafe 执行器]
 ProgressSender[进度发送器]
 ContextWrapper[上下文包装器]
 EventEmitter[事件发射器]
@@ -186,25 +202,14 @@ RPCClient[RPC 客户端]
 Logger[日志系统]
 Antsx[antsx 库]
 ThreadSafety[线程安全机制]
-</subgraph>
-UI --> APIService
-APIService --> ToolRegistry
-ToolRegistry --> TestProgress
-TestProgress --> AsyncExecutor
-AsyncExecutor --> ProgressSender
-TestProgress --> ContextWrapper
-ContextWrapper --> MCPServer
-ProgressSender --> EventEmitter
-EventEmitter --> Antsx
-EventEmitter --> ThreadSafety
-MCPServer --> RPCClient
-MCPServer --> Logger
+ThreadSafeExecution[线程安全执行]
+ResourceManagement[资源管理]
 ```
 
 **图表来源**
-- [mcpserver.go:19-40](file://aiapp/mcpserver/mcpserver.go#L19-L40)
-- [testprogress.go:20-80](file://aiapp/mcpserver/internal/tools/testprogress.go#L20-L80)
-- [wrapper.go:18-28](file://common/mcpx/wrapper.go#L18-L28)
+- [mcpserver.go:20-60](file://aiapp/mcpserver/mcpserver.go#L20-L60)
+- [testprogress.go:25-90](file://aiapp/mcpserver/internal/tools/testprogress.go#L25-L90)
+- [wrapper.go:19-275](file://common/mcpx/wrapper.go#L19-L275)
 
 该架构的主要特点：
 - **清晰的分层结构** - 每层都有明确的职责分工
@@ -212,15 +217,17 @@ MCPServer --> Logger
 - **可扩展性** - 新的工具可以轻松添加到现有框架中
 - **可测试性** - 每个组件都可以独立测试和验证
 - **事件驱动** - 基于 EventEmitter 的异步事件处理机制
-- **线程安全** - 使用 `threading.RunSafe` 确保 goroutine 安全执行
+- **线程安全执行** - 使用 GoSafe 提供更好的错误处理和恢复机制
+- **自动进度累积** - 使用 `ProgressSender.Emit()` 自动管理进度累积
 - **现代化UI** - 支持进度可视化和实时状态更新
-- **进度令牌管理** - 提供进度令牌获取和显示功能
+- **线程安全的进度管理** - 通过互斥锁确保进度累积的线程安全
+- **资源管理优化** - 确保 goroutine 正确退出，避免资源泄漏
 
 ## 详细组件分析
 
 ### 测试进度工具实现
 
-测试进度工具是整个系统的核心组件，负责模拟长时间运行的任务并发送进度更新。经过更新后，该工具现在使用异步安全执行模式。
+测试进度工具是整个系统的核心组件，负责模拟长时间运行的任务并发送进度更新。经过更新后，该工具现在使用自动进度累积系统，移除了手动进度计算代码，并增强了线程安全执行机制。
 
 #### 数据结构设计
 
@@ -235,6 +242,8 @@ class ProgressSender {
 +string token
 +Context ctx
 +ServerSession session
++float64 lastTotal
++mutex mu
 +Start()
 +Emit(progress, total, message)
 +Stop()
@@ -244,14 +253,18 @@ class TestProgressTool {
 +RegisterTestProgress(server)
 +progressHandler(ctx, req, args)
 }
+class GoSafeExecutor {
++GoSafe(fn)
+}
 TestProgressTool --> TestProgressArgs : 使用
 TestProgressTool --> ProgressSender : 创建
+TestProgressTool --> GoSafeExecutor : 使用
 ProgressSender --> Context : 依赖
 ```
 
 **图表来源**
-- [testprogress.go:14-19](file://aiapp/mcpserver/internal/tools/testprogress.go#L14-L19)
-- [wrapper.go:36-41](file://common/mcpx/wrapper.go#L36-L41)
+- [testprogress.go:17-22](file://aiapp/mcpserver/internal/tools/testprogress.go#L17-L22)
+- [wrapper.go:34-45](file://common/mcpx/wrapper.go#L34-L45)
 
 #### 核心算法流程
 
@@ -265,17 +278,16 @@ SetDefaultSteps --> CheckInterval
 CheckInterval --> |否| SetDefaultInterval["设置默认间隔=500ms"]
 CheckInterval --> |是| GetSender["获取进度发送器"]
 SetDefaultInterval --> GetSender
-GetSender --> CreateAsyncExec["创建异步安全执行器"]
-CreateAsyncExec --> RunSafe["使用 threading.RunSafe 包装执行"]
-RunSafe --> LoopStart["开始进度循环"]
+GetSender --> CreateGoSafe["使用 threading.GoSafe 包装执行"]
+CreateGoSafe --> LoopStart["开始进度循环"]
 LoopStart --> CalcProgress["计算当前进度"]
 CalcProgress --> GetCurrentStep["获取当前步骤"]
 GetCurrentStep --> BuildMessage["构建进度消息"]
-BuildMessage --> SendProgress["发送进度通知"]
-SendProgress --> CheckSender{"进度发送器存在?"}
-CheckSender --> |是| EmitEvent["通过EventEmitter发送事件"]
+BuildMessage --> SendIncrement["发送增量进度(sender.Emit)"]
+SendIncrement --> CheckSender{"进度发送器存在?"}
+CheckSender --> |是| AutoAccumulate["自动累积进度(100%)"]
 CheckSender --> |否| LogProgress["记录调试日志"]
-EmitEvent --> Sleep["等待指定时间"]
+AutoAccumulate --> Sleep["等待指定时间"]
 LogProgress --> Sleep
 Sleep --> NextIteration["下一次迭代"]
 NextIteration --> CheckLoop{"还有剩余步骤?"}
@@ -286,46 +298,61 @@ ReturnResult --> End([结束])
 ```
 
 **图表来源**
-- [testprogress.go:30-76](file://aiapp/mcpserver/internal/tools/testprogress.go#L30-L76)
+- [testprogress.go:31-87](file://aiapp/mcpserver/internal/tools/testprogress.go#L31-L87)
 
 #### 关键实现细节
 
-1. **异步安全执行模式**
-   - 使用 `threading.RunSafe(func() { ... })` 包装工具执行逻辑
-   - 确保 goroutine 异常不会传播到父 goroutine
-   - 提供更好的错误处理和资源管理
+1. **线程安全执行升级**
+   - 使用 `threading.GoSafe` 替代 `threading.RunSafe`，提供更好的错误处理和恢复机制
+   - GoSafe能够捕获 goroutine 中的 panic，避免程序崩溃
+   - 通过 defer 语句确保任务完成后正确标记完成状态
+   - 提供更优雅的错误传播和日志记录
 
-2. **参数验证和默认值处理**
-   - 步骤数小于等于0时自动设置为5
-   - 间隔时间小于等于0时自动设置为500毫秒
-   - 消息为空时使用"处理中...当前 step: " + strconv.Itoa(i) 作为动态消息
+2. **同步机制改进**（**已更新**）
+   - **完全移除WaitGroup同步机制**：原有的 `sync.WaitGroup` 同步已被完全移除
+   - **采用EventEmitter架构**：使用基于EventEmitter的异步进度通知系统
+   - **自动进度累积**：通过 `ProgressSender.Emit()` 自动管理进度累积
+   - **改进的资源管理**：EventEmitter确保goroutine正确退出，避免资源泄漏
 
-3. **进度发送机制**
+3. **自动进度累积系统**
+   - 使用 `sender.Emit(increment, msg)` 发送增量进度，无需手动计算
+   - `ProgressSender.Emit()` 方法自动管理进度累积，通过 `lastTotal` 字段累加
+   - 支持最大100%的进度限制，超过100%时自动设为100%
+   - 通过互斥锁确保多线程环境下的进度累积安全
+
+4. **简化的进度计算**
+   - 只需计算每步增量：`increment := float64(100 / steps)`
+   - 每次迭代发送固定增量值，工具自动处理累积逻辑
+   - 移除了复杂的手动进度计算代码，提高了代码可读性和维护性
+
+5. **增强的进度发送机制**
    - 使用 `mcpx.GetProgressSender(ctx)` 获取进度发送器
    - 通过 `sender.Emit()` 发送实时进度更新，基于 EventEmitter 系统
    - 支持带 trace 信息的日志记录
 
-4. **进度令牌获取功能**
+6. **进度令牌获取功能**
    - 通过 `sender.GetToken()` 获取进度令牌
    - 在工具执行结果中显示进度令牌信息
    - 支持调试和监控需求
 
-5. **上下文管理**
-   - 工具执行完成后自动停止进度订阅
+7. **自动完成管理**
+   - 工具执行完成后自动发送100%完成通知
+   - 工具包装器自动停止进度订阅
    - 支持取消信号的传播
    - 自动管理 goroutine 生命周期
 
-6. **步骤信息增强**
-   - 使用 `strconv.Itoa(i)` 将当前步骤转换为字符串
-   - 提供更精确的步骤跟踪信息
-   - 支持更好的用户界面显示
+8. **线程安全的进度管理**
+   - 使用 `sync.Mutex` 保护 `lastTotal` 字段
+   - 确保多线程环境下进度累积的一致性
+   - 防止竞态条件和数据竞争
 
 **章节来源**
-- [testprogress.go:30-76](file://aiapp/mcpserver/internal/tools/testprogress.go#L30-L76)
+- [testprogress.go:31-87](file://aiapp/mcpserver/internal/tools/testprogress.go#L31-L87)
+- [wrapper.go:234-265](file://common/mcpx/wrapper.go#L234-L265)
 
 ### 工具包装器系统
 
-工具包装器提供了统一的工具调用处理机制，确保所有工具都遵循相同的模式。经过更新后，包装器现在更好地支持异步安全执行和进度令牌管理。
+工具包装器提供了统一的工具调用处理机制，确保所有工具都遵循相同的模式。经过更新后，包装器现在更好地支持自动进度累积和进度令牌管理。
 
 #### 包装器配置
 
@@ -346,6 +373,8 @@ class ProgressSender {
 +string token
 +Context ctx
 +ServerSession session
++float64 lastTotal
++mutex mu
 +Start()
 +Emit(progress, total, message)
 +Stop()
@@ -357,8 +386,8 @@ CallToolWrapper --> ProgressSender : 创建
 ```
 
 **图表来源**
-- [wrapper.go:85-100](file://common/mcpx/wrapper.go#L85-L100)
-- [wrapper.go:126-197](file://common/mcpx/wrapper.go#L126-L197)
+- [wrapper.go:146-161](file://common/mcpx/wrapper.go#L146-L161)
+- [wrapper.go:187-265](file://common/mcpx/wrapper.go#L187-L265)
 
 #### 上下文传递机制
 
@@ -383,10 +412,10 @@ Wrapper->>Client : 执行业务逻辑
 ```
 
 **图表来源**
-- [wrapper.go:175-197](file://common/mcpx/wrapper.go#L175-L197)
+- [wrapper.go:212-232](file://common/mcpx/wrapper.go#L212-L232)
 
 **章节来源**
-- [wrapper.go:126-197](file://common/mcpx/wrapper.go#L126-L197)
+- [wrapper.go:187-265](file://common/mcpx/wrapper.go#L187-L265)
 
 ### MCP 服务器集成
 
@@ -400,7 +429,7 @@ MCP 服务器提供了完整的协议支持和安全认证机制。
 | Host | string | 0.0.0.0 | 服务器监听地址 |
 | Port | int | 13003 | 服务器端口号 |
 | Mode | string | dev | 运行模式 |
-| UseStreamable | bool | true | 是否使用 Streamable 协议 |
+| UseStreamable | bool | false | 是否使用 Streamable 协议 |
 | SseTimeout | duration | 24h | SSE 连接超时时间 |
 | MessageTimeout | duration | 18000s | 消息处理超时时间（30分钟） |
 
@@ -413,7 +442,7 @@ MCP 服务器提供了完整的协议支持和安全认证机制。
 | ClaimMapping | map[string]string | user-id → user_id | JWT 声明映射 |
 
 **章节来源**
-- [mcpserver.yaml:1-32](file://aiapp/mcpserver/etc/mcpserver.yaml#L1-L32)
+- [mcpserver.yaml:1-37](file://aiapp/mcpserver/etc/mcpserver.yaml#L1-L37)
 - [server.go:15-22](file://common/mcpx/server.go#L15-L22)
 
 ## 前端UI增强
@@ -529,9 +558,9 @@ function updateStatus(status) {
 ```
 
 **章节来源**
-- [tool.html:398-412](file://aiapp/aigtw/tool.html#L398-L412)
-- [tool.html:693-725](file://aiapp/aigtw/tool.html#L693-L725)
-- [tool.html:814-825](file://aiapp/aigtw/tool.html#L814-L825)
+- [tool.html:173-200](file://aiapp/aigtw/tool.html#L173-L200)
+- [tool.html:196-200](file://aiapp/aigtw/tool.html#L196-L200)
+- [tool.html:138-140](file://aiapp/aigtw/tool.html#L138-L140)
 
 ## 依赖关系分析
 
@@ -546,114 +575,138 @@ C[go.opentelemetry.io/otel]
 D[antsx Event Emitter]
 E[strconv 包]
 F[threading 包]
+G[sync 包]
 end
 subgraph "内部依赖"
-G[common/mcpx]
-H[aiapp/mcpserver/internal/tools]
-I[aiapp/mcpserver/internal/svc]
-J[common/antsx]
-K[threading 安全执行]
+H[common/mcpx]
+I[aiapp/mcpserver/internal/tools]
+J[aiapp/mcpserver/internal/svc]
+K[common/antsx]
+L[threading 安全执行]
+M[EventEmitter 异步通知]
 end
 subgraph "测试进度工具"
-L[TestProgress 工具]
-M[异步安全执行器]
-N[工具包装器]
-O[进度发送器]
-P[EventEmitter 系统]
+N[TestProgress 工具]
+O[GoSafe 执行器]
+P[自动进度累积执行器]
+Q[工具包装器]
+R[进度发送器]
+S[EventEmitter 系统]
 end
 subgraph "前端UI"
-Q[tool.html]
-R[进度显示组件]
-S[消息历史系统]
-T[步骤时间线系统]
+T[tool.html]
+U[进度显示组件]
+V[消息历史系统]
+W[步骤时间线系统]
 end
-L --> G
-L --> A
-L --> E
-L --> F
-M --> F
+N --> H
+N --> A
+N --> E
+N --> F
 N --> G
-N --> B
-O --> G
-O --> P
-O --> K
-P --> J
-G --> B
-G --> C
-G --> D
-H --> L
-I --> G
-Q --> R
-Q --> S
-Q --> T
+O --> F
+P --> F
+Q --> H
+Q --> B
+R --> H
+R --> S
+R --> L
+S --> K
+H --> B
+H --> C
+H --> D
+I --> N
+J --> H
+T --> U
+T --> V
+T --> W
 ```
 
 **图表来源**
-- [testprogress.go:3-14](file://aiapp/mcpserver/internal/tools/testprogress.go#L3-L14)
-- [wrapper.go:3-16](file://common/mcpx/wrapper.go#L3-L16)
-- [tool.html:7-203](file://aiapp/aigtw/tool.html#L7-L203)
+- [testprogress.go:3-15](file://aiapp/mcpserver/internal/tools/testprogress.go#L3-L15)
+- [wrapper.go:3-17](file://common/mcpx/wrapper.go#L3-L17)
+- [tool.html:1-200](file://aiapp/aigtw/tool.html#L1-L200)
 
 ### 依赖特性
 
-1. **最小化外部依赖** - 仅依赖必要的 MCP SDK、Go-Zero 框架、strconv包、threading包和 antsx Event Emitter
+1. **最小化外部依赖** - 仅依赖必要的 MCP SDK、Go-Zero 框架、strconv包、threading包、sync包和 antsx Event Emitter
 2. **模块化设计** - 通过接口和抽象类实现松耦合
 3. **版本兼容性** - 支持不同版本的 MCP 协议规范
 4. **可替换性** - 核心组件可以被其他实现替换
 5. **事件驱动** - 基于 EventEmitter 的异步事件处理机制
-6. **线程安全** - 使用 `threading.RunSafe` 提供 goroutine 安全执行
-7. **现代化UI** - 支持进度可视化和响应式设计
-8. **字符串转换** - 使用strconv包进行整数到字符串的安全转换
-9. **进度令牌管理** - 支持进度令牌的获取和管理
+- **线程安全执行** - 使用 GoSafe 提供更好的错误处理和恢复机制
+- **自动进度累积** - 使用 `ProgressSender.Emit()` 提供自动进度累积功能
+- **现代化UI** - 支持进度可视化和响应式设计
+- **线程安全的进度管理** - 通过互斥锁确保进度累积的线程安全
+- **字符串转换** - 使用 strconv 包进行整数到字符串的安全转换
+- **资源管理** - 通过EventEmitter确保 goroutine 正确退出
 
 **章节来源**
-- [testprogress.go:3-14](file://aiapp/mcpserver/internal/tools/testprogress.go#L3-L14)
-- [wrapper.go:3-16](file://common/mcpx/wrapper.go#L3-L16)
+- [testprogress.go:3-15](file://aiapp/mcpserver/internal/tools/testprogress.go#L3-L15)
+- [wrapper.go:3-17](file://common/mcpx/wrapper.go#L3-L17)
 
 ## 性能考虑
 
-测试进度工具在设计时充分考虑了性能优化和资源管理。经过更新后，工具现在使用异步安全执行模式，进一步提升了性能和可靠性。
+测试进度工具在设计时充分考虑了性能优化和资源管理。经过更新后，工具现在使用自动进度累积系统和增强的线程安全执行机制，进一步提升了性能和可靠性。
 
 ### 性能优化策略
 
-1. **异步安全执行**
-   - 使用 `threading.RunSafe` 包装工具执行逻辑，避免 goroutine 泄漏
-   - 提供更好的异常处理和资源管理
-   - 支持并发安全的工具执行
+1. **线程安全执行优化**
+   - 使用 `threading.GoSafe` 替代 `threading.RunSafe`，提供更好的错误处理和恢复机制
+   - GoSafe能够捕获 goroutine 中的 panic，避免程序崩溃
+   - 通过 defer 语句确保任务完成后正确标记完成状态
+   - 提供更优雅的错误传播和日志记录
 
-2. **异步进度通知**
+2. **同步机制优化**（**已更新**）
+   - **完全移除WaitGroup同步机制**：原有的WaitGroup同步已被完全移除
+   - **采用EventEmitter架构**：使用基于EventEmitter的异步进度通知系统
+   - **自动进度累积**：通过 `ProgressSender.Emit()` 自动管理进度累积
+   - **改进的资源管理**：EventEmitter确保goroutine正确退出，避免资源泄漏
+
+3. **自动进度累积**
+   - 使用 `ProgressSender.Emit()` 自动管理进度累积，避免手动计算开销
+   - 通过 `lastTotal` 字段和互斥锁确保线程安全的进度累积
+   - 支持最大100%的进度限制，防止溢出和不必要的计算
+
+4. **简化进度计算**
+   - 只需计算每步增量：`increment := float64(100 / steps)`
+   - 每次迭代发送固定增量值，工具自动处理累积逻辑
+   - 移除了复杂的手动进度计算代码，提高了代码执行效率
+
+5. **异步进度通知**
    - 使用 EventEmitter 系统发送进度更新，避免阻塞主执行线程
    - 支持批量进度处理和合并
    - 避免频繁的网络通信开销
 
-3. **内存管理**
+6. **内存管理**
    - 及时清理不再使用的上下文
    - 合理控制日志级别以减少内存占用
    - 优化数据结构以提高访问效率
 
-4. **并发处理**
+7. **并发处理**
    - 支持多任务并发执行
    - 实现任务队列和优先级管理
    - 提供资源池和连接复用
 
-5. **事件驱动优化**
+8. **事件驱动优化**
    - EventEmitter 提供非阻塞的事件分发机制
    - 自动处理慢消费者问题
    - 支持动态订阅和取消
 
-6. **前端性能优化**
+9. **前端性能优化**
    - CSS动画使用GPU加速
    - JavaScript使用requestAnimationFrame优化渲染
    - 响应式设计提升用户体验
 
-7. **字符串转换优化**
-   - 使用 `strconv.Itoa` 进行高效的整数到字符串转换
-   - 避免重复的字符串拼接操作
-   - 减少内存分配次数
+10. **字符串转换优化**
+    - 使用 `strconv.Itoa` 进行高效的整数到字符串转换
+    - 避免重复的字符串拼接操作
+    - 减少内存分配次数
 
-8. **进度令牌管理**
-   - 优化进度令牌的生成和管理
-   - 减少令牌相关的性能开销
-   - 提供更好的调试支持
+11. **线程安全优化**
+    - 使用 `sync.Mutex` 保护共享资源
+    - 最小化锁的持有时间
+    - 避免死锁和竞态条件
 
 ### 性能监控指标
 
@@ -668,7 +721,10 @@ Q --> T
 | UI渲染帧率 | 前端UI渲染FPS | > 60fps |
 | 字符串转换性能 | `strconv.Itoa`调用频率 | > 1000/s |
 | 线程安全 | goroutine泄漏检测 | 0个泄漏 |
-| 进度令牌管理 | 令牌生成性能 | < 1ms/令牌 |
+| 进度累积性能 | 自动进度累积速度 | < 1ms/步 |
+| 进度发送性能 | 进度事件发送速度 | < 10ms/次 |
+| EventEmitter 性能 | 事件分发性能 | < 1ms/次 |
+| 线程安全执行性能 | GoSafe 执行开销 | < 1ms/次 |
 
 ## 资源密集型特性说明
 
@@ -680,13 +736,15 @@ Q --> T
    - 长时间的循环处理
    - 大量的数学计算和进度计算
    - 每次迭代都会产生系统负载
-   - **新增**：异步安全执行的CPU开销
+   - **新增**：GoSafe 执行器的CPU开销
+   - **新增**：EventEmitter 异步处理的CPU开销
 
 2. **内存使用特征**
    - 进度发送器的持续占用
    - EventEmitter 的事件缓存
    - 日志记录的内存开销
-   - **新增**：进度令牌的动态字符串存储
+   - **新增**：EventEmitter 状态的内存存储
+   - **新增**：GoSafe 执行器的状态管理
 
 3. **网络资源消耗**
    - 频繁的进度通知发送
@@ -694,9 +752,10 @@ Q --> T
    - 前端轮询的额外开销
 
 4. **线程资源消耗**
-   - 异步安全执行器的 goroutine 管理
+   - GoSafe 执行器的 goroutine 管理
    - EventEmitter 的订阅者管理
-   - **新增**：进度令牌的并发访问
+   - **新增**：EventEmitter 异步处理的线程管理
+   - **新增**：进度累积互斥锁的线程管理
 
 ### 时间复杂度分析
 
@@ -704,7 +763,10 @@ Q --> T
 - **空间复杂度**：O(1)，常数级别的额外内存
 - **执行时间**：约 n × (步骤间隔 + 处理开销)
 - **字符串转换开销**：每次迭代进行一次 `strconv.Itoa` 调用
-- **异步安全开销**：每次迭代进行一次 `threading.RunSafe` 调用
+- **自动进度累积开销**：每次迭代进行一次 `ProgressSender.Emit` 调用
+- **线程安全开销**：每次迭代进行一次互斥锁操作
+- **GoSafe 执行开销**：每次异步任务执行的开销
+- **EventEmitter 开销**：异步事件处理的等待开销
 
 ### 资源监控建议
 
@@ -720,6 +782,16 @@ C --> H[阈值: < 10MB]
 D --> I[根据流量调整]
 E --> J[最大连接数限制]
 F --> K[阈值: < 1000 goroutines]
+L[新增监控] --> M[GoSafe 执行器]
+L --> N[EventEmitter 异步处理]
+L --> O[异步任务数量]
+M --> P[执行成功率]
+N --> Q[事件处理延迟]
+O --> R[活跃任务数]
+S[同步机制监控] --> T[EventEmitter 状态]
+S --> U[异步任务完成状态]
+T --> V[事件队列长度]
+U --> W[任务完成率]
 ```
 
 ## 使用要求和最佳实践
@@ -741,10 +813,16 @@ F --> K[阈值: < 1000 goroutines]
    - 需要正确的CSS样式支持
    - 需要JavaScript事件处理支持
 
-4. **异步安全执行**
-   - 确保 Go-Zero 环境正确配置
-   - 验证 `threading.RunSafe` 功能正常
-   - 监控 goroutine 生命周期
+4. **线程安全执行**
+   - 确保 GoSafe 执行器功能正常
+   - 验证异步任务执行状态
+   - 监控异步任务的完成状态
+
+5. **EventEmitter 异步处理**（**已更新**）
+   - 确保 EventEmitter 系统正常运行
+   - 验证异步事件处理机制
+   - 监控异步事件的完成状态
+   - 监控EventEmitter的性能
 
 ### 最佳实践
 
@@ -761,25 +839,31 @@ F --> K[阈值: < 1000 goroutines]
    - 设置合理的超时时间（30分钟）
    - 监控CPU和内存使用情况
    - 观察进度通知的完整性
-   - **新增**：监控异步安全执行性能
-   - **新增**：监控进度令牌生成性能
+   - **监控 GoSafe 执行器的性能**
+   - **监控 EventEmitter 异步处理性能**
+   - **监控异步任务的完成状态**
+   - **监控线程安全机制**
 
 3. **错误处理**
    - 实现重试机制
    - 处理网络中断情况
    - 提供用户取消选项
-   - **新增**：处理异步安全执行异常
+   - **处理 GoSafe 执行器异常**
+   - **处理 EventEmitter 异常**
 
-4. **步骤跟踪优化**
+4. **性能优化**
    - 合理设置步骤间隔，避免过高的CPU负载
    - 使用适当的步骤总数，平衡进度精度和性能
    - 监控字符串转换操作的性能影响
-   - **新增**：监控异步安全执行的资源使用
+   - **监控 GoSafe 执行器的性能影响**
+   - **监控 EventEmitter 异步处理的性能影响**
+   - **验证线程安全机制的性能影响**
 
-5. **进度令牌管理**
-   - **新增**：合理使用进度令牌进行调试
-   - **新增**：监控进度令牌的生命周期
-   - **新增**：确保进度令牌的安全性
+5. **资源管理**
+   - **合理使用 EventEmitter 管理异步任务**
+   - **监控异步任务的生命周期**
+   - **确保异步任务正确完成**
+   - **验证线程安全机制的资源使用**
 
 ### 使用场景
 
@@ -788,11 +872,15 @@ F --> K[阈值: < 1000 goroutines]
 3. **系统压力测试**：评估系统的并发处理能力
 4. **用户体验测试**：验证前端UI的响应性和步骤显示功能
 5. **字符串转换性能测试**：验证 `strconv` 包的性能表现
-6. **异步安全执行测试**：验证 `threading.RunSafe` 的功能
-7. **进度令牌管理测试**：验证进度令牌的获取和使用
+6. **自动进度累积测试**：验证 `ProgressSender.Emit()` 的功能
+7. **线程安全执行测试**：验证 GoSafe 执行器的线程安全性
+8. **EventEmitter 异步处理测试**：验证异步事件处理机制的可靠性
+9. **进度令牌管理测试**：验证进度令牌的获取和使用
+10. **GoSafe 执行器测试**：验证线程安全执行机制
+11. **EventEmitter 异步处理测试**：验证异步事件处理机制
 
 **章节来源**
-- [testprogress.go:25](file://aiapp/mcpserver/internal/tools/testprogress.go#L25)
+- [testprogress.go:28](file://aiapp/mcpserver/internal/tools/testprogress.go#L28)
 - [mcpserver.yaml:8-9](file://aiapp/mcpserver/etc/mcpserver.yaml#L8-L9)
 
 ## 故障排除指南
@@ -824,8 +912,9 @@ F --> K[阈值: < 1000 goroutines]
 - 连接会话失效
 - 网络传输问题
 - EventEmitter 系统故障
-- **异步安全执行异常**
-- **进度令牌获取失败**
+- **GoSafe 执行器异常**
+- **EventEmitter 异常**
+- **异步任务未完成**
 - **资源密集型特性导致的性能问题**
 - **步骤信息显示问题**
 
@@ -834,10 +923,11 @@ F --> K[阈值: < 1000 goroutines]
 2. 验证 MCP 连接状态
 3. 查看服务器日志中的进度发送记录
 4. 检查 EventEmitter 系统的状态和订阅者数量
-5. **验证异步安全执行器是否正常工作**
-6. **检查进度令牌的生成和获取**
-7. **监控系统资源使用情况**
-8. **检查前端步骤时间线的JavaScript错误**
+5. **验证 GoSafe 执行器的执行状态**
+6. **检查 EventEmitter 异常状态**
+7. **监控异步任务完成情况**
+8. **监控系统资源使用情况**
+9. **检查前端步骤时间线的JavaScript错误**
 
 #### 3. 工具执行超时
 
@@ -847,13 +937,15 @@ F --> K[阈值: < 1000 goroutines]
 - 步骤数过多或间隔时间过长
 - 系统资源不足
 - 外部依赖响应缓慢
-- **异步安全执行阻塞**
+- **GoSafe 执行器阻塞**
+- **EventEmitter 异常**
 
 **解决步骤**：
 1. 调整 `MessageTimeout` 配置（当前为30分钟）
 2. 优化工具执行逻辑
 3. 检查外部服务响应时间
-4. **监控异步安全执行器的性能**
+4. **监控 GoSafe 执行器的执行状态**
+5. **检查 EventEmitter 异常状态**
 
 #### 4. 进度事件丢失
 
@@ -863,7 +955,8 @@ F --> K[阈值: < 1000 goroutines]
 - EventEmitter 的非阻塞特性导致慢消费者丢失事件
 - 订阅者数量过多
 - 网络连接不稳定
-- **异步安全执行器异常**
+- **GoSafe 执行器异常**
+- **EventEmitter 异常**
 - **资源密集型任务导致的系统过载**
 - **步骤信息格式错误**
 
@@ -872,9 +965,10 @@ F --> K[阈值: < 1000 goroutines]
 2. 调整缓冲区大小
 3. 优化网络连接
 4. 实现重试机制
-5. **监控异步安全执行器的状态**
-6. **监控系统负载情况**
-7. **验证步骤信息的字符串转换**
+5. **监控 GoSafe 执行器状态**
+6. **检查 EventEmitter 异常状态**
+7. **监控系统负载情况**
+8. **验证步骤信息字符串转换**
 
 #### 5. 前端UI显示异常
 
@@ -885,7 +979,8 @@ F --> K[阈值: < 1000 goroutines]
 - JavaScript执行错误
 - DOM元素未正确渲染
 - **步骤时间线组件缺失或样式错误**
-- **异步安全执行导致的UI更新问题**
+- **GoSafe 执行器导致的UI更新问题**
+- **EventEmitter 异常导致的UI延迟**
 
 **解决步骤**：
 1. 检查浏览器控制台错误
@@ -893,68 +988,50 @@ F --> K[阈值: < 1000 goroutines]
 3. 确认DOM元素ID匹配
 4. 检查JavaScript函数调用
 5. **验证步骤时间线HTML结构**
-6. **检查CSS样式是否正确应用**
-7. **验证异步安全执行对UI的影响**
+6. **检查CSS样式正确性**
+7. **验证 GoSafe 执行器对UI的影响**
+8. **检查 EventEmitter 异常对UI的影响**
 
-#### 6. 异步安全执行问题
+#### 6. GoSafe 执行器问题
 
-**新增问题**：由于异步安全执行模式导致的问题
+**新增问题**：由于 GoSafe 执行器升级导致的问题
 
 **可能症状**：
 - 工具执行异常终止
-- goroutine 泄漏
-- 异常传播到父goroutine
-- 进度通知延迟严重
-- **进度令牌获取失败**
+- GoSafe 执行器崩溃
+- 异步任务执行失败
+- 错误处理异常
+- **线程安全执行问题**
 
 **解决步骤**：
-1. **检查 `threading.RunSafe` 的使用是否正确**
-2. **验证异步安全执行器的配置**
-3. **监控 goroutine 的生命周期**
-4. **检查异常处理机制**
-5. **验证进度令牌的并发访问安全性**
-6. **监控异步执行的性能指标**
+1. **检查 `threading.GoSafe` 使用是否正确**
+2. **验证 GoSafe 执行器配置**
+3. **监控异步任务执行状态**
+4. **检查 panic 捕获机制**
+5. **验证错误传播机制**
+6. **监控 GoSafe 执行器性能**
 
-#### 7. 进度令牌管理问题
+#### 7. EventEmitter 异常问题
 
-**新增问题**：进度令牌获取和管理相关的问题
+**新增问题**：由于EventEmitter异步处理机制导致的问题
 
 **可能症状**：
-- 进度令牌为空
-- 进度令牌格式错误
-- 进度令牌获取失败
-- 进度令牌显示异常
+- 工具执行异常终止
+- EventEmitter 异常
+- 异步事件处理失败
+- 错误处理异常
+- **异步任务执行异常**
+- **EventEmitter 性能问题**
 
 **解决步骤**：
-1. **检查 `sender.GetToken()` 的调用时机**
-2. **验证进度令牌的生成机制**
-3. **检查进度令牌的存储和传递**
-4. **验证进度令牌在UI中的显示**
-5. **监控进度令牌的生命周期**
-6. **检查进度令牌的安全性**
+1. **检查 EventEmitter 初始化**
+2. **验证异步事件处理状态**
+3. **检查异步事件完成标记**
+4. **验证 EventEmitter 异常处理机制**
+5. **监控 EventEmitter 异步处理状态**
+6. **检查异步事件资源管理**
 
-#### 8. 资源密集型问题
-
-**新增问题**：由于工具的资源密集型特性导致的问题
-
-**可能症状**：
-- 系统响应缓慢
-- 内存使用过高
-- CPU占用率飙升
-- 进度通知延迟严重
-- **字符串转换性能问题**
-- **异步安全执行性能问题**
-
-**解决步骤**：
-1. **监控系统资源使用情况**
-2. **调整工具参数（减少步骤数或增加间隔）**
-3. **优化系统配置**
-4. **考虑使用更强大的硬件资源**
-5. **监控字符串转换操作的性能**
-6. **监控异步安全执行的性能**
-7. **验证进度令牌管理的性能影响**
-
-#### 9. 步骤信息显示问题
+#### 8. 步骤信息显示问题
 
 **新增问题**：步骤时间线或步骤信息显示异常
 
@@ -963,20 +1040,42 @@ F --> K[阈值: < 1000 goroutines]
 - 步骤状态显示错误
 - 步骤信息格式不正确
 - 字符串转换错误
-- **异步安全执行导致的步骤信息延迟**
+- **GoSafe 执行器导致的步骤信息延迟**
+- **EventEmitter 异常导致的步骤信息延迟**
 
 **解决步骤**：
 1. **检查JavaScript控制台错误**
 2. **验证步骤时间线HTML结构**
-3. **检查CSS样式是否正确应用**
-4. **验证 `updateStepTimeline` 函数的调用**
-5. **检查 `strconv.Itoa` 转换是否正常工作**
-6. **验证步骤信息的字符串拼接**
-7. **监控异步安全执行对步骤信息的影响**
+3. **检查CSS样式正确性**
+4. **验证 `updateStepTimeline` 函数调用**
+5. **检查 `strconv.Itoa` 转换正常工作**
+6. **验证步骤信息字符串拼接**
+7. **监控 GoSafe 执行器对步骤信息影响**
+8. **监控 EventEmitter 异常对步骤信息影响**
+
+#### 9. 线程安全问题
+
+**新增问题**：由于线程安全机制导致的问题
+
+**可能症状**：
+- 进度累积不准确
+- 进度超过100%
+- 线程死锁
+- 竞态条件
+- **GoSafe 执行器线程安全问题**
+- **EventEmitter 异常导致的线程安全问题**
+
+**解决步骤**：
+1. **检查互斥锁使用是否正确**
+2. **验证 `sync.Mutex` 保护范围**
+3. **检查 `lastTotal` 字段访问**
+4. **验证 GoSafe 执行器线程安全**
+5. **检查 EventEmitter 异常导致的线程安全问题**
+6. **监控线程安全机制性能**
 
 **章节来源**
-- [testprogress.go:48](file://aiapp/mcpserver/internal/tools/testprogress.go#L48)
-- [mcpserver.yaml:7-8](file://aiapp/mcpserver/etc/mcpserver.yaml#L7-L8)
+- [testprogress.go:28](file://aiapp/mcpserver/internal/tools/testprogress.go#L28)
+- [mcpserver.yaml:8-9](file://aiapp/mcpserver/etc/mcpserver.yaml#L8-L9)
 
 ### 调试技巧
 
@@ -990,15 +1089,17 @@ F --> K[阈值: < 1000 goroutines]
 8. **性能分析**：使用Go的pprof工具分析工具的性能瓶颈
 9. **字符串转换测试**：单独测试 `strconv.Itoa` 的性能和正确性
 10. **步骤时间线调试**：检查步骤时间线组件的JavaScript事件处理
-11. **异步安全执行调试**：使用Go的race detector检测并发问题
-12. **进度令牌调试**：监控进度令牌的生成和使用过程
-13. **线程安全验证**：确保 `threading.RunSafe` 正确处理异常
+11. **GoSafe 执行器调试**：监控 `threading.GoSafe` 的执行状态
+12. **EventEmitter 异常调试**：监控 EventEmitter 异常状态
+13. **异步任务调试**：监控异步任务的执行和完成状态
+14. **线程安全验证**：确保互斥锁正确保护共享资源
+15. **竞态条件检测**：使用Go的race detector检测竞态条件
 
 ## 结论
 
-测试进度工具作为零服务项目中的一个重要组件，成功展示了 MCP 协议在实际应用中的强大功能。该工具提供了完整的异步进度通知功能演示，验证了异步处理机制的完整实现，支持长时间运行工具的实时进度反馈。
+测试进度工具作为零服务项目中的一个重要组件，成功展示了 MCP 协议在实际应用中的强大功能。该工具提供了完整的自动进度累积功能演示，验证了自动进度管理机制的完整实现，支持长时间运行工具的实时进度反馈。
 
-**重要更新**：经过本次更新，测试进度工具的异步安全执行模式、进度令牌获取功能和线程安全性得到了显著增强。这些改进为开发者提供了更可靠、更安全的使用体验，并为类似项目的开发提供了宝贵的参考经验。
+**重要更新**：经过本次更新，测试进度工具的线程安全执行机制、EventEmitter异步处理机制和自动进度累积系统得到了显著增强。这些改进为开发者提供了更可靠、更高效的使用体验，并为类似项目的开发提供了宝贵的参考经验。
 
 ### 主要成就
 
@@ -1010,13 +1111,18 @@ F --> K[阈值: < 1000 goroutines]
 6. **现代化UI** - 进度可视化和实时状态更新提升了用户体验
 7. **资源意识** - 明确标注了工具的资源密集型特性，帮助开发者合理使用
 8. **步骤跟踪增强** - 提供了更精确的步骤信息显示，支持更好的多步骤进程跟踪
-9. **异步安全执行** - 使用 `threading.RunSafe` 提供了更好的线程安全保障
-10. **进度令牌管理** - 支持进度令牌的获取和管理，增强了调试和监控能力
+9. **线程安全执行** - 使用 GoSafe 提供了更好的错误处理和恢复机制
+10. **EventEmitter 异步处理** - 采用EventEmitter架构提供更高效的异步事件处理
+11. **自动进度累积** - 使用 `ProgressSender.Emit()` 提供了自动进度累积功能
+12. **线程安全的进度管理** - 通过互斥锁确保进度累积的线程安全
 
 ### 技术亮点
 
 - **上下文管理**：实现了完整的上下文传递和管理机制
-- **异步安全执行器**：基于 `threading.RunSafe` 的安全执行机制
+- **GoSafe 执行器**：基于 `threading.GoSafe` 的线程安全执行机制
+- **EventEmitter 异步处理**：采用EventEmitter架构提供异步事件处理
+- **自动进度累积执行器**：基于 `ProgressSender.Emit()` 的自动进度累积机制
+- **简化进度计算**：移除了复杂的手动进度计算代码
 - **进度发送器**：基于 EventEmitter 的灵活进度通知发送能力
 - **工具包装器**：统一了工具调用的处理模式，自动管理生命周期
 - **MCP 服务器集成**：无缝集成了完整的 MCP 协议支持
@@ -1024,7 +1130,8 @@ F --> K[阈值: < 1000 goroutines]
 - **前端UI增强**：支持进度可视化、步骤时间线和响应式设计
 - **字符串转换优化**：使用 `strconv` 包进行高效的整数到字符串转换
 - **资源密集型特性标注**：为工具使用提供了明确的性能要求
-- **进度令牌获取**：支持进度令牌的获取和显示功能
+- **进度令牌管理**：支持进度令牌的获取和管理功能
+- **线程安全机制优化**：改进了互斥锁的使用和性能
 
 ### 未来发展方向
 
@@ -1036,8 +1143,10 @@ F --> K[阈值: < 1000 goroutines]
 6. **UI改进** - 增强前端UI的交互性和视觉效果
 7. **资源管理** - 实现更智能的资源使用监控和优化
 8. **字符串转换优化** - 进一步优化 `strconv` 包的使用和性能
-9. **异步安全执行优化** - 提升 `threading.RunSafe` 的性能和可靠性
-10. **进度令牌管理优化** - 改进进度令牌的生成、管理和使用机制
+9. **GoSafe 执行器优化** - 提升 `threading.GoSafe` 的性能和可靠性
+10. **EventEmitter 异步处理优化** - 改进EventEmitter的性能和稳定性
+11. **异步任务处理优化** - 提升异步任务处理的性能和可靠性
+12. **线程安全机制优化** - 改进互斥锁的使用和性能
 
 测试进度工具为零服务项目中的 MCP 功能奠定了坚实的基础，也为类似项目的开发提供了宝贵的参考经验。其基于 EventEmitter 的架构和现代化的前端UI代表了现代微服务架构的最佳实践，为未来的功能扩展和技术演进提供了良好的基础。
 
@@ -1047,8 +1156,9 @@ F --> K[阈值: < 1000 goroutines]
 - 监控系统性能指标，及时发现潜在问题
 - 在生产环境中谨慎使用此类工具
 - 考虑使用专用的测试环境进行性能验证
-- **关注字符串转换性能和步骤信息显示功能**
-- **验证步骤时间线组件的完整性和正确性**
-- **监控异步安全执行器的性能和稳定性**
-- **验证进度令牌管理的安全性和有效性**
-- **确保线程安全机制的正确配置和使用**
+- **关注 GoSafe 执行器的性能和稳定性**
+- **验证 EventEmitter 异步处理机制的正确配置和使用**
+- **监控异步任务的完成状态**
+- **确保线程安全机制的正确使用**
+- **验证自动进度累积与前端UI的协调工作**
+- **监控EventEmitter异步处理的性能和稳定性**

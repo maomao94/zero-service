@@ -51,13 +51,13 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Handler: pass.AsyncToolCallHandler(serverCtx),
 			},
 			{
-				// 查询异步工具调用的执行状态和结果，建议轮询间隔 1~2 秒
+				// 查询异步工具调用的执行状态和结果
 				Method:  http.MethodGet,
 				Path:    "/async/tool/result/:task_id",
 				Handler: pass.AsyncToolResultHandler(serverCtx),
 			},
 			{
-				// 分页查询异步结果列表，支持按状态、时间范围过滤，支持多字段排序
+				// 分页查询异步结果列表
 				Method:  http.MethodGet,
 				Path:    "/async/tool/results",
 				Handler: pass.ListAsyncResultsHandler(serverCtx),

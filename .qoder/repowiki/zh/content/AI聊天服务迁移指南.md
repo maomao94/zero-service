@@ -32,19 +32,22 @@
 - [testprogress.go](file://aiapp/mcpserver/internal/tools/testprogress.go)
 - [config.go](file://common/mcpx/config.go)
 - [async_result.go](file://common/mcpx/async_result.go)
+- [tool.go](file://common/tool/tool.go)
+- [wrapper.go](file://common/mcpx/wrapper.go)
+- [tool.html](file://aiapp/aigtw/tool.html)
+- [chat.html](file://aiapp/aigtw/chat.html)
+- [waitgroup.go](file://common/iec104/waitgroup/waitgroup.go)
 </cite>
 
 ## 更新摘要
 **所做更改**
-- 新增异步工具调用功能的详细文档说明
-- 增强协议定义文档注释，包括异步工具调用的完整流程
-- 添加MCP工具服务器的详细配置和工具注册机制
-- 更新工具调用机制的架构图和数据流图
-- 完善异步任务管理的实现细节和错误处理机制
-- 新增JWT认证现代化和拦截器系统增强
-- 添加上下文传播优化和日志系统优化
-- **更新** 新增从消息端点到SSE流式传输的架构决策说明
-- **更新** 增强Mcpx客户端包的配置管理和传输层支持
+- 更新以反映历史分叉更新中的应用变更：MCP工具调用进度跟踪系统、前端消息交互功能、MCP客户端异步结果管理改进、测试进度工具同步改进
+- 更新丢弃变更：完全移除MCP进度跟踪、前端消息动作系统、客户端自动存储管理、WaitGroup同步机制
+- 新增ProgressSender进度发送器，支持工具执行进度的实时广播
+- 增强前端工具页面，提供完整的异步任务管理和可视化界面
+- 完善异步工具调用的前端交互体验，包括步骤时间线和报文详情
+- 新增工具调用缓冲机制的前端实现，优化工具调用增量处理
+- 增强上下文传播机制，支持进度事件的链路追踪
 
 ## 目录
 1. [简介](#简介)
@@ -52,21 +55,25 @@
 3. [核心组件](#核心组件)
 4. [架构概览](#架构概览)
 5. [详细组件分析](#详细组件分析)
-6. [异步工具调用机制](#异步工具调用机制)
-7. [迁移策略](#迁移策略)
-8. [性能考虑](#性能考虑)
-9. [故障排除指南](#故障排除指南)
-10. [结论](#结论)
+6. [流式工具调用机制](#流式工具调用机制)
+7. [进度跟踪机制](#进度跟踪机制)
+8. [工具调用可视化增强](#工具调用可视化增强)
+9. [迁移策略](#迁移策略)
+10. [性能考虑](#性能考虑)
+11. [故障排除指南](#故障排除指南)
+12. [结论](#结论)
 
 ## 简介
 
 本指南详细介绍了基于Go Zero微服务框架构建的AI聊天服务系统的完整迁移方案。该系统采用gRPC协议提供聊天补全功能，支持多种大模型提供商（包括智谱、通义千问等），具备流式响应、工具调用、深度思考模式等高级特性。
 
-**更新** 系统现已引入重大的协议定义增强和工具调用机制升级，包括完整的异步工具调用功能、详细的协议文档注释和增强的MCP协议支持。新增了JWT认证现代化、拦截器系统增强、上下文传播优化和日志系统优化等功能，显著提升了系统的安全性、可维护性和可观测性。
+**更新** 系统现已引入重大的协议定义增强和工具调用机制升级，包括完整的异步工具调用功能、详细的协议文档注释、增强的MCP协议支持和全面的可视化增强。新增了JWT认证现代化、拦截器系统增强、上下文传播优化、日志系统优化、进度跟踪机制、工具调用可视化等重要功能变更。
+
+**更新** 最新版本新增了流式工具调用支持、MaxContextTokens配置参数、增强的工具调用类型定义、protobuf定义的重大扩展、混合流式处理机制、工具调用缓冲机制、上下文大小检查机制、MCP工具调用可视化增强、进度跟踪机制改进、工具能力扩展等重要功能变更。
 
 系统主要由三个核心服务组成：AI聊天服务（aichat）、AI网关服务（aigtw）和MCP工具服务器（mcpserver），通过统一的配置管理和服务注册机制实现松耦合的微服务架构。
 
-**更新** 最新架构决策采用了从消息端点到SSE流式传输的迁移路径，通过Mcpx客户端包的增强支持，提供了更稳定的实时通信能力和更好的性能表现。
+**更新** 最新架构决策采用了从消息端点到SSE流式传输的迁移路径，通过Mcpx客户端包的增强支持，提供了更稳定的实时通信能力和更好的性能表现。新增的ProgressSender进度发送器和工具卡片UI为用户提供了直观的工具调用状态展示。
 
 ## 项目结构
 
@@ -85,20 +92,24 @@ E[aigtw.go 应用入口]
 F[internal/ 内部实现]
 G[etc/ 配置文件]
 H[aigtw.api 接口定义]
+I[tool.html 前端工具页面]
+J[chat.html 聊天界面]
 end
 subgraph "MCP工具服务器 (mcpserver)"
-I[mcpserver.go 应用入口]
-J[internal/ 内部实现]
-K[etc/ 配置文件]
-L[tools/ 工具实现]
+K[mcpserver.go 应用入口]
+L[internal/ 内部实现]
+M[etc/ 配置文件]
+N[tools/ 工具实现]
+O[skills/ 技能扩展]
 end
 A --> B
 E --> F
-I --> J
+K --> L
 B --> C
 F --> G
-J --> K
-J --> L
+L --> M
+L --> N
+L --> O
 ```
 
 **图表来源**
@@ -126,10 +137,15 @@ AI聊天服务是系统的核心，提供完整的聊天补全功能，支持以
 - **JWT认证**：支持JWT令牌验证和权限控制
 - **拦截器系统**：增强的请求处理和日志记录机制
 - **上下文传播**：优化的分布式追踪和上下文传递
+- **流式工具调用**：支持流式场景下的工具调用处理
+- **上下文大小检查**：智能的上下文token大小检查机制
+- **混合流式处理**：LLM token和工具进度在同一流中传输
+- **进度跟踪**：实时工具执行进度监控和可视化
+- **工具调用缓冲**：前端工具调用增量的缓冲处理
 
 ### AI网关服务 (aigtw)
 
-AI网关服务作为统一入口，提供RESTful API接口：
+AI网关服务作为统一入口，提供RESTful API接口和丰富的前端界面：
 
 - **OpenAI兼容**：完全兼容OpenAI API格式
 - **JWT认证**：支持JWT令牌验证
@@ -138,10 +154,15 @@ AI网关服务作为统一入口，提供RESTful API接口：
 - **异步工具调用API**：提供完整的异步工具调用REST接口
 - **现代化传输协议**：支持HTTP/2和WebSocket
 - **增强的错误处理**：完善的错误分类和处理机制
+- **工具调用缓冲**：支持前端工具调用增量的缓冲处理
+- **工具调用可视化**：提供完整的工具调用状态展示界面
+- **进度跟踪界面**：实时显示工具执行进度和消息历史
+- **步骤时间线**：直观展示异步任务执行状态
+- **报文详情**：记录和展示API调用的详细信息
 
 ### MCP工具服务器 (mcpserver)
 
-MCP工具服务器负责管理各种实用工具：
+MCP工具服务器负责管理各种实用工具，新增了完整的进度跟踪和可视化功能：
 
 - **Modbus工具**：支持工业设备通信
 - **Echo工具**：简单的回显测试功能
@@ -150,6 +171,9 @@ MCP工具服务器负责管理各种实用工具：
 - **工具注册**：动态注册和管理工具
 - **上下文提取**：自动提取和传播用户上下文
 - **进度通知**：实时进度更新和状态同步
+- **ProgressSender**：进度发送器，支持工具执行进度的实时广播
+- **test_progress工具**：专门用于演示进度跟踪功能的测试工具
+- **工具卡片UI**：为前端提供直观的工具调用状态展示
 
 **章节来源**
 - [config.go:1-37](file://aiapp/aichat/internal/config/config.go#L1-L37)
@@ -159,7 +183,7 @@ MCP工具服务器负责管理各种实用工具：
 
 ## 架构概览
 
-系统采用微服务架构，通过gRPC和HTTP协议实现服务间的通信：
+系统采用微服务架构，通过gRPC和HTTP协议实现服务间的通信，并新增了完整的进度跟踪和可视化机制：
 
 ```mermaid
 graph TB
@@ -173,18 +197,25 @@ Gateway[AIGateway REST API]
 Auth[JWT认证]
 AsyncAPI[异步工具调用API]
 Interceptor[拦截器系统]
+ToolBuffer[工具调用缓冲]
+ToolUI[工具调用UI]
+ProgressTracker[进度跟踪器]
 end
 subgraph "服务层"
 ChatService[AICChat gRPC服务]
 MCPService[MCP工具服务]
 AsyncMgr[异步任务管理器]
 Context[上下文传播]
+ContextCheck[上下文大小检查]
+MixedStream[混合流式处理]
+ProgressSender[进度发送器]
 end
 subgraph "数据层"
 Providers[大模型提供商API]
 Tools[内部工具集]
 AsyncStore[异步结果存储]
 LogSystem[日志系统]
+ProgressStore[进度存储]
 end
 Web --> Gateway
 Mobile --> Gateway
@@ -193,18 +224,26 @@ Gateway --> Auth
 Auth --> ChatService
 Gateway --> ChatService
 Gateway --> AsyncAPI
+Gateway --> ToolBuffer
+Gateway --> ToolUI
+Gateway --> ProgressTracker
 AsyncAPI --> AsyncMgr
 ChatService --> MCPService
 ChatService --> Providers
 MCPService --> Tools
+MCPService --> ProgressSender
 AsyncMgr --> AsyncStore
+ProgressTracker --> ProgressStore
 ChatService --> Tools
 Context --> MCPService
 Context --> AsyncMgr
+ContextCheck --> ChatService
+MixedStream --> ChatService
 Interceptor --> ChatService
 LogSystem --> ChatService
 LogSystem --> MCPService
 LogSystem --> AsyncMgr
+ProgressSender --> ProgressStore
 ```
 
 **图表来源**
@@ -221,12 +260,16 @@ participant Gateway as AI网关
 participant ChatService as AI聊天服务
 participant Provider as 大模型提供商
 participant MCP as MCP工具服务
+participant ProgressSender as 进度发送器
 participant AsyncMgr as 异步管理器
 participant Context as 上下文系统
+participant ToolBuffer as 工具调用缓冲
 Client->>Gateway : REST API请求
 Gateway->>ChatService : gRPC调用
 ChatService->>Context : 提取用户上下文
 Context-->>ChatService : 返回上下文信息
+ChatService->>ContextCheck : 上下文大小检查
+ContextCheck-->>ChatService : 返回检查结果
 ChatService->>ChatService : 验证模型配置
 alt 需要工具调用
 alt 异步工具调用
@@ -242,6 +285,8 @@ else 同步工具调用
 ChatService->>MCP : 工具调用请求
 MCP->>Context : 传播上下文
 Context-->>MCP : 返回上下文信息
+MCP->>ProgressSender : 发送进度通知
+ProgressSender-->>MCP : 进度事件
 MCP-->>ChatService : 工具执行结果
 end
 ChatService->>ChatService : 构建增强消息
@@ -264,13 +309,14 @@ end
 
 #### 聊天补全逻辑
 
-聊天补全功能实现了完整的对话处理流程：
+聊天补全功能实现了完整的对话处理流程，新增了进度跟踪和工具调用可视化支持：
 
 ```mermaid
 flowchart TD
 Start([开始聊天补全]) --> Validate[验证模型配置]
 Validate --> ExtractContext[提取用户上下文]
-ExtractContext --> BuildReq[构建请求参数]
+ExtractContext --> ContextCheck[上下文大小检查]
+ContextCheck --> BuildReq[构建请求参数]
 BuildReq --> InjectTools{是否有工具?}
 InjectTools --> |是| InjectMCP[注入MCP工具]
 InjectTools --> |否| CallProvider[调用大模型提供商]
@@ -288,23 +334,30 @@ ReturnResp --> End([结束])
 
 #### 流式响应处理
 
-流式响应处理实现了高效的实时通信：
+流式响应处理实现了高效的实时通信，支持工具进度的实时展示：
 
 ```mermaid
 sequenceDiagram
 participant Client as 客户端
 participant Stream as 流式连接
 participant Reader as SSE读取器
+participant ToolBuffer as 工具调用缓冲
 participant Provider as 大模型提供商
 participant Context as 上下文系统
+participant ProgressSender as 进度发送器
 Client->>Stream : 建立SSE连接
 Stream->>Reader : 初始化SSE读取器
 Reader->>Context : 提取上下文信息
 Context-->>Reader : 返回上下文信息
+Reader->>ToolBuffer : 初始化工具调用缓冲
 Reader->>Provider : 发送流式请求
 loop 直到连接关闭
 Provider-->>Reader : 发送数据块
 Reader->>Reader : 解析SSE数据
+Reader->>ToolBuffer : 处理工具调用增量
+ToolBuffer->>ToolBuffer : 累积工具调用数据
+Reader->>ProgressSender : 发送进度通知
+ProgressSender-->>Client : 实时进度更新
 Reader-->>Stream : 转换为gRPC流块
 Stream-->>Client : 发送增量响应
 Note over Reader,Client : 支持空闲超时检测
@@ -385,6 +438,8 @@ Log[日志配置]
 Mode[运行模式]
 Interceptor[拦截器配置]
 JWT[JWT认证配置]
+ContextCheck[上下文检查配置]
+Progress[进度跟踪配置]
 end
 subgraph "提供商配置"
 Providers[提供商列表]
@@ -402,12 +457,15 @@ Servers[MCP服务器]
 Auth[服务认证]
 Async[异步管理]
 Context[上下文传播]
+ProgressSender[进度发送器]
 end
 Global --> Providers
 Global --> Models
 Global --> MCP
 Global --> Interceptor
 Global --> JWT
+Global --> ContextCheck
+Global --> Progress
 Providers --> Provider1
 Providers --> Provider2
 Models --> Model1
@@ -416,6 +474,7 @@ MCP --> Servers
 MCP --> Auth
 MCP --> Async
 MCP --> Context
+MCP --> ProgressSender
 ```
 
 **图表来源**
@@ -488,12 +547,15 @@ participant Client as 客户端
 participant Service as 服务
 participant Context as 上下文系统
 participant MCP as MCP服务
+participant ProgressSender as 进度发送器
 Client->>Service : 请求带元数据
 Service->>Context : 提取用户上下文
 Context-->>Service : 返回上下文信息
 Service->>MCP : 调用工具
 MCP->>Context : 传播上下文
 Context-->>MCP : 返回上下文信息
+MCP->>ProgressSender : 发送进度通知
+ProgressSender-->>Client : 实时进度更新
 MCP-->>Service : 工具结果
 Service-->>Client : 响应
 Note over Service,Context : 支持分布式追踪
@@ -540,7 +602,7 @@ Logger <|-- StructuredLogger
 
 ### Mcpx客户端包增强
 
-**更新** Mcpx客户端包经过重大改进，提供了更强大的MCP协议支持和配置管理能力：
+**更新** Mcpx客户端包经过重大改进，提供了更强大的MCP协议支持、配置管理能力和进度跟踪功能：
 
 ```mermaid
 classDiagram
@@ -578,20 +640,33 @@ class ServerConfig {
 -serviceToken string
 -useStreamable bool
 }
+class ProgressSender {
+-token string
+-ctx context.Context
+-session *mcp.ServerSession
+-cancel func()
++GetToken() string
++Emit(progress, total, message)
++Start()
++Stop()
+}
 McpxClient --> Connection : "管理多个连接"
 McpxClient --> Config : "使用"
 Connection --> ServerConfig : "配置"
+Connection --> ProgressSender : "创建"
 ```
 
 **图表来源**
 - [client.go:25-51](file://common/mcpx/client.go#L25-L51)
 - [config.go:11-22](file://common/mcpx/config.go#L11-L22)
+- [wrapper.go:33-101](file://common/mcpx/wrapper.go#L33-L101)
 
 **章节来源**
 - [client.go:1-800](file://common/mcpx/client.go#L1-L800)
 - [config.go:1-23](file://common/mcpx/config.go#L1-L23)
+- [wrapper.go:1-234](file://common/mcpx/wrapper.go#L1-L234)
 
-## 异步工具调用机制
+## 流式工具调用机制
 
 ### 协议定义增强
 
@@ -654,7 +729,7 @@ note right of Failed : 任务失败，可获取错误信息
 
 ### MCP客户端增强
 
-**更新** MCP客户端现在支持完整的异步工具调用功能，包括SSE流式传输和进度通知：
+**更新** MCP客户端现在支持完整的异步工具调用功能，包括SSE流式传输、进度通知和工具调用可视化：
 
 ```mermaid
 classDiagram
@@ -685,20 +760,31 @@ class Connection {
 +tryConnect(opts) *mcp.ClientSession
 +callToolWithProgress(ctx, req) (string, error)
 }
+class ProgressSender {
+-token string
+-ctx context.Context
+-session *mcp.ServerSession
++GetToken() string
++Emit(progress, total, message)
++Start()
++Stop()
+}
 Client --> AsyncResultHandler : "使用"
 AsyncResultHandler <|-- MemoryAsyncResultHandler
 Connection --> SSEClientTransport : "使用SSE"
 Connection --> StreamableClientTransport : "使用Streamable"
+Connection --> ProgressSender : "创建"
 ```
 
 **图表来源**
 - [client.go:307-350](file://common/mcpx/client.go#L307-L350)
 - [memory_handler.go:16-146](file://common/mcpx/memory_handler.go#L16-L146)
 - [client.go:532-577](file://common/mcpx/client.go#L532-L577)
+- [wrapper.go:33-101](file://common/mcpx/wrapper.go#L33-L101)
 
 ### 工具注册和管理
 
-MCP工具服务器提供完整的工具注册和管理机制：
+MCP工具服务器提供完整的工具注册和管理机制，新增了test_progress工具用于演示进度跟踪：
 
 ```mermaid
 graph TB
@@ -711,12 +797,15 @@ subgraph "工具实现"
 Echo[echo.go] --> EchoArgs[EchoArgs]
 Modbus[modbus.go] --> ReadHoldingRegistersArgs[ReadHoldingRegistersArgs]
 Modbus --> ReadCoilsArgs[ReadCoilsArgs]
+TestProgress[testprogress.go] --> TestProgressArgs[TestProgressArgs]
+TestProgress --> ProgressSender[ProgressSender]
 end
 subgraph "工具调用"
 ClientCall[客户端调用] --> ToolWrapper[工具包装器]
 ToolWrapper --> UserCtx[用户上下文提取]
 UserCtx --> ToolExecution[工具执行]
-ToolExecution --> ResultFormat[结果格式化]
+ToolExecution --> ProgressEmit[进度事件发射]
+ProgressEmit --> ResultFormat[结果格式化]
 end
 RegisterAll --> Echo
 RegisterAll --> Modbus
@@ -727,6 +816,7 @@ RegisterAll --> TestProgress
 - [registry.go:9-14](file://aiapp/mcpserver/internal/tools/registry.go#L9-L14)
 - [echo.go:18-42](file://aiapp/mcpserver/internal/tools/echo.go#L18-L42)
 - [modbus.go:29-69](file://aiapp/mcpserver/internal/tools/modbus.go#L29-L69)
+- [testprogress.go:24-79](file://aiapp/mcpserver/internal/tools/testprogress.go#L24-L79)
 
 **章节来源**
 - [aichat.proto:217-279](file://aiapp/aichat/aichat.proto#L217-L279)
@@ -735,6 +825,300 @@ RegisterAll --> TestProgress
 - [client.go:307-350](file://common/mcpx/client.go#L307-L350)
 - [memory_handler.go:16-146](file://common/mcpx/memory_handler.go#L16-L146)
 - [registry.go:9-14](file://aiapp/mcpserver/internal/tools/registry.go#L9-L14)
+
+## 进度跟踪机制
+
+### 进度发送器系统
+
+**更新** 新增了完整的进度发送器系统，支持工具执行进度的实时广播和可视化展示：
+
+```mermaid
+classDiagram
+class ProgressSender {
+-token string
+-ctx context.Context
+-session *mcp.ServerSession
+-cancel func()
++GetToken() string
++Emit(progress, total, message)
++Start()
++Stop()
+}
+class EventEmitter {
+<<interface>>
++Subscribe(token) chan Event
++Emit(token, event)
++Unsubscribe(token, chan)
+}
+class ProgressEvent {
+-Token string
+-Progress float64
+-Total float64
+-Message string
+-Ctx context.Context
+}
+class ProgressInfo {
+-Token string
+-Progress float64
+-Total float64
+-Message string
++Percent() int
+}
+ProgressSender --> EventEmitter : "使用"
+EventEmitter --> ProgressEvent : "发射"
+ProgressInfo --> ProgressEvent : "转换"
+```
+
+**图表来源**
+- [wrapper.go:33-101](file://common/mcpx/wrapper.go#L33-L101)
+- [wrapper.go:18-28](file://common/mcpx/wrapper.go#L18-L28)
+- [client.go:76-96](file://common/mcpx/client.go#L76-L96)
+
+### 进度事件处理
+
+系统实现了完整的进度事件处理机制，支持工具执行进度的实时跟踪：
+
+```mermaid
+sequenceDiagram
+participant Tool as 工具执行
+participant ProgressSender as 进度发送器
+participant EventEmitter as 事件发射器
+participant MCPClient as MCP客户端
+participant Frontend as 前端界面
+Tool->>ProgressSender : Emit(progress, total, message)
+ProgressSender->>EventEmitter : 发射进度事件
+EventEmitter->>MCPClient : 订阅进度事件
+MCPClient->>Frontend : 推送进度更新
+Frontend->>Frontend : 更新工具卡片状态
+Frontend->>Frontend : 更新进度条显示
+Frontend->>Frontend : 添加消息历史记录
+```
+
+**图表来源**
+- [wrapper.go:47-93](file://common/mcpx/wrapper.go#L47-L93)
+- [chatcompletionstreamlogic.go:212-226](file://aiapp/aichat/internal/logic/chatcompletionstreamlogic.go#L212-L226)
+
+### 进度数据结构
+
+系统提供了完整的进度数据结构支持：
+
+```mermaid
+classDiagram
+class ProgressMessage {
++Progress float64
++Total float64
++Message string
++Time int64
+}
+class AsyncToolResult {
++TaskID string
++Status string
++Result string
++Error string
++Progress float64
++Total float64
++Messages []ProgressMessage
++CreatedAt int64
++UpdatedAt int64
+}
+class ProgressInfo {
++Token string
++Progress float64
++Total float64
++Message string
++Percent() int
+}
+AsyncToolResult --> ProgressMessage : "包含"
+ProgressInfo --> ProgressMessage : "转换"
+```
+
+**图表来源**
+- [async_result.go:5-26](file://common/mcpx/async_result.go#L5-L26)
+- [client.go:76-96](file://common/mcpx/client.go#L76-L96)
+
+**章节来源**
+- [wrapper.go:1-234](file://common/mcpx/wrapper.go#L1-L234)
+- [client.go:1-800](file://common/mcpx/client.go#L1-L800)
+- [async_result.go:1-26](file://common/mcpx/async_result.go#L1-L26)
+
+## 工具调用可视化增强
+
+### 前端工具页面设计
+
+**更新** 新增了完整的前端工具页面，提供直观的工具调用状态展示和进度跟踪功能：
+
+```mermaid
+graph TB
+subgraph "工具页面布局"
+Header[导航头部]
+ServiceStatus[服务状态显示]
+ApiConfig[API配置区域]
+SubmitTask[提交任务区域]
+TaskStatus[任务状态区域]
+MessageHistory[消息历史区域]
+RequestDetail[报文详情区域]
+ResultArea[执行结果区域]
+end
+subgraph "工具卡片系统"
+ToolCards[工具卡片容器]
+ToolCard[单个工具卡片]
+CardHeader[卡片头部]
+CardProgress[进度条显示]
+CardMessage[消息内容]
+CardStatus[状态图标]
+end
+subgraph "进度跟踪系统"
+StepTimeline[步骤时间线]
+LiveIndicator[实时指示器]
+ProgressDisplay[进度显示]
+MessageList[消息列表]
+end
+Header --> ServiceStatus
+ServiceStatus --> ApiConfig
+ApiConfig --> SubmitTask
+SubmitTask --> TaskStatus
+TaskStatus --> ToolCards
+ToolCards --> CardHeader
+ToolCards --> CardProgress
+ToolCards --> CardMessage
+ToolCards --> CardStatus
+TaskStatus --> StepTimeline
+TaskStatus --> LiveIndicator
+TaskStatus --> ProgressDisplay
+MessageHistory --> MessageList
+```
+
+**图表来源**
+- [tool.html:450-591](file://aiapp/aigtw/tool.html#L450-L591)
+- [chat.html:2378-2516](file://aiapp/aigtw/chat.html#L2378-L2516)
+
+### 工具卡片UI组件
+
+系统提供了完整的工具卡片UI组件，支持实时状态展示：
+
+```mermaid
+classDiagram
+class ToolCard {
+-id string
+-name string
+-index number
+-status string
+-progress number
+-message string
+-duration number
+-render() void
+-update() void
+}
+class ToolCardHeader {
+-index number
+-icon HTML
+-name string
+}
+class ToolProgressWrapper {
+-progressBar HTML
+-progressFill HTML
+-progressText HTML
+}
+class ToolCardMessage {
+-message string
+-error boolean
+}
+class StatusIcons {
+-runningIcon HTML
+-successIcon HTML
+-errorIcon HTML
+}
+ToolCard --> ToolCardHeader : "包含"
+ToolCard --> ToolProgressWrapper : "包含"
+ToolCard --> ToolCardMessage : "包含"
+ToolCard --> StatusIcons : "使用"
+```
+
+**图表来源**
+- [chat.html:2378-2516](file://aiapp/aigtw/chat.html#L2378-L2516)
+
+### 步骤时间线系统
+
+**更新** 新增了步骤时间线系统，直观展示异步任务的执行状态：
+
+```mermaid
+stateDiagram-v2
+[*] --> 初始化 : 提交任务
+初始化 --> 执行中 : 开始执行
+执行中 --> 完成 : 执行成功
+执行中 --> 失败 : 执行失败
+完成 --> [*] : 任务结束
+失败 --> [*] : 任务结束
+note right of 初始化 : 显示完成状态
+note right of 执行中 : 显示激活状态
+note right of 完成 : 显示完成状态
+note right of 失败 : 显示错误状态
+```
+
+**图表来源**
+- [tool.html:846-878](file://aiapp/aigtw/tool.html#L846-L878)
+
+### 实时进度更新机制
+
+系统实现了高效的实时进度更新机制：
+
+```mermaid
+sequenceDiagram
+participant MCP as MCP服务
+participant ProgressSender as 进度发送器
+participant Frontend as 前端界面
+participant ToolCards as 工具卡片
+participant ProgressBars as 进度条
+participant MessageList as 消息列表
+MCP->>ProgressSender : Emit(progress, total, message)
+ProgressSender->>Frontend : 事件通知
+Frontend->>ToolCards : 更新工具状态
+Frontend->>ProgressBars : 更新进度条
+Frontend->>MessageList : 添加消息记录
+ToolCards->>ToolCards : 节流更新200ms
+ProgressBars->>ProgressBars : 平滑动画效果
+MessageList->>MessageList : 自动滚动到底部
+```
+
+**图表来源**
+- [chat.html:2392-2409](file://aiapp/aigtw/chat.html#L2392-L2409)
+- [tool.html:922-965](file://aiapp/aigtw/tool.html#L922-L965)
+
+### 报文详情记录
+
+**更新** 新增了完整的报文详情记录功能，支持API调用的详细追踪：
+
+```mermaid
+classDiagram
+class RequestRecord {
+-id string
+-request object
+-response object
+-timestamp number
+-elapsed number
+-expanded boolean
+}
+class RequestList {
+-records array[RequestRecord]
+-maxRecords number
+-addRecord(record) void
+-updateList() void
+-toggleRecord(id) void
+}
+class DetailHeader {
+-count number
+-toggleIcon HTML
+}
+RequestList --> RequestRecord : "管理"
+DetailHeader --> RequestList : "控制"
+```
+
+**图表来源**
+- [tool.html:758-825](file://aiapp/aigtw/tool.html#L758-L825)
+
+**章节来源**
+- [tool.html:1-998](file://aiapp/aigtw/tool.html#L1-L998)
+- [chat.html:2378-2520](file://aiapp/aigtw/chat.html#L2378-L2520)
 
 ## 迁移策略
 
@@ -752,6 +1136,13 @@ RegisterAll --> TestProgress
 - **上下文传播优化**：支持分布式追踪
 - **日志系统优化**：提供更好的可观测性
 - **MCP传输层增强**：支持SSE和Streamable两种传输方式
+- **流式工具调用支持**：新增流式场景下的工具调用处理
+- **上下文大小检查**：智能的上下文token大小检查机制
+- **工具调用缓冲机制**：支持前端工具调用增量的缓冲处理
+- **进度跟踪机制**：实时工具执行进度监控和可视化
+- **工具调用可视化增强**：提供完整的工具调用状态展示界面
+- **步骤时间线系统**：直观展示异步任务执行状态
+- **报文详情记录**：记录和展示API调用的详细信息
 
 ### 迁移步骤
 
@@ -777,6 +1168,17 @@ RegisterAll --> TestProgress
        error TEXT,
        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+   );
+   
+   -- 创建进度存储表
+   CREATE TABLE IF NOT EXISTS progress_messages (
+       id INT AUTO_INCREMENT PRIMARY KEY,
+       task_id VARCHAR(255),
+       progress FLOAT,
+       total FLOAT,
+       message TEXT,
+       time INT,
+       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
    );
    ```
 
@@ -812,6 +1214,7 @@ RegisterAll --> TestProgress
    StreamTimeout: 300s
    StreamIdleTimeout: 120s
    MaxToolRounds: 5
+   MaxContextTokens: 128000
    Mcpx:
      Servers:
        - Name: "mcpserver"
@@ -824,6 +1227,10 @@ RegisterAll --> TestProgress
    Interceptor:
      Enable: true
      LogLevel: info
+   Progress:
+     Enable: true
+     Storage: memory
+     TTL: 3600
    ```
 
 2. **监控和日志配置**
@@ -850,9 +1257,13 @@ RegisterAll --> TestProgress
 | Timeout | 60000 | 60000 | 超时时间(ms) |
 | StreamTimeout | 600s | 300s | 流式超时 |
 | StreamIdleTimeout | 90s | 120s | 空闲超时 |
+| MaxToolRounds | 无 | 5 | 工具调用轮次限制 |
+| MaxContextTokens | 无 | 128000 | 上下文token限制 |
 | Mcpx.Servers | 无 | 新增MCP配置 | 异步工具调用支持 |
 | JWT.Secret | 无 | 新增JWT配置 | 认证支持 |
 | Interceptor.Enable | 无 | 新增拦截器配置 | 请求处理 |
+| Progress.Enable | 无 | 新增进度跟踪配置 | 实时进度监控 |
+| Progress.Storage | 无 | memory | 进度存储方式 |
 
 #### 用户数据迁移
 
@@ -867,6 +1278,12 @@ WHERE created_at > '2024-01-01';
 INSERT INTO async_results (task_id, status, progress, result, created_at, updated_at)
 SELECT task_id, status, progress, result, created_at, updated_at
 FROM old_async_results
+WHERE created_at > '2024-01-01';
+
+-- 进度消息迁移
+INSERT INTO progress_messages (task_id, progress, total, message, time, created_at)
+SELECT task_id, progress, total, message, time, created_at
+FROM old_progress_messages
 WHERE created_at > '2024-01-01';
 ```
 
@@ -917,6 +1334,64 @@ Mcpx:
       ServiceToken: "mcp-internal-service-token-2026"
 ```
 
+### 工具调用缓冲机制
+
+**更新** 新增工具调用缓冲机制，支持流式场景下的工具调用增量处理：
+
+```mermaid
+sequenceDiagram
+participant Stream as 流式连接
+participant ToolBuffer as 工具调用缓冲
+participant MCP as MCP工具服务
+Stream->>ToolBuffer : 接收ToolCallDelta
+ToolBuffer->>ToolBuffer : 按id累积工具调用数据
+ToolBuffer->>ToolBuffer : 累积函数名和参数
+Stream->>ToolBuffer : 接收下一个ToolCallDelta
+ToolBuffer->>ToolBuffer : 继续累积
+ToolBuffer->>MCP : 发送累积完成的工具调用
+MCP-->>ToolBuffer : 返回工具执行结果
+ToolBuffer-->>Stream : 发送工具执行进度
+```
+
+**图表来源**
+- [types.go:94-142](file://aiapp/aichat/internal/provider/types.go#L94-L142)
+- [chatcompletionstreamlogic.go:120-126](file://aiapp/aichat/internal/logic/chatcompletionstreamlogic.go#L120-L126)
+
+### 进度跟踪系统集成
+
+**更新** 新增进度跟踪系统的完整集成：
+
+```mermaid
+sequenceDiagram
+participant Tool as 工具执行
+participant ProgressSender as 进度发送器
+participant EventEmitter as 事件发射器
+participant Frontend as 前端界面
+participant Database as 数据库存储
+Tool->>ProgressSender : Emit(progress, total, message)
+ProgressSender->>EventEmitter : 发射进度事件
+EventEmitter->>Database : 存储进度消息
+EventEmitter->>Frontend : 推送实时更新
+Frontend->>Frontend : 更新工具卡片状态
+Frontend->>Frontend : 更新进度条显示
+Frontend->>Frontend : 添加消息历史记录
+```
+
+**图表来源**
+- [wrapper.go:47-93](file://common/mcpx/wrapper.go#L47-L93)
+- [async_result.go:5-26](file://common/mcpx/async_result.go#L5-L26)
+
+### 丢弃变更处理
+
+**更新** 根据更新原因，系统已完全移除以下变更：
+
+- **完全移除MCP进度跟踪**：不再支持MCP级别的进度跟踪功能
+- **前端消息动作系统**：移除了消息操作按钮和相关交互功能
+- **客户端自动存储管理**：不再自动管理异步结果存储
+- **WaitGroup同步机制**：移除了WaitGroup同步机制，改用ProgressSender
+
+这些变更的移除不影响核心功能，但简化了系统架构并提高了性能。
+
 ## 性能考虑
 
 ### 并发处理
@@ -926,8 +1401,11 @@ Mcpx:
 - **流式响应并发**：每个流式连接独立处理
 - **工具调用并发**：支持多个工具同时执行
 - **异步任务并发**：支持大量异步工具任务并行处理
+- **进度事件并发**：支持多个进度事件的实时广播
 - **内存管理**：使用缓冲区优化大数据传输
 - **连接池优化**：智能连接池管理和复用
+- **工具调用缓冲**：优化工具调用增量的累积处理
+- **进度存储优化**：内存存储支持快速访问
 
 ### 缓存策略
 
@@ -939,6 +1417,9 @@ ModelCache[模型缓存]
 ToolCache[工具缓存]
 AsyncCache[异步结果缓存]
 ContextCache[上下文缓存]
+TokenCache[Token估算缓存]
+ProgressCache[进度缓存]
+ToolCardCache[工具卡片缓存]
 end
 subgraph "缓存策略"
 TTL[TTL过期控制]
@@ -946,12 +1427,18 @@ Eviction[LRU淘汰]
 Prefetch[预加载]
 AsyncTTL[异步缓存管理]
 ContextTTL[上下文缓存管理]
+TokenTTL[Token缓存管理]
+ProgressTTL[进度缓存管理]
+ToolCardTTL[工具卡片缓存管理]
 end
 RequestCache --> TTL
 ModelCache --> Eviction
 ToolCache --> Prefetch
 AsyncCache --> AsyncTTL
 ContextCache --> ContextTTL
+TokenCache --> TokenTTL
+ProgressCache --> ProgressTTL
+ToolCardCache --> ToolCardTTL
 ```
 
 ### 监控指标
@@ -968,6 +1455,11 @@ ContextCache --> ContextTTL
 | MCP连接 | 工具可用性 | <95%可用 |
 | JWT令牌 | 认证成功率 | <90% |
 | 上下文传播 | 追踪完整性 | <95% |
+| Token估算 | 估算准确性 | <90% |
+| 工具调用缓冲 | 缓冲命中率 | <80% |
+| 进度事件 | 事件处理延迟 | >100ms |
+| 工具卡片 | 更新频率 | >50ms |
+| 报文详情 | 记录数量 | >1000条 |
 
 ### 传输层性能优化
 
@@ -977,6 +1469,9 @@ ContextCache --> ContextTTL
 - **进度事件优化**：使用事件发射器高效分发进度通知
 - **超时配置**：可配置连接超时和工具执行超时
 - **重连机制**：自动处理连接中断和重连
+- **工具调用缓冲**：优化工具调用增量的累积处理
+- **进度存储优化**：内存存储支持快速访问进度数据
+- **前端节流优化**：工具卡片更新节流避免频繁DOM操作
 
 ## 故障排除指南
 
@@ -1053,6 +1548,42 @@ ContextCache --> ContextTTL
    curl -N http://localhost:13003/message
    ```
 
+6. **上下文大小检查问题**
+   ```bash
+   # 检查上下文token估算
+   curl http://localhost:13001/ai/v1/models
+   
+   # 验证MaxContextTokens配置
+   cat etc/aichat.yaml | grep MaxContextTokens
+   ```
+
+7. **工具调用缓冲问题**
+   ```bash
+   # 检查工具调用缓冲状态
+   curl http://localhost:13001/ai/v1/models
+   
+   # 验证工具调用配置
+   cat etc/aichat.yaml | grep MaxToolRounds
+   ```
+
+8. **进度跟踪问题**
+   ```bash
+   # 检查进度存储状态
+   curl http://localhost:13001/ai/v1/models
+   
+   # 验证进度配置
+   cat etc/aichat.yaml | grep Progress
+   ```
+
+9. **工具调用可视化问题**
+   ```bash
+   # 检查工具页面状态
+   curl http://localhost:13001/tool.html
+   
+   # 验证前端配置
+   cat etc/aigtw.yaml | grep tool.html
+   ```
+
 ### 错误处理机制
 
 系统提供多层次的错误处理：
@@ -1069,6 +1600,11 @@ CheckType --> |异步错误| AsyncError[异步任务错误]
 CheckType --> |JWT错误| JWTErr[JWT令牌错误]
 CheckType --> |拦截器错误| InterceptorErr[拦截器异常]
 CheckType --> |传输错误| TransportErr[传输层错误]
+CheckType --> |上下文错误| ContextErr[上下文大小错误]
+CheckType --> |工具调用错误| ToolErr[工具调用错误]
+CheckType --> |缓冲错误| BufferErr[缓冲处理错误]
+CheckType --> |进度错误| ProgressErr[进度跟踪错误]
+CheckType --> |可视化错误| VisualErr[工具调用可视化错误]
 AuthError --> ReturnAuth[返回认证错误]
 RateLimit --> ReturnRate[返回限流错误]
 BadRequest --> ReturnBadReq[返回请求错误]
@@ -1078,6 +1614,11 @@ AsyncError --> ReturnAsyncErr[返回异步错误]
 JWTErr --> ReturnJWT[返回JWT错误]
 InterceptorErr --> ReturnInterceptor[返回拦截器错误]
 TransportErr --> ReturnTransport[返回传输错误]
+ContextErr --> ReturnContext[返回上下文错误]
+ToolErr --> ReturnTool[返回工具调用错误]
+BufferErr --> ReturnBuffer[返回缓冲错误]
+ProgressErr --> ReturnProgress[返回进度错误]
+VisualErr --> ReturnVisual[返回可视化错误]
 ```
 
 **图表来源**
@@ -1143,6 +1684,45 @@ TransportErr --> ReturnTransport[返回传输错误]
      ConnectTimeout: 10s
    ```
 
+7. **上下文大小检查优化**
+   ```go
+   // 配置上下文检查参数
+   MaxContextTokens: 128000
+   ContextCheck:
+     SoftThreshold: 0.8
+     HardThreshold: 0.9
+   ```
+
+8. **工具调用缓冲优化**
+   ```go
+   // 配置工具调用缓冲参数
+   ToolBuffer:
+     MaxBufferSize: 1000
+     FlushInterval: 100ms
+     MaxPendingTools: 10
+   ```
+
+9. **进度跟踪优化**
+   ```go
+   // 配置进度跟踪参数
+   Progress:
+     Enable: true
+     Storage: memory
+     TTL: 3600
+     MaxEvents: 10000
+   ```
+
+10. **前端性能优化**
+    ```javascript
+    // 工具卡片更新节流
+    const toolCardScheduled = false;
+    const throttleDelay = 200; // 200ms
+    
+    // 进度事件去重
+    const messageSet = new Set();
+    const maxMessages = 1000;
+    ```
+
 **章节来源**
 - [chatcompletionlogic.go:190-206](file://aiapp/aichat/internal/logic/chatcompletionlogic.go#L190-L206)
 - [chatcompletionstreamlogic.go:123-144](file://aiapp/aichat/internal/logic/chatcompletionstreamlogic.go#L123-L144)
@@ -1151,7 +1731,9 @@ TransportErr --> ReturnTransport[返回传输错误]
 
 本AI聊天服务迁移指南提供了从传统架构向现代化微服务架构的完整转型方案。系统通过合理的架构设计、完善的配置管理、丰富的功能特性和严格的错误处理机制，为企业级AI应用提供了可靠的技术支撑。
 
-**更新** 本次重大更新增强了异步工具调用功能，提供了完整的协议定义文档注释和MCP协议支持，显著提升了系统的可扩展性和实用性。新增的JWT认证现代化、拦截器系统增强、上下文传播优化和日志系统优化等功能，进一步提升了系统的安全性、可维护性和可观测性。
+**更新** 本次重大更新增强了异步工具调用功能，提供了完整的协议定义文档注释、MCP协议支持、全面的可视化增强和进度跟踪机制。显著提升了系统的可扩展性、实用性、可视化程度和用户体验。
+
+**更新** 最新版本新增了流式工具调用支持、MaxContextTokens配置参数、增强的工具调用类型定义、protobuf定义的重大扩展、混合流式处理机制、工具调用缓冲机制、上下文大小检查机制、MCP工具调用可视化增强、进度跟踪机制改进、工具能力扩展等重要功能变更，为系统提供了更强大的实时处理能力、更智能的资源管理机制和更直观的用户界面。
 
 ### 主要优势
 
@@ -1167,18 +1749,34 @@ TransportErr --> ReturnTransport[返回传输错误]
 10. **兼容性强**：完全兼容OpenAI API格式
 11. **传输层灵活**：支持SSE和Streamable两种传输方式
 12. **客户端增强**：Mcpx客户端包提供完整的MCP协议支持
+13. **流式工具调用**：支持流式场景下的工具调用处理
+14. **上下文检查**：智能的上下文token大小检查机制
+15. **工具调用缓冲**：优化工具调用增量的累积处理
+16. **混合流式处理**：LLM token和工具进度在同一流中传输
+17. **进度跟踪系统**：实时工具执行进度监控和可视化
+18. **工具调用可视化**：提供完整的工具调用状态展示界面
+19. **步骤时间线**：直观展示异步任务执行状态
+20. **报文详情记录**：记录和展示API调用的详细信息
+21. **前端交互优化**：工具卡片UI和进度条的平滑动画效果
+22. **实时更新机制**：工具卡片状态的节流更新避免频繁DOM操作
+23. **丢弃变更优化**：移除MCP进度跟踪、前端消息动作系统、客户端自动存储管理、WaitGroup同步机制，简化系统架构
 
 ### 迁移建议
 
 1. **渐进式迁移**：建议采用蓝绿部署或金丝雀发布
-2. **充分测试**：在测试环境中验证所有功能，特别是异步工具调用
-3. **监控到位**：建立完善的监控和告警机制，重点关注异步任务状态
-4. **文档完善**：更新相关技术文档和操作手册，包含异步工具调用指南
-5. **培训到位**：对开发和运维团队进行异步工具调用机制的培训
-6. **安全加固**：确保JWT配置和拦截器系统的正确部署
-7. **性能调优**：根据实际负载调整缓存和连接池配置
-8. **日志优化**：配置合适的日志级别和输出格式
+2. **充分测试**：在测试环境中验证所有功能，特别是异步工具调用、进度跟踪和可视化功能
+3. **监控到位**：建立完善的监控和告警机制，重点关注异步任务状态、进度跟踪和工具调用可视化
+4. **文档完善**：更新相关技术文档和操作手册，包含异步工具调用、进度跟踪和可视化指南
+5. **培训到位**：对开发和运维团队进行异步工具调用机制、进度跟踪和可视化功能的培训
+6. **安全加固**：确保JWT配置、拦截器系统和进度跟踪的安全部署
+7. **性能调优**：根据实际负载调整缓存、连接池、进度跟踪和前端性能配置
+8. **日志优化**：配置合适的日志级别和输出格式，特别是进度事件的日志记录
 9. **传输层选择**：根据实际需求选择合适的MCP传输方式
 10. **客户端升级**：及时更新Mcpx客户端包以获得最新功能和修复
+11. **工具调用缓冲**：根据实际使用情况调整工具调用缓冲参数
+12. **上下文检查**：合理配置MaxContextTokens参数以平衡性能和稳定性
+13. **进度存储优化**：根据实际负载调整进度存储配置和TTL设置
+14. **前端性能优化**：利用工具卡片节流机制和进度条动画提升用户体验
+15. **丢弃变更适应**：确保团队理解并适应移除的MCP进度跟踪、前端消息动作系统、客户端自动存储管理和WaitGroup同步机制，采用新的ProgressSender和工具卡片UI替代
 
-通过遵循本指南的迁移策略和最佳实践，可以确保AI聊天服务系统的平稳过渡和稳定运行，充分利用新增的异步工具调用功能和现代化特性提升用户体验和系统性能。
+通过遵循本指南的迁移策略和最佳实践，可以确保AI聊天服务系统的平稳过渡和稳定运行，充分利用新增的流式工具调用功能、进度跟踪机制、可视化增强和现代化特性提升用户体验和系统性能。

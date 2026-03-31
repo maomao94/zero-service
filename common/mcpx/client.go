@@ -44,10 +44,41 @@ type Client struct {
 
 	metrics *stat.Metrics
 
+	// 配置选项（使用 SDK 类型）
 	options *mcp.ClientOptions
 
 	// 进度事件发射器，按 token 分发进度
 	progressEmitter *antsx.EventEmitter[ProgressInfo]
+
+	// Reactor goroutine 池，用于异步工具调用
+	reactor *antsx.Reactor
+
+	// 异步结果存储
+	asyncResultStore AsyncResultStore
+}
+
+// ClientOption Client 配置选项
+type ClientOption func(*Client)
+
+// WithAsyncResultStore 设置异步结果存储
+func WithAsyncResultStore(store AsyncResultStore) ClientOption {
+	return func(c *Client) {
+		c.asyncResultStore = store
+	}
+}
+
+// WithReactor 设置 goroutine 池
+func WithReactor(reactor *antsx.Reactor) ClientOption {
+	return func(c *Client) {
+		c.reactor = reactor
+	}
+}
+
+// WithOptions 设置完整配置选项（使用 SDK 的 *mcp.ClientOptions）
+func WithOptions(opts *mcp.ClientOptions) ClientOption {
+	return func(c *Client) {
+		c.options = opts
+	}
 }
 
 // Connection 单个 MCP 服务连接
@@ -81,6 +112,20 @@ type ProgressInfo struct {
 	Message  string  // 进度消息
 }
 
+// Percent 计算进度百分比，返回 0-100 的整数
+func (p *ProgressInfo) Percent() int {
+	// total > 1 表示真正的进度值，计算百分比
+	if p.Total > 1 {
+		return int(p.Progress / p.Total * 100)
+	}
+	// progress 本身就是百分比
+	if p.Progress > 0 && p.Progress <= 100 {
+		return int(p.Progress)
+	}
+	// 不合理情况，默认 100
+	return 100
+}
+
 // ProgressCallback 进度回调函数
 type ProgressCallback func(info *ProgressInfo)
 
@@ -93,14 +138,8 @@ type CallToolWithProgressRequest struct {
 }
 
 // NewClient 创建 MCP 客户端
-// opts 参数可选，为 nil 时使用默认配置
-// 支持配置所有 MCP handlers（CreateMessageHandler、ElicitationHandler 等）
-func NewClient(cfg Config, opts ...*mcp.ClientOptions) *Client {
-	var clientOpts *mcp.ClientOptions
-	if len(opts) > 0 {
-		clientOpts = opts[0]
-	}
-
+// 使用 ClientOption 配置选项（如 WithAsyncResultStore、WithReactor）
+func NewClient(cfg Config, opts ...ClientOption) *Client {
 	if cfg.RefreshInterval <= 0 {
 		cfg.RefreshInterval = DefaultRefreshInterval
 	}
@@ -110,16 +149,23 @@ func NewClient(cfg Config, opts ...*mcp.ClientOptions) *Client {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	c := &Client{
-		config:          cfg,
-		connections:     make(map[string]*Connection),
-		toolRoutes:      make(map[string]*Connection),
-		promptRoutes:    make(map[string]*Connection),
-		resourceRoutes:  make(map[string]*Connection),
-		metrics:         stat.NewMetrics("mcpx"),
-		ctx:             ctx,
-		cancel:          cancel,
-		options:         clientOpts,
-		progressEmitter: antsx.NewEventEmitter[ProgressInfo](),
+		config:           cfg,
+		connections:      make(map[string]*Connection),
+		toolRoutes:       make(map[string]*Connection),
+		promptRoutes:     make(map[string]*Connection),
+		resourceRoutes:   make(map[string]*Connection),
+		metrics:          stat.NewMetrics("mcpx"),
+		ctx:              ctx,
+		cancel:           cancel,
+		options:          &mcp.ClientOptions{},
+		progressEmitter:  antsx.NewEventEmitter[ProgressInfo](),
+		asyncResultStore: NewEmptyAsyncResultStore(),
+	}
+	c.reactor, _ = antsx.NewReactor(1000)
+
+	// 应用 Option 配置
+	for _, opt := range opts {
+		opt(c)
 	}
 
 	names := make(map[string]bool)
@@ -242,8 +288,7 @@ func (c *Client) buildClientOptions() *mcp.ClientOptions {
 		}
 	}
 
-	// 进度通知处理器（内部实现，不允许覆盖）
-	// 通过 emitter 分发进度，调用方通过订阅 token topic 来接收进度
+	// 进度通知处理器（内部实现）
 	opts.ProgressNotificationHandler = func(ctx context.Context, req *mcp.ProgressNotificationClientRequest) {
 		token := fmt.Sprintf("%v", req.Params.ProgressToken)
 		c.progressEmitter.Emit(token, ProgressInfo{
@@ -333,6 +378,8 @@ func (c *Client) CallToolWithProgress(ctx context.Context, req *CallToolWithProg
 		c.metrics.AddDrop()
 		return "", fmt.Errorf("[mcpx] tool %q not found", req.Name)
 	}
+
+	logx.Infof("[mcpx] CallToolWithProgress: name=%s, token=%s, hasCallback=%v", req.Name, req.Token, req.OnProgress != nil)
 
 	result, err := conn.callToolWithProgress(ctx, req)
 	if err != nil {
@@ -787,9 +834,12 @@ func (conn *Connection) callToolWithProgress(ctx context.Context, req *CallToolW
 		// 设置 ProgressToken
 		params.SetProgressToken(token)
 		threading.GoSafe(func() {
+			logx.Infof("[mcpx] progress listener started: token=%s", token)
 			for info := range progressCh {
+				logx.Infof("[mcpx] progress received: token=%s, progress=%.0f/%.0f, msg=%s", token, info.Progress, info.Total, info.Message)
 				req.OnProgress(&info)
 			}
+			logx.Infof("[mcpx] progress listener stopped: token=%s", token)
 		})
 	}
 	result, err := session.CallTool(ctx, params)
@@ -913,6 +963,17 @@ func ParseArgs(argsJSON string) map[string]any {
 func (c *Client) CallToolAsync(ctx context.Context, req *CallToolAsyncRequest) (string, error) {
 	taskID, _ := tool.SimpleUUID()
 
+	if c.asyncResultStore != nil {
+		c.asyncResultStore.Save(ctx, &AsyncToolResult{
+			TaskID:    taskID,
+			Status:    "pending",
+			Progress:  0,
+			Total:     100,
+			CreatedAt: time.Now().Unix(),
+			UpdatedAt: time.Now().Unix(),
+		})
+	}
+
 	// 创建独立 context，继承原 ctx 的值（ctxprop、OTel trace 等）
 	// 但不继承 cancel，请求结束后原 ctx 会被 cancel，这里创建的不受影响
 	asyncCtx := context.WithoutCancel(ctx)
@@ -925,12 +986,34 @@ func (c *Client) CallToolAsync(ctx context.Context, req *CallToolAsyncRequest) (
 			Name:  req.Name,
 			Args:  req.Args,
 			OnProgress: func(info *ProgressInfo) {
+				// 1. 保存进度到 store（幂等，先创建任务）
+				if c.asyncResultStore != nil {
+					if !c.asyncResultStore.Exists(asyncCtx, taskID) {
+						total := 100.0
+						if info.Total > 1 {
+							total = info.Total
+						}
+						c.asyncResultStore.Save(asyncCtx, &AsyncToolResult{
+							TaskID:    taskID,
+							Status:    "pending",
+							Progress:  0,
+							Total:     total,
+							CreatedAt: time.Now().Unix(),
+							UpdatedAt: time.Now().Unix(),
+						})
+					}
+					progress := 0.0
+					if info.Total > 0 {
+						progress = info.Progress / info.Total * 100
+					}
+					c.asyncResultStore.UpdateProgress(asyncCtx, taskID, progress, 100, info.Message)
+				}
+				// 2. 通知业务方
 				if req.TaskObserver != nil {
 					progress := 0.0
 					total := 100.0
 					if info.Total > 0 {
 						progress = info.Progress / info.Total * 100
-						total = 100.0
 					}
 					req.TaskObserver.OnProgress(taskID, progress, total, info.Message)
 				}
@@ -940,12 +1023,13 @@ func (c *Client) CallToolAsync(ctx context.Context, req *CallToolAsyncRequest) (
 		// 构建最终结果
 		finalResult := &AsyncToolResult{
 			TaskID:    taskID,
+			Status:    "pending",
+			Progress:  0,
 			CreatedAt: time.Now().Unix(),
 			UpdatedAt: time.Now().Unix(),
 		}
 
-		// MCP 最终消息，用于通知
-		finalMessage := ""
+		var finalMessage string
 		if callErr != nil {
 			finalResult.Status = "failed"
 			finalResult.Error = callErr.Error()
@@ -955,16 +1039,142 @@ func (c *Client) CallToolAsync(ctx context.Context, req *CallToolAsyncRequest) (
 			finalResult.Status = "completed"
 			finalResult.Result = res
 			finalResult.Progress = 100
-			finalMessage = "completed"
+			finalMessage = "异步任务完成"
 		}
 
-		// 调用 OnComplete 保存最终结果，传入 MCP 最终消息
+		// 获取已有消息历史并追加完成消息
+		if c.asyncResultStore != nil {
+			if existing, err := c.asyncResultStore.Get(asyncCtx, taskID); err == nil && existing != nil {
+				finalResult.Messages = existing.Messages
+			}
+			finalResult.Messages = append(finalResult.Messages, ProgressMessage{
+				Progress: 100,
+				Total:    100,
+				Message:  finalMessage,
+				Time:     time.Now().Unix(),
+			})
+			c.asyncResultStore.Save(asyncCtx, finalResult)
+		}
+
+		// 回调通知
 		if req.TaskObserver != nil {
 			req.TaskObserver.OnComplete(taskID, finalMessage, finalResult)
 		}
 	})
 
 	return taskID, nil
+}
+
+// CallToolAsyncAwait 异步调用工具，返回 Promise 可同步等待
+// - 任务提交到 Reactor 池执行（goroutine 复用）
+// - 进度通过 TaskObserver 推送
+// - 结果通过 Promise 返回，同时自动保存到 asyncResultStore
+// 返回 (taskID, Promise, error)
+func (c *Client) CallToolAsyncAwait(ctx context.Context, req *CallToolAsyncRequest) (string, *antsx.Promise[string], error) {
+	taskID, _ := tool.SimpleUUID()
+
+	if c.asyncResultStore != nil {
+		c.asyncResultStore.Save(ctx, &AsyncToolResult{
+			TaskID:    taskID,
+			Status:    "pending",
+			Progress:  0,
+			Total:     100,
+			CreatedAt: time.Now().Unix(),
+			UpdatedAt: time.Now().Unix(),
+		})
+	}
+
+	// 创建 Promise
+	promise := antsx.NewPromise[string](taskID)
+
+	// 保存原始 observer
+	origObserver := req.TaskObserver
+
+	// 提交到 Reactor 池执行
+	_, err := antsx.Submit(ctx, c.reactor, taskID, func(ctx context.Context) (string, error) {
+		// 调用同步方法（带进度回调）
+		result, callErr := c.CallToolWithProgress(ctx, &CallToolWithProgressRequest{
+			Token: taskID,
+			Name:  req.Name,
+			Args:  req.Args,
+			OnProgress: func(info *ProgressInfo) {
+				// 1. 保存进度到 store（幂等，先创建任务）
+				if c.asyncResultStore != nil {
+					if !c.asyncResultStore.Exists(ctx, taskID) {
+						total := 100.0
+						if info.Total > 1 {
+							total = info.Total
+						}
+						c.asyncResultStore.Save(ctx, &AsyncToolResult{
+							TaskID:    taskID,
+							Status:    "pending",
+							Progress:  0,
+							Total:     total,
+							CreatedAt: time.Now().Unix(),
+							UpdatedAt: time.Now().Unix(),
+						})
+					}
+					c.asyncResultStore.UpdateProgress(ctx, taskID, float64(info.Percent()), 100, info.Message)
+				}
+				// 2. 通知业务方
+				if origObserver != nil {
+					origObserver.OnProgress(taskID, float64(info.Percent()), 100, info.Message)
+				}
+			},
+		})
+
+		// 构建结果
+		finalResult := &AsyncToolResult{
+			TaskID:    taskID,
+			Status:    "pending",
+			Progress:  0,
+			CreatedAt: time.Now().Unix(),
+			UpdatedAt: time.Now().Unix(),
+		}
+
+		var finalMessage string
+		if callErr != nil {
+			finalResult.Status = "failed"
+			finalResult.Error = callErr.Error()
+			finalResult.Progress = 0
+			finalMessage = callErr.Error()
+		} else {
+			finalResult.Status = "completed"
+			finalResult.Result = result
+			finalResult.Progress = 100
+			finalMessage = "异步任务完成"
+		}
+
+		// 获取已有消息历史并追加完成消息
+		if c.asyncResultStore != nil {
+			if existing, err := c.asyncResultStore.Get(ctx, taskID); err == nil && existing != nil {
+				finalResult.Messages = existing.Messages
+			}
+			finalResult.Messages = append(finalResult.Messages, ProgressMessage{
+				Progress: 100,
+				Total:    100,
+				Message:  finalMessage,
+				Time:     time.Now().Unix(),
+			})
+			c.asyncResultStore.Save(ctx, finalResult)
+		}
+
+		// 回调通知
+		if origObserver != nil {
+			origObserver.OnComplete(taskID, finalMessage, finalResult)
+		}
+
+		// resolve Promise
+		if callErr != nil {
+			promise.Reject(callErr)
+		} else {
+			promise.Resolve(result)
+		}
+
+		return result, callErr
+	})
+
+	return taskID, promise, err
 }
 
 // stripServerPrefix 从名称中移除服务器前缀（serverName__）

@@ -35,9 +35,9 @@ func (l *AsyncToolResultLogic) AsyncToolResult(in *aichat.AsyncToolResultReq) (*
 	}
 
 	// 转换 messages
-	messages := make([]*aichat.ProgressMessage, len(result.Messages))
+	messages := make([]*aichat.ProgressMessagePb, len(result.Messages))
 	for i, msg := range result.Messages {
-		messages[i] = &aichat.ProgressMessage{
+		messages[i] = &aichat.ProgressMessagePb{
 			Progress: msg.Progress,
 			Total:    msg.Total,
 			Message:  msg.Message,

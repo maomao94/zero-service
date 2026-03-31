@@ -2,4 +2,4 @@
 
 echo "开始生成"
 goctl api format --dir=./
-goctl api go --api=./aigtw.api --dir=./
+goctl api go --api=./doc/aigtw.api --dir=./

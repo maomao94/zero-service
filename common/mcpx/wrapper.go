@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"zero-service/common/antsx"
 	"zero-service/common/ctxdata"
@@ -30,30 +31,101 @@ type progressEvent struct {
 // ctxProgressSenderKey context key for progress sender
 type ctxProgressSenderKey struct{}
 
-// ProgressSender 进度发送器，具备发布和订阅能力
-// Emit - 发布进度到 emitter
-// Start - 订阅并转发到 Client，返回 cancel 函数
+// ProgressSender 进度发送器，类似 Promise
+// Emit - 发送中间进度
+// Resolve - 成功完成
+// Reject - 失败（保留当前进度）
+// Stop - 清理资源
 type ProgressSender struct {
-	token   string
-	ctx     context.Context
-	session *mcp.ServerSession
-	cancel  func()
+	token    string
+	ctx      context.Context
+	session  *mcp.ServerSession
+	cancel   func()
+	wg       sync.WaitGroup // 等待 goroutine 处理完所有消息
+	done     bool           // 是否已调用 Resolve/Reject
+	progress float64        // 当前进度
+	mu       sync.Mutex
 }
 
 func (p *ProgressSender) GetToken() string {
 	return p.token
 }
 
-// Emit 发送进度到 emitter，携带 ctx 以传递链路信息
-func (p *ProgressSender) Emit(progress, total float64, message string) {
-	logx.WithContext(p.ctx).Debugf("[mcpx] progress emit: token=%s, progress=%.0f/%.0f, msg=%s", p.token, progress, total, message)
+// Emit 发送进度（progress 会累加，total 固定为 100）
+// progress: 本次要累加的进度值，最终会累加显示
+func (p *ProgressSender) Emit(progress float64, message string) {
+	p.mu.Lock()
+	if p.done {
+		p.mu.Unlock()
+		return
+	}
+	// 累加进度
+	p.progress += progress
+	if p.progress > 100 {
+		p.progress = 100
+	}
+	currentProgress := p.progress
+	p.mu.Unlock()
+
+	logx.WithContext(p.ctx).Debugf("[mcpx] progress emit: token=%s, progress=%.0f, msg=%s", p.token, currentProgress, message)
 	progressEmitter.Emit(p.token, progressEvent{
 		Token:    p.token,
-		Progress: progress,
-		Total:    total,
+		Progress: currentProgress,
+		Total:    100,
 		Message:  message,
 		Ctx:      p.ctx,
 	})
+}
+
+// Resolve 发送成功完成通知
+func (p *ProgressSender) Resolve(message string) {
+	p.mu.Lock()
+	if p.done {
+		p.mu.Unlock()
+		return
+	}
+	p.done = true
+	p.mu.Unlock()
+
+	logx.WithContext(p.ctx).Debugf("[mcpx] progress resolve: token=%s, msg=%s", p.token, message)
+	progressEmitter.Emit(p.token, progressEvent{
+		Token:    p.token,
+		Progress: 100,
+		Total:    100,
+		Message:  message,
+		Ctx:      p.ctx,
+	})
+}
+
+// Reject 发送失败通知（保留当前进度）
+func (p *ProgressSender) Reject(message string) {
+	p.mu.Lock()
+	if p.done {
+		p.mu.Unlock()
+		return
+	}
+	p.done = true
+	currentProgress := p.progress
+	p.mu.Unlock()
+
+	logx.WithContext(p.ctx).Debugf("[mcpx] progress reject: token=%s, progress=%.0f, msg=%s", p.token, currentProgress, message)
+	progressEmitter.Emit(p.token, progressEvent{
+		Token:    p.token,
+		Progress: currentProgress,
+		Total:    100,
+		Message:  message,
+		Ctx:      p.ctx,
+	})
+}
+
+// Stop 清理资源，关闭订阅
+func (p *ProgressSender) Stop() {
+	logx.WithContext(p.ctx).Debugf("[mcpx] progress stop: token=%s", p.token)
+	if p.cancel != nil {
+		p.cancel()
+	}
+	p.wg.Wait()
+	logx.WithContext(p.ctx).Debugf("[mcpx] progress stop done: token=%s", p.token)
 }
 
 // Start 订阅进度事件并转发到 MCP Client
@@ -61,9 +133,11 @@ func (p *ProgressSender) Start() {
 	logx.WithContext(p.ctx).Infof("[mcpx] progress start: token=%s", p.token)
 	ch, unsub := progressEmitter.Subscribe(p.token)
 	p.cancel = unsub
+	p.wg.Add(1)
 	threading.GoSafe(func() {
 		start := timex.Now()
-		defer logx.WithContext(p.ctx).WithDuration(timex.Since(start)).Infof("[mcpx] progress stopped chan: token=%s", p.token)
+		defer p.wg.Done()
+		defer logx.WithContext(p.ctx).WithDuration(timex.Since(start)).Infof("[mcpx] progress goroutine exit: token=%s", p.token)
 		for event := range ch {
 			notifyErr := p.session.NotifyProgress(event.Ctx, &mcp.ProgressNotificationParams{
 				ProgressToken: event.Token,
@@ -76,14 +150,6 @@ func (p *ProgressSender) Start() {
 			}
 		}
 	})
-}
-
-// Stop 停止订阅
-func (p *ProgressSender) Stop() {
-	if p.cancel != nil {
-		logx.WithContext(p.ctx).Debugf("[mcpx] progress stop: token=%s", p.token)
-		p.cancel()
-	}
 }
 
 // GetProgressSender 从 context 获取进度发送器
@@ -183,7 +249,7 @@ func CallToolWrapper[In, Out any](
 		}
 
 		// 将进度发送器存入 ctx，供业务层使用
-		// 业务层通过 GetProgressSender(ctx) 获取，调用 Emit 发送进度
+		// 业务层通过 GetProgressSender(ctx) 获取，调用 Resolve/Reject
 		var progressSender *ProgressSender
 		if req.Session != nil {
 			if token := req.Params.GetProgressToken(); token != nil {
@@ -200,8 +266,13 @@ func CallToolWrapper[In, Out any](
 
 		result, out, err = h(ctx, req, args)
 
-		// 工具执行完毕后停止进度订阅
+		// 停止订阅，发送完成/失败通知并释放资源
 		if progressSender != nil {
+			if err != nil {
+				progressSender.Reject("工具调用失败: " + err.Error())
+			} else {
+				progressSender.Resolve("工具调用完成")
+			}
 			progressSender.Stop()
 		}
 

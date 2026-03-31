@@ -1,0 +1,55 @@
+syntax = "v1"
+
+type (
+	// 异步工具调用请求
+	AsyncToolCallRequest {
+		Server string                 `json:"server"` // MCP 服务器名称
+		Tool   string                 `json:"tool"` // MCP 工具名称
+		Args   map[string]interface{} `json:"args"` // 工具参数
+	}
+	// 异步工具调用响应
+	AsyncToolCallResponse {
+		TaskID string `json:"task_id"` // 任务唯一标识符
+		Status string `json:"status"` // 任务初始状态，固定为 "pending"
+	}
+	// 查询异步结果请求
+	AsyncToolResultRequest {
+		TaskID string `path:"task_id"`
+	}
+	// 异步工具结果响应
+	AsyncToolResultResponse {
+		TaskID   string            `json:"task_id"` // 任务标识符
+		Status   string            `json:"status"` // 状态: pending / running / completed / failed
+		Progress float64           `json:"progress"` // 执行进度 0.0~100.0
+		Result   string            `json:"result,omitempty"` // 成功结果
+		Error    string            `json:"error,omitempty"` // 失败错误
+		Messages []ProgressMessage `json:"messages,omitempty"` // 进度消息历史
+	}
+	// 列表查询请求
+	ListAsyncResultsRequest {
+		Status    string `form:"status,optional"` // 过滤状态
+		StartTime int64  `form:"start_time,optional"` // 开始时间戳（毫秒）
+		EndTime   int64  `form:"end_time,optional"` // 结束时间戳（毫秒）
+		Page      int    `form:"page,optional"` // 页码
+		PageSize  int    `form:"page_size,optional"` // 每页数量
+		SortField string `form:"sort_field,optional"` // 排序字段
+		SortOrder string `form:"sort_order,optional"` // 排序方向
+	}
+	// 列表查询响应
+	ListAsyncResultsResponse {
+		Items      []AsyncToolResultResponse `json:"items"` // 任务列表
+		Total      int64                     `json:"total"` // 总数
+		Page       int                       `json:"page"` // 当前页
+		PageSize   int                       `json:"page_size"` // 每页数量
+		TotalPages int                       `json:"total_pages"` // 总页数
+	}
+	// 统计信息响应
+	AsyncResultStatsResponse {
+		Total       int64   `json:"total"` // 任务总数
+		Pending     int64   `json:"pending"` // 待处理任务数
+		Completed   int64   `json:"completed"` // 已完成任务数
+		Failed      int64   `json:"failed"` // 失败任务数
+		SuccessRate float64 `json:"success_rate"` // 成功率
+	}
+)
+

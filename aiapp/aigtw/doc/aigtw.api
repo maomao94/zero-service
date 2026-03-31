@@ -1,0 +1,78 @@
+syntax = "v1"
+
+// ============================================================
+// 导入
+// ============================================================
+import (
+	"base.api"
+	"types/openai.api"
+	"types/tool.api"
+)
+
+// ============================================================
+// 服务信息
+// ============================================================
+info (
+	title:   "AI网关服务"
+	desc:    "OpenAI 兼容 AI 网关，提供对话补全、模型列表、异步工具调用等功能"
+	author:  "hehanpeng"
+	email:   "hehanpengyy@163.com"
+	version: "v1"
+)
+
+// ============================================================
+// 模型列表接口
+// ============================================================
+@server (
+	prefix: ai/v1
+	group:  pass
+	jwt:    JwtAuth
+)
+service aigtw {
+	@doc "列出所有可用模型"
+	@handler listModels
+	get /models returns (ListModelsResponse)
+}
+
+// ============================================================
+// 对话补全接口
+// ============================================================
+@server (
+	prefix:  ai/v1
+	group:   pass
+	jwt:     JwtAuth
+	timeout: 0s
+	sse:     true
+)
+service aigtw {
+	@doc "对话补全"
+	@handler chatCompletions
+	post /chat/completions (ChatCompletionRequest) returns (ChatCompletionResponse)
+}
+
+// ============================================================
+// 异步工具调用接口
+// ============================================================
+@server (
+	prefix: ai/v1
+	group:  pass
+	jwt:    JwtAuth
+)
+service aigtw {
+	@doc "异步调用 MCP 工具，提交任务后立即返回 task_id"
+	@handler asyncToolCall
+	post /async/tool/call (AsyncToolCallRequest) returns (AsyncToolCallResponse)
+
+	@doc "查询异步工具调用的执行状态和结果"
+	@handler asyncToolResult
+	get /async/tool/result/:task_id (AsyncToolResultRequest) returns (AsyncToolResultResponse)
+
+	@doc "分页查询异步结果列表"
+	@handler listAsyncResults
+	get /async/tool/results (ListAsyncResultsRequest) returns (ListAsyncResultsResponse)
+
+	@doc "获取异步结果统计信息"
+	@handler asyncResultStats
+	get /async/tool/stats returns (AsyncResultStatsResponse)
+}
+

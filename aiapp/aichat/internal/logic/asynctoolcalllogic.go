@@ -30,12 +30,6 @@ func (l *AsyncToolCallLogic) AsyncToolCall(in *aichat.AsyncToolCallReq) (*aichat
 		return nil, ErrMcpClientNotConfigured
 	}
 
-	// 获取 AsyncResultStore
-	store := l.svcCtx.AsyncResultStore
-	if store == nil {
-		return nil, ErrAsyncResultHandlerNotConfigured
-	}
-
 	// 解析 JSON 参数
 	args := make(map[string]any)
 	if in.Args != "" {
@@ -48,14 +42,13 @@ func (l *AsyncToolCallLogic) AsyncToolCall(in *aichat.AsyncToolCallReq) (*aichat
 	// 构建工具名称（带服务器前缀）
 	toolName := in.Server + mcpx.ToolNameSeparator + in.Tool
 
-	// 创建任务观察者（存储 + 外部通知回调）
-	taskObserver := mcpx.NewDefaultTaskObserver(store, nil)
+	// 创建任务观察者（用于进度回调，存储由 Client 内部管理）
+	taskObserver := mcpx.NewDefaultTaskObserver(nil)
 
 	// 调用异步方法
 	taskID, err := mcpClient.CallToolAsync(l.ctx, &mcpx.CallToolAsyncRequest{
 		Name:         toolName,
 		Args:         args,
-		ResultStore:  store,
 		TaskObserver: taskObserver,
 	})
 	if err != nil {

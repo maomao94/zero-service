@@ -31,6 +31,9 @@ func RegisterEcho(server *sdkmcp.Server) {
 			prefix = args.Prefix
 		}
 
+		// 注意：同步工具不需要手动发送进度
+		// wrapper 会自动发送开始(0%)和结束(100%)进度
+
 		return &sdkmcp.CallToolResult{
 			Content: []sdkmcp.Content{
 				&sdkmcp.TextContent{Text: prefix + args.Message + ", 用户名: " + username},

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"sync"
 	"time"
 
 	"zero-service/common/mcpx"
@@ -42,26 +43,36 @@ func RegisterTestProgress(server *sdkmcp.Server) {
 
 		logx.WithContext(ctx).Infof("[test_progress] 开始测试, steps=%d, interval=%dms", steps, interval)
 
-		threading.RunSafe(func() {
+		// 等待组，确保异步任务完成后才返回
+		var wg sync.WaitGroup
+		wg.Add(1)
+
+		threading.GoSafe(func() {
+			defer wg.Done()
+			// 计算每步的增量
+			increment := float64(100 / steps)
+
 			for i := 1; i <= steps; i++ {
-				progress := float64(i)
-				total := float64(steps)
 				msg := args.Message
 				if msg == "" {
 					msg = "处理中...当前 step: " + strconv.Itoa(i)
 				}
 
-				// 发送进度通知
+				// 发送进度通知（每次累加 increment）
 				if sender != nil {
-					sender.Emit(progress, total, msg)
+					sender.Emit(increment, msg)
 				} else {
-					logx.WithContext(ctx).Debugf("[test_progress] 进度: %.0f/%.0f - %s", progress, total, msg)
+					logx.WithContext(ctx).Debugf("[test_progress] 进度: step %d/%d", i, steps)
 				}
 
 				// 模拟耗时操作
 				time.Sleep(time.Duration(interval) * time.Millisecond)
 			}
 		})
+
+		// 等待异步任务完成
+		wg.Wait()
+
 		result := "测试进度执行中,共 %d 步,token:%s"
 		sendToken := ""
 		if sender != nil {

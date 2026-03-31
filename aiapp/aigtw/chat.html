@@ -522,6 +522,45 @@
             margin-top: 10px;
         }
 
+        /* Message Actions */
+        .message-actions {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .message:hover .message-actions {
+            opacity: 1;
+        }
+        .message-actions.show {
+            opacity: 1;
+        }
+        .msg-action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .msg-action-btn:hover {
+            background: var(--surface-hover);
+            color: var(--text-primary);
+        }
+        .msg-action-btn.copied {
+            color: var(--assistant-accent);
+        }
+        .msg-action-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
         /* Streaming cursor */
         .streaming-cursor {
             display: inline-block;
@@ -538,6 +577,223 @@
             51%, 100% { opacity: 0; }
         }
 
+        /* Tool Call Cards - Modern Style */
+        .tool-call-container {
+            margin: 16px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .tool-call-card {
+            border: 1px solid var(--border-light);
+            border-radius: 14px;
+            padding: 16px;
+            background: var(--surface);
+            max-width: 520px;
+            transition: all 0.3s ease;
+            animation: slideInFromTop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .tool-card-running {
+            border-color: var(--accent);
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.03), rgba(108, 92, 231, 0.08));
+        }
+
+        .tool-card-success {
+            border-color: var(--assistant-accent);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.02), rgba(16, 185, 129, 0.05));
+        }
+
+        .tool-card-error {
+            border-color: var(--danger);
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.02), rgba(239, 68, 68, 0.05));
+        }
+
+        @keyframes slideInFromTop {
+            from { opacity: 0; transform: translateY(-12px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .tool-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .tool-card-index {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--surface-hover);
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Tool Icon with Animations */
+        .tool-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .tool-icon-running {
+            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.35);
+        }
+
+        .tool-icon-success {
+            background: linear-gradient(135deg, var(--assistant-accent), #34d399);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+            animation: successPopIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .tool-icon-error {
+            background: linear-gradient(135deg, var(--danger), #f87171);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+            animation: errorShake 0.5s ease;
+        }
+
+        .tool-icon svg {
+            width: 18px;
+            height: 18px;
+            color: white;
+        }
+
+        /* Spinner Animation */
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2.5px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes successPopIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes errorShake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-3px); }
+            40%, 80% { transform: translateX(3px); }
+        }
+
+        .tool-card-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .tool-card-name {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text-primary);
+        }
+
+        .tool-card-status {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* Progress Bar */
+        .tool-progress-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .tool-progress-bar {
+            flex: 1;
+            height: 6px;
+            background: var(--surface-hover);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .tool-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+            border-radius: 3px;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .tool-progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .tool-progress-text {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent);
+            min-width: 38px;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Tool Card Message */
+        .tool-card-message {
+            margin-top: 12px;
+            padding: 10px 12px;
+            background: var(--surface-hover);
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            word-break: break-word;
+        }
+
+        /* 错误消息样式 */
+        .tool-card-error-msg {
+            background: var(--danger-bg);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            font-weight: 500;
+        }
+
+        /* Error 标签样式 */
+        .tool-card-status .error-tag {
+            display: inline-block;
+            background: var(--danger);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+
         /* Tool Error Display */
         .tool-error-container {
             position: fixed;
@@ -547,14 +803,12 @@
             max-width: 400px;
         }
         .tool-error {
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
+            position: relative;
             padding: 12px 16px;
             background: var(--surface-elevated, #fff);
-            border: 1px solid var(--danger, #dc3545);
+            border: 2px solid var(--danger, #dc3545);
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.25);
             font-size: 14px;
             color: var(--text-primary, #333);
             animation: slideIn 0.3s ease;
@@ -563,9 +817,28 @@
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
+        .tool-error-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .tool-error-tag {
+            display: inline-block;
+            background: var(--danger, #dc3545);
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
         .tool-error-icon {
             color: var(--danger, #dc3545);
             font-size: 16px;
+        }
+        .tool-error-content {
+            line-height: 1.4;
         }
         .tool-error-name {
             font-weight: 600;
@@ -573,6 +846,21 @@
         }
         .tool-error-msg {
             color: var(--text-secondary, #666);
+        }
+        .tool-error-close {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: none;
+            border: none;
+            color: var(--text-tertiary, #999);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+        .tool-error-close:hover {
+            color: var(--danger, #dc3545);
         }
 
         /* Markdown Styles */
@@ -1392,6 +1680,9 @@ let thinkingStartTime = null;
 let thinkingElapsedTimer = null;
 let thinkingDuration = 0;
 
+// Tool call cards state - 使用 tool_id 作为 key，支持结构化事件
+let toolCards = {};  // { toolId: { id, name, index, status, progress, message, duration } }
+
 /* ============================================
    INIT
    ============================================ */
@@ -1742,6 +2033,33 @@ function addMessage(role, content, meta) {
 
     const rendered = isUser ? escapeHtml(content).replace(/\n/g, '<br>') : renderMarkdown(content);
 
+    // 操作按钮 HTML
+    const actionBtns = `
+        <div class="message-actions">
+            <button class="msg-action-btn" onclick="copyMessage(this)" title="复制内容">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+            </button>
+            ${!isUser ? `
+            <button class="msg-action-btn" onclick="regenerateMessage(this)" title="重新生成">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <path d="M1 4v6h6"></path>
+                    <path d="M23 20v-6h-6"></path>
+                    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                </svg>
+            </button>
+            ` : ''}
+            <button class="msg-action-btn" onclick="deleteMessage(this)" title="删除">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+            </button>
+        </div>
+    `;
+
     msg.innerHTML =
         '<div class="message-inner">' +
             '<div class="avatar ' + avatarClass + '">' + avatarText + '</div>' +
@@ -1749,8 +2067,12 @@ function addMessage(role, content, meta) {
                 '<div class="message-role">' + roleLabel + '</div>' +
                 '<div class="message-content" id="' + contentId + '">' + rendered + '</div>' +
                 (meta ? '<div class="message-meta">' + escapeHtml(meta) + '</div>' : '') +
+                actionBtns +
             '</div>' +
         '</div>';
+
+    // 保存原始内容用于复制
+    msg.dataset.content = content;
 
     area.appendChild(msg);
     area.scrollTop = area.scrollHeight;
@@ -1781,6 +2103,110 @@ function updateStats() {
     const elapsed = startTime ? ((Date.now() - startTime) / 1000).toFixed(1) + 's' : '-';
     document.getElementById('elapsed').textContent = elapsed;
     document.getElementById('statElapsed').textContent = elapsed;
+}
+
+/* ============================================
+   MESSAGE ACTIONS
+   ============================================ */
+
+// 复制消息内容
+async function copyMessage(btn) {
+    const msgEl = btn.closest('.message');
+    const content = msgEl.dataset.content || '';
+
+    try {
+        await navigator.clipboard.writeText(content);
+        btn.classList.add('copied');
+        // 更改图标为勾选
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>`;
+        setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>`;
+        }, 1500);
+    } catch (err) {
+        console.error('复制失败:', err);
+    }
+}
+
+// 重新生成回复
+function regenerateMessage(btn) {
+    const msgEl = btn.closest('.message');
+    const area = document.getElementById('chatArea');
+
+    // 找到当前 assistant 消息在 history 中的索引
+    const allMessages = area.querySelectorAll('.message.assistant');
+    const lastAssistantMsg = allMessages[allMessages.length - 1];
+    if (!lastAssistantMsg || lastAssistantMsg !== msgEl) return;
+
+    // 删除当前 assistant 消息
+    const historyIndex = conversationHistory.findIndex(m => m.role === 'assistant');
+    if (historyIndex !== -1) {
+        conversationHistory = conversationHistory.slice(0, historyIndex);
+    }
+
+    // 删除 DOM 元素
+    msgEl.remove();
+
+    // 重新发送最后一条用户消息
+    const lastUserMsg = conversationHistory[conversationHistory.length - 1];
+    if (lastUserMsg && lastUserMsg.role === 'user') {
+        sendMessage();
+    }
+
+    updateSidebarInfo();
+}
+
+// 删除消息
+function deleteMessage(btn) {
+    const msgEl = btn.closest('.message');
+    const area = document.getElementById('chatArea');
+
+    // 找到消息在列表中的索引
+    const allMessages = area.querySelectorAll('.message');
+    const msgIndex = Array.from(allMessages).indexOf(msgEl);
+
+    // 从 conversationHistory 中删除对应的消息
+    // 消息顺序: user, assistant, user, assistant...
+    let histIndex = 0;
+    for (let i = 0; i < msgIndex && histIndex < conversationHistory.length; i++) {
+        const msg = allMessages[i];
+        if (msg.classList.contains('user')) {
+            histIndex++;
+        } else {
+            histIndex++;
+        }
+    }
+
+    // 更简单的逻辑：计算 user 和 assistant 的数量
+    let userCount = 0;
+    let assistantCount = 0;
+    for (let i = 0; i < msgIndex; i++) {
+        if (allMessages[i].classList.contains('user')) userCount++;
+        else assistantCount++;
+    }
+
+    // 删除对应位置的消息
+    if (msgEl.classList.contains('user')) {
+        // 删除用户消息时，可能需要同时删除对应的 assistant 回复
+        conversationHistory.splice(userCount - 1, msgEl.classList.contains('user') ? 1 : 2);
+    } else {
+        // 删除 assistant 消息
+        conversationHistory.splice(userCount + assistantCount - 1, 1);
+    }
+
+    msgEl.remove();
+
+    // 如果没有消息了，显示空状态
+    if (area.querySelectorAll('.message').length === 0) {
+        clearChat();
+    }
+
+    updateSidebarInfo();
 }
 
 /* ============================================
@@ -1895,6 +2321,11 @@ async function handleStream(resp, contentEl) {
     isStreaming = true;
     const area = document.getElementById('chatArea');
 
+    // Tool call buffer for accumulating streaming tool_calls
+    const toolCallBuffer = {};
+    let pendingToolCalls = [];  // 待执行的工具调用
+    let isWaitingForTools = false;  // 等待工具执行完成
+
     while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -1923,13 +2354,25 @@ async function handleStream(resp, contentEl) {
             if (trimmed.startsWith('data: ') || trimmed.startsWith('data:')) {
                 const jsonStr = trimmed.startsWith('data: ') ? trimmed.substring(6) : trimmed.substring(5);
 
-                // 处理 tool_error 事件
+                // 处理工具事件 (tool_start, tool_progress, tool_success, tool_error)
+                if (currentEvent && ['tool_start', 'tool_progress', 'tool_success', 'tool_error'].includes(currentEvent)) {
+                    const eventType = currentEvent;
+                    currentEvent = '';
+                    try {
+                        const eventData = JSON.parse(jsonStr);
+                        handleToolEvent(eventType, eventData);
+                    } catch (e) {
+                        console.error('Failed to parse tool event:', e);
+                    }
+                    continue;
+                }
+
+                // 处理旧的 tool_error 事件（兼容）
                 if (currentEvent === 'tool_error') {
                     currentEvent = '';
                     try {
                         const errorData = JSON.parse(jsonStr);
                         const errorMsg = `[Tool Error] ${errorData.tool_name}: ${errorData.error}`;
-                        // 在消息区域显示错误
                         showToolError(errorData.tool_name, errorData.error);
                         console.error(errorMsg);
                     } catch (e) {
@@ -1959,6 +2402,27 @@ async function handleStream(resp, contentEl) {
                         changed = true;
                     }
 
+                    // Handle tool_calls delta (accumulate by id)
+                    if (delta.tool_calls && delta.tool_calls.length > 0) {
+                        for (const tc of delta.tool_calls) {
+                            if (!toolCallBuffer[tc.id]) {
+                                toolCallBuffer[tc.id] = { id: tc.id, index: tc.index, type: tc.type, function: { name: '', arguments: '' } };
+                            }
+                            if (tc.function) {
+                                if (tc.function.name) toolCallBuffer[tc.id].function.name += tc.function.name;
+                                if (tc.function.arguments) toolCallBuffer[tc.id].function.arguments += tc.function.arguments;
+                            }
+                        }
+                        changed = true;
+                    }
+
+                    // Handle tool role messages (tool execution status from mixed stream)
+                    if (delta.role === 'tool' && delta.content) {
+                        // Tool execution progress/status, parse and update card
+                        parseAndUpdateToolCard(delta.content);
+                        changed = true;
+                    }
+
                     // Collect content (may contain <think> tags from GLM-4.5V)
                     if (delta.content) {
                         if (delta.reasoning_content) {
@@ -1985,6 +2449,15 @@ async function handleStream(resp, contentEl) {
                             }
                         }
                         changed = true;
+                    }
+
+                    // Check finish_reason for tool_calls
+                    if (chunk.choices[0]?.finish_reason === 'tool_calls') {
+                        // Collect all pending tool calls from buffer
+                        pendingToolCalls = Object.values(toolCallBuffer);
+                        isWaitingForTools = true;
+                        // Clear buffer for next round
+                        Object.keys(toolCallBuffer).forEach(k => delete toolCallBuffer[k]);
                     }
 
                     if (changed) {
@@ -2038,6 +2511,14 @@ function cleanup() {
     document.getElementById('btnStop').style.display = 'none';
     stopTimer();
     document.getElementById('userInput').focus();
+    // 只清理非错误状态的工具卡片，保留错误卡片以便用户查看
+    for (const toolId in toolCards) {
+        if (toolCards[toolId].status !== 'error') {
+            delete toolCards[toolId];
+        }
+    }
+    // 重新渲染以显示保留的错误卡片
+    renderToolCards();
 }
 
 function clearChat() {
@@ -2078,18 +2559,174 @@ function showToolError(toolName, errorMsg) {
     // 创建错误消息元素
     const errorDiv = document.createElement('div');
     errorDiv.className = 'tool-error';
-    errorDiv.innerHTML = `<span class="tool-error-icon">⚠</span><span class="tool-error-name">${escapeHtml(toolName)}</span>: <span class="tool-error-msg">${escapeHtml(errorMsg)}</span>`;
+    errorDiv.innerHTML = `
+        <div class="tool-error-header">
+            <span class="tool-error-tag">Error</span>
+            <span class="tool-error-icon">⚠</span>
+        </div>
+        <div class="tool-error-content">
+            <span class="tool-error-name">${escapeHtml(toolName)}</span>: <span class="tool-error-msg">${escapeHtml(errorMsg)}</span>
+        </div>
+        <button class="tool-error-close" onclick="this.parentElement.remove()">×</button>
+    `;
 
-    // 清除之前的错误（可选：保留历史错误）
+    // 清除之前的错误
     toolErrorEl.innerHTML = '';
     toolErrorEl.appendChild(errorDiv);
+}
 
-    // 3秒后自动隐藏
-    setTimeout(() => {
-        if (errorDiv.parentNode) {
-            errorDiv.remove();
+/* ============================================
+   TOOL EVENT HANDLERS (NEW)
+   ============================================ */
+
+// 处理工具状态事件
+function handleToolEvent(eventType, eventData) {
+    const toolId = eventData.tool_id || eventData.tool_name;
+    switch (eventType) {
+        case 'tool_start':
+            handleToolStart(toolId, eventData);
+            break;
+        case 'tool_progress':
+            handleToolProgress(toolId, eventData);
+            break;
+        case 'tool_success':
+            handleToolSuccess(toolId, eventData);
+            break;
+        case 'tool_error':
+            handleToolErrorEvent(toolId, eventData);
+            break;
+    }
+}
+
+// 处理工具开始事件
+function handleToolStart(toolId, data) {
+    toolCards[toolId] = {
+        id: toolId,
+        name: data.tool_name || toolId,
+        index: data.index || 1,
+        status: 'running',
+        progress: 0,
+        message: '开始执行...',
+        duration: null
+    };
+    renderToolCards();
+}
+
+// 处理工具进度事件 - 收到进度立即渲染
+function handleToolProgress(toolId, data) {
+    const card = toolCards[toolId];
+    if (card) {
+        card.progress = data.progress || 0;
+        card.message = data.message || '';
+        card.status = 'running';
+        // 收到进度时立即渲染
+        renderToolCards();
+    }
+}
+
+// 处理工具成功事件
+function handleToolSuccess(toolId, data) {
+    const card = toolCards[toolId];
+    if (card) {
+        card.status = 'success';
+        card.progress = 100;
+        card.message = data.result_summary || '执行成功';
+        card.duration = data.duration_ms;
+        renderToolCards();
+    }
+}
+
+// 处理工具错误事件
+function handleToolErrorEvent(toolId, data) {
+    const card = toolCards[toolId];
+    if (card) {
+        card.status = 'error';
+        card.error = true;  // 标记为错误，用于 cleanup 时保留
+        card.message = data.error || '未知错误';
+        card.duration = data.duration_ms;
+        renderToolCards();
+        // 同时显示弹出提示
+        showToolError(card.name, card.message);
+    }
+}
+
+/* ============================================
+   TOOL CALL CARDS (STRUCTURED EVENTS)
+   ============================================ */
+
+// 渲染所有工具卡片 - 现代卡片样式
+function renderToolCards() {
+    const contentEl = document.querySelector('.assistant .message-content');
+    if (!contentEl) return;
+
+    // 查找或创建工具卡片容器
+    let container = contentEl.querySelector('.tool-call-container');
+    if (Object.keys(toolCards).length === 0) {
+        if (container) container.remove();
+        return;
+    }
+
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'tool-call-container';
+        contentEl.insertBefore(container, contentEl.firstChild);
+    }
+
+    container.innerHTML = '';
+
+    // 按 index 排序（保证顺序）
+    const sortedCards = Object.values(toolCards).sort((a, b) => a.index - b.index);
+
+    for (const card of sortedCards) {
+        const cardEl = document.createElement('div');
+        cardEl.className = `tool-call-card tool-card-${card.status}`;
+        cardEl.dataset.toolId = card.id;
+
+        // 计算执行时间
+        let durationText = '';
+        if (card.duration) {
+            durationText = ` · ${(card.duration / 1000).toFixed(1)}s`;
         }
-    }, 5000);
+
+        // 状态图标
+        let iconHtml = '';
+        if (card.status === 'running') {
+            iconHtml = '<div class="tool-icon tool-icon-running"><div class="spinner"></div></div>';
+        } else if (card.status === 'success') {
+            iconHtml = '<div class="tool-icon tool-icon-success"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></div>';
+        } else if (card.status === 'error') {
+            iconHtml = '<div class="tool-icon tool-icon-error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div>';
+        }
+
+        // 状态文本
+        let statusText = '执行中';
+        if (card.status === 'success') statusText = '已完成' + durationText;
+        if (card.status === 'error') statusText = '<span class="error-tag">Error</span>执行失败' + durationText;
+
+        // 消息样式区分
+        let messageClass = 'tool-card-message';
+        if (card.status === 'error') messageClass = 'tool-card-message tool-card-error-msg';
+
+        cardEl.innerHTML =
+            '<div class="tool-card-header">' +
+                '<div class="tool-card-index">' + card.index + '</div>' +
+                iconHtml +
+                '<div class="tool-card-info">' +
+                    '<div class="tool-card-name">' + escapeHtml(card.name) + '</div>' +
+                    '<div class="tool-card-status">' + statusText + '</div>' +
+                '</div>' +
+            '</div>' +
+            (card.status !== 'success' && card.status !== 'error' ?
+                '<div class="tool-progress-wrapper">' +
+                    '<div class="tool-progress-bar">' +
+                        '<div class="tool-progress-fill" style="width: ' + card.progress + '%"></div>' +
+                    '</div>' +
+                    '<span class="tool-progress-text">' + card.progress + '%</span>' +
+                '</div>' : '') +
+            (card.message ? '<div class="' + messageClass + '">' + escapeHtml(card.message) + '</div>' : '');
+
+        container.appendChild(cardEl);
+    }
 }
 </script>
 

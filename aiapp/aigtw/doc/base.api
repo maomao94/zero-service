@@ -1,2 +1,10 @@
 syntax = "v1"
 
+// BaseApi 基础配置，定义通用类型和认证方式
+type (
+	// JwtAuth JWT 认证
+	JwtAuth {
+		Authorization string `header:"Authorization,optional"`
+	}
+)
+

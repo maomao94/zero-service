@@ -51,9 +51,9 @@ func (l *ListAsyncResultsLogic) ListAsyncResults(in *aichat.ListAsyncResultsReq)
 	// 转换响应
 	items := make([]*aichat.AsyncToolResultRes, len(storeResp.Items))
 	for i, item := range storeResp.Items {
-		messages := make([]*aichat.ProgressMessage, len(item.Messages))
+		messages := make([]*aichat.ProgressMessagePb, len(item.Messages))
 		for j, msg := range item.Messages {
-			messages[j] = &aichat.ProgressMessage{
+			messages[j] = &aichat.ProgressMessagePb{
 				Progress: msg.Progress,
 				Total:    msg.Total,
 				Message:  msg.Message,

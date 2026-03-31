@@ -92,8 +92,7 @@ type TaskObserver interface {
 
 // CallToolAsyncRequest 异步工具调用请求
 type CallToolAsyncRequest struct {
-	Name         string           // 工具名称
-	Args         map[string]any   // 工具参数
-	ResultStore  AsyncResultStore // 异步结果存储（必填）
-	TaskObserver TaskObserver     // 任务观察者（可选，用于实时通知）
+	Name         string         // 工具名称
+	Args         map[string]any // 工具参数
+	TaskObserver TaskObserver   // 任务观察者（可选，用于实时通知）
 }

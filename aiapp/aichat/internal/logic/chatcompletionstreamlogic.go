@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -14,9 +15,43 @@ import (
 	"zero-service/common/mcpx"
 
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/threading"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+// ToolEvent 工具状态事件
+type ToolEvent struct {
+	Type          string `json:"type"`      // tool_start/progress/success/error
+	ToolId        string `json:"tool_id"`   // 工具调用 ID
+	ToolName      string `json:"tool_name"` // 工具名称
+	Index         int    `json:"index"`     // 工具序号（1-based）
+	Progress      int    `json:"progress,omitempty"`
+	Total         int    `json:"total,omitempty"`
+	Message       string `json:"message,omitempty"`
+	ResultSummary string `json:"result_summary,omitempty"`
+	Error         string `json:"error,omitempty"`
+	DurationMs    int64  `json:"duration_ms,omitempty"`
+}
+
+// sendToolEvent 发送工具状态事件（通过 role=tool 的 content 字段）
+func sendToolEvent(stream aichat.AiChat_ChatCompletionStreamServer, modelId string, event ToolEvent) error {
+	data, err := json.Marshal(event)
+	if err != nil {
+		return err
+	}
+	return stream.Send(&aichat.ChatCompletionStreamChunk{
+		Model: modelId,
+		Choices: []*aichat.ChunkChoicePb{
+			{
+				Delta: &aichat.ChatDeltaPb{
+					Role:    "tool",
+					Content: string(data),
+				},
+			},
+		},
+	})
+}
 
 type ChatCompletionStreamLogic struct {
 	ctx    context.Context
@@ -41,150 +76,268 @@ func (l *ChatCompletionStreamLogic) ChatCompletionStream(in *aichat.ChatCompleti
 	req := toProviderRequest(in, backendModel, providerName)
 
 	// 注入 MCP 工具
+	var hasTools bool
 	if l.svcCtx.McpClient != nil && l.svcCtx.McpClient.HasTools() {
-		req.Tools = mcpToolsToOpenAI(l.svcCtx.McpClient.Tools())
+		req.Tools = provider.McpToolsToOpenAI(l.svcCtx.McpClient.Tools())
+		hasTools = len(req.Tools) > 0
 	}
 
-	l.Logger.Infof("chat completion stream, model: %s -> %s (%s), tools: %d", in.Model, backendModel, providerName, len(req.Tools))
+	l.Logger.Infof("chat completion stream, model: %s -> %s (%s), tools: %v", in.Model, backendModel, providerName, hasTools)
 
-	// 总超时：包裹整个 stream 生命周期，超时后 HTTP body 自动关闭
+	// 上下文大小检查（软限制）
+	if maxTokens := l.svcCtx.Config.MaxContextTokens; maxTokens > 0 {
+		var totalTokens int
+		for _, msg := range req.Messages {
+			totalTokens += 4 + tool.EstimateTokens(msg.Content)
+		}
+		if totalTokens > maxTokens {
+			l.Logger.Infof("context large: %d tokens > %d limit, may cause timeout", totalTokens, maxTokens)
+		} else {
+			l.Logger.Debugf("context tokens: %d / %d", totalTokens, maxTokens)
+		}
+	}
+
+	// 总超时
 	streamCtx, streamCancel := context.WithTimeout(l.ctx, l.svcCtx.Config.StreamTimeout)
 	defer streamCancel()
 
-	// 如果有工具，先用非流式完成 tool-calling 循环
-	if len(req.Tools) > 0 {
-		for round := 0; round < l.svcCtx.Config.MaxToolRounds; round++ {
-			resp, chatErr := p.ChatCompletion(streamCtx, req)
-			if chatErr != nil {
-				l.Logger.Errorf("tool-calling round %d error: %v", round+1, chatErr)
-				return toGrpcError(chatErr)
-			}
+	// 混合流主循环
+	return l.mixedStreamLoop(streamCtx, req, p, stream, in.Model)
+}
 
-			if len(resp.Choices) == 0 || resp.Choices[0].FinishReason != "tool_calls" {
-				break // 没有更多工具调用
-			}
-
-			if l.svcCtx.McpClient == nil {
-				break
-			}
-
-			// 执行工具调用，追加消息
-			assistantMsg := resp.Choices[0].Message
-			req.Messages = append(req.Messages, assistantMsg)
-
-			for _, tc := range assistantMsg.ToolCalls {
-				taskId, _ := tool.SimpleUUID()
-				l.Infof("stream tool call round %d: %s(%s)", round+1, tc.Function.Name, tc.Function.Arguments)
-
-				// 使用带进度通知的工具调用
-				progressCallback := func(info *mcpx.ProgressInfo) {
-					l.Logger.Infof("tool callback %s, %s progress: %.1f/%.1f - %s",
-						info.Token, tc.Function.Name, info.Progress, info.Total, info.Message)
-				}
-
-				result, callErr := l.svcCtx.McpClient.CallToolWithProgress(streamCtx, &mcpx.CallToolWithProgressRequest{
-					Token:      taskId,
-					Name:       tc.Function.Name,
-					Args:       mcpx.ParseArgs(tc.Function.Arguments),
-					OnProgress: progressCallback,
-				})
-				if callErr != nil {
-					l.Logger.Errorf("tool call %s error: %v", tc.Function.Name, callErr)
-					result = fmt.Sprintf("tool error: %v", callErr)
-				}
-				l.Logger.Debugf("tool call %s result: %s", tc.Function.Name, result)
-				req.Messages = append(req.Messages, provider.ChatMessage{
-					Role:       "tool",
-					Content:    result,
-					ToolCallId: tc.Id,
-				})
-			}
-		}
-		// 清除 tools，最终流式调用不再触发工具
-		req.Tools = nil
-	}
-
-	reader, err := p.ChatCompletionStream(streamCtx, req)
-	if err != nil {
-		l.Logger.Errorf("chat completion stream error: %v", err)
-		return toGrpcError(err)
-	}
-	defer reader.Close()
-
+// mixedStreamLoop 混合流主循环：LLM token + tool 进度全部通过同一个 stream 输出
+func (l *ChatCompletionStreamLogic) mixedStreamLoop(ctx context.Context, req *provider.ChatRequest, p provider.Provider, stream aichat.AiChat_ChatCompletionStreamServer, modelId string) error {
 	idleTimeout := l.svcCtx.Config.StreamIdleTimeout
+	toolBuf := provider.NewToolCallBuffer()
 
-	for {
-		// 将阻塞的 Recv 包装到 Promise，使其可被超时中断
-		recv := antsx.NewPromise[*provider.StreamChunk]("stream-recv")
-		go func() {
-			chunk, recvErr := reader.Recv()
-			if recvErr != nil {
-				recv.Reject(recvErr)
-			} else {
-				recv.Resolve(chunk)
+	for round := 0; round < l.svcCtx.Config.MaxToolRounds; round++ {
+		// 开始新一轮 LLM 流式
+		reader, err := p.ChatCompletionStream(ctx, req)
+		if err != nil {
+			return provider.ToGrpcError(err)
+		}
+
+		for {
+			recv := antsx.NewPromise[*provider.StreamChunk]("stream-recv")
+			threading.GoSafe(func() {
+				chunk, recvErr := reader.Recv()
+				if recvErr != nil {
+					recv.Reject(recvErr)
+				} else {
+					recv.Resolve(chunk)
+				}
+			})
+			idleCtx, idleCancel := context.WithTimeout(ctx, idleTimeout)
+			chunk, awaitErr := recv.Await(idleCtx)
+			idleCancel()
+
+			if awaitErr != nil {
+				reader.Close()
+				if errors.Is(awaitErr, io.EOF) {
+					goto checkToolCalls
+				}
+				return l.handleStreamError(awaitErr, ctx)
 			}
-		}()
 
-		// 空闲超时 ctx：继承 streamCtx（总超时 + 客户端断开），叠加 chunk 间空闲超时
-		idleCtx, idleCancel := context.WithTimeout(streamCtx, idleTimeout)
-		chunk, awaitErr := recv.Await(idleCtx)
-		idleCancel()
-
-		if awaitErr != nil {
-			if errors.Is(awaitErr, io.EOF) {
-				l.Logger.Infof("stream completed, model: %s", in.Model)
+			// 客户端断开检查
+			if l.ctx.Err() != nil {
+				reader.Close()
 				return nil
 			}
-			// 按优先级判断：客户端断开 > 总超时 > 空闲超时 > 上游错误
-			switch {
-			case l.ctx.Err() != nil:
-				// gRPC 客户端断开（浏览器关闭 SSE → aigtw 取消 gRPC 调用 → l.ctx 取消）
-				l.Logger.Infof("stream client disconnected, model: %s, awaitErr: %v",
-					in.Model, awaitErr)
-				return nil
-			case streamCtx.Err() != nil:
-				// streamCtx 超时但 l.ctx 未取消 → 总超时到期
-				l.Logger.Errorf("stream total timeout (%v), model: %s, awaitErr: %v",
-					l.svcCtx.Config.StreamTimeout, in.Model, awaitErr)
-				return status.Errorf(codes.DeadlineExceeded, "stream total timeout")
-			case errors.Is(awaitErr, context.DeadlineExceeded):
-				// streamCtx 正常但 awaitErr 是 DeadlineExceeded → idleCtx 空闲超时
-				l.Logger.Errorf("stream idle timeout (%v), model: %s, awaitErr: %v",
-					idleTimeout, in.Model, awaitErr)
-				return status.Errorf(codes.DeadlineExceeded, "stream idle timeout")
-			default:
-				// 上游 provider 返回的业务错误
-				l.Logger.Errorf("stream recv error: %v, model: %s", awaitErr, in.Model)
-				return toGrpcError(awaitErr)
+
+			// 空 chunk 检查
+			if len(chunk.Choices) == 0 {
+				continue
+			}
+			choice := chunk.Choices[0]
+
+			// 收集 tool_calls 增量（需要按 id 拼接）
+			if len(choice.Delta.ToolCalls) > 0 {
+				l.Logger.Debugf("LLM choose tool_calls: %v", choice.Delta.ToolCalls)
+				for i := range choice.Delta.ToolCalls {
+					toolBuf.Accumulate(&choice.Delta.ToolCalls[i])
+				}
+				continue
+			}
+
+			// 正常 token → 直接发给前端
+			protoChunk := toProtoStreamChunk(chunk, modelId)
+			if err := stream.Send(protoChunk); err != nil {
+				reader.Close()
+				return err
 			}
 		}
 
-		// select 竞态：Resolve 和 ctx.Done 同时 ready 时可能选中 Resolve，
-		// 此时 awaitErr == nil 但 l.ctx 已取消，提前退出避免无意义的 Send
-		if l.ctx.Err() != nil {
-			l.Logger.Infof("stream client disconnected, model: %s", in.Model)
+	checkToolCalls:
+		reader.Close()
+
+		// 检查是否有累积的 tool_calls
+		if !toolBuf.HasPendingTools() {
 			return nil
 		}
 
-		protoChunk := toProtoStreamChunk(chunk, in.Model)
-		if sendErr := stream.Send(protoChunk); sendErr != nil {
-			l.Logger.Errorf("stream send error: %v", sendErr)
-			return sendErr
+		toolCalls := toolBuf.Collect()
+		toolBuf = provider.NewToolCallBuffer()
+
+		l.Logger.Infof("round %d: detected %d tool calls", round+1, len(toolCalls))
+
+		// 把 assistant tool call 写入上下文（需要转换为值类型）
+		tcValues := make([]provider.ToolCall, len(toolCalls))
+		for i, tc := range toolCalls {
+			tcValues[i] = *tc
 		}
+		req.Messages = append(req.Messages, provider.ChatMessage{
+			Role:      "assistant",
+			Content:   "",
+			ToolCalls: tcValues,
+		})
+
+		// 串行执行工具（每个工具都实时推送进度到 stream）
+		toolIndex := 1
+		for _, tc := range toolCalls {
+			toolName := tc.Function.Name
+			toolId := tc.Id
+
+			// === 1. 发送工具开始事件 ===
+			if err := sendToolEvent(stream, modelId, ToolEvent{
+				Type:     "tool_start",
+				ToolId:   toolId,
+				ToolName: toolName,
+				Index:    toolIndex,
+			}); err != nil {
+				return err
+			}
+
+			// === 2. 进度回调 ===
+			progressCallback := func(info *mcpx.ProgressInfo) {
+				l.Logger.Debugf("tool progress: tool=%s, percent=%d%%, msg=%s", toolName, info.Percent(), info.Message)
+				sendToolEvent(stream, modelId, ToolEvent{
+					Type:     "tool_progress",
+					ToolId:   toolId,
+					ToolName: toolName,
+					Progress: info.Percent(),
+					Total:    100,
+					Message:  info.Message,
+				})
+			}
+
+			// === 3. 提交到 Reactor 池执行，Promise 等待结果 ===
+			taskID, promise, submitErr := l.svcCtx.McpClient.CallToolAsyncAwait(ctx, &mcpx.CallToolAsyncRequest{
+				Name:         toolName,
+				Args:         mcpx.ParseArgs(tc.Function.Arguments),
+				TaskObserver: mcpx.NewDefaultTaskObserver(progressCallback),
+			})
+			if submitErr != nil {
+				l.Logger.Errorf("submit tool error: tool=%s, err=%v", toolName, submitErr)
+				sendToolEvent(stream, modelId, ToolEvent{
+					Type:     "tool_error",
+					ToolId:   toolId,
+					ToolName: toolName,
+					Error:    submitErr.Error(),
+				})
+				toolIndex++
+				continue
+			}
+
+			// 等待异步任务完成
+			result, awaitErr := promise.Await(ctx)
+			l.Logger.Infof("tool executed: tool=%s, taskId=%s, result_len=%d, err=%v", toolName, taskID, len(result), awaitErr)
+
+			// === 4. 发送完成事件 ===
+			var toolResult string
+			if awaitErr != nil {
+				toolResult = fmt.Sprintf("tool error: %v", awaitErr)
+				sendToolEvent(stream, modelId, ToolEvent{
+					Type:     "tool_error",
+					ToolId:   toolId,
+					ToolName: toolName,
+					Error:    awaitErr.Error(),
+				})
+			} else {
+				toolResult = result
+				summary := result
+				if len(summary) > 100 {
+					summary = summary[:100] + "..."
+				}
+				sendToolEvent(stream, modelId, ToolEvent{
+					Type:          "tool_success",
+					ToolId:        toolId,
+					ToolName:      toolName,
+					ResultSummary: summary,
+				})
+			}
+
+			// 回填 tool 结果给 LLM
+			req.Messages = append(req.Messages, provider.ChatMessage{
+				Role:       "tool",
+				Content:    toolResult,
+				ToolCallId: tc.Id,
+			})
+
+			toolIndex++
+		}
+
+		// 第一轮后清除工具定义，后续轮次不再传输
+		if round == 0 {
+			req.Tools = nil
+			l.Logger.Debugf("cleared tools after first round")
+		}
+	}
+
+	return nil
+}
+
+// handleStreamError 处理流式错误
+func (l *ChatCompletionStreamLogic) handleStreamError(awaitErr error, streamCtx context.Context) error {
+	if errors.Is(awaitErr, io.EOF) {
+		return nil
+	}
+
+	switch {
+	case l.ctx.Err() != nil:
+		l.Logger.Infof("stream client disconnected, awaitErr: %v", awaitErr)
+		return nil
+	case streamCtx.Err() != nil:
+		l.Logger.Errorf("stream total timeout (%v), awaitErr: %v",
+			l.svcCtx.Config.StreamTimeout, awaitErr)
+		return status.Errorf(codes.DeadlineExceeded, "stream total timeout")
+	case errors.Is(awaitErr, context.DeadlineExceeded):
+		l.Logger.Errorf("stream idle timeout (%v), awaitErr: %v",
+			l.svcCtx.Config.StreamIdleTimeout, awaitErr)
+		return status.Errorf(codes.DeadlineExceeded, "stream idle timeout")
+	default:
+		l.Logger.Errorf("stream recv error: %v", awaitErr)
+		return provider.ToGrpcError(awaitErr)
 	}
 }
 
 // toProtoStreamChunk 将 provider 流式 chunk 转为 proto chunk
 func toProtoStreamChunk(chunk *provider.StreamChunk, modelId string) *aichat.ChatCompletionStreamChunk {
-	choices := make([]*aichat.ChunkChoice, len(chunk.Choices))
+	choices := make([]*aichat.ChunkChoicePb, len(chunk.Choices))
 	for i, c := range chunk.Choices {
-		choices[i] = &aichat.ChunkChoice{
-			Index: int32(c.Index),
-			Delta: &aichat.ChatDelta{
-				Role:             c.Delta.Role,
-				Content:          c.Delta.Content,
-				ReasoningContent: c.Delta.ReasoningContent,
-			},
+		delta := &aichat.ChatDeltaPb{
+			Role:             c.Delta.Role,
+			Content:          c.Delta.Content,
+			ReasoningContent: c.Delta.ReasoningContent,
+		}
+		// 转换 tool_calls 增量
+		if len(c.Delta.ToolCalls) > 0 {
+			delta.ToolCalls = make([]*aichat.ToolCallDeltaPb, len(c.Delta.ToolCalls))
+			for j, tc := range c.Delta.ToolCalls {
+				delta.ToolCalls[j] = &aichat.ToolCallDeltaPb{
+					Index: int32(tc.Index),
+					Id:    tc.Id,
+					Type:  tc.Type,
+					Function: &aichat.ToolCallFunctionDeltaPb{
+						Name:      tc.Function.Name,
+						Arguments: tc.Function.Arguments,
+					},
+				}
+			}
+		}
+		choices[i] = &aichat.ChunkChoicePb{
+			Index:        int32(c.Index),
+			Delta:        delta,
 			FinishReason: c.FinishReason,
 		}
 	}

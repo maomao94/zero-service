@@ -33,6 +33,9 @@ func RegisterModbus(server *sdkmcp.Server, svcCtx *svc.ServiceContext) {
 		Name:        "read_holding_registers",
 		Description: "读取 Modbus 保持寄存器 (Function Code 0x03)，返回寄存器值的多种表示形式（无符号整数、有符号整数、十六进制）",
 	}, mcpx.CallToolWrapper(func(ctx context.Context, req *sdkmcp.CallToolRequest, args ReadHoldingRegistersArgs) (*sdkmcp.CallToolResult, any, error) {
+		// 注意：同步工具不需要手动发送进度
+		// wrapper 会自动发送开始(0%)和结束(100%)进度
+
 		resp, err := svcCtx.BridgeModbusCli.ReadHoldingRegisters(ctx, &bridgemodbus.ReadHoldingRegistersReq{
 			ModbusCode: args.ModbusCode,
 			Address:    args.Address,
@@ -53,6 +56,9 @@ func RegisterModbus(server *sdkmcp.Server, svcCtx *svc.ServiceContext) {
 		Name:        "read_coils",
 		Description: "读取 Modbus 线圈状态 (Function Code 0x01)，返回每个线圈的开关状态（true=ON, false=OFF）",
 	}, mcpx.CallToolWrapper(func(ctx context.Context, req *sdkmcp.CallToolRequest, args ReadCoilsArgs) (*sdkmcp.CallToolResult, any, error) {
+		// 注意：同步工具不需要手动发送进度
+		// wrapper 会自动发送开始(0%)和结束(100%)进度
+
 		resp, err := svcCtx.BridgeModbusCli.ReadCoils(ctx, &bridgemodbus.ReadCoilsReq{
 			ModbusCode: args.ModbusCode,
 			Address:    args.Address,

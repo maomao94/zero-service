@@ -24,14 +24,15 @@ func NewServiceContext(c config.Config) *ServiceContext {
 
 	var mc *mcpx.Client
 	mcpCfg := c.Mcpx
+	store := mcpx.NewMemoryAsyncResultStore()
 	if len(mcpCfg.Servers) > 0 {
-		mc = mcpx.NewClient(mcpCfg)
+		mc = mcpx.NewClient(mcpCfg, mcpx.WithAsyncResultStore(store))
 	}
 
 	return &ServiceContext{
 		Config:           c,
 		Registry:         registry,
 		McpClient:        mc,
-		AsyncResultStore: mcpx.NewMemoryAsyncResultStore(),
+		AsyncResultStore: store,
 	}
 }

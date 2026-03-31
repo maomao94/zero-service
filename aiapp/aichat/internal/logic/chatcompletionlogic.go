@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"zero-service/aiapp/aichat/aichat"
@@ -11,7 +10,6 @@ import (
 	"zero-service/common/mcpx"
 	"zero-service/common/tool"
 
-	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/zeromicro/go-zero/core/logx"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -40,18 +38,31 @@ func (l *ChatCompletionLogic) ChatCompletion(in *aichat.ChatCompletionReq) (*aic
 	// 构建 provider 请求
 	req := toProviderRequest(in, backendModel, providerName)
 
-	// 注入 MCP 工具
+	// 注入 MCP 工具（仅首次）
+	var hasTools bool
 	if l.svcCtx.McpClient != nil && l.svcCtx.McpClient.HasTools() {
-		req.Tools = mcpToolsToOpenAI(l.svcCtx.McpClient.Tools())
+		req.Tools = provider.McpToolsToOpenAI(l.svcCtx.McpClient.Tools())
+		hasTools = len(req.Tools) > 0
 	}
 
-	l.Infof("chat completion, model: %s -> %s (%s), tools: %d", in.Model, backendModel, providerName, len(req.Tools))
+	l.Infof("chat completion, model: %s -> %s (%s), tools: %v", in.Model, backendModel, providerName, hasTools)
+
+	// 上下文大小检查（硬限制）
+	if maxTokens := l.svcCtx.Config.MaxContextTokens; maxTokens > 0 {
+		var totalTokens int
+		for _, msg := range req.Messages {
+			totalTokens += 4 + tool.EstimateTokens(msg.Content)
+		}
+		if totalTokens > maxTokens {
+			return nil, status.Errorf(codes.InvalidArgument, "context too large: %d tokens > %d limit", totalTokens, maxTokens)
+		}
+	}
 
 	for round := 0; round < l.svcCtx.Config.MaxToolRounds; round++ {
 		resp, chatErr := p.ChatCompletion(l.ctx, req)
 		if chatErr != nil {
 			l.Logger.Errorf("chat completion error: %v", chatErr)
-			return nil, toGrpcError(chatErr)
+			return nil, provider.ToGrpcError(chatErr)
 		}
 
 		// 检查是否需要工具调用
@@ -67,6 +78,10 @@ func (l *ChatCompletionLogic) ChatCompletion(in *aichat.ChatCompletionReq) (*aic
 
 		assistantMsg := resp.Choices[0].Message
 		req.Messages = append(req.Messages, assistantMsg)
+
+		if len(assistantMsg.ToolCalls) > 0 {
+			l.Logger.Debugf("LLM choose tool_calls: %v", assistantMsg.ToolCalls)
+		}
 
 		for _, tc := range assistantMsg.ToolCalls {
 			taskId, _ := tool.SimpleUUID()
@@ -94,6 +109,12 @@ func (l *ChatCompletionLogic) ChatCompletion(in *aichat.ChatCompletionReq) (*aic
 				Content:    result,
 				ToolCallId: tc.Id,
 			})
+		}
+
+		// 第一轮后清除工具定义，后续轮次不再传输
+		if round == 0 {
+			req.Tools = nil
+			l.Logger.Debugf("cleared tools after first round")
 		}
 	}
 
@@ -175,11 +196,11 @@ func buildThinkingParams(providerName string, enable bool) map[string]any {
 
 // toProtoResponse 将 provider 响应转为 proto 响应
 func toProtoResponse(resp *provider.ChatResponse, modelId string) *aichat.ChatCompletionRes {
-	choices := make([]*aichat.Choice, len(resp.Choices))
+	choices := make([]*aichat.ChoicePb, len(resp.Choices))
 	for i, c := range resp.Choices {
-		choices[i] = &aichat.Choice{
+		choices[i] = &aichat.ChoicePb{
 			Index: int32(c.Index),
-			Message: &aichat.ChatMessage{
+			Message: &aichat.ChatMessagePb{
 				Role:             c.Message.Role,
 				Content:          c.Message.Content,
 				ReasoningContent: c.Message.ReasoningContent,
@@ -194,44 +215,10 @@ func toProtoResponse(resp *provider.ChatResponse, modelId string) *aichat.ChatCo
 		Created: resp.Created,
 		Model:   modelId,
 		Choices: choices,
-		Usage: &aichat.Usage{
+		Usage: &aichat.UsagePb{
 			PromptTokens:     int32(resp.Usage.PromptTokens),
 			CompletionTokens: int32(resp.Usage.CompletionTokens),
 			TotalTokens:      int32(resp.Usage.TotalTokens),
 		},
 	}
-}
-
-// toGrpcError 将 provider 错误转为 gRPC status error
-func toGrpcError(err error) error {
-	var apiErr *provider.APIError
-	if errors.As(err, &apiErr) {
-		switch {
-		case apiErr.StatusCode == 401 || apiErr.StatusCode == 403:
-			return status.Errorf(codes.PermissionDenied, "upstream auth error: %s", apiErr.Body)
-		case apiErr.StatusCode == 429:
-			return status.Errorf(codes.ResourceExhausted, "upstream rate limit: %s", apiErr.Body)
-		case apiErr.StatusCode == 400:
-			return status.Errorf(codes.InvalidArgument, "upstream bad request: %s", apiErr.Body)
-		default:
-			return status.Errorf(codes.Unavailable, "upstream error (status %d): %s", apiErr.StatusCode, apiErr.Body)
-		}
-	}
-	return status.Errorf(codes.Internal, "internal error: %v", err)
-}
-
-// mcpToolsToOpenAI 将 MCP 工具转换为 OpenAI function calling 格式。
-func mcpToolsToOpenAI(tools []*mcp.Tool) []provider.ToolDef {
-	defs := make([]provider.ToolDef, len(tools))
-	for i, t := range tools {
-		defs[i] = provider.ToolDef{
-			Type: "function",
-			Function: provider.ToolFunction{
-				Name:        t.Name,
-				Description: t.Description,
-				Parameters:  t.InputSchema,
-			},
-		}
-	}
-	return defs
 }

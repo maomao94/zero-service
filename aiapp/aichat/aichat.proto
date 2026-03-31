@@ -14,11 +14,11 @@ message EmptyReq {}
 // 对话消息
 // ============================================================
 
-// ChatMessage 单条对话消息，兼容 OpenAI Chat Completion 消息格式。
+// ChatMessagePb 单条对话消息，兼容 OpenAI Chat Completion 消息格式。
 //
 // 当模型启用深度思考（thinking）时，assistant 消息会包含 reasoning_content 字段，
 // 用于携带模型的推理/思考过程文本，与最终回答 content 分离。
-message ChatMessage {
+message ChatMessagePb {
   // 消息角色，有效值：
   // - system: 系统提示，用于设定 AI 行为和上下文
   // - user: 用户输入
@@ -45,7 +45,7 @@ message ChatCompletionReq {
 
   // 消息历史列表，按时间顺序排列的消息数组。
   // 建议包含 system 消息作为系统提示，user 消息作为用户输入
-  repeated ChatMessage messages = 2;
+  repeated ChatMessagePb messages = 2;
 
   // 生成文本的随机性参数，取值范围 0.0~2.0。
   // - 较低值：输出更确定、更聚焦
@@ -75,14 +75,14 @@ message ChatCompletionReq {
   bool enable_thinking = 8;
 }
 
-// Choice 对话补全的单个候选回复。
-message Choice {
+// ChoicePb 对话补全的单个候选回复。
+message ChoicePb {
   // 候选回复的索引，从 0 开始。
   // 当 n > 1 时用于区分不同候选
   int32 index = 1;
 
   // 完整的 assistant 回复消息，包含 role 和 content
-  ChatMessage message = 2;
+  ChatMessagePb message = 2;
 
   // 生成结束原因，有效值：
   // - stop: 模型自然停止（遇到 stop 序列或达到 max_tokens）
@@ -91,8 +91,8 @@ message Choice {
   string finish_reason = 3;
 }
 
-// Usage token 使用量统计信息。
-message Usage {
+// UsagePb token 使用量统计信息。
+message UsagePb {
   // 输入 prompt 消耗的 token 数量
   int32 prompt_tokens = 1;
 
@@ -118,19 +118,19 @@ message ChatCompletionRes {
   string model = 4;
 
   // 候选回复列表，通常只有一个（除非请求时指定 n > 1）
-  repeated Choice choices = 5;
+  repeated ChoicePb choices = 5;
 
   // token 使用量统计
-  Usage usage = 6;
+  UsagePb usage = 6;
 }
 
 // ============================================================
 // 流式响应
 // ============================================================
 
-// ChatDelta 流式增量消息。在 thinking 模式下，模型会先通过 reasoning_content
+// ChatDeltaPb 流式增量消息。在 thinking 模式下，模型会先通过 reasoning_content
 // 逐 chunk 输出推理过程，再通过 content 输出最终回答。前端可根据两字段分别渲染。
-message ChatDelta {
+message ChatDeltaPb {
   // 角色标识（仅首个 chunk 包含），固定为 "assistant"
   string role = 1;
 
@@ -140,17 +140,34 @@ message ChatDelta {
   // 推理思考过程的增量内容。流式场景下先于 content 输出，
   // 当 reasoning_content 结束、content 开始时，表示模型已从思考阶段切换到回答阶段
   string reasoning_content = 3;
+
+  // 工具调用的增量数据列表
+  repeated ToolCallDeltaPb tool_calls = 4;
 }
 
-// ChunkChoice 流式响应的单个增量片段。
-message ChunkChoice {
+// ToolCallDeltaPb 流式场景中工具调用的增量数据
+message ToolCallDeltaPb {
+  int32 index = 1;
+  string id = 2;
+  string type = 3;
+  ToolCallFunctionDeltaPb function = 4;
+}
+
+// ToolCallFunctionDeltaPb 函数信息增量
+message ToolCallFunctionDeltaPb {
+  string name = 1;
+  string arguments = 2;
+}
+
+// ChunkChoicePb 流式响应的单个增量片段。
+message ChunkChoicePb {
   // 片段索引，从 0 开始
   int32 index = 1;
 
-  // 增量消息内容，包含 role、content、reasoning_content
-  ChatDelta delta = 2;
+  // 增量消息内容，包含 role、content、reasoning_content、tool_calls
+  ChatDeltaPb delta = 2;
 
-  // 片段结束原因，有效值：stop、length、content_filter
+  // 片段结束原因，有效值：stop、length、content_filter、tool_calls
   string finish_reason = 3;
 }
 
@@ -170,7 +187,7 @@ message ChatCompletionStreamChunk {
   string model = 4;
 
   // 增量片段列表
-  repeated ChunkChoice choices = 5;
+  repeated ChunkChoicePb choices = 5;
 }
 
 // ============================================================
@@ -180,8 +197,8 @@ message ChatCompletionStreamChunk {
 // ListModelsReq 获取模型列表请求
 message ListModelsReq {}
 
-// ModelObject 模型对象，包含模型的基本信息和能力描述。
-message ModelObject {
+// ModelObjectPb 模型对象，包含模型的基本信息和能力描述。
+message ModelObjectPb {
   // 模型唯一标识符，用于 API 调用时指定模型
   string id = 1;
 
@@ -210,7 +227,7 @@ message ModelObject {
 // ListModelsRes 模型列表响应
 message ListModelsRes {
   // 可用模型数组
-  repeated ModelObject data = 1;
+  repeated ModelObjectPb data = 1;
 }
 
 // ============================================================
@@ -281,12 +298,12 @@ message AsyncToolResultRes {
   string error = 5;
 
   // 进度消息历史
-  repeated ProgressMessage messages = 6;
+  repeated ProgressMessagePb messages = 6;
 }
 
-// ProgressMessage 进度消息
+// ProgressMessagePb 进度消息
 // 记录 MCP 服务器发送的所有进度通知，用于前端展示消息历史
-message ProgressMessage {
+message ProgressMessagePb {
   // 当前进度百分比，取值范围 0.0~100.0
   double progress = 1;
 

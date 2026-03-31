@@ -27,9 +27,10 @@ type ModelConfig struct {
 
 type Config struct {
 	zrpc.RpcServerConf
-	StreamTimeout     time.Duration `json:",default=10m"` // 单次流的总时长上限
-	StreamIdleTimeout time.Duration `json:",default=90s"` // chunk 间最大空闲时间
-	MaxToolRounds     int           `json:",default=10"`  // tool-calling 最大循环轮次
+	StreamTimeout     time.Duration `json:",default=10m"`    // 单次流的总时长上限
+	StreamIdleTimeout time.Duration `json:",default=90s"`    // chunk 间最大空闲时间
+	MaxToolRounds     int           `json:",default=10"`     // tool-calling 最大循环轮次
+	MaxContextTokens  int           `json:",default=128000"` // 上下文 token 上限（用于警告）
 	Providers         []ProviderConfig
 	Models            []ModelConfig
 	Mcpx              mcpx.Config `json:",optional"` // MCP 客户端配置

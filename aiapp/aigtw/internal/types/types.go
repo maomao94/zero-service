@@ -4,22 +4,22 @@
 package types
 
 type AsyncResultStatsResponse struct {
-	Total       int64   `json:"total"`
-	Pending     int64   `json:"pending"`
-	Completed   int64   `json:"completed"`
-	Failed      int64   `json:"failed"`
-	SuccessRate float64 `json:"success_rate"`
+	Total       int64   `json:"total"`        // 任务总数
+	Pending     int64   `json:"pending"`      // 待处理任务数
+	Completed   int64   `json:"completed"`    // 已完成任务数
+	Failed      int64   `json:"failed"`       // 失败任务数
+	SuccessRate float64 `json:"success_rate"` // 成功率
 }
 
 type AsyncToolCallRequest struct {
-	Server string                 `json:"server"`
-	Tool   string                 `json:"tool"`
-	Args   map[string]interface{} `json:"args"`
+	Server string                 `json:"server"` // MCP 服务器名称
+	Tool   string                 `json:"tool"`   // MCP 工具名称
+	Args   map[string]interface{} `json:"args"`   // 工具参数
 }
 
 type AsyncToolCallResponse struct {
-	TaskID string `json:"task_id"`
-	Status string `json:"status"`
+	TaskID string `json:"task_id"` // 任务唯一标识符
+	Status string `json:"status"`  // 任务初始状态，固定为 "pending"
 }
 
 type AsyncToolResultRequest struct {
@@ -27,12 +27,12 @@ type AsyncToolResultRequest struct {
 }
 
 type AsyncToolResultResponse struct {
-	TaskID   string            `json:"task_id"`
-	Status   string            `json:"status"`
-	Progress float64           `json:"progress"`
-	Result   string            `json:"result,omitempty"`
-	Error    string            `json:"error,omitempty"`
-	Messages []ProgressMessage `json:"messages,omitempty"`
+	TaskID   string            `json:"task_id"`            // 任务标识符
+	Status   string            `json:"status"`             // 状态: pending / running / completed / failed
+	Progress float64           `json:"progress"`           // 执行进度 0.0~100.0
+	Result   string            `json:"result,omitempty"`   // 成功结果
+	Error    string            `json:"error,omitempty"`    // 失败错误
+	Messages []ProgressMessage `json:"messages,omitempty"` // 进度消息历史
 }
 
 type ChatCompletionChunk struct {
@@ -44,36 +44,37 @@ type ChatCompletionChunk struct {
 }
 
 type ChatCompletionRequest struct {
-	Model       string         `json:"model"`                                        // 模型ID，对应能力（如 aigtw-chat, aigtw-coding）
-	Messages    []ChatMessage  `json:"messages"`                                     // 对话消息列表
-	Stream      bool           `json:"stream,optional"`                              // 是否启用 SSE 流式输出
-	Temperature float64        `json:"temperature,optional,default=1,range=[0:2.0]"` // 采样温度，越高越随机
-	TopP        float64        `json:"top_p,optional,default=1,range=[0:1.0]"`       // 核采样概率
-	MaxTokens   int            `json:"max_tokens,optional"`                          // 最大生成 token 数
-	Stop        []string       `json:"stop,optional"`                                // 停止生成的标记序列
-	User        string         `json:"user,optional"`                                // 终端用户标识
-	Thinking    *ThinkingParam `json:"thinking,optional"`
+	Model       string        `json:"model"`                                        // 模型ID，对应能力
+	Messages    []ChatMessage `json:"messages"`                                     // 对话消息列表
+	Stream      bool          `json:"stream,optional"`                              // 是否启用 SSE 流式输出
+	Temperature float64       `json:"temperature,optional,default=1,range=[0:2.0]"` // 采样温度
+	TopP        float64       `json:"top_p,optional,default=1,range=[0:1.0]"`       // 核采样概率
+	MaxTokens   int           `json:"max_tokens,optional"`                          // 最大生成 token 数
+	Stop        []string      `json:"stop,optional"`                                // 停止生成的标记序列
+	User        string        `json:"user,optional"`                                // 终端用户标识
+	Thinking    ThinkingParam `json:"thinking,optional"`                            // 深度思考模式参数
 }
 
 type ChatCompletionResponse struct {
-	Id      string   `json:"id"`      // 补全ID，格式 chatcmpl-{uuid}
+	Id      string   `json:"id"`      // 补全ID
 	Object  string   `json:"object"`  // 固定值 "chat.completion"
-	Created int64    `json:"created"` // 创建时间（Unix 时间戳）
+	Created int64    `json:"created"` // 创建时间
 	Model   string   `json:"model"`   // 实际使用的模型ID
 	Choices []Choice `json:"choices"` // 补全结果列表
 	Usage   Usage    `json:"usage"`   // Token 用量统计
 }
 
 type ChatDelta struct {
-	Role             string `json:"role,optional"`    // 角色
-	Content          string `json:"content,optional"` // 内容增量
-	ReasoningContent string `json:"reasoning_content,optional"`
+	Role             string          `json:"role,optional"`              // 角色
+	Content          string          `json:"content,optional"`           // 内容增量
+	ReasoningContent string          `json:"reasoning_content,optional"` // 推理思考过程增量
+	ToolCalls        []ToolCallDelta `json:"tool_calls,optional"`        // 工具调用增量
 }
 
 type ChatMessage struct {
-	Role             string `json:"role"`    // 角色: system / user / assistant
-	Content          string `json:"content"` // 消息内容
-	ReasoningContent string `json:"reasoning_content,optional"`
+	Role             string `json:"role"`                       // 角色: system / user / assistant
+	Content          string `json:"content"`                    // 消息内容
+	ReasoningContent string `json:"reasoning_content,optional"` // 模型推理思考过程
 }
 
 type Choice struct {
@@ -85,25 +86,29 @@ type Choice struct {
 type ChunkChoice struct {
 	Index        int       `json:"index"`                  // 选项索引
 	Delta        ChatDelta `json:"delta"`                  // 增量内容
-	FinishReason *string   `json:"finish_reason,optional"` // 结束原因
+	FinishReason *string   `json:"finish_reason,optional"` // 结束原因: stop / length / content_filter / tool_calls
+}
+
+type JwtAuth struct {
+	Authorization string `header:"Authorization,optional"`
 }
 
 type ListAsyncResultsRequest struct {
-	Status    string `form:"status,optional"`
-	StartTime int64  `form:"start_time,optional"`
-	EndTime   int64  `form:"end_time,optional"`
-	Page      int    `form:"page,optional"`
-	PageSize  int    `form:"page_size,optional"`
-	SortField string `form:"sort_field,optional"`
-	SortOrder string `form:"sort_order,optional"`
+	Status    string `form:"status,optional"`     // 过滤状态
+	StartTime int64  `form:"start_time,optional"` // 开始时间戳（毫秒）
+	EndTime   int64  `form:"end_time,optional"`   // 结束时间戳（毫秒）
+	Page      int    `form:"page,optional"`       // 页码
+	PageSize  int    `form:"page_size,optional"`  // 每页数量
+	SortField string `form:"sort_field,optional"` // 排序字段
+	SortOrder string `form:"sort_order,optional"` // 排序方向
 }
 
 type ListAsyncResultsResponse struct {
-	Items      []AsyncToolResultResponse `json:"items"`
-	Total      int64                     `json:"total"`
-	Page       int                       `json:"page"`
-	PageSize   int                       `json:"page_size"`
-	TotalPages int                       `json:"total_pages"`
+	Items      []AsyncToolResultResponse `json:"items"`       // 任务列表
+	Total      int64                     `json:"total"`       // 总数
+	Page       int                       `json:"page"`        // 当前页
+	PageSize   int                       `json:"page_size"`   // 每页数量
+	TotalPages int                       `json:"total_pages"` // 总页数
 }
 
 type ListModelsResponse struct {
@@ -118,22 +123,34 @@ type ModelMetadata struct {
 }
 
 type ModelObject struct {
-	Id       string         `json:"id"`                // 模型ID（即能力ID，如 aigtw-chat）
+	Id       string         `json:"id"`                // 模型ID
 	Object   string         `json:"object"`            // 固定值 "model"
-	Created  int64          `json:"created"`           // 创建时间（Unix 时间戳）
-	OwnedBy  string         `json:"owned_by"`          // 所属方，固定 "aigtw"
-	Metadata *ModelMetadata `json:"metadata,optional"` // 扩展元数据（能力详情）
+	Created  int64          `json:"created"`           // 创建时间
+	OwnedBy  string         `json:"owned_by"`          // 所属方
+	Metadata *ModelMetadata `json:"metadata,optional"` // 扩展元数据
 }
 
 type ProgressMessage struct {
-	Progress float64 `json:"progress"`
-	Total    float64 `json:"total"`
-	Message  string  `json:"message"`
-	Time     int64   `json:"time"`
+	Progress float64 `json:"progress"` // 当前进度百分比，0.0~100.0
+	Total    float64 `json:"total"`    // 进度总值（参考值）
+	Message  string  `json:"message"`  // 消息内容
+	Time     int64   `json:"time"`     // 时间戳，Unix 秒
 }
 
 type ThinkingParam struct {
 	Type string `json:"type"` // "enabled" 启用 / "disabled" 禁用
+}
+
+type ToolCallDelta struct {
+	Index    int                   `json:"index,omitempty"`    // 工具调用索引
+	Id       string                `json:"id,omitempty"`       // 工具调用ID
+	Type     string                `json:"type,omitempty"`     // 类型，通常为 "function"
+	Function ToolCallFunctionDelta `json:"function,omitempty"` // 函数信息
+}
+
+type ToolCallFunctionDelta struct {
+	Name      string `json:"name,omitempty"`      // 函数名称
+	Arguments string `json:"arguments,omitempty"` // 参数JSON字符串（可能分片到达）
 }
 
 type Usage struct {

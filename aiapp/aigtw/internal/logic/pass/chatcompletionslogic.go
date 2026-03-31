@@ -2,6 +2,7 @@ package pass
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -91,6 +92,17 @@ func (l *ChatCompletionsLogic) handleStream(req *types.ChatCompletionRequest) er
 		default:
 		}
 
+		// 检查是否为工具事件（role=tool，content 是 JSON 格式）
+		if len(chunk.Choices) > 0 && chunk.Choices[0].Delta != nil && chunk.Choices[0].Delta.Role == "tool" {
+			content := chunk.Choices[0].Delta.Content
+			eventType := inferToolEventType(content)
+			if eventType != "" {
+				// 写入 SSE 事件：event: {type}\ndata: {content}\n\n
+				sw.WriteEvent(eventType, content)
+				continue
+			}
+		}
+
 		httpChunk := toHTTPChunk(chunk)
 		if err := sw.WriteJSON(httpChunk); err != nil {
 			l.Logger.Errorf("write sse chunk error: %v", err)
@@ -99,13 +111,25 @@ func (l *ChatCompletionsLogic) handleStream(req *types.ChatCompletionRequest) er
 	}
 }
 
+// inferToolEventType 根据 JSON 内容推断工具事件类型
+func inferToolEventType(content string) string {
+	var event map[string]interface{}
+	if err := json.Unmarshal([]byte(content), &event); err != nil {
+		return ""
+	}
+	if t, ok := event["type"].(string); ok {
+		return t
+	}
+	return ""
+}
+
 // toProtoRequest 将 HTTP JSON 请求转为 gRPC proto 请求。
 // 负责将 HTTP 层的 OpenAI 标准 thinking 对象转换为 gRPC 层的 bool enable_thinking，
 // 同时透传 ReasoningContent 使 aichat 服务能正确处理 thinking 模式相关参数。
 func toProtoRequest(req *types.ChatCompletionRequest) *aichat.ChatCompletionReq {
-	messages := make([]*aichat.ChatMessage, len(req.Messages))
+	messages := make([]*aichat.ChatMessagePb, len(req.Messages))
 	for i, m := range req.Messages {
-		messages[i] = &aichat.ChatMessage{
+		messages[i] = &aichat.ChatMessagePb{
 			Role:             m.Role,
 			Content:          m.Content,
 			ReasoningContent: m.ReasoningContent,
@@ -114,7 +138,7 @@ func toProtoRequest(req *types.ChatCompletionRequest) *aichat.ChatCompletionReq 
 
 	// 将 OpenAI 标准的 thinking 对象（{"thinking":{"type":"enabled"}}）
 	// 映射为内部 proto 的 bool enable_thinking
-	enableThinking := req.Thinking != nil && req.Thinking.Type == "enabled"
+	enableThinking := req.Thinking.Type == "enabled"
 
 	return &aichat.ChatCompletionReq{
 		Model:          req.Model,
@@ -165,16 +189,33 @@ func toHTTPResponse(resp *aichat.ChatCompletionRes) *types.ChatCompletionRespons
 
 // toHTTPChunk 将 gRPC proto 流式 chunk 转为 HTTP SSE chunk。
 // 透传 Delta.ReasoningContent，前端通过此字段实时展示模型的推理思考过程。
+// 当有 tool_calls 时，透传工具调用增量。
 func toHTTPChunk(chunk *aichat.ChatCompletionStreamChunk) types.ChatCompletionChunk {
 	choices := make([]types.ChunkChoice, len(chunk.Choices))
 	for i, c := range chunk.Choices {
+		delta := types.ChatDelta{
+			Role:             c.Delta.Role,
+			Content:          c.Delta.Content,
+			ReasoningContent: c.Delta.ReasoningContent,
+		}
+		// 转换 tool_calls 增量
+		if len(c.Delta.ToolCalls) > 0 {
+			delta.ToolCalls = make([]types.ToolCallDelta, len(c.Delta.ToolCalls))
+			for j, tc := range c.Delta.ToolCalls {
+				delta.ToolCalls[j] = types.ToolCallDelta{
+					Index: int(tc.Index),
+					Id:    tc.Id,
+					Type:  tc.Type,
+					Function: types.ToolCallFunctionDelta{
+						Name:      tc.Function.Name,
+						Arguments: tc.Function.Arguments,
+					},
+				}
+			}
+		}
 		cc := types.ChunkChoice{
 			Index: int(c.Index),
-			Delta: types.ChatDelta{
-				Role:             c.Delta.Role,
-				Content:          c.Delta.Content,
-				ReasoningContent: c.Delta.ReasoningContent,
-			},
+			Delta: delta,
 		}
 		if c.FinishReason != "" {
 			reason := c.FinishReason

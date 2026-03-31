@@ -95,13 +95,23 @@ func (h *MemoryAsyncResultStore) Get(ctx context.Context, taskID string) (*Async
 }
 
 // UpdateProgress 更新进度，追加消息到历史
+// 如果任务不存在，会自动创建（幂等操作）
 func (h *MemoryAsyncResultStore) UpdateProgress(ctx context.Context, taskID string, progress, total float64, message string) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
 	result, ok := h.data[taskID]
 	if !ok {
-		return errors.New("async result not found")
+		// 自动创建任务（幂等）
+		result = &AsyncToolResult{
+			TaskID:    taskID,
+			Status:    "pending",
+			Progress:  progress,
+			Total:     total,
+			CreatedAt: time.Now().Unix(),
+			UpdatedAt: time.Now().Unix(),
+		}
+		h.data[taskID] = result
 	}
 
 	result.Progress = progress
@@ -314,49 +324,22 @@ func (h *MemoryAsyncResultStore) SetError(ctx context.Context, taskID string, er
 }
 
 // DefaultTaskObserver 默认任务观察者
-// 将任务状态变化通知到外部（如 WebSocket、Server-Sent Events 等）
+// 只负责将任务状态变化通知到外部（如 WebSocket、Server-Sent Events 等）
+// 不负责存储，存储由 Client 内部管理
 type DefaultTaskObserver struct {
-	store    AsyncResultStore
 	callback ProgressCallback // 外部回调
 }
 
 // NewDefaultTaskObserver 创建默认任务观察者
-// - store: 异步结果存储
 // - callback: 外部回调，用于实时通知（如 WebSocket 推送）
-func NewDefaultTaskObserver(store AsyncResultStore, callback ProgressCallback) *DefaultTaskObserver {
+func NewDefaultTaskObserver(callback ProgressCallback) *DefaultTaskObserver {
 	return &DefaultTaskObserver{
-		store:    store,
 		callback: callback,
 	}
 }
 
-// OnProgress 进度更新回调
-// 1. 保存进度到存储
-// 2. 触发外部回调
+// OnProgress 进度更新回调，只触发外部回调
 func (h *DefaultTaskObserver) OnProgress(taskID string, progress, total float64, message string) {
-	ctx := context.Background()
-
-	// 如果任务不存在，先创建（幂等操作）
-	if !h.store.Exists(ctx, taskID) {
-		initialResult := &AsyncToolResult{
-			TaskID:    taskID,
-			Status:    "pending",
-			Progress:  0,
-			CreatedAt: time.Now().Unix(),
-			UpdatedAt: time.Now().Unix(),
-		}
-		if err := h.store.Save(ctx, initialResult); err != nil {
-			logx.Debugf("[DefaultTaskObserver] OnProgress: failed to create task %s: %v", taskID, err)
-		}
-	}
-
-	// 保存进度到存储
-	if err := h.store.UpdateProgress(ctx, taskID, progress, total, message); err != nil {
-		logx.Debugf("[DefaultTaskObserver] OnProgress: failed to update progress %s: %v", taskID, err)
-		return
-	}
-
-	// 触发外部回调
 	if h.callback != nil {
 		h.callback(&ProgressInfo{
 			Token:    taskID,
@@ -367,41 +350,9 @@ func (h *DefaultTaskObserver) OnProgress(taskID string, progress, total float64,
 	}
 }
 
-// OnComplete 任务完成回调
-// 1. 获取已有消息历史
-// 2. 追加完成消息
-// 3. 保存最终结果
-// 4. 触发外部回调
+// OnComplete 任务完成回调，只触发外部回调
+// 存储已在 Client.CallToolAsyncAwait 中处理
 func (h *DefaultTaskObserver) OnComplete(taskID string, message string, result *AsyncToolResult) {
-	ctx := context.Background()
-
-	// 获取已有消息历史
-	existing, err := h.store.Get(ctx, taskID)
-	if err == nil && existing != nil {
-		logx.Debugf("[DefaultTaskObserver] OnComplete: found %d existing messages for task %s", len(existing.Messages), taskID)
-		result.Messages = existing.Messages
-	}
-
-	// 追加完成消息
-	now := time.Now().Unix()
-	result.Messages = append(result.Messages, ProgressMessage{
-		Progress: 100,
-		Total:    100,
-		Message:  message,
-		Time:     now,
-	})
-	result.Progress = 100
-	result.UpdatedAt = now
-
-	logx.Debugf("[DefaultTaskObserver] OnComplete: taskID=%s, finalMessages=%d, result=%s",
-		taskID, len(result.Messages), result.Result)
-
-	// 保存最终结果
-	if err := h.store.Save(ctx, result); err != nil {
-		logx.Debugf("[DefaultTaskObserver] OnComplete: failed to save result %s: %v", taskID, err)
-	}
-
-	// 触发外部回调
 	if h.callback != nil {
 		h.callback(&ProgressInfo{
 			Token:    taskID,
@@ -410,4 +361,53 @@ func (h *DefaultTaskObserver) OnComplete(taskID string, message string, result *
 			Message:  message,
 		})
 	}
+}
+
+// emptyAsyncResultStore 空实现，不做任何操作
+// 用于 Client 默认值，避免空指针
+type emptyAsyncResultStore struct{}
+
+func (e *emptyAsyncResultStore) Save(ctx context.Context, result *AsyncToolResult) error {
+	return nil
+}
+
+func (e *emptyAsyncResultStore) Get(ctx context.Context, taskID string) (*AsyncToolResult, error) {
+	return nil, nil
+}
+
+func (e *emptyAsyncResultStore) UpdateProgress(ctx context.Context, taskID string, progress, total float64, message string) error {
+	return nil
+}
+
+func (e *emptyAsyncResultStore) Exists(ctx context.Context, taskID string) bool {
+	return false
+}
+
+func (e *emptyAsyncResultStore) Delete(ctx context.Context, taskID string) error {
+	return nil
+}
+
+func (e *emptyAsyncResultStore) List(ctx context.Context, req *ListAsyncResultsReq) (*ListAsyncResultsResp, error) {
+	return &ListAsyncResultsResp{}, nil
+}
+
+func (e *emptyAsyncResultStore) Stats(ctx context.Context) (*AsyncResultStats, error) {
+	return &AsyncResultStats{}, nil
+}
+
+func (e *emptyAsyncResultStore) SetStatus(ctx context.Context, taskID string, status string) error {
+	return nil
+}
+
+func (e *emptyAsyncResultStore) SetResult(ctx context.Context, taskID string, result string) error {
+	return nil
+}
+
+func (e *emptyAsyncResultStore) SetError(ctx context.Context, taskID string, errMsg string) error {
+	return nil
+}
+
+// NewEmptyAsyncResultStore 创建空实现，用于 Client 默认值
+func NewEmptyAsyncResultStore() AsyncResultStore {
+	return &emptyAsyncResultStore{}
 }

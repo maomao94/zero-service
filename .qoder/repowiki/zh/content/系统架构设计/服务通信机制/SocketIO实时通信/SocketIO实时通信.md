@@ -1,7 +1,7 @@
 # SocketIO实时通信
 
 <cite>
-**本文引用的文件**
+**本文档引用的文件**
 - [common/socketiox/server.go](file://common/socketiox/server.go)
 - [common/socketiox/handler.go](file://common/socketiox/handler.go)
 - [common/socketiox/container.go](file://common/socketiox/container.go)
@@ -18,7 +18,15 @@
 - [common/mqttx/mqttx.go](file://common/mqttx/mqttx.go)
 - [facade/streamevent/etc/streamevent.yaml](file://facade/streamevent/etc/streamevent.yaml)
 - [common/socketiox/test-socketio.html](file://common/socketiox/test-socketio.html)
+- [socketapp/socketgtw/internal/sockethandler/sockertuphandler.go](file://socketapp/socketgtw/internal/sockethandler/sockertuphandler.go)
 </cite>
+
+## 更新摘要
+**所做更改**
+- 增强了SocketIO中间件处理机制的错误处理和状态管理
+- 完善了事件处理的参数验证和错误响应机制
+- 加强了连接钩子和房间管理的状态跟踪
+- 优化了异步处理的安全性和错误恢复机制
 
 ## 目录
 1. [简介](#简介)
@@ -26,14 +34,17 @@
 3. [核心组件](#核心组件)
 4. [架构总览](#架构总览)
 5. [详细组件分析](#详细组件分析)
-6. [依赖分析](#依赖分析)
-7. [性能考虑](#性能考虑)
-8. [故障排查指南](#故障排查指南)
-9. [结论](#结论)
-10. [附录](#附录)
+6. [中间件处理机制增强](#中间件处理机制增强)
+7. [依赖分析](#依赖分析)
+8. [性能考虑](#性能考虑)
+9. [故障排查指南](#故障排查指南)
+10. [结论](#结论)
+11. [附录](#附录)
 
 ## 简介
 本文件面向Zero-Service项目中基于Socket.IO的实时通信能力，系统性阐述Socket.IO在实时消息推送中的应用，覆盖连接管理、房间机制、消息路由、广播策略、鉴权机制、与MQTT桥接、监控指标与故障排查等内容，并提供客户端集成与最佳实践建议。文档以代码为依据，结合架构图与流程图，帮助读者快速理解并高效落地。
+
+**更新** 本次更新重点增强了SocketIO中间件处理机制，提供了更完善的错误处理和状态管理能力。
 
 ## 项目结构
 围绕Socket.IO的实现，项目由以下层次构成：
@@ -74,7 +85,7 @@ Bridge --> StreamEvt
 Srv --> Handler
 ```
 
-图表来源
+**图表来源**
 - [common/socketiox/server.go:299-335](file://common/socketiox/server.go#L299-L335)
 - [common/socketiox/handler.go:19-41](file://common/socketiox/handler.go#L19-L41)
 - [common/socketiox/container.go:30-61](file://common/socketiox/container.go#L30-L61)
@@ -85,7 +96,7 @@ Srv --> Handler
 - [app/bridgemqtt/internal/handler/mqttstreamhandler.go:99-129](file://app/bridgemqtt/internal/handler/mqttstreamhandler.go#L99-L129)
 - [common/mqttx/mqttx.go:98-178](file://common/mqttx/mqttx.go#L98-L178)
 
-章节来源
+**章节来源**
 - [common/socketiox/server.go:1-814](file://common/socketiox/server.go#L1-L814)
 - [common/socketiox/handler.go:1-41](file://common/socketiox/handler.go#L1-L41)
 - [common/socketiox/container.go:1-426](file://common/socketiox/container.go#L1-L426)
@@ -113,7 +124,7 @@ Srv --> Handler
 - SocketContainer
   - 统一管理RPC客户端连接，支持直连、Etcd订阅、Nacos订阅三种发现方式，具备动态增删与健康实例筛选能力。
 
-章节来源
+**章节来源**
 - [common/socketiox/server.go:119-232](file://common/socketiox/server.go#L119-L232)
 - [socketapp/socketgtw/internal/server/socketgtwserver.go:26-90](file://socketapp/socketgtw/internal/server/socketgtwserver.go#L26-L90)
 - [socketapp/socketpush/internal/server/socketpushserver.go:26-102](file://socketapp/socketpush/internal/server/socketpushserver.go#L26-L102)
@@ -144,7 +155,7 @@ Nacos -.-> RPCGW
 Nacos -.-> RPCPUSH
 ```
 
-图表来源
+**图表来源**
 - [common/socketiox/handler.go:19-41](file://common/socketiox/handler.go#L19-L41)
 - [common/socketiox/server.go:337-676](file://common/socketiox/server.go#L337-L676)
 - [socketapp/socketgtw/socketgtw.go:48-62](file://socketapp/socketgtw/socketgtw.go#L48-L62)
@@ -187,11 +198,11 @@ P-->>S : "结果"
 S-->>C : "ACK或下行响应"
 ```
 
-图表来源
+**图表来源**
 - [common/socketiox/server.go:337-676](file://common/socketiox/server.go#L337-L676)
 - [socketapp/socketpush/internal/server/socketpushserver.go:26-60](file://socketapp/socketpush/internal/server/socketpushserver.go#L26-L60)
 
-章节来源
+**章节来源**
 - [common/socketiox/server.go:20-83](file://common/socketiox/server.go#L20-L83)
 - [common/socketiox/server.go:119-232](file://common/socketiox/server.go#L119-L232)
 - [common/socketiox/server.go:337-676](file://common/socketiox/server.go#L337-L676)
@@ -218,10 +229,10 @@ Err --> End(["结束"])
 Ack --> End
 ```
 
-图表来源
+**图表来源**
 - [common/socketiox/server.go:392-435](file://common/socketiox/server.go#L392-L435)
 
-章节来源
+**章节来源**
 - [common/socketiox/server.go:204-232](file://common/socketiox/server.go#L204-L232)
 - [common/socketiox/server.go:392-468](file://common/socketiox/server.go#L392-L468)
 
@@ -246,12 +257,12 @@ S->>T : "向房间内会话广播事件"
 S-->>C : "ACK或下行响应"
 ```
 
-图表来源
+**图表来源**
 - [common/socketiox/server.go:678-688](file://common/socketiox/server.go#L678-L688)
 - [socketapp/socketgtw/internal/server/socketgtwserver.go:38-48](file://socketapp/socketgtw/internal/server/socketgtwserver.go#L38-L48)
 - [socketapp/socketpush/internal/server/socketpushserver.go:50-58](file://socketapp/socketpush/internal/server/socketpushserver.go#L50-L58)
 
-章节来源
+**章节来源**
 - [common/socketiox/server.go:678-700](file://common/socketiox/server.go#L678-L700)
 - [socketapp/socketgtw/internal/server/socketgtwserver.go:38-48](file://socketapp/socketgtw/internal/server/socketgtwserver.go#L38-L48)
 - [socketapp/socketpush/internal/server/socketpushserver.go:50-58](file://socketapp/socketpush/internal/server/socketpushserver.go#L50-L58)
@@ -276,12 +287,12 @@ S->>S : "OnAuthentication校验Token"
 S-->>U : "连接建立/拒绝"
 ```
 
-图表来源
+**图表来源**
 - [socketapp/socketpush/internal/logic/gentokenlogic.go:29-45](file://socketapp/socketpush/internal/logic/gentokenlogic.go#L29-L45)
 - [socketapp/socketpush/internal/logic/verifytokenlogic.go:28-49](file://socketapp/socketpush/internal/logic/verifytokenlogic.go#L28-L49)
 - [common/socketiox/server.go:337-349](file://common/socketiox/server.go#L337-L349)
 
-章节来源
+**章节来源**
 - [socketapp/socketpush/etc/socketpush.yaml:10-13](file://socketapp/socketpush/etc/socketpush.yaml#L10-L13)
 - [socketapp/socketpush/internal/logic/gentokenlogic.go:29-79](file://socketapp/socketpush/internal/logic/gentokenlogic.go#L29-L79)
 - [socketapp/socketpush/internal/logic/verifytokenlogic.go:28-49](file://socketapp/socketpush/internal/logic/verifytokenlogic.go#L28-L49)
@@ -310,11 +321,11 @@ SE-->>MS : "返回"
 SP-->>MS : "返回"
 ```
 
-图表来源
+**图表来源**
 - [app/bridgemqtt/internal/handler/mqttstreamhandler.go:130-188](file://app/bridgemqtt/internal/handler/mqttstreamhandler.go#L130-L188)
 - [common/mqttx/mqttx.go:98-178](file://common/mqttx/mqttx.go#L98-L178)
 
-章节来源
+**章节来源**
 - [app/bridgemqtt/etc/bridgemqtt.yaml:30-48](file://app/bridgemqtt/etc/bridgemqtt.yaml#L30-L48)
 - [app/bridgemqtt/internal/handler/mqttstreamhandler.go:99-188](file://app/bridgemqtt/internal/handler/mqttstreamhandler.go#L99-L188)
 - [common/mqttx/mqttx.go:45-64](file://common/mqttx/mqttx.go#L45-L64)
@@ -340,12 +351,12 @@ Etcd --> Done
 Nacos --> Done
 ```
 
-图表来源
+**图表来源**
 - [common/socketiox/container.go:35-61](file://common/socketiox/container.go#L35-L61)
 - [common/socketiox/container.go:83-130](file://common/socketiox/container.go#L83-L130)
 - [common/socketiox/container.go:156-242](file://common/socketiox/container.go#L156-L242)
 
-章节来源
+**章节来源**
 - [common/socketiox/container.go:30-61](file://common/socketiox/container.go#L30-L61)
 - [common/socketiox/container.go:83-356](file://common/socketiox/container.go#L83-L356)
 
@@ -359,9 +370,90 @@ Nacos --> Done
 - 测试页面
   - 提供测试HTML页面，便于本地调试Socket.IO连接与事件交互。
 
-章节来源
+**章节来源**
 - [socketapp/socketgtw/socketgtw.go:48-62](file://socketapp/socketgtw/socketgtw.go#L48-L62)
 - [common/socketiox/test-socketio.html:1-44](file://common/socketiox/test-socketio.html#L1-L44)
+
+## 中间件处理机制增强
+
+### 错误处理机制完善
+**更新** SocketIO中间件处理机制已显著增强，提供了更完善的错误处理和状态管理能力：
+
+- **参数验证增强**
+  - 所有事件处理都增加了严格的参数验证，包括reqId、room、event、payload等字段的必填性检查
+  - 使用extractPayload函数统一处理不同类型的负载数据，支持字符串和JSON对象的自动转换
+  - 参数解析失败时立即返回标准化的错误响应
+
+- **异步安全处理**
+  - 所有事件处理都通过threading.GoSafe包装，确保异步任务的异常不会影响主线程
+  - 异步处理中增加了完整的错误捕获和日志记录机制
+  - 支持ACK回调和下行响应两种错误反馈方式
+
+- **状态管理优化**
+  - 连接钩子执行失败时，会将错误信息存储在session.roomLoadError中
+  - 断开连接时自动清理会话状态，防止内存泄漏
+  - 统一的会话状态跟踪和清理机制
+
+```mermaid
+flowchart TD
+Start(["事件接收"]) --> Extract["extractPayload解析负载"]
+Extract --> Valid{"参数验证"}
+Valid -- 失败 --> ErrorResp["sendErrorResponse返回错误"]
+Valid -- 成功 --> Async["threading.GoSafe异步处理"]
+Async --> Handler{"事件处理器存在?"}
+Handler -- 不存在 --> NoHandler["返回未配置处理器错误"]
+Handler -- 存在 --> Process["执行业务处理"]
+Process --> Result{"处理结果"}
+Result -- 成功 --> SuccessResp["返回成功响应"]
+Result -- 失败 --> BizError["返回业务处理失败"]
+ErrorResp --> End(["结束"])
+NoHandler --> End
+SuccessResp --> End
+BizError --> End
+```
+
+**图表来源**
+- [common/socketiox/server.go:392-435](file://common/socketiox/server.go#L392-L435)
+- [common/socketiox/server.go:469-530](file://common/socketiox/server.go#L469-L530)
+- [common/socketiox/server.go:532-618](file://common/socketiox/server.go#L532-L618)
+
+### 钩子机制增强
+**更新** 中间件处理机制增强了钩子执行的可靠性和状态跟踪：
+
+- **连接钩子**
+  - 在连接建立后执行，支持房间加载和权限初始化
+  - 执行失败时记录错误状态，不影响连接建立
+  - 支持批量房间加入操作
+
+- **预加入房间钩子**
+  - 在房间加入前执行，提供权限验证和业务规则检查
+  - 钩子失败时直接返回错误，阻止房间加入操作
+  - 支持异步钩子执行
+
+- **断开连接钩子**
+  - 在连接断开时执行，清理资源和状态
+  - 区分正常断开和异常断开，记录断开原因
+  - 支持异步清理操作
+
+### 事件处理器增强
+**更新** 事件处理器机制得到了全面增强：
+
+- **统一的事件处理框架**
+  - 支持自定义事件处理器注册
+  - 提供标准化的事件处理接口
+  - 支持事件负载的智能解析和序列化
+
+- **SocketUpHandler实现**
+  - 专门处理上行事件的处理器
+  - 集成流事件服务，支持事件持久化
+  - 提供统一的响应格式化
+
+**章节来源**
+- [common/socketiox/server.go:350-400](file://common/socketiox/server.go#L350-L400)
+- [common/socketiox/server.go:415-434](file://common/socketiox/server.go#L415-L434)
+- [common/socketiox/server.go:494-530](file://common/socketiox/server.go#L494-L530)
+- [common/socketiox/server.go:643-674](file://common/socketiox/server.go#L643-L674)
+- [socketapp/socketgtw/internal/sockethandler/sockertuphandler.go:23-44](file://socketapp/socketgtw/internal/sockethandler/sockertuphandler.go#L23-L44)
 
 ## 依赖分析
 - 组件耦合
@@ -384,13 +476,13 @@ B --> P
 B --> E["streamevent RPC"]
 ```
 
-图表来源
+**图表来源**
 - [common/socketiox/handler.go:19-41](file://common/socketiox/handler.go#L19-L41)
 - [common/socketiox/server.go:337-676](file://common/socketiox/server.go#L337-L676)
 - [common/socketiox/container.go:30-61](file://common/socketiox/container.go#L30-L61)
 - [app/bridgemqtt/internal/handler/mqttstreamhandler.go:99-188](file://app/bridgemqtt/internal/handler/mqttstreamhandler.go#L99-L188)
 
-章节来源
+**章节来源**
 - [common/socketiox/handler.go:19-41](file://common/socketiox/handler.go#L19-L41)
 - [common/socketiox/container.go:30-61](file://common/socketiox/container.go#L30-L61)
 
@@ -404,7 +496,7 @@ B --> E["streamevent RPC"]
 - 日志与指标
   - 统计定时上报会话数、房间数、元数据与房间加载错误，便于容量规划与问题定位。
 
-章节来源
+**章节来源**
 - [common/socketiox/server.go:702-740](file://common/socketiox/server.go#L702-L740)
 - [common/socketiox/container.go:348-356](file://common/socketiox/container.go#L348-L356)
 
@@ -419,15 +511,17 @@ B --> E["streamevent RPC"]
   - 确认事件名不为保留事件；检查RPC广播接口调用链路；核对目标房间是否存在在线会话。
 - MQTT桥接异常
   - 检查EventMapping配置与默认事件；确认streamevent与Socket推送RPC可达；查看日志中的耗时与错误标记。
+- 中间件处理异常
+  - **新增** 检查事件参数验证是否通过；确认异步处理是否出现panic；查看钩子执行状态和错误信息。
 
-章节来源
+**章节来源**
 - [socketapp/socketgtw/socketgtw.go:48-62](file://socketapp/socketgtw/socketgtw.go#L48-L62)
 - [socketapp/socketpush/internal/logic/verifytokenlogic.go:28-49](file://socketapp/socketpush/internal/logic/verifytokenlogic.go#L28-L49)
 - [common/socketiox/server.go:392-468](file://common/socketiox/server.go#L392-L468)
 - [app/bridgemqtt/internal/handler/mqttstreamhandler.go:130-188](file://app/bridgemqtt/internal/handler/mqttstreamhandler.go#L130-L188)
 
 ## 结论
-Zero-Service的Socket.IO实时通信方案以通用服务器为核心，配合RPC网关与推送服务，实现了从连接管理、房间机制、消息路由到广播策略的完整闭环；通过MQTT桥接与服务发现，进一步扩展了跨协议与分布式场景下的实时能力。建议在生产环境中结合监控指标与日志，持续优化广播策略与连接池规模，确保高并发下的稳定性与低延迟。
+Zero-Service的Socket.IO实时通信方案以通用服务器为核心，配合RPC网关与推送服务，实现了从连接管理、房间机制、消息路由到广播策略的完整闭环；通过MQTT桥接与服务发现，进一步扩展了跨协议与分布式场景下的实时能力。**更新** 中间件处理机制的增强使得系统在错误处理、状态管理和异步安全性方面有了显著提升，为生产环境的稳定运行提供了更强保障。建议在生产环境中结合监控指标与日志，持续优化广播策略与连接池规模，确保高并发下的稳定性与低延迟。
 
 ## 附录
 - 配置参考
@@ -436,7 +530,7 @@ Zero-Service的Socket.IO实时通信方案以通用服务器为核心，配合RP
   - MQTT桥接配置：包含MQTT Broker、用户名密码、QoS、订阅主题、事件映射、Socket推送RPC客户端配置等。
   - 流事件服务配置：包含服务名、监听地址、日志、Nacos注册、数据库配置等。
 
-章节来源
+**章节来源**
 - [socketapp/socketgtw/etc/socketgtw.yaml:1-37](file://socketapp/socketgtw/etc/socketgtw.yaml#L1-L37)
 - [socketapp/socketpush/etc/socketpush.yaml:1-28](file://socketapp/socketpush/etc/socketpush.yaml#L1-L28)
 - [app/bridgemqtt/etc/bridgemqtt.yaml:1-48](file://app/bridgemqtt/etc/bridgemqtt.yaml#L1-L48)

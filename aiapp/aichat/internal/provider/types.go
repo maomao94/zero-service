@@ -74,6 +74,71 @@ type ChatDelta struct {
 	// 流式场景中先于 Content 输出，当 ReasoningContent 停止且 Content 开始时，
 	// 表示模型已从思考阶段切换到回答阶段。
 	ReasoningContent string `json:"reasoning_content,omitempty"`
+	// ToolCalls 流式场景中工具调用的增量列表
+	ToolCalls []ToolCallDelta `json:"tool_calls,omitempty"`
+}
+
+// ToolCallDelta 流式场景中工具调用的增量数据。
+type ToolCallDelta struct {
+	Index    int                   `json:"index,omitempty"`
+	Id       string                `json:"id,omitempty"`
+	Type     string                `json:"type,omitempty"`
+	Function ToolCallFunctionDelta `json:"function,omitempty"`
+}
+
+type ToolCallFunctionDelta struct {
+	Name      string `json:"name,omitempty"`
+	Arguments string `json:"arguments,omitempty"`
+}
+
+// ToolCallBuffer 累积流式工具调用增量的辅助结构
+type ToolCallBuffer struct {
+	calls map[string]*ToolCall
+}
+
+// NewToolCallBuffer 创建新的工具调用 buffer
+func NewToolCallBuffer() *ToolCallBuffer {
+	return &ToolCallBuffer{calls: make(map[string]*ToolCall)}
+}
+
+// Accumulate 将增量累积到 buffer 中
+func (b *ToolCallBuffer) Accumulate(delta *ToolCallDelta) {
+	if delta == nil {
+		return
+	}
+
+	tc, exists := b.calls[delta.Id]
+	if !exists {
+		tc = &ToolCall{
+			Id:   delta.Id,
+			Type: "function",
+		}
+		b.calls[delta.Id] = tc
+	}
+
+	if delta.Function.Name != "" {
+		if tc.Function.Name == "" {
+			tc.Function.Name = delta.Function.Name
+		}
+	}
+	if delta.Function.Arguments != "" {
+		tc.Function.Arguments += delta.Function.Arguments
+	}
+}
+
+// Collect 返回所有累积的工具调用并清空 buffer
+func (b *ToolCallBuffer) Collect() []*ToolCall {
+	result := make([]*ToolCall, 0, len(b.calls))
+	for _, tc := range b.calls {
+		result = append(result, tc)
+	}
+	b.calls = make(map[string]*ToolCall)
+	return result
+}
+
+// HasPendingTools 检查是否有未处理的工具调用
+func (b *ToolCallBuffer) HasPendingTools() bool {
+	return len(b.calls) > 0
 }
 
 // ToolDef OpenAI tools 请求格式

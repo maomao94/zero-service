@@ -6,6 +6,9 @@
 - [mcpserver.yaml](file://aiapp/mcpserver/etc/mcpserver.yaml)
 - [config.go](file://aiapp/mcpserver/internal/config/config.go)
 - [servicecontext.go](file://aiapp/mcpserver/internal/svc/servicecontext.go)
+- [loader.go](file://aiapp/mcpserver/internal/skills/loader.go)
+- [prompt.go](file://aiapp/mcpserver/internal/skills/prompt.go)
+- [resource.go](file://aiapp/mcpserver/internal/skills/resource.go)
 - [registry.go](file://aiapp/mcpserver/internal/tools/registry.go)
 - [echo.go](file://aiapp/mcpserver/internal/tools/echo.go)
 - [modbus.go](file://aiapp/mcpserver/internal/tools/modbus.go)
@@ -24,19 +27,18 @@
 
 ## 更新摘要
 **所做更改**
-- **传输协议配置更新**：MCP服务器配置中UseStreamable选项从true改为false，表明服务器不再使用流式连接，改用SSE传输协议
-- **测试进度功能线程机制更新**：testprogress工具中的线程机制从threading.GoSafe更新为threading.RunSafe，提高了进度测试功能的可靠性
+- **工具能力扩展**：echo和modbus工具现在都集成了进度报告功能，提供实时进度反馈
+- **进度报告机制增强**：所有工具现在都支持基于ProgressSender接口的进度通知，包括自动校验和修正机制
+- **线程安全机制优化**：testprogress工具使用RunSafe线程机制替代GoSafe，提高进度测试功能的可靠性
+- **统一工具包装器**：所有工具现在使用CallToolWrapper进行统一的上下文处理和进度管理
+- **上下文传播增强**：支持基于上下文的进度发送器注入和管理，确保工具调用的一致性
+- **日志增强功能**：通过CallToolWrapper提供统一的日志记录机制，自动记录工具调用的执行时间和参数
+- **响应消息增强**：在响应消息中支持中文用户名显示，提升用户体验
 - **超时配置优化**：MessageTimeout配置从注释状态恢复启用，设置为18000秒（30分钟），提供更灵活的工具执行超时控制
 - **SSE连接超时配置**：SseTimeout配置保持24小时，支持长时间连接场景
-- **CallToolWrapper现代化处理**：继续使用CallToolWrapper统一包装所有工具处理器，提供更好的日志记录、上下文提取和错误处理能力
-- **增强的上下文传播机制**：支持Streamable传输、SSE + mcpx.Client和SSE直连JWT三种认证路径的自动上下文提取
-- **统一的日志记录功能**：通过CallToolWrapper提供统一的日志记录机制，自动记录工具调用的执行时间和参数
-- **优化的工具注册系统**：所有工具现在使用CallToolWrapper进行包装，替代传统的WithCtxProp方法
-- **增强的进度通知功能**：新增ProgressSender接口，支持基于上下文的进度发送器注入和管理
-- **改进的超时配置管理**：SSE连接超时调整为24小时，工具执行超时调整为30分钟，支持更灵活的部署场景
-- **优化的响应消息增强**：在响应消息中支持中文用户名显示，提升用户体验
-- **现代化的上下文传播**：通过CallToolWrapper实现更可靠的上下文提取和传播机制
-- **线程安全机制优化**：testprogress工具使用RunSafe线程机制替代GoSafe，提高进度测试功能的可靠性
+- **技能管理系统增强**：新增完整的技能管理功能，包括动态技能内容和提示词模板
+- **MCP协议扩展**：新增resources和prompts API支持，提供动态技能内容和提示词模板
+- **配置管理增强**：新增Skills配置段落，支持目录路径和自动重载选项
 
 ## 目录
 1. [简介](#简介)
@@ -44,23 +46,24 @@
 3. [核心组件](#核心组件)
 4. [架构总览](#架构总览)
 5. [详细组件分析](#详细组件分析)
-6. [双层认证系统](#双层认证系统)
-7. [SSE传输协议改进](#sse传输协议改进)
-8. [超时配置管理](#超时配置管理)
-9. [上下文传播机制](#上下文传播机制)
-10. [工具实现详解](#工具实现详解)
-11. [CallToolWrapper现代化工具处理](#calltoolwrapper现代化工具处理)
-12. [日志增强功能](#日志增强功能)
-13. [配置管理增强](#配置管理增强)
-14. [多服务器连接管理](#多服务器连接管理)
-15. [JWT密钥配置增强](#jwt密钥配置增强)
-16. [工具名前缀路由](#工具名前缀路由)
-17. [日志配置优化](#日志配置优化)
-18. [依赖分析](#依赖分析)
-19. [性能考量](#性能考量)
-20. [故障排查指南](#故障排查指南)
-21. [结论](#结论)
-22. [附录](#附录)
+6. [技能管理系统](#技能管理系统)
+7. [双层认证系统](#双层认证系统)
+8. [SSE传输协议改进](#sse传输协议改进)
+9. [超时配置管理](#超时配置管理)
+10. [上下文传播机制](#上下文传播机制)
+11. [工具实现详解](#工具实现详解)
+12. [CallToolWrapper现代化工具处理](#calltoolwrapper现代化工具处理)
+13. [日志增强功能](#日志增强功能)
+14. [配置管理增强](#配置管理增强)
+15. [多服务器连接管理](#多服务器连接管理)
+16. [JWT密钥配置增强](#jwt密钥配置增强)
+17. [工具名前缀路由](#工具名前缀路由)
+18. [日志配置优化](#日志配置优化)
+19. [依赖分析](#依赖分析)
+20. [性能考量](#性能考量)
+21. [故障排查指南](#故障排查指南)
+22. [结论](#结论)
+23. [附录](#附录)
 
 ## 简介
 本文件为MCP（Model Context Protocol）服务器的技术文档，围绕在本仓库中的MCP服务器实现进行系统化说明。该实现基于go-zero框架和最新的MCP协议规范，提供模块化的MCP服务器示例，包含：
@@ -84,12 +87,20 @@
 - **认证上下文提取**：新增的SSE传输认证上下文提取功能，确保工具调用的一致性
 - **进度通知功能**：testprogress工具支持实时进度更新，用于演示长时间任务的进度反馈
 - **线程安全机制优化**：testprogress工具使用RunSafe线程机制替代GoSafe，提高进度测试功能的可靠性
+- **新增技能管理系统**：完整的MCP技能管理功能，包括技能加载器、提示模板处理和资源管理
+- **支持热重载功能**：通过fsnotify实现SKILL.md文件的实时监控和自动重载
+- **MCP协议扩展**：新增resources和prompts API支持，提供动态技能内容和提示词模板
+- **技能文件格式标准化**：支持YAML frontmatter格式的SKILL.md文件，包含name、description、allowed-tools等元数据
+- **动态技能注册**：技能内容通过MCP协议动态注册到服务器，支持实时更新
+- **资源URI模板**：实现skill://协议的资源URI模板，支持动态技能内容检索
+- **提示词模板系统**：提供基于技能内容的动态提示词生成，支持task和context参数
+- **配置管理增强**：新增Skills配置段落，支持目录路径和自动重载选项
 
 本仓库中MCP服务器属于aiapp子模块，当前实现展示了如何通过go-zero的mcp包快速搭建模块化的MCP服务，并注册多个工具供外部AI代理调用。
 
 **章节来源**
 - [mcpserver.go:19-38](file://aiapp/mcpserver/mcpserver.go#L19-L38)
-- [mcpserver.yaml:1-32](file://aiapp/mcpserver/etc/mcpserver.yaml#L1-L32)
+- [mcpserver.yaml:1-37](file://aiapp/mcpserver/etc/mcpserver.yaml#L1-L37)
 
 ## 项目结构
 MCP服务器位于aiapp/mcpserver目录，采用完全模块化的go-zero合规布局：
@@ -99,11 +110,18 @@ aiapp/mcpserver/
 ├── mcpserver.go              # 服务器入口点
 ├── etc/
 │   └── mcpserver.yaml        # 服务器配置文件（含Auth配置和超时配置）
+├── skills/                   # 技能管理目录
+│   └── example/              # 示例技能
+│       └── SKILL.md          # 示例技能文件
 └── internal/
     ├── config/
     │   └── config.go         # 配置结构定义
     ├── svc/
     │   └── servicecontext.go # 服务上下文管理
+    ├── skills/               # 技能管理系统
+    │   ├── loader.go         # 技能加载器
+    │   ├── prompt.go         # 提示模板处理
+    │   └── resource.go       # 资源管理
     └── tools/
         ├── echo.go           # echo工具实现（使用CallToolWrapper）
         ├── modbus.go         # Modbus工具实现（使用CallToolWrapper）
@@ -113,20 +131,22 @@ aiapp/mcpserver/
 
 **章节来源**
 - [README.md:59-108](file://README.md#L59-L108)
-- [mcpserver.go:1-41](file://aiapp/mcpserver/mcpserver.go#L1-L41)
-- [mcpserver.yaml:1-32](file://aiapp/mcpserver/etc/mcpserver.yaml#L1-L32)
+- [mcpserver.go:1-61](file://aiapp/mcpserver/mcpserver.go#L1-L61)
+- [mcpserver.yaml:33-37](file://aiapp/mcpserver/etc/mcpserver.yaml#L33-L37)
 
 ## 核心组件
 
 ### 配置管理模块
 - **Config结构**：继承mcpx.McpServerConf，扩展BridgeModbusRpcConf用于Modbus服务调用
+- **SkillsConfig结构**：新增的技能管理配置，包含Dir（技能目录路径）和AutoReload（自动重载标志）
 - **配置加载**：通过conf.MustLoad加载YAML配置到Config结构
-- **配置验证**：包含MCP基础配置、Auth配置、Modbus RPC客户端配置和超时配置
+- **配置验证**：包含MCP基础配置、Auth配置、Modbus RPC客户端配置、超时配置和Skills配置
 - **环境标识**：支持Mode开发环境标识，便于环境特定配置管理
 - **超时配置**：SSE连接超时（24小时）和工具执行超时（30分钟）配置
 
 ### 服务上下文模块
-- **ServiceContext结构**：包含Config和BridgeModbusCli客户端
+- **ServiceContext结构**：包含Config、BridgeModbusCli客户端和SkillsLoader
+- **SkillsLoader**：新增的技能加载器实例，用于管理技能文件的加载和热重载
 - **依赖注入**：通过NewServiceContext集中管理服务依赖
 - **客户端初始化**：基于BridgeModbusRpcConf创建gRPC客户端
 
@@ -135,9 +155,16 @@ aiapp/mcpserver/
 - **工具注册机制**：支持动态工具注册和管理
 - **工具隔离**：每个工具独立实现，便于维护和扩展
 
+### 技能管理系统
+- **Loader结构**：负责技能文件的扫描、加载和热重载
+- **Skill结构**：技能元数据和内容的封装
+- **Frontmatter结构**：SKILL.md文件的YAML frontmatter解析
+- **PromptTemplate结构**：MCP提示词模板的定义
+- **Resource结构**：MCP资源的定义和URI模板
+
 **章节来源**
-- [config.go:8-12](file://aiapp/mcpserver/internal/config/config.go#L8-L12)
-- [servicecontext.go:10-26](file://aiapp/mcpserver/internal/svc/servicecontext.go#L10-L26)
+- [config.go:8-19](file://aiapp/mcpserver/internal/config/config.go#L8-L19)
+- [servicecontext.go:12-39](file://aiapp/mcpserver/internal/svc/servicecontext.go#L12-L39)
 - [registry.go:9-15](file://aiapp/mcpserver/internal/tools/registry.go#L9-L15)
 
 ## 架构总览
@@ -148,6 +175,10 @@ graph TB
 subgraph "MCP服务器模块化架构"
 CFG["配置管理<br/>internal/config/config.go"]
 CTX["服务上下文<br/>internal/svc/servicecontext.go"]
+SKILLS["技能管理系统<br/>internal/skills/*"]
+LOADER["技能加载器<br/>internal/skills/loader.go"]
+PROMPT["提示模板<br/>internal/skills/prompt.go"]
+RESOURCE["资源管理<br/>internal/skills/resource.go"]
 REG["工具注册中心<br/>internal/tools/registry.go"]
 ECHO["Echo工具<br/>internal/tools/echo.go"]
 MODBUS["Modbus工具<br/>internal/tools/modbus.go"]
@@ -172,14 +203,26 @@ THREEPATHS["三种认证路径<br/>SSE直连/JWT"]
 AUTOTRACE["自动追踪<br/>Trace上下文提取"]
 RUNSAFE["线程安全<br/>RunSafe机制"]
 THREADSAFE["线程安全<br/>GoSafe vs RunSafe"]
+SKILLENABLED["技能系统启用<br/>Skills配置"]
+SKILLCHECK["技能文件监控<br/>fsnotify"]
+SKILLREGISTER["技能动态注册<br/>resources/prompts"]
+SKILLHOTRELOAD["技能热重载<br/>自动重载"]
+SKILLFORMAT["技能格式<br/>YAML frontmatter"]
+SKILLURI["技能URI<br/>skill://协议"]
+SKILLPROMPT["技能提示词<br/>动态模板"]
 end
 ENTRY --> CFG
 ENTRY --> CTX
+ENTRY --> SKILLS
 ENTRY --> REG
+SKILLS --> LOADER
+SKILLS --> PROMPT
+SKILLS --> RESOURCE
 REG --> ECHO
 REG --> MODBUS
 REG --> TESTPROGRESS
 CTX --> MODBUS
+CTX --> LOADER
 CFG --> CONF
 AUTH --> SSE
 SSE --> WRAPPER
@@ -198,13 +241,20 @@ THREEPATHS --> CTXPROP
 AUTOTRACE --> CTXPROP
 RUNSAFE --> TESTPROGRESS
 THREADSAFE --> TESTPROGRESS
+SKILLENABLED --> SKILLS
+SKILLCHECK --> SKILLHOTRELOAD
+SKILLREGISTER --> SKILLHOTRELOAD
+SKILLFORMAT --> LOADER
+SKILLURI --> RESOURCE
+SKILLPROMPT --> PROMPT
 ```
 
 **图表来源**
-- [mcpserver.go:28-33](file://aiapp/mcpserver/mcpserver.go#L28-L33)
-- [config.go:8-12](file://aiapp/mcpserver/internal/config/config.go#L8-L12)
-- [servicecontext.go:15-26](file://aiapp/mcpserver/internal/svc/servicecontext.go#L15-L26)
+- [mcpserver.go:28-51](file://aiapp/mcpserver/mcpserver.go#L28-L51)
+- [config.go:8-19](file://aiapp/mcpserver/internal/config/config.go#L8-L19)
+- [servicecontext.go:15-39](file://aiapp/mcpserver/internal/svc/servicecontext.go#L15-L39)
 - [registry.go:10-15](file://aiapp/mcpserver/internal/tools/registry.go#L10-L15)
+- [loader.go:30-59](file://aiapp/mcpserver/internal/skills/loader.go#L30-L59)
 - [wrapper.go:23-70](file://common/mcpx/wrapper.go#L23-L70)
 
 ## 详细组件分析
@@ -219,12 +269,15 @@ THREADSAFE --> TESTPROGRESS
   - Log：日志配置，包含Encoding、Path、Level: debug、KeepDays
   - Auth：认证配置段落，包含JwtSecrets和ServiceToken
   - BridgeModbusRpcConf：Modbus服务RPC客户端配置
+  - **Skills**：新增的技能管理配置，包含Dir（技能目录路径）和AutoReload（自动重载）
 - **启动流程**
   - 解析配置文件路径
   - 加载配置并打印Go版本
   - 禁用统计日志以优化启动性能
-  - 创建服务上下文
+  - 创建服务上下文（包含SkillsLoader）
   - 创建MCP服务器实例（使用mcpx.NewMcpServer）
+  - **新增** 注册Skills Resources和Prompts
+  - **新增** 启动技能文件监控（热重载）
   - 统一注册所有工具（包括testprogress工具）
   - 启动服务
 
@@ -235,6 +288,7 @@ participant Main as "mcpserver.go"
 participant Conf as "配置加载"
 participant Log as "日志配置"
 participant Ctx as "服务上下文"
+participant Skills as "技能系统"
 participant Reg as "工具注册"
 participant Srv as "MCP服务器"
 CLI->>Main : 传入配置文件路径
@@ -242,7 +296,15 @@ Main->>Conf : conf.MustLoad(配置文件)
 Main->>Main : 打印Go版本
 Main->>Log : logx.DisableStat()
 Main->>Ctx : NewServiceContext(c)
+Ctx->>Skills : NewLoader(c.Skills.Dir, c.Skills.AutoReload)
+Skills-->>Ctx : 返回SkillsLoader
 Main->>Srv : mcpx.NewMcpServer(c.McpServerConf)
+Main->>Skills : RegisterResources(server.Server(), svcCtx.SkillsLoader)
+Skills-->>Main : 注册完成
+Main->>Skills : RegisterPrompts(server.Server(), svcCtx.SkillsLoader)
+Skills-->>Main : 注册完成
+Main->>Skills : StartWatcher()
+Skills-->>Main : 启动监控
 Main->>Reg : RegisterAll(server.Server(), svcCtx)
 Reg->>Reg : RegisterEcho(server)
 Reg->>Reg : RegisterModbus(server, svcCtx)
@@ -252,14 +314,14 @@ Srv-->>CLI : 服务就绪
 ```
 
 **图表来源**
-- [mcpserver.go:19-40](file://aiapp/mcpserver/mcpserver.go#L19-L40)
-- [config.go:8-12](file://aiapp/mcpserver/internal/config/config.go#L8-L12)
-- [servicecontext.go:15-26](file://aiapp/mcpserver/internal/svc/servicecontext.go#L15-L26)
+- [mcpserver.go:19-60](file://aiapp/mcpserver/mcpserver.go#L19-L60)
+- [config.go:8-19](file://aiapp/mcpserver/internal/config/config.go#L8-L19)
+- [servicecontext.go:18-39](file://aiapp/mcpserver/internal/svc/servicecontext.go#L18-L39)
 - [registry.go:10-15](file://aiapp/mcpserver/internal/tools/registry.go#L10-L15)
 
 **章节来源**
-- [mcpserver.go:19-40](file://aiapp/mcpserver/mcpserver.go#L19-L40)
-- [mcpserver.yaml:1-32](file://aiapp/mcpserver/etc/mcpserver.yaml#L1-L32)
+- [mcpserver.go:19-60](file://aiapp/mcpserver/mcpserver.go#L19-L60)
+- [mcpserver.yaml:1-37](file://aiapp/mcpserver/etc/mcpserver.yaml#L1-L37)
 
 ### 工具注册与调用流程
 - **统一注册机制**：RegisterAll函数统一管理所有工具的注册，包括testprogress工具
@@ -278,17 +340,20 @@ Check --> |test_progress| TestProgress["TestProgress工具处理"]
 Echo --> Wrapper["CallToolWrapper包装器"]
 Wrapper --> DebugLog["统一日志记录：捕获token和username"]
 DebugLog --> Format1["格式化回显消息含中文用户名"]
-Format1 --> Return1["返回结果"]
+Format1 --> Progress1["发送进度通知"]
+Progress1 --> Return1["返回结果"]
 Modbus1 --> Wrapper2["CallToolWrapper包装器"]
 Wrapper2 --> Extract["自动上下文提取"]
 Extract --> Call1["调用BridgeModbusCli"]
 Call1 --> Format2["格式化寄存器结果"]
-Format2 --> Return2["返回结果"]
+Format2 --> Progress2["发送进度通知"]
+Progress2 --> Return2["返回结果"]
 Modbus2 --> Wrapper3["CallToolWrapper包装器"]
 Wrapper3 --> Extract2["自动上下文提取"]
 Extract2 --> Call2["调用BridgeModbusCli"]
 Call2 --> Format3["格式化线圈结果"]
-Format3 --> Return3["返回结果"]
+Format3 --> Progress3["发送进度通知"]
+Progress3 --> Return3["返回结果"]
 TestProgress --> Wrapper4["CallToolWrapper包装器"]
 Wrapper4 --> Progress["进度发送器提取"]
 Progress --> Loop["循环发送进度通知"]
@@ -315,6 +380,133 @@ Return4 --> End
 - [echo.go:15-42](file://aiapp/mcpserver/internal/tools/echo.go#L15-L42)
 - [modbus.go:28-129](file://aiapp/mcpserver/internal/tools/modbus.go#L28-L129)
 - [testprogress.go:13-69](file://aiapp/mcpserver/internal/tools/testprogress.go#L13-L69)
+
+## 技能管理系统
+
+### 技能加载器架构
+MCP服务器新增了完整的技能管理系统，支持动态加载和热重载SKILL.md文件：
+
+```mermaid
+graph LR
+subgraph "技能加载器架构"
+A["Skills目录"] --> B["NewLoader函数"]
+B --> C["Loader结构体"]
+C --> D["mu: RWMutex"]
+C --> E["dir: 技能目录路径"]
+C --> F["skills: map[string]*Skill"]
+C --> G["autoReload: 自动重载标志"]
+C --> H["watcher: fsnotify.Watcher"]
+C --> I["stopCh: 停止信号"]
+B --> J["Load方法"]
+J --> K["filepath.Walk扫描"]
+K --> L["loadSkillFile加载单个文件"]
+L --> M["parseFrontmatter解析YAML"]
+M --> N["创建Skill结构"]
+N --> O["存储到skills映射"]
+B --> P["StartWatcher启动监控"]
+P --> Q["fsnotify文件监控"]
+Q --> R["handleFileChange处理变化"]
+R --> S["Load重新加载"]
+R --> T["删除或重命名处理"]
+end
+```
+
+**图表来源**
+- [loader.go:30-59](file://aiapp/mcpserver/internal/skills/loader.go#L30-L59)
+- [loader.go:61-86](file://aiapp/mcpserver/internal/skills/loader.go#L61-L86)
+- [loader.go:88-120](file://aiapp/mcpserver/internal/skills/loader.go#L88-L120)
+- [loader.go:142-167](file://aiapp/mcpserver/internal/skills/loader.go#L142-L167)
+- [loader.go:169-212](file://aiapp/mcpserver/internal/skills/loader.go#L169-L212)
+
+### 技能文件格式
+技能系统支持标准的SKILL.md文件格式，包含YAML frontmatter和正文内容：
+
+```mermaid
+graph TB
+subgraph "SKILL.md文件格式"
+A["---"] --> B["name: example"]
+A --> C["description: 示例 Skill"]
+A --> D["allowed-tools: [Read, Grep, Glob]"]
+A --> E["---"]
+F["正文内容"] --> G["使用场景说明"]
+F --> H["核心功能描述"]
+F --> I["最佳实践指导"]
+F --> J["示例代码展示"]
+end
+```
+
+**图表来源**
+- [skills/example/SKILL.md:1-78](file://aiapp/mcpserver/skills/example/SKILL.md#L1-L78)
+
+### 技能资源注册
+技能系统通过MCP协议动态注册资源和提示词：
+
+```mermaid
+graph LR
+subgraph "技能资源注册流程"
+A["RegisterResources函数"] --> B["AddResourceTemplate注册URI模板"]
+B --> C["listResourcesHandler列出资源"]
+C --> D["registerSingleResource注册固定资源"]
+D --> E["readResourceHandler读取资源"]
+E --> F["buildResourceContent构建内容"]
+F --> G["返回Markdown格式内容"]
+A2["RegisterPrompts函数"] --> B2["registerSkillPrompts注册所有技能"]
+B2 --> C2["registerSinglePrompt注册单个技能"]
+C2 --> D2["getPromptHandler获取处理函数"]
+D2 --> E2["buildPromptContent构建提示词"]
+E2 --> F2["返回消息内容"]
+end
+```
+
+**图表来源**
+- [resource.go:15-29](file://aiapp/mcpserver/internal/skills/resource.go#L15-L29)
+- [resource.go:31-41](file://aiapp/mcpserver/internal/skills/resource.go#L31-L41)
+- [resource.go:43-72](file://aiapp/mcpserver/internal/skills/resource.go#L43-L72)
+- [resource.go:74-101](file://aiapp/mcpserver/internal/skills/resource.go#L74-L101)
+- [prompt.go:20-33](file://aiapp/mcpserver/internal/skills/prompt.go#L20-L33)
+- [prompt.go:35-59](file://aiapp/mcpserver/internal/skills/prompt.go#L35-L59)
+- [prompt.go:61-95](file://aiapp/mcpserver/internal/skills/prompt.go#L61-L95)
+
+### 热重载机制
+技能系统支持实时监控和自动重载：
+
+```mermaid
+graph LR
+subgraph "热重载机制"
+A["StartWatcher启动监控"] --> B["fsnotify.NewWatcher创建监控器"]
+B --> C["watcher.Add监控目录"]
+C --> D["watchLoop监控循环"]
+D --> E{"事件类型？"}
+E --> |Create| F["handleFileChange处理创建"]
+F --> G["Load重新加载所有技能"]
+E --> |Write| H["handleFileChange处理写入"]
+H --> I["Load重新加载所有技能"]
+E --> |Remove| J["handleFileChange处理删除"]
+J --> K["从skills映射删除"]
+E --> |Rename| L["handleFileChange处理重命名"]
+L --> M["Load重新加载所有技能"]
+G --> N["日志记录"]
+I --> N
+K --> N
+M --> N
+end
+```
+
+**图表来源**
+- [loader.go:142-167](file://aiapp/mcpserver/internal/skills/loader.go#L142-L167)
+- [loader.go:169-189](file://aiapp/mcpserver/internal/skills/loader.go#L169-L189)
+- [loader.go:191-212](file://aiapp/mcpserver/internal/skills/loader.go#L191-L212)
+
+**章节来源**
+- [loader.go:14-28](file://aiapp/mcpserver/internal/skills/loader.go#L14-L28)
+- [loader.go:30-59](file://aiapp/mcpserver/internal/skills/loader.go#L30-L59)
+- [loader.go:61-120](file://aiapp/mcpserver/internal/skills/loader.go#L61-L120)
+- [loader.go:142-212](file://aiapp/mcpserver/internal/skills/loader.go#L142-L212)
+- [prompt.go:12-18](file://aiapp/mcpserver/internal/skills/prompt.go#L12-L18)
+- [prompt.go:20-95](file://aiapp/mcpserver/internal/skills/prompt.go#L20-L95)
+- [resource.go:12-29](file://aiapp/mcpserver/internal/skills/resource.go#L12-L29)
+- [resource.go:31-101](file://aiapp/mcpserver/internal/skills/resource.go#L31-L101)
+- [skills/example/SKILL.md:1-78](file://aiapp/mcpserver/skills/example/SKILL.md#L1-L78)
 
 ## 双层认证系统
 
@@ -519,6 +711,7 @@ end
 - **日志增强**：通过CallToolWrapper提供统一的日志记录，同时捕获token和username信息
 - **响应格式**：返回TextContent格式的文本内容，在响应消息中支持中文用户名显示
 - **使用场景**：测试工具调用链路和验证MCP协议实现
+- **进度报告**：**更新** 集成ProgressSender接口，发送100%完成的进度通知
 
 ### Modbus工具实现
 - **读保持寄存器工具**：支持Function Code 0x03，返回多种数值表示
@@ -527,6 +720,7 @@ end
 - **结果格式化**：提供JSON格式的结果输出
 - **错误处理**：完善的RPC调用错误处理机制
 - **上下文传播**：使用CallToolWrapper进行统一的上下文处理
+- **进度报告**：**更新** 集成ProgressSender接口，发送100%完成的进度通知
 
 ### TestProgress工具实现
 - **参数结构**：包含steps（总步数）、interval（每步间隔毫秒）和message（可选消息）
@@ -682,13 +876,18 @@ end
 - **MessageTimeout**：**更新** 工具执行超时时间（默认30秒，现配置为30分钟）
 - **配置应用**：通过registerRoutes方法分别应用到SSE和POST端点
 
+### 技能管理配置
+- **Skills.Dir**：**新增** 技能目录路径，默认"./skills"
+- **Skills.AutoReload**：**新增** 自动重载标志，默认true
+- **配置验证**：支持空配置，无技能时跳过技能系统初始化
+
 ### 配置文件结构更新
 - **YAML结构**：支持多层嵌套配置
-- **配置层次**：Name、Host、Port、Mode、Mcp、Log、Auth、BridgeModbusRpcConf等配置项
+- **配置层次**：Name、Host、Port、Mode、Mcp、Log、Auth、BridgeModbusRpcConf、Skills等配置项
 - **配置验证**：确保配置项的完整性和正确性
 
 **章节来源**
-- [mcpserver.yaml:5-32](file://aiapp/mcpserver/etc/mcpserver.yaml#L5-L32)
+- [mcpserver.yaml:5-37](file://aiapp/mcpserver/etc/mcpserver.yaml#L5-L37)
 
 ## 多服务器连接管理
 
@@ -877,6 +1076,7 @@ E --> L["长期保留策略"]
 - **go-zero mcp包**：核心MCP服务器功能
 - **go-zero zrpc包**：RPC客户端通信支持
 - **modelcontextprotocol/go-sdk**：MCP协议SDK
+- **fsnotify/fsnotify**：文件监控依赖
 - **项目模块依赖**：go.mod中声明的github.com/zeromicro/go-zero v1.10.0
 - **Modbus服务依赖**：app/bridgemodbus模块提供Modbus协议支持
 - **第三方依赖**：grid-x/modbus用于Modbus协议实现
@@ -904,18 +1104,25 @@ SDK --> RUNSAFE["RunSafe线程机制"]
 SDK --> THREADSAFE["GoSafe vs RunSafe"]
 SDK --> THREEPATHS["三种认证路径"]
 SDK --> AUTOTRACE["自动追踪"]
+FSNOTIFY["fsnotify文件监控"] --> LOADER["技能加载器"]
+LOADER --> SKILLS["技能系统"]
+SKILLS --> RESOURCES["资源管理"]
+SKILLS --> PROMPTS["提示模板"]
+SKILLS --> HOTRELOAD["热重载机制"]
+SKILLS --> FORMAT["YAML格式解析"]
 ```
 
 **图表来源**
 - [go.mod:50](file://go.mod#L50)
 - [mcpserver.go:12-14](file://aiapp/mcpserver/mcpserver.go#L12-L14)
-- [servicecontext.go:18-26](file://aiapp/mcpserver/internal/svc/servicecontext.go#L18-L26)
+- [servicecontext.go:18-39](file://aiapp/mcpserver/internal/svc/servicecontext.go#L18-L39)
 - [wrapper.go:1-15](file://common/mcpx/wrapper.go#L1-L15)
+- [loader.go:10](file://aiapp/mcpserver/internal/skills/loader.go#L10)
 
 **章节来源**
 - [go.mod:50](file://go.mod#L50)
 - [mcpserver.go:12-14](file://aiapp/mcpserver/mcpserver.go#L12-L14)
-- [servicecontext.go:18-26](file://aiapp/mcpserver/internal/svc/servicecontext.go#L18-L26)
+- [servicecontext.go:18-39](file://aiapp/mcpserver/internal/svc/servicecontext.go#L18-L39)
 - [wrapper.go:1-15](file://common/mcpx/wrapper.go#L1-L15)
 
 ## 性能考量
@@ -943,13 +1150,27 @@ SDK --> AUTOTRACE["自动追踪"]
 - **长时间连接支持**：24小时的SSE连接超时配置支持长时间连接场景
 - **工具执行性能**：30分钟的工具执行超时控制优化系统性能
 - **线程安全机制优化**：**更新** testprogress工具使用RunSafe线程机制替代GoSafe，提高进度测试功能的可靠性
+- **技能系统性能优化**：**新增** fsnotify文件监控支持热重载，减少手动重启开销
+- **技能加载优化**：**新增** 并发安全的RWMutex保护技能映射，支持高并发访问
+- **技能热重载优化**：**新增** 自动重载机制，支持实时技能更新
+- **技能URI模板优化**：**新增** skill://协议URI模板，支持动态资源检索
+- **技能提示词优化**：**新增** 动态提示词模板，支持个性化任务处理
+- **技能格式解析优化**：**新增** YAML frontmatter解析，支持丰富的元数据管理
+- **工具能力扩展优化**：**更新** echo和modbus工具集成进度报告功能，提供实时进度反馈
+- **进度报告机制优化**：**更新** 所有工具支持基于ProgressSender接口的进度通知，包括自动校验和修正机制
+- **统一工具包装器优化**：**更新** 所有工具使用CallToolWrapper进行统一的上下文处理和进度管理
+- **上下文传播优化**：**更新** 基于上下文的进度发送器注入和管理，确保工具调用的一致性
+- **日志增强优化**：**更新** 通过CallToolWrapper提供统一的日志记录机制，自动记录工具调用的执行时间和参数
+- **响应增强优化**：**更新** 在响应消息中支持中文用户名显示，提升用户体验
 
 **章节来源**
 - [mcpserver.go:25-26](file://aiapp/mcpserver/mcpserver.go#L25-L26)
 - [mcpserver.yaml:4](file://aiapp/mcpserver/etc/mcpserver.yaml#L4)
-- [servicecontext.go:15-26](file://aiapp/mcpserver/internal/svc/servicecontext.go#L15-L26)
+- [servicecontext.go:15-39](file://aiapp/mcpserver/internal/svc/servicecontext.go#L15-L39)
 - [wrapper.go:31-70](file://common/mcpx/wrapper.go#L31-L70)
 - [testprogress.go:27-69](file://aiapp/mcpserver/internal/tools/testprogress.go#L27-L69)
+- [loader.go:30-59](file://aiapp/mcpserver/internal/skills/loader.go#L30-L59)
+- [loader.go:142-167](file://aiapp/mcpserver/internal/skills/loader.go#L142-L167)
 
 ## 故障排查指南
 - **配置加载失败**
@@ -958,6 +1179,8 @@ SDK --> AUTOTRACE["自动追踪"]
   - 验证BridgeModbusRpcConf配置的RPC服务可达性
   - 检查Auth配置的JwtSecrets和ServiceToken格式
   - **更新** 验证SseTimeout和MessageTimeout配置格式
+  - **新增** 验证Skills配置的Dir路径是否存在且可读
+  - **新增** 检查Skills.AutoReload配置的布尔值格式
 - **认证失败**
   - 检查JWT令牌是否在JwtSecrets中配置
   - 验证ServiceToken是否正确配置
@@ -970,6 +1193,7 @@ SDK --> AUTOTRACE["自动追踪"]
   - 验证上下文传播是否正常工作
   - **更新** 检查CallToolWrapper是否正确包装工具处理器
   - **更新** 检查testprogress工具的进度发送器是否正确注入
+  - **更新** 验证echo和modbus工具的进度报告功能
 - **传输协议问题**
   - **更新** 确认UseStreamable配置为false，使用SSE传输协议
   - 检查MessageTimeout和Cors配置
@@ -1019,14 +1243,14 @@ SDK --> AUTOTRACE["自动追踪"]
   - **更新** 确认用户名编码和字符集支持
 - **CallToolWrapper问题**
   - **更新** 检查工具处理器是否正确使用CallToolWrapper包装
-  - **更新** 验证上下文提取机制是否正常工作
-  - **更新** 确认日志记录和错误处理功能正常
-  - **更新** 检查进度发送器的注入和提取机制
+  - **updated** 验证上下文提取机制是否正常工作
+  - **updated** 确认日志记录和错误处理功能正常
+  - **updated** 检查进度发送器的注入和提取机制
 - **日志级别问题**
-  - **更新** 确认日志级别已调整为debug以获取详细信息
-  - **更新** 验证debug级别日志的输出格式和内容
+  - **updated** 确认日志级别已调整为debug以获取详细信息
+  - **updated** 验证debug级别日志的输出格式和内容
 - **testprogress工具问题**
-  - **更新** 检查steps参数是否为正数
+  - **updated** 检查steps参数是否为正数
   - **updated** 验证interval参数是否大于0
   - **updated** 确认进度发送器是否正确获取
   - **updated** 检查循环执行和进度发送逻辑
@@ -1045,17 +1269,46 @@ SDK --> AUTOTRACE["自动追踪"]
   - **updated** 检查ProgressSender接口的实现
   - **updated** 验证进度事件的发射和订阅机制
   - **updated** 确认进度通知的实时性和准确性
+  - **updated** 验证echo和modbus工具的进度报告功能
 - **线程安全问题**
   - **updated** 检查RunSafe线程机制的使用是否正确
   - **updated** 验证GoSafe和RunSafe的区别和适用场景
   - **updated** 确认testprogress工具的线程安全机制
+- **技能系统问题**
+  - **新增** 检查Skills.Dir配置的目录路径是否存在且可读
+  - **新增** 验证SKILL.md文件的YAML frontmatter格式
+  - **新增** 确认fsnotify文件监控是否正常工作
+  - **新增** 检查技能热重载机制的自动重载功能
+  - **新增** 验证技能资源URI模板的注册和解析
+  - **新增** 确认技能提示词模板的动态生成功能
+  - **新增** 检查技能内容的Markdown格式渲染
+  - **新增** 验证技能工具权限过滤机制
+- **技能文件格式问题**
+  - **新增** 检查SKILL.md文件的frontmatter格式
+  - **新增** 验证name字段的唯一性和合法性
+  - **新增** 确认description字段的可读性
+  - **新增** 验证allowed-tools数组的格式和有效性
+- **技能资源访问问题**
+  - **新增** 检查skill://协议URI的格式
+  - **新增** 验证资源内容的Markdown渲染
+  - **新增** 确认资源元数据的正确显示
+  - **新增** 检查资源列表的过滤功能
+- **技能提示词生成问题**
+  - **新增** 验证提示词模板的动态参数替换
+  - **新增** 检查task和context参数的处理
+  - **新增** 确认技能内容的截断和省略处理
+  - **新增** 验证提示词消息的格式和结构
 
 **章节来源**
 - [mcpserver.go:22-23](file://aiapp/mcpserver/mcpserver.go#L22-L23)
 - [mcpserver.yaml:7-9](file://aiapp/mcpserver/etc/mcpserver.yaml#L7-L9)
 - [mcpserver.yaml:10-18](file://aiapp/mcpserver/etc/mcpserver.yaml#L10-L18)
+- [mcpserver.yaml:33-37](file://aiapp/mcpserver/etc/mcpserver.yaml#L33-L37)
 - [wrapper.go:31-70](file://common/mcpx/wrapper.go#L31-L70)
 - [testprogress.go:27-69](file://aiapp/mcpserver/internal/tools/testprogress.go#L27-L69)
+- [loader.go:142-212](file://aiapp/mcpserver/internal/skills/loader.go#L142-L212)
+- [prompt.go:61-95](file://aiapp/mcpserver/internal/skills/prompt.go#L61-L95)
+- [resource.go:74-101](file://aiapp/mcpserver/internal/skills/resource.go#L74-L101)
 
 ## 结论
 本MCP服务器在本仓库中提供了高度模块化的实现范例，展示了如何基于go-zero构建企业级的MCP服务。当前实现具有以下特点：
@@ -1091,22 +1344,41 @@ SDK --> AUTOTRACE["自动追踪"]
 - **长时间连接支持**：通过SseTimeout配置增强长时间连接支持能力
 - **工具执行性能优化**：通过MessageTimeout配置优化30分钟的工具执行超时控制
 - **线程安全机制优化**：**更新** testprogress工具使用RunSafe线程机制替代GoSafe，提高进度测试功能的可靠性
-
-**更新** 本次更新特别增强了MCP服务器的超时配置管理和线程安全机制，通过以下改进提升了系统的灵活性和稳定性：
-
-- **传输协议配置更新**：**更新** UseStreamable选项从true改为false，表明服务器不再使用流式连接，改用SSE传输
-- **测试进度功能线程机制更新**：**更新** testprogress工具中的线程机制从threading.GoSafe更新为threading.RunSafe，提高了进度测试功能的可靠性
-- **超时配置优化**：**更新** MessageTimeout配置从注释状态恢复启用，设置为18000秒（30分钟），提供更灵活的工具执行超时控制
-- **SSE连接超时配置**：SseTimeout配置保持24小时，支持长时间连接场景
-- **CallToolWrapper现代化**：统一的工具处理机制，提供更好的日志记录、上下文提取和错误处理能力
-- **三种认证路径支持**：支持SSE + mcpx.Client和SSE直连JWT两种认证路径
-- **自动上下文提取**：根据不同的传输协议自动提取和传播用户上下文
-- **进度通知功能增强**：基于上下文的进度发送器，支持实时进度更新
-- **testprogress工具增强**：使用RunSafe线程机制替代GoSafe，提高进度测试功能的可靠性
-- **超时配置管理**：SSE连接超时（24小时）和工具执行超时（30分钟）配置，支持更灵活的部署场景
-- **长时间连接增强**：通过24小时SseTimeout配置增强长时间连接支持能力
-- **工具执行性能优化**：通过30分钟MessageTimeout配置优化工具执行超时控制
+- **新增技能管理系统**：**更新** 完整的MCP技能管理功能，包括技能加载器、提示模板处理和资源管理
+- **支持热重载功能**：**更新** 通过fsnotify实现SKILL.md文件的实时监控和自动重载
+- **MCP协议扩展**：**更新** 新增resources和prompts API支持，提供动态技能内容和提示词模板
+- **技能文件格式标准化**：**更新** 支持YAML frontmatter格式的SKILL.md文件，包含name、description、allowed-tools等元数据
+- **动态技能注册**：**更新** 技能内容通过MCP协议动态注册到服务器，支持实时更新
+- **资源URI模板**：**更新** 实现skill://协议的资源URI模板，支持动态技能内容检索
+- **提示词模板系统**：**更新** 提供基于技能内容的动态提示词生成，支持task和context参数
+- **配置管理增强**：**更新** 新增Skills配置段落，支持目录路径和自动重载选项
+- **工具能力扩展**：**更新** echo和modbus工具现在都集成了进度报告功能，提供实时进度反馈
+- **进度报告机制增强**：**更新** 所有工具现在都支持基于ProgressSender接口的进度通知，包括自动校验和修正机制
 - **线程安全机制优化**：**更新** testprogress工具使用RunSafe线程机制替代GoSafe，提高进度测试功能的可靠性
+- **统一工具包装器**：**更新** 所有工具使用CallToolWrapper进行统一的上下文处理和进度管理
+- **上下文传播优化**：**更新** 基于上下文的进度发送器注入和管理，确保工具调用的一致性
+- **日志增强优化**：**更新** 通过CallToolWrapper提供统一的日志记录机制，自动记录工具调用的执行时间和参数
+- **响应增强优化**：**更新** 在响应消息中支持中文用户名显示，提升用户体验
+
+**更新** 本次更新特别增强了MCP服务器的工具能力扩展，特别是echo和modbus工具的进度报告功能增强，以及testprogress工具的线程安全机制优化：
+
+- **工具能力扩展**：**更新** echo和modbus工具现在都集成了进度报告功能，提供实时进度反馈
+- **进度报告机制增强**：**更新** 所有工具现在都支持基于ProgressSender接口的进度通知，包括自动校验和修正机制
+- **线程安全机制优化**：**更新** testprogress工具使用RunSafe线程机制替代GoSafe，提高进度测试功能的可靠性
+- **统一工具包装器**：**更新** 所有工具使用CallToolWrapper进行统一的上下文处理和进度管理
+- **上下文传播优化**：**更新** 基于上下文的进度发送器注入和管理，确保工具调用的一致性
+- **日志增强优化**：**更新** 通过CallToolWrapper提供统一的日志记录机制，自动记录工具调用的执行时间和参数
+- **响应增强优化**：**更新** 在响应消息中支持中文用户名显示，提升用户体验
+- **超时配置优化**：**更新** SseTimeout配置保持24小时，MessageTimeout配置从注释状态恢复启用，设置为18000秒（30分钟）
+- **传输协议配置更新**：**更新** UseStreamable选项从true改为false，表明服务器不再使用流式连接，改用SSE传输
+- **技能系统集成**：**更新** 新增完整的技能管理系统，支持动态技能内容和提示词模板
+- **热重载机制**：**更新** 通过fsnotify实现技能文件的实时监控和自动重载
+- **MCP协议扩展**：**更新** 新增resources和prompts API支持，提供动态技能内容和提示词模板
+- **技能文件格式**：**更新** 支持YAML frontmatter格式的SKILL.md文件，包含name、description、allowed-tools等元数据
+- **动态技能注册**：**更新** 技能内容通过MCP协议动态注册到服务器，支持实时更新
+- **资源URI模板**：**更新** 实现skill://协议的资源URI模板，支持动态技能内容检索
+- **提示词模板系统**：**更新** 提供基于技能内容的动态提示词生成，支持task和context参数
+- **配置管理增强**：**更新** 新增Skills配置段落，支持目录路径和自动重载选项
 
 后续演进方向：
 - 增强工具安全策略（如鉴权、限流）
@@ -1127,6 +1399,14 @@ SDK --> AUTOTRACE["自动追踪"]
 - 增强长时间连接的稳定性和可靠性保障
 - 实现三种认证路径的统一上下文传播机制
 - 提升线程安全机制的可靠性和性能表现
+- **新增** 扩展技能系统功能，支持技能版本管理和依赖关系
+- **新增** 增强技能权限控制，支持基于角色的技能访问控制
+- **新增** 实现技能内容缓存机制，提升技能资源访问性能
+- **新增** 扩展提示词模板系统，支持多语言和多模态提示词
+- **新增** 增强技能热重载机制，支持增量更新和回滚功能
+- **新增** 实现技能系统监控指标，提供技能使用统计和分析
+- **新增** 扩展技能API接口，支持批量操作和批量查询
+- **新增** 增强工具能力扩展，支持更多类型的进度报告和状态反馈
 
 ## 附录
 
@@ -1148,9 +1428,11 @@ SDK --> AUTOTRACE["自动追踪"]
 - **BridgeModbusRpcConf.Endpoints**：Modbus服务RPC端点
 - **BridgeModbusRpcConf.NonBlock**：非阻塞模式
 - **BridgeModbusRpcConf.Timeout**：RPC调用超时时间
+- **Skills.Dir**：**新增** 技能目录路径（默认"./skills"）
+- **Skills.AutoReload**：**新增** 自动重载标志（默认true）
 
 **章节来源**
-- [mcpserver.yaml:1-32](file://aiapp/mcpserver/etc/mcpserver.yaml#L1-L32)
+- [mcpserver.yaml:1-37](file://aiapp/mcpserver/etc/mcpserver.yaml#L1-L37)
 
 ### 工具参数说明
 
@@ -1159,6 +1441,7 @@ SDK --> AUTOTRACE["自动追踪"]
 - **prefix**：可选字符串，添加到回显消息前的前缀，默认"Echo: "
 - **日志增强**：通过CallToolWrapper提供统一的日志记录，自动捕获并记录token和username信息
 - **响应增强**：在响应消息中显示中文用户名
+- **进度报告**：**更新** 集成ProgressSender接口，发送100%完成的进度通知
 
 #### Modbus工具参数
 
@@ -1180,6 +1463,32 @@ SDK --> AUTOTRACE["自动追踪"]
 - **线程机制**：**更新** 使用RunSafe线程机制替代GoSafe，提高进度测试功能的可靠性
 - **循环处理**：通过for循环模拟任务执行过程
 - **日志记录**：记录每次进度发送的详细信息
+
+### 技能系统配置说明
+
+#### 技能文件格式
+- **YAML Frontmatter**：包含name、description、allowed-tools等元数据
+- **正文内容**：Markdown格式的技能详细说明
+- **文件命名**：必须为SKILL.md
+- **目录结构**：每个技能一个独立目录
+
+#### 技能加载器配置
+- **Dir**：技能目录路径，默认"./skills"
+- **AutoReload**：是否启用自动重载，默认true
+- **并发安全**：使用RWMutex保护技能映射
+- **文件监控**：使用fsnotify监控SKILL.md文件变化
+
+#### 技能资源配置
+- **URI模板**：skill://{skill_name}/content
+- **MIME类型**：text/markdown
+- **内容格式**：包含元数据和正文的完整Markdown内容
+- **动态注册**：通过MCP协议动态注册资源模板
+
+#### 技能提示词配置
+- **提示词模板**：{skill_name}-guide
+- **参数结构**：task（必填）、context（可选）
+- **内容生成**：动态生成包含技能描述和任务的提示词
+- **消息格式**：单条user消息，包含完整的提示词内容
 
 ### 多服务器配置示例
 
@@ -1211,6 +1520,9 @@ BridgeModbusRpcConf:
     - 127.0.0.1:25004
   NonBlock: true
   Timeout: 10000
+Skills:
+  Dir: "./skills"
+  AutoReload: true
 ```
 
 #### AI聊天应用多服务器配置
@@ -1266,12 +1578,27 @@ Log:
 - **工具执行超时最佳实践**：**updated** 通过30分钟MessageTimeout配置优化工具执行超时控制
 - **三种认证路径最佳实践**：**updated** 确保SSE + mcpx.Client和SSE直连JWT两种路径的上下文提取正常工作
 - **线程安全最佳实践**：**updated** 正确使用RunSafe线程机制，确保进度测试功能的可靠性和性能表现
+- **技能系统最佳实践**：**updated** 正确配置Skills.Dir和Skills.AutoReload，确保技能系统正常运行
+- **技能文件格式最佳实践**：**updated** 遵循YAML frontmatter格式，确保技能元数据正确解析
+- **技能热重载最佳实践**：**updated** 合理设置AutoReload，平衡实时性和系统性能
+- **技能资源访问最佳实践**：**updated** 正确使用skill://协议URI，确保资源访问的准确性和安全性
+- **技能提示词生成最佳实践**：**updated** 合理设计提示词模板，确保提示词内容的准确性和实用性
+- **技能权限控制最佳实践**：**updated** 正确配置allowed-tools，确保技能工具的权限控制
+- **技能系统监控最佳实践**：**updated** 利用日志和调试信息监控技能系统运行状态
+- **技能API接口最佳实践**：**updated** 正确使用MCP协议resources和prompts API，确保技能系统功能完整
+- **工具能力扩展最佳实践**：**updated** 合理使用ProgressSender接口，确保工具进度报告的准确性和实时性
+- **进度报告机制最佳实践**：**updated** 利用自动校验和修正机制，确保进度值的合理性和一致性
+- **统一工具包装器最佳实践**：**updated** 正确使用CallToolWrapper，确保工具处理的统一性和可靠性
 
 **章节来源**
 - [mcpserver.go:17](file://aiapp/mcpserver/mcpserver.go#L17)
 - [mcpserver.go:25-26](file://aiapp/mcpserver/mcpserver.go#L25-L26)
 - [registry.go:9-15](file://aiapp/mcpserver/internal/tools/registry.go#L9-L15)
 - [mcpserver.yaml:4-7](file://aiapp/mcpserver/etc/mcpserver.yaml#L4-L7)
+- [mcpserver.yaml:33-37](file://aiapp/mcpserver/etc/mcpserver.yaml#L33-L37)
 - [aichat.yaml:8-17](file://aiapp/aichat/etc/aichat.yaml#L8-L17)
 - [wrapper.go:23-70](file://common/mcpx/wrapper.go#L23-L70)
 - [testprogress.go:13-69](file://aiapp/mcpserver/internal/tools/testprogress.go#L13-L69)
+- [loader.go:30-59](file://aiapp/mcpserver/internal/skills/loader.go#L30-L59)
+- [prompt.go:61-95](file://aiapp/mcpserver/internal/skills/prompt.go#L61-L95)
+- [resource.go:74-101](file://aiapp/mcpserver/internal/skills/resource.go#L74-L101)

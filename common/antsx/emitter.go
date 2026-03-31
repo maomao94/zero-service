@@ -97,6 +97,17 @@ func (e *EventEmitter[T]) Emit(topic string, value T) {
 	}
 }
 
+// EmitSync 向指定 topic 的所有订阅者同步广播事件（会等待慢消费者）
+//func (e *EventEmitter[T]) EmitSync(topic string, value T) {
+//	e.mu.RLock()
+//	subs := make([]*Subscriber[T], len(e.subscribers[topic]))
+//	copy(subs, e.subscribers[topic])
+//	e.mu.RUnlock()
+//	for _, sub := range subs {
+//		sub.ch <- value
+//	}
+//}
+
 // TopicCount 返回当前活跃的 topic 数量
 func (e *EventEmitter[T]) TopicCount() int {
 	e.mu.RLock()

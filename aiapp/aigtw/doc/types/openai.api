@@ -1,0 +1,117 @@
+syntax = "v1"
+
+// OpenaiApi OpenAI 兼容类型定义
+type (
+	// ==================== 对话补全请求 ====================
+	// ChatCompletionRequest 对话补全请求体（兼容 OpenAI /v1/chat/completions）
+	ChatCompletionRequest {
+		Model       string        `json:"model"` // 模型ID，对应能力
+		Messages    []ChatMessage `json:"messages"` // 对话消息列表
+		Stream      bool          `json:"stream,optional"` // 是否启用 SSE 流式输出
+		Temperature float64       `json:"temperature,optional,default=1,range=[0:2.0]"` // 采样温度
+		TopP        float64       `json:"top_p,optional,default=1,range=[0:1.0]"` // 核采样概率
+		MaxTokens   int           `json:"max_tokens,optional"` // 最大生成 token 数
+		Stop        []string      `json:"stop,optional"` // 停止生成的标记序列
+		User        string        `json:"user,optional"` // 终端用户标识
+		Thinking    ThinkingParam `json:"thinking,optional"` // 深度思考模式参数
+	}
+	// ThinkingParam 深度思考模式参数
+	ThinkingParam {
+		Type string `json:"type"` // "enabled" 启用 / "disabled" 禁用
+	}
+	// ChatMessage 对话消息
+	ChatMessage {
+		Role             string `json:"role"` // 角色: system / user / assistant
+		Content          string `json:"content"` // 消息内容
+		ReasoningContent string `json:"reasoning_content,optional"` // 模型推理思考过程
+	}
+	// ==================== 对话补全响应（非流式） ====================
+	// ChatCompletionResponse 非流式对话补全响应
+	ChatCompletionResponse {
+		Id      string   `json:"id"` // 补全ID
+		Object  string   `json:"object"` // 固定值 "chat.completion"
+		Created int64    `json:"created"` // 创建时间
+		Model   string   `json:"model"` // 实际使用的模型ID
+		Choices []Choice `json:"choices"` // 补全结果列表
+		Usage   Usage    `json:"usage"` // Token 用量统计
+	}
+	// Choice 补全选项
+	Choice {
+		Index        int         `json:"index"` // 选项索引
+		Message      ChatMessage `json:"message"` // 完整的助手消息
+		FinishReason string      `json:"finish_reason"` // 结束原因: stop / length / content_filter
+	}
+	// Usage Token 用量统计
+	Usage {
+		PromptTokens     int `json:"prompt_tokens"` // 提示词 token 数
+		CompletionTokens int `json:"completion_tokens"` // 补全 token 数
+		TotalTokens      int `json:"total_tokens"` // 总 token 数
+	}
+	// ==================== 流式响应 Chunk ====================
+	// ChatCompletionChunk SSE 流式 chunk
+	ChatCompletionChunk {
+		Id      string        `json:"id"` // 补全ID
+		Object  string        `json:"object"` // 固定值 "chat.completion.chunk"
+		Created int64         `json:"created"` // 创建时间
+		Model   string        `json:"model"` // 模型ID
+		Choices []ChunkChoice `json:"choices"` // 选项列表
+	}
+	// ChunkChoice 流式选项
+	ChunkChoice {
+		Index        int       `json:"index"` // 选项索引
+		Delta        ChatDelta `json:"delta"` // 增量内容
+		FinishReason *string   `json:"finish_reason,optional"` // 结束原因: stop / length / content_filter / tool_calls
+	}
+	// ChatDelta 增量消息，流式 SSE 场景使用。
+	// thinking 模式下，reasoning_content 先于 content 输出。
+	// 当模型需要调用工具时，通过 tool_calls 字段逐 chunk 输出工具调用信息。
+	ChatDelta {
+		Role             string          `json:"role,optional"` // 角色
+		Content          string          `json:"content,optional"` // 内容增量
+		ReasoningContent string          `json:"reasoning_content,optional"` // 推理思考过程增量
+		ToolCalls        []ToolCallDelta `json:"tool_calls,optional"` // 工具调用增量
+	}
+	// ==================== 工具调用类型 ====================
+	// ToolCallDelta 工具调用增量，流式响应中使用。
+	// 模型的 id、name、arguments 会分片到达，前端需要按 index+id 合并后展示。
+	ToolCallDelta {
+		Index    int                   `json:"index,omitempty"` // 工具调用索引
+		Id       string                `json:"id,omitempty"` // 工具调用ID
+		Type     string                `json:"type,omitempty"` // 类型，通常为 "function"
+		Function ToolCallFunctionDelta `json:"function,omitempty"` // 函数信息
+	}
+	// ToolCallFunctionDelta 函数信息增量
+	ToolCallFunctionDelta {
+		Name      string `json:"name,omitempty"` // 函数名称
+		Arguments string `json:"arguments,omitempty"` // 参数JSON字符串（可能分片到达）
+	}
+	// ProgressMessage 进度消息
+	// 记录 MCP 服务器发送的所有进度通知，用于前端展示消息历史
+	ProgressMessage {
+		Progress float64 `json:"progress"` // 当前进度百分比，0.0~100.0
+		Total    float64 `json:"total"` // 进度总值（参考值）
+		Message  string  `json:"message"` // 消息内容
+		Time     int64   `json:"time"` // 时间戳，Unix 秒
+	}
+	// ==================== 模型列表响应 ====================
+	// ListModelsResponse 模型列表响应
+	ListModelsResponse {
+		Object string        `json:"object"` // 固定值 "list"
+		Data   []ModelObject `json:"data"` // 模型列表
+	}
+	// ModelObject 模型对象
+	ModelObject {
+		Id       string         `json:"id"` // 模型ID
+		Object   string         `json:"object"` // 固定值 "model"
+		Created  int64          `json:"created"` // 创建时间
+		OwnedBy  string         `json:"owned_by"` // 所属方
+		Metadata *ModelMetadata `json:"metadata,optional"` // 扩展元数据
+	}
+	// ModelMetadata 模型能力元数据
+	ModelMetadata {
+		DisplayName       string `json:"display_name"` // 能力显示名称
+		Description       string `json:"description"` // 能力描述
+		SupportsStreaming bool   `json:"supports_streaming"` // 是否支持流式输出
+	}
+)
+
