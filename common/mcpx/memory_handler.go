@@ -44,7 +44,7 @@ func (h *MemoryAsyncResultStore) cleanup() {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	now := time.Now().Unix()
+	now := time.Now().UnixMilli()
 	for taskID, expiry := range h.expiries {
 		if expiry > 0 && expiry < now {
 			delete(h.data, taskID)
@@ -68,7 +68,7 @@ func (h *MemoryAsyncResultStore) Save(ctx context.Context, result *AsyncToolResu
 	}
 
 	// 设置创建和更新时间
-	now := time.Now().Unix()
+	now := time.Now().UnixMilli()
 	if result.CreatedAt == 0 {
 		result.CreatedAt = now
 	}
@@ -77,7 +77,7 @@ func (h *MemoryAsyncResultStore) Save(ctx context.Context, result *AsyncToolResu
 	h.data[result.TaskID] = result
 	// 默认 24 小时过期
 	if h.expiries[result.TaskID] == 0 {
-		h.expiries[result.TaskID] = now + 86400
+		h.expiries[result.TaskID] = now + 86400000 // 默认 24 小时过期（毫秒）
 	}
 	return nil
 }
@@ -108,22 +108,22 @@ func (h *MemoryAsyncResultStore) UpdateProgress(ctx context.Context, taskID stri
 			Status:    "pending",
 			Progress:  progress,
 			Total:     total,
-			CreatedAt: time.Now().Unix(),
-			UpdatedAt: time.Now().Unix(),
+			CreatedAt: time.Now().UnixMilli(),
+			UpdatedAt: time.Now().UnixMilli(),
 		}
 		h.data[taskID] = result
 	}
 
 	result.Progress = progress
 	result.Total = total
-	result.UpdatedAt = time.Now().Unix()
+	result.UpdatedAt = time.Now().UnixMilli()
 
 	// 保存消息到历史
 	result.Messages = append(result.Messages, ProgressMessage{
 		Progress: progress,
 		Total:    total,
 		Message:  message,
-		Time:     time.Now().Unix(),
+		Time:     time.Now().UnixMilli(),
 	})
 
 	logx.WithContext(ctx).Debugf("[MemoryAsyncResultStore] UpdateProgress: taskID=%s, progress=%.2f, message=%s, totalMessages=%d",
@@ -283,7 +283,7 @@ func (h *MemoryAsyncResultStore) SetStatus(ctx context.Context, taskID string, s
 	}
 
 	result.Status = status
-	result.UpdatedAt = time.Now().Unix()
+	result.UpdatedAt = time.Now().UnixMilli()
 
 	return nil
 }
@@ -301,7 +301,7 @@ func (h *MemoryAsyncResultStore) SetResult(ctx context.Context, taskID string, r
 	r.Result = result
 	r.Status = "completed"
 	r.Progress = 100
-	r.UpdatedAt = time.Now().Unix()
+	r.UpdatedAt = time.Now().UnixMilli()
 
 	return nil
 }
@@ -318,7 +318,7 @@ func (h *MemoryAsyncResultStore) SetError(ctx context.Context, taskID string, er
 
 	r.Error = errMsg
 	r.Status = "failed"
-	r.UpdatedAt = time.Now().Unix()
+	r.UpdatedAt = time.Now().UnixMilli()
 
 	return nil
 }

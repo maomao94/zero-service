@@ -64,7 +64,7 @@ type SocketDown struct {
 }
 
 type StatDown struct {
-	SId           string            `json:"sId"`
+	SocketId      string            `json:"socketId"`
 	Rooms         []string          `json:"rooms"`
 	Nps           string            `json:"nps"`
 	MetaData      map[string]string `json:"metadata,omitempty"`
@@ -117,7 +117,7 @@ func sendErrorResponse(session *Session, payload *socketio.EventPayload, code in
 }
 
 type Session struct {
-	id            string
+	socketId      string
 	socket        *socketio.Socket
 	lock          sync.Mutex
 	metadata      map[string]string
@@ -132,7 +132,7 @@ func (s *Session) checkSocketNil() bool {
 	return s.socket == nil
 }
 
-func (s *Session) ID() string { return s.id }
+func (s *Session) ID() string { return s.socketId }
 
 func (s *Session) GetMetadata(key string) interface{} {
 	s.lock.Lock()
@@ -155,9 +155,9 @@ func (s *Session) SetMetadata(key string, val interface{}) {
 	defer s.lock.Unlock()
 	if str, ok := val.(string); ok && str != "" {
 		s.metadata[key] = str
-		logx.Debugf("[socketio] set metadata key %q with value %v for conn %s", key, str, s.id)
+		logx.Debugf("[socketio] set metadata key %q with value %v for conn %s", key, str, s.socketId)
 	} else {
-		logx.Debugf("[socketio] skipped non-string metadata key %q with value %v (type: %T) for conn %s", key, val, val, s.id)
+		logx.Debugf("[socketio] skipped non-string metadata key %q with value %v (type: %T) for conn %s", key, val, val, s.socketId)
 	}
 }
 
@@ -351,7 +351,7 @@ func (srv *Server) bindEvents() {
 		token := socket.Handshake["token"]
 		logx.Infof("[socketio] new connection: token=%s", token)
 		session := &Session{
-			id:       socket.Id,
+			socketId: socket.Id,
 			socket:   socket,
 			metadata: make(map[string]string),
 		}
@@ -372,9 +372,9 @@ func (srv *Server) bindEvents() {
 		}
 		srv.sessions[socket.Id] = session
 		srv.lock.Unlock()
-		connectCtx := logx.WithFields(context.WithValue(context.Background(), "SID", socket.Id),
-			logx.Field("SID", socket.Id),
-			logx.Field("EVENT", "connection"),
+		connectCtx := logx.WithFields(context.Background(),
+			logx.Field("socketId", socket.Id),
+			logx.Field("event", "connection"),
 		)
 		connectCtx = context.WithValue(connectCtx, ctxdata.CtxAuthorizationKey, token)
 		if srv.connectHook != nil {
@@ -390,9 +390,9 @@ func (srv *Server) bindEvents() {
 		}
 		logx.WithContext(connectCtx).Infof("[socketio] new connection established: conn=%s", socket.Id)
 		socket.On(EventJoinRoom, func(payload *socketio.EventPayload) {
-			ctx := logx.WithFields(context.WithValue(context.Background(), "SID", payload.SID),
-				logx.Field("SID", payload.SID),
-				logx.Field("EVENT", EventJoinRoom),
+			ctx := logx.WithFields(context.Background(),
+				logx.Field("socketId", payload.SID),
+				logx.Field("event", EventJoinRoom),
 			)
 			ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
 			handlerPayload := extractPayload(payload)
@@ -434,9 +434,9 @@ func (srv *Server) bindEvents() {
 			})
 		})
 		socket.On(EventLeaveRoom, func(payload *socketio.EventPayload) {
-			ctx := logx.WithFields(context.WithValue(context.Background(), "SID", payload.SID),
-				logx.Field("SID", payload.SID),
-				logx.Field("EVENT", EventLeaveRoom),
+			ctx := logx.WithFields(context.WithValue(context.Background(), "socketId", payload.SID),
+				logx.Field("socketId", payload.SID),
+				logx.Field("event", EventLeaveRoom),
 			)
 			ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
 			handlerPayload := extractPayload(payload)
@@ -467,9 +467,9 @@ func (srv *Server) bindEvents() {
 			})
 		})
 		socket.On(EventUp, func(payload *socketio.EventPayload) {
-			ctx := logx.WithFields(context.WithValue(context.Background(), "SID", payload.SID),
-				logx.Field("SID", payload.SID),
-				logx.Field("EVENT", EventUp),
+			ctx := logx.WithFields(context.Background(),
+				logx.Field("socketId", payload.SID),
+				logx.Field("event", EventUp),
 			)
 			ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
 			handlerPayload := extractPayload(payload)
@@ -530,9 +530,9 @@ func (srv *Server) bindEvents() {
 			})
 		})
 		socket.On(EventRoomBroadcast, func(payload *socketio.EventPayload) {
-			ctx := logx.WithFields(context.WithValue(context.Background(), "SID", payload.SID),
-				logx.Field("SID", payload.SID),
-				logx.Field("EVENT", EventRoomBroadcast),
+			ctx := logx.WithFields(context.WithValue(context.Background(), "socketId", payload.SID),
+				logx.Field("socketId", payload.SID),
+				logx.Field("event", EventRoomBroadcast),
 			)
 			ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
 			handlerPayload := extractPayload(payload)
@@ -574,9 +574,9 @@ func (srv *Server) bindEvents() {
 			})
 		})
 		socket.On(EventGlobalBroadcast, func(payload *socketio.EventPayload) {
-			ctx := logx.WithFields(context.WithValue(context.Background(), "SID", payload.SID),
-				logx.Field("SID", payload.SID),
-				logx.Field("EVENT", EventGlobalBroadcast),
+			ctx := logx.WithFields(context.WithValue(context.Background(), "socketId", payload.SID),
+				logx.Field("socketId", payload.SID),
+				logx.Field("event", EventGlobalBroadcast),
 			)
 			ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
 			handlerPayload := extractPayload(payload)
@@ -625,9 +625,9 @@ func (srv *Server) bindEvents() {
 				}
 			}
 			// 执行断开连接钩子
-			ctx := logx.WithFields(context.WithValue(context.Background(), "SID", socket.Id),
-				logx.Field("SID", socket.Id),
-				logx.Field("EVENT", "disconnect"),
+			ctx := logx.WithFields(context.WithValue(context.Background(), "socketId", socket.Id),
+				logx.Field("socketId", socket.Id),
+				logx.Field("event", "disconnect"),
 			)
 			ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
 			srv.lock.RLock()
@@ -647,9 +647,9 @@ func (srv *Server) bindEvents() {
 			currentEvent := eventName
 			currentHandler := handler
 			socket.On(currentEvent, func(payload *socketio.EventPayload) {
-				ctx := logx.WithFields(context.WithValue(context.Background(), "SID", payload.SID),
-					logx.Field("SID", payload.SID),
-					logx.Field("EVENT", currentEvent),
+				ctx := logx.WithFields(context.Background(),
+					logx.Field("socketId", payload.SID),
+					logx.Field("event", currentEvent),
 				)
 				ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
 				var handlerPayload []byte
@@ -723,7 +723,7 @@ func (srv *Server) statLoop() {
 			for _, sess := range sessions {
 				threading.GoSafe(func() {
 					stat := StatDown{
-						SId:           sess.id,
+						SocketId:      sess.socketId,
 						Rooms:         sess.socket.Rooms(),
 						Nps:           sess.socket.Nps,
 						MetaData:      sess.AllMetadata(),
@@ -739,11 +739,11 @@ func (srv *Server) statLoop() {
 	}
 }
 
-func (srv *Server) cleanInvalidSession(sId string) {
+func (srv *Server) cleanInvalidSession(socketId string) {
 	srv.lock.Lock()
 	defer srv.lock.Unlock()
-	logx.Debugf("[socketio] cleaning invalid session: %s", sId)
-	delete(srv.sessions, sId)
+	logx.Debugf("[socketio] cleaning invalid session: %s", socketId)
+	delete(srv.sessions, socketId)
 }
 
 func (srv *Server) SessionCount() int {
@@ -752,10 +752,10 @@ func (srv *Server) SessionCount() int {
 	return len(srv.sessions)
 }
 
-func (srv *Server) GetSession(sId string) *Session {
+func (srv *Server) GetSession(socketId string) *Session {
 	srv.lock.RLock()
 	defer srv.lock.RUnlock()
-	return srv.sessions[sId]
+	return srv.sessions[socketId]
 }
 
 func (srv *Server) GetSessionByDeviceId(deviceId string) ([]*Session, bool) {
@@ -781,18 +781,18 @@ func (srv *Server) GetSessionByKey(key, value string) ([]*Session, bool) {
 	return sessions, true
 }
 
-func (srv *Server) JoinRoom(sId string, room string) {
+func (srv *Server) JoinRoom(socketId string, room string) {
 	srv.lock.RLock()
-	session, ok := srv.sessions[sId]
+	session, ok := srv.sessions[socketId]
 	srv.lock.RUnlock()
 	if ok {
 		session.JoinRoom(room)
 	}
 }
 
-func (srv *Server) LeaveRoom(sId string, room string) {
+func (srv *Server) LeaveRoom(socketId string, room string) {
 	srv.lock.RLock()
-	session, ok := srv.sessions[sId]
+	session, ok := srv.sessions[socketId]
 	srv.lock.RUnlock()
 	if ok {
 		session.LeaveRoom(room)

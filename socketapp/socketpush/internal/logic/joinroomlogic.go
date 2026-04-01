@@ -31,9 +31,9 @@ func (l *JoinRoomLogic) JoinRoom(in *socketpush.JoinRoomReq) (*socketpush.JoinRo
 	for _, cli := range l.svcCtx.SocketContainer.GetClients() {
 		threading.GoSafe(func() {
 			cli.JoinRoom(baseCtx, &socketgtw.JoinRoomReq{
-				ReqId: in.ReqId,
-				SId:   in.SId,
-				Room:  in.Room,
+				ReqId:    in.ReqId,
+				SocketId: in.SocketId,
+				Room:     in.Room,
 			})
 		})
 	}

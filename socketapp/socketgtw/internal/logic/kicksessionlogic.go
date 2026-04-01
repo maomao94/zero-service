@@ -25,7 +25,7 @@ func NewKickSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *KickS
 
 // 剔除 session
 func (l *KickSessionLogic) KickSession(in *socketgtw.KickSessionReq) (*socketgtw.KickSessionRes, error) {
-	sess := l.svcCtx.SocketServer.GetSession(in.SId)
+	sess := l.svcCtx.SocketServer.GetSession(in.SocketId)
 	if sess != nil {
 		err := sess.Close()
 		return nil, err

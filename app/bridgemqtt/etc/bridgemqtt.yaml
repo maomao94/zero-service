@@ -23,15 +23,23 @@ MqttConfig:
   Username: "mqtt"
   Password: "password"
   Qos: 0
+  Timeout: 30000
+  KeepAlive: 60000
   SubscribeTopics:
     - "test"
     - "test/topic2"
     - "iec/#"
 #  EventMapping:
-#    - match: "iec/#"
+#    - topicTemplate: "iec/#"
 #      event: "iecEvent"
-#    - match: "test/topic2"
+#    - topicTemplate: "test/topic2"
 #      event: "testTopic2Event"
+#LogConfig:
+#  defaultLogPayload: false
+#  topicSettings:
+#    - topicTemplate: "test"
+#      logPayload: true
+#      minLogInterval: 10s
 #StreamEventConf:
 #  # nacos://[user:passwd]@host/service?param=value'
 #  #  Target: nacos://nacos:nacos@127.0.0.1:8848/stream-event?namespaceid=public&timeout=5000s
@@ -41,7 +49,7 @@ MqttConfig:
 #  Timeout: 10000
 SocketPushConf:
   # nacos://[user:passwd]@host/service?param=value'
-  #  Target: nacos://nacos:nacos@127.0.0.1:8848/socket-push?namespaceid=public&timeout=5000s
+#  #  Target: nacos://nacos:nacos@127.0.0.1:8848/socket-push?namespaceid=public&timeout=5000s
   Endpoints:
     - 127.0.0.1:25002
   NonBlock: true

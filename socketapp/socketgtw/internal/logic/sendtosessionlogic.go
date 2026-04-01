@@ -27,7 +27,7 @@ func NewSendToSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Sen
 
 // 向指定 session 发送消息
 func (l *SendToSessionLogic) SendToSession(in *socketgtw.SendToSessionReq) (*socketgtw.SendToSessionRes, error) {
-	session := l.svcCtx.SocketServer.GetSession(in.SId)
+	session := l.svcCtx.SocketServer.GetSession(in.SocketId)
 	if session != nil {
 		var payload any
 		raw := []byte(in.Payload)

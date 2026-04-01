@@ -31,10 +31,10 @@ func (l *SendToSessionsLogic) SendToSessions(in *socketpush.SendToSessionsReq) (
 	for _, cli := range l.svcCtx.SocketContainer.GetClients() {
 		threading.GoSafe(func() {
 			cli.SendToSessions(baseCtx, &socketgtw.SendToSessionsReq{
-				ReqId:   in.ReqId,
-				SIds:    in.SIds,
-				Event:   in.Event,
-				Payload: in.Payload,
+				ReqId:     in.ReqId,
+				SocketIds: in.SocketIds,
+				Event:     in.Event,
+				Payload:   in.Payload,
 			})
 		})
 	}

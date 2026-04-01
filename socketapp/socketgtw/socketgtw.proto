@@ -38,8 +38,8 @@ message PbMetaSession{
 
 message JoinRoomReq {
   string reqId = 1;
-  string sId = 2;    // session ID
-  string room = 3;   // 房间名
+  string socketId = 2;
+  string room = 3;
 }
 
 message JoinRoomRes {
@@ -48,7 +48,7 @@ message JoinRoomRes {
 
 message LeaveRoomReq {
   string reqId = 1;
-  string sId = 2;
+  string socketId = 2;
   string room = 3;
 }
 
@@ -79,7 +79,7 @@ message BroadcastGlobalRes {
 
 message KickSessionReq {
   string reqId = 1;
-  string sId = 2;
+  string socketId = 2;
 }
 
 message KickSessionRes {
@@ -98,7 +98,7 @@ message KickMetaSessionRes {
 
 message SendToSessionReq {
   string reqId = 1;
-  string sId = 2;
+  string socketId = 2;
   string event = 3;
   string payload = 4;
 }
@@ -109,7 +109,7 @@ message SendToSessionRes {
 
 message SendToSessionsReq {
   string reqId = 1;
-  repeated string sIds = 2;
+  repeated string socketIds = 2;
   string event = 3;
   string payload = 4;
 }

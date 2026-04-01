@@ -76,8 +76,8 @@ func (x *PbMetaSession) GetValue() string {
 type JoinRoomReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ReqId         string                 `protobuf:"bytes,1,opt,name=reqId,proto3" json:"reqId,omitempty"`
-	SId           string                 `protobuf:"bytes,2,opt,name=sId,proto3" json:"sId,omitempty"`   // session ID
-	Room          string                 `protobuf:"bytes,3,opt,name=room,proto3" json:"room,omitempty"` // 房间名
+	SocketId      string                 `protobuf:"bytes,2,opt,name=socketId,proto3" json:"socketId,omitempty"`
+	Room          string                 `protobuf:"bytes,3,opt,name=room,proto3" json:"room,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -119,9 +119,9 @@ func (x *JoinRoomReq) GetReqId() string {
 	return ""
 }
 
-func (x *JoinRoomReq) GetSId() string {
+func (x *JoinRoomReq) GetSocketId() string {
 	if x != nil {
-		return x.SId
+		return x.SocketId
 	}
 	return ""
 }
@@ -180,7 +180,7 @@ func (x *JoinRoomRes) GetReqId() string {
 type LeaveRoomReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ReqId         string                 `protobuf:"bytes,1,opt,name=reqId,proto3" json:"reqId,omitempty"`
-	SId           string                 `protobuf:"bytes,2,opt,name=sId,proto3" json:"sId,omitempty"`
+	SocketId      string                 `protobuf:"bytes,2,opt,name=socketId,proto3" json:"socketId,omitempty"`
 	Room          string                 `protobuf:"bytes,3,opt,name=room,proto3" json:"room,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -223,9 +223,9 @@ func (x *LeaveRoomReq) GetReqId() string {
 	return ""
 }
 
-func (x *LeaveRoomReq) GetSId() string {
+func (x *LeaveRoomReq) GetSocketId() string {
 	if x != nil {
-		return x.SId
+		return x.SocketId
 	}
 	return ""
 }
@@ -500,7 +500,7 @@ func (x *BroadcastGlobalRes) GetReqId() string {
 type KickSessionReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ReqId         string                 `protobuf:"bytes,1,opt,name=reqId,proto3" json:"reqId,omitempty"`
-	SId           string                 `protobuf:"bytes,2,opt,name=sId,proto3" json:"sId,omitempty"`
+	SocketId      string                 `protobuf:"bytes,2,opt,name=socketId,proto3" json:"socketId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -542,9 +542,9 @@ func (x *KickSessionReq) GetReqId() string {
 	return ""
 }
 
-func (x *KickSessionReq) GetSId() string {
+func (x *KickSessionReq) GetSocketId() string {
 	if x != nil {
-		return x.SId
+		return x.SocketId
 	}
 	return ""
 }
@@ -700,7 +700,7 @@ func (x *KickMetaSessionRes) GetReqId() string {
 type SendToSessionReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ReqId         string                 `protobuf:"bytes,1,opt,name=reqId,proto3" json:"reqId,omitempty"`
-	SId           string                 `protobuf:"bytes,2,opt,name=sId,proto3" json:"sId,omitempty"`
+	SocketId      string                 `protobuf:"bytes,2,opt,name=socketId,proto3" json:"socketId,omitempty"`
 	Event         string                 `protobuf:"bytes,3,opt,name=event,proto3" json:"event,omitempty"`
 	Payload       string                 `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -744,9 +744,9 @@ func (x *SendToSessionReq) GetReqId() string {
 	return ""
 }
 
-func (x *SendToSessionReq) GetSId() string {
+func (x *SendToSessionReq) GetSocketId() string {
 	if x != nil {
-		return x.SId
+		return x.SocketId
 	}
 	return ""
 }
@@ -812,7 +812,7 @@ func (x *SendToSessionRes) GetReqId() string {
 type SendToSessionsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ReqId         string                 `protobuf:"bytes,1,opt,name=reqId,proto3" json:"reqId,omitempty"`
-	SIds          []string               `protobuf:"bytes,2,rep,name=sIds,proto3" json:"sIds,omitempty"`
+	SocketIds     []string               `protobuf:"bytes,2,rep,name=socketIds,proto3" json:"socketIds,omitempty"`
 	Event         string                 `protobuf:"bytes,3,opt,name=event,proto3" json:"event,omitempty"`
 	Payload       string                 `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -856,9 +856,9 @@ func (x *SendToSessionsReq) GetReqId() string {
 	return ""
 }
 
-func (x *SendToSessionsReq) GetSIds() []string {
+func (x *SendToSessionsReq) GetSocketIds() []string {
 	if x != nil {
-		return x.SIds
+		return x.SocketIds
 	}
 	return nil
 }
@@ -1240,16 +1240,16 @@ const file_socketgtw_proto_rawDesc = "" +
 	"\x0fsocketgtw.proto\x12\tsocketgtw\"7\n" +
 	"\rPbMetaSession\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value\"I\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value\"S\n" +
 	"\vJoinRoomReq\x12\x14\n" +
-	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x10\n" +
-	"\x03sId\x18\x02 \x01(\tR\x03sId\x12\x12\n" +
+	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x1a\n" +
+	"\bsocketId\x18\x02 \x01(\tR\bsocketId\x12\x12\n" +
 	"\x04room\x18\x03 \x01(\tR\x04room\"#\n" +
 	"\vJoinRoomRes\x12\x14\n" +
-	"\x05reqId\x18\x01 \x01(\tR\x05reqId\"J\n" +
+	"\x05reqId\x18\x01 \x01(\tR\x05reqId\"T\n" +
 	"\fLeaveRoomReq\x12\x14\n" +
-	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x10\n" +
-	"\x03sId\x18\x02 \x01(\tR\x03sId\x12\x12\n" +
+	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x1a\n" +
+	"\bsocketId\x18\x02 \x01(\tR\bsocketId\x12\x12\n" +
 	"\x04room\x18\x03 \x01(\tR\x04room\"$\n" +
 	"\fLeaveRoomRes\x12\x14\n" +
 	"\x05reqId\x18\x01 \x01(\tR\x05reqId\"l\n" +
@@ -1265,10 +1265,10 @@ const file_socketgtw_proto_rawDesc = "" +
 	"\x05event\x18\x02 \x01(\tR\x05event\x12\x18\n" +
 	"\apayload\x18\x03 \x01(\tR\apayload\"*\n" +
 	"\x12BroadcastGlobalRes\x12\x14\n" +
-	"\x05reqId\x18\x01 \x01(\tR\x05reqId\"8\n" +
+	"\x05reqId\x18\x01 \x01(\tR\x05reqId\"B\n" +
 	"\x0eKickSessionReq\x12\x14\n" +
-	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x10\n" +
-	"\x03sId\x18\x02 \x01(\tR\x03sId\"&\n" +
+	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x1a\n" +
+	"\bsocketId\x18\x02 \x01(\tR\bsocketId\"&\n" +
 	"\x0eKickSessionRes\x12\x14\n" +
 	"\x05reqId\x18\x01 \x01(\tR\x05reqId\"R\n" +
 	"\x12KickMetaSessionReq\x12\x14\n" +
@@ -1276,17 +1276,17 @@ const file_socketgtw_proto_rawDesc = "" +
 	"\x03key\x18\x02 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x03 \x01(\tR\x05value\"*\n" +
 	"\x12KickMetaSessionRes\x12\x14\n" +
-	"\x05reqId\x18\x01 \x01(\tR\x05reqId\"j\n" +
+	"\x05reqId\x18\x01 \x01(\tR\x05reqId\"t\n" +
 	"\x10SendToSessionReq\x12\x14\n" +
-	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x10\n" +
-	"\x03sId\x18\x02 \x01(\tR\x03sId\x12\x14\n" +
+	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x1a\n" +
+	"\bsocketId\x18\x02 \x01(\tR\bsocketId\x12\x14\n" +
 	"\x05event\x18\x03 \x01(\tR\x05event\x12\x18\n" +
 	"\apayload\x18\x04 \x01(\tR\apayload\"(\n" +
 	"\x10SendToSessionRes\x12\x14\n" +
-	"\x05reqId\x18\x01 \x01(\tR\x05reqId\"m\n" +
+	"\x05reqId\x18\x01 \x01(\tR\x05reqId\"w\n" +
 	"\x11SendToSessionsReq\x12\x14\n" +
-	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x12\n" +
-	"\x04sIds\x18\x02 \x03(\tR\x04sIds\x12\x14\n" +
+	"\x05reqId\x18\x01 \x01(\tR\x05reqId\x12\x1c\n" +
+	"\tsocketIds\x18\x02 \x03(\tR\tsocketIds\x12\x14\n" +
 	"\x05event\x18\x03 \x01(\tR\x05event\x12\x18\n" +
 	"\apayload\x18\x04 \x01(\tR\apayload\")\n" +
 	"\x11SendToSessionsRes\x12\x14\n" +

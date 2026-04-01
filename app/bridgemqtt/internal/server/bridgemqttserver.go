@@ -23,11 +23,6 @@ func NewBridgeMqttServer(svcCtx *svc.ServiceContext) *BridgeMqttServer {
 	}
 }
 
-func (s *BridgeMqttServer) Ping(ctx context.Context, in *bridgemqtt.Req) (*bridgemqtt.Res, error) {
-	l := logic.NewPingLogic(ctx, s.svcCtx)
-	return l.Ping(in)
-}
-
 // 发布消息
 func (s *BridgeMqttServer) Publish(ctx context.Context, in *bridgemqtt.PublishReq) (*bridgemqtt.PublishRes, error) {
 	l := logic.NewPublishLogic(ctx, s.svcCtx)

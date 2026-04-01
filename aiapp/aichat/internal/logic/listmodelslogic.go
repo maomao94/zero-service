@@ -26,7 +26,7 @@ func NewListModelsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ListMo
 
 func (l *ListModelsLogic) ListModels(in *aichat.ListModelsReq) (*aichat.ListModelsRes, error) {
 	var data []*aichat.ModelObjectPb
-	now := time.Now().Unix()
+	now := time.Now().UnixMilli()
 	for _, mc := range l.svcCtx.Config.Models {
 		data = append(data, &aichat.ModelObjectPb{
 			Id:                mc.Id,

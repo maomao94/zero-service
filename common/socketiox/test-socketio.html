@@ -852,7 +852,7 @@
                         <button id="connectBtn" class="primary">连接</button>
             <button id="disconnectBtn" class="secondary" disabled>断开连接</button>
                         <span id="connectionStatus" class="status disconnected">未连接</span>
-                        <span id="socketId"></span>
+                        <span id="socketIdDisplay"></span>
                     </div>
                 </div>
                 
@@ -971,7 +971,7 @@
         const connectBtn = document.getElementById('connectBtn');
         const disconnectBtn = document.getElementById('disconnectBtn');
         const connectionStatus = document.getElementById('connectionStatus');
-        const socketIdSpan = document.getElementById('socketId');
+        const socketIdSpan = document.getElementById('socketIdDisplay');
         const payloadInput = document.getElementById('payload');
         const sendUpBtn = document.getElementById('sendUpBtn');
         const sendRoomBtn = document.getElementById('sendRoomBtn');

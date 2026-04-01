@@ -24,7 +24,7 @@ func NewLeaveRoomLogic(ctx context.Context, svcCtx *svc.ServiceContext) *LeaveRo
 
 // 离开房间
 func (l *LeaveRoomLogic) LeaveRoom(in *socketgtw.LeaveRoomReq) (*socketgtw.LeaveRoomRes, error) {
-	session := l.svcCtx.SocketServer.GetSession(in.SId)
+	session := l.svcCtx.SocketServer.GetSession(in.SocketId)
 	if session != nil {
 		err := session.LeaveRoom(in.Room)
 		if err != nil {

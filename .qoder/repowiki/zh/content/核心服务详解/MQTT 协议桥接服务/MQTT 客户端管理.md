@@ -2,9 +2,12 @@
 
 <cite>
 **本文引用的文件**
-- [common/mqttx/mqttx.go](file://common/mqttx/mqttx.go)
+- [common/mqttx/config.go](file://common/mqttx/config.go)
+- [common/mqttx/client.go](file://common/mqttx/client.go)
+- [common/mqttx/dispatcher.go](file://common/mqttx/dispatcher.go)
 - [common/mqttx/message.go](file://common/mqttx/message.go)
 - [common/mqttx/trace.go](file://common/mqttx/trace.go)
+- [common/mqttx/topiclog.go](file://common/mqttx/topiclog.go)
 - [app/bridgemqtt/etc/bridgemqtt.yaml](file://app/bridgemqtt/etc/bridgemqtt.yaml)
 - [app/bridgemqtt/internal/config/config.go](file://app/bridgemqtt/internal/config/config.go)
 - [app/bridgemqtt/internal/svc/servicecontext.go](file://app/bridgemqtt/internal/svc/servicecontext.go)
@@ -15,6 +18,12 @@
 - [app/bridgemqtt/bridgemqtt.go](file://app/bridgemqtt/bridgemqtt.go)
 - [facade/streamevent/internal/logic/receivemqttmessagelogic.go](file://facade/streamevent/internal/logic/receivemqttmessagelogic.go)
 </cite>
+
+## 更新摘要
+**变更内容**
+- 更新超时和心跳配置为毫秒精度，改进连接处理逻辑
+- 新增毫秒时间单位转换的具体实现细节
+- 更新配置模板和参数说明，反映新的时间单位
 
 ## 目录
 1. [简介](#简介)
@@ -31,6 +40,8 @@
 ## 简介
 本技术文档围绕仓库中的 MQTT 客户端管理能力进行系统化梳理，覆盖客户端生命周期、连接与断开处理、标识符与认证、TLS 配置、状态监控、心跳与自动重连、会话与遗嘱、并发与资源管理、性能优化、配置模板与参数调优、故障诊断以及多客户端场景下的负载均衡与故障转移实践建议。文档以代码为依据，结合架构图与流程图，帮助读者快速理解并落地 MQTT 客户端在本项目中的使用方式。
 
+**更新** 本版本重点更新了超时和心跳配置从秒转换为毫秒精度的实现细节，以及相应的连接处理逻辑改进。
+
 ## 项目结构
 与 MQTT 客户端管理直接相关的模块主要分布在以下位置：
 - 通用 MQTT 客户端封装：common/mqttx
@@ -41,7 +52,7 @@
 ```mermaid
 graph TB
 subgraph "通用层"
-MQTTCfg["MqttConfig<br/>配置项"]
+MQTTCfg["MqttConfig<br/>配置项毫秒精度"]
 MQTTClient["Client<br/>客户端封装"]
 Message["Message<br/>消息模型"]
 Carrier["MessageCarrier<br/>传播载体"]
@@ -69,20 +80,21 @@ Server --> LogicPub
 Server --> LogicPing
 ```
 
-图表来源
-- [common/mqttx/mqttx.go:51-87](file://common/mqttx/mqttx.go#L51-L87)
+**图表来源**
+- [common/mqttx/config.go:15-18](file://common/mqttx/config.go#L15-L18)
+- [common/mqttx/client.go:126-127](file://common/mqttx/client.go#L126-L127)
 - [app/bridgemqtt/internal/config/config.go:9-23](file://app/bridgemqtt/internal/config/config.go#L9-L23)
 - [app/bridgemqtt/internal/svc/servicecontext.go:16-59](file://app/bridgemqtt/internal/svc/servicecontext.go#L16-L59)
 - [app/bridgemqtt/internal/handler/mqttstreamhandler.go:99-119](file://app/bridgemqtt/internal/handler/mqttstreamhandler.go#L99-L119)
 - [app/bridgemqtt/internal/server/bridgemqttserver.go:15-42](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L15-L42)
 
-章节来源
-- [app/bridgemqtt/etc/bridgemqtt.yaml:1-48](file://app/bridgemqtt/etc/bridgemqtt.yaml#L1-L48)
+**章节来源**
+- [app/bridgemqtt/etc/bridgemqtt.yaml:1-56](file://app/bridgemqtt/etc/bridgemqtt.yaml#L1-L56)
 - [app/bridgemqtt/bridgemqtt.go:28-71](file://app/bridgemqtt/bridgemqtt.go#L28-L71)
 
 ## 核心组件
 - 通用 MQTT 客户端封装
-  - MqttConfig：定义 Broker 地址、ClientID、用户名密码、QoS、超时、心跳、自动订阅、初始订阅主题、事件映射、默认事件等。
+  - MqttConfig：定义 Broker 地址、ClientID、用户名密码、QoS、超时（毫秒）、心跳（毫秒）、自动订阅、初始订阅主题、事件映射、默认事件等。
   - Client：封装 paho 客户端，提供连接、订阅、发布、关闭、处理器注册、自动重连、订阅恢复、指标与链路追踪等能力。
   - Message/MessageCarrier：支持在消息中携带 headers 并通过 OpenTelemetry 文本传播。
 - 桥接服务
@@ -94,8 +106,11 @@ Server --> LogicPing
   - bridgemqtt.yaml：服务监听、日志、Nacos 注册、MQTT 连接参数、上游服务地址等。
   - bridgemqtt.go：加载配置、注册服务、可选 Nacos 注册、启动 RPC 服务器。
 
-章节来源
-- [common/mqttx/mqttx.go:51-178](file://common/mqttx/mqttx.go#L51-L178)
+**更新** 配置项现在使用毫秒精度，包括超时和心跳参数。
+
+**章节来源**
+- [common/mqttx/config.go:15-18](file://common/mqttx/config.go#L15-L18)
+- [common/mqttx/client.go:126-127](file://common/mqttx/client.go#L126-L127)
 - [common/mqttx/message.go:3-30](file://common/mqttx/message.go#L3-L30)
 - [common/mqttx/trace.go:8-31](file://common/mqttx/trace.go#L8-L31)
 - [app/bridgemqtt/internal/config/config.go:9-23](file://app/bridgemqtt/internal/config/config.go#L9-L23)
@@ -127,7 +142,7 @@ Mqtt->>Up1 : "ReceiveMQTTMessage(...)"
 Mqtt->>Up2 : "BroadcastRoom(...)"
 ```
 
-图表来源
+**图表来源**
 - [app/bridgemqtt/internal/server/bridgemqttserver.go:26-41](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L26-L41)
 - [app/bridgemqtt/internal/logic/publishlogic.go:27-33](file://app/bridgemqtt/internal/logic/publishlogic.go#L27-L33)
 - [app/bridgemqtt/internal/svc/servicecontext.go:48-55](file://app/bridgemqtt/internal/svc/servicecontext.go#L48-L55)
@@ -137,7 +152,7 @@ Mqtt->>Up2 : "BroadcastRoom(...)"
 
 ### 通用 MQTT 客户端封装（Client）
 - 生命周期与连接
-  - 构造阶段：校验 Broker、生成 ClientID、设置超时与心跳、配置自动重连、设置连接回调与断开回调、建立连接并等待超时。
+  - 构造阶段：校验 Broker、生成 ClientID、设置超时与心跳（毫秒）、配置自动重连、设置连接回调与断开回调、建立连接并等待超时。
   - OnConnect：首次连接成功后触发 OnReady 回调；随后尝试恢复订阅。
   - OnConnectionLost：断开时清空已订阅集合，等待重连后重新订阅。
   - Close：优雅断开连接并清理订阅状态。
@@ -152,6 +167,8 @@ Mqtt->>Up2 : "BroadcastRoom(...)"
   - 使用互斥锁保护处理器表与订阅状态；内部使用统计指标与 tracer。
 - 会话与遗嘱
   - 当前实现未显式设置 CleanSession/Will；如需会话持久化或遗嘱，请在 Broker 端或扩展配置中补充。
+
+**更新** 连接处理逻辑现已支持毫秒精度的时间配置，所有超时和心跳参数通过 `time.Duration(cfg.Timeout) * time.Millisecond` 转换为 Go 的时间类型。
 
 ```mermaid
 classDiagram
@@ -180,8 +197,8 @@ class MqttConfig {
 +Username
 +Password
 +Qos
-+Timeout
-+KeepAlive
++Timeout(ms)
++KeepAlive(ms)
 +AutoSubscribe
 +SubscribeTopics[]
 +EventMapping[]
@@ -205,20 +222,19 @@ Client --> Message : "消费时解包"
 Message --> MessageCarrier : "传播"
 ```
 
-图表来源
-- [common/mqttx/mqttx.go:76-178](file://common/mqttx/mqttx.go#L76-L178)
-- [common/mqttx/mqttx.go:258-307](file://common/mqttx/mqttx.go#L258-L307)
-- [common/mqttx/mqttx.go:310-342](file://common/mqttx/mqttx.go#L310-L342)
-- [common/mqttx/mqttx.go:362-388](file://common/mqttx/mqttx.go#L362-L388)
+**图表来源**
+- [common/mqttx/client.go:76-100](file://common/mqttx/client.go#L76-L100)
+- [common/mqttx/config.go:15-18](file://common/mqttx/config.go#L15-L18)
+- [common/mqttx/client.go:126-127](file://common/mqttx/client.go#L126-L127)
 - [common/mqttx/message.go:3-30](file://common/mqttx/message.go#L3-L30)
 - [common/mqttx/trace.go:8-31](file://common/mqttx/trace.go#L8-L31)
 
-章节来源
-- [common/mqttx/mqttx.go:98-178](file://common/mqttx/mqttx.go#L98-L178)
-- [common/mqttx/mqttx.go:180-255](file://common/mqttx/mqttx.go#L180-L255)
-- [common/mqttx/mqttx.go:258-307](file://common/mqttx/mqttx.go#L258-L307)
-- [common/mqttx/mqttx.go:310-342](file://common/mqttx/mqttx.go#L310-L342)
-- [common/mqttx/mqttx.go:362-388](file://common/mqttx/mqttx.go#L362-L388)
+**章节来源**
+- [common/mqttx/client.go:98-178](file://common/mqttx/client.go#L98-L178)
+- [common/mqttx/client.go:180-255](file://common/mqttx/client.go#L180-L255)
+- [common/mqttx/client.go:258-307](file://common/mqttx/client.go#L258-L307)
+- [common/mqttx/client.go:310-342](file://common/mqttx/client.go#L310-L342)
+- [common/mqttx/client.go:362-388](file://common/mqttx/client.go#L362-L388)
 
 ### 桥接服务（ServiceContext 与 Handler）
 - 服务上下文
@@ -239,11 +255,11 @@ Stream --> Done(["完成"])
 Socket --> Done
 ```
 
-图表来源
+**图表来源**
 - [app/bridgemqtt/internal/handler/mqttstreamhandler.go:130-188](file://app/bridgemqtt/internal/handler/mqttstreamhandler.go#L130-L188)
 - [app/bridgemqtt/internal/svc/servicecontext.go:48-55](file://app/bridgemqtt/internal/svc/servicecontext.go#L48-L55)
 
-章节来源
+**章节来源**
 - [app/bridgemqtt/internal/svc/servicecontext.go:21-60](file://app/bridgemqtt/internal/svc/servicecontext.go#L21-L60)
 - [app/bridgemqtt/internal/handler/mqttstreamhandler.go:99-188](file://app/bridgemqtt/internal/handler/mqttstreamhandler.go#L99-L188)
 
@@ -266,11 +282,11 @@ L-->>S : "返回响应"
 S-->>Caller : "完成"
 ```
 
-图表来源
+**图表来源**
 - [app/bridgemqtt/internal/server/bridgemqttserver.go:31-41](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L31-L41)
 - [app/bridgemqtt/internal/logic/publishlogic.go:27-33](file://app/bridgemqtt/internal/logic/publishlogic.go#L27-L33)
 
-章节来源
+**章节来源**
 - [app/bridgemqtt/internal/server/bridgemqttserver.go:15-42](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L15-L42)
 - [app/bridgemqtt/internal/logic/pinglogic.go:26-30](file://app/bridgemqtt/internal/logic/pinglogic.go#L26-L30)
 - [app/bridgemqtt/internal/logic/publishlogic.go:27-33](file://app/bridgemqtt/internal/logic/publishlogic.go#L27-L33)
@@ -295,12 +311,12 @@ Server["BridgeMqttServer"] --> Logic["PublishLogic/PingLogic"]
 Logic --> MQTT
 ```
 
-图表来源
+**图表来源**
 - [app/bridgemqtt/internal/config/config.go:9-23](file://app/bridgemqtt/internal/config/config.go#L9-L23)
 - [app/bridgemqtt/internal/svc/servicecontext.go:16-59](file://app/bridgemqtt/internal/svc/servicecontext.go#L16-L59)
 - [app/bridgemqtt/internal/server/bridgemqttserver.go:15-42](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L15-L42)
 
-章节来源
+**章节来源**
 - [app/bridgemqtt/internal/config/config.go:9-23](file://app/bridgemqtt/internal/config/config.go#L9-L23)
 - [app/bridgemqtt/internal/svc/servicecontext.go:21-60](file://app/bridgemqtt/internal/svc/servicecontext.go#L21-L60)
 - [app/bridgemqtt/internal/server/bridgemqttserver.go:15-42](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L15-L42)
@@ -310,22 +326,24 @@ Logic --> MQTT
   - Handler 使用任务运行器并发处理，避免阻塞；可根据消息吞吐量调整并发度。
   - TopicLogManager 提供按主题的日志去噪，降低高频日志对性能的影响。
 - 发布与订阅
-  - 发布与订阅均设置超时，防止阻塞；建议根据网络状况调整超时与心跳参数。
+  - 发布与订阅均设置超时（毫秒），防止阻塞；建议根据网络状况调整超时与心跳参数。
   - QoS 选择影响可靠性与性能，建议在业务允许范围内选择合适值。
 - 上游调用
   - gRPC 客户端设置了最大发送消息大小，避免大包导致内存压力。
 - 指标与追踪
   - 内置指标统计与 span 打点，便于定位慢调用与异常。
 
-章节来源
+**更新** 超时和心跳参数现在使用毫秒精度，提供了更精细的时间控制能力。
+
+**章节来源**
 - [app/bridgemqtt/internal/handler/mqttstreamhandler.go:114-118](file://app/bridgemqtt/internal/handler/mqttstreamhandler.go#L114-L118)
 - [app/bridgemqtt/internal/handler/mqttstreamhandler.go:32-92](file://app/bridgemqtt/internal/handler/mqttstreamhandler.go#L32-L92)
 - [app/bridgemqtt/internal/svc/servicecontext.go:29-45](file://app/bridgemqtt/internal/svc/servicecontext.go#L29-L45)
-- [common/mqttx/mqttx.go:310-342](file://common/mqttx/mqttx.go#L310-L342)
+- [common/mqttx/client.go:310-342](file://common/mqttx/client.go#L310-L342)
 
 ## 故障排查指南
 - 连接失败
-  - 检查 Broker 地址、用户名密码、超时与心跳配置；确认 OnConnect 回调是否触发。
+  - 检查 Broker 地址、用户名密码、超时（毫秒）与心跳（毫秒）配置；确认 OnConnect 回调是否触发。
   - 若连接超时，适当增大 Timeout 或检查网络连通性。
 - 断开与重连
   - OnConnectionLost 会清空订阅集合，待重连后自动恢复订阅；若未恢复，检查 RestoreSubscriptions 流程。
@@ -338,21 +356,25 @@ Logic --> MQTT
 - 日志与追踪
   - 查看 span 属性（topic、message_id、qos、client_id）与指标统计，定位异常。
 
-章节来源
-- [common/mqttx/mqttx.go:148-166](file://common/mqttx/mqttx.go#L148-L166)
-- [common/mqttx/mqttx.go:236-255](file://common/mqttx/mqttx.go#L236-L255)
-- [common/mqttx/mqttx.go:310-342](file://common/mqttx/mqttx.go#L310-L342)
-- [common/mqttx/mqttx.go:293-305](file://common/mqttx/mqttx.go#L293-L305)
+**更新** 故障排查指南现在包含毫秒精度的超时和心跳参数说明。
+
+**章节来源**
+- [common/mqttx/client.go:148-166](file://common/mqttx/client.go#L148-L166)
+- [common/mqttx/client.go:236-255](file://common/mqttx/client.go#L236-L255)
+- [common/mqttx/client.go:310-342](file://common/mqttx/client.go#L310-L342)
+- [common/mqttx/client.go:293-305](file://common/mqttx/client.go#L293-L305)
 
 ## 结论
 本项目提供了完整、可扩展的 MQTT 客户端管理能力：从通用封装到桥接服务，再到上游集成与可观测性，形成了一条清晰的链路。通过合理的配置、并发与资源管理策略，可在生产环境中稳定运行。对于会话持久化与 TLS 安全连接，建议在现有配置基础上扩展相应参数与证书配置。
+
+**更新** 最新版本显著改进了时间配置的精度，从秒级提升到毫秒级，为网络环境的精细化调优提供了更好的支持。
 
 ## 附录
 
 ### 客户端生命周期与连接流程
 ```mermaid
 flowchart TD
-A["创建 Client"] --> B["设置 Broker/认证/QoS/超时/心跳"]
+A["创建 Client"] --> B["设置 Broker/认证/QoS/超时(毫秒)/心跳(毫秒)"]
 B --> C["连接 Broker"]
 C --> D{"连接成功?"}
 D -- 否 --> E["报错/重试"]
@@ -364,54 +386,60 @@ I --> J["清空订阅并等待重连"]
 J --> C
 ```
 
-图表来源
-- [common/mqttx/mqttx.go:98-178](file://common/mqttx/mqttx.go#L98-L178)
-- [common/mqttx/mqttx.go:148-166](file://common/mqttx/mqttx.go#L148-L166)
-- [common/mqttx/mqttx.go:236-255](file://common/mqttx/mqttx.go#L236-L255)
+**图表来源**
+- [common/mqttx/client.go:98-178](file://common/mqttx/client.go#L98-L178)
+- [common/mqttx/client.go:148-166](file://common/mqttx/client.go#L148-L166)
+- [common/mqttx/client.go:236-255](file://common/mqttx/client.go#L236-L255)
 
 ### 配置模板与参数说明
 - 服务配置（bridgemqtt.yaml）
   - Name、ListenOn、Timeout、Log、NacosConfig、MqttConfig、SocketPushConf 等。
-  - MqttConfig 关键项：Broker、ClientID（可省略）、Username、Password、Qos、Timeout、KeepAlive、AutoSubscribe、SubscribeTopics、EventMapping、DefaultEvent。
+  - MqttConfig 关键项：Broker、ClientID（可省略）、Username、Password、Qos、Timeout（毫秒）、KeepAlive（毫秒）、AutoSubscribe、SubscribeTopics、EventMapping、DefaultEvent。
 - 服务上下文配置（config.go）
   - 聚合 RPC 服务配置、Nacos 注册配置、MQTT 配置、上游服务客户端配置。
 
-章节来源
-- [app/bridgemqtt/etc/bridgemqtt.yaml:1-48](file://app/bridgemqtt/etc/bridgemqtt.yaml#L1-L48)
+**更新** 配置模板现在使用毫秒精度的时间参数。
+
+**章节来源**
+- [app/bridgemqtt/etc/bridgemqtt.yaml:1-56](file://app/bridgemqtt/etc/bridgemqtt.yaml#L1-L56)
 - [app/bridgemqtt/internal/config/config.go:9-23](file://app/bridgemqtt/internal/config/config.go#L9-L23)
 
 ### 认证与安全连接
 - 用户名密码认证：在 MqttConfig 中设置 Username 与 Password。
 - TLS 安全连接：当前通用封装未显式暴露 TLS 配置项；如需启用，请在 Broker 地址中使用 TLS 协议，并在 paho 客户端选项中增加 TLS 参数（例如在扩展封装中添加）。
 
-章节来源
-- [common/mqttx/mqttx.go:137-146](file://common/mqttx/mqttx.go#L137-L146)
+**章节来源**
+- [common/mqttx/config.go:137-146](file://common/mqttx/config.go#L137-L146)
 - [app/bridgemqtt/etc/bridgemqtt.yaml:19-25](file://app/bridgemqtt/etc/bridgemqtt.yaml#L19-L25)
 
 ### 心跳检测与自动重连
-- 心跳：KeepAlive 控制心跳间隔；Broker 端应与该值匹配。
+- 心跳：KeepAlive 控制心跳间隔（毫秒）；Broker 端应与该值匹配。
 - 自动重连：SetAutoReconnect 已开启；断开后清空订阅集合，重连后恢复订阅。
-- 建议：根据网络波动调整 KeepAlive 与 Timeout，确保在弱网环境下仍能维持连接。
+- 建议：根据网络波动调整 KeepAlive 与 Timeout（毫秒），确保在弱网环境下仍能维持连接。
 
-章节来源
-- [common/mqttx/mqttx.go:144-146](file://common/mqttx/mqttx.go#L144-L146)
-- [common/mqttx/mqttx.go:161-166](file://common/mqttx/mqttx.go#L161-L166)
-- [common/mqttx/mqttx.go:236-255](file://common/mqttx/mqttx.go#L236-L255)
+**更新** 心跳和超时参数现在使用毫秒精度，提供了更精细的网络控制能力。
+
+**章节来源**
+- [common/mqttx/config.go:144-146](file://common/mqttx/config.go#L144-L146)
+- [common/mqttx/client.go:161-166](file://common/mqttx/client.go#L161-L166)
+- [common/mqttx/client.go:236-255](file://common/mqttx/client.go#L236-L255)
 
 ### 会话管理、遗嘱消息与清理
 - 会话管理：当前未设置 CleanSession/Will；如需持久会话或遗嘱，请在扩展封装中补充相应选项。
 - 清理工作：Close 时断开连接并清空订阅状态；OnConnectionLost 也会清空订阅集合以便重连后恢复。
 
-章节来源
-- [common/mqttx/mqttx.go:336-342](file://common/mqttx/mqttx.go#L336-L342)
-- [common/mqttx/mqttx.go:161-166](file://common/mqttx/mqttx.go#L161-L166)
+**章节来源**
+- [common/mqttx/client.go:336-342](file://common/mqttx/client.go#L336-L342)
+- [common/mqttx/client.go:161-166](file://common/mqttx/client.go#L161-L166)
 
 ### 并发连接限制与资源管理
 - 并发：Handler 使用任务运行器并发处理；可根据业务调整并发度。
-- 资源：Client 内置指标与 tracer；注意合理设置超时与心跳，避免资源泄露。
+- 资源：Client 内置指标与 tracer；注意合理设置超时与心跳（毫秒），避免资源泄露。
 - 上游：gRPC 客户端设置最大发送消息大小，防止大包占用过多内存。
 
-章节来源
+**更新** 资源管理现在包含毫秒精度的时间参数配置。
+
+**章节来源**
 - [app/bridgemqtt/internal/handler/mqttstreamhandler.go:114-118](file://app/bridgemqtt/internal/handler/mqttstreamhandler.go#L114-L118)
 - [app/bridgemqtt/internal/svc/servicecontext.go:29-45](file://app/bridgemqtt/internal/svc/servicecontext.go#L29-L45)
 
@@ -419,7 +447,7 @@ J --> C
 - 负载均衡：可通过多个桥接实例横向扩展，结合 Nacos 注册与客户端路由实现流量分摊。
 - 故障转移：利用自动重连与订阅恢复机制，在单实例故障时由其他实例接管订阅；建议配合健康检查与熔断策略。
 
-章节来源
+**章节来源**
 - [app/bridgemqtt/etc/bridgemqtt.yaml:11-18](file://app/bridgemqtt/etc/bridgemqtt.yaml#L11-L18)
 - [app/bridgemqtt/bridgemqtt.go:46-64](file://app/bridgemqtt/bridgemqtt.go#L46-L64)
 
@@ -428,8 +456,24 @@ J --> C
 - 指标与追踪：查看 span 属性与耗时统计，定位慢调用与异常。
 - 上游调用：关注 StreamEvent 与 SocketPush 的调用耗时与成功率。
 
-章节来源
-- [common/mqttx/mqttx.go:148-166](file://common/mqttx/mqttx.go#L148-L166)
-- [common/mqttx/mqttx.go:236-255](file://common/mqttx/mqttx.go#L236-L255)
-- [common/mqttx/mqttx.go:310-342](file://common/mqttx/mqttx.go#L310-L342)
+**章节来源**
+- [common/mqttx/client.go:148-166](file://common/mqttx/client.go#L148-L166)
+- [common/mqttx/client.go:236-255](file://common/mqttx/client.go#L236-L255)
+- [common/mqttx/client.go:310-342](file://common/mqttx/client.go#L310-L342)
 - [app/bridgemqtt/internal/handler/mqttstreamhandler.go:140-187](file://app/bridgemqtt/internal/handler/mqttstreamhandler.go#L140-L187)
+
+### 时间配置精度说明
+- 超时配置：Timeout 字段现在使用毫秒精度，通过 `time.Duration(cfg.Timeout) * time.Millisecond` 转换为 Go 的时间类型。
+- 心跳配置：KeepAlive 字段现在使用毫秒精度，通过 `time.Duration(cfg.KeepAlive) * time.Millisecond` 转换为 Go 的时间类型。
+- 默认值：Timeout 默认 30000ms（30秒），KeepAlive 默认 60000ms（60秒）。
+
+**新增章节**
+- 精度转换：所有时间参数在连接处理过程中都会通过毫秒精度转换，确保与底层 MQTT 客户端库的期望格式一致。
+- 配置兼容：现有的配置文件中的数值保持不变，但语义已从秒转换为毫秒。
+
+**章节来源**
+- [common/mqttx/config.go:15-18](file://common/mqttx/config.go#L15-L18)
+- [common/mqttx/client.go:126-127](file://common/mqttx/client.go#L126-L127)
+- [common/mqttx/client.go:136-138](file://common/mqttx/client.go#L136-L138)
+- [common/mqttx/client.go:219](file://common/mqttx/client.go#L219)
+- [common/mqttx/client.go:332](file://common/mqttx/client.go#L332)

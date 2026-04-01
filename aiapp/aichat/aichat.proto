@@ -16,7 +16,7 @@ message EmptyReq {}
 
 // ChatMessagePb 单条对话消息，兼容 OpenAI Chat Completion 消息格式。
 //
-// 当模型启用深度思考（thinking）时，assistant 消息会包含 reasoning_content 字段，
+// 当模型启用深度思考（thinking）时，assistant 消息会包含 reasoningContent 字段，
 // 用于携带模型的推理/思考过程文本，与最终回答 content 分离。
 message ChatMessagePb {
   // 消息角色，有效值：
@@ -29,8 +29,8 @@ message ChatMessagePb {
   string content = 2;
 
   // 模型的推理思考过程（仅 assistant 角色有值）。
-  // 不同厂商返回字段名相同（reasoning_content），但启用方式不同，参见 enable_thinking。
-  string reasoning_content = 3;
+  // 不同厂商返回字段名相同（reasoningContent），但启用方式不同，参见 enableThinking。
+  string reasoningContent = 3;
 }
 
 // ============================================================
@@ -54,13 +54,13 @@ message ChatCompletionReq {
   double temperature = 3;
 
   // 核采样参数，取值范围 0.0~1.0。
-  // 模型只从累计概率质量达到 top_p 的最小 token 集合中采样。
+  // 模型只从累计概率质量达到 topP 的最小 token 集合中采样。
   // 建议与 temperature 二选一使用，不同时调整
-  double top_p = 4;
+  double topP = 4;
 
   // 单次回复的最大 token 数限制。
   // 用于控制回复长度，防止生成过长内容
-  int32 max_tokens = 5;
+  int32 maxTokens = 5;
 
   // 停止序列，当模型生成这些字符串时停止输出。
   // 可指定多个停止词，用于精确控制生成结束位置
@@ -70,9 +70,9 @@ message ChatCompletionReq {
   string user = 7;
 
   // 是否启用深度思考模式。
-  // 启用后模型会先生成推理过程（reasoning_content），再给出最终回答。
+  // 启用后模型会先生成推理过程（reasoningContent），再给出最终回答。
   // 不同厂商启用方式可能不同
-  bool enable_thinking = 8;
+  bool enableThinking = 8;
 }
 
 // ChoicePb 对话补全的单个候选回复。
@@ -88,19 +88,19 @@ message ChoicePb {
   // - stop: 模型自然停止（遇到 stop 序列或达到 max_tokens）
   // - length: 达到 max_tokens 限制
   // - content_filter: 内容被过滤
-  string finish_reason = 3;
+  string finishReason = 3;
 }
 
 // UsagePb token 使用量统计信息。
 message UsagePb {
   // 输入 prompt 消耗的 token 数量
-  int32 prompt_tokens = 1;
+  int32 promptTokens = 1;
 
   // 输出 completion 消耗的 token 数量
-  int32 completion_tokens = 2;
+  int32 completionTokens = 2;
 
-  // 总消耗 token 数量 = prompt_tokens + completion_tokens
-  int32 total_tokens = 3;
+  // 总消耗 token 数量 = prompt_tokens + completionTokens
+  int32 totalTokens = 3;
 }
 
 // ChatCompletionRes 非流式对话补全响应。
@@ -128,7 +128,7 @@ message ChatCompletionRes {
 // 流式响应
 // ============================================================
 
-// ChatDeltaPb 流式增量消息。在 thinking 模式下，模型会先通过 reasoning_content
+// ChatDeltaPb 流式增量消息。在 thinking 模式下，模型会先通过 reasoningContent
 // 逐 chunk 输出推理过程，再通过 content 输出最终回答。前端可根据两字段分别渲染。
 message ChatDeltaPb {
   // 角色标识（仅首个 chunk 包含），固定为 "assistant"
@@ -138,11 +138,11 @@ message ChatDeltaPb {
   string content = 2;
 
   // 推理思考过程的增量内容。流式场景下先于 content 输出，
-  // 当 reasoning_content 结束、content 开始时，表示模型已从思考阶段切换到回答阶段
-  string reasoning_content = 3;
+  // 当 reasoningContent 结束、content 开始时，表示模型已从思考阶段切换到回答阶段
+  string reasoningContent = 3;
 
   // 工具调用的增量数据列表
-  repeated ToolCallDeltaPb tool_calls = 4;
+  repeated ToolCallDeltaPb toolCalls = 4;
 }
 
 // ToolCallDeltaPb 流式场景中工具调用的增量数据
@@ -164,11 +164,11 @@ message ChunkChoicePb {
   // 片段索引，从 0 开始
   int32 index = 1;
 
-  // 增量消息内容，包含 role、content、reasoning_content、tool_calls
+  // 增量消息内容，包含 role、content、reasoningContent、toolCalls
   ChatDeltaPb delta = 2;
 
-  // 片段结束原因，有效值：stop、length、content_filter、tool_calls
-  string finish_reason = 3;
+  // 片段结束原因，有效值：stop、length、content_filter、toolCalls
+  string finishReason = 3;
 }
 
 // ChatCompletionStreamChunk 流式对话补全的 SSE chunk 格式，
@@ -209,19 +209,19 @@ message ModelObjectPb {
   int64 created = 3;
 
   // 模型所属的 provider 名称，如 zhipu、dashscope
-  string owned_by = 4;
+  string ownedBy = 4;
 
   // 模型的友好显示名称，用于 UI 展示
-  string display_name = 5;
+  string displayName = 5;
 
   // 模型的详细描述，说明模型的能力和适用场景
   string description = 6;
 
   // 是否支持流式输出（SSE）
-  bool supports_streaming = 7;
+  bool supportsStreaming = 7;
 
   // 模型支持的最大 token 数（输入+输出）
-  int32 max_tokens = 8;
+  int32 maxTokens = 8;
 }
 
 // ListModelsRes 模型列表响应
@@ -237,7 +237,7 @@ message ListModelsRes {
 // AsyncToolCallReq 异步调用 MCP 工具的请求。
 //
 // 使用流程：
-// 1. 调用 AsyncToolCall 提交任务，获取 task_id
+// 1. 调用 AsyncToolCall 提交任务，获取 taskId
 // 2. 轮询 AsyncToolResult 查询执行状态和结果
 // 3. 状态变为 completed 时获取最终结果
 message AsyncToolCallReq {
@@ -261,7 +261,7 @@ message AsyncToolCallReq {
 // AsyncToolCallRes 异步调用 MCP 工具的响应。
 message AsyncToolCallRes {
   // 任务唯一标识符，用于后续查询任务状态和结果
-  string task_id = 1;
+  string taskId = 1;
 
   // 任务初始状态，固定为 "pending"
   string status = 2;
@@ -269,14 +269,14 @@ message AsyncToolCallRes {
 
 // AsyncToolResultReq 查询异步工具调用结果的请求。
 message AsyncToolResultReq {
-  // 任务标识符，即 AsyncToolCall 返回的 task_id
-  string task_id = 1;
+  // 任务标识符，即 AsyncToolCall 返回的 taskId
+  string taskId = 1;
 }
 
 // AsyncToolResultRes 查询异步工具调用结果响应。
 message AsyncToolResultRes {
   // 任务标识符
-  string task_id = 1;
+  string taskId = 1;
 
   // 任务状态，有效值：
   // - pending: 任务等待执行
@@ -313,7 +313,7 @@ message ProgressMessagePb {
   // 消息内容，MCP 服务器返回的原始消息
   string message = 3;
 
-  // 时间戳，Unix 秒级时间戳
+  // 时间戳，Unix 毫秒级时间戳
   int64 time = 4;
 }
 
@@ -327,22 +327,22 @@ message ListAsyncResultsReq {
   string status = 1;
 
   // 开始时间戳（毫秒），0 表示不限制
-  int64 start_time = 2;
+  int64 startTime = 2;
 
   // 结束时间戳（毫秒），0 表示不限制
-  int64 end_time = 3;
+  int64 endTime = 3;
 
   // 页码，从 1 开始
   int32 page = 4;
 
   // 每页数量
-  int32 page_size = 5;
+  int32 pageSize = 5;
 
   // 排序字段：created_at/updated_at/progress
-  string sort_field = 6;
+  string sortField = 6;
 
   // 排序方向：asc/desc
-  string sort_order = 7;
+  string sortOrder = 7;
 }
 
 // ListAsyncResultsResp 分页查询异步结果响应
@@ -357,10 +357,10 @@ message ListAsyncResultsResp {
   int32 page = 3;
 
   // 每页数量
-  int32 page_size = 4;
+  int32 pageSize = 4;
 
   // 总页数
-  int32 total_pages = 5;
+  int32 totalPages = 5;
 }
 
 // AsyncResultStat 异步结果统计
@@ -378,7 +378,7 @@ message AsyncResultStat {
   int64 failed = 4;
 
   // 成功率（百分比）
-  double success_rate = 5;
+  double successRate = 5;
 }
 
 // ============================================================
@@ -400,7 +400,7 @@ service AiChat {
   // 返回模型列表包含模型 ID、描述、最大 token 数等
   rpc ListModels(ListModelsReq) returns(ListModelsRes);
 
-  // AsyncToolCall 异步调用 MCP 工具，提交任务后立即返回 task_id。
+  // AsyncToolCall 异步调用 MCP 工具，提交任务后立即返回 taskId。
   // 用于执行耗时较长的工具操作，避免阻塞请求
   rpc AsyncToolCall(AsyncToolCallReq) returns(AsyncToolCallRes);
 

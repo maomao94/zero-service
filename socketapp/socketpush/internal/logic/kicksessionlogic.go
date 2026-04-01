@@ -31,8 +31,8 @@ func (l *KickSessionLogic) KickSession(in *socketpush.KickSessionReq) (*socketpu
 	for _, cli := range l.svcCtx.SocketContainer.GetClients() {
 		threading.GoSafe(func() {
 			cli.KickSession(baseCtx, &socketgtw.KickSessionReq{
-				ReqId: in.ReqId,
-				SId:   in.SId,
+				ReqId:    in.ReqId,
+				SocketId: in.SocketId,
 			})
 		})
 	}

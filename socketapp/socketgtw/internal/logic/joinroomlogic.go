@@ -24,7 +24,7 @@ func NewJoinRoomLogic(ctx context.Context, svcCtx *svc.ServiceContext) *JoinRoom
 
 // 加入房间
 func (l *JoinRoomLogic) JoinRoom(in *socketgtw.JoinRoomReq) (*socketgtw.JoinRoomRes, error) {
-	session := l.svcCtx.SocketServer.GetSession(in.SId)
+	session := l.svcCtx.SocketServer.GetSession(in.SocketId)
 	if session != nil {
 		err := session.JoinRoom(in.Room)
 		if err != nil {

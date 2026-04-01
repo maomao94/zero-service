@@ -27,7 +27,7 @@ func NewSendToSessionsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Se
 
 // 向指定 session 批量发送消息
 func (l *SendToSessionsLogic) SendToSessions(in *socketgtw.SendToSessionsReq) (*socketgtw.SendToSessionsRes, error) {
-	if len(in.SIds) != 0 {
+	if len(in.SocketIds) != 0 {
 		var payload any
 		raw := []byte(in.Payload)
 		var js json.RawMessage
@@ -36,8 +36,8 @@ func (l *SendToSessionsLogic) SendToSessions(in *socketgtw.SendToSessionsReq) (*
 		} else {
 			payload = in.Payload
 		}
-		for _, sId := range in.SIds {
-			session := l.svcCtx.SocketServer.GetSession(sId)
+		for _, socketId := range in.SocketIds {
+			session := l.svcCtx.SocketServer.GetSession(socketId)
 			if session != nil {
 				err := session.EmitDown(in.Event, payload, in.ReqId)
 				if err != nil {

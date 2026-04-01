@@ -44,7 +44,7 @@ type AiChatClient interface {
 	// ListModels 列出所有可用模型及其能力信息。
 	// 返回模型列表包含模型 ID、描述、最大 token 数等
 	ListModels(ctx context.Context, in *ListModelsReq, opts ...grpc.CallOption) (*ListModelsRes, error)
-	// AsyncToolCall 异步调用 MCP 工具，提交任务后立即返回 task_id。
+	// AsyncToolCall 异步调用 MCP 工具，提交任务后立即返回 taskId。
 	// 用于执行耗时较长的工具操作，避免阻塞请求
 	AsyncToolCall(ctx context.Context, in *AsyncToolCallReq, opts ...grpc.CallOption) (*AsyncToolCallRes, error)
 	// AsyncToolResult 查询异步工具调用的执行状态和结果。
@@ -161,7 +161,7 @@ type AiChatServer interface {
 	// ListModels 列出所有可用模型及其能力信息。
 	// 返回模型列表包含模型 ID、描述、最大 token 数等
 	ListModels(context.Context, *ListModelsReq) (*ListModelsRes, error)
-	// AsyncToolCall 异步调用 MCP 工具，提交任务后立即返回 task_id。
+	// AsyncToolCall 异步调用 MCP 工具，提交任务后立即返回 taskId。
 	// 用于执行耗时较长的工具操作，避免阻塞请求
 	AsyncToolCall(context.Context, *AsyncToolCallReq) (*AsyncToolCallRes, error)
 	// AsyncToolResult 查询异步工具调用的执行状态和结果。

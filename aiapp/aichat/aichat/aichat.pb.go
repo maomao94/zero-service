@@ -60,7 +60,7 @@ func (*EmptyReq) Descriptor() ([]byte, []int) {
 
 // ChatMessagePb 单条对话消息，兼容 OpenAI Chat Completion 消息格式。
 //
-// 当模型启用深度思考（thinking）时，assistant 消息会包含 reasoning_content 字段，
+// 当模型启用深度思考（thinking）时，assistant 消息会包含 reasoningContent 字段，
 // 用于携带模型的推理/思考过程文本，与最终回答 content 分离。
 type ChatMessagePb struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -72,8 +72,8 @@ type ChatMessagePb struct {
 	// 消息正文内容，即实际的对话文本
 	Content string `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
 	// 模型的推理思考过程（仅 assistant 角色有值）。
-	// 不同厂商返回字段名相同（reasoning_content），但启用方式不同，参见 enable_thinking。
-	ReasoningContent string `protobuf:"bytes,3,opt,name=reasoning_content,json=reasoningContent,proto3" json:"reasoning_content,omitempty"`
+	// 不同厂商返回字段名相同（reasoningContent），但启用方式不同，参见 enableThinking。
+	ReasoningContent string `protobuf:"bytes,3,opt,name=reasoningContent,proto3" json:"reasoningContent,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -144,21 +144,21 @@ type ChatCompletionReq struct {
 	// - 0.0 时模型总是选择最高概率的 token（贪婪解码）
 	Temperature float64 `protobuf:"fixed64,3,opt,name=temperature,proto3" json:"temperature,omitempty"`
 	// 核采样参数，取值范围 0.0~1.0。
-	// 模型只从累计概率质量达到 top_p 的最小 token 集合中采样。
+	// 模型只从累计概率质量达到 topP 的最小 token 集合中采样。
 	// 建议与 temperature 二选一使用，不同时调整
-	TopP float64 `protobuf:"fixed64,4,opt,name=top_p,json=topP,proto3" json:"top_p,omitempty"`
+	TopP float64 `protobuf:"fixed64,4,opt,name=topP,proto3" json:"topP,omitempty"`
 	// 单次回复的最大 token 数限制。
 	// 用于控制回复长度，防止生成过长内容
-	MaxTokens int32 `protobuf:"varint,5,opt,name=max_tokens,json=maxTokens,proto3" json:"max_tokens,omitempty"`
+	MaxTokens int32 `protobuf:"varint,5,opt,name=maxTokens,proto3" json:"maxTokens,omitempty"`
 	// 停止序列，当模型生成这些字符串时停止输出。
 	// 可指定多个停止词，用于精确控制生成结束位置
 	Stop []string `protobuf:"bytes,6,rep,name=stop,proto3" json:"stop,omitempty"`
 	// 用户标识，用于追踪和统计特定用户的请求
 	User string `protobuf:"bytes,7,opt,name=user,proto3" json:"user,omitempty"`
 	// 是否启用深度思考模式。
-	// 启用后模型会先生成推理过程（reasoning_content），再给出最终回答。
+	// 启用后模型会先生成推理过程（reasoningContent），再给出最终回答。
 	// 不同厂商启用方式可能不同
-	EnableThinking bool `protobuf:"varint,8,opt,name=enable_thinking,json=enableThinking,proto3" json:"enable_thinking,omitempty"`
+	EnableThinking bool `protobuf:"varint,8,opt,name=enableThinking,proto3" json:"enableThinking,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -261,7 +261,7 @@ type ChoicePb struct {
 	// - stop: 模型自然停止（遇到 stop 序列或达到 max_tokens）
 	// - length: 达到 max_tokens 限制
 	// - content_filter: 内容被过滤
-	FinishReason  string `protobuf:"bytes,3,opt,name=finish_reason,json=finishReason,proto3" json:"finish_reason,omitempty"`
+	FinishReason  string `protobuf:"bytes,3,opt,name=finishReason,proto3" json:"finishReason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -321,11 +321,11 @@ func (x *ChoicePb) GetFinishReason() string {
 type UsagePb struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 输入 prompt 消耗的 token 数量
-	PromptTokens int32 `protobuf:"varint,1,opt,name=prompt_tokens,json=promptTokens,proto3" json:"prompt_tokens,omitempty"`
+	PromptTokens int32 `protobuf:"varint,1,opt,name=promptTokens,proto3" json:"promptTokens,omitempty"`
 	// 输出 completion 消耗的 token 数量
-	CompletionTokens int32 `protobuf:"varint,2,opt,name=completion_tokens,json=completionTokens,proto3" json:"completion_tokens,omitempty"`
-	// 总消耗 token 数量 = prompt_tokens + completion_tokens
-	TotalTokens   int32 `protobuf:"varint,3,opt,name=total_tokens,json=totalTokens,proto3" json:"total_tokens,omitempty"`
+	CompletionTokens int32 `protobuf:"varint,2,opt,name=completionTokens,proto3" json:"completionTokens,omitempty"`
+	// 总消耗 token 数量 = prompt_tokens + completionTokens
+	TotalTokens   int32 `protobuf:"varint,3,opt,name=totalTokens,proto3" json:"totalTokens,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -472,7 +472,7 @@ func (x *ChatCompletionRes) GetUsage() *UsagePb {
 	return nil
 }
 
-// ChatDeltaPb 流式增量消息。在 thinking 模式下，模型会先通过 reasoning_content
+// ChatDeltaPb 流式增量消息。在 thinking 模式下，模型会先通过 reasoningContent
 // 逐 chunk 输出推理过程，再通过 content 输出最终回答。前端可根据两字段分别渲染。
 type ChatDeltaPb struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -481,10 +481,10 @@ type ChatDeltaPb struct {
 	// 正文增量内容，即最终回答的文本片段
 	Content string `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
 	// 推理思考过程的增量内容。流式场景下先于 content 输出，
-	// 当 reasoning_content 结束、content 开始时，表示模型已从思考阶段切换到回答阶段
-	ReasoningContent string `protobuf:"bytes,3,opt,name=reasoning_content,json=reasoningContent,proto3" json:"reasoning_content,omitempty"`
+	// 当 reasoningContent 结束、content 开始时，表示模型已从思考阶段切换到回答阶段
+	ReasoningContent string `protobuf:"bytes,3,opt,name=reasoningContent,proto3" json:"reasoningContent,omitempty"`
 	// 工具调用的增量数据列表
-	ToolCalls     []*ToolCallDeltaPb `protobuf:"bytes,4,rep,name=tool_calls,json=toolCalls,proto3" json:"tool_calls,omitempty"`
+	ToolCalls     []*ToolCallDeltaPb `protobuf:"bytes,4,rep,name=toolCalls,proto3" json:"toolCalls,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -674,10 +674,10 @@ type ChunkChoicePb struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 片段索引，从 0 开始
 	Index int32 `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`
-	// 增量消息内容，包含 role、content、reasoning_content、tool_calls
+	// 增量消息内容，包含 role、content、reasoningContent、toolCalls
 	Delta *ChatDeltaPb `protobuf:"bytes,2,opt,name=delta,proto3" json:"delta,omitempty"`
-	// 片段结束原因，有效值：stop、length、content_filter、tool_calls
-	FinishReason  string `protobuf:"bytes,3,opt,name=finish_reason,json=finishReason,proto3" json:"finish_reason,omitempty"`
+	// 片段结束原因，有效值：stop、length、content_filter、toolCalls
+	FinishReason  string `protobuf:"bytes,3,opt,name=finishReason,proto3" json:"finishReason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -863,15 +863,15 @@ type ModelObjectPb struct {
 	// 模型创建时间的 Unix 时间戳
 	Created int64 `protobuf:"varint,3,opt,name=created,proto3" json:"created,omitempty"`
 	// 模型所属的 provider 名称，如 zhipu、dashscope
-	OwnedBy string `protobuf:"bytes,4,opt,name=owned_by,json=ownedBy,proto3" json:"owned_by,omitempty"`
+	OwnedBy string `protobuf:"bytes,4,opt,name=ownedBy,proto3" json:"ownedBy,omitempty"`
 	// 模型的友好显示名称，用于 UI 展示
-	DisplayName string `protobuf:"bytes,5,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	DisplayName string `protobuf:"bytes,5,opt,name=displayName,proto3" json:"displayName,omitempty"`
 	// 模型的详细描述，说明模型的能力和适用场景
 	Description string `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
 	// 是否支持流式输出（SSE）
-	SupportsStreaming bool `protobuf:"varint,7,opt,name=supports_streaming,json=supportsStreaming,proto3" json:"supports_streaming,omitempty"`
+	SupportsStreaming bool `protobuf:"varint,7,opt,name=supportsStreaming,proto3" json:"supportsStreaming,omitempty"`
 	// 模型支持的最大 token 数（输入+输出）
-	MaxTokens     int32 `protobuf:"varint,8,opt,name=max_tokens,json=maxTokens,proto3" json:"max_tokens,omitempty"`
+	MaxTokens     int32 `protobuf:"varint,8,opt,name=maxTokens,proto3" json:"maxTokens,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1011,7 +1011,7 @@ func (x *ListModelsRes) GetData() []*ModelObjectPb {
 // AsyncToolCallReq 异步调用 MCP 工具的请求。
 //
 // 使用流程：
-// 1. 调用 AsyncToolCall 提交任务，获取 task_id
+// 1. 调用 AsyncToolCall 提交任务，获取 taskId
 // 2. 轮询 AsyncToolResult 查询执行状态和结果
 // 3. 状态变为 completed 时获取最终结果
 type AsyncToolCallReq struct {
@@ -1090,7 +1090,7 @@ func (x *AsyncToolCallReq) GetArgs() string {
 type AsyncToolCallRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 任务唯一标识符，用于后续查询任务状态和结果
-	TaskId string `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	TaskId string `protobuf:"bytes,1,opt,name=taskId,proto3" json:"taskId,omitempty"`
 	// 任务初始状态，固定为 "pending"
 	Status        string `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1144,8 +1144,8 @@ func (x *AsyncToolCallRes) GetStatus() string {
 // AsyncToolResultReq 查询异步工具调用结果的请求。
 type AsyncToolResultReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 任务标识符，即 AsyncToolCall 返回的 task_id
-	TaskId        string `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	// 任务标识符，即 AsyncToolCall 返回的 taskId
+	TaskId        string `protobuf:"bytes,1,opt,name=taskId,proto3" json:"taskId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1191,7 +1191,7 @@ func (x *AsyncToolResultReq) GetTaskId() string {
 type AsyncToolResultRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 任务标识符
-	TaskId string `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	TaskId string `protobuf:"bytes,1,opt,name=taskId,proto3" json:"taskId,omitempty"`
 	// 任务状态，有效值：
 	// - pending: 任务等待执行
 	// - running: 任务执行中
@@ -1295,7 +1295,7 @@ type ProgressMessagePb struct {
 	Total float64 `protobuf:"fixed64,2,opt,name=total,proto3" json:"total,omitempty"`
 	// 消息内容，MCP 服务器返回的原始消息
 	Message string `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
-	// 时间戳，Unix 秒级时间戳
+	// 时间戳，Unix 毫秒级时间戳
 	Time          int64 `protobuf:"varint,4,opt,name=time,proto3" json:"time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1365,17 +1365,17 @@ type ListAsyncResultsReq struct {
 	// 过滤状态：pending/completed/failed（空字符串表示全部）
 	Status string `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
 	// 开始时间戳（毫秒），0 表示不限制
-	StartTime int64 `protobuf:"varint,2,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
+	StartTime int64 `protobuf:"varint,2,opt,name=startTime,proto3" json:"startTime,omitempty"`
 	// 结束时间戳（毫秒），0 表示不限制
-	EndTime int64 `protobuf:"varint,3,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
+	EndTime int64 `protobuf:"varint,3,opt,name=endTime,proto3" json:"endTime,omitempty"`
 	// 页码，从 1 开始
 	Page int32 `protobuf:"varint,4,opt,name=page,proto3" json:"page,omitempty"`
 	// 每页数量
-	PageSize int32 `protobuf:"varint,5,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageSize int32 `protobuf:"varint,5,opt,name=pageSize,proto3" json:"pageSize,omitempty"`
 	// 排序字段：created_at/updated_at/progress
-	SortField string `protobuf:"bytes,6,opt,name=sort_field,json=sortField,proto3" json:"sort_field,omitempty"`
+	SortField string `protobuf:"bytes,6,opt,name=sortField,proto3" json:"sortField,omitempty"`
 	// 排序方向：asc/desc
-	SortOrder     string `protobuf:"bytes,7,opt,name=sort_order,json=sortOrder,proto3" json:"sort_order,omitempty"`
+	SortOrder     string `protobuf:"bytes,7,opt,name=sortOrder,proto3" json:"sortOrder,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1469,9 +1469,9 @@ type ListAsyncResultsResp struct {
 	// 当前页
 	Page int32 `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`
 	// 每页数量
-	PageSize int32 `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageSize int32 `protobuf:"varint,4,opt,name=pageSize,proto3" json:"pageSize,omitempty"`
 	// 总页数
-	TotalPages    int32 `protobuf:"varint,5,opt,name=total_pages,json=totalPages,proto3" json:"total_pages,omitempty"`
+	TotalPages    int32 `protobuf:"varint,5,opt,name=totalPages,proto3" json:"totalPages,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1553,7 +1553,7 @@ type AsyncResultStat struct {
 	// 失败任务数
 	Failed int64 `protobuf:"varint,4,opt,name=failed,proto3" json:"failed,omitempty"`
 	// 成功率（百分比）
-	SuccessRate   float64 `protobuf:"fixed64,5,opt,name=success_rate,json=successRate,proto3" json:"success_rate,omitempty"`
+	SuccessRate   float64 `protobuf:"fixed64,5,opt,name=successRate,proto3" json:"successRate,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1629,42 +1629,40 @@ const file_aichat_proto_rawDesc = "" +
 	"\n" +
 	"\faichat.proto\x12\x06aichat\"\n" +
 	"\n" +
-	"\bEmptyReq\"j\n" +
+	"\bEmptyReq\"i\n" +
 	"\rChatMessagePb\x12\x12\n" +
 	"\x04role\x18\x01 \x01(\tR\x04role\x12\x18\n" +
-	"\acontent\x18\x02 \x01(\tR\acontent\x12+\n" +
-	"\x11reasoning_content\x18\x03 \x01(\tR\x10reasoningContent\"\x83\x02\n" +
+	"\acontent\x18\x02 \x01(\tR\acontent\x12*\n" +
+	"\x10reasoningContent\x18\x03 \x01(\tR\x10reasoningContent\"\x80\x02\n" +
 	"\x11ChatCompletionReq\x12\x14\n" +
 	"\x05model\x18\x01 \x01(\tR\x05model\x121\n" +
 	"\bmessages\x18\x02 \x03(\v2\x15.aichat.ChatMessagePbR\bmessages\x12 \n" +
-	"\vtemperature\x18\x03 \x01(\x01R\vtemperature\x12\x13\n" +
-	"\x05top_p\x18\x04 \x01(\x01R\x04topP\x12\x1d\n" +
-	"\n" +
-	"max_tokens\x18\x05 \x01(\x05R\tmaxTokens\x12\x12\n" +
+	"\vtemperature\x18\x03 \x01(\x01R\vtemperature\x12\x12\n" +
+	"\x04topP\x18\x04 \x01(\x01R\x04topP\x12\x1c\n" +
+	"\tmaxTokens\x18\x05 \x01(\x05R\tmaxTokens\x12\x12\n" +
 	"\x04stop\x18\x06 \x03(\tR\x04stop\x12\x12\n" +
-	"\x04user\x18\a \x01(\tR\x04user\x12'\n" +
-	"\x0fenable_thinking\x18\b \x01(\bR\x0eenableThinking\"v\n" +
+	"\x04user\x18\a \x01(\tR\x04user\x12&\n" +
+	"\x0eenableThinking\x18\b \x01(\bR\x0eenableThinking\"u\n" +
 	"\bChoicePb\x12\x14\n" +
 	"\x05index\x18\x01 \x01(\x05R\x05index\x12/\n" +
-	"\amessage\x18\x02 \x01(\v2\x15.aichat.ChatMessagePbR\amessage\x12#\n" +
-	"\rfinish_reason\x18\x03 \x01(\tR\ffinishReason\"~\n" +
-	"\aUsagePb\x12#\n" +
-	"\rprompt_tokens\x18\x01 \x01(\x05R\fpromptTokens\x12+\n" +
-	"\x11completion_tokens\x18\x02 \x01(\x05R\x10completionTokens\x12!\n" +
-	"\ftotal_tokens\x18\x03 \x01(\x05R\vtotalTokens\"\xbe\x01\n" +
+	"\amessage\x18\x02 \x01(\v2\x15.aichat.ChatMessagePbR\amessage\x12\"\n" +
+	"\ffinishReason\x18\x03 \x01(\tR\ffinishReason\"{\n" +
+	"\aUsagePb\x12\"\n" +
+	"\fpromptTokens\x18\x01 \x01(\x05R\fpromptTokens\x12*\n" +
+	"\x10completionTokens\x18\x02 \x01(\x05R\x10completionTokens\x12 \n" +
+	"\vtotalTokens\x18\x03 \x01(\x05R\vtotalTokens\"\xbe\x01\n" +
 	"\x11ChatCompletionRes\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06object\x18\x02 \x01(\tR\x06object\x12\x18\n" +
 	"\acreated\x18\x03 \x01(\x03R\acreated\x12\x14\n" +
 	"\x05model\x18\x04 \x01(\tR\x05model\x12*\n" +
 	"\achoices\x18\x05 \x03(\v2\x10.aichat.ChoicePbR\achoices\x12%\n" +
-	"\x05usage\x18\x06 \x01(\v2\x0f.aichat.UsagePbR\x05usage\"\xa0\x01\n" +
+	"\x05usage\x18\x06 \x01(\v2\x0f.aichat.UsagePbR\x05usage\"\x9e\x01\n" +
 	"\vChatDeltaPb\x12\x12\n" +
 	"\x04role\x18\x01 \x01(\tR\x04role\x12\x18\n" +
-	"\acontent\x18\x02 \x01(\tR\acontent\x12+\n" +
-	"\x11reasoning_content\x18\x03 \x01(\tR\x10reasoningContent\x126\n" +
-	"\n" +
-	"tool_calls\x18\x04 \x03(\v2\x17.aichat.ToolCallDeltaPbR\ttoolCalls\"\x88\x01\n" +
+	"\acontent\x18\x02 \x01(\tR\acontent\x12*\n" +
+	"\x10reasoningContent\x18\x03 \x01(\tR\x10reasoningContent\x125\n" +
+	"\ttoolCalls\x18\x04 \x03(\v2\x17.aichat.ToolCallDeltaPbR\ttoolCalls\"\x88\x01\n" +
 	"\x0fToolCallDeltaPb\x12\x14\n" +
 	"\x05index\x18\x01 \x01(\x05R\x05index\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x12\x12\n" +
@@ -1672,41 +1670,40 @@ const file_aichat_proto_rawDesc = "" +
 	"\bfunction\x18\x04 \x01(\v2\x1f.aichat.ToolCallFunctionDeltaPbR\bfunction\"K\n" +
 	"\x17ToolCallFunctionDeltaPb\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1c\n" +
-	"\targuments\x18\x02 \x01(\tR\targuments\"u\n" +
+	"\targuments\x18\x02 \x01(\tR\targuments\"t\n" +
 	"\rChunkChoicePb\x12\x14\n" +
 	"\x05index\x18\x01 \x01(\x05R\x05index\x12)\n" +
-	"\x05delta\x18\x02 \x01(\v2\x13.aichat.ChatDeltaPbR\x05delta\x12#\n" +
-	"\rfinish_reason\x18\x03 \x01(\tR\ffinishReason\"\xa4\x01\n" +
+	"\x05delta\x18\x02 \x01(\v2\x13.aichat.ChatDeltaPbR\x05delta\x12\"\n" +
+	"\ffinishReason\x18\x03 \x01(\tR\ffinishReason\"\xa4\x01\n" +
 	"\x19ChatCompletionStreamChunk\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06object\x18\x02 \x01(\tR\x06object\x12\x18\n" +
 	"\acreated\x18\x03 \x01(\x03R\acreated\x12\x14\n" +
 	"\x05model\x18\x04 \x01(\tR\x05model\x12/\n" +
 	"\achoices\x18\x05 \x03(\v2\x15.aichat.ChunkChoicePbR\achoices\"\x0f\n" +
-	"\rListModelsReq\"\xff\x01\n" +
+	"\rListModelsReq\"\xfb\x01\n" +
 	"\rModelObjectPb\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06object\x18\x02 \x01(\tR\x06object\x12\x18\n" +
-	"\acreated\x18\x03 \x01(\x03R\acreated\x12\x19\n" +
-	"\bowned_by\x18\x04 \x01(\tR\aownedBy\x12!\n" +
-	"\fdisplay_name\x18\x05 \x01(\tR\vdisplayName\x12 \n" +
-	"\vdescription\x18\x06 \x01(\tR\vdescription\x12-\n" +
-	"\x12supports_streaming\x18\a \x01(\bR\x11supportsStreaming\x12\x1d\n" +
-	"\n" +
-	"max_tokens\x18\b \x01(\x05R\tmaxTokens\":\n" +
+	"\acreated\x18\x03 \x01(\x03R\acreated\x12\x18\n" +
+	"\aownedBy\x18\x04 \x01(\tR\aownedBy\x12 \n" +
+	"\vdisplayName\x18\x05 \x01(\tR\vdisplayName\x12 \n" +
+	"\vdescription\x18\x06 \x01(\tR\vdescription\x12,\n" +
+	"\x11supportsStreaming\x18\a \x01(\bR\x11supportsStreaming\x12\x1c\n" +
+	"\tmaxTokens\x18\b \x01(\x05R\tmaxTokens\":\n" +
 	"\rListModelsRes\x12)\n" +
 	"\x04data\x18\x01 \x03(\v2\x15.aichat.ModelObjectPbR\x04data\"R\n" +
 	"\x10AsyncToolCallReq\x12\x16\n" +
 	"\x06server\x18\x01 \x01(\tR\x06server\x12\x12\n" +
 	"\x04tool\x18\x02 \x01(\tR\x04tool\x12\x12\n" +
-	"\x04args\x18\x03 \x01(\tR\x04args\"C\n" +
-	"\x10AsyncToolCallRes\x12\x17\n" +
-	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12\x16\n" +
-	"\x06status\x18\x02 \x01(\tR\x06status\"-\n" +
-	"\x12AsyncToolResultReq\x12\x17\n" +
-	"\atask_id\x18\x01 \x01(\tR\x06taskId\"\xc6\x01\n" +
-	"\x12AsyncToolResultRes\x12\x17\n" +
-	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12\x16\n" +
+	"\x04args\x18\x03 \x01(\tR\x04args\"B\n" +
+	"\x10AsyncToolCallRes\x12\x16\n" +
+	"\x06taskId\x18\x01 \x01(\tR\x06taskId\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\",\n" +
+	"\x12AsyncToolResultReq\x12\x16\n" +
+	"\x06taskId\x18\x01 \x01(\tR\x06taskId\"\xc5\x01\n" +
+	"\x12AsyncToolResultRes\x12\x16\n" +
+	"\x06taskId\x18\x01 \x01(\tR\x06taskId\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x1a\n" +
 	"\bprogress\x18\x03 \x01(\x01R\bprogress\x12\x16\n" +
 	"\x06result\x18\x04 \x01(\tR\x06result\x12\x14\n" +
@@ -1716,31 +1713,29 @@ const file_aichat_proto_rawDesc = "" +
 	"\bprogress\x18\x01 \x01(\x01R\bprogress\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x01R\x05total\x12\x18\n" +
 	"\amessage\x18\x03 \x01(\tR\amessage\x12\x12\n" +
-	"\x04time\x18\x04 \x01(\x03R\x04time\"\xd6\x01\n" +
+	"\x04time\x18\x04 \x01(\x03R\x04time\"\xd1\x01\n" +
 	"\x13ListAsyncResultsReq\x12\x16\n" +
-	"\x06status\x18\x01 \x01(\tR\x06status\x12\x1d\n" +
-	"\n" +
-	"start_time\x18\x02 \x01(\x03R\tstartTime\x12\x19\n" +
-	"\bend_time\x18\x03 \x01(\x03R\aendTime\x12\x12\n" +
-	"\x04page\x18\x04 \x01(\x05R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x05 \x01(\x05R\bpageSize\x12\x1d\n" +
-	"\n" +
-	"sort_field\x18\x06 \x01(\tR\tsortField\x12\x1d\n" +
-	"\n" +
-	"sort_order\x18\a \x01(\tR\tsortOrder\"\xb0\x01\n" +
+	"\x06status\x18\x01 \x01(\tR\x06status\x12\x1c\n" +
+	"\tstartTime\x18\x02 \x01(\x03R\tstartTime\x12\x18\n" +
+	"\aendTime\x18\x03 \x01(\x03R\aendTime\x12\x12\n" +
+	"\x04page\x18\x04 \x01(\x05R\x04page\x12\x1a\n" +
+	"\bpageSize\x18\x05 \x01(\x05R\bpageSize\x12\x1c\n" +
+	"\tsortField\x18\x06 \x01(\tR\tsortField\x12\x1c\n" +
+	"\tsortOrder\x18\a \x01(\tR\tsortOrder\"\xae\x01\n" +
 	"\x14ListAsyncResultsResp\x120\n" +
 	"\x05items\x18\x01 \x03(\v2\x1a.aichat.AsyncToolResultResR\x05items\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x03R\x05total\x12\x12\n" +
-	"\x04page\x18\x03 \x01(\x05R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12\x1f\n" +
-	"\vtotal_pages\x18\x05 \x01(\x05R\n" +
-	"totalPages\"\x9a\x01\n" +
+	"\x04page\x18\x03 \x01(\x05R\x04page\x12\x1a\n" +
+	"\bpageSize\x18\x04 \x01(\x05R\bpageSize\x12\x1e\n" +
+	"\n" +
+	"totalPages\x18\x05 \x01(\x05R\n" +
+	"totalPages\"\x99\x01\n" +
 	"\x0fAsyncResultStat\x12\x14\n" +
 	"\x05total\x18\x01 \x01(\x03R\x05total\x12\x18\n" +
 	"\apending\x18\x02 \x01(\x03R\apending\x12\x1c\n" +
 	"\tcompleted\x18\x03 \x01(\x03R\tcompleted\x12\x16\n" +
-	"\x06failed\x18\x04 \x01(\x03R\x06failed\x12!\n" +
-	"\fsuccess_rate\x18\x05 \x01(\x01R\vsuccessRate2\x82\x04\n" +
+	"\x06failed\x18\x04 \x01(\x03R\x06failed\x12 \n" +
+	"\vsuccessRate\x18\x05 \x01(\x01R\vsuccessRate2\x82\x04\n" +
 	"\x06AiChat\x12F\n" +
 	"\x0eChatCompletion\x12\x19.aichat.ChatCompletionReq\x1a\x19.aichat.ChatCompletionRes\x12V\n" +
 	"\x14ChatCompletionStream\x12\x19.aichat.ChatCompletionReq\x1a!.aichat.ChatCompletionStreamChunk0\x01\x12:\n" +
@@ -1794,7 +1789,7 @@ var file_aichat_proto_depIdxs = []int32{
 	1,  // 1: aichat.ChoicePb.message:type_name -> aichat.ChatMessagePb
 	3,  // 2: aichat.ChatCompletionRes.choices:type_name -> aichat.ChoicePb
 	4,  // 3: aichat.ChatCompletionRes.usage:type_name -> aichat.UsagePb
-	7,  // 4: aichat.ChatDeltaPb.tool_calls:type_name -> aichat.ToolCallDeltaPb
+	7,  // 4: aichat.ChatDeltaPb.toolCalls:type_name -> aichat.ToolCallDeltaPb
 	8,  // 5: aichat.ToolCallDeltaPb.function:type_name -> aichat.ToolCallFunctionDeltaPb
 	6,  // 6: aichat.ChunkChoicePb.delta:type_name -> aichat.ChatDeltaPb
 	9,  // 7: aichat.ChatCompletionStreamChunk.choices:type_name -> aichat.ChunkChoicePb

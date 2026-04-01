@@ -32,42 +32,42 @@ service SocketPush {
   // 向指定元数据 session 批量发送消息
   rpc SendToMetaSessions(SendToMetaSessionsReq) returns (SendToMetaSessionsRes);
   // 获取网关统计信息
-  rpc SocketGtwStat(SocketGtwStatReq) returns (SocketGtwStatRes);
+  rpc SocketGtwStat (SocketGtwStatReq) returns (SocketGtwStatRes);
 }
 
-message PbMetaSession{
+message PbMetaSession {
   string key = 1;
   string value = 2;
 }
 
-message PbSocketGtwStat{
+message PbSocketGtwStat {
   string node = 1;
   int64 sessions = 2;
 }
 
-message GenTokenReq{
+message GenTokenReq {
   string uid = 1;
   map<string, string> payload = 2;
 }
 
-message GenTokenRes{
+message GenTokenRes {
   string accessToken = 1;
-  int64  accessExpire = 2;
-  int64  refreshAfter = 3;
+  int64 accessExpire = 2;
+  int64 refreshAfter = 3;
 }
 
-message VerifyTokenReq{
+message VerifyTokenReq {
   string accessToken = 1;
 }
 
-message VerifyTokenRes{
-  string claim_json = 1;
+message VerifyTokenRes {
+  string claimJson = 1;
 }
 
 message JoinRoomReq {
   string reqId = 1;
-  string sId = 2;    // session ID
-  string room = 3;   // 房间名
+  string socketId = 2;
+  string room = 3;
 }
 
 message JoinRoomRes {
@@ -76,7 +76,7 @@ message JoinRoomRes {
 
 message LeaveRoomReq {
   string reqId = 1;
-  string sId = 2;
+  string socketId = 2;
   string room = 3;
 }
 
@@ -107,7 +107,7 @@ message BroadcastGlobalRes {
 
 message KickSessionReq {
   string reqId = 1;
-  string sId = 2;
+  string socketId = 2;
 }
 
 message KickSessionRes {
@@ -126,7 +126,7 @@ message KickMetaSessionRes {
 
 message SendToSessionReq {
   string reqId = 1;
-  string sId = 2;
+  string socketId = 2;
   string event = 3;
   string payload = 4;
 }
@@ -137,7 +137,7 @@ message SendToSessionRes {
 
 message SendToSessionsReq {
   string reqId = 1;
-  repeated string sIds = 2;
+  repeated string socketIds = 2;
   string event = 3;
   string payload = 4;
 }

@@ -31,9 +31,9 @@ func (l *LeaveRoomLogic) LeaveRoom(in *socketpush.LeaveRoomReq) (*socketpush.Lea
 	for _, cli := range l.svcCtx.SocketContainer.GetClients() {
 		threading.GoSafe(func() {
 			cli.LeaveRoom(baseCtx, &socketgtw.LeaveRoomReq{
-				ReqId: in.ReqId,
-				SId:   in.SId,
-				Room:  in.Room,
+				ReqId:    in.ReqId,
+				SocketId: in.SocketId,
+				Room:     in.Room,
 			})
 		})
 	}

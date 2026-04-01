@@ -8,14 +8,21 @@
 - [bridgemqttserver.go](file://app/bridgemqtt/internal/server/bridgemqttserver.go)
 - [publishlogic.go](file://app/bridgemqtt/internal/logic/publishlogic.go)
 - [publishwithtracelogic.go](file://app/bridgemqtt/internal/logic/publishwithtracelogic.go)
-- [pinglogic.go](file://app/bridgemqtt/internal/logic/pinglogic.go)
 - [servicecontext.go](file://app/bridgemqtt/internal/svc/servicecontext.go)
 - [config.go](file://app/bridgemqtt/internal/config/config.go)
 - [bridgemqtt.yaml](file://app/bridgemqtt/etc/bridgemqtt.yaml)
-- [mqttx.go](file://common/mqttx/mqttx.go)
+- [client.go](file://common/mqttx/client.go)
 - [message.go](file://common/mqttx/message.go)
 - [mqttstream.swagger.json](file://swagger/mqttstream.swagger.json)
 </cite>
+
+## 更新摘要
+**所做更改**
+- 删除了 Ping 接口相关文档内容，因为服务协议已简化，不再包含 Ping 方法
+- 更新了服务接口列表，仅保留 Publish 和 PublishWithTrace 两个核心方法
+- 更新了架构图和序列图，移除了 Ping 接口相关的流程
+- 更新了配置选项说明，反映了服务协议的简化
+- 更新了客户端库使用说明，移除了 Ping 相关的配置项
 
 ## 目录
 1. [简介](#简介)
@@ -31,7 +38,7 @@
 
 ## 简介
 本文件为 MQTT API 接口参考，聚焦于基于 gRPC 的 MQTT 桥接服务，覆盖以下能力：
-- 核心接口：Ping、Publish、PublishWithTrace
+- 核心接口：Publish、PublishWithTrace
 - 请求参数与响应格式
 - 错误码与异常处理
 - 认证与安全策略
@@ -40,6 +47,8 @@
 - 版本管理、兼容性与迁移指南
 - 性能指标、监控方法与故障排除
 
+**更新** 服务协议已简化，移除了 Ping 接口，目前仅提供消息发布功能。
+
 ## 项目结构
 该服务位于 app/bridgemqtt，采用 goctl 生成的 gRPC 代码骨架，结合 common/mqttx 提供的 MQTT 客户端能力，完成对上游 MQTT Broker 的发布与订阅。
 
@@ -47,7 +56,6 @@
 graph TB
 subgraph "gRPC 服务层"
 S["BridgeMqttServer<br/>server/bridgemqttserver.go"]
-L1["PingLogic<br/>internal/logic/pinglogic.go"]
 L2["PublishLogic<br/>internal/logic/publishlogic.go"]
 L3["PublishWithTraceLogic<br/>internal/logic/publishwithtracelogic.go"]
 end
@@ -57,7 +65,7 @@ Conf["Config<br/>internal/config/config.go"]
 Yaml["配置文件<br/>etc/bridgemqtt.yaml"]
 end
 subgraph "MQTT 客户端"
-Mqtt["mqttx.Client<br/>common/mqttx/mqttx.go"]
+Mqtt["mqttx.Client<br/>common/mqttx/client.go"]
 Msg["Message<br/>common/mqttx/message.go"]
 end
 subgraph "协议与生成代码"
@@ -66,7 +74,6 @@ PB["bridgemqtt.pb.go / bridgemqtt_grpc.pb.go"]
 end
 Proto --> PB
 PB --> S
-S --> L1
 S --> L2
 S --> L3
 L2 --> Ctx
@@ -78,40 +85,41 @@ Yaml --> Conf
 ```
 
 **图表来源**
-- [bridgemqttserver.go:15-42](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L15-L42)
-- [publishlogic.go:26-33](file://app/bridgemqtt/internal/logic/publishlogic.go#L26-L33)
-- [publishwithtracelogic.go:30-47](file://app/bridgemqtt/internal/logic/publishwithtracelogic.go#L30-L47)
-- [servicecontext.go:16-60](file://app/bridgemqtt/internal/svc/servicecontext.go#L16-L60)
+- [bridgemqttserver.go:15-37](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L15-L37)
+- [publishlogic.go:26-34](file://app/bridgemqtt/internal/logic/publishlogic.go#L26-L34)
+- [publishwithtracelogic.go:30-48](file://app/bridgemqtt/internal/logic/publishwithtracelogic.go#L30-L48)
+- [servicecontext.go:16-61](file://app/bridgemqtt/internal/svc/servicecontext.go#L16-L61)
 - [config.go:9-24](file://app/bridgemqtt/internal/config/config.go#L9-L24)
 - [bridgemqtt.yaml:1-48](file://app/bridgemqtt/etc/bridgemqtt.yaml#L1-L48)
-- [mqttx.go:76-388](file://common/mqttx/mqttx.go#L76-L388)
-- [message.go:3-30](file://common/mqttx/message.go#L3-L30)
+- [client.go:76-354](file://common/mqttx/client.go#L76-L354)
+- [message.go:3-38](file://common/mqttx/message.go#L3-L38)
 - [bridgemqtt.proto:10-16](file://app/bridgemqtt/bridgemqtt.proto#L10-L16)
 
 **章节来源**
-- [bridgemqttserver.go:15-42](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L15-L42)
-- [servicecontext.go:16-60](file://app/bridgemqtt/internal/svc/servicecontext.go#L16-L60)
+- [bridgemqttserver.go:15-37](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L15-L37)
+- [servicecontext.go:16-61](file://app/bridgemqtt/internal/svc/servicecontext.go#L16-L61)
 - [bridgemqtt.yaml:1-48](file://app/bridgemqtt/etc/bridgemqtt.yaml#L1-L48)
 
 ## 核心组件
-- gRPC 服务定义与生成代码：服务名为 BridgeMqtt，包含 Ping、Publish、PublishWithTrace 三个 RPC 方法。
+- gRPC 服务定义与生成代码：服务名为 BridgeMqtt，包含 Publish、PublishWithTrace 两个 RPC 方法。
 - 服务端实现：BridgeMqttServer 将 RPC 调用路由至对应 Logic 层。
 - Logic 层：
-  - PingLogic：健康检查响应。
   - PublishLogic：直接发布消息至指定 topic。
   - PublishWithTraceLogic：注入链路追踪头并发布消息，返回 traceId。
 - 上下文与配置：ServiceContext 负责初始化日志、MQTT 客户端、下游服务客户端；Config/MqttConfig 控制 MQTT 客户端行为。
 - MQTT 客户端：mqttx.Client 提供连接、订阅、发布、追踪埋点与指标统计。
 
+**更新** 移除了 Ping 接口相关组件，服务结构更加简洁。
+
 **章节来源**
 - [bridgemqtt.proto:10-16](file://app/bridgemqtt/bridgemqtt.proto#L10-L16)
 - [bridgemqtt_grpc.pb.go:40-76](file://app/bridgemqtt/bridgemqtt/bridgemqtt_grpc.pb.go#L40-L76)
-- [bridgemqttserver.go:26-41](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L26-L41)
-- [publishlogic.go:26-33](file://app/bridgemqtt/internal/logic/publishlogic.go#L26-L33)
-- [publishwithtracelogic.go:30-47](file://app/bridgemqtt/internal/logic/publishwithtracelogic.go#L30-L47)
-- [servicecontext.go:16-60](file://app/bridgemqtt/internal/svc/servicecontext.go#L16-L60)
+- [bridgemqttserver.go:26-37](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L26-L37)
+- [publishlogic.go:26-34](file://app/bridgemqtt/internal/logic/publishlogic.go#L26-L34)
+- [publishwithtracelogic.go:30-48](file://app/bridgemqtt/internal/logic/publishwithtracelogic.go#L30-L48)
+- [servicecontext.go:16-61](file://app/bridgemqtt/internal/svc/servicecontext.go#L16-L61)
 - [config.go:9-24](file://app/bridgemqtt/internal/config/config.go#L9-L24)
-- [mqttx.go:51-64](file://common/mqttx/mqttx.go#L51-L64)
+- [client.go:51-64](file://common/mqttx/client.go#L51-L64)
 
 ## 架构总览
 MQTT API 通过 gRPC 对外暴露，内部以 mqttx.Client 连接外部 MQTT Broker。PublishWithTrace 会将 OpenTelemetry 上下文注入消息载荷，便于跨服务链路追踪。
@@ -136,9 +144,9 @@ Server-->>Client : "{traceId}"
 ```
 
 **图表来源**
-- [bridgemqttserver.go:37-41](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L37-L41)
-- [publishwithtracelogic.go:30-47](file://app/bridgemqtt/internal/logic/publishwithtracelogic.go#L30-L47)
-- [mqttx.go:309-333](file://common/mqttx/mqttx.go#L309-L333)
+- [bridgemqttserver.go:32-37](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L32-L37)
+- [publishwithtracelogic.go:30-48](file://app/bridgemqtt/internal/logic/publishwithtracelogic.go#L30-L48)
+- [client.go:326-339](file://common/mqttx/client.go#L326-L339)
 
 ## 详细组件分析
 
@@ -146,13 +154,10 @@ Server-->>Client : "{traceId}"
 
 - 服务名：BridgeMqtt
 - 方法：
-  - Ping(Req) -> Res
   - Publish(PublishReq) -> PublishRes
   - PublishWithTrace(PublishWithTraceReq) -> PublishWithTraceRes
 
 - 请求与响应字段：
-  - Req.ping: string
-  - Res.pong: string
   - PublishReq.topic: string；PublishReq.payload: bytes
   - PublishRes: 空
   - PublishWithTraceReq.topic: string；PublishWithTraceReq.payload: bytes
@@ -162,35 +167,12 @@ Server-->>Client : "{traceId}"
   - bridgemqtt_grpc.pb.go：gRPC 客户端与服务桩
   - bridgemqtt.pb.go：消息类型定义与访问器
 
+**更新** 移除了 Ping 接口，服务接口更加简洁。
+
 **章节来源**
-- [bridgemqtt.proto:10-49](file://app/bridgemqtt/bridgemqtt.proto#L10-L49)
+- [bridgemqtt.proto:10-34](file://app/bridgemqtt/bridgemqtt.proto#L10-L34)
 - [bridgemqtt_grpc.pb.go:40-76](file://app/bridgemqtt/bridgemqtt/bridgemqtt_grpc.pb.go#L40-L76)
 - [bridgemqtt.pb.go:68-300](file://app/bridgemqtt/bridgemqtt/bridgemqtt.pb.go#L68-L300)
-
-### Ping 接口
-- 功能：健康检查，返回固定字符串。
-- 请求：Req.ping
-- 响应：Res.pong
-- 实现路径：BridgeMqttServer -> PingLogic -> 返回 Res
-
-```mermaid
-sequenceDiagram
-participant C as "客户端"
-participant S as "BridgeMqttServer"
-participant L as "PingLogic"
-C->>S : "Ping({ping})"
-S->>L : "Ping(req)"
-L-->>S : "{pong : 'pong'}"
-S-->>C : "{pong : 'pong'}"
-```
-
-**图表来源**
-- [bridgemqttserver.go:26-29](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L26-L29)
-- [pinglogic.go:26-30](file://app/bridgemqtt/internal/logic/pinglogic.go#L26-L30)
-
-**章节来源**
-- [bridgemqttserver.go:26-29](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L26-L29)
-- [pinglogic.go:26-30](file://app/bridgemqtt/internal/logic/pinglogic.go#L26-L30)
 
 ### Publish 接口
 - 功能：向指定 topic 发布消息。
@@ -216,14 +198,14 @@ S-->>C : "{}"
 ```
 
 **图表来源**
-- [bridgemqttserver.go:31-35](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L31-L35)
-- [publishlogic.go:26-33](file://app/bridgemqtt/internal/logic/publishlogic.go#L26-L33)
-- [mqttx.go:309-333](file://common/mqttx/mqttx.go#L309-L333)
+- [bridgemqttserver.go:26-31](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L26-L31)
+- [publishlogic.go:26-34](file://app/bridgemqtt/internal/logic/publishlogic.go#L26-L34)
+- [client.go:326-339](file://common/mqttx/client.go#L326-L339)
 
 **章节来源**
-- [bridgemqttserver.go:31-35](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L31-L35)
-- [publishlogic.go:26-33](file://app/bridgemqtt/internal/logic/publishlogic.go#L26-L33)
-- [mqttx.go:309-333](file://common/mqttx/mqttx.go#L309-L333)
+- [bridgemqttserver.go:26-31](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L26-L31)
+- [publishlogic.go:26-34](file://app/bridgemqtt/internal/logic/publishlogic.go#L26-L34)
+- [client.go:326-339](file://common/mqttx/client.go#L326-L339)
 
 ### PublishWithTrace 接口
 - 功能：发布消息并携带链路追踪信息，返回 traceId。
@@ -256,15 +238,15 @@ S-->>C : "{traceId}"
 ```
 
 **图表来源**
-- [bridgemqttserver.go:37-41](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L37-L41)
-- [publishwithtracelogic.go:30-47](file://app/bridgemqtt/internal/logic/publishwithtracelogic.go#L30-L47)
-- [message.go:3-30](file://common/mqttx/message.go#L3-L30)
-- [mqttx.go:377-388](file://common/mqttx/mqttx.go#L377-L388)
+- [bridgemqttserver.go:32-37](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L32-L37)
+- [publishwithtracelogic.go:30-48](file://app/bridgemqtt/internal/logic/publishwithtracelogic.go#L30-L48)
+- [message.go:3-38](file://common/mqttx/message.go#L3-L38)
+- [client.go:377-388](file://common/mqttx/client.go#L377-L388)
 
 **章节来源**
-- [publishwithtracelogic.go:30-47](file://app/bridgemqtt/internal/logic/publishwithtracelogic.go#L30-L47)
-- [message.go:3-30](file://common/mqttx/message.go#L3-L30)
-- [mqttx.go:377-388](file://common/mqttx/mqttx.go#L377-L388)
+- [publishwithtracelogic.go:30-48](file://app/bridgemqtt/internal/logic/publishwithtracelogic.go#L30-L48)
+- [message.go:3-38](file://common/mqttx/message.go#L3-L38)
+- [client.go:377-388](file://common/mqttx/client.go#L377-L388)
 
 ### 认证机制、权限控制与安全策略
 - MQTT Broker 认证：通过 MqttConfig 中的 Broker、Username、Password 配置连接参数。
@@ -274,7 +256,7 @@ S-->>C : "{traceId}"
 
 **章节来源**
 - [bridgemqtt.yaml:19-25](file://app/bridgemqtt/etc/bridgemqtt.yaml#L19-L25)
-- [mqttx.go:51-64](file://common/mqttx/mqttx.go#L51-L64)
+- [client.go:51-64](file://common/mqttx/client.go#L51-L64)
 
 ### 超时设置、重试机制与并发限制
 - gRPC 超时：服务配置中的 Timeout 字段用于 gRPC 调用超时控制。
@@ -285,14 +267,14 @@ S-->>C : "{traceId}"
 
 **章节来源**
 - [bridgemqtt.yaml:3](file://app/bridgemqtt/etc/bridgemqtt.yaml#L3)
-- [mqttx.go:58-60](file://common/mqttx/mqttx.go#L58-L60)
-- [mqttx.go:144-146](file://common/mqttx/mqttx.go#L144-L146)
-- [mqttx.go:161-166](file://common/mqttx/mqttx.go#L161-L166)
+- [client.go:58-60](file://common/mqttx/client.go#L58-L60)
+- [client.go:144-146](file://common/mqttx/client.go#L144-L146)
+- [client.go:161-166](file://common/mqttx/client.go#L161-L166)
 - [servicecontext.go:109](file://app/bridgemqtt/internal/svc/servicecontext.go#L109)
 
 ### 接口调用示例与 SDK 使用指南
 - gRPC 客户端调用：
-  - 使用生成的 gRPC 客户端（bridgemqtt_grpc.pb.go）发起 Ping/Publish/PublishWithTrace 调用。
+  - 使用生成的 gRPC 客户端（bridgemqtt_grpc.pb.go）发起 Publish/PublishWithTrace 调用。
   - 注意设置合适的上下文超时与 Metadata（如需要）。
 - SDK 建议：
   - 使用 goctl 生成的客户端代码，保持与服务端一致的 proto 定义。
@@ -319,7 +301,7 @@ S-->>C : "{traceId}"
 - 服务端依赖：
   - 生成代码：bridgemqtt_grpc.pb.go/bridgemqtt.pb.go
   - 服务实现：BridgeMqttServer
-  - 业务逻辑：PingLogic、PublishLogic、PublishWithTraceLogic
+  - 业务逻辑：PublishLogic、PublishWithTraceLogic
   - 上下文：ServiceContext（含日志、MQTT 客户端、下游客户端）
 - MQTT 客户端依赖：
   - paho.mqtt.golang
@@ -329,7 +311,6 @@ S-->>C : "{traceId}"
 ```mermaid
 graph LR
 PB["bridgemqtt.pb.go / bridgemqtt_grpc.pb.go"] --> S["BridgeMqttServer"]
-S --> L1["PingLogic"]
 S --> L2["PublishLogic"]
 S --> L3["PublishWithTraceLogic"]
 L2 --> Ctx["ServiceContext"]
@@ -341,15 +322,15 @@ Mqtt --> Paho["paho.mqtt.golang"]
 
 **图表来源**
 - [bridgemqtt_grpc.pb.go:40-76](file://app/bridgemqtt/bridgemqtt/bridgemqtt_grpc.pb.go#L40-L76)
-- [bridgemqttserver.go:26-41](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L26-L41)
-- [publishlogic.go:26-33](file://app/bridgemqtt/internal/logic/publishlogic.go#L26-L33)
-- [publishwithtracelogic.go:30-47](file://app/bridgemqtt/internal/logic/publishwithtracelogic.go#L30-L47)
-- [servicecontext.go:16-60](file://app/bridgemqtt/internal/svc/servicecontext.go#L16-L60)
-- [mqttx.go:377-388](file://common/mqttx/mqttx.go#L377-L388)
+- [bridgemqttserver.go:26-37](file://app/bridgemqtt/internal/server/bridgemqttserver.go#L26-L37)
+- [publishlogic.go:26-34](file://app/bridgemqtt/internal/logic/publishlogic.go#L26-L34)
+- [publishwithtracelogic.go:30-48](file://app/bridgemqtt/internal/logic/publishwithtracelogic.go#L30-L48)
+- [servicecontext.go:16-61](file://app/bridgemqtt/internal/svc/servicecontext.go#L16-L61)
+- [client.go:377-388](file://common/mqttx/client.go#L377-L388)
 
 **章节来源**
 - [bridgemqtt_grpc.pb.go:40-76](file://app/bridgemqtt/bridgemqtt/bridgemqtt_grpc.pb.go#L40-L76)
-- [servicecontext.go:16-60](file://app/bridgemqtt/internal/svc/servicecontext.go#L16-L60)
+- [servicecontext.go:16-61](file://app/bridgemqtt/internal/svc/servicecontext.go#L16-L61)
 
 ## 性能考量
 - 指标采集：
@@ -363,8 +344,8 @@ Mqtt --> Paho["paho.mqtt.golang"]
   - 在网关层增加熔断与限流策略。
 
 **章节来源**
-- [mqttx.go:124-126](file://common/mqttx/mqttx.go#L124-L126)
-- [mqttx.go:309-333](file://common/mqttx/mqttx.go#L309-L333)
+- [client.go:124-126](file://common/mqttx/client.go#L124-L126)
+- [client.go:326-339](file://common/mqttx/client.go#L326-L339)
 - [servicecontext.go:109](file://app/bridgemqtt/internal/svc/servicecontext.go#L109)
 
 ## 故障排除指南
@@ -379,13 +360,13 @@ Mqtt --> Paho["paho.mqtt.golang"]
   - 确保 PublishWithTrace 流程中正确注入传播上下文；检查 headers 内容。
 
 **章节来源**
-- [mqttx.go:100-117](file://common/mqttx/mqttx.go#L100-L117)
-- [mqttx.go:168-177](file://common/mqttx/mqttx.go#L168-L177)
-- [mqttx.go:215-233](file://common/mqttx/mqttx.go#L215-L233)
-- [mqttx.go:309-333](file://common/mqttx/mqttx.go#L309-L333)
+- [client.go:100-117](file://common/mqttx/client.go#L100-L117)
+- [client.go:168-177](file://common/mqttx/client.go#L168-L177)
+- [client.go:215-233](file://common/mqttx/client.go#L215-L233)
+- [client.go:326-339](file://common/mqttx/client.go#L326-L339)
 
 ## 结论
-本 MQTT API 通过清晰的 gRPC 接口与成熟的 MQTT 客户端实现，提供了健康检查、消息发布与链路追踪能力。建议在生产环境中完善认证、TLS、限流与可观测性配置，以满足高可用与可运维需求。
+本 MQTT API 通过清晰的 gRPC 接口与成熟的 MQTT 客户端实现，提供了消息发布与链路追踪能力。服务协议已简化，移除了不必要的 Ping 接口，使整体架构更加简洁高效。建议在生产环境中完善认证、TLS、限流与可观测性配置，以满足高可用与可运维需求。
 
 ## 附录
 
@@ -397,6 +378,6 @@ Mqtt --> Paho["paho.mqtt.golang"]
 
 **章节来源**
 - [bridgemqtt_grpc.pb.go:99-107](file://app/bridgemqtt/bridgemqtt/bridgemqtt_grpc.pb.go#L99-L107)
-- [mqttx.go:170-175](file://common/mqttx/mqttx.go#L170-L175)
-- [mqttx.go:222-228](file://common/mqttx/mqttx.go#L222-L228)
-- [mqttx.go:320-331](file://common/mqttx/mqttx.go#L320-L331)
+- [client.go:170-175](file://common/mqttx/client.go#L170-L175)
+- [client.go:222-228](file://common/mqttx/client.go#L222-L228)
+- [client.go:320-331](file://common/mqttx/client.go#L320-L331)

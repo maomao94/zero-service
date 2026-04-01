@@ -21,8 +21,8 @@ type AsyncToolResult struct {
 	Progress  float64           `json:"progress"`   // 当前进度百分比 0-100
 	Total     float64           `json:"total"`      // 进度总值
 	Messages  []ProgressMessage `json:"messages"`   // 消息历史（MCP 进度通知列表）
-	CreatedAt int64             `json:"created_at"` // 创建时间戳
-	UpdatedAt int64             `json:"updated_at"` // 更新时间戳
+	CreatedAt int64             `json:"created_at"` // 创建时间戳（毫秒）
+	UpdatedAt int64             `json:"updated_at"` // 更新时间戳（毫秒）
 }
 
 // AsyncResultStore 异步结果存储接口

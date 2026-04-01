@@ -969,8 +969,8 @@ func (c *Client) CallToolAsync(ctx context.Context, req *CallToolAsyncRequest) (
 			Status:    "pending",
 			Progress:  0,
 			Total:     100,
-			CreatedAt: time.Now().Unix(),
-			UpdatedAt: time.Now().Unix(),
+			CreatedAt: time.Now().UnixMilli(),
+			UpdatedAt: time.Now().UnixMilli(),
 		})
 	}
 
@@ -998,8 +998,8 @@ func (c *Client) CallToolAsync(ctx context.Context, req *CallToolAsyncRequest) (
 							Status:    "pending",
 							Progress:  0,
 							Total:     total,
-							CreatedAt: time.Now().Unix(),
-							UpdatedAt: time.Now().Unix(),
+							CreatedAt: time.Now().UnixMilli(),
+							UpdatedAt: time.Now().UnixMilli(),
 						})
 					}
 					progress := 0.0
@@ -1025,8 +1025,8 @@ func (c *Client) CallToolAsync(ctx context.Context, req *CallToolAsyncRequest) (
 			TaskID:    taskID,
 			Status:    "pending",
 			Progress:  0,
-			CreatedAt: time.Now().Unix(),
-			UpdatedAt: time.Now().Unix(),
+			CreatedAt: time.Now().UnixMilli(),
+			UpdatedAt: time.Now().UnixMilli(),
 		}
 
 		var finalMessage string
@@ -1051,7 +1051,7 @@ func (c *Client) CallToolAsync(ctx context.Context, req *CallToolAsyncRequest) (
 				Progress: 100,
 				Total:    100,
 				Message:  finalMessage,
-				Time:     time.Now().Unix(),
+				Time:     time.Now().UnixMilli(),
 			})
 			c.asyncResultStore.Save(asyncCtx, finalResult)
 		}
@@ -1079,8 +1079,8 @@ func (c *Client) CallToolAsyncAwait(ctx context.Context, req *CallToolAsyncReque
 			Status:    "pending",
 			Progress:  0,
 			Total:     100,
-			CreatedAt: time.Now().Unix(),
-			UpdatedAt: time.Now().Unix(),
+			CreatedAt: time.Now().UnixMilli(),
+			UpdatedAt: time.Now().UnixMilli(),
 		})
 	}
 
@@ -1110,8 +1110,8 @@ func (c *Client) CallToolAsyncAwait(ctx context.Context, req *CallToolAsyncReque
 							Status:    "pending",
 							Progress:  0,
 							Total:     total,
-							CreatedAt: time.Now().Unix(),
-							UpdatedAt: time.Now().Unix(),
+							CreatedAt: time.Now().UnixMilli(),
+							UpdatedAt: time.Now().UnixMilli(),
 						})
 					}
 					c.asyncResultStore.UpdateProgress(ctx, taskID, float64(info.Percent()), 100, info.Message)
@@ -1128,8 +1128,8 @@ func (c *Client) CallToolAsyncAwait(ctx context.Context, req *CallToolAsyncReque
 			TaskID:    taskID,
 			Status:    "pending",
 			Progress:  0,
-			CreatedAt: time.Now().Unix(),
-			UpdatedAt: time.Now().Unix(),
+			CreatedAt: time.Now().UnixMilli(),
+			UpdatedAt: time.Now().UnixMilli(),
 		}
 
 		var finalMessage string
@@ -1154,7 +1154,7 @@ func (c *Client) CallToolAsyncAwait(ctx context.Context, req *CallToolAsyncReque
 				Progress: 100,
 				Total:    100,
 				Message:  finalMessage,
-				Time:     time.Now().Unix(),
+				Time:     time.Now().UnixMilli(),
 			})
 			c.asyncResultStore.Save(ctx, finalResult)
 		}

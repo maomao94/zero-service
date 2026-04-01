@@ -41,7 +41,7 @@ func (s *AiChatServer) ListModels(ctx context.Context, in *aichat.ListModelsReq)
 	return l.ListModels(in)
 }
 
-// AsyncToolCall 异步调用 MCP 工具，提交任务后立即返回 task_id。
+// AsyncToolCall 异步调用 MCP 工具，提交任务后立即返回 taskId。
 func (s *AiChatServer) AsyncToolCall(ctx context.Context, in *aichat.AsyncToolCallReq) (*aichat.AsyncToolCallRes, error) {
 	l := logic.NewAsyncToolCallLogic(ctx, s.svcCtx)
 	return l.AsyncToolCall(in)
