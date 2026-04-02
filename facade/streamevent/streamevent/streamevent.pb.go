@@ -2638,7 +2638,7 @@ func (x *UpSocketMessageRes) GetPayload() string {
 	return ""
 }
 
-type PbPlan struct {
+type PlanPb struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 创建时间
 	CreateTime string `protobuf:"bytes,101,opt,name=createTime,proto3" json:"createTime,omitempty"`
@@ -2680,20 +2680,20 @@ type PbPlan struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *PbPlan) Reset() {
-	*x = PbPlan{}
+func (x *PlanPb) Reset() {
+	*x = PlanPb{}
 	mi := &file_streamevent_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PbPlan) String() string {
+func (x *PlanPb) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PbPlan) ProtoMessage() {}
+func (*PlanPb) ProtoMessage() {}
 
-func (x *PbPlan) ProtoReflect() protoreflect.Message {
+func (x *PlanPb) ProtoReflect() protoreflect.Message {
 	mi := &file_streamevent_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2705,131 +2705,131 @@ func (x *PbPlan) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PbPlan.ProtoReflect.Descriptor instead.
-func (*PbPlan) Descriptor() ([]byte, []int) {
+// Deprecated: Use PlanPb.ProtoReflect.Descriptor instead.
+func (*PlanPb) Descriptor() ([]byte, []int) {
 	return file_streamevent_proto_rawDescGZIP(), []int{28}
 }
 
-func (x *PbPlan) GetCreateTime() string {
+func (x *PlanPb) GetCreateTime() string {
 	if x != nil {
 		return x.CreateTime
 	}
 	return ""
 }
 
-func (x *PbPlan) GetUpdateTime() string {
+func (x *PlanPb) GetUpdateTime() string {
 	if x != nil {
 		return x.UpdateTime
 	}
 	return ""
 }
 
-func (x *PbPlan) GetCreateUser() string {
+func (x *PlanPb) GetCreateUser() string {
 	if x != nil {
 		return x.CreateUser
 	}
 	return ""
 }
 
-func (x *PbPlan) GetUpdateUser() string {
+func (x *PlanPb) GetUpdateUser() string {
 	if x != nil {
 		return x.UpdateUser
 	}
 	return ""
 }
 
-func (x *PbPlan) GetDeptCode() string {
+func (x *PlanPb) GetDeptCode() string {
 	if x != nil {
 		return x.DeptCode
 	}
 	return ""
 }
 
-func (x *PbPlan) GetId() int64 {
+func (x *PlanPb) GetId() int64 {
 	if x != nil {
 		return x.Id
 	}
 	return 0
 }
 
-func (x *PbPlan) GetPlanId() string {
+func (x *PlanPb) GetPlanId() string {
 	if x != nil {
 		return x.PlanId
 	}
 	return ""
 }
 
-func (x *PbPlan) GetPlanName() string {
+func (x *PlanPb) GetPlanName() string {
 	if x != nil {
 		return x.PlanName
 	}
 	return ""
 }
 
-func (x *PbPlan) GetType() string {
+func (x *PlanPb) GetType() string {
 	if x != nil {
 		return x.Type
 	}
 	return ""
 }
 
-func (x *PbPlan) GetGroupId() string {
+func (x *PlanPb) GetGroupId() string {
 	if x != nil {
 		return x.GroupId
 	}
 	return ""
 }
 
-func (x *PbPlan) GetDescription() string {
+func (x *PlanPb) GetDescription() string {
 	if x != nil {
 		return x.Description
 	}
 	return ""
 }
 
-func (x *PbPlan) GetStartTime() string {
+func (x *PlanPb) GetStartTime() string {
 	if x != nil {
 		return x.StartTime
 	}
 	return ""
 }
 
-func (x *PbPlan) GetEndTime() string {
+func (x *PlanPb) GetEndTime() string {
 	if x != nil {
 		return x.EndTime
 	}
 	return ""
 }
 
-func (x *PbPlan) GetExt1() string {
+func (x *PlanPb) GetExt1() string {
 	if x != nil {
 		return x.Ext1
 	}
 	return ""
 }
 
-func (x *PbPlan) GetExt2() string {
+func (x *PlanPb) GetExt2() string {
 	if x != nil {
 		return x.Ext2
 	}
 	return ""
 }
 
-func (x *PbPlan) GetExt3() string {
+func (x *PlanPb) GetExt3() string {
 	if x != nil {
 		return x.Ext3
 	}
 	return ""
 }
 
-func (x *PbPlan) GetExt4() string {
+func (x *PlanPb) GetExt4() string {
 	if x != nil {
 		return x.Ext4
 	}
 	return ""
 }
 
-func (x *PbPlan) GetExt5() string {
+func (x *PlanPb) GetExt5() string {
 	if x != nil {
 		return x.Ext5
 	}
@@ -2838,7 +2838,7 @@ func (x *PbPlan) GetExt5() string {
 
 type HandlerPlanTaskEventReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	Plan  *PbPlan                `protobuf:"bytes,100,opt,name=plan,proto3" json:"plan,omitempty"`
+	Plan  *PlanPb                `protobuf:"bytes,100,opt,name=plan,proto3" json:"plan,omitempty"`
 	// 自增主键ID
 	Id int64 `protobuf:"varint,50,opt,name=id,proto3" json:"id,omitempty"`
 	// 关联的计划主键ID
@@ -2907,7 +2907,7 @@ func (*HandlerPlanTaskEventReq) Descriptor() ([]byte, []int) {
 	return file_streamevent_proto_rawDescGZIP(), []int{29}
 }
 
-func (x *HandlerPlanTaskEventReq) GetPlan() *PbPlan {
+func (x *HandlerPlanTaskEventReq) GetPlan() *PlanPb {
 	if x != nil {
 		return x.Plan
 	}
@@ -3043,7 +3043,7 @@ type HandlerPlanTaskEventRes struct {
 	// 结果原因 （成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
 	Reason string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
 	// 延期配置-默认延期5分钟：delayed,ongoing-自定义延期
-	DelayConfig   *PbDelayConfig `protobuf:"bytes,4,opt,name=delayConfig,proto3" json:"delayConfig,omitempty"`
+	DelayConfig   *DelayConfigPb `protobuf:"bytes,4,opt,name=delayConfig,proto3" json:"delayConfig,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3099,14 +3099,14 @@ func (x *HandlerPlanTaskEventRes) GetReason() string {
 	return ""
 }
 
-func (x *HandlerPlanTaskEventRes) GetDelayConfig() *PbDelayConfig {
+func (x *HandlerPlanTaskEventRes) GetDelayConfig() *DelayConfigPb {
 	if x != nil {
 		return x.DelayConfig
 	}
 	return nil
 }
 
-type PbDelayConfig struct {
+type DelayConfigPb struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 下次触发时间（格式：yyyy-MM-dd HH:mm:ss，定时扫描的核心筛选条件）
 	NextTriggerTime string `protobuf:"bytes,1,opt,name=nextTriggerTime,proto3" json:"nextTriggerTime,omitempty"`
@@ -3116,20 +3116,20 @@ type PbDelayConfig struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *PbDelayConfig) Reset() {
-	*x = PbDelayConfig{}
+func (x *DelayConfigPb) Reset() {
+	*x = DelayConfigPb{}
 	mi := &file_streamevent_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PbDelayConfig) String() string {
+func (x *DelayConfigPb) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PbDelayConfig) ProtoMessage() {}
+func (*DelayConfigPb) ProtoMessage() {}
 
-func (x *PbDelayConfig) ProtoReflect() protoreflect.Message {
+func (x *DelayConfigPb) ProtoReflect() protoreflect.Message {
 	mi := &file_streamevent_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3141,19 +3141,19 @@ func (x *PbDelayConfig) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PbDelayConfig.ProtoReflect.Descriptor instead.
-func (*PbDelayConfig) Descriptor() ([]byte, []int) {
+// Deprecated: Use DelayConfigPb.ProtoReflect.Descriptor instead.
+func (*DelayConfigPb) Descriptor() ([]byte, []int) {
 	return file_streamevent_proto_rawDescGZIP(), []int{31}
 }
 
-func (x *PbDelayConfig) GetNextTriggerTime() string {
+func (x *DelayConfigPb) GetNextTriggerTime() string {
 	if x != nil {
 		return x.NextTriggerTime
 	}
 	return ""
 }
 
-func (x *PbDelayConfig) GetDelayReason() string {
+func (x *DelayConfigPb) GetDelayReason() string {
 	if x != nil {
 		return x.DelayReason
 	}
@@ -3498,7 +3498,7 @@ const file_streamevent_proto_rawDesc = "" +
 	"\apayload\x18\x04 \x01(\tR\apayload\".\n" +
 	"\x12UpSocketMessageRes\x12\x18\n" +
 	"\apayload\x18\x01 \x01(\tR\apayload\"\xd4\x03\n" +
-	"\x06PbPlan\x12\x1e\n" +
+	"\x06PlanPb\x12\x1e\n" +
 	"\n" +
 	"createTime\x18e \x01(\tR\n" +
 	"createTime\x12\x1e\n" +
@@ -3527,7 +3527,7 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x04ext4\x18\v \x01(\tR\x04ext4\x12\x12\n" +
 	"\x04ext5\x18\f \x01(\tR\x04ext5\"\xa6\x04\n" +
 	"\x17HandlerPlanTaskEventReq\x12'\n" +
-	"\x04plan\x18d \x01(\v2\x13.streamevent.PbPlanR\x04plan\x12\x0e\n" +
+	"\x04plan\x18d \x01(\v2\x13.streamevent.PlanPbR\x04plan\x12\x0e\n" +
 	"\x02id\x182 \x01(\x03R\x02id\x12\x16\n" +
 	"\x06planPk\x18\x01 \x01(\x03R\x06planPk\x12\x16\n" +
 	"\x06planId\x18\x02 \x01(\tR\x06planId\x12\x18\n" +
@@ -3556,8 +3556,8 @@ const file_streamevent_proto_rawDesc = "" +
 	"execResult\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x16\n" +
 	"\x06reason\x18\x03 \x01(\tR\x06reason\x12<\n" +
-	"\vdelayConfig\x18\x04 \x01(\v2\x1a.streamevent.PbDelayConfigR\vdelayConfig\"[\n" +
-	"\rPbDelayConfig\x12(\n" +
+	"\vdelayConfig\x18\x04 \x01(\v2\x1a.streamevent.DelayConfigPbR\vdelayConfig\"[\n" +
+	"\rDelayConfigPb\x12(\n" +
 	"\x0fnextTriggerTime\x18\x01 \x01(\tR\x0fnextTriggerTime\x12 \n" +
 	"\vdelayReason\x18\x02 \x01(\tR\vdelayReason\"\xac\x02\n" +
 	"\x12NotifyPlanEventReq\x128\n" +
@@ -3630,10 +3630,10 @@ var file_streamevent_proto_goTypes = []any{
 	(*PackedSinglePointWithSCDInfo)(nil),               // 26: streamevent.PackedSinglePointWithSCDInfo
 	(*UpSocketMessageReq)(nil),                         // 27: streamevent.UpSocketMessageReq
 	(*UpSocketMessageRes)(nil),                         // 28: streamevent.UpSocketMessageRes
-	(*PbPlan)(nil),                                     // 29: streamevent.PbPlan
+	(*PlanPb)(nil),                                     // 29: streamevent.PlanPb
 	(*HandlerPlanTaskEventReq)(nil),                    // 30: streamevent.HandlerPlanTaskEventReq
 	(*HandlerPlanTaskEventRes)(nil),                    // 31: streamevent.HandlerPlanTaskEventRes
-	(*PbDelayConfig)(nil),                              // 32: streamevent.PbDelayConfig
+	(*DelayConfigPb)(nil),                              // 32: streamevent.DelayConfigPb
 	(*NotifyPlanEventReq)(nil),                         // 33: streamevent.NotifyPlanEventReq
 	(*NotifyPlanEventRes)(nil),                         // 34: streamevent.NotifyPlanEventRes
 	nil,                                                // 35: streamevent.NotifyPlanEventReq.AttributesEntry
@@ -3645,8 +3645,8 @@ var file_streamevent_proto_depIdxs = []int32{
 	12, // 3: streamevent.MsgBody.pm:type_name -> streamevent.PointMapping
 	18, // 4: streamevent.StepPositionInfo.value:type_name -> streamevent.StepPosition
 	22, // 5: streamevent.BinaryCounterReadingInfo.value:type_name -> streamevent.BinaryCounterReading
-	29, // 6: streamevent.HandlerPlanTaskEventReq.plan:type_name -> streamevent.PbPlan
-	32, // 7: streamevent.HandlerPlanTaskEventRes.delayConfig:type_name -> streamevent.PbDelayConfig
+	29, // 6: streamevent.HandlerPlanTaskEventReq.plan:type_name -> streamevent.PlanPb
+	32, // 7: streamevent.HandlerPlanTaskEventRes.delayConfig:type_name -> streamevent.DelayConfigPb
 	0,  // 8: streamevent.NotifyPlanEventReq.eventType:type_name -> streamevent.PlanEventType
 	35, // 9: streamevent.NotifyPlanEventReq.attributes:type_name -> streamevent.NotifyPlanEventReq.AttributesEntry
 	1,  // 10: streamevent.StreamEvent.ReceiveMQTTMessage:input_type -> streamevent.ReceiveMQTTMessageReq

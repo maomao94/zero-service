@@ -26,6 +26,7 @@
 - 改进客户端连接处理，采用毫秒精度的时间控制
 - 重构消息处理架构，引入消息调度器和处理器管理器
 - 增强配置结构，支持更灵活的日志配置和事件映射
+- **更新** 分布式追踪ID标准化：从trace_id改为traceId，提升分布式追踪系统的互操作性和可观测性
 
 ## 目录
 1. [引言](#引言)
@@ -42,7 +43,7 @@
 ## 引言
 本技术文档围绕"MQTT 协议桥接服务"展开，系统性阐述其在物联网场景中的定位与价值：以轻量、低带宽、高可靠的消息传输能力支撑设备与平台之间的数据互通；通过统一的桥接层实现 MQTT 与内部 RPC 生态（如流事件推送、实时推送）的无缝衔接。文档覆盖客户端管理、主题订阅、消息发布、链路追踪与上下文传递、QoS 与重连策略、API 接口与消息格式、主题命名与权限控制建议、性能调优与部署实践等。
 
-**更新** 新增了 TopicLogManager 日志配置系统，支持按主题粒度的日志频率控制和内容过滤，改进了客户端连接处理的毫秒精度控制，重构了消息处理架构以提高性能和可维护性。
+**更新** 新增了 TopicLogManager 日志配置系统，支持按主题粒度的日志频率控制和内容过滤，改进了客户端连接处理的毫秒精度控制，重构了消息处理架构以提高性能和可维护性。**更新** 分布式追踪ID标准化：从trace_id改为traceId，提升分布式追踪系统的互操作性和可观测性。
 
 ## 项目结构
 该服务采用 go-zero 微服务框架，按"RPC 服务 + 业务逻辑 + 配置 + 通用组件"的层次组织：
@@ -117,7 +118,7 @@ MSG --> TRC
 - 流处理器：将 MQTT 消息转发至流事件与实时推送服务。
 - 追踪与消息载体：基于 OpenTelemetry 文本映射传播，将 trace 上下文嵌入消息头。
 
-**更新** 新增了 TopicLogManager 日志管理器组件，重构了消息处理架构，改进了客户端连接处理的毫秒精度控制。
+**更新** 新增了 TopicLogManager 日志管理器组件，重构了消息处理架构，改进了客户端连接处理的毫秒精度控制。**更新** 分布式追踪ID标准化：从trace_id改为traceId，提升分布式追踪系统的互操作性和可观测性。
 
 **章节来源**
 - [client.go:32-46](file://common/mqttx/client.go#L32-L46)
@@ -152,7 +153,7 @@ L1-->>RPC : 成功
 RPC-->>C : 成功
 else 带追踪发布
 RPC->>L2 : 调用 PublishWithTrace
-L2->>L2 : 提取 traceID 并注入消息头
+L2->>L2 : 提取 traceId 并注入消息头
 L2->>MQ : Publish(topic, trace 包装后的 payload)
 MQ->>DISP : 分发消息
 DISP->>DL : 投递到下游
@@ -318,7 +319,7 @@ Wait --> Done
 
 ### 发布与带追踪发布
 - 普通发布：直接调用客户端发布，支持配置的 QoS。
-- 带追踪发布：从上下文提取 traceID，构造消息对象，注入消息头，再进行发布；返回 traceID 便于链路追踪。
+- 带追踪发布：从上下文提取 traceId，构造消息对象，注入消息头，再进行发布；返回 traceId 便于链路追踪。
 
 ```mermaid
 sequenceDiagram
@@ -329,7 +330,7 @@ participant Carrier as "MessageCarrier"
 participant MQ as "MQTT 客户端"
 Caller->>RPC : PublishWithTrace(topic, payload)
 RPC->>Logic : PublishWithTrace
-Logic->>Logic : 提取 traceID
+Logic->>Logic : 提取 traceId
 Logic->>Logic : 构造消息并注入 headers
 Logic->>Carrier : TextMapPropagator.Inject
 Logic->>MQ : Publish(topic, JSON(消息))
@@ -416,9 +417,13 @@ LogResult --> Done
   - PublishWithTraceReq/PublishWithTraceRes：topic 字符串，payload 字节，traceId 字符串。
 - Swagger 定义：包含 MQTT 消息体的通用结构（sessionId、msgId、topic、payload、sendTime）。
 
+**更新** 分布式追踪ID标准化：响应字段从trace_id改为traceId，提升分布式追踪系统的互操作性和可观测性。
+
 **章节来源**
 - [bridgemqtt.proto:10-16](file://app/bridgemqtt/bridgemqtt.proto#L10-L16)
 - [bridgemqtt.proto:20-49](file://app/bridgemqtt/bridgemqtt.proto#L20-L49)
+- [bridgemqtt.pb.go:165-170](file://app/bridgemqtt/bridgemqtt/bridgemqtt.pb.go#L165-L170)
+- [publishwithtracelogic.go:44-46](file://app/bridgemqtt/internal/logic/publishwithtracelogic.go#L44-L46)
 - [mqttstream.swagger.json:20-44](file://swagger/mqttstream.swagger.json#L20-L44)
 
 ## 依赖分析
@@ -496,9 +501,9 @@ HND --> TM
   - **重构** 消息处理架构后，无处理器时会调用回调函数而非直接忽略。
   - 空负载将被拒绝处理。
 - 重连后丢失订阅
-  - 系统会在 OnConnectionLost 清空订阅集合并在 OnConnect 恢复订阅；若未恢复，请检查配置与错误日志。
+  - 系统会在 OnConnectionLost 清空订阅集合，连接成功后恢复订阅；若未恢复，请检查配置与错误日志。
 - 追踪无效
-  - 确认上下文包含 traceID，消息头中包含传播的键值；检查下游是否正确解析消息头。
+  - 确认上下文包含 traceId，消息头中包含传播的键值；检查下游是否正确解析消息头。
 - **新增** 日志配置问题
   - 检查 TopicLogConfig 配置是否正确加载。
   - 确认主题模板匹配是否正确。
@@ -514,7 +519,7 @@ HND --> TM
 - [topiclog.go:117-131](file://common/mqttx/topiclog.go#L117-L131)
 
 ## 结论
-本桥接服务以简洁稳定的架构实现了 MQTT 与内部生态的高效对接：通过统一的客户端管理与订阅机制保障消息可达性，借助带追踪发布实现端到端链路可视化，结合**重构**的消息处理架构与**新增**的日志管理器提升整体性能与可维护性。**改进** 的毫秒精度连接控制和灵活的日志配置使系统在各类 IoT 场景中实现更高的可用性、可观测性和可控性。
+本桥接服务以简洁稳定的架构实现了 MQTT 与内部生态的高效对接：通过统一的客户端管理与订阅机制保障消息可达性，借助带追踪发布实现端到端链路可视化，结合**重构**的消息处理架构与**新增**的日志管理器提升整体性能与可维护性。**改进** 的毫秒精度连接控制和灵活的日志配置使系统在各类 IoT 场景中实现更高的可用性、可观测性和可控性。**更新** 分布式追踪ID标准化进一步提升了系统的互操作性和可观测性。
 
 ## 附录
 
@@ -529,9 +534,13 @@ HND --> TM
   - 请求：PublishWithTraceReq.topic, PublishWithTraceReq.payload
   - 响应：PublishWithTraceRes.traceId
 
+**更新** 分布式追踪ID标准化：响应字段从trace_id改为traceId，提升分布式追踪系统的互操作性和可观测性。
+
 **章节来源**
 - [bridgemqtt.proto:10-16](file://app/bridgemqtt/bridgemqtt.proto#L10-L16)
 - [bridgemqtt.proto:20-49](file://app/bridgemqtt/bridgemqtt.proto#L20-L49)
+- [bridgemqtt.pb.go:165-170](file://app/bridgemqtt/bridgemqtt/bridgemqtt.pb.go#L165-L170)
+- [publishwithtracelogic.go:44-46](file://app/bridgemqtt/internal/logic/publishwithtracelogic.go#L44-L46)
 
 ### 消息格式规范
 - 普通发布：topic 字符串，payload 字节。
@@ -604,3 +613,7 @@ HND --> TM
   - 合理设置任务运行器并发度与日志频率阈值；监控发布/消费耗时与错误率。
   - **重构** 利用新的消息处理架构提高吞吐量。
   - **新增** 使用 TopicLogManager 优化日志性能开销。
+- **更新** 分布式追踪最佳实践
+  - 使用标准化的 traceId 字段进行链路追踪，提升跨系统互操作性。
+  - 确保消息头中正确传播 trace 上下文，便于端到端链路分析。
+  - 结合 OpenTelemetry 标准，实现统一的分布式追踪体验。

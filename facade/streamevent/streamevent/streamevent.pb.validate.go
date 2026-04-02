@@ -3392,21 +3392,21 @@ var _ interface {
 	ErrorName() string
 } = UpSocketMessageResValidationError{}
 
-// Validate checks the field values on PbPlan with the rules defined in the
+// Validate checks the field values on PlanPb with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *PbPlan) Validate() error {
+func (m *PlanPb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on PbPlan with the rules defined in the
+// ValidateAll checks the field values on PlanPb with the rules defined in the
 // proto definition for this message. If any rules are violated, the result is
-// a list of violation errors wrapped in PbPlanMultiError, or nil if none found.
-func (m *PbPlan) ValidateAll() error {
+// a list of violation errors wrapped in PlanPbMultiError, or nil if none found.
+func (m *PlanPb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *PbPlan) validate(all bool) error {
+func (m *PlanPb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -3450,18 +3450,18 @@ func (m *PbPlan) validate(all bool) error {
 	// no validation rules for Ext5
 
 	if len(errors) > 0 {
-		return PbPlanMultiError(errors)
+		return PlanPbMultiError(errors)
 	}
 
 	return nil
 }
 
-// PbPlanMultiError is an error wrapping multiple validation errors returned by
-// PbPlan.ValidateAll() if the designated constraints aren't met.
-type PbPlanMultiError []error
+// PlanPbMultiError is an error wrapping multiple validation errors returned by
+// PlanPb.ValidateAll() if the designated constraints aren't met.
+type PlanPbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m PbPlanMultiError) Error() string {
+func (m PlanPbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -3470,11 +3470,11 @@ func (m PbPlanMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m PbPlanMultiError) AllErrors() []error { return m }
+func (m PlanPbMultiError) AllErrors() []error { return m }
 
-// PbPlanValidationError is the validation error returned by PbPlan.Validate if
+// PlanPbValidationError is the validation error returned by PlanPb.Validate if
 // the designated constraints aren't met.
-type PbPlanValidationError struct {
+type PlanPbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -3482,22 +3482,22 @@ type PbPlanValidationError struct {
 }
 
 // Field function returns field value.
-func (e PbPlanValidationError) Field() string { return e.field }
+func (e PlanPbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e PbPlanValidationError) Reason() string { return e.reason }
+func (e PlanPbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e PbPlanValidationError) Cause() error { return e.cause }
+func (e PlanPbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e PbPlanValidationError) Key() bool { return e.key }
+func (e PlanPbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e PbPlanValidationError) ErrorName() string { return "PbPlanValidationError" }
+func (e PlanPbValidationError) ErrorName() string { return "PlanPbValidationError" }
 
 // Error satisfies the builtin error interface
-func (e PbPlanValidationError) Error() string {
+func (e PlanPbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -3509,14 +3509,14 @@ func (e PbPlanValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPbPlan.%s: %s%s",
+		"invalid %sPlanPb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = PbPlanValidationError{}
+var _ error = PlanPbValidationError{}
 
 var _ interface {
 	Field() string
@@ -3524,7 +3524,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = PbPlanValidationError{}
+} = PlanPbValidationError{}
 
 // Validate checks the field values on HandlerPlanTaskEventReq with the rules
 // defined in the proto definition for this message. If any rules are
@@ -3828,22 +3828,22 @@ var _ interface {
 	ErrorName() string
 } = HandlerPlanTaskEventResValidationError{}
 
-// Validate checks the field values on PbDelayConfig with the rules defined in
+// Validate checks the field values on DelayConfigPb with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *PbDelayConfig) Validate() error {
+func (m *DelayConfigPb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on PbDelayConfig with the rules defined
+// ValidateAll checks the field values on DelayConfigPb with the rules defined
 // in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in PbDelayConfigMultiError, or
+// result is a list of violation errors wrapped in DelayConfigPbMultiError, or
 // nil if none found.
-func (m *PbDelayConfig) ValidateAll() error {
+func (m *DelayConfigPb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *PbDelayConfig) validate(all bool) error {
+func (m *DelayConfigPb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -3855,19 +3855,19 @@ func (m *PbDelayConfig) validate(all bool) error {
 	// no validation rules for DelayReason
 
 	if len(errors) > 0 {
-		return PbDelayConfigMultiError(errors)
+		return DelayConfigPbMultiError(errors)
 	}
 
 	return nil
 }
 
-// PbDelayConfigMultiError is an error wrapping multiple validation errors
-// returned by PbDelayConfig.ValidateAll() if the designated constraints
+// DelayConfigPbMultiError is an error wrapping multiple validation errors
+// returned by DelayConfigPb.ValidateAll() if the designated constraints
 // aren't met.
-type PbDelayConfigMultiError []error
+type DelayConfigPbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m PbDelayConfigMultiError) Error() string {
+func (m DelayConfigPbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -3876,11 +3876,11 @@ func (m PbDelayConfigMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m PbDelayConfigMultiError) AllErrors() []error { return m }
+func (m DelayConfigPbMultiError) AllErrors() []error { return m }
 
-// PbDelayConfigValidationError is the validation error returned by
-// PbDelayConfig.Validate if the designated constraints aren't met.
-type PbDelayConfigValidationError struct {
+// DelayConfigPbValidationError is the validation error returned by
+// DelayConfigPb.Validate if the designated constraints aren't met.
+type DelayConfigPbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -3888,22 +3888,22 @@ type PbDelayConfigValidationError struct {
 }
 
 // Field function returns field value.
-func (e PbDelayConfigValidationError) Field() string { return e.field }
+func (e DelayConfigPbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e PbDelayConfigValidationError) Reason() string { return e.reason }
+func (e DelayConfigPbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e PbDelayConfigValidationError) Cause() error { return e.cause }
+func (e DelayConfigPbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e PbDelayConfigValidationError) Key() bool { return e.key }
+func (e DelayConfigPbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e PbDelayConfigValidationError) ErrorName() string { return "PbDelayConfigValidationError" }
+func (e DelayConfigPbValidationError) ErrorName() string { return "DelayConfigPbValidationError" }
 
 // Error satisfies the builtin error interface
-func (e PbDelayConfigValidationError) Error() string {
+func (e DelayConfigPbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -3915,14 +3915,14 @@ func (e PbDelayConfigValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPbDelayConfig.%s: %s%s",
+		"invalid %sDelayConfigPb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = PbDelayConfigValidationError{}
+var _ error = DelayConfigPbValidationError{}
 
 var _ interface {
 	Field() string
@@ -3930,7 +3930,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = PbDelayConfigValidationError{}
+} = DelayConfigPbValidationError{}
 
 // Validate checks the field values on NotifyPlanEventReq with the rules
 // defined in the proto definition for this message. If any rules are

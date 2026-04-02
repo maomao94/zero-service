@@ -214,7 +214,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		logx.WithContext(ctx).Errorf("Error updating plan exec item %d to running: %v", execItem.Id, err)
 		return
 	}
-	callPlan := &streamevent.PbPlan{
+	callPlan := &streamevent.PlanPb{
 		CreateTime:  carbon.CreateFromStdTime(plan.CreateTime).ToDateTimeString(),
 		UpdateTime:  carbon.CreateFromStdTime(plan.UpdateTime).ToDateTimeString(),
 		CreateUser:  plan.CreateUser.String,

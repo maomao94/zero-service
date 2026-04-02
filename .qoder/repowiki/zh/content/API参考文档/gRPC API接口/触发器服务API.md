@@ -3,6 +3,7 @@
 <cite>
 **本文引用的文件**
 - [trigger.proto](file://app/trigger/trigger.proto)
+- [trigger.pb.go](file://app/trigger/trigger/trigger.pb.go)
 - [trigger.go](file://app/trigger/trigger.go)
 - [triggerrpcserver.go](file://app/trigger/internal/server/triggerrpcserver.go)
 - [sendtriggerlogic.go](file://app/trigger/internal/logic/sendtriggerlogic.go)
@@ -17,20 +18,30 @@
 - [routes.go](file://app/trigger/internal/task/routes.go)
 </cite>
 
+## 更新摘要
+**所做更改**
+- 更新了所有字段命名规范，从 snake_case 统一改为 camelCase
+- 新增了字段命名规范章节，详细说明 camelCase 转换规则
+- 更新了任务状态枚举、队列信息、计划任务等数据结构的字段命名
+- 完善了客户端调用示例中的字段命名一致性
+
 ## 目录
 1. [简介](#简介)
 2. [项目结构](#项目结构)
 3. [核心组件](#核心组件)
 4. [架构总览](#架构总览)
 5. [详细组件分析](#详细组件分析)
-6. [依赖分析](#依赖分析)
-7. [性能考虑](#性能考虑)
-8. [故障排查指南](#故障排查指南)
-9. [结论](#结论)
-10. [附录](#附录)
+6. [字段命名规范标准化](#字段命名规范标准化)
+7. [依赖分析](#依赖分析)
+8. [性能考虑](#性能考虑)
+9. [故障排查指南](#故障排查指南)
+10. [结论](#结论)
+11. [附录](#附录)
 
 ## 简介
 本文件系统性地梳理触发器服务的 gRPC API，覆盖任务调度、计划任务管理与队列管理三大能力域。重点说明 SendTrigger、SendProtoTrigger 等触发接口的参数结构、调用流程与错误处理；阐述 RunTask、DeleteTask、ArchiveTask 等任务生命周期管理接口；详解 CreatePlanTask、PausePlan、ResumePlan 等计划任务接口的配置参数与执行机制；提供队列管理接口 Queues、GetQueueInfo 的使用说明；并给出任务状态枚举、重试机制与性能优化建议。
+
+**更新** 本次更新主要反映了 protobuf 字段命名规范的标准化，所有字段从 snake_case 统一转换为 camelCase，提升了 API 的一致性和可读性。
 
 ## 项目结构
 触发器服务基于 go-zero 与 asynq 构建，gRPC 服务由 proto 定义并通过 server 层路由到各 logic 实现，底层通过 asynq 客户端/服务器与 Redis 交互，持久化使用 SQL 数据库模型。
@@ -92,7 +103,7 @@ C --> R
 - [servicecontext.go:50-91](file://app/trigger/internal/svc/servicecontext.go#L50-L91)
 
 ## 架构总览
-触发器服务采用“gRPC 服务层 → 逻辑层 → 服务上下文 → 底层基础设施”的分层设计。gRPC 服务负责协议编解码与路由；逻辑层封装业务规则与参数校验；服务上下文统一管理 asynq、数据库、Redis、流事件客户端等资源；基础设施层完成任务入队、持久化与外部回调。
+触发器服务采用"gRPC 服务层 → 逻辑层 → 服务上下文 → 底层基础设施"的分层设计。gRPC 服务负责协议编解码与路由；逻辑层封装业务规则与参数校验；服务上下文统一管理 asynq、数据库、Redis、流事件客户端等资源；基础设施层完成任务入队、持久化与外部回调。
 
 ```mermaid
 sequenceDiagram
@@ -249,7 +260,7 @@ RPC-->>Client : "CreatePlanTaskRes"
 - GetQueueInfo
   - 功能：获取指定队列的统计信息快照。
   - 参数：queue（必填，最小长度 1）。
-  - 返回：PbQueueInfo，包含 pending/active/scheduled/retry/aggregating/archived/completed 等数量、内存占用、延迟、是否暂停等。
+  - 返回：QueueInfoPb，包含 pending、active、scheduled、retry、aggregating、archived、completed 等数量、内存占用、延迟、是否暂停等。
 - 使用场景
   - 监控队列健康度、容量与延迟。
   - 选择合适的队列进行任务投递。
@@ -302,6 +313,113 @@ C["调用 GetQueueInfo(queue)"] --> D["返回队列信息快照"]
 - [triggerrpcserver.go:26-36](file://app/trigger/internal/server/triggerrpcserver.go#L26-L36)
 - [sendtriggerlogic.go:37-104](file://app/trigger/internal/logic/sendtriggerlogic.go#L37-L104)
 
+## 字段命名规范标准化
+
+### 更新概述
+本次更新实现了触发器服务 protobuf 字段命名规范的全面标准化，将原有的 snake_case 命名风格统一转换为 camelCase 风格。这一变更涉及 50+ 个字段，涵盖任务、队列、计划任务等核心数据结构。
+
+### 字段命名转换规则
+- **snake_case → camelCase**：所有下划线分隔的字段名转换为驼峰命名
+- **保持语义不变**：转换后的字段含义与原字段完全一致
+- **JSON 标签同步**：Go 语言生成的 JSON 标签也相应更新为 camelCase
+
+### 主要字段转换示例
+
+#### 任务相关字段
+- `task_id` → `taskId`
+- `queue_name` → `queueName`
+- `process_time` → `processTime`
+- `create_time` → `createTime`
+- `update_time` → `updateTime`
+
+#### 队列信息字段
+- `queue_name` → `queueName`
+- `memory_usage` → `memoryUsage`
+- `pending_count` → `pendingCount`
+- `active_count` → `activeCount`
+- `scheduled_count` → `scheduledCount`
+
+#### 计划任务字段
+- `plan_id` → `planId`
+- `batch_id` → `batchId`
+- `exec_id` → `execId`
+- `item_id` → `itemId`
+- `trigger_time` → `triggerTime`
+- `next_trigger_time` → `nextTriggerTime`
+- `last_trigger_time` → `lastTriggerTime`
+
+#### 时间戳字段
+- `created_at` → `createdAt`
+- `updated_at` → `updatedAt`
+- `finished_time` → `finishedTime`
+- `paused_time` → `pausedTime`
+
+### 数据结构字段更新
+
+#### TaskInfoPb 结构
+- `id` → `id`（保持不变）
+- `queue` → `queue`（保持不变）
+- `type` → `type`（保持不变）
+- `payload` → `payload`（保持不变）
+- `state` → `state`（保持不变）
+- `max_retry` → `maxRetry`
+- `retried` → `retried`（保持不变）
+- `last_err` → `lastErr`
+- `last_failed_at` → `lastFailedAt`
+- `timeout` → `timeout`（保持不变）
+- `deadline` → `deadline`（保持不变）
+- `group` → `group`（保持不变）
+- `next_process_at` → `nextProcessAt`
+- `is_orphaned` → `isOrphaned`
+- `retention` → `retention`（保持不变）
+- `completed_at` → `completedAt`
+- `result` → `result`（保持不变）
+
+#### QueueInfoPb 结构
+- `queue` → `queue`（保持不变）
+- `memory_usage` → `memoryUsage`
+- `latency` → `latency`（保持不变）
+- `size` → `size`（保持不变）
+- `groups` → `groups`（保持不变）
+- `pending` → `pending`（保持不变）
+- `active` → `active`（保持不变）
+- `scheduled` → `scheduled`（保持不变）
+- `retry` → `retry`（保持不变）
+- `archived` → `archived`（保持不变）
+- `completed` → `completed`（保持不变）
+- `aggregating` → `aggregating`（保持不变）
+- `processed` → `processed`（保持不变）
+- `failed` → `failed`（保持不变）
+- `processed_total` → `processedTotal`
+- `failed_total` → `failedTotal`
+- `paused` → `paused`（保持不变）
+- `timestamp` → `timestamp`（保持不变）
+
+#### 计划任务相关字段
+- `plan_id` → `planId`
+- `batch_id` → `batchId`
+- `exec_id` → `execId`
+- `item_id` → `itemId`
+- `plan_trigger_time` → `planTriggerTime`
+- `next_trigger_time` → `nextTriggerTime`
+- `last_trigger_time` → `lastTriggerTime`
+- `trigger_count` → `triggerCount`
+- `terminated_reason` → `terminatedReason`
+- `paused_time` → `pausedTime`
+- `paused_reason` → `pausedReason`
+
+### 客户端兼容性
+- **向后兼容**：现有客户端代码需要更新字段访问方式
+- **迁移路径**：建议逐步更新客户端代码，确保字段命名一致性
+- **API 文档**：所有接口文档已更新为新的 camelCase 字段命名
+
+**章节来源**
+- [trigger.proto:124-159](file://app/trigger/trigger.proto#L124-L159)
+- [trigger.proto:173-214](file://app/trigger/trigger.proto#L173-L214)
+- [trigger.proto:504-549](file://app/trigger/trigger.proto#L504-L549)
+- [trigger.proto:858-928](file://app/trigger/trigger.proto#L858-L928)
+- [trigger.proto:1044-1096](file://app/trigger/trigger.proto#L1044-L1096)
+
 ## 依赖分析
 - 服务启动与注册
   - 启动入口 [trigger.go](file://app/trigger/trigger.go) 注册 gRPC 服务、注册 asynq 任务与调度器、注册 cron 服务，并可选注册到 Nacos。
@@ -345,7 +463,7 @@ C --> D["SQL 模型"]
 - 批量清理
   - 提供 DeleteAllCompletedTasks 与 DeleteAllArchivedTasks，定期清理历史数据，控制数据库与队列规模。
 - 监控与告警
-  - 使用 GetQueueInfo 获取 pending/active/scheduled/retry/aggregating/archived/completed 数量与延迟，结合外部监控体系建立告警。
+  - 使用 GetQueueInfo 获取 pending、active、scheduled、retry、aggregating、archived、completed 数量与延迟，结合外部监控体系建立告警。
 - 资源配置
   - 参考配置文件 [trigger.yaml](file://app/trigger/etc/trigger.yaml) 中的 Redis、DB、日志与 Nacos 注册配置，按环境调整。
 
@@ -377,10 +495,12 @@ C --> D["SQL 模型"]
 - [pauseplanlogic.go:56-61](file://app/trigger/internal/logic/pauseplanlogic.go#L56-L61)
 
 ## 结论
-触发器服务通过清晰的分层设计与完善的参数校验、重试与监控机制，提供了稳定可靠的触发与调度能力。建议在生产环境中结合队列监控、批量清理与合理的重试策略，持续优化任务吞吐与稳定性。
+触发器服务通过清晰的分层设计与完善的参数校验、重试与监控机制，提供了稳定可靠的触发与调度能力。本次字段命名规范标准化进一步提升了 API 的一致性和可维护性。建议在生产环境中结合队列监控、批量清理与合理的重试策略，持续优化任务吞吐与稳定性。
 
 ## 附录
 - 配置文件位置与关键项
   - [trigger.yaml](file://app/trigger/etc/trigger.yaml)：监听地址、日志、Redis、DB、Nacos 注册、StreamEvent 客户端等。
 - 任务执行实现
   - [deferTriggerTask.go](file://app/trigger/internal/task/deferTriggerTask.go)、[deferTriggerProtoTask.go](file://app/trigger/internal/task/deferTriggerProtoTask.go)、[routes.go](file://app/trigger/internal/task/routes.go)。
+- 字段命名对照表
+  - 所有 snake_case 与 camelCase 字段对照详见"字段命名规范标准化"章节。

@@ -18,7 +18,16 @@
 - [joinroomlogic.go](file://socketapp/socketgtw/internal/logic/joinroomlogic.go)
 - [gentokenlogic.go](file://socketapp/socketpush/internal/logic/gentokenlogic.go)
 - [test-socketio.html](file://common/socketiox/test-socketio.html)
+- [socketgtw.pb.go](file://socketapp/socketgtw/socketgtw/socketgtw.pb.go)
+- [socketpush.pb.go](file://socketapp/socketpush/socketpush/socketpush.pb.go)
 </cite>
+
+## 更新摘要
+**所做更改**
+- 更新了SocketGtw和SocketPush服务的protobuf字段命名规范，统一采用camelCase格式
+- 新增了毫秒级时间戳精度支持的说明
+- 更新了相关接口文档以反映字段命名变化
+- 补充了字段命名规范和时间戳处理的技术细节
 
 ## 目录
 1. [简介](#简介)
@@ -26,11 +35,12 @@
 3. [核心组件](#核心组件)
 4. [架构总览](#架构总览)
 5. [详细组件分析](#详细组件分析)
-6. [依赖关系分析](#依赖关系分析)
-7. [性能与可靠性](#性能与可靠性)
-8. [故障排查指南](#故障排查指南)
-9. [结论](#结论)
-10. [附录：SocketIO客户端示例与最佳实践](#附录socketio客户端示例与最佳实践)
+6. [字段命名规范标准化](#字段命名规范标准化)
+7. [依赖关系分析](#依赖关系分析)
+8. [性能与可靠性](#性能与可靠性)
+9. [故障排查指南](#故障排查指南)
+10. [结论](#结论)
+11. [附录：SocketIO客户端示例与最佳实践](#附录socketio客户端示例与最佳实践)
 
 ## 简介
 本文件系统性梳理了基于 gRPC 的 SocketIO 实时通信服务接口，覆盖以下能力：
@@ -38,6 +48,8 @@
 - 推送服务（SocketPush）：Token 生成与校验、房间管理、广播与推送、统计查询
 - SocketIO 内核：事件绑定、会话生命周期、房间加入/离开、广播、心跳统计与元数据透传
 - WebSocket 协议、心跳检测与断线重连、消息队列集成与可靠性保障、性能优化建议
+
+**更新** 本版本重点介绍了SocketIO服务protobuf字段命名规范的标准化，所有字段统一采用camelCase格式，并支持毫秒级时间戳精度。
 
 ## 项目结构
 SocketIO 服务由两个独立的 gRPC 服务组成：
@@ -74,14 +86,14 @@ GW --> SGW
 GW --> SP
 ```
 
-图表来源
+**图表来源**
 - [socketgtwserver.go:15-91](file://socketapp/socketgtw/internal/server/socketgtwserver.go#L15-L91)
 - [socketpushserver.go:15-103](file://socketapp/socketpush/internal/server/socketpushserver.go#L15-L103)
 - [servicecontext.go（SocketGtw）:18-134](file://socketapp/socketgtw/internal/svc/servicecontext.go#L18-L134)
 - [servicecontext.go（SocketPush）:8-18](file://socketapp/socketpush/internal/svc/servicecontext.go#L8-L18)
 - [server.go:299-335](file://common/socketiox/server.go#L299-L335)
 
-章节来源
+**章节来源**
 - [socketgtw.go:30-90](file://socketapp/socketgtw/socketgtw.go#L30-L90)
 - [socketpush.go:27-70](file://socketapp/socketpush/socketpush.go#L27-L70)
 - [socketgtw.yaml:1-37](file://socketapp/socketgtw/etc/socketgtw.yaml#L1-L37)
@@ -101,7 +113,7 @@ GW --> SP
 - SocketIO 内核
   - 连接认证与元数据注入、连接/断开钩子、房间加入/离开、广播、心跳统计、会话查询与元数据检索
 
-章节来源
+**章节来源**
 - [socketgtw.proto:9-32](file://socketapp/socketgtw/socketgtw.proto#L9-L32)
 - [socketpush.proto:9-36](file://socketapp/socketpush/socketpush.proto#L9-L36)
 - [server.go:299-335](file://common/socketiox/server.go#L299-L335)
@@ -128,7 +140,7 @@ S->>E : "连接/断开/房间事件上报"
 E-->>S : "确认/回执"
 ```
 
-图表来源
+**图表来源**
 - [socketgtwserver.go:26-90](file://socketapp/socketgtw/internal/server/socketgtwserver.go#L26-L90)
 - [socketpushserver.go:26-102](file://socketapp/socketpush/internal/server/socketpushserver.go#L26-L102)
 - [servicecontext.go（SocketGtw）:38-131](file://socketapp/socketgtw/internal/svc/servicecontext.go#L38-L131)
@@ -183,12 +195,12 @@ JoinRoomLogic --> ServiceContext_Gtw : "使用"
 ServiceContext_Gtw --> Server : "访问"
 ```
 
-图表来源
+**图表来源**
 - [socketgtwserver.go:15-91](file://socketapp/socketgtw/internal/server/socketgtwserver.go#L15-L91)
 - [joinroomlogic.go:11-38](file://socketapp/socketgtw/internal/logic/joinroomlogic.go#L11-L38)
 - [servicecontext.go（SocketGtw）:18-134](file://socketapp/socketgtw/internal/svc/servicecontext.go#L18-L134)
 
-章节来源
+**章节来源**
 - [socketgtw.proto:9-32](file://socketapp/socketgtw/socketgtw.proto#L9-L32)
 - [socketgtwserver.go:26-90](file://socketapp/socketgtw/internal/server/socketgtwserver.go#L26-L90)
 - [joinroomlogic.go:25-37](file://socketapp/socketgtw/internal/logic/joinroomlogic.go#L25-L37)
@@ -242,12 +254,12 @@ GenTokenLogic --> ServiceContext_Push : "使用"
 ServiceContext_Push --> SocketContainer : "访问"
 ```
 
-图表来源
+**图表来源**
 - [socketpushserver.go:15-103](file://socketapp/socketpush/internal/server/socketpushserver.go#L15-L103)
 - [gentokenlogic.go:15-79](file://socketapp/socketpush/internal/logic/gentokenlogic.go#L15-L79)
 - [servicecontext.go（SocketPush）:8-18](file://socketapp/socketpush/internal/svc/servicecontext.go#L8-L18)
 
-章节来源
+**章节来源**
 - [socketpush.proto:9-36](file://socketapp/socketpush/socketpush.proto#L9-L36)
 - [socketpushserver.go:26-102](file://socketapp/socketpush/internal/server/socketpushserver.go#L26-L102)
 - [gentokenlogic.go:29-79](file://socketapp/socketpush/internal/logic/gentokenlogic.go#L29-L79)
@@ -291,14 +303,52 @@ Disconnect --> Clean["清理会话"]
 Clean --> End(["结束"])
 ```
 
-图表来源
+**图表来源**
 - [server.go:337-676](file://common/socketiox/server.go#L337-L676)
 - [server.go:702-740](file://common/socketiox/server.go#L702-L740)
 
-章节来源
+**章节来源**
 - [server.go:299-335](file://common/socketiox/server.go#L299-L335)
 - [server.go:337-676](file://common/socketiox/server.go#L337-L676)
 - [server.go:702-740](file://common/socketiox/server.go#L702-L740)
+
+## 字段命名规范标准化
+
+### camelCase 字段命名规范
+SocketIO 服务的 protobuf 接口已全面采用 camelCase 字段命名规范，确保与主流编程语言和框架的兼容性：
+
+#### SocketGtw 服务字段规范
+- 所有字段名称采用小驼峰命名法（如：socketId、accessToken、accessExpire）
+- 请求和响应消息中的字段保持一致的命名风格
+- 保持与 JSON 序列化兼容的字段名
+
+#### SocketPush 服务字段规范
+- 统一采用 camelCase 命名风格
+- 时间戳字段使用毫秒级精度
+- 复合字段如 metaSessions 采用标准命名约定
+
+### 毫秒级时间戳精度支持
+
+#### 时间戳字段类型
+- 所有时间相关字段使用 int64 类型表示 Unix 时间戳
+- 支持毫秒级精度的时间戳计算
+- 与标准 Unix 时间戳保持兼容性
+
+#### 时间戳应用场景
+- **GenToken 接口**：accessExpire 和 refreshAfter 字段提供毫秒级时间戳
+- **SocketGtwStat 接口**：单节点会话统计中的时间戳字段
+- **SocketPush 统计**：跨节点会话统计中的时间戳信息
+
+#### 时间戳处理机制
+- 生成 Token 时使用当前时间戳（秒级）转换为毫秒级
+- 时间戳在服务端进行统一处理和验证
+- 支持客户端和服务端的时间同步机制
+
+**章节来源**
+- [socketgtw.proto:39-149](file://socketapp/socketgtw/socketgtw.proto#L39-L149)
+- [socketpush.proto:48-177](file://socketapp/socketpush/socketpush.proto#L48-L177)
+- [socketgtw.pb.go:1192-1222](file://socketapp/socketgtw/socketgtw/socketgtw.pb.go#L1192-L1222)
+- [socketpush.pb.go:1444-1474](file://socketapp/socketpush/socketpush/socketpush.pb.go#L1444-L1474)
 
 ## 依赖关系分析
 - SocketGtw
@@ -321,13 +371,13 @@ SP --> SGWC["SocketGtw gRPC 客户端"]
 SGWC --> SGW
 ```
 
-图表来源
+**图表来源**
 - [servicecontext.go（SocketGtw）:24-37](file://socketapp/socketgtw/internal/svc/servicecontext.go#L24-L37)
 - [servicecontext.go（SocketGtw）:38-131](file://socketapp/socketgtw/internal/svc/servicecontext.go#L38-L131)
 - [servicecontext.go（SocketPush）:13-18](file://socketapp/socketpush/internal/svc/servicecontext.go#L13-L18)
 - [socketpush.yaml:22-27](file://socketapp/socketpush/etc/socketpush.yaml#L22-L27)
 
-章节来源
+**章节来源**
 - [socketgtw.yaml:30-36](file://socketapp/socketgtw/etc/socketgtw.yaml#L30-L36)
 - [socketpush.yaml:22-27](file://socketapp/socketpush/etc/socketpush.yaml#L22-L27)
 
@@ -342,8 +392,9 @@ SGWC --> SGW
   - 合理设置 SocketMetaData 列表，避免注入过多无关元数据
   - 使用批量接口（如 SendToSessions、SendToMetaSessions）减少网络往返
   - 对于高并发广播，优先使用房间广播而非全局广播
+  - 利用 camelCase 字段命名规范提高序列化性能
 
-章节来源
+**章节来源**
 - [socketgtw.yaml:1-37](file://socketapp/socketgtw/etc/socketgtw.yaml#L1-L37)
 - [socketpush.yaml:1-28](file://socketapp/socketpush/etc/socketpush.yaml#L1-L28)
 - [servicecontext.go（SocketGtw）:24-37](file://socketapp/socketgtw/internal/svc/servicecontext.go#L24-L37)
@@ -354,14 +405,18 @@ SGWC --> SGW
   - 确认 SocketGtw/SocketPush 的 Nacos 注册与发现配置
 - 房间操作异常
   - 确认请求参数（reqId、room、event、payload）是否完整
-  - 查看 SocketIO 服务器日志中的“缺少必填项”或“参数解析失败”提示
+  - 查看 SocketIO 服务器日志中的"缺少必填项"或"参数解析失败"提示
 - 广播/推送无响应
   - 检查目标会话是否存在，房间是否正确
   - 确认 SocketIO 服务器统计循环是否正常运行
 - 事件未上报
   - 检查 StreamEvent RPC 客户端配置与网络连通性
+- 字段命名问题
+  - 确认客户端使用 camelCase 字段名进行请求
+  - 检查时间戳字段是否使用正确的毫秒级格式
+  - 验证复合字段如 metaSessions 的结构是否符合规范
 
-章节来源
+**章节来源**
 - [server.go:392-575](file://common/socketiox/server.go#L392-L575)
 - [server.go:702-740](file://common/socketiox/server.go#L702-L740)
 - [socketgtw.yaml:1-37](file://socketapp/socketgtw/etc/socketgtw.yaml#L1-L37)
@@ -369,6 +424,8 @@ SGWC --> SGW
 
 ## 结论
 本 SocketIO 服务通过清晰的 gRPC 分层设计，将认证、房间管理、广播与推送能力解耦，既满足内部网关（SocketGtw）的事件上报需求，又为外部推送（SocketPush）提供统一入口。结合 SocketIO 内核的事件驱动模型与心跳统计，可在保证可靠性的同时实现高性能的实时通信。
+
+**更新** 本次更新重点强化了字段命名规范的标准化和毫秒级时间戳精度的支持，进一步提升了服务的兼容性和性能表现。
 
 ## 附录：SocketIO客户端示例与最佳实践
 - 客户端示例
@@ -379,6 +436,8 @@ SGWC --> SGW
   - 合理使用房间广播与全局广播，避免不必要的全量推送
   - 使用批量接口进行多会话推送，降低延迟
   - 监控统计事件，及时发现异常会话与房间加载错误
+  - 遵循 camelCase 字段命名规范，确保与服务端的兼容性
+  - 正确处理毫秒级时间戳，避免时间同步问题
 
-章节来源
+**章节来源**
 - [test-socketio.html:1-800](file://common/socketiox/test-socketio.html#L1-L800)

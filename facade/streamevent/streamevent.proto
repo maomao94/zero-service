@@ -458,7 +458,7 @@ message UpSocketMessageRes{
   string payload = 1; // 返回数据, __connection__ 返回 room 数组
 }
 
-message PbPlan{
+message PlanPb{
   // 创建时间
   string createTime = 101;
   // 更新时间
@@ -499,7 +499,7 @@ message PbPlan{
 }
 
 message HandlerPlanTaskEventReq{
-  PbPlan plan = 100;
+  PlanPb plan = 100;
 
   // 自增主键ID
   int64 id = 50;
@@ -546,10 +546,10 @@ message HandlerPlanTaskEventRes{
   // 结果原因 （成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
   string reason = 3;
   // 延期配置-默认延期5分钟：delayed,ongoing-自定义延期
-  PbDelayConfig delayConfig = 4;
+  DelayConfigPb delayConfig = 4;
 }
 
-message PbDelayConfig {
+message DelayConfigPb {
   // 下次触发时间（格式：yyyy-MM-dd HH:mm:ss，定时扫描的核心筛选条件）
   string nextTriggerTime = 1;
   // 延期原因

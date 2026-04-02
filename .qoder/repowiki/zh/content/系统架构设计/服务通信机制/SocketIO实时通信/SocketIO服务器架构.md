@@ -11,6 +11,13 @@
 - [common/socketiox/test-socketio.html](file://common/socketiox/test-socketio.html)
 </cite>
 
+## 更新摘要
+**所做更改**
+- 更新了会话标识符标准化的描述，从`sId`改为`socketId`
+- 更新了房间管理操作的API描述，包括JoinRoom、LeaveRoom等方法
+- 更新了统计收集机制的实现细节
+- 更新了相关配置和事件处理的示例
+
 ## 目录
 1. [简介](#简介)
 2. [项目结构](#项目结构)
@@ -25,6 +32,8 @@
 
 ## 简介
 本文件面向Zero-Service项目中的SocketIO服务器架构，系统性阐述其设计理念、关键模块、并发模型与生命周期管理，并提供配置说明、监控指标与性能优化建议。目标读者既包括需要快速上手的开发者，也包括希望深入理解实现细节的技术人员。
+
+**更新** 本版本反映了Socket.IO服务器会话标识符标准化的重要变更，从`sId`统一改为`socketId`，提升了API的一致性和可读性。
 
 ## 项目结构
 围绕SocketIO服务的关键目录与文件如下：
@@ -53,7 +62,7 @@ S --> C
 P --> C
 ```
 
-图表来源
+**图表来源**
 - [common/socketiox/server.go](file://common/socketiox/server.go)
 - [common/socketiox/handler.go](file://common/socketiox/handler.go)
 - [common/socketiox/container.go](file://common/socketiox/container.go)
@@ -62,7 +71,7 @@ P --> C
 - [socketapp/socketpush/etc/socketpush.yaml](file://socketapp/socketpush/etc/socketpush.yaml)
 - [common/socketiox/test-socketio.html](file://common/socketiox/test-socketio.html)
 
-章节来源
+**章节来源**
 - [common/socketiox/server.go](file://common/socketiox/server.go)
 - [common/socketiox/handler.go](file://common/socketiox/handler.go)
 - [common/socketiox/container.go](file://common/socketiox/container.go)
@@ -73,18 +82,20 @@ P --> C
 
 ## 核心组件
 - Server：SocketIO服务器主体，负责握手、鉴权、事件绑定、广播、统计上报、会话管理与生命周期控制
-- Session：单个连接的会话抽象，封装底层socket、元数据、房间管理与发送能力
+- Session：单个连接的会话抽象，封装底层socket、元数据、房间管理与发送能力。**更新** 现在使用`socketId`作为会话标识符
 - 事件处理器：通过EventHandlers注册任意自定义事件，统一在回调中异步处理
 - HTTP适配器：将HTTP请求转交给SocketIO内部处理器，暴露到REST路由
 - 客户端容器：基于zrpc与多种注册中心（直连/ETCD/Nacos）动态维护下游Socket网关客户端
 
-章节来源
+**章节来源**
 - [common/socketiox/server.go](file://common/socketiox/server.go)
 - [common/socketiox/handler.go](file://common/socketiox/handler.go)
 - [common/socketiox/container.go](file://common/socketiox/container.go)
 
 ## 架构总览
-SocketIO服务器采用“HTTP入口 + SocketIO内核 + 广播/推送扩展”的分层架构。HTTP入口通过REST路由将socket.io请求交由SocketIO处理器；Server在连接建立后完成鉴权、会话初始化、房间加载与事件绑定；业务侧通过事件处理器或广播接口进行下行推送；客户端容器负责与下游服务的动态连接与负载均衡。
+SocketIO服务器采用"HTTP入口 + SocketIO内核 + 广播/推送扩展"的分层架构。HTTP入口通过REST路由将socket.io请求交由SocketIO处理器；Server在连接建立后完成鉴权、会话初始化、房间加载与事件绑定；业务侧通过事件处理器或广播接口进行下行推送；客户端容器负责与下游服务的动态连接与负载均衡。
+
+**更新** 会话标识符现在统一使用`socketId`，确保了跨组件间的一致性。
 
 ```mermaid
 sequenceDiagram
@@ -98,7 +109,7 @@ Client->>HTTP : GET /socket.io
 HTTP->>Adapter : 转发请求
 Adapter->>Server : ServeHTTP
 Server->>Server : OnAuthentication/OnConnection
-Server->>Server : 初始化Session/加载房间
+Server->>Server : 初始化Session(socketId)/加载房间
 Client->>Server : 发送事件(__up__/自定义)
 Server->>Handler : 异步处理(Threading)
 Handler-->>Server : 返回下行数据
@@ -106,7 +117,7 @@ Server-->>Client : __down__/自定义事件
 Server->>Container : 广播/推送(可选)
 ```
 
-图表来源
+**图表来源**
 - [socketapp/socketgtw/internal/handler/routes.go](file://socketapp/socketgtw/internal/handler/routes.go)
 - [common/socketiox/handler.go](file://common/socketiox/handler.go)
 - [common/socketiox/server.go](file://common/socketiox/server.go)
@@ -118,7 +129,7 @@ Server->>Container : 广播/推送(可选)
 - 结构体字段
   - 继承底层Io实例
   - eventHandlers：事件名到处理器映射
-  - sessions：连接ID到Session的全局表
+  - sessions：连接ID到Session的全局表（使用`socketId`作为键）
   - lock：读写锁保护sessions
   - statInterval：统计上报周期
   - stopChan：统计协程退出信号
@@ -129,12 +140,14 @@ Server->>Container : 广播/推送(可选)
   - bindEvents绑定认证、连接、事件监听与断开清理
   - 启动statLoop统计协程
 
+**更新** 会话管理现在使用`socketId`作为会话标识符，确保了与客户端API的一致性。
+
 ```mermaid
 classDiagram
 class Server {
 +Io
 +eventHandlers
-+sessions
++sessions(socketId -> Session)
 +lock
 +statInterval
 +stopChan
@@ -149,10 +162,10 @@ class Server {
 +BroadcastRoom()
 +BroadcastGlobal()
 +SessionCount()
-+GetSession()
++GetSession(socketId)
 }
 class Session {
-+id
++socketId
 +socket
 +lock
 +metadata
@@ -169,43 +182,45 @@ class EventHandlers {
 }
 class Options {
 }
-Server --> Session : "管理"
+Server --> Session : "管理(socketId)"
 Server --> EventHandlers : "注册/调用"
 Server --> Options : "配置"
 ```
 
-图表来源
+**图表来源**
 - [common/socketiox/server.go](file://common/socketiox/server.go)
 
-章节来源
+**章节来源**
 - [common/socketiox/server.go](file://common/socketiox/server.go)
 
 ### 会话管理机制(Session)
 - 元数据存储：以字符串键值对保存，仅接受非空字符串，防止污染
-- 房间管理：幂等加入/离开，内部加锁保证一致性
+- 房间管理：幂等加入/离开，内部加锁保证一致性。**更新** 使用`socketId`标识会话
 - 发送能力：支持任意载荷、字符串、下行事件、响应事件
 - 生命周期：连接建立创建，断开清理，异常时主动断开
 
+**更新** 会话标识符现在统一使用`socketId`，提供了更清晰的语义表达。
+
 ```mermaid
 flowchart TD
-Start(["连接建立"]) --> Init["创建Session并加入全局表"]
+Start(["连接建立"]) --> Init["创建Session(socketId)并加入全局表"]
 Init --> LoadRooms["执行ConnectHook加载房间(可选)"]
-LoadRooms --> Ready["会话就绪"]
-Ready --> Join["加入房间"]
-Ready --> Leave["离开房间"]
-Ready --> Send["发送下行/响应"]
+LoadRooms --> Ready["会话就绪(socketId)"]
+Ready --> Join["加入房间(socketId)"]
+Ready --> Leave["离开房间(socketId)"]
+Ready --> Send["发送下行/响应(socketId)"]
 Join --> Ready
 Leave --> Ready
 Send --> Ready
-Ready --> Disconnect["断开连接"]
-Disconnect --> Clean["从全局表移除"]
+Ready --> Disconnect["断开连接(socketId)"]
+Disconnect --> Clean["从全局表移除(socketId)"]
 Clean --> End(["结束"])
 ```
 
-图表来源
+**图表来源**
 - [common/socketiox/server.go](file://common/socketiox/server.go)
 
-章节来源
+**章节来源**
 - [common/socketiox/server.go](file://common/socketiox/server.go)
 
 ### 事件处理器注册系统
@@ -217,28 +232,30 @@ Clean --> End(["结束"])
 - 自定义事件：通过WithHandler/WithEventHandlers注册，Server在OnConnection中为每个连接绑定
 - 处理策略：收到事件后提取载荷，异步执行处理器，支持Ack或下行事件回包
 
+**更新** 房间管理事件现在使用`socketId`进行标识，确保了事件处理的一致性。
+
 ```mermaid
 sequenceDiagram
-participant Conn as "连接"
+participant Conn as "连接(socketId)"
 participant S as "Server"
 participant EH as "事件处理器"
 participant Ack as "Ack回调"
-Conn->>S : 触发自定义事件
-S->>S : 提取载荷/构造上下文
-S->>EH : 异步调用Handle()
+Conn->>S : 触发自定义事件(socketId)
+S->>S : 提取载荷/构造上下文(socketId)
+S->>EH : 异步调用Handle(socketId)
 alt 有Ack
-EH-->>S : 返回结果
-S->>Ack : 回传响应
+EH-->>S : 返回结果(socketId)
+S->>Ack : 回传响应(socketId)
 else 无Ack
-EH-->>S : 返回结果
+EH-->>S : 返回结果(socketId)
 S-->>Conn : 下行事件(__down__)
 end
 ```
 
-图表来源
+**图表来源**
 - [common/socketiox/server.go](file://common/socketiox/server.go)
 
-章节来源
+**章节来源**
 - [common/socketiox/server.go](file://common/socketiox/server.go)
 
 ### 握手与鉴权机制
@@ -246,7 +263,7 @@ end
 - 连接阶段：OnConnection创建Session，支持带声明的令牌解析并将指定键注入Session元数据
 - 钩子：ConnectHook/DisconnectHook/PreJoinRoomHook提供扩展点
 
-章节来源
+**章节来源**
 - [common/socketiox/server.go](file://common/socketiox/server.go)
 
 ### 广播与推送
@@ -260,14 +277,14 @@ S["Server"] --> BR["BroadcastRoom"]
 S --> BG["BroadcastGlobal"]
 S --> SC["SocketContainer"]
 SC --> DC["直连/ETCD/Nacos"]
-DC --> Clients["下游SocketGtw客户端"]
+DC --> Clients["下游SocketGtw客户端(socketId)"]
 ```
 
-图表来源
+**图表来源**
 - [common/socketiox/server.go](file://common/socketiox/server.go)
 - [common/socketiox/container.go](file://common/socketiox/container.go)
 
-章节来源
+**章节来源**
 - [common/socketiox/server.go](file://common/socketiox/server.go)
 - [common/socketiox/container.go](file://common/socketiox/container.go)
 
@@ -276,7 +293,7 @@ DC --> Clients["下游SocketGtw客户端"]
 - 锁机制：sessions全局表使用读写锁；Session内部元数据访问使用互斥锁
 - 内存管理：Session元数据仅保存字符串键值；统计协程按配置周期触发，避免高频轮询
 
-章节来源
+**章节来源**
 - [common/socketiox/server.go](file://common/socketiox/server.go)
 
 ### 生命周期管理
@@ -284,7 +301,7 @@ DC --> Clients["下游SocketGtw客户端"]
 - 运行：事件循环持续处理连接、断开、房间、广播与自定义事件
 - 停止：通过stopChan驱动statLoop退出；Session断开时清理无效会话
 
-章节来源
+**章节来源**
 - [common/socketiox/server.go](file://common/socketiox/server.go)
 
 ### 配置选项详解
@@ -303,12 +320,12 @@ DC --> Clients["下游SocketGtw客户端"]
 - 上下文键
   - WithContextKeys：指定从令牌声明中抽取的键列表
 
-章节来源
+**章节来源**
 - [common/socketiox/server.go](file://common/socketiox/server.go)
 
 ### 监控指标与性能优化
 - 监控指标
-  - 统计事件：__stat_down__，包含会话ID、房间列表、网络性能指标、元数据与房间加载错误
+  - 统计事件：__stat_down__，包含会话ID(socketId)、房间列表、网络性能指标、元数据与房间加载错误
   - 统计周期：可通过WithStatInterval调整
   - 日志：连接、断开、鉴权、处理错误均有日志输出
 - 性能优化建议
@@ -317,7 +334,9 @@ DC --> Clients["下游SocketGtw客户端"]
   - 合理设置统计周期，避免过高的日志压力
   - 对高并发场景，确保事件处理器内部I/O操作非阻塞
 
-章节来源
+**更新** 统计信息现在使用`socketId`标识，提供了更精确的会话跟踪能力。
+
+**章节来源**
 - [common/socketiox/server.go](file://common/socketiox/server.go)
 
 ## 依赖分析
@@ -336,13 +355,13 @@ Container --> Zrpc["zrpc"]
 Container --> Reg["注册中心(Nacos/ETCD/直连)"]
 ```
 
-图表来源
+**图表来源**
 - [socketapp/socketgtw/internal/handler/routes.go](file://socketapp/socketgtw/internal/handler/routes.go)
 - [common/socketiox/handler.go](file://common/socketiox/handler.go)
 - [common/socketiox/server.go](file://common/socketiox/server.go)
 - [common/socketiox/container.go](file://common/socketiox/container.go)
 
-章节来源
+**章节来源**
 - [socketapp/socketgtw/internal/handler/routes.go](file://socketapp/socketgtw/internal/handler/routes.go)
 - [common/socketiox/handler.go](file://common/socketiox/handler.go)
 - [common/socketiox/server.go](file://common/socketiox/server.go)
@@ -357,22 +376,24 @@ Container --> Reg["注册中心(Nacos/ETCD/直连)"]
 ## 故障排查指南
 - 连接失败
   - 检查OnAuthentication与令牌校验器配置
-  - 查看日志中“token validation failed”等信息
+  - 查看日志中"token validation failed"等信息
 - 事件处理异常
   - 确认事件处理器已注册且签名正确
-  - 关注“failed to process request”日志
+  - 关注"failed to process request"日志
 - 房间加入失败
   - 检查PreJoinRoomHook返回值
   - 确认房间名非空
 - 统计不更新
   - 检查WithStatInterval配置
-  - 关注“session count mismatch”告警
+  - 关注"session count mismatch"告警
 
-章节来源
+**章节来源**
 - [common/socketiox/server.go](file://common/socketiox/server.go)
 
 ## 结论
 该SocketIO服务器架构以清晰的分层设计、完善的并发模型与灵活的扩展点，满足了实时通信与事件驱动场景的需求。通过HTTP适配器、事件处理器与客户端容器的协同，既能快速接入业务，也能在高并发下保持稳定与可观测性。
+
+**更新** 最新的会话标识符标准化进一步提升了系统的可维护性和API一致性，为后续的功能扩展奠定了坚实的基础。
 
 ## 附录
 - 配置样例
@@ -381,7 +402,7 @@ Container --> Reg["注册中心(Nacos/ETCD/直连)"]
 - 浏览器测试
   - test-socketio.html：提供连接、事件发送与日志展示的前端工具
 
-章节来源
+**章节来源**
 - [socketapp/socketgtw/etc/socketgtw.yaml](file://socketapp/socketgtw/etc/socketgtw.yaml)
 - [socketapp/socketpush/etc/socketpush.yaml](file://socketapp/socketpush/etc/socketpush.yaml)
 - [common/socketiox/test-socketio.html](file://common/socketiox/test-socketio.html)
