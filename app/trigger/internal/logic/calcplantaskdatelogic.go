@@ -89,7 +89,7 @@ func (l *CalcPlanTaskDateLogic) CalcPlanTaskDate(in *trigger.CalcPlanTaskDateReq
 	}, nil
 }
 
-func (l *CalcPlanTaskDateLogic) ConvertToRRuleOption(planRule *trigger.PbPlanRule, startTime, endTime *carbon.Carbon) (rrule.ROption, error) {
+func (l *CalcPlanTaskDateLogic) ConvertToRRuleOption(planRule *trigger.PlanRulePb, startTime, endTime *carbon.Carbon) (rrule.ROption, error) {
 	// 设置默认的rrule选项
 	opts := rrule.ROption{
 		Freq:     rrule.Frequency(planRule.Freq),

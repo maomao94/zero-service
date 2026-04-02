@@ -23,20 +23,20 @@ const (
 )
 
 // PodPhase 表示 Pod 的整体运行阶段（调度视角）
-type PodPhase int32
+type PodPhasePb int32
 
 const (
-	PodPhase_POD_PHASE_UNKNOWN   PodPhase = 0
-	PodPhase_POD_PHASE_PENDING   PodPhase = 1 // 已创建但尚未进入运行态（拉取镜像 / 创建中）
-	PodPhase_POD_PHASE_RUNNING   PodPhase = 2 // 至少一个容器运行中
-	PodPhase_POD_PHASE_SUCCEEDED PodPhase = 3 // 所有容器正常完成（退出码 0）
-	PodPhase_POD_PHASE_FAILED    PodPhase = 4 // 至少一个容器异常退出
-	PodPhase_POD_PHASE_STOPPED   PodPhase = 5 // 被用户或系统显式停止
+	PodPhasePb_POD_PHASE_UNKNOWN   PodPhasePb = 0
+	PodPhasePb_POD_PHASE_PENDING   PodPhasePb = 1 // 已创建但尚未进入运行态（拉取镜像 / 创建中）
+	PodPhasePb_POD_PHASE_RUNNING   PodPhasePb = 2 // 至少一个容器运行中
+	PodPhasePb_POD_PHASE_SUCCEEDED PodPhasePb = 3 // 所有容器正常完成（退出码 0）
+	PodPhasePb_POD_PHASE_FAILED    PodPhasePb = 4 // 至少一个容器异常退出
+	PodPhasePb_POD_PHASE_STOPPED   PodPhasePb = 5 // 被用户或系统显式停止
 )
 
-// Enum value maps for PodPhase.
+// Enum value maps for PodPhasePb.
 var (
-	PodPhase_name = map[int32]string{
+	PodPhasePb_name = map[int32]string{
 		0: "POD_PHASE_UNKNOWN",
 		1: "POD_PHASE_PENDING",
 		2: "POD_PHASE_RUNNING",
@@ -44,7 +44,7 @@ var (
 		4: "POD_PHASE_FAILED",
 		5: "POD_PHASE_STOPPED",
 	}
-	PodPhase_value = map[string]int32{
+	PodPhasePb_value = map[string]int32{
 		"POD_PHASE_UNKNOWN":   0,
 		"POD_PHASE_PENDING":   1,
 		"POD_PHASE_RUNNING":   2,
@@ -54,55 +54,55 @@ var (
 	}
 )
 
-func (x PodPhase) Enum() *PodPhase {
-	p := new(PodPhase)
+func (x PodPhasePb) Enum() *PodPhasePb {
+	p := new(PodPhasePb)
 	*p = x
 	return p
 }
 
-func (x PodPhase) String() string {
+func (x PodPhasePb) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (PodPhase) Descriptor() protoreflect.EnumDescriptor {
+func (PodPhasePb) Descriptor() protoreflect.EnumDescriptor {
 	return file_podengine_proto_enumTypes[0].Descriptor()
 }
 
-func (PodPhase) Type() protoreflect.EnumType {
+func (PodPhasePb) Type() protoreflect.EnumType {
 	return &file_podengine_proto_enumTypes[0]
 }
 
-func (x PodPhase) Number() protoreflect.EnumNumber {
+func (x PodPhasePb) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use PodPhase.Descriptor instead.
-func (PodPhase) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use PodPhasePb.Descriptor instead.
+func (PodPhasePb) EnumDescriptor() ([]byte, []int) {
 	return file_podengine_proto_rawDescGZIP(), []int{0}
 }
 
 // PodConditionType 表示 Pod 在生命周期中的关键条件
 // 主要用于表达“是否就绪 / 是否可服务”等状态
-type PodConditionType int32
+type PodConditionTypePb int32
 
 const (
-	PodConditionType_POD_CONDITION_TYPE_UNKNOWN          PodConditionType = 0
-	PodConditionType_POD_CONDITION_TYPE_POD_SCHEDULED    PodConditionType = 1 // Pod 已被调度到运行节点
-	PodConditionType_POD_CONDITION_TYPE_CONTAINERS_READY PodConditionType = 2 // 所有容器就绪
-	PodConditionType_POD_CONDITION_TYPE_INITIALIZED      PodConditionType = 3 // 初始化完成
-	PodConditionType_POD_CONDITION_TYPE_READY            PodConditionType = 4 // Pod 可对外提供服务
+	PodConditionTypePb_POD_CONDITION_TYPE_UNKNOWN          PodConditionTypePb = 0
+	PodConditionTypePb_POD_CONDITION_TYPE_POD_SCHEDULED    PodConditionTypePb = 1 // Pod 已被调度到运行节点
+	PodConditionTypePb_POD_CONDITION_TYPE_CONTAINERS_READY PodConditionTypePb = 2 // 所有容器就绪
+	PodConditionTypePb_POD_CONDITION_TYPE_INITIALIZED      PodConditionTypePb = 3 // 初始化完成
+	PodConditionTypePb_POD_CONDITION_TYPE_READY            PodConditionTypePb = 4 // Pod 可对外提供服务
 )
 
-// Enum value maps for PodConditionType.
+// Enum value maps for PodConditionTypePb.
 var (
-	PodConditionType_name = map[int32]string{
+	PodConditionTypePb_name = map[int32]string{
 		0: "POD_CONDITION_TYPE_UNKNOWN",
 		1: "POD_CONDITION_TYPE_POD_SCHEDULED",
 		2: "POD_CONDITION_TYPE_CONTAINERS_READY",
 		3: "POD_CONDITION_TYPE_INITIALIZED",
 		4: "POD_CONDITION_TYPE_READY",
 	}
-	PodConditionType_value = map[string]int32{
+	PodConditionTypePb_value = map[string]int32{
 		"POD_CONDITION_TYPE_UNKNOWN":          0,
 		"POD_CONDITION_TYPE_POD_SCHEDULED":    1,
 		"POD_CONDITION_TYPE_CONTAINERS_READY": 2,
@@ -111,37 +111,37 @@ var (
 	}
 )
 
-func (x PodConditionType) Enum() *PodConditionType {
-	p := new(PodConditionType)
+func (x PodConditionTypePb) Enum() *PodConditionTypePb {
+	p := new(PodConditionTypePb)
 	*p = x
 	return p
 }
 
-func (x PodConditionType) String() string {
+func (x PodConditionTypePb) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (PodConditionType) Descriptor() protoreflect.EnumDescriptor {
+func (PodConditionTypePb) Descriptor() protoreflect.EnumDescriptor {
 	return file_podengine_proto_enumTypes[1].Descriptor()
 }
 
-func (PodConditionType) Type() protoreflect.EnumType {
+func (PodConditionTypePb) Type() protoreflect.EnumType {
 	return &file_podengine_proto_enumTypes[1]
 }
 
-func (x PodConditionType) Number() protoreflect.EnumNumber {
+func (x PodConditionTypePb) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use PodConditionType.Descriptor instead.
-func (PodConditionType) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use PodConditionTypePb.Descriptor instead.
+func (PodConditionTypePb) EnumDescriptor() ([]byte, []int) {
 	return file_podengine_proto_rawDescGZIP(), []int{1}
 }
 
 // PodCondition 描述某一条件的当前状态 todo
-type PodCondition struct {
+type PodConditionPb struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
-	Type               PodConditionType       `protobuf:"varint,1,opt,name=type,proto3,enum=podengine.PodConditionType" json:"type,omitempty"`
+	Type               PodConditionTypePb     `protobuf:"varint,1,opt,name=type,proto3,enum=podengine.PodConditionTypePb" json:"type,omitempty"`
 	Status             bool                   `protobuf:"varint,2,opt,name=status,proto3" json:"status,omitempty"`
 	Reason             string                 `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
 	Message            string                 `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
@@ -150,20 +150,20 @@ type PodCondition struct {
 	sizeCache          protoimpl.SizeCache
 }
 
-func (x *PodCondition) Reset() {
-	*x = PodCondition{}
+func (x *PodConditionPb) Reset() {
+	*x = PodConditionPb{}
 	mi := &file_podengine_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PodCondition) String() string {
+func (x *PodConditionPb) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PodCondition) ProtoMessage() {}
+func (*PodConditionPb) ProtoMessage() {}
 
-func (x *PodCondition) ProtoReflect() protoreflect.Message {
+func (x *PodConditionPb) ProtoReflect() protoreflect.Message {
 	mi := &file_podengine_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -175,40 +175,40 @@ func (x *PodCondition) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PodCondition.ProtoReflect.Descriptor instead.
-func (*PodCondition) Descriptor() ([]byte, []int) {
+// Deprecated: Use PodConditionPb.ProtoReflect.Descriptor instead.
+func (*PodConditionPb) Descriptor() ([]byte, []int) {
 	return file_podengine_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *PodCondition) GetType() PodConditionType {
+func (x *PodConditionPb) GetType() PodConditionTypePb {
 	if x != nil {
 		return x.Type
 	}
-	return PodConditionType_POD_CONDITION_TYPE_UNKNOWN
+	return PodConditionTypePb_POD_CONDITION_TYPE_UNKNOWN
 }
 
-func (x *PodCondition) GetStatus() bool {
+func (x *PodConditionPb) GetStatus() bool {
 	if x != nil {
 		return x.Status
 	}
 	return false
 }
 
-func (x *PodCondition) GetReason() string {
+func (x *PodConditionPb) GetReason() string {
 	if x != nil {
 		return x.Reason
 	}
 	return ""
 }
 
-func (x *PodCondition) GetMessage() string {
+func (x *PodConditionPb) GetMessage() string {
 	if x != nil {
 		return x.Message
 	}
 	return ""
 }
 
-func (x *PodCondition) GetLastTransitionTime() string {
+func (x *PodConditionPb) GetLastTransitionTime() string {
 	if x != nil {
 		return x.LastTransitionTime
 	}
@@ -216,7 +216,7 @@ func (x *PodCondition) GetLastTransitionTime() string {
 }
 
 // ContainerState 表示单个容器的运行状态
-type ContainerState struct {
+type ContainerStatePb struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Running       bool                   `protobuf:"varint,1,opt,name=running,proto3" json:"running,omitempty"`          // 运行中
 	Terminated    bool                   `protobuf:"varint,2,opt,name=terminated,proto3" json:"terminated,omitempty"`    // 已终止
@@ -230,20 +230,20 @@ type ContainerState struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ContainerState) Reset() {
-	*x = ContainerState{}
+func (x *ContainerStatePb) Reset() {
+	*x = ContainerStatePb{}
 	mi := &file_podengine_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ContainerState) String() string {
+func (x *ContainerStatePb) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ContainerState) ProtoMessage() {}
+func (*ContainerStatePb) ProtoMessage() {}
 
-func (x *ContainerState) ProtoReflect() protoreflect.Message {
+func (x *ContainerStatePb) ProtoReflect() protoreflect.Message {
 	mi := &file_podengine_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -255,61 +255,61 @@ func (x *ContainerState) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ContainerState.ProtoReflect.Descriptor instead.
-func (*ContainerState) Descriptor() ([]byte, []int) {
+// Deprecated: Use ContainerStatePb.ProtoReflect.Descriptor instead.
+func (*ContainerStatePb) Descriptor() ([]byte, []int) {
 	return file_podengine_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *ContainerState) GetRunning() bool {
+func (x *ContainerStatePb) GetRunning() bool {
 	if x != nil {
 		return x.Running
 	}
 	return false
 }
 
-func (x *ContainerState) GetTerminated() bool {
+func (x *ContainerStatePb) GetTerminated() bool {
 	if x != nil {
 		return x.Terminated
 	}
 	return false
 }
 
-func (x *ContainerState) GetWaiting() bool {
+func (x *ContainerStatePb) GetWaiting() bool {
 	if x != nil {
 		return x.Waiting
 	}
 	return false
 }
 
-func (x *ContainerState) GetReason() string {
+func (x *ContainerStatePb) GetReason() string {
 	if x != nil {
 		return x.Reason
 	}
 	return ""
 }
 
-func (x *ContainerState) GetMessage() string {
+func (x *ContainerStatePb) GetMessage() string {
 	if x != nil {
 		return x.Message
 	}
 	return ""
 }
 
-func (x *ContainerState) GetStartedTime() string {
+func (x *ContainerStatePb) GetStartedTime() string {
 	if x != nil {
 		return x.StartedTime
 	}
 	return ""
 }
 
-func (x *ContainerState) GetFinishedTime() string {
+func (x *ContainerStatePb) GetFinishedTime() string {
 	if x != nil {
 		return x.FinishedTime
 	}
 	return ""
 }
 
-func (x *ContainerState) GetExitCode() string {
+func (x *ContainerStatePb) GetExitCode() string {
 	if x != nil {
 		return x.ExitCode
 	}
@@ -317,11 +317,11 @@ func (x *ContainerState) GetExitCode() string {
 }
 
 // Container 表示实际运行中的容器实例
-type Container struct {
+type ContainerPb struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`   // 容器名称
 	Image string                 `protobuf:"bytes,2,opt,name=image,proto3" json:"image,omitempty"` // 镜像名称
-	State *ContainerState        `protobuf:"bytes,3,opt,name=state,proto3" json:"state,omitempty"` // 当前状态
+	State *ContainerStatePb      `protobuf:"bytes,3,opt,name=state,proto3" json:"state,omitempty"` // 当前状态
 	// 端口声明
 	// Docker: "8080:80", "80/tcp"
 	// K8s: 映射为 containerPort / service
@@ -336,20 +336,20 @@ type Container struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Container) Reset() {
-	*x = Container{}
+func (x *ContainerPb) Reset() {
+	*x = ContainerPb{}
 	mi := &file_podengine_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Container) String() string {
+func (x *ContainerPb) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Container) ProtoMessage() {}
+func (*ContainerPb) ProtoMessage() {}
 
-func (x *Container) ProtoReflect() protoreflect.Message {
+func (x *ContainerPb) ProtoReflect() protoreflect.Message {
 	mi := &file_podengine_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -361,61 +361,61 @@ func (x *Container) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Container.ProtoReflect.Descriptor instead.
-func (*Container) Descriptor() ([]byte, []int) {
+// Deprecated: Use ContainerPb.ProtoReflect.Descriptor instead.
+func (*ContainerPb) Descriptor() ([]byte, []int) {
 	return file_podengine_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *Container) GetName() string {
+func (x *ContainerPb) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *Container) GetImage() string {
+func (x *ContainerPb) GetImage() string {
 	if x != nil {
 		return x.Image
 	}
 	return ""
 }
 
-func (x *Container) GetState() *ContainerState {
+func (x *ContainerPb) GetState() *ContainerStatePb {
 	if x != nil {
 		return x.State
 	}
 	return nil
 }
 
-func (x *Container) GetPorts() []string {
+func (x *ContainerPb) GetPorts() []string {
 	if x != nil {
 		return x.Ports
 	}
 	return nil
 }
 
-func (x *Container) GetEnv() map[string]string {
+func (x *ContainerPb) GetEnv() map[string]string {
 	if x != nil {
 		return x.Env
 	}
 	return nil
 }
 
-func (x *Container) GetArgs() []string {
+func (x *ContainerPb) GetArgs() []string {
 	if x != nil {
 		return x.Args
 	}
 	return nil
 }
 
-func (x *Container) GetResources() map[string]string {
+func (x *ContainerPb) GetResources() map[string]string {
 	if x != nil {
 		return x.Resources
 	}
 	return nil
 }
 
-func (x *Container) GetVolumeMounts() []string {
+func (x *ContainerPb) GetVolumeMounts() []string {
 	if x != nil {
 		return x.VolumeMounts
 	}
@@ -423,7 +423,7 @@ func (x *Container) GetVolumeMounts() []string {
 }
 
 // ContainerSpec 描述期望运行的容器规格
-type ContainerSpec struct {
+type ContainerSpecPb struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	Name      string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Image     string                 `protobuf:"bytes,2,opt,name=image,proto3" json:"image,omitempty"`
@@ -437,20 +437,20 @@ type ContainerSpec struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ContainerSpec) Reset() {
-	*x = ContainerSpec{}
+func (x *ContainerSpecPb) Reset() {
+	*x = ContainerSpecPb{}
 	mi := &file_podengine_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ContainerSpec) String() string {
+func (x *ContainerSpecPb) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ContainerSpec) ProtoMessage() {}
+func (*ContainerSpecPb) ProtoMessage() {}
 
-func (x *ContainerSpec) ProtoReflect() protoreflect.Message {
+func (x *ContainerSpecPb) ProtoReflect() protoreflect.Message {
 	mi := &file_podengine_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -462,54 +462,54 @@ func (x *ContainerSpec) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ContainerSpec.ProtoReflect.Descriptor instead.
-func (*ContainerSpec) Descriptor() ([]byte, []int) {
+// Deprecated: Use ContainerSpecPb.ProtoReflect.Descriptor instead.
+func (*ContainerSpecPb) Descriptor() ([]byte, []int) {
 	return file_podengine_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *ContainerSpec) GetName() string {
+func (x *ContainerSpecPb) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *ContainerSpec) GetImage() string {
+func (x *ContainerSpecPb) GetImage() string {
 	if x != nil {
 		return x.Image
 	}
 	return ""
 }
 
-func (x *ContainerSpec) GetArgs() []string {
+func (x *ContainerSpecPb) GetArgs() []string {
 	if x != nil {
 		return x.Args
 	}
 	return nil
 }
 
-func (x *ContainerSpec) GetEnv() map[string]string {
+func (x *ContainerSpecPb) GetEnv() map[string]string {
 	if x != nil {
 		return x.Env
 	}
 	return nil
 }
 
-func (x *ContainerSpec) GetPorts() []string {
+func (x *ContainerSpecPb) GetPorts() []string {
 	if x != nil {
 		return x.Ports
 	}
 	return nil
 }
 
-func (x *ContainerSpec) GetResources() map[string]string {
+func (x *ContainerSpecPb) GetResources() map[string]string {
 	if x != nil {
 		return x.Resources
 	}
 	return nil
 }
 
-func (x *ContainerSpec) GetVolumeMounts() []string {
+func (x *ContainerSpecPb) GetVolumeMounts() []string {
 	if x != nil {
 		return x.VolumeMounts
 	}
@@ -517,11 +517,11 @@ func (x *ContainerSpec) GetVolumeMounts() []string {
 }
 
 // PodSpec 描述 Pod 的期望状态
-type PodSpec struct {
+type PodSpecPb struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"` // Pod 逻辑名称
 	// 期望运行的容器列表（支持多容器）
-	Containers []*ContainerSpec `protobuf:"bytes,2,rep,name=containers,proto3" json:"containers,omitempty"`
+	Containers []*ContainerSpecPb `protobuf:"bytes,2,rep,name=containers,proto3" json:"containers,omitempty"`
 	// 资源标签（元数据）
 	// Docker: container labels
 	// K8s: metadata.labels
@@ -544,20 +544,20 @@ type PodSpec struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *PodSpec) Reset() {
-	*x = PodSpec{}
+func (x *PodSpecPb) Reset() {
+	*x = PodSpecPb{}
 	mi := &file_podengine_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PodSpec) String() string {
+func (x *PodSpecPb) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PodSpec) ProtoMessage() {}
+func (*PodSpecPb) ProtoMessage() {}
 
-func (x *PodSpec) ProtoReflect() protoreflect.Message {
+func (x *PodSpecPb) ProtoReflect() protoreflect.Message {
 	mi := &file_podengine_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -569,68 +569,68 @@ func (x *PodSpec) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PodSpec.ProtoReflect.Descriptor instead.
-func (*PodSpec) Descriptor() ([]byte, []int) {
+// Deprecated: Use PodSpecPb.ProtoReflect.Descriptor instead.
+func (*PodSpecPb) Descriptor() ([]byte, []int) {
 	return file_podengine_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *PodSpec) GetName() string {
+func (x *PodSpecPb) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *PodSpec) GetContainers() []*ContainerSpec {
+func (x *PodSpecPb) GetContainers() []*ContainerSpecPb {
 	if x != nil {
 		return x.Containers
 	}
 	return nil
 }
 
-func (x *PodSpec) GetLabels() map[string]string {
+func (x *PodSpecPb) GetLabels() map[string]string {
 	if x != nil {
 		return x.Labels
 	}
 	return nil
 }
 
-func (x *PodSpec) GetAnnotations() map[string]string {
+func (x *PodSpecPb) GetAnnotations() map[string]string {
 	if x != nil {
 		return x.Annotations
 	}
 	return nil
 }
 
-func (x *PodSpec) GetRestartPolicy() string {
+func (x *PodSpecPb) GetRestartPolicy() string {
 	if x != nil {
 		return x.RestartPolicy
 	}
 	return ""
 }
 
-func (x *PodSpec) GetTerminationGracePeriodSeconds() int32 {
+func (x *PodSpecPb) GetTerminationGracePeriodSeconds() int32 {
 	if x != nil {
 		return x.TerminationGracePeriodSeconds
 	}
 	return 0
 }
 
-func (x *PodSpec) GetNetworkMode() string {
+func (x *PodSpecPb) GetNetworkMode() string {
 	if x != nil {
 		return x.NetworkMode
 	}
 	return ""
 }
 
-func (x *PodSpec) GetNetworkName() string {
+func (x *PodSpecPb) GetNetworkName() string {
 	if x != nil {
 		return x.NetworkName
 	}
 	return ""
 }
 
-func (x *PodSpec) GetNetworkConfig() map[string]string {
+func (x *PodSpecPb) GetNetworkConfig() map[string]string {
 	if x != nil {
 		return x.NetworkConfig
 	}
@@ -638,13 +638,13 @@ func (x *PodSpec) GetNetworkConfig() map[string]string {
 }
 
 // Pod 表示系统中一个已创建或运行中的 Pod 实例
-type Pod struct {
+type PodPb struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                // Pod ID（runtime 生成）
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`                            // Pod 名称
-	Phase         PodPhase               `protobuf:"varint,3,opt,name=phase,proto3,enum=podengine.PodPhase" json:"phase,omitempty"` // 当前阶段
-	Conditions    []*PodCondition        `protobuf:"bytes,4,rep,name=conditions,proto3" json:"conditions,omitempty"`
-	Containers    []*Container           `protobuf:"bytes,5,rep,name=containers,proto3" json:"containers,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                  // Pod ID（runtime 生成）
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`                              // Pod 名称
+	Phase         PodPhasePb             `protobuf:"varint,3,opt,name=phase,proto3,enum=podengine.PodPhasePb" json:"phase,omitempty"` // 当前阶段
+	Conditions    []*PodConditionPb      `protobuf:"bytes,4,rep,name=conditions,proto3" json:"conditions,omitempty"`
+	Containers    []*ContainerPb         `protobuf:"bytes,5,rep,name=containers,proto3" json:"containers,omitempty"`
 	Labels        map[string]string      `protobuf:"bytes,6,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Annotations   map[string]string      `protobuf:"bytes,7,rep,name=annotations,proto3" json:"annotations,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	NetworkMode   string                 `protobuf:"bytes,8,opt,name=networkMode,proto3" json:"networkMode,omitempty"`   // 网络模式
@@ -655,20 +655,20 @@ type Pod struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Pod) Reset() {
-	*x = Pod{}
+func (x *PodPb) Reset() {
+	*x = PodPb{}
 	mi := &file_podengine_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Pod) String() string {
+func (x *PodPb) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Pod) ProtoMessage() {}
+func (*PodPb) ProtoMessage() {}
 
-func (x *Pod) ProtoReflect() protoreflect.Message {
+func (x *PodPb) ProtoReflect() protoreflect.Message {
 	mi := &file_podengine_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -680,82 +680,82 @@ func (x *Pod) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Pod.ProtoReflect.Descriptor instead.
-func (*Pod) Descriptor() ([]byte, []int) {
+// Deprecated: Use PodPb.ProtoReflect.Descriptor instead.
+func (*PodPb) Descriptor() ([]byte, []int) {
 	return file_podengine_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *Pod) GetId() string {
+func (x *PodPb) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *Pod) GetName() string {
+func (x *PodPb) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *Pod) GetPhase() PodPhase {
+func (x *PodPb) GetPhase() PodPhasePb {
 	if x != nil {
 		return x.Phase
 	}
-	return PodPhase_POD_PHASE_UNKNOWN
+	return PodPhasePb_POD_PHASE_UNKNOWN
 }
 
-func (x *Pod) GetConditions() []*PodCondition {
+func (x *PodPb) GetConditions() []*PodConditionPb {
 	if x != nil {
 		return x.Conditions
 	}
 	return nil
 }
 
-func (x *Pod) GetContainers() []*Container {
+func (x *PodPb) GetContainers() []*ContainerPb {
 	if x != nil {
 		return x.Containers
 	}
 	return nil
 }
 
-func (x *Pod) GetLabels() map[string]string {
+func (x *PodPb) GetLabels() map[string]string {
 	if x != nil {
 		return x.Labels
 	}
 	return nil
 }
 
-func (x *Pod) GetAnnotations() map[string]string {
+func (x *PodPb) GetAnnotations() map[string]string {
 	if x != nil {
 		return x.Annotations
 	}
 	return nil
 }
 
-func (x *Pod) GetNetworkMode() string {
+func (x *PodPb) GetNetworkMode() string {
 	if x != nil {
 		return x.NetworkMode
 	}
 	return ""
 }
 
-func (x *Pod) GetCreationTime() string {
+func (x *PodPb) GetCreationTime() string {
 	if x != nil {
 		return x.CreationTime
 	}
 	return ""
 }
 
-func (x *Pod) GetStartTime() string {
+func (x *PodPb) GetStartTime() string {
 	if x != nil {
 		return x.StartTime
 	}
 	return ""
 }
 
-func (x *Pod) GetDeletedTime() string {
+func (x *PodPb) GetDeletedTime() string {
 	if x != nil {
 		return x.DeletedTime
 	}
@@ -766,7 +766,7 @@ type CreatePodReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Node          string                 `protobuf:"bytes,50,opt,name=node,proto3" json:"node,omitempty"` // docker 运行节点 默认-local
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Spec          *PodSpec               `protobuf:"bytes,2,opt,name=spec,proto3" json:"spec,omitempty"`
+	Spec          *PodSpecPb             `protobuf:"bytes,2,opt,name=spec,proto3" json:"spec,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -815,7 +815,7 @@ func (x *CreatePodReq) GetName() string {
 	return ""
 }
 
-func (x *CreatePodReq) GetSpec() *PodSpec {
+func (x *CreatePodReq) GetSpec() *PodSpecPb {
 	if x != nil {
 		return x.Spec
 	}
@@ -824,7 +824,7 @@ func (x *CreatePodReq) GetSpec() *PodSpec {
 
 type CreatePodRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Pod           *Pod                   `protobuf:"bytes,1,opt,name=pod,proto3" json:"pod,omitempty"`
+	Pod           *PodPb                 `protobuf:"bytes,1,opt,name=pod,proto3" json:"pod,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -859,7 +859,7 @@ func (*CreatePodRes) Descriptor() ([]byte, []int) {
 	return file_podengine_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *CreatePodRes) GetPod() *Pod {
+func (x *CreatePodRes) GetPod() *PodPb {
 	if x != nil {
 		return x.Pod
 	}
@@ -920,7 +920,7 @@ func (x *StartPodReq) GetId() string {
 
 type StartPodRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Pod           *Pod                   `protobuf:"bytes,1,opt,name=pod,proto3" json:"pod,omitempty"`
+	Pod           *PodPb                 `protobuf:"bytes,1,opt,name=pod,proto3" json:"pod,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -955,7 +955,7 @@ func (*StartPodRes) Descriptor() ([]byte, []int) {
 	return file_podengine_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *StartPodRes) GetPod() *Pod {
+func (x *StartPodRes) GetPod() *PodPb {
 	if x != nil {
 		return x.Pod
 	}
@@ -1112,7 +1112,7 @@ func (x *RestartPodReq) GetId() string {
 
 type RestartPodRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Pod           *Pod                   `protobuf:"bytes,1,opt,name=pod,proto3" json:"pod,omitempty"`
+	Pod           *PodPb                 `protobuf:"bytes,1,opt,name=pod,proto3" json:"pod,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1147,7 +1147,7 @@ func (*RestartPodRes) Descriptor() ([]byte, []int) {
 	return file_podengine_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *RestartPodRes) GetPod() *Pod {
+func (x *RestartPodRes) GetPod() *PodPb {
 	if x != nil {
 		return x.Pod
 	}
@@ -1208,7 +1208,7 @@ func (x *GetPodReq) GetId() string {
 
 type GetPodRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Pod           *Pod                   `protobuf:"bytes,1,opt,name=pod,proto3" json:"pod,omitempty"`
+	Pod           *PodPb                 `protobuf:"bytes,1,opt,name=pod,proto3" json:"pod,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1243,7 +1243,7 @@ func (*GetPodRes) Descriptor() ([]byte, []int) {
 	return file_podengine_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *GetPodRes) GetPod() *Pod {
+func (x *GetPodRes) GetPod() *PodPb {
 	if x != nil {
 		return x.Pod
 	}
@@ -1336,7 +1336,7 @@ func (x *ListPodsReq) GetLabels() map[string]string {
 
 type ListPodsRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Items         []*ListPodItem         `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	Items         []*ListPodItemPb       `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
 	Total         int32                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1372,7 +1372,7 @@ func (*ListPodsRes) Descriptor() ([]byte, []int) {
 	return file_podengine_proto_rawDescGZIP(), []int{17}
 }
 
-func (x *ListPodsRes) GetItems() []*ListPodItem {
+func (x *ListPodsRes) GetItems() []*ListPodItemPb {
 	if x != nil {
 		return x.Items
 	}
@@ -1386,11 +1386,11 @@ func (x *ListPodsRes) GetTotal() int32 {
 	return 0
 }
 
-type ListPodItem struct {
+type ListPodItemPb struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Phase         PodPhase               `protobuf:"varint,3,opt,name=phase,proto3,enum=podengine.PodPhase" json:"phase,omitempty"`
+	Phase         PodPhasePb             `protobuf:"varint,3,opt,name=phase,proto3,enum=podengine.PodPhasePb" json:"phase,omitempty"`
 	CreateTime    string                 `protobuf:"bytes,4,opt,name=createTime,proto3" json:"createTime,omitempty"`
 	Image         string                 `protobuf:"bytes,5,opt,name=image,proto3" json:"image,omitempty"`
 	ImageId       string                 `protobuf:"bytes,6,opt,name=imageId,proto3" json:"imageId,omitempty"`
@@ -1407,20 +1407,20 @@ type ListPodItem struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListPodItem) Reset() {
-	*x = ListPodItem{}
+func (x *ListPodItemPb) Reset() {
+	*x = ListPodItemPb{}
 	mi := &file_podengine_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListPodItem) String() string {
+func (x *ListPodItemPb) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListPodItem) ProtoMessage() {}
+func (*ListPodItemPb) ProtoMessage() {}
 
-func (x *ListPodItem) ProtoReflect() protoreflect.Message {
+func (x *ListPodItemPb) ProtoReflect() protoreflect.Message {
 	mi := &file_podengine_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1432,110 +1432,110 @@ func (x *ListPodItem) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListPodItem.ProtoReflect.Descriptor instead.
-func (*ListPodItem) Descriptor() ([]byte, []int) {
+// Deprecated: Use ListPodItemPb.ProtoReflect.Descriptor instead.
+func (*ListPodItemPb) Descriptor() ([]byte, []int) {
 	return file_podengine_proto_rawDescGZIP(), []int{18}
 }
 
-func (x *ListPodItem) GetId() string {
+func (x *ListPodItemPb) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *ListPodItem) GetName() string {
+func (x *ListPodItemPb) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *ListPodItem) GetPhase() PodPhase {
+func (x *ListPodItemPb) GetPhase() PodPhasePb {
 	if x != nil {
 		return x.Phase
 	}
-	return PodPhase_POD_PHASE_UNKNOWN
+	return PodPhasePb_POD_PHASE_UNKNOWN
 }
 
-func (x *ListPodItem) GetCreateTime() string {
+func (x *ListPodItemPb) GetCreateTime() string {
 	if x != nil {
 		return x.CreateTime
 	}
 	return ""
 }
 
-func (x *ListPodItem) GetImage() string {
+func (x *ListPodItemPb) GetImage() string {
 	if x != nil {
 		return x.Image
 	}
 	return ""
 }
 
-func (x *ListPodItem) GetImageId() string {
+func (x *ListPodItemPb) GetImageId() string {
 	if x != nil {
 		return x.ImageId
 	}
 	return ""
 }
 
-func (x *ListPodItem) GetCommand() string {
+func (x *ListPodItemPb) GetCommand() string {
 	if x != nil {
 		return x.Command
 	}
 	return ""
 }
 
-func (x *ListPodItem) GetPorts() []string {
+func (x *ListPodItemPb) GetPorts() []string {
 	if x != nil {
 		return x.Ports
 	}
 	return nil
 }
 
-func (x *ListPodItem) GetSizeRw() int64 {
+func (x *ListPodItemPb) GetSizeRw() int64 {
 	if x != nil {
 		return x.SizeRw
 	}
 	return 0
 }
 
-func (x *ListPodItem) GetSizeRootFs() int64 {
+func (x *ListPodItemPb) GetSizeRootFs() int64 {
 	if x != nil {
 		return x.SizeRootFs
 	}
 	return 0
 }
 
-func (x *ListPodItem) GetLabels() map[string]string {
+func (x *ListPodItemPb) GetLabels() map[string]string {
 	if x != nil {
 		return x.Labels
 	}
 	return nil
 }
 
-func (x *ListPodItem) GetState() string {
+func (x *ListPodItemPb) GetState() string {
 	if x != nil {
 		return x.State
 	}
 	return ""
 }
 
-func (x *ListPodItem) GetStatus() string {
+func (x *ListPodItemPb) GetStatus() string {
 	if x != nil {
 		return x.Status
 	}
 	return ""
 }
 
-func (x *ListPodItem) GetNetworkMode() string {
+func (x *ListPodItemPb) GetNetworkMode() string {
 	if x != nil {
 		return x.NetworkMode
 	}
 	return ""
 }
 
-func (x *ListPodItem) GetMounts() []string {
+func (x *ListPodItemPb) GetMounts() []string {
 	if x != nil {
 		return x.Mounts
 	}
@@ -1700,7 +1700,7 @@ func (x *GetPodStatsReq) GetId() string {
 
 type GetPodStatsRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Stats         []*ContainerStats      `protobuf:"bytes,1,rep,name=stats,proto3" json:"stats,omitempty"`
+	Stats         []*ContainerStatsPb    `protobuf:"bytes,1,rep,name=stats,proto3" json:"stats,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1735,14 +1735,14 @@ func (*GetPodStatsRes) Descriptor() ([]byte, []int) {
 	return file_podengine_proto_rawDescGZIP(), []int{22}
 }
 
-func (x *GetPodStatsRes) GetStats() []*ContainerStats {
+func (x *GetPodStatsRes) GetStats() []*ContainerStatsPb {
 	if x != nil {
 		return x.Stats
 	}
 	return nil
 }
 
-type ContainerStats struct {
+type ContainerStatsPb struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ContainerId   string                 `protobuf:"bytes,1,opt,name=containerId,proto3" json:"containerId,omitempty"`
 	ContainerName string                 `protobuf:"bytes,2,opt,name=containerName,proto3" json:"containerName,omitempty"`
@@ -1774,20 +1774,20 @@ type ContainerStats struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ContainerStats) Reset() {
-	*x = ContainerStats{}
+func (x *ContainerStatsPb) Reset() {
+	*x = ContainerStatsPb{}
 	mi := &file_podengine_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ContainerStats) String() string {
+func (x *ContainerStatsPb) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ContainerStats) ProtoMessage() {}
+func (*ContainerStatsPb) ProtoMessage() {}
 
-func (x *ContainerStats) ProtoReflect() protoreflect.Message {
+func (x *ContainerStatsPb) ProtoReflect() protoreflect.Message {
 	mi := &file_podengine_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1799,152 +1799,152 @@ func (x *ContainerStats) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ContainerStats.ProtoReflect.Descriptor instead.
-func (*ContainerStats) Descriptor() ([]byte, []int) {
+// Deprecated: Use ContainerStatsPb.ProtoReflect.Descriptor instead.
+func (*ContainerStatsPb) Descriptor() ([]byte, []int) {
 	return file_podengine_proto_rawDescGZIP(), []int{23}
 }
 
-func (x *ContainerStats) GetContainerId() string {
+func (x *ContainerStatsPb) GetContainerId() string {
 	if x != nil {
 		return x.ContainerId
 	}
 	return ""
 }
 
-func (x *ContainerStats) GetContainerName() string {
+func (x *ContainerStatsPb) GetContainerName() string {
 	if x != nil {
 		return x.ContainerName
 	}
 	return ""
 }
 
-func (x *ContainerStats) GetCpuUsagePercent() float64 {
+func (x *ContainerStatsPb) GetCpuUsagePercent() float64 {
 	if x != nil {
 		return x.CpuUsagePercent
 	}
 	return 0
 }
 
-func (x *ContainerStats) GetCpuUsagePercentDisplay() string {
+func (x *ContainerStatsPb) GetCpuUsagePercentDisplay() string {
 	if x != nil {
 		return x.CpuUsagePercentDisplay
 	}
 	return ""
 }
 
-func (x *ContainerStats) GetCpuUsageTotal() int64 {
+func (x *ContainerStatsPb) GetCpuUsageTotal() int64 {
 	if x != nil {
 		return x.CpuUsageTotal
 	}
 	return 0
 }
 
-func (x *ContainerStats) GetCpuUsageTotalDisplay() string {
+func (x *ContainerStatsPb) GetCpuUsageTotalDisplay() string {
 	if x != nil {
 		return x.CpuUsageTotalDisplay
 	}
 	return ""
 }
 
-func (x *ContainerStats) GetMemoryUsage() int64 {
+func (x *ContainerStatsPb) GetMemoryUsage() int64 {
 	if x != nil {
 		return x.MemoryUsage
 	}
 	return 0
 }
 
-func (x *ContainerStats) GetMemoryUsageDisplay() string {
+func (x *ContainerStatsPb) GetMemoryUsageDisplay() string {
 	if x != nil {
 		return x.MemoryUsageDisplay
 	}
 	return ""
 }
 
-func (x *ContainerStats) GetMemoryLimit() int64 {
+func (x *ContainerStatsPb) GetMemoryLimit() int64 {
 	if x != nil {
 		return x.MemoryLimit
 	}
 	return 0
 }
 
-func (x *ContainerStats) GetMemoryLimitDisplay() string {
+func (x *ContainerStatsPb) GetMemoryLimitDisplay() string {
 	if x != nil {
 		return x.MemoryLimitDisplay
 	}
 	return ""
 }
 
-func (x *ContainerStats) GetMemoryUsagePercent() float64 {
+func (x *ContainerStatsPb) GetMemoryUsagePercent() float64 {
 	if x != nil {
 		return x.MemoryUsagePercent
 	}
 	return 0
 }
 
-func (x *ContainerStats) GetMemoryUsagePercentDisplay() string {
+func (x *ContainerStatsPb) GetMemoryUsagePercentDisplay() string {
 	if x != nil {
 		return x.MemoryUsagePercentDisplay
 	}
 	return ""
 }
 
-func (x *ContainerStats) GetNetworkRxBytes() int64 {
+func (x *ContainerStatsPb) GetNetworkRxBytes() int64 {
 	if x != nil {
 		return x.NetworkRxBytes
 	}
 	return 0
 }
 
-func (x *ContainerStats) GetNetworkRxBytesDisplay() string {
+func (x *ContainerStatsPb) GetNetworkRxBytesDisplay() string {
 	if x != nil {
 		return x.NetworkRxBytesDisplay
 	}
 	return ""
 }
 
-func (x *ContainerStats) GetNetworkTxBytes() int64 {
+func (x *ContainerStatsPb) GetNetworkTxBytes() int64 {
 	if x != nil {
 		return x.NetworkTxBytes
 	}
 	return 0
 }
 
-func (x *ContainerStats) GetNetworkTxBytesDisplay() string {
+func (x *ContainerStatsPb) GetNetworkTxBytesDisplay() string {
 	if x != nil {
 		return x.NetworkTxBytesDisplay
 	}
 	return ""
 }
 
-func (x *ContainerStats) GetStorageReadBytes() int64 {
+func (x *ContainerStatsPb) GetStorageReadBytes() int64 {
 	if x != nil {
 		return x.StorageReadBytes
 	}
 	return 0
 }
 
-func (x *ContainerStats) GetStorageReadBytesDisplay() string {
+func (x *ContainerStatsPb) GetStorageReadBytesDisplay() string {
 	if x != nil {
 		return x.StorageReadBytesDisplay
 	}
 	return ""
 }
 
-func (x *ContainerStats) GetStorageWriteBytes() int64 {
+func (x *ContainerStatsPb) GetStorageWriteBytes() int64 {
 	if x != nil {
 		return x.StorageWriteBytes
 	}
 	return 0
 }
 
-func (x *ContainerStats) GetStorageWriteBytesDisplay() string {
+func (x *ContainerStatsPb) GetStorageWriteBytesDisplay() string {
 	if x != nil {
 		return x.StorageWriteBytesDisplay
 	}
 	return ""
 }
 
-func (x *ContainerStats) GetTimestamp() string {
+func (x *ContainerStatsPb) GetTimestamp() string {
 	if x != nil {
 		return x.Timestamp
 	}
@@ -2029,7 +2029,7 @@ func (x *ListImagesReq) GetIncludeDigests() bool {
 
 type ListImagesRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Items         []*Image               `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	Items         []*ImagePb             `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
 	Total         int32                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2065,7 +2065,7 @@ func (*ListImagesRes) Descriptor() ([]byte, []int) {
 	return file_podengine_proto_rawDescGZIP(), []int{25}
 }
 
-func (x *ListImagesRes) GetItems() []*Image {
+func (x *ListImagesRes) GetItems() []*ImagePb {
 	if x != nil {
 		return x.Items
 	}
@@ -2080,7 +2080,7 @@ func (x *ListImagesRes) GetTotal() int32 {
 }
 
 // Image 表示系统中的镜像信息
-type Image struct {
+type ImagePb struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                                                                   // 镜像 ID
 	References    []string               `protobuf:"bytes,2,rep,name=references,proto3" json:"references,omitempty"`                                                                   // 镜像标签列表（完整引用，如 ubuntu:latest）
@@ -2093,20 +2093,20 @@ type Image struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Image) Reset() {
-	*x = Image{}
+func (x *ImagePb) Reset() {
+	*x = ImagePb{}
 	mi := &file_podengine_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Image) String() string {
+func (x *ImagePb) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Image) ProtoMessage() {}
+func (*ImagePb) ProtoMessage() {}
 
-func (x *Image) ProtoReflect() protoreflect.Message {
+func (x *ImagePb) ProtoReflect() protoreflect.Message {
 	mi := &file_podengine_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2118,54 +2118,54 @@ func (x *Image) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Image.ProtoReflect.Descriptor instead.
-func (*Image) Descriptor() ([]byte, []int) {
+// Deprecated: Use ImagePb.ProtoReflect.Descriptor instead.
+func (*ImagePb) Descriptor() ([]byte, []int) {
 	return file_podengine_proto_rawDescGZIP(), []int{26}
 }
 
-func (x *Image) GetId() string {
+func (x *ImagePb) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *Image) GetReferences() []string {
+func (x *ImagePb) GetReferences() []string {
 	if x != nil {
 		return x.References
 	}
 	return nil
 }
 
-func (x *Image) GetDigests() []string {
+func (x *ImagePb) GetDigests() []string {
 	if x != nil {
 		return x.Digests
 	}
 	return nil
 }
 
-func (x *Image) GetSize() int64 {
+func (x *ImagePb) GetSize() int64 {
 	if x != nil {
 		return x.Size
 	}
 	return 0
 }
 
-func (x *Image) GetSizeDisplay() string {
+func (x *ImagePb) GetSizeDisplay() string {
 	if x != nil {
 		return x.SizeDisplay
 	}
 	return ""
 }
 
-func (x *Image) GetCreatedAt() string {
+func (x *ImagePb) GetCreatedAt() string {
 	if x != nil {
 		return x.CreatedAt
 	}
 	return ""
 }
 
-func (x *Image) GetLabels() map[string]string {
+func (x *ImagePb) GetLabels() map[string]string {
 	if x != nil {
 		return x.Labels
 	}
@@ -2176,14 +2176,14 @@ var File_podengine_proto protoreflect.FileDescriptor
 
 const file_podengine_proto_rawDesc = "" +
 	"\n" +
-	"\x0fpodengine.proto\x12\tpodengine\x1a\x17validate/validate.proto\"\xb9\x01\n" +
-	"\fPodCondition\x12/\n" +
-	"\x04type\x18\x01 \x01(\x0e2\x1b.podengine.PodConditionTypeR\x04type\x12\x16\n" +
+	"\x0fpodengine.proto\x12\tpodengine\x1a\x17validate/validate.proto\"\xbd\x01\n" +
+	"\x0ePodConditionPb\x121\n" +
+	"\x04type\x18\x01 \x01(\x0e2\x1d.podengine.PodConditionTypePbR\x04type\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\bR\x06status\x12\x16\n" +
 	"\x06reason\x18\x03 \x01(\tR\x06reason\x12\x18\n" +
 	"\amessage\x18\x04 \x01(\tR\amessage\x12.\n" +
-	"\x12lastTransitionTime\x18\x05 \x01(\tR\x12lastTransitionTime\"\xf8\x01\n" +
-	"\x0eContainerState\x12\x18\n" +
+	"\x12lastTransitionTime\x18\x05 \x01(\tR\x12lastTransitionTime\"\xfa\x01\n" +
+	"\x10ContainerStatePb\x12\x18\n" +
 	"\arunning\x18\x01 \x01(\bR\arunning\x12\x1e\n" +
 	"\n" +
 	"terminated\x18\x02 \x01(\bR\n" +
@@ -2193,48 +2193,48 @@ const file_podengine_proto_rawDesc = "" +
 	"\amessage\x18\x05 \x01(\tR\amessage\x12 \n" +
 	"\vstartedTime\x18\x06 \x01(\tR\vstartedTime\x12\"\n" +
 	"\ffinishedTime\x18\a \x01(\tR\ffinishedTime\x12\x1a\n" +
-	"\bexitCode\x18\b \x01(\tR\bexitCode\"\x9e\x03\n" +
-	"\tContainer\x12\x12\n" +
+	"\bexitCode\x18\b \x01(\tR\bexitCode\"\xa6\x03\n" +
+	"\vContainerPb\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
-	"\x05image\x18\x02 \x01(\tR\x05image\x12/\n" +
-	"\x05state\x18\x03 \x01(\v2\x19.podengine.ContainerStateR\x05state\x12\x14\n" +
-	"\x05ports\x18\x04 \x03(\tR\x05ports\x12/\n" +
-	"\x03env\x18\x05 \x03(\v2\x1d.podengine.Container.EnvEntryR\x03env\x12\x12\n" +
-	"\x04args\x18\x06 \x03(\tR\x04args\x12A\n" +
-	"\tresources\x18\a \x03(\v2#.podengine.Container.ResourcesEntryR\tresources\x12\"\n" +
+	"\x05image\x18\x02 \x01(\tR\x05image\x121\n" +
+	"\x05state\x18\x03 \x01(\v2\x1b.podengine.ContainerStatePbR\x05state\x12\x14\n" +
+	"\x05ports\x18\x04 \x03(\tR\x05ports\x121\n" +
+	"\x03env\x18\x05 \x03(\v2\x1f.podengine.ContainerPb.EnvEntryR\x03env\x12\x12\n" +
+	"\x04args\x18\x06 \x03(\tR\x04args\x12C\n" +
+	"\tresources\x18\a \x03(\v2%.podengine.ContainerPb.ResourcesEntryR\tresources\x12\"\n" +
 	"\fvolumeMounts\x18\b \x03(\tR\fvolumeMounts\x1a6\n" +
 	"\bEnvEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a<\n" +
 	"\x0eResourcesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8b\x03\n" +
-	"\rContainerSpec\x12\x1b\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x91\x03\n" +
+	"\x0fContainerSpecPb\x12\x1b\n" +
 	"\x04name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04name\x12\x1d\n" +
 	"\x05image\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05image\x12\x12\n" +
-	"\x04args\x18\x03 \x03(\tR\x04args\x123\n" +
-	"\x03env\x18\x04 \x03(\v2!.podengine.ContainerSpec.EnvEntryR\x03env\x12\x14\n" +
-	"\x05ports\x18\x05 \x03(\tR\x05ports\x12E\n" +
-	"\tresources\x18\x06 \x03(\v2'.podengine.ContainerSpec.ResourcesEntryR\tresources\x12\"\n" +
+	"\x04args\x18\x03 \x03(\tR\x04args\x125\n" +
+	"\x03env\x18\x04 \x03(\v2#.podengine.ContainerSpecPb.EnvEntryR\x03env\x12\x14\n" +
+	"\x05ports\x18\x05 \x03(\tR\x05ports\x12G\n" +
+	"\tresources\x18\x06 \x03(\v2).podengine.ContainerSpecPb.ResourcesEntryR\tresources\x12\"\n" +
 	"\fvolumeMounts\x18\a \x03(\tR\fvolumeMounts\x1a6\n" +
 	"\bEnvEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a<\n" +
 	"\x0eResourcesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xdc\x05\n" +
-	"\aPodSpec\x12\x1b\n" +
-	"\x04name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04name\x12B\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe6\x05\n" +
+	"\tPodSpecPb\x12\x1b\n" +
+	"\x04name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04name\x12D\n" +
 	"\n" +
-	"containers\x18\x02 \x03(\v2\x18.podengine.ContainerSpecB\b\xfaB\x05\x92\x01\x02\b\x01R\n" +
-	"containers\x126\n" +
-	"\x06labels\x18\x03 \x03(\v2\x1e.podengine.PodSpec.LabelsEntryR\x06labels\x12E\n" +
-	"\vannotations\x18\x04 \x03(\v2#.podengine.PodSpec.AnnotationsEntryR\vannotations\x12B\n" +
+	"containers\x18\x02 \x03(\v2\x1a.podengine.ContainerSpecPbB\b\xfaB\x05\x92\x01\x02\b\x01R\n" +
+	"containers\x128\n" +
+	"\x06labels\x18\x03 \x03(\v2 .podengine.PodSpecPb.LabelsEntryR\x06labels\x12G\n" +
+	"\vannotations\x18\x04 \x03(\v2%.podengine.PodSpecPb.AnnotationsEntryR\vannotations\x12B\n" +
 	"\rrestartPolicy\x18\x05 \x01(\tB\x1c\xfaB\x19r\x17R\x02noR\tonFailureR\x06alwaysR\rrestartPolicy\x12D\n" +
 	"\x1dterminationGracePeriodSeconds\x18\x06 \x01(\x05R\x1dterminationGracePeriodSeconds\x12;\n" +
 	"\vnetworkMode\x18\a \x01(\tB\x19\xfaB\x16r\x14R\x06bridgeR\x04hostR\x04noneR\vnetworkMode\x12 \n" +
-	"\vnetworkName\x18\b \x01(\tR\vnetworkName\x12K\n" +
-	"\rnetworkConfig\x18\t \x03(\v2%.podengine.PodSpec.NetworkConfigEntryR\rnetworkConfig\x1a9\n" +
+	"\vnetworkName\x18\b \x01(\tR\vnetworkName\x12M\n" +
+	"\rnetworkConfig\x18\t \x03(\v2'.podengine.PodSpecPb.NetworkConfigEntryR\rnetworkConfig\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a>\n" +
@@ -2243,19 +2243,19 @@ const file_podengine_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a@\n" +
 	"\x12NetworkConfigEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xbb\x04\n" +
-	"\x03Pod\x12\x0e\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xc7\x04\n" +
+	"\x05PodPb\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12)\n" +
-	"\x05phase\x18\x03 \x01(\x0e2\x13.podengine.PodPhaseR\x05phase\x127\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12+\n" +
+	"\x05phase\x18\x03 \x01(\x0e2\x15.podengine.PodPhasePbR\x05phase\x129\n" +
 	"\n" +
-	"conditions\x18\x04 \x03(\v2\x17.podengine.PodConditionR\n" +
-	"conditions\x124\n" +
+	"conditions\x18\x04 \x03(\v2\x19.podengine.PodConditionPbR\n" +
+	"conditions\x126\n" +
 	"\n" +
-	"containers\x18\x05 \x03(\v2\x14.podengine.ContainerR\n" +
-	"containers\x122\n" +
-	"\x06labels\x18\x06 \x03(\v2\x1a.podengine.Pod.LabelsEntryR\x06labels\x12A\n" +
-	"\vannotations\x18\a \x03(\v2\x1f.podengine.Pod.AnnotationsEntryR\vannotations\x12 \n" +
+	"containers\x18\x05 \x03(\v2\x16.podengine.ContainerPbR\n" +
+	"containers\x124\n" +
+	"\x06labels\x18\x06 \x03(\v2\x1c.podengine.PodPb.LabelsEntryR\x06labels\x12C\n" +
+	"\vannotations\x18\a \x03(\v2!.podengine.PodPb.AnnotationsEntryR\vannotations\x12 \n" +
 	"\vnetworkMode\x18\b \x01(\tR\vnetworkMode\x12\"\n" +
 	"\fcreationTime\x18\t \x01(\tR\fcreationTime\x12\x1c\n" +
 	"\tstartTime\x18\n" +
@@ -2266,18 +2266,18 @@ const file_podengine_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a>\n" +
 	"\x10AnnotationsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"q\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"s\n" +
 	"\fCreatePodReq\x12\x12\n" +
 	"\x04node\x182 \x01(\tR\x04node\x12\x1b\n" +
-	"\x04name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04name\x120\n" +
-	"\x04spec\x18\x02 \x01(\v2\x12.podengine.PodSpecB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04spec\"0\n" +
-	"\fCreatePodRes\x12 \n" +
-	"\x03pod\x18\x01 \x01(\v2\x0e.podengine.PodR\x03pod\":\n" +
+	"\x04name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04name\x122\n" +
+	"\x04spec\x18\x02 \x01(\v2\x14.podengine.PodSpecPbB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x04spec\"2\n" +
+	"\fCreatePodRes\x12\"\n" +
+	"\x03pod\x18\x01 \x01(\v2\x10.podengine.PodPbR\x03pod\":\n" +
 	"\vStartPodReq\x12\x12\n" +
 	"\x04node\x182 \x01(\tR\x04node\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"/\n" +
-	"\vStartPodRes\x12 \n" +
-	"\x03pod\x18\x01 \x01(\v2\x0e.podengine.PodR\x03pod\"O\n" +
+	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"1\n" +
+	"\vStartPodRes\x12\"\n" +
+	"\x03pod\x18\x01 \x01(\v2\x10.podengine.PodPbR\x03pod\"O\n" +
 	"\n" +
 	"StopPodReq\x12\x12\n" +
 	"\x04node\x182 \x01(\tR\x04node\x12\x17\n" +
@@ -2287,14 +2287,14 @@ const file_podengine_proto_rawDesc = "" +
 	"StopPodRes\"<\n" +
 	"\rRestartPodReq\x12\x12\n" +
 	"\x04node\x182 \x01(\tR\x04node\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"1\n" +
-	"\rRestartPodRes\x12 \n" +
-	"\x03pod\x18\x01 \x01(\v2\x0e.podengine.PodR\x03pod\"8\n" +
+	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"3\n" +
+	"\rRestartPodRes\x12\"\n" +
+	"\x03pod\x18\x01 \x01(\v2\x10.podengine.PodPbR\x03pod\"8\n" +
 	"\tGetPodReq\x12\x12\n" +
 	"\x04node\x182 \x01(\tR\x04node\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"-\n" +
-	"\tGetPodRes\x12 \n" +
-	"\x03pod\x18\x01 \x01(\v2\x0e.podengine.PodR\x03pod\"\x82\x02\n" +
+	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"/\n" +
+	"\tGetPodRes\x12\"\n" +
+	"\x03pod\x18\x01 \x01(\v2\x10.podengine.PodPbR\x03pod\"\x82\x02\n" +
 	"\vListPodsReq\x12\x12\n" +
 	"\x04node\x182 \x01(\tR\x04node\x12\x1e\n" +
 	"\x05limit\x18\x01 \x01(\x05B\b\xfaB\x05\x1a\x03\x18\xe8\aR\x05limit\x12 \n" +
@@ -2304,14 +2304,14 @@ const file_podengine_proto_rawDesc = "" +
 	"\x06labels\x18\x05 \x03(\v2\".podengine.ListPodsReq.LabelsEntryR\x06labels\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"Q\n" +
-	"\vListPodsRes\x12,\n" +
-	"\x05items\x18\x01 \x03(\v2\x16.podengine.ListPodItemR\x05items\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x05R\x05total\"\xf3\x03\n" +
-	"\vListPodItem\x12\x0e\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"S\n" +
+	"\vListPodsRes\x12.\n" +
+	"\x05items\x18\x01 \x03(\v2\x18.podengine.ListPodItemPbR\x05items\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x05R\x05total\"\xf9\x03\n" +
+	"\rListPodItemPb\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12)\n" +
-	"\x05phase\x18\x03 \x01(\x0e2\x13.podengine.PodPhaseR\x05phase\x12\x1e\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12+\n" +
+	"\x05phase\x18\x03 \x01(\x0e2\x15.podengine.PodPhasePbR\x05phase\x12\x1e\n" +
 	"\n" +
 	"createTime\x18\x04 \x01(\tR\n" +
 	"createTime\x12\x14\n" +
@@ -2323,8 +2323,8 @@ const file_podengine_proto_rawDesc = "" +
 	"\n" +
 	"sizeRootFs\x18\n" +
 	" \x01(\x03R\n" +
-	"sizeRootFs\x12:\n" +
-	"\x06labels\x18\v \x03(\v2\".podengine.ListPodItem.LabelsEntryR\x06labels\x12\x14\n" +
+	"sizeRootFs\x12<\n" +
+	"\x06labels\x18\v \x03(\v2$.podengine.ListPodItemPb.LabelsEntryR\x06labels\x12\x14\n" +
 	"\x05state\x18\f \x01(\tR\x05state\x12\x16\n" +
 	"\x06status\x18\r \x01(\tR\x06status\x12 \n" +
 	"\vnetworkMode\x18\x0e \x01(\tR\vnetworkMode\x12\x16\n" +
@@ -2340,10 +2340,10 @@ const file_podengine_proto_rawDesc = "" +
 	"\fDeletePodRes\"=\n" +
 	"\x0eGetPodStatsReq\x12\x12\n" +
 	"\x04node\x182 \x01(\tR\x04node\x12\x17\n" +
-	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"A\n" +
-	"\x0eGetPodStatsRes\x12/\n" +
-	"\x05stats\x18\x01 \x03(\v2\x19.podengine.ContainerStatsR\x05stats\"\xd0\a\n" +
-	"\x0eContainerStats\x12 \n" +
+	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\"C\n" +
+	"\x0eGetPodStatsRes\x121\n" +
+	"\x05stats\x18\x01 \x03(\v2\x1b.podengine.ContainerStatsPbR\x05stats\"\xd2\a\n" +
+	"\x10ContainerStatsPb\x12 \n" +
 	"\vcontainerId\x18\x01 \x01(\tR\vcontainerId\x12$\n" +
 	"\rcontainerName\x18\x02 \x01(\tR\rcontainerName\x12(\n" +
 	"\x0fcpuUsagePercent\x18\x03 \x01(\x01R\x0fcpuUsagePercent\x126\n" +
@@ -2373,11 +2373,11 @@ const file_podengine_proto_rawDesc = "" +
 	"\n" +
 	"references\x18\x03 \x03(\tR\n" +
 	"references\x12&\n" +
-	"\x0eincludeDigests\x18\x04 \x01(\bR\x0eincludeDigests\"M\n" +
-	"\rListImagesRes\x12&\n" +
-	"\x05items\x18\x01 \x03(\v2\x10.podengine.ImageR\x05items\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x05R\x05total\"\x96\x02\n" +
-	"\x05Image\x12\x0e\n" +
+	"\x0eincludeDigests\x18\x04 \x01(\bR\x0eincludeDigests\"O\n" +
+	"\rListImagesRes\x12(\n" +
+	"\x05items\x18\x01 \x03(\v2\x12.podengine.ImagePbR\x05items\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x05R\x05total\"\x9a\x02\n" +
+	"\aImagePb\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1e\n" +
 	"\n" +
 	"references\x18\x02 \x03(\tR\n" +
@@ -2385,19 +2385,20 @@ const file_podengine_proto_rawDesc = "" +
 	"\adigests\x18\x03 \x03(\tR\adigests\x12\x12\n" +
 	"\x04size\x18\x04 \x01(\x03R\x04size\x12 \n" +
 	"\vsizeDisplay\x18\x05 \x01(\tR\vsizeDisplay\x12\x1c\n" +
-	"\tcreatedAt\x18\x06 \x01(\tR\tcreatedAt\x124\n" +
-	"\x06labels\x18\a \x03(\v2\x1c.podengine.Image.LabelsEntryR\x06labels\x1a9\n" +
+	"\tcreatedAt\x18\x06 \x01(\tR\tcreatedAt\x126\n" +
+	"\x06labels\x18\a \x03(\v2\x1e.podengine.ImagePb.LabelsEntryR\x06labels\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01*\x95\x01\n" +
-	"\bPodPhase\x12\x15\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01*\x97\x01\n" +
+	"\n" +
+	"PodPhasePb\x12\x15\n" +
 	"\x11POD_PHASE_UNKNOWN\x10\x00\x12\x15\n" +
 	"\x11POD_PHASE_PENDING\x10\x01\x12\x15\n" +
 	"\x11POD_PHASE_RUNNING\x10\x02\x12\x17\n" +
 	"\x13POD_PHASE_SUCCEEDED\x10\x03\x12\x14\n" +
 	"\x10POD_PHASE_FAILED\x10\x04\x12\x15\n" +
-	"\x11POD_PHASE_STOPPED\x10\x05*\xc3\x01\n" +
-	"\x10PodConditionType\x12\x1e\n" +
+	"\x11POD_PHASE_STOPPED\x10\x05*\xc5\x01\n" +
+	"\x12PodConditionTypePb\x12\x1e\n" +
 	"\x1aPOD_CONDITION_TYPE_UNKNOWN\x10\x00\x12$\n" +
 	" POD_CONDITION_TYPE_POD_SCHEDULED\x10\x01\x12'\n" +
 	"#POD_CONDITION_TYPE_CONTAINERS_READY\x10\x02\x12\"\n" +
@@ -2432,76 +2433,76 @@ func file_podengine_proto_rawDescGZIP() []byte {
 var file_podengine_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_podengine_proto_msgTypes = make([]protoimpl.MessageInfo, 39)
 var file_podengine_proto_goTypes = []any{
-	(PodPhase)(0),          // 0: podengine.PodPhase
-	(PodConditionType)(0),  // 1: podengine.PodConditionType
-	(*PodCondition)(nil),   // 2: podengine.PodCondition
-	(*ContainerState)(nil), // 3: podengine.ContainerState
-	(*Container)(nil),      // 4: podengine.Container
-	(*ContainerSpec)(nil),  // 5: podengine.ContainerSpec
-	(*PodSpec)(nil),        // 6: podengine.PodSpec
-	(*Pod)(nil),            // 7: podengine.Pod
-	(*CreatePodReq)(nil),   // 8: podengine.CreatePodReq
-	(*CreatePodRes)(nil),   // 9: podengine.CreatePodRes
-	(*StartPodReq)(nil),    // 10: podengine.StartPodReq
-	(*StartPodRes)(nil),    // 11: podengine.StartPodRes
-	(*StopPodReq)(nil),     // 12: podengine.StopPodReq
-	(*StopPodRes)(nil),     // 13: podengine.StopPodRes
-	(*RestartPodReq)(nil),  // 14: podengine.RestartPodReq
-	(*RestartPodRes)(nil),  // 15: podengine.RestartPodRes
-	(*GetPodReq)(nil),      // 16: podengine.GetPodReq
-	(*GetPodRes)(nil),      // 17: podengine.GetPodRes
-	(*ListPodsReq)(nil),    // 18: podengine.ListPodsReq
-	(*ListPodsRes)(nil),    // 19: podengine.ListPodsRes
-	(*ListPodItem)(nil),    // 20: podengine.ListPodItem
-	(*DeletePodReq)(nil),   // 21: podengine.DeletePodReq
-	(*DeletePodRes)(nil),   // 22: podengine.DeletePodRes
-	(*GetPodStatsReq)(nil), // 23: podengine.GetPodStatsReq
-	(*GetPodStatsRes)(nil), // 24: podengine.GetPodStatsRes
-	(*ContainerStats)(nil), // 25: podengine.ContainerStats
-	(*ListImagesReq)(nil),  // 26: podengine.ListImagesReq
-	(*ListImagesRes)(nil),  // 27: podengine.ListImagesRes
-	(*Image)(nil),          // 28: podengine.Image
-	nil,                    // 29: podengine.Container.EnvEntry
-	nil,                    // 30: podengine.Container.ResourcesEntry
-	nil,                    // 31: podengine.ContainerSpec.EnvEntry
-	nil,                    // 32: podengine.ContainerSpec.ResourcesEntry
-	nil,                    // 33: podengine.PodSpec.LabelsEntry
-	nil,                    // 34: podengine.PodSpec.AnnotationsEntry
-	nil,                    // 35: podengine.PodSpec.NetworkConfigEntry
-	nil,                    // 36: podengine.Pod.LabelsEntry
-	nil,                    // 37: podengine.Pod.AnnotationsEntry
-	nil,                    // 38: podengine.ListPodsReq.LabelsEntry
-	nil,                    // 39: podengine.ListPodItem.LabelsEntry
-	nil,                    // 40: podengine.Image.LabelsEntry
+	(PodPhasePb)(0),          // 0: podengine.PodPhasePb
+	(PodConditionTypePb)(0),  // 1: podengine.PodConditionTypePb
+	(*PodConditionPb)(nil),   // 2: podengine.PodConditionPb
+	(*ContainerStatePb)(nil), // 3: podengine.ContainerStatePb
+	(*ContainerPb)(nil),      // 4: podengine.ContainerPb
+	(*ContainerSpecPb)(nil),  // 5: podengine.ContainerSpecPb
+	(*PodSpecPb)(nil),        // 6: podengine.PodSpecPb
+	(*PodPb)(nil),            // 7: podengine.PodPb
+	(*CreatePodReq)(nil),     // 8: podengine.CreatePodReq
+	(*CreatePodRes)(nil),     // 9: podengine.CreatePodRes
+	(*StartPodReq)(nil),      // 10: podengine.StartPodReq
+	(*StartPodRes)(nil),      // 11: podengine.StartPodRes
+	(*StopPodReq)(nil),       // 12: podengine.StopPodReq
+	(*StopPodRes)(nil),       // 13: podengine.StopPodRes
+	(*RestartPodReq)(nil),    // 14: podengine.RestartPodReq
+	(*RestartPodRes)(nil),    // 15: podengine.RestartPodRes
+	(*GetPodReq)(nil),        // 16: podengine.GetPodReq
+	(*GetPodRes)(nil),        // 17: podengine.GetPodRes
+	(*ListPodsReq)(nil),      // 18: podengine.ListPodsReq
+	(*ListPodsRes)(nil),      // 19: podengine.ListPodsRes
+	(*ListPodItemPb)(nil),    // 20: podengine.ListPodItemPb
+	(*DeletePodReq)(nil),     // 21: podengine.DeletePodReq
+	(*DeletePodRes)(nil),     // 22: podengine.DeletePodRes
+	(*GetPodStatsReq)(nil),   // 23: podengine.GetPodStatsReq
+	(*GetPodStatsRes)(nil),   // 24: podengine.GetPodStatsRes
+	(*ContainerStatsPb)(nil), // 25: podengine.ContainerStatsPb
+	(*ListImagesReq)(nil),    // 26: podengine.ListImagesReq
+	(*ListImagesRes)(nil),    // 27: podengine.ListImagesRes
+	(*ImagePb)(nil),          // 28: podengine.ImagePb
+	nil,                      // 29: podengine.ContainerPb.EnvEntry
+	nil,                      // 30: podengine.ContainerPb.ResourcesEntry
+	nil,                      // 31: podengine.ContainerSpecPb.EnvEntry
+	nil,                      // 32: podengine.ContainerSpecPb.ResourcesEntry
+	nil,                      // 33: podengine.PodSpecPb.LabelsEntry
+	nil,                      // 34: podengine.PodSpecPb.AnnotationsEntry
+	nil,                      // 35: podengine.PodSpecPb.NetworkConfigEntry
+	nil,                      // 36: podengine.PodPb.LabelsEntry
+	nil,                      // 37: podengine.PodPb.AnnotationsEntry
+	nil,                      // 38: podengine.ListPodsReq.LabelsEntry
+	nil,                      // 39: podengine.ListPodItemPb.LabelsEntry
+	nil,                      // 40: podengine.ImagePb.LabelsEntry
 }
 var file_podengine_proto_depIdxs = []int32{
-	1,  // 0: podengine.PodCondition.type:type_name -> podengine.PodConditionType
-	3,  // 1: podengine.Container.state:type_name -> podengine.ContainerState
-	29, // 2: podengine.Container.env:type_name -> podengine.Container.EnvEntry
-	30, // 3: podengine.Container.resources:type_name -> podengine.Container.ResourcesEntry
-	31, // 4: podengine.ContainerSpec.env:type_name -> podengine.ContainerSpec.EnvEntry
-	32, // 5: podengine.ContainerSpec.resources:type_name -> podengine.ContainerSpec.ResourcesEntry
-	5,  // 6: podengine.PodSpec.containers:type_name -> podengine.ContainerSpec
-	33, // 7: podengine.PodSpec.labels:type_name -> podengine.PodSpec.LabelsEntry
-	34, // 8: podengine.PodSpec.annotations:type_name -> podengine.PodSpec.AnnotationsEntry
-	35, // 9: podengine.PodSpec.networkConfig:type_name -> podengine.PodSpec.NetworkConfigEntry
-	0,  // 10: podengine.Pod.phase:type_name -> podengine.PodPhase
-	2,  // 11: podengine.Pod.conditions:type_name -> podengine.PodCondition
-	4,  // 12: podengine.Pod.containers:type_name -> podengine.Container
-	36, // 13: podengine.Pod.labels:type_name -> podengine.Pod.LabelsEntry
-	37, // 14: podengine.Pod.annotations:type_name -> podengine.Pod.AnnotationsEntry
-	6,  // 15: podengine.CreatePodReq.spec:type_name -> podengine.PodSpec
-	7,  // 16: podengine.CreatePodRes.pod:type_name -> podengine.Pod
-	7,  // 17: podengine.StartPodRes.pod:type_name -> podengine.Pod
-	7,  // 18: podengine.RestartPodRes.pod:type_name -> podengine.Pod
-	7,  // 19: podengine.GetPodRes.pod:type_name -> podengine.Pod
+	1,  // 0: podengine.PodConditionPb.type:type_name -> podengine.PodConditionTypePb
+	3,  // 1: podengine.ContainerPb.state:type_name -> podengine.ContainerStatePb
+	29, // 2: podengine.ContainerPb.env:type_name -> podengine.ContainerPb.EnvEntry
+	30, // 3: podengine.ContainerPb.resources:type_name -> podengine.ContainerPb.ResourcesEntry
+	31, // 4: podengine.ContainerSpecPb.env:type_name -> podengine.ContainerSpecPb.EnvEntry
+	32, // 5: podengine.ContainerSpecPb.resources:type_name -> podengine.ContainerSpecPb.ResourcesEntry
+	5,  // 6: podengine.PodSpecPb.containers:type_name -> podengine.ContainerSpecPb
+	33, // 7: podengine.PodSpecPb.labels:type_name -> podengine.PodSpecPb.LabelsEntry
+	34, // 8: podengine.PodSpecPb.annotations:type_name -> podengine.PodSpecPb.AnnotationsEntry
+	35, // 9: podengine.PodSpecPb.networkConfig:type_name -> podengine.PodSpecPb.NetworkConfigEntry
+	0,  // 10: podengine.PodPb.phase:type_name -> podengine.PodPhasePb
+	2,  // 11: podengine.PodPb.conditions:type_name -> podengine.PodConditionPb
+	4,  // 12: podengine.PodPb.containers:type_name -> podengine.ContainerPb
+	36, // 13: podengine.PodPb.labels:type_name -> podengine.PodPb.LabelsEntry
+	37, // 14: podengine.PodPb.annotations:type_name -> podengine.PodPb.AnnotationsEntry
+	6,  // 15: podengine.CreatePodReq.spec:type_name -> podengine.PodSpecPb
+	7,  // 16: podengine.CreatePodRes.pod:type_name -> podengine.PodPb
+	7,  // 17: podengine.StartPodRes.pod:type_name -> podengine.PodPb
+	7,  // 18: podengine.RestartPodRes.pod:type_name -> podengine.PodPb
+	7,  // 19: podengine.GetPodRes.pod:type_name -> podengine.PodPb
 	38, // 20: podengine.ListPodsReq.labels:type_name -> podengine.ListPodsReq.LabelsEntry
-	20, // 21: podengine.ListPodsRes.items:type_name -> podengine.ListPodItem
-	0,  // 22: podengine.ListPodItem.phase:type_name -> podengine.PodPhase
-	39, // 23: podengine.ListPodItem.labels:type_name -> podengine.ListPodItem.LabelsEntry
-	25, // 24: podengine.GetPodStatsRes.stats:type_name -> podengine.ContainerStats
-	28, // 25: podengine.ListImagesRes.items:type_name -> podengine.Image
-	40, // 26: podengine.Image.labels:type_name -> podengine.Image.LabelsEntry
+	20, // 21: podengine.ListPodsRes.items:type_name -> podengine.ListPodItemPb
+	0,  // 22: podengine.ListPodItemPb.phase:type_name -> podengine.PodPhasePb
+	39, // 23: podengine.ListPodItemPb.labels:type_name -> podengine.ListPodItemPb.LabelsEntry
+	25, // 24: podengine.GetPodStatsRes.stats:type_name -> podengine.ContainerStatsPb
+	28, // 25: podengine.ListImagesRes.items:type_name -> podengine.ImagePb
+	40, // 26: podengine.ImagePb.labels:type_name -> podengine.ImagePb.LabelsEntry
 	8,  // 27: podengine.PodEngine.CreatePod:input_type -> podengine.CreatePodReq
 	10, // 28: podengine.PodEngine.StartPod:input_type -> podengine.StartPodReq
 	12, // 29: podengine.PodEngine.StopPod:input_type -> podengine.StopPodReq

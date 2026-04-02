@@ -41,13 +41,13 @@ func (l *GetPodLogic) GetPod(in *podengine.GetPodReq) (*podengine.GetPodRes, err
 	if err != nil {
 		return nil, fmt.Errorf("container not found: %s", in.Id)
 	}
-	pod := &podengine.Pod{
+	pod := &podengine.PodPb{
 		Id:          container.ID,
 		Name:        container.Name[1:], // Remove leading slash
 		Labels:      container.Config.Labels,
 		Phase:       getPodPhase(container.State),
 		NetworkMode: string(container.HostConfig.NetworkMode),
-		Containers: []*podengine.Container{
+		Containers: []*podengine.ContainerPb{
 			{
 				Name:         container.Name[1:],
 				Image:        container.Config.Image,
@@ -77,25 +77,25 @@ func (l *GetPodLogic) GetPod(in *podengine.GetPodReq) (*podengine.GetPodRes, err
 	}, nil
 }
 
-func getPodPhase(state *container.State) podengine.PodPhase {
+func getPodPhase(state *container.State) podengine.PodPhasePb {
 	if state.Running {
-		return podengine.PodPhase_POD_PHASE_RUNNING
+		return podengine.PodPhasePb_POD_PHASE_RUNNING
 	} else if state.Status == "exited" {
 		if state.ExitCode == 0 {
-			return podengine.PodPhase_POD_PHASE_SUCCEEDED
+			return podengine.PodPhasePb_POD_PHASE_SUCCEEDED
 		} else {
-			return podengine.PodPhase_POD_PHASE_FAILED
+			return podengine.PodPhasePb_POD_PHASE_FAILED
 		}
 	} else if state.Status == "created" {
-		return podengine.PodPhase_POD_PHASE_PENDING
+		return podengine.PodPhasePb_POD_PHASE_PENDING
 	} else if state.Status == "stopped" {
-		return podengine.PodPhase_POD_PHASE_STOPPED
+		return podengine.PodPhasePb_POD_PHASE_STOPPED
 	}
-	return podengine.PodPhase_POD_PHASE_UNKNOWN
+	return podengine.PodPhasePb_POD_PHASE_UNKNOWN
 }
 
-func getContainerState(state *container.State) *podengine.ContainerState {
-	containerState := &podengine.ContainerState{
+func getContainerState(state *container.State) *podengine.ContainerStatePb {
+	containerState := &podengine.ContainerStatePb{
 		Running:      state.Running,
 		Terminated:   state.Status == "exited",
 		Waiting:      state.Status == "created" || state.Status == "restarting",

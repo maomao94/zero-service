@@ -2,10 +2,11 @@ package logic
 
 import (
 	"context"
-	"github.com/jinzhu/copier"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/copierx"
+
+	"github.com/jinzhu/copier"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -34,7 +35,7 @@ func (l *GetTaskInfoLogic) GetTaskInfo(in *trigger.GetTaskInfoReq) (*trigger.Get
 	if err != nil {
 		return nil, err
 	}
-	pbTaskInfo := trigger.PbTaskInfo{}
+	pbTaskInfo := trigger.TaskInfoPb{}
 	copier.CopyWithOption(&pbTaskInfo, taskInfo, copierx.Option)
 	pbTaskInfo.State = int32(taskInfo.State)
 	return &trigger.GetTaskInfoRes{

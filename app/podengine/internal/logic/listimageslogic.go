@@ -54,7 +54,7 @@ func (l *ListImagesLogic) ListImages(in *podengine.ListImagesReq) (*podengine.Li
 		return nil, fmt.Errorf("failed to list images: %w", err)
 	}
 
-	var items []*podengine.Image
+	var items []*podengine.ImagePb
 	for _, img := range images {
 		// Process image tags
 		references := make([]string, 0)
@@ -76,7 +76,7 @@ func (l *ListImagesLogic) ListImages(in *podengine.ListImagesReq) (*podengine.Li
 
 			}
 		}
-		image := &podengine.Image{
+		image := &podengine.ImagePb{
 			Id:          img.ID,
 			References:  references,
 			Digests:     digests,
@@ -94,7 +94,7 @@ func (l *ListImagesLogic) ListImages(in *podengine.ListImagesReq) (*podengine.Li
 
 	total := len(items)
 	if in.Offset > int32(total) {
-		items = []*podengine.Image{}
+		items = []*podengine.ImagePb{}
 	} else {
 		end := in.Offset + in.Limit
 		if end > int32(total) {

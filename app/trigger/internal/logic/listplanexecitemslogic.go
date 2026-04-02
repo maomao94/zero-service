@@ -76,13 +76,13 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 
 	// 构建响应
 	resp := &trigger.ListPlanExecItemsRes{
-		PlanExecItems: make([]*trigger.PbPlanExecItem, 0, len(execItems)),
+		PlanExecItems: make([]*trigger.PlanExecItemPb, 0, len(execItems)),
 		Total:         total,
 	}
 
 	// 转换执行项列表
 	for _, execItem := range execItems {
-		pbExecItem := &trigger.PbPlanExecItem{
+		pbExecItem := &trigger.PlanExecItemPb{
 			CreateTime:       carbon.CreateFromStdTime(execItem.CreateTime).ToDateTimeString(),
 			UpdateTime:       carbon.CreateFromStdTime(execItem.UpdateTime).ToDateTimeString(),
 			CreateUser:       execItem.CreateUser.String,
@@ -104,7 +104,7 @@ func (l *ListPlanExecItemsLogic) ListPlanExecItems(in *trigger.ListPlanExecItems
 			PlanTriggerTime:  carbon.CreateFromStdTime(execItem.PlanTriggerTime).ToDateTimeString(),
 			NextTriggerTime:  carbon.CreateFromStdTime(execItem.NextTriggerTime).ToDateTimeString(),
 			TriggerCount:     int32(execItem.TriggerCount),
-			Status:           trigger.PbExecItemStatus(execItem.Status),
+			Status:           trigger.ExecItemStatusPb(execItem.Status),
 			LastResult:       execItem.LastResult.String,
 			LastMessage:      execItem.LastMessage.String,
 			LastReason:       execItem.LastReason.String,

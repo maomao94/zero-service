@@ -2,9 +2,10 @@ package logic
 
 import (
 	"context"
+	"zero-service/common/copierx"
+
 	"github.com/hibiken/asynq"
 	"github.com/jinzhu/copier"
-	"zero-service/common/copierx"
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
@@ -37,13 +38,13 @@ func (l *ListActiveTasksLogic) ListActiveTasks(in *trigger.ListActiveTasksReq) (
 	if err != nil {
 		return nil, err
 	}
-	taskInfo := []*trigger.PbTaskInfo{}
+	taskInfo := []*trigger.TaskInfoPb{}
 	copier.CopyWithOption(&taskInfo, tasks, copierx.Option)
 	qinfo, err := l.svcCtx.AsynqInspector.GetQueueInfo(in.Queue)
 	if err != nil {
 		return nil, err
 	}
-	queueInfo := trigger.PbQueueInfo{}
+	queueInfo := trigger.QueueInfoPb{}
 	copier.CopyWithOption(&queueInfo, qinfo, copierx.Option)
 	return &trigger.ListActiveTasksRes{
 		TasksInfo: taskInfo,

@@ -31,7 +31,7 @@ service PodEngine {
 // =======================
 
 // PodPhase 表示 Pod 的整体运行阶段（调度视角）
-enum PodPhase {
+enum PodPhasePb {
   POD_PHASE_UNKNOWN = 0;
   POD_PHASE_PENDING = 1; // 已创建但尚未进入运行态（拉取镜像 / 创建中）
   POD_PHASE_RUNNING = 2; // 至少一个容器运行中
@@ -43,7 +43,7 @@ enum PodPhase {
 
 // PodConditionType 表示 Pod 在生命周期中的关键条件
 // 主要用于表达“是否就绪 / 是否可服务”等状态
-enum PodConditionType {
+enum PodConditionTypePb {
   POD_CONDITION_TYPE_UNKNOWN = 0;
   POD_CONDITION_TYPE_POD_SCHEDULED = 1; // Pod 已被调度到运行节点
   POD_CONDITION_TYPE_CONTAINERS_READY = 2; // 所有容器就绪
@@ -53,8 +53,8 @@ enum PodConditionType {
 
 
 // PodCondition 描述某一条件的当前状态 todo
-message PodCondition {
-  PodConditionType type = 1;
+message PodConditionPb {
+  PodConditionTypePb type = 1;
   bool status = 2;
   string reason = 3;
   string message = 4;
@@ -63,7 +63,7 @@ message PodCondition {
 
 
 // ContainerState 表示单个容器的运行状态
-message ContainerState {
+message ContainerStatePb {
   bool running = 1;        // 运行中
   bool terminated = 2;     // 已终止
   bool waiting = 3;        // 等待中（创建 / 重启等）
@@ -80,10 +80,10 @@ message ContainerState {
 // =======================
 
 // Container 表示实际运行中的容器实例
-message Container {
+message ContainerPb {
   string name = 1;                 // 容器名称
   string image = 2;                // 镜像名称
-  ContainerState state = 3;        // 当前状态
+  ContainerStatePb state = 3;        // 当前状态
 
   // 端口声明
   // Docker: "8080:80", "80/tcp"
@@ -106,7 +106,7 @@ message Container {
 // =======================
 
 // ContainerSpec 描述期望运行的容器规格
-message ContainerSpec {
+message ContainerSpecPb {
   string name = 1 [(validate.rules).string.min_len = 1];
   string image = 2 [(validate.rules).string.min_len = 1];
 
@@ -122,11 +122,11 @@ message ContainerSpec {
 
 
 // PodSpec 描述 Pod 的期望状态
-message PodSpec {
+message PodSpecPb {
   string name = 1 [(validate.rules).string.min_len = 1];   // Pod 逻辑名称
 
   // 期望运行的容器列表（支持多容器）
-  repeated ContainerSpec containers = 2 [(validate.rules).repeated = {min_items: 1}];
+  repeated ContainerSpecPb containers = 2 [(validate.rules).repeated = {min_items: 1}];
 
   // 资源标签（元数据）
   // Docker: container labels
@@ -160,13 +160,13 @@ message PodSpec {
 // =======================
 
 // Pod 表示系统中一个已创建或运行中的 Pod 实例
-message Pod {
+message PodPb {
   string id = 1;               // Pod ID（runtime 生成）
   string name = 2;             // Pod 名称
-  PodPhase phase = 3;          // 当前阶段
+  PodPhasePb phase = 3;          // 当前阶段
 
-  repeated PodCondition conditions = 4;
-  repeated Container containers = 5;
+  repeated PodConditionPb conditions = 4;
+  repeated ContainerPb containers = 5;
 
   map<string, string> labels = 6;
   map<string, string> annotations = 7;
@@ -185,11 +185,11 @@ message Pod {
 message CreatePodReq {
   string node = 50; // docker 运行节点 默认-local
   string name = 1 [(validate.rules).string.min_len = 1];
-  PodSpec spec = 2 [(validate.rules).message.required = true];
+  PodSpecPb spec = 2 [(validate.rules).message.required = true];
 }
 
 message CreatePodRes {
-  Pod pod = 1;
+  PodPb pod = 1;
 }
 
 message StartPodReq {
@@ -198,7 +198,7 @@ message StartPodReq {
 }
 
 message StartPodRes {
-  Pod pod = 1;
+  PodPb pod = 1;
 }
 
 message StopPodReq {
@@ -216,7 +216,7 @@ message RestartPodReq {
 }
 
 message RestartPodRes {
-  Pod pod = 1;
+  PodPb pod = 1;
 }
 
 message GetPodReq {
@@ -225,7 +225,7 @@ message GetPodReq {
 }
 
 message GetPodRes {
-  Pod pod = 1;
+  PodPb pod = 1;
 }
 
 message ListPodsReq {
@@ -238,14 +238,14 @@ message ListPodsReq {
 }
 
 message ListPodsRes {
-  repeated ListPodItem items = 1;
+  repeated ListPodItemPb items = 1;
   int32 total = 2;
 }
 
-message ListPodItem {
+message ListPodItemPb {
   string id = 1;
   string name = 2;
-  PodPhase phase = 3;
+  PodPhasePb phase = 3;
   string createTime = 4;
   string image = 5;
   string imageId = 6;
@@ -276,10 +276,10 @@ message GetPodStatsReq {
 }
 
 message GetPodStatsRes {
-  repeated ContainerStats stats = 1;
+  repeated ContainerStatsPb stats = 1;
 }
 
-message ContainerStats {
+message ContainerStatsPb {
   string containerId = 1;
   string containerName = 2;
 
@@ -322,12 +322,12 @@ message ListImagesReq {
 }
 
 message ListImagesRes {
-  repeated Image items = 1;
+  repeated ImagePb items = 1;
   int32 total = 2;
 }
 
 // Image 表示系统中的镜像信息
-message Image {
+message ImagePb {
   string id = 1;               // 镜像 ID
   repeated string references = 2;    // 镜像标签列表（完整引用，如 ubuntu:latest）
   repeated string digests = 3; // 镜像摘要列表

@@ -2,11 +2,12 @@ package logic
 
 import (
 	"context"
-	"github.com/hibiken/asynq"
-	"github.com/jinzhu/copier"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/copierx"
+
+	"github.com/hibiken/asynq"
+	"github.com/jinzhu/copier"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -36,13 +37,13 @@ func (l *ListScheduledTasksLogic) ListScheduledTasks(in *trigger.ListScheduledTa
 	if err != nil {
 		return nil, err
 	}
-	taskInfo := []*trigger.PbTaskInfo{}
+	taskInfo := []*trigger.TaskInfoPb{}
 	copier.CopyWithOption(&taskInfo, tasks, copierx.Option)
 	qinfo, err := l.svcCtx.AsynqInspector.GetQueueInfo(in.Queue)
 	if err != nil {
 		return nil, err
 	}
-	queueInfo := trigger.PbQueueInfo{}
+	queueInfo := trigger.QueueInfoPb{}
 	copier.CopyWithOption(&queueInfo, qinfo, copierx.Option)
 	return &trigger.ListScheduledTasksRes{
 		TasksInfo: taskInfo,

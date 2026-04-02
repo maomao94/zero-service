@@ -2,10 +2,11 @@ package logic
 
 import (
 	"context"
-	"github.com/jinzhu/copier"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/copierx"
+
+	"github.com/jinzhu/copier"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -34,7 +35,7 @@ func (l *HistoricalStatsLogic) HistoricalStats(in *trigger.HistoricalStatsReq) (
 	if err != nil {
 		return nil, err
 	}
-	dailyStatList := []*trigger.PbDailyStats{}
+	dailyStatList := []*trigger.DailyStatsPb{}
 	copier.CopyWithOption(&dailyStatList, dailyStats, copierx.Option)
 	return &trigger.HistoricalStatsRes{
 		DailyStat: dailyStatList,

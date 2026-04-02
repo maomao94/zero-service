@@ -54,14 +54,14 @@ func (l *GetPlanLogic) GetPlan(in *trigger.GetPlanReq) (*trigger.GetPlanRes, err
 		return nil, err
 	}
 	// 解析规则
-	var pbRule trigger.PbPlanRule
+	var pbRule trigger.PlanRulePb
 	err = json.Unmarshal([]byte(plan.RecurrenceRule), &pbRule)
 	if err != nil {
 		return nil, err
 	}
 
 	// 构建响应
-	pbPlan := &trigger.PbPlan{
+	pbPlan := &trigger.PlanPb{
 		CreateTime:       carbon.CreateFromStdTime(plan.CreateTime).ToDateTimeString(),
 		UpdateTime:       carbon.CreateFromStdTime(plan.UpdateTime).ToDateTimeString(),
 		CreateUser:       plan.CreateUser.String,

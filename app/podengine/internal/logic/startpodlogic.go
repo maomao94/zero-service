@@ -51,15 +51,15 @@ func (l *StartPodLogic) StartPod(in *podengine.StartPodReq) (*podengine.StartPod
 	}
 
 	// Build the pod response
-	pod := &podengine.Pod{
+	pod := &podengine.PodPb{
 		Id:    containerInfo.ID,
 		Name:  containerInfo.Name[1:], // Remove leading slash
-		Phase: podengine.PodPhase_POD_PHASE_RUNNING,
-		Containers: []*podengine.Container{
+		Phase: podengine.PodPhasePb_POD_PHASE_RUNNING,
+		Containers: []*podengine.ContainerPb{
 			{
 				Name:  containerInfo.Name[1:],
 				Image: containerInfo.Config.Image,
-				State: &podengine.ContainerState{
+				State: &podengine.ContainerStatePb{
 					Running:      true,
 					Terminated:   false,
 					Waiting:      false,

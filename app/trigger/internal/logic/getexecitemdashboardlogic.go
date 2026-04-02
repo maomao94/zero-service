@@ -122,17 +122,17 @@ func (l *GetExecItemDashboardLogic) GetExecItemDashboard(in *trigger.GetExecItem
 
 	// 构建响应
 	response := &trigger.GetExecItemDashboardRes{
-		Stats: make([]*trigger.ExecItemDashboardItem, 0, len(stats)),
+		Stats: make([]*trigger.ExecItemDashboardItemPb, 0, len(stats)),
 	}
 	for _, stat := range stats {
-		response.Stats = append(response.Stats, &trigger.ExecItemDashboardItem{
+		response.Stats = append(response.Stats, &trigger.ExecItemDashboardItemPb{
 			PlanType: stat.PlanType,
 			Total:    stat.Total,
-			Finished: &trigger.FinishedItemsStats{
+			Finished: &trigger.FinishedItemsStatsPb{
 				Total:      stat.FinishedTotal,
 				Terminated: stat.FinishedTerminated,
 			},
-			Pending: &trigger.PendingItemsStats{
+			Pending: &trigger.PendingItemsStatsPb{
 				Total:   stat.PendingTotal,
 				Delayed: stat.PendingDelayed,
 			},

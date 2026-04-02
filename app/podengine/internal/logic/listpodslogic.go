@@ -67,7 +67,7 @@ func (l *ListPodsLogic) ListPods(in *podengine.ListPodsReq) (*podengine.ListPods
 		return nil, fmt.Errorf("failed to list containers: %w", err)
 	}
 
-	var items []*podengine.ListPodItem
+	var items []*podengine.ListPodItemPb
 	for _, container := range containers {
 		containerName := strings.TrimPrefix(container.Names[0], "/")
 		phase := getPodPhaseFromStatus(container.State)
@@ -82,7 +82,7 @@ func (l *ListPodsLogic) ListPods(in *podengine.ListPodsReq) (*podengine.ListPods
 			}
 		}
 
-		item := &podengine.ListPodItem{
+		item := &podengine.ListPodItemPb{
 			Id:          container.ID,
 			Name:        containerName,
 			Phase:       phase,
@@ -108,7 +108,7 @@ func (l *ListPodsLogic) ListPods(in *podengine.ListPodsReq) (*podengine.ListPods
 	}
 	total := len(items)
 	if in.Offset > int32(total) {
-		items = []*podengine.ListPodItem{}
+		items = []*podengine.ListPodItemPb{}
 	} else {
 		end := in.Offset + in.Limit
 		if end > int32(total) {
@@ -123,17 +123,17 @@ func (l *ListPodsLogic) ListPods(in *podengine.ListPodsReq) (*podengine.ListPods
 	}, nil
 }
 
-func getPodPhaseFromStatus(state string) podengine.PodPhase {
+func getPodPhaseFromStatus(state string) podengine.PodPhasePb {
 	switch state {
 	case "running":
-		return podengine.PodPhase_POD_PHASE_RUNNING
+		return podengine.PodPhasePb_POD_PHASE_RUNNING
 	case "exited":
-		return podengine.PodPhase_POD_PHASE_SUCCEEDED
+		return podengine.PodPhasePb_POD_PHASE_SUCCEEDED
 	case "created":
-		return podengine.PodPhase_POD_PHASE_PENDING
+		return podengine.PodPhasePb_POD_PHASE_PENDING
 	case "stopped":
-		return podengine.PodPhase_POD_PHASE_STOPPED
+		return podengine.PodPhasePb_POD_PHASE_STOPPED
 	default:
-		return podengine.PodPhase_POD_PHASE_UNKNOWN
+		return podengine.PodPhasePb_POD_PHASE_UNKNOWN
 	}
 }

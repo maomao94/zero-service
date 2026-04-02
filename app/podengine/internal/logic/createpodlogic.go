@@ -116,15 +116,15 @@ func (l *CreatePodLogic) CreatePod(in *podengine.CreatePodReq) (*podengine.Creat
 		return nil, fmt.Errorf("failed to inspect container: %w", err)
 	}
 
-	pod := &podengine.Pod{
+	pod := &podengine.PodPb{
 		Id:    containerInfo.ID,
 		Name:  in.Name,
-		Phase: podengine.PodPhase_POD_PHASE_PENDING,
-		Containers: []*podengine.Container{
+		Phase: podengine.PodPhasePb_POD_PHASE_PENDING,
+		Containers: []*podengine.ContainerPb{
 			{
 				Name:  containerSpec.Name,
 				Image: containerSpec.Image,
-				State: &podengine.ContainerState{
+				State: &podengine.ContainerStatePb{
 					Running:      false,
 					Terminated:   false,
 					Waiting:      true,

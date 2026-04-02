@@ -54,7 +54,7 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 	}
 
 	// 构建响应
-	pbExecItem := &trigger.PbPlanExecItem{
+	pbExecItem := &trigger.PlanExecItemPb{
 		CreateTime:       carbon.CreateFromStdTime(execItem.CreateTime).ToDateTimeString(),
 		UpdateTime:       carbon.CreateFromStdTime(execItem.UpdateTime).ToDateTimeString(),
 		CreateUser:       execItem.CreateUser.String,
@@ -76,7 +76,7 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 		PlanTriggerTime:  carbon.CreateFromStdTime(execItem.PlanTriggerTime).ToDateTimeString(),
 		NextTriggerTime:  carbon.CreateFromStdTime(execItem.NextTriggerTime).ToDateTimeString(),
 		TriggerCount:     int32(execItem.TriggerCount),
-		Status:           trigger.PbExecItemStatus(execItem.Status),
+		Status:           trigger.ExecItemStatusPb(execItem.Status),
 		LastResult:       execItem.LastResult.String,
 		LastMessage:      execItem.LastMessage.String,
 		LastReason:       execItem.LastReason.String,
@@ -99,6 +99,6 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 		pbExecItem.PausedTime = carbon.CreateFromStdTime(execItem.PausedTime.Time).ToDateTimeString()
 	}
 	return &trigger.GetPlanExecItemRes{
-		PlanExecItem: []*trigger.PbPlanExecItem{pbExecItem},
+		PlanExecItem: []*trigger.PlanExecItemPb{pbExecItem},
 	}, nil
 }

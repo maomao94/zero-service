@@ -60,20 +60,20 @@ func (l *ListPlansLogic) ListPlans(in *trigger.ListPlansReq) (*trigger.ListPlans
 
 	// 构建响应
 	resp := &trigger.ListPlansRes{
-		Plans: make([]*trigger.PbPlan, 0, len(plans)),
+		Plans: make([]*trigger.PlanPb, 0, len(plans)),
 		Total: total,
 	}
 
 	// 转换计划列表
 	for _, plan := range plans {
 		// 解析规则
-		var pbRule trigger.PbPlanRule
+		var pbRule trigger.PlanRulePb
 		err = json.Unmarshal([]byte(plan.RecurrenceRule), &pbRule)
 		if err != nil {
 			continue
 		}
 
-		pbPlan := &trigger.PbPlan{
+		pbPlan := &trigger.PlanPb{
 			CreateTime:       carbon.CreateFromStdTime(plan.CreateTime).ToDateTimeString(),
 			UpdateTime:       carbon.CreateFromStdTime(plan.UpdateTime).ToDateTimeString(),
 			CreateUser:       plan.CreateUser.String,

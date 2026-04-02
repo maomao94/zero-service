@@ -35,22 +35,22 @@ var (
 	_ = sort.Sort
 )
 
-// Validate checks the field values on PodCondition with the rules defined in
+// Validate checks the field values on PodConditionPb with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *PodCondition) Validate() error {
+func (m *PodConditionPb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on PodCondition with the rules defined
+// ValidateAll checks the field values on PodConditionPb with the rules defined
 // in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in PodConditionMultiError, or
-// nil if none found.
-func (m *PodCondition) ValidateAll() error {
+// result is a list of violation errors wrapped in PodConditionPbMultiError,
+// or nil if none found.
+func (m *PodConditionPb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *PodCondition) validate(all bool) error {
+func (m *PodConditionPb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -68,18 +68,19 @@ func (m *PodCondition) validate(all bool) error {
 	// no validation rules for LastTransitionTime
 
 	if len(errors) > 0 {
-		return PodConditionMultiError(errors)
+		return PodConditionPbMultiError(errors)
 	}
 
 	return nil
 }
 
-// PodConditionMultiError is an error wrapping multiple validation errors
-// returned by PodCondition.ValidateAll() if the designated constraints aren't met.
-type PodConditionMultiError []error
+// PodConditionPbMultiError is an error wrapping multiple validation errors
+// returned by PodConditionPb.ValidateAll() if the designated constraints
+// aren't met.
+type PodConditionPbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m PodConditionMultiError) Error() string {
+func (m PodConditionPbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -88,11 +89,11 @@ func (m PodConditionMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m PodConditionMultiError) AllErrors() []error { return m }
+func (m PodConditionPbMultiError) AllErrors() []error { return m }
 
-// PodConditionValidationError is the validation error returned by
-// PodCondition.Validate if the designated constraints aren't met.
-type PodConditionValidationError struct {
+// PodConditionPbValidationError is the validation error returned by
+// PodConditionPb.Validate if the designated constraints aren't met.
+type PodConditionPbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -100,22 +101,22 @@ type PodConditionValidationError struct {
 }
 
 // Field function returns field value.
-func (e PodConditionValidationError) Field() string { return e.field }
+func (e PodConditionPbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e PodConditionValidationError) Reason() string { return e.reason }
+func (e PodConditionPbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e PodConditionValidationError) Cause() error { return e.cause }
+func (e PodConditionPbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e PodConditionValidationError) Key() bool { return e.key }
+func (e PodConditionPbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e PodConditionValidationError) ErrorName() string { return "PodConditionValidationError" }
+func (e PodConditionPbValidationError) ErrorName() string { return "PodConditionPbValidationError" }
 
 // Error satisfies the builtin error interface
-func (e PodConditionValidationError) Error() string {
+func (e PodConditionPbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -127,14 +128,14 @@ func (e PodConditionValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPodCondition.%s: %s%s",
+		"invalid %sPodConditionPb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = PodConditionValidationError{}
+var _ error = PodConditionPbValidationError{}
 
 var _ interface {
 	Field() string
@@ -142,24 +143,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = PodConditionValidationError{}
+} = PodConditionPbValidationError{}
 
-// Validate checks the field values on ContainerState with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *ContainerState) Validate() error {
+// Validate checks the field values on ContainerStatePb with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *ContainerStatePb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on ContainerState with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in ContainerStateMultiError,
-// or nil if none found.
-func (m *ContainerState) ValidateAll() error {
+// ValidateAll checks the field values on ContainerStatePb with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ContainerStatePbMultiError, or nil if none found.
+func (m *ContainerStatePb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *ContainerState) validate(all bool) error {
+func (m *ContainerStatePb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -183,19 +184,19 @@ func (m *ContainerState) validate(all bool) error {
 	// no validation rules for ExitCode
 
 	if len(errors) > 0 {
-		return ContainerStateMultiError(errors)
+		return ContainerStatePbMultiError(errors)
 	}
 
 	return nil
 }
 
-// ContainerStateMultiError is an error wrapping multiple validation errors
-// returned by ContainerState.ValidateAll() if the designated constraints
+// ContainerStatePbMultiError is an error wrapping multiple validation errors
+// returned by ContainerStatePb.ValidateAll() if the designated constraints
 // aren't met.
-type ContainerStateMultiError []error
+type ContainerStatePbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m ContainerStateMultiError) Error() string {
+func (m ContainerStatePbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -204,11 +205,11 @@ func (m ContainerStateMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m ContainerStateMultiError) AllErrors() []error { return m }
+func (m ContainerStatePbMultiError) AllErrors() []error { return m }
 
-// ContainerStateValidationError is the validation error returned by
-// ContainerState.Validate if the designated constraints aren't met.
-type ContainerStateValidationError struct {
+// ContainerStatePbValidationError is the validation error returned by
+// ContainerStatePb.Validate if the designated constraints aren't met.
+type ContainerStatePbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -216,22 +217,22 @@ type ContainerStateValidationError struct {
 }
 
 // Field function returns field value.
-func (e ContainerStateValidationError) Field() string { return e.field }
+func (e ContainerStatePbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ContainerStateValidationError) Reason() string { return e.reason }
+func (e ContainerStatePbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ContainerStateValidationError) Cause() error { return e.cause }
+func (e ContainerStatePbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ContainerStateValidationError) Key() bool { return e.key }
+func (e ContainerStatePbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ContainerStateValidationError) ErrorName() string { return "ContainerStateValidationError" }
+func (e ContainerStatePbValidationError) ErrorName() string { return "ContainerStatePbValidationError" }
 
 // Error satisfies the builtin error interface
-func (e ContainerStateValidationError) Error() string {
+func (e ContainerStatePbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -243,14 +244,14 @@ func (e ContainerStateValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sContainerState.%s: %s%s",
+		"invalid %sContainerStatePb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ContainerStateValidationError{}
+var _ error = ContainerStatePbValidationError{}
 
 var _ interface {
 	Field() string
@@ -258,24 +259,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ContainerStateValidationError{}
+} = ContainerStatePbValidationError{}
 
-// Validate checks the field values on Container with the rules defined in the
-// proto definition for this message. If any rules are violated, the first
+// Validate checks the field values on ContainerPb with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *Container) Validate() error {
+func (m *ContainerPb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Container with the rules defined in
+// ValidateAll checks the field values on ContainerPb with the rules defined in
 // the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in ContainerMultiError, or nil
-// if none found.
-func (m *Container) ValidateAll() error {
+// result is a list of violation errors wrapped in ContainerPbMultiError, or
+// nil if none found.
+func (m *ContainerPb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Container) validate(all bool) error {
+func (m *ContainerPb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -290,7 +291,7 @@ func (m *Container) validate(all bool) error {
 		switch v := interface{}(m.GetState()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ContainerValidationError{
+				errors = append(errors, ContainerPbValidationError{
 					field:  "State",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -298,7 +299,7 @@ func (m *Container) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, ContainerValidationError{
+				errors = append(errors, ContainerPbValidationError{
 					field:  "State",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -307,7 +308,7 @@ func (m *Container) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetState()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return ContainerValidationError{
+			return ContainerPbValidationError{
 				field:  "State",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -320,18 +321,18 @@ func (m *Container) validate(all bool) error {
 	// no validation rules for Resources
 
 	if len(errors) > 0 {
-		return ContainerMultiError(errors)
+		return ContainerPbMultiError(errors)
 	}
 
 	return nil
 }
 
-// ContainerMultiError is an error wrapping multiple validation errors returned
-// by Container.ValidateAll() if the designated constraints aren't met.
-type ContainerMultiError []error
+// ContainerPbMultiError is an error wrapping multiple validation errors
+// returned by ContainerPb.ValidateAll() if the designated constraints aren't met.
+type ContainerPbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m ContainerMultiError) Error() string {
+func (m ContainerPbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -340,11 +341,11 @@ func (m ContainerMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m ContainerMultiError) AllErrors() []error { return m }
+func (m ContainerPbMultiError) AllErrors() []error { return m }
 
-// ContainerValidationError is the validation error returned by
-// Container.Validate if the designated constraints aren't met.
-type ContainerValidationError struct {
+// ContainerPbValidationError is the validation error returned by
+// ContainerPb.Validate if the designated constraints aren't met.
+type ContainerPbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -352,22 +353,22 @@ type ContainerValidationError struct {
 }
 
 // Field function returns field value.
-func (e ContainerValidationError) Field() string { return e.field }
+func (e ContainerPbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ContainerValidationError) Reason() string { return e.reason }
+func (e ContainerPbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ContainerValidationError) Cause() error { return e.cause }
+func (e ContainerPbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ContainerValidationError) Key() bool { return e.key }
+func (e ContainerPbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ContainerValidationError) ErrorName() string { return "ContainerValidationError" }
+func (e ContainerPbValidationError) ErrorName() string { return "ContainerPbValidationError" }
 
 // Error satisfies the builtin error interface
-func (e ContainerValidationError) Error() string {
+func (e ContainerPbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -379,14 +380,14 @@ func (e ContainerValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sContainer.%s: %s%s",
+		"invalid %sContainerPb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ContainerValidationError{}
+var _ error = ContainerPbValidationError{}
 
 var _ interface {
 	Field() string
@@ -394,24 +395,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ContainerValidationError{}
+} = ContainerPbValidationError{}
 
-// Validate checks the field values on ContainerSpec with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *ContainerSpec) Validate() error {
+// Validate checks the field values on ContainerSpecPb with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *ContainerSpecPb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on ContainerSpec with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in ContainerSpecMultiError, or
-// nil if none found.
-func (m *ContainerSpec) ValidateAll() error {
+// ValidateAll checks the field values on ContainerSpecPb with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ContainerSpecPbMultiError, or nil if none found.
+func (m *ContainerSpecPb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *ContainerSpec) validate(all bool) error {
+func (m *ContainerSpecPb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -419,7 +420,7 @@ func (m *ContainerSpec) validate(all bool) error {
 	var errors []error
 
 	if utf8.RuneCountInString(m.GetName()) < 1 {
-		err := ContainerSpecValidationError{
+		err := ContainerSpecPbValidationError{
 			field:  "Name",
 			reason: "value length must be at least 1 runes",
 		}
@@ -430,7 +431,7 @@ func (m *ContainerSpec) validate(all bool) error {
 	}
 
 	if utf8.RuneCountInString(m.GetImage()) < 1 {
-		err := ContainerSpecValidationError{
+		err := ContainerSpecPbValidationError{
 			field:  "Image",
 			reason: "value length must be at least 1 runes",
 		}
@@ -445,19 +446,19 @@ func (m *ContainerSpec) validate(all bool) error {
 	// no validation rules for Resources
 
 	if len(errors) > 0 {
-		return ContainerSpecMultiError(errors)
+		return ContainerSpecPbMultiError(errors)
 	}
 
 	return nil
 }
 
-// ContainerSpecMultiError is an error wrapping multiple validation errors
-// returned by ContainerSpec.ValidateAll() if the designated constraints
+// ContainerSpecPbMultiError is an error wrapping multiple validation errors
+// returned by ContainerSpecPb.ValidateAll() if the designated constraints
 // aren't met.
-type ContainerSpecMultiError []error
+type ContainerSpecPbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m ContainerSpecMultiError) Error() string {
+func (m ContainerSpecPbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -466,11 +467,11 @@ func (m ContainerSpecMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m ContainerSpecMultiError) AllErrors() []error { return m }
+func (m ContainerSpecPbMultiError) AllErrors() []error { return m }
 
-// ContainerSpecValidationError is the validation error returned by
-// ContainerSpec.Validate if the designated constraints aren't met.
-type ContainerSpecValidationError struct {
+// ContainerSpecPbValidationError is the validation error returned by
+// ContainerSpecPb.Validate if the designated constraints aren't met.
+type ContainerSpecPbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -478,22 +479,22 @@ type ContainerSpecValidationError struct {
 }
 
 // Field function returns field value.
-func (e ContainerSpecValidationError) Field() string { return e.field }
+func (e ContainerSpecPbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ContainerSpecValidationError) Reason() string { return e.reason }
+func (e ContainerSpecPbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ContainerSpecValidationError) Cause() error { return e.cause }
+func (e ContainerSpecPbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ContainerSpecValidationError) Key() bool { return e.key }
+func (e ContainerSpecPbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ContainerSpecValidationError) ErrorName() string { return "ContainerSpecValidationError" }
+func (e ContainerSpecPbValidationError) ErrorName() string { return "ContainerSpecPbValidationError" }
 
 // Error satisfies the builtin error interface
-func (e ContainerSpecValidationError) Error() string {
+func (e ContainerSpecPbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -505,14 +506,14 @@ func (e ContainerSpecValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sContainerSpec.%s: %s%s",
+		"invalid %sContainerSpecPb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ContainerSpecValidationError{}
+var _ error = ContainerSpecPbValidationError{}
 
 var _ interface {
 	Field() string
@@ -520,23 +521,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ContainerSpecValidationError{}
+} = ContainerSpecPbValidationError{}
 
-// Validate checks the field values on PodSpec with the rules defined in the
+// Validate checks the field values on PodSpecPb with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *PodSpec) Validate() error {
+func (m *PodSpecPb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on PodSpec with the rules defined in the
-// proto definition for this message. If any rules are violated, the result is
-// a list of violation errors wrapped in PodSpecMultiError, or nil if none found.
-func (m *PodSpec) ValidateAll() error {
+// ValidateAll checks the field values on PodSpecPb with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in PodSpecPbMultiError, or nil
+// if none found.
+func (m *PodSpecPb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *PodSpec) validate(all bool) error {
+func (m *PodSpecPb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -544,7 +546,7 @@ func (m *PodSpec) validate(all bool) error {
 	var errors []error
 
 	if utf8.RuneCountInString(m.GetName()) < 1 {
-		err := PodSpecValidationError{
+		err := PodSpecPbValidationError{
 			field:  "Name",
 			reason: "value length must be at least 1 runes",
 		}
@@ -555,7 +557,7 @@ func (m *PodSpec) validate(all bool) error {
 	}
 
 	if len(m.GetContainers()) < 1 {
-		err := PodSpecValidationError{
+		err := PodSpecPbValidationError{
 			field:  "Containers",
 			reason: "value must contain at least 1 item(s)",
 		}
@@ -572,7 +574,7 @@ func (m *PodSpec) validate(all bool) error {
 			switch v := interface{}(item).(type) {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, PodSpecValidationError{
+					errors = append(errors, PodSpecPbValidationError{
 						field:  fmt.Sprintf("Containers[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -580,7 +582,7 @@ func (m *PodSpec) validate(all bool) error {
 				}
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
-					errors = append(errors, PodSpecValidationError{
+					errors = append(errors, PodSpecPbValidationError{
 						field:  fmt.Sprintf("Containers[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -589,7 +591,7 @@ func (m *PodSpec) validate(all bool) error {
 			}
 		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return PodSpecValidationError{
+				return PodSpecPbValidationError{
 					field:  fmt.Sprintf("Containers[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -603,8 +605,8 @@ func (m *PodSpec) validate(all bool) error {
 
 	// no validation rules for Annotations
 
-	if _, ok := _PodSpec_RestartPolicy_InLookup[m.GetRestartPolicy()]; !ok {
-		err := PodSpecValidationError{
+	if _, ok := _PodSpecPb_RestartPolicy_InLookup[m.GetRestartPolicy()]; !ok {
+		err := PodSpecPbValidationError{
 			field:  "RestartPolicy",
 			reason: "value must be in list [no onFailure always]",
 		}
@@ -616,8 +618,8 @@ func (m *PodSpec) validate(all bool) error {
 
 	// no validation rules for TerminationGracePeriodSeconds
 
-	if _, ok := _PodSpec_NetworkMode_InLookup[m.GetNetworkMode()]; !ok {
-		err := PodSpecValidationError{
+	if _, ok := _PodSpecPb_NetworkMode_InLookup[m.GetNetworkMode()]; !ok {
+		err := PodSpecPbValidationError{
 			field:  "NetworkMode",
 			reason: "value must be in list [bridge host none]",
 		}
@@ -632,18 +634,18 @@ func (m *PodSpec) validate(all bool) error {
 	// no validation rules for NetworkConfig
 
 	if len(errors) > 0 {
-		return PodSpecMultiError(errors)
+		return PodSpecPbMultiError(errors)
 	}
 
 	return nil
 }
 
-// PodSpecMultiError is an error wrapping multiple validation errors returned
-// by PodSpec.ValidateAll() if the designated constraints aren't met.
-type PodSpecMultiError []error
+// PodSpecPbMultiError is an error wrapping multiple validation errors returned
+// by PodSpecPb.ValidateAll() if the designated constraints aren't met.
+type PodSpecPbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m PodSpecMultiError) Error() string {
+func (m PodSpecPbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -652,11 +654,11 @@ func (m PodSpecMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m PodSpecMultiError) AllErrors() []error { return m }
+func (m PodSpecPbMultiError) AllErrors() []error { return m }
 
-// PodSpecValidationError is the validation error returned by PodSpec.Validate
-// if the designated constraints aren't met.
-type PodSpecValidationError struct {
+// PodSpecPbValidationError is the validation error returned by
+// PodSpecPb.Validate if the designated constraints aren't met.
+type PodSpecPbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -664,22 +666,22 @@ type PodSpecValidationError struct {
 }
 
 // Field function returns field value.
-func (e PodSpecValidationError) Field() string { return e.field }
+func (e PodSpecPbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e PodSpecValidationError) Reason() string { return e.reason }
+func (e PodSpecPbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e PodSpecValidationError) Cause() error { return e.cause }
+func (e PodSpecPbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e PodSpecValidationError) Key() bool { return e.key }
+func (e PodSpecPbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e PodSpecValidationError) ErrorName() string { return "PodSpecValidationError" }
+func (e PodSpecPbValidationError) ErrorName() string { return "PodSpecPbValidationError" }
 
 // Error satisfies the builtin error interface
-func (e PodSpecValidationError) Error() string {
+func (e PodSpecPbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -691,14 +693,14 @@ func (e PodSpecValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPodSpec.%s: %s%s",
+		"invalid %sPodSpecPb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = PodSpecValidationError{}
+var _ error = PodSpecPbValidationError{}
 
 var _ interface {
 	Field() string
@@ -706,35 +708,35 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = PodSpecValidationError{}
+} = PodSpecPbValidationError{}
 
-var _PodSpec_RestartPolicy_InLookup = map[string]struct{}{
+var _PodSpecPb_RestartPolicy_InLookup = map[string]struct{}{
 	"no":        {},
 	"onFailure": {},
 	"always":    {},
 }
 
-var _PodSpec_NetworkMode_InLookup = map[string]struct{}{
+var _PodSpecPb_NetworkMode_InLookup = map[string]struct{}{
 	"bridge": {},
 	"host":   {},
 	"none":   {},
 }
 
-// Validate checks the field values on Pod with the rules defined in the proto
-// definition for this message. If any rules are violated, the first error
-// encountered is returned, or nil if there are no violations.
-func (m *Pod) Validate() error {
+// Validate checks the field values on PodPb with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *PodPb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Pod with the rules defined in the
+// ValidateAll checks the field values on PodPb with the rules defined in the
 // proto definition for this message. If any rules are violated, the result is
-// a list of violation errors wrapped in PodMultiError, or nil if none found.
-func (m *Pod) ValidateAll() error {
+// a list of violation errors wrapped in PodPbMultiError, or nil if none found.
+func (m *PodPb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Pod) validate(all bool) error {
+func (m *PodPb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -754,7 +756,7 @@ func (m *Pod) validate(all bool) error {
 			switch v := interface{}(item).(type) {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, PodValidationError{
+					errors = append(errors, PodPbValidationError{
 						field:  fmt.Sprintf("Conditions[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -762,7 +764,7 @@ func (m *Pod) validate(all bool) error {
 				}
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
-					errors = append(errors, PodValidationError{
+					errors = append(errors, PodPbValidationError{
 						field:  fmt.Sprintf("Conditions[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -771,7 +773,7 @@ func (m *Pod) validate(all bool) error {
 			}
 		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return PodValidationError{
+				return PodPbValidationError{
 					field:  fmt.Sprintf("Conditions[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -788,7 +790,7 @@ func (m *Pod) validate(all bool) error {
 			switch v := interface{}(item).(type) {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, PodValidationError{
+					errors = append(errors, PodPbValidationError{
 						field:  fmt.Sprintf("Containers[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -796,7 +798,7 @@ func (m *Pod) validate(all bool) error {
 				}
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
-					errors = append(errors, PodValidationError{
+					errors = append(errors, PodPbValidationError{
 						field:  fmt.Sprintf("Containers[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -805,7 +807,7 @@ func (m *Pod) validate(all bool) error {
 			}
 		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return PodValidationError{
+				return PodPbValidationError{
 					field:  fmt.Sprintf("Containers[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -828,18 +830,18 @@ func (m *Pod) validate(all bool) error {
 	// no validation rules for DeletedTime
 
 	if len(errors) > 0 {
-		return PodMultiError(errors)
+		return PodPbMultiError(errors)
 	}
 
 	return nil
 }
 
-// PodMultiError is an error wrapping multiple validation errors returned by
-// Pod.ValidateAll() if the designated constraints aren't met.
-type PodMultiError []error
+// PodPbMultiError is an error wrapping multiple validation errors returned by
+// PodPb.ValidateAll() if the designated constraints aren't met.
+type PodPbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m PodMultiError) Error() string {
+func (m PodPbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -848,11 +850,11 @@ func (m PodMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m PodMultiError) AllErrors() []error { return m }
+func (m PodPbMultiError) AllErrors() []error { return m }
 
-// PodValidationError is the validation error returned by Pod.Validate if the
-// designated constraints aren't met.
-type PodValidationError struct {
+// PodPbValidationError is the validation error returned by PodPb.Validate if
+// the designated constraints aren't met.
+type PodPbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -860,22 +862,22 @@ type PodValidationError struct {
 }
 
 // Field function returns field value.
-func (e PodValidationError) Field() string { return e.field }
+func (e PodPbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e PodValidationError) Reason() string { return e.reason }
+func (e PodPbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e PodValidationError) Cause() error { return e.cause }
+func (e PodPbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e PodValidationError) Key() bool { return e.key }
+func (e PodPbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e PodValidationError) ErrorName() string { return "PodValidationError" }
+func (e PodPbValidationError) ErrorName() string { return "PodPbValidationError" }
 
 // Error satisfies the builtin error interface
-func (e PodValidationError) Error() string {
+func (e PodPbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -887,14 +889,14 @@ func (e PodValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPod.%s: %s%s",
+		"invalid %sPodPb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = PodValidationError{}
+var _ error = PodPbValidationError{}
 
 var _ interface {
 	Field() string
@@ -902,7 +904,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = PodValidationError{}
+} = PodPbValidationError{}
 
 // Validate checks the field values on CreatePodReq with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
@@ -2379,22 +2381,22 @@ var _ interface {
 	ErrorName() string
 } = ListPodsResValidationError{}
 
-// Validate checks the field values on ListPodItem with the rules defined in
+// Validate checks the field values on ListPodItemPb with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *ListPodItem) Validate() error {
+func (m *ListPodItemPb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on ListPodItem with the rules defined in
-// the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in ListPodItemMultiError, or
+// ValidateAll checks the field values on ListPodItemPb with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in ListPodItemPbMultiError, or
 // nil if none found.
-func (m *ListPodItem) ValidateAll() error {
+func (m *ListPodItemPb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *ListPodItem) validate(all bool) error {
+func (m *ListPodItemPb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -2428,18 +2430,19 @@ func (m *ListPodItem) validate(all bool) error {
 	// no validation rules for NetworkMode
 
 	if len(errors) > 0 {
-		return ListPodItemMultiError(errors)
+		return ListPodItemPbMultiError(errors)
 	}
 
 	return nil
 }
 
-// ListPodItemMultiError is an error wrapping multiple validation errors
-// returned by ListPodItem.ValidateAll() if the designated constraints aren't met.
-type ListPodItemMultiError []error
+// ListPodItemPbMultiError is an error wrapping multiple validation errors
+// returned by ListPodItemPb.ValidateAll() if the designated constraints
+// aren't met.
+type ListPodItemPbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m ListPodItemMultiError) Error() string {
+func (m ListPodItemPbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -2448,11 +2451,11 @@ func (m ListPodItemMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m ListPodItemMultiError) AllErrors() []error { return m }
+func (m ListPodItemPbMultiError) AllErrors() []error { return m }
 
-// ListPodItemValidationError is the validation error returned by
-// ListPodItem.Validate if the designated constraints aren't met.
-type ListPodItemValidationError struct {
+// ListPodItemPbValidationError is the validation error returned by
+// ListPodItemPb.Validate if the designated constraints aren't met.
+type ListPodItemPbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -2460,22 +2463,22 @@ type ListPodItemValidationError struct {
 }
 
 // Field function returns field value.
-func (e ListPodItemValidationError) Field() string { return e.field }
+func (e ListPodItemPbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ListPodItemValidationError) Reason() string { return e.reason }
+func (e ListPodItemPbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ListPodItemValidationError) Cause() error { return e.cause }
+func (e ListPodItemPbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ListPodItemValidationError) Key() bool { return e.key }
+func (e ListPodItemPbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ListPodItemValidationError) ErrorName() string { return "ListPodItemValidationError" }
+func (e ListPodItemPbValidationError) ErrorName() string { return "ListPodItemPbValidationError" }
 
 // Error satisfies the builtin error interface
-func (e ListPodItemValidationError) Error() string {
+func (e ListPodItemPbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -2487,14 +2490,14 @@ func (e ListPodItemValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sListPodItem.%s: %s%s",
+		"invalid %sListPodItemPb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ListPodItemValidationError{}
+var _ error = ListPodItemPbValidationError{}
 
 var _ interface {
 	Field() string
@@ -2502,7 +2505,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ListPodItemValidationError{}
+} = ListPodItemPbValidationError{}
 
 // Validate checks the field values on DeletePodReq with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
@@ -2966,22 +2969,22 @@ var _ interface {
 	ErrorName() string
 } = GetPodStatsResValidationError{}
 
-// Validate checks the field values on ContainerStats with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *ContainerStats) Validate() error {
+// Validate checks the field values on ContainerStatsPb with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *ContainerStatsPb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on ContainerStats with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in ContainerStatsMultiError,
-// or nil if none found.
-func (m *ContainerStats) ValidateAll() error {
+// ValidateAll checks the field values on ContainerStatsPb with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ContainerStatsPbMultiError, or nil if none found.
+func (m *ContainerStatsPb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *ContainerStats) validate(all bool) error {
+func (m *ContainerStatsPb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -3031,19 +3034,19 @@ func (m *ContainerStats) validate(all bool) error {
 	// no validation rules for Timestamp
 
 	if len(errors) > 0 {
-		return ContainerStatsMultiError(errors)
+		return ContainerStatsPbMultiError(errors)
 	}
 
 	return nil
 }
 
-// ContainerStatsMultiError is an error wrapping multiple validation errors
-// returned by ContainerStats.ValidateAll() if the designated constraints
+// ContainerStatsPbMultiError is an error wrapping multiple validation errors
+// returned by ContainerStatsPb.ValidateAll() if the designated constraints
 // aren't met.
-type ContainerStatsMultiError []error
+type ContainerStatsPbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m ContainerStatsMultiError) Error() string {
+func (m ContainerStatsPbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -3052,11 +3055,11 @@ func (m ContainerStatsMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m ContainerStatsMultiError) AllErrors() []error { return m }
+func (m ContainerStatsPbMultiError) AllErrors() []error { return m }
 
-// ContainerStatsValidationError is the validation error returned by
-// ContainerStats.Validate if the designated constraints aren't met.
-type ContainerStatsValidationError struct {
+// ContainerStatsPbValidationError is the validation error returned by
+// ContainerStatsPb.Validate if the designated constraints aren't met.
+type ContainerStatsPbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -3064,22 +3067,22 @@ type ContainerStatsValidationError struct {
 }
 
 // Field function returns field value.
-func (e ContainerStatsValidationError) Field() string { return e.field }
+func (e ContainerStatsPbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ContainerStatsValidationError) Reason() string { return e.reason }
+func (e ContainerStatsPbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ContainerStatsValidationError) Cause() error { return e.cause }
+func (e ContainerStatsPbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ContainerStatsValidationError) Key() bool { return e.key }
+func (e ContainerStatsPbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ContainerStatsValidationError) ErrorName() string { return "ContainerStatsValidationError" }
+func (e ContainerStatsPbValidationError) ErrorName() string { return "ContainerStatsPbValidationError" }
 
 // Error satisfies the builtin error interface
-func (e ContainerStatsValidationError) Error() string {
+func (e ContainerStatsPbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -3091,14 +3094,14 @@ func (e ContainerStatsValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sContainerStats.%s: %s%s",
+		"invalid %sContainerStatsPb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ContainerStatsValidationError{}
+var _ error = ContainerStatsPbValidationError{}
 
 var _ interface {
 	Field() string
@@ -3106,7 +3109,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ContainerStatsValidationError{}
+} = ContainerStatsPbValidationError{}
 
 // Validate checks the field values on ListImagesReq with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
@@ -3370,21 +3373,21 @@ var _ interface {
 	ErrorName() string
 } = ListImagesResValidationError{}
 
-// Validate checks the field values on Image with the rules defined in the
+// Validate checks the field values on ImagePb with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *Image) Validate() error {
+func (m *ImagePb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Image with the rules defined in the
+// ValidateAll checks the field values on ImagePb with the rules defined in the
 // proto definition for this message. If any rules are violated, the result is
-// a list of violation errors wrapped in ImageMultiError, or nil if none found.
-func (m *Image) ValidateAll() error {
+// a list of violation errors wrapped in ImagePbMultiError, or nil if none found.
+func (m *ImagePb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Image) validate(all bool) error {
+func (m *ImagePb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -3402,18 +3405,18 @@ func (m *Image) validate(all bool) error {
 	// no validation rules for Labels
 
 	if len(errors) > 0 {
-		return ImageMultiError(errors)
+		return ImagePbMultiError(errors)
 	}
 
 	return nil
 }
 
-// ImageMultiError is an error wrapping multiple validation errors returned by
-// Image.ValidateAll() if the designated constraints aren't met.
-type ImageMultiError []error
+// ImagePbMultiError is an error wrapping multiple validation errors returned
+// by ImagePb.ValidateAll() if the designated constraints aren't met.
+type ImagePbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m ImageMultiError) Error() string {
+func (m ImagePbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -3422,11 +3425,11 @@ func (m ImageMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m ImageMultiError) AllErrors() []error { return m }
+func (m ImagePbMultiError) AllErrors() []error { return m }
 
-// ImageValidationError is the validation error returned by Image.Validate if
-// the designated constraints aren't met.
-type ImageValidationError struct {
+// ImagePbValidationError is the validation error returned by ImagePb.Validate
+// if the designated constraints aren't met.
+type ImagePbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -3434,22 +3437,22 @@ type ImageValidationError struct {
 }
 
 // Field function returns field value.
-func (e ImageValidationError) Field() string { return e.field }
+func (e ImagePbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ImageValidationError) Reason() string { return e.reason }
+func (e ImagePbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ImageValidationError) Cause() error { return e.cause }
+func (e ImagePbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ImageValidationError) Key() bool { return e.key }
+func (e ImagePbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ImageValidationError) ErrorName() string { return "ImageValidationError" }
+func (e ImagePbValidationError) ErrorName() string { return "ImagePbValidationError" }
 
 // Error satisfies the builtin error interface
-func (e ImageValidationError) Error() string {
+func (e ImagePbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -3461,14 +3464,14 @@ func (e ImageValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sImage.%s: %s%s",
+		"invalid %sImagePb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ImageValidationError{}
+var _ error = ImagePbValidationError{}
 
 var _ interface {
 	Field() string
@@ -3476,4 +3479,4 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ImageValidationError{}
+} = ImagePbValidationError{}

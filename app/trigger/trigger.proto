@@ -106,7 +106,7 @@ service TriggerRpc {
 }
 
 // 执行项调度状态枚举定义
-enum PbExecItemStatus {
+enum ExecItemStatusPb {
   // 初始等待调度，可扫表触发
   EXEC_ITEM_STATUS_WAITING = 0;
   // 延期等待（业务失败重试或业务延期），可扫表触发
@@ -121,7 +121,7 @@ enum PbExecItemStatus {
   EXEC_ITEM_STATUS_TERMINATED = 300;
 }
 
-message PbTaskInfo {
+message TaskInfoPb {
   // ID is the identifier of the task.
   string id = 1;
   // Queue is the name of the queue in which the task belongs.
@@ -158,7 +158,7 @@ message PbTaskInfo {
   string result = 17;
 }
 
-message PbDailyStats  {
+message DailyStatsPb {
   // Name of the queue.
   string queue = 1;
   // Total number of tasks being processed during the given date.
@@ -170,7 +170,7 @@ message PbDailyStats  {
   string date = 4;
 }
 
-message PbQueueInfo  {
+message QueueInfoPb {
   // Name of the queue.
   string Queue = 1;
   // Total number of bytes that the queue and its tasks require to be stored in redis.
@@ -301,7 +301,7 @@ message GetQueueInfoReq {
 }
 
 message GetQueueInfoRes {
-  PbQueueInfo queueInfo = 1;
+  QueueInfoPb queueInfo = 1;
 }
 
 message ArchiveTaskReq {
@@ -338,7 +338,7 @@ message GetTaskInfoReq {
 }
 
 message GetTaskInfoRes {
-  PbTaskInfo taskInfo = 1;
+  TaskInfoPb taskInfo = 1;
 }
 
 message DeleteAllCompletedTasksReq {
@@ -373,7 +373,7 @@ message HistoricalStatsReq {
 }
 
 message HistoricalStatsRes {
-  repeated PbDailyStats dailyStat = 1;
+  repeated DailyStatsPb dailyStat = 1;
 }
 
 message ListActiveTasksReq {
@@ -385,8 +385,8 @@ message ListActiveTasksReq {
 }
 
 message ListActiveTasksRes {
-  PbQueueInfo queueInfo = 1;
-  repeated PbTaskInfo tasksInfo = 2;
+  QueueInfoPb queueInfo = 1;
+  repeated TaskInfoPb tasksInfo = 2;
 }
 
 message ListPendingTasksReq {
@@ -398,8 +398,8 @@ message ListPendingTasksReq {
 }
 
 message ListPendingTasksRes {
-  PbQueueInfo queueInfo = 1;
-  repeated PbTaskInfo tasksInfo = 2;
+  QueueInfoPb queueInfo = 1;
+  repeated TaskInfoPb tasksInfo = 2;
 }
 
 message ListAggregatingTasksReq {
@@ -412,8 +412,8 @@ message ListAggregatingTasksReq {
 }
 
 message ListAggregatingTasksRes {
-  PbQueueInfo queueInfo = 1;
-  repeated PbTaskInfo tasksInfo = 2;
+  QueueInfoPb queueInfo = 1;
+  repeated TaskInfoPb tasksInfo = 2;
 }
 
 message ListScheduledTasksReq {
@@ -425,8 +425,8 @@ message ListScheduledTasksReq {
 }
 
 message ListScheduledTasksRes {
-  PbQueueInfo queueInfo = 1;
-  repeated PbTaskInfo tasksInfo = 2;
+  QueueInfoPb queueInfo = 1;
+  repeated TaskInfoPb tasksInfo = 2;
 }
 
 message ListRetryTasksReq {
@@ -438,8 +438,8 @@ message ListRetryTasksReq {
 }
 
 message ListRetryTasksRes {
-  PbQueueInfo queueInfo = 1;
-  repeated PbTaskInfo tasksInfo = 2;
+  QueueInfoPb queueInfo = 1;
+  repeated TaskInfoPb tasksInfo = 2;
 }
 
 message ListArchivedTasksReq {
@@ -451,8 +451,8 @@ message ListArchivedTasksReq {
 }
 
 message ListArchivedTasksRes {
-  PbQueueInfo queueInfo = 1;
-  repeated PbTaskInfo tasksInfo = 2;
+  QueueInfoPb queueInfo = 1;
+  repeated TaskInfoPb tasksInfo = 2;
 }
 
 message ListCompletedTasksReq {
@@ -464,8 +464,8 @@ message ListCompletedTasksReq {
 }
 
 message ListCompletedTasksRes {
-  PbQueueInfo queueInfo = 1;
-  repeated PbTaskInfo tasksInfo = 2;
+  QueueInfoPb queueInfo = 1;
+  repeated TaskInfoPb tasksInfo = 2;
 }
 
 message RunTaskReq {
@@ -491,7 +491,7 @@ message CalcPlanTaskDateReq {
   // 格式：yyyy-MM-dd HH:mm:ss
   string endTime = 2;
   // 计划规则项 默认 规则项 MINUTELY
-  PbPlanRule rule = 3 [(validate.rules).message = {required: true}];
+  PlanRulePb rule = 3 [(validate.rules).message = {required: true}];
   // 排除日期列表
   // 格式：yyyy-MM-dd
   repeated string excludeDates = 4 [(validate.rules).repeated = {items: {string: {min_len: 1}}}];
@@ -525,7 +525,7 @@ message CreatePlanTaskReq {
   // 格式：yyyy-MM-dd HH:mm:ss
   string endTime = 7;
   // 计划规则项 默认 规则项 MINUTELY
-  PbPlanRule rule = 8 [(validate.rules).message = {required: true}];
+  PlanRulePb rule = 8 [(validate.rules).message = {required: true}];
   // 排除日期列表
   // 格式：yyyy-MM-dd
   repeated string excludeDates = 9 [(validate.rules).repeated = {items: {string: {min_len: 1}}}];
@@ -534,7 +534,7 @@ message CreatePlanTaskReq {
   // 间隔类型 0-不间隔（同时发起） 1-往后顺延 2-间隔时间内偏移
   int32 intervalType = 11 [(validate.rules).int32 = {gte: 0, lte: 2}];
   // 计划执行项-根据规则项生成日期批次-batchId 并生成对应批次执行项-execId
-  repeated CreatePlanExecItem execItems = 12 [(validate.rules).repeated = {min_items: 1}];
+  repeated CreatePlanExecItemPb execItems = 12 [(validate.rules).repeated = {min_items: 1}];
   // batchNum 前缀
   string batchNumPrefix = 13;
   // 是否跳过时间过滤，用于立即执行的计划
@@ -548,7 +548,7 @@ message CreatePlanTaskReq {
   string ext5 = 54;
 }
 
-message PbPlanRule {
+message PlanRulePb {
   // 规则项 0-YEARLY 1-MONTHLY 2-WEEKLY 3-DAILY 4-HOURLY 5-MINUTELY
   int32 freq = 1 [(validate.rules).int32 = {gte: 0, lte: 5}];
   // 月（1-12）
@@ -585,7 +585,8 @@ message PbPlanRule {
   ];
 }
 
-message CreatePlanExecItem {
+// 计划执行项创建数据模型
+message CreatePlanExecItemPb {
   // 执行项ID,业务字段,例如工单号
   string itemId = 1 [(validate.rules).string = {min_len: 1}];
   // 执行项类型,业务字段
@@ -729,10 +730,10 @@ message GetPlanReq {
 }
 
 message GetPlanRes {
-  PbPlan plan = 1;
+  PlanPb plan = 1;
 }
 
-message PbPlan{
+message PlanPb {
   // 创建时间
   string createTime = 101;
   // 更新时间
@@ -761,7 +762,7 @@ message PbPlan{
   // 规则生效结束时间
   string endTime = 7;
   // 计划规则项
-  PbPlanRule rule = 8;
+  PlanRulePb rule = 8;
   // 状态：1-启用，2-暂停，3-终止
   int32 status = 9;
   // 扫表标记, 0-未扫表, 1-已扫表
@@ -804,7 +805,7 @@ message ListPlansReq {
 
 message ListPlansRes {
   // 计划列表
-  repeated PbPlan plans = 1;
+  repeated PlanPb plans = 1;
   // 总记录数
   int64 total = 2;
 }
@@ -816,7 +817,7 @@ message GetPlanBatchReq {
 }
 
 message GetPlanBatchRes {
-  PbPlanBatch planBatch = 1;
+  PlanBatchPb planBatch = 1;
 }
 
 message ListPlanBatchesReq {
@@ -839,7 +840,7 @@ message ListPlanBatchesReq {
 
 message ListPlanBatchesRes {
   // 批次列表
-  repeated PbPlanBatch planBatches = 1;
+  repeated PlanBatchPb planBatches = 1;
   // 总记录数
   int64 total = 2;
 }
@@ -851,10 +852,10 @@ message GetPlanExecItemReq {
 }
 
 message GetPlanExecItemRes {
-  repeated PbPlanExecItem planExecItem = 1;
+  repeated PlanExecItemPb planExecItem = 1;
 }
 
-message PbPlanExecItem {
+message PlanExecItemPb {
   // 创建时间
   string createTime = 101;
   // 更新时间
@@ -901,7 +902,7 @@ message PbPlanExecItem {
   // 触发次数
   int32 triggerCount = 17;
   // 状态
-  PbExecItemStatus status = 18;
+  ExecItemStatusPb status = 18;
   // 上次执行结果
   string lastResult = 19;
   // 上次结果描述
@@ -944,12 +945,12 @@ message ListPlanExecItemsReq {
   string itemId = 7;
   // 执行项名称模糊查询
   string itemName = 8;
-  repeated PbExecItemStatus status = 9;
+  repeated ExecItemStatusPb status = 9;
 }
 
 message ListPlanExecItemsRes {
   // 执行项列表
-  repeated PbPlanExecItem  planExecItems = 1;
+  repeated PlanExecItemPb  planExecItems = 1;
   // 总记录数
   int64 total = 2;
 }
@@ -960,7 +961,7 @@ message GetPlanExecLogReq {
 }
 
 message GetPlanExecLogRes {
-  PbPlanExecLog planExecLog = 1;
+  PlanExecLogPb planExecLog = 1;
 }
 
 
@@ -990,12 +991,12 @@ message ListPlanExecLogsReq {
 // 分页获取计划触发日志列表响应
 message ListPlanExecLogsRes {
   // 日志列表
-  repeated PbPlanExecLog planExecLogs = 1;
+  repeated PlanExecLogPb planExecLogs = 1;
   // 总记录数
   int64 total = 2;
 }
 
-message PbPlanExecLog {
+message PlanExecLogPb {
   // 创建时间
   string createTime = 101;
   // 更新时间
@@ -1040,7 +1041,7 @@ message PbPlanExecLog {
 }
 
 // 计划批次数据模型
-message PbPlanBatch {
+message PlanBatchPb {
   // 创建时间
   string createTime = 101;
   // 更新时间
@@ -1106,7 +1107,7 @@ message GetExecItemDashboardReq {
 }
 
 // 已结束执行项统计
-message FinishedItemsStats {
+message FinishedItemsStatsPb {
   // 已结束执行项总数
   int64 total = 1;
   // 其中终止执行项数
@@ -1114,7 +1115,7 @@ message FinishedItemsStats {
 }
 
 // 待完成执行项统计
-message PendingItemsStats {
+message PendingItemsStatsPb {
   // 待完成执行项总数
   int64 total = 1;
   // 其中延期执行项数
@@ -1124,19 +1125,19 @@ message PendingItemsStats {
 // 执行项仪表板统计信息响应
 message GetExecItemDashboardRes {
   // 统计结果列表
-  repeated ExecItemDashboardItem stats = 1;
+  repeated ExecItemDashboardItemPb stats = 1;
 }
 
 // 执行项仪表板统计项
-message ExecItemDashboardItem {
+message ExecItemDashboardItemPb {
   // 计划类型
   string planType = 1;
   // 当前执行项总数
   int64 total = 2;
   // 已结束执行项统计
-  FinishedItemsStats finished = 3;
+  FinishedItemsStatsPb finished = 3;
   // 待完成执行项统计
-  PendingItemsStats pending= 4;
+  PendingItemsStatsPb pending = 4;
 }
 
 message CallbackPlanExecItemReq {
@@ -1154,10 +1155,10 @@ message CallbackPlanExecItemReq {
   // 结果原因 （成功/失败/延期原因，如“设备离线，延期至2024-01-01 09:00:00”）
   string reason = 5 [(validate.rules).string = {max_len: 1000}];
   // 延期配置-默认延期5分钟：delayed,ongoing-自定义延期
-  PbDelayConfig delayConfig = 6;
+  DelayConfigPb delayConfig = 6;
 }
 
-message PbDelayConfig {
+message DelayConfigPb {
   // 下次触发时间（格式：yyyy-MM-dd HH:mm:ss，定时扫描的核心筛选条件）
   string nextTriggerTime = 1;
   // 延期原因

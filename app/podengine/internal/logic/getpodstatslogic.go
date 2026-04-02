@@ -103,7 +103,7 @@ func (l *GetPodStatsLogic) GetPodStats(in *podengine.GetPodStatsReq) (*podengine
 	}
 
 	// Create container stats with real info
-	containerStats := &podengine.ContainerStats{
+	containerStats := &podengine.ContainerStatsPb{
 		ContainerId:               containerInfo.ID,
 		ContainerName:             containerInfo.Name[1:], // Remove leading slash
 		CpuUsagePercent:           cpuUsagePercent,
@@ -128,6 +128,6 @@ func (l *GetPodStatsLogic) GetPodStats(in *podengine.GetPodStatsReq) (*podengine
 	}
 
 	return &podengine.GetPodStatsRes{
-		Stats: []*podengine.ContainerStats{containerStats},
+		Stats: []*podengine.ContainerStatsPb{containerStats},
 	}, nil
 }

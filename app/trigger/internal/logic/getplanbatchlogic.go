@@ -77,7 +77,7 @@ func (l *GetPlanBatchLogic) GetPlanBatch(in *trigger.GetPlanBatchReq) (*trigger.
 	}
 
 	// 构建响应
-	pbPlanBatch := &trigger.PbPlanBatch{
+	pbPlanBatch := &trigger.PlanBatchPb{
 		CreateTime:       carbon.CreateFromStdTime(planBatch.CreateTime).ToDateTimeString(),
 		UpdateTime:       carbon.CreateFromStdTime(planBatch.UpdateTime).ToDateTimeString(),
 		CreateUser:       planBatch.CreateUser.String,

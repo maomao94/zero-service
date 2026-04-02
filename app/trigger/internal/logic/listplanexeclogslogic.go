@@ -65,13 +65,13 @@ func (l *ListPlanExecLogsLogic) ListPlanExecLogs(in *trigger.ListPlanExecLogsReq
 
 	// 构建响应
 	resp := &trigger.ListPlanExecLogsRes{
-		PlanExecLogs: make([]*trigger.PbPlanExecLog, 0, len(logs)),
+		PlanExecLogs: make([]*trigger.PlanExecLogPb, 0, len(logs)),
 		Total:        total,
 	}
 
 	// 转换日志列表
 	for _, log := range logs {
-		pbLog := &trigger.PbPlanExecLog{
+		pbLog := &trigger.PlanExecLogPb{
 			CreateTime:  carbon.CreateFromStdTime(log.CreateTime).ToDateTimeString(),
 			UpdateTime:  carbon.CreateFromStdTime(log.UpdateTime).ToDateTimeString(),
 			CreateUser:  log.CreateUser.String,

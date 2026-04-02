@@ -35,22 +35,22 @@ var (
 	_ = sort.Sort
 )
 
-// Validate checks the field values on PbTaskInfo with the rules defined in the
+// Validate checks the field values on TaskInfoPb with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *PbTaskInfo) Validate() error {
+func (m *TaskInfoPb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on PbTaskInfo with the rules defined in
+// ValidateAll checks the field values on TaskInfoPb with the rules defined in
 // the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in PbTaskInfoMultiError, or
+// result is a list of violation errors wrapped in TaskInfoPbMultiError, or
 // nil if none found.
-func (m *PbTaskInfo) ValidateAll() error {
+func (m *TaskInfoPb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *PbTaskInfo) validate(all bool) error {
+func (m *TaskInfoPb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -92,18 +92,18 @@ func (m *PbTaskInfo) validate(all bool) error {
 	// no validation rules for Result
 
 	if len(errors) > 0 {
-		return PbTaskInfoMultiError(errors)
+		return TaskInfoPbMultiError(errors)
 	}
 
 	return nil
 }
 
-// PbTaskInfoMultiError is an error wrapping multiple validation errors
-// returned by PbTaskInfo.ValidateAll() if the designated constraints aren't met.
-type PbTaskInfoMultiError []error
+// TaskInfoPbMultiError is an error wrapping multiple validation errors
+// returned by TaskInfoPb.ValidateAll() if the designated constraints aren't met.
+type TaskInfoPbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m PbTaskInfoMultiError) Error() string {
+func (m TaskInfoPbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -112,11 +112,11 @@ func (m PbTaskInfoMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m PbTaskInfoMultiError) AllErrors() []error { return m }
+func (m TaskInfoPbMultiError) AllErrors() []error { return m }
 
-// PbTaskInfoValidationError is the validation error returned by
-// PbTaskInfo.Validate if the designated constraints aren't met.
-type PbTaskInfoValidationError struct {
+// TaskInfoPbValidationError is the validation error returned by
+// TaskInfoPb.Validate if the designated constraints aren't met.
+type TaskInfoPbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -124,22 +124,22 @@ type PbTaskInfoValidationError struct {
 }
 
 // Field function returns field value.
-func (e PbTaskInfoValidationError) Field() string { return e.field }
+func (e TaskInfoPbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e PbTaskInfoValidationError) Reason() string { return e.reason }
+func (e TaskInfoPbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e PbTaskInfoValidationError) Cause() error { return e.cause }
+func (e TaskInfoPbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e PbTaskInfoValidationError) Key() bool { return e.key }
+func (e TaskInfoPbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e PbTaskInfoValidationError) ErrorName() string { return "PbTaskInfoValidationError" }
+func (e TaskInfoPbValidationError) ErrorName() string { return "TaskInfoPbValidationError" }
 
 // Error satisfies the builtin error interface
-func (e PbTaskInfoValidationError) Error() string {
+func (e TaskInfoPbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -151,14 +151,14 @@ func (e PbTaskInfoValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPbTaskInfo.%s: %s%s",
+		"invalid %sTaskInfoPb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = PbTaskInfoValidationError{}
+var _ error = TaskInfoPbValidationError{}
 
 var _ interface {
 	Field() string
@@ -166,24 +166,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = PbTaskInfoValidationError{}
+} = TaskInfoPbValidationError{}
 
-// Validate checks the field values on PbDailyStats with the rules defined in
+// Validate checks the field values on DailyStatsPb with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *PbDailyStats) Validate() error {
+func (m *DailyStatsPb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on PbDailyStats with the rules defined
+// ValidateAll checks the field values on DailyStatsPb with the rules defined
 // in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in PbDailyStatsMultiError, or
+// result is a list of violation errors wrapped in DailyStatsPbMultiError, or
 // nil if none found.
-func (m *PbDailyStats) ValidateAll() error {
+func (m *DailyStatsPb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *PbDailyStats) validate(all bool) error {
+func (m *DailyStatsPb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -199,18 +199,18 @@ func (m *PbDailyStats) validate(all bool) error {
 	// no validation rules for Date
 
 	if len(errors) > 0 {
-		return PbDailyStatsMultiError(errors)
+		return DailyStatsPbMultiError(errors)
 	}
 
 	return nil
 }
 
-// PbDailyStatsMultiError is an error wrapping multiple validation errors
-// returned by PbDailyStats.ValidateAll() if the designated constraints aren't met.
-type PbDailyStatsMultiError []error
+// DailyStatsPbMultiError is an error wrapping multiple validation errors
+// returned by DailyStatsPb.ValidateAll() if the designated constraints aren't met.
+type DailyStatsPbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m PbDailyStatsMultiError) Error() string {
+func (m DailyStatsPbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -219,11 +219,11 @@ func (m PbDailyStatsMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m PbDailyStatsMultiError) AllErrors() []error { return m }
+func (m DailyStatsPbMultiError) AllErrors() []error { return m }
 
-// PbDailyStatsValidationError is the validation error returned by
-// PbDailyStats.Validate if the designated constraints aren't met.
-type PbDailyStatsValidationError struct {
+// DailyStatsPbValidationError is the validation error returned by
+// DailyStatsPb.Validate if the designated constraints aren't met.
+type DailyStatsPbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -231,22 +231,22 @@ type PbDailyStatsValidationError struct {
 }
 
 // Field function returns field value.
-func (e PbDailyStatsValidationError) Field() string { return e.field }
+func (e DailyStatsPbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e PbDailyStatsValidationError) Reason() string { return e.reason }
+func (e DailyStatsPbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e PbDailyStatsValidationError) Cause() error { return e.cause }
+func (e DailyStatsPbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e PbDailyStatsValidationError) Key() bool { return e.key }
+func (e DailyStatsPbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e PbDailyStatsValidationError) ErrorName() string { return "PbDailyStatsValidationError" }
+func (e DailyStatsPbValidationError) ErrorName() string { return "DailyStatsPbValidationError" }
 
 // Error satisfies the builtin error interface
-func (e PbDailyStatsValidationError) Error() string {
+func (e DailyStatsPbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -258,14 +258,14 @@ func (e PbDailyStatsValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPbDailyStats.%s: %s%s",
+		"invalid %sDailyStatsPb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = PbDailyStatsValidationError{}
+var _ error = DailyStatsPbValidationError{}
 
 var _ interface {
 	Field() string
@@ -273,24 +273,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = PbDailyStatsValidationError{}
+} = DailyStatsPbValidationError{}
 
-// Validate checks the field values on PbQueueInfo with the rules defined in
+// Validate checks the field values on QueueInfoPb with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *PbQueueInfo) Validate() error {
+func (m *QueueInfoPb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on PbQueueInfo with the rules defined in
+// ValidateAll checks the field values on QueueInfoPb with the rules defined in
 // the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in PbQueueInfoMultiError, or
+// result is a list of violation errors wrapped in QueueInfoPbMultiError, or
 // nil if none found.
-func (m *PbQueueInfo) ValidateAll() error {
+func (m *QueueInfoPb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *PbQueueInfo) validate(all bool) error {
+func (m *QueueInfoPb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -334,18 +334,18 @@ func (m *PbQueueInfo) validate(all bool) error {
 	// no validation rules for Timestamp
 
 	if len(errors) > 0 {
-		return PbQueueInfoMultiError(errors)
+		return QueueInfoPbMultiError(errors)
 	}
 
 	return nil
 }
 
-// PbQueueInfoMultiError is an error wrapping multiple validation errors
-// returned by PbQueueInfo.ValidateAll() if the designated constraints aren't met.
-type PbQueueInfoMultiError []error
+// QueueInfoPbMultiError is an error wrapping multiple validation errors
+// returned by QueueInfoPb.ValidateAll() if the designated constraints aren't met.
+type QueueInfoPbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m PbQueueInfoMultiError) Error() string {
+func (m QueueInfoPbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -354,11 +354,11 @@ func (m PbQueueInfoMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m PbQueueInfoMultiError) AllErrors() []error { return m }
+func (m QueueInfoPbMultiError) AllErrors() []error { return m }
 
-// PbQueueInfoValidationError is the validation error returned by
-// PbQueueInfo.Validate if the designated constraints aren't met.
-type PbQueueInfoValidationError struct {
+// QueueInfoPbValidationError is the validation error returned by
+// QueueInfoPb.Validate if the designated constraints aren't met.
+type QueueInfoPbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -366,22 +366,22 @@ type PbQueueInfoValidationError struct {
 }
 
 // Field function returns field value.
-func (e PbQueueInfoValidationError) Field() string { return e.field }
+func (e QueueInfoPbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e PbQueueInfoValidationError) Reason() string { return e.reason }
+func (e QueueInfoPbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e PbQueueInfoValidationError) Cause() error { return e.cause }
+func (e QueueInfoPbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e PbQueueInfoValidationError) Key() bool { return e.key }
+func (e QueueInfoPbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e PbQueueInfoValidationError) ErrorName() string { return "PbQueueInfoValidationError" }
+func (e QueueInfoPbValidationError) ErrorName() string { return "QueueInfoPbValidationError" }
 
 // Error satisfies the builtin error interface
-func (e PbQueueInfoValidationError) Error() string {
+func (e QueueInfoPbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -393,14 +393,14 @@ func (e PbQueueInfoValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPbQueueInfo.%s: %s%s",
+		"invalid %sQueueInfoPb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = PbQueueInfoValidationError{}
+var _ error = QueueInfoPbValidationError{}
 
 var _ interface {
 	Field() string
@@ -408,7 +408,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = PbQueueInfoValidationError{}
+} = QueueInfoPbValidationError{}
 
 // Validate checks the field values on SendTriggerReq with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
@@ -6156,22 +6156,22 @@ var _ interface {
 	ErrorName() string
 } = CreatePlanTaskReqValidationError{}
 
-// Validate checks the field values on PbPlanRule with the rules defined in the
+// Validate checks the field values on PlanRulePb with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *PbPlanRule) Validate() error {
+func (m *PlanRulePb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on PbPlanRule with the rules defined in
+// ValidateAll checks the field values on PlanRulePb with the rules defined in
 // the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in PbPlanRuleMultiError, or
+// result is a list of violation errors wrapped in PlanRulePbMultiError, or
 // nil if none found.
-func (m *PbPlanRule) ValidateAll() error {
+func (m *PlanRulePb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *PbPlanRule) validate(all bool) error {
+func (m *PlanRulePb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -6179,7 +6179,7 @@ func (m *PbPlanRule) validate(all bool) error {
 	var errors []error
 
 	if val := m.GetFreq(); val < 0 || val > 5 {
-		err := PbPlanRuleValidationError{
+		err := PlanRulePbValidationError{
 			field:  "Freq",
 			reason: "value must be inside range [0, 5]",
 		}
@@ -6193,7 +6193,7 @@ func (m *PbPlanRule) validate(all bool) error {
 		_, _ = idx, item
 
 		if val := item; val < 1 || val > 12 {
-			err := PbPlanRuleValidationError{
+			err := PlanRulePbValidationError{
 				field:  fmt.Sprintf("Month[%v]", idx),
 				reason: "value must be inside range [1, 12]",
 			}
@@ -6209,7 +6209,7 @@ func (m *PbPlanRule) validate(all bool) error {
 		_, _ = idx, item
 
 		if val := item; val < -31 || val > 31 {
-			err := PbPlanRuleValidationError{
+			err := PlanRulePbValidationError{
 				field:  fmt.Sprintf("Day[%v]", idx),
 				reason: "value must be inside range [-31, 31]",
 			}
@@ -6219,8 +6219,8 @@ func (m *PbPlanRule) validate(all bool) error {
 			errors = append(errors, err)
 		}
 
-		if _, ok := _PbPlanRule_Day_NotInLookup[item]; ok {
-			err := PbPlanRuleValidationError{
+		if _, ok := _PlanRulePb_Day_NotInLookup[item]; ok {
+			err := PlanRulePbValidationError{
 				field:  fmt.Sprintf("Day[%v]", idx),
 				reason: "value must not be in list [0]",
 			}
@@ -6236,7 +6236,7 @@ func (m *PbPlanRule) validate(all bool) error {
 		_, _ = idx, item
 
 		if val := item; val < 1 || val > 7 {
-			err := PbPlanRuleValidationError{
+			err := PlanRulePbValidationError{
 				field:  fmt.Sprintf("Week[%v]", idx),
 				reason: "value must be inside range [1, 7]",
 			}
@@ -6249,7 +6249,7 @@ func (m *PbPlanRule) validate(all bool) error {
 	}
 
 	if len(m.GetHours()) < 1 {
-		err := PbPlanRuleValidationError{
+		err := PlanRulePbValidationError{
 			field:  "Hours",
 			reason: "value must contain at least 1 item(s)",
 		}
@@ -6263,7 +6263,7 @@ func (m *PbPlanRule) validate(all bool) error {
 		_, _ = idx, item
 
 		if val := item; val < 0 || val > 23 {
-			err := PbPlanRuleValidationError{
+			err := PlanRulePbValidationError{
 				field:  fmt.Sprintf("Hours[%v]", idx),
 				reason: "value must be inside range [0, 23]",
 			}
@@ -6276,7 +6276,7 @@ func (m *PbPlanRule) validate(all bool) error {
 	}
 
 	if len(m.GetMinutes()) < 1 {
-		err := PbPlanRuleValidationError{
+		err := PlanRulePbValidationError{
 			field:  "Minutes",
 			reason: "value must contain at least 1 item(s)",
 		}
@@ -6290,7 +6290,7 @@ func (m *PbPlanRule) validate(all bool) error {
 		_, _ = idx, item
 
 		if val := item; val < 0 || val > 59 {
-			err := PbPlanRuleValidationError{
+			err := PlanRulePbValidationError{
 				field:  fmt.Sprintf("Minutes[%v]", idx),
 				reason: "value must be inside range [0, 59]",
 			}
@@ -6303,18 +6303,18 @@ func (m *PbPlanRule) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return PbPlanRuleMultiError(errors)
+		return PlanRulePbMultiError(errors)
 	}
 
 	return nil
 }
 
-// PbPlanRuleMultiError is an error wrapping multiple validation errors
-// returned by PbPlanRule.ValidateAll() if the designated constraints aren't met.
-type PbPlanRuleMultiError []error
+// PlanRulePbMultiError is an error wrapping multiple validation errors
+// returned by PlanRulePb.ValidateAll() if the designated constraints aren't met.
+type PlanRulePbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m PbPlanRuleMultiError) Error() string {
+func (m PlanRulePbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -6323,11 +6323,11 @@ func (m PbPlanRuleMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m PbPlanRuleMultiError) AllErrors() []error { return m }
+func (m PlanRulePbMultiError) AllErrors() []error { return m }
 
-// PbPlanRuleValidationError is the validation error returned by
-// PbPlanRule.Validate if the designated constraints aren't met.
-type PbPlanRuleValidationError struct {
+// PlanRulePbValidationError is the validation error returned by
+// PlanRulePb.Validate if the designated constraints aren't met.
+type PlanRulePbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -6335,22 +6335,22 @@ type PbPlanRuleValidationError struct {
 }
 
 // Field function returns field value.
-func (e PbPlanRuleValidationError) Field() string { return e.field }
+func (e PlanRulePbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e PbPlanRuleValidationError) Reason() string { return e.reason }
+func (e PlanRulePbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e PbPlanRuleValidationError) Cause() error { return e.cause }
+func (e PlanRulePbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e PbPlanRuleValidationError) Key() bool { return e.key }
+func (e PlanRulePbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e PbPlanRuleValidationError) ErrorName() string { return "PbPlanRuleValidationError" }
+func (e PlanRulePbValidationError) ErrorName() string { return "PlanRulePbValidationError" }
 
 // Error satisfies the builtin error interface
-func (e PbPlanRuleValidationError) Error() string {
+func (e PlanRulePbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -6362,14 +6362,14 @@ func (e PbPlanRuleValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPbPlanRule.%s: %s%s",
+		"invalid %sPlanRulePb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = PbPlanRuleValidationError{}
+var _ error = PlanRulePbValidationError{}
 
 var _ interface {
 	Field() string
@@ -6377,28 +6377,28 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = PbPlanRuleValidationError{}
+} = PlanRulePbValidationError{}
 
-var _PbPlanRule_Day_NotInLookup = map[int32]struct{}{
+var _PlanRulePb_Day_NotInLookup = map[int32]struct{}{
 	0: {},
 }
 
-// Validate checks the field values on CreatePlanExecItem with the rules
+// Validate checks the field values on CreatePlanExecItemPb with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *CreatePlanExecItem) Validate() error {
+func (m *CreatePlanExecItemPb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on CreatePlanExecItem with the rules
+// ValidateAll checks the field values on CreatePlanExecItemPb with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// CreatePlanExecItemMultiError, or nil if none found.
-func (m *CreatePlanExecItem) ValidateAll() error {
+// CreatePlanExecItemPbMultiError, or nil if none found.
+func (m *CreatePlanExecItemPb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *CreatePlanExecItem) validate(all bool) error {
+func (m *CreatePlanExecItemPb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -6406,7 +6406,7 @@ func (m *CreatePlanExecItem) validate(all bool) error {
 	var errors []error
 
 	if utf8.RuneCountInString(m.GetItemId()) < 1 {
-		err := CreatePlanExecItemValidationError{
+		err := CreatePlanExecItemPbValidationError{
 			field:  "ItemId",
 			reason: "value length must be at least 1 runes",
 		}
@@ -6437,19 +6437,19 @@ func (m *CreatePlanExecItem) validate(all bool) error {
 	// no validation rules for Ext5
 
 	if len(errors) > 0 {
-		return CreatePlanExecItemMultiError(errors)
+		return CreatePlanExecItemPbMultiError(errors)
 	}
 
 	return nil
 }
 
-// CreatePlanExecItemMultiError is an error wrapping multiple validation errors
-// returned by CreatePlanExecItem.ValidateAll() if the designated constraints
-// aren't met.
-type CreatePlanExecItemMultiError []error
+// CreatePlanExecItemPbMultiError is an error wrapping multiple validation
+// errors returned by CreatePlanExecItemPb.ValidateAll() if the designated
+// constraints aren't met.
+type CreatePlanExecItemPbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m CreatePlanExecItemMultiError) Error() string {
+func (m CreatePlanExecItemPbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -6458,11 +6458,11 @@ func (m CreatePlanExecItemMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m CreatePlanExecItemMultiError) AllErrors() []error { return m }
+func (m CreatePlanExecItemPbMultiError) AllErrors() []error { return m }
 
-// CreatePlanExecItemValidationError is the validation error returned by
-// CreatePlanExecItem.Validate if the designated constraints aren't met.
-type CreatePlanExecItemValidationError struct {
+// CreatePlanExecItemPbValidationError is the validation error returned by
+// CreatePlanExecItemPb.Validate if the designated constraints aren't met.
+type CreatePlanExecItemPbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -6470,24 +6470,24 @@ type CreatePlanExecItemValidationError struct {
 }
 
 // Field function returns field value.
-func (e CreatePlanExecItemValidationError) Field() string { return e.field }
+func (e CreatePlanExecItemPbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e CreatePlanExecItemValidationError) Reason() string { return e.reason }
+func (e CreatePlanExecItemPbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e CreatePlanExecItemValidationError) Cause() error { return e.cause }
+func (e CreatePlanExecItemPbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e CreatePlanExecItemValidationError) Key() bool { return e.key }
+func (e CreatePlanExecItemPbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e CreatePlanExecItemValidationError) ErrorName() string {
-	return "CreatePlanExecItemValidationError"
+func (e CreatePlanExecItemPbValidationError) ErrorName() string {
+	return "CreatePlanExecItemPbValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e CreatePlanExecItemValidationError) Error() string {
+func (e CreatePlanExecItemPbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -6499,14 +6499,14 @@ func (e CreatePlanExecItemValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sCreatePlanExecItem.%s: %s%s",
+		"invalid %sCreatePlanExecItemPb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = CreatePlanExecItemValidationError{}
+var _ error = CreatePlanExecItemPbValidationError{}
 
 var _ interface {
 	Field() string
@@ -6514,7 +6514,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = CreatePlanExecItemValidationError{}
+} = CreatePlanExecItemPbValidationError{}
 
 // Validate checks the field values on CreatePlanTaskRes with the rules defined
 // in the proto definition for this message. If any rules are violated, the
@@ -9308,21 +9308,21 @@ var _ interface {
 	ErrorName() string
 } = GetPlanResValidationError{}
 
-// Validate checks the field values on PbPlan with the rules defined in the
+// Validate checks the field values on PlanPb with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *PbPlan) Validate() error {
+func (m *PlanPb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on PbPlan with the rules defined in the
+// ValidateAll checks the field values on PlanPb with the rules defined in the
 // proto definition for this message. If any rules are violated, the result is
-// a list of violation errors wrapped in PbPlanMultiError, or nil if none found.
-func (m *PbPlan) ValidateAll() error {
+// a list of violation errors wrapped in PlanPbMultiError, or nil if none found.
+func (m *PlanPb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *PbPlan) validate(all bool) error {
+func (m *PlanPb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -9359,7 +9359,7 @@ func (m *PbPlan) validate(all bool) error {
 		switch v := interface{}(m.GetRule()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, PbPlanValidationError{
+				errors = append(errors, PlanPbValidationError{
 					field:  "Rule",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -9367,7 +9367,7 @@ func (m *PbPlan) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, PbPlanValidationError{
+				errors = append(errors, PlanPbValidationError{
 					field:  "Rule",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -9376,7 +9376,7 @@ func (m *PbPlan) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetRule()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return PbPlanValidationError{
+			return PlanPbValidationError{
 				field:  "Rule",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -9407,18 +9407,18 @@ func (m *PbPlan) validate(all bool) error {
 	// no validation rules for Ext5
 
 	if len(errors) > 0 {
-		return PbPlanMultiError(errors)
+		return PlanPbMultiError(errors)
 	}
 
 	return nil
 }
 
-// PbPlanMultiError is an error wrapping multiple validation errors returned by
-// PbPlan.ValidateAll() if the designated constraints aren't met.
-type PbPlanMultiError []error
+// PlanPbMultiError is an error wrapping multiple validation errors returned by
+// PlanPb.ValidateAll() if the designated constraints aren't met.
+type PlanPbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m PbPlanMultiError) Error() string {
+func (m PlanPbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -9427,11 +9427,11 @@ func (m PbPlanMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m PbPlanMultiError) AllErrors() []error { return m }
+func (m PlanPbMultiError) AllErrors() []error { return m }
 
-// PbPlanValidationError is the validation error returned by PbPlan.Validate if
+// PlanPbValidationError is the validation error returned by PlanPb.Validate if
 // the designated constraints aren't met.
-type PbPlanValidationError struct {
+type PlanPbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -9439,22 +9439,22 @@ type PbPlanValidationError struct {
 }
 
 // Field function returns field value.
-func (e PbPlanValidationError) Field() string { return e.field }
+func (e PlanPbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e PbPlanValidationError) Reason() string { return e.reason }
+func (e PlanPbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e PbPlanValidationError) Cause() error { return e.cause }
+func (e PlanPbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e PbPlanValidationError) Key() bool { return e.key }
+func (e PlanPbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e PbPlanValidationError) ErrorName() string { return "PbPlanValidationError" }
+func (e PlanPbValidationError) ErrorName() string { return "PlanPbValidationError" }
 
 // Error satisfies the builtin error interface
-func (e PbPlanValidationError) Error() string {
+func (e PlanPbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -9466,14 +9466,14 @@ func (e PbPlanValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPbPlan.%s: %s%s",
+		"invalid %sPlanPb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = PbPlanValidationError{}
+var _ error = PlanPbValidationError{}
 
 var _ interface {
 	Field() string
@@ -9481,7 +9481,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = PbPlanValidationError{}
+} = PlanPbValidationError{}
 
 // Validate checks the field values on ListPlansReq with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
@@ -10606,22 +10606,22 @@ var _ interface {
 	ErrorName() string
 } = GetPlanExecItemResValidationError{}
 
-// Validate checks the field values on PbPlanExecItem with the rules defined in
+// Validate checks the field values on PlanExecItemPb with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *PbPlanExecItem) Validate() error {
+func (m *PlanExecItemPb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on PbPlanExecItem with the rules defined
+// ValidateAll checks the field values on PlanExecItemPb with the rules defined
 // in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in PbPlanExecItemMultiError,
+// result is a list of violation errors wrapped in PlanExecItemPbMultiError,
 // or nil if none found.
-func (m *PbPlanExecItem) ValidateAll() error {
+func (m *PlanExecItemPb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *PbPlanExecItem) validate(all bool) error {
+func (m *PlanExecItemPb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -10697,19 +10697,19 @@ func (m *PbPlanExecItem) validate(all bool) error {
 	// no validation rules for Ext5
 
 	if len(errors) > 0 {
-		return PbPlanExecItemMultiError(errors)
+		return PlanExecItemPbMultiError(errors)
 	}
 
 	return nil
 }
 
-// PbPlanExecItemMultiError is an error wrapping multiple validation errors
-// returned by PbPlanExecItem.ValidateAll() if the designated constraints
+// PlanExecItemPbMultiError is an error wrapping multiple validation errors
+// returned by PlanExecItemPb.ValidateAll() if the designated constraints
 // aren't met.
-type PbPlanExecItemMultiError []error
+type PlanExecItemPbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m PbPlanExecItemMultiError) Error() string {
+func (m PlanExecItemPbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -10718,11 +10718,11 @@ func (m PbPlanExecItemMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m PbPlanExecItemMultiError) AllErrors() []error { return m }
+func (m PlanExecItemPbMultiError) AllErrors() []error { return m }
 
-// PbPlanExecItemValidationError is the validation error returned by
-// PbPlanExecItem.Validate if the designated constraints aren't met.
-type PbPlanExecItemValidationError struct {
+// PlanExecItemPbValidationError is the validation error returned by
+// PlanExecItemPb.Validate if the designated constraints aren't met.
+type PlanExecItemPbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -10730,22 +10730,22 @@ type PbPlanExecItemValidationError struct {
 }
 
 // Field function returns field value.
-func (e PbPlanExecItemValidationError) Field() string { return e.field }
+func (e PlanExecItemPbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e PbPlanExecItemValidationError) Reason() string { return e.reason }
+func (e PlanExecItemPbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e PbPlanExecItemValidationError) Cause() error { return e.cause }
+func (e PlanExecItemPbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e PbPlanExecItemValidationError) Key() bool { return e.key }
+func (e PlanExecItemPbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e PbPlanExecItemValidationError) ErrorName() string { return "PbPlanExecItemValidationError" }
+func (e PlanExecItemPbValidationError) ErrorName() string { return "PlanExecItemPbValidationError" }
 
 // Error satisfies the builtin error interface
-func (e PbPlanExecItemValidationError) Error() string {
+func (e PlanExecItemPbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -10757,14 +10757,14 @@ func (e PbPlanExecItemValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPbPlanExecItem.%s: %s%s",
+		"invalid %sPlanExecItemPb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = PbPlanExecItemValidationError{}
+var _ error = PlanExecItemPbValidationError{}
 
 var _ interface {
 	Field() string
@@ -10772,7 +10772,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = PbPlanExecItemValidationError{}
+} = PlanExecItemPbValidationError{}
 
 // Validate checks the field values on ListPlanExecItemsReq with the rules
 // defined in the proto definition for this message. If any rules are
@@ -11662,22 +11662,22 @@ var _ interface {
 	ErrorName() string
 } = ListPlanExecLogsResValidationError{}
 
-// Validate checks the field values on PbPlanExecLog with the rules defined in
+// Validate checks the field values on PlanExecLogPb with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *PbPlanExecLog) Validate() error {
+func (m *PlanExecLogPb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on PbPlanExecLog with the rules defined
+// ValidateAll checks the field values on PlanExecLogPb with the rules defined
 // in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in PbPlanExecLogMultiError, or
+// result is a list of violation errors wrapped in PlanExecLogPbMultiError, or
 // nil if none found.
-func (m *PbPlanExecLog) ValidateAll() error {
+func (m *PlanExecLogPb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *PbPlanExecLog) validate(all bool) error {
+func (m *PlanExecLogPb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -11725,19 +11725,19 @@ func (m *PbPlanExecLog) validate(all bool) error {
 	// no validation rules for Message
 
 	if len(errors) > 0 {
-		return PbPlanExecLogMultiError(errors)
+		return PlanExecLogPbMultiError(errors)
 	}
 
 	return nil
 }
 
-// PbPlanExecLogMultiError is an error wrapping multiple validation errors
-// returned by PbPlanExecLog.ValidateAll() if the designated constraints
+// PlanExecLogPbMultiError is an error wrapping multiple validation errors
+// returned by PlanExecLogPb.ValidateAll() if the designated constraints
 // aren't met.
-type PbPlanExecLogMultiError []error
+type PlanExecLogPbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m PbPlanExecLogMultiError) Error() string {
+func (m PlanExecLogPbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -11746,11 +11746,11 @@ func (m PbPlanExecLogMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m PbPlanExecLogMultiError) AllErrors() []error { return m }
+func (m PlanExecLogPbMultiError) AllErrors() []error { return m }
 
-// PbPlanExecLogValidationError is the validation error returned by
-// PbPlanExecLog.Validate if the designated constraints aren't met.
-type PbPlanExecLogValidationError struct {
+// PlanExecLogPbValidationError is the validation error returned by
+// PlanExecLogPb.Validate if the designated constraints aren't met.
+type PlanExecLogPbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -11758,22 +11758,22 @@ type PbPlanExecLogValidationError struct {
 }
 
 // Field function returns field value.
-func (e PbPlanExecLogValidationError) Field() string { return e.field }
+func (e PlanExecLogPbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e PbPlanExecLogValidationError) Reason() string { return e.reason }
+func (e PlanExecLogPbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e PbPlanExecLogValidationError) Cause() error { return e.cause }
+func (e PlanExecLogPbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e PbPlanExecLogValidationError) Key() bool { return e.key }
+func (e PlanExecLogPbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e PbPlanExecLogValidationError) ErrorName() string { return "PbPlanExecLogValidationError" }
+func (e PlanExecLogPbValidationError) ErrorName() string { return "PlanExecLogPbValidationError" }
 
 // Error satisfies the builtin error interface
-func (e PbPlanExecLogValidationError) Error() string {
+func (e PlanExecLogPbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -11785,14 +11785,14 @@ func (e PbPlanExecLogValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPbPlanExecLog.%s: %s%s",
+		"invalid %sPlanExecLogPb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = PbPlanExecLogValidationError{}
+var _ error = PlanExecLogPbValidationError{}
 
 var _ interface {
 	Field() string
@@ -11800,24 +11800,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = PbPlanExecLogValidationError{}
+} = PlanExecLogPbValidationError{}
 
-// Validate checks the field values on PbPlanBatch with the rules defined in
+// Validate checks the field values on PlanBatchPb with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *PbPlanBatch) Validate() error {
+func (m *PlanBatchPb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on PbPlanBatch with the rules defined in
+// ValidateAll checks the field values on PlanBatchPb with the rules defined in
 // the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in PbPlanBatchMultiError, or
+// result is a list of violation errors wrapped in PlanBatchPbMultiError, or
 // nil if none found.
-func (m *PbPlanBatch) ValidateAll() error {
+func (m *PlanBatchPb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *PbPlanBatch) validate(all bool) error {
+func (m *PlanBatchPb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -11875,18 +11875,18 @@ func (m *PbPlanBatch) validate(all bool) error {
 	// no validation rules for Ext5
 
 	if len(errors) > 0 {
-		return PbPlanBatchMultiError(errors)
+		return PlanBatchPbMultiError(errors)
 	}
 
 	return nil
 }
 
-// PbPlanBatchMultiError is an error wrapping multiple validation errors
-// returned by PbPlanBatch.ValidateAll() if the designated constraints aren't met.
-type PbPlanBatchMultiError []error
+// PlanBatchPbMultiError is an error wrapping multiple validation errors
+// returned by PlanBatchPb.ValidateAll() if the designated constraints aren't met.
+type PlanBatchPbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m PbPlanBatchMultiError) Error() string {
+func (m PlanBatchPbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -11895,11 +11895,11 @@ func (m PbPlanBatchMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m PbPlanBatchMultiError) AllErrors() []error { return m }
+func (m PlanBatchPbMultiError) AllErrors() []error { return m }
 
-// PbPlanBatchValidationError is the validation error returned by
-// PbPlanBatch.Validate if the designated constraints aren't met.
-type PbPlanBatchValidationError struct {
+// PlanBatchPbValidationError is the validation error returned by
+// PlanBatchPb.Validate if the designated constraints aren't met.
+type PlanBatchPbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -11907,22 +11907,22 @@ type PbPlanBatchValidationError struct {
 }
 
 // Field function returns field value.
-func (e PbPlanBatchValidationError) Field() string { return e.field }
+func (e PlanBatchPbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e PbPlanBatchValidationError) Reason() string { return e.reason }
+func (e PlanBatchPbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e PbPlanBatchValidationError) Cause() error { return e.cause }
+func (e PlanBatchPbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e PbPlanBatchValidationError) Key() bool { return e.key }
+func (e PlanBatchPbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e PbPlanBatchValidationError) ErrorName() string { return "PbPlanBatchValidationError" }
+func (e PlanBatchPbValidationError) ErrorName() string { return "PlanBatchPbValidationError" }
 
 // Error satisfies the builtin error interface
-func (e PbPlanBatchValidationError) Error() string {
+func (e PlanBatchPbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -11934,14 +11934,14 @@ func (e PbPlanBatchValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPbPlanBatch.%s: %s%s",
+		"invalid %sPlanBatchPb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = PbPlanBatchValidationError{}
+var _ error = PlanBatchPbValidationError{}
 
 var _ interface {
 	Field() string
@@ -11949,7 +11949,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = PbPlanBatchValidationError{}
+} = PlanBatchPbValidationError{}
 
 // Validate checks the field values on GetExecItemDashboardReq with the rules
 // defined in the proto definition for this message. If any rules are
@@ -12059,22 +12059,22 @@ var _ interface {
 	ErrorName() string
 } = GetExecItemDashboardReqValidationError{}
 
-// Validate checks the field values on FinishedItemsStats with the rules
+// Validate checks the field values on FinishedItemsStatsPb with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *FinishedItemsStats) Validate() error {
+func (m *FinishedItemsStatsPb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on FinishedItemsStats with the rules
+// ValidateAll checks the field values on FinishedItemsStatsPb with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// FinishedItemsStatsMultiError, or nil if none found.
-func (m *FinishedItemsStats) ValidateAll() error {
+// FinishedItemsStatsPbMultiError, or nil if none found.
+func (m *FinishedItemsStatsPb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *FinishedItemsStats) validate(all bool) error {
+func (m *FinishedItemsStatsPb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -12086,19 +12086,19 @@ func (m *FinishedItemsStats) validate(all bool) error {
 	// no validation rules for Terminated
 
 	if len(errors) > 0 {
-		return FinishedItemsStatsMultiError(errors)
+		return FinishedItemsStatsPbMultiError(errors)
 	}
 
 	return nil
 }
 
-// FinishedItemsStatsMultiError is an error wrapping multiple validation errors
-// returned by FinishedItemsStats.ValidateAll() if the designated constraints
-// aren't met.
-type FinishedItemsStatsMultiError []error
+// FinishedItemsStatsPbMultiError is an error wrapping multiple validation
+// errors returned by FinishedItemsStatsPb.ValidateAll() if the designated
+// constraints aren't met.
+type FinishedItemsStatsPbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m FinishedItemsStatsMultiError) Error() string {
+func (m FinishedItemsStatsPbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -12107,11 +12107,11 @@ func (m FinishedItemsStatsMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m FinishedItemsStatsMultiError) AllErrors() []error { return m }
+func (m FinishedItemsStatsPbMultiError) AllErrors() []error { return m }
 
-// FinishedItemsStatsValidationError is the validation error returned by
-// FinishedItemsStats.Validate if the designated constraints aren't met.
-type FinishedItemsStatsValidationError struct {
+// FinishedItemsStatsPbValidationError is the validation error returned by
+// FinishedItemsStatsPb.Validate if the designated constraints aren't met.
+type FinishedItemsStatsPbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -12119,24 +12119,24 @@ type FinishedItemsStatsValidationError struct {
 }
 
 // Field function returns field value.
-func (e FinishedItemsStatsValidationError) Field() string { return e.field }
+func (e FinishedItemsStatsPbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e FinishedItemsStatsValidationError) Reason() string { return e.reason }
+func (e FinishedItemsStatsPbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e FinishedItemsStatsValidationError) Cause() error { return e.cause }
+func (e FinishedItemsStatsPbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e FinishedItemsStatsValidationError) Key() bool { return e.key }
+func (e FinishedItemsStatsPbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e FinishedItemsStatsValidationError) ErrorName() string {
-	return "FinishedItemsStatsValidationError"
+func (e FinishedItemsStatsPbValidationError) ErrorName() string {
+	return "FinishedItemsStatsPbValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e FinishedItemsStatsValidationError) Error() string {
+func (e FinishedItemsStatsPbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -12148,14 +12148,14 @@ func (e FinishedItemsStatsValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sFinishedItemsStats.%s: %s%s",
+		"invalid %sFinishedItemsStatsPb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = FinishedItemsStatsValidationError{}
+var _ error = FinishedItemsStatsPbValidationError{}
 
 var _ interface {
 	Field() string
@@ -12163,24 +12163,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = FinishedItemsStatsValidationError{}
+} = FinishedItemsStatsPbValidationError{}
 
-// Validate checks the field values on PendingItemsStats with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *PendingItemsStats) Validate() error {
+// Validate checks the field values on PendingItemsStatsPb with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *PendingItemsStatsPb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on PendingItemsStats with the rules
+// ValidateAll checks the field values on PendingItemsStatsPb with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// PendingItemsStatsMultiError, or nil if none found.
-func (m *PendingItemsStats) ValidateAll() error {
+// PendingItemsStatsPbMultiError, or nil if none found.
+func (m *PendingItemsStatsPb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *PendingItemsStats) validate(all bool) error {
+func (m *PendingItemsStatsPb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -12192,19 +12192,19 @@ func (m *PendingItemsStats) validate(all bool) error {
 	// no validation rules for Delayed
 
 	if len(errors) > 0 {
-		return PendingItemsStatsMultiError(errors)
+		return PendingItemsStatsPbMultiError(errors)
 	}
 
 	return nil
 }
 
-// PendingItemsStatsMultiError is an error wrapping multiple validation errors
-// returned by PendingItemsStats.ValidateAll() if the designated constraints
-// aren't met.
-type PendingItemsStatsMultiError []error
+// PendingItemsStatsPbMultiError is an error wrapping multiple validation
+// errors returned by PendingItemsStatsPb.ValidateAll() if the designated
+// constraints aren't met.
+type PendingItemsStatsPbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m PendingItemsStatsMultiError) Error() string {
+func (m PendingItemsStatsPbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -12213,11 +12213,11 @@ func (m PendingItemsStatsMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m PendingItemsStatsMultiError) AllErrors() []error { return m }
+func (m PendingItemsStatsPbMultiError) AllErrors() []error { return m }
 
-// PendingItemsStatsValidationError is the validation error returned by
-// PendingItemsStats.Validate if the designated constraints aren't met.
-type PendingItemsStatsValidationError struct {
+// PendingItemsStatsPbValidationError is the validation error returned by
+// PendingItemsStatsPb.Validate if the designated constraints aren't met.
+type PendingItemsStatsPbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -12225,24 +12225,24 @@ type PendingItemsStatsValidationError struct {
 }
 
 // Field function returns field value.
-func (e PendingItemsStatsValidationError) Field() string { return e.field }
+func (e PendingItemsStatsPbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e PendingItemsStatsValidationError) Reason() string { return e.reason }
+func (e PendingItemsStatsPbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e PendingItemsStatsValidationError) Cause() error { return e.cause }
+func (e PendingItemsStatsPbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e PendingItemsStatsValidationError) Key() bool { return e.key }
+func (e PendingItemsStatsPbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e PendingItemsStatsValidationError) ErrorName() string {
-	return "PendingItemsStatsValidationError"
+func (e PendingItemsStatsPbValidationError) ErrorName() string {
+	return "PendingItemsStatsPbValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e PendingItemsStatsValidationError) Error() string {
+func (e PendingItemsStatsPbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -12254,14 +12254,14 @@ func (e PendingItemsStatsValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPendingItemsStats.%s: %s%s",
+		"invalid %sPendingItemsStatsPb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = PendingItemsStatsValidationError{}
+var _ error = PendingItemsStatsPbValidationError{}
 
 var _ interface {
 	Field() string
@@ -12269,7 +12269,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = PendingItemsStatsValidationError{}
+} = PendingItemsStatsPbValidationError{}
 
 // Validate checks the field values on GetExecItemDashboardRes with the rules
 // defined in the proto definition for this message. If any rules are
@@ -12407,22 +12407,22 @@ var _ interface {
 	ErrorName() string
 } = GetExecItemDashboardResValidationError{}
 
-// Validate checks the field values on ExecItemDashboardItem with the rules
+// Validate checks the field values on ExecItemDashboardItemPb with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *ExecItemDashboardItem) Validate() error {
+func (m *ExecItemDashboardItemPb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on ExecItemDashboardItem with the rules
-// defined in the proto definition for this message. If any rules are
+// ValidateAll checks the field values on ExecItemDashboardItemPb with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// ExecItemDashboardItemMultiError, or nil if none found.
-func (m *ExecItemDashboardItem) ValidateAll() error {
+// ExecItemDashboardItemPbMultiError, or nil if none found.
+func (m *ExecItemDashboardItemPb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *ExecItemDashboardItem) validate(all bool) error {
+func (m *ExecItemDashboardItemPb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -12437,7 +12437,7 @@ func (m *ExecItemDashboardItem) validate(all bool) error {
 		switch v := interface{}(m.GetFinished()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ExecItemDashboardItemValidationError{
+				errors = append(errors, ExecItemDashboardItemPbValidationError{
 					field:  "Finished",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -12445,7 +12445,7 @@ func (m *ExecItemDashboardItem) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, ExecItemDashboardItemValidationError{
+				errors = append(errors, ExecItemDashboardItemPbValidationError{
 					field:  "Finished",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -12454,7 +12454,7 @@ func (m *ExecItemDashboardItem) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetFinished()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return ExecItemDashboardItemValidationError{
+			return ExecItemDashboardItemPbValidationError{
 				field:  "Finished",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -12466,7 +12466,7 @@ func (m *ExecItemDashboardItem) validate(all bool) error {
 		switch v := interface{}(m.GetPending()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ExecItemDashboardItemValidationError{
+				errors = append(errors, ExecItemDashboardItemPbValidationError{
 					field:  "Pending",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -12474,7 +12474,7 @@ func (m *ExecItemDashboardItem) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, ExecItemDashboardItemValidationError{
+				errors = append(errors, ExecItemDashboardItemPbValidationError{
 					field:  "Pending",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -12483,7 +12483,7 @@ func (m *ExecItemDashboardItem) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetPending()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return ExecItemDashboardItemValidationError{
+			return ExecItemDashboardItemPbValidationError{
 				field:  "Pending",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -12492,19 +12492,19 @@ func (m *ExecItemDashboardItem) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return ExecItemDashboardItemMultiError(errors)
+		return ExecItemDashboardItemPbMultiError(errors)
 	}
 
 	return nil
 }
 
-// ExecItemDashboardItemMultiError is an error wrapping multiple validation
-// errors returned by ExecItemDashboardItem.ValidateAll() if the designated
+// ExecItemDashboardItemPbMultiError is an error wrapping multiple validation
+// errors returned by ExecItemDashboardItemPb.ValidateAll() if the designated
 // constraints aren't met.
-type ExecItemDashboardItemMultiError []error
+type ExecItemDashboardItemPbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m ExecItemDashboardItemMultiError) Error() string {
+func (m ExecItemDashboardItemPbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -12513,11 +12513,11 @@ func (m ExecItemDashboardItemMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m ExecItemDashboardItemMultiError) AllErrors() []error { return m }
+func (m ExecItemDashboardItemPbMultiError) AllErrors() []error { return m }
 
-// ExecItemDashboardItemValidationError is the validation error returned by
-// ExecItemDashboardItem.Validate if the designated constraints aren't met.
-type ExecItemDashboardItemValidationError struct {
+// ExecItemDashboardItemPbValidationError is the validation error returned by
+// ExecItemDashboardItemPb.Validate if the designated constraints aren't met.
+type ExecItemDashboardItemPbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -12525,24 +12525,24 @@ type ExecItemDashboardItemValidationError struct {
 }
 
 // Field function returns field value.
-func (e ExecItemDashboardItemValidationError) Field() string { return e.field }
+func (e ExecItemDashboardItemPbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ExecItemDashboardItemValidationError) Reason() string { return e.reason }
+func (e ExecItemDashboardItemPbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ExecItemDashboardItemValidationError) Cause() error { return e.cause }
+func (e ExecItemDashboardItemPbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ExecItemDashboardItemValidationError) Key() bool { return e.key }
+func (e ExecItemDashboardItemPbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ExecItemDashboardItemValidationError) ErrorName() string {
-	return "ExecItemDashboardItemValidationError"
+func (e ExecItemDashboardItemPbValidationError) ErrorName() string {
+	return "ExecItemDashboardItemPbValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e ExecItemDashboardItemValidationError) Error() string {
+func (e ExecItemDashboardItemPbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -12554,14 +12554,14 @@ func (e ExecItemDashboardItemValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sExecItemDashboardItem.%s: %s%s",
+		"invalid %sExecItemDashboardItemPb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ExecItemDashboardItemValidationError{}
+var _ error = ExecItemDashboardItemPbValidationError{}
 
 var _ interface {
 	Field() string
@@ -12569,7 +12569,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ExecItemDashboardItemValidationError{}
+} = ExecItemDashboardItemPbValidationError{}
 
 // Validate checks the field values on CallbackPlanExecItemReq with the rules
 // defined in the proto definition for this message. If any rules are
@@ -12776,22 +12776,22 @@ var _CallbackPlanExecItemReq_ExecResult_InLookup = map[string]struct{}{
 	"ongoing":    {},
 }
 
-// Validate checks the field values on PbDelayConfig with the rules defined in
+// Validate checks the field values on DelayConfigPb with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *PbDelayConfig) Validate() error {
+func (m *DelayConfigPb) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on PbDelayConfig with the rules defined
+// ValidateAll checks the field values on DelayConfigPb with the rules defined
 // in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in PbDelayConfigMultiError, or
+// result is a list of violation errors wrapped in DelayConfigPbMultiError, or
 // nil if none found.
-func (m *PbDelayConfig) ValidateAll() error {
+func (m *DelayConfigPb) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *PbDelayConfig) validate(all bool) error {
+func (m *DelayConfigPb) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -12801,7 +12801,7 @@ func (m *PbDelayConfig) validate(all bool) error {
 	// no validation rules for NextTriggerTime
 
 	if utf8.RuneCountInString(m.GetDelayReason()) > 1000 {
-		err := PbDelayConfigValidationError{
+		err := DelayConfigPbValidationError{
 			field:  "DelayReason",
 			reason: "value length must be at most 1000 runes",
 		}
@@ -12812,19 +12812,19 @@ func (m *PbDelayConfig) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return PbDelayConfigMultiError(errors)
+		return DelayConfigPbMultiError(errors)
 	}
 
 	return nil
 }
 
-// PbDelayConfigMultiError is an error wrapping multiple validation errors
-// returned by PbDelayConfig.ValidateAll() if the designated constraints
+// DelayConfigPbMultiError is an error wrapping multiple validation errors
+// returned by DelayConfigPb.ValidateAll() if the designated constraints
 // aren't met.
-type PbDelayConfigMultiError []error
+type DelayConfigPbMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m PbDelayConfigMultiError) Error() string {
+func (m DelayConfigPbMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -12833,11 +12833,11 @@ func (m PbDelayConfigMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m PbDelayConfigMultiError) AllErrors() []error { return m }
+func (m DelayConfigPbMultiError) AllErrors() []error { return m }
 
-// PbDelayConfigValidationError is the validation error returned by
-// PbDelayConfig.Validate if the designated constraints aren't met.
-type PbDelayConfigValidationError struct {
+// DelayConfigPbValidationError is the validation error returned by
+// DelayConfigPb.Validate if the designated constraints aren't met.
+type DelayConfigPbValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -12845,22 +12845,22 @@ type PbDelayConfigValidationError struct {
 }
 
 // Field function returns field value.
-func (e PbDelayConfigValidationError) Field() string { return e.field }
+func (e DelayConfigPbValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e PbDelayConfigValidationError) Reason() string { return e.reason }
+func (e DelayConfigPbValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e PbDelayConfigValidationError) Cause() error { return e.cause }
+func (e DelayConfigPbValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e PbDelayConfigValidationError) Key() bool { return e.key }
+func (e DelayConfigPbValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e PbDelayConfigValidationError) ErrorName() string { return "PbDelayConfigValidationError" }
+func (e DelayConfigPbValidationError) ErrorName() string { return "DelayConfigPbValidationError" }
 
 // Error satisfies the builtin error interface
-func (e PbDelayConfigValidationError) Error() string {
+func (e DelayConfigPbValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -12872,14 +12872,14 @@ func (e PbDelayConfigValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPbDelayConfig.%s: %s%s",
+		"invalid %sDelayConfigPb.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = PbDelayConfigValidationError{}
+var _ error = DelayConfigPbValidationError{}
 
 var _ interface {
 	Field() string
@@ -12887,7 +12887,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = PbDelayConfigValidationError{}
+} = DelayConfigPbValidationError{}
 
 // Validate checks the field values on CallbackPlanExecItemRes with the rules
 // defined in the proto definition for this message. If any rules are

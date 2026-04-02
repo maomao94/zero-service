@@ -45,7 +45,7 @@ func (l *GetPlanExecLogLogic) GetPlanExecLog(in *trigger.GetPlanExecLogReq) (*tr
 	}
 
 	// 构建响应
-	pbLog := &trigger.PbPlanExecLog{
+	pbLog := &trigger.PlanExecLogPb{
 		CreateTime:  carbon.CreateFromStdTime(log.CreateTime).ToDateTimeString(),
 		UpdateTime:  carbon.CreateFromStdTime(log.UpdateTime).ToDateTimeString(),
 		CreateUser:  log.CreateUser.String,

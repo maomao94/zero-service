@@ -85,7 +85,7 @@ func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (
 
 	// 构建响应
 	resp := &trigger.ListPlanBatchesRes{
-		PlanBatches: make([]*trigger.PbPlanBatch, 0, len(planBatches)),
+		PlanBatches: make([]*trigger.PlanBatchPb, 0, len(planBatches)),
 		Total:       total,
 	}
 
@@ -110,7 +110,7 @@ func (l *ListPlanBatchesLogic) ListPlanBatches(in *trigger.ListPlanBatchesReq) (
 			statusCountMap[statusStr] = sc.Count
 		}
 
-		pbPlanBatch := &trigger.PbPlanBatch{
+		pbPlanBatch := &trigger.PlanBatchPb{
 			CreateTime:       carbon.CreateFromStdTime(planBatch.CreateTime).ToDateTimeString(),
 			UpdateTime:       carbon.CreateFromStdTime(planBatch.UpdateTime).ToDateTimeString(),
 			CreateUser:       planBatch.CreateUser.String,
