@@ -3,6 +3,7 @@ package svc
 import (
 	"zero-service/aiapp/aichat/aichat"
 	"zero-service/aiapp/aigtw/internal/config"
+	"zero-service/aiapp/aisolo/aisolo"
 	interceptor "zero-service/common/Interceptor/rpcclient"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -12,13 +13,18 @@ import (
 type ServiceContext struct {
 	Config    config.Config
 	AiChatCli aichat.AiChatClient
+	EinoCli   aisolo.AiSoloClient
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	logx.Must(logx.SetUp(c.Log))
+
 	return &ServiceContext{
 		Config: c,
 		AiChatCli: aichat.NewAiChatClient(zrpc.MustNewClient(c.AiChatRpcConf,
+			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
+			zrpc.WithStreamClientInterceptor(interceptor.StreamTracingInterceptor)).Conn()),
+		EinoCli: aisolo.NewAiSoloClient(zrpc.MustNewClient(c.AiSoloRpcConf,
 			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
 			zrpc.WithStreamClientInterceptor(interceptor.StreamTracingInterceptor)).Conn()),
 	}

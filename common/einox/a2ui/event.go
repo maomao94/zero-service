@@ -18,20 +18,20 @@ const (
 	SurfaceChart    Surface = "chart"    // 图表
 )
 
-// Component 组件类型
-type Component string
+// ComponentType 组件类型
+type ComponentType string
 
 const (
-	ComponentText     Component = "text"
-	ComponentCode     Component = "code"
-	ComponentImage    Component = "image"
-	ComponentFile     Component = "file"
-	ComponentTable    Component = "table"
-	ComponentChart    Component = "chart"
-	ComponentToolCall Component = "tool_call"
-	ComponentThinking Component = "thinking"
-	ComponentError    Component = "error"
-	ComponentLoading  Component = "loading"
+	ComponentTypeText     ComponentType = "text"
+	ComponentTypeCode     ComponentType = "code"
+	ComponentTypeImage    ComponentType = "image"
+	ComponentTypeFile     ComponentType = "file"
+	ComponentTypeTable    ComponentType = "table"
+	ComponentTypeChart    ComponentType = "chart"
+	ComponentTypeToolCall ComponentType = "tool_call"
+	ComponentTypeThinking ComponentType = "thinking"
+	ComponentTypeError    ComponentType = "error"
+	ComponentTypeLoading  ComponentType = "loading"
 )
 
 // DataModel 数据模型类型
@@ -45,14 +45,14 @@ const (
 	DataModelGraph  DataModel = "graph"
 )
 
-// Event A2UI 事件
+// Event A2UI 事件（用于内部事件流转）
 type Event struct {
-	Type      EventType `json:"type"`      // 事件类型
-	ID        string    `json:"id"`        // 事件 ID
-	Surface   Surface   `json:"surface"`   // 渲染表面
-	Component Component `json:"component"` // 组件类型
-	Data      any       `json:"data"`      // 数据
-	Error     string    `json:"error"`     // 错误信息
+	Type      EventType     `json:"type"`      // 事件类型
+	ID        string        `json:"id"`        // 事件 ID
+	Surface   Surface       `json:"surface"`   // 渲染表面
+	Component ComponentType `json:"component"` // 组件类型
+	Data      any           `json:"data"`      // 数据
+	Error     string        `json:"error"`     // 错误信息
 }
 
 // EventType 事件类型
@@ -130,7 +130,7 @@ func NewTextEvent(content string, finish bool) *Event {
 	return &Event{
 		Type:      EventChunk,
 		Surface:   SurfaceText,
-		Component: ComponentText,
+		Component: ComponentTypeText,
 		Data: TextEvent{
 			Content: content,
 			Finish:  finish,
@@ -143,7 +143,7 @@ func NewMarkdownEvent(content string, finish bool) *Event {
 	return &Event{
 		Type:      EventChunk,
 		Surface:   SurfaceMarkdown,
-		Component: ComponentText,
+		Component: ComponentTypeText,
 		Data: MarkdownEvent{
 			Content: content,
 			Finish:  finish,
@@ -160,7 +160,7 @@ func NewToolCallEvent(id, name string, args any) (*Event, error) {
 	return &Event{
 		Type:      EventToolCall,
 		ID:        id,
-		Component: ComponentToolCall,
+		Component: ComponentTypeToolCall,
 		Data: ToolCallEvent{
 			ID:   id,
 			Name: name,
@@ -174,7 +174,7 @@ func NewToolResultEvent(id, name, result, errMsg string) *Event {
 	return &Event{
 		Type:      EventToolResult,
 		ID:        id,
-		Component: ComponentToolCall,
+		Component: ComponentTypeToolCall,
 		Data: ToolResultEvent{
 			ID:     id,
 			Name:   name,
@@ -189,7 +189,7 @@ func NewCodeEvent(language, code string, finish bool) *Event {
 	return &Event{
 		Type:      EventChunk,
 		Surface:   SurfaceText,
-		Component: ComponentCode,
+		Component: ComponentTypeCode,
 		Data: CodeEvent{
 			Language: language,
 			Code:     code,
@@ -216,7 +216,7 @@ func NewEndEvent() *Event {
 func NewErrorEvent(err string) *Event {
 	return &Event{
 		Type:      EventError,
-		Component: ComponentError,
+		Component: ComponentTypeError,
 		Error:     err,
 	}
 }
@@ -225,7 +225,7 @@ func NewErrorEvent(err string) *Event {
 func NewThinkingEvent(content string, finish bool) *Event {
 	return &Event{
 		Type:      EventThinking,
-		Component: ComponentThinking,
+		Component: ComponentTypeThinking,
 		Data: map[string]any{
 			"content": content,
 			"finish":  finish,

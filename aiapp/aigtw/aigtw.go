@@ -8,7 +8,6 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
-	"os"
 	"path/filepath"
 
 	"zero-service/aiapp/aigtw/internal/config"
@@ -29,18 +28,6 @@ import (
 
 var configFile = flag.String("f", "etc/aigtw.yaml", "the config file")
 
-// serveStaticFile 返回一个静态文件服务 Handler
-func serveStaticFile(baseDir, filename string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		filePath := filepath.Join(baseDir, filename)
-		if _, err := os.Stat(filePath); err == nil {
-			http.ServeFile(w, r, filePath)
-			return
-		}
-		http.NotFound(w, r)
-	}
-}
-
 func main() {
 	flag.Parse()
 
@@ -55,8 +42,7 @@ func main() {
 
 	server := rest.MustNewServer(c.RestConf, gtwx.CorsOption())
 
-	// 全局中间件：将 Authorization header 注入 context，标记 auth-type=user，
-	// 确保 gRPC 拦截器可通过 ctxdata.GetAuthorization(ctx) 传递原始 token。
+	// 全局中间件
 	server.Use(func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
@@ -68,9 +54,6 @@ func main() {
 		}
 	})
 
-	// 全局中间件：将外部 JWT claim key 映射为内部标准 key。
-	// server.Use 中间件在 go-zero JWT 中间件之后执行（见 rest/engine.go bindRoute），
-	// 此时 JWT claims 已注入 context，可安全读取外部 key 并写入内部 key。
 	if len(c.JwtAuth.ClaimMapping) > 0 {
 		claimMapping := c.JwtAuth.ClaimMapping
 		server.Use(func(next http.HandlerFunc) http.HandlerFunc {
@@ -82,32 +65,11 @@ func main() {
 	}
 
 	ctx := svc.NewServiceContext(c)
-	handler.RegisterHandlers(server, ctx)
 
-	// 获取当前工作目录
-	wd, _ := os.Getwd()
-	staticDir := filepath.Join(wd, "aiapp", "aigtw")
+	// 静态文件目录 - 使用绝对路径
+	staticDir := "/Users/hehanpeng/GolandProjects/zero-service/aiapp/aigtw"
 
-	// 静态文件服务 - 支持 /chat.html, /tool.html, /results.html 等
-	server.AddRoute(rest.Route{
-		Method:  http.MethodGet,
-		Path:    "/chat.html",
-		Handler: serveStaticFile(staticDir, "chat.html"),
-	})
-
-	server.AddRoute(rest.Route{
-		Method:  http.MethodGet,
-		Path:    "/tool.html",
-		Handler: serveStaticFile(staticDir, "tool.html"),
-	})
-
-	server.AddRoute(rest.Route{
-		Method:  http.MethodGet,
-		Path:    "/results.html",
-		Handler: serveStaticFile(staticDir, "results.html"),
-	})
-
-	// 根路径重定向到 chat.html
+	// 根路径和静态文件路由（需要在 RegisterHandlers 之前添加）
 	server.AddRoute(rest.Route{
 		Method: http.MethodGet,
 		Path:   "/",
@@ -115,6 +77,20 @@ func main() {
 			http.ServeFile(w, r, filepath.Join(staticDir, "chat.html"))
 		},
 	})
+
+	for _, name := range []string{"chat.html", "tool.html", "results.html", "solo.html"} {
+		fname := name
+		server.AddRoute(rest.Route{
+			Method: http.MethodGet,
+			Path:   "/" + fname,
+			Handler: func(w http.ResponseWriter, r *http.Request) {
+				http.ServeFile(w, r, filepath.Join(staticDir, fname))
+			},
+		})
+	}
+
+	// 注册 API 路由
+	handler.RegisterHandlers(server, ctx)
 
 	serviceGroup := service.NewServiceGroup()
 	defer serviceGroup.Stop()
