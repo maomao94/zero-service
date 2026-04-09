@@ -3,11 +3,11 @@ package logic
 import (
 	"context"
 	"zero-service/common/copierx"
+	"zero-service/model/gormmodel"
 
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/app/bridgemodbus/internal/svc"
 
-	"github.com/Masterminds/squirrel"
 	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -28,8 +28,8 @@ func NewBatchGetConfigByCodeLogic(ctx context.Context, svcCtx *svc.ServiceContex
 
 // 根据编码数组查询详情
 func (l *BatchGetConfigByCodeLogic) BatchGetConfigByCode(in *bridgemodbus.BatchGetConfigByCodeReq) (*bridgemodbus.BatchGetConfigByCodeRes, error) {
-	builder := l.svcCtx.ModbusSlaveConfigModel.SelectBuilder().Where(squirrel.Eq{"modbus_code": in.ModbusCode})
-	list, err := l.svcCtx.ModbusSlaveConfigModel.FindAll(l.ctx, builder)
+	var list []gormmodel.ModbusSlaveConfig
+	err := l.svcCtx.DB.WithContext(l.ctx).Where("modbus_code IN ?", in.ModbusCode).Find(&list).Error
 	if err != nil {
 		return nil, err
 	}

@@ -1,0 +1,194 @@
+syntax = "proto3";
+package aisolo;
+
+option go_package = "./aisolo";
+
+// ============================================================
+// AI Solo - 基于 Eino 框架的 AI 助手服务
+// 统一流式接口，简洁的业务导向设计
+// ============================================================
+
+// ============================================================
+// 通用枚举
+// ============================================================
+
+// AgentMode Agent 运行模式
+enum AgentMode {
+  AGENT_MODE_UNSPECIFIED = 0;
+  AGENT_MODE_AUTO = 1;      // 自动选择（默认）
+  AGENT_MODE_FAST = 2;      // 快速响应（基础对话）
+  AGENT_MODE_DEEP = 3;      // 深度思考（复杂任务）
+}
+
+// ============================================================
+// 核心请求/响应
+// ============================================================
+
+// AskRequest 对话请求
+message AskRequest {
+  string session_id = 1;          // 会话 ID（空则创建新会话）
+  string user_id = 2;            // 用户 ID
+  string message = 3;            // 用户消息
+  AgentMode agent_mode = 4;      // Agent 运行模式
+  map<string, string> meta = 5;  // 元数据（可选）
+}
+
+// StreamChunk 流式响应块（gRPC 内部使用）
+// 透传 A2UI JSON 数据
+message StreamChunk {
+  string session_id = 1;         // 会话 ID
+  string data = 2;              // A2UI JSON 数据（NDJSON 行）
+  bool is_final = 3;            // 是否结束
+}
+
+// InterruptInfo 中断信息
+message InterruptInfo {
+  string interrupt_id = 1;      // 中断 ID
+  string reason = 2;            // 中断原因
+  string description = 3;        // 描述
+  repeated Option options = 4;   // 选项（如需选择）
+  bool required = 5;             // 是否必须处理
+}
+
+// Option 选项
+message Option {
+  string id = 1;
+  string label = 2;
+}
+
+// ============================================================
+// 会话管理
+// ============================================================
+
+// CreateSessionRequest 创建会话请求
+message CreateSessionRequest {
+  string user_id = 1;           // 用户 ID
+  string title = 2;             // 会话标题（可选）
+  AgentMode agent_mode = 3;     // 默认 Agent 模式
+}
+
+// Session 会话信息
+message Session {
+  string session_id = 1;
+  string user_id = 2;
+  string title = 3;
+  AgentMode agent_mode = 4;
+  int64 created_at = 5;
+  int64 updated_at = 6;
+  int32 message_count = 7;
+  string last_message = 8;      // 最后一条消息摘要
+}
+
+// ListSessionsRequest 列出会话请求
+message ListSessionsRequest {
+  string user_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+// ListSessionsResponse 列出会话响应
+message ListSessionsResponse {
+  repeated Session sessions = 1;
+  int64 total = 2;
+  int32 page = 3;
+  int32 total_pages = 4;
+}
+
+// ============================================================
+// Agent 管理
+// ============================================================
+
+// ListAgentsRequest 列出 Agent 请求
+message ListAgentsRequest {}
+
+// AgentInfo Agent 信息
+message AgentInfo {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  repeated string capabilities = 4;
+  bool available = 5;
+}
+
+// ListAgentsResponse 列出 Agent 响应
+message ListAgentsResponse {
+  repeated AgentInfo agents = 1;
+}
+
+// ============================================================
+// 健康检查
+// ============================================================
+
+// HealthRequest 健康检查请求
+message HealthRequest {}
+
+// HealthResponse 健康检查响应
+message HealthResponse {
+  bool healthy = 1;
+  string version = 2;
+  map<string, string> components = 3;
+}
+
+// ============================================================
+// 辅助消息
+// ============================================================
+
+message SessionRequest {
+  string session_id = 1;
+  string user_id = 2;
+}
+
+message ResumeRequest {
+  string session_id = 1;
+  string interrupt_id = 2;
+  string action = 3;            // approve/deny
+  map<string, string> params = 4; // 额外参数
+}
+
+message Empty {}
+
+// ============================================================
+// RPC 服务定义
+// ============================================================
+
+// EinoService AI 助手核心服务
+service AiSolo {
+  // ============================================================
+  // 会话管理
+  // ============================================================
+  
+  // CreateSession 创建会话
+  rpc CreateSession(CreateSessionRequest) returns (Session);
+  
+  // GetSession 获取会话
+  rpc GetSession(SessionRequest) returns (Session);
+  
+  // ListSessions 列出会话
+  rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse);
+  
+  // DeleteSession 删除会话
+  rpc DeleteSession(SessionRequest) returns (Empty);
+
+  // ============================================================
+  // 对话（统一流式）
+  // ============================================================
+  
+  // AskStream 流式对话
+  // - 会话自动创建（session_id 为空时）
+  // - 返回 A2UI 格式的 SSE 事件流
+  rpc AskStream(AskRequest) returns (stream StreamChunk);
+
+  // ============================================================
+  // Agent 管理
+  // ============================================================
+  
+  // ListAgents 列出可用 Agent
+  rpc ListAgents(ListAgentsRequest) returns (ListAgentsResponse);
+
+  // ============================================================
+  // 中断恢复
+  // ============================================================
+  
+  // Resume 恢复中断的执行
+  rpc Resume(ResumeRequest) returns (stream StreamChunk);
+}

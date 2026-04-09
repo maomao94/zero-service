@@ -2,7 +2,12 @@ package logic
 
 import (
 	"context"
-	"zero-service/model"
+
+	"zero-service/common/gormx"
+	"zero-service/model/gormmodel"
+
+	"github.com/pkg/errors"
+	"gorm.io/gorm"
 
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/app/bridgemodbus/internal/svc"
@@ -26,36 +31,40 @@ func NewSaveConfigLogic(ctx context.Context, svcCtx *svc.ServiceContext) *SaveCo
 
 // 保存（新增或更新）配置
 func (l *SaveConfigLogic) SaveConfig(in *bridgemodbus.SaveConfigReq) (*bridgemodbus.SaveConfigRes, error) {
-	// 查找现有配置
-	exist, err := l.svcCtx.ModbusSlaveConfigModel.FindOneByModbusCode(l.ctx, in.ModbusCode)
-	if err != nil && err != model.ErrNotFound {
-		return nil, err
-	}
-
-	// 如果配置存在，则更新
-	if exist != nil {
-		exist.SlaveAddress = in.SlaveAddress
-		exist.Slave = int64(in.Slave)
-		_, err = l.svcCtx.ModbusSlaveConfigModel.Update(l.ctx, nil, exist)
-		if err != nil {
-			return nil, err
+	var id int64
+	err := l.svcCtx.DB.WithContext(l.ctx).Transact(func(tx *gormx.DB) error {
+		var exist gormmodel.ModbusSlaveConfig
+		err := tx.Where("modbus_code = ?", in.ModbusCode).First(&exist).Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
 		}
-		return &bridgemodbus.SaveConfigRes{
-			Id: int64(exist.Id),
-		}, nil
-	}
 
-	// 配置不存在，创建新配置
-	insertBuilder := l.svcCtx.ModbusSlaveConfigModel.InsertBuilder()
-	insertBuilder = insertBuilder.
-		Columns("modbus_code", "slave_address", "slave").
-		Values(in.ModbusCode, in.SlaveAddress, in.Slave)
-	result, err := l.svcCtx.ModbusSlaveConfigModel.InsertWithBuilder(l.ctx, nil, insertBuilder)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// 新增
+			newCfg := &gormmodel.ModbusSlaveConfig{
+				ModbusCode:   in.ModbusCode,
+				SlaveAddress: in.SlaveAddress,
+				Slave:        int64(in.Slave),
+			}
+			if err := tx.Create(newCfg).Error; err != nil {
+				return err
+			}
+			id = int64(newCfg.Id)
+		} else {
+			// 更新
+			exist.SlaveAddress = in.SlaveAddress
+			exist.Slave = int64(in.Slave)
+			if err := tx.Save(&exist).Error; err != nil {
+				return err
+			}
+			id = int64(exist.Id)
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	lastId, _ := result.LastInsertId()
 	return &bridgemodbus.SaveConfigRes{
-		Id: lastId,
+		Id: id,
 	}, nil
 }

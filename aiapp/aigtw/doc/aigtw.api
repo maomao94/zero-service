@@ -4,9 +4,9 @@ syntax = "v1"
 // 导入
 // ============================================================
 import (
-	"base.api"
 	"types/openai.api"
 	"types/tool.api"
+	"types/solo.api"
 )
 
 // ============================================================
@@ -14,7 +14,7 @@ import (
 // ============================================================
 info (
 	title:   "AI网关服务"
-	desc:    "OpenAI 兼容 AI 网关，提供对话补全、模型列表、异步工具调用等功能"
+	desc:    "OpenAI 兼容 AI 网关，提供对话补全、模型列表、异步工具调用、AI Solo 智能助手等功能"
 	author:  "hehanpeng"
 	email:   "hehanpengyy@163.com"
 	version: "v1"
@@ -74,5 +74,63 @@ service aigtw {
 	@doc "获取异步结果统计信息"
 	@handler asyncResultStats
 	get /async/tool/stats returns (AsyncResultStatsResponse)
+}
+
+// ============================================================
+// AI Solo 智能助手接口
+// ============================================================
+@server (
+	prefix: solo/v1
+	group:  solo
+	jwt:    JwtAuth
+)
+service aigtw {
+	@doc "健康检查"
+	@handler soloHealth
+	get /health returns (SoloHealthResp)
+
+	@doc "列出 Agent"
+	@handler listAgents
+	get /agents returns (SoloListAgentsResp)
+
+	@doc "列出会话"
+	@handler listSessions
+	get /sessions (SoloListSessionsReq) returns (SoloListSessionsResp)
+
+	@doc "创建会话"
+	@handler createSession
+	post /sessions (SoloCreateSessionReq) returns (SoloCreateSessionResp)
+
+	@doc "获取会话"
+	@handler getSession
+	get /sessions/:id (SoloGetSessionReq) returns (SoloGetSessionResp)
+
+	@doc "删除会话"
+	@handler deleteSession
+	delete /sessions/:id (SoloDeleteSessionReq) returns (SoloDeleteSessionResp)
+
+	@doc "切换 Agent"
+	@handler switchAgent
+	post /sessions/:id/switch (SoloSwitchAgentReq) returns (SoloSwitchAgentResp)
+
+	@doc "中断恢复"
+	@handler resume
+	post /interrupt/:id/resume (SoloInterruptReq) returns (SoloInterruptResp)
+}
+
+// ============================================================
+// AI Solo 流式对话接口（SSE）
+// ============================================================
+@server (
+	prefix:  solo/v1
+	group:   solo
+	jwt:     JwtAuth
+	timeout: 10m
+	sse:     true
+)
+service aigtw {
+	@doc "对话（SSE 流式输出 A2UI v0.8 协议消息）"
+	@handler chat
+	post /chat (SoloChatReq) returns (SoloChatResp)
 }
 

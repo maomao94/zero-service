@@ -1,4 +1,4 @@
-package model
+package gormmodel
 
 import "zero-service/common/modbusx"
 

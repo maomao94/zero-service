@@ -8,6 +8,7 @@ import (
 	"time"
 
 	pass "zero-service/aiapp/aigtw/internal/handler/pass"
+	solo "zero-service/aiapp/aigtw/internal/handler/solo"
 	"zero-service/aiapp/aigtw/internal/svc"
 
 	"github.com/zeromicro/go-zero/rest"
@@ -71,5 +72,75 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 		},
 		rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret),
 		rest.WithPrefix("/ai/v1"),
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				// 列出 Agent
+				Method:  http.MethodGet,
+				Path:    "/agents",
+				Handler: solo.ListAgentsHandler(serverCtx),
+			},
+			{
+				// 健康检查
+				Method:  http.MethodGet,
+				Path:    "/health",
+				Handler: solo.SoloHealthHandler(serverCtx),
+			},
+			{
+				// 中断恢复
+				Method:  http.MethodPost,
+				Path:    "/interrupt/:id/resume",
+				Handler: solo.ResumeHandler(serverCtx),
+			},
+			{
+				// 列出会话
+				Method:  http.MethodGet,
+				Path:    "/sessions",
+				Handler: solo.ListSessionsHandler(serverCtx),
+			},
+			{
+				// 创建会话
+				Method:  http.MethodPost,
+				Path:    "/sessions",
+				Handler: solo.CreateSessionHandler(serverCtx),
+			},
+			{
+				// 获取会话
+				Method:  http.MethodGet,
+				Path:    "/sessions/:id",
+				Handler: solo.GetSessionHandler(serverCtx),
+			},
+			{
+				// 删除会话
+				Method:  http.MethodDelete,
+				Path:    "/sessions/:id",
+				Handler: solo.DeleteSessionHandler(serverCtx),
+			},
+			{
+				// 切换 Agent
+				Method:  http.MethodPost,
+				Path:    "/sessions/:id/switch",
+				Handler: solo.SwitchAgentHandler(serverCtx),
+			},
+		},
+		rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret),
+		rest.WithPrefix("/solo/v1"),
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				// 对话（SSE 流式输出 A2UI v0.8 协议消息）
+				Method:  http.MethodPost,
+				Path:    "/chat",
+				Handler: solo.ChatHandler(serverCtx),
+			},
+		},
+		rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret),
+		rest.WithPrefix("/solo/v1"),
+		rest.WithTimeout(600000*time.Millisecond),
+		rest.WithSSE(),
 	)
 }

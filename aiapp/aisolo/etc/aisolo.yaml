@@ -1,0 +1,255 @@
+Name: aisolo.rpc
+ListenOn: 0.0.0.0:23002
+Mode: dev
+Timeout: 60000
+
+Log:
+  Encoding: plain
+  Level: debug
+  KeepDays: 300
+
+# ============================================================
+# 模型配置
+# ============================================================
+DefaultModel: "deepseek-v3-2-251201"
+
+Models:
+  - Id: "deepseek-v3-2-251201"
+    Provider: "ark"
+    BackendModel: "deepseek-v3-2-251201"
+    DisplayName: "DeepSeek V3"
+    Description: "DeepSeek V3 模型，通过火山引擎 ARK"
+    MaxTokens: 32768
+    SupportsStreaming: true
+    SupportsToolCalling: true
+    SupportsThinking: true
+
+# ============================================================
+# Provider 配置
+# ============================================================
+Providers:
+  - Name: "ark"
+    Type: "openai_compatible"
+    Endpoint: "https://ark.cn-beijing.volces.com/api/v3"
+    ApiKey: "e09fbc83-9d4b-4b09-98aa-837145715808"
+
+# ============================================================
+# Agent 配置（基于 Eino ADK）
+# ============================================================
+Agents:
+  # ChatModelAgent - ReAct 工具调用
+  ChatModel:
+    Name: "ChatModelAgent"
+    Description: "ReAct 工具调用 Agent，支持多轮工具调用"
+    Instruction: |
+      你是一个有帮助的 AI 助手。
+      根据用户需求，使用可用工具完成任务。
+      如果不需要工具，直接回答用户问题。
+    MaxIterations: 20
+
+  # SequentialAgent - 顺序执行
+  Sequential:
+    Name: "SequentialAgent"
+    Description: "顺序执行 Agent，按顺序依次执行子 Agent"
+    Instruction: |
+      你是一个顺序执行助手。
+      按步骤依次执行任务，前一步的输出作为下一步的输入。
+    SubAgentNames:
+      - "Researcher"
+      - "Analyst"
+      - "Writer"
+
+  # LoopAgent - 循环执行
+  Loop:
+    Name: "LoopAgent"
+    Description: "循环执行 Agent，循环执行直到条件满足"
+    Instruction: |
+      你是一个循环执行助手。
+      持续优化任务，直到达到预期结果或最大迭代次数。
+    MaxIterations: 10
+    SubAgentNames:
+      - "Researcher"
+      - "Coder"
+
+  # ParallelAgent - 并行执行
+  Parallel:
+    Name: "ParallelAgent"
+    Description: "并行执行 Agent，并发执行多个子 Agent"
+    Instruction: |
+      你是一个并行执行协调器。
+      同时启动多个子 Agent 处理任务，合并所有结果。
+    SubAgentNames:
+      - "Researcher"
+      - "Analyst"
+
+  # SupervisorAgent - 监督者
+  Supervisor:
+    Name: "SupervisorAgent"
+    Description: "监督者 Agent，动态分配任务给合适的子 Agent"
+    Instruction: |
+      你是一个智能监督者。
+      分析用户请求，动态分配任务给最合适的专家 Agent。
+      监督各 Agent 的执行，整合最终结果。
+    MaxTokens: 4096
+    SubAgentNames:
+      - "Researcher"
+      - "Coder"
+      - "Analyst"
+      - "Writer"
+
+  # PlanExecuteAgent - 规划-执行
+  PlanExecute:
+    Name: "PlanExecuteAgent"
+    Description: "规划-执行 Agent，Planner -> Executor -> Replanner 循环"
+    PlannerInstruction: |
+      你是一个任务规划专家。
+      将复杂任务分解为可执行的步骤。
+      输出 JSON 格式的计划。
+    ExecutorInstruction: |
+      你是一个任务执行专家。
+      按照计划执行每个步骤。
+      报告执行结果和遇到的问题。
+    ReplannerInstruction: |
+      你是一个重规划专家。
+      评估执行结果，调整计划。
+      如果任务完成，返回空计划。
+    MaxIterations: 10
+
+  # DeepAgent - 深度规划+文件系统
+  Deep:
+    Name: "DeepAgent"
+    Description: "深度规划 Agent，支持任务规划、文件系统和子 Agent 委派"
+    Instruction: |
+      你是一个专业的 AI 助手，能够：
+      1. 规划复杂任务（使用 WriteTodos 工具）
+      2. 操作文件系统（读取、创建、修改文件）
+      3. 委派子任务给专家 Agent
+    MaxIterations: 30
+    EnableFileSystem: true
+    FileSystemBackend: "memory"  # memory, local
+    EnableSubAgents: true
+    SubAgents:
+      - Name: "GeneralPurpose"
+        Description: "通用助手，处理一般性任务"
+      - Name: "Researcher"
+        Description: "研究专家，搜索和分析信息"
+      - Name: "Coder"
+        Description: "编程专家，编写和调试代码"
+
+  # MultiAgent - 多 Agent 协作
+  Multi:
+    Name: "MultiAgent"
+    Description: "多 Agent 协作系统，协调多个专家 Agent"
+    CoordinatorInstruction: |
+      你是协调员，负责：
+      1. 分析用户请求
+      2. 分配任务给合适的专家 Agent
+      3. 整合各专家的结果
+      4. 返回最终答案
+    ExpertAgents:
+      - Name: "Researcher"
+        Description: "研究和信息收集专家"
+        Instruction: "你负责搜索、收集和分析信息"
+      - Name: "Analyst"
+        Description: "数据分析专家"
+        Instruction: "你负责数据分析和可视化"
+      - Name: "Writer"
+        Description: "内容创作专家"
+        Instruction: "你负责撰写和编辑内容"
+
+# ============================================================
+# 智能路由配置
+# ============================================================
+Router:
+  Strategy: "auto"  # auto, simple, llm, manual
+  # 两级路由配置
+  SimpleThreshold: 50  # 消息字符数阈值
+  # LLM 路由配置
+  LLMRouterModel: "deepseek-v3-2-251201"
+  LLMRouterPrompt: |
+    分析用户请求，选择最合适的 Agent 类型：
+    
+    - chat_model: 简单问答、工具调用、单步任务
+    - deep: 复杂任务规划、文件操作、多步骤任务
+    - multi: 需要多专家协作的任务
+    
+    用户请求：{query}
+    
+    返回 JSON：{"agent_type": "xxx", "reason": "xxx", "confidence": 0.9}
+
+# ============================================================
+# 记忆系统配置（使用 Eino Memory）
+# ============================================================
+Memory:
+  EnableUserMemories: true
+  EnableSessionSummary: true
+  Retrieval: "last_n"
+  MemoryLimit: 20
+  AsyncWorkerPoolSize: 5
+  SummaryTrigger:
+    Strategy: "smart"
+    MessageThreshold: 10
+    MinInterval: 600
+  Cleanup:
+    SessionCleanupInterval: 24
+    SessionRetentionTime: 168
+    MessageHistoryLimit: 1000
+    CleanupInterval: 12
+
+# ============================================================
+# 数据库配置（使用 gormx）
+# ============================================================
+Database:
+  Type: "sqlite"
+  DSN: "./aisolo.db"
+  MaxIdleConns: 10
+  MaxOpenConns: 100
+
+# ============================================================
+# RAG 配置（使用 Eino RAG）
+# ============================================================
+RAG:
+  Enabled: true
+  VectorStore:
+    Type: "memory"  # memory, milvus, redis, qdrant, es
+    # Milvus 配置示例
+    # Type: "milvus"
+    # Host: "localhost"
+    # Port: 19530
+    # Collection: "aisolo_docs"
+    # Dimension: 1024
+  Embedding:
+    Provider: "ark"
+    Model: "doubao-embedding-vision-251215"
+  TopK: 5
+  ScoreThreshold: 0.7
+  BatchSize: 20
+
+# ============================================================
+# Embedding 配置
+# ============================================================
+Embedding:
+  Provider: "ark"
+  Model: "doubao-embedding-vision-251215"
+  ApiKey: "${ARK_API_KEY}"
+  Region: "cn-beijing"
+
+# ============================================================
+# 工具配置（Eino 原生工具）
+# ============================================================
+Tools:
+  # 内置工具
+  BuiltIn:
+    - Name: "calculator"
+      Description: "数学计算器"
+    - Name: "web_search"
+      Description: "网络搜索"
+    - Name: "code_interpreter"
+      Description: "代码解释器"
+  
+  # 文件系统工具（DeepAgent 专用）
+  FileSystem:
+    Enabled: true
+    Backend: "memory"  # memory, local, sandbox
+    BaseDir: "/workspace"
+    AllowedExtensions: [".txt", ".md", ".json", ".yaml", ".go", ".py", ".js", ".ts"]

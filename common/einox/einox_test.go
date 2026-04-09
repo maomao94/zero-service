@@ -9,12 +9,11 @@ import (
 	"testing"
 	"time"
 
+	"zero-service/common/einox"
 	"zero-service/common/einox/a2ui"
 	"zero-service/common/einox/agent"
 	"zero-service/common/einox/memory"
 	"zero-service/common/einox/model"
-
-	"github.com/cloudwego/eino/schema"
 )
 
 // 测试配置（从环境变量读取，请设置环境变量）
@@ -217,14 +216,14 @@ func TestAgent_RunWithHistory(t *testing.T) {
 	sessionID := "test-session-001"
 
 	// 3. 第一轮对话
-	result1, err := a.RunWithHistory(ctx, "我叫张三，请记住我的名字", agent.WithSessionID(sessionID))
+	result1, err := a.RunWithHistory(ctx, "我叫张三，请记住我的名字", einox.WithSessionID(sessionID))
 	if err != nil {
 		t.Fatalf("第一轮对话失败: %v", err)
 	}
 	log.Printf("✅ 第一轮对话成功: %s", result1.Response)
 
 	// 4. 第二轮对话（测试是否记住名字）
-	result2, err := a.RunWithHistory(ctx, "我叫什么名字？", agent.WithSessionID(sessionID))
+	result2, err := a.RunWithHistory(ctx, "我叫什么名字？", einox.WithSessionID(sessionID))
 	if err != nil {
 		t.Fatalf("第二轮对话失败: %v", err)
 	}
@@ -238,7 +237,7 @@ func TestAgent_RunWithHistory(t *testing.T) {
 	log.Printf("   第二轮响应: %s", result2.Response)
 
 	// 5. 清理
-	_ = a.ClearMemory(ctx, sessionID)
+	_ = a.ClearMemory(ctx, "default", sessionID)
 }
 
 // =============================================================================
@@ -318,17 +317,19 @@ func TestMemory_Storage(t *testing.T) {
 	)
 
 	// 测试保存和获取
-	msg := &schema.Message{
-		Role:    schema.User,
-		Content: "测试消息",
+	msg := &memory.ConversationMessage{
+		UserID:    "user-1",
+		SessionID: "session-1",
+		Role:      "user",
+		Content:   "测试消息",
 	}
 
-	err := storage.Save(ctx, "session-1", msg)
+	err := storage.SaveMessage(ctx, msg)
 	if err != nil {
 		t.Fatalf("保存消息失败: %v", err)
 	}
 
-	msgs, err := storage.Get(ctx, "session-1", 0)
+	msgs, err := storage.GetMessages(ctx, "user-1", "session-1", 0)
 	if err != nil {
 		t.Fatalf("获取消息失败: %v", err)
 	}
@@ -338,7 +339,7 @@ func TestMemory_Storage(t *testing.T) {
 	}
 
 	// 测试计数
-	count, err := storage.Count(ctx, "session-1")
+	count, err := storage.GetMessageCount(ctx, "user-1", "session-1")
 	if err != nil {
 		t.Fatalf("计数失败: %v", err)
 	}
@@ -347,12 +348,12 @@ func TestMemory_Storage(t *testing.T) {
 	}
 
 	// 测试清除
-	err = storage.Clear(ctx, "session-1")
+	err = storage.CleanupMessagesByLimit(ctx, "user-1", "session-1", 0)
 	if err != nil {
 		t.Fatalf("清除消息失败: %v", err)
 	}
 
-	count, _ = storage.Count(ctx, "session-1")
+	count, _ = storage.GetMessageCount(ctx, "user-1", "session-1")
 	if count != 0 {
 		t.Fatalf("清除后计数应为 0，实际为 %d", count)
 	}
@@ -527,6 +528,132 @@ func TestFullFlow_AgentWithSSE(t *testing.T) {
 //     result, _ := a.Run(ctx, "计算 2 + 2")
 //     log.Printf("工具调用结果: %s", result.Response)
 // }
+
+// =============================================================================
+// Test 11: MemoryAgent 带记忆功能测试
+// =============================================================================
+
+func TestMemoryAgent_Basic(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	arkBaseURL := "https://ark.cn-beijing.volces.com/api/v3"
+
+	// 1. 创建 ChatModel
+	chatModel, err := model.NewChatModel(ctx, model.Config{
+		Provider:  model.ProviderDeepSeek,
+		APIKey:    getTestAPIKey(),
+		Model:     testModel,
+		BaseURL:   arkBaseURL,
+		MaxTokens: 2048,
+	})
+	if err != nil {
+		t.Fatalf("创建 ChatModel 失败: %v", err)
+	}
+
+	// 2. 创建带记忆功能的 Agent
+	memAgent, err := agent.NewWithMemory(ctx, chatModel,
+		agent.WithName("memory-agent"),
+		agent.WithDescription("一个支持记忆功能的 AI 助手"),
+		agent.WithInstruction("你是一个友好的 AI 助手，用简洁的语言回答问题。"),
+		agent.WithMemoryConfig(memory.EnableAllMemory()),
+	)
+	if err != nil {
+		t.Fatalf("创建 MemoryAgent 失败: %v", err)
+	}
+	defer memAgent.Close()
+
+	userID := "test-user-001"
+	sessionID := "test-session-001"
+
+	// 3. 第一轮对话：告诉 Agent 我的名字
+	result1, err := memAgent.Run(ctx, userID, sessionID, "我叫张三，请记住我的名字，我喜欢 Go 编程")
+	if err != nil {
+		t.Fatalf("第一轮对话失败: %v", err)
+	}
+	log.Printf("✅ 第一轮对话成功: %s", result1.Response)
+
+	// 4. 第二轮对话：测试是否记住
+	result2, err := memAgent.Run(ctx, userID, sessionID, "我叫什么名字？我喜欢什么编程语言？")
+	if err != nil {
+		t.Fatalf("第二轮对话失败: %v", err)
+	}
+	log.Printf("✅ 第二轮对话成功: %s", result2.Response)
+
+	// 5. 检查用户记忆
+	memMgr := memAgent.GetMemoryManager()
+	userMem, err := memMgr.GetUserMemory(ctx, userID)
+	if err != nil {
+		t.Fatalf("获取用户记忆失败: %v", err)
+	}
+	if userMem != nil && userMem.Memory != "" {
+		log.Printf("✅ 用户记忆已生成: %s", truncate(userMem.Memory, 200))
+	}
+}
+
+// =============================================================================
+// Test 12: MemoryManager 异步任务测试
+// =============================================================================
+
+func TestMemoryManager_AsyncTasks(t *testing.T) {
+	ctx := context.Background()
+	arkBaseURL := "https://ark.cn-beijing.volces.com/api/v3"
+
+	// 1. 创建 ChatModel
+	chatModel, err := model.NewChatModel(ctx, model.Config{
+		Provider:  model.ProviderDeepSeek,
+		APIKey:    getTestAPIKey(),
+		Model:     testModel,
+		BaseURL:   arkBaseURL,
+		MaxTokens: 2048,
+	})
+	if err != nil {
+		t.Fatalf("创建 ChatModel 失败: %v", err)
+	}
+
+	// 2. 创建记忆管理器
+	storage := memory.NewMemoryStorage()
+	config := memory.EnableAllMemory()
+	config.AsyncWorkerPoolSize = 3 // 小池子便于测试
+	config.SummaryTrigger.MessageThreshold = 2
+
+	manager, err := memory.NewMemoryManager(chatModel, storage, config)
+	if err != nil {
+		t.Fatalf("创建 MemoryManager 失败: %v", err)
+	}
+	defer manager.Close()
+
+	// 3. 模拟多轮对话
+	userID := "async-test-user"
+	sessionID := "async-test-session"
+
+	for i := 1; i <= 5; i++ {
+		// 保存用户消息
+		err := manager.ProcessUserMessage(ctx, userID, sessionID, "这是第"+string(rune('0'+i))+"轮对话", nil)
+		if err != nil {
+			t.Fatalf("保存用户消息失败: %v", err)
+		}
+
+		// 保存助手消息
+		err = manager.ProcessAssistantMessage(ctx, userID, sessionID, "好的，这是第"+string(rune('0'+i))+"轮回复")
+		if err != nil {
+			t.Fatalf("保存助手消息失败: %v", err)
+		}
+	}
+
+	// 等待异步任务完成
+	time.Sleep(5 * time.Second)
+
+	// 4. 检查任务队列统计
+	stats := manager.GetTaskQueueStats()
+	log.Printf("✅ 异步任务统计: 已处理=%d, 丢弃=%d, 队列大小=%d/%d",
+		stats.ProcessedTasks, stats.DroppedTasks, stats.QueueSize, stats.QueueCapacity)
+
+	// 5. 检查用户记忆
+	userMem, _ := manager.GetUserMemory(ctx, userID)
+	if userMem != nil {
+		log.Printf("✅ 用户记忆: %s", truncate(userMem.Memory, 100))
+	}
+}
 
 // =============================================================================
 // 辅助函数

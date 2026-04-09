@@ -89,10 +89,6 @@ type ChunkChoice struct {
 	FinishReason *string   `json:"finish_reason,optional"` // 结束原因: stop / length / content_filter / tool_calls
 }
 
-type JwtAuth struct {
-	Authorization string `header:"Authorization,optional"`
-}
-
 type ListAsyncResultsRequest struct {
 	Status    string `form:"status,optional"`     // 过滤状态
 	StartTime int64  `form:"start_time,optional"` // 开始时间戳（毫秒）
@@ -135,6 +131,105 @@ type ProgressMessage struct {
 	Total    float64 `json:"total"`    // 进度总值（参考值）
 	Message  string  `json:"message"`  // 消息内容
 	Time     int64   `json:"time"`     // 时间戳，Unix 秒
+}
+
+type SoloAgentInfo struct {
+	Type         string   `json:"type"`         // Agent 类型
+	Name         string   `json:"name"`         // Agent 名称
+	Description  string   `json:"description"`  // Agent 描述
+	Capabilities []string `json:"capabilities"` // 能力列表
+	Available    bool     `json:"available"`    // 是否可用
+}
+
+type SoloChatReq struct {
+	SessionId string `json:"sessionId"`          // 会话 ID（空则创建新会话）
+	Message   string `json:"message"`            // 消息内容
+	AgentMode string `json:"agentMode,optional"` // Agent 模式: auto, fast, deep
+}
+
+type SoloChatResp struct {
+}
+
+type SoloCreateSessionReq struct {
+	Title string `json:"title,optional"` // 会话标题
+}
+
+type SoloCreateSessionResp struct {
+	Session *SoloSessionInfo `json:"session"` // 会话信息
+}
+
+type SoloDeleteSessionReq struct {
+	SessionId string `path:"id"` // 会话 ID
+}
+
+type SoloDeleteSessionResp struct {
+}
+
+type SoloGetSessionReq struct {
+	SessionId string `path:"id"` // 会话 ID
+}
+
+type SoloGetSessionResp struct {
+	Session *SoloSessionInfo `json:"session"` // 会话信息
+}
+
+type SoloHealthResp struct {
+	Status  string `json:"status"`  // 状态
+	Version string `json:"version"` // 版本
+}
+
+type SoloInterruptReq struct {
+	InterruptId string   `json:"interruptId"` // 中断 ID
+	Approved    bool     `json:"approved"`    // 是否批准
+	SelectedIds []string `json:"selectedIds"` // 选中的选项 ID
+	Reason      string   `json:"reason"`      // 拒绝原因
+}
+
+type SoloInterruptResp struct {
+	Success     bool   `json:"success"`     // 是否成功
+	Message     string `json:"message"`     // 消息
+	InterruptId string `json:"interruptId"` // 中断 ID
+}
+
+type SoloListAgentsResp struct {
+	Agents []*SoloAgentInfo `json:"agents"` // Agent 列表
+}
+
+type SoloListSessionsReq struct {
+	Page     int `json:"page,optional"`     // 页码
+	PageSize int `json:"pageSize,optional"` // 每页数量
+}
+
+type SoloListSessionsResp struct {
+	Sessions []*SoloSessionInfo `json:"sessions"` // 会话列表
+	Total    int                `json:"total"`    // 总数
+}
+
+type SoloSessionInfo struct {
+	SessionId    string `json:"sessionId"`    // 会话 ID
+	UserId       string `json:"userId"`       // 用户 ID
+	AgentMode    string `json:"agentMode"`    // Agent 模式
+	Title        string `json:"title"`        // 会话标题
+	CreatedAt    int64  `json:"createdAt"`    // 创建时间
+	UpdatedAt    int64  `json:"updatedAt"`    // 更新时间
+	MessageCount int    `json:"messageCount"` // 消息数量
+	LastMessage  string `json:"lastMessage"`  // 最后一条消息
+}
+
+type SoloSwitchAgentReq struct {
+	SessionId   string `json:"sessionId"`   // 会话 ID
+	AgentMode   string `json:"agentMode"`   // Agent 模式
+	KeepContext bool   `json:"keepContext"` // 保持上下文
+}
+
+type SoloSwitchAgentResp struct {
+	Session  *SoloSessionInfo `json:"session"`  // 会话信息
+	NewAgent *SoloAgentInfo   `json:"newAgent"` // 新的 Agent
+}
+
+type SoloToolInfo struct {
+	Name        string `json:"name"`        // 工具名称
+	Description string `json:"description"` // 工具描述
 }
 
 type ThinkingParam struct {

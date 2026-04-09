@@ -3,7 +3,8 @@ package gormx
 import (
 	"strings"
 
-	"github.com/zeromicro/go-zero/core/stores/cache"
+	"github.com/pkg/errors"
+	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -18,47 +19,27 @@ const (
 	DatabaseSQLite   DatabaseType = "sqlite"
 )
 
-// DsnConf DSN 配置（用于构建 DSN）
-type DsnConf struct {
-	Host     string // 主机地址
-	Port     int    // 端口
-	User     string // 用户名
-	Password string // 密码
-	DBName   string // 数据库名
-	SSLMode  string // SSL 模式（postgres 专用）
-}
-
-// NewMySQLWithDsn 使用 DSN 配置创建 MySQL 连接
-func NewMySQLWithDsn(conf DsnConf) (*gorm.DB, error) {
-	dsn := conf.User + ":" + conf.Password + "@tcp(" + conf.Host + ":" + itoa(conf.Port) + ")/" + conf.DBName + "?charset=utf8mb4&parseTime=True&loc=Local"
-	return NewMySQL(dsn)
-}
-
-// NewPostgres 使用 PostgreSQL DSN 创建连接
-//
-// DSN 格式：host=127.0.0.1 user=gorm password=gorm dbname=gorm port=5432 sslmode=disable
-func NewPostgres(dsn string) (*gorm.DB, error) {
-	return gorm.Open(postgres.Open(dsn), &gorm.Config{
+// NewMySQL 创建MySQL连接（使用 gormx 日志配置）
+func NewMySQL(dsn string) (*gorm.DB, error) {
+	return gorm.Open(mysql.Open(dsn), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
+		Logger:                                   DefaultGormLogger(),
 	})
 }
 
-// NewPostgresWithDsn 使用配置创建 PostgreSQL 连接
-func NewPostgresWithDsn(conf DsnConf) (*gorm.DB, error) {
-	sslMode := conf.SSLMode
-	if sslMode == "" {
-		sslMode = "disable"
-	}
-	dsn := "host=" + conf.Host + " user=" + conf.User + " password=" + conf.Password + " dbname=" + conf.DBName + " port=" + itoa(conf.Port) + " sslmode=" + sslMode
-	return NewPostgres(dsn)
+// NewPostgres 使用 PostgreSQL DSN 创建连接
+func NewPostgres(dsn string) (*gorm.DB, error) {
+	return gorm.Open(postgres.Open(dsn), &gorm.Config{
+		DisableForeignKeyConstraintWhenMigrating: true,
+		Logger:                                   DefaultGormLogger(),
+	})
 }
 
 // NewSQLite 使用 SQLite DSN 创建连接
-//
-// DSN 格式：file:app.db?cache=shared
 func NewSQLite(dsn string) (*gorm.DB, error) {
 	return gorm.Open(sqlite.Open(dsn), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
+		Logger:                                   DefaultGormLogger(),
 	})
 }
 
@@ -66,60 +47,55 @@ func NewSQLite(dsn string) (*gorm.DB, error) {
 func ParseDatabaseType(dsn string) DatabaseType {
 	dsn = strings.TrimSpace(dsn)
 
+	// SQLite 检测
 	if strings.HasPrefix(dsn, "file:") || strings.Contains(dsn, ".db") || strings.Contains(dsn, ".sqlite") {
 		return DatabaseSQLite
 	}
+	// PostgreSQL 检测
 	if strings.HasPrefix(dsn, "postgres") || strings.Contains(dsn, "pg ") || strings.Contains(dsn, "sslmode=") {
 		return DatabasePostgres
 	}
-	if strings.Contains(dsn, "@tcp(") || strings.Contains(dsn, "charset=") {
+	// MySQL 检测（默认）
+	if strings.Contains(dsn, "@tcp(") || strings.Contains(dsn, "charset=") || strings.Contains(dsn, "root:") {
 		return DatabaseMySQL
 	}
 
-	return DatabaseMySQL
+	// 尝试根据端口或前缀判断
+	lower := strings.ToLower(dsn)
+	if strings.HasPrefix(lower, "mysql") || strings.Contains(lower, ":3306") {
+		return DatabaseMySQL
+	}
+	if strings.HasPrefix(lower, "postgresql") || strings.Contains(lower, ":5432") {
+		return DatabasePostgres
+	}
+
+	return DatabaseMySQL // 默认 MySQL
 }
 
-// NewByDSN 根据 DSN 自动识别数据库类型并创建连接
-func NewByDSN(dsn string) (*gorm.DB, error) {
-	dbType := ParseDatabaseType(dsn)
+// GetDialector 根据数据库类型和DSN返回对应的gorm驱动
+func GetDialector(dbType DatabaseType, dsn string) (gorm.Dialector, error) {
 	switch dbType {
-	case DatabaseSQLite:
-		return NewSQLite(dsn)
+	case DatabaseMySQL:
+		return mysql.Open(dsn), nil
 	case DatabasePostgres:
-		return NewPostgres(dsn)
+		return postgres.Open(dsn), nil
+	case DatabaseSQLite:
+		return sqlite.Open(dsn), nil
 	default:
-		return NewMySQL(dsn)
+		return nil, errors.Errorf("unsupported database type: %s", dbType)
 	}
 }
 
-// NewCachedConnByDSN 根据 DSN 创建带缓存的连接
-func NewCachedConnByDSN(dsn string, cacheConf cache.CacheConf) (*CachedConn, error) {
-	db, err := NewByDSN(dsn)
-	if err != nil {
-		return nil, err
+// GetDatabaseTypeFromDialector 从 gorm.DB 获取数据库类型
+func GetDatabaseTypeFromDialector(db *gorm.DB) DatabaseType {
+	switch db.Statement.Dialector.(type) {
+	case *mysql.Dialector:
+		return DatabaseMySQL
+	case *postgres.Dialector:
+		return DatabasePostgres
+	case *sqlite.Dialector:
+		return DatabaseSQLite
+	default:
+		return DatabaseMySQL
 	}
-	return &CachedConn{
-		Cache: cache.New(cacheConf, exclusiveCalls, stats, gorm.ErrRecordNotFound),
-		DB:    db,
-	}, nil
-}
-
-// itoa 简单的 int 转 string
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
-	}
-	var result []byte
-	negative := n < 0
-	if negative {
-		n = -n
-	}
-	for n > 0 {
-		result = append([]byte{byte('0' + n%10)}, result...)
-		n /= 10
-	}
-	if negative {
-		result = append([]byte{'-'}, result...)
-	}
-	return string(result)
 }

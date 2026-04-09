@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"zero-service/model/gormmodel"
 
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/app/bridgemodbus/internal/svc"
@@ -25,12 +26,10 @@ func NewDeleteConfigLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Dele
 
 // 删除配置（支持批量）
 func (l *DeleteConfigLogic) DeleteConfig(in *bridgemodbus.DeleteConfigReq) (*bridgemodbus.DeleteConfigRes, error) {
-	for _, id := range in.Ids {
-		err := l.svcCtx.ModbusSlaveConfigModel.Delete(l.ctx, nil, id)
-		if err != nil {
-			logx.Errorf("Delete failed, id=%d, err=%v", id, err)
-			continue
-		}
+	err := l.svcCtx.DB.WithContext(l.ctx).Delete(&gormmodel.ModbusSlaveConfig{}, in.Ids).Error
+	if err != nil {
+		logx.Errorf("Batch delete failed, ids=%v, err=%v", in.Ids, err)
+		return nil, err
 	}
 	return &bridgemodbus.DeleteConfigRes{}, nil
 }

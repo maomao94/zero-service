@@ -6,11 +6,16 @@ import (
 
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/components/model"
+	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
 	"github.com/zeromicro/go-zero/core/logx"
 
+	"zero-service/common/einox"
 	"zero-service/common/einox/memory"
 )
+
+// Ensure Agent implements einox.AgentInterface
+var _ einox.AgentInterface = (*Agent)(nil)
 
 // =============================================================================
 // Agent
@@ -62,93 +67,112 @@ func New(ctx context.Context, opts ...Option) (*Agent, error) {
 }
 
 // Run 运行 Agent（单轮对话）
-func (a *Agent) Run(ctx context.Context, input string, opts ...RunOption) (*Result, error) {
+func (a *Agent) Run(ctx context.Context, input string, opts ...einox.RunOption) (*einox.AgentResult, error) {
 	iter := a.runner.Query(ctx, input)
 	return a.collectResult(iter)
 }
 
 // RunWithHistory 运行 Agent（带历史消息）
-func (a *Agent) RunWithHistory(ctx context.Context, input string, opts ...RunOption) (*Result, error) {
-	var runCfg runOptions
+func (a *Agent) RunWithHistory(ctx context.Context, input string, opts ...einox.RunOption) (*einox.AgentResult, error) {
+	var runCfg einox.RunOptions
 	for _, opt := range opts {
 		opt(&runCfg)
 	}
 
-	sessionID := runCfg.sessionID
-	if sessionID == "" {
-		sessionID = "default"
+	// 验证必填参数
+	if runCfg.UserID == "" {
+		return nil, einox.ErrUserIDRequired
+	}
+	if runCfg.SessionID == "" {
+		return nil, einox.ErrSessionIDRequired
 	}
 
+	sessionID := runCfg.SessionID
+	userID := runCfg.UserID
+
 	// 1. 获取历史消息
-	msgs, err := a.storage.Get(ctx, sessionID, 0)
+	msgs, err := a.storage.GetMessages(ctx, userID, sessionID, 0)
 	if err != nil {
 		return nil, err
 	}
 
+	// 转换为 schema.Message
+	var schemaMsgs []*schema.Message
+	for _, msg := range msgs {
+		schemaMsgs = append(schemaMsgs, msg.ToSchemaMessage())
+	}
+
 	// 2. 添加系统消息
-	if runCfg.system != "" {
-		msgs = append([]*schema.Message{
-			{Role: schema.System, Content: runCfg.system},
-		}, msgs...)
+	if runCfg.System != "" {
+		schemaMsgs = append([]*schema.Message{
+			{Role: schema.System, Content: runCfg.System},
+		}, schemaMsgs...)
 	}
 
 	// 3. 添加用户消息
 	userMsg := schema.UserMessage(input)
-	msgs = append(msgs, userMsg)
+	schemaMsgs = append(schemaMsgs, userMsg)
 
-	// 4. 运行（先不保存用户消息，确保 runner 成功后再保存）
-	iter := a.runner.Run(ctx, msgs)
+	// 4. 运行
+	iter := a.runner.Run(ctx, schemaMsgs)
 	result, err := a.collectResult(iter)
 	if err != nil {
 		return nil, err
 	}
 
 	// 5. 运行成功后保存消息
-	_ = a.storage.Save(ctx, sessionID, userMsg)
-	assistantMsg := &schema.Message{
-		Role:    schema.Assistant,
-		Content: result.Response,
-	}
-	_ = a.storage.Save(ctx, sessionID, assistantMsg)
+	_ = a.saveMessage(ctx, userID, sessionID, "user", input)
+	_ = a.saveMessage(ctx, userID, sessionID, "assistant", result.Response)
 
 	return result, nil
 }
 
 // RunStream 流式运行
-func (a *Agent) RunStream(ctx context.Context, input string, opts ...RunOption) (<-chan *Result, error) {
-	var runCfg runOptions
+func (a *Agent) RunStream(ctx context.Context, input string, opts ...einox.RunOption) (<-chan *einox.AgentResult, error) {
+	var runCfg einox.RunOptions
 	for _, opt := range opts {
 		opt(&runCfg)
 	}
 
-	sessionID := runCfg.sessionID
-	if sessionID == "" {
-		sessionID = "default"
+	// 验证必填参数
+	if runCfg.UserID == "" {
+		return nil, einox.ErrUserIDRequired
+	}
+	if runCfg.SessionID == "" {
+		return nil, einox.ErrSessionIDRequired
 	}
 
+	sessionID := runCfg.SessionID
+	userID := runCfg.UserID
+
 	// 获取历史消息
-	msgs, err := a.storage.Get(ctx, sessionID, 0)
+	msgs, err := a.storage.GetMessages(ctx, userID, sessionID, 0)
 	if err != nil {
 		return nil, err
 	}
 
+	var schemaMsgs []*schema.Message
+	for _, msg := range msgs {
+		schemaMsgs = append(schemaMsgs, msg.ToSchemaMessage())
+	}
+
 	// 添加系统消息
-	if runCfg.system != "" {
-		msgs = append([]*schema.Message{
-			{Role: schema.System, Content: runCfg.system},
-		}, msgs...)
+	if runCfg.System != "" {
+		schemaMsgs = append([]*schema.Message{
+			{Role: schema.System, Content: runCfg.System},
+		}, schemaMsgs...)
 	}
 
 	// 添加用户消息
 	userMsg := schema.UserMessage(input)
-	msgs = append(msgs, userMsg)
+	schemaMsgs = append(schemaMsgs, userMsg)
 
-	ch := make(chan *Result, 1)
+	ch := make(chan *einox.AgentResult, 1)
 
 	go func() {
 		defer close(ch)
 
-		iter := a.runner.Run(ctx, msgs)
+		iter := a.runner.Run(ctx, schemaMsgs)
 		var response string
 
 		for {
@@ -158,7 +182,7 @@ func (a *Agent) RunStream(ctx context.Context, input string, opts ...RunOption) 
 			}
 			if event.Err != nil {
 				logx.Errorf("[Agent] stream error: %v", event.Err)
-				ch <- &Result{Err: event.Err}
+				ch <- &einox.AgentResult{Err: event.Err}
 				return
 			}
 			if event.Output != nil {
@@ -167,18 +191,14 @@ func (a *Agent) RunStream(ctx context.Context, input string, opts ...RunOption) 
 					continue
 				}
 				response = msg.Content
-				ch <- &Result{Response: msg.Content}
+				ch <- &einox.AgentResult{Response: msg.Content}
 			}
 		}
 
 		// 流式结束后保存消息
 		if response != "" {
-			_ = a.storage.Save(ctx, sessionID, userMsg)
-			assistantMsg := &schema.Message{
-				Role:    schema.Assistant,
-				Content: response,
-			}
-			_ = a.storage.Save(ctx, sessionID, assistantMsg)
+			_ = a.saveMessage(ctx, userID, sessionID, "user", input)
+			_ = a.saveMessage(ctx, userID, sessionID, "assistant", response)
 		}
 	}()
 
@@ -186,13 +206,30 @@ func (a *Agent) RunStream(ctx context.Context, input string, opts ...RunOption) 
 }
 
 // ClearMemory 清除记忆
-func (a *Agent) ClearMemory(ctx context.Context, sessionID string) error {
-	return a.storage.Clear(ctx, sessionID)
+func (a *Agent) ClearMemory(ctx context.Context, userID, sessionID string) error {
+	if userID == "" {
+		return einox.ErrUserIDRequired
+	}
+	if sessionID == "" {
+		return einox.ErrSessionIDRequired
+	}
+	// 清空该会话的所有消息
+	return a.storage.CleanupMessagesByLimit(ctx, userID, sessionID, 0)
+}
+
+// saveMessage 保存消息到存储
+func (a *Agent) saveMessage(ctx context.Context, userID, sessionID, role, content string) error {
+	return a.storage.SaveMessage(ctx, &memory.ConversationMessage{
+		UserID:    userID,
+		SessionID: sessionID,
+		Role:      role,
+		Content:   content,
+	})
 }
 
 // collectResult 收集结果
-func (a *Agent) collectResult(iter *adk.AsyncIterator[*adk.AgentEvent]) (*Result, error) {
-	var result Result
+func (a *Agent) collectResult(iter *adk.AsyncIterator[*adk.AgentEvent]) (*einox.AgentResult, error) {
+	var result einox.AgentResult
 	for {
 		event, ok := iter.Next()
 		if !ok {
@@ -222,45 +259,14 @@ func createChatAgent(ctx context.Context, cfg *options) (*adk.ChatModelAgent, er
 		description = cfg.name + " - AI Assistant"
 	}
 
-	// 获取 ChatModel（可能是 BaseChatModel, ChatModel 或 ToolCallingChatModel）
+	// 直接使用传入的模型
 	var chatModel model.BaseChatModel
-
-	// 尝试转换为 ToolCallingChatModel（支持安全的 WithTools）
-	if len(cfg.tools) > 0 {
-		if tcModel, ok := cfg.model.(model.ToolCallingChatModel); ok {
-			// 使用 WithTools 创建带有工具的模型实例（并发安全）
-			toolInfos := make([]*schema.ToolInfo, 0, len(cfg.tools))
-			for _, t := range cfg.tools {
-				info, err := t.Info(ctx)
-				if err != nil {
-					return nil, fmt.Errorf("get tool info: %w", err)
-				}
-				toolInfos = append(toolInfos, info)
-			}
-
-			var err error
-			chatModel, err = tcModel.WithTools(toolInfos)
-			if err != nil {
-				return nil, fmt.Errorf("bind tools to model: %w", err)
-			}
-		} else if cModel, ok := cfg.model.(model.ChatModel); ok {
-			// 降级到 ChatModel（deprecated，但仍然支持）
-			chatModel = cModel
-		} else if bModel, ok := cfg.model.(model.BaseChatModel); ok {
-			// 直接使用 BaseChatModel
-			chatModel = bModel
-		} else {
-			return nil, fmt.Errorf("model must implement BaseChatModel interface")
-		}
+	if cModel, ok := cfg.model.(model.ChatModel); ok {
+		chatModel = cModel
+	} else if bModel, ok := cfg.model.(model.BaseChatModel); ok {
+		chatModel = bModel
 	} else {
-		// 没有工具，直接使用传入的模型
-		if cModel, ok := cfg.model.(model.ChatModel); ok {
-			chatModel = cModel
-		} else if bModel, ok := cfg.model.(model.BaseChatModel); ok {
-			chatModel = bModel
-		} else {
-			return nil, fmt.Errorf("model must implement BaseChatModel interface")
-		}
+		return nil, fmt.Errorf("model must implement BaseChatModel interface")
 	}
 
 	agentCfg := &adk.ChatModelAgentConfig{
@@ -270,15 +276,125 @@ func createChatAgent(ctx context.Context, cfg *options) (*adk.ChatModelAgent, er
 		Model:       chatModel,
 	}
 
+	// 绑定工具到 Agent（ToolsConfig 会自动将工具信息传递给 Model）
+	if len(cfg.tools) > 0 {
+		agentCfg.ToolsConfig = adk.ToolsConfig{
+			ToolsNodeConfig: compose.ToolsNodeConfig{
+				Tools: cfg.tools,
+			},
+		}
+	}
+
+	// 应用 Handlers（ChatModelAgentMiddleware 接口实现）
+	if len(cfg.handlers) > 0 {
+		agentCfg.Handlers = cfg.handlers
+	}
+
+	// 应用 Middlewares（AgentMiddleware 结构体，简化场景）
+	if len(cfg.middlewares) > 0 {
+		agentCfg.Middlewares = cfg.middlewares
+	}
+
 	return adk.NewChatModelAgent(ctx, agentCfg)
 }
 
-// =============================================================================
-// 类型定义
-// =============================================================================
+// Stream 返回 Agent 事件的原始流
+// 这个方法直接返回 adk.AsyncIterator，允许调用者自定义事件处理逻辑
+// 与 RunStream 不同，Stream() 返回的是完整的 Agent 事件，而不是简化后的 Result
+func (a *Agent) Stream(ctx context.Context, input string, opts ...einox.RunOption) (*adk.AsyncIterator[*adk.AgentEvent], error) {
+	var runCfg einox.RunOptions
+	for _, opt := range opts {
+		opt(&runCfg)
+	}
 
-// Result Agent 执行结果
-type Result struct {
-	Response string // 响应内容
-	Err      error  // 错误信息（仅在发生错误时设置）
+	// 验证必填参数
+	if runCfg.UserID == "" {
+		return nil, einox.ErrUserIDRequired
+	}
+	if runCfg.SessionID == "" {
+		return nil, einox.ErrSessionIDRequired
+	}
+
+	sessionID := runCfg.SessionID
+	userID := runCfg.UserID
+
+	// 1. 获取历史消息
+	msgs, err := a.storage.GetMessages(ctx, userID, sessionID, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	// 转换为 schema.Message
+	var schemaMsgs []*schema.Message
+	for _, msg := range msgs {
+		schemaMsgs = append(schemaMsgs, msg.ToSchemaMessage())
+	}
+
+	// 2. 添加系统消息
+	if runCfg.System != "" {
+		schemaMsgs = append([]*schema.Message{
+			{Role: schema.System, Content: runCfg.System},
+		}, schemaMsgs...)
+	}
+
+	// 3. 添加用户消息
+	userMsg := schema.UserMessage(input)
+	schemaMsgs = append(schemaMsgs, userMsg)
+
+	// 4. 保存用户消息（异步）
+	go func() {
+		_ = a.saveMessage(ctx, userID, sessionID, "user", input)
+	}()
+
+	// 5. 返回原始事件流
+	return a.runner.Run(ctx, schemaMsgs), nil
+}
+
+// CollectAndSaveStream 收集流式事件并保存结果
+// 这是一个便捷方法，结合了 Stream() 和消息保存逻辑
+func (a *Agent) CollectAndSaveStream(ctx context.Context, input string, opts ...einox.RunOption) (<-chan *einox.AgentResult, error) {
+	iter, err := a.Stream(ctx, input, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	var runCfg einox.RunOptions
+	for _, opt := range opts {
+		opt(&runCfg)
+	}
+	userID := runCfg.UserID
+	sessionID := runCfg.SessionID
+
+	ch := make(chan *einox.AgentResult, 1)
+
+	go func() {
+		defer close(ch)
+		var response string
+
+		for {
+			event, ok := iter.Next()
+			if !ok {
+				break
+			}
+			if event.Err != nil {
+				ch <- &einox.AgentResult{Err: event.Err}
+				return
+			}
+			if event.Output != nil {
+				msg, err := event.Output.MessageOutput.GetMessage()
+				if err != nil {
+					continue
+				}
+				response = msg.Content
+				ch <- &einox.AgentResult{Response: msg.Content}
+			}
+		}
+
+		// 流结束后保存助手消息
+		if response != "" {
+			_ = a.saveMessage(ctx, userID, sessionID, "assistant", response)
+		}
+	}()
+
+	return ch, nil
 }
