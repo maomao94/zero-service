@@ -141,11 +141,29 @@ message SessionRequest {
 message ResumeRequest {
   string session_id = 1;
   string interrupt_id = 2;
-  string action = 3;            // approve/deny
-  map<string, string> params = 4; // 额外参数
+  string user_id = 3;
+  ResumeAction action = 4;           // approve/deny
+  repeated string selected_ids = 5;  // 多选时选中的选项
+  string reason = 6;                 // 拒绝原因（可选）
 }
 
+// ResumeAction 恢复动作
+enum ResumeAction {
+  RESUME_ACTION_UNSPECIFIED = 0;
+  RESUME_ACTION_APPROVE = 1;         // 批准
+  RESUME_ACTION_DENY = 2;           // 拒绝
+}
+
+// Empty 空消息
 message Empty {}
+
+// ResumeResponse 恢复执行响应
+message ResumeResponse {
+  string session_id = 1;
+  bool success = 2;
+  string message = 3;              // 结果消息
+  InterruptInfo final_state = 4;    // 最终状态
+}
 
 // ============================================================
 // RPC 服务定义
@@ -189,6 +207,6 @@ service AiSolo {
   // 中断恢复
   // ============================================================
   
-  // Resume 恢复中断的执行
-  rpc Resume(ResumeRequest) returns (stream StreamChunk);
+  // Resume 恢复中断的执行（同步返回结果）
+  rpc Resume(ResumeRequest) returns (ResumeResponse);
 }

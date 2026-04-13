@@ -8,12 +8,10 @@ import (
 	"time"
 
 	"zero-service/aiapp/aisolo/aisolo"
-	"zero-service/aiapp/aisolo/internal/router"
 	"zero-service/aiapp/aisolo/internal/svc"
 	"zero-service/common/a2ui"
 	"zero-service/common/einox/memory"
 
-	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/schema"
 	"github.com/zeromicro/go-zero/core/logx"
 	"google.golang.org/grpc/codes"
@@ -65,6 +63,7 @@ func (l *AskStreamLogic) AskStream(in *aisolo.AskRequest, streamSvc aisolo.AiSol
 
 	writer := &grpcWriter{streamSvc: streamSvc}
 
+	// 获取历史消息
 	var history []*schema.Message
 	if l.svcCtx.MemoryStorage != nil {
 		msgs, err := l.svcCtx.MemoryStorage.GetMessages(l.ctx, userID, sessionID, 20)
@@ -80,15 +79,43 @@ func (l *AskStreamLogic) AskStream(in *aisolo.AskRequest, streamSvc aisolo.AiSol
 		}
 	}
 
-	agentMode := l.selectAgentMode(in)
-	agentName := l.getAgentName(agentMode, in.Message)
+	// 获取角色
+	roleID := l.getRoleID(in)
 
-	agent := l.svcCtx.GetAgent(agentName)
-	if agent == nil {
-		agent = l.svcCtx.GetAgent("chat_model")
+	// 为角色创建 Agent
+	einoAgent, err := l.svcCtx.RoleManager.CreateAgent(l.ctx, roleID)
+	if err != nil {
+		errMsg := a2ui.Message{
+			SurfaceUpdate: &a2ui.SurfaceUpdateMsg{
+				SurfaceID: "chat-" + sessionID,
+				Components: []a2ui.Component{
+					{
+						ID: "error-card",
+						Component: a2ui.ComponentValue{
+							Card: &a2ui.CardComp{
+								Children: []string{"error-content"},
+							},
+						},
+					},
+					{
+						ID: "error-content",
+						Component: a2ui.ComponentValue{
+							Text: &a2ui.TextComp{
+								Value:     fmt.Sprintf("Error: create agent failed: %v", err),
+								UsageHint: "body",
+							},
+						},
+					},
+				},
+			},
+		}
+		if err := l.emitMessage(writer, errMsg); err != nil {
+			l.Logger.Errorf("send error message: %v", err)
+		}
+		return nil
 	}
 
-	if agent == nil {
+	if einoAgent == nil || einoAgent.Runner() == nil {
 		errMsg := a2ui.Message{
 			SurfaceUpdate: &a2ui.SurfaceUpdateMsg{
 				SurfaceID: "chat-" + sessionID,
@@ -119,16 +146,14 @@ func (l *AskStreamLogic) AskStream(in *aisolo.AskRequest, streamSvc aisolo.AiSol
 		return nil
 	}
 
+	// 构建消息
 	messages := append(history, &schema.Message{
 		Role:    schema.User,
 		Content: in.Message,
 	})
 
-	runner := adk.NewRunner(l.ctx, adk.RunnerConfig{
-		Agent:           agent,
-		EnableStreaming: true,
-	})
-
+	// 使用 Agent 的 Runner（已包含 EnableStreaming 配置）
+	runner := einoAgent.Runner()
 	events := runner.Run(l.ctx, messages)
 
 	lastContent, interruptID, err := a2ui.StreamToWriter(writer, sessionID, history, events)
@@ -139,6 +164,7 @@ func (l *AskStreamLogic) AskStream(in *aisolo.AskRequest, streamSvc aisolo.AiSol
 		}
 	}
 
+	// 保存消息
 	if l.svcCtx.MemoryStorage != nil {
 		if err := l.svcCtx.MemoryStorage.SaveMessage(l.ctx, &memory.ConversationMessage{
 			UserID:    userID,
@@ -160,6 +186,7 @@ func (l *AskStreamLogic) AskStream(in *aisolo.AskRequest, streamSvc aisolo.AiSol
 		}
 	}
 
+	// 发送中断请求
 	if interruptID != "" {
 		interruptMsg := a2ui.Message{
 			InterruptRequest: &a2ui.InterruptRequestMsg{
@@ -175,7 +202,7 @@ func (l *AskStreamLogic) AskStream(in *aisolo.AskRequest, streamSvc aisolo.AiSol
 	}
 
 	duration := time.Since(startTime).Milliseconds()
-	l.Logger.Infof("AskStream completed: session=%s, agent=%s, duration=%dms", sessionID, agentName, duration)
+	l.Logger.Infof("AskStream completed: session=%s, role=%s, duration=%dms", sessionID, roleID, duration)
 	return nil
 }
 
@@ -188,45 +215,17 @@ func (l *AskStreamLogic) emitMessage(w io.Writer, msg a2ui.Message) error {
 	return err
 }
 
-func (l *AskStreamLogic) selectAgentMode(in *aisolo.AskRequest) aisolo.AgentMode {
-	if in.AgentMode != aisolo.AgentMode_AGENT_MODE_UNSPECIFIED {
-		return in.AgentMode
-	}
-	return aisolo.AgentMode_AGENT_MODE_AUTO
-}
-
-func (l *AskStreamLogic) getAgentName(mode aisolo.AgentMode, message string) string {
-	switch mode {
+// getRoleID 根据 AgentMode 获取角色 ID
+func (l *AskStreamLogic) getRoleID(in *aisolo.AskRequest) string {
+	switch in.AgentMode {
 	case aisolo.AgentMode_AGENT_MODE_FAST:
-		return "chat_model"
+		return "assistant"
 	case aisolo.AgentMode_AGENT_MODE_DEEP:
-		return "deep"
+		// Deep 模式使用 deep agent
+		return "assistant" // 后续支持 deep agent
 	case aisolo.AgentMode_AGENT_MODE_AUTO:
 		fallthrough
 	default:
-		if l.svcCtx.Router != nil && message != "" {
-			decision, err := l.svcCtx.Router.Route(l.ctx, message)
-			if err == nil && decision != nil {
-				return l.decisionToAgentName(decision.SelectedAgent)
-			}
-		}
-		return "chat_model"
-	}
-}
-
-func (l *AskStreamLogic) decisionToAgentName(agentType router.AgentType) string {
-	switch agentType {
-	case router.AgentTypeDeep:
-		return "deep"
-	case router.AgentTypeSequential:
-		return "sequential"
-	case router.AgentTypeParallel:
-		return "parallel"
-	case router.AgentTypeSupervisor:
-		return "supervisor"
-	case router.AgentTypePlanExecute:
-		return "plan_execute"
-	default:
-		return "chat_model"
+		return "assistant"
 	}
 }

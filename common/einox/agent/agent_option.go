@@ -17,17 +17,21 @@ import (
 type Option func(*options)
 
 type options struct {
-	name         string
-	description  string
-	instruction  string
-	model        any // 支持 BaseChatModel/ChatModel/ToolCallingChatModel
-	tools        []tool.BaseTool
-	storage      memory.Storage
-	stream       bool
-	memoryConfig *memory.MemoryConfig
-	handlers     []adk.ChatModelAgentMiddleware // 使用 Handlers (接口类型)
-	middlewares  []adk.AgentMiddleware          // 简单场景用 Middlewares (结构体类型)
-	modelOptions []model.Option
+	name             string
+	description      string
+	instruction      string
+	model            any // 支持 BaseChatModel/ChatModel/ToolCallingChatModel
+	tools            []tool.BaseTool
+	storage          memory.Storage
+	stream           bool
+	memoryConfig     *memory.MemoryConfig
+	handlers         []adk.ChatModelAgentMiddleware // 使用 Handlers (接口类型)
+	middlewares      []adk.AgentMiddleware          // 简单场景用 Middlewares (结构体类型)
+	modelOptions     []model.Option
+	enableWriteTodos bool   // Deep Agent: 启用 WriteTodos
+	enableFileSystem bool   // Deep Agent: 启用文件系统
+	skillsDir        string // Deep Agent: Skills 目录
+	maxIter          int    // 组合型 Agent: 最大迭代次数
 }
 
 // WithName 设置 Agent 名称

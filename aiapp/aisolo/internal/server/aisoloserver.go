@@ -59,8 +59,8 @@ func (s *AiSoloServer) ListAgents(ctx context.Context, in *aisolo.ListAgentsRequ
 	return l.ListAgents(in)
 }
 
-// Resume 恢复中断的执行
-func (s *AiSoloServer) Resume(in *aisolo.ResumeRequest, stream aisolo.AiSolo_ResumeServer) error {
-	l := logic.NewResumeLogic(stream.Context(), s.svcCtx)
-	return l.Resume(in, stream)
+// Resume 恢复中断的执行（同步返回结果）
+func (s *AiSoloServer) Resume(ctx context.Context, in *aisolo.ResumeRequest) (*aisolo.ResumeResponse, error) {
+	l := logic.NewResumeLogic(ctx, s.svcCtx)
+	return l.Resume(in)
 }

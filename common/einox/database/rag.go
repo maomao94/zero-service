@@ -3,6 +3,9 @@ package database
 import (
 	"context"
 	"fmt"
+	"math"
+	"sort"
+	"sync/atomic"
 
 	"github.com/cloudwego/eino/components/embedding"
 	"github.com/cloudwego/eino/components/indexer"
@@ -429,9 +432,13 @@ func NewDocuments(contents []string, metadata map[string]any) []*Document {
 	return docs
 }
 
-// generateID 生成唯一 ID
+// idCounter 原子计数器，用于生成唯一 ID
+var idCounter int64
+
+// generateID 生成唯一 ID（线程安全）
 func generateID() string {
-	return fmt.Sprintf("doc_%d", len(make([]byte, 0)))
+	id := atomic.AddInt64(&idCounter, 1)
+	return fmt.Sprintf("doc_%d", id)
 }
 
 // cosineSimilarity 计算余弦相似度
@@ -448,32 +455,15 @@ func cosineSimilarity(a, b []float64) float64 {
 	if normA == 0 || normB == 0 {
 		return 0
 	}
-	return dot / (sqrt(normA) * sqrt(normB))
+	return dot / (math.Sqrt(normA) * math.Sqrt(normB))
 }
 
-// sortScoredDocs 排序（简单冒泡，生产环境应使用 sort.Slice）
+// sortScoredDocs 排序（使用标准库 sort）
 func sortScoredDocs(scored []struct {
 	doc   *Document
 	score float64
 }) {
-	n := len(scored)
-	for i := 0; i < n-1; i++ {
-		for j := i + 1; j < n; j++ {
-			if scored[j].score > scored[i].score {
-				scored[i], scored[j] = scored[j], scored[i]
-			}
-		}
-	}
-}
-
-// sqrt 简单平方根实现
-func sqrt(x float64) float64 {
-	if x <= 0 {
-		return 0
-	}
-	z := x
-	for i := 0; i < 10; i++ {
-		z = (z + x/z) / 2
-	}
-	return z
+	sort.Slice(scored, func(i, j int) bool {
+		return scored[i].score > scored[j].score
+	})
 }

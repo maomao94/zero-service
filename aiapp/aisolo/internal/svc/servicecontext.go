@@ -3,35 +3,27 @@ package svc
 import (
 	"context"
 
-	"github.com/cloudwego/eino/adk"
-	"github.com/cloudwego/eino/components/model"
-	"github.com/zeromicro/go-zero/core/logx"
-
-	"zero-service/aiapp/aisolo/internal/agent"
 	"zero-service/aiapp/aisolo/internal/config"
-	"zero-service/aiapp/aisolo/internal/router"
+	"zero-service/aiapp/aisolo/internal/roles"
 	"zero-service/common/einox/memory"
 	exinoModel "zero-service/common/einox/model"
+
+	"github.com/cloudwego/eino/components/model"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 // ServiceContext 服务上下文
 type ServiceContext struct {
 	Config config.Config
 
-	// 智能路由器
-	Router router.Router
+	// ChatModel
+	ChatModel model.BaseChatModel
 
 	// 记忆存储
 	MemoryStorage memory.Storage
 
-	// Agent 管理器
-	AgentManager *agent.Manager
-
-	// ChatModel
-	ChatModel model.BaseChatModel
-
-	// DefaultAgent 默认 Agent
-	DefaultAgent adk.Agent
+	// 角色管理器
+	RoleManager *roles.RoleManager
 }
 
 // NewServiceContext 创建服务上下文
@@ -44,65 +36,31 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	// 初始化记忆存储
 	svc.initMemoryStorage()
 
-	// 初始化智能路由器
-	svc.initRouter()
-
 	// 初始化 ChatModel
 	svc.initChatModel(ctx)
 
-	// 初始化 Agent 管理器
-	svc.initAgentManager(ctx)
+	// 初始化角色管理器
+	svc.initRoleManager()
 
 	return svc
 }
 
 // initMemoryStorage 初始化记忆存储
 func (s *ServiceContext) initMemoryStorage() {
-	// 使用内存存储
 	s.MemoryStorage = memory.NewMemoryStorage()
 	logx.Info("MemoryStorage initialized: in-memory")
 }
 
-// initRouter 初始化智能路由器
-func (s *ServiceContext) initRouter() {
-	s.Router = router.NewTwoLevelRouter(
-		router.WithSimpleThreshold(s.Config.Router.SimpleThreshold),
-	)
-}
-
 // initChatModel 初始化 ChatModel
 func (s *ServiceContext) initChatModel(ctx context.Context) {
-	// 从配置获取默认模型
-	defaultModel := s.Config.DefaultModel
-	if defaultModel == "" {
-		defaultModel = "deepseek-v3-2-251201"
-	}
-
-	// 构建模型配置
 	cfg := exinoModel.Config{
-		Provider: exinoModel.ProviderArk,
-		Model:    defaultModel,
+		Provider: exinoModel.Provider(s.Config.Model.Provider),
+		Model:    s.Config.Model.Model,
+		APIKey:   s.Config.Model.APIKey,
 	}
 
-	// 从 Providers 配置获取 API Key
-	for _, p := range s.Config.Providers {
-		if p.Name == "ark" {
-			cfg.APIKey = p.ApiKey
-			if p.Endpoint != "" {
-				cfg.BaseURL = p.Endpoint
-			}
-		}
-	}
-
-	// 从 Models 配置获取详细配置
-	for _, m := range s.Config.Models {
-		if m.Id == defaultModel {
-			cfg.Provider = exinoModel.Provider(m.Provider)
-			cfg.Model = m.BackendModel
-			if m.MaxTokens > 0 {
-				cfg.MaxTokens = m.MaxTokens
-			}
-		}
+	if s.Config.Model.BaseURL != "" {
+		cfg.BaseURL = s.Config.Model.BaseURL
 	}
 
 	chatModel, err := exinoModel.NewChatModel(ctx, cfg)
@@ -112,36 +70,26 @@ func (s *ServiceContext) initChatModel(ctx context.Context) {
 	}
 
 	s.ChatModel = chatModel
-	logx.Infof("ChatModel initialized: %s", defaultModel)
+	logx.Infof("ChatModel initialized: %s", s.Config.Model.Model)
 }
 
-// initAgentManager 初始化 Agent 管理器
-func (s *ServiceContext) initAgentManager(ctx context.Context) {
+// initRoleManager 初始化角色管理器
+func (s *ServiceContext) initRoleManager() {
 	if s.ChatModel == nil {
-		logx.Info("ChatModel not initialized, skip AgentManager initialization")
+		logx.Info("ChatModel not initialized, skip RoleManager initialization")
 		return
 	}
 
-	manager, err := agent.NewManager(&s.Config, s.ChatModel)
-	if err != nil {
-		logx.Errorf("init agent manager failed: %v", err)
-		return
+	// 根据配置决定是否启用 skills
+	var rm *roles.RoleManager
+	if s.Config.Skills.Enabled && s.Config.Skills.Dir != "" {
+		rm = roles.NewRoleManagerWithSkills(s.ChatModel, s.Config.Skills.Dir)
+		logx.Infof("RoleManager initialized with %d roles + skills dir: %s", len(roles.BuiltinRoles), s.Config.Skills.Dir)
+	} else {
+		rm = roles.NewRoleManager(s.ChatModel)
+		logx.Infof("RoleManager initialized with %d roles", len(roles.BuiltinRoles))
 	}
-
-	s.AgentManager = manager
-	logx.Infof("AgentManager initialized with %d agents", len(manager.List()))
-}
-
-// GetAgent 获取 Agent
-func (s *ServiceContext) GetAgent(agentType string) adk.Agent {
-	if s.AgentManager == nil {
-		return nil
-	}
-	wrappedAgent := s.AgentManager.GetByType(agentType)
-	if wrappedAgent == nil {
-		return nil
-	}
-	return wrappedAgent.GetADKAgent()
+	s.RoleManager = rm
 }
 
 // Close 关闭资源

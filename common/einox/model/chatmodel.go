@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino-ext/components/model/deepseek"
@@ -76,7 +77,7 @@ func NewChatModel(ctx context.Context, cfg Config) (model.BaseChatModel, error) 
 		return newClaude(ctx, cfg)
 	default:
 		logx.Errorf("unsupported provider: %s", cfg.Provider)
-		return nil, nil
+		return nil, fmt.Errorf("unsupported provider: %s", cfg.Provider)
 	}
 }
 
@@ -200,5 +201,5 @@ func newArk(ctx context.Context, cfg Config) (model.BaseChatModel, error) {
 // 2. 或等待官方支持
 func newClaude(ctx context.Context, cfg Config) (model.BaseChatModel, error) {
 	logx.Errorf("claude provider not implemented yet, use openai with claude base url")
-	return nil, nil
+	return nil, fmt.Errorf("claude provider not implemented: use openai compatible interface with claude base url")
 }

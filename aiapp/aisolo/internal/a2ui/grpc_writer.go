@@ -1,6 +1,7 @@
 package a2ui
 
 import (
+	"errors"
 	"io"
 
 	"zero-service/aiapp/aisolo/aisolo"
@@ -22,6 +23,9 @@ func NewGRPCStreamWriter(stream aisolo.AiSolo_AskStreamServer, sessionID string)
 
 // Write 实现 io.Writer 接口
 func (w *GRPCStreamWriter) Write(p []byte) (n int, err error) {
+	if w.stream == nil {
+		return 0, errors.New("stream is nil")
+	}
 	chunk := &aisolo.StreamChunk{
 		SessionId: w.sessionID,
 		Data:      string(p),

@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/cloudwego/eino-ext/components/model/ark"
@@ -114,7 +115,7 @@ func newChatModelByOption(ctx context.Context, provider Provider, cfg *chatModel
 		return newClaudeByOption(ctx, cfg)
 	default:
 		logx.Errorf("unsupported provider: %s", provider)
-		return nil, nil
+		return nil, fmt.Errorf("unsupported provider: %s", provider)
 	}
 }
 
@@ -213,5 +214,5 @@ func newArkByOption(ctx context.Context, cfg *chatModelOptions) (model.BaseChatM
 
 func newClaudeByOption(ctx context.Context, cfg *chatModelOptions) (model.BaseChatModel, error) {
 	logx.Errorf("claude provider not implemented yet, use openai with claude base url")
-	return nil, nil
+	return nil, fmt.Errorf("claude provider not implemented: use openai compatible interface with claude base url")
 }

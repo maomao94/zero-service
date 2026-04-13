@@ -48,8 +48,8 @@ type AiSoloClient interface {
 	AskStream(ctx context.Context, in *AskRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[StreamChunk], error)
 	// ListAgents 列出可用 Agent
 	ListAgents(ctx context.Context, in *ListAgentsRequest, opts ...grpc.CallOption) (*ListAgentsResponse, error)
-	// Resume 恢复中断的执行
-	Resume(ctx context.Context, in *ResumeRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[StreamChunk], error)
+	// Resume 恢复中断的执行（同步返回结果）
+	Resume(ctx context.Context, in *ResumeRequest, opts ...grpc.CallOption) (*ResumeResponse, error)
 }
 
 type aiSoloClient struct {
@@ -129,24 +129,15 @@ func (c *aiSoloClient) ListAgents(ctx context.Context, in *ListAgentsRequest, op
 	return out, nil
 }
 
-func (c *aiSoloClient) Resume(ctx context.Context, in *ResumeRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[StreamChunk], error) {
+func (c *aiSoloClient) Resume(ctx context.Context, in *ResumeRequest, opts ...grpc.CallOption) (*ResumeResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &AiSolo_ServiceDesc.Streams[1], AiSolo_Resume_FullMethodName, cOpts...)
+	out := new(ResumeResponse)
+	err := c.cc.Invoke(ctx, AiSolo_Resume_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[ResumeRequest, StreamChunk]{ClientStream: stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
+	return out, nil
 }
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type AiSolo_ResumeClient = grpc.ServerStreamingClient[StreamChunk]
 
 // AiSoloServer is the server API for AiSolo service.
 // All implementations must embed UnimplementedAiSoloServer
@@ -168,8 +159,8 @@ type AiSoloServer interface {
 	AskStream(*AskRequest, grpc.ServerStreamingServer[StreamChunk]) error
 	// ListAgents 列出可用 Agent
 	ListAgents(context.Context, *ListAgentsRequest) (*ListAgentsResponse, error)
-	// Resume 恢复中断的执行
-	Resume(*ResumeRequest, grpc.ServerStreamingServer[StreamChunk]) error
+	// Resume 恢复中断的执行（同步返回结果）
+	Resume(context.Context, *ResumeRequest) (*ResumeResponse, error)
 	mustEmbedUnimplementedAiSoloServer()
 }
 
@@ -198,8 +189,8 @@ func (UnimplementedAiSoloServer) AskStream(*AskRequest, grpc.ServerStreamingServ
 func (UnimplementedAiSoloServer) ListAgents(context.Context, *ListAgentsRequest) (*ListAgentsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListAgents not implemented")
 }
-func (UnimplementedAiSoloServer) Resume(*ResumeRequest, grpc.ServerStreamingServer[StreamChunk]) error {
-	return status.Errorf(codes.Unimplemented, "method Resume not implemented")
+func (UnimplementedAiSoloServer) Resume(context.Context, *ResumeRequest) (*ResumeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Resume not implemented")
 }
 func (UnimplementedAiSoloServer) mustEmbedUnimplementedAiSoloServer() {}
 func (UnimplementedAiSoloServer) testEmbeddedByValue()                {}
@@ -323,16 +314,23 @@ func _AiSolo_ListAgents_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AiSolo_Resume_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(ResumeRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
+func _AiSolo_Resume_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResumeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
 	}
-	return srv.(AiSoloServer).Resume(m, &grpc.GenericServerStream[ResumeRequest, StreamChunk]{ServerStream: stream})
+	if interceptor == nil {
+		return srv.(AiSoloServer).Resume(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AiSolo_Resume_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AiSoloServer).Resume(ctx, req.(*ResumeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type AiSolo_ResumeServer = grpc.ServerStreamingServer[StreamChunk]
 
 // AiSolo_ServiceDesc is the grpc.ServiceDesc for AiSolo service.
 // It's only intended for direct use with grpc.RegisterService,
@@ -361,16 +359,15 @@ var AiSolo_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "ListAgents",
 			Handler:    _AiSolo_ListAgents_Handler,
 		},
+		{
+			MethodName: "Resume",
+			Handler:    _AiSolo_Resume_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "AskStream",
 			Handler:       _AiSolo_AskStream_Handler,
-			ServerStreams: true,
-		},
-		{
-			StreamName:    "Resume",
-			Handler:       _AiSolo_Resume_Handler,
 			ServerStreams: true,
 		},
 	},

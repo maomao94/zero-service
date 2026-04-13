@@ -2,7 +2,9 @@ package logic
 
 import (
 	"context"
+
 	"zero-service/aiapp/aisolo/aisolo"
+	"zero-service/common/einox/agent"
 
 	"github.com/zeromicro/go-zero/core/logx"
 
@@ -25,24 +27,8 @@ func NewListAgentsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ListAg
 
 // ListAgents 列出可用 Agent
 func (l *ListAgentsLogic) ListAgents(in *aisolo.ListAgentsRequest) (*aisolo.ListAgentsResponse, error) {
-	var agents []*aisolo.AgentInfo
-
-	// 从 AgentManager 获取
-	if l.svcCtx.AgentManager != nil {
-		agentInfos := l.svcCtx.AgentManager.List()
-		for _, info := range agentInfos {
-			agents = append(agents, &aisolo.AgentInfo{
-				Id:           info.Type,
-				Name:         info.Name,
-				Description:  info.Description,
-				Capabilities: info.Capabilities,
-				Available:    info.Available,
-			})
-		}
-	} else {
-		// 返回默认 Agent 类型
-		agents = getDefaultAgents()
-	}
+	// 返回默认 Agent 类型列表（来自 Builtins）
+	agents := getDefaultAgents()
 
 	return &aisolo.ListAgentsResponse{
 		Agents: agents,
@@ -53,49 +39,49 @@ func (l *ListAgentsLogic) ListAgents(in *aisolo.ListAgentsRequest) (*aisolo.List
 func getDefaultAgents() []*aisolo.AgentInfo {
 	return []*aisolo.AgentInfo{
 		{
-			Id:           "chat_model",
+			Id:           string(agent.EinoTypeChatModel),
 			Name:         "ChatModelAgent",
 			Description:  "ReAct 工具调用 Agent，支持多轮对话和工具调用",
 			Capabilities: []string{"工具调用", "多轮对话", "ReAct 推理"},
 			Available:    true,
 		},
 		{
-			Id:           "deep",
+			Id:           string(agent.EinoTypeDeep),
 			Name:         "DeepAgent",
 			Description:  "深度规划 Agent，支持任务规划、文件系统和子 Agent 委派",
 			Capabilities: []string{"任务规划", "文件操作", "子Agent委派"},
 			Available:    true,
 		},
 		{
-			Id:           "sequential",
+			Id:           string(agent.EinoTypeSequential),
 			Name:         "SequentialAgent",
 			Description:  "顺序执行 Agent，按顺序依次执行子 Agent",
 			Capabilities: []string{"顺序执行", "流水线处理"},
 			Available:    true,
 		},
 		{
-			Id:           "parallel",
+			Id:           string(agent.EinoTypeParallel),
 			Name:         "ParallelAgent",
 			Description:  "并行执行 Agent，并发执行多个子 Agent",
 			Capabilities: []string{"并行执行", "并发处理"},
 			Available:    true,
 		},
 		{
-			Id:           "supervisor",
+			Id:           string(agent.EinoTypeSupervisor),
 			Name:         "SupervisorAgent",
 			Description:  "监督者 Agent，协调多个子 Agent 动态分配任务",
 			Capabilities: []string{"动态任务分配", "多 Agent 协调"},
 			Available:    true,
 		},
 		{
-			Id:           "plan_execute",
+			Id:           string(agent.EinoTypePlanExecute),
 			Name:         "PlanExecuteAgent",
 			Description:  "规划-执行 Agent，Planner -> Executor -> Replanner 循环",
 			Capabilities: []string{"任务规划", "分步执行", "动态调整"},
 			Available:    true,
 		},
 		{
-			Id:           "loop",
+			Id:           string(agent.EinoTypeLoop),
 			Name:         "LoopAgent",
 			Description:  "循环执行 Agent，循环执行直到条件满足",
 			Capabilities: []string{"循环执行", "迭代优化"},

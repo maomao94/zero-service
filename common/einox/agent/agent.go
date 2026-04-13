@@ -23,10 +23,11 @@ var _ einox.AgentInterface = (*Agent)(nil)
 
 // Agent AI Agent
 type Agent struct {
-	name    string
-	runner  *adk.Runner
-	storage memory.Storage
-	opts    options
+	name     string
+	adkAgent adk.Agent // 底层的 adk.Agent 实例
+	runner   *adk.Runner
+	storage  memory.Storage
+	opts     options
 }
 
 // New 创建 Agent
@@ -59,10 +60,11 @@ func New(ctx context.Context, opts ...Option) (*Agent, error) {
 	}
 
 	return &Agent{
-		name:    cfg.name,
-		runner:  runner,
-		storage: cfg.storage,
-		opts:    cfg,
+		name:     cfg.name,
+		adkAgent: chatAgent,
+		runner:   runner,
+		storage:  cfg.storage,
+		opts:     cfg,
 	}, nil
 }
 
@@ -397,4 +399,14 @@ func (a *Agent) CollectAndSaveStream(ctx context.Context, input string, opts ...
 	}()
 
 	return ch, nil
+}
+
+// Runner 获取底层的 adk.Runner
+func (a *Agent) Runner() *adk.Runner {
+	return a.runner
+}
+
+// GetAgent 获取底层的 adk.Agent
+func (a *Agent) GetAgent() adk.Agent {
+	return a.adkAgent
 }
