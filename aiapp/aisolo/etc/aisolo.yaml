@@ -1,5 +1,5 @@
 Name: aisolo.rpc
-ListenOn: 0.0.0.0:28099
+ListenOn: 0.0.0.0:23002
 
 Log:
   Encoding: plain

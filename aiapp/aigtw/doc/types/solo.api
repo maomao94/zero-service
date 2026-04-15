@@ -13,12 +13,6 @@ type SoloChatRequest {
 // SoloChatResponse Solo 流式对话响应（SSE 流，实际数据通过 A2UI NDJSON 输出）
 type SoloChatResponse {}
 
-// SoloHealthResponse Solo 健康检查响应
-type SoloHealthResponse {
-	Status  string `json:"status"` // 状态
-	Version string `json:"version"` // 版本
-}
-
 // SoloSessionInfo Solo 会话信息
 type SoloSessionInfo {
 	SessionId    string `json:"sessionId"` // 会话 ID
@@ -81,11 +75,12 @@ type SoloToolInfo {
 
 // SoloAgentInfo Solo Agent 信息
 type SoloAgentInfo {
-	Type         string   `json:"type"` // Agent 类型
-	Name         string   `json:"name"` // Agent 名称
-	Description  string   `json:"description"` // Agent 描述
-	Capabilities []string `json:"capabilities"` // 能力列表
-	Available    bool     `json:"available"` // 是否可用
+	Type         string          `json:"type"` // Agent 类型
+	Name         string          `json:"name"` // Agent 名称
+	Description  string          `json:"description"` // Agent 描述
+	Capabilities []string        `json:"capabilities"` // 能力列表
+	Available    bool            `json:"available"` // 是否可用
+	Tools        []*SoloToolInfo `json:"tools"` // 可用工具列表
 }
 
 // SoloListAgentsResponse Solo 列出 Agent 响应
@@ -108,10 +103,11 @@ type SoloSwitchAgentResponse {
 
 // SoloInterruptRequest Solo 中断请求（前端触发）
 type SoloInterruptRequest {
+	SessionId   string   `json:"sessionId,optional"` // 会话 ID（可选，后端通过 interruptId 关联）
 	InterruptId string   `json:"interruptId"` // 中断 ID
 	Approved    bool     `json:"approved"` // 是否批准
 	SelectedIds []string `json:"selectedIds"` // 选中的选项 ID
-	Reason      string   `json:"reason"` // 拒绝原因
+	Reason      string   `json:"reason,optional"` // 拒绝原因
 }
 
 // SoloInterruptResponse Solo 中断响应

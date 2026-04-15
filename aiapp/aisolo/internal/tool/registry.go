@@ -11,6 +11,7 @@ import (
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/schema"
 	"github.com/zeromicro/go-zero/core/logx"
+	"zero-service/common/einox/middleware"
 )
 
 // =============================================================================
@@ -154,20 +155,51 @@ func (t *DateTimeTool) Info(ctx context.Context) (*schema.ToolInfo, error) {
 
 // Invoke 执行获取日期时间
 func (t *DateTimeTool) Invoke(ctx context.Context, params string) (string, error) {
-	now := time.Now()
-	result := map[string]any{
-		"date":     now.Format("2006-01-02"),
-		"time":     now.Format("15:04:05"),
-		"datetime": now.Format("2006-01-02 15:04:05"),
-		"weekday":  now.Weekday().String(),
-		"unix":     now.Unix(),
+	// 检查是否已经过用户确认
+	wasInterrupted, _, storedArgs := tool.GetInterruptState[string](ctx)
+	if !wasInterrupted {
+		// 抛出中断请求，询问用户确认
+		return "", tool.StatefulInterrupt(ctx, &middleware.ApprovalInfo{
+			ToolName:        "date_time",
+			ArgumentsInJSON: params,
+			Question:        "确认要查询当前服务器时间吗？",
+			Required:        true,
+		}, params)
 	}
 
-	data, err := json.Marshal(result)
-	if err != nil {
-		return "", err
+	// 获取用户的恢复选择
+	isTarget, hasData, data := tool.GetResumeContext[*middleware.ApprovalResult](ctx)
+	if isTarget && hasData {
+		if data.Approved {
+			// 用户确认，返回时间结果
+			now := time.Now()
+			result := map[string]any{
+				"date":     now.Format("2006-01-02"),
+				"time":     now.Format("15:04:05"),
+				"datetime": now.Format("2006-01-02 15:04:05"),
+				"weekday":  now.Weekday().String(),
+				"unix":     now.Unix(),
+			}
+
+			dataVal, err := json.Marshal(result)
+			if err != nil {
+				return "", err
+			}
+			return string(dataVal), nil
+		}
+		if data.DisapproveReason != nil {
+			return fmt.Sprintf("查询时间已取消: %s", *data.DisapproveReason), nil
+		}
+		return "查询时间已取消", nil
 	}
-	return string(data), nil
+
+	// 未获取到恢复数据，再次抛出中断
+	return "", tool.StatefulInterrupt(ctx, &middleware.ApprovalInfo{
+		ToolName:        "date_time",
+		ArgumentsInJSON: storedArgs,
+		Question:        "确认要查询当前服务器时间吗？",
+		Required:        true,
+	}, storedArgs)
 }
 
 // =============================================================================

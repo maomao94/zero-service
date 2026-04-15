@@ -129,6 +129,12 @@ message DeleteSessionResp {
 // Agent 管理
 // ============================================================
 
+// ToolInfo 工具信息
+message ToolInfo {
+  string name = 1;
+  string description = 2;
+}
+
 // ListAgentsReq 列出 Agent 请求
 message ListAgentsReq {}
 
@@ -139,6 +145,7 @@ message AgentInfo {
   string description = 3;
   repeated string capabilities = 4;
   bool available = 5;
+  repeated ToolInfo tools = 6;
 }
 
 // ListAgentsResp 列出 Agent 响应
@@ -167,12 +174,26 @@ enum ResumeAction {
   RESUME_ACTION_DENY = 2;           // 拒绝
 }
 
-// ResumeResp 恢复执行响应
+// ResumeResp 恢复执行响应（同步）
 message ResumeResp {
   string session_id = 1;
   bool success = 2;
   string message = 3;              // 结果消息
   InterruptInfo final_state = 4;    // 最终状态
+}
+
+// ResumeStreamChunk 流式恢复响应块
+message ResumeStreamChunk {
+  string session_id = 1;         // 会话 ID
+  string data = 2;              // A2UI JSON 数据
+  bool is_final = 3;            // 是否结束
+  bool has_interrupt = 4;       // 是否有新的中断
+  string interrupt_id = 5;       // 中断 ID（如有）
+}
+
+// ResumeStreamResp 流式恢复响应（包装 Chunk）
+message ResumeStreamResp {
+  ResumeStreamChunk chunk = 1;
 }
 
 // ============================================================
@@ -234,6 +255,9 @@ service AiSolo {
 
   // Resume 恢复中断的执行（同步返回结果）
   rpc Resume(ResumeReq) returns (ResumeResp);
+
+  // ResumeStream 恢复中断的执行（流式返回 A2UI 事件）
+  rpc ResumeStream(ResumeReq) returns (stream ResumeStreamResp);
 
   // ============================================================
   // 健康检查

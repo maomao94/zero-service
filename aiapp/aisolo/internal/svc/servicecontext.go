@@ -41,6 +41,7 @@ type ServiceContext struct {
 
 // NewServiceContext 创建服务上下文
 func NewServiceContext(c config.Config) *ServiceContext {
+	logx.Must(logx.SetUp(c.Log))
 	ctx := context.Background()
 	svc := &ServiceContext{
 		Config: c,

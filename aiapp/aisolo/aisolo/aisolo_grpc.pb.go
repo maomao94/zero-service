@@ -26,6 +26,7 @@ const (
 	AiSolo_AskStream_FullMethodName     = "/aisolo.AiSolo/AskStream"
 	AiSolo_ListAgents_FullMethodName    = "/aisolo.AiSolo/ListAgents"
 	AiSolo_Resume_FullMethodName        = "/aisolo.AiSolo/Resume"
+	AiSolo_ResumeStream_FullMethodName  = "/aisolo.AiSolo/ResumeStream"
 	AiSolo_Health_FullMethodName        = "/aisolo.AiSolo/Health"
 )
 
@@ -51,6 +52,8 @@ type AiSoloClient interface {
 	ListAgents(ctx context.Context, in *ListAgentsReq, opts ...grpc.CallOption) (*ListAgentsResp, error)
 	// Resume 恢复中断的执行（同步返回结果）
 	Resume(ctx context.Context, in *ResumeReq, opts ...grpc.CallOption) (*ResumeResp, error)
+	// ResumeStream 恢复中断的执行（流式返回 A2UI 事件）
+	ResumeStream(ctx context.Context, in *ResumeReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ResumeStreamResp], error)
 	// Health 健康检查接口
 	Health(ctx context.Context, in *HealthReq, opts ...grpc.CallOption) (*HealthResp, error)
 }
@@ -142,6 +145,25 @@ func (c *aiSoloClient) Resume(ctx context.Context, in *ResumeReq, opts ...grpc.C
 	return out, nil
 }
 
+func (c *aiSoloClient) ResumeStream(ctx context.Context, in *ResumeReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ResumeStreamResp], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &AiSolo_ServiceDesc.Streams[1], AiSolo_ResumeStream_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[ResumeReq, ResumeStreamResp]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type AiSolo_ResumeStreamClient = grpc.ServerStreamingClient[ResumeStreamResp]
+
 func (c *aiSoloClient) Health(ctx context.Context, in *HealthReq, opts ...grpc.CallOption) (*HealthResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(HealthResp)
@@ -174,6 +196,8 @@ type AiSoloServer interface {
 	ListAgents(context.Context, *ListAgentsReq) (*ListAgentsResp, error)
 	// Resume 恢复中断的执行（同步返回结果）
 	Resume(context.Context, *ResumeReq) (*ResumeResp, error)
+	// ResumeStream 恢复中断的执行（流式返回 A2UI 事件）
+	ResumeStream(*ResumeReq, grpc.ServerStreamingServer[ResumeStreamResp]) error
 	// Health 健康检查接口
 	Health(context.Context, *HealthReq) (*HealthResp, error)
 	mustEmbedUnimplementedAiSoloServer()
@@ -206,6 +230,9 @@ func (UnimplementedAiSoloServer) ListAgents(context.Context, *ListAgentsReq) (*L
 }
 func (UnimplementedAiSoloServer) Resume(context.Context, *ResumeReq) (*ResumeResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Resume not implemented")
+}
+func (UnimplementedAiSoloServer) ResumeStream(*ResumeReq, grpc.ServerStreamingServer[ResumeStreamResp]) error {
+	return status.Errorf(codes.Unimplemented, "method ResumeStream not implemented")
 }
 func (UnimplementedAiSoloServer) Health(context.Context, *HealthReq) (*HealthResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Health not implemented")
@@ -350,6 +377,17 @@ func _AiSolo_Resume_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AiSolo_ResumeStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ResumeReq)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(AiSoloServer).ResumeStream(m, &grpc.GenericServerStream[ResumeReq, ResumeStreamResp]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type AiSolo_ResumeStreamServer = grpc.ServerStreamingServer[ResumeStreamResp]
+
 func _AiSolo_Health_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(HealthReq)
 	if err := dec(in); err != nil {
@@ -408,6 +446,11 @@ var AiSolo_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "AskStream",
 			Handler:       _AiSolo_AskStream_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "ResumeStream",
+			Handler:       _AiSolo_ResumeStream_Handler,
 			ServerStreams: true,
 		},
 	},

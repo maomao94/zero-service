@@ -83,12 +83,6 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Handler: solo.ListAgentsHandler(serverCtx),
 			},
 			{
-				// 健康检查
-				Method:  http.MethodGet,
-				Path:    "/health",
-				Handler: solo.SoloHealthHandler(serverCtx),
-			},
-			{
 				// 中断恢复
 				Method:  http.MethodPost,
 				Path:    "/interrupt/:id/resume",

@@ -35,10 +35,10 @@ func NewChatLogic(ctx context.Context, svcCtx *svc.ServiceContext, w http.Respon
 	}
 }
 
-func (l *ChatLogic) Chat(req *types.SoloChatRequest) error {
+func (l *ChatLogic) Chat(req *types.SoloChatRequest) (*types.SoloChatResponse, error) {
 	sw, err := ssex.NewWriter(l.w)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// 获取用户ID
@@ -77,7 +77,7 @@ func (l *ChatLogic) Chat(req *types.SoloChatRequest) error {
 	stream, err := l.svcCtx.AiSoloCli.AskStream(l.ctx, protoReq)
 	if err != nil {
 		l.Logger.Errorf("AskStream gRPC call failed: %v", err)
-		return err
+		return nil, err
 	}
 
 	// 直接透传 A2UI NDJSON 数据
@@ -86,11 +86,11 @@ func (l *ChatLogic) Chat(req *types.SoloChatRequest) error {
 		if errors.Is(err, io.EOF) {
 			sw.WriteDone()
 			l.Logger.Infof("solo stream completed, sessionId: %s, userID: %s", req.SessionId, userID)
-			return nil
+			return nil, nil
 		}
 		if err != nil {
 			l.Logger.Errorf("stream recv error: %v", err)
-			return nil
+			return nil, nil
 		}
 
 		// 透传 gRPC 层的 A2UI JSON
@@ -101,7 +101,7 @@ func (l *ChatLogic) Chat(req *types.SoloChatRequest) error {
 		// 检查客户端断开
 		if l.r.Context().Err() != nil {
 			l.Logger.Infof("stream client disconnected, sessionId: %s, userID: %s", req.SessionId, userID)
-			return nil
+			return nil, nil
 		}
 	}
 }

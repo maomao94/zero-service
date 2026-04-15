@@ -33,12 +33,11 @@ func (l *ResumeLogic) Resume(in *aisolo.ResumeReq) (*aisolo.ResumeResp, error) {
 	l.Infof("Resume: session=%s, user=%s, interrupt=%s, action=%v",
 		sessionID, userID, interruptID, in.Action)
 
-	if sessionID == "" {
-		return nil, status.Error(codes.InvalidArgument, "session_id is required")
-	}
 	if interruptID == "" {
 		return nil, status.Error(codes.InvalidArgument, "interrupt_id is required")
 	}
+
+	// sessionID 可以从 interruptID 关联获取，允许为空
 	if userID == "" {
 		userID = "anonymous"
 	}

@@ -65,8 +65,14 @@ func (s *AiSoloServer) Resume(ctx context.Context, in *aisolo.ResumeReq) (*aisol
 	return l.Resume(in)
 }
 
+// ResumeStream 恢复中断的执行（流式返回 A2UI 事件）
+func (s *AiSoloServer) ResumeStream(in *aisolo.ResumeReq, stream aisolo.AiSolo_ResumeStreamServer) error {
+	l := logic.NewResumeStreamLogic(stream.Context(), s.svcCtx)
+	return l.ResumeStream(in, stream)
+}
+
 // Health 健康检查接口
 func (s *AiSoloServer) Health(ctx context.Context, in *aisolo.HealthReq) (*aisolo.HealthResp, error) {
 	l := logic.NewHealthLogic(ctx, s.svcCtx)
-	return l.Health()
+	return l.Health(in)
 }

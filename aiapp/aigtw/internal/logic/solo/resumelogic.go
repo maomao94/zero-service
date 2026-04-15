@@ -32,8 +32,11 @@ func (l *ResumeLogic) Resume(req *types.SoloInterruptRequest) (resp *types.SoloI
 		action = aisolo.ResumeAction_RESUME_ACTION_DENY
 	}
 	protoReq := &aisolo.ResumeReq{
+		SessionId:   req.SessionId,
 		InterruptId: req.InterruptId,
 		Action:      action,
+		SelectedIds: req.SelectedIds,
+		Reason:      req.Reason,
 	}
 
 	_, err = l.svcCtx.AiSoloCli.Resume(l.ctx, protoReq)

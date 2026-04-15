@@ -66,31 +66,55 @@ func main() {
 
 	ctx := svc.NewServiceContext(c)
 
-	// 静态文件目录 - 使用相对路径（程序运行目录为aigtw根目录）
-	staticDir := "."
+	// 静态文件目录 - 使用绝对路径确保在任何目录启动都能正确访问
+	staticDir, _ := filepath.Abs("aiapp/aigtw")
 
-	// 根路径和静态文件路由（需要在 RegisterHandlers 之前添加）
-	server.AddRoute(rest.Route{
-		Method: http.MethodGet,
-		Path:   "/",
-		Handler: func(w http.ResponseWriter, r *http.Request) {
-			http.ServeFile(w, r, filepath.Join(staticDir, "chat.html"))
+	// 静态文件服务
+	fileServer := http.FileServer(http.Dir(staticDir))
+
+	// 根路径返回 chat.html
+	server.AddRoutes([]rest.Route{
+		{
+			Method: http.MethodGet,
+			Path:   "/",
+			Handler: func(w http.ResponseWriter, r *http.Request) {
+				http.ServeFile(w, r, filepath.Join(staticDir, "chat.html"))
+			},
+		},
+		{
+			Method: http.MethodGet,
+			Path:   "/chat.html",
+			Handler: func(w http.ResponseWriter, r *http.Request) {
+				http.ServeFile(w, r, filepath.Join(staticDir, "chat.html"))
+			},
+		},
+		{
+			Method: http.MethodGet,
+			Path:   "/solo.html",
+			Handler: func(w http.ResponseWriter, r *http.Request) {
+				http.ServeFile(w, r, filepath.Join(staticDir, "solo.html"))
+			},
+		},
+		{
+			Method: http.MethodGet,
+			Path:   "/tool.html",
+			Handler: func(w http.ResponseWriter, r *http.Request) {
+				http.ServeFile(w, r, filepath.Join(staticDir, "tool.html"))
+			},
+		},
+		{
+			Method: http.MethodGet,
+			Path:   "/results.html",
+			Handler: func(w http.ResponseWriter, r *http.Request) {
+				http.ServeFile(w, r, filepath.Join(staticDir, "results.html"))
+			},
 		},
 	})
 
-	for _, name := range []string{"chat.html", "tool.html", "results.html", "solo.html"} {
-		fname := name
-		server.AddRoute(rest.Route{
-			Method: http.MethodGet,
-			Path:   "/" + fname,
-			Handler: func(w http.ResponseWriter, r *http.Request) {
-				http.ServeFile(w, r, filepath.Join(staticDir, fname))
-			},
-		})
-	}
-
 	// 注册 API 路由
 	handler.RegisterHandlers(server, ctx)
+
+	_ = fileServer // 预留，用于后续扩展静态资源服务
 
 	serviceGroup := service.NewServiceGroup()
 	defer serviceGroup.Stop()

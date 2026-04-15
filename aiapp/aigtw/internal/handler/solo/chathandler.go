@@ -19,9 +19,11 @@ func ChatHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		}
 
 		l := solo.NewChatLogic(r.Context(), svcCtx, w, r)
-		err := l.Chat(&req)
+		resp, err := l.Chat(&req)
 		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
+		} else if resp != nil {
+			httpx.OkJsonCtx(r.Context(), w, resp)
 		}
 		// SSE 流式响应，不需要返回 JSON
 	}

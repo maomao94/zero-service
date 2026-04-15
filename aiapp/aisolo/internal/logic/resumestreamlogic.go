@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"io"
 	"time"
-	"zero-service/common/einox/a2ui"
 
 	"zero-service/aiapp/aisolo/aisolo"
 	"zero-service/aiapp/aisolo/internal/svc"
+	"zero-service/common/einox/a2ui"
 	"zero-service/common/einox/memory"
 
 	"github.com/cloudwego/eino/schema"
@@ -18,30 +18,29 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type AskStreamLogic struct {
+type ResumeStreamLogic struct {
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
 	Logger logx.Logger
 }
 
-func NewAskStreamLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AskStreamLogic {
-	return &AskStreamLogic{
+func NewResumeStreamLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ResumeStreamLogic {
+	return &ResumeStreamLogic{
 		ctx:    ctx,
 		svcCtx: svcCtx,
 		Logger: logx.WithContext(ctx),
 	}
 }
 
-type grpcWriter struct {
-	streamSvc aisolo.AiSolo_AskStreamServer
+type resumeGrpcWriter struct {
+	streamSvc aisolo.AiSolo_ResumeStreamServer
 }
 
-func (w *grpcWriter) Write(p []byte) (n int, err error) {
-	resp := &aisolo.AskStreamResp{
-		Chunk: &aisolo.AskStreamChunk{
-			SessionId: "",
-			Data:      string(p),
-			IsFinal:   false,
+func (w *resumeGrpcWriter) Write(p []byte) (n int, err error) {
+	resp := &aisolo.ResumeStreamResp{
+		Chunk: &aisolo.ResumeStreamChunk{
+			Data:    string(p),
+			IsFinal: false,
 		},
 	}
 	if err := w.streamSvc.Send(resp); err != nil {
@@ -50,29 +49,38 @@ func (w *grpcWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func (l *AskStreamLogic) AskStream(in *aisolo.AskReq, streamSvc aisolo.AiSolo_AskStreamServer) error {
+func (l *ResumeStreamLogic) ResumeStream(in *aisolo.ResumeReq, streamSvc aisolo.AiSolo_ResumeStreamServer) error {
 	startTime := time.Now()
 
 	sessionID := in.SessionId
 	userID := in.UserId
-	if userID == "" {
-		return status.Error(codes.InvalidArgument, "user_id is required")
-	}
+	interruptID := in.InterruptId
+
+	l.Logger.Infof("ResumeStream: session=%s, user=%s, interrupt=%s, action=%v",
+		sessionID, userID, interruptID, in.Action)
+
 	if sessionID == "" {
 		return status.Error(codes.InvalidArgument, "session_id is required")
 	}
-	if in.Message == "" {
-		return status.Error(codes.InvalidArgument, "message is required")
+	if interruptID == "" {
+		return status.Error(codes.InvalidArgument, "interrupt_id is required")
+	}
+	if userID == "" {
+		userID = "anonymous"
 	}
 
-	writer := &grpcWriter{streamSvc: streamSvc}
+	writer := &resumeGrpcWriter{streamSvc: streamSvc}
 
 	history, err := l.getHistory(userID, sessionID)
 	if err != nil {
 		l.Logger.Errorf("get messages: %v", err)
 	}
 
-	einoAgent, cleanup, err := l.svcCtx.Router.Route(l.ctx, in)
+	einoAgent, cleanup, err := l.svcCtx.Router.Route(l.ctx, &aisolo.AskReq{
+		UserId:    userID,
+		SessionId: sessionID,
+		AgentMode: aisolo.AgentMode_AGENT_MODE_FAST,
+	})
 	if err != nil {
 		errMsg := a2ui.Message{
 			SurfaceUpdate: &a2ui.SurfaceUpdateMsg{
@@ -136,26 +144,66 @@ func (l *AskStreamLogic) AskStream(in *aisolo.AskReq, streamSvc aisolo.AiSolo_As
 		return nil
 	}
 
-	messages := append(history, &schema.Message{
-		Role:    schema.User,
-		Content: in.Message,
-	})
-
 	runner := einoAgent.Runner()
-	events := runner.Run(l.ctx, messages)
 
-	lastContent, interruptID, _, err := a2ui.StreamToWriter(writer, sessionID, history, events)
+	l.Logger.Infof("ResumeStream: resuming agent with interruptID=%s, approved=%v", interruptID, in.Action == aisolo.ResumeAction_RESUME_ACTION_APPROVE)
+
+	events, err := runner.Resume(l.ctx, interruptID)
+	if err != nil {
+		l.Logger.Errorf("resume agent failed: %v", err)
+
+		errMsg := a2ui.Message{
+			SurfaceUpdate: &a2ui.SurfaceUpdateMsg{
+				SurfaceID: "chat-" + sessionID,
+				Components: []a2ui.Component{
+					{
+						ID: "error-card",
+						Component: a2ui.ComponentValue{
+							Card: &a2ui.CardComp{
+								Children: []string{"error-content"},
+							},
+						},
+					},
+					{
+						ID: "error-content",
+						Component: a2ui.ComponentValue{
+							Text: &a2ui.TextComp{
+								Value:     fmt.Sprintf("Resume failed: %v", err),
+								UsageHint: "body",
+							},
+						},
+					},
+				},
+			},
+		}
+		if err := l.emitMessage(writer, errMsg); err != nil {
+			l.Logger.Errorf("send error message: %v", err)
+		}
+
+		finalResp := &aisolo.ResumeStreamResp{
+			Chunk: &aisolo.ResumeStreamChunk{
+				SessionId: sessionID,
+				IsFinal:   true,
+			},
+		}
+		streamSvc.Send(finalResp)
+		return nil
+	}
+
+	lastContent, newInterruptID, _, err := a2ui.StreamToWriter(writer, sessionID, history, events)
 	if err != nil && !errors.Is(err, io.EOF) {
 		l.Logger.Errorf("stream to writer: %v", err)
 		return status.Error(codes.Internal, fmt.Sprintf("agent execution failed: %v", err))
 	}
 
-	l.saveMessages(userID, sessionID, in.Message, lastContent)
+	if lastContent != "" {
+		l.saveMessages(userID, sessionID, "", lastContent)
+	}
 
-	if interruptID != "" {
+	if newInterruptID != "" {
 		interruptMsg := a2ui.Message{
 			InterruptRequest: &a2ui.InterruptRequestMsg{
-				InterruptID: interruptID,
+				InterruptID: newInterruptID,
 				Description: "approval required",
 				Type:        a2ui.InterruptTypeApproval,
 			},
@@ -165,12 +213,23 @@ func (l *AskStreamLogic) AskStream(in *aisolo.AskReq, streamSvc aisolo.AiSolo_As
 		}
 	}
 
+	finalResp := &aisolo.ResumeStreamResp{
+		Chunk: &aisolo.ResumeStreamChunk{
+			SessionId: sessionID,
+			IsFinal:   true,
+		},
+	}
+	if err := streamSvc.Send(finalResp); err != nil {
+		l.Logger.Errorf("send final response: %v", err)
+	}
+
 	duration := time.Since(startTime).Milliseconds()
-	l.Logger.Infof("AskStream completed: session=%s, mode=%s, duration=%dms", sessionID, in.AgentMode.String(), duration)
+	l.Logger.Infof("ResumeStream completed: session=%s, duration=%dms", sessionID, duration)
+
 	return nil
 }
 
-func (l *AskStreamLogic) getHistory(userID, sessionID string) ([]*schema.Message, error) {
+func (l *ResumeStreamLogic) getHistory(userID, sessionID string) ([]*schema.Message, error) {
 	if l.svcCtx.MemoryStorage == nil {
 		return nil, nil
 	}
@@ -188,7 +247,7 @@ func (l *AskStreamLogic) getHistory(userID, sessionID string) ([]*schema.Message
 	return history, nil
 }
 
-func (l *AskStreamLogic) saveMessages(userID, sessionID, userMsg, assistantMsg string) {
+func (l *ResumeStreamLogic) saveMessages(userID, sessionID, userMsg, assistantMsg string) {
 	if l.svcCtx.MemoryStorage == nil {
 		return
 	}
@@ -214,7 +273,7 @@ func (l *AskStreamLogic) saveMessages(userID, sessionID, userMsg, assistantMsg s
 	}
 }
 
-func (l *AskStreamLogic) emitMessage(w io.Writer, msg a2ui.Message) error {
+func (l *ResumeStreamLogic) emitMessage(w io.Writer, msg a2ui.Message) error {
 	data, err := a2ui.Encode(msg)
 	if err != nil {
 		return err

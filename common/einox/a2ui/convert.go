@@ -9,11 +9,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"strings"
 
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/schema"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 // =============================================================================
@@ -56,7 +56,7 @@ func StreamToWriter(w io.Writer, sessionID string, history []*schema.Message, ev
 		return "", "", 0, err
 	}
 
-	// 发送历史消息
+	// 发送历史消息（全量）
 	if err := emitHistory(w, surfaceID, history, rootChildren); err != nil {
 		return "", "", 0, err
 	}
@@ -94,12 +94,12 @@ func streamEvents(w io.Writer, surfaceID string, rootChildren *[]string, msgIdx 
 	for {
 		event, ok := events.Next()
 		if !ok {
-			log.Printf("[a2ui] event stream ended (iterator exhausted)")
+			logx.Info("[a2ui] event stream ended (iterator exhausted)")
 			break
 		}
 
 		if event.Err != nil {
-			log.Printf("[a2ui] event error: %v", event.Err)
+			logx.Errorf("[a2ui] event error: %v", event.Err)
 			_ = emitToolChip(w, surfaceID, rootChildren, msgIdx, "error", event.Err.Error())
 			return lastContent.String(), "", event.Err
 		}
@@ -119,7 +119,7 @@ func streamEvents(w io.Writer, surfaceID string, rootChildren *[]string, msgIdx 
 				interruptID = ictxs[0].ID
 				desc = fmt.Sprintf("%v", ictxs[0].Info)
 			}
-			log.Printf("[a2ui] interrupt: id=%s desc=%q", interruptID, desc)
+			logx.Infof("[a2ui] interrupt: id=%s desc=%q", interruptID, desc)
 			_ = emitToolChip(w, surfaceID, rootChildren, msgIdx, "approval needed", desc)
 			_ = emit(w, Message{
 				InterruptRequest: &InterruptRequestMsg{
@@ -132,11 +132,11 @@ func streamEvents(w io.Writer, surfaceID string, rootChildren *[]string, msgIdx 
 
 		hasOutput := event.Output != nil && event.Output.MessageOutput != nil
 		hasExit := event.Action != nil && event.Action.Exit
-		log.Printf("[a2ui] event: hasOutput=%v hasExit=%v", hasOutput, hasExit)
+		logx.Infof("[a2ui] event: hasOutput=%v hasExit=%v", hasOutput, hasExit)
 
 		if !hasOutput {
 			if hasExit {
-				log.Printf("[a2ui] exit (no output)")
+				logx.Info("[a2ui] exit (no output)")
 				break
 			}
 			continue
@@ -147,14 +147,14 @@ func streamEvents(w io.Writer, surfaceID string, rootChildren *[]string, msgIdx 
 		if role == "" && mo.Message != nil {
 			role = mo.Message.Role
 		}
-		log.Printf("[a2ui] message output: role=%q isStreaming=%v hasStream=%v hasMessage=%v",
+		logx.Infof("[a2ui] message output: role=%q isStreaming=%v hasStream=%v hasMessage=%v",
 			role, mo.IsStreaming, mo.MessageStream != nil, mo.Message != nil)
 
 		switch role {
 		case schema.Tool:
 			// 消费流式数据，然后显示紧凑的工具结果卡片
 			content := drainToolResult(mo)
-			log.Printf("[a2ui] tool result (%d chars): %.200s", len(content), content)
+			logx.Infof("[a2ui] tool result (%d chars): %.200s", len(content), content)
 			_ = emitToolChip(w, surfaceID, rootChildren, msgIdx, "tool result", content)
 
 		default:
@@ -185,7 +185,7 @@ func streamEvents(w io.Writer, surfaceID string, rootChildren *[]string, msgIdx 
 						break
 					}
 					if recvErr != nil {
-						log.Printf("[a2ui] stream recv error: %v", recvErr)
+						logx.Errorf("[a2ui] stream recv error: %v", recvErr)
 						break
 					}
 
@@ -241,10 +241,10 @@ func streamEvents(w io.Writer, surfaceID string, rootChildren *[]string, msgIdx 
 					}
 					toolCalls = append(toolCalls, toolCallInfo{Name: name, Args: args})
 				}
-				log.Printf("[a2ui] assistant stream: content=%d chars toolCalls=%d", accContent.Len(), len(toolCalls))
+				logx.Infof("[a2ui] assistant stream: content=%d chars toolCalls=%d", accContent.Len(), len(toolCalls))
 
 				for _, tc := range toolCalls {
-					log.Printf("[a2ui] tool call: %s args=%s", tc.Name, tc.Args)
+					logx.Infof("[a2ui] tool call: %s args=%s", tc.Name, tc.Args)
 					_ = emitToolChip(w, surfaceID, rootChildren, msgIdx, "tool call", formatToolCall(tc))
 				}
 				if shellEmitted {
@@ -254,10 +254,10 @@ func streamEvents(w io.Writer, surfaceID string, rootChildren *[]string, msgIdx 
 
 			} else if mo.Message != nil {
 				msg := mo.Message
-				log.Printf("[a2ui] assistant message: content=%d chars toolCalls=%d", len(msg.Content), len(msg.ToolCalls))
+				logx.Infof("[a2ui] assistant message: content=%d chars toolCalls=%d", len(msg.Content), len(msg.ToolCalls))
 
 				for _, tc := range msg.ToolCalls {
-					log.Printf("[a2ui] tool call: %s args=%s", tc.Function.Name, tc.Function.Arguments)
+					logx.Infof("[a2ui] tool call: %s args=%s", tc.Function.Name, tc.Function.Arguments)
 					_ = emitToolChip(w, surfaceID, rootChildren, msgIdx, "tool call", formatToolCall(toolCallInfo{
 						Name: tc.Function.Name,
 						Args: tc.Function.Arguments,
@@ -271,12 +271,12 @@ func streamEvents(w io.Writer, surfaceID string, rootChildren *[]string, msgIdx 
 					lastContent.WriteString(msg.Content)
 				}
 			} else {
-				log.Printf("[a2ui] assistant event with no stream and no message (skipped)")
+				logx.Info("[a2ui] assistant event with no stream and no message (skipped)")
 			}
 		}
 
 		if hasExit {
-			log.Printf("[a2ui] exit (after output)")
+			logx.Info("[a2ui] exit (after output)")
 			break
 		}
 	}
@@ -304,7 +304,7 @@ func consumeStream(stream *schema.StreamReader[*schema.Message]) (content string
 			break
 		}
 		if err != nil {
-			log.Printf("[a2ui] stream recv error: %v", err)
+			logx.Errorf("[a2ui] stream recv error: %v", err)
 			break
 		}
 		if chunk.Content != "" {
@@ -406,16 +406,18 @@ func emitToolChip(w io.Writer, surfaceID string, rootChildren *[]string, msgIdx 
 		display = string([]rune(display)[:300]) + "…"
 	}
 
+	comps := []Component{
+		{ID: "root-col", Component: ComponentValue{Column: &ColumnComp{Children: append([]string{}, *rootChildren...)}}},
+		{ID: cardID, Component: ComponentValue{Card: &CardComp{Children: []string{colID}}}},
+		{ID: colID, Component: ComponentValue{Column: &ColumnComp{Children: []string{labelID, textID}}}},
+		{ID: labelID, Component: ComponentValue{Text: &TextComp{Value: kind, UsageHint: "caption"}}},
+		{ID: textID, Component: ComponentValue{Text: &TextComp{Value: display, UsageHint: "body"}}},
+	}
+
 	return emit(w, Message{
 		SurfaceUpdate: &SurfaceUpdateMsg{
-			SurfaceID: surfaceID,
-			Components: []Component{
-				{ID: "root-col", Component: ComponentValue{Column: &ColumnComp{Children: append([]string{}, *rootChildren...)}}},
-				{ID: cardID, Component: ComponentValue{Card: &CardComp{Children: []string{colID}}}},
-				{ID: colID, Component: ComponentValue{Column: &ColumnComp{Children: []string{labelID, textID}}}},
-				{ID: labelID, Component: ComponentValue{Text: &TextComp{Value: kind, UsageHint: "caption"}}},
-				{ID: textID, Component: ComponentValue{Text: &TextComp{Value: display, UsageHint: "body"}}},
-			},
+			SurfaceID:  surfaceID,
+			Components: comps,
 		},
 	})
 }
@@ -442,16 +444,18 @@ func emitHistory(w io.Writer, surfaceID string, history []*schema.Message, rootC
 }
 
 func emitMessageShell(w io.Writer, surfaceID string, rootChildren []string, cardID, colID, roleID, contentID, dataKey, roleLabel string) error {
+	comps := []Component{
+		{ID: "root-col", Component: ComponentValue{Column: &ColumnComp{Children: append([]string{}, rootChildren...)}}},
+		{ID: cardID, Component: ComponentValue{Card: &CardComp{Children: []string{colID}}}},
+		{ID: colID, Component: ComponentValue{Column: &ColumnComp{Children: []string{roleID, contentID}}}},
+		{ID: roleID, Component: ComponentValue{Text: &TextComp{Value: roleLabel, UsageHint: "caption"}}},
+		{ID: contentID, Component: ComponentValue{Text: &TextComp{DataKey: dataKey, UsageHint: "body"}}},
+	}
+
 	return emit(w, Message{
 		SurfaceUpdate: &SurfaceUpdateMsg{
-			SurfaceID: surfaceID,
-			Components: []Component{
-				{ID: "root-col", Component: ComponentValue{Column: &ColumnComp{Children: append([]string{}, rootChildren...)}}},
-				{ID: cardID, Component: ComponentValue{Card: &CardComp{Children: []string{colID}}}},
-				{ID: colID, Component: ComponentValue{Column: &ColumnComp{Children: []string{roleID, contentID}}}},
-				{ID: roleID, Component: ComponentValue{Text: &TextComp{Value: roleLabel, UsageHint: "caption"}}},
-				{ID: contentID, Component: ComponentValue{Text: &TextComp{DataKey: dataKey, UsageHint: "body"}}},
-			},
+			SurfaceID:  surfaceID,
+			Components: comps,
 		},
 	})
 }

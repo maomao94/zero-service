@@ -970,6 +970,59 @@ func (x *DeleteSessionResp) GetSuccess() bool {
 	return false
 }
 
+// ToolInfo 工具信息
+type ToolInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ToolInfo) Reset() {
+	*x = ToolInfo{}
+	mi := &file_aisolo_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ToolInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ToolInfo) ProtoMessage() {}
+
+func (x *ToolInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ToolInfo.ProtoReflect.Descriptor instead.
+func (*ToolInfo) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *ToolInfo) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ToolInfo) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
 // ListAgentsReq 列出 Agent 请求
 type ListAgentsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -979,7 +1032,7 @@ type ListAgentsReq struct {
 
 func (x *ListAgentsReq) Reset() {
 	*x = ListAgentsReq{}
-	mi := &file_aisolo_proto_msgTypes[14]
+	mi := &file_aisolo_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -991,7 +1044,7 @@ func (x *ListAgentsReq) String() string {
 func (*ListAgentsReq) ProtoMessage() {}
 
 func (x *ListAgentsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[14]
+	mi := &file_aisolo_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1004,7 +1057,7 @@ func (x *ListAgentsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAgentsReq.ProtoReflect.Descriptor instead.
 func (*ListAgentsReq) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{14}
+	return file_aisolo_proto_rawDescGZIP(), []int{15}
 }
 
 // AgentInfo Agent 信息
@@ -1015,13 +1068,14 @@ type AgentInfo struct {
 	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
 	Capabilities  []string               `protobuf:"bytes,4,rep,name=capabilities,proto3" json:"capabilities,omitempty"`
 	Available     bool                   `protobuf:"varint,5,opt,name=available,proto3" json:"available,omitempty"`
+	Tools         []*ToolInfo            `protobuf:"bytes,6,rep,name=tools,proto3" json:"tools,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AgentInfo) Reset() {
 	*x = AgentInfo{}
-	mi := &file_aisolo_proto_msgTypes[15]
+	mi := &file_aisolo_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1033,7 +1087,7 @@ func (x *AgentInfo) String() string {
 func (*AgentInfo) ProtoMessage() {}
 
 func (x *AgentInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[15]
+	mi := &file_aisolo_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1046,7 +1100,7 @@ func (x *AgentInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AgentInfo.ProtoReflect.Descriptor instead.
 func (*AgentInfo) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{15}
+	return file_aisolo_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *AgentInfo) GetId() string {
@@ -1084,6 +1138,13 @@ func (x *AgentInfo) GetAvailable() bool {
 	return false
 }
 
+func (x *AgentInfo) GetTools() []*ToolInfo {
+	if x != nil {
+		return x.Tools
+	}
+	return nil
+}
+
 // ListAgentsResp 列出 Agent 响应
 type ListAgentsResp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1094,7 +1155,7 @@ type ListAgentsResp struct {
 
 func (x *ListAgentsResp) Reset() {
 	*x = ListAgentsResp{}
-	mi := &file_aisolo_proto_msgTypes[16]
+	mi := &file_aisolo_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1106,7 +1167,7 @@ func (x *ListAgentsResp) String() string {
 func (*ListAgentsResp) ProtoMessage() {}
 
 func (x *ListAgentsResp) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[16]
+	mi := &file_aisolo_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1119,7 +1180,7 @@ func (x *ListAgentsResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAgentsResp.ProtoReflect.Descriptor instead.
 func (*ListAgentsResp) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{16}
+	return file_aisolo_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ListAgentsResp) GetAgents() []*AgentInfo {
@@ -1144,7 +1205,7 @@ type ResumeReq struct {
 
 func (x *ResumeReq) Reset() {
 	*x = ResumeReq{}
-	mi := &file_aisolo_proto_msgTypes[17]
+	mi := &file_aisolo_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1156,7 +1217,7 @@ func (x *ResumeReq) String() string {
 func (*ResumeReq) ProtoMessage() {}
 
 func (x *ResumeReq) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[17]
+	mi := &file_aisolo_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1169,7 +1230,7 @@ func (x *ResumeReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResumeReq.ProtoReflect.Descriptor instead.
 func (*ResumeReq) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{17}
+	return file_aisolo_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ResumeReq) GetSessionId() string {
@@ -1214,7 +1275,7 @@ func (x *ResumeReq) GetReason() string {
 	return ""
 }
 
-// ResumeResp 恢复执行响应
+// ResumeResp 恢复执行响应（同步）
 type ResumeResp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
@@ -1227,7 +1288,7 @@ type ResumeResp struct {
 
 func (x *ResumeResp) Reset() {
 	*x = ResumeResp{}
-	mi := &file_aisolo_proto_msgTypes[18]
+	mi := &file_aisolo_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1239,7 +1300,7 @@ func (x *ResumeResp) String() string {
 func (*ResumeResp) ProtoMessage() {}
 
 func (x *ResumeResp) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[18]
+	mi := &file_aisolo_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1252,7 +1313,7 @@ func (x *ResumeResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResumeResp.ProtoReflect.Descriptor instead.
 func (*ResumeResp) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{18}
+	return file_aisolo_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ResumeResp) GetSessionId() string {
@@ -1283,6 +1344,128 @@ func (x *ResumeResp) GetFinalState() *InterruptInfo {
 	return nil
 }
 
+// ResumeStreamChunk 流式恢复响应块
+type ResumeStreamChunk struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`           // 会话 ID
+	Data          string                 `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`                                      // A2UI JSON 数据
+	IsFinal       bool                   `protobuf:"varint,3,opt,name=is_final,json=isFinal,proto3" json:"is_final,omitempty"`                // 是否结束
+	HasInterrupt  bool                   `protobuf:"varint,4,opt,name=has_interrupt,json=hasInterrupt,proto3" json:"has_interrupt,omitempty"` // 是否有新的中断
+	InterruptId   string                 `protobuf:"bytes,5,opt,name=interrupt_id,json=interruptId,proto3" json:"interrupt_id,omitempty"`     // 中断 ID（如有）
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResumeStreamChunk) Reset() {
+	*x = ResumeStreamChunk{}
+	mi := &file_aisolo_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResumeStreamChunk) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResumeStreamChunk) ProtoMessage() {}
+
+func (x *ResumeStreamChunk) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResumeStreamChunk.ProtoReflect.Descriptor instead.
+func (*ResumeStreamChunk) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *ResumeStreamChunk) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *ResumeStreamChunk) GetData() string {
+	if x != nil {
+		return x.Data
+	}
+	return ""
+}
+
+func (x *ResumeStreamChunk) GetIsFinal() bool {
+	if x != nil {
+		return x.IsFinal
+	}
+	return false
+}
+
+func (x *ResumeStreamChunk) GetHasInterrupt() bool {
+	if x != nil {
+		return x.HasInterrupt
+	}
+	return false
+}
+
+func (x *ResumeStreamChunk) GetInterruptId() string {
+	if x != nil {
+		return x.InterruptId
+	}
+	return ""
+}
+
+// ResumeStreamResp 流式恢复响应（包装 Chunk）
+type ResumeStreamResp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Chunk         *ResumeStreamChunk     `protobuf:"bytes,1,opt,name=chunk,proto3" json:"chunk,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResumeStreamResp) Reset() {
+	*x = ResumeStreamResp{}
+	mi := &file_aisolo_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResumeStreamResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResumeStreamResp) ProtoMessage() {}
+
+func (x *ResumeStreamResp) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResumeStreamResp.ProtoReflect.Descriptor instead.
+func (*ResumeStreamResp) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *ResumeStreamResp) GetChunk() *ResumeStreamChunk {
+	if x != nil {
+		return x.Chunk
+	}
+	return nil
+}
+
 // HealthReq 健康检查请求
 type HealthReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1292,7 +1475,7 @@ type HealthReq struct {
 
 func (x *HealthReq) Reset() {
 	*x = HealthReq{}
-	mi := &file_aisolo_proto_msgTypes[19]
+	mi := &file_aisolo_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1304,7 +1487,7 @@ func (x *HealthReq) String() string {
 func (*HealthReq) ProtoMessage() {}
 
 func (x *HealthReq) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[19]
+	mi := &file_aisolo_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1317,7 +1500,7 @@ func (x *HealthReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthReq.ProtoReflect.Descriptor instead.
 func (*HealthReq) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{19}
+	return file_aisolo_proto_rawDescGZIP(), []int{22}
 }
 
 // HealthResp 健康检查响应
@@ -1333,7 +1516,7 @@ type HealthResp struct {
 
 func (x *HealthResp) Reset() {
 	*x = HealthResp{}
-	mi := &file_aisolo_proto_msgTypes[20]
+	mi := &file_aisolo_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1345,7 +1528,7 @@ func (x *HealthResp) String() string {
 func (*HealthResp) ProtoMessage() {}
 
 func (x *HealthResp) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[20]
+	mi := &file_aisolo_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1358,7 +1541,7 @@ func (x *HealthResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthResp.ProtoReflect.Descriptor instead.
 func (*HealthResp) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{20}
+	return file_aisolo_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *HealthResp) GetStatus() string {
@@ -1462,14 +1645,18 @@ const file_aisolo_proto_rawDesc = "" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\"-\n" +
 	"\x11DeleteSessionResp\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x0f\n" +
-	"\rListAgentsReq\"\x93\x01\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"@\n" +
+	"\bToolInfo\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\"\x0f\n" +
+	"\rListAgentsReq\"\xbb\x01\n" +
 	"\tAgentInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\"\n" +
 	"\fcapabilities\x18\x04 \x03(\tR\fcapabilities\x12\x1c\n" +
-	"\tavailable\x18\x05 \x01(\bR\tavailable\";\n" +
+	"\tavailable\x18\x05 \x01(\bR\tavailable\x12&\n" +
+	"\x05tools\x18\x06 \x03(\v2\x10.aisolo.ToolInfoR\x05tools\";\n" +
 	"\x0eListAgentsResp\x12)\n" +
 	"\x06agents\x18\x01 \x03(\v2\x11.aisolo.AgentInfoR\x06agents\"\xcf\x01\n" +
 	"\tResumeReq\x12\x1d\n" +
@@ -1487,7 +1674,16 @@ const file_aisolo_proto_rawDesc = "" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x03 \x01(\tR\amessage\x126\n" +
 	"\vfinal_state\x18\x04 \x01(\v2\x15.aisolo.InterruptInfoR\n" +
-	"finalState\"\v\n" +
+	"finalState\"\xa9\x01\n" +
+	"\x11ResumeStreamChunk\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x12\n" +
+	"\x04data\x18\x02 \x01(\tR\x04data\x12\x19\n" +
+	"\bis_final\x18\x03 \x01(\bR\aisFinal\x12#\n" +
+	"\rhas_interrupt\x18\x04 \x01(\bR\fhasInterrupt\x12!\n" +
+	"\finterrupt_id\x18\x05 \x01(\tR\vinterruptId\"C\n" +
+	"\x10ResumeStreamResp\x12/\n" +
+	"\x05chunk\x18\x01 \x01(\v2\x19.aisolo.ResumeStreamChunkR\x05chunk\"\v\n" +
 	"\tHealthReq\"\xe7\x01\n" +
 	"\n" +
 	"HealthResp\x12\x16\n" +
@@ -1506,7 +1702,7 @@ const file_aisolo_proto_rawDesc = "" +
 	"\fResumeAction\x12\x1d\n" +
 	"\x19RESUME_ACTION_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15RESUME_ACTION_APPROVE\x10\x01\x12\x16\n" +
-	"\x12RESUME_ACTION_DENY\x10\x022\xe9\x03\n" +
+	"\x12RESUME_ACTION_DENY\x10\x022\xa8\x04\n" +
 	"\x06AiSolo\x12D\n" +
 	"\rCreateSession\x12\x18.aisolo.CreateSessionReq\x1a\x19.aisolo.CreateSessionResp\x12;\n" +
 	"\n" +
@@ -1516,7 +1712,8 @@ const file_aisolo_proto_rawDesc = "" +
 	"\tAskStream\x12\x0e.aisolo.AskReq\x1a\x15.aisolo.AskStreamResp0\x01\x12;\n" +
 	"\n" +
 	"ListAgents\x12\x15.aisolo.ListAgentsReq\x1a\x16.aisolo.ListAgentsResp\x12/\n" +
-	"\x06Resume\x12\x11.aisolo.ResumeReq\x1a\x12.aisolo.ResumeResp\x12/\n" +
+	"\x06Resume\x12\x11.aisolo.ResumeReq\x1a\x12.aisolo.ResumeResp\x12=\n" +
+	"\fResumeStream\x12\x11.aisolo.ResumeReq\x1a\x18.aisolo.ResumeStreamResp0\x01\x12/\n" +
 	"\x06Health\x12\x11.aisolo.HealthReq\x1a\x12.aisolo.HealthRespB\n" +
 	"Z\b./aisolob\x06proto3"
 
@@ -1533,7 +1730,7 @@ func file_aisolo_proto_rawDescGZIP() []byte {
 }
 
 var file_aisolo_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_aisolo_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
+var file_aisolo_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_aisolo_proto_goTypes = []any{
 	(AgentMode)(0),            // 0: aisolo.AgentMode
 	(ResumeAction)(0),         // 1: aisolo.ResumeAction
@@ -1551,19 +1748,22 @@ var file_aisolo_proto_goTypes = []any{
 	(*ListSessionsResp)(nil),  // 13: aisolo.ListSessionsResp
 	(*DeleteSessionReq)(nil),  // 14: aisolo.DeleteSessionReq
 	(*DeleteSessionResp)(nil), // 15: aisolo.DeleteSessionResp
-	(*ListAgentsReq)(nil),     // 16: aisolo.ListAgentsReq
-	(*AgentInfo)(nil),         // 17: aisolo.AgentInfo
-	(*ListAgentsResp)(nil),    // 18: aisolo.ListAgentsResp
-	(*ResumeReq)(nil),         // 19: aisolo.ResumeReq
-	(*ResumeResp)(nil),        // 20: aisolo.ResumeResp
-	(*HealthReq)(nil),         // 21: aisolo.HealthReq
-	(*HealthResp)(nil),        // 22: aisolo.HealthResp
-	nil,                       // 23: aisolo.AskReq.MetaEntry
-	nil,                       // 24: aisolo.HealthResp.DependenciesEntry
+	(*ToolInfo)(nil),          // 16: aisolo.ToolInfo
+	(*ListAgentsReq)(nil),     // 17: aisolo.ListAgentsReq
+	(*AgentInfo)(nil),         // 18: aisolo.AgentInfo
+	(*ListAgentsResp)(nil),    // 19: aisolo.ListAgentsResp
+	(*ResumeReq)(nil),         // 20: aisolo.ResumeReq
+	(*ResumeResp)(nil),        // 21: aisolo.ResumeResp
+	(*ResumeStreamChunk)(nil), // 22: aisolo.ResumeStreamChunk
+	(*ResumeStreamResp)(nil),  // 23: aisolo.ResumeStreamResp
+	(*HealthReq)(nil),         // 24: aisolo.HealthReq
+	(*HealthResp)(nil),        // 25: aisolo.HealthResp
+	nil,                       // 26: aisolo.AskReq.MetaEntry
+	nil,                       // 27: aisolo.HealthResp.DependenciesEntry
 }
 var file_aisolo_proto_depIdxs = []int32{
 	0,  // 0: aisolo.AskReq.agent_mode:type_name -> aisolo.AgentMode
-	23, // 1: aisolo.AskReq.meta:type_name -> aisolo.AskReq.MetaEntry
+	26, // 1: aisolo.AskReq.meta:type_name -> aisolo.AskReq.MetaEntry
 	3,  // 2: aisolo.AskStreamResp.chunk:type_name -> aisolo.AskStreamChunk
 	6,  // 3: aisolo.InterruptInfo.options:type_name -> aisolo.Option
 	0,  // 4: aisolo.CreateSessionReq.agent_mode:type_name -> aisolo.AgentMode
@@ -1571,31 +1771,35 @@ var file_aisolo_proto_depIdxs = []int32{
 	0,  // 6: aisolo.Session.agent_mode:type_name -> aisolo.AgentMode
 	9,  // 7: aisolo.GetSessionResp.session:type_name -> aisolo.Session
 	9,  // 8: aisolo.ListSessionsResp.sessions:type_name -> aisolo.Session
-	17, // 9: aisolo.ListAgentsResp.agents:type_name -> aisolo.AgentInfo
-	1,  // 10: aisolo.ResumeReq.action:type_name -> aisolo.ResumeAction
-	5,  // 11: aisolo.ResumeResp.final_state:type_name -> aisolo.InterruptInfo
-	24, // 12: aisolo.HealthResp.dependencies:type_name -> aisolo.HealthResp.DependenciesEntry
-	7,  // 13: aisolo.AiSolo.CreateSession:input_type -> aisolo.CreateSessionReq
-	10, // 14: aisolo.AiSolo.GetSession:input_type -> aisolo.GetSessionReq
-	12, // 15: aisolo.AiSolo.ListSessions:input_type -> aisolo.ListSessionsReq
-	14, // 16: aisolo.AiSolo.DeleteSession:input_type -> aisolo.DeleteSessionReq
-	2,  // 17: aisolo.AiSolo.AskStream:input_type -> aisolo.AskReq
-	16, // 18: aisolo.AiSolo.ListAgents:input_type -> aisolo.ListAgentsReq
-	19, // 19: aisolo.AiSolo.Resume:input_type -> aisolo.ResumeReq
-	21, // 20: aisolo.AiSolo.Health:input_type -> aisolo.HealthReq
-	8,  // 21: aisolo.AiSolo.CreateSession:output_type -> aisolo.CreateSessionResp
-	11, // 22: aisolo.AiSolo.GetSession:output_type -> aisolo.GetSessionResp
-	13, // 23: aisolo.AiSolo.ListSessions:output_type -> aisolo.ListSessionsResp
-	15, // 24: aisolo.AiSolo.DeleteSession:output_type -> aisolo.DeleteSessionResp
-	4,  // 25: aisolo.AiSolo.AskStream:output_type -> aisolo.AskStreamResp
-	18, // 26: aisolo.AiSolo.ListAgents:output_type -> aisolo.ListAgentsResp
-	20, // 27: aisolo.AiSolo.Resume:output_type -> aisolo.ResumeResp
-	22, // 28: aisolo.AiSolo.Health:output_type -> aisolo.HealthResp
-	21, // [21:29] is the sub-list for method output_type
-	13, // [13:21] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	16, // 9: aisolo.AgentInfo.tools:type_name -> aisolo.ToolInfo
+	18, // 10: aisolo.ListAgentsResp.agents:type_name -> aisolo.AgentInfo
+	1,  // 11: aisolo.ResumeReq.action:type_name -> aisolo.ResumeAction
+	5,  // 12: aisolo.ResumeResp.final_state:type_name -> aisolo.InterruptInfo
+	22, // 13: aisolo.ResumeStreamResp.chunk:type_name -> aisolo.ResumeStreamChunk
+	27, // 14: aisolo.HealthResp.dependencies:type_name -> aisolo.HealthResp.DependenciesEntry
+	7,  // 15: aisolo.AiSolo.CreateSession:input_type -> aisolo.CreateSessionReq
+	10, // 16: aisolo.AiSolo.GetSession:input_type -> aisolo.GetSessionReq
+	12, // 17: aisolo.AiSolo.ListSessions:input_type -> aisolo.ListSessionsReq
+	14, // 18: aisolo.AiSolo.DeleteSession:input_type -> aisolo.DeleteSessionReq
+	2,  // 19: aisolo.AiSolo.AskStream:input_type -> aisolo.AskReq
+	17, // 20: aisolo.AiSolo.ListAgents:input_type -> aisolo.ListAgentsReq
+	20, // 21: aisolo.AiSolo.Resume:input_type -> aisolo.ResumeReq
+	20, // 22: aisolo.AiSolo.ResumeStream:input_type -> aisolo.ResumeReq
+	24, // 23: aisolo.AiSolo.Health:input_type -> aisolo.HealthReq
+	8,  // 24: aisolo.AiSolo.CreateSession:output_type -> aisolo.CreateSessionResp
+	11, // 25: aisolo.AiSolo.GetSession:output_type -> aisolo.GetSessionResp
+	13, // 26: aisolo.AiSolo.ListSessions:output_type -> aisolo.ListSessionsResp
+	15, // 27: aisolo.AiSolo.DeleteSession:output_type -> aisolo.DeleteSessionResp
+	4,  // 28: aisolo.AiSolo.AskStream:output_type -> aisolo.AskStreamResp
+	19, // 29: aisolo.AiSolo.ListAgents:output_type -> aisolo.ListAgentsResp
+	21, // 30: aisolo.AiSolo.Resume:output_type -> aisolo.ResumeResp
+	23, // 31: aisolo.AiSolo.ResumeStream:output_type -> aisolo.ResumeStreamResp
+	25, // 32: aisolo.AiSolo.Health:output_type -> aisolo.HealthResp
+	24, // [24:33] is the sub-list for method output_type
+	15, // [15:24] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_aisolo_proto_init() }
@@ -1609,7 +1813,7 @@ func file_aisolo_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_aisolo_proto_rawDesc), len(file_aisolo_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   23,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

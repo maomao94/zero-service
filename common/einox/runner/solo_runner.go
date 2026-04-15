@@ -11,8 +11,8 @@ import (
 	"github.com/cloudwego/eino/schema"
 	"github.com/zeromicro/go-zero/core/logx"
 
-	"zero-service/common/a2ui"
 	"zero-service/common/einox"
+	"zero-service/common/einox/a2ui"
 	"zero-service/common/einox/memory"
 )
 
@@ -209,7 +209,7 @@ func (r *SoloRunner) StreamToA2UI(ctx context.Context, w io.Writer, sessionID st
 
 	iter := runner.Run(ctx, messages)
 
-	response, interruptID, err := a2ui.StreamToWriter(w, sessionID, messages, iter)
+	response, interruptID, _, err := a2ui.StreamToWriter(w, sessionID, messages, iter)
 	if err != nil {
 		return response, "", fmt.Errorf("stream to a2ui: %w", err)
 	}

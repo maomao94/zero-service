@@ -71,13 +71,6 @@ type ChatDelta struct {
 	ToolCalls        []ToolCallDelta `json:"tool_calls,optional"`        // 工具调用增量
 }
 
-type HealthResponse struct {
-	Status       string            `json:"status"`       // 服务状态: ok/error
-	Version      string            `json:"version"`      // 服务版本
-	Timestamp    int64             `json:"timestamp"`    // 响应时间戳
-	Dependencies map[string]string `json:"dependencies"` // 依赖服务状态
-}
-
 type ChatMessage struct {
 	Role             string `json:"role"`                       // 角色: system / user / assistant
 	Content          string `json:"content"`                    // 消息内容
@@ -141,11 +134,12 @@ type ProgressMessage struct {
 }
 
 type SoloAgentInfo struct {
-	Type         string   `json:"type"`         // Agent 类型
-	Name         string   `json:"name"`         // Agent 名称
-	Description  string   `json:"description"`  // Agent 描述
-	Capabilities []string `json:"capabilities"` // 能力列表
-	Available    bool     `json:"available"`    // 是否可用
+	Type         string          `json:"type"`         // Agent 类型
+	Name         string          `json:"name"`         // Agent 名称
+	Description  string          `json:"description"`  // Agent 描述
+	Capabilities []string        `json:"capabilities"` // 能力列表
+	Available    bool            `json:"available"`    // 是否可用
+	Tools        []*SoloToolInfo `json:"tools"`        // 可用工具列表
 }
 
 type SoloChatRequest struct {
@@ -181,16 +175,12 @@ type SoloGetSessionResponse struct {
 	Session *SoloSessionInfo `json:"session"` // 会话信息
 }
 
-type SoloHealthResponse struct {
-	Status  string `json:"status"`  // 状态
-	Version string `json:"version"` // 版本
-}
-
 type SoloInterruptRequest struct {
-	InterruptId string   `json:"interruptId"` // 中断 ID
-	Approved    bool     `json:"approved"`    // 是否批准
-	SelectedIds []string `json:"selectedIds"` // 选中的选项 ID
-	Reason      string   `json:"reason"`      // 拒绝原因
+	SessionId   string   `json:"sessionId,optional"` // 会话 ID（可选，后端通过 interruptId 关联）
+	InterruptId string   `json:"interruptId"`        // 中断 ID（从路径获取）
+	Approved    bool     `json:"approved"`           // 是否批准
+	SelectedIds []string `json:"selectedIds"`        // 选中的选项 ID
+	Reason      string   `json:"reason,optional"`    // 拒绝原因
 }
 
 type SoloInterruptResponse struct {
