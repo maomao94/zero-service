@@ -3,8 +3,11 @@ package agent
 import (
 	"context"
 	"fmt"
+	"os"
 
+	localbk "github.com/cloudwego/eino-ext/adk/backend/local"
 	"github.com/cloudwego/eino/adk"
+	"github.com/cloudwego/eino/adk/middlewares/skill"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
@@ -287,6 +290,10 @@ func createChatAgent(ctx context.Context, cfg *options) (*adk.ChatModelAgent, er
 		}
 	}
 
+	// 配置 skill 中间件（通用功能，所有 Agent 类型支持）
+	skillHandlers := buildSkillHandlers(ctx, cfg)
+	cfg.handlers = append(skillHandlers, cfg.handlers...)
+
 	// 应用 Handlers（ChatModelAgentMiddleware 接口实现）
 	if len(cfg.handlers) > 0 {
 		agentCfg.Handlers = cfg.handlers
@@ -298,6 +305,53 @@ func createChatAgent(ctx context.Context, cfg *options) (*adk.ChatModelAgent, er
 	}
 
 	return adk.NewChatModelAgent(ctx, agentCfg)
+}
+
+// buildSkillHandlers 根据配置构建 skill 中间件
+func buildSkillHandlers(ctx context.Context, cfg *options) []adk.ChatModelAgentMiddleware {
+	if cfg.skillsDir == "" {
+		// 尝试从环境变量获取
+		cfg.skillsDir = os.Getenv("EINO_EXT_SKILLS_DIR")
+	}
+
+	if cfg.skillsDir == "" {
+		return nil
+	}
+
+	// 验证目录存在
+	fi, err := os.Stat(cfg.skillsDir)
+	if err != nil || !fi.IsDir() {
+		return nil
+	}
+
+	// 使用 local backend
+	backend, err := localbk.NewBackend(ctx, &localbk.Config{})
+	if err != nil {
+		logx.Errorf("[Agent] create local backend for skill: %v", err)
+		return nil
+	}
+
+	// 创建 skill backend
+	skillBackend, err := skill.NewBackendFromFilesystem(ctx, &skill.BackendFromFilesystemConfig{
+		Backend: backend,
+		BaseDir: cfg.skillsDir,
+	})
+	if err != nil {
+		logx.Errorf("[Agent] create skill backend: %v", err)
+		return nil
+	}
+
+	// 创建 skill 中间件
+	skillMiddleware, err := skill.NewMiddleware(ctx, &skill.Config{
+		Backend: skillBackend,
+	})
+	if err != nil {
+		logx.Errorf("[Agent] create skill middleware: %v", err)
+		return nil
+	}
+
+	logx.Infof("[Agent] skill middleware loaded: dir=%s", cfg.skillsDir)
+	return []adk.ChatModelAgentMiddleware{skillMiddleware}
 }
 
 // Stream 返回 Agent 事件的原始流

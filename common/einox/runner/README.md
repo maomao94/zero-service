@@ -97,7 +97,7 @@ messages := []*schema.Message{
 }
 
 var buf bytes.Buffer
-response, err := sr.StreamToA2UI(ctx, &buf, "session-123", messages)
+response, interruptID, err := sr.StreamToA2UI(ctx, &buf, "session-123", messages)
 ```
 
 ## API 文档

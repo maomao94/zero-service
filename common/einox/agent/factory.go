@@ -8,7 +8,6 @@ import (
 	localbk "github.com/cloudwego/eino-ext/adk/backend/local"
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/adk/filesystem"
-	"github.com/cloudwego/eino/adk/middlewares/skill"
 	"github.com/cloudwego/eino/adk/prebuilt/deep"
 	"github.com/cloudwego/eino/adk/prebuilt/planexecute"
 	"github.com/cloudwego/eino/adk/prebuilt/supervisor"
@@ -234,43 +233,22 @@ func newDeepAgentImpl(ctx context.Context, chatModel model.BaseChatModel, opts .
 		maxIter = 30
 	}
 
-	// 收集 handlers
-	var handlers []adk.ChatModelAgentMiddleware
+	// 收集 options
+	var cfg options
+	for _, opt := range opts {
+		opt(&cfg)
+	}
 
-	// 确定 backend（文件系统或 skill 需要 backend）
+	// 配置 skill 中间件（通用功能）
+	skillHandlers := buildSkillHandlers(ctx, &cfg)
+	cfg.handlers = append(skillHandlers, cfg.handlers...)
+
+	// 确定 backend（文件系统需要 backend）
 	var backend filesystem.Backend
-	if getEnableFileSystem(opts) || getSkillsDir(opts) != "" {
+	if getEnableFileSystem(opts) || getSkillsDir(opts) != "" || os.Getenv("EINO_EXT_SKILLS_DIR") != "" {
 		// 使用 local backend 支持文件系统和 skill
 		backend, _ = localbk.NewBackend(ctx, &localbk.Config{})
 	}
-
-	// 配置 skill 中间件
-	skillsDir := getSkillsDir(opts)
-	if skillsDir == "" {
-		// 尝试从环境变量获取
-		skillsDir = os.Getenv("EINO_EXT_SKILLS_DIR")
-	}
-
-	if skillsDir != "" {
-		// 验证目录存在
-		if fi, err := os.Stat(skillsDir); err == nil && fi.IsDir() {
-			skillBackend, err := skill.NewBackendFromFilesystem(ctx, &skill.BackendFromFilesystemConfig{
-				Backend: backend,
-				BaseDir: skillsDir,
-			})
-			if err == nil {
-				skillMiddleware, err := skill.NewMiddleware(ctx, &skill.Config{
-					Backend: skillBackend,
-				})
-				if err == nil {
-					handlers = append(handlers, skillMiddleware)
-				}
-			}
-		}
-	}
-
-	// 添加自定义 handlers
-	handlers = append(handlers, getHandlers(opts)...)
 
 	deepCfg := &deep.Config{
 		Name:              getName(opts),
@@ -280,7 +258,7 @@ func newDeepAgentImpl(ctx context.Context, chatModel model.BaseChatModel, opts .
 		MaxIteration:      maxIter,
 		WithoutWriteTodos: !getEnableWriteTodos(opts),
 		Backend:           backend,
-		Handlers:          handlers,
+		Handlers:          cfg.handlers,
 	}
 
 	agent, err := deep.New(ctx, deepCfg)

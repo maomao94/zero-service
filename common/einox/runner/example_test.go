@@ -183,12 +183,13 @@ func ExampleSoloRunner_StreamToA2UI() {
 	}
 
 	var buf bytes.Buffer
-	response, err := runner.StreamToA2UI(ctx, &buf, "session-123", messages)
+	response, interruptID, err := runner.StreamToA2UI(ctx, &buf, "session-123", messages)
 	if err != nil {
 		fmt.Printf("stream to a2ui failed: %v\n", err)
 		return
 	}
 
 	fmt.Printf("Response: %s\n", response)
+	fmt.Printf("InterruptID: %s\n", interruptID)
 	fmt.Printf("Output: %s\n", buf.String())
 }

@@ -122,12 +122,12 @@ func TestSoloRunnerStreamToA2UI(t *testing.T) {
 		schema.UserMessage("hello"),
 	}
 
-	_, err = runner.StreamToA2UI(ctx, nil, "session-1", messages)
+	_, _, err = runner.StreamToA2UI(ctx, nil, "session-1", messages)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "writer is required")
 
 	var buf bytes.Buffer
-	_, err = runner.StreamToA2UI(ctx, &buf, "session-1", messages)
+	_, _, err = runner.StreamToA2UI(ctx, &buf, "session-1", messages)
 	assert.NoError(t, err)
 }
 
