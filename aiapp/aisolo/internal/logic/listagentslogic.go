@@ -26,11 +26,11 @@ func NewListAgentsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ListAg
 }
 
 // ListAgents 列出可用 Agent
-func (l *ListAgentsLogic) ListAgents(in *aisolo.ListAgentsRequest) (*aisolo.ListAgentsResponse, error) {
+func (l *ListAgentsLogic) ListAgents(in *aisolo.ListAgentsReq) (*aisolo.ListAgentsResp, error) {
 	// 返回默认 Agent 类型列表（来自 Builtins）
 	agents := getDefaultAgents()
 
-	return &aisolo.ListAgentsResponse{
+	return &aisolo.ListAgentsResp{
 		Agents: agents,
 	}, nil
 }

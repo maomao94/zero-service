@@ -27,7 +27,7 @@ func NewListSessionsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *List
 }
 
 // ListSessions 列出会话
-func (l *ListSessionsLogic) ListSessions(in *aisolo.ListSessionsRequest) (*aisolo.ListSessionsResponse, error) {
+func (l *ListSessionsLogic) ListSessions(in *aisolo.ListSessionsReq) (*aisolo.ListSessionsResp, error) {
 	// 验证必填参数
 	userID := in.UserId
 	if userID == "" {
@@ -50,7 +50,7 @@ func (l *ListSessionsLogic) ListSessions(in *aisolo.ListSessionsRequest) (*aisol
 		return nil, err
 	}
 
-	return &aisolo.ListSessionsResponse{
+	return &aisolo.ListSessionsResp{
 		Sessions:   sessions,
 		Total:      total,
 		Page:       int32(page),

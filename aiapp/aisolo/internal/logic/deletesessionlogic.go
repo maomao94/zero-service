@@ -24,14 +24,14 @@ func NewDeleteSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Del
 }
 
 // DeleteSession 删除会话
-func (l *DeleteSessionLogic) DeleteSession(in *aisolo.SessionRequest) (*aisolo.Empty, error) {
+func (l *DeleteSessionLogic) DeleteSession(in *aisolo.DeleteSessionReq) (*aisolo.DeleteSessionResp, error) {
 	err := GlobalSessionStore.Delete(l.ctx, in.SessionId)
 	if err != nil {
 		l.Errorf("delete session failed: %v", err)
-		return &aisolo.Empty{}, err
+		return nil, err
 	}
 
 	l.Infof("Session deleted: %s", in.SessionId)
 
-	return &aisolo.Empty{}, nil
+	return &aisolo.DeleteSessionResp{Success: true}, nil
 }

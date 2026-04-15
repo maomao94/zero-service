@@ -24,8 +24,8 @@ func NewListAgentsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ListAg
 	}
 }
 
-func (l *ListAgentsLogic) ListAgents() (resp *types.SoloListAgentsResp, err error) {
-	protoReq := &aisolo.ListAgentsRequest{}
+func (l *ListAgentsLogic) ListAgents() (resp *types.SoloListAgentsResponse, err error) {
+	protoReq := &aisolo.ListAgentsReq{}
 
 	result, err := l.svcCtx.EinoCli.ListAgents(l.ctx, protoReq)
 	if err != nil {
@@ -44,5 +44,5 @@ func (l *ListAgentsLogic) ListAgents() (resp *types.SoloListAgentsResp, err erro
 		}
 	}
 
-	return &types.SoloListAgentsResp{Agents: agents}, nil
+	return &types.SoloListAgentsResponse{Agents: agents}, nil
 }

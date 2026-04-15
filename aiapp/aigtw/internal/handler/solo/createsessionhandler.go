@@ -15,7 +15,7 @@ import (
 // 创建会话
 func CreateSessionHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req types.SoloCreateSessionReq
+		var req types.SoloCreateSessionRequest
 		if err := httpx.Parse(r, &req); err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 			return

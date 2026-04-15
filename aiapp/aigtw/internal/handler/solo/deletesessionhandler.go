@@ -15,7 +15,7 @@ import (
 // 删除会话
 func DeleteSessionHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req types.SoloDeleteSessionReq
+		var req types.SoloDeleteSessionRequest
 		if err := httpx.Parse(r, &req); err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 			return

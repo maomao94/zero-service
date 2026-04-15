@@ -32,24 +32,24 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// EinoService AI 助手核心服务
+// AiSolo AI 助手核心服务
 type AiSoloClient interface {
 	// CreateSession 创建会话
-	CreateSession(ctx context.Context, in *CreateSessionRequest, opts ...grpc.CallOption) (*Session, error)
+	CreateSession(ctx context.Context, in *CreateSessionReq, opts ...grpc.CallOption) (*CreateSessionResp, error)
 	// GetSession 获取会话
-	GetSession(ctx context.Context, in *SessionRequest, opts ...grpc.CallOption) (*Session, error)
+	GetSession(ctx context.Context, in *GetSessionReq, opts ...grpc.CallOption) (*GetSessionResp, error)
 	// ListSessions 列出会话
-	ListSessions(ctx context.Context, in *ListSessionsRequest, opts ...grpc.CallOption) (*ListSessionsResponse, error)
+	ListSessions(ctx context.Context, in *ListSessionsReq, opts ...grpc.CallOption) (*ListSessionsResp, error)
 	// DeleteSession 删除会话
-	DeleteSession(ctx context.Context, in *SessionRequest, opts ...grpc.CallOption) (*Empty, error)
+	DeleteSession(ctx context.Context, in *DeleteSessionReq, opts ...grpc.CallOption) (*DeleteSessionResp, error)
 	// AskStream 流式对话
 	// - 会话自动创建（session_id 为空时）
 	// - 返回 A2UI 格式的 SSE 事件流
-	AskStream(ctx context.Context, in *AskRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[StreamChunk], error)
+	AskStream(ctx context.Context, in *AskReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[AskStreamResp], error)
 	// ListAgents 列出可用 Agent
-	ListAgents(ctx context.Context, in *ListAgentsRequest, opts ...grpc.CallOption) (*ListAgentsResponse, error)
+	ListAgents(ctx context.Context, in *ListAgentsReq, opts ...grpc.CallOption) (*ListAgentsResp, error)
 	// Resume 恢复中断的执行（同步返回结果）
-	Resume(ctx context.Context, in *ResumeRequest, opts ...grpc.CallOption) (*ResumeResponse, error)
+	Resume(ctx context.Context, in *ResumeReq, opts ...grpc.CallOption) (*ResumeResp, error)
 }
 
 type aiSoloClient struct {
@@ -60,9 +60,9 @@ func NewAiSoloClient(cc grpc.ClientConnInterface) AiSoloClient {
 	return &aiSoloClient{cc}
 }
 
-func (c *aiSoloClient) CreateSession(ctx context.Context, in *CreateSessionRequest, opts ...grpc.CallOption) (*Session, error) {
+func (c *aiSoloClient) CreateSession(ctx context.Context, in *CreateSessionReq, opts ...grpc.CallOption) (*CreateSessionResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Session)
+	out := new(CreateSessionResp)
 	err := c.cc.Invoke(ctx, AiSolo_CreateSession_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -70,9 +70,9 @@ func (c *aiSoloClient) CreateSession(ctx context.Context, in *CreateSessionReque
 	return out, nil
 }
 
-func (c *aiSoloClient) GetSession(ctx context.Context, in *SessionRequest, opts ...grpc.CallOption) (*Session, error) {
+func (c *aiSoloClient) GetSession(ctx context.Context, in *GetSessionReq, opts ...grpc.CallOption) (*GetSessionResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Session)
+	out := new(GetSessionResp)
 	err := c.cc.Invoke(ctx, AiSolo_GetSession_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -80,9 +80,9 @@ func (c *aiSoloClient) GetSession(ctx context.Context, in *SessionRequest, opts 
 	return out, nil
 }
 
-func (c *aiSoloClient) ListSessions(ctx context.Context, in *ListSessionsRequest, opts ...grpc.CallOption) (*ListSessionsResponse, error) {
+func (c *aiSoloClient) ListSessions(ctx context.Context, in *ListSessionsReq, opts ...grpc.CallOption) (*ListSessionsResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListSessionsResponse)
+	out := new(ListSessionsResp)
 	err := c.cc.Invoke(ctx, AiSolo_ListSessions_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -90,9 +90,9 @@ func (c *aiSoloClient) ListSessions(ctx context.Context, in *ListSessionsRequest
 	return out, nil
 }
 
-func (c *aiSoloClient) DeleteSession(ctx context.Context, in *SessionRequest, opts ...grpc.CallOption) (*Empty, error) {
+func (c *aiSoloClient) DeleteSession(ctx context.Context, in *DeleteSessionReq, opts ...grpc.CallOption) (*DeleteSessionResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Empty)
+	out := new(DeleteSessionResp)
 	err := c.cc.Invoke(ctx, AiSolo_DeleteSession_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -100,13 +100,13 @@ func (c *aiSoloClient) DeleteSession(ctx context.Context, in *SessionRequest, op
 	return out, nil
 }
 
-func (c *aiSoloClient) AskStream(ctx context.Context, in *AskRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[StreamChunk], error) {
+func (c *aiSoloClient) AskStream(ctx context.Context, in *AskReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[AskStreamResp], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	stream, err := c.cc.NewStream(ctx, &AiSolo_ServiceDesc.Streams[0], AiSolo_AskStream_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[AskRequest, StreamChunk]{ClientStream: stream}
+	x := &grpc.GenericClientStream[AskReq, AskStreamResp]{ClientStream: stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -117,11 +117,11 @@ func (c *aiSoloClient) AskStream(ctx context.Context, in *AskRequest, opts ...gr
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type AiSolo_AskStreamClient = grpc.ServerStreamingClient[StreamChunk]
+type AiSolo_AskStreamClient = grpc.ServerStreamingClient[AskStreamResp]
 
-func (c *aiSoloClient) ListAgents(ctx context.Context, in *ListAgentsRequest, opts ...grpc.CallOption) (*ListAgentsResponse, error) {
+func (c *aiSoloClient) ListAgents(ctx context.Context, in *ListAgentsReq, opts ...grpc.CallOption) (*ListAgentsResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListAgentsResponse)
+	out := new(ListAgentsResp)
 	err := c.cc.Invoke(ctx, AiSolo_ListAgents_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -129,9 +129,9 @@ func (c *aiSoloClient) ListAgents(ctx context.Context, in *ListAgentsRequest, op
 	return out, nil
 }
 
-func (c *aiSoloClient) Resume(ctx context.Context, in *ResumeRequest, opts ...grpc.CallOption) (*ResumeResponse, error) {
+func (c *aiSoloClient) Resume(ctx context.Context, in *ResumeReq, opts ...grpc.CallOption) (*ResumeResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ResumeResponse)
+	out := new(ResumeResp)
 	err := c.cc.Invoke(ctx, AiSolo_Resume_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -143,24 +143,24 @@ func (c *aiSoloClient) Resume(ctx context.Context, in *ResumeRequest, opts ...gr
 // All implementations must embed UnimplementedAiSoloServer
 // for forward compatibility.
 //
-// EinoService AI 助手核心服务
+// AiSolo AI 助手核心服务
 type AiSoloServer interface {
 	// CreateSession 创建会话
-	CreateSession(context.Context, *CreateSessionRequest) (*Session, error)
+	CreateSession(context.Context, *CreateSessionReq) (*CreateSessionResp, error)
 	// GetSession 获取会话
-	GetSession(context.Context, *SessionRequest) (*Session, error)
+	GetSession(context.Context, *GetSessionReq) (*GetSessionResp, error)
 	// ListSessions 列出会话
-	ListSessions(context.Context, *ListSessionsRequest) (*ListSessionsResponse, error)
+	ListSessions(context.Context, *ListSessionsReq) (*ListSessionsResp, error)
 	// DeleteSession 删除会话
-	DeleteSession(context.Context, *SessionRequest) (*Empty, error)
+	DeleteSession(context.Context, *DeleteSessionReq) (*DeleteSessionResp, error)
 	// AskStream 流式对话
 	// - 会话自动创建（session_id 为空时）
 	// - 返回 A2UI 格式的 SSE 事件流
-	AskStream(*AskRequest, grpc.ServerStreamingServer[StreamChunk]) error
+	AskStream(*AskReq, grpc.ServerStreamingServer[AskStreamResp]) error
 	// ListAgents 列出可用 Agent
-	ListAgents(context.Context, *ListAgentsRequest) (*ListAgentsResponse, error)
+	ListAgents(context.Context, *ListAgentsReq) (*ListAgentsResp, error)
 	// Resume 恢复中断的执行（同步返回结果）
-	Resume(context.Context, *ResumeRequest) (*ResumeResponse, error)
+	Resume(context.Context, *ResumeReq) (*ResumeResp, error)
 	mustEmbedUnimplementedAiSoloServer()
 }
 
@@ -171,25 +171,25 @@ type AiSoloServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAiSoloServer struct{}
 
-func (UnimplementedAiSoloServer) CreateSession(context.Context, *CreateSessionRequest) (*Session, error) {
+func (UnimplementedAiSoloServer) CreateSession(context.Context, *CreateSessionReq) (*CreateSessionResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateSession not implemented")
 }
-func (UnimplementedAiSoloServer) GetSession(context.Context, *SessionRequest) (*Session, error) {
+func (UnimplementedAiSoloServer) GetSession(context.Context, *GetSessionReq) (*GetSessionResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSession not implemented")
 }
-func (UnimplementedAiSoloServer) ListSessions(context.Context, *ListSessionsRequest) (*ListSessionsResponse, error) {
+func (UnimplementedAiSoloServer) ListSessions(context.Context, *ListSessionsReq) (*ListSessionsResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListSessions not implemented")
 }
-func (UnimplementedAiSoloServer) DeleteSession(context.Context, *SessionRequest) (*Empty, error) {
+func (UnimplementedAiSoloServer) DeleteSession(context.Context, *DeleteSessionReq) (*DeleteSessionResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteSession not implemented")
 }
-func (UnimplementedAiSoloServer) AskStream(*AskRequest, grpc.ServerStreamingServer[StreamChunk]) error {
+func (UnimplementedAiSoloServer) AskStream(*AskReq, grpc.ServerStreamingServer[AskStreamResp]) error {
 	return status.Errorf(codes.Unimplemented, "method AskStream not implemented")
 }
-func (UnimplementedAiSoloServer) ListAgents(context.Context, *ListAgentsRequest) (*ListAgentsResponse, error) {
+func (UnimplementedAiSoloServer) ListAgents(context.Context, *ListAgentsReq) (*ListAgentsResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListAgents not implemented")
 }
-func (UnimplementedAiSoloServer) Resume(context.Context, *ResumeRequest) (*ResumeResponse, error) {
+func (UnimplementedAiSoloServer) Resume(context.Context, *ResumeReq) (*ResumeResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Resume not implemented")
 }
 func (UnimplementedAiSoloServer) mustEmbedUnimplementedAiSoloServer() {}
@@ -214,7 +214,7 @@ func RegisterAiSoloServer(s grpc.ServiceRegistrar, srv AiSoloServer) {
 }
 
 func _AiSolo_CreateSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateSessionRequest)
+	in := new(CreateSessionReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -226,13 +226,13 @@ func _AiSolo_CreateSession_Handler(srv interface{}, ctx context.Context, dec fun
 		FullMethod: AiSolo_CreateSession_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AiSoloServer).CreateSession(ctx, req.(*CreateSessionRequest))
+		return srv.(AiSoloServer).CreateSession(ctx, req.(*CreateSessionReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _AiSolo_GetSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SessionRequest)
+	in := new(GetSessionReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -244,13 +244,13 @@ func _AiSolo_GetSession_Handler(srv interface{}, ctx context.Context, dec func(i
 		FullMethod: AiSolo_GetSession_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AiSoloServer).GetSession(ctx, req.(*SessionRequest))
+		return srv.(AiSoloServer).GetSession(ctx, req.(*GetSessionReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _AiSolo_ListSessions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListSessionsRequest)
+	in := new(ListSessionsReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -262,13 +262,13 @@ func _AiSolo_ListSessions_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: AiSolo_ListSessions_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AiSoloServer).ListSessions(ctx, req.(*ListSessionsRequest))
+		return srv.(AiSoloServer).ListSessions(ctx, req.(*ListSessionsReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _AiSolo_DeleteSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SessionRequest)
+	in := new(DeleteSessionReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -280,24 +280,24 @@ func _AiSolo_DeleteSession_Handler(srv interface{}, ctx context.Context, dec fun
 		FullMethod: AiSolo_DeleteSession_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AiSoloServer).DeleteSession(ctx, req.(*SessionRequest))
+		return srv.(AiSoloServer).DeleteSession(ctx, req.(*DeleteSessionReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _AiSolo_AskStream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(AskRequest)
+	m := new(AskReq)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(AiSoloServer).AskStream(m, &grpc.GenericServerStream[AskRequest, StreamChunk]{ServerStream: stream})
+	return srv.(AiSoloServer).AskStream(m, &grpc.GenericServerStream[AskReq, AskStreamResp]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type AiSolo_AskStreamServer = grpc.ServerStreamingServer[StreamChunk]
+type AiSolo_AskStreamServer = grpc.ServerStreamingServer[AskStreamResp]
 
 func _AiSolo_ListAgents_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListAgentsRequest)
+	in := new(ListAgentsReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -309,13 +309,13 @@ func _AiSolo_ListAgents_Handler(srv interface{}, ctx context.Context, dec func(i
 		FullMethod: AiSolo_ListAgents_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AiSoloServer).ListAgents(ctx, req.(*ListAgentsRequest))
+		return srv.(AiSoloServer).ListAgents(ctx, req.(*ListAgentsReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _AiSolo_Resume_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ResumeRequest)
+	in := new(ResumeReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -327,7 +327,7 @@ func _AiSolo_Resume_Handler(srv interface{}, ctx context.Context, dec func(inter
 		FullMethod: AiSolo_Resume_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AiSoloServer).Resume(ctx, req.(*ResumeRequest))
+		return srv.(AiSoloServer).Resume(ctx, req.(*ResumeReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }

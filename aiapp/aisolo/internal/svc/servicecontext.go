@@ -80,14 +80,14 @@ func (s *ServiceContext) initRoleManager() {
 		return
 	}
 
-	// 根据配置决定是否启用 skills
+	// 根据配置决定是否启用 skills 和内置工具
 	var rm *roles.RoleManager
 	if s.Config.Skills.Enabled && s.Config.Skills.Dir != "" {
-		rm = roles.NewRoleManagerWithSkills(s.ChatModel, s.Config.Skills.Dir)
-		logx.Infof("RoleManager initialized with %d roles + skills dir: %s", len(roles.BuiltinRoles), s.Config.Skills.Dir)
+		rm = roles.NewRoleManagerWithSkillsAndTools(s.ChatModel, s.Config.Skills.Dir)
+		logx.Infof("RoleManager initialized with %d roles + skills + builtin tools, skills dir: %s", len(roles.BuiltinRoles), s.Config.Skills.Dir)
 	} else {
-		rm = roles.NewRoleManager(s.ChatModel)
-		logx.Infof("RoleManager initialized with %d roles", len(roles.BuiltinRoles))
+		rm = roles.NewRoleManagerWithBuiltinTools(s.ChatModel)
+		logx.Infof("RoleManager initialized with %d roles + builtin tools", len(roles.BuiltinRoles))
 	}
 	s.RoleManager = rm
 }

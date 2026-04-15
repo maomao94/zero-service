@@ -23,10 +23,10 @@ func NewSoloHealthLogic(ctx context.Context, svcCtx *svc.ServiceContext) *SoloHe
 	}
 }
 
-func (l *SoloHealthLogic) SoloHealth() (resp *types.SoloHealthResp, err error) {
+func (l *SoloHealthLogic) SoloHealth() (resp *types.SoloHealthResponse, err error) {
 	// Aisolo 服务健康检查
 	// 直接返回健康状态，gRPC 连接由框架管理
-	return &types.SoloHealthResp{
+	return &types.SoloHealthResponse{
 		Status:  "ok",
 		Version: "1.0.0",
 	}, nil

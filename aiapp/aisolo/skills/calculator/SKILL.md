@@ -1,3 +1,8 @@
+---
+name: calculator
+description: 数学计算器，支持加减乘除、幂运算等基本数学运算
+---
+
 # Calculator Skill
 
 ## 概述

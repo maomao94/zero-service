@@ -24,12 +24,14 @@ func NewResumeLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ResumeLogi
 	}
 }
 
-func (l *ResumeLogic) Resume(req *types.SoloInterruptReq) (resp *types.SoloInterruptResp, err error) {
-	action := "deny"
+func (l *ResumeLogic) Resume(req *types.SoloInterruptRequest) (resp *types.SoloInterruptResponse, err error) {
+	var action aisolo.ResumeAction
 	if req.Approved {
-		action = "approve"
+		action = aisolo.ResumeAction_RESUME_ACTION_APPROVE
+	} else {
+		action = aisolo.ResumeAction_RESUME_ACTION_DENY
 	}
-	protoReq := &aisolo.ResumeRequest{
+	protoReq := &aisolo.ResumeReq{
 		InterruptId: req.InterruptId,
 		Action:      action,
 	}
@@ -40,7 +42,7 @@ func (l *ResumeLogic) Resume(req *types.SoloInterruptReq) (resp *types.SoloInter
 		return nil, err
 	}
 
-	return &types.SoloInterruptResp{
+	return &types.SoloInterruptResponse{
 		Success:     true,
 		Message:     "Resume request processed",
 		InterruptId: req.InterruptId,

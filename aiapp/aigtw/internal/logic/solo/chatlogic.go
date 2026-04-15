@@ -35,7 +35,7 @@ func NewChatLogic(ctx context.Context, svcCtx *svc.ServiceContext, w http.Respon
 	}
 }
 
-func (l *ChatLogic) Chat(req *types.SoloChatReq) error {
+func (l *ChatLogic) Chat(req *types.SoloChatRequest) error {
 	sw, err := ssex.NewWriter(l.w)
 	if err != nil {
 		return err
@@ -66,7 +66,7 @@ func (l *ChatLogic) Chat(req *types.SoloChatReq) error {
 	defer close(kaStop)
 
 	// 构建 gRPC 请求
-	protoReq := &aisolo.AskRequest{
+	protoReq := &aisolo.AskReq{
 		SessionId: req.SessionId,
 		UserId:    userID,
 		Message:   req.Message,
@@ -94,8 +94,8 @@ func (l *ChatLogic) Chat(req *types.SoloChatReq) error {
 		}
 
 		// 透传 gRPC 层的 A2UI JSON
-		if chunk.Data != "" {
-			sw.Write([]byte(chunk.Data))
+		if chunk.Chunk != nil && chunk.Chunk.Data != "" {
+			sw.Write([]byte(chunk.Chunk.Data))
 		}
 
 		// 检查客户端断开

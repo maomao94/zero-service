@@ -31,7 +31,7 @@ func NewResumeLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ResumeLogi
 // 2. 根据 action 构造 ApprovalResult
 // 3. 调用 Runner.ResumeWithParams 恢复执行
 // 4. 返回执行结果
-func (l *ResumeLogic) Resume(in *aisolo.ResumeRequest) (*aisolo.ResumeResponse, error) {
+func (l *ResumeLogic) Resume(in *aisolo.ResumeReq) (*aisolo.ResumeResp, error) {
 	sessionID := in.SessionId
 	userID := in.UserId
 	interruptID := in.InterruptId
@@ -96,7 +96,7 @@ func (l *ResumeLogic) Resume(in *aisolo.ResumeRequest) (*aisolo.ResumeResponse, 
 	_ = result
 
 	l.Infof("Resume completed: session=%s", sessionID)
-	return &aisolo.ResumeResponse{
+	return &aisolo.ResumeResp{
 		SessionId: sessionID,
 		Success:   true,
 		Message:   "中断已处理，执行已恢复",

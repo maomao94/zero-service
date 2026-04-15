@@ -24,8 +24,8 @@ enum AgentMode {
 // 核心请求/响应
 // ============================================================
 
-// AskRequest 对话请求
-message AskRequest {
+// AskReq 对话请求
+message AskReq {
   string session_id = 1;          // 会话 ID（空则创建新会话）
   string user_id = 2;            // 用户 ID
   string message = 3;            // 用户消息
@@ -33,12 +33,16 @@ message AskRequest {
   map<string, string> meta = 5;  // 元数据（可选）
 }
 
-// StreamChunk 流式响应块（gRPC 内部使用）
-// 透传 A2UI JSON 数据
-message StreamChunk {
+// AskStreamChunk 流式响应块
+message AskStreamChunk {
   string session_id = 1;         // 会话 ID
-  string data = 2;              // A2UI JSON 数据（NDJSON 行）
+  string data = 2;              // A2UI JSON 数据
   bool is_final = 3;            // 是否结束
+}
+
+// AskStreamResp 流式响应（包装 Chunk）
+message AskStreamResp {
+  AskStreamChunk chunk = 1;
 }
 
 // InterruptInfo 中断信息
@@ -60,11 +64,16 @@ message Option {
 // 会话管理
 // ============================================================
 
-// CreateSessionRequest 创建会话请求
-message CreateSessionRequest {
+// CreateSessionReq 创建会话请求
+message CreateSessionReq {
   string user_id = 1;           // 用户 ID
   string title = 2;             // 会话标题（可选）
   AgentMode agent_mode = 3;     // 默认 Agent 模式
+}
+
+// CreateSessionResp 创建会话响应
+message CreateSessionResp {
+  Session session = 1;
 }
 
 // Session 会话信息
@@ -79,27 +88,49 @@ message Session {
   string last_message = 8;      // 最后一条消息摘要
 }
 
-// ListSessionsRequest 列出会话请求
-message ListSessionsRequest {
+// GetSessionReq 获取会话请求
+message GetSessionReq {
+  string session_id = 1;
+  string user_id = 2;
+}
+
+// GetSessionResp 获取会话响应
+message GetSessionResp {
+  Session session = 1;
+}
+
+// ListSessionsReq 列出会话请求
+message ListSessionsReq {
   string user_id = 1;
   int32 page = 2;
   int32 page_size = 3;
 }
 
-// ListSessionsResponse 列出会话响应
-message ListSessionsResponse {
+// ListSessionsResp 列出会话响应
+message ListSessionsResp {
   repeated Session sessions = 1;
   int64 total = 2;
   int32 page = 3;
   int32 total_pages = 4;
 }
 
+// DeleteSessionReq 删除会话请求
+message DeleteSessionReq {
+  string session_id = 1;
+  string user_id = 2;
+}
+
+// DeleteSessionResp 删除会话响应
+message DeleteSessionResp {
+  bool success = 1;
+}
+
 // ============================================================
 // Agent 管理
 // ============================================================
 
-// ListAgentsRequest 列出 Agent 请求
-message ListAgentsRequest {}
+// ListAgentsReq 列出 Agent 请求
+message ListAgentsReq {}
 
 // AgentInfo Agent 信息
 message AgentInfo {
@@ -110,35 +141,17 @@ message AgentInfo {
   bool available = 5;
 }
 
-// ListAgentsResponse 列出 Agent 响应
-message ListAgentsResponse {
+// ListAgentsResp 列出 Agent 响应
+message ListAgentsResp {
   repeated AgentInfo agents = 1;
 }
 
 // ============================================================
-// 健康检查
+// 中断恢复
 // ============================================================
 
-// HealthRequest 健康检查请求
-message HealthRequest {}
-
-// HealthResponse 健康检查响应
-message HealthResponse {
-  bool healthy = 1;
-  string version = 2;
-  map<string, string> components = 3;
-}
-
-// ============================================================
-// 辅助消息
-// ============================================================
-
-message SessionRequest {
-  string session_id = 1;
-  string user_id = 2;
-}
-
-message ResumeRequest {
+// ResumeReq 恢复执行请求
+message ResumeReq {
   string session_id = 1;
   string interrupt_id = 2;
   string user_id = 3;
@@ -154,11 +167,8 @@ enum ResumeAction {
   RESUME_ACTION_DENY = 2;           // 拒绝
 }
 
-// Empty 空消息
-message Empty {}
-
-// ResumeResponse 恢复执行响应
-message ResumeResponse {
+// ResumeResp 恢复执行响应
+message ResumeResp {
   string session_id = 1;
   bool success = 2;
   string message = 3;              // 结果消息
@@ -169,44 +179,44 @@ message ResumeResponse {
 // RPC 服务定义
 // ============================================================
 
-// EinoService AI 助手核心服务
+// AiSolo AI 助手核心服务
 service AiSolo {
   // ============================================================
   // 会话管理
   // ============================================================
-  
+
   // CreateSession 创建会话
-  rpc CreateSession(CreateSessionRequest) returns (Session);
-  
+  rpc CreateSession(CreateSessionReq) returns (CreateSessionResp);
+
   // GetSession 获取会话
-  rpc GetSession(SessionRequest) returns (Session);
-  
+  rpc GetSession(GetSessionReq) returns (GetSessionResp);
+
   // ListSessions 列出会话
-  rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse);
-  
+  rpc ListSessions(ListSessionsReq) returns (ListSessionsResp);
+
   // DeleteSession 删除会话
-  rpc DeleteSession(SessionRequest) returns (Empty);
+  rpc DeleteSession(DeleteSessionReq) returns (DeleteSessionResp);
 
   // ============================================================
   // 对话（统一流式）
   // ============================================================
-  
+
   // AskStream 流式对话
   // - 会话自动创建（session_id 为空时）
   // - 返回 A2UI 格式的 SSE 事件流
-  rpc AskStream(AskRequest) returns (stream StreamChunk);
+  rpc AskStream(AskReq) returns (stream AskStreamResp);
 
   // ============================================================
   // Agent 管理
   // ============================================================
-  
+
   // ListAgents 列出可用 Agent
-  rpc ListAgents(ListAgentsRequest) returns (ListAgentsResponse);
+  rpc ListAgents(ListAgentsReq) returns (ListAgentsResp);
 
   // ============================================================
   // 中断恢复
   // ============================================================
-  
+
   // Resume 恢复中断的执行（同步返回结果）
-  rpc Resume(ResumeRequest) returns (ResumeResponse);
+  rpc Resume(ResumeReq) returns (ResumeResp);
 }

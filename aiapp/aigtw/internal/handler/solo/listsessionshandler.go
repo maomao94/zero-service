@@ -15,7 +15,7 @@ import (
 // 列出会话
 func ListSessionsHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req types.SoloListSessionsReq
+		var req types.SoloListSessionsRequest
 		if err := httpx.Parse(r, &req); err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 			return

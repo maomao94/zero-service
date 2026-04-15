@@ -3,18 +3,18 @@ syntax = "v1"
 // ============================================================
 // Solo 类型定义 - 基于 A2UI 协议
 // ============================================================
-// SoloChatReq Solo 对话请求
-type SoloChatReq {
+// SoloChatRequest Solo 对话请求
+type SoloChatRequest {
 	SessionId string `json:"sessionId"` // 会话 ID（空则创建新会话）
 	Message   string `json:"message"` // 消息内容
 	AgentMode string `json:"agentMode,optional"` // Agent 模式: auto, fast, deep
 }
 
-// SoloChatResp Solo 流式对话响应（SSE 流，实际数据通过 A2UI NDJSON 输出）
-type SoloChatResp {}
+// SoloChatResponse Solo 流式对话响应（SSE 流，实际数据通过 A2UI NDJSON 输出）
+type SoloChatResponse {}
 
-// SoloHealthResp Solo 健康检查响应
-type SoloHealthResp {
+// SoloHealthResponse Solo 健康检查响应
+type SoloHealthResponse {
 	Status  string `json:"status"` // 状态
 	Version string `json:"version"` // 版本
 }
@@ -31,45 +31,47 @@ type SoloSessionInfo {
 	LastMessage  string `json:"lastMessage"` // 最后一条消息
 }
 
-// SoloListSessionsReq Solo 列出会话请求
-type SoloListSessionsReq {
+// SoloListSessionsRequest Solo 列出会话请求
+type SoloListSessionsRequest {
 	Page     int `json:"page,optional"` // 页码
 	PageSize int `json:"pageSize,optional"` // 每页数量
 }
 
-// SoloListSessionsResp Solo 列出会话响应
-type SoloListSessionsResp {
+// SoloListSessionsResponse Solo 列出会话响应
+type SoloListSessionsResponse {
 	Sessions []*SoloSessionInfo `json:"sessions"` // 会话列表
 	Total    int                `json:"total"` // 总数
 }
 
-// SoloCreateSessionReq Solo 创建会话请求
-type SoloCreateSessionReq {
+// SoloCreateSessionRequest Solo 创建会话请求
+type SoloCreateSessionRequest {
 	Title string `json:"title,optional"` // 会话标题
 }
 
-// SoloCreateSessionResp Solo 创建会话响应
-type SoloCreateSessionResp {
+// SoloCreateSessionResponse Solo 创建会话响应
+type SoloCreateSessionResponse {
 	Session *SoloSessionInfo `json:"session"` // 会话信息
 }
 
-// SoloGetSessionReq Solo 获取会话请求
-type SoloGetSessionReq {
+// SoloGetSessionRequest Solo 获取会话请求
+type SoloGetSessionRequest {
 	SessionId string `path:"id"` // 会话 ID
 }
 
-// SoloGetSessionResp Solo 获取会话响应
-type SoloGetSessionResp {
+// SoloGetSessionResponse Solo 获取会话响应
+type SoloGetSessionResponse {
 	Session *SoloSessionInfo `json:"session"` // 会话信息
 }
 
-// SoloDeleteSessionReq Solo 删除会话请求
-type SoloDeleteSessionReq {
+// SoloDeleteSessionRequest Solo 删除会话请求
+type SoloDeleteSessionRequest {
 	SessionId string `path:"id"` // 会话 ID
 }
 
-// SoloDeleteSessionResp Solo 删除会话响应
-type SoloDeleteSessionResp {}
+// SoloDeleteSessionResponse Solo 删除会话响应
+type SoloDeleteSessionResponse {
+	Success bool `json:"success"` // 是否成功
+}
 
 // SoloToolInfo Solo 工具信息
 type SoloToolInfo {
@@ -86,34 +88,34 @@ type SoloAgentInfo {
 	Available    bool     `json:"available"` // 是否可用
 }
 
-// SoloListAgentsResp Solo 列出 Agent 响应
-type SoloListAgentsResp {
+// SoloListAgentsResponse Solo 列出 Agent 响应
+type SoloListAgentsResponse {
 	Agents []*SoloAgentInfo `json:"agents"` // Agent 列表
 }
 
-// SoloSwitchAgentReq Solo 切换 Agent 请求
-type SoloSwitchAgentReq {
+// SoloSwitchAgentRequest Solo 切换 Agent 请求
+type SoloSwitchAgentRequest {
 	SessionId   string `json:"sessionId"` // 会话 ID
 	AgentMode   string `json:"agentMode"` // Agent 模式
 	KeepContext bool   `json:"keepContext"` // 保持上下文
 }
 
-// SoloSwitchAgentResp Solo 切换 Agent 响应
-type SoloSwitchAgentResp {
+// SoloSwitchAgentResponse Solo 切换 Agent 响应
+type SoloSwitchAgentResponse {
 	Session  *SoloSessionInfo `json:"session"` // 会话信息
 	NewAgent *SoloAgentInfo   `json:"newAgent"` // 新的 Agent
 }
 
-// SoloInterruptReq Solo 中断请求（前端触发）
-type SoloInterruptReq {
+// SoloInterruptRequest Solo 中断请求（前端触发）
+type SoloInterruptRequest {
 	InterruptId string   `json:"interruptId"` // 中断 ID
 	Approved    bool     `json:"approved"` // 是否批准
 	SelectedIds []string `json:"selectedIds"` // 选中的选项 ID
 	Reason      string   `json:"reason"` // 拒绝原因
 }
 
-// SoloInterruptResp Solo 中断响应
-type SoloInterruptResp {
+// SoloInterruptResponse Solo 中断响应
+type SoloInterruptResponse {
 	Success     bool   `json:"success"` // 是否成功
 	Message     string `json:"message"` // 消息
 	InterruptId string `json:"interruptId"` // 中断 ID

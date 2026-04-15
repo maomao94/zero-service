@@ -24,8 +24,8 @@ func NewSwitchAgentLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Switc
 	}
 }
 
-func (l *SwitchAgentLogic) SwitchAgent(req *types.SoloSwitchAgentReq) (resp *types.SoloSwitchAgentResp, err error) {
-	protoReq := &aisolo.SessionRequest{
+func (l *SwitchAgentLogic) SwitchAgent(req *types.SoloSwitchAgentRequest) (resp *types.SoloSwitchAgentResponse, err error) {
+	protoReq := &aisolo.GetSessionReq{
 		SessionId: req.SessionId,
 	}
 
@@ -35,16 +35,16 @@ func (l *SwitchAgentLogic) SwitchAgent(req *types.SoloSwitchAgentReq) (resp *typ
 		return nil, err
 	}
 
-	return &types.SoloSwitchAgentResp{
+	return &types.SoloSwitchAgentResponse{
 		Session: &types.SoloSessionInfo{
-			SessionId:    result.SessionId,
-			UserId:       result.UserId,
+			SessionId:    result.Session.SessionId,
+			UserId:       result.Session.UserId,
 			AgentMode:    req.AgentMode,
-			Title:        result.Title,
-			CreatedAt:    result.CreatedAt,
-			UpdatedAt:    result.UpdatedAt,
-			MessageCount: int(result.MessageCount),
-			LastMessage:  result.LastMessage,
+			Title:        result.Session.Title,
+			CreatedAt:    result.Session.CreatedAt,
+			UpdatedAt:    result.Session.UpdatedAt,
+			MessageCount: int(result.Session.MessageCount),
+			LastMessage:  result.Session.LastMessage,
 		},
 		NewAgent: &types.SoloAgentInfo{
 			Type:         req.AgentMode,

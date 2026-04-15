@@ -37,16 +37,20 @@ type grpcWriter struct {
 }
 
 func (w *grpcWriter) Write(p []byte) (n int, err error) {
-	chunk := &aisolo.StreamChunk{
-		Data: string(p),
+	resp := &aisolo.AskStreamResp{
+		Chunk: &aisolo.AskStreamChunk{
+			SessionId: "",
+			Data:      string(p),
+			IsFinal:   false,
+		},
 	}
-	if err := w.streamSvc.Send(chunk); err != nil {
+	if err := w.streamSvc.Send(resp); err != nil {
 		return 0, err
 	}
 	return len(p), nil
 }
 
-func (l *AskStreamLogic) AskStream(in *aisolo.AskRequest, streamSvc aisolo.AiSolo_AskStreamServer) error {
+func (l *AskStreamLogic) AskStream(in *aisolo.AskReq, streamSvc aisolo.AiSolo_AskStreamServer) error {
 	startTime := time.Now()
 
 	sessionID := in.SessionId
@@ -216,7 +220,7 @@ func (l *AskStreamLogic) emitMessage(w io.Writer, msg a2ui.Message) error {
 }
 
 // getRoleID 根据 AgentMode 获取角色 ID
-func (l *AskStreamLogic) getRoleID(in *aisolo.AskRequest) string {
+func (l *AskStreamLogic) getRoleID(in *aisolo.AskReq) string {
 	switch in.AgentMode {
 	case aisolo.AgentMode_AGENT_MODE_FAST:
 		return "assistant"

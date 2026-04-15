@@ -24,16 +24,16 @@ func NewDeleteSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Del
 	}
 }
 
-func (l *DeleteSessionLogic) DeleteSession(req *types.SoloDeleteSessionReq) (resp *types.SoloDeleteSessionResp, err error) {
-	protoReq := &aisolo.SessionRequest{
+func (l *DeleteSessionLogic) DeleteSession(req *types.SoloDeleteSessionRequest) (resp *types.SoloDeleteSessionResponse, err error) {
+	protoReq := &aisolo.DeleteSessionReq{
 		SessionId: req.SessionId,
 	}
 
-	_, err = l.svcCtx.EinoCli.DeleteSession(l.ctx, protoReq)
+	result, err := l.svcCtx.EinoCli.DeleteSession(l.ctx, protoReq)
 	if err != nil {
 		l.Logger.Errorf("delete session failed: %v", err)
 		return nil, err
 	}
 
-	return &types.SoloDeleteSessionResp{}, nil
+	return &types.SoloDeleteSessionResponse{Success: result.Success}, nil
 }

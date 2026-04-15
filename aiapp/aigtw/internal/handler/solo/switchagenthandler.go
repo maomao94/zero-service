@@ -15,7 +15,7 @@ import (
 // 切换 Agent
 func SwitchAgentHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req types.SoloSwitchAgentReq
+		var req types.SoloSwitchAgentRequest
 		if err := httpx.Parse(r, &req); err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 			return

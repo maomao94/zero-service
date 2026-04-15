@@ -24,43 +24,43 @@ func NewAiSoloServer(svcCtx *svc.ServiceContext) *AiSoloServer {
 }
 
 // CreateSession 创建会话
-func (s *AiSoloServer) CreateSession(ctx context.Context, in *aisolo.CreateSessionRequest) (*aisolo.Session, error) {
+func (s *AiSoloServer) CreateSession(ctx context.Context, in *aisolo.CreateSessionReq) (*aisolo.CreateSessionResp, error) {
 	l := logic.NewCreateSessionLogic(ctx, s.svcCtx)
 	return l.CreateSession(in)
 }
 
 // GetSession 获取会话
-func (s *AiSoloServer) GetSession(ctx context.Context, in *aisolo.SessionRequest) (*aisolo.Session, error) {
+func (s *AiSoloServer) GetSession(ctx context.Context, in *aisolo.GetSessionReq) (*aisolo.GetSessionResp, error) {
 	l := logic.NewGetSessionLogic(ctx, s.svcCtx)
 	return l.GetSession(in)
 }
 
 // ListSessions 列出会话
-func (s *AiSoloServer) ListSessions(ctx context.Context, in *aisolo.ListSessionsRequest) (*aisolo.ListSessionsResponse, error) {
+func (s *AiSoloServer) ListSessions(ctx context.Context, in *aisolo.ListSessionsReq) (*aisolo.ListSessionsResp, error) {
 	l := logic.NewListSessionsLogic(ctx, s.svcCtx)
 	return l.ListSessions(in)
 }
 
 // DeleteSession 删除会话
-func (s *AiSoloServer) DeleteSession(ctx context.Context, in *aisolo.SessionRequest) (*aisolo.Empty, error) {
+func (s *AiSoloServer) DeleteSession(ctx context.Context, in *aisolo.DeleteSessionReq) (*aisolo.DeleteSessionResp, error) {
 	l := logic.NewDeleteSessionLogic(ctx, s.svcCtx)
 	return l.DeleteSession(in)
 }
 
 // AskStream 流式对话
-func (s *AiSoloServer) AskStream(in *aisolo.AskRequest, stream aisolo.AiSolo_AskStreamServer) error {
+func (s *AiSoloServer) AskStream(in *aisolo.AskReq, stream aisolo.AiSolo_AskStreamServer) error {
 	l := logic.NewAskStreamLogic(stream.Context(), s.svcCtx)
 	return l.AskStream(in, stream)
 }
 
 // ListAgents 列出可用 Agent
-func (s *AiSoloServer) ListAgents(ctx context.Context, in *aisolo.ListAgentsRequest) (*aisolo.ListAgentsResponse, error) {
+func (s *AiSoloServer) ListAgents(ctx context.Context, in *aisolo.ListAgentsReq) (*aisolo.ListAgentsResp, error) {
 	l := logic.NewListAgentsLogic(ctx, s.svcCtx)
 	return l.ListAgents(in)
 }
 
 // Resume 恢复中断的执行（同步返回结果）
-func (s *AiSoloServer) Resume(ctx context.Context, in *aisolo.ResumeRequest) (*aisolo.ResumeResponse, error) {
+func (s *AiSoloServer) Resume(ctx context.Context, in *aisolo.ResumeReq) (*aisolo.ResumeResp, error) {
 	l := logic.NewResumeLogic(ctx, s.svcCtx)
 	return l.Resume(in)
 }

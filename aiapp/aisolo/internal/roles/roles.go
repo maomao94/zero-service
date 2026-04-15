@@ -3,9 +3,11 @@ package roles
 import (
 	"context"
 
+	einotool "zero-service/aiapp/aisolo/internal/tool"
 	"zero-service/common/einox/agent"
 
 	"github.com/cloudwego/eino/components/model"
+	"github.com/cloudwego/eino/components/tool"
 )
 
 // =============================================================================
@@ -66,25 +68,61 @@ var BuiltinRoles = map[string]*Role{
 
 // RoleManager 角色管理器
 type RoleManager struct {
-	roles     map[string]*Role
-	model     model.BaseChatModel
-	skillsDir string
+	roles      map[string]*Role
+	model      model.BaseChatModel
+	skillsDir  string
+	tools      []tool.BaseTool
+	toolsReady bool
 }
 
-// NewRoleManager 创建角色管理器
-func NewRoleManager(model model.BaseChatModel) *RoleManager {
-	return &RoleManager{
-		roles: BuiltinRoles,
-		model: model,
+// Option 角色管理器选项
+type Option func(*RoleManager)
+
+// WithTools 设置内置工具
+func WithTools(tools []tool.BaseTool) Option {
+	return func(rm *RoleManager) {
+		rm.tools = tools
+		rm.toolsReady = true
 	}
 }
 
-// NewRoleManagerWithSkills 创建角色管理器（带 skills 目录）
-func NewRoleManagerWithSkills(model model.BaseChatModel, skillsDir string) *RoleManager {
+// NewRoleManager 创建角色管理器（无内置工具）
+func NewRoleManager(model model.BaseChatModel) *RoleManager {
 	return &RoleManager{
-		roles:     BuiltinRoles,
-		model:     model,
-		skillsDir: skillsDir,
+		roles:      BuiltinRoles,
+		model:      model,
+		toolsReady: false,
+	}
+}
+
+// NewRoleManagerWithTools 创建角色管理器（带内置工具）
+func NewRoleManagerWithTools(model model.BaseChatModel, tools []tool.BaseTool) *RoleManager {
+	return &RoleManager{
+		roles:      BuiltinRoles,
+		model:      model,
+		tools:      tools,
+		toolsReady: true,
+	}
+}
+
+// NewRoleManagerWithBuiltinTools 创建角色管理器（带内置工具自动注册）
+func NewRoleManagerWithBuiltinTools(model model.BaseChatModel) *RoleManager {
+	return &RoleManager{
+		roles:      BuiltinRoles,
+		model:      model,
+		tools:      einotool.GetGlobalRegistry().ToEinoTools(),
+		toolsReady: true,
+	}
+}
+
+// NewRoleManagerWithSkillsAndTools 创建角色管理器（带 skills 和内置工具）
+func NewRoleManagerWithSkillsAndTools(model model.BaseChatModel, skillsDir string) *RoleManager {
+	return &RoleManager{
+		roles:      BuiltinRoles,
+		model:      model,
+		skillsDir:  skillsDir,
+		tools:      einotool.GetGlobalRegistry().ToEinoTools(),
+		toolsReady: true,
 	}
 }
 
@@ -119,6 +157,11 @@ func (rm *RoleManager) CreateAgent(ctx context.Context, roleID string) (*agent.A
 	// 添加 skills 支持
 	if rm.skillsDir != "" {
 		opts = append(opts, agent.WithSkillsDir(rm.skillsDir))
+	}
+
+	// 添加内置工具支持
+	if rm.toolsReady && len(rm.tools) > 0 {
+		opts = append(opts, agent.WithTools(rm.tools...))
 	}
 
 	return agent.NewChatModelAgent(ctx, rm.model, opts...)

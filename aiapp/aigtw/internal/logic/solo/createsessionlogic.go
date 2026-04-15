@@ -25,14 +25,14 @@ func NewCreateSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Cre
 	}
 }
 
-func (l *CreateSessionLogic) CreateSession(req *types.SoloCreateSessionReq) (resp *types.SoloCreateSessionResp, err error) {
+func (l *CreateSessionLogic) CreateSession(req *types.SoloCreateSessionRequest) (resp *types.SoloCreateSessionResponse, err error) {
 	// 从 JWT context 获取用户ID
 	userID := ctxdata.GetUserId(l.ctx)
 	if userID == "" {
 		userID = "anonymous"
 	}
 
-	protoReq := &aisolo.CreateSessionRequest{
+	protoReq := &aisolo.CreateSessionReq{
 		Title:  req.Title,
 		UserId: userID,
 	}
@@ -43,16 +43,16 @@ func (l *CreateSessionLogic) CreateSession(req *types.SoloCreateSessionReq) (res
 		return nil, err
 	}
 
-	return &types.SoloCreateSessionResp{
+	return &types.SoloCreateSessionResponse{
 		Session: &types.SoloSessionInfo{
-			SessionId:    result.SessionId,
-			UserId:       result.UserId,
-			AgentMode:    result.AgentMode.String(),
-			Title:        result.Title,
-			CreatedAt:    result.CreatedAt,
-			UpdatedAt:    result.UpdatedAt,
-			MessageCount: int(result.MessageCount),
-			LastMessage:  result.LastMessage,
+			SessionId:    result.Session.SessionId,
+			UserId:       result.Session.UserId,
+			AgentMode:    result.Session.AgentMode.String(),
+			Title:        result.Session.Title,
+			CreatedAt:    result.Session.CreatedAt,
+			UpdatedAt:    result.Session.UpdatedAt,
+			MessageCount: int(result.Session.MessageCount),
+			LastMessage:  result.Session.LastMessage,
 		},
 	}, nil
 }

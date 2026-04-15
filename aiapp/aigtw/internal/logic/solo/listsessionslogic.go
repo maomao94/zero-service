@@ -25,14 +25,14 @@ func NewListSessionsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *List
 	}
 }
 
-func (l *ListSessionsLogic) ListSessions(req *types.SoloListSessionsReq) (resp *types.SoloListSessionsResp, err error) {
+func (l *ListSessionsLogic) ListSessions(req *types.SoloListSessionsRequest) (resp *types.SoloListSessionsResponse, err error) {
 	// 从 JWT context 获取用户ID
 	userID := ctxdata.GetUserId(l.ctx)
 	if userID == "" {
 		userID = "anonymous"
 	}
 
-	protoReq := &aisolo.ListSessionsRequest{
+	protoReq := &aisolo.ListSessionsReq{
 		UserId:   userID,
 		Page:     int32(req.Page),
 		PageSize: int32(req.PageSize),
@@ -58,7 +58,7 @@ func (l *ListSessionsLogic) ListSessions(req *types.SoloListSessionsReq) (resp *
 		}
 	}
 
-	return &types.SoloListSessionsResp{
+	return &types.SoloListSessionsResponse{
 		Sessions: sessions,
 		Total:    int(result.Total),
 	}, nil

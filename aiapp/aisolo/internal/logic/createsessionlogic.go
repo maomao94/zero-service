@@ -27,7 +27,7 @@ func NewCreateSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Cre
 }
 
 // CreateSession 创建会话
-func (l *CreateSessionLogic) CreateSession(in *aisolo.CreateSessionRequest) (*aisolo.Session, error) {
+func (l *CreateSessionLogic) CreateSession(in *aisolo.CreateSessionReq) (*aisolo.CreateSessionResp, error) {
 	// 验证必填参数
 	userID := in.UserId
 	if userID == "" {
@@ -41,14 +41,16 @@ func (l *CreateSessionLogic) CreateSession(in *aisolo.CreateSessionRequest) (*ai
 		return nil, err
 	}
 
-	// 转换为新格式
-	return &aisolo.Session{
-		SessionId:    session.SessionId,
-		UserId:       session.UserId,
-		Title:        in.Title,
-		AgentMode:    in.AgentMode,
-		CreatedAt:    session.CreatedAt,
-		UpdatedAt:    session.UpdatedAt,
-		MessageCount: session.MessageCount,
+	// 返回包装响应
+	return &aisolo.CreateSessionResp{
+		Session: &aisolo.Session{
+			SessionId:    session.SessionId,
+			UserId:       session.UserId,
+			Title:        in.Title,
+			AgentMode:    in.AgentMode,
+			CreatedAt:    session.CreatedAt,
+			UpdatedAt:    session.UpdatedAt,
+			MessageCount: session.MessageCount,
+		},
 	}, nil
 }

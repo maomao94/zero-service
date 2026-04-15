@@ -141,66 +141,67 @@ type SoloAgentInfo struct {
 	Available    bool     `json:"available"`    // 是否可用
 }
 
-type SoloChatReq struct {
+type SoloChatRequest struct {
 	SessionId string `json:"sessionId"`          // 会话 ID（空则创建新会话）
 	Message   string `json:"message"`            // 消息内容
 	AgentMode string `json:"agentMode,optional"` // Agent 模式: auto, fast, deep
 }
 
-type SoloChatResp struct {
+type SoloChatResponse struct {
 }
 
-type SoloCreateSessionReq struct {
+type SoloCreateSessionRequest struct {
 	Title string `json:"title,optional"` // 会话标题
 }
 
-type SoloCreateSessionResp struct {
+type SoloCreateSessionResponse struct {
 	Session *SoloSessionInfo `json:"session"` // 会话信息
 }
 
-type SoloDeleteSessionReq struct {
+type SoloDeleteSessionRequest struct {
 	SessionId string `path:"id"` // 会话 ID
 }
 
-type SoloDeleteSessionResp struct {
+type SoloDeleteSessionResponse struct {
+	Success bool `json:"success"` // 是否成功
 }
 
-type SoloGetSessionReq struct {
+type SoloGetSessionRequest struct {
 	SessionId string `path:"id"` // 会话 ID
 }
 
-type SoloGetSessionResp struct {
+type SoloGetSessionResponse struct {
 	Session *SoloSessionInfo `json:"session"` // 会话信息
 }
 
-type SoloHealthResp struct {
+type SoloHealthResponse struct {
 	Status  string `json:"status"`  // 状态
 	Version string `json:"version"` // 版本
 }
 
-type SoloInterruptReq struct {
+type SoloInterruptRequest struct {
 	InterruptId string   `json:"interruptId"` // 中断 ID
 	Approved    bool     `json:"approved"`    // 是否批准
 	SelectedIds []string `json:"selectedIds"` // 选中的选项 ID
 	Reason      string   `json:"reason"`      // 拒绝原因
 }
 
-type SoloInterruptResp struct {
+type SoloInterruptResponse struct {
 	Success     bool   `json:"success"`     // 是否成功
 	Message     string `json:"message"`     // 消息
 	InterruptId string `json:"interruptId"` // 中断 ID
 }
 
-type SoloListAgentsResp struct {
+type SoloListAgentsResponse struct {
 	Agents []*SoloAgentInfo `json:"agents"` // Agent 列表
 }
 
-type SoloListSessionsReq struct {
+type SoloListSessionsRequest struct {
 	Page     int `json:"page,optional"`     // 页码
 	PageSize int `json:"pageSize,optional"` // 每页数量
 }
 
-type SoloListSessionsResp struct {
+type SoloListSessionsResponse struct {
 	Sessions []*SoloSessionInfo `json:"sessions"` // 会话列表
 	Total    int                `json:"total"`    // 总数
 }
@@ -216,13 +217,13 @@ type SoloSessionInfo struct {
 	LastMessage  string `json:"lastMessage"`  // 最后一条消息
 }
 
-type SoloSwitchAgentReq struct {
+type SoloSwitchAgentRequest struct {
 	SessionId   string `json:"sessionId"`   // 会话 ID
 	AgentMode   string `json:"agentMode"`   // Agent 模式
 	KeepContext bool   `json:"keepContext"` // 保持上下文
 }
 
-type SoloSwitchAgentResp struct {
+type SoloSwitchAgentResponse struct {
 	Session  *SoloSessionInfo `json:"session"`  // 会话信息
 	NewAgent *SoloAgentInfo   `json:"newAgent"` // 新的 Agent
 }

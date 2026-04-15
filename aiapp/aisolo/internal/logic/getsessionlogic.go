@@ -24,12 +24,12 @@ func NewGetSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetSes
 }
 
 // GetSession 获取会话
-func (l *GetSessionLogic) GetSession(in *aisolo.SessionRequest) (*aisolo.Session, error) {
+func (l *GetSessionLogic) GetSession(in *aisolo.GetSessionReq) (*aisolo.GetSessionResp, error) {
 	session, err := GlobalSessionStore.Get(l.ctx, in.SessionId)
 	if err != nil {
 		l.Errorf("get session failed: %v", err)
 		return nil, err
 	}
 
-	return session, nil
+	return &aisolo.GetSessionResp{Session: session}, nil
 }

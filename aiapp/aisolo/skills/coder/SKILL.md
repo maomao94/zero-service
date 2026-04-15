@@ -1,3 +1,8 @@
+---
+name: coder
+description: 专业的编程助手技能，帮助编写、调试和优化代码
+---
+
 # Coder Skill - 编程助手
 
 ## 概述

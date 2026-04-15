@@ -26,11 +26,14 @@ func (w *GRPCStreamWriter) Write(p []byte) (n int, err error) {
 	if w.stream == nil {
 		return 0, errors.New("stream is nil")
 	}
-	chunk := &aisolo.StreamChunk{
-		SessionId: w.sessionID,
-		Data:      string(p),
+	resp := &aisolo.AskStreamResp{
+		Chunk: &aisolo.AskStreamChunk{
+			SessionId: w.sessionID,
+			Data:      string(p),
+			IsFinal:   false,
+		},
 	}
-	if err := w.stream.Send(chunk); err != nil {
+	if err := w.stream.Send(resp); err != nil {
 		return 0, err
 	}
 	return len(p), nil
