@@ -26,6 +26,7 @@ const (
 	AiSolo_AskStream_FullMethodName     = "/aisolo.AiSolo/AskStream"
 	AiSolo_ListAgents_FullMethodName    = "/aisolo.AiSolo/ListAgents"
 	AiSolo_Resume_FullMethodName        = "/aisolo.AiSolo/Resume"
+	AiSolo_Health_FullMethodName        = "/aisolo.AiSolo/Health"
 )
 
 // AiSoloClient is the client API for AiSolo service.
@@ -50,6 +51,8 @@ type AiSoloClient interface {
 	ListAgents(ctx context.Context, in *ListAgentsReq, opts ...grpc.CallOption) (*ListAgentsResp, error)
 	// Resume 恢复中断的执行（同步返回结果）
 	Resume(ctx context.Context, in *ResumeReq, opts ...grpc.CallOption) (*ResumeResp, error)
+	// Health 健康检查接口
+	Health(ctx context.Context, in *HealthReq, opts ...grpc.CallOption) (*HealthResp, error)
 }
 
 type aiSoloClient struct {
@@ -139,6 +142,16 @@ func (c *aiSoloClient) Resume(ctx context.Context, in *ResumeReq, opts ...grpc.C
 	return out, nil
 }
 
+func (c *aiSoloClient) Health(ctx context.Context, in *HealthReq, opts ...grpc.CallOption) (*HealthResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HealthResp)
+	err := c.cc.Invoke(ctx, AiSolo_Health_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AiSoloServer is the server API for AiSolo service.
 // All implementations must embed UnimplementedAiSoloServer
 // for forward compatibility.
@@ -161,6 +174,8 @@ type AiSoloServer interface {
 	ListAgents(context.Context, *ListAgentsReq) (*ListAgentsResp, error)
 	// Resume 恢复中断的执行（同步返回结果）
 	Resume(context.Context, *ResumeReq) (*ResumeResp, error)
+	// Health 健康检查接口
+	Health(context.Context, *HealthReq) (*HealthResp, error)
 	mustEmbedUnimplementedAiSoloServer()
 }
 
@@ -191,6 +206,9 @@ func (UnimplementedAiSoloServer) ListAgents(context.Context, *ListAgentsReq) (*L
 }
 func (UnimplementedAiSoloServer) Resume(context.Context, *ResumeReq) (*ResumeResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Resume not implemented")
+}
+func (UnimplementedAiSoloServer) Health(context.Context, *HealthReq) (*HealthResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Health not implemented")
 }
 func (UnimplementedAiSoloServer) mustEmbedUnimplementedAiSoloServer() {}
 func (UnimplementedAiSoloServer) testEmbeddedByValue()                {}
@@ -332,6 +350,24 @@ func _AiSolo_Resume_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AiSolo_Health_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HealthReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AiSoloServer).Health(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AiSolo_Health_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AiSoloServer).Health(ctx, req.(*HealthReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AiSolo_ServiceDesc is the grpc.ServiceDesc for AiSolo service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -362,6 +398,10 @@ var AiSolo_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Resume",
 			Handler:    _AiSolo_Resume_Handler,
+		},
+		{
+			MethodName: "Health",
+			Handler:    _AiSolo_Health_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

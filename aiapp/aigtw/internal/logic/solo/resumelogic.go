@@ -36,7 +36,7 @@ func (l *ResumeLogic) Resume(req *types.SoloInterruptRequest) (resp *types.SoloI
 		Action:      action,
 	}
 
-	_, err = l.svcCtx.EinoCli.Resume(l.ctx, protoReq)
+	_, err = l.svcCtx.AiSoloCli.Resume(l.ctx, protoReq)
 	if err != nil {
 		l.Logger.Errorf("resume failed: %v", err)
 		return nil, err

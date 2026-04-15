@@ -27,7 +27,7 @@ func NewListAgentsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ListAg
 func (l *ListAgentsLogic) ListAgents() (resp *types.SoloListAgentsResponse, err error) {
 	protoReq := &aisolo.ListAgentsReq{}
 
-	result, err := l.svcCtx.EinoCli.ListAgents(l.ctx, protoReq)
+	result, err := l.svcCtx.AiSoloCli.ListAgents(l.ctx, protoReq)
 	if err != nil {
 		l.Logger.Errorf("list agents failed: %v", err)
 		return nil, err

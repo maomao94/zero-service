@@ -21,6 +21,27 @@ info (
 )
 
 // ============================================================
+// 类型定义
+// ============================================================
+type (
+	// 异步结果统计响应
+	AsyncResultStatsResponse {
+		Total int64 `json:"total"`
+		Pending int64 `json:"pending"`
+		Success int64 `json:"success"`
+		Failed int64 `json:"failed"`
+	}
+	
+	// 健康检查响应
+	HealthResponse {
+		Status string `json:"status"`
+		Version string `json:"version"`
+		Timestamp int64 `json:"timestamp"`
+		Dependencies map[string]string `json:"dependencies"`
+	}
+)
+
+// ============================================================
 // 模型列表接口
 // ============================================================
 @server (
@@ -59,6 +80,10 @@ service aigtw {
 	jwt:    JwtAuth
 )
 service aigtw {
+	@doc "全局健康检查"
+	@handler health
+	get /health returns (HealthResponse)
+
 	@doc "异步调用 MCP 工具，提交任务后立即返回 task_id"
 	@handler asyncToolCall
 	post /async/tool/call (AsyncToolCallRequest) returns (AsyncToolCallResponse)

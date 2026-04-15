@@ -71,6 +71,13 @@ type ChatDelta struct {
 	ToolCalls        []ToolCallDelta `json:"tool_calls,optional"`        // 工具调用增量
 }
 
+type HealthResponse struct {
+	Status       string            `json:"status"`       // 服务状态: ok/error
+	Version      string            `json:"version"`      // 服务版本
+	Timestamp    int64             `json:"timestamp"`    // 响应时间戳
+	Dependencies map[string]string `json:"dependencies"` // 依赖服务状态
+}
+
 type ChatMessage struct {
 	Role             string `json:"role"`                       // 角色: system / user / assistant
 	Content          string `json:"content"`                    // 消息内容

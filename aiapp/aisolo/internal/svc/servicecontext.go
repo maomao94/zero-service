@@ -2,9 +2,13 @@ package svc
 
 import (
 	"context"
+	"time"
 
+	"zero-service/aiapp/aisolo/internal/agent"
 	"zero-service/aiapp/aisolo/internal/config"
 	"zero-service/aiapp/aisolo/internal/roles"
+	"zero-service/aiapp/aisolo/internal/router"
+	"zero-service/aiapp/aisolo/internal/tool"
 	"zero-service/common/einox/memory"
 	exinoModel "zero-service/common/einox/model"
 
@@ -24,6 +28,15 @@ type ServiceContext struct {
 
 	// 角色管理器
 	RoleManager *roles.RoleManager
+
+	// Agent池
+	AgentPool *agent.AgentPool
+
+	// 请求路由器
+	Router *router.Router
+
+	// 工具管理器
+	ToolManager *tool.ToolManager
 }
 
 // NewServiceContext 创建服务上下文
@@ -41,6 +54,15 @@ func NewServiceContext(c config.Config) *ServiceContext {
 
 	// 初始化角色管理器
 	svc.initRoleManager()
+
+	// 初始化Agent池
+	svc.initAgentPool()
+
+	// 初始化请求路由器
+	svc.initRouter()
+
+	// 初始化工具管理器
+	svc.initToolManager(ctx)
 
 	return svc
 }
@@ -92,7 +114,69 @@ func (s *ServiceContext) initRoleManager() {
 	s.RoleManager = rm
 }
 
+// initAgentPool 初始化Agent池
+func (s *ServiceContext) initAgentPool() {
+	if s.RoleManager == nil {
+		logx.Info("RoleManager not initialized, skip AgentPool initialization")
+		return
+	}
+
+	maxIdle := 10
+	maxLive := 1 * time.Hour
+	if s.Config.Agent.PoolMaxIdle > 0 {
+		maxIdle = s.Config.Agent.PoolMaxIdle
+	}
+	if s.Config.Agent.PoolMaxLive > 0 {
+		maxLive = s.Config.Agent.PoolMaxLive
+	}
+
+	s.AgentPool = agent.NewAgentPool(s.RoleManager, maxIdle, maxLive)
+	logx.Infof("AgentPool initialized: maxIdle=%d, maxLive=%v", maxIdle, maxLive)
+}
+
+// initRouter 初始化请求路由器
+func (s *ServiceContext) initRouter() {
+	if s.AgentPool == nil {
+		logx.Info("AgentPool not initialized, skip Router initialization")
+		return
+	}
+
+	s.Router = router.NewRouter(s.AgentPool)
+	logx.Info("Router initialized")
+}
+
+// initToolManager 初始化工具管理器
+func (s *ServiceContext) initToolManager(ctx context.Context) {
+	if !s.Config.Tools.Enabled {
+		logx.Info("Tools disabled, skip ToolManager initialization")
+		return
+	}
+
+	registry := tool.NewRegistry()
+	config := tool.ToolConfig{
+		Timeout:        30 * time.Second,
+		MaxRetries:     3,
+		MaxConcurrency: 10,
+	}
+	if s.Config.Tools.Timeout > 0 {
+		config.Timeout = s.Config.Tools.Timeout
+	}
+	if s.Config.Tools.MaxRetries > 0 {
+		config.MaxRetries = s.Config.Tools.MaxRetries
+	}
+	if s.Config.Tools.MaxConcurrency > 0 {
+		config.MaxConcurrency = s.Config.Tools.MaxConcurrency
+	}
+
+	s.ToolManager = tool.NewToolManager(registry, config)
+	logx.Infof("ToolManager initialized: timeout=%v, maxRetries=%d, maxConcurrency=%d",
+		config.Timeout, config.MaxRetries, config.MaxConcurrency)
+}
+
 // Close 关闭资源
 func (s *ServiceContext) Close() error {
+	if s.AgentPool != nil {
+		s.AgentPool.Cleanup()
+	}
 	return nil
 }

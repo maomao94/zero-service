@@ -74,7 +74,7 @@ func (l *ChatLogic) Chat(req *types.SoloChatRequest) error {
 	}
 
 	// 调用 gRPC 流
-	stream, err := l.svcCtx.EinoCli.AskStream(l.ctx, protoReq)
+	stream, err := l.svcCtx.AiSoloCli.AskStream(l.ctx, protoReq)
 	if err != nil {
 		l.Logger.Errorf("AskStream gRPC call failed: %v", err)
 		return err

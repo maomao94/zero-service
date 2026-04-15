@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"strings"
+	"sync"
 
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
@@ -20,8 +21,10 @@ type IntentResult struct {
 
 // IntentClassifier 意图分类器
 type IntentClassifier struct {
-	model  model.BaseChatModel
-	prompt string
+	model       model.BaseChatModel
+	prompt      string
+	feedbackMap map[string]string // 反馈记录：query -> intent，用于优化分类
+	mu          sync.RWMutex
 }
 
 // intentPrompt 意图分类提示词
@@ -45,13 +48,38 @@ const intentPrompt = `你是一个智能助手路由器。根据用户输入，�
 // NewIntentClassifier 创建意图分类器
 func NewIntentClassifier(model model.BaseChatModel) *IntentClassifier {
 	return &IntentClassifier{
-		model:  model,
-		prompt: intentPrompt,
+		model:       model,
+		prompt:      intentPrompt,
+		feedbackMap: make(map[string]string),
 	}
+}
+
+// AddFeedback 添加路由反馈，用于优化后续分类
+func (c *IntentClassifier) AddFeedback(query string, correctIntent string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.feedbackMap[query] = correctIntent
+}
+
+// GetFeedback 获取历史反馈
+func (c *IntentClassifier) GetFeedback(query string) (string, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	intent, ok := c.feedbackMap[query]
+	return intent, ok
 }
 
 // Classify 执行意图分类
 func (c *IntentClassifier) Classify(ctx context.Context, query string) (*IntentResult, error) {
+	// 优先匹配历史反馈
+	if intent, ok := c.GetFeedback(query); ok {
+		return &IntentResult{
+			Intent:     intent,
+			Confidence: 1.0,
+			Reasoning:  "历史反馈匹配",
+		}, nil
+	}
+
 	// 构建提示
 	prompt := strings.Replace(c.prompt, "{{.input}}", query, 1)
 

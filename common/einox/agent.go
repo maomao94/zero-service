@@ -78,3 +78,18 @@ func (r *RunOptions) ToSchemaMessages() []*schema.Message {
 	}
 	return msgs
 }
+
+type sessionIDKey struct{}
+
+// WithSessionIDContext 将会话ID存入上下文
+func WithSessionIDContext(ctx context.Context, sessionID string) context.Context {
+	return context.WithValue(ctx, sessionIDKey{}, sessionID)
+}
+
+// GetSessionID 从上下文获取会话ID
+func GetSessionID(ctx context.Context) string {
+	if v, ok := ctx.Value(sessionIDKey{}).(string); ok {
+		return v
+	}
+	return ""
+}

@@ -2,6 +2,8 @@ package memory
 
 import (
 	"context"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -29,6 +31,10 @@ type Storage interface {
 	GetUserMemory(ctx context.Context, userID string) (*UserMemory, error)
 	// SaveUserMemory 保存用户记忆
 	SaveUserMemory(ctx context.Context, memory *UserMemory) error
+	// SearchUserMemories 语义搜索用户记忆
+	SearchUserMemories(ctx context.Context, tenantID, userID, query string, vector []float32, topK int, threshold float64, permissionFilter []string) ([]*MemorySearchResult, error)
+	// GetUserMemoriesByPermission 获取用户指定权限级别的记忆
+	GetUserMemoriesByPermission(ctx context.Context, tenantID, userID string, permissions []string) ([]*UserMemory, error)
 
 	// GetSessionSummary 获取会话摘要
 	GetSessionSummary(ctx context.Context, userID, sessionID string) (*SessionSummary, error)
@@ -255,6 +261,80 @@ func (s *MemoryStorage) CleanupOldSessions(ctx context.Context, olderThan time.D
 		}
 	}
 	return nil
+}
+
+// SearchUserMemories 语义搜索用户记忆（内存实现使用简单关键词匹配）
+func (s *MemoryStorage) SearchUserMemories(ctx context.Context, tenantID, userID, query string, vector []float32, topK int, threshold float64, permissionFilter []string) ([]*MemorySearchResult, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	var results []*MemorySearchResult
+	query = strings.ToLower(query)
+
+	permissionSet := make(map[string]bool)
+	for _, p := range permissionFilter {
+		permissionSet[p] = true
+	}
+
+	for _, mem := range s.memories {
+		// 权限过滤
+		if !permissionSet[mem.Permission] {
+			continue
+		}
+		// 租户过滤（如果提供）
+		if tenantID != "" && mem.TenantID != tenantID {
+			continue
+		}
+		// 用户过滤
+		if mem.UserID != userID {
+			continue
+		}
+		// 简单关键词匹配（内存实现暂不支持向量搜索）
+		content := strings.ToLower(mem.Memory)
+		if strings.Contains(content, query) {
+			// 简单计算匹配得分：关键词出现次数占比
+			score := float64(strings.Count(content, query)) / float64(len(content)) * 100
+			if score > threshold {
+				results = append(results, &MemorySearchResult{
+					Memory:   mem,
+					Score:    score,
+					Distance: 1 - score,
+				})
+			}
+		}
+	}
+
+	// 按得分排序
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Score > results[j].Score
+	})
+
+	// 限制返回数量
+	if len(results) > topK {
+		results = results[:topK]
+	}
+
+	return results, nil
+}
+
+// GetUserMemoriesByPermission 获取用户指定权限的记忆
+func (s *MemoryStorage) GetUserMemoriesByPermission(ctx context.Context, tenantID, userID string, permissions []string) ([]*UserMemory, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	permissionSet := make(map[string]bool)
+	for _, p := range permissions {
+		permissionSet[p] = true
+	}
+
+	var results []*UserMemory
+	for _, mem := range s.memories {
+		if permissionSet[mem.Permission] && mem.UserID == userID && (tenantID == "" || mem.TenantID == tenantID) {
+			results = append(results, mem)
+		}
+	}
+
+	return results, nil
 }
 
 // AutoMigrate 自动迁移（内存存储无需操作）

@@ -1,5 +1,5 @@
 Name: aisolo.rpc
-ListenOn: 0.0.0.0:23002
+ListenOn: 0.0.0.0:28099
 
 Log:
   Encoding: plain
@@ -19,7 +19,26 @@ Memory:
 
 Tools:
   Enabled: true
+  Timeout: 30s
+  MaxRetries: 3
+  MaxConcurrency: 10
 
 Skills:
   Dir: "./skills"
   Enabled: true
+
+Agent:
+  PoolMaxIdle: 10
+  PoolMaxLive: 1h
+
+Checkpoint:
+  Dir: "./checkpoints"
+
+Metrics:
+  Enabled: false
+
+Limit:
+  MaxConcurrency: 100
+  RateLimit: 50
+  RequestTimeout: 300s
+

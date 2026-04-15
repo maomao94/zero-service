@@ -29,7 +29,7 @@ func (l *SwitchAgentLogic) SwitchAgent(req *types.SoloSwitchAgentRequest) (resp 
 		SessionId: req.SessionId,
 	}
 
-	result, err := l.svcCtx.EinoCli.GetSession(l.ctx, protoReq)
+	result, err := l.svcCtx.AiSoloCli.GetSession(l.ctx, protoReq)
 	if err != nil {
 		l.Logger.Errorf("switch agent failed: %v", err)
 		return nil, err

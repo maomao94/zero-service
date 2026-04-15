@@ -67,27 +67,12 @@ func (l *AskStreamLogic) AskStream(in *aisolo.AskReq, streamSvc aisolo.AiSolo_As
 
 	writer := &grpcWriter{streamSvc: streamSvc}
 
-	// 获取历史消息
-	var history []*schema.Message
-	if l.svcCtx.MemoryStorage != nil {
-		msgs, err := l.svcCtx.MemoryStorage.GetMessages(l.ctx, userID, sessionID, 20)
-		if err != nil {
-			l.Logger.Errorf("get messages: %v", err)
-		} else {
-			for _, msg := range msgs {
-				history = append(history, &schema.Message{
-					Role:    schema.RoleType(msg.Role),
-					Content: msg.Content,
-				})
-			}
-		}
+	history, err := l.getHistory(userID, sessionID)
+	if err != nil {
+		l.Logger.Errorf("get messages: %v", err)
 	}
 
-	// 获取角色
-	roleID := l.getRoleID(in)
-
-	// 为角色创建 Agent
-	einoAgent, err := l.svcCtx.RoleManager.CreateAgent(l.ctx, roleID)
+	einoAgent, cleanup, err := l.svcCtx.Router.Route(l.ctx, in)
 	if err != nil {
 		errMsg := a2ui.Message{
 			SurfaceUpdate: &a2ui.SurfaceUpdateMsg{
@@ -105,7 +90,7 @@ func (l *AskStreamLogic) AskStream(in *aisolo.AskReq, streamSvc aisolo.AiSolo_As
 						ID: "error-content",
 						Component: a2ui.ComponentValue{
 							Text: &a2ui.TextComp{
-								Value:     fmt.Sprintf("Error: create agent failed: %v", err),
+								Value:     fmt.Sprintf("Error: route agent failed: %v", err),
 								UsageHint: "body",
 							},
 						},
@@ -118,6 +103,7 @@ func (l *AskStreamLogic) AskStream(in *aisolo.AskReq, streamSvc aisolo.AiSolo_As
 		}
 		return nil
 	}
+	defer cleanup()
 
 	if einoAgent == nil || einoAgent.Runner() == nil {
 		errMsg := a2ui.Message{
@@ -150,47 +136,22 @@ func (l *AskStreamLogic) AskStream(in *aisolo.AskReq, streamSvc aisolo.AiSolo_As
 		return nil
 	}
 
-	// 构建消息
 	messages := append(history, &schema.Message{
 		Role:    schema.User,
 		Content: in.Message,
 	})
 
-	// 使用 Agent 的 Runner（已包含 EnableStreaming 配置）
 	runner := einoAgent.Runner()
 	events := runner.Run(l.ctx, messages)
 
 	lastContent, interruptID, err := a2ui.StreamToWriter(writer, sessionID, history, events)
-	if err != nil {
+	if err != nil && !errors.Is(err, io.EOF) {
 		l.Logger.Errorf("stream to writer: %v", err)
-		if !errors.Is(err, io.EOF) {
-			return status.Error(codes.Internal, fmt.Sprintf("agent execution failed: %v", err))
-		}
+		return status.Error(codes.Internal, fmt.Sprintf("agent execution failed: %v", err))
 	}
 
-	// 保存消息
-	if l.svcCtx.MemoryStorage != nil {
-		if err := l.svcCtx.MemoryStorage.SaveMessage(l.ctx, &memory.ConversationMessage{
-			UserID:    userID,
-			SessionID: sessionID,
-			Role:      "user",
-			Content:   in.Message,
-		}); err != nil {
-			l.Logger.Errorf("save user message: %v", err)
-		}
-		if lastContent != "" {
-			if err := l.svcCtx.MemoryStorage.SaveMessage(l.ctx, &memory.ConversationMessage{
-				UserID:    userID,
-				SessionID: sessionID,
-				Role:      "assistant",
-				Content:   lastContent,
-			}); err != nil {
-				l.Logger.Errorf("save assistant message: %v", err)
-			}
-		}
-	}
+	l.saveMessages(userID, sessionID, in.Message, lastContent)
 
-	// 发送中断请求
 	if interruptID != "" {
 		interruptMsg := a2ui.Message{
 			InterruptRequest: &a2ui.InterruptRequestMsg{
@@ -206,8 +167,52 @@ func (l *AskStreamLogic) AskStream(in *aisolo.AskReq, streamSvc aisolo.AiSolo_As
 	}
 
 	duration := time.Since(startTime).Milliseconds()
-	l.Logger.Infof("AskStream completed: session=%s, role=%s, duration=%dms", sessionID, roleID, duration)
+	l.Logger.Infof("AskStream completed: session=%s, mode=%s, duration=%dms", sessionID, in.AgentMode.String(), duration)
 	return nil
+}
+
+func (l *AskStreamLogic) getHistory(userID, sessionID string) ([]*schema.Message, error) {
+	if l.svcCtx.MemoryStorage == nil {
+		return nil, nil
+	}
+	msgs, err := l.svcCtx.MemoryStorage.GetMessages(l.ctx, userID, sessionID, 20)
+	if err != nil {
+		return nil, err
+	}
+	var history []*schema.Message
+	for _, msg := range msgs {
+		history = append(history, &schema.Message{
+			Role:    schema.RoleType(msg.Role),
+			Content: msg.Content,
+		})
+	}
+	return history, nil
+}
+
+func (l *AskStreamLogic) saveMessages(userID, sessionID, userMsg, assistantMsg string) {
+	if l.svcCtx.MemoryStorage == nil {
+		return
+	}
+	if userMsg != "" {
+		if err := l.svcCtx.MemoryStorage.SaveMessage(l.ctx, &memory.ConversationMessage{
+			UserID:    userID,
+			SessionID: sessionID,
+			Role:      "user",
+			Content:   userMsg,
+		}); err != nil {
+			l.Logger.Errorf("save user message: %v", err)
+		}
+	}
+	if assistantMsg != "" {
+		if err := l.svcCtx.MemoryStorage.SaveMessage(l.ctx, &memory.ConversationMessage{
+			UserID:    userID,
+			SessionID: sessionID,
+			Role:      "assistant",
+			Content:   assistantMsg,
+		}); err != nil {
+			l.Logger.Errorf("save assistant message: %v", err)
+		}
+	}
 }
 
 func (l *AskStreamLogic) emitMessage(w io.Writer, msg a2ui.Message) error {
@@ -217,19 +222,4 @@ func (l *AskStreamLogic) emitMessage(w io.Writer, msg a2ui.Message) error {
 	}
 	_, err = w.Write(data)
 	return err
-}
-
-// getRoleID 根据 AgentMode 获取角色 ID
-func (l *AskStreamLogic) getRoleID(in *aisolo.AskReq) string {
-	switch in.AgentMode {
-	case aisolo.AgentMode_AGENT_MODE_FAST:
-		return "assistant"
-	case aisolo.AgentMode_AGENT_MODE_DEEP:
-		// Deep 模式使用 deep agent
-		return "assistant" // 后续支持 deep agent
-	case aisolo.AgentMode_AGENT_MODE_AUTO:
-		fallthrough
-	default:
-		return "assistant"
-	}
 }

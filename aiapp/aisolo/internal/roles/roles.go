@@ -2,6 +2,7 @@ package roles
 
 import (
 	"context"
+	"fmt"
 
 	einotool "zero-service/aiapp/aisolo/internal/tool"
 	"zero-service/common/einox/agent"
@@ -133,6 +134,30 @@ func (rm *RoleManager) Get(roleID string) *Role {
 	}
 	// 默认返回 assistant
 	return rm.roles["assistant"]
+}
+
+// AddRole 添加角色
+func (rm *RoleManager) AddRole(role *Role) error {
+	if role == nil || role.ID == "" {
+		return fmt.Errorf("invalid role: id is required")
+	}
+	if _, exists := rm.roles[role.ID]; exists {
+		return fmt.Errorf("role %s already exists", role.ID)
+	}
+	rm.roles[role.ID] = role
+	return nil
+}
+
+// UpdateRole 更新角色
+func (rm *RoleManager) UpdateRole(role *Role) error {
+	if role == nil || role.ID == "" {
+		return fmt.Errorf("invalid role: id is required")
+	}
+	if _, exists := rm.roles[role.ID]; !exists {
+		return fmt.Errorf("role %s not found", role.ID)
+	}
+	rm.roles[role.ID] = role
+	return nil
 }
 
 // List 获取所有角色

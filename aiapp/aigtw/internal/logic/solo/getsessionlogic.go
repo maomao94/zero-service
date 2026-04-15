@@ -29,7 +29,7 @@ func (l *GetSessionLogic) GetSession(req *types.SoloGetSessionRequest) (resp *ty
 		SessionId: req.SessionId,
 	}
 
-	result, err := l.svcCtx.EinoCli.GetSession(l.ctx, protoReq)
+	result, err := l.svcCtx.AiSoloCli.GetSession(l.ctx, protoReq)
 	if err != nil {
 		l.Logger.Errorf("get session failed: %v", err)
 		return nil, err

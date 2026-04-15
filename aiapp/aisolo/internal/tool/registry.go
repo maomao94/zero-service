@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/schema"
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -217,6 +218,69 @@ func (r *Registry) List() []string {
 		names = append(names, name)
 	}
 	return names
+}
+
+// GetTool 实现tool.Registry接口
+func (r *Registry) GetTool(ctx context.Context, name string) (tool.BaseTool, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	t, ok := r.tools[name]
+	if !ok {
+		return nil, fmt.Errorf("tool %s not found", name)
+	}
+	// 适配成tool.BaseTool
+	return &toolAdapter{t: t}, nil
+}
+
+// ListTools 实现tool.Registry接口
+func (r *Registry) ListTools(ctx context.Context) ([]tool.BaseTool, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var tools []tool.BaseTool
+	for _, t := range r.tools {
+		tools = append(tools, &toolAdapter{t: t})
+	}
+	return tools, nil
+}
+
+// Register 实现tool.Registry接口
+func (r *Registry) RegisterTool(ctx context.Context, t tool.InvokableTool) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	info, err := t.Info(ctx)
+	if err != nil {
+		return err
+	}
+	// 适配成ToolFunc
+	r.tools[info.Name] = &baseToolAdapter{t: t}
+	logx.Infof("[ToolRegistry] registered tool: %s", info.Name)
+	return nil
+}
+
+// toolAdapter 把ToolFunc适配成tool.InvokableTool
+type toolAdapter struct {
+	t ToolFunc
+}
+
+func (a *toolAdapter) Info(ctx context.Context) (*schema.ToolInfo, error) {
+	return a.t.Info(ctx)
+}
+
+func (a *toolAdapter) Invoke(ctx context.Context, params string) (string, error) {
+	return a.t.Invoke(ctx, params)
+}
+
+// baseToolAdapter 把tool.InvokableTool适配成ToolFunc
+type baseToolAdapter struct {
+	t tool.InvokableTool
+}
+
+func (a *baseToolAdapter) Info(ctx context.Context) (*schema.ToolInfo, error) {
+	return a.t.Info(ctx)
+}
+
+func (a *baseToolAdapter) Invoke(ctx context.Context, params string) (string, error) {
+	return a.t.InvokableRun(ctx, params)
 }
 
 // RegisterBuiltinTools 注册内置工具

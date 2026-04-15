@@ -419,12 +419,69 @@ func (m *MemoryManager) GetUserMemory(ctx context.Context, userID string) (*User
 	return m.storage.GetUserMemory(ctx, userID)
 }
 
+// SearchUserMemories 语义搜索用户记忆（支持权限过滤）
+func (m *MemoryManager) SearchUserMemories(ctx context.Context, tenantID, userID, query string, vector []float32, permissions []string) ([]*MemorySearchResult, error) {
+	if !m.config.SemanticRetrieval.Enabled {
+		return nil, fmt.Errorf("semantic retrieval is not enabled")
+	}
+	if len(permissions) == 0 {
+		permissions = []string{m.config.DefaultPermission}
+	}
+	return m.storage.SearchUserMemories(ctx, tenantID, userID, query, vector, m.config.SemanticRetrieval.TopK, m.config.SemanticRetrieval.Threshold, permissions)
+}
+
+// GetUserMemoriesWithPermission 获取用户指定权限的记忆
+func (m *MemoryManager) GetUserMemoriesWithPermission(ctx context.Context, tenantID, userID string, permissions []string) ([]*UserMemory, error) {
+	if len(permissions) == 0 {
+		permissions = []string{m.config.DefaultPermission}
+	}
+	return m.storage.GetUserMemoriesByPermission(ctx, tenantID, userID, permissions)
+}
+
 // GetRecentMessages 获取最近的会话消息（用于 Agent 上下文）
 func (m *MemoryManager) GetRecentMessages(ctx context.Context, userID, sessionID string, limit int) ([]*ConversationMessage, error) {
 	if limit <= 0 {
 		limit = m.config.MemoryLimit
 	}
 	return m.storage.GetMessages(ctx, userID, sessionID, limit)
+}
+
+// MergeUserMemory 合并用户记忆（增量更新，避免重复）
+func (m *MemoryManager) MergeUserMemory(ctx context.Context, userID string, newMemoryContent string) error {
+	existing, err := m.storage.GetUserMemory(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if existing == nil {
+		// 创建新记忆
+		memory := &UserMemory{
+			UserID:     userID,
+			Memory:     newMemoryContent,
+			Permission: m.config.DefaultPermission,
+		}
+		return m.storage.SaveUserMemory(ctx, memory)
+	}
+	// 调用模型合并记忆
+	prompt := fmt.Sprintf(`请合并以下两段用户记忆，保留所有有用信息，去除重复内容，保持Markdown格式：
+
+现有记忆：
+%s
+
+新增记忆片段：
+%s
+
+如果不需要更新，直接返回"NO_UPDATE"`, existing.Memory, newMemoryContent)
+
+	msg := schema.UserMessage(prompt)
+	resp, err := m.model.Generate(ctx, []*schema.Message{msg})
+	if err != nil {
+		return err
+	}
+	if resp.Content == "NO_UPDATE" {
+		return nil
+	}
+	existing.Memory = resp.Content
+	return m.storage.SaveUserMemory(ctx, existing)
 }
 
 // =============================================================================

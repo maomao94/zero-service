@@ -66,8 +66,8 @@ func main() {
 
 	ctx := svc.NewServiceContext(c)
 
-	// 静态文件目录 - 使用绝对路径
-	staticDir := "/Users/hehanpeng/GolandProjects/zero-service/aiapp/aigtw"
+	// 静态文件目录 - 使用相对路径（程序运行目录为aigtw根目录）
+	staticDir := "."
 
 	// 根路径和静态文件路由（需要在 RegisterHandlers 之前添加）
 	server.AddRoute(rest.Route{

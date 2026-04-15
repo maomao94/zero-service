@@ -64,3 +64,9 @@ func (s *AiSoloServer) Resume(ctx context.Context, in *aisolo.ResumeReq) (*aisol
 	l := logic.NewResumeLogic(ctx, s.svcCtx)
 	return l.Resume(in)
 }
+
+// Health 健康检查接口
+func (s *AiSoloServer) Health(ctx context.Context, in *aisolo.HealthReq) (*aisolo.HealthResp, error) {
+	l := logic.NewHealthLogic(ctx, s.svcCtx)
+	return l.Health()
+}

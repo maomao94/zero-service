@@ -16,11 +16,30 @@ import (
 // 每个用户一条记录，使用 Markdown 格式存储所有记忆内容。
 // 记忆由 AI 自动分析提取，存储用户的偏好、习惯、重要信息等。
 type UserMemory struct {
-	ID        string    `json:"id"`        // 记忆ID
-	UserID    string    `json:"userId"`    // 用户ID（主键）
-	Memory    string    `json:"memory"`    // 记忆内容（Markdown 格式）
-	CreatedAt time.Time `json:"createdAt"` // 创建时间
-	UpdatedAt time.Time `json:"updatedAt"` // 最后更新时间
+	ID         string    `json:"id"`         // 记忆ID
+	TenantID   string    `json:"tenantId"`   // 租户ID（用于权限隔离）
+	UserID     string    `json:"userId"`     // 用户ID（主键）
+	Memory     string    `json:"memory"`     // 记忆内容（Markdown 格式）
+	Vector     []float32 `json:"-"`          // 记忆向量（用于语义检索，不序列化）
+	Permission string    `json:"permission"` // 权限级别：private(私有)、shared(共享)、public(公开)
+	CreatedAt  time.Time `json:"createdAt"`  // 创建时间
+	UpdatedAt  time.Time `json:"updatedAt"`  // 最后更新时间
+}
+
+// MemorySearchResult 记忆搜索结果
+type MemorySearchResult struct {
+	Memory   *UserMemory `json:"memory"`   // 匹配的记忆
+	Score    float64     `json:"score"`    // 匹配得分（0-1，越高越匹配）
+	Distance float64     `json:"distance"` // 向量距离（越小越匹配）
+}
+
+// SemanticRetrievalConfig 语义检索配置
+type SemanticRetrievalConfig struct {
+	Enabled      bool    `json:"enabled"`      // 是否启用语义检索
+	TopK         int     `json:"topK"`         // 返回最匹配的TopK条结果
+	Threshold    float64 `json:"threshold"`    // 匹配阈值，低于此分数的结果不返回
+	VectorDim    int     `json:"vectorDim"`    // 向量维度
+	DistanceType string  `json:"distanceType"` // 距离类型：cosine(余弦)、euclidean(欧氏)
 }
 
 // SessionSummary 会话摘要结构
@@ -216,6 +235,10 @@ type MemoryConfig struct {
 	MemoryLimit int `json:"memoryLimit"`
 	// 异步处理的 goroutine 池大小
 	AsyncWorkerPoolSize int `json:"asyncWorkerPoolSize"`
+	// 语义检索配置
+	SemanticRetrieval SemanticRetrievalConfig `json:"semanticRetrieval"`
+	// 默认权限级别
+	DefaultPermission string `json:"defaultPermission"` // 默认 private
 
 	// ================================
 	// 中断/恢复记忆配置
@@ -242,8 +265,16 @@ func DefaultMemoryConfig() *MemoryConfig {
 		Retrieval:                 RetrievalLastN,
 		MemoryLimit:               20,
 		AsyncWorkerPoolSize:       5,
-		EnableCheckpoint:          true,
-		CheckpointRetentionTime:   24, // 24小时
+		DefaultPermission:         "private",
+		SemanticRetrieval: SemanticRetrievalConfig{
+			Enabled:      false,
+			TopK:         5,
+			Threshold:    0.7,
+			VectorDim:    1536, // OpenAI ada-002 维度
+			DistanceType: "cosine",
+		},
+		EnableCheckpoint:        true,
+		CheckpointRetentionTime: 24, // 24小时
 		SummaryTrigger: SummaryTriggerConfig{
 			Strategy:         TriggerSmart,
 			MessageThreshold: 10,

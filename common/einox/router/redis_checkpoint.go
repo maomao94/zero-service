@@ -144,6 +144,147 @@ func (s *RedisCheckPointStore) Client() *redis.Client {
 	return s.client
 }
 
+// ListBySession 获取会话下的所有检查点
+func (s *RedisCheckPointStore) ListBySession(ctx context.Context, sessionID string) ([]*CheckPoint, error) {
+	keys, err := s.Keys(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []*CheckPoint
+	for _, key := range keys {
+		// 去掉前缀
+		checkPointID := key[len(s.prefix):]
+		data, exists, err := s.Get(ctx, checkPointID)
+		if err != nil || !exists {
+			continue
+		}
+
+		var checkPoint CheckPoint
+		if err := json.Unmarshal(data, &checkPoint); err != nil {
+			continue
+		}
+
+		if checkPoint.SessionID == sessionID {
+			results = append(results, &checkPoint)
+		}
+	}
+	return results, nil
+}
+
+// ListByUser 获取用户下的所有检查点
+func (s *RedisCheckPointStore) ListByUser(ctx context.Context, userID string) ([]*CheckPoint, error) {
+	keys, err := s.Keys(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []*CheckPoint
+	for _, key := range keys {
+		// 去掉前缀
+		checkPointID := key[len(s.prefix):]
+		data, exists, err := s.Get(ctx, checkPointID)
+		if err != nil || !exists {
+			continue
+		}
+
+		var checkPoint CheckPoint
+		if err := json.Unmarshal(data, &checkPoint); err != nil {
+			continue
+		}
+
+		if checkPoint.UserID == userID {
+			results = append(results, &checkPoint)
+		}
+	}
+	return results, nil
+}
+
+// CleanupExpired 清理过期的检查点
+// Redis 自动过期，这里统计已过期但尚未被清理的数量
+func (s *RedisCheckPointStore) CleanupExpired(ctx context.Context) (int, error) {
+	// 执行 SCAN 遍历所有 key，检查 TTL
+	var count int
+	iter := s.client.Scan(ctx, 0, s.prefix+"*", 1000).Iterator()
+	for iter.Next(ctx) {
+		key := iter.Val()
+		ttl, err := s.client.TTL(ctx, key).Result()
+		if err != nil {
+			continue
+		}
+		if ttl < 0 {
+			// 已过期
+			count++
+			// 主动删除
+			s.client.Del(ctx, key)
+		}
+	}
+	return count, iter.Err()
+}
+
+// UpdateStatus 更新检查点状态
+func (s *RedisCheckPointStore) UpdateStatus(ctx context.Context, checkPointID string, status string, errMsg string) error {
+	data, exists, err := s.Get(ctx, checkPointID)
+	if err != nil || !exists {
+		return err
+	}
+
+	var checkPoint CheckPoint
+	if err := json.Unmarshal(data, &checkPoint); err != nil {
+		return err
+	}
+
+	checkPoint.Status = status
+	checkPoint.Error = errMsg
+	checkPoint.UpdatedAt = time.Now()
+
+	newData, err := json.Marshal(checkPoint)
+	if err != nil {
+		return err
+	}
+
+	// 保留原有 TTL
+	ttl, err := s.client.TTL(ctx, s.key(checkPointID)).Result()
+	if err != nil {
+		return err
+	}
+
+	return s.client.Set(ctx, s.key(checkPointID), newData, ttl).Err()
+}
+
+// IncrementRetry 增加重试次数
+func (s *RedisCheckPointStore) IncrementRetry(ctx context.Context, checkPointID string) (int, error) {
+	data, exists, err := s.Get(ctx, checkPointID)
+	if err != nil || !exists {
+		return 0, err
+	}
+
+	var checkPoint CheckPoint
+	if err := json.Unmarshal(data, &checkPoint); err != nil {
+		return 0, err
+	}
+
+	checkPoint.RetryCount++
+	checkPoint.UpdatedAt = time.Now()
+
+	newData, err := json.Marshal(checkPoint)
+	if err != nil {
+		return 0, err
+	}
+
+	// 保留原有 TTL
+	ttl, err := s.client.TTL(ctx, s.key(checkPointID)).Result()
+	if err != nil {
+		return 0, err
+	}
+
+	if err := s.client.Set(ctx, s.key(checkPointID), newData, ttl).Err(); err != nil {
+		return 0, err
+	}
+
+	return checkPoint.RetryCount, nil
+}
+
 // =============================================================================
 // CheckPointData 检查点数据结构
 // =============================================================================

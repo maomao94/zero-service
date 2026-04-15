@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 	"time"
 )
@@ -9,6 +10,33 @@ import (
 // =============================================================================
 // CheckPointStore 接口
 // =============================================================================
+
+// InterruptType 中断类型
+type InterruptType string
+
+const (
+	InterruptTypeUserCancel    InterruptType = "user_cancel"     // 用户主动取消
+	InterruptTypeNeedUserInput InterruptType = "need_user_input" // 需要用户输入/选择
+	InterruptTypeError         InterruptType = "error"           // 执行错误中断
+	InterruptTypeTimeout       InterruptType = "timeout"         // 超时中断
+	InterruptTypeRateLimit     InterruptType = "rate_limit"      // 限流中断
+)
+
+// CheckPoint 执行检查点
+type CheckPoint struct {
+	ID            string                 `json:"id"`             // 检查点ID
+	SessionID     string                 `json:"session_id"`     // 会话ID
+	UserID        string                 `json:"user_id"`        // 用户ID
+	InterruptType InterruptType          `json:"interrupt_type"` // 中断类型
+	Status        string                 `json:"status"`         // 状态: running/paused/finished/failed
+	RetryCount    int                    `json:"retry_count"`    // 重试次数
+	MaxRetry      int                    `json:"max_retry"`      // 最大重试次数
+	ExpireAt      time.Time              `json:"expire_at"`      // 过期时间
+	State         map[string]interface{} `json:"state"`          // 执行状态数据
+	Error         string                 `json:"error"`          // 错误信息（如果是错误中断）
+	CreatedAt     time.Time              `json:"created_at"`     // 创建时间
+	UpdatedAt     time.Time              `json:"updated_at"`     // 更新时间
+}
 
 // CheckPointStore 检查点存储接口
 // 用于中断恢复时保存和恢复 Agent 执行状态
@@ -25,6 +53,21 @@ type CheckPointStore interface {
 
 	// Exists 检查点是否存在
 	Exists(ctx context.Context, checkPointID string) (bool, error)
+
+	// ListBySession 获取会话下的所有检查点
+	ListBySession(ctx context.Context, sessionID string) ([]*CheckPoint, error)
+
+	// ListByUser 获取用户下的所有检查点
+	ListByUser(ctx context.Context, userID string) ([]*CheckPoint, error)
+
+	// CleanupExpired 清理过期的检查点
+	CleanupExpired(ctx context.Context) (int, error)
+
+	// UpdateStatus 更新检查点状态
+	UpdateStatus(ctx context.Context, checkPointID string, status string, errMsg string) error
+
+	// IncrementRetry 增加重试次数
+	IncrementRetry(ctx context.Context, checkPointID string) (int, error)
 }
 
 // =============================================================================
@@ -174,6 +217,106 @@ func (s *MemoryCheckPointStore) StartCleanupDaemon(interval time.Duration) func(
 	return func() { close(stop) }
 }
 
+// ListBySession 获取会话下的所有检查点
+func (s *MemoryCheckPointStore) ListBySession(ctx context.Context, sessionID string) ([]*CheckPoint, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	var results []*CheckPoint
+	now := time.Now()
+	for _, cp := range s.data {
+		var checkPoint CheckPoint
+		if err := json.Unmarshal(cp.data, &checkPoint); err != nil {
+			continue
+		}
+		// 过滤未过期且会话匹配的
+		if checkPoint.SessionID == sessionID && (cp.expiresAt.IsZero() || now.Before(cp.expiresAt)) {
+			results = append(results, &checkPoint)
+		}
+	}
+	return results, nil
+}
+
+// ListByUser 获取用户下的所有检查点
+func (s *MemoryCheckPointStore) ListByUser(ctx context.Context, userID string) ([]*CheckPoint, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	var results []*CheckPoint
+	now := time.Now()
+	for _, cp := range s.data {
+		var checkPoint CheckPoint
+		if err := json.Unmarshal(cp.data, &checkPoint); err != nil {
+			continue
+		}
+		// 过滤未过期且用户匹配的
+		if checkPoint.UserID == userID && (cp.expiresAt.IsZero() || now.Before(cp.expiresAt)) {
+			results = append(results, &checkPoint)
+		}
+	}
+	return results, nil
+}
+
+// CleanupExpired 清理过期的检查点
+func (s *MemoryCheckPointStore) CleanupExpired(ctx context.Context) (int, error) {
+	return s.Cleanup(), nil
+}
+
+// UpdateStatus 更新检查点状态
+func (s *MemoryCheckPointStore) UpdateStatus(ctx context.Context, checkPointID string, status string, errMsg string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	cp, ok := s.data[checkPointID]
+	if !ok {
+		return nil
+	}
+
+	var checkPoint CheckPoint
+	if err := json.Unmarshal(cp.data, &checkPoint); err != nil {
+		return err
+	}
+
+	checkPoint.Status = status
+	checkPoint.Error = errMsg
+	checkPoint.UpdatedAt = time.Now()
+
+	newData, err := json.Marshal(checkPoint)
+	if err != nil {
+		return err
+	}
+
+	cp.data = newData
+	return nil
+}
+
+// IncrementRetry 增加重试次数
+func (s *MemoryCheckPointStore) IncrementRetry(ctx context.Context, checkPointID string) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	cp, ok := s.data[checkPointID]
+	if !ok {
+		return 0, nil
+	}
+
+	var checkPoint CheckPoint
+	if err := json.Unmarshal(cp.data, &checkPoint); err != nil {
+		return 0, err
+	}
+
+	checkPoint.RetryCount++
+	checkPoint.UpdatedAt = time.Now()
+
+	newData, err := json.Marshal(checkPoint)
+	if err != nil {
+		return 0, err
+	}
+
+	cp.data = newData
+	return checkPoint.RetryCount, nil
+}
+
 // =============================================================================
 // NoOpCheckPointStore 无操作存储
 // =============================================================================
@@ -201,6 +344,31 @@ func (s *NoOpCheckPointStore) Delete(ctx context.Context, checkPointID string) e
 
 func (s *NoOpCheckPointStore) Exists(ctx context.Context, checkPointID string) (bool, error) {
 	return false, nil
+}
+
+// ListBySession 获取会话下的所有检查点
+func (s *NoOpCheckPointStore) ListBySession(ctx context.Context, sessionID string) ([]*CheckPoint, error) {
+	return nil, nil
+}
+
+// ListByUser 获取用户下的所有检查点
+func (s *NoOpCheckPointStore) ListByUser(ctx context.Context, userID string) ([]*CheckPoint, error) {
+	return nil, nil
+}
+
+// CleanupExpired 清理过期的检查点
+func (s *NoOpCheckPointStore) CleanupExpired(ctx context.Context) (int, error) {
+	return 0, nil
+}
+
+// UpdateStatus 更新检查点状态
+func (s *NoOpCheckPointStore) UpdateStatus(ctx context.Context, checkPointID string, status string, errMsg string) error {
+	return nil
+}
+
+// IncrementRetry 增加重试次数
+func (s *NoOpCheckPointStore) IncrementRetry(ctx context.Context, checkPointID string) (int, error) {
+	return 0, nil
 }
 
 // =============================================================================

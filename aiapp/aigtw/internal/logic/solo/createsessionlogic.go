@@ -37,7 +37,7 @@ func (l *CreateSessionLogic) CreateSession(req *types.SoloCreateSessionRequest) 
 		UserId: userID,
 	}
 
-	result, err := l.svcCtx.EinoCli.CreateSession(l.ctx, protoReq)
+	result, err := l.svcCtx.AiSoloCli.CreateSession(l.ctx, protoReq)
 	if err != nil {
 		l.Logger.Errorf("create session failed: %v", err)
 		return nil, err

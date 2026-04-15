@@ -23,6 +23,6 @@ AiChatRpcConf:
   Timeout: 120000
 AiSoloRpcConf:
   Endpoints:
-    - 127.0.0.1:23002
+    - 127.0.0.1:28099
   NonBlock: true
   Timeout: 300000

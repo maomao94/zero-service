@@ -3,7 +3,11 @@ package agent
 import (
 	"context"
 	"fmt"
+	"math"
 	"os"
+	"sync"
+	"sync/atomic"
+	"time"
 
 	localbk "github.com/cloudwego/eino-ext/adk/backend/local"
 	"github.com/cloudwego/eino/adk"
@@ -24,13 +28,31 @@ var _ einox.AgentInterface = (*Agent)(nil)
 // Agent
 // =============================================================================
 
+// AgentStatus 智能体状态
+type AgentStatus string
+
+const (
+	AgentStatusInit     AgentStatus = "init"     // 初始化中
+	AgentStatusRunning  AgentStatus = "running"  // 运行中
+	AgentStatusPaused   AgentStatus = "paused"   // 已暂停
+	AgentStatusStopping AgentStatus = "stopping" // 关闭中
+	AgentStatusStopped  AgentStatus = "stopped"  // 已关闭
+	AgentStatusError    AgentStatus = "error"    // 错误状态
+)
+
 // Agent AI Agent
 type Agent struct {
-	name     string
-	adkAgent adk.Agent // 底层的 adk.Agent 实例
-	runner   *adk.Runner
-	storage  memory.Storage
-	opts     options
+	name           string
+	adkAgent       adk.Agent // 底层的 adk.Agent 实例
+	runner         *adk.Runner
+	storage        memory.Storage
+	opts           options
+	status         AgentStatus
+	statusMu       sync.RWMutex
+	startTime      time.Time
+	lastActiveTime time.Time
+	requestCount   atomic.Int64
+	errorCount     atomic.Int64
 }
 
 // New 创建 Agent
@@ -62,13 +84,17 @@ func New(ctx context.Context, opts ...Option) (*Agent, error) {
 		cfg.storage = memory.NewMemoryStorage()
 	}
 
-	return &Agent{
-		name:     cfg.name,
-		adkAgent: chatAgent,
-		runner:   runner,
-		storage:  cfg.storage,
-		opts:     cfg,
-	}, nil
+	agent := &Agent{
+		name:      cfg.name,
+		adkAgent:  chatAgent,
+		runner:    runner,
+		storage:   cfg.storage,
+		opts:      cfg,
+		status:    AgentStatusInit,
+		startTime: time.Now(),
+	}
+	agent.lastActiveTime = agent.startTime
+	return agent, nil
 }
 
 // Run 运行 Agent（单轮对话）
@@ -460,7 +486,88 @@ func (a *Agent) Runner() *adk.Runner {
 	return a.runner
 }
 
-// GetAgent 获取底层的 adk.Agent
+// GetAdkAgent 获取底层 ADK Agent
 func (a *Agent) GetAgent() adk.Agent {
 	return a.adkAgent
+}
+
+// GetStatus 获取智能体状态
+func (a *Agent) GetStatus() AgentStatus {
+	a.statusMu.RLock()
+	defer a.statusMu.RUnlock()
+	return a.status
+}
+
+// setStatus 设置智能体状态（内部方法）
+func (a *Agent) setStatus(status AgentStatus) {
+	a.statusMu.Lock()
+	defer a.statusMu.Unlock()
+	a.status = status
+}
+
+// Start 启动智能体
+func (a *Agent) Start(ctx context.Context) error {
+	if a.GetStatus() == AgentStatusRunning {
+		return nil
+	}
+	a.setStatus(AgentStatusRunning)
+	logx.Infof("[Agent] %s started", a.name)
+	return nil
+}
+
+// Stop 优雅关闭智能体
+func (a *Agent) Stop(ctx context.Context) error {
+	currentStatus := a.GetStatus()
+	if currentStatus == AgentStatusStopped || currentStatus == AgentStatusStopping {
+		return nil
+	}
+
+	a.setStatus(AgentStatusStopping)
+	logx.Infof("[Agent] %s stopping...", a.name)
+
+	// 等待正在处理的请求完成（超时5秒）
+	_, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	// TODO: 等待Runner处理完成
+
+	a.setStatus(AgentStatusStopped)
+	logx.Infof("[Agent] %s stopped", a.name)
+	return nil
+}
+
+// HealthCheck 健康检查
+func (a *Agent) HealthCheck(ctx context.Context) bool {
+	status := a.GetStatus()
+	if status == AgentStatusError || status == AgentStatusStopped {
+		return false
+	}
+	// 检查最后活跃时间是否超过阈值（默认5分钟）
+	if time.Since(a.lastActiveTime) > 5*time.Minute {
+		return false
+	}
+	return true
+}
+
+// GetMetrics 获取监控指标
+func (a *Agent) GetMetrics() map[string]interface{} {
+	return map[string]interface{}{
+		"name":           a.name,
+		"status":         a.GetStatus(),
+		"start_time":     a.startTime.Format(time.RFC3339),
+		"last_active":    a.lastActiveTime.Format(time.RFC3339),
+		"uptime_seconds": time.Since(a.startTime).Seconds(),
+		"request_count":  a.requestCount.Load(),
+		"error_count":    a.errorCount.Load(),
+		"error_rate":     float64(a.errorCount.Load()) / math.Max(float64(a.requestCount.Load()), 1),
+	}
+}
+
+// recordRequest 记录请求（内部方法）
+func (a *Agent) recordRequest(success bool) {
+	a.requestCount.Add(1)
+	if !success {
+		a.errorCount.Add(1)
+	}
+	a.lastActiveTime = time.Now()
 }

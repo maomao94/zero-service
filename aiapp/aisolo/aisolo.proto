@@ -176,6 +176,21 @@ message ResumeResp {
 }
 
 // ============================================================
+// 健康检查
+// ============================================================
+
+// HealthReq 健康检查请求
+message HealthReq {}
+
+// HealthResp 健康检查响应
+message HealthResp {
+  string status = 1;               // 服务状态: ok/error
+  string version = 2;              // 服务版本
+  int64 timestamp = 3;             // 响应时间戳
+  map<string, string> dependencies = 4; // 依赖服务状态
+}
+
+// ============================================================
 // RPC 服务定义
 // ============================================================
 
@@ -219,4 +234,11 @@ service AiSolo {
 
   // Resume 恢复中断的执行（同步返回结果）
   rpc Resume(ResumeReq) returns (ResumeResp);
+
+  // ============================================================
+  // 健康检查
+  // ============================================================
+
+  // Health 健康检查接口
+  rpc Health(HealthReq) returns (HealthResp);
 }

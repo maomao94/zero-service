@@ -256,6 +256,114 @@
             40% { transform: scale(1); }
         }
 
+        /* 选择卡片样式 */
+        .choice-cards { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+        .choice-card {
+            padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px;
+            background-color: var(--bg-tertiary); cursor: pointer; display: flex; align-items: flex-start; gap: 8px;
+            transition: all 0.2s;
+        }
+        .choice-card:hover { border-color: var(--accent-color); }
+        .choice-card.selected { border-color: var(--accent-color); background-color: rgba(16, 163, 127, 0.1); }
+        .choice-radio {
+            width: 18px; height: 18px; border: 2px solid var(--border-color); border-radius: 50%;
+            flex-shrink: 0; margin-top: 2px; position: relative;
+        }
+        .choice-card.selected .choice-radio { border-color: var(--accent-color); }
+        .choice-card.selected .choice-radio::after {
+            content: ''; position: absolute; top: 3px; left: 3px; width: 8px; height: 8px;
+            background-color: var(--accent-color); border-radius: 50%;
+        }
+        .choice-checkbox {
+            width: 18px; height: 18px; border: 2px solid var(--border-color); border-radius: 4px;
+            flex-shrink: 0; margin-top: 2px; position: relative;
+        }
+        .choice-card.selected .choice-checkbox { border-color: var(--accent-color); background-color: var(--accent-color); }
+        .choice-card.selected .choice-checkbox::after {
+            content: '✓'; position: absolute; top: -1px; left: 2px; color: white; font-size: 12px;
+        }
+        .choice-label { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+        .choice-desc { font-size: 12px; color: var(--text-secondary); }
+        .confirm-choice-btn {
+            margin-top: 12px; padding: 8px 16px; background-color: var(--accent-color); color: white;
+            border: none; border-radius: 6px; cursor: pointer; font-size: 14px;
+        }
+        .confirm-choice-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* 自定义输入框 */
+        .custom-input {
+            margin-top: 12px;
+        }
+        .custom-input textarea {
+            width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px;
+            background-color: var(--bg-primary); color: var(--text-primary); font-size: 14px;
+            resize: vertical; min-height: 60px; font-family: inherit;
+        }
+        .custom-input button {
+            margin-top: 8px; padding: 6px 12px; background-color: var(--accent-color); color: white;
+            border: none; border-radius: 4px; cursor: pointer; font-size: 13px;
+        }
+
+        /* 消息操作按钮 */
+        .message-actions {
+            display: flex; gap: 4px; margin-top: 4px; opacity: 0; transition: opacity 0.2s;
+        }
+        .message:hover .message-actions { opacity: 1; }
+        .msg-action-btn {
+            background: none; border: none; color: var(--text-tertiary); cursor: pointer;
+            padding: 2px 6px; border-radius: 4px; font-size: 12px;
+        }
+        .msg-action-btn:hover { background-color: var(--bg-hover); color: var(--text-primary); }
+
+        /* 代码高亮 */
+        pre {
+            background-color: var(--bg-primary); padding: 12px; border-radius: 6px; overflow-x: auto;
+            margin: 8px 0;
+        }
+        code {
+            font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace; font-size: 13px;
+            background-color: var(--bg-primary); padding: 2px 4px; border-radius: 3px;
+        }
+        pre code { padding: 0; background: none; }
+
+        /* 表格样式 */
+        table { border-collapse: collapse; width: 100%; margin: 8px 0; }
+        th, td { border: 1px solid var(--border-color); padding: 8px; text-align: left; }
+        th { background-color: var(--bg-tertiary); font-weight: 600; }
+
+        /* 列表样式 */
+        ul, ol { margin: 8px 0; padding-left: 24px; }
+        li { margin: 4px 0; }
+
+        /* 链接样式 */
+        a { color: var(--accent-color); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* 错误提示 */
+        .error-toast {
+            position: fixed; top: 20px; right: 20px; padding: 12px 16px; background-color: var(--error-color);
+            color: white; border-radius: 6px; z-index: 1000; animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; } }
+
+        /* 移动端菜单按钮 */
+        .mobile-menu-btn { display: none; }
+        .sidebar-toggle { display: none; }
+
+        /* 响应式适配 */
+        @media (max-width: 1024px) {
+            .right-panel { width: 280px; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; left: -240px; top: 0; height: 100vh; z-index: 100; transition: left 0.3s; }
+            .sidebar.open { left: 0; }
+            .right-panel { display: none; }
+            .mobile-menu-btn { display: flex; }
+            .sidebar-toggle { display: flex; }
+            .message { max-width: 95%; }
+            .header-actions #tokenInput { width: 120px; }
+        }
+
         /* 滚动条 */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -277,6 +385,7 @@
         <!-- 主区域 -->
         <main class="main">
             <header class="header">
+                <button class="icon-btn sidebar-toggle" onclick="toggleSidebar()" title="菜单">☰</button>
                 <div class="agent-selector">
                     <select id="agentSelector" onchange="switchRole(this.value)">
                         <option value="assistant">💬 通用助手</option>
@@ -292,6 +401,7 @@
                 </div>
                 <div class="header-actions">
                     <input type="password" id="tokenInput" placeholder="输入 Token..." style="width:180px;padding:4px 8px;border-radius:4px;border:1px solid var(--border-color);font-size:12px;" onchange="setToken(this.value)">
+                    <button class="icon-btn" id="interruptBtn" onclick="toggleInterrupt()" title="中断请求" style="display: none;">⏸️</button>
                     <button class="icon-btn" onclick="toggleTheme()" title="切换主题">🌙</button>
                     <button class="icon-btn" onclick="clearChat()" title="清空对话">🗑️</button>
                 </div>
@@ -346,7 +456,9 @@
             agentMode: 'fast',         // 模式: fast, deep
             isStreaming: false,
             selectedChoices: [],
-            pendingInterruptId: null
+            pendingInterruptId: null,
+            controller: null,          // 中断控制器
+            isInterrupted: false       // 是否已中断
         };
 
         // 角色配置（对应 aisolo/internal/roles/roles.go 中的 BuiltinRoles）
@@ -498,9 +610,25 @@
         }
 
         // ========== SSE 流式聊天 ==========
-        async function streamChat(message, loadingEl) {
+        async function streamChat(message, loadingEl, resumeData = null) {
             const token = getToken();
             const authHeader = token ? { 'Authorization': 'Bearer ' + token } : {};
+
+            // 创建中断控制器
+            state.controller = new AbortController();
+            document.getElementById('interruptBtn').style.display = 'flex';
+            state.isInterrupted = false;
+
+            let body;
+            if (resumeData) {
+                body = resumeData;
+            } else {
+                body = JSON.stringify({
+                    sessionId: state.sessionId,
+                    message: message,
+                    agentMode: state.agentMode  // fast 或 deep
+                });
+            }
 
             const response = await fetch('/solo/v1/chat', {
                 method: 'POST',
@@ -508,11 +636,8 @@
                     'Content-Type': 'application/json',
                     ...authHeader
                 },
-                body: JSON.stringify({
-                    sessionId: state.sessionId,
-                    message: message,
-                    agentMode: state.agentMode  // fast 或 deep
-                })
+                body: body,
+                signal: state.controller.signal
             });
 
             if (!response.ok) {
@@ -527,25 +652,31 @@
             loadingEl.remove();
             currentMessageEl = addMessage('assistant', '');
 
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
+            try {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
 
-                buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split('\n');
-                buffer = lines.pop() || '';
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
 
-                for (const line of lines) {
-                    if (line.startsWith('data: ')) {
-                        const data = line.slice(6);
-                        try {
-                            const event = JSON.parse(data);
-                            handleA2UIEvent(event, currentMessageEl);
-                        } catch (e) {
-                            // 忽略解析错误
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const data = line.slice(6);
+                            try {
+                                const event = JSON.parse(data);
+                                handleA2UIEvent(event, currentMessageEl);
+                            } catch (e) {
+                                // 忽略解析错误
+                            }
                         }
                     }
                 }
+            } finally {
+                state.controller = null;
+                document.getElementById('interruptBtn').style.display = 'none';
+                document.getElementById('interruptBtn').textContent = '⏸️';
             }
         }
 
@@ -603,36 +734,72 @@
                         <button class="approval-btn reject" onclick="rejectAction()">❌ 拒绝</button>
                     </div>
                 `;
-            } else if (interrupt.type === 'single' || interrupt.type === 'multiple') {
-                const options = interrupt.options || [];
-                state.selectedChoices = [];
-
-                let optionsHtml = '<div class="choice-cards">';
-                for (const opt of options) {
-                    optionsHtml += `
-                        <div class="choice-card" data-id="${opt.id}" onclick="toggleChoice(this, '${interrupt.type}')">
-                            ${interrupt.type === 'single' ? '<div class="choice-radio"></div>' : '<div class="choice-checkbox"></div>'}
-                            <div>
-                                <div class="choice-label">${escapeHtml(opt.label)}</div>
-                                <div class="choice-desc">${escapeHtml(opt.description || '')}</div>
-                            </div>
+            } else if (interrupt.type === 'single' || interrupt.type === 'multiple' || interrupt.type === 'input') {
+                if (interrupt.type === 'input') {
+                    // 自定义输入
+                    card.innerHTML = `
+                        <div class="tool-header">⌨️ 请输入</div>
+                        <div class="tool-args">${escapeHtml(interrupt.description)}</div>
+                        <div class="custom-input">
+                            <textarea id="customInputText" placeholder="请输入内容..."></textarea>
+                            <button onclick="submitCustomInput()">提交</button>
                         </div>
                     `;
-                }
-                optionsHtml += '</div>';
+                } else {
+                    // 单选/多选
+                    const options = interrupt.options || [];
+                    state.selectedChoices = [];
 
-                card.innerHTML = `
-                    <div class="tool-header">${interrupt.type === 'single' ? '🔘 单选' : '☐ 多选'}</div>
-                    <div class="tool-args">${escapeHtml(interrupt.description)}</div>
-                    ${optionsHtml}
-                    <button class="confirm-choice-btn" onclick="confirmChoice('${interrupt.interruptId}')" disabled>确认选择</button>
-                `;
+                    let optionsHtml = '<div class="choice-cards">';
+                    for (const opt of options) {
+                        optionsHtml += `
+                            <div class="choice-card" data-id="${opt.id}" onclick="toggleChoice(this, '${interrupt.type}')">
+                                ${interrupt.type === 'single' ? '<div class="choice-radio"></div>' : '<div class="choice-checkbox"></div>'}
+                                <div>
+                                    <div class="choice-label">${escapeHtml(opt.label)}</div>
+                                    <div class="choice-desc">${escapeHtml(opt.description || '')}</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    optionsHtml += '</div>';
+
+                    card.innerHTML = `
+                        <div class="tool-header">${interrupt.type === 'single' ? '🔘 单选' : '☐ 多选'}</div>
+                        <div class="tool-args">${escapeHtml(interrupt.description)}</div>
+                        ${optionsHtml}
+                        <button class="confirm-choice-btn" onclick="confirmChoice('${interrupt.interruptId}')" disabled>确认选择</button>
+                    `;
+                }
             }
 
             bubble.appendChild(card);
         }
 
-        // ========== 中断操作 ==========
+        // ========== 中断/继续操作 ==========
+        function toggleInterrupt() {
+            if (state.isStreaming && state.controller) {
+                if (!state.isInterrupted) {
+                    // 中断请求
+                    state.controller.abort();
+                    state.isInterrupted = true;
+                    document.getElementById('interruptBtn').textContent = '▶️';
+                    document.getElementById('interruptBtn').title = '继续请求';
+                    showToast('请求已中断');
+                } else {
+                    // 继续请求
+                    document.getElementById('interruptBtn').textContent = '⏸️';
+                    document.getElementById('interruptBtn').title = '中断请求';
+                    state.isInterrupted = false;
+                    const loadingEl = addLoading();
+                    streamChat('', loadingEl, JSON.stringify({
+                        sessionId: state.sessionId,
+                        resume: true
+                    }));
+                }
+            }
+        }
+
         function approveAction() { resumeAction(true); }
         function rejectAction() { resumeAction(false); }
 
@@ -654,18 +821,31 @@
             await resumeAction(true, state.selectedChoices);
         }
 
-        async function resumeAction(approved, selectedIds = []) {
+        async function submitCustomInput() {
+            const inputText = document.getElementById('customInputText').value.trim();
+            if (!inputText) {
+                showToast('请输入内容');
+                return;
+            }
+            await resumeAction(true, [], inputText);
+        }
+
+        async function resumeAction(approved, selectedIds = [], customInput = '') {
             try {
                 const token = getToken();
                 const authHeader = token ? { 'Authorization': 'Bearer ' + token } : {};
+                const body = {
+                    interruptId: state.pendingInterruptId,
+                    approved: approved,
+                    selectedIds: selectedIds
+                };
+                if (customInput) {
+                    body.customInput = customInput;
+                }
                 const response = await fetch(`/solo/v1/interrupt/${state.pendingInterruptId}/resume`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', ...authHeader },
-                    body: JSON.stringify({
-                        interruptId: state.pendingInterruptId,
-                        approved: approved,
-                        selectedIds: selectedIds
-                    })
+                    body: JSON.stringify(body)
                 });
 
                 if (!response.ok) throw new Error('Resume failed');
@@ -682,6 +862,7 @@
             const chatArea = document.getElementById('chatArea');
             const messageEl = document.createElement('div');
             messageEl.className = `message ${role}`;
+            messageEl.dataset.id = 'msg_' + Date.now();
 
             const avatarText = role === 'user' ? '👤' : role === 'assistant' ? '🤖' : '🔧';
 
@@ -689,6 +870,11 @@
                 <div class="message-avatar">${avatarText}</div>
                 <div class="message-content">
                     <div class="message-bubble">${escapeHtml(content)}</div>
+                    <div class="message-actions">
+                        <button class="msg-action-btn" onclick="copyMessage('${messageEl.dataset.id}')" title="复制">📋</button>
+                        ${role === 'assistant' ? `<button class="msg-action-btn" onclick="regenerateMessage('${messageEl.dataset.id}')" title="重新生成">🔄</button>` : ''}
+                        <button class="msg-action-btn" onclick="deleteMessage('${messageEl.dataset.id}')" title="删除">🗑️</button>
+                    </div>
                 </div>
             `;
 
@@ -728,19 +914,107 @@
             chatArea.scrollTop = chatArea.scrollHeight;
         }
 
-        // 简单的 Markdown 渲染（支持代码块和粗体）
+        // 完整的 Markdown 渲染
         function renderMarkdown(text) {
             // 转义 HTML
             let html = escapeHtml(text);
+            
             // 代码块
             html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+            
             // 行内代码
             html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+            
             // 粗体
             html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            
+            // 斜体
+            html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+            
+            // 链接
+            html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+            
+            // 标题
+            html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+            html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+            html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+            
+            // 无序列表
+            html = html.replace(/^\s*[-*+]\s+(.*)/gim, '<li>$1</li>');
+            html = html.replace(/(<li>.*?<\/li>)/gis, '<ul>$1</ul>');
+            
+            // 有序列表
+            html = html.replace(/^\s*\d+\.\s+(.*)/gim, '<li>$1</li>');
+            html = html.replace(/(<li>.*?<\/li>)/gis, '<ol>$1</ol>');
+            
+            // 表格
+            html = html.replace(/^\|(.+)\|$/gim, function(match, p1) {
+                return '<tr><td>' + p1.replace(/\|/g, '</td><td>') + '</td></tr>';
+            });
+            html = html.replace(/(<tr>.*?<\/tr>)/gis, '<table>$1</table>');
+            // 处理表头分隔线
+            html = html.replace(/<tr><td>[-:| ]+<\/td><\/tr>/g, '');
+            
             // 换行
             html = html.replace(/\n/g, '<br>');
+            
+            // 移除多余的标签
+            html = html.replace(/<\/ul>\s*<ul>/g, '');
+            html = html.replace(/<\/ol>\s*<ol>/g, '');
+            
             return html;
+        }
+
+        // 提示框
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'error-toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // 复制消息
+        function copyMessage(msgId) {
+            const msgEl = document.querySelector(`[data-id="${msgId}"]`);
+            const text = msgEl.querySelector('.message-bubble').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('复制成功');
+            }).catch(() => {
+                showToast('复制失败');
+            });
+        }
+
+        // 删除消息
+        function deleteMessage(msgId) {
+            const msgEl = document.querySelector(`[data-id="${msgId}"]`);
+            msgEl.remove();
+        }
+
+        // 重新生成消息
+        function regenerateMessage(msgId) {
+            // 找到上一条用户消息
+            const msgEl = document.querySelector(`[data-id="${msgId}"]`);
+            let prevMsg = msgEl.previousElementSibling;
+            while (prevMsg && !prevMsg.classList.contains('user')) {
+                prevMsg = prevMsg.previousElementSibling;
+            }
+            if (!prevMsg) return;
+            
+            const userMessage = prevMsg.querySelector('.message-bubble').textContent;
+            deleteMessage(msgId);
+            deleteMessage(prevMsg.dataset.id);
+            
+            // 重新发送
+            const input = document.getElementById('inputField');
+            input.value = userMessage;
+            sendMessage();
+        }
+
+        // 切换侧边栏
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('open');
         }
 
         // ========== 快捷键 ==========
@@ -752,7 +1026,12 @@
                     case '3': switchRole('researcher'); break;
                     case '4': switchRole('analyst'); break;
                     case '5': switchRole('planner'); break;
+                    case 'k': e.preventDefault(); clearChat(); break;
                 }
+            }
+            // ESC关闭侧边栏
+            if (e.key === 'Escape') {
+                document.querySelector('.sidebar').classList.remove('open');
             }
         });
     </script>

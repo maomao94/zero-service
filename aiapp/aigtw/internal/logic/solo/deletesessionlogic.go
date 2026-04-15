@@ -29,7 +29,7 @@ func (l *DeleteSessionLogic) DeleteSession(req *types.SoloDeleteSessionRequest) 
 		SessionId: req.SessionId,
 	}
 
-	result, err := l.svcCtx.EinoCli.DeleteSession(l.ctx, protoReq)
+	result, err := l.svcCtx.AiSoloCli.DeleteSession(l.ctx, protoReq)
 	if err != nil {
 		l.Logger.Errorf("delete session failed: %v", err)
 		return nil, err

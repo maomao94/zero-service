@@ -13,7 +13,7 @@ import (
 type ServiceContext struct {
 	Config    config.Config
 	AiChatCli aichat.AiChatClient
-	EinoCli   aisolo.AiSoloClient
+	AiSoloCli aisolo.AiSoloClient
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -24,7 +24,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		AiChatCli: aichat.NewAiChatClient(zrpc.MustNewClient(c.AiChatRpcConf,
 			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
 			zrpc.WithStreamClientInterceptor(interceptor.StreamTracingInterceptor)).Conn()),
-		EinoCli: aisolo.NewAiSoloClient(zrpc.MustNewClient(c.AiSoloRpcConf,
+		AiSoloCli: aisolo.NewAiSoloClient(zrpc.MustNewClient(c.AiSoloRpcConf,
 			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
 			zrpc.WithStreamClientInterceptor(interceptor.StreamTracingInterceptor)).Conn()),
 	}

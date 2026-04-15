@@ -38,7 +38,7 @@ func (l *ListSessionsLogic) ListSessions(req *types.SoloListSessionsRequest) (re
 		PageSize: int32(req.PageSize),
 	}
 
-	result, err := l.svcCtx.EinoCli.ListSessions(l.ctx, protoReq)
+	result, err := l.svcCtx.AiSoloCli.ListSessions(l.ctx, protoReq)
 	if err != nil {
 		l.Logger.Errorf("list sessions failed: %v", err)
 		return nil, err

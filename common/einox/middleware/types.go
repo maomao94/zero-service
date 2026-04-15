@@ -28,22 +28,9 @@ type ChoiceInfo struct {
 	ArgumentsInJSON string         `json:"arguments_in_json"`
 	Question        string         `json:"question"`
 	Options         []ChoiceOption `json:"options"`
-	Required        bool           `json:"required"`
+	Required        bool           `json:"required,omitempty"`
 	MinSelect       int            `json:"min_select,omitempty"`
 	MaxSelect       int            `json:"max_select,omitempty"`
-}
-
-// ChoiceOption 选择选项
-type ChoiceOption struct {
-	ID          string `json:"id"`
-	Label       string `json:"label"`
-	Description string `json:"description,omitempty"`
-	Default     bool   `json:"default,omitempty"`
-}
-
-// ChoiceResult 选择结果
-type ChoiceResult struct {
-	SelectedIDs []string `json:"selected_ids"`
 }
 
 // HumanConfirmInfo 人工确认信息，用于需要用户确认的操作
