@@ -110,11 +110,18 @@ func (rm *RoleManager) List() []*Role {
 func (rm *RoleManager) CreateAgent(ctx context.Context, roleID string) (*agent.Agent, error) {
 	role := rm.Get(roleID)
 
-	return agent.NewChatModelAgent(ctx, rm.model,
+	opts := []agent.Option{
 		agent.WithName(role.ID),
 		agent.WithDescription(role.Description),
 		agent.WithInstruction(role.Instruction),
-	)
+	}
+
+	// 添加 skills 支持
+	if rm.skillsDir != "" {
+		opts = append(opts, agent.WithSkillsDir(rm.skillsDir))
+	}
+
+	return agent.NewChatModelAgent(ctx, rm.model, opts...)
 }
 
 // =============================================================================
