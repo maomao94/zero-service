@@ -10,12 +10,14 @@ import (
 	"github.com/zeromicro/go-zero/zrpc"
 )
 
+// ServiceContext aigtw HTTP 网关的服务上下文。
 type ServiceContext struct {
 	Config    config.Config
 	AiChatCli aichat.AiChatClient
 	AiSoloCli aisolo.AiSoloClient
 }
 
+// NewServiceContext 构造 ServiceContext。
 func NewServiceContext(c config.Config) *ServiceContext {
 	logx.Must(logx.SetUp(c.Log))
 

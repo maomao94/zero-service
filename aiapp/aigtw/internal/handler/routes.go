@@ -77,16 +77,16 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	server.AddRoutes(
 		[]rest.Route{
 			{
-				// 列出 Agent
+				// 获取中断详情（页面刷新后回填 UI）
 				Method:  http.MethodGet,
-				Path:    "/agents",
-				Handler: solo.ListAgentsHandler(serverCtx),
+				Path:    "/interrupt/:interruptId",
+				Handler: solo.GetInterruptHandler(serverCtx),
 			},
 			{
-				// 中断恢复
-				Method:  http.MethodPost,
-				Path:    "/interrupt/:id/resume",
-				Handler: solo.ResumeHandler(serverCtx),
+				// 列出所有 Mode (用户挑 Mode, 不再挑 Agent)
+				Method:  http.MethodGet,
+				Path:    "/modes",
+				Handler: solo.ListModesHandler(serverCtx),
 			},
 			{
 				// 列出会话
@@ -103,20 +103,20 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			{
 				// 获取会话
 				Method:  http.MethodGet,
-				Path:    "/sessions/:id",
+				Path:    "/sessions/:sessionId",
 				Handler: solo.GetSessionHandler(serverCtx),
 			},
 			{
 				// 删除会话
 				Method:  http.MethodDelete,
-				Path:    "/sessions/:id",
+				Path:    "/sessions/:sessionId",
 				Handler: solo.DeleteSessionHandler(serverCtx),
 			},
 			{
-				// 切换 Agent
-				Method:  http.MethodPost,
-				Path:    "/sessions/:id/switch",
-				Handler: solo.SwitchAgentHandler(serverCtx),
+				// 获取会话历史消息（一次性，供前端初次进入会话时加载）
+				Method:  http.MethodGet,
+				Path:    "/sessions/:sessionId/messages",
+				Handler: solo.ListMessagesHandler(serverCtx),
 			},
 		},
 		rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret),
@@ -126,7 +126,22 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	server.AddRoutes(
 		[]rest.Route{
 			{
-				// 对话（SSE 流式输出 A2UI v0.8 协议消息）
+				// 中断恢复（SSE 流式输出 Solo Protocol 事件）
+				Method:  http.MethodPost,
+				Path:    "/interrupt/:interruptId/resume",
+				Handler: solo.ResumeHandler(serverCtx),
+			},
+		},
+		rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret),
+		rest.WithPrefix("/solo/v1"),
+		rest.WithTimeout(600000*time.Millisecond),
+		rest.WithSSE(),
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				// 对话（SSE 流式输出 Solo Protocol 事件）
 				Method:  http.MethodPost,
 				Path:    "/chat",
 				Handler: solo.ChatHandler(serverCtx),

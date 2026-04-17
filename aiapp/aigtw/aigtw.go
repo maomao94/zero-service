@@ -8,7 +8,9 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
+	"strings"
 
 	"zero-service/aiapp/aigtw/internal/config"
 	"zero-service/aiapp/aigtw/internal/handler"
@@ -20,6 +22,7 @@ import (
 	_ "zero-service/common/nacosx"
 	"zero-service/common/tool"
 
+	"github.com/google/uuid"
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/service"
@@ -36,16 +39,47 @@ func main() {
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
+	if secret := os.Getenv("AIGTW_JWT_ACCESS_SECRET"); secret != "" {
+		c.JwtAuth.AccessSecret = secret
+	}
+	if c.JwtAuth.AccessSecret == "" {
+		fmt.Println("jwt access secret is empty, set JwtAuth.AccessSecret or AIGTW_JWT_ACCESS_SECRET")
+		return
+	}
 
 	// Print Go version
 	tool.PrintGoVersion()
 
-	server := rest.MustNewServer(c.RestConf, gtwx.CorsOption())
+	// 静态资源目录
+	exePath, _ := os.Executable()
+	exeDir := filepath.Dir(exePath)
+	staticRoot := filepath.Join(exeDir, "static")
+	// fallback: 相对于当前工作目录
+	if _, err := os.Stat(staticRoot); os.IsNotExist(err) {
+		cwd, _ := os.Getwd()
+		// 如果当前目录已经是 aigtw 目录，直接用 cwd/static
+		if strings.HasSuffix(cwd, "aigtw") {
+			staticRoot = filepath.Join(cwd, "static")
+		} else {
+			staticRoot = filepath.Join(cwd, "aiapp/aigtw/static")
+		}
+	}
+
+	server := rest.MustNewServer(c.RestConf,
+		gtwx.CorsOption(),
+		rest.WithFileServer("/static", http.Dir(staticRoot)),
+	)
 
 	// 全局中间件
 	server.Use(func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
+			requestID := r.Header.Get("X-Request-Id")
+			if requestID == "" {
+				requestID = uuid.NewString()
+			}
+			w.Header().Set("X-Request-Id", requestID)
+
 			if auth := r.Header.Get("Authorization"); auth != "" {
 				ctx = context.WithValue(ctx, ctxdata.CtxAuthTypeKey, "user")
 				ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, auth)
@@ -66,55 +100,20 @@ func main() {
 
 	ctx := svc.NewServiceContext(c)
 
-	// 静态文件目录 - 使用绝对路径确保在任何目录启动都能正确访问
-	staticDir, _ := filepath.Abs("aiapp/aigtw")
+	logx.Infof("static root: %s", staticRoot)
 
-	// 静态文件服务
-	fileServer := http.FileServer(http.Dir(staticDir))
-
-	// 根路径返回 chat.html
 	server.AddRoutes([]rest.Route{
 		{
 			Method: http.MethodGet,
 			Path:   "/",
 			Handler: func(w http.ResponseWriter, r *http.Request) {
-				http.ServeFile(w, r, filepath.Join(staticDir, "chat.html"))
-			},
-		},
-		{
-			Method: http.MethodGet,
-			Path:   "/chat.html",
-			Handler: func(w http.ResponseWriter, r *http.Request) {
-				http.ServeFile(w, r, filepath.Join(staticDir, "chat.html"))
-			},
-		},
-		{
-			Method: http.MethodGet,
-			Path:   "/solo.html",
-			Handler: func(w http.ResponseWriter, r *http.Request) {
-				http.ServeFile(w, r, filepath.Join(staticDir, "solo.html"))
-			},
-		},
-		{
-			Method: http.MethodGet,
-			Path:   "/tool.html",
-			Handler: func(w http.ResponseWriter, r *http.Request) {
-				http.ServeFile(w, r, filepath.Join(staticDir, "tool.html"))
-			},
-		},
-		{
-			Method: http.MethodGet,
-			Path:   "/results.html",
-			Handler: func(w http.ResponseWriter, r *http.Request) {
-				http.ServeFile(w, r, filepath.Join(staticDir, "results.html"))
+				http.Redirect(w, r, "/static/solo/index.html", http.StatusFound)
 			},
 		},
 	})
 
 	// 注册 API 路由
 	handler.RegisterHandlers(server, ctx)
-
-	_ = fileServer // 预留，用于后续扩展静态资源服务
 
 	serviceGroup := service.NewServiceGroup()
 	defer serviceGroup.Stop()

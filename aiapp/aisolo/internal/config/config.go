@@ -10,14 +10,16 @@ import (
 type Config struct {
 	zrpc.RpcServerConf
 
-	Model      ModelConfig      `json:"model"`
-	Memory     MemoryConfig     `json:"memory"`
-	Tools      ToolsConfig      `json:"tools"`
-	Skills     SkillsConfig     `json:"skills"`
-	Agent      AgentConfig      `json:"agent"`
-	Checkpoint CheckpointConfig `json:"checkpoint"`
-	Metrics    MetricsConfig    `json:"metrics"`
-	Limit      LimitConfig      `json:"limit"`
+	Model        ModelConfig        `json:"model"`
+	Memory       MemoryConfig       `json:"memory"`
+	SessionStore SessionStoreConfig `json:",optional"`
+	DB           DBConfig           `json:",optional"`
+	Tools        ToolsConfig        `json:"tools"`
+	Skills       SkillsConfig       `json:"skills"`
+	Agent        AgentConfig        `json:"agent"`
+	Checkpoint   CheckpointConfig   `json:"checkpoint"`
+	Metrics      MetricsConfig      `json:"metrics"`
+	Limit        LimitConfig        `json:"limit"`
 }
 
 // AgentConfig Agent配置
@@ -26,9 +28,11 @@ type AgentConfig struct {
 	PoolMaxLive time.Duration `json:"poolMaxLive"`
 }
 
-// CheckpointConfig 检查点配置
+// CheckpointConfig Agent 中断/恢复的快照存储配置。
+// 与 Memory/SessionStore 保持一致的 memory|jsonl|gormx 三后端模型。
 type CheckpointConfig struct {
-	Dir string `json:"dir"`
+	Type    string `json:",default=memory,options=memory|jsonl|gormx"`
+	BaseDir string `json:",optional"` // JSONL 存储目录
 }
 
 // MetricsConfig 监控配置
@@ -46,9 +50,23 @@ type ModelConfig struct {
 	Temperature float64 `json:"temperature"`
 }
 
-// MemoryConfig 记忆配置
+// MemoryConfig 记忆配置（消息存储）。
 type MemoryConfig struct {
-	Type string `json:"type"`
+	Type    string `json:",default=memory,options=memory|jsonl|gormx"`
+	BaseDir string `json:",optional"` // JSONL 存储目录
+}
+
+// SessionStoreConfig 会话存储配置。
+type SessionStoreConfig struct {
+	Type    string `json:",default=memory,options=memory|jsonl|gormx"`
+	BaseDir string `json:",optional"` // JSONL 存储目录
+}
+
+// DBConfig gormx 数据库配置。
+type DBConfig struct {
+	Enabled    bool   `json:",optional,default=false"`
+	DataSource string `json:",optional"`
+	LogLevel   string `json:",optional,default=error"`
 }
 
 // ToolsConfig 工具配置

@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 	interceptor "zero-service/common/Interceptor/rpcserver"
 
 	"zero-service/aiapp/aisolo/aisolo"
@@ -25,6 +26,13 @@ func main() {
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
+	if apiKey := os.Getenv("AISOLO_MODEL_API_KEY"); apiKey != "" {
+		c.Model.APIKey = apiKey
+	}
+	if c.Model.APIKey == "" {
+		fmt.Println("model api key is empty, set Model.APIKey or AISOLO_MODEL_API_KEY")
+		return
+	}
 	ctx := svc.NewServiceContext(c)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {

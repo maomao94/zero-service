@@ -9,9 +9,6 @@ require (
 	github.com/brianvoe/gofakeit/v7 v7.14.1
 	github.com/cloudwego/eino v0.8.7
 	github.com/cloudwego/eino-ext/adk/backend/local v0.2.4
-	github.com/cloudwego/eino-ext/components/embedding/ark v0.1.1
-	github.com/cloudwego/eino-ext/components/embedding/ollama v0.0.0-20260408093428-9b7587b89863
-	github.com/cloudwego/eino-ext/components/embedding/openai v0.0.0-20260408093428-9b7587b89863
 	github.com/cloudwego/eino-ext/components/model/ark v0.1.65
 	github.com/cloudwego/eino-ext/components/model/deepseek v0.1.2
 	github.com/cloudwego/eino-ext/components/model/ollama v0.1.9
@@ -45,14 +42,13 @@ require (
 	github.com/panjf2000/ants/v2 v2.12.0
 	github.com/paulmach/orb v0.13.0
 	github.com/pkg/errors v0.9.2-0.20201214064552-5dd12d0cfe7f
+	github.com/prometheus/client_golang v1.23.2
 	github.com/qichengzx/coordtransform v0.0.0-20220708113031-010878418826
-	github.com/redis/go-redis/v9 v9.18.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
 	github.com/shopspring/decimal v1.4.0
 	github.com/songzhibin97/gkit v1.2.13
 	github.com/spf13/cast v1.10.0
-	github.com/stretchr/testify v1.11.1
 	github.com/taosdata/driver-go/v3 v3.8.0
 	github.com/teambition/rrule-go v1.8.2
 	github.com/tidwall/gjson v1.18.0
@@ -210,10 +206,10 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.66.1 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
+	github.com/redis/go-redis/v9 v9.18.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/reugn/async v0.9.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
@@ -224,6 +220,7 @@ require (
 	github.com/segmentio/kafka-go v0.4.47 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/slongfield/pyfmt v0.0.0-20220222012616-ea85ff4c361f // indirect
+	github.com/smarty/assertions v1.16.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.6.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect

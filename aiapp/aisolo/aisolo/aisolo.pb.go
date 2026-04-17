@@ -21,29 +21,35 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// AgentMode Agent 运行模式
+// AgentMode Agent 运行模式, 对齐 eino ADK 的核心能力。
 type AgentMode int32
 
 const (
 	AgentMode_AGENT_MODE_UNSPECIFIED AgentMode = 0
-	AgentMode_AGENT_MODE_AUTO        AgentMode = 1 // 自动选择（默认）
-	AgentMode_AGENT_MODE_FAST        AgentMode = 2 // 快速响应（基础对话）
-	AgentMode_AGENT_MODE_DEEP        AgentMode = 3 // 深度思考（复杂任务）
+	AgentMode_AGENT_MODE_AGENT       AgentMode = 1 // ChatModelAgent + tools, ReAct 推理 (默认)
+	AgentMode_AGENT_MODE_WORKFLOW    AgentMode = 2 // Sequential / Parallel / Loop Workflow
+	AgentMode_AGENT_MODE_SUPERVISOR  AgentMode = 3 // prebuilt/supervisor 多 Agent 协作
+	AgentMode_AGENT_MODE_PLAN        AgentMode = 4 // prebuilt/planexecute 计划-执行
+	AgentMode_AGENT_MODE_DEEP        AgentMode = 5 // prebuilt/deep 深度研究
 )
 
 // Enum value maps for AgentMode.
 var (
 	AgentMode_name = map[int32]string{
 		0: "AGENT_MODE_UNSPECIFIED",
-		1: "AGENT_MODE_AUTO",
-		2: "AGENT_MODE_FAST",
-		3: "AGENT_MODE_DEEP",
+		1: "AGENT_MODE_AGENT",
+		2: "AGENT_MODE_WORKFLOW",
+		3: "AGENT_MODE_SUPERVISOR",
+		4: "AGENT_MODE_PLAN",
+		5: "AGENT_MODE_DEEP",
 	}
 	AgentMode_value = map[string]int32{
 		"AGENT_MODE_UNSPECIFIED": 0,
-		"AGENT_MODE_AUTO":        1,
-		"AGENT_MODE_FAST":        2,
-		"AGENT_MODE_DEEP":        3,
+		"AGENT_MODE_AGENT":       1,
+		"AGENT_MODE_WORKFLOW":    2,
+		"AGENT_MODE_SUPERVISOR":  3,
+		"AGENT_MODE_PLAN":        4,
+		"AGENT_MODE_DEEP":        5,
 	}
 )
 
@@ -74,13 +80,133 @@ func (AgentMode) EnumDescriptor() ([]byte, []int) {
 	return file_aisolo_proto_rawDescGZIP(), []int{0}
 }
 
-// ResumeAction 恢复动作
+// InterruptKind 中断种类, 驱动前端 UI 渲染选择。
+type InterruptKind int32
+
+const (
+	InterruptKind_INTERRUPT_KIND_UNSPECIFIED   InterruptKind = 0
+	InterruptKind_INTERRUPT_KIND_APPROVAL      InterruptKind = 1 // 二选一审批 (approve / deny)
+	InterruptKind_INTERRUPT_KIND_SINGLE_SELECT InterruptKind = 2 // 单选
+	InterruptKind_INTERRUPT_KIND_MULTI_SELECT  InterruptKind = 3 // 多选
+	InterruptKind_INTERRUPT_KIND_FREE_TEXT     InterruptKind = 4 // 自由文本输入
+	InterruptKind_INTERRUPT_KIND_FORM_INPUT    InterruptKind = 5 // 结构化表单
+	InterruptKind_INTERRUPT_KIND_INFO_ACK      InterruptKind = 6 // 展示信息 + 点击确认
+)
+
+// Enum value maps for InterruptKind.
+var (
+	InterruptKind_name = map[int32]string{
+		0: "INTERRUPT_KIND_UNSPECIFIED",
+		1: "INTERRUPT_KIND_APPROVAL",
+		2: "INTERRUPT_KIND_SINGLE_SELECT",
+		3: "INTERRUPT_KIND_MULTI_SELECT",
+		4: "INTERRUPT_KIND_FREE_TEXT",
+		5: "INTERRUPT_KIND_FORM_INPUT",
+		6: "INTERRUPT_KIND_INFO_ACK",
+	}
+	InterruptKind_value = map[string]int32{
+		"INTERRUPT_KIND_UNSPECIFIED":   0,
+		"INTERRUPT_KIND_APPROVAL":      1,
+		"INTERRUPT_KIND_SINGLE_SELECT": 2,
+		"INTERRUPT_KIND_MULTI_SELECT":  3,
+		"INTERRUPT_KIND_FREE_TEXT":     4,
+		"INTERRUPT_KIND_FORM_INPUT":    5,
+		"INTERRUPT_KIND_INFO_ACK":      6,
+	}
+)
+
+func (x InterruptKind) Enum() *InterruptKind {
+	p := new(InterruptKind)
+	*p = x
+	return p
+}
+
+func (x InterruptKind) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (InterruptKind) Descriptor() protoreflect.EnumDescriptor {
+	return file_aisolo_proto_enumTypes[1].Descriptor()
+}
+
+func (InterruptKind) Type() protoreflect.EnumType {
+	return &file_aisolo_proto_enumTypes[1]
+}
+
+func (x InterruptKind) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use InterruptKind.Descriptor instead.
+func (InterruptKind) EnumDescriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{1}
+}
+
+// SessionStatus 会话运行状态。
+type SessionStatus int32
+
+const (
+	SessionStatus_SESSION_STATUS_UNSPECIFIED SessionStatus = 0
+	SessionStatus_SESSION_STATUS_IDLE        SessionStatus = 1 // 空闲, 可以开始新一轮
+	SessionStatus_SESSION_STATUS_RUNNING     SessionStatus = 2 // 正在执行中
+	SessionStatus_SESSION_STATUS_INTERRUPTED SessionStatus = 3 // 中断中, 等待用户恢复
+)
+
+// Enum value maps for SessionStatus.
+var (
+	SessionStatus_name = map[int32]string{
+		0: "SESSION_STATUS_UNSPECIFIED",
+		1: "SESSION_STATUS_IDLE",
+		2: "SESSION_STATUS_RUNNING",
+		3: "SESSION_STATUS_INTERRUPTED",
+	}
+	SessionStatus_value = map[string]int32{
+		"SESSION_STATUS_UNSPECIFIED": 0,
+		"SESSION_STATUS_IDLE":        1,
+		"SESSION_STATUS_RUNNING":     2,
+		"SESSION_STATUS_INTERRUPTED": 3,
+	}
+)
+
+func (x SessionStatus) Enum() *SessionStatus {
+	p := new(SessionStatus)
+	*p = x
+	return p
+}
+
+func (x SessionStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (SessionStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_aisolo_proto_enumTypes[2].Descriptor()
+}
+
+func (SessionStatus) Type() protoreflect.EnumType {
+	return &file_aisolo_proto_enumTypes[2]
+}
+
+func (x SessionStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use SessionStatus.Descriptor instead.
+func (SessionStatus) EnumDescriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{2}
+}
+
+// ResumeAction 恢复动作。具体字段按 kind 决定填哪个。
 type ResumeAction int32
 
 const (
 	ResumeAction_RESUME_ACTION_UNSPECIFIED ResumeAction = 0
-	ResumeAction_RESUME_ACTION_APPROVE     ResumeAction = 1 // 批准
-	ResumeAction_RESUME_ACTION_DENY        ResumeAction = 2 // 拒绝
+	ResumeAction_RESUME_ACTION_APPROVE     ResumeAction = 1 // approval
+	ResumeAction_RESUME_ACTION_DENY        ResumeAction = 2 // approval
+	ResumeAction_RESUME_ACTION_SELECT      ResumeAction = 3 // single_select / multi_select
+	ResumeAction_RESUME_ACTION_TEXT        ResumeAction = 4 // free_text
+	ResumeAction_RESUME_ACTION_FORM        ResumeAction = 5 // form_input
+	ResumeAction_RESUME_ACTION_ACK         ResumeAction = 6 // info_ack
+	ResumeAction_RESUME_ACTION_CANCEL      ResumeAction = 7 // 所有 kind 都可取消
 )
 
 // Enum value maps for ResumeAction.
@@ -89,11 +215,21 @@ var (
 		0: "RESUME_ACTION_UNSPECIFIED",
 		1: "RESUME_ACTION_APPROVE",
 		2: "RESUME_ACTION_DENY",
+		3: "RESUME_ACTION_SELECT",
+		4: "RESUME_ACTION_TEXT",
+		5: "RESUME_ACTION_FORM",
+		6: "RESUME_ACTION_ACK",
+		7: "RESUME_ACTION_CANCEL",
 	}
 	ResumeAction_value = map[string]int32{
 		"RESUME_ACTION_UNSPECIFIED": 0,
 		"RESUME_ACTION_APPROVE":     1,
 		"RESUME_ACTION_DENY":        2,
+		"RESUME_ACTION_SELECT":      3,
+		"RESUME_ACTION_TEXT":        4,
+		"RESUME_ACTION_FORM":        5,
+		"RESUME_ACTION_ACK":         6,
+		"RESUME_ACTION_CANCEL":      7,
 	}
 )
 
@@ -108,11 +244,11 @@ func (x ResumeAction) String() string {
 }
 
 func (ResumeAction) Descriptor() protoreflect.EnumDescriptor {
-	return file_aisolo_proto_enumTypes[1].Descriptor()
+	return file_aisolo_proto_enumTypes[3].Descriptor()
 }
 
 func (ResumeAction) Type() protoreflect.EnumType {
-	return &file_aisolo_proto_enumTypes[1]
+	return &file_aisolo_proto_enumTypes[3]
 }
 
 func (x ResumeAction) Number() protoreflect.EnumNumber {
@@ -121,17 +257,17 @@ func (x ResumeAction) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ResumeAction.Descriptor instead.
 func (ResumeAction) EnumDescriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{1}
+	return file_aisolo_proto_rawDescGZIP(), []int{3}
 }
 
-// AskReq 对话请求
+// AskReq 一轮对话请求。
 type AskReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`                                                // 会话 ID（空则创建新会话）
-	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`                                                         // 用户 ID
-	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`                                                                     // 用户消息
-	AgentMode     AgentMode              `protobuf:"varint,4,opt,name=agent_mode,json=agentMode,proto3,enum=aisolo.AgentMode" json:"agent_mode,omitempty"`                         // Agent 运行模式
-	Meta          map[string]string      `protobuf:"bytes,5,rep,name=meta,proto3" json:"meta,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // 元数据（可选）
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	Mode          AgentMode              `protobuf:"varint,4,opt,name=mode,proto3,enum=aisolo.AgentMode" json:"mode,omitempty"` // 可选, 留空则使用 session 当前 mode
+	Meta          map[string]string      `protobuf:"bytes,5,rep,name=meta,proto3" json:"meta,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -187,9 +323,9 @@ func (x *AskReq) GetMessage() string {
 	return ""
 }
 
-func (x *AskReq) GetAgentMode() AgentMode {
+func (x *AskReq) GetMode() AgentMode {
 	if x != nil {
-		return x.AgentMode
+		return x.Mode
 	}
 	return AgentMode_AGENT_MODE_UNSPECIFIED
 }
@@ -201,12 +337,12 @@ func (x *AskReq) GetMeta() map[string]string {
 	return nil
 }
 
-// AskStreamChunk 流式响应块
+// AskStreamChunk 每一帧的 JSON Event (见 einox/protocol 定义)。
 type AskStreamChunk struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"` // 会话 ID
-	Data          string                 `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`                            // A2UI JSON 数据
-	IsFinal       bool                   `protobuf:"varint,3,opt,name=is_final,json=isFinal,proto3" json:"is_final,omitempty"`      // 是否结束
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	Data          string                 `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`                       // 完整 JSON Event, 按行输出
+	IsFinal       bool                   `protobuf:"varint,3,opt,name=is_final,json=isFinal,proto3" json:"is_final,omitempty"` // 最后一帧
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -262,7 +398,6 @@ func (x *AskStreamChunk) GetIsFinal() bool {
 	return false
 }
 
-// AskStreamResp 流式响应（包装 Chunk）
 type AskStreamResp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Chunk         *AskStreamChunk        `protobuf:"bytes,1,opt,name=chunk,proto3" json:"chunk,omitempty"`
@@ -307,95 +442,19 @@ func (x *AskStreamResp) GetChunk() *AskStreamChunk {
 	return nil
 }
 
-// InterruptInfo 中断信息
-type InterruptInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	InterruptId   string                 `protobuf:"bytes,1,opt,name=interrupt_id,json=interruptId,proto3" json:"interrupt_id,omitempty"` // 中断 ID
-	Reason        string                 `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`                              // 中断原因
-	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`                    // 描述
-	Options       []*Option              `protobuf:"bytes,4,rep,name=options,proto3" json:"options,omitempty"`                            // 选项（如需选择）
-	Required      bool                   `protobuf:"varint,5,opt,name=required,proto3" json:"required,omitempty"`                         // 是否必须处理
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *InterruptInfo) Reset() {
-	*x = InterruptInfo{}
-	mi := &file_aisolo_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *InterruptInfo) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*InterruptInfo) ProtoMessage() {}
-
-func (x *InterruptInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use InterruptInfo.ProtoReflect.Descriptor instead.
-func (*InterruptInfo) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *InterruptInfo) GetInterruptId() string {
-	if x != nil {
-		return x.InterruptId
-	}
-	return ""
-}
-
-func (x *InterruptInfo) GetReason() string {
-	if x != nil {
-		return x.Reason
-	}
-	return ""
-}
-
-func (x *InterruptInfo) GetDescription() string {
-	if x != nil {
-		return x.Description
-	}
-	return ""
-}
-
-func (x *InterruptInfo) GetOptions() []*Option {
-	if x != nil {
-		return x.Options
-	}
-	return nil
-}
-
-func (x *InterruptInfo) GetRequired() bool {
-	if x != nil {
-		return x.Required
-	}
-	return false
-}
-
-// Option 选项
+// Option 单选 / 多选的候选项。
 type Option struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Label         string                 `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
+	Desc          string                 `protobuf:"bytes,3,opt,name=desc,proto3" json:"desc,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Option) Reset() {
 	*x = Option{}
-	mi := &file_aisolo_proto_msgTypes[4]
+	mi := &file_aisolo_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -407,7 +466,7 @@ func (x *Option) String() string {
 func (*Option) ProtoMessage() {}
 
 func (x *Option) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[4]
+	mi := &file_aisolo_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -420,7 +479,7 @@ func (x *Option) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Option.ProtoReflect.Descriptor instead.
 func (*Option) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{4}
+	return file_aisolo_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Option) GetId() string {
@@ -437,30 +496,140 @@ func (x *Option) GetLabel() string {
 	return ""
 }
 
-// CreateSessionReq 创建会话请求
-type CreateSessionReq struct {
+func (x *Option) GetDesc() string {
+	if x != nil {
+		return x.Desc
+	}
+	return ""
+}
+
+// Field 表单字段 (form_input 使用)。
+type Field struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`                                 // 用户 ID
-	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`                                                 // 会话标题（可选）
-	AgentMode     AgentMode              `protobuf:"varint,3,opt,name=agent_mode,json=agentMode,proto3,enum=aisolo.AgentMode" json:"agent_mode,omitempty"` // 默认 Agent 模式
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Label         string                 `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
+	Type          string                 `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"` // string | number | boolean
+	Required      bool                   `protobuf:"varint,4,opt,name=required,proto3" json:"required,omitempty"`
+	Placeholder   string                 `protobuf:"bytes,5,opt,name=placeholder,proto3" json:"placeholder,omitempty"`
+	Default       string                 `protobuf:"bytes,6,opt,name=default,proto3" json:"default,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CreateSessionReq) Reset() {
-	*x = CreateSessionReq{}
+func (x *Field) Reset() {
+	*x = Field{}
+	mi := &file_aisolo_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Field) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Field) ProtoMessage() {}
+
+func (x *Field) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Field.ProtoReflect.Descriptor instead.
+func (*Field) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *Field) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Field) GetLabel() string {
+	if x != nil {
+		return x.Label
+	}
+	return ""
+}
+
+func (x *Field) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *Field) GetRequired() bool {
+	if x != nil {
+		return x.Required
+	}
+	return false
+}
+
+func (x *Field) GetPlaceholder() string {
+	if x != nil {
+		return x.Placeholder
+	}
+	return ""
+}
+
+func (x *Field) GetDefault() string {
+	if x != nil {
+		return x.Default
+	}
+	return ""
+}
+
+// InterruptInfo 结构化中断元数据。Kind 决定哪些字段有效:
+//
+//	APPROVAL      -> question, detail
+//	SINGLE_SELECT -> question, options
+//	MULTI_SELECT  -> question, options, min_select, max_select
+//	FREE_TEXT     -> question, placeholder, multiline
+//	FORM_INPUT    -> question, fields
+//	INFO_ACK      -> title, body
+type InterruptInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	InterruptId   string                 `protobuf:"bytes,1,opt,name=interrupt_id,json=interruptId,proto3" json:"interrupt_id,omitempty"`
+	Kind          InterruptKind          `protobuf:"varint,2,opt,name=kind,proto3,enum=aisolo.InterruptKind" json:"kind,omitempty"`
+	ToolName      string                 `protobuf:"bytes,3,opt,name=tool_name,json=toolName,proto3" json:"tool_name,omitempty"`
+	Required      bool                   `protobuf:"varint,4,opt,name=required,proto3" json:"required,omitempty"`
+	Question      string                 `protobuf:"bytes,10,opt,name=question,proto3" json:"question,omitempty"`
+	Detail        string                 `protobuf:"bytes,11,opt,name=detail,proto3" json:"detail,omitempty"`
+	Options       []*Option              `protobuf:"bytes,12,rep,name=options,proto3" json:"options,omitempty"`
+	MinSelect     int32                  `protobuf:"varint,13,opt,name=min_select,json=minSelect,proto3" json:"min_select,omitempty"`
+	MaxSelect     int32                  `protobuf:"varint,14,opt,name=max_select,json=maxSelect,proto3" json:"max_select,omitempty"`
+	Placeholder   string                 `protobuf:"bytes,15,opt,name=placeholder,proto3" json:"placeholder,omitempty"`
+	Multiline     bool                   `protobuf:"varint,16,opt,name=multiline,proto3" json:"multiline,omitempty"`
+	Fields        []*Field               `protobuf:"bytes,17,rep,name=fields,proto3" json:"fields,omitempty"`
+	Title         string                 `protobuf:"bytes,18,opt,name=title,proto3" json:"title,omitempty"`
+	Body          string                 `protobuf:"bytes,19,opt,name=body,proto3" json:"body,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InterruptInfo) Reset() {
+	*x = InterruptInfo{}
 	mi := &file_aisolo_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CreateSessionReq) String() string {
+func (x *InterruptInfo) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CreateSessionReq) ProtoMessage() {}
+func (*InterruptInfo) ProtoMessage() {}
 
-func (x *CreateSessionReq) ProtoReflect() protoreflect.Message {
+func (x *InterruptInfo) ProtoReflect() protoreflect.Message {
 	mi := &file_aisolo_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -472,740 +641,131 @@ func (x *CreateSessionReq) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CreateSessionReq.ProtoReflect.Descriptor instead.
-func (*CreateSessionReq) Descriptor() ([]byte, []int) {
+// Deprecated: Use InterruptInfo.ProtoReflect.Descriptor instead.
+func (*InterruptInfo) Descriptor() ([]byte, []int) {
 	return file_aisolo_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *CreateSessionReq) GetUserId() string {
+func (x *InterruptInfo) GetInterruptId() string {
 	if x != nil {
-		return x.UserId
+		return x.InterruptId
 	}
 	return ""
 }
 
-func (x *CreateSessionReq) GetTitle() string {
+func (x *InterruptInfo) GetKind() InterruptKind {
+	if x != nil {
+		return x.Kind
+	}
+	return InterruptKind_INTERRUPT_KIND_UNSPECIFIED
+}
+
+func (x *InterruptInfo) GetToolName() string {
+	if x != nil {
+		return x.ToolName
+	}
+	return ""
+}
+
+func (x *InterruptInfo) GetRequired() bool {
+	if x != nil {
+		return x.Required
+	}
+	return false
+}
+
+func (x *InterruptInfo) GetQuestion() string {
+	if x != nil {
+		return x.Question
+	}
+	return ""
+}
+
+func (x *InterruptInfo) GetDetail() string {
+	if x != nil {
+		return x.Detail
+	}
+	return ""
+}
+
+func (x *InterruptInfo) GetOptions() []*Option {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
+func (x *InterruptInfo) GetMinSelect() int32 {
+	if x != nil {
+		return x.MinSelect
+	}
+	return 0
+}
+
+func (x *InterruptInfo) GetMaxSelect() int32 {
+	if x != nil {
+		return x.MaxSelect
+	}
+	return 0
+}
+
+func (x *InterruptInfo) GetPlaceholder() string {
+	if x != nil {
+		return x.Placeholder
+	}
+	return ""
+}
+
+func (x *InterruptInfo) GetMultiline() bool {
+	if x != nil {
+		return x.Multiline
+	}
+	return false
+}
+
+func (x *InterruptInfo) GetFields() []*Field {
+	if x != nil {
+		return x.Fields
+	}
+	return nil
+}
+
+func (x *InterruptInfo) GetTitle() string {
 	if x != nil {
 		return x.Title
 	}
 	return ""
 }
 
-func (x *CreateSessionReq) GetAgentMode() AgentMode {
+func (x *InterruptInfo) GetBody() string {
 	if x != nil {
-		return x.AgentMode
-	}
-	return AgentMode_AGENT_MODE_UNSPECIFIED
-}
-
-// CreateSessionResp 创建会话响应
-type CreateSessionResp struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Session       *Session               `protobuf:"bytes,1,opt,name=session,proto3" json:"session,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CreateSessionResp) Reset() {
-	*x = CreateSessionResp{}
-	mi := &file_aisolo_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateSessionResp) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateSessionResp) ProtoMessage() {}
-
-func (x *CreateSessionResp) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateSessionResp.ProtoReflect.Descriptor instead.
-func (*CreateSessionResp) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *CreateSessionResp) GetSession() *Session {
-	if x != nil {
-		return x.Session
-	}
-	return nil
-}
-
-// Session 会话信息
-type Session struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Title         string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
-	AgentMode     AgentMode              `protobuf:"varint,4,opt,name=agent_mode,json=agentMode,proto3,enum=aisolo.AgentMode" json:"agent_mode,omitempty"`
-	CreatedAt     int64                  `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     int64                  `protobuf:"varint,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	MessageCount  int32                  `protobuf:"varint,7,opt,name=message_count,json=messageCount,proto3" json:"message_count,omitempty"`
-	LastMessage   string                 `protobuf:"bytes,8,opt,name=last_message,json=lastMessage,proto3" json:"last_message,omitempty"` // 最后一条消息摘要
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Session) Reset() {
-	*x = Session{}
-	mi := &file_aisolo_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Session) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Session) ProtoMessage() {}
-
-func (x *Session) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Session.ProtoReflect.Descriptor instead.
-func (*Session) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *Session) GetSessionId() string {
-	if x != nil {
-		return x.SessionId
+		return x.Body
 	}
 	return ""
 }
 
-func (x *Session) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
-func (x *Session) GetTitle() string {
-	if x != nil {
-		return x.Title
-	}
-	return ""
-}
-
-func (x *Session) GetAgentMode() AgentMode {
-	if x != nil {
-		return x.AgentMode
-	}
-	return AgentMode_AGENT_MODE_UNSPECIFIED
-}
-
-func (x *Session) GetCreatedAt() int64 {
-	if x != nil {
-		return x.CreatedAt
-	}
-	return 0
-}
-
-func (x *Session) GetUpdatedAt() int64 {
-	if x != nil {
-		return x.UpdatedAt
-	}
-	return 0
-}
-
-func (x *Session) GetMessageCount() int32 {
-	if x != nil {
-		return x.MessageCount
-	}
-	return 0
-}
-
-func (x *Session) GetLastMessage() string {
-	if x != nil {
-		return x.LastMessage
-	}
-	return ""
-}
-
-// GetSessionReq 获取会话请求
-type GetSessionReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetSessionReq) Reset() {
-	*x = GetSessionReq{}
-	mi := &file_aisolo_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetSessionReq) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetSessionReq) ProtoMessage() {}
-
-func (x *GetSessionReq) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetSessionReq.ProtoReflect.Descriptor instead.
-func (*GetSessionReq) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *GetSessionReq) GetSessionId() string {
-	if x != nil {
-		return x.SessionId
-	}
-	return ""
-}
-
-func (x *GetSessionReq) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
-// GetSessionResp 获取会话响应
-type GetSessionResp struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Session       *Session               `protobuf:"bytes,1,opt,name=session,proto3" json:"session,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetSessionResp) Reset() {
-	*x = GetSessionResp{}
-	mi := &file_aisolo_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetSessionResp) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetSessionResp) ProtoMessage() {}
-
-func (x *GetSessionResp) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetSessionResp.ProtoReflect.Descriptor instead.
-func (*GetSessionResp) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *GetSessionResp) GetSession() *Session {
-	if x != nil {
-		return x.Session
-	}
-	return nil
-}
-
-// ListSessionsReq 列出会话请求
-type ListSessionsReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Page          int32                  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`
-	PageSize      int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListSessionsReq) Reset() {
-	*x = ListSessionsReq{}
-	mi := &file_aisolo_proto_msgTypes[10]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListSessionsReq) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListSessionsReq) ProtoMessage() {}
-
-func (x *ListSessionsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[10]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListSessionsReq.ProtoReflect.Descriptor instead.
-func (*ListSessionsReq) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *ListSessionsReq) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
-func (x *ListSessionsReq) GetPage() int32 {
-	if x != nil {
-		return x.Page
-	}
-	return 0
-}
-
-func (x *ListSessionsReq) GetPageSize() int32 {
-	if x != nil {
-		return x.PageSize
-	}
-	return 0
-}
-
-// ListSessionsResp 列出会话响应
-type ListSessionsResp struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Sessions      []*Session             `protobuf:"bytes,1,rep,name=sessions,proto3" json:"sessions,omitempty"`
-	Total         int64                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
-	Page          int32                  `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`
-	TotalPages    int32                  `protobuf:"varint,4,opt,name=total_pages,json=totalPages,proto3" json:"total_pages,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListSessionsResp) Reset() {
-	*x = ListSessionsResp{}
-	mi := &file_aisolo_proto_msgTypes[11]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListSessionsResp) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListSessionsResp) ProtoMessage() {}
-
-func (x *ListSessionsResp) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[11]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListSessionsResp.ProtoReflect.Descriptor instead.
-func (*ListSessionsResp) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{11}
-}
-
-func (x *ListSessionsResp) GetSessions() []*Session {
-	if x != nil {
-		return x.Sessions
-	}
-	return nil
-}
-
-func (x *ListSessionsResp) GetTotal() int64 {
-	if x != nil {
-		return x.Total
-	}
-	return 0
-}
-
-func (x *ListSessionsResp) GetPage() int32 {
-	if x != nil {
-		return x.Page
-	}
-	return 0
-}
-
-func (x *ListSessionsResp) GetTotalPages() int32 {
-	if x != nil {
-		return x.TotalPages
-	}
-	return 0
-}
-
-// DeleteSessionReq 删除会话请求
-type DeleteSessionReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DeleteSessionReq) Reset() {
-	*x = DeleteSessionReq{}
-	mi := &file_aisolo_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DeleteSessionReq) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteSessionReq) ProtoMessage() {}
-
-func (x *DeleteSessionReq) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteSessionReq.ProtoReflect.Descriptor instead.
-func (*DeleteSessionReq) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *DeleteSessionReq) GetSessionId() string {
-	if x != nil {
-		return x.SessionId
-	}
-	return ""
-}
-
-func (x *DeleteSessionReq) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
-// DeleteSessionResp 删除会话响应
-type DeleteSessionResp struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DeleteSessionResp) Reset() {
-	*x = DeleteSessionResp{}
-	mi := &file_aisolo_proto_msgTypes[13]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DeleteSessionResp) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteSessionResp) ProtoMessage() {}
-
-func (x *DeleteSessionResp) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[13]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteSessionResp.ProtoReflect.Descriptor instead.
-func (*DeleteSessionResp) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{13}
-}
-
-func (x *DeleteSessionResp) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-// ToolInfo 工具信息
-type ToolInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ToolInfo) Reset() {
-	*x = ToolInfo{}
-	mi := &file_aisolo_proto_msgTypes[14]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ToolInfo) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ToolInfo) ProtoMessage() {}
-
-func (x *ToolInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[14]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ToolInfo.ProtoReflect.Descriptor instead.
-func (*ToolInfo) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{14}
-}
-
-func (x *ToolInfo) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *ToolInfo) GetDescription() string {
-	if x != nil {
-		return x.Description
-	}
-	return ""
-}
-
-// ListAgentsReq 列出 Agent 请求
-type ListAgentsReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListAgentsReq) Reset() {
-	*x = ListAgentsReq{}
-	mi := &file_aisolo_proto_msgTypes[15]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListAgentsReq) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListAgentsReq) ProtoMessage() {}
-
-func (x *ListAgentsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[15]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListAgentsReq.ProtoReflect.Descriptor instead.
-func (*ListAgentsReq) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{15}
-}
-
-// AgentInfo Agent 信息
-type AgentInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	Capabilities  []string               `protobuf:"bytes,4,rep,name=capabilities,proto3" json:"capabilities,omitempty"`
-	Available     bool                   `protobuf:"varint,5,opt,name=available,proto3" json:"available,omitempty"`
-	Tools         []*ToolInfo            `protobuf:"bytes,6,rep,name=tools,proto3" json:"tools,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *AgentInfo) Reset() {
-	*x = AgentInfo{}
-	mi := &file_aisolo_proto_msgTypes[16]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *AgentInfo) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AgentInfo) ProtoMessage() {}
-
-func (x *AgentInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[16]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AgentInfo.ProtoReflect.Descriptor instead.
-func (*AgentInfo) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{16}
-}
-
-func (x *AgentInfo) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *AgentInfo) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *AgentInfo) GetDescription() string {
-	if x != nil {
-		return x.Description
-	}
-	return ""
-}
-
-func (x *AgentInfo) GetCapabilities() []string {
-	if x != nil {
-		return x.Capabilities
-	}
-	return nil
-}
-
-func (x *AgentInfo) GetAvailable() bool {
-	if x != nil {
-		return x.Available
-	}
-	return false
-}
-
-func (x *AgentInfo) GetTools() []*ToolInfo {
-	if x != nil {
-		return x.Tools
-	}
-	return nil
-}
-
-// ListAgentsResp 列出 Agent 响应
-type ListAgentsResp struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Agents        []*AgentInfo           `protobuf:"bytes,1,rep,name=agents,proto3" json:"agents,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListAgentsResp) Reset() {
-	*x = ListAgentsResp{}
-	mi := &file_aisolo_proto_msgTypes[17]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListAgentsResp) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListAgentsResp) ProtoMessage() {}
-
-func (x *ListAgentsResp) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[17]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListAgentsResp.ProtoReflect.Descriptor instead.
-func (*ListAgentsResp) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{17}
-}
-
-func (x *ListAgentsResp) GetAgents() []*AgentInfo {
-	if x != nil {
-		return x.Agents
-	}
-	return nil
-}
-
-// ResumeReq 恢复执行请求
+// ResumeReq 恢复执行。按 kind / action 填对应字段。
 type ResumeReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	InterruptId   string                 `protobuf:"bytes,2,opt,name=interrupt_id,json=interruptId,proto3" json:"interrupt_id,omitempty"`
-	UserId        string                 `protobuf:"bytes,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Action        ResumeAction           `protobuf:"varint,4,opt,name=action,proto3,enum=aisolo.ResumeAction" json:"action,omitempty"`    // approve/deny
-	SelectedIds   []string               `protobuf:"bytes,5,rep,name=selected_ids,json=selectedIds,proto3" json:"selected_ids,omitempty"` // 多选时选中的选项
-	Reason        string                 `protobuf:"bytes,6,opt,name=reason,proto3" json:"reason,omitempty"`                              // 拒绝原因（可选）
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	SessionId   string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	UserId      string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	InterruptId string                 `protobuf:"bytes,3,opt,name=interrupt_id,json=interruptId,proto3" json:"interrupt_id,omitempty"`
+	Action      ResumeAction           `protobuf:"varint,4,opt,name=action,proto3,enum=aisolo.ResumeAction" json:"action,omitempty"`
+	// approval 用
+	Reason string `protobuf:"bytes,10,opt,name=reason,proto3" json:"reason,omitempty"`
+	// single/multi select 用
+	SelectedIds []string `protobuf:"bytes,20,rep,name=selected_ids,json=selectedIds,proto3" json:"selected_ids,omitempty"`
+	// free_text 用
+	Text string `protobuf:"bytes,30,opt,name=text,proto3" json:"text,omitempty"`
+	// form_input 用
+	FormValues    map[string]string `protobuf:"bytes,40,rep,name=form_values,json=formValues,proto3" json:"form_values,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ResumeReq) Reset() {
 	*x = ResumeReq{}
-	mi := &file_aisolo_proto_msgTypes[18]
+	mi := &file_aisolo_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1217,7 +777,7 @@ func (x *ResumeReq) String() string {
 func (*ResumeReq) ProtoMessage() {}
 
 func (x *ResumeReq) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[18]
+	mi := &file_aisolo_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1230,19 +790,12 @@ func (x *ResumeReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResumeReq.ProtoReflect.Descriptor instead.
 func (*ResumeReq) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{18}
+	return file_aisolo_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ResumeReq) GetSessionId() string {
 	if x != nil {
 		return x.SessionId
-	}
-	return ""
-}
-
-func (x *ResumeReq) GetInterruptId() string {
-	if x != nil {
-		return x.InterruptId
 	}
 	return ""
 }
@@ -1254,18 +807,18 @@ func (x *ResumeReq) GetUserId() string {
 	return ""
 }
 
+func (x *ResumeReq) GetInterruptId() string {
+	if x != nil {
+		return x.InterruptId
+	}
+	return ""
+}
+
 func (x *ResumeReq) GetAction() ResumeAction {
 	if x != nil {
 		return x.Action
 	}
 	return ResumeAction_RESUME_ACTION_UNSPECIFIED
-}
-
-func (x *ResumeReq) GetSelectedIds() []string {
-	if x != nil {
-		return x.SelectedIds
-	}
-	return nil
 }
 
 func (x *ResumeReq) GetReason() string {
@@ -1275,90 +828,41 @@ func (x *ResumeReq) GetReason() string {
 	return ""
 }
 
-// ResumeResp 恢复执行响应（同步）
-type ResumeResp struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	Success       bool                   `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`
-	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`                         // 结果消息
-	FinalState    *InterruptInfo         `protobuf:"bytes,4,opt,name=final_state,json=finalState,proto3" json:"final_state,omitempty"` // 最终状态
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ResumeResp) Reset() {
-	*x = ResumeResp{}
-	mi := &file_aisolo_proto_msgTypes[19]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ResumeResp) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ResumeResp) ProtoMessage() {}
-
-func (x *ResumeResp) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[19]
+func (x *ResumeReq) GetSelectedIds() []string {
 	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ResumeResp.ProtoReflect.Descriptor instead.
-func (*ResumeResp) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{19}
-}
-
-func (x *ResumeResp) GetSessionId() string {
-	if x != nil {
-		return x.SessionId
-	}
-	return ""
-}
-
-func (x *ResumeResp) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-func (x *ResumeResp) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-func (x *ResumeResp) GetFinalState() *InterruptInfo {
-	if x != nil {
-		return x.FinalState
+		return x.SelectedIds
 	}
 	return nil
 }
 
-// ResumeStreamChunk 流式恢复响应块
+func (x *ResumeReq) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+func (x *ResumeReq) GetFormValues() map[string]string {
+	if x != nil {
+		return x.FormValues
+	}
+	return nil
+}
+
 type ResumeStreamChunk struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`           // 会话 ID
-	Data          string                 `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`                                      // A2UI JSON 数据
-	IsFinal       bool                   `protobuf:"varint,3,opt,name=is_final,json=isFinal,proto3" json:"is_final,omitempty"`                // 是否结束
-	HasInterrupt  bool                   `protobuf:"varint,4,opt,name=has_interrupt,json=hasInterrupt,proto3" json:"has_interrupt,omitempty"` // 是否有新的中断
-	InterruptId   string                 `protobuf:"bytes,5,opt,name=interrupt_id,json=interruptId,proto3" json:"interrupt_id,omitempty"`     // 中断 ID（如有）
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	Data          string                 `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+	IsFinal       bool                   `protobuf:"varint,3,opt,name=is_final,json=isFinal,proto3" json:"is_final,omitempty"`
+	HasInterrupt  bool                   `protobuf:"varint,4,opt,name=has_interrupt,json=hasInterrupt,proto3" json:"has_interrupt,omitempty"`
+	InterruptId   string                 `protobuf:"bytes,5,opt,name=interrupt_id,json=interruptId,proto3" json:"interrupt_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ResumeStreamChunk) Reset() {
 	*x = ResumeStreamChunk{}
-	mi := &file_aisolo_proto_msgTypes[20]
+	mi := &file_aisolo_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1370,7 +874,7 @@ func (x *ResumeStreamChunk) String() string {
 func (*ResumeStreamChunk) ProtoMessage() {}
 
 func (x *ResumeStreamChunk) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[20]
+	mi := &file_aisolo_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1383,7 +887,7 @@ func (x *ResumeStreamChunk) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResumeStreamChunk.ProtoReflect.Descriptor instead.
 func (*ResumeStreamChunk) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{20}
+	return file_aisolo_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ResumeStreamChunk) GetSessionId() string {
@@ -1421,7 +925,6 @@ func (x *ResumeStreamChunk) GetInterruptId() string {
 	return ""
 }
 
-// ResumeStreamResp 流式恢复响应（包装 Chunk）
 type ResumeStreamResp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Chunk         *ResumeStreamChunk     `protobuf:"bytes,1,opt,name=chunk,proto3" json:"chunk,omitempty"`
@@ -1431,7 +934,7 @@ type ResumeStreamResp struct {
 
 func (x *ResumeStreamResp) Reset() {
 	*x = ResumeStreamResp{}
-	mi := &file_aisolo_proto_msgTypes[21]
+	mi := &file_aisolo_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1443,7 +946,7 @@ func (x *ResumeStreamResp) String() string {
 func (*ResumeStreamResp) ProtoMessage() {}
 
 func (x *ResumeStreamResp) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[21]
+	mi := &file_aisolo_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1456,7 +959,7 @@ func (x *ResumeStreamResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResumeStreamResp.ProtoReflect.Descriptor instead.
 func (*ResumeStreamResp) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{21}
+	return file_aisolo_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ResumeStreamResp) GetChunk() *ResumeStreamChunk {
@@ -1466,7 +969,1010 @@ func (x *ResumeStreamResp) GetChunk() *ResumeStreamChunk {
 	return nil
 }
 
-// HealthReq 健康检查请求
+type Session struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Title         string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
+	Mode          AgentMode              `protobuf:"varint,4,opt,name=mode,proto3,enum=aisolo.AgentMode" json:"mode,omitempty"`
+	Status        SessionStatus          `protobuf:"varint,5,opt,name=status,proto3,enum=aisolo.SessionStatus" json:"status,omitempty"`
+	InterruptId   string                 `protobuf:"bytes,6,opt,name=interrupt_id,json=interruptId,proto3" json:"interrupt_id,omitempty"` // status=INTERRUPTED 时非空
+	CreatedAt     int64                  `protobuf:"varint,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     int64                  `protobuf:"varint,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	MessageCount  int32                  `protobuf:"varint,9,opt,name=message_count,json=messageCount,proto3" json:"message_count,omitempty"`
+	LastMessage   string                 `protobuf:"bytes,10,opt,name=last_message,json=lastMessage,proto3" json:"last_message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Session) Reset() {
+	*x = Session{}
+	mi := &file_aisolo_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Session) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Session) ProtoMessage() {}
+
+func (x *Session) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Session.ProtoReflect.Descriptor instead.
+func (*Session) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *Session) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *Session) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *Session) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *Session) GetMode() AgentMode {
+	if x != nil {
+		return x.Mode
+	}
+	return AgentMode_AGENT_MODE_UNSPECIFIED
+}
+
+func (x *Session) GetStatus() SessionStatus {
+	if x != nil {
+		return x.Status
+	}
+	return SessionStatus_SESSION_STATUS_UNSPECIFIED
+}
+
+func (x *Session) GetInterruptId() string {
+	if x != nil {
+		return x.InterruptId
+	}
+	return ""
+}
+
+func (x *Session) GetCreatedAt() int64 {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return 0
+}
+
+func (x *Session) GetUpdatedAt() int64 {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return 0
+}
+
+func (x *Session) GetMessageCount() int32 {
+	if x != nil {
+		return x.MessageCount
+	}
+	return 0
+}
+
+func (x *Session) GetLastMessage() string {
+	if x != nil {
+		return x.LastMessage
+	}
+	return ""
+}
+
+type CreateSessionReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Mode          AgentMode              `protobuf:"varint,3,opt,name=mode,proto3,enum=aisolo.AgentMode" json:"mode,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateSessionReq) Reset() {
+	*x = CreateSessionReq{}
+	mi := &file_aisolo_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateSessionReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateSessionReq) ProtoMessage() {}
+
+func (x *CreateSessionReq) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateSessionReq.ProtoReflect.Descriptor instead.
+func (*CreateSessionReq) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *CreateSessionReq) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *CreateSessionReq) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *CreateSessionReq) GetMode() AgentMode {
+	if x != nil {
+		return x.Mode
+	}
+	return AgentMode_AGENT_MODE_UNSPECIFIED
+}
+
+type CreateSessionResp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Session       *Session               `protobuf:"bytes,1,opt,name=session,proto3" json:"session,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateSessionResp) Reset() {
+	*x = CreateSessionResp{}
+	mi := &file_aisolo_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateSessionResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateSessionResp) ProtoMessage() {}
+
+func (x *CreateSessionResp) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateSessionResp.ProtoReflect.Descriptor instead.
+func (*CreateSessionResp) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *CreateSessionResp) GetSession() *Session {
+	if x != nil {
+		return x.Session
+	}
+	return nil
+}
+
+type GetSessionReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetSessionReq) Reset() {
+	*x = GetSessionReq{}
+	mi := &file_aisolo_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetSessionReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSessionReq) ProtoMessage() {}
+
+func (x *GetSessionReq) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSessionReq.ProtoReflect.Descriptor instead.
+func (*GetSessionReq) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *GetSessionReq) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *GetSessionReq) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type GetSessionResp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Session       *Session               `protobuf:"bytes,1,opt,name=session,proto3" json:"session,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetSessionResp) Reset() {
+	*x = GetSessionResp{}
+	mi := &file_aisolo_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetSessionResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSessionResp) ProtoMessage() {}
+
+func (x *GetSessionResp) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSessionResp.ProtoReflect.Descriptor instead.
+func (*GetSessionResp) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *GetSessionResp) GetSession() *Session {
+	if x != nil {
+		return x.Session
+	}
+	return nil
+}
+
+type ListSessionsReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Page          int32                  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`
+	PageSize      int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListSessionsReq) Reset() {
+	*x = ListSessionsReq{}
+	mi := &file_aisolo_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListSessionsReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSessionsReq) ProtoMessage() {}
+
+func (x *ListSessionsReq) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSessionsReq.ProtoReflect.Descriptor instead.
+func (*ListSessionsReq) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *ListSessionsReq) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *ListSessionsReq) GetPage() int32 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *ListSessionsReq) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+type ListSessionsResp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Sessions      []*Session             `protobuf:"bytes,1,rep,name=sessions,proto3" json:"sessions,omitempty"`
+	Total         int64                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	Page          int32                  `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`
+	TotalPages    int32                  `protobuf:"varint,4,opt,name=total_pages,json=totalPages,proto3" json:"total_pages,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListSessionsResp) Reset() {
+	*x = ListSessionsResp{}
+	mi := &file_aisolo_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListSessionsResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSessionsResp) ProtoMessage() {}
+
+func (x *ListSessionsResp) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSessionsResp.ProtoReflect.Descriptor instead.
+func (*ListSessionsResp) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *ListSessionsResp) GetSessions() []*Session {
+	if x != nil {
+		return x.Sessions
+	}
+	return nil
+}
+
+func (x *ListSessionsResp) GetTotal() int64 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+func (x *ListSessionsResp) GetPage() int32 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *ListSessionsResp) GetTotalPages() int32 {
+	if x != nil {
+		return x.TotalPages
+	}
+	return 0
+}
+
+type DeleteSessionReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteSessionReq) Reset() {
+	*x = DeleteSessionReq{}
+	mi := &file_aisolo_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteSessionReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteSessionReq) ProtoMessage() {}
+
+func (x *DeleteSessionReq) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteSessionReq.ProtoReflect.Descriptor instead.
+func (*DeleteSessionReq) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *DeleteSessionReq) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *DeleteSessionReq) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type DeleteSessionResp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteSessionResp) Reset() {
+	*x = DeleteSessionResp{}
+	mi := &file_aisolo_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteSessionResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteSessionResp) ProtoMessage() {}
+
+func (x *DeleteSessionResp) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteSessionResp.ProtoReflect.Descriptor instead.
+func (*DeleteSessionResp) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *DeleteSessionResp) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+type GetInterruptReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	InterruptId   string                 `protobuf:"bytes,1,opt,name=interrupt_id,json=interruptId,proto3" json:"interrupt_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetInterruptReq) Reset() {
+	*x = GetInterruptReq{}
+	mi := &file_aisolo_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetInterruptReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetInterruptReq) ProtoMessage() {}
+
+func (x *GetInterruptReq) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetInterruptReq.ProtoReflect.Descriptor instead.
+func (*GetInterruptReq) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *GetInterruptReq) GetInterruptId() string {
+	if x != nil {
+		return x.InterruptId
+	}
+	return ""
+}
+
+func (x *GetInterruptReq) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type GetInterruptResp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Info          *InterruptInfo         `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetInterruptResp) Reset() {
+	*x = GetInterruptResp{}
+	mi := &file_aisolo_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetInterruptResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetInterruptResp) ProtoMessage() {}
+
+func (x *GetInterruptResp) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetInterruptResp.ProtoReflect.Descriptor instead.
+func (*GetInterruptResp) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *GetInterruptResp) GetInfo() *InterruptInfo {
+	if x != nil {
+		return x.Info
+	}
+	return nil
+}
+
+type Message struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	SessionId     string                 `protobuf:"bytes,2,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Role          string                 `protobuf:"bytes,4,opt,name=role,proto3" json:"role,omitempty"` // user | assistant | tool | system
+	Content       string                 `protobuf:"bytes,5,opt,name=content,proto3" json:"content,omitempty"`
+	CreatedAt     int64                  `protobuf:"varint,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	ToolCallId    string                 `protobuf:"bytes,7,opt,name=tool_call_id,json=toolCallId,proto3" json:"tool_call_id,omitempty"`
+	ToolName      string                 `protobuf:"bytes,8,opt,name=tool_name,json=toolName,proto3" json:"tool_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Message) Reset() {
+	*x = Message{}
+	mi := &file_aisolo_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Message) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Message) ProtoMessage() {}
+
+func (x *Message) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Message.ProtoReflect.Descriptor instead.
+func (*Message) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *Message) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Message) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *Message) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *Message) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+func (x *Message) GetContent() string {
+	if x != nil {
+		return x.Content
+	}
+	return ""
+}
+
+func (x *Message) GetCreatedAt() int64 {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return 0
+}
+
+func (x *Message) GetToolCallId() string {
+	if x != nil {
+		return x.ToolCallId
+	}
+	return ""
+}
+
+func (x *Message) GetToolName() string {
+	if x != nil {
+		return x.ToolName
+	}
+	return ""
+}
+
+type ListMessagesReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Limit         int32                  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListMessagesReq) Reset() {
+	*x = ListMessagesReq{}
+	mi := &file_aisolo_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListMessagesReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListMessagesReq) ProtoMessage() {}
+
+func (x *ListMessagesReq) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListMessagesReq.ProtoReflect.Descriptor instead.
+func (*ListMessagesReq) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *ListMessagesReq) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *ListMessagesReq) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *ListMessagesReq) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+type ListMessagesResp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Messages      []*Message             `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
+	Total         int32                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListMessagesResp) Reset() {
+	*x = ListMessagesResp{}
+	mi := &file_aisolo_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListMessagesResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListMessagesResp) ProtoMessage() {}
+
+func (x *ListMessagesResp) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListMessagesResp.ProtoReflect.Descriptor instead.
+func (*ListMessagesResp) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *ListMessagesResp) GetMessages() []*Message {
+	if x != nil {
+		return x.Messages
+	}
+	return nil
+}
+
+func (x *ListMessagesResp) GetTotal() int32 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+type ModeInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Mode          AgentMode              `protobuf:"varint,1,opt,name=mode,proto3,enum=aisolo.AgentMode" json:"mode,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"` // 展示名, 如 "Agent 模式"
+	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	Capabilities  []string               `protobuf:"bytes,4,rep,name=capabilities,proto3" json:"capabilities,omitempty"`
+	Default       bool                   `protobuf:"varint,5,opt,name=default,proto3" json:"default,omitempty"` // 是否是默认 mode
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ModeInfo) Reset() {
+	*x = ModeInfo{}
+	mi := &file_aisolo_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ModeInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ModeInfo) ProtoMessage() {}
+
+func (x *ModeInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ModeInfo.ProtoReflect.Descriptor instead.
+func (*ModeInfo) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *ModeInfo) GetMode() AgentMode {
+	if x != nil {
+		return x.Mode
+	}
+	return AgentMode_AGENT_MODE_UNSPECIFIED
+}
+
+func (x *ModeInfo) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ModeInfo) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *ModeInfo) GetCapabilities() []string {
+	if x != nil {
+		return x.Capabilities
+	}
+	return nil
+}
+
+func (x *ModeInfo) GetDefault() bool {
+	if x != nil {
+		return x.Default
+	}
+	return false
+}
+
+type ListModesReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListModesReq) Reset() {
+	*x = ListModesReq{}
+	mi := &file_aisolo_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListModesReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListModesReq) ProtoMessage() {}
+
+func (x *ListModesReq) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListModesReq.ProtoReflect.Descriptor instead.
+func (*ListModesReq) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{24}
+}
+
+type ListModesResp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Modes         []*ModeInfo            `protobuf:"bytes,1,rep,name=modes,proto3" json:"modes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListModesResp) Reset() {
+	*x = ListModesResp{}
+	mi := &file_aisolo_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListModesResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListModesResp) ProtoMessage() {}
+
+func (x *ListModesResp) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListModesResp.ProtoReflect.Descriptor instead.
+func (*ListModesResp) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *ListModesResp) GetModes() []*ModeInfo {
+	if x != nil {
+		return x.Modes
+	}
+	return nil
+}
+
 type HealthReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1475,7 +1981,7 @@ type HealthReq struct {
 
 func (x *HealthReq) Reset() {
 	*x = HealthReq{}
-	mi := &file_aisolo_proto_msgTypes[22]
+	mi := &file_aisolo_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1487,7 +1993,7 @@ func (x *HealthReq) String() string {
 func (*HealthReq) ProtoMessage() {}
 
 func (x *HealthReq) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[22]
+	mi := &file_aisolo_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1500,23 +2006,22 @@ func (x *HealthReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthReq.ProtoReflect.Descriptor instead.
 func (*HealthReq) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{22}
+	return file_aisolo_proto_rawDescGZIP(), []int{26}
 }
 
-// HealthResp 健康检查响应
 type HealthResp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Status        string                 `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`                                                                                       // 服务状态: ok/error
-	Version       string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`                                                                                     // 服务版本
-	Timestamp     int64                  `protobuf:"varint,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`                                                                                // 响应时间戳
-	Dependencies  map[string]string      `protobuf:"bytes,4,rep,name=dependencies,proto3" json:"dependencies,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // 依赖服务状态
+	Status        string                 `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
+	Version       string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
+	Timestamp     int64                  `protobuf:"varint,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Dependencies  map[string]string      `protobuf:"bytes,4,rep,name=dependencies,proto3" json:"dependencies,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *HealthResp) Reset() {
 	*x = HealthResp{}
-	mi := &file_aisolo_proto_msgTypes[23]
+	mi := &file_aisolo_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1528,7 +2033,7 @@ func (x *HealthResp) String() string {
 func (*HealthResp) ProtoMessage() {}
 
 func (x *HealthResp) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[23]
+	mi := &file_aisolo_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1541,7 +2046,7 @@ func (x *HealthResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthResp.ProtoReflect.Descriptor instead.
 func (*HealthResp) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{23}
+	return file_aisolo_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *HealthResp) GetStatus() string {
@@ -1576,14 +2081,13 @@ var File_aisolo_proto protoreflect.FileDescriptor
 
 const file_aisolo_proto_rawDesc = "" +
 	"\n" +
-	"\faisolo.proto\x12\x06aisolo\"\xf3\x01\n" +
+	"\faisolo.proto\x12\x06aisolo\"\xe8\x01\n" +
 	"\x06AskReq\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\x120\n" +
-	"\n" +
-	"agent_mode\x18\x04 \x01(\x0e2\x11.aisolo.AgentModeR\tagentMode\x12,\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\x12%\n" +
+	"\x04mode\x18\x04 \x01(\x0e2\x11.aisolo.AgentModeR\x04mode\x12,\n" +
 	"\x04meta\x18\x05 \x03(\v2\x18.aisolo.AskReq.MetaEntryR\x04meta\x1a7\n" +
 	"\tMetaEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
@@ -1594,36 +2098,81 @@ const file_aisolo_proto_rawDesc = "" +
 	"\x04data\x18\x02 \x01(\tR\x04data\x12\x19\n" +
 	"\bis_final\x18\x03 \x01(\bR\aisFinal\"=\n" +
 	"\rAskStreamResp\x12,\n" +
-	"\x05chunk\x18\x01 \x01(\v2\x16.aisolo.AskStreamChunkR\x05chunk\"\xb2\x01\n" +
-	"\rInterruptInfo\x12!\n" +
-	"\finterrupt_id\x18\x01 \x01(\tR\vinterruptId\x12\x16\n" +
-	"\x06reason\x18\x02 \x01(\tR\x06reason\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\x12(\n" +
-	"\aoptions\x18\x04 \x03(\v2\x0e.aisolo.OptionR\aoptions\x12\x1a\n" +
-	"\brequired\x18\x05 \x01(\bR\brequired\".\n" +
+	"\x05chunk\x18\x01 \x01(\v2\x16.aisolo.AskStreamChunkR\x05chunk\"B\n" +
 	"\x06Option\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
-	"\x05label\x18\x02 \x01(\tR\x05label\"s\n" +
-	"\x10CreateSessionReq\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x120\n" +
+	"\x05label\x18\x02 \x01(\tR\x05label\x12\x12\n" +
+	"\x04desc\x18\x03 \x01(\tR\x04desc\"\x9d\x01\n" +
+	"\x05Field\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
+	"\x05label\x18\x02 \x01(\tR\x05label\x12\x12\n" +
+	"\x04type\x18\x03 \x01(\tR\x04type\x12\x1a\n" +
+	"\brequired\x18\x04 \x01(\bR\brequired\x12 \n" +
+	"\vplaceholder\x18\x05 \x01(\tR\vplaceholder\x12\x18\n" +
+	"\adefault\x18\x06 \x01(\tR\adefault\"\xc3\x03\n" +
+	"\rInterruptInfo\x12!\n" +
+	"\finterrupt_id\x18\x01 \x01(\tR\vinterruptId\x12)\n" +
+	"\x04kind\x18\x02 \x01(\x0e2\x15.aisolo.InterruptKindR\x04kind\x12\x1b\n" +
+	"\ttool_name\x18\x03 \x01(\tR\btoolName\x12\x1a\n" +
+	"\brequired\x18\x04 \x01(\bR\brequired\x12\x1a\n" +
+	"\bquestion\x18\n" +
+	" \x01(\tR\bquestion\x12\x16\n" +
+	"\x06detail\x18\v \x01(\tR\x06detail\x12(\n" +
+	"\aoptions\x18\f \x03(\v2\x0e.aisolo.OptionR\aoptions\x12\x1d\n" +
 	"\n" +
-	"agent_mode\x18\x03 \x01(\x0e2\x11.aisolo.AgentModeR\tagentMode\">\n" +
-	"\x11CreateSessionResp\x12)\n" +
-	"\asession\x18\x01 \x01(\v2\x0f.aisolo.SessionR\asession\"\x8f\x02\n" +
+	"min_select\x18\r \x01(\x05R\tminSelect\x12\x1d\n" +
+	"\n" +
+	"max_select\x18\x0e \x01(\x05R\tmaxSelect\x12 \n" +
+	"\vplaceholder\x18\x0f \x01(\tR\vplaceholder\x12\x1c\n" +
+	"\tmultiline\x18\x10 \x01(\bR\tmultiline\x12%\n" +
+	"\x06fields\x18\x11 \x03(\v2\r.aisolo.FieldR\x06fields\x12\x14\n" +
+	"\x05title\x18\x12 \x01(\tR\x05title\x12\x12\n" +
+	"\x04body\x18\x13 \x01(\tR\x04body\"\xe6\x02\n" +
+	"\tResumeReq\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12!\n" +
+	"\finterrupt_id\x18\x03 \x01(\tR\vinterruptId\x12,\n" +
+	"\x06action\x18\x04 \x01(\x0e2\x14.aisolo.ResumeActionR\x06action\x12\x16\n" +
+	"\x06reason\x18\n" +
+	" \x01(\tR\x06reason\x12!\n" +
+	"\fselected_ids\x18\x14 \x03(\tR\vselectedIds\x12\x12\n" +
+	"\x04text\x18\x1e \x01(\tR\x04text\x12B\n" +
+	"\vform_values\x18( \x03(\v2!.aisolo.ResumeReq.FormValuesEntryR\n" +
+	"formValues\x1a=\n" +
+	"\x0fFormValuesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa9\x01\n" +
+	"\x11ResumeStreamChunk\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x12\n" +
+	"\x04data\x18\x02 \x01(\tR\x04data\x12\x19\n" +
+	"\bis_final\x18\x03 \x01(\bR\aisFinal\x12#\n" +
+	"\rhas_interrupt\x18\x04 \x01(\bR\fhasInterrupt\x12!\n" +
+	"\finterrupt_id\x18\x05 \x01(\tR\vinterruptId\"C\n" +
+	"\x10ResumeStreamResp\x12/\n" +
+	"\x05chunk\x18\x01 \x01(\v2\x19.aisolo.ResumeStreamChunkR\x05chunk\"\xd6\x02\n" +
 	"\aSession\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x14\n" +
-	"\x05title\x18\x03 \x01(\tR\x05title\x120\n" +
+	"\x05title\x18\x03 \x01(\tR\x05title\x12%\n" +
+	"\x04mode\x18\x04 \x01(\x0e2\x11.aisolo.AgentModeR\x04mode\x12-\n" +
+	"\x06status\x18\x05 \x01(\x0e2\x15.aisolo.SessionStatusR\x06status\x12!\n" +
+	"\finterrupt_id\x18\x06 \x01(\tR\vinterruptId\x12\x1d\n" +
 	"\n" +
-	"agent_mode\x18\x04 \x01(\x0e2\x11.aisolo.AgentModeR\tagentMode\x12\x1d\n" +
+	"created_at\x18\a \x01(\x03R\tcreatedAt\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\x05 \x01(\x03R\tcreatedAt\x12\x1d\n" +
-	"\n" +
-	"updated_at\x18\x06 \x01(\x03R\tupdatedAt\x12#\n" +
-	"\rmessage_count\x18\a \x01(\x05R\fmessageCount\x12!\n" +
-	"\flast_message\x18\b \x01(\tR\vlastMessage\"G\n" +
+	"updated_at\x18\b \x01(\x03R\tupdatedAt\x12#\n" +
+	"\rmessage_count\x18\t \x01(\x05R\fmessageCount\x12!\n" +
+	"\flast_message\x18\n" +
+	" \x01(\tR\vlastMessage\"h\n" +
+	"\x10CreateSessionReq\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12%\n" +
+	"\x04mode\x18\x03 \x01(\x0e2\x11.aisolo.AgentModeR\x04mode\">\n" +
+	"\x11CreateSessionResp\x12)\n" +
+	"\asession\x18\x01 \x01(\v2\x0f.aisolo.SessionR\asession\"G\n" +
 	"\rGetSessionReq\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x17\n" +
@@ -1645,45 +2194,41 @@ const file_aisolo_proto_rawDesc = "" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\"-\n" +
 	"\x11DeleteSessionResp\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"@\n" +
-	"\bToolInfo\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\"\x0f\n" +
-	"\rListAgentsReq\"\xbb\x01\n" +
-	"\tAgentInfo\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"M\n" +
+	"\x0fGetInterruptReq\x12!\n" +
+	"\finterrupt_id\x18\x01 \x01(\tR\vinterruptId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"=\n" +
+	"\x10GetInterruptResp\x12)\n" +
+	"\x04info\x18\x01 \x01(\v2\x15.aisolo.InterruptInfoR\x04info\"\xdd\x01\n" +
+	"\aMessage\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x02 \x01(\tR\tsessionId\x12\x17\n" +
+	"\auser_id\x18\x03 \x01(\tR\x06userId\x12\x12\n" +
+	"\x04role\x18\x04 \x01(\tR\x04role\x12\x18\n" +
+	"\acontent\x18\x05 \x01(\tR\acontent\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\x06 \x01(\x03R\tcreatedAt\x12 \n" +
+	"\ftool_call_id\x18\a \x01(\tR\n" +
+	"toolCallId\x12\x1b\n" +
+	"\ttool_name\x18\b \x01(\tR\btoolName\"_\n" +
+	"\x0fListMessagesReq\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x14\n" +
+	"\x05limit\x18\x03 \x01(\x05R\x05limit\"U\n" +
+	"\x10ListMessagesResp\x12+\n" +
+	"\bmessages\x18\x01 \x03(\v2\x0f.aisolo.MessageR\bmessages\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x05R\x05total\"\xa5\x01\n" +
+	"\bModeInfo\x12%\n" +
+	"\x04mode\x18\x01 \x01(\x0e2\x11.aisolo.AgentModeR\x04mode\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\"\n" +
-	"\fcapabilities\x18\x04 \x03(\tR\fcapabilities\x12\x1c\n" +
-	"\tavailable\x18\x05 \x01(\bR\tavailable\x12&\n" +
-	"\x05tools\x18\x06 \x03(\v2\x10.aisolo.ToolInfoR\x05tools\";\n" +
-	"\x0eListAgentsResp\x12)\n" +
-	"\x06agents\x18\x01 \x03(\v2\x11.aisolo.AgentInfoR\x06agents\"\xcf\x01\n" +
-	"\tResumeReq\x12\x1d\n" +
-	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x12!\n" +
-	"\finterrupt_id\x18\x02 \x01(\tR\vinterruptId\x12\x17\n" +
-	"\auser_id\x18\x03 \x01(\tR\x06userId\x12,\n" +
-	"\x06action\x18\x04 \x01(\x0e2\x14.aisolo.ResumeActionR\x06action\x12!\n" +
-	"\fselected_ids\x18\x05 \x03(\tR\vselectedIds\x12\x16\n" +
-	"\x06reason\x18\x06 \x01(\tR\x06reason\"\x97\x01\n" +
-	"\n" +
-	"ResumeResp\x12\x1d\n" +
-	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x18\n" +
-	"\asuccess\x18\x02 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\x126\n" +
-	"\vfinal_state\x18\x04 \x01(\v2\x15.aisolo.InterruptInfoR\n" +
-	"finalState\"\xa9\x01\n" +
-	"\x11ResumeStreamChunk\x12\x1d\n" +
-	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x12\n" +
-	"\x04data\x18\x02 \x01(\tR\x04data\x12\x19\n" +
-	"\bis_final\x18\x03 \x01(\bR\aisFinal\x12#\n" +
-	"\rhas_interrupt\x18\x04 \x01(\bR\fhasInterrupt\x12!\n" +
-	"\finterrupt_id\x18\x05 \x01(\tR\vinterruptId\"C\n" +
-	"\x10ResumeStreamResp\x12/\n" +
-	"\x05chunk\x18\x01 \x01(\v2\x19.aisolo.ResumeStreamChunkR\x05chunk\"\v\n" +
+	"\fcapabilities\x18\x04 \x03(\tR\fcapabilities\x12\x18\n" +
+	"\adefault\x18\x05 \x01(\bR\adefault\"\x0e\n" +
+	"\fListModesReq\"7\n" +
+	"\rListModesResp\x12&\n" +
+	"\x05modes\x18\x01 \x03(\v2\x10.aisolo.ModeInfoR\x05modes\"\v\n" +
 	"\tHealthReq\"\xe7\x01\n" +
 	"\n" +
 	"HealthResp\x12\x16\n" +
@@ -1693,27 +2238,47 @@ const file_aisolo_proto_rawDesc = "" +
 	"\fdependencies\x18\x04 \x03(\v2$.aisolo.HealthResp.DependenciesEntryR\fdependencies\x1a?\n" +
 	"\x11DependenciesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01*f\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01*\x9b\x01\n" +
 	"\tAgentMode\x12\x1a\n" +
-	"\x16AGENT_MODE_UNSPECIFIED\x10\x00\x12\x13\n" +
-	"\x0fAGENT_MODE_AUTO\x10\x01\x12\x13\n" +
-	"\x0fAGENT_MODE_FAST\x10\x02\x12\x13\n" +
-	"\x0fAGENT_MODE_DEEP\x10\x03*`\n" +
+	"\x16AGENT_MODE_UNSPECIFIED\x10\x00\x12\x14\n" +
+	"\x10AGENT_MODE_AGENT\x10\x01\x12\x17\n" +
+	"\x13AGENT_MODE_WORKFLOW\x10\x02\x12\x19\n" +
+	"\x15AGENT_MODE_SUPERVISOR\x10\x03\x12\x13\n" +
+	"\x0fAGENT_MODE_PLAN\x10\x04\x12\x13\n" +
+	"\x0fAGENT_MODE_DEEP\x10\x05*\xe9\x01\n" +
+	"\rInterruptKind\x12\x1e\n" +
+	"\x1aINTERRUPT_KIND_UNSPECIFIED\x10\x00\x12\x1b\n" +
+	"\x17INTERRUPT_KIND_APPROVAL\x10\x01\x12 \n" +
+	"\x1cINTERRUPT_KIND_SINGLE_SELECT\x10\x02\x12\x1f\n" +
+	"\x1bINTERRUPT_KIND_MULTI_SELECT\x10\x03\x12\x1c\n" +
+	"\x18INTERRUPT_KIND_FREE_TEXT\x10\x04\x12\x1d\n" +
+	"\x19INTERRUPT_KIND_FORM_INPUT\x10\x05\x12\x1b\n" +
+	"\x17INTERRUPT_KIND_INFO_ACK\x10\x06*\x84\x01\n" +
+	"\rSessionStatus\x12\x1e\n" +
+	"\x1aSESSION_STATUS_UNSPECIFIED\x10\x00\x12\x17\n" +
+	"\x13SESSION_STATUS_IDLE\x10\x01\x12\x1a\n" +
+	"\x16SESSION_STATUS_RUNNING\x10\x02\x12\x1e\n" +
+	"\x1aSESSION_STATUS_INTERRUPTED\x10\x03*\xdb\x01\n" +
 	"\fResumeAction\x12\x1d\n" +
 	"\x19RESUME_ACTION_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15RESUME_ACTION_APPROVE\x10\x01\x12\x16\n" +
-	"\x12RESUME_ACTION_DENY\x10\x022\xa8\x04\n" +
+	"\x12RESUME_ACTION_DENY\x10\x02\x12\x18\n" +
+	"\x14RESUME_ACTION_SELECT\x10\x03\x12\x16\n" +
+	"\x12RESUME_ACTION_TEXT\x10\x04\x12\x16\n" +
+	"\x12RESUME_ACTION_FORM\x10\x05\x12\x15\n" +
+	"\x11RESUME_ACTION_ACK\x10\x06\x12\x18\n" +
+	"\x14RESUME_ACTION_CANCEL\x10\a2\xfa\x04\n" +
 	"\x06AiSolo\x12D\n" +
 	"\rCreateSession\x12\x18.aisolo.CreateSessionReq\x1a\x19.aisolo.CreateSessionResp\x12;\n" +
 	"\n" +
 	"GetSession\x12\x15.aisolo.GetSessionReq\x1a\x16.aisolo.GetSessionResp\x12A\n" +
 	"\fListSessions\x12\x17.aisolo.ListSessionsReq\x1a\x18.aisolo.ListSessionsResp\x12D\n" +
-	"\rDeleteSession\x12\x18.aisolo.DeleteSessionReq\x1a\x19.aisolo.DeleteSessionResp\x124\n" +
-	"\tAskStream\x12\x0e.aisolo.AskReq\x1a\x15.aisolo.AskStreamResp0\x01\x12;\n" +
-	"\n" +
-	"ListAgents\x12\x15.aisolo.ListAgentsReq\x1a\x16.aisolo.ListAgentsResp\x12/\n" +
-	"\x06Resume\x12\x11.aisolo.ResumeReq\x1a\x12.aisolo.ResumeResp\x12=\n" +
-	"\fResumeStream\x12\x11.aisolo.ResumeReq\x1a\x18.aisolo.ResumeStreamResp0\x01\x12/\n" +
+	"\rDeleteSession\x12\x18.aisolo.DeleteSessionReq\x1a\x19.aisolo.DeleteSessionResp\x12A\n" +
+	"\fListMessages\x12\x17.aisolo.ListMessagesReq\x1a\x18.aisolo.ListMessagesResp\x124\n" +
+	"\tAskStream\x12\x0e.aisolo.AskReq\x1a\x15.aisolo.AskStreamResp0\x01\x12=\n" +
+	"\fResumeStream\x12\x11.aisolo.ResumeReq\x1a\x18.aisolo.ResumeStreamResp0\x01\x128\n" +
+	"\tListModes\x12\x14.aisolo.ListModesReq\x1a\x15.aisolo.ListModesResp\x12A\n" +
+	"\fGetInterrupt\x12\x17.aisolo.GetInterruptReq\x1a\x18.aisolo.GetInterruptResp\x12/\n" +
 	"\x06Health\x12\x11.aisolo.HealthReq\x1a\x12.aisolo.HealthRespB\n" +
 	"Z\b./aisolob\x06proto3"
 
@@ -1729,77 +2294,91 @@ func file_aisolo_proto_rawDescGZIP() []byte {
 	return file_aisolo_proto_rawDescData
 }
 
-var file_aisolo_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_aisolo_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
+var file_aisolo_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_aisolo_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
 var file_aisolo_proto_goTypes = []any{
 	(AgentMode)(0),            // 0: aisolo.AgentMode
-	(ResumeAction)(0),         // 1: aisolo.ResumeAction
-	(*AskReq)(nil),            // 2: aisolo.AskReq
-	(*AskStreamChunk)(nil),    // 3: aisolo.AskStreamChunk
-	(*AskStreamResp)(nil),     // 4: aisolo.AskStreamResp
-	(*InterruptInfo)(nil),     // 5: aisolo.InterruptInfo
-	(*Option)(nil),            // 6: aisolo.Option
-	(*CreateSessionReq)(nil),  // 7: aisolo.CreateSessionReq
-	(*CreateSessionResp)(nil), // 8: aisolo.CreateSessionResp
-	(*Session)(nil),           // 9: aisolo.Session
-	(*GetSessionReq)(nil),     // 10: aisolo.GetSessionReq
-	(*GetSessionResp)(nil),    // 11: aisolo.GetSessionResp
-	(*ListSessionsReq)(nil),   // 12: aisolo.ListSessionsReq
-	(*ListSessionsResp)(nil),  // 13: aisolo.ListSessionsResp
-	(*DeleteSessionReq)(nil),  // 14: aisolo.DeleteSessionReq
-	(*DeleteSessionResp)(nil), // 15: aisolo.DeleteSessionResp
-	(*ToolInfo)(nil),          // 16: aisolo.ToolInfo
-	(*ListAgentsReq)(nil),     // 17: aisolo.ListAgentsReq
-	(*AgentInfo)(nil),         // 18: aisolo.AgentInfo
-	(*ListAgentsResp)(nil),    // 19: aisolo.ListAgentsResp
-	(*ResumeReq)(nil),         // 20: aisolo.ResumeReq
-	(*ResumeResp)(nil),        // 21: aisolo.ResumeResp
-	(*ResumeStreamChunk)(nil), // 22: aisolo.ResumeStreamChunk
-	(*ResumeStreamResp)(nil),  // 23: aisolo.ResumeStreamResp
-	(*HealthReq)(nil),         // 24: aisolo.HealthReq
-	(*HealthResp)(nil),        // 25: aisolo.HealthResp
-	nil,                       // 26: aisolo.AskReq.MetaEntry
-	nil,                       // 27: aisolo.HealthResp.DependenciesEntry
+	(InterruptKind)(0),        // 1: aisolo.InterruptKind
+	(SessionStatus)(0),        // 2: aisolo.SessionStatus
+	(ResumeAction)(0),         // 3: aisolo.ResumeAction
+	(*AskReq)(nil),            // 4: aisolo.AskReq
+	(*AskStreamChunk)(nil),    // 5: aisolo.AskStreamChunk
+	(*AskStreamResp)(nil),     // 6: aisolo.AskStreamResp
+	(*Option)(nil),            // 7: aisolo.Option
+	(*Field)(nil),             // 8: aisolo.Field
+	(*InterruptInfo)(nil),     // 9: aisolo.InterruptInfo
+	(*ResumeReq)(nil),         // 10: aisolo.ResumeReq
+	(*ResumeStreamChunk)(nil), // 11: aisolo.ResumeStreamChunk
+	(*ResumeStreamResp)(nil),  // 12: aisolo.ResumeStreamResp
+	(*Session)(nil),           // 13: aisolo.Session
+	(*CreateSessionReq)(nil),  // 14: aisolo.CreateSessionReq
+	(*CreateSessionResp)(nil), // 15: aisolo.CreateSessionResp
+	(*GetSessionReq)(nil),     // 16: aisolo.GetSessionReq
+	(*GetSessionResp)(nil),    // 17: aisolo.GetSessionResp
+	(*ListSessionsReq)(nil),   // 18: aisolo.ListSessionsReq
+	(*ListSessionsResp)(nil),  // 19: aisolo.ListSessionsResp
+	(*DeleteSessionReq)(nil),  // 20: aisolo.DeleteSessionReq
+	(*DeleteSessionResp)(nil), // 21: aisolo.DeleteSessionResp
+	(*GetInterruptReq)(nil),   // 22: aisolo.GetInterruptReq
+	(*GetInterruptResp)(nil),  // 23: aisolo.GetInterruptResp
+	(*Message)(nil),           // 24: aisolo.Message
+	(*ListMessagesReq)(nil),   // 25: aisolo.ListMessagesReq
+	(*ListMessagesResp)(nil),  // 26: aisolo.ListMessagesResp
+	(*ModeInfo)(nil),          // 27: aisolo.ModeInfo
+	(*ListModesReq)(nil),      // 28: aisolo.ListModesReq
+	(*ListModesResp)(nil),     // 29: aisolo.ListModesResp
+	(*HealthReq)(nil),         // 30: aisolo.HealthReq
+	(*HealthResp)(nil),        // 31: aisolo.HealthResp
+	nil,                       // 32: aisolo.AskReq.MetaEntry
+	nil,                       // 33: aisolo.ResumeReq.FormValuesEntry
+	nil,                       // 34: aisolo.HealthResp.DependenciesEntry
 }
 var file_aisolo_proto_depIdxs = []int32{
-	0,  // 0: aisolo.AskReq.agent_mode:type_name -> aisolo.AgentMode
-	26, // 1: aisolo.AskReq.meta:type_name -> aisolo.AskReq.MetaEntry
-	3,  // 2: aisolo.AskStreamResp.chunk:type_name -> aisolo.AskStreamChunk
-	6,  // 3: aisolo.InterruptInfo.options:type_name -> aisolo.Option
-	0,  // 4: aisolo.CreateSessionReq.agent_mode:type_name -> aisolo.AgentMode
-	9,  // 5: aisolo.CreateSessionResp.session:type_name -> aisolo.Session
-	0,  // 6: aisolo.Session.agent_mode:type_name -> aisolo.AgentMode
-	9,  // 7: aisolo.GetSessionResp.session:type_name -> aisolo.Session
-	9,  // 8: aisolo.ListSessionsResp.sessions:type_name -> aisolo.Session
-	16, // 9: aisolo.AgentInfo.tools:type_name -> aisolo.ToolInfo
-	18, // 10: aisolo.ListAgentsResp.agents:type_name -> aisolo.AgentInfo
-	1,  // 11: aisolo.ResumeReq.action:type_name -> aisolo.ResumeAction
-	5,  // 12: aisolo.ResumeResp.final_state:type_name -> aisolo.InterruptInfo
-	22, // 13: aisolo.ResumeStreamResp.chunk:type_name -> aisolo.ResumeStreamChunk
-	27, // 14: aisolo.HealthResp.dependencies:type_name -> aisolo.HealthResp.DependenciesEntry
-	7,  // 15: aisolo.AiSolo.CreateSession:input_type -> aisolo.CreateSessionReq
-	10, // 16: aisolo.AiSolo.GetSession:input_type -> aisolo.GetSessionReq
-	12, // 17: aisolo.AiSolo.ListSessions:input_type -> aisolo.ListSessionsReq
-	14, // 18: aisolo.AiSolo.DeleteSession:input_type -> aisolo.DeleteSessionReq
-	2,  // 19: aisolo.AiSolo.AskStream:input_type -> aisolo.AskReq
-	17, // 20: aisolo.AiSolo.ListAgents:input_type -> aisolo.ListAgentsReq
-	20, // 21: aisolo.AiSolo.Resume:input_type -> aisolo.ResumeReq
-	20, // 22: aisolo.AiSolo.ResumeStream:input_type -> aisolo.ResumeReq
-	24, // 23: aisolo.AiSolo.Health:input_type -> aisolo.HealthReq
-	8,  // 24: aisolo.AiSolo.CreateSession:output_type -> aisolo.CreateSessionResp
-	11, // 25: aisolo.AiSolo.GetSession:output_type -> aisolo.GetSessionResp
-	13, // 26: aisolo.AiSolo.ListSessions:output_type -> aisolo.ListSessionsResp
-	15, // 27: aisolo.AiSolo.DeleteSession:output_type -> aisolo.DeleteSessionResp
-	4,  // 28: aisolo.AiSolo.AskStream:output_type -> aisolo.AskStreamResp
-	19, // 29: aisolo.AiSolo.ListAgents:output_type -> aisolo.ListAgentsResp
-	21, // 30: aisolo.AiSolo.Resume:output_type -> aisolo.ResumeResp
-	23, // 31: aisolo.AiSolo.ResumeStream:output_type -> aisolo.ResumeStreamResp
-	25, // 32: aisolo.AiSolo.Health:output_type -> aisolo.HealthResp
-	24, // [24:33] is the sub-list for method output_type
-	15, // [15:24] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	0,  // 0: aisolo.AskReq.mode:type_name -> aisolo.AgentMode
+	32, // 1: aisolo.AskReq.meta:type_name -> aisolo.AskReq.MetaEntry
+	5,  // 2: aisolo.AskStreamResp.chunk:type_name -> aisolo.AskStreamChunk
+	1,  // 3: aisolo.InterruptInfo.kind:type_name -> aisolo.InterruptKind
+	7,  // 4: aisolo.InterruptInfo.options:type_name -> aisolo.Option
+	8,  // 5: aisolo.InterruptInfo.fields:type_name -> aisolo.Field
+	3,  // 6: aisolo.ResumeReq.action:type_name -> aisolo.ResumeAction
+	33, // 7: aisolo.ResumeReq.form_values:type_name -> aisolo.ResumeReq.FormValuesEntry
+	11, // 8: aisolo.ResumeStreamResp.chunk:type_name -> aisolo.ResumeStreamChunk
+	0,  // 9: aisolo.Session.mode:type_name -> aisolo.AgentMode
+	2,  // 10: aisolo.Session.status:type_name -> aisolo.SessionStatus
+	0,  // 11: aisolo.CreateSessionReq.mode:type_name -> aisolo.AgentMode
+	13, // 12: aisolo.CreateSessionResp.session:type_name -> aisolo.Session
+	13, // 13: aisolo.GetSessionResp.session:type_name -> aisolo.Session
+	13, // 14: aisolo.ListSessionsResp.sessions:type_name -> aisolo.Session
+	9,  // 15: aisolo.GetInterruptResp.info:type_name -> aisolo.InterruptInfo
+	24, // 16: aisolo.ListMessagesResp.messages:type_name -> aisolo.Message
+	0,  // 17: aisolo.ModeInfo.mode:type_name -> aisolo.AgentMode
+	27, // 18: aisolo.ListModesResp.modes:type_name -> aisolo.ModeInfo
+	34, // 19: aisolo.HealthResp.dependencies:type_name -> aisolo.HealthResp.DependenciesEntry
+	14, // 20: aisolo.AiSolo.CreateSession:input_type -> aisolo.CreateSessionReq
+	16, // 21: aisolo.AiSolo.GetSession:input_type -> aisolo.GetSessionReq
+	18, // 22: aisolo.AiSolo.ListSessions:input_type -> aisolo.ListSessionsReq
+	20, // 23: aisolo.AiSolo.DeleteSession:input_type -> aisolo.DeleteSessionReq
+	25, // 24: aisolo.AiSolo.ListMessages:input_type -> aisolo.ListMessagesReq
+	4,  // 25: aisolo.AiSolo.AskStream:input_type -> aisolo.AskReq
+	10, // 26: aisolo.AiSolo.ResumeStream:input_type -> aisolo.ResumeReq
+	28, // 27: aisolo.AiSolo.ListModes:input_type -> aisolo.ListModesReq
+	22, // 28: aisolo.AiSolo.GetInterrupt:input_type -> aisolo.GetInterruptReq
+	30, // 29: aisolo.AiSolo.Health:input_type -> aisolo.HealthReq
+	15, // 30: aisolo.AiSolo.CreateSession:output_type -> aisolo.CreateSessionResp
+	17, // 31: aisolo.AiSolo.GetSession:output_type -> aisolo.GetSessionResp
+	19, // 32: aisolo.AiSolo.ListSessions:output_type -> aisolo.ListSessionsResp
+	21, // 33: aisolo.AiSolo.DeleteSession:output_type -> aisolo.DeleteSessionResp
+	26, // 34: aisolo.AiSolo.ListMessages:output_type -> aisolo.ListMessagesResp
+	6,  // 35: aisolo.AiSolo.AskStream:output_type -> aisolo.AskStreamResp
+	12, // 36: aisolo.AiSolo.ResumeStream:output_type -> aisolo.ResumeStreamResp
+	29, // 37: aisolo.AiSolo.ListModes:output_type -> aisolo.ListModesResp
+	23, // 38: aisolo.AiSolo.GetInterrupt:output_type -> aisolo.GetInterruptResp
+	31, // 39: aisolo.AiSolo.Health:output_type -> aisolo.HealthResp
+	30, // [30:40] is the sub-list for method output_type
+	20, // [20:30] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_aisolo_proto_init() }
@@ -1812,8 +2391,8 @@ func file_aisolo_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_aisolo_proto_rawDesc), len(file_aisolo_proto_rawDesc)),
-			NumEnums:      2,
-			NumMessages:   26,
+			NumEnums:      4,
+			NumMessages:   31,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

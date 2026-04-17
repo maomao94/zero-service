@@ -4,109 +4,201 @@ package aisolo;
 option go_package = "./aisolo";
 
 // ============================================================
-// AI Solo - 基于 Eino 框架的 AI 助手服务
-// 统一流式接口，简洁的业务导向设计
+// AI Solo - 基于 Eino ADK 的 AI 助手服务
+//
+// 设计要点:
+//   1. 用户只看到 Mode, 不再有 Agent 选择。
+//   2. 所有对话交互走 SSE 流; 每帧 data 是完整 JSON Event (见 einox/protocol)。
+//   3. 中断类型统一为 6 种 kind, 通过 InterruptInfo.kind 区分。
+//   4. 恢复请求按 kind 携带不同字段, 服务端据此组装 ResumeResult。
 // ============================================================
 
-// ============================================================
-// 通用枚举
-// ============================================================
-
-// AgentMode Agent 运行模式
+// AgentMode Agent 运行模式, 对齐 eino ADK 的核心能力。
 enum AgentMode {
   AGENT_MODE_UNSPECIFIED = 0;
-  AGENT_MODE_AUTO = 1;      // 自动选择（默认）
-  AGENT_MODE_FAST = 2;      // 快速响应（基础对话）
-  AGENT_MODE_DEEP = 3;      // 深度思考（复杂任务）
+  AGENT_MODE_AGENT       = 1; // ChatModelAgent + tools, ReAct 推理 (默认)
+  AGENT_MODE_WORKFLOW    = 2; // Sequential / Parallel / Loop Workflow
+  AGENT_MODE_SUPERVISOR  = 3; // prebuilt/supervisor 多 Agent 协作
+  AGENT_MODE_PLAN        = 4; // prebuilt/planexecute 计划-执行
+  AGENT_MODE_DEEP        = 5; // prebuilt/deep 深度研究
+}
+
+// InterruptKind 中断种类, 驱动前端 UI 渲染选择。
+enum InterruptKind {
+  INTERRUPT_KIND_UNSPECIFIED   = 0;
+  INTERRUPT_KIND_APPROVAL      = 1; // 二选一审批 (approve / deny)
+  INTERRUPT_KIND_SINGLE_SELECT = 2; // 单选
+  INTERRUPT_KIND_MULTI_SELECT  = 3; // 多选
+  INTERRUPT_KIND_FREE_TEXT     = 4; // 自由文本输入
+  INTERRUPT_KIND_FORM_INPUT    = 5; // 结构化表单
+  INTERRUPT_KIND_INFO_ACK      = 6; // 展示信息 + 点击确认
+}
+
+// SessionStatus 会话运行状态。
+enum SessionStatus {
+  SESSION_STATUS_UNSPECIFIED = 0;
+  SESSION_STATUS_IDLE        = 1; // 空闲, 可以开始新一轮
+  SESSION_STATUS_RUNNING     = 2; // 正在执行中
+  SESSION_STATUS_INTERRUPTED = 3; // 中断中, 等待用户恢复
+}
+
+// ResumeAction 恢复动作。具体字段按 kind 决定填哪个。
+enum ResumeAction {
+  RESUME_ACTION_UNSPECIFIED = 0;
+  RESUME_ACTION_APPROVE = 1;  // approval
+  RESUME_ACTION_DENY    = 2;  // approval
+  RESUME_ACTION_SELECT  = 3;  // single_select / multi_select
+  RESUME_ACTION_TEXT    = 4;  // free_text
+  RESUME_ACTION_FORM    = 5;  // form_input
+  RESUME_ACTION_ACK     = 6;  // info_ack
+  RESUME_ACTION_CANCEL  = 7;  // 所有 kind 都可取消
 }
 
 // ============================================================
-// 核心请求/响应
+// 对话请求 / 流式响应
 // ============================================================
 
-// AskReq 对话请求
+// AskReq 一轮对话请求。
 message AskReq {
-  string session_id = 1;          // 会话 ID（空则创建新会话）
-  string user_id = 2;            // 用户 ID
-  string message = 3;            // 用户消息
-  AgentMode agent_mode = 4;      // Agent 运行模式
-  map<string, string> meta = 5;  // 元数据（可选）
+  string session_id = 1;
+  string user_id = 2;
+  string message = 3;
+  AgentMode mode = 4;              // 可选, 留空则使用 session 当前 mode
+  map<string, string> meta = 5;
 }
 
-// AskStreamChunk 流式响应块
+// AskStreamChunk 每一帧的 JSON Event (见 einox/protocol 定义)。
 message AskStreamChunk {
-  string session_id = 1;         // 会话 ID
-  string data = 2;              // A2UI JSON 数据
-  bool is_final = 3;            // 是否结束
+  string session_id = 1;
+  string data = 2;        // 完整 JSON Event, 按行输出
+  bool   is_final = 3;    // 最后一帧
 }
 
-// AskStreamResp 流式响应（包装 Chunk）
 message AskStreamResp {
   AskStreamChunk chunk = 1;
 }
 
-// InterruptInfo 中断信息
-message InterruptInfo {
-  string interrupt_id = 1;      // 中断 ID
-  string reason = 2;            // 中断原因
-  string description = 3;        // 描述
-  repeated Option options = 4;   // 选项（如需选择）
-  bool required = 5;             // 是否必须处理
-}
+// ============================================================
+// 中断 / 恢复
+// ============================================================
 
-// Option 选项
+// Option 单选 / 多选的候选项。
 message Option {
   string id = 1;
   string label = 2;
+  string desc = 3;
+}
+
+// Field 表单字段 (form_input 使用)。
+message Field {
+  string name = 1;
+  string label = 2;
+  string type = 3;         // string | number | boolean
+  bool required = 4;
+  string placeholder = 5;
+  string default = 6;
+}
+
+// InterruptInfo 结构化中断元数据。Kind 决定哪些字段有效:
+//   APPROVAL      -> question, detail
+//   SINGLE_SELECT -> question, options
+//   MULTI_SELECT  -> question, options, min_select, max_select
+//   FREE_TEXT     -> question, placeholder, multiline
+//   FORM_INPUT    -> question, fields
+//   INFO_ACK      -> title, body
+message InterruptInfo {
+  string interrupt_id = 1;
+  InterruptKind kind = 2;
+  string tool_name = 3;
+  bool required = 4;
+
+  string question = 10;
+  string detail = 11;
+  repeated Option options = 12;
+  int32 min_select = 13;
+  int32 max_select = 14;
+  string placeholder = 15;
+  bool multiline = 16;
+  repeated Field fields = 17;
+  string title = 18;
+  string body = 19;
+}
+
+// ResumeReq 恢复执行。按 kind / action 填对应字段。
+message ResumeReq {
+  string session_id = 1;
+  string user_id = 2;
+  string interrupt_id = 3;
+
+  ResumeAction action = 4;
+
+  // approval 用
+  string reason = 10;
+
+  // single/multi select 用
+  repeated string selected_ids = 20;
+
+  // free_text 用
+  string text = 30;
+
+  // form_input 用
+  map<string, string> form_values = 40;
+}
+
+message ResumeStreamChunk {
+  string session_id = 1;
+  string data = 2;
+  bool is_final = 3;
+  bool has_interrupt = 4;
+  string interrupt_id = 5;
+}
+
+message ResumeStreamResp {
+  ResumeStreamChunk chunk = 1;
 }
 
 // ============================================================
 // 会话管理
 // ============================================================
 
-// CreateSessionReq 创建会话请求
-message CreateSessionReq {
-  string user_id = 1;           // 用户 ID
-  string title = 2;             // 会话标题（可选）
-  AgentMode agent_mode = 3;     // 默认 Agent 模式
-}
-
-// CreateSessionResp 创建会话响应
-message CreateSessionResp {
-  Session session = 1;
-}
-
-// Session 会话信息
 message Session {
   string session_id = 1;
   string user_id = 2;
   string title = 3;
-  AgentMode agent_mode = 4;
-  int64 created_at = 5;
-  int64 updated_at = 6;
-  int32 message_count = 7;
-  string last_message = 8;      // 最后一条消息摘要
+  AgentMode mode = 4;
+  SessionStatus status = 5;
+  string interrupt_id = 6;       // status=INTERRUPTED 时非空
+  int64 created_at = 7;
+  int64 updated_at = 8;
+  int32 message_count = 9;
+  string last_message = 10;
 }
 
-// GetSessionReq 获取会话请求
+message CreateSessionReq {
+  string user_id = 1;
+  string title = 2;
+  AgentMode mode = 3;
+}
+
+message CreateSessionResp {
+  Session session = 1;
+}
+
 message GetSessionReq {
   string session_id = 1;
   string user_id = 2;
 }
 
-// GetSessionResp 获取会话响应
 message GetSessionResp {
   Session session = 1;
 }
 
-// ListSessionsReq 列出会话请求
 message ListSessionsReq {
   string user_id = 1;
   int32 page = 2;
   int32 page_size = 3;
 }
 
-// ListSessionsResp 列出会话响应
 message ListSessionsResp {
   repeated Session sessions = 1;
   int64 total = 2;
@@ -114,155 +206,107 @@ message ListSessionsResp {
   int32 total_pages = 4;
 }
 
-// DeleteSessionReq 删除会话请求
 message DeleteSessionReq {
   string session_id = 1;
   string user_id = 2;
 }
 
-// DeleteSessionResp 删除会话响应
 message DeleteSessionResp {
   bool success = 1;
 }
 
 // ============================================================
-// Agent 管理
+// 获取中断详情 (页面刷新后回填 UI 使用)
 // ============================================================
 
-// ToolInfo 工具信息
-message ToolInfo {
-  string name = 1;
-  string description = 2;
+message GetInterruptReq {
+  string interrupt_id = 1;
+  string user_id = 2;
 }
 
-// ListAgentsReq 列出 Agent 请求
-message ListAgentsReq {}
+message GetInterruptResp {
+  InterruptInfo info = 1;
+}
 
-// AgentInfo Agent 信息
-message AgentInfo {
+// ============================================================
+// 历史消息
+// ============================================================
+
+message Message {
   string id = 1;
-  string name = 2;
+  string session_id = 2;
+  string user_id = 3;
+  string role = 4;            // user | assistant | tool | system
+  string content = 5;
+  int64 created_at = 6;
+  string tool_call_id = 7;
+  string tool_name = 8;
+}
+
+message ListMessagesReq {
+  string session_id = 1;
+  string user_id = 2;
+  int32 limit = 3;
+}
+
+message ListMessagesResp {
+  repeated Message messages = 1;
+  int32 total = 2;
+}
+
+// ============================================================
+// Mode 列表 (取代旧 ListAgents)
+// ============================================================
+
+message ModeInfo {
+  AgentMode mode = 1;
+  string name = 2;           // 展示名, 如 "Agent 模式"
   string description = 3;
   repeated string capabilities = 4;
-  bool available = 5;
-  repeated ToolInfo tools = 6;
+  bool default = 5;          // 是否是默认 mode
 }
 
-// ListAgentsResp 列出 Agent 响应
-message ListAgentsResp {
-  repeated AgentInfo agents = 1;
-}
+message ListModesReq {}
 
-// ============================================================
-// 中断恢复
-// ============================================================
-
-// ResumeReq 恢复执行请求
-message ResumeReq {
-  string session_id = 1;
-  string interrupt_id = 2;
-  string user_id = 3;
-  ResumeAction action = 4;           // approve/deny
-  repeated string selected_ids = 5;  // 多选时选中的选项
-  string reason = 6;                 // 拒绝原因（可选）
-}
-
-// ResumeAction 恢复动作
-enum ResumeAction {
-  RESUME_ACTION_UNSPECIFIED = 0;
-  RESUME_ACTION_APPROVE = 1;         // 批准
-  RESUME_ACTION_DENY = 2;           // 拒绝
-}
-
-// ResumeResp 恢复执行响应（同步）
-message ResumeResp {
-  string session_id = 1;
-  bool success = 2;
-  string message = 3;              // 结果消息
-  InterruptInfo final_state = 4;    // 最终状态
-}
-
-// ResumeStreamChunk 流式恢复响应块
-message ResumeStreamChunk {
-  string session_id = 1;         // 会话 ID
-  string data = 2;              // A2UI JSON 数据
-  bool is_final = 3;            // 是否结束
-  bool has_interrupt = 4;       // 是否有新的中断
-  string interrupt_id = 5;       // 中断 ID（如有）
-}
-
-// ResumeStreamResp 流式恢复响应（包装 Chunk）
-message ResumeStreamResp {
-  ResumeStreamChunk chunk = 1;
+message ListModesResp {
+  repeated ModeInfo modes = 1;
 }
 
 // ============================================================
 // 健康检查
 // ============================================================
 
-// HealthReq 健康检查请求
 message HealthReq {}
 
-// HealthResp 健康检查响应
 message HealthResp {
-  string status = 1;               // 服务状态: ok/error
-  string version = 2;              // 服务版本
-  int64 timestamp = 3;             // 响应时间戳
-  map<string, string> dependencies = 4; // 依赖服务状态
+  string status = 1;
+  string version = 2;
+  int64 timestamp = 3;
+  map<string, string> dependencies = 4;
 }
 
 // ============================================================
-// RPC 服务定义
+// Service
 // ============================================================
 
-// AiSolo AI 助手核心服务
 service AiSolo {
-  // ============================================================
   // 会话管理
-  // ============================================================
-
-  // CreateSession 创建会话
   rpc CreateSession(CreateSessionReq) returns (CreateSessionResp);
-
-  // GetSession 获取会话
   rpc GetSession(GetSessionReq) returns (GetSessionResp);
-
-  // ListSessions 列出会话
   rpc ListSessions(ListSessionsReq) returns (ListSessionsResp);
-
-  // DeleteSession 删除会话
   rpc DeleteSession(DeleteSessionReq) returns (DeleteSessionResp);
+  rpc ListMessages(ListMessagesReq) returns (ListMessagesResp);
 
-  // ============================================================
-  // 对话（统一流式）
-  // ============================================================
-
-  // AskStream 流式对话
-  // - 会话自动创建（session_id 为空时）
-  // - 返回 A2UI 格式的 SSE 事件流
+  // 对话 / 恢复 (均为流式)
   rpc AskStream(AskReq) returns (stream AskStreamResp);
-
-  // ============================================================
-  // Agent 管理
-  // ============================================================
-
-  // ListAgents 列出可用 Agent
-  rpc ListAgents(ListAgentsReq) returns (ListAgentsResp);
-
-  // ============================================================
-  // 中断恢复
-  // ============================================================
-
-  // Resume 恢复中断的执行（同步返回结果）
-  rpc Resume(ResumeReq) returns (ResumeResp);
-
-  // ResumeStream 恢复中断的执行（流式返回 A2UI 事件）
   rpc ResumeStream(ResumeReq) returns (stream ResumeStreamResp);
 
-  // ============================================================
-  // 健康检查
-  // ============================================================
+  // Mode 列表
+  rpc ListModes(ListModesReq) returns (ListModesResp);
 
-  // Health 健康检查接口
+  // 获取中断详情 (前端刷新后回填 UI)
+  rpc GetInterrupt(GetInterruptReq) returns (GetInterruptResp);
+
+  // 健康
   rpc Health(HealthReq) returns (HealthResp);
 }

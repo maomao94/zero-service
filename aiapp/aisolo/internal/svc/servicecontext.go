@@ -2,182 +2,230 @@ package svc
 
 import (
 	"context"
-	"time"
-
-	"zero-service/aiapp/aisolo/internal/agent"
-	"zero-service/aiapp/aisolo/internal/config"
-	"zero-service/aiapp/aisolo/internal/roles"
-	"zero-service/aiapp/aisolo/internal/router"
-	"zero-service/aiapp/aisolo/internal/tool"
-	"zero-service/common/einox/memory"
-	exinoModel "zero-service/common/einox/model"
 
 	"github.com/cloudwego/eino/components/model"
 	"github.com/zeromicro/go-zero/core/logx"
+
+	"zero-service/aiapp/aisolo/internal/config"
+	"zero-service/aiapp/aisolo/internal/modes"
+	"zero-service/aiapp/aisolo/internal/session"
+	"zero-service/aiapp/aisolo/internal/turn"
+	"zero-service/common/einox/checkpoint"
+	"zero-service/common/einox/memory"
+	"zero-service/common/einox/metrics"
+	exinoModel "zero-service/common/einox/model"
+	"zero-service/common/einox/tool"
+	"zero-service/common/einox/tool/builtin"
+	"zero-service/common/gormx"
 )
 
-// ServiceContext 服务上下文
+// ServiceContext 服务上下文。
+//
+// 组装关系:
+//
+//	Config
+//	 ├── DB (gormx 可选)
+//	 ├── MemoryStorage   (消息历史)
+//	 ├── SessionStore    (会话元数据 + 中断记录)
+//	 ├── CheckPointStore (ADK Agent 中断 checkpoint)
+//	 ├── ChatModel
+//	 ├── ToolKit         (所有内置工具)
+//	 ├── ModeRegistry    (5 个 Blueprint)
+//	 ├── ModePool        (按 mode 缓存 Agent 实例)
+//	 └── TurnExecutor    (统一 Ask / Resume 入口)
 type ServiceContext struct {
 	Config config.Config
 
-	// ChatModel
-	ChatModel model.BaseChatModel
-
-	// 记忆存储
-	MemoryStorage memory.Storage
-
-	// 角色管理器
-	RoleManager *roles.RoleManager
-
-	// Agent池
-	AgentPool *agent.AgentPool
-
-	// 请求路由器
-	Router *router.Router
-
-	// 工具管理器
-	ToolManager *tool.ToolManager
+	DB              *gormx.DB
+	Messages        memory.Storage
+	Sessions        session.Store
+	CheckPointStore checkpoint.Store
+	ChatModel       model.BaseChatModel
+	Kit             *tool.Kit
+	Registry        *modes.Registry
+	Pool            *modes.Pool
+	Executor        *turn.Executor
+	Metrics         *metrics.Metrics
 }
 
-// NewServiceContext 创建服务上下文
+// NewServiceContext 构造并初始化。
 func NewServiceContext(c config.Config) *ServiceContext {
 	logx.Must(logx.SetUp(c.Log))
+
 	ctx := context.Background()
-	svc := &ServiceContext{
-		Config: c,
+	s := &ServiceContext{Config: c, Metrics: metrics.Global()}
+
+	s.initDB()
+	s.initMemory()
+	s.initSessions()
+	s.initCheckPoint()
+	s.initChatModel(ctx)
+	s.initKit()
+	s.initModes(ctx)
+	s.initExecutor()
+	s.recoverRunningSessions(ctx)
+
+	return s
+}
+
+// recoverRunningSessions 启动时清理残留 RUNNING 状态的会话。
+// 场景: 上次进程异常退出 / 客户端 SSE 中途断开, 导致 session.Status 卡在 RUNNING,
+// 下次用户再发消息会被 executor 拒绝 ("session is running")。此处统一清为 IDLE。
+func (s *ServiceContext) recoverRunningSessions(ctx context.Context) {
+	if s.Sessions == nil {
+		return
 	}
-
-	// 初始化记忆存储
-	svc.initMemoryStorage()
-
-	// 初始化 ChatModel
-	svc.initChatModel(ctx)
-
-	// 初始化角色管理器
-	svc.initRoleManager()
-
-	// 初始化Agent池
-	svc.initAgentPool()
-
-	// 初始化请求路由器
-	svc.initRouter()
-
-	// 初始化工具管理器
-	svc.initToolManager(ctx)
-
-	return svc
+	n, err := s.Sessions.ResetRunningToIdle(ctx)
+	if err != nil {
+		logx.Errorf("[svc] reset running sessions: %v", err)
+		return
+	}
+	if n > 0 {
+		logx.Infof("[svc] recovered %d running sessions to idle", n)
+	}
 }
 
-// initMemoryStorage 初始化记忆存储
-func (s *ServiceContext) initMemoryStorage() {
-	s.MemoryStorage = memory.NewMemoryStorage()
-	logx.Info("MemoryStorage initialized: in-memory")
+func (s *ServiceContext) initDB() {
+	if !s.Config.DB.Enabled || s.Config.DB.DataSource == "" {
+		return
+	}
+	db, err := gormx.OpenWithConf(gormx.Config{
+		DataSource: s.Config.DB.DataSource,
+		LogLevel:   s.Config.DB.LogLevel,
+	})
+	if err != nil {
+		logx.Errorf("[svc] gormx open: %v", err)
+		return
+	}
+	s.DB = db
+	logx.Info("[svc] gormx ready")
 }
 
-// initChatModel 初始化 ChatModel
+func (s *ServiceContext) initMemory() {
+	t := memory.Type(s.Config.Memory.Type)
+	switch t {
+	case memory.TypeGORMX:
+		if s.DB == nil {
+			logx.Error("[svc] memory=gormx but DB nil, fallback to in-memory")
+			s.Messages = memory.NewMemoryStorage()
+			return
+		}
+		st, err := memory.NewGormxStorage(s.DB)
+		if err != nil {
+			logx.Errorf("[svc] gormx memory: %v", err)
+			s.Messages = memory.NewMemoryStorage()
+			return
+		}
+		s.Messages = st
+	case memory.TypeJSONL:
+		st, err := memory.NewStorage(memory.Config{Type: memory.TypeJSONL, BaseDir: s.Config.Memory.BaseDir})
+		if err != nil {
+			logx.Errorf("[svc] jsonl memory: %v", err)
+			s.Messages = memory.NewMemoryStorage()
+			return
+		}
+		s.Messages = st
+	default:
+		s.Messages = memory.NewMemoryStorage()
+	}
+	logx.Infof("[svc] messages store=%s", t)
+}
+
+func (s *ServiceContext) initSessions() {
+	st, err := session.NewStore(session.Config{Type: s.Config.SessionStore.Type})
+	if err != nil {
+		logx.Errorf("[svc] session store: %v, fallback to memory", err)
+		s.Sessions = session.NewMemoryStore()
+		return
+	}
+	s.Sessions = st
+	logx.Infof("[svc] sessions store=%s", s.Config.SessionStore.Type)
+}
+
+func (s *ServiceContext) initCheckPoint() {
+	st, err := checkpoint.NewStore(
+		checkpoint.Config{
+			Type:    checkpoint.Type(s.Config.Checkpoint.Type),
+			BaseDir: s.Config.Checkpoint.BaseDir,
+		},
+		s.DB,
+	)
+	if err != nil {
+		logx.Errorf("[svc] checkpoint: %v, fallback to memory", err)
+		s.CheckPointStore = checkpoint.NewMemoryStore()
+		return
+	}
+	s.CheckPointStore = st
+	logx.Infof("[svc] checkpoint=%s", s.Config.Checkpoint.Type)
+}
+
 func (s *ServiceContext) initChatModel(ctx context.Context) {
 	cfg := exinoModel.Config{
 		Provider: exinoModel.Provider(s.Config.Model.Provider),
 		Model:    s.Config.Model.Model,
 		APIKey:   s.Config.Model.APIKey,
 	}
-
 	if s.Config.Model.BaseURL != "" {
 		cfg.BaseURL = s.Config.Model.BaseURL
 	}
-
-	chatModel, err := exinoModel.NewChatModel(ctx, cfg)
+	cm, err := exinoModel.NewChatModel(ctx, cfg)
 	if err != nil {
-		logx.Errorf("init chat model failed: %v", err)
+		logx.Errorf("[svc] chat model: %v", err)
 		return
 	}
-
-	s.ChatModel = chatModel
-	logx.Infof("ChatModel initialized: %s", s.Config.Model.Model)
+	s.ChatModel = cm
+	logx.Infof("[svc] chat model ready: %s/%s", s.Config.Model.Provider, s.Config.Model.Model)
 }
 
-// initRoleManager 初始化角色管理器
-func (s *ServiceContext) initRoleManager() {
+func (s *ServiceContext) initKit() {
+	s.Kit = builtin.NewDefaultKit()
+	logx.Infof("[svc] tool kit loaded: %d tools", len(s.Kit.All()))
+}
+
+func (s *ServiceContext) initModes(ctx context.Context) {
+	s.Registry = modes.NewRegistry()
 	if s.ChatModel == nil {
-		logx.Info("ChatModel not initialized, skip RoleManager initialization")
+		logx.Info("[svc] chat model nil, skip mode pool")
 		return
 	}
-
-	// 根据配置决定是否启用 skills 和内置工具
-	var rm *roles.RoleManager
-	if s.Config.Skills.Enabled && s.Config.Skills.Dir != "" {
-		rm = roles.NewRoleManagerWithSkillsAndTools(s.ChatModel, s.Config.Skills.Dir)
-		logx.Infof("RoleManager initialized with %d roles + skills + builtin tools, skills dir: %s", len(roles.BuiltinRoles), s.Config.Skills.Dir)
-	} else {
-		rm = roles.NewRoleManagerWithBuiltinTools(s.ChatModel)
-		logx.Infof("RoleManager initialized with %d roles + builtin tools", len(roles.BuiltinRoles))
-	}
-	s.RoleManager = rm
+	s.Pool = modes.NewPool(s.Registry, modes.Dependencies{
+		ChatModel:       s.ChatModel,
+		Kit:             s.Kit,
+		CheckPointStore: s.CheckPointStore,
+		SkillsDir:       s.Config.Skills.Dir,
+	})
+	_ = ctx
+	logx.Infof("[svc] mode registry + pool ready: %d modes", len(s.Registry.List()))
 }
 
-// initAgentPool 初始化Agent池
-func (s *ServiceContext) initAgentPool() {
-	if s.RoleManager == nil {
-		logx.Info("RoleManager not initialized, skip AgentPool initialization")
+func (s *ServiceContext) initExecutor() {
+	if s.Pool == nil {
+		logx.Info("[svc] pool nil, skip executor")
 		return
 	}
-
-	maxIdle := 10
-	maxLive := 1 * time.Hour
-	if s.Config.Agent.PoolMaxIdle > 0 {
-		maxIdle = s.Config.Agent.PoolMaxIdle
-	}
-	if s.Config.Agent.PoolMaxLive > 0 {
-		maxLive = s.Config.Agent.PoolMaxLive
-	}
-
-	s.AgentPool = agent.NewAgentPool(s.RoleManager, maxIdle, maxLive)
-	logx.Infof("AgentPool initialized: maxIdle=%d, maxLive=%v", maxIdle, maxLive)
+	s.Executor = turn.New(turn.Config{
+		Pool:     s.Pool,
+		Registry: s.Registry,
+		Messages: s.Messages,
+		Sessions: s.Sessions,
+		Metrics:  s.Metrics,
+	})
+	logx.Info("[svc] turn executor ready")
 }
 
-// initRouter 初始化请求路由器
-func (s *ServiceContext) initRouter() {
-	if s.AgentPool == nil {
-		logx.Info("AgentPool not initialized, skip Router initialization")
-		return
-	}
-
-	s.Router = router.NewRouter(s.AgentPool)
-	logx.Info("Router initialized")
-}
-
-// initToolManager 初始化工具管理器
-func (s *ServiceContext) initToolManager(ctx context.Context) {
-	if !s.Config.Tools.Enabled {
-		logx.Info("Tools disabled, skip ToolManager initialization")
-		return
-	}
-
-	registry := tool.NewRegistry()
-	config := tool.ToolConfig{
-		Timeout:        30 * time.Second,
-		MaxRetries:     3,
-		MaxConcurrency: 10,
-	}
-	if s.Config.Tools.Timeout > 0 {
-		config.Timeout = s.Config.Tools.Timeout
-	}
-	if s.Config.Tools.MaxRetries > 0 {
-		config.MaxRetries = s.Config.Tools.MaxRetries
-	}
-	if s.Config.Tools.MaxConcurrency > 0 {
-		config.MaxConcurrency = s.Config.Tools.MaxConcurrency
-	}
-
-	s.ToolManager = tool.NewToolManager(registry, config)
-	logx.Infof("ToolManager initialized: timeout=%v, maxRetries=%d, maxConcurrency=%d",
-		config.Timeout, config.MaxRetries, config.MaxConcurrency)
-}
-
-// Close 关闭资源
+// Close 释放资源。
 func (s *ServiceContext) Close() error {
-	if s.AgentPool != nil {
-		s.AgentPool.Cleanup()
+	if s.Pool != nil {
+		s.Pool.Cleanup()
+	}
+	if s.Sessions != nil {
+		_ = s.Sessions.Close()
+	}
+	if s.Messages != nil {
+		_ = s.Messages.Close()
+	}
+	if s.CheckPointStore != nil {
+		_ = s.CheckPointStore.Close()
 	}
 	return nil
 }

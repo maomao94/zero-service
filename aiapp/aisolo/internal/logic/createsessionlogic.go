@@ -2,14 +2,12 @@ package logic
 
 import (
 	"context"
-
-	"zero-service/aiapp/aisolo/aisolo"
-
-	"zero-service/aiapp/aisolo/internal/svc"
+	"errors"
 
 	"github.com/zeromicro/go-zero/core/logx"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+
+	"zero-service/aiapp/aisolo/aisolo"
+	"zero-service/aiapp/aisolo/internal/svc"
 )
 
 type CreateSessionLogic struct {
@@ -26,31 +24,14 @@ func NewCreateSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Cre
 	}
 }
 
-// CreateSession 创建会话
+// CreateSession 新建一个会话 (用户只挑 mode, 无需再指定 agent)。
 func (l *CreateSessionLogic) CreateSession(in *aisolo.CreateSessionReq) (*aisolo.CreateSessionResp, error) {
-	// 验证必填参数
-	userID := in.UserId
-	if userID == "" {
-		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	if in.UserId == "" {
+		return nil, errors.New("user_id is required")
 	}
-
-	// 创建会话
-	session, err := GlobalSessionStore.Create(l.ctx, userID)
-	if err != nil {
-		l.Errorf("create session failed: %v", err)
+	sess := newSession(in.UserId, in.Title, in.Mode)
+	if err := l.svcCtx.Sessions.CreateSession(l.ctx, sess); err != nil {
 		return nil, err
 	}
-
-	// 返回包装响应
-	return &aisolo.CreateSessionResp{
-		Session: &aisolo.Session{
-			SessionId:    session.SessionId,
-			UserId:       session.UserId,
-			Title:        in.Title,
-			AgentMode:    in.AgentMode,
-			CreatedAt:    session.CreatedAt,
-			UpdatedAt:    session.UpdatedAt,
-			MessageCount: session.MessageCount,
-		},
-	}, nil
+	return &aisolo.CreateSessionResp{Session: toProtoSession(sess)}, nil
 }

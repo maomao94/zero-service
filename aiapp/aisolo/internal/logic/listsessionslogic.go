@@ -3,13 +3,10 @@ package logic
 import (
 	"context"
 
-	"zero-service/aiapp/aisolo/aisolo"
-
-	"zero-service/aiapp/aisolo/internal/svc"
-
 	"github.com/zeromicro/go-zero/core/logx"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+
+	"zero-service/aiapp/aisolo/aisolo"
+	"zero-service/aiapp/aisolo/internal/svc"
 )
 
 type ListSessionsLogic struct {
@@ -26,34 +23,30 @@ func NewListSessionsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *List
 	}
 }
 
-// ListSessions 列出会话
 func (l *ListSessionsLogic) ListSessions(in *aisolo.ListSessionsReq) (*aisolo.ListSessionsResp, error) {
-	// 验证必填参数
-	userID := in.UserId
-	if userID == "" {
-		return nil, status.Error(codes.InvalidArgument, "user_id is required")
-	}
-
 	page := int(in.Page)
+	size := int(in.PageSize)
 	if page <= 0 {
 		page = 1
 	}
-
-	pageSize := int(in.PageSize)
-	if pageSize <= 0 {
-		pageSize = 20
+	if size <= 0 {
+		size = 20
 	}
-
-	sessions, total, err := GlobalSessionStore.List(l.ctx, userID, page, pageSize)
+	sessions, total, err := l.svcCtx.Sessions.ListSessions(l.ctx, in.UserId, page, size)
 	if err != nil {
-		l.Errorf("list sessions failed: %v", err)
 		return nil, err
 	}
 
+	out := make([]*aisolo.Session, 0, len(sessions))
+	for _, s := range sessions {
+		out = append(out, toProtoSession(s))
+	}
+
+	totalPages := int32((total + int64(size) - 1) / int64(size))
 	return &aisolo.ListSessionsResp{
-		Sessions:   sessions,
+		Sessions:   out,
 		Total:      total,
 		Page:       int32(page),
-		TotalPages: int32((int(total) + pageSize - 1) / pageSize),
+		TotalPages: totalPages,
 	}, nil
 }

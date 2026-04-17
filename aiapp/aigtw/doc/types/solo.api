@@ -1,119 +1,188 @@
 syntax = "v1"
 
 // ============================================================
-// Solo 类型定义 - 基于 A2UI 协议
+// Solo 类型定义 —— 与 aisolo gRPC 对齐, 模式驱动 + 6 种中断
 // ============================================================
 // SoloChatRequest Solo 对话请求
 type SoloChatRequest {
-	SessionId string `json:"sessionId"` // 会话 ID（空则创建新会话）
+	SessionId string `json:"sessionId"` // 会话 ID（必填）
 	Message   string `json:"message"` // 消息内容
-	AgentMode string `json:"agentMode,optional"` // Agent 模式: auto, fast, deep
+	Mode      string `json:"mode,optional"` // Mode 名: agent | workflow | supervisor | plan | deep
 }
 
-// SoloChatResponse Solo 流式对话响应（SSE 流，实际数据通过 A2UI NDJSON 输出）
+// SoloChatResponse Solo 流式对话响应 (SSE NDJSON)
 type SoloChatResponse {}
 
 // SoloSessionInfo Solo 会话信息
 type SoloSessionInfo {
-	SessionId    string `json:"sessionId"` // 会话 ID
-	UserId       string `json:"userId"` // 用户 ID
-	AgentMode    string `json:"agentMode"` // Agent 模式
-	Title        string `json:"title"` // 会话标题
-	CreatedAt    int64  `json:"createdAt"` // 创建时间
-	UpdatedAt    int64  `json:"updatedAt"` // 更新时间
-	MessageCount int    `json:"messageCount"` // 消息数量
-	LastMessage  string `json:"lastMessage"` // 最后一条消息
+	SessionId    string `json:"sessionId"`
+	UserId       string `json:"userId"`
+	Mode         string `json:"mode"`
+	Status       string `json:"status"` // idle | running | interrupted
+	InterruptId  string `json:"interruptId,optional"`
+	Title        string `json:"title"`
+	CreatedAt    int64  `json:"createdAt"`
+	UpdatedAt    int64  `json:"updatedAt"`
+	MessageCount int    `json:"messageCount"`
+	LastMessage  string `json:"lastMessage"`
 }
 
 // SoloListSessionsRequest Solo 列出会话请求
 type SoloListSessionsRequest {
-	Page     int `json:"page,optional"` // 页码
-	PageSize int `json:"pageSize,optional"` // 每页数量
+	Page     int `form:"page,optional"`
+	PageSize int `form:"pageSize,optional"`
 }
 
 // SoloListSessionsResponse Solo 列出会话响应
 type SoloListSessionsResponse {
-	Sessions []*SoloSessionInfo `json:"sessions"` // 会话列表
-	Total    int                `json:"total"` // 总数
+	Sessions   []*SoloSessionInfo `json:"sessions"`
+	Total      int                `json:"total"`
+	Page       int                `json:"page"`
+	TotalPages int                `json:"totalPages"`
 }
 
 // SoloCreateSessionRequest Solo 创建会话请求
 type SoloCreateSessionRequest {
-	Title string `json:"title,optional"` // 会话标题
+	Title string `json:"title,optional"`
+	Mode  string `json:"mode,optional"` // 可选, 留空走默认
 }
 
 // SoloCreateSessionResponse Solo 创建会话响应
 type SoloCreateSessionResponse {
-	Session *SoloSessionInfo `json:"session"` // 会话信息
+	Session *SoloSessionInfo `json:"session"`
 }
 
 // SoloGetSessionRequest Solo 获取会话请求
 type SoloGetSessionRequest {
-	SessionId string `path:"id"` // 会话 ID
+	SessionId string `path:"sessionId"`
 }
 
 // SoloGetSessionResponse Solo 获取会话响应
 type SoloGetSessionResponse {
-	Session *SoloSessionInfo `json:"session"` // 会话信息
+	Session *SoloSessionInfo `json:"session"`
 }
 
 // SoloDeleteSessionRequest Solo 删除会话请求
 type SoloDeleteSessionRequest {
-	SessionId string `path:"id"` // 会话 ID
+	SessionId string `path:"sessionId"`
 }
 
 // SoloDeleteSessionResponse Solo 删除会话响应
 type SoloDeleteSessionResponse {
-	Success bool `json:"success"` // 是否成功
+	Success bool `json:"success"`
 }
 
-// SoloToolInfo Solo 工具信息
-type SoloToolInfo {
-	Name        string `json:"name"` // 工具名称
-	Description string `json:"description"` // 工具描述
+// SoloMessageInfo Solo 会话消息
+type SoloMessageInfo {
+	Id         string `json:"id"`
+	SessionId  string `json:"sessionId"`
+	UserId     string `json:"userId"`
+	Role       string `json:"role"` // user | assistant | tool | system
+	Content    string `json:"content"`
+	CreatedAt  int64  `json:"createdAt"`
+	ToolCallId string `json:"toolCallId,optional"`
+	ToolName   string `json:"toolName,optional"`
 }
 
-// SoloAgentInfo Solo Agent 信息
-type SoloAgentInfo {
-	Type         string          `json:"type"` // Agent 类型
-	Name         string          `json:"name"` // Agent 名称
-	Description  string          `json:"description"` // Agent 描述
-	Capabilities []string        `json:"capabilities"` // 能力列表
-	Available    bool            `json:"available"` // 是否可用
-	Tools        []*SoloToolInfo `json:"tools"` // 可用工具列表
+// SoloListMessagesRequest Solo 获取会话历史消息请求
+type SoloListMessagesRequest {
+	SessionId string `path:"sessionId"`
+	Limit     int    `form:"limit,optional"`
 }
 
-// SoloListAgentsResponse Solo 列出 Agent 响应
-type SoloListAgentsResponse {
-	Agents []*SoloAgentInfo `json:"agents"` // Agent 列表
+// SoloListMessagesResponse Solo 历史消息响应
+type SoloListMessagesResponse {
+	Messages []*SoloMessageInfo `json:"messages"`
+	Total    int                `json:"total"`
 }
 
-// SoloSwitchAgentRequest Solo 切换 Agent 请求
-type SoloSwitchAgentRequest {
-	SessionId   string `json:"sessionId"` // 会话 ID
-	AgentMode   string `json:"agentMode"` // Agent 模式
-	KeepContext bool   `json:"keepContext"` // 保持上下文
+// SoloModeInfo Mode 元信息 (取代旧的 AgentInfo)
+type SoloModeInfo {
+	Mode         string   `json:"mode"` // agent | workflow | supervisor | plan | deep
+	Name         string   `json:"name"` // 展示名
+	Description  string   `json:"description"`
+	Capabilities []string `json:"capabilities"`
+	Default      bool     `json:"default"`
 }
 
-// SoloSwitchAgentResponse Solo 切换 Agent 响应
-type SoloSwitchAgentResponse {
-	Session  *SoloSessionInfo `json:"session"` // 会话信息
-	NewAgent *SoloAgentInfo   `json:"newAgent"` // 新的 Agent
+// SoloListModesResponse Solo 列出 Mode 响应
+type SoloListModesResponse {
+	Modes []*SoloModeInfo `json:"modes"`
 }
 
-// SoloInterruptRequest Solo 中断请求（前端触发）
+// SoloInterruptRequest Solo 中断恢复请求 (6 种 kind 通过 Action + 附加字段区分)
+//
+// Action 取值：
+//   - approve : 批准 (approval kind)
+//   - deny    : 拒绝 (approval kind, 可带 reason)
+//   - select  : 选择 (single/multi_select kind, 带 selectedIds)
+//   - text    : 文本 (free_text kind, 带 text)
+//   - form    : 表单 (form_input kind, 带 formValues)
+//   - ack     : 确认 (info_ack kind)
+//   - cancel  : 取消 (任意 kind)
 type SoloInterruptRequest {
-	SessionId   string   `json:"sessionId,optional"` // 会话 ID（可选，后端通过 interruptId 关联）
-	InterruptId string   `json:"interruptId"` // 中断 ID
-	Approved    bool     `json:"approved"` // 是否批准
-	SelectedIds []string `json:"selectedIds"` // 选中的选项 ID
-	Reason      string   `json:"reason,optional"` // 拒绝原因
+	SessionId   string            `json:"sessionId,optional"`
+	InterruptId string            `path:"interruptId"`
+	Action      string            `json:"action,optional"`
+	SelectedIds []string          `json:"selectedIds,optional"`
+	Reason      string            `json:"reason,optional"`
+	Text        string            `json:"text,optional"`
+	FormValues  map[string]string `json:"formValues,optional"`
 }
 
-// SoloInterruptResponse Solo 中断响应
-type SoloInterruptResponse {
-	Success     bool   `json:"success"` // 是否成功
-	Message     string `json:"message"` // 消息
-	InterruptId string `json:"interruptId"` // 中断 ID
+// SoloInterruptResponse Solo 中断恢复响应 (SSE NDJSON)
+type SoloInterruptResponse {}
+
+// SoloOption 单选/多选选项
+type SoloOption {
+	Id    string `json:"id"`
+	Label string `json:"label"`
+	Desc  string `json:"desc,optional"`
+}
+
+// SoloField 表单字段
+type SoloField {
+	Name        string `json:"name"`
+	Label       string `json:"label"`
+	Type        string `json:"type"`
+	Required    bool   `json:"required,optional"`
+	Placeholder string `json:"placeholder,optional"`
+	Default     string `json:"default,optional"`
+}
+
+// SoloInterruptInfo 结构化中断详情 (页面刷新后回填 UI 使用)
+//
+// Kind 决定哪些字段有效:
+//   approval      -> question, detail
+//   single_select -> question, options
+//   multi_select  -> question, options, minSelect, maxSelect
+//   free_text     -> question, placeholder, multiline
+//   form_input    -> question, fields
+//   info_ack      -> title, body
+type SoloInterruptInfo {
+	InterruptId string        `json:"interruptId"`
+	Kind        string        `json:"kind"`
+	ToolName    string        `json:"toolName,optional"`
+	Required    bool          `json:"required,optional"`
+	Question    string        `json:"question,optional"`
+	Detail      string        `json:"detail,optional"`
+	Options     []*SoloOption `json:"options,optional"`
+	MinSelect   int           `json:"minSelect,optional"`
+	MaxSelect   int           `json:"maxSelect,optional"`
+	Placeholder string        `json:"placeholder,optional"`
+	Multiline   bool          `json:"multiline,optional"`
+	Fields      []*SoloField  `json:"fields,optional"`
+	Title       string        `json:"title,optional"`
+	Body        string        `json:"body,optional"`
+}
+
+// SoloGetInterruptRequest 获取中断详情请求
+type SoloGetInterruptRequest {
+	InterruptId string `path:"interruptId"`
+}
+
+// SoloGetInterruptResponse 获取中断详情响应
+type SoloGetInterruptResponse {
+	Info *SoloInterruptInfo `json:"info"`
 }
 

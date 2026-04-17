@@ -4,157 +4,114 @@ import (
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/components/tool"
-	"github.com/cloudwego/eino/schema"
-
-	"zero-service/common/einox/memory"
 )
-
-// =============================================================================
-// Agent 配置选项（构造时）
-// =============================================================================
 
 // Option Agent 构造选项
 type Option func(*options)
 
+// newOptions 应用选项, 给出可读的默认值。
+func newOptions(opts ...Option) *options {
+	o := &options{}
+	for _, fn := range opts {
+		fn(o)
+	}
+	return o
+}
+
 type options struct {
-	name             string
-	description      string
-	instruction      string
-	model            any // 支持 BaseChatModel/ChatModel/ToolCallingChatModel
-	tools            []tool.BaseTool
-	storage          memory.Storage
-	stream           bool
-	memoryConfig     *memory.MemoryConfig
-	handlers         []adk.ChatModelAgentMiddleware // 使用 Handlers (接口类型)
-	middlewares      []adk.AgentMiddleware          // 简单场景用 Middlewares (结构体类型)
-	modelOptions     []model.Option
-	enableWriteTodos bool   // Deep Agent: 启用 WriteTodos
-	enableFileSystem bool   // Deep Agent: 启用文件系统
-	skillsDir        string // Deep Agent: Skills 目录
-	maxIter          int    // 组合型 Agent: 最大迭代次数
+	name            string
+	description     string
+	instruction     string
+	model           any
+	tools           []tool.BaseTool
+	subAgents       []adk.Agent
+	handlers        []adk.ChatModelAgentMiddleware
+	middlewares     []adk.AgentMiddleware
+	modelOptions    []model.Option
+	skillsDir       string
+	maxIter         int
+	checkpointStore adk.CheckPointStore
+
+	enableWriteTodos bool
+	enableFileSystem bool
 }
 
 // WithName 设置 Agent 名称
 func WithName(name string) Option {
-	return func(o *options) {
-		o.name = name
-	}
+	return func(o *options) { o.name = name }
 }
 
 // WithDescription 设置 Agent 描述
 func WithDescription(desc string) Option {
-	return func(o *options) {
-		o.description = desc
-	}
+	return func(o *options) { o.description = desc }
 }
 
 // WithInstruction 设置系统指令
-func WithInstruction(instruction string) Option {
-	return func(o *options) {
-		o.instruction = instruction
-	}
+func WithInstruction(s string) Option {
+	return func(o *options) { o.instruction = s }
 }
 
-// WithModel 设置模型（支持 BaseChatModel/ChatModel/ToolCallingChatModel）
-//
-// 推荐使用 ToolCallingChatModel（如 ark.ChatModel），因为它支持并发安全的 WithTools
+// WithModel 设置模型
 func WithModel(m any) Option {
-	return func(o *options) {
-		o.model = m
-	}
+	return func(o *options) { o.model = m }
 }
 
 // WithTools 设置工具列表
 func WithTools(tools ...tool.BaseTool) Option {
-	return func(o *options) {
-		o.tools = tools
-	}
+	return func(o *options) { o.tools = append(o.tools, tools...) }
 }
 
-// WithStorage 设置记忆存储
-func WithStorage(storage memory.Storage) Option {
-	return func(o *options) {
-		o.storage = storage
-	}
+// WithSubAgents 设置子 Agent（Workflow / Supervisor 使用）
+func WithSubAgents(subs ...adk.Agent) Option {
+	return func(o *options) { o.subAgents = append(o.subAgents, subs...) }
 }
 
-// WithMemoryStorage 创建并设置记忆存储（使用默认内存存储）
-func WithMemoryStorage(opts ...memory.StorageOption) Option {
-	return func(o *options) {
-		o.storage = memory.NewMemoryStorage(opts...)
-	}
-}
-
-// WithStream 启用流式输出
-func WithStream(enable bool) Option {
-	return func(o *options) {
-		o.stream = enable
-	}
-}
-
-// WithMemoryConfig 设置记忆配置
-//
-// 配置用户记忆、会话摘要等功能。
-// 传 nil 使用默认配置，传 memory.DisableMemory() 禁用记忆功能。
-func WithMemoryConfig(cfg *memory.MemoryConfig) Option {
-	return func(o *options) {
-		o.memoryConfig = cfg
-	}
-}
-
-// WithHandler 添加 Handler（ChatModelAgentMiddleware 接口实现）
-//
-// 推荐使用此方法添加复杂中间件，如：
-// - ApprovalMiddleware: 工具调用审批
-// - ChoiceMiddleware: 单选/多选交互
-// - HumanConfirmMiddleware: 人工确认
+// WithHandler 添加 ChatModelAgentMiddleware
 func WithHandler(mw adk.ChatModelAgentMiddleware) Option {
-	return func(o *options) {
-		o.handlers = append(o.handlers, mw)
-	}
+	return func(o *options) { o.handlers = append(o.handlers, mw) }
 }
 
-// WithHandlers 添加多个 Handler
+// WithHandlers 添加多个 ChatModelAgentMiddleware
 func WithHandlers(mws ...adk.ChatModelAgentMiddleware) Option {
-	return func(o *options) {
-		o.handlers = append(o.handlers, mws...)
-	}
+	return func(o *options) { o.handlers = append(o.handlers, mws...) }
 }
 
-// WithMiddleware 添加 Middleware（AgentMiddleware 结构体，简化场景）
-//
-// 适用于简单的静态扩展，如添加额外指令或工具
+// WithMiddleware 添加 AgentMiddleware
 func WithMiddleware(mw adk.AgentMiddleware) Option {
-	return func(o *options) {
-		o.middlewares = append(o.middlewares, mw)
-	}
+	return func(o *options) { o.middlewares = append(o.middlewares, mw) }
 }
 
-// WithMiddlewares 添加多个 Middleware
+// WithMiddlewares 添加多个 AgentMiddleware
 func WithMiddlewares(mws ...adk.AgentMiddleware) Option {
-	return func(o *options) {
-		o.middlewares = append(o.middlewares, mws...)
-	}
+	return func(o *options) { o.middlewares = append(o.middlewares, mws...) }
 }
 
-// WithModelOption 添加模型选项
-//
-// 可用选项参考 model 包的 WithTemperature, WithTopP, WithMaxTokens 等
+// WithModelOption 添加模型参数选项
 func WithModelOption(opt model.Option) Option {
-	return func(o *options) {
-		o.modelOptions = append(o.modelOptions, opt)
-	}
+	return func(o *options) { o.modelOptions = append(o.modelOptions, opt) }
 }
 
-// =============================================================================
-// 辅助函数
-// =============================================================================
+// WithSkillsDir 设置 Skills 目录
+func WithSkillsDir(dir string) Option {
+	return func(o *options) { o.skillsDir = dir }
+}
 
-// schemaMsgFromMessages 转换消息列表
-func schemaMsgFromMessages(msgs []*memory.ConversationMessage) []*schema.Message {
-	var schemaMsgs []*schema.Message
-	for _, msg := range msgs {
-		schemaMsgs = append(schemaMsgs, msg.ToSchemaMessage())
-	}
-	return schemaMsgs
+// WithMaxIterations 设置最大迭代次数（Deep / PlanExecute / Loop 使用）
+func WithMaxIterations(n int) Option {
+	return func(o *options) { o.maxIter = n }
+}
+
+// WithEnableWriteTodos 启用 Deep Agent 的 WriteTodos
+func WithEnableWriteTodos(b bool) Option {
+	return func(o *options) { o.enableWriteTodos = b }
+}
+
+// WithEnableFileSystem 启用 Deep Agent 的文件系统
+func WithEnableFileSystem(b bool) Option {
+	return func(o *options) { o.enableFileSystem = b }
+}
+
+// WithCheckPointStore 设置 adk Runner 的 CheckPointStore（用于中断/恢复）
+func WithCheckPointStore(s adk.CheckPointStore) Option {
+	return func(o *options) { o.checkpointStore = s }
 }

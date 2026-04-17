@@ -1,0 +1,450 @@
+:root {
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --surface-2: #f1f3f8;
+  --border: #e4e7ee;
+  --text: #1f2230;
+  --text-muted: #6b7280;
+  --primary: #3b5bff;
+  --primary-hover: #2b49e8;
+  --danger: #dc3545;
+  --success: #1aaf5c;
+  --warning: #e4a11b;
+  --radius: 8px;
+  --radius-sm: 6px;
+  --mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, monospace;
+  --font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei",
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; padding: 0; }
+body {
+  font-family: var(--font);
+  color: var(--text);
+  background: var(--bg);
+  font-size: 14px;
+  line-height: 1.5;
+}
+button { font-family: inherit; cursor: pointer; }
+
+/* ============ 应用外壳 ============ */
+.app-shell {
+  display: grid;
+  grid-template-rows: 52px 1fr;
+  height: 100%;
+}
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.app-header .brand { font-weight: 600; font-size: 15px; }
+.app-header .brand .sub { color: var(--text-muted); font-weight: 400; margin-left: 6px; font-size: 13px; }
+.app-header .actions { display: flex; gap: 8px; align-items: center; }
+.app-header input[type="password"],
+.app-header input[type="text"] {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  width: 240px;
+  font-size: 13px;
+}
+.status-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--text-muted);
+  display: inline-block;
+}
+.status-dot.ok { background: var(--success); }
+.status-dot.err { background: var(--danger); }
+.status-dot.run { background: var(--warning); animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: 0.3; } }
+
+.app-main {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  overflow: hidden;
+}
+
+/* ============ 左侧会话列表 ============ */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-header h3 { margin: 0; font-size: 13px; color: var(--text-muted); }
+.session-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  overflow-y: auto;
+  flex: 1;
+}
+.session-list li {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  margin-bottom: 4px;
+  transition: background 0.15s;
+}
+.session-list li:hover { background: var(--surface-2); }
+.session-list li.active { background: #e6ebff; }
+.session-list .title { font-size: 13px; font-weight: 500; }
+.session-list .meta {
+  display: flex; justify-content: space-between;
+  color: var(--text-muted); font-size: 11px; margin-top: 2px;
+}
+.session-list .badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  color: #fff;
+  background: var(--primary);
+}
+.session-list .badge.mode-workflow { background: #7a5bff; }
+.session-list .badge.mode-supervisor { background: #0ea5a7; }
+.session-list .badge.mode-plan { background: #e4a11b; }
+.session-list .badge.mode-deep { background: #d33; }
+.session-list .badge.status-interrupted { background: var(--warning); }
+.session-list .badge.status-running { background: var(--primary); }
+
+/* ============ 中间聊天区 ============ */
+.chat-area {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  overflow: hidden;
+  background: var(--bg);
+}
+.chat-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.chat-toolbar .left { display: flex; flex-direction: column; min-width: 0; }
+.chat-toolbar .title { font-weight: 600; font-size: 14px; }
+.chat-toolbar .sub { color: var(--text-muted); font-size: 12px; }
+.chat-toolbar .right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.chat-toolbar select, .chat-toolbar input {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  background: #fff;
+}
+
+/* ============ 本地计算器（与后端 calculator 规则一致） ============ */
+.calc-panel-wrap {
+  padding: 6px 12px 8px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.calc-panel-wrap .calc-toggle {
+  margin-bottom: 0;
+}
+.calc-panel {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.calc-panel .calc-row {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 8px;
+  align-items: center;
+}
+.calc-panel .calc-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.calc-panel .calc-input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--mono);
+  font-size: 13px;
+  background: #fff;
+}
+.calc-panel .calc-preview {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: #fff;
+  border: 1px solid var(--border);
+  min-height: 32px;
+}
+.calc-panel .calc-preview .muted { color: var(--text-muted); font-family: var(--font); }
+.calc-panel .calc-preview.is-ok {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+.calc-panel .calc-preview.is-err {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
+.calc-panel .calc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.calc-panel .calc-hint {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.messages {
+  padding: 20px;
+  overflow-y: auto;
+  display: flex; flex-direction: column;
+  gap: 12px;
+}
+.empty {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  gap: 8px;
+  text-align: center;
+}
+
+.message {
+  max-width: min(760px, 100%);
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  line-height: 1.6;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+.message.user {
+  align-self: flex-end;
+  background: #e6ebff;
+  border-color: #c8d2ff;
+}
+.message.assistant { align-self: flex-start; }
+.message.tool {
+  align-self: flex-start;
+  background: var(--surface-2);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.message.system {
+  align-self: center;
+  background: #fff7e6;
+  border-color: #ffe7ba;
+  font-size: 12px;
+  color: #8a6d1e;
+}
+.message .role {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.message .body p:last-child { margin-bottom: 0; }
+.message .body pre {
+  background: #282c34; color: #abb2bf;
+  padding: 10px; border-radius: var(--radius-sm);
+  overflow-x: auto;
+}
+.message .body code { font-family: var(--mono); font-size: 12px; }
+.message .body p code {
+  background: var(--surface-2);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.tool-call {
+  align-self: flex-start;
+  max-width: min(760px, 100%);
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  font-family: var(--mono); font-size: 12px;
+}
+.tool-call.pending { background: #fffbeb; border-color: #fde68a; }
+.tool-call.error { background: #fef2f2; border-color: #fecaca; }
+.tool-call .name { font-weight: 600; }
+.tool-call .args,
+.tool-call .result {
+  margin-top: 4px; color: var(--text-muted);
+  white-space: pre-wrap; word-break: break-all;
+}
+.tool-call.error .tool-soft-error {
+  color: #991b1b;
+  font-weight: 500;
+}
+
+/* ============ 中断面板 ============ */
+.interrupt-panel {
+  margin: 12px 20px;
+  padding: 16px;
+  border-radius: var(--radius);
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  display: flex; flex-direction: column;
+  gap: 10px;
+}
+.interrupt-panel .kind {
+  display: inline-block;
+  background: var(--warning);
+  color: #fff;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  align-self: flex-start;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.interrupt-panel .question { font-weight: 600; font-size: 14px; }
+.interrupt-panel .detail,
+.interrupt-panel .body { color: var(--text-muted); font-size: 13px; }
+.interrupt-panel .tool-name {
+  font-family: var(--mono); font-size: 11px; color: var(--text-muted);
+}
+.interrupt-panel .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.interrupt-panel .options { display: flex; flex-direction: column; gap: 6px; }
+.interrupt-panel .options label {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.interrupt-panel .options label:hover { background: var(--surface-2); }
+.interrupt-panel .options .option-label { font-weight: 500; }
+.interrupt-panel .options .option-desc {
+  color: var(--text-muted); font-size: 12px; margin-top: 2px;
+}
+.interrupt-panel input[type="text"],
+.interrupt-panel textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 13px;
+  background: #fff;
+}
+.interrupt-panel textarea { min-height: 80px; resize: vertical; }
+.interrupt-panel .field-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 8px; align-items: center;
+  margin-bottom: 8px;
+}
+.interrupt-panel .field-row label { font-size: 13px; }
+
+/* ============ 输入框 ============ */
+.composer {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+.composer textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  resize: vertical;
+  min-height: 48px;
+  font-family: inherit;
+}
+.composer .send-group { display: flex; flex-direction: column; gap: 6px; }
+
+/* ============ 按钮 ============ */
+.btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.btn:hover { background: var(--surface-2); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn.primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+.btn.danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+.btn.danger:hover { opacity: 0.85; }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--text-muted); }
+.btn.ghost:hover { color: var(--text); }
+.btn.sm { padding: 3px 8px; font-size: 12px; }
+
+/* ============ Toast ============ */
+.toasts {
+  position: fixed;
+  top: 70px; right: 20px;
+  display: flex; flex-direction: column;
+  gap: 8px; z-index: 999;
+}
+.toast {
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  background: #1f2230;
+  color: #fff;
+  font-size: 13px;
+  min-width: 200px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  animation: slideIn 0.2s ease-out;
+}
+.toast.error { background: var(--danger); }
+.toast.success { background: var(--success); }
+.toast.warn { background: var(--warning); }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* ============ Mode picker ============ */
+.mode-picker {
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.mode-picker .chip {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+.mode-picker .chip:hover { background: var(--surface-2); }
+.mode-picker .chip.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.mode-picker .chip[disabled] { opacity: 0.5; cursor: not-allowed; }

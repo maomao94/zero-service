@@ -2,10 +2,11 @@ package solo
 
 import (
 	"context"
-	"zero-service/aiapp/aisolo/aisolo"
+	"errors"
 
 	"zero-service/aiapp/aigtw/internal/svc"
 	"zero-service/aiapp/aigtw/internal/types"
+	"zero-service/aiapp/aisolo/aisolo"
 	"zero-service/common/ctxdata"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -17,6 +18,7 @@ type CreateSessionLogic struct {
 	svcCtx *svc.ServiceContext
 }
 
+// NewCreateSessionLogic 创建会话 Logic。
 func NewCreateSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *CreateSessionLogic {
 	return &CreateSessionLogic{
 		Logger: logx.WithContext(ctx),
@@ -25,34 +27,19 @@ func NewCreateSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Cre
 	}
 }
 
-func (l *CreateSessionLogic) CreateSession(req *types.SoloCreateSessionRequest) (resp *types.SoloCreateSessionResponse, err error) {
-	// 从 JWT context 获取用户ID
+// CreateSession 透传到 aisolo gRPC, 用户 ID 从 JWT 解析出的 ctx 拿。
+func (l *CreateSessionLogic) CreateSession(req *types.SoloCreateSessionRequest) (*types.SoloCreateSessionResponse, error) {
 	userID := ctxdata.GetUserId(l.ctx)
 	if userID == "" {
-		userID = "anonymous"
+		return nil, errors.New("missing user id in context")
 	}
-
-	protoReq := &aisolo.CreateSessionReq{
-		Title:  req.Title,
+	resp, err := l.svcCtx.AiSoloCli.CreateSession(l.ctx, &aisolo.CreateSessionReq{
 		UserId: userID,
-	}
-
-	result, err := l.svcCtx.AiSoloCli.CreateSession(l.ctx, protoReq)
+		Title:  req.Title,
+		Mode:   parseMode(req.Mode),
+	})
 	if err != nil {
-		l.Logger.Errorf("create session failed: %v", err)
 		return nil, err
 	}
-
-	return &types.SoloCreateSessionResponse{
-		Session: &types.SoloSessionInfo{
-			SessionId:    result.Session.SessionId,
-			UserId:       result.Session.UserId,
-			AgentMode:    result.Session.AgentMode.String(),
-			Title:        result.Session.Title,
-			CreatedAt:    result.Session.CreatedAt,
-			UpdatedAt:    result.Session.UpdatedAt,
-			MessageCount: int(result.Session.MessageCount),
-			LastMessage:  result.Session.LastMessage,
-		},
-	}, nil
+	return &types.SoloCreateSessionResponse{Session: sessionToType(resp.GetSession())}, nil
 }

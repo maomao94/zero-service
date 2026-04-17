@@ -23,55 +23,56 @@ func NewAiSoloServer(svcCtx *svc.ServiceContext) *AiSoloServer {
 	}
 }
 
-// CreateSession 创建会话
+// 会话管理
 func (s *AiSoloServer) CreateSession(ctx context.Context, in *aisolo.CreateSessionReq) (*aisolo.CreateSessionResp, error) {
 	l := logic.NewCreateSessionLogic(ctx, s.svcCtx)
 	return l.CreateSession(in)
 }
 
-// GetSession 获取会话
 func (s *AiSoloServer) GetSession(ctx context.Context, in *aisolo.GetSessionReq) (*aisolo.GetSessionResp, error) {
 	l := logic.NewGetSessionLogic(ctx, s.svcCtx)
 	return l.GetSession(in)
 }
 
-// ListSessions 列出会话
 func (s *AiSoloServer) ListSessions(ctx context.Context, in *aisolo.ListSessionsReq) (*aisolo.ListSessionsResp, error) {
 	l := logic.NewListSessionsLogic(ctx, s.svcCtx)
 	return l.ListSessions(in)
 }
 
-// DeleteSession 删除会话
 func (s *AiSoloServer) DeleteSession(ctx context.Context, in *aisolo.DeleteSessionReq) (*aisolo.DeleteSessionResp, error) {
 	l := logic.NewDeleteSessionLogic(ctx, s.svcCtx)
 	return l.DeleteSession(in)
 }
 
-// AskStream 流式对话
+func (s *AiSoloServer) ListMessages(ctx context.Context, in *aisolo.ListMessagesReq) (*aisolo.ListMessagesResp, error) {
+	l := logic.NewListMessagesLogic(ctx, s.svcCtx)
+	return l.ListMessages(in)
+}
+
+// 对话 / 恢复 (均为流式)
 func (s *AiSoloServer) AskStream(in *aisolo.AskReq, stream aisolo.AiSolo_AskStreamServer) error {
 	l := logic.NewAskStreamLogic(stream.Context(), s.svcCtx)
 	return l.AskStream(in, stream)
 }
 
-// ListAgents 列出可用 Agent
-func (s *AiSoloServer) ListAgents(ctx context.Context, in *aisolo.ListAgentsReq) (*aisolo.ListAgentsResp, error) {
-	l := logic.NewListAgentsLogic(ctx, s.svcCtx)
-	return l.ListAgents(in)
-}
-
-// Resume 恢复中断的执行（同步返回结果）
-func (s *AiSoloServer) Resume(ctx context.Context, in *aisolo.ResumeReq) (*aisolo.ResumeResp, error) {
-	l := logic.NewResumeLogic(ctx, s.svcCtx)
-	return l.Resume(in)
-}
-
-// ResumeStream 恢复中断的执行（流式返回 A2UI 事件）
 func (s *AiSoloServer) ResumeStream(in *aisolo.ResumeReq, stream aisolo.AiSolo_ResumeStreamServer) error {
 	l := logic.NewResumeStreamLogic(stream.Context(), s.svcCtx)
 	return l.ResumeStream(in, stream)
 }
 
-// Health 健康检查接口
+// Mode 列表
+func (s *AiSoloServer) ListModes(ctx context.Context, in *aisolo.ListModesReq) (*aisolo.ListModesResp, error) {
+	l := logic.NewListModesLogic(ctx, s.svcCtx)
+	return l.ListModes(in)
+}
+
+// 获取中断详情 (前端刷新后回填 UI)
+func (s *AiSoloServer) GetInterrupt(ctx context.Context, in *aisolo.GetInterruptReq) (*aisolo.GetInterruptResp, error) {
+	l := logic.NewGetInterruptLogic(ctx, s.svcCtx)
+	return l.GetInterrupt(in)
+}
+
+// 健康
 func (s *AiSoloServer) Health(ctx context.Context, in *aisolo.HealthReq) (*aisolo.HealthResp, error) {
 	l := logic.NewHealthLogic(ctx, s.svcCtx)
 	return l.Health(in)

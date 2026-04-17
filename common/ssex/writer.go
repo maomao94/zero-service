@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 )
 
 // Writer 封装 SSE 协议写入，自动 Flush
@@ -14,6 +15,7 @@ type Writer struct {
 	w       http.ResponseWriter
 	flusher http.Flusher
 	buf     []byte // 缓冲，用于 io.Writer 实现
+	mu      sync.Mutex
 }
 
 // NewWriter 创建 SSE Writer，要求 ResponseWriter 支持 Flusher
@@ -28,6 +30,9 @@ func NewWriter(w http.ResponseWriter) (*Writer, error) {
 // Write 实现 io.Writer 接口
 // 将数据缓冲，直到遇到换行符，每行作为 SSE data 事件发送
 func (w *Writer) Write(p []byte) (n int, err error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
 	w.buf = append(w.buf, p...)
 	for {
 		idx := bytes.IndexByte(w.buf, '\n')
@@ -51,6 +56,8 @@ func (w *Writer) Write(p []byte) (n int, err error) {
 //	data: {data}\n
 //	\n
 func (w *Writer) WriteEvent(event, data string) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	fmt.Fprintf(w.w, "event: %s\ndata: %s\n\n", event, data)
 	w.flusher.Flush()
 }
@@ -60,6 +67,8 @@ func (w *Writer) WriteEvent(event, data string) {
 //	data: {data}\n
 //	\n
 func (w *Writer) WriteData(data string) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	fmt.Fprintf(w.w, "data: %s\n\n", data)
 	w.flusher.Flush()
 }
@@ -69,6 +78,8 @@ func (w *Writer) WriteData(data string) {
 //	: {comment}\n
 //	\n
 func (w *Writer) WriteComment(comment string) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	fmt.Fprintf(w.w, ": %s\n\n", comment)
 	w.flusher.Flush()
 }
@@ -83,6 +94,8 @@ func (w *Writer) WriteKeepAlive() {
 //	data: {"id":"chatcmpl-xxx","choices":[...]}\n
 //	\n
 func (w *Writer) WriteJSON(v any) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	data, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -97,17 +110,23 @@ func (w *Writer) WriteJSON(v any) error {
 //	data: [DONE]\n
 //	\n
 func (w *Writer) WriteDone() {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	fmt.Fprint(w.w, "data: [DONE]\n\n")
 	w.flusher.Flush()
 }
 
 // Flush 手动刷新
 func (w *Writer) Flush() {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	w.flusher.Flush()
 }
 
 // BufferFlush 刷新缓冲区中剩余的数据
 func (w *Writer) BufferFlush() {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	if len(w.buf) > 0 {
 		fmt.Fprintf(w.w, "data: %s\n\n", w.buf)
 		w.buf = nil

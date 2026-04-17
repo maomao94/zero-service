@@ -2,10 +2,12 @@ package solo
 
 import (
 	"context"
-	"zero-service/aiapp/aisolo/aisolo"
+	"errors"
 
 	"zero-service/aiapp/aigtw/internal/svc"
 	"zero-service/aiapp/aigtw/internal/types"
+	"zero-service/aiapp/aisolo/aisolo"
+	"zero-service/common/ctxdata"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -24,16 +26,17 @@ func NewDeleteSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Del
 	}
 }
 
-func (l *DeleteSessionLogic) DeleteSession(req *types.SoloDeleteSessionRequest) (resp *types.SoloDeleteSessionResponse, err error) {
-	protoReq := &aisolo.DeleteSessionReq{
-		SessionId: req.SessionId,
+func (l *DeleteSessionLogic) DeleteSession(req *types.SoloDeleteSessionRequest) (*types.SoloDeleteSessionResponse, error) {
+	userID := ctxdata.GetUserId(l.ctx)
+	if userID == "" {
+		return nil, errors.New("missing user id in context")
 	}
-
-	result, err := l.svcCtx.AiSoloCli.DeleteSession(l.ctx, protoReq)
+	resp, err := l.svcCtx.AiSoloCli.DeleteSession(l.ctx, &aisolo.DeleteSessionReq{
+		SessionId: req.SessionId,
+		UserId:    userID,
+	})
 	if err != nil {
-		l.Logger.Errorf("delete session failed: %v", err)
 		return nil, err
 	}
-
-	return &types.SoloDeleteSessionResponse{Success: result.Success}, nil
+	return &types.SoloDeleteSessionResponse{Success: resp.GetSuccess()}, nil
 }

@@ -2,10 +2,10 @@ package logic
 
 import (
 	"context"
-	"zero-service/aiapp/aisolo/aisolo"
 
 	"github.com/zeromicro/go-zero/core/logx"
 
+	"zero-service/aiapp/aisolo/aisolo"
 	"zero-service/aiapp/aisolo/internal/svc"
 )
 
@@ -23,15 +23,12 @@ func NewDeleteSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Del
 	}
 }
 
-// DeleteSession 删除会话
 func (l *DeleteSessionLogic) DeleteSession(in *aisolo.DeleteSessionReq) (*aisolo.DeleteSessionResp, error) {
-	err := GlobalSessionStore.Delete(l.ctx, in.SessionId)
-	if err != nil {
-		l.Errorf("delete session failed: %v", err)
-		return nil, err
+	if err := l.svcCtx.Sessions.DeleteSession(l.ctx, in.UserId, in.SessionId); err != nil {
+		return &aisolo.DeleteSessionResp{Success: false}, err
 	}
-
-	l.Infof("Session deleted: %s", in.SessionId)
-
+	if l.svcCtx.Messages != nil {
+		_ = l.svcCtx.Messages.DeleteSession(l.ctx, in.UserId, in.SessionId)
+	}
 	return &aisolo.DeleteSessionResp{Success: true}, nil
 }

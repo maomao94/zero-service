@@ -1,7 +1,12 @@
+// Package memory 提供对话消息的持久化存储。
+//
+// 定义了最小的 Storage 接口（SaveMessage/GetMessages/DeleteSession），
+// 以及三种可切换的实现：memory / jsonl / gormx。
 package memory
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"strings"
 	"sync"
@@ -14,351 +19,160 @@ import (
 // Storage 接口
 // =============================================================================
 
-// Storage 记忆存储接口
+// Storage 对话消息存储接口。
+//
+// 设计原则：
+//   - 仅包含最小必要的消息持久化能力
+//   - 其他增强能力（用户记忆、会话摘要等）不属于核心存储职责
 type Storage interface {
-	// SaveMessage 保存消息
+	// SaveMessage 保存一条对话消息。
 	SaveMessage(ctx context.Context, msg *ConversationMessage) error
-	// GetMessages 获取会话消息
+
+	// GetMessages 读取指定会话的消息（按时间升序）。
+	//   limit <= 0 表示返回全部，>0 时返回最新的 limit 条。
 	GetMessages(ctx context.Context, userID, sessionID string, limit int) ([]*ConversationMessage, error)
-	// GetMessageCount 获取会话消息数量
-	GetMessageCount(ctx context.Context, userID, sessionID string) (int, error)
-	// CleanupMessagesByLimit 清理超限消息（保留最新的 N 条）
-	CleanupMessagesByLimit(ctx context.Context, userID, sessionID string, keepCount int) error
-	// CleanupMessagesByTime 清理过期消息
-	CleanupMessagesByTime(ctx context.Context, olderThan time.Duration) error
 
-	// GetUserMemory 获取用户记忆
-	GetUserMemory(ctx context.Context, userID string) (*UserMemory, error)
-	// SaveUserMemory 保存用户记忆
-	SaveUserMemory(ctx context.Context, memory *UserMemory) error
-	// SearchUserMemories 语义搜索用户记忆
-	SearchUserMemories(ctx context.Context, tenantID, userID, query string, vector []float32, topK int, threshold float64, permissionFilter []string) ([]*MemorySearchResult, error)
-	// GetUserMemoriesByPermission 获取用户指定权限级别的记忆
-	GetUserMemoriesByPermission(ctx context.Context, tenantID, userID string, permissions []string) ([]*UserMemory, error)
+	// DeleteSession 删除指定会话的全部消息。
+	DeleteSession(ctx context.Context, userID, sessionID string) error
 
-	// GetSessionSummary 获取会话摘要
-	GetSessionSummary(ctx context.Context, userID, sessionID string) (*SessionSummary, error)
-	// SaveSessionSummary 保存会话摘要
-	SaveSessionSummary(ctx context.Context, summary *SessionSummary) error
-
-	// CleanupOldSessions 清理旧会话
-	CleanupOldSessions(ctx context.Context, olderThan time.Duration) error
-
-	// AutoMigrate 自动迁移（用于 SQL 存储）
-	AutoMigrate() error
+	// Close 关闭存储（释放文件/数据库等资源）。
+	Close() error
 }
 
 // =============================================================================
-// MemoryStorage 内存存储实现
+// 工厂
 // =============================================================================
 
-// MemoryStorage 基于内存的存储实现
-// 适用于单实例或测试场景
+// Type 存储类型。
+type Type string
+
+const (
+	TypeMemory Type = "memory" // 内存存储（默认）
+	TypeJSONL  Type = "jsonl"  // JSONL 文件存储
+	TypeGORMX  Type = "gormx"  // 基于 common/gormx 的关系型数据库存储
+)
+
+// Config 存储配置。
+//
+// 对于 gormx 类型，调用方需通过 NewStorageWithGormxDB 直接注入 *gormx.DB，
+// 这里的 Config 不持有数据库连接，避免把基础设施细节耦合到公共库。
+type Config struct {
+	Type Type `json:",default=memory,options=memory|jsonl|gormx"`
+
+	// JSONL 配置
+	BaseDir string `json:",optional"` // JSONL 根目录，每个会话一个 .jsonl 文件
+}
+
+// NewStorage 根据配置构造非 gormx 类型的 Storage 实例。
+//
+// gormx 类型请使用 NewGormxStorage 直接传入 *gormx.DB。
+func NewStorage(cfg Config) (Storage, error) {
+	switch cfg.Type {
+	case "", TypeMemory:
+		return NewMemoryStorage(), nil
+	case TypeJSONL:
+		if cfg.BaseDir == "" {
+			return nil, fmt.Errorf("memory.NewStorage: jsonl.BaseDir is required")
+		}
+		return NewJSONLStorage(cfg.BaseDir)
+	case TypeGORMX:
+		return nil, fmt.Errorf("memory.NewStorage: gormx type requires NewGormxStorage(db); pass *gormx.DB directly")
+	default:
+		return nil, fmt.Errorf("memory.NewStorage: unknown type %q", cfg.Type)
+	}
+}
+
+// =============================================================================
+// MemoryStorage 内存实现
+// =============================================================================
+
+// MemoryStorage 基于内存的存储实现，适用于单实例或测试场景。
 type MemoryStorage struct {
-	mu        sync.RWMutex
-	messages  map[string][]*ConversationMessage // key: userID:sessionID
-	memories  map[string]*UserMemory            // key: userID
-	summaries map[string]*SessionSummary        // key: userID:sessionID
-
-	// 配置
-	maxSize    int           // 最大消息数（0 = 无限制）
-	windowSize int           // 滑动窗口大小（0 = 不启用）
-	ttl        time.Duration // 会话 TTL（0 = 永不过期）
+	mu       sync.RWMutex
+	messages map[string][]*ConversationMessage // key: userID:sessionID
 }
 
-// StorageOption 存储配置选项
-type StorageOption func(*storageOptions)
-
-type storageOptions struct {
-	maxSize    int           // 最大消息数（0 = 无限制）
-	ttl        time.Duration // 会话 TTL（0 = 永不过期）
-	windowSize int           // 滑动窗口大小（0 = 不启用）
-}
-
-// WithMaxSize 设置最大消息数
-func WithMaxSize(max int) StorageOption {
-	return func(o *storageOptions) {
-		o.maxSize = max
-	}
-}
-
-// WithTTL 设置会话 TTL
-func WithTTL(ttl time.Duration) StorageOption {
-	return func(o *storageOptions) {
-		o.ttl = ttl
-	}
-}
-
-// WithWindowSize 设置滑动窗口大小
-func WithWindowSize(size int) StorageOption {
-	return func(o *storageOptions) {
-		o.windowSize = size
-	}
-}
-
-// NewMemoryStorage 创建内存存储
-func NewMemoryStorage(opts ...StorageOption) *MemoryStorage {
-	var cfg storageOptions
-	for _, opt := range opts {
-		opt(&cfg)
-	}
+// NewMemoryStorage 创建内存存储。
+func NewMemoryStorage() *MemoryStorage {
 	return &MemoryStorage{
-		messages:   make(map[string][]*ConversationMessage),
-		memories:   make(map[string]*UserMemory),
-		summaries:  make(map[string]*SessionSummary),
-		maxSize:    cfg.maxSize,
-		ttl:        cfg.ttl,
-		windowSize: cfg.windowSize,
+		messages: make(map[string][]*ConversationMessage),
 	}
 }
 
-// messageKey 生成消息存储的 key
 func messageKey(userID, sessionID string) string {
 	return userID + ":" + sessionID
 }
 
 // SaveMessage 保存消息
-func (s *MemoryStorage) SaveMessage(ctx context.Context, msg *ConversationMessage) error {
+func (s *MemoryStorage) SaveMessage(_ context.Context, msg *ConversationMessage) error {
+	if msg == nil {
+		return nil
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if msg.ID == "" {
 		msg.ID = uuid.NewString()
 	}
-	msg.CreatedAt = time.Now()
+	if msg.CreatedAt.IsZero() {
+		msg.CreatedAt = time.Now()
+	}
 
 	key := messageKey(msg.UserID, msg.SessionID)
 	s.messages[key] = append(s.messages[key], msg)
-
-	// 滑动窗口裁剪
-	if s.windowSize > 0 && len(s.messages[key]) > s.windowSize {
-		s.messages[key] = s.messages[key][len(s.messages[key])-s.windowSize:]
-		return nil
-	}
-
-	// 最大容量裁剪
-	if s.maxSize > 0 && len(s.messages[key]) > s.maxSize {
-		s.messages[key] = s.messages[key][len(s.messages[key])-s.maxSize:]
-	}
-
 	return nil
 }
 
 // GetMessages 获取会话消息
-func (s *MemoryStorage) GetMessages(ctx context.Context, userID, sessionID string, limit int) ([]*ConversationMessage, error) {
+func (s *MemoryStorage) GetMessages(_ context.Context, userID, sessionID string, limit int) ([]*ConversationMessage, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	key := messageKey(userID, sessionID)
-	msgs := s.messages[key]
-
+	msgs := s.messages[messageKey(userID, sessionID)]
 	if limit > 0 && len(msgs) > limit {
-		return msgs[len(msgs)-limit:], nil
+		return append([]*ConversationMessage(nil), msgs[len(msgs)-limit:]...), nil
 	}
-	return msgs, nil
+	return append([]*ConversationMessage(nil), msgs...), nil
 }
 
-// GetMessageCount 获取会话消息数量
-func (s *MemoryStorage) GetMessageCount(ctx context.Context, userID, sessionID string) (int, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	key := messageKey(userID, sessionID)
-	return len(s.messages[key]), nil
-}
-
-// CleanupMessagesByLimit 清理超限消息（保留最新的 N 条）
-func (s *MemoryStorage) CleanupMessagesByLimit(ctx context.Context, userID, sessionID string, keepCount int) error {
+// DeleteSession 删除会话的全部消息
+func (s *MemoryStorage) DeleteSession(_ context.Context, userID, sessionID string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
-	key := messageKey(userID, sessionID)
-	if len(s.messages[key]) > keepCount {
-		s.messages[key] = s.messages[key][len(s.messages[key])-keepCount:]
-	}
+	delete(s.messages, messageKey(userID, sessionID))
 	return nil
 }
 
-// CleanupMessagesByTime 清理过期消息
-func (s *MemoryStorage) CleanupMessagesByTime(ctx context.Context, olderThan time.Duration) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	cutoff := time.Now().Add(-olderThan)
-	for key, msgs := range s.messages {
-		// 检查第一条消息的时间
-		if len(msgs) > 0 && msgs[0].CreatedAt.Before(cutoff) {
-			delete(s.messages, key)
-		}
-	}
+// Close 无资源需要释放。
+func (s *MemoryStorage) Close() error {
 	return nil
 }
 
-// GetUserMemory 获取用户记忆
-func (s *MemoryStorage) GetUserMemory(ctx context.Context, userID string) (*UserMemory, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+// =============================================================================
+// 辅助函数
+// =============================================================================
 
-	if memory, ok := s.memories[userID]; ok {
-		return memory, nil
-	}
-	return nil, nil
-}
-
-// SaveUserMemory 保存用户记忆
-func (s *MemoryStorage) SaveUserMemory(ctx context.Context, memory *UserMemory) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	now := time.Now()
-	if memory.CreatedAt.IsZero() {
-		memory.CreatedAt = now
-	}
-	memory.UpdatedAt = now
-
-	s.memories[memory.UserID] = memory
-	return nil
-}
-
-// GetSessionSummary 获取会话摘要
-func (s *MemoryStorage) GetSessionSummary(ctx context.Context, userID, sessionID string) (*SessionSummary, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	key := messageKey(userID, sessionID)
-	if summary, ok := s.summaries[key]; ok {
-		return summary, nil
-	}
-	return nil, nil
-}
-
-// SaveSessionSummary 保存会话摘要
-func (s *MemoryStorage) SaveSessionSummary(ctx context.Context, summary *SessionSummary) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	now := time.Now()
-	if summary.CreatedAt.IsZero() {
-		summary.CreatedAt = now
-	}
-	summary.UpdatedAt = now
-
-	key := messageKey(summary.UserID, summary.SessionID)
-	s.summaries[key] = summary
-	return nil
-}
-
-// CleanupOldSessions 清理旧会话
-func (s *MemoryStorage) CleanupOldSessions(ctx context.Context, olderThan time.Duration) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	cutoff := time.Now().Add(-olderThan)
-	for key, msgs := range s.messages {
-		if len(msgs) > 0 && msgs[0].CreatedAt.Before(cutoff) {
-			delete(s.messages, key)
-			delete(s.summaries, key)
-		}
-	}
-	return nil
-}
-
-// SearchUserMemories 语义搜索用户记忆（内存实现使用简单关键词匹配）
-func (s *MemoryStorage) SearchUserMemories(ctx context.Context, tenantID, userID, query string, vector []float32, topK int, threshold float64, permissionFilter []string) ([]*MemorySearchResult, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	var results []*MemorySearchResult
-	query = strings.ToLower(query)
-
-	permissionSet := make(map[string]bool)
-	for _, p := range permissionFilter {
-		permissionSet[p] = true
-	}
-
-	for _, mem := range s.memories {
-		// 权限过滤
-		if !permissionSet[mem.Permission] {
-			continue
-		}
-		// 租户过滤（如果提供）
-		if tenantID != "" && mem.TenantID != tenantID {
-			continue
-		}
-		// 用户过滤
-		if mem.UserID != userID {
-			continue
-		}
-		// 简单关键词匹配（内存实现暂不支持向量搜索）
-		content := strings.ToLower(mem.Memory)
-		if strings.Contains(content, query) {
-			// 简单计算匹配得分：关键词出现次数占比
-			score := float64(strings.Count(content, query)) / float64(len(content)) * 100
-			if score > threshold {
-				results = append(results, &MemorySearchResult{
-					Memory:   mem,
-					Score:    score,
-					Distance: 1 - score,
-				})
-			}
-		}
-	}
-
-	// 按得分排序
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Score > results[j].Score
+// sortMessagesAsc 按 CreatedAt 升序排序。
+func sortMessagesAsc(msgs []*ConversationMessage) {
+	sort.SliceStable(msgs, func(i, j int) bool {
+		return msgs[i].CreatedAt.Before(msgs[j].CreatedAt)
 	})
-
-	// 限制返回数量
-	if len(results) > topK {
-		results = results[:topK]
-	}
-
-	return results, nil
 }
 
-// GetUserMemoriesByPermission 获取用户指定权限的记忆
-func (s *MemoryStorage) GetUserMemoriesByPermission(ctx context.Context, tenantID, userID string, permissions []string) ([]*UserMemory, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	permissionSet := make(map[string]bool)
-	for _, p := range permissions {
-		permissionSet[p] = true
+// sanitizeFilename 清理不合法的文件名字符。
+func sanitizeFilename(s string) string {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return "_"
 	}
-
-	var results []*UserMemory
-	for _, mem := range s.memories {
-		if permissionSet[mem.Permission] && mem.UserID == userID && (tenantID == "" || mem.TenantID == tenantID) {
-			results = append(results, mem)
+	var b strings.Builder
+	for _, r := range s {
+		switch {
+		case r == '/', r == '\\', r == ':', r == '*', r == '?', r == '"', r == '<', r == '>', r == '|':
+			b.WriteRune('_')
+		default:
+			b.WriteRune(r)
 		}
 	}
-
-	return results, nil
-}
-
-// AutoMigrate 自动迁移（内存存储无需操作）
-func (s *MemoryStorage) AutoMigrate() error {
-	return nil
-}
-
-// =============================================================================
-// 工具函数
-// =============================================================================
-
-// MessagesToText 将消息列表转换为文本
-func MessagesToText(msgs []*ConversationMessage) string {
-	if len(msgs) == 0 {
-		return ""
-	}
-
-	var text string
-	for _, msg := range msgs {
-		role := msg.Role
-		if role == "" {
-			role = "user"
-		}
-		text += role + ": " + msg.Content + "\n\n"
-	}
-	return text
+	return b.String()
 }

@@ -15,7 +15,17 @@ Model:
   Temperature: 0.7
 
 Memory:
-  Type: "memory"
+  Type: "memory"          # memory | jsonl | gormx
+  BaseDir: "./data/messages"
+
+SessionStore:
+  Type: "memory"          # memory | jsonl | gormx
+  BaseDir: "./data/sessions"
+
+DB:
+  Enabled: false
+  DataSource: ""
+  LogLevel: "error"
 
 Tools:
   Enabled: true
@@ -32,7 +42,8 @@ Agent:
   PoolMaxLive: 1h
 
 Checkpoint:
-  Dir: "./checkpoints"
+  Type: "memory"          # memory | jsonl | gormx，分布式部署请使用 gormx
+  BaseDir: "./data/checkpoints"
 
 Metrics:
   Enabled: false

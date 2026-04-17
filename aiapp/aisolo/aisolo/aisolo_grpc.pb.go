@@ -23,38 +23,32 @@ const (
 	AiSolo_GetSession_FullMethodName    = "/aisolo.AiSolo/GetSession"
 	AiSolo_ListSessions_FullMethodName  = "/aisolo.AiSolo/ListSessions"
 	AiSolo_DeleteSession_FullMethodName = "/aisolo.AiSolo/DeleteSession"
+	AiSolo_ListMessages_FullMethodName  = "/aisolo.AiSolo/ListMessages"
 	AiSolo_AskStream_FullMethodName     = "/aisolo.AiSolo/AskStream"
-	AiSolo_ListAgents_FullMethodName    = "/aisolo.AiSolo/ListAgents"
-	AiSolo_Resume_FullMethodName        = "/aisolo.AiSolo/Resume"
 	AiSolo_ResumeStream_FullMethodName  = "/aisolo.AiSolo/ResumeStream"
+	AiSolo_ListModes_FullMethodName     = "/aisolo.AiSolo/ListModes"
+	AiSolo_GetInterrupt_FullMethodName  = "/aisolo.AiSolo/GetInterrupt"
 	AiSolo_Health_FullMethodName        = "/aisolo.AiSolo/Health"
 )
 
 // AiSoloClient is the client API for AiSolo service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-//
-// AiSolo AI 助手核心服务
 type AiSoloClient interface {
-	// CreateSession 创建会话
+	// 会话管理
 	CreateSession(ctx context.Context, in *CreateSessionReq, opts ...grpc.CallOption) (*CreateSessionResp, error)
-	// GetSession 获取会话
 	GetSession(ctx context.Context, in *GetSessionReq, opts ...grpc.CallOption) (*GetSessionResp, error)
-	// ListSessions 列出会话
 	ListSessions(ctx context.Context, in *ListSessionsReq, opts ...grpc.CallOption) (*ListSessionsResp, error)
-	// DeleteSession 删除会话
 	DeleteSession(ctx context.Context, in *DeleteSessionReq, opts ...grpc.CallOption) (*DeleteSessionResp, error)
-	// AskStream 流式对话
-	// - 会话自动创建（session_id 为空时）
-	// - 返回 A2UI 格式的 SSE 事件流
+	ListMessages(ctx context.Context, in *ListMessagesReq, opts ...grpc.CallOption) (*ListMessagesResp, error)
+	// 对话 / 恢复 (均为流式)
 	AskStream(ctx context.Context, in *AskReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[AskStreamResp], error)
-	// ListAgents 列出可用 Agent
-	ListAgents(ctx context.Context, in *ListAgentsReq, opts ...grpc.CallOption) (*ListAgentsResp, error)
-	// Resume 恢复中断的执行（同步返回结果）
-	Resume(ctx context.Context, in *ResumeReq, opts ...grpc.CallOption) (*ResumeResp, error)
-	// ResumeStream 恢复中断的执行（流式返回 A2UI 事件）
 	ResumeStream(ctx context.Context, in *ResumeReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ResumeStreamResp], error)
-	// Health 健康检查接口
+	// Mode 列表
+	ListModes(ctx context.Context, in *ListModesReq, opts ...grpc.CallOption) (*ListModesResp, error)
+	// 获取中断详情 (前端刷新后回填 UI)
+	GetInterrupt(ctx context.Context, in *GetInterruptReq, opts ...grpc.CallOption) (*GetInterruptResp, error)
+	// 健康
 	Health(ctx context.Context, in *HealthReq, opts ...grpc.CallOption) (*HealthResp, error)
 }
 
@@ -106,6 +100,16 @@ func (c *aiSoloClient) DeleteSession(ctx context.Context, in *DeleteSessionReq, 
 	return out, nil
 }
 
+func (c *aiSoloClient) ListMessages(ctx context.Context, in *ListMessagesReq, opts ...grpc.CallOption) (*ListMessagesResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListMessagesResp)
+	err := c.cc.Invoke(ctx, AiSolo_ListMessages_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *aiSoloClient) AskStream(ctx context.Context, in *AskReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[AskStreamResp], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	stream, err := c.cc.NewStream(ctx, &AiSolo_ServiceDesc.Streams[0], AiSolo_AskStream_FullMethodName, cOpts...)
@@ -124,26 +128,6 @@ func (c *aiSoloClient) AskStream(ctx context.Context, in *AskReq, opts ...grpc.C
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type AiSolo_AskStreamClient = grpc.ServerStreamingClient[AskStreamResp]
-
-func (c *aiSoloClient) ListAgents(ctx context.Context, in *ListAgentsReq, opts ...grpc.CallOption) (*ListAgentsResp, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListAgentsResp)
-	err := c.cc.Invoke(ctx, AiSolo_ListAgents_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *aiSoloClient) Resume(ctx context.Context, in *ResumeReq, opts ...grpc.CallOption) (*ResumeResp, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ResumeResp)
-	err := c.cc.Invoke(ctx, AiSolo_Resume_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
 
 func (c *aiSoloClient) ResumeStream(ctx context.Context, in *ResumeReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ResumeStreamResp], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
@@ -164,6 +148,26 @@ func (c *aiSoloClient) ResumeStream(ctx context.Context, in *ResumeReq, opts ...
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type AiSolo_ResumeStreamClient = grpc.ServerStreamingClient[ResumeStreamResp]
 
+func (c *aiSoloClient) ListModes(ctx context.Context, in *ListModesReq, opts ...grpc.CallOption) (*ListModesResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListModesResp)
+	err := c.cc.Invoke(ctx, AiSolo_ListModes_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aiSoloClient) GetInterrupt(ctx context.Context, in *GetInterruptReq, opts ...grpc.CallOption) (*GetInterruptResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetInterruptResp)
+	err := c.cc.Invoke(ctx, AiSolo_GetInterrupt_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *aiSoloClient) Health(ctx context.Context, in *HealthReq, opts ...grpc.CallOption) (*HealthResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(HealthResp)
@@ -177,28 +181,21 @@ func (c *aiSoloClient) Health(ctx context.Context, in *HealthReq, opts ...grpc.C
 // AiSoloServer is the server API for AiSolo service.
 // All implementations must embed UnimplementedAiSoloServer
 // for forward compatibility.
-//
-// AiSolo AI 助手核心服务
 type AiSoloServer interface {
-	// CreateSession 创建会话
+	// 会话管理
 	CreateSession(context.Context, *CreateSessionReq) (*CreateSessionResp, error)
-	// GetSession 获取会话
 	GetSession(context.Context, *GetSessionReq) (*GetSessionResp, error)
-	// ListSessions 列出会话
 	ListSessions(context.Context, *ListSessionsReq) (*ListSessionsResp, error)
-	// DeleteSession 删除会话
 	DeleteSession(context.Context, *DeleteSessionReq) (*DeleteSessionResp, error)
-	// AskStream 流式对话
-	// - 会话自动创建（session_id 为空时）
-	// - 返回 A2UI 格式的 SSE 事件流
+	ListMessages(context.Context, *ListMessagesReq) (*ListMessagesResp, error)
+	// 对话 / 恢复 (均为流式)
 	AskStream(*AskReq, grpc.ServerStreamingServer[AskStreamResp]) error
-	// ListAgents 列出可用 Agent
-	ListAgents(context.Context, *ListAgentsReq) (*ListAgentsResp, error)
-	// Resume 恢复中断的执行（同步返回结果）
-	Resume(context.Context, *ResumeReq) (*ResumeResp, error)
-	// ResumeStream 恢复中断的执行（流式返回 A2UI 事件）
 	ResumeStream(*ResumeReq, grpc.ServerStreamingServer[ResumeStreamResp]) error
-	// Health 健康检查接口
+	// Mode 列表
+	ListModes(context.Context, *ListModesReq) (*ListModesResp, error)
+	// 获取中断详情 (前端刷新后回填 UI)
+	GetInterrupt(context.Context, *GetInterruptReq) (*GetInterruptResp, error)
+	// 健康
 	Health(context.Context, *HealthReq) (*HealthResp, error)
 	mustEmbedUnimplementedAiSoloServer()
 }
@@ -222,17 +219,20 @@ func (UnimplementedAiSoloServer) ListSessions(context.Context, *ListSessionsReq)
 func (UnimplementedAiSoloServer) DeleteSession(context.Context, *DeleteSessionReq) (*DeleteSessionResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteSession not implemented")
 }
+func (UnimplementedAiSoloServer) ListMessages(context.Context, *ListMessagesReq) (*ListMessagesResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListMessages not implemented")
+}
 func (UnimplementedAiSoloServer) AskStream(*AskReq, grpc.ServerStreamingServer[AskStreamResp]) error {
 	return status.Errorf(codes.Unimplemented, "method AskStream not implemented")
 }
-func (UnimplementedAiSoloServer) ListAgents(context.Context, *ListAgentsReq) (*ListAgentsResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListAgents not implemented")
-}
-func (UnimplementedAiSoloServer) Resume(context.Context, *ResumeReq) (*ResumeResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Resume not implemented")
-}
 func (UnimplementedAiSoloServer) ResumeStream(*ResumeReq, grpc.ServerStreamingServer[ResumeStreamResp]) error {
 	return status.Errorf(codes.Unimplemented, "method ResumeStream not implemented")
+}
+func (UnimplementedAiSoloServer) ListModes(context.Context, *ListModesReq) (*ListModesResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListModes not implemented")
+}
+func (UnimplementedAiSoloServer) GetInterrupt(context.Context, *GetInterruptReq) (*GetInterruptResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetInterrupt not implemented")
 }
 func (UnimplementedAiSoloServer) Health(context.Context, *HealthReq) (*HealthResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Health not implemented")
@@ -330,6 +330,24 @@ func _AiSolo_DeleteSession_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AiSolo_ListMessages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListMessagesReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AiSoloServer).ListMessages(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AiSolo_ListMessages_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AiSoloServer).ListMessages(ctx, req.(*ListMessagesReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AiSolo_AskStream_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(AskReq)
 	if err := stream.RecvMsg(m); err != nil {
@@ -341,42 +359,6 @@ func _AiSolo_AskStream_Handler(srv interface{}, stream grpc.ServerStream) error 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type AiSolo_AskStreamServer = grpc.ServerStreamingServer[AskStreamResp]
 
-func _AiSolo_ListAgents_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListAgentsReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AiSoloServer).ListAgents(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AiSolo_ListAgents_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AiSoloServer).ListAgents(ctx, req.(*ListAgentsReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AiSolo_Resume_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ResumeReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AiSoloServer).Resume(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AiSolo_Resume_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AiSoloServer).Resume(ctx, req.(*ResumeReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _AiSolo_ResumeStream_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(ResumeReq)
 	if err := stream.RecvMsg(m); err != nil {
@@ -387,6 +369,42 @@ func _AiSolo_ResumeStream_Handler(srv interface{}, stream grpc.ServerStream) err
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type AiSolo_ResumeStreamServer = grpc.ServerStreamingServer[ResumeStreamResp]
+
+func _AiSolo_ListModes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListModesReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AiSoloServer).ListModes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AiSolo_ListModes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AiSoloServer).ListModes(ctx, req.(*ListModesReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AiSolo_GetInterrupt_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetInterruptReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AiSoloServer).GetInterrupt(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AiSolo_GetInterrupt_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AiSoloServer).GetInterrupt(ctx, req.(*GetInterruptReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
 
 func _AiSolo_Health_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(HealthReq)
@@ -430,12 +448,16 @@ var AiSolo_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AiSolo_DeleteSession_Handler,
 		},
 		{
-			MethodName: "ListAgents",
-			Handler:    _AiSolo_ListAgents_Handler,
+			MethodName: "ListMessages",
+			Handler:    _AiSolo_ListMessages_Handler,
 		},
 		{
-			MethodName: "Resume",
-			Handler:    _AiSolo_Resume_Handler,
+			MethodName: "ListModes",
+			Handler:    _AiSolo_ListModes_Handler,
+		},
+		{
+			MethodName: "GetInterrupt",
+			Handler:    _AiSolo_GetInterrupt_Handler,
 		},
 		{
 			MethodName: "Health",

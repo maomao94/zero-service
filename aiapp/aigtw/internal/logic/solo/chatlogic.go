@@ -3,16 +3,15 @@ package solo
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
-	"time"
-
-	"zero-service/aiapp/aisolo/aisolo"
+	"strings"
 
 	"zero-service/aiapp/aigtw/internal/svc"
 	"zero-service/aiapp/aigtw/internal/types"
+	"zero-service/aiapp/aisolo/aisolo"
 	"zero-service/common/ctxdata"
-	"zero-service/common/ssex"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -21,99 +20,65 @@ type ChatLogic struct {
 	logx.Logger
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
-	w      http.ResponseWriter
-	r      *http.Request
 }
 
-func NewChatLogic(ctx context.Context, svcCtx *svc.ServiceContext, w http.ResponseWriter, r *http.Request) *ChatLogic {
+func NewChatLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ChatLogic {
 	return &ChatLogic{
 		Logger: logx.WithContext(ctx),
 		ctx:    ctx,
 		svcCtx: svcCtx,
-		w:      w,
-		r:      r,
 	}
 }
 
-func (l *ChatLogic) Chat(req *types.SoloChatRequest) (*types.SoloChatResponse, error) {
-	sw, err := ssex.NewWriter(l.w)
-	if err != nil {
-		return nil, err
-	}
-
-	// 获取用户ID
+// Chat 把 aisolo AskStream 的每一帧 (已经是完整的 JSON Event) 直接作为 SSE data: 帧
+// 写入 HTTP 响应。这里不经过 channel, 也不再 json.Marshal, 保证 NDJSON over SSE 的完整性。
+func (l *ChatLogic) Chat(req *types.SoloChatRequest, w io.Writer) error {
 	userID := ctxdata.GetUserId(l.ctx)
 	if userID == "" {
-		userID = "anonymous"
+		return errors.New("missing user id in context")
+	}
+	if strings.TrimSpace(req.SessionId) == "" {
+		return errors.New("sessionId is required")
 	}
 
-	l.Logger.Infof("solo chat stream started, sessionId: %s, userID: %s", req.SessionId, userID)
-
-	// 启动 keep-alive goroutine
-	kaStop := make(chan struct{})
-	go func() {
-		ticker := time.NewTicker(5 * time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-kaStop:
-				return
-			case <-ticker.C:
-				sw.WriteKeepAlive()
-			}
-		}
-	}()
-	defer close(kaStop)
-
-	// 构建 gRPC 请求
-	protoReq := &aisolo.AskReq{
+	stream, err := l.svcCtx.AiSoloCli.AskStream(l.ctx, &aisolo.AskReq{
 		SessionId: req.SessionId,
 		UserId:    userID,
 		Message:   req.Message,
-		AgentMode: l.toAgentMode(req.AgentMode),
-	}
-
-	// 调用 gRPC 流
-	stream, err := l.svcCtx.AiSoloCli.AskStream(l.ctx, protoReq)
+		Mode:      parseMode(req.Mode),
+	})
 	if err != nil {
-		l.Logger.Errorf("AskStream gRPC call failed: %v", err)
-		return nil, err
+		return err
 	}
 
-	// 直接透传 A2UI NDJSON 数据
+	flusher, _ := w.(http.Flusher)
 	for {
-		chunk, err := stream.Recv()
+		resp, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
-			sw.WriteDone()
-			l.Logger.Infof("solo stream completed, sessionId: %s, userID: %s", req.SessionId, userID)
-			return nil, nil
+			return nil
 		}
 		if err != nil {
-			l.Logger.Errorf("stream recv error: %v", err)
-			return nil, nil
+			return err
 		}
-
-		// 透传 gRPC 层的 A2UI JSON
-		if chunk.Chunk != nil && chunk.Chunk.Data != "" {
-			sw.Write([]byte(chunk.Chunk.Data))
+		chunk := resp.GetChunk()
+		if chunk == nil {
+			continue
 		}
-
-		// 检查客户端断开
-		if l.r.Context().Err() != nil {
-			l.Logger.Infof("stream client disconnected, sessionId: %s, userID: %s", req.SessionId, userID)
-			return nil, nil
+		// aisolo 端用 protocol.Encode 输出, 每帧末尾带了 '\n' 用于 NDJSON。
+		// 这里要套 SSE `data: <json>\n\n` 格式, 先把这个尾部换行掉, 避免变成
+		// 三个换行 (不符合 SSE 规范, 部分代理会切帧错误)。
+		data := strings.TrimRight(chunk.GetData(), "\r\n")
+		if data == "" {
+			continue
 		}
-	}
-}
-
-// toAgentMode 转换 Agent 模式
-func (l *ChatLogic) toAgentMode(mode string) aisolo.AgentMode {
-	switch mode {
-	case "fast":
-		return aisolo.AgentMode_AGENT_MODE_FAST
-	case "deep":
-		return aisolo.AgentMode_AGENT_MODE_DEEP
-	default:
-		return aisolo.AgentMode_AGENT_MODE_AUTO
+		if _, err := fmt.Fprintf(w, "data: %s\n\n", data); err != nil {
+			return err
+		}
+		if flusher != nil {
+			flusher.Flush()
+		}
+		if chunk.GetIsFinal() {
+			return nil
+		}
 	}
 }
