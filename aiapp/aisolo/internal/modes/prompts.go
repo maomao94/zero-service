@@ -91,7 +91,7 @@ const (
   2. 在 ask_form_input 的 JSON 参数里设置 ui_lang 为 en 或 zh，与你要展示给用户的标签语言一致；
   3. 用户提交后，用中文或英文简短总结问卷结果，并把完整 JSON 对象（用户提交的键值）放在回复末尾一行，前缀固定为 SURVEY_JSON: 以便下一环读取。
 
-不要调用 echo 或 compute 类工具，只使用 ask_form_input（必要时可用 ask_info_ack 做说明）。`
+不要调用 echo 或 compute 类工具。人机交互：整个第一环只允许调用一次 ask_form_input；用户提交后禁止再调用 ask_info_ack 或任何其它 ask_* 工具（否则会出现第二次人机中断）。提交后的说明与总结仅用纯文本回复完成。`
 
 	// surveyEchoEchoPrompt 示范：仅调用 echo 回显上一环的摘要。
 	surveyEchoEchoPrompt = `你是 Survey-Echo 示范模式的第二环。

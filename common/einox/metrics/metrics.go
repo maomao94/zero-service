@@ -161,8 +161,7 @@ func (m *Metrics) RecordInterrupt(ctx context.Context, kind, tool, interruptID s
 	}
 }
 
-// RecordResume 记录一次 Resume 结果。mode 为上层会话的智能体模式（如 agent、workflow）。
-// resumeAction 为客户端 YES/NO（指标里 yes|no|unspecified）。interruptID 仅写入日志。
+// RecordResume 记录一次 Resume 结果。resumeAction 为客户端 YES/NO（标签 action）。
 func (m *Metrics) RecordResume(ctx context.Context, kind, status, mode, interruptID, resumeAction string, d time.Duration) {
 	k := promLabelKindOrTool(kind)
 	mod := promLabelKindOrTool(mode)
