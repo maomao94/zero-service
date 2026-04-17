@@ -37,6 +37,7 @@ func (l *CreateSessionLogic) CreateSession(req *types.SoloCreateSessionRequest) 
 		UserId: userID,
 		Title:  req.Title,
 		Mode:   parseMode(req.Mode),
+		UiLang: req.UiLang,
 	})
 	if err != nil {
 		return nil, err

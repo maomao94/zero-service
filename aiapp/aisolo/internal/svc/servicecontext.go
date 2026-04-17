@@ -11,6 +11,7 @@ import (
 	"zero-service/aiapp/aisolo/internal/session"
 	"zero-service/aiapp/aisolo/internal/turn"
 	"zero-service/common/einox/checkpoint"
+	"zero-service/common/einox/fsrestrict"
 	"zero-service/common/einox/memory"
 	"zero-service/common/einox/metrics"
 	exinoModel "zero-service/common/einox/model"
@@ -188,11 +189,46 @@ func (s *ServiceContext) initModes(ctx context.Context) {
 		logx.Info("[svc] chat model nil, skip mode pool")
 		return
 	}
+	skillsDir := config.EffectiveSkillsDir(s.Config.Skills)
+	if s.Config.Skills.Enabled && s.Config.Skills.Dir != "" && skillsDir == "" {
+		logx.Errorf("[svc] skills: enabled but directory missing or invalid (configure Skills.Dir or set Skills.Strict): %q", s.Config.Skills.Dir)
+	}
+	var deepFS fsrestrict.Config
+	if s.Config.Agent.DeepLocalFilesystemEnabled() {
+		if roots, err := config.ResolvedDeepFilesystemRoots(s.Config.Agent.Deep.FilesystemAllowedRoots); err != nil {
+			logx.Errorf("[svc] deep filesystem user roots: %v", err)
+		} else {
+			deepFS.UserRoots = roots
+			if len(roots) > 0 {
+				logx.Infof("[svc] deep filesystem user roots: %v", roots)
+			}
+		}
+		if s.Config.Agent.Deep.FilesystemSessionBaseDir != "" {
+			if sb, err := config.ResolvedSessionBaseDir(s.Config.Agent.Deep.FilesystemSessionBaseDir); err != nil {
+				logx.Errorf("[svc] deep filesystem session base: %v", err)
+			} else {
+				deepFS.SessionBaseDir = sb
+				logx.Infof("[svc] deep filesystem session base: %s", sb)
+			}
+		}
+		if s.Config.Agent.Deep.FilesystemLegacyUserRootsFullAccess &&
+			s.Config.Agent.Deep.FilesystemSessionBaseDir == "" &&
+			len(deepFS.UserRoots) > 0 {
+			deepFS.Policy = fsrestrict.PermissivePolicy()
+		} else {
+			deepFS.Policy = s.Config.Agent.Deep.FilesystemPolicy.ToFSPolicy()
+			if deepFS.Policy == (fsrestrict.Policy{}) {
+				deepFS.Policy = fsrestrict.DefaultPolicy()
+			}
+		}
+	}
 	s.Pool = modes.NewPool(s.Registry, modes.Dependencies{
-		ChatModel:       s.ChatModel,
-		Kit:             s.Kit,
-		CheckPointStore: s.CheckPointStore,
-		SkillsDir:       s.Config.Skills.Dir,
+		ChatModel:                 s.ChatModel,
+		Kit:                       s.Kit,
+		CheckPointStore:           s.CheckPointStore,
+		SkillsDir:                 skillsDir,
+		DeepEnableLocalFilesystem: s.Config.Agent.DeepLocalFilesystemEnabled(),
+		DeepFSConfig:              deepFS,
 	})
 	_ = ctx
 	logx.Infof("[svc] mode registry + pool ready: %d modes", len(s.Registry.List()))
@@ -209,6 +245,7 @@ func (s *ServiceContext) initExecutor() {
 		Messages: s.Messages,
 		Sessions: s.Sessions,
 		Metrics:  s.Metrics,
+		App:      &s.Config,
 	})
 	logx.Info("[svc] turn executor ready")
 }

@@ -3,25 +3,67 @@ import { renderMarkdown } from "../lib/markdown.js";
 import { ModePicker } from "./ModePicker.js";
 import { InterruptPanel } from "./InterruptPanel.js";
 import { CalcPanel } from "./CalcPanel.js";
+import { SkillChips } from "./SkillChips.js";
+
+/** 工具参数/结果：尽量格式化为多行 JSON，否则原文 */
+function formatToolPayload(raw) {
+  if (raw == null) return "";
+  const s = String(raw);
+  if (!s.trim()) return "";
+  try {
+    const o = JSON.parse(s);
+    return JSON.stringify(o, null, 2);
+  } catch (_) {
+    return s;
+  }
+}
+
+function agentChip(name) {
+  if (!name) return null;
+  return html`<span class="msg-agent-chip" title="ADK Agent">${name}</span>`;
+}
 
 function MessageItem({ m }) {
   const role = m.role || "assistant";
   if (role === "tool_call") {
     const hasResult = m.result != null && String(m.result).length > 0;
     const cls = m.error ? "tool-call error" : hasResult ? "tool-call" : "tool-call pending";
+    let argsDisplay = m.args ? formatToolPayload(m.args) : "";
+    let resultDisplay = hasResult ? formatToolPayload(m.result) : "";
+    if (m.tool === "echo" && m.args) {
+      try {
+        const o = JSON.parse(m.args);
+        if (o && typeof o.text === "string") argsDisplay = o.text;
+      } catch (_) { /* keep formatted */ }
+    }
+    if (m.tool === "echo" && hasResult) {
+      resultDisplay = String(m.result);
+    }
     return html`
       <div class=${cls}>
-        <div class="name">→ ${m.tool || "tool"}</div>
-        ${m.args && html`<div class="args">args: ${m.args}</div>`}
-        ${hasResult && html`<div class="result">result: ${m.result}</div>`}
-        ${m.error && html`<div class="result tool-soft-error">error: ${m.error}</div>`}
+        <div class="tool-call-head">
+          <span class="tool-call-badge">tool</span>
+          ${agentChip(m.agent_name)}
+          <div class="name">${m.tool || "tool"}</div>
+        </div>
+        ${m.args &&
+        html`
+          <div class="tool-section-label">参数</div>
+          <pre class="tool-payload">${m.tool === "echo" ? argsDisplay : argsDisplay}</pre>
+        `}
+        ${hasResult &&
+        html`
+          <div class="tool-section-label">结果</div>
+          <pre class="tool-payload">${resultDisplay}</pre>
+        `}
+        ${m.error && html`<div class="tool-soft-error">错误: ${m.error}</div>`}
       </div>
     `;
   }
   if (role === "assistant") {
     return html`
       <div class="message assistant">
-        <div class="role">assistant</div>
+        <div class="role">${agentChip(m.agent_name)}<span class="role-label">assistant</span></div>
         <div class="body" dangerouslySetInnerHTML=${{ __html: renderMarkdown(m.content || "") }}></div>
       </div>`;
   }
@@ -46,6 +88,7 @@ function MessageItem({ m }) {
 export function ChatView({
   session, messages, input, setInput,
   modes, mode, onModeChange,
+  skills,
   running, onSend, onStop,
   interrupt, onResume,
 }) {
@@ -102,6 +145,11 @@ export function ChatView({
         </div>
       </div>
 
+      <${SkillChips}
+        skills=${skills || []}
+        setInput=${setInput}
+        disabled=${calcDisabled}
+      />
       <${CalcPanel} disabled=${calcDisabled} setInput=${setInput} onInserted=${focusComposer} />
 
       <div class="messages" ref=${scrollRef}>
@@ -117,7 +165,12 @@ export function ChatView({
           </div>
         `}
         ${messages.map((m, i) => html`<${MessageItem} key=${m.id || i} m=${m} />`)}
-        ${interrupt && html`<${InterruptPanel} data=${interrupt} onResume=${onResume} disabled=${running} />`}
+        ${interrupt && html`<${InterruptPanel}
+          key=${interrupt.interrupt_id || interrupt.kind || "interrupt"}
+          data=${interrupt}
+          onResume=${onResume}
+          disabled=${running}
+        />`}
       </div>
 
       <footer class="composer">

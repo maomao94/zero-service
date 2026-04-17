@@ -21,12 +21,13 @@ enum AgentMode {
   AGENT_MODE_SUPERVISOR  = 3; // prebuilt/supervisor 多 Agent 协作
   AGENT_MODE_PLAN        = 4; // prebuilt/planexecute 计划-执行
   AGENT_MODE_DEEP        = 5; // prebuilt/deep 深度研究
+  reserved 6; // 曾为 AGENT_MODE_SURVEY_ECHO 示范枚举, 已移除; 问卷→echo 联调见 modes.BuildSurveyEchoAgent / NewSurveyEchoAgentTool
 }
 
 // InterruptKind 中断种类, 驱动前端 UI 渲染选择。
 enum InterruptKind {
   INTERRUPT_KIND_UNSPECIFIED   = 0;
-  INTERRUPT_KIND_APPROVAL      = 1; // 二选一审批 (approve / deny)
+  INTERRUPT_KIND_APPROVAL      = 1; // 二选一确认 (前端 yes / no)
   INTERRUPT_KIND_SINGLE_SELECT = 2; // 单选
   INTERRUPT_KIND_MULTI_SELECT  = 3; // 多选
   INTERRUPT_KIND_FREE_TEXT     = 4; // 自由文本输入
@@ -42,16 +43,11 @@ enum SessionStatus {
   SESSION_STATUS_INTERRUPTED = 3; // 中断中, 等待用户恢复
 }
 
-// ResumeAction 恢复动作。具体字段按 kind 决定填哪个。
+// ResumeAction 恢复动作。仅 yes / no；具体负载字段仍按 InterruptKind 填写。
 enum ResumeAction {
   RESUME_ACTION_UNSPECIFIED = 0;
-  RESUME_ACTION_APPROVE = 1;  // approval
-  RESUME_ACTION_DENY    = 2;  // approval
-  RESUME_ACTION_SELECT  = 3;  // single_select / multi_select
-  RESUME_ACTION_TEXT    = 4;  // free_text
-  RESUME_ACTION_FORM    = 5;  // form_input
-  RESUME_ACTION_ACK     = 6;  // info_ack
-  RESUME_ACTION_CANCEL  = 7;  // 所有 kind 都可取消
+  RESUME_ACTION_YES = 1;
+  RESUME_ACTION_NO  = 2;
 }
 
 // ============================================================
@@ -64,6 +60,7 @@ message AskReq {
   string user_id = 2;
   string message = 3;
   AgentMode mode = 4;              // 可选, 留空则使用 session 当前 mode
+  // 扩展键值对。常用: ui_lang (如 zh、en) — 写入会话默认 UI 语言; 工具在 InterruptInfo 中显式设置 ui_lang 时优先生效。
   map<string, string> meta = 5;
 }
 
@@ -97,6 +94,11 @@ message Field {
   bool required = 4;
   string placeholder = 5;
   string default = 6;
+  string widget = 7;       // text|textarea|select|radio|multi_select|checkbox|switch|number
+  repeated Option options = 8;
+  int32 min_select = 9;
+  int32 max_select = 10;
+  bool allow_custom = 11;  // 单选/下拉/多选下展示「其他」输入，由业务按需开启
 }
 
 // InterruptInfo 结构化中断元数据。Kind 决定哪些字段有效:
@@ -111,6 +113,7 @@ message InterruptInfo {
   InterruptKind kind = 2;
   string tool_name = 3;
   bool required = 4;
+  string ui_lang = 5;      // UI 语言提示 (如 zh/en), 优先供前端文案渲染
 
   string question = 10;
   string detail = 11;
@@ -122,6 +125,7 @@ message InterruptInfo {
   repeated Field fields = 17;
   string title = 18;
   string body = 19;
+  string agent_name = 20; // 触发中断的 ADK Agent（与 protocol.InterruptData.agent_name 对齐）
 }
 
 // ResumeReq 恢复执行。按 kind / action 填对应字段。
@@ -172,12 +176,14 @@ message Session {
   int64 updated_at = 8;
   int32 message_count = 9;
   string last_message = 10;
+  string ui_lang = 11;             // 会话默认 UI 语言 (zh/en), 由 AskReq.meta["ui_lang"] 更新
 }
 
 message CreateSessionReq {
   string user_id = 1;
   string title = 2;
   AgentMode mode = 3;
+  string ui_lang = 4; // 可选, 初始会话默认 UI 语言 (zh/en); 与 AskReq.meta["ui_lang"] 规则一致
 }
 
 message CreateSessionResp {
@@ -272,6 +278,21 @@ message ListModesResp {
   repeated ModeInfo modes = 1;
 }
 
+// SkillInfo 供前端展示技能标签 / launch（扫描 Skills 目录下 SKILL.md）。
+message SkillInfo {
+  string id = 1;                  // 子目录名
+  string name = 2;                // frontmatter name，缺省同 id
+  string description = 3;
+  repeated string tags = 4;
+  string launch_prompt = 5;       // 点击 chip 时预填或拼入用户消息的引导语
+}
+
+message ListSkillsReq {}
+
+message ListSkillsResp {
+  repeated SkillInfo skills = 1;
+}
+
 // ============================================================
 // 健康检查
 // ============================================================
@@ -303,6 +324,9 @@ service AiSolo {
 
   // Mode 列表
   rpc ListModes(ListModesReq) returns (ListModesResp);
+
+  // Skills 目录元数据（供 Solo 动态标签）
+  rpc ListSkills(ListSkillsReq) returns (ListSkillsResp);
 
   // 获取中断详情 (前端刷新后回填 UI)
   rpc GetInterrupt(GetInterruptReq) returns (GetInterruptResp);

@@ -26,6 +26,10 @@ func main() {
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
+	if err := c.Validate(); err != nil {
+		fmt.Fprintf(os.Stderr, "invalid config: %v\n", err)
+		os.Exit(1)
+	}
 	if apiKey := os.Getenv("AISOLO_MODEL_API_KEY"); apiKey != "" {
 		c.Model.APIKey = apiKey
 	}

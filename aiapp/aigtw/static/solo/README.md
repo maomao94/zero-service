@@ -36,6 +36,13 @@ static/solo/
 
 ## 协议
 
+`POST /solo/v1/sessions` 创建会话时可带 `uiLang`（`zh` / `en`），首轮对话前即写入会话默认 UI 语言。
+
+`POST /solo/v1/chat` 请求体可带 `meta`，例如 `{ "meta": { "ui_lang": "zh" } }` 或 `"en"`。
+网关透传到 `aisolo` 后写入**会话默认 UI 语言**；若某次中断 payload 未带 `ui_lang`，
+服务端与流式 `interrupt` 事件会用会话默认值补齐。`GET /solo/v1/sessions/:id` 返回的
+`uiLang` 为当前会话中的该值。
+
 所有对外接口都是 SSE + JSON NDJSON 流: 每一帧 `data:` 后面是一个完整 JSON 对象
 (定义见 `common/einox/protocol/event.go`)。前端 `api/sse.js` 按 `\n\n` 拆帧,
 单帧 JSON.parse, 派发给 App 的事件状态机 `applyEvent`。
@@ -57,16 +64,16 @@ static/solo/
 ## 6 种中断 (InterruptPanel)
 
 前端按 `interrupt.kind` 分发到对应子面板, 各自把用户响应打包为
-`POST /solo/v1/interrupt/:id/resume` 的 body:
+`POST /solo/v1/interrupt/:id/resume` 的 body。**Action 仅 `yes` / `no`**（与 gRPC `ResumeAction` 一致）；`ui_lang`（如 `zh`/`en`）由中断事件下发，用于按钮等文案本地化。
 
-| kind            | 子面板            | Action      | 额外字段                |
-|-----------------|-------------------|-------------|-------------------------|
-| `approval`      | Approval.js       | approve/deny/cancel | reason          |
-| `single_select` | SingleSelect.js   | select/cancel       | selectedIds[1]  |
-| `multi_select`  | MultiSelect.js    | select/cancel       | selectedIds[N]  |
-| `free_text`     | FreeText.js       | text/cancel         | text            |
-| `form_input`    | FormInput.js      | form/cancel         | formValues map  |
-| `info_ack`      | InfoAck.js        | ack/cancel          | 无              |
+| kind            | 子面板            | Action | 额外字段 |
+|-----------------|-------------------|--------|----------|
+| `approval`      | Approval.js       | yes / no | `reason`（选填，随 no 提交） |
+| `single_select` | SingleSelect.js   | yes / no | `selectedIds`（长度 1） |
+| `multi_select`  | MultiSelect.js    | yes / no | `selectedIds` |
+| `free_text`     | FreeText.js       | yes / no | `text` |
+| `form_input`    | FormInput.js      | yes / no | `formValues` |
+| `info_ack`      | InfoAck.js        | yes / no | 无 |
 
 ## 运行
 

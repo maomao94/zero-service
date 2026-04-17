@@ -34,12 +34,30 @@ Tools:
   MaxConcurrency: 10
 
 Skills:
+  # 子目录各含 SKILL.md；示例见 skills/survey_echo_flow（问卷→echo 说明 + 渐进披露）
   Dir: "./skills"
   Enabled: true
+  # Strict: true  # 为 true 时目录必须存在否则进程拒绝启动（go-zero Validate）
 
 Agent:
   PoolMaxIdle: 10
   PoolMaxLive: 1h
+  # Deep 本地文件系统（grep 等依赖本机 ripgrep）；仅 Skills 时可关掉以避免要求 rg
+  # Deep:
+  #   DisableLocalFilesystem: true
+  #   # 用户工作区根（须已存在）；仅配此项且 legacy 默认 true 时，区内读写与旧版 chroot 一致
+  #   FilesystemAllowedRoots:
+  #     - "./data/deep_workspace"
+  #   # 会话工作区父目录（须已存在）；每会话子目录为 {BaseDir}/{sessionId}，CreateSession/Ask 会 MkdirAll
+  #   FilesystemSessionBaseDir: "./data/deep_sessions"
+  #   FilesystemLegacyUserRootsFullAccess: true  # 仅用户 roots、无会话目录时是否区内全开（默认 true）
+  #   FilesystemPolicy:
+  #     readUser: true
+  #     writeUser: false
+  #     editUser: false
+  #     readSession: true
+  #     writeSession: true
+  #     editSession: true
 
 Checkpoint:
   Type: "memory"          # memory | jsonl | gormx，分布式部署请使用 gormx

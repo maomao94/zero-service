@@ -1,5 +1,6 @@
 import { html } from "../../lib/deps.js";
 import { renderMarkdown } from "../../lib/markdown.js";
+import { t } from "../../lib/i18n.js";
 
 export function InfoAck({ data, onResume, disabled }) {
   return html`
@@ -13,9 +14,9 @@ export function InfoAck({ data, onResume, disabled }) {
       ${data.tool_name && html`<div class="tool-name">tool: ${data.tool_name}</div>`}
       <div class="actions">
         <button class="btn primary" disabled=${disabled}
-          onClick=${() => onResume({ action: "ack" })}>已确认</button>
+          onClick=${() => onResume({ action: "yes" })}>${t(data, "yes")}</button>
         <button class="btn ghost" disabled=${disabled}
-          onClick=${() => onResume({ action: "cancel" })}>取消</button>
+          onClick=${() => onResume({ action: "no" })}>${t(data, "no")}</button>
       </div>
     </div>
   `;

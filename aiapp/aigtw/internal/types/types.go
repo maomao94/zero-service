@@ -134,17 +134,19 @@ type ProgressMessage struct {
 }
 
 type SoloChatRequest struct {
-	SessionId string `json:"sessionId"`     // 会话 ID（必填）
-	Message   string `json:"message"`       // 消息内容
-	Mode      string `json:"mode,optional"` // Mode 名: agent | workflow | supervisor | plan | deep
+	SessionId string            `json:"sessionId"`     // 会话 ID（必填）
+	Message   string            `json:"message"`       // 消息内容
+	Mode      string            `json:"mode,optional"` // Mode 名: agent | workflow | supervisor | plan | deep
+	Meta      map[string]string `json:"meta,optional"` // 透传 aisolo AskReq.meta, 常用 ui_lang=zh|en
 }
 
 type SoloChatResponse struct {
 }
 
 type SoloCreateSessionRequest struct {
-	Title string `json:"title,optional"`
-	Mode  string `json:"mode,optional"` // 可选, 留空走默认
+	Title  string `json:"title,optional"`
+	Mode   string `json:"mode,optional"`   // 可选, 留空走默认
+	UiLang string `json:"uiLang,optional"` // 可选 zh|en, 写入会话默认 UI 语言 (首轮 Ask 前即生效)
 }
 
 type SoloCreateSessionResponse struct {
@@ -160,12 +162,17 @@ type SoloDeleteSessionResponse struct {
 }
 
 type SoloField struct {
-	Name        string `json:"name"`
-	Label       string `json:"label"`
-	Type        string `json:"type"`
-	Required    bool   `json:"required,optional"`
-	Placeholder string `json:"placeholder,optional"`
-	Default     string `json:"default,optional"`
+	Name        string        `json:"name"`
+	Label       string        `json:"label"`
+	Type        string        `json:"type"`
+	Required    bool          `json:"required,optional"`
+	Placeholder string        `json:"placeholder,optional"`
+	Default     string        `json:"default,optional"`
+	Widget      string        `json:"widget,optional"` // text|textarea|select|radio|multi_select|checkbox|switch|number
+	Options     []*SoloOption `json:"options,optional"`
+	MinSelect   int           `json:"minSelect,optional"`   // multi_select 最少选择项
+	MaxSelect   int           `json:"maxSelect,optional"`   // multi_select 最多选择项，0 表示不限制
+	AllowCustom bool          `json:"allowCustom,optional"` // 为 true 时展示「其他」自定义输入
 }
 
 type SoloGetInterruptRequest struct {
@@ -189,6 +196,7 @@ type SoloInterruptInfo struct {
 	Kind        string        `json:"kind"`
 	ToolName    string        `json:"toolName,optional"`
 	Required    bool          `json:"required,optional"`
+	UiLang      string        `json:"uiLang,optional"` // 由模型提示的 UI 语言, 如 zh/en
 	Question    string        `json:"question,optional"`
 	Detail      string        `json:"detail,optional"`
 	Options     []*SoloOption `json:"options,optional"`
@@ -199,6 +207,7 @@ type SoloInterruptInfo struct {
 	Fields      []*SoloField  `json:"fields,optional"`
 	Title       string        `json:"title,optional"`
 	Body        string        `json:"body,optional"`
+	AgentName   string        `json:"agentName,optional"` // 触发中断的 ADK Agent 名
 }
 
 type SoloInterruptRequest struct {
@@ -226,6 +235,18 @@ type SoloListMessagesResponse struct {
 
 type SoloListModesResponse struct {
 	Modes []*SoloModeInfo `json:"modes"`
+}
+
+type SoloSkillInfo struct {
+	Id           string   `json:"id"`
+	Name         string   `json:"name"`
+	Description  string   `json:"description"`
+	Tags         []string `json:"tags,optional"`
+	LaunchPrompt string   `json:"launchPrompt,optional"`
+}
+
+type SoloListSkillsResponse struct {
+	Skills []*SoloSkillInfo `json:"skills"`
 }
 
 type SoloListSessionsRequest struct {
@@ -276,6 +297,7 @@ type SoloSessionInfo struct {
 	UpdatedAt    int64  `json:"updatedAt"`
 	MessageCount int    `json:"messageCount"`
 	LastMessage  string `json:"lastMessage"`
+	UiLang       string `json:"uiLang,optional"` // 会话默认 UI 语言 (由网关透传 gRPC)
 }
 
 type ThinkingParam struct {

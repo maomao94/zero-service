@@ -27,6 +27,7 @@ const (
 	AiSolo_AskStream_FullMethodName     = "/aisolo.AiSolo/AskStream"
 	AiSolo_ResumeStream_FullMethodName  = "/aisolo.AiSolo/ResumeStream"
 	AiSolo_ListModes_FullMethodName     = "/aisolo.AiSolo/ListModes"
+	AiSolo_ListSkills_FullMethodName    = "/aisolo.AiSolo/ListSkills"
 	AiSolo_GetInterrupt_FullMethodName  = "/aisolo.AiSolo/GetInterrupt"
 	AiSolo_Health_FullMethodName        = "/aisolo.AiSolo/Health"
 )
@@ -46,6 +47,8 @@ type AiSoloClient interface {
 	ResumeStream(ctx context.Context, in *ResumeReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ResumeStreamResp], error)
 	// Mode 列表
 	ListModes(ctx context.Context, in *ListModesReq, opts ...grpc.CallOption) (*ListModesResp, error)
+	// Skills 目录元数据（供 Solo 动态标签）
+	ListSkills(ctx context.Context, in *ListSkillsReq, opts ...grpc.CallOption) (*ListSkillsResp, error)
 	// 获取中断详情 (前端刷新后回填 UI)
 	GetInterrupt(ctx context.Context, in *GetInterruptReq, opts ...grpc.CallOption) (*GetInterruptResp, error)
 	// 健康
@@ -158,6 +161,16 @@ func (c *aiSoloClient) ListModes(ctx context.Context, in *ListModesReq, opts ...
 	return out, nil
 }
 
+func (c *aiSoloClient) ListSkills(ctx context.Context, in *ListSkillsReq, opts ...grpc.CallOption) (*ListSkillsResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListSkillsResp)
+	err := c.cc.Invoke(ctx, AiSolo_ListSkills_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *aiSoloClient) GetInterrupt(ctx context.Context, in *GetInterruptReq, opts ...grpc.CallOption) (*GetInterruptResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetInterruptResp)
@@ -193,6 +206,8 @@ type AiSoloServer interface {
 	ResumeStream(*ResumeReq, grpc.ServerStreamingServer[ResumeStreamResp]) error
 	// Mode 列表
 	ListModes(context.Context, *ListModesReq) (*ListModesResp, error)
+	// Skills 目录元数据（供 Solo 动态标签）
+	ListSkills(context.Context, *ListSkillsReq) (*ListSkillsResp, error)
 	// 获取中断详情 (前端刷新后回填 UI)
 	GetInterrupt(context.Context, *GetInterruptReq) (*GetInterruptResp, error)
 	// 健康
@@ -230,6 +245,9 @@ func (UnimplementedAiSoloServer) ResumeStream(*ResumeReq, grpc.ServerStreamingSe
 }
 func (UnimplementedAiSoloServer) ListModes(context.Context, *ListModesReq) (*ListModesResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListModes not implemented")
+}
+func (UnimplementedAiSoloServer) ListSkills(context.Context, *ListSkillsReq) (*ListSkillsResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListSkills not implemented")
 }
 func (UnimplementedAiSoloServer) GetInterrupt(context.Context, *GetInterruptReq) (*GetInterruptResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetInterrupt not implemented")
@@ -388,6 +406,24 @@ func _AiSolo_ListModes_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AiSolo_ListSkills_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListSkillsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AiSoloServer).ListSkills(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AiSolo_ListSkills_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AiSoloServer).ListSkills(ctx, req.(*ListSkillsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AiSolo_GetInterrupt_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetInterruptReq)
 	if err := dec(in); err != nil {
@@ -454,6 +490,10 @@ var AiSolo_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListModes",
 			Handler:    _AiSolo_ListModes_Handler,
+		},
+		{
+			MethodName: "ListSkills",
+			Handler:    _AiSolo_ListSkills_Handler,
 		},
 		{
 			MethodName: "GetInterrupt",

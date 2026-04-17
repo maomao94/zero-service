@@ -15,6 +15,7 @@ type ApprovalInfo struct {
 	Question        string `json:"question,omitempty"`
 	Detail          string `json:"detail,omitempty"`
 	Required        bool   `json:"required,omitempty"`
+	UILang          string `json:"ui_lang,omitempty"`
 }
 
 // ApprovalResult 审批结果。
@@ -45,6 +46,7 @@ type SelectInfo struct {
 	MinSelect       int               `json:"min_select,omitempty"`
 	MaxSelect       int               `json:"max_select,omitempty"`
 	Required        bool              `json:"required,omitempty"`
+	UILang          string            `json:"ui_lang,omitempty"`
 }
 
 // SelectResult 选择类中断的恢复结果。
@@ -66,6 +68,7 @@ type TextInputInfo struct {
 	Placeholder     string `json:"placeholder,omitempty"`
 	Multiline       bool   `json:"multiline,omitempty"`
 	Required        bool   `json:"required,omitempty"`
+	UILang          string `json:"ui_lang,omitempty"`
 }
 
 // TextInputResult 文本输入结果。Cancelled=true 时 Text 可能为空。
@@ -82,12 +85,17 @@ type TextInputResult struct {
 // FormField 表单字段定义。
 // Type: string | number | boolean
 type FormField struct {
-	Name        string `json:"name"`
-	Label       string `json:"label"`
-	Type        string `json:"type"`
-	Required    bool   `json:"required,omitempty"`
-	Placeholder string `json:"placeholder,omitempty"`
-	Default     string `json:"default,omitempty"`
+	Name        string            `json:"name"`
+	Label       string            `json:"label"`
+	Type        string            `json:"type"`
+	Required    bool              `json:"required,omitempty"`
+	Placeholder string            `json:"placeholder,omitempty"`
+	Default     string            `json:"default,omitempty"`
+	Widget      string            `json:"widget,omitempty"`
+	Options     []InterruptOption `json:"options,omitempty"`
+	MinSelect   int               `json:"min_select,omitempty"`
+	MaxSelect   int               `json:"max_select,omitempty"`
+	AllowCustom bool              `json:"allow_custom,omitempty"`
 }
 
 // FormInputInfo 向用户征集结构化表单。
@@ -97,6 +105,7 @@ type FormInputInfo struct {
 	Question        string      `json:"question"`
 	Fields          []FormField `json:"fields"`
 	Required        bool        `json:"required,omitempty"`
+	UILang          string      `json:"ui_lang,omitempty"`
 }
 
 // FormInputResult 表单提交结果。Values 的 key 是 Field.Name，value 是字符串形式
@@ -117,6 +126,7 @@ type InfoAckInfo struct {
 	ArgumentsInJSON string `json:"arguments_in_json,omitempty"`
 	Title           string `json:"title"`
 	Body            string `json:"body"` // 支持 markdown
+	UILang          string `json:"ui_lang,omitempty"`
 }
 
 // InfoAckResult 用户是否确认。Ack=false 视为取消。

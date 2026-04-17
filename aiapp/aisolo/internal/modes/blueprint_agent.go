@@ -33,6 +33,14 @@ func (*agentBlueprint) Build(ctx context.Context, deps Dependencies) (*einoxagen
 		AllowCapabilities(tool.CapCompute, tool.CapIO, tool.CapHuman).
 		Apply(deps.Kit)
 
+	// TODO(业务上线前删除): 以下为 Eino 联调演示 —— 将「问卷→echo」顺序流封装为 AgentTool 挂进默认 Agent。
+	// 正式业务智能体应移除 NewSurveyEchoAgentTool，仅保留 Kit 内真实业务工具或由配置注入的子 Agent。
+	at, err := NewSurveyEchoAgentTool(ctx, deps)
+	if err != nil {
+		return nil, err
+	}
+	tools = append(tools, at)
+
 	return einoxagent.NewChatModelAgent(ctx, deps.ChatModel,
 		einoxagent.WithName("agent"),
 		einoxagent.WithDescription("Default ChatModel agent with all built-in tools"),

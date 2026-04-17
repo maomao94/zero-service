@@ -66,6 +66,11 @@ func (s *AiSoloServer) ListModes(ctx context.Context, in *aisolo.ListModesReq) (
 	return l.ListModes(in)
 }
 
+func (s *AiSoloServer) ListSkills(ctx context.Context, in *aisolo.ListSkillsReq) (*aisolo.ListSkillsResp, error) {
+	l := logic.NewListSkillsLogic(ctx, s.svcCtx)
+	return l.ListSkills(in)
+}
+
 // 获取中断详情 (前端刷新后回填 UI)
 func (s *AiSoloServer) GetInterrupt(ctx context.Context, in *aisolo.GetInterruptReq) (*aisolo.GetInterruptResp, error) {
 	l := logic.NewGetInterruptLogic(ctx, s.svcCtx)

@@ -125,6 +125,11 @@ func buildSkillHandlers(ctx context.Context, cfg *options) []adk.ChatModelAgentM
 		return nil
 	}
 	if fi, err := os.Stat(dir); err != nil || !fi.IsDir() {
+		if err != nil {
+			logx.Errorf("[agent] skills dir unavailable (skill middleware skipped): dir=%s err=%v", dir, err)
+		} else {
+			logx.Errorf("[agent] skills path is not a directory (skill middleware skipped): dir=%s", dir)
+		}
 		return nil
 	}
 

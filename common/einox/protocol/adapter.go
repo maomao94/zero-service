@@ -32,10 +32,16 @@ type RunResult struct {
 	Interrupt *InterruptData
 }
 
+// PipeOptions 控制 PipeEvents 的少量横切行为 (如会话级 UI 语言)。
+type PipeOptions struct {
+	// SessionUILang 在工具未声明 ui_lang 时写入中断事件与 RunResult, 与前端 i18n 对齐。
+	SessionUILang string
+}
+
 // PipeEvents 消费 adk AgentEvent 异步流, 按协议 emit 事件, 并返回 RunResult。
 //
 // 不负责 turn.start / turn.end —— 调用方（turn.Executor）来包裹一轮生命周期。
-func PipeEvents(em *Emitter, iter *adk.AsyncIterator[*adk.AgentEvent]) (RunResult, error) {
+func PipeEvents(em *Emitter, iter *adk.AsyncIterator[*adk.AgentEvent], opt PipeOptions) (RunResult, error) {
 	var res RunResult
 
 	for {
@@ -53,12 +59,18 @@ func PipeEvents(em *Emitter, iter *adk.AsyncIterator[*adk.AgentEvent]) (RunResul
 		// 中断优先级最高, 中断后这一轮就结束了。
 		if ev.Action != nil && ev.Action.Interrupted != nil {
 			data := extractInterrupt(ev.Action.Interrupted.InterruptContexts)
+			data.AgentName = ev.AgentName
+			if strings.TrimSpace(data.UILang) == "" {
+				if def := strings.TrimSpace(opt.SessionUILang); def != "" {
+					data.UILang = def
+				}
+			}
 			res.HasInterrupt = true
 			res.InterruptID = data.InterruptID
 			res.InterruptKind = data.Kind
 			dataCopy := data
 			res.Interrupt = &dataCopy
-			_ = em.Emit(EventInterrupt, data)
+			_ = em.Emit(EventInterrupt, dataCopy)
 			return res, nil
 		}
 
@@ -80,9 +92,9 @@ func PipeEvents(em *Emitter, iter *adk.AsyncIterator[*adk.AgentEvent]) (RunResul
 
 		switch role {
 		case schema.Tool:
-			emitToolResult(em, mo)
+			emitToolResult(em, mo, ev.AgentName)
 		default:
-			text := emitAssistantMessage(em, role, mo)
+			text := emitAssistantMessage(em, role, mo, ev.AgentName)
 			if text != "" {
 				res.LastContent = text
 			}
@@ -98,19 +110,19 @@ func PipeEvents(em *Emitter, iter *adk.AsyncIterator[*adk.AgentEvent]) (RunResul
 // assistant 消息
 // =============================================================================
 
-func emitAssistantMessage(em *Emitter, role schema.RoleType, mo *adk.MessageVariant) string {
+func emitAssistantMessage(em *Emitter, role schema.RoleType, mo *adk.MessageVariant, agentName string) string {
 	if mo.IsStreaming && mo.MessageStream != nil {
-		return emitAssistantStream(em, role, mo.MessageStream)
+		return emitAssistantStream(em, role, mo.MessageStream, agentName)
 	}
 	if mo.Message == nil {
 		return ""
 	}
-	return emitAssistantOneShot(em, role, mo.Message)
+	return emitAssistantOneShot(em, role, mo.Message, agentName)
 }
 
 // emitAssistantStream 把一条流式 assistant 消息拆成 message.start / delta... / end
 // + 若干 tool.call.start (工具调用在流末尾才有稳定的 args)。
-func emitAssistantStream(em *Emitter, role schema.RoleType, stream *schema.StreamReader[adk.Message]) string {
+func emitAssistantStream(em *Emitter, role schema.RoleType, stream *schema.StreamReader[adk.Message], agentName string) string {
 	msgID := uuid.NewString()
 	roleStr := toMessageRole(role)
 
@@ -158,6 +170,7 @@ func emitAssistantStream(em *Emitter, role schema.RoleType, stream *schema.Strea
 				_ = em.Emit(EventMessageStart, MessageStartData{
 					MessageID: msgID,
 					Role:      roleStr,
+					AgentName: agentName,
 				})
 				started = true
 			}
@@ -165,6 +178,7 @@ func emitAssistantStream(em *Emitter, role schema.RoleType, stream *schema.Strea
 			_ = em.Emit(EventMessageDelta, MessageDeltaData{
 				MessageID: msgID,
 				Text:      chunk.Content,
+				AgentName: agentName,
 			})
 		}
 	}
@@ -174,6 +188,7 @@ func emitAssistantStream(em *Emitter, role schema.RoleType, stream *schema.Strea
 			MessageID: msgID,
 			Role:      roleStr,
 			Text:      content.String(),
+			AgentName: agentName,
 		})
 	}
 
@@ -187,22 +202,24 @@ func emitAssistantStream(em *Emitter, role schema.RoleType, stream *schema.Strea
 			Tool:      acc.Name,
 			ArgsJSON:  acc.Args.String(),
 			MessageID: msgID,
+			AgentName: agentName,
 		})
 	}
 
 	return content.String()
 }
 
-func emitAssistantOneShot(em *Emitter, role schema.RoleType, msg *schema.Message) string {
+func emitAssistantOneShot(em *Emitter, role schema.RoleType, msg *schema.Message, agentName string) string {
 	msgID := uuid.NewString()
 	roleStr := toMessageRole(role)
 
 	if msg.Content != "" {
-		_ = em.Emit(EventMessageStart, MessageStartData{MessageID: msgID, Role: roleStr})
+		_ = em.Emit(EventMessageStart, MessageStartData{MessageID: msgID, Role: roleStr, AgentName: agentName})
 		_ = em.Emit(EventMessageEnd, MessageEndData{
 			MessageID: msgID,
 			Role:      roleStr,
 			Text:      msg.Content,
+			AgentName: agentName,
 		})
 	}
 
@@ -212,6 +229,7 @@ func emitAssistantOneShot(em *Emitter, role schema.RoleType, msg *schema.Message
 			Tool:      tc.Function.Name,
 			ArgsJSON:  tc.Function.Arguments,
 			MessageID: msgID,
+			AgentName: agentName,
 		})
 	}
 	return msg.Content
@@ -250,7 +268,7 @@ func toolPayloadForEmit(content string) (result, errMsg string) {
 	return s, ""
 }
 
-func emitToolResult(em *Emitter, mo *adk.MessageVariant) {
+func emitToolResult(em *Emitter, mo *adk.MessageVariant, agentName string) {
 	var (
 		content strings.Builder
 		callID  string
@@ -284,10 +302,11 @@ func emitToolResult(em *Emitter, mo *adk.MessageVariant) {
 	body := content.String()
 	res, errStr := toolPayloadForEmit(body)
 	_ = em.Emit(EventToolCallEnd, ToolCallEndData{
-		CallID: callID,
-		Tool:   name,
-		Result: res,
-		Error:  errStr,
+		CallID:    callID,
+		Tool:      name,
+		Result:    res,
+		Error:     errStr,
+		AgentName: agentName,
 	})
 }
 
@@ -296,10 +315,15 @@ func emitToolResult(em *Emitter, mo *adk.MessageVariant) {
 // =============================================================================
 
 // extractInterrupt 从 adk InterruptContexts 里挑 root-cause, 按 Info 的具体
-// 类型转换为 InterruptData。未识别的类型降级为 approval（最安全默认）。
+// 类型转换为 InterruptData。未识别的类型使用 free_text 承载错误说明（不伪装为 approval）。
 func extractInterrupt(ctxs []*adk.InterruptCtx) InterruptData {
 	if len(ctxs) == 0 {
-		return InterruptData{Kind: InterruptApproval}
+		return InterruptData{
+			Kind:      InterruptFreeText,
+			Question:  "Missing interrupt context",
+			Required:  false,
+			Multiline: false,
+		}
 	}
 	chosen := ctxs[0]
 	for _, ic := range ctxs {
@@ -311,7 +335,6 @@ func extractInterrupt(ctxs []*adk.InterruptCtx) InterruptData {
 
 	d := InterruptData{
 		InterruptID: chosen.ID,
-		Kind:        InterruptApproval,
 	}
 
 	switch info := chosen.Info.(type) {
@@ -321,6 +344,7 @@ func extractInterrupt(ctxs []*adk.InterruptCtx) InterruptData {
 		d.Detail = info.Detail
 		d.ToolName = info.ToolName
 		d.Required = info.Required
+		d.UILang = info.UILang
 
 	case *middleware.SelectInfo:
 		d.Kind = InterruptSingleSelect
@@ -332,6 +356,7 @@ func extractInterrupt(ctxs []*adk.InterruptCtx) InterruptData {
 		d.MinSelect = info.MinSelect
 		d.MaxSelect = info.MaxSelect
 		d.Required = info.Required
+		d.UILang = info.UILang
 		d.Options = toProtoOptions(info.Options)
 
 	case *middleware.TextInputInfo:
@@ -341,6 +366,7 @@ func extractInterrupt(ctxs []*adk.InterruptCtx) InterruptData {
 		d.Multiline = info.Multiline
 		d.ToolName = info.ToolName
 		d.Required = info.Required
+		d.UILang = info.UILang
 
 	case *middleware.FormInputInfo:
 		d.Kind = InterruptFormInput
@@ -348,15 +374,21 @@ func extractInterrupt(ctxs []*adk.InterruptCtx) InterruptData {
 		d.Fields = toProtoFields(info.Fields)
 		d.ToolName = info.ToolName
 		d.Required = info.Required
+		d.UILang = info.UILang
 
 	case *middleware.InfoAckInfo:
 		d.Kind = InterruptInfoAck
 		d.Title = info.Title
 		d.Body = info.Body
 		d.ToolName = info.ToolName
+		d.UILang = info.UILang
 
 	default:
+		d.Kind = InterruptFreeText
+		d.Question = "Unsupported interrupt type"
 		d.Detail = fmt.Sprintf("%v", chosen.Info)
+		d.Required = false
+		d.Multiline = false
 	}
 
 	return d
@@ -386,6 +418,11 @@ func toProtoFields(src []middleware.FormField) []Field {
 			Required:    f.Required,
 			Placeholder: f.Placeholder,
 			Default:     f.Default,
+			Widget:      f.Widget,
+			Options:     toProtoOptions(f.Options),
+			MinSelect:   f.MinSelect,
+			MaxSelect:   f.MaxSelect,
+			AllowCustom: f.AllowCustom,
 		})
 	}
 	return out

@@ -85,7 +85,7 @@ type InterruptKind int32
 
 const (
 	InterruptKind_INTERRUPT_KIND_UNSPECIFIED   InterruptKind = 0
-	InterruptKind_INTERRUPT_KIND_APPROVAL      InterruptKind = 1 // 二选一审批 (approve / deny)
+	InterruptKind_INTERRUPT_KIND_APPROVAL      InterruptKind = 1 // 二选一确认 (前端 yes / no)
 	InterruptKind_INTERRUPT_KIND_SINGLE_SELECT InterruptKind = 2 // 单选
 	InterruptKind_INTERRUPT_KIND_MULTI_SELECT  InterruptKind = 3 // 多选
 	InterruptKind_INTERRUPT_KIND_FREE_TEXT     InterruptKind = 4 // 自由文本输入
@@ -195,41 +195,26 @@ func (SessionStatus) EnumDescriptor() ([]byte, []int) {
 	return file_aisolo_proto_rawDescGZIP(), []int{2}
 }
 
-// ResumeAction 恢复动作。具体字段按 kind 决定填哪个。
+// ResumeAction 恢复动作。仅 yes / no；具体负载字段仍按 InterruptKind 填写。
 type ResumeAction int32
 
 const (
 	ResumeAction_RESUME_ACTION_UNSPECIFIED ResumeAction = 0
-	ResumeAction_RESUME_ACTION_APPROVE     ResumeAction = 1 // approval
-	ResumeAction_RESUME_ACTION_DENY        ResumeAction = 2 // approval
-	ResumeAction_RESUME_ACTION_SELECT      ResumeAction = 3 // single_select / multi_select
-	ResumeAction_RESUME_ACTION_TEXT        ResumeAction = 4 // free_text
-	ResumeAction_RESUME_ACTION_FORM        ResumeAction = 5 // form_input
-	ResumeAction_RESUME_ACTION_ACK         ResumeAction = 6 // info_ack
-	ResumeAction_RESUME_ACTION_CANCEL      ResumeAction = 7 // 所有 kind 都可取消
+	ResumeAction_RESUME_ACTION_YES         ResumeAction = 1
+	ResumeAction_RESUME_ACTION_NO          ResumeAction = 2
 )
 
 // Enum value maps for ResumeAction.
 var (
 	ResumeAction_name = map[int32]string{
 		0: "RESUME_ACTION_UNSPECIFIED",
-		1: "RESUME_ACTION_APPROVE",
-		2: "RESUME_ACTION_DENY",
-		3: "RESUME_ACTION_SELECT",
-		4: "RESUME_ACTION_TEXT",
-		5: "RESUME_ACTION_FORM",
-		6: "RESUME_ACTION_ACK",
-		7: "RESUME_ACTION_CANCEL",
+		1: "RESUME_ACTION_YES",
+		2: "RESUME_ACTION_NO",
 	}
 	ResumeAction_value = map[string]int32{
 		"RESUME_ACTION_UNSPECIFIED": 0,
-		"RESUME_ACTION_APPROVE":     1,
-		"RESUME_ACTION_DENY":        2,
-		"RESUME_ACTION_SELECT":      3,
-		"RESUME_ACTION_TEXT":        4,
-		"RESUME_ACTION_FORM":        5,
-		"RESUME_ACTION_ACK":         6,
-		"RESUME_ACTION_CANCEL":      7,
+		"RESUME_ACTION_YES":         1,
+		"RESUME_ACTION_NO":          2,
 	}
 )
 
@@ -262,12 +247,13 @@ func (ResumeAction) EnumDescriptor() ([]byte, []int) {
 
 // AskReq 一轮对话请求。
 type AskReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
-	Mode          AgentMode              `protobuf:"varint,4,opt,name=mode,proto3,enum=aisolo.AgentMode" json:"mode,omitempty"` // 可选, 留空则使用 session 当前 mode
-	Meta          map[string]string      `protobuf:"bytes,5,rep,name=meta,proto3" json:"meta,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	SessionId string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	UserId    string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Message   string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	Mode      AgentMode              `protobuf:"varint,4,opt,name=mode,proto3,enum=aisolo.AgentMode" json:"mode,omitempty"` // 可选, 留空则使用 session 当前 mode
+	// 扩展键值对。常用: ui_lang (如 zh、en) — 写入会话默认 UI 语言; 工具在 InterruptInfo 中显式设置 ui_lang 时优先生效。
+	Meta          map[string]string `protobuf:"bytes,5,rep,name=meta,proto3" json:"meta,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -512,6 +498,11 @@ type Field struct {
 	Required      bool                   `protobuf:"varint,4,opt,name=required,proto3" json:"required,omitempty"`
 	Placeholder   string                 `protobuf:"bytes,5,opt,name=placeholder,proto3" json:"placeholder,omitempty"`
 	Default       string                 `protobuf:"bytes,6,opt,name=default,proto3" json:"default,omitempty"`
+	Widget        string                 `protobuf:"bytes,7,opt,name=widget,proto3" json:"widget,omitempty"` // text|textarea|select|radio|multi_select|checkbox|switch|number
+	Options       []*Option              `protobuf:"bytes,8,rep,name=options,proto3" json:"options,omitempty"`
+	MinSelect     int32                  `protobuf:"varint,9,opt,name=min_select,json=minSelect,proto3" json:"min_select,omitempty"`
+	MaxSelect     int32                  `protobuf:"varint,10,opt,name=max_select,json=maxSelect,proto3" json:"max_select,omitempty"`
+	AllowCustom   bool                   `protobuf:"varint,11,opt,name=allow_custom,json=allowCustom,proto3" json:"allow_custom,omitempty"` // 单选/下拉/多选下展示「其他」输入，由业务按需开启
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -588,6 +579,41 @@ func (x *Field) GetDefault() string {
 	return ""
 }
 
+func (x *Field) GetWidget() string {
+	if x != nil {
+		return x.Widget
+	}
+	return ""
+}
+
+func (x *Field) GetOptions() []*Option {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
+func (x *Field) GetMinSelect() int32 {
+	if x != nil {
+		return x.MinSelect
+	}
+	return 0
+}
+
+func (x *Field) GetMaxSelect() int32 {
+	if x != nil {
+		return x.MaxSelect
+	}
+	return 0
+}
+
+func (x *Field) GetAllowCustom() bool {
+	if x != nil {
+		return x.AllowCustom
+	}
+	return false
+}
+
 // InterruptInfo 结构化中断元数据。Kind 决定哪些字段有效:
 //
 //	APPROVAL      -> question, detail
@@ -602,6 +628,7 @@ type InterruptInfo struct {
 	Kind          InterruptKind          `protobuf:"varint,2,opt,name=kind,proto3,enum=aisolo.InterruptKind" json:"kind,omitempty"`
 	ToolName      string                 `protobuf:"bytes,3,opt,name=tool_name,json=toolName,proto3" json:"tool_name,omitempty"`
 	Required      bool                   `protobuf:"varint,4,opt,name=required,proto3" json:"required,omitempty"`
+	UiLang        string                 `protobuf:"bytes,5,opt,name=ui_lang,json=uiLang,proto3" json:"ui_lang,omitempty"` // UI 语言提示 (如 zh/en), 优先供前端文案渲染
 	Question      string                 `protobuf:"bytes,10,opt,name=question,proto3" json:"question,omitempty"`
 	Detail        string                 `protobuf:"bytes,11,opt,name=detail,proto3" json:"detail,omitempty"`
 	Options       []*Option              `protobuf:"bytes,12,rep,name=options,proto3" json:"options,omitempty"`
@@ -612,6 +639,7 @@ type InterruptInfo struct {
 	Fields        []*Field               `protobuf:"bytes,17,rep,name=fields,proto3" json:"fields,omitempty"`
 	Title         string                 `protobuf:"bytes,18,opt,name=title,proto3" json:"title,omitempty"`
 	Body          string                 `protobuf:"bytes,19,opt,name=body,proto3" json:"body,omitempty"`
+	AgentName     string                 `protobuf:"bytes,20,opt,name=agent_name,json=agentName,proto3" json:"agent_name,omitempty"` // 触发中断的 ADK Agent（与 protocol.InterruptData.agent_name 对齐）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -672,6 +700,13 @@ func (x *InterruptInfo) GetRequired() bool {
 		return x.Required
 	}
 	return false
+}
+
+func (x *InterruptInfo) GetUiLang() string {
+	if x != nil {
+		return x.UiLang
+	}
+	return ""
 }
 
 func (x *InterruptInfo) GetQuestion() string {
@@ -740,6 +775,13 @@ func (x *InterruptInfo) GetTitle() string {
 func (x *InterruptInfo) GetBody() string {
 	if x != nil {
 		return x.Body
+	}
+	return ""
+}
+
+func (x *InterruptInfo) GetAgentName() string {
+	if x != nil {
+		return x.AgentName
 	}
 	return ""
 }
@@ -981,6 +1023,7 @@ type Session struct {
 	UpdatedAt     int64                  `protobuf:"varint,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	MessageCount  int32                  `protobuf:"varint,9,opt,name=message_count,json=messageCount,proto3" json:"message_count,omitempty"`
 	LastMessage   string                 `protobuf:"bytes,10,opt,name=last_message,json=lastMessage,proto3" json:"last_message,omitempty"`
+	UiLang        string                 `protobuf:"bytes,11,opt,name=ui_lang,json=uiLang,proto3" json:"ui_lang,omitempty"` // 会话默认 UI 语言 (zh/en), 由 AskReq.meta["ui_lang"] 更新
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1085,11 +1128,19 @@ func (x *Session) GetLastMessage() string {
 	return ""
 }
 
+func (x *Session) GetUiLang() string {
+	if x != nil {
+		return x.UiLang
+	}
+	return ""
+}
+
 type CreateSessionReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	Mode          AgentMode              `protobuf:"varint,3,opt,name=mode,proto3,enum=aisolo.AgentMode" json:"mode,omitempty"`
+	UiLang        string                 `protobuf:"bytes,4,opt,name=ui_lang,json=uiLang,proto3" json:"ui_lang,omitempty"` // 可选, 初始会话默认 UI 语言 (zh/en); 与 AskReq.meta["ui_lang"] 规则一致
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1143,6 +1194,13 @@ func (x *CreateSessionReq) GetMode() AgentMode {
 		return x.Mode
 	}
 	return AgentMode_AGENT_MODE_UNSPECIFIED
+}
+
+func (x *CreateSessionReq) GetUiLang() string {
+	if x != nil {
+		return x.UiLang
+	}
+	return ""
 }
 
 type CreateSessionResp struct {
@@ -1973,6 +2031,163 @@ func (x *ListModesResp) GetModes() []*ModeInfo {
 	return nil
 }
 
+// SkillInfo 供前端展示技能标签 / launch（扫描 Skills 目录下 SKILL.md）。
+type SkillInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`     // 子目录名
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"` // frontmatter name，缺省同 id
+	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	Tags          []string               `protobuf:"bytes,4,rep,name=tags,proto3" json:"tags,omitempty"`
+	LaunchPrompt  string                 `protobuf:"bytes,5,opt,name=launch_prompt,json=launchPrompt,proto3" json:"launch_prompt,omitempty"` // 点击 chip 时预填或拼入用户消息的引导语
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SkillInfo) Reset() {
+	*x = SkillInfo{}
+	mi := &file_aisolo_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SkillInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SkillInfo) ProtoMessage() {}
+
+func (x *SkillInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SkillInfo.ProtoReflect.Descriptor instead.
+func (*SkillInfo) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *SkillInfo) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *SkillInfo) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *SkillInfo) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *SkillInfo) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+func (x *SkillInfo) GetLaunchPrompt() string {
+	if x != nil {
+		return x.LaunchPrompt
+	}
+	return ""
+}
+
+type ListSkillsReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListSkillsReq) Reset() {
+	*x = ListSkillsReq{}
+	mi := &file_aisolo_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListSkillsReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSkillsReq) ProtoMessage() {}
+
+func (x *ListSkillsReq) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSkillsReq.ProtoReflect.Descriptor instead.
+func (*ListSkillsReq) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{27}
+}
+
+type ListSkillsResp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Skills        []*SkillInfo           `protobuf:"bytes,1,rep,name=skills,proto3" json:"skills,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListSkillsResp) Reset() {
+	*x = ListSkillsResp{}
+	mi := &file_aisolo_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListSkillsResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSkillsResp) ProtoMessage() {}
+
+func (x *ListSkillsResp) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSkillsResp.ProtoReflect.Descriptor instead.
+func (*ListSkillsResp) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *ListSkillsResp) GetSkills() []*SkillInfo {
+	if x != nil {
+		return x.Skills
+	}
+	return nil
+}
+
 type HealthReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1981,7 +2196,7 @@ type HealthReq struct {
 
 func (x *HealthReq) Reset() {
 	*x = HealthReq{}
-	mi := &file_aisolo_proto_msgTypes[26]
+	mi := &file_aisolo_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1993,7 +2208,7 @@ func (x *HealthReq) String() string {
 func (*HealthReq) ProtoMessage() {}
 
 func (x *HealthReq) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[26]
+	mi := &file_aisolo_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2006,7 +2221,7 @@ func (x *HealthReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthReq.ProtoReflect.Descriptor instead.
 func (*HealthReq) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{26}
+	return file_aisolo_proto_rawDescGZIP(), []int{29}
 }
 
 type HealthResp struct {
@@ -2021,7 +2236,7 @@ type HealthResp struct {
 
 func (x *HealthResp) Reset() {
 	*x = HealthResp{}
-	mi := &file_aisolo_proto_msgTypes[27]
+	mi := &file_aisolo_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2033,7 +2248,7 @@ func (x *HealthResp) String() string {
 func (*HealthResp) ProtoMessage() {}
 
 func (x *HealthResp) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[27]
+	mi := &file_aisolo_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2046,7 +2261,7 @@ func (x *HealthResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthResp.ProtoReflect.Descriptor instead.
 func (*HealthResp) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{27}
+	return file_aisolo_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *HealthResp) GetStatus() string {
@@ -2102,19 +2317,28 @@ const file_aisolo_proto_rawDesc = "" +
 	"\x06Option\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05label\x18\x02 \x01(\tR\x05label\x12\x12\n" +
-	"\x04desc\x18\x03 \x01(\tR\x04desc\"\x9d\x01\n" +
+	"\x04desc\x18\x03 \x01(\tR\x04desc\"\xc0\x02\n" +
 	"\x05Field\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05label\x18\x02 \x01(\tR\x05label\x12\x12\n" +
 	"\x04type\x18\x03 \x01(\tR\x04type\x12\x1a\n" +
 	"\brequired\x18\x04 \x01(\bR\brequired\x12 \n" +
 	"\vplaceholder\x18\x05 \x01(\tR\vplaceholder\x12\x18\n" +
-	"\adefault\x18\x06 \x01(\tR\adefault\"\xc3\x03\n" +
+	"\adefault\x18\x06 \x01(\tR\adefault\x12\x16\n" +
+	"\x06widget\x18\a \x01(\tR\x06widget\x12(\n" +
+	"\aoptions\x18\b \x03(\v2\x0e.aisolo.OptionR\aoptions\x12\x1d\n" +
+	"\n" +
+	"min_select\x18\t \x01(\x05R\tminSelect\x12\x1d\n" +
+	"\n" +
+	"max_select\x18\n" +
+	" \x01(\x05R\tmaxSelect\x12!\n" +
+	"\fallow_custom\x18\v \x01(\bR\vallowCustom\"\xfb\x03\n" +
 	"\rInterruptInfo\x12!\n" +
 	"\finterrupt_id\x18\x01 \x01(\tR\vinterruptId\x12)\n" +
 	"\x04kind\x18\x02 \x01(\x0e2\x15.aisolo.InterruptKindR\x04kind\x12\x1b\n" +
 	"\ttool_name\x18\x03 \x01(\tR\btoolName\x12\x1a\n" +
-	"\brequired\x18\x04 \x01(\bR\brequired\x12\x1a\n" +
+	"\brequired\x18\x04 \x01(\bR\brequired\x12\x17\n" +
+	"\aui_lang\x18\x05 \x01(\tR\x06uiLang\x12\x1a\n" +
 	"\bquestion\x18\n" +
 	" \x01(\tR\bquestion\x12\x16\n" +
 	"\x06detail\x18\v \x01(\tR\x06detail\x12(\n" +
@@ -2127,7 +2351,9 @@ const file_aisolo_proto_rawDesc = "" +
 	"\tmultiline\x18\x10 \x01(\bR\tmultiline\x12%\n" +
 	"\x06fields\x18\x11 \x03(\v2\r.aisolo.FieldR\x06fields\x12\x14\n" +
 	"\x05title\x18\x12 \x01(\tR\x05title\x12\x12\n" +
-	"\x04body\x18\x13 \x01(\tR\x04body\"\xe6\x02\n" +
+	"\x04body\x18\x13 \x01(\tR\x04body\x12\x1d\n" +
+	"\n" +
+	"agent_name\x18\x14 \x01(\tR\tagentName\"\xe6\x02\n" +
 	"\tResumeReq\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x17\n" +
@@ -2151,7 +2377,7 @@ const file_aisolo_proto_rawDesc = "" +
 	"\rhas_interrupt\x18\x04 \x01(\bR\fhasInterrupt\x12!\n" +
 	"\finterrupt_id\x18\x05 \x01(\tR\vinterruptId\"C\n" +
 	"\x10ResumeStreamResp\x12/\n" +
-	"\x05chunk\x18\x01 \x01(\v2\x19.aisolo.ResumeStreamChunkR\x05chunk\"\xd6\x02\n" +
+	"\x05chunk\x18\x01 \x01(\v2\x19.aisolo.ResumeStreamChunkR\x05chunk\"\xef\x02\n" +
 	"\aSession\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x17\n" +
@@ -2166,11 +2392,13 @@ const file_aisolo_proto_rawDesc = "" +
 	"updated_at\x18\b \x01(\x03R\tupdatedAt\x12#\n" +
 	"\rmessage_count\x18\t \x01(\x05R\fmessageCount\x12!\n" +
 	"\flast_message\x18\n" +
-	" \x01(\tR\vlastMessage\"h\n" +
+	" \x01(\tR\vlastMessage\x12\x17\n" +
+	"\aui_lang\x18\v \x01(\tR\x06uiLang\"\x81\x01\n" +
 	"\x10CreateSessionReq\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12%\n" +
-	"\x04mode\x18\x03 \x01(\x0e2\x11.aisolo.AgentModeR\x04mode\">\n" +
+	"\x04mode\x18\x03 \x01(\x0e2\x11.aisolo.AgentModeR\x04mode\x12\x17\n" +
+	"\aui_lang\x18\x04 \x01(\tR\x06uiLang\">\n" +
 	"\x11CreateSessionResp\x12)\n" +
 	"\asession\x18\x01 \x01(\v2\x0f.aisolo.SessionR\asession\"G\n" +
 	"\rGetSessionReq\x12\x1d\n" +
@@ -2228,7 +2456,16 @@ const file_aisolo_proto_rawDesc = "" +
 	"\adefault\x18\x05 \x01(\bR\adefault\"\x0e\n" +
 	"\fListModesReq\"7\n" +
 	"\rListModesResp\x12&\n" +
-	"\x05modes\x18\x01 \x03(\v2\x10.aisolo.ModeInfoR\x05modes\"\v\n" +
+	"\x05modes\x18\x01 \x03(\v2\x10.aisolo.ModeInfoR\x05modes\"\x8a\x01\n" +
+	"\tSkillInfo\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x12\n" +
+	"\x04tags\x18\x04 \x03(\tR\x04tags\x12#\n" +
+	"\rlaunch_prompt\x18\x05 \x01(\tR\flaunchPrompt\"\x0f\n" +
+	"\rListSkillsReq\";\n" +
+	"\x0eListSkillsResp\x12)\n" +
+	"\x06skills\x18\x01 \x03(\v2\x11.aisolo.SkillInfoR\x06skills\"\v\n" +
 	"\tHealthReq\"\xe7\x01\n" +
 	"\n" +
 	"HealthResp\x12\x16\n" +
@@ -2238,14 +2475,14 @@ const file_aisolo_proto_rawDesc = "" +
 	"\fdependencies\x18\x04 \x03(\v2$.aisolo.HealthResp.DependenciesEntryR\fdependencies\x1a?\n" +
 	"\x11DependenciesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01*\x9b\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01*\xa1\x01\n" +
 	"\tAgentMode\x12\x1a\n" +
 	"\x16AGENT_MODE_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10AGENT_MODE_AGENT\x10\x01\x12\x17\n" +
 	"\x13AGENT_MODE_WORKFLOW\x10\x02\x12\x19\n" +
 	"\x15AGENT_MODE_SUPERVISOR\x10\x03\x12\x13\n" +
 	"\x0fAGENT_MODE_PLAN\x10\x04\x12\x13\n" +
-	"\x0fAGENT_MODE_DEEP\x10\x05*\xe9\x01\n" +
+	"\x0fAGENT_MODE_DEEP\x10\x05\"\x04\b\x06\x10\x06*\xe9\x01\n" +
 	"\rInterruptKind\x12\x1e\n" +
 	"\x1aINTERRUPT_KIND_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17INTERRUPT_KIND_APPROVAL\x10\x01\x12 \n" +
@@ -2258,16 +2495,11 @@ const file_aisolo_proto_rawDesc = "" +
 	"\x1aSESSION_STATUS_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13SESSION_STATUS_IDLE\x10\x01\x12\x1a\n" +
 	"\x16SESSION_STATUS_RUNNING\x10\x02\x12\x1e\n" +
-	"\x1aSESSION_STATUS_INTERRUPTED\x10\x03*\xdb\x01\n" +
+	"\x1aSESSION_STATUS_INTERRUPTED\x10\x03*Z\n" +
 	"\fResumeAction\x12\x1d\n" +
-	"\x19RESUME_ACTION_UNSPECIFIED\x10\x00\x12\x19\n" +
-	"\x15RESUME_ACTION_APPROVE\x10\x01\x12\x16\n" +
-	"\x12RESUME_ACTION_DENY\x10\x02\x12\x18\n" +
-	"\x14RESUME_ACTION_SELECT\x10\x03\x12\x16\n" +
-	"\x12RESUME_ACTION_TEXT\x10\x04\x12\x16\n" +
-	"\x12RESUME_ACTION_FORM\x10\x05\x12\x15\n" +
-	"\x11RESUME_ACTION_ACK\x10\x06\x12\x18\n" +
-	"\x14RESUME_ACTION_CANCEL\x10\a2\xfa\x04\n" +
+	"\x19RESUME_ACTION_UNSPECIFIED\x10\x00\x12\x15\n" +
+	"\x11RESUME_ACTION_YES\x10\x01\x12\x14\n" +
+	"\x10RESUME_ACTION_NO\x10\x022\xb7\x05\n" +
 	"\x06AiSolo\x12D\n" +
 	"\rCreateSession\x12\x18.aisolo.CreateSessionReq\x1a\x19.aisolo.CreateSessionResp\x12;\n" +
 	"\n" +
@@ -2277,7 +2509,9 @@ const file_aisolo_proto_rawDesc = "" +
 	"\fListMessages\x12\x17.aisolo.ListMessagesReq\x1a\x18.aisolo.ListMessagesResp\x124\n" +
 	"\tAskStream\x12\x0e.aisolo.AskReq\x1a\x15.aisolo.AskStreamResp0\x01\x12=\n" +
 	"\fResumeStream\x12\x11.aisolo.ResumeReq\x1a\x18.aisolo.ResumeStreamResp0\x01\x128\n" +
-	"\tListModes\x12\x14.aisolo.ListModesReq\x1a\x15.aisolo.ListModesResp\x12A\n" +
+	"\tListModes\x12\x14.aisolo.ListModesReq\x1a\x15.aisolo.ListModesResp\x12;\n" +
+	"\n" +
+	"ListSkills\x12\x15.aisolo.ListSkillsReq\x1a\x16.aisolo.ListSkillsResp\x12A\n" +
 	"\fGetInterrupt\x12\x17.aisolo.GetInterruptReq\x1a\x18.aisolo.GetInterruptResp\x12/\n" +
 	"\x06Health\x12\x11.aisolo.HealthReq\x1a\x12.aisolo.HealthRespB\n" +
 	"Z\b./aisolob\x06proto3"
@@ -2295,7 +2529,7 @@ func file_aisolo_proto_rawDescGZIP() []byte {
 }
 
 var file_aisolo_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_aisolo_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
+var file_aisolo_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
 var file_aisolo_proto_goTypes = []any{
 	(AgentMode)(0),            // 0: aisolo.AgentMode
 	(InterruptKind)(0),        // 1: aisolo.InterruptKind
@@ -2327,58 +2561,65 @@ var file_aisolo_proto_goTypes = []any{
 	(*ModeInfo)(nil),          // 27: aisolo.ModeInfo
 	(*ListModesReq)(nil),      // 28: aisolo.ListModesReq
 	(*ListModesResp)(nil),     // 29: aisolo.ListModesResp
-	(*HealthReq)(nil),         // 30: aisolo.HealthReq
-	(*HealthResp)(nil),        // 31: aisolo.HealthResp
-	nil,                       // 32: aisolo.AskReq.MetaEntry
-	nil,                       // 33: aisolo.ResumeReq.FormValuesEntry
-	nil,                       // 34: aisolo.HealthResp.DependenciesEntry
+	(*SkillInfo)(nil),         // 30: aisolo.SkillInfo
+	(*ListSkillsReq)(nil),     // 31: aisolo.ListSkillsReq
+	(*ListSkillsResp)(nil),    // 32: aisolo.ListSkillsResp
+	(*HealthReq)(nil),         // 33: aisolo.HealthReq
+	(*HealthResp)(nil),        // 34: aisolo.HealthResp
+	nil,                       // 35: aisolo.AskReq.MetaEntry
+	nil,                       // 36: aisolo.ResumeReq.FormValuesEntry
+	nil,                       // 37: aisolo.HealthResp.DependenciesEntry
 }
 var file_aisolo_proto_depIdxs = []int32{
 	0,  // 0: aisolo.AskReq.mode:type_name -> aisolo.AgentMode
-	32, // 1: aisolo.AskReq.meta:type_name -> aisolo.AskReq.MetaEntry
+	35, // 1: aisolo.AskReq.meta:type_name -> aisolo.AskReq.MetaEntry
 	5,  // 2: aisolo.AskStreamResp.chunk:type_name -> aisolo.AskStreamChunk
-	1,  // 3: aisolo.InterruptInfo.kind:type_name -> aisolo.InterruptKind
-	7,  // 4: aisolo.InterruptInfo.options:type_name -> aisolo.Option
-	8,  // 5: aisolo.InterruptInfo.fields:type_name -> aisolo.Field
-	3,  // 6: aisolo.ResumeReq.action:type_name -> aisolo.ResumeAction
-	33, // 7: aisolo.ResumeReq.form_values:type_name -> aisolo.ResumeReq.FormValuesEntry
-	11, // 8: aisolo.ResumeStreamResp.chunk:type_name -> aisolo.ResumeStreamChunk
-	0,  // 9: aisolo.Session.mode:type_name -> aisolo.AgentMode
-	2,  // 10: aisolo.Session.status:type_name -> aisolo.SessionStatus
-	0,  // 11: aisolo.CreateSessionReq.mode:type_name -> aisolo.AgentMode
-	13, // 12: aisolo.CreateSessionResp.session:type_name -> aisolo.Session
-	13, // 13: aisolo.GetSessionResp.session:type_name -> aisolo.Session
-	13, // 14: aisolo.ListSessionsResp.sessions:type_name -> aisolo.Session
-	9,  // 15: aisolo.GetInterruptResp.info:type_name -> aisolo.InterruptInfo
-	24, // 16: aisolo.ListMessagesResp.messages:type_name -> aisolo.Message
-	0,  // 17: aisolo.ModeInfo.mode:type_name -> aisolo.AgentMode
-	27, // 18: aisolo.ListModesResp.modes:type_name -> aisolo.ModeInfo
-	34, // 19: aisolo.HealthResp.dependencies:type_name -> aisolo.HealthResp.DependenciesEntry
-	14, // 20: aisolo.AiSolo.CreateSession:input_type -> aisolo.CreateSessionReq
-	16, // 21: aisolo.AiSolo.GetSession:input_type -> aisolo.GetSessionReq
-	18, // 22: aisolo.AiSolo.ListSessions:input_type -> aisolo.ListSessionsReq
-	20, // 23: aisolo.AiSolo.DeleteSession:input_type -> aisolo.DeleteSessionReq
-	25, // 24: aisolo.AiSolo.ListMessages:input_type -> aisolo.ListMessagesReq
-	4,  // 25: aisolo.AiSolo.AskStream:input_type -> aisolo.AskReq
-	10, // 26: aisolo.AiSolo.ResumeStream:input_type -> aisolo.ResumeReq
-	28, // 27: aisolo.AiSolo.ListModes:input_type -> aisolo.ListModesReq
-	22, // 28: aisolo.AiSolo.GetInterrupt:input_type -> aisolo.GetInterruptReq
-	30, // 29: aisolo.AiSolo.Health:input_type -> aisolo.HealthReq
-	15, // 30: aisolo.AiSolo.CreateSession:output_type -> aisolo.CreateSessionResp
-	17, // 31: aisolo.AiSolo.GetSession:output_type -> aisolo.GetSessionResp
-	19, // 32: aisolo.AiSolo.ListSessions:output_type -> aisolo.ListSessionsResp
-	21, // 33: aisolo.AiSolo.DeleteSession:output_type -> aisolo.DeleteSessionResp
-	26, // 34: aisolo.AiSolo.ListMessages:output_type -> aisolo.ListMessagesResp
-	6,  // 35: aisolo.AiSolo.AskStream:output_type -> aisolo.AskStreamResp
-	12, // 36: aisolo.AiSolo.ResumeStream:output_type -> aisolo.ResumeStreamResp
-	29, // 37: aisolo.AiSolo.ListModes:output_type -> aisolo.ListModesResp
-	23, // 38: aisolo.AiSolo.GetInterrupt:output_type -> aisolo.GetInterruptResp
-	31, // 39: aisolo.AiSolo.Health:output_type -> aisolo.HealthResp
-	30, // [30:40] is the sub-list for method output_type
-	20, // [20:30] is the sub-list for method input_type
-	20, // [20:20] is the sub-list for extension type_name
-	20, // [20:20] is the sub-list for extension extendee
-	0,  // [0:20] is the sub-list for field type_name
+	7,  // 3: aisolo.Field.options:type_name -> aisolo.Option
+	1,  // 4: aisolo.InterruptInfo.kind:type_name -> aisolo.InterruptKind
+	7,  // 5: aisolo.InterruptInfo.options:type_name -> aisolo.Option
+	8,  // 6: aisolo.InterruptInfo.fields:type_name -> aisolo.Field
+	3,  // 7: aisolo.ResumeReq.action:type_name -> aisolo.ResumeAction
+	36, // 8: aisolo.ResumeReq.form_values:type_name -> aisolo.ResumeReq.FormValuesEntry
+	11, // 9: aisolo.ResumeStreamResp.chunk:type_name -> aisolo.ResumeStreamChunk
+	0,  // 10: aisolo.Session.mode:type_name -> aisolo.AgentMode
+	2,  // 11: aisolo.Session.status:type_name -> aisolo.SessionStatus
+	0,  // 12: aisolo.CreateSessionReq.mode:type_name -> aisolo.AgentMode
+	13, // 13: aisolo.CreateSessionResp.session:type_name -> aisolo.Session
+	13, // 14: aisolo.GetSessionResp.session:type_name -> aisolo.Session
+	13, // 15: aisolo.ListSessionsResp.sessions:type_name -> aisolo.Session
+	9,  // 16: aisolo.GetInterruptResp.info:type_name -> aisolo.InterruptInfo
+	24, // 17: aisolo.ListMessagesResp.messages:type_name -> aisolo.Message
+	0,  // 18: aisolo.ModeInfo.mode:type_name -> aisolo.AgentMode
+	27, // 19: aisolo.ListModesResp.modes:type_name -> aisolo.ModeInfo
+	30, // 20: aisolo.ListSkillsResp.skills:type_name -> aisolo.SkillInfo
+	37, // 21: aisolo.HealthResp.dependencies:type_name -> aisolo.HealthResp.DependenciesEntry
+	14, // 22: aisolo.AiSolo.CreateSession:input_type -> aisolo.CreateSessionReq
+	16, // 23: aisolo.AiSolo.GetSession:input_type -> aisolo.GetSessionReq
+	18, // 24: aisolo.AiSolo.ListSessions:input_type -> aisolo.ListSessionsReq
+	20, // 25: aisolo.AiSolo.DeleteSession:input_type -> aisolo.DeleteSessionReq
+	25, // 26: aisolo.AiSolo.ListMessages:input_type -> aisolo.ListMessagesReq
+	4,  // 27: aisolo.AiSolo.AskStream:input_type -> aisolo.AskReq
+	10, // 28: aisolo.AiSolo.ResumeStream:input_type -> aisolo.ResumeReq
+	28, // 29: aisolo.AiSolo.ListModes:input_type -> aisolo.ListModesReq
+	31, // 30: aisolo.AiSolo.ListSkills:input_type -> aisolo.ListSkillsReq
+	22, // 31: aisolo.AiSolo.GetInterrupt:input_type -> aisolo.GetInterruptReq
+	33, // 32: aisolo.AiSolo.Health:input_type -> aisolo.HealthReq
+	15, // 33: aisolo.AiSolo.CreateSession:output_type -> aisolo.CreateSessionResp
+	17, // 34: aisolo.AiSolo.GetSession:output_type -> aisolo.GetSessionResp
+	19, // 35: aisolo.AiSolo.ListSessions:output_type -> aisolo.ListSessionsResp
+	21, // 36: aisolo.AiSolo.DeleteSession:output_type -> aisolo.DeleteSessionResp
+	26, // 37: aisolo.AiSolo.ListMessages:output_type -> aisolo.ListMessagesResp
+	6,  // 38: aisolo.AiSolo.AskStream:output_type -> aisolo.AskStreamResp
+	12, // 39: aisolo.AiSolo.ResumeStream:output_type -> aisolo.ResumeStreamResp
+	29, // 40: aisolo.AiSolo.ListModes:output_type -> aisolo.ListModesResp
+	32, // 41: aisolo.AiSolo.ListSkills:output_type -> aisolo.ListSkillsResp
+	23, // 42: aisolo.AiSolo.GetInterrupt:output_type -> aisolo.GetInterruptResp
+	34, // 43: aisolo.AiSolo.Health:output_type -> aisolo.HealthResp
+	33, // [33:44] is the sub-list for method output_type
+	22, // [22:33] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_aisolo_proto_init() }
@@ -2392,7 +2633,7 @@ func file_aisolo_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_aisolo_proto_rawDesc), len(file_aisolo_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   31,
+			NumMessages:   34,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

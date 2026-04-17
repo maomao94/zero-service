@@ -61,20 +61,10 @@ func sessionStatusToString(s aisolo.SessionStatus) string {
 // parseResumeAction 将字符串 action 映射为 gRPC 枚举。
 func parseResumeAction(s string) aisolo.ResumeAction {
 	switch strings.ToLower(strings.TrimSpace(s)) {
-	case "approve", "approved":
-		return aisolo.ResumeAction_RESUME_ACTION_APPROVE
-	case "deny", "reject":
-		return aisolo.ResumeAction_RESUME_ACTION_DENY
-	case "select":
-		return aisolo.ResumeAction_RESUME_ACTION_SELECT
-	case "text":
-		return aisolo.ResumeAction_RESUME_ACTION_TEXT
-	case "form":
-		return aisolo.ResumeAction_RESUME_ACTION_FORM
-	case "ack", "acknowledge":
-		return aisolo.ResumeAction_RESUME_ACTION_ACK
-	case "cancel", "canceled":
-		return aisolo.ResumeAction_RESUME_ACTION_CANCEL
+	case "yes":
+		return aisolo.ResumeAction_RESUME_ACTION_YES
+	case "no":
+		return aisolo.ResumeAction_RESUME_ACTION_NO
 	}
 	return aisolo.ResumeAction_RESUME_ACTION_UNSPECIFIED
 }
@@ -95,6 +85,7 @@ func sessionToType(s *aisolo.Session) *types.SoloSessionInfo {
 		UpdatedAt:    s.GetUpdatedAt(),
 		MessageCount: int(s.GetMessageCount()),
 		LastMessage:  s.GetLastMessage(),
+		UiLang:       s.GetUiLang(),
 	}
 }
 
@@ -144,6 +135,8 @@ func interruptToType(info *aisolo.InterruptInfo) *types.SoloInterruptInfo {
 		Kind:        interruptKindToString(info.GetKind()),
 		ToolName:    info.GetToolName(),
 		Required:    info.GetRequired(),
+		UiLang:      info.GetUiLang(),
+		AgentName:   info.GetAgentName(),
 		Question:    info.GetQuestion(),
 		Detail:      info.GetDetail(),
 		MinSelect:   int(info.GetMinSelect()),
@@ -162,7 +155,14 @@ func interruptToType(info *aisolo.InterruptInfo) *types.SoloInterruptInfo {
 		out.Fields = append(out.Fields, &types.SoloField{
 			Name: f.GetName(), Label: f.GetLabel(), Type: f.GetType(),
 			Required: f.GetRequired(), Placeholder: f.GetPlaceholder(), Default: f.GetDefault(),
+			Widget: f.GetWidget(), MinSelect: int(f.GetMinSelect()), MaxSelect: int(f.GetMaxSelect()),
+			AllowCustom: f.GetAllowCustom(),
 		})
+		for _, opt := range f.GetOptions() {
+			out.Fields[len(out.Fields)-1].Options = append(out.Fields[len(out.Fields)-1].Options, &types.SoloOption{
+				Id: opt.GetId(), Label: opt.GetLabel(), Desc: opt.GetDesc(),
+			})
+		}
 	}
 	return out
 }

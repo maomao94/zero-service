@@ -4,17 +4,16 @@ package solo
 import (
 	"net/http"
 
-	"github.com/zeromicro/go-zero/core/logc"
-	"github.com/zeromicro/go-zero/rest/httpx"
 	"zero-service/aiapp/aigtw/internal/logic/solo"
 	"zero-service/aiapp/aigtw/internal/svc"
 	"zero-service/aiapp/aigtw/internal/types"
+
+	"github.com/zeromicro/go-zero/core/logc"
+	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
 // ResumeHandler 中断恢复 (SSE 流式输出 Solo Protocol 事件).
-// Request body 里 Action 字段决定恢复类型, 与 aisolo gRPC ResumeAction 对齐:
-//
-//	approve / deny / select / text / form / ack / cancel.
+// Request body 里 Action 与 aisolo gRPC ResumeAction 对齐: yes | no。
 func ResumeHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req types.SoloInterruptRequest

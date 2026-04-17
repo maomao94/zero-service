@@ -4,6 +4,8 @@ import (
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/components/tool"
+
+	"zero-service/common/einox/fsrestrict"
 )
 
 // Option Agent 构造选项
@@ -34,6 +36,9 @@ type options struct {
 
 	enableWriteTodos bool
 	enableFileSystem bool
+
+	// deepFS 控制 Deep 本地文件 Backend 的用户根、会话父目录与读写策略；零值表示不限制路径。
+	deepFS fsrestrict.Config
 }
 
 // WithName 设置 Agent 名称
@@ -61,7 +66,8 @@ func WithTools(tools ...tool.BaseTool) Option {
 	return func(o *options) { o.tools = append(o.tools, tools...) }
 }
 
-// WithSubAgents 设置子 Agent（Workflow / Supervisor 使用）
+// WithSubAgents 设置子 Agent（Workflow / Supervisor / Deep 使用）。
+// Deep 模式下会写入 deep.Config.SubAgents，由 prebuilt/deep 的 task 工具按上下文调度。
 func WithSubAgents(subs ...adk.Agent) Option {
 	return func(o *options) { o.subAgents = append(o.subAgents, subs...) }
 }
@@ -109,6 +115,23 @@ func WithEnableWriteTodos(b bool) Option {
 // WithEnableFileSystem 启用 Deep Agent 的文件系统
 func WithEnableFileSystem(b bool) Option {
 	return func(o *options) { o.enableFileSystem = b }
+}
+
+// WithDeepFilesystem 设置 Deep 本地文件系统沙箱（用户根、会话父目录、策略）。
+func WithDeepFilesystem(c fsrestrict.Config) Option {
+	return func(o *options) { o.deepFS = c }
+}
+
+// WithFilesystemAllowedRoots 仅设置用户可见根目录；策略为 PermissivePolicy（与旧 Wrap 行为一致）。
+func WithFilesystemAllowedRoots(absRoots []string) Option {
+	return func(o *options) {
+		if len(absRoots) == 0 {
+			o.deepFS.UserRoots = nil
+			return
+		}
+		o.deepFS.UserRoots = append([]string(nil), absRoots...)
+		o.deepFS.Policy = fsrestrict.PermissivePolicy()
+	}
 }
 
 // WithCheckPointStore 设置 adk Runner 的 CheckPointStore（用于中断/恢复）

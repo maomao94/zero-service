@@ -94,12 +94,14 @@ type TurnEndData struct {
 type MessageStartData struct {
 	MessageID string      `json:"message_id"`
 	Role      MessageRole `json:"role"`
+	AgentName string      `json:"agent_name,omitempty"` // ADK 事件来源 Agent（子 Agent / AgentTool 内层等）
 }
 
 // MessageDeltaData 消息文本增量。
 type MessageDeltaData struct {
 	MessageID string `json:"message_id"`
 	Text      string `json:"text"`
+	AgentName string `json:"agent_name,omitempty"`
 }
 
 // MessageEndData 消息结束，携带完整文本。
@@ -107,6 +109,7 @@ type MessageEndData struct {
 	MessageID string      `json:"message_id"`
 	Role      MessageRole `json:"role"`
 	Text      string      `json:"text"`
+	AgentName string      `json:"agent_name,omitempty"`
 }
 
 // ToolCallStartData 工具调用开始。
@@ -115,14 +118,16 @@ type ToolCallStartData struct {
 	Tool      string `json:"tool"`
 	ArgsJSON  string `json:"args_json,omitempty"`
 	MessageID string `json:"message_id,omitempty"` // 关联到哪条 assistant 消息
+	AgentName string `json:"agent_name,omitempty"`
 }
 
 // ToolCallEndData 工具调用结束。
 type ToolCallEndData struct {
-	CallID string `json:"call_id"`
-	Tool   string `json:"tool"`
-	Result string `json:"result,omitempty"`
-	Error  string `json:"error,omitempty"`
+	CallID    string `json:"call_id"`
+	Tool      string `json:"tool"`
+	Result    string `json:"result,omitempty"`
+	Error     string `json:"error,omitempty"`
+	AgentName string `json:"agent_name,omitempty"`
 }
 
 // InterruptData 中断，要求用户介入。
@@ -139,6 +144,8 @@ type InterruptData struct {
 	Kind        InterruptKind `json:"kind"`
 	ToolName    string        `json:"tool_name,omitempty"`
 	Required    bool          `json:"required,omitempty"`
+	UILang      string        `json:"ui_lang,omitempty"`
+	AgentName   string        `json:"agent_name,omitempty"` // 触发中断的 ADK Agent 名
 
 	Question    string   `json:"question,omitempty"`
 	Detail      string   `json:"detail,omitempty"`
@@ -161,12 +168,18 @@ type Option struct {
 
 // Field 表单字段（form_input 用）。
 type Field struct {
-	Name        string `json:"name"`
-	Label       string `json:"label"`
-	Type        string `json:"type"` // string | number | boolean
-	Required    bool   `json:"required,omitempty"`
-	Placeholder string `json:"placeholder,omitempty"`
-	Default     string `json:"default,omitempty"`
+	Name        string   `json:"name"`
+	Label       string   `json:"label"`
+	Type        string   `json:"type"` // string | number | boolean
+	Required    bool     `json:"required,omitempty"`
+	Placeholder string   `json:"placeholder,omitempty"`
+	Default     string   `json:"default,omitempty"`
+	Widget      string   `json:"widget,omitempty"` // text|textarea|select|radio|multi_select|checkbox|switch|number
+	Options     []Option `json:"options,omitempty"`
+	MinSelect   int      `json:"min_select,omitempty"`
+	MaxSelect   int      `json:"max_select,omitempty"`
+	// AllowCustom 为 true 时展示「其他」输入框，提交值可为自由文本（单选/下拉/单选列表）或并入多选数组。
+	AllowCustom bool `json:"allow_custom,omitempty"`
 }
 
 // ErrorData 错误事件。

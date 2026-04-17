@@ -5,9 +5,10 @@ syntax = "v1"
 // ============================================================
 // SoloChatRequest Solo 对话请求
 type SoloChatRequest {
-	SessionId string `json:"sessionId"` // 会话 ID（必填）
-	Message   string `json:"message"` // 消息内容
-	Mode      string `json:"mode,optional"` // Mode 名: agent | workflow | supervisor | plan | deep
+	SessionId string            `json:"sessionId"` // 会话 ID（必填）
+	Message   string            `json:"message"` // 消息内容
+	Mode      string            `json:"mode,optional"` // Mode 名: agent | workflow | supervisor | plan | deep
+	Meta      map[string]string `json:"meta,optional"` // 透传 aisolo AskReq.meta, 常用 ui_lang=zh|en
 }
 
 // SoloChatResponse Solo 流式对话响应 (SSE NDJSON)
@@ -25,6 +26,7 @@ type SoloSessionInfo {
 	UpdatedAt    int64  `json:"updatedAt"`
 	MessageCount int    `json:"messageCount"`
 	LastMessage  string `json:"lastMessage"`
+	UiLang       string `json:"uiLang,optional"` // 会话默认 UI 语言 (由网关透传 gRPC)
 }
 
 // SoloListSessionsRequest Solo 列出会话请求
@@ -43,8 +45,9 @@ type SoloListSessionsResponse {
 
 // SoloCreateSessionRequest Solo 创建会话请求
 type SoloCreateSessionRequest {
-	Title string `json:"title,optional"`
-	Mode  string `json:"mode,optional"` // 可选, 留空走默认
+	Title  string `json:"title,optional"`
+	Mode   string `json:"mode,optional"` // 可选, 留空走默认
+	UiLang string `json:"uiLang,optional"` // 可选 zh|en, 写入会话默认 UI 语言 (首轮 Ask 前即生效)
 }
 
 // SoloCreateSessionResponse Solo 创建会话响应
@@ -110,16 +113,23 @@ type SoloListModesResponse {
 	Modes []*SoloModeInfo `json:"modes"`
 }
 
+// SoloSkillInfo 技能元数据（与 aisolo ListSkills 对齐）
+type SoloSkillInfo {
+	Id           string   `json:"id"`
+	Name         string   `json:"name"`
+	Description  string   `json:"description"`
+	Tags         []string `json:"tags,optional"`
+	LaunchPrompt string   `json:"launchPrompt,optional"`
+}
+
+// SoloListSkillsResponse Solo 列出技能
+type SoloListSkillsResponse {
+	Skills []*SoloSkillInfo `json:"skills"`
+}
+
 // SoloInterruptRequest Solo 中断恢复请求 (6 种 kind 通过 Action + 附加字段区分)
 //
-// Action 取值：
-//   - approve : 批准 (approval kind)
-//   - deny    : 拒绝 (approval kind, 可带 reason)
-//   - select  : 选择 (single/multi_select kind, 带 selectedIds)
-//   - text    : 文本 (free_text kind, 带 text)
-//   - form    : 表单 (form_input kind, 带 formValues)
-//   - ack     : 确认 (info_ack kind)
-//   - cancel  : 取消 (任意 kind)
+// Action 取值：yes | no（按 kind 携带 selectedIds / text / formValues / reason 等）
 type SoloInterruptRequest {
 	SessionId   string            `json:"sessionId,optional"`
 	InterruptId string            `path:"interruptId"`
@@ -142,12 +152,17 @@ type SoloOption {
 
 // SoloField 表单字段
 type SoloField {
-	Name        string `json:"name"`
-	Label       string `json:"label"`
-	Type        string `json:"type"`
-	Required    bool   `json:"required,optional"`
-	Placeholder string `json:"placeholder,optional"`
-	Default     string `json:"default,optional"`
+	Name        string        `json:"name"`
+	Label       string        `json:"label"`
+	Type        string        `json:"type"`
+	Required    bool          `json:"required,optional"`
+	Placeholder string        `json:"placeholder,optional"`
+	Default     string        `json:"default,optional"`
+	Widget      string        `json:"widget,optional"` // text|textarea|select|radio|multi_select|checkbox|switch|number
+	Options     []*SoloOption `json:"options,optional"`
+	MinSelect   int           `json:"minSelect,optional"` // multi_select 最少选择项
+	MaxSelect   int           `json:"maxSelect,optional"` // multi_select 最多选择项，0 表示不限制
+	AllowCustom bool          `json:"allowCustom,optional"` // 为 true 时展示「其他」自定义输入
 }
 
 // SoloInterruptInfo 结构化中断详情 (页面刷新后回填 UI 使用)
@@ -164,6 +179,7 @@ type SoloInterruptInfo {
 	Kind        string        `json:"kind"`
 	ToolName    string        `json:"toolName,optional"`
 	Required    bool          `json:"required,optional"`
+	UiLang      string        `json:"uiLang,optional"` // 由模型提示的 UI 语言, 如 zh/en
 	Question    string        `json:"question,optional"`
 	Detail      string        `json:"detail,optional"`
 	Options     []*SoloOption `json:"options,optional"`
@@ -174,6 +190,7 @@ type SoloInterruptInfo {
 	Fields      []*SoloField  `json:"fields,optional"`
 	Title       string        `json:"title,optional"`
 	Body        string        `json:"body,optional"`
+	AgentName   string        `json:"agentName,optional"` // 触发中断的 ADK Agent 名
 }
 
 // SoloGetInterruptRequest 获取中断详情请求

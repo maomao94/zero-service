@@ -3,11 +3,13 @@ package agent
 import (
 	"context"
 	"fmt"
-	"os"
 
 	localbk "github.com/cloudwego/eino-ext/adk/backend/local"
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/adk/filesystem"
+
+	"zero-service/common/einox/fsrestrict"
+
 	"github.com/cloudwego/eino/adk/prebuilt/deep"
 	"github.com/cloudwego/eino/adk/prebuilt/planexecute"
 	"github.com/cloudwego/eino/adk/prebuilt/supervisor"
@@ -155,7 +157,8 @@ func NewChatModelAgent(ctx context.Context, chatModel model.BaseChatModel, opts 
 	return New(ctx, append(opts, WithModel(chatModel))...)
 }
 
-// NewDeepAgent 创建 Deep Agent (预构建, 带 WriteTodos、文件系统、子 Agent 委派)。
+// NewDeepAgent 创建 Deep Agent (预构建: WriteTodos、可选 FileSystem、WithTools 合并进 ToolsConfig、WithSubAgents 写入 SubAgents)。
+// Eino 会为子 Agent 注册 task 编排工具；主模型根据对话上下文决定何时委派。
 func NewDeepAgent(ctx context.Context, chatModel model.BaseChatModel, opts ...Option) (*Agent, error) {
 	cfg := newOptions(opts...)
 	cfg.model = chatModel
@@ -168,12 +171,18 @@ func NewDeepAgent(ctx context.Context, chatModel model.BaseChatModel, opts ...Op
 	skillHandlers := buildSkillHandlers(ctx, cfg)
 	cfg.handlers = append(skillHandlers, cfg.handlers...)
 
+	// 仅当启用 Deep 本地文件系统时挂载 Backend（grep 等工具依赖本机 ripgrep）。
+	// Skill 中间件在 buildSkillHandlers 内自行创建 local backend，不因 skills 目录而向 Deep 重复挂载。
 	var backend filesystem.Backend
-	if cfg.enableFileSystem || cfg.skillsDir != "" || os.Getenv("EINO_EXT_SKILLS_DIR") != "" {
-		backend, _ = localbk.NewBackend(ctx, &localbk.Config{})
+	if cfg.enableFileSystem {
+		inner, err := localbk.NewBackend(ctx, &localbk.Config{})
+		if err != nil {
+			return nil, fmt.Errorf("agent: local filesystem backend: %w", err)
+		}
+		backend = fsrestrict.WrapConfigured(inner, cfg.deepFS)
 	}
 
-	deepAgent, err := deep.New(ctx, &deep.Config{
+	deepCfg := &deep.Config{
 		Name:              cfg.name,
 		Description:       cfg.description,
 		ChatModel:         chatModel,
@@ -182,7 +191,16 @@ func NewDeepAgent(ctx context.Context, chatModel model.BaseChatModel, opts ...Op
 		WithoutWriteTodos: !cfg.enableWriteTodos,
 		Backend:           backend,
 		Handlers:          cfg.handlers,
-	})
+		SubAgents:         cfg.subAgents,
+	}
+	if len(cfg.tools) > 0 {
+		deepCfg.ToolsConfig = adk.ToolsConfig{ToolsNodeConfig: toolsNodeConfig(cfg)}
+	}
+	if len(cfg.middlewares) > 0 {
+		deepCfg.Middlewares = cfg.middlewares
+	}
+
+	deepAgent, err := deep.New(ctx, deepCfg)
 	if err != nil {
 		return nil, err
 	}

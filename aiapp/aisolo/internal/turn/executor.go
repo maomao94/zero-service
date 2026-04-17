@@ -18,6 +18,7 @@ package turn
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cloudwego/eino/adk"
@@ -26,8 +27,12 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 
 	"zero-service/aiapp/aisolo/aisolo"
+	"zero-service/aiapp/aisolo/internal/config"
 	"zero-service/aiapp/aisolo/internal/modes"
 	"zero-service/aiapp/aisolo/internal/session"
+	"zero-service/aiapp/aisolo/internal/sessionworkdir"
+	"zero-service/aiapp/aisolo/internal/uilang"
+	"zero-service/common/einox/fsrestrict"
 	"zero-service/common/einox/memory"
 	"zero-service/common/einox/metrics"
 	mw "zero-service/common/einox/middleware"
@@ -42,6 +47,7 @@ type Executor struct {
 	messages memory.Storage
 	sessions session.Store
 	metrics  *metrics.Metrics
+	appCfg   *config.Config
 }
 
 // Config Executor 依赖。
@@ -51,6 +57,8 @@ type Config struct {
 	Messages memory.Storage
 	Sessions session.Store
 	Metrics  *metrics.Metrics
+	// App 可选；用于会话工作区目录创建等。
+	App *config.Config
 }
 
 // New 构造 Executor。
@@ -65,6 +73,7 @@ func New(cfg Config) *Executor {
 		messages: cfg.Messages,
 		sessions: cfg.Sessions,
 		metrics:  m,
+		appCfg:   cfg.App,
 	}
 }
 
@@ -73,7 +82,8 @@ type AskInput struct {
 	SessionID string
 	UserID    string
 	Message   string
-	Mode      aisolo.AgentMode // 可选, 留空沿用 session.Mode
+	Mode      aisolo.AgentMode  // 可选, 留空沿用 session.Mode
+	Meta      map[string]string // 透传 gRPC AskReq.meta; 识别 ui_lang / uiLang 更新会话默认 UI 语言
 }
 
 // ResumeInput Resume 请求输入。
@@ -116,6 +126,11 @@ func (e *Executor) Ask(ctx context.Context, em *protocol.Emitter, in AskInput) e
 	if in.Mode != aisolo.AgentMode_AGENT_MODE_UNSPECIFIED && in.Mode != sess.Mode {
 		sess.Mode = in.Mode
 	}
+	if lang := metaUILangFromMap(in.Meta); lang != "" && lang != sess.UILang {
+		sess.UILang = lang
+		sess.UpdatedAt = time.Now()
+		_ = e.sessions.UpdateSession(ctx, sess)
+	}
 	effMode := sess.Mode
 
 	agent, err := e.pool.Get(ctx, effMode)
@@ -124,9 +139,17 @@ func (e *Executor) Ask(ctx context.Context, em *protocol.Emitter, in AskInput) e
 		return err
 	}
 
-	_ = em.TurnStart(in.Message)
+	userContent := augmentSkillLaunch(in.Message, in.Meta)
+	if e.appCfg != nil {
+		if err := sessionworkdir.EnsureSession(*e.appCfg, in.SessionID); err != nil {
+			logx.Errorf("[turn] session workspace: %v", err)
+		}
+	}
+	ctx = fsrestrict.WithSessionID(ctx, in.SessionID)
 
-	if err := e.saveUserMessage(ctx, sess, in.Message); err != nil {
+	_ = em.TurnStart(userContent)
+
+	if err := e.saveUserMessage(ctx, sess, userContent); err != nil {
 		logx.Errorf("[turn] save user msg: %v", err)
 	}
 
@@ -142,7 +165,7 @@ func (e *Executor) Ask(ctx context.Context, em *protocol.Emitter, in AskInput) e
 	}
 
 	iter := agent.Runner().Run(ctx, history, adk.WithCheckPointID(in.SessionID))
-	res, err := protocol.PipeEvents(em, iter)
+	res, err := protocol.PipeEvents(em, iter, protocol.PipeOptions{SessionUILang: sess.UILang})
 	if err != nil {
 		e.markSessionIdle(ctx, sess)
 		e.metrics.RecordTurn(ctx, modeStr(effMode), "error", time.Since(start))
@@ -152,7 +175,7 @@ func (e *Executor) Ask(ctx context.Context, em *protocol.Emitter, in AskInput) e
 
 	if res.HasInterrupt {
 		e.persistInterrupt(ctx, sess, res)
-		e.metrics.RecordInterrupt(ctx, string(res.InterruptKind), "")
+		e.metrics.RecordInterrupt(ctx, string(res.InterruptKind), interruptToolMetricLabel(res), res.InterruptID)
 		e.metrics.RecordTurn(ctx, modeStr(effMode), "interrupt", time.Since(start))
 		_ = em.TurnEnd(true, res.InterruptID, res.LastContent)
 		return nil
@@ -210,6 +233,13 @@ func (e *Executor) Resume(ctx context.Context, em *protocol.Emitter, in ResumeIn
 		return err
 	}
 
+	if e.appCfg != nil {
+		if err := sessionworkdir.EnsureSession(*e.appCfg, in.SessionID); err != nil {
+			logx.Errorf("[turn] session workspace: %v", err)
+		}
+	}
+	ctx = fsrestrict.WithSessionID(ctx, in.SessionID)
+
 	sess.Status = aisolo.SessionStatus_SESSION_STATUS_RUNNING
 	sess.UpdatedAt = time.Now()
 	_ = e.sessions.UpdateSession(ctx, sess)
@@ -221,22 +251,25 @@ func (e *Executor) Resume(ctx context.Context, em *protocol.Emitter, in ResumeIn
 	})
 	if err != nil {
 		e.fail(em, "resume_start", err)
-		e.metrics.RecordResume(ctx, string(rec.Kind), "error", time.Since(start))
+		e.metrics.RecordResume(ctx, aisoloInterruptKindLabel(rec.Kind), "error", modeStr(sess.Mode), in.InterruptID, resumeActionStr(in.Action), time.Since(start))
 		_ = em.TurnEnd(false, "", "")
 		return err
 	}
 
-	res, err := protocol.PipeEvents(em, iter)
+	res, err := protocol.PipeEvents(em, iter, protocol.PipeOptions{SessionUILang: sess.UILang})
 	if err != nil {
 		e.markSessionIdle(ctx, sess)
-		e.metrics.RecordResume(ctx, string(rec.Kind), "error", time.Since(start))
+		e.metrics.RecordTurn(ctx, modeStr(sess.Mode), "error", time.Since(start))
+		e.metrics.RecordResume(ctx, aisoloInterruptKindLabel(rec.Kind), "error", modeStr(sess.Mode), in.InterruptID, resumeActionStr(in.Action), time.Since(start))
 		_ = em.TurnEnd(false, "", "")
 		return err
 	}
 
 	if res.HasInterrupt {
 		e.persistInterrupt(ctx, sess, res)
-		e.metrics.RecordResume(ctx, string(rec.Kind), "chained", time.Since(start))
+		e.metrics.RecordInterrupt(ctx, string(res.InterruptKind), interruptToolMetricLabel(res), res.InterruptID)
+		e.metrics.RecordTurn(ctx, modeStr(sess.Mode), "interrupt", time.Since(start))
+		e.metrics.RecordResume(ctx, aisoloInterruptKindLabel(rec.Kind), "interrupted_again", modeStr(sess.Mode), in.InterruptID, resumeActionStr(in.Action), time.Since(start))
 		_ = em.TurnEnd(true, res.InterruptID, res.LastContent)
 		return nil
 	}
@@ -247,7 +280,8 @@ func (e *Executor) Resume(ctx context.Context, em *protocol.Emitter, in ResumeIn
 		}
 	}
 	e.markSessionIdle(ctx, sess)
-	e.metrics.RecordResume(ctx, string(rec.Kind), "ok", time.Since(start))
+	e.metrics.RecordTurn(ctx, modeStr(sess.Mode), "ok", time.Since(start))
+	e.metrics.RecordResume(ctx, aisoloInterruptKindLabel(rec.Kind), "ok", modeStr(sess.Mode), in.InterruptID, resumeActionStr(in.Action), time.Since(start))
 	_ = em.TurnEnd(false, "", res.LastContent)
 	return nil
 }
@@ -337,6 +371,46 @@ func (e *Executor) saveAssistantMessage(ctx context.Context, sess *session.Sessi
 	return nil
 }
 
+// metaUILangFromMap 从 Ask 透传的 meta 解析 UI 语言键, 值经 uilang.Normalize.
+func metaUILangFromMap(meta map[string]string) string {
+	if meta == nil {
+		return ""
+	}
+	for _, k := range []string{"ui_lang", "uiLang", "UILang"} {
+		if v := uilang.Normalize(meta[k]); v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
+// augmentSkillLaunch 若 meta 含 skill_launch，则将其置于用户消息前以触发对应技能上下文。
+func augmentSkillLaunch(msg string, meta map[string]string) string {
+	if meta == nil {
+		return msg
+	}
+	lp := strings.TrimSpace(meta["skill_launch"])
+	if lp == "" {
+		return msg
+	}
+	if strings.TrimSpace(msg) == "" {
+		return lp
+	}
+	return lp + "\n\n" + msg
+}
+
+// resumeActionStr 将 Resume 的 YES/NO 打成低基数指标标签。
+func resumeActionStr(a aisolo.ResumeAction) string {
+	switch a {
+	case aisolo.ResumeAction_RESUME_ACTION_YES:
+		return "yes"
+	case aisolo.ResumeAction_RESUME_ACTION_NO:
+		return "no"
+	default:
+		return "unspecified"
+	}
+}
+
 func modeStr(m aisolo.AgentMode) string {
 	switch m {
 	case aisolo.AgentMode_AGENT_MODE_AGENT:
@@ -351,6 +425,41 @@ func modeStr(m aisolo.AgentMode) string {
 		return "deep"
 	default:
 		return "unknown"
+	}
+}
+
+// interruptToolMetricLabel 填 interrupt_total 的 tool 标签：人机中断在 protocol 里带 ToolName；
+// 仅 Agent、无工具名时用 agent:<name>；否则 unknown（避免无意义空串）。
+func interruptToolMetricLabel(res protocol.RunResult) string {
+	if res.Interrupt != nil {
+		if t := strings.TrimSpace(res.Interrupt.ToolName); t != "" {
+			return t
+		}
+		if a := strings.TrimSpace(res.Interrupt.AgentName); a != "" {
+			return "agent:" + a
+		}
+	}
+	return "unknown"
+}
+
+// aisoloInterruptKindLabel 把 aisolo.InterruptKind 转成与 protocol.InterruptKind 一致的短字符串，供指标与日志。
+// 禁止对枚举底层 int32 直接 string()：会得到 Unicode 码点（如 4 -> "\\x04"），日志里像空串。
+func aisoloInterruptKindLabel(k aisolo.InterruptKind) string {
+	switch k {
+	case aisolo.InterruptKind_INTERRUPT_KIND_APPROVAL:
+		return "approval"
+	case aisolo.InterruptKind_INTERRUPT_KIND_SINGLE_SELECT:
+		return "single_select"
+	case aisolo.InterruptKind_INTERRUPT_KIND_MULTI_SELECT:
+		return "multi_select"
+	case aisolo.InterruptKind_INTERRUPT_KIND_FREE_TEXT:
+		return "free_text"
+	case aisolo.InterruptKind_INTERRUPT_KIND_FORM_INPUT:
+		return "form_input"
+	case aisolo.InterruptKind_INTERRUPT_KIND_INFO_ACK:
+		return "info_ack"
+	default:
+		return "unspecified"
 	}
 }
 
@@ -375,49 +484,28 @@ func toProtoKind(k protocol.InterruptKind) aisolo.InterruptKind {
 }
 
 // buildResumePayload 把 ResumeInput 根据 kind 转成对应的 *mw.XxxResult。
-// 字段映射规则:
-//
-//	APPROVAL      : Action=APPROVE/DENY -> ApprovalResult
-//	SINGLE_SELECT : Action=SELECT -> SelectResult{SelectedIDs[0]}
-//	MULTI_SELECT  : Action=SELECT -> SelectResult{SelectedIDs}
-//	FREE_TEXT     : Action=TEXT -> TextInputResult
-//	FORM_INPUT    : Action=FORM -> FormInputResult
-//	INFO_ACK      : Action=ACK -> InfoAckResult
-//	CANCEL 任意 kind 都视为取消, 填对应类型的 Cancelled=true
+// Action 仅 YES / NO：NO 表示取消或拒绝（按 kind 映射到 Cancelled 或 Approved=false）。
 func buildResumePayload(kind aisolo.InterruptKind, in ResumeInput) (any, error) {
-	if in.Action == aisolo.ResumeAction_RESUME_ACTION_CANCEL {
+	switch in.Action {
+	case aisolo.ResumeAction_RESUME_ACTION_NO:
 		return cancelPayload(kind, in.Reason), nil
+	case aisolo.ResumeAction_RESUME_ACTION_YES:
+		// continue
+	default:
+		return nil, fmt.Errorf("resume action must be YES or NO, got %v", in.Action)
 	}
 
 	switch kind {
 	case aisolo.InterruptKind_INTERRUPT_KIND_APPROVAL:
-		switch in.Action {
-		case aisolo.ResumeAction_RESUME_ACTION_APPROVE:
-			return &mw.ApprovalResult{Approved: true}, nil
-		case aisolo.ResumeAction_RESUME_ACTION_DENY:
-			reason := in.Reason
-			return &mw.ApprovalResult{Approved: false, DisapproveReason: &reason}, nil
-		}
+		return &mw.ApprovalResult{Approved: true}, nil
 	case aisolo.InterruptKind_INTERRUPT_KIND_SINGLE_SELECT,
 		aisolo.InterruptKind_INTERRUPT_KIND_MULTI_SELECT:
-		if in.Action != aisolo.ResumeAction_RESUME_ACTION_SELECT {
-			return nil, fmt.Errorf("select kind requires SELECT action")
-		}
 		return &mw.SelectResult{SelectedIDs: in.SelectedIDs}, nil
 	case aisolo.InterruptKind_INTERRUPT_KIND_FREE_TEXT:
-		if in.Action != aisolo.ResumeAction_RESUME_ACTION_TEXT {
-			return nil, fmt.Errorf("free_text kind requires TEXT action")
-		}
 		return &mw.TextInputResult{Text: in.Text}, nil
 	case aisolo.InterruptKind_INTERRUPT_KIND_FORM_INPUT:
-		if in.Action != aisolo.ResumeAction_RESUME_ACTION_FORM {
-			return nil, fmt.Errorf("form_input kind requires FORM action")
-		}
 		return &mw.FormInputResult{Values: in.FormValues}, nil
 	case aisolo.InterruptKind_INTERRUPT_KIND_INFO_ACK:
-		if in.Action != aisolo.ResumeAction_RESUME_ACTION_ACK {
-			return nil, fmt.Errorf("info_ack kind requires ACK action")
-		}
 		return &mw.InfoAckResult{Ack: true}, nil
 	}
 	return nil, fmt.Errorf("unsupported kind/action combo: kind=%v action=%v", kind, in.Action)

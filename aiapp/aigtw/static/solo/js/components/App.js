@@ -1,4 +1,4 @@
-import { html, useCallback, useEffect, useState } from "../lib/deps.js";
+import { html, useCallback, useEffect, useRef, useState } from "../lib/deps.js";
 import { api, getToken, setToken, streamEndpoints } from "../api/client.js";
 import { useSSE } from "../hooks/useSSE.js";
 import { useToasts } from "../hooks/useToast.js";
@@ -17,46 +17,88 @@ function applyEvent(state, ev) {
 
     case "message.start": {
       const d = ev.data || {};
-      msgs.push({ id: d.message_id, role: d.role || "assistant", content: "" });
+      msgs.push({
+        id: d.message_id,
+        role: d.role || "assistant",
+        content: "",
+        agent_name: d.agent_name || "",
+      });
       return { ...state, messages: msgs };
     }
     case "message.delta": {
       const d = ev.data || {};
       for (let i = msgs.length - 1; i >= 0; i--) {
         if (msgs[i].id === d.message_id) {
-          msgs[i] = { ...msgs[i], content: (msgs[i].content || "") + (d.text || "") };
+          msgs[i] = {
+            ...msgs[i],
+            content: (msgs[i].content || "") + (d.text || ""),
+            agent_name: msgs[i].agent_name || d.agent_name || "",
+          };
           return { ...state, messages: msgs };
         }
       }
-      msgs.push({ id: d.message_id, role: "assistant", content: d.text || "" });
+      msgs.push({
+        id: d.message_id,
+        role: "assistant",
+        content: d.text || "",
+        agent_name: d.agent_name || "",
+      });
       return { ...state, messages: msgs };
     }
     case "message.end": {
       const d = ev.data || {};
       for (let i = msgs.length - 1; i >= 0; i--) {
         if (msgs[i].id === d.message_id) {
-          msgs[i] = { ...msgs[i], content: d.text || msgs[i].content || "", role: d.role || msgs[i].role };
+          msgs[i] = {
+            ...msgs[i],
+            content: d.text || msgs[i].content || "",
+            role: d.role || msgs[i].role,
+            agent_name: msgs[i].agent_name || d.agent_name || "",
+          };
           return { ...state, messages: msgs };
         }
       }
-      msgs.push({ id: d.message_id, role: d.role || "assistant", content: d.text || "" });
+      msgs.push({
+        id: d.message_id,
+        role: d.role || "assistant",
+        content: d.text || "",
+        agent_name: d.agent_name || "",
+      });
       return { ...state, messages: msgs };
     }
 
     case "tool.call.start": {
       const d = ev.data || {};
-      msgs.push({ id: `tc:${d.call_id}`, role: "tool_call", tool: d.tool, args: d.args_json });
+      msgs.push({
+        id: `tc:${d.call_id}`,
+        role: "tool_call",
+        tool: d.tool,
+        args: d.args_json,
+        agent_name: d.agent_name || "",
+      });
       return { ...state, messages: msgs };
     }
     case "tool.call.end": {
       const d = ev.data || {};
       for (let i = msgs.length - 1; i >= 0; i--) {
         if (msgs[i].id === `tc:${d.call_id}`) {
-          msgs[i] = { ...msgs[i], result: d.result, error: d.error };
+          msgs[i] = {
+            ...msgs[i],
+            result: d.result,
+            error: d.error,
+            agent_name: msgs[i].agent_name || d.agent_name || "",
+          };
           return { ...state, messages: msgs };
         }
       }
-      msgs.push({ id: `tc:${d.call_id}`, role: "tool_call", tool: d.tool, result: d.result, error: d.error });
+      msgs.push({
+        id: `tc:${d.call_id}`,
+        role: "tool_call",
+        tool: d.tool,
+        result: d.result,
+        error: d.error,
+        agent_name: d.agent_name || "",
+      });
       return { ...state, messages: msgs };
     }
 
@@ -77,6 +119,18 @@ function applyEvent(state, ev) {
   }
 }
 
+const UI_LANG_KEY = "solo.uiLang";
+
+function readStoredUILang() {
+  try {
+    const s = localStorage.getItem(UI_LANG_KEY);
+    if (s === "zh" || s === "en") return s;
+  } catch (_) { /* ignore */ }
+  const n = (typeof navigator !== "undefined" && navigator.language) || "";
+  if (String(n).toLowerCase().startsWith("en")) return "en";
+  return "zh";
+}
+
 // =============================================================================
 // 顶层 App 组件
 // =============================================================================
@@ -87,6 +141,7 @@ export function App() {
 
   const [token, setTokenState] = useState(() => getToken());
   const [modes, setModes] = useState([]);
+  const [skills, setSkills] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [currentId, setCurrentId] = useState("");
   const [currentSession, setCurrentSession] = useState(null);
@@ -94,6 +149,18 @@ export function App() {
   const [messages, setMessages] = useState([]);
   const [interrupt, setInterrupt] = useState(null);
   const [input, setInput] = useState("");
+  const [uiLang, setUiLangState] = useState(() => readStoredUILang());
+
+  // 防止快速切换会话时，较慢的 getSession/listMessages 晚到覆盖当前选中项。
+  const pickedSessionRef = useRef("");
+
+  const setUiLang = useCallback((v) => {
+    const x = v === "en" ? "en" : "zh";
+    try {
+      localStorage.setItem(UI_LANG_KEY, x);
+    } catch (_) { /* ignore */ }
+    setUiLangState(x);
+  }, []);
 
   // --------------- 初始化: modes + sessions ---------------
   // 只依赖稳定的 toasts.push, 避免 render 循环.
@@ -110,6 +177,13 @@ export function App() {
     } catch (err) { pushToast(`加载 Mode 失败: ${err.message}`, "error"); }
   }, [pushToast]);
 
+  const loadSkills = useCallback(async () => {
+    try {
+      const r = await api.listSkills();
+      setSkills(r.skills || []);
+    } catch (err) { pushToast(`加载 Skills 失败: ${err.message}`, "error"); }
+  }, [pushToast]);
+
   const loadSessions = useCallback(async () => {
     try {
       const r = await api.listSessions({ page: 1, pageSize: 50 });
@@ -121,6 +195,7 @@ export function App() {
   useEffect(() => {
     if (!token) return;
     loadModes();
+    loadSkills();
     loadSessions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
@@ -130,6 +205,8 @@ export function App() {
   // 实现 "页面刷新后继续审批/确认" 的体验。
   const pickSession = useCallback(async (id) => {
     if (!id) return;
+    pickedSessionRef.current = id;
+    sse.stop();
     setCurrentId(id);
     setMessages([]);
     setInterrupt(null);
@@ -138,6 +215,7 @@ export function App() {
         api.getSession(id),
         api.listMessages(id, 200),
       ]);
+      if (pickedSessionRef.current !== id) return;
       const s = sess.session;
       setCurrentSession(s);
       if (s && s.mode) setMode(s.mode);
@@ -149,6 +227,7 @@ export function App() {
       if (s && s.status === "interrupted" && s.interruptId) {
         try {
           const r = await api.getInterrupt(s.interruptId);
+          if (pickedSessionRef.current !== id) return;
           if (r && r.info) {
             // 后端字段是 interruptId / minSelect / maxSelect 等 camelCase,
             // 转换成 protocol.Event 里的 snake_case, 复用 InterruptPanel 渲染逻辑。
@@ -157,6 +236,8 @@ export function App() {
               kind:         r.info.kind,
               tool_name:    r.info.toolName,
               required:     r.info.required,
+              ui_lang:      r.info.uiLang,
+              agent_name:   r.info.agentName || "",
               question:     r.info.question,
               detail:       r.info.detail,
               options:      r.info.options || [],
@@ -170,21 +251,27 @@ export function App() {
             });
           }
         } catch (err) {
-          pushToast(`加载中断详情失败: ${err.message}`, "error");
+          if (pickedSessionRef.current === id) {
+            pushToast(`加载中断详情失败: ${err.message}`, "error");
+          }
         }
       }
-    } catch (err) { pushToast(`加载会话失败: ${err.message}`, "error"); }
-  }, [pushToast]);
+    } catch (err) {
+      if (pickedSessionRef.current === id) {
+        pushToast(`加载会话失败: ${err.message}`, "error");
+      }
+    }
+  }, [pushToast, sse]);
 
   // --------------- 新建 / 删除 ---------------
   const newSession = useCallback(async () => {
     try {
-      const r = await api.createSession({ title: "新会话", mode });
+      const r = await api.createSession({ title: "新会话", mode, uiLang });
       const s = r.session;
       setSessions((list) => [s, ...list]);
       await pickSession(s.sessionId);
     } catch (err) { pushToast(`创建会话失败: ${err.message}`, "error"); }
-  }, [mode, pickSession, pushToast]);
+  }, [mode, uiLang, pickSession, pushToast]);
 
   const deleteSession = useCallback(async (id) => {
     if (!confirm("确认删除该会话?")) return;
@@ -226,24 +313,29 @@ export function App() {
   // 没必要再整体拉 /sessions 把左栏翻一遍 (老逻辑做这件事纯粹是 UX 冗余)。
   const send = useCallback(() => {
     if (!currentId || !input.trim()) return;
+    const streamSessionId = currentId;
     const userText = input;
     setInput("");
     setMessages((list) => [...list, { role: "user", content: userText, id: `u:${Date.now()}` }]);
     const { chat } = streamEndpoints();
     sse.start(
       chat,
-      { sessionId: currentId, message: userText, mode },
+      { sessionId: currentId, message: userText, mode, meta: { ui_lang: uiLang } },
       {
-        onEvent,
+        onEvent: (ev) => {
+          if (pickedSessionRef.current !== streamSessionId) return;
+          onEvent(ev);
+        },
         onError: (err) => pushToast(`对话中断: ${err.message}`, "error"),
         onClose: () => { refreshCurrent(); },
       },
     );
-  }, [currentId, input, mode, sse, onEvent, pushToast, refreshCurrent]);
+  }, [currentId, input, mode, uiLang, sse, onEvent, pushToast, refreshCurrent]);
 
   // --------------- 中断恢复 ---------------
   const resume = useCallback((payload) => {
     if (!interrupt || !interrupt.interrupt_id) return;
+    const streamSessionId = currentId;
     const body = {
       sessionId: currentId,
       action: payload.action,
@@ -259,7 +351,10 @@ export function App() {
       resumeURL(iid),
       body,
       {
-        onEvent,
+        onEvent: (ev) => {
+          if (pickedSessionRef.current !== streamSessionId) return;
+          onEvent(ev);
+        },
         onError: (err) => pushToast(`恢复失败: ${err.message}`, "error"),
         onClose: () => { refreshCurrent(); },
       },
@@ -277,8 +372,8 @@ export function App() {
   const saveToken = useCallback(() => {
     setToken(token);
     pushToast("JWT 已保存", "success");
-    loadModes(); loadSessions();
-  }, [token, pushToast, loadModes, loadSessions]);
+    loadModes(); loadSkills(); loadSessions();
+  }, [token, pushToast, loadModes, loadSkills, loadSessions]);
 
   const connStatus = sse.running ? "run" : token ? "ok" : "err";
 
@@ -291,6 +386,15 @@ export function App() {
         </div>
         <div class="actions">
           <span class=${`status-dot ${connStatus}`} title=${sse.running ? "运行中" : "空闲"}></span>
+          <select
+            class="btn sm"
+            title="界面语言 (写入会话, 每轮对话随 meta 下发)"
+            value=${uiLang}
+            onChange=${(e) => setUiLang(e.target.value)}
+          >
+            <option value="zh">中文 UI</option>
+            <option value="en">English UI</option>
+          </select>
           <input
             type="password"
             placeholder="粘贴 JWT access token"
@@ -318,6 +422,7 @@ export function App() {
           modes=${modes}
           mode=${mode}
           onModeChange=${onModeChange}
+          skills=${skills}
           running=${sse.running}
           onSend=${send}
           onStop=${sse.stop}

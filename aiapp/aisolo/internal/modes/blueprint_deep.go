@@ -2,6 +2,7 @@ package modes
 
 import (
 	"context"
+	"fmt"
 
 	"zero-service/aiapp/aisolo/aisolo"
 	einoxagent "zero-service/common/einox/agent"
@@ -33,14 +34,21 @@ func (*deepBlueprint) Build(ctx context.Context, deps Dependencies) (*einoxagent
 		AllowCapabilities(tool.CapCompute, tool.CapIO, tool.CapHuman).
 		Apply(deps.Kit)
 
+	subs, err := buildDefaultDeepSubAgents(ctx, deps)
+	if err != nil {
+		return nil, fmt.Errorf("modes: deep subagents: %w", err)
+	}
+
 	return einoxagent.NewDeepAgent(ctx, deps.ChatModel,
 		einoxagent.WithName("deep"),
-		einoxagent.WithDescription("Deep research agent with filesystem and write-todos."),
+		einoxagent.WithDescription("Deep agent: todos, filesystem, tools, and task-delegation to deep_research / deep_synthesis subagents."),
 		einoxagent.WithInstruction(deepPrompt),
 		einoxagent.WithTools(tools...),
+		einoxagent.WithSubAgents(subs...),
 		einoxagent.WithMaxIterations(30),
 		einoxagent.WithEnableWriteTodos(true),
-		einoxagent.WithEnableFileSystem(true),
+		einoxagent.WithEnableFileSystem(deps.DeepEnableLocalFilesystem),
+		einoxagent.WithDeepFilesystem(deps.DeepFSConfig),
 		einoxagent.WithSkillsDir(deps.SkillsDir),
 		einoxagent.WithCheckPointStore(deps.CheckPointStore),
 	)

@@ -92,6 +92,10 @@ service aigtw {
 	@handler listModes
 	get /modes returns (SoloListModesResponse)
 
+	@doc "列出 Skills 目录元数据（动态标签 / launch）"
+	@handler listSkills
+	get /skills returns (SoloListSkillsResponse)
+
 	@doc "列出会话"
 	@handler listSessions
 	get /sessions (SoloListSessionsRequest) returns (SoloListSessionsResponse)

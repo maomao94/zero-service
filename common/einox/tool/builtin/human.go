@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/components/tool/utils"
@@ -46,6 +47,7 @@ func init() {
 type askConfirmParam struct {
 	Question string `json:"question" jsonschema:"required,description=让用户确认的问题"`
 	Detail   string `json:"detail,omitempty" jsonschema:"description=问题详情, 可留空"`
+	UILang   string `json:"ui_lang,omitempty" jsonschema:"description=前端 UI 语言提示, 如 zh/en"`
 }
 
 // NewAskConfirm 返回一个"请用户确认/拒绝"的中断工具。
@@ -60,6 +62,7 @@ func NewAskConfirm() tool.InvokableTool {
 					Question: in.Question,
 					Detail:   in.Detail,
 					Required: true,
+					UILang:   in.UILang,
 				}, in)
 			}
 
@@ -78,6 +81,7 @@ func NewAskConfirm() tool.InvokableTool {
 				Question: stored.Question,
 				Detail:   stored.Detail,
 				Required: true,
+				UILang:   stored.UILang,
 			}, stored)
 		})
 	if err != nil {
@@ -91,7 +95,8 @@ func NewAskConfirm() tool.InvokableTool {
 // ------------------------------------------------------------------
 
 type choiceOption struct {
-	ID    string `json:"id" jsonschema:"required,description=选项 ID"`
+	ID    string `json:"id" jsonschema:"description=选项 ID, 与 value 二选一"`
+	Value string `json:"value,omitempty" jsonschema:"description=与 id 等价, 模型常写 value 而漏写 id"`
 	Label string `json:"label" jsonschema:"required,description=选项显示文本"`
 	Desc  string `json:"desc,omitempty" jsonschema:"description=选项详细描述"`
 }
@@ -99,6 +104,7 @@ type choiceOption struct {
 type askSingleParam struct {
 	Question string         `json:"question" jsonschema:"required,description=给用户的问题"`
 	Options  []choiceOption `json:"options" jsonschema:"required,description=候选项列表"`
+	UILang   string         `json:"ui_lang,omitempty" jsonschema:"description=前端 UI 语言提示, 如 zh/en"`
 }
 
 // NewAskSingleChoice 单选类中断工具。
@@ -114,6 +120,7 @@ func NewAskSingleChoice() tool.InvokableTool {
 					Options:  toMwOptions(in.Options),
 					Multi:    false,
 					Required: true,
+					UILang:   in.UILang,
 				}, in)
 			}
 
@@ -133,6 +140,7 @@ func NewAskSingleChoice() tool.InvokableTool {
 				Options:  toMwOptions(stored.Options),
 				Multi:    false,
 				Required: true,
+				UILang:   stored.UILang,
 			}, stored)
 		})
 	if err != nil {
@@ -150,6 +158,7 @@ type askMultiParam struct {
 	Options   []choiceOption `json:"options" jsonschema:"required"`
 	MinSelect int            `json:"min_select,omitempty" jsonschema:"description=最少选择数 (默认 0)"`
 	MaxSelect int            `json:"max_select,omitempty" jsonschema:"description=最多选择数 (0 表示不限)"`
+	UILang    string         `json:"ui_lang,omitempty" jsonschema:"description=前端 UI 语言提示, 如 zh/en"`
 }
 
 // NewAskMultiChoice 多选类中断工具。
@@ -167,6 +176,7 @@ func NewAskMultiChoice() tool.InvokableTool {
 					MinSelect: in.MinSelect,
 					MaxSelect: in.MaxSelect,
 					Required:  in.MinSelect > 0,
+					UILang:    in.UILang,
 				}, in)
 			}
 
@@ -186,6 +196,7 @@ func NewAskMultiChoice() tool.InvokableTool {
 				MinSelect: stored.MinSelect,
 				MaxSelect: stored.MaxSelect,
 				Required:  stored.MinSelect > 0,
+				UILang:    stored.UILang,
 			}, stored)
 		})
 	if err != nil {
@@ -199,10 +210,12 @@ func NewAskMultiChoice() tool.InvokableTool {
 // ------------------------------------------------------------------
 
 type askTextParam struct {
-	Question    string `json:"question" jsonschema:"required,description=给用户的问题"`
-	Placeholder string `json:"placeholder,omitempty"`
-	Multiline   bool   `json:"multiline,omitempty"`
-	Required    bool   `json:"required,omitempty"`
+	Question    string      `json:"question" jsonschema:"required,description=给用户的问题"`
+	Placeholder string      `json:"placeholder,omitempty"`
+	Multiline   bool        `json:"multiline,omitempty"`
+	Required    bool        `json:"required,omitempty"`
+	UILang      string      `json:"ui_lang,omitempty" jsonschema:"description=前端 UI 语言提示, 如 zh/en"`
+	Fields      []formField `json:"fields,omitempty" jsonschema:"description=问卷字段。非空时按结构化表单交互, 可表达下拉/单选/多选等"`
 }
 
 // NewAskTextInput 自由文本输入类中断工具。
@@ -212,13 +225,41 @@ func NewAskTextInput() tool.InvokableTool {
 		func(ctx context.Context, in *askTextParam) (string, error) {
 			wasInterrupted, _, stored := tool.GetInterruptState[*askTextParam](ctx)
 			if !wasInterrupted {
+				if len(in.Fields) > 0 {
+					return "", tool.StatefulInterrupt(ctx, &mw.FormInputInfo{
+						ToolName: name,
+						Question: in.Question,
+						Fields:   toMwFields(in.Fields),
+						Required: in.Required,
+						UILang:   in.UILang,
+					}, in)
+				}
 				return "", tool.StatefulInterrupt(ctx, &mw.TextInputInfo{
 					ToolName:    name,
 					Question:    in.Question,
 					Placeholder: in.Placeholder,
 					Multiline:   in.Multiline,
 					Required:    in.Required,
+					UILang:      in.UILang,
 				}, in)
+			}
+
+			if len(stored.Fields) > 0 {
+				isTarget, has, data := tool.GetResumeContext[*mw.FormInputResult](ctx)
+				if isTarget && has {
+					if data.Cancelled {
+						return fmt.Sprintf("user cancelled: %s", reasonOr(data.Reason, "no reason")), nil
+					}
+					b, _ := json.Marshal(data.Values)
+					return fmt.Sprintf("user submitted: %s", string(b)), nil
+				}
+				return "", tool.StatefulInterrupt(ctx, &mw.FormInputInfo{
+					ToolName: name,
+					Question: stored.Question,
+					Fields:   toMwFields(stored.Fields),
+					Required: stored.Required,
+					UILang:   stored.UILang,
+				}, stored)
 			}
 
 			isTarget, has, data := tool.GetResumeContext[*mw.TextInputResult](ctx)
@@ -234,6 +275,7 @@ func NewAskTextInput() tool.InvokableTool {
 				Placeholder: stored.Placeholder,
 				Multiline:   stored.Multiline,
 				Required:    stored.Required,
+				UILang:      stored.UILang,
 			}, stored)
 		})
 	if err != nil {
@@ -247,17 +289,24 @@ func NewAskTextInput() tool.InvokableTool {
 // ------------------------------------------------------------------
 
 type formField struct {
-	Name        string `json:"name" jsonschema:"required,description=字段名, 作为提交时的 key"`
-	Label       string `json:"label" jsonschema:"required,description=字段显示文本"`
-	Type        string `json:"type" jsonschema:"required,description=字段类型, string|number|boolean"`
-	Required    bool   `json:"required,omitempty"`
-	Placeholder string `json:"placeholder,omitempty"`
-	Default     string `json:"default,omitempty"`
+	Name        string         `json:"name" jsonschema:"required,description=字段名, 作为提交时的 key"`
+	Label       string         `json:"label" jsonschema:"required,description=字段显示文本"`
+	Type        string         `json:"type" jsonschema:"required,description=字段类型, string|number|boolean"`
+	Required    bool           `json:"required,omitempty"`
+	Placeholder string         `json:"placeholder,omitempty"`
+	Default     string         `json:"default,omitempty"`
+	Widget      string         `json:"widget,omitempty" jsonschema:"description=控件类型, text|textarea|select|radio|multi_select(多选下拉, 勿写 multiselect)|checkbox|switch|number"`
+	Options     []choiceOption `json:"options,omitempty" jsonschema:"description=候选项, 下拉/单选/多选类控件使用"`
+	MinSelect   int            `json:"min_select,omitempty" jsonschema:"description=多选控件最小选择数"`
+	MaxSelect   int            `json:"max_select,omitempty" jsonschema:"description=多选控件最大选择数, 0 表示不限"`
+	AllowCustom bool           `json:"allow_custom,omitempty" jsonschema:"description=为 true 时在单选/下拉/多选下增加「其他」自定义输入, 固定选项场景可省略"`
 }
 
 type askFormParam struct {
 	Question string      `json:"question" jsonschema:"required"`
 	Fields   []formField `json:"fields" jsonschema:"required"`
+	Required bool        `json:"required,omitempty" jsonschema:"description=是否必须提交表单"`
+	UILang   string      `json:"ui_lang,omitempty" jsonschema:"description=前端 UI 语言提示, 如 zh/en"`
 }
 
 // NewAskFormInput 表单类中断工具。
@@ -271,7 +320,8 @@ func NewAskFormInput() tool.InvokableTool {
 					ToolName: name,
 					Question: in.Question,
 					Fields:   toMwFields(in.Fields),
-					Required: true,
+					Required: in.Required,
+					UILang:   in.UILang,
 				}, in)
 			}
 
@@ -287,7 +337,8 @@ func NewAskFormInput() tool.InvokableTool {
 				ToolName: name,
 				Question: stored.Question,
 				Fields:   toMwFields(stored.Fields),
-				Required: true,
+				Required: stored.Required,
+				UILang:   stored.UILang,
 			}, stored)
 		})
 	if err != nil {
@@ -301,8 +352,9 @@ func NewAskFormInput() tool.InvokableTool {
 // ------------------------------------------------------------------
 
 type askInfoParam struct {
-	Title string `json:"title" jsonschema:"required,description=信息标题"`
-	Body  string `json:"body" jsonschema:"required,description=信息正文, 支持 markdown"`
+	Title  string `json:"title" jsonschema:"required,description=信息标题"`
+	Body   string `json:"body" jsonschema:"required,description=信息正文, 支持 markdown"`
+	UILang string `json:"ui_lang,omitempty" jsonschema:"description=前端 UI 语言提示, 如 zh/en"`
 }
 
 // NewAskInfoAck 展示-确认类中断工具。
@@ -316,6 +368,7 @@ func NewAskInfoAck() tool.InvokableTool {
 					ToolName: name,
 					Title:    in.Title,
 					Body:     in.Body,
+					UILang:   in.UILang,
 				}, in)
 			}
 
@@ -330,6 +383,7 @@ func NewAskInfoAck() tool.InvokableTool {
 				ToolName: name,
 				Title:    stored.Title,
 				Body:     stored.Body,
+				UILang:   stored.UILang,
 			}, stored)
 		})
 	if err != nil {
@@ -345,9 +399,26 @@ func NewAskInfoAck() tool.InvokableTool {
 func toMwOptions(src []choiceOption) []mw.InterruptOption {
 	out := make([]mw.InterruptOption, 0, len(src))
 	for _, o := range src {
-		out = append(out, mw.InterruptOption{ID: o.ID, Label: o.Label, Desc: o.Desc})
+		id := strings.TrimSpace(o.ID)
+		if id == "" {
+			id = strings.TrimSpace(o.Value)
+		}
+		out = append(out, mw.InterruptOption{ID: id, Label: o.Label, Desc: o.Desc})
 	}
 	return out
+}
+
+// normalizeFormWidget 把模型常见写法统一成前端识别的 widget 名。
+func normalizeFormWidget(w string) string {
+	s := strings.ToLower(strings.TrimSpace(w))
+	s = strings.ReplaceAll(s, "-", "_")
+	s = strings.ReplaceAll(s, " ", "_")
+	switch s {
+	case "multiselect", "multi_select":
+		return "multi_select"
+	default:
+		return strings.TrimSpace(w)
+	}
 }
 
 func toMwFields(src []formField) []mw.FormField {
@@ -360,6 +431,11 @@ func toMwFields(src []formField) []mw.FormField {
 			Required:    f.Required,
 			Placeholder: f.Placeholder,
 			Default:     f.Default,
+			Widget:      normalizeFormWidget(f.Widget),
+			Options:     toMwOptions(f.Options),
+			MinSelect:   f.MinSelect,
+			MaxSelect:   f.MaxSelect,
+			AllowCustom: f.AllowCustom,
 		})
 	}
 	return out

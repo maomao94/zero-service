@@ -106,6 +106,8 @@ func interruptToProto(r *session.InterruptRecord) *aisolo.InterruptInfo {
 	}
 	info.ToolName = d.ToolName
 	info.Required = d.Required
+	info.UiLang = d.UILang
+	info.AgentName = d.AgentName
 	info.Question = d.Question
 	info.Detail = d.Detail
 	info.MinSelect = int32(d.MinSelect)
@@ -121,7 +123,14 @@ func interruptToProto(r *session.InterruptRecord) *aisolo.InterruptInfo {
 		info.Fields = append(info.Fields, &aisolo.Field{
 			Name: f.Name, Label: f.Label, Type: f.Type,
 			Required: f.Required, Placeholder: f.Placeholder, Default: f.Default,
+			Widget: f.Widget, MinSelect: int32(f.MinSelect), MaxSelect: int32(f.MaxSelect),
+			AllowCustom: f.AllowCustom,
 		})
+		for _, opt := range f.Options {
+			info.Fields[len(info.Fields)-1].Options = append(info.Fields[len(info.Fields)-1].Options, &aisolo.Option{
+				Id: opt.ID, Label: opt.Label, Desc: opt.Desc,
+			})
+		}
 	}
 	return info
 }
@@ -142,5 +151,6 @@ func toProtoSession(s *session.Session) *aisolo.Session {
 		UpdatedAt:    s.UpdatedAt.Unix(),
 		MessageCount: s.MessageCount,
 		LastMessage:  s.LastMessage,
+		UiLang:       s.UILang,
 	}
 }

@@ -1,4 +1,4 @@
-// Package modes 定义 aisolo 对用户暴露的 5 种 Mode, 以及根据 Mode 构造 Agent
+// Package modes 定义 aisolo 对用户暴露的 Mode, 以及根据 Mode 构造 Agent
 // 的 Blueprint。
 //
 // 设计要点：
@@ -19,6 +19,7 @@ import (
 
 	"zero-service/aiapp/aisolo/aisolo"
 	einoxagent "zero-service/common/einox/agent"
+	"zero-service/common/einox/fsrestrict"
 	"zero-service/common/einox/tool"
 )
 
@@ -27,7 +28,12 @@ type Dependencies struct {
 	ChatModel       model.BaseChatModel
 	Kit             *tool.Kit
 	CheckPointStore adk.CheckPointStore
-	SkillsDir       string
+	// SkillsDir 为已解析的 skill 根目录绝对路径；空表示不加载 skill 中间件。
+	SkillsDir string
+	// DeepEnableLocalFilesystem 为 true 时 Deep 模式挂载 Eino 本地文件系统工具（grep 等）。
+	DeepEnableLocalFilesystem bool
+	// DeepFSConfig Deep 本地文件沙箱（用户根、会话父目录、策略）；零值表示不限制路径。
+	DeepFSConfig fsrestrict.Config
 }
 
 // Blueprint 描述一个 Mode 的构造方式。
@@ -44,7 +50,7 @@ type Registry struct {
 	def     aisolo.AgentMode
 }
 
-// NewRegistry 构造默认 Registry, 内置 5 个 Blueprint。
+// NewRegistry 构造默认 Registry, 内置全部 Blueprint。
 // 默认 Mode 为 AGENT。
 func NewRegistry() *Registry {
 	r := &Registry{

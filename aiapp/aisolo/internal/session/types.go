@@ -25,6 +25,7 @@ type Session struct {
 	InterruptID  string // Status=INTERRUPTED 时非空
 	MessageCount int32
 	LastMessage  string
+	UILang       string // 会话默认 UI 语言 (zh/en), Ask meta 写入; 中断未带 ui_lang 时补齐
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }

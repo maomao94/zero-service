@@ -11,6 +11,7 @@ import (
 	"context"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -25,7 +26,7 @@ type Metrics struct {
 	toolCallCounter *prometheus.CounterVec   // tool, status
 	toolCallLatency *prometheus.HistogramVec // tool, status
 	interruptTotal  *prometheus.CounterVec   // kind, tool
-	resumeTotal     *prometheus.CounterVec   // kind, status
+	resumeTotal     *prometheus.CounterVec   // kind, status, mode, action (yes|no|unspecified)
 	checkpointTotal *prometheus.CounterVec   // op, status
 }
 
@@ -90,8 +91,8 @@ func NewMetrics() *Metrics {
 			Namespace: namespace,
 			Subsystem: "resume",
 			Name:      "total",
-			Help:      "Total number of resume attempts, by interrupt kind and status.",
-		}, []string{"kind", "status"}),
+			Help:      "Resume outcomes: ok=session idle; error=resume or stream failed; interrupted_again=resume finished but new HITL (session still interrupted). Labels: kind, status, mode, action.",
+		}, []string{"kind", "status", "mode", "action"}),
 
 		checkpointTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: namespace,
@@ -109,6 +110,22 @@ func NewMetrics() *Metrics {
 // =============================================================================
 // Record 方法 —— 上层业务的全部埋点入口
 // =============================================================================
+
+// promLabelKindOrTool 避免把 Go 里对 int32 枚举误做的 string(enum)（Unicode 控制符）写进 Prometheus 标签。
+func promLabelKindOrTool(s string) string {
+	if s == "" {
+		return ""
+	}
+	if !utf8.ValidString(s) {
+		return "invalid_utf8"
+	}
+	for _, r := range s {
+		if r < 0x20 || r == 0x7f {
+			return "invalid_enum_string"
+		}
+	}
+	return s
+}
 
 // RecordTurn 记录一轮对话的耗时。
 func (m *Metrics) RecordTurn(ctx context.Context, mode, status string, d time.Duration) {
@@ -133,16 +150,41 @@ func (m *Metrics) RecordToolCall(ctx context.Context, tool, status string, d tim
 	}
 }
 
-// RecordInterrupt 记录一次中断发生。
-func (m *Metrics) RecordInterrupt(ctx context.Context, kind, tool string) {
-	m.interruptTotal.WithLabelValues(kind, tool).Inc()
-	logx.WithContext(ctx).Infof("[einox.metrics] interrupt kind=%s tool=%s", kind, tool)
+// RecordInterrupt 记录一次中断发生。interruptID 仅写入日志，不进 Prometheus 标签（避免高基数）。
+func (m *Metrics) RecordInterrupt(ctx context.Context, kind, tool, interruptID string) {
+	k, t := promLabelKindOrTool(kind), promLabelKindOrTool(tool)
+	m.interruptTotal.WithLabelValues(k, t).Inc()
+	if interruptID != "" {
+		logx.WithContext(ctx).Infof("[einox.metrics] interrupt interrupt_id=%q kind=%q tool=%q", interruptID, kind, tool)
+	} else {
+		logx.WithContext(ctx).Infof("[einox.metrics] interrupt kind=%q tool=%q", kind, tool)
+	}
 }
 
-// RecordResume 记录一次 Resume 结果。
-func (m *Metrics) RecordResume(ctx context.Context, kind, status string, d time.Duration) {
-	m.resumeTotal.WithLabelValues(kind, status).Inc()
-	logx.WithContext(ctx).Infof("[einox.metrics] resume kind=%s status=%s dur=%s", kind, status, d)
+// RecordResume 记录一次 Resume 结果。mode 为上层会话的智能体模式（如 agent、workflow）。
+// resumeAction 为客户端 YES/NO（指标里 yes|no|unspecified）。interruptID 仅写入日志。
+func (m *Metrics) RecordResume(ctx context.Context, kind, status, mode, interruptID, resumeAction string, d time.Duration) {
+	k := promLabelKindOrTool(kind)
+	mod := promLabelKindOrTool(mode)
+	act := promLabelKindOrTool(resumeAction)
+	if act == "" {
+		act = "unspecified"
+	}
+	if mod == "" {
+		mod = "unknown"
+	}
+	if k != kind {
+		logx.WithContext(ctx).Errorf(
+			"[einox.metrics] resume kind label sanitized (caller likely used string(int32_enum)); raw=%q status=%s mode=%s action=%s interrupt_id=%q",
+			kind, status, mod, act, interruptID,
+		)
+	}
+	m.resumeTotal.WithLabelValues(k, status, mod, act).Inc()
+	if interruptID != "" {
+		logx.WithContext(ctx).Infof("[einox.metrics] resume interrupt_id=%q kind=%q status=%s mode=%s action=%s dur=%s", interruptID, kind, status, mod, act, d)
+	} else {
+		logx.WithContext(ctx).Infof("[einox.metrics] resume kind=%q status=%s mode=%s action=%s dur=%s", kind, status, mod, act, d)
+	}
 }
 
 // RecordCheckPoint 记录 checkpoint 存取操作。

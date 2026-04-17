@@ -34,6 +34,7 @@ async function request(method, path, body) {
 
 export const api = {
   listModes:    ()        => request("GET",    "/modes"),
+  listSkills:   ()        => request("GET",    "/skills"),
   listSessions: (p = {})  => request("GET",    `/sessions?page=${p.page || 1}&pageSize=${p.pageSize || 20}`),
   createSession:(p)       => request("POST",   "/sessions", p),
   getSession:   (id)      => request("GET",    `/sessions/${id}`),

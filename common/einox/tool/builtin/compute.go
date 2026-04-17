@@ -25,14 +25,14 @@ type echoParam struct {
 }
 
 type echoResult struct {
-	Text string `json:"text"`
+	Result string `json:"result"`
 }
 
 // NewEcho 返回一个示例工具：原样返回输入。
 func NewEcho() tool.InvokableTool {
 	t, err := utils.InferTool("echo", "Echo: 原样返回输入的文本，常用于自检工具链路。",
 		func(_ context.Context, in *echoParam) (*echoResult, error) {
-			return &echoResult{Text: in.Text}, nil
+			return &echoResult{Result: in.Text}, nil
 		})
 	if err != nil {
 		panic(err)
