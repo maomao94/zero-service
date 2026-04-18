@@ -1,4 +1,4 @@
-import { html, useCallback, useEffect, useRef, useState } from "../lib/deps.js";
+import { html, useCallback, useEffect, useReducer, useRef, useState } from "../lib/deps.js";
 import { api, getToken, setToken, streamEndpoints } from "../api/client.js";
 import { useSSE } from "../hooks/useSSE.js";
 import { useToasts } from "../hooks/useToast.js";
@@ -119,7 +119,36 @@ function applyEvent(state, ev) {
   }
 }
 
+/** 单 reducer 合并 messages + interrupt，避免嵌套 setState 在密集 SSE 下不同步。 */
+function streamReducer(state, action) {
+  switch (action.type) {
+    case "RESET":
+      return {
+        messages: action.messages ? action.messages.slice() : [],
+        interrupt: action.interrupt !== undefined ? action.interrupt : null,
+      };
+    case "EVENT":
+      return applyEvent(state, action.ev);
+    case "APPEND_USER":
+      return {
+        ...state,
+        messages: [...state.messages, {
+          role: "user",
+          content: action.content,
+          id: action.id || `u:${Date.now()}`,
+          createdAt: Math.floor(Date.now() / 1000),
+        }],
+      };
+    case "SET_INTERRUPT":
+      return { ...state, interrupt: action.interrupt };
+    default:
+      return state;
+  }
+}
+
 const UI_LANG_KEY = "solo.uiLang";
+const THEME_KEY = "solo.theme";
+const SESSION_PAGE_SIZE = 50;
 
 function readStoredUILang() {
   try {
@@ -129,6 +158,18 @@ function readStoredUILang() {
   const n = (typeof navigator !== "undefined" && navigator.language) || "";
   if (String(n).toLowerCase().startsWith("en")) return "en";
   return "zh";
+}
+
+function readStoredTheme() {
+  try {
+    const s = localStorage.getItem(THEME_KEY);
+    if (s === "dark" || s === "light") return s;
+  } catch (_) { /* ignore */ }
+  if (typeof window !== "undefined" && window.matchMedia
+    && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+    return "dark";
+  }
+  return "light";
 }
 
 // =============================================================================
@@ -143,16 +184,32 @@ export function App() {
   const [modes, setModes] = useState([]);
   const [skills, setSkills] = useState([]);
   const [sessions, setSessions] = useState([]);
+  const [sessionsTotal, setSessionsTotal] = useState(0);
+  const [sessionsPage, setSessionsPage] = useState(1);
   const [currentId, setCurrentId] = useState("");
   const [currentSession, setCurrentSession] = useState(null);
   const [mode, setMode] = useState("agent");
-  const [messages, setMessages] = useState([]);
-  const [interrupt, setInterrupt] = useState(null);
+  const [stream, dispatchStream] = useReducer(streamReducer, { messages: [], interrupt: null });
+  const { messages, interrupt } = stream;
   const [input, setInput] = useState("");
   const [uiLang, setUiLangState] = useState(() => readStoredUILang());
+  const [theme, setThemeState] = useState(() => readStoredTheme());
 
   // 防止快速切换会话时，较慢的 getSession/listMessages 晚到覆盖当前选中项。
   const pickedSessionRef = useRef("");
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "dark") root.setAttribute("data-theme", "dark");
+    else root.removeAttribute("data-theme");
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch (_) { /* ignore */ }
+  }, [theme]);
+
+  const setTheme = useCallback((v) => {
+    setThemeState(v === "dark" ? "dark" : "light");
+  }, []);
 
   const setUiLang = useCallback((v) => {
     const x = v === "en" ? "en" : "zh";
@@ -184,12 +241,22 @@ export function App() {
     } catch (err) { pushToast(`加载 Skills 失败: ${err.message}`, "error"); }
   }, [pushToast]);
 
-  const loadSessions = useCallback(async () => {
+  const loadSessions = useCallback(async (page = 1, append = false) => {
     try {
-      const r = await api.listSessions({ page: 1, pageSize: 50 });
-      setSessions(r.sessions || []);
+      const r = await api.listSessions({ page, pageSize: SESSION_PAGE_SIZE });
+      const list = r.sessions || [];
+      const total = typeof r.total === "number" ? r.total : list.length;
+      setSessionsTotal(total);
+      setSessionsPage(page);
+      setSessions((prev) => (append ? [...prev, ...list] : list));
     } catch (err) { pushToast(`加载会话失败: ${err.message}`, "error"); }
   }, [pushToast]);
+
+  const loadMoreSessions = useCallback(() => {
+    const loaded = sessions.length;
+    if (loaded >= sessionsTotal) return;
+    loadSessions(sessionsPage + 1, true);
+  }, [sessions.length, sessionsTotal, sessionsPage, loadSessions]);
 
   // 只在 token 变化时加载一次; loadModes/loadSessions 本身稳定不再列入 deps.
   useEffect(() => {
@@ -208,8 +275,7 @@ export function App() {
     pickedSessionRef.current = id;
     sse.stop();
     setCurrentId(id);
-    setMessages([]);
-    setInterrupt(null);
+    dispatchStream({ type: "RESET", messages: [], interrupt: null });
     try {
       const [sess, msgs] = await Promise.all([
         api.getSession(id),
@@ -220,9 +286,14 @@ export function App() {
       setCurrentSession(s);
       if (s && s.mode) setMode(s.mode);
       const normalized = (msgs.messages || []).map((m) => ({
-        id: m.id, role: m.role, content: m.content,
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        createdAt: m.createdAt != null ? m.createdAt : (m.created_at != null ? m.created_at : 0),
+        toolCallId: m.toolCallId || m.tool_call_id || "",
+        toolName: m.toolName || m.tool_name || "",
       }));
-      setMessages(normalized);
+      dispatchStream({ type: "RESET", messages: normalized, interrupt: null });
 
       if (s && s.status === "interrupted" && s.interruptId) {
         try {
@@ -231,23 +302,26 @@ export function App() {
           if (r && r.info) {
             // 后端字段是 interruptId / minSelect / maxSelect 等 camelCase,
             // 转换成 protocol.Event 里的 snake_case, 复用 InterruptPanel 渲染逻辑。
-            setInterrupt({
-              interrupt_id: r.info.interruptId,
-              kind:         r.info.kind,
-              tool_name:    r.info.toolName,
-              required:     r.info.required,
-              ui_lang:      r.info.uiLang,
-              agent_name:   r.info.agentName || "",
-              question:     r.info.question,
-              detail:       r.info.detail,
-              options:      r.info.options || [],
-              min_select:   r.info.minSelect,
-              max_select:   r.info.maxSelect,
-              placeholder:  r.info.placeholder,
-              multiline:    r.info.multiline,
-              fields:       r.info.fields || [],
-              title:        r.info.title,
-              body:         r.info.body,
+            dispatchStream({
+              type: "SET_INTERRUPT",
+              interrupt: {
+                interrupt_id: r.info.interruptId,
+                kind:         r.info.kind,
+                tool_name:    r.info.toolName,
+                required:     r.info.required,
+                ui_lang:      r.info.uiLang,
+                agent_name:   r.info.agentName || "",
+                question:     r.info.question,
+                detail:       r.info.detail,
+                options:      r.info.options || [],
+                min_select:   r.info.minSelect,
+                max_select:   r.info.maxSelect,
+                placeholder:  r.info.placeholder,
+                multiline:    r.info.multiline,
+                fields:       r.info.fields || [],
+                title:        r.info.title,
+                body:         r.info.body,
+              },
             });
           }
         } catch (err) {
@@ -268,7 +342,11 @@ export function App() {
     try {
       const r = await api.createSession({ title: "新会话", mode, uiLang });
       const s = r.session;
-      setSessions((list) => [s, ...list]);
+      setSessions((list) => {
+        const next = [s, ...list];
+        setSessionsTotal((t) => (t > 0 ? t + 1 : next.length));
+        return next;
+      });
       await pickSession(s.sessionId);
     } catch (err) { pushToast(`创建会话失败: ${err.message}`, "error"); }
   }, [mode, uiLang, pickSession, pushToast]);
@@ -280,7 +358,7 @@ export function App() {
       setSessions((list) => list.filter((s) => s.sessionId !== id));
       if (id === currentId) {
         setCurrentId(""); setCurrentSession(null);
-        setMessages([]); setInterrupt(null);
+        dispatchStream({ type: "RESET", messages: [], interrupt: null });
       }
       pushToast("已删除", "success");
     } catch (err) { pushToast(`删除失败: ${err.message}`, "error"); }
@@ -288,14 +366,7 @@ export function App() {
 
   // --------------- SSE 事件处理 ---------------
   const onEvent = useCallback((ev) => {
-    setMessages((prevMsgs) => {
-      setInterrupt((prevIt) => {
-        const next = applyEvent({ messages: prevMsgs, interrupt: prevIt }, ev);
-        prevMsgs = next.messages;
-        return next.interrupt;
-      });
-      return prevMsgs;
-    });
+    dispatchStream({ type: "EVENT", ev });
   }, []);
 
   const refreshCurrent = useCallback(async () => {
@@ -316,7 +387,7 @@ export function App() {
     const streamSessionId = currentId;
     const userText = input;
     setInput("");
-    setMessages((list) => [...list, { role: "user", content: userText, id: `u:${Date.now()}` }]);
+    dispatchStream({ type: "APPEND_USER", content: userText, id: `u:${Date.now()}` });
     const { chat } = streamEndpoints();
     sse.start(
       chat,
@@ -345,7 +416,7 @@ export function App() {
       formValues: payload.formValues || {},
     };
     const iid = interrupt.interrupt_id;
-    setInterrupt(null);
+    dispatchStream({ type: "SET_INTERRUPT", interrupt: null });
     const { resume: resumeURL } = streamEndpoints();
     sse.start(
       resumeURL(iid),
@@ -364,8 +435,7 @@ export function App() {
   // --------------- Mode 切换 ---------------
   const onModeChange = useCallback(async (next) => {
     setMode(next);
-    // 如果已有会话, 不做服务器端切换 (后端目前按请求体 mode 派发 Agent).
-    // 当前 session.mode 会在下一轮 AskStream 里刷新.
+    // mode 仅影响「下一条新建会话」；已选会话的 Ask 须与该会话 mode 一致，否则 aisolo 返回 mode_mismatch。
   }, []);
 
   // --------------- Token 保存 ---------------
@@ -395,6 +465,15 @@ export function App() {
             <option value="zh">中文 UI</option>
             <option value="en">English UI</option>
           </select>
+          <select
+            class="btn sm"
+            title="浅色 / 深色外观"
+            value=${theme}
+            onChange=${(e) => setTheme(e.target.value)}
+          >
+            <option value="light">浅色</option>
+            <option value="dark">深色</option>
+          </select>
           <input
             type="password"
             placeholder="粘贴 JWT access token"
@@ -408,10 +487,13 @@ export function App() {
       <main class="app-main">
         <${SessionList}
           sessions=${sessions}
+          sessionsTotal=${sessionsTotal}
+          hasMoreSessions=${sessions.length < sessionsTotal}
+          onLoadMoreSessions=${loadMoreSessions}
           currentId=${currentId}
           onPick=${pickSession}
           onDelete=${deleteSession}
-          onRefresh=${loadSessions}
+          onRefresh=${() => loadSessions(1, false)}
           onNew=${newSession}
         />
         <${ChatView}

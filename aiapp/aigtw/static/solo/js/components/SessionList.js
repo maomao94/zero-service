@@ -1,4 +1,4 @@
-import { html } from "../lib/deps.js";
+import { html, useMemo, useState } from "../lib/deps.js";
 
 function badge(mode) {
   if (!mode) return null;
@@ -12,7 +12,32 @@ function statusBadge(status) {
   return null;
 }
 
-export function SessionList({ sessions, currentId, onPick, onDelete, onRefresh, onNew }) {
+export function SessionList({
+  sessions,
+  sessionsTotal = 0,
+  hasMoreSessions = false,
+  onLoadMoreSessions,
+  currentId,
+  onPick,
+  onDelete,
+  onRefresh,
+  onNew,
+}) {
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const visible = useMemo(() => {
+    if (!q) return sessions;
+    return sessions.filter((s) => {
+      const title = (s.title || "").toLowerCase();
+      const id = (s.sessionId || "").toLowerCase();
+      const last = (s.lastMessage || "").toLowerCase();
+      return title.includes(q) || id.includes(q) || last.includes(q);
+    });
+  }, [sessions, q]);
+
+  const totalHint = sessionsTotal > 0
+    ? `已加载 ${sessions.length} / 共 ${sessionsTotal} 条`
+    : "";
   return html`
     <aside class="sidebar">
       <div class="sidebar-header">
@@ -22,9 +47,21 @@ export function SessionList({ sessions, currentId, onPick, onDelete, onRefresh, 
           <button class="btn ghost sm" onClick=${onRefresh}>刷新</button>
         </div>
       </div>
+      <div class="sidebar-search">
+        <input
+          type="search"
+          placeholder="搜索标题、ID、预览…"
+          value=${query}
+          onInput=${(e) => setQuery(e.target.value)}
+        />
+      </div>
+      ${totalHint && html`<div class="sidebar-meta">${totalHint}</div>`}
       <ul class="session-list">
         ${sessions.length === 0 && html`<li style="color:var(--text-muted); cursor:default;">暂无会话</li>`}
-        ${sessions.map((s) => html`
+        ${sessions.length > 0 && visible.length === 0 && html`
+          <li style="color:var(--text-muted); cursor:default;">无匹配会话</li>
+        `}
+        ${visible.map((s) => html`
           <li
             key=${s.sessionId}
             class=${s.sessionId === currentId ? "active" : ""}
@@ -50,6 +87,13 @@ export function SessionList({ sessions, currentId, onPick, onDelete, onRefresh, 
           </li>
         `)}
       </ul>
+      ${hasMoreSessions && html`
+        <div class="sidebar-footer">
+          <button class="btn ghost sm" style="width:100%;" onClick=${onLoadMoreSessions}>
+            加载更多
+          </button>
+        </div>
+      `}
     </aside>
   `;
 }

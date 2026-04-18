@@ -28,6 +28,10 @@ type Session struct {
 	UILang       string // 会话默认 UI 语言 (zh/en), Ask meta 写入; 中断未带 ui_lang 时补齐
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
+	// RunOwner / RunLeaseUntil：分布式下标识「哪一实例持有 RUNNING」及租约到期时间；
+	// 进程内 memory 后端可不填，启动时 RecoverRunningSessions 仍全量清 RUNNING。
+	RunOwner      string
+	RunLeaseUntil time.Time // 零值表示未设置租约（仅 gormx 持久化应在一轮 Ask 开始时写入）
 }
 
 // InterruptRecord 记录一次中断细节, 便于 Resume 校验 / 审计 / 页面刷新回填。
@@ -59,14 +63,32 @@ type Store interface {
 	SaveInterrupt(ctx context.Context, r *InterruptRecord) error
 	GetInterrupt(ctx context.Context, interruptID string) (*InterruptRecord, error)
 
-	// ResetRunningToIdle 把所有残留在 RUNNING 状态的会话改回 IDLE。
-	// 在服务启动时调用, 防止进程异常退出后 SSE 断开、会话卡死在 RUNNING。
-	ResetRunningToIdle(ctx context.Context) (int, error)
+	// RecoverRunningSessions 启动时恢复卡住的 RUNNING 会话。
+	// memory：全部 RUNNING → IDLE（单实例开发）。
+	// gormx/jsonl：仅当租约过期或「无租约且过久未更新」时置 IDLE，避免误清健康实例上的长连接。
+	RecoverRunningSessions(ctx context.Context) (int, error)
 
 	Close() error
 }
 
-// Config 存储后端配置。当前仅实现 memory; 后续可扩 jsonl / gormx。
+// Config 存储后端配置：memory | jsonl | gormx（gormx 需调用方注入 *gormx.DB）。
 type Config struct {
-	Type string // memory (默认)
+	Type    string
+	BaseDir string // jsonl 根目录
+	// NullLeaseRecoverGrace：RUNNING 且无租约时，若 UpdatedAt 早于此间隔则启动恢复可清为 IDLE（默认 2m）。
+	NullLeaseRecoverGrace time.Duration
+}
+
+// LeaseStaleForRecover 判断 RUNNING 会话是否可按「过期租约」策略安全恢复为 IDLE。
+func LeaseStaleForRecover(s *Session, now time.Time, nullLeaseGrace time.Duration) bool {
+	if s == nil || s.Status != aisolo.SessionStatus_SESSION_STATUS_RUNNING {
+		return false
+	}
+	if !s.RunLeaseUntil.IsZero() {
+		return now.After(s.RunLeaseUntil)
+	}
+	if nullLeaseGrace <= 0 {
+		nullLeaseGrace = 2 * time.Minute
+	}
+	return s.UpdatedAt.Before(now.Add(-nullLeaseGrace))
 }

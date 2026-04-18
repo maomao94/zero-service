@@ -66,6 +66,7 @@ func (s *AiSoloServer) ListModes(ctx context.Context, in *aisolo.ListModesReq) (
 	return l.ListModes(in)
 }
 
+// Skills 目录元数据（供 Solo 动态标签）
 func (s *AiSoloServer) ListSkills(ctx context.Context, in *aisolo.ListSkillsReq) (*aisolo.ListSkillsResp, error) {
 	l := logic.NewListSkillsLogic(ctx, s.svcCtx)
 	return l.ListSkills(in)

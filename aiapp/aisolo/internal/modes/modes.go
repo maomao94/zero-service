@@ -34,6 +34,8 @@ type Dependencies struct {
 	DeepEnableLocalFilesystem bool
 	// DeepFSConfig Deep 本地文件沙箱（用户根、会话父目录、策略）；零值表示不限制路径。
 	DeepFSConfig fsrestrict.Config
+	// PlanMaxIterations PlanExecute 模式最大迭代（默认 10）。
+	PlanMaxIterations int
 }
 
 // Blueprint 描述一个 Mode 的构造方式。
@@ -58,7 +60,9 @@ func NewRegistry() *Registry {
 		def: aisolo.AgentMode_AGENT_MODE_AGENT,
 	}
 	r.Register(&agentBlueprint{})
-	r.Register(&workflowBlueprint{})
+	for _, bp := range workflowBlueprints() {
+		r.Register(bp)
+	}
 	r.Register(&supervisorBlueprint{})
 	r.Register(&planBlueprint{})
 	r.Register(&deepBlueprint{})

@@ -89,11 +89,6 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Handler: solo.ListModesHandler(serverCtx),
 			},
 			{
-				Method:  http.MethodGet,
-				Path:    "/skills",
-				Handler: solo.ListSkillsHandler(serverCtx),
-			},
-			{
 				// 列出会话
 				Method:  http.MethodGet,
 				Path:    "/sessions",
@@ -122,6 +117,12 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Method:  http.MethodGet,
 				Path:    "/sessions/:sessionId/messages",
 				Handler: solo.ListMessagesHandler(serverCtx),
+			},
+			{
+				// 列出 Skills 目录元数据（动态标签 / launch）
+				Method:  http.MethodGet,
+				Path:    "/skills",
+				Handler: solo.ListSkillsHandler(serverCtx),
 			},
 		},
 		rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret),

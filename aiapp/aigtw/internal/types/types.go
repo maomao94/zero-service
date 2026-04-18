@@ -136,7 +136,7 @@ type ProgressMessage struct {
 type SoloChatRequest struct {
 	SessionId string            `json:"sessionId"`     // 会话 ID（必填）
 	Message   string            `json:"message"`       // 消息内容
-	Mode      string            `json:"mode,optional"` // Mode 名: agent | workflow | supervisor | plan | deep
+	Mode      string            `json:"mode,optional"` // agent | workflow-sequential | workflow-parallel | workflow-loop | supervisor | plan | deep
 	Meta      map[string]string `json:"meta,optional"` // 透传 aisolo AskReq.meta, 常用 ui_lang=zh|en
 }
 
@@ -145,7 +145,7 @@ type SoloChatResponse struct {
 
 type SoloCreateSessionRequest struct {
 	Title  string `json:"title,optional"`
-	Mode   string `json:"mode,optional"`   // 可选, 留空走默认
+	Mode   string `json:"mode,optional"`   // 可选; 留空走默认 agent; Workflow 见 SoloChatRequest.Mode
 	UiLang string `json:"uiLang,optional"` // 可选 zh|en, 写入会话默认 UI 语言 (首轮 Ask 前即生效)
 }
 
@@ -237,18 +237,6 @@ type SoloListModesResponse struct {
 	Modes []*SoloModeInfo `json:"modes"`
 }
 
-type SoloSkillInfo struct {
-	Id           string   `json:"id"`
-	Name         string   `json:"name"`
-	Description  string   `json:"description"`
-	Tags         []string `json:"tags,optional"`
-	LaunchPrompt string   `json:"launchPrompt,optional"`
-}
-
-type SoloListSkillsResponse struct {
-	Skills []*SoloSkillInfo `json:"skills"`
-}
-
 type SoloListSessionsRequest struct {
 	Page     int `form:"page,optional"`
 	PageSize int `form:"pageSize,optional"`
@@ -259,6 +247,10 @@ type SoloListSessionsResponse struct {
 	Total      int                `json:"total"`
 	Page       int                `json:"page"`
 	TotalPages int                `json:"totalPages"`
+}
+
+type SoloListSkillsResponse struct {
+	Skills []*SoloSkillInfo `json:"skills"`
 }
 
 type SoloMessageInfo struct {
@@ -273,7 +265,7 @@ type SoloMessageInfo struct {
 }
 
 type SoloModeInfo struct {
-	Mode         string   `json:"mode"` // agent | workflow | supervisor | plan | deep
+	Mode         string   `json:"mode"` // agent | workflow-sequential | workflow-parallel | workflow-loop | supervisor | plan | deep
 	Name         string   `json:"name"` // 展示名
 	Description  string   `json:"description"`
 	Capabilities []string `json:"capabilities"`
@@ -289,7 +281,7 @@ type SoloOption struct {
 type SoloSessionInfo struct {
 	SessionId    string `json:"sessionId"`
 	UserId       string `json:"userId"`
-	Mode         string `json:"mode"`
+	Mode         string `json:"mode"`   // 与 SoloChatRequest.Mode 同套字符串
 	Status       string `json:"status"` // idle | running | interrupted
 	InterruptId  string `json:"interruptId,optional"`
 	Title        string `json:"title"`
@@ -298,6 +290,14 @@ type SoloSessionInfo struct {
 	MessageCount int    `json:"messageCount"`
 	LastMessage  string `json:"lastMessage"`
 	UiLang       string `json:"uiLang,optional"` // 会话默认 UI 语言 (由网关透传 gRPC)
+}
+
+type SoloSkillInfo struct {
+	Id           string   `json:"id"`
+	Name         string   `json:"name"`
+	Description  string   `json:"description"`
+	Tags         []string `json:"tags,optional"`
+	LaunchPrompt string   `json:"launchPrompt,optional"`
 }
 
 type ThinkingParam struct {

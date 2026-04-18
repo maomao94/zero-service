@@ -14,14 +14,16 @@ option go_package = "./aisolo";
 // ============================================================
 
 // AgentMode Agent 运行模式, 对齐 eino ADK 的核心能力。
+// 核心模式在前；Workflow 家族置于末尾连续编号，后续新增 AGENT_MODE_WORKFLOW_* 接在 8、9… 即可，不扰动前方取值。
 enum AgentMode {
   AGENT_MODE_UNSPECIFIED = 0;
   AGENT_MODE_AGENT       = 1; // ChatModelAgent + tools, ReAct 推理 (默认)
-  AGENT_MODE_WORKFLOW    = 2; // Sequential / Parallel / Loop Workflow
-  AGENT_MODE_SUPERVISOR  = 3; // prebuilt/supervisor 多 Agent 协作
-  AGENT_MODE_PLAN        = 4; // prebuilt/planexecute 计划-执行
-  AGENT_MODE_DEEP        = 5; // prebuilt/deep 深度研究
-  reserved 6; // 曾为 AGENT_MODE_SURVEY_ECHO 示范枚举, 已移除; 问卷→echo 联调见 modes.BuildSurveyEchoAgent / NewSurveyEchoAgentTool
+  AGENT_MODE_SUPERVISOR  = 2; // prebuilt/supervisor 多 Agent 协作
+  AGENT_MODE_PLAN        = 3; // prebuilt/planexecute 计划-执行
+  AGENT_MODE_DEEP        = 4; // prebuilt/deep 深度研究
+  AGENT_MODE_WORKFLOW_SEQUENTIAL = 5; // ADK Sequential Workflow（Planner → Summarizer）
+  AGENT_MODE_WORKFLOW_PARALLEL = 6; // ADK Parallel Workflow
+  AGENT_MODE_WORKFLOW_LOOP = 7; // ADK Loop Workflow
 }
 
 // InterruptKind 中断种类, 驱动前端 UI 渲染选择。
@@ -177,6 +179,7 @@ message Session {
   int32 message_count = 9;
   string last_message = 10;
   string ui_lang = 11;             // 会话默认 UI 语言 (zh/en), 由 AskReq.meta["ui_lang"] 更新
+  reserved 12;                     // 曾为 workflow_topology；Workflow 形态仅以 AgentMode 三枚举区分
 }
 
 message CreateSessionReq {

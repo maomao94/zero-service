@@ -1,4 +1,4 @@
-import { html, useCallback, useEffect, useRef } from "../lib/deps.js";
+import { html, useCallback, useEffect, useRef, useState } from "../lib/deps.js";
 import { renderMarkdown } from "../lib/markdown.js";
 import { ModePicker } from "./ModePicker.js";
 import { InterruptPanel } from "./InterruptPanel.js";
@@ -23,6 +23,28 @@ function agentChip(name) {
   return html`<span class="msg-agent-chip" title="ADK Agent">${name}</span>`;
 }
 
+/** Unix 秒或毫秒 → 简短本地时间 */
+function formatMsgClock(ts) {
+  if (ts == null || ts === 0) return "";
+  const n = Number(ts);
+  if (!Number.isFinite(n)) return "";
+  const ms = n < 1e12 ? n * 1000 : n;
+  const d = new Date(ms);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString(undefined, {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function timeChip(ts) {
+  const t = formatMsgClock(ts);
+  if (!t) return null;
+  return html`<span class="msg-time" title="消息时间">${t}</span>`;
+}
+
 function MessageItem({ m }) {
   const role = m.role || "assistant";
   if (role === "tool_call") {
@@ -39,19 +61,30 @@ function MessageItem({ m }) {
     if (m.tool === "echo" && hasResult) {
       resultDisplay = String(m.result);
     }
+    const done = hasResult || !!m.error;
+    const [expanded, setExpanded] = useState(() => !done);
     return html`
       <div class=${cls}>
-        <div class="tool-call-head">
+        <button
+          type="button"
+          class="tool-call-toggle"
+          onClick=${() => setExpanded((v) => !v)}
+          aria-expanded=${expanded}
+        >
+          <span class="chevron" aria-hidden="true">${expanded ? "▼" : "▶"}</span>
           <span class="tool-call-badge">tool</span>
           ${agentChip(m.agent_name)}
-          <div class="name">${m.tool || "tool"}</div>
-        </div>
-        ${m.args &&
+          <span class="name">${m.tool || "tool"}</span>
+          ${done
+            ? html`<span class="tool-call-status">完成</span>`
+            : html`<span class="tool-call-status pending">进行中</span>`}
+        </button>
+        ${expanded && m.args &&
         html`
           <div class="tool-section-label">参数</div>
           <pre class="tool-payload">${m.tool === "echo" ? argsDisplay : argsDisplay}</pre>
         `}
-        ${hasResult &&
+        ${expanded && hasResult &&
         html`
           <div class="tool-section-label">结果</div>
           <pre class="tool-payload">${resultDisplay}</pre>
@@ -63,23 +96,27 @@ function MessageItem({ m }) {
   if (role === "assistant") {
     return html`
       <div class="message assistant">
-        <div class="role">${agentChip(m.agent_name)}<span class="role-label">assistant</span></div>
+        <div class="role">${timeChip(m.createdAt)}${agentChip(m.agent_name)}<span class="role-label">assistant</span></div>
         <div class="body" dangerouslySetInnerHTML=${{ __html: renderMarkdown(m.content || "") }}></div>
       </div>`;
   }
   if (role === "user") {
     return html`
       <div class="message user">
-        <div class="role">user</div>
+        <div class="role">${timeChip(m.createdAt)}<span class="role-label">user</span></div>
         <div class="body">${m.content}</div>
       </div>`;
   }
   if (role === "system") {
-    return html`<div class="message system">${m.content}</div>`;
+    return html`
+      <div class="message system">
+        <div class="role">${timeChip(m.createdAt)}<span class="role-label">system</span></div>
+        <div class="body">${m.content}</div>
+      </div>`;
   }
   return html`
     <div class="message tool">
-      <div class="role">${role}</div>
+      <div class="role">${timeChip(m.createdAt)}<span class="role-label">${role}</span></div>
       <div class="body">${m.content}</div>
     </div>
   `;

@@ -7,7 +7,7 @@ syntax = "v1"
 type SoloChatRequest {
 	SessionId string            `json:"sessionId"` // 会话 ID（必填）
 	Message   string            `json:"message"` // 消息内容
-	Mode      string            `json:"mode,optional"` // Mode 名: agent | workflow | supervisor | plan | deep
+	Mode      string            `json:"mode,optional"` // agent | workflow-sequential | workflow-parallel | workflow-loop | supervisor | plan | deep
 	Meta      map[string]string `json:"meta,optional"` // 透传 aisolo AskReq.meta, 常用 ui_lang=zh|en
 }
 
@@ -18,7 +18,7 @@ type SoloChatResponse {}
 type SoloSessionInfo {
 	SessionId    string `json:"sessionId"`
 	UserId       string `json:"userId"`
-	Mode         string `json:"mode"`
+	Mode         string `json:"mode"` // 与 SoloChatRequest.Mode 同套字符串
 	Status       string `json:"status"` // idle | running | interrupted
 	InterruptId  string `json:"interruptId,optional"`
 	Title        string `json:"title"`
@@ -46,7 +46,7 @@ type SoloListSessionsResponse {
 // SoloCreateSessionRequest Solo 创建会话请求
 type SoloCreateSessionRequest {
 	Title  string `json:"title,optional"`
-	Mode   string `json:"mode,optional"` // 可选, 留空走默认
+	Mode   string `json:"mode,optional"` // 可选; 留空走默认 agent; Workflow 见 SoloChatRequest.Mode
 	UiLang string `json:"uiLang,optional"` // 可选 zh|en, 写入会话默认 UI 语言 (首轮 Ask 前即生效)
 }
 
@@ -101,7 +101,7 @@ type SoloListMessagesResponse {
 
 // SoloModeInfo Mode 元信息 (取代旧的 AgentInfo)
 type SoloModeInfo {
-	Mode         string   `json:"mode"` // agent | workflow | supervisor | plan | deep
+	Mode         string   `json:"mode"` // agent | workflow-sequential | workflow-parallel | workflow-loop | supervisor | plan | deep
 	Name         string   `json:"name"` // 展示名
 	Description  string   `json:"description"`
 	Capabilities []string `json:"capabilities"`

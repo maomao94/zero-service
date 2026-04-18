@@ -76,13 +76,13 @@ func (s *ServiceContext) recoverRunningSessions(ctx context.Context) {
 	if s.Sessions == nil {
 		return
 	}
-	n, err := s.Sessions.ResetRunningToIdle(ctx)
+	n, err := s.Sessions.RecoverRunningSessions(ctx)
 	if err != nil {
-		logx.Errorf("[svc] reset running sessions: %v", err)
+		logx.Errorf("[svc] recover running sessions: %v", err)
 		return
 	}
 	if n > 0 {
-		logx.Infof("[svc] recovered %d running sessions to idle", n)
+		logx.Infof("[svc] recovered %d running sessions to idle (lease-aware for gormx/jsonl)", n)
 	}
 }
 
@@ -133,7 +133,12 @@ func (s *ServiceContext) initMemory() {
 }
 
 func (s *ServiceContext) initSessions() {
-	st, err := session.NewStore(session.Config{Type: s.Config.SessionStore.Type})
+	cfg := session.Config{
+		Type:                  s.Config.SessionStore.Type,
+		BaseDir:               s.Config.SessionStore.BaseDir,
+		NullLeaseRecoverGrace: s.Config.SessionStore.NullLeaseRecoverGrace,
+	}
+	st, err := session.NewStore(cfg, s.DB)
 	if err != nil {
 		logx.Errorf("[svc] session store: %v, fallback to memory", err)
 		s.Sessions = session.NewMemoryStore()
@@ -229,6 +234,7 @@ func (s *ServiceContext) initModes(ctx context.Context) {
 		SkillsDir:                 skillsDir,
 		DeepEnableLocalFilesystem: s.Config.Agent.DeepLocalFilesystemEnabled(),
 		DeepFSConfig:              deepFS,
+		PlanMaxIterations:         s.Config.Agent.EffectivePlanMaxIterations(),
 	})
 	_ = ctx
 	logx.Infof("[svc] mode registry + pool ready: %d modes", len(s.Registry.List()))
@@ -239,13 +245,17 @@ func (s *ServiceContext) initExecutor() {
 		logx.Info("[svc] pool nil, skip executor")
 		return
 	}
+	instanceID := s.Config.EffectiveRunInstanceID()
 	s.Executor = turn.New(turn.Config{
-		Pool:     s.Pool,
-		Registry: s.Registry,
-		Messages: s.Messages,
-		Sessions: s.Sessions,
-		Metrics:  s.Metrics,
-		App:      &s.Config,
+		Pool:              s.Pool,
+		Registry:          s.Registry,
+		Messages:          s.Messages,
+		Sessions:          s.Sessions,
+		Metrics:           s.Metrics,
+		App:               &s.Config,
+		RunInstanceID:     instanceID,
+		RunLeaseTTL:       s.Config.EffectiveSessionRunLeaseTTL(),
+		RunNullLeaseGrace: s.Config.EffectiveNullLeaseRecoverGrace(),
 	})
 	logx.Info("[svc] turn executor ready")
 }

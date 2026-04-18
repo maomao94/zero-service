@@ -3,6 +3,8 @@ package agent
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
 
 	localbk "github.com/cloudwego/eino-ext/adk/backend/local"
 	"github.com/cloudwego/eino/adk"
@@ -14,143 +16,9 @@ import (
 	"github.com/cloudwego/eino/adk/prebuilt/planexecute"
 	"github.com/cloudwego/eino/adk/prebuilt/supervisor"
 	"github.com/cloudwego/eino/components/model"
+	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
 )
-
-// EinoAgentType 标识本封装支持的 Eino Agent 实现类型。
-//
-// aisolo 的 Mode 会映射到其中某一个（或组合出一个由多个 Agent 组合成的 Workflow）。
-type EinoAgentType string
-
-const (
-	// EinoTypeChatModel ReAct 风格, ChatModelAgent + tool calling。
-	EinoTypeChatModel EinoAgentType = "chat_model"
-	// EinoTypeDeep prebuilt/deep, 带 WriteTodos / FileSystem / 子 Agent 委派。
-	EinoTypeDeep EinoAgentType = "deep"
-	// EinoTypePlan prebuilt/planexecute, 计划-执行-重新计划循环。
-	EinoTypePlan EinoAgentType = "plan"
-	// EinoTypeSupervisor prebuilt/supervisor, 多 Agent 协作。
-	EinoTypeSupervisor EinoAgentType = "supervisor"
-	// EinoTypeSequential adk.NewSequentialAgent, 子 Agent 顺序执行。
-	EinoTypeSequential EinoAgentType = "sequential"
-	// EinoTypeParallel adk.NewParallelAgent, 子 Agent 并行执行。
-	EinoTypeParallel EinoAgentType = "parallel"
-	// EinoTypeLoop adk.NewLoopAgent, 子 Agent 循环执行到终止条件。
-	EinoTypeLoop EinoAgentType = "loop"
-)
-
-// AgentTypeInfo Agent 类型元信息, 供 ListModes 等接口展示。
-type AgentTypeInfo struct {
-	Type         string   `json:"type"`
-	Name         string   `json:"name"`
-	Description  string   `json:"description"`
-	Capabilities []string `json:"capabilities"`
-}
-
-var einoAgentTypeInfos = map[EinoAgentType]AgentTypeInfo{
-	EinoTypeChatModel: {
-		Type:         string(EinoTypeChatModel),
-		Name:         "ChatModel Agent",
-		Description:  "ReAct 工具调用 Agent, LLM 推理 → 工具调用 → 循环直到完成",
-		Capabilities: []string{"工具调用", "多轮对话", "ReAct 推理"},
-	},
-	EinoTypeDeep: {
-		Type:         string(EinoTypeDeep),
-		Name:         "Deep Agent",
-		Description:  "深度 Agent, 内置规划、文件系统、子 Agent 委派",
-		Capabilities: []string{"任务规划", "文件操作", "深度思考", "子 Agent 委派"},
-	},
-	EinoTypePlan: {
-		Type:         string(EinoTypePlan),
-		Name:         "PlanExecute Agent",
-		Description:  "计划-执行-重新计划循环 Agent，适合可分解的复杂任务",
-		Capabilities: []string{"任务分解", "计划执行", "动态重规划", "工具调用"},
-	},
-	EinoTypeSupervisor: {
-		Type:         string(EinoTypeSupervisor),
-		Name:         "Supervisor Agent",
-		Description:  "监督者多 Agent 协作，Supervisor 调度多个子 Agent",
-		Capabilities: []string{"多 Agent 协作", "任务委派", "集中调度"},
-	},
-	EinoTypeSequential: {
-		Type:         string(EinoTypeSequential),
-		Name:         "Sequential Workflow",
-		Description:  "Workflow Agent, 多个子 Agent 顺序执行, 上一个输出作为下一个输入",
-		Capabilities: []string{"Workflow", "顺序编排"},
-	},
-	EinoTypeParallel: {
-		Type:         string(EinoTypeParallel),
-		Name:         "Parallel Workflow",
-		Description:  "Workflow Agent, 多个子 Agent 并行执行, 最终汇总",
-		Capabilities: []string{"Workflow", "并行编排"},
-	},
-	EinoTypeLoop: {
-		Type:         string(EinoTypeLoop),
-		Name:         "Loop Workflow",
-		Description:  "Workflow Agent, 子 Agent 循环执行到最大迭代或 Exit",
-		Capabilities: []string{"Workflow", "循环编排"},
-	},
-}
-
-// LookupEinoAgentType 返回类型元信息, 不存在时返回 false。
-func LookupEinoAgentType(t EinoAgentType) (AgentTypeInfo, bool) {
-	info, ok := einoAgentTypeInfos[t]
-	return info, ok
-}
-
-// NewAgent 是上层唯一的 Agent 构造入口 —— 按类型分发到具体的构造函数。
-//
-// Workflow 类（sequential / parallel / loop / supervisor）必须通过 WithSubAgents
-// 提供子 Agent；ChatModel / Deep / Plan 则需要通过 WithModel 提供 ChatModel。
-func NewAgent(ctx context.Context, t EinoAgentType, opts ...Option) (*Agent, error) {
-	cfg := newOptions(opts...)
-	switch t {
-	case EinoTypeChatModel:
-		if cfg.model == nil {
-			return nil, fmt.Errorf("agent: chat_model requires WithModel")
-		}
-		m, ok := cfg.model.(model.BaseChatModel)
-		if !ok {
-			return nil, fmt.Errorf("agent: chat_model requires model.BaseChatModel")
-		}
-		return NewChatModelAgent(ctx, m, opts...)
-	case EinoTypeDeep:
-		if cfg.model == nil {
-			return nil, fmt.Errorf("agent: deep requires WithModel")
-		}
-		m, ok := cfg.model.(model.BaseChatModel)
-		if !ok {
-			return nil, fmt.Errorf("agent: deep requires model.BaseChatModel")
-		}
-		return NewDeepAgent(ctx, m, opts...)
-	case EinoTypePlan:
-		if cfg.model == nil {
-			return nil, fmt.Errorf("agent: plan requires WithModel")
-		}
-		m, ok := cfg.model.(model.BaseChatModel)
-		if !ok {
-			return nil, fmt.Errorf("agent: plan requires model.BaseChatModel")
-		}
-		return NewPlanExecuteAgent(ctx, m, opts...)
-	case EinoTypeSupervisor:
-		if cfg.model == nil {
-			return nil, fmt.Errorf("agent: supervisor requires WithModel")
-		}
-		m, ok := cfg.model.(model.BaseChatModel)
-		if !ok {
-			return nil, fmt.Errorf("agent: supervisor requires model.BaseChatModel")
-		}
-		return NewSupervisorAgent(ctx, m, cfg.subAgents, opts...)
-	case EinoTypeSequential:
-		return NewSequentialAgent(ctx, opts...)
-	case EinoTypeParallel:
-		return NewParallelAgent(ctx, opts...)
-	case EinoTypeLoop:
-		return NewLoopAgent(ctx, opts...)
-	default:
-		return nil, fmt.Errorf("agent: unknown type %q", string(t))
-	}
-}
 
 // NewChatModelAgent 创建 ReAct 工具调用 Agent。
 func NewChatModelAgent(ctx context.Context, chatModel model.BaseChatModel, opts ...Option) (*Agent, error) {
@@ -314,19 +182,71 @@ func NewSupervisorAgent(ctx context.Context, chatModel model.BaseChatModel, subA
 	}, nil
 }
 
+// needsWorkflowCoordinator 为 true 时，Workflow 需挂 ChatModel 才能挂载 tools / skills / handlers / middlewares。
+func needsWorkflowCoordinator(cfg *options) bool {
+	if len(cfg.tools) > 0 || len(cfg.handlers) > 0 || len(cfg.middlewares) > 0 {
+		return true
+	}
+	d := strings.TrimSpace(cfg.skillsDir)
+	if d == "" {
+		d = strings.TrimSpace(os.Getenv("EINO_EXT_SKILLS_DIR"))
+	}
+	return d != ""
+}
+
+// coordinatorOptionsClone 复制 options 供独立 ChatModel 子 Agent 使用，避免 buildChatModelAgent 改写原 cfg 的 handlers。
+func coordinatorOptionsClone(cfg *options) *options {
+	cc := *cfg
+	cc.subAgents = nil
+	cc.tools = append([]tool.BaseTool(nil), cfg.tools...)
+	cc.handlers = append([]adk.ChatModelAgentMiddleware(nil), cfg.handlers...)
+	cc.middlewares = append([]adk.AgentMiddleware(nil), cfg.middlewares...)
+	if strings.TrimSpace(cc.name) != "" {
+		cc.name = cc.name + "/coordinator"
+	} else {
+		cc.name = "workflow-coordinator"
+	}
+	if strings.TrimSpace(cc.description) == "" {
+		cc.description = "Sub-agent with tools/skills; runs as first step of the workflow"
+	}
+	return &cc
+}
+
+// workflowSubAgents 合并 WithSubAgents 与可选的协调子 Agent（ADK Workflow 本身无 Tools 字段）。
+func workflowSubAgents(ctx context.Context, cfg *options) ([]adk.Agent, error) {
+	base := append([]adk.Agent(nil), cfg.subAgents...)
+	if !needsWorkflowCoordinator(cfg) {
+		return base, nil
+	}
+	if cfg.model == nil {
+		return nil, fmt.Errorf("agent: workflow with tools/skills/handlers/middlewares requires WithModel (coordinator ChatModel)")
+	}
+	cc := coordinatorOptionsClone(cfg)
+	coord, err := buildChatModelAgent(ctx, cc)
+	if err != nil {
+		return nil, fmt.Errorf("agent: workflow coordinator: %w", err)
+	}
+	return append([]adk.Agent{coord}, base...), nil
+}
+
 // NewSequentialAgent 创建 adk Sequential Workflow Agent。
 //
-// 子 Agent 通过 WithSubAgents 传入, 至少一个。
+// 子 Agent 通过 WithSubAgents 传入，至少一个（若配置了 tools/skills/handlers/middlewares 且提供 WithModel，
+// 会自动前置一个带工具与 skill 的 ChatModel 协调子 Agent）。
 func NewSequentialAgent(ctx context.Context, opts ...Option) (*Agent, error) {
 	cfg := newOptions(opts...)
-	if len(cfg.subAgents) == 0 {
+	subs, err := workflowSubAgents(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+	if len(subs) == 0 {
 		return nil, fmt.Errorf("agent: sequential requires at least one sub agent")
 	}
 
 	seqAgent, err := adk.NewSequentialAgent(ctx, &adk.SequentialAgentConfig{
 		Name:        cfg.name,
 		Description: cfg.description,
-		SubAgents:   cfg.subAgents,
+		SubAgents:   subs,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("agent: new sequential: %w", err)
@@ -347,16 +267,22 @@ func NewSequentialAgent(ctx context.Context, opts ...Option) (*Agent, error) {
 }
 
 // NewParallelAgent 创建 adk Parallel Workflow Agent。
+//
+// 若配置了 tools/skills/handlers/middlewares 且提供 WithModel，会前置一个协调子 Agent（与其它子 Agent 并行）。
 func NewParallelAgent(ctx context.Context, opts ...Option) (*Agent, error) {
 	cfg := newOptions(opts...)
-	if len(cfg.subAgents) == 0 {
+	subs, err := workflowSubAgents(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+	if len(subs) == 0 {
 		return nil, fmt.Errorf("agent: parallel requires at least one sub agent")
 	}
 
 	parAgent, err := adk.NewParallelAgent(ctx, &adk.ParallelAgentConfig{
 		Name:        cfg.name,
 		Description: cfg.description,
-		SubAgents:   cfg.subAgents,
+		SubAgents:   subs,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("agent: new parallel: %w", err)
@@ -379,16 +305,21 @@ func NewParallelAgent(ctx context.Context, opts ...Option) (*Agent, error) {
 // NewLoopAgent 创建 adk Loop Workflow Agent。
 //
 // 最大迭代次数通过 WithMaxIterations 设置, 不设置则由 adk 默认值决定。
+// 若配置了 tools/skills/handlers/middlewares 且提供 WithModel，会前置协调子 Agent（参与每轮循环中的子 Agent 序列）。
 func NewLoopAgent(ctx context.Context, opts ...Option) (*Agent, error) {
 	cfg := newOptions(opts...)
-	if len(cfg.subAgents) == 0 {
+	subs, err := workflowSubAgents(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+	if len(subs) == 0 {
 		return nil, fmt.Errorf("agent: loop requires at least one sub agent")
 	}
 
 	loopAgent, err := adk.NewLoopAgent(ctx, &adk.LoopAgentConfig{
 		Name:          cfg.name,
 		Description:   cfg.description,
-		SubAgents:     cfg.subAgents,
+		SubAgents:     subs,
 		MaxIterations: cfg.maxIter,
 	})
 	if err != nil {

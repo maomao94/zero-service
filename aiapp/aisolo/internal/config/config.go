@@ -1,6 +1,8 @@
 package config
 
 import (
+	"os"
+	"strings"
 	"time"
 
 	"github.com/zeromicro/go-zero/zrpc"
@@ -13,13 +15,16 @@ type Config struct {
 	Model        ModelConfig        `json:"model"`
 	Memory       MemoryConfig       `json:"memory"`
 	SessionStore SessionStoreConfig `json:",optional"`
-	DB           DBConfig           `json:",optional"`
-	Tools        ToolsConfig        `json:"tools"`
-	Skills       SkillsConfig       `json:"skills"`
-	Agent        AgentConfig        `json:"agent"`
-	Checkpoint   CheckpointConfig   `json:"checkpoint"`
-	Metrics      MetricsConfig      `json:"metrics"`
-	Limit        LimitConfig        `json:"limit"`
+	// SessionRun 控制 RUNNING 租约（多实例 / 持久化会话时避免误清与健康实例冲突）。
+	// YAML 键必须为 sessionRun（camelCase，与 json 标签一致）；勿写 SessionRun: 且仅注释子行，否则 conf 报 type mismatch。
+	SessionRun SessionRunConfig `json:"sessionRun,optional"`
+	DB         DBConfig         `json:",optional"`
+	Tools      ToolsConfig      `json:"tools"`
+	Skills     SkillsConfig     `json:"skills"`
+	Agent      AgentConfig      `json:"agent"`
+	Checkpoint CheckpointConfig `json:"checkpoint"`
+	Metrics    MetricsConfig    `json:"metrics"`
+	Limit      LimitConfig      `json:"limit"`
 }
 
 // AgentConfig Agent配置
@@ -27,6 +32,8 @@ type AgentConfig struct {
 	PoolMaxIdle int             `json:"poolMaxIdle"`
 	PoolMaxLive time.Duration   `json:"poolMaxLive"`
 	Deep        DeepAgentConfig `json:"deep,optional"`
+	// PlanMaxIterations PlanExecute 模式最大迭代（默认 10，≤0 时按 10）。
+	PlanMaxIterations int `json:"planMaxIterations,optional"`
 }
 
 // DeepAgentConfig Deep 模式专属（见 blueprint_deep）。
@@ -62,6 +69,59 @@ func (a AgentConfig) DeepLocalFilesystemEnabled() bool {
 	return !a.Deep.DisableLocalFilesystem
 }
 
+// EffectivePlanMaxIterations Plan 模式最大迭代次数。
+func (a AgentConfig) EffectivePlanMaxIterations() int {
+	if a.PlanMaxIterations > 0 {
+		return a.PlanMaxIterations
+	}
+	return 10
+}
+
+// EffectiveSessionRunLeaseTTL RUNNING 租约时长；≤0 时默认 30m。
+func (c Config) EffectiveSessionRunLeaseTTL() time.Duration {
+	t := c.SessionRun.LeaseTTL
+	if t <= 0 {
+		return 30 * time.Minute
+	}
+	return t
+}
+
+// EffectiveNullLeaseRecoverGrace gormx/jsonl 启动恢复时，无租约 RUNNING 按 updated_at 判陈旧阈值。
+func (c Config) EffectiveNullLeaseRecoverGrace() time.Duration {
+	if c.SessionStore.NullLeaseRecoverGrace > 0 {
+		return c.SessionStore.NullLeaseRecoverGrace
+	}
+	return 2 * time.Minute
+}
+
+// listenPortFromRpcListenOn 从当前 RpcServerConf.ListenOn（根 yaml 的 gRPC 监听，如 0.0.0.0:23002）解析端口。
+func listenPortFromRpcListenOn(listenOn string) string {
+	listenOn = strings.TrimSpace(listenOn)
+	if listenOn == "" {
+		return ""
+	}
+	if i := strings.LastIndexByte(listenOn, ':'); i >= 0 && i+1 < len(listenOn) {
+		return listenOn[i+1:]
+	}
+	return ""
+}
+
+// EffectiveRunInstanceID 写入会话 run_owner：显式 sessionRun.instanceID 优先；否则 hostname:port，port 仅来自本进程 Rpc ListenOn（与根 yaml 一致，Docker 每实例一份配置即可区分）。
+func (c Config) EffectiveRunInstanceID() string {
+	id := strings.TrimSpace(c.SessionRun.InstanceID)
+	if id != "" {
+		return id
+	}
+	host, err := os.Hostname()
+	if err != nil || host == "" {
+		host = "unknown"
+	}
+	if p := listenPortFromRpcListenOn(c.ListenOn); p != "" {
+		return host + ":" + p
+	}
+	return host
+}
+
 // CheckpointConfig Agent 中断/恢复的快照存储配置。
 // 与 Memory/SessionStore 保持一致的 memory|jsonl|gormx 三后端模型。
 type CheckpointConfig struct {
@@ -94,6 +154,16 @@ type MemoryConfig struct {
 type SessionStoreConfig struct {
 	Type    string `json:",default=memory,options=memory|jsonl|gormx"`
 	BaseDir string `json:",optional"` // JSONL 存储目录
+	// NullLeaseRecoverGrace：RUNNING 且无租约时，超过该时间未更新则可被启动恢复清为 IDLE（gormx/jsonl，默认 2m）。
+	NullLeaseRecoverGrace time.Duration `json:"nullLeaseRecoverGrace,optional"`
+}
+
+// SessionRunConfig 一轮 Ask/Resume 持有 RUNNING 时的租约行为。
+type SessionRunConfig struct {
+	// LeaseTTL：进入 RUNNING 时写入 run_lease_until = now+LeaseTTL；默认 30m。≤0 时按 30m 处理。
+	LeaseTTL time.Duration `json:"leaseTTL,optional"`
+	// InstanceID 写入 run_owner；一般留空即可（默认主机名 + 根 yaml ListenOn 的 RPC 端口）。仅特殊场景再覆盖。
+	InstanceID string `json:"instanceID,optional"`
 }
 
 // DBConfig gormx 数据库配置。

@@ -33,12 +33,17 @@ func (*planBlueprint) Build(ctx context.Context, deps Dependencies) (*einoxagent
 		AllowCapabilities(tool.CapCompute, tool.CapIO, tool.CapHuman).
 		Apply(deps.Kit)
 
+	maxIt := deps.PlanMaxIterations
+	if maxIt <= 0 {
+		maxIt = 10
+	}
+
 	return einoxagent.NewPlanExecuteAgent(ctx, deps.ChatModel,
 		einoxagent.WithName("plan"),
 		einoxagent.WithDescription("Plan-Execute-Replan agent."),
 		einoxagent.WithInstruction(planPrompt),
 		einoxagent.WithTools(tools...),
-		einoxagent.WithMaxIterations(10),
+		einoxagent.WithMaxIterations(maxIt),
 		einoxagent.WithCheckPointStore(deps.CheckPointStore),
 	)
 }

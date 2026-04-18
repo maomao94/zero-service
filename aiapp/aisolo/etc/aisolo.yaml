@@ -19,8 +19,14 @@ Memory:
   BaseDir: "./data/messages"
 
 SessionStore:
-  Type: "memory"          # memory | jsonl | gormx
+  Type: "memory"          # memory | jsonl | gormx（多副本请 gormx + DB.Enabled）
   BaseDir: "./data/sessions"
+  # nullLeaseRecoverGrace: 2m   # gormx/jsonl：无租约的 RUNNING 超过多久可被启动恢复清掉
+
+# 多实例时 RUNNING 租约（仅持久化会话存储 + executor 使用）；键名须与 config.Config 的 json 标签一致（sessionRun）
+sessionRun:
+  leaseTTL: 30m
+  # instanceID 可选。不填时 run_owner = 主机名 + 根配置 ListenOn 的 RPC 端口（与上方 ListenOn 同源）；Docker 每容器一份 yaml 即可。
 
 DB:
   Enabled: false
@@ -42,15 +48,14 @@ Skills:
 Agent:
   PoolMaxIdle: 10
   PoolMaxLive: 1h
+  # planMaxIterations: 12      # Plan 模式最大迭代，默认 10
   # Deep 本地文件系统（grep 等依赖本机 ripgrep）；仅 Skills 时可关掉以避免要求 rg
   # Deep:
   #   DisableLocalFilesystem: true
-  #   # 用户工作区根（须已存在）；仅配此项且 legacy 默认 true 时，区内读写与旧版 chroot 一致
   #   FilesystemAllowedRoots:
   #     - "./data/deep_workspace"
-  #   # 会话工作区父目录（须已存在）；每会话子目录为 {BaseDir}/{sessionId}，CreateSession/Ask 会 MkdirAll
   #   FilesystemSessionBaseDir: "./data/deep_sessions"
-  #   FilesystemLegacyUserRootsFullAccess: true  # 仅用户 roots、无会话目录时是否区内全开（默认 true）
+  #   FilesystemLegacyUserRootsFullAccess: true
   #   FilesystemPolicy:
   #     readUser: true
   #     writeUser: false

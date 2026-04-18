@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"sort"
 	"sync"
+	"time"
 
 	"zero-service/aiapp/aisolo/aisolo"
+	"zero-service/common/gormx"
 )
 
 // MemoryStore 进程内 Session 存储, 仅用于开发/测试。生产请改用持久化后端。
@@ -24,11 +26,18 @@ func NewMemoryStore() *MemoryStore {
 	}
 }
 
-// NewStore 目前只支持 memory; 保留工厂以便后续扩展。
-func NewStore(cfg Config) (Store, error) {
+// NewStore 按配置构造会话存储（memory | jsonl | gormx）。gormx 时 db 不可为 nil。
+func NewStore(cfg Config, db *gormx.DB) (Store, error) {
 	switch cfg.Type {
 	case "", "memory":
 		return NewMemoryStore(), nil
+	case "jsonl":
+		return NewJSONLStore(cfg.BaseDir, cfg.NullLeaseRecoverGrace)
+	case "gormx":
+		if db == nil {
+			return nil, fmt.Errorf("session: gormx store requires DB")
+		}
+		return NewGormxStore(db, cfg.NullLeaseRecoverGrace)
 	default:
 		return nil, fmt.Errorf("session: unsupported store type %q", cfg.Type)
 	}
@@ -146,13 +155,15 @@ func (s *MemoryStore) GetInterrupt(_ context.Context, id string) (*InterruptReco
 	return &cp, nil
 }
 
-func (s *MemoryStore) ResetRunningToIdle(_ context.Context) (int, error) {
+func (s *MemoryStore) RecoverRunningSessions(_ context.Context) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	n := 0
 	for _, sess := range s.sessions {
 		if sess.Status == aisolo.SessionStatus_SESSION_STATUS_RUNNING {
 			sess.Status = aisolo.SessionStatus_SESSION_STATUS_IDLE
+			sess.RunOwner = ""
+			sess.RunLeaseUntil = time.Time{}
 			n++
 		}
 	}

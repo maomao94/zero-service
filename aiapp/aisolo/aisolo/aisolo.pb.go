@@ -22,15 +22,18 @@ const (
 )
 
 // AgentMode Agent 运行模式, 对齐 eino ADK 的核心能力。
+// 核心模式在前；Workflow 家族置于末尾连续编号，后续新增 AGENT_MODE_WORKFLOW_* 接在 8、9… 即可，不扰动前方取值。
 type AgentMode int32
 
 const (
-	AgentMode_AGENT_MODE_UNSPECIFIED AgentMode = 0
-	AgentMode_AGENT_MODE_AGENT       AgentMode = 1 // ChatModelAgent + tools, ReAct 推理 (默认)
-	AgentMode_AGENT_MODE_WORKFLOW    AgentMode = 2 // Sequential / Parallel / Loop Workflow
-	AgentMode_AGENT_MODE_SUPERVISOR  AgentMode = 3 // prebuilt/supervisor 多 Agent 协作
-	AgentMode_AGENT_MODE_PLAN        AgentMode = 4 // prebuilt/planexecute 计划-执行
-	AgentMode_AGENT_MODE_DEEP        AgentMode = 5 // prebuilt/deep 深度研究
+	AgentMode_AGENT_MODE_UNSPECIFIED         AgentMode = 0
+	AgentMode_AGENT_MODE_AGENT               AgentMode = 1 // ChatModelAgent + tools, ReAct 推理 (默认)
+	AgentMode_AGENT_MODE_SUPERVISOR          AgentMode = 2 // prebuilt/supervisor 多 Agent 协作
+	AgentMode_AGENT_MODE_PLAN                AgentMode = 3 // prebuilt/planexecute 计划-执行
+	AgentMode_AGENT_MODE_DEEP                AgentMode = 4 // prebuilt/deep 深度研究
+	AgentMode_AGENT_MODE_WORKFLOW_SEQUENTIAL AgentMode = 5 // ADK Sequential Workflow（Planner → Summarizer）
+	AgentMode_AGENT_MODE_WORKFLOW_PARALLEL   AgentMode = 6 // ADK Parallel Workflow
+	AgentMode_AGENT_MODE_WORKFLOW_LOOP       AgentMode = 7 // ADK Loop Workflow
 )
 
 // Enum value maps for AgentMode.
@@ -38,18 +41,22 @@ var (
 	AgentMode_name = map[int32]string{
 		0: "AGENT_MODE_UNSPECIFIED",
 		1: "AGENT_MODE_AGENT",
-		2: "AGENT_MODE_WORKFLOW",
-		3: "AGENT_MODE_SUPERVISOR",
-		4: "AGENT_MODE_PLAN",
-		5: "AGENT_MODE_DEEP",
+		2: "AGENT_MODE_SUPERVISOR",
+		3: "AGENT_MODE_PLAN",
+		4: "AGENT_MODE_DEEP",
+		5: "AGENT_MODE_WORKFLOW_SEQUENTIAL",
+		6: "AGENT_MODE_WORKFLOW_PARALLEL",
+		7: "AGENT_MODE_WORKFLOW_LOOP",
 	}
 	AgentMode_value = map[string]int32{
-		"AGENT_MODE_UNSPECIFIED": 0,
-		"AGENT_MODE_AGENT":       1,
-		"AGENT_MODE_WORKFLOW":    2,
-		"AGENT_MODE_SUPERVISOR":  3,
-		"AGENT_MODE_PLAN":        4,
-		"AGENT_MODE_DEEP":        5,
+		"AGENT_MODE_UNSPECIFIED":         0,
+		"AGENT_MODE_AGENT":               1,
+		"AGENT_MODE_SUPERVISOR":          2,
+		"AGENT_MODE_PLAN":                3,
+		"AGENT_MODE_DEEP":                4,
+		"AGENT_MODE_WORKFLOW_SEQUENTIAL": 5,
+		"AGENT_MODE_WORKFLOW_PARALLEL":   6,
+		"AGENT_MODE_WORKFLOW_LOOP":       7,
 	}
 )
 
@@ -2377,7 +2384,7 @@ const file_aisolo_proto_rawDesc = "" +
 	"\rhas_interrupt\x18\x04 \x01(\bR\fhasInterrupt\x12!\n" +
 	"\finterrupt_id\x18\x05 \x01(\tR\vinterruptId\"C\n" +
 	"\x10ResumeStreamResp\x12/\n" +
-	"\x05chunk\x18\x01 \x01(\v2\x19.aisolo.ResumeStreamChunkR\x05chunk\"\xef\x02\n" +
+	"\x05chunk\x18\x01 \x01(\v2\x19.aisolo.ResumeStreamChunkR\x05chunk\"\xf5\x02\n" +
 	"\aSession\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x17\n" +
@@ -2393,7 +2400,7 @@ const file_aisolo_proto_rawDesc = "" +
 	"\rmessage_count\x18\t \x01(\x05R\fmessageCount\x12!\n" +
 	"\flast_message\x18\n" +
 	" \x01(\tR\vlastMessage\x12\x17\n" +
-	"\aui_lang\x18\v \x01(\tR\x06uiLang\"\x81\x01\n" +
+	"\aui_lang\x18\v \x01(\tR\x06uiLangJ\x04\b\f\x10\r\"\x81\x01\n" +
 	"\x10CreateSessionReq\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12%\n" +
@@ -2475,14 +2482,16 @@ const file_aisolo_proto_rawDesc = "" +
 	"\fdependencies\x18\x04 \x03(\v2$.aisolo.HealthResp.DependenciesEntryR\fdependencies\x1a?\n" +
 	"\x11DependenciesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01*\xa1\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01*\xe6\x01\n" +
 	"\tAgentMode\x12\x1a\n" +
 	"\x16AGENT_MODE_UNSPECIFIED\x10\x00\x12\x14\n" +
-	"\x10AGENT_MODE_AGENT\x10\x01\x12\x17\n" +
-	"\x13AGENT_MODE_WORKFLOW\x10\x02\x12\x19\n" +
-	"\x15AGENT_MODE_SUPERVISOR\x10\x03\x12\x13\n" +
-	"\x0fAGENT_MODE_PLAN\x10\x04\x12\x13\n" +
-	"\x0fAGENT_MODE_DEEP\x10\x05\"\x04\b\x06\x10\x06*\xe9\x01\n" +
+	"\x10AGENT_MODE_AGENT\x10\x01\x12\x19\n" +
+	"\x15AGENT_MODE_SUPERVISOR\x10\x02\x12\x13\n" +
+	"\x0fAGENT_MODE_PLAN\x10\x03\x12\x13\n" +
+	"\x0fAGENT_MODE_DEEP\x10\x04\x12\"\n" +
+	"\x1eAGENT_MODE_WORKFLOW_SEQUENTIAL\x10\x05\x12 \n" +
+	"\x1cAGENT_MODE_WORKFLOW_PARALLEL\x10\x06\x12\x1c\n" +
+	"\x18AGENT_MODE_WORKFLOW_LOOP\x10\a*\xe9\x01\n" +
 	"\rInterruptKind\x12\x1e\n" +
 	"\x1aINTERRUPT_KIND_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17INTERRUPT_KIND_APPROVAL\x10\x01\x12 \n" +

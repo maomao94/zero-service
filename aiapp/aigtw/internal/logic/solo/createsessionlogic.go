@@ -7,6 +7,7 @@ import (
 	"zero-service/aiapp/aigtw/internal/svc"
 	"zero-service/aiapp/aigtw/internal/types"
 	"zero-service/aiapp/aisolo/aisolo"
+	"zero-service/aiapp/aisolo/modeweb"
 	"zero-service/common/ctxdata"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -36,7 +37,7 @@ func (l *CreateSessionLogic) CreateSession(req *types.SoloCreateSessionRequest) 
 	resp, err := l.svcCtx.AiSoloCli.CreateSession(l.ctx, &aisolo.CreateSessionReq{
 		UserId: userID,
 		Title:  req.Title,
-		Mode:   parseMode(req.Mode),
+		Mode:   modeweb.Parse(req.Mode),
 		UiLang: req.UiLang,
 	})
 	if err != nil {

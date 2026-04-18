@@ -32,6 +32,7 @@ import (
 	"zero-service/aiapp/aisolo/internal/session"
 	"zero-service/aiapp/aisolo/internal/sessionworkdir"
 	"zero-service/aiapp/aisolo/internal/uilang"
+	"zero-service/aiapp/aisolo/modeweb"
 	"zero-service/common/einox/fsrestrict"
 	"zero-service/common/einox/memory"
 	"zero-service/common/einox/metrics"
@@ -42,12 +43,15 @@ import (
 // Executor 一次 turn 的执行器。每个 RPC 请求可以 new 一个, 或在 svcCtx 里复用,
 // 它本身是无状态的, 依赖都是指针。
 type Executor struct {
-	pool     *modes.Pool
-	reg      *modes.Registry
-	messages memory.Storage
-	sessions session.Store
-	metrics  *metrics.Metrics
-	appCfg   *config.Config
+	pool              *modes.Pool
+	reg               *modes.Registry
+	messages          memory.Storage
+	sessions          session.Store
+	metrics           *metrics.Metrics
+	appCfg            *config.Config
+	runInstanceID     string
+	runLeaseTTL       time.Duration
+	runNullLeaseGrace time.Duration
 }
 
 // Config Executor 依赖。
@@ -59,6 +63,10 @@ type Config struct {
 	Metrics  *metrics.Metrics
 	// App 可选；用于会话工作区目录创建等。
 	App *config.Config
+	// RunInstanceID / RunLeaseTTL / RunNullLeaseGrace：多实例下 RUNNING 租约（见 config.SessionRun）。
+	RunInstanceID     string
+	RunLeaseTTL       time.Duration
+	RunNullLeaseGrace time.Duration
 }
 
 // New 构造 Executor。
@@ -67,13 +75,28 @@ func New(cfg Config) *Executor {
 	if m == nil {
 		m = metrics.Global()
 	}
+	ttl := cfg.RunLeaseTTL
+	if ttl <= 0 {
+		ttl = 30 * time.Minute
+	}
+	grace := cfg.RunNullLeaseGrace
+	if grace <= 0 {
+		grace = 2 * time.Minute
+	}
+	inst := cfg.RunInstanceID
+	if inst == "" {
+		inst = "unknown"
+	}
 	return &Executor{
-		pool:     cfg.Pool,
-		reg:      cfg.Registry,
-		messages: cfg.Messages,
-		sessions: cfg.Sessions,
-		metrics:  m,
-		appCfg:   cfg.App,
+		pool:              cfg.Pool,
+		reg:               cfg.Registry,
+		messages:          cfg.Messages,
+		sessions:          cfg.Sessions,
+		metrics:           m,
+		appCfg:            cfg.App,
+		runInstanceID:     inst,
+		runLeaseTTL:       ttl,
+		runNullLeaseGrace: grace,
 	}
 }
 
@@ -117,14 +140,21 @@ func (e *Executor) Ask(ctx context.Context, em *protocol.Emitter, in AskInput) e
 		return err
 	}
 	if sess.Status == aisolo.SessionStatus_SESSION_STATUS_RUNNING {
-		// 保护: 虽然启动时会把 RUNNING 清理成 IDLE, 但运行期仍可能遇到并发请求。
+		if session.LeaseStaleForRecover(sess, time.Now(), e.runNullLeaseGrace) {
+			e.markSessionIdle(ctx, sess)
+		}
+	}
+	if sess.Status == aisolo.SessionStatus_SESSION_STATUS_RUNNING {
+		// 保护：健康 RUNNING（租约未过期）拒绝并发 Ask。
 		err := fmt.Errorf("session is running, wait for previous turn to finish")
 		e.fail(em, "session_running", err)
 		return err
 	}
 
 	if in.Mode != aisolo.AgentMode_AGENT_MODE_UNSPECIFIED && in.Mode != sess.Mode {
-		sess.Mode = in.Mode
+		err := fmt.Errorf("ask mode %v does not match session mode %v", in.Mode, sess.Mode)
+		e.fail(em, "mode_mismatch", err)
+		return err
 	}
 	if lang := metaUILangFromMap(in.Meta); lang != "" && lang != sess.UILang {
 		sess.UILang = lang
@@ -156,6 +186,7 @@ func (e *Executor) Ask(ctx context.Context, em *protocol.Emitter, in AskInput) e
 	sess.Status = aisolo.SessionStatus_SESSION_STATUS_RUNNING
 	sess.InterruptID = ""
 	sess.UpdatedAt = time.Now()
+	e.applyRunLease(sess)
 	_ = e.sessions.UpdateSession(ctx, sess)
 
 	history, err := e.loadHistory(ctx, sess)
@@ -169,6 +200,9 @@ func (e *Executor) Ask(ctx context.Context, em *protocol.Emitter, in AskInput) e
 	if err != nil {
 		e.markSessionIdle(ctx, sess)
 		e.metrics.RecordTurn(ctx, modeStr(effMode), "error", time.Since(start))
+		if effMode == aisolo.AgentMode_AGENT_MODE_PLAN {
+			e.metrics.RecordAgent(ctx, "plan_execute", "error", time.Since(start))
+		}
 		_ = em.TurnEnd(false, "", "")
 		return err
 	}
@@ -177,6 +211,9 @@ func (e *Executor) Ask(ctx context.Context, em *protocol.Emitter, in AskInput) e
 		e.persistInterrupt(ctx, sess, res)
 		e.metrics.RecordInterrupt(ctx, string(res.InterruptKind), interruptToolMetricLabel(res), res.InterruptID)
 		e.metrics.RecordTurn(ctx, modeStr(effMode), "interrupt", time.Since(start))
+		if effMode == aisolo.AgentMode_AGENT_MODE_PLAN {
+			e.metrics.RecordAgent(ctx, "plan_execute", "interrupt", time.Since(start))
+		}
 		_ = em.TurnEnd(true, res.InterruptID, res.LastContent)
 		return nil
 	}
@@ -188,6 +225,9 @@ func (e *Executor) Ask(ctx context.Context, em *protocol.Emitter, in AskInput) e
 	}
 	e.markSessionIdle(ctx, sess)
 	e.metrics.RecordTurn(ctx, modeStr(effMode), "ok", time.Since(start))
+	if effMode == aisolo.AgentMode_AGENT_MODE_PLAN {
+		e.metrics.RecordAgent(ctx, "plan_execute", "ok", time.Since(start))
+	}
 	_ = em.TurnEnd(false, "", res.LastContent)
 	return nil
 }
@@ -242,6 +282,7 @@ func (e *Executor) Resume(ctx context.Context, em *protocol.Emitter, in ResumeIn
 
 	sess.Status = aisolo.SessionStatus_SESSION_STATUS_RUNNING
 	sess.UpdatedAt = time.Now()
+	e.applyRunLease(sess)
 	_ = e.sessions.UpdateSession(ctx, sess)
 
 	_ = em.TurnStart("")
@@ -260,6 +301,9 @@ func (e *Executor) Resume(ctx context.Context, em *protocol.Emitter, in ResumeIn
 	if err != nil {
 		e.markSessionIdle(ctx, sess)
 		e.metrics.RecordTurn(ctx, modeStr(sess.Mode), "error", time.Since(start))
+		if sess.Mode == aisolo.AgentMode_AGENT_MODE_PLAN {
+			e.metrics.RecordAgent(ctx, "plan_execute", "error", time.Since(start))
+		}
 		e.metrics.RecordResume(ctx, aisoloInterruptKindLabel(rec.Kind), "error", modeStr(sess.Mode), in.InterruptID, resumeActionStr(in.Action), time.Since(start))
 		_ = em.TurnEnd(false, "", "")
 		return err
@@ -269,6 +313,9 @@ func (e *Executor) Resume(ctx context.Context, em *protocol.Emitter, in ResumeIn
 		e.persistInterrupt(ctx, sess, res)
 		e.metrics.RecordInterrupt(ctx, string(res.InterruptKind), interruptToolMetricLabel(res), res.InterruptID)
 		e.metrics.RecordTurn(ctx, modeStr(sess.Mode), "interrupt", time.Since(start))
+		if sess.Mode == aisolo.AgentMode_AGENT_MODE_PLAN {
+			e.metrics.RecordAgent(ctx, "plan_execute", "interrupt", time.Since(start))
+		}
 		e.metrics.RecordResume(ctx, aisoloInterruptKindLabel(rec.Kind), "interrupted_again", modeStr(sess.Mode), in.InterruptID, resumeActionStr(in.Action), time.Since(start))
 		_ = em.TurnEnd(true, res.InterruptID, res.LastContent)
 		return nil
@@ -281,6 +328,9 @@ func (e *Executor) Resume(ctx context.Context, em *protocol.Emitter, in ResumeIn
 	}
 	e.markSessionIdle(ctx, sess)
 	e.metrics.RecordTurn(ctx, modeStr(sess.Mode), "ok", time.Since(start))
+	if sess.Mode == aisolo.AgentMode_AGENT_MODE_PLAN {
+		e.metrics.RecordAgent(ctx, "plan_execute", "ok", time.Since(start))
+	}
 	e.metrics.RecordResume(ctx, aisoloInterruptKindLabel(rec.Kind), "ok", modeStr(sess.Mode), in.InterruptID, resumeActionStr(in.Action), time.Since(start))
 	_ = em.TurnEnd(false, "", res.LastContent)
 	return nil
@@ -298,8 +348,15 @@ func (e *Executor) fail(em *protocol.Emitter, code string, err error) {
 func (e *Executor) markSessionIdle(ctx context.Context, sess *session.Session) {
 	sess.Status = aisolo.SessionStatus_SESSION_STATUS_IDLE
 	sess.InterruptID = ""
+	sess.RunOwner = ""
+	sess.RunLeaseUntil = time.Time{}
 	sess.UpdatedAt = time.Now()
 	_ = e.sessions.UpdateSession(ctx, sess)
+}
+
+func (e *Executor) applyRunLease(sess *session.Session) {
+	sess.RunOwner = e.runInstanceID
+	sess.RunLeaseUntil = time.Now().Add(e.runLeaseTTL)
 }
 
 // persistInterrupt 更新 session 为 INTERRUPTED + 落盘完整 InterruptData。
@@ -307,6 +364,8 @@ func (e *Executor) markSessionIdle(ctx context.Context, sess *session.Session) {
 func (e *Executor) persistInterrupt(ctx context.Context, sess *session.Session, res protocol.RunResult) {
 	sess.Status = aisolo.SessionStatus_SESSION_STATUS_INTERRUPTED
 	sess.InterruptID = res.InterruptID
+	sess.RunOwner = ""
+	sess.RunLeaseUntil = time.Time{}
 	sess.UpdatedAt = time.Now()
 	_ = e.sessions.UpdateSession(ctx, sess)
 
@@ -412,11 +471,12 @@ func resumeActionStr(a aisolo.ResumeAction) string {
 }
 
 func modeStr(m aisolo.AgentMode) string {
+	if t := modeweb.TurnMetricTag(m); t != "" {
+		return t
+	}
 	switch m {
 	case aisolo.AgentMode_AGENT_MODE_AGENT:
 		return "agent"
-	case aisolo.AgentMode_AGENT_MODE_WORKFLOW:
-		return "workflow"
 	case aisolo.AgentMode_AGENT_MODE_SUPERVISOR:
 		return "supervisor"
 	case aisolo.AgentMode_AGENT_MODE_PLAN:

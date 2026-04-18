@@ -6,44 +6,8 @@ import (
 
 	"zero-service/aiapp/aigtw/internal/types"
 	"zero-service/aiapp/aisolo/aisolo"
+	"zero-service/aiapp/aisolo/modeweb"
 )
-
-// parseMode 将外部的字符串 mode 映射为 gRPC 枚举。空字符串 / 未知值返回 UNSPECIFIED，
-// 由下游 aisolo 侧决定是否回退到默认 mode。
-func parseMode(s string) aisolo.AgentMode {
-	switch strings.ToLower(strings.TrimSpace(s)) {
-	case "", "default":
-		return aisolo.AgentMode_AGENT_MODE_UNSPECIFIED
-	case "agent":
-		return aisolo.AgentMode_AGENT_MODE_AGENT
-	case "workflow":
-		return aisolo.AgentMode_AGENT_MODE_WORKFLOW
-	case "supervisor":
-		return aisolo.AgentMode_AGENT_MODE_SUPERVISOR
-	case "plan", "plan-execute", "planexecute":
-		return aisolo.AgentMode_AGENT_MODE_PLAN
-	case "deep", "deepagent", "deep-agent":
-		return aisolo.AgentMode_AGENT_MODE_DEEP
-	}
-	return aisolo.AgentMode_AGENT_MODE_UNSPECIFIED
-}
-
-// modeToString 将 gRPC mode 枚举转为对外的字符串。
-func modeToString(m aisolo.AgentMode) string {
-	switch m {
-	case aisolo.AgentMode_AGENT_MODE_AGENT:
-		return "agent"
-	case aisolo.AgentMode_AGENT_MODE_WORKFLOW:
-		return "workflow"
-	case aisolo.AgentMode_AGENT_MODE_SUPERVISOR:
-		return "supervisor"
-	case aisolo.AgentMode_AGENT_MODE_PLAN:
-		return "plan"
-	case aisolo.AgentMode_AGENT_MODE_DEEP:
-		return "deep"
-	}
-	return ""
-}
 
 // sessionStatusToString 会话状态枚举 -> 字符串。
 func sessionStatusToString(s aisolo.SessionStatus) string {
@@ -77,7 +41,7 @@ func sessionToType(s *aisolo.Session) *types.SoloSessionInfo {
 	return &types.SoloSessionInfo{
 		SessionId:    s.GetSessionId(),
 		UserId:       s.GetUserId(),
-		Mode:         modeToString(s.GetMode()),
+		Mode:         modeweb.ToSoloString(s.GetMode()),
 		Status:       sessionStatusToString(s.GetStatus()),
 		InterruptId:  s.GetInterruptId(),
 		Title:        s.GetTitle(),
@@ -173,7 +137,7 @@ func modeToType(m *aisolo.ModeInfo) *types.SoloModeInfo {
 		return nil
 	}
 	return &types.SoloModeInfo{
-		Mode:         modeToString(m.GetMode()),
+		Mode:         modeweb.ToSoloString(m.GetMode()),
 		Name:         m.GetName(),
 		Description:  m.GetDescription(),
 		Capabilities: m.GetCapabilities(),
