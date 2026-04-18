@@ -19,23 +19,23 @@ import (
 func buildDefaultDeepSubAgents(ctx context.Context, deps Dependencies) ([]adk.Agent, error) {
 	computeIO := tool.NewPolicy().AllowCapabilities(tool.CapCompute, tool.CapIO).Apply(deps.Kit)
 
-	research, err := einoxagent.NewChatModelAgent(ctx, deps.ChatModel,
+	research, err := einoxagent.NewChatModelAgent(ctx, deps.ChatModel, appendSkillDirOpts(deps,
 		einoxagent.WithName("deep_research"),
 		einoxagent.WithDescription("Runs compute/io steps: calculator, time, http_get, echo checks. No user-facing interrupts."),
 		einoxagent.WithInstruction(deepSubResearchPrompt),
 		einoxagent.WithTools(computeIO...),
 		einoxagent.WithCheckPointStore(deps.CheckPointStore),
-	)
+	)...)
 	if err != nil {
 		return nil, fmt.Errorf("modes: deep sub deep_research: %w", err)
 	}
 
-	synthesis, err := einoxagent.NewChatModelAgent(ctx, deps.ChatModel,
+	synthesis, err := einoxagent.NewChatModelAgent(ctx, deps.ChatModel, appendSkillDirOpts(deps,
 		einoxagent.WithName("deep_synthesis"),
 		einoxagent.WithDescription("Turns gathered notes into a polished user-facing answer. No tools."),
 		einoxagent.WithInstruction(deepSubSynthesisPrompt),
 		einoxagent.WithCheckPointStore(deps.CheckPointStore),
-	)
+	)...)
 	if err != nil {
 		return nil, fmt.Errorf("modes: deep sub deep_synthesis: %w", err)
 	}

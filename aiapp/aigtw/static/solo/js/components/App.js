@@ -391,7 +391,7 @@ export function App() {
     const { chat } = streamEndpoints();
     sse.start(
       chat,
-      { sessionId: currentId, message: userText, mode, meta: { ui_lang: uiLang } },
+      { sessionId: currentId, message: userText, mode, uiLang },
       {
         onEvent: (ev) => {
           if (pickedSessionRef.current !== streamSessionId) return;
@@ -458,7 +458,7 @@ export function App() {
           <span class=${`status-dot ${connStatus}`} title=${sse.running ? "运行中" : "空闲"}></span>
           <select
             class="btn sm"
-            title="界面语言 (写入会话, 每轮对话随 meta 下发)"
+            title="界面语言 (写入会话, 每轮随 uiLang 下发)"
             value=${uiLang}
             onChange=${(e) => setUiLang(e.target.value)}
           >

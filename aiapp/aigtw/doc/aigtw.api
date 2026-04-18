@@ -7,6 +7,7 @@ import (
 	"types/openai.api"
 	"types/tool.api"
 	"types/solo.api"
+	"types/rag.api"
 )
 
 // ============================================================
@@ -119,6 +120,34 @@ service aigtw {
 	@doc "获取中断详情（页面刷新后回填 UI）"
 	@handler getInterrupt
 	get /interrupt/:interruptId (SoloGetInterruptRequest) returns (SoloGetInterruptResponse)
+
+	@doc "创建向量知识库集合"
+	@handler createRagCollection
+	post /rag/collections (RagCreateCollectionRequest) returns (RagCreateCollectionResponse)
+
+	@doc "列出向量知识库集合"
+	@handler listRagCollections
+	get /rag/collections returns (RagListCollectionsResponse)
+
+	@doc "删除向量知识库集合"
+	@handler deleteRagCollection
+	delete /rag/collections/:collectionId (RagDeleteCollectionRequest) returns (RagDeleteCollectionResponse)
+
+	@doc "写入文本到集合（分块 + 向量化）"
+	@handler ingestRagDocument
+	post /rag/collections/:collectionId/ingest (RagIngestRequest) returns (RagIngestResponse)
+
+	@doc "列出集合内文档"
+	@handler listRagSources
+	get /rag/collections/:collectionId/sources (RagListSourcesRequest) returns (RagListSourcesResponse)
+
+	@doc "删除集合内某文档向量"
+	@handler deleteRagSource
+	delete /rag/collections/:collectionId/sources/:sourceId (RagDeleteSourceRequest) returns (RagDeleteSourceResponse)
+
+	@doc "向量检索（测试或 BFF 调用）"
+	@handler queryRagCollection
+	post /rag/collections/:collectionId/query (RagQueryRequest) returns (RagQueryResponse)
 }
 
 // ============================================================

@@ -3,6 +3,7 @@ import { renderMarkdown } from "../lib/markdown.js";
 import { ModePicker } from "./ModePicker.js";
 import { InterruptPanel } from "./InterruptPanel.js";
 import { CalcPanel } from "./CalcPanel.js";
+import { RagPanel } from "./RagPanel.js";
 import { SkillChips } from "./SkillChips.js";
 
 /** 工具参数/结果：尽量格式化为多行 JSON，否则原文 */
@@ -188,6 +189,7 @@ export function ChatView({
         disabled=${calcDisabled}
       />
       <${CalcPanel} disabled=${calcDisabled} setInput=${setInput} onInserted=${focusComposer} />
+      <${RagPanel} disabled=${calcDisabled} setInput=${setInput} onInserted=${focusComposer} />
 
       <div class="messages" ref=${scrollRef}>
         ${!session && html`

@@ -115,7 +115,9 @@ func buildChatModelAgent(ctx context.Context, cfg *options) (*adk.ChatModelAgent
 	return adk.NewChatModelAgent(ctx, agentCfg)
 }
 
-// buildSkillHandlers 根据 skillsDir 构造 skill 中间件 (参考 chatwitheino)。
+// buildSkillHandlers 根据 skillsDir 构造 skill 中间件（与 chatwitheino 一致）：
+// skill.NewBackendFromFilesystem + skill.NewMiddleware，从 BaseDir 读取各 SKILL.md；
+// 模型先只看到技能的元数据，命中后再经文件系统加载正文，由模型自主决定是否 launch，而非由网关替模型选型。
 func buildSkillHandlers(ctx context.Context, cfg *options) []adk.ChatModelAgentMiddleware {
 	dir := cfg.skillsDir
 	if dir == "" {

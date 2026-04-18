@@ -47,7 +47,7 @@ func (l *ChatLogic) Chat(req *types.SoloChatRequest, w io.Writer) error {
 		UserId:    userID,
 		Message:   req.Message,
 		Mode:      modeweb.Parse(req.Mode),
-		Meta:      req.Meta,
+		UiLang:    strings.TrimSpace(req.UiLang),
 	})
 	if err != nil {
 		return err

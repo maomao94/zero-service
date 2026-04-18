@@ -153,9 +153,9 @@ func (e *Emitter) EmitError(code, msg string) error {
 	return e.Emit(EventError, ErrorData{Code: code, Message: msg})
 }
 
-// TurnStart / TurnEnd 便捷方法。
-func (e *Emitter) TurnStart(userMsg string) error {
-	return e.Emit(EventTurnStart, TurnStartData{UserMessage: userMsg})
+// TurnStart 一轮开始（可携带技能命中信息）。
+func (e *Emitter) TurnStart(data TurnStartData) error {
+	return e.Emit(EventTurnStart, data)
 }
 
 func (e *Emitter) TurnEnd(hasInterrupt bool, interruptID, lastMsg string) error {

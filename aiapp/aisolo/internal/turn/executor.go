@@ -105,8 +105,9 @@ type AskInput struct {
 	SessionID string
 	UserID    string
 	Message   string
-	Mode      aisolo.AgentMode  // 可选, 留空沿用 session.Mode
-	Meta      map[string]string // 透传 gRPC AskReq.meta; 识别 ui_lang / uiLang 更新会话默认 UI 语言
+	Mode      aisolo.AgentMode // 可选, 留空沿用 session.Mode
+	// UILang 可选 zh|en；非空时写入会话默认 UI 语言（与 CreateSession 初始 ui_lang 一致）。
+	UILang string
 }
 
 // ResumeInput Resume 请求输入。
@@ -156,7 +157,7 @@ func (e *Executor) Ask(ctx context.Context, em *protocol.Emitter, in AskInput) e
 		e.fail(em, "mode_mismatch", err)
 		return err
 	}
-	if lang := metaUILangFromMap(in.Meta); lang != "" && lang != sess.UILang {
+	if lang := uilang.Normalize(in.UILang); lang != "" && lang != sess.UILang {
 		sess.UILang = lang
 		sess.UpdatedAt = time.Now()
 		_ = e.sessions.UpdateSession(ctx, sess)
@@ -169,7 +170,7 @@ func (e *Executor) Ask(ctx context.Context, em *protocol.Emitter, in AskInput) e
 		return err
 	}
 
-	userContent := augmentSkillLaunch(in.Message, in.Meta)
+	userContent := strings.TrimSpace(in.Message)
 	if e.appCfg != nil {
 		if err := sessionworkdir.EnsureSession(*e.appCfg, in.SessionID); err != nil {
 			logx.Errorf("[turn] session workspace: %v", err)
@@ -177,7 +178,7 @@ func (e *Executor) Ask(ctx context.Context, em *protocol.Emitter, in AskInput) e
 	}
 	ctx = fsrestrict.WithSessionID(ctx, in.SessionID)
 
-	_ = em.TurnStart(userContent)
+	_ = em.TurnStart(protocol.TurnStartData{UserMessage: userContent})
 
 	if err := e.saveUserMessage(ctx, sess, userContent); err != nil {
 		logx.Errorf("[turn] save user msg: %v", err)
@@ -285,7 +286,7 @@ func (e *Executor) Resume(ctx context.Context, em *protocol.Emitter, in ResumeIn
 	e.applyRunLease(sess)
 	_ = e.sessions.UpdateSession(ctx, sess)
 
-	_ = em.TurnStart("")
+	_ = em.TurnStart(protocol.TurnStartData{UserMessage: ""})
 
 	iter, err := agent.Runner().ResumeWithParams(ctx, in.SessionID, &adk.ResumeParams{
 		Targets: map[string]any{in.InterruptID: payload},
@@ -428,34 +429,6 @@ func (e *Executor) saveAssistantMessage(ctx context.Context, sess *session.Sessi
 	sess.MessageCount++
 	sess.LastMessage = text
 	return nil
-}
-
-// metaUILangFromMap 从 Ask 透传的 meta 解析 UI 语言键, 值经 uilang.Normalize.
-func metaUILangFromMap(meta map[string]string) string {
-	if meta == nil {
-		return ""
-	}
-	for _, k := range []string{"ui_lang", "uiLang", "UILang"} {
-		if v := uilang.Normalize(meta[k]); v != "" {
-			return v
-		}
-	}
-	return ""
-}
-
-// augmentSkillLaunch 若 meta 含 skill_launch，则将其置于用户消息前以触发对应技能上下文。
-func augmentSkillLaunch(msg string, meta map[string]string) string {
-	if meta == nil {
-		return msg
-	}
-	lp := strings.TrimSpace(meta["skill_launch"])
-	if lp == "" {
-		return msg
-	}
-	if strings.TrimSpace(msg) == "" {
-		return lp
-	}
-	return lp + "\n\n" + msg
 }
 
 // resumeActionStr 将 Resume 的 YES/NO 打成低基数指标标签。

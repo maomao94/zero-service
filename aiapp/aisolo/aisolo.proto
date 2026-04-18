@@ -62,8 +62,8 @@ message AskReq {
   string user_id = 2;
   string message = 3;
   AgentMode mode = 4;              // 可选, 留空则使用 session 当前 mode
-  // 扩展键值对。常用: ui_lang (如 zh、en) — 写入会话默认 UI 语言; 工具在 InterruptInfo 中显式设置 ui_lang 时优先生效。
-  map<string, string> meta = 5;
+  reserved 5;                      // 曾为 map meta，已废弃；勿复用该编号
+  string ui_lang = 6;              // 可选 zh|en；非空时更新会话默认 UI 语言（与 CreateSessionReq.ui_lang 语义一致）
 }
 
 // AskStreamChunk 每一帧的 JSON Event (见 einox/protocol 定义)。
@@ -178,7 +178,7 @@ message Session {
   int64 updated_at = 8;
   int32 message_count = 9;
   string last_message = 10;
-  string ui_lang = 11;             // 会话默认 UI 语言 (zh/en), 由 AskReq.meta["ui_lang"] 更新
+  string ui_lang = 11;             // 会话默认 UI 语言 (zh/en), 由 AskReq.ui_lang 更新
   reserved 12;                     // 曾为 workflow_topology；Workflow 形态仅以 AgentMode 三枚举区分
 }
 
@@ -186,7 +186,7 @@ message CreateSessionReq {
   string user_id = 1;
   string title = 2;
   AgentMode mode = 3;
-  string ui_lang = 4; // 可选, 初始会话默认 UI 语言 (zh/en); 与 AskReq.meta["ui_lang"] 规则一致
+  string ui_lang = 4; // 可选, 初始会话默认 UI 语言 (zh/en); 与 AskReq.ui_lang 规则一致
 }
 
 message CreateSessionResp {

@@ -38,6 +38,8 @@ func (*planBlueprint) Build(ctx context.Context, deps Dependencies) (*einoxagent
 		maxIt = 10
 	}
 
+	// PlanExecute 当前由 prebuilt 直接组装 Planner/Executor，不经 buildChatModelAgent，故此处不传 WithSkillsDir；
+	// 技能能力请用 Agent / Workflow / Supervisor / Deep 等 ChatModelAgent 路径。
 	return einoxagent.NewPlanExecuteAgent(ctx, deps.ChatModel,
 		einoxagent.WithName("plan"),
 		einoxagent.WithDescription("Plan-Execute-Replan agent."),

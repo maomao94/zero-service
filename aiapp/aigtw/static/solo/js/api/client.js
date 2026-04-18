@@ -41,6 +41,14 @@ export const api = {
   deleteSession:(id)      => request("DELETE", `/sessions/${id}`),
   listMessages: (id, lim = 200) => request("GET", `/sessions/${id}/messages?limit=${lim}`),
   getInterrupt: (iid)     => request("GET",    `/interrupt/${iid}`),
+  // einox/rag（网关未启用 rag 时接口会报错，调用方自行 try/catch）
+  ragListCollections: () => request("GET", "/rag/collections"),
+  ragCreateCollection: (body) => request("POST", "/rag/collections", body),
+  ragDeleteCollection: (id) => request("DELETE", `/rag/collections/${id}`),
+  ragIngest: (collectionId, body) => request("POST", `/rag/collections/${collectionId}/ingest`, body),
+  ragListSources: (collectionId) => request("GET", `/rag/collections/${collectionId}/sources`),
+  ragDeleteSource: (collectionId, sourceId) => request("DELETE", `/rag/collections/${collectionId}/sources/${sourceId}`),
+  ragQuery: (collectionId, body) => request("POST", `/rag/collections/${collectionId}/query`, body),
 };
 
 export function streamEndpoints() {

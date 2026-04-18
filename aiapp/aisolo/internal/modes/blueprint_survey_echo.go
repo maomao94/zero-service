@@ -20,24 +20,24 @@ func BuildSurveyEchoAgent(ctx context.Context, deps Dependencies) (*einoxagent.A
 	humanTools := tool.NewPolicy().AllowCapabilities(tool.CapHuman).Apply(deps.Kit)
 	echoTools := tool.NewPolicy().AllowNames("echo").Apply(deps.Kit)
 
-	planner, err := einoxagent.NewChatModelAgent(ctx, deps.ChatModel,
+	planner, err := einoxagent.NewChatModelAgent(ctx, deps.ChatModel, appendSkillDirOpts(deps,
 		einoxagent.WithName("survey-echo-planner"),
 		einoxagent.WithDescription("Collect user answers via human-interrupt tools."),
 		einoxagent.WithInstruction(surveyEchoPlannerPrompt),
 		einoxagent.WithTools(humanTools...),
 		einoxagent.WithCheckPointStore(deps.CheckPointStore),
-	)
+	)...)
 	if err != nil {
 		return nil, fmt.Errorf("modes: build survey-echo planner: %w", err)
 	}
 
-	echoer, err := einoxagent.NewChatModelAgent(ctx, deps.ChatModel,
+	echoer, err := einoxagent.NewChatModelAgent(ctx, deps.ChatModel, appendSkillDirOpts(deps,
 		einoxagent.WithName("survey-echo-echoer"),
 		einoxagent.WithDescription("Echo survey summary via echo tool only."),
 		einoxagent.WithInstruction(surveyEchoEchoPrompt),
 		einoxagent.WithTools(echoTools...),
 		einoxagent.WithCheckPointStore(deps.CheckPointStore),
-	)
+	)...)
 	if err != nil {
 		return nil, fmt.Errorf("modes: build survey-echo echoer: %w", err)
 	}

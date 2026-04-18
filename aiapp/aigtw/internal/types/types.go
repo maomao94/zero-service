@@ -133,11 +133,90 @@ type ProgressMessage struct {
 	Time     int64   `json:"time"`     // 时间戳，Unix 秒
 }
 
+type RagCollectionInfo struct {
+	Id        string `json:"id"`
+	Name      string `json:"name"`
+	CreatedAt int64  `json:"createdAt"`
+}
+
+type RagCreateCollectionRequest struct {
+	Name string `json:"name"`
+}
+
+type RagCreateCollectionResponse struct {
+	Id string `json:"id"`
+}
+
+type RagDeleteCollectionRequest struct {
+	CollectionId string `path:"collectionId"`
+}
+
+type RagDeleteCollectionResponse struct {
+	Success bool `json:"success"`
+}
+
+type RagDeleteSourceRequest struct {
+	CollectionId string `path:"collectionId"`
+	SourceId     string `path:"sourceId"`
+}
+
+type RagDeleteSourceResponse struct {
+	Success bool `json:"success"`
+}
+
+type RagHitInfo struct {
+	Text     string  `json:"text"`
+	Score    float64 `json:"score"`
+	SourceId string  `json:"sourceId,optional"`
+	Filename string  `json:"filename,optional"`
+}
+
+type RagIngestRequest struct {
+	CollectionId string `path:"collectionId"`
+	Filename     string `json:"filename,optional"`
+	Content      string `json:"content"`
+}
+
+type RagIngestResponse struct {
+	SourceId string `json:"sourceId"`
+	Chunks   int    `json:"chunks"`
+}
+
+type RagListCollectionsResponse struct {
+	Collections []RagCollectionInfo `json:"collections"`
+}
+
+type RagListSourcesRequest struct {
+	CollectionId string `path:"collectionId"`
+}
+
+type RagListSourcesResponse struct {
+	Sources []RagSourceInfo `json:"sources"`
+}
+
+type RagQueryRequest struct {
+	CollectionId string `path:"collectionId"`
+	Query        string `json:"query"`
+	TopK         int    `json:"topK,optional"`
+}
+
+type RagQueryResponse struct {
+	Hits    []RagHitInfo `json:"hits"`
+	Context string       `json:"context"`
+}
+
+type RagSourceInfo struct {
+	Id        string `json:"id"`
+	Filename  string `json:"filename"`
+	Chunks    int    `json:"chunks"`
+	CreatedAt int64  `json:"createdAt"`
+}
+
 type SoloChatRequest struct {
-	SessionId string            `json:"sessionId"`     // 会话 ID（必填）
-	Message   string            `json:"message"`       // 消息内容
-	Mode      string            `json:"mode,optional"` // agent | workflow-sequential | workflow-parallel | workflow-loop | supervisor | plan | deep
-	Meta      map[string]string `json:"meta,optional"` // 透传 aisolo AskReq.meta, 常用 ui_lang=zh|en
+	SessionId string `json:"sessionId"`       // 会话 ID（必填）
+	Message   string `json:"message"`         // 消息内容
+	Mode      string `json:"mode,optional"`   // agent | workflow-sequential | workflow-parallel | workflow-loop | supervisor | plan | deep
+	UiLang    string `json:"uiLang,optional"` // 可选 zh|en，透传 aisolo AskReq.ui_lang，更新会话默认 UI 语言
 }
 
 type SoloChatResponse struct {

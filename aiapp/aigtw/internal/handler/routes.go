@@ -89,6 +89,48 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Handler: solo.ListModesHandler(serverCtx),
 			},
 			{
+				// 创建向量知识库集合
+				Method:  http.MethodPost,
+				Path:    "/rag/collections",
+				Handler: solo.CreateRagCollectionHandler(serverCtx),
+			},
+			{
+				// 列出向量知识库集合
+				Method:  http.MethodGet,
+				Path:    "/rag/collections",
+				Handler: solo.ListRagCollectionsHandler(serverCtx),
+			},
+			{
+				// 删除向量知识库集合
+				Method:  http.MethodDelete,
+				Path:    "/rag/collections/:collectionId",
+				Handler: solo.DeleteRagCollectionHandler(serverCtx),
+			},
+			{
+				// 写入文本到集合（分块 + 向量化）
+				Method:  http.MethodPost,
+				Path:    "/rag/collections/:collectionId/ingest",
+				Handler: solo.IngestRagDocumentHandler(serverCtx),
+			},
+			{
+				// 向量检索（测试或 BFF 调用）
+				Method:  http.MethodPost,
+				Path:    "/rag/collections/:collectionId/query",
+				Handler: solo.QueryRagCollectionHandler(serverCtx),
+			},
+			{
+				// 列出集合内文档
+				Method:  http.MethodGet,
+				Path:    "/rag/collections/:collectionId/sources",
+				Handler: solo.ListRagSourcesHandler(serverCtx),
+			},
+			{
+				// 删除集合内某文档向量
+				Method:  http.MethodDelete,
+				Path:    "/rag/collections/:collectionId/sources/:sourceId",
+				Handler: solo.DeleteRagSourceHandler(serverCtx),
+			},
+			{
 				// 列出会话
 				Method:  http.MethodGet,
 				Path:    "/sessions",

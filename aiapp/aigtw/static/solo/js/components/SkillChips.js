@@ -1,6 +1,6 @@
 import { html } from "../lib/deps.js";
 
-/** 技能标签：点击将 launchPrompt 写入输入框（由父组件 setInput 拼接）。 */
+/** 技能快捷入口：仅把文案写入输入框；是否 launch 某技能由模型经服务端 skill 中间件（磁盘 SKILL.md）自行决定，不经 meta 传 skill_id。 */
 export function SkillChips({ skills, setInput, disabled }) {
   if (!skills || skills.length === 0) return null;
   const onChip = (s) => {

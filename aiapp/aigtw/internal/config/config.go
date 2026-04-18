@@ -6,6 +6,8 @@ package config
 import (
 	"github.com/zeromicro/go-zero/rest"
 	"github.com/zeromicro/go-zero/zrpc"
+
+	einoxrag "zero-service/common/einox/rag"
 )
 
 type AbilityConfig struct {
@@ -26,4 +28,6 @@ type Config struct {
 	AiChatRpcConf zrpc.RpcClientConf
 	AiSoloRpcConf zrpc.RpcClientConf
 	Abilities     []AbilityConfig `json:",optional"`
+	// Rag 向量库（与 aisolo 共用 sqlite 路径时需配置相同 dataDir）。
+	Rag einoxrag.Config `json:"rag,optional"`
 }

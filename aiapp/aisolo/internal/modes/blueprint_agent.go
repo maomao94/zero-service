@@ -41,11 +41,11 @@ func (*agentBlueprint) Build(ctx context.Context, deps Dependencies) (*einoxagen
 	}
 	tools = append(tools, at)
 
-	return einoxagent.NewChatModelAgent(ctx, deps.ChatModel,
+	return einoxagent.NewChatModelAgent(ctx, deps.ChatModel, appendSkillDirOpts(deps,
 		einoxagent.WithName("agent"),
 		einoxagent.WithDescription("Default ChatModel agent with all built-in tools"),
 		einoxagent.WithInstruction(agentPrompt),
 		einoxagent.WithTools(tools...),
 		einoxagent.WithCheckPointStore(deps.CheckPointStore),
-	)
+	)...)
 }

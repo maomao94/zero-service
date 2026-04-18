@@ -25,6 +25,9 @@ static/solo/
         ├── SessionList.js
         ├── ModePicker.js
         ├── ChatView.js
+        ├── SkillChips.js   # 仅预填输入框；技能 launch 由模型 + skill 中间件
+        ├── CalcPanel.js    # 本地算术预览 + 插入提示
+        ├── RagPanel.js     # 网关 einox/rag 数据面（集合 / 入库 / 试检索）
         └── interrupt/
             ├── Approval.js       # approval
             ├── SingleSelect.js   # single_select
@@ -40,7 +43,9 @@ static/solo/
 
 `mode` 字符串与 aisolo `AgentMode` 对齐，**唯一实现**在 `aiapp/aisolo/modeweb`（`Parse` / `ToSoloString`），网关 Solo 逻辑仅做转发：`agent`、`workflow-sequential`、`workflow-parallel`、`workflow-loop`、`supervisor`、`plan`、`deep`。已创建会话后，每轮 `chat` 的 `mode` 须与该会话一致，否则 aisolo 返回 `mode_mismatch`。
 
-`POST /solo/v1/chat` 请求体可带 `meta`，例如 `{ "meta": { "ui_lang": "zh" } }` 或 `"en"`。
+`POST /solo/v1/chat` 请求体可带 `uiLang`（`zh` / `en`），写入 aisolo 会话默认 UI 语言，例如 `{ "uiLang": "zh" }`。
+
+向量库维护走 **`/solo/v1/rag/*`** REST（与 `client.js` 中 `rag*` 方法一致），需在 `aigtw.yaml` 打开 `Rag.Enabled` 并配置 Embedding；与 aisolo 对话进程独立。
 网关透传到 `aisolo` 后写入**会话默认 UI 语言**；若某次中断 payload 未带 `ui_lang`，
 服务端与流式 `interrupt` 事件会用会话默认值补齐。`GET /solo/v1/sessions/:id` 返回的
 `uiLang` 为当前会话中的该值。

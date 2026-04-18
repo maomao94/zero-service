@@ -45,7 +45,7 @@ func (l *AskStreamLogic) AskStream(in *aisolo.AskReq, stream aisolo.AiSolo_AskSt
 		UserID:    in.UserId,
 		Message:   in.Message,
 		Mode:      in.Mode,
-		Meta:      in.GetMeta(),
+		UILang:    in.GetUiLang(),
 	})
 
 	// 最终一帧: 强制 is_final=true, 让客户端知道流结束

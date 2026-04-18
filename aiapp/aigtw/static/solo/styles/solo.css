@@ -242,6 +242,189 @@ button { font-family: inherit; cursor: pointer; }
   line-height: 1.4;
 }
 
+/* ============ 网关 RAG（aigtw einox/rag，与 /solo/v1/rag 对齐） ============ */
+.rag-panel-wrap {
+  padding: 6px 12px 8px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.rag-panel-wrap .rag-toggle {
+  margin-bottom: 0;
+}
+.rag-panel {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.rag-banner {
+  font-size: 12px;
+  color: #991b1b;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+}
+.rag-tip {
+  font-size: 12px;
+  color: #166534;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+}
+.rag-id-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.rag-id-code {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 4px 8px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.rag-row.rag-split {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: stretch;
+}
+.rag-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  min-width: 40px;
+}
+.rag-input {
+  flex: 1;
+  min-width: 120px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-size: 13px;
+  background: #fff;
+}
+.rag-input.rag-topk {
+  max-width: 72px;
+  font-family: var(--mono);
+}
+.rag-textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: var(--font);
+  background: #fff;
+  resize: vertical;
+}
+.rag-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.rag-sources {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.rag-sources li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.rag-sources li:last-child {
+  border-bottom: none;
+}
+.rag-sources .muted {
+  color: var(--text-muted);
+  padding: 8px 10px;
+}
+.rag-src-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rag-src-meta {
+  color: var(--text-muted);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.rag-hits {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rag-hit {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 8px;
+  align-items: start;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  background: #fff;
+}
+.rag-hit-score {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.rag-hit-text {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.rag-ctx-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.rag-ctx {
+  margin: 0;
+  max-height: 140px;
+  overflow: auto;
+  font-size: 12px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  white-space: pre-wrap;
+}
+.rag-hint {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
 .messages {
   padding: 20px;
   overflow-y: auto;
@@ -833,7 +1016,27 @@ button { font-family: inherit; cursor: pointer; }
 :root[data-theme="dark"] .chat-toolbar select,
 :root[data-theme="dark"] .chat-toolbar input,
 :root[data-theme="dark"] .calc-panel .calc-input,
+:root[data-theme="dark"] .rag-panel .rag-input,
+:root[data-theme="dark"] .rag-panel .rag-textarea,
+:root[data-theme="dark"] .rag-sources,
+:root[data-theme="dark"] .rag-hit,
+:root[data-theme="dark"] .rag-ctx,
 :root[data-theme="dark"] .sidebar-search input {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--border);
+}
+:root[data-theme="dark"] .rag-banner {
+  background: rgba(248, 113, 113, 0.12);
+  color: #fecaca;
+  border-color: rgba(248, 113, 113, 0.35);
+}
+:root[data-theme="dark"] .rag-tip {
+  background: rgba(74, 222, 128, 0.12);
+  color: #bbf7d0;
+  border-color: rgba(74, 222, 128, 0.35);
+}
+:root[data-theme="dark"] .rag-id-code {
   background: var(--surface-2);
   color: var(--text);
   border-color: var(--border);

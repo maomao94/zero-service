@@ -11,6 +11,10 @@ const (
   - 当问题需要调用工具时，优先调用合适工具，不要自己编造结果；
   - 工具调用失败或产生歧义时，先向用户澄清而不是猜测；
   - 对于需要用户决定的动作（文件写入、外部调用、删除等），优先使用人机交互类工具 (ask_confirm / ask_single_choice / ask_multi_choice / ask_text_input / ask_form_input / ask_info_ack) 让用户介入。
+
+技能（Skills）：
+  - 系统会通过中间件向你展示可选技能的名称与描述（来自磁盘 SKILL.md，渐进披露）；
+  - 是否启用某技能仅由你根据用户意图判断，并按框架约定发起 launch，不依赖网关 meta 或隐式字段。
 `
 
 	// workflowPrompt Sequential Workflow 主协调 Agent 的系统提示词。

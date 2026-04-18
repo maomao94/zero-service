@@ -110,3 +110,15 @@ func checkModel(deps Dependencies) error {
 	}
 	return nil
 }
+
+// appendSkillDirOpts 在配置了 Skills.Dir 时追加 einoxagent.WithSkillsDir，从而挂载
+// github.com/cloudwego/eino/adk/middlewares/skill：与 chatwitheino 相同，通过 local Backend +
+// NewBackendFromFilesystem 从目录读 SKILL.md，模型先见各技能的 name/description，再自行决定是否 launch。
+// 技能不由网关 meta 传递；前端标签若存在，仅等价于帮用户拼一句自然语言进输入框。
+func appendSkillDirOpts(deps Dependencies, opts ...einoxagent.Option) []einoxagent.Option {
+	out := append([]einoxagent.Option{}, opts...)
+	if deps.SkillsDir != "" {
+		out = append(out, einoxagent.WithSkillsDir(deps.SkillsDir))
+	}
+	return out
+}

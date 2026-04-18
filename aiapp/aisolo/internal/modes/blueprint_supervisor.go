@@ -39,33 +39,35 @@ func (*supervisorBlueprint) Build(ctx context.Context, deps Dependencies) (*eino
 	computeIO := tool.NewPolicy().AllowCapabilities(tool.CapCompute, tool.CapIO).Apply(deps.Kit)
 	humanTools := tool.NewPolicy().AllowCapabilities(tool.CapHuman).Apply(deps.Kit)
 
-	researcher, err := einoxagent.NewChatModelAgent(ctx, deps.ChatModel,
+	researcher, err := einoxagent.NewChatModelAgent(ctx, deps.ChatModel, appendSkillDirOpts(deps,
 		einoxagent.WithName("researcher"),
 		einoxagent.WithDescription("Do calculation, fetch time, or any compute/io task."),
 		einoxagent.WithInstruction(supervisorWorkerPrompt),
 		einoxagent.WithTools(computeIO...),
 		einoxagent.WithCheckPointStore(deps.CheckPointStore),
-	)
+	)...)
 	if err != nil {
 		return nil, fmt.Errorf("modes: build supervisor.researcher: %w", err)
 	}
 
-	interactor, err := einoxagent.NewChatModelAgent(ctx, deps.ChatModel,
+	interactor, err := einoxagent.NewChatModelAgent(ctx, deps.ChatModel, appendSkillDirOpts(deps,
 		einoxagent.WithName("interactor"),
 		einoxagent.WithDescription("Interact with the user via approval/select/text/form/info tools."),
 		einoxagent.WithInstruction(supervisorWorkerPrompt),
 		einoxagent.WithTools(humanTools...),
 		einoxagent.WithCheckPointStore(deps.CheckPointStore),
-	)
+	)...)
 	if err != nil {
 		return nil, fmt.Errorf("modes: build supervisor.interactor: %w", err)
 	}
 
 	return einoxagent.NewSupervisorAgent(ctx, deps.ChatModel,
 		[]adk.Agent{researcher.GetAgent(), interactor.GetAgent()},
-		einoxagent.WithName("supervisor"),
-		einoxagent.WithDescription("Supervisor that delegates to researcher / interactor."),
-		einoxagent.WithInstruction(supervisorPrompt),
-		einoxagent.WithCheckPointStore(deps.CheckPointStore),
+		appendSkillDirOpts(deps,
+			einoxagent.WithName("supervisor"),
+			einoxagent.WithDescription("Supervisor that delegates to researcher / interactor."),
+			einoxagent.WithInstruction(supervisorPrompt),
+			einoxagent.WithCheckPointStore(deps.CheckPointStore),
+		)...,
 	)
 }

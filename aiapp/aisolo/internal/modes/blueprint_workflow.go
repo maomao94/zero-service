@@ -62,24 +62,24 @@ func (b *workflowBlueprint) Build(ctx context.Context, deps Dependencies) (*eino
 		AllowCapabilities(tool.CapCompute, tool.CapIO, tool.CapHuman).
 		Apply(deps.Kit)
 
-	planner, err := einoxagent.NewChatModelAgent(ctx, deps.ChatModel,
+	planner, err := einoxagent.NewChatModelAgent(ctx, deps.ChatModel, appendSkillDirOpts(deps,
 		einoxagent.WithName("workflow-planner"),
 		einoxagent.WithDescription("Plan the task into steps, no external side effects."),
 		einoxagent.WithInstruction(workflowPrompt),
 		einoxagent.WithTools(computeTools...),
 		einoxagent.WithCheckPointStore(deps.CheckPointStore),
-	)
+	)...)
 	if err != nil {
 		return nil, fmt.Errorf("modes: build workflow planner: %w", err)
 	}
 
-	summarizer, err := einoxagent.NewChatModelAgent(ctx, deps.ChatModel,
+	summarizer, err := einoxagent.NewChatModelAgent(ctx, deps.ChatModel, appendSkillDirOpts(deps,
 		einoxagent.WithName("workflow-summarizer"),
 		einoxagent.WithDescription("Summarize previous steps into the final answer for the user."),
 		einoxagent.WithInstruction(workflowSummarizerPrompt),
 		einoxagent.WithTools(allTools...),
 		einoxagent.WithCheckPointStore(deps.CheckPointStore),
-	)
+	)...)
 	if err != nil {
 		return nil, fmt.Errorf("modes: build workflow summarizer: %w", err)
 	}

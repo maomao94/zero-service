@@ -26,3 +26,14 @@ AiSoloRpcConf:
     - 127.0.0.1:23002
   NonBlock: true
   Timeout: 300000
+
+# einox/rag 向量库（仅 aigtw HTTP /solo/v1/rag/*；JWT 用户隔离，与 aisolo 无共享配置要求）
+Rag:
+  Enabled: false
+  Backend: sqlite
+  DataDir: "./data/rag"
+  Embedding:
+    Provider: ark
+    api_key: ""
+    model: ""
+    ark_region: cn-beijing
