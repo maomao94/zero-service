@@ -35,10 +35,12 @@ func (l *CreateSessionLogic) CreateSession(req *types.SoloCreateSessionRequest) 
 		return nil, errors.New("missing user id in context")
 	}
 	resp, err := l.svcCtx.AiSoloCli.CreateSession(l.ctx, &aisolo.CreateSessionReq{
-		UserId: userID,
-		Title:  req.Title,
-		Mode:   modeweb.Parse(req.Mode),
-		UiLang: req.UiLang,
+		UserId:            userID,
+		Title:             req.Title,
+		Mode:              modeweb.Parse(req.Mode),
+		UiLang:            req.UiLang,
+		KnowledgeBaseId:   req.KnowledgeBaseId,
+		KnowledgeBaseName: req.KnowledgeBaseName,
 	})
 	if err != nil {
 		return nil, err

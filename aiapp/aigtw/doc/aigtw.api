@@ -7,7 +7,7 @@ import (
 	"types/openai.api"
 	"types/tool.api"
 	"types/solo.api"
-	"types/rag.api"
+	"types/knowledge.api"
 )
 
 // ============================================================
@@ -105,6 +105,10 @@ service aigtw {
 	@handler createSession
 	post /sessions (SoloCreateSessionRequest) returns (SoloCreateSessionResponse)
 
+	@doc "绑定会话知识库（供 Agent search_knowledge_base 工具使用）"
+	@handler bindSessionKnowledge
+	post /sessions/:sessionId/knowledge (SoloBindKnowledgeRequest) returns (SoloBindKnowledgeResponse)
+
 	@doc "获取会话"
 	@handler getSession
 	get /sessions/:sessionId (SoloGetSessionRequest) returns (SoloGetSessionResponse)
@@ -121,33 +125,37 @@ service aigtw {
 	@handler getInterrupt
 	get /interrupt/:interruptId (SoloGetInterruptRequest) returns (SoloGetInterruptResponse)
 
-	@doc "创建向量知识库集合"
-	@handler createRagCollection
-	post /rag/collections (RagCreateCollectionRequest) returns (RagCreateCollectionResponse)
+	@doc "创建知识库"
+	@handler createKnowledgeBase
+	post /knowledge/bases (KnowledgeCreateBaseRequest) returns (KnowledgeCreateBaseResponse)
 
-	@doc "列出向量知识库集合"
-	@handler listRagCollections
-	get /rag/collections returns (RagListCollectionsResponse)
+	@doc "列出知识库"
+	@handler listKnowledgeBases
+	get /knowledge/bases returns (KnowledgeListBasesResponse)
 
-	@doc "删除向量知识库集合"
-	@handler deleteRagCollection
-	delete /rag/collections/:collectionId (RagDeleteCollectionRequest) returns (RagDeleteCollectionResponse)
+	@doc "删除知识库"
+	@handler deleteKnowledgeBase
+	delete /knowledge/bases/:baseId (KnowledgeDeleteBaseRequest) returns (KnowledgeDeleteBaseResponse)
 
-	@doc "写入文本到集合（分块 + 向量化）"
-	@handler ingestRagDocument
-	post /rag/collections/:collectionId/ingest (RagIngestRequest) returns (RagIngestResponse)
+	@doc "单文档入库（分块 + 向量化）"
+	@handler ingestKnowledgeDocument
+	post /knowledge/bases/:baseId/ingest (KnowledgeIngestRequest) returns (KnowledgeIngestResponse)
 
-	@doc "列出集合内文档"
-	@handler listRagSources
-	get /rag/collections/:collectionId/sources (RagListSourcesRequest) returns (RagListSourcesResponse)
+	@doc "批量文档入库"
+	@handler ingestKnowledgeDocuments
+	post /knowledge/bases/:baseId/ingest-batch (KnowledgeIngestBatchRequest) returns (KnowledgeIngestBatchResponse)
 
-	@doc "删除集合内某文档向量"
-	@handler deleteRagSource
-	delete /rag/collections/:collectionId/sources/:sourceId (RagDeleteSourceRequest) returns (RagDeleteSourceResponse)
+	@doc "列出知识库内文档"
+	@handler listKnowledgeDocuments
+	get /knowledge/bases/:baseId/documents (KnowledgeListDocumentsRequest) returns (KnowledgeListDocumentsResponse)
 
-	@doc "向量检索（测试或 BFF 调用）"
-	@handler queryRagCollection
-	post /rag/collections/:collectionId/query (RagQueryRequest) returns (RagQueryResponse)
+	@doc "删除知识库内某文档向量"
+	@handler deleteKnowledgeDocument
+	delete /knowledge/bases/:baseId/documents/:sourceId (KnowledgeDeleteDocumentRequest) returns (KnowledgeDeleteDocumentResponse)
+
+	@doc "向量检索（测试或 BFF）"
+	@handler queryKnowledgeBase
+	post /knowledge/bases/:baseId/query (KnowledgeQueryRequest) returns (KnowledgeQueryResponse)
 }
 
 // ============================================================

@@ -29,6 +29,11 @@ func (s *AiSoloServer) CreateSession(ctx context.Context, in *aisolo.CreateSessi
 	return l.CreateSession(in)
 }
 
+func (s *AiSoloServer) BindKnowledgeBase(ctx context.Context, in *aisolo.BindKnowledgeBaseReq) (*aisolo.BindKnowledgeBaseResp, error) {
+	l := logic.NewBindKnowledgeBaseLogic(ctx, s.svcCtx)
+	return l.BindKnowledgeBase(in)
+}
+
 func (s *AiSoloServer) GetSession(ctx context.Context, in *aisolo.GetSessionReq) (*aisolo.GetSessionResp, error) {
 	l := logic.NewGetSessionLogic(ctx, s.svcCtx)
 	return l.GetSession(in)

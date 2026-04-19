@@ -48,10 +48,11 @@ Skills:
 Agent:
   PoolMaxIdle: 10
   PoolMaxLive: 1h
+  # demoSurveyEcho: true   # 联调：挂载 Survey→Echo 子 Agent 工具（生产勿开）
   # planMaxIterations: 12      # Plan 模式最大迭代，默认 10
-  # Deep 本地文件系统（grep 等依赖本机 ripgrep）；仅 Skills 时可关掉以避免要求 rg
+  # Deep 本地文件系统默认关闭；需 grep 等工具时显式 enableLocalFilesystem: true
   # Deep:
-  #   DisableLocalFilesystem: true
+  #   enableLocalFilesystem: true
   #   FilesystemAllowedRoots:
   #     - "./data/deep_workspace"
   #   FilesystemSessionBaseDir: "./data/deep_sessions"
@@ -75,3 +76,13 @@ Limit:
   MaxConcurrency: 100
   RateLimit: 50
   RequestTimeout: 300s
+
+# 与 aigtw 共用索引时可启用（memory 仅本进程；生产用 gorm/redis/milvus 对齐网关）
+# Knowledge:
+#   Enabled: false
+#   Backend: memory
+#   DataDir: "./data/knowledge"
+#   Embedding:
+#     api_key: ""
+#     model: ""
+#     ark_region: cn-beijing

@@ -166,7 +166,18 @@ button { font-family: inherit; cursor: pointer; }
 }
 .chat-toolbar .left { display: flex; flex-direction: column; min-width: 0; }
 .chat-toolbar .title { font-weight: 600; font-size: 14px; }
-.chat-toolbar .sub { color: var(--text-muted); font-size: 12px; }
+.chat-toolbar .sub { color: var(--text-muted); font-size: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.chat-toolbar .kb-pill {
+  display: inline-block;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--accent-contrast, #fff);
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 999px;
+  vertical-align: middle;
+}
 .chat-toolbar .right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .chat-toolbar select, .chat-toolbar input {
   padding: 6px 10px;
@@ -242,7 +253,48 @@ button { font-family: inherit; cursor: pointer; }
   line-height: 1.4;
 }
 
-/* ============ 网关 RAG（aigtw einox/rag，与 /solo/v1/rag 对齐） ============ */
+/* ============ 网关知识库（einox/knowledge，/solo/v1/knowledge/*） ============ */
+.rag-panel .rag-batch {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.rag-panel .rag-file {
+  font-size: 12px;
+  max-width: 100%;
+}
+.rag-panel .rag-session-bind {
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.rag-panel .rag-session-bind-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  min-width: 0;
+}
+.rag-panel .rag-bound-id {
+  font-size: 11px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rag-panel .rag-bound-name {
+  font-size: 12px;
+  color: var(--text-muted);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .rag-panel-wrap {
   padding: 6px 12px 8px;
   background: var(--surface-2);
@@ -258,6 +310,12 @@ button { font-family: inherit; cursor: pointer; }
   gap: 8px;
   max-height: 70vh;
   overflow-y: auto;
+}
+.rag-panel .rag-meta.subtle {
+  font-size: 11px;
+  color: var(--muted-fg, #64748b);
+  line-height: 1.4;
+  word-break: break-word;
 }
 .rag-banner {
   font-size: 12px;
@@ -515,6 +573,15 @@ button { font-family: inherit; cursor: pointer; }
 .tool-call.error {
   background: linear-gradient(165deg, #fffafa 0%, #fef2f2 100%);
   border-color: #fecaca;
+}
+.tool-call.knowledge {
+  background: linear-gradient(165deg, #f5f8ff 0%, #eef4ff 100%);
+  border-color: #c7d2fe;
+}
+.tool-call.knowledge .tool-call-badge {
+  color: #4338ca;
+  border-color: #a5b4fc;
+  background: rgba(238, 242, 255, 0.95);
 }
 .tool-call-toggle {
   display: flex;
@@ -1068,6 +1135,15 @@ button { font-family: inherit; cursor: pointer; }
 :root[data-theme="dark"] .tool-call.error {
   background: linear-gradient(165deg, #261a1a 0%, #221515 100%);
   border-color: #5c2d2d;
+}
+:root[data-theme="dark"] .tool-call.knowledge {
+  background: linear-gradient(165deg, #1a1d2e 0%, #151a28 100%);
+  border-color: #3730a3;
+}
+:root[data-theme="dark"] .tool-call.knowledge .tool-call-badge {
+  color: #c7d2fe;
+  border-color: #4f46e5;
+  background: rgba(30, 27, 75, 0.6);
 }
 :root[data-theme="dark"] .tool-call .tool-payload {
   background: rgba(0, 0, 0, 0.35);

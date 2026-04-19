@@ -29,9 +29,9 @@ func (*planBlueprint) Build(ctx context.Context, deps Dependencies) (*einoxagent
 		return nil, err
 	}
 
-	tools := tool.NewPolicy().
+	tools := mergeTools(tool.NewPolicy().
 		AllowCapabilities(tool.CapCompute, tool.CapIO, tool.CapHuman).
-		Apply(deps.Kit)
+		Apply(deps.Kit), deps.KnowledgeTools)
 
 	maxIt := deps.PlanMaxIterations
 	if maxIt <= 0 {

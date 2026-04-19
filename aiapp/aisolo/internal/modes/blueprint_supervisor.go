@@ -36,7 +36,7 @@ func (*supervisorBlueprint) Build(ctx context.Context, deps Dependencies) (*eino
 		return nil, err
 	}
 
-	computeIO := tool.NewPolicy().AllowCapabilities(tool.CapCompute, tool.CapIO).Apply(deps.Kit)
+	computeIO := mergeTools(tool.NewPolicy().AllowCapabilities(tool.CapCompute, tool.CapIO).Apply(deps.Kit), deps.KnowledgeTools)
 	humanTools := tool.NewPolicy().AllowCapabilities(tool.CapHuman).Apply(deps.Kit)
 
 	researcher, err := einoxagent.NewChatModelAgent(ctx, deps.ChatModel, appendSkillDirOpts(deps,

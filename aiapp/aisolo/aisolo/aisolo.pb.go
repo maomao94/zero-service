@@ -1018,20 +1018,22 @@ func (x *ResumeStreamResp) GetChunk() *ResumeStreamChunk {
 }
 
 type Session struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Title         string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
-	Mode          AgentMode              `protobuf:"varint,4,opt,name=mode,proto3,enum=aisolo.AgentMode" json:"mode,omitempty"`
-	Status        SessionStatus          `protobuf:"varint,5,opt,name=status,proto3,enum=aisolo.SessionStatus" json:"status,omitempty"`
-	InterruptId   string                 `protobuf:"bytes,6,opt,name=interrupt_id,json=interruptId,proto3" json:"interrupt_id,omitempty"` // status=INTERRUPTED 时非空
-	CreatedAt     int64                  `protobuf:"varint,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     int64                  `protobuf:"varint,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	MessageCount  int32                  `protobuf:"varint,9,opt,name=message_count,json=messageCount,proto3" json:"message_count,omitempty"`
-	LastMessage   string                 `protobuf:"bytes,10,opt,name=last_message,json=lastMessage,proto3" json:"last_message,omitempty"`
-	UiLang        string                 `protobuf:"bytes,11,opt,name=ui_lang,json=uiLang,proto3" json:"ui_lang,omitempty"` // 会话默认 UI 语言 (zh/en), 由 AskReq.ui_lang 更新
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	SessionId         string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	UserId            string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Title             string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
+	Mode              AgentMode              `protobuf:"varint,4,opt,name=mode,proto3,enum=aisolo.AgentMode" json:"mode,omitempty"`
+	Status            SessionStatus          `protobuf:"varint,5,opt,name=status,proto3,enum=aisolo.SessionStatus" json:"status,omitempty"`
+	InterruptId       string                 `protobuf:"bytes,6,opt,name=interrupt_id,json=interruptId,proto3" json:"interrupt_id,omitempty"` // status=INTERRUPTED 时非空
+	CreatedAt         int64                  `protobuf:"varint,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt         int64                  `protobuf:"varint,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	MessageCount      int32                  `protobuf:"varint,9,opt,name=message_count,json=messageCount,proto3" json:"message_count,omitempty"`
+	LastMessage       string                 `protobuf:"bytes,10,opt,name=last_message,json=lastMessage,proto3" json:"last_message,omitempty"`
+	UiLang            string                 `protobuf:"bytes,11,opt,name=ui_lang,json=uiLang,proto3" json:"ui_lang,omitempty"`                                    // 会话默认 UI 语言 (zh/en), 由 AskReq.ui_lang 更新
+	KnowledgeBaseId   string                 `protobuf:"bytes,12,opt,name=knowledge_base_id,json=knowledgeBaseId,proto3" json:"knowledge_base_id,omitempty"`       // 当前会话绑定的知识库 ID（由网关/BFF 检索注入使用）
+	KnowledgeBaseName string                 `protobuf:"bytes,13,opt,name=knowledge_base_name,json=knowledgeBaseName,proto3" json:"knowledge_base_name,omitempty"` // 当前会话绑定的知识库名称（供前端展示）
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *Session) Reset() {
@@ -1141,14 +1143,30 @@ func (x *Session) GetUiLang() string {
 	return ""
 }
 
+func (x *Session) GetKnowledgeBaseId() string {
+	if x != nil {
+		return x.KnowledgeBaseId
+	}
+	return ""
+}
+
+func (x *Session) GetKnowledgeBaseName() string {
+	if x != nil {
+		return x.KnowledgeBaseName
+	}
+	return ""
+}
+
 type CreateSessionReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	Mode          AgentMode              `protobuf:"varint,3,opt,name=mode,proto3,enum=aisolo.AgentMode" json:"mode,omitempty"`
-	UiLang        string                 `protobuf:"bytes,4,opt,name=ui_lang,json=uiLang,proto3" json:"ui_lang,omitempty"` // 可选, 初始会话默认 UI 语言 (zh/en); 与 AskReq.ui_lang 规则一致
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	UserId            string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Title             string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Mode              AgentMode              `protobuf:"varint,3,opt,name=mode,proto3,enum=aisolo.AgentMode" json:"mode,omitempty"`
+	UiLang            string                 `protobuf:"bytes,4,opt,name=ui_lang,json=uiLang,proto3" json:"ui_lang,omitempty"` // 可选, 初始会话默认 UI 语言 (zh/en); 与 AskReq.ui_lang 规则一致
+	KnowledgeBaseId   string                 `protobuf:"bytes,5,opt,name=knowledge_base_id,json=knowledgeBaseId,proto3" json:"knowledge_base_id,omitempty"`
+	KnowledgeBaseName string                 `protobuf:"bytes,6,opt,name=knowledge_base_name,json=knowledgeBaseName,proto3" json:"knowledge_base_name,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *CreateSessionReq) Reset() {
@@ -1209,6 +1227,20 @@ func (x *CreateSessionReq) GetUiLang() string {
 	return ""
 }
 
+func (x *CreateSessionReq) GetKnowledgeBaseId() string {
+	if x != nil {
+		return x.KnowledgeBaseId
+	}
+	return ""
+}
+
+func (x *CreateSessionReq) GetKnowledgeBaseName() string {
+	if x != nil {
+		return x.KnowledgeBaseName
+	}
+	return ""
+}
+
 type CreateSessionResp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Session       *Session               `protobuf:"bytes,1,opt,name=session,proto3" json:"session,omitempty"`
@@ -1253,6 +1285,118 @@ func (x *CreateSessionResp) GetSession() *Session {
 	return nil
 }
 
+type BindKnowledgeBaseReq struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	SessionId         string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	UserId            string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	KnowledgeBaseId   string                 `protobuf:"bytes,3,opt,name=knowledge_base_id,json=knowledgeBaseId,proto3" json:"knowledge_base_id,omitempty"`
+	KnowledgeBaseName string                 `protobuf:"bytes,4,opt,name=knowledge_base_name,json=knowledgeBaseName,proto3" json:"knowledge_base_name,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *BindKnowledgeBaseReq) Reset() {
+	*x = BindKnowledgeBaseReq{}
+	mi := &file_aisolo_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BindKnowledgeBaseReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BindKnowledgeBaseReq) ProtoMessage() {}
+
+func (x *BindKnowledgeBaseReq) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BindKnowledgeBaseReq.ProtoReflect.Descriptor instead.
+func (*BindKnowledgeBaseReq) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *BindKnowledgeBaseReq) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *BindKnowledgeBaseReq) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *BindKnowledgeBaseReq) GetKnowledgeBaseId() string {
+	if x != nil {
+		return x.KnowledgeBaseId
+	}
+	return ""
+}
+
+func (x *BindKnowledgeBaseReq) GetKnowledgeBaseName() string {
+	if x != nil {
+		return x.KnowledgeBaseName
+	}
+	return ""
+}
+
+type BindKnowledgeBaseResp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Session       *Session               `protobuf:"bytes,1,opt,name=session,proto3" json:"session,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BindKnowledgeBaseResp) Reset() {
+	*x = BindKnowledgeBaseResp{}
+	mi := &file_aisolo_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BindKnowledgeBaseResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BindKnowledgeBaseResp) ProtoMessage() {}
+
+func (x *BindKnowledgeBaseResp) ProtoReflect() protoreflect.Message {
+	mi := &file_aisolo_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BindKnowledgeBaseResp.ProtoReflect.Descriptor instead.
+func (*BindKnowledgeBaseResp) Descriptor() ([]byte, []int) {
+	return file_aisolo_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *BindKnowledgeBaseResp) GetSession() *Session {
+	if x != nil {
+		return x.Session
+	}
+	return nil
+}
+
 type GetSessionReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
@@ -1263,7 +1407,7 @@ type GetSessionReq struct {
 
 func (x *GetSessionReq) Reset() {
 	*x = GetSessionReq{}
-	mi := &file_aisolo_proto_msgTypes[12]
+	mi := &file_aisolo_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1275,7 +1419,7 @@ func (x *GetSessionReq) String() string {
 func (*GetSessionReq) ProtoMessage() {}
 
 func (x *GetSessionReq) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[12]
+	mi := &file_aisolo_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1288,7 +1432,7 @@ func (x *GetSessionReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSessionReq.ProtoReflect.Descriptor instead.
 func (*GetSessionReq) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{12}
+	return file_aisolo_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetSessionReq) GetSessionId() string {
@@ -1314,7 +1458,7 @@ type GetSessionResp struct {
 
 func (x *GetSessionResp) Reset() {
 	*x = GetSessionResp{}
-	mi := &file_aisolo_proto_msgTypes[13]
+	mi := &file_aisolo_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1326,7 +1470,7 @@ func (x *GetSessionResp) String() string {
 func (*GetSessionResp) ProtoMessage() {}
 
 func (x *GetSessionResp) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[13]
+	mi := &file_aisolo_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1339,7 +1483,7 @@ func (x *GetSessionResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSessionResp.ProtoReflect.Descriptor instead.
 func (*GetSessionResp) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{13}
+	return file_aisolo_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetSessionResp) GetSession() *Session {
@@ -1360,7 +1504,7 @@ type ListSessionsReq struct {
 
 func (x *ListSessionsReq) Reset() {
 	*x = ListSessionsReq{}
-	mi := &file_aisolo_proto_msgTypes[14]
+	mi := &file_aisolo_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1372,7 +1516,7 @@ func (x *ListSessionsReq) String() string {
 func (*ListSessionsReq) ProtoMessage() {}
 
 func (x *ListSessionsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[14]
+	mi := &file_aisolo_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1385,7 +1529,7 @@ func (x *ListSessionsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSessionsReq.ProtoReflect.Descriptor instead.
 func (*ListSessionsReq) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{14}
+	return file_aisolo_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ListSessionsReq) GetUserId() string {
@@ -1421,7 +1565,7 @@ type ListSessionsResp struct {
 
 func (x *ListSessionsResp) Reset() {
 	*x = ListSessionsResp{}
-	mi := &file_aisolo_proto_msgTypes[15]
+	mi := &file_aisolo_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1433,7 +1577,7 @@ func (x *ListSessionsResp) String() string {
 func (*ListSessionsResp) ProtoMessage() {}
 
 func (x *ListSessionsResp) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[15]
+	mi := &file_aisolo_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1446,7 +1590,7 @@ func (x *ListSessionsResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSessionsResp.ProtoReflect.Descriptor instead.
 func (*ListSessionsResp) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{15}
+	return file_aisolo_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ListSessionsResp) GetSessions() []*Session {
@@ -1487,7 +1631,7 @@ type DeleteSessionReq struct {
 
 func (x *DeleteSessionReq) Reset() {
 	*x = DeleteSessionReq{}
-	mi := &file_aisolo_proto_msgTypes[16]
+	mi := &file_aisolo_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1499,7 +1643,7 @@ func (x *DeleteSessionReq) String() string {
 func (*DeleteSessionReq) ProtoMessage() {}
 
 func (x *DeleteSessionReq) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[16]
+	mi := &file_aisolo_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1512,7 +1656,7 @@ func (x *DeleteSessionReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSessionReq.ProtoReflect.Descriptor instead.
 func (*DeleteSessionReq) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{16}
+	return file_aisolo_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *DeleteSessionReq) GetSessionId() string {
@@ -1538,7 +1682,7 @@ type DeleteSessionResp struct {
 
 func (x *DeleteSessionResp) Reset() {
 	*x = DeleteSessionResp{}
-	mi := &file_aisolo_proto_msgTypes[17]
+	mi := &file_aisolo_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1550,7 +1694,7 @@ func (x *DeleteSessionResp) String() string {
 func (*DeleteSessionResp) ProtoMessage() {}
 
 func (x *DeleteSessionResp) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[17]
+	mi := &file_aisolo_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1563,7 +1707,7 @@ func (x *DeleteSessionResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSessionResp.ProtoReflect.Descriptor instead.
 func (*DeleteSessionResp) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{17}
+	return file_aisolo_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *DeleteSessionResp) GetSuccess() bool {
@@ -1583,7 +1727,7 @@ type GetInterruptReq struct {
 
 func (x *GetInterruptReq) Reset() {
 	*x = GetInterruptReq{}
-	mi := &file_aisolo_proto_msgTypes[18]
+	mi := &file_aisolo_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1595,7 +1739,7 @@ func (x *GetInterruptReq) String() string {
 func (*GetInterruptReq) ProtoMessage() {}
 
 func (x *GetInterruptReq) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[18]
+	mi := &file_aisolo_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1608,7 +1752,7 @@ func (x *GetInterruptReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetInterruptReq.ProtoReflect.Descriptor instead.
 func (*GetInterruptReq) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{18}
+	return file_aisolo_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *GetInterruptReq) GetInterruptId() string {
@@ -1634,7 +1778,7 @@ type GetInterruptResp struct {
 
 func (x *GetInterruptResp) Reset() {
 	*x = GetInterruptResp{}
-	mi := &file_aisolo_proto_msgTypes[19]
+	mi := &file_aisolo_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1646,7 +1790,7 @@ func (x *GetInterruptResp) String() string {
 func (*GetInterruptResp) ProtoMessage() {}
 
 func (x *GetInterruptResp) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[19]
+	mi := &file_aisolo_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1659,7 +1803,7 @@ func (x *GetInterruptResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetInterruptResp.ProtoReflect.Descriptor instead.
 func (*GetInterruptResp) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{19}
+	return file_aisolo_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *GetInterruptResp) GetInfo() *InterruptInfo {
@@ -1685,7 +1829,7 @@ type Message struct {
 
 func (x *Message) Reset() {
 	*x = Message{}
-	mi := &file_aisolo_proto_msgTypes[20]
+	mi := &file_aisolo_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1697,7 +1841,7 @@ func (x *Message) String() string {
 func (*Message) ProtoMessage() {}
 
 func (x *Message) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[20]
+	mi := &file_aisolo_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1710,7 +1854,7 @@ func (x *Message) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Message.ProtoReflect.Descriptor instead.
 func (*Message) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{20}
+	return file_aisolo_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *Message) GetId() string {
@@ -1780,7 +1924,7 @@ type ListMessagesReq struct {
 
 func (x *ListMessagesReq) Reset() {
 	*x = ListMessagesReq{}
-	mi := &file_aisolo_proto_msgTypes[21]
+	mi := &file_aisolo_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1792,7 +1936,7 @@ func (x *ListMessagesReq) String() string {
 func (*ListMessagesReq) ProtoMessage() {}
 
 func (x *ListMessagesReq) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[21]
+	mi := &file_aisolo_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1805,7 +1949,7 @@ func (x *ListMessagesReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMessagesReq.ProtoReflect.Descriptor instead.
 func (*ListMessagesReq) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{21}
+	return file_aisolo_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ListMessagesReq) GetSessionId() string {
@@ -1839,7 +1983,7 @@ type ListMessagesResp struct {
 
 func (x *ListMessagesResp) Reset() {
 	*x = ListMessagesResp{}
-	mi := &file_aisolo_proto_msgTypes[22]
+	mi := &file_aisolo_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1851,7 +1995,7 @@ func (x *ListMessagesResp) String() string {
 func (*ListMessagesResp) ProtoMessage() {}
 
 func (x *ListMessagesResp) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[22]
+	mi := &file_aisolo_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1864,7 +2008,7 @@ func (x *ListMessagesResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMessagesResp.ProtoReflect.Descriptor instead.
 func (*ListMessagesResp) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{22}
+	return file_aisolo_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *ListMessagesResp) GetMessages() []*Message {
@@ -1894,7 +2038,7 @@ type ModeInfo struct {
 
 func (x *ModeInfo) Reset() {
 	*x = ModeInfo{}
-	mi := &file_aisolo_proto_msgTypes[23]
+	mi := &file_aisolo_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1906,7 +2050,7 @@ func (x *ModeInfo) String() string {
 func (*ModeInfo) ProtoMessage() {}
 
 func (x *ModeInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[23]
+	mi := &file_aisolo_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1919,7 +2063,7 @@ func (x *ModeInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ModeInfo.ProtoReflect.Descriptor instead.
 func (*ModeInfo) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{23}
+	return file_aisolo_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *ModeInfo) GetMode() AgentMode {
@@ -1965,7 +2109,7 @@ type ListModesReq struct {
 
 func (x *ListModesReq) Reset() {
 	*x = ListModesReq{}
-	mi := &file_aisolo_proto_msgTypes[24]
+	mi := &file_aisolo_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1977,7 +2121,7 @@ func (x *ListModesReq) String() string {
 func (*ListModesReq) ProtoMessage() {}
 
 func (x *ListModesReq) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[24]
+	mi := &file_aisolo_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1990,7 +2134,7 @@ func (x *ListModesReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListModesReq.ProtoReflect.Descriptor instead.
 func (*ListModesReq) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{24}
+	return file_aisolo_proto_rawDescGZIP(), []int{26}
 }
 
 type ListModesResp struct {
@@ -2002,7 +2146,7 @@ type ListModesResp struct {
 
 func (x *ListModesResp) Reset() {
 	*x = ListModesResp{}
-	mi := &file_aisolo_proto_msgTypes[25]
+	mi := &file_aisolo_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2014,7 +2158,7 @@ func (x *ListModesResp) String() string {
 func (*ListModesResp) ProtoMessage() {}
 
 func (x *ListModesResp) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[25]
+	mi := &file_aisolo_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2027,7 +2171,7 @@ func (x *ListModesResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListModesResp.ProtoReflect.Descriptor instead.
 func (*ListModesResp) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{25}
+	return file_aisolo_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *ListModesResp) GetModes() []*ModeInfo {
@@ -2051,7 +2195,7 @@ type SkillInfo struct {
 
 func (x *SkillInfo) Reset() {
 	*x = SkillInfo{}
-	mi := &file_aisolo_proto_msgTypes[26]
+	mi := &file_aisolo_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2063,7 +2207,7 @@ func (x *SkillInfo) String() string {
 func (*SkillInfo) ProtoMessage() {}
 
 func (x *SkillInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[26]
+	mi := &file_aisolo_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2076,7 +2220,7 @@ func (x *SkillInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SkillInfo.ProtoReflect.Descriptor instead.
 func (*SkillInfo) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{26}
+	return file_aisolo_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *SkillInfo) GetId() string {
@@ -2122,7 +2266,7 @@ type ListSkillsReq struct {
 
 func (x *ListSkillsReq) Reset() {
 	*x = ListSkillsReq{}
-	mi := &file_aisolo_proto_msgTypes[27]
+	mi := &file_aisolo_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2134,7 +2278,7 @@ func (x *ListSkillsReq) String() string {
 func (*ListSkillsReq) ProtoMessage() {}
 
 func (x *ListSkillsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[27]
+	mi := &file_aisolo_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2147,7 +2291,7 @@ func (x *ListSkillsReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSkillsReq.ProtoReflect.Descriptor instead.
 func (*ListSkillsReq) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{27}
+	return file_aisolo_proto_rawDescGZIP(), []int{29}
 }
 
 type ListSkillsResp struct {
@@ -2159,7 +2303,7 @@ type ListSkillsResp struct {
 
 func (x *ListSkillsResp) Reset() {
 	*x = ListSkillsResp{}
-	mi := &file_aisolo_proto_msgTypes[28]
+	mi := &file_aisolo_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2171,7 +2315,7 @@ func (x *ListSkillsResp) String() string {
 func (*ListSkillsResp) ProtoMessage() {}
 
 func (x *ListSkillsResp) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[28]
+	mi := &file_aisolo_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2184,7 +2328,7 @@ func (x *ListSkillsResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSkillsResp.ProtoReflect.Descriptor instead.
 func (*ListSkillsResp) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{28}
+	return file_aisolo_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ListSkillsResp) GetSkills() []*SkillInfo {
@@ -2202,7 +2346,7 @@ type HealthReq struct {
 
 func (x *HealthReq) Reset() {
 	*x = HealthReq{}
-	mi := &file_aisolo_proto_msgTypes[29]
+	mi := &file_aisolo_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2214,7 +2358,7 @@ func (x *HealthReq) String() string {
 func (*HealthReq) ProtoMessage() {}
 
 func (x *HealthReq) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[29]
+	mi := &file_aisolo_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2227,7 +2371,7 @@ func (x *HealthReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthReq.ProtoReflect.Descriptor instead.
 func (*HealthReq) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{29}
+	return file_aisolo_proto_rawDescGZIP(), []int{31}
 }
 
 type HealthResp struct {
@@ -2242,7 +2386,7 @@ type HealthResp struct {
 
 func (x *HealthResp) Reset() {
 	*x = HealthResp{}
-	mi := &file_aisolo_proto_msgTypes[30]
+	mi := &file_aisolo_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2254,7 +2398,7 @@ func (x *HealthResp) String() string {
 func (*HealthResp) ProtoMessage() {}
 
 func (x *HealthResp) ProtoReflect() protoreflect.Message {
-	mi := &file_aisolo_proto_msgTypes[30]
+	mi := &file_aisolo_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2267,7 +2411,7 @@ func (x *HealthResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthResp.ProtoReflect.Descriptor instead.
 func (*HealthResp) Descriptor() ([]byte, []int) {
-	return file_aisolo_proto_rawDescGZIP(), []int{30}
+	return file_aisolo_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *HealthResp) GetStatus() string {
@@ -2380,7 +2524,7 @@ const file_aisolo_proto_rawDesc = "" +
 	"\rhas_interrupt\x18\x04 \x01(\bR\fhasInterrupt\x12!\n" +
 	"\finterrupt_id\x18\x05 \x01(\tR\vinterruptId\"C\n" +
 	"\x10ResumeStreamResp\x12/\n" +
-	"\x05chunk\x18\x01 \x01(\v2\x19.aisolo.ResumeStreamChunkR\x05chunk\"\xf5\x02\n" +
+	"\x05chunk\x18\x01 \x01(\v2\x19.aisolo.ResumeStreamChunkR\x05chunk\"\xcb\x03\n" +
 	"\aSession\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x17\n" +
@@ -2396,13 +2540,25 @@ const file_aisolo_proto_rawDesc = "" +
 	"\rmessage_count\x18\t \x01(\x05R\fmessageCount\x12!\n" +
 	"\flast_message\x18\n" +
 	" \x01(\tR\vlastMessage\x12\x17\n" +
-	"\aui_lang\x18\v \x01(\tR\x06uiLangJ\x04\b\f\x10\r\"\x81\x01\n" +
+	"\aui_lang\x18\v \x01(\tR\x06uiLang\x12*\n" +
+	"\x11knowledge_base_id\x18\f \x01(\tR\x0fknowledgeBaseId\x12.\n" +
+	"\x13knowledge_base_name\x18\r \x01(\tR\x11knowledgeBaseName\"\xdd\x01\n" +
 	"\x10CreateSessionReq\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12%\n" +
 	"\x04mode\x18\x03 \x01(\x0e2\x11.aisolo.AgentModeR\x04mode\x12\x17\n" +
-	"\aui_lang\x18\x04 \x01(\tR\x06uiLang\">\n" +
+	"\aui_lang\x18\x04 \x01(\tR\x06uiLang\x12*\n" +
+	"\x11knowledge_base_id\x18\x05 \x01(\tR\x0fknowledgeBaseId\x12.\n" +
+	"\x13knowledge_base_name\x18\x06 \x01(\tR\x11knowledgeBaseName\">\n" +
 	"\x11CreateSessionResp\x12)\n" +
+	"\asession\x18\x01 \x01(\v2\x0f.aisolo.SessionR\asession\"\xaa\x01\n" +
+	"\x14BindKnowledgeBaseReq\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12*\n" +
+	"\x11knowledge_base_id\x18\x03 \x01(\tR\x0fknowledgeBaseId\x12.\n" +
+	"\x13knowledge_base_name\x18\x04 \x01(\tR\x11knowledgeBaseName\"B\n" +
+	"\x15BindKnowledgeBaseResp\x12)\n" +
 	"\asession\x18\x01 \x01(\v2\x0f.aisolo.SessionR\asession\"G\n" +
 	"\rGetSessionReq\x12\x1d\n" +
 	"\n" +
@@ -2504,9 +2660,10 @@ const file_aisolo_proto_rawDesc = "" +
 	"\fResumeAction\x12\x1d\n" +
 	"\x19RESUME_ACTION_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11RESUME_ACTION_YES\x10\x01\x12\x14\n" +
-	"\x10RESUME_ACTION_NO\x10\x022\xb7\x05\n" +
+	"\x10RESUME_ACTION_NO\x10\x022\x89\x06\n" +
 	"\x06AiSolo\x12D\n" +
-	"\rCreateSession\x12\x18.aisolo.CreateSessionReq\x1a\x19.aisolo.CreateSessionResp\x12;\n" +
+	"\rCreateSession\x12\x18.aisolo.CreateSessionReq\x1a\x19.aisolo.CreateSessionResp\x12P\n" +
+	"\x11BindKnowledgeBase\x12\x1c.aisolo.BindKnowledgeBaseReq\x1a\x1d.aisolo.BindKnowledgeBaseResp\x12;\n" +
 	"\n" +
 	"GetSession\x12\x15.aisolo.GetSessionReq\x1a\x16.aisolo.GetSessionResp\x12A\n" +
 	"\fListSessions\x12\x17.aisolo.ListSessionsReq\x1a\x18.aisolo.ListSessionsResp\x12D\n" +
@@ -2534,45 +2691,47 @@ func file_aisolo_proto_rawDescGZIP() []byte {
 }
 
 var file_aisolo_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_aisolo_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
+var file_aisolo_proto_msgTypes = make([]protoimpl.MessageInfo, 35)
 var file_aisolo_proto_goTypes = []any{
-	(AgentMode)(0),            // 0: aisolo.AgentMode
-	(InterruptKind)(0),        // 1: aisolo.InterruptKind
-	(SessionStatus)(0),        // 2: aisolo.SessionStatus
-	(ResumeAction)(0),         // 3: aisolo.ResumeAction
-	(*AskReq)(nil),            // 4: aisolo.AskReq
-	(*AskStreamChunk)(nil),    // 5: aisolo.AskStreamChunk
-	(*AskStreamResp)(nil),     // 6: aisolo.AskStreamResp
-	(*Option)(nil),            // 7: aisolo.Option
-	(*Field)(nil),             // 8: aisolo.Field
-	(*InterruptInfo)(nil),     // 9: aisolo.InterruptInfo
-	(*ResumeReq)(nil),         // 10: aisolo.ResumeReq
-	(*ResumeStreamChunk)(nil), // 11: aisolo.ResumeStreamChunk
-	(*ResumeStreamResp)(nil),  // 12: aisolo.ResumeStreamResp
-	(*Session)(nil),           // 13: aisolo.Session
-	(*CreateSessionReq)(nil),  // 14: aisolo.CreateSessionReq
-	(*CreateSessionResp)(nil), // 15: aisolo.CreateSessionResp
-	(*GetSessionReq)(nil),     // 16: aisolo.GetSessionReq
-	(*GetSessionResp)(nil),    // 17: aisolo.GetSessionResp
-	(*ListSessionsReq)(nil),   // 18: aisolo.ListSessionsReq
-	(*ListSessionsResp)(nil),  // 19: aisolo.ListSessionsResp
-	(*DeleteSessionReq)(nil),  // 20: aisolo.DeleteSessionReq
-	(*DeleteSessionResp)(nil), // 21: aisolo.DeleteSessionResp
-	(*GetInterruptReq)(nil),   // 22: aisolo.GetInterruptReq
-	(*GetInterruptResp)(nil),  // 23: aisolo.GetInterruptResp
-	(*Message)(nil),           // 24: aisolo.Message
-	(*ListMessagesReq)(nil),   // 25: aisolo.ListMessagesReq
-	(*ListMessagesResp)(nil),  // 26: aisolo.ListMessagesResp
-	(*ModeInfo)(nil),          // 27: aisolo.ModeInfo
-	(*ListModesReq)(nil),      // 28: aisolo.ListModesReq
-	(*ListModesResp)(nil),     // 29: aisolo.ListModesResp
-	(*SkillInfo)(nil),         // 30: aisolo.SkillInfo
-	(*ListSkillsReq)(nil),     // 31: aisolo.ListSkillsReq
-	(*ListSkillsResp)(nil),    // 32: aisolo.ListSkillsResp
-	(*HealthReq)(nil),         // 33: aisolo.HealthReq
-	(*HealthResp)(nil),        // 34: aisolo.HealthResp
-	nil,                       // 35: aisolo.ResumeReq.FormValuesEntry
-	nil,                       // 36: aisolo.HealthResp.DependenciesEntry
+	(AgentMode)(0),                // 0: aisolo.AgentMode
+	(InterruptKind)(0),            // 1: aisolo.InterruptKind
+	(SessionStatus)(0),            // 2: aisolo.SessionStatus
+	(ResumeAction)(0),             // 3: aisolo.ResumeAction
+	(*AskReq)(nil),                // 4: aisolo.AskReq
+	(*AskStreamChunk)(nil),        // 5: aisolo.AskStreamChunk
+	(*AskStreamResp)(nil),         // 6: aisolo.AskStreamResp
+	(*Option)(nil),                // 7: aisolo.Option
+	(*Field)(nil),                 // 8: aisolo.Field
+	(*InterruptInfo)(nil),         // 9: aisolo.InterruptInfo
+	(*ResumeReq)(nil),             // 10: aisolo.ResumeReq
+	(*ResumeStreamChunk)(nil),     // 11: aisolo.ResumeStreamChunk
+	(*ResumeStreamResp)(nil),      // 12: aisolo.ResumeStreamResp
+	(*Session)(nil),               // 13: aisolo.Session
+	(*CreateSessionReq)(nil),      // 14: aisolo.CreateSessionReq
+	(*CreateSessionResp)(nil),     // 15: aisolo.CreateSessionResp
+	(*BindKnowledgeBaseReq)(nil),  // 16: aisolo.BindKnowledgeBaseReq
+	(*BindKnowledgeBaseResp)(nil), // 17: aisolo.BindKnowledgeBaseResp
+	(*GetSessionReq)(nil),         // 18: aisolo.GetSessionReq
+	(*GetSessionResp)(nil),        // 19: aisolo.GetSessionResp
+	(*ListSessionsReq)(nil),       // 20: aisolo.ListSessionsReq
+	(*ListSessionsResp)(nil),      // 21: aisolo.ListSessionsResp
+	(*DeleteSessionReq)(nil),      // 22: aisolo.DeleteSessionReq
+	(*DeleteSessionResp)(nil),     // 23: aisolo.DeleteSessionResp
+	(*GetInterruptReq)(nil),       // 24: aisolo.GetInterruptReq
+	(*GetInterruptResp)(nil),      // 25: aisolo.GetInterruptResp
+	(*Message)(nil),               // 26: aisolo.Message
+	(*ListMessagesReq)(nil),       // 27: aisolo.ListMessagesReq
+	(*ListMessagesResp)(nil),      // 28: aisolo.ListMessagesResp
+	(*ModeInfo)(nil),              // 29: aisolo.ModeInfo
+	(*ListModesReq)(nil),          // 30: aisolo.ListModesReq
+	(*ListModesResp)(nil),         // 31: aisolo.ListModesResp
+	(*SkillInfo)(nil),             // 32: aisolo.SkillInfo
+	(*ListSkillsReq)(nil),         // 33: aisolo.ListSkillsReq
+	(*ListSkillsResp)(nil),        // 34: aisolo.ListSkillsResp
+	(*HealthReq)(nil),             // 35: aisolo.HealthReq
+	(*HealthResp)(nil),            // 36: aisolo.HealthResp
+	nil,                           // 37: aisolo.ResumeReq.FormValuesEntry
+	nil,                           // 38: aisolo.HealthResp.DependenciesEntry
 }
 var file_aisolo_proto_depIdxs = []int32{
 	0,  // 0: aisolo.AskReq.mode:type_name -> aisolo.AgentMode
@@ -2582,47 +2741,50 @@ var file_aisolo_proto_depIdxs = []int32{
 	7,  // 4: aisolo.InterruptInfo.options:type_name -> aisolo.Option
 	8,  // 5: aisolo.InterruptInfo.fields:type_name -> aisolo.Field
 	3,  // 6: aisolo.ResumeReq.action:type_name -> aisolo.ResumeAction
-	35, // 7: aisolo.ResumeReq.form_values:type_name -> aisolo.ResumeReq.FormValuesEntry
+	37, // 7: aisolo.ResumeReq.form_values:type_name -> aisolo.ResumeReq.FormValuesEntry
 	11, // 8: aisolo.ResumeStreamResp.chunk:type_name -> aisolo.ResumeStreamChunk
 	0,  // 9: aisolo.Session.mode:type_name -> aisolo.AgentMode
 	2,  // 10: aisolo.Session.status:type_name -> aisolo.SessionStatus
 	0,  // 11: aisolo.CreateSessionReq.mode:type_name -> aisolo.AgentMode
 	13, // 12: aisolo.CreateSessionResp.session:type_name -> aisolo.Session
-	13, // 13: aisolo.GetSessionResp.session:type_name -> aisolo.Session
-	13, // 14: aisolo.ListSessionsResp.sessions:type_name -> aisolo.Session
-	9,  // 15: aisolo.GetInterruptResp.info:type_name -> aisolo.InterruptInfo
-	24, // 16: aisolo.ListMessagesResp.messages:type_name -> aisolo.Message
-	0,  // 17: aisolo.ModeInfo.mode:type_name -> aisolo.AgentMode
-	27, // 18: aisolo.ListModesResp.modes:type_name -> aisolo.ModeInfo
-	30, // 19: aisolo.ListSkillsResp.skills:type_name -> aisolo.SkillInfo
-	36, // 20: aisolo.HealthResp.dependencies:type_name -> aisolo.HealthResp.DependenciesEntry
-	14, // 21: aisolo.AiSolo.CreateSession:input_type -> aisolo.CreateSessionReq
-	16, // 22: aisolo.AiSolo.GetSession:input_type -> aisolo.GetSessionReq
-	18, // 23: aisolo.AiSolo.ListSessions:input_type -> aisolo.ListSessionsReq
-	20, // 24: aisolo.AiSolo.DeleteSession:input_type -> aisolo.DeleteSessionReq
-	25, // 25: aisolo.AiSolo.ListMessages:input_type -> aisolo.ListMessagesReq
-	4,  // 26: aisolo.AiSolo.AskStream:input_type -> aisolo.AskReq
-	10, // 27: aisolo.AiSolo.ResumeStream:input_type -> aisolo.ResumeReq
-	28, // 28: aisolo.AiSolo.ListModes:input_type -> aisolo.ListModesReq
-	31, // 29: aisolo.AiSolo.ListSkills:input_type -> aisolo.ListSkillsReq
-	22, // 30: aisolo.AiSolo.GetInterrupt:input_type -> aisolo.GetInterruptReq
-	33, // 31: aisolo.AiSolo.Health:input_type -> aisolo.HealthReq
-	15, // 32: aisolo.AiSolo.CreateSession:output_type -> aisolo.CreateSessionResp
-	17, // 33: aisolo.AiSolo.GetSession:output_type -> aisolo.GetSessionResp
-	19, // 34: aisolo.AiSolo.ListSessions:output_type -> aisolo.ListSessionsResp
-	21, // 35: aisolo.AiSolo.DeleteSession:output_type -> aisolo.DeleteSessionResp
-	26, // 36: aisolo.AiSolo.ListMessages:output_type -> aisolo.ListMessagesResp
-	6,  // 37: aisolo.AiSolo.AskStream:output_type -> aisolo.AskStreamResp
-	12, // 38: aisolo.AiSolo.ResumeStream:output_type -> aisolo.ResumeStreamResp
-	29, // 39: aisolo.AiSolo.ListModes:output_type -> aisolo.ListModesResp
-	32, // 40: aisolo.AiSolo.ListSkills:output_type -> aisolo.ListSkillsResp
-	23, // 41: aisolo.AiSolo.GetInterrupt:output_type -> aisolo.GetInterruptResp
-	34, // 42: aisolo.AiSolo.Health:output_type -> aisolo.HealthResp
-	32, // [32:43] is the sub-list for method output_type
-	21, // [21:32] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	13, // 13: aisolo.BindKnowledgeBaseResp.session:type_name -> aisolo.Session
+	13, // 14: aisolo.GetSessionResp.session:type_name -> aisolo.Session
+	13, // 15: aisolo.ListSessionsResp.sessions:type_name -> aisolo.Session
+	9,  // 16: aisolo.GetInterruptResp.info:type_name -> aisolo.InterruptInfo
+	26, // 17: aisolo.ListMessagesResp.messages:type_name -> aisolo.Message
+	0,  // 18: aisolo.ModeInfo.mode:type_name -> aisolo.AgentMode
+	29, // 19: aisolo.ListModesResp.modes:type_name -> aisolo.ModeInfo
+	32, // 20: aisolo.ListSkillsResp.skills:type_name -> aisolo.SkillInfo
+	38, // 21: aisolo.HealthResp.dependencies:type_name -> aisolo.HealthResp.DependenciesEntry
+	14, // 22: aisolo.AiSolo.CreateSession:input_type -> aisolo.CreateSessionReq
+	16, // 23: aisolo.AiSolo.BindKnowledgeBase:input_type -> aisolo.BindKnowledgeBaseReq
+	18, // 24: aisolo.AiSolo.GetSession:input_type -> aisolo.GetSessionReq
+	20, // 25: aisolo.AiSolo.ListSessions:input_type -> aisolo.ListSessionsReq
+	22, // 26: aisolo.AiSolo.DeleteSession:input_type -> aisolo.DeleteSessionReq
+	27, // 27: aisolo.AiSolo.ListMessages:input_type -> aisolo.ListMessagesReq
+	4,  // 28: aisolo.AiSolo.AskStream:input_type -> aisolo.AskReq
+	10, // 29: aisolo.AiSolo.ResumeStream:input_type -> aisolo.ResumeReq
+	30, // 30: aisolo.AiSolo.ListModes:input_type -> aisolo.ListModesReq
+	33, // 31: aisolo.AiSolo.ListSkills:input_type -> aisolo.ListSkillsReq
+	24, // 32: aisolo.AiSolo.GetInterrupt:input_type -> aisolo.GetInterruptReq
+	35, // 33: aisolo.AiSolo.Health:input_type -> aisolo.HealthReq
+	15, // 34: aisolo.AiSolo.CreateSession:output_type -> aisolo.CreateSessionResp
+	17, // 35: aisolo.AiSolo.BindKnowledgeBase:output_type -> aisolo.BindKnowledgeBaseResp
+	19, // 36: aisolo.AiSolo.GetSession:output_type -> aisolo.GetSessionResp
+	21, // 37: aisolo.AiSolo.ListSessions:output_type -> aisolo.ListSessionsResp
+	23, // 38: aisolo.AiSolo.DeleteSession:output_type -> aisolo.DeleteSessionResp
+	28, // 39: aisolo.AiSolo.ListMessages:output_type -> aisolo.ListMessagesResp
+	6,  // 40: aisolo.AiSolo.AskStream:output_type -> aisolo.AskStreamResp
+	12, // 41: aisolo.AiSolo.ResumeStream:output_type -> aisolo.ResumeStreamResp
+	31, // 42: aisolo.AiSolo.ListModes:output_type -> aisolo.ListModesResp
+	34, // 43: aisolo.AiSolo.ListSkills:output_type -> aisolo.ListSkillsResp
+	25, // 44: aisolo.AiSolo.GetInterrupt:output_type -> aisolo.GetInterruptResp
+	36, // 45: aisolo.AiSolo.Health:output_type -> aisolo.HealthResp
+	34, // [34:46] is the sub-list for method output_type
+	22, // [22:34] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_aisolo_proto_init() }
@@ -2636,7 +2798,7 @@ func file_aisolo_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_aisolo_proto_rawDesc), len(file_aisolo_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   33,
+			NumMessages:   35,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

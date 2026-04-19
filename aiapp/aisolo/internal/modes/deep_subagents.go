@@ -17,7 +17,7 @@ import (
 // 与 supervisor 蓝图分工一致：人机交互保留在主 Deep（WithTools 含 human），
 // 子 Agent 收窄能力边界，便于模型在 task 描述中稳定选型。
 func buildDefaultDeepSubAgents(ctx context.Context, deps Dependencies) ([]adk.Agent, error) {
-	computeIO := tool.NewPolicy().AllowCapabilities(tool.CapCompute, tool.CapIO).Apply(deps.Kit)
+	computeIO := mergeTools(tool.NewPolicy().AllowCapabilities(tool.CapCompute, tool.CapIO).Apply(deps.Kit), deps.KnowledgeTools)
 
 	research, err := einoxagent.NewChatModelAgent(ctx, deps.ChatModel, appendSkillDirOpts(deps,
 		einoxagent.WithName("deep_research"),

@@ -26,8 +26,11 @@ type Session struct {
 	MessageCount int32
 	LastMessage  string
 	UILang       string // 会话默认 UI 语言 (zh/en), Ask ui_lang 或 CreateSession 写入; 中断未带 ui_lang 时补齐
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	// KnowledgeBaseID / KnowledgeBaseName 为当前会话绑定的知识库；Agent 可据此调用知识库检索工具。
+	KnowledgeBaseID   string
+	KnowledgeBaseName string
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
 	// RunOwner / RunLeaseUntil：分布式下标识「哪一实例持有 RUNNING」及租约到期时间；
 	// 进程内 memory 后端可不填，启动时 RecoverRunningSessions 仍全量清 RUNNING。
 	RunOwner      string

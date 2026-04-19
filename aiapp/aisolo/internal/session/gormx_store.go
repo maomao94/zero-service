@@ -186,19 +186,21 @@ func (s *GormxStore) Close() error { return nil }
 // --- DB models ---
 
 type sessionRow struct {
-	ID            string     `gorm:"column:id;type:varchar(64);primaryKey"`
-	UserID        string     `gorm:"column:user_id;type:varchar(64);index:idx_sess_user_upd,priority:1"`
-	Title         string     `gorm:"type:varchar(512)"`
-	Mode          int32      `gorm:"column:mode"`
-	Status        int32      `gorm:"column:status"`
-	InterruptID   string     `gorm:"column:interrupt_id;type:varchar(128)"`
-	MessageCount  int32      `gorm:"column:message_count"`
-	LastMessage   string     `gorm:"column:last_message;type:text"`
-	UILang        string     `gorm:"column:ui_lang;type:varchar(16)"`
-	RunOwner      string     `gorm:"column:run_owner;type:varchar(128)"`
-	RunLeaseUntil *time.Time `gorm:"column:run_lease_until"`
-	CreatedAt     time.Time  `gorm:"column:created_at"`
-	UpdatedAt     time.Time  `gorm:"column:updated_at;index:idx_sess_user_upd,priority:2"`
+	ID                string     `gorm:"column:id;type:varchar(64);primaryKey"`
+	UserID            string     `gorm:"column:user_id;type:varchar(64);index:idx_sess_user_upd,priority:1"`
+	Title             string     `gorm:"type:varchar(512)"`
+	Mode              int32      `gorm:"column:mode"`
+	Status            int32      `gorm:"column:status"`
+	InterruptID       string     `gorm:"column:interrupt_id;type:varchar(128)"`
+	MessageCount      int32      `gorm:"column:message_count"`
+	LastMessage       string     `gorm:"column:last_message;type:text"`
+	UILang            string     `gorm:"column:ui_lang;type:varchar(16)"`
+	KnowledgeBaseID   string     `gorm:"column:knowledge_base_id;type:varchar(128)"`
+	KnowledgeBaseName string     `gorm:"column:knowledge_base_name;type:varchar(512)"`
+	RunOwner          string     `gorm:"column:run_owner;type:varchar(128)"`
+	RunLeaseUntil     *time.Time `gorm:"column:run_lease_until"`
+	CreatedAt         time.Time  `gorm:"column:created_at"`
+	UpdatedAt         time.Time  `gorm:"column:updated_at;index:idx_sess_user_upd,priority:2"`
 }
 
 func (sessionRow) TableName() string { return "einox_aisolo_session" }

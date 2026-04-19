@@ -59,7 +59,7 @@ func ResolvedSessionBaseDir(path string) (string, error) {
 }
 
 func validateDeepFilesystemRoots(c *Config) error {
-	if c.Agent.Deep.DisableLocalFilesystem {
+	if !c.Agent.Deep.EnableLocalFilesystem {
 		return nil
 	}
 	if c.Agent.Deep.FilesystemSessionBaseDir != "" {

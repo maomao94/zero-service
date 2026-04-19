@@ -18,6 +18,16 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	server.AddRoutes(
 		[]rest.Route{
 			{
+				Method:  http.MethodGet,
+				Path:    "/health",
+				Handler: HealthHandler(serverCtx),
+			},
+		},
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
 				// 列出所有可用模型
 				Method:  http.MethodGet,
 				Path:    "/models",
@@ -77,58 +87,70 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	server.AddRoutes(
 		[]rest.Route{
 			{
+				// 网关元数据（知识库后端等，供静态页展示）
+				Method:  http.MethodGet,
+				Path:    "/meta",
+				Handler: solo.GatewayMetaHandler(serverCtx),
+			},
+			{
 				// 获取中断详情（页面刷新后回填 UI）
 				Method:  http.MethodGet,
 				Path:    "/interrupt/:interruptId",
 				Handler: solo.GetInterruptHandler(serverCtx),
 			},
 			{
+				// 创建知识库
+				Method:  http.MethodPost,
+				Path:    "/knowledge/bases",
+				Handler: solo.CreateKnowledgeBaseHandler(serverCtx),
+			},
+			{
+				// 列出知识库
+				Method:  http.MethodGet,
+				Path:    "/knowledge/bases",
+				Handler: solo.ListKnowledgeBasesHandler(serverCtx),
+			},
+			{
+				// 删除知识库
+				Method:  http.MethodDelete,
+				Path:    "/knowledge/bases/:baseId",
+				Handler: solo.DeleteKnowledgeBaseHandler(serverCtx),
+			},
+			{
+				// 列出知识库内文档
+				Method:  http.MethodGet,
+				Path:    "/knowledge/bases/:baseId/documents",
+				Handler: solo.ListKnowledgeDocumentsHandler(serverCtx),
+			},
+			{
+				// 删除知识库内某文档向量
+				Method:  http.MethodDelete,
+				Path:    "/knowledge/bases/:baseId/documents/:sourceId",
+				Handler: solo.DeleteKnowledgeDocumentHandler(serverCtx),
+			},
+			{
+				// 单文档入库（分块 + 向量化）
+				Method:  http.MethodPost,
+				Path:    "/knowledge/bases/:baseId/ingest",
+				Handler: solo.IngestKnowledgeDocumentHandler(serverCtx),
+			},
+			{
+				// 批量文档入库
+				Method:  http.MethodPost,
+				Path:    "/knowledge/bases/:baseId/ingest-batch",
+				Handler: solo.IngestKnowledgeDocumentsHandler(serverCtx),
+			},
+			{
+				// 向量检索（测试或 BFF）
+				Method:  http.MethodPost,
+				Path:    "/knowledge/bases/:baseId/query",
+				Handler: solo.QueryKnowledgeBaseHandler(serverCtx),
+			},
+			{
 				// 列出所有 Mode (用户挑 Mode, 不再挑 Agent)
 				Method:  http.MethodGet,
 				Path:    "/modes",
 				Handler: solo.ListModesHandler(serverCtx),
-			},
-			{
-				// 创建向量知识库集合
-				Method:  http.MethodPost,
-				Path:    "/rag/collections",
-				Handler: solo.CreateRagCollectionHandler(serverCtx),
-			},
-			{
-				// 列出向量知识库集合
-				Method:  http.MethodGet,
-				Path:    "/rag/collections",
-				Handler: solo.ListRagCollectionsHandler(serverCtx),
-			},
-			{
-				// 删除向量知识库集合
-				Method:  http.MethodDelete,
-				Path:    "/rag/collections/:collectionId",
-				Handler: solo.DeleteRagCollectionHandler(serverCtx),
-			},
-			{
-				// 写入文本到集合（分块 + 向量化）
-				Method:  http.MethodPost,
-				Path:    "/rag/collections/:collectionId/ingest",
-				Handler: solo.IngestRagDocumentHandler(serverCtx),
-			},
-			{
-				// 向量检索（测试或 BFF 调用）
-				Method:  http.MethodPost,
-				Path:    "/rag/collections/:collectionId/query",
-				Handler: solo.QueryRagCollectionHandler(serverCtx),
-			},
-			{
-				// 列出集合内文档
-				Method:  http.MethodGet,
-				Path:    "/rag/collections/:collectionId/sources",
-				Handler: solo.ListRagSourcesHandler(serverCtx),
-			},
-			{
-				// 删除集合内某文档向量
-				Method:  http.MethodDelete,
-				Path:    "/rag/collections/:collectionId/sources/:sourceId",
-				Handler: solo.DeleteRagSourceHandler(serverCtx),
 			},
 			{
 				// 列出会话
@@ -153,6 +175,12 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Method:  http.MethodDelete,
 				Path:    "/sessions/:sessionId",
 				Handler: solo.DeleteSessionHandler(serverCtx),
+			},
+			{
+				// 绑定会话知识库（供 Agent search_knowledge_base 工具使用）
+				Method:  http.MethodPost,
+				Path:    "/sessions/:sessionId/knowledge",
+				Handler: solo.BindSessionKnowledgeHandler(serverCtx),
 			},
 			{
 				// 获取会话历史消息（一次性，供前端初次进入会话时加载）

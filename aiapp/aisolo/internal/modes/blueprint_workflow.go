@@ -58,9 +58,9 @@ func (b *workflowBlueprint) Build(ctx context.Context, deps Dependencies) (*eino
 	}
 
 	computeTools := tool.NewPolicy().AllowCapabilities(tool.CapCompute).Apply(deps.Kit)
-	allTools := tool.NewPolicy().
+	allTools := mergeTools(tool.NewPolicy().
 		AllowCapabilities(tool.CapCompute, tool.CapIO, tool.CapHuman).
-		Apply(deps.Kit)
+		Apply(deps.Kit), deps.KnowledgeTools)
 
 	planner, err := einoxagent.NewChatModelAgent(ctx, deps.ChatModel, appendSkillDirOpts(deps,
 		einoxagent.WithName("workflow-planner"),

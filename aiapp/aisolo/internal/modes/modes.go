@@ -16,6 +16,7 @@ import (
 
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/components/model"
+	ctool "github.com/cloudwego/eino/components/tool"
 
 	"zero-service/aiapp/aisolo/aisolo"
 	einoxagent "zero-service/common/einox/agent"
@@ -36,6 +37,21 @@ type Dependencies struct {
 	DeepFSConfig fsrestrict.Config
 	// PlanMaxIterations PlanExecute 模式最大迭代（默认 10）。
 	PlanMaxIterations int
+	// DemoSurveyEcho 为 true 时在默认 Agent 模式挂载联调 Survey→Echo 子 Agent。
+	DemoSurveyEcho bool
+	// KnowledgeTools 会话级知识库检索等（由 svc 在 Knowledge 启用时注入）；可为 nil。
+	KnowledgeTools []ctool.BaseTool
+}
+
+// mergeTools 将 Kit 策略产出的工具与额外工具（如知识库检索）合并。
+func mergeTools(base []ctool.BaseTool, extra []ctool.BaseTool) []ctool.BaseTool {
+	if len(extra) == 0 {
+		return base
+	}
+	out := make([]ctool.BaseTool, 0, len(base)+len(extra))
+	out = append(out, base...)
+	out = append(out, extra...)
+	return out
 }
 
 // Blueprint 描述一个 Mode 的构造方式。

@@ -28,6 +28,8 @@ type Metrics struct {
 	interruptTotal  *prometheus.CounterVec   // kind, tool
 	resumeTotal     *prometheus.CounterVec   // kind, status, mode, action (yes|no|unspecified)
 	checkpointTotal *prometheus.CounterVec   // op, status
+
+	knowledgeDuration *prometheus.HistogramVec // op, status, backend
 }
 
 // Option Metrics 构造选项。
@@ -100,9 +102,17 @@ func NewMetrics() *Metrics {
 			Name:      "total",
 			Help:      "Total number of checkpoint operations.",
 		}, []string{"op", "status"}),
+
+		knowledgeDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: "knowledge",
+			Name:      "operation_duration_seconds",
+			Help:      "Knowledge ingest/search latency by backend (memory|gorm|redis|milvus).",
+			Buckets:   prometheus.DefBuckets,
+		}, []string{"op", "status", "backend"}),
 	}
 
-	register(m.turnDuration, m.agentDuration, m.toolCallLatency)
+	register(m.turnDuration, m.agentDuration, m.toolCallLatency, m.knowledgeDuration)
 	registerCounters(m.toolCallCounter, m.interruptTotal, m.resumeTotal, m.checkpointTotal)
 	return m
 }
@@ -191,6 +201,23 @@ func (m *Metrics) RecordCheckPoint(ctx context.Context, op, status string) {
 	m.checkpointTotal.WithLabelValues(op, status).Inc()
 	if status == "error" {
 		logx.WithContext(ctx).Errorf("[einox.metrics] checkpoint op=%s error", op)
+	}
+}
+
+// RecordKnowledge 记录知识库 ingest/search 耗时（backend 为 knowledge.EffectiveBackend()）。
+func (m *Metrics) RecordKnowledge(ctx context.Context, op, status, backend string, d time.Duration) {
+	b := promLabelKindOrTool(backend)
+	if b == "" {
+		b = "unknown"
+	}
+	o := promLabelKindOrTool(op)
+	st := promLabelKindOrTool(status)
+	if st == "" {
+		st = "unknown"
+	}
+	m.knowledgeDuration.WithLabelValues(o, st, b).Observe(d.Seconds())
+	if st == "error" {
+		logx.WithContext(ctx).Debugf("[einox.metrics] knowledge op=%s backend=%s dur=%s", o, b, d)
 	}
 }
 

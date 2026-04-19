@@ -1,0 +1,103 @@
+syntax = "v1"
+
+// 知识库向量 REST（与 common/einox/knowledge 对齐；用户隔离来自 JWT）
+type KnowledgeCreateBaseRequest {
+	Name string `json:"name"`
+}
+
+type KnowledgeCreateBaseResponse {
+	Id string `json:"id"`
+}
+
+type KnowledgeBaseInfo {
+	Id        string `json:"id"`
+	Name      string `json:"name"`
+	CreatedAt int64  `json:"createdAt"`
+}
+
+type KnowledgeListBasesResponse {
+	Bases []KnowledgeBaseInfo `json:"bases"`
+}
+
+type KnowledgeDeleteBaseRequest {
+	BaseId string `path:"baseId"`
+}
+
+type KnowledgeDeleteBaseResponse {
+	Success bool `json:"success"`
+}
+
+type KnowledgeIngestRequest {
+	BaseId   string `path:"baseId"`
+	Filename string `json:"filename,optional"`
+	Content  string `json:"content"`
+}
+
+type KnowledgeIngestResponse {
+	SourceId string `json:"sourceId"`
+	Chunks   int    `json:"chunks"`
+}
+
+type KnowledgeIngestItem {
+	Filename string `json:"filename,optional"`
+	Content  string `json:"content"`
+}
+
+type KnowledgeIngestBatchRequest {
+	BaseId string                `path:"baseId"`
+	Items  []KnowledgeIngestItem `json:"items"`
+}
+
+type KnowledgeIngestBatchResultItem {
+	Filename string `json:"filename"`
+	SourceId string `json:"sourceId"`
+	Chunks   int    `json:"chunks"`
+	Error    string `json:"error,optional"`
+}
+
+type KnowledgeIngestBatchResponse {
+	Results []KnowledgeIngestBatchResultItem `json:"results"`
+}
+
+type KnowledgeListDocumentsRequest {
+	BaseId string `path:"baseId"`
+}
+
+type KnowledgeDocumentInfo {
+	Id        string `json:"id"`
+	Filename  string `json:"filename"`
+	Chunks    int    `json:"chunks"`
+	CreatedAt int64  `json:"createdAt"`
+}
+
+type KnowledgeListDocumentsResponse {
+	Documents []KnowledgeDocumentInfo `json:"documents"`
+}
+
+type KnowledgeDeleteDocumentRequest {
+	BaseId   string `path:"baseId"`
+	SourceId string `path:"sourceId"`
+}
+
+type KnowledgeDeleteDocumentResponse {
+	Success bool `json:"success"`
+}
+
+type KnowledgeQueryRequest {
+	BaseId string `path:"baseId"`
+	Query  string `json:"query"`
+	TopK   int    `json:"topK,optional"`
+}
+
+type KnowledgeCitationInfo {
+	Text     string  `json:"text"`
+	Score    float64 `json:"score"`
+	SourceId string  `json:"sourceId,optional"`
+	Filename string  `json:"filename,optional"`
+}
+
+type KnowledgeQueryResponse {
+	Hits    []KnowledgeCitationInfo `json:"hits"`
+	Context string                  `json:"context"`
+}
+

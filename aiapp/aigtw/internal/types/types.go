@@ -89,6 +89,106 @@ type ChunkChoice struct {
 	FinishReason *string   `json:"finish_reason,optional"` // 结束原因: stop / length / content_filter / tool_calls
 }
 
+type KnowledgeBaseInfo struct {
+	Id        string `json:"id"`
+	Name      string `json:"name"`
+	CreatedAt int64  `json:"createdAt"`
+}
+
+type KnowledgeCitationInfo struct {
+	Text     string  `json:"text"`
+	Score    float64 `json:"score"`
+	SourceId string  `json:"sourceId,optional"`
+	Filename string  `json:"filename,optional"`
+}
+
+type KnowledgeCreateBaseRequest struct {
+	Name string `json:"name"`
+}
+
+type KnowledgeCreateBaseResponse struct {
+	Id string `json:"id"`
+}
+
+type KnowledgeDeleteBaseRequest struct {
+	BaseId string `path:"baseId"`
+}
+
+type KnowledgeDeleteBaseResponse struct {
+	Success bool `json:"success"`
+}
+
+type KnowledgeDeleteDocumentRequest struct {
+	BaseId   string `path:"baseId"`
+	SourceId string `path:"sourceId"`
+}
+
+type KnowledgeDeleteDocumentResponse struct {
+	Success bool `json:"success"`
+}
+
+type KnowledgeDocumentInfo struct {
+	Id        string `json:"id"`
+	Filename  string `json:"filename"`
+	Chunks    int    `json:"chunks"`
+	CreatedAt int64  `json:"createdAt"`
+}
+
+type KnowledgeIngestBatchRequest struct {
+	BaseId string                `path:"baseId"`
+	Items  []KnowledgeIngestItem `json:"items"`
+}
+
+type KnowledgeIngestBatchResponse struct {
+	Results []KnowledgeIngestBatchResultItem `json:"results"`
+}
+
+type KnowledgeIngestBatchResultItem struct {
+	Filename string `json:"filename"`
+	SourceId string `json:"sourceId"`
+	Chunks   int    `json:"chunks"`
+	Error    string `json:"error,optional"`
+}
+
+type KnowledgeIngestItem struct {
+	Filename string `json:"filename,optional"`
+	Content  string `json:"content"`
+}
+
+type KnowledgeIngestRequest struct {
+	BaseId   string `path:"baseId"`
+	Filename string `json:"filename,optional"`
+	Content  string `json:"content"`
+}
+
+type KnowledgeIngestResponse struct {
+	SourceId string `json:"sourceId"`
+	Chunks   int    `json:"chunks"`
+}
+
+type KnowledgeListBasesResponse struct {
+	Bases []KnowledgeBaseInfo `json:"bases"`
+}
+
+type KnowledgeListDocumentsRequest struct {
+	BaseId string `path:"baseId"`
+}
+
+type KnowledgeListDocumentsResponse struct {
+	Documents []KnowledgeDocumentInfo `json:"documents"`
+}
+
+type KnowledgeQueryRequest struct {
+	BaseId string `path:"baseId"`
+	Query  string `json:"query"`
+	TopK   int    `json:"topK,optional"`
+}
+
+type KnowledgeQueryResponse struct {
+	Hits    []KnowledgeCitationInfo `json:"hits"`
+	Context string                  `json:"context"`
+}
+
 type ListAsyncResultsRequest struct {
 	Status    string `form:"status,optional"`     // 过滤状态
 	StartTime int64  `form:"start_time,optional"` // 开始时间戳（毫秒）
@@ -133,83 +233,14 @@ type ProgressMessage struct {
 	Time     int64   `json:"time"`     // 时间戳，Unix 秒
 }
 
-type RagCollectionInfo struct {
-	Id        string `json:"id"`
-	Name      string `json:"name"`
-	CreatedAt int64  `json:"createdAt"`
+type SoloBindKnowledgeRequest struct {
+	SessionId         string `path:"sessionId"`
+	KnowledgeBaseId   string `json:"knowledgeBaseId"`
+	KnowledgeBaseName string `json:"knowledgeBaseName,optional"`
 }
 
-type RagCreateCollectionRequest struct {
-	Name string `json:"name"`
-}
-
-type RagCreateCollectionResponse struct {
-	Id string `json:"id"`
-}
-
-type RagDeleteCollectionRequest struct {
-	CollectionId string `path:"collectionId"`
-}
-
-type RagDeleteCollectionResponse struct {
-	Success bool `json:"success"`
-}
-
-type RagDeleteSourceRequest struct {
-	CollectionId string `path:"collectionId"`
-	SourceId     string `path:"sourceId"`
-}
-
-type RagDeleteSourceResponse struct {
-	Success bool `json:"success"`
-}
-
-type RagHitInfo struct {
-	Text     string  `json:"text"`
-	Score    float64 `json:"score"`
-	SourceId string  `json:"sourceId,optional"`
-	Filename string  `json:"filename,optional"`
-}
-
-type RagIngestRequest struct {
-	CollectionId string `path:"collectionId"`
-	Filename     string `json:"filename,optional"`
-	Content      string `json:"content"`
-}
-
-type RagIngestResponse struct {
-	SourceId string `json:"sourceId"`
-	Chunks   int    `json:"chunks"`
-}
-
-type RagListCollectionsResponse struct {
-	Collections []RagCollectionInfo `json:"collections"`
-}
-
-type RagListSourcesRequest struct {
-	CollectionId string `path:"collectionId"`
-}
-
-type RagListSourcesResponse struct {
-	Sources []RagSourceInfo `json:"sources"`
-}
-
-type RagQueryRequest struct {
-	CollectionId string `path:"collectionId"`
-	Query        string `json:"query"`
-	TopK         int    `json:"topK,optional"`
-}
-
-type RagQueryResponse struct {
-	Hits    []RagHitInfo `json:"hits"`
-	Context string       `json:"context"`
-}
-
-type RagSourceInfo struct {
-	Id        string `json:"id"`
-	Filename  string `json:"filename"`
-	Chunks    int    `json:"chunks"`
-	CreatedAt int64  `json:"createdAt"`
+type SoloBindKnowledgeResponse struct {
+	Session *SoloSessionInfo `json:"session"`
 }
 
 type SoloChatRequest struct {
@@ -223,9 +254,11 @@ type SoloChatResponse struct {
 }
 
 type SoloCreateSessionRequest struct {
-	Title  string `json:"title,optional"`
-	Mode   string `json:"mode,optional"`   // 可选; 留空走默认 agent; Workflow 见 SoloChatRequest.Mode
-	UiLang string `json:"uiLang,optional"` // 可选 zh|en, 写入会话默认 UI 语言 (首轮 Ask 前即生效)
+	Title             string `json:"title,optional"`
+	Mode              string `json:"mode,optional"`   // 可选; 留空走默认 agent; Workflow 见 SoloChatRequest.Mode
+	UiLang            string `json:"uiLang,optional"` // 可选 zh|en, 写入会话默认 UI 语言 (首轮 Ask 前即生效)
+	KnowledgeBaseId   string `json:"knowledgeBaseId,optional"`
+	KnowledgeBaseName string `json:"knowledgeBaseName,optional"`
 }
 
 type SoloCreateSessionResponse struct {
@@ -358,17 +391,19 @@ type SoloOption struct {
 }
 
 type SoloSessionInfo struct {
-	SessionId    string `json:"sessionId"`
-	UserId       string `json:"userId"`
-	Mode         string `json:"mode"`   // 与 SoloChatRequest.Mode 同套字符串
-	Status       string `json:"status"` // idle | running | interrupted
-	InterruptId  string `json:"interruptId,optional"`
-	Title        string `json:"title"`
-	CreatedAt    int64  `json:"createdAt"`
-	UpdatedAt    int64  `json:"updatedAt"`
-	MessageCount int    `json:"messageCount"`
-	LastMessage  string `json:"lastMessage"`
-	UiLang       string `json:"uiLang,optional"` // 会话默认 UI 语言 (由网关透传 gRPC)
+	SessionId         string `json:"sessionId"`
+	UserId            string `json:"userId"`
+	Mode              string `json:"mode"`   // 与 SoloChatRequest.Mode 同套字符串
+	Status            string `json:"status"` // idle | running | interrupted
+	InterruptId       string `json:"interruptId,optional"`
+	Title             string `json:"title"`
+	CreatedAt         int64  `json:"createdAt"`
+	UpdatedAt         int64  `json:"updatedAt"`
+	MessageCount      int    `json:"messageCount"`
+	LastMessage       string `json:"lastMessage"`
+	UiLang            string `json:"uiLang,optional"` // 会话默认 UI 语言 (由网关透传 gRPC)
+	KnowledgeBaseId   string `json:"knowledgeBaseId,optional"`
+	KnowledgeBaseName string `json:"knowledgeBaseName,optional"`
 }
 
 type SoloSkillInfo struct {

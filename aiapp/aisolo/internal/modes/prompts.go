@@ -15,6 +15,9 @@ const (
 技能（Skills）：
   - 系统会通过中间件向你展示可选技能的名称与描述（来自磁盘 SKILL.md，渐进披露）；
   - 是否启用某技能仅由你根据用户意图判断，并按框架约定发起 launch，不依赖网关 meta 或隐式字段。
+
+知识库：
+  - 若可用工具中出现 search_knowledge_base，表示当前会话已绑定向量知识库；用户询问上传文档、内部资料时优先调用该工具检索，再结合检索结果作答。
 `
 
 	// workflowPrompt Sequential Workflow 主协调 Agent 的系统提示词。
@@ -33,7 +36,8 @@ const (
 请保证：
   - 直接说结论；
   - 避免复述每个子 Agent 的流水账；
-  - 对有歧义的地方主动追问用户。
+  - 对有歧义的地方主动追问用户；
+  - 若需核对用户上传的文档，可调用 search_knowledge_base（会话已绑定时可用）。
 `
 
 	// supervisorPrompt Supervisor Agent 的系统提示词。

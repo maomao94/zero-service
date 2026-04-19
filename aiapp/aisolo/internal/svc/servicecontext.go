@@ -2,8 +2,10 @@ package svc
 
 import (
 	"context"
+	"strings"
 
 	"github.com/cloudwego/eino/components/model"
+	ctool "github.com/cloudwego/eino/components/tool"
 	"github.com/zeromicro/go-zero/core/logx"
 
 	"zero-service/aiapp/aisolo/internal/config"
@@ -12,6 +14,7 @@ import (
 	"zero-service/aiapp/aisolo/internal/turn"
 	"zero-service/common/einox/checkpoint"
 	"zero-service/common/einox/fsrestrict"
+	einoxkb "zero-service/common/einox/knowledge"
 	"zero-service/common/einox/memory"
 	"zero-service/common/einox/metrics"
 	exinoModel "zero-service/common/einox/model"
@@ -47,6 +50,9 @@ type ServiceContext struct {
 	Pool            *modes.Pool
 	Executor        *turn.Executor
 	Metrics         *metrics.Metrics
+	Knowledge       *einoxkb.Service
+	// KnowledgeInitErr 非空表示 Knowledge 启用但初始化失败，供 Health RPC 摘要。
+	KnowledgeInitErr string
 }
 
 // NewServiceContext 构造并初始化。
@@ -61,6 +67,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	s.initSessions()
 	s.initCheckPoint()
 	s.initChatModel(ctx)
+	s.initKnowledge(ctx)
 	s.initKit()
 	s.initModes(ctx)
 	s.initExecutor()
@@ -183,6 +190,20 @@ func (s *ServiceContext) initChatModel(ctx context.Context) {
 	logx.Infof("[svc] chat model ready: %s/%s", s.Config.Model.Provider, s.Config.Model.Model)
 }
 
+func (s *ServiceContext) initKnowledge(ctx context.Context) {
+	kb, err := einoxkb.NewService(s.Config.Knowledge, s.Config.Model.APIKey)
+	if err != nil {
+		logx.Errorf("[svc] knowledge: %v", err)
+		s.KnowledgeInitErr = truncateInitErr(err.Error())
+		return
+	}
+	s.Knowledge = kb
+	if kb != nil {
+		logx.Infof("[svc] knowledge ready backend=%s", s.Config.Knowledge.EffectiveBackend())
+	}
+	_ = ctx
+}
+
 func (s *ServiceContext) initKit() {
 	s.Kit = builtin.NewDefaultKit()
 	logx.Infof("[svc] tool kit loaded: %d tools", len(s.Kit.All()))
@@ -227,6 +248,15 @@ func (s *ServiceContext) initModes(ctx context.Context) {
 			}
 		}
 	}
+	var kbTools []ctool.BaseTool
+	if s.Knowledge != nil {
+		if kt, err := einoxkb.NewSearchTool(s.Knowledge); err != nil {
+			logx.Errorf("[svc] knowledge search tool: %v", err)
+		} else if kt != nil {
+			kbTools = []ctool.BaseTool{kt}
+		}
+	}
+
 	s.Pool = modes.NewPool(s.Registry, modes.Dependencies{
 		ChatModel:                 s.ChatModel,
 		Kit:                       s.Kit,
@@ -235,6 +265,8 @@ func (s *ServiceContext) initModes(ctx context.Context) {
 		DeepEnableLocalFilesystem: s.Config.Agent.DeepLocalFilesystemEnabled(),
 		DeepFSConfig:              deepFS,
 		PlanMaxIterations:         s.Config.Agent.EffectivePlanMaxIterations(),
+		DemoSurveyEcho:            s.Config.Agent.DemoSurveyEcho,
+		KnowledgeTools:            kbTools,
 	})
 	_ = ctx
 	logx.Infof("[svc] mode registry + pool ready: %d modes", len(s.Registry.List()))
@@ -274,5 +306,16 @@ func (s *ServiceContext) Close() error {
 	if s.CheckPointStore != nil {
 		_ = s.CheckPointStore.Close()
 	}
+	if s.Knowledge != nil {
+		_ = s.Knowledge.Close()
+	}
 	return nil
+}
+
+func truncateInitErr(s string) string {
+	const max = 512
+	if len(s) <= max {
+		return s
+	}
+	return strings.TrimSpace(s[:max])
 }

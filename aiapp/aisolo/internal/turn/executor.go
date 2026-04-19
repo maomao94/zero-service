@@ -34,6 +34,7 @@ import (
 	"zero-service/aiapp/aisolo/internal/uilang"
 	"zero-service/aiapp/aisolo/modeweb"
 	"zero-service/common/einox/fsrestrict"
+	einoxkb "zero-service/common/einox/knowledge"
 	"zero-service/common/einox/memory"
 	"zero-service/common/einox/metrics"
 	mw "zero-service/common/einox/middleware"
@@ -177,6 +178,7 @@ func (e *Executor) Ask(ctx context.Context, em *protocol.Emitter, in AskInput) e
 		}
 	}
 	ctx = fsrestrict.WithSessionID(ctx, in.SessionID)
+	ctx = einoxkb.WithAgentTurn(ctx, in.UserID, sess.KnowledgeBaseID)
 
 	_ = em.TurnStart(protocol.TurnStartData{UserMessage: userContent})
 
@@ -280,6 +282,7 @@ func (e *Executor) Resume(ctx context.Context, em *protocol.Emitter, in ResumeIn
 		}
 	}
 	ctx = fsrestrict.WithSessionID(ctx, in.SessionID)
+	ctx = einoxkb.WithAgentTurn(ctx, in.UserID, sess.KnowledgeBaseID)
 
 	sess.Status = aisolo.SessionStatus_SESSION_STATUS_RUNNING
 	sess.UpdatedAt = time.Now()

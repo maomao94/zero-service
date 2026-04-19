@@ -39,17 +39,19 @@ func sessionToType(s *aisolo.Session) *types.SoloSessionInfo {
 		return nil
 	}
 	return &types.SoloSessionInfo{
-		SessionId:    s.GetSessionId(),
-		UserId:       s.GetUserId(),
-		Mode:         modeweb.ToSoloString(s.GetMode()),
-		Status:       sessionStatusToString(s.GetStatus()),
-		InterruptId:  s.GetInterruptId(),
-		Title:        s.GetTitle(),
-		CreatedAt:    s.GetCreatedAt(),
-		UpdatedAt:    s.GetUpdatedAt(),
-		MessageCount: int(s.GetMessageCount()),
-		LastMessage:  s.GetLastMessage(),
-		UiLang:       s.GetUiLang(),
+		SessionId:         s.GetSessionId(),
+		UserId:            s.GetUserId(),
+		Mode:              modeweb.ToSoloString(s.GetMode()),
+		Status:            sessionStatusToString(s.GetStatus()),
+		InterruptId:       s.GetInterruptId(),
+		Title:             s.GetTitle(),
+		CreatedAt:         s.GetCreatedAt(),
+		UpdatedAt:         s.GetUpdatedAt(),
+		MessageCount:      int(s.GetMessageCount()),
+		LastMessage:       s.GetLastMessage(),
+		UiLang:            s.GetUiLang(),
+		KnowledgeBaseId:   s.GetKnowledgeBaseId(),
+		KnowledgeBaseName: s.GetKnowledgeBaseName(),
 	}
 }
 

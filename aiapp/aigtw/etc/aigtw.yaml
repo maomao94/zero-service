@@ -27,11 +27,19 @@ AiSoloRpcConf:
   NonBlock: true
   Timeout: 300000
 
-# einox/rag 向量库（仅 aigtw HTTP /solo/v1/rag/*；JWT 用户隔离，与 aisolo 无共享配置要求）
-Rag:
+# einox/knowledge（/solo/v1/knowledge/*；JWT 用户隔离）
+# Backend: memory | gorm | redis | milvus（sqlite 等价于 gorm+本地 sqlite 文件）
+# 与 aisolo 共用索引：gorm+同 DataDir/同 DSN，或 redis/milvus 同实例
+Knowledge:
   Enabled: false
-  Backend: sqlite
-  DataDir: "./data/rag"
+  Backend: memory
+  DataDir: "./data/knowledge"
+  # DSN: "user:pass@tcp(127.0.0.1:3306)/db?charset=utf8mb4&parseTime=true"  # backend=gorm 时
+  # Redis:
+  #   addr: "127.0.0.1:6379"
+  # Milvus:
+  #   addr: "127.0.0.1:19530"
+  #   vectorDim: 1024
   Embedding:
     Provider: ark
     api_key: ""

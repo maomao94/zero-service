@@ -36,6 +36,19 @@ func (l *HealthLogic) Health(_ *aisolo.HealthReq) (*aisolo.HealthResp, error) {
 	} else {
 		deps["executor"] = "missing"
 	}
+	if l.svcCtx.Config.Knowledge.Enabled {
+		deps["knowledge_backend"] = l.svcCtx.Config.Knowledge.EffectiveBackend()
+	}
+	if l.svcCtx.Knowledge != nil {
+		deps["knowledge"] = "ok"
+	} else if l.svcCtx.Config.Knowledge.Enabled {
+		deps["knowledge"] = "misconfigured"
+		if l.svcCtx.KnowledgeInitErr != "" {
+			deps["knowledge_error"] = l.svcCtx.KnowledgeInitErr
+		}
+	} else {
+		deps["knowledge"] = "disabled"
+	}
 	return &aisolo.HealthResp{
 		Status:       "ok",
 		Version:      "refactor",

@@ -7,7 +7,7 @@ import (
 	"github.com/zeromicro/go-zero/rest"
 	"github.com/zeromicro/go-zero/zrpc"
 
-	einoxrag "zero-service/common/einox/rag"
+	einoxkb "zero-service/common/einox/knowledge"
 )
 
 type AbilityConfig struct {
@@ -28,6 +28,6 @@ type Config struct {
 	AiChatRpcConf zrpc.RpcClientConf
 	AiSoloRpcConf zrpc.RpcClientConf
 	Abilities     []AbilityConfig `json:",optional"`
-	// Rag 向量库（与 aisolo 共用 sqlite 路径时需配置相同 dataDir）。
-	Rag einoxrag.Config `json:"rag,optional"`
+	// Knowledge 向量知识库（与 aisolo 共用 dataDir 时需配置一致）。
+	Knowledge einoxkb.Config `json:"knowledge,optional"`
 }

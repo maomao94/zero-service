@@ -4,11 +4,20 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // EffectiveSkillsDir 根据 Skills 配置解析 skill 根目录的绝对路径。
+// 若设置环境变量 EINO_EXT_SKILLS_DIR（与 eino-examples chatwitheino 一致）且为有效目录，优先使用。
 // 未启用、未配置目录或路径不存在时返回空字符串（不视为错误）。
 func EffectiveSkillsDir(sk SkillsConfig) string {
+	if env := strings.TrimSpace(os.Getenv("EINO_EXT_SKILLS_DIR")); env != "" {
+		if abs, err := filepath.Abs(env); err == nil {
+			if fi, err := os.Stat(abs); err == nil && fi.IsDir() {
+				return abs
+			}
+		}
+	}
 	if !sk.Enabled || sk.Dir == "" {
 		return ""
 	}

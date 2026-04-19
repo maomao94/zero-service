@@ -1,5 +1,6 @@
 import { html, useCallback, useEffect, useReducer, useRef, useState } from "../lib/deps.js";
 import { api, getToken, setToken, streamEndpoints } from "../api/client.js";
+import { readPreferredKnowledgeBaseId } from "../lib/soloPrefs.js";
 import { useSSE } from "../hooks/useSSE.js";
 import { useToasts } from "../hooks/useToast.js";
 import { SessionList } from "./SessionList.js";
@@ -340,7 +341,10 @@ export function App() {
   // --------------- 新建 / 删除 ---------------
   const newSession = useCallback(async () => {
     try {
-      const r = await api.createSession({ title: "新会话", mode, uiLang });
+      const kb = readPreferredKnowledgeBaseId();
+      const body = { title: "新会话", mode, uiLang };
+      if (kb) body.knowledgeBaseId = kb;
+      const r = await api.createSession(body);
       const s = r.session;
       setSessions((list) => {
         const next = [s, ...list];
@@ -510,6 +514,7 @@ export function App() {
           onStop=${sse.stop}
           interrupt=${interrupt}
           onResume=${resume}
+          onRefreshSession=${refreshCurrent}
         />
       </main>
 

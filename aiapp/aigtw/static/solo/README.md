@@ -27,7 +27,7 @@ static/solo/
         ├── ChatView.js
         ├── SkillChips.js   # 仅预填输入框；技能 launch 由模型 + skill 中间件
         ├── CalcPanel.js    # 本地算术预览 + 插入提示
-        ├── RagPanel.js     # 网关 einox/rag 数据面（集合 / 入库 / 试检索）
+        ├── RagPanel.js     # 网关 einox/knowledge（知识库 / 入库 / 批量 / 试检索）
         └── interrupt/
             ├── Approval.js       # approval
             ├── SingleSelect.js   # single_select

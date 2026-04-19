@@ -46,53 +46,67 @@ function timeChip(ts) {
   return html`<span class="msg-time" title="消息时间">${t}</span>`;
 }
 
+function ToolCallBlock({ m }) {
+  const isKnowledgeTool = m.tool === "search_knowledge_base";
+  const hasResult = m.result != null && String(m.result).length > 0;
+  const cls = [
+    "tool-call",
+    m.error ? "error" : hasResult ? "" : "pending",
+    isKnowledgeTool ? "knowledge" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  let argsDisplay = m.args ? formatToolPayload(m.args) : "";
+  let resultDisplay = hasResult ? formatToolPayload(m.result) : "";
+  if (m.tool === "echo" && m.args) {
+    try {
+      const o = JSON.parse(m.args);
+      if (o && typeof o.text === "string") argsDisplay = o.text;
+    } catch (_) { /* keep formatted */ }
+  }
+  if (m.tool === "echo" && hasResult) {
+    resultDisplay = String(m.result);
+  }
+  const done = hasResult || !!m.error;
+  const [expanded, setExpanded] = useState(() => !done);
+  useEffect(() => {
+    if (isKnowledgeTool && done) setExpanded(false);
+  }, [isKnowledgeTool, done]);
+  return html`
+    <div class=${cls}>
+      <button
+        type="button"
+        class="tool-call-toggle"
+        onClick=${() => setExpanded((v) => !v)}
+        aria-expanded=${expanded}
+      >
+        <span class="chevron" aria-hidden="true">${expanded ? "▼" : "▶"}</span>
+        <span class="tool-call-badge">${isKnowledgeTool ? "KB" : "tool"}</span>
+        ${agentChip(m.agent_name)}
+        <span class="name">${m.tool || "tool"}</span>
+        ${done
+          ? html`<span class="tool-call-status">完成</span>`
+          : html`<span class="tool-call-status pending">进行中</span>`}
+      </button>
+      ${expanded && m.args &&
+      html`
+        <div class="tool-section-label">参数</div>
+        <pre class="tool-payload">${m.tool === "echo" ? argsDisplay : argsDisplay}</pre>
+      `}
+      ${expanded && hasResult &&
+      html`
+        <div class="tool-section-label">结果</div>
+        <pre class="tool-payload">${resultDisplay}</pre>
+      `}
+      ${m.error && html`<div class="tool-soft-error">错误: ${m.error}</div>`}
+    </div>
+  `;
+}
+
 function MessageItem({ m }) {
   const role = m.role || "assistant";
   if (role === "tool_call") {
-    const hasResult = m.result != null && String(m.result).length > 0;
-    const cls = m.error ? "tool-call error" : hasResult ? "tool-call" : "tool-call pending";
-    let argsDisplay = m.args ? formatToolPayload(m.args) : "";
-    let resultDisplay = hasResult ? formatToolPayload(m.result) : "";
-    if (m.tool === "echo" && m.args) {
-      try {
-        const o = JSON.parse(m.args);
-        if (o && typeof o.text === "string") argsDisplay = o.text;
-      } catch (_) { /* keep formatted */ }
-    }
-    if (m.tool === "echo" && hasResult) {
-      resultDisplay = String(m.result);
-    }
-    const done = hasResult || !!m.error;
-    const [expanded, setExpanded] = useState(() => !done);
-    return html`
-      <div class=${cls}>
-        <button
-          type="button"
-          class="tool-call-toggle"
-          onClick=${() => setExpanded((v) => !v)}
-          aria-expanded=${expanded}
-        >
-          <span class="chevron" aria-hidden="true">${expanded ? "▼" : "▶"}</span>
-          <span class="tool-call-badge">tool</span>
-          ${agentChip(m.agent_name)}
-          <span class="name">${m.tool || "tool"}</span>
-          ${done
-            ? html`<span class="tool-call-status">完成</span>`
-            : html`<span class="tool-call-status pending">进行中</span>`}
-        </button>
-        ${expanded && m.args &&
-        html`
-          <div class="tool-section-label">参数</div>
-          <pre class="tool-payload">${m.tool === "echo" ? argsDisplay : argsDisplay}</pre>
-        `}
-        ${expanded && hasResult &&
-        html`
-          <div class="tool-section-label">结果</div>
-          <pre class="tool-payload">${resultDisplay}</pre>
-        `}
-        ${m.error && html`<div class="tool-soft-error">错误: ${m.error}</div>`}
-      </div>
-    `;
+    return html`<${ToolCallBlock} m=${m} />`;
   }
   if (role === "assistant") {
     return html`
@@ -129,6 +143,7 @@ export function ChatView({
   skills,
   running, onSend, onStop,
   interrupt, onResume,
+  onRefreshSession,
 }) {
   const scrollRef = useRef(null);
   const composerRef = useRef(null);
@@ -168,7 +183,12 @@ export function ChatView({
           <span class="title">${session ? (session.title || "未命名会话") : "未选择会话"}</span>
           <span class="sub">
             ${session
-              ? `${session.sessionId.slice(0, 8)} · ${session.status || "idle"} · ${session.messageCount || 0} 条`
+              ? html`
+                  ${session.sessionId.slice(0, 8)} · ${session.status || "idle"} · ${session.messageCount || 0} 条
+                  ${session.knowledgeBaseId
+                    ? html`<span class="kb-pill" title=${session.knowledgeBaseName || session.knowledgeBaseId}>知识库</span>`
+                    : null}
+                `
               : "在左侧选择或新建一个会话开始对话"}
           </span>
         </div>
@@ -189,7 +209,19 @@ export function ChatView({
         disabled=${calcDisabled}
       />
       <${CalcPanel} disabled=${calcDisabled} setInput=${setInput} onInserted=${focusComposer} />
-      <${RagPanel} disabled=${calcDisabled} setInput=${setInput} onInserted=${focusComposer} />
+      <${RagPanel}
+        disabled=${calcDisabled}
+        setInput=${setInput}
+        onInserted=${focusComposer}
+        sessionId=${session?.sessionId || ""}
+        boundKnowledge=${session && (session.knowledgeBaseId || session.knowledgeBaseName)
+          ? {
+              knowledgeBaseId: session.knowledgeBaseId || "",
+              knowledgeBaseName: session.knowledgeBaseName || "",
+            }
+          : null}
+        onKnowledgeBound=${onRefreshSession}
+      />
 
       <div class="messages" ref=${scrollRef}>
         ${!session && html`

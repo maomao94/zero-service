@@ -141,16 +141,18 @@ func toProtoSession(s *session.Session) *aisolo.Session {
 		return nil
 	}
 	return &aisolo.Session{
-		SessionId:    s.ID,
-		UserId:       s.UserID,
-		Title:        s.Title,
-		Mode:         s.Mode,
-		Status:       s.Status,
-		InterruptId:  s.InterruptID,
-		CreatedAt:    s.CreatedAt.Unix(),
-		UpdatedAt:    s.UpdatedAt.Unix(),
-		MessageCount: s.MessageCount,
-		LastMessage:  s.LastMessage,
-		UiLang:       s.UILang,
+		SessionId:         s.ID,
+		UserId:            s.UserID,
+		Title:             s.Title,
+		Mode:              s.Mode,
+		Status:            s.Status,
+		InterruptId:       s.InterruptID,
+		CreatedAt:         s.CreatedAt.Unix(),
+		UpdatedAt:         s.UpdatedAt.Unix(),
+		MessageCount:      s.MessageCount,
+		LastMessage:       s.LastMessage,
+		UiLang:            s.UILang,
+		KnowledgeBaseId:   s.KnowledgeBaseID,
+		KnowledgeBaseName: s.KnowledgeBaseName,
 	}
 }

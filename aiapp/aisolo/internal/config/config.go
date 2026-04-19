@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	einoxkb "zero-service/common/einox/knowledge"
+
 	"github.com/zeromicro/go-zero/zrpc"
 )
 
@@ -15,6 +17,7 @@ type Config struct {
 	Model        ModelConfig        `json:"model"`
 	Memory       MemoryConfig       `json:"memory"`
 	SessionStore SessionStoreConfig `json:",optional"`
+	Knowledge    einoxkb.Config     `json:"knowledge,optional"`
 	// SessionRun 控制 RUNNING 租约（多实例 / 持久化会话时避免误清与健康实例冲突）。
 	// YAML 键必须为 sessionRun（camelCase，与 json 标签一致）；勿写 SessionRun: 且仅注释子行，否则 conf 报 type mismatch。
 	SessionRun SessionRunConfig `json:"sessionRun,optional"`
@@ -34,13 +37,14 @@ type AgentConfig struct {
 	Deep        DeepAgentConfig `json:"deep,optional"`
 	// PlanMaxIterations PlanExecute 模式最大迭代（默认 10，≤0 时按 10）。
 	PlanMaxIterations int `json:"planMaxIterations,optional"`
+	// DemoSurveyEcho 为 true 时在默认 Agent 模式挂载联调用 Survey→Echo 子 Agent（生产请关闭）。
+	DemoSurveyEcho bool `json:"demoSurveyEcho,optional"`
 }
 
 // DeepAgentConfig Deep 模式专属（见 blueprint_deep）。
 type DeepAgentConfig struct {
-	// DisableLocalFilesystem 为 true 时不挂载 Eino 本地文件系统工具（含 grep，依赖本机 ripgrep）。
-	// 为 false 或未配置时启用。Skill 中间件仍可由 Skills 单独打开，与该项独立。
-	DisableLocalFilesystem bool `json:"disableLocalFilesystem,optional"`
+	// EnableLocalFilesystem 为 true 时 Deep 模式挂载 Eino 本地文件系统工具（grep 等）。默认 false（安全基线）。
+	EnableLocalFilesystem bool `json:"enableLocalFilesystem,optional"`
 	// FilesystemAllowedRoots 用户可见工作区（知识库/项目根等），绝对路径在启动时解析；与 SessionBaseDir 独立。
 	// 未配置且未配置 SessionBaseDir 时 Deep 文件工具不限制路径（历史行为）。
 	FilesystemAllowedRoots []string `json:"filesystemAllowedRoots,optional"`
@@ -64,9 +68,9 @@ type DeepFilesystemPolicy struct {
 	EditSession  bool `json:"editSession,optional,default=true"`
 }
 
-// DeepLocalFilesystemEnabled 是否挂载 Deep 的本地 filesystem 工具（默认 true）。
+// DeepLocalFilesystemEnabled 是否挂载 Deep 的本地 filesystem 工具（默认关闭）。
 func (a AgentConfig) DeepLocalFilesystemEnabled() bool {
-	return !a.Deep.DisableLocalFilesystem
+	return a.Deep.EnableLocalFilesystem
 }
 
 // EffectivePlanMaxIterations Plan 模式最大迭代次数。

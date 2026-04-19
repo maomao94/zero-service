@@ -83,7 +83,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 	if err != nil {
 		return nil, err
 	}
-	l.Logger.Infof("CallbackPlanExecItem: planId=%s, planPk=%d, execId=%s, batchId=%s, batchPk= %s, batchNum=%s, itemId=%s, status=%d",
+	l.Logger.Infof("CallbackPlanExecItem: planId=%s, planPk=%d, execId=%s, batchId=%s, batchPk= %d, batchNum=%s, itemId=%s, status=%d",
 		execItem.PlanId, execItem.PlanPk, execItem.ExecId, execItem.BatchId, batch.Id, batch.BatchNum, execItem.ItemId, execItem.Status)
 
 	// 检查执行项状态是否为终态

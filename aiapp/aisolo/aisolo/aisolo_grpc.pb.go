@@ -19,17 +19,18 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AiSolo_CreateSession_FullMethodName = "/aisolo.AiSolo/CreateSession"
-	AiSolo_GetSession_FullMethodName    = "/aisolo.AiSolo/GetSession"
-	AiSolo_ListSessions_FullMethodName  = "/aisolo.AiSolo/ListSessions"
-	AiSolo_DeleteSession_FullMethodName = "/aisolo.AiSolo/DeleteSession"
-	AiSolo_ListMessages_FullMethodName  = "/aisolo.AiSolo/ListMessages"
-	AiSolo_AskStream_FullMethodName     = "/aisolo.AiSolo/AskStream"
-	AiSolo_ResumeStream_FullMethodName  = "/aisolo.AiSolo/ResumeStream"
-	AiSolo_ListModes_FullMethodName     = "/aisolo.AiSolo/ListModes"
-	AiSolo_ListSkills_FullMethodName    = "/aisolo.AiSolo/ListSkills"
-	AiSolo_GetInterrupt_FullMethodName  = "/aisolo.AiSolo/GetInterrupt"
-	AiSolo_Health_FullMethodName        = "/aisolo.AiSolo/Health"
+	AiSolo_CreateSession_FullMethodName     = "/aisolo.AiSolo/CreateSession"
+	AiSolo_BindKnowledgeBase_FullMethodName = "/aisolo.AiSolo/BindKnowledgeBase"
+	AiSolo_GetSession_FullMethodName        = "/aisolo.AiSolo/GetSession"
+	AiSolo_ListSessions_FullMethodName      = "/aisolo.AiSolo/ListSessions"
+	AiSolo_DeleteSession_FullMethodName     = "/aisolo.AiSolo/DeleteSession"
+	AiSolo_ListMessages_FullMethodName      = "/aisolo.AiSolo/ListMessages"
+	AiSolo_AskStream_FullMethodName         = "/aisolo.AiSolo/AskStream"
+	AiSolo_ResumeStream_FullMethodName      = "/aisolo.AiSolo/ResumeStream"
+	AiSolo_ListModes_FullMethodName         = "/aisolo.AiSolo/ListModes"
+	AiSolo_ListSkills_FullMethodName        = "/aisolo.AiSolo/ListSkills"
+	AiSolo_GetInterrupt_FullMethodName      = "/aisolo.AiSolo/GetInterrupt"
+	AiSolo_Health_FullMethodName            = "/aisolo.AiSolo/Health"
 )
 
 // AiSoloClient is the client API for AiSolo service.
@@ -38,6 +39,7 @@ const (
 type AiSoloClient interface {
 	// 会话管理
 	CreateSession(ctx context.Context, in *CreateSessionReq, opts ...grpc.CallOption) (*CreateSessionResp, error)
+	BindKnowledgeBase(ctx context.Context, in *BindKnowledgeBaseReq, opts ...grpc.CallOption) (*BindKnowledgeBaseResp, error)
 	GetSession(ctx context.Context, in *GetSessionReq, opts ...grpc.CallOption) (*GetSessionResp, error)
 	ListSessions(ctx context.Context, in *ListSessionsReq, opts ...grpc.CallOption) (*ListSessionsResp, error)
 	DeleteSession(ctx context.Context, in *DeleteSessionReq, opts ...grpc.CallOption) (*DeleteSessionResp, error)
@@ -67,6 +69,16 @@ func (c *aiSoloClient) CreateSession(ctx context.Context, in *CreateSessionReq, 
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateSessionResp)
 	err := c.cc.Invoke(ctx, AiSolo_CreateSession_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aiSoloClient) BindKnowledgeBase(ctx context.Context, in *BindKnowledgeBaseReq, opts ...grpc.CallOption) (*BindKnowledgeBaseResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BindKnowledgeBaseResp)
+	err := c.cc.Invoke(ctx, AiSolo_BindKnowledgeBase_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -197,6 +209,7 @@ func (c *aiSoloClient) Health(ctx context.Context, in *HealthReq, opts ...grpc.C
 type AiSoloServer interface {
 	// 会话管理
 	CreateSession(context.Context, *CreateSessionReq) (*CreateSessionResp, error)
+	BindKnowledgeBase(context.Context, *BindKnowledgeBaseReq) (*BindKnowledgeBaseResp, error)
 	GetSession(context.Context, *GetSessionReq) (*GetSessionResp, error)
 	ListSessions(context.Context, *ListSessionsReq) (*ListSessionsResp, error)
 	DeleteSession(context.Context, *DeleteSessionReq) (*DeleteSessionResp, error)
@@ -224,6 +237,9 @@ type UnimplementedAiSoloServer struct{}
 
 func (UnimplementedAiSoloServer) CreateSession(context.Context, *CreateSessionReq) (*CreateSessionResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateSession not implemented")
+}
+func (UnimplementedAiSoloServer) BindKnowledgeBase(context.Context, *BindKnowledgeBaseReq) (*BindKnowledgeBaseResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BindKnowledgeBase not implemented")
 }
 func (UnimplementedAiSoloServer) GetSession(context.Context, *GetSessionReq) (*GetSessionResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSession not implemented")
@@ -290,6 +306,24 @@ func _AiSolo_CreateSession_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AiSoloServer).CreateSession(ctx, req.(*CreateSessionReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AiSolo_BindKnowledgeBase_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BindKnowledgeBaseReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AiSoloServer).BindKnowledgeBase(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AiSolo_BindKnowledgeBase_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AiSoloServer).BindKnowledgeBase(ctx, req.(*BindKnowledgeBaseReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -470,6 +504,10 @@ var AiSolo_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateSession",
 			Handler:    _AiSolo_CreateSession_Handler,
+		},
+		{
+			MethodName: "BindKnowledgeBase",
+			Handler:    _AiSolo_BindKnowledgeBase_Handler,
 		},
 		{
 			MethodName: "GetSession",

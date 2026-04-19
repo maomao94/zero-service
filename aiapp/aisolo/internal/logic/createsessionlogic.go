@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/zeromicro/go-zero/core/logx"
 
@@ -34,6 +35,10 @@ func (l *CreateSessionLogic) CreateSession(in *aisolo.CreateSessionReq) (*aisolo
 	sess := newSession(in.UserId, in.Title, in.Mode)
 	if v := uilang.Normalize(in.GetUiLang()); v != "" {
 		sess.UILang = v
+	}
+	if kb := strings.TrimSpace(in.GetKnowledgeBaseId()); kb != "" {
+		sess.KnowledgeBaseID = kb
+		sess.KnowledgeBaseName = strings.TrimSpace(in.GetKnowledgeBaseName())
 	}
 	if err := l.svcCtx.Sessions.CreateSession(l.ctx, sess); err != nil {
 		return nil, err

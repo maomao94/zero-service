@@ -179,7 +179,8 @@ message Session {
   int32 message_count = 9;
   string last_message = 10;
   string ui_lang = 11;             // 会话默认 UI 语言 (zh/en), 由 AskReq.ui_lang 更新
-  reserved 12;                     // 曾为 workflow_topology；Workflow 形态仅以 AgentMode 三枚举区分
+  string knowledge_base_id = 12;   // 当前会话绑定的知识库 ID（由网关/BFF 检索注入使用）
+  string knowledge_base_name = 13; // 当前会话绑定的知识库名称（供前端展示）
 }
 
 message CreateSessionReq {
@@ -187,9 +188,22 @@ message CreateSessionReq {
   string title = 2;
   AgentMode mode = 3;
   string ui_lang = 4; // 可选, 初始会话默认 UI 语言 (zh/en); 与 AskReq.ui_lang 规则一致
+  string knowledge_base_id = 5;
+  string knowledge_base_name = 6;
 }
 
 message CreateSessionResp {
+  Session session = 1;
+}
+
+message BindKnowledgeBaseReq {
+  string session_id = 1;
+  string user_id = 2;
+  string knowledge_base_id = 3;
+  string knowledge_base_name = 4;
+}
+
+message BindKnowledgeBaseResp {
   Session session = 1;
 }
 
@@ -316,6 +330,7 @@ message HealthResp {
 service AiSolo {
   // 会话管理
   rpc CreateSession(CreateSessionReq) returns (CreateSessionResp);
+  rpc BindKnowledgeBase(BindKnowledgeBaseReq) returns (BindKnowledgeBaseResp);
   rpc GetSession(GetSessionReq) returns (GetSessionResp);
   rpc ListSessions(ListSessionsReq) returns (ListSessionsResp);
   rpc DeleteSession(DeleteSessionReq) returns (DeleteSessionResp);
