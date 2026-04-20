@@ -8,6 +8,8 @@ import (
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
+	"zero-service/app/trigger/internal/execdelay"
+	"zero-service/app/trigger/internal/planscope"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/facade/streamevent/streamevent"
@@ -62,9 +64,15 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 	}
 	lockKey := fmt.Sprintf("trigger:lock:plan:exec:%s", execItem.ExecId)
 	lock := redis.NewRedisLock(l.svcCtx.Redis, lockKey)
-	b, _ := lock.AcquireCtx(l.ctx)
+	b, lockErr := lock.AcquireCtx(l.ctx)
+	if lockErr != nil {
+		logx.WithContext(l.ctx).Errorf("%s CallbackPlanExecItem Redis 锁 Acquire 错误: %v", planscope.ExecCallback(execItem), lockErr)
+		return nil, lockErr
+	}
 	if !b {
-		err = fmt.Errorf("Error acquiring lock for plan exec item %d", execItem.Id)
+		lockScope := planscope.ExecCallback(execItem)
+		logx.WithContext(l.ctx).Errorf("%s CallbackPlanExecItem 未抢到 Redis 锁", lockScope)
+		err = fmt.Errorf("%s CallbackPlanExecItem 未抢到 Redis 锁", lockScope)
 		return nil, err
 	}
 	defer lock.Release()
@@ -83,8 +91,9 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 	if err != nil {
 		return nil, err
 	}
-	l.Logger.Infof("CallbackPlanExecItem: planId=%s, planPk=%d, execId=%s, batchId=%s, batchPk= %d, batchNum=%s, itemId=%s, status=%d",
-		execItem.PlanId, execItem.PlanPk, execItem.ExecId, execItem.BatchId, batch.Id, batch.BatchNum, execItem.ItemId, execItem.Status)
+	scope := planscope.CallbackScope(execItem, plan, batch)
+	logx.WithContext(l.ctx).Infof("%s 收到执行回调 execResult=%s item_status=%d message=%s",
+		scope, in.GetExecResult(), execItem.Status, in.Message)
 
 	// 检查执行项状态是否为终态
 	if execItem.Status == int64(model.StatusCompleted) || execItem.Status == int64(model.StatusTerminated) {
@@ -110,62 +119,22 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 			)
 		case model.ResultDelayed:
 			currentTime := carbon.Now()
-			delayTriggerTime := currentTime.AddMinutes(5).ToDateTimeString()
-			delayReason := in.Reason
-			if in.DelayConfig == nil {
-				l.Errorf("No delay config provided for exec item %d", execItem.Id)
-			} else {
-				if len(in.DelayConfig.DelayReason) != 0 {
-					delayReason = fmt.Sprintf("%s, %s", in.DelayConfig.DelayReason, in.Message)
-				}
-				delayTime := carbon.ParseByLayout(in.DelayConfig.NextTriggerTime, carbon.DateTimeLayout)
-				isTrue := true
-				if delayTime.Error != nil || delayTime.IsInvalid() {
-					l.Errorf("Invalid delay time format for exec item %d: %s", execItem.Id, in.DelayConfig.NextTriggerTime)
-					isTrue = false
-				} else {
-					if delayTime.Lt(currentTime) {
-						l.Errorf("Delay time for exec item %d is in the past: %v, current time: %v", execItem.Id, delayTime.ToDateTimeString(), currentTime.ToDateTimeString())
-						isTrue = false
-					}
-				}
-				if isTrue {
-					delayTriggerTime = delayTime.ToDateTimeString()
-				}
-			}
-			delayReason = fmt.Sprintf("%s, 下次触发时间: %s", delayReason, delayTriggerTime)
+			dr := execdelay.Resolve(in.DelayConfig, in.Message, in.Reason, currentTime, execdelay.ModeDelayed)
+			execdelay.LogWarnings(ctx, scope, dr)
+			delayTriggerTime := dr.NextTrigger
+			delayReason := execdelay.FinalReason(dr.ReasonStem, delayTriggerTime)
 			reason = delayReason
 			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToDelayed(ctx, execItem.Id, in.ExecResult, in.Message, delayReason, delayTriggerTime,
 				[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 			)
 		case model.ResultOngoing:
 			currentTime := carbon.Now()
-			delayTriggerTime := currentTime.AddMinutes(5).ToDateTimeString()
-			delayReason := in.Reason
-			if in.DelayConfig == nil {
-				l.Debugf("No delay config provided for exec item %d", execItem.Id)
-			} else {
-				if len(in.DelayConfig.DelayReason) != 0 {
-					delayReason = fmt.Sprintf("%s, %s", in.DelayConfig.DelayReason, in.Message)
-				}
-				delayTime := carbon.ParseByLayout(in.DelayConfig.NextTriggerTime, carbon.DateTimeLayout)
-				isTrue := true
-				if delayTime.Error != nil || delayTime.IsInvalid() {
-					l.Errorf("Invalid delay time format for exec item %d: %s", execItem.Id, in.DelayConfig.NextTriggerTime)
-					isTrue = false
-				} else {
-					if delayTime.Lt(currentTime) {
-						l.Errorf("Delay time for exec item %d is in the past: %v, current time: %v", execItem.Id, delayTime.ToDateTimeString(), currentTime.ToDateTimeString())
-						isTrue = false
-					}
-				}
-				if isTrue {
-					delayTriggerTime = delayTime.ToDateTimeString()
-				}
-			}
-			delayReason = fmt.Sprintf("%s, 下次触发时间: %s", delayReason, delayTriggerTime)
+			or := execdelay.Resolve(in.DelayConfig, in.Message, in.Reason, currentTime, execdelay.ModeOngoing)
+			execdelay.LogWarnings(ctx, scope, or)
+			delayTriggerTime := or.NextTrigger
+			delayReason := execdelay.FinalReason(or.ReasonStem, delayTriggerTime)
 			reason = delayReason
-			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToOngoing(ctx, execItem.Id, in.Message, in.Reason, false, delayTriggerTime,
+			transErr = l.svcCtx.PlanExecItemModel.UpdateStatusToOngoing(ctx, execItem.Id, in.Message, delayReason, false, delayTriggerTime,
 				[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 			)
 		case model.ResultTerminated:
@@ -203,7 +172,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 		}
 		// 插入执行日志
 		if _, err := l.svcCtx.PlanExecLogModel.Insert(ctx, nil, logEntry); err != nil {
-			logx.Errorf("Callback Error inserting plan exec log for item %d: %v", execItem.Id, err)
+			logx.WithContext(ctx).Errorf("%s 插入 plan_exec_log 失败: %v", scope, err)
 		}
 		return nil
 	})
@@ -213,7 +182,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 
 	batchCount, err := l.svcCtx.PlanBatchModel.UpdateBatchFinishedTime(l.ctx, execItem.BatchPk)
 	if err != nil {
-		l.Errorf("Error updating batch %s completed time: %v", execItem.BatchId, err)
+		logx.WithContext(l.ctx).Errorf("%s 更新 plan_batch.finished_time 失败: %v", scope, err)
 	}
 	if batchCount > 0 {
 		batchNotifyReq := streamevent.NotifyPlanEventReq{
@@ -228,7 +197,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 
 	planCount, err := l.svcCtx.PlanModel.UpdateBatchFinishedTime(l.ctx, execItem.PlanPk)
 	if err != nil {
-		l.Errorf("Error updating plan %s completed time: %v", execItem.PlanId, err)
+		logx.WithContext(l.ctx).Errorf("%s 更新 plan.finished_time 失败: %v", scope, err)
 	}
 	if planCount > 0 {
 		planPlanReq := streamevent.NotifyPlanEventReq{

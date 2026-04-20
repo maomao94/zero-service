@@ -46,7 +46,7 @@ func (l *DeferTriggerTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task
 			Msg   string `json:"Msg"`
 		}
 		if len(msg.MsgId) == 0 {
-			msg.Msg = t.ResultWriter().TaskID()
+			msg.MsgId = t.ResultWriter().TaskID()
 		}
 		var data = Data{
 			MsgId: msg.MsgId,
@@ -55,14 +55,21 @@ func (l *DeferTriggerTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task
 		postCtx, cancel := context.WithTimeout(ctx, time.Duration(10)*time.Second)
 		defer cancel()
 		resp, err := l.svcCtx.Httpc.Do(postCtx, http.MethodPost, msg.Url, data)
-		logx.WithContext(ctx).Infof("http invoke - %s", msg.Url)
+		logger := logx.WithContext(ctx).WithFields(
+			logx.Field("msgId", data.MsgId),
+			logx.Field("url", msg.Url),
+			logx.Field("taskType", t.Type()),
+		)
 		if err != nil {
+			logger.Errorf("http trigger request failed: %v", err)
 			t.ResultWriter().Write([]byte("fail,http error"))
 			return err
 		}
 		if resp.StatusCode == http.StatusOK {
+			logger.Infof("http trigger succeeded, status=%d", resp.StatusCode)
 			t.ResultWriter().Write([]byte("success"))
 		} else {
+			logger.Errorf("http trigger unexpected status: %d %s", resp.StatusCode, resp.Status)
 			t.ResultWriter().Write([]byte("fail,httpCode error: " + resp.Status))
 			return errors.New("trigger fail")
 		}

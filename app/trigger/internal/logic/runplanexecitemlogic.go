@@ -7,6 +7,7 @@ import (
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
+	"zero-service/app/trigger/internal/planscope"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/model"
@@ -86,7 +87,8 @@ func (l *RunPlanExecItemLogic) RunPlanExecItem(in *trigger.RunPlanExecItemReq) (
 		return nil, err
 	}
 
-	l.Logger.Infof("Plan exec item %d will be executed immediately, nextTriggerTime updated to %v, current status: %d", execItem.Id, now, execItem.Status)
+	l.Logger.Infof("%s 立即执行：next_trigger 已更新为 %v，status=%d",
+		planscope.ExecScope(execItem), execItem.NextTriggerTime.Format(time.RFC3339Nano), execItem.Status)
 
 	return &trigger.RunPlanExecItemRes{}, nil
 }

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"time"
 
+	"zero-service/app/trigger/internal/planscope"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/tool"
@@ -94,5 +95,6 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 		return &trigger.PausePlanRes{}, nil
 	}
 
+	l.Infof("%s 暂停计划：事务已提交", planscope.PlanScope(plan))
 	return &trigger.PausePlanRes{}, nil
 }

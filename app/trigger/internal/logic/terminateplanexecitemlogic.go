@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"database/sql"
+	"zero-service/app/trigger/internal/planscope"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/tool"
@@ -75,6 +76,8 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 		return nil, errors.BadRequest("", "执行项状态已结束,无需终止")
 	}
 
+	scope := planscope.ExecScope(execItem)
+
 	// 执行事务
 	err = l.svcCtx.PlanModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
 		// 更新执行项状态为已终止
@@ -97,7 +100,7 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 	}
 	batchCount, err := l.svcCtx.PlanBatchModel.UpdateBatchFinishedTime(l.ctx, execItem.BatchPk)
 	if err != nil {
-		l.Errorf("Error updating batch %s completed time: %v", execItem.BatchId, err)
+		l.Errorf("%s 更新 plan_batch.finished_time 失败: %v", scope, err)
 	}
 	if batchCount > 0 {
 		batchNotifyReq := streamevent.NotifyPlanEventReq{
@@ -112,7 +115,7 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 
 	planCount, err := l.svcCtx.PlanModel.UpdateBatchFinishedTime(l.ctx, execItem.PlanPk)
 	if err != nil {
-		l.Errorf("Error updating plan %s completed time: %v", execItem.PlanId, err)
+		l.Errorf("%s 更新 plan.finished_time 失败: %v", scope, err)
 	}
 	if planCount > 0 {
 		planPlanReq := streamevent.NotifyPlanEventReq{
@@ -125,5 +128,6 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 		l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq)
 	}
 
+	l.Infof("%s 终止执行项：事务已提交", scope)
 	return &trigger.TerminatePlanExecItemRes{}, nil
 }

@@ -43,8 +43,8 @@ func (l *SendProtoTriggerLogic) SendProtoTrigger(in *trigger.SendProtoTriggerReq
 	defer span.End()
 	carrier := &propagation.HeaderCarrier{}
 	otel.GetTextMapPropagator().Inject(spanCtx, carrier)
-	matsh := GrpcServerRegexp.MatchString(in.GrpcServer)
-	if !matsh {
+	match := GrpcServerRegexp.MatchString(in.GrpcServer)
+	if !match {
 		return nil, errors.New("grpcServer is invalid")
 	}
 	msg := &msgbody.ProtoMsgBody{

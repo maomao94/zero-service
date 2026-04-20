@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"time"
 
+	"zero-service/app/trigger/internal/planscope"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/tool"
@@ -92,5 +93,6 @@ func (l *PausePlanBatchLogic) PausePlanBatch(in *trigger.PausePlanBatchReq) (*tr
 		return &trigger.PausePlanBatchRes{}, nil
 	}
 
+	l.Infof("%s 暂停批次：事务已提交", planscope.BatchScope(plan, planBatch))
 	return &trigger.PausePlanBatchRes{}, nil
 }

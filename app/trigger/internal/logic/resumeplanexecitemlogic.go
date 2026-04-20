@@ -7,6 +7,7 @@ import (
 	"zero-service/common/tool"
 	"zero-service/model"
 
+	"zero-service/app/trigger/internal/planscope"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 
@@ -86,5 +87,6 @@ func (l *ResumePlanExecItemLogic) ResumePlanExecItem(in *trigger.ResumePlanExecI
 		return nil, err
 	}
 
+	l.Infof("%s 恢复执行项：事务已提交", planscope.ExecScope(execItem))
 	return &trigger.ResumePlanExecItemRes{}, nil
 }

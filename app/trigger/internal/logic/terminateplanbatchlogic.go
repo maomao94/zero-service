@@ -6,6 +6,7 @@ import (
 	"time"
 	"zero-service/facade/streamevent/streamevent"
 
+	"zero-service/app/trigger/internal/planscope"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/tool"
@@ -100,9 +101,10 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 		Attributes: map[string]string{},
 	}
 	l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &batchNotifyReq)
+	bScope := planscope.BatchScope(plan, planBatch)
 	planCount, err := l.svcCtx.PlanModel.UpdateBatchFinishedTime(l.ctx, planBatch.PlanPk)
 	if err != nil {
-		l.Errorf("Error updating plan %s completed time: %v", planBatch.PlanId, err)
+		l.Errorf("%s 更新 plan.finished_time 失败: %v", bScope, err)
 	}
 	if planCount > 0 {
 		planPlanReq := streamevent.NotifyPlanEventReq{
@@ -114,5 +116,7 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 		}
 		l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq)
 	}
+
+	l.Infof("%s 终止批次：事务已提交", planscope.BatchScope(plan, planBatch))
 	return &trigger.TerminatePlanBatchRes{}, nil
 }
