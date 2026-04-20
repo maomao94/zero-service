@@ -99,14 +99,20 @@ func (s *Service) assertEmbeddingOutputDim(dim int) error {
 			return fmt.Errorf("knowledge: embedding output dim %d != Milvus.vectorDim %d", dim, want)
 		}
 	}
-	s.embedDimMu.Lock()
-	defer s.embedDimMu.Unlock()
-	if s.embedDim == 0 {
-		s.embedDim = dim
-		return nil
+	s.embedDimMu.RLock()
+	cached := s.embedDim
+	s.embedDimMu.RUnlock()
+	if cached == 0 {
+		s.embedDimMu.Lock()
+		defer s.embedDimMu.Unlock()
+		if s.embedDim == 0 {
+			s.embedDim = dim
+			return nil
+		}
+		cached = s.embedDim
 	}
-	if s.embedDim != dim {
-		return fmt.Errorf("knowledge: embedding dimension mismatch: previously %d, now %d (same model/endpoint required)", s.embedDim, dim)
+	if cached != dim {
+		return fmt.Errorf("knowledge: embedding dimension mismatch: previously %d, now %d (same model/endpoint required)", cached, dim)
 	}
 	return nil
 }

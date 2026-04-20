@@ -1,0 +1,237 @@
+syntax = "proto3";
+
+package djigateway;
+option go_package = "./djigateway";
+option java_multiple_files = true;
+option java_package = "com.github.djigateway.grpc";
+option java_outer_classname = "DjiGatewayProto";
+
+// DjiGateway DJI 上云网关服务。
+// 将业务系统的 gRPC 请求转换为 DJI Cloud API MQTT 协议指令，
+// 实现航线任务下发、PSDK 自定义数据透传、指令飞行控制（DRC）等能力。
+// 网关内部通过 MQTT 通配符同时订阅多台机巢，支持并发控制多设备。
+service DjiGateway {
+  // Ping 健康检查接口，用于验证服务可用性。
+  rpc Ping(Req) returns (Res);
+
+  // ==================== 航线管理（Wayline Management） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/wayline.html
+
+  // ExecuteFlightTask 执行航线飞行任务。
+  // 内部依次调用 flighttask_prepare（航线准备）和 flighttask_execute（航线执行），
+  // 等待设备 ACK 后返回结果。
+  rpc ExecuteFlightTask(FlightTaskReq) returns (CommonRes);
+
+  // ReturnHome 控制飞行器一键返航。
+  // 对应 DJI Cloud API method: return_home，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc ReturnHome(DeviceSnReq) returns (CommonRes);
+
+  // ReturnHomeCancelAutoReturn 取消自动返航。
+  // 对应 DJI Cloud API method: return_home_cancel，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc ReturnHomeCancelAutoReturn(DeviceSnReq) returns (CommonRes);
+
+  // ==================== PSDK 自定义数据透传（PSDK Custom Data Transmission） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk-transmit-custom-data.html
+
+  // SendCustomDataToPsdk 自定义数据透传至 PSDK 负载设备。
+  // 对应 DJI Cloud API method: custom_data_transmission_to_psdk，
+  // Topic: thing/product/{gateway_sn}/services，方向 down（云平台→设备），
+  // 将自定义消息透传推送到 PSDK 负载设备，等待设备 ACK 后返回结果。
+  // 上行方向（设备→云平台）通过 events topic 的 custom_data_transmission_from_psdk 事件钩子处理。
+  rpc SendCustomDataToPsdk(CustomDataToPsdkReq) returns (CommonRes);
+
+  // ==================== 指令飞行控制（Live Flight Controls / DRC） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html
+
+  // --- 飞行控制指令（DRC Commands） ---
+
+  // FlightAuthorityGrab 获取飞行控制权。
+  // 对应 DJI Cloud API method: flight_authority_grab，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  // 在进行指令飞行操控前需要先获取飞行控制权。
+  rpc FlightAuthorityGrab(DeviceSnReq) returns (CommonRes);
+
+  // PayloadAuthorityGrab 获取负载控制权。
+  // 对应 DJI Cloud API method: payload_authority_grab，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  // 在控制相机、云台等负载设备前需要先获取负载控制权。
+  rpc PayloadAuthorityGrab(DeviceSnReq) returns (CommonRes);
+
+  // DrcModeEnter 进入指令飞行（DRC）模式。
+  // 对应 DJI Cloud API method: drc_mode_enter，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  // 进入 DRC 模式后，可通过 DRC 通道发送实时飞行控制指令。
+  rpc DrcModeEnter(DrcModeEnterReq) returns (CommonRes);
+
+  // DrcModeExit 退出指令飞行（DRC）模式。
+  // 对应 DJI Cloud API method: drc_mode_exit，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc DrcModeExit(DeviceSnReq) returns (CommonRes);
+
+  // SendDrcCommand 通过 DRC 通道发送实时飞行控制指令（杆量控制）。
+  // 对应 DJI Cloud API method: drone_control，Topic: thing/product/{gateway_sn}/drc/down，
+  // 即发即忘模式，不等待设备 ACK。适用于高频实时控制场景（虚拟摇杆）。
+  rpc SendDrcCommand(DroneControlReq) returns (CommonRes);
+
+  // DroneEmergencyStop 飞行器紧急停桨。
+  // 对应 DJI Cloud API method: drone_emergency_stop，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  // 危险操作：会立即停止所有电机，飞行器将失去动力坠落。仅在紧急情况下使用。
+  // 需要在配置文件中开启 DangerousOps.EnableEmergencyStop 才能调用。
+  rpc DroneEmergencyStop(DeviceSnReq) returns (CommonRes);
+
+  // --- Flyto 指令（Flyto Commands） ---
+
+  // FlyToPoint 飞向指定航点。
+  // 对应 DJI Cloud API method: fly_to_point，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  // 适用于飞行器在空中的场景，支持多航点路径。
+  rpc FlyToPoint(FlyToPointReq) returns (CommonRes);
+
+  // FlyToPointStop 停止当前的飞向航点任务。
+  // 对应 DJI Cloud API method: fly_to_point_stop，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc FlyToPointStop(DeviceSnReq) returns (CommonRes);
+
+  // --- 一键起飞指令（One-key Taking Off Commands） ---
+
+  // TakeoffToPoint 一键起飞到指定坐标点。
+  // 对应 DJI Cloud API method: takeoff_to_point，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  // 适用于飞行器在机场内的场景。
+  rpc TakeoffToPoint(TakeoffToPointReq) returns (CommonRes);
+}
+
+// Req 健康检查请求。
+message Req {
+  // ping 请求标识，任意字符串。
+  string ping = 1;
+}
+
+// Res 健康检查响应。
+message Res {
+  // pong 响应标识，回传请求中的 ping 内容。
+  string pong = 1;
+}
+
+// FlightTaskReq 航线飞行任务请求。
+message FlightTaskReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // task_id 飞行任务 ID，业务侧全局唯一标识。
+  string task_id = 2;
+  // wpml_url 航线文件（WPML 格式）的下载地址，设备将从此 URL 拉取航线文件。
+  string wpml_url = 3;
+}
+
+// CustomDataToPsdkReq PSDK 自定义数据透传请求。
+// 对应 DJI Cloud API method: custom_data_transmission_to_psdk（Services, down）。
+message CustomDataToPsdkReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // value 自定义透传数据内容，长度应小于 256 字符。
+  string value = 2;
+}
+
+// CommonRes 通用响应，用于返回命令执行结果。
+message CommonRes {
+  // code 结果码，0 表示成功，非 0 表示失败。
+  int32 code = 1;
+  // message 结果描述信息，成功时为 "ok"，失败时为错误详情。
+  string message = 2;
+  // tid 事务 ID（DJI Cloud API 中的 tid），用于追踪本次请求在 MQTT 链路中的唯一标识。
+  string tid = 3;
+}
+
+// ==================== 指令飞行（DRC）请求消息 ====================
+
+// DeviceSnReq 通用设备请求，仅包含设备序列号。
+// 用于无额外参数的 RPC 请求（如 FlightAuthorityGrab、DrcModeExit 等）。
+message DeviceSnReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+}
+
+// DrcModeEnterReq 进入 DRC 指令飞行模式请求。
+// 包含 DRC 专用 MQTT Broker 的连接信息，设备将使用这些信息建立 DRC 通信链路。
+message DrcModeEnterReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // mqtt_broker DRC 专用 MQTT Broker 地址，格式 "host:port"。
+  string mqtt_broker = 2;
+  // client_id MQTT 客户端 ID。
+  string client_id = 3;
+  // username MQTT 连接用户名。
+  string username = 4;
+  // password MQTT 连接密码。
+  string password = 5;
+  // expire_time 连接过期时间，Unix 秒级时间戳。
+  int64 expire_time = 6;
+  // enable_osd 是否启用 OSD 遥测数据上报。
+  bool enable_osd = 7;
+}
+
+// DroneControlReq 飞行器杆量控制（虚拟摇杆）请求。
+// 通过 DRC 通道实时下发控制指令，即发即忘，不等待设备 ACK。
+message DroneControlReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // x 水平方向速度，正值向右，取值范围 [-1, 1]。
+  double x = 2;
+  // y 前后方向速度，正值向前，取值范围 [-1, 1]。
+  double y = 3;
+  // h 垂直方向速度，正值上升，取值范围 [-1, 1]。
+  double h = 4;
+  // w 偏航角速度，正值顺时针旋转，取值范围 [-1, 1]。
+  double w = 5;
+  // seq 指令序号，递增整数，用于保序和去重。
+  int32 seq = 6;
+}
+
+// TakeoffToPointReq 一键起飞到指定坐标点请求。
+message TakeoffToPointReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // flight_id 飞行任务 ID，全局唯一标识。
+  string flight_id = 2;
+  // target_latitude 目标纬度，取值范围 [-90, 90]。
+  double target_latitude = 3;
+  // target_longitude 目标经度，取值范围 [-180, 180]。
+  double target_longitude = 4;
+  // target_height 目标高度，单位米。
+  double target_height = 5;
+  // security_takeoff_height 安全起飞高度，单位米。
+  double security_takeoff_height = 6;
+  // rth_altitude 返航高度，单位米。可选。
+  double rth_altitude = 7;
+  // rc_lost_action 遥控器信号丢失动作，0: 返航, 1: 悬停, 2: 降落。可选。
+  int32 rc_lost_action = 8;
+  // max_speed 最大飞行速度，单位 m/s。可选。
+  double max_speed = 9;
+  // commander_flight_height 指令飞行高度，单位米。可选。
+  double commander_flight_height = 10;
+}
+
+// FlyToPointReq 飞向指定航点请求。
+message FlyToPointReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // fly_to_id 飞行任务 ID，全局唯一标识。
+  string fly_to_id = 2;
+  // max_speed 最大飞行速度，单位 m/s。
+  double max_speed = 3;
+  // points 航点列表，按顺序飞行。
+  repeated Waypoint points = 4;
+}
+
+// Waypoint 飞行航点坐标。
+message Waypoint {
+  // latitude 航点纬度，取值范围 [-90, 90]。
+  double latitude = 1;
+  // longitude 航点经度，取值范围 [-180, 180]。
+  double longitude = 2;
+  // height 航点高度，单位米。
+  double height = 3;
+}

@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"database/sql"
+	"zero-service/app/trigger/internal/planscope"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/tool"
@@ -99,8 +100,9 @@ func (l *ResumePlanBatchLogic) ResumePlanBatch(in *trigger.ResumePlanBatchReq) (
 	})
 
 	if err != nil {
-		return &trigger.ResumePlanBatchRes{}, nil
+		return nil, err
 	}
 
+	planscope.BatchScope(plan, planBatch).Logger(l.ctx).Info("RPC 恢复批次：批次状态已更新，事务已提交")
 	return &trigger.ResumePlanBatchRes{}, nil
 }

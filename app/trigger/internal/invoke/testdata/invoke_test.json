@@ -1,0 +1,277 @@
+{
+  "_说明": "gRPC Invoke 接口测试数据集，使用 grpcurl 调用示例: grpcurl -plaintext -d @invoke_test.json localhost:8080 trigger.TriggerRpc/Invoke",
+
+  "1_http_json_post": {
+    "_desc": "HTTP JSON POST 请求",
+    "tasks": [
+      {
+        "id": "http-json-1",
+        "protocol": "http",
+        "timeout": 5000,
+        "url": "https://httpbin.org/post",
+        "httpMethod": "POST",
+        "headers": {
+          "Content-Type": "application/json",
+          "X-Request-Id": "test-001"
+        },
+        "body": "eyJuYW1lIjoiemVyby1zZXJ2aWNlIiwidmVyc2lvbiI6IjEuMC4wIn0="
+      }
+    ],
+    "maxConcurrency": 0,
+    "debug": true
+  },
+
+  "2_http_get": {
+    "_desc": "HTTP GET 请求（无 body）",
+    "tasks": [
+      {
+        "id": "http-get-1",
+        "protocol": "http",
+        "timeout": 5000,
+        "url": "https://httpbin.org/get?key=value&lang=go",
+        "httpMethod": "GET",
+        "headers": {
+          "Accept": "application/json"
+        }
+      }
+    ],
+    "debug": true
+  },
+
+  "3_http_form_urlencoded": {
+    "_desc": "HTTP 表单 POST（application/x-www-form-urlencoded），body 为 JSON 自动转换",
+    "tasks": [
+      {
+        "id": "http-form-1",
+        "protocol": "http",
+        "timeout": 5000,
+        "url": "https://httpbin.org/post",
+        "httpMethod": "POST",
+        "headers": {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        "body": "eyJ1c2VybmFtZSI6ImFkbWluIiwicGFzc3dvcmQiOiIxMjM0NTYiLCJyZW1lbWJlciI6dHJ1ZX0="
+      }
+    ],
+    "debug": true
+  },
+
+  "4_http_multipart_form": {
+    "_desc": "HTTP Multipart 表单 POST（multipart/form-data），body 为 JSON 自动转换",
+    "tasks": [
+      {
+        "id": "http-multipart-1",
+        "protocol": "http",
+        "timeout": 5000,
+        "url": "https://httpbin.org/post",
+        "httpMethod": "POST",
+        "headers": {
+          "Content-Type": "multipart/form-data"
+        },
+        "body": "eyJmaWVsZDEiOiJ2YWx1ZTEiLCJmaWVsZDIiOiJ2YWx1ZTIifQ=="
+      }
+    ],
+    "debug": true
+  },
+
+  "5_http_nested_form": {
+    "_desc": "HTTP 表单 POST - 嵌套 JSON 自动扁平化（user.name=admin&user.age=25&tags=go&tags=rust）",
+    "tasks": [
+      {
+        "id": "http-nested-form-1",
+        "protocol": "http",
+        "timeout": 5000,
+        "url": "https://httpbin.org/post",
+        "httpMethod": "POST",
+        "headers": {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        "body": "eyJ1c2VyIjp7Im5hbWUiOiJhZG1pbiIsImFnZSI6MjV9LCJ0YWdzIjpbImdvIiwicnVzdCJdLCJhY3RpdmUiOnRydWUsIm1ldGEiOm51bGx9"
+      }
+    ],
+    "debug": true
+  },
+
+  "6_http_put_delete": {
+    "_desc": "HTTP PUT 和 DELETE 混合并发",
+    "tasks": [
+      {
+        "id": "http-put-1",
+        "protocol": "http",
+        "timeout": 5000,
+        "url": "https://httpbin.org/put",
+        "httpMethod": "PUT",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "eyJpZCI6MSwic3RhdHVzIjoidXBkYXRlZCJ9"
+      },
+      {
+        "id": "http-delete-1",
+        "protocol": "http",
+        "timeout": 5000,
+        "url": "https://httpbin.org/delete",
+        "httpMethod": "DELETE"
+      }
+    ],
+    "maxConcurrency": 2,
+    "debug": true
+  },
+
+  "7_grpc_invoke": {
+    "_desc": "gRPC 调用（payload 为 protobuf 字节码的 base64 编码）",
+    "tasks": [
+      {
+        "id": "grpc-1",
+        "protocol": "grpc",
+        "timeout": 10000,
+        "grpcServer": "127.0.0.1:8080",
+        "method": "/trigger.TriggerRpc/Queues",
+        "payload": ""
+      }
+    ],
+    "debug": true
+  },
+
+  "8_mixed_http_grpc": {
+    "_desc": "混合 HTTP + gRPC 并发调用",
+    "tasks": [
+      {
+        "id": "mix-http-1",
+        "protocol": "http",
+        "timeout": 5000,
+        "url": "https://httpbin.org/post",
+        "httpMethod": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "eyJzb3VyY2UiOiJtaXhlZC10ZXN0In0="
+      },
+      {
+        "id": "mix-grpc-1",
+        "protocol": "grpc",
+        "timeout": 10000,
+        "grpcServer": "127.0.0.1:8080",
+        "method": "/trigger.TriggerRpc/Queues",
+        "payload": ""
+      }
+    ],
+    "maxConcurrency": 5,
+    "debug": true
+  },
+
+  "9_concurrency_control": {
+    "_desc": "并发控制测试 - 5 个任务限制 2 并发",
+    "tasks": [
+      {
+        "id": "cc-1",
+        "protocol": "http",
+        "timeout": 5000,
+        "url": "https://httpbin.org/delay/1",
+        "httpMethod": "GET"
+      },
+      {
+        "id": "cc-2",
+        "protocol": "http",
+        "timeout": 5000,
+        "url": "https://httpbin.org/delay/1",
+        "httpMethod": "GET"
+      },
+      {
+        "id": "cc-3",
+        "protocol": "http",
+        "timeout": 5000,
+        "url": "https://httpbin.org/delay/1",
+        "httpMethod": "GET"
+      },
+      {
+        "id": "cc-4",
+        "protocol": "http",
+        "timeout": 5000,
+        "url": "https://httpbin.org/delay/1",
+        "httpMethod": "GET"
+      },
+      {
+        "id": "cc-5",
+        "protocol": "http",
+        "timeout": 5000,
+        "url": "https://httpbin.org/delay/1",
+        "httpMethod": "GET"
+      }
+    ],
+    "maxConcurrency": 2,
+    "debug": true
+  },
+
+  "10_timeout_test": {
+    "_desc": "超时测试 - 100ms 超时访问延迟 5s 接口",
+    "tasks": [
+      {
+        "id": "timeout-1",
+        "protocol": "http",
+        "timeout": 100,
+        "url": "https://httpbin.org/delay/5",
+        "httpMethod": "GET"
+      }
+    ],
+    "debug": true
+  },
+
+  "11_http_custom_headers": {
+    "_desc": "HTTP 自定义请求头",
+    "tasks": [
+      {
+        "id": "custom-header-1",
+        "protocol": "http",
+        "timeout": 5000,
+        "url": "https://httpbin.org/headers",
+        "httpMethod": "GET",
+        "headers": {
+          "Authorization": "Bearer test-token-123",
+          "X-Tenant-Id": "tenant-001",
+          "X-Trace-Id": "trace-abc-123",
+          "Accept-Language": "zh-CN"
+        }
+      }
+    ],
+    "debug": true
+  },
+
+  "12_grpcurl_ready_json_post": {
+    "_desc": "grpcurl 可直接使用的完整请求（JSON POST）",
+    "_grpcurl": "grpcurl -plaintext -d '{\"tasks\":[{\"id\":\"t1\",\"protocol\":\"http\",\"timeout\":5000,\"url\":\"https://httpbin.org/post\",\"httpMethod\":\"POST\",\"headers\":{\"Content-Type\":\"application/json\"},\"body\":\"eyJoZWxsbyI6IndvcmxkIn0=\"}],\"debug\":true}' localhost:8080 trigger.TriggerRpc/Invoke",
+    "tasks": [
+      {
+        "id": "t1",
+        "protocol": "http",
+        "timeout": 5000,
+        "url": "https://httpbin.org/post",
+        "httpMethod": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "eyJoZWxsbyI6IndvcmxkIn0="
+      }
+    ],
+    "debug": true
+  },
+
+  "13_grpcurl_ready_form_post": {
+    "_desc": "grpcurl 可直接使用的完整请求（表单 POST）",
+    "_grpcurl": "grpcurl -plaintext -d '{\"tasks\":[{\"id\":\"t2\",\"protocol\":\"http\",\"timeout\":5000,\"url\":\"https://httpbin.org/post\",\"httpMethod\":\"POST\",\"headers\":{\"Content-Type\":\"application/x-www-form-urlencoded\"},\"body\":\"eyJrZXkxIjoidmFsdWUxIiwia2V5MiI6InZhbHVlMiJ9\"}],\"debug\":true}' localhost:8080 trigger.TriggerRpc/Invoke",
+    "tasks": [
+      {
+        "id": "t2",
+        "protocol": "http",
+        "timeout": 5000,
+        "url": "https://httpbin.org/post",
+        "httpMethod": "POST",
+        "headers": {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        "body": "eyJrZXkxIjoidmFsdWUxIiwia2V5MiI6InZhbHVlMiJ9"
+      }
+    ],
+    "debug": true
+  }
+}

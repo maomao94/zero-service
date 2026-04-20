@@ -2,6 +2,7 @@ package svc
 
 import (
 	"math"
+	"time"
 	"zero-service/app/trigger/internal/config"
 	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/asynqx"
@@ -24,6 +25,8 @@ import (
 
 const (
 	expiryDeviation = 0.05
+	// connExpiryMinutes 连接缓存过期时间（分钟）
+	connExpiryMinutes = 30
 )
 
 type ServiceContext struct {
@@ -34,7 +37,7 @@ type ServiceContext struct {
 	AsynqServer       *asynq.Server
 	Scheduler         *asynq.Scheduler
 	Httpc             httpc.Service
-	ConnMap           *collection.SafeMap
+	ConnMap           *collection.Cache // 使用带过期清理的缓存
 	SqlConn           sqlx.SqlConn
 	PlanModel         model.PlanModel
 	PlanBatchModel    model.PlanBatchModel
@@ -59,6 +62,12 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	dbConn := dbx.New(c.DB.DataSource)
 	database := dbx.MustNewQoqu(c.DB.DataSource)
 
+	// 使用带自动过期清理的缓存，30分钟不访问自动移除过期连接
+	connCache, err := collection.NewCache(time.Minute * connExpiryMinutes)
+	if err != nil {
+		panic(err)
+	}
+
 	return &ServiceContext{
 		Config:            c,
 		Validate:          validator.New(),
@@ -67,7 +76,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		AsynqServer:       asynqx.NewAsynqServer(c.Redis.Host, c.Redis.Pass, c.RedisDB),
 		Scheduler:         asynqx.NewScheduler(c.Redis.Host, c.Redis.Pass, c.RedisDB),
 		Httpc:             httpc.NewService("httpc"),
-		ConnMap:           collection.NewSafeMap(),
+		ConnMap:           connCache,
 		SqlConn:           dbConn,
 		PlanModel:         model.NewPlanModel(dbConn, model.WithDBType(dbType)),
 		PlanBatchModel:    model.NewPlanBatchModel(dbConn, model.WithDBType(dbType)),

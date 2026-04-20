@@ -7,6 +7,7 @@ import (
 	"zero-service/common/tool"
 	"zero-service/model"
 
+	"zero-service/app/trigger/internal/planscope"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 
@@ -100,5 +101,6 @@ func (l *PausePlanExecItemLogic) PausePlanExecItem(in *trigger.PausePlanExecItem
 		return nil, err
 	}
 
+	planscope.ExecScope(execItem).Logger(l.ctx).Info("RPC 暂停执行项：执行项状态已更新，事务已提交")
 	return &trigger.PausePlanExecItemRes{}, nil
 }

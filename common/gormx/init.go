@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sort"
+	"sync"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"gorm.io/driver/mysql"
@@ -19,9 +20,9 @@ var (
 )
 
 const (
-	InitOrderSystem   = 10     // 系统基础表
-	InitOrderInternal = 1000   // 内部表
-	InitOrderExternal = 100000 // 外部/业务表
+	InitOrderSystem   = 10
+	InitOrderInternal = 1000
+	InitOrderExternal = 100000
 )
 
 type Initializer interface {
@@ -39,12 +40,18 @@ type orderedInit struct {
 
 type initSlice []*orderedInit
 
+type initDBKey struct{}
+
 var (
+	initMu       sync.Mutex
 	initializers = initSlice{}
 	initCache    = make(map[string]*orderedInit)
 )
 
 func RegisterInit(order int, init Initializer) {
+	initMu.Lock()
+	defer initMu.Unlock()
+
 	name := init.Name()
 	if _, ok := initCache[name]; ok {
 		logx.Errorf("initializer %s already registered", name)
@@ -56,6 +63,9 @@ func RegisterInit(order int, init Initializer) {
 }
 
 func UnregisterInit(name string) {
+	initMu.Lock()
+	defer initMu.Unlock()
+
 	delete(initCache, name)
 	for i, init := range initializers {
 		if init.Name() == name {
@@ -66,49 +76,43 @@ func UnregisterInit(name string) {
 }
 
 func ClearAllInits() {
+	initMu.Lock()
+	defer initMu.Unlock()
 	initializers = initSlice{}
 	initCache = make(map[string]*orderedInit)
 }
 
-func (a initSlice) Len() int {
-	return len(a)
-}
-
-func (a initSlice) Less(i, j int) bool {
-	return a[i].order < a[j].order
-}
-
-func (a initSlice) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
-}
-
 func AutoInit(db *gorm.DB) error {
-	if len(initializers) == 0 {
+	initMu.Lock()
+	sorted := make(initSlice, len(initializers))
+	copy(sorted, initializers)
+	initMu.Unlock()
+
+	if len(sorted) == 0 {
 		logx.Info("no initializers registered, skip auto init")
 		return nil
 	}
 
-	sort.Sort(&initializers)
+	sort.Slice(sorted, func(i, j int) bool {
+		return sorted[i].order < sorted[j].order
+	})
 
 	ctx := context.Background()
-	for _, init := range initializers {
+	for _, init := range sorted {
 		if init.TableCreated(ctx, db) {
 			logx.Infof("table for %s already exists, skip", init.Name())
 			continue
 		}
-
 		logx.Infof("migrating table for %s...", init.Name())
 		var err error
 		ctx, err = init.MigrateTable(ctx, db)
 		if err != nil {
 			return err
 		}
-
 		if init.DataInserted(ctx, db) {
 			logx.Infof("data for %s already exists, skip", init.Name())
 			continue
 		}
-
 		logx.Infof("initializing data for %s...", init.Name())
 		ctx, err = init.InitializeData(ctx, db)
 		if err != nil {
@@ -131,11 +135,9 @@ func NewTableInitializer(tableName string, models ...any) *TableInitializer {
 	return &TableInitializer{tableName: tableName, models: models}
 }
 
-func (t *TableInitializer) Name() string {
-	return t.tableName
-}
+func (t *TableInitializer) Name() string { return t.tableName }
 
-func (t *TableInitializer) TableCreated(ctx context.Context, db *gorm.DB) bool {
+func (t *TableInitializer) TableCreated(_ context.Context, db *gorm.DB) bool {
 	return db.Migrator().HasTable(t.tableName)
 }
 
@@ -146,7 +148,7 @@ func (t *TableInitializer) MigrateTable(ctx context.Context, db *gorm.DB) (conte
 	return ctx, db.AutoMigrate(t.models...)
 }
 
-func (t *TableInitializer) DataInserted(ctx context.Context, db *gorm.DB) bool {
+func (t *TableInitializer) DataInserted(_ context.Context, db *gorm.DB) bool {
 	if len(t.initialData) == 0 && t.dataFn == nil {
 		return true
 	}
@@ -180,20 +182,13 @@ func (t *TableInitializer) WithModels(models ...any) *TableInitializer {
 	return t
 }
 
-type InitHandler interface {
-	EnsureDB(ctx context.Context, dbName string, conf Config) (context.Context, *gorm.DB, error)
-	InitTables(ctx context.Context, db *gorm.DB, inits initSlice) error
-	InitData(ctx context.Context, db *gorm.DB, inits initSlice) error
-}
-
 type MysqlInitHandler struct{}
 
 func (h *MysqlInitHandler) EnsureDB(ctx context.Context, dbName string, conf Config) (context.Context, *gorm.DB, error) {
 	if dbName == "" {
 		return ctx, nil, nil
 	}
-	dsn := conf.DataSource
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+	db, err := gorm.Open(mysql.Open(conf.DataSource), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
 		Logger:                                   QuietGormLogger(),
 	})
@@ -204,7 +199,7 @@ func (h *MysqlInitHandler) EnsureDB(ctx context.Context, dbName string, conf Con
 	if err := db.Exec(createSQL).Error; err != nil {
 		return ctx, nil, err
 	}
-	ctx = context.WithValue(ctx, "db", db)
+	ctx = context.WithValue(ctx, initDBKey{}, db)
 	return ctx, db, nil
 }
 
@@ -222,8 +217,7 @@ func (h *PostgresInitHandler) EnsureDB(ctx context.Context, dbName string, conf 
 	if dbName == "" {
 		return ctx, nil, nil
 	}
-	dsn := conf.DataSource
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+	db, err := gorm.Open(postgres.Open(conf.DataSource), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
 		Logger:                                   QuietGormLogger(),
 	})
@@ -234,7 +228,7 @@ func (h *PostgresInitHandler) EnsureDB(ctx context.Context, dbName string, conf 
 	if err := db.Exec(createSQL).Error; err != nil {
 		return ctx, nil, err
 	}
-	ctx = context.WithValue(ctx, "db", db)
+	ctx = context.WithValue(ctx, initDBKey{}, db)
 	return ctx, db, nil
 }
 
@@ -248,16 +242,15 @@ func (h *PostgresInitHandler) InitData(ctx context.Context, db *gorm.DB, inits i
 
 type SqliteInitHandler struct{}
 
-func (h *SqliteInitHandler) EnsureDB(ctx context.Context, dbName string, conf Config) (context.Context, *gorm.DB, error) {
-	dsn := conf.DataSource
-	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
+func (h *SqliteInitHandler) EnsureDB(ctx context.Context, _ string, conf Config) (context.Context, *gorm.DB, error) {
+	db, err := gorm.Open(sqlite.Open(conf.DataSource), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
 		Logger:                                   QuietGormLogger(),
 	})
 	if err != nil {
 		return ctx, nil, err
 	}
-	ctx = context.WithValue(ctx, "db", db)
+	ctx = context.WithValue(ctx, initDBKey{}, db)
 	return ctx, db, nil
 }
 

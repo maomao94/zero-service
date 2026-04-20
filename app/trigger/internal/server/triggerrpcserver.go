@@ -268,3 +268,9 @@ func (s *TriggerRpcServer) NextId(ctx context.Context, in *trigger.NextIdReq) (*
 	l := logic.NewNextIdLogic(ctx, s.svcCtx)
 	return l.NextId(in)
 }
+
+// 并发调用调度
+func (s *TriggerRpcServer) Invoke(ctx context.Context, in *trigger.InvokeReq) (*trigger.InvokeRes, error) {
+	l := logic.NewInvokeLogic(ctx, s.svcCtx)
+	return l.Invoke(in)
+}

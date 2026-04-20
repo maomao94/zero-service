@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"strings"
 	"time"
 
 	"github.com/cloudwego/eino/schema"
@@ -59,13 +60,16 @@ func FromSchemaMessage(userID, sessionID string, msg *schema.Message) *Conversat
 
 // MessagesToText 将消息列表转换为纯文本，方便调试。
 func MessagesToText(msgs []*ConversationMessage) string {
-	var text string
+	var b strings.Builder
 	for _, msg := range msgs {
 		role := msg.Role
 		if role == "" {
 			role = "user"
 		}
-		text += role + ": " + msg.Content + "\n\n"
+		b.WriteString(role)
+		b.WriteString(": ")
+		b.WriteString(msg.Content)
+		b.WriteString("\n\n")
 	}
-	return text
+	return b.String()
 }
