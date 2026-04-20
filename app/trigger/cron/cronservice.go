@@ -9,6 +9,7 @@ import (
 	"zero-service/app/trigger/internal/execdelay"
 	"zero-service/app/trigger/internal/planscope"
 	"zero-service/app/trigger/internal/svc"
+	"zero-service/app/trigger/internal/triggerutil"
 	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
 	"zero-service/model"
@@ -207,6 +208,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 		defer close(errCh)
 		lockKey := fmt.Sprintf("trigger:lock:plan:exec:%s", execItem.ExecId)
 		lock := redis.NewRedisLock(s.svcCtx.Redis, lockKey)
+		lock.SetExpire(triggerutil.RedisLockExpireSeconds(execItem.RequestTimeout))
 		b, taskErr := lock.AcquireCtx(ctx)
 		if taskErr != nil {
 			errCh <- fmt.Errorf("调用下游前获取 Redis 锁失败: %w", taskErr)
@@ -221,7 +223,8 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 			if releaseErr != nil {
 				logx.WithContext(ctx).Errorf("执行回调 Redis 锁释放失败: %v", releaseErr)
 			} else if !ok {
-				logx.WithContext(ctx).Info("执行回调 Redis 锁释放：锁已过期或不存在")
+				// 多见于锁 TTL 短于 RPC（默认未 SetExpire 仅 ~500ms）；已 SetExpire 后仅极端情况（key 被删/过期竞态）
+				logx.WithContext(ctx).Debug("执行回调 Redis 锁释放：未删除 key（多因锁已过期或 token 不一致）")
 			}
 		}()
 		res, taskErr = s.svcCtx.StreamEventCli.HandlerPlanTaskEvent(ctx, req)
