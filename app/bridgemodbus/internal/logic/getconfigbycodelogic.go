@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"zero-service/common/copierx"
+	"zero-service/model/gormmodel"
 
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/app/bridgemodbus/internal/svc"
@@ -27,7 +28,8 @@ func NewGetConfigByCodeLogic(ctx context.Context, svcCtx *svc.ServiceContext) *G
 
 // 根据编码查询详情
 func (l *GetConfigByCodeLogic) GetConfigByCode(in *bridgemodbus.GetConfigByCodeReq) (*bridgemodbus.GetConfigByCodeRes, error) {
-	cfg, err := l.svcCtx.ModbusSlaveConfigModel.FindOneByModbusCode(l.ctx, in.ModbusCode)
+	var cfg gormmodel.ModbusSlaveConfig
+	err := l.svcCtx.DB.WithContext(l.ctx).Where("modbus_code = ?", in.ModbusCode).First(&cfg).Error
 	if err != nil {
 		return nil, err
 	}

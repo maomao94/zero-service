@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Solo · Mode 驱动多智能体</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="vendor/highlight/atom-one-dark.min.css" />
+  <link rel="stylesheet" href="styles/solo.css" />
+
+  <!-- importmap: 所有模块解析都走 esm.sh 锁版本, 方便离线也能替换成 local vendor -->
+  <script type="importmap">
+    {
+      "imports": {
+        "preact":         "https://esm.sh/preact@10.24.0",
+        "preact/hooks":   "https://esm.sh/preact@10.24.0/hooks",
+        "htm":            "https://esm.sh/htm@3.1.1",
+        "htm/preact":     "https://esm.sh/htm@3.1.1/preact"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="vendor/marked/marked.min.js"></script>
+  <script src="vendor/highlight/highlight.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

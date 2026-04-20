@@ -1,6 +1,7 @@
 package config
 
 import (
+	"zero-service/common/gormx"
 	"zero-service/common/modbusx"
 
 	"github.com/zeromicro/go-zero/zrpc"
@@ -18,8 +19,6 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
-	DB struct {
-		DataSource string
-	}
+	DB               gormx.Config
 	ModbusClientConf modbusx.ModbusClientConf
 }

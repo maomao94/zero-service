@@ -89,8 +89,104 @@ type ChunkChoice struct {
 	FinishReason *string   `json:"finish_reason,optional"` // 结束原因: stop / length / content_filter / tool_calls
 }
 
-type JwtAuth struct {
-	Authorization string `header:"Authorization,optional"`
+type KnowledgeBaseInfo struct {
+	Id        string `json:"id"`
+	Name      string `json:"name"`
+	CreatedAt int64  `json:"createdAt"`
+}
+
+type KnowledgeCitationInfo struct {
+	Text     string  `json:"text"`
+	Score    float64 `json:"score"`
+	SourceId string  `json:"sourceId,optional"`
+	Filename string  `json:"filename,optional"`
+}
+
+type KnowledgeCreateBaseRequest struct {
+	Name string `json:"name"`
+}
+
+type KnowledgeCreateBaseResponse struct {
+	Id string `json:"id"`
+}
+
+type KnowledgeDeleteBaseRequest struct {
+	BaseId string `path:"baseId"`
+}
+
+type KnowledgeDeleteBaseResponse struct {
+	Success bool `json:"success"`
+}
+
+type KnowledgeDeleteDocumentRequest struct {
+	BaseId   string `path:"baseId"`
+	SourceId string `path:"sourceId"`
+}
+
+type KnowledgeDeleteDocumentResponse struct {
+	Success bool `json:"success"`
+}
+
+type KnowledgeDocumentInfo struct {
+	Id        string `json:"id"`
+	Filename  string `json:"filename"`
+	Chunks    int    `json:"chunks"`
+	CreatedAt int64  `json:"createdAt"`
+}
+
+type KnowledgeIngestBatchRequest struct {
+	BaseId string                `path:"baseId"`
+	Items  []KnowledgeIngestItem `json:"items"`
+}
+
+type KnowledgeIngestBatchResponse struct {
+	Results []KnowledgeIngestBatchResultItem `json:"results"`
+}
+
+type KnowledgeIngestBatchResultItem struct {
+	Filename string `json:"filename"`
+	SourceId string `json:"sourceId"`
+	Chunks   int    `json:"chunks"`
+	Error    string `json:"error,optional"`
+}
+
+type KnowledgeIngestItem struct {
+	Filename string `json:"filename,optional"`
+	Content  string `json:"content"`
+}
+
+type KnowledgeIngestRequest struct {
+	BaseId   string `path:"baseId"`
+	Filename string `json:"filename,optional"`
+	Content  string `json:"content"`
+}
+
+type KnowledgeIngestResponse struct {
+	SourceId string `json:"sourceId"`
+	Chunks   int    `json:"chunks"`
+}
+
+type KnowledgeListBasesResponse struct {
+	Bases []KnowledgeBaseInfo `json:"bases"`
+}
+
+type KnowledgeListDocumentsRequest struct {
+	BaseId string `path:"baseId"`
+}
+
+type KnowledgeListDocumentsResponse struct {
+	Documents []KnowledgeDocumentInfo `json:"documents"`
+}
+
+type KnowledgeQueryRequest struct {
+	BaseId string `path:"baseId"`
+	Query  string `json:"query"`
+	TopK   int    `json:"topK,optional"`
+}
+
+type KnowledgeQueryResponse struct {
+	Hits    []KnowledgeCitationInfo `json:"hits"`
+	Context string                  `json:"context"`
 }
 
 type ListAsyncResultsRequest struct {
@@ -135,6 +231,187 @@ type ProgressMessage struct {
 	Total    float64 `json:"total"`    // 进度总值（参考值）
 	Message  string  `json:"message"`  // 消息内容
 	Time     int64   `json:"time"`     // 时间戳，Unix 秒
+}
+
+type SoloBindKnowledgeRequest struct {
+	SessionId         string `path:"sessionId"`
+	KnowledgeBaseId   string `json:"knowledgeBaseId"`
+	KnowledgeBaseName string `json:"knowledgeBaseName,optional"`
+}
+
+type SoloBindKnowledgeResponse struct {
+	Session *SoloSessionInfo `json:"session"`
+}
+
+type SoloChatRequest struct {
+	SessionId string `json:"sessionId"`       // 会话 ID（必填）
+	Message   string `json:"message"`         // 消息内容
+	Mode      string `json:"mode,optional"`   // agent | workflow-sequential | workflow-parallel | workflow-loop | supervisor | plan | deep
+	UiLang    string `json:"uiLang,optional"` // 可选 zh|en，透传 aisolo AskReq.ui_lang，更新会话默认 UI 语言
+}
+
+type SoloChatResponse struct {
+}
+
+type SoloCreateSessionRequest struct {
+	Title             string `json:"title,optional"`
+	Mode              string `json:"mode,optional"`   // 可选; 留空走默认 agent; Workflow 见 SoloChatRequest.Mode
+	UiLang            string `json:"uiLang,optional"` // 可选 zh|en, 写入会话默认 UI 语言 (首轮 Ask 前即生效)
+	KnowledgeBaseId   string `json:"knowledgeBaseId,optional"`
+	KnowledgeBaseName string `json:"knowledgeBaseName,optional"`
+}
+
+type SoloCreateSessionResponse struct {
+	Session *SoloSessionInfo `json:"session"`
+}
+
+type SoloDeleteSessionRequest struct {
+	SessionId string `path:"sessionId"`
+}
+
+type SoloDeleteSessionResponse struct {
+	Success bool `json:"success"`
+}
+
+type SoloField struct {
+	Name        string        `json:"name"`
+	Label       string        `json:"label"`
+	Type        string        `json:"type"`
+	Required    bool          `json:"required,optional"`
+	Placeholder string        `json:"placeholder,optional"`
+	Default     string        `json:"default,optional"`
+	Widget      string        `json:"widget,optional"` // text|textarea|select|radio|multi_select|checkbox|switch|number
+	Options     []*SoloOption `json:"options,optional"`
+	MinSelect   int           `json:"minSelect,optional"`   // multi_select 最少选择项
+	MaxSelect   int           `json:"maxSelect,optional"`   // multi_select 最多选择项，0 表示不限制
+	AllowCustom bool          `json:"allowCustom,optional"` // 为 true 时展示「其他」自定义输入
+}
+
+type SoloGetInterruptRequest struct {
+	InterruptId string `path:"interruptId"`
+}
+
+type SoloGetInterruptResponse struct {
+	Info *SoloInterruptInfo `json:"info"`
+}
+
+type SoloGetSessionRequest struct {
+	SessionId string `path:"sessionId"`
+}
+
+type SoloGetSessionResponse struct {
+	Session *SoloSessionInfo `json:"session"`
+}
+
+type SoloInterruptInfo struct {
+	InterruptId string        `json:"interruptId"`
+	Kind        string        `json:"kind"`
+	ToolName    string        `json:"toolName,optional"`
+	Required    bool          `json:"required,optional"`
+	UiLang      string        `json:"uiLang,optional"` // 由模型提示的 UI 语言, 如 zh/en
+	Question    string        `json:"question,optional"`
+	Detail      string        `json:"detail,optional"`
+	Options     []*SoloOption `json:"options,optional"`
+	MinSelect   int           `json:"minSelect,optional"`
+	MaxSelect   int           `json:"maxSelect,optional"`
+	Placeholder string        `json:"placeholder,optional"`
+	Multiline   bool          `json:"multiline,optional"`
+	Fields      []*SoloField  `json:"fields,optional"`
+	Title       string        `json:"title,optional"`
+	Body        string        `json:"body,optional"`
+	AgentName   string        `json:"agentName,optional"` // 触发中断的 ADK Agent 名
+}
+
+type SoloInterruptRequest struct {
+	SessionId   string            `json:"sessionId,optional"`
+	InterruptId string            `path:"interruptId"`
+	Action      string            `json:"action,optional"`
+	SelectedIds []string          `json:"selectedIds,optional"`
+	Reason      string            `json:"reason,optional"`
+	Text        string            `json:"text,optional"`
+	FormValues  map[string]string `json:"formValues,optional"`
+}
+
+type SoloInterruptResponse struct {
+}
+
+type SoloListMessagesRequest struct {
+	SessionId string `path:"sessionId"`
+	Limit     int    `form:"limit,optional"`
+}
+
+type SoloListMessagesResponse struct {
+	Messages []*SoloMessageInfo `json:"messages"`
+	Total    int                `json:"total"`
+}
+
+type SoloListModesResponse struct {
+	Modes []*SoloModeInfo `json:"modes"`
+}
+
+type SoloListSessionsRequest struct {
+	Page     int `form:"page,optional"`
+	PageSize int `form:"pageSize,optional"`
+}
+
+type SoloListSessionsResponse struct {
+	Sessions   []*SoloSessionInfo `json:"sessions"`
+	Total      int                `json:"total"`
+	Page       int                `json:"page"`
+	TotalPages int                `json:"totalPages"`
+}
+
+type SoloListSkillsResponse struct {
+	Skills []*SoloSkillInfo `json:"skills"`
+}
+
+type SoloMessageInfo struct {
+	Id         string `json:"id"`
+	SessionId  string `json:"sessionId"`
+	UserId     string `json:"userId"`
+	Role       string `json:"role"` // user | assistant | tool | system
+	Content    string `json:"content"`
+	CreatedAt  int64  `json:"createdAt"`
+	ToolCallId string `json:"toolCallId,optional"`
+	ToolName   string `json:"toolName,optional"`
+}
+
+type SoloModeInfo struct {
+	Mode         string   `json:"mode"` // agent | workflow-sequential | workflow-parallel | workflow-loop | supervisor | plan | deep
+	Name         string   `json:"name"` // 展示名
+	Description  string   `json:"description"`
+	Capabilities []string `json:"capabilities"`
+	Default      bool     `json:"default"`
+}
+
+type SoloOption struct {
+	Id    string `json:"id"`
+	Label string `json:"label"`
+	Desc  string `json:"desc,optional"`
+}
+
+type SoloSessionInfo struct {
+	SessionId         string `json:"sessionId"`
+	UserId            string `json:"userId"`
+	Mode              string `json:"mode"`   // 与 SoloChatRequest.Mode 同套字符串
+	Status            string `json:"status"` // idle | running | interrupted
+	InterruptId       string `json:"interruptId,optional"`
+	Title             string `json:"title"`
+	CreatedAt         int64  `json:"createdAt"`
+	UpdatedAt         int64  `json:"updatedAt"`
+	MessageCount      int    `json:"messageCount"`
+	LastMessage       string `json:"lastMessage"`
+	UiLang            string `json:"uiLang,optional"` // 会话默认 UI 语言 (由网关透传 gRPC)
+	KnowledgeBaseId   string `json:"knowledgeBaseId,optional"`
+	KnowledgeBaseName string `json:"knowledgeBaseName,optional"`
+}
+
+type SoloSkillInfo struct {
+	Id           string   `json:"id"`
+	Name         string   `json:"name"`
+	Description  string   `json:"description"`
+	Tags         []string `json:"tags,optional"`
+	LaunchPrompt string   `json:"launchPrompt,optional"`
 }
 
 type ThinkingParam struct {

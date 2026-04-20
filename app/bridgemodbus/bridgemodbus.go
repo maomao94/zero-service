@@ -3,14 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	interceptor "zero-service/common/Interceptor/rpcserver"
-	"zero-service/common/nacosx"
-	"zero-service/common/tool"
-
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/app/bridgemodbus/internal/config"
 	"zero-service/app/bridgemodbus/internal/server"
 	"zero-service/app/bridgemodbus/internal/svc"
+	interceptor "zero-service/common/Interceptor/rpcserver"
+	"zero-service/common/nacosx"
+	"zero-service/common/tool"
 
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
@@ -42,7 +41,7 @@ func main() {
 			reflection.Register(grpcServer)
 		}
 	})
-	// register service to nacos
+
 	if c.NacosConfig.IsRegister {
 		sc := []constant.ServerConfig{
 			*constant.NewServerConfig(c.NacosConfig.Host, c.NacosConfig.Port),

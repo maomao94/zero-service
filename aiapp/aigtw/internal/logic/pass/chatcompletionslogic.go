@@ -64,6 +64,7 @@ func (l *ChatCompletionsLogic) handleStream(req *types.ChatCompletionRequest) er
 
 	grpcStream, err := l.svcCtx.AiChatCli.ChatCompletionStream(l.ctx, protoReq)
 	if err != nil {
+		l.writeStreamError(sw, "upstream_unavailable", "failed to start stream")
 		return err
 	}
 
@@ -78,9 +79,7 @@ func (l *ChatCompletionsLogic) handleStream(req *types.ChatCompletionRequest) er
 		}
 		if err != nil {
 			l.Logger.Errorf("stream recv error: %v", err)
-			// SSE 已开始写入（HTTP 200 已提交），不能再返回 error 给 handler 写 JSON 错误，
-			// 否则客户端 SSE parser 无法解析混入的 JSON 错误体。
-			// 直接返回 nil，让连接正常关闭，客户端通过未收到 [DONE] 检测异常。
+			l.writeStreamError(sw, "stream_recv_error", "upstream stream interrupted")
 			return nil
 		}
 
@@ -106,9 +105,22 @@ func (l *ChatCompletionsLogic) handleStream(req *types.ChatCompletionRequest) er
 		httpChunk := toHTTPChunk(chunk)
 		if err := sw.WriteJSON(httpChunk); err != nil {
 			l.Logger.Errorf("write sse chunk error: %v", err)
+			l.writeStreamError(sw, "stream_write_error", "failed to write sse chunk")
 			return nil
 		}
 	}
+}
+
+func (l *ChatCompletionsLogic) writeStreamError(sw *ssex.Writer, code, message string) {
+	payload, err := json.Marshal(map[string]string{
+		"code":    code,
+		"message": message,
+	})
+	if err != nil {
+		l.Logger.Errorf("marshal stream error payload failed: %v", err)
+		return
+	}
+	sw.WriteEvent("error", string(payload))
 }
 
 // inferToolEventType 根据 JSON 内容推断工具事件类型

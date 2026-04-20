@@ -6,6 +6,8 @@ package config
 import (
 	"github.com/zeromicro/go-zero/rest"
 	"github.com/zeromicro/go-zero/zrpc"
+
+	einoxkb "zero-service/common/einox/knowledge"
 )
 
 type AbilityConfig struct {
@@ -24,5 +26,8 @@ type Config struct {
 		ClaimMapping map[string]string `json:",optional"` // 外部 JWT claim key 映射为内部 key（如 "user-id" -> "user_id"）
 	}
 	AiChatRpcConf zrpc.RpcClientConf
+	AiSoloRpcConf zrpc.RpcClientConf
 	Abilities     []AbilityConfig `json:",optional"`
+	// Knowledge 向量知识库（与 aisolo 共用 dataDir 时需配置一致）。
+	Knowledge einoxkb.Config `json:"knowledge,optional"`
 }

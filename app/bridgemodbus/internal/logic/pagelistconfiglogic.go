@@ -3,11 +3,12 @@ package logic
 import (
 	"context"
 	"zero-service/common/copierx"
+	"zero-service/common/gormx"
+	"zero-service/model/gormmodel"
 
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/app/bridgemodbus/internal/svc"
 
-	"github.com/Masterminds/squirrel"
 	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -28,25 +29,26 @@ func NewPageListConfigLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Pa
 
 // 分页查询配置列表
 func (l *PageListConfigLogic) PageListConfig(in *bridgemodbus.PageListConfigReq) (*bridgemodbus.PageListConfigRes, error) {
-	whereBuilder := l.svcCtx.ModbusSlaveConfigModel.SelectBuilder()
+	// 构建查询
+	db := l.svcCtx.DB.WithContext(l.ctx).Model(&gormmodel.ModbusSlaveConfig{})
 	if len(in.Keyword) > 0 {
-		whereBuilder = whereBuilder.Where(squirrel.Like{
-			"modbus_code": in.Keyword + "%",
-		})
+		db = db.Where("modbus_code LIKE ?", in.Keyword+"%")
 	}
 	if in.Status > 0 {
-		whereBuilder = whereBuilder.Where(squirrel.Eq{
-			"status": in.Status,
-		})
+		db = db.Where("status = ?", in.Status)
 	}
-	list, total, err := l.svcCtx.ModbusSlaveConfigModel.FindPageListByPageWithTotal(l.ctx, whereBuilder, in.Page, in.PageSize)
+
+	// 使用 gormx 分页
+	var list []gormmodel.ModbusSlaveConfig
+	pageResult, err := gormx.QueryPage(db, int(in.Page), int(in.PageSize), &list)
 	if err != nil {
 		return nil, err
 	}
+
 	var pbList []*bridgemodbus.PbModbusConfig
 	_ = copier.CopyWithOption(&pbList, list, copierx.Option)
 	return &bridgemodbus.PageListConfigRes{
-		Total: uint32(total),
+		Total: uint32(pageResult.Total),
 		Cfg:   pbList,
 	}, nil
 }

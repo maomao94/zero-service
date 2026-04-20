@@ -627,7 +627,7 @@ ToolEventHandlers --> ToolEvent : 数据绑定
 
 **图表来源**
 - [chatcompletionstreamlogic.go:23-54](file://aiapp/aichat/internal/logic/chatcompletionstreamlogic.go#L23-L54)
-- [chatcompletionstreamlogic.go:201-256](file/aiapp/aichat/internal/logic/chatcompletionstreamlogic.go#L201-L256)
+- [chatcompletionstreamlogic.go:201-256](file://aiapp/aichat/internal/logic/chatcompletionstreamlogic.go#L201-L256)
 - [tool.html:2351-2426](file://aiapp/aigtw/tool.html#L2351-L2426)
 
 **更新** 事件系统流程：
@@ -818,7 +818,7 @@ class ListAsyncResultsLogic {
 +存储列表查询
 }
 class AsyncResultStatsLogic {
-+AsyncResultStats(in) AsyncResultStat
++AsyncResultStats(in) AsyncResultStats
 +统计查询
 +存储统计
 +统计计算
@@ -1349,6 +1349,9 @@ MemoryAsyncResultStore --> FrontendTimeDisplay : 提供数据
 | **新增** 时间戳精度升级 | 毫秒级 | 时间戳精度提升 | 时间戳配置 |
 | **新增** 异步存储毫秒级 | 毫秒级 | 异步存储时间精度 | 存储配置 |
 | **新增** 进度消息毫秒级 | 毫秒级 | 进度消息时间精度 | 消息配置 |
+| **新增** 工具调用精度提升 | 毫秒级 | 工具调用时间精度 | 调用配置 |
+| **新增** 内存存储改进 | 毫秒级 | 内存存储过期精度 | 存储配置 |
+| **新增** 进度回调系统增强 | 毫秒级 | 进度回调时间精度 | 回调配置 |
 
 **更新** 超时优先级判断：
 1. 客户端断开（浏览器关闭SSE→aigtw取消gRPC调用→l.ctx取消）
@@ -1519,7 +1522,7 @@ MemoryAsyncResultStore --> FrontendTimeDisplay : 提供数据
 - **工具事件系统优化**：工具事件处理的性能优化
 - **前端事件处理优化**：前端事件解析的性能优化
 - **进度跟踪日志优化**：详细的进度跟踪日志记录性能优化
-- **开发者可见性优化**：开发者可见性的提升性能优化
+- **开发者可见性优化**：开发者可见性的性能优化
 - **时间戳精度升级优化**：毫秒级时间戳的性能优化
 - **异步存储优化优化**：毫秒级存储的性能优化
 - **进度跟踪增强优化**：毫秒级进度跟踪的性能优化
@@ -1582,6 +1585,7 @@ MemoryAsyncResultStore --> FrontendTimeDisplay : 提供数据
 | **新增** 前端显示优化错误 | INTERNAL | 前端毫秒级显示异常 | 检查毫秒级时间显示配置 |
 | **新增** 工具调用精度提升错误 | INTERNAL | 工具调用毫秒级精度异常 | 检查毫秒级工具调用配置 |
 | **新增** 内存存储改进错误 | INTERNAL | 内存存储毫秒级过期异常 | 检查毫秒级过期清理配置 |
+| **新增** 进度回调系统增强错误 | INTERNAL | 进度回调毫秒级精度异常 | 检查毫秒级进度回调配置 |
 
 **更新** 新增的MCP相关错误：
 - MCP连接失败：检查Mcpx.Servers配置和SSE端点可达性
@@ -1780,13 +1784,13 @@ MemoryAsyncResultStore --> FrontendTimeDisplay : 提供数据
 100. **新增** 事件监控测试：验证工具事件处理的监控和统计功能
 101. **新增** 进度跟踪日志功能测试：验证详细的进度跟踪日志记录功能
 102. **新增** 开发者可见性功能测试：验证开发者可见性的提升效果
-103. **新增** 时间戳精度升级功能测试：验证毫秒级时间戳的处理和记录
-104. **新增** 异步存储优化功能测试：验证毫秒级存储的处理和记录
-105. **新增** 进度跟踪增强功能测试：验证毫秒级进度跟踪的处理和记录
-106. **新增** 前端显示优化功能测试：验证毫秒级时间显示的处理和记录
-107. **新增** 工具调用精度提升功能测试：验证毫秒级工具调用的处理和记录
-108. **新增** 内存存储改进功能测试：验证毫秒级过期清理的处理和记录
-109. **新增** 进度回调系统增强功能测试：验证毫秒级进度回调的处理和记录
+103. **新增** 时间戳精度升级功能测试：验证毫秒级时间戳的处理和记录功能
+104. **新增** 异步存储优化功能测试：验证毫秒级存储的处理和记录功能
+105. **新增** 进度跟踪增强功能测试：验证毫秒级进度跟踪的处理和记录功能
+106. **新增** 前端显示优化功能测试：验证毫秒级时间显示的处理和记录功能
+107. **新增** 工具调用精度提升功能测试：验证毫秒级工具调用的处理和记录功能
+108. **新增** 内存存储改进功能测试：验证毫秒级过期清理的处理和记录功能
+109. **新增** 进度回调系统增强功能测试：验证毫秒级进度回调的处理和记录功能
 
 **更新** 新增调试技巧：
 - 调整超时配置：根据实际需求调整StreamTimeout、StreamIdleTimeout和MaxToolRounds

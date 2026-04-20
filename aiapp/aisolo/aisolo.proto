@@ -1,0 +1,354 @@
+syntax = "proto3";
+package aisolo;
+
+option go_package = "./aisolo";
+
+// ============================================================
+// AI Solo - 基于 Eino ADK 的 AI 助手服务
+//
+// 设计要点:
+//   1. 用户只看到 Mode, 不再有 Agent 选择。
+//   2. 所有对话交互走 SSE 流; 每帧 data 是完整 JSON Event (见 einox/protocol)。
+//   3. 中断类型统一为 6 种 kind, 通过 InterruptInfo.kind 区分。
+//   4. 恢复请求按 kind 携带不同字段, 服务端据此组装 ResumeResult。
+// ============================================================
+
+// AgentMode Agent 运行模式, 对齐 eino ADK 的核心能力。
+// 核心模式在前；Workflow 家族置于末尾连续编号，后续新增 AGENT_MODE_WORKFLOW_* 接在 8、9… 即可，不扰动前方取值。
+enum AgentMode {
+  AGENT_MODE_UNSPECIFIED = 0;
+  AGENT_MODE_AGENT       = 1; // ChatModelAgent + tools, ReAct 推理 (默认)
+  AGENT_MODE_SUPERVISOR  = 2; // prebuilt/supervisor 多 Agent 协作
+  AGENT_MODE_PLAN        = 3; // prebuilt/planexecute 计划-执行
+  AGENT_MODE_DEEP        = 4; // prebuilt/deep 深度研究
+  AGENT_MODE_WORKFLOW_SEQUENTIAL = 5; // ADK Sequential Workflow（Planner → Summarizer）
+  AGENT_MODE_WORKFLOW_PARALLEL = 6; // ADK Parallel Workflow
+  AGENT_MODE_WORKFLOW_LOOP = 7; // ADK Loop Workflow
+}
+
+// InterruptKind 中断种类, 驱动前端 UI 渲染选择。
+enum InterruptKind {
+  INTERRUPT_KIND_UNSPECIFIED   = 0;
+  INTERRUPT_KIND_APPROVAL      = 1; // 二选一确认 (前端 yes / no)
+  INTERRUPT_KIND_SINGLE_SELECT = 2; // 单选
+  INTERRUPT_KIND_MULTI_SELECT  = 3; // 多选
+  INTERRUPT_KIND_FREE_TEXT     = 4; // 自由文本输入
+  INTERRUPT_KIND_FORM_INPUT    = 5; // 结构化表单
+  INTERRUPT_KIND_INFO_ACK      = 6; // 展示信息 + 点击确认
+}
+
+// SessionStatus 会话运行状态。
+enum SessionStatus {
+  SESSION_STATUS_UNSPECIFIED = 0;
+  SESSION_STATUS_IDLE        = 1; // 空闲, 可以开始新一轮
+  SESSION_STATUS_RUNNING     = 2; // 正在执行中
+  SESSION_STATUS_INTERRUPTED = 3; // 中断中, 等待用户恢复
+}
+
+// ResumeAction 恢复动作。仅 yes / no；具体负载字段仍按 InterruptKind 填写。
+enum ResumeAction {
+  RESUME_ACTION_UNSPECIFIED = 0;
+  RESUME_ACTION_YES = 1;
+  RESUME_ACTION_NO  = 2;
+}
+
+// ============================================================
+// 对话请求 / 流式响应
+// ============================================================
+
+// AskReq 一轮对话请求。
+message AskReq {
+  string session_id = 1;
+  string user_id = 2;
+  string message = 3;
+  AgentMode mode = 4;              // 可选, 留空则使用 session 当前 mode
+  reserved 5;                      // 曾为 map meta，已废弃；勿复用该编号
+  string ui_lang = 6;              // 可选 zh|en；非空时更新会话默认 UI 语言（与 CreateSessionReq.ui_lang 语义一致）
+}
+
+// AskStreamChunk 每一帧的 JSON Event (见 einox/protocol 定义)。
+message AskStreamChunk {
+  string session_id = 1;
+  string data = 2;        // 完整 JSON Event, 按行输出
+  bool   is_final = 3;    // 最后一帧
+}
+
+message AskStreamResp {
+  AskStreamChunk chunk = 1;
+}
+
+// ============================================================
+// 中断 / 恢复
+// ============================================================
+
+// Option 单选 / 多选的候选项。
+message Option {
+  string id = 1;
+  string label = 2;
+  string desc = 3;
+}
+
+// Field 表单字段 (form_input 使用)。
+message Field {
+  string name = 1;
+  string label = 2;
+  string type = 3;         // string | number | boolean
+  bool required = 4;
+  string placeholder = 5;
+  string default = 6;
+  string widget = 7;       // text|textarea|select|radio|multi_select|checkbox|switch|number
+  repeated Option options = 8;
+  int32 min_select = 9;
+  int32 max_select = 10;
+  bool allow_custom = 11;  // 单选/下拉/多选下展示「其他」输入，由业务按需开启
+}
+
+// InterruptInfo 结构化中断元数据。Kind 决定哪些字段有效:
+//   APPROVAL      -> question, detail
+//   SINGLE_SELECT -> question, options
+//   MULTI_SELECT  -> question, options, min_select, max_select
+//   FREE_TEXT     -> question, placeholder, multiline
+//   FORM_INPUT    -> question, fields
+//   INFO_ACK      -> title, body
+message InterruptInfo {
+  string interrupt_id = 1;
+  InterruptKind kind = 2;
+  string tool_name = 3;
+  bool required = 4;
+  string ui_lang = 5;      // UI 语言提示 (如 zh/en), 优先供前端文案渲染
+
+  string question = 10;
+  string detail = 11;
+  repeated Option options = 12;
+  int32 min_select = 13;
+  int32 max_select = 14;
+  string placeholder = 15;
+  bool multiline = 16;
+  repeated Field fields = 17;
+  string title = 18;
+  string body = 19;
+  string agent_name = 20; // 触发中断的 ADK Agent（与 protocol.InterruptData.agent_name 对齐）
+}
+
+// ResumeReq 恢复执行。按 kind / action 填对应字段。
+message ResumeReq {
+  string session_id = 1;
+  string user_id = 2;
+  string interrupt_id = 3;
+
+  ResumeAction action = 4;
+
+  // approval 用
+  string reason = 10;
+
+  // single/multi select 用
+  repeated string selected_ids = 20;
+
+  // free_text 用
+  string text = 30;
+
+  // form_input 用
+  map<string, string> form_values = 40;
+}
+
+message ResumeStreamChunk {
+  string session_id = 1;
+  string data = 2;
+  bool is_final = 3;
+  bool has_interrupt = 4;
+  string interrupt_id = 5;
+}
+
+message ResumeStreamResp {
+  ResumeStreamChunk chunk = 1;
+}
+
+// ============================================================
+// 会话管理
+// ============================================================
+
+message Session {
+  string session_id = 1;
+  string user_id = 2;
+  string title = 3;
+  AgentMode mode = 4;
+  SessionStatus status = 5;
+  string interrupt_id = 6;       // status=INTERRUPTED 时非空
+  int64 created_at = 7;
+  int64 updated_at = 8;
+  int32 message_count = 9;
+  string last_message = 10;
+  string ui_lang = 11;             // 会话默认 UI 语言 (zh/en), 由 AskReq.ui_lang 更新
+  string knowledge_base_id = 12;   // 当前会话绑定的知识库 ID（由网关/BFF 检索注入使用）
+  string knowledge_base_name = 13; // 当前会话绑定的知识库名称（供前端展示）
+}
+
+message CreateSessionReq {
+  string user_id = 1;
+  string title = 2;
+  AgentMode mode = 3;
+  string ui_lang = 4; // 可选, 初始会话默认 UI 语言 (zh/en); 与 AskReq.ui_lang 规则一致
+  string knowledge_base_id = 5;
+  string knowledge_base_name = 6;
+}
+
+message CreateSessionResp {
+  Session session = 1;
+}
+
+message BindKnowledgeBaseReq {
+  string session_id = 1;
+  string user_id = 2;
+  string knowledge_base_id = 3;
+  string knowledge_base_name = 4;
+}
+
+message BindKnowledgeBaseResp {
+  Session session = 1;
+}
+
+message GetSessionReq {
+  string session_id = 1;
+  string user_id = 2;
+}
+
+message GetSessionResp {
+  Session session = 1;
+}
+
+message ListSessionsReq {
+  string user_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message ListSessionsResp {
+  repeated Session sessions = 1;
+  int64 total = 2;
+  int32 page = 3;
+  int32 total_pages = 4;
+}
+
+message DeleteSessionReq {
+  string session_id = 1;
+  string user_id = 2;
+}
+
+message DeleteSessionResp {
+  bool success = 1;
+}
+
+// ============================================================
+// 获取中断详情 (页面刷新后回填 UI 使用)
+// ============================================================
+
+message GetInterruptReq {
+  string interrupt_id = 1;
+  string user_id = 2;
+}
+
+message GetInterruptResp {
+  InterruptInfo info = 1;
+}
+
+// ============================================================
+// 历史消息
+// ============================================================
+
+message Message {
+  string id = 1;
+  string session_id = 2;
+  string user_id = 3;
+  string role = 4;            // user | assistant | tool | system
+  string content = 5;
+  int64 created_at = 6;
+  string tool_call_id = 7;
+  string tool_name = 8;
+}
+
+message ListMessagesReq {
+  string session_id = 1;
+  string user_id = 2;
+  int32 limit = 3;
+}
+
+message ListMessagesResp {
+  repeated Message messages = 1;
+  int32 total = 2;
+}
+
+// ============================================================
+// Mode 列表 (取代旧 ListAgents)
+// ============================================================
+
+message ModeInfo {
+  AgentMode mode = 1;
+  string name = 2;           // 展示名, 如 "Agent 模式"
+  string description = 3;
+  repeated string capabilities = 4;
+  bool default = 5;          // 是否是默认 mode
+}
+
+message ListModesReq {}
+
+message ListModesResp {
+  repeated ModeInfo modes = 1;
+}
+
+// SkillInfo 供前端展示技能标签 / launch（扫描 Skills 目录下 SKILL.md）。
+message SkillInfo {
+  string id = 1;                  // 子目录名
+  string name = 2;                // frontmatter name，缺省同 id
+  string description = 3;
+  repeated string tags = 4;
+  string launch_prompt = 5;       // 点击 chip 时预填或拼入用户消息的引导语
+}
+
+message ListSkillsReq {}
+
+message ListSkillsResp {
+  repeated SkillInfo skills = 1;
+}
+
+// ============================================================
+// 健康检查
+// ============================================================
+
+message HealthReq {}
+
+message HealthResp {
+  string status = 1;
+  string version = 2;
+  int64 timestamp = 3;
+  map<string, string> dependencies = 4;
+}
+
+// ============================================================
+// Service
+// ============================================================
+
+service AiSolo {
+  // 会话管理
+  rpc CreateSession(CreateSessionReq) returns (CreateSessionResp);
+  rpc BindKnowledgeBase(BindKnowledgeBaseReq) returns (BindKnowledgeBaseResp);
+  rpc GetSession(GetSessionReq) returns (GetSessionResp);
+  rpc ListSessions(ListSessionsReq) returns (ListSessionsResp);
+  rpc DeleteSession(DeleteSessionReq) returns (DeleteSessionResp);
+  rpc ListMessages(ListMessagesReq) returns (ListMessagesResp);
+
+  // 对话 / 恢复 (均为流式)
+  rpc AskStream(AskReq) returns (stream AskStreamResp);
+  rpc ResumeStream(ResumeReq) returns (stream ResumeStreamResp);
+
+  // Mode 列表
+  rpc ListModes(ListModesReq) returns (ListModesResp);
+
+  // Skills 目录元数据（供 Solo 动态标签）
+  rpc ListSkills(ListSkillsReq) returns (ListSkillsResp);
+
+  // 获取中断详情 (前端刷新后回填 UI)
+  rpc GetInterrupt(GetInterruptReq) returns (GetInterruptResp);
+
+  // 健康
+  rpc Health(HealthReq) returns (HealthResp);
+}

@@ -8,12 +8,23 @@ import (
 	"time"
 
 	pass "zero-service/aiapp/aigtw/internal/handler/pass"
+	solo "zero-service/aiapp/aigtw/internal/handler/solo"
 	"zero-service/aiapp/aigtw/internal/svc"
 
 	"github.com/zeromicro/go-zero/rest"
 )
 
 func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				Method:  http.MethodGet,
+				Path:    "/health",
+				Handler: HealthHandler(serverCtx),
+			},
+		},
+	)
+
 	server.AddRoutes(
 		[]rest.Route{
 			{
@@ -71,5 +82,150 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 		},
 		rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret),
 		rest.WithPrefix("/ai/v1"),
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				// 网关元数据（知识库后端等，供静态页展示）
+				Method:  http.MethodGet,
+				Path:    "/meta",
+				Handler: solo.GatewayMetaHandler(serverCtx),
+			},
+			{
+				// 获取中断详情（页面刷新后回填 UI）
+				Method:  http.MethodGet,
+				Path:    "/interrupt/:interruptId",
+				Handler: solo.GetInterruptHandler(serverCtx),
+			},
+			{
+				// 创建知识库
+				Method:  http.MethodPost,
+				Path:    "/knowledge/bases",
+				Handler: solo.CreateKnowledgeBaseHandler(serverCtx),
+			},
+			{
+				// 列出知识库
+				Method:  http.MethodGet,
+				Path:    "/knowledge/bases",
+				Handler: solo.ListKnowledgeBasesHandler(serverCtx),
+			},
+			{
+				// 删除知识库
+				Method:  http.MethodDelete,
+				Path:    "/knowledge/bases/:baseId",
+				Handler: solo.DeleteKnowledgeBaseHandler(serverCtx),
+			},
+			{
+				// 列出知识库内文档
+				Method:  http.MethodGet,
+				Path:    "/knowledge/bases/:baseId/documents",
+				Handler: solo.ListKnowledgeDocumentsHandler(serverCtx),
+			},
+			{
+				// 删除知识库内某文档向量
+				Method:  http.MethodDelete,
+				Path:    "/knowledge/bases/:baseId/documents/:sourceId",
+				Handler: solo.DeleteKnowledgeDocumentHandler(serverCtx),
+			},
+			{
+				// 单文档入库（分块 + 向量化）
+				Method:  http.MethodPost,
+				Path:    "/knowledge/bases/:baseId/ingest",
+				Handler: solo.IngestKnowledgeDocumentHandler(serverCtx),
+			},
+			{
+				// 批量文档入库
+				Method:  http.MethodPost,
+				Path:    "/knowledge/bases/:baseId/ingest-batch",
+				Handler: solo.IngestKnowledgeDocumentsHandler(serverCtx),
+			},
+			{
+				// 向量检索（测试或 BFF）
+				Method:  http.MethodPost,
+				Path:    "/knowledge/bases/:baseId/query",
+				Handler: solo.QueryKnowledgeBaseHandler(serverCtx),
+			},
+			{
+				// 列出所有 Mode (用户挑 Mode, 不再挑 Agent)
+				Method:  http.MethodGet,
+				Path:    "/modes",
+				Handler: solo.ListModesHandler(serverCtx),
+			},
+			{
+				// 列出会话
+				Method:  http.MethodGet,
+				Path:    "/sessions",
+				Handler: solo.ListSessionsHandler(serverCtx),
+			},
+			{
+				// 创建会话
+				Method:  http.MethodPost,
+				Path:    "/sessions",
+				Handler: solo.CreateSessionHandler(serverCtx),
+			},
+			{
+				// 获取会话
+				Method:  http.MethodGet,
+				Path:    "/sessions/:sessionId",
+				Handler: solo.GetSessionHandler(serverCtx),
+			},
+			{
+				// 删除会话
+				Method:  http.MethodDelete,
+				Path:    "/sessions/:sessionId",
+				Handler: solo.DeleteSessionHandler(serverCtx),
+			},
+			{
+				// 绑定会话知识库（供 Agent search_knowledge_base 工具使用）
+				Method:  http.MethodPost,
+				Path:    "/sessions/:sessionId/knowledge",
+				Handler: solo.BindSessionKnowledgeHandler(serverCtx),
+			},
+			{
+				// 获取会话历史消息（一次性，供前端初次进入会话时加载）
+				Method:  http.MethodGet,
+				Path:    "/sessions/:sessionId/messages",
+				Handler: solo.ListMessagesHandler(serverCtx),
+			},
+			{
+				// 列出 Skills 目录元数据（动态标签 / launch）
+				Method:  http.MethodGet,
+				Path:    "/skills",
+				Handler: solo.ListSkillsHandler(serverCtx),
+			},
+		},
+		rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret),
+		rest.WithPrefix("/solo/v1"),
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				// 中断恢复（SSE 流式输出 Solo Protocol 事件）
+				Method:  http.MethodPost,
+				Path:    "/interrupt/:interruptId/resume",
+				Handler: solo.ResumeHandler(serverCtx),
+			},
+		},
+		rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret),
+		rest.WithPrefix("/solo/v1"),
+		rest.WithTimeout(600000*time.Millisecond),
+		rest.WithSSE(),
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				// 对话（SSE 流式输出 Solo Protocol 事件）
+				Method:  http.MethodPost,
+				Path:    "/chat",
+				Handler: solo.ChatHandler(serverCtx),
+			},
+		},
+		rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret),
+		rest.WithPrefix("/solo/v1"),
+		rest.WithTimeout(600000*time.Millisecond),
+		rest.WithSSE(),
 	)
 }

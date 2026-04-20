@@ -18,8 +18,10 @@ NacosConfig:
   NamespaceId: public
   ServiceName: bridge-modbus
 DB:
-  DataSource: root:PXDN93VRKUm8TeE7@tcp(localhost:33069)/zero?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
-#  DataSource: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable&TimeZone=Asia/Shanghai
+#  DataSource: root:PXDN93VRKUm8TeE7@tcp(localhost:33069)/zero?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+  DataSource: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable&TimeZone=Asia/Shanghai
+  LogLevel: info
+  QueryFields: true
 ModbusClientConf:
   Address: 127.0.0.1:5020
   Slave: 1

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"zero-service/aiapp/aigtw/internal/config"
 	"zero-service/aiapp/aigtw/internal/handler"
@@ -21,6 +22,7 @@ import (
 	_ "zero-service/common/nacosx"
 	"zero-service/common/tool"
 
+	"github.com/google/uuid"
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/service"
@@ -28,18 +30,6 @@ import (
 )
 
 var configFile = flag.String("f", "etc/aigtw.yaml", "the config file")
-
-// serveStaticFile 返回一个静态文件服务 Handler
-func serveStaticFile(baseDir, filename string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		filePath := filepath.Join(baseDir, filename)
-		if _, err := os.Stat(filePath); err == nil {
-			http.ServeFile(w, r, filePath)
-			return
-		}
-		http.NotFound(w, r)
-	}
-}
 
 func main() {
 	flag.Parse()
@@ -49,17 +39,47 @@ func main() {
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
+	if secret := os.Getenv("AIGTW_JWT_ACCESS_SECRET"); secret != "" {
+		c.JwtAuth.AccessSecret = secret
+	}
+	if c.JwtAuth.AccessSecret == "" {
+		fmt.Println("jwt access secret is empty, set JwtAuth.AccessSecret or AIGTW_JWT_ACCESS_SECRET")
+		return
+	}
 
 	// Print Go version
 	tool.PrintGoVersion()
 
-	server := rest.MustNewServer(c.RestConf, gtwx.CorsOption())
+	// 静态资源目录
+	exePath, _ := os.Executable()
+	exeDir := filepath.Dir(exePath)
+	staticRoot := filepath.Join(exeDir, "static")
+	// fallback: 相对于当前工作目录
+	if _, err := os.Stat(staticRoot); os.IsNotExist(err) {
+		cwd, _ := os.Getwd()
+		// 如果当前目录已经是 aigtw 目录，直接用 cwd/static
+		if strings.HasSuffix(cwd, "aigtw") {
+			staticRoot = filepath.Join(cwd, "static")
+		} else {
+			staticRoot = filepath.Join(cwd, "aiapp/aigtw/static")
+		}
+	}
 
-	// 全局中间件：将 Authorization header 注入 context，标记 auth-type=user，
-	// 确保 gRPC 拦截器可通过 ctxdata.GetAuthorization(ctx) 传递原始 token。
+	server := rest.MustNewServer(c.RestConf,
+		gtwx.CorsOption(),
+		rest.WithFileServer("/static", http.Dir(staticRoot)),
+	)
+
+	// 全局中间件
 	server.Use(func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
+			requestID := r.Header.Get("X-Request-Id")
+			if requestID == "" {
+				requestID = uuid.NewString()
+			}
+			w.Header().Set("X-Request-Id", requestID)
+
 			if auth := r.Header.Get("Authorization"); auth != "" {
 				ctx = context.WithValue(ctx, ctxdata.CtxAuthTypeKey, "user")
 				ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, auth)
@@ -68,9 +88,6 @@ func main() {
 		}
 	})
 
-	// 全局中间件：将外部 JWT claim key 映射为内部标准 key。
-	// server.Use 中间件在 go-zero JWT 中间件之后执行（见 rest/engine.go bindRoute），
-	// 此时 JWT claims 已注入 context，可安全读取外部 key 并写入内部 key。
 	if len(c.JwtAuth.ClaimMapping) > 0 {
 		claimMapping := c.JwtAuth.ClaimMapping
 		server.Use(func(next http.HandlerFunc) http.HandlerFunc {
@@ -82,39 +99,21 @@ func main() {
 	}
 
 	ctx := svc.NewServiceContext(c)
-	handler.RegisterHandlers(server, ctx)
 
-	// 获取当前工作目录
-	wd, _ := os.Getwd()
-	staticDir := filepath.Join(wd, "aiapp", "aigtw")
+	logx.Infof("static root: %s", staticRoot)
 
-	// 静态文件服务 - 支持 /chat.html, /tool.html, /results.html 等
-	server.AddRoute(rest.Route{
-		Method:  http.MethodGet,
-		Path:    "/chat.html",
-		Handler: serveStaticFile(staticDir, "chat.html"),
-	})
-
-	server.AddRoute(rest.Route{
-		Method:  http.MethodGet,
-		Path:    "/tool.html",
-		Handler: serveStaticFile(staticDir, "tool.html"),
-	})
-
-	server.AddRoute(rest.Route{
-		Method:  http.MethodGet,
-		Path:    "/results.html",
-		Handler: serveStaticFile(staticDir, "results.html"),
-	})
-
-	// 根路径重定向到 chat.html
-	server.AddRoute(rest.Route{
-		Method: http.MethodGet,
-		Path:   "/",
-		Handler: func(w http.ResponseWriter, r *http.Request) {
-			http.ServeFile(w, r, filepath.Join(staticDir, "chat.html"))
+	server.AddRoutes([]rest.Route{
+		{
+			Method: http.MethodGet,
+			Path:   "/",
+			Handler: func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, "/static/solo/index.html", http.StatusFound)
+			},
 		},
 	})
+
+	// 注册 API 路由
+	handler.RegisterHandlers(server, ctx)
 
 	serviceGroup := service.NewServiceGroup()
 	defer serviceGroup.Stop()

@@ -1,0 +1,221 @@
+syntax = "v1"
+
+// ============================================================
+// Solo 类型定义 —— 与 aisolo gRPC 对齐, 模式驱动 + 6 种中断
+// ============================================================
+// SoloChatRequest Solo 对话请求
+//
+// 技能不由请求体选型，由服务端 Eino skill 中间件从 Skills 目录暴露给模型后由 LLM 自行 launch。
+type SoloChatRequest {
+	SessionId string `json:"sessionId"` // 会话 ID（必填）
+	Message   string `json:"message"` // 消息内容
+	Mode      string `json:"mode,optional"` // agent | workflow-sequential | workflow-parallel | workflow-loop | supervisor | plan | deep
+	UiLang    string `json:"uiLang,optional"` // 可选 zh|en，透传 aisolo AskReq.ui_lang，更新会话默认 UI 语言
+}
+
+// SoloChatResponse Solo 流式对话响应 (SSE NDJSON)
+type SoloChatResponse {}
+
+// SoloSessionInfo Solo 会话信息
+type SoloSessionInfo {
+	SessionId         string `json:"sessionId"`
+	UserId            string `json:"userId"`
+	Mode              string `json:"mode"` // 与 SoloChatRequest.Mode 同套字符串
+	Status            string `json:"status"` // idle | running | interrupted
+	InterruptId       string `json:"interruptId,optional"`
+	Title             string `json:"title"`
+	CreatedAt         int64  `json:"createdAt"`
+	UpdatedAt         int64  `json:"updatedAt"`
+	MessageCount      int    `json:"messageCount"`
+	LastMessage       string `json:"lastMessage"`
+	UiLang            string `json:"uiLang,optional"` // 会话默认 UI 语言 (由网关透传 gRPC)
+	KnowledgeBaseId   string `json:"knowledgeBaseId,optional"`
+	KnowledgeBaseName string `json:"knowledgeBaseName,optional"`
+}
+
+// SoloListSessionsRequest Solo 列出会话请求
+type SoloListSessionsRequest {
+	Page     int `form:"page,optional"`
+	PageSize int `form:"pageSize,optional"`
+}
+
+// SoloListSessionsResponse Solo 列出会话响应
+type SoloListSessionsResponse {
+	Sessions   []*SoloSessionInfo `json:"sessions"`
+	Total      int                `json:"total"`
+	Page       int                `json:"page"`
+	TotalPages int                `json:"totalPages"`
+}
+
+// SoloCreateSessionRequest Solo 创建会话请求
+type SoloCreateSessionRequest {
+	Title             string `json:"title,optional"`
+	Mode              string `json:"mode,optional"` // 可选; 留空走默认 agent; Workflow 见 SoloChatRequest.Mode
+	UiLang            string `json:"uiLang,optional"` // 可选 zh|en, 写入会话默认 UI 语言 (首轮 Ask 前即生效)
+	KnowledgeBaseId   string `json:"knowledgeBaseId,optional"`
+	KnowledgeBaseName string `json:"knowledgeBaseName,optional"`
+}
+
+type SoloBindKnowledgeRequest {
+	SessionId         string `path:"sessionId"`
+	KnowledgeBaseId   string `json:"knowledgeBaseId"`
+	KnowledgeBaseName string `json:"knowledgeBaseName,optional"`
+}
+
+type SoloBindKnowledgeResponse {
+	Session *SoloSessionInfo `json:"session"`
+}
+
+// SoloCreateSessionResponse Solo 创建会话响应
+type SoloCreateSessionResponse {
+	Session *SoloSessionInfo `json:"session"`
+}
+
+// SoloGetSessionRequest Solo 获取会话请求
+type SoloGetSessionRequest {
+	SessionId string `path:"sessionId"`
+}
+
+// SoloGetSessionResponse Solo 获取会话响应
+type SoloGetSessionResponse {
+	Session *SoloSessionInfo `json:"session"`
+}
+
+// SoloDeleteSessionRequest Solo 删除会话请求
+type SoloDeleteSessionRequest {
+	SessionId string `path:"sessionId"`
+}
+
+// SoloDeleteSessionResponse Solo 删除会话响应
+type SoloDeleteSessionResponse {
+	Success bool `json:"success"`
+}
+
+// SoloMessageInfo Solo 会话消息
+type SoloMessageInfo {
+	Id         string `json:"id"`
+	SessionId  string `json:"sessionId"`
+	UserId     string `json:"userId"`
+	Role       string `json:"role"` // user | assistant | tool | system
+	Content    string `json:"content"`
+	CreatedAt  int64  `json:"createdAt"`
+	ToolCallId string `json:"toolCallId,optional"`
+	ToolName   string `json:"toolName,optional"`
+}
+
+// SoloListMessagesRequest Solo 获取会话历史消息请求
+type SoloListMessagesRequest {
+	SessionId string `path:"sessionId"`
+	Limit     int    `form:"limit,optional"`
+}
+
+// SoloListMessagesResponse Solo 历史消息响应
+type SoloListMessagesResponse {
+	Messages []*SoloMessageInfo `json:"messages"`
+	Total    int                `json:"total"`
+}
+
+// SoloModeInfo Mode 元信息 (取代旧的 AgentInfo)
+type SoloModeInfo {
+	Mode         string   `json:"mode"` // agent | workflow-sequential | workflow-parallel | workflow-loop | supervisor | plan | deep
+	Name         string   `json:"name"` // 展示名
+	Description  string   `json:"description"`
+	Capabilities []string `json:"capabilities"`
+	Default      bool     `json:"default"`
+}
+
+// SoloListModesResponse Solo 列出 Mode 响应
+type SoloListModesResponse {
+	Modes []*SoloModeInfo `json:"modes"`
+}
+
+// SoloSkillInfo 技能元数据（与 aisolo ListSkills 对齐）
+type SoloSkillInfo {
+	Id           string   `json:"id"`
+	Name         string   `json:"name"`
+	Description  string   `json:"description"`
+	Tags         []string `json:"tags,optional"`
+	LaunchPrompt string   `json:"launchPrompt,optional"`
+}
+
+// SoloListSkillsResponse Solo 列出技能
+type SoloListSkillsResponse {
+	Skills []*SoloSkillInfo `json:"skills"`
+}
+
+// SoloInterruptRequest Solo 中断恢复请求 (6 种 kind 通过 Action + 附加字段区分)
+//
+// Action 取值：yes | no（按 kind 携带 selectedIds / text / formValues / reason 等）
+type SoloInterruptRequest {
+	SessionId   string            `json:"sessionId,optional"`
+	InterruptId string            `path:"interruptId"`
+	Action      string            `json:"action,optional"`
+	SelectedIds []string          `json:"selectedIds,optional"`
+	Reason      string            `json:"reason,optional"`
+	Text        string            `json:"text,optional"`
+	FormValues  map[string]string `json:"formValues,optional"`
+}
+
+// SoloInterruptResponse Solo 中断恢复响应 (SSE NDJSON)
+type SoloInterruptResponse {}
+
+// SoloOption 单选/多选选项
+type SoloOption {
+	Id    string `json:"id"`
+	Label string `json:"label"`
+	Desc  string `json:"desc,optional"`
+}
+
+// SoloField 表单字段
+type SoloField {
+	Name        string        `json:"name"`
+	Label       string        `json:"label"`
+	Type        string        `json:"type"`
+	Required    bool          `json:"required,optional"`
+	Placeholder string        `json:"placeholder,optional"`
+	Default     string        `json:"default,optional"`
+	Widget      string        `json:"widget,optional"` // text|textarea|select|radio|multi_select|checkbox|switch|number
+	Options     []*SoloOption `json:"options,optional"`
+	MinSelect   int           `json:"minSelect,optional"` // multi_select 最少选择项
+	MaxSelect   int           `json:"maxSelect,optional"` // multi_select 最多选择项，0 表示不限制
+	AllowCustom bool          `json:"allowCustom,optional"` // 为 true 时展示「其他」自定义输入
+}
+
+// SoloInterruptInfo 结构化中断详情 (页面刷新后回填 UI 使用)
+//
+// Kind 决定哪些字段有效:
+//   approval      -> question, detail
+//   single_select -> question, options
+//   multi_select  -> question, options, minSelect, maxSelect
+//   free_text     -> question, placeholder, multiline
+//   form_input    -> question, fields
+//   info_ack      -> title, body
+type SoloInterruptInfo {
+	InterruptId string        `json:"interruptId"`
+	Kind        string        `json:"kind"`
+	ToolName    string        `json:"toolName,optional"`
+	Required    bool          `json:"required,optional"`
+	UiLang      string        `json:"uiLang,optional"` // 由模型提示的 UI 语言, 如 zh/en
+	Question    string        `json:"question,optional"`
+	Detail      string        `json:"detail,optional"`
+	Options     []*SoloOption `json:"options,optional"`
+	MinSelect   int           `json:"minSelect,optional"`
+	MaxSelect   int           `json:"maxSelect,optional"`
+	Placeholder string        `json:"placeholder,optional"`
+	Multiline   bool          `json:"multiline,optional"`
+	Fields      []*SoloField  `json:"fields,optional"`
+	Title       string        `json:"title,optional"`
+	Body        string        `json:"body,optional"`
+	AgentName   string        `json:"agentName,optional"` // 触发中断的 ADK Agent 名
+}
+
+// SoloGetInterruptRequest 获取中断详情请求
+type SoloGetInterruptRequest {
+	InterruptId string `path:"interruptId"`
+}
+
+// SoloGetInterruptResponse 获取中断详情响应
+type SoloGetInterruptResponse {
+	Info *SoloInterruptInfo `json:"info"`
+}
+

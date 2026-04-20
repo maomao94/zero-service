@@ -10,7 +10,7 @@ Log:
   Level: debug
   KeepDays: 300
 JwtAuth:
-  AccessSecret: 629c6233-1a76-471b-bd25-b87208762219
+  AccessSecret: "629c6233-1a76-471b-bd25-b87208762219"
   # ClaimMapping: 外部 JWT claim key -> 内部标准 key（按需配置）
   ClaimMapping:
     user-id: "user_id"
@@ -21,4 +21,27 @@ AiChatRpcConf:
     - 127.0.0.1:23001
   NonBlock: true
   Timeout: 120000
+AiSoloRpcConf:
+  Endpoints:
+    - 127.0.0.1:23002
+  NonBlock: true
+  Timeout: 300000
 
+# einox/knowledge（/solo/v1/knowledge/*；JWT 用户隔离）
+# Backend: memory | gorm | redis | milvus（sqlite 等价于 gorm+本地 sqlite 文件）
+# 与 aisolo 共用索引：gorm+同 DataDir/同 DSN，或 redis/milvus 同实例
+Knowledge:
+  Enabled: false
+  Backend: memory
+  DataDir: "./data/knowledge"
+  # DSN: "user:pass@tcp(127.0.0.1:3306)/db?charset=utf8mb4&parseTime=true"  # backend=gorm 时
+  # Redis:
+  #   addr: "127.0.0.1:6379"
+  # Milvus:
+  #   addr: "127.0.0.1:19530"
+  #   vectorDim: 1024
+  Embedding:
+    Provider: ark
+    api_key: ""
+    model: ""
+    ark_region: cn-beijing

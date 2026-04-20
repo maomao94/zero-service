@@ -1,0 +1,88 @@
+Name: aisolo.rpc
+ListenOn: 0.0.0.0:23002
+
+Log:
+  Encoding: plain
+  Level: debug
+  KeepDays: 300
+
+Model:
+  Provider: "ark"
+  Model: "deepseek-v3-2-251201"
+  APIKey: "e09fbc83-9d4b-4b09-98aa-837145715808"
+  BaseURL: ""
+  MaxTokens: 32768
+  Temperature: 0.7
+
+Memory:
+  Type: "memory"          # memory | jsonl | gormx
+  BaseDir: "./data/messages"
+
+SessionStore:
+  Type: "memory"          # memory | jsonl | gormx（多副本请 gormx + DB.Enabled）
+  BaseDir: "./data/sessions"
+  # nullLeaseRecoverGrace: 2m   # gormx/jsonl：无租约的 RUNNING 超过多久可被启动恢复清掉
+
+# 多实例时 RUNNING 租约（仅持久化会话存储 + executor 使用）；键名须与 config.Config 的 json 标签一致（sessionRun）
+sessionRun:
+  leaseTTL: 30m
+  # instanceID 可选。不填时 run_owner = 主机名 + 根配置 ListenOn 的 RPC 端口（与上方 ListenOn 同源）；Docker 每容器一份 yaml 即可。
+
+DB:
+  Enabled: false
+  DataSource: ""
+  LogLevel: "error"
+
+Tools:
+  Enabled: true
+  Timeout: 30s
+  MaxRetries: 3
+  MaxConcurrency: 10
+
+Skills:
+  # 子目录各含 SKILL.md；示例见 skills/survey_echo_flow（问卷→echo 说明 + 渐进披露）
+  Dir: "./skills"
+  Enabled: true
+  # Strict: true  # 为 true 时目录必须存在否则进程拒绝启动（go-zero Validate）
+
+Agent:
+  PoolMaxIdle: 10
+  PoolMaxLive: 1h
+  # demoSurveyEcho: true   # 联调：挂载 Survey→Echo 子 Agent 工具（生产勿开）
+  # planMaxIterations: 12      # Plan 模式最大迭代，默认 10
+  # Deep 本地文件系统默认关闭；需 grep 等工具时显式 enableLocalFilesystem: true
+  # Deep:
+  #   enableLocalFilesystem: true
+  #   FilesystemAllowedRoots:
+  #     - "./data/deep_workspace"
+  #   FilesystemSessionBaseDir: "./data/deep_sessions"
+  #   FilesystemLegacyUserRootsFullAccess: true
+  #   FilesystemPolicy:
+  #     readUser: true
+  #     writeUser: false
+  #     editUser: false
+  #     readSession: true
+  #     writeSession: true
+  #     editSession: true
+
+Checkpoint:
+  Type: "memory"          # memory | jsonl | gormx，分布式部署请使用 gormx
+  BaseDir: "./data/checkpoints"
+
+Metrics:
+  Enabled: false
+
+Limit:
+  MaxConcurrency: 100
+  RateLimit: 50
+  RequestTimeout: 300s
+
+# 与 aigtw 共用索引时可启用（memory 仅本进程；生产用 gorm/redis/milvus 对齐网关）
+# Knowledge:
+#   Enabled: false
+#   Backend: memory
+#   DataDir: "./data/knowledge"
+#   Embedding:
+#     api_key: ""
+#     model: ""
+#     ark_region: cn-beijing

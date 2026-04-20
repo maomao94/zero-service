@@ -4,45 +4,61 @@ import (
 	"context"
 	"errors"
 	"zero-service/app/bridgemodbus/internal/config"
-	"zero-service/common/dbx"
+	"zero-service/common/gormx"
 	"zero-service/common/modbusx"
 	"zero-service/common/tool"
-	"zero-service/model"
+	"zero-service/model/gormmodel"
 	"zero-service/third_party/extproto"
+
+	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/service"
 )
 
 type ServiceContext struct {
-	Config                 config.Config
-	ModbusSlaveConfigModel model.ModbusSlaveConfigModel
-	ModbusConfigConverter  *model.ModbusConfigConverter
-	ModbusClientPool       *modbusx.ModbusClientPool
-	Manager                *modbusx.PoolManager
+	Config                config.Config
+	DB                    *gormx.DB
+	ModbusConfigConverter *gormmodel.ModbusConfigConverter
+	ModbusClientPool      *modbusx.ModbusClientPool
+	Manager               *modbusx.PoolManager
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
-	// 解析数据库类型
-	dbType := dbx.ParseDatabaseType(c.DB.DataSource)
-	return &ServiceContext{
-		Config:                 c,
-		ModbusSlaveConfigModel: model.NewModbusSlaveConfigModel(dbx.New(c.DB.DataSource), model.WithDBType(dbType)),
-		ModbusConfigConverter:  model.NewModbusConfigConverter(),
-		ModbusClientPool:       modbusx.NewModbusClientPool(&c.ModbusClientConf, c.ModbusPool),
-		Manager:                modbusx.NewPoolManager(),
+	logx.Must(logx.SetUp(c.Log))
+
+	// 创建 gormx 数据库连接
+	db := gormx.MustOpenWithConf(c.DB)
+
+	if isDevOrTest(c.Mode) {
+		db.MustAutoMigrate(&gormmodel.ModbusSlaveConfig{})
 	}
+
+	return &ServiceContext{
+		Config:                c,
+		DB:                    db,
+		ModbusConfigConverter: gormmodel.NewModbusConfigConverter(),
+		ModbusClientPool:      modbusx.NewModbusClientPool(&c.ModbusClientConf, c.ModbusPool),
+		Manager:               modbusx.NewPoolManager(),
+	}
+}
+
+// isDevOrTest 判断是否为开发或测试环境
+func isDevOrTest(mode string) bool {
+	return mode == service.DevMode || mode == service.TestMode
 }
 
 func (s *ServiceContext) AddPool(ctx context.Context, modbusCode string) (*modbusx.ModbusClientPool, error) {
 	if modbusCode == "" {
 		return nil, errors.New("modbusCode不能为空")
 	}
-	slaveConfig, err := s.ModbusSlaveConfigModel.FindOneByModbusCode(ctx, modbusCode)
+	var slaveConfig gormmodel.ModbusSlaveConfig
+	err := s.DB.WithContext(ctx).Where("modbus_code = ?", modbusCode).First(&slaveConfig).Error
 	if err != nil {
 		return nil, err
 	}
-	if slaveConfig == nil || slaveConfig.Status != 1 {
+	if slaveConfig.Status != 1 {
 		return nil, errors.New("配置不存在或未启用: " + modbusCode)
 	}
-	clientConf := s.ModbusConfigConverter.ToClientConf(slaveConfig)
+	clientConf := s.ModbusConfigConverter.ToClientConf(&slaveConfig)
 	if clientConf == nil {
 		return nil, errors.New("配置转换失败")
 	}
