@@ -93,6 +93,8 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 	if err != nil {
 		return nil, err
 	}
+	bScope := planscope.BatchScope(plan, planBatch)
+	bLog := bScope.Logger(l.ctx)
 	batchNotifyReq := streamevent.NotifyPlanEventReq{
 		EventType:  streamevent.PlanEventType_BATCH_FINISHED,
 		PlanId:     planBatch.PlanId,
@@ -100,9 +102,8 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 		BatchId:    planBatch.BatchId,
 		Attributes: map[string]string{},
 	}
+	bLog.WithFields(logx.Field("notify_event", planscope.NotifyEventBatchFinished)).Info("下游通知：调用 NotifyPlanEvent（批次收尾）")
 	l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &batchNotifyReq)
-	bScope := planscope.BatchScope(plan, planBatch)
-	bLog := bScope.Logger(l.ctx)
 	planCount, err := l.svcCtx.PlanModel.UpdateBatchFinishedTime(l.ctx, planBatch.PlanPk)
 	if err != nil {
 		bLog.Errorf("更新计划 finished_time（用于收尾判断）失败: %v", err)
@@ -115,6 +116,7 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 			//BatchId:    planBatch.BatchId,
 			Attributes: map[string]string{},
 		}
+		bLog.WithFields(logx.Field("notify_event", planscope.NotifyEventPlanFinished)).Info("下游通知：调用 NotifyPlanEvent（计划收尾）")
 		l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq)
 	}
 

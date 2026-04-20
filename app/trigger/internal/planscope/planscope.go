@@ -31,6 +31,12 @@ const (
 	EntryCallback = "callback"
 )
 
+// NotifyEvent* 与日志字段 notify_event 对应，语义对齐 streamevent.PlanEventType（BATCH_FINISHED / PLAN_FINISHED）。
+const (
+	NotifyEventBatchFinished = "BATCH_FINISHED"
+	NotifyEventPlanFinished  = "PLAN_FINISHED"
+)
+
 type Scope struct {
 	Entry  string
 	Tag    string

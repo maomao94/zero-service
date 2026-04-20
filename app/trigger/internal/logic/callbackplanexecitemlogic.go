@@ -196,12 +196,13 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 			BatchId:    execItem.BatchId,
 			Attributes: map[string]string{},
 		}
+		scope.WithFields(logx.Field("notify_event", planscope.NotifyEventBatchFinished)).Logger(l.ctx).Info("下游通知：调用 NotifyPlanEvent（批次收尾）")
 		l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &batchNotifyReq)
 	}
 
 	planCount, err := l.svcCtx.PlanModel.UpdateBatchFinishedTime(l.ctx, execItem.PlanPk)
 	if err != nil {
-		log.Errorf("更新计划 finished_time（用于收尾判断）失败: %v", err)
+		scope.Logger(l.ctx).Errorf("更新计划 finished_time（用于收尾判断）失败: %v", err)
 	}
 	if planCount > 0 {
 		planPlanReq := streamevent.NotifyPlanEventReq{
@@ -211,6 +212,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 			//BatchId:    execItem.BatchId,
 			Attributes: map[string]string{},
 		}
+		scope.WithFields(logx.Field("notify_event", planscope.NotifyEventPlanFinished)).Logger(l.ctx).Info("下游通知：调用 NotifyPlanEvent（计划收尾）")
 		l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq)
 	}
 

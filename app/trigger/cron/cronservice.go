@@ -332,6 +332,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 			BatchId:    execItem.BatchId,
 			Attributes: map[string]string{},
 		}
+		scope.WithFields(logx.Field("notify_event", planscope.NotifyEventBatchFinished)).Logger(ctx).Info("下游通知：调用 NotifyPlanEvent（批次收尾）")
 		s.svcCtx.StreamEventCli.NotifyPlanEvent(ctx, &batchNotifyReq)
 	}
 	planCount, err := s.svcCtx.PlanModel.UpdateBatchFinishedTime(ctx, execItem.PlanPk)
@@ -345,6 +346,7 @@ func (s *CronService) ExecuteCallback(ctx context.Context, execItem *model.PlanE
 			PlanType:   plan.Type.String,
 			Attributes: map[string]string{},
 		}
+		scope.WithFields(logx.Field("notify_event", planscope.NotifyEventPlanFinished)).Logger(ctx).Info("下游通知：调用 NotifyPlanEvent（计划收尾）")
 		s.svcCtx.StreamEventCli.NotifyPlanEvent(ctx, &planPlanReq)
 	}
 	scope.WithFields(

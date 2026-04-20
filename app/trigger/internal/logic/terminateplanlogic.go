@@ -102,8 +102,10 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 		//BatchId:    execItem.BatchId,
 		Attributes: map[string]string{},
 	}
+	planLog := planscope.PlanScope(plan).Logger(l.ctx)
+	planLog.WithFields(logx.Field("notify_event", planscope.NotifyEventPlanFinished)).Info("下游通知：调用 NotifyPlanEvent（计划收尾）")
 	l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq)
 
-	planscope.PlanScope(plan).Logger(l.ctx).Info("RPC 终止计划：计划状态已更新，事务已提交")
+	planLog.Info("RPC 终止计划：计划状态已更新，事务已提交")
 	return &trigger.TerminatePlanRes{}, nil
 }

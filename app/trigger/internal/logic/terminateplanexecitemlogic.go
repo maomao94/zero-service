@@ -111,6 +111,7 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 			BatchId:    execItem.BatchId,
 			Attributes: map[string]string{},
 		}
+		log.WithFields(logx.Field("notify_event", planscope.NotifyEventBatchFinished)).Info("下游通知：调用 NotifyPlanEvent（批次收尾）")
 		l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &batchNotifyReq)
 	}
 
@@ -126,6 +127,7 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 			//BatchId:    execItem.BatchId,
 			Attributes: map[string]string{},
 		}
+		log.WithFields(logx.Field("notify_event", planscope.NotifyEventPlanFinished)).Info("下游通知：调用 NotifyPlanEvent（计划收尾）")
 		l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq)
 	}
 
