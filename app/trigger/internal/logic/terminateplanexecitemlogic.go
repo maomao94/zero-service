@@ -77,6 +77,7 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 	}
 
 	scope := planscope.ExecScope(execItem)
+	log := scope.Logger(l.ctx)
 
 	// 执行事务
 	err = l.svcCtx.PlanModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
@@ -100,7 +101,7 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 	}
 	batchCount, err := l.svcCtx.PlanBatchModel.UpdateBatchFinishedTime(l.ctx, execItem.BatchPk)
 	if err != nil {
-		l.Errorf("%s 更新 plan_batch.finished_time 失败: %v", scope, err)
+		log.Errorf("更新批次 finished_time（用于收尾判断）失败: %v", err)
 	}
 	if batchCount > 0 {
 		batchNotifyReq := streamevent.NotifyPlanEventReq{
@@ -115,7 +116,7 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 
 	planCount, err := l.svcCtx.PlanModel.UpdateBatchFinishedTime(l.ctx, execItem.PlanPk)
 	if err != nil {
-		l.Errorf("%s 更新 plan.finished_time 失败: %v", scope, err)
+		log.Errorf("更新计划 finished_time（用于收尾判断）失败: %v", err)
 	}
 	if planCount > 0 {
 		planPlanReq := streamevent.NotifyPlanEventReq{
@@ -128,6 +129,6 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 		l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq)
 	}
 
-	l.Infof("%s 终止执行项：事务已提交", scope)
+	log.Info("RPC 终止执行项：执行项状态已更新，事务已提交")
 	return &trigger.TerminatePlanExecItemRes{}, nil
 }

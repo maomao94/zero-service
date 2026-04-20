@@ -4,8 +4,9 @@ go 1.25.0
 
 require (
 	github.com/ArtisanCloud/PowerLibs/v3 v3.3.2
-	github.com/ArtisanCloud/PowerWeChat/v3 v3.4.40
+	github.com/ArtisanCloud/PowerWeChat/v3 v3.4.41
 	github.com/Masterminds/squirrel v1.5.4
+	github.com/alicebob/miniredis/v2 v2.37.0
 	github.com/brianvoe/gofakeit/v7 v7.14.1
 	github.com/cloudwego/eino v0.8.10
 	github.com/cloudwego/eino-ext/adk/backend/local v0.2.4
@@ -97,7 +98,6 @@ require (
 	github.com/alibabacloud-go/tea-utils v1.4.4 // indirect
 	github.com/alibabacloud-go/tea-utils/v2 v2.0.7 // indirect
 	github.com/alibabacloud-go/tea-xml v1.1.3 // indirect
-	github.com/alicebob/miniredis/v2 v2.37.0 // indirect
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1800 // indirect
 	github.com/aliyun/alibabacloud-dkms-gcs-go-sdk v0.5.1 // indirect
 	github.com/aliyun/alibabacloud-dkms-transfer-go-sdk v0.1.8 // indirect

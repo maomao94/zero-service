@@ -66,13 +66,13 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 	lock := redis.NewRedisLock(l.svcCtx.Redis, lockKey)
 	b, lockErr := lock.AcquireCtx(l.ctx)
 	if lockErr != nil {
-		logx.WithContext(l.ctx).Errorf("%s CallbackPlanExecItem Redis 锁 Acquire 错误: %v", planscope.ExecCallback(execItem), lockErr)
+		planscope.ExecCallback(execItem).Logger(l.ctx).Errorf("RPC 执行回调：获取 Redis 分布式锁失败: %v", lockErr)
 		return nil, lockErr
 	}
 	if !b {
 		lockScope := planscope.ExecCallback(execItem)
-		logx.WithContext(l.ctx).Errorf("%s CallbackPlanExecItem 未抢到 Redis 锁", lockScope)
-		err = fmt.Errorf("%s CallbackPlanExecItem 未抢到 Redis 锁", lockScope)
+		lockScope.Logger(l.ctx).Error("RPC 执行回调：未获取到 Redis 锁（可能并发回调同一执行单）")
+		err = fmt.Errorf("执行回调未获取到 Redis 锁")
 		return nil, err
 	}
 	defer lock.Release()
@@ -92,8 +92,12 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 		return nil, err
 	}
 	scope := planscope.CallbackScope(execItem, plan, batch)
-	logx.WithContext(l.ctx).Infof("%s 收到执行回调 execResult=%s item_status=%d message=%s",
-		scope, in.GetExecResult(), execItem.Status, in.Message)
+	log := scope.Logger(l.ctx)
+	log.WithFields(
+		logx.Field("exec_result", in.GetExecResult()),
+		logx.Field("item_status", execItem.Status),
+		logx.Field("message", in.Message),
+	).Info("RPC 执行回调：收到下游回执，将按 exec_result 回写执行项与流水")
 
 	// 检查执行项状态是否为终态
 	if execItem.Status == int64(model.StatusCompleted) || execItem.Status == int64(model.StatusTerminated) {
@@ -172,7 +176,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 		}
 		// 插入执行日志
 		if _, err := l.svcCtx.PlanExecLogModel.Insert(ctx, nil, logEntry); err != nil {
-			logx.WithContext(ctx).Errorf("%s 插入 plan_exec_log 失败: %v", scope, err)
+			scope.Logger(ctx).Errorf("写入执行流水 plan_exec_log 失败: %v", err)
 		}
 		return nil
 	})
@@ -182,7 +186,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 
 	batchCount, err := l.svcCtx.PlanBatchModel.UpdateBatchFinishedTime(l.ctx, execItem.BatchPk)
 	if err != nil {
-		logx.WithContext(l.ctx).Errorf("%s 更新 plan_batch.finished_time 失败: %v", scope, err)
+		scope.Logger(l.ctx).Errorf("更新批次 finished_time（用于收尾判断）失败: %v", err)
 	}
 	if batchCount > 0 {
 		batchNotifyReq := streamevent.NotifyPlanEventReq{
@@ -197,7 +201,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 
 	planCount, err := l.svcCtx.PlanModel.UpdateBatchFinishedTime(l.ctx, execItem.PlanPk)
 	if err != nil {
-		logx.WithContext(l.ctx).Errorf("%s 更新 plan.finished_time 失败: %v", scope, err)
+		log.Errorf("更新计划 finished_time（用于收尾判断）失败: %v", err)
 	}
 	if planCount > 0 {
 		planPlanReq := streamevent.NotifyPlanEventReq{

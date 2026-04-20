@@ -88,13 +88,12 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 			return transErr
 		}
 		return nil
-		return nil
 	})
 
 	if err != nil {
-		return &trigger.PausePlanRes{}, nil
+		return nil, err
 	}
 
-	l.Infof("%s 暂停计划：事务已提交", planscope.PlanScope(plan))
+	planscope.PlanScope(plan).Logger(l.ctx).Info("RPC 暂停计划：计划状态已更新，事务已提交")
 	return &trigger.PausePlanRes{}, nil
 }

@@ -70,13 +70,20 @@ func (l *RunPlanExecItemLogic) RunPlanExecItem(in *trigger.RunPlanExecItemReq) (
 		return nil, err
 	}
 
-	// 检查当前状态是否允许终止操作
 	if plan.Status == int64(model.PlanStatusTerminated) || plan.FinishedTime.Valid {
-		return nil, errors.BadRequest("", "计划状态已结束,不可终止")
+		return nil, errors.BadRequest("", "计划状态已结束,不可立即执行")
 	}
 
 	if planBatch.Status == int64(model.PlanStatusTerminated) || planBatch.FinishedTime.Valid {
-		return nil, errors.BadRequest("", "计划批次状态已结束,不可终止")
+		return nil, errors.BadRequest("", "计划批次状态已结束,不可立即执行")
+	}
+
+	if plan.Status == int64(model.PlanStatusPaused) {
+		return nil, errors.BadRequest("", "计划处于暂停状态,不可立即执行")
+	}
+
+	if planBatch.Status == int64(model.PlanStatusPaused) {
+		return nil, errors.BadRequest("", "计划批次处于暂停状态,不可立即执行")
 	}
 
 	// 更新下次触发时间为当前时间，使其立即执行
@@ -87,8 +94,11 @@ func (l *RunPlanExecItemLogic) RunPlanExecItem(in *trigger.RunPlanExecItemReq) (
 		return nil, err
 	}
 
-	l.Logger.Infof("%s 立即执行：next_trigger 已更新为 %v，status=%d",
-		planscope.ExecScope(execItem), execItem.NextTriggerTime.Format(time.RFC3339Nano), execItem.Status)
+	planscope.ExecScope(execItem).WithFields(
+		logx.Field("plan_name", plan.PlanName.String),
+		logx.Field("next_trigger", execItem.NextTriggerTime.Format(time.RFC3339Nano)),
+		logx.Field("status", execItem.Status),
+	).Logger(l.ctx).Info("RPC 立即执行：已将本执行项的下次调度时间改为当前时间，等待定时扫表触发下游")
 
 	return &trigger.RunPlanExecItemRes{}, nil
 }

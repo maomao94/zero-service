@@ -97,6 +97,6 @@ func (l *ResumePlanLogic) ResumePlan(in *trigger.ResumePlanReq) (*trigger.Resume
 		return nil, err
 	}
 
-	l.Infof("%s 恢复计划：事务已提交", planscope.PlanScope(plan))
+	planscope.PlanScope(plan).Logger(l.ctx).Info("RPC 恢复计划：计划状态已更新，事务已提交")
 	return &trigger.ResumePlanRes{}, nil
 }

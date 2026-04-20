@@ -87,6 +87,6 @@ func (l *ResumePlanExecItemLogic) ResumePlanExecItem(in *trigger.ResumePlanExecI
 		return nil, err
 	}
 
-	l.Infof("%s 恢复执行项：事务已提交", planscope.ExecScope(execItem))
+	planscope.ExecScope(execItem).Logger(l.ctx).Info("RPC 恢复执行项：执行项状态已更新，事务已提交")
 	return &trigger.ResumePlanExecItemRes{}, nil
 }

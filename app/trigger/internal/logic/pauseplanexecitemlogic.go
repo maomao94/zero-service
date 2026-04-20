@@ -101,6 +101,6 @@ func (l *PausePlanExecItemLogic) PausePlanExecItem(in *trigger.PausePlanExecItem
 		return nil, err
 	}
 
-	l.Infof("%s 暂停执行项：事务已提交", planscope.ExecScope(execItem))
+	planscope.ExecScope(execItem).Logger(l.ctx).Info("RPC 暂停执行项：执行项状态已更新，事务已提交")
 	return &trigger.PausePlanExecItemRes{}, nil
 }

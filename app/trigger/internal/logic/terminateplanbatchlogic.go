@@ -102,9 +102,10 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 	}
 	l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &batchNotifyReq)
 	bScope := planscope.BatchScope(plan, planBatch)
+	bLog := bScope.Logger(l.ctx)
 	planCount, err := l.svcCtx.PlanModel.UpdateBatchFinishedTime(l.ctx, planBatch.PlanPk)
 	if err != nil {
-		l.Errorf("%s 更新 plan.finished_time 失败: %v", bScope, err)
+		bLog.Errorf("更新计划 finished_time（用于收尾判断）失败: %v", err)
 	}
 	if planCount > 0 {
 		planPlanReq := streamevent.NotifyPlanEventReq{
@@ -117,6 +118,6 @@ func (l *TerminatePlanBatchLogic) TerminatePlanBatch(in *trigger.TerminatePlanBa
 		l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq)
 	}
 
-	l.Infof("%s 终止批次：事务已提交", planscope.BatchScope(plan, planBatch))
+	bLog.Info("RPC 终止批次：批次状态已更新，事务已提交")
 	return &trigger.TerminatePlanBatchRes{}, nil
 }

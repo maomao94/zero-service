@@ -90,9 +90,9 @@ func (l *PausePlanBatchLogic) PausePlanBatch(in *trigger.PausePlanBatchReq) (*tr
 	})
 
 	if err != nil {
-		return &trigger.PausePlanBatchRes{}, nil
+		return nil, err
 	}
 
-	l.Infof("%s 暂停批次：事务已提交", planscope.BatchScope(plan, planBatch))
+	planscope.BatchScope(plan, planBatch).Logger(l.ctx).Info("RPC 暂停批次：批次状态已更新，事务已提交")
 	return &trigger.PausePlanBatchRes{}, nil
 }
