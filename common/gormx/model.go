@@ -7,52 +7,64 @@ import (
 	"gorm.io/gorm"
 )
 
-// ============ GORM 标准命名模型 ============
+const DefaultTenantID = "000000"
 
-// Model 通用模型基类（uint 主键 + GORM软删除）
-//
-// 使用示例：
-//
-//	type User struct {
-//	    gormx.Model
-//	    Name  string
-//	}
-type Model struct {
-	ID        uint           `gorm:"primarykey" json:"id"`
-	CreatedAt time.Time      `gorm:"type:timestamp(6)"`
-	UpdatedAt time.Time      `gorm:"type:timestamp(6)"`
-	DeletedAt gorm.DeletedAt `gorm:"type:timestamp(6);index" json:"-"`
+type AuditMixin struct {
+	CreateUser uint   `gorm:"index" json:"create_user"`
+	CreateName string `gorm:"size:64" json:"create_name"`
+	UpdateUser uint   `gorm:"index" json:"update_user"`
+	UpdateName string `gorm:"size:64" json:"update_name"`
+	DeleteUser uint   `gorm:"index" json:"delete_user"`
+	DeleteName string `gorm:"size:64" json:"delete_name"`
 }
 
-// IntIDModel int 类型主键模型
-type IntIDModel struct {
-	ID        int            `gorm:"primarykey" json:"id"`
-	CreatedAt time.Time      `gorm:"type:timestamp(6)"`
-	UpdatedAt time.Time      `gorm:"type:timestamp(6)"`
-	DeletedAt gorm.DeletedAt `gorm:"type:timestamp(6);index" json:"-"`
+type AuditWithoutDeleteMixin struct {
+	CreateUser uint   `gorm:"index" json:"create_user"`
+	CreateName string `gorm:"size:64" json:"create_name"`
+	UpdateUser uint   `gorm:"index" json:"update_user"`
+	UpdateName string `gorm:"size:64" json:"update_name"`
 }
 
-// StringIDModel string 类型主键模型（UUID）
-type StringIDModel struct {
-	ID        string         `gorm:"primarykey;size:36" json:"id"`
-	CreatedAt time.Time      `gorm:"type:timestamp(6)"`
-	UpdatedAt time.Time      `gorm:"type:timestamp(6)"`
-	DeletedAt gorm.DeletedAt `gorm:"type:timestamp(6);index" json:"-"`
+type VersionMixin struct {
+	Version int64 `gorm:"default:0" json:"version"`
 }
 
-// TimeModel 仅时间戳模型（无软删除）
-type TimeModel struct {
-	ID        uint      `gorm:"primarykey" json:"id"`
-	CreatedAt time.Time `json:"created_at;type:timestamp(6)"`
-	UpdatedAt time.Time `json:"updated_at;type:timestamp(6)"`
+func (m *VersionMixin) GetVersion() int64 {
+	return m.Version
 }
 
-// ============ 老项目兼容模型（snake_case命名 + DelState） ============
+func (m *VersionMixin) SetVersion(v int64) {
+	m.Version = v
+}
 
-// LegacyBaseModel 兼容老项目数据库结构的基础模型
-//
-// 字段：Id/CreateTime/UpdateTime/DeleteTime/DelState/Version
-// DeleteTime使用gorm.DeletedAt实现GORM原生软删除，同时保留DelState字段
+func (m *VersionMixin) IncrementVersion() {
+	m.Version++
+}
+
+type SoftDeleteMixin struct {
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
+func (m *SoftDeleteMixin) IsDeleted() bool {
+	return m.DeletedAt.Valid && !m.DeletedAt.Time.IsZero()
+}
+
+type TenantMixin struct {
+	TenantID string `gorm:"size:12;index;not null;default:'000000'" json:"tenant_id"`
+}
+
+func (m *TenantMixin) GetTenantID() string {
+	return m.TenantID
+}
+
+func (m *TenantMixin) SetTenantID(tenantID string) {
+	m.TenantID = tenantID
+}
+
+func (m *TenantMixin) IsDefaultTenant() bool {
+	return m.TenantID == "" || m.TenantID == DefaultTenantID
+}
+
 type LegacyBaseModel struct {
 	Id         int64        `gorm:"column:id;primaryKey" json:"id"`
 	CreateTime time.Time    `gorm:"column:create_time;type:timestamp(6);autoCreateTime:milli"`
@@ -62,7 +74,18 @@ type LegacyBaseModel struct {
 	Version    int64        `gorm:"column:version;default:0"`
 }
 
-// LegacyStringBaseModel 老项目兼容模型（string主键）
+func (m *LegacyBaseModel) GetVersion() int64 {
+	return m.Version
+}
+
+func (m *LegacyBaseModel) SetVersion(v int64) {
+	m.Version = v
+}
+
+func (m *LegacyBaseModel) IsDeleted() bool {
+	return m.DeleteTime.Valid && !m.DeleteTime.Time.IsZero()
+}
+
 type LegacyStringBaseModel struct {
 	Id         string       `gorm:"column:id;primaryKey;size:36" json:"id"`
 	CreateTime time.Time    `gorm:"column:create_time;type:timestamp(6);autoCreateTime:milli"`
@@ -72,49 +95,14 @@ type LegacyStringBaseModel struct {
 	Version    int64        `gorm:"column:version;default:0"`
 }
 
-// GetVersion 获取版本号（乐观锁）
-func (m *LegacyBaseModel) GetVersion() int64 {
-	return m.Version
-}
-
-// SetVersion 设置版本号
-func (m *LegacyBaseModel) SetVersion(v int64) {
-	m.Version = v
-}
-
-// GetVersion 获取版本号（乐观锁）
 func (m *LegacyStringBaseModel) GetVersion() int64 {
 	return m.Version
 }
 
-// SetVersion 设置版本号
 func (m *LegacyStringBaseModel) SetVersion(v int64) {
 	m.Version = v
 }
 
-// ============ Model 辅助方法 ============
-
-// IsDeleted 检查是否已软删除
-func (m *Model) IsDeleted() bool {
-	return m.DeletedAt.Valid && !m.DeletedAt.Time.IsZero()
-}
-
-// IsDeleted 检查是否已软删除
-func (m *IntIDModel) IsDeleted() bool {
-	return m.DeletedAt.Valid && !m.DeletedAt.Time.IsZero()
-}
-
-// IsDeleted 检查是否已软删除
-func (m *StringIDModel) IsDeleted() bool {
-	return m.DeletedAt.Valid && !m.DeletedAt.Time.IsZero()
-}
-
-// IsDeleted 检查是否已软删除
-func (m *LegacyBaseModel) IsDeleted() bool {
-	return m.DeleteTime.Valid && !m.DeleteTime.Time.IsZero()
-}
-
-// IsDeleted 检查是否已软删除
 func (m *LegacyStringBaseModel) IsDeleted() bool {
 	return m.DeleteTime.Valid && !m.DeleteTime.Time.IsZero()
 }

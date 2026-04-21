@@ -1,8 +1,6 @@
 package gormx
 
 import (
-	"context"
-
 	"gorm.io/gorm"
 )
 
@@ -72,26 +70,4 @@ func setColumnIfZero(db *gorm.DB, column string, value any) {
 		return
 	}
 	db.Statement.SetColumn(column, value)
-}
-
-func UnscopedUpdate(db *gorm.DB, model any, updates map[string]any) error {
-	return db.Session(&gorm.Session{
-		SkipHooks: true,
-	}).Model(model).Updates(updates).Error
-}
-
-func UnscopedCreate(db *gorm.DB, value any) error {
-	return db.Session(&gorm.Session{
-		SkipHooks: true,
-	}).Create(value).Error
-}
-
-func SystemUpdate(db *gorm.DB, model any, updates map[string]any) error {
-	emptyCtx := context.Background()
-	return db.WithContext(emptyCtx).Model(model).Updates(updates).Error
-}
-
-func SystemCreate(db *gorm.DB, value any) error {
-	emptyCtx := context.Background()
-	return db.WithContext(emptyCtx).Create(value).Error
 }

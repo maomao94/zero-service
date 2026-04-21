@@ -103,6 +103,9 @@ service TriggerRpc {
 
   // 生成自增ID
   rpc NextId (NextIdReq) returns (NextIdRes);
+
+  // 并发调用调度
+  rpc Invoke(InvokeReq) returns (InvokeRes);
 }
 
 // 执行项调度状态枚举定义
@@ -1179,4 +1182,70 @@ message NextIdReq{
 
 message NextIdRes{
   string nextId = 1;
+}
+
+// ==================== Invoke Service ====================
+
+// 单个调用任务描述
+message InvokeTaskPb {
+  // 任务唯一标识
+  string id = 1 [(validate.rules).string = {min_len: 1}];
+  // 协议类型: http / grpc
+  string protocol = 2 [(validate.rules).string = {in: ["http", "grpc"]}];
+  // 单任务超时时间（毫秒），0 表示不设单独超时
+  int64 timeout = 3 [(validate.rules).int64 = {gte: 0}];
+
+  // === HTTP 字段 ===
+  // 请求地址
+  string url = 10;
+  // HTTP 方法: GET / POST / PUT / DELETE 等
+  string httpMethod = 11;
+  // 自定义请求头
+  map<string, string> headers = 12;
+  // 请求体
+  bytes body = 13;
+
+  // === gRPC 字段 ===
+  // gRPC 服务地址
+  string grpcServer = 20;
+  // gRPC 方法全路径，如 /pb.Service/Method
+  string method = 21;
+  // pb 字节数据
+  bytes payload = 22;
+}
+
+// 并发调用请求
+message InvokeReq {
+  extproto.CurrentUser currentUser = 100;
+
+  // 调用任务列表
+  repeated InvokeTaskPb tasks = 1 [(validate.rules).repeated = {min_items: 1}];
+  // 最大并发数，0 或不设表示不限制
+  int32 maxConcurrency = 2 [(validate.rules).int32 = {gte: 0}];
+  // 调试模式，开启后在日志中打印每个任务的响应数据
+  bool debug = 3;
+}
+
+// 单个任务执行结果
+message InvokeTaskResultPb {
+  // 任务唯一标识，与请求中的 id 对应
+  string id = 1;
+  // 是否执行成功
+  bool success = 2;
+  // HTTP 状态码或 gRPC 状态码
+  int32 statusCode = 3;
+  // 错误信息（失败时）
+  string error = 4;
+  // 返回数据
+  bytes data = 5;
+  // 执行耗时（毫秒）
+  int64 costMs = 6;
+  // 格式化耗时，如 "123ms"、"1.5s"
+  string costFormatted = 7;
+}
+
+// 并发调用响应
+message InvokeRes {
+  // 每个任务的独立执行结果
+  repeated InvokeTaskResultPb results = 1;
 }

@@ -60,6 +60,7 @@ const (
 	TriggerRpc_GetExecItemDashboard_FullMethodName    = "/trigger.TriggerRpc/GetExecItemDashboard"
 	TriggerRpc_CallbackPlanExecItem_FullMethodName    = "/trigger.TriggerRpc/CallbackPlanExecItem"
 	TriggerRpc_NextId_FullMethodName                  = "/trigger.TriggerRpc/NextId"
+	TriggerRpc_Invoke_FullMethodName                  = "/trigger.TriggerRpc/Invoke"
 )
 
 // TriggerRpcClient is the client API for TriggerRpc service.
@@ -148,6 +149,8 @@ type TriggerRpcClient interface {
 	CallbackPlanExecItem(ctx context.Context, in *CallbackPlanExecItemReq, opts ...grpc.CallOption) (*CallbackPlanExecItemRes, error)
 	// 生成自增ID
 	NextId(ctx context.Context, in *NextIdReq, opts ...grpc.CallOption) (*NextIdRes, error)
+	// 并发调用调度
+	Invoke(ctx context.Context, in *InvokeReq, opts ...grpc.CallOption) (*InvokeRes, error)
 }
 
 type triggerRpcClient struct {
@@ -568,6 +571,16 @@ func (c *triggerRpcClient) NextId(ctx context.Context, in *NextIdReq, opts ...gr
 	return out, nil
 }
 
+func (c *triggerRpcClient) Invoke(ctx context.Context, in *InvokeReq, opts ...grpc.CallOption) (*InvokeRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(InvokeRes)
+	err := c.cc.Invoke(ctx, TriggerRpc_Invoke_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TriggerRpcServer is the server API for TriggerRpc service.
 // All implementations must embed UnimplementedTriggerRpcServer
 // for forward compatibility.
@@ -654,6 +667,8 @@ type TriggerRpcServer interface {
 	CallbackPlanExecItem(context.Context, *CallbackPlanExecItemReq) (*CallbackPlanExecItemRes, error)
 	// 生成自增ID
 	NextId(context.Context, *NextIdReq) (*NextIdRes, error)
+	// 并发调用调度
+	Invoke(context.Context, *InvokeReq) (*InvokeRes, error)
 	mustEmbedUnimplementedTriggerRpcServer()
 }
 
@@ -786,6 +801,9 @@ func (UnimplementedTriggerRpcServer) CallbackPlanExecItem(context.Context, *Call
 }
 func (UnimplementedTriggerRpcServer) NextId(context.Context, *NextIdReq) (*NextIdRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NextId not implemented")
+}
+func (UnimplementedTriggerRpcServer) Invoke(context.Context, *InvokeReq) (*InvokeRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Invoke not implemented")
 }
 func (UnimplementedTriggerRpcServer) mustEmbedUnimplementedTriggerRpcServer() {}
 func (UnimplementedTriggerRpcServer) testEmbeddedByValue()                    {}
@@ -1546,6 +1564,24 @@ func _TriggerRpc_NextId_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TriggerRpc_Invoke_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InvokeReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TriggerRpcServer).Invoke(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TriggerRpc_Invoke_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TriggerRpcServer).Invoke(ctx, req.(*InvokeReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TriggerRpc_ServiceDesc is the grpc.ServiceDesc for TriggerRpc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1716,6 +1752,10 @@ var TriggerRpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "NextId",
 			Handler:    _TriggerRpc_NextId_Handler,
+		},
+		{
+			MethodName: "Invoke",
+			Handler:    _TriggerRpc_Invoke_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

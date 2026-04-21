@@ -340,3 +340,147 @@ func TestPendingRegistry_OverrideTTL(t *testing.T) {
 		t.Fatalf("expected ErrPendingExpired, got %v", err)
 	}
 }
+
+func TestPendingRegistry_ConcurrentRegisterClose(t *testing.T) {
+	reg := antsx.NewPendingRegistry[int]()
+
+	var wg sync.WaitGroup
+	for i := 0; i < 50; i++ {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			id := fmt.Sprintf("race-%d", idx)
+			p, err := reg.Register(id, time.Second)
+			if err != nil {
+				return
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+			defer cancel()
+			p.Await(ctx)
+		}(i)
+	}
+
+	time.Sleep(20 * time.Millisecond)
+	reg.Close()
+	wg.Wait()
+}
+
+func TestRequestReply_TTL(t *testing.T) {
+	reg := antsx.NewPendingRegistry[string](antsx.WithDefaultTTL(100 * time.Millisecond))
+	defer reg.Close()
+
+	ctx := context.Background()
+	_, err := antsx.RequestReply(ctx, reg, "rr-ttl", func() error {
+		return nil
+	})
+	if !errors.Is(err, antsx.ErrPendingExpired) {
+		t.Fatalf("expected ErrPendingExpired, got %v", err)
+	}
+}
+
+func TestPendingRegistry_RejectNonExistent(t *testing.T) {
+	reg := antsx.NewPendingRegistry[string]()
+	defer reg.Close()
+
+	ok := reg.Reject("ghost", errors.New("nope"))
+	if ok {
+		t.Fatal("expected false for non-existent ID")
+	}
+}
+
+func TestPendingRegistry_MassiveRegisterResolve(t *testing.T) {
+	reg := antsx.NewPendingRegistry[int]()
+	defer reg.Close()
+
+	const n = 500
+	promises := make([]*antsx.Promise[int], n)
+
+	var wg sync.WaitGroup
+	for i := 0; i < n; i++ {
+		id := fmt.Sprintf("mass-%d", i)
+		p, err := reg.Register(id, 5*time.Second)
+		if err != nil {
+			t.Fatal(err)
+		}
+		promises[i] = p
+
+		wg.Add(1)
+		go func(idx int, id string) {
+			defer wg.Done()
+			time.Sleep(time.Duration(idx%10) * time.Millisecond)
+			reg.Resolve(id, idx)
+		}(i, id)
+	}
+
+	wg.Wait()
+
+	ctx := context.Background()
+	for i := 0; i < n; i++ {
+		val, err := promises[i].Await(ctx)
+		if err != nil {
+			t.Fatalf("promise %d: %v", i, err)
+		}
+		if val != i {
+			t.Fatalf("promise %d: expected %d, got %d", i, i, val)
+		}
+	}
+}
+
+func TestPendingRegistry_WithTimingWheel(t *testing.T) {
+	reg := antsx.NewPendingRegistry[string](
+		antsx.WithTimingWheel(50*time.Millisecond, 10),
+		antsx.WithDefaultTTL(200*time.Millisecond),
+	)
+	defer reg.Close()
+
+	p, err := reg.Register("tw-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	time.Sleep(300 * time.Millisecond)
+
+	_, err = p.Await(context.Background())
+	if !errors.Is(err, antsx.ErrPendingExpired) {
+		t.Fatalf("expected ErrPendingExpired with custom TimingWheel, got: %v", err)
+	}
+}
+
+func TestPendingRegistry_RegisterResolveBeforeTimeout(t *testing.T) {
+	reg := antsx.NewPendingRegistry[string](
+		antsx.WithDefaultTTL(500 * time.Millisecond),
+	)
+	defer reg.Close()
+
+	p, err := reg.Register("fast-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	reg.Resolve("fast-1", "hello")
+
+	val, err := p.Await(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if val != "hello" {
+		t.Fatalf("expected 'hello', got %q", val)
+	}
+}
+
+func TestRequestReply_CtxTimeout(t *testing.T) {
+	reg := antsx.NewPendingRegistry[string](
+		antsx.WithDefaultTTL(5 * time.Second),
+	)
+	defer reg.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	_, err := antsx.RequestReply(ctx, reg, "timeout-1", func() error {
+		return nil
+	})
+	if err == nil {
+		t.Fatal("expected error from ctx timeout")
+	}
+}

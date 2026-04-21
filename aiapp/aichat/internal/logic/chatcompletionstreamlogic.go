@@ -118,7 +118,7 @@ func (l *ChatCompletionStreamLogic) mixedStreamLoop(ctx context.Context, req *pr
 		}
 
 		for {
-			recv := antsx.NewPromise[*provider.StreamChunk]("stream-recv")
+			recv := antsx.NewPromise[*provider.StreamChunk]()
 			threading.GoSafe(func() {
 				chunk, recvErr := reader.Recv()
 				if recvErr != nil {

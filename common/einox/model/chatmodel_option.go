@@ -153,7 +153,7 @@ func newDeepSeekByOption(ctx context.Context, cfg *chatModelOptions) (model.Base
 	return deepseek.NewChatModel(ctx, config)
 }
 
-func newOllamaByOption(ctx context.Context, cfg *chatModelOptions) (model.ChatModel, error) {
+func newOllamaByOption(ctx context.Context, cfg *chatModelOptions) (model.BaseChatModel, error) {
 	url := cfg.baseURL
 	if url == "" {
 		url = "http://localhost:11434"
@@ -213,6 +213,5 @@ func newArkByOption(ctx context.Context, cfg *chatModelOptions) (model.BaseChatM
 }
 
 func newClaudeByOption(ctx context.Context, cfg *chatModelOptions) (model.BaseChatModel, error) {
-	logx.Errorf("claude provider not implemented yet, use openai with claude base url")
-	return nil, fmt.Errorf("claude provider not implemented: use openai compatible interface with claude base url")
+	return nil, fmt.Errorf("claude provider not implemented: please use provider=openai with base_url pointing to a Claude-compatible OpenAI proxy")
 }

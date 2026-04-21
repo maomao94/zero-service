@@ -2,11 +2,12 @@ package gormx
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/zeromicro/go-zero/core/logx"
 	"gorm.io/gorm"
 )
 
-// ColumnInfo 列信息
 type ColumnInfo struct {
 	ColumnName    string `json:"column_name"`
 	DataType      string `json:"data_type"`
@@ -18,17 +19,14 @@ type ColumnInfo struct {
 	DefaultValue  string `json:"default_value"`
 }
 
-// TableInfo 表信息
 type TableInfo struct {
 	TableName string `json:"table_name"`
 }
 
-// DBInfo 数据库信息
 type DBInfo struct {
 	Database string `json:"database"`
 }
 
-// GetTables 获取数据库中的表列表
 func GetTables(db *gorm.DB, dbName string) ([]TableInfo, error) {
 	var tables []TableInfo
 	sql := buildGetTablesSQL(db)
@@ -38,11 +36,9 @@ func GetTables(db *gorm.DB, dbName string) ([]TableInfo, error) {
 	return tables, nil
 }
 
-// GetColumns 获取表的列信息
 func GetColumns(db *gorm.DB, tableName string) ([]ColumnInfo, error) {
 	var columns []ColumnInfo
 
-	// SQLite 不支持参数化 PRAGMA，需要动态构建
 	if GetDatabaseTypeFromDialector(db) == DatabaseSQLite {
 		sql := fmt.Sprintf(`SELECT
 			name AS column_name,
@@ -63,7 +59,6 @@ func GetColumns(db *gorm.DB, tableName string) ([]ColumnInfo, error) {
 	return columns, nil
 }
 
-// GetDatabases 获取所有数据库
 func GetDatabases(db *gorm.DB) ([]DBInfo, error) {
 	var dbs []DBInfo
 	sql := buildGetDatabasesSQL(db)
@@ -73,22 +68,85 @@ func GetDatabases(db *gorm.DB) ([]DBInfo, error) {
 	return dbs, nil
 }
 
-// CreateTable 创建表
 func CreateTable(db *gorm.DB, model any) error {
 	return db.AutoMigrate(model)
 }
 
-// DropTable 删除表
-func DropTable(db *gorm.DB, tableName string) error {
+func DropTableByName(db *gorm.DB, tableName string) error {
 	return db.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", tableName)).Error
 }
 
-// HasTable 检查表是否存在
 func HasTable(db *gorm.DB, tableName string) bool {
 	return db.Migrator().HasTable(tableName)
 }
 
-// ============ 私有方法：根据数据库类型构建 SQL ============
+func (db *DB) AlterColumn(tableName, field, fieldType string) error {
+	dialect := string(GetDatabaseTypeFromDialector(db.DB))
+	var sql string
+	switch dialect {
+	case "mysql":
+		sql = fmt.Sprintf("ALTER TABLE `%s` MODIFY COLUMN `%s` %s", tableName, field, fieldType)
+	case "postgres":
+		sql = fmt.Sprintf("ALTER TABLE \"%s\" ALTER COLUMN \"%s\" TYPE %s", tableName, field, fieldType)
+	default:
+		sql = fmt.Sprintf("ALTER TABLE %s MODIFY COLUMN %s %s", tableName, field, fieldType)
+	}
+	return db.Exec(sql).Error
+}
+
+func (db *DB) RenameColumn(tableName, oldName, newName string) error {
+	return db.Migrator().RenameColumn(tableName, oldName, newName)
+}
+
+func (db *DB) AddColumn(tableName, field, fieldType string) error {
+	if db.Migrator().HasColumn(tableName, field) {
+		logx.Infof("column %s.%s already exists, skip", tableName, field)
+		return nil
+	}
+	sql := fmt.Sprintf("ALTER TABLE `%s` ADD COLUMN `%s` %s", tableName, field, fieldType)
+	return db.Exec(sql).Error
+}
+
+func (db *DB) DropColumn(tableName, field string) error {
+	return db.Migrator().DropColumn(tableName, field)
+}
+
+func (db *DB) CreateIndex(tableName, indexName string, fields []string) error {
+	if db.Migrator().HasIndex(tableName, indexName) {
+		logx.Infof("index %s on %s already exists, skip", indexName, tableName)
+		return nil
+	}
+	sql := fmt.Sprintf("CREATE INDEX `%s` ON `%s` (%s)", indexName, tableName, strings.Join(fields, ", "))
+	return db.Exec(sql).Error
+}
+
+func (db *DB) DropIndex(tableName, indexName string) error {
+	return db.Migrator().DropIndex(tableName, indexName)
+}
+
+func (db *DB) CreateForeignKey(table, field, references string) error {
+	constraintName := "fk_" + table + "_" + field
+	sql := fmt.Sprintf("ALTER TABLE `%s` ADD CONSTRAINT `%s` FOREIGN KEY (`%s`) REFERENCES %s",
+		table, constraintName, field, references)
+	return db.Exec(sql).Error
+}
+
+func (db *DB) DropForeignKey(table, constraintName string) error {
+	sql := fmt.Sprintf("ALTER TABLE `%s` DROP FOREIGN KEY `%s`", table, constraintName)
+	return db.Exec(sql).Error
+}
+
+func (db *DB) RenameTable(oldName, newName string) error {
+	return db.Migrator().RenameTable(oldName, newName)
+}
+
+func (db *DB) DropTable(name string) error {
+	return db.Exec(fmt.Sprintf("DROP TABLE IF EXISTS `%s`", name)).Error
+}
+
+func (db *DB) HasTable(name string) bool {
+	return db.Migrator().HasTable(name)
+}
 
 func buildGetTablesSQL(db *gorm.DB) string {
 	switch GetDatabaseTypeFromDialector(db) {
@@ -96,7 +154,7 @@ func buildGetTablesSQL(db *gorm.DB) string {
 		return `SELECT tablename AS table_name FROM pg_catalog.pg_tables WHERE schemaname = 'public'`
 	case DatabaseSQLite:
 		return `SELECT name AS table_name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'`
-	default: // MySQL
+	default:
 		return "SELECT TABLE_NAME AS table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_TYPE = 'BASE TABLE'"
 	}
 }
@@ -124,7 +182,7 @@ func buildGetColumnsSQL(db *gorm.DB) string {
 			LEFT JOIN pg_catalog.pg_statio_all_descriptions pd ON pd.objoid = (SELECT oid FROM pg_class WHERE relname = $1)
 			WHERE c.table_name = $1 AND c.table_schema = 'public'
 			ORDER BY c.ordinal_position`
-	default: // MySQL
+	default:
 		return `
 			SELECT
 				c.COLUMN_NAME AS column_name,
@@ -152,7 +210,7 @@ func buildGetDatabasesSQL(db *gorm.DB) string {
 		return "SELECT datname AS database FROM pg_catalog.pg_database WHERE datistemplate = false"
 	case DatabaseSQLite:
 		return "SELECT 'main' AS database"
-	default: // MySQL
+	default:
 		return "SELECT SCHEMA_NAME AS database FROM INFORMATION_SCHEMA.SCHEMATA"
 	}
 }

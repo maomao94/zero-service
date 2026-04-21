@@ -200,6 +200,5 @@ func newArk(ctx context.Context, cfg Config) (model.BaseChatModel, error) {
 // 1. 使用 OpenAI 兼容接口 + Claude API Base URL
 // 2. 或等待官方支持
 func newClaude(ctx context.Context, cfg Config) (model.BaseChatModel, error) {
-	logx.Errorf("claude provider not implemented yet, use openai with claude base url")
-	return nil, fmt.Errorf("claude provider not implemented: use openai compatible interface with claude base url")
+	return nil, fmt.Errorf("claude provider not implemented: please use provider=openai with base_url pointing to a Claude-compatible OpenAI proxy")
 }

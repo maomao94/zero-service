@@ -19,7 +19,7 @@ import (
 // 适合单机部署、简单持久化的场景（借鉴 eino-examples/quickstart/chatwitheino/mem）。
 type JSONLStorage struct {
 	baseDir string
-	mu      sync.Mutex // 文件追加使用单进程内串行化，简化并发模型
+	mu      sync.RWMutex
 }
 
 // NewJSONLStorage 创建 JSONL 存储。
@@ -72,6 +72,9 @@ func (s *JSONLStorage) SaveMessage(_ context.Context, msg *ConversationMessage) 
 
 // GetMessages 读取会话文件并按 CreatedAt 升序返回。
 func (s *JSONLStorage) GetMessages(_ context.Context, userID, sessionID string, limit int) ([]*ConversationMessage, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	fp := s.sessionFile(userID, sessionID)
 	f, err := os.Open(fp)
 	if err != nil {

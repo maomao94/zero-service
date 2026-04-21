@@ -19,7 +19,7 @@ import (
 //   - 文件名用 key 的 sha1，避免非法字符与超长名。
 type JSONLStore struct {
 	baseDir string
-	mu      sync.Mutex // 保证并发安全 + 原子替换
+	mu      sync.RWMutex
 }
 
 // NewJSONLStore 创建 JSONL 存储。会自动创建 baseDir。
@@ -66,8 +66,8 @@ func (s *JSONLStore) Get(_ context.Context, key string) ([]byte, bool, error) {
 	if key == "" {
 		return nil, false, nil
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
 	data, err := os.ReadFile(s.keyPath(key))
 	if os.IsNotExist(err) {

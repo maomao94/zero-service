@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 )
@@ -113,6 +114,7 @@ func (e *ArkEmbedder) embedBatch(ctx context.Context, texts []string) ([][]float
 	if len(er.Data) != len(texts) {
 		return nil, fmt.Errorf("knowledge embedding: expect %d vectors, got %d", len(texts), len(er.Data))
 	}
+	sort.Slice(er.Data, func(i, j int) bool { return er.Data[i].Index < er.Data[j].Index })
 	out := make([][]float32, len(er.Data))
 	for i := range er.Data {
 		v := make([]float32, len(er.Data[i].Embedding))

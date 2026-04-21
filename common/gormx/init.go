@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sort"
+	"sync"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"gorm.io/driver/mysql"
@@ -19,9 +20,9 @@ var (
 )
 
 const (
-	InitOrderSystem   = 10     // 系统基础表
-	InitOrderInternal = 1000   // 内部表
-	InitOrderExternal = 100000 // 外部/业务表
+	InitOrderSystem   = 10
+	InitOrderInternal = 1000
+	InitOrderExternal = 100000
 )
 
 type Initializer interface {
@@ -39,12 +40,18 @@ type orderedInit struct {
 
 type initSlice []*orderedInit
 
+type initDBKey struct{}
+
 var (
+	initMu       sync.Mutex
 	initializers = initSlice{}
 	initCache    = make(map[string]*orderedInit)
 )
 
 func RegisterInit(order int, init Initializer) {
+	initMu.Lock()
+	defer initMu.Unlock()
+
 	name := init.Name()
 	if _, ok := initCache[name]; ok {
 		logx.Errorf("initializer %s already registered", name)
@@ -56,6 +63,9 @@ func RegisterInit(order int, init Initializer) {
 }
 
 func UnregisterInit(name string) {
+	initMu.Lock()
+	defer initMu.Unlock()
+
 	delete(initCache, name)
 	for i, init := range initializers {
 		if init.Name() == name {
@@ -66,6 +76,9 @@ func UnregisterInit(name string) {
 }
 
 func ClearAllInits() {
+	initMu.Lock()
+	defer initMu.Unlock()
+
 	initializers = initSlice{}
 	initCache = make(map[string]*orderedInit)
 }
@@ -83,15 +96,20 @@ func (a initSlice) Swap(i, j int) {
 }
 
 func AutoInit(db *gorm.DB) error {
-	if len(initializers) == 0 {
+	initMu.Lock()
+	sorted := make(initSlice, len(initializers))
+	copy(sorted, initializers)
+	initMu.Unlock()
+
+	if len(sorted) == 0 {
 		logx.Info("no initializers registered, skip auto init")
 		return nil
 	}
 
-	sort.Sort(&initializers)
+	sort.Sort(&sorted)
 
 	ctx := context.Background()
-	for _, init := range initializers {
+	for _, init := range sorted {
 		if init.TableCreated(ctx, db) {
 			logx.Infof("table for %s already exists, skip", init.Name())
 			continue
@@ -204,7 +222,7 @@ func (h *MysqlInitHandler) EnsureDB(ctx context.Context, dbName string, conf Con
 	if err := db.Exec(createSQL).Error; err != nil {
 		return ctx, nil, err
 	}
-	ctx = context.WithValue(ctx, "db", db)
+	ctx = context.WithValue(ctx, initDBKey{}, db)
 	return ctx, db, nil
 }
 
@@ -234,7 +252,7 @@ func (h *PostgresInitHandler) EnsureDB(ctx context.Context, dbName string, conf 
 	if err := db.Exec(createSQL).Error; err != nil {
 		return ctx, nil, err
 	}
-	ctx = context.WithValue(ctx, "db", db)
+	ctx = context.WithValue(ctx, initDBKey{}, db)
 	return ctx, db, nil
 }
 
@@ -257,7 +275,7 @@ func (h *SqliteInitHandler) EnsureDB(ctx context.Context, dbName string, conf Co
 	if err != nil {
 		return ctx, nil, err
 	}
-	ctx = context.WithValue(ctx, "db", db)
+	ctx = context.WithValue(ctx, initDBKey{}, db)
 	return ctx, db, nil
 }
 

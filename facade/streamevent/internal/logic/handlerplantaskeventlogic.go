@@ -30,7 +30,7 @@ func (l *HandlerPlanTaskEventLogic) HandlerPlanTaskEvent(in *streamevent.Handler
 	return &streamevent.HandlerPlanTaskEventRes{
 		ExecResult: model.ResultCompleted,
 		Message:    "",
-		DelayConfig: &streamevent.PbDelayConfig{
+		DelayConfig: &streamevent.DelayConfigPb{
 			NextTriggerTime: carbon.Now().AddHours(1).ToDateTimeString(),
 			DelayReason:     "",
 		},
