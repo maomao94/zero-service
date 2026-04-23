@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"zero-service/common/antsx"
@@ -31,6 +32,9 @@ type Client struct {
 	onFlightTaskReady    func(ctx context.Context, gatewaySn string, data *FlightTaskReadyEvent)
 	onReturnHomeInfo     func(ctx context.Context, gatewaySn string, data *ReturnHomeInfoEvent)
 	onCustomDataFromPsdk func(ctx context.Context, gatewaySn string, data *CustomDataFromPsdkEvent)
+	onHmsEventNotify     func(ctx context.Context, gatewaySn string, data *HmsEventData)
+	onOsd                func(ctx context.Context, deviceSn string, data *OsdMessage)
+	onState              func(ctx context.Context, deviceSn string, data *OsdMessage)
 }
 
 // NewClient 创建一个新的 DJI Cloud API 客户端实例。
@@ -166,6 +170,18 @@ func (c *Client) dispatchTypedEvent(ctx context.Context, gatewaySn, method strin
 			c.onCustomDataFromPsdk(ctx, gatewaySn, &msg.Data)
 			return true
 		}
+	case MethodHmsEventNotify:
+		if c.onHmsEventNotify != nil {
+			var msg struct {
+				Data HmsEventData `json:"data"`
+			}
+			if err := json.Unmarshal(raw, &msg); err != nil {
+				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal HmsEventData failed: %v", err)
+				return true
+			}
+			c.onHmsEventNotify(ctx, gatewaySn, &msg.Data)
+			return true
+		}
 	}
 	return false
 }
@@ -226,6 +242,32 @@ func (c *Client) OnReturnHomeInfo(handler func(ctx context.Context, gatewaySn st
 //   - handler: 回调函数，携带已解析的 CustomDataFromPsdkEvent 结构体
 func (c *Client) OnCustomDataFromPsdk(handler func(ctx context.Context, gatewaySn string, data *CustomDataFromPsdkEvent)) {
 	c.onCustomDataFromPsdk = handler
+}
+
+// OnHmsEventNotify 注册 HMS 健康告警上报钩子。
+// 方向 up：设备→云平台。对应 method: hms。
+// 设备上报健康管理系统告警和状态事件时触发，钩子只负责通知。
+//   - handler: 回调函数，携带已解析的 HmsEventData 结构体
+func (c *Client) OnHmsEventNotify(handler func(ctx context.Context, gatewaySn string, data *HmsEventData)) {
+	c.onHmsEventNotify = handler
+}
+
+// OnOsd 注册设备 OSD 遥测数据上报钩子。
+// Topic: thing/product/{device_sn}/osd
+// 方向 up：设备→云平台。
+// 设备定期推送实时遥测数据（飞行姿态、GPS 坐标、电池电量等），钩子只负责通知。
+//   - handler: 回调函数，携带设备 SN 和已解析的 OsdMessage 结构体
+func (c *Client) OnOsd(handler func(ctx context.Context, deviceSn string, data *OsdMessage)) {
+	c.onOsd = handler
+}
+
+// OnState 注册设备状态上报钩子。
+// Topic: thing/product/{device_sn}/state
+// 方向 up：设备→云平台。
+// 设备上报自身状态信息（固件版本、在线状态、设备能力集等），钩子只负责通知。
+//   - handler: 回调函数，携带设备 SN 和已解析的 OsdMessage 结构体
+func (c *Client) OnState(handler func(ctx context.Context, deviceSn string, data *OsdMessage)) {
+	c.onState = handler
 }
 
 // ==================== 基础命令发送 ====================
@@ -822,6 +864,58 @@ func (c *Client) LiveSetQuality(ctx context.Context, gatewaySn string, data *Liv
 	return c.SendCommand(ctx, gatewaySn, MethodLiveSetQuality, data)
 }
 
+// ==================== OSD / State 回调处理 ====================
+
+// extractDeviceSnFromTopic 从 MQTT topic 中提取设备 SN。
+// topic 格式: thing/product/{device_sn}/osd 或 thing/product/{device_sn}/state
+func extractDeviceSnFromTopic(topic string) string {
+	parts := strings.Split(topic, "/")
+	if len(parts) >= 3 {
+		return parts[2]
+	}
+	return ""
+}
+
+// HandleOsd 处理设备的 osd 主题消息回调。
+// 解析设备 OSD 遥测数据，并通过 onOsd 钩子分发给上层业务。
+//   - ctx: 请求上下文
+//   - payload: MQTT 消息原始字节
+//   - topic: 消息来源的 MQTT 主题，格式 thing/product/{device_sn}/osd
+//   - 返回值: 解析失败时返回错误，成功时返回 nil
+func (c *Client) HandleOsd(ctx context.Context, payload []byte, topic string, _ string) error {
+	if c.onOsd == nil {
+		return nil
+	}
+	var msg OsdMessage
+	if err := json.Unmarshal(payload, &msg); err != nil {
+		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal osd failed: %v, topic=%s", err, topic)
+		return err
+	}
+	deviceSn := extractDeviceSnFromTopic(topic)
+	c.onOsd(ctx, deviceSn, &msg)
+	return nil
+}
+
+// HandleState 处理设备的 state 主题消息回调。
+// 解析设备状态数据，并通过 onState 钩子分发给上层业务。
+//   - ctx: 请求上下文
+//   - payload: MQTT 消息原始字节
+//   - topic: 消息来源的 MQTT 主题，格式 thing/product/{device_sn}/state
+//   - 返回值: 解析失败时返回错误，成功时返回 nil
+func (c *Client) HandleState(ctx context.Context, payload []byte, topic string, _ string) error {
+	if c.onState == nil {
+		return nil
+	}
+	var msg OsdMessage
+	if err := json.Unmarshal(payload, &msg); err != nil {
+		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal state failed: %v, topic=%s", err, topic)
+		return err
+	}
+	deviceSn := extractDeviceSnFromTopic(topic)
+	c.onState(ctx, deviceSn, &msg)
+	return nil
+}
+
 // ==================== 订阅管理 ====================
 
 // SubscribeAll 批量订阅所有通配主题。
@@ -832,6 +926,8 @@ func (c *Client) SubscribeAll() error {
 		ServicesReplyTopicPattern():    c.HandleServicesReply,
 		EventsTopicPattern():           c.HandleEvents,
 		PropertySetReplyTopicPattern(): c.HandlePropertySetReply,
+		OsdTopicPattern():              c.HandleOsd,
+		StateTopicPattern():            c.HandleState,
 	}
 	for topic, handler := range topics {
 		if err := c.mqttClient.AddHandlerFunc(topic, handler); err != nil {

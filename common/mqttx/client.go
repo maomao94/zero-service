@@ -252,14 +252,16 @@ func (c *Client) restoreSubscriptions() error {
 }
 
 // messageHandler 消息处理包装器
+// topic 参数为订阅时的主题模板（可能含通配符 +/#），用于 dispatcher 精确匹配处理器
 func (c *Client) messageHandler(topic string) mqtt.MessageHandler {
 	return func(_ mqtt.Client, msg mqtt.Message) {
-		c.processMessage(msg)
+		c.processMessage(msg, topic)
 	}
 }
 
 // processMessage 处理接收到的消息
-func (c *Client) processMessage(msg mqtt.Message) {
+// topicTemplate 为订阅时注册的主题模板，用于 dispatcher 查找对应处理器
+func (c *Client) processMessage(msg mqtt.Message, topicTemplate string) {
 	ctx := context.Background()
 	payload := msg.Payload()
 
@@ -270,7 +272,7 @@ func (c *Client) processMessage(msg mqtt.Message) {
 	}
 
 	// 启动追踪 span
-	ctx, span := c.startSpan(ctx, msg, topicTemplateFromMsg(msg))
+	ctx, span := c.startSpan(ctx, msg, topicTemplate)
 	defer span.End()
 	ctx = logx.ContextWithFields(ctx, logx.Field("client", c.GetClientID()))
 
@@ -280,7 +282,7 @@ func (c *Client) processMessage(msg mqtt.Message) {
 	}
 
 	// 分发给 handlers
-	c.dispatcher.dispatch(ctx, payload, msg.Topic(), topicTemplateFromMsg(msg))
+	c.dispatcher.dispatch(ctx, payload, msg.Topic(), topicTemplate)
 }
 
 // tryUnwrapPayload 尝试解析包装消息
@@ -300,12 +302,6 @@ func (c *Client) tryUnwrapPayload(data []byte) (*Message, error) {
 func (c *Client) extractTraceContext(ctx context.Context, msg *Message) context.Context {
 	carrier := NewMessageCarrier(msg)
 	return otel.GetTextMapPropagator().Extract(ctx, carrier)
-}
-
-// topicTemplateFromMsg 从消息获取主题模板
-// 这里简化处理，直接返回完整主题
-func topicTemplateFromMsg(msg mqtt.Message) string {
-	return msg.Topic()
 }
 
 // startSpan 启动追踪 span

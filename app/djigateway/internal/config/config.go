@@ -19,7 +19,17 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
-	MqttConfig mqttx.MqttConfig
-	AckTimeout time.Duration `json:",default=5s"`
-	PendingTTL time.Duration `json:",default=30s"`
+	MqttConfig   mqttx.MqttConfig
+	AckTimeout   time.Duration      `json:",default=5s"`
+	PendingTTL   time.Duration      `json:",default=30s"`
+	DangerousOps DangerousOpsConfig `json:",optional"`
+}
+
+// DangerousOpsConfig 敏感/危险操作开关配置。
+// 默认全部关闭，需要在配置文件中显式开启才能调用对应接口。
+type DangerousOpsConfig struct {
+	// EnableDroneEmergencyStop 是否启用紧急停桨接口。
+	// 紧急停桨会立即停止所有电机，飞行器将失去动力坠落，属于极端危险操作。
+	// 默认 false，生产环境请谨慎开启。
+	EnableDroneEmergencyStop bool `json:",default=false"`
 }

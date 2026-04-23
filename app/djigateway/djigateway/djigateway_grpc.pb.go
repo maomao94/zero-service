@@ -19,18 +19,92 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	DjiGateway_Ping_FullMethodName                 = "/djigateway.DjiGateway/Ping"
-	DjiGateway_ExecuteFlightTask_FullMethodName    = "/djigateway.DjiGateway/ExecuteFlightTask"
-	DjiGateway_SendCustomDataToPsdk_FullMethodName = "/djigateway.DjiGateway/SendCustomDataToPsdk"
+	DjiGateway_Ping_FullMethodName                       = "/djigateway.DjiGateway/Ping"
+	DjiGateway_ExecuteFlightTask_FullMethodName          = "/djigateway.DjiGateway/ExecuteFlightTask"
+	DjiGateway_ReturnHome_FullMethodName                 = "/djigateway.DjiGateway/ReturnHome"
+	DjiGateway_ReturnHomeCancelAutoReturn_FullMethodName = "/djigateway.DjiGateway/ReturnHomeCancelAutoReturn"
+	DjiGateway_SendCustomDataToPsdk_FullMethodName       = "/djigateway.DjiGateway/SendCustomDataToPsdk"
+	DjiGateway_FlightAuthorityGrab_FullMethodName        = "/djigateway.DjiGateway/FlightAuthorityGrab"
+	DjiGateway_PayloadAuthorityGrab_FullMethodName       = "/djigateway.DjiGateway/PayloadAuthorityGrab"
+	DjiGateway_DrcModeEnter_FullMethodName               = "/djigateway.DjiGateway/DrcModeEnter"
+	DjiGateway_DrcModeExit_FullMethodName                = "/djigateway.DjiGateway/DrcModeExit"
+	DjiGateway_SendDrcCommand_FullMethodName             = "/djigateway.DjiGateway/SendDrcCommand"
+	DjiGateway_DroneEmergencyStop_FullMethodName         = "/djigateway.DjiGateway/DroneEmergencyStop"
+	DjiGateway_FlyToPoint_FullMethodName                 = "/djigateway.DjiGateway/FlyToPoint"
+	DjiGateway_FlyToPointStop_FullMethodName             = "/djigateway.DjiGateway/FlyToPointStop"
+	DjiGateway_TakeoffToPoint_FullMethodName             = "/djigateway.DjiGateway/TakeoffToPoint"
 )
 
 // DjiGatewayClient is the client API for DjiGateway service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// DjiGateway DJI 上云网关服务。
+// 将业务系统的 gRPC 请求转换为 DJI Cloud API MQTT 协议指令，
+// 实现航线任务下发、PSDK 自定义数据透传、指令飞行控制（DRC）等能力。
+// 网关内部通过 MQTT 通配符同时订阅多台机巢，支持并发控制多设备。
 type DjiGatewayClient interface {
+	// Ping 健康检查接口，用于验证服务可用性。
 	Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error)
+	// ExecuteFlightTask 执行航线飞行任务。
+	// 内部依次调用 flighttask_prepare（航线准备）和 flighttask_execute（航线执行），
+	// 等待设备 ACK 后返回结果。
 	ExecuteFlightTask(ctx context.Context, in *FlightTaskReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// ReturnHome 控制飞行器一键返航。
+	// 对应 DJI Cloud API method: return_home，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	ReturnHome(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// ReturnHomeCancelAutoReturn 取消自动返航。
+	// 对应 DJI Cloud API method: return_home_cancel，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	ReturnHomeCancelAutoReturn(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// SendCustomDataToPsdk 通过自定义数据透传通道向 PSDK 负载发送数据。
+	// 对应 DJI Cloud API method: custom_data_transmission_to_psdk，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	SendCustomDataToPsdk(ctx context.Context, in *CustomDataToPsdkReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// FlightAuthorityGrab 获取飞行控制权。
+	// 对应 DJI Cloud API method: flight_authority_grab，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	// 在进行指令飞行操控前需要先获取飞行控制权。
+	FlightAuthorityGrab(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// PayloadAuthorityGrab 获取负载控制权。
+	// 对应 DJI Cloud API method: payload_authority_grab，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	// 在控制相机、云台等负载设备前需要先获取负载控制权。
+	PayloadAuthorityGrab(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// DrcModeEnter 进入指令飞行（DRC）模式。
+	// 对应 DJI Cloud API method: drc_mode_enter，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	// 进入 DRC 模式后，可通过 DRC 通道发送实时飞行控制指令。
+	DrcModeEnter(ctx context.Context, in *DrcModeEnterReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// DrcModeExit 退出指令飞行（DRC）模式。
+	// 对应 DJI Cloud API method: drc_mode_exit，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	DrcModeExit(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// SendDrcCommand 通过 DRC 通道发送实时飞行控制指令（杆量控制）。
+	// 对应 DJI Cloud API method: drone_control，Topic: thing/product/{gateway_sn}/drc/down，
+	// 即发即忘模式，不等待设备 ACK。适用于高频实时控制场景（虚拟摇杆）。
+	SendDrcCommand(ctx context.Context, in *DroneControlReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// DroneEmergencyStop 飞行器紧急停桨。
+	// 对应 DJI Cloud API method: drone_emergency_stop，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	// 危险操作：会立即停止所有电机，飞行器将失去动力坠落。仅在紧急情况下使用。
+	// 需要在配置文件中开启 DangerousOps.EnableEmergencyStop 才能调用。
+	DroneEmergencyStop(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// FlyToPoint 飞向指定航点。
+	// 对应 DJI Cloud API method: fly_to_point，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	// 适用于飞行器在空中的场景，支持多航点路径。
+	FlyToPoint(ctx context.Context, in *FlyToPointReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// FlyToPointStop 停止当前的飞向航点任务。
+	// 对应 DJI Cloud API method: fly_to_point_stop，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	FlyToPointStop(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// TakeoffToPoint 一键起飞到指定坐标点。
+	// 对应 DJI Cloud API method: takeoff_to_point，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	// 适用于飞行器在机场内的场景。
+	TakeoffToPoint(ctx context.Context, in *TakeoffToPointReq, opts ...grpc.CallOption) (*CommonRes, error)
 }
 
 type djiGatewayClient struct {
@@ -61,6 +135,26 @@ func (c *djiGatewayClient) ExecuteFlightTask(ctx context.Context, in *FlightTask
 	return out, nil
 }
 
+func (c *djiGatewayClient) ReturnHome(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiGateway_ReturnHome_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiGatewayClient) ReturnHomeCancelAutoReturn(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiGateway_ReturnHomeCancelAutoReturn_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *djiGatewayClient) SendCustomDataToPsdk(ctx context.Context, in *CustomDataToPsdkReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
@@ -71,13 +165,166 @@ func (c *djiGatewayClient) SendCustomDataToPsdk(ctx context.Context, in *CustomD
 	return out, nil
 }
 
+func (c *djiGatewayClient) FlightAuthorityGrab(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiGateway_FlightAuthorityGrab_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiGatewayClient) PayloadAuthorityGrab(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiGateway_PayloadAuthorityGrab_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiGatewayClient) DrcModeEnter(ctx context.Context, in *DrcModeEnterReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiGateway_DrcModeEnter_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiGatewayClient) DrcModeExit(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiGateway_DrcModeExit_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiGatewayClient) SendDrcCommand(ctx context.Context, in *DroneControlReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiGateway_SendDrcCommand_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiGatewayClient) DroneEmergencyStop(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiGateway_DroneEmergencyStop_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiGatewayClient) FlyToPoint(ctx context.Context, in *FlyToPointReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiGateway_FlyToPoint_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiGatewayClient) FlyToPointStop(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiGateway_FlyToPointStop_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiGatewayClient) TakeoffToPoint(ctx context.Context, in *TakeoffToPointReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiGateway_TakeoffToPoint_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DjiGatewayServer is the server API for DjiGateway service.
 // All implementations must embed UnimplementedDjiGatewayServer
 // for forward compatibility.
+//
+// DjiGateway DJI 上云网关服务。
+// 将业务系统的 gRPC 请求转换为 DJI Cloud API MQTT 协议指令，
+// 实现航线任务下发、PSDK 自定义数据透传、指令飞行控制（DRC）等能力。
+// 网关内部通过 MQTT 通配符同时订阅多台机巢，支持并发控制多设备。
 type DjiGatewayServer interface {
+	// Ping 健康检查接口，用于验证服务可用性。
 	Ping(context.Context, *Req) (*Res, error)
+	// ExecuteFlightTask 执行航线飞行任务。
+	// 内部依次调用 flighttask_prepare（航线准备）和 flighttask_execute（航线执行），
+	// 等待设备 ACK 后返回结果。
 	ExecuteFlightTask(context.Context, *FlightTaskReq) (*CommonRes, error)
+	// ReturnHome 控制飞行器一键返航。
+	// 对应 DJI Cloud API method: return_home，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	ReturnHome(context.Context, *DeviceSnReq) (*CommonRes, error)
+	// ReturnHomeCancelAutoReturn 取消自动返航。
+	// 对应 DJI Cloud API method: return_home_cancel，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	ReturnHomeCancelAutoReturn(context.Context, *DeviceSnReq) (*CommonRes, error)
+	// SendCustomDataToPsdk 通过自定义数据透传通道向 PSDK 负载发送数据。
+	// 对应 DJI Cloud API method: custom_data_transmission_to_psdk，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	SendCustomDataToPsdk(context.Context, *CustomDataToPsdkReq) (*CommonRes, error)
+	// FlightAuthorityGrab 获取飞行控制权。
+	// 对应 DJI Cloud API method: flight_authority_grab，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	// 在进行指令飞行操控前需要先获取飞行控制权。
+	FlightAuthorityGrab(context.Context, *DeviceSnReq) (*CommonRes, error)
+	// PayloadAuthorityGrab 获取负载控制权。
+	// 对应 DJI Cloud API method: payload_authority_grab，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	// 在控制相机、云台等负载设备前需要先获取负载控制权。
+	PayloadAuthorityGrab(context.Context, *DeviceSnReq) (*CommonRes, error)
+	// DrcModeEnter 进入指令飞行（DRC）模式。
+	// 对应 DJI Cloud API method: drc_mode_enter，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	// 进入 DRC 模式后，可通过 DRC 通道发送实时飞行控制指令。
+	DrcModeEnter(context.Context, *DrcModeEnterReq) (*CommonRes, error)
+	// DrcModeExit 退出指令飞行（DRC）模式。
+	// 对应 DJI Cloud API method: drc_mode_exit，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	DrcModeExit(context.Context, *DeviceSnReq) (*CommonRes, error)
+	// SendDrcCommand 通过 DRC 通道发送实时飞行控制指令（杆量控制）。
+	// 对应 DJI Cloud API method: drone_control，Topic: thing/product/{gateway_sn}/drc/down，
+	// 即发即忘模式，不等待设备 ACK。适用于高频实时控制场景（虚拟摇杆）。
+	SendDrcCommand(context.Context, *DroneControlReq) (*CommonRes, error)
+	// DroneEmergencyStop 飞行器紧急停桨。
+	// 对应 DJI Cloud API method: drone_emergency_stop，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	// 危险操作：会立即停止所有电机，飞行器将失去动力坠落。仅在紧急情况下使用。
+	// 需要在配置文件中开启 DangerousOps.EnableEmergencyStop 才能调用。
+	DroneEmergencyStop(context.Context, *DeviceSnReq) (*CommonRes, error)
+	// FlyToPoint 飞向指定航点。
+	// 对应 DJI Cloud API method: fly_to_point，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	// 适用于飞行器在空中的场景，支持多航点路径。
+	FlyToPoint(context.Context, *FlyToPointReq) (*CommonRes, error)
+	// FlyToPointStop 停止当前的飞向航点任务。
+	// 对应 DJI Cloud API method: fly_to_point_stop，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	FlyToPointStop(context.Context, *DeviceSnReq) (*CommonRes, error)
+	// TakeoffToPoint 一键起飞到指定坐标点。
+	// 对应 DJI Cloud API method: takeoff_to_point，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	// 适用于飞行器在机场内的场景。
+	TakeoffToPoint(context.Context, *TakeoffToPointReq) (*CommonRes, error)
 	mustEmbedUnimplementedDjiGatewayServer()
 }
 
@@ -94,8 +341,41 @@ func (UnimplementedDjiGatewayServer) Ping(context.Context, *Req) (*Res, error) {
 func (UnimplementedDjiGatewayServer) ExecuteFlightTask(context.Context, *FlightTaskReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExecuteFlightTask not implemented")
 }
+func (UnimplementedDjiGatewayServer) ReturnHome(context.Context, *DeviceSnReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReturnHome not implemented")
+}
+func (UnimplementedDjiGatewayServer) ReturnHomeCancelAutoReturn(context.Context, *DeviceSnReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReturnHomeCancelAutoReturn not implemented")
+}
 func (UnimplementedDjiGatewayServer) SendCustomDataToPsdk(context.Context, *CustomDataToPsdkReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendCustomDataToPsdk not implemented")
+}
+func (UnimplementedDjiGatewayServer) FlightAuthorityGrab(context.Context, *DeviceSnReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FlightAuthorityGrab not implemented")
+}
+func (UnimplementedDjiGatewayServer) PayloadAuthorityGrab(context.Context, *DeviceSnReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PayloadAuthorityGrab not implemented")
+}
+func (UnimplementedDjiGatewayServer) DrcModeEnter(context.Context, *DrcModeEnterReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DrcModeEnter not implemented")
+}
+func (UnimplementedDjiGatewayServer) DrcModeExit(context.Context, *DeviceSnReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DrcModeExit not implemented")
+}
+func (UnimplementedDjiGatewayServer) SendDrcCommand(context.Context, *DroneControlReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendDrcCommand not implemented")
+}
+func (UnimplementedDjiGatewayServer) DroneEmergencyStop(context.Context, *DeviceSnReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DroneEmergencyStop not implemented")
+}
+func (UnimplementedDjiGatewayServer) FlyToPoint(context.Context, *FlyToPointReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FlyToPoint not implemented")
+}
+func (UnimplementedDjiGatewayServer) FlyToPointStop(context.Context, *DeviceSnReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FlyToPointStop not implemented")
+}
+func (UnimplementedDjiGatewayServer) TakeoffToPoint(context.Context, *TakeoffToPointReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TakeoffToPoint not implemented")
 }
 func (UnimplementedDjiGatewayServer) mustEmbedUnimplementedDjiGatewayServer() {}
 func (UnimplementedDjiGatewayServer) testEmbeddedByValue()                    {}
@@ -154,6 +434,42 @@ func _DjiGateway_ExecuteFlightTask_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DjiGateway_ReturnHome_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeviceSnReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).ReturnHome(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_ReturnHome_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).ReturnHome(ctx, req.(*DeviceSnReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiGateway_ReturnHomeCancelAutoReturn_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeviceSnReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).ReturnHomeCancelAutoReturn(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_ReturnHomeCancelAutoReturn_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).ReturnHomeCancelAutoReturn(ctx, req.(*DeviceSnReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _DjiGateway_SendCustomDataToPsdk_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CustomDataToPsdkReq)
 	if err := dec(in); err != nil {
@@ -168,6 +484,168 @@ func _DjiGateway_SendCustomDataToPsdk_Handler(srv interface{}, ctx context.Conte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(DjiGatewayServer).SendCustomDataToPsdk(ctx, req.(*CustomDataToPsdkReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiGateway_FlightAuthorityGrab_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeviceSnReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).FlightAuthorityGrab(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_FlightAuthorityGrab_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).FlightAuthorityGrab(ctx, req.(*DeviceSnReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiGateway_PayloadAuthorityGrab_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeviceSnReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).PayloadAuthorityGrab(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_PayloadAuthorityGrab_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).PayloadAuthorityGrab(ctx, req.(*DeviceSnReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiGateway_DrcModeEnter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DrcModeEnterReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).DrcModeEnter(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_DrcModeEnter_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).DrcModeEnter(ctx, req.(*DrcModeEnterReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiGateway_DrcModeExit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeviceSnReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).DrcModeExit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_DrcModeExit_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).DrcModeExit(ctx, req.(*DeviceSnReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiGateway_SendDrcCommand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DroneControlReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).SendDrcCommand(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_SendDrcCommand_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).SendDrcCommand(ctx, req.(*DroneControlReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiGateway_DroneEmergencyStop_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeviceSnReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).DroneEmergencyStop(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_DroneEmergencyStop_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).DroneEmergencyStop(ctx, req.(*DeviceSnReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiGateway_FlyToPoint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FlyToPointReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).FlyToPoint(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_FlyToPoint_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).FlyToPoint(ctx, req.(*FlyToPointReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiGateway_FlyToPointStop_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeviceSnReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).FlyToPointStop(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_FlyToPointStop_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).FlyToPointStop(ctx, req.(*DeviceSnReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiGateway_TakeoffToPoint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TakeoffToPointReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).TakeoffToPoint(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_TakeoffToPoint_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).TakeoffToPoint(ctx, req.(*TakeoffToPointReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -188,8 +666,52 @@ var DjiGateway_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DjiGateway_ExecuteFlightTask_Handler,
 		},
 		{
+			MethodName: "ReturnHome",
+			Handler:    _DjiGateway_ReturnHome_Handler,
+		},
+		{
+			MethodName: "ReturnHomeCancelAutoReturn",
+			Handler:    _DjiGateway_ReturnHomeCancelAutoReturn_Handler,
+		},
+		{
 			MethodName: "SendCustomDataToPsdk",
 			Handler:    _DjiGateway_SendCustomDataToPsdk_Handler,
+		},
+		{
+			MethodName: "FlightAuthorityGrab",
+			Handler:    _DjiGateway_FlightAuthorityGrab_Handler,
+		},
+		{
+			MethodName: "PayloadAuthorityGrab",
+			Handler:    _DjiGateway_PayloadAuthorityGrab_Handler,
+		},
+		{
+			MethodName: "DrcModeEnter",
+			Handler:    _DjiGateway_DrcModeEnter_Handler,
+		},
+		{
+			MethodName: "DrcModeExit",
+			Handler:    _DjiGateway_DrcModeExit_Handler,
+		},
+		{
+			MethodName: "SendDrcCommand",
+			Handler:    _DjiGateway_SendDrcCommand_Handler,
+		},
+		{
+			MethodName: "DroneEmergencyStop",
+			Handler:    _DjiGateway_DroneEmergencyStop_Handler,
+		},
+		{
+			MethodName: "FlyToPoint",
+			Handler:    _DjiGateway_FlyToPoint_Handler,
+		},
+		{
+			MethodName: "FlyToPointStop",
+			Handler:    _DjiGateway_FlyToPointStop_Handler,
+		},
+		{
+			MethodName: "TakeoffToPoint",
+			Handler:    _DjiGateway_TakeoffToPoint_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

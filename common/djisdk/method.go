@@ -148,11 +148,14 @@ const (
 	MethodAirConditionerModeSwitch = "air_conditioner_mode_switch"
 )
 
-// ==================== 指令飞行 ====================
+// ==================== 指令飞行控制（Live Flight Controls / DRC） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html
 // Topic: thing/product/{gateway_sn}/services
-// 方向: 云平台 → 设备（Services），DRC 指令飞行控制
+// 方向: 云平台 → 设备（Services）
 
 const (
+	// --- 飞行控制指令（DRC Commands） ---
+
 	// MethodFlightAuthorityGrab 飞行控制权抢夺（Flight Authority Grab）
 	// 云平台 → 设备，抢夺飞行器飞行控制权
 	MethodFlightAuthorityGrab = "flight_authority_grab"
@@ -169,9 +172,15 @@ const (
 	// 云平台 → 设备，退出指令飞行（DRC）控制模式
 	MethodDrcModeExit = "drc_mode_exit"
 
-	// MethodTakeoffToPoint 一键起飞至指定点（Takeoff To Point）
-	// 云平台 → 设备，控制飞行器起飞并飞往指定坐标点
-	MethodTakeoffToPoint = "takeoff_to_point"
+	// MethodDroneControl 飞行器虚拟摇杆控制（Drone Control）
+	// 云平台 → 设备，通过虚拟摇杆实时控制飞行器姿态和运动
+	MethodDroneControl = "drone_control"
+
+	// MethodDroneEmergencyStop 飞行器紧急停桨（Drone Emergency Stop）
+	// 云平台 → 设备，紧急停止飞行器电机（慎用，飞行器将直接坠落）
+	MethodDroneEmergencyStop = "drone_emergency_stop"
+
+	// --- Flyto 指令（Flyto Commands） ---
 
 	// MethodFlyToPoint 飞向指定点（Fly To Point）
 	// 云平台 → 设备，控制飞行器飞往指定坐标点
@@ -181,14 +190,19 @@ const (
 	// 云平台 → 设备，停止当前飞向指定点的飞行任务
 	MethodFlyToPointStop = "fly_to_point_stop"
 
-	// MethodDroneControl 飞行器虚拟摇杆控制（Drone Control）
-	// 云平台 → 设备，通过虚拟摇杆实时控制飞行器姿态和运动
-	MethodDroneControl = "drone_control"
+	// --- 一键起飞指令（One-key Taking Off Commands） ---
 
-	// MethodDroneEmergencyStop 飞行器紧急停桨（Drone Emergency Stop）
-	// 云平台 → 设备，紧急停止飞行器电机（慎用，飞行器将直接坠落）
-	MethodDroneEmergencyStop = "drone_emergency_stop"
+	// MethodTakeoffToPoint 一键起飞至指定点（Takeoff To Point）
+	// 云平台 → 设备，控制飞行器起飞并飞往指定坐标点
+	MethodTakeoffToPoint = "takeoff_to_point"
+)
 
+// ==================== 航线管理 - 返航控制 ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/wayline.html
+// Topic: thing/product/{gateway_sn}/services
+// 方向: 云平台 → 设备（Services）
+
+const (
 	// MethodReturnHome 一键返航（Return Home）
 	// 云平台 → 设备，控制飞行器执行返航操作
 	MethodReturnHome = "return_home"

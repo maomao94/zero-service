@@ -15,6 +15,7 @@ type ServiceContext struct {
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
+	logx.Must(logx.SetUp(c.Log))
 	mqttCli := mqttx.MustNewClient(c.MqttConfig)
 	djiCli := djisdk.NewClient(mqttCli, c.AckTimeout, c.PendingTTL)
 
@@ -26,6 +27,9 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	djiCli.OnFlightTaskReady(hooks.OnFlightTaskReady)
 	djiCli.OnReturnHomeInfo(hooks.OnReturnHomeInfo)
 	djiCli.OnCustomDataFromPsdk(hooks.OnCustomDataFromPsdk)
+	djiCli.OnHmsEventNotify(hooks.OnHmsEventNotify)
+	djiCli.OnOsd(hooks.OnOsd)
+	djiCli.OnState(hooks.OnState)
 
 	return &ServiceContext{
 		Config:    c,

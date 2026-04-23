@@ -1,20 +1,23 @@
 Name: djigateway.rpc
-ListenOn: 0.0.0.0:25020
+ListenOn: 0.0.0.0:21012
 Timeout: 10000
 Log:
   Encoding: plain
+  #  Mode: file
   Path: /opt/logs/djigateway
   Level: info
+  KeepDays: 300
 MqttConfig:
   Broker:
     - tcp://127.0.0.1:1883
   ClientID: dji-gateway-001
-  Qos: 1
-  Timeout: 30000
-  KeepAlive: 60000
-  AutoSubscribe: true
+  Username: "mqtt"
+  Password: "password"
+  Qos: 0
 AckTimeout: 5s
 PendingTTL: 30s
+DangerousOps:
+  EnableDroneEmergencyStop: false
 NacosConfig:
   IsRegister: false
   Host: 127.0.0.1

@@ -694,3 +694,33 @@ type DockHomeInfo struct {
 	// HomeDistance 到 home 点的距离，单位米。必填。
 	HomeDistance float64 `json:"home_distance"`
 }
+
+// HmsEventData HMS 健康告警事件数据。
+// 方向 up：设备→云平台。
+// 对应 method: hms。
+// 设备上报健康管理系统的告警和状态事件。
+type HmsEventData struct {
+	// List HMS 告警列表。必填。
+	List []HmsItem `json:"list"`
+}
+
+// HmsItem HMS 健康告警条目。
+type HmsItem struct {
+	// HmsID 告警 ID，全局唯一标识。必填。
+	HmsID string `json:"hms_id"`
+	// Level 告警级别。必填。
+	// 0: 通知, 1: 提示, 2: 警告, 3: 严重
+	Level int `json:"level"`
+	// Module 告警模块标识。必填。
+	// 0: 飞行器, 3: 机场
+	Module int `json:"module"`
+	// InTheSky 告警发生时飞行器是否在空中。必填。
+	// 0: 地面, 1: 空中
+	InTheSky int `json:"in_the_sky"`
+	// Code 告警码，格式为 "fpv_tip_xxxxxxxxx"。必填。
+	Code string `json:"code"`
+	// Imminent 是否为紧急告警。必填。
+	Imminent bool `json:"imminent"`
+	// Key 告警标识 Key。必填。
+	Key string `json:"key"`
+}

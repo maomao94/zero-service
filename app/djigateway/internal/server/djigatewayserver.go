@@ -23,17 +23,86 @@ func NewDjiGatewayServer(svcCtx *svc.ServiceContext) *DjiGatewayServer {
 	}
 }
 
+// Ping 健康检查接口，用于验证服务可用性。
 func (s *DjiGatewayServer) Ping(ctx context.Context, in *djigateway.Req) (*djigateway.Res, error) {
 	l := logic.NewPingLogic(ctx, s.svcCtx)
 	return l.Ping(in)
 }
 
+// ExecuteFlightTask 执行航线飞行任务。
 func (s *DjiGatewayServer) ExecuteFlightTask(ctx context.Context, in *djigateway.FlightTaskReq) (*djigateway.CommonRes, error) {
 	l := logic.NewExecuteFlightTaskLogic(ctx, s.svcCtx)
 	return l.ExecuteFlightTask(in)
 }
 
+// ReturnHome 控制飞行器一键返航。
+func (s *DjiGatewayServer) ReturnHome(ctx context.Context, in *djigateway.DeviceSnReq) (*djigateway.CommonRes, error) {
+	l := logic.NewReturnHomeLogic(ctx, s.svcCtx)
+	return l.ReturnHome(in)
+}
+
+// ReturnHomeCancelAutoReturn 取消自动返航。
+func (s *DjiGatewayServer) ReturnHomeCancelAutoReturn(ctx context.Context, in *djigateway.DeviceSnReq) (*djigateway.CommonRes, error) {
+	l := logic.NewReturnHomeCancelAutoReturnLogic(ctx, s.svcCtx)
+	return l.ReturnHomeCancelAutoReturn(in)
+}
+
+// SendCustomDataToPsdk 通过自定义数据透传通道向 PSDK 负载发送数据。
 func (s *DjiGatewayServer) SendCustomDataToPsdk(ctx context.Context, in *djigateway.CustomDataToPsdkReq) (*djigateway.CommonRes, error) {
 	l := logic.NewSendCustomDataToPsdkLogic(ctx, s.svcCtx)
 	return l.SendCustomDataToPsdk(in)
+}
+
+// FlightAuthorityGrab 获取飞行控制权。
+func (s *DjiGatewayServer) FlightAuthorityGrab(ctx context.Context, in *djigateway.DeviceSnReq) (*djigateway.CommonRes, error) {
+	l := logic.NewFlightAuthorityGrabLogic(ctx, s.svcCtx)
+	return l.FlightAuthorityGrab(in)
+}
+
+// PayloadAuthorityGrab 获取负载控制权。
+func (s *DjiGatewayServer) PayloadAuthorityGrab(ctx context.Context, in *djigateway.DeviceSnReq) (*djigateway.CommonRes, error) {
+	l := logic.NewPayloadAuthorityGrabLogic(ctx, s.svcCtx)
+	return l.PayloadAuthorityGrab(in)
+}
+
+// DrcModeEnter 进入指令飞行（DRC）模式。
+func (s *DjiGatewayServer) DrcModeEnter(ctx context.Context, in *djigateway.DrcModeEnterReq) (*djigateway.CommonRes, error) {
+	l := logic.NewDrcModeEnterLogic(ctx, s.svcCtx)
+	return l.DrcModeEnter(in)
+}
+
+// DrcModeExit 退出指令飞行（DRC）模式。
+func (s *DjiGatewayServer) DrcModeExit(ctx context.Context, in *djigateway.DeviceSnReq) (*djigateway.CommonRes, error) {
+	l := logic.NewDrcModeExitLogic(ctx, s.svcCtx)
+	return l.DrcModeExit(in)
+}
+
+// SendDrcCommand 通过 DRC 通道发送实时飞行控制指令（杆量控制）。
+func (s *DjiGatewayServer) SendDrcCommand(ctx context.Context, in *djigateway.DroneControlReq) (*djigateway.CommonRes, error) {
+	l := logic.NewSendDrcCommandLogic(ctx, s.svcCtx)
+	return l.SendDrcCommand(in)
+}
+
+// DroneEmergencyStop 飞行器紧急停桨。
+func (s *DjiGatewayServer) DroneEmergencyStop(ctx context.Context, in *djigateway.DeviceSnReq) (*djigateway.CommonRes, error) {
+	l := logic.NewDroneEmergencyStopLogic(ctx, s.svcCtx)
+	return l.DroneEmergencyStop(in)
+}
+
+// FlyToPoint 飞向指定航点。
+func (s *DjiGatewayServer) FlyToPoint(ctx context.Context, in *djigateway.FlyToPointReq) (*djigateway.CommonRes, error) {
+	l := logic.NewFlyToPointLogic(ctx, s.svcCtx)
+	return l.FlyToPoint(in)
+}
+
+// FlyToPointStop 停止当前的飞向航点任务。
+func (s *DjiGatewayServer) FlyToPointStop(ctx context.Context, in *djigateway.DeviceSnReq) (*djigateway.CommonRes, error) {
+	l := logic.NewFlyToPointStopLogic(ctx, s.svcCtx)
+	return l.FlyToPointStop(in)
+}
+
+// TakeoffToPoint 一键起飞到指定坐标点。
+func (s *DjiGatewayServer) TakeoffToPoint(ctx context.Context, in *djigateway.TakeoffToPointReq) (*djigateway.CommonRes, error) {
+	l := logic.NewTakeoffToPointLogic(ctx, s.svcCtx)
+	return l.TakeoffToPoint(in)
 }

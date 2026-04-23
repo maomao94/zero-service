@@ -14,3 +14,5 @@ gtw/env/
 
 # Claude directories
 #.claude/
+
+/.trae/specs/
