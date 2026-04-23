@@ -8,6 +8,7 @@ import (
 	"time"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/common/antsx"
+	"zero-service/common/netx"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -76,7 +77,7 @@ func Run(ctx context.Context, svcCtx *svc.ServiceContext, tasks []*Task, maxConc
 		} else {
 			results[i] = sr.Val
 		}
-		results[i].CostFormatted = FormatCostMs(results[i].CostMs)
+		results[i].CostFormatted = netx.FormatCostMs(results[i].CostMs)
 		if debug {
 			r := results[i]
 			if r.Error != "" {

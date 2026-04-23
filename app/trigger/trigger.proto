@@ -1202,7 +1202,7 @@ message InvokeTaskPb {
   string httpMethod = 11;
   // 自定义请求头
   map<string, string> headers = 12;
-  // 请求体
+  // 请求体（JSON 格式；当 Content-Type 为 application/x-www-form-urlencoded 或 multipart/form-data 时，会将 JSON 键值对转为对应表单编码）
   bytes body = 13;
 
   // === gRPC 字段 ===

@@ -13,8 +13,6 @@ type BaseModel struct {
 	UpdatedAt time.Time `gorm:"type:timestamp(6)" json:"updated_at"`
 }
 
-type IntBaseModel = BaseModel
-
 type StringBaseModel struct {
 	ID string `gorm:"primarykey;size:36" json:"id"`
 	AuditMixin

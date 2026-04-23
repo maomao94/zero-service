@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package djigateway;
+option go_package = "./djigateway";
+option java_multiple_files = true;
+option java_package = "com.github.djigateway.grpc";
+option java_outer_classname = "DjiGatewayProto";
+
+// DjiGateway DJI 上云网关服务。
+// 将业务系统的 gRPC 请求转换为 DJI Cloud API MQTT 协议指令，
+// 实现航线任务下发、PSDK 自定义数据透传等能力。
+// 网关内部通过 MQTT 通配符同时订阅多台机巢，支持并发控制多设备。
+service DjiGateway {
+  // Ping 健康检查接口，用于验证服务可用性。
+  rpc Ping(Req) returns (Res);
+
+  // ExecuteFlightTask 执行航线飞行任务。
+  // 内部依次调用 flighttask_prepare（航线准备）和 flighttask_execute（航线执行），
+  // 等待设备 ACK 后返回结果。
+  rpc ExecuteFlightTask(FlightTaskReq) returns (CommonRes);
+
+  // SendCustomDataToPsdk 通过自定义数据透传通道向 PSDK 负载发送数据。
+  // 对应 DJI Cloud API method: custom_data_transmission_to_psdk，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc SendCustomDataToPsdk(CustomDataToPsdkReq) returns (CommonRes);
+}
+
+// Req 健康检查请求。
+message Req {
+  // ping 请求标识，任意字符串。
+  string ping = 1;
+}
+
+// Res 健康检查响应。
+message Res {
+  // pong 响应标识，回传请求中的 ping 内容。
+  string pong = 1;
+}
+
+// FlightTaskReq 航线飞行任务请求。
+message FlightTaskReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // task_id 飞行任务 ID，业务侧全局唯一标识。
+  string task_id = 2;
+  // wpml_url 航线文件（WPML 格式）的下载地址，设备将从此 URL 拉取航线文件。
+  string wpml_url = 3;
+}
+
+// CustomDataToPsdkReq PSDK 自定义数据透传请求。
+message CustomDataToPsdkReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // value 自定义透传数据内容，长度应小于 256 字符。
+  string value = 2;
+}
+
+// CommonRes 通用响应，用于返回命令执行结果。
+message CommonRes {
+  // code 结果码，0 表示成功，非 0 表示失败。
+  int32 code = 1;
+  // message 结果描述信息，成功时为 "ok"，失败时为错误详情。
+  string message = 2;
+  // tid 事务 ID（DJI Cloud API 中的 tid），用于追踪本次请求在 MQTT 链路中的唯一标识。
+  string tid = 3;
+}

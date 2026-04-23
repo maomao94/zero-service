@@ -1,0 +1,25 @@
+Name: djigateway.rpc
+ListenOn: 0.0.0.0:25020
+Timeout: 10000
+Log:
+  Encoding: plain
+  Path: /opt/logs/djigateway
+  Level: info
+MqttConfig:
+  Broker:
+    - tcp://127.0.0.1:1883
+  ClientID: dji-gateway-001
+  Qos: 1
+  Timeout: 30000
+  KeepAlive: 60000
+  AutoSubscribe: true
+AckTimeout: 5s
+PendingTTL: 30s
+NacosConfig:
+  IsRegister: false
+  Host: 127.0.0.1
+  Port: 8848
+  Username: nacos
+  PassWord: nacos
+  NamespaceId: public
+  ServiceName: djigateway

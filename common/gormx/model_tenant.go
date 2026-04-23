@@ -14,8 +14,6 @@ type TenantModel struct {
 	UpdatedAt time.Time `gorm:"type:timestamp(6)" json:"updated_at"`
 }
 
-type TenantIntIDModel = TenantModel
-
 type TenantStringIDModel struct {
 	ID string `gorm:"primarykey;size:36" json:"id"`
 	TenantMixin
@@ -27,24 +25,6 @@ type TenantStringIDModel struct {
 }
 
 type TenantTimeModel struct {
-	ID string `gorm:"primarykey;size:36" json:"id"`
-	TenantMixin
-	AuditWithoutDeleteMixin
-	VersionMixin
-	CreatedAt time.Time `gorm:"type:timestamp(6)" json:"created_at"`
-	UpdatedAt time.Time `gorm:"type:timestamp(6)" json:"updated_at"`
-}
-
-type TenantIntTimeModel struct {
-	ID uint `gorm:"primarykey" json:"id"`
-	TenantMixin
-	AuditWithoutDeleteMixin
-	VersionMixin
-	CreatedAt time.Time `gorm:"type:timestamp(6)" json:"created_at"`
-	UpdatedAt time.Time `gorm:"type:timestamp(6)" json:"updated_at"`
-}
-
-type TenantStringTimeModel struct {
 	ID string `gorm:"primarykey;size:36" json:"id"`
 	TenantMixin
 	AuditWithoutDeleteMixin

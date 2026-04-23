@@ -1,30 +1,36 @@
 # 项目开发规则
 
 ## 项目概览
-- 基于 [go-zero](https://go-zero.dev/) 开发
-- AI 相关业务基于字节跳动 [eino](https://github.com/cloudwego/eino) 框架开发
+- 基于 go-zero 开发
+- AI 相关业务基于字节跳动 eino 框架开发
 
 ## 代码生成流程
-- 每个业务服务都提供 `gen.sh` 脚本用于基础代码生成
-- **网关接口**: 先修改 `.api` 文件定义接口，再执行 `gen.sh`
-- **gRPC 服务**: 先修改 `.proto` 文件定义服务，再执行 `gen.sh`
+- 每个业务服务都提供 gen.sh 脚本用于基础代码生成
+- **网关接口**: 先修改 .api 文件定义接口，再执行 gen.sh
+- **gRPC 服务**: 先修改 .proto 文件定义服务，再执行 gen.sh
 
 ## 命名约定
 ### API (网关)
-- 请求结构命名: `xxxRequest`
-- 响应结构命名: `xxxResponse`
+- 请求结构命名: xxxRequest
+- 响应结构命名: xxxResponse
 - 请求和响应必须成对出现
 
 ### gRPC
-- 请求结构命名: `xxxReq`
-- 响应结构命名: `xxxRes`
-- 请求和响应必须成对出现，例如: `chatReq` + `chatRes`
+- 请求结构命名: xxxReq
+- 响应结构命名: xxxRes
+- 请求和响应必须成对出现，例如: chatReq + chatRes
 
 ## 编码规范
 - 遵循 Go / go-zero / Google 开发规范
 - 禁止 Java 编程风格（如不必要的 getter/setter 等）
 - 工具类，结构类等流程代码，，注释清晰，但是避免口语化注释
 - 工具类函数比如有单元测试，确保其正确性
+- proto, api 文件必须有清晰的注释对照，如果是 api转 grpc, 注释保持一致
 
 ## Git
 - 提交信息使用中文
+
+## 开发计划管理
+
+当用户提到开发计划、版本开发、任务拆解、变更记录、下一步计划等需求时，使用 `dev-manager` 技能。
+开发计划目录：`CP-开发计划/`，模板目录：`CP-开发计划/template/`。

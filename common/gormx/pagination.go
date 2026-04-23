@@ -2,8 +2,6 @@ package gormx
 
 import (
 	"math"
-	"reflect"
-	"strconv"
 
 	"gorm.io/gorm"
 )
@@ -51,10 +49,6 @@ func QueryPageWithTotal[T any](db *gorm.DB, page, pageSize int, total int64, res
 		TotalPages: totalPages,
 		Data:       *result,
 	}, nil
-}
-
-func QueryPageWithTenant[T any](db *gorm.DB, page, pageSize int, result *T, whereFn func(db *gorm.DB) *gorm.DB) (*PageResult[T], error) {
-	return QueryPage(whereFn(db), page, pageSize, result)
 }
 
 func NewPageResult[T any](total int64, page, pageSize int, data T) *PageResult[T] {
@@ -118,97 +112,6 @@ func CursorPage[T any](
 		HasMore: hasMore,
 		Data:    data,
 	}, nil
-}
-
-func CursorPageByID(db *gorm.DB, pageSize int, cursor string, result any, idField string) (*CursorPageResult[any], error) {
-	if pageSize <= 0 {
-		pageSize = 10
-	}
-
-	var q *gorm.DB
-	if cursor != "" {
-		id, err := strconv.ParseInt(cursor, 10, 64)
-		if err != nil {
-			return nil, err
-		}
-		q = db.Where(idField+" > ?", id)
-	} else {
-		q = db
-	}
-
-	if err := q.Limit(pageSize + 1).Find(result).Error; err != nil {
-		return nil, err
-	}
-
-	rv := reflect.ValueOf(result)
-	if rv.Kind() == reflect.Ptr {
-		rv = rv.Elem()
-	}
-
-	length := 0
-	if rv.Kind() == reflect.Slice {
-		length = rv.Len()
-	}
-
-	hasMore := length > pageSize
-	nextCursor := ""
-
-	if hasMore && length > 0 {
-		lastIdx := pageSize - 1
-		last := rv.Index(lastIdx)
-		nextCursor = extractIDCursor(last, idField)
-		rv.Set(rv.Slice(0, pageSize))
-	} else if length > 0 {
-		last := rv.Index(length - 1)
-		nextCursor = extractIDCursor(last, idField)
-	}
-
-	return &CursorPageResult[any]{
-		Cursor:  nextCursor,
-		HasMore: hasMore,
-		Data:    result,
-	}, nil
-}
-
-func extractIDCursor(v reflect.Value, idField string) string {
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-	if v.Kind() == reflect.Struct {
-		f := v.FieldByName("ID")
-		if !f.IsValid() {
-			f = v.FieldByName("Id")
-		}
-		if f.IsValid() {
-			switch f.Kind() {
-			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-				return strconv.FormatInt(f.Int(), 10)
-			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-				return strconv.FormatUint(f.Uint(), 10)
-			case reflect.Float32, reflect.Float64:
-				return strconv.FormatInt(int64(f.Float()), 10)
-			case reflect.String:
-				return f.String()
-			}
-		}
-	}
-	if v.Kind() == reflect.Map {
-		key := v.MapIndex(reflect.ValueOf(idField))
-		if key.IsValid() {
-			iface := key.Interface()
-			switch id := iface.(type) {
-			case int64:
-				return strconv.FormatInt(id, 10)
-			case float64:
-				return strconv.FormatInt(int64(id), 10)
-			case uint:
-				return strconv.FormatUint(uint64(id), 10)
-			case string:
-				return id
-			}
-		}
-	}
-	return ""
 }
 
 func NewCursorResult[T any](cursor string, hasMore bool, data T) *CursorPageResult[T] {

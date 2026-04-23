@@ -27,6 +27,21 @@ type DBInfo struct {
 	Database string `json:"database"`
 }
 
+func quote(name string) string {
+	return "`" + name + "`"
+}
+
+func quotePG(name string) string {
+	return "\"" + name + "\""
+}
+
+func dialectQuote(db *gorm.DB, name string) string {
+	if GetDatabaseTypeFromDialector(db) == DatabasePostgres {
+		return quotePG(name)
+	}
+	return quote(name)
+}
+
 func GetTables(db *gorm.DB, dbName string) ([]TableInfo, error) {
 	var tables []TableInfo
 	sql := buildGetTablesSQL(db)
@@ -38,7 +53,6 @@ func GetTables(db *gorm.DB, dbName string) ([]TableInfo, error) {
 
 func GetColumns(db *gorm.DB, tableName string) ([]ColumnInfo, error) {
 	var columns []ColumnInfo
-
 	if GetDatabaseTypeFromDialector(db) == DatabaseSQLite {
 		sql := fmt.Sprintf(`SELECT
 			name AS column_name,
@@ -51,7 +65,6 @@ func GetColumns(db *gorm.DB, tableName string) ([]ColumnInfo, error) {
 		}
 		return columns, nil
 	}
-
 	sql := buildGetColumnsSQL(db)
 	if err := db.Raw(sql, tableName).Scan(&columns).Error; err != nil {
 		return nil, err
@@ -73,7 +86,7 @@ func CreateTable(db *gorm.DB, model any) error {
 }
 
 func DropTableByName(db *gorm.DB, tableName string) error {
-	return db.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", tableName)).Error
+	return db.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", dialectQuote(db, tableName))).Error
 }
 
 func HasTable(db *gorm.DB, tableName string) bool {
@@ -84,12 +97,12 @@ func (db *DB) AlterColumn(tableName, field, fieldType string) error {
 	dialect := string(GetDatabaseTypeFromDialector(db.DB))
 	var sql string
 	switch dialect {
-	case "mysql":
-		sql = fmt.Sprintf("ALTER TABLE `%s` MODIFY COLUMN `%s` %s", tableName, field, fieldType)
 	case "postgres":
-		sql = fmt.Sprintf("ALTER TABLE \"%s\" ALTER COLUMN \"%s\" TYPE %s", tableName, field, fieldType)
+		sql = fmt.Sprintf("ALTER TABLE %s ALTER COLUMN %s TYPE %s",
+			quotePG(tableName), quotePG(field), fieldType)
 	default:
-		sql = fmt.Sprintf("ALTER TABLE %s MODIFY COLUMN %s %s", tableName, field, fieldType)
+		sql = fmt.Sprintf("ALTER TABLE %s MODIFY COLUMN %s %s",
+			quote(tableName), quote(field), fieldType)
 	}
 	return db.Exec(sql).Error
 }
@@ -103,7 +116,8 @@ func (db *DB) AddColumn(tableName, field, fieldType string) error {
 		logx.Infof("column %s.%s already exists, skip", tableName, field)
 		return nil
 	}
-	sql := fmt.Sprintf("ALTER TABLE `%s` ADD COLUMN `%s` %s", tableName, field, fieldType)
+	sql := fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s",
+		dialectQuote(db.DB, tableName), dialectQuote(db.DB, field), fieldType)
 	return db.Exec(sql).Error
 }
 
@@ -116,7 +130,13 @@ func (db *DB) CreateIndex(tableName, indexName string, fields []string) error {
 		logx.Infof("index %s on %s already exists, skip", indexName, tableName)
 		return nil
 	}
-	sql := fmt.Sprintf("CREATE INDEX `%s` ON `%s` (%s)", indexName, tableName, strings.Join(fields, ", "))
+	quotedFields := make([]string, len(fields))
+	for i, f := range fields {
+		quotedFields[i] = dialectQuote(db.DB, f)
+	}
+	sql := fmt.Sprintf("CREATE INDEX %s ON %s (%s)",
+		dialectQuote(db.DB, indexName), dialectQuote(db.DB, tableName),
+		strings.Join(quotedFields, ", "))
 	return db.Exec(sql).Error
 }
 
@@ -126,13 +146,15 @@ func (db *DB) DropIndex(tableName, indexName string) error {
 
 func (db *DB) CreateForeignKey(table, field, references string) error {
 	constraintName := "fk_" + table + "_" + field
-	sql := fmt.Sprintf("ALTER TABLE `%s` ADD CONSTRAINT `%s` FOREIGN KEY (`%s`) REFERENCES %s",
-		table, constraintName, field, references)
+	sql := fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s",
+		dialectQuote(db.DB, table), dialectQuote(db.DB, constraintName),
+		dialectQuote(db.DB, field), references)
 	return db.Exec(sql).Error
 }
 
 func (db *DB) DropForeignKey(table, constraintName string) error {
-	sql := fmt.Sprintf("ALTER TABLE `%s` DROP FOREIGN KEY `%s`", table, constraintName)
+	sql := fmt.Sprintf("ALTER TABLE %s DROP FOREIGN KEY %s",
+		dialectQuote(db.DB, table), dialectQuote(db.DB, constraintName))
 	return db.Exec(sql).Error
 }
 
@@ -141,7 +163,7 @@ func (db *DB) RenameTable(oldName, newName string) error {
 }
 
 func (db *DB) DropTable(name string) error {
-	return db.Exec(fmt.Sprintf("DROP TABLE IF EXISTS `%s`", name)).Error
+	return db.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", dialectQuote(db.DB, name))).Error
 }
 
 func (db *DB) HasTable(name string) bool {

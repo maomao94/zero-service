@@ -28,13 +28,13 @@ func BatchUpdateByIds(db *gorm.DB, model any, updates []Ups) error {
 			if !ok {
 				continue
 			}
-			updateData := make(map[string]any, len(up)-1)
+			data := make(map[string]any, len(up)-1)
 			for k, v := range up {
 				if k != "id" {
-					updateData[k] = v
+					data[k] = v
 				}
 			}
-			if err := tx.Model(model).Where("id = ?", id).Updates(updateData).Error; err != nil {
+			if err := tx.Model(model).Where("id = ?", id).Updates(data).Error; err != nil {
 				return err
 			}
 		}
@@ -68,25 +68,18 @@ func Restore(db *gorm.DB, model any, conds ...any) error {
 }
 
 func UnscopedUpdate(db *gorm.DB, model any, updates map[string]any) error {
-	return db.Session(&gorm.Session{
-		SkipHooks: true,
-	}).Model(model).Updates(updates).Error
+	return db.Session(&gorm.Session{SkipHooks: true}).Model(model).Updates(updates).Error
 }
 
 func UnscopedCreate(db *gorm.DB, value any) error {
-	return db.Session(&gorm.Session{
-		SkipHooks: true,
-	}).Create(value).Error
+	return db.Session(&gorm.Session{SkipHooks: true}).Create(value).Error
 }
 
-func SystemUpdate(db *gorm.DB, model any, updates map[string]any) error {
-	emptyCtx := context.Background()
-	return db.WithContext(emptyCtx).Model(model).Updates(updates).Error
-}
-
-func SystemCreate(db *gorm.DB, value any) error {
-	emptyCtx := context.Background()
-	return db.WithContext(emptyCtx).Create(value).Error
+func withTenantQuery(ctx context.Context, db *gorm.DB) *gorm.DB {
+	if tenantID := GetTenantID(ctx); tenantID != "" {
+		return db.Where("tenant_id = ?", tenantID)
+	}
+	return db
 }
 
 func BatchInsertWithTenant[T any](ctx context.Context, db *gorm.DB, values []T) error {
@@ -100,26 +93,20 @@ func BatchUpdateByIdsWithTenant(ctx context.Context, db *gorm.DB, model any, upd
 	if len(updates) == 0 {
 		return nil
 	}
-
 	return db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		for _, up := range updates {
 			id, ok := up["id"]
 			if !ok {
 				continue
 			}
-			updateData := make(map[string]any, len(up)-1)
+			data := make(map[string]any, len(up)-1)
 			for k, v := range up {
 				if k != "id" {
-					updateData[k] = v
+					data[k] = v
 				}
 			}
-
-			query := tx.Model(model).Where("id = ?", id)
-			if tenantID := GetTenantID(ctx); tenantID != "" {
-				query = query.Where("tenant_id = ?", tenantID)
-			}
-
-			if err := query.Updates(updateData).Error; err != nil {
+			q := withTenantQuery(ctx, tx.Model(model).Where("id = ?", id))
+			if err := q.Updates(data).Error; err != nil {
 				return err
 			}
 		}
@@ -131,50 +118,28 @@ func BatchDeleteByIdsWithTenant[T any](ctx context.Context, db *gorm.DB, model *
 	if len(ids) == 0 {
 		return nil
 	}
-
-	query := db.WithContext(ctx).Model(model).Where("id IN ?", ids)
-
-	if tenantID := GetTenantID(ctx); tenantID != "" {
-		query = query.Where("tenant_id = ?", tenantID)
-	}
-
-	return query.Delete(model).Error
+	q := withTenantQuery(ctx, db.WithContext(ctx).Model(model).Where("id IN ?", ids))
+	return q.Delete(model).Error
 }
 
 func BatchDeleteByConditionWithTenant(ctx context.Context, db *gorm.DB, model any, queryFn func(db *gorm.DB) *gorm.DB) error {
 	return db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		q := queryFn(tx)
-		if tenantID := GetTenantID(ctx); tenantID != "" {
-			q = q.Where("tenant_id = ?", tenantID)
-		}
-		return q.Delete(model).Error
+		return withTenantQuery(ctx, queryFn(tx)).Delete(model).Error
 	})
 }
 
 func RestoreWithTenant(ctx context.Context, db *gorm.DB, model any, conds ...any) error {
-	query := db.WithContext(ctx).Unscoped().Model(model).Select("deleted_at")
-
-	if tenantID := GetTenantID(ctx); tenantID != "" {
-		query = query.Where("tenant_id = ?", tenantID)
-	}
-
+	q := withTenantQuery(ctx, db.WithContext(ctx).Unscoped().Model(model).Select("deleted_at"))
 	if len(conds) > 0 {
-		query = query.Where(conds[0], conds[1:]...)
+		q = q.Where(conds[0], conds[1:]...)
 	}
-
-	return query.Updates(map[any]any{"deleted_at": nil}).Error
+	return q.Updates(map[any]any{"deleted_at": nil}).Error
 }
 
 func UnscopedDeleteWithTenant(ctx context.Context, db *gorm.DB, model any, conds ...any) error {
-	query := db.WithContext(ctx).Unscoped().Model(model)
-
-	if tenantID := GetTenantID(ctx); tenantID != "" {
-		query = query.Where("tenant_id = ?", tenantID)
-	}
-
+	q := withTenantQuery(ctx, db.WithContext(ctx).Unscoped().Model(model))
 	if len(conds) > 0 {
-		query = query.Where(conds[0], conds[1:]...)
+		q = q.Where(conds[0], conds[1:]...)
 	}
-
-	return query.Delete(model).Error
+	return q.Delete(model).Error
 }

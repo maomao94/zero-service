@@ -17,17 +17,14 @@ func (db *DB) MigrateLegacyFields(tableName string) error {
 		{"del_state", "bigint NOT NULL DEFAULT 0", "删除状态"},
 		{"version", "bigint NOT NULL DEFAULT 0", "乐观锁版本号"},
 	}
-
 	for _, f := range fields {
 		if err := addColumnIfNotExists(db.DB, tableName, f.name, f.colType, f.comment); err != nil {
 			return err
 		}
 	}
-
 	if err := addIndexIfNotExists(db.DB, tableName, "idx_del_state", "del_state"); err != nil {
 		return err
 	}
-
 	logx.Infof("migrate legacy fields for table %s success", tableName)
 	return nil
 }
@@ -43,13 +40,11 @@ func (db *DB) MigrateAuditFields(tableName string) error {
 		{"update_user", "bigint unsigned NOT NULL DEFAULT 0", "更新人ID"},
 		{"update_name", "varchar(64) NOT NULL DEFAULT ''", "更新人姓名"},
 	}
-
 	for _, f := range fields {
 		if err := addColumnIfNotExists(db.DB, tableName, f.name, f.colType, f.comment); err != nil {
 			return err
 		}
 	}
-
 	indexes := []struct {
 		name    string
 		columns string
@@ -62,7 +57,6 @@ func (db *DB) MigrateAuditFields(tableName string) error {
 			return err
 		}
 	}
-
 	logx.Infof("migrate audit fields for table %s success", tableName)
 	return nil
 }

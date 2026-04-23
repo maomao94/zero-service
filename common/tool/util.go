@@ -182,7 +182,7 @@ func EncodeBase62(data []byte) string {
 // 参数：randomBytesLen 随机字节数（建议5-8，越小越短但冲突风险越高）
 // 返回：短路径字符串、原始唯一标识（十六进制）、错误
 func ShortPath(randomBytesLen int) (shortPath string, uniqueID string, err error) {
-	// 校验随机字节数范围（避免过短导致冲突，或过长失去“短”的意义）
+	// 校验随机字节数范围（避免过短导致冲突，或过长失去"短"的意义）
 	if randomBytesLen < 3 || randomBytesLen > 10 {
 		return "", "", fmt.Errorf("randomBytesLen 建议3-10，当前 %d", randomBytesLen)
 	}

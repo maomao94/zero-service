@@ -29,18 +29,6 @@ type VersionMixin struct {
 	Version int64 `gorm:"default:0" json:"version"`
 }
 
-func (m *VersionMixin) GetVersion() int64 {
-	return m.Version
-}
-
-func (m *VersionMixin) SetVersion(v int64) {
-	m.Version = v
-}
-
-func (m *VersionMixin) IncrementVersion() {
-	m.Version++
-}
-
 type SoftDeleteMixin struct {
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
@@ -51,14 +39,6 @@ func (m *SoftDeleteMixin) IsDeleted() bool {
 
 type TenantMixin struct {
 	TenantID string `gorm:"size:12;index;not null;default:'000000'" json:"tenant_id"`
-}
-
-func (m *TenantMixin) GetTenantID() string {
-	return m.TenantID
-}
-
-func (m *TenantMixin) SetTenantID(tenantID string) {
-	m.TenantID = tenantID
 }
 
 func (m *TenantMixin) IsDefaultTenant() bool {
@@ -74,14 +54,6 @@ type LegacyBaseModel struct {
 	Version    int64        `gorm:"column:version;default:0"`
 }
 
-func (m *LegacyBaseModel) GetVersion() int64 {
-	return m.Version
-}
-
-func (m *LegacyBaseModel) SetVersion(v int64) {
-	m.Version = v
-}
-
 func (m *LegacyBaseModel) IsDeleted() bool {
 	return m.DeleteTime.Valid && !m.DeleteTime.Time.IsZero()
 }
@@ -93,14 +65,6 @@ type LegacyStringBaseModel struct {
 	DeleteTime sql.NullTime `gorm:"column:delete_time;type:timestamp(6);index" json:"-"`
 	DelState   int64        `gorm:"column:del_state;default:0"`
 	Version    int64        `gorm:"column:version;default:0"`
-}
-
-func (m *LegacyStringBaseModel) GetVersion() int64 {
-	return m.Version
-}
-
-func (m *LegacyStringBaseModel) SetVersion(v int64) {
-	m.Version = v
 }
 
 func (m *LegacyStringBaseModel) IsDeleted() bool {

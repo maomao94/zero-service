@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"zero-service/app/trigger/internal/svc"
+	"zero-service/common/netx"
 
 	"google.golang.org/protobuf/encoding/protowire"
 )
@@ -32,15 +33,16 @@ type Result struct {
 	CostFormatted string
 }
 
-func FormatCostMs(ms int64) string {
-	if ms < 1000 {
-		return fmt.Sprintf("%dms", ms)
-	}
-	return fmt.Sprintf("%.1fs", float64(ms)/1000)
-}
-
 type Invoker interface {
 	Execute(ctx context.Context, svcCtx *svc.ServiceContext, task *Task) *Result
+}
+
+func ValidateAndFlatten(body []byte) (map[string][]string, error) {
+	return netx.ValidateAndFlatten(body)
+}
+
+func EncodeURLEncoded(body []byte) (string, error) {
+	return netx.EncodeURLEncoded(body)
 }
 
 func RawProtoToJSON(data []byte) string {
