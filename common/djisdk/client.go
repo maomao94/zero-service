@@ -25,7 +25,6 @@ type EventHandler func(ctx context.Context, event *EventMessage) error
 type Client struct {
 	mqttClient    *mqttx.Client
 	pending       *antsx.PendingRegistry[*ServiceReply]
-	ackTimeout    time.Duration
 	eventHandlers map[string]EventHandler
 	onlineChecker func(gatewaySn string) bool
 
@@ -41,14 +40,12 @@ type Client struct {
 
 // NewClient 创建一个新的 DJI Cloud API 客户端实例。
 //   - mqttClient: MQTT 客户端实例，用于与设备进行 MQTT 通信
-//   - ackTimeout: 命令应答超时时间
 //   - pendingTTL: 待处理请求的过期时间
 //   - 返回值: 初始化完成的 Client 指针
-func NewClient(mqttClient *mqttx.Client, ackTimeout time.Duration, pendingTTL time.Duration) *Client {
+func NewClient(mqttClient *mqttx.Client, pendingTTL time.Duration) *Client {
 	return &Client{
 		mqttClient:    mqttClient,
 		pending:       antsx.NewPendingRegistry[*ServiceReply](antsx.WithDefaultTTL(pendingTTL)),
-		ackTimeout:    ackTimeout,
 		eventHandlers: make(map[string]EventHandler),
 	}
 }

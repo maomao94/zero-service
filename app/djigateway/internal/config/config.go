@@ -20,7 +20,6 @@ type Config struct {
 		ServiceName string
 	} `json:",optional"`
 	MqttConfig   mqttx.MqttConfig
-	AckTimeout   time.Duration      `json:",default=5s"`
 	PendingTTL   time.Duration      `json:",default=30s"`
 	DangerousOps DangerousOpsConfig `json:",optional"`
 }

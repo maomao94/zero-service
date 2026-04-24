@@ -23,7 +23,7 @@ type ServiceContext struct {
 func NewServiceContext(c config.Config) *ServiceContext {
 	logx.Must(logx.SetUp(c.Log))
 	mqttCli := mqttx.MustNewClient(c.MqttConfig)
-	djiCli := djisdk.NewClient(mqttCli, c.AckTimeout, c.PendingTTL)
+	djiCli := djisdk.NewClient(mqttCli, c.PendingTTL)
 
 	onlineCache, err := collection.NewCache(dockOnlineTTL, collection.WithName("dock-online"))
 	logx.Must(err)
