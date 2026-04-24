@@ -103,6 +103,11 @@
 
 | 编号 | 优先级 | 需求描述 | 来源 | 状态 | Sprint | 备注 |
 | --- | --- | --- | --- | --- | --- | --- |
+| B-009 | Must | Dock3 全量 gRPC 接口暴露 — 远程调试（15个 RPC：debug_mode/cover/drone/charge/format/light/battery/alarm/airconditioner） | 需求输入.md | 开发中 | S6 | SDK 已有，proto 未暴露 |
+| B-010 | Must | Dock3 全量 gRPC 接口暴露 — 相机/云台控制（6个 RPC：camera_mode/photo/recording/focal_length/gimbal_reset） | 需求输入.md | 开发中 | S6 | SDK 已有，proto 未暴露 |
+| B-011 | Must | Dock3 全量 gRPC 接口暴露 — 直播管理（3个 RPC：live_start/stop/quality） | 需求输入.md | 开发中 | S6 | SDK 已有，proto 未暴露 |
+| B-012 | Must | Dock3 全量 gRPC 接口暴露 — 航线管理补充（4个 RPC：cancel/pause/resume/withOptions） | 需求输入.md | 开发中 | S6 | SDK 已有，proto 未暴露 |
+| B-013 | Should | Dock3 全量 gRPC 接口暴露 — 通用属性设置（1个 RPC：SetProperty） | 需求输入.md | 开发中 | S6 | SDK 已有，proto 未暴露 |
 
 ---
 
