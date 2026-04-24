@@ -102,6 +102,174 @@ service DjiGateway {
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
   // 适用于飞行器在机场内的场景。
   rpc TakeoffToPoint(TakeoffToPointReq) returns (CommonRes);
+
+  // ==================== 航线管理 - 补充（Wayline Management Extended） ====================
+
+  // CancelFlightTask 取消指定的飞行任务。
+  // 对应 DJI Cloud API method: flighttask_undo，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc CancelFlightTask(CancelFlightTaskReq) returns (CommonRes);
+
+  // PauseFlightTask 暂停当前正在执行的飞行任务。
+  // 对应 DJI Cloud API method: flighttask_pause，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc PauseFlightTask(DeviceSnReq) returns (CommonRes);
+
+  // ResumeFlightTask 恢复已暂停的飞行任务。
+  // 对应 DJI Cloud API method: flighttask_recovery，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc ResumeFlightTask(DeviceSnReq) returns (CommonRes);
+
+  // ExecuteFlightTaskWithOptions 使用自定义配置执行航线飞行任务。
+  // 允许完全控制航线准备参数（如断点续飞、任务类型、返航高度等），
+  // 内部先 flighttask_prepare 再 flighttask_execute。
+  rpc ExecuteFlightTaskWithOptions(FlightTaskWithOptionsReq) returns (CommonRes);
+
+  // ==================== 远程调试 - 机巢控制（Remote Debug） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/dock.html
+
+  // DebugModeOpen 开启机巢调试模式。
+  // 对应 DJI Cloud API method: debug_mode_open，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc DebugModeOpen(DeviceSnReq) returns (CommonRes);
+
+  // DebugModeClose 关闭机巢调试模式。
+  // 对应 DJI Cloud API method: debug_mode_close，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc DebugModeClose(DeviceSnReq) returns (CommonRes);
+
+  // CoverOpen 打开机巢舱盖。
+  // 对应 DJI Cloud API method: cover_open，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc CoverOpen(DeviceSnReq) returns (CommonRes);
+
+  // CoverClose 关闭机巢舱盖。
+  // 对应 DJI Cloud API method: cover_close，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc CoverClose(DeviceSnReq) returns (CommonRes);
+
+  // CoverForceClose 强制关闭机巢舱盖。
+  // 对应 DJI Cloud API method: cover_force_close，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc CoverForceClose(DeviceSnReq) returns (CommonRes);
+
+  // DroneOpen 开启机巢中的无人机电源。
+  // 对应 DJI Cloud API method: drone_open，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc DroneOpen(DeviceSnReq) returns (CommonRes);
+
+  // DroneClose 关闭机巢中的无人机电源。
+  // 对应 DJI Cloud API method: drone_close，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc DroneClose(DeviceSnReq) returns (CommonRes);
+
+  // DeviceReboot 重启机巢设备。
+  // 对应 DJI Cloud API method: device_reboot，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc DeviceReboot(DeviceSnReq) returns (CommonRes);
+
+  // ChargeOpen 开启机巢充电功能。
+  // 对应 DJI Cloud API method: charge_open，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc ChargeOpen(DeviceSnReq) returns (CommonRes);
+
+  // ChargeClose 关闭机巢充电功能。
+  // 对应 DJI Cloud API method: charge_close，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc ChargeClose(DeviceSnReq) returns (CommonRes);
+
+  // DroneFormat 格式化无人机存储。
+  // 对应 DJI Cloud API method: drone_format，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc DroneFormat(DeviceSnReq) returns (CommonRes);
+
+  // DeviceFormat 格式化机巢设备存储。
+  // 对应 DJI Cloud API method: device_format，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc DeviceFormat(DeviceSnReq) returns (CommonRes);
+
+  // SupplementLightOpen 开启机巢补光灯。
+  // 对应 DJI Cloud API method: supplement_light_open，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc SupplementLightOpen(DeviceSnReq) returns (CommonRes);
+
+  // SupplementLightClose 关闭机巢补光灯。
+  // 对应 DJI Cloud API method: supplement_light_close，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc SupplementLightClose(DeviceSnReq) returns (CommonRes);
+
+  // BatteryStoreModeSwitchSwitch 切换电池保养存储模式。
+  // 对应 DJI Cloud API method: battery_store_mode_switch，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc BatteryStoreModeSwitchSwitch(BatteryStoreModeReq) returns (CommonRes);
+
+  // AlarmStateSwitch 切换机巢声光报警状态。
+  // 对应 DJI Cloud API method: alarm_state_switch，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc AlarmStateSwitch(AlarmStateSwitchReq) returns (CommonRes);
+
+  // AirConditionerModeSwitch 切换机巢空调工作模式。
+  // 对应 DJI Cloud API method: air_conditioner_mode_switch，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc AirConditionerModeSwitch(AirConditionerModeSwitchReq) returns (CommonRes);
+
+  // ==================== 相机/云台控制（Camera & Gimbal） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html
+
+  // CameraModeSwitch 切换相机拍摄模式。
+  // 对应 DJI Cloud API method: camera_mode_switch，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc CameraModeSwitch(CameraModeSwitchReq) returns (CommonRes);
+
+  // CameraPhotoTake 控制相机拍照。
+  // 对应 DJI Cloud API method: camera_photo_take，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc CameraPhotoTake(CameraPhotoTakeReq) returns (CommonRes);
+
+  // CameraRecordingStart 开始录像。
+  // 对应 DJI Cloud API method: camera_recording_start，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc CameraRecordingStart(CameraRecordingStartReq) returns (CommonRes);
+
+  // CameraRecordingStop 停止录像。
+  // 对应 DJI Cloud API method: camera_recording_stop，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc CameraRecordingStop(CameraRecordingStopReq) returns (CommonRes);
+
+  // CameraFocalLengthSet 设置相机焦距（变焦倍数）。
+  // 对应 DJI Cloud API method: camera_focal_length_set，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc CameraFocalLengthSet(CameraFocalLengthSetReq) returns (CommonRes);
+
+  // GimbalReset 重置云台角度。
+  // 对应 DJI Cloud API method: gimbal_reset，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc GimbalReset(GimbalResetReq) returns (CommonRes);
+
+  // ==================== 直播管理（Live） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/live.html
+
+  // LiveStartPush 开始直播推流。
+  // 对应 DJI Cloud API method: live_start_push，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc LiveStartPush(LiveStartPushReq) returns (CommonRes);
+
+  // LiveStopPush 停止直播推流。
+  // 对应 DJI Cloud API method: live_stop_push，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc LiveStopPush(LiveStopPushReq) returns (CommonRes);
+
+  // LiveSetQuality 设置直播画质。
+  // 对应 DJI Cloud API method: live_set_quality，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc LiveSetQuality(LiveSetQualityReq) returns (CommonRes);
+
+  // ==================== 属性设置（Property Set） ====================
+
+  // SetProperty 设置设备属性。
+  // 通过 property/set 主题向设备下发属性设置命令。
+  // properties 为 JSON 格式的键值对字符串。
+  rpc SetProperty(SetPropertyReq) returns (CommonRes);
 }
 
 // Req 健康检查请求。
@@ -234,4 +402,172 @@ message Waypoint {
   double longitude = 2;
   // height 航点高度，单位米。
   double height = 3;
+}
+
+// ==================== 航线管理 - 补充请求消息 ====================
+
+// CancelFlightTaskReq 取消飞行任务请求。
+message CancelFlightTaskReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // flight_ids 要取消的飞行任务 ID 列表。
+  repeated string flight_ids = 2;
+}
+
+// FlightTaskWithOptionsReq 自定义配置航线飞行任务请求。
+message FlightTaskWithOptionsReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // flight_id 飞行任务 ID，业务侧全局唯一标识。
+  string flight_id = 2;
+  // task_type 任务类型，0: 立即执行, 1: 定时执行, 2: 条件触发。
+  int32 task_type = 3;
+  // wpml_url 航线文件（WPML 格式）的下载地址。
+  string wpml_url = 4;
+  // wpml_fingerprint 航线文件指纹（MD5），用于完整性校验。可选。
+  string wpml_fingerprint = 5;
+  // execute_time 计划执行时间，Unix 毫秒时间戳，0 或不填表示立即执行。可选。
+  int64 execute_time = 6;
+  // rth_altitude 返航高度，单位米，取值范围 [20, 500]。可选。
+  int32 rth_altitude = 7;
+  // out_of_control_action 失控动作，0: 返航, 1: 悬停, 2: 降落。可选。
+  int32 out_of_control_action = 8;
+  // exit_wayline_when_rc_lost 遥控器信号丢失时是否退出航线，0: 不退出, 1: 退出。可选。
+  int32 exit_wayline_when_rc_lost = 9;
+  // break_point_index 断点续飞航点索引，-1 表示不使用断点续飞。可选。
+  int32 break_point_index = 10;
+  // break_point_state 断点状态，0: 在航段上, 1: 在航点上。可选。
+  int32 break_point_state = 11;
+  // break_point_progress 断点进度，取值范围 [0, 1]。可选。
+  double break_point_progress = 12;
+  // break_point_wayline_id 断点所在航线 ID。可选。
+  int32 break_point_wayline_id = 13;
+}
+
+// ==================== 远程调试请求消息 ====================
+
+// BatteryStoreModeReq 电池保养存储模式切换请求。
+message BatteryStoreModeReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // enable 开关状态，1 为开启，0 为关闭。
+  int32 enable = 2;
+}
+
+// AlarmStateSwitchReq 声光报警开关切换请求。
+message AlarmStateSwitchReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // action 动作标识，具体含义参考 DJI Cloud API 文档。
+  int32 action = 2;
+}
+
+// AirConditionerModeSwitchReq 空调模式切换请求。
+message AirConditionerModeSwitchReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // action 空调模式，0: 关闭, 1: 制冷, 2: 制热, 3: 除湿。
+  int32 action = 2;
+}
+
+// ==================== 相机/云台请求消息 ====================
+
+// CameraModeSwitchReq 相机模式切换请求。
+message CameraModeSwitchReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // payload_index 负载设备索引，格式 "机型-挂载位置"，如 "53-0"。
+  string payload_index = 2;
+  // camera_mode 相机模式，0: 拍照, 1: 录像。
+  int32 camera_mode = 3;
+}
+
+// CameraPhotoTakeReq 相机拍照请求。
+message CameraPhotoTakeReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // payload_index 负载设备索引，格式 "机型-挂载位置"。
+  string payload_index = 2;
+}
+
+// CameraRecordingStartReq 开始录像请求。
+message CameraRecordingStartReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // payload_index 负载设备索引，格式 "机型-挂载位置"。
+  string payload_index = 2;
+}
+
+// CameraRecordingStopReq 停止录像请求。
+message CameraRecordingStopReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // payload_index 负载设备索引，格式 "机型-挂载位置"。
+  string payload_index = 2;
+}
+
+// CameraFocalLengthSetReq 相机焦距设置请求。
+message CameraFocalLengthSetReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // payload_index 负载设备索引，格式 "机型-挂载位置"。
+  string payload_index = 2;
+  // camera_type 相机类型，0: 广角, 1: 变焦, 2: 红外。
+  int32 camera_type = 3;
+  // zoom_factor 变焦倍数。
+  double zoom_factor = 4;
+}
+
+// GimbalResetReq 云台重置请求。
+message GimbalResetReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // payload_index 负载设备索引，格式 "机型-挂载位置"。
+  string payload_index = 2;
+  // reset_mode 重置模式，0: 回中, 1: 朝下, 2: 偏航回中。
+  int32 reset_mode = 3;
+}
+
+// ==================== 直播请求消息 ====================
+
+// LiveStartPushReq 开始直播推流请求。
+message LiveStartPushReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // url_type 推流协议类型，0: AGORA, 1: RTMP, 2: RTSP, 3: GB28181。
+  int32 url_type = 2;
+  // url 推流地址。
+  string url = 3;
+  // video_id 视频流 ID，格式 "SN/机型-挂载位置/镜头类型"。
+  string video_id = 4;
+  // video_quality 视频质量，0: 自适应, 1: 流畅, 2: 标清, 3: 高清, 4: 超清。
+  int32 video_quality = 5;
+}
+
+// LiveStopPushReq 停止直播推流请求。
+message LiveStopPushReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // video_id 视频流 ID，与启动时一致。
+  string video_id = 2;
+}
+
+// LiveSetQualityReq 设置直播画质请求。
+message LiveSetQualityReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // video_id 视频流 ID。
+  string video_id = 2;
+  // video_quality 视频质量，0: 自适应, 1: 流畅, 2: 标清, 3: 高清, 4: 超清。
+  int32 video_quality = 3;
+}
+
+// ==================== 属性设置请求消息 ====================
+
+// SetPropertyReq 设备属性设置请求。
+message SetPropertyReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // properties JSON 格式的属性键值对字符串。
+  string properties = 2;
 }
