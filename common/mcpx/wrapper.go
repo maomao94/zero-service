@@ -131,14 +131,18 @@ func (p *ProgressSender) Stop() {
 // Start 订阅进度事件并转发到 MCP Client
 func (p *ProgressSender) Start() {
 	logx.WithContext(p.ctx).Infof("[mcpx] progress start: token=%s", p.token)
-	ch, unsub := progressEmitter.Subscribe(p.token)
+	ch, unsub := progressEmitter.Subscribe(p.ctx, p.token)
 	p.cancel = unsub
 	p.wg.Add(1)
 	threading.GoSafe(func() {
 		start := timex.Now()
 		defer p.wg.Done()
 		defer logx.WithContext(p.ctx).WithDuration(timex.Since(start)).Infof("[mcpx] progress goroutine exit: token=%s", p.token)
-		for event := range ch {
+		for {
+			event, err := ch.Recv()
+			if err != nil {
+				break
+			}
 			notifyErr := p.session.NotifyProgress(event.Ctx, &mcp.ProgressNotificationParams{
 				ProgressToken: event.Token,
 				Progress:      event.Progress,

@@ -6,6 +6,7 @@ import (
 	"zero-service/gtw/internal/types"
 	"zero-service/zerorpc/zerorpc"
 
+	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -30,8 +31,12 @@ func (l *EditCurrentUserLogic) EditCurrentUser(req *types.EditCurrentUserRequest
 	if err != nil {
 		return nil, err
 	}
+	userId, err := convertor.ToInt(u.User.Id)
+	if err != nil {
+		return nil, err
+	}
 	l.svcCtx.ZeroRpcCli.EditUserInfo(l.ctx, &zerorpc.EditUserInfoReq{
-		Id:       u.User.Id,
+		Id:       userId,
 		Mobile:   u.User.Mobile,
 		Nickname: req.Nickname,
 		Sex:      req.Sex,

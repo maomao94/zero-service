@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"database/sql"
+	"zero-service/app/trigger/internal/planscope"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/tool"
@@ -75,6 +76,9 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 		return nil, errors.BadRequest("", "执行项状态已结束,无需终止")
 	}
 
+	scope := planscope.ExecScope(execItem)
+	log := scope.Logger(l.ctx)
+
 	// 执行事务
 	err = l.svcCtx.PlanModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
 		// 更新执行项状态为已终止
@@ -97,7 +101,7 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 	}
 	batchCount, err := l.svcCtx.PlanBatchModel.UpdateBatchFinishedTime(l.ctx, execItem.BatchPk)
 	if err != nil {
-		l.Errorf("Error updating batch %s completed time: %v", execItem.BatchId, err)
+		log.Errorf("更新批次 finished_time（用于收尾判断）失败: %v", err)
 	}
 	if batchCount > 0 {
 		batchNotifyReq := streamevent.NotifyPlanEventReq{
@@ -107,12 +111,13 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 			BatchId:    execItem.BatchId,
 			Attributes: map[string]string{},
 		}
+		log.WithFields(logx.Field("notify_event", planscope.NotifyEventBatchFinished)).Info("下游通知：调用 NotifyPlanEvent（批次收尾）")
 		l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &batchNotifyReq)
 	}
 
 	planCount, err := l.svcCtx.PlanModel.UpdateBatchFinishedTime(l.ctx, execItem.PlanPk)
 	if err != nil {
-		l.Errorf("Error updating plan %s completed time: %v", execItem.PlanId, err)
+		log.Errorf("更新计划 finished_time（用于收尾判断）失败: %v", err)
 	}
 	if planCount > 0 {
 		planPlanReq := streamevent.NotifyPlanEventReq{
@@ -122,8 +127,10 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 			//BatchId:    execItem.BatchId,
 			Attributes: map[string]string{},
 		}
+		log.WithFields(logx.Field("notify_event", planscope.NotifyEventPlanFinished)).Info("下游通知：调用 NotifyPlanEvent（计划收尾）")
 		l.svcCtx.StreamEventCli.NotifyPlanEvent(l.ctx, &planPlanReq)
 	}
 
+	log.Info("RPC 终止执行项：执行项状态已更新，事务已提交")
 	return &trigger.TerminatePlanExecItemRes{}, nil
 }

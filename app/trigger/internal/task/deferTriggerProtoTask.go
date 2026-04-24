@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"path"
 	"time"
 	"zero-service/app/trigger/internal/svc"
 	interceptor "zero-service/common/Interceptor/rpcclient"
@@ -82,13 +81,21 @@ func (l *DeferTriggerProtoTaskHandler) ProcessTask(ctx context.Context, t *asynq
 		var respBytes []byte
 		zrpc.DontLogClientContentForMethod(msg.Method)
 		err = cli.Conn().Invoke(ctx, msg.Method, msg.Payload, &respBytes)
-		serverName := path.Join(cli.Conn().Target(), msg.Method)
+		target := cli.Conn().Target()
+		method := msg.Method
 		duration := timex.Since(startTime)
-		logx.WithContext(ctx).WithDuration(duration).Infof("rpc invoke - %s", serverName)
+		logger := logx.WithContext(ctx).WithDuration(duration).WithFields(
+			logx.Field("msgId", msg.MsgId),
+			logx.Field("grpcTarget", target),
+			logx.Field("method", method),
+			logx.Field("taskType", t.Type()),
+		)
 		if err != nil {
+			logger.Errorf("grpc trigger invoke failed: %v", err)
 			t.ResultWriter().Write([]byte("fail,rpcInvokeError: " + err.Error()))
 			return err
 		}
+		logger.Infof("grpc trigger invoke ok")
 	}
 	return nil
 }

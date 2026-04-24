@@ -818,24 +818,24 @@ func (conn *Connection) callToolWithProgress(ctx context.Context, req *CallToolW
 
 	// 订阅进度事件
 	var cancel func()
-	var progressCh <-chan ProgressInfo
+	var progressSR *antsx.StreamReader[ProgressInfo]
 	if req.OnProgress != nil {
-		progressCh, cancel = conn.clientRef.progressEmitter.Subscribe(token)
+		progressSR, cancel = conn.clientRef.progressEmitter.Subscribe(ctx, token)
 		defer cancel()
 	}
 
-	// 从 ctx 收集用户上下文，注入 trace 到 _meta
 	meta := ctxprop.CollectFromCtx(ctx)
 	otel.GetTextMapPropagator().Inject(ctx, NewMapMetaCarrier(meta))
-	// 设置meta
 	params.SetMeta(meta)
-	// 启动 goroutine 监听进度
-	if req.OnProgress != nil && progressCh != nil {
-		// 设置 ProgressToken
+	if req.OnProgress != nil && progressSR != nil {
 		params.SetProgressToken(token)
 		threading.GoSafe(func() {
 			logx.Infof("[mcpx] progress listener started: token=%s", token)
-			for info := range progressCh {
+			for {
+				info, err := progressSR.Recv()
+				if err != nil {
+					break
+				}
 				logx.Infof("[mcpx] progress received: token=%s, progress=%.0f/%.0f, msg=%s", token, info.Progress, info.Total, info.Message)
 				req.OnProgress(&info)
 			}
@@ -1085,13 +1085,13 @@ func (c *Client) CallToolAsyncAwait(ctx context.Context, req *CallToolAsyncReque
 	}
 
 	// 创建 Promise
-	promise := antsx.NewPromise[string](taskID)
+	promise := antsx.NewPromise[string]()
 
 	// 保存原始 observer
 	origObserver := req.TaskObserver
 
 	// 提交到 Reactor 池执行
-	_, err := antsx.Submit(ctx, c.reactor, taskID, func(ctx context.Context) (string, error) {
+	_, err := antsx.Submit(ctx, c.reactor, func(ctx context.Context) (string, error) {
 		// 调用同步方法（带进度回调）
 		result, callErr := c.CallToolWithProgress(ctx, &CallToolWithProgressRequest{
 			Token: taskID,

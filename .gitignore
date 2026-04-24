@@ -13,4 +13,6 @@ socketapp/*/env/
 gtw/env/
 
 # Claude directories
-.claude/
+#.claude/
+
+/.trae/specs/

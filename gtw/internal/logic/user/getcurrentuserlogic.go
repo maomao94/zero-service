@@ -30,7 +30,7 @@ func NewGetCurrentUserLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Ge
 }
 
 func (l *GetCurrentUserLogic) GetCurrentUser(req *types.GetCurrentUserRequest) (resp *types.GetCurrentUserReply, err error) {
-	userId := ctxdata.GetUserIdFromCtx(l.ctx, true)
+	userId := ctxdata.GetUserId(l.ctx)
 	if len(userId) > 0 {
 		res, err := l.svcCtx.ZeroRpcCli.GetUserInfo(l.ctx, &zerorpc.GetUserInfoReq{
 			Id: userId,

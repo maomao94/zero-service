@@ -79,7 +79,7 @@ func newMessageDispatcher(m *handlerManager, metrics *stat.Metrics) *messageDisp
 		manager: m,
 		metrics: metrics,
 		onNoHandler: func(ctx context.Context, payload []byte, topic, topicTemplate string) {
-			// 默认无处理器时忽略
+			logx.WithContext(ctx).Infof("[mqttx] no handler registered for topic=%s template=%s", topic, topicTemplate)
 		},
 	}
 }

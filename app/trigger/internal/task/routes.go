@@ -2,6 +2,7 @@ package task
 
 import (
 	"zero-service/app/trigger/internal/svc"
+	"zero-service/app/trigger/internal/task/scheduler"
 	"zero-service/common/asynqx"
 
 	"github.com/hibiken/asynq"
@@ -28,7 +29,7 @@ func (l *CronJob) Register() *asynq.ServeMux {
 	logx.Infof("asynq cronJob-task registered: %s", asynqx.DeferTriggerProtoTask)
 
 	//scheduler job
-	mux.Handle(asynqx.SchedulerDeferTask, NewDeferTriggerTask(l.svcCtx))
+	mux.Handle(asynqx.SchedulerDeferTask, scheduler.NewSchedulerDeferTask(l.svcCtx))
 	logx.Infof("asynq cronJob-scheduler registered: %s", asynqx.SchedulerDeferTask)
 	return mux
 }

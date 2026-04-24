@@ -112,8 +112,14 @@ func NewMetrics() *Metrics {
 		}, []string{"op", "status", "backend"}),
 	}
 
-	register(m.turnDuration, m.agentDuration, m.toolCallLatency, m.knowledgeDuration)
-	registerCounters(m.toolCallCounter, m.interruptTotal, m.resumeTotal, m.checkpointTotal)
+	m.turnDuration = registerOrReuse(m.turnDuration)
+	m.agentDuration = registerOrReuse(m.agentDuration)
+	m.toolCallLatency = registerOrReuse(m.toolCallLatency)
+	m.knowledgeDuration = registerOrReuse(m.knowledgeDuration)
+	m.toolCallCounter = registerOrReuse(m.toolCallCounter)
+	m.interruptTotal = registerOrReuse(m.interruptTotal)
+	m.resumeTotal = registerOrReuse(m.resumeTotal)
+	m.checkpointTotal = registerOrReuse(m.checkpointTotal)
 	return m
 }
 
@@ -225,17 +231,12 @@ func (m *Metrics) RecordKnowledge(ctx context.Context, op, status, backend strin
 // 注册工具函数
 // =============================================================================
 
-func register(cs ...prometheus.Collector) {
-	for _, c := range cs {
-		if err := prometheus.Register(c); err != nil {
-			if are, ok := err.(prometheus.AlreadyRegisteredError); ok {
-				// 已注册直接忽略; 复用原 collector 让外部仍能写入
-				_ = are
-				continue
-			}
-			logx.Errorf("[einox.metrics] register: %v", err)
+func registerOrReuse[T prometheus.Collector](c T) T {
+	if err := prometheus.Register(c); err != nil {
+		if are, ok := err.(prometheus.AlreadyRegisteredError); ok {
+			return are.ExistingCollector.(T)
 		}
+		logx.Errorf("[einox.metrics] register: %v", err)
 	}
+	return c
 }
-
-func registerCounters(cs ...prometheus.Collector) { register(cs...) }

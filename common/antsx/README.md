@@ -1,437 +1,543 @@
-# antsx - Go 响应式工具包
+# antsx
 
-基于 ants goroutine 池的响应式编程工具包，参考 Java Project Reactor 理念，以 Go 惯用风格实现。
+基于 ants 协程池的响应式编程工具包，提供流式处理、异步 Promise、并行编排、发布订阅等能力。
 
-**并发安全**：所有类型均为并发安全设计，内置 panic recovery。
-用户函数 panic 会被捕获并转换为 error，不会导致 goroutine 泄漏或调用方永久阻塞。
+流式原语 API 设计参考字节跳动 [eino](https://github.com/cloudwego/eino) 框架，保持一致的 `Pipe / StreamReader / StreamWriter` 使用范式。
 
----
+## 模块速查
 
-## 场景选择指南
+| 模块 | 文件 | 核心能力 |
+|------|------|---------|
+| **Stream** | `stream.go` `select.go` | 流式管道：Pipe、Copy、Merge、Convert、FromArray |
+| **Promise** | `promise.go` | 异步结果容器：Await、Then、Map、FlatMap、All、Race |
+| **Reactor** | `reactor.go` | 协程池调度：Submit（带返回值）、Post（无返回值）、Go |
+| **Invoke** | `invoke.go` | 并行流程编排：多任务并发执行、快速失败、超时控制 |
+| **EventEmitter** | `emitter.go` | 发布/订阅：多 topic、ctx 取消自动退订 |
+| **PendingRegistry** | `pending.go` | 关联 ID 注册表：请求-响应模式、TTL 自动过期 |
+| **UnboundedChan** | `unbounded.go` | 无界通道：基于 mutex+cond 的无限缓冲 channel |
 
-根据你的架构选择合适的工具：
+## 快速使用
 
-| 场景 | 推荐工具 | 关键特征 |
-|------|---------|---------|
-| 阻塞调用加超时 | `Promise` | 数据直连流转，只需包装阻塞 I/O |
-| 并行聚合多个调用 | `Invoke` | 多个独立调用并行执行，汇总结果 |
-| 高并发任务+资源控制 | `Reactor` | goroutine 池化复用，ID 去重 |
-| 异步请求-响应匹配 | `PendingRegistry` | 请求和响应走不同通道，用关联 ID 匹配 |
-| 事件广播/多订阅者 | `EventEmitter` | 一对多推送，topic 级隔离 |
-| MQ 异步流式推送 | `EventEmitter` + `PendingRegistry` | 解耦的生产者-消费者 + 完成信号 |
+### Stream（流式管道）
 
-### 如何判断用哪个？
-
-```
-你的数据流是怎样的？
-
-├── 直连同步流（调用方直接拿结果）
-│   ├── 单个阻塞调用需要超时 ──────────> Promise
-│   ├── 多个独立调用并行聚合 ──────────> Invoke
-│   └── 高并发提交需要限流 ───────────> Reactor + Promise
-│
-└── 解耦异步流（请求和响应走不同通道）
-    ├── 一次请求 - 一次响应 ──────────> PendingRegistry
-    ├── 一次请求 - 多次推送 ──────────> EventEmitter
-    └── 一次请求 - 多次推送 + 完成信号 ─> EventEmitter + PendingRegistry
-```
-
----
-
-## 1. Promise[T] - 异步结果容器
-
-**适用场景**：将阻塞调用包装为可超时、可取消的异步操作。
-
-### 典型场景：gRPC stream 读取加超时
-
-```
-上游 AI ──SSE──> reader.Recv() [阻塞] ──> gRPC stream.Send() ──> 客户端
-                     │
-                     └── 如果上游挂了，Recv() 永远阻塞
-                         用 Promise 包装后可以设超时中断
-```
+创建生产者-消费者管道：
 
 ```go
+sr, sw := antsx.Pipe[string](10) // 缓冲区容量 10
+go func() {
+    defer sw.Close() // 必须调用，通知消费者 EOF
+    sw.Send("hello", nil)
+    sw.Send("world", nil)
+}()
+
+defer sr.Close() // 必须调用，即使已读到 EOF
 for {
-    recv := antsx.NewPromise[*StreamChunk]("stream-recv")
-    go func() {
-        chunk, err := reader.Recv() // 阻塞 I/O
-        if err != nil {
-            recv.Reject(err)
-        } else {
-            recv.Resolve(chunk)
-        }
-    }()
-
-    // 90s 内没收到 chunk 就超时返回
-    idleCtx, cancel := context.WithTimeout(streamCtx, 90*time.Second)
-    chunk, err := recv.Await(idleCtx)
-    cancel()
-
-    if err != nil {
-        // context.DeadlineExceeded = 超时
-        // io.EOF = 正常结束
-        // 其他 = 上游错误
-        return err
+    val, err := sr.Recv()
+    if errors.Is(err, io.EOF) {
+        break
     }
-    stream.Send(toProto(chunk))
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println(val)
 }
 ```
 
-### 基本用法
+流操作：
 
 ```go
-p := antsx.NewPromise[string]("req-1")
+// 多路合并（fan-in），按到达顺序交错输出
+merged := antsx.MergeStreamReaders([]*antsx.StreamReader[int]{sr1, sr2, sr3})
+defer merged.Close()
 
-go func() {
-    result := doSomeWork()
-    p.Resolve(result)
-}()
+// 广播复制（fan-out），原始 reader 调用后不可再用
+copies := sr.Copy(3)
+// copies[0], copies[1], copies[2] 各自独立消费完整数据
 
-val, err := p.Await(ctx)                    // 跟随 context 超时
-val, err := p.AwaitWithTimeout(3 * time.Second) // 固定超时
+// 类型转换（带过滤），返回 ErrNoValue 可跳过当前元素
+converted := antsx.StreamReaderWithConvert(sr, func(i int) (string, error) {
+    if i == 0 {
+        return "", antsx.ErrNoValue // 跳过零值
+    }
+    return fmt.Sprintf("v%d", i), nil
+})
+
+// 具名流合并，可追踪每条源流的结束
+merged := antsx.MergeNamedStreamReaders(map[string]*antsx.StreamReader[string]{
+    "agent_a": srA,
+    "agent_b": srB,
+})
+for {
+    chunk, err := merged.Recv()
+    if errors.Is(err, io.EOF) { break }
+    if name, ok := antsx.GetSourceName(err); ok {
+        fmt.Printf("%s finished\n", name)
+        continue
+    }
+    process(chunk)
+}
+
+// 数组转流（零开销，无 goroutine）
+sr := antsx.StreamReaderFromArray([]int{1, 2, 3})
 ```
 
-### 链式调用
+### Promise（异步结果容器）
 
 ```go
-// Then: T -> (U, error)
-p2 := antsx.Then(ctx, p1, func(val int) (string, error) {
-    return fmt.Sprintf("result: %d", val), nil
+// 创建并等待
+p := antsx.NewPromise[int]()
+go func() { p.Resolve(42) }()
+val, err := p.Await(ctx) // 阻塞直到 Resolve/Reject 或 ctx 取消
+
+// 带超时的等待
+val, err := p.AwaitWithTimeout(5 * time.Second)
+
+// 链式变换
+result := antsx.Then(ctx, promise, func(v int) (string, error) {
+    return fmt.Sprintf("got %d", v), nil
 })
 
-// Map: T -> U（纯映射）
-p3 := antsx.Map(ctx, p1, func(val int) string {
-    return strconv.Itoa(val)
+// 映射
+mapped := antsx.Map(ctx, promise, func(v int) string {
+    return strconv.Itoa(v)
 })
 
-// FlatMap: T -> *Promise[U]（链接多个异步操作）
-p4 := antsx.FlatMap(ctx, p1, func(val int) *antsx.Promise[string] {
-    return fetchFromRemote(val)
+// 扁平映射
+flat := antsx.FlatMap(ctx, promise, func(v int) *antsx.Promise[string] {
+    return antsx.Go(ctx, func(ctx context.Context) (string, error) {
+        return fetchName(ctx, v)
+    })
 })
-```
 
-### 并发组合
-
-```go
-// 等待所有完成，任一失败立即取消其余
+// 并发等待全部完成（fast-fail，任一失败立即返回错误）
 results, err := antsx.PromiseAll(ctx, p1, p2, p3)
 
-// 竞争，返回最先完成的
+// 竞速取最快完成的
 val, err := antsx.PromiseRace(ctx, p1, p2)
-```
 
-### 错误捕获
-
-```go
-p.Catch(func(err error) {
-    log.Printf("任务失败: %v", err)
+// 后台执行，返回 Promise
+p := antsx.Go(ctx, func(ctx context.Context) (int, error) {
+    return compute(ctx)
 })
 ```
 
----
-
-## 2. Invoke - 并行流程编排
-
-**适用场景**：多个独立的 RPC/IO 调用需要并行执行并汇总结果。
-
-### 典型场景：聚合用户画像
-
-```
-        ┌── getBasic()  ──> 基础信息
-请求 ───┼── getStats()  ──> 统计数据  ───> 合并为完整画像
-        └── getPrefs()  ──> 偏好设置
-```
+### Reactor（协程池调度）
 
 ```go
+r, _ := antsx.NewReactor(100) // 创建 100 worker 的协程池
+defer r.Release()
+
+// Submit：带返回值，返回 Promise
+p, _ := antsx.Submit(ctx, r, func(ctx context.Context) (int, error) {
+    return compute(), nil
+})
+val, _ := p.Await(ctx)
+
+// Post：无返回值，内置 panic 保护和日志记录
+antsx.Post(ctx, r, func(ctx context.Context) error {
+    doWork(ctx)
+    return nil
+})
+
+// Go：直接提交函数到协程池，内置 panic 保护和日志记录
+r.Go(ctx, func(ctx context.Context) { doSomething(ctx) })
+
+// 查询活跃 worker 数
+count := r.ActiveCount()
+```
+
+### Invoke（并行流程编排）
+
+```go
+// 并行执行多个任务，fast-fail（任一失败立即取消其他任务）
+// 结果按任务定义顺序排列（非完成顺序）
 results, err := antsx.Invoke(ctx,
-    antsx.Task[*UserInfo]{
-        Name:    "basic-info",
-        Timeout: 3 * time.Second,
-        Fn:      func(ctx context.Context) (*UserInfo, error) { return userRpc.GetBasic(ctx) },
-    },
-    antsx.Task[*UserInfo]{
-        Name:    "stats",
-        Timeout: 5 * time.Second,
-        Fn:      func(ctx context.Context) (*UserInfo, error) { return userRpc.GetStats(ctx) },
-    },
+    antsx.Task[int]{Name: "db", Fn: queryDB},
+    antsx.Task[int]{Name: "cache", Timeout: 500*time.Millisecond, Fn: queryCache},
+    antsx.Task[int]{Name: "api", Fn: callAPI},
 )
-// results 按 index 排列（不是完成顺序）
-// 任一失败 -> 立即取消其余，返回第一个错误
+
+// 使用指定 Reactor 协程池执行（受限并发数）
+results, err := antsx.InvokeWithReactor(ctx, reactor, tasks...)
+
+// 执行后回调聚合
+sum, err := antsx.InvokeCallback(ctx, tasks, func(vals []int) (int, error) {
+    total := 0
+    for _, v := range vals { total += v }
+    return total, nil
+})
 ```
 
-### InvokeCallback - 执行后聚合变换
+### EventEmitter（发布/订阅）
 
 ```go
-profile, err := antsx.InvokeCallback(ctx,
-    []antsx.Task[*UserInfo]{
-        {Name: "basic", Fn: getBasic, Timeout: 3 * time.Second},
-        {Name: "stats", Fn: getStats, Timeout: 5 * time.Second},
-    },
-    func(infos []*UserInfo) (*AggregatedProfile, error) {
-        return mergeProfiles(infos[0], infos[1]), nil
-    },
-)
+emitter := antsx.NewEventEmitter[string]()
+defer emitter.Close()
+
+// 订阅 topic（ctx 取消时自动退订）
+sr, cancel := emitter.Subscribe(ctx, "chat-room")
+defer cancel()
+
+// 自定义缓冲区大小
+sr2, cancel2 := emitter.Subscribe(ctx, "logs", 100)
+defer cancel2()
+
+// 发布事件（广播给所有订阅者）
+emitter.Emit("chat-room", "hello!")
+
+// 接收事件
+val, err := sr.Recv()
+
+// 查询状态
+emitter.TopicCount()            // 活跃 topic 数
+emitter.SubscriberCount("chat") // 指定 topic 的订阅者数
 ```
 
-### InvokeWithReactor - 池化执行
+### PendingRegistry（请求-响应模式）
 
-当并发任务量大时，通过 Reactor 池限制 goroutine 数量：
+```go
+reg := antsx.NewPendingRegistry[Response](
+    antsx.WithDefaultTTL(30 * time.Second),
+    antsx.WithTimingWheel(100*time.Millisecond, 16), // 自定义时间轮参数
+)
+defer reg.Close()
+
+// 请求-响应一体化（注册 + 发送 + 等待）
+resp, err := antsx.RequestReply(ctx, reg, requestID, func() error {
+    return conn.Send(request)
+})
+
+// 或分步操作
+promise, _ := reg.Register(requestID, 5*time.Second) // 可覆盖默认 TTL
+conn.Send(request)
+// ... 远端回调 ...
+reg.Resolve(requestID, response)
+resp, _ := promise.Await(ctx)
+
+// 查询状态
+reg.Has(requestID) // 是否有待处理请求
+reg.Len()          // 待处理总数
+```
+
+### UnboundedChan（无界通道）
+
+```go
+ch := antsx.NewUnboundedChan[Task]()
+defer ch.Close()
+
+// 生产（已关闭时 panic，类似内置 channel 行为）
+ch.Send(task)
+
+// 安全生产（已关闭时返回 false）
+ok := ch.TrySend(task)
+
+// 阻塞消费（通道关闭且清空后返回 zero, false）
+val, ok := ch.Receive()
+
+// 带 ctx 超时消费
+val, ok := ch.ReceiveContext(ctx)
+
+// 队列长度
+ch.Len()
+```
+
+## 设计细节
+
+### 流的内部架构
+
+`StreamReader` 使用类型标签 + 联合体模式（而非接口多态），通过 switch-case 分派到具体实现，
+避免接口虚表调用开销：
+
+- `readerStream`: 基于 channel 的基本流
+- `readerArray`: 基于数组的同步流（零 goroutine 开销）
+- `readerMulti`: 多路合并流
+- `readerConvert`: 类型转换/过滤流
+- `readerChild`: Copy 产生的子流
+
+### 静态 select 优化
+
+多路合并（`MergeStreamReaders`）在源流数量 ≤5 时使用编译时展开的 `select` 语句，
+避免 `reflect.Select` 的反射开销。源流数量 >5 时降级为 `reflect.Select`。
+
+### Copy 零拷贝广播
+
+`Copy` 使用链表 + `sync.Once` 实现零拷贝的 fan-out：
+- 第一个到达的子流触发实际的 `Recv()` 读取
+- 其他子流直接读取已填充的数据
+- `atomic.AddUint32` 引用计数确保所有子流关闭后自动关闭源流
+
+### UnboundedChan 内存管理
+
+底层使用切片作为环形缓冲区，当已消费偏移量超过容量一半时自动 compact：
+- 重新分配切片，释放已消费元素
+- 已消费位置显式清零，防止指针类型元素被底层数组持有导致 GC 无法回收
+
+## 协程安全性
+
+| 类型 | 安全性 |
+|------|--------|
+| `Promise` | 所有方法可并发调用。Resolve/Reject 通过 `sync.Once` 保证幂等 |
+| `StreamWriter` | `Send` 和 `Close` 均可安全并发调用，`Close` 通过 atomic CAS 幂等 |
+| `StreamReader` | `Recv` **非**并发安全（单消费者模型），`Close` 可从任意 goroutine 调用 |
+| `EventEmitter` | 所有方法可并发调用。内部使用 `sync.RWMutex` 保护订阅者列表 |
+| `PendingRegistry` | 所有方法可并发调用。内部使用 `sync.Mutex` 保护注册表 |
+| `UnboundedChan` | 所有方法可并发调用。支持 MPMC（多生产者多消费者） |
+| `Reactor` | `Submit/Post/Go` 可并发调用。`Release` 后调用其他方法返回错误 |
+
+## 资源释放指南
+
+**必须调用的 Close/Release**：
+
+- `StreamWriter.Close()` — 不调用会导致消费者永远阻塞在 `Recv`
+- `StreamReader.Close()` — 不调用会导致生产者 goroutine 泄漏（Send 阻塞）
+- `EventEmitter.Close()` — 不调用会导致所有订阅者 goroutine 泄漏
+- `PendingRegistry.Close()` — 不调用会导致内部 TimingWheel 协程泄漏
+- `Reactor.Release()` — 不调用会导致协程池泄漏
+- `UnboundedChan.Close()` — 不调用会导致等待中的消费者永远阻塞
+
+**防御性机制**：
+
+- `StreamReader.SetAutomaticClose()` 注册 GC Finalizer，在 reader 不可达时自动关闭
+- 所有 Close 方法均为幂等操作，多次调用安全
+
+## 错误类型参考
+
+| 错误 | 来源 | 含义 |
+|------|------|------|
+| `io.EOF` | `StreamReader.Recv` | 流数据已全部读取完毕 |
+| `ErrNoValue` | `StreamReaderWithConvert` | convert 函数跳过当前元素（过滤语义） |
+| `ErrRecvAfterClosed` | `StreamReader.Recv` (Copy) | 在已关闭的子流上调用 Recv |
+| `SourceEOF` | `MergeNamedStreamReaders` | 某条具名源流结束（其他源流可能仍在产出） |
+| `ErrDuplicateID` | `PendingRegistry.Register` | 注册了重复的关联 ID |
+| `ErrPendingExpired` | `PendingRegistry` | 条目超过 TTL 自动过期 |
+| `ErrRegistryClosed` | `PendingRegistry` | 注册表已关闭 |
+| `ErrChanClosed` | `UnboundedChan.TrySend` | 向已关闭的通道发送（TrySend 返回 false） |
+
+## 最佳实践
+
+1. **始终 `defer sr.Close()` 和 `defer sw.Close()`** — 即使已经读到 EOF
+2. **检查 `Send` 返回值** — `closed == true` 表示消费者已关闭，应停止生产
+3. **Copy 必须在 Recv 之前调用** — 原始 reader 在 Copy 后不可用
+4. **单个 StreamReader 只由一个 goroutine 消费** — 需要多消费者时先 Copy
+5. **使用 `errors.Is(err, io.EOF)` 判断流结束** — 而非 `err == io.EOF`
+6. **ErrNoValue 仅在 convert 函数中使用** — 不要在其他场景返回该错误
+7. **Invoke 结果按定义顺序排列** — 不是按完成时间排列
+8. **Promise 的 Resolve/Reject 只有首次调用生效** — 后续调用被忽略
+
+## 实战示例
+
+### 流式管道：Copy + 并行处理 + Merge
+
+将一个流 Copy 为多份，分别处理后 Merge 合并结果：
+
+```go
+func processStream(ctx context.Context) error {
+    sr, sw := antsx.Pipe[string](10)
+    go func() {
+        defer sw.Close()
+        for _, msg := range messages {
+            sw.Send(msg, nil)
+        }
+    }()
+
+    copies := sr.Copy(2)
+
+    translated := antsx.StreamReaderWithConvert(copies[0], func(s string) (string, error) {
+        return translate(s), nil
+    })
+
+    summarized := antsx.StreamReaderWithConvert(copies[1], func(s string) (string, error) {
+        return summarize(s), nil
+    })
+
+    merged := antsx.MergeStreamReaders([]*antsx.StreamReader[string]{translated, summarized})
+    defer merged.Close()
+
+    for {
+        chunk, err := merged.Recv()
+        if errors.Is(err, io.EOF) { break }
+        if err != nil { return err }
+        fmt.Println(chunk)
+    }
+    return nil
+}
+```
+
+### Promise 流水线
+
+Go + Then + Map + FlatMap 链式调用：
+
+```go
+ctx := context.Background()
+
+result := antsx.Go(ctx, func(ctx context.Context) (int, error) {
+    return fetchUserID(ctx)
+})
+
+name := antsx.Then(ctx, result, func(id int) (string, error) {
+    return fetchUserName(ctx, id)
+})
+
+greeting := antsx.Map(ctx, name, func(n string) string {
+    return "Hello, " + n + "!"
+})
+
+val, err := greeting.Await(ctx)
+```
+
+### Invoke 错误处理
+
+带错误处理和超时的 Invoke 示例：
+
+```go
+ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+defer cancel()
+
+results, err := antsx.Invoke(ctx,
+    antsx.Task[string]{
+        Name:    "user-service",
+        Timeout: 2 * time.Second,
+        Fn: func(ctx context.Context) (string, error) {
+            return userClient.GetProfile(ctx, userID)
+        },
+    },
+    antsx.Task[string]{
+        Name:    "order-service",
+        Timeout: 3 * time.Second,
+        Fn: func(ctx context.Context) (string, error) {
+            return orderClient.GetRecent(ctx, userID)
+        },
+    },
+)
+if err != nil {
+    log.Printf("聚合查询失败: %v", err)
+    return
+}
+profile, orders := results[0], results[1]
+```
+
+### EventEmitter 多 topic 并发
+
+多 topic 生产消费示例：
+
+```go
+emitter := antsx.NewEventEmitter[Event]()
+defer emitter.Close()
+
+ctx, cancel := context.WithCancel(context.Background())
+defer cancel()
+
+chatSr, chatCancel := emitter.Subscribe(ctx, "chat", 50)
+defer chatCancel()
+logSr, logCancel := emitter.Subscribe(ctx, "system-log", 100)
+defer logCancel()
+
+go func() {
+    defer chatSr.Close()
+    for {
+        event, err := chatSr.Recv()
+        if errors.Is(err, io.EOF) { break }
+        handleChatEvent(event)
+    }
+}()
+
+go func() {
+    defer logSr.Close()
+    for {
+        event, err := logSr.Recv()
+        if errors.Is(err, io.EOF) { break }
+        writeLog(event)
+    }
+}()
+
+emitter.Emit("chat", Event{Type: "message", Data: "hello"})
+emitter.Emit("system-log", Event{Type: "info", Data: "user joined"})
+```
+
+### PendingRegistry WebSocket 请求-响应
+
+WebSocket 场景的请求-响应关联：
+
+```go
+reg := antsx.NewPendingRegistry[[]byte](
+    antsx.WithDefaultTTL(30 * time.Second),
+)
+defer reg.Close()
+
+go func() {
+    for {
+        msg := conn.ReadMessage()
+        reg.Resolve(msg.RequestID, msg.Payload)
+    }
+}()
+
+ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+defer cancel()
+
+resp, err := antsx.RequestReply(ctx, reg, "req-123", func() error {
+    return conn.WriteMessage(Request{ID: "req-123", Action: "getUser"})
+})
+if errors.Is(err, antsx.ErrPendingExpired) {
+    log.Println("请求超时")
+}
+```
+
+### UnboundedChan 工作池
+
+生产者-消费者池示例：
+
+```go
+ch := antsx.NewUnboundedChan[func()]()
+
+var wg sync.WaitGroup
+for i := 0; i < runtime.NumCPU(); i++ {
+    wg.Add(1)
+    go func() {
+        defer wg.Done()
+        for {
+            task, ok := ch.Receive()
+            if !ok { return }
+            task()
+        }
+    }()
+}
+
+for _, item := range items {
+    item := item
+    ch.Send(func() { process(item) })
+}
+
+ch.Close()
+wg.Wait()
+```
+
+### Reactor + Invoke 组合使用
+
+受限并发的批量任务执行：
 
 ```go
 reactor, _ := antsx.NewReactor(10)
 defer reactor.Release()
 
-results, err := antsx.InvokeWithReactor(ctx, reactor,
-    antsx.Task[int]{Name: "t1", Fn: task1},
-    antsx.Task[int]{Name: "t2", Fn: task2},
-)
-```
+ctx := context.Background()
 
----
+tasks := make([]antsx.Task[*Result], len(urls))
+for i, url := range urls {
+    url := url
+    tasks[i] = antsx.Task[*Result]{
+        Name:    url,
+        Timeout: 5 * time.Second,
+        Fn: func(ctx context.Context) (*Result, error) {
+            return httpGet(ctx, url)
+        },
+    }
+}
 
-## 3. Reactor - 池调度器
-
-**适用场景**：高并发场景下需要控制 goroutine 数量，同时需要 ID 去重防止重复提交。
-
-### 典型场景：消息处理限流
-
-```
-高并发请求 ──> Reactor (pool size=100) ──> 有序处理
-                   │
-                   └── ID 去重：同一请求不会重复执行
-```
-
-```go
-reactor, err := antsx.NewReactor(100)
-defer reactor.Release()
-
-// Submit: 带 ID 去重，返回 Promise
-promise, err := antsx.Submit(ctx, reactor, "order-123", func(ctx context.Context) (string, error) {
-    return processOrder(ctx, "order-123")
-})
-// err == ErrDuplicateID 表示同 ID 任务正在执行
-val, err := promise.Await(ctx)
-
-// Post: fire-and-forget，错误仅日志记录
-antsx.Post(ctx, reactor, func(ctx context.Context) (any, error) {
-    return nil, sendNotification(ctx)
-})
-
-// Go: 最轻量的提交，无 Promise/ID 开销
-reactor.Go(func() {
-    cleanupTempFiles()
-})
-```
-
----
-
-## 4. PendingRegistry[T] - 关联 ID 请求-响应匹配
-
-**适用场景**：请求和响应走不同通道（MQ、TCP 等），需要通过关联 ID 将响应路由回对应的请求方。
-
-### 典型流程
-
-```
-发送端                              消费端（另一个 goroutine）
-  │                                    │
-  ├── reg.Register(id) -> Promise      │
-  ├── mq.Publish(请求)                 │
-  ├── promise.Await(ctx) [等待]        │
-  │                                    ├── 收到响应
-  │                                    ├── reg.Resolve(id, 响应)
-  │<── Promise 返回结果 ───────────────┘
-```
-
-### 场景一：MQ 消息匹配
-
-```go
-reg := antsx.NewPendingRegistry[ResponseMsg](
-    antsx.WithDefaultTTL(10 * time.Second),
-)
-defer reg.Close()
-
-// --- 发送端 ---
-correlationId := uuid.New().String()
-promise, err := reg.Register(correlationId, 5*time.Second)
+results, err := antsx.InvokeWithReactor(ctx, reactor, tasks...)
 if err != nil {
-    return err // ErrDuplicateID 或 ErrRegistryClosed
+    log.Fatal(err)
 }
-
-err = kafka.Publish("cmd-topic", Message{
-    CorrelationId: correlationId,
-    Payload:       cmdPayload,
-})
-if err != nil {
-    reg.Reject(correlationId, err) // 发送失败，立即清理
-    return err
-}
-
-reply, err := promise.Await(ctx)
-// err: nil(成功) / ErrPendingExpired(TTL超时) / context.DeadlineExceeded(ctx超时)
-
-
-// --- 消费端（另一个 goroutine）---
-for msg := range consumer.Messages() {
-    var resp ResponseMsg
-    json.Unmarshal(msg.Value, &resp)
-    reg.Resolve(resp.CorrelationId, resp)
+for i, r := range results {
+    fmt.Printf("%s -> %s\n", urls[i], r.Status)
 }
 ```
-
-### 场景二：TCP sendNo 匹配
-
-```go
-// 发送端
-sendNo := atomic.AddUint32(&seq, 1)
-id := strconv.FormatUint(uint64(sendNo), 10)
-
-promise, _ := reg.Register(id, 3*time.Second)
-conn.WriteFrame(Frame{SendNo: sendNo, Data: payload})
-reply, err := promise.Await(ctx)
-
-// 接收端（read loop）
-for {
-    frame := conn.ReadFrame()
-    id := strconv.FormatUint(uint64(frame.SendNo), 10)
-    reg.Resolve(id, frame)
-}
-```
-
-### RequestReply 便捷封装
-
-一行代码完成 注册 -> 发送 -> 等待：
-
-```go
-reply, err := antsx.RequestReply(ctx, reg, correlationId, func() error {
-    return kafka.Publish("cmd-topic", Message{
-        CorrelationId: correlationId,
-        Payload:       cmdPayload,
-    })
-})
-// sendFn 失败会自动清理已注册的 entry
-```
-
----
-
-## 5. EventEmitter[T] - 发布/订阅
-
-**适用场景**：一对多事件广播，按 topic 隔离。适合 SSE 推送、实时通知等场景。
-
-### 典型流程
-
-```
-生产者                         消费者 A（SSE 连接 1）
-  │                              │
-  ├── emitter.Emit(topic, event) ├── ch, cancel := emitter.Subscribe(topic)
-  │         │                    ├── for event := range ch { sendSSE(event) }
-  │         ├──────────────────> │
-  │         │                    消费者 B（SSE 连接 2）
-  │         │                    │
-  │         └──────────────────> ├── for event := range ch { sendSSE(event) }
-```
-
-```go
-emitter := antsx.NewEventEmitter[SSEEvent]()
-defer emitter.Close()
-
-// 订阅（bufSize 防止慢消费者阻塞生产者）
-ch, cancel := emitter.Subscribe("user-123", 32)
-defer cancel()
-
-go func() {
-    for event := range ch {
-        sendSSE(event)
-    }
-}()
-
-// 发布（非阻塞，慢消费者消息丢弃）
-emitter.Emit("user-123", SSEEvent{Event: "message", Data: "hello"})
-
-// 查询
-emitter.TopicCount()                  // 活跃 topic 数
-emitter.SubscriberCount("user-123")   // 指定 topic 订阅者数
-```
-
----
-
-## 6. 组合模式：EventEmitter + PendingRegistry
-
-**适用场景**：通过 MQ 解耦的异步流式推送。请求通过 MQ 发给后端 Worker，Worker 逐步产生事件推回前端，
-最后用一个完成信号收尾。
-
-### 与 Promise 直连模式的区别
-
-```
-Promise 直连模式（如 gRPC stream + 上游 SSE）：
-  客户端 ──请求──> 网关 ──gRPC stream──> 服务 ──HTTP SSE──> 上游 AI
-                   │<── chunk ──────────<── chunk ──────<── chunk
-                   │
-                   └── 数据在同一条链路直接流转，Promise 只是给阻塞的 Recv() 加超时
-
-EventEmitter + PendingRegistry 模式（如 MQ 异步流式）：
-  客户端 ──请求──> HTTP Handler ──MQ──> AI Worker（独立进程）
-                   │                        │
-                   │<── EventEmitter ────────┤ 逐 token 推送
-                   │                        │
-                   │<── PendingRegistry ────┘ 完成信号
-                   │
-                   └── 请求和响应走不同通道，需要 EventEmitter 桥接事件 + PendingRegistry 匹配完成
-```
-
-### 完整示例
-
-```go
-// ========== 服务初始化 ==========
-emitter := antsx.NewEventEmitter[SSEEvent]()
-pendingReg := antsx.NewPendingRegistry[string](antsx.WithDefaultTTL(60 * time.Second))
-
-// ========== HTTP Handler: 客户端发起对话 ==========
-func handleChat(ctx context.Context, req ChatRequest) {
-    sessionId := uuid.New().String()
-
-    // 1. 注册完成信号（60s TTL 兜底，防止 Worker 挂掉后连接永不关闭）
-    done, _ := pendingReg.Register(sessionId, 60*time.Second)
-
-    // 2. 订阅该 session 的流式事件
-    ch, cancel := emitter.Subscribe(sessionId)
-    defer cancel()
-
-    // 3. 通过 MQ 发送给后端 AI Worker
-    mq.Publish("ai-request", AIRequest{SessionId: sessionId, Prompt: req.Prompt})
-
-    // 4. 等待完成信号，触发 cancel 关闭 ch
-    go func() {
-        done.Await(ctx)
-        cancel()
-    }()
-
-    // 5. 持续推送事件给客户端，直到 ch 关闭
-    for event := range ch {
-        sendSSE(event)
-    }
-}
-
-// ========== AI Worker: 处理推理结果（独立进程/goroutine） ==========
-func handleAIResult(result AIResult) {
-    for _, token := range result.Tokens {
-        emitter.Emit(result.SessionId, SSEEvent{Event: "token", Data: token})
-    }
-    emitter.Emit(result.SessionId, SSEEvent{Event: "done", Data: ""})
-    pendingReg.Resolve(result.SessionId, "completed") // 触发完成信号
-}
-```
-
----
-
-## 模块速查
-
-| 文件 | 核心类型 | 职责 |
-|------|---------|------|
-| `promise.go` | `Promise[T]` | 泛型异步结果容器，支持链式调用 |
-| `promise_ext.go` | `PromiseAll`, `PromiseRace`, `Then`, `Map`, `FlatMap` | Promise 组合器和转换器 |
-| `reactor.go` | `Reactor` | ants 池调度器，带 ID 去重 |
-| `pending.go` | `PendingRegistry[T]` | 关联 ID 请求-响应匹配，自动过期 |
-| `invoke.go` | `Task[T]`, `Invoke` | 并行流程编排，支持超时控制 |
-| `emitter.go` | `EventEmitter[T]` | Topic 级别发布/订阅 |
-| `errors.go` | `ErrPendingExpired`, `ErrDuplicateID`, `ErrRegistryClosed` | 哨兵错误 |

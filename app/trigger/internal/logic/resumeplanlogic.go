@@ -7,6 +7,7 @@ import (
 	"zero-service/common/tool"
 	"zero-service/model"
 
+	"zero-service/app/trigger/internal/planscope"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 
@@ -96,5 +97,6 @@ func (l *ResumePlanLogic) ResumePlan(in *trigger.ResumePlanReq) (*trigger.Resume
 		return nil, err
 	}
 
+	planscope.PlanScope(plan).Logger(l.ctx).Info("RPC 恢复计划：计划状态已更新，事务已提交")
 	return &trigger.ResumePlanRes{}, nil
 }

@@ -2,6 +2,7 @@ package knowledge
 
 import (
 	"strings"
+	"unicode/utf8"
 
 	"github.com/cloudwego/eino/schema"
 )
@@ -13,6 +14,7 @@ func SplitIntoDocuments(text string, chunkSize int) []*schema.Document {
 	}
 	var chunks []*schema.Document
 	var buf strings.Builder
+	var bufRunes int
 
 	flush := func() {
 		s := strings.TrimSpace(buf.String())
@@ -20,6 +22,7 @@ func SplitIntoDocuments(text string, chunkSize int) []*schema.Document {
 			chunks = append(chunks, &schema.Document{Content: s})
 		}
 		buf.Reset()
+		bufRunes = 0
 	}
 
 	for _, para := range strings.Split(text, "\n\n") {
@@ -27,28 +30,34 @@ func SplitIntoDocuments(text string, chunkSize int) []*schema.Document {
 		if para == "" {
 			continue
 		}
-		if buf.Len()+len(para)+2 > chunkSize && buf.Len() > 0 {
+		paraRunes := utf8.RuneCountInString(para)
+		if bufRunes+paraRunes+2 > chunkSize && bufRunes > 0 {
 			flush()
 		}
-		if len(para) > chunkSize {
+		if paraRunes > chunkSize {
 			for _, line := range strings.Split(para, "\n") {
 				line = strings.TrimSpace(line)
 				if line == "" {
 					continue
 				}
-				if buf.Len()+len(line)+1 > chunkSize && buf.Len() > 0 {
+				lineRunes := utf8.RuneCountInString(line)
+				if bufRunes+lineRunes+1 > chunkSize && bufRunes > 0 {
 					flush()
 				}
-				if buf.Len() > 0 {
+				if bufRunes > 0 {
 					buf.WriteByte('\n')
+					bufRunes++
 				}
 				buf.WriteString(line)
+				bufRunes += lineRunes
 			}
 		} else {
-			if buf.Len() > 0 {
+			if bufRunes > 0 {
 				buf.WriteString("\n\n")
+				bufRunes += 2
 			}
 			buf.WriteString(para)
+			bufRunes += paraRunes
 		}
 	}
 	flush()

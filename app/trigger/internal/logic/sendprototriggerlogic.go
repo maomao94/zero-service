@@ -3,17 +3,13 @@ package logic
 import (
 	"context"
 	"regexp"
-	"time"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/asynqx"
 	"zero-service/common/msgbody"
 
-	"github.com/dromara/carbon/v2"
-	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	"github.com/pkg/errors"
-	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/trace"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
@@ -21,7 +17,7 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
-var GrpcServerRegexp = regexp.MustCompile(`^(?:(?:[a-zA-Z0-9\-_.]+\.)*[a-zA-Z0-9\-_.]+:\d+|direct://[^/]*/(?:[a-zA-Z0-9\-_.]+:\d+(?:,[a-zA-Z0-9\-_.]+:\d+)*)|nacos://(.+)@([a-zA-Z0-9\-_.]+:\d+)(/[^?\s]*)?(?:\?[^#\s]*)?)$`)
+var GrpcServerRegexp = regexp.MustCompile(`^(?:(?:[a-zA-Z0-9\-_.]+\.)*[a-zA-Z0-9\-_.]+:\d+|direct://[^/]*/(?:[a-zA-Z0-9\-_.]+:\d+(?:,[a-zA-Z0-9\-_.]+:\d+)*)|nacos://(.+)@([a-zA-Z0-9\-_.]+:\d+)(/[^?\s]*)?(?:\?[^#\s]*)?|etcd://\S+|consul://\S+)$`)
 
 type SendProtoTriggerLogic struct {
 	ctx    context.Context
@@ -41,12 +37,15 @@ func (l *SendProtoTriggerLogic) SendProtoTrigger(in *trigger.SendProtoTriggerReq
 	traceID := trace.TraceIDFromContext(l.ctx)
 	spanCtx, span := asynqx.StartAsynqProducerSpan(l.ctx, asynqx.DeferTriggerProtoTask)
 	defer span.End()
+
 	carrier := &propagation.HeaderCarrier{}
 	otel.GetTextMapPropagator().Inject(spanCtx, carrier)
-	matsh := GrpcServerRegexp.MatchString(in.GrpcServer)
-	if !matsh {
+
+	match := GrpcServerRegexp.MatchString(in.GrpcServer)
+	if !match {
 		return nil, errors.New("grpcServer is invalid")
 	}
+
 	msg := &msgbody.ProtoMsgBody{
 		MsgId:          in.MsgId,
 		Carrier:        carrier,
@@ -55,43 +54,17 @@ func (l *SendProtoTriggerLogic) SendProtoTrigger(in *trigger.SendProtoTriggerReq
 		Payload:        string(in.Payload),
 		RequestTimeout: in.RequestTimeout,
 	}
-	opts := []asynq.Option{}
-	if len(in.GetMsgId()) == 0 {
-		in.MsgId = uuid.NewString()
-		msg.MsgId = in.MsgId
-	}
-	opts = append(opts, asynq.TaskID(in.MsgId))
-	payload, err := jsonx.Marshal(msg)
+
+	opts, payload, err := prepareEnqueue(l.ctx, l.svcCtx, in.MsgId, in.MaxRetry, in.TriggerTime, in.ProcessIn, msg)
 	if err != nil {
 		return nil, err
 	}
-	err = l.svcCtx.Validate.Struct(msg)
+
+	taskInfo, err := l.svcCtx.AsynqClient.Enqueue(asynq.NewTask(asynqx.DeferTriggerProtoTask, payload), opts...)
 	if err != nil {
 		return nil, err
 	}
-	if in.GetMaxRetry() > 0 {
-		opts = append(opts, asynq.MaxRetry(int(in.GetMaxRetry())))
-	}
-	opts = append(opts, asynq.Queue("critical"), asynq.Retention(7*24*time.Hour))
-	var d time.Duration
-	if len(in.TriggerTime) > 0 {
-		triggerTime := carbon.Parse(in.TriggerTime)
-		if triggerTime.Error != nil {
-			return nil, triggerTime.Error
-		}
-		internal := carbon.Now().DiffInSeconds(triggerTime)
-		if internal < 0 {
-			return nil, errors.New("triggerTime is invalid")
-		}
-		d = time.Duration(internal) * time.Second
-	} else {
-		d = time.Duration(in.ProcessIn) * time.Second
-	}
-	opts = append(opts, asynq.ProcessIn(d))
-	taskInfo, err := l.svcCtx.AsynqClient.Enqueue(asynq.NewTask(asynqx.DeferTriggerProtoTask, []byte(payload)), opts...)
-	if err != nil {
-		return nil, err
-	}
+
 	return &trigger.SendProtoTriggerRes{
 		TraceId: traceID,
 		Id:      taskInfo.ID,

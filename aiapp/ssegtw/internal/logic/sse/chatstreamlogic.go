@@ -62,13 +62,11 @@ func (l *ChatStreamLogic) ChatStream(req *types.ChatStreamRequest) error {
 	}
 
 	// 2. 订阅事件流（EventEmitter）
-	msgChan, cancel := l.svcCtx.Emitter.Subscribe(channel)
+	msgSR, cancel := l.svcCtx.Emitter.Subscribe(l.ctx, channel)
 	defer cancel()
 
-	// 3. 发送连接成功事件
 	sw.WriteEvent("connected", fmt.Sprintf(`{"channel":"%s"}`, channel))
 
-	// 4. 启动模拟 worker：逐字符输出 token，最后 Resolve 完成信号
 	go func() {
 		tokens := []rune(prompt)
 		for _, token := range tokens {
@@ -86,31 +84,44 @@ func (l *ChatStreamLogic) ChatStream(req *types.ChatStreamRequest) error {
 		l.svcCtx.PendingReg.Resolve(channel, "completed")
 	}()
 
-	// 5. 用独立 goroutine 等待完成信号，触发 cancel 关闭 msgChan
 	go func() {
 		donePromise.Await(l.r.Context())
 		cancel()
 	}()
 
-	// 心跳定时器
+	type recvResult struct {
+		msg svc.SSEEvent
+		ok  bool
+	}
+	msgCh := make(chan recvResult, 1)
+	go func() {
+		defer close(msgCh)
+		for {
+			msg, err := msgSR.Recv()
+			if err != nil {
+				return
+			}
+			msgCh <- recvResult{msg: msg, ok: true}
+		}
+	}()
+
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
-	// 6. 主循环：转发事件到客户端
 	for {
 		select {
 		case <-l.r.Context().Done():
 			l.Infof("chat stream disconnected, channel: %s", channel)
 			return nil
-		case msg, ok := <-msgChan:
+		case r, ok := <-msgCh:
 			if !ok {
 				l.Infof("chat stream completed, channel: %s", channel)
 				return nil
 			}
-			if len(msg.Event) > 0 {
-				sw.WriteEvent(msg.Event, msg.Data)
+			if len(r.msg.Event) > 0 {
+				sw.WriteEvent(r.msg.Event, r.msg.Data)
 			} else {
-				sw.WriteData(msg.Data)
+				sw.WriteData(r.msg.Data)
 			}
 		case <-ticker.C:
 			sw.WriteKeepAlive()

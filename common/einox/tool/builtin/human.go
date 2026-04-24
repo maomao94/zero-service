@@ -417,7 +417,7 @@ func normalizeFormWidget(w string) string {
 	case "multiselect", "multi_select":
 		return "multi_select"
 	default:
-		return strings.TrimSpace(w)
+		return s
 	}
 }
 

@@ -13203,3 +13203,589 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = NextIdResValidationError{}
+
+// Validate checks the field values on InvokeTaskPb with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *InvokeTaskPb) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on InvokeTaskPb with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in InvokeTaskPbMultiError, or
+// nil if none found.
+func (m *InvokeTaskPb) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *InvokeTaskPb) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetId()) < 1 {
+		err := InvokeTaskPbValidationError{
+			field:  "Id",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := _InvokeTaskPb_Protocol_InLookup[m.GetProtocol()]; !ok {
+		err := InvokeTaskPbValidationError{
+			field:  "Protocol",
+			reason: "value must be in list [http grpc]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if m.GetTimeout() < 0 {
+		err := InvokeTaskPbValidationError{
+			field:  "Timeout",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Url
+
+	// no validation rules for HttpMethod
+
+	// no validation rules for Headers
+
+	// no validation rules for Body
+
+	// no validation rules for GrpcServer
+
+	// no validation rules for Method
+
+	// no validation rules for Payload
+
+	if len(errors) > 0 {
+		return InvokeTaskPbMultiError(errors)
+	}
+
+	return nil
+}
+
+// InvokeTaskPbMultiError is an error wrapping multiple validation errors
+// returned by InvokeTaskPb.ValidateAll() if the designated constraints aren't met.
+type InvokeTaskPbMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m InvokeTaskPbMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m InvokeTaskPbMultiError) AllErrors() []error { return m }
+
+// InvokeTaskPbValidationError is the validation error returned by
+// InvokeTaskPb.Validate if the designated constraints aren't met.
+type InvokeTaskPbValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e InvokeTaskPbValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e InvokeTaskPbValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e InvokeTaskPbValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e InvokeTaskPbValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e InvokeTaskPbValidationError) ErrorName() string { return "InvokeTaskPbValidationError" }
+
+// Error satisfies the builtin error interface
+func (e InvokeTaskPbValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sInvokeTaskPb.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = InvokeTaskPbValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = InvokeTaskPbValidationError{}
+
+var _InvokeTaskPb_Protocol_InLookup = map[string]struct{}{
+	"http": {},
+	"grpc": {},
+}
+
+// Validate checks the field values on InvokeReq with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *InvokeReq) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on InvokeReq with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in InvokeReqMultiError, or nil
+// if none found.
+func (m *InvokeReq) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *InvokeReq) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCurrentUser()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, InvokeReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, InvokeReqValidationError{
+					field:  "CurrentUser",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCurrentUser()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return InvokeReqValidationError{
+				field:  "CurrentUser",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(m.GetTasks()) < 1 {
+		err := InvokeReqValidationError{
+			field:  "Tasks",
+			reason: "value must contain at least 1 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetTasks() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, InvokeReqValidationError{
+						field:  fmt.Sprintf("Tasks[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, InvokeReqValidationError{
+						field:  fmt.Sprintf("Tasks[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return InvokeReqValidationError{
+					field:  fmt.Sprintf("Tasks[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if m.GetMaxConcurrency() < 0 {
+		err := InvokeReqValidationError{
+			field:  "MaxConcurrency",
+			reason: "value must be greater than or equal to 0",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Debug
+
+	if len(errors) > 0 {
+		return InvokeReqMultiError(errors)
+	}
+
+	return nil
+}
+
+// InvokeReqMultiError is an error wrapping multiple validation errors returned
+// by InvokeReq.ValidateAll() if the designated constraints aren't met.
+type InvokeReqMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m InvokeReqMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m InvokeReqMultiError) AllErrors() []error { return m }
+
+// InvokeReqValidationError is the validation error returned by
+// InvokeReq.Validate if the designated constraints aren't met.
+type InvokeReqValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e InvokeReqValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e InvokeReqValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e InvokeReqValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e InvokeReqValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e InvokeReqValidationError) ErrorName() string { return "InvokeReqValidationError" }
+
+// Error satisfies the builtin error interface
+func (e InvokeReqValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sInvokeReq.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = InvokeReqValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = InvokeReqValidationError{}
+
+// Validate checks the field values on InvokeTaskResultPb with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *InvokeTaskResultPb) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on InvokeTaskResultPb with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// InvokeTaskResultPbMultiError, or nil if none found.
+func (m *InvokeTaskResultPb) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *InvokeTaskResultPb) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Id
+
+	// no validation rules for Success
+
+	// no validation rules for StatusCode
+
+	// no validation rules for Error
+
+	// no validation rules for Data
+
+	// no validation rules for CostMs
+
+	// no validation rules for CostFormatted
+
+	if len(errors) > 0 {
+		return InvokeTaskResultPbMultiError(errors)
+	}
+
+	return nil
+}
+
+// InvokeTaskResultPbMultiError is an error wrapping multiple validation errors
+// returned by InvokeTaskResultPb.ValidateAll() if the designated constraints
+// aren't met.
+type InvokeTaskResultPbMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m InvokeTaskResultPbMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m InvokeTaskResultPbMultiError) AllErrors() []error { return m }
+
+// InvokeTaskResultPbValidationError is the validation error returned by
+// InvokeTaskResultPb.Validate if the designated constraints aren't met.
+type InvokeTaskResultPbValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e InvokeTaskResultPbValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e InvokeTaskResultPbValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e InvokeTaskResultPbValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e InvokeTaskResultPbValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e InvokeTaskResultPbValidationError) ErrorName() string {
+	return "InvokeTaskResultPbValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e InvokeTaskResultPbValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sInvokeTaskResultPb.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = InvokeTaskResultPbValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = InvokeTaskResultPbValidationError{}
+
+// Validate checks the field values on InvokeRes with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *InvokeRes) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on InvokeRes with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in InvokeResMultiError, or nil
+// if none found.
+func (m *InvokeRes) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *InvokeRes) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetResults() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, InvokeResValidationError{
+						field:  fmt.Sprintf("Results[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, InvokeResValidationError{
+						field:  fmt.Sprintf("Results[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return InvokeResValidationError{
+					field:  fmt.Sprintf("Results[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return InvokeResMultiError(errors)
+	}
+
+	return nil
+}
+
+// InvokeResMultiError is an error wrapping multiple validation errors returned
+// by InvokeRes.ValidateAll() if the designated constraints aren't met.
+type InvokeResMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m InvokeResMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m InvokeResMultiError) AllErrors() []error { return m }
+
+// InvokeResValidationError is the validation error returned by
+// InvokeRes.Validate if the designated constraints aren't met.
+type InvokeResValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e InvokeResValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e InvokeResValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e InvokeResValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e InvokeResValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e InvokeResValidationError) ErrorName() string { return "InvokeResValidationError" }
+
+// Error satisfies the builtin error interface
+func (e InvokeResValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sInvokeRes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = InvokeResValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = InvokeResValidationError{}

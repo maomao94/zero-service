@@ -6,6 +6,7 @@ import (
 	"zero-service/zerorpc/internal/svc"
 	"zero-service/zerorpc/zerorpc"
 
+	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -25,7 +26,11 @@ func NewGetUserInfoLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetUs
 
 // 用户详情
 func (l *GetUserInfoLogic) GetUserInfo(in *zerorpc.GetUserInfoReq) (*zerorpc.GetUserInfoRes, error) {
-	u, err := l.svcCtx.UserModel.FindOne(l.ctx, in.GetId())
+	userId, err := convertor.ToInt(in.GetId())
+	if err != nil {
+		return nil, err
+	}
+	u, err := l.svcCtx.UserModel.FindOne(l.ctx, userId)
 	if err != nil {
 		return nil, err
 	}
