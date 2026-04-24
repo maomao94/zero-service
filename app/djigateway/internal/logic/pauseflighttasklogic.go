@@ -28,7 +28,7 @@ func (l *PauseFlightTaskLogic) PauseFlightTask(in *djigateway.DeviceSnReq) (*dji
 	tid, err := l.svcCtx.DjiClient.PauseFlightTask(l.ctx, in.DeviceSn)
 	if err != nil {
 		l.Errorf("[flight-task] pause flight task failed: %v", err)
-		return &djigateway.CommonRes{Code: -1, Message: err.Error(), Tid: tid}, nil
+		return errRes(tid, err), nil
 	}
-	return &djigateway.CommonRes{Code: 0, Message: "success", Tid: tid}, nil
+	return okRes(tid), nil
 }

@@ -1,8 +1,9 @@
 package djisdk
 
-// ==================== 航线管理 ====================
-// Topic: thing/product/{gateway_sn}/services
-// 方向: 云平台 → 设备（Services）
+// ==================== 一、航线管理（Wayline Management） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/wayline.html
+// Topic: thing/product/{gateway_sn}/services | events
+// 方向: 云平台 <-> 设备
 
 const (
 	// MethodFlightTaskPrepare 航线任务准备（Flighttask Prepare）
@@ -28,9 +29,21 @@ const (
 	// MethodFlightTaskStop 航线任务停止（Flighttask Stop）
 	// 云平台 → 设备，强制停止当前航线任务
 	MethodFlightTaskStop = "flighttask_stop"
+
+	// MethodReturnHome 一键返航（Return Home）
+	// 云平台 → 设备，控制飞行器执行返航操作
+	MethodReturnHome = "return_home"
+
+	// MethodReturnHomeCancelAutoReturn 取消自动返航（Return Home Cancel）
+	// 云平台 → 设备，取消飞行器自动返航
+	MethodReturnHomeCancelAutoReturn = "return_home_cancel"
+
+	// MethodReturnSpecificHome 返航至指定点（Return Specific Home）
+	// 云平台 → 设备，控制飞行器返航至指定的备降点
+	MethodReturnSpecificHome = "return_specific_home"
 )
 
-// ==================== 航线管理 - Events ====================
+// --- 航线管理 - Events ---
 // Topic: thing/product/{gateway_sn}/events
 // 方向: 设备 → 云平台（Events）
 
@@ -48,9 +61,9 @@ const (
 	MethodReturnHomeInfo = "return_home_info"
 )
 
-// ==================== PSDK 数据透传（PSDK Data Transmission） ====================
-// Topic: thing/product/{gateway_sn}/services | events
+// ==================== 二、PSDK 自定义数据透传（PSDK Custom Data Transmission） ====================
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk-transmit-custom-data.html
+// Topic: thing/product/{gateway_sn}/services | events
 
 const (
 	// MethodPsdkWrite PSDK 数据写入（PSDK Write）
@@ -70,7 +83,57 @@ const (
 	MethodCustomDataTransmissionFromPsdk = "custom_data_transmission_from_psdk"
 )
 
-// ==================== 远程调试 ====================
+// ==================== 三、指令飞行控制（Live Flight Controls / DRC） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html
+// Topic: thing/product/{gateway_sn}/services
+// 方向: 云平台 → 设备（Services）
+
+const (
+	// --- 飞行控制指令（DRC Commands） ---
+
+	// MethodFlightAuthorityGrab 飞行控制权抢夺（Flight Authority Grab）
+	// 云平台 → 设备，抢夺飞行器飞行控制权
+	MethodFlightAuthorityGrab = "flight_authority_grab"
+
+	// MethodPayloadAuthorityGrab 负载控制权抢夺（Payload Authority Grab）
+	// 云平台 → 设备，抢夺负载设备控制权
+	MethodPayloadAuthorityGrab = "payload_authority_grab"
+
+	// MethodDrcModeEnter 进入 DRC 模式（DRC Mode Enter）
+	// 云平台 → 设备，进入指令飞行（DRC）控制模式
+	MethodDrcModeEnter = "drc_mode_enter"
+
+	// MethodDrcModeExit 退出 DRC 模式（DRC Mode Exit）
+	// 云平台 → 设备，退出指令飞行（DRC）控制模式
+	MethodDrcModeExit = "drc_mode_exit"
+
+	// MethodDroneControl 飞行器虚拟摇杆控制（Drone Control）
+	// 云平台 → 设备，通过虚拟摇杆实时控制飞行器姿态和运动
+	MethodDroneControl = "drone_control"
+
+	// MethodDroneEmergencyStop 飞行器紧急停桨（Drone Emergency Stop）
+	// 云平台 → 设备，紧急停止飞行器电机（慎用，飞行器将直接坠落）
+	MethodDroneEmergencyStop = "drone_emergency_stop"
+
+	// --- Flyto 指令（Flyto Commands） ---
+
+	// MethodFlyToPoint 飞向指定点（Fly To Point）
+	// 云平台 → 设备，控制飞行器飞往指定坐标点
+	MethodFlyToPoint = "fly_to_point"
+
+	// MethodFlyToPointStop 停止飞向指定点（Fly To Point Stop）
+	// 云平台 → 设备，停止当前飞向指定点的飞行任务
+	MethodFlyToPointStop = "fly_to_point_stop"
+
+	// --- 一键起飞指令（One-key Taking Off Commands） ---
+
+	// MethodTakeoffToPoint 一键起飞至指定点（Takeoff To Point）
+	// 云平台 → 设备，控制飞行器起飞并飞往指定坐标点
+	MethodTakeoffToPoint = "takeoff_to_point"
+)
+
+// ==================== 四、远程调试 - 机巢控制（Remote Debug） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/cmd.html
 // Topic: thing/product/{gateway_sn}/services
 // 方向: 云平台 → 设备（Services），机场远程调试控制指令
 
@@ -148,75 +211,8 @@ const (
 	MethodAirConditionerModeSwitch = "air_conditioner_mode_switch"
 )
 
-// ==================== 指令飞行控制（Live Flight Controls / DRC） ====================
+// ==================== 五、相机/云台控制（Camera & Gimbal） ====================
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html
-// Topic: thing/product/{gateway_sn}/services
-// 方向: 云平台 → 设备（Services）
-
-const (
-	// --- 飞行控制指令（DRC Commands） ---
-
-	// MethodFlightAuthorityGrab 飞行控制权抢夺（Flight Authority Grab）
-	// 云平台 → 设备，抢夺飞行器飞行控制权
-	MethodFlightAuthorityGrab = "flight_authority_grab"
-
-	// MethodPayloadAuthorityGrab 负载控制权抢夺（Payload Authority Grab）
-	// 云平台 → 设备，抢夺负载设备控制权
-	MethodPayloadAuthorityGrab = "payload_authority_grab"
-
-	// MethodDrcModeEnter 进入 DRC 模式（DRC Mode Enter）
-	// 云平台 → 设备，进入指令飞行（DRC）控制模式
-	MethodDrcModeEnter = "drc_mode_enter"
-
-	// MethodDrcModeExit 退出 DRC 模式（DRC Mode Exit）
-	// 云平台 → 设备，退出指令飞行（DRC）控制模式
-	MethodDrcModeExit = "drc_mode_exit"
-
-	// MethodDroneControl 飞行器虚拟摇杆控制（Drone Control）
-	// 云平台 → 设备，通过虚拟摇杆实时控制飞行器姿态和运动
-	MethodDroneControl = "drone_control"
-
-	// MethodDroneEmergencyStop 飞行器紧急停桨（Drone Emergency Stop）
-	// 云平台 → 设备，紧急停止飞行器电机（慎用，飞行器将直接坠落）
-	MethodDroneEmergencyStop = "drone_emergency_stop"
-
-	// --- Flyto 指令（Flyto Commands） ---
-
-	// MethodFlyToPoint 飞向指定点（Fly To Point）
-	// 云平台 → 设备，控制飞行器飞往指定坐标点
-	MethodFlyToPoint = "fly_to_point"
-
-	// MethodFlyToPointStop 停止飞向指定点（Fly To Point Stop）
-	// 云平台 → 设备，停止当前飞向指定点的飞行任务
-	MethodFlyToPointStop = "fly_to_point_stop"
-
-	// --- 一键起飞指令（One-key Taking Off Commands） ---
-
-	// MethodTakeoffToPoint 一键起飞至指定点（Takeoff To Point）
-	// 云平台 → 设备，控制飞行器起飞并飞往指定坐标点
-	MethodTakeoffToPoint = "takeoff_to_point"
-)
-
-// ==================== 航线管理 - 返航控制 ====================
-// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/wayline.html
-// Topic: thing/product/{gateway_sn}/services
-// 方向: 云平台 → 设备（Services）
-
-const (
-	// MethodReturnHome 一键返航（Return Home）
-	// 云平台 → 设备，控制飞行器执行返航操作
-	MethodReturnHome = "return_home"
-
-	// MethodReturnHomeCancelAutoReturn 取消自动返航（Return Home Cancel）
-	// 云平台 → 设备，取消飞行器自动返航
-	MethodReturnHomeCancelAutoReturn = "return_home_cancel"
-
-	// MethodReturnSpecificHome 返航至指定点（Return Specific Home）
-	// 云平台 → 设备，控制飞行器返航至指定的备降点
-	MethodReturnSpecificHome = "return_specific_home"
-)
-
-// ==================== 指令飞行 - 相机/云台控制 ====================
 // Topic: thing/product/{gateway_sn}/services
 // 方向: 云平台 → 设备（Services），相机和云台远程控制指令
 
@@ -286,7 +282,8 @@ const (
 	MethodCameraIrMeteringArea = "ir_metering_area"
 )
 
-// ==================== 直播 ====================
+// ==================== 六、直播管理（Live） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/live.html
 // Topic: thing/product/{gateway_sn}/services
 // 方向: 云平台 → 设备（Services），视频直播流控制
 
@@ -306,23 +303,25 @@ const (
 	// MethodLiveLensChange 切换直播镜头（Live Lens Change）
 	// 云平台 → 设备，切换直播推流使用的相机镜头
 	MethodLiveLensChange = "live_lens_change"
+
+	// MethodLiveCameraChange 切换直播相机（Live Camera Change）
+	// 云平台 → 设备，切换直播推流使用的相机（如机巢内/外摄像头）
+	MethodLiveCameraChange = "live_camera_change"
 )
 
-// ==================== 设备管理 ====================
-// Topic: thing/product/{gateway_sn}/services | events
-// 设备拓扑与属性管理
+// ==================== 七、属性设置（Property Set） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/property.html
+// Topic: thing/product/{gateway_sn}/services
+// 方向: 云平台 → 设备（Services）
 
 const (
-	// MethodUpdateTopo 更新设备拓扑（Update Topo）
-	// 设备 → 云平台（Events），设备上报拓扑结构变化（如飞行器上下线）
-	MethodUpdateTopo = "update_topo"
-
 	// MethodPropertySet 设备属性设置（Property Set）
 	// 云平台 → 设备（Services），远程设置设备属性参数
 	MethodPropertySet = "property_set"
 )
 
-// ==================== 固件升级 ====================
+// ==================== 八、固件管理（Firmware） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/firmware.html
 // Topic: thing/product/{gateway_sn}/services | events
 // OTA 固件升级管理
 
@@ -336,7 +335,19 @@ const (
 	MethodOtaProgress = "ota_progress"
 )
 
-// ==================== HMS ====================
+// ==================== 九、设备管理（Device Management） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/device.html
+// Topic: thing/product/{gateway_sn}/services | events
+// 设备拓扑与属性管理
+
+const (
+	// MethodUpdateTopo 更新设备拓扑（Update Topo）
+	// 设备 → 云平台（Events），设备上报拓扑结构变化（如飞行器上下线）
+	MethodUpdateTopo = "update_topo"
+)
+
+// ==================== 十、HMS 健康管理（HMS） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/hms.html
 // Topic: thing/product/{gateway_sn}/events
 // 方向: 设备 → 云平台（Events），健康管理系统
 
@@ -346,7 +357,8 @@ const (
 	MethodHmsEventNotify = "hms"
 )
 
-// ==================== 模拟器 ====================
+// ==================== 十一、模拟器（Simulator） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/simulator.html
 // Topic: thing/product/{gateway_sn}/services
 // 方向: 云平台 → 设备（Services），模拟器任务控制
 

@@ -39,7 +39,7 @@ func (l *TakeoffToPointLogic) TakeoffToPoint(in *djigateway.TakeoffToPointReq) (
 	tid, err := l.svcCtx.DjiClient.TakeoffToPoint(l.ctx, in.DeviceSn, data)
 	if err != nil {
 		l.Errorf("[drc] takeoff to point failed: %v", err)
-		return &djigateway.CommonRes{Code: -1, Message: err.Error(), Tid: tid}, nil
+		return errRes(tid, err), nil
 	}
-	return &djigateway.CommonRes{Code: 0, Message: "success", Tid: tid}, nil
+	return okRes(tid), nil
 }

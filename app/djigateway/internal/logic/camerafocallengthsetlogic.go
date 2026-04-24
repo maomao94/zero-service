@@ -33,7 +33,7 @@ func (l *CameraFocalLengthSetLogic) CameraFocalLengthSet(in *djigateway.CameraFo
 	tid, err := l.svcCtx.DjiClient.CameraFocalLengthSet(l.ctx, in.DeviceSn, data)
 	if err != nil {
 		l.Errorf("[camera] camera focal length set failed: %v", err)
-		return &djigateway.CommonRes{Code: -1, Message: err.Error(), Tid: tid}, nil
+		return errRes(tid, err), nil
 	}
-	return &djigateway.CommonRes{Code: 0, Message: "success", Tid: tid}, nil
+	return okRes(tid), nil
 }

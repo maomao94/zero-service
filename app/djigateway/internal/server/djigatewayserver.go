@@ -35,6 +35,36 @@ func (s *DjiGatewayServer) ExecuteFlightTask(ctx context.Context, in *djigateway
 	return l.ExecuteFlightTask(in)
 }
 
+// ExecuteFlightTaskWithOptions 使用自定义配置执行航线飞行任务。
+func (s *DjiGatewayServer) ExecuteFlightTaskWithOptions(ctx context.Context, in *djigateway.FlightTaskWithOptionsReq) (*djigateway.CommonRes, error) {
+	l := logic.NewExecuteFlightTaskWithOptionsLogic(ctx, s.svcCtx)
+	return l.ExecuteFlightTaskWithOptions(in)
+}
+
+// CancelFlightTask 取消指定的飞行任务。
+func (s *DjiGatewayServer) CancelFlightTask(ctx context.Context, in *djigateway.CancelFlightTaskReq) (*djigateway.CommonRes, error) {
+	l := logic.NewCancelFlightTaskLogic(ctx, s.svcCtx)
+	return l.CancelFlightTask(in)
+}
+
+// PauseFlightTask 暂停当前正在执行的飞行任务。
+func (s *DjiGatewayServer) PauseFlightTask(ctx context.Context, in *djigateway.DeviceSnReq) (*djigateway.CommonRes, error) {
+	l := logic.NewPauseFlightTaskLogic(ctx, s.svcCtx)
+	return l.PauseFlightTask(in)
+}
+
+// ResumeFlightTask 恢复已暂停的飞行任务。
+func (s *DjiGatewayServer) ResumeFlightTask(ctx context.Context, in *djigateway.DeviceSnReq) (*djigateway.CommonRes, error) {
+	l := logic.NewResumeFlightTaskLogic(ctx, s.svcCtx)
+	return l.ResumeFlightTask(in)
+}
+
+// StopFlightTask 强制停止当前航线任务。
+func (s *DjiGatewayServer) StopFlightTask(ctx context.Context, in *djigateway.DeviceSnReq) (*djigateway.CommonRes, error) {
+	l := logic.NewStopFlightTaskLogic(ctx, s.svcCtx)
+	return l.StopFlightTask(in)
+}
+
 // ReturnHome 控制飞行器一键返航。
 func (s *DjiGatewayServer) ReturnHome(ctx context.Context, in *djigateway.DeviceSnReq) (*djigateway.CommonRes, error) {
 	l := logic.NewReturnHomeLogic(ctx, s.svcCtx)
@@ -45,6 +75,12 @@ func (s *DjiGatewayServer) ReturnHome(ctx context.Context, in *djigateway.Device
 func (s *DjiGatewayServer) ReturnHomeCancelAutoReturn(ctx context.Context, in *djigateway.DeviceSnReq) (*djigateway.CommonRes, error) {
 	l := logic.NewReturnHomeCancelAutoReturnLogic(ctx, s.svcCtx)
 	return l.ReturnHomeCancelAutoReturn(in)
+}
+
+// ReturnSpecificHome 返航至指定备降点。
+func (s *DjiGatewayServer) ReturnSpecificHome(ctx context.Context, in *djigateway.ReturnSpecificHomeReq) (*djigateway.CommonRes, error) {
+	l := logic.NewReturnSpecificHomeLogic(ctx, s.svcCtx)
+	return l.ReturnSpecificHome(in)
 }
 
 // SendCustomDataToPsdk 自定义数据透传至 PSDK 负载设备。
@@ -107,28 +143,10 @@ func (s *DjiGatewayServer) TakeoffToPoint(ctx context.Context, in *djigateway.Ta
 	return l.TakeoffToPoint(in)
 }
 
-// CancelFlightTask 取消指定的飞行任务。
-func (s *DjiGatewayServer) CancelFlightTask(ctx context.Context, in *djigateway.CancelFlightTaskReq) (*djigateway.CommonRes, error) {
-	l := logic.NewCancelFlightTaskLogic(ctx, s.svcCtx)
-	return l.CancelFlightTask(in)
-}
-
-// PauseFlightTask 暂停当前正在执行的飞行任务。
-func (s *DjiGatewayServer) PauseFlightTask(ctx context.Context, in *djigateway.DeviceSnReq) (*djigateway.CommonRes, error) {
-	l := logic.NewPauseFlightTaskLogic(ctx, s.svcCtx)
-	return l.PauseFlightTask(in)
-}
-
-// ResumeFlightTask 恢复已暂停的飞行任务。
-func (s *DjiGatewayServer) ResumeFlightTask(ctx context.Context, in *djigateway.DeviceSnReq) (*djigateway.CommonRes, error) {
-	l := logic.NewResumeFlightTaskLogic(ctx, s.svcCtx)
-	return l.ResumeFlightTask(in)
-}
-
-// ExecuteFlightTaskWithOptions 使用自定义配置执行航线飞行任务。
-func (s *DjiGatewayServer) ExecuteFlightTaskWithOptions(ctx context.Context, in *djigateway.FlightTaskWithOptionsReq) (*djigateway.CommonRes, error) {
-	l := logic.NewExecuteFlightTaskWithOptionsLogic(ctx, s.svcCtx)
-	return l.ExecuteFlightTaskWithOptions(in)
+// SimulateMission 模拟飞行任务调试。
+func (s *DjiGatewayServer) SimulateMission(ctx context.Context, in *djigateway.SimulateMissionReq) (*djigateway.CommonRes, error) {
+	l := logic.NewSimulateMissionLogic(ctx, s.svcCtx)
+	return l.SimulateMission(in)
 }
 
 // DebugModeOpen 开启机巢调试模式。
@@ -233,6 +251,12 @@ func (s *DjiGatewayServer) AirConditionerModeSwitch(ctx context.Context, in *dji
 	return l.AirConditionerModeSwitch(in)
 }
 
+// BatteryMaintenanceSwitch 切换电池保养功能开关。
+func (s *DjiGatewayServer) BatteryMaintenanceSwitch(ctx context.Context, in *djigateway.BatteryStoreModeReq) (*djigateway.CommonRes, error) {
+	l := logic.NewBatteryMaintenanceSwitchLogic(ctx, s.svcCtx)
+	return l.BatteryMaintenanceSwitch(in)
+}
+
 // CameraModeSwitch 切换相机拍摄模式。
 func (s *DjiGatewayServer) CameraModeSwitch(ctx context.Context, in *djigateway.CameraModeSwitchReq) (*djigateway.CommonRes, error) {
 	l := logic.NewCameraModeSwitchLogic(ctx, s.svcCtx)
@@ -243,6 +267,12 @@ func (s *DjiGatewayServer) CameraModeSwitch(ctx context.Context, in *djigateway.
 func (s *DjiGatewayServer) CameraPhotoTake(ctx context.Context, in *djigateway.CameraPhotoTakeReq) (*djigateway.CommonRes, error) {
 	l := logic.NewCameraPhotoTakeLogic(ctx, s.svcCtx)
 	return l.CameraPhotoTake(in)
+}
+
+// CameraPhotoStop 停止连续拍照。
+func (s *DjiGatewayServer) CameraPhotoStop(ctx context.Context, in *djigateway.CameraPhotoStopReq) (*djigateway.CommonRes, error) {
+	l := logic.NewCameraPhotoStopLogic(ctx, s.svcCtx)
+	return l.CameraPhotoStop(in)
 }
 
 // CameraRecordingStart 开始录像。
@@ -269,6 +299,60 @@ func (s *DjiGatewayServer) GimbalReset(ctx context.Context, in *djigateway.Gimba
 	return l.GimbalReset(in)
 }
 
+// CameraAim 相机指点对准。
+func (s *DjiGatewayServer) CameraAim(ctx context.Context, in *djigateway.CameraAimReq) (*djigateway.CommonRes, error) {
+	l := logic.NewCameraAimLogic(ctx, s.svcCtx)
+	return l.CameraAim(in)
+}
+
+// CameraPointFocusAction 相机指点对焦。
+func (s *DjiGatewayServer) CameraPointFocusAction(ctx context.Context, in *djigateway.CameraPointFocusActionReq) (*djigateway.CommonRes, error) {
+	l := logic.NewCameraPointFocusActionLogic(ctx, s.svcCtx)
+	return l.CameraPointFocusAction(in)
+}
+
+// CameraScreenSplit 相机分屏控制。
+func (s *DjiGatewayServer) CameraScreenSplit(ctx context.Context, in *djigateway.CameraScreenSplitReq) (*djigateway.CommonRes, error) {
+	l := logic.NewCameraScreenSplitLogic(ctx, s.svcCtx)
+	return l.CameraScreenSplit(in)
+}
+
+// CameraPhotoStorageSet 设置拍照存储位置。
+func (s *DjiGatewayServer) CameraPhotoStorageSet(ctx context.Context, in *djigateway.CameraPhotoStorageSetReq) (*djigateway.CommonRes, error) {
+	l := logic.NewCameraPhotoStorageSetLogic(ctx, s.svcCtx)
+	return l.CameraPhotoStorageSet(in)
+}
+
+// CameraVideoStorageSet 设置录像存储位置。
+func (s *DjiGatewayServer) CameraVideoStorageSet(ctx context.Context, in *djigateway.CameraVideoStorageSetReq) (*djigateway.CommonRes, error) {
+	l := logic.NewCameraVideoStorageSetLogic(ctx, s.svcCtx)
+	return l.CameraVideoStorageSet(in)
+}
+
+// CameraLookAt 相机朝向指定坐标。
+func (s *DjiGatewayServer) CameraLookAt(ctx context.Context, in *djigateway.CameraLookAtReq) (*djigateway.CommonRes, error) {
+	l := logic.NewCameraLookAtLogic(ctx, s.svcCtx)
+	return l.CameraLookAt(in)
+}
+
+// CameraScreenDrag 相机屏幕拖拽控制。
+func (s *DjiGatewayServer) CameraScreenDrag(ctx context.Context, in *djigateway.CameraScreenDragReq) (*djigateway.CommonRes, error) {
+	l := logic.NewCameraScreenDragLogic(ctx, s.svcCtx)
+	return l.CameraScreenDrag(in)
+}
+
+// CameraIrMeteringPoint 红外测温点设置。
+func (s *DjiGatewayServer) CameraIrMeteringPoint(ctx context.Context, in *djigateway.CameraIrMeteringPointReq) (*djigateway.CommonRes, error) {
+	l := logic.NewCameraIrMeteringPointLogic(ctx, s.svcCtx)
+	return l.CameraIrMeteringPoint(in)
+}
+
+// CameraIrMeteringArea 红外区域测温设置。
+func (s *DjiGatewayServer) CameraIrMeteringArea(ctx context.Context, in *djigateway.CameraIrMeteringAreaReq) (*djigateway.CommonRes, error) {
+	l := logic.NewCameraIrMeteringAreaLogic(ctx, s.svcCtx)
+	return l.CameraIrMeteringArea(in)
+}
+
 // LiveStartPush 开始直播推流。
 func (s *DjiGatewayServer) LiveStartPush(ctx context.Context, in *djigateway.LiveStartPushReq) (*djigateway.CommonRes, error) {
 	l := logic.NewLiveStartPushLogic(ctx, s.svcCtx)
@@ -287,8 +371,32 @@ func (s *DjiGatewayServer) LiveSetQuality(ctx context.Context, in *djigateway.Li
 	return l.LiveSetQuality(in)
 }
 
+// LiveLensChange 切换直播镜头。
+func (s *DjiGatewayServer) LiveLensChange(ctx context.Context, in *djigateway.LiveLensChangeReq) (*djigateway.CommonRes, error) {
+	l := logic.NewLiveLensChangeLogic(ctx, s.svcCtx)
+	return l.LiveLensChange(in)
+}
+
+// LiveCameraChange 切换直播相机。
+func (s *DjiGatewayServer) LiveCameraChange(ctx context.Context, in *djigateway.LiveCameraChangeReq) (*djigateway.CommonRes, error) {
+	l := logic.NewLiveCameraChangeLogic(ctx, s.svcCtx)
+	return l.LiveCameraChange(in)
+}
+
 // SetProperty 设置设备属性。
 func (s *DjiGatewayServer) SetProperty(ctx context.Context, in *djigateway.SetPropertyReq) (*djigateway.CommonRes, error) {
 	l := logic.NewSetPropertyLogic(ctx, s.svcCtx)
 	return l.SetProperty(in)
+}
+
+// OtaCreate 创建固件升级任务。
+func (s *DjiGatewayServer) OtaCreate(ctx context.Context, in *djigateway.OtaCreateReq) (*djigateway.CommonRes, error) {
+	l := logic.NewOtaCreateLogic(ctx, s.svcCtx)
+	return l.OtaCreate(in)
+}
+
+// IsDeviceOnline 查询机巢在线状态。
+func (s *DjiGatewayServer) IsDeviceOnline(ctx context.Context, in *djigateway.DeviceSnReq) (*djigateway.DeviceOnlineRes, error) {
+	l := logic.NewIsDeviceOnlineLogic(ctx, s.svcCtx)
+	return l.IsDeviceOnline(in)
 }

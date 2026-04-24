@@ -28,7 +28,7 @@ func (l *DroneOpenLogic) DroneOpen(in *djigateway.DeviceSnReq) (*djigateway.Comm
 	tid, err := l.svcCtx.DjiClient.DroneOpen(l.ctx, in.DeviceSn)
 	if err != nil {
 		l.Errorf("[remote-debug] drone open failed: %v", err)
-		return &djigateway.CommonRes{Code: -1, Message: err.Error(), Tid: tid}, nil
+		return errRes(tid, err), nil
 	}
-	return &djigateway.CommonRes{Code: 0, Message: "success", Tid: tid}, nil
+	return okRes(tid), nil
 }

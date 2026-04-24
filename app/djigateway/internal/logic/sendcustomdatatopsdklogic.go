@@ -36,16 +36,8 @@ func (l *SendCustomDataToPsdkLogic) SendCustomDataToPsdk(in *djigateway.CustomDa
 	tid, err := l.svcCtx.DjiClient.SendCustomDataToPsdk(l.ctx, in.DeviceSn, in.Value)
 	if err != nil {
 		l.Errorf("[psdk-transmit] send failed: %v", err)
-		return &djigateway.CommonRes{
-			Code:    -1,
-			Message: err.Error(),
-			Tid:     tid,
-		}, nil
+		return errRes(tid, err), nil
 	}
 
-	return &djigateway.CommonRes{
-		Code:    0,
-		Message: "success",
-		Tid:     tid,
-	}, nil
+	return okRes(tid), nil
 }

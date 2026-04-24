@@ -27,6 +27,7 @@ type Client struct {
 	pending       *antsx.PendingRegistry[*ServiceReply]
 	ackTimeout    time.Duration
 	eventHandlers map[string]EventHandler
+	onlineChecker func(gatewaySn string) bool
 
 	onFlightTaskProgress func(ctx context.Context, gatewaySn string, data *FlightTaskProgressEvent)
 	onFlightTaskReady    func(ctx context.Context, gatewaySn string, data *FlightTaskReadyEvent)
@@ -35,6 +36,7 @@ type Client struct {
 	onHmsEventNotify     func(ctx context.Context, gatewaySn string, data *HmsEventData)
 	onOsd                func(ctx context.Context, deviceSn string, data *OsdMessage)
 	onState              func(ctx context.Context, deviceSn string, data *OsdMessage)
+	onStatus             func(ctx context.Context, gatewaySn string, data *StatusMessage)
 }
 
 // NewClient 创建一个新的 DJI Cloud API 客户端实例。
@@ -270,6 +272,22 @@ func (c *Client) OnState(handler func(ctx context.Context, deviceSn string, data
 	c.onState = handler
 }
 
+// OnStatus 注册设备上下线状态钩子。
+// Topic: sys/product/{gateway_sn}/status
+// 方向 up：设备→云平台。
+// 设备上线/下线/拓扑变更时触发，钩子只负责通知。
+//   - handler: 回调函数，携带网关 SN 和已解析的 StatusMessage 结构体
+func (c *Client) OnStatus(handler func(ctx context.Context, gatewaySn string, data *StatusMessage)) {
+	c.onStatus = handler
+}
+
+// SetOnlineChecker 设置设备在线状态检查函数。
+// 设置后，SendCommand 在发送命令前会先调用此函数检查设备是否在线，离线则快速拒绝。
+//   - checker: 在线检查函数，接收 gatewaySn，返回 true 表示在线
+func (c *Client) SetOnlineChecker(checker func(gatewaySn string) bool) {
+	c.onlineChecker = checker
+}
+
 // ==================== 基础命令发送 ====================
 
 // SendCommand 向设备发送服务命令并等待应答。
@@ -281,6 +299,10 @@ func (c *Client) OnState(handler func(ctx context.Context, deviceSn string, data
 //   - 返回值 tid: 本次请求的事务 ID
 //   - 返回值 err: 发送失败、等待超时或设备返回错误时的错误信息
 func (c *Client) SendCommand(ctx context.Context, gatewaySn, method string, data any) (string, error) {
+	if c.onlineChecker != nil && !c.onlineChecker(gatewaySn) {
+		return "", fmt.Errorf("[dji-sdk] device offline: sn=%s, command rejected", gatewaySn)
+	}
+
 	tid := uuid.New().String()
 	bid := uuid.New().String()
 
@@ -301,7 +323,7 @@ func (c *Client) SendCommand(ctx context.Context, gatewaySn, method string, data
 	}
 
 	if reply.Data.Result != 0 {
-		return tid, fmt.Errorf("[dji-sdk] device returned error: method=%s tid=%s result=%d", method, tid, reply.Data.Result)
+		return tid, NewDJIError(reply.Data.Result)
 	}
 
 	return tid, nil
@@ -334,7 +356,7 @@ func (c *Client) SendCommandFireAndForget(ctx context.Context, gatewaySn, method
 	return tid, nil
 }
 
-// ==================== 航线管理 ====================
+// ==================== 一、航线管理（Wayline Management） ====================
 
 // ExecuteFlightTask 执行航线飞行任务。
 // 先下发 flighttask_prepare 命令进行航线准备，成功后再下发 flighttask_execute 命令开始执行。
@@ -414,8 +436,44 @@ func (c *Client) ResumeFlightTask(ctx context.Context, gatewaySn string) (string
 	return c.SendCommand(ctx, gatewaySn, MethodFlightTaskResume, struct{}{})
 }
 
-// ==================== PSDK 数据透传（PSDK Data Transmission） ====================
-// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk-transmit-custom-data.html
+// StopFlightTask 强制停止当前航线任务。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) StopFlightTask(ctx context.Context, gatewaySn string) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodFlightTaskStop, struct{}{})
+}
+
+// ReturnHome 控制无人机一键返航。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) ReturnHome(ctx context.Context, gatewaySn string) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodReturnHome, &ReturnHomeData{})
+}
+
+// ReturnHomeCancelAutoReturn 取消自动返航。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) ReturnHomeCancelAutoReturn(ctx context.Context, gatewaySn string) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodReturnHomeCancelAutoReturn, &ReturnHomeCancelData{})
+}
+
+// ReturnSpecificHome 控制飞行器返航至指定备降点。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 指定返航点参数
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) ReturnSpecificHome(ctx context.Context, gatewaySn string, data *ReturnSpecificHomeData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodReturnSpecificHome, data)
+}
+
+// ==================== 二、PSDK 自定义数据透传（PSDK Custom Data Transmission） ====================
 
 // SendPsdkCommand PSDK 数据写入（psdk_write），使用默认负载索引 "0"。
 // 方向 down：云平台→设备（Services），对应 method: psdk_write。
@@ -463,7 +521,7 @@ func (c *Client) SendCustomDataToPsdk(ctx context.Context, gatewaySn, value stri
 	return c.SendCommand(ctx, gatewaySn, MethodCustomDataTransmissionToPsdk, data)
 }
 
-// ==================== 远程调试 - 机巢控制 ====================
+// ==================== 四、远程调试 - 机巢控制（Remote Debug） ====================
 
 // DebugModeOpen 开启机巢调试模式。
 //   - ctx: 请求上下文
@@ -622,7 +680,17 @@ func (c *Client) AirConditionerModeSwitch(ctx context.Context, gatewaySn string,
 	return c.SendCommand(ctx, gatewaySn, MethodAirConditionerModeSwitch, &AirConditionerModeSwitchData{Action: action})
 }
 
-// ==================== 属性设置 ====================
+// BatteryMaintenanceSwitch 切换电池保养功能开关。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - enable: 开关状态，1 为开启，0 为关闭
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) BatteryMaintenanceSwitch(ctx context.Context, gatewaySn string, enable int) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodBatteryMaintenanceSwitch, &BatteryMaintenanceSwitchData{Enable: enable})
+}
+
+// ==================== 七、属性设置（Property Set） ====================
 
 // SetProperty 设置设备属性。
 // 通过 property/set 主题向设备下发属性设置命令并等待应答。
@@ -658,7 +726,7 @@ func (c *Client) SetProperty(ctx context.Context, gatewaySn string, properties P
 	return tid, nil
 }
 
-// ==================== 指令飞行 ====================
+// ==================== 三、指令飞行控制（Live Flight Controls / DRC） ====================
 
 // FlightAuthorityGrab 获取飞行控制权。
 // 在指令飞行前需要先获取飞行控制权。
@@ -731,24 +799,6 @@ func (c *Client) FlyToPointStop(ctx context.Context, gatewaySn string) (string, 
 	return c.SendCommand(ctx, gatewaySn, MethodFlyToPointStop, struct{}{})
 }
 
-// ReturnHome 控制无人机一键返航。
-//   - ctx: 请求上下文
-//   - gatewaySn: 网关设备序列号
-//   - 返回值 tid: 本次请求的事务 ID
-//   - 返回值 err: 命令发送或设备返回错误时的错误信息
-func (c *Client) ReturnHome(ctx context.Context, gatewaySn string) (string, error) {
-	return c.SendCommand(ctx, gatewaySn, MethodReturnHome, &ReturnHomeData{})
-}
-
-// ReturnHomeCancelAutoReturn 取消自动返航。
-//   - ctx: 请求上下文
-//   - gatewaySn: 网关设备序列号
-//   - 返回值 tid: 本次请求的事务 ID
-//   - 返回值 err: 命令发送或设备返回错误时的错误信息
-func (c *Client) ReturnHomeCancelAutoReturn(ctx context.Context, gatewaySn string) (string, error) {
-	return c.SendCommand(ctx, gatewaySn, MethodReturnHomeCancelAutoReturn, &ReturnHomeCancelData{})
-}
-
 // DroneEmergencyStop 无人机紧急停桨。
 // 危险操作：会立即停止所有电机，无人机将失去动力坠落。仅在紧急情况下使用。
 //   - ctx: 请求上下文
@@ -774,7 +824,7 @@ func (c *Client) SendDrcCommand(ctx context.Context, gatewaySn string, data *Dro
 	return c.mqttClient.Publish(ctx, topic, payload)
 }
 
-// ==================== 相机控制 ====================
+// ==================== 五、相机/云台控制（Camera & Gimbal） ====================
 
 // CameraModeSwitch 切换相机拍摄模式（拍照/录像等）。
 //   - ctx: 请求上下文
@@ -836,7 +886,107 @@ func (c *Client) GimbalReset(ctx context.Context, gatewaySn string, data *Gimbal
 	return c.SendCommand(ctx, gatewaySn, MethodGimbalReset, data)
 }
 
-// ==================== 直播 ====================
+// CameraAim 控制相机对准指定屏幕坐标点。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 瞄准参数，包含负载索引、相机类型和目标坐标
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) CameraAim(ctx context.Context, gatewaySn string, data *CameraAimData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodCameraAimCamera, data)
+}
+
+// CameraPhotoStop 停止相机连续拍照。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - payloadIndex: 负载设备索引
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) CameraPhotoStop(ctx context.Context, gatewaySn, payloadIndex string) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodCameraPhotoStop, &CameraPhotoTakeData{PayloadIndex: payloadIndex})
+}
+
+// CameraPointFocusAction 控制相机在指定屏幕坐标执行对焦。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 对焦参数，包含负载索引、相机类型和对焦坐标
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) CameraPointFocusAction(ctx context.Context, gatewaySn string, data *CameraPointFocusActionData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodCameraPointFocusAction, data)
+}
+
+// CameraScreenSplit 控制相机画面分屏显示。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 分屏参数
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) CameraScreenSplit(ctx context.Context, gatewaySn string, data *CameraScreenSplitData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodCameraScreenSplit, data)
+}
+
+// CameraPhotoStorageSet 设置拍照存储位置。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 存储设置参数
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) CameraPhotoStorageSet(ctx context.Context, gatewaySn string, data *CameraStorageSetData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodCameraPhotoStorageSet, data)
+}
+
+// CameraVideoStorageSet 设置录像存储位置。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 存储设置参数
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) CameraVideoStorageSet(ctx context.Context, gatewaySn string, data *CameraStorageSetData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodCameraVideoStorageSet, data)
+}
+
+// CameraLookAt 控制相机持续朝向指定地理坐标。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 朝向参数，包含负载索引和目标坐标
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) CameraLookAt(ctx context.Context, gatewaySn string, data *CameraLookAtData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodCameraLookAt, data)
+}
+
+// CameraScreenDrag 通过屏幕拖拽方式控制云台转动。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 拖动参数
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) CameraScreenDrag(ctx context.Context, gatewaySn string, data *CameraScreenDragData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodCameraScreenDrag, data)
+}
+
+// CameraIrMeteringPoint 设置红外相机指定点测温。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 测温点参数
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) CameraIrMeteringPoint(ctx context.Context, gatewaySn string, data *CameraIrMeteringPointData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodCameraIrMeteringPoint, data)
+}
+
+// CameraIrMeteringArea 设置红外相机指定区域测温。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 测温区域参数
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) CameraIrMeteringArea(ctx context.Context, gatewaySn string, data *CameraIrMeteringAreaData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodCameraIrMeteringArea, data)
+}
+
+// ==================== 六、直播管理（Live） ====================
 
 // LiveStartPush 开始直播推流。
 //   - ctx: 请求上下文
@@ -866,6 +1016,26 @@ func (c *Client) LiveStopPush(ctx context.Context, gatewaySn string, data *LiveS
 //   - 返回值 err: 命令发送或设备返回错误时的错误信息
 func (c *Client) LiveSetQuality(ctx context.Context, gatewaySn string, data *LiveSetQualityData) (string, error) {
 	return c.SendCommand(ctx, gatewaySn, MethodLiveSetQuality, data)
+}
+
+// LiveLensChange 切换直播推流使用的相机镜头。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 镜头切换参数，包含视频 ID 和目标镜头类型
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) LiveLensChange(ctx context.Context, gatewaySn string, data *LiveLensChangeData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodLiveLensChange, data)
+}
+
+// LiveCameraChange 切换直播推流使用的相机（Dock3）。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 直播相机切换参数
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) LiveCameraChange(ctx context.Context, gatewaySn string, data *LiveCameraChangeData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodLiveCameraChange, data)
 }
 
 // ==================== OSD / State 回调处理 ====================
@@ -920,6 +1090,49 @@ func (c *Client) HandleState(ctx context.Context, payload []byte, topic string, 
 	return nil
 }
 
+// HandleStatus 处理设备的 sys/product/+/status 主题消息回调。
+// 解析设备上下线状态消息，通过 onStatus 钩子分发给上层业务，并自动回复确认。
+//   - ctx: 请求上下文
+//   - payload: MQTT 消息原始字节
+//   - topic: 消息来源的 MQTT 主题，格式 sys/product/{gateway_sn}/status
+//   - 返回值: 解析失败时返回错误，成功时返回 nil
+func (c *Client) HandleStatus(ctx context.Context, payload []byte, topic string, _ string) error {
+	var msg StatusMessage
+	if err := json.Unmarshal(payload, &msg); err != nil {
+		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal status failed: %v, topic=%s", err, topic)
+		return err
+	}
+	gatewaySn := extractDeviceSnFromTopic(topic)
+	logx.WithContext(ctx).Infof("[dji-sdk] received status: sn=%s method=%s", gatewaySn, msg.Method)
+
+	if c.onStatus != nil {
+		c.onStatus(ctx, gatewaySn, &msg)
+	}
+
+	return c.replyStatus(ctx, gatewaySn, msg.Tid, msg.Bid)
+}
+
+// replyStatus 向设备发送 status_reply 确认消息。
+func (c *Client) replyStatus(ctx context.Context, gatewaySn, tid, bid string) error {
+	reply := struct {
+		Tid       string         `json:"tid"`
+		Bid       string         `json:"bid"`
+		Timestamp int64          `json:"timestamp"`
+		Data      EventReplyData `json:"data"`
+	}{
+		Tid:       tid,
+		Bid:       bid,
+		Timestamp: time.Now().UnixMilli(),
+		Data:      EventReplyData{Result: 0},
+	}
+	data, err := json.Marshal(reply)
+	if err != nil {
+		return fmt.Errorf("[dji-sdk] marshal status_reply failed: %w", err)
+	}
+	topic := StatusReplyTopic(gatewaySn)
+	return c.mqttClient.Publish(ctx, topic, data)
+}
+
 // ==================== 订阅管理 ====================
 
 // SubscribeAll 批量订阅所有通配主题。
@@ -932,6 +1145,7 @@ func (c *Client) SubscribeAll() error {
 		PropertySetReplyTopicPattern(): c.HandlePropertySetReply,
 		OsdTopicPattern():              c.HandleOsd,
 		StateTopicPattern():            c.HandleState,
+		StatusTopicPattern():           c.HandleStatus,
 	}
 	for topic, handler := range topics {
 		if err := c.mqttClient.AddHandlerFunc(topic, handler); err != nil {
@@ -961,6 +1175,30 @@ func (c *Client) SubscribeEvents() error {
 //   - 返回值: 订阅失败时返回错误，成功时返回 nil
 func (c *Client) SubscribePropertySetReply() error {
 	return c.mqttClient.AddHandlerFunc(PropertySetReplyTopicPattern(), c.HandlePropertySetReply)
+}
+
+// ==================== 八、固件管理（Firmware） ====================
+
+// OtaCreate 创建 OTA 固件升级任务。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 升级参数，包含待升级设备列表
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) OtaCreate(ctx context.Context, gatewaySn string, data *OtaCreateData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodOtaCreate, data)
+}
+
+// ==================== 十一、模拟器（Simulator） ====================
+
+// SimulateMission 下发模拟飞行任务，用于仿真调试。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 模拟任务参数
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) SimulateMission(ctx context.Context, gatewaySn string, data *SimulateMission) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodSimulateMission, data)
 }
 
 // ==================== 生命周期 ====================

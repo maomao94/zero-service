@@ -28,7 +28,7 @@ func (l *CancelFlightTaskLogic) CancelFlightTask(in *djigateway.CancelFlightTask
 	tid, err := l.svcCtx.DjiClient.CancelFlightTask(l.ctx, in.DeviceSn, in.FlightIds)
 	if err != nil {
 		l.Errorf("[flight-task] cancel flight task failed: %v", err)
-		return &djigateway.CommonRes{Code: -1, Message: err.Error(), Tid: tid}, nil
+		return errRes(tid, err), nil
 	}
-	return &djigateway.CommonRes{Code: 0, Message: "success", Tid: tid}, nil
+	return okRes(tid), nil
 }

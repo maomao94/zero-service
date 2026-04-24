@@ -35,7 +35,7 @@ func (l *SetPropertyLogic) SetProperty(in *djigateway.SetPropertyReq) (*djigatew
 	tid, err := l.svcCtx.DjiClient.SetProperty(l.ctx, in.DeviceSn, properties)
 	if err != nil {
 		l.Errorf("[property] set property failed: %v", err)
-		return &djigateway.CommonRes{Code: -1, Message: err.Error(), Tid: tid}, nil
+		return errRes(tid, err), nil
 	}
-	return &djigateway.CommonRes{Code: 0, Message: "success", Tid: tid}, nil
+	return okRes(tid), nil
 }

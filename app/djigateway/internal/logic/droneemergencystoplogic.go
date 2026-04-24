@@ -32,7 +32,7 @@ func (l *DroneEmergencyStopLogic) DroneEmergencyStop(in *djigateway.DeviceSnReq)
 	tid, err := l.svcCtx.DjiClient.DroneEmergencyStop(l.ctx, in.DeviceSn)
 	if err != nil {
 		l.Errorf("[drc] drone emergency stop failed: %v", err)
-		return &djigateway.CommonRes{Code: -1, Message: err.Error(), Tid: tid}, nil
+		return errRes(tid, err), nil
 	}
-	return &djigateway.CommonRes{Code: 0, Message: "success", Tid: tid}, nil
+	return okRes(tid), nil
 }

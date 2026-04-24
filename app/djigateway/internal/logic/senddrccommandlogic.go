@@ -35,7 +35,7 @@ func (l *SendDrcCommandLogic) SendDrcCommand(in *djigateway.DroneControlReq) (*d
 	err := l.svcCtx.DjiClient.SendDrcCommand(l.ctx, in.DeviceSn, data)
 	if err != nil {
 		l.Errorf("[drc] send drc command failed: %v", err)
-		return &djigateway.CommonRes{Code: -1, Message: err.Error()}, nil
+		return errRes("", err), nil
 	}
-	return &djigateway.CommonRes{Code: 0, Message: "success"}, nil
+	return okRes(""), nil
 }

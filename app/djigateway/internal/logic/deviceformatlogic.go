@@ -28,7 +28,7 @@ func (l *DeviceFormatLogic) DeviceFormat(in *djigateway.DeviceSnReq) (*djigatewa
 	tid, err := l.svcCtx.DjiClient.DeviceFormat(l.ctx, in.DeviceSn)
 	if err != nil {
 		l.Errorf("[remote-debug] device format failed: %v", err)
-		return &djigateway.CommonRes{Code: -1, Message: err.Error(), Tid: tid}, nil
+		return errRes(tid, err), nil
 	}
-	return &djigateway.CommonRes{Code: 0, Message: "success", Tid: tid}, nil
+	return okRes(tid), nil
 }

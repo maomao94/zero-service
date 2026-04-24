@@ -28,7 +28,7 @@ func (l *ResumeFlightTaskLogic) ResumeFlightTask(in *djigateway.DeviceSnReq) (*d
 	tid, err := l.svcCtx.DjiClient.ResumeFlightTask(l.ctx, in.DeviceSn)
 	if err != nil {
 		l.Errorf("[flight-task] resume flight task failed: %v", err)
-		return &djigateway.CommonRes{Code: -1, Message: err.Error(), Tid: tid}, nil
+		return errRes(tid, err), nil
 	}
-	return &djigateway.CommonRes{Code: 0, Message: "success", Tid: tid}, nil
+	return okRes(tid), nil
 }

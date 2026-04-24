@@ -34,7 +34,7 @@ func (l *LiveStartPushLogic) LiveStartPush(in *djigateway.LiveStartPushReq) (*dj
 	tid, err := l.svcCtx.DjiClient.LiveStartPush(l.ctx, in.DeviceSn, data)
 	if err != nil {
 		l.Errorf("[live] live start push failed: %v", err)
-		return &djigateway.CommonRes{Code: -1, Message: err.Error(), Tid: tid}, nil
+		return errRes(tid, err), nil
 	}
-	return &djigateway.CommonRes{Code: 0, Message: "success", Tid: tid}, nil
+	return okRes(tid), nil
 }

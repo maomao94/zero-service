@@ -29,16 +29,8 @@ func (l *ExecuteFlightTaskLogic) ExecuteFlightTask(in *djigateway.FlightTaskReq)
 	tid, err := l.svcCtx.DjiClient.ExecuteFlightTask(l.ctx, in.DeviceSn, in.TaskId, in.WpmlUrl)
 	if err != nil {
 		l.Errorf("[flight-task] execute failed: %v", err)
-		return &djigateway.CommonRes{
-			Code:    -1,
-			Message: err.Error(),
-			Tid:     tid,
-		}, nil
+		return errRes(tid, err), nil
 	}
 
-	return &djigateway.CommonRes{
-		Code:    0,
-		Message: "success",
-		Tid:     tid,
-	}, nil
+	return okRes(tid), nil
 }

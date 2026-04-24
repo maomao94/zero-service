@@ -32,7 +32,7 @@ func (l *GimbalResetLogic) GimbalReset(in *djigateway.GimbalResetReq) (*djigatew
 	tid, err := l.svcCtx.DjiClient.GimbalReset(l.ctx, in.DeviceSn, data)
 	if err != nil {
 		l.Errorf("[camera] gimbal reset failed: %v", err)
-		return &djigateway.CommonRes{Code: -1, Message: err.Error(), Tid: tid}, nil
+		return errRes(tid, err), nil
 	}
-	return &djigateway.CommonRes{Code: 0, Message: "success", Tid: tid}, nil
+	return okRes(tid), nil
 }

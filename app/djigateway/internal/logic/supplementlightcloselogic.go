@@ -28,7 +28,7 @@ func (l *SupplementLightCloseLogic) SupplementLightClose(in *djigateway.DeviceSn
 	tid, err := l.svcCtx.DjiClient.SupplementLightClose(l.ctx, in.DeviceSn)
 	if err != nil {
 		l.Errorf("[remote-debug] supplement light close failed: %v", err)
-		return &djigateway.CommonRes{Code: -1, Message: err.Error(), Tid: tid}, nil
+		return errRes(tid, err), nil
 	}
-	return &djigateway.CommonRes{Code: 0, Message: "success", Tid: tid}, nil
+	return okRes(tid), nil
 }

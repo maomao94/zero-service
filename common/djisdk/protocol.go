@@ -148,7 +148,7 @@ func NewEventReply(tid, bid, method string, result int) *EventReply {
 	}
 }
 
-// ==================== 航线管理 ====================
+// ==================== 一、航线管理（Wayline Management） ====================
 
 // FlightTaskPrepareData 航线任务准备数据，用于下发航线任务前的准备阶段。
 type FlightTaskPrepareData struct {
@@ -216,7 +216,17 @@ type FlightTaskCancelData struct {
 	FlightIDs []string `json:"flight_ids"`
 }
 
-// ==================== 航线进度事件 ====================
+// ReturnSpecificHomeData 返航至指定点数据。
+type ReturnSpecificHomeData struct {
+	// Latitude 指定返航点纬度，取值范围 [-90, 90]。必填。
+	Latitude float64 `json:"latitude"`
+	// Longitude 指定返航点经度，取值范围 [-180, 180]。必填。
+	Longitude float64 `json:"longitude"`
+	// Height 指定返航点高度，单位米。必填。
+	Height float64 `json:"height"`
+}
+
+// ==================== 一、航线管理 - 航线进度事件 ====================
 
 // FlightTaskProgressData 航线任务进度事件数据。
 type FlightTaskProgressData struct {
@@ -240,7 +250,7 @@ type EventProgressExt struct {
 	BreakPoint *BreakPoint `json:"break_point,omitempty"`
 }
 
-// ==================== PSDK ====================
+// ==================== 二、PSDK 自定义数据透传（PSDK Custom Data Transmission） ====================
 
 // PsdkWriteData PSDK 数据写入请求，用于向 PSDK 负载发送数据。
 type PsdkWriteData struct {
@@ -256,7 +266,7 @@ type CustomDataTransmissionData struct {
 	Value string `json:"value"`
 }
 
-// ==================== 远程调试 ====================
+// ==================== 四、远程调试 - 机巢控制（Remote Debug） ====================
 
 // DebugModeData 远程调试模式数据，开启或关闭调试模式，无额外参数。
 type DebugModeData struct{}
@@ -303,7 +313,7 @@ type AirConditionerModeSwitchData struct {
 	Action int `json:"action"`
 }
 
-// ==================== 远程调试事件进度 ====================
+// ==================== 四、远程调试 - 事件进度 ====================
 
 // DebugProgressData 远程调试进度事件数据。
 type DebugProgressData struct {
@@ -329,17 +339,28 @@ type DebugProgressDetail struct {
 	StepKey string `json:"step_key,omitempty"`
 }
 
-// ==================== 属性设置 ====================
+// ==================== 七、属性设置（Property Set） ====================
 
 // PropertySetData 属性设置数据，键值对形式，键为属性名，值为属性值。
 type PropertySetData map[string]any
 
-// ==================== 指令飞行 ====================
+// ==================== 三、指令飞行控制（Live Flight Controls / DRC） ====================
 
-// DrcModeEnterData 指令飞行模式进入数据，包含 DRC 链路的 MQTT 连接信息。
+// DrcModeEnterData 进入指令飞行（DRC）模式请求数据（Dock3 协议）。
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html
 type DrcModeEnterData struct {
-	// MqttBroker DRC 专用 MQTT Broker 地址，格式 "host:port"。必填。
-	MqttBroker string `json:"mqtt_broker"`
+	// MqttBroker DRC 专用 MQTT Broker 连接信息。必填。
+	MqttBroker DrcMqttBroker `json:"mqtt_broker"`
+	// OsdFrequency OSD 遥测数据上报频率，取值范围 [1, 30]，单位 Hz。必填。
+	OsdFrequency int `json:"osd_frequency"`
+	// HsiFrequency HSI（水平态势感知）数据上报频率，取值范围 [1, 30]，单位 Hz。必填。
+	HsiFrequency int `json:"hsi_frequency"`
+}
+
+// DrcMqttBroker DRC 专用 MQTT Broker 连接信息。
+type DrcMqttBroker struct {
+	// Address MQTT Broker 地址，格式 "host:port"。必填。
+	Address string `json:"address"`
 	// ClientID MQTT 客户端 ID。必填。
 	ClientID string `json:"client_id"`
 	// Username MQTT 连接用户名。必填。
@@ -348,8 +369,8 @@ type DrcModeEnterData struct {
 	Password string `json:"password"`
 	// ExpireTime 连接过期时间，Unix 秒级时间戳。必填。
 	ExpireTime int64 `json:"expire_time"`
-	// EnableOSD 是否启用 OSD 遥测数据上报。必填。
-	EnableOSD bool `json:"enable_osd"`
+	// EnableTLS 是否启用 TLS 加密连接，默认 false。
+	EnableTLS bool `json:"enable_tls,omitempty"`
 }
 
 // DrcModeExitData 指令飞行模式退出数据，无额外参数。
@@ -426,7 +447,7 @@ type ReturnHomeCancelData struct{}
 // DroneEmergencyStopData 无人机紧急停机数据，无额外参数。
 type DroneEmergencyStopData struct{}
 
-// ==================== 相机控制 ====================
+// ==================== 五、相机/云台控制（Camera & Gimbal） ====================
 
 // CameraModeSwitchData 相机模式切换数据。
 type CameraModeSwitchData struct {
@@ -498,7 +519,71 @@ type CameraLookAtData struct {
 	Height float64 `json:"height"`
 }
 
-// ==================== 直播 ====================
+// CameraPointFocusActionData 相机指点对焦数据。
+type CameraPointFocusActionData struct {
+	// PayloadIndex 负载设备索引，格式为 "机型-挂载位置"。必填。
+	PayloadIndex string `json:"payload_index"`
+	// CameraType 相机类型，0: 广角, 1: 变焦, 2: 红外。必填。
+	CameraType int `json:"camera_type"`
+	// X 对焦点 X 坐标，归一化值，取值范围 [0, 1]。必填。
+	X float64 `json:"x"`
+	// Y 对焦点 Y 坐标，归一化值，取值范围 [0, 1]。必填。
+	Y float64 `json:"y"`
+}
+
+// CameraScreenSplitData 相机画面分屏数据。
+type CameraScreenSplitData struct {
+	// PayloadIndex 负载设备索引，格式为 "机型-挂载位置"。必填。
+	PayloadIndex string `json:"payload_index"`
+	// Enable 是否开启分屏，true: 开启, false: 关闭。必填。
+	Enable bool `json:"enable"`
+}
+
+// CameraStorageSetData 照片/视频存储设置数据。
+type CameraStorageSetData struct {
+	// PayloadIndex 负载设备索引，格式为 "机型-挂载位置"。必填。
+	PayloadIndex string `json:"payload_index"`
+	// StorageType 存储位置，0: 机载存储, 1: SD 卡。必填。
+	StorageType int `json:"storage_type"`
+}
+
+// CameraScreenDragData 相机画面拖动数据。
+type CameraScreenDragData struct {
+	// PayloadIndex 负载设备索引，格式为 "机型-挂载位置"。必填。
+	PayloadIndex string `json:"payload_index"`
+	// CameraType 相机类型，0: 广角, 1: 变焦, 2: 红外。必填。
+	CameraType int `json:"camera_type"`
+	// X 拖动起点 X 坐标，归一化值，取值范围 [0, 1]。必填。
+	X float64 `json:"x"`
+	// Y 拖动起点 Y 坐标，归一化值，取值范围 [0, 1]。必填。
+	Y float64 `json:"y"`
+}
+
+// CameraIrMeteringPointData 红外点测温数据。
+type CameraIrMeteringPointData struct {
+	// PayloadIndex 负载设备索引，格式为 "机型-挂载位置"。必填。
+	PayloadIndex string `json:"payload_index"`
+	// X 测温点 X 坐标，归一化值，取值范围 [0, 1]。必填。
+	X float64 `json:"x"`
+	// Y 测温点 Y 坐标，归一化值，取值范围 [0, 1]。必填。
+	Y float64 `json:"y"`
+}
+
+// CameraIrMeteringAreaData 红外区域测温数据。
+type CameraIrMeteringAreaData struct {
+	// PayloadIndex 负载设备索引，格式为 "机型-挂载位置"。必填。
+	PayloadIndex string `json:"payload_index"`
+	// X 区域起点 X 坐标，归一化值，取值范围 [0, 1]。必填。
+	X float64 `json:"x"`
+	// Y 区域起点 Y 坐标，归一化值，取值范围 [0, 1]。必填。
+	Y float64 `json:"y"`
+	// Width 区域宽度，归一化值，取值范围 [0, 1]。必填。
+	Width float64 `json:"width"`
+	// Height 区域高度，归一化值，取值范围 [0, 1]。必填。
+	Height float64 `json:"height"`
+}
+
+// ==================== 六、直播管理（Live） ====================
 
 // LiveStartPushData 直播推流启动数据。
 type LiveStartPushData struct {
@@ -526,7 +611,23 @@ type LiveSetQualityData struct {
 	VideoQuality int `json:"video_quality"`
 }
 
-// ==================== 固件升级 ====================
+// LiveLensChangeData 直播镜头切换数据。
+type LiveLensChangeData struct {
+	// VideoID 视频流 ID。必填。
+	VideoID string `json:"video_id"`
+	// VideoType 镜头类型，0: 广角, 1: 变焦, 2: 红外。必填。
+	VideoType int `json:"video_type"`
+}
+
+// LiveCameraChangeData 直播相机切换数据（Dock3）。
+type LiveCameraChangeData struct {
+	// VideoID 视频流 ID。必填。
+	VideoID string `json:"video_id"`
+	// CameraIndex 相机索引，指定切换到的目标相机。必填。
+	CameraIndex string `json:"camera_index"`
+}
+
+// ==================== 八、固件管理（Firmware） ====================
 
 // OtaCreateData OTA 固件升级创建数据。
 type OtaCreateData struct {
@@ -544,7 +645,7 @@ type OtaDevice struct {
 	FirmwareUpgradeType int `json:"firmware_upgrade_type"`
 }
 
-// ==================== 设备上下线 ====================
+// ==================== 九、设备管理（Device Management） ====================
 
 // TopoUpdateData 设备拓扑更新数据，用于设备上线/下线通知。
 type TopoUpdateData struct {
@@ -586,7 +687,7 @@ type TopoSubDevice struct {
 	Version TopoVersion `json:"version,omitempty"`
 }
 
-// ==================== 设备主动上报事件（方向 up：设备→云平台） ====================
+// ==================== 设备主动上报事件（方向 up: 设备->云平台） ====================
 // 以下结构体对应 thing/product/{gateway_sn}/events topic 中，设备主动推送的事件数据。
 // 这些事件不由网关发起请求触发，而是设备在特定条件下自动上报。
 

@@ -103,8 +103,11 @@
 
 | 编号 | 优先级 | 需求描述 | 来源 | 状态 | Sprint | 备注 |
 | --- | --- | --- | --- | --- | --- | --- |
-| B-014 | Must | gRPC 错误码优化 — 引入 DJIErrorCode 枚举，SendCommand 返回设备错误时在 CommonRes 中携带原始错误码 + 枚举中文描述，调用方可感知具体 DJI 错误 | 需求输入.md | 开发中 | S7 | SDK 层改造 SendCommand + errorcode 包 |
-| B-015 | Must | 机巢在线状态管理 — SDK 订阅 sys/product/+/status 主题 + onStatus 钩子；业务层用 go-zero cache 标记机巢在线（Status 主判断 + OSD 心跳辅助超时）；下发命令前校验在线状态，离线快速拒绝 | 需求输入.md | 开发中 | S7 | Status 主题 + OSD 辅助心跳 + 在线拦截 |
+| B-014 | Must | gRPC 错误码优化 — 引入 DJIErrorCode 枚举，SendCommand 返回设备错误时在 CommonRes 中携带原始错误码 + 枚举中文描述，调用方可感知具体 DJI 错误 | 需求输入.md | 已完成 | S7 | SDK 层改造 SendCommand + errorcode 包 + proto 新增 reason_code |
+| B-015 | Must | 机巢在线状态管理 — SDK 订阅 sys/product/+/status 主题 + onStatus 钩子；业务层用 go-zero cache 标记机巢在线（Status 主判断 + OSD 心跳辅助超时）；下发命令前校验在线状态，离线快速拒绝 | 需求输入.md | 已完成 | S7 | Status 主题 + OSD 辅助心跳 + 在线拦截 |
+| B-016 | Must | Proto optional 字段清理 — 移除 DrcMqttBroker.enable_tls 的 optional 关键字，改为普通 bool 类型；同步 SDK protocol.go 和 drcmodeenterlogic.go，消除跨语言兼容性问题 | 需求输入.md | 已完成 | S8 | 兼容老旧 Java proto3 |
+| B-017 | Must | SDK Client 方法补齐 — 补齐 16 个缺失的 Client 封装方法（StopFlightTask、BatteryMaintenanceSwitch、LiveLensChange、ReturnSpecificHome、SimulateMission、OtaCreate、CameraAim、CameraPhotoStop 等 8 个相机控制方法） | 需求输入.md | 已完成 | S8 | 52 个 Method 常量→全部有 Client 封装 |
+| B-018 | Must | S6 遗漏指令透传补齐 — 新增 5 个下行指令 RPC（StopFlightTask/ReturnSpecificHome/BatteryMaintenanceSwitch/LiveLensChange/OtaCreate）+ 1 个平台查询 RPC（IsDeviceOnline），proto 注释标注 DJI Cloud API 引用链接 | 需求输入.md | 已完成 | S8 | ⚠️ 原 B-018 描述错误（将指令透传误归类为"平台能力"），已修正 |
 
 ---
 
