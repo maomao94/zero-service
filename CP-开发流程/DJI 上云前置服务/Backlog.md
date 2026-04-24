@@ -1,26 +1,38 @@
 # DJI 上云前置服务 -- 产品待办列表
 
-> 老板在便签区随意写想法，AI 产品经理自动梳理并写入产品待办表。
+> 本文件是所有需求的唯一入口。老板通过「需求输入」提交想法，AI 产品经理自动梳理并写入产品待办表。
 
 <!--
 === 使用说明 ===
 
-【老板（用户）- 老板便签】
-- 在「老板便签」区域随意写下想法，格式不限
-- 一句话、关键词、甚至画个箭头都行，AI 产品经理会自动梳理
-- 梳理后的条目会标记「已梳理 → B-XXX」，关联到产品待办表
+【老板（用户）- 需求输入方式】
 
-【老板（用户）- 产品待办】
-- 在「产品待办」表格中追加新需求，只需填写「需求描述」列，其余列可留空
-- 格式不限，简要描述即可，AI 会自动润色补充
-- 可随时追加新需求，无需关注排序
+老板是技术出身的项目开发者，需求输入支持两种方式：
 
-【AI - 老板便签梳理】
-- Sprint Planning 时读取「老板便签」中的未梳理条目
-- 对模糊想法执行苏格拉底式需求澄清（WHY/WHO/WHAT/HOW 四维度提问）
-- 将澄清后的想法结构化为 Epic → Story，写入产品待办表
-- 在便签原文后追加 → 已梳理: B-XXX，标记复选框为 [x]
-- 信息不足以拆解时，向老板发起 1-2 个关键问题（附带选项/示例）
+方式一：快捷便签（适合简短想法）
+- 在「老板便签」区域直接写，一句话、关键词均可
+- 梳理后标记「已梳理 → B-XXX」
+
+方式二：需求文档（适合复杂需求）
+- 在项目目录下创建 `需求输入.md`，支持标准 Markdown 格式
+- 可包含大段描述、接口定义、代码片段、架构图、外部链接等
+- Sprint Planning 时 PM 自动读取并梳理
+- 梳理完成后 PM 在文档底部追加处理记录
+
+【老板（用户）- 补充文档】
+- 老板可在需求输入中引用补充材料，PM 负责串联消化
+- 支持的引用类型见「补充文档」区域
+
+【AI - 需求梳理流程】
+- Sprint Planning 时按顺序读取：① 需求输入.md ② 老板便签 ③ 补充文档引用
+- 对模糊想法执行需求澄清，按以下维度结构化提问：
+  · WHY — 业务目标、解决什么问题、不做的后果
+  · WHO — 使用方（人/系统/设备）、上下游依赖
+  · WHAT — 功能边界、输入输出、核心数据结构、非目标
+  · HOW — 技术约束、协议选型、性能要求、已有可复用组件
+- 信息不足以拆解时，向老板发起 3-5 个关键问题（按维度分组，附带选项/示例，一次问清减少迭代）
+- 将需求结构化为 Epic → Story，写入产品待办表
+- 便签原文标记「已梳理 → B-XXX」，需求文档底部追加处理记录
 
 【AI - 产品待办管理】
 - 读取新增条目后，润色需求描述，补充技术细节
@@ -42,20 +54,55 @@
 
 ---
 
-## 老板便签
+## 需求输入
 
-> 老板的想法随便写，格式不限，AI 产品经理会自动梳理。
+> 复杂需求请使用项目目录下的 `需求输入.md` 文件，支持标准 Markdown，可包含接口定义、代码片段、架构图等。
+> 简单想法可直接写在下方便签区。
+
+### 老板便签
+
+> 快捷输入区，一句话、关键词均可，PM 自动梳理。
 
 - [x] received event: tid=e4889c0f-378b-47af-b18f-ec9472baea89 method=live_stop_push need_reply=0 gateway=  app=djigateway.rpc      caller=djisdk/client.go:103   trace=4a024174515dc42624642b09be0152b3  span=69556ab2f8eb628b   client=dji-gateway-001
 规范钩子函数的打印日志 → 已梳理: B-008
+
+### 补充文档
+
+> 老板可在此引用与需求相关的补充材料，PM 在需求分析时自动串联消化。
+
+| 类型 | 引用 | 说明 |
+| --- | --- | --- |
+| 接口定义 | `app/djigateway/djigateway.proto` | DJI 上云 gRPC 接口定义 |
+| 外部文档 | https://developer.dji.com/doc/cloud-api-tutorial/cn/ | DJI Cloud API 官方文档 |
+
+---
+
+## 路线图
+
+> 从开发计划（架构设计文档）中提取模块依赖关系，规划迭代顺序。
+
+### 依赖分析
+
+| 层级 | 模块 | 依赖 | 说明 |
+| --- | --- | --- | --- |
+| 地基模块 | {模块名} | 无 | {基础设施，优先开发} |
+| 核心业务 | {模块名} | {依赖的地基模块} | {核心功能，第二优先级} |
+| 锦上添花 | {模块名} | {依赖的核心模块} | {增强功能，最后迭代} |
+
+### 里程碑规划
+
+| 里程碑 | 目标 | 关键交付物 | 状态 |
+| --- | --- | --- | --- |
+| Milestone 1 MVP | {最小可用版本} | {交付物列表} | 未开始 |
+| Milestone 2 完整版 | {功能完整} | {交付物列表} | 未开始 |
+| Milestone 3 增强版 | {体验优化与扩展} | {交付物列表} | 未开始 |
+
 ---
 
 ## 产品待办
 
 | 编号 | 优先级 | 需求描述 | 来源 | 状态 | Sprint | 备注 |
 | --- | --- | --- | --- | --- | --- | --- |
-| B-007 | Should | PSDK 透传接口规范化：按 DJI Cloud API 官方文档（dock3/psdk-transmit-custom-data）规范 gRPC 接口命名与注释。上行 `custom_data_transmission_from_psdk`（Events, up）钩子已具备，保持日志级处理；下行 `custom_data_transmission_to_psdk`（Services, down）gRPC 接口定义需重新规范命名和注释，功能重写 | 老板便签 | 开发中 | S05 | 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk-transmit-custom-data.html |
-| B-008 | Should | 钩子日志规范化：规范 SDK 层（`[dji-sdk]`）和业务钩子层（`[dji-gateway]`）的日志打印格式，统一为结构化键值对输出，消除空值字段噪音，确保 method/tid/gateway 等关键字段有意义输出 | 老板便签 | 开发中 | S05 | - |
 
 ---
 
@@ -65,9 +112,11 @@
 
 | 编号 | 需求描述 | 完成 Sprint | 完成日期 |
 | --- | --- | --- | --- |
-| B-001 | 接入大疆 DRC 指令飞行控制（drc_mode_enter / drc_mode_exit / drone_control），在 djigateway.proto 新增 11 个 gRPC 接口，Logic 层全部实现 | S03 | - |
-| B-002 | 补 HMS 健康告警上报钩子（protocol.go 新增 HmsEventData 结构体，client.go 新增类型化钩子 + dispatchTypedEvent 分支，hooks/hms_event.go 实现） | S03 | - |
-| B-003 | 补设备属性上报钩子（OSD / State 上报，HandleOsd / HandleState，SubscribeAll 增加订阅，hooks/osd.go + state.go 实现） | S03 | - |
-| B-004 | 敏感接口配置拦截（DroneEmergencyStop 默认关闭，DangerousOpsConfig 配置结构 + Logic 层拦截检查） | S03 | - |
-| B-005 | 接口归类修正（按上云 API 官方分类，return_home 系列归入航线管理，DRC 按子分组拆分） | S03 | - |
-| B-006 | 修复 MQTT 消息分发 topicTemplate 匹配错误：`topicTemplateFromMsg` 返回完整主题而非订阅通配模板，导致 dispatcher 匹配失败，所有通配订阅消息被静默丢弃 | S04 | - |
+| B-001 | 接入大疆 DRC 指令飞行控制（drc_mode_enter / drc_mode_exit / drone_control），在 djigateway.proto 新增 11 个 gRPC 接口，Logic 层全部实现 | S3 | - |
+| B-002 | 补 HMS 健康告警上报钩子（protocol.go 新增 HmsEventData 结构体，client.go 新增类型化钩子 + dispatchTypedEvent 分支，hooks/hms_event.go 实现） | S3 | - |
+| B-003 | 补设备属性上报钩子（OSD / State 上报，HandleOsd / HandleState，SubscribeAll 增加订阅，hooks/osd.go + state.go 实现） | S3 | - |
+| B-004 | 敏感接口配置拦截（DroneEmergencyStop 默认关闭，DangerousOpsConfig 配置结构 + Logic 层拦截检查） | S3 | - |
+| B-005 | 接口归类修正（按上云 API 官方分类，return_home 系列归入航线管理，DRC 按子分组拆分） | S3 | - |
+| B-006 | 修复 MQTT 消息分发 topicTemplate 匹配错误：`topicTemplateFromMsg` 返回完整主题而非订阅通配模板，导致 dispatcher 匹配失败，所有通配订阅消息被静默丢弃 | S4 | - |
+| B-007 | PSDK 透传接口规范化：按 DJI Cloud API 官方文档规范 gRPC 接口命名与注释，proto/Logic/SDK 方法全面规范化，Logic 层新增 value 长度校验 | S5 | - |
+| B-008 | 钩子日志规范化：SDK 层 HandleEvents 移除空值 gateway 字段，业务钩子层 device=/gateway= 统一为 sn=，7 个钩子文件全部对齐 | S5 | - |

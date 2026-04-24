@@ -5,51 +5,46 @@ alwaysApply: true
 # 项目开发规则
 
 ## 项目概览
-- 基于 go-zero 开发
-- AI 相关业务基于字节跳动 eino 框架开发
+- go-zero 微服务 + eino AI 框架
+- Trellis 管理规范注入/任务跟踪/会话记忆（`.trellis/`）
 
-## 代码生成流程
-- 每个业务服务都提供 gen.sh 脚本用于基础代码生成
-- **网关接口**: 先修改 .api 文件定义接口，再执行 gen.sh
-- **gRPC 服务**: 先修改 .proto 文件定义服务，再执行 gen.sh
+## 路由表
 
-## 命名约定
-### API (网关)
-- 请求结构命名: xxxRequest
-- 响应结构命名: xxxResponse
-- 请求和响应必须成对出现
+| 场景 | 动作 | 详细规范位置 |
+|------|------|-------------|
+| Sprint/Backlog/任务拆解 | 激活 `agile-dev-manager` 技能 | `CP-开发流程/开发规范.md` |
+| 角色视角（PM/Backend/QA等） | 激活 `ai-team` 技能 | `.trae/skills/ai-team/SKILL.md` |
+| go-zero 框架知识 | 激活 `zero-skills` 技能 | - |
+| eino 框架知识 | 激活 `eino-skills`/`eino-learning` 技能 | - |
+| 部署模块 | 激活 `module-deploy` 技能 | - |
 
-### gRPC
-- 请求结构命名: xxxReq
-- 响应结构命名: xxxRes
-- 请求和响应必须成对出现，例如: chatReq + chatRes
+## 编码规范速查
 
-## 编码规范
-- 遵循 Go / go-zero / Google 开发规范
-- 禁止 Java 编程风格（如不必要的 getter/setter 等）
-- 工具类，结构类等流程代码，，注释清晰，但是避免口语化注释
-- 工具类函数比如有单元测试，确保其正确性
-- proto, api 文件必须有清晰的注释对照，如果是 api转 grpc, 注释保持一致
+> 完整规范在 `.trellis/spec/coding-standards.md` 和 `.trellis/spec/go-zero-conventions.md`，`/start` 时自动注入
 
-## Git
-- 提交信息使用中文
+- 命名：API `xxxRequest`/`xxxResponse`，gRPC `xxxReq`/`xxxRes`，必须成对
+- 流程：先改 `.api`/`.proto` → 执行 `gen.sh` → 写 Logic，禁止跳过 gen.sh
+- 风格：Go/go-zero/Google 规范，禁止 Java 风格，注释清晰勿口语化
+- 质量：工具类函数须有单测，proto/api 注释必须完整且一致
+- Git：提交信息中文
 
-## 开发流程管理
+## Trellis 命令速查
 
-当用户提到开发计划、Sprint、Backlog、任务拆解、变更记录、项目大纲润色等需求时，使用 `agile-dev-manager` 技能。
-开发流程目录：`CP-开发流程/`，模板目录：`CP-开发流程/template/`。
+> 完整工作流在 `.trellis/spec/workflow.md`，`/start` 时自动注入
 
-用户 = 老板（提需求、审批、监工），AI = 开发团队（自动闭环执行）。
-Sprint 流程中 AI 自动调度角色（PM → Backend → QA → Scrum Master），无需老板手动切换。
-角色定义详见 `ai-team` 技能，默认角色：后端开发（Backend Developer）。
+| 命令 | 时机 | 命令 | 时机 |
+|------|------|------|------|
+| `/start` | 会话开始 | `/brainstorm` | Planning |
+| `/before-dev` | 编码前 | `/check` | 编码后 |
+| `/finish-work` | 收尾 | `/update-spec` | 规范沉淀 |
 
-### 开发流程变更同步规则
+## 普通编码模式
 
-当对开发流程体系进行变更时（模板、技能、规范），必须同步以下全部内容：
+非 Sprint 日常编码三段式：
+1. **编码前**：读 `.trellis/spec/` 规范 → 检索项目代码 → 确认技术栈
+2. **编码中**：遵循规范 → `zero-skills` 获取框架知识 → 复用现有组件
+3. **编码后**：`go build` → 工具类单测 → proto/api 注释检查
 
-1. **模板同步**：修改 `CP-开发流程/template/` 后，检查所有项目目录（`CP-开发流程/{项目名}/`）的对应文件，同步增量变更
-2. **技能同步**：修改 `ai-team` 或 `agile-dev-manager` 技能后，检查 `开发规范.md` 是否需要同步更新流程说明
-3. **规范同步**：修改 `开发规范.md` 后，检查技能文件中的流程描述是否一致
-4. **规则同步**：新增流程概念时，确认 `rule.md` 是否需要补充路由提示
+## 开发流程变更同步
 
-同步范围：`template/` → 所有项目目录 → `开发规范.md` → 技能文件 → `rule.md`，形成完整闭环。
+修改 `template/` → 同步所有项目目录 → `开发规范.md` → 技能文件 → `rule.md` → `.trellis/spec/`
