@@ -48,9 +48,9 @@ const (
 	MethodReturnHomeInfo = "return_home_info"
 )
 
-// ==================== PSDK ====================
+// ==================== PSDK 数据透传（PSDK Data Transmission） ====================
 // Topic: thing/product/{gateway_sn}/services | events
-// PSDK（Payload SDK）负载设备通信相关
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk-transmit-custom-data.html
 
 const (
 	// MethodPsdkWrite PSDK 数据写入（PSDK Write）

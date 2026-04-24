@@ -14,5 +14,5 @@ import (
 // 设备定期推送实时遥测数据（飞行姿态、GPS 坐标、电池电量等）。
 // 业务端可在此钩子中实现遥测数据持久化、WebSocket 推送、地图轨迹绘制等逻辑。
 func OnOsd(ctx context.Context, deviceSn string, data *djisdk.OsdMessage) {
-	logx.WithContext(ctx).Debugf("[dji-gateway] osd: device=%s tid=%s ts=%d", deviceSn, data.Tid, data.Timestamp)
+	logx.WithContext(ctx).Debugf("[dji-gateway] osd: sn=%s tid=%s ts=%d", deviceSn, data.Tid, data.Timestamp)
 }

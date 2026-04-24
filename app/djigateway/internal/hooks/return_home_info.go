@@ -14,6 +14,6 @@ import (
 // Method: return_home_info
 // 设备返航时主动上报规划的返航路径信息。
 func OnReturnHomeInfo(ctx context.Context, gatewaySn string, data *djisdk.ReturnHomeInfoEvent) {
-	logx.WithContext(ctx).Infof("[dji-gateway] return home info: gateway=%s flight_id=%s last_point_type=%d points=%d",
+	logx.WithContext(ctx).Infof("[dji-gateway] return home info: sn=%s flight_id=%s last_point_type=%d points=%d",
 		gatewaySn, data.FlightID, data.LastPointType, len(data.PlannedPathPoints))
 }

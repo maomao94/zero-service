@@ -15,5 +15,5 @@ import (
 // 与 OSD 不同，state 侧重于设备元信息而非实时飞行数据。
 // 业务端可在此钩子中实现设备状态同步、拓扑更新等逻辑。
 func OnState(ctx context.Context, deviceSn string, data *djisdk.OsdMessage) {
-	logx.WithContext(ctx).Infof("[dji-gateway] state: device=%s tid=%s ts=%d", deviceSn, data.Tid, data.Timestamp)
+	logx.WithContext(ctx).Infof("[dji-gateway] state: sn=%s tid=%s ts=%d", deviceSn, data.Tid, data.Timestamp)
 }

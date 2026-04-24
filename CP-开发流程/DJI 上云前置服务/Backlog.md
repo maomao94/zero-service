@@ -46,21 +46,16 @@
 
 > 老板的想法随便写，格式不限，AI 产品经理会自动梳理。
 
-- [x] 解决hms 日志没有打印的问题，我用 mqttx工具订阅了，hms 一直在上班，但是日志没有看到 → 已梳理: B-006
-- [] https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk-transmit-custom-data.html 规范 Topic: thing/product/{gateway_sn}/events
-
-Direction: up
-
-Method: custom_data_transmission_from_psdk
-你这个是特定的 psdk 接收，这个需要加一个钩子
-下面还有一个发送特定的 psdk 接口  是平台发送给机巢的，grpc 定义的接口描述不行，规范接口，重新写功能
-
+- [x] received event: tid=e4889c0f-378b-47af-b18f-ec9472baea89 method=live_stop_push need_reply=0 gateway=  app=djigateway.rpc      caller=djisdk/client.go:103   trace=4a024174515dc42624642b09be0152b3  span=69556ab2f8eb628b   client=dji-gateway-001
+规范钩子函数的打印日志 → 已梳理: B-008
 ---
 
 ## 产品待办
 
 | 编号 | 优先级 | 需求描述 | 来源 | 状态 | Sprint | 备注 |
 | --- | --- | --- | --- | --- | --- | --- |
+| B-007 | Should | PSDK 透传接口规范化：按 DJI Cloud API 官方文档（dock3/psdk-transmit-custom-data）规范 gRPC 接口命名与注释。上行 `custom_data_transmission_from_psdk`（Events, up）钩子已具备，保持日志级处理；下行 `custom_data_transmission_to_psdk`（Services, down）gRPC 接口定义需重新规范命名和注释，功能重写 | 老板便签 | 开发中 | S05 | 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk-transmit-custom-data.html |
+| B-008 | Should | 钩子日志规范化：规范 SDK 层（`[dji-sdk]`）和业务钩子层（`[dji-gateway]`）的日志打印格式，统一为结构化键值对输出，消除空值字段噪音，确保 method/tid/gateway 等关键字段有意义输出 | 老板便签 | 开发中 | S05 | - |
 
 ---
 

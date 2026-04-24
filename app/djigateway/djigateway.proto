@@ -32,11 +32,14 @@ service DjiGateway {
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
   rpc ReturnHomeCancelAutoReturn(DeviceSnReq) returns (CommonRes);
 
-  // ==================== PSDK 数据透传 ====================
+  // ==================== PSDK 自定义数据透传（PSDK Custom Data Transmission） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk-transmit-custom-data.html
 
-  // SendCustomDataToPsdk 通过自定义数据透传通道向 PSDK 负载发送数据。
+  // SendCustomDataToPsdk 自定义数据透传至 PSDK 负载设备。
   // 对应 DJI Cloud API method: custom_data_transmission_to_psdk，
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  // Topic: thing/product/{gateway_sn}/services，方向 down（云平台→设备），
+  // 将自定义消息透传推送到 PSDK 负载设备，等待设备 ACK 后返回结果。
+  // 上行方向（设备→云平台）通过 events topic 的 custom_data_transmission_from_psdk 事件钩子处理。
   rpc SendCustomDataToPsdk(CustomDataToPsdkReq) returns (CommonRes);
 
   // ==================== 指令飞行控制（Live Flight Controls / DRC） ====================
@@ -124,6 +127,7 @@ message FlightTaskReq {
 }
 
 // CustomDataToPsdkReq PSDK 自定义数据透传请求。
+// 对应 DJI Cloud API method: custom_data_transmission_to_psdk（Services, down）。
 message CustomDataToPsdkReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
   string device_sn = 1;

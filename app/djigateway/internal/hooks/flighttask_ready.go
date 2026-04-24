@@ -14,5 +14,5 @@ import (
 // Method: flighttask_ready
 // 机巢中有任务满足就绪条件时主动上报可执行的任务 ID 列表。
 func OnFlightTaskReady(ctx context.Context, gatewaySn string, data *djisdk.FlightTaskReadyEvent) {
-	logx.WithContext(ctx).Infof("[dji-gateway] flight task ready: gateway=%s flight_ids=%v", gatewaySn, data.FlightIDs)
+	logx.WithContext(ctx).Infof("[dji-gateway] flight task ready: sn=%s flight_ids=%v", gatewaySn, data.FlightIDs)
 }

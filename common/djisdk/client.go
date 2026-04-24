@@ -100,7 +100,7 @@ func (c *Client) HandleEvents(ctx context.Context, payload []byte, topic string,
 		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal events failed: %v, topic=%s", err, topic)
 		return err
 	}
-	logx.WithContext(ctx).Infof("[dji-sdk] received event: tid=%s method=%s need_reply=%d gateway=%s", event.Tid, event.Method, event.NeedReply, event.Gateway)
+	logx.WithContext(ctx).Infof("[dji-sdk] received event: tid=%s method=%s need_reply=%d", event.Tid, event.Method, event.NeedReply)
 
 	handled := c.dispatchTypedEvent(ctx, event.Gateway, event.Method, payload)
 
@@ -414,12 +414,14 @@ func (c *Client) ResumeFlightTask(ctx context.Context, gatewaySn string) (string
 	return c.SendCommand(ctx, gatewaySn, MethodFlightTaskResume, struct{}{})
 }
 
-// ==================== PSDK ====================
+// ==================== PSDK 数据透传（PSDK Data Transmission） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk-transmit-custom-data.html
 
-// SendPsdkCommand 向 PSDK 负载发送数据，使用默认负载索引 "0"。
+// SendPsdkCommand PSDK 数据写入（psdk_write），使用默认负载索引 "0"。
+// 方向 down：云平台→设备（Services），对应 method: psdk_write。
 //   - ctx: 请求上下文
 //   - gatewaySn: 网关设备序列号
-//   - payload: 要发送的负载数据内容
+//   - payload: 待发送数据内容（Base64 编码）
 //   - 返回值 tid: 本次请求的事务 ID
 //   - 返回值 err: 命令发送或设备返回错误时的错误信息
 func (c *Client) SendPsdkCommand(ctx context.Context, gatewaySn, payload string) (string, error) {
@@ -430,11 +432,12 @@ func (c *Client) SendPsdkCommand(ctx context.Context, gatewaySn, payload string)
 	return c.SendCommand(ctx, gatewaySn, MethodPsdkWrite, data)
 }
 
-// SendPsdkCommandWithIndex 向指定索引的 PSDK 负载发送数据。
+// SendPsdkCommandWithIndex PSDK 数据写入（psdk_write），指定负载索引。
+// 方向 down：云平台→设备（Services），对应 method: psdk_write。
 //   - ctx: 请求上下文
 //   - gatewaySn: 网关设备序列号
-//   - payloadIndex: 负载索引，标识目标 PSDK 负载设备
-//   - payload: 要发送的负载数据内容
+//   - payloadIndex: 负载索引，格式 "机型-挂载位置"，如 "53-0"
+//   - payload: 待发送数据内容（Base64 编码）
 //   - 返回值 tid: 本次请求的事务 ID
 //   - 返回值 err: 命令发送或设备返回错误时的错误信息
 func (c *Client) SendPsdkCommandWithIndex(ctx context.Context, gatewaySn, payloadIndex, payload string) (string, error) {
@@ -445,11 +448,12 @@ func (c *Client) SendPsdkCommandWithIndex(ctx context.Context, gatewaySn, payloa
 	return c.SendCommand(ctx, gatewaySn, MethodPsdkWrite, data)
 }
 
-// SendCustomDataToPsdk 通过自定义数据透传通道向 PSDK 负载发送数据。
-// 使用 custom_data_transmission_to_psdk 方法和 CustomDataTransmissionData 结构体。
+// SendCustomDataToPsdk 自定义数据透传至 PSDK 负载设备。
+// 方向 down：云平台→设备（Services），对应 method: custom_data_transmission_to_psdk。
+// 上行方向 custom_data_transmission_from_psdk 通过 OnCustomDataFromPsdk 钩子处理。
 //   - ctx: 请求上下文
 //   - gatewaySn: 网关设备序列号
-//   - value: 要透传的自定义数据内容
+//   - value: 自定义透传数据内容，长度应小于 256 字符
 //   - 返回值 tid: 本次请求的事务 ID
 //   - 返回值 err: 命令发送或设备返回错误时的错误信息
 func (c *Client) SendCustomDataToPsdk(ctx context.Context, gatewaySn, value string) (string, error) {

@@ -24,11 +24,18 @@ func NewSendCustomDataToPsdkLogic(ctx context.Context, svcCtx *svc.ServiceContex
 }
 
 func (l *SendCustomDataToPsdkLogic) SendCustomDataToPsdk(in *djigateway.CustomDataToPsdkReq) (*djigateway.CommonRes, error) {
-	l.Infof("[psdk-custom] device_sn=%s value_len=%d", in.DeviceSn, len(in.Value))
+	l.Infof("[psdk-transmit] sn=%s value_len=%d", in.DeviceSn, len(in.Value))
+
+	if len(in.Value) >= 256 {
+		return &djigateway.CommonRes{
+			Code:    -1,
+			Message: "value length must be less than 256",
+		}, nil
+	}
 
 	tid, err := l.svcCtx.DjiClient.SendCustomDataToPsdk(l.ctx, in.DeviceSn, in.Value)
 	if err != nil {
-		l.Errorf("[psdk-custom] send failed: %v", err)
+		l.Errorf("[psdk-transmit] send failed: %v", err)
 		return &djigateway.CommonRes{
 			Code:    -1,
 			Message: err.Error(),
