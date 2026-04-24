@@ -103,11 +103,8 @@
 
 | 编号 | 优先级 | 需求描述 | 来源 | 状态 | Sprint | 备注 |
 | --- | --- | --- | --- | --- | --- | --- |
-| B-009 | Must | Dock3 全量 gRPC 接口暴露 — 远程调试（15个 RPC：debug_mode/cover/drone/charge/format/light/battery/alarm/airconditioner） | 需求输入.md | 已完成 | S6 | SDK 已有，proto 未暴露 |
-| B-010 | Must | Dock3 全量 gRPC 接口暴露 — 相机/云台控制（6个 RPC：camera_mode/photo/recording/focal_length/gimbal_reset） | 需求输入.md | 已完成 | S6 | SDK 已有，proto 未暴露 |
-| B-011 | Must | Dock3 全量 gRPC 接口暴露 — 直播管理（3个 RPC：live_start/stop/quality） | 需求输入.md | 已完成 | S6 | SDK 已有，proto 未暴露 |
-| B-012 | Must | Dock3 全量 gRPC 接口暴露 — 航线管理补充（4个 RPC：cancel/pause/resume/withOptions） | 需求输入.md | 已完成 | S6 | SDK 已有，proto 未暴露 |
-| B-013 | Should | Dock3 全量 gRPC 接口暴露 — 通用属性设置（1个 RPC：SetProperty） | 需求输入.md | 已完成 | S6 | SDK 已有，proto 未暴露 |
+| B-014 | Must | gRPC 错误码优化 — 引入 DJIErrorCode 枚举，SendCommand 返回设备错误时在 CommonRes 中携带原始错误码 + 枚举中文描述，调用方可感知具体 DJI 错误 | 需求输入.md | 开发中 | S7 | SDK 层改造 SendCommand + errorcode 包 |
+| B-015 | Must | 机巢在线状态管理 — SDK 订阅 sys/product/+/status 主题 + onStatus 钩子；业务层用 go-zero cache 标记机巢在线（Status 主判断 + OSD 心跳辅助超时）；下发命令前校验在线状态，离线快速拒绝 | 需求输入.md | 开发中 | S7 | Status 主题 + OSD 辅助心跳 + 在线拦截 |
 
 ---
 
@@ -125,3 +122,8 @@
 | B-006 | 修复 MQTT 消息分发 topicTemplate 匹配错误：`topicTemplateFromMsg` 返回完整主题而非订阅通配模板，导致 dispatcher 匹配失败，所有通配订阅消息被静默丢弃 | S4 | - |
 | B-007 | PSDK 透传接口规范化：按 DJI Cloud API 官方文档规范 gRPC 接口命名与注释，proto/Logic/SDK 方法全面规范化，Logic 层新增 value 长度校验 | S5 | - |
 | B-008 | 钩子日志规范化：SDK 层 HandleEvents 移除空值 gateway 字段，业务钩子层 device=/gateway= 统一为 sn=，7 个钩子文件全部对齐 | S5 | - |
+| B-009 | Dock3 全量 gRPC 接口暴露 — 远程调试（15个 RPC） | S6 | 2026-04-24 |
+| B-010 | Dock3 全量 gRPC 接口暴露 — 相机/云台控制（6个 RPC） | S6 | 2026-04-24 |
+| B-011 | Dock3 全量 gRPC 接口暴露 — 直播管理（3个 RPC） | S6 | 2026-04-24 |
+| B-012 | Dock3 全量 gRPC 接口暴露 — 航线管理补充（4个 RPC） | S6 | 2026-04-24 |
+| B-013 | Dock3 全量 gRPC 接口暴露 — 通用属性设置（1个 RPC：SetProperty） | S6 | 2026-04-24 |
