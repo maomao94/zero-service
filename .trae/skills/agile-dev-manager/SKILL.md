@@ -54,62 +54,108 @@ AI   = 开发团队    —— 自动闭环执行，主动汇报进展
 ⑤ 读取 CP-开发流程/{项目名}/ 下的文档体系（开发计划 + Backlog + 任务清单）
 ```
 
-### 完整闭环流程图
+### 完整闭环流程图（含门禁 + 退出清单）
 
 ```
 老板提出需求（需求输入.md / Backlog便签 / 一句话 / 补充文档）
         ↓
 ┌──────────────────────────────────────────────────────┐
-│  Phase 0: 会话启动（自动执行）                          │
+│  Phase 0: 会话启动（自动执行，MUST 不可跳过）          │
 │  ① /start 加载项目上下文                               │
 │  ② 读取 .trellis/spec/ 规范                           │
 │  ③ 读取 .trellis/workspace/boss/ 最近会话             │
 │  ④ 读取 CP-开发流程 文档体系                           │
+│                                                        │
+│  ✅ 退出清单（全部满足才能进入 Phase 1）：               │
+│  □ get_context.py 已执行                               │
+│  □ spec/backend/index.md 已读取                        │
+│  □ coding-standards.md + go-zero-conventions.md 已读取 │
+│  □ workspace/boss/journal 已读取                       │
+│  □ CP-开发流程/{项目}/ 五个核心文件已读取               │
 ├──────────────────────────────────────────────────────┤
 │  Phase 1: Planning（自动调度 PM）                       │
+│  入口门禁：Phase 0 退出清单全部 ✅                      │
+│                                                        │
 │  ① 读取项目上下文（架构设计文档 + Backlog）              │
 │  ② PM 读取需求输入（需求输入.md + 便签 + 补充文档）     │
-│  ③ PM 执行 Trellis /brainstorm 探索需求               │
-│  ④ PM 对模糊想法执行需求澄清（WHY/WHO/WHAT/HOW）       │
-│  ⑤ PM 将需求结构化为 Epic → Story                     │
-│  ⑥ PM 执行依赖分析和里程碑规划（首次项目时）             │
-│  ⑦ PM 评估优先级，规划 Sprint 范围                     │
-│  ⑧ 拆解 Story → Task，写入任务清单                     │
-│  ⑨ PM 执行 Trellis /before-dev 为 Task 准备编码上下文  │
-│  ⑩ 【汇报】向老板汇报 Sprint 计划，请求确认              │
+│  ③ PM 需求分析（WHY/WHO/WHAT/HOW）                    │
+│  ④ PM 将需求结构化为 Epic → Story                     │
+│  ⑤ PM 评估优先级，规划 Sprint 范围                     │
+│  ⑥ 拆解 Story → Task，写入任务清单                     │
+│  ⑦ 【更新文档】Backlog.md + 任务清单.md + 需求输入处理记录│
+│  ⑧ 【汇报】向老板汇报 Sprint 计划，请求确认              │
+│                                                        │
+│  ✅ 退出清单（全部满足才能进入 Phase 2）：               │
+│  □ Backlog.md 已更新（新增条目 + 状态标记）              │
+│  □ 任务清单.md 已更新（Sprint 任务表已写入）             │
+│  □ 需求输入.md 处理记录已追加                           │
+│  □ 归档条件已检查（Sprint >= 4 则归档）                 │
+│  □ Sprint 计划已向老板汇报                              │
 ├──────────────────────────────────────────────────────┤
 │  Phase 2: Execute（自动调度 Backend / Frontend）        │
-│  ① 编码前注入规范（before-dev）：                         │
+│  入口门禁：Phase 1 退出清单全部 ✅ + 老板确认           │
+│                                                        │
+│  ① 编码前规范注入（MUST 先执行）：                       │
 │    python3 ./.trellis/scripts/get_context.py --mode packages│
 │    读取 spec index 的 Pre-Development Checklist            │
 │  ② 检索项目代码，理解现有架构                           │
-│  ③ 复杂 Task 触发 Plan 模式（技术方案先行）             │
-│  ④ 逐 Task 执行：编码 → 编译验证 → 标记完成            │
-│  ⑤ 编码后质量检查（check）：                             │
+│  ③ 逐 Task 执行：编码 → 编译验证 → 标记完成            │
+│  ④ 编码后质量检查（MUST 在编码完成后立即执行）：         │
 │    git diff --name-only HEAD                              │
 │    读取 spec 的 Quality Check 节逐项验证                  │
-│  ⑥ 每个 Task 完成后立即回填变更记录                     │
-│  ⑦ 遇到阻塞时标记 ❌ 并主动报告                        │
-│  ⑧ 发现可沉淀的规范时触发 Spec 模式                    │
+│  ⑤ 每个 Task 完成后立即回填变更记录                     │
+│                                                        │
+│  ✅ 退出清单（全部满足才能进入 Phase 3）：               │
+│  □ spec Pre-Development Checklist 已读取并遵循          │
+│  □ 全部 Task 已标记完成（任务清单已更新）               │
+│  □ go build ./... 编译通过                               │
+│  □ 变更记录.md 已回填                                   │
 ├──────────────────────────────────────────────────────┤
 │  Phase 3: Review（自动调度 QA）                         │
+│  入口门禁：Phase 2 退出清单全部 ✅                      │
+│                                                        │
 │  ① 确认所有 Task 满足 DoD                             │
 │  ② 编译验证：go build ./... + go mod tidy + go vet    │
-│  ③ 运行单元测试：go test ./...                        │
-│  ④ 质量检查（check）：                                  │
+│  ③ 运行单元测试：go test ./...（如有）                 │
+│  ④ 质量检查（按 spec Quality Check 节逐项审查）：       │
 │    git diff --name-only HEAD                            │
-│    读取 spec 的 Quality Check 节逐项审查                │
+│    □ 编译通过 □ 依赖清洁 □ 静态分析                     │
+│    □ proto/api 注释完整 □ 命名规范                      │
+│    □ 无 Java 风格 □ 无跳过 gen.sh                      │
+│                                                        │
+│  ✅ 退出清单（全部满足才能进入 Phase 4）：               │
+│  □ go build ./... 通过                                  │
+│  □ go mod tidy 通过                                     │
+│  □ go vet ./... 通过（本模块零警告）                    │
+│  □ Quality Check 全部项目 ✅                            │
 ├──────────────────────────────────────────────────────┤
 │  Phase 4: Retro（自动调度 PM）                          │
-│  ① 执行 Trellis /finish-work 完成前检查               │
-│  ② 更新 Backlog 状态（标记已完成条目）                  │
-│  ③ 检查是否触发归档条件                                │
-│  ④ 识别遗留问题，追加到 Backlog                        │
-│  ⑤ 更新需求输入.md 处理记录                            │
-│  ⑥ 执行 Trellis /record-session 记录本次会话           │
-│  ⑦ 【汇报】向老板提交 Sprint 交付报告                   │
+│  入口门禁：Phase 3 退出清单全部 ✅                      │
+│                                                        │
+│  ① 更新 Backlog 状态（标记已完成条目）                  │
+│  ② 检查是否触发归档条件                                │
+│  ③ 识别遗留问题，追加到 Backlog                        │
+│  ④ 更新需求输入.md 处理记录（如 Phase 1 未完成）        │
+│  ⑤ 记录会话到 workspace journal                        │
+│  ⑥ 【汇报】向老板提交 Sprint 交付报告                   │
+│                                                        │
+│  ✅ 退出清单（全部满足才能结束 Sprint）：                │
+│  □ Backlog 状态已更新为"已完成"                         │
+│  □ 归档条件已检查                                       │
+│  □ workspace journal 已写入会话记录                     │
+│  □ Sprint 交付报告已输出                                │
 └──────────────────────────────────────────────────────┘
 ```
+
+> **自检输出格式**：每个 Phase 完成时，MUST 按以下格式输出自检结果：
+>
+> ```
+> 【Phase {N} 退出自检】
+> ✅ {检查项1}
+> ✅ {检查项2}
+> ❌ {检查项3} → {补救措施}
+> → 全部 ✅，进入 Phase {N+1}
+> ```
 
 ### 角色自动调度矩阵
 

@@ -2,11 +2,39 @@
 
 > Trellis 工具的命令、自动触发、会话记忆规范。Sprint 敏捷流程详见 `agile-dev-manager` 技能。
 
-## 编码三段式
+## 编码三段式（门禁版）
 
-1. **编码前**：读 `.trellis/spec/` 规范 → 检索项目代码 → 确认技术栈
-2. **编码中**：遵循规范 → `zero-skills` 获取框架知识 → 复用现有组件
-3. **编码后**：`go build` → 工具类单测 → proto/api 注释检查
+> 每个阶段 MUST 完成，NEVER 跳过。违反此规则等同于违反零号法则。
+
+### 1. 编码前（MUST 先执行，否则不准写代码）
+
+```bash
+python3 ./.trellis/scripts/get_context.py
+python3 ./.trellis/scripts/get_context.py --mode packages
+cat .trellis/spec/backend/index.md
+cat .trellis/spec/coding-standards.md
+cat .trellis/spec/go-zero-conventions.md
+```
+
+**自检**：读完 Pre-Development Checklist 后，内心确认"我知道该遵守什么规范"。
+
+### 2. 编码中
+
+- 遵循 spec 规范
+- 需要 go-zero 框架知识时激活 `zero-skills` 技能
+- 复用 `common/` 下现有组件
+- 先改 `.api`/`.proto` → 执行 `gen.sh` → 写 Logic
+
+### 3. 编码后（MUST 在写完最后一行代码后立即执行）
+
+```bash
+go build ./...
+go mod tidy
+go vet ./...
+git diff --name-only HEAD
+```
+
+然后对照 spec Quality Check 节逐项验证。MUST 输出验证结果。
 
 ## Trellis 命令
 
