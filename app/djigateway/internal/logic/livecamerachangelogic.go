@@ -27,7 +27,7 @@ func NewLiveCameraChangeLogic(ctx context.Context, svcCtx *svc.ServiceContext) *
 func (l *LiveCameraChangeLogic) LiveCameraChange(in *djigateway.LiveCameraChangeReq) (*djigateway.CommonRes, error) {
 	data := &djisdk.LiveCameraChangeData{
 		VideoID:     in.VideoId,
-		CameraIndex: in.CameraPosition,
+		CameraIndex: in.CameraIndex,
 	}
 	tid, err := l.svcCtx.DjiClient.LiveCameraChange(l.ctx, in.DeviceSn, data)
 	if err != nil {

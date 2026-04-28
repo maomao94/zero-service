@@ -2,10 +2,15 @@ package djisdk
 
 import "fmt"
 
+// MQTT Topic 与方向说明以 [Topic 总览](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html) 为准。
+// 本包运行于**上云/云平台侧**（或对接云平台的网关服务）：对 thing/product/{gateway_sn} 的 **Publish** 多为**云 → 设备** 下发；**通配订阅 +** 多为**收设备 → 云** 的上行。
+// 物模型**属性设置**（property/set）仅表示**云平台向设备写入可写属性**；**不是**设备向云「设置」属性。设备侧执行结果经 **property/set_reply** 回云（与 services 的 reply 成对思想一致）。
+// **DRC 通道**（见下方 DRC 小节）：**drc/down** 为云→设备高频飞控/杆量，**drc/up** 为设备→云通道内状态/回传；**drc_mode_enter / drc_mode_exit** 在协议上走 **thing/.../services** + **services_reply**，不是 drc/* 子路径。
+
 // ==================== Thing Topic ====================
 //
 // Thing Topic 用于设备物模型相关的消息通信，包括遥测数据上报、
-// 云端服务下发、设备事件上报、设备属性请求等。
+// 云端服务下发、设备事件上报等。
 // 基础路径格式: thing/product/{gateway_sn}/{channel}
 
 // OsdTopic 返回设备遥测数据（OSD）上报 Topic。
@@ -49,14 +54,6 @@ func ServicesTopic(gatewaySn string) string {
 	return fmt.Sprintf("thing/product/%s/services", gatewaySn)
 }
 
-// ServicesReplyTopic 返回设备响应服务调用的 Topic。
-// 路径格式: thing/product/{gateway_sn}/services_reply
-// 方向: 设备 → 云平台
-// 用途: 设备在处理完云平台下发的 services 指令后，通过此 Topic 返回执行结果。
-func ServicesReplyTopic(gatewaySn string) string {
-	return fmt.Sprintf("thing/product/%s/services_reply", gatewaySn)
-}
-
 // ServicesReplyTopicPattern 返回 ServicesReply Topic 的通配订阅模式。
 // 路径格式: thing/product/+/services_reply
 // 方向: 设备 → 云平台（云平台侧订阅）
@@ -89,65 +86,45 @@ func EventsReplyTopic(gatewaySn string) string {
 	return fmt.Sprintf("thing/product/%s/events_reply", gatewaySn)
 }
 
-// RequestsTopic 返回设备自定义请求上报 Topic。
-// 路径格式: thing/product/{gateway_sn}/requests
-// 方向: 设备 → 云平台
-// 用途: 设备主动向云平台发起请求（如配置拉取、临时凭证获取等），
-// 需要云平台通过 requests_reply 进行响应。
-func RequestsTopic(gatewaySn string) string {
-	return fmt.Sprintf("thing/product/%s/requests", gatewaySn)
-}
+// ==================== Organization / Requests（设备主动请求，组织见文档） ====================
+// 大疆上云 [Requests 说明](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/organization.html)。
+// 与 thing/.../services 云下发行不同；此处为**设备**经 requests 要数据/要能力，云经 requests_reply 回包（data 字段以协议与 method 为准）。
 
-// RequestsTopicPattern 返回 Requests Topic 的通配订阅模式。
+// RequestsTopicPattern 返回通配订阅 device→cloud 的 requests 上行主题。
 // 路径格式: thing/product/+/requests
-// 方向: 设备 → 云平台（云平台侧订阅）
-// 用途: 云平台使用该模式订阅所有网关设备的请求消息。
 func RequestsTopicPattern() string {
 	return "thing/product/+/requests"
 }
 
-// RequestsReplyTopic 返回云平台对设备请求的响应 Topic。
+// RequestsReplyTopic 返回 cloud→device 的 requests 应答主题。
 // 路径格式: thing/product/{gateway_sn}/requests_reply
-// 方向: 云平台 → 设备
-// 用途: 云平台在收到设备 requests 消息后，通过此 Topic 下发响应数据。
+// 见协议中 requests_reply 报文体（与 ServiceReply 等常见同形，以官方示例为准）。
 func RequestsReplyTopic(gatewaySn string) string {
 	return fmt.Sprintf("thing/product/%s/requests_reply", gatewaySn)
 }
 
-// ==================== Property Topic ====================
-//
-// Property Topic 用于设备属性的远程设置，
-// 云平台可通过该通道修改设备可写属性（如夜航灯开关、避障距离等）。
-// 基础路径格式: thing/product/{gateway_sn}/property/{channel}
+// ==================== Property（物模型属性，Dock3） ====================
+// [Properties 文档](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/properties.html) 与 [Topic 总览](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html) 中「属性设置」：
+//   - **property/set**：仅 **云平台/本服务 → 目标设备**（`gateway_sn` 为机场/网关等），**Publish** 下发可写物模型键值对。
+//   - **property/set_reply**：**设备 → 云平台**，设备对此次属性写入的执行结果；云平台侧用 **通配 +** **Subscribe** 接收（与发 set 的同一「云」身份）。
 
-// PropertySetTopic 返回云平台下发属性设置的 Topic。
+// PropertySetTopic 返回**云平台向设备**下发属性修改的 Topic（仅云→设备，勿反向理解）。
 // 路径格式: thing/product/{gateway_sn}/property/set
-// 方向: 云平台 → 设备
-// 用途: 云平台向网关设备下发属性修改指令，设置设备可写属性值。
+// 由 SetProperty 使用 ServiceRequest+MethodPropertySet 发布，载荷为待写入属性，见 SetProperty。
 func PropertySetTopic(gatewaySn string) string {
 	return fmt.Sprintf("thing/product/%s/property/set", gatewaySn)
 }
 
-// PropertySetReplyTopic 返回设备响应属性设置的 Topic。
-// 路径格式: thing/product/{gateway_sn}/property/set_reply
-// 方向: 设备 → 云平台
-// 用途: 设备在处理完属性设置指令后，通过此 Topic 返回设置结果。
-func PropertySetReplyTopic(gatewaySn string) string {
-	return fmt.Sprintf("thing/product/%s/property/set_reply", gatewaySn)
-}
-
-// PropertySetReplyTopicPattern 返回 PropertySetReply Topic 的通配订阅模式。
+// PropertySetReplyTopicPattern 返回**设备对 property/set 的应答**通配（设备 → 云，云侧订阅）。
 // 路径格式: thing/product/+/property/set_reply
-// 方向: 设备 → 云平台（云平台侧订阅）
-// 用途: 云平台使用该模式订阅所有网关设备的属性设置响应。
 func PropertySetReplyTopicPattern() string {
 	return "thing/product/+/property/set_reply"
 }
 
-// ==================== Sys Topic ====================
+// ==================== Sys Topic（设备/系统级状态，见设备文档） ====================
 //
-// Sys Topic 用于设备上下线管理和拓扑关系维护，
-// 属于系统级通道，独立于物模型业务。
+// 大疆上云 [Status / 设备与上下线等](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/device.html)。
+// 与 thing 下物模型通道并列；在离线、拓扑等走 sys/product/.../status，云回 status_reply。
 // 基础路径格式: sys/product/{gateway_sn}/{channel}
 
 // StatusTopic 返回设备上下线状态上报 Topic。
@@ -174,32 +151,24 @@ func StatusReplyTopic(gatewaySn string) string {
 	return fmt.Sprintf("sys/product/%s/status_reply", gatewaySn)
 }
 
-// ==================== DRC Topic ====================
-//
-// DRC（Device Remote Control）Topic 用于设备远程实时控制，
-// 通过低延迟双向通道实现飞行器的实时遥控操作（如虚拟摇杆、云台控制等）。
-// 基础路径格式: thing/product/{gateway_sn}/drc/{direction}
+// ==================== DRC（指令飞行 / 实时控制） ====================
+// DRC 使用独立于 services 的实时通道：drc/down 为云平台下发，drc/up 为设备回传。
+// drc_mode_enter、drc_mode_exit、飞行控制权等仍走 services + services_reply。
 
-// DrcUpTopic 返回设备上行 DRC 消息 Topic。
+// DrcUpTopic 返回设备经 drc/up 上报的 Topic。
 // 路径格式: thing/product/{gateway_sn}/drc/up
-// 方向: 设备 → 云平台
-// 用途: 设备通过此 Topic 上报 DRC 通道的遥控响应数据和状态反馈（如控制权状态、心跳等）。
 func DrcUpTopic(gatewaySn string) string {
 	return fmt.Sprintf("thing/product/%s/drc/up", gatewaySn)
 }
 
-// DrcUpTopicPattern 返回 DRC Up Topic 的通配订阅模式。
+// DrcUpTopicPattern 返回 drc/up 通配订阅模式。
 // 路径格式: thing/product/+/drc/up
-// 方向: 设备 → 云平台（云平台侧订阅）
-// 用途: 云平台使用该模式订阅所有网关设备的 DRC 上行消息。
 func DrcUpTopicPattern() string {
 	return "thing/product/+/drc/up"
 }
 
-// DrcDownTopic 返回云平台下行 DRC 控制指令 Topic。
+// DrcDownTopic 返回云平台经 drc/down 下发实时控制消息的 Topic。
 // 路径格式: thing/product/{gateway_sn}/drc/down
-// 方向: 云平台 → 设备
-// 用途: 云平台通过此 Topic 向设备下发实时遥控指令（如虚拟摇杆、云台角度、相机操作等）。
 func DrcDownTopic(gatewaySn string) string {
 	return fmt.Sprintf("thing/product/%s/drc/down", gatewaySn)
 }

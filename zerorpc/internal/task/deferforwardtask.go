@@ -80,7 +80,7 @@ func (l *DeferForwardTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task
 					DateTime:    carbon.Now().Format("Y-m-d H:i:s"),
 					AlarmId:     msg.MsgId,
 					Content:     fmt.Sprintf("%s,转发任务执行失败", traceID),
-					Error:       fmt.Sprintf(fmt.Sprintf("processTask-%s, code:%d, url:%s", t.Type(), resp.StatusCode, msg.Url)),
+					Error:       fmt.Sprintf("processTask-%s, code:%d, url:%s", t.Type(), resp.StatusCode, msg.Url),
 					Ip:          netx.InternalIp(),
 				})
 				if alarmErr != nil {

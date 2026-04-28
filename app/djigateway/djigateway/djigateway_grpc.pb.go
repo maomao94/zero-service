@@ -19,69 +19,80 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	DjiGateway_Ping_FullMethodName                         = "/djigateway.DjiGateway/Ping"
-	DjiGateway_ExecuteFlightTask_FullMethodName            = "/djigateway.DjiGateway/ExecuteFlightTask"
-	DjiGateway_ExecuteFlightTaskWithOptions_FullMethodName = "/djigateway.DjiGateway/ExecuteFlightTaskWithOptions"
-	DjiGateway_CancelFlightTask_FullMethodName             = "/djigateway.DjiGateway/CancelFlightTask"
-	DjiGateway_PauseFlightTask_FullMethodName              = "/djigateway.DjiGateway/PauseFlightTask"
-	DjiGateway_ResumeFlightTask_FullMethodName             = "/djigateway.DjiGateway/ResumeFlightTask"
-	DjiGateway_StopFlightTask_FullMethodName               = "/djigateway.DjiGateway/StopFlightTask"
-	DjiGateway_ReturnHome_FullMethodName                   = "/djigateway.DjiGateway/ReturnHome"
-	DjiGateway_ReturnHomeCancelAutoReturn_FullMethodName   = "/djigateway.DjiGateway/ReturnHomeCancelAutoReturn"
-	DjiGateway_ReturnSpecificHome_FullMethodName           = "/djigateway.DjiGateway/ReturnSpecificHome"
-	DjiGateway_SendCustomDataToPsdk_FullMethodName         = "/djigateway.DjiGateway/SendCustomDataToPsdk"
-	DjiGateway_FlightAuthorityGrab_FullMethodName          = "/djigateway.DjiGateway/FlightAuthorityGrab"
-	DjiGateway_PayloadAuthorityGrab_FullMethodName         = "/djigateway.DjiGateway/PayloadAuthorityGrab"
-	DjiGateway_DrcModeEnter_FullMethodName                 = "/djigateway.DjiGateway/DrcModeEnter"
-	DjiGateway_DrcModeExit_FullMethodName                  = "/djigateway.DjiGateway/DrcModeExit"
-	DjiGateway_SendDrcCommand_FullMethodName               = "/djigateway.DjiGateway/SendDrcCommand"
-	DjiGateway_DroneEmergencyStop_FullMethodName           = "/djigateway.DjiGateway/DroneEmergencyStop"
-	DjiGateway_FlyToPoint_FullMethodName                   = "/djigateway.DjiGateway/FlyToPoint"
-	DjiGateway_FlyToPointStop_FullMethodName               = "/djigateway.DjiGateway/FlyToPointStop"
-	DjiGateway_TakeoffToPoint_FullMethodName               = "/djigateway.DjiGateway/TakeoffToPoint"
-	DjiGateway_SimulateMission_FullMethodName              = "/djigateway.DjiGateway/SimulateMission"
-	DjiGateway_DebugModeOpen_FullMethodName                = "/djigateway.DjiGateway/DebugModeOpen"
-	DjiGateway_DebugModeClose_FullMethodName               = "/djigateway.DjiGateway/DebugModeClose"
-	DjiGateway_CoverOpen_FullMethodName                    = "/djigateway.DjiGateway/CoverOpen"
-	DjiGateway_CoverClose_FullMethodName                   = "/djigateway.DjiGateway/CoverClose"
-	DjiGateway_CoverForceClose_FullMethodName              = "/djigateway.DjiGateway/CoverForceClose"
-	DjiGateway_DroneOpen_FullMethodName                    = "/djigateway.DjiGateway/DroneOpen"
-	DjiGateway_DroneClose_FullMethodName                   = "/djigateway.DjiGateway/DroneClose"
-	DjiGateway_DeviceReboot_FullMethodName                 = "/djigateway.DjiGateway/DeviceReboot"
-	DjiGateway_ChargeOpen_FullMethodName                   = "/djigateway.DjiGateway/ChargeOpen"
-	DjiGateway_ChargeClose_FullMethodName                  = "/djigateway.DjiGateway/ChargeClose"
-	DjiGateway_DroneFormat_FullMethodName                  = "/djigateway.DjiGateway/DroneFormat"
-	DjiGateway_DeviceFormat_FullMethodName                 = "/djigateway.DjiGateway/DeviceFormat"
-	DjiGateway_SupplementLightOpen_FullMethodName          = "/djigateway.DjiGateway/SupplementLightOpen"
-	DjiGateway_SupplementLightClose_FullMethodName         = "/djigateway.DjiGateway/SupplementLightClose"
-	DjiGateway_BatteryStoreModeSwitchSwitch_FullMethodName = "/djigateway.DjiGateway/BatteryStoreModeSwitchSwitch"
-	DjiGateway_AlarmStateSwitch_FullMethodName             = "/djigateway.DjiGateway/AlarmStateSwitch"
-	DjiGateway_AirConditionerModeSwitch_FullMethodName     = "/djigateway.DjiGateway/AirConditionerModeSwitch"
-	DjiGateway_BatteryMaintenanceSwitch_FullMethodName     = "/djigateway.DjiGateway/BatteryMaintenanceSwitch"
-	DjiGateway_CameraModeSwitch_FullMethodName             = "/djigateway.DjiGateway/CameraModeSwitch"
-	DjiGateway_CameraPhotoTake_FullMethodName              = "/djigateway.DjiGateway/CameraPhotoTake"
-	DjiGateway_CameraPhotoStop_FullMethodName              = "/djigateway.DjiGateway/CameraPhotoStop"
-	DjiGateway_CameraRecordingStart_FullMethodName         = "/djigateway.DjiGateway/CameraRecordingStart"
-	DjiGateway_CameraRecordingStop_FullMethodName          = "/djigateway.DjiGateway/CameraRecordingStop"
-	DjiGateway_CameraFocalLengthSet_FullMethodName         = "/djigateway.DjiGateway/CameraFocalLengthSet"
-	DjiGateway_GimbalReset_FullMethodName                  = "/djigateway.DjiGateway/GimbalReset"
-	DjiGateway_CameraAim_FullMethodName                    = "/djigateway.DjiGateway/CameraAim"
-	DjiGateway_CameraPointFocusAction_FullMethodName       = "/djigateway.DjiGateway/CameraPointFocusAction"
-	DjiGateway_CameraScreenSplit_FullMethodName            = "/djigateway.DjiGateway/CameraScreenSplit"
-	DjiGateway_CameraPhotoStorageSet_FullMethodName        = "/djigateway.DjiGateway/CameraPhotoStorageSet"
-	DjiGateway_CameraVideoStorageSet_FullMethodName        = "/djigateway.DjiGateway/CameraVideoStorageSet"
-	DjiGateway_CameraLookAt_FullMethodName                 = "/djigateway.DjiGateway/CameraLookAt"
-	DjiGateway_CameraScreenDrag_FullMethodName             = "/djigateway.DjiGateway/CameraScreenDrag"
-	DjiGateway_CameraIrMeteringPoint_FullMethodName        = "/djigateway.DjiGateway/CameraIrMeteringPoint"
-	DjiGateway_CameraIrMeteringArea_FullMethodName         = "/djigateway.DjiGateway/CameraIrMeteringArea"
-	DjiGateway_LiveStartPush_FullMethodName                = "/djigateway.DjiGateway/LiveStartPush"
-	DjiGateway_LiveStopPush_FullMethodName                 = "/djigateway.DjiGateway/LiveStopPush"
-	DjiGateway_LiveSetQuality_FullMethodName               = "/djigateway.DjiGateway/LiveSetQuality"
-	DjiGateway_LiveLensChange_FullMethodName               = "/djigateway.DjiGateway/LiveLensChange"
-	DjiGateway_LiveCameraChange_FullMethodName             = "/djigateway.DjiGateway/LiveCameraChange"
-	DjiGateway_SetProperty_FullMethodName                  = "/djigateway.DjiGateway/SetProperty"
-	DjiGateway_OtaCreate_FullMethodName                    = "/djigateway.DjiGateway/OtaCreate"
-	DjiGateway_IsDeviceOnline_FullMethodName               = "/djigateway.DjiGateway/IsDeviceOnline"
+	DjiGateway_Ping_FullMethodName                                 = "/djigateway.DjiGateway/Ping"
+	DjiGateway_FlightTaskPrepare_FullMethodName                    = "/djigateway.DjiGateway/FlightTaskPrepare"
+	DjiGateway_FlightTaskExecute_FullMethodName                    = "/djigateway.DjiGateway/FlightTaskExecute"
+	DjiGateway_CancelFlightTask_FullMethodName                     = "/djigateway.DjiGateway/CancelFlightTask"
+	DjiGateway_PauseFlightTask_FullMethodName                      = "/djigateway.DjiGateway/PauseFlightTask"
+	DjiGateway_ResumeFlightTask_FullMethodName                     = "/djigateway.DjiGateway/ResumeFlightTask"
+	DjiGateway_StopFlightTask_FullMethodName                       = "/djigateway.DjiGateway/StopFlightTask"
+	DjiGateway_ReturnHome_FullMethodName                           = "/djigateway.DjiGateway/ReturnHome"
+	DjiGateway_ReturnHomeCancelAutoReturn_FullMethodName           = "/djigateway.DjiGateway/ReturnHomeCancelAutoReturn"
+	DjiGateway_ReturnSpecificHome_FullMethodName                   = "/djigateway.DjiGateway/ReturnSpecificHome"
+	DjiGateway_SendPsdkCommand_FullMethodName                      = "/djigateway.DjiGateway/SendPsdkCommand"
+	DjiGateway_SendCustomDataToPsdk_FullMethodName                 = "/djigateway.DjiGateway/SendCustomDataToPsdk"
+	DjiGateway_FlightAuthorityGrab_FullMethodName                  = "/djigateway.DjiGateway/FlightAuthorityGrab"
+	DjiGateway_PayloadAuthorityGrab_FullMethodName                 = "/djigateway.DjiGateway/PayloadAuthorityGrab"
+	DjiGateway_DrcModeEnter_FullMethodName                         = "/djigateway.DjiGateway/DrcModeEnter"
+	DjiGateway_DrcModeExit_FullMethodName                          = "/djigateway.DjiGateway/DrcModeExit"
+	DjiGateway_SendDrcStickControl_FullMethodName                  = "/djigateway.DjiGateway/SendDrcStickControl"
+	DjiGateway_SendDrcHeartBeat_FullMethodName                     = "/djigateway.DjiGateway/SendDrcHeartBeat"
+	DjiGateway_DrcChannelDroneEmergencyStop_FullMethodName         = "/djigateway.DjiGateway/DrcChannelDroneEmergencyStop"
+	DjiGateway_DroneEmergencyStop_FullMethodName                   = "/djigateway.DjiGateway/DroneEmergencyStop"
+	DjiGateway_FlyToPoint_FullMethodName                           = "/djigateway.DjiGateway/FlyToPoint"
+	DjiGateway_FlyToPointStop_FullMethodName                       = "/djigateway.DjiGateway/FlyToPointStop"
+	DjiGateway_TakeoffToPoint_FullMethodName                       = "/djigateway.DjiGateway/TakeoffToPoint"
+	DjiGateway_DebugModeOpen_FullMethodName                        = "/djigateway.DjiGateway/DebugModeOpen"
+	DjiGateway_DebugModeClose_FullMethodName                       = "/djigateway.DjiGateway/DebugModeClose"
+	DjiGateway_CoverOpen_FullMethodName                            = "/djigateway.DjiGateway/CoverOpen"
+	DjiGateway_CoverClose_FullMethodName                           = "/djigateway.DjiGateway/CoverClose"
+	DjiGateway_CoverForceClose_FullMethodName                      = "/djigateway.DjiGateway/CoverForceClose"
+	DjiGateway_DroneOpen_FullMethodName                            = "/djigateway.DjiGateway/DroneOpen"
+	DjiGateway_DroneClose_FullMethodName                           = "/djigateway.DjiGateway/DroneClose"
+	DjiGateway_DeviceReboot_FullMethodName                         = "/djigateway.DjiGateway/DeviceReboot"
+	DjiGateway_ChargeOpen_FullMethodName                           = "/djigateway.DjiGateway/ChargeOpen"
+	DjiGateway_ChargeClose_FullMethodName                          = "/djigateway.DjiGateway/ChargeClose"
+	DjiGateway_DroneFormat_FullMethodName                          = "/djigateway.DjiGateway/DroneFormat"
+	DjiGateway_DeviceFormat_FullMethodName                         = "/djigateway.DjiGateway/DeviceFormat"
+	DjiGateway_SupplementLightOpen_FullMethodName                  = "/djigateway.DjiGateway/SupplementLightOpen"
+	DjiGateway_SupplementLightClose_FullMethodName                 = "/djigateway.DjiGateway/SupplementLightClose"
+	DjiGateway_BatteryStoreModeSwitch_FullMethodName               = "/djigateway.DjiGateway/BatteryStoreModeSwitch"
+	DjiGateway_AlarmStateSwitch_FullMethodName                     = "/djigateway.DjiGateway/AlarmStateSwitch"
+	DjiGateway_AirConditionerModeSwitch_FullMethodName             = "/djigateway.DjiGateway/AirConditionerModeSwitch"
+	DjiGateway_BatteryMaintenanceSwitch_FullMethodName             = "/djigateway.DjiGateway/BatteryMaintenanceSwitch"
+	DjiGateway_CameraModeSwitch_FullMethodName                     = "/djigateway.DjiGateway/CameraModeSwitch"
+	DjiGateway_CameraPhotoTake_FullMethodName                      = "/djigateway.DjiGateway/CameraPhotoTake"
+	DjiGateway_CameraPhotoStop_FullMethodName                      = "/djigateway.DjiGateway/CameraPhotoStop"
+	DjiGateway_CameraRecordingStart_FullMethodName                 = "/djigateway.DjiGateway/CameraRecordingStart"
+	DjiGateway_CameraRecordingStop_FullMethodName                  = "/djigateway.DjiGateway/CameraRecordingStop"
+	DjiGateway_CameraFocalLengthSet_FullMethodName                 = "/djigateway.DjiGateway/CameraFocalLengthSet"
+	DjiGateway_GimbalReset_FullMethodName                          = "/djigateway.DjiGateway/GimbalReset"
+	DjiGateway_CameraAim_FullMethodName                            = "/djigateway.DjiGateway/CameraAim"
+	DjiGateway_CameraPointFocusAction_FullMethodName               = "/djigateway.DjiGateway/CameraPointFocusAction"
+	DjiGateway_CameraScreenSplit_FullMethodName                    = "/djigateway.DjiGateway/CameraScreenSplit"
+	DjiGateway_CameraPhotoStorageSet_FullMethodName                = "/djigateway.DjiGateway/CameraPhotoStorageSet"
+	DjiGateway_CameraVideoStorageSet_FullMethodName                = "/djigateway.DjiGateway/CameraVideoStorageSet"
+	DjiGateway_CameraLookAt_FullMethodName                         = "/djigateway.DjiGateway/CameraLookAt"
+	DjiGateway_CameraScreenDrag_FullMethodName                     = "/djigateway.DjiGateway/CameraScreenDrag"
+	DjiGateway_CameraIrMeteringPoint_FullMethodName                = "/djigateway.DjiGateway/CameraIrMeteringPoint"
+	DjiGateway_CameraIrMeteringArea_FullMethodName                 = "/djigateway.DjiGateway/CameraIrMeteringArea"
+	DjiGateway_LiveStartPush_FullMethodName                        = "/djigateway.DjiGateway/LiveStartPush"
+	DjiGateway_LiveStopPush_FullMethodName                         = "/djigateway.DjiGateway/LiveStopPush"
+	DjiGateway_LiveSetQuality_FullMethodName                       = "/djigateway.DjiGateway/LiveSetQuality"
+	DjiGateway_LiveLensChange_FullMethodName                       = "/djigateway.DjiGateway/LiveLensChange"
+	DjiGateway_LiveCameraChange_FullMethodName                     = "/djigateway.DjiGateway/LiveCameraChange"
+	DjiGateway_MediaUploadFlighttaskMediaPrioritize_FullMethodName = "/djigateway.DjiGateway/MediaUploadFlighttaskMediaPrioritize"
+	DjiGateway_MediaFastUpload_FullMethodName                      = "/djigateway.DjiGateway/MediaFastUpload"
+	DjiGateway_MediaHighestPriorityUploadFlighttask_FullMethodName = "/djigateway.DjiGateway/MediaHighestPriorityUploadFlighttask"
+	DjiGateway_RemoteLogFileList_FullMethodName                    = "/djigateway.DjiGateway/RemoteLogFileList"
+	DjiGateway_RemoteLogFileUploadStart_FullMethodName             = "/djigateway.DjiGateway/RemoteLogFileUploadStart"
+	DjiGateway_RemoteLogFileUploadUpdate_FullMethodName            = "/djigateway.DjiGateway/RemoteLogFileUploadUpdate"
+	DjiGateway_RemoteLogFileUploadCancel_FullMethodName            = "/djigateway.DjiGateway/RemoteLogFileUploadCancel"
+	DjiGateway_ConfigUpdate_FullMethodName                         = "/djigateway.DjiGateway/ConfigUpdate"
+	DjiGateway_SetProperty_FullMethodName                          = "/djigateway.DjiGateway/SetProperty"
+	DjiGateway_OtaCreate_FullMethodName                            = "/djigateway.DjiGateway/OtaCreate"
+	DjiGateway_IsDeviceOnline_FullMethodName                       = "/djigateway.DjiGateway/IsDeviceOnline"
+	DjiGateway_GetFlightTaskProgressLast_FullMethodName            = "/djigateway.DjiGateway/GetFlightTaskProgressLast"
 )
 
 // DjiGatewayClient is the client API for DjiGateway service.
@@ -89,29 +100,30 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // DjiGateway DJI 上云网关服务。
-// 将业务系统的 gRPC 请求转换为 DJI Cloud API MQTT 协议指令，
-// 实现航线任务下发、PSDK 自定义数据透传、指令飞行控制（DRC）等能力。
-// 网关内部通过 MQTT 通配符同时订阅多台机巢，支持并发控制多设备。
+// 将业务侧 gRPC 调用转换为 DJI Cloud API（MQTT）指令，
+// 覆盖航线、PSDK 自定义数据、指令飞行（DRC，含 DRC 杆量 https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E6%9D%86%E9%87%8F%E6%8E%A7%E5%88%B6 ）、直播与机场控制等能力。
+// 通过 MQTT 主题对接机巢网关（gateway_sn），可并行管理多台设备。
 type DjiGatewayClient interface {
 	// Ping 健康检查接口，用于验证服务可用性。
 	Ping(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Res, error)
-	// ExecuteFlightTask 执行航线飞行任务。
-	// 内部依次调用 flighttask_prepare（航线准备）和 flighttask_execute（航线执行），
-	// 等待设备 ACK 后返回结果。
-	ExecuteFlightTask(ctx context.Context, in *FlightTaskReq, opts ...grpc.CallOption) (*CommonRes, error)
-	// ExecuteFlightTaskWithOptions 使用自定义配置执行航线飞行任务。
-	// 允许完全控制航线准备参数（如断点续飞、任务类型、返航高度等），
-	// 内部先 flighttask_prepare 再 flighttask_execute。
-	ExecuteFlightTaskWithOptions(ctx context.Context, in *FlightTaskWithOptionsReq, opts ...grpc.CallOption) (*CommonRes, error)
-	// CancelFlightTask 取消指定的飞行任务。
+	// FlightTaskPrepare 航线任务准备。
+	// 对应 DJI Cloud API method: flighttask_prepare，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	FlightTaskPrepare(ctx context.Context, in *FlightTaskPrepareReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// FlightTaskExecute 航线任务执行。
+	// 对应 DJI Cloud API method: flighttask_execute，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	// flight_id 须与同一次航线任务准备（FlightTaskPrepare）中的 flight_id 一致。
+	FlightTaskExecute(ctx context.Context, in *FlightTaskExecuteReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// CancelFlightTask 取消航线任务。
 	// 对应 DJI Cloud API method: flighttask_undo，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	CancelFlightTask(ctx context.Context, in *CancelFlightTaskReq, opts ...grpc.CallOption) (*CommonRes, error)
-	// PauseFlightTask 暂停当前正在执行的飞行任务。
+	// PauseFlightTask 暂停航线任务。
 	// 对应 DJI Cloud API method: flighttask_pause，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	PauseFlightTask(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
-	// ResumeFlightTask 恢复已暂停的飞行任务。
+	// ResumeFlightTask 恢复已暂停的航线任务。
 	// 对应 DJI Cloud API method: flighttask_recovery，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	ResumeFlightTask(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
@@ -133,6 +145,9 @@ type DjiGatewayClient interface {
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	// https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/cmd.html
 	ReturnSpecificHome(ctx context.Context, in *ReturnSpecificHomeReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// SendPsdkCommand 通过 psdk_write 向 PSDK 负载写入数据。
+	// Topic: thing/product/{gateway_sn}/services，data.payload_index 默认为 "0"，data.data 为 Base64 编码数据。
+	SendPsdkCommand(ctx context.Context, in *PsdkCommandReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// SendCustomDataToPsdk 自定义数据透传至 PSDK 负载设备。
 	// 对应 DJI Cloud API method: custom_data_transmission_to_psdk，
 	// Topic: thing/product/{gateway_sn}/services，方向 down（云平台→设备），
@@ -151,22 +166,28 @@ type DjiGatewayClient interface {
 	PayloadAuthorityGrab(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// DrcModeEnter 进入指令飞行（DRC）模式。
 	// 对应 DJI Cloud API method: drc_mode_enter，
+	// Topic: thing/product/{gateway_sn}/services，设备应答 services_reply，非 drc/* 子路径。
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	// 进入 DRC 模式后，可通过 DRC 通道发送实时飞行控制指令。
+	// 进入 DRC 模式后，可在 drc/down 上发杆量（见 SendDrcStickControl 与 DRC 杆量: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E6%9D%86%E9%87%8F%E6%8E%A7%E5%88%B6 ）。
 	DrcModeEnter(ctx context.Context, in *DrcModeEnterReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// DrcModeExit 退出指令飞行（DRC）模式。
 	// 对应 DJI Cloud API method: drc_mode_exit，
+	// Topic: thing/product/{gateway_sn}/services，设备应答 services_reply。
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	DrcModeExit(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
-	// SendDrcCommand 通过 DRC 通道发送实时飞行控制指令（杆量控制）。
-	// 对应 DJI Cloud API method: drone_control，Topic: thing/product/{gateway_sn}/drc/down，
-	// 即发即忘模式，不等待设备 ACK。适用于高频实时控制场景（虚拟摇杆）。
-	SendDrcCommand(ctx context.Context, in *DroneControlReq, opts ...grpc.CallOption) (*CommonRes, error)
-	// DroneEmergencyStop 飞行器紧急停桨。
-	// 对应 DJI Cloud API method: drone_emergency_stop，
-	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	// 危险操作：会立即停止所有电机，飞行器将失去动力坠落。仅在紧急情况下使用。
-	// 需要在配置文件中开启 DangerousOps.EnableEmergencyStop 才能调用。
+	// SendDrcStickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
+	// Topic: thing/product/{gateway_sn}/drc/down。建议发送频率约 **5～10 Hz**；与 SendDrcHeartBeat、DrcChannelDroneEmergencyStop 同为即发即忘，无 services_reply。
+	// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E6%9D%86%E9%87%8F%E6%8E%A7%E5%88%B6 ，Topic 总览: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html
+	SendDrcStickControl(ctx context.Context, in *DrcStickControlReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// SendDrcHeartBeat 经 drc/down 发 DRC 心跳（method heart_beat；seq 与 data.timestamp 见 DRC 文档）。
+	SendDrcHeartBeat(ctx context.Context, in *DrcHeartBeatReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// DrcChannelDroneEmergencyStop 通过 DRC 通道下发飞行器紧急停桨。
+	// 对应 DJI Cloud API method: drone_emergency_stop（drc/down），仅表示已发布到 MQTT，不等待 services_reply。
+	// 需要在配置文件中开启 DangerousOps.EnableDroneEmergencyStop 才能调用。
+	DrcChannelDroneEmergencyStop(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// DroneEmergencyStop 飞行器紧急停桨兼容接口。
+	// 当前与 DrcChannelDroneEmergencyStop 保持同一实现，均走 drc/down 即发即忘；新调用方建议使用 DrcChannelDroneEmergencyStop。
+	// 需要在配置文件中开启 DangerousOps.EnableDroneEmergencyStop 才能调用。
 	DroneEmergencyStop(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// FlyToPoint 飞向指定航点。
 	// 对应 DJI Cloud API method: fly_to_point，
@@ -182,11 +203,6 @@ type DjiGatewayClient interface {
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	// 适用于飞行器在机场内的场景。
 	TakeoffToPoint(ctx context.Context, in *TakeoffToPointReq, opts ...grpc.CallOption) (*CommonRes, error)
-	// SimulateMission 模拟飞行任务调试。
-	// 对应 DJI Cloud API method: simulate_mission，
-	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	// https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html
-	SimulateMission(ctx context.Context, in *SimulateMissionReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// DebugModeOpen 开启机巢调试模式。
 	// 对应 DJI Cloud API method: debug_mode_open，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -243,10 +259,10 @@ type DjiGatewayClient interface {
 	// 对应 DJI Cloud API method: supplement_light_close，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	SupplementLightClose(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
-	// BatteryStoreModeSwitchSwitch 切换电池保养存储模式。
+	// BatteryStoreModeSwitch 切换电池保养存储模式。
 	// 对应 DJI Cloud API method: battery_store_mode_switch，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	BatteryStoreModeSwitchSwitch(ctx context.Context, in *BatteryStoreModeReq, opts ...grpc.CallOption) (*CommonRes, error)
+	BatteryStoreModeSwitch(ctx context.Context, in *BatteryStoreModeReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// AlarmStateSwitch 切换机巢声光报警状态。
 	// 对应 DJI Cloud API method: alarm_state_switch，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -356,6 +372,38 @@ type DjiGatewayClient interface {
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	// https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/live.html
 	LiveCameraChange(ctx context.Context, in *LiveCameraChangeReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// MediaUploadFlighttaskMediaPrioritize 优先上传指定航线任务媒体。
+	// 对应 DJI Cloud API method: upload_flighttask_media_prioritize，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	MediaUploadFlighttaskMediaPrioritize(ctx context.Context, in *MediaFlighttaskReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// MediaFastUpload 快速上传指定媒体文件。
+	// 对应 DJI Cloud API method: media_fast_upload，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	MediaFastUpload(ctx context.Context, in *MediaFastUploadReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// MediaHighestPriorityUploadFlighttask 最高优先级上传指定航线任务媒体。
+	// 对应 DJI Cloud API method: highest_priority_upload_flighttask_media，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	MediaHighestPriorityUploadFlighttask(ctx context.Context, in *MediaFlighttaskReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// RemoteLogFileList 查询可上传的远程日志文件列表。
+	// 对应 DJI Cloud API method: fileupload_list，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	RemoteLogFileList(ctx context.Context, in *RemoteLogFileListReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// RemoteLogFileUploadStart 开始上传远程日志文件。
+	// 对应 DJI Cloud API method: fileupload_start，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	RemoteLogFileUploadStart(ctx context.Context, in *RemoteLogFileUploadReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// RemoteLogFileUploadUpdate 更新远程日志文件上传任务。
+	// 对应 DJI Cloud API method: fileupload_update，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	RemoteLogFileUploadUpdate(ctx context.Context, in *RemoteLogFileUploadReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// RemoteLogFileUploadCancel 取消远程日志文件上传任务。
+	// 对应 DJI Cloud API method: fileupload_cancel，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	RemoteLogFileUploadCancel(ctx context.Context, in *RemoteLogFileUploadReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// ConfigUpdate 下发设备配置更新。
+	// 对应 DJI Cloud API method: config_update，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	ConfigUpdate(ctx context.Context, in *ConfigUpdateReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// SetProperty 设置设备属性。
 	// 通过 property/set 主题向设备下发属性设置命令。
 	// properties 为 JSON 格式的键值对字符串。
@@ -365,9 +413,13 @@ type DjiGatewayClient interface {
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	OtaCreate(ctx context.Context, in *OtaCreateReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// IsDeviceOnline 查询机巢在线状态。
-	// 数据来源：hooks/status.go 收到设备 sys/product/+/status 上报后写入 onlineCache。
+	// 数据来源：收到 sys/product/+/status 或 OSD 心跳时写入 onlineCache；离线由 TTL 超时推断。
 	// 本接口从 onlineCache 读取，无需 MQTT 通信。
 	IsDeviceOnline(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*DeviceOnlineRes, error)
+	// GetFlightTaskProgressLast 查询本服务内存中最近一次 flighttask_progress 上报。
+	// 数据来源：thing/product/{gateway_sn}/events、method=flighttask_progress（设备上行），
+	// 由 SDK 分发至钩子后写入进程内缓存；非大疆标准查询接口。
+	GetFlightTaskProgressLast(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*FlightTaskProgressLastRes, error)
 }
 
 type djiGatewayClient struct {
@@ -388,20 +440,20 @@ func (c *djiGatewayClient) Ping(ctx context.Context, in *Req, opts ...grpc.CallO
 	return out, nil
 }
 
-func (c *djiGatewayClient) ExecuteFlightTask(ctx context.Context, in *FlightTaskReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiGatewayClient) FlightTaskPrepare(ctx context.Context, in *FlightTaskPrepareReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
-	err := c.cc.Invoke(ctx, DjiGateway_ExecuteFlightTask_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DjiGateway_FlightTaskPrepare_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *djiGatewayClient) ExecuteFlightTaskWithOptions(ctx context.Context, in *FlightTaskWithOptionsReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiGatewayClient) FlightTaskExecute(ctx context.Context, in *FlightTaskExecuteReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
-	err := c.cc.Invoke(ctx, DjiGateway_ExecuteFlightTaskWithOptions_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DjiGateway_FlightTaskExecute_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -478,6 +530,16 @@ func (c *djiGatewayClient) ReturnSpecificHome(ctx context.Context, in *ReturnSpe
 	return out, nil
 }
 
+func (c *djiGatewayClient) SendPsdkCommand(ctx context.Context, in *PsdkCommandReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiGateway_SendPsdkCommand_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *djiGatewayClient) SendCustomDataToPsdk(ctx context.Context, in *CustomDataToPsdkReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
@@ -528,10 +590,30 @@ func (c *djiGatewayClient) DrcModeExit(ctx context.Context, in *DeviceSnReq, opt
 	return out, nil
 }
 
-func (c *djiGatewayClient) SendDrcCommand(ctx context.Context, in *DroneControlReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiGatewayClient) SendDrcStickControl(ctx context.Context, in *DrcStickControlReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
-	err := c.cc.Invoke(ctx, DjiGateway_SendDrcCommand_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DjiGateway_SendDrcStickControl_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiGatewayClient) SendDrcHeartBeat(ctx context.Context, in *DrcHeartBeatReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiGateway_SendDrcHeartBeat_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiGatewayClient) DrcChannelDroneEmergencyStop(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiGateway_DrcChannelDroneEmergencyStop_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -572,16 +654,6 @@ func (c *djiGatewayClient) TakeoffToPoint(ctx context.Context, in *TakeoffToPoin
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiGateway_TakeoffToPoint_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *djiGatewayClient) SimulateMission(ctx context.Context, in *SimulateMissionReq, opts ...grpc.CallOption) (*CommonRes, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommonRes)
-	err := c.cc.Invoke(ctx, DjiGateway_SimulateMission_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -728,10 +800,10 @@ func (c *djiGatewayClient) SupplementLightClose(ctx context.Context, in *DeviceS
 	return out, nil
 }
 
-func (c *djiGatewayClient) BatteryStoreModeSwitchSwitch(ctx context.Context, in *BatteryStoreModeReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiGatewayClient) BatteryStoreModeSwitch(ctx context.Context, in *BatteryStoreModeReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
-	err := c.cc.Invoke(ctx, DjiGateway_BatteryStoreModeSwitchSwitch_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, DjiGateway_BatteryStoreModeSwitch_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -978,6 +1050,86 @@ func (c *djiGatewayClient) LiveCameraChange(ctx context.Context, in *LiveCameraC
 	return out, nil
 }
 
+func (c *djiGatewayClient) MediaUploadFlighttaskMediaPrioritize(ctx context.Context, in *MediaFlighttaskReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiGateway_MediaUploadFlighttaskMediaPrioritize_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiGatewayClient) MediaFastUpload(ctx context.Context, in *MediaFastUploadReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiGateway_MediaFastUpload_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiGatewayClient) MediaHighestPriorityUploadFlighttask(ctx context.Context, in *MediaFlighttaskReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiGateway_MediaHighestPriorityUploadFlighttask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiGatewayClient) RemoteLogFileList(ctx context.Context, in *RemoteLogFileListReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiGateway_RemoteLogFileList_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiGatewayClient) RemoteLogFileUploadStart(ctx context.Context, in *RemoteLogFileUploadReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiGateway_RemoteLogFileUploadStart_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiGatewayClient) RemoteLogFileUploadUpdate(ctx context.Context, in *RemoteLogFileUploadReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiGateway_RemoteLogFileUploadUpdate_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiGatewayClient) RemoteLogFileUploadCancel(ctx context.Context, in *RemoteLogFileUploadReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiGateway_RemoteLogFileUploadCancel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiGatewayClient) ConfigUpdate(ctx context.Context, in *ConfigUpdateReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiGateway_ConfigUpdate_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *djiGatewayClient) SetProperty(ctx context.Context, in *SetPropertyReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
@@ -1008,34 +1160,45 @@ func (c *djiGatewayClient) IsDeviceOnline(ctx context.Context, in *DeviceSnReq, 
 	return out, nil
 }
 
+func (c *djiGatewayClient) GetFlightTaskProgressLast(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*FlightTaskProgressLastRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(FlightTaskProgressLastRes)
+	err := c.cc.Invoke(ctx, DjiGateway_GetFlightTaskProgressLast_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DjiGatewayServer is the server API for DjiGateway service.
 // All implementations must embed UnimplementedDjiGatewayServer
 // for forward compatibility.
 //
 // DjiGateway DJI 上云网关服务。
-// 将业务系统的 gRPC 请求转换为 DJI Cloud API MQTT 协议指令，
-// 实现航线任务下发、PSDK 自定义数据透传、指令飞行控制（DRC）等能力。
-// 网关内部通过 MQTT 通配符同时订阅多台机巢，支持并发控制多设备。
+// 将业务侧 gRPC 调用转换为 DJI Cloud API（MQTT）指令，
+// 覆盖航线、PSDK 自定义数据、指令飞行（DRC，含 DRC 杆量 https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E6%9D%86%E9%87%8F%E6%8E%A7%E5%88%B6 ）、直播与机场控制等能力。
+// 通过 MQTT 主题对接机巢网关（gateway_sn），可并行管理多台设备。
 type DjiGatewayServer interface {
 	// Ping 健康检查接口，用于验证服务可用性。
 	Ping(context.Context, *Req) (*Res, error)
-	// ExecuteFlightTask 执行航线飞行任务。
-	// 内部依次调用 flighttask_prepare（航线准备）和 flighttask_execute（航线执行），
-	// 等待设备 ACK 后返回结果。
-	ExecuteFlightTask(context.Context, *FlightTaskReq) (*CommonRes, error)
-	// ExecuteFlightTaskWithOptions 使用自定义配置执行航线飞行任务。
-	// 允许完全控制航线准备参数（如断点续飞、任务类型、返航高度等），
-	// 内部先 flighttask_prepare 再 flighttask_execute。
-	ExecuteFlightTaskWithOptions(context.Context, *FlightTaskWithOptionsReq) (*CommonRes, error)
-	// CancelFlightTask 取消指定的飞行任务。
+	// FlightTaskPrepare 航线任务准备。
+	// 对应 DJI Cloud API method: flighttask_prepare，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	FlightTaskPrepare(context.Context, *FlightTaskPrepareReq) (*CommonRes, error)
+	// FlightTaskExecute 航线任务执行。
+	// 对应 DJI Cloud API method: flighttask_execute，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	// flight_id 须与同一次航线任务准备（FlightTaskPrepare）中的 flight_id 一致。
+	FlightTaskExecute(context.Context, *FlightTaskExecuteReq) (*CommonRes, error)
+	// CancelFlightTask 取消航线任务。
 	// 对应 DJI Cloud API method: flighttask_undo，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	CancelFlightTask(context.Context, *CancelFlightTaskReq) (*CommonRes, error)
-	// PauseFlightTask 暂停当前正在执行的飞行任务。
+	// PauseFlightTask 暂停航线任务。
 	// 对应 DJI Cloud API method: flighttask_pause，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	PauseFlightTask(context.Context, *DeviceSnReq) (*CommonRes, error)
-	// ResumeFlightTask 恢复已暂停的飞行任务。
+	// ResumeFlightTask 恢复已暂停的航线任务。
 	// 对应 DJI Cloud API method: flighttask_recovery，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	ResumeFlightTask(context.Context, *DeviceSnReq) (*CommonRes, error)
@@ -1057,6 +1220,9 @@ type DjiGatewayServer interface {
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	// https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/cmd.html
 	ReturnSpecificHome(context.Context, *ReturnSpecificHomeReq) (*CommonRes, error)
+	// SendPsdkCommand 通过 psdk_write 向 PSDK 负载写入数据。
+	// Topic: thing/product/{gateway_sn}/services，data.payload_index 默认为 "0"，data.data 为 Base64 编码数据。
+	SendPsdkCommand(context.Context, *PsdkCommandReq) (*CommonRes, error)
 	// SendCustomDataToPsdk 自定义数据透传至 PSDK 负载设备。
 	// 对应 DJI Cloud API method: custom_data_transmission_to_psdk，
 	// Topic: thing/product/{gateway_sn}/services，方向 down（云平台→设备），
@@ -1075,22 +1241,28 @@ type DjiGatewayServer interface {
 	PayloadAuthorityGrab(context.Context, *DeviceSnReq) (*CommonRes, error)
 	// DrcModeEnter 进入指令飞行（DRC）模式。
 	// 对应 DJI Cloud API method: drc_mode_enter，
+	// Topic: thing/product/{gateway_sn}/services，设备应答 services_reply，非 drc/* 子路径。
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	// 进入 DRC 模式后，可通过 DRC 通道发送实时飞行控制指令。
+	// 进入 DRC 模式后，可在 drc/down 上发杆量（见 SendDrcStickControl 与 DRC 杆量: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E6%9D%86%E9%87%8F%E6%8E%A7%E5%88%B6 ）。
 	DrcModeEnter(context.Context, *DrcModeEnterReq) (*CommonRes, error)
 	// DrcModeExit 退出指令飞行（DRC）模式。
 	// 对应 DJI Cloud API method: drc_mode_exit，
+	// Topic: thing/product/{gateway_sn}/services，设备应答 services_reply。
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	DrcModeExit(context.Context, *DeviceSnReq) (*CommonRes, error)
-	// SendDrcCommand 通过 DRC 通道发送实时飞行控制指令（杆量控制）。
-	// 对应 DJI Cloud API method: drone_control，Topic: thing/product/{gateway_sn}/drc/down，
-	// 即发即忘模式，不等待设备 ACK。适用于高频实时控制场景（虚拟摇杆）。
-	SendDrcCommand(context.Context, *DroneControlReq) (*CommonRes, error)
-	// DroneEmergencyStop 飞行器紧急停桨。
-	// 对应 DJI Cloud API method: drone_emergency_stop，
-	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	// 危险操作：会立即停止所有电机，飞行器将失去动力坠落。仅在紧急情况下使用。
-	// 需要在配置文件中开启 DangerousOps.EnableEmergencyStop 才能调用。
+	// SendDrcStickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
+	// Topic: thing/product/{gateway_sn}/drc/down。建议发送频率约 **5～10 Hz**；与 SendDrcHeartBeat、DrcChannelDroneEmergencyStop 同为即发即忘，无 services_reply。
+	// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E6%9D%86%E9%87%8F%E6%8E%A7%E5%88%B6 ，Topic 总览: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html
+	SendDrcStickControl(context.Context, *DrcStickControlReq) (*CommonRes, error)
+	// SendDrcHeartBeat 经 drc/down 发 DRC 心跳（method heart_beat；seq 与 data.timestamp 见 DRC 文档）。
+	SendDrcHeartBeat(context.Context, *DrcHeartBeatReq) (*CommonRes, error)
+	// DrcChannelDroneEmergencyStop 通过 DRC 通道下发飞行器紧急停桨。
+	// 对应 DJI Cloud API method: drone_emergency_stop（drc/down），仅表示已发布到 MQTT，不等待 services_reply。
+	// 需要在配置文件中开启 DangerousOps.EnableDroneEmergencyStop 才能调用。
+	DrcChannelDroneEmergencyStop(context.Context, *DeviceSnReq) (*CommonRes, error)
+	// DroneEmergencyStop 飞行器紧急停桨兼容接口。
+	// 当前与 DrcChannelDroneEmergencyStop 保持同一实现，均走 drc/down 即发即忘；新调用方建议使用 DrcChannelDroneEmergencyStop。
+	// 需要在配置文件中开启 DangerousOps.EnableDroneEmergencyStop 才能调用。
 	DroneEmergencyStop(context.Context, *DeviceSnReq) (*CommonRes, error)
 	// FlyToPoint 飞向指定航点。
 	// 对应 DJI Cloud API method: fly_to_point，
@@ -1106,11 +1278,6 @@ type DjiGatewayServer interface {
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	// 适用于飞行器在机场内的场景。
 	TakeoffToPoint(context.Context, *TakeoffToPointReq) (*CommonRes, error)
-	// SimulateMission 模拟飞行任务调试。
-	// 对应 DJI Cloud API method: simulate_mission，
-	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	// https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html
-	SimulateMission(context.Context, *SimulateMissionReq) (*CommonRes, error)
 	// DebugModeOpen 开启机巢调试模式。
 	// 对应 DJI Cloud API method: debug_mode_open，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -1167,10 +1334,10 @@ type DjiGatewayServer interface {
 	// 对应 DJI Cloud API method: supplement_light_close，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	SupplementLightClose(context.Context, *DeviceSnReq) (*CommonRes, error)
-	// BatteryStoreModeSwitchSwitch 切换电池保养存储模式。
+	// BatteryStoreModeSwitch 切换电池保养存储模式。
 	// 对应 DJI Cloud API method: battery_store_mode_switch，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	BatteryStoreModeSwitchSwitch(context.Context, *BatteryStoreModeReq) (*CommonRes, error)
+	BatteryStoreModeSwitch(context.Context, *BatteryStoreModeReq) (*CommonRes, error)
 	// AlarmStateSwitch 切换机巢声光报警状态。
 	// 对应 DJI Cloud API method: alarm_state_switch，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -1280,6 +1447,38 @@ type DjiGatewayServer interface {
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	// https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/live.html
 	LiveCameraChange(context.Context, *LiveCameraChangeReq) (*CommonRes, error)
+	// MediaUploadFlighttaskMediaPrioritize 优先上传指定航线任务媒体。
+	// 对应 DJI Cloud API method: upload_flighttask_media_prioritize，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	MediaUploadFlighttaskMediaPrioritize(context.Context, *MediaFlighttaskReq) (*CommonRes, error)
+	// MediaFastUpload 快速上传指定媒体文件。
+	// 对应 DJI Cloud API method: media_fast_upload，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	MediaFastUpload(context.Context, *MediaFastUploadReq) (*CommonRes, error)
+	// MediaHighestPriorityUploadFlighttask 最高优先级上传指定航线任务媒体。
+	// 对应 DJI Cloud API method: highest_priority_upload_flighttask_media，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	MediaHighestPriorityUploadFlighttask(context.Context, *MediaFlighttaskReq) (*CommonRes, error)
+	// RemoteLogFileList 查询可上传的远程日志文件列表。
+	// 对应 DJI Cloud API method: fileupload_list，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	RemoteLogFileList(context.Context, *RemoteLogFileListReq) (*CommonRes, error)
+	// RemoteLogFileUploadStart 开始上传远程日志文件。
+	// 对应 DJI Cloud API method: fileupload_start，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	RemoteLogFileUploadStart(context.Context, *RemoteLogFileUploadReq) (*CommonRes, error)
+	// RemoteLogFileUploadUpdate 更新远程日志文件上传任务。
+	// 对应 DJI Cloud API method: fileupload_update，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	RemoteLogFileUploadUpdate(context.Context, *RemoteLogFileUploadReq) (*CommonRes, error)
+	// RemoteLogFileUploadCancel 取消远程日志文件上传任务。
+	// 对应 DJI Cloud API method: fileupload_cancel，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	RemoteLogFileUploadCancel(context.Context, *RemoteLogFileUploadReq) (*CommonRes, error)
+	// ConfigUpdate 下发设备配置更新。
+	// 对应 DJI Cloud API method: config_update，
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	ConfigUpdate(context.Context, *ConfigUpdateReq) (*CommonRes, error)
 	// SetProperty 设置设备属性。
 	// 通过 property/set 主题向设备下发属性设置命令。
 	// properties 为 JSON 格式的键值对字符串。
@@ -1289,9 +1488,13 @@ type DjiGatewayServer interface {
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	OtaCreate(context.Context, *OtaCreateReq) (*CommonRes, error)
 	// IsDeviceOnline 查询机巢在线状态。
-	// 数据来源：hooks/status.go 收到设备 sys/product/+/status 上报后写入 onlineCache。
+	// 数据来源：收到 sys/product/+/status 或 OSD 心跳时写入 onlineCache；离线由 TTL 超时推断。
 	// 本接口从 onlineCache 读取，无需 MQTT 通信。
 	IsDeviceOnline(context.Context, *DeviceSnReq) (*DeviceOnlineRes, error)
+	// GetFlightTaskProgressLast 查询本服务内存中最近一次 flighttask_progress 上报。
+	// 数据来源：thing/product/{gateway_sn}/events、method=flighttask_progress（设备上行），
+	// 由 SDK 分发至钩子后写入进程内缓存；非大疆标准查询接口。
+	GetFlightTaskProgressLast(context.Context, *DeviceSnReq) (*FlightTaskProgressLastRes, error)
 	mustEmbedUnimplementedDjiGatewayServer()
 }
 
@@ -1305,11 +1508,11 @@ type UnimplementedDjiGatewayServer struct{}
 func (UnimplementedDjiGatewayServer) Ping(context.Context, *Req) (*Res, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
 }
-func (UnimplementedDjiGatewayServer) ExecuteFlightTask(context.Context, *FlightTaskReq) (*CommonRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ExecuteFlightTask not implemented")
+func (UnimplementedDjiGatewayServer) FlightTaskPrepare(context.Context, *FlightTaskPrepareReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FlightTaskPrepare not implemented")
 }
-func (UnimplementedDjiGatewayServer) ExecuteFlightTaskWithOptions(context.Context, *FlightTaskWithOptionsReq) (*CommonRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ExecuteFlightTaskWithOptions not implemented")
+func (UnimplementedDjiGatewayServer) FlightTaskExecute(context.Context, *FlightTaskExecuteReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FlightTaskExecute not implemented")
 }
 func (UnimplementedDjiGatewayServer) CancelFlightTask(context.Context, *CancelFlightTaskReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelFlightTask not implemented")
@@ -1332,6 +1535,9 @@ func (UnimplementedDjiGatewayServer) ReturnHomeCancelAutoReturn(context.Context,
 func (UnimplementedDjiGatewayServer) ReturnSpecificHome(context.Context, *ReturnSpecificHomeReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReturnSpecificHome not implemented")
 }
+func (UnimplementedDjiGatewayServer) SendPsdkCommand(context.Context, *PsdkCommandReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendPsdkCommand not implemented")
+}
 func (UnimplementedDjiGatewayServer) SendCustomDataToPsdk(context.Context, *CustomDataToPsdkReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendCustomDataToPsdk not implemented")
 }
@@ -1347,8 +1553,14 @@ func (UnimplementedDjiGatewayServer) DrcModeEnter(context.Context, *DrcModeEnter
 func (UnimplementedDjiGatewayServer) DrcModeExit(context.Context, *DeviceSnReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DrcModeExit not implemented")
 }
-func (UnimplementedDjiGatewayServer) SendDrcCommand(context.Context, *DroneControlReq) (*CommonRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendDrcCommand not implemented")
+func (UnimplementedDjiGatewayServer) SendDrcStickControl(context.Context, *DrcStickControlReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendDrcStickControl not implemented")
+}
+func (UnimplementedDjiGatewayServer) SendDrcHeartBeat(context.Context, *DrcHeartBeatReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendDrcHeartBeat not implemented")
+}
+func (UnimplementedDjiGatewayServer) DrcChannelDroneEmergencyStop(context.Context, *DeviceSnReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DrcChannelDroneEmergencyStop not implemented")
 }
 func (UnimplementedDjiGatewayServer) DroneEmergencyStop(context.Context, *DeviceSnReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DroneEmergencyStop not implemented")
@@ -1361,9 +1573,6 @@ func (UnimplementedDjiGatewayServer) FlyToPointStop(context.Context, *DeviceSnRe
 }
 func (UnimplementedDjiGatewayServer) TakeoffToPoint(context.Context, *TakeoffToPointReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TakeoffToPoint not implemented")
-}
-func (UnimplementedDjiGatewayServer) SimulateMission(context.Context, *SimulateMissionReq) (*CommonRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SimulateMission not implemented")
 }
 func (UnimplementedDjiGatewayServer) DebugModeOpen(context.Context, *DeviceSnReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DebugModeOpen not implemented")
@@ -1407,8 +1616,8 @@ func (UnimplementedDjiGatewayServer) SupplementLightOpen(context.Context, *Devic
 func (UnimplementedDjiGatewayServer) SupplementLightClose(context.Context, *DeviceSnReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SupplementLightClose not implemented")
 }
-func (UnimplementedDjiGatewayServer) BatteryStoreModeSwitchSwitch(context.Context, *BatteryStoreModeReq) (*CommonRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BatteryStoreModeSwitchSwitch not implemented")
+func (UnimplementedDjiGatewayServer) BatteryStoreModeSwitch(context.Context, *BatteryStoreModeReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BatteryStoreModeSwitch not implemented")
 }
 func (UnimplementedDjiGatewayServer) AlarmStateSwitch(context.Context, *AlarmStateSwitchReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AlarmStateSwitch not implemented")
@@ -1482,6 +1691,30 @@ func (UnimplementedDjiGatewayServer) LiveLensChange(context.Context, *LiveLensCh
 func (UnimplementedDjiGatewayServer) LiveCameraChange(context.Context, *LiveCameraChangeReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LiveCameraChange not implemented")
 }
+func (UnimplementedDjiGatewayServer) MediaUploadFlighttaskMediaPrioritize(context.Context, *MediaFlighttaskReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MediaUploadFlighttaskMediaPrioritize not implemented")
+}
+func (UnimplementedDjiGatewayServer) MediaFastUpload(context.Context, *MediaFastUploadReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MediaFastUpload not implemented")
+}
+func (UnimplementedDjiGatewayServer) MediaHighestPriorityUploadFlighttask(context.Context, *MediaFlighttaskReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MediaHighestPriorityUploadFlighttask not implemented")
+}
+func (UnimplementedDjiGatewayServer) RemoteLogFileList(context.Context, *RemoteLogFileListReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoteLogFileList not implemented")
+}
+func (UnimplementedDjiGatewayServer) RemoteLogFileUploadStart(context.Context, *RemoteLogFileUploadReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoteLogFileUploadStart not implemented")
+}
+func (UnimplementedDjiGatewayServer) RemoteLogFileUploadUpdate(context.Context, *RemoteLogFileUploadReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoteLogFileUploadUpdate not implemented")
+}
+func (UnimplementedDjiGatewayServer) RemoteLogFileUploadCancel(context.Context, *RemoteLogFileUploadReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoteLogFileUploadCancel not implemented")
+}
+func (UnimplementedDjiGatewayServer) ConfigUpdate(context.Context, *ConfigUpdateReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ConfigUpdate not implemented")
+}
 func (UnimplementedDjiGatewayServer) SetProperty(context.Context, *SetPropertyReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetProperty not implemented")
 }
@@ -1490,6 +1723,9 @@ func (UnimplementedDjiGatewayServer) OtaCreate(context.Context, *OtaCreateReq) (
 }
 func (UnimplementedDjiGatewayServer) IsDeviceOnline(context.Context, *DeviceSnReq) (*DeviceOnlineRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IsDeviceOnline not implemented")
+}
+func (UnimplementedDjiGatewayServer) GetFlightTaskProgressLast(context.Context, *DeviceSnReq) (*FlightTaskProgressLastRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFlightTaskProgressLast not implemented")
 }
 func (UnimplementedDjiGatewayServer) mustEmbedUnimplementedDjiGatewayServer() {}
 func (UnimplementedDjiGatewayServer) testEmbeddedByValue()                    {}
@@ -1530,38 +1766,38 @@ func _DjiGateway_Ping_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DjiGateway_ExecuteFlightTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(FlightTaskReq)
+func _DjiGateway_FlightTaskPrepare_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FlightTaskPrepareReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DjiGatewayServer).ExecuteFlightTask(ctx, in)
+		return srv.(DjiGatewayServer).FlightTaskPrepare(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DjiGateway_ExecuteFlightTask_FullMethodName,
+		FullMethod: DjiGateway_FlightTaskPrepare_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiGatewayServer).ExecuteFlightTask(ctx, req.(*FlightTaskReq))
+		return srv.(DjiGatewayServer).FlightTaskPrepare(ctx, req.(*FlightTaskPrepareReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DjiGateway_ExecuteFlightTaskWithOptions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(FlightTaskWithOptionsReq)
+func _DjiGateway_FlightTaskExecute_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FlightTaskExecuteReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DjiGatewayServer).ExecuteFlightTaskWithOptions(ctx, in)
+		return srv.(DjiGatewayServer).FlightTaskExecute(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DjiGateway_ExecuteFlightTaskWithOptions_FullMethodName,
+		FullMethod: DjiGateway_FlightTaskExecute_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiGatewayServer).ExecuteFlightTaskWithOptions(ctx, req.(*FlightTaskWithOptionsReq))
+		return srv.(DjiGatewayServer).FlightTaskExecute(ctx, req.(*FlightTaskExecuteReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1692,6 +1928,24 @@ func _DjiGateway_ReturnSpecificHome_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DjiGateway_SendPsdkCommand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PsdkCommandReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).SendPsdkCommand(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_SendPsdkCommand_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).SendPsdkCommand(ctx, req.(*PsdkCommandReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _DjiGateway_SendCustomDataToPsdk_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CustomDataToPsdkReq)
 	if err := dec(in); err != nil {
@@ -1782,20 +2036,56 @@ func _DjiGateway_DrcModeExit_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DjiGateway_SendDrcCommand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DroneControlReq)
+func _DjiGateway_SendDrcStickControl_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DrcStickControlReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DjiGatewayServer).SendDrcCommand(ctx, in)
+		return srv.(DjiGatewayServer).SendDrcStickControl(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DjiGateway_SendDrcCommand_FullMethodName,
+		FullMethod: DjiGateway_SendDrcStickControl_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiGatewayServer).SendDrcCommand(ctx, req.(*DroneControlReq))
+		return srv.(DjiGatewayServer).SendDrcStickControl(ctx, req.(*DrcStickControlReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiGateway_SendDrcHeartBeat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DrcHeartBeatReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).SendDrcHeartBeat(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_SendDrcHeartBeat_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).SendDrcHeartBeat(ctx, req.(*DrcHeartBeatReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiGateway_DrcChannelDroneEmergencyStop_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeviceSnReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).DrcChannelDroneEmergencyStop(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_DrcChannelDroneEmergencyStop_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).DrcChannelDroneEmergencyStop(ctx, req.(*DeviceSnReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1868,24 +2158,6 @@ func _DjiGateway_TakeoffToPoint_Handler(srv interface{}, ctx context.Context, de
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(DjiGatewayServer).TakeoffToPoint(ctx, req.(*TakeoffToPointReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _DjiGateway_SimulateMission_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SimulateMissionReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DjiGatewayServer).SimulateMission(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DjiGateway_SimulateMission_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiGatewayServer).SimulateMission(ctx, req.(*SimulateMissionReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2142,20 +2414,20 @@ func _DjiGateway_SupplementLightClose_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DjiGateway_BatteryStoreModeSwitchSwitch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DjiGateway_BatteryStoreModeSwitch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(BatteryStoreModeReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DjiGatewayServer).BatteryStoreModeSwitchSwitch(ctx, in)
+		return srv.(DjiGatewayServer).BatteryStoreModeSwitch(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DjiGateway_BatteryStoreModeSwitchSwitch_FullMethodName,
+		FullMethod: DjiGateway_BatteryStoreModeSwitch_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiGatewayServer).BatteryStoreModeSwitchSwitch(ctx, req.(*BatteryStoreModeReq))
+		return srv.(DjiGatewayServer).BatteryStoreModeSwitch(ctx, req.(*BatteryStoreModeReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2592,6 +2864,150 @@ func _DjiGateway_LiveCameraChange_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DjiGateway_MediaUploadFlighttaskMediaPrioritize_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MediaFlighttaskReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).MediaUploadFlighttaskMediaPrioritize(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_MediaUploadFlighttaskMediaPrioritize_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).MediaUploadFlighttaskMediaPrioritize(ctx, req.(*MediaFlighttaskReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiGateway_MediaFastUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MediaFastUploadReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).MediaFastUpload(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_MediaFastUpload_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).MediaFastUpload(ctx, req.(*MediaFastUploadReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiGateway_MediaHighestPriorityUploadFlighttask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MediaFlighttaskReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).MediaHighestPriorityUploadFlighttask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_MediaHighestPriorityUploadFlighttask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).MediaHighestPriorityUploadFlighttask(ctx, req.(*MediaFlighttaskReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiGateway_RemoteLogFileList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoteLogFileListReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).RemoteLogFileList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_RemoteLogFileList_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).RemoteLogFileList(ctx, req.(*RemoteLogFileListReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiGateway_RemoteLogFileUploadStart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoteLogFileUploadReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).RemoteLogFileUploadStart(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_RemoteLogFileUploadStart_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).RemoteLogFileUploadStart(ctx, req.(*RemoteLogFileUploadReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiGateway_RemoteLogFileUploadUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoteLogFileUploadReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).RemoteLogFileUploadUpdate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_RemoteLogFileUploadUpdate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).RemoteLogFileUploadUpdate(ctx, req.(*RemoteLogFileUploadReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiGateway_RemoteLogFileUploadCancel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoteLogFileUploadReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).RemoteLogFileUploadCancel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_RemoteLogFileUploadCancel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).RemoteLogFileUploadCancel(ctx, req.(*RemoteLogFileUploadReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiGateway_ConfigUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfigUpdateReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).ConfigUpdate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_ConfigUpdate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).ConfigUpdate(ctx, req.(*ConfigUpdateReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _DjiGateway_SetProperty_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SetPropertyReq)
 	if err := dec(in); err != nil {
@@ -2646,6 +3062,24 @@ func _DjiGateway_IsDeviceOnline_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DjiGateway_GetFlightTaskProgressLast_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeviceSnReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiGatewayServer).GetFlightTaskProgressLast(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiGateway_GetFlightTaskProgressLast_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiGatewayServer).GetFlightTaskProgressLast(ctx, req.(*DeviceSnReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DjiGateway_ServiceDesc is the grpc.ServiceDesc for DjiGateway service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -2658,12 +3092,12 @@ var DjiGateway_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DjiGateway_Ping_Handler,
 		},
 		{
-			MethodName: "ExecuteFlightTask",
-			Handler:    _DjiGateway_ExecuteFlightTask_Handler,
+			MethodName: "FlightTaskPrepare",
+			Handler:    _DjiGateway_FlightTaskPrepare_Handler,
 		},
 		{
-			MethodName: "ExecuteFlightTaskWithOptions",
-			Handler:    _DjiGateway_ExecuteFlightTaskWithOptions_Handler,
+			MethodName: "FlightTaskExecute",
+			Handler:    _DjiGateway_FlightTaskExecute_Handler,
 		},
 		{
 			MethodName: "CancelFlightTask",
@@ -2694,6 +3128,10 @@ var DjiGateway_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DjiGateway_ReturnSpecificHome_Handler,
 		},
 		{
+			MethodName: "SendPsdkCommand",
+			Handler:    _DjiGateway_SendPsdkCommand_Handler,
+		},
+		{
 			MethodName: "SendCustomDataToPsdk",
 			Handler:    _DjiGateway_SendCustomDataToPsdk_Handler,
 		},
@@ -2714,8 +3152,16 @@ var DjiGateway_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DjiGateway_DrcModeExit_Handler,
 		},
 		{
-			MethodName: "SendDrcCommand",
-			Handler:    _DjiGateway_SendDrcCommand_Handler,
+			MethodName: "SendDrcStickControl",
+			Handler:    _DjiGateway_SendDrcStickControl_Handler,
+		},
+		{
+			MethodName: "SendDrcHeartBeat",
+			Handler:    _DjiGateway_SendDrcHeartBeat_Handler,
+		},
+		{
+			MethodName: "DrcChannelDroneEmergencyStop",
+			Handler:    _DjiGateway_DrcChannelDroneEmergencyStop_Handler,
 		},
 		{
 			MethodName: "DroneEmergencyStop",
@@ -2732,10 +3178,6 @@ var DjiGateway_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "TakeoffToPoint",
 			Handler:    _DjiGateway_TakeoffToPoint_Handler,
-		},
-		{
-			MethodName: "SimulateMission",
-			Handler:    _DjiGateway_SimulateMission_Handler,
 		},
 		{
 			MethodName: "DebugModeOpen",
@@ -2794,8 +3236,8 @@ var DjiGateway_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DjiGateway_SupplementLightClose_Handler,
 		},
 		{
-			MethodName: "BatteryStoreModeSwitchSwitch",
-			Handler:    _DjiGateway_BatteryStoreModeSwitchSwitch_Handler,
+			MethodName: "BatteryStoreModeSwitch",
+			Handler:    _DjiGateway_BatteryStoreModeSwitch_Handler,
 		},
 		{
 			MethodName: "AlarmStateSwitch",
@@ -2894,6 +3336,38 @@ var DjiGateway_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DjiGateway_LiveCameraChange_Handler,
 		},
 		{
+			MethodName: "MediaUploadFlighttaskMediaPrioritize",
+			Handler:    _DjiGateway_MediaUploadFlighttaskMediaPrioritize_Handler,
+		},
+		{
+			MethodName: "MediaFastUpload",
+			Handler:    _DjiGateway_MediaFastUpload_Handler,
+		},
+		{
+			MethodName: "MediaHighestPriorityUploadFlighttask",
+			Handler:    _DjiGateway_MediaHighestPriorityUploadFlighttask_Handler,
+		},
+		{
+			MethodName: "RemoteLogFileList",
+			Handler:    _DjiGateway_RemoteLogFileList_Handler,
+		},
+		{
+			MethodName: "RemoteLogFileUploadStart",
+			Handler:    _DjiGateway_RemoteLogFileUploadStart_Handler,
+		},
+		{
+			MethodName: "RemoteLogFileUploadUpdate",
+			Handler:    _DjiGateway_RemoteLogFileUploadUpdate_Handler,
+		},
+		{
+			MethodName: "RemoteLogFileUploadCancel",
+			Handler:    _DjiGateway_RemoteLogFileUploadCancel_Handler,
+		},
+		{
+			MethodName: "ConfigUpdate",
+			Handler:    _DjiGateway_ConfigUpdate_Handler,
+		},
+		{
 			MethodName: "SetProperty",
 			Handler:    _DjiGateway_SetProperty_Handler,
 		},
@@ -2904,6 +3378,10 @@ var DjiGateway_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "IsDeviceOnline",
 			Handler:    _DjiGateway_IsDeviceOnline_Handler,
+		},
+		{
+			MethodName: "GetFlightTaskProgressLast",
+			Handler:    _DjiGateway_GetFlightTaskProgressLast_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

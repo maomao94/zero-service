@@ -16,6 +16,10 @@ MqttConfig:
   Qos: 0
 AckTimeout: 5s
 PendingTTL: 30s
+UpstreamReply:
+  EnableEventsReply: true
+  EnableStatusReply: true
+  EnableRequestsReply: true
 DangerousOps:
   EnableDroneEmergencyStop: false
 NacosConfig:

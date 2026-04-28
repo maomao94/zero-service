@@ -41,19 +41,19 @@ func (l *SocketGtwStatLogic) SocketGtwStat(in *socketpush.SocketGtwStatReq) (*so
 				}
 			}
 		},
-		func(node NodeSource, writer mr.Writer[socketpush.PbSocketGtwStat], cancel func(error)) {
+		func(node NodeSource, writer mr.Writer[*socketpush.PbSocketGtwStat], cancel func(error)) {
 			res, err := node.Cli.SocketGtwStat(l.ctx, &socketgtw.SocketGtwStatReq{})
 			if err == nil {
-				writer.Write(socketpush.PbSocketGtwStat{
+				writer.Write(&socketpush.PbSocketGtwStat{
 					Node:     node.Node,
 					Sessions: res.Sessions,
 				})
 			}
 		},
-		func(pipe <-chan socketpush.PbSocketGtwStat, writer mr.Writer[[]*socketpush.PbSocketGtwStat], cancel func(error)) {
+		func(pipe <-chan *socketpush.PbSocketGtwStat, writer mr.Writer[[]*socketpush.PbSocketGtwStat], cancel func(error)) {
 			stats := make([]*socketpush.PbSocketGtwStat, 0)
 			for nodeStat := range pipe {
-				stats = append(stats, &nodeStat)
+				stats = append(stats, nodeStat)
 			}
 			writer.Write(stats)
 		},

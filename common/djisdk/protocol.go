@@ -2,6 +2,14 @@ package djisdk
 
 import "time"
 
+// 平台在 status_reply、events_reply、requests_reply 等 data 内 result 的辅助码（与 6 位业务 error code 不同；简单枚举时与上云约定对齐）。
+// 大疆侧常见：0=成功；**2 常表示超时**（见 [错误码](https://developer.dji.com/doc/cloud-api-tutorial/cn/error-code.html) 及各 MQTT 协议 data 说明），故 **禁止将 2 用作与超时无关的占位**（如未注册 handler 应使用 1 或其它与文档一致的值）。
+const (
+	PlatformResultOK           = 0
+	PlatformResultHandlerError = 1 // 云侧未实现/未注册 handler、解包失败、非超时类内部错误
+	PlatformResultTimeout      = 2 // 与文档中 result=2 表示**超时** 对齐；仅在实际超时或协议明确要求填 2 时使用
+)
+
 // ==================== 公共消息结构 ====================
 
 // ServiceRequest 服务请求消息，用于云端向设备下发服务调用指令。
@@ -94,7 +102,8 @@ type OsdMessage struct {
 	Data any `json:"data"`
 }
 
-// RequestMessage 请求消息，设备主动向云端发起的请求。
+// RequestMessage 设备经 thing/.../requests 上行的报文。见
+// [Requests 组织](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/organization.html)。
 type RequestMessage struct {
 	// Tid 事务 ID，全局唯一标识。必填。
 	Tid string `json:"tid"`
@@ -110,7 +119,8 @@ type RequestMessage struct {
 	Data any `json:"data"`
 }
 
-// StatusMessage 状态消息，设备上报的状态变更通知。
+// StatusMessage 由 sys/.../status 上行的状态。见
+// [Status 设备](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/device.html) 与上云状态/拓扑等说明。
 type StatusMessage struct {
 	// Tid 事务 ID。必填。
 	Tid string `json:"tid"`
@@ -124,6 +134,21 @@ type StatusMessage struct {
 	Gateway string `json:"gateway,omitempty"`
 	// Data 状态数据体。必填。
 	Data any `json:"data"`
+}
+
+type RequestReply struct {
+	Tid       string           `json:"tid"`
+	Bid       string           `json:"bid"`
+	Timestamp int64            `json:"timestamp"`
+	Method    string           `json:"method"`
+	Data      ServiceReplyData `json:"data"`
+}
+
+type StatusReply struct {
+	Tid       string         `json:"tid"`
+	Bid       string         `json:"bid"`
+	Timestamp int64          `json:"timestamp"`
+	Data      EventReplyData `json:"data"`
 }
 
 // NewServiceRequest 创建服务请求消息，自动填充当前毫秒时间戳。
@@ -150,7 +175,8 @@ func NewEventReply(tid, bid, method string, result int) *EventReply {
 
 // ==================== 一、航线管理（Wayline Management） ====================
 
-// FlightTaskPrepareData 航线任务准备数据，用于下发航线任务前的准备阶段。
+// FlightTaskPrepareData 航线任务准备数据。
+// 对应 DJI Cloud API method: flighttask_prepare 的 data 载荷。
 type FlightTaskPrepareData struct {
 	// FlightID 航线任务 ID，全局唯一标识。必填。
 	FlightID string `json:"flight_id"`
@@ -170,7 +196,7 @@ type FlightTaskPrepareData struct {
 	OutOfControlAction int `json:"out_of_control_action,omitempty"`
 	// ExitWaylineWhenRCLost 遥控器信号丢失时是否退出航线，0: 不退出, 1: 退出。可选。
 	ExitWaylineWhenRCLost int `json:"exit_wayline_when_rc_lost,omitempty"`
-	// SimulateMission 模拟任务配置，用于仿真调试。可选。
+	// SimulateMission 模拟任务配置，仅作为 flighttask_prepare.data.simulate_mission 子结构随 FlightTaskPrepare 下发。可选。
 	SimulateMission *SimulateMission `json:"simulate_mission,omitempty"`
 }
 
@@ -194,7 +220,7 @@ type BreakPoint struct {
 	WaylineID int `json:"wayline_id"`
 }
 
-// SimulateMission 模拟任务配置，用于在指定坐标进行仿真飞行。
+// SimulateMission 模拟任务配置，用于在 flighttask_prepare.data.simulate_mission 中声明仿真飞行参数。
 type SimulateMission struct {
 	// IsEnable 是否启用模拟任务。必填。
 	IsEnable bool `json:"is_enable"`
@@ -205,12 +231,14 @@ type SimulateMission struct {
 }
 
 // FlightTaskExecuteData 航线任务执行数据。
+// 对应 DJI Cloud API method: flighttask_execute 的 data 载荷。
 type FlightTaskExecuteData struct {
 	// FlightID 航线任务 ID，与准备阶段的 FlightID 一致。必填。
 	FlightID string `json:"flight_id"`
 }
 
 // FlightTaskCancelData 航线任务取消数据。
+// 对应 DJI Cloud API method: flighttask_undo 的 data 载荷。
 type FlightTaskCancelData struct {
 	// FlightIDs 待取消的航线任务 ID 列表。必填。
 	FlightIDs []string `json:"flight_ids"`
@@ -339,12 +367,13 @@ type DebugProgressDetail struct {
 	StepKey string `json:"step_key,omitempty"`
 }
 
-// ==================== 七、属性设置（Property Set） ====================
-
-// PropertySetData 属性设置数据，键值对形式，键为属性名，值为属性值。
+// ==================== 七、物模型属性（Property） ====================
+// PropertySetData **仅用于云 → 设备** 的 `property/set` 载荷；由云平台/本服务 SetProperty 随 MethodPropertySet 一同下发。键为物模型可写属性名。
+// 设备只读/遥测等场景见 **thing/.../state、osd** 等，勿与本「写属性」混用方向。
 type PropertySetData map[string]any
 
 // ==================== 三、指令飞行控制（Live Flight Controls / DRC） ====================
+// 协议与 [DRC 上云](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html) 及 [DRC 杆量](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E6%9D%86%E9%87%8F%E6%8E%A7%E5%88%B6) 一致；飞控/模式类走 services 载荷，杆量用 DrcStickControlData 发 drc/down。
 
 // DrcModeEnterData 进入指令飞行（DRC）模式请求数据（Dock3 协议）。
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html
@@ -424,18 +453,14 @@ type FlyToWaypoint struct {
 	Height float64 `json:"height"`
 }
 
-// DroneControlData 无人机实时操控数据，用于虚拟摇杆控制。
-type DroneControlData struct {
-	// X 水平方向速度，正值向右，取值范围 [-1, 1]。必填。
-	X float64 `json:"x"`
-	// Y 前后方向速度，正值向前，取值范围 [-1, 1]。必填。
-	Y float64 `json:"y"`
-	// H 垂直方向速度，正值上升，取值范围 [-1, 1]。必填。
-	H float64 `json:"h"`
-	// W 偏航角速度，正值顺时针旋转，取值范围 [-1, 1]。必填。
-	W float64 `json:"w"`
-	// Seq 指令序号，递增整数，用于保序和去重。必填。
-	Seq int `json:"seq"`
+// DrcStickControlData 与 DRC 杆量控制 stick_control 的 data 体一致。
+// 由 SendDrcStickControl 放入 DrcDownMessage 后在 drc/down 上发布；seq 位于 DrcDownMessage 顶层。
+type DrcStickControlData struct {
+	Roll        float64 `json:"roll"`
+	Pitch       float64 `json:"pitch"`
+	Throttle    float64 `json:"throttle"`
+	Yaw         float64 `json:"yaw"`
+	GimbalPitch float64 `json:"gimbal_pitch"`
 }
 
 // ReturnHomeData 一键返航数据，无额外参数。
@@ -619,12 +644,119 @@ type LiveLensChangeData struct {
 	VideoType int `json:"video_type"`
 }
 
-// LiveCameraChangeData 直播相机切换数据（Dock3）。
+// LiveCameraChangeData 直播相机切换数据。
+// 对应 DJI Cloud API method: live_camera_change 的 data 载荷。
 type LiveCameraChangeData struct {
 	// VideoID 视频流 ID。必填。
 	VideoID string `json:"video_id"`
-	// CameraIndex 相机索引，指定切换到的目标相机。必填。
+	// CameraIndex 目标相机索引，格式 type-subtype-gimbalIndex。必填。
 	CameraIndex string `json:"camera_index"`
+}
+
+// MediaUploadFlighttaskMediaPrioritizeData 优先上传航线任务媒体请求数据。
+type MediaUploadFlighttaskMediaPrioritizeData struct {
+	// FlightID 航线任务 ID。必填。
+	FlightID string `json:"flight_id"`
+}
+
+// MediaFastUploadData 快速上传媒体文件请求数据。
+type MediaFastUploadData struct {
+	// FileID 媒体文件 ID。必填。
+	FileID string `json:"file_id"`
+}
+
+// MediaHighestPriorityUploadFlighttaskData 最高优先级上传航线任务媒体请求数据。
+type MediaHighestPriorityUploadFlighttaskData struct {
+	// FlightID 航线任务 ID。必填。
+	FlightID string `json:"flight_id"`
+}
+
+// RemoteLogFileListData 远程日志文件列表查询请求数据。
+type RemoteLogFileListData struct {
+	// DeviceSN 目标设备序列号。可选。
+	DeviceSN string `json:"device_sn,omitempty"`
+	// Module 日志模块名称。可选。
+	Module string `json:"module,omitempty"`
+}
+
+// RemoteLogFileUploadStartData 远程日志文件上传启动请求数据。
+type RemoteLogFileUploadStartData struct {
+	// Files 待上传的远程日志文件列表。必填。
+	Files []RemoteLogFile `json:"files"`
+}
+
+// RemoteLogFileUploadUpdateData 远程日志文件上传更新请求数据。
+type RemoteLogFileUploadUpdateData struct {
+	// Files 更新后的远程日志文件列表。必填。
+	Files []RemoteLogFile `json:"files"`
+}
+
+// RemoteLogFileUploadCancelData 远程日志文件上传取消请求数据。
+type RemoteLogFileUploadCancelData struct {
+	// Files 待取消上传的远程日志文件列表。必填。
+	Files []RemoteLogFile `json:"files"`
+}
+
+// RemoteLogFileUploadResultEvent 远程日志文件上传结果事件数据。
+type RemoteLogFileUploadResultEvent struct {
+	// Files 远程日志文件上传结果列表。必填。
+	Files []RemoteLogFileUploadResult `json:"files"`
+}
+
+// RemoteLogFileUploadProgressEvent 远程日志文件上传进度事件数据。
+type RemoteLogFileUploadProgressEvent struct {
+	// Files 远程日志文件上传进度列表。必填。
+	Files []RemoteLogFileUploadProgress `json:"files"`
+}
+
+// RemoteLogFile 远程日志文件信息。
+type RemoteLogFile struct {
+	// DeviceSN 设备序列号。可选。
+	DeviceSN string `json:"device_sn,omitempty"`
+	// Module 日志模块名称。可选。
+	Module string `json:"module,omitempty"`
+	// Key 日志文件唯一标识。可选。
+	Key string `json:"key,omitempty"`
+	// Name 日志文件名称。可选。
+	Name string `json:"name,omitempty"`
+	// URL 日志文件上传地址或访问地址。可选。
+	URL string `json:"url,omitempty"`
+	// Size 日志文件大小，单位字节。可选。
+	Size int64 `json:"size,omitempty"`
+}
+
+// RemoteLogFileUploadResult 远程日志文件上传结果。
+type RemoteLogFileUploadResult struct {
+	// DeviceSN 设备序列号。可选。
+	DeviceSN string `json:"device_sn,omitempty"`
+	// Module 日志模块名称。可选。
+	Module string `json:"module,omitempty"`
+	// Key 日志文件唯一标识。可选。
+	Key string `json:"key,omitempty"`
+	// Result 上传结果码。必填。
+	Result int `json:"result"`
+	// Output 上传结果扩展输出。可选。
+	Output any `json:"output,omitempty"`
+}
+
+// RemoteLogFileUploadProgress 远程日志文件上传进度。
+type RemoteLogFileUploadProgress struct {
+	// DeviceSN 设备序列号。可选。
+	DeviceSN string `json:"device_sn,omitempty"`
+	// Module 日志模块名称。可选。
+	Module string `json:"module,omitempty"`
+	// Key 日志文件唯一标识。可选。
+	Key string `json:"key,omitempty"`
+	// Progress 上传进度，取值范围 [0, 100]。必填。
+	Progress int `json:"progress"`
+}
+
+// ConfigUpdateData 设备配置更新请求数据。
+type ConfigUpdateData struct {
+	// ConfigScope 配置作用域。可选。
+	ConfigScope string `json:"config_scope,omitempty"`
+	// Config 配置键值内容。必填。
+	Config map[string]any `json:"config"`
 }
 
 // ==================== 八、固件管理（Firmware） ====================

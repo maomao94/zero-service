@@ -24,9 +24,10 @@ func NewDrcModeExitLogic(ctx context.Context, svcCtx *svc.ServiceContext) *DrcMo
 }
 
 func (l *DrcModeExitLogic) DrcModeExit(in *djigateway.DeviceSnReq) (*djigateway.CommonRes, error) {
-	tid, err := l.svcCtx.DjiClient.DrcModeExit(l.ctx, in.DeviceSn)
+	deviceSn := in.GetDeviceSn()
+	tid, err := l.svcCtx.DjiClient.DrcModeExit(l.ctx, deviceSn)
 	if err != nil {
-		l.Errorf("[drc] drc mode exit failed: %v", err)
+		l.Errorf("[drc] mode exit failed device_sn=%s tid=%s: %v", deviceSn, tid, err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

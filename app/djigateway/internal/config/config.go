@@ -19,9 +19,16 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
-	MqttConfig   mqttx.MqttConfig
-	PendingTTL   time.Duration      `json:",default=30s"`
-	DangerousOps DangerousOpsConfig `json:",optional"`
+	MqttConfig    mqttx.MqttConfig
+	PendingTTL    time.Duration       `json:",default=30s"`
+	UpstreamReply UpstreamReplyConfig `json:",optional"`
+	DangerousOps  DangerousOpsConfig  `json:",optional"`
+}
+
+type UpstreamReplyConfig struct {
+	EnableEventsReply   bool `json:",default=true"`
+	EnableStatusReply   bool `json:",default=true"`
+	EnableRequestsReply bool `json:",default=true"`
 }
 
 // DangerousOpsConfig 敏感/危险操作开关配置。

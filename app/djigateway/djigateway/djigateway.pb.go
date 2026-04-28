@@ -233,33 +233,32 @@ func (x *DeviceSnReq) GetDeviceSn() string {
 	return ""
 }
 
-// FlightTaskReq 航线飞行任务请求。
-type FlightTaskReq struct {
+// FlightTaskFileRef 航线文件信息。
+// 对应 flighttask_prepare.data.file。
+type FlightTaskFileRef struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// device_sn 目标机巢设备序列号（gateway_sn）。
-	DeviceSn string `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
-	// task_id 飞行任务 ID，业务侧全局唯一标识。
-	TaskId string `protobuf:"bytes,2,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
-	// wpml_url 航线文件（WPML 格式）的下载地址，设备将从此 URL 拉取航线文件。
-	WpmlUrl       string `protobuf:"bytes,3,opt,name=wpml_url,json=wpmlUrl,proto3" json:"wpml_url,omitempty"`
+	// url 航线文件（WPML）下载地址。必填。
+	Url string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	// fingerprint 文件指纹（如 MD5），用于校验。可选。
+	Fingerprint   string `protobuf:"bytes,2,opt,name=fingerprint,proto3" json:"fingerprint,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *FlightTaskReq) Reset() {
-	*x = FlightTaskReq{}
+func (x *FlightTaskFileRef) Reset() {
+	*x = FlightTaskFileRef{}
 	mi := &file_djigateway_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *FlightTaskReq) String() string {
+func (x *FlightTaskFileRef) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*FlightTaskReq) ProtoMessage() {}
+func (*FlightTaskFileRef) ProtoMessage() {}
 
-func (x *FlightTaskReq) ProtoReflect() protoreflect.Message {
+func (x *FlightTaskFileRef) ProtoReflect() protoreflect.Message {
 	mi := &file_djigateway_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -271,38 +270,364 @@ func (x *FlightTaskReq) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use FlightTaskReq.ProtoReflect.Descriptor instead.
-func (*FlightTaskReq) Descriptor() ([]byte, []int) {
+// Deprecated: Use FlightTaskFileRef.ProtoReflect.Descriptor instead.
+func (*FlightTaskFileRef) Descriptor() ([]byte, []int) {
 	return file_djigateway_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *FlightTaskReq) GetDeviceSn() string {
+func (x *FlightTaskFileRef) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *FlightTaskFileRef) GetFingerprint() string {
+	if x != nil {
+		return x.Fingerprint
+	}
+	return ""
+}
+
+// FlightTaskPrepareSimulateMission 模拟任务配置。
+// 对应 flighttask_prepare.data.simulate_mission。
+type FlightTaskPrepareSimulateMission struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// is_enable 是否启用模拟任务。
+	IsEnable bool `protobuf:"varint,1,opt,name=is_enable,json=isEnable,proto3" json:"is_enable,omitempty"`
+	// latitude 模拟起点纬度，启用时必填。
+	Latitude float64 `protobuf:"fixed64,2,opt,name=latitude,proto3" json:"latitude,omitempty"`
+	// longitude 模拟起点经度，启用时必填。
+	Longitude     float64 `protobuf:"fixed64,3,opt,name=longitude,proto3" json:"longitude,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FlightTaskPrepareSimulateMission) Reset() {
+	*x = FlightTaskPrepareSimulateMission{}
+	mi := &file_djigateway_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FlightTaskPrepareSimulateMission) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FlightTaskPrepareSimulateMission) ProtoMessage() {}
+
+func (x *FlightTaskPrepareSimulateMission) ProtoReflect() protoreflect.Message {
+	mi := &file_djigateway_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FlightTaskPrepareSimulateMission.ProtoReflect.Descriptor instead.
+func (*FlightTaskPrepareSimulateMission) Descriptor() ([]byte, []int) {
+	return file_djigateway_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *FlightTaskPrepareSimulateMission) GetIsEnable() bool {
+	if x != nil {
+		return x.IsEnable
+	}
+	return false
+}
+
+func (x *FlightTaskPrepareSimulateMission) GetLatitude() float64 {
+	if x != nil {
+		return x.Latitude
+	}
+	return 0
+}
+
+func (x *FlightTaskPrepareSimulateMission) GetLongitude() float64 {
+	if x != nil {
+		return x.Longitude
+	}
+	return 0
+}
+
+// FlightTaskPrepareBreakPoint 断点续飞信息。
+// 对应 flighttask_prepare.data.break_point。
+type FlightTaskPrepareBreakPoint struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// index 断点序号（航点索引，从 0 开始）。
+	Index int32 `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`
+	// state 断点状态，0: 在航段上, 1: 在航点上。
+	State int32 `protobuf:"varint,2,opt,name=state,proto3" json:"state,omitempty"`
+	// progress 断点进度 [0, 1]。
+	Progress float64 `protobuf:"fixed64,3,opt,name=progress,proto3" json:"progress,omitempty"`
+	// wayline_id 断点所在航线 ID。
+	WaylineId     int32 `protobuf:"varint,4,opt,name=wayline_id,json=waylineId,proto3" json:"wayline_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FlightTaskPrepareBreakPoint) Reset() {
+	*x = FlightTaskPrepareBreakPoint{}
+	mi := &file_djigateway_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FlightTaskPrepareBreakPoint) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FlightTaskPrepareBreakPoint) ProtoMessage() {}
+
+func (x *FlightTaskPrepareBreakPoint) ProtoReflect() protoreflect.Message {
+	mi := &file_djigateway_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FlightTaskPrepareBreakPoint.ProtoReflect.Descriptor instead.
+func (*FlightTaskPrepareBreakPoint) Descriptor() ([]byte, []int) {
+	return file_djigateway_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *FlightTaskPrepareBreakPoint) GetIndex() int32 {
+	if x != nil {
+		return x.Index
+	}
+	return 0
+}
+
+func (x *FlightTaskPrepareBreakPoint) GetState() int32 {
+	if x != nil {
+		return x.State
+	}
+	return 0
+}
+
+func (x *FlightTaskPrepareBreakPoint) GetProgress() float64 {
+	if x != nil {
+		return x.Progress
+	}
+	return 0
+}
+
+func (x *FlightTaskPrepareBreakPoint) GetWaylineId() int32 {
+	if x != nil {
+		return x.WaylineId
+	}
+	return 0
+}
+
+// FlightTaskPrepareReq 航线任务准备请求。
+// 对应 DJI Cloud API method: flighttask_prepare（Services, down）。
+type FlightTaskPrepareReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// device_sn 目标机巢设备序列号（gateway_sn）。
+	DeviceSn string `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
+	// flight_id 航线任务 ID，全局唯一。必填。
+	FlightId string `protobuf:"bytes,2,opt,name=flight_id,json=flightId,proto3" json:"flight_id,omitempty"`
+	// task_type 任务类型，0: 立即执行, 1: 定时执行, 2: 条件触发。必填。
+	TaskType int32 `protobuf:"varint,3,opt,name=task_type,json=taskType,proto3" json:"task_type,omitempty"`
+	// execute_time 计划执行时间，Unix 毫秒时间戳；0 表示立即执行。
+	ExecuteTime int64 `protobuf:"varint,4,opt,name=execute_time,json=executeTime,proto3" json:"execute_time,omitempty"`
+	// wayline_type 航线类型，0: 普通航线, 1: 协调航线。
+	WaylineType int32 `protobuf:"varint,5,opt,name=wayline_type,json=waylineType,proto3" json:"wayline_type,omitempty"`
+	// file 航线文件信息。必填。
+	File *FlightTaskFileRef `protobuf:"bytes,6,opt,name=file,proto3" json:"file,omitempty"`
+	// break_point 断点续飞信息；无需续飞时可省略。
+	BreakPoint *FlightTaskPrepareBreakPoint `protobuf:"bytes,7,opt,name=break_point,json=breakPoint,proto3" json:"break_point,omitempty"`
+	// rth_altitude 返航高度（米），取值范围 [20, 500]。
+	RthAltitude int32 `protobuf:"varint,8,opt,name=rth_altitude,json=rthAltitude,proto3" json:"rth_altitude,omitempty"`
+	// out_of_control_action 失控动作，0: 返航, 1: 悬停, 2: 降落。
+	OutOfControlAction int32 `protobuf:"varint,9,opt,name=out_of_control_action,json=outOfControlAction,proto3" json:"out_of_control_action,omitempty"`
+	// exit_wayline_when_rc_lost 遥控器失联是否退出航线，0: 不退出, 1: 退出。
+	ExitWaylineWhenRcLost int32 `protobuf:"varint,10,opt,name=exit_wayline_when_rc_lost,json=exitWaylineWhenRcLost,proto3" json:"exit_wayline_when_rc_lost,omitempty"`
+	// simulate_mission 仿真调试；未启用时可省略或 is_enable=false。
+	SimulateMission *FlightTaskPrepareSimulateMission `protobuf:"bytes,11,opt,name=simulate_mission,json=simulateMission,proto3" json:"simulate_mission,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *FlightTaskPrepareReq) Reset() {
+	*x = FlightTaskPrepareReq{}
+	mi := &file_djigateway_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FlightTaskPrepareReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FlightTaskPrepareReq) ProtoMessage() {}
+
+func (x *FlightTaskPrepareReq) ProtoReflect() protoreflect.Message {
+	mi := &file_djigateway_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FlightTaskPrepareReq.ProtoReflect.Descriptor instead.
+func (*FlightTaskPrepareReq) Descriptor() ([]byte, []int) {
+	return file_djigateway_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *FlightTaskPrepareReq) GetDeviceSn() string {
 	if x != nil {
 		return x.DeviceSn
 	}
 	return ""
 }
 
-func (x *FlightTaskReq) GetTaskId() string {
+func (x *FlightTaskPrepareReq) GetFlightId() string {
 	if x != nil {
-		return x.TaskId
+		return x.FlightId
 	}
 	return ""
 }
 
-func (x *FlightTaskReq) GetWpmlUrl() string {
+func (x *FlightTaskPrepareReq) GetTaskType() int32 {
 	if x != nil {
-		return x.WpmlUrl
+		return x.TaskType
+	}
+	return 0
+}
+
+func (x *FlightTaskPrepareReq) GetExecuteTime() int64 {
+	if x != nil {
+		return x.ExecuteTime
+	}
+	return 0
+}
+
+func (x *FlightTaskPrepareReq) GetWaylineType() int32 {
+	if x != nil {
+		return x.WaylineType
+	}
+	return 0
+}
+
+func (x *FlightTaskPrepareReq) GetFile() *FlightTaskFileRef {
+	if x != nil {
+		return x.File
+	}
+	return nil
+}
+
+func (x *FlightTaskPrepareReq) GetBreakPoint() *FlightTaskPrepareBreakPoint {
+	if x != nil {
+		return x.BreakPoint
+	}
+	return nil
+}
+
+func (x *FlightTaskPrepareReq) GetRthAltitude() int32 {
+	if x != nil {
+		return x.RthAltitude
+	}
+	return 0
+}
+
+func (x *FlightTaskPrepareReq) GetOutOfControlAction() int32 {
+	if x != nil {
+		return x.OutOfControlAction
+	}
+	return 0
+}
+
+func (x *FlightTaskPrepareReq) GetExitWaylineWhenRcLost() int32 {
+	if x != nil {
+		return x.ExitWaylineWhenRcLost
+	}
+	return 0
+}
+
+func (x *FlightTaskPrepareReq) GetSimulateMission() *FlightTaskPrepareSimulateMission {
+	if x != nil {
+		return x.SimulateMission
+	}
+	return nil
+}
+
+// FlightTaskExecuteReq 航线任务执行请求。
+// 对应 DJI Cloud API method: flighttask_execute（Services, down）。
+type FlightTaskExecuteReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// device_sn 目标机巢设备序列号（gateway_sn）。
+	DeviceSn string `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
+	// flight_id 航线任务 ID，须与航线任务准备请求中的 flight_id 一致。
+	FlightId      string `protobuf:"bytes,2,opt,name=flight_id,json=flightId,proto3" json:"flight_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FlightTaskExecuteReq) Reset() {
+	*x = FlightTaskExecuteReq{}
+	mi := &file_djigateway_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FlightTaskExecuteReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FlightTaskExecuteReq) ProtoMessage() {}
+
+func (x *FlightTaskExecuteReq) ProtoReflect() protoreflect.Message {
+	mi := &file_djigateway_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FlightTaskExecuteReq.ProtoReflect.Descriptor instead.
+func (*FlightTaskExecuteReq) Descriptor() ([]byte, []int) {
+	return file_djigateway_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *FlightTaskExecuteReq) GetDeviceSn() string {
+	if x != nil {
+		return x.DeviceSn
 	}
 	return ""
 }
 
-// CancelFlightTaskReq 取消飞行任务请求。
+func (x *FlightTaskExecuteReq) GetFlightId() string {
+	if x != nil {
+		return x.FlightId
+	}
+	return ""
+}
+
+// CancelFlightTaskReq 取消航线任务请求。
+// 对应 DJI Cloud API method: flighttask_undo（Services, down）。
 type CancelFlightTaskReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// device_sn 目标机巢设备序列号（gateway_sn）。
 	DeviceSn string `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
-	// flight_ids 要取消的飞行任务 ID 列表。
+	// flight_ids 待取消的航线任务 ID 列表。
 	FlightIds     []string `protobuf:"bytes,2,rep,name=flight_ids,json=flightIds,proto3" json:"flight_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -310,7 +635,7 @@ type CancelFlightTaskReq struct {
 
 func (x *CancelFlightTaskReq) Reset() {
 	*x = CancelFlightTaskReq{}
-	mi := &file_djigateway_proto_msgTypes[5]
+	mi := &file_djigateway_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -322,7 +647,7 @@ func (x *CancelFlightTaskReq) String() string {
 func (*CancelFlightTaskReq) ProtoMessage() {}
 
 func (x *CancelFlightTaskReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[5]
+	mi := &file_djigateway_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -335,7 +660,7 @@ func (x *CancelFlightTaskReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelFlightTaskReq.ProtoReflect.Descriptor instead.
 func (*CancelFlightTaskReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{5}
+	return file_djigateway_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *CancelFlightTaskReq) GetDeviceSn() string {
@@ -350,160 +675,6 @@ func (x *CancelFlightTaskReq) GetFlightIds() []string {
 		return x.FlightIds
 	}
 	return nil
-}
-
-// FlightTaskWithOptionsReq 自定义配置航线飞行任务请求。
-type FlightTaskWithOptionsReq struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// device_sn 目标机巢设备序列号（gateway_sn）。
-	DeviceSn string `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
-	// flight_id 飞行任务 ID，业务侧全局唯一标识。
-	FlightId string `protobuf:"bytes,2,opt,name=flight_id,json=flightId,proto3" json:"flight_id,omitempty"`
-	// task_type 任务类型，0: 立即执行, 1: 定时执行, 2: 条件触发。
-	TaskType int32 `protobuf:"varint,3,opt,name=task_type,json=taskType,proto3" json:"task_type,omitempty"`
-	// wpml_url 航线文件（WPML 格式）的下载地址。
-	WpmlUrl string `protobuf:"bytes,4,opt,name=wpml_url,json=wpmlUrl,proto3" json:"wpml_url,omitempty"`
-	// wpml_fingerprint 航线文件指纹（MD5），用于完整性校验。可选。
-	WpmlFingerprint string `protobuf:"bytes,5,opt,name=wpml_fingerprint,json=wpmlFingerprint,proto3" json:"wpml_fingerprint,omitempty"`
-	// execute_time 计划执行时间，Unix 毫秒时间戳，0 或不填表示立即执行。可选。
-	ExecuteTime int64 `protobuf:"varint,6,opt,name=execute_time,json=executeTime,proto3" json:"execute_time,omitempty"`
-	// rth_altitude 返航高度，单位米，取值范围 [20, 500]。可选。
-	RthAltitude int32 `protobuf:"varint,7,opt,name=rth_altitude,json=rthAltitude,proto3" json:"rth_altitude,omitempty"`
-	// out_of_control_action 失控动作，0: 返航, 1: 悬停, 2: 降落。可选。
-	OutOfControlAction int32 `protobuf:"varint,8,opt,name=out_of_control_action,json=outOfControlAction,proto3" json:"out_of_control_action,omitempty"`
-	// exit_wayline_when_rc_lost 遥控器信号丢失时是否退出航线，0: 不退出, 1: 退出。可选。
-	ExitWaylineWhenRcLost int32 `protobuf:"varint,9,opt,name=exit_wayline_when_rc_lost,json=exitWaylineWhenRcLost,proto3" json:"exit_wayline_when_rc_lost,omitempty"`
-	// break_point_index 断点续飞航点索引，-1 表示不使用断点续飞。可选。
-	BreakPointIndex int32 `protobuf:"varint,10,opt,name=break_point_index,json=breakPointIndex,proto3" json:"break_point_index,omitempty"`
-	// break_point_state 断点状态，0: 在航段上, 1: 在航点上。可选。
-	BreakPointState int32 `protobuf:"varint,11,opt,name=break_point_state,json=breakPointState,proto3" json:"break_point_state,omitempty"`
-	// break_point_progress 断点进度，取值范围 [0, 1]。可选。
-	BreakPointProgress float64 `protobuf:"fixed64,12,opt,name=break_point_progress,json=breakPointProgress,proto3" json:"break_point_progress,omitempty"`
-	// break_point_wayline_id 断点所在航线 ID。可选。
-	BreakPointWaylineId int32 `protobuf:"varint,13,opt,name=break_point_wayline_id,json=breakPointWaylineId,proto3" json:"break_point_wayline_id,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
-}
-
-func (x *FlightTaskWithOptionsReq) Reset() {
-	*x = FlightTaskWithOptionsReq{}
-	mi := &file_djigateway_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *FlightTaskWithOptionsReq) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*FlightTaskWithOptionsReq) ProtoMessage() {}
-
-func (x *FlightTaskWithOptionsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use FlightTaskWithOptionsReq.ProtoReflect.Descriptor instead.
-func (*FlightTaskWithOptionsReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *FlightTaskWithOptionsReq) GetDeviceSn() string {
-	if x != nil {
-		return x.DeviceSn
-	}
-	return ""
-}
-
-func (x *FlightTaskWithOptionsReq) GetFlightId() string {
-	if x != nil {
-		return x.FlightId
-	}
-	return ""
-}
-
-func (x *FlightTaskWithOptionsReq) GetTaskType() int32 {
-	if x != nil {
-		return x.TaskType
-	}
-	return 0
-}
-
-func (x *FlightTaskWithOptionsReq) GetWpmlUrl() string {
-	if x != nil {
-		return x.WpmlUrl
-	}
-	return ""
-}
-
-func (x *FlightTaskWithOptionsReq) GetWpmlFingerprint() string {
-	if x != nil {
-		return x.WpmlFingerprint
-	}
-	return ""
-}
-
-func (x *FlightTaskWithOptionsReq) GetExecuteTime() int64 {
-	if x != nil {
-		return x.ExecuteTime
-	}
-	return 0
-}
-
-func (x *FlightTaskWithOptionsReq) GetRthAltitude() int32 {
-	if x != nil {
-		return x.RthAltitude
-	}
-	return 0
-}
-
-func (x *FlightTaskWithOptionsReq) GetOutOfControlAction() int32 {
-	if x != nil {
-		return x.OutOfControlAction
-	}
-	return 0
-}
-
-func (x *FlightTaskWithOptionsReq) GetExitWaylineWhenRcLost() int32 {
-	if x != nil {
-		return x.ExitWaylineWhenRcLost
-	}
-	return 0
-}
-
-func (x *FlightTaskWithOptionsReq) GetBreakPointIndex() int32 {
-	if x != nil {
-		return x.BreakPointIndex
-	}
-	return 0
-}
-
-func (x *FlightTaskWithOptionsReq) GetBreakPointState() int32 {
-	if x != nil {
-		return x.BreakPointState
-	}
-	return 0
-}
-
-func (x *FlightTaskWithOptionsReq) GetBreakPointProgress() float64 {
-	if x != nil {
-		return x.BreakPointProgress
-	}
-	return 0
-}
-
-func (x *FlightTaskWithOptionsReq) GetBreakPointWaylineId() int32 {
-	if x != nil {
-		return x.BreakPointWaylineId
-	}
-	return 0
 }
 
 // ReturnSpecificHomeReq 返航至指定备降点请求。
@@ -524,7 +695,7 @@ type ReturnSpecificHomeReq struct {
 
 func (x *ReturnSpecificHomeReq) Reset() {
 	*x = ReturnSpecificHomeReq{}
-	mi := &file_djigateway_proto_msgTypes[7]
+	mi := &file_djigateway_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -536,7 +707,7 @@ func (x *ReturnSpecificHomeReq) String() string {
 func (*ReturnSpecificHomeReq) ProtoMessage() {}
 
 func (x *ReturnSpecificHomeReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[7]
+	mi := &file_djigateway_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -549,7 +720,7 @@ func (x *ReturnSpecificHomeReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReturnSpecificHomeReq.ProtoReflect.Descriptor instead.
 func (*ReturnSpecificHomeReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{7}
+	return file_djigateway_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ReturnSpecificHomeReq) GetDeviceSn() string {
@@ -580,34 +751,35 @@ func (x *ReturnSpecificHomeReq) GetHeight() float64 {
 	return 0
 }
 
-// SimulateMissionReq 模拟飞行任务调试请求。
-type SimulateMissionReq struct {
+// PsdkCommandReq PSDK 数据写入请求。
+// 对应 DJI Cloud API method: psdk_write（Services, down）。
+type PsdkCommandReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// device_sn 目标机巢设备序列号（gateway_sn）。
 	DeviceSn string `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
-	// latitude 模拟起点纬度。
-	Latitude float64 `protobuf:"fixed64,2,opt,name=latitude,proto3" json:"latitude,omitempty"`
-	// longitude 模拟起点经度。
-	Longitude     float64 `protobuf:"fixed64,3,opt,name=longitude,proto3" json:"longitude,omitempty"`
+	// payload_index 负载索引，格式通常为 "机型-挂载位置"；为空时网关按 "0" 下发。
+	PayloadIndex string `protobuf:"bytes,2,opt,name=payload_index,json=payloadIndex,proto3" json:"payload_index,omitempty"`
+	// data 待写入 PSDK 负载的数据内容，按 DJI 协议使用 Base64 编码。
+	Data          string `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SimulateMissionReq) Reset() {
-	*x = SimulateMissionReq{}
-	mi := &file_djigateway_proto_msgTypes[8]
+func (x *PsdkCommandReq) Reset() {
+	*x = PsdkCommandReq{}
+	mi := &file_djigateway_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SimulateMissionReq) String() string {
+func (x *PsdkCommandReq) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SimulateMissionReq) ProtoMessage() {}
+func (*PsdkCommandReq) ProtoMessage() {}
 
-func (x *SimulateMissionReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[8]
+func (x *PsdkCommandReq) ProtoReflect() protoreflect.Message {
+	mi := &file_djigateway_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -618,30 +790,30 @@ func (x *SimulateMissionReq) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SimulateMissionReq.ProtoReflect.Descriptor instead.
-func (*SimulateMissionReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{8}
+// Deprecated: Use PsdkCommandReq.ProtoReflect.Descriptor instead.
+func (*PsdkCommandReq) Descriptor() ([]byte, []int) {
+	return file_djigateway_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *SimulateMissionReq) GetDeviceSn() string {
+func (x *PsdkCommandReq) GetDeviceSn() string {
 	if x != nil {
 		return x.DeviceSn
 	}
 	return ""
 }
 
-func (x *SimulateMissionReq) GetLatitude() float64 {
+func (x *PsdkCommandReq) GetPayloadIndex() string {
 	if x != nil {
-		return x.Latitude
+		return x.PayloadIndex
 	}
-	return 0
+	return ""
 }
 
-func (x *SimulateMissionReq) GetLongitude() float64 {
+func (x *PsdkCommandReq) GetData() string {
 	if x != nil {
-		return x.Longitude
+		return x.Data
 	}
-	return 0
+	return ""
 }
 
 // CustomDataToPsdkReq PSDK 自定义数据透传请求。
@@ -658,7 +830,7 @@ type CustomDataToPsdkReq struct {
 
 func (x *CustomDataToPsdkReq) Reset() {
 	*x = CustomDataToPsdkReq{}
-	mi := &file_djigateway_proto_msgTypes[9]
+	mi := &file_djigateway_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -670,7 +842,7 @@ func (x *CustomDataToPsdkReq) String() string {
 func (*CustomDataToPsdkReq) ProtoMessage() {}
 
 func (x *CustomDataToPsdkReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[9]
+	mi := &file_djigateway_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -683,7 +855,7 @@ func (x *CustomDataToPsdkReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CustomDataToPsdkReq.ProtoReflect.Descriptor instead.
 func (*CustomDataToPsdkReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{9}
+	return file_djigateway_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *CustomDataToPsdkReq) GetDeviceSn() string {
@@ -701,7 +873,7 @@ func (x *CustomDataToPsdkReq) GetValue() string {
 }
 
 // DrcModeEnterReq 进入 DRC 指令飞行模式请求（Dock3 协议）。
-// 包含 DRC 专用 MQTT Broker 的连接信息及 DRC 链路配置参数。
+// 包含 DRC 专用 MQTT Broker 的连接信息及 DRC 链路配置参数；经 services 下发 drc_mode_enter。
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html
 type DrcModeEnterReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -719,7 +891,7 @@ type DrcModeEnterReq struct {
 
 func (x *DrcModeEnterReq) Reset() {
 	*x = DrcModeEnterReq{}
-	mi := &file_djigateway_proto_msgTypes[10]
+	mi := &file_djigateway_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -731,7 +903,7 @@ func (x *DrcModeEnterReq) String() string {
 func (*DrcModeEnterReq) ProtoMessage() {}
 
 func (x *DrcModeEnterReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[10]
+	mi := &file_djigateway_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -744,7 +916,7 @@ func (x *DrcModeEnterReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcModeEnterReq.ProtoReflect.Descriptor instead.
 func (*DrcModeEnterReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{10}
+	return file_djigateway_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *DrcModeEnterReq) GetDeviceSn() string {
@@ -796,7 +968,7 @@ type DrcMqttBroker struct {
 
 func (x *DrcMqttBroker) Reset() {
 	*x = DrcMqttBroker{}
-	mi := &file_djigateway_proto_msgTypes[11]
+	mi := &file_djigateway_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -808,7 +980,7 @@ func (x *DrcMqttBroker) String() string {
 func (*DrcMqttBroker) ProtoMessage() {}
 
 func (x *DrcMqttBroker) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[11]
+	mi := &file_djigateway_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -821,7 +993,7 @@ func (x *DrcMqttBroker) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DrcMqttBroker.ProtoReflect.Descriptor instead.
 func (*DrcMqttBroker) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{11}
+	return file_djigateway_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *DrcMqttBroker) GetAddress() string {
@@ -866,41 +1038,44 @@ func (x *DrcMqttBroker) GetEnableTls() bool {
 	return false
 }
 
-// DroneControlReq 飞行器杆量控制（虚拟摇杆）请求。
-// 通过 DRC 通道实时下发控制指令，即发即忘，不等待设备 ACK。
-type DroneControlReq struct {
+// DrcStickControlReq DRC 杆量控制（method stick_control）请求，与 SendDrcStickControl 对应。
+// 经 thing/.../drc/down 下发；seq 与 data 同级，data 内含 roll/pitch/throttle/yaw/gimbal_pitch。
+// 文档: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E6%9D%86%E9%87%8F%E6%8E%A7%E5%88%B6
+type DrcStickControlReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// device_sn 目标机巢设备序列号（gateway_sn）。
 	DeviceSn string `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
-	// x 水平方向速度，正值向右，取值范围 [-1, 1]。
-	X float64 `protobuf:"fixed64,2,opt,name=x,proto3" json:"x,omitempty"`
-	// y 前后方向速度，正值向前，取值范围 [-1, 1]。
-	Y float64 `protobuf:"fixed64,3,opt,name=y,proto3" json:"y,omitempty"`
-	// h 垂直方向速度，正值上升，取值范围 [-1, 1]。
-	H float64 `protobuf:"fixed64,4,opt,name=h,proto3" json:"h,omitempty"`
-	// w 偏航角速度，正值顺时针旋转，取值范围 [-1, 1]。
-	W float64 `protobuf:"fixed64,5,opt,name=w,proto3" json:"w,omitempty"`
-	// seq 指令序号，递增整数，用于保序和去重。
-	Seq           int32 `protobuf:"varint,6,opt,name=seq,proto3" json:"seq,omitempty"`
+	// seq 指令序号，递增；当 roll/pitch/throttle/yaw/gimbal_pitch 任一分量相对上一帧有变化时，宜从 0 重新递（见 DRC-flight control 表说明），用于保序与回执对账。
+	Seq int32 `protobuf:"varint,2,opt,name=seq,proto3" json:"seq,omitempty"`
+	// roll 左右平移速度（m/s），俯视机头朝前时：正值为向左、负值为向右，范围约 [-17, 17]（以固件/文档为准）。
+	Roll float64 `protobuf:"fixed64,3,opt,name=roll,proto3" json:"roll,omitempty"`
+	// pitch 前后平移速度（m/s），正值为向前、负值为向后，范围约 [-17, 17]（以固件/文档为准）。
+	Pitch float64 `protobuf:"fixed64,4,opt,name=pitch,proto3" json:"pitch,omitempty"`
+	// throttle 垂直速度（m/s），正值为上升、负值为下降，范围约 [-4, 5]（以固件/文档为准）。
+	Throttle float64 `protobuf:"fixed64,5,opt,name=throttle,proto3" json:"throttle,omitempty"`
+	// yaw 机体偏航角速度（°/s），正值为顺时针、负值为逆时针，范围约 [-90, 90]（以固件/文档为准）。
+	Yaw float64 `protobuf:"fixed64,6,opt,name=yaw,proto3" json:"yaw,omitempty"`
+	// gimbal_pitch 云台俯仰角速度（°/s），正值为向上、负值为向下（以固件/文档为准）。
+	GimbalPitch   float64 `protobuf:"fixed64,7,opt,name=gimbal_pitch,json=gimbalPitch,proto3" json:"gimbal_pitch,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DroneControlReq) Reset() {
-	*x = DroneControlReq{}
-	mi := &file_djigateway_proto_msgTypes[12]
+func (x *DrcStickControlReq) Reset() {
+	*x = DrcStickControlReq{}
+	mi := &file_djigateway_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DroneControlReq) String() string {
+func (x *DrcStickControlReq) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DroneControlReq) ProtoMessage() {}
+func (*DrcStickControlReq) ProtoMessage() {}
 
-func (x *DroneControlReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[12]
+func (x *DrcStickControlReq) ProtoReflect() protoreflect.Message {
+	mi := &file_djigateway_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -911,49 +1086,117 @@ func (x *DroneControlReq) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DroneControlReq.ProtoReflect.Descriptor instead.
-func (*DroneControlReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{12}
+// Deprecated: Use DrcStickControlReq.ProtoReflect.Descriptor instead.
+func (*DrcStickControlReq) Descriptor() ([]byte, []int) {
+	return file_djigateway_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *DroneControlReq) GetDeviceSn() string {
+func (x *DrcStickControlReq) GetDeviceSn() string {
 	if x != nil {
 		return x.DeviceSn
 	}
 	return ""
 }
 
-func (x *DroneControlReq) GetX() float64 {
-	if x != nil {
-		return x.X
-	}
-	return 0
-}
-
-func (x *DroneControlReq) GetY() float64 {
-	if x != nil {
-		return x.Y
-	}
-	return 0
-}
-
-func (x *DroneControlReq) GetH() float64 {
-	if x != nil {
-		return x.H
-	}
-	return 0
-}
-
-func (x *DroneControlReq) GetW() float64 {
-	if x != nil {
-		return x.W
-	}
-	return 0
-}
-
-func (x *DroneControlReq) GetSeq() int32 {
+func (x *DrcStickControlReq) GetSeq() int32 {
 	if x != nil {
 		return x.Seq
+	}
+	return 0
+}
+
+func (x *DrcStickControlReq) GetRoll() float64 {
+	if x != nil {
+		return x.Roll
+	}
+	return 0
+}
+
+func (x *DrcStickControlReq) GetPitch() float64 {
+	if x != nil {
+		return x.Pitch
+	}
+	return 0
+}
+
+func (x *DrcStickControlReq) GetThrottle() float64 {
+	if x != nil {
+		return x.Throttle
+	}
+	return 0
+}
+
+func (x *DrcStickControlReq) GetYaw() float64 {
+	if x != nil {
+		return x.Yaw
+	}
+	return 0
+}
+
+func (x *DrcStickControlReq) GetGimbalPitch() float64 {
+	if x != nil {
+		return x.GimbalPitch
+	}
+	return 0
+}
+
+// DrcHeartBeatReq DRC 心跳（drc/down，method heart_beat）；与 data 同级的 seq 及 data.timestamp 见 DRC 文档。
+type DrcHeartBeatReq struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	DeviceSn        string                 `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
+	Seq             int32                  `protobuf:"varint,2,opt,name=seq,proto3" json:"seq,omitempty"`
+	TimestampMillis int64                  `protobuf:"varint,3,opt,name=timestamp_millis,json=timestampMillis,proto3" json:"timestamp_millis,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *DrcHeartBeatReq) Reset() {
+	*x = DrcHeartBeatReq{}
+	mi := &file_djigateway_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DrcHeartBeatReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DrcHeartBeatReq) ProtoMessage() {}
+
+func (x *DrcHeartBeatReq) ProtoReflect() protoreflect.Message {
+	mi := &file_djigateway_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DrcHeartBeatReq.ProtoReflect.Descriptor instead.
+func (*DrcHeartBeatReq) Descriptor() ([]byte, []int) {
+	return file_djigateway_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *DrcHeartBeatReq) GetDeviceSn() string {
+	if x != nil {
+		return x.DeviceSn
+	}
+	return ""
+}
+
+func (x *DrcHeartBeatReq) GetSeq() int32 {
+	if x != nil {
+		return x.Seq
+	}
+	return 0
+}
+
+func (x *DrcHeartBeatReq) GetTimestampMillis() int64 {
+	if x != nil {
+		return x.TimestampMillis
 	}
 	return 0
 }
@@ -987,7 +1230,7 @@ type TakeoffToPointReq struct {
 
 func (x *TakeoffToPointReq) Reset() {
 	*x = TakeoffToPointReq{}
-	mi := &file_djigateway_proto_msgTypes[13]
+	mi := &file_djigateway_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -999,7 +1242,7 @@ func (x *TakeoffToPointReq) String() string {
 func (*TakeoffToPointReq) ProtoMessage() {}
 
 func (x *TakeoffToPointReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[13]
+	mi := &file_djigateway_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1012,7 +1255,7 @@ func (x *TakeoffToPointReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TakeoffToPointReq.ProtoReflect.Descriptor instead.
 func (*TakeoffToPointReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{13}
+	return file_djigateway_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *TakeoffToPointReq) GetDeviceSn() string {
@@ -1102,7 +1345,7 @@ type FlyToPointReq struct {
 
 func (x *FlyToPointReq) Reset() {
 	*x = FlyToPointReq{}
-	mi := &file_djigateway_proto_msgTypes[14]
+	mi := &file_djigateway_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1114,7 +1357,7 @@ func (x *FlyToPointReq) String() string {
 func (*FlyToPointReq) ProtoMessage() {}
 
 func (x *FlyToPointReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[14]
+	mi := &file_djigateway_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1127,7 +1370,7 @@ func (x *FlyToPointReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FlyToPointReq.ProtoReflect.Descriptor instead.
 func (*FlyToPointReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{14}
+	return file_djigateway_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *FlyToPointReq) GetDeviceSn() string {
@@ -1173,7 +1416,7 @@ type Waypoint struct {
 
 func (x *Waypoint) Reset() {
 	*x = Waypoint{}
-	mi := &file_djigateway_proto_msgTypes[15]
+	mi := &file_djigateway_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1185,7 +1428,7 @@ func (x *Waypoint) String() string {
 func (*Waypoint) ProtoMessage() {}
 
 func (x *Waypoint) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[15]
+	mi := &file_djigateway_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1198,7 +1441,7 @@ func (x *Waypoint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Waypoint.ProtoReflect.Descriptor instead.
 func (*Waypoint) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{15}
+	return file_djigateway_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *Waypoint) GetLatitude() float64 {
@@ -1235,7 +1478,7 @@ type BatteryStoreModeReq struct {
 
 func (x *BatteryStoreModeReq) Reset() {
 	*x = BatteryStoreModeReq{}
-	mi := &file_djigateway_proto_msgTypes[16]
+	mi := &file_djigateway_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1247,7 +1490,7 @@ func (x *BatteryStoreModeReq) String() string {
 func (*BatteryStoreModeReq) ProtoMessage() {}
 
 func (x *BatteryStoreModeReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[16]
+	mi := &file_djigateway_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1260,7 +1503,7 @@ func (x *BatteryStoreModeReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatteryStoreModeReq.ProtoReflect.Descriptor instead.
 func (*BatteryStoreModeReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{16}
+	return file_djigateway_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *BatteryStoreModeReq) GetDeviceSn() string {
@@ -1290,7 +1533,7 @@ type AlarmStateSwitchReq struct {
 
 func (x *AlarmStateSwitchReq) Reset() {
 	*x = AlarmStateSwitchReq{}
-	mi := &file_djigateway_proto_msgTypes[17]
+	mi := &file_djigateway_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1302,7 +1545,7 @@ func (x *AlarmStateSwitchReq) String() string {
 func (*AlarmStateSwitchReq) ProtoMessage() {}
 
 func (x *AlarmStateSwitchReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[17]
+	mi := &file_djigateway_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1315,7 +1558,7 @@ func (x *AlarmStateSwitchReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AlarmStateSwitchReq.ProtoReflect.Descriptor instead.
 func (*AlarmStateSwitchReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{17}
+	return file_djigateway_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *AlarmStateSwitchReq) GetDeviceSn() string {
@@ -1345,7 +1588,7 @@ type AirConditionerModeSwitchReq struct {
 
 func (x *AirConditionerModeSwitchReq) Reset() {
 	*x = AirConditionerModeSwitchReq{}
-	mi := &file_djigateway_proto_msgTypes[18]
+	mi := &file_djigateway_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1357,7 +1600,7 @@ func (x *AirConditionerModeSwitchReq) String() string {
 func (*AirConditionerModeSwitchReq) ProtoMessage() {}
 
 func (x *AirConditionerModeSwitchReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[18]
+	mi := &file_djigateway_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1370,7 +1613,7 @@ func (x *AirConditionerModeSwitchReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AirConditionerModeSwitchReq.ProtoReflect.Descriptor instead.
 func (*AirConditionerModeSwitchReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{18}
+	return file_djigateway_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *AirConditionerModeSwitchReq) GetDeviceSn() string {
@@ -1402,7 +1645,7 @@ type CameraModeSwitchReq struct {
 
 func (x *CameraModeSwitchReq) Reset() {
 	*x = CameraModeSwitchReq{}
-	mi := &file_djigateway_proto_msgTypes[19]
+	mi := &file_djigateway_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1414,7 +1657,7 @@ func (x *CameraModeSwitchReq) String() string {
 func (*CameraModeSwitchReq) ProtoMessage() {}
 
 func (x *CameraModeSwitchReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[19]
+	mi := &file_djigateway_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1427,7 +1670,7 @@ func (x *CameraModeSwitchReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraModeSwitchReq.ProtoReflect.Descriptor instead.
 func (*CameraModeSwitchReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{19}
+	return file_djigateway_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *CameraModeSwitchReq) GetDeviceSn() string {
@@ -1464,7 +1707,7 @@ type CameraPhotoTakeReq struct {
 
 func (x *CameraPhotoTakeReq) Reset() {
 	*x = CameraPhotoTakeReq{}
-	mi := &file_djigateway_proto_msgTypes[20]
+	mi := &file_djigateway_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1476,7 +1719,7 @@ func (x *CameraPhotoTakeReq) String() string {
 func (*CameraPhotoTakeReq) ProtoMessage() {}
 
 func (x *CameraPhotoTakeReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[20]
+	mi := &file_djigateway_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1489,7 +1732,7 @@ func (x *CameraPhotoTakeReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraPhotoTakeReq.ProtoReflect.Descriptor instead.
 func (*CameraPhotoTakeReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{20}
+	return file_djigateway_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *CameraPhotoTakeReq) GetDeviceSn() string {
@@ -1519,7 +1762,7 @@ type CameraPhotoStopReq struct {
 
 func (x *CameraPhotoStopReq) Reset() {
 	*x = CameraPhotoStopReq{}
-	mi := &file_djigateway_proto_msgTypes[21]
+	mi := &file_djigateway_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1531,7 +1774,7 @@ func (x *CameraPhotoStopReq) String() string {
 func (*CameraPhotoStopReq) ProtoMessage() {}
 
 func (x *CameraPhotoStopReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[21]
+	mi := &file_djigateway_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1544,7 +1787,7 @@ func (x *CameraPhotoStopReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraPhotoStopReq.ProtoReflect.Descriptor instead.
 func (*CameraPhotoStopReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{21}
+	return file_djigateway_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *CameraPhotoStopReq) GetDeviceSn() string {
@@ -1574,7 +1817,7 @@ type CameraRecordingStartReq struct {
 
 func (x *CameraRecordingStartReq) Reset() {
 	*x = CameraRecordingStartReq{}
-	mi := &file_djigateway_proto_msgTypes[22]
+	mi := &file_djigateway_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1586,7 +1829,7 @@ func (x *CameraRecordingStartReq) String() string {
 func (*CameraRecordingStartReq) ProtoMessage() {}
 
 func (x *CameraRecordingStartReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[22]
+	mi := &file_djigateway_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1599,7 +1842,7 @@ func (x *CameraRecordingStartReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraRecordingStartReq.ProtoReflect.Descriptor instead.
 func (*CameraRecordingStartReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{22}
+	return file_djigateway_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *CameraRecordingStartReq) GetDeviceSn() string {
@@ -1629,7 +1872,7 @@ type CameraRecordingStopReq struct {
 
 func (x *CameraRecordingStopReq) Reset() {
 	*x = CameraRecordingStopReq{}
-	mi := &file_djigateway_proto_msgTypes[23]
+	mi := &file_djigateway_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1641,7 +1884,7 @@ func (x *CameraRecordingStopReq) String() string {
 func (*CameraRecordingStopReq) ProtoMessage() {}
 
 func (x *CameraRecordingStopReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[23]
+	mi := &file_djigateway_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1654,7 +1897,7 @@ func (x *CameraRecordingStopReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraRecordingStopReq.ProtoReflect.Descriptor instead.
 func (*CameraRecordingStopReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{23}
+	return file_djigateway_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *CameraRecordingStopReq) GetDeviceSn() string {
@@ -1688,7 +1931,7 @@ type CameraFocalLengthSetReq struct {
 
 func (x *CameraFocalLengthSetReq) Reset() {
 	*x = CameraFocalLengthSetReq{}
-	mi := &file_djigateway_proto_msgTypes[24]
+	mi := &file_djigateway_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1700,7 +1943,7 @@ func (x *CameraFocalLengthSetReq) String() string {
 func (*CameraFocalLengthSetReq) ProtoMessage() {}
 
 func (x *CameraFocalLengthSetReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[24]
+	mi := &file_djigateway_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1713,7 +1956,7 @@ func (x *CameraFocalLengthSetReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraFocalLengthSetReq.ProtoReflect.Descriptor instead.
 func (*CameraFocalLengthSetReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{24}
+	return file_djigateway_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *CameraFocalLengthSetReq) GetDeviceSn() string {
@@ -1759,7 +2002,7 @@ type GimbalResetReq struct {
 
 func (x *GimbalResetReq) Reset() {
 	*x = GimbalResetReq{}
-	mi := &file_djigateway_proto_msgTypes[25]
+	mi := &file_djigateway_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1771,7 +2014,7 @@ func (x *GimbalResetReq) String() string {
 func (*GimbalResetReq) ProtoMessage() {}
 
 func (x *GimbalResetReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[25]
+	mi := &file_djigateway_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1784,7 +2027,7 @@ func (x *GimbalResetReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GimbalResetReq.ProtoReflect.Descriptor instead.
 func (*GimbalResetReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{25}
+	return file_djigateway_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *GimbalResetReq) GetDeviceSn() string {
@@ -1829,7 +2072,7 @@ type CameraAimReq struct {
 
 func (x *CameraAimReq) Reset() {
 	*x = CameraAimReq{}
-	mi := &file_djigateway_proto_msgTypes[26]
+	mi := &file_djigateway_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1841,7 +2084,7 @@ func (x *CameraAimReq) String() string {
 func (*CameraAimReq) ProtoMessage() {}
 
 func (x *CameraAimReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[26]
+	mi := &file_djigateway_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1854,7 +2097,7 @@ func (x *CameraAimReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraAimReq.ProtoReflect.Descriptor instead.
 func (*CameraAimReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{26}
+	return file_djigateway_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *CameraAimReq) GetDeviceSn() string {
@@ -1918,7 +2161,7 @@ type CameraPointFocusActionReq struct {
 
 func (x *CameraPointFocusActionReq) Reset() {
 	*x = CameraPointFocusActionReq{}
-	mi := &file_djigateway_proto_msgTypes[27]
+	mi := &file_djigateway_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1930,7 +2173,7 @@ func (x *CameraPointFocusActionReq) String() string {
 func (*CameraPointFocusActionReq) ProtoMessage() {}
 
 func (x *CameraPointFocusActionReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[27]
+	mi := &file_djigateway_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1943,7 +2186,7 @@ func (x *CameraPointFocusActionReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraPointFocusActionReq.ProtoReflect.Descriptor instead.
 func (*CameraPointFocusActionReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{27}
+	return file_djigateway_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *CameraPointFocusActionReq) GetDeviceSn() string {
@@ -1996,7 +2239,7 @@ type CameraScreenSplitReq struct {
 
 func (x *CameraScreenSplitReq) Reset() {
 	*x = CameraScreenSplitReq{}
-	mi := &file_djigateway_proto_msgTypes[28]
+	mi := &file_djigateway_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2008,7 +2251,7 @@ func (x *CameraScreenSplitReq) String() string {
 func (*CameraScreenSplitReq) ProtoMessage() {}
 
 func (x *CameraScreenSplitReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[28]
+	mi := &file_djigateway_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2021,7 +2264,7 @@ func (x *CameraScreenSplitReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraScreenSplitReq.ProtoReflect.Descriptor instead.
 func (*CameraScreenSplitReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{28}
+	return file_djigateway_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *CameraScreenSplitReq) GetDeviceSn() string {
@@ -2060,7 +2303,7 @@ type CameraPhotoStorageSetReq struct {
 
 func (x *CameraPhotoStorageSetReq) Reset() {
 	*x = CameraPhotoStorageSetReq{}
-	mi := &file_djigateway_proto_msgTypes[29]
+	mi := &file_djigateway_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2072,7 +2315,7 @@ func (x *CameraPhotoStorageSetReq) String() string {
 func (*CameraPhotoStorageSetReq) ProtoMessage() {}
 
 func (x *CameraPhotoStorageSetReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[29]
+	mi := &file_djigateway_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2085,7 +2328,7 @@ func (x *CameraPhotoStorageSetReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraPhotoStorageSetReq.ProtoReflect.Descriptor instead.
 func (*CameraPhotoStorageSetReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{29}
+	return file_djigateway_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *CameraPhotoStorageSetReq) GetDeviceSn() string {
@@ -2124,7 +2367,7 @@ type CameraVideoStorageSetReq struct {
 
 func (x *CameraVideoStorageSetReq) Reset() {
 	*x = CameraVideoStorageSetReq{}
-	mi := &file_djigateway_proto_msgTypes[30]
+	mi := &file_djigateway_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2136,7 +2379,7 @@ func (x *CameraVideoStorageSetReq) String() string {
 func (*CameraVideoStorageSetReq) ProtoMessage() {}
 
 func (x *CameraVideoStorageSetReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[30]
+	mi := &file_djigateway_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2149,7 +2392,7 @@ func (x *CameraVideoStorageSetReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraVideoStorageSetReq.ProtoReflect.Descriptor instead.
 func (*CameraVideoStorageSetReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{30}
+	return file_djigateway_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *CameraVideoStorageSetReq) GetDeviceSn() string {
@@ -2194,7 +2437,7 @@ type CameraLookAtReq struct {
 
 func (x *CameraLookAtReq) Reset() {
 	*x = CameraLookAtReq{}
-	mi := &file_djigateway_proto_msgTypes[31]
+	mi := &file_djigateway_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2206,7 +2449,7 @@ func (x *CameraLookAtReq) String() string {
 func (*CameraLookAtReq) ProtoMessage() {}
 
 func (x *CameraLookAtReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[31]
+	mi := &file_djigateway_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2219,7 +2462,7 @@ func (x *CameraLookAtReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraLookAtReq.ProtoReflect.Descriptor instead.
 func (*CameraLookAtReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{31}
+	return file_djigateway_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *CameraLookAtReq) GetDeviceSn() string {
@@ -2285,7 +2528,7 @@ type CameraScreenDragReq struct {
 
 func (x *CameraScreenDragReq) Reset() {
 	*x = CameraScreenDragReq{}
-	mi := &file_djigateway_proto_msgTypes[32]
+	mi := &file_djigateway_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2297,7 +2540,7 @@ func (x *CameraScreenDragReq) String() string {
 func (*CameraScreenDragReq) ProtoMessage() {}
 
 func (x *CameraScreenDragReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[32]
+	mi := &file_djigateway_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2310,7 +2553,7 @@ func (x *CameraScreenDragReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraScreenDragReq.ProtoReflect.Descriptor instead.
 func (*CameraScreenDragReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{32}
+	return file_djigateway_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *CameraScreenDragReq) GetDeviceSn() string {
@@ -2372,7 +2615,7 @@ type CameraIrMeteringPointReq struct {
 
 func (x *CameraIrMeteringPointReq) Reset() {
 	*x = CameraIrMeteringPointReq{}
-	mi := &file_djigateway_proto_msgTypes[33]
+	mi := &file_djigateway_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2384,7 +2627,7 @@ func (x *CameraIrMeteringPointReq) String() string {
 func (*CameraIrMeteringPointReq) ProtoMessage() {}
 
 func (x *CameraIrMeteringPointReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[33]
+	mi := &file_djigateway_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2397,7 +2640,7 @@ func (x *CameraIrMeteringPointReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraIrMeteringPointReq.ProtoReflect.Descriptor instead.
 func (*CameraIrMeteringPointReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{33}
+	return file_djigateway_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *CameraIrMeteringPointReq) GetDeviceSn() string {
@@ -2449,7 +2692,7 @@ type CameraIrMeteringAreaReq struct {
 
 func (x *CameraIrMeteringAreaReq) Reset() {
 	*x = CameraIrMeteringAreaReq{}
-	mi := &file_djigateway_proto_msgTypes[34]
+	mi := &file_djigateway_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2461,7 +2704,7 @@ func (x *CameraIrMeteringAreaReq) String() string {
 func (*CameraIrMeteringAreaReq) ProtoMessage() {}
 
 func (x *CameraIrMeteringAreaReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[34]
+	mi := &file_djigateway_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2474,7 +2717,7 @@ func (x *CameraIrMeteringAreaReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CameraIrMeteringAreaReq.ProtoReflect.Descriptor instead.
 func (*CameraIrMeteringAreaReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{34}
+	return file_djigateway_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *CameraIrMeteringAreaReq) GetDeviceSn() string {
@@ -2538,7 +2781,7 @@ type LiveStartPushReq struct {
 
 func (x *LiveStartPushReq) Reset() {
 	*x = LiveStartPushReq{}
-	mi := &file_djigateway_proto_msgTypes[35]
+	mi := &file_djigateway_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2550,7 +2793,7 @@ func (x *LiveStartPushReq) String() string {
 func (*LiveStartPushReq) ProtoMessage() {}
 
 func (x *LiveStartPushReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[35]
+	mi := &file_djigateway_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2563,7 +2806,7 @@ func (x *LiveStartPushReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LiveStartPushReq.ProtoReflect.Descriptor instead.
 func (*LiveStartPushReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{35}
+	return file_djigateway_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *LiveStartPushReq) GetDeviceSn() string {
@@ -2614,7 +2857,7 @@ type LiveStopPushReq struct {
 
 func (x *LiveStopPushReq) Reset() {
 	*x = LiveStopPushReq{}
-	mi := &file_djigateway_proto_msgTypes[36]
+	mi := &file_djigateway_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2626,7 +2869,7 @@ func (x *LiveStopPushReq) String() string {
 func (*LiveStopPushReq) ProtoMessage() {}
 
 func (x *LiveStopPushReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[36]
+	mi := &file_djigateway_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2639,7 +2882,7 @@ func (x *LiveStopPushReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LiveStopPushReq.ProtoReflect.Descriptor instead.
 func (*LiveStopPushReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{36}
+	return file_djigateway_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *LiveStopPushReq) GetDeviceSn() string {
@@ -2671,7 +2914,7 @@ type LiveSetQualityReq struct {
 
 func (x *LiveSetQualityReq) Reset() {
 	*x = LiveSetQualityReq{}
-	mi := &file_djigateway_proto_msgTypes[37]
+	mi := &file_djigateway_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2683,7 +2926,7 @@ func (x *LiveSetQualityReq) String() string {
 func (*LiveSetQualityReq) ProtoMessage() {}
 
 func (x *LiveSetQualityReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[37]
+	mi := &file_djigateway_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2696,7 +2939,7 @@ func (x *LiveSetQualityReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LiveSetQualityReq.ProtoReflect.Descriptor instead.
 func (*LiveSetQualityReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{37}
+	return file_djigateway_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *LiveSetQualityReq) GetDeviceSn() string {
@@ -2736,7 +2979,7 @@ type LiveLensChangeReq struct {
 
 func (x *LiveLensChangeReq) Reset() {
 	*x = LiveLensChangeReq{}
-	mi := &file_djigateway_proto_msgTypes[38]
+	mi := &file_djigateway_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2748,7 +2991,7 @@ func (x *LiveLensChangeReq) String() string {
 func (*LiveLensChangeReq) ProtoMessage() {}
 
 func (x *LiveLensChangeReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[38]
+	mi := &file_djigateway_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2761,7 +3004,7 @@ func (x *LiveLensChangeReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LiveLensChangeReq.ProtoReflect.Descriptor instead.
 func (*LiveLensChangeReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{38}
+	return file_djigateway_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *LiveLensChangeReq) GetDeviceSn() string {
@@ -2791,17 +3034,17 @@ type LiveCameraChangeReq struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// device_sn 目标机巢设备序列号（gateway_sn）。
 	DeviceSn string `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
-	// video_id 视频流ID。
+	// video_id 视频流 ID。
 	VideoId string `protobuf:"bytes,2,opt,name=video_id,json=videoId,proto3" json:"video_id,omitempty"`
-	// camera_position 相机索引，指定切换到的目标相机，格式如 "机型-挂载位置"。
-	CameraPosition string `protobuf:"bytes,3,opt,name=camera_position,json=cameraPosition,proto3" json:"camera_position,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// camera_index 目标相机索引，格式 type-subtype-gimbalIndex（与 data.camera_index 一致）。
+	CameraIndex   string `protobuf:"bytes,3,opt,name=camera_index,json=cameraIndex,proto3" json:"camera_index,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *LiveCameraChangeReq) Reset() {
 	*x = LiveCameraChangeReq{}
-	mi := &file_djigateway_proto_msgTypes[39]
+	mi := &file_djigateway_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2813,7 +3056,7 @@ func (x *LiveCameraChangeReq) String() string {
 func (*LiveCameraChangeReq) ProtoMessage() {}
 
 func (x *LiveCameraChangeReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[39]
+	mi := &file_djigateway_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2826,7 +3069,7 @@ func (x *LiveCameraChangeReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LiveCameraChangeReq.ProtoReflect.Descriptor instead.
 func (*LiveCameraChangeReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{39}
+	return file_djigateway_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *LiveCameraChangeReq) GetDeviceSn() string {
@@ -2843,9 +3086,393 @@ func (x *LiveCameraChangeReq) GetVideoId() string {
 	return ""
 }
 
-func (x *LiveCameraChangeReq) GetCameraPosition() string {
+func (x *LiveCameraChangeReq) GetCameraIndex() string {
 	if x != nil {
-		return x.CameraPosition
+		return x.CameraIndex
+	}
+	return ""
+}
+
+// MediaFlighttaskReq 航线任务媒体上传请求。
+type MediaFlighttaskReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// device_sn 目标机巢设备序列号（gateway_sn）。
+	DeviceSn string `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
+	// flight_id 航线任务 ID，对应 data.flight_id。
+	FlightId      string `protobuf:"bytes,2,opt,name=flight_id,json=flightId,proto3" json:"flight_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MediaFlighttaskReq) Reset() {
+	*x = MediaFlighttaskReq{}
+	mi := &file_djigateway_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MediaFlighttaskReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MediaFlighttaskReq) ProtoMessage() {}
+
+func (x *MediaFlighttaskReq) ProtoReflect() protoreflect.Message {
+	mi := &file_djigateway_proto_msgTypes[44]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MediaFlighttaskReq.ProtoReflect.Descriptor instead.
+func (*MediaFlighttaskReq) Descriptor() ([]byte, []int) {
+	return file_djigateway_proto_rawDescGZIP(), []int{44}
+}
+
+func (x *MediaFlighttaskReq) GetDeviceSn() string {
+	if x != nil {
+		return x.DeviceSn
+	}
+	return ""
+}
+
+func (x *MediaFlighttaskReq) GetFlightId() string {
+	if x != nil {
+		return x.FlightId
+	}
+	return ""
+}
+
+// MediaFastUploadReq 媒体文件快速上传请求。
+type MediaFastUploadReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// device_sn 目标机巢设备序列号（gateway_sn）。
+	DeviceSn string `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
+	// file_id 媒体文件 ID，对应 data.file_id。
+	FileId        string `protobuf:"bytes,2,opt,name=file_id,json=fileId,proto3" json:"file_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MediaFastUploadReq) Reset() {
+	*x = MediaFastUploadReq{}
+	mi := &file_djigateway_proto_msgTypes[45]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MediaFastUploadReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MediaFastUploadReq) ProtoMessage() {}
+
+func (x *MediaFastUploadReq) ProtoReflect() protoreflect.Message {
+	mi := &file_djigateway_proto_msgTypes[45]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MediaFastUploadReq.ProtoReflect.Descriptor instead.
+func (*MediaFastUploadReq) Descriptor() ([]byte, []int) {
+	return file_djigateway_proto_rawDescGZIP(), []int{45}
+}
+
+func (x *MediaFastUploadReq) GetDeviceSn() string {
+	if x != nil {
+		return x.DeviceSn
+	}
+	return ""
+}
+
+func (x *MediaFastUploadReq) GetFileId() string {
+	if x != nil {
+		return x.FileId
+	}
+	return ""
+}
+
+// RemoteLogFileListReq 远程日志文件列表请求。
+type RemoteLogFileListReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// device_sn 目标机巢设备序列号（gateway_sn）。
+	DeviceSn string `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
+	// target_device_sn 需要查询日志的设备序列号，对应 data.device_sn；为空时由设备默认处理。
+	TargetDeviceSn string `protobuf:"bytes,2,opt,name=target_device_sn,json=targetDeviceSn,proto3" json:"target_device_sn,omitempty"`
+	// module 日志模块标识，对应 data.module。
+	Module        string `protobuf:"bytes,3,opt,name=module,proto3" json:"module,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RemoteLogFileListReq) Reset() {
+	*x = RemoteLogFileListReq{}
+	mi := &file_djigateway_proto_msgTypes[46]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoteLogFileListReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoteLogFileListReq) ProtoMessage() {}
+
+func (x *RemoteLogFileListReq) ProtoReflect() protoreflect.Message {
+	mi := &file_djigateway_proto_msgTypes[46]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoteLogFileListReq.ProtoReflect.Descriptor instead.
+func (*RemoteLogFileListReq) Descriptor() ([]byte, []int) {
+	return file_djigateway_proto_rawDescGZIP(), []int{46}
+}
+
+func (x *RemoteLogFileListReq) GetDeviceSn() string {
+	if x != nil {
+		return x.DeviceSn
+	}
+	return ""
+}
+
+func (x *RemoteLogFileListReq) GetTargetDeviceSn() string {
+	if x != nil {
+		return x.TargetDeviceSn
+	}
+	return ""
+}
+
+func (x *RemoteLogFileListReq) GetModule() string {
+	if x != nil {
+		return x.Module
+	}
+	return ""
+}
+
+// RemoteLogFileUploadReq 远程日志文件上传控制请求。
+type RemoteLogFileUploadReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// device_sn 目标机巢设备序列号（gateway_sn）。
+	DeviceSn string `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
+	// files 远程日志文件列表，对应 data.files。
+	Files         []*RemoteLogFile `protobuf:"bytes,2,rep,name=files,proto3" json:"files,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RemoteLogFileUploadReq) Reset() {
+	*x = RemoteLogFileUploadReq{}
+	mi := &file_djigateway_proto_msgTypes[47]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoteLogFileUploadReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoteLogFileUploadReq) ProtoMessage() {}
+
+func (x *RemoteLogFileUploadReq) ProtoReflect() protoreflect.Message {
+	mi := &file_djigateway_proto_msgTypes[47]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoteLogFileUploadReq.ProtoReflect.Descriptor instead.
+func (*RemoteLogFileUploadReq) Descriptor() ([]byte, []int) {
+	return file_djigateway_proto_rawDescGZIP(), []int{47}
+}
+
+func (x *RemoteLogFileUploadReq) GetDeviceSn() string {
+	if x != nil {
+		return x.DeviceSn
+	}
+	return ""
+}
+
+func (x *RemoteLogFileUploadReq) GetFiles() []*RemoteLogFile {
+	if x != nil {
+		return x.Files
+	}
+	return nil
+}
+
+// RemoteLogFile 远程日志文件描述。
+type RemoteLogFile struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// device_sn 日志所属设备序列号，对应 data.files[].device_sn。
+	DeviceSn string `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
+	// module 日志模块标识，对应 data.files[].module。
+	Module string `protobuf:"bytes,2,opt,name=module,proto3" json:"module,omitempty"`
+	// key 日志文件唯一键，对应 data.files[].key。
+	Key string `protobuf:"bytes,3,opt,name=key,proto3" json:"key,omitempty"`
+	// name 日志文件名，对应 data.files[].name。
+	Name string `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
+	// url 日志上传或下载地址，对应 data.files[].url。
+	Url string `protobuf:"bytes,5,opt,name=url,proto3" json:"url,omitempty"`
+	// size 日志文件大小，单位字节，对应 data.files[].size。
+	Size          int64 `protobuf:"varint,6,opt,name=size,proto3" json:"size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RemoteLogFile) Reset() {
+	*x = RemoteLogFile{}
+	mi := &file_djigateway_proto_msgTypes[48]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoteLogFile) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoteLogFile) ProtoMessage() {}
+
+func (x *RemoteLogFile) ProtoReflect() protoreflect.Message {
+	mi := &file_djigateway_proto_msgTypes[48]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoteLogFile.ProtoReflect.Descriptor instead.
+func (*RemoteLogFile) Descriptor() ([]byte, []int) {
+	return file_djigateway_proto_rawDescGZIP(), []int{48}
+}
+
+func (x *RemoteLogFile) GetDeviceSn() string {
+	if x != nil {
+		return x.DeviceSn
+	}
+	return ""
+}
+
+func (x *RemoteLogFile) GetModule() string {
+	if x != nil {
+		return x.Module
+	}
+	return ""
+}
+
+func (x *RemoteLogFile) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *RemoteLogFile) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *RemoteLogFile) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *RemoteLogFile) GetSize() int64 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+// ConfigUpdateReq 设备配置更新请求。
+type ConfigUpdateReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// device_sn 目标机巢设备序列号（gateway_sn）。
+	DeviceSn string `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
+	// config_scope 配置作用域，对应 data.config_scope。
+	ConfigScope string `protobuf:"bytes,2,opt,name=config_scope,json=configScope,proto3" json:"config_scope,omitempty"`
+	// config JSON 格式配置对象，对应 data.config。
+	Config        string `protobuf:"bytes,3,opt,name=config,proto3" json:"config,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ConfigUpdateReq) Reset() {
+	*x = ConfigUpdateReq{}
+	mi := &file_djigateway_proto_msgTypes[49]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ConfigUpdateReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConfigUpdateReq) ProtoMessage() {}
+
+func (x *ConfigUpdateReq) ProtoReflect() protoreflect.Message {
+	mi := &file_djigateway_proto_msgTypes[49]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConfigUpdateReq.ProtoReflect.Descriptor instead.
+func (*ConfigUpdateReq) Descriptor() ([]byte, []int) {
+	return file_djigateway_proto_rawDescGZIP(), []int{49}
+}
+
+func (x *ConfigUpdateReq) GetDeviceSn() string {
+	if x != nil {
+		return x.DeviceSn
+	}
+	return ""
+}
+
+func (x *ConfigUpdateReq) GetConfigScope() string {
+	if x != nil {
+		return x.ConfigScope
+	}
+	return ""
+}
+
+func (x *ConfigUpdateReq) GetConfig() string {
+	if x != nil {
+		return x.Config
 	}
 	return ""
 }
@@ -2863,7 +3490,7 @@ type SetPropertyReq struct {
 
 func (x *SetPropertyReq) Reset() {
 	*x = SetPropertyReq{}
-	mi := &file_djigateway_proto_msgTypes[40]
+	mi := &file_djigateway_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2875,7 +3502,7 @@ func (x *SetPropertyReq) String() string {
 func (*SetPropertyReq) ProtoMessage() {}
 
 func (x *SetPropertyReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[40]
+	mi := &file_djigateway_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2888,7 +3515,7 @@ func (x *SetPropertyReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetPropertyReq.ProtoReflect.Descriptor instead.
 func (*SetPropertyReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{40}
+	return file_djigateway_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *SetPropertyReq) GetDeviceSn() string {
@@ -2919,7 +3546,7 @@ type OtaCreateReq struct {
 
 func (x *OtaCreateReq) Reset() {
 	*x = OtaCreateReq{}
-	mi := &file_djigateway_proto_msgTypes[41]
+	mi := &file_djigateway_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2931,7 +3558,7 @@ func (x *OtaCreateReq) String() string {
 func (*OtaCreateReq) ProtoMessage() {}
 
 func (x *OtaCreateReq) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[41]
+	mi := &file_djigateway_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2944,7 +3571,7 @@ func (x *OtaCreateReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OtaCreateReq.ProtoReflect.Descriptor instead.
 func (*OtaCreateReq) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{41}
+	return file_djigateway_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *OtaCreateReq) GetDeviceSn() string {
@@ -2976,7 +3603,7 @@ type OtaDevice struct {
 
 func (x *OtaDevice) Reset() {
 	*x = OtaDevice{}
-	mi := &file_djigateway_proto_msgTypes[42]
+	mi := &file_djigateway_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2988,7 +3615,7 @@ func (x *OtaDevice) String() string {
 func (*OtaDevice) ProtoMessage() {}
 
 func (x *OtaDevice) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[42]
+	mi := &file_djigateway_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3001,7 +3628,7 @@ func (x *OtaDevice) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OtaDevice.ProtoReflect.Descriptor instead.
 func (*OtaDevice) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{42}
+	return file_djigateway_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *OtaDevice) GetSn() string {
@@ -3036,7 +3663,7 @@ type DeviceOnlineRes struct {
 
 func (x *DeviceOnlineRes) Reset() {
 	*x = DeviceOnlineRes{}
-	mi := &file_djigateway_proto_msgTypes[43]
+	mi := &file_djigateway_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3048,7 +3675,7 @@ func (x *DeviceOnlineRes) String() string {
 func (*DeviceOnlineRes) ProtoMessage() {}
 
 func (x *DeviceOnlineRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djigateway_proto_msgTypes[43]
+	mi := &file_djigateway_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3061,7 +3688,7 @@ func (x *DeviceOnlineRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceOnlineRes.ProtoReflect.Descriptor instead.
 func (*DeviceOnlineRes) Descriptor() ([]byte, []int) {
-	return file_djigateway_proto_rawDescGZIP(), []int{43}
+	return file_djigateway_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *DeviceOnlineRes) GetIsOnline() bool {
@@ -3069,6 +3696,70 @@ func (x *DeviceOnlineRes) GetIsOnline() bool {
 		return x.IsOnline
 	}
 	return false
+}
+
+// FlightTaskProgressLastRes 最近一次航线任务进度（flighttask_progress）内存缓存。
+type FlightTaskProgressLastRes struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// has_progress 是否已有缓存数据。
+	HasProgress bool `protobuf:"varint,1,opt,name=has_progress,json=hasProgress,proto3" json:"has_progress,omitempty"`
+	// cached_at_ms 服务端写入缓存时的 Unix 毫秒时间戳。
+	CachedAtMs int64 `protobuf:"varint,2,opt,name=cached_at_ms,json=cachedAtMs,proto3" json:"cached_at_ms,omitempty"`
+	// progress_json FlightTaskProgressEvent 的 JSON 序列化；无缓存时为空。
+	ProgressJson  string `protobuf:"bytes,3,opt,name=progress_json,json=progressJson,proto3" json:"progress_json,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FlightTaskProgressLastRes) Reset() {
+	*x = FlightTaskProgressLastRes{}
+	mi := &file_djigateway_proto_msgTypes[54]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FlightTaskProgressLastRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FlightTaskProgressLastRes) ProtoMessage() {}
+
+func (x *FlightTaskProgressLastRes) ProtoReflect() protoreflect.Message {
+	mi := &file_djigateway_proto_msgTypes[54]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FlightTaskProgressLastRes.ProtoReflect.Descriptor instead.
+func (*FlightTaskProgressLastRes) Descriptor() ([]byte, []int) {
+	return file_djigateway_proto_rawDescGZIP(), []int{54}
+}
+
+func (x *FlightTaskProgressLastRes) GetHasProgress() bool {
+	if x != nil {
+		return x.HasProgress
+	}
+	return false
+}
+
+func (x *FlightTaskProgressLastRes) GetCachedAtMs() int64 {
+	if x != nil {
+		return x.CachedAtMs
+	}
+	return 0
+}
+
+func (x *FlightTaskProgressLastRes) GetProgressJson() string {
+	if x != nil {
+		return x.ProgressJson
+	}
+	return ""
 }
 
 var File_djigateway_proto protoreflect.FileDescriptor
@@ -3088,39 +3779,50 @@ const file_djigateway_proto_rawDesc = "" +
 	"\vreason_code\x18\x04 \x01(\x05R\n" +
 	"reasonCode\"*\n" +
 	"\vDeviceSnReq\x12\x1b\n" +
-	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\"`\n" +
-	"\rFlightTaskReq\x12\x1b\n" +
-	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x17\n" +
-	"\atask_id\x18\x02 \x01(\tR\x06taskId\x12\x19\n" +
-	"\bwpml_url\x18\x03 \x01(\tR\awpmlUrl\"Q\n" +
+	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\"G\n" +
+	"\x11FlightTaskFileRef\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\x12 \n" +
+	"\vfingerprint\x18\x02 \x01(\tR\vfingerprint\"y\n" +
+	" FlightTaskPrepareSimulateMission\x12\x1b\n" +
+	"\tis_enable\x18\x01 \x01(\bR\bisEnable\x12\x1a\n" +
+	"\blatitude\x18\x02 \x01(\x01R\blatitude\x12\x1c\n" +
+	"\tlongitude\x18\x03 \x01(\x01R\tlongitude\"\x84\x01\n" +
+	"\x1bFlightTaskPrepareBreakPoint\x12\x14\n" +
+	"\x05index\x18\x01 \x01(\x05R\x05index\x12\x14\n" +
+	"\x05state\x18\x02 \x01(\x05R\x05state\x12\x1a\n" +
+	"\bprogress\x18\x03 \x01(\x01R\bprogress\x12\x1d\n" +
+	"\n" +
+	"wayline_id\x18\x04 \x01(\x05R\twaylineId\"\x99\x04\n" +
+	"\x14FlightTaskPrepareReq\x12\x1b\n" +
+	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x1b\n" +
+	"\tflight_id\x18\x02 \x01(\tR\bflightId\x12\x1b\n" +
+	"\ttask_type\x18\x03 \x01(\x05R\btaskType\x12!\n" +
+	"\fexecute_time\x18\x04 \x01(\x03R\vexecuteTime\x12!\n" +
+	"\fwayline_type\x18\x05 \x01(\x05R\vwaylineType\x121\n" +
+	"\x04file\x18\x06 \x01(\v2\x1d.djigateway.FlightTaskFileRefR\x04file\x12H\n" +
+	"\vbreak_point\x18\a \x01(\v2'.djigateway.FlightTaskPrepareBreakPointR\n" +
+	"breakPoint\x12!\n" +
+	"\frth_altitude\x18\b \x01(\x05R\vrthAltitude\x121\n" +
+	"\x15out_of_control_action\x18\t \x01(\x05R\x12outOfControlAction\x128\n" +
+	"\x19exit_wayline_when_rc_lost\x18\n" +
+	" \x01(\x05R\x15exitWaylineWhenRcLost\x12W\n" +
+	"\x10simulate_mission\x18\v \x01(\v2,.djigateway.FlightTaskPrepareSimulateMissionR\x0fsimulateMission\"P\n" +
+	"\x14FlightTaskExecuteReq\x12\x1b\n" +
+	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x1b\n" +
+	"\tflight_id\x18\x02 \x01(\tR\bflightId\"Q\n" +
 	"\x13CancelFlightTaskReq\x12\x1b\n" +
 	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x1d\n" +
 	"\n" +
-	"flight_ids\x18\x02 \x03(\tR\tflightIds\"\xa9\x04\n" +
-	"\x18FlightTaskWithOptionsReq\x12\x1b\n" +
-	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x1b\n" +
-	"\tflight_id\x18\x02 \x01(\tR\bflightId\x12\x1b\n" +
-	"\ttask_type\x18\x03 \x01(\x05R\btaskType\x12\x19\n" +
-	"\bwpml_url\x18\x04 \x01(\tR\awpmlUrl\x12)\n" +
-	"\x10wpml_fingerprint\x18\x05 \x01(\tR\x0fwpmlFingerprint\x12!\n" +
-	"\fexecute_time\x18\x06 \x01(\x03R\vexecuteTime\x12!\n" +
-	"\frth_altitude\x18\a \x01(\x05R\vrthAltitude\x121\n" +
-	"\x15out_of_control_action\x18\b \x01(\x05R\x12outOfControlAction\x128\n" +
-	"\x19exit_wayline_when_rc_lost\x18\t \x01(\x05R\x15exitWaylineWhenRcLost\x12*\n" +
-	"\x11break_point_index\x18\n" +
-	" \x01(\x05R\x0fbreakPointIndex\x12*\n" +
-	"\x11break_point_state\x18\v \x01(\x05R\x0fbreakPointState\x120\n" +
-	"\x14break_point_progress\x18\f \x01(\x01R\x12breakPointProgress\x123\n" +
-	"\x16break_point_wayline_id\x18\r \x01(\x05R\x13breakPointWaylineId\"\x86\x01\n" +
+	"flight_ids\x18\x02 \x03(\tR\tflightIds\"\x86\x01\n" +
 	"\x15ReturnSpecificHomeReq\x12\x1b\n" +
 	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x1a\n" +
 	"\blatitude\x18\x02 \x01(\x01R\blatitude\x12\x1c\n" +
 	"\tlongitude\x18\x03 \x01(\x01R\tlongitude\x12\x16\n" +
-	"\x06height\x18\x04 \x01(\x01R\x06height\"k\n" +
-	"\x12SimulateMissionReq\x12\x1b\n" +
-	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x1a\n" +
-	"\blatitude\x18\x02 \x01(\x01R\blatitude\x12\x1c\n" +
-	"\tlongitude\x18\x03 \x01(\x01R\tlongitude\"H\n" +
+	"\x06height\x18\x04 \x01(\x01R\x06height\"f\n" +
+	"\x0ePsdkCommandReq\x12\x1b\n" +
+	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12#\n" +
+	"\rpayload_index\x18\x02 \x01(\tR\fpayloadIndex\x12\x12\n" +
+	"\x04data\x18\x03 \x01(\tR\x04data\"H\n" +
 	"\x13CustomDataToPsdkReq\x12\x1b\n" +
 	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value\"\xb4\x01\n" +
@@ -3138,14 +3840,19 @@ const file_djigateway_proto_rawDesc = "" +
 	"\vexpire_time\x18\x05 \x01(\x03R\n" +
 	"expireTime\x12\x1d\n" +
 	"\n" +
-	"enable_tls\x18\x06 \x01(\bR\tenableTls\"x\n" +
-	"\x0fDroneControlReq\x12\x1b\n" +
-	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\f\n" +
-	"\x01x\x18\x02 \x01(\x01R\x01x\x12\f\n" +
-	"\x01y\x18\x03 \x01(\x01R\x01y\x12\f\n" +
-	"\x01h\x18\x04 \x01(\x01R\x01h\x12\f\n" +
-	"\x01w\x18\x05 \x01(\x01R\x01w\x12\x10\n" +
-	"\x03seq\x18\x06 \x01(\x05R\x03seq\"\x9c\x03\n" +
+	"enable_tls\x18\x06 \x01(\bR\tenableTls\"\xbe\x01\n" +
+	"\x12DrcStickControlReq\x12\x1b\n" +
+	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x10\n" +
+	"\x03seq\x18\x02 \x01(\x05R\x03seq\x12\x12\n" +
+	"\x04roll\x18\x03 \x01(\x01R\x04roll\x12\x14\n" +
+	"\x05pitch\x18\x04 \x01(\x01R\x05pitch\x12\x1a\n" +
+	"\bthrottle\x18\x05 \x01(\x01R\bthrottle\x12\x10\n" +
+	"\x03yaw\x18\x06 \x01(\x01R\x03yaw\x12!\n" +
+	"\fgimbal_pitch\x18\a \x01(\x01R\vgimbalPitch\"k\n" +
+	"\x0fDrcHeartBeatReq\x12\x1b\n" +
+	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x10\n" +
+	"\x03seq\x18\x02 \x01(\x05R\x03seq\x12)\n" +
+	"\x10timestamp_millis\x18\x03 \x01(\x03R\x0ftimestampMillis\"\x9c\x03\n" +
 	"\x11TakeoffToPointReq\x12\x1b\n" +
 	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x1b\n" +
 	"\tflight_id\x18\x02 \x01(\tR\bflightId\x12'\n" +
@@ -3275,11 +3982,35 @@ const file_djigateway_proto_rawDesc = "" +
 	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x19\n" +
 	"\bvideo_id\x18\x02 \x01(\tR\avideoId\x12\x1d\n" +
 	"\n" +
-	"video_type\x18\x03 \x01(\x05R\tvideoType\"v\n" +
+	"video_type\x18\x03 \x01(\x05R\tvideoType\"p\n" +
 	"\x13LiveCameraChangeReq\x12\x1b\n" +
 	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x19\n" +
-	"\bvideo_id\x18\x02 \x01(\tR\avideoId\x12'\n" +
-	"\x0fcamera_position\x18\x03 \x01(\tR\x0ecameraPosition\"M\n" +
+	"\bvideo_id\x18\x02 \x01(\tR\avideoId\x12!\n" +
+	"\fcamera_index\x18\x03 \x01(\tR\vcameraIndex\"N\n" +
+	"\x12MediaFlighttaskReq\x12\x1b\n" +
+	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x1b\n" +
+	"\tflight_id\x18\x02 \x01(\tR\bflightId\"J\n" +
+	"\x12MediaFastUploadReq\x12\x1b\n" +
+	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x17\n" +
+	"\afile_id\x18\x02 \x01(\tR\x06fileId\"u\n" +
+	"\x14RemoteLogFileListReq\x12\x1b\n" +
+	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12(\n" +
+	"\x10target_device_sn\x18\x02 \x01(\tR\x0etargetDeviceSn\x12\x16\n" +
+	"\x06module\x18\x03 \x01(\tR\x06module\"f\n" +
+	"\x16RemoteLogFileUploadReq\x12\x1b\n" +
+	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12/\n" +
+	"\x05files\x18\x02 \x03(\v2\x19.djigateway.RemoteLogFileR\x05files\"\x90\x01\n" +
+	"\rRemoteLogFile\x12\x1b\n" +
+	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x16\n" +
+	"\x06module\x18\x02 \x01(\tR\x06module\x12\x10\n" +
+	"\x03key\x18\x03 \x01(\tR\x03key\x12\x12\n" +
+	"\x04name\x18\x04 \x01(\tR\x04name\x12\x10\n" +
+	"\x03url\x18\x05 \x01(\tR\x03url\x12\x12\n" +
+	"\x04size\x18\x06 \x01(\x03R\x04size\"i\n" +
+	"\x0fConfigUpdateReq\x12\x1b\n" +
+	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12!\n" +
+	"\fconfig_scope\x18\x02 \x01(\tR\vconfigScope\x12\x16\n" +
+	"\x06config\x18\x03 \x01(\tR\x06config\"M\n" +
 	"\x0eSetPropertyReq\x12\x1b\n" +
 	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x1e\n" +
 	"\n" +
@@ -3293,12 +4024,17 @@ const file_djigateway_proto_rawDesc = "" +
 	"\x0fproduct_version\x18\x02 \x01(\tR\x0eproductVersion\x122\n" +
 	"\x15firmware_upgrade_type\x18\x03 \x01(\x05R\x13firmwareUpgradeType\".\n" +
 	"\x0fDeviceOnlineRes\x12\x1b\n" +
-	"\tis_online\x18\x01 \x01(\bR\bisOnline2\xbc#\n" +
+	"\tis_online\x18\x01 \x01(\bR\bisOnline\"\x85\x01\n" +
+	"\x19FlightTaskProgressLastRes\x12!\n" +
+	"\fhas_progress\x18\x01 \x01(\bR\vhasProgress\x12 \n" +
+	"\fcached_at_ms\x18\x02 \x01(\x03R\n" +
+	"cachedAtMs\x12#\n" +
+	"\rprogress_json\x18\x03 \x01(\tR\fprogressJson2\xc8*\n" +
 	"\n" +
 	"DjiGateway\x12(\n" +
-	"\x04Ping\x12\x0f.djigateway.Req\x1a\x0f.djigateway.Res\x12E\n" +
-	"\x11ExecuteFlightTask\x12\x19.djigateway.FlightTaskReq\x1a\x15.djigateway.CommonRes\x12[\n" +
-	"\x1cExecuteFlightTaskWithOptions\x12$.djigateway.FlightTaskWithOptionsReq\x1a\x15.djigateway.CommonRes\x12J\n" +
+	"\x04Ping\x12\x0f.djigateway.Req\x1a\x0f.djigateway.Res\x12L\n" +
+	"\x11FlightTaskPrepare\x12 .djigateway.FlightTaskPrepareReq\x1a\x15.djigateway.CommonRes\x12L\n" +
+	"\x11FlightTaskExecute\x12 .djigateway.FlightTaskExecuteReq\x1a\x15.djigateway.CommonRes\x12J\n" +
 	"\x10CancelFlightTask\x12\x1f.djigateway.CancelFlightTaskReq\x1a\x15.djigateway.CommonRes\x12A\n" +
 	"\x0fPauseFlightTask\x12\x17.djigateway.DeviceSnReq\x1a\x15.djigateway.CommonRes\x12B\n" +
 	"\x10ResumeFlightTask\x12\x17.djigateway.DeviceSnReq\x1a\x15.djigateway.CommonRes\x12@\n" +
@@ -3306,19 +4042,21 @@ const file_djigateway_proto_rawDesc = "" +
 	"\n" +
 	"ReturnHome\x12\x17.djigateway.DeviceSnReq\x1a\x15.djigateway.CommonRes\x12L\n" +
 	"\x1aReturnHomeCancelAutoReturn\x12\x17.djigateway.DeviceSnReq\x1a\x15.djigateway.CommonRes\x12N\n" +
-	"\x12ReturnSpecificHome\x12!.djigateway.ReturnSpecificHomeReq\x1a\x15.djigateway.CommonRes\x12N\n" +
+	"\x12ReturnSpecificHome\x12!.djigateway.ReturnSpecificHomeReq\x1a\x15.djigateway.CommonRes\x12D\n" +
+	"\x0fSendPsdkCommand\x12\x1a.djigateway.PsdkCommandReq\x1a\x15.djigateway.CommonRes\x12N\n" +
 	"\x14SendCustomDataToPsdk\x12\x1f.djigateway.CustomDataToPsdkReq\x1a\x15.djigateway.CommonRes\x12E\n" +
 	"\x13FlightAuthorityGrab\x12\x17.djigateway.DeviceSnReq\x1a\x15.djigateway.CommonRes\x12F\n" +
 	"\x14PayloadAuthorityGrab\x12\x17.djigateway.DeviceSnReq\x1a\x15.djigateway.CommonRes\x12B\n" +
 	"\fDrcModeEnter\x12\x1b.djigateway.DrcModeEnterReq\x1a\x15.djigateway.CommonRes\x12=\n" +
-	"\vDrcModeExit\x12\x17.djigateway.DeviceSnReq\x1a\x15.djigateway.CommonRes\x12D\n" +
-	"\x0eSendDrcCommand\x12\x1b.djigateway.DroneControlReq\x1a\x15.djigateway.CommonRes\x12D\n" +
+	"\vDrcModeExit\x12\x17.djigateway.DeviceSnReq\x1a\x15.djigateway.CommonRes\x12L\n" +
+	"\x13SendDrcStickControl\x12\x1e.djigateway.DrcStickControlReq\x1a\x15.djigateway.CommonRes\x12F\n" +
+	"\x10SendDrcHeartBeat\x12\x1b.djigateway.DrcHeartBeatReq\x1a\x15.djigateway.CommonRes\x12N\n" +
+	"\x1cDrcChannelDroneEmergencyStop\x12\x17.djigateway.DeviceSnReq\x1a\x15.djigateway.CommonRes\x12D\n" +
 	"\x12DroneEmergencyStop\x12\x17.djigateway.DeviceSnReq\x1a\x15.djigateway.CommonRes\x12>\n" +
 	"\n" +
 	"FlyToPoint\x12\x19.djigateway.FlyToPointReq\x1a\x15.djigateway.CommonRes\x12@\n" +
 	"\x0eFlyToPointStop\x12\x17.djigateway.DeviceSnReq\x1a\x15.djigateway.CommonRes\x12F\n" +
-	"\x0eTakeoffToPoint\x12\x1d.djigateway.TakeoffToPointReq\x1a\x15.djigateway.CommonRes\x12H\n" +
-	"\x0fSimulateMission\x12\x1e.djigateway.SimulateMissionReq\x1a\x15.djigateway.CommonRes\x12?\n" +
+	"\x0eTakeoffToPoint\x12\x1d.djigateway.TakeoffToPointReq\x1a\x15.djigateway.CommonRes\x12?\n" +
 	"\rDebugModeOpen\x12\x17.djigateway.DeviceSnReq\x1a\x15.djigateway.CommonRes\x12@\n" +
 	"\x0eDebugModeClose\x12\x17.djigateway.DeviceSnReq\x1a\x15.djigateway.CommonRes\x12;\n" +
 	"\tCoverOpen\x12\x17.djigateway.DeviceSnReq\x1a\x15.djigateway.CommonRes\x12<\n" +
@@ -3335,8 +4073,8 @@ const file_djigateway_proto_rawDesc = "" +
 	"\vDroneFormat\x12\x17.djigateway.DeviceSnReq\x1a\x15.djigateway.CommonRes\x12>\n" +
 	"\fDeviceFormat\x12\x17.djigateway.DeviceSnReq\x1a\x15.djigateway.CommonRes\x12E\n" +
 	"\x13SupplementLightOpen\x12\x17.djigateway.DeviceSnReq\x1a\x15.djigateway.CommonRes\x12F\n" +
-	"\x14SupplementLightClose\x12\x17.djigateway.DeviceSnReq\x1a\x15.djigateway.CommonRes\x12V\n" +
-	"\x1cBatteryStoreModeSwitchSwitch\x12\x1f.djigateway.BatteryStoreModeReq\x1a\x15.djigateway.CommonRes\x12J\n" +
+	"\x14SupplementLightClose\x12\x17.djigateway.DeviceSnReq\x1a\x15.djigateway.CommonRes\x12P\n" +
+	"\x16BatteryStoreModeSwitch\x12\x1f.djigateway.BatteryStoreModeReq\x1a\x15.djigateway.CommonRes\x12J\n" +
 	"\x10AlarmStateSwitch\x12\x1f.djigateway.AlarmStateSwitchReq\x1a\x15.djigateway.CommonRes\x12Z\n" +
 	"\x18AirConditionerModeSwitch\x12'.djigateway.AirConditionerModeSwitchReq\x1a\x15.djigateway.CommonRes\x12R\n" +
 	"\x18BatteryMaintenanceSwitch\x12\x1f.djigateway.BatteryStoreModeReq\x1a\x15.djigateway.CommonRes\x12J\n" +
@@ -3360,10 +4098,19 @@ const file_djigateway_proto_rawDesc = "" +
 	"\fLiveStopPush\x12\x1b.djigateway.LiveStopPushReq\x1a\x15.djigateway.CommonRes\x12F\n" +
 	"\x0eLiveSetQuality\x12\x1d.djigateway.LiveSetQualityReq\x1a\x15.djigateway.CommonRes\x12F\n" +
 	"\x0eLiveLensChange\x12\x1d.djigateway.LiveLensChangeReq\x1a\x15.djigateway.CommonRes\x12J\n" +
-	"\x10LiveCameraChange\x12\x1f.djigateway.LiveCameraChangeReq\x1a\x15.djigateway.CommonRes\x12@\n" +
+	"\x10LiveCameraChange\x12\x1f.djigateway.LiveCameraChangeReq\x1a\x15.djigateway.CommonRes\x12]\n" +
+	"$MediaUploadFlighttaskMediaPrioritize\x12\x1e.djigateway.MediaFlighttaskReq\x1a\x15.djigateway.CommonRes\x12H\n" +
+	"\x0fMediaFastUpload\x12\x1e.djigateway.MediaFastUploadReq\x1a\x15.djigateway.CommonRes\x12]\n" +
+	"$MediaHighestPriorityUploadFlighttask\x12\x1e.djigateway.MediaFlighttaskReq\x1a\x15.djigateway.CommonRes\x12L\n" +
+	"\x11RemoteLogFileList\x12 .djigateway.RemoteLogFileListReq\x1a\x15.djigateway.CommonRes\x12U\n" +
+	"\x18RemoteLogFileUploadStart\x12\".djigateway.RemoteLogFileUploadReq\x1a\x15.djigateway.CommonRes\x12V\n" +
+	"\x19RemoteLogFileUploadUpdate\x12\".djigateway.RemoteLogFileUploadReq\x1a\x15.djigateway.CommonRes\x12V\n" +
+	"\x19RemoteLogFileUploadCancel\x12\".djigateway.RemoteLogFileUploadReq\x1a\x15.djigateway.CommonRes\x12B\n" +
+	"\fConfigUpdate\x12\x1b.djigateway.ConfigUpdateReq\x1a\x15.djigateway.CommonRes\x12@\n" +
 	"\vSetProperty\x12\x1a.djigateway.SetPropertyReq\x1a\x15.djigateway.CommonRes\x12<\n" +
 	"\tOtaCreate\x12\x18.djigateway.OtaCreateReq\x1a\x15.djigateway.CommonRes\x12F\n" +
-	"\x0eIsDeviceOnline\x12\x17.djigateway.DeviceSnReq\x1a\x1b.djigateway.DeviceOnlineResB=\n" +
+	"\x0eIsDeviceOnline\x12\x17.djigateway.DeviceSnReq\x1a\x1b.djigateway.DeviceOnlineRes\x12[\n" +
+	"\x19GetFlightTaskProgressLast\x12\x17.djigateway.DeviceSnReq\x1a%.djigateway.FlightTaskProgressLastResB=\n" +
 	"\x1acom.github.djigateway.grpcB\x0fDjiGatewayProtoP\x01Z\f./djigatewayb\x06proto3"
 
 var (
@@ -3378,188 +4125,225 @@ func file_djigateway_proto_rawDescGZIP() []byte {
 	return file_djigateway_proto_rawDescData
 }
 
-var file_djigateway_proto_msgTypes = make([]protoimpl.MessageInfo, 44)
+var file_djigateway_proto_msgTypes = make([]protoimpl.MessageInfo, 55)
 var file_djigateway_proto_goTypes = []any{
-	(*Req)(nil),                         // 0: djigateway.Req
-	(*Res)(nil),                         // 1: djigateway.Res
-	(*CommonRes)(nil),                   // 2: djigateway.CommonRes
-	(*DeviceSnReq)(nil),                 // 3: djigateway.DeviceSnReq
-	(*FlightTaskReq)(nil),               // 4: djigateway.FlightTaskReq
-	(*CancelFlightTaskReq)(nil),         // 5: djigateway.CancelFlightTaskReq
-	(*FlightTaskWithOptionsReq)(nil),    // 6: djigateway.FlightTaskWithOptionsReq
-	(*ReturnSpecificHomeReq)(nil),       // 7: djigateway.ReturnSpecificHomeReq
-	(*SimulateMissionReq)(nil),          // 8: djigateway.SimulateMissionReq
-	(*CustomDataToPsdkReq)(nil),         // 9: djigateway.CustomDataToPsdkReq
-	(*DrcModeEnterReq)(nil),             // 10: djigateway.DrcModeEnterReq
-	(*DrcMqttBroker)(nil),               // 11: djigateway.DrcMqttBroker
-	(*DroneControlReq)(nil),             // 12: djigateway.DroneControlReq
-	(*TakeoffToPointReq)(nil),           // 13: djigateway.TakeoffToPointReq
-	(*FlyToPointReq)(nil),               // 14: djigateway.FlyToPointReq
-	(*Waypoint)(nil),                    // 15: djigateway.Waypoint
-	(*BatteryStoreModeReq)(nil),         // 16: djigateway.BatteryStoreModeReq
-	(*AlarmStateSwitchReq)(nil),         // 17: djigateway.AlarmStateSwitchReq
-	(*AirConditionerModeSwitchReq)(nil), // 18: djigateway.AirConditionerModeSwitchReq
-	(*CameraModeSwitchReq)(nil),         // 19: djigateway.CameraModeSwitchReq
-	(*CameraPhotoTakeReq)(nil),          // 20: djigateway.CameraPhotoTakeReq
-	(*CameraPhotoStopReq)(nil),          // 21: djigateway.CameraPhotoStopReq
-	(*CameraRecordingStartReq)(nil),     // 22: djigateway.CameraRecordingStartReq
-	(*CameraRecordingStopReq)(nil),      // 23: djigateway.CameraRecordingStopReq
-	(*CameraFocalLengthSetReq)(nil),     // 24: djigateway.CameraFocalLengthSetReq
-	(*GimbalResetReq)(nil),              // 25: djigateway.GimbalResetReq
-	(*CameraAimReq)(nil),                // 26: djigateway.CameraAimReq
-	(*CameraPointFocusActionReq)(nil),   // 27: djigateway.CameraPointFocusActionReq
-	(*CameraScreenSplitReq)(nil),        // 28: djigateway.CameraScreenSplitReq
-	(*CameraPhotoStorageSetReq)(nil),    // 29: djigateway.CameraPhotoStorageSetReq
-	(*CameraVideoStorageSetReq)(nil),    // 30: djigateway.CameraVideoStorageSetReq
-	(*CameraLookAtReq)(nil),             // 31: djigateway.CameraLookAtReq
-	(*CameraScreenDragReq)(nil),         // 32: djigateway.CameraScreenDragReq
-	(*CameraIrMeteringPointReq)(nil),    // 33: djigateway.CameraIrMeteringPointReq
-	(*CameraIrMeteringAreaReq)(nil),     // 34: djigateway.CameraIrMeteringAreaReq
-	(*LiveStartPushReq)(nil),            // 35: djigateway.LiveStartPushReq
-	(*LiveStopPushReq)(nil),             // 36: djigateway.LiveStopPushReq
-	(*LiveSetQualityReq)(nil),           // 37: djigateway.LiveSetQualityReq
-	(*LiveLensChangeReq)(nil),           // 38: djigateway.LiveLensChangeReq
-	(*LiveCameraChangeReq)(nil),         // 39: djigateway.LiveCameraChangeReq
-	(*SetPropertyReq)(nil),              // 40: djigateway.SetPropertyReq
-	(*OtaCreateReq)(nil),                // 41: djigateway.OtaCreateReq
-	(*OtaDevice)(nil),                   // 42: djigateway.OtaDevice
-	(*DeviceOnlineRes)(nil),             // 43: djigateway.DeviceOnlineRes
+	(*Req)(nil),                              // 0: djigateway.Req
+	(*Res)(nil),                              // 1: djigateway.Res
+	(*CommonRes)(nil),                        // 2: djigateway.CommonRes
+	(*DeviceSnReq)(nil),                      // 3: djigateway.DeviceSnReq
+	(*FlightTaskFileRef)(nil),                // 4: djigateway.FlightTaskFileRef
+	(*FlightTaskPrepareSimulateMission)(nil), // 5: djigateway.FlightTaskPrepareSimulateMission
+	(*FlightTaskPrepareBreakPoint)(nil),      // 6: djigateway.FlightTaskPrepareBreakPoint
+	(*FlightTaskPrepareReq)(nil),             // 7: djigateway.FlightTaskPrepareReq
+	(*FlightTaskExecuteReq)(nil),             // 8: djigateway.FlightTaskExecuteReq
+	(*CancelFlightTaskReq)(nil),              // 9: djigateway.CancelFlightTaskReq
+	(*ReturnSpecificHomeReq)(nil),            // 10: djigateway.ReturnSpecificHomeReq
+	(*PsdkCommandReq)(nil),                   // 11: djigateway.PsdkCommandReq
+	(*CustomDataToPsdkReq)(nil),              // 12: djigateway.CustomDataToPsdkReq
+	(*DrcModeEnterReq)(nil),                  // 13: djigateway.DrcModeEnterReq
+	(*DrcMqttBroker)(nil),                    // 14: djigateway.DrcMqttBroker
+	(*DrcStickControlReq)(nil),               // 15: djigateway.DrcStickControlReq
+	(*DrcHeartBeatReq)(nil),                  // 16: djigateway.DrcHeartBeatReq
+	(*TakeoffToPointReq)(nil),                // 17: djigateway.TakeoffToPointReq
+	(*FlyToPointReq)(nil),                    // 18: djigateway.FlyToPointReq
+	(*Waypoint)(nil),                         // 19: djigateway.Waypoint
+	(*BatteryStoreModeReq)(nil),              // 20: djigateway.BatteryStoreModeReq
+	(*AlarmStateSwitchReq)(nil),              // 21: djigateway.AlarmStateSwitchReq
+	(*AirConditionerModeSwitchReq)(nil),      // 22: djigateway.AirConditionerModeSwitchReq
+	(*CameraModeSwitchReq)(nil),              // 23: djigateway.CameraModeSwitchReq
+	(*CameraPhotoTakeReq)(nil),               // 24: djigateway.CameraPhotoTakeReq
+	(*CameraPhotoStopReq)(nil),               // 25: djigateway.CameraPhotoStopReq
+	(*CameraRecordingStartReq)(nil),          // 26: djigateway.CameraRecordingStartReq
+	(*CameraRecordingStopReq)(nil),           // 27: djigateway.CameraRecordingStopReq
+	(*CameraFocalLengthSetReq)(nil),          // 28: djigateway.CameraFocalLengthSetReq
+	(*GimbalResetReq)(nil),                   // 29: djigateway.GimbalResetReq
+	(*CameraAimReq)(nil),                     // 30: djigateway.CameraAimReq
+	(*CameraPointFocusActionReq)(nil),        // 31: djigateway.CameraPointFocusActionReq
+	(*CameraScreenSplitReq)(nil),             // 32: djigateway.CameraScreenSplitReq
+	(*CameraPhotoStorageSetReq)(nil),         // 33: djigateway.CameraPhotoStorageSetReq
+	(*CameraVideoStorageSetReq)(nil),         // 34: djigateway.CameraVideoStorageSetReq
+	(*CameraLookAtReq)(nil),                  // 35: djigateway.CameraLookAtReq
+	(*CameraScreenDragReq)(nil),              // 36: djigateway.CameraScreenDragReq
+	(*CameraIrMeteringPointReq)(nil),         // 37: djigateway.CameraIrMeteringPointReq
+	(*CameraIrMeteringAreaReq)(nil),          // 38: djigateway.CameraIrMeteringAreaReq
+	(*LiveStartPushReq)(nil),                 // 39: djigateway.LiveStartPushReq
+	(*LiveStopPushReq)(nil),                  // 40: djigateway.LiveStopPushReq
+	(*LiveSetQualityReq)(nil),                // 41: djigateway.LiveSetQualityReq
+	(*LiveLensChangeReq)(nil),                // 42: djigateway.LiveLensChangeReq
+	(*LiveCameraChangeReq)(nil),              // 43: djigateway.LiveCameraChangeReq
+	(*MediaFlighttaskReq)(nil),               // 44: djigateway.MediaFlighttaskReq
+	(*MediaFastUploadReq)(nil),               // 45: djigateway.MediaFastUploadReq
+	(*RemoteLogFileListReq)(nil),             // 46: djigateway.RemoteLogFileListReq
+	(*RemoteLogFileUploadReq)(nil),           // 47: djigateway.RemoteLogFileUploadReq
+	(*RemoteLogFile)(nil),                    // 48: djigateway.RemoteLogFile
+	(*ConfigUpdateReq)(nil),                  // 49: djigateway.ConfigUpdateReq
+	(*SetPropertyReq)(nil),                   // 50: djigateway.SetPropertyReq
+	(*OtaCreateReq)(nil),                     // 51: djigateway.OtaCreateReq
+	(*OtaDevice)(nil),                        // 52: djigateway.OtaDevice
+	(*DeviceOnlineRes)(nil),                  // 53: djigateway.DeviceOnlineRes
+	(*FlightTaskProgressLastRes)(nil),        // 54: djigateway.FlightTaskProgressLastRes
 }
 var file_djigateway_proto_depIdxs = []int32{
-	11, // 0: djigateway.DrcModeEnterReq.mqtt_broker:type_name -> djigateway.DrcMqttBroker
-	15, // 1: djigateway.FlyToPointReq.points:type_name -> djigateway.Waypoint
-	42, // 2: djigateway.OtaCreateReq.devices:type_name -> djigateway.OtaDevice
-	0,  // 3: djigateway.DjiGateway.Ping:input_type -> djigateway.Req
-	4,  // 4: djigateway.DjiGateway.ExecuteFlightTask:input_type -> djigateway.FlightTaskReq
-	6,  // 5: djigateway.DjiGateway.ExecuteFlightTaskWithOptions:input_type -> djigateway.FlightTaskWithOptionsReq
-	5,  // 6: djigateway.DjiGateway.CancelFlightTask:input_type -> djigateway.CancelFlightTaskReq
-	3,  // 7: djigateway.DjiGateway.PauseFlightTask:input_type -> djigateway.DeviceSnReq
-	3,  // 8: djigateway.DjiGateway.ResumeFlightTask:input_type -> djigateway.DeviceSnReq
-	3,  // 9: djigateway.DjiGateway.StopFlightTask:input_type -> djigateway.DeviceSnReq
-	3,  // 10: djigateway.DjiGateway.ReturnHome:input_type -> djigateway.DeviceSnReq
-	3,  // 11: djigateway.DjiGateway.ReturnHomeCancelAutoReturn:input_type -> djigateway.DeviceSnReq
-	7,  // 12: djigateway.DjiGateway.ReturnSpecificHome:input_type -> djigateway.ReturnSpecificHomeReq
-	9,  // 13: djigateway.DjiGateway.SendCustomDataToPsdk:input_type -> djigateway.CustomDataToPsdkReq
-	3,  // 14: djigateway.DjiGateway.FlightAuthorityGrab:input_type -> djigateway.DeviceSnReq
-	3,  // 15: djigateway.DjiGateway.PayloadAuthorityGrab:input_type -> djigateway.DeviceSnReq
-	10, // 16: djigateway.DjiGateway.DrcModeEnter:input_type -> djigateway.DrcModeEnterReq
-	3,  // 17: djigateway.DjiGateway.DrcModeExit:input_type -> djigateway.DeviceSnReq
-	12, // 18: djigateway.DjiGateway.SendDrcCommand:input_type -> djigateway.DroneControlReq
-	3,  // 19: djigateway.DjiGateway.DroneEmergencyStop:input_type -> djigateway.DeviceSnReq
-	14, // 20: djigateway.DjiGateway.FlyToPoint:input_type -> djigateway.FlyToPointReq
-	3,  // 21: djigateway.DjiGateway.FlyToPointStop:input_type -> djigateway.DeviceSnReq
-	13, // 22: djigateway.DjiGateway.TakeoffToPoint:input_type -> djigateway.TakeoffToPointReq
-	8,  // 23: djigateway.DjiGateway.SimulateMission:input_type -> djigateway.SimulateMissionReq
-	3,  // 24: djigateway.DjiGateway.DebugModeOpen:input_type -> djigateway.DeviceSnReq
-	3,  // 25: djigateway.DjiGateway.DebugModeClose:input_type -> djigateway.DeviceSnReq
-	3,  // 26: djigateway.DjiGateway.CoverOpen:input_type -> djigateway.DeviceSnReq
-	3,  // 27: djigateway.DjiGateway.CoverClose:input_type -> djigateway.DeviceSnReq
-	3,  // 28: djigateway.DjiGateway.CoverForceClose:input_type -> djigateway.DeviceSnReq
-	3,  // 29: djigateway.DjiGateway.DroneOpen:input_type -> djigateway.DeviceSnReq
-	3,  // 30: djigateway.DjiGateway.DroneClose:input_type -> djigateway.DeviceSnReq
-	3,  // 31: djigateway.DjiGateway.DeviceReboot:input_type -> djigateway.DeviceSnReq
-	3,  // 32: djigateway.DjiGateway.ChargeOpen:input_type -> djigateway.DeviceSnReq
-	3,  // 33: djigateway.DjiGateway.ChargeClose:input_type -> djigateway.DeviceSnReq
-	3,  // 34: djigateway.DjiGateway.DroneFormat:input_type -> djigateway.DeviceSnReq
-	3,  // 35: djigateway.DjiGateway.DeviceFormat:input_type -> djigateway.DeviceSnReq
-	3,  // 36: djigateway.DjiGateway.SupplementLightOpen:input_type -> djigateway.DeviceSnReq
-	3,  // 37: djigateway.DjiGateway.SupplementLightClose:input_type -> djigateway.DeviceSnReq
-	16, // 38: djigateway.DjiGateway.BatteryStoreModeSwitchSwitch:input_type -> djigateway.BatteryStoreModeReq
-	17, // 39: djigateway.DjiGateway.AlarmStateSwitch:input_type -> djigateway.AlarmStateSwitchReq
-	18, // 40: djigateway.DjiGateway.AirConditionerModeSwitch:input_type -> djigateway.AirConditionerModeSwitchReq
-	16, // 41: djigateway.DjiGateway.BatteryMaintenanceSwitch:input_type -> djigateway.BatteryStoreModeReq
-	19, // 42: djigateway.DjiGateway.CameraModeSwitch:input_type -> djigateway.CameraModeSwitchReq
-	20, // 43: djigateway.DjiGateway.CameraPhotoTake:input_type -> djigateway.CameraPhotoTakeReq
-	21, // 44: djigateway.DjiGateway.CameraPhotoStop:input_type -> djigateway.CameraPhotoStopReq
-	22, // 45: djigateway.DjiGateway.CameraRecordingStart:input_type -> djigateway.CameraRecordingStartReq
-	23, // 46: djigateway.DjiGateway.CameraRecordingStop:input_type -> djigateway.CameraRecordingStopReq
-	24, // 47: djigateway.DjiGateway.CameraFocalLengthSet:input_type -> djigateway.CameraFocalLengthSetReq
-	25, // 48: djigateway.DjiGateway.GimbalReset:input_type -> djigateway.GimbalResetReq
-	26, // 49: djigateway.DjiGateway.CameraAim:input_type -> djigateway.CameraAimReq
-	27, // 50: djigateway.DjiGateway.CameraPointFocusAction:input_type -> djigateway.CameraPointFocusActionReq
-	28, // 51: djigateway.DjiGateway.CameraScreenSplit:input_type -> djigateway.CameraScreenSplitReq
-	29, // 52: djigateway.DjiGateway.CameraPhotoStorageSet:input_type -> djigateway.CameraPhotoStorageSetReq
-	30, // 53: djigateway.DjiGateway.CameraVideoStorageSet:input_type -> djigateway.CameraVideoStorageSetReq
-	31, // 54: djigateway.DjiGateway.CameraLookAt:input_type -> djigateway.CameraLookAtReq
-	32, // 55: djigateway.DjiGateway.CameraScreenDrag:input_type -> djigateway.CameraScreenDragReq
-	33, // 56: djigateway.DjiGateway.CameraIrMeteringPoint:input_type -> djigateway.CameraIrMeteringPointReq
-	34, // 57: djigateway.DjiGateway.CameraIrMeteringArea:input_type -> djigateway.CameraIrMeteringAreaReq
-	35, // 58: djigateway.DjiGateway.LiveStartPush:input_type -> djigateway.LiveStartPushReq
-	36, // 59: djigateway.DjiGateway.LiveStopPush:input_type -> djigateway.LiveStopPushReq
-	37, // 60: djigateway.DjiGateway.LiveSetQuality:input_type -> djigateway.LiveSetQualityReq
-	38, // 61: djigateway.DjiGateway.LiveLensChange:input_type -> djigateway.LiveLensChangeReq
-	39, // 62: djigateway.DjiGateway.LiveCameraChange:input_type -> djigateway.LiveCameraChangeReq
-	40, // 63: djigateway.DjiGateway.SetProperty:input_type -> djigateway.SetPropertyReq
-	41, // 64: djigateway.DjiGateway.OtaCreate:input_type -> djigateway.OtaCreateReq
-	3,  // 65: djigateway.DjiGateway.IsDeviceOnline:input_type -> djigateway.DeviceSnReq
-	1,  // 66: djigateway.DjiGateway.Ping:output_type -> djigateway.Res
-	2,  // 67: djigateway.DjiGateway.ExecuteFlightTask:output_type -> djigateway.CommonRes
-	2,  // 68: djigateway.DjiGateway.ExecuteFlightTaskWithOptions:output_type -> djigateway.CommonRes
-	2,  // 69: djigateway.DjiGateway.CancelFlightTask:output_type -> djigateway.CommonRes
-	2,  // 70: djigateway.DjiGateway.PauseFlightTask:output_type -> djigateway.CommonRes
-	2,  // 71: djigateway.DjiGateway.ResumeFlightTask:output_type -> djigateway.CommonRes
-	2,  // 72: djigateway.DjiGateway.StopFlightTask:output_type -> djigateway.CommonRes
-	2,  // 73: djigateway.DjiGateway.ReturnHome:output_type -> djigateway.CommonRes
-	2,  // 74: djigateway.DjiGateway.ReturnHomeCancelAutoReturn:output_type -> djigateway.CommonRes
-	2,  // 75: djigateway.DjiGateway.ReturnSpecificHome:output_type -> djigateway.CommonRes
-	2,  // 76: djigateway.DjiGateway.SendCustomDataToPsdk:output_type -> djigateway.CommonRes
-	2,  // 77: djigateway.DjiGateway.FlightAuthorityGrab:output_type -> djigateway.CommonRes
-	2,  // 78: djigateway.DjiGateway.PayloadAuthorityGrab:output_type -> djigateway.CommonRes
-	2,  // 79: djigateway.DjiGateway.DrcModeEnter:output_type -> djigateway.CommonRes
-	2,  // 80: djigateway.DjiGateway.DrcModeExit:output_type -> djigateway.CommonRes
-	2,  // 81: djigateway.DjiGateway.SendDrcCommand:output_type -> djigateway.CommonRes
-	2,  // 82: djigateway.DjiGateway.DroneEmergencyStop:output_type -> djigateway.CommonRes
-	2,  // 83: djigateway.DjiGateway.FlyToPoint:output_type -> djigateway.CommonRes
-	2,  // 84: djigateway.DjiGateway.FlyToPointStop:output_type -> djigateway.CommonRes
-	2,  // 85: djigateway.DjiGateway.TakeoffToPoint:output_type -> djigateway.CommonRes
-	2,  // 86: djigateway.DjiGateway.SimulateMission:output_type -> djigateway.CommonRes
-	2,  // 87: djigateway.DjiGateway.DebugModeOpen:output_type -> djigateway.CommonRes
-	2,  // 88: djigateway.DjiGateway.DebugModeClose:output_type -> djigateway.CommonRes
-	2,  // 89: djigateway.DjiGateway.CoverOpen:output_type -> djigateway.CommonRes
-	2,  // 90: djigateway.DjiGateway.CoverClose:output_type -> djigateway.CommonRes
-	2,  // 91: djigateway.DjiGateway.CoverForceClose:output_type -> djigateway.CommonRes
-	2,  // 92: djigateway.DjiGateway.DroneOpen:output_type -> djigateway.CommonRes
-	2,  // 93: djigateway.DjiGateway.DroneClose:output_type -> djigateway.CommonRes
-	2,  // 94: djigateway.DjiGateway.DeviceReboot:output_type -> djigateway.CommonRes
-	2,  // 95: djigateway.DjiGateway.ChargeOpen:output_type -> djigateway.CommonRes
-	2,  // 96: djigateway.DjiGateway.ChargeClose:output_type -> djigateway.CommonRes
-	2,  // 97: djigateway.DjiGateway.DroneFormat:output_type -> djigateway.CommonRes
-	2,  // 98: djigateway.DjiGateway.DeviceFormat:output_type -> djigateway.CommonRes
-	2,  // 99: djigateway.DjiGateway.SupplementLightOpen:output_type -> djigateway.CommonRes
-	2,  // 100: djigateway.DjiGateway.SupplementLightClose:output_type -> djigateway.CommonRes
-	2,  // 101: djigateway.DjiGateway.BatteryStoreModeSwitchSwitch:output_type -> djigateway.CommonRes
-	2,  // 102: djigateway.DjiGateway.AlarmStateSwitch:output_type -> djigateway.CommonRes
-	2,  // 103: djigateway.DjiGateway.AirConditionerModeSwitch:output_type -> djigateway.CommonRes
-	2,  // 104: djigateway.DjiGateway.BatteryMaintenanceSwitch:output_type -> djigateway.CommonRes
-	2,  // 105: djigateway.DjiGateway.CameraModeSwitch:output_type -> djigateway.CommonRes
-	2,  // 106: djigateway.DjiGateway.CameraPhotoTake:output_type -> djigateway.CommonRes
-	2,  // 107: djigateway.DjiGateway.CameraPhotoStop:output_type -> djigateway.CommonRes
-	2,  // 108: djigateway.DjiGateway.CameraRecordingStart:output_type -> djigateway.CommonRes
-	2,  // 109: djigateway.DjiGateway.CameraRecordingStop:output_type -> djigateway.CommonRes
-	2,  // 110: djigateway.DjiGateway.CameraFocalLengthSet:output_type -> djigateway.CommonRes
-	2,  // 111: djigateway.DjiGateway.GimbalReset:output_type -> djigateway.CommonRes
-	2,  // 112: djigateway.DjiGateway.CameraAim:output_type -> djigateway.CommonRes
-	2,  // 113: djigateway.DjiGateway.CameraPointFocusAction:output_type -> djigateway.CommonRes
-	2,  // 114: djigateway.DjiGateway.CameraScreenSplit:output_type -> djigateway.CommonRes
-	2,  // 115: djigateway.DjiGateway.CameraPhotoStorageSet:output_type -> djigateway.CommonRes
-	2,  // 116: djigateway.DjiGateway.CameraVideoStorageSet:output_type -> djigateway.CommonRes
-	2,  // 117: djigateway.DjiGateway.CameraLookAt:output_type -> djigateway.CommonRes
-	2,  // 118: djigateway.DjiGateway.CameraScreenDrag:output_type -> djigateway.CommonRes
-	2,  // 119: djigateway.DjiGateway.CameraIrMeteringPoint:output_type -> djigateway.CommonRes
-	2,  // 120: djigateway.DjiGateway.CameraIrMeteringArea:output_type -> djigateway.CommonRes
-	2,  // 121: djigateway.DjiGateway.LiveStartPush:output_type -> djigateway.CommonRes
-	2,  // 122: djigateway.DjiGateway.LiveStopPush:output_type -> djigateway.CommonRes
-	2,  // 123: djigateway.DjiGateway.LiveSetQuality:output_type -> djigateway.CommonRes
-	2,  // 124: djigateway.DjiGateway.LiveLensChange:output_type -> djigateway.CommonRes
-	2,  // 125: djigateway.DjiGateway.LiveCameraChange:output_type -> djigateway.CommonRes
-	2,  // 126: djigateway.DjiGateway.SetProperty:output_type -> djigateway.CommonRes
-	2,  // 127: djigateway.DjiGateway.OtaCreate:output_type -> djigateway.CommonRes
-	43, // 128: djigateway.DjiGateway.IsDeviceOnline:output_type -> djigateway.DeviceOnlineRes
-	66, // [66:129] is the sub-list for method output_type
-	3,  // [3:66] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+	4,  // 0: djigateway.FlightTaskPrepareReq.file:type_name -> djigateway.FlightTaskFileRef
+	6,  // 1: djigateway.FlightTaskPrepareReq.break_point:type_name -> djigateway.FlightTaskPrepareBreakPoint
+	5,  // 2: djigateway.FlightTaskPrepareReq.simulate_mission:type_name -> djigateway.FlightTaskPrepareSimulateMission
+	14, // 3: djigateway.DrcModeEnterReq.mqtt_broker:type_name -> djigateway.DrcMqttBroker
+	19, // 4: djigateway.FlyToPointReq.points:type_name -> djigateway.Waypoint
+	48, // 5: djigateway.RemoteLogFileUploadReq.files:type_name -> djigateway.RemoteLogFile
+	52, // 6: djigateway.OtaCreateReq.devices:type_name -> djigateway.OtaDevice
+	0,  // 7: djigateway.DjiGateway.Ping:input_type -> djigateway.Req
+	7,  // 8: djigateway.DjiGateway.FlightTaskPrepare:input_type -> djigateway.FlightTaskPrepareReq
+	8,  // 9: djigateway.DjiGateway.FlightTaskExecute:input_type -> djigateway.FlightTaskExecuteReq
+	9,  // 10: djigateway.DjiGateway.CancelFlightTask:input_type -> djigateway.CancelFlightTaskReq
+	3,  // 11: djigateway.DjiGateway.PauseFlightTask:input_type -> djigateway.DeviceSnReq
+	3,  // 12: djigateway.DjiGateway.ResumeFlightTask:input_type -> djigateway.DeviceSnReq
+	3,  // 13: djigateway.DjiGateway.StopFlightTask:input_type -> djigateway.DeviceSnReq
+	3,  // 14: djigateway.DjiGateway.ReturnHome:input_type -> djigateway.DeviceSnReq
+	3,  // 15: djigateway.DjiGateway.ReturnHomeCancelAutoReturn:input_type -> djigateway.DeviceSnReq
+	10, // 16: djigateway.DjiGateway.ReturnSpecificHome:input_type -> djigateway.ReturnSpecificHomeReq
+	11, // 17: djigateway.DjiGateway.SendPsdkCommand:input_type -> djigateway.PsdkCommandReq
+	12, // 18: djigateway.DjiGateway.SendCustomDataToPsdk:input_type -> djigateway.CustomDataToPsdkReq
+	3,  // 19: djigateway.DjiGateway.FlightAuthorityGrab:input_type -> djigateway.DeviceSnReq
+	3,  // 20: djigateway.DjiGateway.PayloadAuthorityGrab:input_type -> djigateway.DeviceSnReq
+	13, // 21: djigateway.DjiGateway.DrcModeEnter:input_type -> djigateway.DrcModeEnterReq
+	3,  // 22: djigateway.DjiGateway.DrcModeExit:input_type -> djigateway.DeviceSnReq
+	15, // 23: djigateway.DjiGateway.SendDrcStickControl:input_type -> djigateway.DrcStickControlReq
+	16, // 24: djigateway.DjiGateway.SendDrcHeartBeat:input_type -> djigateway.DrcHeartBeatReq
+	3,  // 25: djigateway.DjiGateway.DrcChannelDroneEmergencyStop:input_type -> djigateway.DeviceSnReq
+	3,  // 26: djigateway.DjiGateway.DroneEmergencyStop:input_type -> djigateway.DeviceSnReq
+	18, // 27: djigateway.DjiGateway.FlyToPoint:input_type -> djigateway.FlyToPointReq
+	3,  // 28: djigateway.DjiGateway.FlyToPointStop:input_type -> djigateway.DeviceSnReq
+	17, // 29: djigateway.DjiGateway.TakeoffToPoint:input_type -> djigateway.TakeoffToPointReq
+	3,  // 30: djigateway.DjiGateway.DebugModeOpen:input_type -> djigateway.DeviceSnReq
+	3,  // 31: djigateway.DjiGateway.DebugModeClose:input_type -> djigateway.DeviceSnReq
+	3,  // 32: djigateway.DjiGateway.CoverOpen:input_type -> djigateway.DeviceSnReq
+	3,  // 33: djigateway.DjiGateway.CoverClose:input_type -> djigateway.DeviceSnReq
+	3,  // 34: djigateway.DjiGateway.CoverForceClose:input_type -> djigateway.DeviceSnReq
+	3,  // 35: djigateway.DjiGateway.DroneOpen:input_type -> djigateway.DeviceSnReq
+	3,  // 36: djigateway.DjiGateway.DroneClose:input_type -> djigateway.DeviceSnReq
+	3,  // 37: djigateway.DjiGateway.DeviceReboot:input_type -> djigateway.DeviceSnReq
+	3,  // 38: djigateway.DjiGateway.ChargeOpen:input_type -> djigateway.DeviceSnReq
+	3,  // 39: djigateway.DjiGateway.ChargeClose:input_type -> djigateway.DeviceSnReq
+	3,  // 40: djigateway.DjiGateway.DroneFormat:input_type -> djigateway.DeviceSnReq
+	3,  // 41: djigateway.DjiGateway.DeviceFormat:input_type -> djigateway.DeviceSnReq
+	3,  // 42: djigateway.DjiGateway.SupplementLightOpen:input_type -> djigateway.DeviceSnReq
+	3,  // 43: djigateway.DjiGateway.SupplementLightClose:input_type -> djigateway.DeviceSnReq
+	20, // 44: djigateway.DjiGateway.BatteryStoreModeSwitch:input_type -> djigateway.BatteryStoreModeReq
+	21, // 45: djigateway.DjiGateway.AlarmStateSwitch:input_type -> djigateway.AlarmStateSwitchReq
+	22, // 46: djigateway.DjiGateway.AirConditionerModeSwitch:input_type -> djigateway.AirConditionerModeSwitchReq
+	20, // 47: djigateway.DjiGateway.BatteryMaintenanceSwitch:input_type -> djigateway.BatteryStoreModeReq
+	23, // 48: djigateway.DjiGateway.CameraModeSwitch:input_type -> djigateway.CameraModeSwitchReq
+	24, // 49: djigateway.DjiGateway.CameraPhotoTake:input_type -> djigateway.CameraPhotoTakeReq
+	25, // 50: djigateway.DjiGateway.CameraPhotoStop:input_type -> djigateway.CameraPhotoStopReq
+	26, // 51: djigateway.DjiGateway.CameraRecordingStart:input_type -> djigateway.CameraRecordingStartReq
+	27, // 52: djigateway.DjiGateway.CameraRecordingStop:input_type -> djigateway.CameraRecordingStopReq
+	28, // 53: djigateway.DjiGateway.CameraFocalLengthSet:input_type -> djigateway.CameraFocalLengthSetReq
+	29, // 54: djigateway.DjiGateway.GimbalReset:input_type -> djigateway.GimbalResetReq
+	30, // 55: djigateway.DjiGateway.CameraAim:input_type -> djigateway.CameraAimReq
+	31, // 56: djigateway.DjiGateway.CameraPointFocusAction:input_type -> djigateway.CameraPointFocusActionReq
+	32, // 57: djigateway.DjiGateway.CameraScreenSplit:input_type -> djigateway.CameraScreenSplitReq
+	33, // 58: djigateway.DjiGateway.CameraPhotoStorageSet:input_type -> djigateway.CameraPhotoStorageSetReq
+	34, // 59: djigateway.DjiGateway.CameraVideoStorageSet:input_type -> djigateway.CameraVideoStorageSetReq
+	35, // 60: djigateway.DjiGateway.CameraLookAt:input_type -> djigateway.CameraLookAtReq
+	36, // 61: djigateway.DjiGateway.CameraScreenDrag:input_type -> djigateway.CameraScreenDragReq
+	37, // 62: djigateway.DjiGateway.CameraIrMeteringPoint:input_type -> djigateway.CameraIrMeteringPointReq
+	38, // 63: djigateway.DjiGateway.CameraIrMeteringArea:input_type -> djigateway.CameraIrMeteringAreaReq
+	39, // 64: djigateway.DjiGateway.LiveStartPush:input_type -> djigateway.LiveStartPushReq
+	40, // 65: djigateway.DjiGateway.LiveStopPush:input_type -> djigateway.LiveStopPushReq
+	41, // 66: djigateway.DjiGateway.LiveSetQuality:input_type -> djigateway.LiveSetQualityReq
+	42, // 67: djigateway.DjiGateway.LiveLensChange:input_type -> djigateway.LiveLensChangeReq
+	43, // 68: djigateway.DjiGateway.LiveCameraChange:input_type -> djigateway.LiveCameraChangeReq
+	44, // 69: djigateway.DjiGateway.MediaUploadFlighttaskMediaPrioritize:input_type -> djigateway.MediaFlighttaskReq
+	45, // 70: djigateway.DjiGateway.MediaFastUpload:input_type -> djigateway.MediaFastUploadReq
+	44, // 71: djigateway.DjiGateway.MediaHighestPriorityUploadFlighttask:input_type -> djigateway.MediaFlighttaskReq
+	46, // 72: djigateway.DjiGateway.RemoteLogFileList:input_type -> djigateway.RemoteLogFileListReq
+	47, // 73: djigateway.DjiGateway.RemoteLogFileUploadStart:input_type -> djigateway.RemoteLogFileUploadReq
+	47, // 74: djigateway.DjiGateway.RemoteLogFileUploadUpdate:input_type -> djigateway.RemoteLogFileUploadReq
+	47, // 75: djigateway.DjiGateway.RemoteLogFileUploadCancel:input_type -> djigateway.RemoteLogFileUploadReq
+	49, // 76: djigateway.DjiGateway.ConfigUpdate:input_type -> djigateway.ConfigUpdateReq
+	50, // 77: djigateway.DjiGateway.SetProperty:input_type -> djigateway.SetPropertyReq
+	51, // 78: djigateway.DjiGateway.OtaCreate:input_type -> djigateway.OtaCreateReq
+	3,  // 79: djigateway.DjiGateway.IsDeviceOnline:input_type -> djigateway.DeviceSnReq
+	3,  // 80: djigateway.DjiGateway.GetFlightTaskProgressLast:input_type -> djigateway.DeviceSnReq
+	1,  // 81: djigateway.DjiGateway.Ping:output_type -> djigateway.Res
+	2,  // 82: djigateway.DjiGateway.FlightTaskPrepare:output_type -> djigateway.CommonRes
+	2,  // 83: djigateway.DjiGateway.FlightTaskExecute:output_type -> djigateway.CommonRes
+	2,  // 84: djigateway.DjiGateway.CancelFlightTask:output_type -> djigateway.CommonRes
+	2,  // 85: djigateway.DjiGateway.PauseFlightTask:output_type -> djigateway.CommonRes
+	2,  // 86: djigateway.DjiGateway.ResumeFlightTask:output_type -> djigateway.CommonRes
+	2,  // 87: djigateway.DjiGateway.StopFlightTask:output_type -> djigateway.CommonRes
+	2,  // 88: djigateway.DjiGateway.ReturnHome:output_type -> djigateway.CommonRes
+	2,  // 89: djigateway.DjiGateway.ReturnHomeCancelAutoReturn:output_type -> djigateway.CommonRes
+	2,  // 90: djigateway.DjiGateway.ReturnSpecificHome:output_type -> djigateway.CommonRes
+	2,  // 91: djigateway.DjiGateway.SendPsdkCommand:output_type -> djigateway.CommonRes
+	2,  // 92: djigateway.DjiGateway.SendCustomDataToPsdk:output_type -> djigateway.CommonRes
+	2,  // 93: djigateway.DjiGateway.FlightAuthorityGrab:output_type -> djigateway.CommonRes
+	2,  // 94: djigateway.DjiGateway.PayloadAuthorityGrab:output_type -> djigateway.CommonRes
+	2,  // 95: djigateway.DjiGateway.DrcModeEnter:output_type -> djigateway.CommonRes
+	2,  // 96: djigateway.DjiGateway.DrcModeExit:output_type -> djigateway.CommonRes
+	2,  // 97: djigateway.DjiGateway.SendDrcStickControl:output_type -> djigateway.CommonRes
+	2,  // 98: djigateway.DjiGateway.SendDrcHeartBeat:output_type -> djigateway.CommonRes
+	2,  // 99: djigateway.DjiGateway.DrcChannelDroneEmergencyStop:output_type -> djigateway.CommonRes
+	2,  // 100: djigateway.DjiGateway.DroneEmergencyStop:output_type -> djigateway.CommonRes
+	2,  // 101: djigateway.DjiGateway.FlyToPoint:output_type -> djigateway.CommonRes
+	2,  // 102: djigateway.DjiGateway.FlyToPointStop:output_type -> djigateway.CommonRes
+	2,  // 103: djigateway.DjiGateway.TakeoffToPoint:output_type -> djigateway.CommonRes
+	2,  // 104: djigateway.DjiGateway.DebugModeOpen:output_type -> djigateway.CommonRes
+	2,  // 105: djigateway.DjiGateway.DebugModeClose:output_type -> djigateway.CommonRes
+	2,  // 106: djigateway.DjiGateway.CoverOpen:output_type -> djigateway.CommonRes
+	2,  // 107: djigateway.DjiGateway.CoverClose:output_type -> djigateway.CommonRes
+	2,  // 108: djigateway.DjiGateway.CoverForceClose:output_type -> djigateway.CommonRes
+	2,  // 109: djigateway.DjiGateway.DroneOpen:output_type -> djigateway.CommonRes
+	2,  // 110: djigateway.DjiGateway.DroneClose:output_type -> djigateway.CommonRes
+	2,  // 111: djigateway.DjiGateway.DeviceReboot:output_type -> djigateway.CommonRes
+	2,  // 112: djigateway.DjiGateway.ChargeOpen:output_type -> djigateway.CommonRes
+	2,  // 113: djigateway.DjiGateway.ChargeClose:output_type -> djigateway.CommonRes
+	2,  // 114: djigateway.DjiGateway.DroneFormat:output_type -> djigateway.CommonRes
+	2,  // 115: djigateway.DjiGateway.DeviceFormat:output_type -> djigateway.CommonRes
+	2,  // 116: djigateway.DjiGateway.SupplementLightOpen:output_type -> djigateway.CommonRes
+	2,  // 117: djigateway.DjiGateway.SupplementLightClose:output_type -> djigateway.CommonRes
+	2,  // 118: djigateway.DjiGateway.BatteryStoreModeSwitch:output_type -> djigateway.CommonRes
+	2,  // 119: djigateway.DjiGateway.AlarmStateSwitch:output_type -> djigateway.CommonRes
+	2,  // 120: djigateway.DjiGateway.AirConditionerModeSwitch:output_type -> djigateway.CommonRes
+	2,  // 121: djigateway.DjiGateway.BatteryMaintenanceSwitch:output_type -> djigateway.CommonRes
+	2,  // 122: djigateway.DjiGateway.CameraModeSwitch:output_type -> djigateway.CommonRes
+	2,  // 123: djigateway.DjiGateway.CameraPhotoTake:output_type -> djigateway.CommonRes
+	2,  // 124: djigateway.DjiGateway.CameraPhotoStop:output_type -> djigateway.CommonRes
+	2,  // 125: djigateway.DjiGateway.CameraRecordingStart:output_type -> djigateway.CommonRes
+	2,  // 126: djigateway.DjiGateway.CameraRecordingStop:output_type -> djigateway.CommonRes
+	2,  // 127: djigateway.DjiGateway.CameraFocalLengthSet:output_type -> djigateway.CommonRes
+	2,  // 128: djigateway.DjiGateway.GimbalReset:output_type -> djigateway.CommonRes
+	2,  // 129: djigateway.DjiGateway.CameraAim:output_type -> djigateway.CommonRes
+	2,  // 130: djigateway.DjiGateway.CameraPointFocusAction:output_type -> djigateway.CommonRes
+	2,  // 131: djigateway.DjiGateway.CameraScreenSplit:output_type -> djigateway.CommonRes
+	2,  // 132: djigateway.DjiGateway.CameraPhotoStorageSet:output_type -> djigateway.CommonRes
+	2,  // 133: djigateway.DjiGateway.CameraVideoStorageSet:output_type -> djigateway.CommonRes
+	2,  // 134: djigateway.DjiGateway.CameraLookAt:output_type -> djigateway.CommonRes
+	2,  // 135: djigateway.DjiGateway.CameraScreenDrag:output_type -> djigateway.CommonRes
+	2,  // 136: djigateway.DjiGateway.CameraIrMeteringPoint:output_type -> djigateway.CommonRes
+	2,  // 137: djigateway.DjiGateway.CameraIrMeteringArea:output_type -> djigateway.CommonRes
+	2,  // 138: djigateway.DjiGateway.LiveStartPush:output_type -> djigateway.CommonRes
+	2,  // 139: djigateway.DjiGateway.LiveStopPush:output_type -> djigateway.CommonRes
+	2,  // 140: djigateway.DjiGateway.LiveSetQuality:output_type -> djigateway.CommonRes
+	2,  // 141: djigateway.DjiGateway.LiveLensChange:output_type -> djigateway.CommonRes
+	2,  // 142: djigateway.DjiGateway.LiveCameraChange:output_type -> djigateway.CommonRes
+	2,  // 143: djigateway.DjiGateway.MediaUploadFlighttaskMediaPrioritize:output_type -> djigateway.CommonRes
+	2,  // 144: djigateway.DjiGateway.MediaFastUpload:output_type -> djigateway.CommonRes
+	2,  // 145: djigateway.DjiGateway.MediaHighestPriorityUploadFlighttask:output_type -> djigateway.CommonRes
+	2,  // 146: djigateway.DjiGateway.RemoteLogFileList:output_type -> djigateway.CommonRes
+	2,  // 147: djigateway.DjiGateway.RemoteLogFileUploadStart:output_type -> djigateway.CommonRes
+	2,  // 148: djigateway.DjiGateway.RemoteLogFileUploadUpdate:output_type -> djigateway.CommonRes
+	2,  // 149: djigateway.DjiGateway.RemoteLogFileUploadCancel:output_type -> djigateway.CommonRes
+	2,  // 150: djigateway.DjiGateway.ConfigUpdate:output_type -> djigateway.CommonRes
+	2,  // 151: djigateway.DjiGateway.SetProperty:output_type -> djigateway.CommonRes
+	2,  // 152: djigateway.DjiGateway.OtaCreate:output_type -> djigateway.CommonRes
+	53, // 153: djigateway.DjiGateway.IsDeviceOnline:output_type -> djigateway.DeviceOnlineRes
+	54, // 154: djigateway.DjiGateway.GetFlightTaskProgressLast:output_type -> djigateway.FlightTaskProgressLastRes
+	81, // [81:155] is the sub-list for method output_type
+	7,  // [7:81] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_djigateway_proto_init() }
@@ -3573,7 +4357,7 @@ func file_djigateway_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_djigateway_proto_rawDesc), len(file_djigateway_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   44,
+			NumMessages:   55,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

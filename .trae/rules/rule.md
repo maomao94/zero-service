@@ -48,5 +48,5 @@ go-zero 微服务 + eino AI 框架 + Trellis（`.trellis/`）
 |------|------|---------|
 | 编码标准 | `.trellis/spec/` | `/start` 时注入 |
 | 敏捷流程 | `agile-dev-manager` 技能 | 按需激活 |
-| 项目文档 | `CP-开发流程/{项目}/` | Sprint 时读取 |
+| 项目文档 | `CP-开发流程/{项目}/` | Sprint 时按需读取：优先 Backlog + 当前任务清单 |
 | 模板 | `CP-开发流程/template/` | 新项目初始化 |

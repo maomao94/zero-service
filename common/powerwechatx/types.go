@@ -41,25 +41,25 @@ func (l *PowerWechatLogDriver) Fatal(msg string, v ...interface{}) {
 }
 
 func (l *PowerWechatLogDriver) DebugF(format string, args ...interface{}) {
-	logx.WithContext(l.ctx).Debugf(format, args)
+	logx.WithContext(l.ctx).Debugf(format, args...)
 }
 
 func (l *PowerWechatLogDriver) InfoF(format string, args ...interface{}) {
-	logx.WithContext(l.ctx).Infof(format, args)
+	logx.WithContext(l.ctx).Infof(format, args...)
 }
 
 func (l *PowerWechatLogDriver) WarnF(format string, args ...interface{}) {
-	logx.WithContext(l.ctx).Infof(format, args)
+	logx.WithContext(l.ctx).Infof(format, args...)
 }
 
 func (l *PowerWechatLogDriver) ErrorF(format string, args ...interface{}) {
-	logx.Errorf(format, args)
+	logx.Errorf(format, args...)
 }
 
 func (l *PowerWechatLogDriver) PanicF(format string, args ...interface{}) {
-	logx.Errorf(format, args)
+	logx.Errorf(format, args...)
 }
 
 func (l *PowerWechatLogDriver) FatalF(format string, args ...interface{}) {
-	logx.Errorf(format, args)
+	logx.Errorf(format, args...)
 }

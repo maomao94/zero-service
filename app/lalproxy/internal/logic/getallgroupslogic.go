@@ -60,7 +60,7 @@ func (l *GetAllGroupsLogic) GetAllGroups(in *lalproxy.GetAllGroupsReq) (*lalprox
 		Desp      string `json:"desp"`
 		Data      struct {
 			Groups []*lalx.GroupData `json:"groups"`
-		} `"json: data"`
+		} `json:"data"`
 	}
 	if err := json.Unmarshal(body, &httpResp); err != nil {
 		l.Logger.Errorf("解析响应JSON失败: %v, 响应内容: %s", err, string(body))

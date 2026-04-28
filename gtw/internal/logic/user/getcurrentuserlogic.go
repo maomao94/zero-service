@@ -46,5 +46,4 @@ func (l *GetCurrentUserLogic) GetCurrentUser(req *types.GetCurrentUserRequest) (
 	} else {
 		return nil, errors.New("获取用户错误")
 	}
-	return
 }

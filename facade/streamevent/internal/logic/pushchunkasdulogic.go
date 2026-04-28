@@ -112,7 +112,6 @@ func extractIoaValue(bodyMap map[string]interface{}) string {
 	default:
 		return fmt.Sprintf("%v", v)
 	}
-	return "-"
 }
 
 func (l *PushChunkAsduLogic) PushChunkAsdu(in *streamevent.PushChunkAsduReq) (*streamevent.PushChunkAsduRes, error) {

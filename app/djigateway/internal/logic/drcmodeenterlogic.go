@@ -25,6 +25,7 @@ func NewDrcModeEnterLogic(ctx context.Context, svcCtx *svc.ServiceContext) *DrcM
 }
 
 func (l *DrcModeEnterLogic) DrcModeEnter(in *djigateway.DrcModeEnterReq) (*djigateway.CommonRes, error) {
+	deviceSn := in.GetDeviceSn()
 	broker := in.GetMqttBroker()
 	data := &djisdk.DrcModeEnterData{
 		MqttBroker: djisdk.DrcMqttBroker{
@@ -38,9 +39,9 @@ func (l *DrcModeEnterLogic) DrcModeEnter(in *djigateway.DrcModeEnterReq) (*djiga
 		OsdFrequency: int(in.GetOsdFrequency()),
 		HsiFrequency: int(in.GetHsiFrequency()),
 	}
-	tid, err := l.svcCtx.DjiClient.DrcModeEnter(l.ctx, in.DeviceSn, data)
+	tid, err := l.svcCtx.DjiClient.DrcModeEnter(l.ctx, deviceSn, data)
 	if err != nil {
-		l.Errorf("[drc] drc mode enter failed: %v", err)
+		l.Errorf("[drc] mode enter failed device_sn=%s tid=%s: %v", deviceSn, tid, err)
 		return errRes(tid, err), nil
 	}
 	return okRes(tid), nil

@@ -29,31 +29,31 @@ func (s *DjiGatewayServer) Ping(ctx context.Context, in *djigateway.Req) (*djiga
 	return l.Ping(in)
 }
 
-// ExecuteFlightTask 执行航线飞行任务。
-func (s *DjiGatewayServer) ExecuteFlightTask(ctx context.Context, in *djigateway.FlightTaskReq) (*djigateway.CommonRes, error) {
-	l := logic.NewExecuteFlightTaskLogic(ctx, s.svcCtx)
-	return l.ExecuteFlightTask(in)
+// FlightTaskPrepare 航线任务准备。
+func (s *DjiGatewayServer) FlightTaskPrepare(ctx context.Context, in *djigateway.FlightTaskPrepareReq) (*djigateway.CommonRes, error) {
+	l := logic.NewFlightTaskPrepareLogic(ctx, s.svcCtx)
+	return l.FlightTaskPrepare(in)
 }
 
-// ExecuteFlightTaskWithOptions 使用自定义配置执行航线飞行任务。
-func (s *DjiGatewayServer) ExecuteFlightTaskWithOptions(ctx context.Context, in *djigateway.FlightTaskWithOptionsReq) (*djigateway.CommonRes, error) {
-	l := logic.NewExecuteFlightTaskWithOptionsLogic(ctx, s.svcCtx)
-	return l.ExecuteFlightTaskWithOptions(in)
+// FlightTaskExecute 航线任务执行。
+func (s *DjiGatewayServer) FlightTaskExecute(ctx context.Context, in *djigateway.FlightTaskExecuteReq) (*djigateway.CommonRes, error) {
+	l := logic.NewFlightTaskExecuteLogic(ctx, s.svcCtx)
+	return l.FlightTaskExecute(in)
 }
 
-// CancelFlightTask 取消指定的飞行任务。
+// CancelFlightTask 取消航线任务。
 func (s *DjiGatewayServer) CancelFlightTask(ctx context.Context, in *djigateway.CancelFlightTaskReq) (*djigateway.CommonRes, error) {
 	l := logic.NewCancelFlightTaskLogic(ctx, s.svcCtx)
 	return l.CancelFlightTask(in)
 }
 
-// PauseFlightTask 暂停当前正在执行的飞行任务。
+// PauseFlightTask 暂停航线任务。
 func (s *DjiGatewayServer) PauseFlightTask(ctx context.Context, in *djigateway.DeviceSnReq) (*djigateway.CommonRes, error) {
 	l := logic.NewPauseFlightTaskLogic(ctx, s.svcCtx)
 	return l.PauseFlightTask(in)
 }
 
-// ResumeFlightTask 恢复已暂停的飞行任务。
+// ResumeFlightTask 恢复已暂停的航线任务。
 func (s *DjiGatewayServer) ResumeFlightTask(ctx context.Context, in *djigateway.DeviceSnReq) (*djigateway.CommonRes, error) {
 	l := logic.NewResumeFlightTaskLogic(ctx, s.svcCtx)
 	return l.ResumeFlightTask(in)
@@ -81,6 +81,12 @@ func (s *DjiGatewayServer) ReturnHomeCancelAutoReturn(ctx context.Context, in *d
 func (s *DjiGatewayServer) ReturnSpecificHome(ctx context.Context, in *djigateway.ReturnSpecificHomeReq) (*djigateway.CommonRes, error) {
 	l := logic.NewReturnSpecificHomeLogic(ctx, s.svcCtx)
 	return l.ReturnSpecificHome(in)
+}
+
+// SendPsdkCommand 通过 psdk_write 向 PSDK 负载写入数据。
+func (s *DjiGatewayServer) SendPsdkCommand(ctx context.Context, in *djigateway.PsdkCommandReq) (*djigateway.CommonRes, error) {
+	l := logic.NewSendPsdkCommandLogic(ctx, s.svcCtx)
+	return l.SendPsdkCommand(in)
 }
 
 // SendCustomDataToPsdk 自定义数据透传至 PSDK 负载设备。
@@ -113,13 +119,25 @@ func (s *DjiGatewayServer) DrcModeExit(ctx context.Context, in *djigateway.Devic
 	return l.DrcModeExit(in)
 }
 
-// SendDrcCommand 通过 DRC 通道发送实时飞行控制指令（杆量控制）。
-func (s *DjiGatewayServer) SendDrcCommand(ctx context.Context, in *djigateway.DroneControlReq) (*djigateway.CommonRes, error) {
-	l := logic.NewSendDrcCommandLogic(ctx, s.svcCtx)
-	return l.SendDrcCommand(in)
+// SendDrcStickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
+func (s *DjiGatewayServer) SendDrcStickControl(ctx context.Context, in *djigateway.DrcStickControlReq) (*djigateway.CommonRes, error) {
+	l := logic.NewSendDrcStickControlLogic(ctx, s.svcCtx)
+	return l.SendDrcStickControl(in)
 }
 
-// DroneEmergencyStop 飞行器紧急停桨。
+// SendDrcHeartBeat 经 drc/down 发 DRC 心跳（method heart_beat；seq 与 data.timestamp 见 DRC 文档）。
+func (s *DjiGatewayServer) SendDrcHeartBeat(ctx context.Context, in *djigateway.DrcHeartBeatReq) (*djigateway.CommonRes, error) {
+	l := logic.NewSendDrcHeartBeatLogic(ctx, s.svcCtx)
+	return l.SendDrcHeartBeat(in)
+}
+
+// DrcChannelDroneEmergencyStop 通过 DRC 通道下发飞行器紧急停桨。
+func (s *DjiGatewayServer) DrcChannelDroneEmergencyStop(ctx context.Context, in *djigateway.DeviceSnReq) (*djigateway.CommonRes, error) {
+	l := logic.NewDrcChannelDroneEmergencyStopLogic(ctx, s.svcCtx)
+	return l.DrcChannelDroneEmergencyStop(in)
+}
+
+// DroneEmergencyStop 飞行器紧急停桨兼容接口。
 func (s *DjiGatewayServer) DroneEmergencyStop(ctx context.Context, in *djigateway.DeviceSnReq) (*djigateway.CommonRes, error) {
 	l := logic.NewDroneEmergencyStopLogic(ctx, s.svcCtx)
 	return l.DroneEmergencyStop(in)
@@ -141,12 +159,6 @@ func (s *DjiGatewayServer) FlyToPointStop(ctx context.Context, in *djigateway.De
 func (s *DjiGatewayServer) TakeoffToPoint(ctx context.Context, in *djigateway.TakeoffToPointReq) (*djigateway.CommonRes, error) {
 	l := logic.NewTakeoffToPointLogic(ctx, s.svcCtx)
 	return l.TakeoffToPoint(in)
-}
-
-// SimulateMission 模拟飞行任务调试。
-func (s *DjiGatewayServer) SimulateMission(ctx context.Context, in *djigateway.SimulateMissionReq) (*djigateway.CommonRes, error) {
-	l := logic.NewSimulateMissionLogic(ctx, s.svcCtx)
-	return l.SimulateMission(in)
 }
 
 // DebugModeOpen 开启机巢调试模式。
@@ -233,10 +245,10 @@ func (s *DjiGatewayServer) SupplementLightClose(ctx context.Context, in *djigate
 	return l.SupplementLightClose(in)
 }
 
-// BatteryStoreModeSwitchSwitch 切换电池保养存储模式。
-func (s *DjiGatewayServer) BatteryStoreModeSwitchSwitch(ctx context.Context, in *djigateway.BatteryStoreModeReq) (*djigateway.CommonRes, error) {
-	l := logic.NewBatteryStoreModeSwitchSwitchLogic(ctx, s.svcCtx)
-	return l.BatteryStoreModeSwitchSwitch(in)
+// BatteryStoreModeSwitch 切换电池保养存储模式。
+func (s *DjiGatewayServer) BatteryStoreModeSwitch(ctx context.Context, in *djigateway.BatteryStoreModeReq) (*djigateway.CommonRes, error) {
+	l := logic.NewBatteryStoreModeSwitchLogic(ctx, s.svcCtx)
+	return l.BatteryStoreModeSwitch(in)
 }
 
 // AlarmStateSwitch 切换机巢声光报警状态。
@@ -383,6 +395,54 @@ func (s *DjiGatewayServer) LiveCameraChange(ctx context.Context, in *djigateway.
 	return l.LiveCameraChange(in)
 }
 
+// MediaUploadFlighttaskMediaPrioritize 优先上传指定航线任务媒体。
+func (s *DjiGatewayServer) MediaUploadFlighttaskMediaPrioritize(ctx context.Context, in *djigateway.MediaFlighttaskReq) (*djigateway.CommonRes, error) {
+	l := logic.NewMediaUploadFlighttaskMediaPrioritizeLogic(ctx, s.svcCtx)
+	return l.MediaUploadFlighttaskMediaPrioritize(in)
+}
+
+// MediaFastUpload 快速上传指定媒体文件。
+func (s *DjiGatewayServer) MediaFastUpload(ctx context.Context, in *djigateway.MediaFastUploadReq) (*djigateway.CommonRes, error) {
+	l := logic.NewMediaFastUploadLogic(ctx, s.svcCtx)
+	return l.MediaFastUpload(in)
+}
+
+// MediaHighestPriorityUploadFlighttask 最高优先级上传指定航线任务媒体。
+func (s *DjiGatewayServer) MediaHighestPriorityUploadFlighttask(ctx context.Context, in *djigateway.MediaFlighttaskReq) (*djigateway.CommonRes, error) {
+	l := logic.NewMediaHighestPriorityUploadFlighttaskLogic(ctx, s.svcCtx)
+	return l.MediaHighestPriorityUploadFlighttask(in)
+}
+
+// RemoteLogFileList 查询可上传的远程日志文件列表。
+func (s *DjiGatewayServer) RemoteLogFileList(ctx context.Context, in *djigateway.RemoteLogFileListReq) (*djigateway.CommonRes, error) {
+	l := logic.NewRemoteLogFileListLogic(ctx, s.svcCtx)
+	return l.RemoteLogFileList(in)
+}
+
+// RemoteLogFileUploadStart 开始上传远程日志文件。
+func (s *DjiGatewayServer) RemoteLogFileUploadStart(ctx context.Context, in *djigateway.RemoteLogFileUploadReq) (*djigateway.CommonRes, error) {
+	l := logic.NewRemoteLogFileUploadStartLogic(ctx, s.svcCtx)
+	return l.RemoteLogFileUploadStart(in)
+}
+
+// RemoteLogFileUploadUpdate 更新远程日志文件上传任务。
+func (s *DjiGatewayServer) RemoteLogFileUploadUpdate(ctx context.Context, in *djigateway.RemoteLogFileUploadReq) (*djigateway.CommonRes, error) {
+	l := logic.NewRemoteLogFileUploadUpdateLogic(ctx, s.svcCtx)
+	return l.RemoteLogFileUploadUpdate(in)
+}
+
+// RemoteLogFileUploadCancel 取消远程日志文件上传任务。
+func (s *DjiGatewayServer) RemoteLogFileUploadCancel(ctx context.Context, in *djigateway.RemoteLogFileUploadReq) (*djigateway.CommonRes, error) {
+	l := logic.NewRemoteLogFileUploadCancelLogic(ctx, s.svcCtx)
+	return l.RemoteLogFileUploadCancel(in)
+}
+
+// ConfigUpdate 下发设备配置更新。
+func (s *DjiGatewayServer) ConfigUpdate(ctx context.Context, in *djigateway.ConfigUpdateReq) (*djigateway.CommonRes, error) {
+	l := logic.NewConfigUpdateLogic(ctx, s.svcCtx)
+	return l.ConfigUpdate(in)
+}
+
 // SetProperty 设置设备属性。
 func (s *DjiGatewayServer) SetProperty(ctx context.Context, in *djigateway.SetPropertyReq) (*djigateway.CommonRes, error) {
 	l := logic.NewSetPropertyLogic(ctx, s.svcCtx)
@@ -399,4 +459,10 @@ func (s *DjiGatewayServer) OtaCreate(ctx context.Context, in *djigateway.OtaCrea
 func (s *DjiGatewayServer) IsDeviceOnline(ctx context.Context, in *djigateway.DeviceSnReq) (*djigateway.DeviceOnlineRes, error) {
 	l := logic.NewIsDeviceOnlineLogic(ctx, s.svcCtx)
 	return l.IsDeviceOnline(in)
+}
+
+// GetFlightTaskProgressLast 查询本服务内存中最近一次 flighttask_progress 上报。
+func (s *DjiGatewayServer) GetFlightTaskProgressLast(ctx context.Context, in *djigateway.DeviceSnReq) (*djigateway.FlightTaskProgressLastRes, error) {
+	l := logic.NewGetFlightTaskProgressLastLogic(ctx, s.svcCtx)
+	return l.GetFlightTaskProgressLast(in)
 }

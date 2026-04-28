@@ -14,50 +14,88 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
-// EventHandler 事件处理函数类型。
-//   - ctx: 请求上下文
-//   - event: 从设备接收到的事件消息
-//   - 返回值: 处理过程中的错误，nil 表示成功
-type EventHandler func(ctx context.Context, event *EventMessage) error
+// EventMethodFallback 在 thing/.../events 上，对「本 Client 已注册的某个 method 字符串」的兜底处理。
+// 当 **没有** 命中 SDK 预置的**通知型** method 分支（见 tryDispatchEventNotify）时才会调用，见 OnEvent 与 eventMethodFallbacks。
+// need_reply=1 时，result 会写入 events_reply 的 data.result；err 非 nil 且 result 为 0 时视为 PlatformResultHandlerError。
+type EventMethodFallback func(ctx context.Context, event *EventMessage) (result int, err error)
 
-// Client DJI Cloud API 客户端，封装了与 DJI 设备通过 MQTT 协议进行交互的全部能力。
-// 支持服务命令下发、属性设置、事件处理、航线管理、PSDK 通信、远程调试、指令飞行、相机控制、直播管理等功能。
+// StatusHandler 处理 sys/.../status 上行。返回值只表达业务处理结果；是否发布 status_reply 由 Client 的 ReplyOptions 控制。
+type StatusHandler func(ctx context.Context, gatewaySn string, data *StatusMessage) int
+
+// DrcUpHandler 处理 thing/product/{gateway_sn}/drc/up 设备上行报文；parsed 为 DrcUnmarshalUpData 解析结果，未知 method 时为 *DrcUnknownUpData。
+type DrcUpHandler func(ctx context.Context, gatewaySn string, msg *DrcUpMessage, parsed any) error
+
+// RequestHandler 处理 thing/.../requests 上行。返回值只表达业务处理结果与输出；是否发布 requests_reply 由 Client 的 ReplyOptions 控制。
+// err 非 nil 时若 result 为 0 会视为 PlatformResultHandlerError 再组包，避免启用回复时无响应。
+type RequestHandler func(ctx context.Context, gatewaySn string, req *RequestMessage) (result int, output any, err error)
+
+type mqttClient interface {
+	Publish(ctx context.Context, topic string, payload []byte) error
+	AddHandlerFunc(topic string, fn func(context.Context, []byte, string, string) error) error
+}
+
+type ReplyOptions struct {
+	EnableEventReply   bool
+	EnableStatusReply  bool
+	EnableRequestReply bool
+}
+
+func DefaultReplyOptions() ReplyOptions {
+	return ReplyOptions{
+		EnableEventReply:   true,
+		EnableStatusReply:  true,
+		EnableRequestReply: true,
+	}
+}
+
+// Client 封装**云平台侧**（上云接入端）的 MQTT 与协议能力：对设备 **Publish 下发**（如 services、property/set、drc/down），
+// **通配订阅** 收设备上行（如 *reply、events、osd、requests、set_reply、drc/up 等）。见 [Topic 总览](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html)。
+// 含：services、events、property、osd/state、sys、requests、DRC 等，详情见包级 doc.go 与各 Topic 函数注释。
 type Client struct {
-	mqttClient    *mqttx.Client
-	pending       *antsx.PendingRegistry[*ServiceReply]
-	eventHandlers map[string]EventHandler
-	onlineChecker func(gatewaySn string) bool
+	mqttClient           mqttClient
+	pending              *antsx.PendingRegistry[*ServiceReply]
+	replyOptions         ReplyOptions
+	eventMethodFallbacks map[string]EventMethodFallback
+	onlineChecker        func(gatewaySn string) bool
 
 	onFlightTaskProgress func(ctx context.Context, gatewaySn string, data *FlightTaskProgressEvent)
 	onFlightTaskReady    func(ctx context.Context, gatewaySn string, data *FlightTaskReadyEvent)
 	onReturnHomeInfo     func(ctx context.Context, gatewaySn string, data *ReturnHomeInfoEvent)
 	onCustomDataFromPsdk func(ctx context.Context, gatewaySn string, data *CustomDataFromPsdkEvent)
 	onHmsEventNotify     func(ctx context.Context, gatewaySn string, data *HmsEventData)
+	onRemoteLogResult    func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadResultEvent)
+	onRemoteLogProgress  func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadProgressEvent)
 	onOsd                func(ctx context.Context, deviceSn string, data *OsdMessage)
 	onState              func(ctx context.Context, deviceSn string, data *OsdMessage)
-	onStatus             func(ctx context.Context, gatewaySn string, data *StatusMessage)
+	onStatus             StatusHandler
+	onRequest            RequestHandler
+	onDrcUp              DrcUpHandler
 }
 
-// NewClient 创建一个新的 DJI Cloud API 客户端实例。
-//   - mqttClient: MQTT 客户端实例，用于与设备进行 MQTT 通信
-//   - pendingTTL: 待处理请求的过期时间
-//   - 返回值: 初始化完成的 Client 指针
+// NewClient 创建**云平台侧**上云 Client（mqttx 应对接具备云侧权限的 Broker，由配置保证）。
+//   - mqttClient: 已连接的 MQTT 客户端
+//   - pendingTTL: services_reply / property_set_reply 等按 tid 等待的过期时间
 func NewClient(mqttClient *mqttx.Client, pendingTTL time.Duration) *Client {
+	return NewClientWithReplyOptions(mqttClient, pendingTTL, DefaultReplyOptions())
+}
+
+func NewClientWithReplyOptions(mqttClient *mqttx.Client, pendingTTL time.Duration, replyOptions ReplyOptions) *Client {
+	return newClientWithReplyOptions(mqttClient, pendingTTL, replyOptions)
+}
+
+func newClientWithReplyOptions(mqttClient mqttClient, pendingTTL time.Duration, replyOptions ReplyOptions) *Client {
 	return &Client{
-		mqttClient:    mqttClient,
-		pending:       antsx.NewPendingRegistry[*ServiceReply](antsx.WithDefaultTTL(pendingTTL)),
-		eventHandlers: make(map[string]EventHandler),
+		mqttClient:           mqttClient,
+		pending:              antsx.NewPendingRegistry[*ServiceReply](antsx.WithDefaultTTL(pendingTTL)),
+		replyOptions:         replyOptions,
+		eventMethodFallbacks: make(map[string]EventMethodFallback),
 	}
 }
 
 // ==================== MQTT 回调处理 ====================
 
-// HandleServicesReply 处理设备的 services_reply 主题消息回调。
-// 解析设备返回的服务应答消息，并通过 tid 匹配将应答分发给对应的等待方。
-//   - ctx: 请求上下文
-//   - payload: MQTT 消息原始字节
-//   - topic: 消息来源的 MQTT 主题
-//   - 返回值: 解析失败时返回错误，成功时返回 nil
+// HandleServicesReply 处理 thing/.../services_reply（与 [Topic 总览](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html) 中 services 请求-应答对）。
+// 将应答按 tid 交还 SendCommand 等挂起的调用方。
 func (c *Client) HandleServicesReply(ctx context.Context, payload []byte, topic string, _ string) error {
 	var reply ServiceReply
 	if err := json.Unmarshal(payload, &reply); err != nil {
@@ -69,30 +107,24 @@ func (c *Client) HandleServicesReply(ctx context.Context, payload []byte, topic 
 	return nil
 }
 
-// HandlePropertySetReply 处理设备的 property_set_reply 主题消息回调。
-// 解析设备返回的属性设置应答消息，并通过 tid 匹配将应答分发给对应的等待方。
-//   - ctx: 请求上下文
-//   - payload: MQTT 消息原始字节
-//   - topic: 消息来源的 MQTT 主题
-//   - 返回值: 解析失败时返回错误，成功时返回 nil
+// HandlePropertySetReply 收 **设备 → 云** 的 property/set_reply（[Topic 总览与 Properties](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html) 中与云**下发** property/set 成对）。按 tid 交还 SetProperty 的挂起调用，与 HandleServicesReply、SendCommand 一致，无应用层 On* 回调（与 services_reply 相同）。
 func (c *Client) HandlePropertySetReply(ctx context.Context, payload []byte, topic string, _ string) error {
 	var reply ServiceReply
 	if err := json.Unmarshal(payload, &reply); err != nil {
 		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal property_set_reply failed: %v, topic=%s", err, topic)
 		return err
 	}
-	logx.WithContext(ctx).Infof("[dji-sdk] property set reply: tid=%s result=%d", reply.Tid, reply.Data.Result)
+	gatewaySn := extractDeviceSnFromTopic(topic)
+	logx.WithContext(ctx).Infof("[dji-sdk] property set reply: sn=%s tid=%s result=%d", gatewaySn, reply.Tid, reply.Data.Result)
 	c.pending.Resolve(reply.Tid, &reply)
 	return nil
 }
 
-// HandleEvents 处理设备的 events 主题消息回调。
-// 解析事件消息，优先匹配类型化钩子进行结构化分发，无匹配则走通用 eventHandlers 兜底。
-// 若事件需要回复（need_reply=1），则自动发送事件回复。
-//   - ctx: 请求上下文
-//   - payload: MQTT 消息原始字节
-//   - topic: 消息来源的 MQTT 主题
-//   - 返回值: 解析失败或回复发送失败时返回错误，成功时返回 nil
+// HandleEvents 处理 thing/.../events。
+//
+//	① 先走 tryDispatchEventNotify：SDK 预置的**通知类** method（进度、HMS 等），设备侧多 **need_reply=0**；
+//	② 未命中再跑 OnEvent 的 EventMethodFallback（扩展 method 或需自定义 events_reply 的 result 时）；
+//	最后若 need_reply=1，用合并后的 result 发 events_reply（① 中成功一般为 0，非 0 多为本 SDK 解包 data 失败）。
 func (c *Client) HandleEvents(ctx context.Context, payload []byte, topic string, _ string) error {
 	var event EventMessage
 	if err := json.Unmarshal(payload, &event); err != nil {
@@ -101,25 +133,34 @@ func (c *Client) HandleEvents(ctx context.Context, payload []byte, topic string,
 	}
 	logx.WithContext(ctx).Infof("[dji-sdk] received event: tid=%s method=%s need_reply=%d", event.Tid, event.Method, event.NeedReply)
 
-	handled := c.dispatchTypedEvent(ctx, event.Gateway, event.Method, payload)
-
+	handled, replyResult := c.tryDispatchEventNotify(ctx, event.Gateway, event.Method, payload)
 	if !handled {
-		if handler, ok := c.eventHandlers[event.Method]; ok {
-			if err := handler(ctx, &event); err != nil {
-				logx.WithContext(ctx).Errorf("[dji-sdk] event handler error: method=%s err=%v", event.Method, err)
+		if h, ok := c.eventMethodFallbacks[event.Method]; ok {
+			var err error
+			replyResult, err = h(ctx, &event)
+			if err != nil {
+				logx.WithContext(ctx).Errorf("[dji-sdk] event fallback error: method=%s err=%v", event.Method, err)
+				if replyResult == PlatformResultOK {
+					replyResult = PlatformResultHandlerError
+				}
 			}
 		}
 	}
 
+	if event.NeedReply == 1 && c.replyOptions.EnableEventReply {
+		return c.replyEvent(ctx, event.Gateway, event.Tid, event.Bid, event.Method, replyResult)
+	}
 	if event.NeedReply == 1 {
-		return c.replyEvent(ctx, event.Gateway, event.Tid, event.Bid, event.Method, 0)
+		logx.WithContext(ctx).Infof("[dji-sdk] skip event reply: gateway=%s method=%s tid=%s", event.Gateway, event.Method, event.Tid)
 	}
 	return nil
 }
 
-// dispatchTypedEvent 按 method 匹配类型化钩子，解析 data 为对应结构体并调用。
-// 返回 true 表示匹配到类型化钩子并已处理，false 表示无匹配。
-func (c *Client) dispatchTypedEvent(ctx context.Context, gatewaySn, method string, raw []byte) bool {
+// tryDispatchEventNotify 仅处理本 SDK 已**按 method 建模**的若干**设备上行通知**（OnFlightTaskProgress/Ready、HMS 等）：
+// 与协议一致时，这些多为**只上报、不要求 events_reply**（need_reply=0），回调侧只做落库/推送等。
+// 返回的 result 供极少数「仍带 need_reply=1」或解包 data 失败时写回 events_reply；成功时恒为 PlatformResultOK。
+// 返回 handled=true 表示本 method 已由本分支处理，**不再**调用 eventMethodFallbacks。未注册的 method 走 OnEvent 兜底。
+func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method string, raw []byte) (handled bool, result int) {
 	switch method {
 	case MethodFlightTaskProgress:
 		if c.onFlightTaskProgress != nil {
@@ -128,10 +169,10 @@ func (c *Client) dispatchTypedEvent(ctx context.Context, gatewaySn, method strin
 			}
 			if err := json.Unmarshal(raw, &msg); err != nil {
 				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal FlightTaskProgressEvent failed: %v", err)
-				return true
+				return true, PlatformResultHandlerError
 			}
 			c.onFlightTaskProgress(ctx, gatewaySn, &msg.Data)
-			return true
+			return true, PlatformResultOK
 		}
 	case MethodFlightTaskReady:
 		if c.onFlightTaskReady != nil {
@@ -140,10 +181,10 @@ func (c *Client) dispatchTypedEvent(ctx context.Context, gatewaySn, method strin
 			}
 			if err := json.Unmarshal(raw, &msg); err != nil {
 				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal FlightTaskReadyEvent failed: %v", err)
-				return true
+				return true, PlatformResultHandlerError
 			}
 			c.onFlightTaskReady(ctx, gatewaySn, &msg.Data)
-			return true
+			return true, PlatformResultOK
 		}
 	case MethodReturnHomeInfo:
 		if c.onReturnHomeInfo != nil {
@@ -152,10 +193,10 @@ func (c *Client) dispatchTypedEvent(ctx context.Context, gatewaySn, method strin
 			}
 			if err := json.Unmarshal(raw, &msg); err != nil {
 				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal ReturnHomeInfoEvent failed: %v", err)
-				return true
+				return true, PlatformResultHandlerError
 			}
 			c.onReturnHomeInfo(ctx, gatewaySn, &msg.Data)
-			return true
+			return true, PlatformResultOK
 		}
 	case MethodCustomDataTransmissionFromPsdk:
 		if c.onCustomDataFromPsdk != nil {
@@ -164,10 +205,10 @@ func (c *Client) dispatchTypedEvent(ctx context.Context, gatewaySn, method strin
 			}
 			if err := json.Unmarshal(raw, &msg); err != nil {
 				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal CustomDataFromPsdkEvent failed: %v", err)
-				return true
+				return true, PlatformResultHandlerError
 			}
 			c.onCustomDataFromPsdk(ctx, gatewaySn, &msg.Data)
-			return true
+			return true, PlatformResultOK
 		}
 	case MethodHmsEventNotify:
 		if c.onHmsEventNotify != nil {
@@ -176,13 +217,37 @@ func (c *Client) dispatchTypedEvent(ctx context.Context, gatewaySn, method strin
 			}
 			if err := json.Unmarshal(raw, &msg); err != nil {
 				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal HmsEventData failed: %v", err)
-				return true
+				return true, PlatformResultHandlerError
 			}
 			c.onHmsEventNotify(ctx, gatewaySn, &msg.Data)
-			return true
+			return true, PlatformResultOK
+		}
+	case MethodRemoteLogFileUploadResult:
+		if c.onRemoteLogResult != nil {
+			var msg struct {
+				Data RemoteLogFileUploadResultEvent `json:"data"`
+			}
+			if err := json.Unmarshal(raw, &msg); err != nil {
+				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal RemoteLogFileUploadResultEvent failed: %v", err)
+				return true, PlatformResultHandlerError
+			}
+			c.onRemoteLogResult(ctx, gatewaySn, &msg.Data)
+			return true, PlatformResultOK
+		}
+	case MethodRemoteLogFileUploadProgress:
+		if c.onRemoteLogProgress != nil {
+			var msg struct {
+				Data RemoteLogFileUploadProgressEvent `json:"data"`
+			}
+			if err := json.Unmarshal(raw, &msg); err != nil {
+				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal RemoteLogFileUploadProgressEvent failed: %v", err)
+				return true, PlatformResultHandlerError
+			}
+			c.onRemoteLogProgress(ctx, gatewaySn, &msg.Data)
+			return true, PlatformResultOK
 		}
 	}
-	return false
+	return false, PlatformResultOK
 }
 
 // replyEvent 向设备发送事件回复消息。
@@ -203,12 +268,10 @@ func (c *Client) replyEvent(ctx context.Context, gatewaySn, tid, bid, method str
 	return c.mqttClient.Publish(ctx, topic, data)
 }
 
-// OnEvent 注册指定方法名的通用事件处理函数（兜底）。
-// 当收到对应 method 的事件消息时，若没有类型化钩子匹配，将调用注册的 handler 进行处理。
-//   - method: 事件方法名，对应 DJI Cloud API 中定义的事件类型
-//   - handler: 事件处理函数
-func (c *Client) OnEvent(method string, handler EventHandler) {
-	c.eventHandlers[method] = handler
+// OnEvent 按 method 注册 **扩展/兜底**（未在 tryDispatchEventNotify 中预置的 method、或同 method 不挂 On* 时）。
+// 与 tryDispatchEventNotify 中各 On* 二选一：后者存在时优先生效，见 EventMethodFallback。
+func (c *Client) OnEvent(method string, handler EventMethodFallback) {
+	c.eventMethodFallbacks[method] = handler
 }
 
 // OnFlightTaskProgress 注册航线任务进度上报钩子。
@@ -251,6 +314,14 @@ func (c *Client) OnHmsEventNotify(handler func(ctx context.Context, gatewaySn st
 	c.onHmsEventNotify = handler
 }
 
+func (c *Client) OnRemoteLogFileUploadResult(handler func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadResultEvent)) {
+	c.onRemoteLogResult = handler
+}
+
+func (c *Client) OnRemoteLogFileUploadProgress(handler func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadProgressEvent)) {
+	c.onRemoteLogProgress = handler
+}
+
 // OnOsd 注册设备 OSD 遥测数据上报钩子。
 // Topic: thing/product/{device_sn}/osd
 // 方向 up：设备→云平台。
@@ -269,13 +340,19 @@ func (c *Client) OnState(handler func(ctx context.Context, deviceSn string, data
 	c.onState = handler
 }
 
-// OnStatus 注册设备上下线状态钩子。
-// Topic: sys/product/{gateway_sn}/status
-// 方向 up：设备→云平台。
-// 设备上线/下线/拓扑变更时触发，钩子只负责通知。
-//   - handler: 回调函数，携带网关 SN 和已解析的 StatusMessage 结构体
-func (c *Client) OnStatus(handler func(ctx context.Context, gatewaySn string, data *StatusMessage)) {
+// OnStatus 注册 sys/.../status 上行业务处理器；回调会始终参与分发，status_reply 是否发送由 ReplyOptions.EnableStatusReply 控制。
+func (c *Client) OnStatus(handler StatusHandler) {
 	c.onStatus = handler
+}
+
+// OnRequest 注册 thing/.../requests 上行业务处理器；回调会始终参与分发，requests_reply 是否发送由 ReplyOptions.EnableRequestReply 控制。
+func (c *Client) OnRequest(handler RequestHandler) {
+	c.onRequest = handler
+}
+
+// OnDrcUp 注册 **thing/.../drc/up** 设备→云 处理；由 [HandleDrcUp]、[SubscribeAll] 调用。未注册时仅打 Info 日志。
+func (c *Client) OnDrcUp(handler DrcUpHandler) {
+	c.onDrcUp = handler
 }
 
 // SetOnlineChecker 设置设备在线状态检查函数。
@@ -353,56 +430,34 @@ func (c *Client) SendCommandFireAndForget(ctx context.Context, gatewaySn, method
 	return tid, nil
 }
 
-// ==================== 一、航线管理（Wayline Management） ====================
-
-// ExecuteFlightTask 执行航线飞行任务。
-// 先下发 flighttask_prepare 命令进行航线准备，成功后再下发 flighttask_execute 命令开始执行。
-//   - ctx: 请求上下文
-//   - gatewaySn: 网关设备序列号
-//   - taskID: 飞行任务 ID
-//   - wpmlURL: 航线文件（WPML 格式）的下载 URL
-//   - 返回值 tid: 最后一次命令的事务 ID
-//   - 返回值 err: 准备或执行阶段失败时的错误信息
-func (c *Client) ExecuteFlightTask(ctx context.Context, gatewaySn, taskID, wpmlURL string) (string, error) {
-	prepareData := &FlightTaskPrepareData{
-		FlightID: taskID,
-		TaskType: 0,
-		File: FlightTaskFile{
-			URL: wpmlURL,
-		},
-	}
-
-	tid, err := c.SendCommand(ctx, gatewaySn, MethodFlightTaskPrepare, prepareData)
-	if err != nil {
-		return tid, fmt.Errorf("[dji-sdk] flighttask_prepare failed: %w", err)
-	}
-
-	executeData := &FlightTaskExecuteData{
-		FlightID: taskID,
-	}
-
-	return c.SendCommand(ctx, gatewaySn, MethodFlightTaskExecute, executeData)
+func (c *Client) SendRawCommand(ctx context.Context, gatewaySn, method string, data any) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, method, data)
 }
 
-// ExecuteFlightTaskWithOptions 使用自定义配置执行航线飞行任务。
-// 允许调用方完全控制 FlightTaskPrepareData 的内容（如断点续飞、任务类型、返航高度等），
-// 先下发 flighttask_prepare 命令，成功后再下发 flighttask_execute 命令开始执行。
+func (c *Client) SendRawCommandFireAndForget(ctx context.Context, gatewaySn, method string, data any) (string, error) {
+	return c.SendCommandFireAndForget(ctx, gatewaySn, method, data)
+}
+
+// ==================== 一、航线管理（Wayline Management） ====================
+
+// FlightTaskPrepare 下发航线任务准备指令。
 //   - ctx: 请求上下文
 //   - gatewaySn: 网关设备序列号
-//   - prepare: 自定义的航线准备参数
-//   - 返回值 tid: 最后一次命令的事务 ID
-//   - 返回值 err: 准备或执行阶段失败时的错误信息
-func (c *Client) ExecuteFlightTaskWithOptions(ctx context.Context, gatewaySn string, prepare *FlightTaskPrepareData) (string, error) {
-	tid, err := c.SendCommand(ctx, gatewaySn, MethodFlightTaskPrepare, prepare)
-	if err != nil {
-		return tid, fmt.Errorf("[dji-sdk] flighttask_prepare failed: %w", err)
-	}
+//   - data: 航线任务准备参数，序列化为 services 请求的 data 字段
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) FlightTaskPrepare(ctx context.Context, gatewaySn string, data *FlightTaskPrepareData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodFlightTaskPrepare, data)
+}
 
-	executeData := &FlightTaskExecuteData{
-		FlightID: prepare.FlightID,
-	}
-
-	return c.SendCommand(ctx, gatewaySn, MethodFlightTaskExecute, executeData)
+// FlightTaskExecute 下发航线任务执行指令。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - flightID: 航线任务 ID，须与 FlightTaskPrepare 中的 FlightID 一致
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) FlightTaskExecute(ctx context.Context, gatewaySn, flightID string) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodFlightTaskExecute, &FlightTaskExecuteData{FlightID: flightID})
 }
 
 // CancelFlightTask 取消指定的飞行任务。
@@ -647,13 +702,13 @@ func (c *Client) SupplementLightClose(ctx context.Context, gatewaySn string) (st
 	return c.SendCommand(ctx, gatewaySn, MethodSupplementLightClose, &SupplementLightData{})
 }
 
-// BatteryStoreModeSwitchSwitch 切换电池保养存储模式。
+// BatteryStoreModeSwitch 切换电池保养模式。
 //   - ctx: 请求上下文
 //   - gatewaySn: 网关设备序列号
 //   - enable: 开关状态，1 为开启，0 为关闭
 //   - 返回值 tid: 本次请求的事务 ID
 //   - 返回值 err: 命令发送或设备返回错误时的错误信息
-func (c *Client) BatteryStoreModeSwitchSwitch(ctx context.Context, gatewaySn string, enable int) (string, error) {
+func (c *Client) BatteryStoreModeSwitch(ctx context.Context, gatewaySn string, enable int) (string, error) {
 	return c.SendCommand(ctx, gatewaySn, MethodBatteryStoreModeSwitch, &BatteryStoreModeSwitchData{Enable: enable})
 }
 
@@ -687,15 +742,12 @@ func (c *Client) BatteryMaintenanceSwitch(ctx context.Context, gatewaySn string,
 	return c.SendCommand(ctx, gatewaySn, MethodBatteryMaintenanceSwitch, &BatteryMaintenanceSwitchData{Enable: enable})
 }
 
-// ==================== 七、属性设置（Property Set） ====================
+// ==================== 七、物模型属性（Property：云 → 设备 设置，见 Topic 总览） ====================
 
-// SetProperty 设置设备属性。
-// 通过 property/set 主题向设备下发属性设置命令并等待应答。
-//   - ctx: 请求上下文
-//   - gatewaySn: 网关设备序列号
-//   - properties: 要设置的属性键值对
-//   - 返回值 tid: 本次请求的事务 ID
-//   - 返回值 err: 发送失败、等待超时或设备返回错误时的错误信息
+// SetProperty 由**云平台/本服务** 向 [property/set](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/properties.html)
+// **对设备下发**可写物模型属性（**不是**设备向云设置）。向 `PropertySetTopic(gatewaySn)` 发布，并等 **set_reply**（ServiceReply 同形，tid 与 pending 对齐）。
+//   - gatewaySn: 目标机巢/网关等 thing/product 下的产品 SN
+//   - properties: 待写入键值
 func (c *Client) SetProperty(ctx context.Context, gatewaySn string, properties PropertySetData) (string, error) {
 	tid := uuid.New().String()
 	bid := uuid.New().String()
@@ -724,6 +776,7 @@ func (c *Client) SetProperty(ctx context.Context, gatewaySn string, properties P
 }
 
 // ==================== 三、指令飞行控制（Live Flight Controls / DRC） ====================
+// 方向以 [Topic 总览](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html) 与 [DRC 文档](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html) 为准；**drc/** 的 down、up 与 **services** + **services_reply** 中的 drc_mode_* 等 method 路径不同，见 DrcModeEnter、SendDrcStickControl 与 topic.go 中 Drc*Topic。
 
 // FlightAuthorityGrab 获取飞行控制权。
 // 在指令飞行前需要先获取飞行控制权。
@@ -745,8 +798,7 @@ func (c *Client) PayloadAuthorityGrab(ctx context.Context, gatewaySn string) (st
 	return c.SendCommand(ctx, gatewaySn, MethodPayloadAuthorityGrab, &PayloadAuthorityGrabData{})
 }
 
-// DrcModeEnter 进入指令飞行（DRC）模式。
-// 进入 DRC 模式后，可通过 DRC 通道向无人机发送实时飞行控制指令。
+// DrcModeEnter 进入指令飞行（DRC）模式；经 **thing/.../services** 发 **drc_mode_enter** method，**services_reply** 为应答，非 drc/* topic。进入后在 **drc/down** 可发杆量（见 SendDrcStickControl）。见 [DRC 文档](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html)。
 //   - ctx: 请求上下文
 //   - gatewaySn: 网关设备序列号
 //   - data: DRC 模式进入参数，包含 MQTT Broker 连接信息等
@@ -756,7 +808,7 @@ func (c *Client) DrcModeEnter(ctx context.Context, gatewaySn string, data *DrcMo
 	return c.SendCommand(ctx, gatewaySn, MethodDrcModeEnter, data)
 }
 
-// DrcModeExit 退出指令飞行（DRC）模式。
+// DrcModeExit 退出指令飞行（DRC）模式；**services** 上的 method **drc_mode_exit**，**services_reply** 应答。见 [DRC 文档](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html)。
 //   - ctx: 请求上下文
 //   - gatewaySn: 网关设备序列号
 //   - 返回值 tid: 本次请求的事务 ID
@@ -796,29 +848,41 @@ func (c *Client) FlyToPointStop(ctx context.Context, gatewaySn string) (string, 
 	return c.SendCommand(ctx, gatewaySn, MethodFlyToPointStop, struct{}{})
 }
 
-// DroneEmergencyStop 无人机紧急停桨。
-// 危险操作：会立即停止所有电机，无人机将失去动力坠落。仅在紧急情况下使用。
+// SendDrcStickControl 经 drc/down 即发即忘地下发 stick_control 杆量。
+// seq 位于顶层，data 包含 roll、pitch、throttle、yaw、gimbal_pitch，不等待 services_reply。
 //   - ctx: 请求上下文
 //   - gatewaySn: 网关设备序列号
-//   - 返回值 tid: 本次请求的事务 ID
-//   - 返回值 err: 命令发送或设备返回错误时的错误信息
-func (c *Client) DroneEmergencyStop(ctx context.Context, gatewaySn string) (string, error) {
-	return c.SendCommand(ctx, gatewaySn, MethodDroneEmergencyStop, &DroneEmergencyStopData{})
+//   - data: 杆量数据（DrcStickControlData）
+//   - 返回值: 序列化或发布失败时的错误信息
+func (c *Client) SendDrcStickControl(ctx context.Context, gatewaySn string, seq int, data *DrcStickControlData) error {
+	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodStickControl, data, &seq)
+	return c.publishDrcDown(ctx, gatewaySn, msg)
 }
 
-// SendDrcCommand 通过 DRC 通道发送实时飞行控制指令。
-// 该方法仅发布消息到 DRC 下行主题，不等待应答。适用于高频实时控制场景（如摇杆操控）。
-//   - ctx: 请求上下文
-//   - gatewaySn: 网关设备序列号
-//   - data: 飞行控制数据，包含 X/Y/H/W 轴控制量和序列号
-//   - 返回值: 序列化或发布失败时的错误信息
-func (c *Client) SendDrcCommand(ctx context.Context, gatewaySn string, data *DroneControlData) error {
-	payload, err := json.Marshal(NewServiceRequest(uuid.New().String(), uuid.New().String(), MethodDroneControl, data))
+func (c *Client) publishDrcDown(ctx context.Context, gatewaySn string, msg *DrcDownMessage) error {
+	payload, err := json.Marshal(msg)
 	if err != nil {
-		return fmt.Errorf("[dji-sdk] marshal drc command failed: %w", err)
+		return fmt.Errorf("[dji-sdk] marshal drc/down failed: %w", err)
 	}
-	topic := DrcDownTopic(gatewaySn)
-	return c.mqttClient.Publish(ctx, topic, payload)
+	return c.mqttClient.Publish(ctx, DrcDownTopic(gatewaySn), payload)
+}
+
+// SendDrcHeartBeat 经 drc/down 即发即忘地下发 heart_beat 心跳，seq 与 data 同级，data.timestamp 表示心跳时间戳。
+func (c *Client) SendDrcHeartBeat(ctx context.Context, gatewaySn string, seq int, dataTimestampMillis int64) error {
+	seqp := seq
+	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcHeartBeat, DrcHeartBeatDownData{Timestamp: dataTimestampMillis}, &seqp)
+	return c.publishDrcDown(ctx, gatewaySn, msg)
+}
+
+// SendDrcDroneEmergencyStop 经 drc/down 即发即忘地下发 drone_emergency_stop，区别于 DroneEmergencyStop 使用 services 并等待 services_reply。
+func (c *Client) SendDrcDroneEmergencyStop(ctx context.Context, gatewaySn string) error {
+	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDroneEmergencyStop, struct{}{}, nil)
+	return c.publishDrcDown(ctx, gatewaySn, msg)
+}
+
+func (c *Client) SendRawDrcDown(ctx context.Context, gatewaySn, method string, data any, seq *int) error {
+	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), method, data, seq)
+	return c.publishDrcDown(ctx, gatewaySn, msg)
 }
 
 // ==================== 五、相机/云台控制（Camera & Gimbal） ====================
@@ -830,7 +894,7 @@ func (c *Client) SendDrcCommand(ctx context.Context, gatewaySn string, data *Dro
 //   - 返回值 tid: 本次请求的事务 ID
 //   - 返回值 err: 命令发送或设备返回错误时的错误信息
 func (c *Client) CameraModeSwitch(ctx context.Context, gatewaySn string, data *CameraModeSwitchData) (string, error) {
-	return c.SendCommand(ctx, gatewaySn, MethodCameraModeSwitchCamera, data)
+	return c.SendCommand(ctx, gatewaySn, MethodCameraModeSwitch, data)
 }
 
 // CameraPhotoTake 控制相机拍照。
@@ -890,7 +954,7 @@ func (c *Client) GimbalReset(ctx context.Context, gatewaySn string, data *Gimbal
 //   - 返回值 tid: 本次请求的事务 ID
 //   - 返回值 err: 命令发送或设备返回错误时的错误信息
 func (c *Client) CameraAim(ctx context.Context, gatewaySn string, data *CameraAimData) (string, error) {
-	return c.SendCommand(ctx, gatewaySn, MethodCameraAimCamera, data)
+	return c.SendCommand(ctx, gatewaySn, MethodCameraAim, data)
 }
 
 // CameraPhotoStop 停止相机连续拍照。
@@ -1025,20 +1089,100 @@ func (c *Client) LiveLensChange(ctx context.Context, gatewaySn string, data *Liv
 	return c.SendCommand(ctx, gatewaySn, MethodLiveLensChange, data)
 }
 
-// LiveCameraChange 切换直播推流使用的相机（Dock3）。
+// LiveCameraChange 切换直播相机。
 //   - ctx: 请求上下文
 //   - gatewaySn: 网关设备序列号
-//   - data: 直播相机切换参数
+//   - data: 相机切换参数，包含 video_id、camera_index
 //   - 返回值 tid: 本次请求的事务 ID
 //   - 返回值 err: 命令发送或设备返回错误时的错误信息
 func (c *Client) LiveCameraChange(ctx context.Context, gatewaySn string, data *LiveCameraChangeData) (string, error) {
 	return c.SendCommand(ctx, gatewaySn, MethodLiveCameraChange, data)
 }
 
+// MediaUploadFlighttaskMediaPrioritize 优先上传指定航线任务媒体。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 航线任务媒体上传参数，包含 flight_id
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) MediaUploadFlighttaskMediaPrioritize(ctx context.Context, gatewaySn string, data *MediaUploadFlighttaskMediaPrioritizeData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodMediaUploadFlighttaskMediaPrioritize, data)
+}
+
+// MediaFastUpload 快速上传指定媒体文件。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 媒体快速上传参数，包含 file_id
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) MediaFastUpload(ctx context.Context, gatewaySn string, data *MediaFastUploadData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodMediaFastUpload, data)
+}
+
+// MediaHighestPriorityUploadFlighttask 最高优先级上传指定航线任务媒体。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 航线任务媒体上传参数，包含 flight_id
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) MediaHighestPriorityUploadFlighttask(ctx context.Context, gatewaySn string, data *MediaHighestPriorityUploadFlighttaskData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodMediaHighestPriorityUploadFlighttask, data)
+}
+
+// RemoteLogFileList 查询可上传的远程日志文件列表。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 远程日志列表查询参数，包含目标设备和模块
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) RemoteLogFileList(ctx context.Context, gatewaySn string, data *RemoteLogFileListData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodRemoteLogFileList, data)
+}
+
+// RemoteLogFileUploadStart 开始上传远程日志文件。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 远程日志上传参数，包含待上传文件列表
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) RemoteLogFileUploadStart(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadStartData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodRemoteLogFileUploadStart, data)
+}
+
+// RemoteLogFileUploadUpdate 更新远程日志文件上传任务。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 远程日志上传更新参数，包含文件列表
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) RemoteLogFileUploadUpdate(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadUpdateData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodRemoteLogFileUploadUpdate, data)
+}
+
+// RemoteLogFileUploadCancel 取消远程日志文件上传任务。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 远程日志上传取消参数，包含文件列表
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) RemoteLogFileUploadCancel(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadCancelData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodRemoteLogFileUploadCancel, data)
+}
+
+// ConfigUpdate 下发设备配置更新。
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 配置更新参数，包含设备配置键值
+//   - 返回值 tid: 本次请求的事务 ID
+//   - 返回值 err: 命令发送或设备返回错误时的错误信息
+func (c *Client) ConfigUpdate(ctx context.Context, gatewaySn string, data *ConfigUpdateData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodConfigUpdate, data)
+}
+
 // ==================== OSD / State 回调处理 ====================
 
-// extractDeviceSnFromTopic 从 MQTT topic 中提取设备 SN。
-// topic 格式: thing/product/{device_sn}/osd 或 thing/product/{device_sn}/state
+// extractDeviceSnFromTopic 从 MQTT topic 中提取第三段设备/网关 SN（thing 与 sys 同形：*/product/{sn}/...）。
+// 适用如 thing/product/{sn}/osd、thing/product/{sn}/requests、sys/product/{sn}/status。
 func extractDeviceSnFromTopic(topic string) string {
 	parts := strings.Split(topic, "/")
 	if len(parts) >= 3 {
@@ -1087,12 +1231,7 @@ func (c *Client) HandleState(ctx context.Context, payload []byte, topic string, 
 	return nil
 }
 
-// HandleStatus 处理设备的 sys/product/+/status 主题消息回调。
-// 解析设备上下线状态消息，通过 onStatus 钩子分发给上层业务，并自动回复确认。
-//   - ctx: 请求上下文
-//   - payload: MQTT 消息原始字节
-//   - topic: 消息来源的 MQTT 主题，格式 sys/product/{gateway_sn}/status
-//   - 返回值: 解析失败时返回错误，成功时返回 nil
+// HandleStatus 处理 sys/product/+/status；先执行业务分发，再按 ReplyOptions.EnableStatusReply 决定是否发布 status_reply。
 func (c *Client) HandleStatus(ctx context.Context, payload []byte, topic string, _ string) error {
 	var msg StatusMessage
 	if err := json.Unmarshal(payload, &msg); err != nil {
@@ -1102,25 +1241,24 @@ func (c *Client) HandleStatus(ctx context.Context, payload []byte, topic string,
 	gatewaySn := extractDeviceSnFromTopic(topic)
 	logx.WithContext(ctx).Infof("[dji-sdk] received status: sn=%s method=%s", gatewaySn, msg.Method)
 
+	result := PlatformResultOK
 	if c.onStatus != nil {
-		c.onStatus(ctx, gatewaySn, &msg)
+		result = c.onStatus(ctx, gatewaySn, &msg)
 	}
-
-	return c.replyStatus(ctx, gatewaySn, msg.Tid, msg.Bid)
+	if !c.replyOptions.EnableStatusReply {
+		logx.WithContext(ctx).Infof("[dji-sdk] skip status reply: sn=%s method=%s tid=%s", gatewaySn, msg.Method, msg.Tid)
+		return nil
+	}
+	return c.replyStatus(ctx, gatewaySn, msg.Tid, msg.Bid, result)
 }
 
-// replyStatus 向设备发送 status_reply 确认消息。
-func (c *Client) replyStatus(ctx context.Context, gatewaySn, tid, bid string) error {
-	reply := struct {
-		Tid       string         `json:"tid"`
-		Bid       string         `json:"bid"`
-		Timestamp int64          `json:"timestamp"`
-		Data      EventReplyData `json:"data"`
-	}{
+// replyStatus 向 [status_reply](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/device.html) 发报文，data.result 同 EventReplyData 简形时与 events_reply 的 result 语义一致，特殊 method 以协议为准。
+func (c *Client) replyStatus(ctx context.Context, gatewaySn, tid, bid string, result int) error {
+	reply := StatusReply{
 		Tid:       tid,
 		Bid:       bid,
 		Timestamp: time.Now().UnixMilli(),
-		Data:      EventReplyData{Result: 0},
+		Data:      EventReplyData{Result: result},
 	}
 	data, err := json.Marshal(reply)
 	if err != nil {
@@ -1130,11 +1268,84 @@ func (c *Client) replyStatus(ctx context.Context, gatewaySn, tid, bid string) er
 	return c.mqttClient.Publish(ctx, topic, data)
 }
 
+// HandleRequests 处理 thing/product/+/requests；先执行业务分发，再按 ReplyOptions.EnableRequestReply 决定是否发布 requests_reply。
+// 未注册 OnRequest 且启用回复时回 PlatformResultHandlerError（1），2 保留为 PlatformResultTimeout。
+func (c *Client) HandleRequests(ctx context.Context, payload []byte, topic string, _ string) error {
+	var msg RequestMessage
+	if err := json.Unmarshal(payload, &msg); err != nil {
+		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal requests failed: %v, topic=%s", err, topic)
+		return err
+	}
+	gatewaySn := extractDeviceSnFromTopic(topic)
+	logx.WithContext(ctx).Infof("[dji-sdk] received request: sn=%s method=%s tid=%s", gatewaySn, msg.Method, msg.Tid)
+
+	if c.onRequest == nil {
+		if !c.replyOptions.EnableRequestReply {
+			logx.WithContext(ctx).Infof("[dji-sdk] skip request reply: sn=%s method=%s tid=%s", gatewaySn, msg.Method, msg.Tid)
+			return nil
+		}
+		return c.replyToRequest(ctx, gatewaySn, &msg, PlatformResultHandlerError, nil)
+	}
+	result, output, err := c.onRequest(ctx, gatewaySn, &msg)
+	if err != nil {
+		logx.WithContext(ctx).Errorf("[dji-sdk] request handler error: method=%s err=%v", msg.Method, err)
+		if result == PlatformResultOK {
+			result = PlatformResultHandlerError
+		}
+	}
+	if !c.replyOptions.EnableRequestReply {
+		logx.WithContext(ctx).Infof("[dji-sdk] skip request reply: sn=%s method=%s tid=%s", gatewaySn, msg.Method, msg.Tid)
+		return nil
+	}
+	return c.replyToRequest(ctx, gatewaySn, &msg, result, output)
+}
+
+// replyToRequest 向 thing/.../requests_reply 发报文，Envelope 复用 RequestReply（data 内 result、output 与 services_reply 常见同形，以协议为准）。
+func (c *Client) replyToRequest(ctx context.Context, gatewaySn string, req *RequestMessage, result int, output any) error {
+	reply := RequestReply{
+		Tid:       req.Tid,
+		Bid:       req.Bid,
+		Timestamp: time.Now().UnixMilli(),
+		Method:    req.Method,
+		Data:      ServiceReplyData{Result: result, Output: output},
+	}
+	data, err := json.Marshal(reply)
+	if err != nil {
+		return fmt.Errorf("[dji-sdk] marshal requests_reply failed: %w", err)
+	}
+	return c.mqttClient.Publish(ctx, RequestsReplyTopic(gatewaySn), data)
+}
+
+// HandleDrcUp 处理 thing/product/{gateway_sn}/drc/up 设备上行。
+// 已知 method 解析为强类型，未知 method 保留 raw data 后继续调用 OnDrcUp。
+func (c *Client) HandleDrcUp(ctx context.Context, payload []byte, topic string, _ string) error {
+	msg, err := DrcUpMessageFromJSON(payload)
+	if err != nil {
+		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal drc/up failed: %v, topic=%s", err, topic)
+		return err
+	}
+	gatewaySn := extractDeviceSnFromTopic(topic)
+	parsed, perr := DrcUnmarshalUpData(msg.Method, msg.Data)
+	if perr != nil {
+		logx.WithContext(ctx).Errorf("[dji-sdk] drc/up data parse: method=%s err=%v", msg.Method, perr)
+		return perr
+	}
+	sum := DrcUpPayloadSummary(msg.Method, parsed)
+	if sum == "" {
+		logx.WithContext(ctx).Infof("[dji-sdk] drc/up: sn=%s method=%s ts=%d", gatewaySn, msg.Method, msg.Timestamp)
+	} else {
+		logx.WithContext(ctx).Infof("[dji-sdk] drc/up: sn=%s method=%s ts=%d %s", gatewaySn, msg.Method, msg.Timestamp, sum)
+	}
+	if c.onDrcUp == nil {
+		return nil
+	}
+	return c.onDrcUp(ctx, gatewaySn, msg, parsed)
+}
+
 // ==================== 订阅管理 ====================
 
-// SubscribeAll 批量订阅所有通配主题。
-// 订阅 services_reply、events、property_set_reply 三类通配主题，并注册对应的消息回调处理函数。
-//   - 返回值: 订阅失败时返回第一个遇到的错误，全部成功时返回 nil
+// SubscribeAll 以**云侧**身份通配订阅设备上行（*reply、events、osd、state、status、requests、**drc/up** 等），并注册处理函数，表见 [Topic 总览](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html)。
+// 含 **property/set_reply**（设备对云**下发** property/set 的回执，**非**云发设备）。
 func (c *Client) SubscribeAll() error {
 	topics := map[string]func(context.Context, []byte, string, string) error{
 		ServicesReplyTopicPattern():    c.HandleServicesReply,
@@ -1142,7 +1353,9 @@ func (c *Client) SubscribeAll() error {
 		PropertySetReplyTopicPattern(): c.HandlePropertySetReply,
 		OsdTopicPattern():              c.HandleOsd,
 		StateTopicPattern():            c.HandleState,
+		RequestsTopicPattern():         c.HandleRequests,
 		StatusTopicPattern():           c.HandleStatus,
+		DrcUpTopicPattern():            c.HandleDrcUp,
 	}
 	for topic, handler := range topics {
 		if err := c.mqttClient.AddHandlerFunc(topic, handler); err != nil {
@@ -1167,11 +1380,19 @@ func (c *Client) SubscribeEvents() error {
 	return c.mqttClient.AddHandlerFunc(EventsTopicPattern(), c.HandleEvents)
 }
 
-// SubscribePropertySetReply 订阅 property_set_reply 通配主题。
-// 注册 HandlePropertySetReply 作为消息回调处理函数。
-//   - 返回值: 订阅失败时返回错误，成功时返回 nil
+// SubscribePropertySetReply 订阅 [property/set_reply](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/properties.html) 通配主题，注册 HandlePropertySetReply。
 func (c *Client) SubscribePropertySetReply() error {
 	return c.mqttClient.AddHandlerFunc(PropertySetReplyTopicPattern(), c.HandlePropertySetReply)
+}
+
+// SubscribeRequests 订阅 thing/.../requests 通配主题。见 [Requests | organization](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/organization.html)。
+func (c *Client) SubscribeRequests() error {
+	return c.mqttClient.AddHandlerFunc(RequestsTopicPattern(), c.HandleRequests)
+}
+
+// SubscribeDrcUp 订阅 [thing/.../drc/up](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html) 通配主题，注册 [HandleDrcUp]。
+func (c *Client) SubscribeDrcUp() error {
+	return c.mqttClient.AddHandlerFunc(DrcUpTopicPattern(), c.HandleDrcUp)
 }
 
 // ==================== 八、固件管理（Firmware） ====================
@@ -1184,18 +1405,6 @@ func (c *Client) SubscribePropertySetReply() error {
 //   - 返回值 err: 命令发送或设备返回错误时的错误信息
 func (c *Client) OtaCreate(ctx context.Context, gatewaySn string, data *OtaCreateData) (string, error) {
 	return c.SendCommand(ctx, gatewaySn, MethodOtaCreate, data)
-}
-
-// ==================== 十一、模拟器（Simulator） ====================
-
-// SimulateMission 下发模拟飞行任务，用于仿真调试。
-//   - ctx: 请求上下文
-//   - gatewaySn: 网关设备序列号
-//   - data: 模拟任务参数
-//   - 返回值 tid: 本次请求的事务 ID
-//   - 返回值 err: 命令发送或设备返回错误时的错误信息
-func (c *Client) SimulateMission(ctx context.Context, gatewaySn string, data *SimulateMission) (string, error) {
-	return c.SendCommand(ctx, gatewaySn, MethodSimulateMission, data)
 }
 
 // ==================== 生命周期 ====================
