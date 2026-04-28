@@ -93,3 +93,49 @@
 - AI 在每个 Phase 切换时自动输出退出自检，形成可追溯的执行记录
 - 老板不再需要手动纠正流程，AI 自主闭环
 
+
+
+## Session 3: 完成 DJI SDK 与 djigateway Dock3 协议优化
+
+**Date**: 2026-04-28
+**Task**: 完成 DJI SDK 与 djigateway Dock3 协议优化
+**Branch**: `master`
+
+### Summary
+
+完成 `.trae/specs/optimize-dji-new-gateway/` 项目计划的全部 9 个任务，围绕 DJI Cloud API Dock 3 官方协议补全 `common/djisdk` SDK 与 `app/djigateway` 网关应用，确保协议模块覆盖、字段注释、hook 规范、proto/gRPC 透传入口和验证流程收口。
+
+### Main Changes
+
+- 完成 DJI Dock 3 官方协议审计，覆盖 Properties、Device、Organization、Live、Media、Wayline、HMS、Remote Debug、Firmware、Remote Log、Configuration Update、DRC、PSDK、飞行安全、AirSense、Remote Control 等模块。
+- 对照 `common/djisdk` 与 `app/djigateway/djigateway.proto` 落实 SDK/proto/gateway 补全策略。
+- 清理 Dock 3 新网关不维护的 `drone_control` 入口，DRC 杆量统一走 `stick_control` / `drc/down`。
+- 增加 requests/status 上行回复开关，使上行可解析但是否发布 reply 由配置控制。
+- 补全 SDK 协议字段、公共消息壳、Client 透传封装、DRC up/down、Media、Remote Log、Configuration Update、PSDK、Live、Wayline 等模块能力，并补充 SDK 序列化/反序列化测试。
+- 补全 `djigateway.proto` 中 Media、Remote Log、Configuration Update 等 RPC/message，执行 `app/djigateway/gen.sh` 重新生成代码，并完成 logic 到 SDK payload 的参数映射。
+- 统一 hook 命名与注册规则：SDK 注册函数保持 `OnXxx`，gateway hook 处理函数统一为 `HandleXxx`，注册入口只做依赖装配与分组注册。
+- 统一 SDK 与 proto 注释规范，补齐请求字段、通知字段、回复字段说明，清理过时或误导性注释。
+- `.trae/specs/optimize-dji-new-gateway/tasks.md` Task 1-9 全部完成。
+- `.trae/specs/optimize-dji-new-gateway/checklist.md` 全部验收项完成。
+
+### Git Commits
+
+- 5c259514（记录时最近提交；本次未执行 commit）
+
+### Testing
+
+- [OK] `gofmt -w common/djisdk/*.go app/djigateway/internal/config/*.go app/djigateway/internal/hooks/*.go app/djigateway/internal/logic/*.go app/djigateway/internal/server/*.go app/djigateway/internal/svc/*.go`
+- [OK] `go test ./common/djisdk ./app/djigateway/...`
+- [OK] `go test ./...`
+- [OK] `go vet ./...`
+- [OK] `cd app/djigateway && ./gen.sh && git diff --exit-code -- app/djigateway/djigateway app/djigateway/internal/server app/djigateway/internal/logic app/djigateway/djigateway.proto`
+- [OK] `app/djigateway/djigateway.proto` 无 IDE 诊断错误
+- [OK] `app/djigateway/internal/logic` 未发现 goctl 默认占位逻辑
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 如需要纳入版本历史，由用户明确要求后再执行 git commit。

@@ -29,7 +29,7 @@ func (l *DroneEmergencyStopLogic) DroneEmergencyStop(in *djigateway.DeviceSnReq)
 		return &djigateway.CommonRes{Code: -1, Message: "emergency stop is disabled, enable it in config DangerousOps.EnableDroneEmergencyStop"}, nil
 	}
 
-	err := l.svcCtx.DjiClient.SendDrcDroneEmergencyStop(l.ctx, in.DeviceSn)
+	err := l.svcCtx.DjiClient.DroneEmergencyStop(l.ctx, in.DeviceSn)
 	if err != nil {
 		l.Errorf("[drc] drone emergency stop failed: %v", err)
 		return errRes("", err), nil

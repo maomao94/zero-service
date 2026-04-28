@@ -7,14 +7,77 @@ option java_package = "com.github.djigateway.grpc";
 option java_outer_classname = "DjiGatewayProto";
 
 // DjiGateway DJI 上云网关服务。
-// 将业务侧 gRPC 调用转换为 DJI Cloud API（MQTT）指令，
-// 覆盖航线、PSDK 自定义数据、指令飞行（DRC，含 DRC 杆量 https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E6%9D%86%E9%87%8F%E6%8E%A7%E5%88%B6 ）、直播与机场控制等能力。
+// 将业务侧 gRPC 调用转换为 DJI Dock3 Cloud API（MQTT）指令。
 // 通过 MQTT 主题对接机巢网关（gateway_sn），可并行管理多台设备。
 service DjiGateway {
   // Ping 健康检查接口，用于验证服务可用性。
   rpc Ping(Req) returns (Res);
 
-  // ==================== 航线管理（Wayline Management） ====================
+  // ==================== 属性设置（Properties） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/properties.html
+
+  // SetProperty 设置设备属性。
+  // 通过 property/set 主题向设备下发属性设置命令。
+  // properties 为 JSON 格式的键值对字符串。
+  rpc SetProperty(SetPropertyReq) returns (CommonRes);
+
+  // ==================== 设备管理（Device） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/device.html
+  // 当前 gRPC 网关未暴露该模块的下行标准接口；相关上行消息由 MQTT SDK hooks 处理。
+
+  // ==================== 组织管理（Organization） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/organization.html
+  // 当前 gRPC 网关未暴露该模块的下行标准接口；相关上行消息由 MQTT SDK hooks 处理。
+
+  // ==================== 直播功能（Live） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/live.html
+
+  // LiveStartPush 开始直播推流。
+  // 对应 DJI Cloud API method: live_start_push，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc LiveStartPush(LiveStartPushReq) returns (CommonRes);
+
+  // LiveStopPush 停止直播推流。
+  // 对应 DJI Cloud API method: live_stop_push，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc LiveStopPush(LiveStopPushReq) returns (CommonRes);
+
+  // LiveSetQuality 设置直播画质。
+  // 对应 DJI Cloud API method: live_set_quality，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc LiveSetQuality(LiveSetQualityReq) returns (CommonRes);
+
+  // LiveLensChange 切换直播镜头。
+  // 对应 DJI Cloud API method: live_lens_change，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  // https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/live.html
+  rpc LiveLensChange(LiveLensChangeReq) returns (CommonRes);
+
+  // LiveCameraChange 切换直播相机。
+  // 对应 DJI Cloud API method: live_camera_change，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  // https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/live.html
+  rpc LiveCameraChange(LiveCameraChangeReq) returns (CommonRes);
+
+  // ==================== 媒体功能（Media） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/media.html
+
+  // MediaUploadFlighttaskMediaPrioritize 优先上传指定航线任务媒体。
+  // 对应 DJI Cloud API method: upload_flighttask_media_prioritize，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc MediaUploadFlighttaskMediaPrioritize(MediaFlighttaskReq) returns (CommonRes);
+
+  // MediaFastUpload 快速上传指定媒体文件。
+  // 对应 DJI Cloud API method: media_fast_upload，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc MediaFastUpload(MediaFastUploadReq) returns (CommonRes);
+
+  // MediaHighestPriorityUploadFlighttask 最高优先级上传指定航线任务媒体。
+  // 对应 DJI Cloud API method: highest_priority_upload_flighttask_media，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc MediaHighestPriorityUploadFlighttask(MediaFlighttaskReq) returns (CommonRes);
+
+  // ==================== 航线功能（Wayline） ====================
   // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/wayline.html
 
   // FlightTaskPrepare 航线任务准备。
@@ -65,96 +128,12 @@ service DjiGateway {
   // https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/cmd.html
   rpc ReturnSpecificHome(ReturnSpecificHomeReq) returns (CommonRes);
 
-  // ==================== PSDK 自定义数据透传（PSDK Custom Data Transmission） ====================
-  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk-transmit-custom-data.html
+  // ==================== HMS 管理（HMS） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/hms.html
+  // 当前 gRPC 网关未暴露该模块的下行标准接口；相关上行消息由 MQTT SDK hooks 处理。
 
-  // SendPsdkCommand 通过 psdk_write 向 PSDK 负载写入数据。
-  // Topic: thing/product/{gateway_sn}/services，data.payload_index 默认为 "0"，data.data 为 Base64 编码数据。
-  rpc SendPsdkCommand(PsdkCommandReq) returns (CommonRes);
-
-  // SendCustomDataToPsdk 自定义数据透传至 PSDK 负载设备。
-  // 对应 DJI Cloud API method: custom_data_transmission_to_psdk，
-  // Topic: thing/product/{gateway_sn}/services，方向 down（云平台→设备），
-  // 将自定义消息透传推送到 PSDK 负载设备，等待设备 ACK 后返回结果。
-  // 上行方向（设备→云平台）通过 events topic 的 custom_data_transmission_from_psdk 事件钩子处理。
-  rpc SendCustomDataToPsdk(CustomDataToPsdkReq) returns (CommonRes);
-
-  // ==================== 指令飞行控制（Live Flight Controls / DRC） ====================
-  // 资料 [Topic 总览] https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html （drc/up、drc/down 与 services 对应关系以表为准）
-  // 资料 [DRC 上云] https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html — 文档中 DRC 含多节，常见如：
-  //   - 杆量/虚拟摇杆 (stick_control，drc/down): https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E6%9D%86%E9%87%8F%E6%8E%A7%E5%88%B6
-  //   - 避障信息上报 (设备→云，drc/up 等以文档为准): https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E9%81%BF%E9%9A%9C%E4%BF%A1%E6%81%AF%E4%B8%8A%E6%8A%A5
-  //   - DRC-心跳 (heart_beat，drc/down；与 data 同级的 seq 递增保序，以文档「DRC-心跳」为准)
-  // 本组中：经 services 的 RPC 由 services_reply 答复；SendDrcStickControl、SendDrcHeartBeat、DrcChannelDroneEmergencyStop 走 drc/down，仅表示已发布到 MQTT，不等待 services_reply；设备经 drc/up 的上行由 MQTT 订阅 drc/up 与 djisdk OnDrcUp 处理。
-
-  // --- 飞行控制指令（DRC Commands） ---
-
-  // FlightAuthorityGrab 获取飞行控制权。
-  // 对应 DJI Cloud API method: flight_authority_grab，
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  // 在进行指令飞行操控前需要先获取飞行控制权。
-  rpc FlightAuthorityGrab(DeviceSnReq) returns (CommonRes);
-
-  // PayloadAuthorityGrab 获取负载控制权。
-  // 对应 DJI Cloud API method: payload_authority_grab，
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  // 在控制相机、云台等负载设备前需要先获取负载控制权。
-  rpc PayloadAuthorityGrab(DeviceSnReq) returns (CommonRes);
-
-  // DrcModeEnter 进入指令飞行（DRC）模式。
-  // 对应 DJI Cloud API method: drc_mode_enter，
-  // Topic: thing/product/{gateway_sn}/services，设备应答 services_reply，非 drc/* 子路径。
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  // 进入 DRC 模式后，可在 drc/down 上发杆量（见 SendDrcStickControl 与 DRC 杆量: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E6%9D%86%E9%87%8F%E6%8E%A7%E5%88%B6 ）。
-  rpc DrcModeEnter(DrcModeEnterReq) returns (CommonRes);
-
-  // DrcModeExit 退出指令飞行（DRC）模式。
-  // 对应 DJI Cloud API method: drc_mode_exit，
-  // Topic: thing/product/{gateway_sn}/services，设备应答 services_reply。
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc DrcModeExit(DeviceSnReq) returns (CommonRes);
-
-  // SendDrcStickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
-  // Topic: thing/product/{gateway_sn}/drc/down。建议发送频率约 **5～10 Hz**；与 SendDrcHeartBeat、DrcChannelDroneEmergencyStop 同为即发即忘，无 services_reply。
-  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E6%9D%86%E9%87%8F%E6%8E%A7%E5%88%B6 ，Topic 总览: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html
-  rpc SendDrcStickControl(DrcStickControlReq) returns (CommonRes);
-
-  // SendDrcHeartBeat 经 drc/down 发 DRC 心跳（method heart_beat；seq 与 data.timestamp 见 DRC 文档）。
-  rpc SendDrcHeartBeat(DrcHeartBeatReq) returns (CommonRes);
-
-  // DrcChannelDroneEmergencyStop 通过 DRC 通道下发飞行器紧急停桨。
-  // 对应 DJI Cloud API method: drone_emergency_stop（drc/down），仅表示已发布到 MQTT，不等待 services_reply。
-  // 需要在配置文件中开启 DangerousOps.EnableDroneEmergencyStop 才能调用。
-  rpc DrcChannelDroneEmergencyStop(DeviceSnReq) returns (CommonRes);
-
-  // DroneEmergencyStop 飞行器紧急停桨兼容接口。
-  // 当前与 DrcChannelDroneEmergencyStop 保持同一实现，均走 drc/down 即发即忘；新调用方建议使用 DrcChannelDroneEmergencyStop。
-  // 需要在配置文件中开启 DangerousOps.EnableDroneEmergencyStop 才能调用。
-  rpc DroneEmergencyStop(DeviceSnReq) returns (CommonRes);
-
-  // --- Flyto 指令（Flyto Commands） ---
-
-  // FlyToPoint 飞向指定航点。
-  // 对应 DJI Cloud API method: fly_to_point，
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  // 适用于飞行器在空中的场景，支持多航点路径。
-  rpc FlyToPoint(FlyToPointReq) returns (CommonRes);
-
-  // FlyToPointStop 停止当前的飞向航点任务。
-  // 对应 DJI Cloud API method: fly_to_point_stop，
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc FlyToPointStop(DeviceSnReq) returns (CommonRes);
-
-  // --- 一键起飞指令（One-key Taking Off Commands） ---
-
-  // TakeoffToPoint 一键起飞到指定坐标点。
-  // 对应 DJI Cloud API method: takeoff_to_point，
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  // 适用于飞行器在机场内的场景。
-  rpc TakeoffToPoint(TakeoffToPointReq) returns (CommonRes);
-
-  // ==================== 远程调试 - 机巢控制（Remote Debug） ====================
-  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/dock.html
+  // ==================== 远程调试（Cmd） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/cmd.html
 
   // DebugModeOpen 开启机巢调试模式。
   // 对应 DJI Cloud API method: debug_mode_open，
@@ -244,11 +223,107 @@ service DjiGateway {
   // BatteryMaintenanceSwitch 切换电池保养功能开关。
   // 对应 DJI Cloud API method: battery_maintenance_switch，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  // https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/debug.html
+  // https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/cmd.html
   rpc BatteryMaintenanceSwitch(BatteryStoreModeReq) returns (CommonRes);
 
-  // ==================== 相机/云台控制（Camera & Gimbal） ====================
+  // ==================== 固件升级（Firmware） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/firmware.html
+
+  // OtaCreate 创建固件升级任务。
+  // 对应 DJI Cloud API method: ota_create，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc OtaCreate(OtaCreateReq) returns (CommonRes);
+
+  // ==================== 远程日志（Log） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/log.html
+
+  // Topic: thing/product/{gateway_sn}/services | events。
+  // fileupload_* 控制接口方向 down（云平台→设备），fileupload_progress/result 为设备上行事件。
+
+  // RemoteLogFileList 查询可上传的远程日志文件列表。
+  // 对应 DJI Cloud API method: fileupload_list，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc RemoteLogFileList(RemoteLogFileListReq) returns (CommonRes);
+
+  // RemoteLogFileUploadStart 开始上传远程日志文件。
+  // 对应 DJI Cloud API method: fileupload_start，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc RemoteLogFileUploadStart(RemoteLogFileUploadReq) returns (CommonRes);
+
+  // RemoteLogFileUploadUpdate 更新远程日志文件上传任务。
+  // 对应 DJI Cloud API method: fileupload_update，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc RemoteLogFileUploadUpdate(RemoteLogFileUploadReq) returns (CommonRes);
+
+  // RemoteLogFileUploadCancel 取消远程日志文件上传任务。
+  // 对应 DJI Cloud API method: fileupload_cancel，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc RemoteLogFileUploadCancel(RemoteLogFileUploadReq) returns (CommonRes);
+
+  // ==================== 配置更新（Config） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/config.html
+
+  // ConfigUpdate 下发设备配置更新。
+  // 对应 DJI Cloud API method: config_update，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc ConfigUpdate(ConfigUpdateReq) returns (CommonRes);
+
+  // ==================== 指令飞行（DRC） ====================
   // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html
+
+  // FlightAuthorityGrab 获取飞行控制权。
+  // 对应 DJI Cloud API method: flight_authority_grab，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  // 在进行指令飞行操控前需要先获取飞行控制权。
+  rpc FlightAuthorityGrab(DeviceSnReq) returns (CommonRes);
+
+  // PayloadAuthorityGrab 获取负载控制权。
+  // 对应 DJI Cloud API method: payload_authority_grab，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  // 在控制相机、云台等负载设备前需要先获取负载控制权。
+  rpc PayloadAuthorityGrab(DeviceSnReq) returns (CommonRes);
+
+  // DrcModeEnter 进入指令飞行（DRC）模式。
+  // 对应 DJI Cloud API method: drc_mode_enter，
+  // Topic: thing/product/{gateway_sn}/services，设备应答 services_reply，非 drc/* 子路径。
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  // 进入 DRC 模式后，可在 drc/down 上发杆量（见 SendDrcStickControl 与 DRC 杆量: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E6%9D%86%E9%87%8F%E6%8E%A7%E5%88%B6 ）。
+  rpc DrcModeEnter(DrcModeEnterReq) returns (CommonRes);
+
+  // DrcModeExit 退出指令飞行（DRC）模式。
+  // 对应 DJI Cloud API method: drc_mode_exit，
+  // Topic: thing/product/{gateway_sn}/services，设备应答 services_reply。
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc DrcModeExit(DeviceSnReq) returns (CommonRes);
+
+  // SendDrcStickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
+  // Topic: thing/product/{gateway_sn}/drc/down。建议发送频率约 **5～10 Hz**；与 SendDrcHeartBeat、DroneEmergencyStop 同为即发即忘，无 services_reply。
+  rpc SendDrcStickControl(DrcStickControlReq) returns (CommonRes);
+
+  // SendDrcHeartBeat 经 drc/down 发 DRC 心跳（method heart_beat；seq 与 data.timestamp 见 DRC 文档）。
+  rpc SendDrcHeartBeat(DrcHeartBeatReq) returns (CommonRes);
+
+  // DroneEmergencyStop 通过 DRC 通道下发飞行器紧急停桨。
+  // 对应 DJI Cloud API method: drone_emergency_stop（drc/down），仅表示已发布到 MQTT，不等待 services_reply。
+  // 需要在配置文件中开启 DangerousOps.EnableDroneEmergencyStop 才能调用。
+  rpc DroneEmergencyStop(DeviceSnReq) returns (CommonRes);
+
+  // FlyToPoint 飞向指定航点。
+  // 对应 DJI Cloud API method: fly_to_point，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  // 适用于飞行器在空中的场景，支持多航点路径。
+  rpc FlyToPoint(FlyToPointReq) returns (CommonRes);
+
+  // FlyToPointStop 停止当前的飞向航点任务。
+  // 对应 DJI Cloud API method: fly_to_point_stop，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc FlyToPointStop(DeviceSnReq) returns (CommonRes);
+
+  // TakeoffToPoint 一键起飞到指定坐标点。
+  // 对应 DJI Cloud API method: takeoff_to_point，
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  // 适用于飞行器在机场内的场景。
+  rpc TakeoffToPoint(TakeoffToPointReq) returns (CommonRes);
 
   // CameraModeSwitch 切换相机拍摄模式。
   // 对应 DJI Cloud API method: camera_mode_switch，
@@ -340,103 +415,47 @@ service DjiGateway {
   // https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html
   rpc CameraIrMeteringArea(CameraIrMeteringAreaReq) returns (CommonRes);
 
-  // ==================== 直播管理（Live） ====================
-  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/live.html
+  // ==================== 自定义飞行区（Custom Fly Region） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/custom-fly-region.html
+  // 当前 gRPC 网关未暴露该模块的下行标准接口；相关上行消息由 MQTT SDK hooks 处理。
 
-  // LiveStartPush 开始直播推流。
-  // 对应 DJI Cloud API method: live_start_push，
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc LiveStartPush(LiveStartPushReq) returns (CommonRes);
+  // ==================== PSDK 功能（PSDK） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk.html
+  // 当前 gRPC 网关未暴露该模块的下行标准接口；相关 PSDK 上行事件由 MQTT SDK hooks 处理。
 
-  // LiveStopPush 停止直播推流。
-  // 对应 DJI Cloud API method: live_stop_push，
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc LiveStopPush(LiveStopPushReq) returns (CommonRes);
+  // PsdkUIResourceUpload PSDK UI 资源上传。
+  // 对应 DJI Cloud API method: psdk_ui_resource_upload，
+  // Topic: thing/product/{gateway_sn}/services，方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc PsdkUIResourceUpload(PsdkUIResourceUploadReq) returns (CommonRes);
 
-  // LiveSetQuality 设置直播画质。
-  // 对应 DJI Cloud API method: live_set_quality，
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc LiveSetQuality(LiveSetQualityReq) returns (CommonRes);
+  // ==================== PSDK 互联互通（PSDK Transmit） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk-transmit-custom-data.html
 
-  // LiveLensChange 切换直播镜头。
-  // 对应 DJI Cloud API method: live_lens_change，
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  // https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/live.html
-  rpc LiveLensChange(LiveLensChangeReq) returns (CommonRes);
+  // SendCustomDataToPsdk 自定义数据透传至 PSDK 负载设备。
+  // 对应 DJI Cloud API method: custom_data_transmission_to_psdk，
+  // Topic: thing/product/{gateway_sn}/services，方向 down（云平台→设备），
+  // 将自定义消息透传推送到 PSDK 负载设备，等待设备 ACK 后返回结果。
+  // 上行方向（设备→云平台）通过 events topic 的 custom_data_transmission_from_psdk 事件钩子处理。
+  rpc SendCustomDataToPsdk(CustomDataToPsdkReq) returns (CommonRes);
 
-  // LiveCameraChange 切换直播相机。
-  // 对应 DJI Cloud API method: live_camera_change，
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  // https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/live.html
-  rpc LiveCameraChange(LiveCameraChangeReq) returns (CommonRes);
+  // ==================== ESDK 互联互通（ESDK Transmit） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/esdk-transmit-custom-data.html
+  // 当前 gRPC 网关未暴露该模块的下行标准接口；相关上行消息由 MQTT SDK hooks 处理。
 
-  // ==================== 媒体管理（Media） ====================
-  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/media.html
+  // ==================== 远程解禁（Flysafe） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/flysafe.html
+  // 当前 gRPC 网关未暴露该模块的下行标准接口；相关上行消息由 MQTT SDK hooks 处理。
 
-  // MediaUploadFlighttaskMediaPrioritize 优先上传指定航线任务媒体。
-  // 对应 DJI Cloud API method: upload_flighttask_media_prioritize，
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc MediaUploadFlighttaskMediaPrioritize(MediaFlighttaskReq) returns (CommonRes);
+  // ==================== AirSense ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/airsense.html
+  // 当前 gRPC 网关未暴露该模块的下行标准接口；相关上行消息由 MQTT SDK hooks 处理。
 
-  // MediaFastUpload 快速上传指定媒体文件。
-  // 对应 DJI Cloud API method: media_fast_upload，
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc MediaFastUpload(MediaFastUploadReq) returns (CommonRes);
+  // ==================== 远程控制（Remote Control） ====================
+  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/remote-control.html
+  // 当前 gRPC 网关未暴露该模块的下行标准接口；相关上行消息由 MQTT SDK hooks 处理。
 
-  // MediaHighestPriorityUploadFlighttask 最高优先级上传指定航线任务媒体。
-  // 对应 DJI Cloud API method: highest_priority_upload_flighttask_media，
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc MediaHighestPriorityUploadFlighttask(MediaFlighttaskReq) returns (CommonRes);
+  // ==================== 平台能力接口（非 DJI 标准 API，本服务自定义） ====================
 
-  // ==================== 远程日志（Remote Log） ====================
-  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/remote-log.html
-  // Topic: thing/product/{gateway_sn}/services | events。
-  // fileupload_* 控制接口方向 down（云平台→设备），fileupload_progress/result 为设备上行事件。
-
-  // RemoteLogFileList 查询可上传的远程日志文件列表。
-  // 对应 DJI Cloud API method: fileupload_list，
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc RemoteLogFileList(RemoteLogFileListReq) returns (CommonRes);
-
-  // RemoteLogFileUploadStart 开始上传远程日志文件。
-  // 对应 DJI Cloud API method: fileupload_start，
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc RemoteLogFileUploadStart(RemoteLogFileUploadReq) returns (CommonRes);
-
-  // RemoteLogFileUploadUpdate 更新远程日志文件上传任务。
-  // 对应 DJI Cloud API method: fileupload_update，
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc RemoteLogFileUploadUpdate(RemoteLogFileUploadReq) returns (CommonRes);
-
-  // RemoteLogFileUploadCancel 取消远程日志文件上传任务。
-  // 对应 DJI Cloud API method: fileupload_cancel，
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc RemoteLogFileUploadCancel(RemoteLogFileUploadReq) returns (CommonRes);
-
-  // ==================== 配置更新（Configuration Update） ====================
-
-  // ConfigUpdate 下发设备配置更新。
-  // 对应 DJI Cloud API method: config_update，
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc ConfigUpdate(ConfigUpdateReq) returns (CommonRes);
-
-  // ==================== 属性设置（Property Set） ====================
-  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/properties.html
-
-  // SetProperty 设置设备属性。
-  // 通过 property/set 主题向设备下发属性设置命令。
-  // properties 为 JSON 格式的键值对字符串。
-  rpc SetProperty(SetPropertyReq) returns (CommonRes);
-
-  // ==================== 固件管理（Firmware） ====================
-  // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/firmware.html
-
-  // OtaCreate 创建固件升级任务。
-  // 对应 DJI Cloud API method: ota_create，
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc OtaCreate(OtaCreateReq) returns (CommonRes);
-
-  // ==================== 平台能力接口（非大疆标准 API，本服务自定义） ====================
   // 平台能力 = 大疆 Cloud API 中没有的、由本服务结合业务需求自定义或组合的接口。
   // 大疆标准协议转发类接口请按大疆文档分类归入上方对应分区。
 
@@ -484,7 +503,97 @@ message DeviceSnReq {
   string device_sn = 1;
 }
 
-// ==================== 航线管理请求消息 ====================
+// ==================== 属性设置（Properties）请求消息 ====================
+
+// SetPropertyReq 设备属性设置请求。
+message SetPropertyReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // properties JSON 格式的属性键值对字符串。
+  string properties = 2;
+}
+
+// ==================== 设备管理（Device）消息 ====================
+// 当前 proto 未定义设备管理下行请求；设备状态、拓扑等上行由 MQTT SDK 结构承载。
+
+// ==================== 组织管理（Organization）消息 ====================
+// 当前 proto 未定义组织管理下行请求；requests 上行由 MQTT SDK 结构承载。
+
+// ==================== 直播功能（Live）请求消息 ====================
+
+// LiveStartPushReq 开始直播推流请求。
+message LiveStartPushReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // url_type 推流协议类型，0: AGORA, 1: RTMP, 2: RTSP, 3: GB28181。
+  int32 url_type = 2;
+  // url 推流地址。
+  string url = 3;
+  // video_id 视频流 ID，格式 "SN/机型-挂载位置/镜头类型"。
+  string video_id = 4;
+  // video_quality 视频质量，0: 自适应, 1: 流畅, 2: 标清, 3: 高清, 4: 超清。
+  int32 video_quality = 5;
+}
+
+// LiveStopPushReq 停止直播推流请求。
+message LiveStopPushReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // video_id 视频流 ID，与启动时一致。
+  string video_id = 2;
+}
+
+// LiveSetQualityReq 设置直播画质请求。
+message LiveSetQualityReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // video_id 视频流 ID。
+  string video_id = 2;
+  // video_quality 视频质量，0: 自适应, 1: 流畅, 2: 标清, 3: 高清, 4: 超清。
+  int32 video_quality = 3;
+}
+
+// LiveLensChangeReq 切换直播镜头请求。
+// 对应 DJI Cloud API method: live_lens_change（Services, down）。
+message LiveLensChangeReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // video_id 视频流 ID。
+  string video_id = 2;
+  // video_type 镜头类型，0: 广角, 1: 变焦, 2: 红外。
+  int32 video_type = 3;
+}
+
+// LiveCameraChangeReq 切换直播相机请求。
+// 对应 DJI Cloud API method: live_camera_change（Services, down）。
+message LiveCameraChangeReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // video_id 视频流 ID。
+  string video_id = 2;
+  // camera_index 目标相机索引，格式 type-subtype-gimbalIndex（与 data.camera_index 一致）。
+  string camera_index = 3;
+}
+
+// ==================== 媒体功能（Media）请求消息 ====================
+
+// MediaFlighttaskReq 航线任务媒体上传请求。
+message MediaFlighttaskReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // flight_id 航线任务 ID，对应 data.flight_id。
+  string flight_id = 2;
+}
+
+// MediaFastUploadReq 媒体文件快速上传请求。
+message MediaFastUploadReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // file_id 媒体文件 ID，对应 data.file_id。
+  string file_id = 2;
+}
+
+// ==================== 航线功能（Wayline）请求消息 ====================
 
 // FlightTaskFileRef 航线文件信息。
 // 对应 flighttask_prepare.data.file。
@@ -577,26 +686,102 @@ message ReturnSpecificHomeReq {
   double height = 4;
 }
 
-// ==================== PSDK 请求消息 ====================
+// ==================== HMS 管理（HMS）消息 ====================
+// HMS 为 events 上行通知，当前 gRPC proto 未定义下行请求。
 
-// PsdkCommandReq PSDK 数据写入请求。
-// 对应 DJI Cloud API method: psdk_write（Services, down）。
-message PsdkCommandReq {
+// ==================== 远程调试（Cmd）请求消息 ====================
+
+// BatteryStoreModeReq 电池保养存储模式切换请求。
+message BatteryStoreModeReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
   string device_sn = 1;
-  // payload_index 负载索引，格式通常为 "机型-挂载位置"；为空时网关按 "0" 下发。
-  string payload_index = 2;
-  // data 待写入 PSDK 负载的数据内容，按 DJI 协议使用 Base64 编码。
-  string data = 3;
+  // enable 开关状态，1 为开启，0 为关闭。
+  int32 enable = 2;
 }
 
-// CustomDataToPsdkReq PSDK 自定义数据透传请求。
-// 对应 DJI Cloud API method: custom_data_transmission_to_psdk（Services, down）。
-message CustomDataToPsdkReq {
+// AlarmStateSwitchReq 声光报警开关切换请求。
+message AlarmStateSwitchReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
   string device_sn = 1;
-  // value 自定义透传数据内容，长度应小于 256 字符。
-  string value = 2;
+  // action 动作标识，具体含义参考 DJI Cloud API 文档。
+  int32 action = 2;
+}
+
+// AirConditionerModeSwitchReq 空调模式切换请求。
+message AirConditionerModeSwitchReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // action 空调模式，0: 关闭, 1: 制冷, 2: 制热, 3: 除湿。
+  int32 action = 2;
+}
+
+// ==================== 固件升级（Firmware）请求消息 ====================
+
+// OtaCreateReq 创建固件升级任务请求。
+// 对应 DJI Cloud API method: ota_create（Services, down）。
+message OtaCreateReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // devices 待升级设备列表。
+  repeated OtaDevice devices = 2;
+}
+
+// OtaDevice OTA 升级目标设备信息。
+message OtaDevice {
+  // sn 待升级设备序列号。
+  string sn = 1;
+  // product_version 目标固件版本号。
+  string product_version = 2;
+  // firmware_upgrade_type 升级类型，1: 普通升级, 2: 一致性升级。
+  int32 firmware_upgrade_type = 3;
+}
+
+// ==================== 远程日志（Log）请求消息 ====================
+
+// RemoteLogFileListReq 远程日志文件列表请求。
+message RemoteLogFileListReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // target_device_sn 需要查询日志的设备序列号，对应 data.device_sn；为空时由设备默认处理。
+  string target_device_sn = 2;
+  // module 日志模块标识，对应 data.module。
+  string module = 3;
+}
+
+// RemoteLogFileUploadReq 远程日志文件上传控制请求。
+message RemoteLogFileUploadReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // files 远程日志文件列表，对应 data.files。
+  repeated RemoteLogFile files = 2;
+}
+
+// RemoteLogFile 远程日志文件描述。
+message RemoteLogFile {
+  // device_sn 日志所属设备序列号，对应 data.files[].device_sn。
+  string device_sn = 1;
+  // module 日志模块标识，对应 data.files[].module。
+  string module = 2;
+  // key 日志文件唯一键，对应 data.files[].key。
+  string key = 3;
+  // name 日志文件名，对应 data.files[].name。
+  string name = 4;
+  // url 日志上传或下载地址，对应 data.files[].url。
+  string url = 5;
+  // size 日志文件大小，单位字节，对应 data.files[].size。
+  int64 size = 6;
+}
+
+// ==================== 配置更新（Config）请求消息 ====================
+
+// ConfigUpdateReq 设备配置更新请求。
+message ConfigUpdateReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // config_scope 配置作用域，对应 data.config_scope。
+  string config_scope = 2;
+  // config JSON 格式配置对象，对应 data.config。
+  string config = 3;
 }
 
 // ==================== 指令飞行（DRC）请求消息 ====================
@@ -705,33 +890,7 @@ message Waypoint {
   double height = 3;
 }
 
-// ==================== 远程调试请求消息 ====================
-
-// BatteryStoreModeReq 电池保养存储模式切换请求。
-message BatteryStoreModeReq {
-  // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
-  // enable 开关状态，1 为开启，0 为关闭。
-  int32 enable = 2;
-}
-
-// AlarmStateSwitchReq 声光报警开关切换请求。
-message AlarmStateSwitchReq {
-  // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
-  // action 动作标识，具体含义参考 DJI Cloud API 文档。
-  int32 action = 2;
-}
-
-// AirConditionerModeSwitchReq 空调模式切换请求。
-message AirConditionerModeSwitchReq {
-  // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
-  // action 空调模式，0: 关闭, 1: 制冷, 2: 制热, 3: 除湿。
-  int32 action = 2;
-}
-
-// ==================== 相机/云台请求消息 ====================
+// ==================== 指令飞行（DRC）相机/云台请求消息 ====================
 
 // CameraModeSwitchReq 相机模式切换请求。
 message CameraModeSwitchReq {
@@ -917,158 +1076,43 @@ message CameraIrMeteringAreaReq {
   double height = 6;
 }
 
-// ==================== 直播请求消息 ====================
+// ==================== 自定义飞行区（Custom Fly Region）消息 ====================
+// 当前 proto 未定义自定义飞行区下行请求。
 
-// LiveStartPushReq 开始直播推流请求。
-message LiveStartPushReq {
+// ==================== PSDK 功能与互联互通请求消息 ====================
+
+// PsdkUIResourceUploadReq PSDK UI 资源上传请求。
+message PsdkUIResourceUploadReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
   string device_sn = 1;
-  // url_type 推流协议类型，0: AGORA, 1: RTMP, 2: RTSP, 3: GB28181。
-  int32 url_type = 2;
-  // url 推流地址。
+  // name 资源名称。
+  string name = 2;
+  // url 资源下载地址。
   string url = 3;
-  // video_id 视频流 ID，格式 "SN/机型-挂载位置/镜头类型"。
-  string video_id = 4;
-  // video_quality 视频质量，0: 自适应, 1: 流畅, 2: 标清, 3: 高清, 4: 超清。
-  int32 video_quality = 5;
+  // fingerprint 资源指纹，可选。
+  string fingerprint = 4;
 }
 
-// LiveStopPushReq 停止直播推流请求。
-message LiveStopPushReq {
+// CustomDataToPsdkReq PSDK 自定义数据透传请求。
+// 对应 DJI Cloud API method: custom_data_transmission_to_psdk（Services, down）。
+message CustomDataToPsdkReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
   string device_sn = 1;
-  // video_id 视频流 ID，与启动时一致。
-  string video_id = 2;
+  // value 自定义透传数据内容，长度应小于 256 字符。
+  string value = 2;
 }
 
-// LiveSetQualityReq 设置直播画质请求。
-message LiveSetQualityReq {
-  // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
-  // video_id 视频流 ID。
-  string video_id = 2;
-  // video_quality 视频质量，0: 自适应, 1: 流畅, 2: 标清, 3: 高清, 4: 超清。
-  int32 video_quality = 3;
-}
+// ==================== ESDK 互联互通（ESDK Transmit）消息 ====================
+// 当前 proto 未定义 ESDK 互联互通下行请求。
 
-// LiveLensChangeReq 切换直播镜头请求。
-// 对应 DJI Cloud API method: live_lens_change（Services, down）。
-message LiveLensChangeReq {
-  // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
-  // video_id 视频流 ID。
-  string video_id = 2;
-  // video_type 镜头类型，0: 广角, 1: 变焦, 2: 红外。
-  int32 video_type = 3;
-}
+// ==================== 远程解禁（Flysafe）消息 ====================
+// 当前 proto 未定义远程解禁下行请求。
 
-// LiveCameraChangeReq 切换直播相机请求。
-// 对应 DJI Cloud API method: live_camera_change（Services, down）。
-message LiveCameraChangeReq {
-  // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
-  // video_id 视频流 ID。
-  string video_id = 2;
-  // camera_index 目标相机索引，格式 type-subtype-gimbalIndex（与 data.camera_index 一致）。
-  string camera_index = 3;
-}
+// ==================== AirSense 消息 ====================
+// 当前 proto 未定义 AirSense 下行请求。
 
-// ==================== 媒体管理请求消息 ====================
-
-// MediaFlighttaskReq 航线任务媒体上传请求。
-message MediaFlighttaskReq {
-  // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
-  // flight_id 航线任务 ID，对应 data.flight_id。
-  string flight_id = 2;
-}
-
-// MediaFastUploadReq 媒体文件快速上传请求。
-message MediaFastUploadReq {
-  // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
-  // file_id 媒体文件 ID，对应 data.file_id。
-  string file_id = 2;
-}
-
-// ==================== 远程日志请求消息 ====================
-
-// RemoteLogFileListReq 远程日志文件列表请求。
-message RemoteLogFileListReq {
-  // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
-  // target_device_sn 需要查询日志的设备序列号，对应 data.device_sn；为空时由设备默认处理。
-  string target_device_sn = 2;
-  // module 日志模块标识，对应 data.module。
-  string module = 3;
-}
-
-// RemoteLogFileUploadReq 远程日志文件上传控制请求。
-message RemoteLogFileUploadReq {
-  // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
-  // files 远程日志文件列表，对应 data.files。
-  repeated RemoteLogFile files = 2;
-}
-
-// RemoteLogFile 远程日志文件描述。
-message RemoteLogFile {
-  // device_sn 日志所属设备序列号，对应 data.files[].device_sn。
-  string device_sn = 1;
-  // module 日志模块标识，对应 data.files[].module。
-  string module = 2;
-  // key 日志文件唯一键，对应 data.files[].key。
-  string key = 3;
-  // name 日志文件名，对应 data.files[].name。
-  string name = 4;
-  // url 日志上传或下载地址，对应 data.files[].url。
-  string url = 5;
-  // size 日志文件大小，单位字节，对应 data.files[].size。
-  int64 size = 6;
-}
-
-// ==================== 配置更新请求消息 ====================
-
-// ConfigUpdateReq 设备配置更新请求。
-message ConfigUpdateReq {
-  // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
-  // config_scope 配置作用域，对应 data.config_scope。
-  string config_scope = 2;
-  // config JSON 格式配置对象，对应 data.config。
-  string config = 3;
-}
-
-// ==================== 属性设置请求消息 ====================
-
-// SetPropertyReq 设备属性设置请求。
-message SetPropertyReq {
-  // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
-  // properties JSON 格式的属性键值对字符串。
-  string properties = 2;
-}
-
-// ==================== 固件管理请求消息 ====================
-
-// OtaCreateReq 创建固件升级任务请求。
-// 对应 DJI Cloud API method: ota_create（Services, down）。
-message OtaCreateReq {
-  // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
-  // devices 待升级设备列表。
-  repeated OtaDevice devices = 2;
-}
-
-// OtaDevice OTA 升级目标设备信息。
-message OtaDevice {
-  // sn 待升级设备序列号。
-  string sn = 1;
-  // product_version 目标固件版本号。
-  string product_version = 2;
-  // firmware_upgrade_type 升级类型，1: 普通升级, 2: 一致性升级。
-  int32 firmware_upgrade_type = 3;
-}
+// ==================== 远程控制（Remote Control）消息 ====================
+// 当前 proto 未定义远程控制下行请求。
 
 // ==================== 平台能力响应消息 ====================
 

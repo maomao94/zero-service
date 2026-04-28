@@ -8,16 +8,40 @@ import (
 	"time"
 )
 
-func TestNewClientWithReplyOptionsKeepsExplicitReplySwitches(t *testing.T) {
+func TestNewClientWithOptionsKeepsExplicitReplySwitches(t *testing.T) {
 	options := ReplyOptions{
 		EnableEventReply:   false,
 		EnableStatusReply:  false,
 		EnableRequestReply: false,
 	}
-	client := NewClientWithReplyOptions(nil, time.Second, options)
+	client := NewClient(nil, WithPendingTTL(time.Second), WithReplyOptions(options))
 
 	if client.replyOptions != options {
 		t.Fatalf("replyOptions = %+v, want %+v", client.replyOptions, options)
+	}
+}
+
+func TestNewClientWithPendingTTLOption(t *testing.T) {
+	client := NewClient(nil, WithPendingTTL(time.Second))
+	defer client.pending.Close()
+
+	entry, err := client.pending.Register("ttl-check")
+	if err != nil {
+		t.Fatalf("register pending entry: %v", err)
+	}
+	if entry == nil {
+		t.Fatal("expected pending entry")
+	}
+	if !client.pending.Has("ttl-check") {
+		t.Fatal("expected pending entry to be registered")
+	}
+}
+
+func TestNewClientDefaultOptionsEnableReplies(t *testing.T) {
+	client := NewClient(nil)
+
+	if client.replyOptions != DefaultReplyOptions() {
+		t.Fatalf("replyOptions = %+v, want default reply options", client.replyOptions)
 	}
 }
 
@@ -35,7 +59,7 @@ func TestHandleRequestsReplySwitch(t *testing.T) {
 
 	t.Run("enabled", func(t *testing.T) {
 		mqtt := &recordingMQTTClient{}
-		client := newClientWithReplyOptions(mqtt, time.Second, ReplyOptions{EnableRequestReply: true})
+		client := newClient(mqtt, WithPendingTTL(time.Second), WithReplyOptions(ReplyOptions{EnableRequestReply: true}))
 		client.OnRequest(func(ctx context.Context, gatewaySn string, req *RequestMessage) (int, any, error) {
 			if gatewaySn != "gateway-1" || req.Method != "airport_bind_status" {
 				t.Fatalf("unexpected request: gateway=%s method=%s", gatewaySn, req.Method)
@@ -53,7 +77,7 @@ func TestHandleRequestsReplySwitch(t *testing.T) {
 
 	t.Run("disabled", func(t *testing.T) {
 		mqtt := &recordingMQTTClient{}
-		client := newClientWithReplyOptions(mqtt, time.Second, ReplyOptions{EnableRequestReply: false})
+		client := newClient(mqtt, WithPendingTTL(time.Second), WithReplyOptions(ReplyOptions{EnableRequestReply: false}))
 		called := false
 		client.OnRequest(func(ctx context.Context, gatewaySn string, req *RequestMessage) (int, any, error) {
 			called = true
@@ -78,7 +102,7 @@ func TestHandleStatusReplySwitch(t *testing.T) {
 
 	t.Run("enabled", func(t *testing.T) {
 		mqtt := &recordingMQTTClient{}
-		client := newClientWithReplyOptions(mqtt, time.Second, ReplyOptions{EnableStatusReply: true})
+		client := newClient(mqtt, WithPendingTTL(time.Second), WithReplyOptions(ReplyOptions{EnableStatusReply: true}))
 		client.OnStatus(func(ctx context.Context, gatewaySn string, data *StatusMessage) int {
 			if gatewaySn != "gateway-1" || data.Method != MethodUpdateTopo {
 				t.Fatalf("unexpected status: gateway=%s method=%s", gatewaySn, data.Method)
@@ -96,7 +120,7 @@ func TestHandleStatusReplySwitch(t *testing.T) {
 
 	t.Run("disabled", func(t *testing.T) {
 		mqtt := &recordingMQTTClient{}
-		client := newClientWithReplyOptions(mqtt, time.Second, ReplyOptions{EnableStatusReply: false})
+		client := newClient(mqtt, WithPendingTTL(time.Second), WithReplyOptions(ReplyOptions{EnableStatusReply: false}))
 		called := false
 		client.OnStatus(func(ctx context.Context, gatewaySn string, data *StatusMessage) int {
 			called = true
@@ -151,6 +175,59 @@ func TestRequestAndStatusReplyMarshal(t *testing.T) {
 	}
 	if statusDecoded.Tid != statusReply.Tid || statusDecoded.Bid != statusReply.Bid || statusDecoded.Data.Result != 0 {
 		t.Fatalf("unexpected status reply: %+v", statusDecoded)
+	}
+}
+
+func TestFlightTaskProgressEventUnmarshalCanonicalStructure(t *testing.T) {
+	payload := []byte(`{"ext":{"current_waypoint_index":3,"wayline_mission_state":5,"media_count":8,"track_id":"track-1","flight_id":"flight-1","break_point":{"index":2,"state":1,"progress":66.5,"wayline_id":4,"break_reason":9}}}`)
+
+	var event FlightTaskProgressEvent
+	if err := json.Unmarshal(payload, &event); err != nil {
+		t.Fatalf("unmarshal flight task progress: %v", err)
+	}
+	if event.Ext.CurrentWaypointIndex != 3 || event.Ext.WaylineMissionState != 5 || event.Ext.MediaCount != 8 || event.Ext.TrackID != "track-1" || event.Ext.FlightID != "flight-1" {
+		t.Fatalf("unexpected progress ext: %+v", event.Ext)
+	}
+	if event.Ext.BreakPoint == nil || event.Ext.BreakPoint.BreakReason != 9 {
+		t.Fatalf("unexpected breakpoint: %+v", event.Ext.BreakPoint)
+	}
+}
+
+func TestHmsEventDataUnmarshalOfficialShape(t *testing.T) {
+	payload := []byte(`{"list":[{"level":2,"module":3,"in_the_sky":0,"code":"dock_tip_foo","device_type":"dock","imminent":1,"args":{"component_index":2,"sensor_index":7}}]}`)
+
+	var event HmsEventData
+	if err := json.Unmarshal(payload, &event); err != nil {
+		t.Fatalf("unmarshal hms event: %v", err)
+	}
+	if len(event.List) != 1 {
+		t.Fatalf("len(list) = %d, want 1", len(event.List))
+	}
+	item := event.List[0]
+	if item.Level != 2 || item.Module != 3 || item.InTheSky != 0 || item.Code != "dock_tip_foo" || item.DeviceType != "dock" || item.Imminent != 1 {
+		t.Fatalf("unexpected hms item: %+v", item)
+	}
+	if item.Args.ComponentIndex != 2 || item.Args.SensorIndex != 7 {
+		t.Fatalf("unexpected hms args: %+v", item.Args)
+	}
+}
+
+func TestHandleStateUsesStateMessage(t *testing.T) {
+	client := NewClient(nil)
+	called := false
+	client.OnState(func(ctx context.Context, deviceSn string, data *StateMessage) {
+		called = true
+		if deviceSn != "gateway-1" || data.Tid != "tid-state" {
+			t.Fatalf("unexpected state callback: sn=%s data=%+v", deviceSn, data)
+		}
+	})
+
+	payload := []byte(`{"tid":"tid-state","bid":"bid-state","timestamp":1710000000000,"data":{"mode_code":1}}`)
+	if err := client.HandleState(context.Background(), payload, StateTopic("gateway-1"), ""); err != nil {
+		t.Fatalf("HandleState() error = %v", err)
+	}
+	if !called {
+		t.Fatal("expected state callback")
 	}
 }
 
@@ -387,6 +464,55 @@ func TestFlightTaskPrepareDataOmitsNilSimulateMission(t *testing.T) {
 	}
 }
 
+func TestDroneEmergencyStopPublishesDrcDownTypedMethod(t *testing.T) {
+	mqtt := &recordingMQTTClient{}
+	client := newClient(mqtt, WithPendingTTL(time.Second), WithReplyOptions(DefaultReplyOptions()))
+
+	if err := client.DroneEmergencyStop(context.Background(), "gateway-1"); err != nil {
+		t.Fatalf("DroneEmergencyStop() error = %v", err)
+	}
+	if len(mqtt.published) != 1 {
+		t.Fatalf("published count = %d, want 1", len(mqtt.published))
+	}
+	published := mqtt.published[0]
+	if published.topic != DrcDownTopic("gateway-1") {
+		t.Fatalf("topic = %s, want %s", published.topic, DrcDownTopic("gateway-1"))
+	}
+	var got map[string]any
+	if err := json.Unmarshal(published.payload, &got); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	if got["method"] != MethodDroneEmergencyStop {
+		t.Fatalf("method = %v, want %s", got["method"], MethodDroneEmergencyStop)
+	}
+	data, ok := got["data"].(map[string]any)
+	if !ok {
+		t.Fatalf("data = %T, want object; payload=%s", got["data"], string(published.payload))
+	}
+	if len(data) != 0 {
+		t.Fatalf("data = %v, want empty object", data)
+	}
+	for _, legacy := range []string{"drone_control", "gateway", "output"} {
+		if _, ok := got[legacy]; ok {
+			t.Fatalf("payload should not contain legacy services field %q: %v", legacy, got)
+		}
+	}
+}
+
+func TestLogFieldsDoesNotIncludePayloadOrSensitiveData(t *testing.T) {
+	got := logFields("topic", "thing/product/gateway-1/services", "gateway_sn", "gateway-1", "method", MethodDrcModeEnter, "tid", "tid-1", "result", 0)
+	for _, want := range []string{"topic=thing/product/gateway-1/services", "gateway_sn=gateway-1", "method=drc_mode_enter", "tid=tid-1", "result=0"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("logFields() = %q, want contains %q", got, want)
+		}
+	}
+	for _, sensitive := range []string{"payload", "password", "secret", "token", "certificate", "broker"} {
+		if strings.Contains(strings.ToLower(got), sensitive) {
+			t.Fatalf("logFields() leaked sensitive field %q in %q", sensitive, got)
+		}
+	}
+}
+
 func TestTask5ModulePayloadSerialization(t *testing.T) {
 	cases := []struct {
 		name    string
@@ -397,11 +523,11 @@ func TestTask5ModulePayloadSerialization(t *testing.T) {
 		{name: "drc", payload: TakeoffToPointData{FlightID: "flight-1", TargetLatitude: 22.1, TargetLongitude: 113.1, TargetHeight: 80, SecurityTakeoffHeight: 30}, fields: map[string]any{"flight_id": "flight-1", "target_latitude": 22.1, "target_longitude": 113.1, "target_height": float64(80), "security_takeoff_height": float64(30)}},
 		{name: "remote_debug", payload: BatteryMaintenanceSwitchData{Enable: 1}, fields: map[string]any{"enable": float64(1)}},
 		{name: "camera", payload: CameraIrMeteringAreaData{PayloadIndex: "53-0", X: 0.1, Y: 0.2, Width: 0.3, Height: 0.4}, fields: map[string]any{"payload_index": "53-0", "x": 0.1, "y": 0.2, "width": 0.3, "height": 0.4}},
-		{name: "psdk", payload: CustomDataTransmissionData{Value: "hello"}, fields: map[string]any{"value": "hello"}},
 		{name: "live", payload: LiveCameraChangeData{VideoID: "dock/53-0/normal", CameraIndex: "53-0-0"}, fields: map[string]any{"video_id": "dock/53-0/normal", "camera_index": "53-0-0"}},
 		{name: "media", payload: MediaFastUploadData{FileID: "file-1"}, fields: map[string]any{"file_id": "file-1"}},
 		{name: "remote_log", payload: RemoteLogFileUploadStartData{Files: []RemoteLogFile{{DeviceSN: "dock-1", Module: "dock", Key: "log-1", URL: "https://example.com/log.zip"}}}, fields: map[string]any{"files": []any{map[string]any{"device_sn": "dock-1", "module": "dock", "key": "log-1", "url": "https://example.com/log.zip"}}}},
 		{name: "config_update", payload: ConfigUpdateData{ConfigScope: "dock", Config: map[string]any{"timezone": "Asia/Shanghai"}}, fields: map[string]any{"config_scope": "dock", "config": map[string]any{"timezone": "Asia/Shanghai"}}},
+		{name: "psdk", payload: PsdkUIResourceUploadData{Name: "float-window", URL: "https://example.com/psdk.zip", Fingerprint: "sha256:abc"}, fields: map[string]any{"name": "float-window", "url": "https://example.com/psdk.zip", "fingerprint": "sha256:abc"}},
 	}
 
 	for _, tc := range cases {
@@ -424,7 +550,7 @@ func TestTask5ModulePayloadSerialization(t *testing.T) {
 }
 
 func TestRemoteLogEventHooks(t *testing.T) {
-	client := newClientWithReplyOptions(&recordingMQTTClient{}, time.Second, DefaultReplyOptions())
+	client := newClient(&recordingMQTTClient{}, WithPendingTTL(time.Second), WithReplyOptions(DefaultReplyOptions()))
 	resultCalled := false
 	progressCalled := false
 	client.OnRemoteLogFileUploadResult(func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadResultEvent) {
@@ -450,6 +576,51 @@ func TestRemoteLogEventHooks(t *testing.T) {
 	}
 	if !resultCalled || !progressCalled {
 		t.Fatalf("hooks called result=%v progress=%v", resultCalled, progressCalled)
+	}
+}
+
+func TestOtaProgressAndUpdateTopoEventHooks(t *testing.T) {
+	client := newClient(&recordingMQTTClient{}, WithPendingTTL(time.Second), WithReplyOptions(DefaultReplyOptions()))
+	otaCalled := false
+	topoCalled := false
+	client.OnOtaProgress(func(ctx context.Context, gatewaySn string, data *OtaProgressEvent) {
+		otaCalled = true
+		if gatewaySn != "gateway-1" || len(data.Devices) != 1 || data.Devices[0].SN != "dock-1" || data.Devices[0].Progress != 42 {
+			t.Fatalf("unexpected ota progress event: gateway=%s data=%+v", gatewaySn, data)
+		}
+	})
+	client.OnUpdateTopo(func(ctx context.Context, gatewaySn string, data *TopoUpdateData) {
+		topoCalled = true
+		if gatewaySn != "gateway-1" || data.Type != 3 || len(data.SubDevices) != 1 || data.SubDevices[0].SN != "payload-1" {
+			t.Fatalf("unexpected topo event: gateway=%s data=%+v", gatewaySn, data)
+		}
+	})
+
+	otaPayload := []byte(`{"tid":"tid-3","bid":"bid-3","gateway":"gateway-1","timestamp":1710000000000,"method":"ota_progress","data":{"devices":[{"sn":"dock-1","status":2,"progress":42,"result":0}]}}`)
+	if err := client.HandleEvents(context.Background(), otaPayload, EventsTopic("gateway-1"), ""); err != nil {
+		t.Fatalf("HandleEvents(ota) error = %v", err)
+	}
+	topoPayload := []byte(`{"tid":"tid-4","bid":"bid-4","gateway":"gateway-1","timestamp":1710000000000,"method":"update_topo","data":{"type":3,"sub_type":0,"device_secret":"secret","sub_devices":[{"sn":"payload-1","type":2,"sub_type":1,"index":"0"}]}}`)
+	if err := client.HandleEvents(context.Background(), topoPayload, EventsTopic("gateway-1"), ""); err != nil {
+		t.Fatalf("HandleEvents(topo) error = %v", err)
+	}
+	if !otaCalled || !topoCalled {
+		t.Fatalf("hooks called ota=%v topo=%v", otaCalled, topoCalled)
+	}
+}
+
+func TestPsdkUIResourceUploadPayload(t *testing.T) {
+	payload, err := json.Marshal(PsdkUIResourceUploadData{Name: "panel", URL: "https://example.com/panel.zip", Fingerprint: "sha256:abc"})
+	if err != nil {
+		t.Fatalf("json.Marshal() error = %v", err)
+	}
+	var got map[string]any
+	if err := json.Unmarshal(payload, &got); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	want := map[string]any{"name": "panel", "url": "https://example.com/panel.zip", "fingerprint": "sha256:abc"}
+	if !jsonValueEqual(got, want) {
+		t.Fatalf("payload = %#v, want %#v", got, want)
 	}
 }
 

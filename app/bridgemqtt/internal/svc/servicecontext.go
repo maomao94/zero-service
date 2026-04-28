@@ -49,7 +49,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			logx.Infof("[mqtt] OnReady, client=%s", cli.GetClientID())
 			// 注册转发 handler
 			for _, topic := range c.MqttConfig.SubscribeTopics {
-				cli.AddHandler(topic, handler.NewMqttStreamHandler(cli.GetClientID(), streamEventCli, socketPushCli, c.MqttConfig.EventMapping, c.MqttConfig.DefaultEvent, c.LogConfig))
+				cli.AddHandler(topic, handler.NewMqttStreamHandler(cli.GetClientID(), streamEventCli, socketPushCli, c.EventMapping, c.DefaultEvent, c.LogConfig))
 			}
 		}),
 	)

@@ -20,7 +20,7 @@ func TestRegisterDjiClientRegistersHandlersAndOnlineChecker(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewCache progress error = %v", err)
 	}
-	client := djisdk.NewClientWithReplyOptions(nil, time.Second, djisdk.ReplyOptions{})
+	client := djisdk.NewClient(nil, djisdk.WithPendingTTL(time.Second), djisdk.WithReplyOptions(djisdk.ReplyOptions{}))
 
 	RegisterDjiClient(client, RegisterDjiClientOptions{
 		OnlineCache:         onlineCache,
@@ -64,7 +64,7 @@ func TestRegisterDjiClientRegistersHandlersAndOnlineChecker(t *testing.T) {
 }
 
 func TestRegisterDjiClientWithoutOnlineCacheHandlesUpstreamWithoutOnlineChecker(t *testing.T) {
-	client := djisdk.NewClientWithReplyOptions(nil, time.Second, djisdk.ReplyOptions{})
+	client := djisdk.NewClient(nil, djisdk.WithPendingTTL(time.Second), djisdk.WithReplyOptions(djisdk.ReplyOptions{}))
 
 	RegisterDjiClient(client, RegisterDjiClientOptions{})
 

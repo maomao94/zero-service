@@ -18,16 +18,25 @@ func NewMessageCarrier(msg *Message) MessageCarrier {
 
 // Get 获取 Header（TextMapCarrier 接口实现）
 func (c MessageCarrier) Get(key string) string {
+	if c.msg == nil {
+		return ""
+	}
 	return c.msg.GetHeader(key)
 }
 
 // Set 设置 Header（TextMapCarrier 接口实现）
 func (c MessageCarrier) Set(key, value string) {
+	if c.msg == nil {
+		return
+	}
 	c.msg.SetHeader(key, value)
 }
 
 // Keys 获取所有 Header key（TextMapCarrier 接口实现）
 func (c MessageCarrier) Keys() []string {
+	if c.msg == nil || len(c.msg.Headers) == 0 {
+		return nil
+	}
 	keys := make([]string, 0, len(c.msg.Headers))
 	for k := range c.msg.Headers {
 		keys = append(keys, k)

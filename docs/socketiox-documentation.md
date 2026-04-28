@@ -567,21 +567,28 @@ socket.on('mqtt', (data) => {
 
 #### 11.6.1 配置示例
 
-在配置文件中，可以通过 `EventMapping` 配置项来定义 MQTT 主题到 SocketIO 事件的映射规则：
+在 bridgemqtt 配置文件中，可以通过顶层 `EventMapping` 配置项来定义 MQTT 主题模板到 SocketIO 事件的映射规则。`EventMapping` 和 `DefaultEvent` 属于 bridgemqtt 的 SocketIO 推送配置，不属于通用 `MqttConfig`：
 
 ```yaml
 MqttConfig:
-  # 其他配置项...
-  EventMapping:
-    - match: "iec104/#"
-      event: "iec104"
-    - match: "alarm/#"
-      event: "alarm"
-    - match: "device/+/status"
-      event: "deviceStatus"
-    - match: "heartbeat/#"
-      event: "heartbeat"
-  DefaultEvent: "mqtt"  # 默认事件名称
+  Broker:
+    - "tcp://localhost:1883"
+  SubscribeTopics:
+    - "iec104/#"
+    - "alarm/#"
+    - "device/+/status"
+    - "heartbeat/#"
+
+EventMapping:
+  - topicTemplate: "iec104/#"
+    event: "iec104"
+  - topicTemplate: "alarm/#"
+    event: "alarm"
+  - topicTemplate: "device/+/status"
+    event: "deviceStatus"
+  - topicTemplate: "heartbeat/#"
+    event: "heartbeat"
+DefaultEvent: "mqtt"
 ```
 
 #### 11.6.2 前端处理示例

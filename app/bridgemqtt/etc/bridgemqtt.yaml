@@ -29,11 +29,12 @@ MqttConfig:
     - "test"
     - "test/topic2"
     - "iec/#"
-#  EventMapping:
-#    - topicTemplate: "iec/#"
-#      event: "iecEvent"
-#    - topicTemplate: "test/topic2"
-#      event: "testTopic2Event"
+#EventMapping:
+#  - topicTemplate: "iec/#"
+#    event: "iecEvent"
+#  - topicTemplate: "test/topic2"
+#    event: "testTopic2Event"
+#DefaultEvent: mqtt
 #LogConfig:
 #  defaultLogPayload: false
 #  topicSettings:

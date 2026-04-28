@@ -88,19 +88,20 @@ type EventReplyData struct {
 	Result int `json:"result"`
 }
 
-// OsdMessage OSD 遥测消息，设备定期上报的状态信息。
-type OsdMessage struct {
-	// Tid 事务 ID。必填。
-	Tid string `json:"tid"`
-	// Bid 业务 ID。必填。
-	Bid string `json:"bid"`
-	// Timestamp 消息时间戳，单位毫秒。必填。
-	Timestamp int64 `json:"timestamp"`
-	// Gateway 网关设备 SN。可选。
-	Gateway string `json:"gateway,omitempty"`
-	// Data OSD 遥测数据体，具体内容因设备类型而异。必填。
-	Data any `json:"data"`
+// TelemetryMessage 物模型遥测消息，承载 osd/state 通道上报的状态信息。
+type TelemetryMessage struct {
+	Tid       string `json:"tid"`
+	Bid       string `json:"bid"`
+	Timestamp int64  `json:"timestamp"`
+	Gateway   string `json:"gateway,omitempty"`
+	Data      any    `json:"data"`
 }
+
+// OsdMessage OSD 遥测消息，设备定频上报。
+type OsdMessage = TelemetryMessage
+
+// StateMessage 状态消息，设备状态变化时上报。
+type StateMessage = TelemetryMessage
 
 // RequestMessage 设备经 thing/.../requests 上行的报文。见
 // [Requests 组织](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/organization.html)。
@@ -256,39 +257,16 @@ type ReturnSpecificHomeData struct {
 
 // ==================== 一、航线管理 - 航线进度事件 ====================
 
-// FlightTaskProgressData 航线任务进度事件数据。
-type FlightTaskProgressData struct {
-	// Ext 进度扩展信息，包含航线执行的详细状态。必填。
-	Ext EventProgressExt `json:"ext"`
+// ==================== PSDK 功能与互联互通（PSDK / PSDK Transmit） ====================
+
+// PsdkUIResourceUploadData PSDK UI 资源上传数据。
+type PsdkUIResourceUploadData struct {
+	Name        string `json:"name"`
+	URL         string `json:"url"`
+	Fingerprint string `json:"fingerprint,omitempty"`
 }
 
-// EventProgressExt 航线进度扩展信息。
-type EventProgressExt struct {
-	// CurrentWaypointIndex 当前执行的航点索引，从 0 开始。必填。
-	CurrentWaypointIndex int `json:"current_waypoint_index"`
-	// WaylineMissionState 航线任务状态，参考 DJI 航线任务状态枚举。必填。
-	WaylineMissionState int `json:"wayline_mission_state"`
-	// MediaCount 已拍摄的媒体文件数量。必填。
-	MediaCount int `json:"media_count"`
-	// TrackID 航迹 ID。必填。
-	TrackID string `json:"track_id"`
-	// FlightID 航线任务 ID。必填。
-	FlightID string `json:"flight_id"`
-	// BreakPoint 断点续飞信息，任务中断时上报。可选。
-	BreakPoint *BreakPoint `json:"break_point,omitempty"`
-}
-
-// ==================== 二、PSDK 自定义数据透传（PSDK Custom Data Transmission） ====================
-
-// PsdkWriteData PSDK 数据写入请求，用于向 PSDK 负载发送数据。
-type PsdkWriteData struct {
-	// PayloadIndex 负载设备索引，格式为 "机型-挂载位置"，如 "53-0"。必填。
-	PayloadIndex string `json:"payload_index"`
-	// Data 待发送的数据内容，Base64 编码字符串。必填。
-	Data string `json:"data"`
-}
-
-// CustomDataTransmissionData 自定义数据透传消息，用于 PSDK 设备与云端之间的自定义数据传输。
+// CustomDataTransmissionData 自定义数据透传至 PSDK 请求。
 type CustomDataTransmissionData struct {
 	// Value 自定义消息内容，长度小于 256 字符。必填。
 	Value string `json:"value"`
@@ -372,7 +350,7 @@ type DebugProgressDetail struct {
 // 设备只读/遥测等场景见 **thing/.../state、osd** 等，勿与本「写属性」混用方向。
 type PropertySetData map[string]any
 
-// ==================== 三、指令飞行控制（Live Flight Controls / DRC） ====================
+// ==================== 三、指令飞行控制（DRC） ====================
 // 协议与 [DRC 上云](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html) 及 [DRC 杆量](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E6%9D%86%E9%87%8F%E6%8E%A7%E5%88%B6) 一致；飞控/模式类走 services 载荷，杆量用 DrcStickControlData 发 drc/down。
 
 // DrcModeEnterData 进入指令飞行（DRC）模式请求数据（Dock3 协议）。
@@ -777,6 +755,24 @@ type OtaDevice struct {
 	FirmwareUpgradeType int `json:"firmware_upgrade_type"`
 }
 
+// OtaProgressEvent 固件升级进度事件。
+type OtaProgressEvent struct {
+	Devices []OtaProgressDevice `json:"devices"`
+}
+
+type OtaProgressDevice struct {
+	SN                  string `json:"sn"`
+	DeviceModelDomain   int    `json:"device_model_domain,omitempty"`
+	DeviceModelKey      string `json:"device_model_key,omitempty"`
+	DeviceModel         string `json:"device_model,omitempty"`
+	ProductVersion      string `json:"product_version,omitempty"`
+	FirmwareUpgradeType int    `json:"firmware_upgrade_type,omitempty"`
+	Status              int    `json:"status,omitempty"`
+	Progress            int    `json:"progress,omitempty"`
+	Result              int    `json:"result,omitempty"`
+	ErrorCode           int    `json:"error_code,omitempty"`
+}
+
 // ==================== 九、设备管理（Device Management） ====================
 
 // TopoUpdateData 设备拓扑更新数据，用于设备上线/下线通知。
@@ -939,21 +935,17 @@ type HmsEventData struct {
 
 // HmsItem HMS 健康告警条目。
 type HmsItem struct {
-	// HmsID 告警 ID，全局唯一标识。必填。
-	HmsID string `json:"hms_id"`
-	// Level 告警级别。必填。
-	// 0: 通知, 1: 提示, 2: 警告, 3: 严重
-	Level int `json:"level"`
-	// Module 告警模块标识。必填。
-	// 0: 飞行器, 3: 机场
-	Module int `json:"module"`
-	// InTheSky 告警发生时飞行器是否在空中。必填。
-	// 0: 地面, 1: 空中
-	InTheSky int `json:"in_the_sky"`
-	// Code 告警码，格式为 "fpv_tip_xxxxxxxxx"。必填。
-	Code string `json:"code"`
-	// Imminent 是否为紧急告警。必填。
-	Imminent bool `json:"imminent"`
-	// Key 告警标识 Key。必填。
-	Key string `json:"key"`
+	Level      int         `json:"level"`
+	Module     int         `json:"module"`
+	InTheSky   int         `json:"in_the_sky"`
+	Code       string      `json:"code"`
+	DeviceType string      `json:"device_type"`
+	Imminent   int         `json:"imminent"`
+	Args       HmsItemArgs `json:"args,omitempty"`
+}
+
+// HmsItemArgs HMS 告警文案填充参数。
+type HmsItemArgs struct {
+	ComponentIndex int `json:"component_index,omitempty"`
+	SensorIndex    int `json:"sensor_index,omitempty"`
 }

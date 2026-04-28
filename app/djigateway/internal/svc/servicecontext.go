@@ -27,11 +27,14 @@ type ServiceContext struct {
 func NewServiceContext(c config.Config) *ServiceContext {
 	logx.Must(logx.SetUp(c.Log))
 	mqttCli := mqttx.MustNewClient(c.MqttConfig)
-	djiCli := djisdk.NewClientWithReplyOptions(mqttCli, c.PendingTTL, djisdk.ReplyOptions{
-		EnableEventReply:   c.UpstreamReply.EnableEventsReply,
-		EnableStatusReply:  c.UpstreamReply.EnableStatusReply,
-		EnableRequestReply: c.UpstreamReply.EnableRequestsReply,
-	})
+	djiCli := djisdk.NewClient(mqttCli,
+		djisdk.WithPendingTTL(c.PendingTTL),
+		djisdk.WithReplyOptions(djisdk.ReplyOptions{
+			EnableEventReply:   c.UpstreamReply.EnableEventsReply,
+			EnableStatusReply:  c.UpstreamReply.EnableStatusReply,
+			EnableRequestReply: c.UpstreamReply.EnableRequestsReply,
+		}),
+	)
 
 	onlineCache, err := collection.NewCache(dockOnlineTTL, collection.WithName("dock-online"))
 	logx.Must(err)

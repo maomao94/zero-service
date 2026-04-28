@@ -20,19 +20,6 @@ type MqttConfig struct {
 	AutoSubscribe bool `json:",default=true"`
 	// SubscribeTopics 初始化时需要订阅的主题列表
 	SubscribeTopics []string `json:",optional"`
-	// EventMapping 主题模板到事件的映射关系，用于 socket 推送
-	EventMapping []EventMapping `json:",optional"`
-	// DefaultEvent 默认事件名称，用于 socket 推送
-	DefaultEvent string `json:",default=mqtt"`
-}
-
-// EventMapping 主题模板到事件的映射
-// 用于将 MQTT 主题模板（如 "device/+/data"）映射到 socket 事件名称
-type EventMapping struct {
-	// TopicTemplate 主题模板，支持通配符 + 和 #
-	TopicTemplate string `json:"topicTemplate"`
-	// Event 对应的事件名称
-	Event string `json:"event"`
 }
 
 // Option 可选配置函数，用于自定义 Client 行为

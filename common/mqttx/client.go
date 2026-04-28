@@ -107,7 +107,7 @@ func adjustConfig(cfg *MqttConfig) {
 	if cfg.KeepAlive <= 0 {
 		cfg.KeepAlive = 60000
 	}
-	if cfg.Qos < 0 || cfg.Qos > 2 {
+	if cfg.Qos > 2 {
 		cfg.Qos = 1
 	}
 }
@@ -240,6 +240,7 @@ func (c *Client) isSubscribed(topic string) bool {
 func (c *Client) restoreSubscriptions() error {
 	topics := c.handlerMgr.getAllTopics()
 	topics = append(topics, c.cfg.SubscribeTopics...)
+	topics = uniqueTopics(topics)
 
 	var lastErr error
 	for _, topic := range topics {
@@ -249,6 +250,22 @@ func (c *Client) restoreSubscriptions() error {
 		}
 	}
 	return lastErr
+}
+
+func uniqueTopics(topics []string) []string {
+	if len(topics) < 2 {
+		return topics
+	}
+	seen := make(map[string]struct{}, len(topics))
+	result := make([]string, 0, len(topics))
+	for _, topic := range topics {
+		if _, ok := seen[topic]; ok {
+			continue
+		}
+		seen[topic] = struct{}{}
+		result = append(result, topic)
+	}
+	return result
 }
 
 // messageHandler 消息处理包装器
@@ -338,7 +355,9 @@ func (c *Client) Publish(ctx context.Context, topic string, payload []byte) erro
 func (c *Client) Close() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.client.Disconnect(250)
+	if c.client != nil {
+		c.client.Disconnect(250)
+	}
 	c.subscribed = make(map[string]struct{})
 	logx.Info("[mqtt] Connection closed")
 }

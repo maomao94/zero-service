@@ -18,6 +18,8 @@ func registerEventHandlers(c *djisdk.Client, progressCache *collection.Cache) {
 	c.OnReturnHomeInfo(HandleReturnHomeInfoEvent)
 	c.OnCustomDataFromPsdk(HandleCustomDataFromPsdkEvent)
 	c.OnHmsEventNotify(HandleHmsEventNotify)
+	c.OnRemoteLogFileUploadResult(HandleRemoteLogFileUploadResultEvent)
+	c.OnRemoteLogFileUploadProgress(HandleRemoteLogFileUploadProgressEvent)
 }
 
 func registerTelemetryHandlers(c *djisdk.Client, onlineCache *collection.Cache) {

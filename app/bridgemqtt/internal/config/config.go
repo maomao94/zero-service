@@ -21,4 +21,11 @@ type Config struct {
 	StreamEventConf zrpc.RpcClientConf
 	SocketPushConf  zrpc.RpcClientConf
 	LogConfig       mqttx.TopicLogConfig `json:",optional"`
+	EventMapping    []EventMapping       `json:",optional"`
+	DefaultEvent    string               `json:",default=mqtt"`
+}
+
+type EventMapping struct {
+	TopicTemplate string `json:"topicTemplate"`
+	Event         string `json:"event"`
 }

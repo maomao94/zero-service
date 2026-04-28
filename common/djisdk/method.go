@@ -61,15 +61,12 @@ const (
 	MethodReturnHomeInfo = "return_home_info"
 )
 
-// ==================== 二、PSDK 自定义数据透传（PSDK Custom Data Transmission） ====================
+// ==================== PSDK 功能与互联互通（PSDK / PSDK Transmit） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk.html
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk-transmit-custom-data.html
 // Topic: thing/product/{gateway_sn}/services | events
 
 const (
-	// MethodPsdkWrite PSDK 数据写入（PSDK Write）
-	// 云平台 → 设备（Services），向 PSDK 负载设备写入数据
-	MethodPsdkWrite = "psdk_write"
-
 	// MethodPsdkFloatUp PSDK UI 资源上传（PSDK UI Resource Upload）
 	// 云平台 → 设备（Services），上传 PSDK 浮窗 UI 资源文件
 	MethodPsdkFloatUp = "psdk_ui_resource_upload"
@@ -83,7 +80,7 @@ const (
 	MethodCustomDataTransmissionFromPsdk = "custom_data_transmission_from_psdk"
 )
 
-// ==================== 三、指令飞行控制（Live Flight Controls / DRC） ====================
+// ==================== 指令飞行（DRC） ====================
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html
 // services 通道：drc_mode_*、飞行控制权、FlyTo 等发布到 thing/product/{gateway_sn}/services 并等待 services_reply。
 // drc/down 通道：stick_control、heart_beat、drone_emergency_stop 等实时控制消息即发即忘。
@@ -112,7 +109,7 @@ const (
 	// MethodStickControl DRC 杆量控制，使用 drc/down 即发即忘下发，设备可经 drc/up 回执。
 	MethodStickControl = "stick_control"
 
-	// MethodDroneEmergencyStop 飞行器紧急停桨，可经 services 等待回执，也可经 drc/down 即发即忘地下发 DRC 通道急停。
+	// MethodDroneEmergencyStop 飞行器紧急停桨，通过 drc/down 即发即忘地下发 DRC 通道急停。
 	MethodDroneEmergencyStop = "drone_emergency_stop"
 
 	// --- Flyto 指令（Flyto Commands） ---
@@ -144,7 +141,7 @@ const (
 	MethodDrcOsdInfoPush = "osd_info_push"
 )
 
-// ==================== 四、远程调试 - 机巢控制（Remote Debug） ====================
+// ==================== 远程调试（Cmd） ====================
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/cmd.html
 // Topic: thing/product/{gateway_sn}/services
 // 方向: 云平台 → 设备（Services），机场远程调试控制指令
@@ -232,9 +229,6 @@ const (
 	// MethodCameraModeSwitch 相机模式切换（Camera Mode Switch）
 	// 云平台 → 设备，切换相机工作模式（拍照/录像等）
 	MethodCameraModeSwitch = "camera_mode_switch"
-
-	// MethodCameraModeSwitchCamera 兼容旧常量名，新代码使用 MethodCameraModeSwitch。
-	MethodCameraModeSwitchCamera = MethodCameraModeSwitch
 
 	// MethodCameraPhotoTake 拍照（Camera Photo Take）
 	// 云平台 → 设备，控制相机执行拍照

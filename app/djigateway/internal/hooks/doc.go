@@ -3,7 +3,7 @@
 // 划分与 DJI [Topic 总览](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html) 一致：
 //
 //   - 事件类（thing/.../events，method 分流，部分需 events_reply 由 djisdk 回包）：
-//     见 event_flighttask_up.go、event_notify_up.go
+//     见 event_notify_up.go，覆盖航线任务进度、任务就绪、返航信息、PSDK 自定义数据、HMS、远程日志上传结果与进度。
 //   - 遥测/物模型状态类（thing/.../osd、thing/.../state，高频/元信息，无云侧 *reply）：
 //     见 telemetry_up.go
 //   - 系统状态类（sys/.../status，在离线/拓扑，需 status_reply）：

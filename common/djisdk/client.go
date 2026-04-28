@@ -48,6 +48,36 @@ func DefaultReplyOptions() ReplyOptions {
 	}
 }
 
+const defaultPendingTTL = 30 * time.Second
+
+type ClientOption func(*clientOptions)
+
+type clientOptions struct {
+	pendingTTL   time.Duration
+	replyOptions ReplyOptions
+}
+
+func WithPendingTTL(ttl time.Duration) ClientOption {
+	return func(options *clientOptions) {
+		if ttl > 0 {
+			options.pendingTTL = ttl
+		}
+	}
+}
+
+func WithReplyOptions(replyOptions ReplyOptions) ClientOption {
+	return func(options *clientOptions) {
+		options.replyOptions = replyOptions
+	}
+}
+
+func defaultClientOptions() clientOptions {
+	return clientOptions{
+		pendingTTL:   defaultPendingTTL,
+		replyOptions: DefaultReplyOptions(),
+	}
+}
+
 // Client 封装**云平台侧**（上云接入端）的 MQTT 与协议能力：对设备 **Publish 下发**（如 services、property/set、drc/down），
 // **通配订阅** 收设备上行（如 *reply、events、osd、requests、set_reply、drc/up 等）。见 [Topic 总览](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html)。
 // 含：services、events、property、osd/state、sys、requests、DRC 等，详情见包级 doc.go 与各 Topic 函数注释。
@@ -65,31 +95,48 @@ type Client struct {
 	onHmsEventNotify     func(ctx context.Context, gatewaySn string, data *HmsEventData)
 	onRemoteLogResult    func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadResultEvent)
 	onRemoteLogProgress  func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadProgressEvent)
+	onOtaProgress        func(ctx context.Context, gatewaySn string, data *OtaProgressEvent)
+	onTopoUpdate         func(ctx context.Context, gatewaySn string, data *TopoUpdateData)
 	onOsd                func(ctx context.Context, deviceSn string, data *OsdMessage)
-	onState              func(ctx context.Context, deviceSn string, data *OsdMessage)
+	onState              func(ctx context.Context, deviceSn string, data *StateMessage)
 	onStatus             StatusHandler
 	onRequest            RequestHandler
 	onDrcUp              DrcUpHandler
 }
 
-// NewClient 创建**云平台侧**上云 Client（mqttx 应对接具备云侧权限的 Broker，由配置保证）。
-//   - mqttClient: 已连接的 MQTT 客户端
-//   - pendingTTL: services_reply / property_set_reply 等按 tid 等待的过期时间
-func NewClient(mqttClient *mqttx.Client, pendingTTL time.Duration) *Client {
-	return NewClientWithReplyOptions(mqttClient, pendingTTL, DefaultReplyOptions())
+func NewClient(mqttClient *mqttx.Client, opts ...ClientOption) *Client {
+	return newClient(mqttClient, opts...)
 }
 
-func NewClientWithReplyOptions(mqttClient *mqttx.Client, pendingTTL time.Duration, replyOptions ReplyOptions) *Client {
-	return newClientWithReplyOptions(mqttClient, pendingTTL, replyOptions)
-}
+func newClient(mqttClient mqttClient, opts ...ClientOption) *Client {
+	options := defaultClientOptions()
+	for _, opt := range opts {
+		if opt != nil {
+			opt(&options)
+		}
+	}
 
-func newClientWithReplyOptions(mqttClient mqttClient, pendingTTL time.Duration, replyOptions ReplyOptions) *Client {
 	return &Client{
 		mqttClient:           mqttClient,
-		pending:              antsx.NewPendingRegistry[*ServiceReply](antsx.WithDefaultTTL(pendingTTL)),
-		replyOptions:         replyOptions,
+		pending:              antsx.NewPendingRegistry[*ServiceReply](antsx.WithDefaultTTL(options.pendingTTL)),
+		replyOptions:         options.replyOptions,
 		eventMethodFallbacks: make(map[string]EventMethodFallback),
 	}
+}
+
+func logFields(fields ...any) string {
+	if len(fields) == 0 {
+		return ""
+	}
+	parts := make([]string, 0, len(fields)/2)
+	for i := 0; i+1 < len(fields); i += 2 {
+		key, ok := fields[i].(string)
+		if !ok || key == "" {
+			continue
+		}
+		parts = append(parts, fmt.Sprintf("%s=%v", key, fields[i+1]))
+	}
+	return strings.Join(parts, " ")
 }
 
 // ==================== MQTT 回调处理 ====================
@@ -102,7 +149,7 @@ func (c *Client) HandleServicesReply(ctx context.Context, payload []byte, topic 
 		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal services_reply failed: %v, topic=%s", err, topic)
 		return err
 	}
-	logx.WithContext(ctx).Infof("[dji-sdk] received reply: tid=%s method=%s result=%d", reply.Tid, reply.Method, reply.Data.Result)
+	logx.WithContext(ctx).Infof("[dji-sdk] services_reply %s", logFields("topic", topic, "gateway_sn", extractDeviceSnFromTopic(topic), "method", reply.Method, "tid", reply.Tid, "result", reply.Data.Result))
 	c.pending.Resolve(reply.Tid, &reply)
 	return nil
 }
@@ -115,7 +162,7 @@ func (c *Client) HandlePropertySetReply(ctx context.Context, payload []byte, top
 		return err
 	}
 	gatewaySn := extractDeviceSnFromTopic(topic)
-	logx.WithContext(ctx).Infof("[dji-sdk] property set reply: sn=%s tid=%s result=%d", gatewaySn, reply.Tid, reply.Data.Result)
+	logx.WithContext(ctx).Infof("[dji-sdk] property_set_reply %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", reply.Method, "tid", reply.Tid, "result", reply.Data.Result))
 	c.pending.Resolve(reply.Tid, &reply)
 	return nil
 }
@@ -131,7 +178,7 @@ func (c *Client) HandleEvents(ctx context.Context, payload []byte, topic string,
 		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal events failed: %v, topic=%s", err, topic)
 		return err
 	}
-	logx.WithContext(ctx).Infof("[dji-sdk] received event: tid=%s method=%s need_reply=%d", event.Tid, event.Method, event.NeedReply)
+	logx.WithContext(ctx).Infof("[dji-sdk] events %s", logFields("topic", topic, "gateway_sn", event.Gateway, "method", event.Method, "tid", event.Tid, "need_reply", event.NeedReply))
 
 	handled, replyResult := c.tryDispatchEventNotify(ctx, event.Gateway, event.Method, payload)
 	if !handled {
@@ -246,6 +293,30 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 			c.onRemoteLogProgress(ctx, gatewaySn, &msg.Data)
 			return true, PlatformResultOK
 		}
+	case MethodOtaProgress:
+		if c.onOtaProgress != nil {
+			var msg struct {
+				Data OtaProgressEvent `json:"data"`
+			}
+			if err := json.Unmarshal(raw, &msg); err != nil {
+				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal OtaProgressEvent failed: %v", err)
+				return true, PlatformResultHandlerError
+			}
+			c.onOtaProgress(ctx, gatewaySn, &msg.Data)
+			return true, PlatformResultOK
+		}
+	case MethodUpdateTopo:
+		if c.onTopoUpdate != nil {
+			var msg struct {
+				Data TopoUpdateData `json:"data"`
+			}
+			if err := json.Unmarshal(raw, &msg); err != nil {
+				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal TopoUpdateData failed: %v", err)
+				return true, PlatformResultHandlerError
+			}
+			c.onTopoUpdate(ctx, gatewaySn, &msg.Data)
+			return true, PlatformResultOK
+		}
 	}
 	return false, PlatformResultOK
 }
@@ -322,6 +393,18 @@ func (c *Client) OnRemoteLogFileUploadProgress(handler func(ctx context.Context,
 	c.onRemoteLogProgress = handler
 }
 
+func (c *Client) OnOtaProgress(handler func(ctx context.Context, gatewaySn string, data *OtaProgressEvent)) {
+	c.onOtaProgress = handler
+}
+
+func (c *Client) OnTopoUpdate(handler func(ctx context.Context, gatewaySn string, data *TopoUpdateData)) {
+	c.onTopoUpdate = handler
+}
+
+func (c *Client) OnUpdateTopo(handler func(ctx context.Context, gatewaySn string, data *TopoUpdateData)) {
+	c.OnTopoUpdate(handler)
+}
+
 // OnOsd 注册设备 OSD 遥测数据上报钩子。
 // Topic: thing/product/{device_sn}/osd
 // 方向 up：设备→云平台。
@@ -336,7 +419,7 @@ func (c *Client) OnOsd(handler func(ctx context.Context, deviceSn string, data *
 // 方向 up：设备→云平台。
 // 设备上报自身状态信息（固件版本、在线状态、设备能力集等），钩子只负责通知。
 //   - handler: 回调函数，携带设备 SN 和已解析的 OsdMessage 结构体
-func (c *Client) OnState(handler func(ctx context.Context, deviceSn string, data *OsdMessage)) {
+func (c *Client) OnState(handler func(ctx context.Context, deviceSn string, data *StateMessage)) {
 	c.onState = handler
 }
 
@@ -387,7 +470,7 @@ func (c *Client) SendCommand(ctx context.Context, gatewaySn, method string, data
 	}
 
 	topic := ServicesTopic(gatewaySn)
-	logx.WithContext(ctx).Infof("[dji-sdk] send command: topic=%s method=%s tid=%s", topic, method, tid)
+	logx.WithContext(ctx).Infof("[dji-sdk] send_command %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", method, "tid", tid))
 
 	reply, err := antsx.RequestReply(ctx, c.pending, tid, func() error {
 		return c.mqttClient.Publish(ctx, topic, payload)
@@ -422,20 +505,12 @@ func (c *Client) SendCommandFireAndForget(ctx context.Context, gatewaySn, method
 	}
 
 	topic := ServicesTopic(gatewaySn)
-	logx.WithContext(ctx).Infof("[dji-sdk] send command (fire&forget): topic=%s method=%s tid=%s", topic, method, tid)
+	logx.WithContext(ctx).Infof("[dji-sdk] send_command_fire_and_forget %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", method, "tid", tid))
 
 	if err := c.mqttClient.Publish(ctx, topic, payload); err != nil {
 		return tid, fmt.Errorf("[dji-sdk] publish failed: method=%s tid=%s err=%w", method, tid, err)
 	}
 	return tid, nil
-}
-
-func (c *Client) SendRawCommand(ctx context.Context, gatewaySn, method string, data any) (string, error) {
-	return c.SendCommand(ctx, gatewaySn, method, data)
-}
-
-func (c *Client) SendRawCommandFireAndForget(ctx context.Context, gatewaySn, method string, data any) (string, error) {
-	return c.SendCommandFireAndForget(ctx, gatewaySn, method, data)
 }
 
 // ==================== 一、航线管理（Wayline Management） ====================
@@ -525,37 +600,11 @@ func (c *Client) ReturnSpecificHome(ctx context.Context, gatewaySn string, data 
 	return c.SendCommand(ctx, gatewaySn, MethodReturnSpecificHome, data)
 }
 
-// ==================== 二、PSDK 自定义数据透传（PSDK Custom Data Transmission） ====================
+// ==================== PSDK 功能与互联互通（PSDK / PSDK Transmit） ====================
 
-// SendPsdkCommand PSDK 数据写入（psdk_write），使用默认负载索引 "0"。
-// 方向 down：云平台→设备（Services），对应 method: psdk_write。
-//   - ctx: 请求上下文
-//   - gatewaySn: 网关设备序列号
-//   - payload: 待发送数据内容（Base64 编码）
-//   - 返回值 tid: 本次请求的事务 ID
-//   - 返回值 err: 命令发送或设备返回错误时的错误信息
-func (c *Client) SendPsdkCommand(ctx context.Context, gatewaySn, payload string) (string, error) {
-	data := &PsdkWriteData{
-		PayloadIndex: "0",
-		Data:         payload,
-	}
-	return c.SendCommand(ctx, gatewaySn, MethodPsdkWrite, data)
-}
-
-// SendPsdkCommandWithIndex PSDK 数据写入（psdk_write），指定负载索引。
-// 方向 down：云平台→设备（Services），对应 method: psdk_write。
-//   - ctx: 请求上下文
-//   - gatewaySn: 网关设备序列号
-//   - payloadIndex: 负载索引，格式 "机型-挂载位置"，如 "53-0"
-//   - payload: 待发送数据内容（Base64 编码）
-//   - 返回值 tid: 本次请求的事务 ID
-//   - 返回值 err: 命令发送或设备返回错误时的错误信息
-func (c *Client) SendPsdkCommandWithIndex(ctx context.Context, gatewaySn, payloadIndex, payload string) (string, error) {
-	data := &PsdkWriteData{
-		PayloadIndex: payloadIndex,
-		Data:         payload,
-	}
-	return c.SendCommand(ctx, gatewaySn, MethodPsdkWrite, data)
+// PsdkUIResourceUpload 上传 PSDK UI 资源。
+func (c *Client) PsdkUIResourceUpload(ctx context.Context, gatewaySn string, data *PsdkUIResourceUploadData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodPsdkFloatUp, data)
 }
 
 // SendCustomDataToPsdk 自定义数据透传至 PSDK 负载设备。
@@ -573,7 +622,7 @@ func (c *Client) SendCustomDataToPsdk(ctx context.Context, gatewaySn, value stri
 	return c.SendCommand(ctx, gatewaySn, MethodCustomDataTransmissionToPsdk, data)
 }
 
-// ==================== 四、远程调试 - 机巢控制（Remote Debug） ====================
+// ==================== 远程调试（Cmd） ====================
 
 // DebugModeOpen 开启机巢调试模式。
 //   - ctx: 请求上下文
@@ -759,7 +808,7 @@ func (c *Client) SetProperty(ctx context.Context, gatewaySn string, properties P
 	}
 
 	topic := PropertySetTopic(gatewaySn)
-	logx.WithContext(ctx).Infof("[dji-sdk] set property: topic=%s tid=%s", topic, tid)
+	logx.WithContext(ctx).Infof("[dji-sdk] property_set %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", MethodPropertySet, "tid", tid))
 
 	reply, err := antsx.RequestReply(ctx, c.pending, tid, func() error {
 		return c.mqttClient.Publish(ctx, topic, payload)
@@ -775,7 +824,7 @@ func (c *Client) SetProperty(ctx context.Context, gatewaySn string, properties P
 	return tid, nil
 }
 
-// ==================== 三、指令飞行控制（Live Flight Controls / DRC） ====================
+// ==================== 指令飞行（DRC） ====================
 // 方向以 [Topic 总览](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html) 与 [DRC 文档](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html) 为准；**drc/** 的 down、up 与 **services** + **services_reply** 中的 drc_mode_* 等 method 路径不同，见 DrcModeEnter、SendDrcStickControl 与 topic.go 中 Drc*Topic。
 
 // FlightAuthorityGrab 获取飞行控制权。
@@ -864,7 +913,9 @@ func (c *Client) publishDrcDown(ctx context.Context, gatewaySn string, msg *DrcD
 	if err != nil {
 		return fmt.Errorf("[dji-sdk] marshal drc/down failed: %w", err)
 	}
-	return c.mqttClient.Publish(ctx, DrcDownTopic(gatewaySn), payload)
+	topic := DrcDownTopic(gatewaySn)
+	logx.WithContext(ctx).Infof("[dji-sdk] drc_down %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", msg.Method, "tid", msg.Tid, "seq", msg.Seq))
+	return c.mqttClient.Publish(ctx, topic, payload)
 }
 
 // SendDrcHeartBeat 经 drc/down 即发即忘地下发 heart_beat 心跳，seq 与 data 同级，data.timestamp 表示心跳时间戳。
@@ -874,14 +925,9 @@ func (c *Client) SendDrcHeartBeat(ctx context.Context, gatewaySn string, seq int
 	return c.publishDrcDown(ctx, gatewaySn, msg)
 }
 
-// SendDrcDroneEmergencyStop 经 drc/down 即发即忘地下发 drone_emergency_stop，区别于 DroneEmergencyStop 使用 services 并等待 services_reply。
-func (c *Client) SendDrcDroneEmergencyStop(ctx context.Context, gatewaySn string) error {
-	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDroneEmergencyStop, struct{}{}, nil)
-	return c.publishDrcDown(ctx, gatewaySn, msg)
-}
-
-func (c *Client) SendRawDrcDown(ctx context.Context, gatewaySn, method string, data any, seq *int) error {
-	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), method, data, seq)
+// DroneEmergencyStop 经 drc/down 即发即忘地下发 drone_emergency_stop。
+func (c *Client) DroneEmergencyStop(ctx context.Context, gatewaySn string) error {
+	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDroneEmergencyStop, DroneEmergencyStopData{}, nil)
 	return c.publishDrcDown(ctx, gatewaySn, msg)
 }
 
@@ -1221,7 +1267,7 @@ func (c *Client) HandleState(ctx context.Context, payload []byte, topic string, 
 	if c.onState == nil {
 		return nil
 	}
-	var msg OsdMessage
+	var msg StateMessage
 	if err := json.Unmarshal(payload, &msg); err != nil {
 		logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal state failed: %v, topic=%s", err, topic)
 		return err
@@ -1239,7 +1285,7 @@ func (c *Client) HandleStatus(ctx context.Context, payload []byte, topic string,
 		return err
 	}
 	gatewaySn := extractDeviceSnFromTopic(topic)
-	logx.WithContext(ctx).Infof("[dji-sdk] received status: sn=%s method=%s", gatewaySn, msg.Method)
+	logx.WithContext(ctx).Infof("[dji-sdk] status %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", msg.Method, "tid", msg.Tid))
 
 	result := PlatformResultOK
 	if c.onStatus != nil {
@@ -1277,7 +1323,7 @@ func (c *Client) HandleRequests(ctx context.Context, payload []byte, topic strin
 		return err
 	}
 	gatewaySn := extractDeviceSnFromTopic(topic)
-	logx.WithContext(ctx).Infof("[dji-sdk] received request: sn=%s method=%s tid=%s", gatewaySn, msg.Method, msg.Tid)
+	logx.WithContext(ctx).Infof("[dji-sdk] requests %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", msg.Method, "tid", msg.Tid))
 
 	if c.onRequest == nil {
 		if !c.replyOptions.EnableRequestReply {
@@ -1332,9 +1378,9 @@ func (c *Client) HandleDrcUp(ctx context.Context, payload []byte, topic string, 
 	}
 	sum := DrcUpPayloadSummary(msg.Method, parsed)
 	if sum == "" {
-		logx.WithContext(ctx).Infof("[dji-sdk] drc/up: sn=%s method=%s ts=%d", gatewaySn, msg.Method, msg.Timestamp)
+		logx.WithContext(ctx).Infof("[dji-sdk] drc_up %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", msg.Method, "tid", msg.Tid, "ts", msg.Timestamp))
 	} else {
-		logx.WithContext(ctx).Infof("[dji-sdk] drc/up: sn=%s method=%s ts=%d %s", gatewaySn, msg.Method, msg.Timestamp, sum)
+		logx.WithContext(ctx).Infof("[dji-sdk] drc_up %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", msg.Method, "tid", msg.Tid, "ts", msg.Timestamp, "summary", sum))
 	}
 	if c.onDrcUp == nil {
 		return nil
