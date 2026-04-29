@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"zero-service/app/ieccaller/cron"
 	"zero-service/app/ieccaller/ieccaller"
 	"zero-service/app/ieccaller/internal/config"
@@ -116,7 +115,7 @@ func main() {
 		serviceGroup.Add(kq.MustNewQueue(kqConf, kafka.NewBroadcast(ctx)))
 	}
 
-	fmt.Printf("DeployMode: %s\n", c.DeployMode)
-	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
+	logx.Infof("Deploy mode: %s\n", c.DeployMode)
+	logx.Infof("Starting rpc server at %s...\n", c.ListenOn)
 	serviceGroup.Start()
 }

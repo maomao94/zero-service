@@ -1,6 +1,87 @@
 package djisdk
 
-// ==================== 一、航线管理（Wayline Management） ====================
+// ==================== 设备属性（Properties） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/properties.html
+// Topic: thing/product/{gateway_sn}/property/set | property/set_reply
+
+const (
+	// MethodPropertySet 设置设备属性。
+	MethodPropertySet = "property_set"
+)
+
+// ==================== 设备管理（Device） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/device.html
+// Topic: sys/product/{gateway_sn}/status
+// Direction: up，设备拓扑更新由 status hooks 处理。
+
+const (
+	// MethodUpdateTopo 设备拓扑更新上行。
+	MethodUpdateTopo = "update_topo"
+)
+
+// ==================== 组织管理（Organization） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/organization.html
+// Topic: thing/product/{gateway_sn}/requests
+// Direction: up，组织管理请求由 request hooks 处理。
+
+const (
+	// MethodAirportOrganizationBind 机场组织绑定请求上行。
+	MethodAirportOrganizationBind = "airport_organization_bind"
+
+	// MethodAirportOrganizationGet 获取机场绑定组织请求上行。
+	MethodAirportOrganizationGet = "airport_organization_get"
+
+	// MethodAirportBindStatus 机场绑定状态请求上行。
+	MethodAirportBindStatus = "airport_bind_status"
+)
+
+// ==================== 直播功能（Live） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/live.html
+// Topic: thing/product/{gateway_sn}/services
+// 方向: 云平台 → 设备（Services），视频直播流控制
+
+const (
+	// MethodLiveStartPush 开始直播推流（Live Start Push）
+	// 云平台 → 设备（Services），控制设备开始向指定地址推送直播流
+	MethodLiveStartPush = "live_start_push"
+
+	// MethodLiveStopPush 停止直播推流（Live Stop Push）
+	// 云平台 → 设备（Services），控制设备停止直播推流
+	MethodLiveStopPush = "live_stop_push"
+
+	// MethodLiveSetQuality 设置直播质量（Live Set Quality）
+	// 云平台 → 设备（Services），设置直播推流的画质参数
+	MethodLiveSetQuality = "live_set_quality"
+
+	// MethodLiveLensChange 切换直播镜头（Live Lens Change）
+	// 云平台 → 设备（Services），切换直播推流使用的相机镜头
+	MethodLiveLensChange = "live_lens_change"
+
+	// MethodLiveCameraChange 切换直播相机（Live Camera Change）
+	// 云平台 → 设备（Services），切换直播推流使用的相机负载
+	MethodLiveCameraChange = "live_camera_change"
+)
+
+// ==================== 媒体功能（Media） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/media.html
+// Topic: thing/product/{gateway_sn}/services
+// 方向: 云平台 → 设备（Services），等待 services_reply。
+
+const (
+	// MethodMediaUploadFlighttaskMediaPrioritize 优先上传指定航线任务媒体（Upload Flighttask Media Prioritize）。
+	// 云平台 → 设备（Services），按 flight_id 优先上传航线任务媒体。
+	MethodMediaUploadFlighttaskMediaPrioritize = "upload_flighttask_media_prioritize"
+
+	// MethodMediaFastUpload 快速上传指定媒体文件（Media Fast Upload）。
+	// 云平台 → 设备（Services），按 file_id 快速上传单个媒体文件。
+	MethodMediaFastUpload = "media_fast_upload"
+
+	// MethodMediaHighestPriorityUploadFlighttask 最高优先级上传航线任务媒体（Highest Priority Upload Flighttask Media）。
+	// 云平台 → 设备（Services），按 flight_id 最高优先级上传航线任务媒体。
+	MethodMediaHighestPriorityUploadFlighttask = "highest_priority_upload_flighttask_media"
+)
+
+// ==================== 航线功能（Wayline） ====================
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/wayline.html
 // Topic: thing/product/{gateway_sn}/services | events
 // 方向: 云平台 <-> 设备
@@ -61,84 +142,15 @@ const (
 	MethodReturnHomeInfo = "return_home_info"
 )
 
-// ==================== PSDK 功能与互联互通（PSDK / PSDK Transmit） ====================
-// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk.html
-// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk-transmit-custom-data.html
-// Topic: thing/product/{gateway_sn}/services | events
+// ==================== HMS 管理（HMS） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/hms.html
+// Topic: thing/product/{gateway_sn}/events
+// 方向: 设备 → 云平台（Events），健康管理系统
 
 const (
-	// MethodPsdkFloatUp PSDK UI 资源上传（PSDK UI Resource Upload）
-	// 云平台 → 设备（Services），上传 PSDK 浮窗 UI 资源文件
-	MethodPsdkFloatUp = "psdk_ui_resource_upload"
-
-	// MethodCustomDataTransmissionToPsdk 自定义数据透传至 PSDK（Custom Data Transmission To PSDK）
-	// 云平台 → 设备（Services），将自定义消息透传推送到 PSDK 负载设备
-	MethodCustomDataTransmissionToPsdk = "custom_data_transmission_to_psdk"
-
-	// MethodCustomDataTransmissionFromPsdk PSDK 自定义数据上报（Custom Data Transmission From PSDK）
-	// 设备 → 云平台（Events），PSDK 负载设备向云平台上报自定义消息
-	MethodCustomDataTransmissionFromPsdk = "custom_data_transmission_from_psdk"
-)
-
-// ==================== 指令飞行（DRC） ====================
-// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html
-// services 通道：drc_mode_*、飞行控制权、FlyTo 等发布到 thing/product/{gateway_sn}/services 并等待 services_reply。
-// drc/down 通道：stick_control、heart_beat、drone_emergency_stop 等实时控制消息即发即忘。
-// drc/up 通道：设备回传 stick_control 回执、heart_beat、hsi_info_push、delay_info_push、osd_info_push 等状态。
-// 方向: services 与 drc/down 为云平台 → 设备；drc/up 为设备 → 云平台。
-
-const (
-	// --- 飞行控制指令（DRC Commands） ---
-
-	// MethodFlightAuthorityGrab 飞行控制权抢夺（Flight Authority Grab）
-	// 云平台 → 设备，抢夺飞行器飞行控制权
-	MethodFlightAuthorityGrab = "flight_authority_grab"
-
-	// MethodPayloadAuthorityGrab 负载控制权抢夺（Payload Authority Grab）
-	// 云平台 → 设备，抢夺负载设备控制权
-	MethodPayloadAuthorityGrab = "payload_authority_grab"
-
-	// MethodDrcModeEnter 进入 DRC 模式（DRC Mode Enter）
-	// 云平台 → 设备，进入指令飞行（DRC）控制模式
-	MethodDrcModeEnter = "drc_mode_enter"
-
-	// MethodDrcModeExit 退出 DRC 模式（DRC Mode Exit）
-	// 云平台 → 设备，退出指令飞行（DRC）控制模式
-	MethodDrcModeExit = "drc_mode_exit"
-
-	// MethodStickControl DRC 杆量控制，使用 drc/down 即发即忘下发，设备可经 drc/up 回执。
-	MethodStickControl = "stick_control"
-
-	// MethodDroneEmergencyStop 飞行器紧急停桨，通过 drc/down 即发即忘地下发 DRC 通道急停。
-	MethodDroneEmergencyStop = "drone_emergency_stop"
-
-	// --- Flyto 指令（Flyto Commands） ---
-
-	// MethodFlyToPoint 飞向指定点（Fly To Point）
-	// 云平台 → 设备，控制飞行器飞往指定坐标点
-	MethodFlyToPoint = "fly_to_point"
-
-	// MethodFlyToPointStop 停止飞向指定点（Fly To Point Stop）
-	// 云平台 → 设备，停止当前飞向指定点的飞行任务
-	MethodFlyToPointStop = "fly_to_point_stop"
-
-	// --- 一键起飞指令（One-key Taking Off Commands） ---
-
-	// MethodTakeoffToPoint 一键起飞至指定点（Takeoff To Point）
-	// 云平台 → 设备，控制飞行器起飞并飞往指定坐标点
-	MethodTakeoffToPoint = "takeoff_to_point"
-)
-
-// --- DRC 通道 method（drc/down 与 drc/up，与 services 通道独立）---
-const (
-	// MethodDrcHeartBeat DRC 心跳，drc/down 下发，drc/up 回传。
-	MethodDrcHeartBeat = "heart_beat"
-	// MethodDrcHsiInfoPush 设备经 drc/up 上报避障/水平态势。
-	MethodDrcHsiInfoPush = "hsi_info_push"
-	// MethodDrcDelayInfoPush 设备经 drc/up 上报图传链路时延。
-	MethodDrcDelayInfoPush = "delay_info_push"
-	// MethodDrcOsdInfoPush 设备经 drc/up 上报高频 OSD。
-	MethodDrcOsdInfoPush = "osd_info_push"
+	// MethodHmsEventNotify HMS 健康事件通知（HMS Event Notify）
+	// 设备 → 云平台，设备上报健康管理系统告警和状态事件
+	MethodHmsEventNotify = "hms"
 )
 
 // ==================== 远程调试（Cmd） ====================
@@ -220,7 +232,124 @@ const (
 	MethodAirConditionerModeSwitch = "air_conditioner_mode_switch"
 )
 
-// ==================== 五、相机/云台控制（Camera & Gimbal） ====================
+// ==================== 固件升级（Firmware） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/firmware.html
+// Topic: thing/product/{gateway_sn}/services | events
+// OTA 固件升级管理
+
+const (
+	// MethodOtaCreate 创建固件升级任务（OTA Create）
+	// 云平台 → 设备（Services），下发固件升级任务
+	MethodOtaCreate = "ota_create"
+
+	// MethodOtaProgress 固件升级进度上报（OTA Progress）
+	// 设备 → 云平台（Events），设备周期性上报固件升级进度
+	MethodOtaProgress = "ota_progress"
+)
+
+// ==================== 远程日志（Log） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/log.html
+// Topic: thing/product/{gateway_sn}/services | events
+// 方向: fileupload_* 控制为云平台 → 设备（Services），fileupload_progress/result 为设备 → 云平台（Events）。
+
+const (
+	// MethodRemoteLogFileList 查询可上传的远程日志文件列表（Fileupload List）。
+	// 云平台 → 设备（Services），按目标设备和模块查询日志文件。
+	MethodRemoteLogFileList = "fileupload_list"
+
+	// MethodRemoteLogFileUploadStart 开始上传远程日志文件（Fileupload Start）。
+	// 云平台 → 设备（Services），下发待上传日志文件列表。
+	MethodRemoteLogFileUploadStart = "fileupload_start"
+
+	// MethodRemoteLogFileUploadUpdate 更新远程日志文件上传任务（Fileupload Update）。
+	// 云平台 → 设备（Services），更新正在执行的日志上传文件列表。
+	MethodRemoteLogFileUploadUpdate = "fileupload_update"
+
+	// MethodRemoteLogFileUploadCancel 取消远程日志文件上传任务（Fileupload Cancel）。
+	// 云平台 → 设备（Services），取消指定远程日志上传任务。
+	MethodRemoteLogFileUploadCancel = "fileupload_cancel"
+
+	// MethodRemoteLogFileUploadResult 远程日志上传结果上报（Fileupload Result）。
+	// 设备 → 云平台（Events），设备上报远程日志文件上传最终结果。
+	MethodRemoteLogFileUploadResult = "fileupload_result"
+
+	// MethodRemoteLogFileUploadProgress 远程日志上传进度上报（Fileupload Progress）。
+	// 设备 → 云平台（Events），设备上报远程日志文件上传进度。
+	MethodRemoteLogFileUploadProgress = "fileupload_progress"
+)
+
+// ==================== 配置更新（Config） ====================
+// Topic: thing/product/{gateway_sn}/services
+// 方向: 云平台 → 设备（Services），等待 services_reply。
+
+const (
+	// MethodConfigUpdate 下发设备配置更新（Config Update）。
+	// 云平台 → 设备（Services），向设备下发配置更新内容。
+	MethodConfigUpdate = "config_update"
+)
+
+// ==================== 指令飞行（DRC） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html
+// services 通道：drc_mode_*、飞行控制权、FlyTo 等发布到 thing/product/{gateway_sn}/services 并等待 services_reply。
+// drc/down 通道：stick_control、heart_beat、drone_emergency_stop 等实时控制消息即发即忘。
+// drc/up 通道：设备回传 stick_control 回执、heart_beat、hsi_info_push、delay_info_push、osd_info_push 等状态。
+// 方向: services 与 drc/down 为云平台 → 设备；drc/up 为设备 → 云平台。
+
+const (
+	// --- 飞行控制指令（DRC Commands） ---
+
+	// MethodFlightAuthorityGrab 飞行控制权抢夺（Flight Authority Grab）
+	// 云平台 → 设备，抢夺飞行器飞行控制权
+	MethodFlightAuthorityGrab = "flight_authority_grab"
+
+	// MethodPayloadAuthorityGrab 负载控制权抢夺（Payload Authority Grab）
+	// 云平台 → 设备，抢夺负载设备控制权
+	MethodPayloadAuthorityGrab = "payload_authority_grab"
+
+	// MethodDrcModeEnter 进入 DRC 模式（DRC Mode Enter）
+	// 云平台 → 设备，进入指令飞行（DRC）控制模式
+	MethodDrcModeEnter = "drc_mode_enter"
+
+	// MethodDrcModeExit 退出 DRC 模式（DRC Mode Exit）
+	// 云平台 → 设备，退出指令飞行（DRC）控制模式
+	MethodDrcModeExit = "drc_mode_exit"
+
+	// MethodStickControl DRC 杆量控制，使用 drc/down 即发即忘下发，设备可经 drc/up 回执。
+	MethodStickControl = "stick_control"
+
+	// MethodDroneEmergencyStop 飞行器紧急停桨，通过 drc/down 即发即忘地下发 DRC 通道急停。
+	MethodDroneEmergencyStop = "drone_emergency_stop"
+
+	// --- Flyto 指令（Flyto Commands） ---
+
+	// MethodFlyToPoint 飞向指定点（Fly To Point）
+	// 云平台 → 设备，控制飞行器飞往指定坐标点
+	MethodFlyToPoint = "fly_to_point"
+
+	// MethodFlyToPointStop 停止飞向指定点（Fly To Point Stop）
+	// 云平台 → 设备，停止当前飞向指定点的飞行任务
+	MethodFlyToPointStop = "fly_to_point_stop"
+
+	// --- 一键起飞指令（One-key Taking Off Commands） ---
+
+	// MethodTakeoffToPoint 一键起飞至指定点（Takeoff To Point）
+	// 云平台 → 设备，控制飞行器起飞并飞往指定坐标点
+	MethodTakeoffToPoint = "takeoff_to_point"
+)
+
+// --- DRC 通道 method（drc/down 与 drc/up，与 services 通道独立）---
+const (
+	// MethodDrcHeartBeat DRC 心跳，drc/down 下发，drc/up 回传。
+	MethodDrcHeartBeat = "heart_beat"
+	// MethodDrcHsiInfoPush 设备经 drc/up 上报避障/水平态势。
+	MethodDrcHsiInfoPush = "hsi_info_push"
+	// MethodDrcDelayInfoPush 设备经 drc/up 上报图传链路时延。
+	MethodDrcDelayInfoPush = "delay_info_push"
+	// MethodDrcOsdInfoPush 设备经 drc/up 上报高频 OSD。
+	MethodDrcOsdInfoPush = "osd_info_push"
+)
+
+// ==================== 指令飞行（DRC）相机/云台控制 ====================
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html
 // Topic: thing/product/{gateway_sn}/services
 // 方向: 云平台 → 设备（Services），相机和云台远程控制指令
@@ -246,10 +375,6 @@ const (
 	// 云平台 → 设备，控制相机停止录像
 	MethodCameraRecordingStop = "camera_recording_stop"
 
-	// MethodCameraAim 相机框选/指点目标（Camera Aim）
-	// 云平台 → 设备，控制相机视角指向目标
-	MethodCameraAim = "camera_aim"
-
 	// MethodCameraFocalLengthSet 相机焦距设置（Camera Focal Length Set）
 	// 云平台 → 设备，设置相机变焦焦距
 	MethodCameraFocalLengthSet = "camera_focal_length_set"
@@ -257,6 +382,10 @@ const (
 	// MethodGimbalReset 云台重置（Gimbal Reset）
 	// 云平台 → 设备，重置云台角度至默认位置
 	MethodGimbalReset = "gimbal_reset"
+
+	// MethodCameraAim 相机框选/指点目标（Camera Aim）
+	// 云平台 → 设备，控制相机视角指向目标
+	MethodCameraAim = "camera_aim"
 
 	// MethodCameraPointFocusAction 相机指点对焦（Camera Point Focus Action）
 	// 云平台 → 设备，控制相机在指定屏幕坐标点执行对焦
@@ -291,136 +420,109 @@ const (
 	MethodCameraIrMeteringArea = "camera_ir_metering_area"
 )
 
-// ==================== 六、直播管理（Live） ====================
-// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/live.html
+// ==================== 自定义飞行区（Custom Fly Region） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/custom-fly-region.html
 // Topic: thing/product/{gateway_sn}/services
-// 方向: 云平台 → 设备（Services），视频直播流控制
 
 const (
-	// MethodLiveStartPush 开始直播推流（Live Start Push）
-	// 云平台 → 设备（Services），控制设备开始向指定地址推送直播流
-	MethodLiveStartPush = "live_start_push"
+	// MethodFlightAreasUpdate 触发自定义飞行区文件更新。
+	MethodFlightAreasUpdate = "flight_areas_update"
 
-	// MethodLiveStopPush 停止直播推流（Live Stop Push）
-	// 云平台 → 设备（Services），控制设备停止直播推流
-	MethodLiveStopPush = "live_stop_push"
-
-	// MethodLiveSetQuality 设置直播质量（Live Set Quality）
-	// 云平台 → 设备（Services），设置直播推流的画质参数
-	MethodLiveSetQuality = "live_set_quality"
-
-	// MethodLiveLensChange 切换直播镜头（Live Lens Change）
-	// 云平台 → 设备（Services），切换直播推流使用的相机镜头
-	MethodLiveLensChange = "live_lens_change"
-
-	// MethodLiveCameraChange 切换直播相机（Live Camera Change）
-	// 云平台 → 设备（Services），切换直播推流使用的相机负载
-	MethodLiveCameraChange = "live_camera_change"
+	// MethodFlightAreasGet 自定义飞行区文件获取请求上行。
+	MethodFlightAreasGet = "flight_areas_get"
 )
 
-// ==================== 六点一、媒体管理（Media） ====================
-// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/media.html
+// ==================== PSDK 功能与互联互通（PSDK / PSDK Transmit） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk.html
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk-transmit-custom-data.html
+// Topic: thing/product/{gateway_sn}/services | events
+
+const (
+	// MethodPsdkFloatUp PSDK UI 资源上传（PSDK UI Resource Upload）
+	// 云平台 → 设备（Services），上传 PSDK 浮窗 UI 资源文件
+	MethodPsdkFloatUp = "psdk_ui_resource_upload"
+
+	// MethodCustomDataTransmissionToPsdk 自定义数据透传至 PSDK（Custom Data Transmission To PSDK）
+	// 云平台 → 设备（Services），将自定义消息透传推送到 PSDK 负载设备
+	MethodCustomDataTransmissionToPsdk = "custom_data_transmission_to_psdk"
+
+	// MethodCustomDataTransmissionFromPsdk PSDK 自定义数据上报（Custom Data Transmission From PSDK）
+	// 设备 → 云平台（Events），PSDK 负载设备向云平台上报自定义消息
+	MethodCustomDataTransmissionFromPsdk = "custom_data_transmission_from_psdk"
+)
+
+// ==================== ESDK 互联互通（ESDK Transmit） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/esdk-transmit-custom-data.html
+// Topic: thing/product/{gateway_sn}/services | events
+
+const (
+	// MethodCustomDataTransmissionToEsdk 自定义数据透传至 ESDK。
+	MethodCustomDataTransmissionToEsdk = "custom_data_transmission_to_esdk"
+
+	// MethodCustomDataTransmissionFromEsdk ESDK 自定义数据上报。
+	MethodCustomDataTransmissionFromEsdk = "custom_data_transmission_from_esdk"
+)
+
+// ==================== 远程解禁（Flysafe） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/flysafe.html
 // Topic: thing/product/{gateway_sn}/services
-// 方向: 云平台 → 设备（Services），等待 services_reply。
 
 const (
-	// MethodMediaUploadFlighttaskMediaPrioritize 优先上传指定航线任务媒体（Upload Flighttask Media Prioritize）。
-	// 云平台 → 设备（Services），按 flight_id 优先上传航线任务媒体。
-	MethodMediaUploadFlighttaskMediaPrioritize = "upload_flighttask_media_prioritize"
+	// MethodUnlockLicenseSwitch 启用或禁用设备的单个解禁证书。
+	MethodUnlockLicenseSwitch = "unlock_license_switch"
 
-	// MethodMediaFastUpload 快速上传指定媒体文件（Media Fast Upload）。
-	// 云平台 → 设备（Services），按 file_id 快速上传单个媒体文件。
-	MethodMediaFastUpload = "media_fast_upload"
+	// MethodUnlockLicenseUpdate 更新设备的解禁证书。
+	MethodUnlockLicenseUpdate = "unlock_license_update"
 
-	// MethodMediaHighestPriorityUploadFlighttask 最高优先级上传航线任务媒体（Highest Priority Upload Flighttask Media）。
-	// 云平台 → 设备（Services），按 flight_id 最高优先级上传航线任务媒体。
-	MethodMediaHighestPriorityUploadFlighttask = "highest_priority_upload_flighttask_media"
+	// MethodUnlockLicenseList 获取设备的解禁证书列表。
+	MethodUnlockLicenseList = "unlock_license_list"
 )
 
-// ==================== 六点二、远程日志（Remote Log） ====================
-// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/remote-log.html
-// Topic: thing/product/{gateway_sn}/services | events
-// 方向: fileupload_* 控制为云平台 → 设备（Services），fileupload_progress/result 为设备 → 云平台（Events）。
+// ==================== AirSense ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/airsense.html
+// 该模块当前仅包含设备上行告警事件。
 
-const (
-	// MethodRemoteLogFileList 查询可上传的远程日志文件列表（Fileupload List）。
-	// 云平台 → 设备（Services），按目标设备和模块查询日志文件。
-	MethodRemoteLogFileList = "fileupload_list"
-
-	// MethodRemoteLogFileUploadStart 开始上传远程日志文件（Fileupload Start）。
-	// 云平台 → 设备（Services），下发待上传日志文件列表。
-	MethodRemoteLogFileUploadStart = "fileupload_start"
-
-	// MethodRemoteLogFileUploadUpdate 更新远程日志文件上传任务（Fileupload Update）。
-	// 云平台 → 设备（Services），更新正在执行的日志上传文件列表。
-	MethodRemoteLogFileUploadUpdate = "fileupload_update"
-
-	// MethodRemoteLogFileUploadCancel 取消远程日志文件上传任务（Fileupload Cancel）。
-	// 云平台 → 设备（Services），取消指定远程日志上传任务。
-	MethodRemoteLogFileUploadCancel = "fileupload_cancel"
-
-	// MethodRemoteLogFileUploadResult 远程日志上传结果上报（Fileupload Result）。
-	// 设备 → 云平台（Events），设备上报远程日志文件上传最终结果。
-	MethodRemoteLogFileUploadResult = "fileupload_result"
-
-	// MethodRemoteLogFileUploadProgress 远程日志上传进度上报（Fileupload Progress）。
-	// 设备 → 云平台（Events），设备上报远程日志文件上传进度。
-	MethodRemoteLogFileUploadProgress = "fileupload_progress"
-)
-
-// ==================== 六点三、配置更新（Configuration Update） ====================
+// ==================== 远程控制（Remote Control） ====================
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/remote-control.html
 // Topic: thing/product/{gateway_sn}/services
-// 方向: 云平台 → 设备（Services），等待 services_reply。
 
 const (
-	// MethodConfigUpdate 下发设备配置更新（Config Update）。
-	// 云平台 → 设备（Services），向设备下发配置更新内容。
-	MethodConfigUpdate = "config_update"
-)
+	// MethodDrcForceLanding 强制降落。
+	MethodDrcForceLanding = "drc_force_landing"
 
-// ==================== 七、物模型属性（Property） ====================
-// 与 [Topic 总览](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html) 及
-// [Properties 上云](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/properties.html) 一致：
-// 仅 **云平台 → 设备** 走 **property/set**；**设备 → 云** 回 **set_reply**（同形于 services_reply，**非** services 主题）。
+	// MethodDrcEmergencyLanding 紧急降落。
+	MethodDrcEmergencyLanding = "drc_emergency_landing"
 
-const (
-	// MethodPropertySet 云在 property/set 请求体中的方法名
-	MethodPropertySet = "property_set"
-)
+	// MethodDrcLinkageZoomSet 设置红外联动变焦状态。
+	MethodDrcLinkageZoomSet = "drc_linkage_zoom_set"
 
-// ==================== 八、固件管理（Firmware） ====================
-// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/firmware.html
-// Topic: thing/product/{gateway_sn}/services | events
-// OTA 固件升级管理
+	// MethodDrcVideoResolutionSet 设置视频分辨率。
+	MethodDrcVideoResolutionSet = "drc_video_resolution_set"
 
-const (
-	// MethodOtaCreate 创建固件升级任务（OTA Create）
-	// 云平台 → 设备（Services），下发固件升级任务
-	MethodOtaCreate = "ota_create"
+	// MethodDrcIntervalPhotoSet 设置定时拍参数。
+	MethodDrcIntervalPhotoSet = "drc_interval_photo_set"
 
-	// MethodOtaProgress 固件升级进度上报（OTA Progress）
-	// 设备 → 云平台（Events），设备周期性上报固件升级进度
-	MethodOtaProgress = "ota_progress"
-)
+	// MethodDrcInitialStateSubscribe 订阅 DRC 初始状态。
+	MethodDrcInitialStateSubscribe = "drc_initial_state_subscribe"
 
-// ==================== 九、设备管理（Device Management） ====================
-// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/device.html
-// Topic: thing/product/{gateway_sn}/services | events
-// 设备拓扑与属性管理
+	// MethodDrcNightLightsStateSet 设置夜航灯状态。
+	MethodDrcNightLightsStateSet = "drc_night_lights_state_set"
 
-const (
-	// MethodUpdateTopo 更新设备拓扑（Update Topo）
-	// 设备 → 云平台（Events），设备上报拓扑结构变化（如飞行器上下线）
-	MethodUpdateTopo = "update_topo"
-)
+	// MethodDrcStealthStateSet 设置隐蔽模式状态。
+	MethodDrcStealthStateSet = "drc_stealth_state_set"
 
-// ==================== 十、HMS 健康管理（HMS） ====================
-// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/hms.html
-// Topic: thing/product/{gateway_sn}/events
-// 方向: 设备 → 云平台（Events），健康管理系统
+	// MethodDrcCameraApertureValueSet 设置相机光圈。
+	MethodDrcCameraApertureValueSet = "drc_camera_aperture_value_set"
 
-const (
-	// MethodHmsEventNotify HMS 健康事件通知（HMS Event Notify）
-	// 设备 → 云平台，设备上报健康管理系统告警和状态事件
-	MethodHmsEventNotify = "hms"
+	// MethodDrcCameraShutterSet 设置相机快门。
+	MethodDrcCameraShutterSet = "drc_camera_shutter_set"
+
+	// MethodDrcCameraIsoSet 设置相机 ISO。
+	MethodDrcCameraIsoSet = "drc_camera_iso_set"
+
+	// MethodDrcCameraMechanicalShutterSet 设置机械快门。
+	MethodDrcCameraMechanicalShutterSet = "drc_camera_mechanical_shutter_set"
+
+	// MethodDrcCameraDewarpingSet 设置镜头去畸变。
+	MethodDrcCameraDewarpingSet = "drc_camera_dewarping_set"
 )

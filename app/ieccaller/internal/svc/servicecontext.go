@@ -124,12 +124,10 @@ func NewServiceContext(c config.Config) *ServiceContext {
 					logx.WithDuration(duration).Infof("PushChunkAsdu, tId: %s, asdu size: %d - %s", tid, len(msgBodyList), invokeflg)
 					return
 				}
-				return
 			},
 			c.PushAsduChunkBytes,
 		)
 	}
-
 	if len(c.DB.DataSource) > 0 {
 		// 解析数据库类型
 		dbType := dbx.ParseDatabaseType(c.DB.DataSource)
@@ -180,7 +178,7 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 	}
 	byteData, err := jsonx.Marshal(data)
 	if err != nil {
-		return fmt.Errorf("json marshal error %v", err)
+		return fmt.Errorf("json marshal error: %w", err)
 	}
 
 	mr.FinishVoid(
@@ -189,15 +187,16 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 			if !svc.Config.KafkaConfig.IsPush {
 				return
 			}
+			logCtx := asduPushLogContext(ctx, data, ioa, "kafka")
 			if svc.KafkaASDUPusher == nil {
-				logx.WithContext(ctx).Errorf("kafka asdu pusher is nil, msgId: %s", data.MsgId)
+				logx.WithContext(logCtx).Error("kafka asdu pusher is nil")
 				return
 			}
-			pushCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+			pushCtx, cancel := context.WithTimeout(logCtx, 10*time.Second)
 			defer cancel()
 			kafkaErr := svc.KafkaASDUPusher.PushWithKey(pushCtx, key, string(byteData))
 			if kafkaErr != nil {
-				logx.WithContext(pushCtx).Errorf("failed to push asdu to kafka, msgId: %s, err: %v", data.MsgId, kafkaErr)
+				logx.WithContext(pushCtx).Errorf("failed to push asdu to kafka: %v", kafkaErr)
 			}
 		},
 		// MQTT 推送
@@ -205,8 +204,9 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 			if !svc.Config.MqttConfig.IsPush {
 				return
 			}
+			logCtx := asduPushLogContext(ctx, data, ioa, "mqtt")
 			if svc.MqttClient == nil {
-				logx.WithContext(ctx).Errorf("mqtt client is nil, msgId: %s", data.MsgId)
+				logx.WithContext(logCtx).Error("mqtt client is nil")
 				return
 			}
 
@@ -216,31 +216,47 @@ func (svc ServiceContext) PushASDU(ctx context.Context, data *types.MsgBody, ioa
 			}
 
 			for _, topicPattern := range topics {
-				pushTopicCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-				defer cancel()
+				pushTopicCtx, cancel := context.WithTimeout(logCtx, 10*time.Second)
 				topic, genErr := util.GenerateTopic(topicPattern, data)
 				if genErr != nil {
-					logx.WithContext(pushTopicCtx).Debugf("failed to generate mqtt topic, pattern: %s, msgId: %s, err: %v", topicPattern, data.MsgId, genErr)
+					logx.WithContext(pushTopicCtx).Debugf("failed to generate mqtt topic, pattern: %s, err: %v", topicPattern, genErr)
+					cancel()
 					continue
 				}
-				logx.WithContext(pushTopicCtx).Debugf("pushing asdu to mqtt topic: %s, msgId: %s", topic, data.MsgId)
+				logx.WithContext(pushTopicCtx).Debugf("pushing asdu to mqtt topic: %s", topic)
 				mqttErr := svc.MqttClient.Publish(pushTopicCtx, topic, byteData)
+				cancel()
 				if mqttErr != nil {
-					logx.WithContext(pushTopicCtx).Errorf("failed to push asdu to mqtt topic: %s, msgId: %s, err: %v", topic, data.MsgId, mqttErr)
+					logx.WithContext(logCtx).Errorf("failed to push asdu to mqtt topic: %s, err: %v", topic, mqttErr)
 					continue
 				}
 			}
 		},
 		func() {
 			if svc.ChunkAsduPusher != nil {
+				logCtx := asduPushLogContext(ctx, data, ioa, "stream_event")
 				if chunkErr := svc.ChunkAsduPusher.Write(string(byteData)); chunkErr != nil {
-					logx.WithContext(ctx).Errorf("failed to write asdu to batch pusher, msgId: %s, err: %v", data.MsgId, chunkErr)
+					logx.WithContext(logCtx).Errorf("failed to write asdu to batch pusher: %v", chunkErr)
 				}
-				logx.WithContext(ctx).Debugf("write asdu to batch pusher, msgId: %s", data.MsgId)
+				logx.WithContext(logCtx).Debug("write asdu to batch pusher")
 			}
 		},
 	)
 	return nil
+}
+
+func asduPushLogContext(ctx context.Context, data *types.MsgBody, ioa uint, channel string) context.Context {
+	return logx.ContextWithFields(ctx,
+		logx.Field("msgId", data.MsgId),
+		logx.Field("host", data.Host),
+		logx.Field("port", data.Port),
+		logx.Field("asdu", data.Asdu),
+		logx.Field("typeId", data.TypeId),
+		logx.Field("dataType", data.DataType),
+		logx.Field("coa", data.Coa),
+		logx.Field("ioa", ioa),
+		logx.Field("channel", channel),
+	)
 }
 
 func (svc ServiceContext) PushPbBroadcast(ctx context.Context, method string, in any) error {
@@ -269,17 +285,19 @@ func (svc ServiceContext) PushBroadcast(ctx context.Context, data *types.Broadca
 	data.BroadcastGroupId = svc.Config.KafkaConfig.BroadcastGroupId
 	byteData, err := json.Marshal(data)
 	if err != nil {
-		return fmt.Errorf("json marshal error %v", err)
+		return fmt.Errorf("json marshal error: %w", err)
+	}
+
+	if svc.KafkaBroadcastPusher == nil {
+		return fmt.Errorf("kafka broadcast pusher is nil")
 	}
 
 	// Kafka推送
-	if svc.KafkaBroadcastPusher != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		if err := svc.KafkaBroadcastPusher.Push(ctx, string(byteData)); err != nil {
-			logx.WithContext(ctx).Errorf("failed to push broadcast to kafka: %v", err)
-			return err
-		}
+	pushCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	if err := svc.KafkaBroadcastPusher.Push(pushCtx, string(byteData)); err != nil {
+		logx.WithContext(pushCtx).Errorf("failed to push broadcast to kafka: %v", err)
+		return err
 	}
 	return nil
 }

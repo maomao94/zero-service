@@ -6,7 +6,7 @@
 
 - **多协议接入** -- IEC 60870-5-104 / Modbus TCP/RTU / MQTT / gRPC / HTTP，覆盖电力、工业自动化、物联网等场景
 - **数采平台** -- 完整的 IEC 104 主站实现，支持 Kafka/MQTT/gRPC 三协议并行推送，内嵌 SQLite 轻量化配置管理
-- **大疆上云网关** -- `djigateway` 将业务侧 gRPC 调用转换为 DJI Dock3 Cloud API MQTT 指令，支持直播、航线、远程调试、DRC 指令飞行、媒体与日志上传等能力
+- **大疆云平台服务** -- `djicloud` 封装 DJI Dock3 Cloud API MQTT 指令与云平台组合能力，支持直播、航线、远程调试、DRC 指令飞行、媒体与日志上传等能力
 - **AI 应用平台** -- `aiapp` 提供 OpenAI 兼容聊天、Eino ADK Agent/Solo、SSE 网关、MCP Server 与知识库能力
 - **异步任务调度** -- 基于 asynq 的分布式任务队列 + 自研计划任务管理引擎，支持 HTTP/gRPC 回调
 - **实时通信** -- SocketIO 消息网关，支持房间管理、广播推送、MQTT 桥接和 Token 鉴权
@@ -34,10 +34,10 @@
          |    |    |
    +-----+ +--+--+ +------+ +----------+ +----------+
    |       |      |        |          | |          |
-+--v--+ +--v--+ +-v----+ +-v-------+ +-v--------+
-|trig | |file | |alarm | |bridgeXxx| |djigateway|
-|ger  | |     | |      | |modbus/mq| |DJI Dock3 |
-+-----+ +-----+ +------+ +----+----+ +----+-----+
++--v--+ +--v--+ +-v----+ +-v-------+ +-v-----+
+|trig | |file | |alarm | |bridgeXxx| |djicloud|
+|ger  | |     | |      | |modbus/mq| |DJI平台|
++-----+ +-----+ +------+ +----+----+ +---+----+
                                 |         |
         +--------+---------+----+         v
         |        |         |        DJI Cloud API
@@ -73,7 +73,7 @@ zero-service/
 │   ├── podengine/                # 容器管理 - Docker 容器生命周期管理
 │   ├── bridgemodbus/             # Modbus TCP/RTU 协议桥接
 │   ├── bridgemqtt/               # MQTT 协议桥接
-│   ├── djigateway/               # DJI Dock3 上云网关 - gRPC 转 DJI Cloud API MQTT
+│   ├── djicloud/                 # DJI 云平台服务 - DJI Cloud API MQTT 与云平台组合能力
 │   ├── bridgegtw/                # HTTP 代理转发网关
 │   ├── bridgedump/               # 南瑞反向隔离装置文件生成
 │   ├── lalhook/                  # LAL 流媒体回调服务
@@ -184,9 +184,9 @@ IEC 104 从站 --> ieccaller --> Kafka --> iecstash --> streamevent --> TDengine
 
 前端对接文档：[SocketIO 消息网关客户端对接文档](./docs/socketiox-documentation.md)
 
-### DJI Dock3 上云网关 (djigateway)
+### DJI 云平台服务 (djicloud)
 
-`djigateway` 是面向 DJI Dock3 Cloud API 的 gRPC 网关，负责将业务系统的 RPC 调用转换为大疆上云 MQTT Topic 与 method，并统一处理设备侧 ACK、上行事件和在线状态。
+`djicloud` 是面向 DJI Dock3 Cloud API 的云平台服务，负责封装大疆上云 MQTT Topic 与 method，统一处理设备侧 ACK、上行事件和在线状态，并为后续云平台组合接口提供服务边界。
 
 **核心能力**：
 - 标准下行指令封装：属性设置、直播推流、媒体上传、航线任务、远程调试、固件升级、远程日志、配置更新、PSDK 透传等
@@ -196,13 +196,13 @@ IEC 104 从站 --> ieccaller --> Kafka --> iecstash --> streamevent --> TDengine
 - 服务治理：go-zero zrpc、Nacos 注册、gRPC 反射、统一日志拦截器
 
 **模块边界**：
-- `app/djigateway/`：gRPC 服务定义、go-zero 生成骨架、业务 Logic 与配置
+- `app/djicloud/`：gRPC 服务定义、go-zero 生成骨架、业务 Logic 与配置
 - `common/djisdk/`：DJI Cloud API MQTT topic、协议体、强类型 Client、pending ACK 与上行回调
-- 新增 DJI 标准能力时先改 `app/djigateway/djigateway.proto`，执行 `app/djigateway/gen.sh` 后，只在 `internal/logic/` 和 `common/djisdk/` 中补业务实现，避免手写或随意修改生成文件
+- 新增 DJI 标准能力或云平台组合能力时先改 `app/djicloud/djicloud.proto`，执行 `app/djicloud/gen.sh` 后，只在 `internal/logic/` 和 `common/djisdk/` 中补业务实现，避免手写或随意修改生成文件
 
 **数据流**：
 ```
-业务系统 --> djigateway gRPC --> common/djisdk --> MQTT Broker --> DJI Dock3/飞行器
+业务系统 --> djicloud gRPC --> common/djisdk --> MQTT Broker --> DJI Dock3/飞行器
                          ^              |
                          |              v
                   services_reply / events / osd / state / drc/up
@@ -307,9 +307,9 @@ go mod tidy
 cd app/trigger
 go run trigger.go -f etc/trigger.yaml
 
-# 启动 DJI 上云网关
-cd app/djigateway
-go run djigateway.go -f etc/djigateway.yaml
+# 启动 DJI 云平台服务
+cd app/djicloud
+go run djicloud.go -f etc/djicloud.yaml
 
 # 启动 AI HTTP 网关
 cd aiapp/aigtw
@@ -342,7 +342,7 @@ docker-compose up -d
 ### 模块扩展约定
 
 - **go-zero 服务**：先改 `.api`/`.proto`，再执行对应模块 `gen.sh`，不要手写或随意修改生成的 `handler`、`server`、`routes`、`pb.go` 文件
-- **djigateway**：新增 DJI 标准下行能力时，保持 `djigateway.proto`、`common/djisdk/method.go`、协议结构体、Client typed 方法和 Logic 的顺序一致；业务 Logic 调用 `common/djisdk.Client`，不要直接拼 MQTT Topic
+- **djicloud**：新增 DJI 标准下行能力或云平台组合接口时，保持 `djicloud.proto`、`common/djisdk/method.go`、协议结构体、Client typed 方法和 Logic 的顺序一致；业务 Logic 调用 `common/djisdk.Client`，不要直接拼 MQTT Topic
 - **AI 模块**：HTTP 聚合放在 `aiapp/aigtw`，Agent 会话与模式编排放在 `aiapp/aisolo`，通用 Agent/知识库/记忆/工具能力沉淀到 `common/einox`
 - **公共组件**：跨服务复用能力放入 `common/`，业务有状态逻辑保留在具体服务的 `internal/` 中
 - **配置安全**：不要提交真实 MQTT、数据库、OSS、AI Provider、Nacos 密钥；示例配置仅保留占位值
@@ -371,7 +371,7 @@ cd app/{service}
 - 更多见 swagger 目录
 
 重点 Proto：
-- `app/djigateway/djigateway.proto` -- DJI Dock3 上云网关接口
+- `app/djicloud/djicloud.proto` -- DJI 云平台服务接口
 - `aiapp/aichat/aichat.proto` -- OpenAI 兼容聊天 RPC
 - `aiapp/aisolo/aisolo.proto` -- Eino ADK Agent 流式会话 RPC
 

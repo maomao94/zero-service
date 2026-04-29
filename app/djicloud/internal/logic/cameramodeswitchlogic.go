@@ -1,0 +1,39 @@
+package logic
+
+import (
+	"context"
+
+	"zero-service/app/djicloud/djicloud"
+	"zero-service/app/djicloud/internal/svc"
+	"zero-service/common/djisdk"
+
+	"github.com/zeromicro/go-zero/core/logx"
+)
+
+type CameraModeSwitchLogic struct {
+	ctx    context.Context
+	svcCtx *svc.ServiceContext
+	logx.Logger
+}
+
+func NewCameraModeSwitchLogic(ctx context.Context, svcCtx *svc.ServiceContext) *CameraModeSwitchLogic {
+	return &CameraModeSwitchLogic{
+		ctx:    ctx,
+		svcCtx: svcCtx,
+		Logger: logx.WithContext(ctx),
+	}
+}
+
+// CameraModeSwitch 切换相机拍摄模式。
+func (l *CameraModeSwitchLogic) CameraModeSwitch(in *djicloud.CameraModeSwitchReq) (*djicloud.CommonRes, error) {
+	data := &djisdk.CameraModeSwitchData{
+		PayloadIndex: in.PayloadIndex,
+		CameraMode:   int(in.CameraMode),
+	}
+	tid, err := l.svcCtx.DjiClient.CameraModeSwitch(l.ctx, in.DeviceSn, data)
+	if err != nil {
+		l.Errorf("[camera] camera mode switch failed: %v", err)
+		return errRes(tid, err), nil
+	}
+	return okRes(tid), nil
+}

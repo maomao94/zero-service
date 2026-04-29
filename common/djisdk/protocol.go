@@ -255,7 +255,16 @@ type ReturnSpecificHomeData struct {
 	Height float64 `json:"height"`
 }
 
-// ==================== 一、航线管理 - 航线进度事件 ====================
+// ==================== 设备管理（Device） ====================
+// update_topo 为 sys/product/{gateway_sn}/status 上行，见 TopoUpdateData。
+
+// ==================== 组织管理（Organization） ====================
+// airport_* 为 thing/product/{gateway_sn}/requests 上行，使用 RequestMessage 原始数据处理。
+
+// ==================== 自定义飞行区（Custom Fly Region） ====================
+
+// FlightAreasUpdateData 触发自定义飞行区文件更新数据。
+type FlightAreasUpdateData struct{}
 
 // ==================== PSDK 功能与互联互通（PSDK / PSDK Transmit） ====================
 
@@ -270,6 +279,102 @@ type PsdkUIResourceUploadData struct {
 type CustomDataTransmissionData struct {
 	// Value 自定义消息内容，长度小于 256 字符。必填。
 	Value string `json:"value"`
+}
+
+// ==================== ESDK 互联互通（ESDK Transmit） ====================
+
+// CustomDataToEsdkData 自定义数据透传至 ESDK 请求。
+type CustomDataToEsdkData struct {
+	Value string `json:"value"`
+}
+
+// ==================== 远程解禁（Flysafe） ====================
+
+// UnlockLicenseSwitchData 启用或禁用设备的单个解禁证书数据。
+type UnlockLicenseSwitchData struct {
+	LicenseID int64 `json:"license_id"`
+	Enable    bool  `json:"enable"`
+}
+
+// UnlockLicenseFile 解禁证书文件引用。
+type UnlockLicenseFile struct {
+	URL         string `json:"url"`
+	Fingerprint string `json:"fingerprint"`
+}
+
+// UnlockLicenseUpdateData 更新设备解禁证书数据。
+type UnlockLicenseUpdateData struct {
+	File *UnlockLicenseFile `json:"file,omitempty"`
+}
+
+// UnlockLicenseListData 获取设备解禁证书列表数据。
+type UnlockLicenseListData struct {
+	DeviceModelDomain int `json:"device_model_domain"`
+}
+
+// ==================== 远程控制（Remote Control） ====================
+
+// DrcLinkageZoomSetData 红外联动变焦设置数据。
+type DrcLinkageZoomSetData struct {
+	PayloadIndex string `json:"payload_index"`
+	State        bool   `json:"state"`
+}
+
+// DrcVideoResolutionSetData 视频分辨率设置数据。
+type DrcVideoResolutionSetData struct {
+	PayloadIndex    string `json:"payload_index"`
+	VideoResolution string `json:"video_resolution"`
+}
+
+// DrcIntervalPhotoSetData 定时拍设置数据。
+type DrcIntervalPhotoSetData struct {
+	PayloadIndex string `json:"payload_index"`
+	Interval     string `json:"interval"`
+}
+
+// DrcNightLightsStateSetData 夜航灯状态设置数据。
+type DrcNightLightsStateSetData struct {
+	NightLightsState int `json:"night_lights_state"`
+}
+
+// DrcStealthStateSetData 隐蔽模式状态设置数据。
+type DrcStealthStateSetData struct {
+	StealthState int `json:"stealth_state"`
+}
+
+// DrcCameraApertureValueSetData 相机光圈设置数据。
+type DrcCameraApertureValueSetData struct {
+	PayloadIndex  string `json:"payload_index"`
+	CameraType    string `json:"camera_type"`
+	ApertureValue int    `json:"aperture_value"`
+}
+
+// DrcCameraShutterSetData 相机快门设置数据。
+type DrcCameraShutterSetData struct {
+	PayloadIndex string `json:"payload_index"`
+	CameraType   string `json:"camera_type"`
+	ShutterValue int    `json:"shutter_value"`
+}
+
+// DrcCameraIsoSetData 相机 ISO 设置数据。
+type DrcCameraIsoSetData struct {
+	PayloadIndex string `json:"payload_index"`
+	CameraType   string `json:"camera_type"`
+	ISOValue     int    `json:"iso_value"`
+}
+
+// DrcCameraMechanicalShutterSetData 机械快门设置数据。
+type DrcCameraMechanicalShutterSetData struct {
+	PayloadIndex   string `json:"payload_index"`
+	CameraType     string `json:"camera_type"`
+	DewarpingState int    `json:"dewarping_state"`
+}
+
+// DrcCameraDewarpingSetData 镜头去畸变设置数据。
+type DrcCameraDewarpingSetData struct {
+	PayloadIndex   string `json:"payload_index"`
+	CameraType     string `json:"camera_type"`
+	DewarpingState int    `json:"dewarping_state"`
 }
 
 // ==================== 四、远程调试 - 机巢控制（Remote Debug） ====================

@@ -2,6 +2,7 @@ package iec104
 
 import (
 	"context"
+
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -16,33 +17,33 @@ func NewLogProvider(context context.Context) *LogProvider {
 }
 
 func (l *LogProvider) Critical(format string, v ...interface{}) {
-	if v == nil {
+	if len(v) == 0 {
 		l.Logger.Error(format)
 	} else {
-		l.Logger.Errorf(format, v)
+		l.Logger.Errorf(format, v...)
 	}
 }
 
 func (l *LogProvider) Error(format string, v ...interface{}) {
-	if v == nil {
+	if len(v) == 0 {
 		l.Logger.Error(format)
 	} else {
-		l.Logger.Errorf(format, v)
+		l.Logger.Errorf(format, v...)
 	}
 }
 
 func (l *LogProvider) Warn(format string, v ...interface{}) {
-	if v == nil {
-		l.Logger.Error(format)
+	if len(v) == 0 {
+		l.Logger.Slow(format)
 	} else {
-		l.Logger.Errorf(format, v)
+		l.Logger.Slowf(format, v...)
 	}
 }
 
 func (l *LogProvider) Debug(format string, v ...interface{}) {
-	if v == nil {
+	if len(v) == 0 {
 		l.Logger.Debug(format)
 	} else {
-		l.Logger.Debugf(format, v)
+		l.Logger.Debugf(format, v...)
 	}
 }

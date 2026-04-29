@@ -410,6 +410,45 @@ func TestDrcDownStickControlPayloadHasTopLevelSeqAndExpectedDataFields(t *testin
 	}
 }
 
+func TestDrcDownClientMethodsReturnTid(t *testing.T) {
+	mqtt := &recordingMQTTClient{}
+	client := newClient(mqtt)
+
+	tid, err := client.DrcEmergencyLanding(context.Background(), "gateway-1")
+	if err != nil {
+		t.Fatalf("DrcEmergencyLanding() error = %v", err)
+	}
+	if tid == "" {
+		t.Fatal("expected non-empty tid")
+	}
+	if len(mqtt.published) != 1 || mqtt.published[0].topic != DrcDownTopic("gateway-1") {
+		t.Fatalf("published = %+v, want one drc/down message", mqtt.published)
+	}
+	var msg DrcDownMessage
+	if err := json.Unmarshal(mqtt.published[0].payload, &msg); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v", err)
+	}
+	if msg.Tid != tid || msg.Method != MethodDrcEmergencyLanding {
+		t.Fatalf("message = %+v, want tid=%s method=%s", msg, tid, MethodDrcEmergencyLanding)
+	}
+}
+
+func TestDrcDownClientMethodsReturnTidOnPublishError(t *testing.T) {
+	mqtt := &recordingMQTTClient{err: errPublishFailed}
+	client := newClient(mqtt)
+
+	tid, err := client.SendDrcStickControl(context.Background(), "gateway-1", 7, &DrcStickControlData{})
+	if err == nil {
+		t.Fatal("expected publish error")
+	}
+	if tid == "" {
+		t.Fatal("expected non-empty tid on error")
+	}
+	if !strings.Contains(err.Error(), tid) || !strings.Contains(err.Error(), MethodStickControl) {
+		t.Fatalf("error = %q, want method and tid", err.Error())
+	}
+}
+
 func TestFlightTaskPrepareDataSerializesSimulateMission(t *testing.T) {
 	prepare := FlightTaskPrepareData{
 		FlightID: "flight-1",
@@ -468,8 +507,12 @@ func TestDroneEmergencyStopPublishesDrcDownTypedMethod(t *testing.T) {
 	mqtt := &recordingMQTTClient{}
 	client := newClient(mqtt, WithPendingTTL(time.Second), WithReplyOptions(DefaultReplyOptions()))
 
-	if err := client.DroneEmergencyStop(context.Background(), "gateway-1"); err != nil {
+	tid, err := client.DroneEmergencyStop(context.Background(), "gateway-1")
+	if err != nil {
 		t.Fatalf("DroneEmergencyStop() error = %v", err)
+	}
+	if tid == "" {
+		t.Fatal("expected non-empty tid")
 	}
 	if len(mqtt.published) != 1 {
 		t.Fatalf("published count = %d, want 1", len(mqtt.published))

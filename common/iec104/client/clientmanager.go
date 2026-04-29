@@ -68,10 +68,15 @@ func (m *ClientManager) GetClient(host string, port int) (*Client, error) {
 }
 
 func (m *ClientManager) GetClientOrNil(host string, port int) (*Client, error) {
-	client, err := m.GetClient(host, port)
-	if err != nil {
-		return nil, err
+	key := m.getKey(host, port)
+	m.clientsLock.RLock()
+	defer m.clientsLock.RUnlock()
+
+	client, ok := m.clients[key]
+	if !ok {
+		return nil, nil
 	}
+
 	return client, nil
 }
 

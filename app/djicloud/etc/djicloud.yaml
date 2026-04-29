@@ -1,0 +1,32 @@
+Name: djicloud.rpc
+ListenOn: 0.0.0.0:21012
+Timeout: 10000
+Log:
+  Encoding: plain
+  #  Mode: file
+  Path: /opt/logs/djicloud
+  Level: info
+  KeepDays: 300
+MqttConfig:
+  Broker:
+    - tcp://127.0.0.1:1883
+  ClientID: dji-cloud-001
+  Username: "mqtt"
+  Password: "password"
+  Qos: 0
+AckTimeout: 5s
+PendingTTL: 30s
+UpstreamReply:
+  EnableEventsReply: true
+  EnableStatusReply: false
+  EnableRequestsReply: false
+DangerousOps:
+  EnableDroneEmergencyStop: false
+NacosConfig:
+  IsRegister: false
+  Host: 127.0.0.1
+  Port: 8848
+  Username: nacos
+  PassWord: nacos
+  NamespaceId: public
+  ServiceName: djicloud

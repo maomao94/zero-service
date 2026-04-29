@@ -1,7 +1,6 @@
 package cron
 
 import (
-	"fmt"
 	"zero-service/app/ieccaller/internal/svc"
 
 	"github.com/robfig/cron/v3"
@@ -21,55 +20,55 @@ func NewCronService(svcCtx *svc.ServiceContext) *CronService {
 }
 
 func (s *CronService) Start() {
-	// 定时总召唤
 	if len(s.svcCtx.Config.InterrogationCmdCron) > 0 {
-		_, _ = s.c.AddFunc(s.svcCtx.Config.InterrogationCmdCron, func() {
+		if _, err := s.c.AddFunc(s.svcCtx.Config.InterrogationCmdCron, func() {
 			for _, serverCfg := range s.svcCtx.Config.IecServerConfig {
-				// 获取客户端
 				cli, err := s.svcCtx.ClientManager.GetClient(serverCfg.Host, serverCfg.Port)
 				if err != nil {
+					logx.Errorf("get iec104 client failed, host: %s, port: %d, err: %v", serverCfg.Host, serverCfg.Port, err)
 					continue
 				}
 				if !cli.IsConnected() {
 					continue
 				}
-				// 发送总召唤
 				for _, v := range serverCfg.IcCoaList {
 					if err := cli.SendInterrogationCmd(v); err != nil {
-						logx.Errorf("send interrogation cmd error %v\n", err)
+						logx.Errorf("send interrogation cmd failed, server: %s:%d, coa: %d, err: %v", serverCfg.Host, serverCfg.Port, v, err)
 						continue
 					}
 					logx.Infof("send interrogation cmd, server: %s:%d, coa: %d", serverCfg.Host, serverCfg.Port, v)
 				}
 			}
-		})
+		}); err != nil {
+			logx.Errorf("add interrogation cron failed, cron: %s, err: %v", s.svcCtx.Config.InterrogationCmdCron, err)
+		}
 	}
 
-	// 定时累计量召唤
 	if len(s.svcCtx.Config.CounterInterrogationCmd) > 0 {
-		_, _ = s.c.AddFunc(s.svcCtx.Config.CounterInterrogationCmd, func() {
+		if _, err := s.c.AddFunc(s.svcCtx.Config.CounterInterrogationCmd, func() {
 			for _, serverCfg := range s.svcCtx.Config.IecServerConfig {
-				// 获取客户端
 				cli, err := s.svcCtx.ClientManager.GetClient(serverCfg.Host, serverCfg.Port)
 				if err != nil {
+					logx.Errorf("get iec104 client failed, host: %s, port: %d, err: %v", serverCfg.Host, serverCfg.Port, err)
 					continue
 				}
 				if !cli.IsConnected() {
 					continue
 				}
-				// 累计量召唤
 				for _, v := range serverCfg.CcCoaList {
 					if err := cli.SendCounterInterrogationCmd(v); err != nil {
-						logx.Errorf("send counter interrogation cmd error %v\n", err)
+						logx.Errorf("send counter interrogation cmd failed, server: %s:%d, coa: %d, err: %v", serverCfg.Host, serverCfg.Port, v, err)
 						continue
 					}
 					logx.Infof("send counter interrogation cmd, server: %s:%d, coa: %d", serverCfg.Host, serverCfg.Port, v)
 				}
 			}
-		})
+		}); err != nil {
+			logx.Errorf("add counter interrogation cron failed, cron: %s, err: %v", s.svcCtx.Config.CounterInterrogationCmd, err)
+		}
 	}
 	s.c.Start()
-	fmt.Print("Starting cron server \n")
+	logx.Infof("starting cron server")
 }
 
 func (s *CronService) Stop() {

@@ -93,17 +93,9 @@ func (c *ClientCall) OnDelayAcquisition(packet *asdu.ASDU) error {
 
 // OnASDU 数据正体
 func (c *ClientCall) OnASDU(packet *asdu.ASDU) error {
-	ctx := logx.ContextWithFields(context.Background(),
-		logx.Field("type", packet.Type),
-		logx.Field("coa", packet.Coa.String()),
-		logx.Field("commonAddr", packet.CommonAddr),
-		logx.Field("asdu", genASDUName(packet.Type)),
-		logx.Field("host", c.config.Host),
-		logx.Field("port", c.config.Port),
-		logx.Field("stationId", c.stationId),
-	)
+	ctx := c.asduLogContext(context.Background(), packet)
 	ctx = context.WithValue(ctx, "stationId", c.stationId)
-	logx.WithContext(ctx).Info("received OnASDU")
+	logx.WithContext(ctx).Debug("received OnASDU")
 	c.taskRunner.Schedule(func() {
 		dataType := client.GetDataType(packet.Type)
 		// 读取设备数据
@@ -139,6 +131,47 @@ func (c *ClientCall) OnASDU(packet *asdu.ASDU) error {
 	return nil
 }
 
+func (c *ClientCall) pushASDU(ctx context.Context, data *types.MsgBody, ioa uint) error {
+	if err := c.svcCtx.PushASDU(ctx, data, ioa); err != nil {
+		pushCtx := logx.ContextWithFields(ctx,
+			logx.Field("msgId", data.MsgId),
+			logx.Field("typeId", data.TypeId),
+			logx.Field("dataType", data.DataType),
+			logx.Field("coa", data.Coa),
+			logx.Field("ioa", ioa),
+		)
+		logx.WithContext(pushCtx).Errorf("push asdu failed: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (c *ClientCall) asduLogContext(ctx context.Context, packet *asdu.ASDU) context.Context {
+	return logx.ContextWithFields(ctx,
+		logx.Field("host", c.config.Host),
+		logx.Field("port", c.config.Port),
+		logx.Field("stationId", c.stationId),
+		logx.Field("asdu", genASDUName(packet.Type)),
+		logx.Field("typeId", int(packet.Type)),
+		logx.Field("dataType", int(client.GetDataType(packet.Type))),
+		logx.Field("coa", uint(packet.CommonAddr)),
+	)
+}
+
+func (c *ClientCall) newMsgBody(packet *asdu.ASDU, msgId string, coa asdu.CommonAddr, body types.IoaGetter) *types.MsgBody {
+	return &types.MsgBody{
+		MsgId:    msgId,
+		Host:     c.config.Host,
+		Port:     c.config.Port,
+		Asdu:     genASDUName(packet.Type),
+		TypeId:   int(packet.Type),
+		DataType: int(client.GetDataType(packet.Type)),
+		Coa:      uint(coa),
+		Body:     body,
+		MetaData: c.config.MetaData,
+	}
+}
+
 func (c *ClientCall) onSinglePoint(ctx context.Context, packet *asdu.ASDU) {
 	coa := packet.CommonAddr
 	asduDataList := packet.GetSinglePoint()
@@ -156,17 +189,7 @@ func (c *ClientCall) onSinglePoint(ctx context.Context, packet *asdu.ASDU) {
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
-			MsgId:    msgId,
-			Host:     c.config.Host,
-			Port:     c.config.Port,
-			Asdu:     genASDUName(packet.Type),
-			TypeId:   int(packet.Type),
-			DataType: int(client.GetDataType(packet.Type)),
-			Coa:      uint(coa),
-			Body:     &obj,
-			MetaData: c.config.MetaData,
-		}, obj.Ioa)
+		_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
 	}
 }
 
@@ -189,17 +212,7 @@ func (c *ClientCall) onDoublePoint(ctx context.Context, packet *asdu.ASDU) {
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
-			MsgId:    msgId,
-			Host:     c.config.Host,
-			Port:     c.config.Port,
-			Asdu:     genASDUName(packet.Type),
-			TypeId:   int(packet.Type),
-			DataType: int(client.GetDataType(packet.Type)),
-			Coa:      uint(coa),
-			Body:     &obj,
-			MetaData: c.config.MetaData,
-		}, obj.Ioa)
+		_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
 	}
 }
 
@@ -220,17 +233,7 @@ func (c *ClientCall) onMeasuredValueScaled(ctx context.Context, packet *asdu.ASD
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
-			MsgId:    msgId,
-			Host:     c.config.Host,
-			Port:     c.config.Port,
-			Asdu:     genASDUName(packet.Type),
-			TypeId:   int(packet.Type),
-			DataType: int(client.GetDataType(packet.Type)),
-			Coa:      uint(coa),
-			Body:     &obj,
-			MetaData: c.config.MetaData,
-		}, obj.Ioa)
+		_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
 	}
 }
 
@@ -253,17 +256,7 @@ func (c *ClientCall) onMeasuredValueNormal(ctx context.Context, packet *asdu.ASD
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
-			MsgId:    msgId,
-			Host:     c.config.Host,
-			Port:     c.config.Port,
-			Asdu:     genASDUName(packet.Type),
-			TypeId:   int(packet.Type),
-			DataType: int(client.GetDataType(packet.Type)),
-			Coa:      uint(coa),
-			Body:     &obj,
-			MetaData: c.config.MetaData,
-		}, obj.Ioa)
+		_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
 	}
 }
 
@@ -285,17 +278,7 @@ func (c *ClientCall) onStepPosition(ctx context.Context, packet *asdu.ASDU) {
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
-			MsgId:    msgId,
-			Host:     c.config.Host,
-			Port:     c.config.Port,
-			Asdu:     genASDUName(packet.Type),
-			TypeId:   int(packet.Type),
-			DataType: int(client.GetDataType(packet.Type)),
-			Coa:      uint(coa),
-			Body:     &obj,
-			MetaData: c.config.MetaData,
-		}, obj.Ioa)
+		_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
 	}
 }
 
@@ -316,17 +299,7 @@ func (c *ClientCall) onBitString32(ctx context.Context, packet *asdu.ASDU) {
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
-			MsgId:    msgId,
-			Host:     c.config.Host,
-			Port:     c.config.Port,
-			Asdu:     genASDUName(packet.Type),
-			TypeId:   int(packet.Type),
-			DataType: int(client.GetDataType(packet.Type)),
-			Coa:      uint(coa),
-			Body:     &obj,
-			MetaData: c.config.MetaData,
-		}, obj.Ioa)
+		_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
 	}
 }
 
@@ -347,17 +320,7 @@ func (c *ClientCall) onMeasuredValueFloat(ctx context.Context, packet *asdu.ASDU
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
-			MsgId:    msgId,
-			Host:     c.config.Host,
-			Port:     c.config.Port,
-			Asdu:     genASDUName(packet.Type),
-			TypeId:   int(packet.Type),
-			DataType: int(client.GetDataType(packet.Type)),
-			Coa:      uint(coa),
-			Body:     &obj,
-			MetaData: c.config.MetaData,
-		}, obj.Ioa)
+		_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
 	}
 }
 
@@ -373,17 +336,7 @@ func (c *ClientCall) onIntegratedTotals(ctx context.Context, packet *asdu.ASDU) 
 		var obj types.BinaryCounterReadingInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, copierx.Option)
-		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
-			MsgId:    msgId,
-			Host:     c.config.Host,
-			Port:     c.config.Port,
-			Asdu:     genASDUName(packet.Type),
-			TypeId:   int(packet.Type),
-			DataType: int(client.GetDataType(packet.Type)),
-			Coa:      uint(coa),
-			Body:     &obj,
-			MetaData: c.config.MetaData,
-		}, obj.Ioa)
+		_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
 	}
 }
 
@@ -405,17 +358,7 @@ func (c *ClientCall) onEventOfProtectionEquipment(ctx context.Context, packet *a
 		obj.Sb = util.QdpIsSubstituted(p.Qdp)
 		obj.Nt = util.QdpIsNotTopical(p.Qdp)
 		obj.Iv = util.QdpIsInvalid(p.Qdp)
-		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
-			MsgId:    msgId,
-			Host:     c.config.Host,
-			Port:     c.config.Port,
-			Asdu:     genASDUName(packet.Type),
-			TypeId:   int(packet.Type),
-			DataType: int(client.GetDataType(packet.Type)),
-			Coa:      uint(coa),
-			Body:     &obj,
-			MetaData: c.config.MetaData,
-		}, obj.Ioa)
+		_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
 	}
 }
 
@@ -435,17 +378,7 @@ func (c *ClientCall) onPackedStartEventsOfProtectionEquipment(ctx context.Contex
 	obj.Sb = util.QdpIsSubstituted(p.Qdp)
 	obj.Nt = util.QdpIsNotTopical(p.Qdp)
 	obj.Iv = util.QdpIsInvalid(p.Qdp)
-	_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
-		MsgId:    msgId,
-		Host:     c.config.Host,
-		Port:     c.config.Port,
-		Asdu:     genASDUName(packet.Type),
-		TypeId:   int(packet.Type),
-		DataType: int(client.GetDataType(packet.Type)),
-		Coa:      uint(coa),
-		Body:     &obj,
-		MetaData: c.config.MetaData,
-	}, obj.Ioa)
+	_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
 }
 
 func (c *ClientCall) onPackedOutputCircuitInfo(ctx context.Context, packet *asdu.ASDU) {
@@ -472,17 +405,7 @@ func (c *ClientCall) onPackedOutputCircuitInfo(ctx context.Context, packet *asdu
 	obj.Sb = util.QdpIsSubstituted(p.Qdp)
 	obj.Nt = util.QdpIsNotTopical(p.Qdp)
 	obj.Iv = util.QdpIsInvalid(p.Qdp)
-	_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
-		MsgId:    msgId,
-		Host:     c.config.Host,
-		Port:     c.config.Port,
-		Asdu:     genASDUName(packet.Type),
-		TypeId:   int(packet.Type),
-		DataType: int(client.GetDataType(packet.Type)),
-		Coa:      uint(coa),
-		Body:     &obj,
-		MetaData: c.config.MetaData,
-	}, obj.Ioa)
+	_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
 }
 
 func (c *ClientCall) onPackedSinglePointWithSCD(ctx context.Context, packet *asdu.ASDU) {
@@ -521,17 +444,7 @@ func (c *ClientCall) onPackedSinglePointWithSCD(ctx context.Context, packet *asd
 		obj.Sb = util.QdsIsSubstituted(p.Qds)
 		obj.Nt = util.QdsIsNotTopical(p.Qds)
 		obj.Iv = util.QdsIsInvalid(p.Qds)
-		_ = c.svcCtx.PushASDU(ctx, &types.MsgBody{
-			MsgId:    msgId,
-			Host:     c.config.Host,
-			Port:     c.config.Port,
-			Asdu:     genASDUName(packet.Type),
-			TypeId:   int(packet.Type),
-			DataType: int(client.GetDataType(packet.Type)),
-			Coa:      uint(coa),
-			Body:     &obj,
-			MetaData: c.config.MetaData,
-		}, obj.Ioa)
+		_ = c.pushASDU(ctx, c.newMsgBody(packet, msgId, coa, &obj), obj.Ioa)
 	}
 }
 
