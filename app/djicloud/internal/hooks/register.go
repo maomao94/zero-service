@@ -2,30 +2,31 @@ package hooks
 
 import (
 	"zero-service/common/djisdk"
+	"zero-service/common/gormx"
 
 	"github.com/zeromicro/go-zero/core/collection"
 )
 
-// RegisterDjiClientOptions 为 RegisterDjiClient 的依赖：在线缓存与航线进度缓存由 svc 层创建并注入。
+// RegisterDjiClientOptions 为 RegisterDjiClient 的依赖，在线缓存由 svc 层创建并注入。
 type RegisterDjiClientOptions struct {
-	OnlineCache         *collection.Cache
-	FlightProgressCache *collection.Cache
+	DB          *gormx.DB
+	OnlineCache *collection.Cache
 }
 
-func registerEventHandlers(c *djisdk.Client, progressCache *collection.Cache) {
-	c.OnFlightTaskProgress(NewFlightTaskProgressHandler(progressCache))
+func registerEventHandlers(c *djisdk.Client, db *gormx.DB) {
+	c.OnFlightTaskProgress(NewFlightTaskProgressHandler(db))
 	c.OnFlightTaskReady(HandleFlightTaskReadyEvent)
-	c.OnReturnHomeInfo(HandleReturnHomeInfoEvent)
+	c.OnReturnHomeInfo(NewReturnHomeInfoHandler(db))
 	c.OnCustomDataFromPsdk(HandleCustomDataFromPsdkEvent)
-	c.OnHmsEventNotify(HandleHmsEventNotify)
+	c.OnHmsEventNotify(NewHmsEventNotifyHandler(db))
 	c.OnRemoteLogFileUploadResult(HandleRemoteLogFileUploadResultEvent)
 	c.OnRemoteLogFileUploadProgress(HandleRemoteLogFileUploadProgressEvent)
 }
 
-func registerTelemetryHandlers(c *djisdk.Client, onlineCache *collection.Cache) {
-	c.OnOsd(NewOsdHandler(onlineCache))
-	c.OnState(HandleStateTelemetry)
-	c.OnStatus(NewStatusHandler(onlineCache))
+func registerTelemetryHandlers(c *djisdk.Client, db *gormx.DB, onlineCache *collection.Cache) {
+	c.OnOsd(NewOsdHandler(db, onlineCache))
+	c.OnState(NewStateTelemetryHandler(db, onlineCache))
+	c.OnStatus(NewStatusHandler(db, onlineCache))
 	c.OnDrcUp(NewDrcUpHandler(onlineCache))
 }
 
@@ -45,8 +46,8 @@ func RegisterDjiClient(c *djisdk.Client, o RegisterDjiClientOptions) {
 	if c == nil {
 		return
 	}
-	registerEventHandlers(c, o.FlightProgressCache)
-	registerTelemetryHandlers(c, o.OnlineCache)
+	registerEventHandlers(c, o.DB)
+	registerTelemetryHandlers(c, o.DB, o.OnlineCache)
 	registerRequestHandlers(c)
 	registerOnlineChecker(c, o.OnlineCache)
 }

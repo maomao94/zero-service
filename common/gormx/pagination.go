@@ -6,118 +6,89 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	DefaultPage     = 1
+	DefaultPageSize = 10
+	MaxPageSize     = 500
+)
+
 type PageResult[T any] struct {
+	Data       []T   `json:"data"`
 	Total      int64 `json:"total"`
 	Page       int   `json:"page"`
 	PageSize   int   `json:"page_size"`
 	TotalPages int   `json:"total_pages"`
-	Data       T     `json:"data"`
 }
 
-func QueryPage[T any](db *gorm.DB, page, pageSize int, result *T) (*PageResult[T], error) {
+func NormalizePage(page, pageSize int) (int, int) {
+	if page <= 0 {
+		page = DefaultPage
+	}
+	if pageSize <= 0 {
+		pageSize = DefaultPageSize
+	}
+	if pageSize > MaxPageSize {
+		pageSize = MaxPageSize
+	}
+	return page, pageSize
+}
+
+func QueryPage[T any](db *gorm.DB, page, pageSize int, dest *[]T) (*PageResult[T], error) {
+	page, pageSize = NormalizePage(page, pageSize)
 	var total int64
 	if err := db.Count(&total).Error; err != nil {
 		return nil, err
 	}
 
 	offset := (page - 1) * pageSize
-	totalPages := int(math.Ceil(float64(total) / float64(pageSize)))
-	if err := db.Offset(offset).Limit(pageSize).Find(result).Error; err != nil {
+	if err := db.Offset(offset).Limit(pageSize).Find(dest).Error; err != nil {
 		return nil, err
 	}
 
-	return &PageResult[T]{
-		Total:      total,
-		Page:       page,
-		PageSize:   pageSize,
-		TotalPages: totalPages,
-		Data:       *result,
-	}, nil
+	return NewPageResult(*dest, total, page, pageSize), nil
 }
 
-func QueryPageWithTotal[T any](db *gorm.DB, page, pageSize int, total int64, result *T) (*PageResult[T], error) {
-	offset := (page - 1) * pageSize
-	totalPages := int(math.Ceil(float64(total) / float64(pageSize)))
-	if err := db.Offset(offset).Limit(pageSize).Find(result).Error; err != nil {
-		return nil, err
+func NewPageResult[T any](data []T, total int64, page, pageSize int) *PageResult[T] {
+	page, pageSize = NormalizePage(page, pageSize)
+	totalPages := 0
+	if total > 0 {
+		totalPages = int(math.Ceil(float64(total) / float64(pageSize)))
 	}
-
 	return &PageResult[T]{
-		Total:      total,
-		Page:       page,
-		PageSize:   pageSize,
-		TotalPages: totalPages,
-		Data:       *result,
-	}, nil
-}
-
-func NewPageResult[T any](total int64, page, pageSize int, data T) *PageResult[T] {
-	totalPages := int(math.Ceil(float64(total) / float64(pageSize)))
-	return &PageResult[T]{
-		Total:      total,
-		Page:       page,
-		PageSize:   pageSize,
-		TotalPages: totalPages,
 		Data:       data,
-	}
-}
-
-func EmptyPageResult[T any](page, pageSize int) *PageResult[T] {
-	return &PageResult[T]{
-		Total:      0,
+		Total:      total,
 		Page:       page,
 		PageSize:   pageSize,
-		TotalPages: 0,
-		Data:       *new(T),
+		TotalPages: totalPages,
 	}
 }
 
 type CursorPageResult[T any] struct {
-	Cursor  string `json:"cursor"`
-	HasMore bool   `json:"has_more"`
-	Data    T      `json:"data"`
+	Data       []T    `json:"data"`
+	NextCursor string `json:"next_cursor"`
+	HasMore    bool   `json:"has_more"`
 }
 
-func CursorPage[T any](
-	db *gorm.DB,
-	pageSize int,
-	cursor string,
-	result *[]T,
-	whereFn func(db *gorm.DB, cursor string) *gorm.DB,
-	cursorFn func(row T) string,
-) (*CursorPageResult[[]T], error) {
-	if pageSize <= 0 {
-		pageSize = 10
+func CursorPage[T any](db *gorm.DB, cursor string, limit int, orderColumn string, dest *[]T) (*CursorPageResult[T], error) {
+	if limit <= 0 {
+		limit = DefaultPageSize
 	}
-
-	query := whereFn(db, cursor).Limit(pageSize + 1)
-	if err := query.Find(result).Error; err != nil {
+	if limit > MaxPageSize {
+		limit = MaxPageSize
+	}
+	if cursor != "" {
+		db = db.Where(orderColumn+" > ?", cursor)
+	}
+	if err := db.Order(orderColumn + " ASC").Limit(limit + 1).Find(dest).Error; err != nil {
 		return nil, err
 	}
-
-	data := *result
-	hasMore := len(data) > pageSize
-	nextCursor := ""
-
+	hasMore := len(*dest) > limit
 	if hasMore {
-		nextCursor = cursorFn(data[pageSize-1])
-		data = data[:pageSize]
-		*result = data
-	} else if len(data) > 0 {
-		nextCursor = cursorFn(data[len(data)-1])
+		*dest = (*dest)[:limit]
 	}
 
-	return &CursorPageResult[[]T]{
-		Cursor:  nextCursor,
-		HasMore: hasMore,
-		Data:    data,
-	}, nil
-}
-
-func NewCursorResult[T any](cursor string, hasMore bool, data T) *CursorPageResult[T] {
 	return &CursorPageResult[T]{
-		Cursor:  cursor,
+		Data:    *dest,
 		HasMore: hasMore,
-		Data:    data,
-	}
+	}, nil
 }

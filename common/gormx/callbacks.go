@@ -16,10 +16,10 @@ func beforeCreateHook(db *gorm.DB) {
 		return
 	}
 
-	if userCtx.UserID > 0 {
-		setSchemaColumn(db, "create_user", userCtx.UserID)
+	if userID := userCtx.AuditUserValue(); userID != nil {
+		setSchemaColumn(db, "create_user", userID)
 		setSchemaColumn(db, "create_name", userCtx.UserName)
-		setSchemaColumn(db, "update_user", userCtx.UserID)
+		setSchemaColumn(db, "update_user", userID)
 		setSchemaColumn(db, "update_name", userCtx.UserName)
 	}
 
@@ -30,9 +30,11 @@ func beforeCreateHook(db *gorm.DB) {
 
 func beforeUpdateHook(db *gorm.DB) {
 	userCtx := GetUserContext(db.Statement.Context)
-	if userCtx != nil && userCtx.UserID > 0 {
-		setSchemaColumn(db, "update_user", userCtx.UserID)
-		setSchemaColumn(db, "update_name", userCtx.UserName)
+	if userCtx != nil {
+		if userID := userCtx.AuditUserValue(); userID != nil {
+			setSchemaColumn(db, "update_user", userID)
+			setSchemaColumn(db, "update_name", userCtx.UserName)
+		}
 	}
 
 	if hasSchemaField(db, "version") {
@@ -42,9 +44,11 @@ func beforeUpdateHook(db *gorm.DB) {
 
 func beforeDeleteHook(db *gorm.DB) {
 	userCtx := GetUserContext(db.Statement.Context)
-	if userCtx != nil && userCtx.UserID > 0 {
-		setSchemaColumn(db, "delete_user", userCtx.UserID)
-		setSchemaColumn(db, "delete_name", userCtx.UserName)
+	if userCtx != nil {
+		if userID := userCtx.AuditUserValue(); userID != nil {
+			setSchemaColumn(db, "delete_user", userID)
+			setSchemaColumn(db, "delete_name", userCtx.UserName)
+		}
 	}
 }
 

@@ -1,27 +1,47 @@
 package svc
 
 import (
+	"fmt"
 	"time"
 
 	"zero-service/app/djicloud/internal/config"
 	"zero-service/app/djicloud/internal/hooks"
+	"zero-service/app/djicloud/model/gormmodel"
 	"zero-service/common/djisdk"
+	"zero-service/common/gormx"
 	"zero-service/common/mqttx"
 
 	"github.com/zeromicro/go-zero/core/collection"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/service"
 )
 
 const dockOnlineTTL = 60 * time.Second
 
-// flightProgressTTL 航线进度缓存条目的 TTL；每次 flighttask_progress 上报会 Set 同 key，任务持续进行时会不断刷新，条目留在内存中。
-const flightProgressTTL = 24 * time.Hour
-
 type ServiceContext struct {
-	Config              config.Config
-	DjiClient           *djisdk.Client
-	OnlineCache         *collection.Cache
-	FlightProgressCache *collection.Cache
+	Config      config.Config
+	DjiClient   *djisdk.Client
+	DB          *gormx.DB
+	OnlineCache *collection.Cache
+}
+
+func initDB(c config.Config) *gormx.DB {
+	if c.DB.DataSource == "" {
+		logx.Must(fmt.Errorf("djicloud db datasource is required"))
+	}
+	db := gormx.MustOpenWithConf(c.DB)
+	if c.Mode == service.DevMode || c.Mode == service.TestMode {
+		db.MustAutoMigrate(
+			&gormmodel.DjiDevice{},
+			&gormmodel.DjiDeviceTopo{},
+			&gormmodel.DjiDeviceOsdSnapshot{},
+			&gormmodel.DjiDeviceStateSnapshot{},
+			&gormmodel.DjiHmsAlert{},
+			&gormmodel.DjiFlightTaskProgress{},
+			&gormmodel.DjiReturnHomeEvent{},
+		)
+	}
+	return db
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -39,22 +59,21 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	onlineCache, err := collection.NewCache(dockOnlineTTL, collection.WithName("dock-online"))
 	logx.Must(err)
 
-	flightProgressCache, err := collection.NewCache(flightProgressTTL, collection.WithName("flight-task-progress"))
-	logx.Must(err)
+	db := initDB(c)
+
+	hooks.RegisterDjiClient(djiCli, hooks.RegisterDjiClientOptions{
+		DB:          db,
+		OnlineCache: onlineCache,
+	})
 
 	if err := djiCli.SubscribeAll(); err != nil {
 		logx.Errorf("[dji-cloud] subscribe topics failed: %v", err)
 	}
 
-	hooks.RegisterDjiClient(djiCli, hooks.RegisterDjiClientOptions{
-		OnlineCache:         onlineCache,
-		FlightProgressCache: flightProgressCache,
-	})
-
 	return &ServiceContext{
-		Config:              c,
-		DjiClient:           djiCli,
-		OnlineCache:         onlineCache,
-		FlightProgressCache: flightProgressCache,
+		Config:      c,
+		DjiClient:   djiCli,
+		DB:          db,
+		OnlineCache: onlineCache,
 	}
 }

@@ -39,17 +39,29 @@ func (db *DB) Transact(fn func(tx *DB) error) error {
 	})
 }
 
+func (db *DB) WithTenant(ctx context.Context) *gorm.DB {
+	return db.WithContext(ctx).DB.Scopes(TenantScope(ctx))
+}
+
+func (db *DB) WithTenantStrict(ctx context.Context) *gorm.DB {
+	return db.WithContext(ctx).DB.Scopes(TenantScopeStrict(ctx))
+}
+
+func (db *DB) WithDeleted(ctx context.Context) *gorm.DB {
+	return db.WithContext(ctx).DB.Unscoped()
+}
+
+func (db *DB) WithTenantDeleted(ctx context.Context) *gorm.DB {
+	return db.WithContext(ctx).DB.Scopes(TenantScopeWithDelete(ctx))
+}
+
 func (db *DB) AutoMigrate(dst ...any) error {
 	if len(dst) == 0 {
 		return nil
 	}
-	originalLogger := db.DB.Logger
-	db.DB.Logger = QuietGormLogger()
-	if err := db.DB.AutoMigrate(dst...); err != nil {
-		db.DB.Logger = originalLogger
+	if err := db.DB.Session(&gorm.Session{Logger: QuietGormLogger()}).AutoMigrate(dst...); err != nil {
 		return err
 	}
-	db.DB.Logger = originalLogger
 	logx.Infof("auto migrate %d tables success", len(dst))
 	return nil
 }

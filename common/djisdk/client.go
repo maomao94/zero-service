@@ -212,13 +212,15 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 	case MethodFlightTaskProgress:
 		if c.onFlightTaskProgress != nil {
 			var msg struct {
-				Data FlightTaskProgressEvent `json:"data"`
+				Data struct {
+					Output FlightTaskProgressEvent `json:"output"`
+				} `json:"data"`
 			}
 			if err := json.Unmarshal(raw, &msg); err != nil {
 				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal FlightTaskProgressEvent failed: %v", err)
 				return true, PlatformResultHandlerError
 			}
-			c.onFlightTaskProgress(ctx, gatewaySn, &msg.Data)
+			c.onFlightTaskProgress(ctx, gatewaySn, &msg.Data.Output)
 			return true, PlatformResultOK
 		}
 	case MethodFlightTaskReady:

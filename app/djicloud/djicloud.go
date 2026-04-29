@@ -61,8 +61,12 @@ func main() {
 	}
 	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
 	logx.AddGlobalFields(logx.Field("app", c.Name))
-	defer s.Stop()
+
+	group := service.NewServiceGroup()
+	defer group.Stop()
+	group.Add(s)
+	group.Add(svc.NewDeviceOnlineRefreshCron(ctx.DB))
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
-	s.Start()
+	group.Start()
 }

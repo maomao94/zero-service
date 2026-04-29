@@ -10,6 +10,9 @@ const OnlineValue = "1"
 
 // IsOnline 根据与 hooks 同逻辑写入的 onlineCache 判断机巢/网关是否视为在线。
 func IsOnline(onlineCache *collection.Cache, gatewaySn string) bool {
+	if onlineCache == nil {
+		return false
+	}
 	_, ok := onlineCache.Get(gatewaySn)
 	return ok
 }

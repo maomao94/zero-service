@@ -10,7 +10,7 @@ import (
 	"github.com/zeromicro/go-zero/core/collection"
 )
 
-func TestNewDrcUpHandlerRefreshesOnline(t *testing.T) {
+func TestNewDrcUpHandlerDoesNotRefreshOnline(t *testing.T) {
 	onlineCache, err := collection.NewCache(time.Minute)
 	if err != nil {
 		t.Fatalf("NewCache online error = %v", err)
@@ -27,7 +27,7 @@ func TestNewDrcUpHandlerRefreshesOnline(t *testing.T) {
 		t.Fatalf("NewDrcUpHandler() error = %v", err)
 	}
 
-	if !IsOnline(onlineCache, "gateway-1") {
-		t.Fatal("expected gateway to be online")
+	if IsOnline(onlineCache, "gateway-1") {
+		t.Fatal("expected drc/up not to refresh online cache")
 	}
 }

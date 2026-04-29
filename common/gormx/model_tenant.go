@@ -1,39 +1,36 @@
 package gormx
 
-import (
-	"time"
-)
-
+// TenantModel 是带租户字段的新表默认 uint 主键模型。
 type TenantModel struct {
-	ID uint `gorm:"primarykey" json:"id"`
+	IDModel
 	TenantMixin
 	AuditMixin
 	VersionMixin
 	SoftDeleteMixin
-	CreatedAt time.Time `gorm:"type:timestamp(6)" json:"created_at"`
-	UpdatedAt time.Time `gorm:"type:timestamp(6)" json:"updated_at"`
+	TimeMixin
 }
 
+// TenantStringIDModel 是带租户字段的新表 string 主键模型。
 type TenantStringIDModel struct {
-	ID string `gorm:"primarykey;size:36" json:"id"`
+	StringIDModel
 	TenantMixin
 	AuditMixin
 	VersionMixin
 	SoftDeleteMixin
-	CreatedAt time.Time `gorm:"type:timestamp(6)" json:"created_at"`
-	UpdatedAt time.Time `gorm:"type:timestamp(6)" json:"updated_at"`
+	TimeMixin
 }
 
+// TenantTimeModel 是带租户字段、string 主键、时间、版本和无删除审计字段的模型。
 type TenantTimeModel struct {
-	ID string `gorm:"primarykey;size:36" json:"id"`
+	StringIDModel
 	TenantMixin
 	AuditWithoutDeleteMixin
 	VersionMixin
-	CreatedAt time.Time `gorm:"type:timestamp(6)" json:"created_at"`
-	UpdatedAt time.Time `gorm:"type:timestamp(6)" json:"updated_at"`
+	TimeMixin
 }
 
+// TenantOnlyModel 是只需要主键和租户字段的轻量模型。
 type TenantOnlyModel struct {
-	ID uint `gorm:"primarykey" json:"id"`
+	IDModel
 	TenantMixin
 }

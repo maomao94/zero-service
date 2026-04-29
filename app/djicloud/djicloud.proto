@@ -527,14 +527,36 @@ service DjiCloud {
   // 平台能力 = 大疆 Cloud API 中没有的、由本服务结合业务需求自定义或组合的接口。
   // 大疆标准协议转发类接口请按大疆文档分类归入上方对应分区。
 
-  // IsDeviceOnline 查询机巢在线状态。
-  // 数据来源：收到 sys/product/+/status 或 OSD 心跳时写入 onlineCache；离线由 TTL 超时推断。
-  // 本接口从 onlineCache 读取，无需 MQTT 通信。
+  // IsDeviceOnline 查询设备在线状态。
+  // device_sn 可传机巢SN或子设备SN；机巢在线和子设备在线分开判定。
+  // 当前服务应配置数据库用于持久化设备状态；内存 onlineCache 保存热数据以提升高频在线判断性能，数据库保存最近一次在线快照并通过 last_online_at 懒过期清理。
   rpc IsDeviceOnline(DeviceSnReq) returns (DeviceOnlineRes);
 
-  // GetFlightTaskProgressLast 查询本服务内存中最近一次 flighttask_progress 上报。
-  // 数据来源：thing/product/{gateway_sn}/events、method=flighttask_progress（设备上行），
-  // 由 SDK 分发至钩子后写入进程内缓存；非大疆标准查询接口。
+  // ListDevices 查询设备列表，包含机巢、无人机、负载等设备。
+  rpc ListDevices(ListDevicesReq) returns (ListDevicesRes);
+
+  // GetDeviceDetail 查询设备详情，聚合设备基础信息、OSD快照、State快照和拓扑信息。
+  rpc GetDeviceDetail(DeviceSnReq) returns (DeviceDetailRes);
+
+  // GetDeviceOsdSnapshot 查询设备最近一次 OSD 遥测快照。
+  rpc GetDeviceOsdSnapshot(DeviceSnReq) returns (DeviceOsdSnapshotRes);
+
+  // GetDeviceStateSnapshot 查询设备最近一次 State 状态快照。
+  rpc GetDeviceStateSnapshot(DeviceSnReq) returns (DeviceStateSnapshotRes);
+
+  // ListHmsAlerts 查询 HMS 告警记录。
+  rpc ListHmsAlerts(ListHmsAlertsReq) returns (ListHmsAlertsRes);
+
+  // AckHmsAlert 确认 HMS 告警。
+  rpc AckHmsAlert(AckHmsAlertReq) returns (CommonRes);
+
+  // ListFlightTaskProgress 查询飞行任务进度上行记录。
+  // 仅记录 flighttask_progress 推送，不在本服务内维护完整任务状态机。
+  rpc ListFlightTaskProgress(ListFlightTaskProgressReq) returns (ListFlightTaskProgressRes);
+
+  // GetFlightTaskProgressLast 查询最近一次 flighttask_progress 上行记录。
+  // 数据来源：thing/product/{gateway_sn}/events、method=flighttask_progress（设备上行），由 SDK 分发至钩子后写入数据库。
+  // 该接口只返回最近一条进度记录，不代表完整任务状态机；非大疆标准查询接口。
   rpc GetFlightTaskProgressLast(DeviceSnReq) returns (FlightTaskProgressLastRes);
 }
 
@@ -581,8 +603,6 @@ message SetPropertyReq {
   string properties = 2;
 }
 
-// ==================== 设备管理（Device）消息 ====================
-// update_topo 为 sys/product/{gateway_sn}/status 上行，由 common/djisdk.OnTopoUpdate 处理。
 
 // ==================== 组织管理（Organization）消息 ====================
 // airport_* 为 thing/product/{gateway_sn}/requests 上行，由 common/djisdk.OnRequest 处理。
@@ -1329,7 +1349,10 @@ message DrcCameraDewarpingSetReq {
   int32 dewarping_state = 4;
 }
 
-// ==================== 平台能力响应消息 ====================
+// ==================== 平台能力消息（非 DJI 标准 API，本服务自定义） ====================
+
+// 平台能力 = 大疆 Cloud API 中没有的、由本服务结合业务需求自定义或组合的接口。
+// 大疆标准协议转发类消息请按大疆文档分类归入对应分区。
 
 // DeviceOnlineRes 设备在线状态查询响应。
 message DeviceOnlineRes {
@@ -1337,12 +1360,220 @@ message DeviceOnlineRes {
   bool is_online = 1;
 }
 
-// FlightTaskProgressLastRes 最近一次航线任务进度（flighttask_progress）内存缓存。
+// ==================== 设备管理（Device）消息 ====================
+// update_topo 为 sys/product/{gateway_sn}/status 上行，由 common/djisdk.OnTopoUpdate 处理。
+
+// DeviceInfo 设备基础信息。
+message DeviceInfo {
+  // id 数据库主键。
+  int64 id = 1;
+  // device_sn 设备 SN，机巢/无人机/负载设备唯一标识。
+  string device_sn = 2;
+  // gateway_sn 最近一次上报关联的网关机巢 SN；机巢自身等于 device_sn。
+  // 蛙跳场景下，一架飞机可能存在多个机巢绑定关系，完整绑定关系以 DeviceTopoInfo 为准。
+  string gateway_sn = 3;
+  // device_domain 大疆设备领域 domain，0: 飞机类，1: 负载类，2: 遥控器类，3: 机场类，按 DJI 原始字符串透传。
+  string device_domain = 4;
+  // device_type 大疆设备类型。
+  int32 device_type = 5;
+  // device_sub_type 大疆设备子类型。
+  int32 device_sub_type = 6;
+  // alias 设备别名。
+  string alias = 7;
+  // group_name 业务分组。
+  string group_name = 8;
+  // firmware_version 固件版本。
+  string firmware_version = 9;
+  // hardware_version 硬件版本。
+  string hardware_version = 10;
+  // is_online 是否在线，false 表示离线或尚未收到在线上报，true 表示在线。
+  bool is_online = 11;
+  // first_online_at 首次上线时间，毫秒时间戳。
+  int64 first_online_at = 12;
+  // last_online_at 最后在线时间，毫秒时间戳。
+  int64 last_online_at = 13;
+}
+
+// DeviceTopoInfo 设备拓扑信息。
+// 同一个 sub_device_sn 可出现在多个 gateway_sn 下，用于表达大疆蛙跳场景下飞机与多个机巢的绑定关系。
+message DeviceTopoInfo {
+  // gateway_sn 网关机巢 SN。
+  string gateway_sn = 1;
+  // sub_device_sn 子设备 SN。
+  string sub_device_sn = 2;
+  // domain 大疆设备领域 domain，0: 飞机类，1: 负载类，2: 遥控器类，3: 机场类，按 DJI 原始字符串透传。
+  string domain = 3;
+  // sub_device_type 子设备类型。
+  int32 sub_device_type = 4;
+  // sub_device_sub_type 子设备子类型。
+  int32 sub_device_sub_type = 5;
+  // sub_device_index 子设备索引。
+  string sub_device_index = 6;
+  // thing_version 物模型版本。
+  string thing_version = 7;
+}
+
+// ListDevicesReq 查询设备列表请求。
+message ListDevicesReq {
+  // page 页码，从 1 开始。
+  int64 page = 1;
+  // page_size 每页条数，默认由服务端兜底。
+  int64 page_size = 2;
+  // gateway_sn 按机巢拓扑过滤，空表示不过滤。
+  // 查询子设备时会同时匹配设备最近一次 gateway_sn 和 dji_device_topo 中的历史/当前绑定关系，兼容蛙跳。
+  string gateway_sn = 3;
+  // device_domain_filter 设备领域过滤，空字符串表示全部；"0": 飞机类，"1": 负载类，"2": 遥控器类，"3": 机场类。
+  string device_domain_filter = 4;
+  // online_status 在线状态过滤，0: 全部，1: 在线，2: 离线。
+  int32 online_status = 5;
+  // keyword 按 SN/别名模糊查询。
+  string keyword = 6;
+}
+
+// ListDevicesRes 查询设备列表响应。
+message ListDevicesRes {
+  // total 当前过滤条件下的总数量，不受 page/page_size 限制。
+  int64 total = 1;
+  // list 当前页设备列表。
+  repeated DeviceInfo list = 2;
+}
+
+// DeviceOsdSnapshot 设备 OSD 快照。
+message DeviceOsdSnapshot {
+  string device_sn = 1;
+  string gateway_sn = 2;
+  string device_domain = 3;
+  double latitude = 4;
+  double longitude = 5;
+  double altitude = 6;
+  double height = 7;
+  double speed_h = 8;
+  double speed_v = 9;
+  double heading = 10;
+  double attitude_pitch = 11;
+  double attitude_roll = 12;
+  double attitude_heading = 13;
+  int32 battery_percent = 14;
+  double elevation = 15;
+  int32 mode_code = 16;
+  string data_json = 17;
+  int64 reported_at = 18;
+}
+
+// DeviceOsdSnapshotRes 设备 OSD 快照响应。
+message DeviceOsdSnapshotRes {
+  DeviceOsdSnapshot data = 1;
+}
+
+// DeviceStateSnapshot 设备 State 快照。
+message DeviceStateSnapshot {
+  string device_sn = 1;
+  string gateway_sn = 2;
+  string device_domain = 3;
+  string sub_device_sn = 4;
+  bool sub_device_online = 5;
+  string data_json = 6;
+  int64 reported_at = 7;
+}
+
+// DeviceStateSnapshotRes 设备 State 快照响应。
+message DeviceStateSnapshotRes {
+  DeviceStateSnapshot data = 1;
+}
+
+// DeviceDetailRes 设备详情响应。
+message DeviceDetailRes {
+  DeviceInfo device = 1;
+  DeviceOsdSnapshot osd = 2;
+  DeviceStateSnapshot state = 3;
+  repeated DeviceTopoInfo topo = 4;
+}
+
+// HmsAlertInfo HMS 告警信息。
+message HmsAlertInfo {
+  int64 id = 1;
+  string gateway_sn = 2;
+  string device_sn = 3;
+  int32 level = 4;
+  int32 module = 5;
+  string code = 6;
+  string device_type = 7;
+  int32 imminent = 8;
+  int32 in_the_sky = 9;
+  int32 component_index = 10;
+  int32 sensor_index = 11;
+  string message = 12;
+  int32 acked = 13;
+  int64 acked_at = 14;
+  string acked_by = 15;
+  int64 reported_at = 16;
+}
+
+// ListHmsAlertsReq 查询 HMS 告警请求。
+message ListHmsAlertsReq {
+  // page 页码，从 1 开始。
+  int64 page = 1;
+  // page_size 每页条数，默认由服务端兜底。
+  int64 page_size = 2;
+  string gateway_sn = 3;
+  string device_sn = 4;
+  // level 告警等级过滤，0: 全部，其余值按大疆 HMS level 过滤。
+  int32 level = 5;
+  // acked_status 确认状态过滤，0: 全部，1: 未确认，2: 已确认。
+  int32 acked_status = 6;
+}
+
+// ListHmsAlertsRes 查询 HMS 告警响应。
+message ListHmsAlertsRes {
+  // total 当前过滤条件下的总数量，不受 page/page_size 限制。
+  int64 total = 1;
+  // list 当前页 HMS 告警列表。
+  repeated HmsAlertInfo list = 2;
+}
+
+// AckHmsAlertReq 确认 HMS 告警请求。
+message AckHmsAlertReq {
+  int64 id = 1;
+  string acked_by = 2;
+}
+
+// FlightTaskProgressInfo 飞行任务进度推送记录。
+message FlightTaskProgressInfo {
+  int64 id = 1;
+  string flight_id = 2;
+  string gateway_sn = 3;
+  int32 wayline_mission_state = 4;
+  int32 current_waypoint_index = 5;
+  int32 media_count = 6;
+  double progress_percent = 7;
+  string ext_json = 8;
+  int64 reported_at = 9;
+}
+
+// ListFlightTaskProgressReq 查询飞行任务进度推送记录请求。
+message ListFlightTaskProgressReq {
+  // page 页码，从 1 开始。
+  int64 page = 1;
+  // page_size 每页条数，默认由服务端兜底。
+  int64 page_size = 2;
+  string gateway_sn = 3;
+  string flight_id = 4;
+}
+
+// ListFlightTaskProgressRes 查询飞行任务进度推送记录响应。
+message ListFlightTaskProgressRes {
+  // total 当前过滤条件下的总数量，不受 page/page_size 限制。
+  int64 total = 1;
+  // list 当前页飞行任务进度推送记录列表。
+  repeated FlightTaskProgressInfo list = 2;
+}
+
+// FlightTaskProgressLastRes 最近一次航线任务进度（flighttask_progress）数据库记录。
 message FlightTaskProgressLastRes {
-  // has_progress 是否已有缓存数据。
+  // has_progress 是否已有进度记录。
   bool has_progress = 1;
-  // cached_at_ms 服务端写入缓存时的 Unix 毫秒时间戳。
-  int64 cached_at_ms = 2;
-  // progress_json FlightTaskProgressEvent 的 JSON 序列化；无缓存时为空。
+  // reported_at_ms 设备上报时间 Unix 毫秒时间戳。
+  int64 reported_at_ms = 2;
+  // progress_json flighttask_progress 原始扩展数据 JSON；无记录时为空。
   string progress_json = 3;
 }

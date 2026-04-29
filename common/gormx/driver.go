@@ -20,21 +20,18 @@ const (
 
 func ParseDatabaseType(dsn string) DatabaseType {
 	dsn = strings.TrimSpace(dsn)
-	if strings.HasPrefix(dsn, "file:") || strings.Contains(dsn, ".db") || strings.Contains(dsn, ".sqlite") {
+	lower := strings.ToLower(dsn)
+	if lower == "" {
+		return DatabaseMySQL
+	}
+	if strings.HasPrefix(lower, "sqlite://") || strings.HasPrefix(lower, "sqlite3://") || strings.HasPrefix(lower, "file:") || strings.Contains(lower, ".db") || strings.Contains(lower, ".sqlite") || strings.Contains(lower, ":memory:") {
 		return DatabaseSQLite
 	}
-	if strings.HasPrefix(dsn, "postgres") || strings.Contains(dsn, "pg ") || strings.Contains(dsn, "sslmode=") {
+	if strings.HasPrefix(lower, "postgres://") || strings.HasPrefix(lower, "postgresql://") || strings.HasPrefix(lower, "postgres ") || strings.Contains(lower, "sslmode=") || strings.Contains(lower, ":5432") {
 		return DatabasePostgres
 	}
-	if strings.Contains(dsn, "@tcp(") || strings.Contains(dsn, "charset=") || strings.Contains(dsn, "root:") {
+	if strings.HasPrefix(lower, "mysql://") || strings.Contains(lower, "@tcp(") || strings.Contains(lower, "charset=") || strings.Contains(lower, ":3306") {
 		return DatabaseMySQL
-	}
-	lower := strings.ToLower(dsn)
-	if strings.HasPrefix(lower, "mysql") || strings.Contains(lower, ":3306") {
-		return DatabaseMySQL
-	}
-	if strings.HasPrefix(lower, "postgresql") || strings.Contains(lower, ":5432") {
-		return DatabasePostgres
 	}
 	return DatabaseMySQL
 }
@@ -52,7 +49,18 @@ func GetDialector(dbType DatabaseType, dsn string) (gorm.Dialector, error) {
 	}
 }
 
+func Dialector(dbType DatabaseType, dsn string) (gorm.Dialector, error) {
+	return GetDialector(dbType, dsn)
+}
+
+func DatabaseTypeOf(db *gorm.DB) DatabaseType {
+	return GetDatabaseTypeFromDialector(db)
+}
+
 func GetDatabaseTypeFromDialector(db *gorm.DB) DatabaseType {
+	if db == nil || db.Statement == nil || db.Statement.Dialector == nil {
+		return DatabaseMySQL
+	}
 	switch db.Statement.Dialector.(type) {
 	case *mysql.Dialector:
 		return DatabaseMySQL

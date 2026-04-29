@@ -109,6 +109,13 @@ const (
 	DjiCloud_DrcCameraMechanicalShutterSet_FullMethodName        = "/djicloud.DjiCloud/DrcCameraMechanicalShutterSet"
 	DjiCloud_DrcCameraDewarpingSet_FullMethodName                = "/djicloud.DjiCloud/DrcCameraDewarpingSet"
 	DjiCloud_IsDeviceOnline_FullMethodName                       = "/djicloud.DjiCloud/IsDeviceOnline"
+	DjiCloud_ListDevices_FullMethodName                          = "/djicloud.DjiCloud/ListDevices"
+	DjiCloud_GetDeviceDetail_FullMethodName                      = "/djicloud.DjiCloud/GetDeviceDetail"
+	DjiCloud_GetDeviceOsdSnapshot_FullMethodName                 = "/djicloud.DjiCloud/GetDeviceOsdSnapshot"
+	DjiCloud_GetDeviceStateSnapshot_FullMethodName               = "/djicloud.DjiCloud/GetDeviceStateSnapshot"
+	DjiCloud_ListHmsAlerts_FullMethodName                        = "/djicloud.DjiCloud/ListHmsAlerts"
+	DjiCloud_AckHmsAlert_FullMethodName                          = "/djicloud.DjiCloud/AckHmsAlert"
+	DjiCloud_ListFlightTaskProgress_FullMethodName               = "/djicloud.DjiCloud/ListFlightTaskProgress"
 	DjiCloud_GetFlightTaskProgressLast_FullMethodName            = "/djicloud.DjiCloud/GetFlightTaskProgressLast"
 )
 
@@ -478,13 +485,28 @@ type DjiCloudClient interface {
 	// DrcCameraDewarpingSet 设置镜头去畸变。
 	// 对应 DJI Cloud API method: drc_camera_dewarping_set，Topic: drc/down，方向 down（云平台→设备）。
 	DrcCameraDewarpingSet(ctx context.Context, in *DrcCameraDewarpingSetReq, opts ...grpc.CallOption) (*CommonRes, error)
-	// IsDeviceOnline 查询机巢在线状态。
-	// 数据来源：收到 sys/product/+/status 或 OSD 心跳时写入 onlineCache；离线由 TTL 超时推断。
-	// 本接口从 onlineCache 读取，无需 MQTT 通信。
+	// IsDeviceOnline 查询设备在线状态。
+	// device_sn 可传机巢SN或子设备SN；机巢在线和子设备在线分开判定。
+	// 当前服务应配置数据库用于持久化设备状态；内存 onlineCache 保存热数据以提升高频在线判断性能，数据库保存最近一次在线快照并通过 last_online_at 懒过期清理。
 	IsDeviceOnline(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*DeviceOnlineRes, error)
-	// GetFlightTaskProgressLast 查询本服务内存中最近一次 flighttask_progress 上报。
-	// 数据来源：thing/product/{gateway_sn}/events、method=flighttask_progress（设备上行），
-	// 由 SDK 分发至钩子后写入进程内缓存；非大疆标准查询接口。
+	// ListDevices 查询设备列表，包含机巢、无人机、负载等设备。
+	ListDevices(ctx context.Context, in *ListDevicesReq, opts ...grpc.CallOption) (*ListDevicesRes, error)
+	// GetDeviceDetail 查询设备详情，聚合设备基础信息、OSD快照、State快照和拓扑信息。
+	GetDeviceDetail(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*DeviceDetailRes, error)
+	// GetDeviceOsdSnapshot 查询设备最近一次 OSD 遥测快照。
+	GetDeviceOsdSnapshot(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*DeviceOsdSnapshotRes, error)
+	// GetDeviceStateSnapshot 查询设备最近一次 State 状态快照。
+	GetDeviceStateSnapshot(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*DeviceStateSnapshotRes, error)
+	// ListHmsAlerts 查询 HMS 告警记录。
+	ListHmsAlerts(ctx context.Context, in *ListHmsAlertsReq, opts ...grpc.CallOption) (*ListHmsAlertsRes, error)
+	// AckHmsAlert 确认 HMS 告警。
+	AckHmsAlert(ctx context.Context, in *AckHmsAlertReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// ListFlightTaskProgress 查询飞行任务进度上行记录。
+	// 仅记录 flighttask_progress 推送，不在本服务内维护完整任务状态机。
+	ListFlightTaskProgress(ctx context.Context, in *ListFlightTaskProgressReq, opts ...grpc.CallOption) (*ListFlightTaskProgressRes, error)
+	// GetFlightTaskProgressLast 查询最近一次 flighttask_progress 上行记录。
+	// 数据来源：thing/product/{gateway_sn}/events、method=flighttask_progress（设备上行），由 SDK 分发至钩子后写入数据库。
+	// 该接口只返回最近一条进度记录，不代表完整任务状态机；非大疆标准查询接口。
 	GetFlightTaskProgressLast(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*FlightTaskProgressLastRes, error)
 }
 
@@ -1396,6 +1418,76 @@ func (c *djiCloudClient) IsDeviceOnline(ctx context.Context, in *DeviceSnReq, op
 	return out, nil
 }
 
+func (c *djiCloudClient) ListDevices(ctx context.Context, in *ListDevicesReq, opts ...grpc.CallOption) (*ListDevicesRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListDevicesRes)
+	err := c.cc.Invoke(ctx, DjiCloud_ListDevices_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiCloudClient) GetDeviceDetail(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*DeviceDetailRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeviceDetailRes)
+	err := c.cc.Invoke(ctx, DjiCloud_GetDeviceDetail_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiCloudClient) GetDeviceOsdSnapshot(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*DeviceOsdSnapshotRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeviceOsdSnapshotRes)
+	err := c.cc.Invoke(ctx, DjiCloud_GetDeviceOsdSnapshot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiCloudClient) GetDeviceStateSnapshot(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*DeviceStateSnapshotRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeviceStateSnapshotRes)
+	err := c.cc.Invoke(ctx, DjiCloud_GetDeviceStateSnapshot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiCloudClient) ListHmsAlerts(ctx context.Context, in *ListHmsAlertsReq, opts ...grpc.CallOption) (*ListHmsAlertsRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListHmsAlertsRes)
+	err := c.cc.Invoke(ctx, DjiCloud_ListHmsAlerts_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiCloudClient) AckHmsAlert(ctx context.Context, in *AckHmsAlertReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiCloud_AckHmsAlert_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiCloudClient) ListFlightTaskProgress(ctx context.Context, in *ListFlightTaskProgressReq, opts ...grpc.CallOption) (*ListFlightTaskProgressRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListFlightTaskProgressRes)
+	err := c.cc.Invoke(ctx, DjiCloud_ListFlightTaskProgress_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *djiCloudClient) GetFlightTaskProgressLast(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*FlightTaskProgressLastRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(FlightTaskProgressLastRes)
@@ -1772,13 +1864,28 @@ type DjiCloudServer interface {
 	// DrcCameraDewarpingSet 设置镜头去畸变。
 	// 对应 DJI Cloud API method: drc_camera_dewarping_set，Topic: drc/down，方向 down（云平台→设备）。
 	DrcCameraDewarpingSet(context.Context, *DrcCameraDewarpingSetReq) (*CommonRes, error)
-	// IsDeviceOnline 查询机巢在线状态。
-	// 数据来源：收到 sys/product/+/status 或 OSD 心跳时写入 onlineCache；离线由 TTL 超时推断。
-	// 本接口从 onlineCache 读取，无需 MQTT 通信。
+	// IsDeviceOnline 查询设备在线状态。
+	// device_sn 可传机巢SN或子设备SN；机巢在线和子设备在线分开判定。
+	// 当前服务应配置数据库用于持久化设备状态；内存 onlineCache 保存热数据以提升高频在线判断性能，数据库保存最近一次在线快照并通过 last_online_at 懒过期清理。
 	IsDeviceOnline(context.Context, *DeviceSnReq) (*DeviceOnlineRes, error)
-	// GetFlightTaskProgressLast 查询本服务内存中最近一次 flighttask_progress 上报。
-	// 数据来源：thing/product/{gateway_sn}/events、method=flighttask_progress（设备上行），
-	// 由 SDK 分发至钩子后写入进程内缓存；非大疆标准查询接口。
+	// ListDevices 查询设备列表，包含机巢、无人机、负载等设备。
+	ListDevices(context.Context, *ListDevicesReq) (*ListDevicesRes, error)
+	// GetDeviceDetail 查询设备详情，聚合设备基础信息、OSD快照、State快照和拓扑信息。
+	GetDeviceDetail(context.Context, *DeviceSnReq) (*DeviceDetailRes, error)
+	// GetDeviceOsdSnapshot 查询设备最近一次 OSD 遥测快照。
+	GetDeviceOsdSnapshot(context.Context, *DeviceSnReq) (*DeviceOsdSnapshotRes, error)
+	// GetDeviceStateSnapshot 查询设备最近一次 State 状态快照。
+	GetDeviceStateSnapshot(context.Context, *DeviceSnReq) (*DeviceStateSnapshotRes, error)
+	// ListHmsAlerts 查询 HMS 告警记录。
+	ListHmsAlerts(context.Context, *ListHmsAlertsReq) (*ListHmsAlertsRes, error)
+	// AckHmsAlert 确认 HMS 告警。
+	AckHmsAlert(context.Context, *AckHmsAlertReq) (*CommonRes, error)
+	// ListFlightTaskProgress 查询飞行任务进度上行记录。
+	// 仅记录 flighttask_progress 推送，不在本服务内维护完整任务状态机。
+	ListFlightTaskProgress(context.Context, *ListFlightTaskProgressReq) (*ListFlightTaskProgressRes, error)
+	// GetFlightTaskProgressLast 查询最近一次 flighttask_progress 上行记录。
+	// 数据来源：thing/product/{gateway_sn}/events、method=flighttask_progress（设备上行），由 SDK 分发至钩子后写入数据库。
+	// 该接口只返回最近一条进度记录，不代表完整任务状态机；非大疆标准查询接口。
 	GetFlightTaskProgressLast(context.Context, *DeviceSnReq) (*FlightTaskProgressLastRes, error)
 	mustEmbedUnimplementedDjiCloudServer()
 }
@@ -2059,6 +2166,27 @@ func (UnimplementedDjiCloudServer) DrcCameraDewarpingSet(context.Context, *DrcCa
 }
 func (UnimplementedDjiCloudServer) IsDeviceOnline(context.Context, *DeviceSnReq) (*DeviceOnlineRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IsDeviceOnline not implemented")
+}
+func (UnimplementedDjiCloudServer) ListDevices(context.Context, *ListDevicesReq) (*ListDevicesRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListDevices not implemented")
+}
+func (UnimplementedDjiCloudServer) GetDeviceDetail(context.Context, *DeviceSnReq) (*DeviceDetailRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceDetail not implemented")
+}
+func (UnimplementedDjiCloudServer) GetDeviceOsdSnapshot(context.Context, *DeviceSnReq) (*DeviceOsdSnapshotRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceOsdSnapshot not implemented")
+}
+func (UnimplementedDjiCloudServer) GetDeviceStateSnapshot(context.Context, *DeviceSnReq) (*DeviceStateSnapshotRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceStateSnapshot not implemented")
+}
+func (UnimplementedDjiCloudServer) ListHmsAlerts(context.Context, *ListHmsAlertsReq) (*ListHmsAlertsRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListHmsAlerts not implemented")
+}
+func (UnimplementedDjiCloudServer) AckHmsAlert(context.Context, *AckHmsAlertReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AckHmsAlert not implemented")
+}
+func (UnimplementedDjiCloudServer) ListFlightTaskProgress(context.Context, *ListFlightTaskProgressReq) (*ListFlightTaskProgressRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListFlightTaskProgress not implemented")
 }
 func (UnimplementedDjiCloudServer) GetFlightTaskProgressLast(context.Context, *DeviceSnReq) (*FlightTaskProgressLastRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFlightTaskProgressLast not implemented")
@@ -3704,6 +3832,132 @@ func _DjiCloud_IsDeviceOnline_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DjiCloud_ListDevices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListDevicesReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiCloudServer).ListDevices(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiCloud_ListDevices_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiCloudServer).ListDevices(ctx, req.(*ListDevicesReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiCloud_GetDeviceDetail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeviceSnReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiCloudServer).GetDeviceDetail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiCloud_GetDeviceDetail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiCloudServer).GetDeviceDetail(ctx, req.(*DeviceSnReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiCloud_GetDeviceOsdSnapshot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeviceSnReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiCloudServer).GetDeviceOsdSnapshot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiCloud_GetDeviceOsdSnapshot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiCloudServer).GetDeviceOsdSnapshot(ctx, req.(*DeviceSnReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiCloud_GetDeviceStateSnapshot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeviceSnReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiCloudServer).GetDeviceStateSnapshot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiCloud_GetDeviceStateSnapshot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiCloudServer).GetDeviceStateSnapshot(ctx, req.(*DeviceSnReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiCloud_ListHmsAlerts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListHmsAlertsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiCloudServer).ListHmsAlerts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiCloud_ListHmsAlerts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiCloudServer).ListHmsAlerts(ctx, req.(*ListHmsAlertsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiCloud_AckHmsAlert_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AckHmsAlertReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiCloudServer).AckHmsAlert(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiCloud_AckHmsAlert_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiCloudServer).AckHmsAlert(ctx, req.(*AckHmsAlertReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiCloud_ListFlightTaskProgress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFlightTaskProgressReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiCloudServer).ListFlightTaskProgress(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiCloud_ListFlightTaskProgress_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiCloudServer).ListFlightTaskProgress(ctx, req.(*ListFlightTaskProgressReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _DjiCloud_GetFlightTaskProgressLast_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeviceSnReq)
 	if err := dec(in); err != nil {
@@ -4088,6 +4342,34 @@ var DjiCloud_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "IsDeviceOnline",
 			Handler:    _DjiCloud_IsDeviceOnline_Handler,
+		},
+		{
+			MethodName: "ListDevices",
+			Handler:    _DjiCloud_ListDevices_Handler,
+		},
+		{
+			MethodName: "GetDeviceDetail",
+			Handler:    _DjiCloud_GetDeviceDetail_Handler,
+		},
+		{
+			MethodName: "GetDeviceOsdSnapshot",
+			Handler:    _DjiCloud_GetDeviceOsdSnapshot_Handler,
+		},
+		{
+			MethodName: "GetDeviceStateSnapshot",
+			Handler:    _DjiCloud_GetDeviceStateSnapshot_Handler,
+		},
+		{
+			MethodName: "ListHmsAlerts",
+			Handler:    _DjiCloud_ListHmsAlerts_Handler,
+		},
+		{
+			MethodName: "AckHmsAlert",
+			Handler:    _DjiCloud_AckHmsAlert_Handler,
+		},
+		{
+			MethodName: "ListFlightTaskProgress",
+			Handler:    _DjiCloud_ListFlightTaskProgress_Handler,
 		},
 		{
 			MethodName: "GetFlightTaskProgressLast",

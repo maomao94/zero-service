@@ -882,6 +882,8 @@ type OtaProgressDevice struct {
 
 // TopoUpdateData 设备拓扑更新数据，用于设备上线/下线通知。
 type TopoUpdateData struct {
+	// Domain DJI 设备领域，0 飞机类、1 负载类、2 遥控器类、3 机场类。status/update_topo 按 DJI 文档为字符串。
+	Domain string `json:"domain"`
 	// Type 设备类型，参考 DJI 设备类型枚举。必填。
 	Type int `json:"type"`
 	// SubType 设备子类型，参考 DJI 设备子类型枚举。必填。
@@ -892,32 +894,26 @@ type TopoUpdateData struct {
 	NonceSig string `json:"nonce_sig,omitempty"`
 	// Timestamp 签名时间戳，单位毫秒。可选。
 	Timestamp int64 `json:"timestamp,omitempty"`
-	// Version 设备版本信息，包含固件和硬件版本。可选。
-	Version TopoVersion `json:"version,omitempty"`
+	// ThingVersion 物模型版本。
+	ThingVersion string `json:"thing_version,omitempty"`
 	// SubDevices 子设备列表，如无人机挂载的负载设备。可选。
 	SubDevices []TopoSubDevice `json:"sub_devices,omitempty"`
-}
-
-// TopoVersion 设备版本信息。
-type TopoVersion struct {
-	// FirmwareVersion 固件版本号，如 "01.00.0001"。必填。
-	FirmwareVersion string `json:"firmware_version"`
-	// HardwareVersion 硬件版本号，如 "1.0"。必填。
-	HardwareVersion string `json:"hardware_version"`
 }
 
 // TopoSubDevice 拓扑子设备信息。
 type TopoSubDevice struct {
 	// SN 子设备序列号。必填。
 	SN string `json:"sn"`
+	// Domain DJI 子设备领域，0 飞机类、1 负载类、2 遥控器类、3 机场类。status/update_topo 按 DJI 文档为字符串。
+	Domain string `json:"domain"`
 	// Type 子设备类型。必填。
 	Type int `json:"type"`
 	// SubType 子设备子类型。必填。
 	SubType int `json:"sub_type"`
 	// Index 子设备索引标识。必填。
 	Index string `json:"index"`
-	// Version 子设备版本信息。可选。
-	Version TopoVersion `json:"version,omitempty"`
+	// ThingVersion 物模型版本。
+	ThingVersion string `json:"thing_version,omitempty"`
 }
 
 // ==================== 设备主动上报事件（方向 up: 设备->云平台） ====================
@@ -938,8 +934,14 @@ type CustomDataFromPsdkEvent struct {
 // 对应 method: flighttask_progress。
 // 机巢在执行航线任务过程中，主动定频上报当前任务执行进度。
 type FlightTaskProgressEvent struct {
-	// Ext 扩展内容，包含航线执行的详细进度信息。必填。
-	Ext FlightTaskProgressExt `json:"ext"`
+	Ext      FlightTaskProgressExt      `json:"ext"`
+	Progress FlightTaskProgressProgress `json:"progress"`
+	Status   string                     `json:"status"`
+}
+
+type FlightTaskProgressProgress struct {
+	CurrentStep int     `json:"current_step"`
+	Percent     float64 `json:"percent"`
 }
 
 // FlightTaskProgressExt 航线任务进度扩展信息。
@@ -957,6 +959,8 @@ type FlightTaskProgressExt struct {
 	TrackID string `json:"track_id"`
 	// FlightID 任务 ID。必填。
 	FlightID string `json:"flight_id"`
+	// WaylineID 航线 ID。必填。
+	WaylineID int `json:"wayline_id"`
 	// BreakPoint 航线断点信息，用于断点续飞。可选。
 	BreakPoint *FlightTaskBreakPoint `json:"break_point,omitempty"`
 }
@@ -971,6 +975,14 @@ type FlightTaskBreakPoint struct {
 	Progress float64 `json:"progress"`
 	// WaylineID 航线 ID。必填。
 	WaylineID int `json:"wayline_id"`
+	// AttitudeHead 航向角。可选。
+	AttitudeHead float64 `json:"attitude_head,omitempty"`
+	// Latitude 纬度。可选。
+	Latitude float64 `json:"latitude,omitempty"`
+	// Longitude 经度。可选。
+	Longitude float64 `json:"longitude,omitempty"`
+	// Height 高度。可选。
+	Height float64 `json:"height,omitempty"`
 	// BreakReason 中断原因。可选。
 	// 0: 无异常, 1: Mission ID 不存在, 2: 不常见错误,
 	// 257: 航线已开始不能再次开始, 258: 当前状态无法中断,

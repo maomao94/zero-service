@@ -1,40 +1,39 @@
 package gormx
 
-import (
-	"context"
+import "context"
+
+type contextKey string
+
+const (
+	userContextKey  contextKey = "gormx:user"
+	DefaultTenantID            = "default"
 )
 
-type userContextKey struct{}
-
-type superAdminKey struct{}
+type AuditUserID interface {
+	~uint | ~uint64 | ~int64 | ~string
+}
 
 type UserContext struct {
-	UserID   uint   `json:"user_id"`
+	UserID   any    `json:"user_id"`
 	UserName string `json:"user_name"`
 	TenantID string `json:"tenant_id"`
 }
 
 func WithUserContext(ctx context.Context, userCtx *UserContext) context.Context {
-	return context.WithValue(ctx, userContextKey{}, userCtx)
+	if userCtx == nil {
+		return ctx
+	}
+	return context.WithValue(ctx, userContextKey, userCtx)
 }
 
 func GetUserContext(ctx context.Context) *UserContext {
 	if ctx == nil {
 		return nil
 	}
-	userCtx, ok := ctx.Value(userContextKey{}).(*UserContext)
-	if !ok {
-		return nil
+	if v, ok := ctx.Value(userContextKey).(*UserContext); ok {
+		return v
 	}
-	return userCtx
-}
-
-func GetTenantID(ctx context.Context) string {
-	userCtx := GetUserContext(ctx)
-	if userCtx == nil {
-		return ""
-	}
-	return userCtx.TenantID
+	return nil
 }
 
 func GetUserID(ctx context.Context) uint {
@@ -42,7 +41,45 @@ func GetUserID(ctx context.Context) uint {
 	if userCtx == nil {
 		return 0
 	}
-	return userCtx.UserID
+	switch v := userCtx.UserID.(type) {
+	case uint:
+		return v
+	case uint64:
+		return uint(v)
+	case int64:
+		if v < 0 {
+			return 0
+		}
+		return uint(v)
+	case string:
+		return 0
+	default:
+		return 0
+	}
+}
+
+func GetUserIDAs[T AuditUserID](ctx context.Context) (T, bool) {
+	var zero T
+	userCtx := GetUserContext(ctx)
+	if userCtx == nil {
+		return zero, false
+	}
+	v, ok := userCtx.UserID.(T)
+	if !ok {
+		return zero, false
+	}
+	return v, true
+}
+
+func GetUserIDText(ctx context.Context) string {
+	userCtx := GetUserContext(ctx)
+	if userCtx == nil {
+		return ""
+	}
+	if v, ok := userCtx.UserID.(string); ok {
+		return v
+	}
+	return ""
 }
 
 func GetUserName(ctx context.Context) string {
@@ -53,19 +90,18 @@ func GetUserName(ctx context.Context) string {
 	return userCtx.UserName
 }
 
-func WithSuperAdmin(ctx context.Context) context.Context {
-	return context.WithValue(ctx, superAdminKey{}, struct{}{})
-}
-
-func IsSuperAdmin(ctx context.Context) bool {
-	if ctx == nil {
-		return false
+func GetTenantID(ctx context.Context) string {
+	userCtx := GetUserContext(ctx)
+	if userCtx == nil {
+		return DefaultTenantID
 	}
-	_, ok := ctx.Value(superAdminKey{}).(struct{})
-	return ok
+	if userCtx.TenantID == "" {
+		return DefaultTenantID
+	}
+	return userCtx.TenantID
 }
 
-func NewUserContext(userID uint, userName, tenantID string) *UserContext {
+func NewUserContext[T AuditUserID](userID T, userName, tenantID string) *UserContext {
 	return &UserContext{
 		UserID:   userID,
 		UserName: userName,
@@ -73,17 +109,36 @@ func NewUserContext(userID uint, userName, tenantID string) *UserContext {
 	}
 }
 
-func (u *UserContext) HasTenant() bool {
-	return u != nil && u.TenantID != ""
+func NewStringUserContext(userID, userName, tenantID string) *UserContext {
+	return NewUserContext(userID, userName, tenantID)
 }
 
-func (u *UserContext) Clone() *UserContext {
+func (u *UserContext) AuditUserValue() any {
 	if u == nil {
 		return nil
 	}
-	return &UserContext{
-		UserID:   u.UserID,
-		UserName: u.UserName,
-		TenantID: u.TenantID,
+	switch v := u.UserID.(type) {
+	case uint:
+		if v == 0 {
+			return nil
+		}
+		return v
+	case uint64:
+		if v == 0 {
+			return nil
+		}
+		return v
+	case int64:
+		if v == 0 {
+			return nil
+		}
+		return v
+	case string:
+		if v == "" {
+			return nil
+		}
+		return v
+	default:
+		return nil
 	}
 }

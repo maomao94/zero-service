@@ -16,6 +16,11 @@ MqttConfig:
   Qos: 0
 AckTimeout: 5s
 PendingTTL: 30s
+DB:
+  DataSource: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable&TimeZone=Asia/Shanghai
+  LogLevel: error
+  MaxIdleConns: 10
+  MaxOpenConns: 100
 UpstreamReply:
   EnableEventsReply: true
   EnableStatusReply: false

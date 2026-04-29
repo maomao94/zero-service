@@ -3,6 +3,7 @@ package config
 import (
 	"time"
 
+	"zero-service/common/gormx"
 	"zero-service/common/mqttx"
 
 	"github.com/zeromicro/go-zero/zrpc"
@@ -20,6 +21,7 @@ type Config struct {
 		ServiceName string
 	} `json:",optional"`
 	MqttConfig    mqttx.MqttConfig
+	DB            gormx.Config        `json:",optional"`
 	PendingTTL    time.Duration       `json:",default=30s"`
 	UpstreamReply UpstreamReplyConfig `json:",optional"`
 	DangerousOps  DangerousOpsConfig  `json:",optional"`

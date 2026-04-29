@@ -8,9 +8,6 @@ import (
 
 func TenantScope(ctx context.Context) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		if IsSuperAdmin(ctx) {
-			return db
-		}
 		userCtx := GetUserContext(ctx)
 		if userCtx == nil || userCtx.TenantID == "" {
 			return db
@@ -24,9 +21,6 @@ func TenantScope(ctx context.Context) func(db *gorm.DB) *gorm.DB {
 
 func TenantScopeStrict(ctx context.Context) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		if IsSuperAdmin(ctx) {
-			return db
-		}
 		userCtx := GetUserContext(ctx)
 		if userCtx == nil || userCtx.TenantID == "" {
 			return db.Where("1 = 0")
@@ -40,9 +34,6 @@ func TenantScopeStrict(ctx context.Context) func(db *gorm.DB) *gorm.DB {
 
 func TenantScopeWithDelete(ctx context.Context) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		if IsSuperAdmin(ctx) {
-			return db.Unscoped()
-		}
 		userCtx := GetUserContext(ctx)
 		if userCtx == nil || userCtx.TenantID == "" {
 			return db.Unscoped()
@@ -85,12 +76,12 @@ func WithTenantContext(ctx context.Context, tenantID string) context.Context {
 	return WithUserContext(ctx, &UserContext{TenantID: tenantID})
 }
 
-func WithUserAndTenantContext(ctx context.Context, userID uint, userName, tenantID string) context.Context {
-	return WithUserContext(ctx, &UserContext{
-		UserID:   userID,
-		UserName: userName,
-		TenantID: tenantID,
-	})
+func WithUserAndTenantContext[T AuditUserID](ctx context.Context, userID T, userName, tenantID string) context.Context {
+	return WithUserContext(ctx, NewUserContext(userID, userName, tenantID))
+}
+
+func WithStringUserAndTenantContext(ctx context.Context, userID, userName, tenantID string) context.Context {
+	return WithUserAndTenantContext(ctx, userID, userName, tenantID)
 }
 
 func HasTenantField(db *gorm.DB) bool {

@@ -5,68 +5,79 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/plugin/soft_delete"
 )
 
-const DefaultTenantID = "000000"
+const (
+	LegacyDelStateActive  soft_delete.DeletedAt = 0
+	LegacyDelStateDeleted soft_delete.DeletedAt = 1
+)
 
-type AuditMixin struct {
-	CreateUser uint   `gorm:"index" json:"create_user"`
-	CreateName string `gorm:"size:64" json:"create_name"`
-	UpdateUser uint   `gorm:"index" json:"update_user"`
-	UpdateName string `gorm:"size:64" json:"update_name"`
-	DeleteUser uint   `gorm:"index" json:"delete_user"`
-	DeleteName string `gorm:"size:64" json:"delete_name"`
+// IDModel 提供新表默认使用的 uint 主键。
+type IDModel struct {
+	ID uint `gorm:"primarykey" json:"id"`
 }
 
-type AuditWithoutDeleteMixin struct {
-	CreateUser uint   `gorm:"index" json:"create_user"`
-	CreateName string `gorm:"size:64" json:"create_name"`
-	UpdateUser uint   `gorm:"index" json:"update_user"`
-	UpdateName string `gorm:"size:64" json:"update_name"`
+// StringIDModel 提供适合 UUID 或外部 ID 的 string 主键。
+type StringIDModel struct {
+	ID string `gorm:"primarykey;size:36" json:"id"`
 }
 
-type VersionMixin struct {
-	Version int64 `gorm:"default:0" json:"version"`
+// TimeMixin 提供 created_at 和 updated_at 字段，并保留 MySQL timestamp(6) 精度。
+type TimeMixin struct {
+	CreatedAt time.Time `gorm:"type:timestamp(6)" json:"created_at"`
+	UpdatedAt time.Time `gorm:"type:timestamp(6)" json:"updated_at"`
 }
 
+// SoftDeleteMixin 启用 GORM 标准 deleted_at 软删除。
 type SoftDeleteMixin struct {
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
-func (m *SoftDeleteMixin) IsDeleted() bool {
-	return m.DeletedAt.Valid && !m.DeletedAt.Time.IsZero()
+// VersionMixin 提供 version 字段，用于业务侧乐观锁或版本记录。
+type VersionMixin struct {
+	Version int64 `gorm:"column:version;default:0" json:"version"`
 }
 
-type TenantMixin struct {
-	TenantID string `gorm:"size:12;index;not null;default:'000000'" json:"tenant_id"`
+// LegacyIDMixin 提供旧表使用的 int64 id 字段。
+type LegacyIDMixin struct {
+	Id int64 `gorm:"column:id;primaryKey" json:"id"`
 }
 
-func (m *TenantMixin) IsDefaultTenant() bool {
-	return m.TenantID == "" || m.TenantID == DefaultTenantID
+// LegacyStringIDMixin 提供旧表使用的 string id 字段。
+type LegacyStringIDMixin struct {
+	Id string `gorm:"column:id;primaryKey;size:36" json:"id"`
 }
 
+// LegacyTimeMixin 提供旧表 create_time 和 update_time 字段。
+type LegacyTimeMixin struct {
+	CreateTime time.Time `gorm:"column:create_time;type:timestamp(6);autoCreateTime:milli" json:"create_time"`
+	UpdateTime time.Time `gorm:"column:update_time;type:timestamp(6);autoUpdateTime:milli" json:"update_time"`
+}
+
+// LegacySoftDeleteMixin 提供旧表 delete_time 和 del_state 软删除字段。
+type LegacySoftDeleteMixin struct {
+	DeleteTime sql.NullTime          `gorm:"column:delete_time;index" json:"-"`
+	DelState   soft_delete.DeletedAt `gorm:"column:del_state;softDelete:flag,DeletedAtField:DeleteTime;default:0;index" json:"del_state"`
+}
+
+// IsDeleted 判断旧表软删除字段是否表示已删除。
+func (m *LegacySoftDeleteMixin) IsDeleted() bool {
+	return m.DelState == LegacyDelStateDeleted || m.DeleteTime.Valid
+}
+
+// LegacyBaseModel 组合旧表 int64 主键、旧时间字段、旧软删除字段和版本字段。
 type LegacyBaseModel struct {
-	Id         int64        `gorm:"column:id;primaryKey" json:"id"`
-	CreateTime time.Time    `gorm:"column:create_time;type:timestamp(6);autoCreateTime:milli"`
-	UpdateTime time.Time    `gorm:"column:update_time;type:timestamp(6);autoUpdateTime:milli"`
-	DeleteTime sql.NullTime `gorm:"column:delete_time;type:timestamp(6);index" json:"-"`
-	DelState   int64        `gorm:"column:del_state;default:0"`
-	Version    int64        `gorm:"column:version;default:0"`
+	LegacyIDMixin
+	LegacyTimeMixin
+	LegacySoftDeleteMixin
+	VersionMixin
 }
 
-func (m *LegacyBaseModel) IsDeleted() bool {
-	return m.DeleteTime.Valid && !m.DeleteTime.Time.IsZero()
-}
-
+// LegacyStringBaseModel 组合旧表 string 主键、旧时间字段、旧软删除字段和版本字段。
 type LegacyStringBaseModel struct {
-	Id         string       `gorm:"column:id;primaryKey;size:36" json:"id"`
-	CreateTime time.Time    `gorm:"column:create_time;type:timestamp(6);autoCreateTime:milli"`
-	UpdateTime time.Time    `gorm:"column:update_time;type:timestamp(6);autoUpdateTime:milli"`
-	DeleteTime sql.NullTime `gorm:"column:delete_time;type:timestamp(6);index" json:"-"`
-	DelState   int64        `gorm:"column:del_state;default:0"`
-	Version    int64        `gorm:"column:version;default:0"`
-}
-
-func (m *LegacyStringBaseModel) IsDeleted() bool {
-	return m.DeleteTime.Valid && !m.DeleteTime.Time.IsZero()
+	LegacyStringIDMixin
+	LegacyTimeMixin
+	LegacySoftDeleteMixin
+	VersionMixin
 }

@@ -64,7 +64,27 @@ func UnscopedDelete(db *gorm.DB, model any) error {
 }
 
 func Restore(db *gorm.DB, model any, conds ...any) error {
-	return db.Unscoped().Model(model).Select("deleted_at").Updates(map[any]any{"deleted_at": nil}).Error
+	q := db.Unscoped().Model(model)
+	if len(conds) > 0 {
+		q = q.Where(conds[0], conds[1:]...)
+	}
+	if hasLegacyDeleteFields(q) {
+		return q.Select("delete_time", "del_state").Updates(map[string]any{
+			"delete_time": nil,
+			"del_state":   int64(0),
+		}).Error
+	}
+	return q.Update("deleted_at", nil).Error
+}
+
+func hasLegacyDeleteFields(db *gorm.DB) bool {
+	stmt := &gorm.Statement{DB: db}
+	if err := stmt.Parse(db.Statement.Model); err != nil {
+		return false
+	}
+	_, hasDeleteTime := stmt.Schema.FieldsByDBName["delete_time"]
+	_, hasDelState := stmt.Schema.FieldsByDBName["del_state"]
+	return hasDeleteTime && hasDelState
 }
 
 func UnscopedUpdate(db *gorm.DB, model any, updates map[string]any) error {
@@ -129,11 +149,17 @@ func BatchDeleteByConditionWithTenant(ctx context.Context, db *gorm.DB, model an
 }
 
 func RestoreWithTenant(ctx context.Context, db *gorm.DB, model any, conds ...any) error {
-	q := withTenantQuery(ctx, db.WithContext(ctx).Unscoped().Model(model).Select("deleted_at"))
+	q := withTenantQuery(ctx, db.WithContext(ctx).Unscoped().Model(model))
 	if len(conds) > 0 {
 		q = q.Where(conds[0], conds[1:]...)
 	}
-	return q.Updates(map[any]any{"deleted_at": nil}).Error
+	if hasLegacyDeleteFields(q) {
+		return q.Select("delete_time", "del_state").Updates(map[string]any{
+			"delete_time": nil,
+			"del_state":   int64(0),
+		}).Error
+	}
+	return q.Update("deleted_at", nil).Error
 }
 
 func UnscopedDeleteWithTenant(ctx context.Context, db *gorm.DB, model any, conds ...any) error {

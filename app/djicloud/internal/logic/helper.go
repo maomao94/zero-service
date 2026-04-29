@@ -1,7 +1,11 @@
 package logic
 
 import (
+	"database/sql"
+	"time"
+
 	"zero-service/app/djicloud/djicloud"
+	"zero-service/app/djicloud/model/gormmodel"
 	"zero-service/common/djisdk"
 )
 
@@ -19,4 +23,110 @@ func errRes(tid string, err error) *djicloud.CommonRes {
 
 func okRes(tid string) *djicloud.CommonRes {
 	return &djicloud.CommonRes{Code: 0, Message: "success", Tid: tid}
+}
+
+const deviceOnlineTTL = 60 * time.Second
+
+func deviceOnlineExpired(m *gormmodel.DjiDevice, now time.Time) bool {
+	return m == nil || !m.IsOnline || !m.LastOnlineAt.Valid || now.Sub(m.LastOnlineAt.Time) > deviceOnlineTTL
+}
+
+func timeMillis(t time.Time) int64 {
+	if t.IsZero() {
+		return 0
+	}
+	return t.UnixMilli()
+}
+
+func nullTimeMillis(t sql.NullTime) int64 {
+	if !t.Valid {
+		return 0
+	}
+	return timeMillis(t.Time)
+}
+
+func nullStringValue(s sql.NullString) string {
+	if !s.Valid {
+		return ""
+	}
+	return s.String
+}
+
+func nullBoolValue(b sql.NullBool) bool {
+	return b.Valid && b.Bool
+}
+
+func normalizePage(page, pageSize int64) (int64, int64) {
+	if page <= 0 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 20
+	}
+	if pageSize > 200 {
+		pageSize = 200
+	}
+	return page, pageSize
+}
+
+func toDeviceInfo(m *gormmodel.DjiDevice) *djicloud.DeviceInfo {
+	if m == nil {
+		return nil
+	}
+	return &djicloud.DeviceInfo{
+		Id:              m.Id,
+		DeviceSn:        m.DeviceSn,
+		GatewaySn:       m.GatewaySn,
+		DeviceDomain:    m.DeviceDomain,
+		DeviceType:      int32(m.DeviceType),
+		DeviceSubType:   int32(m.DeviceSubType),
+		Alias:           m.Alias,
+		GroupName:       m.GroupName,
+		FirmwareVersion: m.FirmwareVersion,
+		HardwareVersion: m.HardwareVersion,
+		IsOnline:        m.IsOnline,
+		FirstOnlineAt:   nullTimeMillis(m.FirstOnlineAt),
+		LastOnlineAt:    nullTimeMillis(m.LastOnlineAt),
+	}
+}
+
+func toOsdSnapshot(m *gormmodel.DjiDeviceOsdSnapshot) *djicloud.DeviceOsdSnapshot {
+	if m == nil {
+		return nil
+	}
+	return &djicloud.DeviceOsdSnapshot{
+		DeviceSn:        m.DeviceSn,
+		GatewaySn:       m.GatewaySn,
+		DeviceDomain:    m.DeviceDomain,
+		Latitude:        m.Latitude,
+		Longitude:       m.Longitude,
+		Altitude:        m.Altitude,
+		Height:          m.Height,
+		SpeedH:          m.SpeedH,
+		SpeedV:          m.SpeedV,
+		Heading:         m.Heading,
+		AttitudePitch:   m.AttitudePitch,
+		AttitudeRoll:    m.AttitudeRoll,
+		AttitudeHeading: m.AttitudeHeading,
+		BatteryPercent:  int32(m.BatteryPercent),
+		Elevation:       m.Elevation,
+		ModeCode:        int32(m.ModeCode),
+		DataJson:        m.DataJSON,
+		ReportedAt:      timeMillis(m.ReportedAt),
+	}
+}
+
+func toStateSnapshot(m *gormmodel.DjiDeviceStateSnapshot) *djicloud.DeviceStateSnapshot {
+	if m == nil {
+		return nil
+	}
+	return &djicloud.DeviceStateSnapshot{
+		DeviceSn:        m.DeviceSn,
+		GatewaySn:       m.GatewaySn,
+		DeviceDomain:    m.DeviceDomain,
+		SubDeviceSn:     nullStringValue(m.SubDeviceSn),
+		SubDeviceOnline: nullBoolValue(m.SubDeviceOnline),
+		DataJson:        m.DataJSON,
+		ReportedAt:      timeMillis(m.ReportedAt),
+	}
 }

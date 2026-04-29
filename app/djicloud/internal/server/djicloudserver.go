@@ -557,13 +557,55 @@ func (s *DjiCloudServer) DrcCameraDewarpingSet(ctx context.Context, in *djicloud
 	return l.DrcCameraDewarpingSet(in)
 }
 
-// IsDeviceOnline 查询机巢在线状态。
+// IsDeviceOnline 查询设备在线状态。
 func (s *DjiCloudServer) IsDeviceOnline(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.DeviceOnlineRes, error) {
 	l := logic.NewIsDeviceOnlineLogic(ctx, s.svcCtx)
 	return l.IsDeviceOnline(in)
 }
 
-// GetFlightTaskProgressLast 查询本服务内存中最近一次 flighttask_progress 上报。
+// ListDevices 查询设备列表，包含机巢、无人机、负载等设备。
+func (s *DjiCloudServer) ListDevices(ctx context.Context, in *djicloud.ListDevicesReq) (*djicloud.ListDevicesRes, error) {
+	l := logic.NewListDevicesLogic(ctx, s.svcCtx)
+	return l.ListDevices(in)
+}
+
+// GetDeviceDetail 查询设备详情，聚合设备基础信息、OSD快照、State快照和拓扑信息。
+func (s *DjiCloudServer) GetDeviceDetail(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.DeviceDetailRes, error) {
+	l := logic.NewGetDeviceDetailLogic(ctx, s.svcCtx)
+	return l.GetDeviceDetail(in)
+}
+
+// GetDeviceOsdSnapshot 查询设备最近一次 OSD 遥测快照。
+func (s *DjiCloudServer) GetDeviceOsdSnapshot(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.DeviceOsdSnapshotRes, error) {
+	l := logic.NewGetDeviceOsdSnapshotLogic(ctx, s.svcCtx)
+	return l.GetDeviceOsdSnapshot(in)
+}
+
+// GetDeviceStateSnapshot 查询设备最近一次 State 状态快照。
+func (s *DjiCloudServer) GetDeviceStateSnapshot(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.DeviceStateSnapshotRes, error) {
+	l := logic.NewGetDeviceStateSnapshotLogic(ctx, s.svcCtx)
+	return l.GetDeviceStateSnapshot(in)
+}
+
+// ListHmsAlerts 查询 HMS 告警记录。
+func (s *DjiCloudServer) ListHmsAlerts(ctx context.Context, in *djicloud.ListHmsAlertsReq) (*djicloud.ListHmsAlertsRes, error) {
+	l := logic.NewListHmsAlertsLogic(ctx, s.svcCtx)
+	return l.ListHmsAlerts(in)
+}
+
+// AckHmsAlert 确认 HMS 告警。
+func (s *DjiCloudServer) AckHmsAlert(ctx context.Context, in *djicloud.AckHmsAlertReq) (*djicloud.CommonRes, error) {
+	l := logic.NewAckHmsAlertLogic(ctx, s.svcCtx)
+	return l.AckHmsAlert(in)
+}
+
+// ListFlightTaskProgress 查询飞行任务进度上行记录。
+func (s *DjiCloudServer) ListFlightTaskProgress(ctx context.Context, in *djicloud.ListFlightTaskProgressReq) (*djicloud.ListFlightTaskProgressRes, error) {
+	l := logic.NewListFlightTaskProgressLogic(ctx, s.svcCtx)
+	return l.ListFlightTaskProgress(in)
+}
+
+// GetFlightTaskProgressLast 查询最近一次 flighttask_progress 上行记录。
 func (s *DjiCloudServer) GetFlightTaskProgressLast(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.FlightTaskProgressLastRes, error) {
 	l := logic.NewGetFlightTaskProgressLastLogic(ctx, s.svcCtx)
 	return l.GetFlightTaskProgressLast(in)

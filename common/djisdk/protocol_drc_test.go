@@ -179,17 +179,26 @@ func TestRequestAndStatusReplyMarshal(t *testing.T) {
 }
 
 func TestFlightTaskProgressEventUnmarshalCanonicalStructure(t *testing.T) {
-	payload := []byte(`{"ext":{"current_waypoint_index":3,"wayline_mission_state":5,"media_count":8,"track_id":"track-1","flight_id":"flight-1","break_point":{"index":2,"state":1,"progress":66.5,"wayline_id":4,"break_reason":9}}}`)
+	payload := []byte(`{"data":{"result":0,"output":{"ext":{"current_waypoint_index":3,"wayline_mission_state":5,"media_count":8,"track_id":"track-1","flight_id":"flight-1","wayline_id":4,"break_point":{"index":2,"state":1,"progress":66.5,"wayline_id":4,"break_reason":9,"attitude_head":30,"latitude":23.4,"longitude":113.99,"height":100.23}},"progress":{"current_step":19,"percent":100},"status":"ok"}}}`)
 
-	var event FlightTaskProgressEvent
-	if err := json.Unmarshal(payload, &event); err != nil {
+	var raw struct {
+		Data struct {
+			Output FlightTaskProgressEvent `json:"output"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(payload, &raw); err != nil {
 		t.Fatalf("unmarshal flight task progress: %v", err)
 	}
-	if event.Ext.CurrentWaypointIndex != 3 || event.Ext.WaylineMissionState != 5 || event.Ext.MediaCount != 8 || event.Ext.TrackID != "track-1" || event.Ext.FlightID != "flight-1" {
-		t.Fatalf("unexpected progress ext: %+v", event.Ext)
+	event := raw.Data.Output
+	ext := event.Ext
+	if event.Status != "ok" || event.Progress.CurrentStep != 19 || event.Progress.Percent != 100 {
+		t.Fatalf("unexpected progress output: %+v", event)
 	}
-	if event.Ext.BreakPoint == nil || event.Ext.BreakPoint.BreakReason != 9 {
-		t.Fatalf("unexpected breakpoint: %+v", event.Ext.BreakPoint)
+	if ext.CurrentWaypointIndex != 3 || ext.WaylineMissionState != 5 || ext.MediaCount != 8 || ext.TrackID != "track-1" || ext.FlightID != "flight-1" || ext.WaylineID != 4 {
+		t.Fatalf("unexpected progress ext: %+v", ext)
+	}
+	if ext.BreakPoint == nil || ext.BreakPoint.BreakReason != 9 || ext.BreakPoint.AttitudeHead != 30 || ext.BreakPoint.Latitude != 23.4 || ext.BreakPoint.Longitude != 113.99 || ext.BreakPoint.Height != 100.23 {
+		t.Fatalf("unexpected breakpoint: %+v", ext.BreakPoint)
 	}
 }
 

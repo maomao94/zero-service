@@ -4658,14 +4658,1447 @@ func (x *DeviceOnlineRes) GetIsOnline() bool {
 	return false
 }
 
-// FlightTaskProgressLastRes 最近一次航线任务进度（flighttask_progress）内存缓存。
+// DeviceInfo 设备基础信息。
+type DeviceInfo struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id 数据库主键。
+	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// device_sn 设备 SN，机巢/无人机/负载设备唯一标识。
+	DeviceSn string `protobuf:"bytes,2,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
+	// gateway_sn 最近一次上报关联的网关机巢 SN；机巢自身等于 device_sn。
+	// 蛙跳场景下，一架飞机可能存在多个机巢绑定关系，完整绑定关系以 DeviceTopoInfo 为准。
+	GatewaySn string `protobuf:"bytes,3,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
+	// device_domain 大疆设备领域 domain，0: 飞机类，1: 负载类，2: 遥控器类，3: 机场类，按 DJI 原始字符串透传。
+	DeviceDomain string `protobuf:"bytes,4,opt,name=device_domain,json=deviceDomain,proto3" json:"device_domain,omitempty"`
+	// device_type 大疆设备类型。
+	DeviceType int32 `protobuf:"varint,5,opt,name=device_type,json=deviceType,proto3" json:"device_type,omitempty"`
+	// device_sub_type 大疆设备子类型。
+	DeviceSubType int32 `protobuf:"varint,6,opt,name=device_sub_type,json=deviceSubType,proto3" json:"device_sub_type,omitempty"`
+	// alias 设备别名。
+	Alias string `protobuf:"bytes,7,opt,name=alias,proto3" json:"alias,omitempty"`
+	// group_name 业务分组。
+	GroupName string `protobuf:"bytes,8,opt,name=group_name,json=groupName,proto3" json:"group_name,omitempty"`
+	// firmware_version 固件版本。
+	FirmwareVersion string `protobuf:"bytes,9,opt,name=firmware_version,json=firmwareVersion,proto3" json:"firmware_version,omitempty"`
+	// hardware_version 硬件版本。
+	HardwareVersion string `protobuf:"bytes,10,opt,name=hardware_version,json=hardwareVersion,proto3" json:"hardware_version,omitempty"`
+	// is_online 是否在线，false 表示离线或尚未收到在线上报，true 表示在线。
+	IsOnline bool `protobuf:"varint,11,opt,name=is_online,json=isOnline,proto3" json:"is_online,omitempty"`
+	// first_online_at 首次上线时间，毫秒时间戳。
+	FirstOnlineAt int64 `protobuf:"varint,12,opt,name=first_online_at,json=firstOnlineAt,proto3" json:"first_online_at,omitempty"`
+	// last_online_at 最后在线时间，毫秒时间戳。
+	LastOnlineAt  int64 `protobuf:"varint,13,opt,name=last_online_at,json=lastOnlineAt,proto3" json:"last_online_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeviceInfo) Reset() {
+	*x = DeviceInfo{}
+	mi := &file_djicloud_proto_msgTypes[69]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeviceInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeviceInfo) ProtoMessage() {}
+
+func (x *DeviceInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_djicloud_proto_msgTypes[69]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeviceInfo.ProtoReflect.Descriptor instead.
+func (*DeviceInfo) Descriptor() ([]byte, []int) {
+	return file_djicloud_proto_rawDescGZIP(), []int{69}
+}
+
+func (x *DeviceInfo) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *DeviceInfo) GetDeviceSn() string {
+	if x != nil {
+		return x.DeviceSn
+	}
+	return ""
+}
+
+func (x *DeviceInfo) GetGatewaySn() string {
+	if x != nil {
+		return x.GatewaySn
+	}
+	return ""
+}
+
+func (x *DeviceInfo) GetDeviceDomain() string {
+	if x != nil {
+		return x.DeviceDomain
+	}
+	return ""
+}
+
+func (x *DeviceInfo) GetDeviceType() int32 {
+	if x != nil {
+		return x.DeviceType
+	}
+	return 0
+}
+
+func (x *DeviceInfo) GetDeviceSubType() int32 {
+	if x != nil {
+		return x.DeviceSubType
+	}
+	return 0
+}
+
+func (x *DeviceInfo) GetAlias() string {
+	if x != nil {
+		return x.Alias
+	}
+	return ""
+}
+
+func (x *DeviceInfo) GetGroupName() string {
+	if x != nil {
+		return x.GroupName
+	}
+	return ""
+}
+
+func (x *DeviceInfo) GetFirmwareVersion() string {
+	if x != nil {
+		return x.FirmwareVersion
+	}
+	return ""
+}
+
+func (x *DeviceInfo) GetHardwareVersion() string {
+	if x != nil {
+		return x.HardwareVersion
+	}
+	return ""
+}
+
+func (x *DeviceInfo) GetIsOnline() bool {
+	if x != nil {
+		return x.IsOnline
+	}
+	return false
+}
+
+func (x *DeviceInfo) GetFirstOnlineAt() int64 {
+	if x != nil {
+		return x.FirstOnlineAt
+	}
+	return 0
+}
+
+func (x *DeviceInfo) GetLastOnlineAt() int64 {
+	if x != nil {
+		return x.LastOnlineAt
+	}
+	return 0
+}
+
+// DeviceTopoInfo 设备拓扑信息。
+// 同一个 sub_device_sn 可出现在多个 gateway_sn 下，用于表达大疆蛙跳场景下飞机与多个机巢的绑定关系。
+type DeviceTopoInfo struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// gateway_sn 网关机巢 SN。
+	GatewaySn string `protobuf:"bytes,1,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
+	// sub_device_sn 子设备 SN。
+	SubDeviceSn string `protobuf:"bytes,2,opt,name=sub_device_sn,json=subDeviceSn,proto3" json:"sub_device_sn,omitempty"`
+	// domain 大疆设备领域 domain，0: 飞机类，1: 负载类，2: 遥控器类，3: 机场类，按 DJI 原始字符串透传。
+	Domain string `protobuf:"bytes,3,opt,name=domain,proto3" json:"domain,omitempty"`
+	// sub_device_type 子设备类型。
+	SubDeviceType int32 `protobuf:"varint,4,opt,name=sub_device_type,json=subDeviceType,proto3" json:"sub_device_type,omitempty"`
+	// sub_device_sub_type 子设备子类型。
+	SubDeviceSubType int32 `protobuf:"varint,5,opt,name=sub_device_sub_type,json=subDeviceSubType,proto3" json:"sub_device_sub_type,omitempty"`
+	// sub_device_index 子设备索引。
+	SubDeviceIndex string `protobuf:"bytes,6,opt,name=sub_device_index,json=subDeviceIndex,proto3" json:"sub_device_index,omitempty"`
+	// thing_version 物模型版本。
+	ThingVersion  string `protobuf:"bytes,7,opt,name=thing_version,json=thingVersion,proto3" json:"thing_version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeviceTopoInfo) Reset() {
+	*x = DeviceTopoInfo{}
+	mi := &file_djicloud_proto_msgTypes[70]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeviceTopoInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeviceTopoInfo) ProtoMessage() {}
+
+func (x *DeviceTopoInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_djicloud_proto_msgTypes[70]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeviceTopoInfo.ProtoReflect.Descriptor instead.
+func (*DeviceTopoInfo) Descriptor() ([]byte, []int) {
+	return file_djicloud_proto_rawDescGZIP(), []int{70}
+}
+
+func (x *DeviceTopoInfo) GetGatewaySn() string {
+	if x != nil {
+		return x.GatewaySn
+	}
+	return ""
+}
+
+func (x *DeviceTopoInfo) GetSubDeviceSn() string {
+	if x != nil {
+		return x.SubDeviceSn
+	}
+	return ""
+}
+
+func (x *DeviceTopoInfo) GetDomain() string {
+	if x != nil {
+		return x.Domain
+	}
+	return ""
+}
+
+func (x *DeviceTopoInfo) GetSubDeviceType() int32 {
+	if x != nil {
+		return x.SubDeviceType
+	}
+	return 0
+}
+
+func (x *DeviceTopoInfo) GetSubDeviceSubType() int32 {
+	if x != nil {
+		return x.SubDeviceSubType
+	}
+	return 0
+}
+
+func (x *DeviceTopoInfo) GetSubDeviceIndex() string {
+	if x != nil {
+		return x.SubDeviceIndex
+	}
+	return ""
+}
+
+func (x *DeviceTopoInfo) GetThingVersion() string {
+	if x != nil {
+		return x.ThingVersion
+	}
+	return ""
+}
+
+// ListDevicesReq 查询设备列表请求。
+type ListDevicesReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// page 页码，从 1 开始。
+	Page int64 `protobuf:"varint,1,opt,name=page,proto3" json:"page,omitempty"`
+	// page_size 每页条数，默认由服务端兜底。
+	PageSize int64 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// gateway_sn 按机巢拓扑过滤，空表示不过滤。
+	// 查询子设备时会同时匹配设备最近一次 gateway_sn 和 dji_device_topo 中的历史/当前绑定关系，兼容蛙跳。
+	GatewaySn string `protobuf:"bytes,3,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
+	// device_domain_filter 设备领域过滤，空字符串表示全部；"0": 飞机类，"1": 负载类，"2": 遥控器类，"3": 机场类。
+	DeviceDomainFilter string `protobuf:"bytes,4,opt,name=device_domain_filter,json=deviceDomainFilter,proto3" json:"device_domain_filter,omitempty"`
+	// online_status 在线状态过滤，0: 全部，1: 在线，2: 离线。
+	OnlineStatus int32 `protobuf:"varint,5,opt,name=online_status,json=onlineStatus,proto3" json:"online_status,omitempty"`
+	// keyword 按 SN/别名模糊查询。
+	Keyword       string `protobuf:"bytes,6,opt,name=keyword,proto3" json:"keyword,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListDevicesReq) Reset() {
+	*x = ListDevicesReq{}
+	mi := &file_djicloud_proto_msgTypes[71]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListDevicesReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListDevicesReq) ProtoMessage() {}
+
+func (x *ListDevicesReq) ProtoReflect() protoreflect.Message {
+	mi := &file_djicloud_proto_msgTypes[71]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListDevicesReq.ProtoReflect.Descriptor instead.
+func (*ListDevicesReq) Descriptor() ([]byte, []int) {
+	return file_djicloud_proto_rawDescGZIP(), []int{71}
+}
+
+func (x *ListDevicesReq) GetPage() int64 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *ListDevicesReq) GetPageSize() int64 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListDevicesReq) GetGatewaySn() string {
+	if x != nil {
+		return x.GatewaySn
+	}
+	return ""
+}
+
+func (x *ListDevicesReq) GetDeviceDomainFilter() string {
+	if x != nil {
+		return x.DeviceDomainFilter
+	}
+	return ""
+}
+
+func (x *ListDevicesReq) GetOnlineStatus() int32 {
+	if x != nil {
+		return x.OnlineStatus
+	}
+	return 0
+}
+
+func (x *ListDevicesReq) GetKeyword() string {
+	if x != nil {
+		return x.Keyword
+	}
+	return ""
+}
+
+// ListDevicesRes 查询设备列表响应。
+type ListDevicesRes struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// total 当前过滤条件下的总数量，不受 page/page_size 限制。
+	Total int64 `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
+	// list 当前页设备列表。
+	List          []*DeviceInfo `protobuf:"bytes,2,rep,name=list,proto3" json:"list,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListDevicesRes) Reset() {
+	*x = ListDevicesRes{}
+	mi := &file_djicloud_proto_msgTypes[72]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListDevicesRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListDevicesRes) ProtoMessage() {}
+
+func (x *ListDevicesRes) ProtoReflect() protoreflect.Message {
+	mi := &file_djicloud_proto_msgTypes[72]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListDevicesRes.ProtoReflect.Descriptor instead.
+func (*ListDevicesRes) Descriptor() ([]byte, []int) {
+	return file_djicloud_proto_rawDescGZIP(), []int{72}
+}
+
+func (x *ListDevicesRes) GetTotal() int64 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+func (x *ListDevicesRes) GetList() []*DeviceInfo {
+	if x != nil {
+		return x.List
+	}
+	return nil
+}
+
+// DeviceOsdSnapshot 设备 OSD 快照。
+type DeviceOsdSnapshot struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	DeviceSn        string                 `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
+	GatewaySn       string                 `protobuf:"bytes,2,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
+	DeviceDomain    string                 `protobuf:"bytes,3,opt,name=device_domain,json=deviceDomain,proto3" json:"device_domain,omitempty"`
+	Latitude        float64                `protobuf:"fixed64,4,opt,name=latitude,proto3" json:"latitude,omitempty"`
+	Longitude       float64                `protobuf:"fixed64,5,opt,name=longitude,proto3" json:"longitude,omitempty"`
+	Altitude        float64                `protobuf:"fixed64,6,opt,name=altitude,proto3" json:"altitude,omitempty"`
+	Height          float64                `protobuf:"fixed64,7,opt,name=height,proto3" json:"height,omitempty"`
+	SpeedH          float64                `protobuf:"fixed64,8,opt,name=speed_h,json=speedH,proto3" json:"speed_h,omitempty"`
+	SpeedV          float64                `protobuf:"fixed64,9,opt,name=speed_v,json=speedV,proto3" json:"speed_v,omitempty"`
+	Heading         float64                `protobuf:"fixed64,10,opt,name=heading,proto3" json:"heading,omitempty"`
+	AttitudePitch   float64                `protobuf:"fixed64,11,opt,name=attitude_pitch,json=attitudePitch,proto3" json:"attitude_pitch,omitempty"`
+	AttitudeRoll    float64                `protobuf:"fixed64,12,opt,name=attitude_roll,json=attitudeRoll,proto3" json:"attitude_roll,omitempty"`
+	AttitudeHeading float64                `protobuf:"fixed64,13,opt,name=attitude_heading,json=attitudeHeading,proto3" json:"attitude_heading,omitempty"`
+	BatteryPercent  int32                  `protobuf:"varint,14,opt,name=battery_percent,json=batteryPercent,proto3" json:"battery_percent,omitempty"`
+	Elevation       float64                `protobuf:"fixed64,15,opt,name=elevation,proto3" json:"elevation,omitempty"`
+	ModeCode        int32                  `protobuf:"varint,16,opt,name=mode_code,json=modeCode,proto3" json:"mode_code,omitempty"`
+	DataJson        string                 `protobuf:"bytes,17,opt,name=data_json,json=dataJson,proto3" json:"data_json,omitempty"`
+	ReportedAt      int64                  `protobuf:"varint,18,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *DeviceOsdSnapshot) Reset() {
+	*x = DeviceOsdSnapshot{}
+	mi := &file_djicloud_proto_msgTypes[73]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeviceOsdSnapshot) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeviceOsdSnapshot) ProtoMessage() {}
+
+func (x *DeviceOsdSnapshot) ProtoReflect() protoreflect.Message {
+	mi := &file_djicloud_proto_msgTypes[73]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeviceOsdSnapshot.ProtoReflect.Descriptor instead.
+func (*DeviceOsdSnapshot) Descriptor() ([]byte, []int) {
+	return file_djicloud_proto_rawDescGZIP(), []int{73}
+}
+
+func (x *DeviceOsdSnapshot) GetDeviceSn() string {
+	if x != nil {
+		return x.DeviceSn
+	}
+	return ""
+}
+
+func (x *DeviceOsdSnapshot) GetGatewaySn() string {
+	if x != nil {
+		return x.GatewaySn
+	}
+	return ""
+}
+
+func (x *DeviceOsdSnapshot) GetDeviceDomain() string {
+	if x != nil {
+		return x.DeviceDomain
+	}
+	return ""
+}
+
+func (x *DeviceOsdSnapshot) GetLatitude() float64 {
+	if x != nil {
+		return x.Latitude
+	}
+	return 0
+}
+
+func (x *DeviceOsdSnapshot) GetLongitude() float64 {
+	if x != nil {
+		return x.Longitude
+	}
+	return 0
+}
+
+func (x *DeviceOsdSnapshot) GetAltitude() float64 {
+	if x != nil {
+		return x.Altitude
+	}
+	return 0
+}
+
+func (x *DeviceOsdSnapshot) GetHeight() float64 {
+	if x != nil {
+		return x.Height
+	}
+	return 0
+}
+
+func (x *DeviceOsdSnapshot) GetSpeedH() float64 {
+	if x != nil {
+		return x.SpeedH
+	}
+	return 0
+}
+
+func (x *DeviceOsdSnapshot) GetSpeedV() float64 {
+	if x != nil {
+		return x.SpeedV
+	}
+	return 0
+}
+
+func (x *DeviceOsdSnapshot) GetHeading() float64 {
+	if x != nil {
+		return x.Heading
+	}
+	return 0
+}
+
+func (x *DeviceOsdSnapshot) GetAttitudePitch() float64 {
+	if x != nil {
+		return x.AttitudePitch
+	}
+	return 0
+}
+
+func (x *DeviceOsdSnapshot) GetAttitudeRoll() float64 {
+	if x != nil {
+		return x.AttitudeRoll
+	}
+	return 0
+}
+
+func (x *DeviceOsdSnapshot) GetAttitudeHeading() float64 {
+	if x != nil {
+		return x.AttitudeHeading
+	}
+	return 0
+}
+
+func (x *DeviceOsdSnapshot) GetBatteryPercent() int32 {
+	if x != nil {
+		return x.BatteryPercent
+	}
+	return 0
+}
+
+func (x *DeviceOsdSnapshot) GetElevation() float64 {
+	if x != nil {
+		return x.Elevation
+	}
+	return 0
+}
+
+func (x *DeviceOsdSnapshot) GetModeCode() int32 {
+	if x != nil {
+		return x.ModeCode
+	}
+	return 0
+}
+
+func (x *DeviceOsdSnapshot) GetDataJson() string {
+	if x != nil {
+		return x.DataJson
+	}
+	return ""
+}
+
+func (x *DeviceOsdSnapshot) GetReportedAt() int64 {
+	if x != nil {
+		return x.ReportedAt
+	}
+	return 0
+}
+
+// DeviceOsdSnapshotRes 设备 OSD 快照响应。
+type DeviceOsdSnapshotRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Data          *DeviceOsdSnapshot     `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeviceOsdSnapshotRes) Reset() {
+	*x = DeviceOsdSnapshotRes{}
+	mi := &file_djicloud_proto_msgTypes[74]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeviceOsdSnapshotRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeviceOsdSnapshotRes) ProtoMessage() {}
+
+func (x *DeviceOsdSnapshotRes) ProtoReflect() protoreflect.Message {
+	mi := &file_djicloud_proto_msgTypes[74]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeviceOsdSnapshotRes.ProtoReflect.Descriptor instead.
+func (*DeviceOsdSnapshotRes) Descriptor() ([]byte, []int) {
+	return file_djicloud_proto_rawDescGZIP(), []int{74}
+}
+
+func (x *DeviceOsdSnapshotRes) GetData() *DeviceOsdSnapshot {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+// DeviceStateSnapshot 设备 State 快照。
+type DeviceStateSnapshot struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	DeviceSn        string                 `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
+	GatewaySn       string                 `protobuf:"bytes,2,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
+	DeviceDomain    string                 `protobuf:"bytes,3,opt,name=device_domain,json=deviceDomain,proto3" json:"device_domain,omitempty"`
+	SubDeviceSn     string                 `protobuf:"bytes,4,opt,name=sub_device_sn,json=subDeviceSn,proto3" json:"sub_device_sn,omitempty"`
+	SubDeviceOnline bool                   `protobuf:"varint,5,opt,name=sub_device_online,json=subDeviceOnline,proto3" json:"sub_device_online,omitempty"`
+	DataJson        string                 `protobuf:"bytes,6,opt,name=data_json,json=dataJson,proto3" json:"data_json,omitempty"`
+	ReportedAt      int64                  `protobuf:"varint,7,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *DeviceStateSnapshot) Reset() {
+	*x = DeviceStateSnapshot{}
+	mi := &file_djicloud_proto_msgTypes[75]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeviceStateSnapshot) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeviceStateSnapshot) ProtoMessage() {}
+
+func (x *DeviceStateSnapshot) ProtoReflect() protoreflect.Message {
+	mi := &file_djicloud_proto_msgTypes[75]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeviceStateSnapshot.ProtoReflect.Descriptor instead.
+func (*DeviceStateSnapshot) Descriptor() ([]byte, []int) {
+	return file_djicloud_proto_rawDescGZIP(), []int{75}
+}
+
+func (x *DeviceStateSnapshot) GetDeviceSn() string {
+	if x != nil {
+		return x.DeviceSn
+	}
+	return ""
+}
+
+func (x *DeviceStateSnapshot) GetGatewaySn() string {
+	if x != nil {
+		return x.GatewaySn
+	}
+	return ""
+}
+
+func (x *DeviceStateSnapshot) GetDeviceDomain() string {
+	if x != nil {
+		return x.DeviceDomain
+	}
+	return ""
+}
+
+func (x *DeviceStateSnapshot) GetSubDeviceSn() string {
+	if x != nil {
+		return x.SubDeviceSn
+	}
+	return ""
+}
+
+func (x *DeviceStateSnapshot) GetSubDeviceOnline() bool {
+	if x != nil {
+		return x.SubDeviceOnline
+	}
+	return false
+}
+
+func (x *DeviceStateSnapshot) GetDataJson() string {
+	if x != nil {
+		return x.DataJson
+	}
+	return ""
+}
+
+func (x *DeviceStateSnapshot) GetReportedAt() int64 {
+	if x != nil {
+		return x.ReportedAt
+	}
+	return 0
+}
+
+// DeviceStateSnapshotRes 设备 State 快照响应。
+type DeviceStateSnapshotRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Data          *DeviceStateSnapshot   `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeviceStateSnapshotRes) Reset() {
+	*x = DeviceStateSnapshotRes{}
+	mi := &file_djicloud_proto_msgTypes[76]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeviceStateSnapshotRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeviceStateSnapshotRes) ProtoMessage() {}
+
+func (x *DeviceStateSnapshotRes) ProtoReflect() protoreflect.Message {
+	mi := &file_djicloud_proto_msgTypes[76]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeviceStateSnapshotRes.ProtoReflect.Descriptor instead.
+func (*DeviceStateSnapshotRes) Descriptor() ([]byte, []int) {
+	return file_djicloud_proto_rawDescGZIP(), []int{76}
+}
+
+func (x *DeviceStateSnapshotRes) GetData() *DeviceStateSnapshot {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+// DeviceDetailRes 设备详情响应。
+type DeviceDetailRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Device        *DeviceInfo            `protobuf:"bytes,1,opt,name=device,proto3" json:"device,omitempty"`
+	Osd           *DeviceOsdSnapshot     `protobuf:"bytes,2,opt,name=osd,proto3" json:"osd,omitempty"`
+	State         *DeviceStateSnapshot   `protobuf:"bytes,3,opt,name=state,proto3" json:"state,omitempty"`
+	Topo          []*DeviceTopoInfo      `protobuf:"bytes,4,rep,name=topo,proto3" json:"topo,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeviceDetailRes) Reset() {
+	*x = DeviceDetailRes{}
+	mi := &file_djicloud_proto_msgTypes[77]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeviceDetailRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeviceDetailRes) ProtoMessage() {}
+
+func (x *DeviceDetailRes) ProtoReflect() protoreflect.Message {
+	mi := &file_djicloud_proto_msgTypes[77]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeviceDetailRes.ProtoReflect.Descriptor instead.
+func (*DeviceDetailRes) Descriptor() ([]byte, []int) {
+	return file_djicloud_proto_rawDescGZIP(), []int{77}
+}
+
+func (x *DeviceDetailRes) GetDevice() *DeviceInfo {
+	if x != nil {
+		return x.Device
+	}
+	return nil
+}
+
+func (x *DeviceDetailRes) GetOsd() *DeviceOsdSnapshot {
+	if x != nil {
+		return x.Osd
+	}
+	return nil
+}
+
+func (x *DeviceDetailRes) GetState() *DeviceStateSnapshot {
+	if x != nil {
+		return x.State
+	}
+	return nil
+}
+
+func (x *DeviceDetailRes) GetTopo() []*DeviceTopoInfo {
+	if x != nil {
+		return x.Topo
+	}
+	return nil
+}
+
+// HmsAlertInfo HMS 告警信息。
+type HmsAlertInfo struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	GatewaySn      string                 `protobuf:"bytes,2,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
+	DeviceSn       string                 `protobuf:"bytes,3,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
+	Level          int32                  `protobuf:"varint,4,opt,name=level,proto3" json:"level,omitempty"`
+	Module         int32                  `protobuf:"varint,5,opt,name=module,proto3" json:"module,omitempty"`
+	Code           string                 `protobuf:"bytes,6,opt,name=code,proto3" json:"code,omitempty"`
+	DeviceType     string                 `protobuf:"bytes,7,opt,name=device_type,json=deviceType,proto3" json:"device_type,omitempty"`
+	Imminent       int32                  `protobuf:"varint,8,opt,name=imminent,proto3" json:"imminent,omitempty"`
+	InTheSky       int32                  `protobuf:"varint,9,opt,name=in_the_sky,json=inTheSky,proto3" json:"in_the_sky,omitempty"`
+	ComponentIndex int32                  `protobuf:"varint,10,opt,name=component_index,json=componentIndex,proto3" json:"component_index,omitempty"`
+	SensorIndex    int32                  `protobuf:"varint,11,opt,name=sensor_index,json=sensorIndex,proto3" json:"sensor_index,omitempty"`
+	Message        string                 `protobuf:"bytes,12,opt,name=message,proto3" json:"message,omitempty"`
+	Acked          int32                  `protobuf:"varint,13,opt,name=acked,proto3" json:"acked,omitempty"`
+	AckedAt        int64                  `protobuf:"varint,14,opt,name=acked_at,json=ackedAt,proto3" json:"acked_at,omitempty"`
+	AckedBy        string                 `protobuf:"bytes,15,opt,name=acked_by,json=ackedBy,proto3" json:"acked_by,omitempty"`
+	ReportedAt     int64                  `protobuf:"varint,16,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *HmsAlertInfo) Reset() {
+	*x = HmsAlertInfo{}
+	mi := &file_djicloud_proto_msgTypes[78]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HmsAlertInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HmsAlertInfo) ProtoMessage() {}
+
+func (x *HmsAlertInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_djicloud_proto_msgTypes[78]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HmsAlertInfo.ProtoReflect.Descriptor instead.
+func (*HmsAlertInfo) Descriptor() ([]byte, []int) {
+	return file_djicloud_proto_rawDescGZIP(), []int{78}
+}
+
+func (x *HmsAlertInfo) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *HmsAlertInfo) GetGatewaySn() string {
+	if x != nil {
+		return x.GatewaySn
+	}
+	return ""
+}
+
+func (x *HmsAlertInfo) GetDeviceSn() string {
+	if x != nil {
+		return x.DeviceSn
+	}
+	return ""
+}
+
+func (x *HmsAlertInfo) GetLevel() int32 {
+	if x != nil {
+		return x.Level
+	}
+	return 0
+}
+
+func (x *HmsAlertInfo) GetModule() int32 {
+	if x != nil {
+		return x.Module
+	}
+	return 0
+}
+
+func (x *HmsAlertInfo) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *HmsAlertInfo) GetDeviceType() string {
+	if x != nil {
+		return x.DeviceType
+	}
+	return ""
+}
+
+func (x *HmsAlertInfo) GetImminent() int32 {
+	if x != nil {
+		return x.Imminent
+	}
+	return 0
+}
+
+func (x *HmsAlertInfo) GetInTheSky() int32 {
+	if x != nil {
+		return x.InTheSky
+	}
+	return 0
+}
+
+func (x *HmsAlertInfo) GetComponentIndex() int32 {
+	if x != nil {
+		return x.ComponentIndex
+	}
+	return 0
+}
+
+func (x *HmsAlertInfo) GetSensorIndex() int32 {
+	if x != nil {
+		return x.SensorIndex
+	}
+	return 0
+}
+
+func (x *HmsAlertInfo) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *HmsAlertInfo) GetAcked() int32 {
+	if x != nil {
+		return x.Acked
+	}
+	return 0
+}
+
+func (x *HmsAlertInfo) GetAckedAt() int64 {
+	if x != nil {
+		return x.AckedAt
+	}
+	return 0
+}
+
+func (x *HmsAlertInfo) GetAckedBy() string {
+	if x != nil {
+		return x.AckedBy
+	}
+	return ""
+}
+
+func (x *HmsAlertInfo) GetReportedAt() int64 {
+	if x != nil {
+		return x.ReportedAt
+	}
+	return 0
+}
+
+// ListHmsAlertsReq 查询 HMS 告警请求。
+type ListHmsAlertsReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// page 页码，从 1 开始。
+	Page int64 `protobuf:"varint,1,opt,name=page,proto3" json:"page,omitempty"`
+	// page_size 每页条数，默认由服务端兜底。
+	PageSize  int64  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	GatewaySn string `protobuf:"bytes,3,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
+	DeviceSn  string `protobuf:"bytes,4,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
+	// level 告警等级过滤，0: 全部，其余值按大疆 HMS level 过滤。
+	Level int32 `protobuf:"varint,5,opt,name=level,proto3" json:"level,omitempty"`
+	// acked_status 确认状态过滤，0: 全部，1: 未确认，2: 已确认。
+	AckedStatus   int32 `protobuf:"varint,6,opt,name=acked_status,json=ackedStatus,proto3" json:"acked_status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListHmsAlertsReq) Reset() {
+	*x = ListHmsAlertsReq{}
+	mi := &file_djicloud_proto_msgTypes[79]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListHmsAlertsReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListHmsAlertsReq) ProtoMessage() {}
+
+func (x *ListHmsAlertsReq) ProtoReflect() protoreflect.Message {
+	mi := &file_djicloud_proto_msgTypes[79]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListHmsAlertsReq.ProtoReflect.Descriptor instead.
+func (*ListHmsAlertsReq) Descriptor() ([]byte, []int) {
+	return file_djicloud_proto_rawDescGZIP(), []int{79}
+}
+
+func (x *ListHmsAlertsReq) GetPage() int64 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *ListHmsAlertsReq) GetPageSize() int64 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListHmsAlertsReq) GetGatewaySn() string {
+	if x != nil {
+		return x.GatewaySn
+	}
+	return ""
+}
+
+func (x *ListHmsAlertsReq) GetDeviceSn() string {
+	if x != nil {
+		return x.DeviceSn
+	}
+	return ""
+}
+
+func (x *ListHmsAlertsReq) GetLevel() int32 {
+	if x != nil {
+		return x.Level
+	}
+	return 0
+}
+
+func (x *ListHmsAlertsReq) GetAckedStatus() int32 {
+	if x != nil {
+		return x.AckedStatus
+	}
+	return 0
+}
+
+// ListHmsAlertsRes 查询 HMS 告警响应。
+type ListHmsAlertsRes struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// total 当前过滤条件下的总数量，不受 page/page_size 限制。
+	Total int64 `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
+	// list 当前页 HMS 告警列表。
+	List          []*HmsAlertInfo `protobuf:"bytes,2,rep,name=list,proto3" json:"list,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListHmsAlertsRes) Reset() {
+	*x = ListHmsAlertsRes{}
+	mi := &file_djicloud_proto_msgTypes[80]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListHmsAlertsRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListHmsAlertsRes) ProtoMessage() {}
+
+func (x *ListHmsAlertsRes) ProtoReflect() protoreflect.Message {
+	mi := &file_djicloud_proto_msgTypes[80]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListHmsAlertsRes.ProtoReflect.Descriptor instead.
+func (*ListHmsAlertsRes) Descriptor() ([]byte, []int) {
+	return file_djicloud_proto_rawDescGZIP(), []int{80}
+}
+
+func (x *ListHmsAlertsRes) GetTotal() int64 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+func (x *ListHmsAlertsRes) GetList() []*HmsAlertInfo {
+	if x != nil {
+		return x.List
+	}
+	return nil
+}
+
+// AckHmsAlertReq 确认 HMS 告警请求。
+type AckHmsAlertReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	AckedBy       string                 `protobuf:"bytes,2,opt,name=acked_by,json=ackedBy,proto3" json:"acked_by,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AckHmsAlertReq) Reset() {
+	*x = AckHmsAlertReq{}
+	mi := &file_djicloud_proto_msgTypes[81]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AckHmsAlertReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AckHmsAlertReq) ProtoMessage() {}
+
+func (x *AckHmsAlertReq) ProtoReflect() protoreflect.Message {
+	mi := &file_djicloud_proto_msgTypes[81]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AckHmsAlertReq.ProtoReflect.Descriptor instead.
+func (*AckHmsAlertReq) Descriptor() ([]byte, []int) {
+	return file_djicloud_proto_rawDescGZIP(), []int{81}
+}
+
+func (x *AckHmsAlertReq) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *AckHmsAlertReq) GetAckedBy() string {
+	if x != nil {
+		return x.AckedBy
+	}
+	return ""
+}
+
+// FlightTaskProgressInfo 飞行任务进度推送记录。
+type FlightTaskProgressInfo struct {
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	Id                   int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	FlightId             string                 `protobuf:"bytes,2,opt,name=flight_id,json=flightId,proto3" json:"flight_id,omitempty"`
+	GatewaySn            string                 `protobuf:"bytes,3,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
+	WaylineMissionState  int32                  `protobuf:"varint,4,opt,name=wayline_mission_state,json=waylineMissionState,proto3" json:"wayline_mission_state,omitempty"`
+	CurrentWaypointIndex int32                  `protobuf:"varint,5,opt,name=current_waypoint_index,json=currentWaypointIndex,proto3" json:"current_waypoint_index,omitempty"`
+	MediaCount           int32                  `protobuf:"varint,6,opt,name=media_count,json=mediaCount,proto3" json:"media_count,omitempty"`
+	ProgressPercent      float64                `protobuf:"fixed64,7,opt,name=progress_percent,json=progressPercent,proto3" json:"progress_percent,omitempty"`
+	ExtJson              string                 `protobuf:"bytes,8,opt,name=ext_json,json=extJson,proto3" json:"ext_json,omitempty"`
+	ReportedAt           int64                  `protobuf:"varint,9,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *FlightTaskProgressInfo) Reset() {
+	*x = FlightTaskProgressInfo{}
+	mi := &file_djicloud_proto_msgTypes[82]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FlightTaskProgressInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FlightTaskProgressInfo) ProtoMessage() {}
+
+func (x *FlightTaskProgressInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_djicloud_proto_msgTypes[82]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FlightTaskProgressInfo.ProtoReflect.Descriptor instead.
+func (*FlightTaskProgressInfo) Descriptor() ([]byte, []int) {
+	return file_djicloud_proto_rawDescGZIP(), []int{82}
+}
+
+func (x *FlightTaskProgressInfo) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *FlightTaskProgressInfo) GetFlightId() string {
+	if x != nil {
+		return x.FlightId
+	}
+	return ""
+}
+
+func (x *FlightTaskProgressInfo) GetGatewaySn() string {
+	if x != nil {
+		return x.GatewaySn
+	}
+	return ""
+}
+
+func (x *FlightTaskProgressInfo) GetWaylineMissionState() int32 {
+	if x != nil {
+		return x.WaylineMissionState
+	}
+	return 0
+}
+
+func (x *FlightTaskProgressInfo) GetCurrentWaypointIndex() int32 {
+	if x != nil {
+		return x.CurrentWaypointIndex
+	}
+	return 0
+}
+
+func (x *FlightTaskProgressInfo) GetMediaCount() int32 {
+	if x != nil {
+		return x.MediaCount
+	}
+	return 0
+}
+
+func (x *FlightTaskProgressInfo) GetProgressPercent() float64 {
+	if x != nil {
+		return x.ProgressPercent
+	}
+	return 0
+}
+
+func (x *FlightTaskProgressInfo) GetExtJson() string {
+	if x != nil {
+		return x.ExtJson
+	}
+	return ""
+}
+
+func (x *FlightTaskProgressInfo) GetReportedAt() int64 {
+	if x != nil {
+		return x.ReportedAt
+	}
+	return 0
+}
+
+// ListFlightTaskProgressReq 查询飞行任务进度推送记录请求。
+type ListFlightTaskProgressReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// page 页码，从 1 开始。
+	Page int64 `protobuf:"varint,1,opt,name=page,proto3" json:"page,omitempty"`
+	// page_size 每页条数，默认由服务端兜底。
+	PageSize      int64  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	GatewaySn     string `protobuf:"bytes,3,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
+	FlightId      string `protobuf:"bytes,4,opt,name=flight_id,json=flightId,proto3" json:"flight_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListFlightTaskProgressReq) Reset() {
+	*x = ListFlightTaskProgressReq{}
+	mi := &file_djicloud_proto_msgTypes[83]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFlightTaskProgressReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFlightTaskProgressReq) ProtoMessage() {}
+
+func (x *ListFlightTaskProgressReq) ProtoReflect() protoreflect.Message {
+	mi := &file_djicloud_proto_msgTypes[83]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListFlightTaskProgressReq.ProtoReflect.Descriptor instead.
+func (*ListFlightTaskProgressReq) Descriptor() ([]byte, []int) {
+	return file_djicloud_proto_rawDescGZIP(), []int{83}
+}
+
+func (x *ListFlightTaskProgressReq) GetPage() int64 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *ListFlightTaskProgressReq) GetPageSize() int64 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListFlightTaskProgressReq) GetGatewaySn() string {
+	if x != nil {
+		return x.GatewaySn
+	}
+	return ""
+}
+
+func (x *ListFlightTaskProgressReq) GetFlightId() string {
+	if x != nil {
+		return x.FlightId
+	}
+	return ""
+}
+
+// ListFlightTaskProgressRes 查询飞行任务进度推送记录响应。
+type ListFlightTaskProgressRes struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// total 当前过滤条件下的总数量，不受 page/page_size 限制。
+	Total int64 `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
+	// list 当前页飞行任务进度推送记录列表。
+	List          []*FlightTaskProgressInfo `protobuf:"bytes,2,rep,name=list,proto3" json:"list,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListFlightTaskProgressRes) Reset() {
+	*x = ListFlightTaskProgressRes{}
+	mi := &file_djicloud_proto_msgTypes[84]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFlightTaskProgressRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFlightTaskProgressRes) ProtoMessage() {}
+
+func (x *ListFlightTaskProgressRes) ProtoReflect() protoreflect.Message {
+	mi := &file_djicloud_proto_msgTypes[84]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListFlightTaskProgressRes.ProtoReflect.Descriptor instead.
+func (*ListFlightTaskProgressRes) Descriptor() ([]byte, []int) {
+	return file_djicloud_proto_rawDescGZIP(), []int{84}
+}
+
+func (x *ListFlightTaskProgressRes) GetTotal() int64 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+func (x *ListFlightTaskProgressRes) GetList() []*FlightTaskProgressInfo {
+	if x != nil {
+		return x.List
+	}
+	return nil
+}
+
+// FlightTaskProgressLastRes 最近一次航线任务进度（flighttask_progress）数据库记录。
 type FlightTaskProgressLastRes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// has_progress 是否已有缓存数据。
+	// has_progress 是否已有进度记录。
 	HasProgress bool `protobuf:"varint,1,opt,name=has_progress,json=hasProgress,proto3" json:"has_progress,omitempty"`
-	// cached_at_ms 服务端写入缓存时的 Unix 毫秒时间戳。
-	CachedAtMs int64 `protobuf:"varint,2,opt,name=cached_at_ms,json=cachedAtMs,proto3" json:"cached_at_ms,omitempty"`
-	// progress_json FlightTaskProgressEvent 的 JSON 序列化；无缓存时为空。
+	// reported_at_ms 设备上报时间 Unix 毫秒时间戳。
+	ReportedAtMs int64 `protobuf:"varint,2,opt,name=reported_at_ms,json=reportedAtMs,proto3" json:"reported_at_ms,omitempty"`
+	// progress_json flighttask_progress 原始扩展数据 JSON；无记录时为空。
 	ProgressJson  string `protobuf:"bytes,3,opt,name=progress_json,json=progressJson,proto3" json:"progress_json,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -4673,7 +6106,7 @@ type FlightTaskProgressLastRes struct {
 
 func (x *FlightTaskProgressLastRes) Reset() {
 	*x = FlightTaskProgressLastRes{}
-	mi := &file_djicloud_proto_msgTypes[69]
+	mi := &file_djicloud_proto_msgTypes[85]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4685,7 +6118,7 @@ func (x *FlightTaskProgressLastRes) String() string {
 func (*FlightTaskProgressLastRes) ProtoMessage() {}
 
 func (x *FlightTaskProgressLastRes) ProtoReflect() protoreflect.Message {
-	mi := &file_djicloud_proto_msgTypes[69]
+	mi := &file_djicloud_proto_msgTypes[85]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4698,7 +6131,7 @@ func (x *FlightTaskProgressLastRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FlightTaskProgressLastRes.ProtoReflect.Descriptor instead.
 func (*FlightTaskProgressLastRes) Descriptor() ([]byte, []int) {
-	return file_djicloud_proto_rawDescGZIP(), []int{69}
+	return file_djicloud_proto_rawDescGZIP(), []int{85}
 }
 
 func (x *FlightTaskProgressLastRes) GetHasProgress() bool {
@@ -4708,9 +6141,9 @@ func (x *FlightTaskProgressLastRes) GetHasProgress() bool {
 	return false
 }
 
-func (x *FlightTaskProgressLastRes) GetCachedAtMs() int64 {
+func (x *FlightTaskProgressLastRes) GetReportedAtMs() int64 {
 	if x != nil {
-		return x.CachedAtMs
+		return x.ReportedAtMs
 	}
 	return 0
 }
@@ -5049,12 +6482,149 @@ const file_djicloud_proto_rawDesc = "" +
 	"cameraType\x12'\n" +
 	"\x0fdewarping_state\x18\x04 \x01(\x05R\x0edewarpingState\".\n" +
 	"\x0fDeviceOnlineRes\x12\x1b\n" +
-	"\tis_online\x18\x01 \x01(\bR\bisOnline\"\x85\x01\n" +
+	"\tis_online\x18\x01 \x01(\bR\bisOnline\"\xbc\x03\n" +
+	"\n" +
+	"DeviceInfo\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1b\n" +
+	"\tdevice_sn\x18\x02 \x01(\tR\bdeviceSn\x12\x1d\n" +
+	"\n" +
+	"gateway_sn\x18\x03 \x01(\tR\tgatewaySn\x12#\n" +
+	"\rdevice_domain\x18\x04 \x01(\tR\fdeviceDomain\x12\x1f\n" +
+	"\vdevice_type\x18\x05 \x01(\x05R\n" +
+	"deviceType\x12&\n" +
+	"\x0fdevice_sub_type\x18\x06 \x01(\x05R\rdeviceSubType\x12\x14\n" +
+	"\x05alias\x18\a \x01(\tR\x05alias\x12\x1d\n" +
+	"\n" +
+	"group_name\x18\b \x01(\tR\tgroupName\x12)\n" +
+	"\x10firmware_version\x18\t \x01(\tR\x0ffirmwareVersion\x12)\n" +
+	"\x10hardware_version\x18\n" +
+	" \x01(\tR\x0fhardwareVersion\x12\x1b\n" +
+	"\tis_online\x18\v \x01(\bR\bisOnline\x12&\n" +
+	"\x0ffirst_online_at\x18\f \x01(\x03R\rfirstOnlineAt\x12$\n" +
+	"\x0elast_online_at\x18\r \x01(\x03R\flastOnlineAt\"\x91\x02\n" +
+	"\x0eDeviceTopoInfo\x12\x1d\n" +
+	"\n" +
+	"gateway_sn\x18\x01 \x01(\tR\tgatewaySn\x12\"\n" +
+	"\rsub_device_sn\x18\x02 \x01(\tR\vsubDeviceSn\x12\x16\n" +
+	"\x06domain\x18\x03 \x01(\tR\x06domain\x12&\n" +
+	"\x0fsub_device_type\x18\x04 \x01(\x05R\rsubDeviceType\x12-\n" +
+	"\x13sub_device_sub_type\x18\x05 \x01(\x05R\x10subDeviceSubType\x12(\n" +
+	"\x10sub_device_index\x18\x06 \x01(\tR\x0esubDeviceIndex\x12#\n" +
+	"\rthing_version\x18\a \x01(\tR\fthingVersion\"\xd1\x01\n" +
+	"\x0eListDevicesReq\x12\x12\n" +
+	"\x04page\x18\x01 \x01(\x03R\x04page\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x03R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"gateway_sn\x18\x03 \x01(\tR\tgatewaySn\x120\n" +
+	"\x14device_domain_filter\x18\x04 \x01(\tR\x12deviceDomainFilter\x12#\n" +
+	"\ronline_status\x18\x05 \x01(\x05R\fonlineStatus\x12\x18\n" +
+	"\akeyword\x18\x06 \x01(\tR\akeyword\"P\n" +
+	"\x0eListDevicesRes\x12\x14\n" +
+	"\x05total\x18\x01 \x01(\x03R\x05total\x12(\n" +
+	"\x04list\x18\x02 \x03(\v2\x14.djicloud.DeviceInfoR\x04list\"\xc7\x04\n" +
+	"\x11DeviceOsdSnapshot\x12\x1b\n" +
+	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x1d\n" +
+	"\n" +
+	"gateway_sn\x18\x02 \x01(\tR\tgatewaySn\x12#\n" +
+	"\rdevice_domain\x18\x03 \x01(\tR\fdeviceDomain\x12\x1a\n" +
+	"\blatitude\x18\x04 \x01(\x01R\blatitude\x12\x1c\n" +
+	"\tlongitude\x18\x05 \x01(\x01R\tlongitude\x12\x1a\n" +
+	"\baltitude\x18\x06 \x01(\x01R\baltitude\x12\x16\n" +
+	"\x06height\x18\a \x01(\x01R\x06height\x12\x17\n" +
+	"\aspeed_h\x18\b \x01(\x01R\x06speedH\x12\x17\n" +
+	"\aspeed_v\x18\t \x01(\x01R\x06speedV\x12\x18\n" +
+	"\aheading\x18\n" +
+	" \x01(\x01R\aheading\x12%\n" +
+	"\x0eattitude_pitch\x18\v \x01(\x01R\rattitudePitch\x12#\n" +
+	"\rattitude_roll\x18\f \x01(\x01R\fattitudeRoll\x12)\n" +
+	"\x10attitude_heading\x18\r \x01(\x01R\x0fattitudeHeading\x12'\n" +
+	"\x0fbattery_percent\x18\x0e \x01(\x05R\x0ebatteryPercent\x12\x1c\n" +
+	"\televation\x18\x0f \x01(\x01R\televation\x12\x1b\n" +
+	"\tmode_code\x18\x10 \x01(\x05R\bmodeCode\x12\x1b\n" +
+	"\tdata_json\x18\x11 \x01(\tR\bdataJson\x12\x1f\n" +
+	"\vreported_at\x18\x12 \x01(\x03R\n" +
+	"reportedAt\"G\n" +
+	"\x14DeviceOsdSnapshotRes\x12/\n" +
+	"\x04data\x18\x01 \x01(\v2\x1b.djicloud.DeviceOsdSnapshotR\x04data\"\x84\x02\n" +
+	"\x13DeviceStateSnapshot\x12\x1b\n" +
+	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x1d\n" +
+	"\n" +
+	"gateway_sn\x18\x02 \x01(\tR\tgatewaySn\x12#\n" +
+	"\rdevice_domain\x18\x03 \x01(\tR\fdeviceDomain\x12\"\n" +
+	"\rsub_device_sn\x18\x04 \x01(\tR\vsubDeviceSn\x12*\n" +
+	"\x11sub_device_online\x18\x05 \x01(\bR\x0fsubDeviceOnline\x12\x1b\n" +
+	"\tdata_json\x18\x06 \x01(\tR\bdataJson\x12\x1f\n" +
+	"\vreported_at\x18\a \x01(\x03R\n" +
+	"reportedAt\"K\n" +
+	"\x16DeviceStateSnapshotRes\x121\n" +
+	"\x04data\x18\x01 \x01(\v2\x1d.djicloud.DeviceStateSnapshotR\x04data\"\xd1\x01\n" +
+	"\x0fDeviceDetailRes\x12,\n" +
+	"\x06device\x18\x01 \x01(\v2\x14.djicloud.DeviceInfoR\x06device\x12-\n" +
+	"\x03osd\x18\x02 \x01(\v2\x1b.djicloud.DeviceOsdSnapshotR\x03osd\x123\n" +
+	"\x05state\x18\x03 \x01(\v2\x1d.djicloud.DeviceStateSnapshotR\x05state\x12,\n" +
+	"\x04topo\x18\x04 \x03(\v2\x18.djicloud.DeviceTopoInfoR\x04topo\"\xca\x03\n" +
+	"\fHmsAlertInfo\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1d\n" +
+	"\n" +
+	"gateway_sn\x18\x02 \x01(\tR\tgatewaySn\x12\x1b\n" +
+	"\tdevice_sn\x18\x03 \x01(\tR\bdeviceSn\x12\x14\n" +
+	"\x05level\x18\x04 \x01(\x05R\x05level\x12\x16\n" +
+	"\x06module\x18\x05 \x01(\x05R\x06module\x12\x12\n" +
+	"\x04code\x18\x06 \x01(\tR\x04code\x12\x1f\n" +
+	"\vdevice_type\x18\a \x01(\tR\n" +
+	"deviceType\x12\x1a\n" +
+	"\bimminent\x18\b \x01(\x05R\bimminent\x12\x1c\n" +
+	"\n" +
+	"in_the_sky\x18\t \x01(\x05R\binTheSky\x12'\n" +
+	"\x0fcomponent_index\x18\n" +
+	" \x01(\x05R\x0ecomponentIndex\x12!\n" +
+	"\fsensor_index\x18\v \x01(\x05R\vsensorIndex\x12\x18\n" +
+	"\amessage\x18\f \x01(\tR\amessage\x12\x14\n" +
+	"\x05acked\x18\r \x01(\x05R\x05acked\x12\x19\n" +
+	"\backed_at\x18\x0e \x01(\x03R\aackedAt\x12\x19\n" +
+	"\backed_by\x18\x0f \x01(\tR\aackedBy\x12\x1f\n" +
+	"\vreported_at\x18\x10 \x01(\x03R\n" +
+	"reportedAt\"\xb8\x01\n" +
+	"\x10ListHmsAlertsReq\x12\x12\n" +
+	"\x04page\x18\x01 \x01(\x03R\x04page\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x03R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"gateway_sn\x18\x03 \x01(\tR\tgatewaySn\x12\x1b\n" +
+	"\tdevice_sn\x18\x04 \x01(\tR\bdeviceSn\x12\x14\n" +
+	"\x05level\x18\x05 \x01(\x05R\x05level\x12!\n" +
+	"\facked_status\x18\x06 \x01(\x05R\vackedStatus\"T\n" +
+	"\x10ListHmsAlertsRes\x12\x14\n" +
+	"\x05total\x18\x01 \x01(\x03R\x05total\x12*\n" +
+	"\x04list\x18\x02 \x03(\v2\x16.djicloud.HmsAlertInfoR\x04list\";\n" +
+	"\x0eAckHmsAlertReq\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x19\n" +
+	"\backed_by\x18\x02 \x01(\tR\aackedBy\"\xd6\x02\n" +
+	"\x16FlightTaskProgressInfo\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1b\n" +
+	"\tflight_id\x18\x02 \x01(\tR\bflightId\x12\x1d\n" +
+	"\n" +
+	"gateway_sn\x18\x03 \x01(\tR\tgatewaySn\x122\n" +
+	"\x15wayline_mission_state\x18\x04 \x01(\x05R\x13waylineMissionState\x124\n" +
+	"\x16current_waypoint_index\x18\x05 \x01(\x05R\x14currentWaypointIndex\x12\x1f\n" +
+	"\vmedia_count\x18\x06 \x01(\x05R\n" +
+	"mediaCount\x12)\n" +
+	"\x10progress_percent\x18\a \x01(\x01R\x0fprogressPercent\x12\x19\n" +
+	"\bext_json\x18\b \x01(\tR\aextJson\x12\x1f\n" +
+	"\vreported_at\x18\t \x01(\x03R\n" +
+	"reportedAt\"\x88\x01\n" +
+	"\x19ListFlightTaskProgressReq\x12\x12\n" +
+	"\x04page\x18\x01 \x01(\x03R\x04page\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x03R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"gateway_sn\x18\x03 \x01(\tR\tgatewaySn\x12\x1b\n" +
+	"\tflight_id\x18\x04 \x01(\tR\bflightId\"g\n" +
+	"\x19ListFlightTaskProgressRes\x12\x14\n" +
+	"\x05total\x18\x01 \x01(\x03R\x05total\x124\n" +
+	"\x04list\x18\x02 \x03(\v2 .djicloud.FlightTaskProgressInfoR\x04list\"\x89\x01\n" +
 	"\x19FlightTaskProgressLastRes\x12!\n" +
-	"\fhas_progress\x18\x01 \x01(\bR\vhasProgress\x12 \n" +
-	"\fcached_at_ms\x18\x02 \x01(\x03R\n" +
-	"cachedAtMs\x12#\n" +
-	"\rprogress_json\x18\x03 \x01(\tR\fprogressJson2\xc92\n" +
+	"\fhas_progress\x18\x01 \x01(\bR\vhasProgress\x12$\n" +
+	"\x0ereported_at_ms\x18\x02 \x01(\x03R\freportedAtMs\x12#\n" +
+	"\rprogress_json\x18\x03 \x01(\tR\fprogressJson2\xde6\n" +
 	"\bDjiCloud\x12$\n" +
 	"\x04Ping\x12\r.djicloud.Req\x1a\r.djicloud.Res\x12<\n" +
 	"\vSetProperty\x12\x18.djicloud.SetPropertyReq\x1a\x13.djicloud.CommonRes\x12@\n" +
@@ -5150,7 +6720,14 @@ const file_djicloud_proto_rawDesc = "" +
 	"\x0fDrcCameraIsoSet\x12\x1c.djicloud.DrcCameraIsoSetReq\x1a\x13.djicloud.CommonRes\x12`\n" +
 	"\x1dDrcCameraMechanicalShutterSet\x12*.djicloud.DrcCameraMechanicalShutterSetReq\x1a\x13.djicloud.CommonRes\x12P\n" +
 	"\x15DrcCameraDewarpingSet\x12\".djicloud.DrcCameraDewarpingSetReq\x1a\x13.djicloud.CommonRes\x12B\n" +
-	"\x0eIsDeviceOnline\x12\x15.djicloud.DeviceSnReq\x1a\x19.djicloud.DeviceOnlineRes\x12W\n" +
+	"\x0eIsDeviceOnline\x12\x15.djicloud.DeviceSnReq\x1a\x19.djicloud.DeviceOnlineRes\x12A\n" +
+	"\vListDevices\x12\x18.djicloud.ListDevicesReq\x1a\x18.djicloud.ListDevicesRes\x12C\n" +
+	"\x0fGetDeviceDetail\x12\x15.djicloud.DeviceSnReq\x1a\x19.djicloud.DeviceDetailRes\x12M\n" +
+	"\x14GetDeviceOsdSnapshot\x12\x15.djicloud.DeviceSnReq\x1a\x1e.djicloud.DeviceOsdSnapshotRes\x12Q\n" +
+	"\x16GetDeviceStateSnapshot\x12\x15.djicloud.DeviceSnReq\x1a .djicloud.DeviceStateSnapshotRes\x12G\n" +
+	"\rListHmsAlerts\x12\x1a.djicloud.ListHmsAlertsReq\x1a\x1a.djicloud.ListHmsAlertsRes\x12<\n" +
+	"\vAckHmsAlert\x12\x18.djicloud.AckHmsAlertReq\x1a\x13.djicloud.CommonRes\x12b\n" +
+	"\x16ListFlightTaskProgress\x12#.djicloud.ListFlightTaskProgressReq\x1a#.djicloud.ListFlightTaskProgressRes\x12W\n" +
 	"\x19GetFlightTaskProgressLast\x12\x15.djicloud.DeviceSnReq\x1a#.djicloud.FlightTaskProgressLastResB7\n" +
 	"\x18com.github.djicloud.grpcB\rDjiCloudProtoP\x01Z\n" +
 	"./djicloudb\x06proto3"
@@ -5167,7 +6744,7 @@ func file_djicloud_proto_rawDescGZIP() []byte {
 	return file_djicloud_proto_rawDescData
 }
 
-var file_djicloud_proto_msgTypes = make([]protoimpl.MessageInfo, 70)
+var file_djicloud_proto_msgTypes = make([]protoimpl.MessageInfo, 86)
 var file_djicloud_proto_goTypes = []any{
 	(*Req)(nil),                              // 0: djicloud.Req
 	(*Res)(nil),                              // 1: djicloud.Res
@@ -5238,204 +6815,243 @@ var file_djicloud_proto_goTypes = []any{
 	(*DrcCameraMechanicalShutterSetReq)(nil), // 66: djicloud.DrcCameraMechanicalShutterSetReq
 	(*DrcCameraDewarpingSetReq)(nil),         // 67: djicloud.DrcCameraDewarpingSetReq
 	(*DeviceOnlineRes)(nil),                  // 68: djicloud.DeviceOnlineRes
-	(*FlightTaskProgressLastRes)(nil),        // 69: djicloud.FlightTaskProgressLastRes
+	(*DeviceInfo)(nil),                       // 69: djicloud.DeviceInfo
+	(*DeviceTopoInfo)(nil),                   // 70: djicloud.DeviceTopoInfo
+	(*ListDevicesReq)(nil),                   // 71: djicloud.ListDevicesReq
+	(*ListDevicesRes)(nil),                   // 72: djicloud.ListDevicesRes
+	(*DeviceOsdSnapshot)(nil),                // 73: djicloud.DeviceOsdSnapshot
+	(*DeviceOsdSnapshotRes)(nil),             // 74: djicloud.DeviceOsdSnapshotRes
+	(*DeviceStateSnapshot)(nil),              // 75: djicloud.DeviceStateSnapshot
+	(*DeviceStateSnapshotRes)(nil),           // 76: djicloud.DeviceStateSnapshotRes
+	(*DeviceDetailRes)(nil),                  // 77: djicloud.DeviceDetailRes
+	(*HmsAlertInfo)(nil),                     // 78: djicloud.HmsAlertInfo
+	(*ListHmsAlertsReq)(nil),                 // 79: djicloud.ListHmsAlertsReq
+	(*ListHmsAlertsRes)(nil),                 // 80: djicloud.ListHmsAlertsRes
+	(*AckHmsAlertReq)(nil),                   // 81: djicloud.AckHmsAlertReq
+	(*FlightTaskProgressInfo)(nil),           // 82: djicloud.FlightTaskProgressInfo
+	(*ListFlightTaskProgressReq)(nil),        // 83: djicloud.ListFlightTaskProgressReq
+	(*ListFlightTaskProgressRes)(nil),        // 84: djicloud.ListFlightTaskProgressRes
+	(*FlightTaskProgressLastRes)(nil),        // 85: djicloud.FlightTaskProgressLastRes
 }
 var file_djicloud_proto_depIdxs = []int32{
-	12, // 0: djicloud.FlightTaskPrepareReq.file:type_name -> djicloud.FlightTaskFileRef
-	14, // 1: djicloud.FlightTaskPrepareReq.break_point:type_name -> djicloud.FlightTaskPrepareBreakPoint
-	13, // 2: djicloud.FlightTaskPrepareReq.simulate_mission:type_name -> djicloud.FlightTaskPrepareSimulateMission
-	23, // 3: djicloud.OtaCreateReq.devices:type_name -> djicloud.OtaDevice
-	26, // 4: djicloud.RemoteLogFileUploadReq.files:type_name -> djicloud.RemoteLogFile
-	29, // 5: djicloud.DrcModeEnterReq.mqtt_broker:type_name -> djicloud.DrcMqttBroker
-	34, // 6: djicloud.FlyToPointReq.points:type_name -> djicloud.Waypoint
-	55, // 7: djicloud.UnlockLicenseUpdateReq.file:type_name -> djicloud.UnlockLicenseFileRef
-	0,  // 8: djicloud.DjiCloud.Ping:input_type -> djicloud.Req
-	4,  // 9: djicloud.DjiCloud.SetProperty:input_type -> djicloud.SetPropertyReq
-	5,  // 10: djicloud.DjiCloud.LiveStartPush:input_type -> djicloud.LiveStartPushReq
-	6,  // 11: djicloud.DjiCloud.LiveStopPush:input_type -> djicloud.LiveStopPushReq
-	7,  // 12: djicloud.DjiCloud.LiveSetQuality:input_type -> djicloud.LiveSetQualityReq
-	8,  // 13: djicloud.DjiCloud.LiveLensChange:input_type -> djicloud.LiveLensChangeReq
-	9,  // 14: djicloud.DjiCloud.LiveCameraChange:input_type -> djicloud.LiveCameraChangeReq
-	10, // 15: djicloud.DjiCloud.MediaUploadFlighttaskMediaPrioritize:input_type -> djicloud.MediaFlighttaskReq
-	11, // 16: djicloud.DjiCloud.MediaFastUpload:input_type -> djicloud.MediaFastUploadReq
-	10, // 17: djicloud.DjiCloud.MediaHighestPriorityUploadFlighttask:input_type -> djicloud.MediaFlighttaskReq
-	15, // 18: djicloud.DjiCloud.FlightTaskPrepare:input_type -> djicloud.FlightTaskPrepareReq
-	16, // 19: djicloud.DjiCloud.FlightTaskExecute:input_type -> djicloud.FlightTaskExecuteReq
-	17, // 20: djicloud.DjiCloud.CancelFlightTask:input_type -> djicloud.CancelFlightTaskReq
-	3,  // 21: djicloud.DjiCloud.PauseFlightTask:input_type -> djicloud.DeviceSnReq
-	3,  // 22: djicloud.DjiCloud.ResumeFlightTask:input_type -> djicloud.DeviceSnReq
-	3,  // 23: djicloud.DjiCloud.StopFlightTask:input_type -> djicloud.DeviceSnReq
-	3,  // 24: djicloud.DjiCloud.ReturnHome:input_type -> djicloud.DeviceSnReq
-	3,  // 25: djicloud.DjiCloud.ReturnHomeCancelAutoReturn:input_type -> djicloud.DeviceSnReq
-	18, // 26: djicloud.DjiCloud.ReturnSpecificHome:input_type -> djicloud.ReturnSpecificHomeReq
-	3,  // 27: djicloud.DjiCloud.DebugModeOpen:input_type -> djicloud.DeviceSnReq
-	3,  // 28: djicloud.DjiCloud.DebugModeClose:input_type -> djicloud.DeviceSnReq
-	3,  // 29: djicloud.DjiCloud.CoverOpen:input_type -> djicloud.DeviceSnReq
-	3,  // 30: djicloud.DjiCloud.CoverClose:input_type -> djicloud.DeviceSnReq
-	3,  // 31: djicloud.DjiCloud.CoverForceClose:input_type -> djicloud.DeviceSnReq
-	3,  // 32: djicloud.DjiCloud.DroneOpen:input_type -> djicloud.DeviceSnReq
-	3,  // 33: djicloud.DjiCloud.DroneClose:input_type -> djicloud.DeviceSnReq
-	3,  // 34: djicloud.DjiCloud.DeviceReboot:input_type -> djicloud.DeviceSnReq
-	3,  // 35: djicloud.DjiCloud.ChargeOpen:input_type -> djicloud.DeviceSnReq
-	3,  // 36: djicloud.DjiCloud.ChargeClose:input_type -> djicloud.DeviceSnReq
-	3,  // 37: djicloud.DjiCloud.DroneFormat:input_type -> djicloud.DeviceSnReq
-	3,  // 38: djicloud.DjiCloud.DeviceFormat:input_type -> djicloud.DeviceSnReq
-	3,  // 39: djicloud.DjiCloud.SupplementLightOpen:input_type -> djicloud.DeviceSnReq
-	3,  // 40: djicloud.DjiCloud.SupplementLightClose:input_type -> djicloud.DeviceSnReq
-	19, // 41: djicloud.DjiCloud.BatteryStoreModeSwitch:input_type -> djicloud.BatteryStoreModeReq
-	20, // 42: djicloud.DjiCloud.AlarmStateSwitch:input_type -> djicloud.AlarmStateSwitchReq
-	21, // 43: djicloud.DjiCloud.AirConditionerModeSwitch:input_type -> djicloud.AirConditionerModeSwitchReq
-	19, // 44: djicloud.DjiCloud.BatteryMaintenanceSwitch:input_type -> djicloud.BatteryStoreModeReq
-	22, // 45: djicloud.DjiCloud.OtaCreate:input_type -> djicloud.OtaCreateReq
-	24, // 46: djicloud.DjiCloud.RemoteLogFileList:input_type -> djicloud.RemoteLogFileListReq
-	25, // 47: djicloud.DjiCloud.RemoteLogFileUploadStart:input_type -> djicloud.RemoteLogFileUploadReq
-	25, // 48: djicloud.DjiCloud.RemoteLogFileUploadUpdate:input_type -> djicloud.RemoteLogFileUploadReq
-	25, // 49: djicloud.DjiCloud.RemoteLogFileUploadCancel:input_type -> djicloud.RemoteLogFileUploadReq
-	27, // 50: djicloud.DjiCloud.ConfigUpdate:input_type -> djicloud.ConfigUpdateReq
-	3,  // 51: djicloud.DjiCloud.FlightAuthorityGrab:input_type -> djicloud.DeviceSnReq
-	3,  // 52: djicloud.DjiCloud.PayloadAuthorityGrab:input_type -> djicloud.DeviceSnReq
-	28, // 53: djicloud.DjiCloud.DrcModeEnter:input_type -> djicloud.DrcModeEnterReq
-	3,  // 54: djicloud.DjiCloud.DrcModeExit:input_type -> djicloud.DeviceSnReq
-	30, // 55: djicloud.DjiCloud.SendDrcStickControl:input_type -> djicloud.DrcStickControlReq
-	31, // 56: djicloud.DjiCloud.SendDrcHeartBeat:input_type -> djicloud.DrcHeartBeatReq
-	3,  // 57: djicloud.DjiCloud.DroneEmergencyStop:input_type -> djicloud.DeviceSnReq
-	33, // 58: djicloud.DjiCloud.FlyToPoint:input_type -> djicloud.FlyToPointReq
-	3,  // 59: djicloud.DjiCloud.FlyToPointStop:input_type -> djicloud.DeviceSnReq
-	32, // 60: djicloud.DjiCloud.TakeoffToPoint:input_type -> djicloud.TakeoffToPointReq
-	35, // 61: djicloud.DjiCloud.CameraModeSwitch:input_type -> djicloud.CameraModeSwitchReq
-	36, // 62: djicloud.DjiCloud.CameraPhotoTake:input_type -> djicloud.CameraPhotoTakeReq
-	37, // 63: djicloud.DjiCloud.CameraPhotoStop:input_type -> djicloud.CameraPhotoStopReq
-	38, // 64: djicloud.DjiCloud.CameraRecordingStart:input_type -> djicloud.CameraRecordingStartReq
-	39, // 65: djicloud.DjiCloud.CameraRecordingStop:input_type -> djicloud.CameraRecordingStopReq
-	40, // 66: djicloud.DjiCloud.CameraFocalLengthSet:input_type -> djicloud.CameraFocalLengthSetReq
-	41, // 67: djicloud.DjiCloud.GimbalReset:input_type -> djicloud.GimbalResetReq
-	42, // 68: djicloud.DjiCloud.CameraAim:input_type -> djicloud.CameraAimReq
-	43, // 69: djicloud.DjiCloud.CameraPointFocusAction:input_type -> djicloud.CameraPointFocusActionReq
-	44, // 70: djicloud.DjiCloud.CameraScreenSplit:input_type -> djicloud.CameraScreenSplitReq
-	45, // 71: djicloud.DjiCloud.CameraPhotoStorageSet:input_type -> djicloud.CameraPhotoStorageSetReq
-	46, // 72: djicloud.DjiCloud.CameraVideoStorageSet:input_type -> djicloud.CameraVideoStorageSetReq
-	47, // 73: djicloud.DjiCloud.CameraLookAt:input_type -> djicloud.CameraLookAtReq
-	48, // 74: djicloud.DjiCloud.CameraScreenDrag:input_type -> djicloud.CameraScreenDragReq
-	49, // 75: djicloud.DjiCloud.CameraIrMeteringPoint:input_type -> djicloud.CameraIrMeteringPointReq
-	50, // 76: djicloud.DjiCloud.CameraIrMeteringArea:input_type -> djicloud.CameraIrMeteringAreaReq
-	3,  // 77: djicloud.DjiCloud.FlightAreasUpdate:input_type -> djicloud.DeviceSnReq
-	51, // 78: djicloud.DjiCloud.PsdkUIResourceUpload:input_type -> djicloud.PsdkUIResourceUploadReq
-	52, // 79: djicloud.DjiCloud.SendCustomDataToPsdk:input_type -> djicloud.CustomDataToPsdkReq
-	53, // 80: djicloud.DjiCloud.SendCustomDataToEsdk:input_type -> djicloud.CustomDataToEsdkReq
-	54, // 81: djicloud.DjiCloud.UnlockLicenseSwitch:input_type -> djicloud.UnlockLicenseSwitchReq
-	56, // 82: djicloud.DjiCloud.UnlockLicenseUpdate:input_type -> djicloud.UnlockLicenseUpdateReq
-	57, // 83: djicloud.DjiCloud.UnlockLicenseList:input_type -> djicloud.UnlockLicenseListReq
-	3,  // 84: djicloud.DjiCloud.DrcForceLanding:input_type -> djicloud.DeviceSnReq
-	3,  // 85: djicloud.DjiCloud.DrcEmergencyLanding:input_type -> djicloud.DeviceSnReq
-	58, // 86: djicloud.DjiCloud.DrcLinkageZoomSet:input_type -> djicloud.DrcLinkageZoomSetReq
-	59, // 87: djicloud.DjiCloud.DrcVideoResolutionSet:input_type -> djicloud.DrcVideoResolutionSetReq
-	60, // 88: djicloud.DjiCloud.DrcIntervalPhotoSet:input_type -> djicloud.DrcIntervalPhotoSetReq
-	3,  // 89: djicloud.DjiCloud.DrcInitialStateSubscribe:input_type -> djicloud.DeviceSnReq
-	61, // 90: djicloud.DjiCloud.DrcNightLightsStateSet:input_type -> djicloud.DrcNightLightsStateSetReq
-	62, // 91: djicloud.DjiCloud.DrcStealthStateSet:input_type -> djicloud.DrcStealthStateSetReq
-	63, // 92: djicloud.DjiCloud.DrcCameraApertureValueSet:input_type -> djicloud.DrcCameraApertureValueSetReq
-	64, // 93: djicloud.DjiCloud.DrcCameraShutterSet:input_type -> djicloud.DrcCameraShutterSetReq
-	65, // 94: djicloud.DjiCloud.DrcCameraIsoSet:input_type -> djicloud.DrcCameraIsoSetReq
-	66, // 95: djicloud.DjiCloud.DrcCameraMechanicalShutterSet:input_type -> djicloud.DrcCameraMechanicalShutterSetReq
-	67, // 96: djicloud.DjiCloud.DrcCameraDewarpingSet:input_type -> djicloud.DrcCameraDewarpingSetReq
-	3,  // 97: djicloud.DjiCloud.IsDeviceOnline:input_type -> djicloud.DeviceSnReq
-	3,  // 98: djicloud.DjiCloud.GetFlightTaskProgressLast:input_type -> djicloud.DeviceSnReq
-	1,  // 99: djicloud.DjiCloud.Ping:output_type -> djicloud.Res
-	2,  // 100: djicloud.DjiCloud.SetProperty:output_type -> djicloud.CommonRes
-	2,  // 101: djicloud.DjiCloud.LiveStartPush:output_type -> djicloud.CommonRes
-	2,  // 102: djicloud.DjiCloud.LiveStopPush:output_type -> djicloud.CommonRes
-	2,  // 103: djicloud.DjiCloud.LiveSetQuality:output_type -> djicloud.CommonRes
-	2,  // 104: djicloud.DjiCloud.LiveLensChange:output_type -> djicloud.CommonRes
-	2,  // 105: djicloud.DjiCloud.LiveCameraChange:output_type -> djicloud.CommonRes
-	2,  // 106: djicloud.DjiCloud.MediaUploadFlighttaskMediaPrioritize:output_type -> djicloud.CommonRes
-	2,  // 107: djicloud.DjiCloud.MediaFastUpload:output_type -> djicloud.CommonRes
-	2,  // 108: djicloud.DjiCloud.MediaHighestPriorityUploadFlighttask:output_type -> djicloud.CommonRes
-	2,  // 109: djicloud.DjiCloud.FlightTaskPrepare:output_type -> djicloud.CommonRes
-	2,  // 110: djicloud.DjiCloud.FlightTaskExecute:output_type -> djicloud.CommonRes
-	2,  // 111: djicloud.DjiCloud.CancelFlightTask:output_type -> djicloud.CommonRes
-	2,  // 112: djicloud.DjiCloud.PauseFlightTask:output_type -> djicloud.CommonRes
-	2,  // 113: djicloud.DjiCloud.ResumeFlightTask:output_type -> djicloud.CommonRes
-	2,  // 114: djicloud.DjiCloud.StopFlightTask:output_type -> djicloud.CommonRes
-	2,  // 115: djicloud.DjiCloud.ReturnHome:output_type -> djicloud.CommonRes
-	2,  // 116: djicloud.DjiCloud.ReturnHomeCancelAutoReturn:output_type -> djicloud.CommonRes
-	2,  // 117: djicloud.DjiCloud.ReturnSpecificHome:output_type -> djicloud.CommonRes
-	2,  // 118: djicloud.DjiCloud.DebugModeOpen:output_type -> djicloud.CommonRes
-	2,  // 119: djicloud.DjiCloud.DebugModeClose:output_type -> djicloud.CommonRes
-	2,  // 120: djicloud.DjiCloud.CoverOpen:output_type -> djicloud.CommonRes
-	2,  // 121: djicloud.DjiCloud.CoverClose:output_type -> djicloud.CommonRes
-	2,  // 122: djicloud.DjiCloud.CoverForceClose:output_type -> djicloud.CommonRes
-	2,  // 123: djicloud.DjiCloud.DroneOpen:output_type -> djicloud.CommonRes
-	2,  // 124: djicloud.DjiCloud.DroneClose:output_type -> djicloud.CommonRes
-	2,  // 125: djicloud.DjiCloud.DeviceReboot:output_type -> djicloud.CommonRes
-	2,  // 126: djicloud.DjiCloud.ChargeOpen:output_type -> djicloud.CommonRes
-	2,  // 127: djicloud.DjiCloud.ChargeClose:output_type -> djicloud.CommonRes
-	2,  // 128: djicloud.DjiCloud.DroneFormat:output_type -> djicloud.CommonRes
-	2,  // 129: djicloud.DjiCloud.DeviceFormat:output_type -> djicloud.CommonRes
-	2,  // 130: djicloud.DjiCloud.SupplementLightOpen:output_type -> djicloud.CommonRes
-	2,  // 131: djicloud.DjiCloud.SupplementLightClose:output_type -> djicloud.CommonRes
-	2,  // 132: djicloud.DjiCloud.BatteryStoreModeSwitch:output_type -> djicloud.CommonRes
-	2,  // 133: djicloud.DjiCloud.AlarmStateSwitch:output_type -> djicloud.CommonRes
-	2,  // 134: djicloud.DjiCloud.AirConditionerModeSwitch:output_type -> djicloud.CommonRes
-	2,  // 135: djicloud.DjiCloud.BatteryMaintenanceSwitch:output_type -> djicloud.CommonRes
-	2,  // 136: djicloud.DjiCloud.OtaCreate:output_type -> djicloud.CommonRes
-	2,  // 137: djicloud.DjiCloud.RemoteLogFileList:output_type -> djicloud.CommonRes
-	2,  // 138: djicloud.DjiCloud.RemoteLogFileUploadStart:output_type -> djicloud.CommonRes
-	2,  // 139: djicloud.DjiCloud.RemoteLogFileUploadUpdate:output_type -> djicloud.CommonRes
-	2,  // 140: djicloud.DjiCloud.RemoteLogFileUploadCancel:output_type -> djicloud.CommonRes
-	2,  // 141: djicloud.DjiCloud.ConfigUpdate:output_type -> djicloud.CommonRes
-	2,  // 142: djicloud.DjiCloud.FlightAuthorityGrab:output_type -> djicloud.CommonRes
-	2,  // 143: djicloud.DjiCloud.PayloadAuthorityGrab:output_type -> djicloud.CommonRes
-	2,  // 144: djicloud.DjiCloud.DrcModeEnter:output_type -> djicloud.CommonRes
-	2,  // 145: djicloud.DjiCloud.DrcModeExit:output_type -> djicloud.CommonRes
-	2,  // 146: djicloud.DjiCloud.SendDrcStickControl:output_type -> djicloud.CommonRes
-	2,  // 147: djicloud.DjiCloud.SendDrcHeartBeat:output_type -> djicloud.CommonRes
-	2,  // 148: djicloud.DjiCloud.DroneEmergencyStop:output_type -> djicloud.CommonRes
-	2,  // 149: djicloud.DjiCloud.FlyToPoint:output_type -> djicloud.CommonRes
-	2,  // 150: djicloud.DjiCloud.FlyToPointStop:output_type -> djicloud.CommonRes
-	2,  // 151: djicloud.DjiCloud.TakeoffToPoint:output_type -> djicloud.CommonRes
-	2,  // 152: djicloud.DjiCloud.CameraModeSwitch:output_type -> djicloud.CommonRes
-	2,  // 153: djicloud.DjiCloud.CameraPhotoTake:output_type -> djicloud.CommonRes
-	2,  // 154: djicloud.DjiCloud.CameraPhotoStop:output_type -> djicloud.CommonRes
-	2,  // 155: djicloud.DjiCloud.CameraRecordingStart:output_type -> djicloud.CommonRes
-	2,  // 156: djicloud.DjiCloud.CameraRecordingStop:output_type -> djicloud.CommonRes
-	2,  // 157: djicloud.DjiCloud.CameraFocalLengthSet:output_type -> djicloud.CommonRes
-	2,  // 158: djicloud.DjiCloud.GimbalReset:output_type -> djicloud.CommonRes
-	2,  // 159: djicloud.DjiCloud.CameraAim:output_type -> djicloud.CommonRes
-	2,  // 160: djicloud.DjiCloud.CameraPointFocusAction:output_type -> djicloud.CommonRes
-	2,  // 161: djicloud.DjiCloud.CameraScreenSplit:output_type -> djicloud.CommonRes
-	2,  // 162: djicloud.DjiCloud.CameraPhotoStorageSet:output_type -> djicloud.CommonRes
-	2,  // 163: djicloud.DjiCloud.CameraVideoStorageSet:output_type -> djicloud.CommonRes
-	2,  // 164: djicloud.DjiCloud.CameraLookAt:output_type -> djicloud.CommonRes
-	2,  // 165: djicloud.DjiCloud.CameraScreenDrag:output_type -> djicloud.CommonRes
-	2,  // 166: djicloud.DjiCloud.CameraIrMeteringPoint:output_type -> djicloud.CommonRes
-	2,  // 167: djicloud.DjiCloud.CameraIrMeteringArea:output_type -> djicloud.CommonRes
-	2,  // 168: djicloud.DjiCloud.FlightAreasUpdate:output_type -> djicloud.CommonRes
-	2,  // 169: djicloud.DjiCloud.PsdkUIResourceUpload:output_type -> djicloud.CommonRes
-	2,  // 170: djicloud.DjiCloud.SendCustomDataToPsdk:output_type -> djicloud.CommonRes
-	2,  // 171: djicloud.DjiCloud.SendCustomDataToEsdk:output_type -> djicloud.CommonRes
-	2,  // 172: djicloud.DjiCloud.UnlockLicenseSwitch:output_type -> djicloud.CommonRes
-	2,  // 173: djicloud.DjiCloud.UnlockLicenseUpdate:output_type -> djicloud.CommonRes
-	2,  // 174: djicloud.DjiCloud.UnlockLicenseList:output_type -> djicloud.CommonRes
-	2,  // 175: djicloud.DjiCloud.DrcForceLanding:output_type -> djicloud.CommonRes
-	2,  // 176: djicloud.DjiCloud.DrcEmergencyLanding:output_type -> djicloud.CommonRes
-	2,  // 177: djicloud.DjiCloud.DrcLinkageZoomSet:output_type -> djicloud.CommonRes
-	2,  // 178: djicloud.DjiCloud.DrcVideoResolutionSet:output_type -> djicloud.CommonRes
-	2,  // 179: djicloud.DjiCloud.DrcIntervalPhotoSet:output_type -> djicloud.CommonRes
-	2,  // 180: djicloud.DjiCloud.DrcInitialStateSubscribe:output_type -> djicloud.CommonRes
-	2,  // 181: djicloud.DjiCloud.DrcNightLightsStateSet:output_type -> djicloud.CommonRes
-	2,  // 182: djicloud.DjiCloud.DrcStealthStateSet:output_type -> djicloud.CommonRes
-	2,  // 183: djicloud.DjiCloud.DrcCameraApertureValueSet:output_type -> djicloud.CommonRes
-	2,  // 184: djicloud.DjiCloud.DrcCameraShutterSet:output_type -> djicloud.CommonRes
-	2,  // 185: djicloud.DjiCloud.DrcCameraIsoSet:output_type -> djicloud.CommonRes
-	2,  // 186: djicloud.DjiCloud.DrcCameraMechanicalShutterSet:output_type -> djicloud.CommonRes
-	2,  // 187: djicloud.DjiCloud.DrcCameraDewarpingSet:output_type -> djicloud.CommonRes
-	68, // 188: djicloud.DjiCloud.IsDeviceOnline:output_type -> djicloud.DeviceOnlineRes
-	69, // 189: djicloud.DjiCloud.GetFlightTaskProgressLast:output_type -> djicloud.FlightTaskProgressLastRes
-	99, // [99:190] is the sub-list for method output_type
-	8,  // [8:99] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	12,  // 0: djicloud.FlightTaskPrepareReq.file:type_name -> djicloud.FlightTaskFileRef
+	14,  // 1: djicloud.FlightTaskPrepareReq.break_point:type_name -> djicloud.FlightTaskPrepareBreakPoint
+	13,  // 2: djicloud.FlightTaskPrepareReq.simulate_mission:type_name -> djicloud.FlightTaskPrepareSimulateMission
+	23,  // 3: djicloud.OtaCreateReq.devices:type_name -> djicloud.OtaDevice
+	26,  // 4: djicloud.RemoteLogFileUploadReq.files:type_name -> djicloud.RemoteLogFile
+	29,  // 5: djicloud.DrcModeEnterReq.mqtt_broker:type_name -> djicloud.DrcMqttBroker
+	34,  // 6: djicloud.FlyToPointReq.points:type_name -> djicloud.Waypoint
+	55,  // 7: djicloud.UnlockLicenseUpdateReq.file:type_name -> djicloud.UnlockLicenseFileRef
+	69,  // 8: djicloud.ListDevicesRes.list:type_name -> djicloud.DeviceInfo
+	73,  // 9: djicloud.DeviceOsdSnapshotRes.data:type_name -> djicloud.DeviceOsdSnapshot
+	75,  // 10: djicloud.DeviceStateSnapshotRes.data:type_name -> djicloud.DeviceStateSnapshot
+	69,  // 11: djicloud.DeviceDetailRes.device:type_name -> djicloud.DeviceInfo
+	73,  // 12: djicloud.DeviceDetailRes.osd:type_name -> djicloud.DeviceOsdSnapshot
+	75,  // 13: djicloud.DeviceDetailRes.state:type_name -> djicloud.DeviceStateSnapshot
+	70,  // 14: djicloud.DeviceDetailRes.topo:type_name -> djicloud.DeviceTopoInfo
+	78,  // 15: djicloud.ListHmsAlertsRes.list:type_name -> djicloud.HmsAlertInfo
+	82,  // 16: djicloud.ListFlightTaskProgressRes.list:type_name -> djicloud.FlightTaskProgressInfo
+	0,   // 17: djicloud.DjiCloud.Ping:input_type -> djicloud.Req
+	4,   // 18: djicloud.DjiCloud.SetProperty:input_type -> djicloud.SetPropertyReq
+	5,   // 19: djicloud.DjiCloud.LiveStartPush:input_type -> djicloud.LiveStartPushReq
+	6,   // 20: djicloud.DjiCloud.LiveStopPush:input_type -> djicloud.LiveStopPushReq
+	7,   // 21: djicloud.DjiCloud.LiveSetQuality:input_type -> djicloud.LiveSetQualityReq
+	8,   // 22: djicloud.DjiCloud.LiveLensChange:input_type -> djicloud.LiveLensChangeReq
+	9,   // 23: djicloud.DjiCloud.LiveCameraChange:input_type -> djicloud.LiveCameraChangeReq
+	10,  // 24: djicloud.DjiCloud.MediaUploadFlighttaskMediaPrioritize:input_type -> djicloud.MediaFlighttaskReq
+	11,  // 25: djicloud.DjiCloud.MediaFastUpload:input_type -> djicloud.MediaFastUploadReq
+	10,  // 26: djicloud.DjiCloud.MediaHighestPriorityUploadFlighttask:input_type -> djicloud.MediaFlighttaskReq
+	15,  // 27: djicloud.DjiCloud.FlightTaskPrepare:input_type -> djicloud.FlightTaskPrepareReq
+	16,  // 28: djicloud.DjiCloud.FlightTaskExecute:input_type -> djicloud.FlightTaskExecuteReq
+	17,  // 29: djicloud.DjiCloud.CancelFlightTask:input_type -> djicloud.CancelFlightTaskReq
+	3,   // 30: djicloud.DjiCloud.PauseFlightTask:input_type -> djicloud.DeviceSnReq
+	3,   // 31: djicloud.DjiCloud.ResumeFlightTask:input_type -> djicloud.DeviceSnReq
+	3,   // 32: djicloud.DjiCloud.StopFlightTask:input_type -> djicloud.DeviceSnReq
+	3,   // 33: djicloud.DjiCloud.ReturnHome:input_type -> djicloud.DeviceSnReq
+	3,   // 34: djicloud.DjiCloud.ReturnHomeCancelAutoReturn:input_type -> djicloud.DeviceSnReq
+	18,  // 35: djicloud.DjiCloud.ReturnSpecificHome:input_type -> djicloud.ReturnSpecificHomeReq
+	3,   // 36: djicloud.DjiCloud.DebugModeOpen:input_type -> djicloud.DeviceSnReq
+	3,   // 37: djicloud.DjiCloud.DebugModeClose:input_type -> djicloud.DeviceSnReq
+	3,   // 38: djicloud.DjiCloud.CoverOpen:input_type -> djicloud.DeviceSnReq
+	3,   // 39: djicloud.DjiCloud.CoverClose:input_type -> djicloud.DeviceSnReq
+	3,   // 40: djicloud.DjiCloud.CoverForceClose:input_type -> djicloud.DeviceSnReq
+	3,   // 41: djicloud.DjiCloud.DroneOpen:input_type -> djicloud.DeviceSnReq
+	3,   // 42: djicloud.DjiCloud.DroneClose:input_type -> djicloud.DeviceSnReq
+	3,   // 43: djicloud.DjiCloud.DeviceReboot:input_type -> djicloud.DeviceSnReq
+	3,   // 44: djicloud.DjiCloud.ChargeOpen:input_type -> djicloud.DeviceSnReq
+	3,   // 45: djicloud.DjiCloud.ChargeClose:input_type -> djicloud.DeviceSnReq
+	3,   // 46: djicloud.DjiCloud.DroneFormat:input_type -> djicloud.DeviceSnReq
+	3,   // 47: djicloud.DjiCloud.DeviceFormat:input_type -> djicloud.DeviceSnReq
+	3,   // 48: djicloud.DjiCloud.SupplementLightOpen:input_type -> djicloud.DeviceSnReq
+	3,   // 49: djicloud.DjiCloud.SupplementLightClose:input_type -> djicloud.DeviceSnReq
+	19,  // 50: djicloud.DjiCloud.BatteryStoreModeSwitch:input_type -> djicloud.BatteryStoreModeReq
+	20,  // 51: djicloud.DjiCloud.AlarmStateSwitch:input_type -> djicloud.AlarmStateSwitchReq
+	21,  // 52: djicloud.DjiCloud.AirConditionerModeSwitch:input_type -> djicloud.AirConditionerModeSwitchReq
+	19,  // 53: djicloud.DjiCloud.BatteryMaintenanceSwitch:input_type -> djicloud.BatteryStoreModeReq
+	22,  // 54: djicloud.DjiCloud.OtaCreate:input_type -> djicloud.OtaCreateReq
+	24,  // 55: djicloud.DjiCloud.RemoteLogFileList:input_type -> djicloud.RemoteLogFileListReq
+	25,  // 56: djicloud.DjiCloud.RemoteLogFileUploadStart:input_type -> djicloud.RemoteLogFileUploadReq
+	25,  // 57: djicloud.DjiCloud.RemoteLogFileUploadUpdate:input_type -> djicloud.RemoteLogFileUploadReq
+	25,  // 58: djicloud.DjiCloud.RemoteLogFileUploadCancel:input_type -> djicloud.RemoteLogFileUploadReq
+	27,  // 59: djicloud.DjiCloud.ConfigUpdate:input_type -> djicloud.ConfigUpdateReq
+	3,   // 60: djicloud.DjiCloud.FlightAuthorityGrab:input_type -> djicloud.DeviceSnReq
+	3,   // 61: djicloud.DjiCloud.PayloadAuthorityGrab:input_type -> djicloud.DeviceSnReq
+	28,  // 62: djicloud.DjiCloud.DrcModeEnter:input_type -> djicloud.DrcModeEnterReq
+	3,   // 63: djicloud.DjiCloud.DrcModeExit:input_type -> djicloud.DeviceSnReq
+	30,  // 64: djicloud.DjiCloud.SendDrcStickControl:input_type -> djicloud.DrcStickControlReq
+	31,  // 65: djicloud.DjiCloud.SendDrcHeartBeat:input_type -> djicloud.DrcHeartBeatReq
+	3,   // 66: djicloud.DjiCloud.DroneEmergencyStop:input_type -> djicloud.DeviceSnReq
+	33,  // 67: djicloud.DjiCloud.FlyToPoint:input_type -> djicloud.FlyToPointReq
+	3,   // 68: djicloud.DjiCloud.FlyToPointStop:input_type -> djicloud.DeviceSnReq
+	32,  // 69: djicloud.DjiCloud.TakeoffToPoint:input_type -> djicloud.TakeoffToPointReq
+	35,  // 70: djicloud.DjiCloud.CameraModeSwitch:input_type -> djicloud.CameraModeSwitchReq
+	36,  // 71: djicloud.DjiCloud.CameraPhotoTake:input_type -> djicloud.CameraPhotoTakeReq
+	37,  // 72: djicloud.DjiCloud.CameraPhotoStop:input_type -> djicloud.CameraPhotoStopReq
+	38,  // 73: djicloud.DjiCloud.CameraRecordingStart:input_type -> djicloud.CameraRecordingStartReq
+	39,  // 74: djicloud.DjiCloud.CameraRecordingStop:input_type -> djicloud.CameraRecordingStopReq
+	40,  // 75: djicloud.DjiCloud.CameraFocalLengthSet:input_type -> djicloud.CameraFocalLengthSetReq
+	41,  // 76: djicloud.DjiCloud.GimbalReset:input_type -> djicloud.GimbalResetReq
+	42,  // 77: djicloud.DjiCloud.CameraAim:input_type -> djicloud.CameraAimReq
+	43,  // 78: djicloud.DjiCloud.CameraPointFocusAction:input_type -> djicloud.CameraPointFocusActionReq
+	44,  // 79: djicloud.DjiCloud.CameraScreenSplit:input_type -> djicloud.CameraScreenSplitReq
+	45,  // 80: djicloud.DjiCloud.CameraPhotoStorageSet:input_type -> djicloud.CameraPhotoStorageSetReq
+	46,  // 81: djicloud.DjiCloud.CameraVideoStorageSet:input_type -> djicloud.CameraVideoStorageSetReq
+	47,  // 82: djicloud.DjiCloud.CameraLookAt:input_type -> djicloud.CameraLookAtReq
+	48,  // 83: djicloud.DjiCloud.CameraScreenDrag:input_type -> djicloud.CameraScreenDragReq
+	49,  // 84: djicloud.DjiCloud.CameraIrMeteringPoint:input_type -> djicloud.CameraIrMeteringPointReq
+	50,  // 85: djicloud.DjiCloud.CameraIrMeteringArea:input_type -> djicloud.CameraIrMeteringAreaReq
+	3,   // 86: djicloud.DjiCloud.FlightAreasUpdate:input_type -> djicloud.DeviceSnReq
+	51,  // 87: djicloud.DjiCloud.PsdkUIResourceUpload:input_type -> djicloud.PsdkUIResourceUploadReq
+	52,  // 88: djicloud.DjiCloud.SendCustomDataToPsdk:input_type -> djicloud.CustomDataToPsdkReq
+	53,  // 89: djicloud.DjiCloud.SendCustomDataToEsdk:input_type -> djicloud.CustomDataToEsdkReq
+	54,  // 90: djicloud.DjiCloud.UnlockLicenseSwitch:input_type -> djicloud.UnlockLicenseSwitchReq
+	56,  // 91: djicloud.DjiCloud.UnlockLicenseUpdate:input_type -> djicloud.UnlockLicenseUpdateReq
+	57,  // 92: djicloud.DjiCloud.UnlockLicenseList:input_type -> djicloud.UnlockLicenseListReq
+	3,   // 93: djicloud.DjiCloud.DrcForceLanding:input_type -> djicloud.DeviceSnReq
+	3,   // 94: djicloud.DjiCloud.DrcEmergencyLanding:input_type -> djicloud.DeviceSnReq
+	58,  // 95: djicloud.DjiCloud.DrcLinkageZoomSet:input_type -> djicloud.DrcLinkageZoomSetReq
+	59,  // 96: djicloud.DjiCloud.DrcVideoResolutionSet:input_type -> djicloud.DrcVideoResolutionSetReq
+	60,  // 97: djicloud.DjiCloud.DrcIntervalPhotoSet:input_type -> djicloud.DrcIntervalPhotoSetReq
+	3,   // 98: djicloud.DjiCloud.DrcInitialStateSubscribe:input_type -> djicloud.DeviceSnReq
+	61,  // 99: djicloud.DjiCloud.DrcNightLightsStateSet:input_type -> djicloud.DrcNightLightsStateSetReq
+	62,  // 100: djicloud.DjiCloud.DrcStealthStateSet:input_type -> djicloud.DrcStealthStateSetReq
+	63,  // 101: djicloud.DjiCloud.DrcCameraApertureValueSet:input_type -> djicloud.DrcCameraApertureValueSetReq
+	64,  // 102: djicloud.DjiCloud.DrcCameraShutterSet:input_type -> djicloud.DrcCameraShutterSetReq
+	65,  // 103: djicloud.DjiCloud.DrcCameraIsoSet:input_type -> djicloud.DrcCameraIsoSetReq
+	66,  // 104: djicloud.DjiCloud.DrcCameraMechanicalShutterSet:input_type -> djicloud.DrcCameraMechanicalShutterSetReq
+	67,  // 105: djicloud.DjiCloud.DrcCameraDewarpingSet:input_type -> djicloud.DrcCameraDewarpingSetReq
+	3,   // 106: djicloud.DjiCloud.IsDeviceOnline:input_type -> djicloud.DeviceSnReq
+	71,  // 107: djicloud.DjiCloud.ListDevices:input_type -> djicloud.ListDevicesReq
+	3,   // 108: djicloud.DjiCloud.GetDeviceDetail:input_type -> djicloud.DeviceSnReq
+	3,   // 109: djicloud.DjiCloud.GetDeviceOsdSnapshot:input_type -> djicloud.DeviceSnReq
+	3,   // 110: djicloud.DjiCloud.GetDeviceStateSnapshot:input_type -> djicloud.DeviceSnReq
+	79,  // 111: djicloud.DjiCloud.ListHmsAlerts:input_type -> djicloud.ListHmsAlertsReq
+	81,  // 112: djicloud.DjiCloud.AckHmsAlert:input_type -> djicloud.AckHmsAlertReq
+	83,  // 113: djicloud.DjiCloud.ListFlightTaskProgress:input_type -> djicloud.ListFlightTaskProgressReq
+	3,   // 114: djicloud.DjiCloud.GetFlightTaskProgressLast:input_type -> djicloud.DeviceSnReq
+	1,   // 115: djicloud.DjiCloud.Ping:output_type -> djicloud.Res
+	2,   // 116: djicloud.DjiCloud.SetProperty:output_type -> djicloud.CommonRes
+	2,   // 117: djicloud.DjiCloud.LiveStartPush:output_type -> djicloud.CommonRes
+	2,   // 118: djicloud.DjiCloud.LiveStopPush:output_type -> djicloud.CommonRes
+	2,   // 119: djicloud.DjiCloud.LiveSetQuality:output_type -> djicloud.CommonRes
+	2,   // 120: djicloud.DjiCloud.LiveLensChange:output_type -> djicloud.CommonRes
+	2,   // 121: djicloud.DjiCloud.LiveCameraChange:output_type -> djicloud.CommonRes
+	2,   // 122: djicloud.DjiCloud.MediaUploadFlighttaskMediaPrioritize:output_type -> djicloud.CommonRes
+	2,   // 123: djicloud.DjiCloud.MediaFastUpload:output_type -> djicloud.CommonRes
+	2,   // 124: djicloud.DjiCloud.MediaHighestPriorityUploadFlighttask:output_type -> djicloud.CommonRes
+	2,   // 125: djicloud.DjiCloud.FlightTaskPrepare:output_type -> djicloud.CommonRes
+	2,   // 126: djicloud.DjiCloud.FlightTaskExecute:output_type -> djicloud.CommonRes
+	2,   // 127: djicloud.DjiCloud.CancelFlightTask:output_type -> djicloud.CommonRes
+	2,   // 128: djicloud.DjiCloud.PauseFlightTask:output_type -> djicloud.CommonRes
+	2,   // 129: djicloud.DjiCloud.ResumeFlightTask:output_type -> djicloud.CommonRes
+	2,   // 130: djicloud.DjiCloud.StopFlightTask:output_type -> djicloud.CommonRes
+	2,   // 131: djicloud.DjiCloud.ReturnHome:output_type -> djicloud.CommonRes
+	2,   // 132: djicloud.DjiCloud.ReturnHomeCancelAutoReturn:output_type -> djicloud.CommonRes
+	2,   // 133: djicloud.DjiCloud.ReturnSpecificHome:output_type -> djicloud.CommonRes
+	2,   // 134: djicloud.DjiCloud.DebugModeOpen:output_type -> djicloud.CommonRes
+	2,   // 135: djicloud.DjiCloud.DebugModeClose:output_type -> djicloud.CommonRes
+	2,   // 136: djicloud.DjiCloud.CoverOpen:output_type -> djicloud.CommonRes
+	2,   // 137: djicloud.DjiCloud.CoverClose:output_type -> djicloud.CommonRes
+	2,   // 138: djicloud.DjiCloud.CoverForceClose:output_type -> djicloud.CommonRes
+	2,   // 139: djicloud.DjiCloud.DroneOpen:output_type -> djicloud.CommonRes
+	2,   // 140: djicloud.DjiCloud.DroneClose:output_type -> djicloud.CommonRes
+	2,   // 141: djicloud.DjiCloud.DeviceReboot:output_type -> djicloud.CommonRes
+	2,   // 142: djicloud.DjiCloud.ChargeOpen:output_type -> djicloud.CommonRes
+	2,   // 143: djicloud.DjiCloud.ChargeClose:output_type -> djicloud.CommonRes
+	2,   // 144: djicloud.DjiCloud.DroneFormat:output_type -> djicloud.CommonRes
+	2,   // 145: djicloud.DjiCloud.DeviceFormat:output_type -> djicloud.CommonRes
+	2,   // 146: djicloud.DjiCloud.SupplementLightOpen:output_type -> djicloud.CommonRes
+	2,   // 147: djicloud.DjiCloud.SupplementLightClose:output_type -> djicloud.CommonRes
+	2,   // 148: djicloud.DjiCloud.BatteryStoreModeSwitch:output_type -> djicloud.CommonRes
+	2,   // 149: djicloud.DjiCloud.AlarmStateSwitch:output_type -> djicloud.CommonRes
+	2,   // 150: djicloud.DjiCloud.AirConditionerModeSwitch:output_type -> djicloud.CommonRes
+	2,   // 151: djicloud.DjiCloud.BatteryMaintenanceSwitch:output_type -> djicloud.CommonRes
+	2,   // 152: djicloud.DjiCloud.OtaCreate:output_type -> djicloud.CommonRes
+	2,   // 153: djicloud.DjiCloud.RemoteLogFileList:output_type -> djicloud.CommonRes
+	2,   // 154: djicloud.DjiCloud.RemoteLogFileUploadStart:output_type -> djicloud.CommonRes
+	2,   // 155: djicloud.DjiCloud.RemoteLogFileUploadUpdate:output_type -> djicloud.CommonRes
+	2,   // 156: djicloud.DjiCloud.RemoteLogFileUploadCancel:output_type -> djicloud.CommonRes
+	2,   // 157: djicloud.DjiCloud.ConfigUpdate:output_type -> djicloud.CommonRes
+	2,   // 158: djicloud.DjiCloud.FlightAuthorityGrab:output_type -> djicloud.CommonRes
+	2,   // 159: djicloud.DjiCloud.PayloadAuthorityGrab:output_type -> djicloud.CommonRes
+	2,   // 160: djicloud.DjiCloud.DrcModeEnter:output_type -> djicloud.CommonRes
+	2,   // 161: djicloud.DjiCloud.DrcModeExit:output_type -> djicloud.CommonRes
+	2,   // 162: djicloud.DjiCloud.SendDrcStickControl:output_type -> djicloud.CommonRes
+	2,   // 163: djicloud.DjiCloud.SendDrcHeartBeat:output_type -> djicloud.CommonRes
+	2,   // 164: djicloud.DjiCloud.DroneEmergencyStop:output_type -> djicloud.CommonRes
+	2,   // 165: djicloud.DjiCloud.FlyToPoint:output_type -> djicloud.CommonRes
+	2,   // 166: djicloud.DjiCloud.FlyToPointStop:output_type -> djicloud.CommonRes
+	2,   // 167: djicloud.DjiCloud.TakeoffToPoint:output_type -> djicloud.CommonRes
+	2,   // 168: djicloud.DjiCloud.CameraModeSwitch:output_type -> djicloud.CommonRes
+	2,   // 169: djicloud.DjiCloud.CameraPhotoTake:output_type -> djicloud.CommonRes
+	2,   // 170: djicloud.DjiCloud.CameraPhotoStop:output_type -> djicloud.CommonRes
+	2,   // 171: djicloud.DjiCloud.CameraRecordingStart:output_type -> djicloud.CommonRes
+	2,   // 172: djicloud.DjiCloud.CameraRecordingStop:output_type -> djicloud.CommonRes
+	2,   // 173: djicloud.DjiCloud.CameraFocalLengthSet:output_type -> djicloud.CommonRes
+	2,   // 174: djicloud.DjiCloud.GimbalReset:output_type -> djicloud.CommonRes
+	2,   // 175: djicloud.DjiCloud.CameraAim:output_type -> djicloud.CommonRes
+	2,   // 176: djicloud.DjiCloud.CameraPointFocusAction:output_type -> djicloud.CommonRes
+	2,   // 177: djicloud.DjiCloud.CameraScreenSplit:output_type -> djicloud.CommonRes
+	2,   // 178: djicloud.DjiCloud.CameraPhotoStorageSet:output_type -> djicloud.CommonRes
+	2,   // 179: djicloud.DjiCloud.CameraVideoStorageSet:output_type -> djicloud.CommonRes
+	2,   // 180: djicloud.DjiCloud.CameraLookAt:output_type -> djicloud.CommonRes
+	2,   // 181: djicloud.DjiCloud.CameraScreenDrag:output_type -> djicloud.CommonRes
+	2,   // 182: djicloud.DjiCloud.CameraIrMeteringPoint:output_type -> djicloud.CommonRes
+	2,   // 183: djicloud.DjiCloud.CameraIrMeteringArea:output_type -> djicloud.CommonRes
+	2,   // 184: djicloud.DjiCloud.FlightAreasUpdate:output_type -> djicloud.CommonRes
+	2,   // 185: djicloud.DjiCloud.PsdkUIResourceUpload:output_type -> djicloud.CommonRes
+	2,   // 186: djicloud.DjiCloud.SendCustomDataToPsdk:output_type -> djicloud.CommonRes
+	2,   // 187: djicloud.DjiCloud.SendCustomDataToEsdk:output_type -> djicloud.CommonRes
+	2,   // 188: djicloud.DjiCloud.UnlockLicenseSwitch:output_type -> djicloud.CommonRes
+	2,   // 189: djicloud.DjiCloud.UnlockLicenseUpdate:output_type -> djicloud.CommonRes
+	2,   // 190: djicloud.DjiCloud.UnlockLicenseList:output_type -> djicloud.CommonRes
+	2,   // 191: djicloud.DjiCloud.DrcForceLanding:output_type -> djicloud.CommonRes
+	2,   // 192: djicloud.DjiCloud.DrcEmergencyLanding:output_type -> djicloud.CommonRes
+	2,   // 193: djicloud.DjiCloud.DrcLinkageZoomSet:output_type -> djicloud.CommonRes
+	2,   // 194: djicloud.DjiCloud.DrcVideoResolutionSet:output_type -> djicloud.CommonRes
+	2,   // 195: djicloud.DjiCloud.DrcIntervalPhotoSet:output_type -> djicloud.CommonRes
+	2,   // 196: djicloud.DjiCloud.DrcInitialStateSubscribe:output_type -> djicloud.CommonRes
+	2,   // 197: djicloud.DjiCloud.DrcNightLightsStateSet:output_type -> djicloud.CommonRes
+	2,   // 198: djicloud.DjiCloud.DrcStealthStateSet:output_type -> djicloud.CommonRes
+	2,   // 199: djicloud.DjiCloud.DrcCameraApertureValueSet:output_type -> djicloud.CommonRes
+	2,   // 200: djicloud.DjiCloud.DrcCameraShutterSet:output_type -> djicloud.CommonRes
+	2,   // 201: djicloud.DjiCloud.DrcCameraIsoSet:output_type -> djicloud.CommonRes
+	2,   // 202: djicloud.DjiCloud.DrcCameraMechanicalShutterSet:output_type -> djicloud.CommonRes
+	2,   // 203: djicloud.DjiCloud.DrcCameraDewarpingSet:output_type -> djicloud.CommonRes
+	68,  // 204: djicloud.DjiCloud.IsDeviceOnline:output_type -> djicloud.DeviceOnlineRes
+	72,  // 205: djicloud.DjiCloud.ListDevices:output_type -> djicloud.ListDevicesRes
+	77,  // 206: djicloud.DjiCloud.GetDeviceDetail:output_type -> djicloud.DeviceDetailRes
+	74,  // 207: djicloud.DjiCloud.GetDeviceOsdSnapshot:output_type -> djicloud.DeviceOsdSnapshotRes
+	76,  // 208: djicloud.DjiCloud.GetDeviceStateSnapshot:output_type -> djicloud.DeviceStateSnapshotRes
+	80,  // 209: djicloud.DjiCloud.ListHmsAlerts:output_type -> djicloud.ListHmsAlertsRes
+	2,   // 210: djicloud.DjiCloud.AckHmsAlert:output_type -> djicloud.CommonRes
+	84,  // 211: djicloud.DjiCloud.ListFlightTaskProgress:output_type -> djicloud.ListFlightTaskProgressRes
+	85,  // 212: djicloud.DjiCloud.GetFlightTaskProgressLast:output_type -> djicloud.FlightTaskProgressLastRes
+	115, // [115:213] is the sub-list for method output_type
+	17,  // [17:115] is the sub-list for method input_type
+	17,  // [17:17] is the sub-list for extension type_name
+	17,  // [17:17] is the sub-list for extension extendee
+	0,   // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_djicloud_proto_init() }
@@ -5449,7 +7065,7 @@ func file_djicloud_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_djicloud_proto_rawDesc), len(file_djicloud_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   70,
+			NumMessages:   86,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
