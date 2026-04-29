@@ -1,10 +1,5 @@
 package gormx
 
-// TenantMixin 提供 tenant_id 字段，用于租户隔离模型。
-type TenantMixin struct {
-	TenantID string `gorm:"column:tenant_id;size:64;index" json:"tenant_id"`
-}
-
 // AuditMixin 提供 uint 类型的创建、更新和删除审计用户字段。
 type AuditMixin struct {
 	CreateUser uint   `gorm:"column:create_user" json:"create_user"`
