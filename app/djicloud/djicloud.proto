@@ -1497,7 +1497,7 @@ message ListHmsAlertsReq {
   string device_sn = 4;
   // level 告警等级过滤，0: 全部，其余值按大疆 HMS level 过滤。
   int32 level = 5;
-  // acked_status 确认状态过滤，0: 全部，1: 未确认，2: 已确认。
+  // acked_status 确认状态过滤，-1: 全部，0: 未确认，1: 已确认。
   int32 acked_status = 6;
 }
 

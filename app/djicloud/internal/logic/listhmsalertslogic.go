@@ -39,8 +39,8 @@ func (l *ListHmsAlertsLogic) ListHmsAlerts(in *djicloud.ListHmsAlertsReq) (*djic
 	if in.Level > 0 {
 		db = db.Where("level = ?", in.Level)
 	}
-	if in.AckedStatus == 1 || in.AckedStatus == 2 {
-		db = db.Where("acked = ?", in.AckedStatus == 2)
+	if in.AckedStatus == 0 || in.AckedStatus == 1 {
+		db = db.Where("acked = ?", in.AckedStatus)
 	}
 	var total int64
 	if err := db.Count(&total).Error; err != nil {

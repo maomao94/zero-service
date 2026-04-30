@@ -5494,7 +5494,7 @@ type ListHmsAlertsReq struct {
 	DeviceSn  string `protobuf:"bytes,4,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
 	// level 告警等级过滤，0: 全部，其余值按大疆 HMS level 过滤。
 	Level int32 `protobuf:"varint,5,opt,name=level,proto3" json:"level,omitempty"`
-	// acked_status 确认状态过滤，0: 全部，1: 未确认，2: 已确认。
+	// acked_status 确认状态过滤，-1: 全部，0: 未确认，1: 已确认。
 	AckedStatus   int32 `protobuf:"varint,6,opt,name=acked_status,json=ackedStatus,proto3" json:"acked_status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
