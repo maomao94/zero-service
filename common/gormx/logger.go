@@ -18,9 +18,10 @@ func WithFullSQL(ctx context.Context) context.Context {
 }
 
 type LoggerConfig struct {
-	SlowThreshold      time.Duration
-	LogLevel           logger.LogLevel
-	LogQueryParameters bool
+	SlowThreshold             time.Duration
+	LogLevel                  logger.LogLevel
+	ParameterizedQueries      bool
+	IgnoreRecordNotFoundError bool
 }
 
 type gormLogger struct {
@@ -33,8 +34,9 @@ func NewGormLogger(cfg LoggerConfig) logger.Interface {
 
 func DefaultGormLogger() logger.Interface {
 	return NewGormLogger(LoggerConfig{
-		LogLevel:      logger.Error,
-		SlowThreshold: 200 * time.Millisecond,
+		LogLevel:             logger.Error,
+		SlowThreshold:        200 * time.Millisecond,
+		ParameterizedQueries: false,
 	})
 }
 
@@ -44,20 +46,21 @@ func QuietGormLogger() logger.Interface {
 
 func (c *gormLogger) LogMode(level logger.LogLevel) logger.Interface {
 	return &gormLogger{cfg: LoggerConfig{
-		LogLevel:           level,
-		SlowThreshold:      c.cfg.SlowThreshold,
-		LogQueryParameters: c.cfg.LogQueryParameters,
+		LogLevel:                  level,
+		SlowThreshold:             c.cfg.SlowThreshold,
+		ParameterizedQueries:      c.cfg.ParameterizedQueries,
+		IgnoreRecordNotFoundError: c.cfg.IgnoreRecordNotFoundError,
 	}}
 }
 
 func (c *gormLogger) ParamsFilter(ctx context.Context, sql string, params ...any) (string, []any) {
-	if c.cfg.LogQueryParameters {
-		return sql, params
+	if c.cfg.ParameterizedQueries {
+		return sql, nil
 	}
 	if _, ok := ctx.Value(fullSQLKey{}).(bool); ok {
 		return sql, params
 	}
-	return sql, nil
+	return sql, params
 }
 
 func (c *gormLogger) Info(ctx context.Context, msg string, data ...any) {
@@ -86,7 +89,7 @@ func (c *gormLogger) Trace(ctx context.Context, begin time.Time, fc func() (stri
 	elapsed := time.Since(begin)
 
 	switch {
-	case err != nil && !errors.Is(err, gorm.ErrRecordNotFound) && c.cfg.LogLevel >= logger.Error:
+	case err != nil && c.cfg.LogLevel >= logger.Error && (!errors.Is(err, gorm.ErrRecordNotFound) || !c.cfg.IgnoreRecordNotFoundError):
 		sql, rows := fc()
 		logx.WithContext(ctx).WithDuration(elapsed).Errorf("[gorm] [rows:%s] %s error: %v", formatRows(rows), sql, err)
 	case err != nil && errors.Is(err, gorm.ErrRecordNotFound) && c.cfg.LogLevel >= logger.Info:

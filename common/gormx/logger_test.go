@@ -67,7 +67,7 @@ func TestGormLoggerTraceCallsSQLWhenErrorLevelHasError(t *testing.T) {
 }
 
 func TestGormLoggerTraceSkipsRecordNotFoundAtErrorLevel(t *testing.T) {
-	l := NewGormLogger(LoggerConfig{LogLevel: logger.Error, SlowThreshold: time.Hour})
+	l := NewGormLogger(LoggerConfig{LogLevel: logger.Error, SlowThreshold: time.Hour, IgnoreRecordNotFoundError: true})
 	called := false
 
 	l.Trace(context.Background(), time.Now(), func() (string, int64) {
@@ -76,7 +76,21 @@ func TestGormLoggerTraceSkipsRecordNotFoundAtErrorLevel(t *testing.T) {
 	}, gorm.ErrRecordNotFound)
 
 	if called {
-		t.Fatalf("fc should not be called for record not found at error level")
+		t.Fatalf("fc should not be called for record not found at error level when ignored")
+	}
+}
+
+func TestGormLoggerTraceCallsRecordNotFoundAtErrorLevelByDefault(t *testing.T) {
+	l := NewGormLogger(LoggerConfig{LogLevel: logger.Error, SlowThreshold: time.Hour})
+	called := false
+
+	l.Trace(context.Background(), time.Now(), func() (string, int64) {
+		called = true
+		return "select 1", 1
+	}, gorm.ErrRecordNotFound)
+
+	if !called {
+		t.Fatalf("fc should be called for record not found at error level by default")
 	}
 }
 
@@ -145,8 +159,20 @@ func TestGormLoggerLogModeDoesNotMutateOriginal(t *testing.T) {
 	}
 }
 
-func TestGormLoggerParamsFilterHidesQueryParametersByDefault(t *testing.T) {
+func TestGormLoggerParamsFilterShowsQueryParametersByDefault(t *testing.T) {
 	l := NewGormLogger(LoggerConfig{})
+	sql, params := l.(*gormLogger).ParamsFilter(context.Background(), "select * from users where phone = ?", "13800000000")
+
+	if sql != "select * from users where phone = ?" {
+		t.Fatalf("sql = %q", sql)
+	}
+	if len(params) != 1 || params[0] != "13800000000" {
+		t.Fatalf("params = %#v", params)
+	}
+}
+
+func TestGormLoggerParamsFilterUsesGormParameterizedQueries(t *testing.T) {
+	l := NewGormLogger(LoggerConfig{ParameterizedQueries: true})
 	sql, params := l.(*gormLogger).ParamsFilter(context.Background(), "select * from users where phone = ?", "13800000000")
 
 	if sql != "select * from users where phone = ?" {
@@ -157,33 +183,8 @@ func TestGormLoggerParamsFilterHidesQueryParametersByDefault(t *testing.T) {
 	}
 }
 
-func TestGormLoggerParamsFilterShowsQueryParametersWhenConfigOn(t *testing.T) {
-	l := NewGormLogger(LoggerConfig{LogQueryParameters: true})
-	sql, params := l.(*gormLogger).ParamsFilter(context.Background(), "select * from users where phone = ?", "13800000000")
-
-	if sql != "select * from users where phone = ?" {
-		t.Fatalf("sql = %q", sql)
-	}
-	if len(params) != 1 || params[0] != "13800000000" {
-		t.Fatalf("params = %#v", params)
-	}
-}
-
-func TestGormLoggerParamsFilterShowsQueryParametersWithFullSQL(t *testing.T) {
-	l := NewGormLogger(LoggerConfig{})
-	ctx := WithFullSQL(context.Background())
-	sql, params := l.(*gormLogger).ParamsFilter(ctx, "select * from users where phone = ?", "13800000000")
-
-	if sql != "select * from users where phone = ?" {
-		t.Fatalf("sql = %q", sql)
-	}
-	if len(params) != 1 || params[0] != "13800000000" {
-		t.Fatalf("params = %#v", params)
-	}
-}
-
 func TestGormLoggerParamsFilterIgnoresNonFullSQLContext(t *testing.T) {
-	l := NewGormLogger(LoggerConfig{})
+	l := NewGormLogger(LoggerConfig{ParameterizedQueries: true})
 	ctx := context.WithValue(context.Background(), "other_key", true)
 	sql, params := l.(*gormLogger).ParamsFilter(ctx, "select * from users where phone = ?", "13800000000")
 
@@ -195,12 +196,12 @@ func TestGormLoggerParamsFilterIgnoresNonFullSQLContext(t *testing.T) {
 	}
 }
 
-func TestGormLoggerParamsFilterDefaultGormLoggerHidesQueryParameters(t *testing.T) {
+func TestGormLoggerParamsFilterDefaultGormLoggerShowsQueryParameters(t *testing.T) {
 	l := DefaultGormLogger()
 	_, params := l.(*gormLogger).ParamsFilter(context.Background(), "select * from users where phone = ?", "13800000000")
 
-	if params != nil {
-		t.Fatalf("DefaultGormLogger should hide query parameters, params = %#v", params)
+	if len(params) != 1 || params[0] != "13800000000" {
+		t.Fatalf("params = %#v", params)
 	}
 }
 

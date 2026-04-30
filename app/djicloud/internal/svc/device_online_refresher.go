@@ -38,7 +38,7 @@ func (c *DeviceOnlineRefreshCron) Stop() {
 }
 
 func (c *DeviceOnlineRefreshCron) refreshExpiredDevicesOnline(ctx context.Context, now time.Time) {
-	err := c.db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).
+	err := c.db.WithContext(gormx.WithFullSQL(ctx)).Model(&gormmodel.DjiDevice{}).
 		Where("is_online = ? AND last_online_at < ?", true, now.Add(-deviceOnlineTTL)).
 		Updates(map[string]any{"is_online": false, "update_time": now}).Error
 	if err != nil {

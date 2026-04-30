@@ -12,14 +12,15 @@ import (
 )
 
 type Config struct {
-	DataSource         string        `json:",optional"`
-	MaxIdleConns       int           `json:",optional,default=10"`
-	MaxOpenConns       int           `json:",optional,default=100"`
-	SlowThreshold      time.Duration `json:",optional,default=200ms"`
-	LogLevel           string        `json:",optional,default=error"`
-	LogQueryParameters bool          `json:",optional,default=false"`
-	QueryFields        bool          `json:",optional,default=false"`
-	Trace              TraceConfig   `json:",optional"`
+	DataSource                string        `json:",optional"`
+	MaxIdleConns              int           `json:",optional,default=10"`
+	MaxOpenConns              int           `json:",optional,default=100"`
+	SlowThreshold             time.Duration `json:",optional,default=200ms"`
+	LogLevel                  string        `json:",optional,default=error"`
+	ParameterizedQueries      bool          `json:",optional,default=false"`
+	IgnoreRecordNotFoundError bool          `json:",optional,default=false"`
+	QueryFields               bool          `json:",optional,default=false"`
+	Trace                     TraceConfig   `json:",optional"`
 }
 
 type DB struct {
@@ -181,9 +182,10 @@ func OpenWithConf(conf Config) (*DB, error) {
 		WithMaxIdleConns(conf.MaxIdleConns),
 		WithMaxOpenConns(conf.MaxOpenConns),
 		WithLogger(NewGormLogger(LoggerConfig{
-			LogLevel:           parseLogLevel(conf.LogLevel),
-			SlowThreshold:      conf.SlowThreshold,
-			LogQueryParameters: conf.LogQueryParameters,
+			LogLevel:                  parseLogLevel(conf.LogLevel),
+			SlowThreshold:             conf.SlowThreshold,
+			ParameterizedQueries:      conf.ParameterizedQueries,
+			IgnoreRecordNotFoundError: conf.IgnoreRecordNotFoundError,
 		})),
 		WithQueryFields(conf.QueryFields),
 		WithOpenTelemetryConfig(conf.Trace),
