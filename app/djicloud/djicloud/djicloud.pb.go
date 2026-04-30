@@ -4,6 +4,9 @@
 // 	protoc        v5.29.3
 // source: djicloud.proto
 
+// 协议版本：v0.0.1。
+// 与 Gradle/Maven 发布包版本保持一致。
+
 package djicloud
 
 import (
@@ -4659,6 +4662,7 @@ func (x *DeviceOnlineRes) GetIsOnline() bool {
 }
 
 // DeviceInfo 设备基础信息。
+// firmware_version 与 hardware_version 从 DJI state 物模型快照中提取，对应 pushMode=1 的状态数据；空上报不会覆盖已有非空版本。
 type DeviceInfo struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// id 数据库主键。
@@ -4668,26 +4672,20 @@ type DeviceInfo struct {
 	// gateway_sn 最近一次上报关联的网关机巢 SN；机巢自身等于 device_sn。
 	// 蛙跳场景下，一架飞机可能存在多个机巢绑定关系，完整绑定关系以 DeviceTopoInfo 为准。
 	GatewaySn string `protobuf:"bytes,3,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
-	// device_domain 大疆设备领域 domain，0: 飞机类，1: 负载类，2: 遥控器类，3: 机场类，按 DJI 原始字符串透传。
-	DeviceDomain string `protobuf:"bytes,4,opt,name=device_domain,json=deviceDomain,proto3" json:"device_domain,omitempty"`
-	// device_type 大疆设备类型。
-	DeviceType int32 `protobuf:"varint,5,opt,name=device_type,json=deviceType,proto3" json:"device_type,omitempty"`
-	// device_sub_type 大疆设备子类型。
-	DeviceSubType int32 `protobuf:"varint,6,opt,name=device_sub_type,json=deviceSubType,proto3" json:"device_sub_type,omitempty"`
 	// alias 设备别名。
-	Alias string `protobuf:"bytes,7,opt,name=alias,proto3" json:"alias,omitempty"`
+	Alias string `protobuf:"bytes,4,opt,name=alias,proto3" json:"alias,omitempty"`
 	// group_name 业务分组。
-	GroupName string `protobuf:"bytes,8,opt,name=group_name,json=groupName,proto3" json:"group_name,omitempty"`
-	// firmware_version 固件版本。
-	FirmwareVersion string `protobuf:"bytes,9,opt,name=firmware_version,json=firmwareVersion,proto3" json:"firmware_version,omitempty"`
-	// hardware_version 硬件版本。
-	HardwareVersion string `protobuf:"bytes,10,opt,name=hardware_version,json=hardwareVersion,proto3" json:"hardware_version,omitempty"`
-	// is_online 是否在线，false 表示离线或尚未收到在线上报，true 表示在线。
-	IsOnline bool `protobuf:"varint,11,opt,name=is_online,json=isOnline,proto3" json:"is_online,omitempty"`
+	GroupName string `protobuf:"bytes,5,opt,name=group_name,json=groupName,proto3" json:"group_name,omitempty"`
+	// firmware_version 固件版本，来自大疆物模型属性 firmware_version。
+	FirmwareVersion string `protobuf:"bytes,6,opt,name=firmware_version,json=firmwareVersion,proto3" json:"firmware_version,omitempty"`
+	// hardware_version 硬件版本，来自大疆物模型属性 hardware_version。
+	HardwareVersion string `protobuf:"bytes,7,opt,name=hardware_version,json=hardwareVersion,proto3" json:"hardware_version,omitempty"`
+	// is_online 是否在线；当前以设备 OSD 有效上行为在线刷新依据，State/update_topo 不刷新在线状态。
+	IsOnline bool `protobuf:"varint,8,opt,name=is_online,json=isOnline,proto3" json:"is_online,omitempty"`
 	// first_online_at 首次上线时间，毫秒时间戳。
-	FirstOnlineAt int64 `protobuf:"varint,12,opt,name=first_online_at,json=firstOnlineAt,proto3" json:"first_online_at,omitempty"`
+	FirstOnlineAt int64 `protobuf:"varint,9,opt,name=first_online_at,json=firstOnlineAt,proto3" json:"first_online_at,omitempty"`
 	// last_online_at 最后在线时间，毫秒时间戳。
-	LastOnlineAt  int64 `protobuf:"varint,13,opt,name=last_online_at,json=lastOnlineAt,proto3" json:"last_online_at,omitempty"`
+	LastOnlineAt  int64 `protobuf:"varint,10,opt,name=last_online_at,json=lastOnlineAt,proto3" json:"last_online_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4741,27 +4739,6 @@ func (x *DeviceInfo) GetGatewaySn() string {
 		return x.GatewaySn
 	}
 	return ""
-}
-
-func (x *DeviceInfo) GetDeviceDomain() string {
-	if x != nil {
-		return x.DeviceDomain
-	}
-	return ""
-}
-
-func (x *DeviceInfo) GetDeviceType() int32 {
-	if x != nil {
-		return x.DeviceType
-	}
-	return 0
-}
-
-func (x *DeviceInfo) GetDeviceSubType() int32 {
-	if x != nil {
-		return x.DeviceSubType
-	}
-	return 0
 }
 
 func (x *DeviceInfo) GetAlias() string {
@@ -4924,12 +4901,10 @@ type ListDevicesReq struct {
 	// gateway_sn 按机巢拓扑过滤，空表示不过滤。
 	// 查询子设备时会同时匹配设备最近一次 gateway_sn 和 dji_device_topo 中的历史/当前绑定关系，兼容蛙跳。
 	GatewaySn string `protobuf:"bytes,3,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
-	// device_domain_filter 设备领域过滤，空字符串表示全部；"0": 飞机类，"1": 负载类，"2": 遥控器类，"3": 机场类。
-	DeviceDomainFilter string `protobuf:"bytes,4,opt,name=device_domain_filter,json=deviceDomainFilter,proto3" json:"device_domain_filter,omitempty"`
 	// online_status 在线状态过滤，0: 全部，1: 在线，2: 离线。
-	OnlineStatus int32 `protobuf:"varint,5,opt,name=online_status,json=onlineStatus,proto3" json:"online_status,omitempty"`
+	OnlineStatus int32 `protobuf:"varint,4,opt,name=online_status,json=onlineStatus,proto3" json:"online_status,omitempty"`
 	// keyword 按 SN/别名模糊查询。
-	Keyword       string `protobuf:"bytes,6,opt,name=keyword,proto3" json:"keyword,omitempty"`
+	Keyword       string `protobuf:"bytes,5,opt,name=keyword,proto3" json:"keyword,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4981,13 +4956,6 @@ func (x *ListDevicesReq) GetPageSize() int64 {
 func (x *ListDevicesReq) GetGatewaySn() string {
 	if x != nil {
 		return x.GatewaySn
-	}
-	return ""
-}
-
-func (x *ListDevicesReq) GetDeviceDomainFilter() string {
-	if x != nil {
-		return x.DeviceDomainFilter
 	}
 	return ""
 }
@@ -5066,9 +5034,8 @@ type DeviceOsdSnapshot struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DeviceSn      string                 `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
 	GatewaySn     string                 `protobuf:"bytes,2,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
-	DeviceDomain  string                 `protobuf:"bytes,3,opt,name=device_domain,json=deviceDomain,proto3" json:"device_domain,omitempty"`
-	DataJson      string                 `protobuf:"bytes,4,opt,name=data_json,json=dataJson,proto3" json:"data_json,omitempty"`
-	ReportedAt    int64                  `protobuf:"varint,5,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
+	RawJson       string                 `protobuf:"bytes,3,opt,name=raw_json,json=rawJson,proto3" json:"raw_json,omitempty"`
+	ReportedAt    int64                  `protobuf:"varint,4,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5117,16 +5084,9 @@ func (x *DeviceOsdSnapshot) GetGatewaySn() string {
 	return ""
 }
 
-func (x *DeviceOsdSnapshot) GetDeviceDomain() string {
+func (x *DeviceOsdSnapshot) GetRawJson() string {
 	if x != nil {
-		return x.DeviceDomain
-	}
-	return ""
-}
-
-func (x *DeviceOsdSnapshot) GetDataJson() string {
-	if x != nil {
-		return x.DataJson
+		return x.RawJson
 	}
 	return ""
 }
@@ -5188,9 +5148,8 @@ type DeviceStateSnapshot struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DeviceSn      string                 `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
 	GatewaySn     string                 `protobuf:"bytes,2,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
-	DeviceDomain  string                 `protobuf:"bytes,3,opt,name=device_domain,json=deviceDomain,proto3" json:"device_domain,omitempty"`
-	DataJson      string                 `protobuf:"bytes,4,opt,name=data_json,json=dataJson,proto3" json:"data_json,omitempty"`
-	ReportedAt    int64                  `protobuf:"varint,5,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
+	RawJson       string                 `protobuf:"bytes,3,opt,name=raw_json,json=rawJson,proto3" json:"raw_json,omitempty"`
+	ReportedAt    int64                  `protobuf:"varint,4,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5239,16 +5198,9 @@ func (x *DeviceStateSnapshot) GetGatewaySn() string {
 	return ""
 }
 
-func (x *DeviceStateSnapshot) GetDeviceDomain() string {
+func (x *DeviceStateSnapshot) GetRawJson() string {
 	if x != nil {
-		return x.DeviceDomain
-	}
-	return ""
-}
-
-func (x *DeviceStateSnapshot) GetDataJson() string {
-	if x != nil {
-		return x.DataJson
+		return x.RawJson
 	}
 	return ""
 }
@@ -5745,7 +5697,7 @@ type FlightTaskProgressInfo struct {
 	TrackId              string                 `protobuf:"bytes,12,opt,name=track_id,json=trackId,proto3" json:"track_id,omitempty"`
 	WaylineId            int32                  `protobuf:"varint,13,opt,name=wayline_id,json=waylineId,proto3" json:"wayline_id,omitempty"`
 	BreakPointJson       string                 `protobuf:"bytes,14,opt,name=break_point_json,json=breakPointJson,proto3" json:"break_point_json,omitempty"`
-	EventJson            string                 `protobuf:"bytes,15,opt,name=event_json,json=eventJson,proto3" json:"event_json,omitempty"`
+	RawJson              string                 `protobuf:"bytes,15,opt,name=raw_json,json=rawJson,proto3" json:"raw_json,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -5878,9 +5830,9 @@ func (x *FlightTaskProgressInfo) GetBreakPointJson() string {
 	return ""
 }
 
-func (x *FlightTaskProgressInfo) GetEventJson() string {
+func (x *FlightTaskProgressInfo) GetRawJson() string {
 	if x != nil {
-		return x.EventJson
+		return x.RawJson
 	}
 	return ""
 }
@@ -6402,26 +6354,22 @@ const file_djicloud_proto_rawDesc = "" +
 	"cameraType\x12'\n" +
 	"\x0fdewarping_state\x18\x04 \x01(\x05R\x0edewarpingState\".\n" +
 	"\x0fDeviceOnlineRes\x12\x1b\n" +
-	"\tis_online\x18\x01 \x01(\bR\bisOnline\"\xbc\x03\n" +
+	"\tis_online\x18\x01 \x01(\bR\bisOnline\"\xce\x02\n" +
 	"\n" +
 	"DeviceInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1b\n" +
 	"\tdevice_sn\x18\x02 \x01(\tR\bdeviceSn\x12\x1d\n" +
 	"\n" +
-	"gateway_sn\x18\x03 \x01(\tR\tgatewaySn\x12#\n" +
-	"\rdevice_domain\x18\x04 \x01(\tR\fdeviceDomain\x12\x1f\n" +
-	"\vdevice_type\x18\x05 \x01(\x05R\n" +
-	"deviceType\x12&\n" +
-	"\x0fdevice_sub_type\x18\x06 \x01(\x05R\rdeviceSubType\x12\x14\n" +
-	"\x05alias\x18\a \x01(\tR\x05alias\x12\x1d\n" +
+	"gateway_sn\x18\x03 \x01(\tR\tgatewaySn\x12\x14\n" +
+	"\x05alias\x18\x04 \x01(\tR\x05alias\x12\x1d\n" +
 	"\n" +
-	"group_name\x18\b \x01(\tR\tgroupName\x12)\n" +
-	"\x10firmware_version\x18\t \x01(\tR\x0ffirmwareVersion\x12)\n" +
-	"\x10hardware_version\x18\n" +
-	" \x01(\tR\x0fhardwareVersion\x12\x1b\n" +
-	"\tis_online\x18\v \x01(\bR\bisOnline\x12&\n" +
-	"\x0ffirst_online_at\x18\f \x01(\x03R\rfirstOnlineAt\x12$\n" +
-	"\x0elast_online_at\x18\r \x01(\x03R\flastOnlineAt\"\x91\x02\n" +
+	"group_name\x18\x05 \x01(\tR\tgroupName\x12)\n" +
+	"\x10firmware_version\x18\x06 \x01(\tR\x0ffirmwareVersion\x12)\n" +
+	"\x10hardware_version\x18\a \x01(\tR\x0fhardwareVersion\x12\x1b\n" +
+	"\tis_online\x18\b \x01(\bR\bisOnline\x12&\n" +
+	"\x0ffirst_online_at\x18\t \x01(\x03R\rfirstOnlineAt\x12$\n" +
+	"\x0elast_online_at\x18\n" +
+	" \x01(\x03R\flastOnlineAt\"\x91\x02\n" +
 	"\x0eDeviceTopoInfo\x12\x1d\n" +
 	"\n" +
 	"gateway_sn\x18\x01 \x01(\tR\tgatewaySn\x12\"\n" +
@@ -6430,35 +6378,32 @@ const file_djicloud_proto_rawDesc = "" +
 	"\x0fsub_device_type\x18\x04 \x01(\x05R\rsubDeviceType\x12-\n" +
 	"\x13sub_device_sub_type\x18\x05 \x01(\x05R\x10subDeviceSubType\x12(\n" +
 	"\x10sub_device_index\x18\x06 \x01(\tR\x0esubDeviceIndex\x12#\n" +
-	"\rthing_version\x18\a \x01(\tR\fthingVersion\"\xd1\x01\n" +
+	"\rthing_version\x18\a \x01(\tR\fthingVersion\"\x9f\x01\n" +
 	"\x0eListDevicesReq\x12\x12\n" +
 	"\x04page\x18\x01 \x01(\x03R\x04page\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x03R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"gateway_sn\x18\x03 \x01(\tR\tgatewaySn\x120\n" +
-	"\x14device_domain_filter\x18\x04 \x01(\tR\x12deviceDomainFilter\x12#\n" +
-	"\ronline_status\x18\x05 \x01(\x05R\fonlineStatus\x12\x18\n" +
-	"\akeyword\x18\x06 \x01(\tR\akeyword\"P\n" +
+	"gateway_sn\x18\x03 \x01(\tR\tgatewaySn\x12#\n" +
+	"\ronline_status\x18\x04 \x01(\x05R\fonlineStatus\x12\x18\n" +
+	"\akeyword\x18\x05 \x01(\tR\akeyword\"P\n" +
 	"\x0eListDevicesRes\x12\x14\n" +
 	"\x05total\x18\x01 \x01(\x03R\x05total\x12(\n" +
-	"\x04list\x18\x02 \x03(\v2\x14.djicloud.DeviceInfoR\x04list\"\xb2\x01\n" +
+	"\x04list\x18\x02 \x03(\v2\x14.djicloud.DeviceInfoR\x04list\"\x8b\x01\n" +
 	"\x11DeviceOsdSnapshot\x12\x1b\n" +
 	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x1d\n" +
 	"\n" +
-	"gateway_sn\x18\x02 \x01(\tR\tgatewaySn\x12#\n" +
-	"\rdevice_domain\x18\x03 \x01(\tR\fdeviceDomain\x12\x1b\n" +
-	"\tdata_json\x18\x04 \x01(\tR\bdataJson\x12\x1f\n" +
-	"\vreported_at\x18\x05 \x01(\x03R\n" +
+	"gateway_sn\x18\x02 \x01(\tR\tgatewaySn\x12\x19\n" +
+	"\braw_json\x18\x03 \x01(\tR\arawJson\x12\x1f\n" +
+	"\vreported_at\x18\x04 \x01(\x03R\n" +
 	"reportedAt\"G\n" +
 	"\x14DeviceOsdSnapshotRes\x12/\n" +
-	"\x04data\x18\x01 \x01(\v2\x1b.djicloud.DeviceOsdSnapshotR\x04data\"\xb4\x01\n" +
+	"\x04data\x18\x01 \x01(\v2\x1b.djicloud.DeviceOsdSnapshotR\x04data\"\x8d\x01\n" +
 	"\x13DeviceStateSnapshot\x12\x1b\n" +
 	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x1d\n" +
 	"\n" +
-	"gateway_sn\x18\x02 \x01(\tR\tgatewaySn\x12#\n" +
-	"\rdevice_domain\x18\x03 \x01(\tR\fdeviceDomain\x12\x1b\n" +
-	"\tdata_json\x18\x04 \x01(\tR\bdataJson\x12\x1f\n" +
-	"\vreported_at\x18\x05 \x01(\x03R\n" +
+	"gateway_sn\x18\x02 \x01(\tR\tgatewaySn\x12\x19\n" +
+	"\braw_json\x18\x03 \x01(\tR\arawJson\x12\x1f\n" +
+	"\vreported_at\x18\x04 \x01(\x03R\n" +
 	"reportedAt\"K\n" +
 	"\x16DeviceStateSnapshotRes\x121\n" +
 	"\x04data\x18\x01 \x01(\v2\x1d.djicloud.DeviceStateSnapshotR\x04data\"\xd1\x01\n" +
@@ -6501,7 +6446,7 @@ const file_djicloud_proto_rawDesc = "" +
 	"\x04list\x18\x02 \x03(\v2\x16.djicloud.HmsAlertInfoR\x04list\";\n" +
 	"\x0eAckHmsAlertReq\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x19\n" +
-	"\backed_by\x18\x02 \x01(\tR\aackedBy\"\x94\x04\n" +
+	"\backed_by\x18\x02 \x01(\tR\aackedBy\"\x90\x04\n" +
 	"\x16FlightTaskProgressInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1b\n" +
 	"\tflight_id\x18\x02 \x01(\tR\bflightId\x12\x1d\n" +
@@ -6521,9 +6466,8 @@ const file_djicloud_proto_rawDesc = "" +
 	"\btrack_id\x18\f \x01(\tR\atrackId\x12\x1d\n" +
 	"\n" +
 	"wayline_id\x18\r \x01(\x05R\twaylineId\x12(\n" +
-	"\x10break_point_json\x18\x0e \x01(\tR\x0ebreakPointJson\x12\x1d\n" +
-	"\n" +
-	"event_json\x18\x0f \x01(\tR\teventJson\"\x88\x01\n" +
+	"\x10break_point_json\x18\x0e \x01(\tR\x0ebreakPointJson\x12\x19\n" +
+	"\braw_json\x18\x0f \x01(\tR\arawJson\"\x88\x01\n" +
 	"\x19ListFlightTaskProgressReq\x12\x12\n" +
 	"\x04page\x18\x01 \x01(\x03R\x04page\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x03R\bpageSize\x12\x1d\n" +

@@ -36,12 +36,12 @@ func NewFlightTaskProgressHandler(db *gormx.DB) func(ctx context.Context, gatewa
 			TrackId:              ext.TrackID,
 			WaylineId:            ext.WaylineID,
 			BreakPointJSON:       toJSONString(ext.BreakPoint),
-			EventJSON:            toJSONString(data),
+			RawJSON:              toJSONString(data),
 			ExtJSON:              toJSONString(ext),
 			ReportedAt:           time.Now(),
 		}
 		updateColumns := []string{
-			"status", "current_step", "wayline_mission_state", "current_waypoint_index", "media_count", "progress_percent", "track_id", "wayline_id", "break_point_json", "event_json", "ext_json", "reported_at", "update_time",
+			"status", "current_step", "wayline_mission_state", "current_waypoint_index", "media_count", "progress_percent", "track_id", "wayline_id", "break_point_json", "raw_json", "ext_json", "reported_at", "update_time",
 		}
 		if err := db.Transact(func(tx *gormx.DB) error {
 			if err := gormx.Upsert(ctx, tx, &record, gormx.Columns("gateway_sn", "flight_id"), updateColumns); err != nil {
@@ -59,7 +59,7 @@ func NewFlightTaskProgressHandler(db *gormx.DB) func(ctx context.Context, gatewa
 				TrackId:              record.TrackId,
 				WaylineId:            record.WaylineId,
 				BreakPointJSON:       record.BreakPointJSON,
-				EventJSON:            record.EventJSON,
+				RawJSON:              record.RawJSON,
 				ExtJSON:              record.ExtJSON,
 				ReportedAt:           record.ReportedAt,
 			}
@@ -77,11 +77,11 @@ func NewFlightTaskReadyHandler(db *gormx.DB) func(ctx context.Context, gatewaySn
 		}
 		logx.WithContext(ctx).Infof("[dji-cloud] flighttask_ready: sn=%s flight_ids=%v count=%d", gatewaySn, data.FlightIDs, len(data.FlightIDs))
 		flightIdJSON := toJSONString(data.FlightIDs)
-		eventJSON := toJSONString(data)
+		rawJSON := toJSONString(data)
 		if err := gormx.CreateRecord(ctx, db, &gormmodel.DjiFlightTaskReady{
 			GatewaySn:    gatewaySn,
 			FlightIdJSON: flightIdJSON,
-			EventJSON:    eventJSON,
+			RawJSON:      rawJSON,
 			FlightCount:  len(data.FlightIDs),
 			ReportedAt:   time.Now(),
 		}); err != nil {
@@ -100,7 +100,7 @@ func NewReturnHomeInfoHandler(db *gormx.DB) func(ctx context.Context, gatewaySn 
 			FlightId:              data.FlightID,
 			GatewaySn:             gatewaySn,
 			ReportedAt:            time.Now(),
-			EventJSON:             toJSONString(data),
+			RawJSON:               toJSONString(data),
 			HomeDockSn:            data.HomeDockSn,
 			LastPointType:         data.LastPointType,
 			PlannedPathPointCount: len(data.PlannedPathPoints),
@@ -154,7 +154,7 @@ func NewRemoteLogFileUploadProgressHandler(db *gormx.DB) func(ctx context.Contex
 		if err := gormx.CreateRecord(ctx, db, &gormmodel.DjiRemoteLogEvent{
 			GatewaySn:  gatewaySn,
 			Method:     "fileupload_progress",
-			EventJSON:  toJSONString(data),
+			RawJSON:    toJSONString(data),
 			FileCount:  len(data.Files),
 			ReportedAt: time.Now(),
 		}); err != nil {

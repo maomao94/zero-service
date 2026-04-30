@@ -37,9 +37,6 @@ func (l *ListDevicesLogic) ListDevices(in *djicloud.ListDevicesReq) (*djicloud.L
 				Where("gateway_sn = ?", in.GatewaySn),
 		)
 	}
-	if in.DeviceDomainFilter != "" {
-		db = db.Where("device_domain = ?", in.DeviceDomainFilter)
-	}
 	if in.OnlineStatus == 1 || in.OnlineStatus == 2 {
 		db = db.Where("is_online = ?", in.OnlineStatus == 1)
 	}
@@ -51,7 +48,11 @@ func (l *ListDevicesLogic) ListDevices(in *djicloud.ListDevicesReq) (*djicloud.L
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	var devices []gormmodel.DjiDevice
-	if err := db.Order("id DESC").Offset(int((page - 1) * pageSize)).Limit(int(pageSize)).Find(&devices).Error; err != nil {
+	if err := db.
+		Order("id DESC").
+		Offset(int((page - 1) * pageSize)).
+		Limit(int(pageSize)).
+		Find(&devices).Error; err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	list := make([]*djicloud.DeviceInfo, 0, len(devices))

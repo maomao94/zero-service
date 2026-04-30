@@ -3,8 +3,14 @@ package hooks
 import (
 	"database/sql"
 	"encoding/json"
+	"strings"
 	"time"
 )
+
+type deviceVersions struct {
+	FirmwareVersion string
+	HardwareVersion string
+}
 
 func reportTime(ms int64) time.Time {
 	if ms <= 0 {
@@ -23,6 +29,34 @@ func toJSONString(v any) string {
 
 func sqlNullTime(t time.Time) sql.NullTime {
 	return sql.NullTime{Time: t, Valid: true}
+}
+
+func extractDeviceVersions(v any) deviceVersions {
+	raw, err := json.Marshal(v)
+	if err != nil {
+		return deviceVersions{}
+	}
+	var data struct {
+		FirmwareVersion string `json:"firmware_version"`
+		HardwareVersion string `json:"hardware_version"`
+	}
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return deviceVersions{}
+	}
+	return deviceVersions{
+		FirmwareVersion: strings.TrimSpace(data.FirmwareVersion),
+		HardwareVersion: strings.TrimSpace(data.HardwareVersion),
+	}
+}
+
+func appendVersionUpdateColumns(columns []string, versions deviceVersions) []string {
+	if versions.FirmwareVersion != "" {
+		columns = append(columns, "firmware_version")
+	}
+	if versions.HardwareVersion != "" {
+		columns = append(columns, "hardware_version")
+	}
+	return columns
 }
 
 func waylineMissionStateText(state int) string {

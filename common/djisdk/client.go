@@ -393,7 +393,7 @@ func (c *Client) OnUpdateTopo(handler func(ctx context.Context, gatewaySn string
 // OnOsd 注册设备 OSD 遥测数据上报钩子。
 // Topic: thing/product/{device_sn}/osd
 // 方向 up：设备→云平台。
-// 设备定期推送实时遥测数据（飞行姿态、GPS 坐标、电池电量等），钩子只负责通知。
+// 设备定期推送 pushMode=0 的物模型遥测数据（飞行姿态、GPS 坐标、电池电量等），钩子只负责通知。
 //   - handler: 回调函数，携带设备 SN 和已解析的 OsdMessage 结构体
 func (c *Client) OnOsd(handler func(ctx context.Context, deviceSn string, data *OsdMessage)) {
 	c.onOsd = handler
@@ -402,8 +402,8 @@ func (c *Client) OnOsd(handler func(ctx context.Context, deviceSn string, data *
 // OnState 注册设备状态上报钩子。
 // Topic: thing/product/{device_sn}/state
 // 方向 up：设备→云平台。
-// 设备上报自身状态信息（固件版本、在线状态、设备能力集等），钩子只负责通知。
-//   - handler: 回调函数，携带设备 SN 和已解析的 OsdMessage 结构体
+// 设备在状态变化时上报 pushMode=1 的物模型状态，如固件/硬件版本、设备能力集、机巢/负载状态等，钩子只负责通知。
+//   - handler: 回调函数，携带设备 SN 和已解析的 StateMessage 结构体
 func (c *Client) OnState(handler func(ctx context.Context, deviceSn string, data *StateMessage)) {
 	c.onState = handler
 }

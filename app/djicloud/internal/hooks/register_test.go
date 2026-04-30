@@ -3,6 +3,7 @@ package hooks
 import (
 	"context"
 	"database/sql"
+	"strings"
 	"testing"
 	"time"
 
@@ -110,7 +111,7 @@ func TestStateTelemetryUpdatesDeviceDataButNotOnline(t *testing.T) {
 	NewStateTelemetryHandler(db, onlineCache)(ctx, "drone-1", &djisdk.StateMessage{
 		Gateway:   "dock-1",
 		Timestamp: 1710000000000,
-		Data:      map[string]any{"mode_code": 1},
+		Data:      map[string]any{"mode_code": 1, "firmware_version": "05.01.0214", "hardware_version": "M4D"},
 	})
 
 	if IsOnline(onlineCache, "drone-1") {
@@ -120,19 +121,20 @@ func TestStateTelemetryUpdatesDeviceDataButNotOnline(t *testing.T) {
 		t.Fatal("expected state telemetry not to refresh gateway online cache")
 	}
 	var device struct {
-		GatewaySn    string
-		DeviceDomain string
-		IsOnline     bool
-		LastOnlineAt sql.NullTime
+		GatewaySn       string
+		FirmwareVersion string
+		HardwareVersion string
+		IsOnline        bool
+		LastOnlineAt    sql.NullTime
 	}
-	if err := db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).Select("gateway_sn", "device_domain", "is_online", "last_online_at").Where("device_sn = ?", "drone-1").First(&device).Error; err != nil {
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).Where("device_sn = ?", "drone-1").First(&device).Error; err != nil {
 		t.Fatalf("find device error = %v", err)
 	}
 	if device.GatewaySn != "dock-1" {
 		t.Fatalf("GatewaySn = %s, want dock-1", device.GatewaySn)
 	}
-	if device.DeviceDomain != "" {
-		t.Fatalf("DeviceDomain = %s, want zero value because state does not carry DJI domain", device.DeviceDomain)
+	if device.FirmwareVersion != "05.01.0214" || device.HardwareVersion != "M4D" {
+		t.Fatalf("device versions = %s/%s, want 05.01.0214/M4D", device.FirmwareVersion, device.HardwareVersion)
 	}
 	if device.IsOnline {
 		t.Fatal("expected state telemetry not to mark device online")
@@ -140,16 +142,99 @@ func TestStateTelemetryUpdatesDeviceDataButNotOnline(t *testing.T) {
 	if device.LastOnlineAt.Valid {
 		t.Fatal("expected state telemetry not to update last online time")
 	}
+	var snapshot struct {
+		RawJSON string
+	}
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDeviceStateSnapshot{}).Select("raw_json").Where("device_sn = ?", "drone-1").First(&snapshot).Error; err != nil {
+		t.Fatalf("find state snapshot error = %v", err)
+	}
+	if !strings.Contains(snapshot.RawJSON, "firmware_version") {
+		t.Fatalf("expected pushMode=1 property to be stored in state snapshot raw json, got %s", snapshot.RawJSON)
+	}
+}
+
+func TestStateTelemetryPreservesExistingVersionsWhenPayloadVersionIsEmpty(t *testing.T) {
+	db := newHookTestDB(t)
+	ctx := context.Background()
+	if err := db.WithContext(ctx).Create(&gormmodel.DjiDevice{
+		DeviceSn:        "drone-version-keep",
+		GatewaySn:       "dock-a",
+		FirmwareVersion: "05.01.0214",
+		HardwareVersion: "M4D",
+	}).Error; err != nil {
+		t.Fatalf("create device error = %v", err)
+	}
+
+	NewStateTelemetryHandler(db, nil)(ctx, "drone-version-keep", &djisdk.StateMessage{
+		Gateway:   "dock-b",
+		Timestamp: 1710000000000,
+		Data:      map[string]any{"firmware_version": "", "hardware_version": nil},
+	})
+
+	var device struct {
+		GatewaySn       string
+		FirmwareVersion string
+		HardwareVersion string
+	}
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).Where("device_sn = ?", "drone-version-keep").First(&device).Error; err != nil {
+		t.Fatalf("find device error = %v", err)
+	}
+	if device.GatewaySn != "dock-b" {
+		t.Fatalf("GatewaySn = %s, want dock-b", device.GatewaySn)
+	}
+	if device.FirmwareVersion != "05.01.0214" || device.HardwareVersion != "M4D" {
+		t.Fatalf("device versions = %s/%s, want preserved versions", device.FirmwareVersion, device.HardwareVersion)
+	}
+}
+
+func TestOsdTelemetryDoesNotUpdateDeviceVersions(t *testing.T) {
+	db := newHookTestDB(t)
+	ctx := context.Background()
+
+	NewOsdHandler(db, nil)(ctx, "dock-version", &djisdk.OsdMessage{
+		Gateway:   "dock-version",
+		Timestamp: 1710000000000,
+		Data:      map[string]any{"firmware_version": "14.03.00.03", "hardware_version": "Dock3"},
+	})
+
+	var device struct {
+		FirmwareVersion string
+		HardwareVersion string
+		IsOnline        bool
+	}
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).Where("device_sn = ?", "dock-version").First(&device).Error; err != nil {
+		t.Fatalf("find device error = %v", err)
+	}
+	if device.FirmwareVersion != "" || device.HardwareVersion != "" {
+		t.Fatalf("device versions = %s/%s, want empty because osd must not update state-only versions", device.FirmwareVersion, device.HardwareVersion)
+	}
+	if !device.IsOnline {
+		t.Fatal("expected osd telemetry to mark device online")
+	}
+}
+
+func TestTelemetryHandlersSkipNilDB(t *testing.T) {
+	ctx := context.Background()
+
+	NewOsdHandler(nil, nil)(ctx, "dock-nil-db", &djisdk.OsdMessage{
+		Gateway:   "dock-nil-db",
+		Timestamp: 1710000000000,
+		Data:      map[string]any{"firmware_version": "14.03.00.03"},
+	})
+	NewStateTelemetryHandler(nil, nil)(ctx, "drone-nil-db", &djisdk.StateMessage{
+		Gateway:   "dock-nil-db",
+		Timestamp: 1710000000000,
+		Data:      map[string]any{"firmware_version": "05.01.0214"},
+	})
 }
 
 func TestStateTelemetryUpdatesGatewayOnEveryReport(t *testing.T) {
 	db := newHookTestDB(t)
 	ctx := context.Background()
 	if err := db.WithContext(ctx).Create(&gormmodel.DjiDevice{
-		DeviceSn:     "drone-frog-jump",
-		GatewaySn:    "dock-a",
-		DeviceDomain: gormmodel.DjiDeviceDomainAircraft,
-		IsOnline:     true,
+		DeviceSn:  "drone-frog-jump",
+		GatewaySn: "dock-a",
+		IsOnline:  true,
 	}).Error; err != nil {
 		t.Fatalf("create device error = %v", err)
 	}
@@ -161,30 +246,33 @@ func TestStateTelemetryUpdatesGatewayOnEveryReport(t *testing.T) {
 	})
 
 	var device struct {
-		GatewaySn    string
-		DeviceDomain string
+		GatewaySn string
 	}
-	if err := db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).Select("gateway_sn", "device_domain").Where("device_sn = ?", "drone-frog-jump").First(&device).Error; err != nil {
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).Select("gateway_sn").Where("device_sn = ?", "drone-frog-jump").First(&device).Error; err != nil {
 		t.Fatalf("find device error = %v", err)
 	}
 	if device.GatewaySn != "dock-b" {
 		t.Fatalf("GatewaySn = %s, want dock-b", device.GatewaySn)
 	}
-	if device.DeviceDomain != gormmodel.DjiDeviceDomainAircraft {
-		t.Fatalf("DeviceDomain = %s, want existing aircraft domain", device.DeviceDomain)
-	}
 }
 
-func TestStateTelemetryPreservesKnownPayloadDomain(t *testing.T) {
+func TestStateTelemetryPreservesTopologyAsTypeSource(t *testing.T) {
 	db := newHookTestDB(t)
 	ctx := context.Background()
 	if err := db.WithContext(ctx).Create(&gormmodel.DjiDevice{
-		DeviceSn:     "payload-1",
-		GatewaySn:    "dock-a",
-		DeviceDomain: gormmodel.DjiDeviceDomainPayload,
-		IsOnline:     true,
+		DeviceSn:  "payload-1",
+		GatewaySn: "dock-a",
+		IsOnline:  true,
 	}).Error; err != nil {
 		t.Fatalf("create device error = %v", err)
+	}
+	if err := db.WithContext(ctx).Create(&gormmodel.DjiDeviceTopo{
+		GatewaySn:     "dock-a",
+		SubDeviceSn:   "payload-1",
+		Domain:        gormmodel.DjiDeviceDomainPayload,
+		SubDeviceType: 99,
+	}).Error; err != nil {
+		t.Fatalf("create topo error = %v", err)
 	}
 
 	NewStateTelemetryHandler(db, nil)(ctx, "payload-1", &djisdk.StateMessage{
@@ -194,17 +282,22 @@ func TestStateTelemetryPreservesKnownPayloadDomain(t *testing.T) {
 	})
 
 	var device struct {
-		GatewaySn    string
-		DeviceDomain string
+		GatewaySn string
 	}
-	if err := db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).Select("gateway_sn", "device_domain").Where("device_sn = ?", "payload-1").First(&device).Error; err != nil {
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).Select("gateway_sn").Where("device_sn = ?", "payload-1").First(&device).Error; err != nil {
 		t.Fatalf("find device error = %v", err)
 	}
 	if device.GatewaySn != "dock-b" {
 		t.Fatalf("GatewaySn = %s, want dock-b", device.GatewaySn)
 	}
-	if device.DeviceDomain != gormmodel.DjiDeviceDomainPayload {
-		t.Fatalf("DeviceDomain = %s, want existing payload domain because state does not carry DJI domain", device.DeviceDomain)
+	var topo struct {
+		Domain string
+	}
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDeviceTopo{}).Select("domain").Where("gateway_sn = ? AND sub_device_sn = ?", "dock-a", "payload-1").First(&topo).Error; err != nil {
+		t.Fatalf("find topo error = %v", err)
+	}
+	if topo.Domain != gormmodel.DjiDeviceDomainPayload {
+		t.Fatalf("topo Domain = %s, want payload domain", topo.Domain)
 	}
 }
 
@@ -226,7 +319,7 @@ func TestStateTelemetryRejectsMissingGateway(t *testing.T) {
 	}
 }
 
-func TestStatusUpdateTopoUsesDjiDomains(t *testing.T) {
+func TestStatusUpdateTopoStoresTypeOnlyInTopo(t *testing.T) {
 	db := newHookTestDB(t)
 	onlineCache, err := collection.NewCache(time.Minute)
 	if err != nil {
@@ -254,35 +347,26 @@ func TestStatusUpdateTopoUsesDjiDomains(t *testing.T) {
 	}
 
 	var dock struct {
-		DeviceDomain  string
-		DeviceType    int
-		DeviceSubType int
-		LastOnlineAt  sql.NullTime
+		GatewaySn    string
+		LastOnlineAt sql.NullTime
 	}
-	if err := db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).Select("device_domain", "device_type", "device_sub_type", "last_online_at").Where("device_sn = ?", "dock3-1").First(&dock).Error; err != nil {
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).Select("gateway_sn", "last_online_at").Where("device_sn = ?", "dock3-1").First(&dock).Error; err != nil {
 		t.Fatalf("find dock error = %v", err)
 	}
-	if dock.DeviceDomain != gormmodel.DjiDeviceDomainDock {
-		t.Fatalf("dock DeviceDomain = %s, want DJI dock domain", dock.DeviceDomain)
-	}
-	if dock.DeviceType != 119 || dock.DeviceSubType != 0 {
-		t.Fatalf("dock type = %d/%d, want 119/0", dock.DeviceType, dock.DeviceSubType)
+	if dock.GatewaySn != "dock3-1" {
+		t.Fatalf("dock GatewaySn = %s, want dock3-1", dock.GatewaySn)
 	}
 	if dock.LastOnlineAt.Valid {
 		t.Fatalf("dock LastOnlineAt = %v, want empty because status does not handle online", dock.LastOnlineAt)
 	}
 	var aircraft struct {
-		DeviceDomain string
-		DeviceType   int
+		GatewaySn string
 	}
-	if err := db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).Select("device_domain", "device_type").Where("device_sn = ?", "m4d-1").First(&aircraft).Error; err != nil {
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).Select("gateway_sn").Where("device_sn = ?", "m4d-1").First(&aircraft).Error; err != nil {
 		t.Fatalf("find aircraft error = %v", err)
 	}
-	if aircraft.DeviceDomain != gormmodel.DjiDeviceDomainAircraft {
-		t.Fatalf("aircraft DeviceDomain = %s, want DJI aircraft domain", aircraft.DeviceDomain)
-	}
-	if aircraft.DeviceType != 60 {
-		t.Fatalf("aircraft DeviceType = %d, want 60", aircraft.DeviceType)
+	if aircraft.GatewaySn != "dock3-1" {
+		t.Fatalf("aircraft GatewaySn = %s, want dock3-1", aircraft.GatewaySn)
 	}
 	var topo struct {
 		Domain         string
@@ -406,7 +490,6 @@ func TestOsdTelemetryDoesNotOverwriteFirstOnlineAt(t *testing.T) {
 	if err := db.WithContext(ctx).Create(&gormmodel.DjiDevice{
 		DeviceSn:      "dock-first-online",
 		GatewaySn:     "dock-first-online",
-		DeviceDomain:  gormmodel.DjiDeviceDomainDock,
 		IsOnline:      true,
 		FirstOnlineAt: sql.NullTime{Time: firstOnlineAt, Valid: true},
 		LastOnlineAt:  sql.NullTime{Time: firstOnlineAt, Valid: true},
@@ -435,16 +518,23 @@ func TestOsdTelemetryDoesNotOverwriteFirstOnlineAt(t *testing.T) {
 	}
 }
 
-func TestOsdTelemetryPreservesKnownPayloadDomain(t *testing.T) {
+func TestOsdTelemetryPreservesTopologyAsTypeSource(t *testing.T) {
 	db := newHookTestDB(t)
 	ctx := context.Background()
 	if err := db.WithContext(ctx).Create(&gormmodel.DjiDevice{
-		DeviceSn:     "payload-osd-1",
-		GatewaySn:    "dock-a",
-		DeviceDomain: gormmodel.DjiDeviceDomainPayload,
-		IsOnline:     true,
+		DeviceSn:  "payload-osd-1",
+		GatewaySn: "dock-a",
+		IsOnline:  true,
 	}).Error; err != nil {
 		t.Fatalf("create device error = %v", err)
+	}
+	if err := db.WithContext(ctx).Create(&gormmodel.DjiDeviceTopo{
+		GatewaySn:     "dock-a",
+		SubDeviceSn:   "payload-osd-1",
+		Domain:        gormmodel.DjiDeviceDomainPayload,
+		SubDeviceType: 99,
+	}).Error; err != nil {
+		t.Fatalf("create topo error = %v", err)
 	}
 
 	NewOsdHandler(db, nil)(ctx, "payload-osd-1", &djisdk.OsdMessage{
@@ -454,18 +544,23 @@ func TestOsdTelemetryPreservesKnownPayloadDomain(t *testing.T) {
 	})
 
 	var device struct {
-		GatewaySn    string
-		DeviceDomain string
-		IsOnline     bool
+		GatewaySn string
+		IsOnline  bool
 	}
-	if err := db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).Select("gateway_sn", "device_domain", "is_online").Where("device_sn = ?", "payload-osd-1").First(&device).Error; err != nil {
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDevice{}).Select("gateway_sn", "is_online").Where("device_sn = ?", "payload-osd-1").First(&device).Error; err != nil {
 		t.Fatalf("find device error = %v", err)
 	}
 	if device.GatewaySn != "dock-b" {
 		t.Fatalf("GatewaySn = %s, want dock-b", device.GatewaySn)
 	}
-	if device.DeviceDomain != gormmodel.DjiDeviceDomainPayload {
-		t.Fatalf("DeviceDomain = %s, want existing payload domain because osd does not carry DJI domain", device.DeviceDomain)
+	var topo struct {
+		Domain string
+	}
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDeviceTopo{}).Select("domain").Where("gateway_sn = ? AND sub_device_sn = ?", "dock-a", "payload-osd-1").First(&topo).Error; err != nil {
+		t.Fatalf("find topo error = %v", err)
+	}
+	if topo.Domain != gormmodel.DjiDeviceDomainPayload {
+		t.Fatalf("topo Domain = %s, want payload domain", topo.Domain)
 	}
 	if !device.IsOnline {
 		t.Fatal("expected osd telemetry to mark payload online")
@@ -501,13 +596,13 @@ func TestOsdTelemetryStoresOnlyOfficialRawSnapshot(t *testing.T) {
 	})
 
 	var snapshot struct {
-		DataJSON string
+		RawJSON string
 	}
-	if err := db.WithContext(ctx).Model(&gormmodel.DjiDeviceOsdSnapshot{}).Select("data_json").Where("device_sn = ?", "dock-json").First(&snapshot).Error; err != nil {
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDeviceOsdSnapshot{}).Select("raw_json").Where("device_sn = ?", "dock-json").First(&snapshot).Error; err != nil {
 		t.Fatalf("find osd snapshot error = %v", err)
 	}
-	if snapshot.DataJSON == "" || snapshot.DataJSON == "{}" {
-		t.Fatalf("DataJSON = %q, want raw osd payload", snapshot.DataJSON)
+	if snapshot.RawJSON == "" || snapshot.RawJSON == "{}" {
+		t.Fatalf("RawJSON = %q, want raw osd payload", snapshot.RawJSON)
 	}
 	if db.WithContext(ctx).Migrator().HasColumn(&gormmodel.DjiDeviceOsdSnapshot{}, "latitude") {
 		t.Fatal("expected osd snapshot not to have guessed latitude column")
@@ -528,13 +623,13 @@ func TestStateTelemetryStoresOnlyOfficialRawSnapshot(t *testing.T) {
 	})
 
 	var snapshot struct {
-		DataJSON string
+		RawJSON string
 	}
-	if err := db.WithContext(ctx).Model(&gormmodel.DjiDeviceStateSnapshot{}).Select("data_json").Where("device_sn = ?", "dock-state-json").First(&snapshot).Error; err != nil {
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDeviceStateSnapshot{}).Select("raw_json").Where("device_sn = ?", "dock-state-json").First(&snapshot).Error; err != nil {
 		t.Fatalf("find state snapshot error = %v", err)
 	}
-	if snapshot.DataJSON == "" || snapshot.DataJSON == "{}" {
-		t.Fatalf("DataJSON = %q, want raw state payload", snapshot.DataJSON)
+	if snapshot.RawJSON == "" || snapshot.RawJSON == "{}" {
+		t.Fatalf("RawJSON = %q, want raw state payload", snapshot.RawJSON)
 	}
 	if db.WithContext(ctx).Migrator().HasColumn(&gormmodel.DjiDeviceStateSnapshot{}, "sub_device_sn") {
 		t.Fatal("expected state snapshot not to have guessed sub_device_sn column")
@@ -574,17 +669,17 @@ func TestFlightTaskProgressStoresOfficialFieldsAndUpdatesDockTaskAndDeviceState(
 		CurrentStep    int
 		TrackId        string
 		WaylineId      int
-		EventJSON      string
+		RawJSON        string
 		BreakPointJSON string
 	}
-	if err := db.WithContext(ctx).Model(&gormmodel.DjiDockFlightTask{}).Select("status", "current_step", "track_id", "wayline_id", "event_json", "break_point_json").Where("gateway_sn = ? AND flight_id = ?", "dock-progress", "flight-json").First(&task).Error; err != nil {
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDockFlightTask{}).Select("status", "current_step", "track_id", "wayline_id", "raw_json", "break_point_json").Where("gateway_sn = ? AND flight_id = ?", "dock-progress", "flight-json").First(&task).Error; err != nil {
 		t.Fatalf("find dock flight task error = %v", err)
 	}
 	if task.Status != "in_progress" || task.CurrentStep != 2 || task.TrackId != "track-json" || task.WaylineId != 2 {
 		t.Fatalf("task official fields = status:%s step:%d track:%s wayline:%d", task.Status, task.CurrentStep, task.TrackId, task.WaylineId)
 	}
-	if task.EventJSON == "" || task.EventJSON == "{}" {
-		t.Fatalf("EventJSON = %q, want raw event data", task.EventJSON)
+	if task.RawJSON == "" || task.RawJSON == "{}" {
+		t.Fatalf("RawJSON = %q, want raw event data", task.RawJSON)
 	}
 	if task.BreakPointJSON == "" || task.BreakPointJSON == "{}" {
 		t.Fatalf("BreakPointJSON = %q, want raw break point data", task.BreakPointJSON)
@@ -751,9 +846,9 @@ func TestFlightTaskReadyPersistsEventWithFlightIDs(t *testing.T) {
 	var ready struct {
 		GatewaySn   string
 		FlightCount int
-		EventJSON   string
+		RawJSON     string
 	}
-	if err := db.WithContext(ctx).Model(&gormmodel.DjiFlightTaskReady{}).Select("gateway_sn", "flight_count", "event_json").Where("gateway_sn = ?", "dock-ready").First(&ready).Error; err != nil {
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiFlightTaskReady{}).Select("gateway_sn", "flight_count", "raw_json").Where("gateway_sn = ?", "dock-ready").First(&ready).Error; err != nil {
 		t.Fatalf("find flight task ready error = %v", err)
 	}
 	if ready.GatewaySn != "dock-ready" {
@@ -762,8 +857,8 @@ func TestFlightTaskReadyPersistsEventWithFlightIDs(t *testing.T) {
 	if ready.FlightCount != 2 {
 		t.Fatalf("FlightCount = %d, want 2", ready.FlightCount)
 	}
-	if ready.EventJSON == "" || ready.EventJSON == "{}" {
-		t.Fatalf("EventJSON = %q, want raw event data", ready.EventJSON)
+	if ready.RawJSON == "" || ready.RawJSON == "{}" {
+		t.Fatalf("RawJSON = %q, want raw event data", ready.RawJSON)
 	}
 }
 

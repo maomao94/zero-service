@@ -1,5 +1,8 @@
 syntax = "proto3";
 
+// 协议版本：v0.0.1。
+// 与 Gradle/Maven 发布包版本保持一致。
+
 package djicloud;
 option go_package = "./djicloud";
 option java_multiple_files = true;
@@ -1364,6 +1367,7 @@ message DeviceOnlineRes {
 // update_topo 为 sys/product/{gateway_sn}/status 上行，由 common/djisdk.OnTopoUpdate 处理。
 
 // DeviceInfo 设备基础信息。
+// firmware_version 与 hardware_version 从 DJI state 物模型快照中提取，对应 pushMode=1 的状态数据；空上报不会覆盖已有非空版本。
 message DeviceInfo {
   // id 数据库主键。
   int64 id = 1;
@@ -1372,26 +1376,20 @@ message DeviceInfo {
   // gateway_sn 最近一次上报关联的网关机巢 SN；机巢自身等于 device_sn。
   // 蛙跳场景下，一架飞机可能存在多个机巢绑定关系，完整绑定关系以 DeviceTopoInfo 为准。
   string gateway_sn = 3;
-  // device_domain 大疆设备领域 domain，0: 飞机类，1: 负载类，2: 遥控器类，3: 机场类，按 DJI 原始字符串透传。
-  string device_domain = 4;
-  // device_type 大疆设备类型。
-  int32 device_type = 5;
-  // device_sub_type 大疆设备子类型。
-  int32 device_sub_type = 6;
   // alias 设备别名。
-  string alias = 7;
+  string alias = 4;
   // group_name 业务分组。
-  string group_name = 8;
-  // firmware_version 固件版本。
-  string firmware_version = 9;
-  // hardware_version 硬件版本。
-  string hardware_version = 10;
-  // is_online 是否在线，false 表示离线或尚未收到在线上报，true 表示在线。
-  bool is_online = 11;
+  string group_name = 5;
+  // firmware_version 固件版本，来自大疆物模型属性 firmware_version。
+  string firmware_version = 6;
+  // hardware_version 硬件版本，来自大疆物模型属性 hardware_version。
+  string hardware_version = 7;
+  // is_online 是否在线；当前以设备 OSD 有效上行为在线刷新依据，State/update_topo 不刷新在线状态。
+  bool is_online = 8;
   // first_online_at 首次上线时间，毫秒时间戳。
-  int64 first_online_at = 12;
+  int64 first_online_at = 9;
   // last_online_at 最后在线时间，毫秒时间戳。
-  int64 last_online_at = 13;
+  int64 last_online_at = 10;
 }
 
 // DeviceTopoInfo 设备拓扑信息。
@@ -1422,12 +1420,10 @@ message ListDevicesReq {
   // gateway_sn 按机巢拓扑过滤，空表示不过滤。
   // 查询子设备时会同时匹配设备最近一次 gateway_sn 和 dji_device_topo 中的历史/当前绑定关系，兼容蛙跳。
   string gateway_sn = 3;
-  // device_domain_filter 设备领域过滤，空字符串表示全部；"0": 飞机类，"1": 负载类，"2": 遥控器类，"3": 机场类。
-  string device_domain_filter = 4;
   // online_status 在线状态过滤，0: 全部，1: 在线，2: 离线。
-  int32 online_status = 5;
+  int32 online_status = 4;
   // keyword 按 SN/别名模糊查询。
-  string keyword = 6;
+  string keyword = 5;
 }
 
 // ListDevicesRes 查询设备列表响应。
@@ -1442,9 +1438,8 @@ message ListDevicesRes {
 message DeviceOsdSnapshot {
   string device_sn = 1;
   string gateway_sn = 2;
-  string device_domain = 3;
-  string data_json = 4;
-  int64 reported_at = 5;
+  string raw_json = 3;
+  int64 reported_at = 4;
 }
 
 // DeviceOsdSnapshotRes 设备 OSD 快照响应。
@@ -1456,9 +1451,8 @@ message DeviceOsdSnapshotRes {
 message DeviceStateSnapshot {
   string device_sn = 1;
   string gateway_sn = 2;
-  string device_domain = 3;
-  string data_json = 4;
-  int64 reported_at = 5;
+  string raw_json = 3;
+  int64 reported_at = 4;
 }
 
 // DeviceStateSnapshotRes 设备 State 快照响应。
@@ -1537,7 +1531,7 @@ message FlightTaskProgressInfo {
   string track_id = 12;
   int32 wayline_id = 13;
   string break_point_json = 14;
-  string event_json = 15;
+  string raw_json = 15;
 }
 
 // ListFlightTaskProgressReq 查询飞行任务进度推送记录请求。

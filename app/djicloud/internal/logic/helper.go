@@ -66,9 +66,6 @@ func toDeviceInfo(m *gormmodel.DjiDevice) *djicloud.DeviceInfo {
 		Id:              m.Id,
 		DeviceSn:        m.DeviceSn,
 		GatewaySn:       m.GatewaySn,
-		DeviceDomain:    m.DeviceDomain,
-		DeviceType:      int32(m.DeviceType),
-		DeviceSubType:   int32(m.DeviceSubType),
 		Alias:           m.Alias,
 		GroupName:       m.GroupName,
 		FirmwareVersion: m.FirmwareVersion,
@@ -84,11 +81,10 @@ func toOsdSnapshot(m *gormmodel.DjiDeviceOsdSnapshot) *djicloud.DeviceOsdSnapsho
 		return nil
 	}
 	return &djicloud.DeviceOsdSnapshot{
-		DeviceSn:     m.DeviceSn,
-		GatewaySn:    m.GatewaySn,
-		DeviceDomain: m.DeviceDomain,
-		DataJson:     m.DataJSON,
-		ReportedAt:   timeMillis(m.ReportedAt),
+		DeviceSn:   m.DeviceSn,
+		GatewaySn:  m.GatewaySn,
+		RawJson:    m.RawJSON,
+		ReportedAt: timeMillis(m.ReportedAt),
 	}
 }
 
@@ -97,10 +93,9 @@ func toStateSnapshot(m *gormmodel.DjiDeviceStateSnapshot) *djicloud.DeviceStateS
 		return nil
 	}
 	return &djicloud.DeviceStateSnapshot{
-		DeviceSn:     m.DeviceSn,
-		GatewaySn:    m.GatewaySn,
-		DeviceDomain: m.DeviceDomain,
-		DataJson:     m.DataJSON,
-		ReportedAt:   timeMillis(m.ReportedAt),
+		DeviceSn:   m.DeviceSn,
+		GatewaySn:  m.GatewaySn,
+		RawJson:    m.RawJSON,
+		ReportedAt: timeMillis(m.ReportedAt),
 	}
 }

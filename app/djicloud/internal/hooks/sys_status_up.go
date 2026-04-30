@@ -42,12 +42,9 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 
 		if err := db.WithContext(ctx).Transact(func(tx *gormx.DB) error {
 			if err := gormx.Upsert(ctx, tx, &gormmodel.DjiDevice{
-				DeviceSn:      gatewaySn,
-				GatewaySn:     gatewaySn,
-				DeviceDomain:  topo.Domain,
-				DeviceType:    topo.Type,
-				DeviceSubType: topo.SubType,
-			}, []clause.Column{{Name: "device_sn"}}, []string{"gateway_sn", "device_domain", "device_type", "device_sub_type", "update_time"}); err != nil {
+				DeviceSn:  gatewaySn,
+				GatewaySn: gatewaySn,
+			}, []clause.Column{{Name: "device_sn"}}, []string{"gateway_sn", "update_time"}); err != nil {
 				return err
 			}
 
@@ -80,12 +77,9 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 				}
 
 				if err := gormx.Upsert(ctx, tx, &gormmodel.DjiDevice{
-					DeviceSn:      sub.SN,
-					GatewaySn:     gatewaySn,
-					DeviceDomain:  subDomain,
-					DeviceType:    sub.Type,
-					DeviceSubType: sub.SubType,
-				}, []clause.Column{{Name: "device_sn"}}, []string{"gateway_sn", "device_domain", "device_type", "device_sub_type", "update_time"}); err != nil {
+					DeviceSn:  sub.SN,
+					GatewaySn: gatewaySn,
+				}, []clause.Column{{Name: "device_sn"}}, []string{"gateway_sn", "update_time"}); err != nil {
 					return err
 				}
 			}

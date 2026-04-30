@@ -40,6 +40,6 @@ func (l *GetFlightTaskProgressLastLogic) GetFlightTaskProgressLast(in *djicloud.
 	return &djicloud.FlightTaskProgressLastRes{
 		HasProgress:  true,
 		ReportedAtMs: timeMillis(progress.ReportedAt),
-		ProgressJson: progress.EventJSON,
+		ProgressJson: progress.RawJSON,
 	}, nil
 }

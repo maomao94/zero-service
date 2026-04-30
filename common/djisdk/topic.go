@@ -16,7 +16,7 @@ import "fmt"
 // OsdTopic 返回设备遥测数据（OSD）上报 Topic。
 // 路径格式: thing/product/{device_sn}/osd
 // 方向: 设备 → 云平台
-// 用途: 设备定期推送实时遥测数据（飞行姿态、GPS 坐标、电池电量等）至云平台。
+// 用途: 设备定期推送 DJI 物模型中 pushMode=0 的定频数据，通常包括飞行姿态、GPS 坐标、电池电量等实时属性。
 func OsdTopic(deviceSn string) string {
 	return fmt.Sprintf("thing/product/%s/osd", deviceSn)
 }
@@ -32,8 +32,8 @@ func OsdTopicPattern() string {
 // StateTopic 返回设备状态上报 Topic。
 // 路径格式: thing/product/{device_sn}/state
 // 方向: 设备 → 云平台
-// 用途: 设备上报自身状态信息（固件版本、在线状态、设备能力集等），
-// 与 OSD 不同，state 侧重于设备元信息而非实时飞行数据。
+// 用途: 设备在状态变化时推送 DJI 物模型中 pushMode=1 的状态数据，通常包括固件/硬件版本、设备能力集、机巢/负载状态等非定频属性。
+// 本服务不使用 state 上报刷新在线状态，在线状态以有效 osd 上行为准。
 func StateTopic(deviceSn string) string {
 	return fmt.Sprintf("thing/product/%s/state", deviceSn)
 }

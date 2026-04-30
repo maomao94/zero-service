@@ -35,13 +35,11 @@ func NewOsdHandler(db *gormx.DB, onlineCache *collection.Cache) func(ctx context
 			IsOnline:     true,
 			LastOnlineAt: sqlNullTime(now),
 		}
-		if deviceSn == gatewaySn {
-			device.DeviceDomain = gormmodel.DjiDeviceDomainDock
-		}
 		device.TouchOnline(now)
 		updateColumns := []string{"gateway_sn", "is_online", "last_online_at", "update_time"}
-		if deviceSn == gatewaySn {
-			updateColumns = append(updateColumns, "device_domain")
+		if db == nil {
+			logx.WithContext(ctx).Errorf("[dji-cloud] osd storage skipped: db is nil")
+			return
 		}
 		if err := gormx.Upsert(ctx, db, &device, gormx.Columns("device_sn"), updateColumns); err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] upsert osd device online failed: %v", err)
@@ -50,16 +48,10 @@ func NewOsdHandler(db *gormx.DB, onlineCache *collection.Cache) func(ctx context
 		snapshot := gormmodel.DjiDeviceOsdSnapshot{
 			DeviceSn:   deviceSn,
 			GatewaySn:  gatewaySn,
-			DataJSON:   toJSONString(data.Data),
+			RawJSON:    toJSONString(data.Data),
 			ReportedAt: now,
 		}
-		if deviceSn == gatewaySn {
-			snapshot.DeviceDomain = gormmodel.DjiDeviceDomainDock
-		}
-		snapshotUpdateColumns := []string{"gateway_sn", "data_json", "reported_at", "update_time"}
-		if deviceSn == gatewaySn {
-			snapshotUpdateColumns = append(snapshotUpdateColumns, "device_domain")
-		}
+		snapshotUpdateColumns := []string{"gateway_sn", "raw_json", "reported_at", "update_time"}
 		if err := gormx.Upsert(ctx, db, &snapshot, gormx.Columns("device_sn"), snapshotUpdateColumns); err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] upsert osd snapshot failed: %v", err)
 		}
@@ -79,17 +71,18 @@ func NewStateTelemetryHandler(db *gormx.DB, _ *collection.Cache) func(ctx contex
 			return
 		}
 		now := reportTime(data.Timestamp)
+		versions := extractDeviceVersions(data.Data)
 
 		device := gormmodel.DjiDevice{
-			DeviceSn:  deviceSn,
-			GatewaySn: gatewaySn,
+			DeviceSn:        deviceSn,
+			GatewaySn:       gatewaySn,
+			FirmwareVersion: versions.FirmwareVersion,
+			HardwareVersion: versions.HardwareVersion,
 		}
-		if deviceSn == gatewaySn {
-			device.DeviceDomain = gormmodel.DjiDeviceDomainDock
-		}
-		updateColumns := []string{"gateway_sn", "update_time"}
-		if deviceSn == gatewaySn {
-			updateColumns = append(updateColumns, "device_domain")
+		updateColumns := appendVersionUpdateColumns([]string{"gateway_sn", "update_time"}, versions)
+		if db == nil {
+			logx.WithContext(ctx).Errorf("[dji-cloud] state storage skipped: db is nil")
+			return
 		}
 		if err := gormx.Upsert(ctx, db, &device, gormx.Columns("device_sn"), updateColumns); err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] upsert state device failed: %v", err)
@@ -98,16 +91,10 @@ func NewStateTelemetryHandler(db *gormx.DB, _ *collection.Cache) func(ctx contex
 		snapshot := gormmodel.DjiDeviceStateSnapshot{
 			DeviceSn:   deviceSn,
 			GatewaySn:  gatewaySn,
-			DataJSON:   toJSONString(data.Data),
+			RawJSON:    toJSONString(data.Data),
 			ReportedAt: now,
 		}
-		if deviceSn == gatewaySn {
-			snapshot.DeviceDomain = gormmodel.DjiDeviceDomainDock
-		}
-		snapshotUpdateColumns := []string{"gateway_sn", "data_json", "reported_at", "update_time"}
-		if deviceSn == gatewaySn {
-			snapshotUpdateColumns = append(snapshotUpdateColumns, "device_domain")
-		}
+		snapshotUpdateColumns := []string{"gateway_sn", "raw_json", "reported_at", "update_time"}
 		if err := gormx.Upsert(ctx, db, &snapshot, gormx.Columns("device_sn"), snapshotUpdateColumns); err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] upsert state snapshot failed: %v", err)
 		}

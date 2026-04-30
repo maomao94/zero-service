@@ -20,24 +20,16 @@ const (
 // 数据来源：
 //   - 机巢设备来自 sys/product/{gateway_sn}/status 的 update_topo 上行；
 //   - 子设备来自 update_topo.sub_devices、thing/product/{device_sn}/osd、thing/product/{device_sn}/state；
-//   - 在线状态由机巢 status/OSD 和子设备 OSD/State 推送刷新，内存缓存用于高频在线判断，数据库保存最新状态快照并按 LastOnlineAt 懒过期清理。
-//
-// 设计约定：DeviceDomain 直接使用大疆原始 domain 值，和上云 API 产品枚举保持一致。
-//   - 0: 飞机类
-//   - 1: 负载类
-//   - 2: 遥控器类
-//   - 3: 机场类
+//   - 固件版本、硬件版本从 state 物模型快照中提取，对应 DJI 物模型 pushMode=1 的状态数据，空值不上屏覆盖；
+//   - 在线状态由 osd 上行刷新，内存缓存用于高频在线判断，数据库保存最新在线快照并按 LastOnlineAt 懒过期清理。
 //
 // 蛙跳场景：同一架飞机可能先后或同时与多个机巢建立拓扑关系，多机巢绑定关系不放在本表表达，而由 DjiDeviceTopo 按 gateway_sn + sub_device_sn 保存；本表 GatewaySn 仅表示最近一次上报归属的机巢，用于快速展示和控制路由兜底。
-// 在线状态：数据库默认 IsOnline=false，表示离线或尚未收到在线上报；收到机巢 status/OSD 或子设备 OSD/State 等有效上行后才置为 true。
+// 在线状态：数据库默认 IsOnline=false，表示离线或尚未收到在线上报；收到设备 osd 有效上行后置为 true，status/update_topo 与 state 仅维护设备归属和状态快照。
 // 使用场景：设备列表、机巢详情、无人机详情、设备在线判断、后续设备分组/别名管理。
 type DjiDevice struct {
 	gormx.LegacyBaseModel
 	DeviceSn        string       `gorm:"column:device_sn;type:varchar(64);uniqueIndex;not null;comment:设备SN，机巢/无人机/负载设备唯一标识"`
 	GatewaySn       string       `gorm:"column:gateway_sn;type:varchar(64);index;not null;default:'';comment:最近一次上报关联的网关机巢SN，机巢自身等于device_sn；蛙跳多绑定关系以dji_device_topo为准"`
-	DeviceDomain    string       `gorm:"column:device_domain;index;type:varchar(8);not null;default:'';comment:大疆设备领域domain，0飞机类，1负载类，2遥控器类，3机场类"`
-	DeviceType      int          `gorm:"column:device_type;not null;default:0;comment:大疆设备类型"`
-	DeviceSubType   int          `gorm:"column:device_sub_type;not null;default:0;comment:大疆设备子类型"`
 	Alias           string       `gorm:"column:alias;type:varchar(128);default:'';comment:设备别名"`
 	GroupName       string       `gorm:"column:group_name;type:varchar(128);default:'';comment:业务分组"`
 	FirmwareVersion string       `gorm:"column:firmware_version;type:varchar(64);default:'';comment:固件版本"`
@@ -48,10 +40,6 @@ type DjiDevice struct {
 }
 
 func (DjiDevice) TableName() string { return "dji_device" }
-
-func (d *DjiDevice) IsDock() bool {
-	return d.DeviceDomain == DjiDeviceDomainDock
-}
 
 func (d *DjiDevice) TouchOnline(now time.Time) {
 	d.IsOnline = true

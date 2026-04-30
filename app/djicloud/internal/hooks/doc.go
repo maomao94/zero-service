@@ -4,8 +4,8 @@
 //
 //   - 事件类（thing/.../events，method 分流，部分需 events_reply 由 djisdk 回包）：
 //     见 event_notify_up.go，覆盖航线任务进度、任务就绪、返航信息、PSDK 自定义数据、HMS、远程日志上传结果与进度。
-//   - 遥测/物模型状态类（thing/.../osd、thing/.../state，高频/元信息，无云侧 *reply）：
-//     见 telemetry_up.go
+//   - 遥测/物模型状态类（thing/.../osd、thing/.../state，无云侧 *reply）：
+//     见 telemetry_up.go。DJI 物模型字段表中的 pushMode 决定上报通道：pushMode=0 随 osd 定频上报，pushMode=1 随 state 状态变化上报；本服务按 MQTT Topic 分流，不从 payload 中二次解析 pushMode。
 //   - 系统状态类（sys/.../status，在离线/拓扑，需 status_reply）：
 //     见 sys_status_up.go
 //   - 设备主动请求（thing/.../requests → requests_reply，需 OnRequest）：

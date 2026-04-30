@@ -4,6 +4,9 @@
 // - protoc             v5.29.3
 // source: djicloud.proto
 
+// 协议版本：v0.0.1。
+// 与 Gradle/Maven 发布包版本保持一致。
+
 package djicloud
 
 import (

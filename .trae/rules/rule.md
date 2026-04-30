@@ -40,6 +40,7 @@ go-zero 微服务 + eino AI 框架 + Trellis（`.trellis/`）
 - 先改 `.api`/`.proto` → `gen.sh` → 写 Logic，禁止跳过
 - Go/go-zero/Google 规范，禁止 Java 风格
 - 工具类函数须有单测，proto/api 注释完整一致
+- gRPC/API 生成代码非必要不写单测，优先覆盖手写 Logic、工具函数与关键业务分支
 - Git 提交信息中文
 
 ## 规范层级

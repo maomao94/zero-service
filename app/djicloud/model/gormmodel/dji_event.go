@@ -39,7 +39,7 @@ type DjiDockFlightTask struct {
 	FlightId   string    `gorm:"column:flight_id;type:varchar(64);uniqueIndex:idx_dji_dock_flight_task_gateway_flight;not null;comment:大疆航线任务ID"`
 	GatewaySn  string    `gorm:"column:gateway_sn;type:varchar(64);uniqueIndex:idx_dji_dock_flight_task_gateway_flight;not null;comment:网关机巢SN"`
 	ReportedAt time.Time `gorm:"column:reported_at;index;not null;comment:设备上报时间"`
-	EventJSON  string    `gorm:"column:event_json;type:jsonb;default:'{}';comment:完整flighttask_progress事件data原始JSON"`
+	RawJSON    string    `gorm:"column:raw_json;type:jsonb;default:'{}';comment:完整flighttask_progress事件data原始JSON"`
 	ExtJSON    string    `gorm:"column:ext_json;type:jsonb;default:'{}';comment:flighttask_progress.ext原始JSON"`
 
 	Status               string  `gorm:"column:status;type:varchar(64);index;not null;default:'';comment:官方flighttask_progress status字段"`
@@ -61,7 +61,7 @@ type DjiDockDeviceFlightTaskState struct {
 	GatewaySn  string    `gorm:"column:gateway_sn;type:varchar(64);uniqueIndex;not null;comment:网关机巢SN"`
 	FlightId   string    `gorm:"column:flight_id;type:varchar(64);index;not null;comment:大疆航线任务ID"`
 	ReportedAt time.Time `gorm:"column:reported_at;index;not null;comment:设备上报时间"`
-	EventJSON  string    `gorm:"column:event_json;type:jsonb;default:'{}';comment:完整flighttask_progress事件data原始JSON"`
+	RawJSON    string    `gorm:"column:raw_json;type:jsonb;default:'{}';comment:完整flighttask_progress事件data原始JSON"`
 	ExtJSON    string    `gorm:"column:ext_json;type:jsonb;default:'{}';comment:flighttask_progress.ext原始JSON"`
 
 	Status               string  `gorm:"column:status;type:varchar(64);index;not null;default:'';comment:官方flighttask_progress status字段"`
@@ -89,7 +89,7 @@ type DjiFlightTaskReady struct {
 	gormx.LegacyBaseModel
 	GatewaySn    string    `gorm:"column:gateway_sn;type:varchar(64);index;not null;comment:网关机巢SN"`
 	FlightIdJSON string    `gorm:"column:flight_id_json;type:jsonb;default:'[]';comment:就绪任务ID列表原始JSON"`
-	EventJSON    string    `gorm:"column:event_json;type:jsonb;default:'{}';comment:完整flighttask_ready事件原始JSON"`
+	RawJSON      string    `gorm:"column:raw_json;type:jsonb;default:'{}';comment:完整flighttask_ready事件原始JSON"`
 	FlightCount  int       `gorm:"column:flight_count;default:0;comment:就绪任务数量"`
 	ReportedAt   time.Time `gorm:"column:reported_at;index;not null;comment:设备上报时间"`
 }
@@ -100,13 +100,13 @@ func (DjiFlightTaskReady) TableName() string { return "dji_flight_task_ready" }
 //
 // 功能：记录大疆 fileupload_progress 上行事件，追踪远程日志上传进度。
 // 数据来源：thing/product/{gateway_sn}/events method=fileupload_progress。
-// 写入策略：按事件逐条插入，原始数据完整保存在 EventJSON。
+// 写入策略：按事件逐条插入，原始数据完整保存在 RawJSON。
 // 使用场景：排查日志上传进度、运维审计。
 type DjiRemoteLogEvent struct {
 	gormx.LegacyBaseModel
 	GatewaySn  string    `gorm:"column:gateway_sn;type:varchar(64);index;not null;comment:网关机巢SN"`
 	Method     string    `gorm:"column:method;type:varchar(64);index;not null;default:'';comment:事件方法名(fileupload_progress)"`
-	EventJSON  string    `gorm:"column:event_json;type:jsonb;default:'{}';comment:完整事件原始JSON"`
+	RawJSON    string    `gorm:"column:raw_json;type:jsonb;default:'{}';comment:完整事件原始JSON"`
 	FileCount  int       `gorm:"column:file_count;default:0;comment:文件数量"`
 	ReportedAt time.Time `gorm:"column:reported_at;index;not null;comment:设备上报时间"`
 }
@@ -117,14 +117,14 @@ func (DjiRemoteLogEvent) TableName() string { return "dji_remote_log_event" }
 //
 // 功能：记录大疆 return_home_info 上行事件，用于观察无人机返航过程和排查返航异常。
 // 数据来源：thing/product/{gateway_sn}/events method=return_home_info。
-// 写入策略：按事件逐条插入，原始数据完整保存在 EventJSON。
+// 写入策略：按事件逐条插入，原始数据完整保存在 RawJSON。
 // 使用场景：机巢运维、返航过程追踪、后续告警/通知扩展。
 type DjiReturnHomeEvent struct {
 	gormx.LegacyBaseModel
 	FlightId   string    `gorm:"column:flight_id;type:varchar(64);index;default:'';comment:关联航线任务ID"`
 	GatewaySn  string    `gorm:"column:gateway_sn;type:varchar(64);index;not null;comment:网关机巢SN"`
 	ReportedAt time.Time `gorm:"column:reported_at;index;not null;comment:设备上报时间"`
-	EventJSON  string    `gorm:"column:event_json;type:jsonb;default:'{}';comment:完整返航事件原始数据JSON"`
+	RawJSON    string    `gorm:"column:raw_json;type:jsonb;default:'{}';comment:完整返航事件原始数据JSON"`
 
 	HomeDockSn            string `gorm:"column:home_dock_sn;type:varchar(64);index;default:'';comment:返航目标机场SN，蛙跳任务场景下上报"`
 	LastPointType         int    `gorm:"column:last_point_type;default:0;comment:返航路径最后一个点类型，0返航点上空，1非返航点上空"`

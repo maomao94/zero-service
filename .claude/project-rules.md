@@ -1,51 +1,53 @@
 # 项目开发规则
 
-## 项目概览
-- 基于 go-zero 开发
-- AI 相关业务基于字节跳动 eino 框架开发
+## 技术栈
+go-zero 微服务 + eino AI 框架 + Trellis（`.trellis/`）
 
-## 代码生成流程
-- 每个业务服务都提供 gen.sh 脚本用于基础代码生成
-- **网关接口**: 先修改 .api 文件定义接口，再执行 gen.sh
-- **gRPC 服务**: 先修改 .proto 文件定义服务，再执行 gen.sh
+## 技能路由
 
-## 命名约定
-### API (网关)
-- 请求结构命名: xxxRequest
-- 响应结构命名: xxxResponse
-- 请求和响应必须成对出现
+| 场景 | 激活技能 |
+|------|---------|
+| Sprint/Backlog/任务拆解/角色调度 | `agile-dev-manager`（含角色体系） |
+| go-zero 框架 | `zero-skills` |
+| eino 框架 | `eino-skills` / `eino-learning` |
+| 部署模块 | `module-deploy` |
 
-### gRPC
-- 请求结构命名: xxxReq
-- 响应结构命名: xxxRes
-- 请求和响应必须成对出现，例如: chatReq + chatRes
+> `ai-team` 为角色详细参考文档，已内联到 agile-dev-manager，无需单独激活。
 
-## 编码规范
-- 遵循 Go / go-zero / Google 开发规范
-- 禁止 Java 编程风格（如不必要的 getter/setter 等）
-- 工具类，结构类等流程代码，，注释清晰，但是避免口语化注释
-- 工具类函数比如有单元测试，确保其正确性
-- proto, api 文件必须有清晰的注释对照，如果是 api转 grpc, 注释保持一致
+## Workflow 自动触发
 
-## Git
-- 提交信息使用中文
+每次新会话开始时，自动读取并执行 `.agent/workflows/start.md` 中的流程，完成会话初始化（读取开发者身份、git 状态、活跃任务、项目 spec 等）。
 
-## 开发流程管理
+当用户要求执行以下关键词时，自动读取并执行对应的 workflow 文件：
 
-当用户提到开发计划、Sprint、Backlog、任务拆解、变更记录、项目大纲润色等需求时，使用 `agile-dev-manager` 技能。
-开发流程目录：`CP-开发流程/`，模板目录：`CP-开发流程/template/`。
+| 关键词 | Workflow 文件 |
+|--------|--------------|
+| `/start` 或 "开始会话" | `.agent/workflows/start.md` |
+| `/brainstorm` 或 "头脑风暴" | `.agent/workflows/brainstorm.md` |
+| `/before-dev` 或 "开发前检查" | `.agent/workflows/before-dev.md` |
+| `/check` 或 "检查代码" | `.agent/workflows/check.md` |
+| `/check-cross-layer` 或 "跨层检查" | `.agent/workflows/check-cross-layer.md` |
+| `/finish-work` 或 "完成工作" | `.agent/workflows/finish-work.md` |
+| `/improve-ut` 或 "改进测试" | `.agent/workflows/improve-ut.md` |
+| `/break-loop` 或 "分析 Bug" | `.agent/workflows/break-loop.md` |
+| `/update-spec` 或 "更新规范" | `.agent/workflows/update-spec.md` |
+| `/record-session` 或 "记录会话" | `.agent/workflows/record-session.md` |
+| `/onboard` 或 "入职培训" | `.agent/workflows/onboard.md` |
+| `/create-command` 或 "创建命令" | `.agent/workflows/create-command.md` |
+| `/integrate-skill` 或 "集成技能" | `.agent/workflows/integrate-skill.md` |
 
-用户 = 老板（提需求、审批、监工），AI = 开发团队（自动闭环执行）。
-Sprint 流程中 AI 自动调度角色（PM → Backend → QA → Scrum Master），无需老板手动切换。
-角色定义详见 `ai-team` 技能，默认角色：后端开发（Backend Developer）。
+## 编码底线
+- 先改 `.api`/`.proto` → `gen.sh` → 写 Logic，禁止跳过
+- Go/go-zero/Google 规范，禁止 Java 风格
+- 工具类函数须有单测，proto/api 注释完整一致
+- gRPC/API 生成代码非必要不写单测，优先覆盖手写 Logic、工具函数与关键业务分支
+- Git 提交信息中文
 
-### 开发流程变更同步规则
+## 规范层级
 
-当对开发流程体系进行变更时（模板、技能、规范），必须同步以下全部内容：
-
-1. **模板同步**：修改 `CP-开发流程/template/` 后，检查所有项目目录（`CP-开发流程/{项目名}/`）的对应文件，同步增量变更
-2. **技能同步**：修改 `ai-team` 或 `agile-dev-manager` 技能后，检查 `开发规范.md` 是否需要同步更新流程说明
-3. **规范同步**：修改 `开发规范.md` 后，检查技能文件中的流程描述是否一致
-4. **规则同步**：新增流程概念时，确认 `rule.md` 是否需要补充路由提示
-
-同步范围：`template/` → 所有项目目录 → `开发规范.md` → 技能文件 → `rule.md`，形成完整闭环。
+| 层级 | 位置 | 加载时机 |
+|------|------|---------|
+| 编码标准 | `.trellis/spec/` | `/start` 时注入 |
+| 敏捷流程 | `agile-dev-manager` 技能 | 按需激活 |
+| 项目文档 | `CP-开发流程/{项目}/` | Sprint 时按需读取：优先 Backlog + 当前任务清单 |
+| 模板 | `CP-开发流程/template/` | 新项目初始化 |

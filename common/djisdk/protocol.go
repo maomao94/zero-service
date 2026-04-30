@@ -88,13 +88,14 @@ type EventReplyData struct {
 	Result int `json:"result"`
 }
 
-// TelemetryMessage 物模型遥测消息，承载 osd/state 通道上报的状态信息。
+// TelemetryMessage 物模型遥测消息，承载 thing/product/{device_sn}/osd 与 thing/product/{device_sn}/state 上报。
 type TelemetryMessage struct {
 	Tid       string `json:"tid"`
 	Bid       string `json:"bid"`
 	Timestamp int64  `json:"timestamp"`
 	Gateway   string `json:"gateway,omitempty"`
-	Data      any    `json:"data"`
+	// Data 物模型属性快照。OsdMessage 通常承载 pushMode=0 的定频属性，StateMessage 通常承载 pushMode=1 的状态变化属性。
+	Data any `json:"data"`
 }
 
 // OsdMessage OSD 遥测消息，设备定频上报。
@@ -860,7 +861,7 @@ type OtaProgressDevice struct {
 
 // ==================== 九、设备管理（Device Management） ====================
 
-// TopoUpdateData 设备拓扑更新数据，用于设备上线/下线通知。
+// TopoUpdateData 设备拓扑更新数据，对应 sys/product/{gateway_sn}/status 的 update_topo。
 type TopoUpdateData struct {
 	// Domain DJI 设备领域，0 飞机类、1 负载类、2 遥控器类、3 机场类。status/update_topo 按 DJI 文档为字符串。
 	Domain string `json:"domain"`
