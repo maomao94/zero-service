@@ -250,7 +250,7 @@ const (
 // ==================== 远程日志（Log） ====================
 // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/log.html
 // Topic: thing/product/{gateway_sn}/services | events
-// 方向: fileupload_* 控制为云平台 → 设备（Services），fileupload_progress/result 为设备 → 云平台（Events）。
+// 方向: fileupload_* 控制为云平台 → 设备（Services），fileupload_progress 为设备 → 云平台（Events）。
 
 const (
 	// MethodRemoteLogFileList 查询可上传的远程日志文件列表（Fileupload List）。
@@ -268,10 +268,6 @@ const (
 	// MethodRemoteLogFileUploadCancel 取消远程日志文件上传任务（Fileupload Cancel）。
 	// 云平台 → 设备（Services），取消指定远程日志上传任务。
 	MethodRemoteLogFileUploadCancel = "fileupload_cancel"
-
-	// MethodRemoteLogFileUploadResult 远程日志上传结果上报（Fileupload Result）。
-	// 设备 → 云平台（Events），设备上报远程日志文件上传最终结果。
-	MethodRemoteLogFileUploadResult = "fileupload_result"
 
 	// MethodRemoteLogFileUploadProgress 远程日志上传进度上报（Fileupload Progress）。
 	// 设备 → 云平台（Events），设备上报远程日志文件上传进度。

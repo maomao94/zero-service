@@ -780,12 +780,6 @@ type RemoteLogFileUploadCancelData struct {
 	Files []RemoteLogFile `json:"files"`
 }
 
-// RemoteLogFileUploadResultEvent 远程日志文件上传结果事件数据。
-type RemoteLogFileUploadResultEvent struct {
-	// Files 远程日志文件上传结果列表。必填。
-	Files []RemoteLogFileUploadResult `json:"files"`
-}
-
 // RemoteLogFileUploadProgressEvent 远程日志文件上传进度事件数据。
 type RemoteLogFileUploadProgressEvent struct {
 	// Files 远程日志文件上传进度列表。必填。
@@ -806,20 +800,6 @@ type RemoteLogFile struct {
 	URL string `json:"url,omitempty"`
 	// Size 日志文件大小，单位字节。可选。
 	Size int64 `json:"size,omitempty"`
-}
-
-// RemoteLogFileUploadResult 远程日志文件上传结果。
-type RemoteLogFileUploadResult struct {
-	// DeviceSN 设备序列号。可选。
-	DeviceSN string `json:"device_sn,omitempty"`
-	// Module 日志模块名称。可选。
-	Module string `json:"module,omitempty"`
-	// Key 日志文件唯一标识。可选。
-	Key string `json:"key,omitempty"`
-	// Result 上传结果码。必填。
-	Result int `json:"result"`
-	// Output 上传结果扩展输出。可选。
-	Output any `json:"output,omitempty"`
 }
 
 // RemoteLogFileUploadProgress 远程日志文件上传进度。

@@ -5063,27 +5063,14 @@ func (x *ListDevicesRes) GetList() []*DeviceInfo {
 
 // DeviceOsdSnapshot 设备 OSD 快照。
 type DeviceOsdSnapshot struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	DeviceSn        string                 `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
-	GatewaySn       string                 `protobuf:"bytes,2,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
-	DeviceDomain    string                 `protobuf:"bytes,3,opt,name=device_domain,json=deviceDomain,proto3" json:"device_domain,omitempty"`
-	Latitude        float64                `protobuf:"fixed64,4,opt,name=latitude,proto3" json:"latitude,omitempty"`
-	Longitude       float64                `protobuf:"fixed64,5,opt,name=longitude,proto3" json:"longitude,omitempty"`
-	Altitude        float64                `protobuf:"fixed64,6,opt,name=altitude,proto3" json:"altitude,omitempty"`
-	Height          float64                `protobuf:"fixed64,7,opt,name=height,proto3" json:"height,omitempty"`
-	SpeedH          float64                `protobuf:"fixed64,8,opt,name=speed_h,json=speedH,proto3" json:"speed_h,omitempty"`
-	SpeedV          float64                `protobuf:"fixed64,9,opt,name=speed_v,json=speedV,proto3" json:"speed_v,omitempty"`
-	Heading         float64                `protobuf:"fixed64,10,opt,name=heading,proto3" json:"heading,omitempty"`
-	AttitudePitch   float64                `protobuf:"fixed64,11,opt,name=attitude_pitch,json=attitudePitch,proto3" json:"attitude_pitch,omitempty"`
-	AttitudeRoll    float64                `protobuf:"fixed64,12,opt,name=attitude_roll,json=attitudeRoll,proto3" json:"attitude_roll,omitempty"`
-	AttitudeHeading float64                `protobuf:"fixed64,13,opt,name=attitude_heading,json=attitudeHeading,proto3" json:"attitude_heading,omitempty"`
-	BatteryPercent  int32                  `protobuf:"varint,14,opt,name=battery_percent,json=batteryPercent,proto3" json:"battery_percent,omitempty"`
-	Elevation       float64                `protobuf:"fixed64,15,opt,name=elevation,proto3" json:"elevation,omitempty"`
-	ModeCode        int32                  `protobuf:"varint,16,opt,name=mode_code,json=modeCode,proto3" json:"mode_code,omitempty"`
-	DataJson        string                 `protobuf:"bytes,17,opt,name=data_json,json=dataJson,proto3" json:"data_json,omitempty"`
-	ReportedAt      int64                  `protobuf:"varint,18,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceSn      string                 `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
+	GatewaySn     string                 `protobuf:"bytes,2,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
+	DeviceDomain  string                 `protobuf:"bytes,3,opt,name=device_domain,json=deviceDomain,proto3" json:"device_domain,omitempty"`
+	DataJson      string                 `protobuf:"bytes,4,opt,name=data_json,json=dataJson,proto3" json:"data_json,omitempty"`
+	ReportedAt    int64                  `protobuf:"varint,5,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *DeviceOsdSnapshot) Reset() {
@@ -5135,97 +5122,6 @@ func (x *DeviceOsdSnapshot) GetDeviceDomain() string {
 		return x.DeviceDomain
 	}
 	return ""
-}
-
-func (x *DeviceOsdSnapshot) GetLatitude() float64 {
-	if x != nil {
-		return x.Latitude
-	}
-	return 0
-}
-
-func (x *DeviceOsdSnapshot) GetLongitude() float64 {
-	if x != nil {
-		return x.Longitude
-	}
-	return 0
-}
-
-func (x *DeviceOsdSnapshot) GetAltitude() float64 {
-	if x != nil {
-		return x.Altitude
-	}
-	return 0
-}
-
-func (x *DeviceOsdSnapshot) GetHeight() float64 {
-	if x != nil {
-		return x.Height
-	}
-	return 0
-}
-
-func (x *DeviceOsdSnapshot) GetSpeedH() float64 {
-	if x != nil {
-		return x.SpeedH
-	}
-	return 0
-}
-
-func (x *DeviceOsdSnapshot) GetSpeedV() float64 {
-	if x != nil {
-		return x.SpeedV
-	}
-	return 0
-}
-
-func (x *DeviceOsdSnapshot) GetHeading() float64 {
-	if x != nil {
-		return x.Heading
-	}
-	return 0
-}
-
-func (x *DeviceOsdSnapshot) GetAttitudePitch() float64 {
-	if x != nil {
-		return x.AttitudePitch
-	}
-	return 0
-}
-
-func (x *DeviceOsdSnapshot) GetAttitudeRoll() float64 {
-	if x != nil {
-		return x.AttitudeRoll
-	}
-	return 0
-}
-
-func (x *DeviceOsdSnapshot) GetAttitudeHeading() float64 {
-	if x != nil {
-		return x.AttitudeHeading
-	}
-	return 0
-}
-
-func (x *DeviceOsdSnapshot) GetBatteryPercent() int32 {
-	if x != nil {
-		return x.BatteryPercent
-	}
-	return 0
-}
-
-func (x *DeviceOsdSnapshot) GetElevation() float64 {
-	if x != nil {
-		return x.Elevation
-	}
-	return 0
-}
-
-func (x *DeviceOsdSnapshot) GetModeCode() int32 {
-	if x != nil {
-		return x.ModeCode
-	}
-	return 0
 }
 
 func (x *DeviceOsdSnapshot) GetDataJson() string {
@@ -5289,16 +5185,14 @@ func (x *DeviceOsdSnapshotRes) GetData() *DeviceOsdSnapshot {
 
 // DeviceStateSnapshot 设备 State 快照。
 type DeviceStateSnapshot struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	DeviceSn        string                 `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
-	GatewaySn       string                 `protobuf:"bytes,2,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
-	DeviceDomain    string                 `protobuf:"bytes,3,opt,name=device_domain,json=deviceDomain,proto3" json:"device_domain,omitempty"`
-	SubDeviceSn     string                 `protobuf:"bytes,4,opt,name=sub_device_sn,json=subDeviceSn,proto3" json:"sub_device_sn,omitempty"`
-	SubDeviceOnline bool                   `protobuf:"varint,5,opt,name=sub_device_online,json=subDeviceOnline,proto3" json:"sub_device_online,omitempty"`
-	DataJson        string                 `protobuf:"bytes,6,opt,name=data_json,json=dataJson,proto3" json:"data_json,omitempty"`
-	ReportedAt      int64                  `protobuf:"varint,7,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceSn      string                 `protobuf:"bytes,1,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
+	GatewaySn     string                 `protobuf:"bytes,2,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
+	DeviceDomain  string                 `protobuf:"bytes,3,opt,name=device_domain,json=deviceDomain,proto3" json:"device_domain,omitempty"`
+	DataJson      string                 `protobuf:"bytes,4,opt,name=data_json,json=dataJson,proto3" json:"data_json,omitempty"`
+	ReportedAt    int64                  `protobuf:"varint,5,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *DeviceStateSnapshot) Reset() {
@@ -5350,20 +5244,6 @@ func (x *DeviceStateSnapshot) GetDeviceDomain() string {
 		return x.DeviceDomain
 	}
 	return ""
-}
-
-func (x *DeviceStateSnapshot) GetSubDeviceSn() string {
-	if x != nil {
-		return x.SubDeviceSn
-	}
-	return ""
-}
-
-func (x *DeviceStateSnapshot) GetSubDeviceOnline() bool {
-	if x != nil {
-		return x.SubDeviceOnline
-	}
-	return false
 }
 
 func (x *DeviceStateSnapshot) GetDataJson() string {
@@ -5499,20 +5379,19 @@ type HmsAlertInfo struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	Id             int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	GatewaySn      string                 `protobuf:"bytes,2,opt,name=gateway_sn,json=gatewaySn,proto3" json:"gateway_sn,omitempty"`
-	DeviceSn       string                 `protobuf:"bytes,3,opt,name=device_sn,json=deviceSn,proto3" json:"device_sn,omitempty"`
-	Level          int32                  `protobuf:"varint,4,opt,name=level,proto3" json:"level,omitempty"`
-	Module         int32                  `protobuf:"varint,5,opt,name=module,proto3" json:"module,omitempty"`
-	Code           string                 `protobuf:"bytes,6,opt,name=code,proto3" json:"code,omitempty"`
-	DeviceType     string                 `protobuf:"bytes,7,opt,name=device_type,json=deviceType,proto3" json:"device_type,omitempty"`
-	Imminent       int32                  `protobuf:"varint,8,opt,name=imminent,proto3" json:"imminent,omitempty"`
-	InTheSky       int32                  `protobuf:"varint,9,opt,name=in_the_sky,json=inTheSky,proto3" json:"in_the_sky,omitempty"`
-	ComponentIndex int32                  `protobuf:"varint,10,opt,name=component_index,json=componentIndex,proto3" json:"component_index,omitempty"`
-	SensorIndex    int32                  `protobuf:"varint,11,opt,name=sensor_index,json=sensorIndex,proto3" json:"sensor_index,omitempty"`
-	Message        string                 `protobuf:"bytes,12,opt,name=message,proto3" json:"message,omitempty"`
-	Acked          int32                  `protobuf:"varint,13,opt,name=acked,proto3" json:"acked,omitempty"`
-	AckedAt        int64                  `protobuf:"varint,14,opt,name=acked_at,json=ackedAt,proto3" json:"acked_at,omitempty"`
-	AckedBy        string                 `protobuf:"bytes,15,opt,name=acked_by,json=ackedBy,proto3" json:"acked_by,omitempty"`
-	ReportedAt     int64                  `protobuf:"varint,16,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
+	Level          int32                  `protobuf:"varint,3,opt,name=level,proto3" json:"level,omitempty"`
+	Module         int32                  `protobuf:"varint,4,opt,name=module,proto3" json:"module,omitempty"`
+	Code           string                 `protobuf:"bytes,5,opt,name=code,proto3" json:"code,omitempty"`
+	DeviceType     string                 `protobuf:"bytes,6,opt,name=device_type,json=deviceType,proto3" json:"device_type,omitempty"`
+	Imminent       int32                  `protobuf:"varint,7,opt,name=imminent,proto3" json:"imminent,omitempty"`
+	InTheSky       int32                  `protobuf:"varint,8,opt,name=in_the_sky,json=inTheSky,proto3" json:"in_the_sky,omitempty"`
+	ComponentIndex int32                  `protobuf:"varint,9,opt,name=component_index,json=componentIndex,proto3" json:"component_index,omitempty"`
+	SensorIndex    int32                  `protobuf:"varint,10,opt,name=sensor_index,json=sensorIndex,proto3" json:"sensor_index,omitempty"`
+	Acked          int32                  `protobuf:"varint,11,opt,name=acked,proto3" json:"acked,omitempty"`
+	AckedAt        int64                  `protobuf:"varint,12,opt,name=acked_at,json=ackedAt,proto3" json:"acked_at,omitempty"`
+	AckedBy        string                 `protobuf:"bytes,13,opt,name=acked_by,json=ackedBy,proto3" json:"acked_by,omitempty"`
+	ReportedAt     int64                  `protobuf:"varint,14,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
+	ItemJson       string                 `protobuf:"bytes,15,opt,name=item_json,json=itemJson,proto3" json:"item_json,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -5557,13 +5436,6 @@ func (x *HmsAlertInfo) GetId() int64 {
 func (x *HmsAlertInfo) GetGatewaySn() string {
 	if x != nil {
 		return x.GatewaySn
-	}
-	return ""
-}
-
-func (x *HmsAlertInfo) GetDeviceSn() string {
-	if x != nil {
-		return x.DeviceSn
 	}
 	return ""
 }
@@ -5624,13 +5496,6 @@ func (x *HmsAlertInfo) GetSensorIndex() int32 {
 	return 0
 }
 
-func (x *HmsAlertInfo) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
 func (x *HmsAlertInfo) GetAcked() int32 {
 	if x != nil {
 		return x.Acked
@@ -5657,6 +5522,13 @@ func (x *HmsAlertInfo) GetReportedAt() int64 {
 		return x.ReportedAt
 	}
 	return 0
+}
+
+func (x *HmsAlertInfo) GetItemJson() string {
+	if x != nil {
+		return x.ItemJson
+	}
+	return ""
 }
 
 // ListHmsAlertsReq 查询 HMS 告警请求。
@@ -5868,6 +5740,12 @@ type FlightTaskProgressInfo struct {
 	ProgressPercent      float64                `protobuf:"fixed64,7,opt,name=progress_percent,json=progressPercent,proto3" json:"progress_percent,omitempty"`
 	ExtJson              string                 `protobuf:"bytes,8,opt,name=ext_json,json=extJson,proto3" json:"ext_json,omitempty"`
 	ReportedAt           int64                  `protobuf:"varint,9,opt,name=reported_at,json=reportedAt,proto3" json:"reported_at,omitempty"`
+	Status               string                 `protobuf:"bytes,10,opt,name=status,proto3" json:"status,omitempty"`
+	CurrentStep          int32                  `protobuf:"varint,11,opt,name=current_step,json=currentStep,proto3" json:"current_step,omitempty"`
+	TrackId              string                 `protobuf:"bytes,12,opt,name=track_id,json=trackId,proto3" json:"track_id,omitempty"`
+	WaylineId            int32                  `protobuf:"varint,13,opt,name=wayline_id,json=waylineId,proto3" json:"wayline_id,omitempty"`
+	BreakPointJson       string                 `protobuf:"bytes,14,opt,name=break_point_json,json=breakPointJson,proto3" json:"break_point_json,omitempty"`
+	EventJson            string                 `protobuf:"bytes,15,opt,name=event_json,json=eventJson,proto3" json:"event_json,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -5963,6 +5841,48 @@ func (x *FlightTaskProgressInfo) GetReportedAt() int64 {
 		return x.ReportedAt
 	}
 	return 0
+}
+
+func (x *FlightTaskProgressInfo) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *FlightTaskProgressInfo) GetCurrentStep() int32 {
+	if x != nil {
+		return x.CurrentStep
+	}
+	return 0
+}
+
+func (x *FlightTaskProgressInfo) GetTrackId() string {
+	if x != nil {
+		return x.TrackId
+	}
+	return ""
+}
+
+func (x *FlightTaskProgressInfo) GetWaylineId() int32 {
+	if x != nil {
+		return x.WaylineId
+	}
+	return 0
+}
+
+func (x *FlightTaskProgressInfo) GetBreakPointJson() string {
+	if x != nil {
+		return x.BreakPointJson
+	}
+	return ""
+}
+
+func (x *FlightTaskProgressInfo) GetEventJson() string {
+	if x != nil {
+		return x.EventJson
+	}
+	return ""
 }
 
 // ListFlightTaskProgressReq 查询飞行任务进度推送记录请求。
@@ -6521,40 +6441,24 @@ const file_djicloud_proto_rawDesc = "" +
 	"\akeyword\x18\x06 \x01(\tR\akeyword\"P\n" +
 	"\x0eListDevicesRes\x12\x14\n" +
 	"\x05total\x18\x01 \x01(\x03R\x05total\x12(\n" +
-	"\x04list\x18\x02 \x03(\v2\x14.djicloud.DeviceInfoR\x04list\"\xc7\x04\n" +
+	"\x04list\x18\x02 \x03(\v2\x14.djicloud.DeviceInfoR\x04list\"\xb2\x01\n" +
 	"\x11DeviceOsdSnapshot\x12\x1b\n" +
 	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x1d\n" +
 	"\n" +
 	"gateway_sn\x18\x02 \x01(\tR\tgatewaySn\x12#\n" +
-	"\rdevice_domain\x18\x03 \x01(\tR\fdeviceDomain\x12\x1a\n" +
-	"\blatitude\x18\x04 \x01(\x01R\blatitude\x12\x1c\n" +
-	"\tlongitude\x18\x05 \x01(\x01R\tlongitude\x12\x1a\n" +
-	"\baltitude\x18\x06 \x01(\x01R\baltitude\x12\x16\n" +
-	"\x06height\x18\a \x01(\x01R\x06height\x12\x17\n" +
-	"\aspeed_h\x18\b \x01(\x01R\x06speedH\x12\x17\n" +
-	"\aspeed_v\x18\t \x01(\x01R\x06speedV\x12\x18\n" +
-	"\aheading\x18\n" +
-	" \x01(\x01R\aheading\x12%\n" +
-	"\x0eattitude_pitch\x18\v \x01(\x01R\rattitudePitch\x12#\n" +
-	"\rattitude_roll\x18\f \x01(\x01R\fattitudeRoll\x12)\n" +
-	"\x10attitude_heading\x18\r \x01(\x01R\x0fattitudeHeading\x12'\n" +
-	"\x0fbattery_percent\x18\x0e \x01(\x05R\x0ebatteryPercent\x12\x1c\n" +
-	"\televation\x18\x0f \x01(\x01R\televation\x12\x1b\n" +
-	"\tmode_code\x18\x10 \x01(\x05R\bmodeCode\x12\x1b\n" +
-	"\tdata_json\x18\x11 \x01(\tR\bdataJson\x12\x1f\n" +
-	"\vreported_at\x18\x12 \x01(\x03R\n" +
+	"\rdevice_domain\x18\x03 \x01(\tR\fdeviceDomain\x12\x1b\n" +
+	"\tdata_json\x18\x04 \x01(\tR\bdataJson\x12\x1f\n" +
+	"\vreported_at\x18\x05 \x01(\x03R\n" +
 	"reportedAt\"G\n" +
 	"\x14DeviceOsdSnapshotRes\x12/\n" +
-	"\x04data\x18\x01 \x01(\v2\x1b.djicloud.DeviceOsdSnapshotR\x04data\"\x84\x02\n" +
+	"\x04data\x18\x01 \x01(\v2\x1b.djicloud.DeviceOsdSnapshotR\x04data\"\xb4\x01\n" +
 	"\x13DeviceStateSnapshot\x12\x1b\n" +
 	"\tdevice_sn\x18\x01 \x01(\tR\bdeviceSn\x12\x1d\n" +
 	"\n" +
 	"gateway_sn\x18\x02 \x01(\tR\tgatewaySn\x12#\n" +
-	"\rdevice_domain\x18\x03 \x01(\tR\fdeviceDomain\x12\"\n" +
-	"\rsub_device_sn\x18\x04 \x01(\tR\vsubDeviceSn\x12*\n" +
-	"\x11sub_device_online\x18\x05 \x01(\bR\x0fsubDeviceOnline\x12\x1b\n" +
-	"\tdata_json\x18\x06 \x01(\tR\bdataJson\x12\x1f\n" +
-	"\vreported_at\x18\a \x01(\x03R\n" +
+	"\rdevice_domain\x18\x03 \x01(\tR\fdeviceDomain\x12\x1b\n" +
+	"\tdata_json\x18\x04 \x01(\tR\bdataJson\x12\x1f\n" +
+	"\vreported_at\x18\x05 \x01(\x03R\n" +
 	"reportedAt\"K\n" +
 	"\x16DeviceStateSnapshotRes\x121\n" +
 	"\x04data\x18\x01 \x01(\v2\x1d.djicloud.DeviceStateSnapshotR\x04data\"\xd1\x01\n" +
@@ -6562,29 +6466,28 @@ const file_djicloud_proto_rawDesc = "" +
 	"\x06device\x18\x01 \x01(\v2\x14.djicloud.DeviceInfoR\x06device\x12-\n" +
 	"\x03osd\x18\x02 \x01(\v2\x1b.djicloud.DeviceOsdSnapshotR\x03osd\x123\n" +
 	"\x05state\x18\x03 \x01(\v2\x1d.djicloud.DeviceStateSnapshotR\x05state\x12,\n" +
-	"\x04topo\x18\x04 \x03(\v2\x18.djicloud.DeviceTopoInfoR\x04topo\"\xca\x03\n" +
+	"\x04topo\x18\x04 \x03(\v2\x18.djicloud.DeviceTopoInfoR\x04topo\"\xb0\x03\n" +
 	"\fHmsAlertInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1d\n" +
 	"\n" +
-	"gateway_sn\x18\x02 \x01(\tR\tgatewaySn\x12\x1b\n" +
-	"\tdevice_sn\x18\x03 \x01(\tR\bdeviceSn\x12\x14\n" +
-	"\x05level\x18\x04 \x01(\x05R\x05level\x12\x16\n" +
-	"\x06module\x18\x05 \x01(\x05R\x06module\x12\x12\n" +
-	"\x04code\x18\x06 \x01(\tR\x04code\x12\x1f\n" +
-	"\vdevice_type\x18\a \x01(\tR\n" +
+	"gateway_sn\x18\x02 \x01(\tR\tgatewaySn\x12\x14\n" +
+	"\x05level\x18\x03 \x01(\x05R\x05level\x12\x16\n" +
+	"\x06module\x18\x04 \x01(\x05R\x06module\x12\x12\n" +
+	"\x04code\x18\x05 \x01(\tR\x04code\x12\x1f\n" +
+	"\vdevice_type\x18\x06 \x01(\tR\n" +
 	"deviceType\x12\x1a\n" +
-	"\bimminent\x18\b \x01(\x05R\bimminent\x12\x1c\n" +
+	"\bimminent\x18\a \x01(\x05R\bimminent\x12\x1c\n" +
 	"\n" +
-	"in_the_sky\x18\t \x01(\x05R\binTheSky\x12'\n" +
-	"\x0fcomponent_index\x18\n" +
-	" \x01(\x05R\x0ecomponentIndex\x12!\n" +
-	"\fsensor_index\x18\v \x01(\x05R\vsensorIndex\x12\x18\n" +
-	"\amessage\x18\f \x01(\tR\amessage\x12\x14\n" +
-	"\x05acked\x18\r \x01(\x05R\x05acked\x12\x19\n" +
-	"\backed_at\x18\x0e \x01(\x03R\aackedAt\x12\x19\n" +
-	"\backed_by\x18\x0f \x01(\tR\aackedBy\x12\x1f\n" +
-	"\vreported_at\x18\x10 \x01(\x03R\n" +
-	"reportedAt\"\xb8\x01\n" +
+	"in_the_sky\x18\b \x01(\x05R\binTheSky\x12'\n" +
+	"\x0fcomponent_index\x18\t \x01(\x05R\x0ecomponentIndex\x12!\n" +
+	"\fsensor_index\x18\n" +
+	" \x01(\x05R\vsensorIndex\x12\x14\n" +
+	"\x05acked\x18\v \x01(\x05R\x05acked\x12\x19\n" +
+	"\backed_at\x18\f \x01(\x03R\aackedAt\x12\x19\n" +
+	"\backed_by\x18\r \x01(\tR\aackedBy\x12\x1f\n" +
+	"\vreported_at\x18\x0e \x01(\x03R\n" +
+	"reportedAt\x12\x1b\n" +
+	"\titem_json\x18\x0f \x01(\tR\bitemJson\"\xb8\x01\n" +
 	"\x10ListHmsAlertsReq\x12\x12\n" +
 	"\x04page\x18\x01 \x01(\x03R\x04page\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x03R\bpageSize\x12\x1d\n" +
@@ -6598,7 +6501,7 @@ const file_djicloud_proto_rawDesc = "" +
 	"\x04list\x18\x02 \x03(\v2\x16.djicloud.HmsAlertInfoR\x04list\";\n" +
 	"\x0eAckHmsAlertReq\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x19\n" +
-	"\backed_by\x18\x02 \x01(\tR\aackedBy\"\xd6\x02\n" +
+	"\backed_by\x18\x02 \x01(\tR\aackedBy\"\x94\x04\n" +
 	"\x16FlightTaskProgressInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1b\n" +
 	"\tflight_id\x18\x02 \x01(\tR\bflightId\x12\x1d\n" +
@@ -6611,7 +6514,16 @@ const file_djicloud_proto_rawDesc = "" +
 	"\x10progress_percent\x18\a \x01(\x01R\x0fprogressPercent\x12\x19\n" +
 	"\bext_json\x18\b \x01(\tR\aextJson\x12\x1f\n" +
 	"\vreported_at\x18\t \x01(\x03R\n" +
-	"reportedAt\"\x88\x01\n" +
+	"reportedAt\x12\x16\n" +
+	"\x06status\x18\n" +
+	" \x01(\tR\x06status\x12!\n" +
+	"\fcurrent_step\x18\v \x01(\x05R\vcurrentStep\x12\x19\n" +
+	"\btrack_id\x18\f \x01(\tR\atrackId\x12\x1d\n" +
+	"\n" +
+	"wayline_id\x18\r \x01(\x05R\twaylineId\x12(\n" +
+	"\x10break_point_json\x18\x0e \x01(\tR\x0ebreakPointJson\x12\x1d\n" +
+	"\n" +
+	"event_json\x18\x0f \x01(\tR\teventJson\"\x88\x01\n" +
 	"\x19ListFlightTaskProgressReq\x12\x12\n" +
 	"\x04page\x18\x01 \x01(\x03R\x04page\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x03R\bpageSize\x12\x1d\n" +

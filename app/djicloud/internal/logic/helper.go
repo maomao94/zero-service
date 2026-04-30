@@ -45,17 +45,6 @@ func nullTimeMillis(t sql.NullTime) int64 {
 	return timeMillis(t.Time)
 }
 
-func nullStringValue(s sql.NullString) string {
-	if !s.Valid {
-		return ""
-	}
-	return s.String
-}
-
-func nullBoolValue(b sql.NullBool) bool {
-	return b.Valid && b.Bool
-}
-
 func normalizePage(page, pageSize int64) (int64, int64) {
 	if page <= 0 {
 		page = 1
@@ -95,24 +84,11 @@ func toOsdSnapshot(m *gormmodel.DjiDeviceOsdSnapshot) *djicloud.DeviceOsdSnapsho
 		return nil
 	}
 	return &djicloud.DeviceOsdSnapshot{
-		DeviceSn:        m.DeviceSn,
-		GatewaySn:       m.GatewaySn,
-		DeviceDomain:    m.DeviceDomain,
-		Latitude:        m.Latitude,
-		Longitude:       m.Longitude,
-		Altitude:        m.Altitude,
-		Height:          m.Height,
-		SpeedH:          m.SpeedH,
-		SpeedV:          m.SpeedV,
-		Heading:         m.Heading,
-		AttitudePitch:   m.AttitudePitch,
-		AttitudeRoll:    m.AttitudeRoll,
-		AttitudeHeading: m.AttitudeHeading,
-		BatteryPercent:  int32(m.BatteryPercent),
-		Elevation:       m.Elevation,
-		ModeCode:        int32(m.ModeCode),
-		DataJson:        m.DataJSON,
-		ReportedAt:      timeMillis(m.ReportedAt),
+		DeviceSn:     m.DeviceSn,
+		GatewaySn:    m.GatewaySn,
+		DeviceDomain: m.DeviceDomain,
+		DataJson:     m.DataJSON,
+		ReportedAt:   timeMillis(m.ReportedAt),
 	}
 }
 
@@ -121,12 +97,10 @@ func toStateSnapshot(m *gormmodel.DjiDeviceStateSnapshot) *djicloud.DeviceStateS
 		return nil
 	}
 	return &djicloud.DeviceStateSnapshot{
-		DeviceSn:        m.DeviceSn,
-		GatewaySn:       m.GatewaySn,
-		DeviceDomain:    m.DeviceDomain,
-		SubDeviceSn:     nullStringValue(m.SubDeviceSn),
-		SubDeviceOnline: nullBoolValue(m.SubDeviceOnline),
-		DataJson:        m.DataJSON,
-		ReportedAt:      timeMillis(m.ReportedAt),
+		DeviceSn:     m.DeviceSn,
+		GatewaySn:    m.GatewaySn,
+		DeviceDomain: m.DeviceDomain,
+		DataJson:     m.DataJSON,
+		ReportedAt:   timeMillis(m.ReportedAt),
 	}
 }

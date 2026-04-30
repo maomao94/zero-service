@@ -68,7 +68,7 @@ func Restore(db *gorm.DB, model any, conds ...any) error {
 	if len(conds) > 0 {
 		q = q.Where(conds[0], conds[1:]...)
 	}
-	if hasLegacyDeleteFields(q) {
+	if hasLegacyDeleteFields(q, model) {
 		return q.Select("delete_time", "del_state").Updates(map[string]any{
 			"delete_time": nil,
 			"del_state":   int64(0),
@@ -77,9 +77,12 @@ func Restore(db *gorm.DB, model any, conds ...any) error {
 	return q.Update("deleted_at", nil).Error
 }
 
-func hasLegacyDeleteFields(db *gorm.DB) bool {
+func hasLegacyDeleteFields(db *gorm.DB, model any) bool {
+	if db == nil || model == nil {
+		return false
+	}
 	stmt := &gorm.Statement{DB: db}
-	if err := stmt.Parse(db.Statement.Model); err != nil {
+	if err := stmt.Parse(model); err != nil {
 		return false
 	}
 	_, hasDeleteTime := stmt.Schema.FieldsByDBName["delete_time"]
@@ -87,12 +90,20 @@ func hasLegacyDeleteFields(db *gorm.DB) bool {
 	return hasDeleteTime && hasDelState
 }
 
-func UnscopedUpdate(db *gorm.DB, model any, updates map[string]any) error {
+func SkipHooksUpdate(db *gorm.DB, model any, updates map[string]any) error {
 	return db.Session(&gorm.Session{SkipHooks: true}).Model(model).Updates(updates).Error
 }
 
-func UnscopedCreate(db *gorm.DB, value any) error {
+func UnscopedUpdate(db *gorm.DB, model any, updates map[string]any) error {
+	return SkipHooksUpdate(db, model, updates)
+}
+
+func SkipHooksCreate(db *gorm.DB, value any) error {
 	return db.Session(&gorm.Session{SkipHooks: true}).Create(value).Error
+}
+
+func UnscopedCreate(db *gorm.DB, value any) error {
+	return SkipHooksCreate(db, value)
 }
 
 func withTenantQuery(ctx context.Context, db *gorm.DB) *gorm.DB {
@@ -153,7 +164,7 @@ func RestoreWithTenant(ctx context.Context, db *gorm.DB, model any, conds ...any
 	if len(conds) > 0 {
 		q = q.Where(conds[0], conds[1:]...)
 	}
-	if hasLegacyDeleteFields(q) {
+	if hasLegacyDeleteFields(q, model) {
 		return q.Select("delete_time", "del_state").Updates(map[string]any{
 			"delete_time": nil,
 			"del_state":   int64(0),

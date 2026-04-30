@@ -25,12 +25,11 @@ func NewGetFlightTaskProgressLastLogic(ctx context.Context, svcCtx *svc.ServiceC
 	}
 }
 
-// GetFlightTaskProgressLast 查询最近一次 flighttask_progress 上行记录。
+// GetFlightTaskProgressLast 查询机巢当前航线任务状态。
 func (l *GetFlightTaskProgressLastLogic) GetFlightTaskProgressLast(in *djicloud.DeviceSnReq) (*djicloud.FlightTaskProgressLastRes, error) {
-	var progress gormmodel.DjiFlightTaskProgress
+	var progress gormmodel.DjiDockDeviceFlightTaskState
 	err := l.svcCtx.DB.WithContext(l.ctx).
 		Where("gateway_sn = ?", in.DeviceSn).
-		Order("reported_at DESC, id DESC").
 		First(&progress).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -41,6 +40,6 @@ func (l *GetFlightTaskProgressLastLogic) GetFlightTaskProgressLast(in *djicloud.
 	return &djicloud.FlightTaskProgressLastRes{
 		HasProgress:  true,
 		ReportedAtMs: timeMillis(progress.ReportedAt),
-		ProgressJson: progress.ExtJSON,
+		ProgressJson: progress.EventJSON,
 	}, nil
 }

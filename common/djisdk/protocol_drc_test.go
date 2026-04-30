@@ -601,16 +601,9 @@ func TestTask5ModulePayloadSerialization(t *testing.T) {
 	}
 }
 
-func TestRemoteLogEventHooks(t *testing.T) {
+func TestRemoteLogProgressEventHook(t *testing.T) {
 	client := newClient(&recordingMQTTClient{}, WithPendingTTL(time.Second), WithReplyOptions(DefaultReplyOptions()))
-	resultCalled := false
 	progressCalled := false
-	client.OnRemoteLogFileUploadResult(func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadResultEvent) {
-		resultCalled = true
-		if gatewaySn != "gateway-1" || len(data.Files) != 1 || data.Files[0].Result != 0 {
-			t.Fatalf("unexpected result event: gateway=%s data=%+v", gatewaySn, data)
-		}
-	})
 	client.OnRemoteLogFileUploadProgress(func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadProgressEvent) {
 		progressCalled = true
 		if gatewaySn != "gateway-1" || len(data.Files) != 1 || data.Files[0].Progress != 50 {
@@ -618,16 +611,12 @@ func TestRemoteLogEventHooks(t *testing.T) {
 		}
 	})
 
-	resultPayload := []byte(`{"tid":"tid-1","bid":"bid-1","gateway":"gateway-1","timestamp":1710000000000,"method":"fileupload_result","data":{"files":[{"key":"log-1","result":0}]}}`)
-	if err := client.HandleEvents(context.Background(), resultPayload, EventsTopic("gateway-1"), ""); err != nil {
-		t.Fatalf("HandleEvents(result) error = %v", err)
-	}
 	progressPayload := []byte(`{"tid":"tid-2","bid":"bid-2","gateway":"gateway-1","timestamp":1710000000000,"method":"fileupload_progress","data":{"files":[{"key":"log-1","progress":50}]}}`)
 	if err := client.HandleEvents(context.Background(), progressPayload, EventsTopic("gateway-1"), ""); err != nil {
 		t.Fatalf("HandleEvents(progress) error = %v", err)
 	}
-	if !resultCalled || !progressCalled {
-		t.Fatalf("hooks called result=%v progress=%v", resultCalled, progressCalled)
+	if !progressCalled {
+		t.Fatalf("progress hook not called")
 	}
 }
 

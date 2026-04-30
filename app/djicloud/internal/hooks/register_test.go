@@ -18,7 +18,7 @@ import (
 func newHookTestDB(t *testing.T) *gormx.DB {
 	t.Helper()
 
-	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared&parseTime=true&loc=UTC"), &gorm.Config{
+	db, err := gorm.Open(sqlite.Open("file:"+t.Name()+"?mode=memory&cache=shared&parseTime=true&loc=UTC"), &gorm.Config{
 		NowFunc: func() time.Time {
 			return time.Unix(1710000000, 0).UTC()
 		},
@@ -26,7 +26,18 @@ func newHookTestDB(t *testing.T) *gormx.DB {
 	if err != nil {
 		t.Fatalf("open sqlite db error = %v", err)
 	}
-	if err := db.AutoMigrate(&gormmodel.DjiDevice{}, &gormmodel.DjiDeviceTopo{}, &gormmodel.DjiDeviceOsdSnapshot{}, &gormmodel.DjiDeviceStateSnapshot{}); err != nil {
+	if err := db.AutoMigrate(
+		&gormmodel.DjiDevice{},
+		&gormmodel.DjiDeviceTopo{},
+		&gormmodel.DjiDeviceOsdSnapshot{},
+		&gormmodel.DjiDeviceStateSnapshot{},
+		&gormmodel.DjiDockFlightTask{},
+		&gormmodel.DjiDockDeviceFlightTaskState{},
+		&gormmodel.DjiFlightTaskReady{},
+		&gormmodel.DjiRemoteLogEvent{},
+		&gormmodel.DjiReturnHomeEvent{},
+		&gormmodel.DjiHmsAlert{},
+	); err != nil {
 		t.Fatalf("auto migrate hook models error = %v", err)
 	}
 
@@ -479,8 +490,312 @@ func TestOsdTelemetryRejectsMissingGateway(t *testing.T) {
 	}
 }
 
+func TestOsdTelemetryStoresOnlyOfficialRawSnapshot(t *testing.T) {
+	db := newHookTestDB(t)
+	ctx := context.Background()
+
+	NewOsdHandler(db, nil)(ctx, "dock-json", &djisdk.OsdMessage{
+		Gateway:   "dock-json",
+		Timestamp: 1710000000000,
+		Data:      map[string]any{"mode_code": 1, "latitude": 22.1},
+	})
+
+	var snapshot struct {
+		DataJSON string
+	}
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDeviceOsdSnapshot{}).Select("data_json").Where("device_sn = ?", "dock-json").First(&snapshot).Error; err != nil {
+		t.Fatalf("find osd snapshot error = %v", err)
+	}
+	if snapshot.DataJSON == "" || snapshot.DataJSON == "{}" {
+		t.Fatalf("DataJSON = %q, want raw osd payload", snapshot.DataJSON)
+	}
+	if db.WithContext(ctx).Migrator().HasColumn(&gormmodel.DjiDeviceOsdSnapshot{}, "latitude") {
+		t.Fatal("expected osd snapshot not to have guessed latitude column")
+	}
+	if db.WithContext(ctx).Migrator().HasColumn(&gormmodel.DjiDeviceOsdSnapshot{}, "mode_code") {
+		t.Fatal("expected osd snapshot not to have guessed mode_code column")
+	}
+}
+
+func TestStateTelemetryStoresOnlyOfficialRawSnapshot(t *testing.T) {
+	db := newHookTestDB(t)
+	ctx := context.Background()
+
+	NewStateTelemetryHandler(db, nil)(ctx, "dock-state-json", &djisdk.StateMessage{
+		Gateway:   "dock-state-json",
+		Timestamp: 1710000000000,
+		Data:      map[string]any{"wireless_link_topo": map[string]any{"quality": 1}},
+	})
+
+	var snapshot struct {
+		DataJSON string
+	}
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDeviceStateSnapshot{}).Select("data_json").Where("device_sn = ?", "dock-state-json").First(&snapshot).Error; err != nil {
+		t.Fatalf("find state snapshot error = %v", err)
+	}
+	if snapshot.DataJSON == "" || snapshot.DataJSON == "{}" {
+		t.Fatalf("DataJSON = %q, want raw state payload", snapshot.DataJSON)
+	}
+	if db.WithContext(ctx).Migrator().HasColumn(&gormmodel.DjiDeviceStateSnapshot{}, "sub_device_sn") {
+		t.Fatal("expected state snapshot not to have guessed sub_device_sn column")
+	}
+	if db.WithContext(ctx).Migrator().HasColumn(&gormmodel.DjiDeviceStateSnapshot{}, "sub_device_online") {
+		t.Fatal("expected state snapshot not to have guessed sub_device_online column")
+	}
+}
+
+func TestFlightTaskProgressStoresOfficialFieldsAndUpdatesDockTaskAndDeviceState(t *testing.T) {
+	db := newHookTestDB(t)
+	ctx := context.Background()
+	data := &djisdk.FlightTaskProgressEvent{
+		Ext: djisdk.FlightTaskProgressExt{
+			FlightID:             "flight-json",
+			WaylineMissionState:  6,
+			CurrentWaypointIndex: 3,
+			MediaCount:           4,
+			TrackID:              "track-json",
+			WaylineID:            2,
+			BreakPoint: &djisdk.FlightTaskBreakPoint{
+				Index: 1,
+				State: 2,
+			},
+		},
+		Progress: djisdk.FlightTaskProgressProgress{
+			CurrentStep: 2,
+			Percent:     70.5,
+		},
+		Status: "in_progress",
+	}
+
+	NewFlightTaskProgressHandler(db)(ctx, "dock-progress", data)
+
+	var task struct {
+		Status         string
+		CurrentStep    int
+		TrackId        string
+		WaylineId      int
+		EventJSON      string
+		BreakPointJSON string
+	}
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDockFlightTask{}).Select("status", "current_step", "track_id", "wayline_id", "event_json", "break_point_json").Where("gateway_sn = ? AND flight_id = ?", "dock-progress", "flight-json").First(&task).Error; err != nil {
+		t.Fatalf("find dock flight task error = %v", err)
+	}
+	if task.Status != "in_progress" || task.CurrentStep != 2 || task.TrackId != "track-json" || task.WaylineId != 2 {
+		t.Fatalf("task official fields = status:%s step:%d track:%s wayline:%d", task.Status, task.CurrentStep, task.TrackId, task.WaylineId)
+	}
+	if task.EventJSON == "" || task.EventJSON == "{}" {
+		t.Fatalf("EventJSON = %q, want raw event data", task.EventJSON)
+	}
+	if task.BreakPointJSON == "" || task.BreakPointJSON == "{}" {
+		t.Fatalf("BreakPointJSON = %q, want raw break point data", task.BreakPointJSON)
+	}
+
+	data.Progress.Percent = 88.8
+	data.Status = "updated"
+	NewFlightTaskProgressHandler(db)(ctx, "dock-progress", data)
+
+	var taskTotal int64
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDockFlightTask{}).Where("gateway_sn = ? AND flight_id = ?", "dock-progress", "flight-json").Count(&taskTotal).Error; err != nil {
+		t.Fatalf("count dock flight task error = %v", err)
+	}
+	if taskTotal != 1 {
+		t.Fatalf("dock task count = %d, want 1", taskTotal)
+	}
+	var snapshot struct {
+		Status          string
+		ProgressPercent float64
+	}
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDockFlightTask{}).Select("status", "progress_percent").Where("gateway_sn = ? AND flight_id = ?", "dock-progress", "flight-json").First(&snapshot).Error; err != nil {
+		t.Fatalf("find dock flight task error = %v", err)
+	}
+	if snapshot.Status != "updated" || snapshot.ProgressPercent != 88.8 {
+		t.Fatalf("task latest status/percent = %s/%f, want updated/88.8", snapshot.Status, snapshot.ProgressPercent)
+	}
+
+	other := *data
+	other.Ext.FlightID = "flight-other"
+	other.Status = "other-task"
+	other.Progress.Percent = 11.1
+	NewFlightTaskProgressHandler(db)(ctx, "dock-progress", &other)
+
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDockFlightTask{}).Select("status", "progress_percent").Where("gateway_sn = ? AND flight_id = ?", "dock-progress", "flight-json").First(&snapshot).Error; err != nil {
+		t.Fatalf("find original dock flight task error = %v", err)
+	}
+	if snapshot.Status != "updated" || snapshot.ProgressPercent != 88.8 {
+		t.Fatalf("task latest after other task = %s/%f, want updated/88.8", snapshot.Status, snapshot.ProgressPercent)
+	}
+
+	var dockLatest struct {
+		FlightId        string
+		Status          string
+		ProgressPercent float64
+	}
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDockDeviceFlightTaskState{}).Select("flight_id", "status", "progress_percent").Where("gateway_sn = ?", "dock-progress").First(&dockLatest).Error; err != nil {
+		t.Fatalf("find dock device flight task state error = %v", err)
+	}
+	if dockLatest.FlightId != "flight-other" || dockLatest.Status != "other-task" || dockLatest.ProgressPercent != 11.1 {
+		t.Fatalf("dock latest = %s/%s/%f, want flight-other/other-task/11.1", dockLatest.FlightId, dockLatest.Status, dockLatest.ProgressPercent)
+	}
+}
+
+func TestFlightTaskProgressSkipsInvalidIdentity(t *testing.T) {
+	db := newHookTestDB(t)
+	ctx := context.Background()
+	data := &djisdk.FlightTaskProgressEvent{
+		Ext:      djisdk.FlightTaskProgressExt{FlightID: "flight-invalid"},
+		Progress: djisdk.FlightTaskProgressProgress{Percent: 10},
+		Status:   "in_progress",
+	}
+
+	NewFlightTaskProgressHandler(db)(ctx, "", data)
+	data.Ext.FlightID = ""
+	NewFlightTaskProgressHandler(db)(ctx, "dock-invalid", data)
+
+	var taskTotal int64
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDockFlightTask{}).Count(&taskTotal).Error; err != nil {
+		t.Fatalf("count dock flight task error = %v", err)
+	}
+	if taskTotal != 0 {
+		t.Fatalf("dock task count = %d, want 0", taskTotal)
+	}
+	var stateTotal int64
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDockDeviceFlightTaskState{}).Count(&stateTotal).Error; err != nil {
+		t.Fatalf("count dock device flight task state error = %v", err)
+	}
+	if stateTotal != 0 {
+		t.Fatalf("dock device state count = %d, want 0", stateTotal)
+	}
+}
+
+func TestHmsAlertStoresOfficialItemJSON(t *testing.T) {
+	db := newHookTestDB(t)
+	ctx := context.Background()
+
+	NewHmsEventNotifyHandler(db)(ctx, "dock-hms", &djisdk.HmsEventData{List: []djisdk.HmsItem{{
+		Level:      2,
+		Module:     3,
+		InTheSky:   1,
+		Code:       "0x16100083",
+		DeviceType: "dock",
+		Imminent:   1,
+		Args:       djisdk.HmsItemArgs{ComponentIndex: 4, SensorIndex: 5},
+	}}})
+
+	var alert struct {
+		ItemJSON string
+	}
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiHmsAlert{}).Select("item_json").Where("gateway_sn = ?", "dock-hms").First(&alert).Error; err != nil {
+		t.Fatalf("find hms alert error = %v", err)
+	}
+	if alert.ItemJSON == "" || alert.ItemJSON == "{}" {
+		t.Fatalf("ItemJSON = %q, want raw hms item", alert.ItemJSON)
+	}
+	if db.WithContext(ctx).Migrator().HasColumn(&gormmodel.DjiHmsAlert{}, "device_sn") {
+		t.Fatal("expected hms alert not to have guessed device_sn column")
+	}
+	if db.WithContext(ctx).Migrator().HasColumn(&gormmodel.DjiHmsAlert{}, "message") {
+		t.Fatal("expected hms alert not to have guessed message column")
+	}
+}
+
+func TestReturnHomeEventDoesNotStoreLeapfrogDerivedFields(t *testing.T) {
+	db := newHookTestDB(t)
+	ctx := context.Background()
+
+	NewReturnHomeInfoHandler(db)(ctx, "dock-return", &djisdk.ReturnHomeInfoEvent{
+		FlightID:      "flight-return",
+		HomeDockSn:    "dock-home",
+		LastPointType: 1,
+		PlannedPathPoints: []djisdk.PathPoint{{
+			Latitude:  22.1,
+			Longitude: 113.1,
+		}},
+		MultiDockHomeInfo: []djisdk.DockHomeInfo{{
+			SN:           "dock-a",
+			HomeDistance: 12.3,
+		}},
+	})
+
+	var event struct {
+		FlightId              string
+		PlannedPathPointCount int
+	}
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiReturnHomeEvent{}).Select("flight_id", "planned_path_point_count").Where("gateway_sn = ?", "dock-return").First(&event).Error; err != nil {
+		t.Fatalf("find return home event error = %v", err)
+	}
+	if event.FlightId != "flight-return" || event.PlannedPathPointCount != 1 {
+		t.Fatalf("return home event = %s/%d, want flight-return/1", event.FlightId, event.PlannedPathPointCount)
+	}
+	if db.WithContext(ctx).Migrator().HasColumn(&gormmodel.DjiReturnHomeEvent{}, "multi_dock_home_info_count") {
+		t.Fatal("expected return home event not to have leapfrog multi_dock_home_info_count column")
+	}
+	if db.WithContext(ctx).Migrator().HasColumn(&gormmodel.DjiReturnHomeEvent{}, "nearest_home_distance") {
+		t.Fatal("expected return home event not to have leapfrog nearest_home_distance column")
+	}
+}
+
 func TestIsOnlineWithNilCacheReturnsFalse(t *testing.T) {
 	if IsOnline(nil, "gateway-1") {
 		t.Fatal("expected nil online cache to report offline")
+	}
+}
+
+func TestFlightTaskReadyPersistsEventWithFlightIDs(t *testing.T) {
+	db := newHookTestDB(t)
+	ctx := context.Background()
+
+	NewFlightTaskReadyHandler(db)(ctx, "dock-ready", &djisdk.FlightTaskReadyEvent{
+		FlightIDs: []string{"flight-a", "flight-b"},
+	})
+
+	var ready struct {
+		GatewaySn   string
+		FlightCount int
+		EventJSON   string
+	}
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiFlightTaskReady{}).Select("gateway_sn", "flight_count", "event_json").Where("gateway_sn = ?", "dock-ready").First(&ready).Error; err != nil {
+		t.Fatalf("find flight task ready error = %v", err)
+	}
+	if ready.GatewaySn != "dock-ready" {
+		t.Fatalf("GatewaySn = %s, want dock-ready", ready.GatewaySn)
+	}
+	if ready.FlightCount != 2 {
+		t.Fatalf("FlightCount = %d, want 2", ready.FlightCount)
+	}
+	if ready.EventJSON == "" || ready.EventJSON == "{}" {
+		t.Fatalf("EventJSON = %q, want raw event data", ready.EventJSON)
+	}
+}
+
+func TestRemoteLogProgressPersistsEventWithMethod(t *testing.T) {
+	db := newHookTestDB(t)
+	ctx := context.Background()
+
+	NewRemoteLogFileUploadProgressHandler(db)(ctx, "dock-log-p", &djisdk.RemoteLogFileUploadProgressEvent{
+		Files: []djisdk.RemoteLogFileUploadProgress{
+			{DeviceSN: "dock-log-p", Module: "dock", Key: "log-1", Progress: 50},
+		},
+	})
+
+	var event struct {
+		Method    string
+		FileCount int
+	}
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiRemoteLogEvent{}).Select("method", "file_count").Where("gateway_sn = ?", "dock-log-p").First(&event).Error; err != nil {
+		t.Fatalf("find remote log progress event error = %v", err)
+	}
+	if event.Method != "fileupload_progress" {
+		t.Fatalf("Method = %s, want fileupload_progress", event.Method)
+	}
+	if event.FileCount != 1 {
+		t.Fatalf("FileCount = %d, want 1", event.FileCount)
+	}
+}
+
+func TestDeviceRequestHandlerReturnsErrorOnNilReq(t *testing.T) {
+	handler := NewDeviceRequestHandler()
+	result, _, _ := handler(context.Background(), "dock-nil", nil)
+	if result != djisdk.PlatformResultHandlerError {
+		t.Fatalf("result = %d, want PlatformResultHandlerError for nil request", result)
 	}
 }

@@ -24,56 +24,30 @@ func Columns(names ...string) []clause.Column {
 }
 
 func Upsert(ctx context.Context, db *DB, data any, columns []clause.Column, updateColumns []string) error {
-	return UpsertByColumns(ctx, db, data, columns, updateColumns)
+	if db == nil {
+		return errors.New("gormx db is nil")
+	}
+	if data == nil {
+		return errors.New("gormx upsert data is nil")
+	}
+	if len(columns) == 0 {
+		return errors.New("gormx upsert conflict columns is empty")
+	}
+	conflict := clause.OnConflict{Columns: columns}
+	if len(updateColumns) == 0 {
+		conflict.DoNothing = true
+	} else {
+		conflict.DoUpdates = clause.AssignmentColumns(updateColumns)
+	}
+	return db.WithContext(ctx).Clauses(conflict).Create(data).Error
 }
 
 func UpsertByColumns(ctx context.Context, db *DB, data any, columns []clause.Column, updateColumns []string) error {
-	if db == nil {
-		return errors.New("gormx db is nil")
-	}
-	return db.WithContext(ctx).Clauses(clause.OnConflict{
-		Columns:   columns,
-		DoUpdates: clause.AssignmentColumns(updateColumns),
-	}).Create(data).Error
+	return Upsert(ctx, db, data, columns, updateColumns)
 }
 
 func UpsertByColumnNames(ctx context.Context, db *DB, data any, columnNames []string, updateColumns []string) error {
-	return UpsertByColumns(ctx, db, data, Columns(columnNames...), updateColumns)
-}
-
-func UpsertWithDeletedAt(ctx context.Context, db *DB, data any, columns []clause.Column, updateColumns []string) error {
-	return UpsertByColumnsWithDeletedAt(ctx, db, data, columns, updateColumns)
-}
-
-func UpsertByColumnsWithDeletedAt(ctx context.Context, db *DB, data any, columns []clause.Column, updateColumns []string) error {
-	if db == nil {
-		return errors.New("gormx db is nil")
-	}
-	assignments := clause.AssignmentColumns(updateColumns)
-	assignments = append(assignments, clause.Assignment{Column: clause.Column{Name: "deleted_at"}, Value: nil})
-	return db.WithContext(ctx).Unscoped().Clauses(clause.OnConflict{
-		Columns:   columns,
-		DoUpdates: assignments,
-	}).Create(data).Error
-}
-
-func UpsertWithLegacyDelete(ctx context.Context, db *DB, data any, columns []clause.Column, updateColumns []string) error {
-	return UpsertByColumnsWithLegacyDelete(ctx, db, data, columns, updateColumns)
-}
-
-func UpsertByColumnsWithLegacyDelete(ctx context.Context, db *DB, data any, columns []clause.Column, updateColumns []string) error {
-	if db == nil {
-		return errors.New("gormx db is nil")
-	}
-	assignments := clause.AssignmentColumns(updateColumns)
-	assignments = append(assignments,
-		clause.Assignment{Column: clause.Column{Name: "delete_time"}, Value: nil},
-		clause.Assignment{Column: clause.Column{Name: "del_state"}, Value: int64(0)},
-	)
-	return db.WithContext(ctx).Unscoped().Clauses(clause.OnConflict{
-		Columns:   columns,
-		DoUpdates: assignments,
-	}).Create(data).Error
+	return Upsert(ctx, db, data, Columns(columnNames...), updateColumns)
 }
 
 func CreateRecord(ctx context.Context, db *DB, data any) error {

@@ -26,10 +26,10 @@ func NewListFlightTaskProgressLogic(ctx context.Context, svcCtx *svc.ServiceCont
 	}
 }
 
-// ListFlightTaskProgress 查询飞行任务进度上行记录。
+// ListFlightTaskProgress 查询机巢航线任务最新快照。
 func (l *ListFlightTaskProgressLogic) ListFlightTaskProgress(in *djicloud.ListFlightTaskProgressReq) (*djicloud.ListFlightTaskProgressRes, error) {
 	page, pageSize := normalizePage(in.GetPage(), in.GetPageSize())
-	db := l.svcCtx.DB.WithContext(l.ctx).Model(&gormmodel.DjiFlightTaskProgress{})
+	db := l.svcCtx.DB.WithContext(l.ctx).Model(&gormmodel.DjiDockFlightTask{})
 	if in.GatewaySn != "" {
 		db = db.Where("gateway_sn = ?", in.GatewaySn)
 	}
@@ -40,7 +40,7 @@ func (l *ListFlightTaskProgressLogic) ListFlightTaskProgress(in *djicloud.ListFl
 	if err := db.Count(&total).Error; err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	var records []gormmodel.DjiFlightTaskProgress
+	var records []gormmodel.DjiDockFlightTask
 	if err := db.Order("reported_at DESC,id DESC").Offset(int((page - 1) * pageSize)).Limit(int(pageSize)).Find(&records).Error; err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -57,6 +57,12 @@ func (l *ListFlightTaskProgressLogic) ListFlightTaskProgress(in *djicloud.ListFl
 			ProgressPercent:      item.ProgressPercent,
 			ExtJson:              item.ExtJSON,
 			ReportedAt:           timeMillis(item.ReportedAt),
+			Status:               item.Status,
+			CurrentStep:          int32(item.CurrentStep),
+			TrackId:              item.TrackId,
+			WaylineId:            int32(item.WaylineId),
+			BreakPointJson:       item.BreakPointJSON,
+			EventJson:            item.EventJSON,
 		})
 	}
 	return &djicloud.ListFlightTaskProgressRes{Total: total, List: list}, nil

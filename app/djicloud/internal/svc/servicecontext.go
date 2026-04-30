@@ -37,7 +37,10 @@ func initDB(c config.Config) *gormx.DB {
 			&gormmodel.DjiDeviceOsdSnapshot{},
 			&gormmodel.DjiDeviceStateSnapshot{},
 			&gormmodel.DjiHmsAlert{},
-			&gormmodel.DjiFlightTaskProgress{},
+			&gormmodel.DjiDockFlightTask{},
+			&gormmodel.DjiDockDeviceFlightTaskState{},
+			&gormmodel.DjiFlightTaskReady{},
+			&gormmodel.DjiRemoteLogEvent{},
 			&gormmodel.DjiReturnHomeEvent{},
 		)
 	}

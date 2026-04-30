@@ -1443,21 +1443,8 @@ message DeviceOsdSnapshot {
   string device_sn = 1;
   string gateway_sn = 2;
   string device_domain = 3;
-  double latitude = 4;
-  double longitude = 5;
-  double altitude = 6;
-  double height = 7;
-  double speed_h = 8;
-  double speed_v = 9;
-  double heading = 10;
-  double attitude_pitch = 11;
-  double attitude_roll = 12;
-  double attitude_heading = 13;
-  int32 battery_percent = 14;
-  double elevation = 15;
-  int32 mode_code = 16;
-  string data_json = 17;
-  int64 reported_at = 18;
+  string data_json = 4;
+  int64 reported_at = 5;
 }
 
 // DeviceOsdSnapshotRes 设备 OSD 快照响应。
@@ -1470,10 +1457,8 @@ message DeviceStateSnapshot {
   string device_sn = 1;
   string gateway_sn = 2;
   string device_domain = 3;
-  string sub_device_sn = 4;
-  bool sub_device_online = 5;
-  string data_json = 6;
-  int64 reported_at = 7;
+  string data_json = 4;
+  int64 reported_at = 5;
 }
 
 // DeviceStateSnapshotRes 设备 State 快照响应。
@@ -1493,20 +1478,19 @@ message DeviceDetailRes {
 message HmsAlertInfo {
   int64 id = 1;
   string gateway_sn = 2;
-  string device_sn = 3;
-  int32 level = 4;
-  int32 module = 5;
-  string code = 6;
-  string device_type = 7;
-  int32 imminent = 8;
-  int32 in_the_sky = 9;
-  int32 component_index = 10;
-  int32 sensor_index = 11;
-  string message = 12;
-  int32 acked = 13;
-  int64 acked_at = 14;
-  string acked_by = 15;
-  int64 reported_at = 16;
+  int32 level = 3;
+  int32 module = 4;
+  string code = 5;
+  string device_type = 6;
+  int32 imminent = 7;
+  int32 in_the_sky = 8;
+  int32 component_index = 9;
+  int32 sensor_index = 10;
+  int32 acked = 11;
+  int64 acked_at = 12;
+  string acked_by = 13;
+  int64 reported_at = 14;
+  string item_json = 15;
 }
 
 // ListHmsAlertsReq 查询 HMS 告警请求。
@@ -1548,6 +1532,12 @@ message FlightTaskProgressInfo {
   double progress_percent = 7;
   string ext_json = 8;
   int64 reported_at = 9;
+  string status = 10;
+  int32 current_step = 11;
+  string track_id = 12;
+  int32 wayline_id = 13;
+  string break_point_json = 14;
+  string event_json = 15;
 }
 
 // ListFlightTaskProgressReq 查询飞行任务进度推送记录请求。

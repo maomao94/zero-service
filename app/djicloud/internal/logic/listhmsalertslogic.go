@@ -34,7 +34,7 @@ func (l *ListHmsAlertsLogic) ListHmsAlerts(in *djicloud.ListHmsAlertsReq) (*djic
 		db = db.Where("gateway_sn = ?", in.GatewaySn)
 	}
 	if in.DeviceSn != "" {
-		db = db.Where("device_sn = ?", in.DeviceSn)
+		return &djicloud.ListHmsAlertsRes{}, nil
 	}
 	if in.Level > 0 {
 		db = db.Where("level = ?", in.Level)
@@ -56,7 +56,6 @@ func (l *ListHmsAlertsLogic) ListHmsAlerts(in *djicloud.ListHmsAlertsReq) (*djic
 		list = append(list, &djicloud.HmsAlertInfo{
 			Id:             item.Id,
 			GatewaySn:      item.GatewaySn,
-			DeviceSn:       item.DeviceSn,
 			Level:          int32(item.Level),
 			Module:         int32(item.Module),
 			Code:           item.Code,
@@ -65,11 +64,11 @@ func (l *ListHmsAlertsLogic) ListHmsAlerts(in *djicloud.ListHmsAlertsReq) (*djic
 			InTheSky:       int32(item.InTheSky),
 			ComponentIndex: int32(item.ComponentIndex),
 			SensorIndex:    int32(item.SensorIndex),
-			Message:        item.Message,
 			Acked:          int32(item.Acked),
 			AckedAt:        nullTimeMillis(item.AckedAt),
 			AckedBy:        item.AckedBy,
 			ReportedAt:     timeMillis(item.ReportedAt),
+			ItemJson:       item.ItemJSON,
 		})
 	}
 	return &djicloud.ListHmsAlertsRes{Total: total, List: list}, nil

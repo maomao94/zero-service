@@ -9,7 +9,6 @@ import (
 
 	"github.com/zeromicro/go-zero/core/collection"
 	"github.com/zeromicro/go-zero/core/logx"
-	"gorm.io/gorm/clause"
 )
 
 func NewOsdHandler(db *gormx.DB, onlineCache *collection.Cache) func(ctx context.Context, deviceSn string, data *djisdk.OsdMessage) {
@@ -44,7 +43,7 @@ func NewOsdHandler(db *gormx.DB, onlineCache *collection.Cache) func(ctx context
 		if deviceSn == gatewaySn {
 			updateColumns = append(updateColumns, "device_domain")
 		}
-		if err := gormx.UpsertByColumns(ctx, db, &device, []clause.Column{{Name: "device_sn"}}, updateColumns); err != nil {
+		if err := gormx.Upsert(ctx, db, &device, gormx.Columns("device_sn"), updateColumns); err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] upsert osd device online failed: %v", err)
 		}
 
@@ -61,7 +60,7 @@ func NewOsdHandler(db *gormx.DB, onlineCache *collection.Cache) func(ctx context
 		if deviceSn == gatewaySn {
 			snapshotUpdateColumns = append(snapshotUpdateColumns, "device_domain")
 		}
-		if err := gormx.UpsertByColumns(ctx, db, &snapshot, []clause.Column{{Name: "device_sn"}}, snapshotUpdateColumns); err != nil {
+		if err := gormx.Upsert(ctx, db, &snapshot, gormx.Columns("device_sn"), snapshotUpdateColumns); err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] upsert osd snapshot failed: %v", err)
 		}
 	}
@@ -92,7 +91,7 @@ func NewStateTelemetryHandler(db *gormx.DB, _ *collection.Cache) func(ctx contex
 		if deviceSn == gatewaySn {
 			updateColumns = append(updateColumns, "device_domain")
 		}
-		if err := gormx.UpsertByColumns(ctx, db, &device, []clause.Column{{Name: "device_sn"}}, updateColumns); err != nil {
+		if err := gormx.Upsert(ctx, db, &device, gormx.Columns("device_sn"), updateColumns); err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] upsert state device failed: %v", err)
 		}
 
@@ -109,7 +108,7 @@ func NewStateTelemetryHandler(db *gormx.DB, _ *collection.Cache) func(ctx contex
 		if deviceSn == gatewaySn {
 			snapshotUpdateColumns = append(snapshotUpdateColumns, "device_domain")
 		}
-		if err := gormx.UpsertByColumns(ctx, db, &snapshot, []clause.Column{{Name: "device_sn"}}, snapshotUpdateColumns); err != nil {
+		if err := gormx.Upsert(ctx, db, &snapshot, gormx.Columns("device_sn"), snapshotUpdateColumns); err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] upsert state snapshot failed: %v", err)
 		}
 	}

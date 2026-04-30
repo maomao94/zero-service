@@ -7,18 +7,19 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/logx"
-	"go.opentelemetry.io/otel/trace"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
 type Config struct {
-	DataSource    string        `json:",optional"`
-	MaxIdleConns  int           `json:",optional,default=10"`
-	MaxOpenConns  int           `json:",optional,default=100"`
-	SlowThreshold time.Duration `json:",optional,default=200ms"`
-	LogLevel      string        `json:",optional,default=error"`
-	QueryFields   bool          `json:",optional,default=false"`
+	DataSource         string        `json:",optional"`
+	MaxIdleConns       int           `json:",optional,default=10"`
+	MaxOpenConns       int           `json:",optional,default=100"`
+	SlowThreshold      time.Duration `json:",optional,default=200ms"`
+	LogLevel           string        `json:",optional,default=error"`
+	LogQueryParameters bool          `json:",optional,default=false"`
+	QueryFields        bool          `json:",optional,default=false"`
+	Trace              TraceConfig   `json:",optional"`
 }
 
 type DB struct {
@@ -26,11 +27,11 @@ type DB struct {
 }
 
 func (db *DB) WithContext(ctx context.Context) *DB {
-	gormDB := db.DB.WithContext(ctx)
-	if spanCtx := trace.SpanContextFromContext(ctx); spanCtx.IsValid() {
-		gormDB = gormDB.Set("trace_id", spanCtx.TraceID().String())
-	}
-	return &DB{DB: gormDB}
+	return &DB{DB: db.DB.WithContext(ctx)}
+}
+
+func (db *DB) ExplainSQL(queryFn func(tx *gorm.DB) *gorm.DB) string {
+	return db.DB.ToSQL(queryFn)
 }
 
 func (db *DB) Transact(fn func(tx *DB) error) error {
@@ -82,6 +83,7 @@ type dbOptions struct {
 	connMaxLifetime time.Duration
 	gormLogger      logger.Interface
 	queryFields     bool
+	openTelemetry   TraceConfig
 }
 
 func WithRawDB(pool *sql.DB) Option {
@@ -114,6 +116,7 @@ func Open(dsn string, opts ...Option) (*DB, error) {
 		maxOpenConns:    100,
 		connMaxLifetime: time.Hour,
 		gormLogger:      DefaultGormLogger(),
+		openTelemetry:   defaultOpenTelemetryConfig(),
 	}
 	for _, opt := range opts {
 		opt(options)
@@ -158,6 +161,9 @@ func Open(dsn string, opts ...Option) (*DB, error) {
 	}
 
 	RegisterCallbacks(gormDB)
+	if err := registerOpenTelemetry(gormDB, options.openTelemetry); err != nil {
+		return nil, err
+	}
 	return &DB{DB: gormDB}, nil
 }
 
@@ -175,10 +181,12 @@ func OpenWithConf(conf Config) (*DB, error) {
 		WithMaxIdleConns(conf.MaxIdleConns),
 		WithMaxOpenConns(conf.MaxOpenConns),
 		WithLogger(NewGormLogger(LoggerConfig{
-			LogLevel:      parseLogLevel(conf.LogLevel),
-			SlowThreshold: conf.SlowThreshold,
+			LogLevel:           parseLogLevel(conf.LogLevel),
+			SlowThreshold:      conf.SlowThreshold,
+			LogQueryParameters: conf.LogQueryParameters,
 		})),
 		WithQueryFields(conf.QueryFields),
+		WithOpenTelemetryConfig(conf.Trace),
 	)
 }
 

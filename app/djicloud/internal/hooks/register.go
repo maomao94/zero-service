@@ -15,12 +15,11 @@ type RegisterDjiClientOptions struct {
 
 func registerEventHandlers(c *djisdk.Client, db *gormx.DB) {
 	c.OnFlightTaskProgress(NewFlightTaskProgressHandler(db))
-	c.OnFlightTaskReady(HandleFlightTaskReadyEvent)
+	c.OnFlightTaskReady(NewFlightTaskReadyHandler(db))
 	c.OnReturnHomeInfo(NewReturnHomeInfoHandler(db))
 	c.OnCustomDataFromPsdk(HandleCustomDataFromPsdkEvent)
 	c.OnHmsEventNotify(NewHmsEventNotifyHandler(db))
-	c.OnRemoteLogFileUploadResult(HandleRemoteLogFileUploadResultEvent)
-	c.OnRemoteLogFileUploadProgress(HandleRemoteLogFileUploadProgressEvent)
+	c.OnRemoteLogFileUploadProgress(NewRemoteLogFileUploadProgressHandler(db))
 }
 
 func registerTelemetryHandlers(c *djisdk.Client, db *gormx.DB, onlineCache *collection.Cache) {

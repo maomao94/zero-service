@@ -24,3 +24,30 @@ func toJSONString(v any) string {
 func sqlNullTime(t time.Time) sql.NullTime {
 	return sql.NullTime{Time: t, Valid: true}
 }
+
+func waylineMissionStateText(state int) string {
+	switch state {
+	case 0:
+		return "disconnected"
+	case 1:
+		return "waypoint_unsupported"
+	case 2:
+		return "wayline_ready"
+	case 3:
+		return "wayline_uploading"
+	case 4:
+		return "wayline_prepared"
+	case 5:
+		return "entering_wayline"
+	case 6:
+		return "wayline_executing"
+	case 7:
+		return "wayline_interrupted"
+	case 8:
+		return "wayline_resuming"
+	case 9:
+		return "wayline_stopped"
+	default:
+		return "unknown"
+	}
+}

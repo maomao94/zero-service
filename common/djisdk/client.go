@@ -93,7 +93,6 @@ type Client struct {
 	onReturnHomeInfo     func(ctx context.Context, gatewaySn string, data *ReturnHomeInfoEvent)
 	onCustomDataFromPsdk func(ctx context.Context, gatewaySn string, data *CustomDataFromPsdkEvent)
 	onHmsEventNotify     func(ctx context.Context, gatewaySn string, data *HmsEventData)
-	onRemoteLogResult    func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadResultEvent)
 	onRemoteLogProgress  func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadProgressEvent)
 	onOtaProgress        func(ctx context.Context, gatewaySn string, data *OtaProgressEvent)
 	onTopoUpdate         func(ctx context.Context, gatewaySn string, data *TopoUpdateData)
@@ -271,18 +270,6 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 			c.onHmsEventNotify(ctx, gatewaySn, &msg.Data)
 			return true, PlatformResultOK
 		}
-	case MethodRemoteLogFileUploadResult:
-		if c.onRemoteLogResult != nil {
-			var msg struct {
-				Data RemoteLogFileUploadResultEvent `json:"data"`
-			}
-			if err := json.Unmarshal(raw, &msg); err != nil {
-				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal RemoteLogFileUploadResultEvent failed: %v", err)
-				return true, PlatformResultHandlerError
-			}
-			c.onRemoteLogResult(ctx, gatewaySn, &msg.Data)
-			return true, PlatformResultOK
-		}
 	case MethodRemoteLogFileUploadProgress:
 		if c.onRemoteLogProgress != nil {
 			var msg struct {
@@ -385,10 +372,6 @@ func (c *Client) OnCustomDataFromPsdk(handler func(ctx context.Context, gatewayS
 //   - handler: 回调函数，携带已解析的 HmsEventData 结构体
 func (c *Client) OnHmsEventNotify(handler func(ctx context.Context, gatewaySn string, data *HmsEventData)) {
 	c.onHmsEventNotify = handler
-}
-
-func (c *Client) OnRemoteLogFileUploadResult(handler func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadResultEvent)) {
-	c.onRemoteLogResult = handler
 }
 
 func (c *Client) OnRemoteLogFileUploadProgress(handler func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadProgressEvent)) {

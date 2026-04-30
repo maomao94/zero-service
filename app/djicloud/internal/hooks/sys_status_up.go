@@ -41,7 +41,7 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 		}
 
 		if err := db.WithContext(ctx).Transact(func(tx *gormx.DB) error {
-			if err := gormx.UpsertByColumns(ctx, tx, &gormmodel.DjiDevice{
+			if err := gormx.Upsert(ctx, tx, &gormmodel.DjiDevice{
 				DeviceSn:      gatewaySn,
 				GatewaySn:     gatewaySn,
 				DeviceDomain:  topo.Domain,
@@ -67,7 +67,7 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 
 			for _, sub := range topo.SubDevices {
 				subDomain := sub.Domain
-				if err := gormx.UpsertByColumnsWithLegacyDelete(ctx, tx, &gormmodel.DjiDeviceTopo{
+				if err := gormx.Upsert(ctx, tx, &gormmodel.DjiDeviceTopo{
 					GatewaySn:        gatewaySn,
 					SubDeviceSn:      sub.SN,
 					Domain:           subDomain,
@@ -79,7 +79,7 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 					return err
 				}
 
-				if err := gormx.UpsertByColumns(ctx, tx, &gormmodel.DjiDevice{
+				if err := gormx.Upsert(ctx, tx, &gormmodel.DjiDevice{
 					DeviceSn:      sub.SN,
 					GatewaySn:     gatewaySn,
 					DeviceDomain:  subDomain,

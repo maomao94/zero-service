@@ -58,10 +58,10 @@ func DatabaseTypeOf(db *gorm.DB) DatabaseType {
 }
 
 func GetDatabaseTypeFromDialector(db *gorm.DB) DatabaseType {
-	if db == nil || db.Statement == nil || db.Statement.Dialector == nil {
+	if db == nil || db.Dialector == nil {
 		return DatabaseMySQL
 	}
-	switch db.Statement.Dialector.(type) {
+	switch db.Dialector.(type) {
 	case *mysql.Dialector:
 		return DatabaseMySQL
 	case *postgres.Dialector:
