@@ -3,6 +3,7 @@ package hooks
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"strings"
 	"testing"
 	"time"
@@ -37,6 +38,7 @@ func newHookTestDB(t *testing.T) *gormx.DB {
 		&gormmodel.DjiFlightTaskReady{},
 		&gormmodel.DjiRemoteLogEvent{},
 		&gormmodel.DjiReturnHomeEvent{},
+		&gormmodel.DjiDrcUpEvent{},
 		&gormmodel.DjiHmsAlert{},
 	); err != nil {
 		t.Fatalf("auto migrate hook models error = %v", err)
@@ -51,9 +53,10 @@ func TestRegisterDjiClientRegistersHandlersAndOnlineChecker(t *testing.T) {
 		t.Fatalf("NewCache online error = %v", err)
 	}
 	client := djisdk.NewClient(nil, djisdk.WithPendingTTL(time.Second), djisdk.WithReplyOptions(djisdk.ReplyOptions{}))
+	db := newHookTestDB(t)
 
 	RegisterDjiClient(client, RegisterDjiClientOptions{
-		DB:          newHookTestDB(t),
+		DB:          db,
 		OnlineCache: onlineCache,
 	})
 
@@ -86,6 +89,20 @@ func TestRegisterDjiClientRegistersHandlersAndOnlineChecker(t *testing.T) {
 	requestsPayload := []byte(`{"tid":"tid-3","bid":"bid-3","timestamp":1710000000000,"method":"airport_bind_status","data":{"status":1}}`)
 	if err := client.HandleRequests(ctx, requestsPayload, "thing/product/gateway-1/requests", ""); err != nil {
 		t.Fatalf("HandleRequests() error = %v", err)
+	}
+
+	drcPayload := []byte(`{"tid":"tid-drc","bid":"bid-drc","timestamp":1710000000000,"method":"drc_initial_state_subscribe","seq":1,"data":{"result":0}}`)
+	if err := client.HandleDrcUp(ctx, drcPayload, djisdk.DrcUpTopic("gateway-1"), ""); err != nil {
+		t.Fatalf("HandleDrcUp() error = %v", err)
+	}
+	var drcEvent struct {
+		RawJSON string
+	}
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDrcUpEvent{}).Select("raw_json").Where("gateway_sn = ? AND method = ?", "gateway-1", djisdk.MethodDrcInitialStateSubscribe).First(&drcEvent).Error; err != nil {
+		t.Fatalf("find registered drc event error = %v", err)
+	}
+	if drcEvent.RawJSON != `{"result":0}` {
+		t.Fatalf("registered RawJSON = %q, want only result", drcEvent.RawJSON)
 	}
 }
 
@@ -893,4 +910,66 @@ func TestDeviceRequestHandlerReturnsErrorOnNilReq(t *testing.T) {
 	if result != djisdk.PlatformResultHandlerError {
 		t.Fatalf("result = %d, want PlatformResultHandlerError for nil request", result)
 	}
+}
+
+func TestDrcInitialStateSubscribePersistsRawEvent(t *testing.T) {
+	db := newHookTestDB(t)
+	ctx := context.Background()
+
+	err := NewDrcUpHandler(db)(ctx, "dock-drc", &djisdk.DrcUpMessage{Method: djisdk.MethodDrcInitialStateSubscribe, Timestamp: 1710000000000}, &djisdk.DrcInitialStateSubscribeUpData{Result: 0})
+	if err != nil {
+		t.Fatalf("handler error = %v", err)
+	}
+
+	var event struct {
+		RawJSON string
+	}
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDrcUpEvent{}).Select("raw_json").Where("gateway_sn = ? AND method = ?", "dock-drc", djisdk.MethodDrcInitialStateSubscribe).First(&event).Error; err != nil {
+		t.Fatalf("find drc event error = %v", err)
+	}
+	if event.RawJSON != `{"result":0}` {
+		t.Fatalf("RawJSON = %q, want only result", event.RawJSON)
+	}
+}
+
+func TestDrcUpHandlerIgnoresNilMessage(t *testing.T) {
+	if err := NewDrcUpHandler(nil)(context.Background(), "dock-nil", nil, nil); err != nil {
+		t.Fatalf("handler error = %v", err)
+	}
+}
+
+func TestDeviceRequestHandlerReturnsMethodSpecificOutput(t *testing.T) {
+	handler := NewDeviceRequestHandler()
+	cases := []struct {
+		method string
+		want   string
+	}{
+		{method: djisdk.MethodAirportOrganizationGet, want: "organization_id"},
+		{method: djisdk.MethodAirportBindStatus, want: "status"},
+		{method: djisdk.MethodFlightAreasGet, want: "flight_areas"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.method, func(t *testing.T) {
+			result, output, err := handler(context.Background(), "dock-req", &djisdk.RequestMessage{Method: tc.method})
+			if err != nil {
+				t.Fatalf("handler error = %v", err)
+			}
+			if result != djisdk.PlatformResultOK {
+				t.Fatalf("result = %d, want OK", result)
+			}
+			if output == nil || !strings.Contains(asJSON(t, output), tc.want) {
+				t.Fatalf("output = %#v, want key %s", output, tc.want)
+			}
+		})
+	}
+}
+
+func asJSON(t *testing.T, v any) string {
+	t.Helper()
+	data, err := json.Marshal(v)
+	if err != nil {
+		t.Fatalf("marshal output error = %v", err)
+	}
+	return string(data)
 }

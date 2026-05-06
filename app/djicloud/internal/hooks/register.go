@@ -26,7 +26,7 @@ func registerTelemetryHandlers(c *djisdk.Client, db *gormx.DB, onlineCache *coll
 	c.OnOsd(NewOsdHandler(db, onlineCache))
 	c.OnState(NewStateTelemetryHandler(db, onlineCache))
 	c.OnStatus(NewStatusHandler(db, onlineCache))
-	c.OnDrcUp(NewDrcUpHandler(onlineCache))
+	c.OnDrcUp(NewDrcUpHandler(db))
 }
 
 func registerRequestHandlers(c *djisdk.Client) {

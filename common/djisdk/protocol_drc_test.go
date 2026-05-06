@@ -3,6 +3,8 @@ package djisdk
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -620,6 +622,43 @@ func TestRemoteLogProgressEventHook(t *testing.T) {
 	}
 }
 
+func TestRequestsReplyOutputForKnownMethods(t *testing.T) {
+	cases := []struct {
+		name       string
+		method     string
+		output     any
+		wantOutput string
+	}{
+		{name: "airport_organization_get", method: MethodAirportOrganizationGet, output: map[string]any{"organization_id": "org-1", "organization_name": "ops"}, wantOutput: `"organization_id":"org-1"`},
+		{name: "airport_bind_status", method: MethodAirportBindStatus, output: map[string]any{"status": 1}, wantOutput: `"status":1`},
+		{name: "flight_areas_get", method: MethodFlightAreasGet, output: map[string]any{"url": "https://example.com/fly.json"}, wantOutput: `"url":"https://example.com/fly.json"`},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			mqtt := &recordingMQTTClient{}
+			client := newClient(mqtt, WithPendingTTL(time.Second), WithReplyOptions(ReplyOptions{EnableRequestReply: true}))
+			client.OnRequest(func(ctx context.Context, gatewaySn string, req *RequestMessage) (int, any, error) {
+				if gatewaySn != "gateway-1" || req.Method != tc.method {
+					t.Fatalf("unexpected request: gateway=%s method=%s", gatewaySn, req.Method)
+				}
+				return PlatformResultOK, tc.output, nil
+			})
+
+			payload := []byte(`{"tid":"tid-1","bid":"bid-1","timestamp":1710000000000,"method":"` + tc.method + `","data":{}}`)
+			if err := client.HandleRequests(context.Background(), payload, "thing/product/gateway-1/requests", ""); err != nil {
+				t.Fatalf("HandleRequests() error = %v", err)
+			}
+			if len(mqtt.published) != 1 || mqtt.published[0].topic != RequestsReplyTopic("gateway-1") {
+				t.Fatalf("published = %+v, want one requests_reply", mqtt.published)
+			}
+			if !strings.Contains(string(mqtt.published[0].payload), tc.wantOutput) {
+				t.Fatalf("payload = %s, want output containing %s", mqtt.published[0].payload, tc.wantOutput)
+			}
+		})
+	}
+}
+
 func TestOtaProgressAndUpdateTopoEventHooks(t *testing.T) {
 	client := newClient(&recordingMQTTClient{}, WithPendingTTL(time.Second), WithReplyOptions(DefaultReplyOptions()))
 	otaCalled := false
@@ -662,6 +701,140 @@ func TestPsdkUIResourceUploadPayload(t *testing.T) {
 	want := map[string]any{"name": "panel", "url": "https://example.com/panel.zip", "fingerprint": "sha256:abc"}
 	if !jsonValueEqual(got, want) {
 		t.Fatalf("payload = %#v, want %#v", got, want)
+	}
+}
+
+func TestTask2DownMethodsPublishExpectedTopicsAndMethods(t *testing.T) {
+	cases := []struct {
+		name        string
+		call        func(*Client) (string, error)
+		wantTopic   string
+		wantMethod  string
+		wantDataKey string
+	}{
+		{name: "property_set", call: func(c *Client) (string, error) {
+			return c.SetProperty(context.Background(), "gateway-1", PropertySetData{"flighttask_step_code": 1})
+		}, wantTopic: PropertySetTopic("gateway-1"), wantMethod: MethodPropertySet, wantDataKey: "flighttask_step_code"},
+		{name: "psdk_ui_resource_upload", call: func(c *Client) (string, error) {
+			return c.PsdkUIResourceUpload(context.Background(), "gateway-1", &PsdkUIResourceUploadData{Name: "panel", URL: "https://example.com/panel.zip"})
+		}, wantTopic: ServicesTopic("gateway-1"), wantMethod: MethodPsdkFloatUp, wantDataKey: "url"},
+		{name: "custom_data_transmission_to_esdk", call: func(c *Client) (string, error) {
+			return c.SendCustomDataToEsdk(context.Background(), "gateway-1", "hello")
+		}, wantTopic: ServicesTopic("gateway-1"), wantMethod: MethodCustomDataTransmissionToEsdk, wantDataKey: "value"},
+		{
+			name: "drc_initial_state_subscribe",
+			call: func(c *Client) (string, error) {
+				return c.DrcInitialStateSubscribe(context.Background(), "gateway-1")
+			},
+			wantTopic:  DrcDownTopic("gateway-1"),
+			wantMethod: MethodDrcInitialStateSubscribe,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			mqtt := &recordingMQTTClient{}
+			client := newClient(mqtt, WithPendingTTL(time.Millisecond))
+			tid, err := tc.call(client)
+			if tid == "" {
+				t.Fatal("expected non-empty tid")
+			}
+			if tc.wantTopic != DrcDownTopic("gateway-1") && err == nil {
+				t.Fatal("expected timeout because no reply is injected")
+			}
+			if len(mqtt.published) != 1 {
+				t.Fatalf("published count = %d, want 1", len(mqtt.published))
+			}
+			published := mqtt.published[0]
+			if published.topic != tc.wantTopic {
+				t.Fatalf("topic = %s, want %s", published.topic, tc.wantTopic)
+			}
+			var got map[string]any
+			if err := json.Unmarshal(published.payload, &got); err != nil {
+				t.Fatalf("json.Unmarshal() error = %v", err)
+			}
+			if got["tid"] != tid || got["method"] != tc.wantMethod {
+				t.Fatalf("message tid/method = %v/%v, want %s/%s", got["tid"], got["method"], tid, tc.wantMethod)
+			}
+			if tc.wantDataKey != "" {
+				data, ok := got["data"].(map[string]any)
+				if !ok {
+					t.Fatalf("data = %T, want object; payload=%s", got["data"], string(published.payload))
+				}
+				if _, ok := data[tc.wantDataKey]; !ok {
+					t.Fatalf("data missing %s: %v", tc.wantDataKey, data)
+				}
+			}
+		})
+	}
+}
+
+func TestSetPropertyUsesDJIErrorForDeviceResult(t *testing.T) {
+	mqtt := &recordingMQTTClient{}
+	client := newClient(mqtt, WithPendingTTL(time.Second))
+
+	done := make(chan error, 1)
+	go func() {
+		_, err := client.SetProperty(context.Background(), "gateway-1", PropertySetData{"flighttask_step_code": 1})
+		done <- err
+	}()
+
+	deadline := time.After(time.Second)
+	for len(mqtt.published) == 0 {
+		select {
+		case <-deadline:
+			t.Fatal("timeout waiting publish")
+		default:
+			time.Sleep(time.Millisecond)
+		}
+	}
+	var req ServiceRequest
+	if err := json.Unmarshal(mqtt.published[0].payload, &req); err != nil {
+		t.Fatalf("json.Unmarshal() request error = %v", err)
+	}
+	reply := ServiceReply{Tid: req.Tid, Bid: req.Bid, Method: req.Method, Data: ServiceReplyData{Result: 314004}}
+	payload, err := json.Marshal(reply)
+	if err != nil {
+		t.Fatalf("json.Marshal() reply error = %v", err)
+	}
+	if err := client.HandlePropertySetReply(context.Background(), payload, PropertySetTopic("gateway-1")+"_reply", ""); err != nil {
+		t.Fatalf("HandlePropertySetReply() error = %v", err)
+	}
+
+	select {
+	case err := <-done:
+		var djiErr *DJIError
+		if !errors.As(err, &djiErr) || djiErr.Code != 314004 {
+			t.Fatalf("error = %T %v, want DJIError code 314004", err, err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("timeout waiting SetProperty")
+	}
+}
+
+func TestDrcInitialStateSubscribeUpDataParser(t *testing.T) {
+	payload := json.RawMessage(`{"result":0}`)
+
+	parsed, err := DrcUnmarshalUpData(MethodDrcInitialStateSubscribe, payload)
+	if err != nil {
+		t.Fatalf("DrcUnmarshalUpData() error = %v", err)
+	}
+	state, ok := parsed.(*DrcInitialStateSubscribeUpData)
+	if !ok {
+		t.Fatalf("parsed = %T, want *DrcInitialStateSubscribeUpData", parsed)
+	}
+	if state.Result != 0 {
+		t.Fatalf("Result = %d, want 0", state.Result)
+	}
+	if reflect.TypeOf(*state).NumField() != 1 {
+		t.Fatalf("DrcInitialStateSubscribeUpData has %d fields, want only result", reflect.TypeOf(*state).NumField())
+	}
+	encoded, err := json.Marshal(state)
+	if err != nil {
+		t.Fatalf("Marshal() error = %v", err)
+	}
+	if string(encoded) != `{"result":0}` {
+		t.Fatalf("encoded = %s, want only result field", encoded)
 	}
 }
 

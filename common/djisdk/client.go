@@ -523,7 +523,7 @@ func (c *Client) SetProperty(ctx context.Context, gatewaySn string, properties P
 	}
 
 	if reply.Data.Result != 0 {
-		return tid, fmt.Errorf("[dji-sdk] property_set device error: tid=%s result=%d", tid, reply.Data.Result)
+		return tid, NewDJIError(reply.Data.Result)
 	}
 
 	return tid, nil

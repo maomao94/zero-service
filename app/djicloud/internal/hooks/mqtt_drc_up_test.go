@@ -10,7 +10,7 @@ import (
 	"github.com/zeromicro/go-zero/core/collection"
 )
 
-func TestNewDrcUpHandlerDoesNotRefreshOnline(t *testing.T) {
+func TestDrcUpDoesNotRefreshOnline(t *testing.T) {
 	onlineCache, err := collection.NewCache(time.Minute)
 	if err != nil {
 		t.Fatalf("NewCache online error = %v", err)
@@ -23,7 +23,7 @@ func TestNewDrcUpHandlerDoesNotRefreshOnline(t *testing.T) {
 	}
 	parsed := &djisdk.DrcHeartBeatUpData{Timestamp: 123450}
 
-	if err := NewDrcUpHandler(onlineCache)(context.Background(), "gateway-1", msg, parsed); err != nil {
+	if err := NewDrcUpHandler(nil)(context.Background(), "gateway-1", msg, parsed); err != nil {
 		t.Fatalf("NewDrcUpHandler() error = %v", err)
 	}
 

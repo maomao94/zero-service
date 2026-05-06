@@ -6,8 +6,9 @@ import (
 	"time"
 )
 
-// DRC 下行与上行模型对齐 DRC 上云文档中的 drc/down、drc/up 分节。
-// drc/down 是云平台发布到 thing/product/{gateway_sn}/drc/down 的即发即忘通道；drc/up 是设备发布到 thing/product/{gateway_sn}/drc/up 的上行回传通道。
+// DRC 协议模型对应官方 DRC 上云文档的 drc/down 与 drc/up 分节。
+// drc/down 是云平台发布到 thing/product/{gateway_sn}/drc/down 的实时控制通道；drc/up 是设备发布到 thing/product/{gateway_sn}/drc/up 的状态与回执通道。
+// 进入/退出 DRC 模式、飞行控制权抢占等仍走 services/services_reply，不属于 drc/down 或 drc/up 子路径。
 
 // DrcDownMessage 云平台经 drc/down 下发的通用报文。
 // stick_control 与 heart_beat 的 seq 位于 data 同级，调用方应按 method 选择对应 payload。
@@ -44,23 +45,31 @@ func NewDrcDownMessage(tid, bid, method string, data any, seq *int) *DrcDownMess
 	}
 }
 
-// DrcUpMessage 设备经 drc/up 上行的通用壳。
-// Data 保留原始 data 字段，已知 method 可通过 DrcUnmarshalUpData 转为强类型，未知 method 可继续向 hook 分发原始载荷。
+// DrcUpMessage 是设备经 drc/up 上行的通用报文壳。
+// Data 保留原始 data 字段；已知 method 可通过 DrcUnmarshalUpData 转为强类型，未知 method 会以 DrcUnknownUpData 继续分发，避免新增协议字段阻断业务 hook。
 type DrcUpMessage struct {
-	Tid       string          `json:"tid,omitempty"`
-	Bid       string          `json:"bid,omitempty"`
-	Timestamp int64           `json:"timestamp"`
-	Method    string          `json:"method"`
-	Gateway   string          `json:"gateway,omitempty"`
-	Data      json.RawMessage `json:"data"`
-	// Seq 部分 method（如 heart_beat）在顶层与 data 同级出现。
+	// Tid 事务 ID，设备侧按协议携带；部分上行消息可能省略。
+	Tid string `json:"tid,omitempty"`
+	// Bid 业务 ID，设备侧按协议携带；部分上行消息可能省略。
+	Bid string `json:"bid,omitempty"`
+	// Timestamp 设备上报时间戳，单位毫秒。
+	Timestamp int64 `json:"timestamp"`
+	// Method DRC 上行方法名，如 drc_initial_state_subscribe、heart_beat、hsi_info_push。
+	Method string `json:"method"`
+	// Gateway 网关设备 SN；部分固件仅在 topic 中体现。
+	Gateway string `json:"gateway,omitempty"`
+	// Data DRC 上行业务载荷，结构随 Method 变化。
+	Data json.RawMessage `json:"data"`
+	// Seq 部分 method（如 heart_beat、drc_initial_state_subscribe）在顶层与 data 同级出现。
 	Seq int `json:"seq,omitempty"`
 }
 
 // DrcUnknownUpData 保存 SDK 尚未建模的 drc/up data 原文，便于 hook 继续分发和业务侧按需扩展。
 type DrcUnknownUpData struct {
-	Method string          `json:"method"`
-	Raw    json.RawMessage `json:"raw"`
+	// Method 原始 DRC 上行方法名。
+	Method string `json:"method"`
+	// Raw 原始 data 字段内容，不做结构化解释。
+	Raw json.RawMessage `json:"raw"`
 }
 
 // DrcUpMessageFromJSON 解析 drc/up 报文，兼容 data:null 与缺省 data。
@@ -88,49 +97,79 @@ func DrcUpMessageFromJSON(payload []byte) (*DrcUpMessage, error) {
 	return m, nil
 }
 
-// DrcStickControlAckData 设备在 **drc/up** 对 `stick_control` 的回馈（result/output.seq）。
+// DrcStickControlAckData 是设备在 drc/up 对 `stick_control` 的执行回执。
 type DrcStickControlAckData struct {
+	// Result 返回码，0 表示成功，非 0 对应 DJI 设备错误码。
 	Result int `json:"result"`
-	// Output 内 seq 与下行杆量对应。
+	// Output 携带设备确认的 seq，用于与 drc/down 杆量序号对应。
 	Output *struct {
+		// Seq 设备确认的杆量序号。
 		Seq int `json:"seq"`
 	} `json:"output,omitempty"`
 }
 
-// DrcDroneEmergencyStopUpData 设备在 drc/up 对 `drone_emergency_stop` 的 data。
+// DrcDroneEmergencyStopUpData 是设备在 drc/up 对 `drone_emergency_stop` 的执行回执。
 type DrcDroneEmergencyStopUpData struct {
+	// Result 返回码，0 表示成功，非 0 对应 DJI 设备错误码。
 	Result int `json:"result"`
 }
 
-// DrcHeartBeatUpData 设备在 drc/up 对 `heart_beat` 的 data 体（可与顶层 seq 同时出现）。
+// DrcHeartBeatUpData 是设备在 drc/up `heart_beat` 中回传的 DRC 链路心跳。
 type DrcHeartBeatUpData struct {
+	// Timestamp 设备侧心跳时间戳，单位毫秒。
 	Timestamp int64 `json:"timestamp"`
 	// Seq 文档标为 deprecated，部分固件仍带。
 	Seq int `json:"seq,omitempty"`
 }
 
-// DrcHsiInfoPushData 设备在 drc/up `hsi_info_push` 的 data（避障/水平态势信息）。
-// 设备示例中数组字段名为 `around_distance`，与表头 `around_distances` 可能并存，UnmarshalJSON 做兼容。
+// DrcInitialStateSubscribeUpData 设备在 drc/up 对 `drc_initial_state_subscribe` 的回执数据。
+//
+// 官方 up 方向 data 仅包含 result 字段，非 0 代表设备侧执行错误。
+type DrcInitialStateSubscribeUpData struct {
+	// Result 返回码，0 表示成功，非 0 对应 DJI 设备错误码。
+	Result int `json:"result"`
+}
+
+// DrcHsiInfoPushData 是设备在 drc/up `hsi_info_push` 中上报的避障与水平态势信息。
+// 设备示例中数组字段名为 `around_distance`，与表头 `around_distances` 可能并存，UnmarshalJSON 会同时兼容。
 type DrcHsiInfoPushData struct {
-	UpDistance       int  `json:"up_distance"`
-	DownDistance     int  `json:"down_distance"`
-	UpEnable         bool `json:"up_enable"`
-	UpWork           bool `json:"up_work"`
-	DownEnable       bool `json:"down_enable"`
-	DownWork         bool `json:"down_work"`
-	LeftEnable       bool `json:"left_enable"`
-	LeftWork         bool `json:"left_work"`
-	RightEnable      bool `json:"right_enable"`
-	RightWork        bool `json:"right_work"`
-	FrontEnable      bool `json:"front_enable"`
-	FrontWork        bool `json:"front_work"`
-	BackEnable       bool `json:"back_enable"`
-	BackWork         bool `json:"back_work"`
-	VerticalEnable   bool `json:"vertical_enable"`
-	VerticalWork     bool `json:"vertical_work"`
+	// UpDistance 上方障碍物距离，单位以官方文档为准。
+	UpDistance int `json:"up_distance"`
+	// DownDistance 下方障碍物距离，单位以官方文档为准。
+	DownDistance int `json:"down_distance"`
+	// UpEnable 上方避障能力是否启用。
+	UpEnable bool `json:"up_enable"`
+	// UpWork 上方避障是否处于工作状态。
+	UpWork bool `json:"up_work"`
+	// DownEnable 下方避障能力是否启用。
+	DownEnable bool `json:"down_enable"`
+	// DownWork 下方避障是否处于工作状态。
+	DownWork bool `json:"down_work"`
+	// LeftEnable 左侧避障能力是否启用。
+	LeftEnable bool `json:"left_enable"`
+	// LeftWork 左侧避障是否处于工作状态。
+	LeftWork bool `json:"left_work"`
+	// RightEnable 右侧避障能力是否启用。
+	RightEnable bool `json:"right_enable"`
+	// RightWork 右侧避障是否处于工作状态。
+	RightWork bool `json:"right_work"`
+	// FrontEnable 前方避障能力是否启用。
+	FrontEnable bool `json:"front_enable"`
+	// FrontWork 前方避障是否处于工作状态。
+	FrontWork bool `json:"front_work"`
+	// BackEnable 后方避障能力是否启用。
+	BackEnable bool `json:"back_enable"`
+	// BackWork 后方避障是否处于工作状态。
+	BackWork bool `json:"back_work"`
+	// VerticalEnable 垂直方向避障能力是否启用。
+	VerticalEnable bool `json:"vertical_enable"`
+	// VerticalWork 垂直方向避障是否处于工作状态。
+	VerticalWork bool `json:"vertical_work"`
+	// HorizontalEnable 水平方向避障能力是否启用。
 	HorizontalEnable bool `json:"horizontal_enable"`
-	HorizontalWork   bool `json:"horizontal_work"`
-	// AroundDistances 周向距离，单位 mm；与 JSON 中 around_distance / around_distances 对齐见 UnmarshalJSON
+	// HorizontalWork 水平方向避障是否处于工作状态。
+	HorizontalWork bool `json:"horizontal_work"`
+	// AroundDistances 周向距离数组；兼容 JSON 中 around_distance 与 around_distances 两种键名。
 	AroundDistances []int `json:"-"`
 }
 
@@ -187,30 +226,44 @@ func (d *DrcHsiInfoPushData) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// DrcDelayInfoPushData 设备 drc/up `delay_info_push` 的 data（图传时延）。
+// DrcDelayInfoPushData 是设备在 drc/up `delay_info_push` 中上报的控制链路与图传链路时延。
 type DrcDelayInfoPushData struct {
-	SdrCmdDelay       int                    `json:"sdr_cmd_delay"`
+	// SdrCmdDelay SDR 控制指令链路时延，单位以官方文档为准。
+	SdrCmdDelay int `json:"sdr_cmd_delay"`
+	// LiveviewDelayList 多路图传码流的时延列表。
 	LiveviewDelayList []DrcLiveviewDelayItem `json:"liveview_delay_list"`
 }
 
-// DrcLiveviewDelayItem 多路图传码流时延项。
+// DrcLiveviewDelayItem 表示一路图传码流的时延信息。
 type DrcLiveviewDelayItem struct {
-	VideoID           string `json:"video_id"`
-	LiveviewDelayTime int    `json:"liveview_delay_time"`
+	// VideoID 视频流标识。
+	VideoID string `json:"video_id"`
+	// LiveviewDelayTime 图传时延，单位以官方文档为准。
+	LiveviewDelayTime int `json:"liveview_delay_time"`
 }
 
-// DrcOsdInfoPushData 设备 drc/up `osd_info_push` 的 data（高频姿态/位置等，单位以文档为准）。
+// DrcOsdInfoPushData 是设备在 drc/up `osd_info_push` 中上报的高频姿态、位置与云台状态。
 type DrcOsdInfoPushData struct {
+	// AttitudeHead 飞行器航向角。
 	AttitudeHead float64 `json:"attitude_head"`
-	Latitude     float64 `json:"latitude"`
-	Longitude    float64 `json:"longitude"`
-	Height       float64 `json:"height"`
-	SpeedX       float64 `json:"speed_x"`
-	SpeedY       float64 `json:"speed_y"`
-	SpeedZ       float64 `json:"speed_z"`
-	GimbalPitch  float64 `json:"gimbal_pitch"`
-	GimbalRoll   float64 `json:"gimbal_roll"`
-	GimbalYaw    float64 `json:"gimbal_yaw"`
+	// Latitude 纬度。
+	Latitude float64 `json:"latitude"`
+	// Longitude 经度。
+	Longitude float64 `json:"longitude"`
+	// Height 高度。
+	Height float64 `json:"height"`
+	// SpeedX X 轴速度。
+	SpeedX float64 `json:"speed_x"`
+	// SpeedY Y 轴速度。
+	SpeedY float64 `json:"speed_y"`
+	// SpeedZ Z 轴速度。
+	SpeedZ float64 `json:"speed_z"`
+	// GimbalPitch 云台俯仰角。
+	GimbalPitch float64 `json:"gimbal_pitch"`
+	// GimbalRoll 云台横滚角。
+	GimbalRoll float64 `json:"gimbal_roll"`
+	// GimbalYaw 云台偏航角。
+	GimbalYaw float64 `json:"gimbal_yaw"`
 }
 
 // DrcUnmarshalUpData 按 method 将 drc/up 的 data 反序列化为强类型。
@@ -234,6 +287,12 @@ func DrcUnmarshalUpData(method string, data json.RawMessage) (any, error) {
 		return &v, nil
 	case MethodDrcHeartBeat:
 		var v DrcHeartBeatUpData
+		if err := json.Unmarshal(data, &v); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	case MethodDrcInitialStateSubscribe:
+		var v DrcInitialStateSubscribeUpData
 		if err := json.Unmarshal(data, &v); err != nil {
 			return nil, err
 		}
@@ -282,6 +341,11 @@ func DrcUpPayloadSummary(method string, parsed any) string {
 			return ""
 		}
 		return fmt.Sprintf("ts=%d", t.Timestamp)
+	case *DrcInitialStateSubscribeUpData:
+		if t == nil {
+			return ""
+		}
+		return fmt.Sprintf("result=%d", t.Result)
 	case *DrcHsiInfoPushData:
 		if t == nil {
 			return ""

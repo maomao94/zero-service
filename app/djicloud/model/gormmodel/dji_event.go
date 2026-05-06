@@ -132,3 +132,20 @@ type DjiReturnHomeEvent struct {
 }
 
 func (DjiReturnHomeEvent) TableName() string { return "dji_return_home_event" }
+
+// DjiDrcUpEvent 是 DRC 上行事件记录表。
+//
+// 功能：记录 thing/product/{gateway_sn}/drc/up 中已解析或未知的上行数据，用于指令飞行链路排障、控制权状态审计和高频状态抽样留痕。
+// 数据来源：thing/product/{gateway_sn}/drc/up，典型 method 包括 drc_initial_state_subscribe、heart_beat、hsi_info_push、delay_info_push、osd_info_push。
+// 写入策略：按上行消息逐条插入，RawJSON 保留解析后的原始业务数据，Summary 保留便于检索的短摘要。
+// 使用场景：排查 DRC 链路异常、追踪初始状态订阅回执、分析设备上报的避障/时延/OSD 状态。
+type DjiDrcUpEvent struct {
+	gormx.LegacyBaseModel
+	GatewaySn  string    `gorm:"column:gateway_sn;type:varchar(64);index;not null;comment:网关机巢SN"`
+	Method     string    `gorm:"column:method;type:varchar(64);index;not null;default:'';comment:DRC上行方法名"`
+	RawJSON    string    `gorm:"column:raw_json;type:jsonb;default:'{}';comment:DRC上行原始解析数据JSON"`
+	Summary    string    `gorm:"column:summary;type:varchar(512);default:'';comment:DRC上行摘要"`
+	ReportedAt time.Time `gorm:"column:reported_at;index;not null;comment:设备上报时间"`
+}
+
+func (DjiDrcUpEvent) TableName() string { return "dji_drc_up_event" }
