@@ -1,10 +1,9 @@
 package config
 
 import (
-	"zero-service/common/ossx/osssconfig"
-
-	"github.com/zeromicro/go-zero/core/stores/cache"
 	"github.com/zeromicro/go-zero/zrpc"
+
+	"zero-service/common/gormx"
 )
 
 type Config struct {
@@ -18,13 +17,29 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
-
-	DB struct {
-		DataSource string
-	}
-
-	Cache cache.CacheConf
-	Oss   osssconfig.OssConf
-
+	DB                   gormx.Config
+	Oss                  OssConf
 	ThumbTaskConcurrency int `json:",default=2"`
+	Upload               UploadConf
+}
+
+type OssConf struct {
+	TenantMode bool
+}
+
+type UploadConf struct {
+	TempDir       string `json:",default=/opt/data/temp"`
+	KeepTempFiles bool   `json:",default=false"`
+	Image         ImageUploadConf
+}
+
+type ImageUploadConf struct {
+	MaxExifRead int `json:",default=65536"`
+	Thumb       ImageVariantConf
+}
+
+type ImageVariantConf struct {
+	Enabled bool `json:",default=false"`
+	Width   int  `json:",default=300"`
+	Height  int  `json:",default=300"`
 }

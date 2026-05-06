@@ -35,7 +35,7 @@ func (l *FlightTaskPrepareLogic) FlightTaskPrepare(in *djicloud.FlightTaskPrepar
 		ExecuteTime:           in.ExecuteTime,
 		WaylineType:           int(in.WaylineType),
 		File:                  djisdk.FlightTaskFile{URL: file.GetUrl(), Fingerprint: file.GetFingerprint()},
-		RthAltitude:           int(in.RthAltitude),
+		RthAltitude:           float64(in.RthAltitude),
 		OutOfControlAction:    int(in.OutOfControlAction),
 		ExitWaylineWhenRCLost: int(in.ExitWaylineWhenRcLost),
 	}
@@ -48,8 +48,12 @@ func (l *FlightTaskPrepareLogic) FlightTaskPrepare(in *djicloud.FlightTaskPrepar
 		}
 	}
 	if sm := in.GetSimulateMission(); sm != nil && sm.IsEnable {
+		isEnable := 0
+		if sm.IsEnable {
+			isEnable = 1
+		}
 		prepare.SimulateMission = &djisdk.SimulateMission{
-			IsEnable:  sm.IsEnable,
+			IsEnable:  isEnable,
 			Latitude:  sm.Latitude,
 			Longitude: sm.Longitude,
 		}

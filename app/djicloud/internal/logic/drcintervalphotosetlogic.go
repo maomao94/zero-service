@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"strconv"
 
 	"zero-service/app/djicloud/djicloud"
 	"zero-service/app/djicloud/internal/svc"
@@ -25,7 +26,8 @@ func NewDrcIntervalPhotoSetLogic(ctx context.Context, svcCtx *svc.ServiceContext
 }
 
 func (l *DrcIntervalPhotoSetLogic) DrcIntervalPhotoSet(in *djicloud.DrcIntervalPhotoSetReq) (*djicloud.CommonRes, error) {
-	data := &djisdk.DrcIntervalPhotoSetData{PayloadIndex: in.GetPayloadIndex(), Interval: in.GetInterval()}
+	interval, _ := strconv.ParseFloat(in.GetInterval(), 64)
+	data := &djisdk.DrcIntervalPhotoSetData{PayloadIndex: in.GetPayloadIndex(), Interval: interval}
 	tid, err := l.svcCtx.DjiClient.DrcIntervalPhotoSet(l.ctx, in.GetDeviceSn(), data)
 	if err != nil {
 		return errRes(tid, err), nil

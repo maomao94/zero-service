@@ -2,6 +2,7 @@ package netx
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -14,6 +15,7 @@ type Request struct {
 	QueryParams url.Values
 	FormData    url.Values
 	Body        []byte
+	OptionError error
 }
 
 type FileUpload struct {
@@ -64,6 +66,7 @@ func WithJSONBody(v any) RequestOption {
 	return func(r *Request) {
 		data, err := json.Marshal(v)
 		if err != nil {
+			r.OptionError = fmt.Errorf("marshal json body: %w", err)
 			return
 		}
 		r.Body = data
@@ -81,6 +84,7 @@ func WithBodyReader(reader io.Reader) RequestOption {
 		}
 		data, err := io.ReadAll(reader)
 		if err != nil {
+			r.OptionError = fmt.Errorf("read body: %w", err)
 			return
 		}
 		r.Body = data

@@ -466,7 +466,7 @@ func TestFlightTaskPrepareDataSerializesSimulateMission(t *testing.T) {
 		TaskType: 0,
 		File:     FlightTaskFile{URL: "https://example.com/wayline.kmz"},
 		SimulateMission: &SimulateMission{
-			IsEnable:  true,
+			IsEnable:  1,
 			Latitude:  22.123456,
 			Longitude: 113.654321,
 		},
@@ -484,7 +484,7 @@ func TestFlightTaskPrepareDataSerializesSimulateMission(t *testing.T) {
 	if !ok {
 		t.Fatalf("simulate_mission = %T, want object; payload=%s", got["simulate_mission"], string(payload))
 	}
-	if simulateMission["is_enable"] != true || simulateMission["latitude"] != 22.123456 || simulateMission["longitude"] != 113.654321 {
+	if simulateMission["is_enable"] != float64(1) || simulateMission["latitude"] != 22.123456 || simulateMission["longitude"] != 113.654321 {
 		t.Fatalf("unexpected simulate_mission: %v", simulateMission)
 	}
 	for _, misplaced := range []string{"is_enable", "latitude", "longitude"} {

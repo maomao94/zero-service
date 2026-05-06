@@ -15,6 +15,8 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
+const streamUploadProgressLogThreshold = 100 * 1024 * 1024
+
 type PutStreamFileLogic struct {
 	logx.Logger
 	ctx    context.Context
@@ -84,7 +86,7 @@ func (l *PutStreamFileLogic) PutStreamFile(req *types.PutFileRequest) (resp *typ
 				return nil, err
 			}
 			// 每当上传字节数超过阈值时打印一次进度
-			if uploadedSize-lastLoggedSize >= progressLogThreshold || uploadedSize == fileHeader.Size {
+			if uploadedSize-lastLoggedSize >= streamUploadProgressLogThreshold || uploadedSize == fileHeader.Size {
 				progress := float64(uploadedSize) / float64(fileHeader.Size) * 100
 				l.Logger.Infof(
 					"Uploading part %d: %s (%.2f%% completed, Uploaded: %s / %s)",

@@ -2,8 +2,11 @@ package logic
 
 import (
 	"context"
+
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
+	"zero-service/common/ossx"
+	"zero-service/model/gormmodel"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -23,13 +26,13 @@ func NewDeleteOssLogic(ctx context.Context, svcCtx *svc.ServiceContext) *DeleteO
 }
 
 func (l *DeleteOssLogic) DeleteOss(in *file.DeleteOssReq) (*file.DeleteOssRes, error) {
-	oss, err := l.svcCtx.OssModel.FindOne(l.ctx, in.Id)
-	if err != nil {
+	var oss gormmodel.Oss
+	if err := l.svcCtx.DB.WithContext(l.ctx).First(&oss, in.Id).Error; err != nil {
 		return nil, err
 	}
-	err = l.svcCtx.OssModel.DeleteSoft(l.ctx, nil, oss.Id)
-	if err != nil {
+	if err := l.svcCtx.DB.WithContext(l.ctx).Delete(&oss).Error; err != nil {
 		return nil, err
 	}
+	ossx.CacheInvalidate(oss.TenantId)
 	return &file.DeleteOssRes{Id: oss.Id}, nil
 }

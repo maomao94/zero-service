@@ -2,11 +2,11 @@ package logic
 
 import (
 	"context"
-	"github.com/zeromicro/go-zero/core/logx"
+
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
-	"zero-service/common/ossx"
-	"zero-service/model"
+
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type RemoveBucketLogic struct {
@@ -24,19 +24,16 @@ func NewRemoveBucketLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Remo
 }
 
 func (l *RemoveBucketLogic) RemoveBucket(in *file.RemoveBucketReq) (*file.RemoveBucketRes, error) {
-	ossTemplate, err := ossx.Template(in.TenantId, in.Code, l.svcCtx.Config.Oss.TenantMode, func(tenantId, code string) (oss *model.Oss, err error) {
-		return l.svcCtx.OssModel.FindOneByTenantIdOssCode(l.ctx, in.TenantId, in.Code)
-	})
+	ossTemplate, err := l.svcCtx.GetOssTemplate(l.ctx, in.TenantId, in.Code)
 	if err != nil {
 		return nil, err
 	}
-	bool, err := ossTemplate.BucketExists(l.ctx, in.TenantId, in.BucketName)
+	exists, err := ossTemplate.BucketExists(l.ctx, in.TenantId, in.BucketName)
 	if err != nil {
 		return nil, err
 	}
-	if bool {
-		err = ossTemplate.RemoveBucket(l.ctx, in.TenantId, in.BucketName)
-		if err != nil {
+	if exists {
+		if err = ossTemplate.RemoveBucket(l.ctx, in.TenantId, in.BucketName); err != nil {
 			return nil, err
 		}
 	}

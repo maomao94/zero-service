@@ -2,12 +2,13 @@ package logic
 
 import (
 	"context"
-	"github.com/Masterminds/squirrel"
-	"github.com/dromara/carbon/v2"
-	"github.com/jinzhu/copier"
-	"github.com/zeromicro/go-zero/core/logx"
+
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
+	"zero-service/common/gormx"
+	"zero-service/model/gormmodel"
+
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type OssListLogic struct {
@@ -25,38 +26,26 @@ func NewOssListLogic(ctx context.Context, svcCtx *svc.ServiceContext) *OssListLo
 }
 
 func (l *OssListLogic) OssList(in *file.OssListReq) (*file.OssListRes, error) {
-	whereBuilder := l.svcCtx.OssModel.SelectBuilder()
+	db := l.svcCtx.DB.WithContext(l.ctx).Model(&gormmodel.Oss{})
 	if len(in.TenantId) > 0 {
-		whereBuilder = whereBuilder.Where(squirrel.Eq{
-			"tenant_id": in.TenantId,
-		})
+		db = db.Where("tenant_id = ?", in.TenantId)
 	}
 	if in.Category > 0 {
-		whereBuilder = whereBuilder.Where(squirrel.Eq{
-			"category": in.Category,
-		})
+		db = db.Where("category = ?", in.Category)
 	}
-	count, err := l.svcCtx.OssModel.FindCount(l.ctx, whereBuilder, "1")
+	db = db.Order(ossOrderBy(in.OrderBy))
+
+	var list []gormmodel.Oss
+	pageResult, err := gormx.QueryPage(db, int(in.Page), int(in.PageSize), &list)
 	if err != nil {
 		return nil, err
 	}
-	list, err := l.svcCtx.OssModel.FindPageListByPage(l.ctx, whereBuilder, in.Page, in.PageSize, in.OrderBy)
-	if err != nil {
-		return nil, err
+	respOss := make([]*file.Oss, 0, len(list))
+	for i := range list {
+		respOss = append(respOss, toPbOss(&list[i]))
 	}
-	var respOss []*file.Oss
-	if len(list) > 0 {
-		for _, oss := range list {
-			var pbOss file.Oss
-			_ = copier.Copy(&pbOss, oss)
-			pbOss.CreateTime = carbon.CreateFromStdTime(oss.CreateTime).ToDateTimeString()
-			pbOss.UpdateTime = carbon.CreateFromStdTime(oss.UpdateTime).ToDateTimeString()
-			respOss = append(respOss, &pbOss)
-		}
-	}
-	//copier.Copy(&respOss, list)
 	return &file.OssListRes{
-		Total: count,
+		Total: pageResult.Total,
 		Oss:   respOss,
 	}, nil
 }

@@ -18,6 +18,8 @@ func registerEventHandlers(c *djisdk.Client, db *gormx.DB) {
 	c.OnFlightTaskReady(NewFlightTaskReadyHandler(db))
 	c.OnReturnHomeInfo(NewReturnHomeInfoHandler(db))
 	c.OnCustomDataFromPsdk(HandleCustomDataFromPsdkEvent)
+	c.OnCustomDataFromEsdk(HandleCustomDataFromEsdkEvent)
+	c.OnOtaProgress(HandleOtaProgressEvent)
 	c.OnHmsEventNotify(NewHmsEventNotifyHandler(db))
 	c.OnRemoteLogFileUploadProgress(NewRemoteLogFileUploadProgressHandler(db))
 }

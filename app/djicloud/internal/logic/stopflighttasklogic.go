@@ -5,6 +5,7 @@ import (
 
 	"zero-service/app/djicloud/djicloud"
 	"zero-service/app/djicloud/internal/svc"
+	"zero-service/common/djisdk"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -24,8 +25,11 @@ func NewStopFlightTaskLogic(ctx context.Context, svcCtx *svc.ServiceContext) *St
 }
 
 // StopFlightTask 强制停止当前航线任务。
-func (l *StopFlightTaskLogic) StopFlightTask(in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
-	tid, err := l.svcCtx.DjiClient.StopFlightTask(l.ctx, in.DeviceSn)
+func (l *StopFlightTaskLogic) StopFlightTask(in *djicloud.StopFlightTaskReq) (*djicloud.CommonRes, error) {
+	tid, err := l.svcCtx.DjiClient.StopFlightTask(l.ctx, in.GetDeviceSn(), &djisdk.FlightTaskStopData{
+		FlightID:  in.GetFlightId(),
+		WaylineID: int(in.GetWaylineId()),
+	})
 	if err != nil {
 		l.Errorf("[flight-task] stop flight task failed: %v", err)
 		return errRes(tid, err), nil

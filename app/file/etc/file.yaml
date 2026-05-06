@@ -1,22 +1,65 @@
 Name: file.rpc
 ListenOn: 0.0.0.0:21003
-Timeout: 10000
+# gRPC 单次调用上限（毫秒）。RelayFile（URL 拉取 + 多目标 OSS 上传）等长链路需留足余量。
+Timeout: 600000
 Mode: dev
 Log:
   Encoding: plain
-#  Mode: file
+  #  Mode: file
   Path: /opt/logs/file.rpc
 NacosConfig:
-  IsRegister: true
+  IsRegister: false
   Host: 127.0.0.1
   Port: 8848
   Username: nacos
   PassWord: nacos
   NamespaceId: public
   ServiceName: file
-Oss:
-  # 是否开启租户模式
-  TenantMode: true
+# 缩略图异步处理并发数，默认 2。
+# 只影响图片附加产物生成任务，不影响原图上传链路。
 ThumbTaskConcurrency: 2
+# 文件上传处理配置。
+# 原图始终按上传流直传 OSS；图片缩略图是原图上传成功后的附加产物。
+Upload:
+  # 上传过程使用的临时目录，默认 /opt/data/temp。
+  # 仅图片且开启缩略图时会落完整临时文件；非图片不会落完整临时文件。
+  TempDir: /opt/data/temp
+  # 是否保留上传处理过程中的临时文件，默认 false。
+  # 仅建议线上问题定位时临时开启，开启后需要自行清理 TempDir。
+  KeepTempFiles: false
+  Image:
+    # 图片 EXIF 解析最多缓存的文件头字节数，默认 65536，即 64KB。
+    # 该配置只缓存头部数据，不会把整张图片读入内存。
+    MaxExifRead: 65536
+    # 缩略图配置。开启后，原图上传成功后异步生成并上传缩略图。
+    # 缩略图不会替换原图；当前接口会返回 ThumbLink 和 ThumbName。
+    Thumb:
+      # 是否启用缩略图生成，默认 false；当前服务配置为 true。
+      Enabled: true
+      # 缩略图最大宽度，默认 300。
+      Width: 300
+      # 缩略图最大高度，默认 300。
+      Height: 300
+
+# 数据库配置使用 common/gormx，按 DataSource 自动识别 MySQL/PostgreSQL/SQLite。
+# MySQL 示例：root:password@tcp(127.0.0.1:3306)/zero_service?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+# PostgreSQL 示例：postgres://user:password@127.0.0.1:5432/zero_service?sslmode=disable
+# SQLite 示例：file:/opt/data/file.db?cache=shared
 DB:
   DataSource: root:PXDN93VRKUm8TeE7@tcp(localhost:33069)/zero?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+  # 最大空闲连接数，默认 10。
+  MaxIdleConns: 10
+  # 最大打开连接数，默认 100。
+  MaxOpenConns: 100
+  # 慢 SQL 阈值，默认 200ms。
+  SlowThreshold: 200ms
+  # GORM 日志级别，默认 error，可选 silent/error/warn/info。
+  LogLevel: error
+  # 是否参数化 SQL 日志，默认 false。生产环境建议开启以避免日志暴露敏感参数。
+  ParameterizedQueries: false
+  # 是否忽略 record not found 日志，默认 false。
+  IgnoreRecordNotFoundError: false
+  # 是否按字段名显式查询，默认 false。
+  QueryFields: false
+Oss:
+  TenantMode: true

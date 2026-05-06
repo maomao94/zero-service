@@ -186,16 +186,16 @@ type DjiCloudClient interface {
 	// PauseFlightTask 暂停航线任务。
 	// 对应 DJI Cloud API method: flighttask_pause，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	PauseFlightTask(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	PauseFlightTask(ctx context.Context, in *PauseFlightTaskReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// ResumeFlightTask 恢复已暂停的航线任务。
 	// 对应 DJI Cloud API method: flighttask_recovery，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	ResumeFlightTask(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	ResumeFlightTask(ctx context.Context, in *ResumeFlightTaskReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// StopFlightTask 强制停止当前航线任务。
 	// 对应 DJI Cloud API method: flighttask_stop，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	// https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/wayline.html
-	StopFlightTask(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	StopFlightTask(ctx context.Context, in *StopFlightTaskReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// ReturnHome 控制飞行器一键返航。
 	// 对应 DJI Cloud API method: return_home，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -344,7 +344,7 @@ type DjiCloudClient interface {
 	// FlyToPointStop 停止当前的飞向航点任务。
 	// 对应 DJI Cloud API method: fly_to_point_stop，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	FlyToPointStop(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	FlyToPointStop(ctx context.Context, in *FlyToPointStopReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// TakeoffToPoint 一键起飞到指定坐标点。
 	// 对应 DJI Cloud API method: takeoff_to_point，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -426,7 +426,7 @@ type DjiCloudClient interface {
 	CameraIrMeteringArea(ctx context.Context, in *CameraIrMeteringAreaReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// FlightAreasUpdate 触发自定义飞行区文件更新。
 	// 对应 DJI Cloud API method: flight_areas_update，Topic: services，方向 down，data 为 null。
-	FlightAreasUpdate(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	FlightAreasUpdate(ctx context.Context, in *FlightAreasUpdateReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// PsdkUIResourceUpload PSDK UI 资源上传。
 	// 对应 DJI Cloud API method: psdk_ui_resource_upload，
 	// Topic: thing/product/{gateway_sn}/services，方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -651,7 +651,7 @@ func (c *djiCloudClient) CancelFlightTask(ctx context.Context, in *CancelFlightT
 	return out, nil
 }
 
-func (c *djiCloudClient) PauseFlightTask(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) PauseFlightTask(ctx context.Context, in *PauseFlightTaskReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_PauseFlightTask_FullMethodName, in, out, cOpts...)
@@ -661,7 +661,7 @@ func (c *djiCloudClient) PauseFlightTask(ctx context.Context, in *DeviceSnReq, o
 	return out, nil
 }
 
-func (c *djiCloudClient) ResumeFlightTask(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) ResumeFlightTask(ctx context.Context, in *ResumeFlightTaskReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_ResumeFlightTask_FullMethodName, in, out, cOpts...)
@@ -671,7 +671,7 @@ func (c *djiCloudClient) ResumeFlightTask(ctx context.Context, in *DeviceSnReq, 
 	return out, nil
 }
 
-func (c *djiCloudClient) StopFlightTask(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) StopFlightTask(ctx context.Context, in *StopFlightTaskReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_StopFlightTask_FullMethodName, in, out, cOpts...)
@@ -1031,7 +1031,7 @@ func (c *djiCloudClient) FlyToPoint(ctx context.Context, in *FlyToPointReq, opts
 	return out, nil
 }
 
-func (c *djiCloudClient) FlyToPointStop(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) FlyToPointStop(ctx context.Context, in *FlyToPointStopReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_FlyToPointStop_FullMethodName, in, out, cOpts...)
@@ -1211,7 +1211,7 @@ func (c *djiCloudClient) CameraIrMeteringArea(ctx context.Context, in *CameraIrM
 	return out, nil
 }
 
-func (c *djiCloudClient) FlightAreasUpdate(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) FlightAreasUpdate(ctx context.Context, in *FlightAreasUpdateReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_FlightAreasUpdate_FullMethodName, in, out, cOpts...)
@@ -1565,16 +1565,16 @@ type DjiCloudServer interface {
 	// PauseFlightTask 暂停航线任务。
 	// 对应 DJI Cloud API method: flighttask_pause，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	PauseFlightTask(context.Context, *DeviceSnReq) (*CommonRes, error)
+	PauseFlightTask(context.Context, *PauseFlightTaskReq) (*CommonRes, error)
 	// ResumeFlightTask 恢复已暂停的航线任务。
 	// 对应 DJI Cloud API method: flighttask_recovery，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	ResumeFlightTask(context.Context, *DeviceSnReq) (*CommonRes, error)
+	ResumeFlightTask(context.Context, *ResumeFlightTaskReq) (*CommonRes, error)
 	// StopFlightTask 强制停止当前航线任务。
 	// 对应 DJI Cloud API method: flighttask_stop，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	// https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/wayline.html
-	StopFlightTask(context.Context, *DeviceSnReq) (*CommonRes, error)
+	StopFlightTask(context.Context, *StopFlightTaskReq) (*CommonRes, error)
 	// ReturnHome 控制飞行器一键返航。
 	// 对应 DJI Cloud API method: return_home，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -1723,7 +1723,7 @@ type DjiCloudServer interface {
 	// FlyToPointStop 停止当前的飞向航点任务。
 	// 对应 DJI Cloud API method: fly_to_point_stop，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	FlyToPointStop(context.Context, *DeviceSnReq) (*CommonRes, error)
+	FlyToPointStop(context.Context, *FlyToPointStopReq) (*CommonRes, error)
 	// TakeoffToPoint 一键起飞到指定坐标点。
 	// 对应 DJI Cloud API method: takeoff_to_point，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -1805,7 +1805,7 @@ type DjiCloudServer interface {
 	CameraIrMeteringArea(context.Context, *CameraIrMeteringAreaReq) (*CommonRes, error)
 	// FlightAreasUpdate 触发自定义飞行区文件更新。
 	// 对应 DJI Cloud API method: flight_areas_update，Topic: services，方向 down，data 为 null。
-	FlightAreasUpdate(context.Context, *DeviceSnReq) (*CommonRes, error)
+	FlightAreasUpdate(context.Context, *FlightAreasUpdateReq) (*CommonRes, error)
 	// PsdkUIResourceUpload PSDK UI 资源上传。
 	// 对应 DJI Cloud API method: psdk_ui_resource_upload，
 	// Topic: thing/product/{gateway_sn}/services，方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -1939,13 +1939,13 @@ func (UnimplementedDjiCloudServer) FlightTaskExecute(context.Context, *FlightTas
 func (UnimplementedDjiCloudServer) CancelFlightTask(context.Context, *CancelFlightTaskReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelFlightTask not implemented")
 }
-func (UnimplementedDjiCloudServer) PauseFlightTask(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) PauseFlightTask(context.Context, *PauseFlightTaskReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PauseFlightTask not implemented")
 }
-func (UnimplementedDjiCloudServer) ResumeFlightTask(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) ResumeFlightTask(context.Context, *ResumeFlightTaskReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResumeFlightTask not implemented")
 }
-func (UnimplementedDjiCloudServer) StopFlightTask(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) StopFlightTask(context.Context, *StopFlightTaskReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StopFlightTask not implemented")
 }
 func (UnimplementedDjiCloudServer) ReturnHome(context.Context, *DeviceSnReq) (*CommonRes, error) {
@@ -2053,7 +2053,7 @@ func (UnimplementedDjiCloudServer) DroneEmergencyStop(context.Context, *DeviceSn
 func (UnimplementedDjiCloudServer) FlyToPoint(context.Context, *FlyToPointReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FlyToPoint not implemented")
 }
-func (UnimplementedDjiCloudServer) FlyToPointStop(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) FlyToPointStop(context.Context, *FlyToPointStopReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FlyToPointStop not implemented")
 }
 func (UnimplementedDjiCloudServer) TakeoffToPoint(context.Context, *TakeoffToPointReq) (*CommonRes, error) {
@@ -2107,7 +2107,7 @@ func (UnimplementedDjiCloudServer) CameraIrMeteringPoint(context.Context, *Camer
 func (UnimplementedDjiCloudServer) CameraIrMeteringArea(context.Context, *CameraIrMeteringAreaReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CameraIrMeteringArea not implemented")
 }
-func (UnimplementedDjiCloudServer) FlightAreasUpdate(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) FlightAreasUpdate(context.Context, *FlightAreasUpdateReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FlightAreasUpdate not implemented")
 }
 func (UnimplementedDjiCloudServer) PsdkUIResourceUpload(context.Context, *PsdkUIResourceUploadReq) (*CommonRes, error) {
@@ -2450,7 +2450,7 @@ func _DjiCloud_CancelFlightTask_Handler(srv interface{}, ctx context.Context, de
 }
 
 func _DjiCloud_PauseFlightTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(PauseFlightTaskReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -2462,13 +2462,13 @@ func _DjiCloud_PauseFlightTask_Handler(srv interface{}, ctx context.Context, dec
 		FullMethod: DjiCloud_PauseFlightTask_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).PauseFlightTask(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).PauseFlightTask(ctx, req.(*PauseFlightTaskReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _DjiCloud_ResumeFlightTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(ResumeFlightTaskReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -2480,13 +2480,13 @@ func _DjiCloud_ResumeFlightTask_Handler(srv interface{}, ctx context.Context, de
 		FullMethod: DjiCloud_ResumeFlightTask_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).ResumeFlightTask(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).ResumeFlightTask(ctx, req.(*ResumeFlightTaskReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _DjiCloud_StopFlightTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(StopFlightTaskReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -2498,7 +2498,7 @@ func _DjiCloud_StopFlightTask_Handler(srv interface{}, ctx context.Context, dec 
 		FullMethod: DjiCloud_StopFlightTask_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).StopFlightTask(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).StopFlightTask(ctx, req.(*StopFlightTaskReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -3134,7 +3134,7 @@ func _DjiCloud_FlyToPoint_Handler(srv interface{}, ctx context.Context, dec func
 }
 
 func _DjiCloud_FlyToPointStop_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(FlyToPointStopReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -3146,7 +3146,7 @@ func _DjiCloud_FlyToPointStop_Handler(srv interface{}, ctx context.Context, dec 
 		FullMethod: DjiCloud_FlyToPointStop_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).FlyToPointStop(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).FlyToPointStop(ctx, req.(*FlyToPointStopReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -3458,7 +3458,7 @@ func _DjiCloud_CameraIrMeteringArea_Handler(srv interface{}, ctx context.Context
 }
 
 func _DjiCloud_FlightAreasUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(FlightAreasUpdateReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -3470,7 +3470,7 @@ func _DjiCloud_FlightAreasUpdate_Handler(srv interface{}, ctx context.Context, d
 		FullMethod: DjiCloud_FlightAreasUpdate_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).FlightAreasUpdate(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).FlightAreasUpdate(ctx, req.(*FlightAreasUpdateReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }

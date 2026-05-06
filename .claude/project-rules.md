@@ -12,13 +12,13 @@ go-zero 微服务 + eino AI 框架 + Trellis（`.trellis/`）
 | eino 框架 | `eino-skills` / `eino-learning` |
 | 部署模块 | `module-deploy` |
 
-> `ai-team` 为角色详细参考文档，已内联到 agile-dev-manager，无需单独激活。
+> `ai-team` 为角色详细参考文档，已内联到 `agile-dev-manager`，无需单独激活。
 
 ## Workflow 自动触发
 
-每次新会话开始时，自动读取并执行 `.agent/workflows/start.md` 中的流程，完成会话初始化（读取开发者身份、git 状态、活跃任务、项目 spec 等）。
+新会话开始时，自动按 `.agent/workflows/start.md` 完成初始化（读取开发者身份、git 状态、活跃任务、项目 spec 等），无需用户输入关键词。
 
-当用户要求执行以下关键词时，自动读取并执行对应的 workflow 文件：
+用户输入下列关键词时，自动读取并执行对应 workflow 文件：
 
 | 关键词 | Workflow 文件 |
 |--------|--------------|
@@ -37,11 +37,11 @@ go-zero 微服务 + eino AI 框架 + Trellis（`.trellis/`）
 | `/integrate-skill` 或 "集成技能" | `.agent/workflows/integrate-skill.md` |
 
 ## 编码底线
-- 先改 `.api`/`.proto` → `gen.sh` → 写 Logic，禁止跳过
-- Go/go-zero/Google 规范，禁止 Java 风格
-- 工具类函数须有单测，proto/api 注释完整一致
-- gRPC/API 生成代码非必要不写单测，优先覆盖手写 Logic、工具函数与关键业务分支
-- Git 提交信息中文
+- 先改 `.api` / `.proto` → 跑 `gen.sh` → 再写 Logic，三步顺序不得跳过
+- 遵循 Go / go-zero / Google 规范，禁止 Java 风格
+- 工具类函数必须配单测；`.proto` / `.api` 注释完整且与实现一致
+- gRPC / API 生成代码非必要不写单测，优先覆盖手写 Logic、工具函数与关键业务分支
+- Git 提交信息使用中文
 
 ## 规范层级
 
@@ -59,16 +59,17 @@ go-zero 微服务 + eino AI 框架 + Trellis（`.trellis/`）
 - `TodoWrite` 任务清单的 `content` 字段使用中文
 - `AskUserQuestion` 中的 `question` / `header` / `options.label` / `options.description` 全部使用中文
 - 代码内注释保持文件既有风格，不强制翻译
-- 仅当用户在最新消息中明确切换到其他语言时，才相应切换
+- 仅当用户在最新消息中明确切换语言时，才相应切换
 
 ### 提问纪律
 - Agent Mode 默认自主决策，不为细节频繁打断用户；遇到以下情况必须用 `AskUserQuestion` 主动询问，禁止擅自假设：
-    - 用户意图存在多种合理解读且后果差异大
-    - 需执行不可逆的破坏性操作（删文件、重置分支、改库表、`git push --force` 等）
-    - 缺少关键参数（目标文件路径、目标分支、密钥来源等）且无法从上下文推断
-    - 现有规则之间出现冲突，且本规则文件未给出仲裁
-- 提问格式要求：
-    - 一次性合并相关疑问，避免多轮往返
-    - 每个问题提供 2–4 个具体 options，附中文 description
-    - 开放性问题保留"其他（我来指定）"兜底项
+  - 用户意图存在多种合理解读且后果差异大
+  - 需执行不可逆的破坏性操作（删文件、重置分支、改库表、`git push --force` 等）
+  - 缺少关键参数（目标文件路径、目标分支、密钥来源等）且无法从上下文推断
+  - 现有规则之间出现冲突，且本规则文件未给出仲裁
+- 提问格式：
+  - 一次性合并相关疑问，避免多轮往返
+  - 每个问题提供 2–4 个具体 options，附中文 description
+  - 开放性问题保留"其他（我来指定）"兜底项
 - 常规可推进决策不停下等确认，事后在回复中简述所做假设
+

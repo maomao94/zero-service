@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"strconv"
 
 	"zero-service/app/djicloud/djicloud"
 	"zero-service/app/djicloud/internal/svc"
@@ -25,7 +26,8 @@ func NewDrcVideoResolutionSetLogic(ctx context.Context, svcCtx *svc.ServiceConte
 }
 
 func (l *DrcVideoResolutionSetLogic) DrcVideoResolutionSet(in *djicloud.DrcVideoResolutionSetReq) (*djicloud.CommonRes, error) {
-	data := &djisdk.DrcVideoResolutionSetData{PayloadIndex: in.GetPayloadIndex(), VideoResolution: in.GetVideoResolution()}
+	videoRes, _ := strconv.Atoi(in.GetVideoResolution())
+	data := &djisdk.DrcVideoResolutionSetData{PayloadIndex: in.GetPayloadIndex(), VideoResolution: videoRes}
 	tid, err := l.svcCtx.DjiClient.DrcVideoResolutionSet(l.ctx, in.GetDeviceSn(), data)
 	if err != nil {
 		return errRes(tid, err), nil

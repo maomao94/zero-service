@@ -25,7 +25,7 @@ func NewDrcCameraMechanicalShutterSetLogic(ctx context.Context, svcCtx *svc.Serv
 }
 
 func (l *DrcCameraMechanicalShutterSetLogic) DrcCameraMechanicalShutterSet(in *djicloud.DrcCameraMechanicalShutterSetReq) (*djicloud.CommonRes, error) {
-	data := &djisdk.DrcCameraMechanicalShutterSetData{PayloadIndex: in.GetPayloadIndex(), CameraType: in.GetCameraType(), DewarpingState: int(in.GetDewarpingState())}
+	data := &djisdk.DrcCameraMechanicalShutterSetData{PayloadIndex: in.GetPayloadIndex(), CameraType: in.GetCameraType(), MechanicalShutterState: int(in.GetDewarpingState())}
 	tid, err := l.svcCtx.DjiClient.DrcCameraMechanicalShutterSet(l.ctx, in.GetDeviceSn(), data)
 	if err != nil {
 		return errRes(tid, err), nil

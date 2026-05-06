@@ -9,7 +9,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"zero-service/model"
 
 	"github.com/google/uuid"
 )
@@ -21,7 +20,7 @@ var (
 	Category_Tencent int64 = 4
 
 	templatePool = make(map[string]OssTemplate)
-	ossPool      = make(map[string]*model.Oss)
+	ossPool      = make(map[string]*Config)
 	poolLock     sync.RWMutex
 )
 
@@ -30,12 +29,12 @@ type OssTemplate interface {
 	RemoveBucket(ctx context.Context, tenantId, bucketName string) error                                                                                        // 删除存储桶
 	StatFile(ctx context.Context, tenantId, bucketName, filename string) (*OssFile, error)                                                                      // 获取文件信息
 	BucketExists(ctx context.Context, tenantId, bucketName string) (bool, error)                                                                                // 存储桶是否存在
-	PutFile(ctx context.Context, tenantId, bucketName string, fileHeader *multipart.FileHeader, pathPrefix ...string) (*File, error)                            // 上传文件
-	PutStream(ctx context.Context, tenantId, bucketName, filename, contentType string, stream *[]byte) (*File, error)                                           // 上传文件
-	PutObject(ctx context.Context, tenantId, bucketName, filename, contentType string, reader io.Reader, objectSize int64, pathPrefix ...string) (*File, error) // 上传文件
+	PutFile(ctx context.Context, tenantId, bucketName string, fileHeader *multipart.FileHeader, pathPrefix ...string) (*File, error)                            // 上传文件（HTTP multipart）
+	PutStream(ctx context.Context, tenantId, bucketName, filename, contentType string, stream io.Reader, streamSize int64) (*File, error)                       // 上传文件（字节流）
+	PutObject(ctx context.Context, tenantId, bucketName, filename, contentType string, reader io.Reader, objectSize int64, pathPrefix ...string) (*File, error) // 上传文件（通用 Reader）
 	SignUrl(ctx context.Context, tenantId, bucketName, filename string, expires time.Duration) (string, error)                                                  // 生成文件url
 	RemoveFile(ctx context.Context, tenantId, bucketName, filename string) error                                                                                // 删除文件
-	RemoveFiles(ctx context.Context, tenantId string, bucketName string, filenames []string) ([]RemoveFileResult, error) // 批量删除文件
+	RemoveFiles(ctx context.Context, tenantId string, bucketName string, filenames []string) ([]RemoveFileResult, error)                                        // 批量删除文件
 }
 
 var _ OssTemplate = (*MinioTemplate)(nil)
@@ -44,7 +43,7 @@ type OssRule struct {
 	tenantMode bool
 }
 
-func (o *OssRule) bucketName(tenantId, bucketName string) string {
+func (o *OssRule) fullBucketName(tenantId, bucketName string) string {
 	prefix := ""
 	if o.tenantMode {
 		prefix = tenantId + "-"
@@ -75,6 +74,7 @@ type File struct {
 	FormatSize   string // 格式化文件大小
 	OriginalName string // 初始文件名
 	AttachId     string // 附件表ID
+	Md5          string // 文件内容 MD5
 }
 
 type RemoveFileResult struct {
@@ -93,7 +93,6 @@ type OssFile struct {
 
 type OssProperties struct {
 	Enabled    bool           // 是否启用
-	name       string         // 对象存储名称
 	TenantMode bool           // 是否开启租户模式
 	Endpoint   string         // 对象存储服务的URL
 	AppId      string         // 应用ID TencentCOS需要
@@ -104,48 +103,65 @@ type OssProperties struct {
 	Args       map[string]any // 自定义属性
 }
 
-type GetOssFn func(tenantId, code string) (oss *model.Oss, err error)
+type Config struct {
+	Category   int64
+	Endpoint   string
+	AccessKey  string
+	SecretKey  string
+	BucketName string
+	AppId      string
+	Region     string
+}
 
-func Template(TenantId, Code string, tenantMode bool, getOss GetOssFn) (ossTemplate OssTemplate, err error) {
-	oss, err := getOss(TenantId, Code)
-	poolLock.RLock()
-	ossCached := ossPool[TenantId]
-	ossTemplate = templatePool[TenantId]
-	poolLock.RUnlock()
+// GetConfigFn 按租户与业务编码加载 OSS 配置；ctx 用于取消与超时（如数据库查询）。
+type GetConfigFn func(ctx context.Context, tenantId, code string) (config *Config, err error)
+
+func Template(ctx context.Context, TenantId, Code string, tenantMode bool, getConfig GetConfigFn) (ossTemplate OssTemplate, err error) {
+	config, err := getConfig(ctx, TenantId, Code)
 	if err != nil {
 		return nil, err
-	} else {
-		if ossCached == nil || ossTemplate == nil ||
-			(oss.Endpoint != ossCached.Endpoint) ||
-			(oss.AccessKey != ossCached.AccessKey) {
-			poolLock.Lock()
-			defer poolLock.Unlock()
-			if ossCached == nil || ossTemplate == nil ||
-				(oss.Endpoint != ossCached.Endpoint) ||
-				(oss.AccessKey != ossCached.AccessKey) {
-				ossRule := OssRule{}
-				if tenantMode {
-					ossRule = OssRule{
-						tenantMode: true,
-					}
-				} else {
-					ossRule = OssRule{
-						tenantMode: false,
-					}
-				}
-				if oss.Category == Category_Minio {
-					ossTemplate, err = NewMinioTemplate(oss, ossRule)
-					if err != nil {
-						return nil, err
-					}
-				} else {
-					return nil, errors.New("oss type error")
-				}
-				templatePool[TenantId] = ossTemplate
-				ossPool[TenantId] = oss
-				return
-			}
-		}
-		return
 	}
+
+	poolLock.RLock()
+	configCached := ossPool[TenantId]
+	ossTemplate = templatePool[TenantId]
+	poolLock.RUnlock()
+
+	if needRebuild(configCached, ossTemplate, config) {
+		poolLock.Lock()
+		defer poolLock.Unlock()
+		configCached = ossPool[TenantId]
+		ossTemplate = templatePool[TenantId]
+		if needRebuild(configCached, ossTemplate, config) {
+			ossRule := OssRule{tenantMode: tenantMode}
+			if config.Category == Category_Minio {
+				ossTemplate, err = NewMinioTemplate(config, ossRule)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, errors.New("oss type error")
+			}
+			templatePool[TenantId] = ossTemplate
+			ossPool[TenantId] = config
+		}
+	}
+	return
+}
+
+func needRebuild(cached *Config, ossTemplate OssTemplate, current *Config) bool {
+	if cached == nil || current == nil || ossTemplate == nil {
+		return true
+	}
+	return current.Endpoint != cached.Endpoint ||
+		current.AccessKey != cached.AccessKey ||
+		current.SecretKey != cached.SecretKey
+}
+
+// CacheInvalidate 清除指定租户的 OSS 缓存，在更新/删除 OSS 配置后调用
+func CacheInvalidate(tenantId string) {
+	poolLock.Lock()
+	defer poolLock.Unlock()
+	delete(templatePool, tenantId)
+	delete(ossPool, tenantId)
 }

@@ -102,19 +102,19 @@ func (s *DjiCloudServer) CancelFlightTask(ctx context.Context, in *djicloud.Canc
 }
 
 // PauseFlightTask 暂停航线任务。
-func (s *DjiCloudServer) PauseFlightTask(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) PauseFlightTask(ctx context.Context, in *djicloud.PauseFlightTaskReq) (*djicloud.CommonRes, error) {
 	l := logic.NewPauseFlightTaskLogic(ctx, s.svcCtx)
 	return l.PauseFlightTask(in)
 }
 
 // ResumeFlightTask 恢复已暂停的航线任务。
-func (s *DjiCloudServer) ResumeFlightTask(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) ResumeFlightTask(ctx context.Context, in *djicloud.ResumeFlightTaskReq) (*djicloud.CommonRes, error) {
 	l := logic.NewResumeFlightTaskLogic(ctx, s.svcCtx)
 	return l.ResumeFlightTask(in)
 }
 
 // StopFlightTask 强制停止当前航线任务。
-func (s *DjiCloudServer) StopFlightTask(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) StopFlightTask(ctx context.Context, in *djicloud.StopFlightTaskReq) (*djicloud.CommonRes, error) {
 	l := logic.NewStopFlightTaskLogic(ctx, s.svcCtx)
 	return l.StopFlightTask(in)
 }
@@ -330,7 +330,7 @@ func (s *DjiCloudServer) FlyToPoint(ctx context.Context, in *djicloud.FlyToPoint
 }
 
 // FlyToPointStop 停止当前的飞向航点任务。
-func (s *DjiCloudServer) FlyToPointStop(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) FlyToPointStop(ctx context.Context, in *djicloud.FlyToPointStopReq) (*djicloud.CommonRes, error) {
 	l := logic.NewFlyToPointStopLogic(ctx, s.svcCtx)
 	return l.FlyToPointStop(in)
 }
@@ -438,7 +438,7 @@ func (s *DjiCloudServer) CameraIrMeteringArea(ctx context.Context, in *djicloud.
 }
 
 // FlightAreasUpdate 触发自定义飞行区文件更新。
-func (s *DjiCloudServer) FlightAreasUpdate(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) FlightAreasUpdate(ctx context.Context, in *djicloud.FlightAreasUpdateReq) (*djicloud.CommonRes, error) {
 	l := logic.NewFlightAreasUpdateLogic(ctx, s.svcCtx)
 	return l.FlightAreasUpdate(in)
 }

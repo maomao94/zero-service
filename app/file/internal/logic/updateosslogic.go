@@ -2,9 +2,11 @@ package logic
 
 import (
 	"context"
+
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
-	"zero-service/model"
+	"zero-service/common/ossx"
+	"zero-service/model/gormmodel"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -24,22 +26,24 @@ func NewUpdateOssLogic(ctx context.Context, svcCtx *svc.ServiceContext) *UpdateO
 }
 
 func (l *UpdateOssLogic) UpdateOss(in *file.UpdateOssReq) (*file.UpdateOssRes, error) {
-	_, err := l.svcCtx.OssModel.Update(l.ctx, nil, &model.Oss{
-		Id:         in.Id,
-		TenantId:   in.TenantId,
-		Category:   in.Category,
-		OssCode:    in.OssCode,
-		Endpoint:   in.Endpoint,
-		AccessKey:  in.AccessKey,
-		SecretKey:  in.SecretKey,
-		BucketName: in.BucketName,
-		AppId:      in.AppId,
-		Region:     in.Region,
-		Remark:     in.Remark,
-		Status:     in.Status,
-	})
-	if err != nil {
+	var oss gormmodel.Oss
+	if err := l.svcCtx.DB.WithContext(l.ctx).First(&oss, in.Id).Error; err != nil {
 		return nil, err
 	}
+	oss.TenantId = in.TenantId
+	oss.Category = in.Category
+	oss.OssCode = in.OssCode
+	oss.Endpoint = in.Endpoint
+	oss.AccessKey = in.AccessKey
+	oss.SecretKey = in.SecretKey
+	oss.BucketName = in.BucketName
+	oss.AppId = in.AppId
+	oss.Region = in.Region
+	oss.Remark = in.Remark
+	oss.Status = in.Status
+	if err := l.svcCtx.DB.WithContext(l.ctx).Save(&oss).Error; err != nil {
+		return nil, err
+	}
+	ossx.CacheInvalidate(in.TenantId)
 	return &file.UpdateOssRes{}, nil
 }

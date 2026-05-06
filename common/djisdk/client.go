@@ -92,6 +92,7 @@ type Client struct {
 	onFlightTaskReady    func(ctx context.Context, gatewaySn string, data *FlightTaskReadyEvent)
 	onReturnHomeInfo     func(ctx context.Context, gatewaySn string, data *ReturnHomeInfoEvent)
 	onCustomDataFromPsdk func(ctx context.Context, gatewaySn string, data *CustomDataFromPsdkEvent)
+	onCustomDataFromEsdk func(ctx context.Context, gatewaySn string, data *CustomDataFromEsdkEvent)
 	onHmsEventNotify     func(ctx context.Context, gatewaySn string, data *HmsEventData)
 	onRemoteLogProgress  func(ctx context.Context, gatewaySn string, data *RemoteLogFileUploadProgressEvent)
 	onOtaProgress        func(ctx context.Context, gatewaySn string, data *OtaProgressEvent)
@@ -306,6 +307,18 @@ func (c *Client) tryDispatchEventNotify(ctx context.Context, gatewaySn, method s
 			c.onTopoUpdate(ctx, gatewaySn, &msg.Data)
 			return true, PlatformResultOK
 		}
+	case MethodCustomDataTransmissionFromEsdk:
+		if c.onCustomDataFromEsdk != nil {
+			var msg struct {
+				Data CustomDataFromEsdkEvent `json:"data"`
+			}
+			if err := json.Unmarshal(raw, &msg); err != nil {
+				logx.WithContext(ctx).Errorf("[dji-sdk] unmarshal CustomDataFromEsdkEvent failed: %v", err)
+				return true, PlatformResultHandlerError
+			}
+			c.onCustomDataFromEsdk(ctx, gatewaySn, &msg.Data)
+			return true, PlatformResultOK
+		}
 	}
 	return false, PlatformResultOK
 }
@@ -364,6 +377,14 @@ func (c *Client) OnReturnHomeInfo(handler func(ctx context.Context, gatewaySn st
 //   - handler: 回调函数，携带已解析的 CustomDataFromPsdkEvent 结构体
 func (c *Client) OnCustomDataFromPsdk(handler func(ctx context.Context, gatewaySn string, data *CustomDataFromPsdkEvent)) {
 	c.onCustomDataFromPsdk = handler
+}
+
+// OnCustomDataFromEsdk 注册 ESDK 自定义数据上报钩子。
+// 方向 up：设备→云平台。对应 method: custom_data_transmission_from_esdk。
+// ESDK 负载设备有自定义数据上报时通过 events topic 推送，钩子只负责通知。
+//   - handler: 回调函数，携带已解析的 CustomDataFromEsdkEvent 结构体
+func (c *Client) OnCustomDataFromEsdk(handler func(ctx context.Context, gatewaySn string, data *CustomDataFromEsdkEvent)) {
+	c.onCustomDataFromEsdk = handler
 }
 
 // OnHmsEventNotify 注册 HMS 健康告警上报钩子。
@@ -656,28 +677,31 @@ func (c *Client) CancelFlightTask(ctx context.Context, gatewaySn string, flightI
 // PauseFlightTask 暂停当前正在执行的飞行任务。
 //   - ctx: 请求上下文
 //   - gatewaySn: 网关设备序列号
+//   - data: 暂停参数（含 flight_id 和可选的 wayline_id）
 //   - 返回值 tid: 本次请求的事务 ID
 //   - 返回值 err: 命令发送或设备返回错误时的错误信息
-func (c *Client) PauseFlightTask(ctx context.Context, gatewaySn string) (string, error) {
-	return c.SendCommand(ctx, gatewaySn, MethodFlightTaskPause, struct{}{})
+func (c *Client) PauseFlightTask(ctx context.Context, gatewaySn string, data *FlightTaskPauseData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodFlightTaskPause, data)
 }
 
 // ResumeFlightTask 恢复已暂停的飞行任务。
 //   - ctx: 请求上下文
 //   - gatewaySn: 网关设备序列号
+//   - data: 恢复参数（含 flight_id 和可选的 wayline_id）
 //   - 返回值 tid: 本次请求的事务 ID
 //   - 返回值 err: 命令发送或设备返回错误时的错误信息
-func (c *Client) ResumeFlightTask(ctx context.Context, gatewaySn string) (string, error) {
-	return c.SendCommand(ctx, gatewaySn, MethodFlightTaskResume, struct{}{})
+func (c *Client) ResumeFlightTask(ctx context.Context, gatewaySn string, data *FlightTaskResumeData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodFlightTaskResume, data)
 }
 
 // StopFlightTask 强制停止当前航线任务。
 //   - ctx: 请求上下文
 //   - gatewaySn: 网关设备序列号
+//   - data: 停止参数（含 flight_id 和可选的 wayline_id）
 //   - 返回值 tid: 本次请求的事务 ID
 //   - 返回值 err: 命令发送或设备返回错误时的错误信息
-func (c *Client) StopFlightTask(ctx context.Context, gatewaySn string) (string, error) {
-	return c.SendCommand(ctx, gatewaySn, MethodFlightTaskStop, struct{}{})
+func (c *Client) StopFlightTask(ctx context.Context, gatewaySn string, data *FlightTaskStopData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodFlightTaskStop, data)
 }
 
 // ReturnHome 控制无人机一键返航。
@@ -1002,10 +1026,11 @@ func (c *Client) FlyToPoint(ctx context.Context, gatewaySn string, data *FlyToPo
 // FlyToPointStop 停止当前的飞往航点任务。
 //   - ctx: 请求上下文
 //   - gatewaySn: 网关设备序列号
+//   - data: 停止参数，包含 fly_to_id
 //   - 返回值 tid: 本次请求的事务 ID
 //   - 返回值 err: 命令发送或设备返回错误时的错误信息
-func (c *Client) FlyToPointStop(ctx context.Context, gatewaySn string) (string, error) {
-	return c.SendCommand(ctx, gatewaySn, MethodFlyToPointStop, struct{}{})
+func (c *Client) FlyToPointStop(ctx context.Context, gatewaySn string, data *FlyToPointStopData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodFlyToPointStop, data)
 }
 
 // TakeoffToPoint 起飞到指定坐标点。
@@ -1221,8 +1246,11 @@ func (c *Client) CameraIrMeteringArea(ctx context.Context, gatewaySn string, dat
 // ==================== 自定义飞行区（Custom Fly Region） ====================
 
 // FlightAreasUpdate 触发自定义飞行区文件更新。
-func (c *Client) FlightAreasUpdate(ctx context.Context, gatewaySn string) (string, error) {
-	return c.SendCommand(ctx, gatewaySn, MethodFlightAreasUpdate, &FlightAreasUpdateData{})
+//   - ctx: 请求上下文
+//   - gatewaySn: 网关设备序列号
+//   - data: 飞行区文件引用（url + fingerprint）
+func (c *Client) FlightAreasUpdate(ctx context.Context, gatewaySn string, data *FlightAreasUpdateData) (string, error) {
+	return c.SendCommand(ctx, gatewaySn, MethodFlightAreasUpdate, data)
 }
 
 // ==================== PSDK 功能（PSDK） ====================

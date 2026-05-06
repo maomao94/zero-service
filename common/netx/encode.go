@@ -40,15 +40,19 @@ func EncodeMultipart(fields map[string][]string) (io.Reader, string, error) {
 
 	for k, vs := range fields {
 		for _, v := range vs {
-			fw, fErr := w.CreateFormField(k)
-			if fErr != nil {
-				continue
+			fw, err := w.CreateFormField(k)
+			if err != nil {
+				return nil, "", fmt.Errorf("create form field %q: %w", k, err)
 			}
-			fw.Write([]byte(v))
+			if _, err = fw.Write([]byte(v)); err != nil {
+				return nil, "", fmt.Errorf("write form field %q: %w", k, err)
+			}
 		}
 	}
 
-	w.Close()
+	if err := w.Close(); err != nil {
+		return nil, "", fmt.Errorf("close multipart writer: %w", err)
+	}
 	return buf, w.FormDataContentType(), nil
 }
 

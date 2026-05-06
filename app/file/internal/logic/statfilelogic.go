@@ -2,14 +2,13 @@ package logic
 
 import (
 	"context"
+
+	"zero-service/app/file/file"
+	"zero-service/app/file/internal/svc"
+
 	"github.com/dromara/carbon/v2"
 	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
-	"time"
-	"zero-service/app/file/file"
-	"zero-service/app/file/internal/svc"
-	"zero-service/common/ossx"
-	"zero-service/model"
 )
 
 type StatFileLogic struct {
@@ -27,9 +26,7 @@ func NewStatFileLogic(ctx context.Context, svcCtx *svc.ServiceContext) *StatFile
 }
 
 func (l *StatFileLogic) StatFile(in *file.StatFileReq) (*file.StatFileRes, error) {
-	ossTemplate, err := ossx.Template(in.TenantId, in.Code, l.svcCtx.Config.Oss.TenantMode, func(tenantId, code string) (oss *model.Oss, err error) {
-		return l.svcCtx.OssModel.FindOneByTenantIdOssCode(l.ctx, in.TenantId, in.Code)
-	})
+	ossTemplate, err := l.svcCtx.GetOssTemplate(l.ctx, in.TenantId, in.Code)
 	if err != nil {
 		return nil, err
 	}
@@ -38,15 +35,10 @@ func (l *StatFileLogic) StatFile(in *file.StatFileReq) (*file.StatFileRes, error
 		return nil, err
 	}
 	var resOssFile file.OssFile
-	_ = copier.Copy(&resOssFile, ossFile)
-	resOssFile.PutTime = carbon.CreateFromStdTime(ossFile.PutTime).ToDateTimeString()
-	//l.Infof("time %s", time.Unix(ossFile.PutTime.Unix(), 0).Format("2006-01-02 15:04:05"))
+	copier.Copy(&resOssFile, ossFile) // nolint:errcheck
+	resOssFile.PutTime = carbon.CreateFromStdTime(ossFile.PutTime).Format(carbon.DateTimeMicroFormat)
 	if in.IsSign {
-		expires := 60 * time.Minute // 1 小时
-		if in.Expires > 0 {
-			expires = time.Duration(in.Expires) * time.Minute
-		}
-		signUrl, err := ossTemplate.SignUrl(l.ctx, in.TenantId, in.BucketName, in.Filename, expires)
+		signUrl, err := ossTemplate.SignUrl(l.ctx, in.TenantId, in.BucketName, in.Filename, calcExpires(in.Expires))
 		if err != nil {
 			return nil, err
 		}

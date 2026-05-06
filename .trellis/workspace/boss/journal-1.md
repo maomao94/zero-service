@@ -218,3 +218,242 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 5: DJI Dock3 MQTT SDK 协议/字段对齐与 Proto 透传 Req 消息补全
+
+**Date**: 2026-05-07
+**Task**: DJI Dock3 MQTT SDK 协议/字段对齐与 Proto 透传 Req 消息补全
+**Branch**: `master`
+
+### Summary
+
+(Add summary)
+
+### Main Changes
+
+| 类别 | 内容 |
+|------|------|
+| SDK 协议类型修复 | RthAltitude int→float64, SimulateMission.IsEnable bool→int, VideoResolution string→int, Interval string→float64, MechanicalShutterState 修正 copy-paste bug, omitempty 补全 |
+| 缺失 Data 结构补全 | FlightTaskPauseData/ResumeTaskData/StopTaskData, FlyToPointStopData, FlightAreasUpdateData, CustomDataFromEsdkEvent |
+| ESDK 支持 | client.go 新增 onCustomDataFromEsdk 字段, tryDispatchEventNotify 新增 case, OnCustomDataFromEsdk 注册方法 |
+| Logic 调用方修复 | 9 个 logic 文件适配 SDK 方法签名变更 (类型转换/新增 data 参数) |
+| Hooks 层注册 | event_notify_up.go 新增 HandleOtaProgressEvent/HandleCustomDataFromEsdkEvent, register.go 注册 OnOtaProgress/OnCustomDataFromEsdk |
+| 注释润色 | protocol.go section 编号重排: 一(航线)→二(DRC)→三(远程调试)→四(相机/云台)→五(直播)→六(物模型)→七(固件)→八(设备管理), 移除重复编号 |
+| Proto Req 消息补全 | 5 个 DeviceSnReq 替换为专用 Req: PauseFlightTaskReq(flight_id+wayline_id), ResumeFlightTaskReq, StopFlightTaskReq, FlyToPointStopReq(fly_to_id), FlightAreasUpdateReq(file) |
+| gRPC 生成代码同步 | djicloud_grpc.pb.go/client/server/Unimplemented handler 中 10+ 处类型修正 |
+| 测试修复 | protocol_drc_test.go 适配 IsEnable bool→int 变更 |
+
+**涉及文件 (34 files, +1785/-715)**:
+- `common/djisdk/`: protocol.go, client.go, protocol_drc_test.go
+- `app/djicloud/`: djicloud.proto, djicloud.pb.go, djicloud_grpc.pb.go
+- `app/djicloud/internal/logic/`: 9 个 logic 文件
+- `app/djicloud/internal/hooks/`: event_notify_up.go, register.go
+- `app/djicloud/internal/server/`: djicloudserver.go
+
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `94b250e0` | (see git log) |
+| `d9c167be` | (see git log) |
+| `0ca9568b` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 6: 文件服务优化：TeeWriter 工具 + RelayFile 接口
+
+**Date**: 2026-05-07
+**Task**: 文件服务优化：TeeWriter 工具 + RelayFile 接口
+**Branch**: `master`
+
+### Summary
+
+(Add summary)
+
+### Main Changes
+
+## 完成内容
+
+| 模块 | 变更 | 说明 |
+|------|------|------|
+| `common/antsx/tee.go` | 新增 | 泛化管道扇出工具 TeeWriter，封装 io.Pipe + io.MultiWriter 模式，支持多写入器组合 |
+| `common/antsx/tee_test.go` | 新增 | TeeWriter 6 个单元测试（基本读写、hash、临时文件、错误传播、多写入器、大文件） |
+| `stream_upload_helper.go` | 重构 | 用 TeeWriter 替换直接操作 io.Pipe/MultiWriter，结构字段从 4 个减为 2 个 |
+| `relayfilelogic.go` | 新增 | RelayFile 接口实现：支持 sourceUrl/sourcePath → 多 OSS 目标转推，使用 TeeWriter 多路扇出 |
+| `file.proto` | 新增 | RelayTarget/RelayFileReq/RelayFileRes 消息 + RelayFile RPC |
+
+## Bug 修复
+
+- **EXIF 缓冲守卫**: `recvChunk` 增加 `strings.HasPrefix(contentType, "image/")` 判断，非图片不再浪费 64KB 内存
+- **RelayFile 内存问题**: `PutObject` 的 `objectSize` 从 `-1` 改为实际文件大小，避免 MinIO SDK 全量缓存
+
+## 编译验证
+
+- `go build ./app/file/...` ✓
+- `go vet ./common/antsx/... ./app/file/internal/logic/...` ✓
+- `go test ./common/antsx/` (45 PASS) ✓
+
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `455502e9` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 7: 文件服务流式上传与 GORM 迁移重构
+
+**Date**: 2026-05-07
+**Task**: 文件服务流式上传与 GORM 迁移重构
+**Branch**: `master`
+
+### Summary
+
+完成 file 服务流式上传、OSS 工具解耦、文件处理抽象、Relay 转推隔离、图片附加产物配置与 GORM/gormx 模型迁移。
+
+### Main Changes
+
+### Context
+
+- 用户要求优化 `app/file` 流式上传、分片上传、Relay 转推、TeeWriter、ossx 抽象，并明确 file 项目未上线，可进行大范围重构。
+- 后续继续要求：抽出通用文件处理工具、增加上传临时目录配置、图片缩略图/压缩图异步附加产物、DB/model 层完全迁移到 GORM/gormx，并参考 bridgemodbus 风格。
+- 最终修正要求：删除旧 OSS sqlx model；`common/ossx` 不能耦合业务 model；`LegacyTimeMixin` 保留 `timestamp(6)` 类型。
+
+### Main Changes
+
+- `common/ossx`
+  - 新增通用 `StreamUploadSession`，统一管理 `io.Pipe`、`TeeWriter`、OSS 上传 goroutine、Complete/Abort/Wait 生命周期。
+  - `ossx.Template` 从依赖 `model.Oss` 改为依赖通用 `ossx.Config` 与 `GetConfigFn`，解除通用工具包对业务数据库模型的耦合。
+  - `NewMinioTemplate` 改为接收 `ossx.Config`。
+- `common/filex`
+  - 新增临时文件、头部字节捕获、MD5 捕获、复制文件等通用文件处理工具。
+- `app/file` 流式上传
+  - `PutStreamFile`、`PutChunkFile` 统一接入新的流式上传 helper 和 `ossx.StreamUploadSession`。
+  - 配置化上传临时目录、EXIF 最大读取字节、缩略图与压缩图配置。
+  - 原图始终直接上传；缩略图/压缩图作为原图上传成功后的异步附加产物，不替换原图，也不影响 Relay 原图转推。
+- `RelayFile`
+  - 用 fanout writer 替代 `io.MultiWriter` 的失败传播语义，单个 OSS 目标写失败不会阻断后续目标。
+- `common/antsx`
+  - 补充 `TeeWriter` close 语义和测试，明确只关闭内部 pipe writer，不关闭外部附加 writer。
+- GORM/gormx 迁移
+  - 新增 `model/gormmodel.Oss`，使用 `gormx.LegacyBaseModel` 与显式 GORM column tag。
+  - `app/file/internal/config.Config.DB` 从 `sqlx.SqlConf` 切换为 `gormx.Config`。
+  - `ServiceContext` 移除 `OssModel`，改为注入 `*gormx.DB`，dev/test 下自动 `AutoMigrate(&gormmodel.Oss{})`。
+  - OSS CRUD Logic 改为 GORM Create/First/Save/Delete/QueryPage。
+  - `OssList` 排序改为白名单，避免直接拼接用户输入。
+  - 删除旧 `model/ossmodel.go` 与 `model/ossmodel_gen.go`。
+- `common/gormx`
+  - `LegacyTimeMixin` 保持原有 `type:timestamp(6)` 类型定义；SQLite 测试通过选择字段与原始字符串读取规避驱动扫描限制，而不是修改公共基类。
+
+### Key Files
+
+- `common/ossx/stream_upload.go`
+- `common/ossx/ossx.go`
+- `common/ossx/minio_oss.go`
+- `common/filex/filex.go`
+- `app/file/internal/logic/stream_upload_helper.go`
+- `app/file/internal/logic/relay_fanout_writer.go`
+- `app/file/internal/svc/servicecontext.go`
+- `app/file/internal/config/config.go`
+- `model/gormmodel/oss.go`
+- `model/gormmodel/oss_test.go`
+- `app/file/etc/file.yaml`
+
+### Testing
+
+- [OK] `go test ./common/ossx ./model/gormmodel ./app/file/internal/...`
+- [OK] `go test ./...`
+- [OK] `go vet ./...`
+- [OK] `gofmt -w ...`
+
+### Git Commits
+
+- `00cc3570` 优化文件服务
+
+### Status
+
+[OK] **Completed**
+
+### Notes
+
+- 本次最终工作区已清理，无未提交变更。
+- `common/ossx` 已不再引用 `zero-service/model` 或 `model.Oss`。
+- 旧 OSS sqlx 生成模型已删除。
+
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `00cc3570` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 8: 文件服务流上传接口瘦身与 common/iox 清理
+
+**Date**: 2026-05-07
+**Task**: 文件服务流上传接口瘦身与 common/iox 清理
+**Branch**: `master`
+
+### Summary
+
+移除 PutChunkFile 双向流接口和 gtw 同步网关入口，保留 PutStreamFile 日志，删除 common/iox 并改用标准库 io.Copy；go test ./app/file/... ./gtw/... 与 go vet ./app/file/... ./gtw/... 通过。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `1ecd5e29` | (see git log) |
+| `49c1a1e9` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

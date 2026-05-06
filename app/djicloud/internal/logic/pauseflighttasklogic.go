@@ -5,6 +5,7 @@ import (
 
 	"zero-service/app/djicloud/djicloud"
 	"zero-service/app/djicloud/internal/svc"
+	"zero-service/common/djisdk"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -24,8 +25,11 @@ func NewPauseFlightTaskLogic(ctx context.Context, svcCtx *svc.ServiceContext) *P
 }
 
 // PauseFlightTask 暂停当前正在执行的飞行任务。
-func (l *PauseFlightTaskLogic) PauseFlightTask(in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
-	tid, err := l.svcCtx.DjiClient.PauseFlightTask(l.ctx, in.DeviceSn)
+func (l *PauseFlightTaskLogic) PauseFlightTask(in *djicloud.PauseFlightTaskReq) (*djicloud.CommonRes, error) {
+	tid, err := l.svcCtx.DjiClient.PauseFlightTask(l.ctx, in.GetDeviceSn(), &djisdk.FlightTaskPauseData{
+		FlightID:  in.GetFlightId(),
+		WaylineID: int(in.GetWaylineId()),
+	})
 	if err != nil {
 		l.Errorf("[flight-task] pause flight task failed: %v", err)
 		return errRes(tid, err), nil

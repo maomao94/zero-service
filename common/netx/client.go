@@ -9,6 +9,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -46,7 +47,7 @@ type ClientOption func(*Client)
 
 type Client struct {
 	engine    engine
-	httpcSvc  httpc.Service
+	httpc     httpc.Service
 	timeout   time.Duration
 	tlsConfig *tls.Config
 	headers   http.Header
@@ -66,8 +67,8 @@ func NewClient(opts ...ClientOption) *Client {
 }
 
 func (c *Client) buildEngine() engine {
-	if c.httpcSvc != nil {
-		return &httpcEngine{svc: c.httpcSvc}
+	if c.httpc != nil {
+		return &httpcEngine{svc: c.httpc}
 	}
 
 	transport := &http.Transport{
@@ -85,8 +86,8 @@ func (c *Client) buildEngine() engine {
 	}
 }
 
-func WithHttpcService(svc httpc.Service) ClientOption {
-	return func(c *Client) { c.httpcSvc = svc }
+func WithHttpcService(httpc httpc.Service) ClientOption {
+	return func(c *Client) { c.httpc = httpc }
 }
 
 func WithTimeout(d time.Duration) ClientOption {
@@ -98,7 +99,7 @@ func WithTLSConfig(cfg *tls.Config) ClientOption {
 }
 
 func WithDefaultHeaders(h http.Header) ClientOption {
-	return func(c *Client) { c.headers = h }
+	return func(c *Client) { c.headers = h.Clone() }
 }
 
 // --- 核心请求方法 ---
@@ -109,6 +110,9 @@ func (c *Client) Do(ctx context.Context, req *Request) (*Response, error) {
 	}
 	if req.URL == "" {
 		return nil, errors.New("request url is required")
+	}
+	if req.OptionError != nil {
+		return nil, req.OptionError
 	}
 
 	method := req.Method
@@ -145,6 +149,10 @@ func (c *Client) buildBody(req *Request) (io.Reader, string) {
 	}
 
 	if strings.Contains(ct, "application/x-www-form-urlencoded") {
+		// 如果 body 已经是合法的 URL-编码格式，直接使用，避免双重 JSON 解析
+		if _, err := url.ParseQuery(string(req.Body)); err == nil {
+			return bytes.NewReader(req.Body), "application/x-www-form-urlencoded"
+		}
 		if encoded, err := EncodeURLEncoded(req.Body); err == nil {
 			return strings.NewReader(encoded), "application/x-www-form-urlencoded"
 		}
@@ -375,12 +383,14 @@ func SendRequest(ctx context.Context, req *Request, opts ...ClientOption) (*Resp
 // --- 响应构建 ---
 
 func buildResponse(resp *http.Response, err error, start time.Time) (*Response, error) {
+	costMs := time.Since(start).Milliseconds()
+
 	if err != nil {
 		result := &Response{
-			CostMs: time.Since(start).Milliseconds(),
+			CostMs: costMs,
 			Error:  err.Error(),
 		}
-		result.CostFormatted = FormatCostMs(result.CostMs)
+		result.CostFormatted = FormatCostMs(costMs)
 		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
 			result.StatusCode = http.StatusRequestTimeout
 		} else {
@@ -392,7 +402,6 @@ func buildResponse(resp *http.Response, err error, start time.Time) (*Response, 
 
 	data, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBodyLen+1))
 	if err != nil {
-		costMs := time.Since(start).Milliseconds()
 		return &Response{
 			StatusCode:    resp.StatusCode,
 			Error:         err.Error(),
@@ -401,7 +410,6 @@ func buildResponse(resp *http.Response, err error, start time.Time) (*Response, 
 		}, nil
 	}
 	if len(data) > maxResponseBodyLen {
-		costMs := time.Since(start).Milliseconds()
 		return &Response{
 			StatusCode:    http.StatusBadGateway,
 			Error:         "response body too large",
@@ -410,7 +418,6 @@ func buildResponse(resp *http.Response, err error, start time.Time) (*Response, 
 		}, nil
 	}
 
-	costMs := time.Since(start).Milliseconds()
 	return &Response{
 		StatusCode:    resp.StatusCode,
 		Headers:       resp.Header,

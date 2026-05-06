@@ -3,12 +3,12 @@ package logic
 import (
 	"context"
 	"fmt"
+	"strings"
 
-	"github.com/zeromicro/go-zero/core/logx"
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
-	"zero-service/common/ossx"
-	"zero-service/model"
+
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type RemoveFilesLogic struct {
@@ -26,9 +26,7 @@ func NewRemoveFilesLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Remov
 }
 
 func (l *RemoveFilesLogic) RemoveFiles(in *file.RemoveFilesReq) (*file.RemoveFileRes, error) {
-	ossTemplate, err := ossx.Template(in.TenantId, in.Code, l.svcCtx.Config.Oss.TenantMode, func(tenantId, code string) (oss *model.Oss, err error) {
-		return l.svcCtx.OssModel.FindOneByTenantIdOssCode(l.ctx, in.TenantId, in.Code)
-	})
+	ossTemplate, err := l.svcCtx.GetOssTemplate(l.ctx, in.TenantId, in.Code)
 	if err != nil {
 		return nil, err
 	}
@@ -36,10 +34,15 @@ func (l *RemoveFilesLogic) RemoveFiles(in *file.RemoveFilesReq) (*file.RemoveFil
 	if err != nil {
 		return nil, err
 	}
+	// 收集所有错误，而非遇到第一个就中止
+	var errs []string
 	for _, r := range results {
 		if r.Err != nil {
-			return nil, fmt.Errorf("failed to remove file %s: %w", r.Filename, r.Err)
+			errs = append(errs, fmt.Sprintf("%s: %v", r.Filename, r.Err))
 		}
+	}
+	if len(errs) > 0 {
+		return nil, fmt.Errorf("failed to remove files: %s", strings.Join(errs, "; "))
 	}
 	return &file.RemoveFileRes{}, nil
 }

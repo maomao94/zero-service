@@ -2,15 +2,12 @@ package logic
 
 import (
 	"context"
-	"io"
-	"net/http"
 	"os"
-	"strings"
+
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
 	"zero-service/common/imagex"
 	"zero-service/common/ossx"
-	"zero-service/model"
 
 	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -31,9 +28,7 @@ func NewPutFileLogic(ctx context.Context, svcCtx *svc.ServiceContext) *PutFileLo
 }
 
 func (l *PutFileLogic) PutFile(in *file.PutFileReq) (*file.PutFileRes, error) {
-	ossTemplate, err := ossx.Template(in.TenantId, in.Code, l.svcCtx.Config.Oss.TenantMode, func(tenantId, code string) (oss *model.Oss, err error) {
-		return l.svcCtx.OssModel.FindOneByTenantIdOssCode(l.ctx, in.TenantId, in.Code)
-	})
+	ossTemplate, err := l.svcCtx.GetOssTemplate(l.ctx, in.TenantId, in.Code)
 	if err != nil {
 		return nil, err
 	}
@@ -46,28 +41,25 @@ func (l *PutFileLogic) PutFile(in *file.PutFileReq) (*file.PutFileRes, error) {
 	if err != nil {
 		return nil, err
 	}
-	// 读取文件的前 512 字节
-	buffer := make([]byte, 512)
-	_, err = f.Read(buffer)
+
+	head, reader, err := ossx.ReadUploadHead(f)
 	if err != nil {
-		l.Logger.Errorf("Failed to read file: %v", err)
+		l.Logger.Errorf("Failed to read file head: %v", err)
 		return nil, err
 	}
-	// 检测内容类型
-	contentType := http.DetectContentType(buffer)
-	// 重置文件指针，继续从文件开始读取
-	_, err = f.Seek(0, io.SeekStart)
-	ossFile, err := ossTemplate.PutObject(context.Background(), in.TenantId, in.BucketName, in.Filename, contentType, f, fInfo.Size())
+	contentType := resolveContentType(l.ctx, "", head)
+
+	ossFile, err := ossTemplate.PutObject(l.ctx, in.TenantId, in.BucketName, in.Filename, contentType, reader, fInfo.Size(), in.PathPrefix)
 	if err != nil {
 		return nil, err
 	}
 	var pbFile file.File
-	_ = copier.Copy(&pbFile, ossFile)
-	meta := file.ImageMeta{}
-	if strings.HasPrefix(contentType, "image/") {
-		exifMeta, err := imagex.ExtractImageMeta(in.Path)
-		if err == nil {
-			_ = copier.Copy(&meta, &exifMeta)
+	copier.Copy(&pbFile, ossFile) // nolint:errcheck
+
+	if isImageContentType(contentType) {
+		if exifMeta, err := imagex.ExtractImageMeta(in.Path); err == nil {
+			var meta file.ImageMeta
+			copier.Copy(&meta, &exifMeta) // nolint:errcheck
 			pbFile.Meta = &meta
 		}
 	}

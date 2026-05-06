@@ -193,7 +193,7 @@ type FlightTaskPrepareData struct {
 	// BreakPoint 断点续飞信息，用于从指定断点恢复飞行。可选。
 	BreakPoint *BreakPoint `json:"break_point,omitempty"`
 	// RthAltitude 返航高度，单位米，取值范围 [20, 500]。可选。
-	RthAltitude int `json:"rth_altitude,omitempty"`
+	RthAltitude float64 `json:"rth_altitude,omitempty"`
 	// OutOfControlAction 失控动作，0: 返航, 1: 悬停, 2: 降落。可选。
 	OutOfControlAction int `json:"out_of_control_action,omitempty"`
 	// ExitWaylineWhenRCLost 遥控器信号丢失时是否退出航线，0: 不退出, 1: 退出。可选。
@@ -218,14 +218,14 @@ type BreakPoint struct {
 	State int `json:"state"`
 	// Progress 断点进度，取值范围 [0, 1]，表示当前航段已完成的比例。必填。
 	Progress float64 `json:"progress"`
-	// WaylineID 航线 ID，标识断点所在的航线。必填。
-	WaylineID int `json:"wayline_id"`
+	// WaylineID 航线 ID，标识断点所在的航线。preparE 场景可选。
+	WaylineID int `json:"wayline_id,omitempty"`
 }
 
 // SimulateMission 模拟任务配置，用于在 flighttask_prepare.data.simulate_mission 中声明仿真飞行参数。
 type SimulateMission struct {
-	// IsEnable 是否启用模拟任务。必填。
-	IsEnable bool `json:"is_enable"`
+	// IsEnable 是否启用模拟任务，0: 关闭, 1: 开启。必填。
+	IsEnable int `json:"is_enable"`
 	// Latitude 模拟起飞点纬度，取值范围 [-90, 90]。可选，启用时必填。
 	Latitude float64 `json:"latitude,omitempty"`
 	// Longitude 模拟起飞点经度，取值范围 [-180, 180]。可选，启用时必填。
@@ -244,6 +244,33 @@ type FlightTaskExecuteData struct {
 type FlightTaskCancelData struct {
 	// FlightIDs 待取消的航线任务 ID 列表。必填。
 	FlightIDs []string `json:"flight_ids"`
+}
+
+// FlightTaskPauseData 航线任务暂停数据。
+// 对应 DJI Cloud API method: flighttask_pause 的 data 载荷。
+type FlightTaskPauseData struct {
+	// FlightID 航线任务 ID。必填。
+	FlightID string `json:"flight_id"`
+	// WaylineID 航线 ID，用于标识暂停的航线。可选。
+	WaylineID int `json:"wayline_id,omitempty"`
+}
+
+// FlightTaskResumeData 航线任务恢复数据。
+// 对应 DJI Cloud API method: flighttask_recovery 的 data 载荷。
+type FlightTaskResumeData struct {
+	// FlightID 航线任务 ID。必填。
+	FlightID string `json:"flight_id"`
+	// WaylineID 航线 ID，用于标识恢复的航线。可选。
+	WaylineID int `json:"wayline_id,omitempty"`
+}
+
+// FlightTaskStopData 航线任务停止数据。
+// 对应 DJI Cloud API method: flighttask_stop 的 data 载荷。
+type FlightTaskStopData struct {
+	// FlightID 航线任务 ID。必填。
+	FlightID string `json:"flight_id"`
+	// WaylineID 航线 ID，用于标识停止的航线。可选。
+	WaylineID int `json:"wayline_id,omitempty"`
 }
 
 // ReturnSpecificHomeData 返航至指定点数据。
@@ -265,7 +292,11 @@ type ReturnSpecificHomeData struct {
 // ==================== 自定义飞行区（Custom Fly Region） ====================
 
 // FlightAreasUpdateData 触发自定义飞行区文件更新数据。
-type FlightAreasUpdateData struct{}
+// 对应 DJI Cloud API method: flight_areas_update 的 data 载荷。
+type FlightAreasUpdateData struct {
+	// File 飞行区配置文件引用。必填。
+	File *UnlockLicenseFile `json:"file"`
+}
 
 // ==================== PSDK 功能与互联互通（PSDK / PSDK Transmit） ====================
 
@@ -289,6 +320,13 @@ type CustomDataToEsdkData struct {
 	Value string `json:"value"`
 }
 
+// CustomDataFromEsdkEvent ESDK 自定义数据上报事件。
+// 方向 up：设备 → 云平台。对应 method: custom_data_transmission_from_esdk。
+// ESDK 负载设备经 events topic 向云平台上报自定义消息，data 内仅含 value 字段。
+type CustomDataFromEsdkEvent struct {
+	Value string `json:"value"`
+}
+
 // ==================== 远程解禁（Flysafe） ====================
 
 // UnlockLicenseSwitchData 启用或禁用设备的单个解禁证书数据。
@@ -300,7 +338,7 @@ type UnlockLicenseSwitchData struct {
 // UnlockLicenseFile 解禁证书文件引用。
 type UnlockLicenseFile struct {
 	URL         string `json:"url"`
-	Fingerprint string `json:"fingerprint"`
+	Fingerprint string `json:"fingerprint,omitempty"`
 }
 
 // UnlockLicenseUpdateData 更新设备解禁证书数据。
@@ -324,13 +362,13 @@ type DrcLinkageZoomSetData struct {
 // DrcVideoResolutionSetData 视频分辨率设置数据。
 type DrcVideoResolutionSetData struct {
 	PayloadIndex    string `json:"payload_index"`
-	VideoResolution string `json:"video_resolution"`
+	VideoResolution int    `json:"video_resolution"`
 }
 
 // DrcIntervalPhotoSetData 定时拍设置数据。
 type DrcIntervalPhotoSetData struct {
-	PayloadIndex string `json:"payload_index"`
-	Interval     string `json:"interval"`
+	PayloadIndex string  `json:"payload_index"`
+	Interval     float64 `json:"interval"`
 }
 
 // DrcNightLightsStateSetData 夜航灯状态设置数据。
@@ -366,9 +404,9 @@ type DrcCameraIsoSetData struct {
 
 // DrcCameraMechanicalShutterSetData 机械快门设置数据。
 type DrcCameraMechanicalShutterSetData struct {
-	PayloadIndex   string `json:"payload_index"`
-	CameraType     string `json:"camera_type"`
-	DewarpingState int    `json:"dewarping_state"`
+	PayloadIndex           string `json:"payload_index"`
+	CameraType             string `json:"camera_type"`
+	MechanicalShutterState int    `json:"mechanical_shutter_state"`
 }
 
 // DrcCameraDewarpingSetData 镜头去畸变设置数据。
@@ -378,7 +416,7 @@ type DrcCameraDewarpingSetData struct {
 	DewarpingState int    `json:"dewarping_state"`
 }
 
-// ==================== 四、远程调试 - 机巢控制（Remote Debug） ====================
+// ==================== 三、远程调试 - 机巢控制（Remote Debug） ====================
 
 // DebugModeData 远程调试模式数据，开启或关闭调试模式，无额外参数。
 type DebugModeData struct{}
@@ -425,7 +463,7 @@ type AirConditionerModeSwitchData struct {
 	Action int `json:"action"`
 }
 
-// ==================== 四、远程调试 - 事件进度 ====================
+// ==================== 远程调试 - 事件进度（Remote Debug - Progress） ====================
 
 // DebugProgressData 远程调试进度事件数据。
 type DebugProgressData struct {
@@ -451,12 +489,12 @@ type DebugProgressDetail struct {
 	StepKey string `json:"step_key,omitempty"`
 }
 
-// ==================== 七、物模型属性（Property） ====================
+// ==================== 六、物模型属性（Property） ====================
 // PropertySetData **仅用于云 → 设备** 的 `property/set` 载荷；由云平台/本服务 SetProperty 随 MethodPropertySet 一同下发。键为物模型可写属性名。
 // 设备只读/遥测等场景见 **thing/.../state、osd** 等，勿与本「写属性」混用方向。
 type PropertySetData map[string]any
 
-// ==================== 三、指令飞行控制（DRC） ====================
+// ==================== 二、指令飞行控制（DRC） ====================
 // 协议与 [DRC 上云](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html) 及 [DRC 杆量](https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E6%9D%86%E9%87%8F%E6%8E%A7%E5%88%B6) 一致；飞控/模式类走 services 载荷，杆量用 DrcStickControlData 发 drc/down。
 
 // DrcModeEnterData 进入指令飞行（DRC）模式请求数据（Dock3 协议）。
@@ -527,6 +565,13 @@ type FlyToPointData struct {
 	Points []FlyToWaypoint `json:"points"`
 }
 
+// FlyToPointStopData 停止飞向指定点数据。
+// 对应 DJI Cloud API method: fly_to_point_stop 的 data 载荷。
+type FlyToPointStopData struct {
+	// FlyToID 飞行任务 ID，与发起 FlyToPoint 时一致。必填。
+	FlyToID string `json:"fly_to_id"`
+}
+
 // FlyToWaypoint 飞行航点坐标。
 type FlyToWaypoint struct {
 	// Latitude 航点纬度，取值范围 [-90, 90]。必填。
@@ -556,7 +601,7 @@ type ReturnHomeCancelData struct{}
 // DroneEmergencyStopData 无人机紧急停机数据，无额外参数。
 type DroneEmergencyStopData struct{}
 
-// ==================== 五、相机/云台控制（Camera & Gimbal） ====================
+// ==================== 四、相机/云台控制（Camera & Gimbal） ====================
 
 // CameraModeSwitchData 相机模式切换数据。
 type CameraModeSwitchData struct {
@@ -692,7 +737,7 @@ type CameraIrMeteringAreaData struct {
 	Height float64 `json:"height"`
 }
 
-// ==================== 六、直播管理（Live） ====================
+// ==================== 五、直播管理（Live） ====================
 
 // LiveStartPushData 直播推流启动数据。
 type LiveStartPushData struct {
@@ -823,7 +868,7 @@ type ConfigUpdateData struct {
 	Config map[string]any `json:"config"`
 }
 
-// ==================== 八、固件管理（Firmware） ====================
+// ==================== 七、固件管理（Firmware） ====================
 
 // OtaCreateData OTA 固件升级创建数据。
 type OtaCreateData struct {
@@ -859,7 +904,7 @@ type OtaProgressDevice struct {
 	ErrorCode           int    `json:"error_code,omitempty"`
 }
 
-// ==================== 九、设备管理（Device Management） ====================
+// ==================== 八、设备管理（Device Management） ====================
 
 // TopoUpdateData 设备拓扑更新数据，对应 sys/product/{gateway_sn}/status 的 update_topo。
 type TopoUpdateData struct {

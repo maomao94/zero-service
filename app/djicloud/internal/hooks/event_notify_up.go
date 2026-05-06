@@ -162,3 +162,25 @@ func NewRemoteLogFileUploadProgressHandler(db *gormx.DB) func(ctx context.Contex
 		}
 	}
 }
+
+// HandleOtaProgressEvent 处理固件升级进度事件（OTA Progress）。
+// 对应 DJI Cloud API event method: ota_progress（Events, up）。
+func HandleOtaProgressEvent(ctx context.Context, gatewaySn string, data *djisdk.OtaProgressEvent) {
+	if data == nil {
+		return
+	}
+	logx.WithContext(ctx).Infof("[dji-cloud] ota_progress: sn=%s device_count=%d", gatewaySn, len(data.Devices))
+	for _, dev := range data.Devices {
+		logx.WithContext(ctx).Infof("[dji-cloud] ota_progress device: sn=%s model=%s status=%d progress=%d result=%d",
+			dev.SN, dev.DeviceModel, dev.Status, dev.Progress, dev.Result)
+	}
+}
+
+// HandleCustomDataFromEsdkEvent 处理 ESDK 自定义数据上报事件。
+// 对应 DJI Cloud API event method: custom_data_transmission_from_esdk（Events, up）。
+func HandleCustomDataFromEsdkEvent(ctx context.Context, gatewaySn string, data *djisdk.CustomDataFromEsdkEvent) {
+	if data == nil {
+		return
+	}
+	logx.WithContext(ctx).Infof("[dji-cloud] custom_data_from_esdk: sn=%s value=%s", gatewaySn, data.Value)
+}

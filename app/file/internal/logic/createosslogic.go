@@ -2,9 +2,11 @@ package logic
 
 import (
 	"context"
+
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
-	"zero-service/model"
+	"zero-service/common/ossx"
+	"zero-service/model/gormmodel"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -24,7 +26,7 @@ func NewCreateOssLogic(ctx context.Context, svcCtx *svc.ServiceContext) *CreateO
 }
 
 func (l *CreateOssLogic) CreateOss(in *file.CreateOssReq) (*file.CreateOssRes, error) {
-	oss, err := l.svcCtx.OssModel.Insert(l.ctx, nil, &model.Oss{
+	oss := &gormmodel.Oss{
 		TenantId:   in.TenantId,
 		Category:   in.Category,
 		OssCode:    in.OssCode,
@@ -35,11 +37,11 @@ func (l *CreateOssLogic) CreateOss(in *file.CreateOssReq) (*file.CreateOssRes, e
 		AppId:      in.AppId,
 		Region:     in.Region,
 		Remark:     in.Remark,
-		Status:     2,
-	})
-	if err != nil {
+		Status:     OssStatusEnabled,
+	}
+	if err := l.svcCtx.DB.WithContext(l.ctx).Create(oss).Error; err != nil {
 		return nil, err
 	}
-	id, _ := oss.LastInsertId()
-	return &file.CreateOssRes{Id: id}, nil
+	ossx.CacheInvalidate(in.TenantId)
+	return &file.CreateOssRes{Id: oss.Id}, nil
 }

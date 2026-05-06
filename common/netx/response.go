@@ -24,6 +24,9 @@ func DecodeJSON(resp *Response, target any) error {
 	if resp.Error != "" {
 		return errors.New(resp.Error)
 	}
+	if !resp.Success {
+		return fmt.Errorf("request failed: status %d", resp.StatusCode)
+	}
 	return json.Unmarshal(resp.Data, target)
 }
 

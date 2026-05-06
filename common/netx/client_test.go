@@ -962,6 +962,163 @@ func TestClient_CostTracking(t *testing.T) {
 	}
 }
 
+// --- 边界和新增行为测试 ---
+
+func TestDecodeJSON_NonSuccess(t *testing.T) {
+	resp := &Response{
+		Data:       []byte(`{"code":1001}`),
+		StatusCode: 400,
+		Success:    false,
+	}
+	var target struct {
+		Code int `json:"code"`
+	}
+	err := DecodeJSON(resp, &target)
+	if err == nil {
+		t.Error("expected error for non-success response")
+	}
+	if !strings.Contains(err.Error(), "400") {
+		t.Errorf("expected error to mention status code, got: %v", err)
+	}
+}
+
+func TestFormatCostMs_EdgeCases(t *testing.T) {
+	tests := []struct {
+		input    int64
+		expected string
+	}{
+		{0, "0ms"},
+		{-1, "-1ms"},
+		{-1500, "-1500ms"},
+	}
+	for _, tt := range tests {
+		got := FormatCostMs(tt.input)
+		if got != tt.expected {
+			t.Errorf("FormatCostMs(%d) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestWithJSONBody_MarshalError(t *testing.T) {
+	req := NewRequest("http://example.com", http.MethodPost,
+		WithJSONBody(make(chan int)),
+	)
+	if req.OptionError == nil {
+		t.Fatal("expected OptionError for unmarshalable type")
+	}
+	if !strings.Contains(req.OptionError.Error(), "marshal json body") {
+		t.Errorf("unexpected error message: %v", req.OptionError)
+	}
+}
+
+func TestWithBodyReader_ReadError(t *testing.T) {
+	errReader := &errorReader{}
+	req := NewRequest("http://example.com", http.MethodPost,
+		WithBodyReader(errReader),
+	)
+	if req.OptionError == nil {
+		t.Fatal("expected OptionError for read error")
+	}
+	if !strings.Contains(req.OptionError.Error(), "read body") {
+		t.Errorf("unexpected error message: %v", req.OptionError)
+	}
+}
+
+type errorReader struct{}
+
+func (e *errorReader) Read(_ []byte) (int, error) {
+	return 0, io.ErrUnexpectedEOF
+}
+
+func TestClient_Do_OptionError(t *testing.T) {
+	c := NewClient()
+	req := NewRequest("http://example.com", http.MethodPost,
+		WithJSONBody(make(chan int)),
+	)
+	_, err := c.Do(context.Background(), req)
+	if err == nil {
+		t.Fatal("expected error from option error")
+	}
+}
+
+func TestWithDefaultHeaders_Clone(t *testing.T) {
+	original := http.Header{"Authorization": {"Bearer original"}}
+	c := NewClient(WithDefaultHeaders(original))
+
+	// 修改原始 header 不应影响 client
+	original.Set("X-Evil", "injected")
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("X-Evil") != "" {
+			t.Error("X-Evil should not be present")
+		}
+		if r.Header.Get("Authorization") != "Bearer original" {
+			t.Errorf("expected Authorization header, got %q", r.Header.Get("Authorization"))
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	resp, err := c.Get(ctx(t), ts.URL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Errorf("expected success")
+	}
+}
+
+func TestBuildBody_URLEncodedDirect(t *testing.T) {
+	var gotBody string
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		gotBody = string(body)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	c := NewClient()
+	// 发送已经是 URL-encoded 格式的 body
+	resp, err := c.Do(context.Background(), NewRequest(ts.URL, http.MethodPost,
+		WithBody([]byte("foo=bar&baz=qux")),
+		WithHeader("Content-Type", "application/x-www-form-urlencoded"),
+	))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Errorf("expected success, error: %s", resp.Error)
+	}
+	// 应该保持原始 URL-encoded 格式，不经过 JSON 解析
+	if gotBody != "foo=bar&baz=qux" {
+		t.Errorf("expected original URL-encoded body, got %q", gotBody)
+	}
+}
+
+func TestEncodeMultipart_Error(t *testing.T) {
+	// 创建一个包含非法 field name 的map，虽然在 Go 中 key 总是字符串，
+	// 但可以通过空 key 验证 CreateFormField 的行为
+	_, _, err := EncodeMultipart(map[string][]string{"": {"value"}})
+	// multipart.CreateFormField 对空 key 不报错，所以换一种验证方式：
+	// 验证正常路径仍能返回值
+	if err != nil {
+		t.Fatalf("EncodeMultipart returned error for empty key: %v", err)
+	}
+
+	// 验证正常路径
+	fields := map[string][]string{"normal": {"data"}}
+	reader, ct, err := EncodeMultipart(fields)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if reader == nil {
+		t.Fatal("expected non-nil reader")
+	}
+	if !strings.Contains(ct, "multipart/form-data") {
+		t.Errorf("expected multipart content type, got %q", ct)
+	}
+}
+
 func ctx(t *testing.T) context.Context {
 	t.Helper()
 	return context.Background()

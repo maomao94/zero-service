@@ -102,18 +102,18 @@ service DjiCloud {
   // PauseFlightTask 暂停航线任务。
   // 对应 DJI Cloud API method: flighttask_pause，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc PauseFlightTask(DeviceSnReq) returns (CommonRes);
+  rpc PauseFlightTask(PauseFlightTaskReq) returns (CommonRes);
 
   // ResumeFlightTask 恢复已暂停的航线任务。
   // 对应 DJI Cloud API method: flighttask_recovery，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc ResumeFlightTask(DeviceSnReq) returns (CommonRes);
+  rpc ResumeFlightTask(ResumeFlightTaskReq) returns (CommonRes);
 
   // StopFlightTask 强制停止当前航线任务。
   // 对应 DJI Cloud API method: flighttask_stop，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
   // https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/wayline.html
-  rpc StopFlightTask(DeviceSnReq) returns (CommonRes);
+  rpc StopFlightTask(StopFlightTaskReq) returns (CommonRes);
 
   // ReturnHome 控制飞行器一键返航。
   // 对应 DJI Cloud API method: return_home，
@@ -320,7 +320,7 @@ service DjiCloud {
   // FlyToPointStop 停止当前的飞向航点任务。
   // 对应 DJI Cloud API method: fly_to_point_stop，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc FlyToPointStop(DeviceSnReq) returns (CommonRes);
+  rpc FlyToPointStop(FlyToPointStopReq) returns (CommonRes);
 
   // TakeoffToPoint 一键起飞到指定坐标点。
   // 对应 DJI Cloud API method: takeoff_to_point，
@@ -423,7 +423,7 @@ service DjiCloud {
 
   // FlightAreasUpdate 触发自定义飞行区文件更新。
   // 对应 DJI Cloud API method: flight_areas_update，Topic: services，方向 down，data 为 null。
-  rpc FlightAreasUpdate(DeviceSnReq) returns (CommonRes);
+  rpc FlightAreasUpdate(FlightAreasUpdateReq) returns (CommonRes);
 
   // ==================== PSDK 功能（PSDK） ====================
   // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/psdk.html
@@ -764,6 +764,39 @@ message CancelFlightTaskReq {
   repeated string flight_ids = 2;
 }
 
+// PauseFlightTaskReq 暂停航线任务请求。
+// 对应 DJI Cloud API method: flighttask_pause（Services, down）。
+message PauseFlightTaskReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // flight_id 航线任务 ID。必填。
+  string flight_id = 2;
+  // wayline_id 航线 ID，用于标识暂停的航线。可选。
+  int32 wayline_id = 3;
+}
+
+// ResumeFlightTaskReq 恢复航线任务请求。
+// 对应 DJI Cloud API method: flighttask_recovery（Services, down）。
+message ResumeFlightTaskReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // flight_id 航线任务 ID。必填。
+  string flight_id = 2;
+  // wayline_id 航线 ID，用于标识恢复的航线。可选。
+  int32 wayline_id = 3;
+}
+
+// StopFlightTaskReq 停止航线任务请求。
+// 对应 DJI Cloud API method: flighttask_stop（Services, down）。
+message StopFlightTaskReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // flight_id 航线任务 ID。必填。
+  string flight_id = 2;
+  // wayline_id 航线 ID，用于标识停止的航线。可选。
+  int32 wayline_id = 3;
+}
+
 // ReturnSpecificHomeReq 返航至指定备降点请求。
 // 对应 DJI Cloud API method: return_specific_home（Services, down）。
 message ReturnSpecificHomeReq {
@@ -971,6 +1004,15 @@ message FlyToPointReq {
   repeated Waypoint points = 4;
 }
 
+// FlyToPointStopReq 停止飞向指定航点请求。
+// 对应 DJI Cloud API method: fly_to_point_stop（DRC, down）。
+message FlyToPointStopReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // fly_to_id 飞行任务 ID，与发起 FlyToPoint 时一致。必填。
+  string fly_to_id = 2;
+}
+
 // Waypoint 飞行航点坐标。
 message Waypoint {
   // latitude 航点纬度，取值范围 [-90, 90]。
@@ -1168,8 +1210,15 @@ message CameraIrMeteringAreaReq {
 }
 
 // ==================== 自定义飞行区（Custom Fly Region）消息 ====================
-// flight_areas_update 为 services/down 且 data 为 null，复用 DeviceSnReq。
-// flight_areas_get 为 requests/up，由 common/djisdk.OnRequest 处理并通过 requests_reply 响应。
+
+// FlightAreasUpdateReq 触发自定义飞行区文件更新请求。
+// 对应 DJI Cloud API method: flight_areas_update（Services, down）。
+message FlightAreasUpdateReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // file 飞行区配置文件引用。必填。
+  FlightTaskFileRef file = 2;
+}
 
 // ==================== PSDK 功能与互联互通请求消息 ====================
 

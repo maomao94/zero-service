@@ -2,13 +2,11 @@ package logic
 
 import (
 	"context"
-	"github.com/jinzhu/copier"
-	"time"
+
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
-	"zero-service/common/ossx"
-	"zero-service/model"
 
+	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -32,25 +30,15 @@ func (l *SignUrlLogic) SignUrl(in *file.SignUrlReq) (*file.SignUrlRes, error) {
 		Filename string `validate:"required"`
 	}
 	var rule validateReq
-	copier.Copy(&rule, in)
+	copier.Copy(&rule, in) // nolint:errcheck
 	if err := l.svcCtx.Validate.StructCtx(l.ctx, rule); err != nil {
 		return nil, err
 	}
-	ossTemplate, err := ossx.Template(in.TenantId, in.Code, l.svcCtx.Config.Oss.TenantMode, func(tenantId, code string) (oss *model.Oss, err error) {
-		return l.svcCtx.OssModel.FindOneByTenantIdOssCode(l.ctx, in.TenantId, in.Code)
-	})
+	ossTemplate, err := l.svcCtx.GetOssTemplate(l.ctx, in.TenantId, in.Code)
 	if err != nil {
 		return nil, err
 	}
-	//_, err = ossTemplate.StatFile(in.TenantId, in.BucketName, in.Filename)
-	//if err != nil {
-	//	return nil, err
-	//}
-	expires := 60 * time.Minute // 1 小时
-	if in.Expires > 0 {
-		expires = time.Duration(in.Expires) * time.Minute
-	}
-	signUrl, err := ossTemplate.SignUrl(l.ctx, in.TenantId, in.BucketName, in.Filename, expires)
+	signUrl, err := ossTemplate.SignUrl(l.ctx, in.TenantId, in.BucketName, in.Filename, calcExpires(in.Expires))
 	if err != nil {
 		return nil, err
 	}
