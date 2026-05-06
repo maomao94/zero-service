@@ -139,3 +139,82 @@
 ### Next Steps
 
 - 如需要纳入版本历史，由用户明确要求后再执行 git commit。
+
+
+## Session 4: 完成 DJI Cloud hooks 与 djisdk 注释修正
+
+**Date**: 2026-05-06
+**Task**: 完成 DJI Cloud hooks 与 djisdk 注释修正
+**Branch**: `master`
+
+### Summary
+
+检查并修正 app/djicloud/internal/hooks 的 DRC 上行注册与 handler 参数设计，润色 common/djisdk 注释，并完成验证。
+
+### Main Changes
+
+### Context
+
+- 用户要求完成任务并记录 Trellis 会话。
+- 本轮工作聚焦 DJI Cloud hooks 与 common/djisdk 注释和协议表达。
+- Trellis context：开发者 boss，分支 master，当前任务 `.trellis/tasks/00-bootstrap-guidelines`，工作区记录文件 `.trellis/workspace/boss/journal-1.md`。
+
+### Completed
+
+- 检查 `app/djicloud/internal/hooks/` 后修复 DRC 上行相关问题：
+  - `registerTelemetryHandlers` 保持注册顺序：OSD、State、Status、DRC Up。
+  - `NewDrcUpHandler` 从硬凑参数 `NewDrcUpHandler(_ *collection.Cache, db ...*gormx.DB)` 简化为 `NewDrcUpHandler(db *gormx.DB)`。
+  - 移除未使用的 `onlineCache` 参数和可选 DB 变参校验。
+  - 保留 `msg == nil` 判空，避免直接访问 `msg.Method` 或 `msg.Timestamp` 导致 panic。
+  - DRC topic 注释修正为 `thing/product/{gateway_sn}/drc/up`。
+- 同步更新 hooks 测试：
+  - 注册链路下 `HandleDrcUp` 可写入 `DjiDrcUpEvent`。
+  - `drc_initial_state_subscribe` 上行 raw_json 保持 `{"result":0}`，不引入官方不存在的 output 字段。
+  - DRC up 不刷新 online cache 的测试改为直接验证 `NewDrcUpHandler(nil)`。
+- 润色 `common/djisdk/` 注释：
+  - 包级说明统一云平台侧、设备侧、property、requests、status、drc/down、drc/up、services/services_reply 术语。
+  - `protocol_drc.go` 补齐 DRC 上行消息、未知 data、stick_control 回执、心跳、避障、时延、OSD 等字段注释。
+
+### Verification
+
+- [OK] `gofmt -w app/djicloud/internal/hooks/register.go app/djicloud/internal/hooks/mqtt_drc_up.go app/djicloud/internal/hooks/register_test.go app/djicloud/internal/hooks/mqtt_drc_up_test.go`
+- [OK] `gofmt -w common/djisdk/doc.go common/djisdk/protocol_drc.go`
+- [OK] `go test ./common/djisdk ./app/djicloud/internal/hooks`
+- [OK] `go vet ./common/djisdk ./app/djicloud/internal/hooks`
+
+### Git State
+
+- 记录前执行 `git status --short`，工作区干净。
+- 最近提交：`0ca9568b add`。
+- 本次未执行 git commit，按 Trellis record-session 规则使用 `--no-commit`。
+
+### Decisions
+
+- DRC 上行 handler 不需要 `onlineCache`，职责收敛为日志摘要与 DRC 上行事件留痕。
+- `msg == nil` 校验属于防 panic 的必要保护，保留。
+- `drc_initial_state_subscribe` 的 up data 继续严格按官方文档只保留 `result`。
+
+### Status
+
+[OK] Completed
+
+### Next Steps
+
+- 如需要纳入版本历史，由用户明确要求后再执行 git commit。
+
+
+### Git Commits
+
+(No commits - planning session)
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
