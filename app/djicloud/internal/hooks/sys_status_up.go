@@ -10,7 +10,6 @@ import (
 
 	"github.com/zeromicro/go-zero/core/collection"
 	"github.com/zeromicro/go-zero/core/logx"
-	"gorm.io/gorm/clause"
 )
 
 func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
@@ -41,10 +40,11 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 		}
 
 		if err := db.WithContext(ctx).Transact(func(tx *gormx.DB) error {
-			if err := gormx.Upsert(ctx, tx, &gormmodel.DjiDevice{
+			gatewayDevice := gormmodel.DjiDevice{
 				DeviceSn:  gatewaySn,
 				GatewaySn: gatewaySn,
-			}, []clause.Column{{Name: "device_sn"}}, []string{"gateway_sn", "update_time"}); err != nil {
+			}
+			if err := gormx.UpdateOrCreate(ctx, tx, &gormmodel.DjiDevice{}, map[string]any{"device_sn": gatewaySn}, &gatewayDevice, map[string]any{"gateway_sn": gatewaySn}); err != nil {
 				return err
 			}
 
@@ -64,7 +64,7 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 
 			for _, sub := range topo.SubDevices {
 				subDomain := sub.Domain
-				if err := gormx.Upsert(ctx, tx, &gormmodel.DjiDeviceTopo{
+				topoRecord := gormmodel.DjiDeviceTopo{
 					GatewaySn:        gatewaySn,
 					SubDeviceSn:      sub.SN,
 					Domain:           subDomain,
@@ -72,14 +72,23 @@ func NewStatusHandler(db *gormx.DB, _ *collection.Cache) djisdk.StatusHandler {
 					SubDeviceSubType: sub.SubType,
 					SubDeviceIndex:   sub.Index,
 					ThingVersion:     sub.ThingVersion,
-				}, []clause.Column{{Name: "gateway_sn"}, {Name: "sub_device_sn"}}, []string{"domain", "sub_device_type", "sub_device_sub_type", "sub_device_index", "thing_version", "update_time"}); err != nil {
+				}
+				topoUpdateData := map[string]any{
+					"domain":              topoRecord.Domain,
+					"sub_device_type":     topoRecord.SubDeviceType,
+					"sub_device_sub_type": topoRecord.SubDeviceSubType,
+					"sub_device_index":    topoRecord.SubDeviceIndex,
+					"thing_version":       topoRecord.ThingVersion,
+				}
+				if err := gormx.UpdateOrCreate(ctx, tx, &gormmodel.DjiDeviceTopo{}, map[string]any{"gateway_sn": gatewaySn, "sub_device_sn": sub.SN}, &topoRecord, topoUpdateData); err != nil {
 					return err
 				}
 
-				if err := gormx.Upsert(ctx, tx, &gormmodel.DjiDevice{
+				subDevice := gormmodel.DjiDevice{
 					DeviceSn:  sub.SN,
 					GatewaySn: gatewaySn,
-				}, []clause.Column{{Name: "device_sn"}}, []string{"gateway_sn", "update_time"}); err != nil {
+				}
+				if err := gormx.UpdateOrCreate(ctx, tx, &gormmodel.DjiDevice{}, map[string]any{"device_sn": sub.SN}, &subDevice, map[string]any{"gateway_sn": gatewaySn}); err != nil {
 					return err
 				}
 			}

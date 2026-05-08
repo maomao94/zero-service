@@ -9,7 +9,9 @@ import (
 	"zero-service/common/filex"
 )
 
-const maxContentTypeDetectBytes = 512
+// MaxContentTypeDetectBytes 是 MIME 类型探测时读取的最大字节数，
+// 标准 HTTP 的 DetectContentType 最多只需要前 512 字节。
+const MaxContentTypeDetectBytes = 512
 
 // StreamUploadRequest 描述一次通用流式上传请求。
 type StreamUploadRequest struct {
@@ -84,7 +86,7 @@ func DetectContentType(contentType string, head []byte) string {
 	if len(head) == 0 {
 		return ""
 	}
-	return http.DetectContentType(head[:min(len(head), maxContentTypeDetectBytes)])
+	return http.DetectContentType(head[:min(len(head), MaxContentTypeDetectBytes)])
 }
 
 // ReadUploadHead 从 reader 中读取前 512 字节作为 MIME 类型与 EXIF 的探测头。
@@ -93,7 +95,7 @@ func ReadUploadHead(reader io.Reader) ([]byte, io.Reader, error) {
 	if reader == nil {
 		return nil, nil, io.EOF
 	}
-	buf := make([]byte, maxContentTypeDetectBytes)
+	buf := make([]byte, MaxContentTypeDetectBytes)
 	n, err := io.ReadFull(reader, buf)
 	if err == io.EOF {
 		return nil, reader, nil

@@ -602,6 +602,61 @@ func TestOsdTelemetryRejectsMissingGateway(t *testing.T) {
 	}
 }
 
+func TestHookHandlersDoNotGenerateDialectUpsertSQL(t *testing.T) {
+	db := newHookTestDB(t)
+	sqls := make([]string, 0)
+	db.DB.Callback().Create().Before("gorm:create").Register("hooks:test_capture_create_sql", func(tx *gorm.DB) {
+		tx.Statement.SQL.Reset()
+		tx.Statement.Build("INSERT", "VALUES", "ON CONFLICT")
+		sqls = append(sqls, tx.Statement.SQL.String())
+	})
+
+	ctx := context.Background()
+	NewOsdHandler(db, nil)(ctx, "dock-sql", &djisdk.OsdMessage{
+		Gateway:   "dock-sql",
+		Timestamp: 1710000000000,
+		Data:      map[string]any{"mode_code": 1},
+	})
+	NewStateTelemetryHandler(db, nil)(ctx, "drone-sql", &djisdk.StateMessage{
+		Gateway:   "dock-sql",
+		Timestamp: 1710000000000,
+		Data:      map[string]any{"firmware_version": "05.01.0214"},
+	})
+	NewFlightTaskProgressHandler(db)(ctx, "dock-sql", &djisdk.FlightTaskProgressEvent{
+		Status: "running",
+		Progress: djisdk.FlightTaskProgressProgress{
+			CurrentStep: 2,
+			Percent:     50,
+		},
+		Ext: djisdk.FlightTaskProgressExt{
+			FlightID:             "flight-sql",
+			CurrentWaypointIndex: 1,
+			WaylineMissionState:  6,
+			MediaCount:           3,
+			TrackID:              "track-sql",
+			WaylineID:            9,
+		},
+	})
+	result := NewStatusHandler(db, nil)(ctx, "dock-sql", &djisdk.StatusMessage{
+		Method:    djisdk.MethodUpdateTopo,
+		Timestamp: 1710000000000,
+		Data: map[string]any{
+			"sub_devices": []any{
+				map[string]any{"sn": "drone-sql", "domain": "0", "type": 60, "sub_type": 0, "index": "A"},
+			},
+		},
+	})
+	if result != djisdk.PlatformResultOK {
+		t.Fatalf("status result = %d, want %d", result, djisdk.PlatformResultOK)
+	}
+
+	for _, sql := range sqls {
+		if strings.Contains(sql, "ON CONFLICT") {
+			t.Fatalf("generated dialect upsert SQL %q", sql)
+		}
+	}
+}
+
 func TestOsdTelemetryStoresOnlyOfficialRawSnapshot(t *testing.T) {
 	db := newHookTestDB(t)
 	ctx := context.Background()

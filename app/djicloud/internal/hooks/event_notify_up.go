@@ -40,11 +40,22 @@ func NewFlightTaskProgressHandler(db *gormx.DB) func(ctx context.Context, gatewa
 			ExtJSON:              toJSONString(ext),
 			ReportedAt:           time.Now(),
 		}
-		updateColumns := []string{
-			"status", "current_step", "wayline_mission_state", "current_waypoint_index", "media_count", "progress_percent", "track_id", "wayline_id", "break_point_json", "raw_json", "ext_json", "reported_at", "update_time",
+		updateData := map[string]any{
+			"status":                 record.Status,
+			"current_step":           record.CurrentStep,
+			"wayline_mission_state":  record.WaylineMissionState,
+			"current_waypoint_index": record.CurrentWaypointIndex,
+			"media_count":            record.MediaCount,
+			"progress_percent":       record.ProgressPercent,
+			"track_id":               record.TrackId,
+			"wayline_id":             record.WaylineId,
+			"break_point_json":       record.BreakPointJSON,
+			"raw_json":               record.RawJSON,
+			"ext_json":               record.ExtJSON,
+			"reported_at":            record.ReportedAt,
 		}
 		if err := db.Transact(func(tx *gormx.DB) error {
-			if err := gormx.Upsert(ctx, tx, &record, gormx.Columns("gateway_sn", "flight_id"), updateColumns); err != nil {
+			if err := gormx.UpdateOrCreate(ctx, tx, &gormmodel.DjiDockFlightTask{}, map[string]any{"gateway_sn": gatewaySn, "flight_id": ext.FlightID}, &record, updateData); err != nil {
 				return err
 			}
 			deviceState := gormmodel.DjiDockDeviceFlightTaskState{
@@ -63,7 +74,22 @@ func NewFlightTaskProgressHandler(db *gormx.DB) func(ctx context.Context, gatewa
 				ExtJSON:              record.ExtJSON,
 				ReportedAt:           record.ReportedAt,
 			}
-			return gormx.Upsert(ctx, tx, &deviceState, gormx.Columns("gateway_sn"), append([]string{"flight_id"}, updateColumns...))
+			deviceStateUpdateData := map[string]any{
+				"flight_id":              deviceState.FlightId,
+				"status":                 deviceState.Status,
+				"current_step":           deviceState.CurrentStep,
+				"wayline_mission_state":  deviceState.WaylineMissionState,
+				"current_waypoint_index": deviceState.CurrentWaypointIndex,
+				"media_count":            deviceState.MediaCount,
+				"progress_percent":       deviceState.ProgressPercent,
+				"track_id":               deviceState.TrackId,
+				"wayline_id":             deviceState.WaylineId,
+				"break_point_json":       deviceState.BreakPointJSON,
+				"raw_json":               deviceState.RawJSON,
+				"ext_json":               deviceState.ExtJSON,
+				"reported_at":            deviceState.ReportedAt,
+			}
+			return gormx.UpdateOrCreate(ctx, tx, &gormmodel.DjiDockDeviceFlightTaskState{}, map[string]any{"gateway_sn": gatewaySn}, &deviceState, deviceStateUpdateData)
 		}); err != nil {
 			logx.WithContext(ctx).Errorf("[dji-cloud] upsert flight task progress state failed: %v", err)
 		}

@@ -2,10 +2,8 @@ package logic
 
 import (
 	"context"
-	"mime"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -20,8 +18,6 @@ import (
 	"zero-service/common/tool"
 )
 
-const uploadContentTypeProbeBytes = 512
-
 // resolveContentType 解析内容类型。若调用方已显式指定则直接返回，否则基于文件头前 512 字节
 // 探测 MIME 类型，并在探测成功时记录日志。
 func resolveContentType(ctx context.Context, contentType string, head []byte) string {
@@ -30,16 +26,6 @@ func resolveContentType(ctx context.Context, contentType string, head []byte) st
 		logx.WithContext(ctx).Infof("Detected Content-Type: %s", detected)
 	}
 	return detected
-}
-
-// isImageContentType 判断 Content-Type 是否为图片类型。先通过 mime.ParseMediaType 解析
-// 去除参数（如 "; charset=utf-8"），再以前缀 "image/" 做匹配。
-func isImageContentType(contentType string) bool {
-	mediaType, _, err := mime.ParseMediaType(contentType)
-	if err == nil && mediaType != "" {
-		contentType = mediaType
-	}
-	return strings.HasPrefix(strings.ToLower(contentType), "image/")
 }
 
 // buildCaptureOptions 基于上传配置构建 CaptureOptions，不依赖运行时 ContentType 探测。
@@ -69,7 +55,7 @@ func processUploadResult(
 	thumbTaskRunner *threading.TaskRunner,
 ) *file.File {
 	if result.File == nil {
-		cleanupTempPath(result.TempPath, uploadConf.KeepTempFiles)
+		_ = filex.RemoveTempFile(result.TempPath, uploadConf.KeepTempFiles)
 		return &file.File{}
 	}
 
@@ -77,19 +63,19 @@ func processUploadResult(
 	copier.Copy(&pbFile, result.File) // nolint:errcheck
 	pbFile.Md5 = result.File.Md5
 
-	if !isImageContentType(result.ContentType) {
-		cleanupTempPath(result.TempPath, uploadConf.KeepTempFiles)
+	if !filex.IsImageContentType(result.ContentType) {
+		_ = filex.RemoveTempFile(result.TempPath, uploadConf.KeepTempFiles)
 		return &pbFile
 	}
 
-	if exifMeta, err := imagex.ExtractImageMetaFromBytes(result.Head); err == nil {
+	if exifMeta, err := imagex.ExtractImageMetaFromBytes(result.Head, imagex.WithExtraMetaFields("BodySerialNumber")); err == nil {
 		var meta file.ImageMeta
 		copier.Copy(&meta, &exifMeta) // nolint:errcheck
 		pbFile.Meta = &meta
 	}
 
 	if !needThumbGeneration(uploadConf, result, isThumb, thumbTaskRunner) {
-		cleanupTempPath(result.TempPath, uploadConf.KeepTempFiles)
+		_ = filex.RemoveTempFile(result.TempPath, uploadConf.KeepTempFiles)
 		return &pbFile
 	}
 
@@ -97,14 +83,6 @@ func processUploadResult(
 		tenantID, bucketName, filename, thumbTaskRunner)
 
 	return &pbFile
-}
-
-// cleanupTempPath 根据 KeepTempFiles 配置决定是否清理临时文件路径。
-func cleanupTempPath(tempPath string, keepTempFiles bool) {
-	if tempPath == "" || keepTempFiles {
-		return
-	}
-	os.Remove(tempPath) // nolint:errcheck
 }
 
 func needThumbGeneration(uploadConf config.UploadConf, result *ossx.StreamUploadResult, isThumb bool, thumbTaskRunner *threading.TaskRunner) bool {
@@ -134,10 +112,10 @@ func scheduleThumbGeneration(
 	thumbSourcePath := filepath.Join(filepath.Dir(sourcePath), filepath.Base(sourcePath)+"_source")
 	if err := filex.CopyFile(sourcePath, thumbSourcePath); err != nil {
 		logx.WithContext(ctx).Errorf("Failed to copy image temp file: %v", err)
-		cleanupTempPath(result.TempPath, uploadConf.KeepTempFiles)
+		_ = filex.RemoveTempFile(result.TempPath, uploadConf.KeepTempFiles)
 		return
 	}
-	cleanupTempPath(result.TempPath, uploadConf.KeepTempFiles)
+	_ = filex.RemoveTempFile(result.TempPath, uploadConf.KeepTempFiles)
 
 	thumbFilename := "thumb_" + filename
 	ossName := tool.GenOssFilename(thumbFilename, "thumb")

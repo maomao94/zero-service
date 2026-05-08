@@ -27,6 +27,9 @@ Upload:
   # 是否保留上传处理过程中的临时文件，默认 false。
   # 仅建议线上问题定位时临时开启，开启后需要自行清理 TempDir。
   KeepTempFiles: false
+  # RelayFile 多目标 OSS 转推上传并发数，默认 4。
+  # 推荐值 4：适合当前最大 200MB 源文件，在提升多目标上传速度的同时控制文件 FD、网络连接和带宽压力。
+  RelayUploadConcurrency: 4
   Image:
     # 图片 EXIF 解析最多缓存的文件头字节数，默认 65536，即 64KB。
     # 该配置只缓存头部数据，不会把整张图片读入内存。

@@ -4,17 +4,14 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
-	"path"
-	"path/filepath"
-	"strings"
 
 	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
 
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
+	"zero-service/common/antsx"
 	"zero-service/common/filex"
 	"zero-service/common/ossx"
 )
@@ -69,13 +66,13 @@ func (l *RelayFileLogic) prepareRelaySource(in *file.RelayFileReq) (*relaySource
 }
 
 func (l *RelayFileLogic) openLocalSource(sourcePath, reqContentType string) (*relaySource, error) {
-	head, size, err := filex.ReadFileHead(sourcePath, uploadContentTypeProbeBytes)
+	head, size, err := filex.ReadFileHead(sourcePath, ossx.MaxContentTypeDetectBytes)
 	if err != nil {
 		return nil, err
 	}
 	contentType := resolveContentType(l.ctx, reqContentType, head)
 	return &relaySource{
-		filename:    relaySourceFilename(sourcePath),
+		filename:    filex.ExtractFilenameFromURL(sourcePath),
 		size:        size,
 		contentType: contentType,
 		openReader: func() (io.ReadCloser, error) {
@@ -104,7 +101,7 @@ func (l *RelayFileLogic) fetchURLSource(sourceURL, reqContentType string) (*rela
 	}
 	tempPath := f.Name()
 
-	headWriter := filex.NewHeadCaptureWriter(uploadContentTypeProbeBytes)
+	headWriter := filex.NewHeadCaptureWriter(ossx.MaxContentTypeDetectBytes)
 	written, copyErr := io.Copy(f, io.TeeReader(io.LimitReader(body, relayMaxSourceBytes+1), headWriter))
 	if copyErr != nil {
 		_ = f.Close()
@@ -124,7 +121,7 @@ func (l *RelayFileLogic) fetchURLSource(sourceURL, reqContentType string) (*rela
 	contentType := resolveContentType(l.ctx, reqContentType, headWriter.Bytes())
 
 	return &relaySource{
-		filename:    relaySourceFilename(sourceURL),
+		filename:    filex.ExtractFilenameFromURL(sourceURL),
 		size:        written,
 		contentType: contentType,
 		openReader: func() (io.ReadCloser, error) {
@@ -146,14 +143,39 @@ func (l *RelayFileLogic) makePathCleanup(tempPath string) func() {
 
 // putRelayTargets 逐个目标执行转推，单目标失败不影响后续目标。
 func (l *RelayFileLogic) putRelayTargets(targets []*file.RelayTarget, source *relaySource) ([]relayResult, error) {
-	results := make([]relayResult, len(targets))
-	var firstErr error
+	concurrency := l.svcCtx.Config.Upload.RelayUploadConcurrency
+	if concurrency <= 0 {
+		concurrency = 1
+	}
+	reactor, err := antsx.NewReactor(concurrency)
+	if err != nil {
+		return nil, err
+	}
+	defer reactor.Release()
+
+	tasks := make([]antsx.Task[relayResult], 0, len(targets))
 	for i, target := range targets {
-		ossTemplate, err := l.svcCtx.GetOssTemplate(l.ctx, target.TenantId, target.Code)
-		if err != nil {
-			results[i] = relayResult{Index: i, Err: err}
+		index, relayTarget := i, target
+		tasks = append(tasks, antsx.Task[relayResult]{
+			Name: fmt.Sprintf("relay-target-%d", index),
+			Fn: func(ctx context.Context) (relayResult, error) {
+				ossTemplate, err := l.svcCtx.GetOssTemplate(ctx, relayTarget.TenantId, relayTarget.Code)
+				if err != nil {
+					return relayResult{Index: index, Err: err}, nil
+				}
+				return l.uploadToRelayTarget(ctx, index, relayTarget, source, ossTemplate), nil
+			},
+		})
+	}
+
+	settledResults := antsx.InvokeAllSettledWithReactor(l.ctx, reactor, tasks...)
+	results := make([]relayResult, len(settledResults))
+	var firstErr error
+	for i, settledResult := range settledResults {
+		if settledResult.Err != nil {
+			results[i] = relayResult{Index: i, Err: settledResult.Err}
 		} else {
-			results[i] = l.uploadToRelayTarget(i, target, source, ossTemplate)
+			results[i] = settledResult.Val
 		}
 		if firstErr == nil && results[i].Err != nil {
 			firstErr = results[i].Err
@@ -163,7 +185,7 @@ func (l *RelayFileLogic) putRelayTargets(targets []*file.RelayTarget, source *re
 }
 
 // uploadToRelayTarget 执行单目标上传，统一管理 reader 生命周期。
-func (l *RelayFileLogic) uploadToRelayTarget(index int, target *file.RelayTarget, source *relaySource, ossTemplate ossx.OssTemplate) relayResult {
+func (l *RelayFileLogic) uploadToRelayTarget(ctx context.Context, index int, target *file.RelayTarget, source *relaySource, ossTemplate ossx.OssTemplate) relayResult {
 	reader, err := source.openReader()
 	if err != nil {
 		return relayResult{Index: index, Err: err}
@@ -174,7 +196,7 @@ func (l *RelayFileLogic) uploadToRelayTarget(index int, target *file.RelayTarget
 	if filename == "" {
 		filename = source.filename
 	}
-	uploadedFile, err := ossTemplate.PutObject(l.ctx, target.TenantId, target.BucketName, filename, source.contentType, reader, source.size, target.PathPrefix)
+	uploadedFile, err := ossTemplate.PutObject(ctx, target.TenantId, target.BucketName, filename, source.contentType, reader, source.size, target.PathPrefix)
 	if err != nil {
 		return relayResult{Index: index, Err: err}
 	}
@@ -198,18 +220,6 @@ func (l *RelayFileLogic) buildRelayResponse(results []relayResult) *file.RelayFi
 		res.Files = append(res.Files, &pbFile)
 	}
 	return res
-}
-
-func relaySourceFilename(source string) string {
-	if source == "" {
-		return ""
-	}
-	if u, err := url.Parse(source); err == nil && u.Path != "" {
-		if name := path.Base(u.Path); name != "." && name != "/" {
-			return name
-		}
-	}
-	return filepath.Base(strings.TrimRight(source, string(os.PathSeparator)))
 }
 
 type relaySource struct {

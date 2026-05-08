@@ -28,9 +28,10 @@ type OssConf struct {
 }
 
 type UploadConf struct {
-	TempDir       string `json:",default=/opt/data/temp"`
-	KeepTempFiles bool   `json:",default=false"`
-	Image         ImageUploadConf
+	TempDir                string `json:",default=/opt/data/temp"`
+	KeepTempFiles          bool   `json:",default=false"`
+	RelayUploadConcurrency int    `json:",default=4"`
+	Image                  ImageUploadConf
 }
 
 type ImageUploadConf struct {

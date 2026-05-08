@@ -175,3 +175,78 @@ func TestNewMD5TeeReader(t *testing.T) {
 		t.Fatalf("Hex() = %q, want 5eb63bbbe01eeed093cb22bb8f5acdc3", digest.Hex())
 	}
 }
+
+func TestIsImageContentType(t *testing.T) {
+	tests := []struct {
+		name        string
+		contentType string
+		want        bool
+	}{
+		{"image/png", "image/png", true},
+		{"image/jpeg with charset", "image/jpeg; charset=utf-8", true},
+		{"text/plain", "text/plain", false},
+		{"empty string", "", false},
+		{"image/svg+xml", "image/svg+xml", true},
+		{"uppercase IMAGE/PNG", "IMAGE/PNG", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := IsImageContentType(tt.contentType); got != tt.want {
+				t.Errorf("IsImageContentType(%q) = %v, want %v", tt.contentType, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRemoveTempFile(t *testing.T) {
+	t.Run("empty path", func(t *testing.T) {
+		if err := RemoveTempFile("", false); err != nil {
+			t.Errorf("RemoveTempFile empty path should return nil, got %v", err)
+		}
+	})
+	t.Run("keep temp files", func(t *testing.T) {
+		if err := RemoveTempFile("/nonexistent", true); err != nil {
+			t.Errorf("RemoveTempFile keepTempFiles=true should return nil, got %v", err)
+		}
+	})
+	t.Run("remove existing file", func(t *testing.T) {
+		tempDir := t.TempDir()
+		tempPath := filepath.Join(tempDir, "test.tmp")
+		if err := os.WriteFile(tempPath, []byte("test"), 0644); err != nil {
+			t.Fatal(err)
+		}
+		if err := RemoveTempFile(tempPath, false); err != nil {
+			t.Errorf("RemoveTempFile should succeed, got %v", err)
+		}
+		if _, err := os.Stat(tempPath); !os.IsNotExist(err) {
+			t.Error("file should be removed")
+		}
+	})
+	t.Run("remove non-existent file is ok", func(t *testing.T) {
+		err := RemoveTempFile("/nonexistent/path/file", false)
+		if err == nil {
+			t.Error("expected error for non-existent file, got nil")
+		}
+	})
+}
+
+func TestExtractFilenameFromURL(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   string
+	}{
+		{"http url", "http://example.com/path/to/file.txt", "file.txt"},
+		{"http url with query", "http://example.com/file.txt?token=abc", "file.txt"},
+		{"local path", "/tmp/uploads/photo.jpg", "photo.jpg"},
+		{"empty", "", ""},
+		{"url with no path", "http://example.com", "example.com"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ExtractFilenameFromURL(tt.source); got != tt.want {
+				t.Errorf("ExtractFilenameFromURL(%q) = %q, want %q", tt.source, got, tt.want)
+			}
+		})
+	}
+}

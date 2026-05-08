@@ -2,8 +2,12 @@ package filex
 
 import (
 	"io"
+	"mime"
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
+	"strings"
 )
 
 type HeadCaptureWriter struct {
@@ -165,4 +169,37 @@ func ReadFileHead(path string, maxHead int) ([]byte, int64, error) {
 		return nil, 0, err
 	}
 	return head[:n], info.Size(), nil
+}
+
+// IsImageContentType 判断 Content-Type 是否为图片类型。
+// 先通过 mime.ParseMediaType 去除参数（如 "; charset=utf-8"），再以前缀 "image/" 做匹配。
+func IsImageContentType(contentType string) bool {
+	mediaType, _, err := mime.ParseMediaType(contentType)
+	if err == nil && mediaType != "" {
+		contentType = mediaType
+	}
+	return strings.HasPrefix(strings.ToLower(contentType), "image/")
+}
+
+// RemoveTempFile 根据 keepTempFiles 标记条件性清理临时文件。
+// 复用 Capture.Release() 错误处理模式，返回 error 供调用方决定是否忽略。
+func RemoveTempFile(tempPath string, keepTempFiles bool) error {
+	if tempPath == "" || keepTempFiles {
+		return nil
+	}
+	return os.Remove(tempPath)
+}
+
+// ExtractFilenameFromURL 从 URL 或本地文件路径提取文件名。
+// 优先解析 URL 路径的 base，回退到 filepath.Base。
+func ExtractFilenameFromURL(source string) string {
+	if source == "" {
+		return ""
+	}
+	if u, err := url.Parse(source); err == nil && u.Path != "" {
+		if name := path.Base(u.Path); name != "." && name != "/" {
+			return name
+		}
+	}
+	return filepath.Base(strings.TrimRight(source, string(os.PathSeparator)))
 }

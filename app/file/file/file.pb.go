@@ -383,13 +383,14 @@ func (x *File) GetThumbName() string {
 
 type ImageMeta struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Longitude     float64                `protobuf:"fixed64,1,opt,name=longitude,proto3" json:"longitude,omitempty"`   // 经度
-	Latitude      float64                `protobuf:"fixed64,2,opt,name=latitude,proto3" json:"latitude,omitempty"`     // 纬度
-	Time          string                 `protobuf:"bytes,3,opt,name=time,proto3" json:"time,omitempty"`               // 拍摄时间
-	ImgHeight     int32                  `protobuf:"varint,4,opt,name=imgHeight,proto3" json:"imgHeight,omitempty"`    // 高
-	ImgWidth      int32                  `protobuf:"varint,5,opt,name=imgWidth,proto3" json:"imgWidth,omitempty"`      // 宽
-	Altitude      float64                `protobuf:"fixed64,6,opt,name=altitude,proto3" json:"altitude,omitempty"`     // 高度
-	CameraModel   string                 `protobuf:"bytes,7,opt,name=cameraModel,proto3" json:"cameraModel,omitempty"` // 相机型号
+	Longitude     float64                `protobuf:"fixed64,1,opt,name=longitude,proto3" json:"longitude,omitempty"`                                                                 // 经度
+	Latitude      float64                `protobuf:"fixed64,2,opt,name=latitude,proto3" json:"latitude,omitempty"`                                                                   // 纬度
+	Time          string                 `protobuf:"bytes,3,opt,name=time,proto3" json:"time,omitempty"`                                                                             // 拍摄时间
+	ImgHeight     int32                  `protobuf:"varint,4,opt,name=imgHeight,proto3" json:"imgHeight,omitempty"`                                                                  // 高
+	ImgWidth      int32                  `protobuf:"varint,5,opt,name=imgWidth,proto3" json:"imgWidth,omitempty"`                                                                    // 宽
+	Altitude      float64                `protobuf:"fixed64,6,opt,name=altitude,proto3" json:"altitude,omitempty"`                                                                   // 高度
+	CameraModel   string                 `protobuf:"bytes,7,opt,name=cameraModel,proto3" json:"cameraModel,omitempty"`                                                               // 相机型号
+	Extra         map[string]string      `protobuf:"bytes,8,rep,name=extra,proto3" json:"extra,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // 扩展元数据
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -471,6 +472,13 @@ func (x *ImageMeta) GetCameraModel() string {
 		return x.CameraModel
 	}
 	return ""
+}
+
+func (x *ImageMeta) GetExtra() map[string]string {
+	if x != nil {
+		return x.Extra
+	}
+	return nil
 }
 
 type OssFile struct {
@@ -2604,7 +2612,7 @@ const file_file_proto_rawDesc = "" +
 	"\x04meta\x18\t \x01(\v2\x0f.file.ImageMetaR\x04meta\x12\x1c\n" +
 	"\tthumbLink\x18\n" +
 	" \x01(\tR\tthumbLink\x12\x1c\n" +
-	"\tThumbName\x18\v \x01(\tR\tThumbName\"\xd1\x01\n" +
+	"\tThumbName\x18\v \x01(\tR\tThumbName\"\xbd\x02\n" +
 	"\tImageMeta\x12\x1c\n" +
 	"\tlongitude\x18\x01 \x01(\x01R\tlongitude\x12\x1a\n" +
 	"\blatitude\x18\x02 \x01(\x01R\blatitude\x12\x12\n" +
@@ -2612,7 +2620,12 @@ const file_file_proto_rawDesc = "" +
 	"\timgHeight\x18\x04 \x01(\x05R\timgHeight\x12\x1a\n" +
 	"\bimgWidth\x18\x05 \x01(\x05R\bimgWidth\x12\x1a\n" +
 	"\baltitude\x18\x06 \x01(\x01R\baltitude\x12 \n" +
-	"\vcameraModel\x18\a \x01(\tR\vcameraModel\"\xbb\x01\n" +
+	"\vcameraModel\x18\a \x01(\tR\vcameraModel\x120\n" +
+	"\x05extra\x18\b \x03(\v2\x1a.file.ImageMeta.ExtraEntryR\x05extra\x1a8\n" +
+	"\n" +
+	"ExtraEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xbb\x01\n" +
 	"\aOssFile\x12\x12\n" +
 	"\x04link\x18\x01 \x01(\tR\x04link\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
@@ -2843,7 +2856,7 @@ func file_file_proto_rawDescGZIP() []byte {
 	return file_file_proto_rawDescData
 }
 
-var file_file_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
+var file_file_proto_msgTypes = make([]protoimpl.MessageInfo, 39)
 var file_file_proto_goTypes = []any{
 	(*Req)(nil),                   // 0: file.Req
 	(*Res)(nil),                   // 1: file.Res
@@ -2883,54 +2896,56 @@ var file_file_proto_goTypes = []any{
 	(*RemoveFilesReq)(nil),        // 35: file.RemoveFilesReq
 	(*CaptureVideoStreamReq)(nil), // 36: file.CaptureVideoStreamReq
 	(*CaptureVideoStreamRes)(nil), // 37: file.CaptureVideoStreamRes
+	nil,                           // 38: file.ImageMeta.ExtraEntry
 }
 var file_file_proto_depIdxs = []int32{
 	4,  // 0: file.File.meta:type_name -> file.ImageMeta
-	2,  // 1: file.OssDetailRes.oss:type_name -> file.Oss
-	2,  // 2: file.OssListRes.oss:type_name -> file.Oss
-	5,  // 3: file.StatFileRes.ossFile:type_name -> file.OssFile
-	3,  // 4: file.PutFileRes.file:type_name -> file.File
-	3,  // 5: file.PutStreamFileRes.file:type_name -> file.File
-	28, // 6: file.RelayFileReq.targets:type_name -> file.RelayTarget
-	3,  // 7: file.RelayFileRes.files:type_name -> file.File
-	3,  // 8: file.CaptureVideoStreamRes.file:type_name -> file.File
-	0,  // 9: file.FileRpc.Ping:input_type -> file.Req
-	6,  // 10: file.FileRpc.OssDetail:input_type -> file.OssDetailReq
-	8,  // 11: file.FileRpc.OssList:input_type -> file.OssListReq
-	10, // 12: file.FileRpc.CreateOss:input_type -> file.CreateOssReq
-	12, // 13: file.FileRpc.UpdateOss:input_type -> file.UpdateOssReq
-	14, // 14: file.FileRpc.DeleteOss:input_type -> file.DeleteOssReq
-	16, // 15: file.FileRpc.MakeBucket:input_type -> file.MakeBucketReq
-	18, // 16: file.FileRpc.RemoveBucket:input_type -> file.RemoveBucketReq
-	20, // 17: file.FileRpc.StatFile:input_type -> file.StatFileReq
-	22, // 18: file.FileRpc.SignUrl:input_type -> file.SignUrlReq
-	24, // 19: file.FileRpc.PutFile:input_type -> file.PutFileReq
-	26, // 20: file.FileRpc.PutStreamFile:input_type -> file.PutStreamFileReq
-	29, // 21: file.FileRpc.RelayFile:input_type -> file.RelayFileReq
-	33, // 22: file.FileRpc.RemoveFile:input_type -> file.RemoveFileReq
-	35, // 23: file.FileRpc.RemoveFiles:input_type -> file.RemoveFilesReq
-	36, // 24: file.FileRpc.CaptureVideoStream:input_type -> file.CaptureVideoStreamReq
-	1,  // 25: file.FileRpc.Ping:output_type -> file.Res
-	7,  // 26: file.FileRpc.OssDetail:output_type -> file.OssDetailRes
-	9,  // 27: file.FileRpc.OssList:output_type -> file.OssListRes
-	11, // 28: file.FileRpc.CreateOss:output_type -> file.CreateOssRes
-	13, // 29: file.FileRpc.UpdateOss:output_type -> file.UpdateOssRes
-	15, // 30: file.FileRpc.DeleteOss:output_type -> file.DeleteOssRes
-	17, // 31: file.FileRpc.MakeBucket:output_type -> file.MakeBucketRes
-	19, // 32: file.FileRpc.RemoveBucket:output_type -> file.RemoveBucketRes
-	21, // 33: file.FileRpc.StatFile:output_type -> file.StatFileRes
-	23, // 34: file.FileRpc.SignUrl:output_type -> file.SignUrlRes
-	25, // 35: file.FileRpc.PutFile:output_type -> file.PutFileRes
-	27, // 36: file.FileRpc.PutStreamFile:output_type -> file.PutStreamFileRes
-	30, // 37: file.FileRpc.RelayFile:output_type -> file.RelayFileRes
-	34, // 38: file.FileRpc.RemoveFile:output_type -> file.RemoveFileRes
-	34, // 39: file.FileRpc.RemoveFiles:output_type -> file.RemoveFileRes
-	37, // 40: file.FileRpc.CaptureVideoStream:output_type -> file.CaptureVideoStreamRes
-	25, // [25:41] is the sub-list for method output_type
-	9,  // [9:25] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	38, // 1: file.ImageMeta.extra:type_name -> file.ImageMeta.ExtraEntry
+	2,  // 2: file.OssDetailRes.oss:type_name -> file.Oss
+	2,  // 3: file.OssListRes.oss:type_name -> file.Oss
+	5,  // 4: file.StatFileRes.ossFile:type_name -> file.OssFile
+	3,  // 5: file.PutFileRes.file:type_name -> file.File
+	3,  // 6: file.PutStreamFileRes.file:type_name -> file.File
+	28, // 7: file.RelayFileReq.targets:type_name -> file.RelayTarget
+	3,  // 8: file.RelayFileRes.files:type_name -> file.File
+	3,  // 9: file.CaptureVideoStreamRes.file:type_name -> file.File
+	0,  // 10: file.FileRpc.Ping:input_type -> file.Req
+	6,  // 11: file.FileRpc.OssDetail:input_type -> file.OssDetailReq
+	8,  // 12: file.FileRpc.OssList:input_type -> file.OssListReq
+	10, // 13: file.FileRpc.CreateOss:input_type -> file.CreateOssReq
+	12, // 14: file.FileRpc.UpdateOss:input_type -> file.UpdateOssReq
+	14, // 15: file.FileRpc.DeleteOss:input_type -> file.DeleteOssReq
+	16, // 16: file.FileRpc.MakeBucket:input_type -> file.MakeBucketReq
+	18, // 17: file.FileRpc.RemoveBucket:input_type -> file.RemoveBucketReq
+	20, // 18: file.FileRpc.StatFile:input_type -> file.StatFileReq
+	22, // 19: file.FileRpc.SignUrl:input_type -> file.SignUrlReq
+	24, // 20: file.FileRpc.PutFile:input_type -> file.PutFileReq
+	26, // 21: file.FileRpc.PutStreamFile:input_type -> file.PutStreamFileReq
+	29, // 22: file.FileRpc.RelayFile:input_type -> file.RelayFileReq
+	33, // 23: file.FileRpc.RemoveFile:input_type -> file.RemoveFileReq
+	35, // 24: file.FileRpc.RemoveFiles:input_type -> file.RemoveFilesReq
+	36, // 25: file.FileRpc.CaptureVideoStream:input_type -> file.CaptureVideoStreamReq
+	1,  // 26: file.FileRpc.Ping:output_type -> file.Res
+	7,  // 27: file.FileRpc.OssDetail:output_type -> file.OssDetailRes
+	9,  // 28: file.FileRpc.OssList:output_type -> file.OssListRes
+	11, // 29: file.FileRpc.CreateOss:output_type -> file.CreateOssRes
+	13, // 30: file.FileRpc.UpdateOss:output_type -> file.UpdateOssRes
+	15, // 31: file.FileRpc.DeleteOss:output_type -> file.DeleteOssRes
+	17, // 32: file.FileRpc.MakeBucket:output_type -> file.MakeBucketRes
+	19, // 33: file.FileRpc.RemoveBucket:output_type -> file.RemoveBucketRes
+	21, // 34: file.FileRpc.StatFile:output_type -> file.StatFileRes
+	23, // 35: file.FileRpc.SignUrl:output_type -> file.SignUrlRes
+	25, // 36: file.FileRpc.PutFile:output_type -> file.PutFileRes
+	27, // 37: file.FileRpc.PutStreamFile:output_type -> file.PutStreamFileRes
+	30, // 38: file.FileRpc.RelayFile:output_type -> file.RelayFileRes
+	34, // 39: file.FileRpc.RemoveFile:output_type -> file.RemoveFileRes
+	34, // 40: file.FileRpc.RemoveFiles:output_type -> file.RemoveFileRes
+	37, // 41: file.FileRpc.CaptureVideoStream:output_type -> file.CaptureVideoStreamRes
+	26, // [26:42] is the sub-list for method output_type
+	10, // [10:26] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_file_proto_init() }
@@ -2944,7 +2959,7 @@ func file_file_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_file_proto_rawDesc), len(file_file_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   38,
+			NumMessages:   39,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

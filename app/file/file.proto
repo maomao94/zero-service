@@ -53,6 +53,7 @@ message ImageMeta {
   int32 imgWidth = 5;     // 宽
   double altitude = 6;    // 高度
   string cameraModel = 7; // 相机型号
+  map<string, string> extra = 8; // 扩展元数据
 }
 
 

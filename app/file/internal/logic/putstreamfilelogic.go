@@ -9,6 +9,7 @@ import (
 
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
+	"zero-service/common/filex"
 	"zero-service/common/ossx"
 )
 
@@ -85,7 +86,7 @@ func (l *PutStreamFileLogic) PutStreamFile(stream file.FileRpc_PutStreamFileServ
 		Reader:         newGrpcUploadReader(stream, firstReq.GetContent()),
 		Size:           firstReq.GetSize(),
 		PathPrefix:     firstReq.GetPathPrefix(),
-		CaptureOptions: buildCaptureOptions(l.svcCtx.Config.Upload, isThumb && isImageContentType(contentType)),
+		CaptureOptions: buildCaptureOptions(l.svcCtx.Config.Upload, isThumb && filex.IsImageContentType(contentType)),
 	})
 	if err != nil {
 		return err

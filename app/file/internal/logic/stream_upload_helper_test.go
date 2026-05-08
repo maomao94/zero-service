@@ -22,6 +22,7 @@ import (
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/config"
 	"zero-service/app/file/internal/svc"
+	"zero-service/common/filex"
 	"zero-service/common/netx"
 	"zero-service/common/ossx"
 )
@@ -198,7 +199,7 @@ func TestProcessUploadResult_ImageExtractsEXIF(t *testing.T) {
 		"t1", "bucket", "a.png", false, nil,
 	)
 
-	if !isImageContentType(result.ContentType) {
+	if !filex.IsImageContentType(result.ContentType) {
 		t.Fatal("PNG should be detected as image")
 	}
 	if pbFile.ThumbLink != "" || pbFile.ThumbName != "" {

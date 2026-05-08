@@ -6,6 +6,7 @@ import (
 
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
+	"zero-service/common/filex"
 	"zero-service/common/imagex"
 	"zero-service/common/ossx"
 
@@ -56,7 +57,7 @@ func (l *PutFileLogic) PutFile(in *file.PutFileReq) (*file.PutFileRes, error) {
 	var pbFile file.File
 	copier.Copy(&pbFile, ossFile) // nolint:errcheck
 
-	if isImageContentType(contentType) {
+	if filex.IsImageContentType(contentType) {
 		if exifMeta, err := imagex.ExtractImageMeta(in.Path); err == nil {
 			var meta file.ImageMeta
 			copier.Copy(&meta, &exifMeta) // nolint:errcheck
