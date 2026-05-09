@@ -118,12 +118,12 @@ service DjiCloud {
   // ReturnHome 控制飞行器一键返航。
   // 对应 DJI Cloud API method: return_home，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc ReturnHome(DeviceSnReq) returns (CommonRes);
+  rpc ReturnHome(ReturnHomeReq) returns (CommonRes);
 
   // ReturnHomeCancelAutoReturn 取消自动返航。
   // 对应 DJI Cloud API method: return_home_cancel，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc ReturnHomeCancelAutoReturn(DeviceSnReq) returns (CommonRes);
+  rpc ReturnHomeCancelAutoReturn(ReturnHomeCancelAutoReturnReq) returns (CommonRes);
 
   // ReturnSpecificHome 返航至指定备降点。
   // 对应 DJI Cloud API method: return_specific_home，
@@ -141,72 +141,72 @@ service DjiCloud {
   // DebugModeOpen 开启机巢调试模式。
   // 对应 DJI Cloud API method: debug_mode_open，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc DebugModeOpen(DeviceSnReq) returns (CommonRes);
+  rpc DebugModeOpen(DebugModeOpenReq) returns (CommonRes);
 
   // DebugModeClose 关闭机巢调试模式。
   // 对应 DJI Cloud API method: debug_mode_close，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc DebugModeClose(DeviceSnReq) returns (CommonRes);
+  rpc DebugModeClose(DebugModeCloseReq) returns (CommonRes);
 
   // CoverOpen 打开机巢舱盖。
   // 对应 DJI Cloud API method: cover_open，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc CoverOpen(DeviceSnReq) returns (CommonRes);
+  rpc CoverOpen(CoverOpenReq) returns (CommonRes);
 
   // CoverClose 关闭机巢舱盖。
   // 对应 DJI Cloud API method: cover_close，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc CoverClose(DeviceSnReq) returns (CommonRes);
+  rpc CoverClose(CoverCloseReq) returns (CommonRes);
 
   // CoverForceClose 强制关闭机巢舱盖。
   // 对应 DJI Cloud API method: cover_force_close，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc CoverForceClose(DeviceSnReq) returns (CommonRes);
+  rpc CoverForceClose(CoverForceCloseReq) returns (CommonRes);
 
   // DroneOpen 开启机巢中的无人机电源。
   // 对应 DJI Cloud API method: drone_open，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc DroneOpen(DeviceSnReq) returns (CommonRes);
+  rpc DroneOpen(DroneOpenReq) returns (CommonRes);
 
   // DroneClose 关闭机巢中的无人机电源。
   // 对应 DJI Cloud API method: drone_close，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc DroneClose(DeviceSnReq) returns (CommonRes);
+  rpc DroneClose(DroneCloseReq) returns (CommonRes);
 
   // DeviceReboot 重启机巢设备。
   // 对应 DJI Cloud API method: device_reboot，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc DeviceReboot(DeviceSnReq) returns (CommonRes);
+  rpc DeviceReboot(DeviceRebootReq) returns (CommonRes);
 
   // ChargeOpen 开启机巢充电功能。
   // 对应 DJI Cloud API method: charge_open，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc ChargeOpen(DeviceSnReq) returns (CommonRes);
+  rpc ChargeOpen(ChargeOpenReq) returns (CommonRes);
 
   // ChargeClose 关闭机巢充电功能。
   // 对应 DJI Cloud API method: charge_close，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc ChargeClose(DeviceSnReq) returns (CommonRes);
+  rpc ChargeClose(ChargeCloseReq) returns (CommonRes);
 
   // DroneFormat 格式化无人机存储。
   // 对应 DJI Cloud API method: drone_format，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc DroneFormat(DeviceSnReq) returns (CommonRes);
+  rpc DroneFormat(DroneFormatReq) returns (CommonRes);
 
   // DeviceFormat 格式化机巢设备存储。
   // 对应 DJI Cloud API method: device_format，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc DeviceFormat(DeviceSnReq) returns (CommonRes);
+  rpc DeviceFormat(DeviceFormatReq) returns (CommonRes);
 
   // SupplementLightOpen 开启机巢补光灯。
   // 对应 DJI Cloud API method: supplement_light_open，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc SupplementLightOpen(DeviceSnReq) returns (CommonRes);
+  rpc SupplementLightOpen(SupplementLightOpenReq) returns (CommonRes);
 
   // SupplementLightClose 关闭机巢补光灯。
   // 对应 DJI Cloud API method: supplement_light_close，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc SupplementLightClose(DeviceSnReq) returns (CommonRes);
+  rpc SupplementLightClose(SupplementLightCloseReq) returns (CommonRes);
 
   // BatteryStoreModeSwitch 切换电池保养存储模式。
   // 对应 DJI Cloud API method: battery_store_mode_switch，
@@ -278,38 +278,13 @@ service DjiCloud {
   // 对应 DJI Cloud API method: flight_authority_grab，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
   // 在进行指令飞行操控前需要先获取飞行控制权。
-  rpc FlightAuthorityGrab(DeviceSnReq) returns (CommonRes);
+  rpc FlightAuthorityGrab(FlightAuthorityGrabReq) returns (CommonRes);
 
   // PayloadAuthorityGrab 获取负载控制权。
   // 对应 DJI Cloud API method: payload_authority_grab，
   // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
   // 在控制相机、云台等负载设备前需要先获取负载控制权。
-  rpc PayloadAuthorityGrab(DeviceSnReq) returns (CommonRes);
-
-  // DrcModeEnter 进入指令飞行（DRC）模式。
-  // 对应 DJI Cloud API method: drc_mode_enter，
-  // Topic: thing/product/{gateway_sn}/services，设备应答 services_reply，非 drc/* 子路径。
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  // 进入 DRC 模式后，可在 drc/down 上发杆量（见 SendDrcStickControl 与 DRC 杆量: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E6%9D%86%E9%87%8F%E6%8E%A7%E5%88%B6 ）。
-  rpc DrcModeEnter(DrcModeEnterReq) returns (CommonRes);
-
-  // DrcModeExit 退出指令飞行（DRC）模式。
-  // 对应 DJI Cloud API method: drc_mode_exit，
-  // Topic: thing/product/{gateway_sn}/services，设备应答 services_reply。
-  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-  rpc DrcModeExit(DeviceSnReq) returns (CommonRes);
-
-  // SendDrcStickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
-  // Topic: thing/product/{gateway_sn}/drc/down。建议发送频率约 **5～10 Hz**；与 SendDrcHeartBeat、DroneEmergencyStop 同为即发即忘，无 services_reply。
-  rpc SendDrcStickControl(DrcStickControlReq) returns (CommonRes);
-
-  // SendDrcHeartBeat 经 drc/down 发 DRC 心跳（method heart_beat；seq 与 data.timestamp 见 DRC 文档）。
-  rpc SendDrcHeartBeat(DrcHeartBeatReq) returns (CommonRes);
-
-  // DroneEmergencyStop 通过 DRC 通道下发飞行器紧急停桨。
-  // 对应 DJI Cloud API method: drone_emergency_stop（drc/down），仅表示已发布到 MQTT，不等待 services_reply。
-  // 需要在配置文件中开启 DangerousOps.EnableDroneEmergencyStop 才能调用。
-  rpc DroneEmergencyStop(DeviceSnReq) returns (CommonRes);
+  rpc PayloadAuthorityGrab(PayloadAuthorityGrabReq) returns (CommonRes);
 
   // FlyToPoint 飞向指定航点。
   // 对应 DJI Cloud API method: fly_to_point，
@@ -470,82 +445,110 @@ service DjiCloud {
   // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/airsense.html
   // 该模块当前仅包含设备上行告警事件，由 MQTT SDK hooks 处理。
 
-  // ==================== 远程控制（Remote Control） ====================
+  // ==================== 平台能力接口（非 DJI 标准 API 及 DRC 指令发送接口） ====================
+  //
+  // 平台能力 = 大疆 Cloud API 中没有的、由本服务结合业务需求自定义或组合的接口。
+  // 本分区同时也包含走 drc/down 主题（即发即忘，无设备回执）的 DRC 指令发送接口，
+  // 以及平台内部管理的 DRC 生命周期控制接口（DrcModeEnter/DrcModeExit）。
   // 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/remote-control.html
+
+  // —————————————————— DRC 生命周期管理（services topic，有设备回执） ——————————————————
+
+  // DrcModeEnter 进入指令飞行（DRC）模式。
+  // 对应 DJI Cloud API method: drc_mode_enter，
+  // Topic: thing/product/{gateway_sn}/services，设备应答 services_reply，非 drc/* 子路径。
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  // 进入 DRC 模式后，可在 drc/down 上发杆量。
+  rpc DrcModeEnter(DrcModeEnterReq) returns (CommonRes);
+
+  // DrcModeExit 退出指令飞行（DRC）模式。
+  // 对应 DJI Cloud API method: drc_mode_exit，
+  // Topic: thing/product/{gateway_sn}/services，设备应答 services_reply。
+  // 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+  rpc DrcModeExit(DrcModeExitReq) returns (CommonRes);
+
+  // —————————————————— DRC 指令发送（drc/down 即发即忘，无 services_reply） ——————————————————
+
+  // DroneEmergencyStop 通过 DRC 通道下发飞行器紧急停桨。
+  // 对应 DJI Cloud API method: drone_emergency_stop（drc/down），仅表示已发布到 MQTT，不等待 services_reply。
+  // 需要在配置文件中开启 DangerousOps.EnableDroneEmergencyStop 才能调用。
+  rpc DroneEmergencyStop(DroneEmergencyStopReq) returns (DroneEmergencyStopRes);
+
+  // SendDrcStickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
+  // Topic: thing/product/{gateway_sn}/drc/down。建议发送频率约 **5～10 Hz**；无 services_reply。
+  // seq 由平台内部管理，无需调用方传入。
+  rpc SendDrcStickControl(DrcStickControlReq) returns (DrcStickControlRes);
 
   // DrcForceLanding 强制降落。
   // 对应 DJI Cloud API method: drc_force_landing，Topic: drc/down，方向 down（云平台→设备）。
-  rpc DrcForceLanding(DeviceSnReq) returns (CommonRes);
+  rpc DrcForceLanding(DrcForceLandingReq) returns (DrcForceLandingRes);
 
   // DrcEmergencyLanding 紧急降落。
   // 对应 DJI Cloud API method: drc_emergency_landing，Topic: drc/down，方向 down（云平台→设备）。
-  rpc DrcEmergencyLanding(DeviceSnReq) returns (CommonRes);
+  rpc DrcEmergencyLanding(DrcEmergencyLandingReq) returns (DrcEmergencyLandingRes);
 
   // DrcLinkageZoomSet 设置红外联动变焦状态。
   // 对应 DJI Cloud API method: drc_linkage_zoom_set，Topic: drc/down，方向 down（云平台→设备）。
-  rpc DrcLinkageZoomSet(DrcLinkageZoomSetReq) returns (CommonRes);
+  rpc DrcLinkageZoomSet(DrcLinkageZoomSetReq) returns (DrcLinkageZoomSetRes);
 
   // DrcVideoResolutionSet 设置视频分辨率。
   // 对应 DJI Cloud API method: drc_video_resolution_set，Topic: drc/down，方向 down（云平台→设备）。
-  rpc DrcVideoResolutionSet(DrcVideoResolutionSetReq) returns (CommonRes);
+  rpc DrcVideoResolutionSet(DrcVideoResolutionSetReq) returns (DrcVideoResolutionSetRes);
 
   // DrcIntervalPhotoSet 设置定时拍参数。
   // 对应 DJI Cloud API method: drc_interval_photo_set，Topic: drc/down，方向 down（云平台→设备）。
-  rpc DrcIntervalPhotoSet(DrcIntervalPhotoSetReq) returns (CommonRes);
+  rpc DrcIntervalPhotoSet(DrcIntervalPhotoSetReq) returns (DrcIntervalPhotoSetRes);
 
   // DrcInitialStateSubscribe 订阅 DRC 初始状态。
   // 对应 DJI Cloud API method: drc_initial_state_subscribe，Topic: drc/down，方向 down（云平台→设备）。
-  rpc DrcInitialStateSubscribe(DeviceSnReq) returns (CommonRes);
+  rpc DrcInitialStateSubscribe(DrcInitialStateSubscribeReq) returns (DrcInitialStateSubscribeRes);
 
   // DrcNightLightsStateSet 设置夜航灯状态。
   // 对应 DJI Cloud API method: drc_night_lights_state_set，Topic: drc/down，方向 down（云平台→设备）。
-  rpc DrcNightLightsStateSet(DrcNightLightsStateSetReq) returns (CommonRes);
+  rpc DrcNightLightsStateSet(DrcNightLightsStateSetReq) returns (DrcNightLightsStateSetRes);
 
   // DrcStealthStateSet 设置隐蔽模式状态。
   // 对应 DJI Cloud API method: drc_stealth_state_set，Topic: drc/down，方向 down（云平台→设备）。
-  rpc DrcStealthStateSet(DrcStealthStateSetReq) returns (CommonRes);
+  rpc DrcStealthStateSet(DrcStealthStateSetReq) returns (DrcStealthStateSetRes);
 
   // DrcCameraApertureValueSet 设置相机光圈。
   // 对应 DJI Cloud API method: drc_camera_aperture_value_set，Topic: drc/down，方向 down（云平台→设备）。
-  rpc DrcCameraApertureValueSet(DrcCameraApertureValueSetReq) returns (CommonRes);
+  rpc DrcCameraApertureValueSet(DrcCameraApertureValueSetReq) returns (DrcCameraApertureValueSetRes);
 
   // DrcCameraShutterSet 设置相机快门。
   // 对应 DJI Cloud API method: drc_camera_shutter_set，Topic: drc/down，方向 down（云平台→设备）。
-  rpc DrcCameraShutterSet(DrcCameraShutterSetReq) returns (CommonRes);
+  rpc DrcCameraShutterSet(DrcCameraShutterSetReq) returns (DrcCameraShutterSetRes);
 
   // DrcCameraIsoSet 设置相机 ISO。
   // 对应 DJI Cloud API method: drc_camera_iso_set，Topic: drc/down，方向 down（云平台→设备）。
-  rpc DrcCameraIsoSet(DrcCameraIsoSetReq) returns (CommonRes);
+  rpc DrcCameraIsoSet(DrcCameraIsoSetReq) returns (DrcCameraIsoSetRes);
 
   // DrcCameraMechanicalShutterSet 设置机械快门。
   // 对应 DJI Cloud API method: drc_camera_mechanical_shutter_set，Topic: drc/down，方向 down（云平台→设备）。
-  rpc DrcCameraMechanicalShutterSet(DrcCameraMechanicalShutterSetReq) returns (CommonRes);
+  rpc DrcCameraMechanicalShutterSet(DrcCameraMechanicalShutterSetReq) returns (DrcCameraMechanicalShutterSetRes);
 
   // DrcCameraDewarpingSet 设置镜头去畸变。
   // 对应 DJI Cloud API method: drc_camera_dewarping_set，Topic: drc/down，方向 down（云平台→设备）。
-  rpc DrcCameraDewarpingSet(DrcCameraDewarpingSetReq) returns (CommonRes);
+  rpc DrcCameraDewarpingSet(DrcCameraDewarpingSetReq) returns (DrcCameraDewarpingSetRes);
 
-  // ==================== 平台能力接口（非 DJI 标准 API，本服务自定义） ====================
-
-  // 平台能力 = 大疆 Cloud API 中没有的、由本服务结合业务需求自定义或组合的接口。
-  // 大疆标准协议转发类接口请按大疆文档分类归入上方对应分区。
+  // —————————————————— 平台自有接口（非 DJI 标准 API） ——————————————————
 
   // IsDeviceOnline 查询设备在线状态。
   // device_sn 可传机巢SN或子设备SN；机巢在线和子设备在线分开判定。
   // 当前服务应配置数据库用于持久化设备状态；内存 onlineCache 保存热数据以提升高频在线判断性能，数据库保存最近一次在线快照并通过 last_online_at 懒过期清理。
-  rpc IsDeviceOnline(DeviceSnReq) returns (DeviceOnlineRes);
+  rpc IsDeviceOnline(IsDeviceOnlineReq) returns (DeviceOnlineRes);
 
   // ListDevices 查询设备列表，包含机巢、无人机、负载等设备。
   rpc ListDevices(ListDevicesReq) returns (ListDevicesRes);
 
   // GetDeviceDetail 查询设备详情，聚合设备基础信息、OSD快照、State快照和拓扑信息。
-  rpc GetDeviceDetail(DeviceSnReq) returns (DeviceDetailRes);
+  rpc GetDeviceDetail(GetDeviceDetailReq) returns (DeviceDetailRes);
 
   // GetDeviceOsdSnapshot 查询设备最近一次 OSD 遥测快照。
-  rpc GetDeviceOsdSnapshot(DeviceSnReq) returns (DeviceOsdSnapshotRes);
+  rpc GetDeviceOsdSnapshot(GetDeviceOsdSnapshotReq) returns (DeviceOsdSnapshotRes);
 
   // GetDeviceStateSnapshot 查询设备最近一次 State 状态快照。
-  rpc GetDeviceStateSnapshot(DeviceSnReq) returns (DeviceStateSnapshotRes);
+  rpc GetDeviceStateSnapshot(GetDeviceStateSnapshotReq) returns (DeviceStateSnapshotRes);
 
   // ListHmsAlerts 查询 HMS 告警记录。
   rpc ListHmsAlerts(ListHmsAlertsReq) returns (ListHmsAlertsRes);
@@ -560,7 +563,11 @@ service DjiCloud {
   // GetFlightTaskProgressLast 查询最近一次 flighttask_progress 上行记录。
   // 数据来源：thing/product/{gateway_sn}/events、method=flighttask_progress（设备上行），由 SDK 分发至钩子后写入数据库。
   // 该接口只返回最近一条进度记录，不代表完整任务状态机；非大疆标准查询接口。
-  rpc GetFlightTaskProgressLast(DeviceSnReq) returns (FlightTaskProgressLastRes);
+  rpc GetFlightTaskProgressLast(GetFlightTaskProgressLastReq) returns (FlightTaskProgressLastRes);
+
+  // QueryDrcStatus 查询设备 DRC 运行状态。
+  // 返回 DRC 模式启用状态、启动时间、最近设备心跳时间、序号和存活状态。
+  rpc QueryDrcStatus(QueryDrcStatusReq) returns (DrcStatusRes);
 }
 
 // ==================== 通用消息 ====================
@@ -587,13 +594,6 @@ message CommonRes {
   string tid = 3;
   // reason_code DJI 设备原始错误码（对应 DJIErrorCode 枚举值），仅在设备返回错误时有值，成功时为 0。
   int32 reason_code = 4;
-}
-
-// DeviceSnReq 通用设备请求，仅包含设备序列号。
-// 用于无额外参数的 RPC 请求（如 FlightAuthorityGrab、DrcModeExit 等）。
-message DeviceSnReq {
-  // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
 }
 
 // ==================== 属性设置（Properties）请求消息 ====================
@@ -797,6 +797,12 @@ message StopFlightTaskReq {
   int32 wayline_id = 3;
 }
 
+// ReturnHomeReq 一键返航请求。
+message ReturnHomeReq { string device_sn = 1; }
+
+// ReturnHomeCancelAutoReturnReq 取消自动返航请求。
+message ReturnHomeCancelAutoReturnReq { string device_sn = 1; }
+
 // ReturnSpecificHomeReq 返航至指定备降点请求。
 // 对应 DJI Cloud API method: return_specific_home（Services, down）。
 message ReturnSpecificHomeReq {
@@ -814,6 +820,48 @@ message ReturnSpecificHomeReq {
 // HMS 为 events 上行通知，当前 gRPC proto 未定义下行请求。
 
 // ==================== 远程调试（Cmd）请求消息 ====================
+
+// DebugModeOpenReq 开启调试模式请求。
+message DebugModeOpenReq { string device_sn = 1; }
+
+// DebugModeCloseReq 关闭调试模式请求。
+message DebugModeCloseReq { string device_sn = 1; }
+
+// CoverOpenReq 打开舱盖请求。
+message CoverOpenReq { string device_sn = 1; }
+
+// CoverCloseReq 关闭舱盖请求。
+message CoverCloseReq { string device_sn = 1; }
+
+// CoverForceCloseReq 强制关闭舱盖请求。
+message CoverForceCloseReq { string device_sn = 1; }
+
+// DroneOpenReq 开启无人机电源请求。
+message DroneOpenReq { string device_sn = 1; }
+
+// DroneCloseReq 关闭无人机电源请求。
+message DroneCloseReq { string device_sn = 1; }
+
+// DeviceRebootReq 重启设备请求。
+message DeviceRebootReq { string device_sn = 1; }
+
+// ChargeOpenReq 开启充电请求。
+message ChargeOpenReq { string device_sn = 1; }
+
+// ChargeCloseReq 关闭充电请求。
+message ChargeCloseReq { string device_sn = 1; }
+
+// DroneFormatReq 格式化无人机存储请求。
+message DroneFormatReq { string device_sn = 1; }
+
+// DeviceFormatReq 格式化设备存储请求。
+message DeviceFormatReq { string device_sn = 1; }
+
+// SupplementLightOpenReq 开启补光灯请求。
+message SupplementLightOpenReq { string device_sn = 1; }
+
+// SupplementLightCloseReq 关闭补光灯请求。
+message SupplementLightCloseReq { string device_sn = 1; }
 
 // BatteryStoreModeReq 电池保养存储模式切换请求。
 message BatteryStoreModeReq {
@@ -841,15 +889,6 @@ message AirConditionerModeSwitchReq {
 
 // ==================== 固件升级（Firmware）请求消息 ====================
 
-// OtaCreateReq 创建固件升级任务请求。
-// 对应 DJI Cloud API method: ota_create（Services, down）。
-message OtaCreateReq {
-  // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
-  // devices 待升级设备列表。
-  repeated OtaDevice devices = 2;
-}
-
 // OtaDevice OTA 升级目标设备信息。
 message OtaDevice {
   // sn 待升级设备序列号。
@@ -858,6 +897,15 @@ message OtaDevice {
   string product_version = 2;
   // firmware_upgrade_type 升级类型，1: 普通升级, 2: 一致性升级。
   int32 firmware_upgrade_type = 3;
+}
+
+// OtaCreateReq 创建固件升级任务请求。
+// 对应 DJI Cloud API method: ota_create（Services, down）。
+message OtaCreateReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // devices 待升级设备列表。
+  repeated OtaDevice devices = 2;
 }
 
 // ==================== 远程日志（Log）请求消息 ====================
@@ -870,14 +918,6 @@ message RemoteLogFileListReq {
   string target_device_sn = 2;
   // module 日志模块标识，对应 data.module。
   string module = 3;
-}
-
-// RemoteLogFileUploadReq 远程日志文件上传控制请求。
-message RemoteLogFileUploadReq {
-  // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
-  // files 远程日志文件列表，对应 data.files。
-  repeated RemoteLogFile files = 2;
 }
 
 // RemoteLogFile 远程日志文件描述。
@@ -896,6 +936,14 @@ message RemoteLogFile {
   int64 size = 6;
 }
 
+// RemoteLogFileUploadReq 远程日志文件上传控制请求。
+message RemoteLogFileUploadReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // files 远程日志文件列表，对应 data.files。
+  repeated RemoteLogFile files = 2;
+}
+
 // ==================== 配置更新（Config）请求消息 ====================
 
 // ConfigUpdateReq 设备配置更新请求。
@@ -911,61 +959,41 @@ message ConfigUpdateReq {
 // ==================== 指令飞行（DRC）请求消息 ====================
 // 与 DRC 上云 https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html 及 Topic 总览 https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/topic-definition.html 对齐；DrcModeEnter 走 services，杆量体见 DrcStickControlReq。
 
-// DrcModeEnterReq 进入 DRC 指令飞行模式请求（Dock3 协议）。
-// 包含 DRC 专用 MQTT Broker 的连接信息及 DRC 链路配置参数；经 services 下发 drc_mode_enter。
-// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html
-message DrcModeEnterReq {
+// FlightAuthorityGrabReq 获取飞行控制权请求。
+message FlightAuthorityGrabReq { string device_sn = 1; }
+
+// PayloadAuthorityGrabReq 获取负载控制权请求。
+message PayloadAuthorityGrabReq { string device_sn = 1; }
+
+// FlyToPointReq 飞向指定航点请求。
+message FlyToPointReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
   string device_sn = 1;
-  // mqtt_broker DRC 专用 MQTT Broker 连接信息。
-  DrcMqttBroker mqtt_broker = 2;
-  // osd_frequency OSD 遥测数据上报频率，取值范围 [1, 30]，单位 Hz。
-  int32 osd_frequency = 3;
-  // hsi_frequency HSI（水平态势感知）数据上报频率，取值范围 [1, 30]，单位 Hz。
-  int32 hsi_frequency = 4;
+  // fly_to_id 飞行任务 ID，全局唯一标识。
+  string fly_to_id = 2;
+  // max_speed 最大飞行速度，单位 m/s。
+  double max_speed = 3;
+  // points 航点列表，按顺序飞行。
+  repeated Waypoint points = 4;
 }
 
-// DrcMqttBroker DRC 专用 MQTT Broker 连接信息。
-message DrcMqttBroker {
-  // address MQTT Broker 地址，格式 "host:port"。
-  string address = 1;
-  // client_id MQTT 客户端 ID。
-  string client_id = 2;
-  // username MQTT 连接用户名。
-  string username = 3;
-  // password MQTT 连接密码。
-  string password = 4;
-  // expire_time 连接过期时间，Unix 秒级时间戳。
-  int64 expire_time = 5;
-  // enable_tls 是否启用 TLS 加密连接，默认 false。
-  bool enable_tls = 6;
+// Waypoint 飞行航点坐标。
+message Waypoint {
+  // latitude 航点纬度，取值范围 [-90, 90]。
+  double latitude = 1;
+  // longitude 航点经度，取值范围 [-180, 180]。
+  double longitude = 2;
+  // height 航点高度，单位米。
+  double height = 3;
 }
 
-// DrcStickControlReq DRC 杆量控制（method stick_control）请求，与 SendDrcStickControl 对应。
-// 经 thing/.../drc/down 下发；seq 与 data 同级，data 内含 roll/pitch/throttle/yaw/gimbal_pitch。
-// 文档: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E6%9D%86%E9%87%8F%E6%8E%A7%E5%88%B6
-message DrcStickControlReq {
+// FlyToPointStopReq 停止飞向指定航点请求。
+// 对应 DJI Cloud API method: fly_to_point_stop（DRC, down）。
+message FlyToPointStopReq {
   // device_sn 目标机巢设备序列号（gateway_sn）。
   string device_sn = 1;
-  // seq 指令序号，递增；当 roll/pitch/throttle/yaw/gimbal_pitch 任一分量相对上一帧有变化时，宜从 0 重新递（见 DRC-flight control 表说明），用于保序与回执对账。
-  int32 seq = 2;
-  // roll 左右平移速度（m/s），俯视机头朝前时：正值为向左、负值为向右，范围约 [-17, 17]（以固件/文档为准）。
-  double roll = 3;
-  // pitch 前后平移速度（m/s），正值为向前、负值为向后，范围约 [-17, 17]（以固件/文档为准）。
-  double pitch = 4;
-  // throttle 垂直速度（m/s），正值为上升、负值为下降，范围约 [-4, 5]（以固件/文档为准）。
-  double throttle = 5;
-  // yaw 机体偏航角速度（°/s），正值为顺时针、负值为逆时针，范围约 [-90, 90]（以固件/文档为准）。
-  double yaw = 6;
-  // gimbal_pitch 云台俯仰角速度（°/s），正值为向上、负值为向下（以固件/文档为准）。
-  double gimbal_pitch = 7;
-}
-
-// DrcHeartBeatReq DRC 心跳（drc/down，method heart_beat）；与 data 同级的 seq 及 data.timestamp 见 DRC 文档。
-message DrcHeartBeatReq {
-  string device_sn = 1;
-  int32 seq = 2;
-  int64 timestamp_millis = 3;
+  // fly_to_id 飞行任务 ID，与发起 FlyToPoint 时一致。必填。
+  string fly_to_id = 2;
 }
 
 // TakeoffToPointReq 一键起飞到指定坐标点请求。
@@ -990,37 +1018,6 @@ message TakeoffToPointReq {
   double max_speed = 9;
   // commander_flight_height 指令飞行高度，单位米。可选。
   double commander_flight_height = 10;
-}
-
-// FlyToPointReq 飞向指定航点请求。
-message FlyToPointReq {
-  // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
-  // fly_to_id 飞行任务 ID，全局唯一标识。
-  string fly_to_id = 2;
-  // max_speed 最大飞行速度，单位 m/s。
-  double max_speed = 3;
-  // points 航点列表，按顺序飞行。
-  repeated Waypoint points = 4;
-}
-
-// FlyToPointStopReq 停止飞向指定航点请求。
-// 对应 DJI Cloud API method: fly_to_point_stop（DRC, down）。
-message FlyToPointStopReq {
-  // device_sn 目标机巢设备序列号（gateway_sn）。
-  string device_sn = 1;
-  // fly_to_id 飞行任务 ID，与发起 FlyToPoint 时一致。必填。
-  string fly_to_id = 2;
-}
-
-// Waypoint 飞行航点坐标。
-message Waypoint {
-  // latitude 航点纬度，取值范围 [-90, 90]。
-  double latitude = 1;
-  // longitude 航点经度，取值范围 [-180, 180]。
-  double longitude = 2;
-  // height 航点高度，单位米。
-  double height = 3;
 }
 
 // ==================== 指令飞行（DRC）相机/云台请求消息 ====================
@@ -1290,8 +1287,54 @@ message UnlockLicenseListReq {
   int32 device_model_domain = 2;
 }
 
-// ==================== AirSense 消息 ====================
-// AirSense 当前仅包含设备上行告警事件。
+// ==================== DRC 生命周期管理消息 ====================
+
+// DrcModeEnterReq 进入 DRC 指令飞行模式请求（Dock3 协议）。
+// MQTT Broker 连接信息由服务端 MQTT 配置自动构建；经 services 下发 drc_mode_enter。
+// 参考: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html
+message DrcModeEnterReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // osd_frequency OSD 遥测数据上报频率，取值范围 [1, 30]，单位 Hz。
+  int32 osd_frequency = 2;
+  // hsi_frequency HSI（水平态势感知）数据上报频率，取值范围 [1, 30]，单位 Hz。
+  int32 hsi_frequency = 3;
+  // max_control_time_millis 最大控制时间，单位毫秒；未传或小于等于 0 时服务端默认 30 分钟。
+  // 从 DRC 模式启用开始计时，到期后强制退出，不受设备心跳续期影响。
+  int64 max_control_time_millis = 4;
+}
+
+// DrcModeExitReq 退出指令飞行模式请求。
+message DrcModeExitReq { string device_sn = 1; }
+
+// ==================== DRC 指令发送请求消息（drc/down 即发即忘） ====================
+
+// DroneEmergencyStopReq 紧急停桨请求。
+message DroneEmergencyStopReq { string device_sn = 1; }
+
+// DrcStickControlReq DRC 杆量控制（method stick_control）请求，与 SendDrcStickControl 对应。
+// 经 thing/.../drc/down 下发；seq 由平台内部管理，无需调用方传入。
+// 文档: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E6%9D%86%E9%87%8F%E6%8E%A7%E5%88%B6
+message DrcStickControlReq {
+  // device_sn 目标机巢设备序列号（gateway_sn）。
+  string device_sn = 1;
+  // roll 左右平移速度（m/s），俯视机头朝前时：正值为向左、负值为向右。
+  double roll = 2;
+  // pitch 前后平移速度（m/s），正值为向前、负值为向后。
+  double pitch = 3;
+  // throttle 垂直速度（m/s），正值为上升、负值为下降。
+  double throttle = 4;
+  // yaw 机体偏航角速度（°/s），正值为顺时针、负值为逆时针。
+  double yaw = 5;
+  // gimbal_pitch 云台俯仰角速度（°/s），正值为向上、负值为向下。
+  double gimbal_pitch = 6;
+}
+
+// DrcForceLandingReq 强制降落请求。
+message DrcForceLandingReq { string device_sn = 1; }
+
+// DrcEmergencyLandingReq 紧急降落请求。
+message DrcEmergencyLandingReq { string device_sn = 1; }
 
 // ==================== 远程控制（Remote Control）消息 ====================
 
@@ -1324,6 +1367,9 @@ message DrcIntervalPhotoSetReq {
   // interval 定时拍照间隔枚举字符串。
   string interval = 3;
 }
+
+// DrcInitialStateSubscribeReq 订阅 DRC 初始状态请求。
+message DrcInitialStateSubscribeReq { string device_sn = 1; }
 
 // DrcNightLightsStateSetReq 夜航灯状态设置请求。
 message DrcNightLightsStateSetReq {
@@ -1401,10 +1447,60 @@ message DrcCameraDewarpingSetReq {
   int32 dewarping_state = 4;
 }
 
+// ==================== DRC 指令响应消息（drc/down 即发即忘，仅返回已下发的序号） ====================
+
+// DroneEmergencyStopRes 紧急停桨响应，返回已下发的 DRC 指令序号。
+message DroneEmergencyStopRes { int32 seq = 1; }
+
+// DrcStickControlRes 杆量控制响应，返回已下发的 DRC 指令序号。
+message DrcStickControlRes { int32 seq = 1; }
+
+// DrcForceLandingRes 强制降落响应，返回已下发的 DRC 指令序号。
+message DrcForceLandingRes { int32 seq = 1; }
+
+// DrcEmergencyLandingRes 紧急降落响应，返回已下发的 DRC 指令序号。
+message DrcEmergencyLandingRes { int32 seq = 1; }
+
+// DrcInitialStateSubscribeRes 订阅 DRC 初始状态响应，返回已下发的 DRC 指令序号。
+message DrcInitialStateSubscribeRes { int32 seq = 1; }
+
+// DrcLinkageZoomSetRes 红外联动变焦设置响应，返回已下发的 DRC 指令序号。
+message DrcLinkageZoomSetRes { int32 seq = 1; }
+
+// DrcVideoResolutionSetRes 视频分辨率设置响应，返回已下发的 DRC 指令序号。
+message DrcVideoResolutionSetRes { int32 seq = 1; }
+
+// DrcIntervalPhotoSetRes 定时拍参数设置响应，返回已下发的 DRC 指令序号。
+message DrcIntervalPhotoSetRes { int32 seq = 1; }
+
+// DrcNightLightsStateSetRes 夜航灯状态设置响应，返回已下发的 DRC 指令序号。
+message DrcNightLightsStateSetRes { int32 seq = 1; }
+
+// DrcStealthStateSetRes 隐蔽模式状态设置响应，返回已下发的 DRC 指令序号。
+message DrcStealthStateSetRes { int32 seq = 1; }
+
+// DrcCameraApertureValueSetRes 相机光圈设置响应，返回已下发的 DRC 指令序号。
+message DrcCameraApertureValueSetRes { int32 seq = 1; }
+
+// DrcCameraShutterSetRes 相机快门设置响应，返回已下发的 DRC 指令序号。
+message DrcCameraShutterSetRes { int32 seq = 1; }
+
+// DrcCameraIsoSetRes 相机 ISO 设置响应，返回已下发的 DRC 指令序号。
+message DrcCameraIsoSetRes { int32 seq = 1; }
+
+// DrcCameraMechanicalShutterSetRes 机械快门设置响应，返回已下发的 DRC 指令序号。
+message DrcCameraMechanicalShutterSetRes { int32 seq = 1; }
+
+// DrcCameraDewarpingSetRes 镜头去畸变设置响应，返回已下发的 DRC 指令序号。
+message DrcCameraDewarpingSetRes { int32 seq = 1; }
+
 // ==================== 平台能力消息（非 DJI 标准 API，本服务自定义） ====================
 
 // 平台能力 = 大疆 Cloud API 中没有的、由本服务结合业务需求自定义或组合的接口。
 // 大疆标准协议转发类消息请按大疆文档分类归入对应分区。
+
+// IsDeviceOnlineReq 查询设备在线状态请求。
+message IsDeviceOnlineReq { string device_sn = 1; }
 
 // DeviceOnlineRes 设备在线状态查询响应。
 message DeviceOnlineRes {
@@ -1483,6 +1579,9 @@ message ListDevicesRes {
   repeated DeviceInfo list = 2;
 }
 
+// GetDeviceDetailReq 查询设备详情请求。
+message GetDeviceDetailReq { string device_sn = 1; }
+
 // DeviceOsdSnapshot 设备 OSD 快照。
 message DeviceOsdSnapshot {
   string device_sn = 1;
@@ -1516,6 +1615,12 @@ message DeviceDetailRes {
   DeviceStateSnapshot state = 3;
   repeated DeviceTopoInfo topo = 4;
 }
+
+// GetDeviceOsdSnapshotReq 查询 OSD 快照请求。
+message GetDeviceOsdSnapshotReq { string device_sn = 1; }
+
+// GetDeviceStateSnapshotReq 查询 State 快照请求。
+message GetDeviceStateSnapshotReq { string device_sn = 1; }
 
 // HmsAlertInfo HMS 告警信息。
 message HmsAlertInfo {
@@ -1601,6 +1706,9 @@ message ListFlightTaskProgressRes {
   repeated FlightTaskProgressInfo list = 2;
 }
 
+// GetFlightTaskProgressLastReq 查询最近一次航线进度请求。
+message GetFlightTaskProgressLastReq { string device_sn = 1; }
+
 // FlightTaskProgressLastRes 最近一次航线任务进度（flighttask_progress）数据库记录。
 message FlightTaskProgressLastRes {
   // has_progress 是否已有进度记录。
@@ -1609,4 +1717,21 @@ message FlightTaskProgressLastRes {
   int64 reported_at_ms = 2;
   // progress_json flighttask_progress 原始扩展数据 JSON；无记录时为空。
   string progress_json = 3;
+}
+
+// QueryDrcStatusReq 查询 DRC 运行状态请求。
+message QueryDrcStatusReq { string device_sn = 1; }
+
+// DrcStatusRes DRC 运行状态查询响应。
+message DrcStatusRes {
+  // enabled DRC 模式是否已启用。
+  bool enabled = 1;
+  // started_at_millis DRC 模式启用时间，Unix 毫秒时间戳。
+  int64 started_at_millis = 2;
+  // last_device_heartbeat_millis 最近一次收到设备心跳的时间，Unix 毫秒时间戳。
+  int64 last_device_heartbeat_millis = 3;
+  // next_seq 下一个 DRC 指令序号。
+  int32 next_seq = 4;
+  // is_alive 设备是否存活
+  bool is_alive = 5;
 }

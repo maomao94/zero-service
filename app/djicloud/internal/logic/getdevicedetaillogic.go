@@ -27,7 +27,7 @@ func NewGetDeviceDetailLogic(ctx context.Context, svcCtx *svc.ServiceContext) *G
 }
 
 // GetDeviceDetail 查询设备详情，聚合设备基础信息、OSD快照、State快照和拓扑信息。
-func (l *GetDeviceDetailLogic) GetDeviceDetail(in *djicloud.DeviceSnReq) (*djicloud.DeviceDetailRes, error) {
+func (l *GetDeviceDetailLogic) GetDeviceDetail(in *djicloud.GetDeviceDetailReq) (*djicloud.DeviceDetailRes, error) {
 	var device gormmodel.DjiDevice
 	if err := l.svcCtx.DB.WithContext(l.ctx).
 		Where("device_sn = ?", in.DeviceSn).

@@ -24,7 +24,7 @@ func NewSupplementLightOpenLogic(ctx context.Context, svcCtx *svc.ServiceContext
 }
 
 // SupplementLightOpen 开启机巢补光灯。
-func (l *SupplementLightOpenLogic) SupplementLightOpen(in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (l *SupplementLightOpenLogic) SupplementLightOpen(in *djicloud.SupplementLightOpenReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.SupplementLightOpen(l.ctx, in.DeviceSn)
 	if err != nil {
 		l.Errorf("[remote-debug] supplement light open failed: %v", err)

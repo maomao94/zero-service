@@ -24,7 +24,7 @@ func NewDeviceFormatLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Devi
 }
 
 // DeviceFormat 格式化机巢设备存储。
-func (l *DeviceFormatLogic) DeviceFormat(in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (l *DeviceFormatLogic) DeviceFormat(in *djicloud.DeviceFormatReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.DeviceFormat(l.ctx, in.DeviceSn)
 	if err != nil {
 		l.Errorf("[remote-debug] device format failed: %v", err)

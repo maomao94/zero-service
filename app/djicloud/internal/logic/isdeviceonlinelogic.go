@@ -28,7 +28,7 @@ func NewIsDeviceOnlineLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Is
 
 // IsDeviceOnline 查询设备在线状态。
 // 内存缓存用于高频在线判断，命中在线时直接返回；缓存未命中时读取数据库快照，并按 last_online_at 做懒过期清理。
-func (l *IsDeviceOnlineLogic) IsDeviceOnline(in *djicloud.DeviceSnReq) (*djicloud.DeviceOnlineRes, error) {
+func (l *IsDeviceOnlineLogic) IsDeviceOnline(in *djicloud.IsDeviceOnlineReq) (*djicloud.DeviceOnlineRes, error) {
 	online := hooks.IsOnline(l.svcCtx.OnlineCache, in.DeviceSn)
 	if online {
 		return &djicloud.DeviceOnlineRes{IsOnline: true}, nil

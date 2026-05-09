@@ -23,7 +23,7 @@ func NewPayloadAuthorityGrabLogic(ctx context.Context, svcCtx *svc.ServiceContex
 	}
 }
 
-func (l *PayloadAuthorityGrabLogic) PayloadAuthorityGrab(in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (l *PayloadAuthorityGrabLogic) PayloadAuthorityGrab(in *djicloud.PayloadAuthorityGrabReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.PayloadAuthorityGrab(l.ctx, in.DeviceSn)
 	if err != nil {
 		l.Errorf("[drc] payload authority grab failed: %v", err)

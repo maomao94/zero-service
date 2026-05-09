@@ -27,7 +27,7 @@ func NewGetDeviceOsdSnapshotLogic(ctx context.Context, svcCtx *svc.ServiceContex
 }
 
 // GetDeviceOsdSnapshot 查询设备最近一次 OSD 遥测快照。
-func (l *GetDeviceOsdSnapshotLogic) GetDeviceOsdSnapshot(in *djicloud.DeviceSnReq) (*djicloud.DeviceOsdSnapshotRes, error) {
+func (l *GetDeviceOsdSnapshotLogic) GetDeviceOsdSnapshot(in *djicloud.GetDeviceOsdSnapshotReq) (*djicloud.DeviceOsdSnapshotRes, error) {
 	var item gormmodel.DjiDeviceOsdSnapshot
 	if err := l.svcCtx.DB.WithContext(l.ctx).Where("device_sn = ?", in.DeviceSn).First(&item).Error; err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())

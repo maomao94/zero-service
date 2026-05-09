@@ -25,12 +25,17 @@ func NewDrcIntervalPhotoSetLogic(ctx context.Context, svcCtx *svc.ServiceContext
 	}
 }
 
-func (l *DrcIntervalPhotoSetLogic) DrcIntervalPhotoSet(in *djicloud.DrcIntervalPhotoSetReq) (*djicloud.CommonRes, error) {
+func (l *DrcIntervalPhotoSetLogic) DrcIntervalPhotoSet(in *djicloud.DrcIntervalPhotoSetReq) (*djicloud.DrcIntervalPhotoSetRes, error) {
+	deviceSn := in.GetDeviceSn()
+	seq, err := l.svcCtx.DrcManager.GetNextSeq(deviceSn)
+	if err != nil {
+		return nil, err
+	}
 	interval, _ := strconv.ParseFloat(in.GetInterval(), 64)
 	data := &djisdk.DrcIntervalPhotoSetData{PayloadIndex: in.GetPayloadIndex(), Interval: interval}
-	tid, err := l.svcCtx.DjiClient.DrcIntervalPhotoSet(l.ctx, in.GetDeviceSn(), data)
-	if err != nil {
-		return errRes(tid, err), nil
+	if _, err := l.svcCtx.DjiClient.DrcIntervalPhotoSet(l.ctx, deviceSn, seq, data); err != nil {
+		l.Errorf("[drc] interval photo set failed device_sn=%s: %v", deviceSn, err)
+		return nil, err
 	}
-	return okRes(tid), nil
+	return &djicloud.DrcIntervalPhotoSetRes{Seq: int32(seq)}, nil
 }

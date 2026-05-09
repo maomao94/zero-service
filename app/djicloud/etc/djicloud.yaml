@@ -38,6 +38,16 @@ UpstreamReply:
   EnableRequestsReply: false
 DangerousOps:
   EnableDroneEmergencyStop: false
+# DRC 平台化功能配置（可选，默认使用 go-zero 默认值）
+DrcConfig:
+  HeartbeatInterval: 2s    # 心跳发送间隔，默认 2s
+  HeartbeatTimeout: 300s   # 设备心跳超时时间，默认 300s（超过此时间未收到心跳则判定离线）
+# SocketPush 配置（可选，未配置则不推送）
+SocketPushConf:
+  Endpoints:
+    - 127.0.0.1:25002
+  Timeout: 10000
+  NonBlock: true
 NacosConfig:
   IsRegister: false
   Host: 127.0.0.1

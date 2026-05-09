@@ -24,7 +24,7 @@ func NewCoverForceCloseLogic(ctx context.Context, svcCtx *svc.ServiceContext) *C
 }
 
 // CoverForceClose 强制关闭机巢舱盖。
-func (l *CoverForceCloseLogic) CoverForceClose(in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (l *CoverForceCloseLogic) CoverForceClose(in *djicloud.CoverForceCloseReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.CoverForceClose(l.ctx, in.DeviceSn)
 	if err != nil {
 		l.Errorf("[remote-debug] cover force close failed: %v", err)

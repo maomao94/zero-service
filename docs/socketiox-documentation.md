@@ -632,7 +632,179 @@ socket.on('mqtt', (data) => {
 - `device/+/status` 可以匹配 `device/1/status`、`device/2/status` 等
 - `iec104/#` 可以匹配 `iec104/device1`、`iec104/device2/data` 等
 
-## 12. 后端推送 API 参考
+## 12. DRC 远程控制对接指导
+
+### 12.1 概述
+
+大疆云端服务通过 DRC（Direct Remote Control）通道实现对设备的远程操控。DRC 会话的生命周期事件通过 SocketIO 推送到前端，前端可根据这些事件实时感知 DRC 模式的开启、关闭和异常过期状态，同步 UI 状态（如 DRC 操控按钮的启停）。
+
+### 12.2 房间规则
+
+所有 DRC 相关事件共用一个房间，房间命名规则：
+
+| 房间名格式 | 说明 |
+|-----------|------|
+| `drc:heartbeat:{gatewaySn}` | 每个网关设备独立房间，`gatewaySn` 为设备序列号 |
+
+前端在进入 DRC 操控页面时，通过 `__join_room_up__` 事件加入对应设备的房间；退出时通过 `__leave_room_up__` 离开。
+
+### 12.3 事件列表
+
+| 事件名 | 触发时机 | 方向 | 说明 |
+|--------|---------|------|------|
+| `drc:heart_beat` | 设备心跳上行 | 设备 → 云 → 前端 | DRC 通道存活心跳，设备周期上报 |
+| `drc:session_enabled` | DRC 模式启用 | 云 → 前端 | gRPC 调用 `DrcModeEnter` 成功后推送，前端可开启 DRC 操控 UI |
+| `drc:session_disabled` | DRC 模式停用 | 云 → 前端 | gRPC 调用 `DrcModeExit` 成功后推送，前端应关闭 DRC 操控按钮 |
+| `drc:session_expired` | DRC 会话自动过期 | 云 → 前端 | 会话因 MaxDeadline 到期、设备心跳超时、cleanLoop 孤儿清理等非主动原因被清除时推送，前端应关闭 DRC 操控按钮 |
+
+### 12.4 数据结构
+
+#### 12.4.1 drc:heart_beat
+
+设备心跳上行数据，Payload 为 DJI DRC 协议的 `heart_beat` 上行原始 JSON。
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| `gateway_sn` | `string` | 网关设备序列号（从房间名推断） |
+| 原始字段 | - | DJI DRC 协议心跳上行数据 |
+
+**示例**：
+```json
+{
+  "event": "drc:heart_beat",
+  "payload": {
+    "result": 0,
+    "timestamp": 1715234567890,
+    "gateway_sn": "4TADLBC00100XXXX"
+  },
+  "reqId": "a1b2c3d4e5f67890abcdef1234567890"
+}
+```
+
+#### 12.4.2 drc:session_enabled
+
+DRC 模式启用通知。
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| `gateway_sn` | `string` | 网关设备序列号 |
+| `session_id` | `string` | DRC 会话唯一标识（UUID） |
+
+**示例**：
+```json
+{
+  "event": "drc:session_enabled",
+  "payload": {
+    "gateway_sn": "4TADLBC00100XXXX",
+    "session_id": "61a33d62eb214810850da55e9dde980f"
+  },
+  "reqId": "b2c3d4e5f6a78901bcdef12345678901"
+}
+```
+
+#### 12.4.3 drc:session_disabled
+
+DRC 模式停用通知（主动退出）。
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| `gateway_sn` | `string` | 网关设备序列号 |
+| `session_id` | `string` | DRC 会话唯一标识 |
+
+**示例**：
+```json
+{
+  "event": "drc:session_disabled",
+  "payload": {
+    "gateway_sn": "4TADLBC00100XXXX",
+    "session_id": "61a33d62eb214810850da55e9dde980f"
+  },
+  "reqId": "c3d4e5f6a7b89012cdef123456789012"
+}
+```
+
+#### 12.4.4 drc:session_expired
+
+DRC 会话自动过期通知（非主动退出）。
+
+| 字段名 | 类型 | 描述 |
+|--------|------|------|
+| `gateway_sn` | `string` | 网关设备序列号 |
+| `session_id` | `string` | DRC 会话唯一标识（孤儿清理时可能为空） |
+| `reason` | `string` | 过期原因：`max_deadline_exceeded`（MaxDeadline 到期）或 `heartbeat_timeout`（心跳超时） |
+
+**示例**：
+```json
+{
+  "event": "drc:session_expired",
+  "payload": {
+    "gateway_sn": "4TADLBC00100XXXX",
+    "session_id": "61a33d62eb214810850da55e9dde980f",
+    "reason": "heartbeat_timeout"
+  },
+  "reqId": "d4e5f6a7b8c90123defa234567890123"
+}
+```
+
+### 12.5 前端对接示例
+
+```javascript
+// 加入 DRC 房间（进入操控页面时）
+function joinDrcRoom(gatewaySn) {
+  socket.emit('__join_room_up__', {
+    reqId: crypto.randomUUID(),
+    room: `drc:heartbeat:${gatewaySn}`
+  });
+}
+
+// 离开 DRC 房间（退出操控页面时）
+function leaveDrcRoom(gatewaySn) {
+  socket.emit('__leave_room_up__', {
+    reqId: crypto.randomUUID(),
+    room: `drc:heartbeat:${gatewaySn}`
+  });
+}
+
+// 监听 DRC 模式启用 — 开启操控 UI
+socket.on('drc:session_enabled', (data) => {
+  console.log('DRC 模式已启用:', data.payload.gateway_sn, data.payload.session_id);
+  // 开启 DRC 操控按钮/面板
+  enableDrcControls(data.payload.gateway_sn);
+});
+
+// 监听 DRC 模式停用 — 关闭操控 UI（主动退出）
+socket.on('drc:session_disabled', (data) => {
+  console.log('DRC 模式已停用:', data.payload.gateway_sn, data.payload.session_id);
+  // 关闭 DRC 操控按钮/面板
+  disableDrcControls(data.payload.gateway_sn);
+});
+
+// 监听 DRC 会话过期 — 关闭操控 UI（异常过期）
+socket.on('drc:session_expired', (data) => {
+  console.warn('DRC 会话已过期:', data.payload.gateway_sn, data.payload.reason);
+  // 关闭 DRC 操控按钮/面板，提示用户会话已过期
+  disableDrcControls(data.payload.gateway_sn);
+  showDrcExpiredWarning(data.payload.reason);
+});
+
+// 监听设备心跳 — 更新存活状态
+socket.on('drc:heart_beat', (data) => {
+  // 心跳持续到达表示 DRC 通道正常
+  updateDrcAliveStatus(data.payload.gateway_sn);
+});
+```
+
+### 12.6 注意事项
+
+1. **房间生命周期**：前端应在进入 DRC 操控页面时加入房间，退出时离开。未加入房间则无法收到任何 DRC 事件。
+2. **session_disabled 与 session_expired 的区别**：`session_disabled` 是用户主动退出 DRC 模式（通过 gRPC 调用 `DrcModeExit`）；`session_expired` 是会话因超时等非主动原因被自动清除。前端对两者的典型处理都是关闭 DRC 按钮，但 expired 场景可能需要额外提示用户。
+3. **reason 字段**：`session_expired` 的 `reason` 取值：
+   - `max_deadline_exceeded`：DRC 会话达到最大允许时长（由后端 WithMaxTimeout 配置），强制清除
+   - `heartbeat_timeout`：设备心跳超时（设备与云端 DRC 通道断开），缓存 TTL 驱逐
+4. **心跳事件频率**：`drc:heart_beat` 事件频率较高（默认 2 秒间隔），前端监听时应避免在每次收到时执行重渲染，建议仅用于存活状态更新。
+5. **事件顺序**：`drc:session_enabled` 一定在 `drc:heart_beat` 之前到达；`drc:session_disabled` 或 `drc:session_expired` 到达后不会再有 `drc:heart_beat`。
+
+## 13. 后端推送 API 参考
 
 后端服务通过 gRPC 调用 socketpush 向前端推送消息，以下为核心接口：
 
@@ -650,10 +822,11 @@ socket.on('mqtt', (data) => {
 
 协议定义：[`socketpush.proto`](../socketapp/socketpush/socketpush.proto) | [`socketgtw.proto`](../socketapp/socketgtw/socketgtw.proto)
 
-## 13. 版本历史
+## 14. 版本历史
 
 | 版本  | 日期         | 说明                                        |
 |-----|------------|-------------------------------------------|
+| 2.6 | 2026-05-09 | 添加 DRC 远程控制对接指导（房间规则、事件列表、数据结构、前端示例） |
 | 2.5 | 2026-03-19 | 添加架构概览、服务端配置参考、GenToken 接口说明、后端推送 API 参考 |
 | 2.4 | 2026-03-06 | 添加房间加载错误处理机制，在 `__stat_down__` 事件中包含 `roomLoadError` 字段 |
 | 2.3 | 2026-03-03 | 添加MQTT事件映射配置，支持自定义事件名称和通配符匹配 |

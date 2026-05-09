@@ -67,11 +67,6 @@ const (
 	DjiCloud_ConfigUpdate_FullMethodName                         = "/djicloud.DjiCloud/ConfigUpdate"
 	DjiCloud_FlightAuthorityGrab_FullMethodName                  = "/djicloud.DjiCloud/FlightAuthorityGrab"
 	DjiCloud_PayloadAuthorityGrab_FullMethodName                 = "/djicloud.DjiCloud/PayloadAuthorityGrab"
-	DjiCloud_DrcModeEnter_FullMethodName                         = "/djicloud.DjiCloud/DrcModeEnter"
-	DjiCloud_DrcModeExit_FullMethodName                          = "/djicloud.DjiCloud/DrcModeExit"
-	DjiCloud_SendDrcStickControl_FullMethodName                  = "/djicloud.DjiCloud/SendDrcStickControl"
-	DjiCloud_SendDrcHeartBeat_FullMethodName                     = "/djicloud.DjiCloud/SendDrcHeartBeat"
-	DjiCloud_DroneEmergencyStop_FullMethodName                   = "/djicloud.DjiCloud/DroneEmergencyStop"
 	DjiCloud_FlyToPoint_FullMethodName                           = "/djicloud.DjiCloud/FlyToPoint"
 	DjiCloud_FlyToPointStop_FullMethodName                       = "/djicloud.DjiCloud/FlyToPointStop"
 	DjiCloud_TakeoffToPoint_FullMethodName                       = "/djicloud.DjiCloud/TakeoffToPoint"
@@ -98,6 +93,10 @@ const (
 	DjiCloud_UnlockLicenseSwitch_FullMethodName                  = "/djicloud.DjiCloud/UnlockLicenseSwitch"
 	DjiCloud_UnlockLicenseUpdate_FullMethodName                  = "/djicloud.DjiCloud/UnlockLicenseUpdate"
 	DjiCloud_UnlockLicenseList_FullMethodName                    = "/djicloud.DjiCloud/UnlockLicenseList"
+	DjiCloud_DrcModeEnter_FullMethodName                         = "/djicloud.DjiCloud/DrcModeEnter"
+	DjiCloud_DrcModeExit_FullMethodName                          = "/djicloud.DjiCloud/DrcModeExit"
+	DjiCloud_DroneEmergencyStop_FullMethodName                   = "/djicloud.DjiCloud/DroneEmergencyStop"
+	DjiCloud_SendDrcStickControl_FullMethodName                  = "/djicloud.DjiCloud/SendDrcStickControl"
 	DjiCloud_DrcForceLanding_FullMethodName                      = "/djicloud.DjiCloud/DrcForceLanding"
 	DjiCloud_DrcEmergencyLanding_FullMethodName                  = "/djicloud.DjiCloud/DrcEmergencyLanding"
 	DjiCloud_DrcLinkageZoomSet_FullMethodName                    = "/djicloud.DjiCloud/DrcLinkageZoomSet"
@@ -120,6 +119,7 @@ const (
 	DjiCloud_AckHmsAlert_FullMethodName                          = "/djicloud.DjiCloud/AckHmsAlert"
 	DjiCloud_ListFlightTaskProgress_FullMethodName               = "/djicloud.DjiCloud/ListFlightTaskProgress"
 	DjiCloud_GetFlightTaskProgressLast_FullMethodName            = "/djicloud.DjiCloud/GetFlightTaskProgressLast"
+	DjiCloud_QueryDrcStatus_FullMethodName                       = "/djicloud.DjiCloud/QueryDrcStatus"
 )
 
 // DjiCloudClient is the client API for DjiCloud service.
@@ -199,11 +199,11 @@ type DjiCloudClient interface {
 	// ReturnHome 控制飞行器一键返航。
 	// 对应 DJI Cloud API method: return_home，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	ReturnHome(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	ReturnHome(ctx context.Context, in *ReturnHomeReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// ReturnHomeCancelAutoReturn 取消自动返航。
 	// 对应 DJI Cloud API method: return_home_cancel，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	ReturnHomeCancelAutoReturn(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	ReturnHomeCancelAutoReturn(ctx context.Context, in *ReturnHomeCancelAutoReturnReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// ReturnSpecificHome 返航至指定备降点。
 	// 对应 DJI Cloud API method: return_specific_home，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -212,59 +212,59 @@ type DjiCloudClient interface {
 	// DebugModeOpen 开启机巢调试模式。
 	// 对应 DJI Cloud API method: debug_mode_open，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	DebugModeOpen(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	DebugModeOpen(ctx context.Context, in *DebugModeOpenReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// DebugModeClose 关闭机巢调试模式。
 	// 对应 DJI Cloud API method: debug_mode_close，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	DebugModeClose(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	DebugModeClose(ctx context.Context, in *DebugModeCloseReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// CoverOpen 打开机巢舱盖。
 	// 对应 DJI Cloud API method: cover_open，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	CoverOpen(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	CoverOpen(ctx context.Context, in *CoverOpenReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// CoverClose 关闭机巢舱盖。
 	// 对应 DJI Cloud API method: cover_close，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	CoverClose(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	CoverClose(ctx context.Context, in *CoverCloseReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// CoverForceClose 强制关闭机巢舱盖。
 	// 对应 DJI Cloud API method: cover_force_close，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	CoverForceClose(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	CoverForceClose(ctx context.Context, in *CoverForceCloseReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// DroneOpen 开启机巢中的无人机电源。
 	// 对应 DJI Cloud API method: drone_open，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	DroneOpen(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	DroneOpen(ctx context.Context, in *DroneOpenReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// DroneClose 关闭机巢中的无人机电源。
 	// 对应 DJI Cloud API method: drone_close，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	DroneClose(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	DroneClose(ctx context.Context, in *DroneCloseReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// DeviceReboot 重启机巢设备。
 	// 对应 DJI Cloud API method: device_reboot，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	DeviceReboot(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	DeviceReboot(ctx context.Context, in *DeviceRebootReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// ChargeOpen 开启机巢充电功能。
 	// 对应 DJI Cloud API method: charge_open，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	ChargeOpen(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	ChargeOpen(ctx context.Context, in *ChargeOpenReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// ChargeClose 关闭机巢充电功能。
 	// 对应 DJI Cloud API method: charge_close，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	ChargeClose(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	ChargeClose(ctx context.Context, in *ChargeCloseReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// DroneFormat 格式化无人机存储。
 	// 对应 DJI Cloud API method: drone_format，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	DroneFormat(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	DroneFormat(ctx context.Context, in *DroneFormatReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// DeviceFormat 格式化机巢设备存储。
 	// 对应 DJI Cloud API method: device_format，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	DeviceFormat(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	DeviceFormat(ctx context.Context, in *DeviceFormatReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// SupplementLightOpen 开启机巢补光灯。
 	// 对应 DJI Cloud API method: supplement_light_open，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	SupplementLightOpen(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	SupplementLightOpen(ctx context.Context, in *SupplementLightOpenReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// SupplementLightClose 关闭机巢补光灯。
 	// 对应 DJI Cloud API method: supplement_light_close，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	SupplementLightClose(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	SupplementLightClose(ctx context.Context, in *SupplementLightCloseReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// BatteryStoreModeSwitch 切换电池保养存储模式。
 	// 对应 DJI Cloud API method: battery_store_mode_switch，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -310,32 +310,12 @@ type DjiCloudClient interface {
 	// 对应 DJI Cloud API method: flight_authority_grab，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	// 在进行指令飞行操控前需要先获取飞行控制权。
-	FlightAuthorityGrab(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	FlightAuthorityGrab(ctx context.Context, in *FlightAuthorityGrabReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// PayloadAuthorityGrab 获取负载控制权。
 	// 对应 DJI Cloud API method: payload_authority_grab，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	// 在控制相机、云台等负载设备前需要先获取负载控制权。
-	PayloadAuthorityGrab(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
-	// DrcModeEnter 进入指令飞行（DRC）模式。
-	// 对应 DJI Cloud API method: drc_mode_enter，
-	// Topic: thing/product/{gateway_sn}/services，设备应答 services_reply，非 drc/* 子路径。
-	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	// 进入 DRC 模式后，可在 drc/down 上发杆量（见 SendDrcStickControl 与 DRC 杆量: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E6%9D%86%E9%87%8F%E6%8E%A7%E5%88%B6 ）。
-	DrcModeEnter(ctx context.Context, in *DrcModeEnterReq, opts ...grpc.CallOption) (*CommonRes, error)
-	// DrcModeExit 退出指令飞行（DRC）模式。
-	// 对应 DJI Cloud API method: drc_mode_exit，
-	// Topic: thing/product/{gateway_sn}/services，设备应答 services_reply。
-	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	DrcModeExit(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
-	// SendDrcStickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
-	// Topic: thing/product/{gateway_sn}/drc/down。建议发送频率约 **5～10 Hz**；与 SendDrcHeartBeat、DroneEmergencyStop 同为即发即忘，无 services_reply。
-	SendDrcStickControl(ctx context.Context, in *DrcStickControlReq, opts ...grpc.CallOption) (*CommonRes, error)
-	// SendDrcHeartBeat 经 drc/down 发 DRC 心跳（method heart_beat；seq 与 data.timestamp 见 DRC 文档）。
-	SendDrcHeartBeat(ctx context.Context, in *DrcHeartBeatReq, opts ...grpc.CallOption) (*CommonRes, error)
-	// DroneEmergencyStop 通过 DRC 通道下发飞行器紧急停桨。
-	// 对应 DJI Cloud API method: drone_emergency_stop（drc/down），仅表示已发布到 MQTT，不等待 services_reply。
-	// 需要在配置文件中开启 DangerousOps.EnableDroneEmergencyStop 才能调用。
-	DroneEmergencyStop(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	PayloadAuthorityGrab(ctx context.Context, in *PayloadAuthorityGrabReq, opts ...grpc.CallOption) (*CommonRes, error)
 	// FlyToPoint 飞向指定航点。
 	// 对应 DJI Cloud API method: fly_to_point，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -449,57 +429,76 @@ type DjiCloudClient interface {
 	// UnlockLicenseList 获取设备的解禁证书列表。
 	// 对应 DJI Cloud API method: unlock_license_list，方向 down（云平台→设备）。
 	UnlockLicenseList(ctx context.Context, in *UnlockLicenseListReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// DrcModeEnter 进入指令飞行（DRC）模式。
+	// 对应 DJI Cloud API method: drc_mode_enter，
+	// Topic: thing/product/{gateway_sn}/services，设备应答 services_reply，非 drc/* 子路径。
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	// 进入 DRC 模式后，可在 drc/down 上发杆量。
+	DrcModeEnter(ctx context.Context, in *DrcModeEnterReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// DrcModeExit 退出指令飞行（DRC）模式。
+	// 对应 DJI Cloud API method: drc_mode_exit，
+	// Topic: thing/product/{gateway_sn}/services，设备应答 services_reply。
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	DrcModeExit(ctx context.Context, in *DrcModeExitReq, opts ...grpc.CallOption) (*CommonRes, error)
+	// DroneEmergencyStop 通过 DRC 通道下发飞行器紧急停桨。
+	// 对应 DJI Cloud API method: drone_emergency_stop（drc/down），仅表示已发布到 MQTT，不等待 services_reply。
+	// 需要在配置文件中开启 DangerousOps.EnableDroneEmergencyStop 才能调用。
+	DroneEmergencyStop(ctx context.Context, in *DroneEmergencyStopReq, opts ...grpc.CallOption) (*DroneEmergencyStopRes, error)
+	// SendDrcStickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
+	// Topic: thing/product/{gateway_sn}/drc/down。建议发送频率约 **5～10 Hz**；无 services_reply。
+	// seq 由平台内部管理，无需调用方传入。
+	SendDrcStickControl(ctx context.Context, in *DrcStickControlReq, opts ...grpc.CallOption) (*DrcStickControlRes, error)
 	// DrcForceLanding 强制降落。
 	// 对应 DJI Cloud API method: drc_force_landing，Topic: drc/down，方向 down（云平台→设备）。
-	DrcForceLanding(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	DrcForceLanding(ctx context.Context, in *DrcForceLandingReq, opts ...grpc.CallOption) (*DrcForceLandingRes, error)
 	// DrcEmergencyLanding 紧急降落。
 	// 对应 DJI Cloud API method: drc_emergency_landing，Topic: drc/down，方向 down（云平台→设备）。
-	DrcEmergencyLanding(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	DrcEmergencyLanding(ctx context.Context, in *DrcEmergencyLandingReq, opts ...grpc.CallOption) (*DrcEmergencyLandingRes, error)
 	// DrcLinkageZoomSet 设置红外联动变焦状态。
 	// 对应 DJI Cloud API method: drc_linkage_zoom_set，Topic: drc/down，方向 down（云平台→设备）。
-	DrcLinkageZoomSet(ctx context.Context, in *DrcLinkageZoomSetReq, opts ...grpc.CallOption) (*CommonRes, error)
+	DrcLinkageZoomSet(ctx context.Context, in *DrcLinkageZoomSetReq, opts ...grpc.CallOption) (*DrcLinkageZoomSetRes, error)
 	// DrcVideoResolutionSet 设置视频分辨率。
 	// 对应 DJI Cloud API method: drc_video_resolution_set，Topic: drc/down，方向 down（云平台→设备）。
-	DrcVideoResolutionSet(ctx context.Context, in *DrcVideoResolutionSetReq, opts ...grpc.CallOption) (*CommonRes, error)
+	DrcVideoResolutionSet(ctx context.Context, in *DrcVideoResolutionSetReq, opts ...grpc.CallOption) (*DrcVideoResolutionSetRes, error)
 	// DrcIntervalPhotoSet 设置定时拍参数。
 	// 对应 DJI Cloud API method: drc_interval_photo_set，Topic: drc/down，方向 down（云平台→设备）。
-	DrcIntervalPhotoSet(ctx context.Context, in *DrcIntervalPhotoSetReq, opts ...grpc.CallOption) (*CommonRes, error)
+	DrcIntervalPhotoSet(ctx context.Context, in *DrcIntervalPhotoSetReq, opts ...grpc.CallOption) (*DrcIntervalPhotoSetRes, error)
 	// DrcInitialStateSubscribe 订阅 DRC 初始状态。
 	// 对应 DJI Cloud API method: drc_initial_state_subscribe，Topic: drc/down，方向 down（云平台→设备）。
-	DrcInitialStateSubscribe(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error)
+	DrcInitialStateSubscribe(ctx context.Context, in *DrcInitialStateSubscribeReq, opts ...grpc.CallOption) (*DrcInitialStateSubscribeRes, error)
 	// DrcNightLightsStateSet 设置夜航灯状态。
 	// 对应 DJI Cloud API method: drc_night_lights_state_set，Topic: drc/down，方向 down（云平台→设备）。
-	DrcNightLightsStateSet(ctx context.Context, in *DrcNightLightsStateSetReq, opts ...grpc.CallOption) (*CommonRes, error)
+	DrcNightLightsStateSet(ctx context.Context, in *DrcNightLightsStateSetReq, opts ...grpc.CallOption) (*DrcNightLightsStateSetRes, error)
 	// DrcStealthStateSet 设置隐蔽模式状态。
 	// 对应 DJI Cloud API method: drc_stealth_state_set，Topic: drc/down，方向 down（云平台→设备）。
-	DrcStealthStateSet(ctx context.Context, in *DrcStealthStateSetReq, opts ...grpc.CallOption) (*CommonRes, error)
+	DrcStealthStateSet(ctx context.Context, in *DrcStealthStateSetReq, opts ...grpc.CallOption) (*DrcStealthStateSetRes, error)
 	// DrcCameraApertureValueSet 设置相机光圈。
 	// 对应 DJI Cloud API method: drc_camera_aperture_value_set，Topic: drc/down，方向 down（云平台→设备）。
-	DrcCameraApertureValueSet(ctx context.Context, in *DrcCameraApertureValueSetReq, opts ...grpc.CallOption) (*CommonRes, error)
+	DrcCameraApertureValueSet(ctx context.Context, in *DrcCameraApertureValueSetReq, opts ...grpc.CallOption) (*DrcCameraApertureValueSetRes, error)
 	// DrcCameraShutterSet 设置相机快门。
 	// 对应 DJI Cloud API method: drc_camera_shutter_set，Topic: drc/down，方向 down（云平台→设备）。
-	DrcCameraShutterSet(ctx context.Context, in *DrcCameraShutterSetReq, opts ...grpc.CallOption) (*CommonRes, error)
+	DrcCameraShutterSet(ctx context.Context, in *DrcCameraShutterSetReq, opts ...grpc.CallOption) (*DrcCameraShutterSetRes, error)
 	// DrcCameraIsoSet 设置相机 ISO。
 	// 对应 DJI Cloud API method: drc_camera_iso_set，Topic: drc/down，方向 down（云平台→设备）。
-	DrcCameraIsoSet(ctx context.Context, in *DrcCameraIsoSetReq, opts ...grpc.CallOption) (*CommonRes, error)
+	DrcCameraIsoSet(ctx context.Context, in *DrcCameraIsoSetReq, opts ...grpc.CallOption) (*DrcCameraIsoSetRes, error)
 	// DrcCameraMechanicalShutterSet 设置机械快门。
 	// 对应 DJI Cloud API method: drc_camera_mechanical_shutter_set，Topic: drc/down，方向 down（云平台→设备）。
-	DrcCameraMechanicalShutterSet(ctx context.Context, in *DrcCameraMechanicalShutterSetReq, opts ...grpc.CallOption) (*CommonRes, error)
+	DrcCameraMechanicalShutterSet(ctx context.Context, in *DrcCameraMechanicalShutterSetReq, opts ...grpc.CallOption) (*DrcCameraMechanicalShutterSetRes, error)
 	// DrcCameraDewarpingSet 设置镜头去畸变。
 	// 对应 DJI Cloud API method: drc_camera_dewarping_set，Topic: drc/down，方向 down（云平台→设备）。
-	DrcCameraDewarpingSet(ctx context.Context, in *DrcCameraDewarpingSetReq, opts ...grpc.CallOption) (*CommonRes, error)
+	DrcCameraDewarpingSet(ctx context.Context, in *DrcCameraDewarpingSetReq, opts ...grpc.CallOption) (*DrcCameraDewarpingSetRes, error)
 	// IsDeviceOnline 查询设备在线状态。
 	// device_sn 可传机巢SN或子设备SN；机巢在线和子设备在线分开判定。
 	// 当前服务应配置数据库用于持久化设备状态；内存 onlineCache 保存热数据以提升高频在线判断性能，数据库保存最近一次在线快照并通过 last_online_at 懒过期清理。
-	IsDeviceOnline(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*DeviceOnlineRes, error)
+	IsDeviceOnline(ctx context.Context, in *IsDeviceOnlineReq, opts ...grpc.CallOption) (*DeviceOnlineRes, error)
 	// ListDevices 查询设备列表，包含机巢、无人机、负载等设备。
 	ListDevices(ctx context.Context, in *ListDevicesReq, opts ...grpc.CallOption) (*ListDevicesRes, error)
 	// GetDeviceDetail 查询设备详情，聚合设备基础信息、OSD快照、State快照和拓扑信息。
-	GetDeviceDetail(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*DeviceDetailRes, error)
+	GetDeviceDetail(ctx context.Context, in *GetDeviceDetailReq, opts ...grpc.CallOption) (*DeviceDetailRes, error)
 	// GetDeviceOsdSnapshot 查询设备最近一次 OSD 遥测快照。
-	GetDeviceOsdSnapshot(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*DeviceOsdSnapshotRes, error)
+	GetDeviceOsdSnapshot(ctx context.Context, in *GetDeviceOsdSnapshotReq, opts ...grpc.CallOption) (*DeviceOsdSnapshotRes, error)
 	// GetDeviceStateSnapshot 查询设备最近一次 State 状态快照。
-	GetDeviceStateSnapshot(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*DeviceStateSnapshotRes, error)
+	GetDeviceStateSnapshot(ctx context.Context, in *GetDeviceStateSnapshotReq, opts ...grpc.CallOption) (*DeviceStateSnapshotRes, error)
 	// ListHmsAlerts 查询 HMS 告警记录。
 	ListHmsAlerts(ctx context.Context, in *ListHmsAlertsReq, opts ...grpc.CallOption) (*ListHmsAlertsRes, error)
 	// AckHmsAlert 确认 HMS 告警。
@@ -510,7 +509,10 @@ type DjiCloudClient interface {
 	// GetFlightTaskProgressLast 查询最近一次 flighttask_progress 上行记录。
 	// 数据来源：thing/product/{gateway_sn}/events、method=flighttask_progress（设备上行），由 SDK 分发至钩子后写入数据库。
 	// 该接口只返回最近一条进度记录，不代表完整任务状态机；非大疆标准查询接口。
-	GetFlightTaskProgressLast(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*FlightTaskProgressLastRes, error)
+	GetFlightTaskProgressLast(ctx context.Context, in *GetFlightTaskProgressLastReq, opts ...grpc.CallOption) (*FlightTaskProgressLastRes, error)
+	// QueryDrcStatus 查询设备 DRC 运行状态。
+	// 返回 DRC 模式启用状态、启动时间、最近设备心跳时间、序号和存活状态。
+	QueryDrcStatus(ctx context.Context, in *QueryDrcStatusReq, opts ...grpc.CallOption) (*DrcStatusRes, error)
 }
 
 type djiCloudClient struct {
@@ -681,7 +683,7 @@ func (c *djiCloudClient) StopFlightTask(ctx context.Context, in *StopFlightTaskR
 	return out, nil
 }
 
-func (c *djiCloudClient) ReturnHome(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) ReturnHome(ctx context.Context, in *ReturnHomeReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_ReturnHome_FullMethodName, in, out, cOpts...)
@@ -691,7 +693,7 @@ func (c *djiCloudClient) ReturnHome(ctx context.Context, in *DeviceSnReq, opts .
 	return out, nil
 }
 
-func (c *djiCloudClient) ReturnHomeCancelAutoReturn(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) ReturnHomeCancelAutoReturn(ctx context.Context, in *ReturnHomeCancelAutoReturnReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_ReturnHomeCancelAutoReturn_FullMethodName, in, out, cOpts...)
@@ -711,7 +713,7 @@ func (c *djiCloudClient) ReturnSpecificHome(ctx context.Context, in *ReturnSpeci
 	return out, nil
 }
 
-func (c *djiCloudClient) DebugModeOpen(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) DebugModeOpen(ctx context.Context, in *DebugModeOpenReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_DebugModeOpen_FullMethodName, in, out, cOpts...)
@@ -721,7 +723,7 @@ func (c *djiCloudClient) DebugModeOpen(ctx context.Context, in *DeviceSnReq, opt
 	return out, nil
 }
 
-func (c *djiCloudClient) DebugModeClose(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) DebugModeClose(ctx context.Context, in *DebugModeCloseReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_DebugModeClose_FullMethodName, in, out, cOpts...)
@@ -731,7 +733,7 @@ func (c *djiCloudClient) DebugModeClose(ctx context.Context, in *DeviceSnReq, op
 	return out, nil
 }
 
-func (c *djiCloudClient) CoverOpen(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) CoverOpen(ctx context.Context, in *CoverOpenReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_CoverOpen_FullMethodName, in, out, cOpts...)
@@ -741,7 +743,7 @@ func (c *djiCloudClient) CoverOpen(ctx context.Context, in *DeviceSnReq, opts ..
 	return out, nil
 }
 
-func (c *djiCloudClient) CoverClose(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) CoverClose(ctx context.Context, in *CoverCloseReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_CoverClose_FullMethodName, in, out, cOpts...)
@@ -751,7 +753,7 @@ func (c *djiCloudClient) CoverClose(ctx context.Context, in *DeviceSnReq, opts .
 	return out, nil
 }
 
-func (c *djiCloudClient) CoverForceClose(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) CoverForceClose(ctx context.Context, in *CoverForceCloseReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_CoverForceClose_FullMethodName, in, out, cOpts...)
@@ -761,7 +763,7 @@ func (c *djiCloudClient) CoverForceClose(ctx context.Context, in *DeviceSnReq, o
 	return out, nil
 }
 
-func (c *djiCloudClient) DroneOpen(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) DroneOpen(ctx context.Context, in *DroneOpenReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_DroneOpen_FullMethodName, in, out, cOpts...)
@@ -771,7 +773,7 @@ func (c *djiCloudClient) DroneOpen(ctx context.Context, in *DeviceSnReq, opts ..
 	return out, nil
 }
 
-func (c *djiCloudClient) DroneClose(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) DroneClose(ctx context.Context, in *DroneCloseReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_DroneClose_FullMethodName, in, out, cOpts...)
@@ -781,7 +783,7 @@ func (c *djiCloudClient) DroneClose(ctx context.Context, in *DeviceSnReq, opts .
 	return out, nil
 }
 
-func (c *djiCloudClient) DeviceReboot(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) DeviceReboot(ctx context.Context, in *DeviceRebootReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_DeviceReboot_FullMethodName, in, out, cOpts...)
@@ -791,7 +793,7 @@ func (c *djiCloudClient) DeviceReboot(ctx context.Context, in *DeviceSnReq, opts
 	return out, nil
 }
 
-func (c *djiCloudClient) ChargeOpen(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) ChargeOpen(ctx context.Context, in *ChargeOpenReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_ChargeOpen_FullMethodName, in, out, cOpts...)
@@ -801,7 +803,7 @@ func (c *djiCloudClient) ChargeOpen(ctx context.Context, in *DeviceSnReq, opts .
 	return out, nil
 }
 
-func (c *djiCloudClient) ChargeClose(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) ChargeClose(ctx context.Context, in *ChargeCloseReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_ChargeClose_FullMethodName, in, out, cOpts...)
@@ -811,7 +813,7 @@ func (c *djiCloudClient) ChargeClose(ctx context.Context, in *DeviceSnReq, opts 
 	return out, nil
 }
 
-func (c *djiCloudClient) DroneFormat(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) DroneFormat(ctx context.Context, in *DroneFormatReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_DroneFormat_FullMethodName, in, out, cOpts...)
@@ -821,7 +823,7 @@ func (c *djiCloudClient) DroneFormat(ctx context.Context, in *DeviceSnReq, opts 
 	return out, nil
 }
 
-func (c *djiCloudClient) DeviceFormat(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) DeviceFormat(ctx context.Context, in *DeviceFormatReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_DeviceFormat_FullMethodName, in, out, cOpts...)
@@ -831,7 +833,7 @@ func (c *djiCloudClient) DeviceFormat(ctx context.Context, in *DeviceSnReq, opts
 	return out, nil
 }
 
-func (c *djiCloudClient) SupplementLightOpen(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) SupplementLightOpen(ctx context.Context, in *SupplementLightOpenReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_SupplementLightOpen_FullMethodName, in, out, cOpts...)
@@ -841,7 +843,7 @@ func (c *djiCloudClient) SupplementLightOpen(ctx context.Context, in *DeviceSnRe
 	return out, nil
 }
 
-func (c *djiCloudClient) SupplementLightClose(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) SupplementLightClose(ctx context.Context, in *SupplementLightCloseReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_SupplementLightClose_FullMethodName, in, out, cOpts...)
@@ -951,7 +953,7 @@ func (c *djiCloudClient) ConfigUpdate(ctx context.Context, in *ConfigUpdateReq, 
 	return out, nil
 }
 
-func (c *djiCloudClient) FlightAuthorityGrab(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) FlightAuthorityGrab(ctx context.Context, in *FlightAuthorityGrabReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_FlightAuthorityGrab_FullMethodName, in, out, cOpts...)
@@ -961,60 +963,10 @@ func (c *djiCloudClient) FlightAuthorityGrab(ctx context.Context, in *DeviceSnRe
 	return out, nil
 }
 
-func (c *djiCloudClient) PayloadAuthorityGrab(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) PayloadAuthorityGrab(ctx context.Context, in *PayloadAuthorityGrabReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
 	err := c.cc.Invoke(ctx, DjiCloud_PayloadAuthorityGrab_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *djiCloudClient) DrcModeEnter(ctx context.Context, in *DrcModeEnterReq, opts ...grpc.CallOption) (*CommonRes, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommonRes)
-	err := c.cc.Invoke(ctx, DjiCloud_DrcModeEnter_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *djiCloudClient) DrcModeExit(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommonRes)
-	err := c.cc.Invoke(ctx, DjiCloud_DrcModeExit_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *djiCloudClient) SendDrcStickControl(ctx context.Context, in *DrcStickControlReq, opts ...grpc.CallOption) (*CommonRes, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommonRes)
-	err := c.cc.Invoke(ctx, DjiCloud_SendDrcStickControl_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *djiCloudClient) SendDrcHeartBeat(ctx context.Context, in *DrcHeartBeatReq, opts ...grpc.CallOption) (*CommonRes, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommonRes)
-	err := c.cc.Invoke(ctx, DjiCloud_SendDrcHeartBeat_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *djiCloudClient) DroneEmergencyStop(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommonRes)
-	err := c.cc.Invoke(ctx, DjiCloud_DroneEmergencyStop_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1281,9 +1233,49 @@ func (c *djiCloudClient) UnlockLicenseList(ctx context.Context, in *UnlockLicens
 	return out, nil
 }
 
-func (c *djiCloudClient) DrcForceLanding(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) DrcModeEnter(ctx context.Context, in *DrcModeEnterReq, opts ...grpc.CallOption) (*CommonRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiCloud_DrcModeEnter_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiCloudClient) DrcModeExit(ctx context.Context, in *DrcModeExitReq, opts ...grpc.CallOption) (*CommonRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommonRes)
+	err := c.cc.Invoke(ctx, DjiCloud_DrcModeExit_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiCloudClient) DroneEmergencyStop(ctx context.Context, in *DroneEmergencyStopReq, opts ...grpc.CallOption) (*DroneEmergencyStopRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DroneEmergencyStopRes)
+	err := c.cc.Invoke(ctx, DjiCloud_DroneEmergencyStop_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiCloudClient) SendDrcStickControl(ctx context.Context, in *DrcStickControlReq, opts ...grpc.CallOption) (*DrcStickControlRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DrcStickControlRes)
+	err := c.cc.Invoke(ctx, DjiCloud_SendDrcStickControl_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiCloudClient) DrcForceLanding(ctx context.Context, in *DrcForceLandingReq, opts ...grpc.CallOption) (*DrcForceLandingRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DrcForceLandingRes)
 	err := c.cc.Invoke(ctx, DjiCloud_DrcForceLanding_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1291,9 +1283,9 @@ func (c *djiCloudClient) DrcForceLanding(ctx context.Context, in *DeviceSnReq, o
 	return out, nil
 }
 
-func (c *djiCloudClient) DrcEmergencyLanding(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) DrcEmergencyLanding(ctx context.Context, in *DrcEmergencyLandingReq, opts ...grpc.CallOption) (*DrcEmergencyLandingRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommonRes)
+	out := new(DrcEmergencyLandingRes)
 	err := c.cc.Invoke(ctx, DjiCloud_DrcEmergencyLanding_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1301,9 +1293,9 @@ func (c *djiCloudClient) DrcEmergencyLanding(ctx context.Context, in *DeviceSnRe
 	return out, nil
 }
 
-func (c *djiCloudClient) DrcLinkageZoomSet(ctx context.Context, in *DrcLinkageZoomSetReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) DrcLinkageZoomSet(ctx context.Context, in *DrcLinkageZoomSetReq, opts ...grpc.CallOption) (*DrcLinkageZoomSetRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommonRes)
+	out := new(DrcLinkageZoomSetRes)
 	err := c.cc.Invoke(ctx, DjiCloud_DrcLinkageZoomSet_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1311,9 +1303,9 @@ func (c *djiCloudClient) DrcLinkageZoomSet(ctx context.Context, in *DrcLinkageZo
 	return out, nil
 }
 
-func (c *djiCloudClient) DrcVideoResolutionSet(ctx context.Context, in *DrcVideoResolutionSetReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) DrcVideoResolutionSet(ctx context.Context, in *DrcVideoResolutionSetReq, opts ...grpc.CallOption) (*DrcVideoResolutionSetRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommonRes)
+	out := new(DrcVideoResolutionSetRes)
 	err := c.cc.Invoke(ctx, DjiCloud_DrcVideoResolutionSet_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1321,9 +1313,9 @@ func (c *djiCloudClient) DrcVideoResolutionSet(ctx context.Context, in *DrcVideo
 	return out, nil
 }
 
-func (c *djiCloudClient) DrcIntervalPhotoSet(ctx context.Context, in *DrcIntervalPhotoSetReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) DrcIntervalPhotoSet(ctx context.Context, in *DrcIntervalPhotoSetReq, opts ...grpc.CallOption) (*DrcIntervalPhotoSetRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommonRes)
+	out := new(DrcIntervalPhotoSetRes)
 	err := c.cc.Invoke(ctx, DjiCloud_DrcIntervalPhotoSet_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1331,9 +1323,9 @@ func (c *djiCloudClient) DrcIntervalPhotoSet(ctx context.Context, in *DrcInterva
 	return out, nil
 }
 
-func (c *djiCloudClient) DrcInitialStateSubscribe(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) DrcInitialStateSubscribe(ctx context.Context, in *DrcInitialStateSubscribeReq, opts ...grpc.CallOption) (*DrcInitialStateSubscribeRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommonRes)
+	out := new(DrcInitialStateSubscribeRes)
 	err := c.cc.Invoke(ctx, DjiCloud_DrcInitialStateSubscribe_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1341,9 +1333,9 @@ func (c *djiCloudClient) DrcInitialStateSubscribe(ctx context.Context, in *Devic
 	return out, nil
 }
 
-func (c *djiCloudClient) DrcNightLightsStateSet(ctx context.Context, in *DrcNightLightsStateSetReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) DrcNightLightsStateSet(ctx context.Context, in *DrcNightLightsStateSetReq, opts ...grpc.CallOption) (*DrcNightLightsStateSetRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommonRes)
+	out := new(DrcNightLightsStateSetRes)
 	err := c.cc.Invoke(ctx, DjiCloud_DrcNightLightsStateSet_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1351,9 +1343,9 @@ func (c *djiCloudClient) DrcNightLightsStateSet(ctx context.Context, in *DrcNigh
 	return out, nil
 }
 
-func (c *djiCloudClient) DrcStealthStateSet(ctx context.Context, in *DrcStealthStateSetReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) DrcStealthStateSet(ctx context.Context, in *DrcStealthStateSetReq, opts ...grpc.CallOption) (*DrcStealthStateSetRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommonRes)
+	out := new(DrcStealthStateSetRes)
 	err := c.cc.Invoke(ctx, DjiCloud_DrcStealthStateSet_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1361,9 +1353,9 @@ func (c *djiCloudClient) DrcStealthStateSet(ctx context.Context, in *DrcStealthS
 	return out, nil
 }
 
-func (c *djiCloudClient) DrcCameraApertureValueSet(ctx context.Context, in *DrcCameraApertureValueSetReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) DrcCameraApertureValueSet(ctx context.Context, in *DrcCameraApertureValueSetReq, opts ...grpc.CallOption) (*DrcCameraApertureValueSetRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommonRes)
+	out := new(DrcCameraApertureValueSetRes)
 	err := c.cc.Invoke(ctx, DjiCloud_DrcCameraApertureValueSet_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1371,9 +1363,9 @@ func (c *djiCloudClient) DrcCameraApertureValueSet(ctx context.Context, in *DrcC
 	return out, nil
 }
 
-func (c *djiCloudClient) DrcCameraShutterSet(ctx context.Context, in *DrcCameraShutterSetReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) DrcCameraShutterSet(ctx context.Context, in *DrcCameraShutterSetReq, opts ...grpc.CallOption) (*DrcCameraShutterSetRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommonRes)
+	out := new(DrcCameraShutterSetRes)
 	err := c.cc.Invoke(ctx, DjiCloud_DrcCameraShutterSet_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1381,9 +1373,9 @@ func (c *djiCloudClient) DrcCameraShutterSet(ctx context.Context, in *DrcCameraS
 	return out, nil
 }
 
-func (c *djiCloudClient) DrcCameraIsoSet(ctx context.Context, in *DrcCameraIsoSetReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) DrcCameraIsoSet(ctx context.Context, in *DrcCameraIsoSetReq, opts ...grpc.CallOption) (*DrcCameraIsoSetRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommonRes)
+	out := new(DrcCameraIsoSetRes)
 	err := c.cc.Invoke(ctx, DjiCloud_DrcCameraIsoSet_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1391,9 +1383,9 @@ func (c *djiCloudClient) DrcCameraIsoSet(ctx context.Context, in *DrcCameraIsoSe
 	return out, nil
 }
 
-func (c *djiCloudClient) DrcCameraMechanicalShutterSet(ctx context.Context, in *DrcCameraMechanicalShutterSetReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) DrcCameraMechanicalShutterSet(ctx context.Context, in *DrcCameraMechanicalShutterSetReq, opts ...grpc.CallOption) (*DrcCameraMechanicalShutterSetRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommonRes)
+	out := new(DrcCameraMechanicalShutterSetRes)
 	err := c.cc.Invoke(ctx, DjiCloud_DrcCameraMechanicalShutterSet_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1401,9 +1393,9 @@ func (c *djiCloudClient) DrcCameraMechanicalShutterSet(ctx context.Context, in *
 	return out, nil
 }
 
-func (c *djiCloudClient) DrcCameraDewarpingSet(ctx context.Context, in *DrcCameraDewarpingSetReq, opts ...grpc.CallOption) (*CommonRes, error) {
+func (c *djiCloudClient) DrcCameraDewarpingSet(ctx context.Context, in *DrcCameraDewarpingSetReq, opts ...grpc.CallOption) (*DrcCameraDewarpingSetRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommonRes)
+	out := new(DrcCameraDewarpingSetRes)
 	err := c.cc.Invoke(ctx, DjiCloud_DrcCameraDewarpingSet_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1411,7 +1403,7 @@ func (c *djiCloudClient) DrcCameraDewarpingSet(ctx context.Context, in *DrcCamer
 	return out, nil
 }
 
-func (c *djiCloudClient) IsDeviceOnline(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*DeviceOnlineRes, error) {
+func (c *djiCloudClient) IsDeviceOnline(ctx context.Context, in *IsDeviceOnlineReq, opts ...grpc.CallOption) (*DeviceOnlineRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeviceOnlineRes)
 	err := c.cc.Invoke(ctx, DjiCloud_IsDeviceOnline_FullMethodName, in, out, cOpts...)
@@ -1431,7 +1423,7 @@ func (c *djiCloudClient) ListDevices(ctx context.Context, in *ListDevicesReq, op
 	return out, nil
 }
 
-func (c *djiCloudClient) GetDeviceDetail(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*DeviceDetailRes, error) {
+func (c *djiCloudClient) GetDeviceDetail(ctx context.Context, in *GetDeviceDetailReq, opts ...grpc.CallOption) (*DeviceDetailRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeviceDetailRes)
 	err := c.cc.Invoke(ctx, DjiCloud_GetDeviceDetail_FullMethodName, in, out, cOpts...)
@@ -1441,7 +1433,7 @@ func (c *djiCloudClient) GetDeviceDetail(ctx context.Context, in *DeviceSnReq, o
 	return out, nil
 }
 
-func (c *djiCloudClient) GetDeviceOsdSnapshot(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*DeviceOsdSnapshotRes, error) {
+func (c *djiCloudClient) GetDeviceOsdSnapshot(ctx context.Context, in *GetDeviceOsdSnapshotReq, opts ...grpc.CallOption) (*DeviceOsdSnapshotRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeviceOsdSnapshotRes)
 	err := c.cc.Invoke(ctx, DjiCloud_GetDeviceOsdSnapshot_FullMethodName, in, out, cOpts...)
@@ -1451,7 +1443,7 @@ func (c *djiCloudClient) GetDeviceOsdSnapshot(ctx context.Context, in *DeviceSnR
 	return out, nil
 }
 
-func (c *djiCloudClient) GetDeviceStateSnapshot(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*DeviceStateSnapshotRes, error) {
+func (c *djiCloudClient) GetDeviceStateSnapshot(ctx context.Context, in *GetDeviceStateSnapshotReq, opts ...grpc.CallOption) (*DeviceStateSnapshotRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeviceStateSnapshotRes)
 	err := c.cc.Invoke(ctx, DjiCloud_GetDeviceStateSnapshot_FullMethodName, in, out, cOpts...)
@@ -1491,10 +1483,20 @@ func (c *djiCloudClient) ListFlightTaskProgress(ctx context.Context, in *ListFli
 	return out, nil
 }
 
-func (c *djiCloudClient) GetFlightTaskProgressLast(ctx context.Context, in *DeviceSnReq, opts ...grpc.CallOption) (*FlightTaskProgressLastRes, error) {
+func (c *djiCloudClient) GetFlightTaskProgressLast(ctx context.Context, in *GetFlightTaskProgressLastReq, opts ...grpc.CallOption) (*FlightTaskProgressLastRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(FlightTaskProgressLastRes)
 	err := c.cc.Invoke(ctx, DjiCloud_GetFlightTaskProgressLast_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *djiCloudClient) QueryDrcStatus(ctx context.Context, in *QueryDrcStatusReq, opts ...grpc.CallOption) (*DrcStatusRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DrcStatusRes)
+	err := c.cc.Invoke(ctx, DjiCloud_QueryDrcStatus_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1578,11 +1580,11 @@ type DjiCloudServer interface {
 	// ReturnHome 控制飞行器一键返航。
 	// 对应 DJI Cloud API method: return_home，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	ReturnHome(context.Context, *DeviceSnReq) (*CommonRes, error)
+	ReturnHome(context.Context, *ReturnHomeReq) (*CommonRes, error)
 	// ReturnHomeCancelAutoReturn 取消自动返航。
 	// 对应 DJI Cloud API method: return_home_cancel，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	ReturnHomeCancelAutoReturn(context.Context, *DeviceSnReq) (*CommonRes, error)
+	ReturnHomeCancelAutoReturn(context.Context, *ReturnHomeCancelAutoReturnReq) (*CommonRes, error)
 	// ReturnSpecificHome 返航至指定备降点。
 	// 对应 DJI Cloud API method: return_specific_home，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -1591,59 +1593,59 @@ type DjiCloudServer interface {
 	// DebugModeOpen 开启机巢调试模式。
 	// 对应 DJI Cloud API method: debug_mode_open，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	DebugModeOpen(context.Context, *DeviceSnReq) (*CommonRes, error)
+	DebugModeOpen(context.Context, *DebugModeOpenReq) (*CommonRes, error)
 	// DebugModeClose 关闭机巢调试模式。
 	// 对应 DJI Cloud API method: debug_mode_close，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	DebugModeClose(context.Context, *DeviceSnReq) (*CommonRes, error)
+	DebugModeClose(context.Context, *DebugModeCloseReq) (*CommonRes, error)
 	// CoverOpen 打开机巢舱盖。
 	// 对应 DJI Cloud API method: cover_open，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	CoverOpen(context.Context, *DeviceSnReq) (*CommonRes, error)
+	CoverOpen(context.Context, *CoverOpenReq) (*CommonRes, error)
 	// CoverClose 关闭机巢舱盖。
 	// 对应 DJI Cloud API method: cover_close，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	CoverClose(context.Context, *DeviceSnReq) (*CommonRes, error)
+	CoverClose(context.Context, *CoverCloseReq) (*CommonRes, error)
 	// CoverForceClose 强制关闭机巢舱盖。
 	// 对应 DJI Cloud API method: cover_force_close，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	CoverForceClose(context.Context, *DeviceSnReq) (*CommonRes, error)
+	CoverForceClose(context.Context, *CoverForceCloseReq) (*CommonRes, error)
 	// DroneOpen 开启机巢中的无人机电源。
 	// 对应 DJI Cloud API method: drone_open，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	DroneOpen(context.Context, *DeviceSnReq) (*CommonRes, error)
+	DroneOpen(context.Context, *DroneOpenReq) (*CommonRes, error)
 	// DroneClose 关闭机巢中的无人机电源。
 	// 对应 DJI Cloud API method: drone_close，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	DroneClose(context.Context, *DeviceSnReq) (*CommonRes, error)
+	DroneClose(context.Context, *DroneCloseReq) (*CommonRes, error)
 	// DeviceReboot 重启机巢设备。
 	// 对应 DJI Cloud API method: device_reboot，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	DeviceReboot(context.Context, *DeviceSnReq) (*CommonRes, error)
+	DeviceReboot(context.Context, *DeviceRebootReq) (*CommonRes, error)
 	// ChargeOpen 开启机巢充电功能。
 	// 对应 DJI Cloud API method: charge_open，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	ChargeOpen(context.Context, *DeviceSnReq) (*CommonRes, error)
+	ChargeOpen(context.Context, *ChargeOpenReq) (*CommonRes, error)
 	// ChargeClose 关闭机巢充电功能。
 	// 对应 DJI Cloud API method: charge_close，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	ChargeClose(context.Context, *DeviceSnReq) (*CommonRes, error)
+	ChargeClose(context.Context, *ChargeCloseReq) (*CommonRes, error)
 	// DroneFormat 格式化无人机存储。
 	// 对应 DJI Cloud API method: drone_format，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	DroneFormat(context.Context, *DeviceSnReq) (*CommonRes, error)
+	DroneFormat(context.Context, *DroneFormatReq) (*CommonRes, error)
 	// DeviceFormat 格式化机巢设备存储。
 	// 对应 DJI Cloud API method: device_format，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	DeviceFormat(context.Context, *DeviceSnReq) (*CommonRes, error)
+	DeviceFormat(context.Context, *DeviceFormatReq) (*CommonRes, error)
 	// SupplementLightOpen 开启机巢补光灯。
 	// 对应 DJI Cloud API method: supplement_light_open，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	SupplementLightOpen(context.Context, *DeviceSnReq) (*CommonRes, error)
+	SupplementLightOpen(context.Context, *SupplementLightOpenReq) (*CommonRes, error)
 	// SupplementLightClose 关闭机巢补光灯。
 	// 对应 DJI Cloud API method: supplement_light_close，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	SupplementLightClose(context.Context, *DeviceSnReq) (*CommonRes, error)
+	SupplementLightClose(context.Context, *SupplementLightCloseReq) (*CommonRes, error)
 	// BatteryStoreModeSwitch 切换电池保养存储模式。
 	// 对应 DJI Cloud API method: battery_store_mode_switch，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -1689,32 +1691,12 @@ type DjiCloudServer interface {
 	// 对应 DJI Cloud API method: flight_authority_grab，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	// 在进行指令飞行操控前需要先获取飞行控制权。
-	FlightAuthorityGrab(context.Context, *DeviceSnReq) (*CommonRes, error)
+	FlightAuthorityGrab(context.Context, *FlightAuthorityGrabReq) (*CommonRes, error)
 	// PayloadAuthorityGrab 获取负载控制权。
 	// 对应 DJI Cloud API method: payload_authority_grab，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
 	// 在控制相机、云台等负载设备前需要先获取负载控制权。
-	PayloadAuthorityGrab(context.Context, *DeviceSnReq) (*CommonRes, error)
-	// DrcModeEnter 进入指令飞行（DRC）模式。
-	// 对应 DJI Cloud API method: drc_mode_enter，
-	// Topic: thing/product/{gateway_sn}/services，设备应答 services_reply，非 drc/* 子路径。
-	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	// 进入 DRC 模式后，可在 drc/down 上发杆量（见 SendDrcStickControl 与 DRC 杆量: https://developer.dji.com/doc/cloud-api-tutorial/cn/api-reference/dock-to-cloud/mqtt/dock/dock3/drc.html#drc-%E6%9D%86%E9%87%8F%E6%8E%A7%E5%88%B6 ）。
-	DrcModeEnter(context.Context, *DrcModeEnterReq) (*CommonRes, error)
-	// DrcModeExit 退出指令飞行（DRC）模式。
-	// 对应 DJI Cloud API method: drc_mode_exit，
-	// Topic: thing/product/{gateway_sn}/services，设备应答 services_reply。
-	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
-	DrcModeExit(context.Context, *DeviceSnReq) (*CommonRes, error)
-	// SendDrcStickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
-	// Topic: thing/product/{gateway_sn}/drc/down。建议发送频率约 **5～10 Hz**；与 SendDrcHeartBeat、DroneEmergencyStop 同为即发即忘，无 services_reply。
-	SendDrcStickControl(context.Context, *DrcStickControlReq) (*CommonRes, error)
-	// SendDrcHeartBeat 经 drc/down 发 DRC 心跳（method heart_beat；seq 与 data.timestamp 见 DRC 文档）。
-	SendDrcHeartBeat(context.Context, *DrcHeartBeatReq) (*CommonRes, error)
-	// DroneEmergencyStop 通过 DRC 通道下发飞行器紧急停桨。
-	// 对应 DJI Cloud API method: drone_emergency_stop（drc/down），仅表示已发布到 MQTT，不等待 services_reply。
-	// 需要在配置文件中开启 DangerousOps.EnableDroneEmergencyStop 才能调用。
-	DroneEmergencyStop(context.Context, *DeviceSnReq) (*CommonRes, error)
+	PayloadAuthorityGrab(context.Context, *PayloadAuthorityGrabReq) (*CommonRes, error)
 	// FlyToPoint 飞向指定航点。
 	// 对应 DJI Cloud API method: fly_to_point，
 	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
@@ -1828,57 +1810,76 @@ type DjiCloudServer interface {
 	// UnlockLicenseList 获取设备的解禁证书列表。
 	// 对应 DJI Cloud API method: unlock_license_list，方向 down（云平台→设备）。
 	UnlockLicenseList(context.Context, *UnlockLicenseListReq) (*CommonRes, error)
+	// DrcModeEnter 进入指令飞行（DRC）模式。
+	// 对应 DJI Cloud API method: drc_mode_enter，
+	// Topic: thing/product/{gateway_sn}/services，设备应答 services_reply，非 drc/* 子路径。
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	// 进入 DRC 模式后，可在 drc/down 上发杆量。
+	DrcModeEnter(context.Context, *DrcModeEnterReq) (*CommonRes, error)
+	// DrcModeExit 退出指令飞行（DRC）模式。
+	// 对应 DJI Cloud API method: drc_mode_exit，
+	// Topic: thing/product/{gateway_sn}/services，设备应答 services_reply。
+	// 方向 down（云平台→设备），等待设备 ACK 后返回结果。
+	DrcModeExit(context.Context, *DrcModeExitReq) (*CommonRes, error)
+	// DroneEmergencyStop 通过 DRC 通道下发飞行器紧急停桨。
+	// 对应 DJI Cloud API method: drone_emergency_stop（drc/down），仅表示已发布到 MQTT，不等待 services_reply。
+	// 需要在配置文件中开启 DangerousOps.EnableDroneEmergencyStop 才能调用。
+	DroneEmergencyStop(context.Context, *DroneEmergencyStopReq) (*DroneEmergencyStopRes, error)
+	// SendDrcStickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
+	// Topic: thing/product/{gateway_sn}/drc/down。建议发送频率约 **5～10 Hz**；无 services_reply。
+	// seq 由平台内部管理，无需调用方传入。
+	SendDrcStickControl(context.Context, *DrcStickControlReq) (*DrcStickControlRes, error)
 	// DrcForceLanding 强制降落。
 	// 对应 DJI Cloud API method: drc_force_landing，Topic: drc/down，方向 down（云平台→设备）。
-	DrcForceLanding(context.Context, *DeviceSnReq) (*CommonRes, error)
+	DrcForceLanding(context.Context, *DrcForceLandingReq) (*DrcForceLandingRes, error)
 	// DrcEmergencyLanding 紧急降落。
 	// 对应 DJI Cloud API method: drc_emergency_landing，Topic: drc/down，方向 down（云平台→设备）。
-	DrcEmergencyLanding(context.Context, *DeviceSnReq) (*CommonRes, error)
+	DrcEmergencyLanding(context.Context, *DrcEmergencyLandingReq) (*DrcEmergencyLandingRes, error)
 	// DrcLinkageZoomSet 设置红外联动变焦状态。
 	// 对应 DJI Cloud API method: drc_linkage_zoom_set，Topic: drc/down，方向 down（云平台→设备）。
-	DrcLinkageZoomSet(context.Context, *DrcLinkageZoomSetReq) (*CommonRes, error)
+	DrcLinkageZoomSet(context.Context, *DrcLinkageZoomSetReq) (*DrcLinkageZoomSetRes, error)
 	// DrcVideoResolutionSet 设置视频分辨率。
 	// 对应 DJI Cloud API method: drc_video_resolution_set，Topic: drc/down，方向 down（云平台→设备）。
-	DrcVideoResolutionSet(context.Context, *DrcVideoResolutionSetReq) (*CommonRes, error)
+	DrcVideoResolutionSet(context.Context, *DrcVideoResolutionSetReq) (*DrcVideoResolutionSetRes, error)
 	// DrcIntervalPhotoSet 设置定时拍参数。
 	// 对应 DJI Cloud API method: drc_interval_photo_set，Topic: drc/down，方向 down（云平台→设备）。
-	DrcIntervalPhotoSet(context.Context, *DrcIntervalPhotoSetReq) (*CommonRes, error)
+	DrcIntervalPhotoSet(context.Context, *DrcIntervalPhotoSetReq) (*DrcIntervalPhotoSetRes, error)
 	// DrcInitialStateSubscribe 订阅 DRC 初始状态。
 	// 对应 DJI Cloud API method: drc_initial_state_subscribe，Topic: drc/down，方向 down（云平台→设备）。
-	DrcInitialStateSubscribe(context.Context, *DeviceSnReq) (*CommonRes, error)
+	DrcInitialStateSubscribe(context.Context, *DrcInitialStateSubscribeReq) (*DrcInitialStateSubscribeRes, error)
 	// DrcNightLightsStateSet 设置夜航灯状态。
 	// 对应 DJI Cloud API method: drc_night_lights_state_set，Topic: drc/down，方向 down（云平台→设备）。
-	DrcNightLightsStateSet(context.Context, *DrcNightLightsStateSetReq) (*CommonRes, error)
+	DrcNightLightsStateSet(context.Context, *DrcNightLightsStateSetReq) (*DrcNightLightsStateSetRes, error)
 	// DrcStealthStateSet 设置隐蔽模式状态。
 	// 对应 DJI Cloud API method: drc_stealth_state_set，Topic: drc/down，方向 down（云平台→设备）。
-	DrcStealthStateSet(context.Context, *DrcStealthStateSetReq) (*CommonRes, error)
+	DrcStealthStateSet(context.Context, *DrcStealthStateSetReq) (*DrcStealthStateSetRes, error)
 	// DrcCameraApertureValueSet 设置相机光圈。
 	// 对应 DJI Cloud API method: drc_camera_aperture_value_set，Topic: drc/down，方向 down（云平台→设备）。
-	DrcCameraApertureValueSet(context.Context, *DrcCameraApertureValueSetReq) (*CommonRes, error)
+	DrcCameraApertureValueSet(context.Context, *DrcCameraApertureValueSetReq) (*DrcCameraApertureValueSetRes, error)
 	// DrcCameraShutterSet 设置相机快门。
 	// 对应 DJI Cloud API method: drc_camera_shutter_set，Topic: drc/down，方向 down（云平台→设备）。
-	DrcCameraShutterSet(context.Context, *DrcCameraShutterSetReq) (*CommonRes, error)
+	DrcCameraShutterSet(context.Context, *DrcCameraShutterSetReq) (*DrcCameraShutterSetRes, error)
 	// DrcCameraIsoSet 设置相机 ISO。
 	// 对应 DJI Cloud API method: drc_camera_iso_set，Topic: drc/down，方向 down（云平台→设备）。
-	DrcCameraIsoSet(context.Context, *DrcCameraIsoSetReq) (*CommonRes, error)
+	DrcCameraIsoSet(context.Context, *DrcCameraIsoSetReq) (*DrcCameraIsoSetRes, error)
 	// DrcCameraMechanicalShutterSet 设置机械快门。
 	// 对应 DJI Cloud API method: drc_camera_mechanical_shutter_set，Topic: drc/down，方向 down（云平台→设备）。
-	DrcCameraMechanicalShutterSet(context.Context, *DrcCameraMechanicalShutterSetReq) (*CommonRes, error)
+	DrcCameraMechanicalShutterSet(context.Context, *DrcCameraMechanicalShutterSetReq) (*DrcCameraMechanicalShutterSetRes, error)
 	// DrcCameraDewarpingSet 设置镜头去畸变。
 	// 对应 DJI Cloud API method: drc_camera_dewarping_set，Topic: drc/down，方向 down（云平台→设备）。
-	DrcCameraDewarpingSet(context.Context, *DrcCameraDewarpingSetReq) (*CommonRes, error)
+	DrcCameraDewarpingSet(context.Context, *DrcCameraDewarpingSetReq) (*DrcCameraDewarpingSetRes, error)
 	// IsDeviceOnline 查询设备在线状态。
 	// device_sn 可传机巢SN或子设备SN；机巢在线和子设备在线分开判定。
 	// 当前服务应配置数据库用于持久化设备状态；内存 onlineCache 保存热数据以提升高频在线判断性能，数据库保存最近一次在线快照并通过 last_online_at 懒过期清理。
-	IsDeviceOnline(context.Context, *DeviceSnReq) (*DeviceOnlineRes, error)
+	IsDeviceOnline(context.Context, *IsDeviceOnlineReq) (*DeviceOnlineRes, error)
 	// ListDevices 查询设备列表，包含机巢、无人机、负载等设备。
 	ListDevices(context.Context, *ListDevicesReq) (*ListDevicesRes, error)
 	// GetDeviceDetail 查询设备详情，聚合设备基础信息、OSD快照、State快照和拓扑信息。
-	GetDeviceDetail(context.Context, *DeviceSnReq) (*DeviceDetailRes, error)
+	GetDeviceDetail(context.Context, *GetDeviceDetailReq) (*DeviceDetailRes, error)
 	// GetDeviceOsdSnapshot 查询设备最近一次 OSD 遥测快照。
-	GetDeviceOsdSnapshot(context.Context, *DeviceSnReq) (*DeviceOsdSnapshotRes, error)
+	GetDeviceOsdSnapshot(context.Context, *GetDeviceOsdSnapshotReq) (*DeviceOsdSnapshotRes, error)
 	// GetDeviceStateSnapshot 查询设备最近一次 State 状态快照。
-	GetDeviceStateSnapshot(context.Context, *DeviceSnReq) (*DeviceStateSnapshotRes, error)
+	GetDeviceStateSnapshot(context.Context, *GetDeviceStateSnapshotReq) (*DeviceStateSnapshotRes, error)
 	// ListHmsAlerts 查询 HMS 告警记录。
 	ListHmsAlerts(context.Context, *ListHmsAlertsReq) (*ListHmsAlertsRes, error)
 	// AckHmsAlert 确认 HMS 告警。
@@ -1889,7 +1890,10 @@ type DjiCloudServer interface {
 	// GetFlightTaskProgressLast 查询最近一次 flighttask_progress 上行记录。
 	// 数据来源：thing/product/{gateway_sn}/events、method=flighttask_progress（设备上行），由 SDK 分发至钩子后写入数据库。
 	// 该接口只返回最近一条进度记录，不代表完整任务状态机；非大疆标准查询接口。
-	GetFlightTaskProgressLast(context.Context, *DeviceSnReq) (*FlightTaskProgressLastRes, error)
+	GetFlightTaskProgressLast(context.Context, *GetFlightTaskProgressLastReq) (*FlightTaskProgressLastRes, error)
+	// QueryDrcStatus 查询设备 DRC 运行状态。
+	// 返回 DRC 模式启用状态、启动时间、最近设备心跳时间、序号和存活状态。
+	QueryDrcStatus(context.Context, *QueryDrcStatusReq) (*DrcStatusRes, error)
 	mustEmbedUnimplementedDjiCloudServer()
 }
 
@@ -1948,55 +1952,55 @@ func (UnimplementedDjiCloudServer) ResumeFlightTask(context.Context, *ResumeFlig
 func (UnimplementedDjiCloudServer) StopFlightTask(context.Context, *StopFlightTaskReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StopFlightTask not implemented")
 }
-func (UnimplementedDjiCloudServer) ReturnHome(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) ReturnHome(context.Context, *ReturnHomeReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReturnHome not implemented")
 }
-func (UnimplementedDjiCloudServer) ReturnHomeCancelAutoReturn(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) ReturnHomeCancelAutoReturn(context.Context, *ReturnHomeCancelAutoReturnReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReturnHomeCancelAutoReturn not implemented")
 }
 func (UnimplementedDjiCloudServer) ReturnSpecificHome(context.Context, *ReturnSpecificHomeReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReturnSpecificHome not implemented")
 }
-func (UnimplementedDjiCloudServer) DebugModeOpen(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) DebugModeOpen(context.Context, *DebugModeOpenReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DebugModeOpen not implemented")
 }
-func (UnimplementedDjiCloudServer) DebugModeClose(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) DebugModeClose(context.Context, *DebugModeCloseReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DebugModeClose not implemented")
 }
-func (UnimplementedDjiCloudServer) CoverOpen(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) CoverOpen(context.Context, *CoverOpenReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CoverOpen not implemented")
 }
-func (UnimplementedDjiCloudServer) CoverClose(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) CoverClose(context.Context, *CoverCloseReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CoverClose not implemented")
 }
-func (UnimplementedDjiCloudServer) CoverForceClose(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) CoverForceClose(context.Context, *CoverForceCloseReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CoverForceClose not implemented")
 }
-func (UnimplementedDjiCloudServer) DroneOpen(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) DroneOpen(context.Context, *DroneOpenReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DroneOpen not implemented")
 }
-func (UnimplementedDjiCloudServer) DroneClose(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) DroneClose(context.Context, *DroneCloseReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DroneClose not implemented")
 }
-func (UnimplementedDjiCloudServer) DeviceReboot(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) DeviceReboot(context.Context, *DeviceRebootReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeviceReboot not implemented")
 }
-func (UnimplementedDjiCloudServer) ChargeOpen(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) ChargeOpen(context.Context, *ChargeOpenReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChargeOpen not implemented")
 }
-func (UnimplementedDjiCloudServer) ChargeClose(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) ChargeClose(context.Context, *ChargeCloseReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChargeClose not implemented")
 }
-func (UnimplementedDjiCloudServer) DroneFormat(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) DroneFormat(context.Context, *DroneFormatReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DroneFormat not implemented")
 }
-func (UnimplementedDjiCloudServer) DeviceFormat(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) DeviceFormat(context.Context, *DeviceFormatReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeviceFormat not implemented")
 }
-func (UnimplementedDjiCloudServer) SupplementLightOpen(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) SupplementLightOpen(context.Context, *SupplementLightOpenReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SupplementLightOpen not implemented")
 }
-func (UnimplementedDjiCloudServer) SupplementLightClose(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) SupplementLightClose(context.Context, *SupplementLightCloseReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SupplementLightClose not implemented")
 }
 func (UnimplementedDjiCloudServer) BatteryStoreModeSwitch(context.Context, *BatteryStoreModeReq) (*CommonRes, error) {
@@ -2029,26 +2033,11 @@ func (UnimplementedDjiCloudServer) RemoteLogFileUploadCancel(context.Context, *R
 func (UnimplementedDjiCloudServer) ConfigUpdate(context.Context, *ConfigUpdateReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ConfigUpdate not implemented")
 }
-func (UnimplementedDjiCloudServer) FlightAuthorityGrab(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) FlightAuthorityGrab(context.Context, *FlightAuthorityGrabReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FlightAuthorityGrab not implemented")
 }
-func (UnimplementedDjiCloudServer) PayloadAuthorityGrab(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) PayloadAuthorityGrab(context.Context, *PayloadAuthorityGrabReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PayloadAuthorityGrab not implemented")
-}
-func (UnimplementedDjiCloudServer) DrcModeEnter(context.Context, *DrcModeEnterReq) (*CommonRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DrcModeEnter not implemented")
-}
-func (UnimplementedDjiCloudServer) DrcModeExit(context.Context, *DeviceSnReq) (*CommonRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DrcModeExit not implemented")
-}
-func (UnimplementedDjiCloudServer) SendDrcStickControl(context.Context, *DrcStickControlReq) (*CommonRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendDrcStickControl not implemented")
-}
-func (UnimplementedDjiCloudServer) SendDrcHeartBeat(context.Context, *DrcHeartBeatReq) (*CommonRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendDrcHeartBeat not implemented")
-}
-func (UnimplementedDjiCloudServer) DroneEmergencyStop(context.Context, *DeviceSnReq) (*CommonRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DroneEmergencyStop not implemented")
 }
 func (UnimplementedDjiCloudServer) FlyToPoint(context.Context, *FlyToPointReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FlyToPoint not implemented")
@@ -2128,58 +2117,70 @@ func (UnimplementedDjiCloudServer) UnlockLicenseUpdate(context.Context, *UnlockL
 func (UnimplementedDjiCloudServer) UnlockLicenseList(context.Context, *UnlockLicenseListReq) (*CommonRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UnlockLicenseList not implemented")
 }
-func (UnimplementedDjiCloudServer) DrcForceLanding(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) DrcModeEnter(context.Context, *DrcModeEnterReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DrcModeEnter not implemented")
+}
+func (UnimplementedDjiCloudServer) DrcModeExit(context.Context, *DrcModeExitReq) (*CommonRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DrcModeExit not implemented")
+}
+func (UnimplementedDjiCloudServer) DroneEmergencyStop(context.Context, *DroneEmergencyStopReq) (*DroneEmergencyStopRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DroneEmergencyStop not implemented")
+}
+func (UnimplementedDjiCloudServer) SendDrcStickControl(context.Context, *DrcStickControlReq) (*DrcStickControlRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendDrcStickControl not implemented")
+}
+func (UnimplementedDjiCloudServer) DrcForceLanding(context.Context, *DrcForceLandingReq) (*DrcForceLandingRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DrcForceLanding not implemented")
 }
-func (UnimplementedDjiCloudServer) DrcEmergencyLanding(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) DrcEmergencyLanding(context.Context, *DrcEmergencyLandingReq) (*DrcEmergencyLandingRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DrcEmergencyLanding not implemented")
 }
-func (UnimplementedDjiCloudServer) DrcLinkageZoomSet(context.Context, *DrcLinkageZoomSetReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) DrcLinkageZoomSet(context.Context, *DrcLinkageZoomSetReq) (*DrcLinkageZoomSetRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DrcLinkageZoomSet not implemented")
 }
-func (UnimplementedDjiCloudServer) DrcVideoResolutionSet(context.Context, *DrcVideoResolutionSetReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) DrcVideoResolutionSet(context.Context, *DrcVideoResolutionSetReq) (*DrcVideoResolutionSetRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DrcVideoResolutionSet not implemented")
 }
-func (UnimplementedDjiCloudServer) DrcIntervalPhotoSet(context.Context, *DrcIntervalPhotoSetReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) DrcIntervalPhotoSet(context.Context, *DrcIntervalPhotoSetReq) (*DrcIntervalPhotoSetRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DrcIntervalPhotoSet not implemented")
 }
-func (UnimplementedDjiCloudServer) DrcInitialStateSubscribe(context.Context, *DeviceSnReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) DrcInitialStateSubscribe(context.Context, *DrcInitialStateSubscribeReq) (*DrcInitialStateSubscribeRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DrcInitialStateSubscribe not implemented")
 }
-func (UnimplementedDjiCloudServer) DrcNightLightsStateSet(context.Context, *DrcNightLightsStateSetReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) DrcNightLightsStateSet(context.Context, *DrcNightLightsStateSetReq) (*DrcNightLightsStateSetRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DrcNightLightsStateSet not implemented")
 }
-func (UnimplementedDjiCloudServer) DrcStealthStateSet(context.Context, *DrcStealthStateSetReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) DrcStealthStateSet(context.Context, *DrcStealthStateSetReq) (*DrcStealthStateSetRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DrcStealthStateSet not implemented")
 }
-func (UnimplementedDjiCloudServer) DrcCameraApertureValueSet(context.Context, *DrcCameraApertureValueSetReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) DrcCameraApertureValueSet(context.Context, *DrcCameraApertureValueSetReq) (*DrcCameraApertureValueSetRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DrcCameraApertureValueSet not implemented")
 }
-func (UnimplementedDjiCloudServer) DrcCameraShutterSet(context.Context, *DrcCameraShutterSetReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) DrcCameraShutterSet(context.Context, *DrcCameraShutterSetReq) (*DrcCameraShutterSetRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DrcCameraShutterSet not implemented")
 }
-func (UnimplementedDjiCloudServer) DrcCameraIsoSet(context.Context, *DrcCameraIsoSetReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) DrcCameraIsoSet(context.Context, *DrcCameraIsoSetReq) (*DrcCameraIsoSetRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DrcCameraIsoSet not implemented")
 }
-func (UnimplementedDjiCloudServer) DrcCameraMechanicalShutterSet(context.Context, *DrcCameraMechanicalShutterSetReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) DrcCameraMechanicalShutterSet(context.Context, *DrcCameraMechanicalShutterSetReq) (*DrcCameraMechanicalShutterSetRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DrcCameraMechanicalShutterSet not implemented")
 }
-func (UnimplementedDjiCloudServer) DrcCameraDewarpingSet(context.Context, *DrcCameraDewarpingSetReq) (*CommonRes, error) {
+func (UnimplementedDjiCloudServer) DrcCameraDewarpingSet(context.Context, *DrcCameraDewarpingSetReq) (*DrcCameraDewarpingSetRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DrcCameraDewarpingSet not implemented")
 }
-func (UnimplementedDjiCloudServer) IsDeviceOnline(context.Context, *DeviceSnReq) (*DeviceOnlineRes, error) {
+func (UnimplementedDjiCloudServer) IsDeviceOnline(context.Context, *IsDeviceOnlineReq) (*DeviceOnlineRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IsDeviceOnline not implemented")
 }
 func (UnimplementedDjiCloudServer) ListDevices(context.Context, *ListDevicesReq) (*ListDevicesRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListDevices not implemented")
 }
-func (UnimplementedDjiCloudServer) GetDeviceDetail(context.Context, *DeviceSnReq) (*DeviceDetailRes, error) {
+func (UnimplementedDjiCloudServer) GetDeviceDetail(context.Context, *GetDeviceDetailReq) (*DeviceDetailRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceDetail not implemented")
 }
-func (UnimplementedDjiCloudServer) GetDeviceOsdSnapshot(context.Context, *DeviceSnReq) (*DeviceOsdSnapshotRes, error) {
+func (UnimplementedDjiCloudServer) GetDeviceOsdSnapshot(context.Context, *GetDeviceOsdSnapshotReq) (*DeviceOsdSnapshotRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceOsdSnapshot not implemented")
 }
-func (UnimplementedDjiCloudServer) GetDeviceStateSnapshot(context.Context, *DeviceSnReq) (*DeviceStateSnapshotRes, error) {
+func (UnimplementedDjiCloudServer) GetDeviceStateSnapshot(context.Context, *GetDeviceStateSnapshotReq) (*DeviceStateSnapshotRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceStateSnapshot not implemented")
 }
 func (UnimplementedDjiCloudServer) ListHmsAlerts(context.Context, *ListHmsAlertsReq) (*ListHmsAlertsRes, error) {
@@ -2191,8 +2192,11 @@ func (UnimplementedDjiCloudServer) AckHmsAlert(context.Context, *AckHmsAlertReq)
 func (UnimplementedDjiCloudServer) ListFlightTaskProgress(context.Context, *ListFlightTaskProgressReq) (*ListFlightTaskProgressRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListFlightTaskProgress not implemented")
 }
-func (UnimplementedDjiCloudServer) GetFlightTaskProgressLast(context.Context, *DeviceSnReq) (*FlightTaskProgressLastRes, error) {
+func (UnimplementedDjiCloudServer) GetFlightTaskProgressLast(context.Context, *GetFlightTaskProgressLastReq) (*FlightTaskProgressLastRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFlightTaskProgressLast not implemented")
+}
+func (UnimplementedDjiCloudServer) QueryDrcStatus(context.Context, *QueryDrcStatusReq) (*DrcStatusRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryDrcStatus not implemented")
 }
 func (UnimplementedDjiCloudServer) mustEmbedUnimplementedDjiCloudServer() {}
 func (UnimplementedDjiCloudServer) testEmbeddedByValue()                  {}
@@ -2504,7 +2508,7 @@ func _DjiCloud_StopFlightTask_Handler(srv interface{}, ctx context.Context, dec 
 }
 
 func _DjiCloud_ReturnHome_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(ReturnHomeReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -2516,13 +2520,13 @@ func _DjiCloud_ReturnHome_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: DjiCloud_ReturnHome_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).ReturnHome(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).ReturnHome(ctx, req.(*ReturnHomeReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _DjiCloud_ReturnHomeCancelAutoReturn_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(ReturnHomeCancelAutoReturnReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -2534,7 +2538,7 @@ func _DjiCloud_ReturnHomeCancelAutoReturn_Handler(srv interface{}, ctx context.C
 		FullMethod: DjiCloud_ReturnHomeCancelAutoReturn_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).ReturnHomeCancelAutoReturn(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).ReturnHomeCancelAutoReturn(ctx, req.(*ReturnHomeCancelAutoReturnReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2558,7 +2562,7 @@ func _DjiCloud_ReturnSpecificHome_Handler(srv interface{}, ctx context.Context, 
 }
 
 func _DjiCloud_DebugModeOpen_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(DebugModeOpenReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -2570,13 +2574,13 @@ func _DjiCloud_DebugModeOpen_Handler(srv interface{}, ctx context.Context, dec f
 		FullMethod: DjiCloud_DebugModeOpen_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).DebugModeOpen(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).DebugModeOpen(ctx, req.(*DebugModeOpenReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _DjiCloud_DebugModeClose_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(DebugModeCloseReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -2588,13 +2592,13 @@ func _DjiCloud_DebugModeClose_Handler(srv interface{}, ctx context.Context, dec 
 		FullMethod: DjiCloud_DebugModeClose_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).DebugModeClose(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).DebugModeClose(ctx, req.(*DebugModeCloseReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _DjiCloud_CoverOpen_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(CoverOpenReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -2606,13 +2610,13 @@ func _DjiCloud_CoverOpen_Handler(srv interface{}, ctx context.Context, dec func(
 		FullMethod: DjiCloud_CoverOpen_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).CoverOpen(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).CoverOpen(ctx, req.(*CoverOpenReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _DjiCloud_CoverClose_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(CoverCloseReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -2624,13 +2628,13 @@ func _DjiCloud_CoverClose_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: DjiCloud_CoverClose_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).CoverClose(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).CoverClose(ctx, req.(*CoverCloseReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _DjiCloud_CoverForceClose_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(CoverForceCloseReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -2642,13 +2646,13 @@ func _DjiCloud_CoverForceClose_Handler(srv interface{}, ctx context.Context, dec
 		FullMethod: DjiCloud_CoverForceClose_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).CoverForceClose(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).CoverForceClose(ctx, req.(*CoverForceCloseReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _DjiCloud_DroneOpen_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(DroneOpenReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -2660,13 +2664,13 @@ func _DjiCloud_DroneOpen_Handler(srv interface{}, ctx context.Context, dec func(
 		FullMethod: DjiCloud_DroneOpen_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).DroneOpen(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).DroneOpen(ctx, req.(*DroneOpenReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _DjiCloud_DroneClose_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(DroneCloseReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -2678,13 +2682,13 @@ func _DjiCloud_DroneClose_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: DjiCloud_DroneClose_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).DroneClose(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).DroneClose(ctx, req.(*DroneCloseReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _DjiCloud_DeviceReboot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(DeviceRebootReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -2696,13 +2700,13 @@ func _DjiCloud_DeviceReboot_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: DjiCloud_DeviceReboot_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).DeviceReboot(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).DeviceReboot(ctx, req.(*DeviceRebootReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _DjiCloud_ChargeOpen_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(ChargeOpenReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -2714,13 +2718,13 @@ func _DjiCloud_ChargeOpen_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: DjiCloud_ChargeOpen_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).ChargeOpen(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).ChargeOpen(ctx, req.(*ChargeOpenReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _DjiCloud_ChargeClose_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(ChargeCloseReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -2732,13 +2736,13 @@ func _DjiCloud_ChargeClose_Handler(srv interface{}, ctx context.Context, dec fun
 		FullMethod: DjiCloud_ChargeClose_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).ChargeClose(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).ChargeClose(ctx, req.(*ChargeCloseReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _DjiCloud_DroneFormat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(DroneFormatReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -2750,13 +2754,13 @@ func _DjiCloud_DroneFormat_Handler(srv interface{}, ctx context.Context, dec fun
 		FullMethod: DjiCloud_DroneFormat_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).DroneFormat(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).DroneFormat(ctx, req.(*DroneFormatReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _DjiCloud_DeviceFormat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(DeviceFormatReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -2768,13 +2772,13 @@ func _DjiCloud_DeviceFormat_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: DjiCloud_DeviceFormat_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).DeviceFormat(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).DeviceFormat(ctx, req.(*DeviceFormatReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _DjiCloud_SupplementLightOpen_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(SupplementLightOpenReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -2786,13 +2790,13 @@ func _DjiCloud_SupplementLightOpen_Handler(srv interface{}, ctx context.Context,
 		FullMethod: DjiCloud_SupplementLightOpen_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).SupplementLightOpen(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).SupplementLightOpen(ctx, req.(*SupplementLightOpenReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _DjiCloud_SupplementLightClose_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(SupplementLightCloseReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -2804,7 +2808,7 @@ func _DjiCloud_SupplementLightClose_Handler(srv interface{}, ctx context.Context
 		FullMethod: DjiCloud_SupplementLightClose_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).SupplementLightClose(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).SupplementLightClose(ctx, req.(*SupplementLightCloseReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2990,7 +2994,7 @@ func _DjiCloud_ConfigUpdate_Handler(srv interface{}, ctx context.Context, dec fu
 }
 
 func _DjiCloud_FlightAuthorityGrab_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(FlightAuthorityGrabReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -3002,13 +3006,13 @@ func _DjiCloud_FlightAuthorityGrab_Handler(srv interface{}, ctx context.Context,
 		FullMethod: DjiCloud_FlightAuthorityGrab_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).FlightAuthorityGrab(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).FlightAuthorityGrab(ctx, req.(*FlightAuthorityGrabReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _DjiCloud_PayloadAuthorityGrab_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(PayloadAuthorityGrabReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -3020,97 +3024,7 @@ func _DjiCloud_PayloadAuthorityGrab_Handler(srv interface{}, ctx context.Context
 		FullMethod: DjiCloud_PayloadAuthorityGrab_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).PayloadAuthorityGrab(ctx, req.(*DeviceSnReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _DjiCloud_DrcModeEnter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DrcModeEnterReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DjiCloudServer).DrcModeEnter(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DjiCloud_DrcModeEnter_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).DrcModeEnter(ctx, req.(*DrcModeEnterReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _DjiCloud_DrcModeExit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DjiCloudServer).DrcModeExit(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DjiCloud_DrcModeExit_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).DrcModeExit(ctx, req.(*DeviceSnReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _DjiCloud_SendDrcStickControl_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DrcStickControlReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DjiCloudServer).SendDrcStickControl(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DjiCloud_SendDrcStickControl_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).SendDrcStickControl(ctx, req.(*DrcStickControlReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _DjiCloud_SendDrcHeartBeat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DrcHeartBeatReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DjiCloudServer).SendDrcHeartBeat(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DjiCloud_SendDrcHeartBeat_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).SendDrcHeartBeat(ctx, req.(*DrcHeartBeatReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _DjiCloud_DroneEmergencyStop_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DjiCloudServer).DroneEmergencyStop(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DjiCloud_DroneEmergencyStop_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).DroneEmergencyStop(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).PayloadAuthorityGrab(ctx, req.(*PayloadAuthorityGrabReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -3583,8 +3497,80 @@ func _DjiCloud_UnlockLicenseList_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DjiCloud_DrcModeEnter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DrcModeEnterReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiCloudServer).DrcModeEnter(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiCloud_DrcModeEnter_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiCloudServer).DrcModeEnter(ctx, req.(*DrcModeEnterReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiCloud_DrcModeExit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DrcModeExitReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiCloudServer).DrcModeExit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiCloud_DrcModeExit_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiCloudServer).DrcModeExit(ctx, req.(*DrcModeExitReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiCloud_DroneEmergencyStop_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DroneEmergencyStopReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiCloudServer).DroneEmergencyStop(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiCloud_DroneEmergencyStop_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiCloudServer).DroneEmergencyStop(ctx, req.(*DroneEmergencyStopReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiCloud_SendDrcStickControl_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DrcStickControlReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiCloudServer).SendDrcStickControl(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiCloud_SendDrcStickControl_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiCloudServer).SendDrcStickControl(ctx, req.(*DrcStickControlReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _DjiCloud_DrcForceLanding_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(DrcForceLandingReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -3596,13 +3582,13 @@ func _DjiCloud_DrcForceLanding_Handler(srv interface{}, ctx context.Context, dec
 		FullMethod: DjiCloud_DrcForceLanding_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).DrcForceLanding(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).DrcForceLanding(ctx, req.(*DrcForceLandingReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _DjiCloud_DrcEmergencyLanding_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(DrcEmergencyLandingReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -3614,7 +3600,7 @@ func _DjiCloud_DrcEmergencyLanding_Handler(srv interface{}, ctx context.Context,
 		FullMethod: DjiCloud_DrcEmergencyLanding_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).DrcEmergencyLanding(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).DrcEmergencyLanding(ctx, req.(*DrcEmergencyLandingReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -3674,7 +3660,7 @@ func _DjiCloud_DrcIntervalPhotoSet_Handler(srv interface{}, ctx context.Context,
 }
 
 func _DjiCloud_DrcInitialStateSubscribe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(DrcInitialStateSubscribeReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -3686,7 +3672,7 @@ func _DjiCloud_DrcInitialStateSubscribe_Handler(srv interface{}, ctx context.Con
 		FullMethod: DjiCloud_DrcInitialStateSubscribe_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).DrcInitialStateSubscribe(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).DrcInitialStateSubscribe(ctx, req.(*DrcInitialStateSubscribeReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -3818,7 +3804,7 @@ func _DjiCloud_DrcCameraDewarpingSet_Handler(srv interface{}, ctx context.Contex
 }
 
 func _DjiCloud_IsDeviceOnline_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(IsDeviceOnlineReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -3830,7 +3816,7 @@ func _DjiCloud_IsDeviceOnline_Handler(srv interface{}, ctx context.Context, dec 
 		FullMethod: DjiCloud_IsDeviceOnline_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).IsDeviceOnline(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).IsDeviceOnline(ctx, req.(*IsDeviceOnlineReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -3854,7 +3840,7 @@ func _DjiCloud_ListDevices_Handler(srv interface{}, ctx context.Context, dec fun
 }
 
 func _DjiCloud_GetDeviceDetail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(GetDeviceDetailReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -3866,13 +3852,13 @@ func _DjiCloud_GetDeviceDetail_Handler(srv interface{}, ctx context.Context, dec
 		FullMethod: DjiCloud_GetDeviceDetail_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).GetDeviceDetail(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).GetDeviceDetail(ctx, req.(*GetDeviceDetailReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _DjiCloud_GetDeviceOsdSnapshot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(GetDeviceOsdSnapshotReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -3884,13 +3870,13 @@ func _DjiCloud_GetDeviceOsdSnapshot_Handler(srv interface{}, ctx context.Context
 		FullMethod: DjiCloud_GetDeviceOsdSnapshot_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).GetDeviceOsdSnapshot(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).GetDeviceOsdSnapshot(ctx, req.(*GetDeviceOsdSnapshotReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _DjiCloud_GetDeviceStateSnapshot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(GetDeviceStateSnapshotReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -3902,7 +3888,7 @@ func _DjiCloud_GetDeviceStateSnapshot_Handler(srv interface{}, ctx context.Conte
 		FullMethod: DjiCloud_GetDeviceStateSnapshot_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).GetDeviceStateSnapshot(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).GetDeviceStateSnapshot(ctx, req.(*GetDeviceStateSnapshotReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -3962,7 +3948,7 @@ func _DjiCloud_ListFlightTaskProgress_Handler(srv interface{}, ctx context.Conte
 }
 
 func _DjiCloud_GetFlightTaskProgressLast_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeviceSnReq)
+	in := new(GetFlightTaskProgressLastReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -3974,7 +3960,25 @@ func _DjiCloud_GetFlightTaskProgressLast_Handler(srv interface{}, ctx context.Co
 		FullMethod: DjiCloud_GetFlightTaskProgressLast_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DjiCloudServer).GetFlightTaskProgressLast(ctx, req.(*DeviceSnReq))
+		return srv.(DjiCloudServer).GetFlightTaskProgressLast(ctx, req.(*GetFlightTaskProgressLastReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DjiCloud_QueryDrcStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryDrcStatusReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DjiCloudServer).QueryDrcStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DjiCloud_QueryDrcStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DjiCloudServer).QueryDrcStatus(ctx, req.(*QueryDrcStatusReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -4167,26 +4171,6 @@ var DjiCloud_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DjiCloud_PayloadAuthorityGrab_Handler,
 		},
 		{
-			MethodName: "DrcModeEnter",
-			Handler:    _DjiCloud_DrcModeEnter_Handler,
-		},
-		{
-			MethodName: "DrcModeExit",
-			Handler:    _DjiCloud_DrcModeExit_Handler,
-		},
-		{
-			MethodName: "SendDrcStickControl",
-			Handler:    _DjiCloud_SendDrcStickControl_Handler,
-		},
-		{
-			MethodName: "SendDrcHeartBeat",
-			Handler:    _DjiCloud_SendDrcHeartBeat_Handler,
-		},
-		{
-			MethodName: "DroneEmergencyStop",
-			Handler:    _DjiCloud_DroneEmergencyStop_Handler,
-		},
-		{
 			MethodName: "FlyToPoint",
 			Handler:    _DjiCloud_FlyToPoint_Handler,
 		},
@@ -4291,6 +4275,22 @@ var DjiCloud_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DjiCloud_UnlockLicenseList_Handler,
 		},
 		{
+			MethodName: "DrcModeEnter",
+			Handler:    _DjiCloud_DrcModeEnter_Handler,
+		},
+		{
+			MethodName: "DrcModeExit",
+			Handler:    _DjiCloud_DrcModeExit_Handler,
+		},
+		{
+			MethodName: "DroneEmergencyStop",
+			Handler:    _DjiCloud_DroneEmergencyStop_Handler,
+		},
+		{
+			MethodName: "SendDrcStickControl",
+			Handler:    _DjiCloud_SendDrcStickControl_Handler,
+		},
+		{
 			MethodName: "DrcForceLanding",
 			Handler:    _DjiCloud_DrcForceLanding_Handler,
 		},
@@ -4377,6 +4377,10 @@ var DjiCloud_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetFlightTaskProgressLast",
 			Handler:    _DjiCloud_GetFlightTaskProgressLast_Handler,
+		},
+		{
+			MethodName: "QueryDrcStatus",
+			Handler:    _DjiCloud_QueryDrcStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

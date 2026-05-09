@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 9
+- **Total Sessions**: 17
 - **Last Active**: 2026-05-09
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~492 | Active |
+| `journal-1.md` | ~871 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,14 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 17 | 2026-05-09 | DRC Manager 代码审阅与深度重构 | `d089329b` | `master` |
+| 16 | 2026-05-09 | DRC 心跳定时发送报文优化 | `da4213c0` | `master` |
+| 15 | 2026-05-09 | proto message 定义按 RPC 顺序重排 | uncommitted | `master` |
+| 14 | 2026-05-09 | DRC 协议优化：接口迁移、类型重构 | `508ec4f2`, `52838c08` | `master` |
+| 13 | 2026-05-09 | 优化 DRC 上行数据管理与心跳超时 | `2599a1bb` | `master` |
+| 12 | 2026-05-09 | DRC seq 类型统一 int32→int | `0965c03b`, `6b71f58e`, `e27e2c56`, `67913f0c` | `master` |
+| 11 | 2026-05-09 | DRC平台化-钩子集成与测试修复 | `b668c103` | `master` |
+| 10 | 2026-05-09 | netx 深度重构与代码优化 | `f5648b79` | `master` |
 | 9 | 2026-05-09 | 图片元数据解析与网关返回完善 | `103f5617` | `master` |
 | 8 | 2026-05-07 | 文件服务流上传接口瘦身与 common/iox 清理 | `1ecd5e29`, `49c1a1e9` | `master` |
 | 7 | 2026-05-07 | 文件服务流式上传与 GORM 迁移重构 | `00cc3570` | `master` |

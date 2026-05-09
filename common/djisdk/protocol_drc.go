@@ -321,7 +321,7 @@ func DrcUnmarshalUpData(method string, data json.RawMessage) (any, error) {
 }
 
 // DrcUpPayloadSummary 将已解析的 drc/up data 转为短摘要，供日志和排障使用。
-func DrcUpPayloadSummary(method string, parsed any) string {
+func DrcUpPayloadSummary(parsed any) string {
 	if parsed == nil {
 		return ""
 	}

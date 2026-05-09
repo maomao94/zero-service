@@ -24,7 +24,7 @@ func NewDebugModeOpenLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Deb
 }
 
 // DebugModeOpen 开启机巢调试模式。
-func (l *DebugModeOpenLogic) DebugModeOpen(in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (l *DebugModeOpenLogic) DebugModeOpen(in *djicloud.DebugModeOpenReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.DebugModeOpen(l.ctx, in.DeviceSn)
 	if err != nil {
 		l.Errorf("[remote-debug] debug mode open failed: %v", err)

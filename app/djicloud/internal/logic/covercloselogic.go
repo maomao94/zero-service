@@ -24,7 +24,7 @@ func NewCoverCloseLogic(ctx context.Context, svcCtx *svc.ServiceContext) *CoverC
 }
 
 // CoverClose 关闭机巢舱盖。
-func (l *CoverCloseLogic) CoverClose(in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (l *CoverCloseLogic) CoverClose(in *djicloud.CoverCloseReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.CoverClose(l.ctx, in.DeviceSn)
 	if err != nil {
 		l.Errorf("[remote-debug] cover close failed: %v", err)

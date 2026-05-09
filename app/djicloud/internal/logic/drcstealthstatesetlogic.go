@@ -24,11 +24,16 @@ func NewDrcStealthStateSetLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 	}
 }
 
-func (l *DrcStealthStateSetLogic) DrcStealthStateSet(in *djicloud.DrcStealthStateSetReq) (*djicloud.CommonRes, error) {
-	data := &djisdk.DrcStealthStateSetData{StealthState: int(in.GetStealthState())}
-	tid, err := l.svcCtx.DjiClient.DrcStealthStateSet(l.ctx, in.GetDeviceSn(), data)
+func (l *DrcStealthStateSetLogic) DrcStealthStateSet(in *djicloud.DrcStealthStateSetReq) (*djicloud.DrcStealthStateSetRes, error) {
+	deviceSn := in.GetDeviceSn()
+	seq, err := l.svcCtx.DrcManager.GetNextSeq(deviceSn)
 	if err != nil {
-		return errRes(tid, err), nil
+		return nil, err
 	}
-	return okRes(tid), nil
+	data := &djisdk.DrcStealthStateSetData{StealthState: int(in.GetStealthState())}
+	if _, err := l.svcCtx.DjiClient.DrcStealthStateSet(l.ctx, deviceSn, seq, data); err != nil {
+		l.Errorf("[drc] stealth state set failed device_sn=%s: %v", deviceSn, err)
+		return nil, err
+	}
+	return &djicloud.DrcStealthStateSetRes{Seq: int32(seq)}, nil
 }

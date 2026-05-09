@@ -7,6 +7,8 @@ import (
 	"zero-service/app/djicloud/internal/svc"
 
 	"github.com/zeromicro/go-zero/core/logx"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type DroneEmergencyStopLogic struct {
@@ -23,16 +25,21 @@ func NewDroneEmergencyStopLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 	}
 }
 
-func (l *DroneEmergencyStopLogic) DroneEmergencyStop(in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (l *DroneEmergencyStopLogic) DroneEmergencyStop(in *djicloud.DroneEmergencyStopReq) (*djicloud.DroneEmergencyStopRes, error) {
 	if !l.svcCtx.Config.DangerousOps.EnableDroneEmergencyStop {
-		l.Errorf("[drc] drone emergency stop blocked: disabled in config (DangerousOps.EnableDroneEmergencyStop=false)")
-		return &djicloud.CommonRes{Code: -1, Message: "emergency stop is disabled, enable it in config DangerousOps.EnableDroneEmergencyStop"}, nil
+		l.Errorf("[drc] drone emergency stop blocked: disabled in config")
+		return nil, status.Errorf(codes.PermissionDenied,
+			"emergency stop is disabled, enable it in config DangerousOps.EnableDroneEmergencyStop")
 	}
 
-	tid, err := l.svcCtx.DjiClient.DroneEmergencyStop(l.ctx, in.DeviceSn)
+	deviceSn := in.GetDeviceSn()
+	seq, err := l.svcCtx.DrcManager.GetNextSeq(deviceSn)
 	if err != nil {
-		l.Errorf("[drc] drone emergency stop failed tid=%s: %v", tid, err)
-		return errRes(tid, err), nil
+		return nil, err
 	}
-	return okRes(tid), nil
+	if _, err := l.svcCtx.DjiClient.DroneEmergencyStop(l.ctx, deviceSn, seq); err != nil {
+		l.Errorf("[drc] drone emergency stop failed device_sn=%s: %v", deviceSn, err)
+		return nil, err
+	}
+	return &djicloud.DroneEmergencyStopRes{Seq: int32(seq)}, nil
 }

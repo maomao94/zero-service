@@ -25,12 +25,17 @@ func NewDrcVideoResolutionSetLogic(ctx context.Context, svcCtx *svc.ServiceConte
 	}
 }
 
-func (l *DrcVideoResolutionSetLogic) DrcVideoResolutionSet(in *djicloud.DrcVideoResolutionSetReq) (*djicloud.CommonRes, error) {
+func (l *DrcVideoResolutionSetLogic) DrcVideoResolutionSet(in *djicloud.DrcVideoResolutionSetReq) (*djicloud.DrcVideoResolutionSetRes, error) {
+	deviceSn := in.GetDeviceSn()
+	seq, err := l.svcCtx.DrcManager.GetNextSeq(deviceSn)
+	if err != nil {
+		return nil, err
+	}
 	videoRes, _ := strconv.Atoi(in.GetVideoResolution())
 	data := &djisdk.DrcVideoResolutionSetData{PayloadIndex: in.GetPayloadIndex(), VideoResolution: videoRes}
-	tid, err := l.svcCtx.DjiClient.DrcVideoResolutionSet(l.ctx, in.GetDeviceSn(), data)
-	if err != nil {
-		return errRes(tid, err), nil
+	if _, err := l.svcCtx.DjiClient.DrcVideoResolutionSet(l.ctx, deviceSn, seq, data); err != nil {
+		l.Errorf("[drc] video resolution set failed device_sn=%s: %v", deviceSn, err)
+		return nil, err
 	}
-	return okRes(tid), nil
+	return &djicloud.DrcVideoResolutionSetRes{Seq: int32(seq)}, nil
 }

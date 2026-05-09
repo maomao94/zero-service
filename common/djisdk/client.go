@@ -1068,16 +1068,15 @@ func (c *Client) publishDrcDown(ctx context.Context, gatewaySn string, msg *DrcD
 	return msg.Tid, nil
 }
 
-// SendDrcHeartBeat 经 drc/down 即发即忘地下发 heart_beat 心跳，seq 与 data 同级，data.timestamp 表示心跳时间戳。
-func (c *Client) SendDrcHeartBeat(ctx context.Context, gatewaySn string, seq int, dataTimestampMillis int64) (string, error) {
-	seqp := seq
-	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcHeartBeat, DrcHeartBeatDownData{Timestamp: dataTimestampMillis}, &seqp)
+// SendDrcHeartBeat 经 drc/down 即发即忘地下发 heart_beat 心跳。
+func (c *Client) SendDrcHeartBeat(ctx context.Context, gatewaySn string, dataTimestampMillis int64) (string, error) {
+	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcHeartBeat, DrcHeartBeatDownData{Timestamp: dataTimestampMillis}, nil)
 	return c.publishDrcDown(ctx, gatewaySn, msg)
 }
 
 // DroneEmergencyStop 经 drc/down 即发即忘地下发 drone_emergency_stop。
-func (c *Client) DroneEmergencyStop(ctx context.Context, gatewaySn string) (string, error) {
-	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDroneEmergencyStop, DroneEmergencyStopData{}, nil)
+func (c *Client) DroneEmergencyStop(ctx context.Context, gatewaySn string, seq int) (string, error) {
+	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDroneEmergencyStop, DroneEmergencyStopData{}, &seq)
 	return c.publishDrcDown(ctx, gatewaySn, msg)
 }
 
@@ -1303,80 +1302,80 @@ func (c *Client) UnlockLicenseList(ctx context.Context, gatewaySn string, data *
 // ==================== 远程控制（Remote Control） ====================
 
 // DrcForceLanding 经 drc/down 下发强制降落。
-func (c *Client) DrcForceLanding(ctx context.Context, gatewaySn string) (string, error) {
-	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcForceLanding, struct{}{}, nil)
+func (c *Client) DrcForceLanding(ctx context.Context, gatewaySn string, seq int) (string, error) {
+	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcForceLanding, struct{}{}, &seq)
 	return c.publishDrcDown(ctx, gatewaySn, msg)
 }
 
 // DrcEmergencyLanding 经 drc/down 下发紧急降落。
-func (c *Client) DrcEmergencyLanding(ctx context.Context, gatewaySn string) (string, error) {
-	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcEmergencyLanding, struct{}{}, nil)
+func (c *Client) DrcEmergencyLanding(ctx context.Context, gatewaySn string, seq int) (string, error) {
+	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcEmergencyLanding, struct{}{}, &seq)
 	return c.publishDrcDown(ctx, gatewaySn, msg)
 }
 
 // DrcLinkageZoomSet 经 drc/down 设置红外联动变焦状态。
-func (c *Client) DrcLinkageZoomSet(ctx context.Context, gatewaySn string, data *DrcLinkageZoomSetData) (string, error) {
-	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcLinkageZoomSet, data, nil)
+func (c *Client) DrcLinkageZoomSet(ctx context.Context, gatewaySn string, seq int, data *DrcLinkageZoomSetData) (string, error) {
+	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcLinkageZoomSet, data, &seq)
 	return c.publishDrcDown(ctx, gatewaySn, msg)
 }
 
 // DrcVideoResolutionSet 经 drc/down 设置视频分辨率。
-func (c *Client) DrcVideoResolutionSet(ctx context.Context, gatewaySn string, data *DrcVideoResolutionSetData) (string, error) {
-	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcVideoResolutionSet, data, nil)
+func (c *Client) DrcVideoResolutionSet(ctx context.Context, gatewaySn string, seq int, data *DrcVideoResolutionSetData) (string, error) {
+	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcVideoResolutionSet, data, &seq)
 	return c.publishDrcDown(ctx, gatewaySn, msg)
 }
 
 // DrcIntervalPhotoSet 经 drc/down 设置定时拍参数。
-func (c *Client) DrcIntervalPhotoSet(ctx context.Context, gatewaySn string, data *DrcIntervalPhotoSetData) (string, error) {
-	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcIntervalPhotoSet, data, nil)
+func (c *Client) DrcIntervalPhotoSet(ctx context.Context, gatewaySn string, seq int, data *DrcIntervalPhotoSetData) (string, error) {
+	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcIntervalPhotoSet, data, &seq)
 	return c.publishDrcDown(ctx, gatewaySn, msg)
 }
 
 // DrcInitialStateSubscribe 经 drc/down 订阅 DRC 初始状态。
-func (c *Client) DrcInitialStateSubscribe(ctx context.Context, gatewaySn string) (string, error) {
-	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcInitialStateSubscribe, struct{}{}, nil)
+func (c *Client) DrcInitialStateSubscribe(ctx context.Context, gatewaySn string, seq int) (string, error) {
+	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcInitialStateSubscribe, struct{}{}, &seq)
 	return c.publishDrcDown(ctx, gatewaySn, msg)
 }
 
 // DrcNightLightsStateSet 经 drc/down 设置夜航灯状态。
-func (c *Client) DrcNightLightsStateSet(ctx context.Context, gatewaySn string, data *DrcNightLightsStateSetData) (string, error) {
-	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcNightLightsStateSet, data, nil)
+func (c *Client) DrcNightLightsStateSet(ctx context.Context, gatewaySn string, seq int, data *DrcNightLightsStateSetData) (string, error) {
+	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcNightLightsStateSet, data, &seq)
 	return c.publishDrcDown(ctx, gatewaySn, msg)
 }
 
 // DrcStealthStateSet 经 drc/down 设置隐蔽模式状态。
-func (c *Client) DrcStealthStateSet(ctx context.Context, gatewaySn string, data *DrcStealthStateSetData) (string, error) {
-	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcStealthStateSet, data, nil)
+func (c *Client) DrcStealthStateSet(ctx context.Context, gatewaySn string, seq int, data *DrcStealthStateSetData) (string, error) {
+	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcStealthStateSet, data, &seq)
 	return c.publishDrcDown(ctx, gatewaySn, msg)
 }
 
 // DrcCameraApertureValueSet 经 drc/down 设置相机光圈。
-func (c *Client) DrcCameraApertureValueSet(ctx context.Context, gatewaySn string, data *DrcCameraApertureValueSetData) (string, error) {
-	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcCameraApertureValueSet, data, nil)
+func (c *Client) DrcCameraApertureValueSet(ctx context.Context, gatewaySn string, seq int, data *DrcCameraApertureValueSetData) (string, error) {
+	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcCameraApertureValueSet, data, &seq)
 	return c.publishDrcDown(ctx, gatewaySn, msg)
 }
 
 // DrcCameraShutterSet 经 drc/down 设置相机快门。
-func (c *Client) DrcCameraShutterSet(ctx context.Context, gatewaySn string, data *DrcCameraShutterSetData) (string, error) {
-	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcCameraShutterSet, data, nil)
+func (c *Client) DrcCameraShutterSet(ctx context.Context, gatewaySn string, seq int, data *DrcCameraShutterSetData) (string, error) {
+	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcCameraShutterSet, data, &seq)
 	return c.publishDrcDown(ctx, gatewaySn, msg)
 }
 
 // DrcCameraIsoSet 经 drc/down 设置相机 ISO。
-func (c *Client) DrcCameraIsoSet(ctx context.Context, gatewaySn string, data *DrcCameraIsoSetData) (string, error) {
-	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcCameraIsoSet, data, nil)
+func (c *Client) DrcCameraIsoSet(ctx context.Context, gatewaySn string, seq int, data *DrcCameraIsoSetData) (string, error) {
+	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcCameraIsoSet, data, &seq)
 	return c.publishDrcDown(ctx, gatewaySn, msg)
 }
 
 // DrcCameraMechanicalShutterSet 经 drc/down 设置机械快门。
-func (c *Client) DrcCameraMechanicalShutterSet(ctx context.Context, gatewaySn string, data *DrcCameraMechanicalShutterSetData) (string, error) {
-	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcCameraMechanicalShutterSet, data, nil)
+func (c *Client) DrcCameraMechanicalShutterSet(ctx context.Context, gatewaySn string, seq int, data *DrcCameraMechanicalShutterSetData) (string, error) {
+	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcCameraMechanicalShutterSet, data, &seq)
 	return c.publishDrcDown(ctx, gatewaySn, msg)
 }
 
 // DrcCameraDewarpingSet 经 drc/down 设置镜头去畸变。
-func (c *Client) DrcCameraDewarpingSet(ctx context.Context, gatewaySn string, data *DrcCameraDewarpingSetData) (string, error) {
-	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcCameraDewarpingSet, data, nil)
+func (c *Client) DrcCameraDewarpingSet(ctx context.Context, gatewaySn string, seq int, data *DrcCameraDewarpingSetData) (string, error) {
+	msg := NewDrcDownMessage(uuid.New().String(), uuid.New().String(), MethodDrcCameraDewarpingSet, data, &seq)
 	return c.publishDrcDown(ctx, gatewaySn, msg)
 }
 
@@ -1531,7 +1530,7 @@ func (c *Client) HandleDrcUp(ctx context.Context, payload []byte, topic string, 
 		logx.WithContext(ctx).Errorf("[dji-sdk] drc/up data parse: method=%s err=%v", msg.Method, perr)
 		return perr
 	}
-	sum := DrcUpPayloadSummary(msg.Method, parsed)
+	sum := DrcUpPayloadSummary(parsed)
 	if sum == "" {
 		logx.WithContext(ctx).Infof("[dji-sdk] drc_up %s", logFields("topic", topic, "gateway_sn", gatewaySn, "method", msg.Method, "tid", msg.Tid, "ts", msg.Timestamp))
 	} else {

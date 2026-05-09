@@ -24,7 +24,7 @@ func NewChargeCloseLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Charg
 }
 
 // ChargeClose 关闭机巢充电功能。
-func (l *ChargeCloseLogic) ChargeClose(in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (l *ChargeCloseLogic) ChargeClose(in *djicloud.ChargeCloseReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.ChargeClose(l.ctx, in.DeviceSn)
 	if err != nil {
 		l.Errorf("[remote-debug] charge close failed: %v", err)

@@ -490,3 +490,382 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 10: netx 深度重构与代码优化
+
+**Date**: 2026-05-09
+**Task**: netx 深度重构与代码优化
+**Branch**: `master`
+
+### Summary
+
+(Add summary)
+
+### Main Changes
+
+| 阶段 | 内容 |
+|------|------|
+| 审阅分析 | 发现 `common/netx/` 包 9 类问题：位置计算、错误类型、引擎导出、命名不一致、buildBody 重叠、Content-Type 死代码、大测试文件、defaultClient 位置、httpc.go 命名 |
+| 5 阶段重构 | 阶段 1: elapsedSince 移动/EncodeURLEncodedIfNeeded/Content-Type 修复；阶段 2: httpc.go→transport.go 重命名/Engine 导出/TransportOption 命名；阶段 3: Response.Error→Response.Err；阶段 4: 测试拆分 (6 个文件)；阶段 5: 全部测试通过 |
+| 第二轮优化 | ErrUploadTooLarge sentinel 包装/DownloadBytes 溢出修复/readLimitedBody 提取复用/DecodeJSON 移除/DownloadOption 统一下载选项/InitHTTPC→NewHTTPCService 重命名/buildBody 简化/EncodeURLEncodedIfNeeded 检测改进 |
+| Bug 修复 | 4 个测试失败：buildResponse 错误消息不匹配、DownloadBytes 选项覆盖、DownloadBytes 禁用限制不生效、JSON 被误判为 URL-encoded |
+| GoDoc 补充 | 为 30+ 导出符号补充中文 GoDoc，覆盖所有类型、构造函数、选项函数、公开方法 |
+
+**修改的文件**:
+- `common/netx/client.go` — buildResponse ErrResponseTooLarge 包装、buildBody 简化、GoDoc
+- `common/netx/client_pkg.go` — 新增、GoDoc
+- `common/netx/download.go` — DownloadBytes 选项修复、DownloadOption 统一、GoDoc
+- `common/netx/encode.go` — EncodeURLEncodedIfNeeded 检测改进、GoDoc
+- `common/netx/reader.go` — readLimitedBody 提取
+- `common/netx/request.go` — GoDoc
+- `common/netx/response.go` — DecodeJSON 移除、Err 字段、readLimitedBody 错误包装、GoDoc
+- `common/netx/transport.go` — InitHTTPC→NewHTTPCService、GoDoc
+- `common/netx/upload.go` — ErrUploadTooLarge 包装、GoDoc
+- `app/trigger/internal/svc/servicecontext.go` — InitHTTPC→NewHTTPCService
+- `app/file/internal/svc/servicecontext.go` — InitHTTPC→NewHTTPCService
+
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `f5648b79` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 11: DRC平台化-钩子集成与测试修复
+
+**Date**: 2026-05-09
+**Task**: DRC平台化-钩子集成与测试修复
+**Branch**: `master`
+
+### Summary
+
+(Add summary)
+
+### Main Changes
+
+
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b668c103` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 12: DRC seq 类型统一 int32→int
+
+**Date**: 2026-05-09
+**Task**: DRC seq 类型统一 int32→int
+**Branch**: `master`
+
+### Summary
+
+(Add summary)
+
+### Main Changes
+
+| 项目 | 描述 |
+|------|------|
+| 重构 | 将 DRC 下发函数 seq 参数类型统一为 int |
+
+**改动范围**：
+- 将 `common/djisdk/client.go` 中 14 个 drc/down 函数的 `seq int32` → `seq int`，移除 `seqp := int(seq)` 转换代码
+- 将 `app/djicloud/internal/drc/state.go` 的 `seq` 字段及 `GetNextSeq()` 返回类型从 `int32` 改为 `int`
+- 将 `app/djicloud/internal/drc/manager.go` 的 `GetNextSeq()` 和 `GetStatus()` 中 `nextSeq` 类型从 `int32` 改为 `int`，移除 `SendHeartbeat` 中的 `int(seq)` 转换
+- 修复 `app/djicloud/internal/logic/querydrcstatuslogic.go` 中 `NextSeq` 字段适配 protobuf 的 `int32` 类型（加 `int32()` 转换）
+- 补全 `common/djisdk/protocol_drc_test.go` 中 3 个测试调用缺失的 seq 参数
+- 验证：编译通过、vet 通过、全部测试通过
+
+**涉及文件**：
+- `common/djisdk/client.go` — 14 个函数签名变更
+- `common/djisdk/protocol_drc_test.go` — 3 个测试调用补参
+- `app/djicloud/internal/drc/state.go` — 字段和返回类型变更
+- `app/djicloud/internal/drc/manager.go` — 返回类型和转换移除
+- `app/djicloud/internal/logic/querydrcstatuslogic.go` — protobuf 字段适配
+
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0965c03b` | (see git log) |
+| `6b71f58e` | (see git log) |
+| `e27e2c56` | (see git log) |
+| `67913f0c` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 13: 优化 DRC 上行数据管理与心跳超时
+
+**Date**: 2026-05-09
+**Task**: 优化 DRC 上行数据管理与心跳超时
+**Branch**: `master`
+
+### Summary
+
+(Add summary)
+
+### Main Changes
+
+| 模块 | 变更 |
+|------|------|
+| manager.go | sync.Map → collection.Cache，TTL 自动管理心跳超时 |
+| manager.go/state.go | RPC 接口（Enable/Disable/OnDeviceHeartbeat/CheckEnabled）增加 ctx 参数 |
+| manager.go | 恢复 LastDeviceHeartbeat 字段，GetStatus 正常返回时间戳 |
+| protocol_drc.go | DrcUnmarshalUpData 全量解析所有 method（协议层不做业务过滤） |
+| protocol_drc.go | DrcUpPayloadSummary 移除未使用的 method 参数 |
+| mqtt_drc_up.go | 高频周期上报（heart_beat/osd/hsi/delay/subscribe）在业务层跳过 DB 写入 |
+| mqtt_drc_up.go | 去重 DrcUpPayloadSummary 调用 |
+
+**Updated Files**:
+- `common/djisdk/protocol_drc.go`
+- `common/djisdk/client.go`
+- `common/djisdk/protocol_drc_test.go`
+- `app/djicloud/internal/drc/manager.go`
+- `app/djicloud/internal/drc/state.go`
+- `app/djicloud/internal/hooks/mqtt_drc_up.go`
+- `app/djicloud/internal/hooks/register_test.go`
+- `app/djicloud/internal/logic/querydrcstatuslogic.go`
+- `app/djicloud/internal/logic/drcmodeenterlogic.go`
+- `app/djicloud/internal/logic/drcmodeexitlogic.go`
+- `app/djicloud/internal/logic/droneemergencystoplogic.go`
+- `app/djicloud/internal/logic/drcforcelandinglogic.go`
+- `app/djicloud/internal/logic/drcemergencylandinglogic.go`
+- `app/djicloud/internal/logic/drcinitialstatesubscribelogic.go`
+- `app/djicloud/internal/logic/drclinkagezoomsetlogic.go`
+- `app/djicloud/internal/logic/drcintervalphotosetlogic.go`
+- `app/djicloud/internal/logic/drccameraaperturevaluesetlogic.go`
+- `app/djicloud/internal/logic/drccameraisosetlogic.go`
+- `app/djicloud/internal/logic/drcvideoresolutionsetlogic.go`
+- `app/djicloud/internal/logic/senddrcstickcontrollogic.go`
+- `app/djicloud/internal/logic/drcnightlightsstatesetlogic.go`
+- `app/djicloud/internal/logic/drccameramechanicalshuttersetlogic.go`
+- `app/djicloud/internal/logic/drcstealthstatesetlogic.go`
+- `app/djicloud/internal/logic/drccameradewarpingsetlogic.go`
+- `app/djicloud/internal/logic/drccamerashuttersetlogic.go`
+
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2599a1bb` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 14: DRC 协议优化：接口迁移、类型重构
+
+**Date**: 2026-05-09
+**Task**: DRC 协议优化：接口迁移、类型重构
+**Branch**: `master`
+
+### Summary
+
+将所有使用 DrcManager 的 DRC/远程控制接口统一迁移到平台能力分区；全部 DeviceSnReq 改为具体命名 Req 类型；drc/down 即发即忘接口创建独立 Res 类型（含 seq 字段）替代 CommonRes
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `508ec4f2` | (see git log) |
+| `52838c08` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 15: proto message 定义按 RPC 顺序重排
+
+**Date**: 2026-05-09
+**Task**: proto message 定义按 RPC 顺序重排
+**Branch**: `master`
+
+### Summary
+
+(Add summary)
+
+### Main Changes
+
+## 完成内容
+- 将 `app/djicloud/djicloud.proto` 中所有 message 定义按 service 中 RPC 声明顺序重排
+- 分组对齐：通用消息 → Properties → Live → Media → Wayline → Cmd → Firmware → Log → Config → DRC → Flysafe → DRC 生命周期 → DRC 指令 → 平台自有接口
+- 执行 `gen.sh` 重新生成 pb.go 代码，编译验证通过
+
+## 改动文件
+- `app/djicloud/djicloud.proto` — message 定义顺序重排
+- `app/djicloud/djicloud/djicloud.pb.go` — 重新生成的 proto 代码
+
+## 验证结果
+- proto 生成 (`gen.sh`) 通过
+- Go 编译 (`go build ./...`) 通过
+
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `uncommitted` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 16: DRC 心跳定时发送报文优化
+
+**Date**: 2026-05-09
+**Task**: DRC 心跳定时发送报文优化
+**Branch**: `master`
+
+### Summary
+
+(Add summary)
+
+### Main Changes
+
+## 变更内容
+
+### SDK 层去 seq
+- `common/djisdk/client.go`: `SendDrcHeartBeat` 去掉废弃的 `seq int` 参数，心跳报文不再携带 `seq` 字段
+- `common/djisdk/protocol_drc_test.go`: 心跳测试断言改为确认 JSON 中不含 `"seq"`
+
+### Proto 增加最大控制时间
+- `app/djicloud/djicloud.proto`: `DrcModeEnterReq` 增加 `max_control_time_millis` 字段（int64，0 表示无上限）
+- 运行 `gen.sh` 重新生成 pb 代码
+
+### Manager 核心重构
+- `app/djicloud/internal/drc/manager.go`:
+  - `chan struct{}` 替换为 `context.Context` 做生命周期控制（`heartbeats sync.Map` → `cancels sync.Map`）
+  - `heartbeatLoop` 职责简化：定时检查缓存 + 发心跳（不再调用 `GetNextSeq`/`IsEnabled`/`IsAlive`）
+  - 新增全局 `cleanLoop` 协程（30s 间隔），扫描孤儿 goroutine 并清理
+  - `OnDeviceHeartbeat` 缓存 miss 时输出日志钩子，不再静默忽略
+  - `SendHeartbeat` 方法移除，逻辑内联到 `heartbeatLoop`
+
+### Logic 层
+- `app/djicloud/internal/logic/drcmodeenterlogic.go`: 传入 `WithMaxTimeout`（从 `max_control_time_millis` 转换）
+
+## 验证
+- `go build ./...` ✅
+- `go vet ./...` ✅
+- `go test ./app/djicloud/... ./common/djisdk/...` ✅
+
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `da4213c0` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 17: DRC Manager 代码审阅与深度重构
+
+**Date**: 2026-05-09
+**Task**: DRC Manager 代码审阅与深度重构
+**Branch**: `master`
+
+### Summary
+
+对 drc/manager.go 全面审阅重构：修复 IsExpired 语义错误(MaxSurvivalTime->HeartbeatTimeout)、合并重复方法(IsEnabled/IsAlive、GetNextSeq/NextSeqIfAlive)、修复 OnDeviceHeartbeat TOCTOU 并发问题、合并 CheckEnabled+GetNextSeq 消除15个logic冗余调用、修复 mqtt_drc_up.go context 逃逸(WithoutCancel)、补充 ServiceContext.Close() 优雅关闭
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d089329b` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

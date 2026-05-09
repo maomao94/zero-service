@@ -24,11 +24,16 @@ func NewDrcCameraMechanicalShutterSetLogic(ctx context.Context, svcCtx *svc.Serv
 	}
 }
 
-func (l *DrcCameraMechanicalShutterSetLogic) DrcCameraMechanicalShutterSet(in *djicloud.DrcCameraMechanicalShutterSetReq) (*djicloud.CommonRes, error) {
-	data := &djisdk.DrcCameraMechanicalShutterSetData{PayloadIndex: in.GetPayloadIndex(), CameraType: in.GetCameraType(), MechanicalShutterState: int(in.GetDewarpingState())}
-	tid, err := l.svcCtx.DjiClient.DrcCameraMechanicalShutterSet(l.ctx, in.GetDeviceSn(), data)
+func (l *DrcCameraMechanicalShutterSetLogic) DrcCameraMechanicalShutterSet(in *djicloud.DrcCameraMechanicalShutterSetReq) (*djicloud.DrcCameraMechanicalShutterSetRes, error) {
+	deviceSn := in.GetDeviceSn()
+	seq, err := l.svcCtx.DrcManager.GetNextSeq(deviceSn)
 	if err != nil {
-		return errRes(tid, err), nil
+		return nil, err
 	}
-	return okRes(tid), nil
+	data := &djisdk.DrcCameraMechanicalShutterSetData{PayloadIndex: in.GetPayloadIndex(), CameraType: in.GetCameraType(), MechanicalShutterState: int(in.GetDewarpingState())}
+	if _, err := l.svcCtx.DjiClient.DrcCameraMechanicalShutterSet(l.ctx, deviceSn, seq, data); err != nil {
+		l.Errorf("[drc] camera mechanical shutter set failed device_sn=%s: %v", deviceSn, err)
+		return nil, err
+	}
+	return &djicloud.DrcCameraMechanicalShutterSetRes{Seq: int32(seq)}, nil
 }

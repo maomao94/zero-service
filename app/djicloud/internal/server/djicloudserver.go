@@ -120,13 +120,13 @@ func (s *DjiCloudServer) StopFlightTask(ctx context.Context, in *djicloud.StopFl
 }
 
 // ReturnHome 控制飞行器一键返航。
-func (s *DjiCloudServer) ReturnHome(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) ReturnHome(ctx context.Context, in *djicloud.ReturnHomeReq) (*djicloud.CommonRes, error) {
 	l := logic.NewReturnHomeLogic(ctx, s.svcCtx)
 	return l.ReturnHome(in)
 }
 
 // ReturnHomeCancelAutoReturn 取消自动返航。
-func (s *DjiCloudServer) ReturnHomeCancelAutoReturn(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) ReturnHomeCancelAutoReturn(ctx context.Context, in *djicloud.ReturnHomeCancelAutoReturnReq) (*djicloud.CommonRes, error) {
 	l := logic.NewReturnHomeCancelAutoReturnLogic(ctx, s.svcCtx)
 	return l.ReturnHomeCancelAutoReturn(in)
 }
@@ -138,85 +138,85 @@ func (s *DjiCloudServer) ReturnSpecificHome(ctx context.Context, in *djicloud.Re
 }
 
 // DebugModeOpen 开启机巢调试模式。
-func (s *DjiCloudServer) DebugModeOpen(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) DebugModeOpen(ctx context.Context, in *djicloud.DebugModeOpenReq) (*djicloud.CommonRes, error) {
 	l := logic.NewDebugModeOpenLogic(ctx, s.svcCtx)
 	return l.DebugModeOpen(in)
 }
 
 // DebugModeClose 关闭机巢调试模式。
-func (s *DjiCloudServer) DebugModeClose(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) DebugModeClose(ctx context.Context, in *djicloud.DebugModeCloseReq) (*djicloud.CommonRes, error) {
 	l := logic.NewDebugModeCloseLogic(ctx, s.svcCtx)
 	return l.DebugModeClose(in)
 }
 
 // CoverOpen 打开机巢舱盖。
-func (s *DjiCloudServer) CoverOpen(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) CoverOpen(ctx context.Context, in *djicloud.CoverOpenReq) (*djicloud.CommonRes, error) {
 	l := logic.NewCoverOpenLogic(ctx, s.svcCtx)
 	return l.CoverOpen(in)
 }
 
 // CoverClose 关闭机巢舱盖。
-func (s *DjiCloudServer) CoverClose(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) CoverClose(ctx context.Context, in *djicloud.CoverCloseReq) (*djicloud.CommonRes, error) {
 	l := logic.NewCoverCloseLogic(ctx, s.svcCtx)
 	return l.CoverClose(in)
 }
 
 // CoverForceClose 强制关闭机巢舱盖。
-func (s *DjiCloudServer) CoverForceClose(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) CoverForceClose(ctx context.Context, in *djicloud.CoverForceCloseReq) (*djicloud.CommonRes, error) {
 	l := logic.NewCoverForceCloseLogic(ctx, s.svcCtx)
 	return l.CoverForceClose(in)
 }
 
 // DroneOpen 开启机巢中的无人机电源。
-func (s *DjiCloudServer) DroneOpen(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) DroneOpen(ctx context.Context, in *djicloud.DroneOpenReq) (*djicloud.CommonRes, error) {
 	l := logic.NewDroneOpenLogic(ctx, s.svcCtx)
 	return l.DroneOpen(in)
 }
 
 // DroneClose 关闭机巢中的无人机电源。
-func (s *DjiCloudServer) DroneClose(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) DroneClose(ctx context.Context, in *djicloud.DroneCloseReq) (*djicloud.CommonRes, error) {
 	l := logic.NewDroneCloseLogic(ctx, s.svcCtx)
 	return l.DroneClose(in)
 }
 
 // DeviceReboot 重启机巢设备。
-func (s *DjiCloudServer) DeviceReboot(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) DeviceReboot(ctx context.Context, in *djicloud.DeviceRebootReq) (*djicloud.CommonRes, error) {
 	l := logic.NewDeviceRebootLogic(ctx, s.svcCtx)
 	return l.DeviceReboot(in)
 }
 
 // ChargeOpen 开启机巢充电功能。
-func (s *DjiCloudServer) ChargeOpen(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) ChargeOpen(ctx context.Context, in *djicloud.ChargeOpenReq) (*djicloud.CommonRes, error) {
 	l := logic.NewChargeOpenLogic(ctx, s.svcCtx)
 	return l.ChargeOpen(in)
 }
 
 // ChargeClose 关闭机巢充电功能。
-func (s *DjiCloudServer) ChargeClose(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) ChargeClose(ctx context.Context, in *djicloud.ChargeCloseReq) (*djicloud.CommonRes, error) {
 	l := logic.NewChargeCloseLogic(ctx, s.svcCtx)
 	return l.ChargeClose(in)
 }
 
 // DroneFormat 格式化无人机存储。
-func (s *DjiCloudServer) DroneFormat(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) DroneFormat(ctx context.Context, in *djicloud.DroneFormatReq) (*djicloud.CommonRes, error) {
 	l := logic.NewDroneFormatLogic(ctx, s.svcCtx)
 	return l.DroneFormat(in)
 }
 
 // DeviceFormat 格式化机巢设备存储。
-func (s *DjiCloudServer) DeviceFormat(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) DeviceFormat(ctx context.Context, in *djicloud.DeviceFormatReq) (*djicloud.CommonRes, error) {
 	l := logic.NewDeviceFormatLogic(ctx, s.svcCtx)
 	return l.DeviceFormat(in)
 }
 
 // SupplementLightOpen 开启机巢补光灯。
-func (s *DjiCloudServer) SupplementLightOpen(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) SupplementLightOpen(ctx context.Context, in *djicloud.SupplementLightOpenReq) (*djicloud.CommonRes, error) {
 	l := logic.NewSupplementLightOpenLogic(ctx, s.svcCtx)
 	return l.SupplementLightOpen(in)
 }
 
 // SupplementLightClose 关闭机巢补光灯。
-func (s *DjiCloudServer) SupplementLightClose(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) SupplementLightClose(ctx context.Context, in *djicloud.SupplementLightCloseReq) (*djicloud.CommonRes, error) {
 	l := logic.NewSupplementLightCloseLogic(ctx, s.svcCtx)
 	return l.SupplementLightClose(in)
 }
@@ -282,45 +282,15 @@ func (s *DjiCloudServer) ConfigUpdate(ctx context.Context, in *djicloud.ConfigUp
 }
 
 // FlightAuthorityGrab 获取飞行控制权。
-func (s *DjiCloudServer) FlightAuthorityGrab(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) FlightAuthorityGrab(ctx context.Context, in *djicloud.FlightAuthorityGrabReq) (*djicloud.CommonRes, error) {
 	l := logic.NewFlightAuthorityGrabLogic(ctx, s.svcCtx)
 	return l.FlightAuthorityGrab(in)
 }
 
 // PayloadAuthorityGrab 获取负载控制权。
-func (s *DjiCloudServer) PayloadAuthorityGrab(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) PayloadAuthorityGrab(ctx context.Context, in *djicloud.PayloadAuthorityGrabReq) (*djicloud.CommonRes, error) {
 	l := logic.NewPayloadAuthorityGrabLogic(ctx, s.svcCtx)
 	return l.PayloadAuthorityGrab(in)
-}
-
-// DrcModeEnter 进入指令飞行（DRC）模式。
-func (s *DjiCloudServer) DrcModeEnter(ctx context.Context, in *djicloud.DrcModeEnterReq) (*djicloud.CommonRes, error) {
-	l := logic.NewDrcModeEnterLogic(ctx, s.svcCtx)
-	return l.DrcModeEnter(in)
-}
-
-// DrcModeExit 退出指令飞行（DRC）模式。
-func (s *DjiCloudServer) DrcModeExit(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
-	l := logic.NewDrcModeExitLogic(ctx, s.svcCtx)
-	return l.DrcModeExit(in)
-}
-
-// SendDrcStickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
-func (s *DjiCloudServer) SendDrcStickControl(ctx context.Context, in *djicloud.DrcStickControlReq) (*djicloud.CommonRes, error) {
-	l := logic.NewSendDrcStickControlLogic(ctx, s.svcCtx)
-	return l.SendDrcStickControl(in)
-}
-
-// SendDrcHeartBeat 经 drc/down 发 DRC 心跳（method heart_beat；seq 与 data.timestamp 见 DRC 文档）。
-func (s *DjiCloudServer) SendDrcHeartBeat(ctx context.Context, in *djicloud.DrcHeartBeatReq) (*djicloud.CommonRes, error) {
-	l := logic.NewSendDrcHeartBeatLogic(ctx, s.svcCtx)
-	return l.SendDrcHeartBeat(in)
-}
-
-// DroneEmergencyStop 通过 DRC 通道下发飞行器紧急停桨。
-func (s *DjiCloudServer) DroneEmergencyStop(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
-	l := logic.NewDroneEmergencyStopLogic(ctx, s.svcCtx)
-	return l.DroneEmergencyStop(in)
 }
 
 // FlyToPoint 飞向指定航点。
@@ -479,86 +449,110 @@ func (s *DjiCloudServer) UnlockLicenseList(ctx context.Context, in *djicloud.Unl
 	return l.UnlockLicenseList(in)
 }
 
+// DrcModeEnter 进入指令飞行（DRC）模式。
+func (s *DjiCloudServer) DrcModeEnter(ctx context.Context, in *djicloud.DrcModeEnterReq) (*djicloud.CommonRes, error) {
+	l := logic.NewDrcModeEnterLogic(ctx, s.svcCtx)
+	return l.DrcModeEnter(in)
+}
+
+// DrcModeExit 退出指令飞行（DRC）模式。
+func (s *DjiCloudServer) DrcModeExit(ctx context.Context, in *djicloud.DrcModeExitReq) (*djicloud.CommonRes, error) {
+	l := logic.NewDrcModeExitLogic(ctx, s.svcCtx)
+	return l.DrcModeExit(in)
+}
+
+// DroneEmergencyStop 通过 DRC 通道下发飞行器紧急停桨。
+func (s *DjiCloudServer) DroneEmergencyStop(ctx context.Context, in *djicloud.DroneEmergencyStopReq) (*djicloud.DroneEmergencyStopRes, error) {
+	l := logic.NewDroneEmergencyStopLogic(ctx, s.svcCtx)
+	return l.DroneEmergencyStop(in)
+}
+
+// SendDrcStickControl 经 drc/down 发 DRC 杆量控制（method stick_control）。
+func (s *DjiCloudServer) SendDrcStickControl(ctx context.Context, in *djicloud.DrcStickControlReq) (*djicloud.DrcStickControlRes, error) {
+	l := logic.NewSendDrcStickControlLogic(ctx, s.svcCtx)
+	return l.SendDrcStickControl(in)
+}
+
 // DrcForceLanding 强制降落。
-func (s *DjiCloudServer) DrcForceLanding(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) DrcForceLanding(ctx context.Context, in *djicloud.DrcForceLandingReq) (*djicloud.DrcForceLandingRes, error) {
 	l := logic.NewDrcForceLandingLogic(ctx, s.svcCtx)
 	return l.DrcForceLanding(in)
 }
 
 // DrcEmergencyLanding 紧急降落。
-func (s *DjiCloudServer) DrcEmergencyLanding(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) DrcEmergencyLanding(ctx context.Context, in *djicloud.DrcEmergencyLandingReq) (*djicloud.DrcEmergencyLandingRes, error) {
 	l := logic.NewDrcEmergencyLandingLogic(ctx, s.svcCtx)
 	return l.DrcEmergencyLanding(in)
 }
 
 // DrcLinkageZoomSet 设置红外联动变焦状态。
-func (s *DjiCloudServer) DrcLinkageZoomSet(ctx context.Context, in *djicloud.DrcLinkageZoomSetReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) DrcLinkageZoomSet(ctx context.Context, in *djicloud.DrcLinkageZoomSetReq) (*djicloud.DrcLinkageZoomSetRes, error) {
 	l := logic.NewDrcLinkageZoomSetLogic(ctx, s.svcCtx)
 	return l.DrcLinkageZoomSet(in)
 }
 
 // DrcVideoResolutionSet 设置视频分辨率。
-func (s *DjiCloudServer) DrcVideoResolutionSet(ctx context.Context, in *djicloud.DrcVideoResolutionSetReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) DrcVideoResolutionSet(ctx context.Context, in *djicloud.DrcVideoResolutionSetReq) (*djicloud.DrcVideoResolutionSetRes, error) {
 	l := logic.NewDrcVideoResolutionSetLogic(ctx, s.svcCtx)
 	return l.DrcVideoResolutionSet(in)
 }
 
 // DrcIntervalPhotoSet 设置定时拍参数。
-func (s *DjiCloudServer) DrcIntervalPhotoSet(ctx context.Context, in *djicloud.DrcIntervalPhotoSetReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) DrcIntervalPhotoSet(ctx context.Context, in *djicloud.DrcIntervalPhotoSetReq) (*djicloud.DrcIntervalPhotoSetRes, error) {
 	l := logic.NewDrcIntervalPhotoSetLogic(ctx, s.svcCtx)
 	return l.DrcIntervalPhotoSet(in)
 }
 
 // DrcInitialStateSubscribe 订阅 DRC 初始状态。
-func (s *DjiCloudServer) DrcInitialStateSubscribe(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) DrcInitialStateSubscribe(ctx context.Context, in *djicloud.DrcInitialStateSubscribeReq) (*djicloud.DrcInitialStateSubscribeRes, error) {
 	l := logic.NewDrcInitialStateSubscribeLogic(ctx, s.svcCtx)
 	return l.DrcInitialStateSubscribe(in)
 }
 
 // DrcNightLightsStateSet 设置夜航灯状态。
-func (s *DjiCloudServer) DrcNightLightsStateSet(ctx context.Context, in *djicloud.DrcNightLightsStateSetReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) DrcNightLightsStateSet(ctx context.Context, in *djicloud.DrcNightLightsStateSetReq) (*djicloud.DrcNightLightsStateSetRes, error) {
 	l := logic.NewDrcNightLightsStateSetLogic(ctx, s.svcCtx)
 	return l.DrcNightLightsStateSet(in)
 }
 
 // DrcStealthStateSet 设置隐蔽模式状态。
-func (s *DjiCloudServer) DrcStealthStateSet(ctx context.Context, in *djicloud.DrcStealthStateSetReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) DrcStealthStateSet(ctx context.Context, in *djicloud.DrcStealthStateSetReq) (*djicloud.DrcStealthStateSetRes, error) {
 	l := logic.NewDrcStealthStateSetLogic(ctx, s.svcCtx)
 	return l.DrcStealthStateSet(in)
 }
 
 // DrcCameraApertureValueSet 设置相机光圈。
-func (s *DjiCloudServer) DrcCameraApertureValueSet(ctx context.Context, in *djicloud.DrcCameraApertureValueSetReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) DrcCameraApertureValueSet(ctx context.Context, in *djicloud.DrcCameraApertureValueSetReq) (*djicloud.DrcCameraApertureValueSetRes, error) {
 	l := logic.NewDrcCameraApertureValueSetLogic(ctx, s.svcCtx)
 	return l.DrcCameraApertureValueSet(in)
 }
 
 // DrcCameraShutterSet 设置相机快门。
-func (s *DjiCloudServer) DrcCameraShutterSet(ctx context.Context, in *djicloud.DrcCameraShutterSetReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) DrcCameraShutterSet(ctx context.Context, in *djicloud.DrcCameraShutterSetReq) (*djicloud.DrcCameraShutterSetRes, error) {
 	l := logic.NewDrcCameraShutterSetLogic(ctx, s.svcCtx)
 	return l.DrcCameraShutterSet(in)
 }
 
 // DrcCameraIsoSet 设置相机 ISO。
-func (s *DjiCloudServer) DrcCameraIsoSet(ctx context.Context, in *djicloud.DrcCameraIsoSetReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) DrcCameraIsoSet(ctx context.Context, in *djicloud.DrcCameraIsoSetReq) (*djicloud.DrcCameraIsoSetRes, error) {
 	l := logic.NewDrcCameraIsoSetLogic(ctx, s.svcCtx)
 	return l.DrcCameraIsoSet(in)
 }
 
 // DrcCameraMechanicalShutterSet 设置机械快门。
-func (s *DjiCloudServer) DrcCameraMechanicalShutterSet(ctx context.Context, in *djicloud.DrcCameraMechanicalShutterSetReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) DrcCameraMechanicalShutterSet(ctx context.Context, in *djicloud.DrcCameraMechanicalShutterSetReq) (*djicloud.DrcCameraMechanicalShutterSetRes, error) {
 	l := logic.NewDrcCameraMechanicalShutterSetLogic(ctx, s.svcCtx)
 	return l.DrcCameraMechanicalShutterSet(in)
 }
 
 // DrcCameraDewarpingSet 设置镜头去畸变。
-func (s *DjiCloudServer) DrcCameraDewarpingSet(ctx context.Context, in *djicloud.DrcCameraDewarpingSetReq) (*djicloud.CommonRes, error) {
+func (s *DjiCloudServer) DrcCameraDewarpingSet(ctx context.Context, in *djicloud.DrcCameraDewarpingSetReq) (*djicloud.DrcCameraDewarpingSetRes, error) {
 	l := logic.NewDrcCameraDewarpingSetLogic(ctx, s.svcCtx)
 	return l.DrcCameraDewarpingSet(in)
 }
 
 // IsDeviceOnline 查询设备在线状态。
-func (s *DjiCloudServer) IsDeviceOnline(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.DeviceOnlineRes, error) {
+func (s *DjiCloudServer) IsDeviceOnline(ctx context.Context, in *djicloud.IsDeviceOnlineReq) (*djicloud.DeviceOnlineRes, error) {
 	l := logic.NewIsDeviceOnlineLogic(ctx, s.svcCtx)
 	return l.IsDeviceOnline(in)
 }
@@ -570,19 +564,19 @@ func (s *DjiCloudServer) ListDevices(ctx context.Context, in *djicloud.ListDevic
 }
 
 // GetDeviceDetail 查询设备详情，聚合设备基础信息、OSD快照、State快照和拓扑信息。
-func (s *DjiCloudServer) GetDeviceDetail(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.DeviceDetailRes, error) {
+func (s *DjiCloudServer) GetDeviceDetail(ctx context.Context, in *djicloud.GetDeviceDetailReq) (*djicloud.DeviceDetailRes, error) {
 	l := logic.NewGetDeviceDetailLogic(ctx, s.svcCtx)
 	return l.GetDeviceDetail(in)
 }
 
 // GetDeviceOsdSnapshot 查询设备最近一次 OSD 遥测快照。
-func (s *DjiCloudServer) GetDeviceOsdSnapshot(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.DeviceOsdSnapshotRes, error) {
+func (s *DjiCloudServer) GetDeviceOsdSnapshot(ctx context.Context, in *djicloud.GetDeviceOsdSnapshotReq) (*djicloud.DeviceOsdSnapshotRes, error) {
 	l := logic.NewGetDeviceOsdSnapshotLogic(ctx, s.svcCtx)
 	return l.GetDeviceOsdSnapshot(in)
 }
 
 // GetDeviceStateSnapshot 查询设备最近一次 State 状态快照。
-func (s *DjiCloudServer) GetDeviceStateSnapshot(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.DeviceStateSnapshotRes, error) {
+func (s *DjiCloudServer) GetDeviceStateSnapshot(ctx context.Context, in *djicloud.GetDeviceStateSnapshotReq) (*djicloud.DeviceStateSnapshotRes, error) {
 	l := logic.NewGetDeviceStateSnapshotLogic(ctx, s.svcCtx)
 	return l.GetDeviceStateSnapshot(in)
 }
@@ -606,7 +600,13 @@ func (s *DjiCloudServer) ListFlightTaskProgress(ctx context.Context, in *djiclou
 }
 
 // GetFlightTaskProgressLast 查询最近一次 flighttask_progress 上行记录。
-func (s *DjiCloudServer) GetFlightTaskProgressLast(ctx context.Context, in *djicloud.DeviceSnReq) (*djicloud.FlightTaskProgressLastRes, error) {
+func (s *DjiCloudServer) GetFlightTaskProgressLast(ctx context.Context, in *djicloud.GetFlightTaskProgressLastReq) (*djicloud.FlightTaskProgressLastRes, error) {
 	l := logic.NewGetFlightTaskProgressLastLogic(ctx, s.svcCtx)
 	return l.GetFlightTaskProgressLast(in)
+}
+
+// QueryDrcStatus 查询设备 DRC 运行状态。
+func (s *DjiCloudServer) QueryDrcStatus(ctx context.Context, in *djicloud.QueryDrcStatusReq) (*djicloud.DrcStatusRes, error) {
+	l := logic.NewQueryDrcStatusLogic(ctx, s.svcCtx)
+	return l.QueryDrcStatus(in)
 }

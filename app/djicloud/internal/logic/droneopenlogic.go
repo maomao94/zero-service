@@ -24,7 +24,7 @@ func NewDroneOpenLogic(ctx context.Context, svcCtx *svc.ServiceContext) *DroneOp
 }
 
 // DroneOpen 开启机巢中的无人机电源。
-func (l *DroneOpenLogic) DroneOpen(in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (l *DroneOpenLogic) DroneOpen(in *djicloud.DroneOpenReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.DroneOpen(l.ctx, in.DeviceSn)
 	if err != nil {
 		l.Errorf("[remote-debug] drone open failed: %v", err)

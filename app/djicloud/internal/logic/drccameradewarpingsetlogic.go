@@ -24,11 +24,16 @@ func NewDrcCameraDewarpingSetLogic(ctx context.Context, svcCtx *svc.ServiceConte
 	}
 }
 
-func (l *DrcCameraDewarpingSetLogic) DrcCameraDewarpingSet(in *djicloud.DrcCameraDewarpingSetReq) (*djicloud.CommonRes, error) {
-	data := &djisdk.DrcCameraDewarpingSetData{PayloadIndex: in.GetPayloadIndex(), CameraType: in.GetCameraType(), DewarpingState: int(in.GetDewarpingState())}
-	tid, err := l.svcCtx.DjiClient.DrcCameraDewarpingSet(l.ctx, in.GetDeviceSn(), data)
+func (l *DrcCameraDewarpingSetLogic) DrcCameraDewarpingSet(in *djicloud.DrcCameraDewarpingSetReq) (*djicloud.DrcCameraDewarpingSetRes, error) {
+	deviceSn := in.GetDeviceSn()
+	seq, err := l.svcCtx.DrcManager.GetNextSeq(deviceSn)
 	if err != nil {
-		return errRes(tid, err), nil
+		return nil, err
 	}
-	return okRes(tid), nil
+	data := &djisdk.DrcCameraDewarpingSetData{PayloadIndex: in.GetPayloadIndex(), CameraType: in.GetCameraType(), DewarpingState: int(in.GetDewarpingState())}
+	if _, err := l.svcCtx.DjiClient.DrcCameraDewarpingSet(l.ctx, deviceSn, seq, data); err != nil {
+		l.Errorf("[drc] camera dewarping set failed device_sn=%s: %v", deviceSn, err)
+		return nil, err
+	}
+	return &djicloud.DrcCameraDewarpingSetRes{Seq: int32(seq)}, nil
 }

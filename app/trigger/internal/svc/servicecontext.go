@@ -65,7 +65,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	database := dbx.MustNewQoqu(c.DB.DataSource)
 
 	// 使用带自动过期清理的缓存，30分钟不访问自动移除过期连接
-	connCache, err := collection.NewCache(time.Minute * connExpiryMinutes)
+	connCache, err := collection.NewCache(time.Minute*connExpiryMinutes, collection.WithName("conn-cache"))
 	if err != nil {
 		panic(err)
 	}

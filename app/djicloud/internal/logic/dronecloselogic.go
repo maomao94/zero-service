@@ -24,7 +24,7 @@ func NewDroneCloseLogic(ctx context.Context, svcCtx *svc.ServiceContext) *DroneC
 }
 
 // DroneClose 关闭机巢中的无人机电源。
-func (l *DroneCloseLogic) DroneClose(in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (l *DroneCloseLogic) DroneClose(in *djicloud.DroneCloseReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.DroneClose(l.ctx, in.DeviceSn)
 	if err != nil {
 		l.Errorf("[remote-debug] drone close failed: %v", err)

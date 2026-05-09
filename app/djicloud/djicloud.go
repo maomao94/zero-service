@@ -33,6 +33,7 @@ func main() {
 	tool.PrintGoVersion()
 
 	ctx := svc.NewServiceContext(c)
+	defer ctx.Close()
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
 		djicloud.RegisterDjiCloudServer(grpcServer, server.NewDjiCloudServer(ctx))

@@ -23,12 +23,16 @@ func NewDrcModeExitLogic(ctx context.Context, svcCtx *svc.ServiceContext) *DrcMo
 	}
 }
 
-func (l *DrcModeExitLogic) DrcModeExit(in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (l *DrcModeExitLogic) DrcModeExit(in *djicloud.DrcModeExitReq) (*djicloud.CommonRes, error) {
 	deviceSn := in.GetDeviceSn()
 	tid, err := l.svcCtx.DjiClient.DrcModeExit(l.ctx, deviceSn)
 	if err != nil {
-		l.Errorf("[drc] mode exit failed device_sn=%s tid=%s: %v", deviceSn, tid, err)
+		l.Errorf("[drc] mode exit failed device_sn=%s: %v", deviceSn, err)
 		return errRes(tid, err), nil
+	}
+	if err := l.svcCtx.DrcManager.Disable(l.ctx, deviceSn); err != nil {
+		l.Errorf("[drc] manager disable failed device_sn=%s: %v", deviceSn, err)
+		return nil, err
 	}
 	return okRes(tid), nil
 }

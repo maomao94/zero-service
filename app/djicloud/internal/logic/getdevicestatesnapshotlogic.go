@@ -27,7 +27,7 @@ func NewGetDeviceStateSnapshotLogic(ctx context.Context, svcCtx *svc.ServiceCont
 }
 
 // GetDeviceStateSnapshot 查询设备最近一次 State 状态快照。
-func (l *GetDeviceStateSnapshotLogic) GetDeviceStateSnapshot(in *djicloud.DeviceSnReq) (*djicloud.DeviceStateSnapshotRes, error) {
+func (l *GetDeviceStateSnapshotLogic) GetDeviceStateSnapshot(in *djicloud.GetDeviceStateSnapshotReq) (*djicloud.DeviceStateSnapshotRes, error) {
 	var item gormmodel.DjiDeviceStateSnapshot
 	if err := l.svcCtx.DB.WithContext(l.ctx).Where("device_sn = ?", in.DeviceSn).First(&item).Error; err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())

@@ -23,10 +23,15 @@ func NewDrcForceLandingLogic(ctx context.Context, svcCtx *svc.ServiceContext) *D
 	}
 }
 
-func (l *DrcForceLandingLogic) DrcForceLanding(in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
-	tid, err := l.svcCtx.DjiClient.DrcForceLanding(l.ctx, in.GetDeviceSn())
+func (l *DrcForceLandingLogic) DrcForceLanding(in *djicloud.DrcForceLandingReq) (*djicloud.DrcForceLandingRes, error) {
+	deviceSn := in.GetDeviceSn()
+	seq, err := l.svcCtx.DrcManager.GetNextSeq(deviceSn)
 	if err != nil {
-		return errRes(tid, err), nil
+		return nil, err
 	}
-	return okRes(tid), nil
+	if _, err := l.svcCtx.DjiClient.DrcForceLanding(l.ctx, deviceSn, seq); err != nil {
+		l.Errorf("[drc] force landing failed device_sn=%s: %v", deviceSn, err)
+		return nil, err
+	}
+	return &djicloud.DrcForceLandingRes{Seq: int32(seq)}, nil
 }

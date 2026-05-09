@@ -1,8 +1,10 @@
 package hooks
 
 import (
+	"zero-service/app/djicloud/internal/drc"
 	"zero-service/common/djisdk"
 	"zero-service/common/gormx"
+	"zero-service/socketapp/socketpush/socketpush"
 
 	"github.com/zeromicro/go-zero/core/collection"
 )
@@ -11,6 +13,8 @@ import (
 type RegisterDjiClientOptions struct {
 	DB          *gormx.DB
 	OnlineCache *collection.Cache
+	DrcManager  *drc.Manager
+	PushCli     socketpush.SocketPushClient
 }
 
 func registerEventHandlers(c *djisdk.Client, db *gormx.DB) {
@@ -24,11 +28,11 @@ func registerEventHandlers(c *djisdk.Client, db *gormx.DB) {
 	c.OnRemoteLogFileUploadProgress(NewRemoteLogFileUploadProgressHandler(db))
 }
 
-func registerTelemetryHandlers(c *djisdk.Client, db *gormx.DB, onlineCache *collection.Cache) {
+func registerTelemetryHandlers(c *djisdk.Client, db *gormx.DB, onlineCache *collection.Cache, drcMgr *drc.Manager, pushCli socketpush.SocketPushClient) {
 	c.OnOsd(NewOsdHandler(db, onlineCache))
 	c.OnState(NewStateTelemetryHandler(db, onlineCache))
 	c.OnStatus(NewStatusHandler(db, onlineCache))
-	c.OnDrcUp(NewDrcUpHandler(db))
+	c.OnDrcUp(NewDrcUpHandler(db, drcMgr, pushCli))
 }
 
 func registerRequestHandlers(c *djisdk.Client) {
@@ -48,7 +52,7 @@ func RegisterDjiClient(c *djisdk.Client, o RegisterDjiClientOptions) {
 		return
 	}
 	registerEventHandlers(c, o.DB)
-	registerTelemetryHandlers(c, o.DB, o.OnlineCache)
+	registerTelemetryHandlers(c, o.DB, o.OnlineCache, o.DrcManager, o.PushCli)
 	registerRequestHandlers(c)
 	registerOnlineChecker(c, o.OnlineCache)
 }

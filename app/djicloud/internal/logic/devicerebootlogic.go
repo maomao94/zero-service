@@ -24,7 +24,7 @@ func NewDeviceRebootLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Devi
 }
 
 // DeviceReboot 重启机巢设备。
-func (l *DeviceRebootLogic) DeviceReboot(in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (l *DeviceRebootLogic) DeviceReboot(in *djicloud.DeviceRebootReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.DeviceReboot(l.ctx, in.DeviceSn)
 	if err != nil {
 		l.Errorf("[remote-debug] device reboot failed: %v", err)

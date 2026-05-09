@@ -26,7 +26,7 @@ func NewGetFlightTaskProgressLastLogic(ctx context.Context, svcCtx *svc.ServiceC
 }
 
 // GetFlightTaskProgressLast 查询机巢当前航线任务状态。
-func (l *GetFlightTaskProgressLastLogic) GetFlightTaskProgressLast(in *djicloud.DeviceSnReq) (*djicloud.FlightTaskProgressLastRes, error) {
+func (l *GetFlightTaskProgressLastLogic) GetFlightTaskProgressLast(in *djicloud.GetFlightTaskProgressLastReq) (*djicloud.FlightTaskProgressLastRes, error) {
 	var progress gormmodel.DjiDockDeviceFlightTaskState
 	err := l.svcCtx.DB.WithContext(l.ctx).
 		Where("gateway_sn = ?", in.DeviceSn).

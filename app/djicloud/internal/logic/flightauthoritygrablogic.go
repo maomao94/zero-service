@@ -23,7 +23,7 @@ func NewFlightAuthorityGrabLogic(ctx context.Context, svcCtx *svc.ServiceContext
 	}
 }
 
-func (l *FlightAuthorityGrabLogic) FlightAuthorityGrab(in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (l *FlightAuthorityGrabLogic) FlightAuthorityGrab(in *djicloud.FlightAuthorityGrabReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.FlightAuthorityGrab(l.ctx, in.DeviceSn)
 	if err != nil {
 		l.Errorf("[drc] flight authority grab failed: %v", err)

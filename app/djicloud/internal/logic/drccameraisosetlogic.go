@@ -24,11 +24,16 @@ func NewDrcCameraIsoSetLogic(ctx context.Context, svcCtx *svc.ServiceContext) *D
 	}
 }
 
-func (l *DrcCameraIsoSetLogic) DrcCameraIsoSet(in *djicloud.DrcCameraIsoSetReq) (*djicloud.CommonRes, error) {
-	data := &djisdk.DrcCameraIsoSetData{PayloadIndex: in.GetPayloadIndex(), CameraType: in.GetCameraType(), ISOValue: int(in.GetIsoValue())}
-	tid, err := l.svcCtx.DjiClient.DrcCameraIsoSet(l.ctx, in.GetDeviceSn(), data)
+func (l *DrcCameraIsoSetLogic) DrcCameraIsoSet(in *djicloud.DrcCameraIsoSetReq) (*djicloud.DrcCameraIsoSetRes, error) {
+	deviceSn := in.GetDeviceSn()
+	seq, err := l.svcCtx.DrcManager.GetNextSeq(deviceSn)
 	if err != nil {
-		return errRes(tid, err), nil
+		return nil, err
 	}
-	return okRes(tid), nil
+	data := &djisdk.DrcCameraIsoSetData{PayloadIndex: in.GetPayloadIndex(), CameraType: in.GetCameraType(), ISOValue: int(in.GetIsoValue())}
+	if _, err := l.svcCtx.DjiClient.DrcCameraIsoSet(l.ctx, deviceSn, seq, data); err != nil {
+		l.Errorf("[drc] camera iso set failed device_sn=%s: %v", deviceSn, err)
+		return nil, err
+	}
+	return &djicloud.DrcCameraIsoSetRes{Seq: int32(seq)}, nil
 }

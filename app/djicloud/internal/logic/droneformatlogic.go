@@ -24,7 +24,7 @@ func NewDroneFormatLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Drone
 }
 
 // DroneFormat 格式化无人机存储。
-func (l *DroneFormatLogic) DroneFormat(in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (l *DroneFormatLogic) DroneFormat(in *djicloud.DroneFormatReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.DroneFormat(l.ctx, in.DeviceSn)
 	if err != nil {
 		l.Errorf("[remote-debug] drone format failed: %v", err)

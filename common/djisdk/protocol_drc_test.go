@@ -295,6 +295,35 @@ func TestDrcUnmarshalUpDataKnownMethod(t *testing.T) {
 	}
 }
 
+func TestDrcUnmarshalUpDataHighFreqParses(t *testing.T) {
+	cases := []struct {
+		name    string
+		method  string
+		data    string
+		wantNil bool
+	}{
+		{name: "stick_control", method: MethodStickControl, data: `{"result":0}`, wantNil: false},
+		{name: "heart_beat", method: MethodDrcHeartBeat, data: `{"timestamp":1710000000000}`, wantNil: false},
+		{name: "osd_info_push", method: MethodDrcOsdInfoPush, data: `{"attitude_head":1.0}`, wantNil: false},
+		{name: "hsi_info_push", method: MethodDrcHsiInfoPush, data: `{"up_distance":10}`, wantNil: false},
+		{name: "delay_info_push", method: MethodDrcDelayInfoPush, data: `{"sdr_cmd_delay":30}`, wantNil: false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			parsed, err := DrcUnmarshalUpData(tc.method, json.RawMessage(tc.data))
+			if err != nil {
+				t.Fatalf("DrcUnmarshalUpData(%s) error = %v", tc.method, err)
+			}
+			if tc.wantNil && parsed != nil {
+				t.Fatalf("DrcUnmarshalUpData(%s) = %T, want nil", tc.method, parsed)
+			}
+			if !tc.wantNil && parsed == nil {
+				t.Fatalf("DrcUnmarshalUpData(%s) = nil, want non-nil", tc.method)
+			}
+		})
+	}
+}
+
 func TestDrcUnmarshalUpDataUnknownMethodKeepsRaw(t *testing.T) {
 	raw := json.RawMessage(`{"future_field":"value","count":2}`)
 
@@ -309,7 +338,7 @@ func TestDrcUnmarshalUpDataUnknownMethodKeepsRaw(t *testing.T) {
 	if unknown.Method != "future_method" || string(unknown.Raw) != string(raw) {
 		t.Fatalf("unexpected unknown payload: %+v", unknown)
 	}
-	if summary := DrcUpPayloadSummary("future_method", unknown); summary != "unknown raw_bytes=34" {
+	if summary := DrcUpPayloadSummary(unknown); summary != "unknown raw_bytes=34" {
 		t.Fatalf("unexpected summary: %q", summary)
 	}
 }
@@ -331,7 +360,7 @@ func TestDrcUpPayloadSummaryKnownMethods(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := DrcUpPayloadSummary(tc.method, tc.parsed); got != tc.want {
+			if got := DrcUpPayloadSummary(tc.parsed); got != tc.want {
 				t.Fatalf("DrcUpPayloadSummary() = %q, want %q", got, tc.want)
 			}
 		})
@@ -339,13 +368,12 @@ func TestDrcUpPayloadSummaryKnownMethods(t *testing.T) {
 }
 
 func TestDrcDownPayloadShapes(t *testing.T) {
-	seq := 9
-	heartBeat := NewDrcDownMessage("tid", "bid", MethodDrcHeartBeat, DrcHeartBeatDownData{Timestamp: 1710000000000}, &seq)
+	heartBeat := NewDrcDownMessage("tid", "bid", MethodDrcHeartBeat, DrcHeartBeatDownData{Timestamp: 1710000000000}, nil)
 	payload, err := json.Marshal(heartBeat)
 	if err != nil {
 		t.Fatalf("json.Marshal() error = %v", err)
 	}
-	if !strings.Contains(string(payload), `"method":"heart_beat"`) || !strings.Contains(string(payload), `"seq":9`) || !strings.Contains(string(payload), `"timestamp":1710000000000`) {
+	if !strings.Contains(string(payload), `"method":"heart_beat"`) || strings.Contains(string(payload), `"seq"`) || !strings.Contains(string(payload), `"timestamp":1710000000000`) {
 		t.Fatalf("unexpected heart beat payload: %s", string(payload))
 	}
 
@@ -425,7 +453,7 @@ func TestDrcDownClientMethodsReturnTid(t *testing.T) {
 	mqtt := &recordingMQTTClient{}
 	client := newClient(mqtt)
 
-	tid, err := client.DrcEmergencyLanding(context.Background(), "gateway-1")
+	tid, err := client.DrcEmergencyLanding(context.Background(), "gateway-1", 0)
 	if err != nil {
 		t.Fatalf("DrcEmergencyLanding() error = %v", err)
 	}
@@ -518,7 +546,7 @@ func TestDroneEmergencyStopPublishesDrcDownTypedMethod(t *testing.T) {
 	mqtt := &recordingMQTTClient{}
 	client := newClient(mqtt, WithPendingTTL(time.Second), WithReplyOptions(DefaultReplyOptions()))
 
-	tid, err := client.DroneEmergencyStop(context.Background(), "gateway-1")
+	tid, err := client.DroneEmergencyStop(context.Background(), "gateway-1", 0)
 	if err != nil {
 		t.Fatalf("DroneEmergencyStop() error = %v", err)
 	}
@@ -724,7 +752,7 @@ func TestTask2DownMethodsPublishExpectedTopicsAndMethods(t *testing.T) {
 		{
 			name: "drc_initial_state_subscribe",
 			call: func(c *Client) (string, error) {
-				return c.DrcInitialStateSubscribe(context.Background(), "gateway-1")
+				return c.DrcInitialStateSubscribe(context.Background(), "gateway-1", 0)
 			},
 			wantTopic:  DrcDownTopic("gateway-1"),
 			wantMethod: MethodDrcInitialStateSubscribe,

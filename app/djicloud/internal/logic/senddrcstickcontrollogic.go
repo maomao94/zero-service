@@ -24,16 +24,18 @@ func NewSendDrcStickControlLogic(ctx context.Context, svcCtx *svc.ServiceContext
 	}
 }
 
-func (l *SendDrcStickControlLogic) SendDrcStickControl(in *djicloud.DrcStickControlReq) (*djicloud.CommonRes, error) {
+func (l *SendDrcStickControlLogic) SendDrcStickControl(in *djicloud.DrcStickControlReq) (*djicloud.DrcStickControlRes, error) {
 	deviceSn := in.GetDeviceSn()
-	seq := int(in.GetSeq())
-	data := buildDrcStickControlData(in)
-	tid, err := l.svcCtx.DjiClient.SendDrcStickControl(l.ctx, deviceSn, seq, data)
+	seq, err := l.svcCtx.DrcManager.GetNextSeq(deviceSn)
 	if err != nil {
-		l.Errorf("[drc] send stick control failed device_sn=%s seq=%d tid=%s: %v", deviceSn, seq, tid, err)
-		return errRes(tid, err), nil
+		return nil, err
 	}
-	return okRes(tid), nil
+	data := buildDrcStickControlData(in)
+	if _, err := l.svcCtx.DjiClient.SendDrcStickControl(l.ctx, deviceSn, int(seq), data); err != nil {
+		l.Errorf("[drc] send stick control failed device_sn=%s seq=%d: %v", deviceSn, seq, err)
+		return nil, err
+	}
+	return &djicloud.DrcStickControlRes{Seq: int32(seq)}, nil
 }
 
 func buildDrcStickControlData(in *djicloud.DrcStickControlReq) *djisdk.DrcStickControlData {

@@ -24,7 +24,7 @@ func NewChargeOpenLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Charge
 }
 
 // ChargeOpen 开启机巢充电功能。
-func (l *ChargeOpenLogic) ChargeOpen(in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (l *ChargeOpenLogic) ChargeOpen(in *djicloud.ChargeOpenReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.ChargeOpen(l.ctx, in.DeviceSn)
 	if err != nil {
 		l.Errorf("[remote-debug] charge open failed: %v", err)

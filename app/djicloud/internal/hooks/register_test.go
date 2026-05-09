@@ -91,18 +91,18 @@ func TestRegisterDjiClientRegistersHandlersAndOnlineChecker(t *testing.T) {
 		t.Fatalf("HandleRequests() error = %v", err)
 	}
 
-	drcPayload := []byte(`{"tid":"tid-drc","bid":"bid-drc","timestamp":1710000000000,"method":"drc_initial_state_subscribe","seq":1,"data":{"result":0}}`)
+	drcPayload := []byte(`{"tid":"tid-drc","bid":"bid-drc","timestamp":1710000000000,"method":"stick_control","seq":1,"data":{"result":0,"output":{"seq":1}}}`)
 	if err := client.HandleDrcUp(ctx, drcPayload, djisdk.DrcUpTopic("gateway-1"), ""); err != nil {
 		t.Fatalf("HandleDrcUp() error = %v", err)
 	}
 	var drcEvent struct {
 		RawJSON string
 	}
-	if err := db.WithContext(ctx).Model(&gormmodel.DjiDrcUpEvent{}).Select("raw_json").Where("gateway_sn = ? AND method = ?", "gateway-1", djisdk.MethodDrcInitialStateSubscribe).First(&drcEvent).Error; err != nil {
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDrcUpEvent{}).Select("raw_json").Where("gateway_sn = ? AND method = ?", "gateway-1", djisdk.MethodStickControl).First(&drcEvent).Error; err != nil {
 		t.Fatalf("find registered drc event error = %v", err)
 	}
-	if drcEvent.RawJSON != `{"result":0}` {
-		t.Fatalf("registered RawJSON = %q, want only result", drcEvent.RawJSON)
+	if drcEvent.RawJSON != `{"result":0,"output":{"seq":1}}` {
+		t.Fatalf("registered RawJSON = %q, want stick_control ack", drcEvent.RawJSON)
 	}
 }
 
@@ -967,11 +967,11 @@ func TestDeviceRequestHandlerReturnsErrorOnNilReq(t *testing.T) {
 	}
 }
 
-func TestDrcInitialStateSubscribePersistsRawEvent(t *testing.T) {
+func TestDrcUpPersistsStickControlEvent(t *testing.T) {
 	db := newHookTestDB(t)
 	ctx := context.Background()
 
-	err := NewDrcUpHandler(db)(ctx, "dock-drc", &djisdk.DrcUpMessage{Method: djisdk.MethodDrcInitialStateSubscribe, Timestamp: 1710000000000}, &djisdk.DrcInitialStateSubscribeUpData{Result: 0})
+	err := NewDrcUpHandler(db, nil, nil)(ctx, "dock-drc", &djisdk.DrcUpMessage{Method: djisdk.MethodStickControl, Timestamp: 1710000000000}, &djisdk.DrcStickControlAckData{Result: 0})
 	if err != nil {
 		t.Fatalf("handler error = %v", err)
 	}
@@ -979,16 +979,16 @@ func TestDrcInitialStateSubscribePersistsRawEvent(t *testing.T) {
 	var event struct {
 		RawJSON string
 	}
-	if err := db.WithContext(ctx).Model(&gormmodel.DjiDrcUpEvent{}).Select("raw_json").Where("gateway_sn = ? AND method = ?", "dock-drc", djisdk.MethodDrcInitialStateSubscribe).First(&event).Error; err != nil {
+	if err := db.WithContext(ctx).Model(&gormmodel.DjiDrcUpEvent{}).Select("raw_json").Where("gateway_sn = ? AND method = ?", "dock-drc", djisdk.MethodStickControl).First(&event).Error; err != nil {
 		t.Fatalf("find drc event error = %v", err)
 	}
 	if event.RawJSON != `{"result":0}` {
-		t.Fatalf("RawJSON = %q, want only result", event.RawJSON)
+		t.Fatalf("RawJSON = %q, want stick_control ack", event.RawJSON)
 	}
 }
 
 func TestDrcUpHandlerIgnoresNilMessage(t *testing.T) {
-	if err := NewDrcUpHandler(nil)(context.Background(), "dock-nil", nil, nil); err != nil {
+	if err := NewDrcUpHandler(nil, nil, nil)(context.Background(), "dock-nil", nil, nil); err != nil {
 		t.Fatalf("handler error = %v", err)
 	}
 }

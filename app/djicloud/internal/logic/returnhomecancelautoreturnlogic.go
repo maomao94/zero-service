@@ -23,7 +23,7 @@ func NewReturnHomeCancelAutoReturnLogic(ctx context.Context, svcCtx *svc.Service
 	}
 }
 
-func (l *ReturnHomeCancelAutoReturnLogic) ReturnHomeCancelAutoReturn(in *djicloud.DeviceSnReq) (*djicloud.CommonRes, error) {
+func (l *ReturnHomeCancelAutoReturnLogic) ReturnHomeCancelAutoReturn(in *djicloud.ReturnHomeCancelAutoReturnReq) (*djicloud.CommonRes, error) {
 	tid, err := l.svcCtx.DjiClient.ReturnHomeCancelAutoReturn(l.ctx, in.DeviceSn)
 	if err != nil {
 		l.Errorf("[drc] return home cancel failed: %v", err)
