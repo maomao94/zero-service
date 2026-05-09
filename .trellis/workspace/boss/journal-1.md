@@ -869,3 +869,36 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 18: DRC 会话生命周期 Hook 与 Socket 推送事件
+
+**Date**: 2026-05-09
+**Task**: DRC 会话生命周期 Hook 与 Socket 推送事件
+**Branch**: `master`
+
+### Summary
+
+将 DRC Manager 的 pushCli 直接依赖改为 Hook 钩子 + Option 闭包模式，新增 SessionEnabledHook/SessionDisabledHook/SessionExpiredHook 三个 hook，NewManager 改为 opts ...ManagerOption，统一 Socket 推送事件（session_enabled/session_disabled/session_expired/heart_beat）共用房间 drc:heartbeat:{gatewaySn}，ReqId 统一 tool.SimpleUUID()，新增 socketiox-documentation.md 第 12 章 DRC 远程控制对接指导
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `26e6c611` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

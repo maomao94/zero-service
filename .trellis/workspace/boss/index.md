@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 17
+- **Total Sessions**: 18
 - **Last Active**: 2026-05-09
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~871 | Active |
+| `journal-1.md` | ~904 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 18 | 2026-05-09 | DRC 会话生命周期 Hook 与 Socket 推送事件 | `26e6c611` | `master` |
 | 17 | 2026-05-09 | DRC Manager 代码审阅与深度重构 | `d089329b` | `master` |
 | 16 | 2026-05-09 | DRC 心跳定时发送报文优化 | `da4213c0` | `master` |
 | 15 | 2026-05-09 | proto message 定义按 RPC 顺序重排 | uncommitted | `master` |
