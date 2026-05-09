@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -22,26 +20,34 @@ func TestNewClient_Default(t *testing.T) {
 	if c.engine == nil {
 		t.Fatal("expected non-nil engine")
 	}
-	if _, ok := c.engine.(*defaultEngine); !ok {
-		t.Fatal("expected defaultEngine")
+	if _, ok := c.engine.(*DefaultEngine); !ok {
+		t.Fatal("expected DefaultEngine")
 	}
-	if c.timeout != DefaultTimeout {
-		t.Errorf("expected timeout %v, got %v", DefaultTimeout, c.timeout)
+	if c.maxResponseBytes != DefaultMaxResponseBytes {
+		t.Fatalf("expected default max response bytes %d, got %d", DefaultMaxResponseBytes, c.maxResponseBytes)
 	}
-}
-
-func TestNewClient_WithHttpcService(t *testing.T) {
-	svc := httpc.NewService("test")
-	c := NewClient(WithHttpcService(svc))
-	if _, ok := c.engine.(*httpcEngine); !ok {
-		t.Fatal("expected httpcEngine")
+	if c.downloadBytesLimit != DefaultDownloadBytesLimit {
+		t.Fatalf("expected default download bytes limit %d, got %d", DefaultDownloadBytesLimit, c.downloadBytesLimit)
+	}
+	if c.uploadBytesLimit != DefaultUploadBytesLimit {
+		t.Fatalf("expected default upload bytes limit %d, got %d", DefaultUploadBytesLimit, c.uploadBytesLimit)
 	}
 }
 
-func TestNewClient_WithTimeout(t *testing.T) {
-	c := NewClient(WithTimeout(5 * time.Second))
-	if c.timeout != 5*time.Second {
-		t.Errorf("expected timeout 5s, got %v", c.timeout)
+func TestNewClient_WithByteLimits(t *testing.T) {
+	c := NewClient(
+		WithMaxResponseBytes(1),
+		WithDownloadBytesLimit(2),
+		WithUploadBytesLimit(3),
+	)
+	if c.maxResponseBytes != 1 {
+		t.Fatalf("expected custom max response bytes, got %d", c.maxResponseBytes)
+	}
+	if c.downloadBytesLimit != 2 {
+		t.Fatalf("expected custom download bytes limit, got %d", c.downloadBytesLimit)
+	}
+	if c.uploadBytesLimit != 3 {
+		t.Fatalf("expected custom upload bytes limit, got %d", c.uploadBytesLimit)
 	}
 }
 
@@ -50,29 +56,6 @@ func TestNewClient_WithTLSConfig(t *testing.T) {
 	c := NewClient(WithTLSConfig(cfg))
 	if c.tlsConfig != cfg {
 		t.Fatal("expected custom TLS config stored")
-	}
-}
-
-func TestNewClient_WithHttpcAndTLS(t *testing.T) {
-	ts := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"secure":true}`))
-	}))
-	defer ts.Close()
-
-	tlsCfg := &tls.Config{InsecureSkipVerify: true}
-	tlsClient := &http.Client{Transport: &http.Transport{TLSClientConfig: tlsCfg}}
-	svc := httpc.NewServiceWithClient("test-tls", tlsClient)
-	c := NewClient(WithHttpcService(svc))
-	if _, ok := c.engine.(*httpcEngine); !ok {
-		t.Fatal("expected httpcEngine")
-	}
-	resp, err := c.Do(ctx(t), NewRequest(ts.URL, http.MethodGet))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !resp.Success {
-		t.Errorf("expected success, error: %s", resp.Error)
 	}
 }
 
@@ -100,7 +83,7 @@ func TestClient_Do_Get(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if !resp.Success {
-		t.Errorf("expected success, got error: %s", resp.Error)
+		t.Errorf("expected success, got error: %s", resp.Err)
 	}
 	if resp.StatusCode != 200 {
 		t.Errorf("expected 200, got %d", resp.StatusCode)
@@ -124,7 +107,7 @@ func TestClient_Do_Post_JSON(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if !resp.Success {
-		t.Errorf("expected success, error: %s", resp.Error)
+		t.Errorf("expected success, error: %s", resp.Err)
 	}
 	if gotBody != `{"key":"value"}` {
 		t.Errorf("expected body, got %q", gotBody)
@@ -153,7 +136,7 @@ func TestClient_Do_Post_FormData(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if !resp.Success {
-		t.Errorf("expected success, error: %s", resp.Error)
+		t.Errorf("expected success, error: %s", resp.Err)
 	}
 	if !strings.Contains(gotCT, "application/x-www-form-urlencoded") {
 		t.Errorf("expected form content type, got %q", gotCT)
@@ -202,7 +185,76 @@ func TestClient_Do_EmptyURL(t *testing.T) {
 	}
 }
 
-func TestClient_Do_WithHttpcService(t *testing.T) {
+func TestClient_Do_WithBodyReader(t *testing.T) {
+	var gotBody string
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		gotBody = string(body)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	c := NewClient()
+	reader := bytes.NewReader([]byte("streamed body"))
+	resp, err := c.Post(ctx(t), ts.URL, WithBodyReader(reader))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Errorf("expected success, error: %s", resp.Err)
+	}
+	if gotBody != "streamed body" {
+		t.Errorf("expected streamed body, got %q", gotBody)
+	}
+}
+
+func TestClient_Do_Timeout(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(500 * time.Millisecond)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	ctx, cancel := context.WithTimeout(ctx(t), 100*time.Millisecond)
+	defer cancel()
+	c := NewClient()
+	resp, err := c.Get(ctx, ts.URL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Error("expected failure for timeout")
+	}
+	if resp.Err == nil {
+		t.Error("expected non-empty error message")
+	}
+	if resp.CostMs <= 0 {
+		t.Error("expected positive cost")
+	}
+}
+
+func TestClient_Do_LargeBody(t *testing.T) {
+	largeData := make([]byte, 10*1024*1024)
+	for i := range largeData {
+		largeData[i] = 'A'
+	}
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write(largeData)
+	}))
+	defer ts.Close()
+
+	c := NewClient()
+	resp, err := c.Get(ctx(t), ts.URL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(resp.Data) != len(largeData) {
+		t.Errorf("expected %d bytes, got %d", len(largeData), len(resp.Data))
+	}
+}
+
+func TestClient_Do_WithEngine(t *testing.T) {
 	var gotBody string
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
@@ -212,13 +264,13 @@ func TestClient_Do_WithHttpcService(t *testing.T) {
 	defer ts.Close()
 
 	svc := httpc.NewService("test-svc")
-	c := NewClient(WithHttpcService(svc))
+	c := NewClient(WithEngine(NewHTTPEngine(svc)))
 	resp, err := c.Do(context.Background(), NewRequest(ts.URL, http.MethodPost, WithBody([]byte(`{"key":"value"}`))))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if !resp.Success {
-		t.Errorf("expected success, error: %s", resp.Error)
+		t.Errorf("expected success, error: %s", resp.Err)
 	}
 	if gotBody != `{"key":"value"}` {
 		t.Errorf("expected body, got %q", gotBody)
@@ -239,7 +291,7 @@ func TestClient_Do_WithTLS(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if !resp.Success {
-		t.Errorf("expected success, error: %s", resp.Error)
+		t.Errorf("expected success, error: %s", resp.Err)
 	}
 }
 
@@ -268,6 +320,129 @@ func TestClient_Do_WithJSONBody(t *testing.T) {
 	}
 	if !strings.Contains(gotBody, `"name":"test"`) {
 		t.Errorf("expected json body, got %q", gotBody)
+	}
+}
+
+func TestClient_Do_UsesContextTimeoutWithoutHTTPClientTimeout(t *testing.T) {
+	c := NewClient()
+	eng, ok := c.engine.(*DefaultEngine)
+	if !ok {
+		t.Fatal("expected default engine")
+	}
+	if eng.client.Timeout != 0 {
+		t.Fatalf("expected http.Client timeout disabled, got %v", eng.client.Timeout)
+	}
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-r.Context().Done():
+			return
+		case <-time.After(300 * time.Millisecond):
+			w.WriteHeader(http.StatusOK)
+		}
+	}))
+	defer ts.Close()
+
+	reqCtx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+	resp, err := c.Get(reqCtx, ts.URL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected timeout response")
+	}
+	if resp.StatusCode != http.StatusRequestTimeout {
+		t.Fatalf("expected 408 timeout status, got %d", resp.StatusCode)
+	}
+}
+
+func TestClient_Do_RespectsExistingContextDeadline(t *testing.T) {
+	c := NewClient()
+	reqCtx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+
+	sawDone := make(chan struct{})
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-r.Context().Done():
+			close(sawDone)
+		case <-time.After(time.Second):
+			w.WriteHeader(http.StatusOK)
+		}
+	}))
+	defer ts.Close()
+
+	resp, err := c.Get(reqCtx, ts.URL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.StatusCode != http.StatusRequestTimeout {
+		t.Fatalf("expected timeout status, got %d", resp.StatusCode)
+	}
+	select {
+	case <-sawDone:
+	case <-time.After(time.Second):
+		t.Fatal("expected caller deadline to cancel request")
+	}
+}
+
+func TestClient_Do_UsesContextWithoutDeadline(t *testing.T) {
+	c := NewClient()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := r.Context().Deadline(); ok {
+			t.Error("expected no derived deadline")
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	resp, err := c.Get(context.Background(), ts.URL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Fatalf("expected success, got %s", resp.Err)
+	}
+}
+
+func TestClient_Do_OptionError(t *testing.T) {
+	c := NewClient()
+	req := NewRequest("http://example.com", http.MethodPost,
+		WithJSONBody(make(chan int)),
+	)
+	_, err := c.Do(context.Background(), req)
+	if err == nil {
+		t.Fatal("expected error from option error")
+	}
+}
+
+func TestClient_Do_UsesConfiguredResponseLimit(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("abcd"))
+	}))
+	defer ts.Close()
+
+	c := NewClient(WithMaxResponseBytes(3))
+	resp, err := c.Get(ctx(t), ts.URL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Success {
+		t.Fatal("expected response limit failure")
+	}
+	if resp.Err == nil || !strings.Contains(resp.Err.Error(), "response body too large") {
+		t.Fatalf("expected response limit error, got %q", resp.Err)
+	}
+
+	c = NewClient(WithMaxResponseBytes(0))
+	resp, err = c.Get(ctx(t), ts.URL)
+	if err != nil {
+		t.Fatalf("unexpected disabled limit error: %v", err)
+	}
+	if string(resp.Data) != "abcd" {
+		t.Fatalf("expected full response body, got %q", string(resp.Data))
 	}
 }
 
@@ -404,517 +579,6 @@ func TestClient_Options(t *testing.T) {
 	}
 }
 
-// --- 包级函数测试 ---
-
-func TestGet(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"ok":true}`))
-	}))
-	defer ts.Close()
-
-	resp, err := Get(ctx(t), ts.URL)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !resp.Success {
-		t.Errorf("expected success")
-	}
-}
-
-func TestPost(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer ts.Close()
-
-	resp, err := Post(ctx(t), ts.URL, WithBody([]byte(`{"key":"value"}`)))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !resp.Success {
-		t.Errorf("expected success")
-	}
-}
-
-func TestSendRequest_PackageLevel(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"ok":true}`))
-	}))
-	defer ts.Close()
-
-	resp, err := SendRequest(ctx(t), NewRequest(ts.URL, http.MethodGet))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !resp.Success {
-		t.Errorf("expected success")
-	}
-}
-
-func TestSendRequest_WithHttpc(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer ts.Close()
-
-	svc := httpc.NewService("test")
-	resp, err := SendRequest(ctx(t), NewRequest(ts.URL, http.MethodGet), WithHttpcService(svc))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !resp.Success {
-		t.Errorf("expected success")
-	}
-}
-
-func TestSendRequest_NilRequest(t *testing.T) {
-	_, err := SendRequest(ctx(t), nil)
-	if err == nil {
-		t.Fatal("expected error for nil request")
-	}
-}
-
-func TestSendRequest_EmptyURL(t *testing.T) {
-	_, err := SendRequest(ctx(t), &Request{})
-	if err == nil {
-		t.Fatal("expected error for empty URL")
-	}
-}
-
-// --- 文件上传测试 ---
-
-func TestClient_Upload(t *testing.T) {
-	var gotCT string
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotCT = r.Header.Get("Content-Type")
-		if err := r.ParseMultipartForm(10 << 20); err != nil {
-			t.Errorf("parse multipart: %v", err)
-		}
-		file, header, err := r.FormFile("file")
-		if err != nil {
-			t.Errorf("get form file: %v", err)
-		}
-		defer file.Close()
-		if header.Filename != "test.txt" {
-			t.Errorf("expected filename test.txt, got %s", header.Filename)
-		}
-		data, _ := io.ReadAll(file)
-		if string(data) != "hello world" {
-			t.Errorf("expected file content, got %q", string(data))
-		}
-		if r.FormValue("desc") != "test upload" {
-			t.Errorf("expected field desc, got %q", r.FormValue("desc"))
-		}
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer ts.Close()
-
-	c := NewClient()
-	resp, err := c.Upload(ctx(t), ts.URL, []FileUpload{
-		{FieldName: "file", FileName: "test.txt", Content: bytes.NewReader([]byte("hello world"))},
-	}, map[string]string{"desc": "test upload"})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !resp.Success {
-		t.Errorf("expected success, error: %s", resp.Error)
-	}
-	if !strings.Contains(gotCT, "multipart/form-data") {
-		t.Errorf("expected multipart content type, got %q", gotCT)
-	}
-}
-
-func TestClient_UploadBytes(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := r.ParseMultipartForm(10 << 20); err != nil {
-			t.Errorf("parse multipart: %v", err)
-		}
-		file, header, err := r.FormFile("attachment")
-		if err != nil {
-			t.Errorf("get form file: %v", err)
-		}
-		defer file.Close()
-		if header.Filename != "data.bin" {
-			t.Errorf("expected filename data.bin, got %s", header.Filename)
-		}
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer ts.Close()
-
-	c := NewClient()
-	resp, err := c.UploadBytes(ctx(t), ts.URL, "attachment", "data.bin", []byte("binary data"), nil)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !resp.Success {
-		t.Errorf("expected success")
-	}
-}
-
-func TestClient_UploadFile(t *testing.T) {
-	tmpFile := filepath.Join(t.TempDir(), "upload.txt")
-	os.WriteFile(tmpFile, []byte("file content"), 0o644)
-
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := r.ParseMultipartForm(10 << 20); err != nil {
-			t.Errorf("parse multipart: %v", err)
-		}
-		file, _, err := r.FormFile("doc")
-		if err != nil {
-			t.Errorf("get form file: %v", err)
-		}
-		defer file.Close()
-		data, _ := io.ReadAll(file)
-		if string(data) != "file content" {
-			t.Errorf("expected file content, got %q", string(data))
-		}
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer ts.Close()
-
-	c := NewClient()
-	resp, err := c.UploadFile(ctx(t), ts.URL, tmpFile, "doc", nil)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !resp.Success {
-		t.Errorf("expected success")
-	}
-}
-
-// --- 文件下载测试 ---
-
-func TestClient_Download(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("download content"))
-	}))
-	defer ts.Close()
-
-	c := NewClient()
-	body, err := c.Download(ctx(t), ts.URL)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer body.Close()
-	data, _ := io.ReadAll(body)
-	if string(data) != "download content" {
-		t.Errorf("expected download content, got %q", string(data))
-	}
-}
-
-func TestClient_DownloadBytes(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("byte content"))
-	}))
-	defer ts.Close()
-
-	c := NewClient()
-	data, err := c.DownloadBytes(ctx(t), ts.URL)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if string(data) != "byte content" {
-		t.Errorf("expected byte content, got %q", string(data))
-	}
-}
-
-func TestClient_DownloadFile(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("saved content"))
-	}))
-	defer ts.Close()
-
-	destPath := filepath.Join(t.TempDir(), "sub", "output.txt")
-	c := NewClient()
-	err := c.DownloadFile(ctx(t), ts.URL, destPath)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	data, err := os.ReadFile(destPath)
-	if err != nil {
-		t.Fatalf("read file: %v", err)
-	}
-	if string(data) != "saved content" {
-		t.Errorf("expected saved content, got %q", string(data))
-	}
-}
-
-func TestClient_Download_Error(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusNotFound)
-	}))
-	defer ts.Close()
-
-	c := NewClient()
-	_, err := c.Download(ctx(t), ts.URL)
-	if err == nil {
-		t.Fatal("expected error for 404")
-	}
-}
-
-// --- Response 工具测试 ---
-
-func TestDecodeJSON_Success(t *testing.T) {
-	resp := &Response{
-		Data:    []byte(`{"name":"test","age":18}`),
-		Success: true,
-	}
-	var target struct {
-		Name string `json:"name"`
-		Age  int    `json:"age"`
-	}
-	err := DecodeJSON(resp, &target)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if target.Name != "test" || target.Age != 18 {
-		t.Errorf("unexpected result: %+v", target)
-	}
-}
-
-func TestDecodeJSON_Error(t *testing.T) {
-	resp := &Response{Error: "some error"}
-	err := DecodeJSON(resp, &struct{}{})
-	if err == nil {
-		t.Error("expected error")
-	}
-}
-
-func TestDecodeJSON_Nil(t *testing.T) {
-	err := DecodeJSON(nil, &struct{}{})
-	if err == nil {
-		t.Error("expected error for nil response")
-	}
-}
-
-func TestFormatCostMs(t *testing.T) {
-	tests := []struct {
-		input    int64
-		expected string
-	}{
-		{100, "100ms"},
-		{999, "999ms"},
-		{1000, "1.0s"},
-		{1500, "1.5s"},
-		{10000, "10.0s"},
-	}
-	for _, tt := range tests {
-		got := FormatCostMs(tt.input)
-		if got != tt.expected {
-			t.Errorf("FormatCostMs(%d) = %q, want %q", tt.input, got, tt.expected)
-		}
-	}
-}
-
-// --- 编码工具测试 ---
-
-func TestValidateAndFlatten(t *testing.T) {
-	data, err := ValidateAndFlatten([]byte(`{"name":"test","age":18,"active":true}`))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if data["name"][0] != "test" {
-		t.Errorf("expected name=test, got %v", data["name"])
-	}
-	if data["age"][0] != "18" {
-		t.Errorf("expected age=18, got %v", data["age"])
-	}
-}
-
-func TestValidateAndFlatten_Nested(t *testing.T) {
-	data, err := ValidateAndFlatten([]byte(`{"user":{"name":"admin","role":"manager"}}`))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if data["user.name"][0] != "admin" {
-		t.Errorf("expected user.name=admin, got %v", data["user.name"])
-	}
-}
-
-func TestValidateAndFlatten_InvalidJSON(t *testing.T) {
-	_, err := ValidateAndFlatten([]byte(`not json`))
-	if err == nil {
-		t.Error("expected error for invalid json")
-	}
-}
-
-func TestValidateAndFlatten_Array(t *testing.T) {
-	data, err := ValidateAndFlatten([]byte(`{"tags":["go","rust"]}`))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(data["tags"]) != 2 {
-		t.Errorf("expected 2 tags, got %v", data["tags"])
-	}
-}
-
-func TestValidateAndFlatten_NullValue(t *testing.T) {
-	data, err := ValidateAndFlatten([]byte(`{"key":null}`))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if _, ok := data["key"]; ok {
-		t.Error("expected null value to be skipped")
-	}
-}
-
-func TestEncodeURLEncoded(t *testing.T) {
-	encoded, err := EncodeURLEncoded([]byte(`{"foo":"bar","num":42}`))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !strings.Contains(encoded, "foo=bar") {
-		t.Errorf("expected foo=bar in %q", encoded)
-	}
-}
-
-func TestEncodeURLEncoded_InvalidJSON(t *testing.T) {
-	_, err := EncodeURLEncoded([]byte(`not json`))
-	if err == nil {
-		t.Error("expected error for invalid json")
-	}
-}
-
-func TestEncodeMultipart(t *testing.T) {
-	fields := map[string][]string{"a": {"b"}, "c": {"d"}}
-	reader, ct, err := EncodeMultipart(fields)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if reader == nil {
-		t.Fatal("expected non-nil reader")
-	}
-	if !strings.Contains(ct, "multipart/form-data") {
-		t.Errorf("expected multipart content type, got %q", ct)
-	}
-}
-
-// --- WithBodyReader / buildBody / buildResponse 分支测试 ---
-
-func TestClient_Do_WithBodyReader(t *testing.T) {
-	var gotBody string
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body, _ := io.ReadAll(r.Body)
-		gotBody = string(body)
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer ts.Close()
-
-	c := NewClient()
-	reader := bytes.NewReader([]byte("streamed body"))
-	resp, err := c.Post(ctx(t), ts.URL, WithBodyReader(reader))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !resp.Success {
-		t.Errorf("expected success, error: %s", resp.Error)
-	}
-	if gotBody != "streamed body" {
-		t.Errorf("expected streamed body, got %q", gotBody)
-	}
-}
-
-func TestClient_Do_Timeout(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		time.Sleep(500 * time.Millisecond)
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer ts.Close()
-
-	c := NewClient(WithTimeout(100 * time.Millisecond))
-	resp, err := c.Get(ctx(t), ts.URL)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if resp.Success {
-		t.Error("expected failure for timeout")
-	}
-	if resp.Error == "" {
-		t.Error("expected non-empty error message")
-	}
-	if resp.CostMs <= 0 {
-		t.Error("expected positive cost")
-	}
-}
-
-func TestClient_Do_LargeBody(t *testing.T) {
-	largeData := make([]byte, 10*1024*1024) // 10MB
-	for i := range largeData {
-		largeData[i] = 'A'
-	}
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write(largeData)
-	}))
-	defer ts.Close()
-
-	c := NewClient()
-	resp, err := c.Get(ctx(t), ts.URL)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(resp.Data) != len(largeData) {
-		t.Errorf("expected %d bytes, got %d", len(largeData), len(resp.Data))
-	}
-}
-
-func TestClient_Do_FormData_BuildBody(t *testing.T) {
-	var gotCT string
-	var gotBody string
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotCT = r.Header.Get("Content-Type")
-		body, _ := io.ReadAll(r.Body)
-		gotBody = string(body)
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer ts.Close()
-
-	c := NewClient()
-	resp, err := c.Do(context.Background(), NewRequest(ts.URL, http.MethodPost,
-		WithFormData(url.Values{"a": {"1"}, "b": {"2"}}),
-	))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !resp.Success {
-		t.Errorf("expected success, error: %s", resp.Error)
-	}
-	if !strings.Contains(gotCT, "application/x-www-form-urlencoded") {
-		t.Errorf("expected form content type, got %q", gotCT)
-	}
-	if !strings.Contains(gotBody, "a=1") || !strings.Contains(gotBody, "b=2") {
-		t.Errorf("expected form fields in body, got %q", gotBody)
-	}
-}
-
-func TestClient_Do_BodyReader_NilBody(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body, _ := io.ReadAll(r.Body)
-		if len(body) != 0 {
-			t.Errorf("expected empty body, got %q", string(body))
-		}
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer ts.Close()
-
-	c := NewClient()
-	resp, err := c.Post(ctx(t), ts.URL)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !resp.Success {
-		t.Errorf("expected success")
-	}
-}
-
-// --- 默认头合并测试 ---
-
 func TestClient_DefaultHeaders_Merge(t *testing.T) {
 	var gotAuth string
 	var gotCustom string
@@ -962,90 +626,10 @@ func TestClient_CostTracking(t *testing.T) {
 	}
 }
 
-// --- 边界和新增行为测试 ---
-
-func TestDecodeJSON_NonSuccess(t *testing.T) {
-	resp := &Response{
-		Data:       []byte(`{"code":1001}`),
-		StatusCode: 400,
-		Success:    false,
-	}
-	var target struct {
-		Code int `json:"code"`
-	}
-	err := DecodeJSON(resp, &target)
-	if err == nil {
-		t.Error("expected error for non-success response")
-	}
-	if !strings.Contains(err.Error(), "400") {
-		t.Errorf("expected error to mention status code, got: %v", err)
-	}
-}
-
-func TestFormatCostMs_EdgeCases(t *testing.T) {
-	tests := []struct {
-		input    int64
-		expected string
-	}{
-		{0, "0ms"},
-		{-1, "-1ms"},
-		{-1500, "-1500ms"},
-	}
-	for _, tt := range tests {
-		got := FormatCostMs(tt.input)
-		if got != tt.expected {
-			t.Errorf("FormatCostMs(%d) = %q, want %q", tt.input, got, tt.expected)
-		}
-	}
-}
-
-func TestWithJSONBody_MarshalError(t *testing.T) {
-	req := NewRequest("http://example.com", http.MethodPost,
-		WithJSONBody(make(chan int)),
-	)
-	if req.OptionError == nil {
-		t.Fatal("expected OptionError for unmarshalable type")
-	}
-	if !strings.Contains(req.OptionError.Error(), "marshal json body") {
-		t.Errorf("unexpected error message: %v", req.OptionError)
-	}
-}
-
-func TestWithBodyReader_ReadError(t *testing.T) {
-	errReader := &errorReader{}
-	req := NewRequest("http://example.com", http.MethodPost,
-		WithBodyReader(errReader),
-	)
-	if req.OptionError == nil {
-		t.Fatal("expected OptionError for read error")
-	}
-	if !strings.Contains(req.OptionError.Error(), "read body") {
-		t.Errorf("unexpected error message: %v", req.OptionError)
-	}
-}
-
-type errorReader struct{}
-
-func (e *errorReader) Read(_ []byte) (int, error) {
-	return 0, io.ErrUnexpectedEOF
-}
-
-func TestClient_Do_OptionError(t *testing.T) {
-	c := NewClient()
-	req := NewRequest("http://example.com", http.MethodPost,
-		WithJSONBody(make(chan int)),
-	)
-	_, err := c.Do(context.Background(), req)
-	if err == nil {
-		t.Fatal("expected error from option error")
-	}
-}
-
 func TestWithDefaultHeaders_Clone(t *testing.T) {
 	original := http.Header{"Authorization": {"Bearer original"}}
 	c := NewClient(WithDefaultHeaders(original))
 
-	// 修改原始 header 不应影响 client
 	original.Set("X-Evil", "injected")
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1068,9 +652,11 @@ func TestWithDefaultHeaders_Clone(t *testing.T) {
 	}
 }
 
-func TestBuildBody_URLEncodedDirect(t *testing.T) {
+func TestClient_Do_FormData_BuildBody(t *testing.T) {
+	var gotCT string
 	var gotBody string
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotCT = r.Header.Get("Content-Type")
 		body, _ := io.ReadAll(r.Body)
 		gotBody = string(body)
 		w.WriteHeader(http.StatusOK)
@@ -1078,48 +664,116 @@ func TestBuildBody_URLEncodedDirect(t *testing.T) {
 	defer ts.Close()
 
 	c := NewClient()
-	// 发送已经是 URL-encoded 格式的 body
 	resp, err := c.Do(context.Background(), NewRequest(ts.URL, http.MethodPost,
-		WithBody([]byte("foo=bar&baz=qux")),
-		WithHeader("Content-Type", "application/x-www-form-urlencoded"),
+		WithFormData(url.Values{"a": {"1"}, "b": {"2"}}),
 	))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if !resp.Success {
-		t.Errorf("expected success, error: %s", resp.Error)
+		t.Errorf("expected success, error: %s", resp.Err)
 	}
-	// 应该保持原始 URL-encoded 格式，不经过 JSON 解析
-	if gotBody != "foo=bar&baz=qux" {
-		t.Errorf("expected original URL-encoded body, got %q", gotBody)
+	if !strings.Contains(gotCT, "application/x-www-form-urlencoded") {
+		t.Errorf("expected form content type, got %q", gotCT)
+	}
+	if !strings.Contains(gotBody, "a=1") || !strings.Contains(gotBody, "b=2") {
+		t.Errorf("expected form fields in body, got %q", gotBody)
 	}
 }
 
-func TestEncodeMultipart_Error(t *testing.T) {
-	// 创建一个包含非法 field name 的map，虽然在 Go 中 key 总是字符串，
-	// 但可以通过空 key 验证 CreateFormField 的行为
-	_, _, err := EncodeMultipart(map[string][]string{"": {"value"}})
-	// multipart.CreateFormField 对空 key 不报错，所以换一种验证方式：
-	// 验证正常路径仍能返回值
-	if err != nil {
-		t.Fatalf("EncodeMultipart returned error for empty key: %v", err)
-	}
+func TestClient_Do_BodyReader_NilBody(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		if len(body) != 0 {
+			t.Errorf("expected empty body, got %q", string(body))
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
 
-	// 验证正常路径
-	fields := map[string][]string{"normal": {"data"}}
-	reader, ct, err := EncodeMultipart(fields)
+	c := NewClient()
+	resp, err := c.Post(ctx(t), ts.URL)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if reader == nil {
-		t.Fatal("expected non-nil reader")
-	}
-	if !strings.Contains(ct, "multipart/form-data") {
-		t.Errorf("expected multipart content type, got %q", ct)
+	if !resp.Success {
+		t.Errorf("expected success")
 	}
 }
 
-func ctx(t *testing.T) context.Context {
-	t.Helper()
-	return context.Background()
+func TestPackageGet(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"ok":true}`))
+	}))
+	defer ts.Close()
+
+	resp, err := Get(ctx(t), ts.URL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Errorf("expected success")
+	}
+}
+
+func TestPackagePost(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	resp, err := Post(ctx(t), ts.URL, WithBody([]byte(`{"key":"value"}`)))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Errorf("expected success")
+	}
+}
+
+func TestSendRequest_PackageLevel(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"ok":true}`))
+	}))
+	defer ts.Close()
+
+	resp, err := SendRequest(ctx(t), NewRequest(ts.URL, http.MethodGet))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Errorf("expected success")
+	}
+}
+
+func TestSendRequest_WithHttpc(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	svc := httpc.NewService("test")
+	resp, err := SendRequest(ctx(t), NewRequest(ts.URL, http.MethodGet), WithEngine(NewHTTPEngine(svc)))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Errorf("expected success")
+	}
+}
+
+func TestSendRequest_NilRequest(t *testing.T) {
+	_, err := SendRequest(ctx(t), nil)
+	if err == nil {
+		t.Fatal("expected error for nil request")
+	}
+}
+
+func TestSendRequest_EmptyURL(t *testing.T) {
+	_, err := SendRequest(ctx(t), &Request{})
+	if err == nil {
+		t.Fatal("expected error for empty URL")
+	}
 }

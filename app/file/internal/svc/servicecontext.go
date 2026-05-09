@@ -54,7 +54,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		db.MustAutoMigrate(&gormmodel.Oss{})
 	}
 
-	httpcSvc := httpc.NewService("file-httpc")
+	httpcSvc := netx.InitHTTPC("file-httpc")
 	svc := &ServiceContext{
 		Config:          c,
 		DB:              db,
@@ -62,7 +62,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		ThumbTaskRunner: threading.NewTaskRunner(c.ThumbTaskConcurrency),
 		Httpc:           httpcSvc,
 		NetClient: netx.NewClient(
-			netx.WithHttpcService(httpcSvc),
+			netx.WithEngine(netx.NewHTTPEngine(httpcSvc)),
 		),
 	}
 	svc.OssTemplateResolver = ossx.NewTemplateResolver(c.Oss.TenantMode, svc.loadOssConfig)

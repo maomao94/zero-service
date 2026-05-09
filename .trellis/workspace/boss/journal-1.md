@@ -457,3 +457,36 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 9: 图片元数据解析与网关返回完善
+
+**Date**: 2026-05-09
+**Task**: 图片元数据解析与网关返回完善
+**Branch**: `master`
+
+### Summary
+
+完成图片 EXIF 元数据解析优化：BodySerialNumber 默认平铺返回，修复 GPS、宽高、海拔解析兼容问题，补齐 file RPC 与 gtw 网关 ImageMeta 字段并完成局部验证。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `103f5617` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

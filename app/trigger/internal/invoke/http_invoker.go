@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"time"
+
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/common/netx"
 
@@ -26,15 +27,10 @@ func (h *HTTPInvoker) Execute(ctx context.Context, svcCtx *svc.ServiceContext, t
 		headers.Set(k, v)
 	}
 
-	clientOpts := []netx.ClientOption{netx.WithHttpcService(svcCtx.Httpc)}
-	if task.Timeout > 0 {
-		clientOpts = append(clientOpts, netx.WithTimeout(time.Duration(task.Timeout)*time.Millisecond))
-	}
-
-	resp, err := netx.SendRequest(ctx, netx.NewRequest(task.URL, method,
-		netx.WithHeaders(headers),
-		netx.WithBody(task.Body),
-	), clientOpts...)
+	req := netx.NewRequest(task.URL, method).
+		HeadersMap(headers).
+		Raw(task.Body)
+	resp, err := svcCtx.NetClient.Do(ctx, req)
 	if err != nil {
 		logx.WithContext(ctx).Errorf("invoke http failed: id=%s url=%s err=%v", task.ID, task.URL, err)
 		result.Error = err.Error()
@@ -48,8 +44,8 @@ func (h *HTTPInvoker) Execute(ctx context.Context, svcCtx *svc.ServiceContext, t
 	result.CostMs = resp.CostMs
 	result.CostFormatted = resp.CostFormatted
 	result.Success = resp.Success
-	if resp.Error != "" {
-		result.Error = resp.Error
+	if resp.Err != nil {
+		result.Error = resp.Err.Error()
 	}
 
 	return result

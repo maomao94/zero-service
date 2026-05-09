@@ -7,6 +7,7 @@ import (
 	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/asynqx"
 	"zero-service/common/dbx"
+	"zero-service/common/netx"
 	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
 	"zero-service/model"
@@ -37,6 +38,7 @@ type ServiceContext struct {
 	AsynqServer       *asynq.Server
 	Scheduler         *asynq.Scheduler
 	Httpc             httpc.Service
+	NetClient         *netx.Client
 	ConnMap           *collection.Cache // 使用带过期清理的缓存
 	SqlConn           sqlx.SqlConn
 	PlanModel         model.PlanModel
@@ -68,6 +70,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		panic(err)
 	}
 
+	httpcSvc := netx.InitHTTPC("trigger-httpc")
 	return &ServiceContext{
 		Config:            c,
 		Validate:          validator.New(),
@@ -75,7 +78,8 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		AsynqInspector:    asynqx.NewAsynqInspector(c.Redis.Host, c.Redis.Pass, c.RedisDB),
 		AsynqServer:       asynqx.NewAsynqServer(c.Redis.Host, c.Redis.Pass, c.RedisDB),
 		Scheduler:         asynqx.NewScheduler(c.Redis.Host, c.Redis.Pass, c.RedisDB),
-		Httpc:             httpc.NewService("httpc"),
+		Httpc:             httpcSvc,
+		NetClient:         netx.NewClient(netx.WithEngine(netx.NewHTTPEngine(httpcSvc))),
 		ConnMap:           connCache,
 		SqlConn:           dbConn,
 		PlanModel:         model.NewPlanModel(dbConn, model.WithDBType(dbType)),

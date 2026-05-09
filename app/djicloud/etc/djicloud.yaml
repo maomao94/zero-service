@@ -18,9 +18,20 @@ AckTimeout: 5s
 PendingTTL: 30s
 DB:
   DataSource: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable&TimeZone=Asia/Shanghai
-  LogLevel: error
+  # 最大空闲连接数，默认 10。
   MaxIdleConns: 10
+  # 最大打开连接数，默认 100。
   MaxOpenConns: 100
+  # 慢 SQL 阈值，默认 200ms。
+  SlowThreshold: 200ms
+  # GORM 日志级别，默认 error，可选 silent/error/warn/info。
+  LogLevel: error
+  # 是否参数化 SQL 日志，默认 false。生产环境建议开启以避免日志暴露敏感参数。
+  ParameterizedQueries: false
+  # 是否忽略 record not found 日志，默认 false。
+  IgnoreRecordNotFoundError: false
+  # 是否按字段名显式查询，默认 false。
+  QueryFields: false
 UpstreamReply:
   EnableEventsReply: true
   EnableStatusReply: false

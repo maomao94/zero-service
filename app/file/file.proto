@@ -54,6 +54,7 @@ message ImageMeta {
   double altitude = 6;    // 高度
   string cameraModel = 7; // 相机型号
   map<string, string> extra = 8; // 扩展元数据
+  string bodySerialNumber = 9; // 机身序列号
 }
 
 

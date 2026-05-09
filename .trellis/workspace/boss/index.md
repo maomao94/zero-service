@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 8
-- **Last Active**: 2026-05-07
+- **Total Sessions**: 9
+- **Last Active**: 2026-05-09
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~459 | Active |
+| `journal-1.md` | ~492 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 9 | 2026-05-09 | 图片元数据解析与网关返回完善 | `103f5617` | `master` |
 | 8 | 2026-05-07 | 文件服务流上传接口瘦身与 common/iox 清理 | `1ecd5e29`, `49c1a1e9` | `master` |
 | 7 | 2026-05-07 | 文件服务流式上传与 GORM 迁移重构 | `00cc3570` | `master` |
 | 6 | 2026-05-07 | 文件服务优化：TeeWriter 工具 + RelayFile 接口 | `455502e9` | `master` |

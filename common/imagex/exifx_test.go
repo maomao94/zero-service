@@ -33,19 +33,117 @@ func TestExtractImageMetaFromBytesWithExtraFieldsReturnsEmptyForNoExif(t *testin
 }
 
 func TestExtractImageMetaFromBytesReadsBodySerialNumberFromExifIFD(t *testing.T) {
-	got, err := ExtractImageMetaFromBytes(buildExifWithBodySerialNumber(t, "BODY-123456"), WithExtraMetaFields("Body Serial Number"))
+	got, err := ExtractImageMetaFromBytes(buildExifWithBodySerialNumber(t, "BODY-123456"))
 	if err != nil {
 		t.Fatalf("ExtractImageMetaFromBytes() error = %v", err)
 	}
-	if got.Extra["bodySerialNumber"] != "BODY-123456" {
-		t.Fatalf("bodySerialNumber = %q, want %q", got.Extra["bodySerialNumber"], "BODY-123456")
+	if got.BodySerialNumber != "BODY-123456" {
+		t.Fatalf("BodySerialNumber = %q, want %q", got.BodySerialNumber, "BODY-123456")
 	}
 }
 
-func TestExtraMetaWalkerBodySerialNumberAlias(t *testing.T) {
-	walker := newExtraMetaWalker([]string{"body_serial_number"})
-	if !walker.wanted["bodySerialNumber"] {
-		t.Fatal("body_serial_number should map to bodySerialNumber")
+func TestExtractImageMetaFromBytesKeepsBodySerialNumberExtraCompatibility(t *testing.T) {
+	got, err := ExtractImageMetaFromBytes(buildExifWithBodySerialNumber(t, "BODY-ID-123"), WithExtraMetaFields("BodySerialNumber"))
+	if err != nil {
+		t.Fatalf("ExtractImageMetaFromBytes() error = %v", err)
+	}
+	if got.BodySerialNumber != "BODY-ID-123" {
+		t.Fatalf("BodySerialNumber = %q, want %q", got.BodySerialNumber, "BODY-ID-123")
+	}
+	if got.Extra["bodySerialNumber"] != "BODY-ID-123" {
+		t.Fatalf("bodySerialNumber extra = %q, want %q", got.Extra["bodySerialNumber"], "BODY-ID-123")
+	}
+}
+
+func TestParseGPSCoordinateSupportsDsopreaFormattedTuple(t *testing.T) {
+	tags := ExifTags{
+		{Name: "GPSLatitude", Value: "[36, 40, 34.23]"},
+		{Name: "GPSLatitudeRef", Value: "N"},
+		{Name: "GPSLongitude", Value: "[117, 47, 11.47]"},
+		{Name: "GPSLongitudeRef", Value: "E"},
+	}
+
+	latitude, err := parseGPSCoordinate(tags, "GPSLatitude", "GPSLatitudeRef")
+	if err != nil {
+		t.Fatalf("parseGPSCoordinate latitude error = %v", err)
+	}
+	if latitude != 36.676175 {
+		t.Fatalf("latitude = %v, want %v", latitude, 36.676175)
+	}
+
+	longitude, err := parseGPSCoordinate(tags, "GPSLongitude", "GPSLongitudeRef")
+	if err != nil {
+		t.Fatalf("parseGPSCoordinate longitude error = %v", err)
+	}
+	if longitude != 117.786519 {
+		t.Fatalf("longitude = %v, want %v", longitude, 117.786519)
+	}
+}
+
+func TestFillSizeSupportsDsopreaSingleValueTuple(t *testing.T) {
+	meta := ImageMeta{}
+	tags := ExifTags{
+		{Name: "PixelXDimension", Value: "[5184]"},
+		{Name: "PixelYDimension", Value: "[3888]"},
+	}
+
+	fillSize(&meta, tags)
+
+	if meta.ImgWidth != 5184 {
+		t.Fatalf("ImgWidth = %d, want %d", meta.ImgWidth, 5184)
+	}
+	if meta.ImgHeight != 3888 {
+		t.Fatalf("ImgHeight = %d, want %d", meta.ImgHeight, 3888)
+	}
+}
+
+func TestFillAltitudeSupportsDsopreaSingleValueTuple(t *testing.T) {
+	meta := ImageMeta{}
+	tags := ExifTags{
+		{Name: "GPSAltitude", Value: "[135.976]"},
+	}
+
+	fillAltitude(&meta, tags)
+
+	if meta.Altitude != 135.976 {
+		t.Fatalf("Altitude = %v, want %v", meta.Altitude, 135.976)
+	}
+}
+
+func TestFillAltitudeSupportsBracketedBelowSeaLevelRef(t *testing.T) {
+	meta := ImageMeta{}
+	tags := ExifTags{
+		{Name: "GPSAltitude", Value: "[135.976]"},
+		{Name: "GPSAltitudeRef", Value: "[1]"},
+	}
+
+	fillAltitude(&meta, tags)
+
+	if meta.Altitude != -135.976 {
+		t.Fatalf("Altitude = %v, want %v", meta.Altitude, -135.976)
+	}
+}
+
+func TestFillSizeSupportsExifImageDimensionNames(t *testing.T) {
+	meta := ImageMeta{}
+	tags := ExifTags{
+		{Name: "ExifImageWidth", Value: "[5184]"},
+		{Name: "ExifImageLength", Value: "[3888]"},
+	}
+
+	fillSize(&meta, tags)
+
+	if meta.ImgWidth != 5184 {
+		t.Fatalf("ImgWidth = %d, want %d", meta.ImgWidth, 5184)
+	}
+	if meta.ImgHeight != 3888 {
+		t.Fatalf("ImgHeight = %d, want %d", meta.ImgHeight, 3888)
+	}
+}
+
+func TestNormalizeExtraMetaFieldAlias(t *testing.T) {
+	if got := normalizeExtraMetaField("body_serial_number"); got != "bodySerialNumber" {
+		t.Fatalf("body_serial_number should map to bodySerialNumber, got %q", got)
 	}
 }
 

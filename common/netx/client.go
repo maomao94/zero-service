@@ -7,55 +7,32 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"mime/multipart"
 	"net/http"
-	"net/url"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/zeromicro/go-zero/rest/httpc"
 )
 
 const (
-	maxResponseBodyLen = 10 << 20 // 10MB
-	DefaultTimeout     = 30 * time.Second
+	DefaultMaxResponseBytes = 10 << 20
+	DefaultUploadBytesLimit = 32 << 20
 )
-
-type engine interface {
-	Do(req *http.Request) (*http.Response, error)
-}
-
-type defaultEngine struct {
-	client *http.Client
-}
-
-func (e *defaultEngine) Do(req *http.Request) (*http.Response, error) {
-	return e.client.Do(req)
-}
-
-type httpcEngine struct {
-	svc httpc.Service
-}
-
-func (e *httpcEngine) Do(req *http.Request) (*http.Response, error) {
-	return e.svc.DoRequest(req)
-}
 
 type ClientOption func(*Client)
 
 type Client struct {
-	engine    engine
-	httpc     httpc.Service
-	timeout   time.Duration
-	tlsConfig *tls.Config
-	headers   http.Header
+	engine             Engine
+	tlsConfig          *tls.Config
+	headers            http.Header
+	maxResponseBytes   int64
+	downloadBytesLimit int64
+	uploadBytesLimit   int64
 }
 
 func NewClient(opts ...ClientOption) *Client {
 	c := &Client{
-		timeout: DefaultTimeout,
+		maxResponseBytes:   DefaultMaxResponseBytes,
+		downloadBytesLimit: DefaultDownloadBytesLimit,
+		uploadBytesLimit:   DefaultUploadBytesLimit,
 	}
 	for _, opt := range opts {
 		opt(c)
@@ -66,32 +43,12 @@ func NewClient(opts ...ClientOption) *Client {
 	return c
 }
 
-func (c *Client) buildEngine() engine {
-	if c.httpc != nil {
-		return &httpcEngine{svc: c.httpc}
-	}
-
-	transport := &http.Transport{
-		TLSHandshakeTimeout:   10 * time.Second,
-		ResponseHeaderTimeout: 10 * time.Second,
-	}
-	if c.tlsConfig != nil {
-		transport.TLSClientConfig = c.tlsConfig
-	}
-	return &defaultEngine{
-		client: &http.Client{
-			Timeout:   c.timeout,
-			Transport: transport,
-		},
-	}
+func (c *Client) buildEngine() Engine {
+	return &DefaultEngine{client: newHTTPClient(WithTransportTLS(c.tlsConfig))}
 }
 
-func WithHttpcService(httpc httpc.Service) ClientOption {
-	return func(c *Client) { c.httpc = httpc }
-}
-
-func WithTimeout(d time.Duration) ClientOption {
-	return func(c *Client) { c.timeout = d }
+func WithEngine(e Engine) ClientOption {
+	return func(c *Client) { c.engine = e }
 }
 
 func WithTLSConfig(cfg *tls.Config) ClientOption {
@@ -102,7 +59,17 @@ func WithDefaultHeaders(h http.Header) ClientOption {
 	return func(c *Client) { c.headers = h.Clone() }
 }
 
-// --- 核心请求方法 ---
+func WithMaxResponseBytes(maxBytes int64) ClientOption {
+	return func(c *Client) { c.maxResponseBytes = maxBytes }
+}
+
+func WithDownloadBytesLimit(maxBytes int64) ClientOption {
+	return func(c *Client) { c.downloadBytesLimit = maxBytes }
+}
+
+func WithUploadBytesLimit(maxBytes int64) ClientOption {
+	return func(c *Client) { c.uploadBytesLimit = maxBytes }
+}
 
 func (c *Client) Do(ctx context.Context, req *Request) (*Response, error) {
 	if req == nil {
@@ -114,63 +81,57 @@ func (c *Client) Do(ctx context.Context, req *Request) (*Response, error) {
 	if req.OptionError != nil {
 		return nil, req.OptionError
 	}
-
 	method := req.Method
 	if method == "" {
 		method = http.MethodGet
 	}
-
 	bodyReader, contentType := c.buildBody(req)
-
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	httpReq, err := http.NewRequestWithContext(ctx, method, req.URL, bodyReader)
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
-
 	c.applyHeaders(httpReq, req, contentType)
 	c.applyQueryParams(httpReq, req)
-
 	start := time.Now()
 	resp, err := c.engine.Do(httpReq)
-	return buildResponse(resp, err, start)
+	return c.buildResponse(resp, err, start)
 }
 
 func (c *Client) buildBody(req *Request) (io.Reader, string) {
+	switch req.bodyKind {
+	case bodyKindForm:
+		return strings.NewReader(req.FormData.Encode()), req.ContentType
+	case bodyKindJSON:
+		return bytes.NewReader(req.Body), req.ContentType
+	case bodyKindReader:
+		return req.BodyReader, req.ContentType
+	case bodyKindRaw:
+		return c.buildRawBody(req)
+	}
 	if req.FormData != nil {
 		return strings.NewReader(req.FormData.Encode()), "application/x-www-form-urlencoded"
+	}
+	if req.BodyReader != nil {
+		return req.BodyReader, req.ContentType
 	}
 	if len(req.Body) == 0 {
 		return nil, ""
 	}
+	return c.buildRawBody(req)
+}
 
-	ct := ""
-	if req.Headers != nil {
-		ct = strings.ToLower(req.Headers.Get("Content-Type"))
+func (c *Client) buildRawBody(req *Request) (io.Reader, string) {
+	ct := req.ContentType
+	if req.Headers != nil && req.Headers.Get("Content-Type") != "" {
+		ct = req.Headers.Get("Content-Type")
 	}
-
-	if strings.Contains(ct, "application/x-www-form-urlencoded") {
-		// 如果 body 已经是合法的 URL-编码格式，直接使用，避免双重 JSON 解析
-		if _, err := url.ParseQuery(string(req.Body)); err == nil {
-			return bytes.NewReader(req.Body), "application/x-www-form-urlencoded"
-		}
-		if encoded, err := EncodeURLEncoded(req.Body); err == nil {
-			return strings.NewReader(encoded), "application/x-www-form-urlencoded"
-		}
-		return bytes.NewReader(req.Body), "application/x-www-form-urlencoded"
+	if strings.Contains(strings.ToLower(ct), "application/x-www-form-urlencoded") {
+		return EncodeURLEncodedIfNeeded(req.Body)
 	}
-
-	if strings.Contains(ct, "multipart/form-data") {
-		data, err := ValidateAndFlatten(req.Body)
-		if err == nil && len(data) > 0 {
-			reader, mct, mErr := EncodeMultipart(data)
-			if mErr == nil {
-				return reader, mct
-			}
-		}
-		return bytes.NewReader(req.Body), ct
-	}
-
-	return bytes.NewReader(req.Body), ""
+	return bytes.NewReader(req.Body), ct
 }
 
 func (c *Client) applyHeaders(httpReq *http.Request, req *Request, contentType string) {
@@ -180,12 +141,19 @@ func (c *Client) applyHeaders(httpReq *http.Request, req *Request, contentType s
 		}
 	}
 	for k, vs := range req.Headers {
+		httpReq.Header.Del(k)
 		for _, v := range vs {
-			httpReq.Header.Set(k, v)
+			httpReq.Header.Add(k, v)
 		}
 	}
 	if contentType != "" {
-		httpReq.Header.Set("Content-Type", contentType)
+		if strings.Contains(strings.ToLower(contentType), "multipart/form-data") {
+			httpReq.Header.Set("Content-Type", contentType)
+			return
+		}
+		if httpReq.Header.Get("Content-Type") == "" {
+			httpReq.Header.Set("Content-Type", contentType)
+		}
 	} else if httpReq.Header.Get("Content-Type") == "" && len(req.Body) > 0 {
 		httpReq.Header.Set("Content-Type", "application/json")
 	}
@@ -203,8 +171,6 @@ func (c *Client) applyQueryParams(httpReq *http.Request, req *Request) {
 	}
 	httpReq.URL.RawQuery = q.Encode()
 }
-
-// --- HTTP 便捷方法 ---
 
 func (c *Client) Get(ctx context.Context, url string, opts ...RequestOption) (*Response, error) {
 	return c.Do(ctx, NewRequest(url, http.MethodGet, opts...))
@@ -234,164 +200,11 @@ func (c *Client) Options(ctx context.Context, url string, opts ...RequestOption)
 	return c.Do(ctx, NewRequest(url, http.MethodOptions, opts...))
 }
 
-// --- 文件上传 ---
-
-func (c *Client) Upload(ctx context.Context, url string, files []FileUpload, fields map[string]string, opts ...RequestOption) (*Response, error) {
-	buf := &bytes.Buffer{}
-	w := multipart.NewWriter(buf)
-
-	for _, f := range files {
-		part, err := w.CreateFormFile(f.FieldName, f.FileName)
-		if err != nil {
-			return nil, fmt.Errorf("create form file: %w", err)
-		}
-		if _, err = io.Copy(part, f.Content); err != nil {
-			return nil, fmt.Errorf("copy file content: %w", err)
-		}
-	}
-
-	for k, v := range fields {
-		if err := w.WriteField(k, v); err != nil {
-			return nil, fmt.Errorf("write field: %w", err)
-		}
-	}
-
-	if err := w.Close(); err != nil {
-		return nil, fmt.Errorf("close multipart writer: %w", err)
-	}
-
-	req := NewRequest(url, http.MethodPost, opts...)
-	req.Body = buf.Bytes()
-	if req.Headers == nil {
-		req.Headers = make(http.Header)
-	}
-	req.Headers.Set("Content-Type", w.FormDataContentType())
-	return c.Do(ctx, req)
-}
-
-func (c *Client) UploadFile(ctx context.Context, url, filePath, fieldName string, fields map[string]string, opts ...RequestOption) (*Response, error) {
-	f, err := os.Open(filePath)
+func (c *Client) buildResponse(resp *http.Response, err error, start time.Time) (*Response, error) {
+	costMs, costFormatted := elapsedSince(start)
 	if err != nil {
-		return nil, fmt.Errorf("open file: %w", err)
-	}
-	defer f.Close()
-
-	return c.Upload(ctx, url, []FileUpload{
-		{FieldName: fieldName, FileName: filepath.Base(filePath), Content: f},
-	}, fields, opts...)
-}
-
-func (c *Client) UploadBytes(ctx context.Context, url, fieldName, fileName string, data []byte, fields map[string]string, opts ...RequestOption) (*Response, error) {
-	return c.Upload(ctx, url, []FileUpload{
-		{FieldName: fieldName, FileName: fileName, Content: bytes.NewReader(data)},
-	}, fields, opts...)
-}
-
-// --- 文件下载 ---
-
-func (c *Client) Download(ctx context.Context, url string, opts ...RequestOption) (io.ReadCloser, error) {
-	req := NewRequest(url, http.MethodGet, opts...)
-
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, req.URL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("create request: %w", err)
-	}
-
-	c.applyHeaders(httpReq, req, "")
-	c.applyQueryParams(httpReq, req)
-
-	resp, err := c.engine.Do(httpReq)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		resp.Body.Close()
-		return nil, fmt.Errorf("download failed: status %d", resp.StatusCode)
-	}
-	return resp.Body, nil
-}
-
-func (c *Client) DownloadFile(ctx context.Context, url, destPath string, opts ...RequestOption) error {
-	body, err := c.Download(ctx, url, opts...)
-	if err != nil {
-		return err
-	}
-	defer body.Close()
-
-	dir := filepath.Dir(destPath)
-	if err = os.MkdirAll(dir, 0o755); err != nil {
-		return fmt.Errorf("create directory: %w", err)
-	}
-
-	f, err := os.Create(destPath)
-	if err != nil {
-		return fmt.Errorf("create file: %w", err)
-	}
-	defer f.Close()
-
-	if _, err = io.Copy(f, body); err != nil {
-		return fmt.Errorf("write file: %w", err)
-	}
-	return nil
-}
-
-func (c *Client) DownloadBytes(ctx context.Context, url string, opts ...RequestOption) ([]byte, error) {
-	body, err := c.Download(ctx, url, opts...)
-	if err != nil {
-		return nil, err
-	}
-	defer body.Close()
-	return io.ReadAll(body)
-}
-
-// --- 包级便捷函数 ---
-
-var defaultClient = NewClient()
-
-func Get(ctx context.Context, url string, opts ...RequestOption) (*Response, error) {
-	return defaultClient.Get(ctx, url, opts...)
-}
-
-func Post(ctx context.Context, url string, opts ...RequestOption) (*Response, error) {
-	return defaultClient.Post(ctx, url, opts...)
-}
-
-func Put(ctx context.Context, url string, opts ...RequestOption) (*Response, error) {
-	return defaultClient.Put(ctx, url, opts...)
-}
-
-func Delete(ctx context.Context, url string, opts ...RequestOption) (*Response, error) {
-	return defaultClient.Delete(ctx, url, opts...)
-}
-
-func Patch(ctx context.Context, url string, opts ...RequestOption) (*Response, error) {
-	return defaultClient.Patch(ctx, url, opts...)
-}
-
-func Head(ctx context.Context, url string, opts ...RequestOption) (*Response, error) {
-	return defaultClient.Head(ctx, url, opts...)
-}
-
-func SendRequest(ctx context.Context, req *Request, opts ...ClientOption) (*Response, error) {
-	if len(opts) == 0 {
-		return defaultClient.Do(ctx, req)
-	}
-	c := NewClient(opts...)
-	return c.Do(ctx, req)
-}
-
-// --- 响应构建 ---
-
-func buildResponse(resp *http.Response, err error, start time.Time) (*Response, error) {
-	costMs := time.Since(start).Milliseconds()
-
-	if err != nil {
-		result := &Response{
-			CostMs: costMs,
-			Error:  err.Error(),
-		}
-		result.CostFormatted = FormatCostMs(costMs)
-		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		result := &Response{CostMs: costMs, CostFormatted: costFormatted, Err: err}
+		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) || strings.Contains(err.Error(), "context deadline exceeded") {
 			result.StatusCode = http.StatusRequestTimeout
 		} else {
 			result.StatusCode = http.StatusBadGateway
@@ -399,31 +212,38 @@ func buildResponse(resp *http.Response, err error, start time.Time) (*Response, 
 		return result, nil
 	}
 	defer resp.Body.Close()
-
-	data, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBodyLen+1))
-	if err != nil {
+	if c.maxResponseBytes <= 0 {
+		data, readErr := io.ReadAll(resp.Body)
+		if readErr != nil {
+			return &Response{StatusCode: resp.StatusCode, Err: readErr, CostMs: costMs, CostFormatted: costFormatted}, nil
+		}
 		return &Response{
 			StatusCode:    resp.StatusCode,
-			Error:         err.Error(),
+			Headers:       resp.Header.Clone(),
+			Data:          data,
 			CostMs:        costMs,
-			CostFormatted: FormatCostMs(costMs),
+			CostFormatted: costFormatted,
+			Success:       resp.StatusCode >= 200 && resp.StatusCode < 300,
 		}, nil
 	}
-	if len(data) > maxResponseBodyLen {
+	data, readErr := io.ReadAll(io.LimitReader(resp.Body, c.maxResponseBytes+1))
+	if readErr != nil {
+		return &Response{StatusCode: resp.StatusCode, Err: readErr, CostMs: costMs, CostFormatted: costFormatted}, nil
+	}
+	if int64(len(data)) > c.maxResponseBytes {
 		return &Response{
 			StatusCode:    http.StatusBadGateway,
-			Error:         "response body too large",
+			Err:           fmt.Errorf("%w: limit %d bytes", ErrResponseTooLarge, c.maxResponseBytes),
 			CostMs:        costMs,
-			CostFormatted: FormatCostMs(costMs),
+			CostFormatted: costFormatted,
 		}, nil
 	}
-
 	return &Response{
 		StatusCode:    resp.StatusCode,
-		Headers:       resp.Header,
+		Headers:       resp.Header.Clone(),
 		Data:          data,
 		CostMs:        costMs,
-		CostFormatted: FormatCostMs(costMs),
+		CostFormatted: costFormatted,
 		Success:       resp.StatusCode >= 200 && resp.StatusCode < 300,
 	}, nil
 }

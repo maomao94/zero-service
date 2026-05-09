@@ -68,7 +68,7 @@ func processUploadResult(
 		return &pbFile
 	}
 
-	if exifMeta, err := imagex.ExtractImageMetaFromBytes(result.Head, imagex.WithExtraMetaFields("BodySerialNumber")); err == nil {
+	if exifMeta, err := imagex.ExtractImageMetaFromBytes(result.Head); err == nil {
 		var meta file.ImageMeta
 		copier.Copy(&meta, &exifMeta) // nolint:errcheck
 		pbFile.Meta = &meta

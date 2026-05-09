@@ -382,17 +382,18 @@ func (x *File) GetThumbName() string {
 }
 
 type ImageMeta struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Longitude     float64                `protobuf:"fixed64,1,opt,name=longitude,proto3" json:"longitude,omitempty"`                                                                 // 经度
-	Latitude      float64                `protobuf:"fixed64,2,opt,name=latitude,proto3" json:"latitude,omitempty"`                                                                   // 纬度
-	Time          string                 `protobuf:"bytes,3,opt,name=time,proto3" json:"time,omitempty"`                                                                             // 拍摄时间
-	ImgHeight     int32                  `protobuf:"varint,4,opt,name=imgHeight,proto3" json:"imgHeight,omitempty"`                                                                  // 高
-	ImgWidth      int32                  `protobuf:"varint,5,opt,name=imgWidth,proto3" json:"imgWidth,omitempty"`                                                                    // 宽
-	Altitude      float64                `protobuf:"fixed64,6,opt,name=altitude,proto3" json:"altitude,omitempty"`                                                                   // 高度
-	CameraModel   string                 `protobuf:"bytes,7,opt,name=cameraModel,proto3" json:"cameraModel,omitempty"`                                                               // 相机型号
-	Extra         map[string]string      `protobuf:"bytes,8,rep,name=extra,proto3" json:"extra,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // 扩展元数据
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Longitude        float64                `protobuf:"fixed64,1,opt,name=longitude,proto3" json:"longitude,omitempty"`                                                                 // 经度
+	Latitude         float64                `protobuf:"fixed64,2,opt,name=latitude,proto3" json:"latitude,omitempty"`                                                                   // 纬度
+	Time             string                 `protobuf:"bytes,3,opt,name=time,proto3" json:"time,omitempty"`                                                                             // 拍摄时间
+	ImgHeight        int32                  `protobuf:"varint,4,opt,name=imgHeight,proto3" json:"imgHeight,omitempty"`                                                                  // 高
+	ImgWidth         int32                  `protobuf:"varint,5,opt,name=imgWidth,proto3" json:"imgWidth,omitempty"`                                                                    // 宽
+	Altitude         float64                `protobuf:"fixed64,6,opt,name=altitude,proto3" json:"altitude,omitempty"`                                                                   // 高度
+	CameraModel      string                 `protobuf:"bytes,7,opt,name=cameraModel,proto3" json:"cameraModel,omitempty"`                                                               // 相机型号
+	Extra            map[string]string      `protobuf:"bytes,8,rep,name=extra,proto3" json:"extra,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // 扩展元数据
+	BodySerialNumber string                 `protobuf:"bytes,9,opt,name=bodySerialNumber,proto3" json:"bodySerialNumber,omitempty"`                                                     // 机身序列号
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *ImageMeta) Reset() {
@@ -479,6 +480,13 @@ func (x *ImageMeta) GetExtra() map[string]string {
 		return x.Extra
 	}
 	return nil
+}
+
+func (x *ImageMeta) GetBodySerialNumber() string {
+	if x != nil {
+		return x.BodySerialNumber
+	}
+	return ""
 }
 
 type OssFile struct {
@@ -2612,7 +2620,7 @@ const file_file_proto_rawDesc = "" +
 	"\x04meta\x18\t \x01(\v2\x0f.file.ImageMetaR\x04meta\x12\x1c\n" +
 	"\tthumbLink\x18\n" +
 	" \x01(\tR\tthumbLink\x12\x1c\n" +
-	"\tThumbName\x18\v \x01(\tR\tThumbName\"\xbd\x02\n" +
+	"\tThumbName\x18\v \x01(\tR\tThumbName\"\xe9\x02\n" +
 	"\tImageMeta\x12\x1c\n" +
 	"\tlongitude\x18\x01 \x01(\x01R\tlongitude\x12\x1a\n" +
 	"\blatitude\x18\x02 \x01(\x01R\blatitude\x12\x12\n" +
@@ -2621,7 +2629,8 @@ const file_file_proto_rawDesc = "" +
 	"\bimgWidth\x18\x05 \x01(\x05R\bimgWidth\x12\x1a\n" +
 	"\baltitude\x18\x06 \x01(\x01R\baltitude\x12 \n" +
 	"\vcameraModel\x18\a \x01(\tR\vcameraModel\x120\n" +
-	"\x05extra\x18\b \x03(\v2\x1a.file.ImageMeta.ExtraEntryR\x05extra\x1a8\n" +
+	"\x05extra\x18\b \x03(\v2\x1a.file.ImageMeta.ExtraEntryR\x05extra\x12*\n" +
+	"\x10bodySerialNumber\x18\t \x01(\tR\x10bodySerialNumber\x1a8\n" +
 	"\n" +
 	"ExtraEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +

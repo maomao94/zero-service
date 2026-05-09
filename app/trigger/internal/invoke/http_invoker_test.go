@@ -9,9 +9,6 @@ import (
 	"sort"
 	"strings"
 	"testing"
-	"zero-service/app/trigger/internal/svc"
-
-	"github.com/zeromicro/go-zero/rest/httpc"
 )
 
 func TestHTTPInvoker_URLEncoded(t *testing.T) {
@@ -26,7 +23,7 @@ func TestHTTPInvoker_URLEncoded(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	sc := &svc.ServiceContext{Httpc: httpc.NewService("form-test")}
+	sc := newTestSvcCtx()
 	h := &HTTPInvoker{}
 	result := h.Execute(context.Background(), sc, &Task{
 		ID:         "form-1",
@@ -63,7 +60,7 @@ func TestHTTPInvoker_Multipart(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	sc := &svc.ServiceContext{Httpc: httpc.NewService("form-test")}
+	sc := newTestSvcCtx()
 	h := &HTTPInvoker{}
 	result := h.Execute(context.Background(), sc, &Task{
 		ID:         "form-2",
@@ -100,24 +97,91 @@ func TestHTTPInvoker_JSONBody(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	sc := &svc.ServiceContext{Httpc: httpc.NewService("form-test")}
+	sc := newTestSvcCtx()
 	h := &HTTPInvoker{}
 	result := h.Execute(context.Background(), sc, &Task{
 		ID:         "json-1",
 		Protocol:   "http",
 		HTTPMethod: "POST",
 		URL:        ts.URL,
+		Headers:    map[string]string{"Content-Type": "application/json; charset=utf-8"},
 		Body:       []byte(`{"key":"value"}`),
 	})
 
 	if !result.Success {
 		t.Fatalf("expected success, got error: %s", result.Error)
 	}
-	if !strings.Contains(gotCT, "application/json") {
-		t.Errorf("expected Content-Type to contain application/json, got %q", gotCT)
+	if gotCT != "application/json; charset=utf-8" {
+		t.Errorf("expected caller content type, got %q", gotCT)
 	}
 	if gotBody != `{"key":"value"}` {
 		t.Errorf("expected body to be original JSON, got %q", gotBody)
+	}
+}
+
+func TestHTTPInvoker_RawContentType(t *testing.T) {
+	var gotCT string
+	var gotBody string
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotCT = r.Header.Get("Content-Type")
+		body, _ := io.ReadAll(r.Body)
+		gotBody = string(body)
+		w.WriteHeader(http.StatusAccepted)
+		w.Write([]byte(`raw-ok`))
+	}))
+	defer ts.Close()
+
+	sc := newTestSvcCtx()
+	h := &HTTPInvoker{}
+	result := h.Execute(context.Background(), sc, &Task{
+		ID:         "raw-1",
+		Protocol:   "http",
+		HTTPMethod: "PATCH",
+		URL:        ts.URL,
+		Headers:    map[string]string{"Content-Type": "text/plain"},
+		Body:       []byte("raw payload"),
+	})
+
+	if !result.Success {
+		t.Fatalf("expected success, got error: %s", result.Error)
+	}
+	if result.StatusCode != http.StatusAccepted {
+		t.Fatalf("expected status 202, got %d", result.StatusCode)
+	}
+	if string(result.Data) != "raw-ok" {
+		t.Fatalf("expected raw response data, got %q", string(result.Data))
+	}
+	if gotCT != "text/plain" {
+		t.Fatalf("expected raw content type, got %q", gotCT)
+	}
+	if gotBody != "raw payload" {
+		t.Fatalf("expected raw body, got %q", gotBody)
+	}
+}
+
+func TestHTTPInvoker_Non2xxKeepsRawResponse(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusTeapot)
+		w.Write([]byte(`teapot`))
+	}))
+	defer ts.Close()
+
+	sc := newTestSvcCtx()
+	result := (&HTTPInvoker{}).Execute(context.Background(), sc, &Task{
+		ID:         "err-1",
+		Protocol:   "http",
+		HTTPMethod: "GET",
+		URL:        ts.URL,
+	})
+
+	if result.Success {
+		t.Fatal("expected non-success result")
+	}
+	if result.StatusCode != http.StatusTeapot {
+		t.Fatalf("expected status 418, got %d", result.StatusCode)
+	}
+	if string(result.Data) != "teapot" {
+		t.Fatalf("expected raw error response, got %q", string(result.Data))
 	}
 }
 
@@ -130,7 +194,7 @@ func TestHTTPInvoker_FormWithInvalidJSON(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	sc := &svc.ServiceContext{Httpc: httpc.NewService("form-test")}
+	sc := newTestSvcCtx()
 	h := &HTTPInvoker{}
 	result := h.Execute(context.Background(), sc, &Task{
 		ID:         "invalid-1",
@@ -156,7 +220,7 @@ func TestHTTPInvoker_NoBodyWithFormContentType(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	sc := &svc.ServiceContext{Httpc: httpc.NewService("form-test")}
+	sc := newTestSvcCtx()
 	h := &HTTPInvoker{}
 	result := h.Execute(context.Background(), sc, &Task{
 		ID:         "no-body-1",
@@ -220,7 +284,7 @@ func TestHTTPInvoker_NestedFormURL(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	sc := &svc.ServiceContext{Httpc: httpc.NewService("form-test")}
+	sc := newTestSvcCtx()
 	h := &HTTPInvoker{}
 	result := h.Execute(context.Background(), sc, &Task{
 		ID:         "nested-form",

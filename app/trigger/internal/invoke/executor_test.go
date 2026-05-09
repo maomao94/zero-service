@@ -10,13 +10,16 @@ import (
 	"testing"
 	"time"
 	"zero-service/app/trigger/internal/svc"
+	"zero-service/common/netx"
 
 	"github.com/zeromicro/go-zero/rest/httpc"
 )
 
 func newTestSvcCtx() *svc.ServiceContext {
+	httpcSvc := httpc.NewService("invoke-test")
 	return &svc.ServiceContext{
-		Httpc: httpc.NewService("invoke-test"),
+		Httpc:     httpcSvc,
+		NetClient: netx.NewClient(netx.WithEngine(netx.NewHTTPEngine(httpcSvc))),
 	}
 }
 

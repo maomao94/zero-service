@@ -20,6 +20,19 @@ func ValidateAndFlatten(body []byte) (map[string][]string, error) {
 	return result, nil
 }
 
+// EncodeURLEncodedIfNeeded 检测 body 是否已是合法 URL-encoded 格式，否则尝试 JSON 扁平化编码。
+// 如果 JSON 扁平化也失败，原样返回 body。
+func EncodeURLEncodedIfNeeded(body []byte) (io.Reader, string) {
+	if _, err := url.ParseQuery(string(body)); err == nil && strings.Contains(string(body), "=") {
+		return bytes.NewReader(body), "application/x-www-form-urlencoded"
+	}
+	encoded, err := EncodeURLEncoded(body)
+	if err != nil {
+		return bytes.NewReader(body), "application/x-www-form-urlencoded"
+	}
+	return strings.NewReader(encoded), "application/x-www-form-urlencoded"
+}
+
 func EncodeURLEncoded(body []byte) (string, error) {
 	data, err := ValidateAndFlatten(body)
 	if err != nil {

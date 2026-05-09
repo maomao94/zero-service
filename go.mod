@@ -21,6 +21,8 @@ require (
 	github.com/doquangtan/socketio/v4 v4.1.6
 	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/dromara/carbon/v2 v2.6.16
+	github.com/dsoprea/go-exif/v3 v3.0.1
+	github.com/dsoprea/go-logging v0.0.0-20200710184922-b02d349568dd
 	github.com/duke-git/lancet/v2 v2.3.9
 	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/envoyproxy/protoc-gen-validate v1.3.3
@@ -48,7 +50,6 @@ require (
 	github.com/qichengzx/coordtransform v0.0.0-20220708113031-010878418826
 	github.com/redis/go-redis/v9 v9.18.0
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
 	github.com/shopspring/decimal v1.4.0
 	github.com/songzhibin97/gkit v1.2.13
 	github.com/spf13/cast v1.10.0
@@ -135,6 +136,7 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
+	github.com/dsoprea/go-utility/v2 v2.0.0-20221003172846-a3e1774ef349 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/eino-contrib/jsonschema v1.0.3 // indirect
 	github.com/eino-contrib/ollama v0.1.0 // indirect
@@ -148,6 +150,7 @@ require (
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
 	github.com/getsentry/sentry-go v0.12.0 // indirect
+	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.3 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
@@ -160,6 +163,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.9 // indirect
 	github.com/gofiber/websocket/v2 v2.2.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
