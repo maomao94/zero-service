@@ -19,6 +19,8 @@ const (
 	bodyKindReader
 )
 
+// Request 表示一个 HTTP 请求，支持 JSON/Form/Raw/Reader 等多种 Body 来源。
+// 支持链式 Builder 方法和函数式 RequestOption 两种构建方式。
 type Request struct {
 	URL         string
 	Method      string
@@ -32,14 +34,17 @@ type Request struct {
 	OptionError error
 }
 
+// FileUpload 表示一个文件上传字段。
 type FileUpload struct {
 	FieldName string
 	FileName  string
 	Content   io.Reader
 }
 
+// RequestOption 函数式请求配置选项。
 type RequestOption func(*Request)
 
+// NewRequest 创建请求对象，可选配合 RequestOption 进行配置。
 func NewRequest(rawURL, method string, opts ...RequestOption) *Request {
 	r := &Request{
 		URL:    rawURL,
@@ -94,10 +99,12 @@ func (r *Request) Reader(reader io.Reader) *Request {
 	return r
 }
 
+// WithHeaders 批量设置请求头。
 func WithHeaders(h http.Header) RequestOption {
 	return func(r *Request) { r.Headers = h.Clone() }
 }
 
+// WithHeader 设置单个请求头 key-value。
 func WithHeader(key, value string) RequestOption {
 	return func(r *Request) {
 		if r.Headers == nil {
@@ -107,10 +114,12 @@ func WithHeader(key, value string) RequestOption {
 	}
 }
 
+// WithQueryParams 设置 URL 查询参数。
 func WithQueryParams(q url.Values) RequestOption {
 	return func(r *Request) { r.QueryParams = cloneValues(q) }
 }
 
+// WithFormData 设置表单数据，自动设置 Content-Type 为 application/x-www-form-urlencoded。
 func WithFormData(f url.Values) RequestOption {
 	return func(r *Request) {
 		r.FormData = cloneValues(f)
@@ -119,6 +128,7 @@ func WithFormData(f url.Values) RequestOption {
 	}
 }
 
+// WithBody 设置原始 Body 字节数据。
 func WithBody(b []byte) RequestOption {
 	return func(r *Request) {
 		r.Body = bytes.Clone(b)
@@ -127,6 +137,7 @@ func WithBody(b []byte) RequestOption {
 	}
 }
 
+// WithJSONBody 将任意类型序列化为 JSON Body，自动设置 Content-Type 为 application/json。
 func WithJSONBody(v any) RequestOption {
 	return func(r *Request) {
 		data, err := json.Marshal(v)
@@ -141,6 +152,7 @@ func WithJSONBody(v any) RequestOption {
 	}
 }
 
+// WithBodyReader 设置 Body 为 io.Reader 流式读取，适用于大文件或流式数据。
 func WithBodyReader(reader io.Reader) RequestOption {
 	return func(r *Request) {
 		if reader == nil {

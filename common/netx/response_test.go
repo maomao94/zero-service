@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestDecodeJSON_Success(t *testing.T) {
+func TestResponseJSON_Success(t *testing.T) {
 	resp := &Response{
 		Data:    []byte(`{"name":"test","age":18}`),
 		Success: true,
@@ -16,7 +16,7 @@ func TestDecodeJSON_Success(t *testing.T) {
 		Name string `json:"name"`
 		Age  int    `json:"age"`
 	}
-	err := DecodeJSON(resp, &target)
+	err := resp.JSON(&target)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -25,22 +25,23 @@ func TestDecodeJSON_Success(t *testing.T) {
 	}
 }
 
-func TestDecodeJSON_Error(t *testing.T) {
+func TestResponseJSON_Error(t *testing.T) {
 	resp := &Response{Err: ErrResponseTooLarge}
-	err := DecodeJSON(resp, &struct{}{})
+	err := resp.JSON(&struct{}{})
 	if err == nil {
 		t.Error("expected error")
 	}
 }
 
-func TestDecodeJSON_Nil(t *testing.T) {
-	err := DecodeJSON(nil, &struct{}{})
+func TestResponseJSON_Nil(t *testing.T) {
+	var resp *Response
+	err := resp.JSON(&struct{}{})
 	if err == nil {
 		t.Error("expected error for nil response")
 	}
 }
 
-func TestDeCodeJSON_NonSuccess(t *testing.T) {
+func TestResponseJSON_NonSuccess(t *testing.T) {
 	resp := &Response{
 		Data:       []byte(`{"code":1001}`),
 		StatusCode: 400,
@@ -49,7 +50,7 @@ func TestDeCodeJSON_NonSuccess(t *testing.T) {
 	var target struct {
 		Code int `json:"code"`
 	}
-	err := DecodeJSON(resp, &target)
+	err := resp.JSON(&target)
 	if err == nil {
 		t.Error("expected error for non-success response")
 	}

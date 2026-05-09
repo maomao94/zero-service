@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 )
 
+// Upload 流式上传文件到指定 URL，支持同时发送额外表单字段。
 func (c *Client) Upload(ctx context.Context, url string, files []FileUpload, fields map[string]string, opts ...RequestOption) (*Response, error) {
 	reader, writer := io.Pipe()
 	multipartWriter := multipart.NewWriter(writer)
@@ -56,7 +57,7 @@ func streamMultipart(pipeWriter *io.PipeWriter, multipartWriter *multipart.Write
 		if maxBytes > 0 {
 			remaining := maxBytes - written
 			if remaining <= 0 {
-				err = fmt.Errorf("upload body too large: limit %d bytes", maxBytes)
+				err = fmt.Errorf("%w: limit %d bytes", ErrUploadTooLarge, maxBytes)
 				return err
 			}
 			writer = &limitedWriter{w: part, n: remaining, limit: maxBytes}
@@ -89,7 +90,7 @@ type limitedWriter struct {
 
 func (w *limitedWriter) Write(p []byte) (int, error) {
 	if w.n <= 0 {
-		return 0, fmt.Errorf("upload body too large: limit %d bytes", w.limit)
+		return 0, fmt.Errorf("%w: limit %d bytes", ErrUploadTooLarge, w.limit)
 	}
 	if int64(len(p)) > w.n {
 		n, err := w.w.Write(p[:w.n])
@@ -97,13 +98,14 @@ func (w *limitedWriter) Write(p []byte) (int, error) {
 			return n, err
 		}
 		w.n -= int64(n)
-		return n, fmt.Errorf("upload body too large: limit %d bytes", w.limit)
+		return n, fmt.Errorf("%w: limit %d bytes", ErrUploadTooLarge, w.limit)
 	}
 	n, err := w.w.Write(p)
 	w.n -= int64(n)
 	return n, err
 }
 
+// UploadFile 上传本地文件到指定 URL。
 func (c *Client) UploadFile(ctx context.Context, url, filePath, fieldName string, fields map[string]string, opts ...RequestOption) (*Response, error) {
 	f, err := os.Open(filePath)
 	if err != nil {
@@ -115,6 +117,7 @@ func (c *Client) UploadFile(ctx context.Context, url, filePath, fieldName string
 	}, fields, opts...)
 }
 
+// UploadBytes 将内存数据作为文件上传到指定 URL。
 func (c *Client) UploadBytes(ctx context.Context, url, fieldName, fileName string, data []byte, fields map[string]string, opts ...RequestOption) (*Response, error) {
 	return c.Upload(ctx, url, []FileUpload{
 		{FieldName: fieldName, FileName: fileName, Content: bytes.NewReader(data)},

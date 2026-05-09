@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// ValidateAndFlatten 将 JSON body 扁平化为 key-value 映射，支持嵌套对象和数组。
 func ValidateAndFlatten(body []byte) (map[string][]string, error) {
 	var raw map[string]any
 	if err := json.Unmarshal(body, &raw); err != nil {
@@ -23,8 +24,21 @@ func ValidateAndFlatten(body []byte) (map[string][]string, error) {
 // EncodeURLEncodedIfNeeded 检测 body 是否已是合法 URL-encoded 格式，否则尝试 JSON 扁平化编码。
 // 如果 JSON 扁平化也失败，原样返回 body。
 func EncodeURLEncodedIfNeeded(body []byte) (io.Reader, string) {
-	if _, err := url.ParseQuery(string(body)); err == nil && strings.Contains(string(body), "=") {
-		return bytes.NewReader(body), "application/x-www-form-urlencoded"
+	// 如果 body 是合法 JSON，优先尝试扁平化编码
+	if json.Valid(body) {
+		encoded, err := EncodeURLEncoded(body)
+		if err != nil {
+			return bytes.NewReader(body), "application/x-www-form-urlencoded"
+		}
+		return strings.NewReader(encoded), "application/x-www-form-urlencoded"
+	}
+	// 检测是否已是合法的 URL-encoded 格式
+	if q, err := url.ParseQuery(string(body)); err == nil && len(q) > 0 {
+		for k := range q {
+			if k != "" {
+				return bytes.NewReader(body), "application/x-www-form-urlencoded"
+			}
+		}
 	}
 	encoded, err := EncodeURLEncoded(body)
 	if err != nil {
@@ -33,6 +47,7 @@ func EncodeURLEncodedIfNeeded(body []byte) (io.Reader, string) {
 	return strings.NewReader(encoded), "application/x-www-form-urlencoded"
 }
 
+// EncodeURLEncoded 将 JSON body 转换并编码为 URL-encoded 格式字符串。
 func EncodeURLEncoded(body []byte) (string, error) {
 	data, err := ValidateAndFlatten(body)
 	if err != nil {
@@ -47,6 +62,7 @@ func EncodeURLEncoded(body []byte) (string, error) {
 	return values.Encode(), nil
 }
 
+// EncodeMultipart 将字段映射编码为 multipart/form-data 格式的 reader 和 Content-Type 头。
 func EncodeMultipart(fields map[string][]string) (io.Reader, string, error) {
 	buf := &bytes.Buffer{}
 	w := multipart.NewWriter(buf)

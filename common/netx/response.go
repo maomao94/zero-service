@@ -12,10 +12,13 @@ import (
 )
 
 var (
+	// ErrResponseTooLarge 表示响应体超过了配置的大小限制。
 	ErrResponseTooLarge = errors.New("response body too large")
-	ErrUploadTooLarge   = errors.New("upload body too large")
+	// ErrUploadTooLarge 表示上传内容超过了配置的大小限制。
+	ErrUploadTooLarge = errors.New("upload body too large")
 )
 
+// Response 封装 HTTP 响应结果，包含状态码、响应头、响应体、耗时和错误信息。
 type Response struct {
 	StatusCode    int
 	Headers       http.Header
@@ -26,6 +29,7 @@ type Response struct {
 	Err           error
 }
 
+// JSON 将响应体作为 JSON 反序列化到 target。
 func (r *Response) JSON(target any) error {
 	if err := r.ensureDecodable(); err != nil {
 		return err
@@ -33,6 +37,7 @@ func (r *Response) JSON(target any) error {
 	return json.Unmarshal(r.Data, target)
 }
 
+// XML 将响应体作为 XML 反序列化到 target。
 func (r *Response) XML(target any) error {
 	if err := r.ensureDecodable(); err != nil {
 		return err
@@ -40,6 +45,7 @@ func (r *Response) XML(target any) error {
 	return xml.Unmarshal(r.Data, target)
 }
 
+// Text 将响应体作为纯文本字符串返回。
 func (r *Response) Text() (string, error) {
 	if err := r.ensureDecodable(); err != nil {
 		return "", err
@@ -47,6 +53,7 @@ func (r *Response) Text() (string, error) {
 	return string(r.Data), nil
 }
 
+// Decode 根据 Content-Type 或 body 前缀自动选择 JSON/XML/Text 进行反序列化。
 func (r *Response) Decode(target any) error {
 	if err := r.ensureDecodable(); err != nil {
 		return err
@@ -89,10 +96,7 @@ func (r *Response) ensureDecodable() error {
 	return nil
 }
 
-func DecodeJSON(resp *Response, target any) error {
-	return resp.JSON(target)
-}
-
+// FormatCostMs 将毫秒耗时格式化为可读字符串（如 "150ms" 或 "1.5s"）。
 func FormatCostMs(ms int64) string {
 	if ms < 1000 {
 		return fmt.Sprintf("%dms", ms)

@@ -30,10 +30,12 @@ type transportConfig struct {
 	tlsConfig *tls.Config
 }
 
+// WithTransportTLS 设置 Transport TLS 配置。
 func WithTransportTLS(cfg *tls.Config) TransportOption {
 	return func(c *transportConfig) { c.tlsConfig = cfg }
 }
 
+// NewTransport 创建配置好的 http.Transport，内置合理的连接池和超时参数。
 func NewTransport(opts ...TransportOption) *http.Transport {
 	cfg := &transportConfig{}
 	for _, opt := range opts {
@@ -55,6 +57,7 @@ func NewTransport(opts ...TransportOption) *http.Transport {
 	return transport
 }
 
+// NewHTTPClient 创建使用 NewTransport 配置的 http.Client，不设置全局超时（由 context 控制）。
 func NewHTTPClient(opts ...TransportOption) *http.Client {
 	return newHTTPClient(opts...)
 }
@@ -63,7 +66,8 @@ func newHTTPClient(opts ...TransportOption) *http.Client {
 	return &http.Client{Transport: NewTransport(opts...)}
 }
 
-func InitHTTPC(name string, opts ...TransportOption) httpc.Service {
+// NewHTTPCService 创建 go-zero httpc.Service 并用本包的 Transport 配置初始化。
+func NewHTTPCService(name string, opts ...TransportOption) httpc.Service {
 	return httpc.NewServiceWithClient(name, newHTTPClient(opts...))
 }
 
@@ -76,6 +80,7 @@ func (e *HTTPCEngine) Do(req *http.Request) (*http.Response, error) {
 	return e.svc.DoRequest(req)
 }
 
+// NewHTTPEngine 将 go-zero httpc.Service 包装为 Engine 接口。
 func NewHTTPEngine(svc httpc.Service) Engine {
 	return &HTTPCEngine{svc: svc}
 }

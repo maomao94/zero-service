@@ -70,7 +70,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		panic(err)
 	}
 
-	httpcSvc := netx.InitHTTPC("trigger-httpc")
+	httpcSvc := netx.NewHTTPCService("trigger-httpc")
 	return &ServiceContext{
 		Config:            c,
 		Validate:          validator.New(),

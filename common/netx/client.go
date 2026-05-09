@@ -8,17 +8,22 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
 
 const (
+	// DefaultMaxResponseBytes 默认响应体最大字节数（10MB）。
 	DefaultMaxResponseBytes = 10 << 20
+	// DefaultUploadBytesLimit 默认上传内容最大字节数（32MB）。
 	DefaultUploadBytesLimit = 32 << 20
 )
 
+// ClientOption 函数式客户端配置选项。
 type ClientOption func(*Client)
 
+// Client 是 HTTP 客户端，支持引擎抽象、TLS 配置、请求/响应/下载/上传大小限制等。
 type Client struct {
 	engine             Engine
 	tlsConfig          *tls.Config
@@ -28,6 +33,7 @@ type Client struct {
 	uploadBytesLimit   int64
 }
 
+// NewClient 创建 Client，若不指定引擎则使用 DefaultEngine。
 func NewClient(opts ...ClientOption) *Client {
 	c := &Client{
 		maxResponseBytes:   DefaultMaxResponseBytes,
@@ -47,30 +53,37 @@ func (c *Client) buildEngine() Engine {
 	return &DefaultEngine{client: newHTTPClient(WithTransportTLS(c.tlsConfig))}
 }
 
+// WithEngine 设置底层 HTTP 执行引擎。
 func WithEngine(e Engine) ClientOption {
 	return func(c *Client) { c.engine = e }
 }
 
+// WithTLSConfig 设置 TLS 配置。
 func WithTLSConfig(cfg *tls.Config) ClientOption {
 	return func(c *Client) { c.tlsConfig = cfg }
 }
 
+// WithDefaultHeaders 设置全局默认请求头（会 Clone，避免外部修改影响）。
 func WithDefaultHeaders(h http.Header) ClientOption {
 	return func(c *Client) { c.headers = h.Clone() }
 }
 
+// WithMaxResponseBytes 设置响应体最大字节数限制，设为 0 则不限制。
 func WithMaxResponseBytes(maxBytes int64) ClientOption {
 	return func(c *Client) { c.maxResponseBytes = maxBytes }
 }
 
+// WithDownloadBytesLimit 设置下载最大字节数限制，设为 0 则不限制。
 func WithDownloadBytesLimit(maxBytes int64) ClientOption {
 	return func(c *Client) { c.downloadBytesLimit = maxBytes }
 }
 
+// WithUploadBytesLimit 设置上传最大字节数限制，设为 0 则不限制。
 func WithUploadBytesLimit(maxBytes int64) ClientOption {
 	return func(c *Client) { c.uploadBytesLimit = maxBytes }
 }
 
+// Do 执行 HTTP 请求，返回统一的 Response 结构。
 func (c *Client) Do(ctx context.Context, req *Request) (*Response, error) {
 	if req == nil {
 		return nil, errors.New("request is nil")
@@ -101,21 +114,18 @@ func (c *Client) Do(ctx context.Context, req *Request) (*Response, error) {
 }
 
 func (c *Client) buildBody(req *Request) (io.Reader, string) {
-	switch req.bodyKind {
-	case bodyKindForm:
-		return strings.NewReader(req.FormData.Encode()), req.ContentType
-	case bodyKindJSON:
+	if req.FormData != nil || req.bodyKind == bodyKindForm {
+		values := req.FormData
+		if values == nil {
+			values = make(url.Values)
+		}
+		return strings.NewReader(values.Encode()), "application/x-www-form-urlencoded"
+	}
+	if req.BodyReader != nil || req.bodyKind == bodyKindReader {
+		return req.BodyReader, req.ContentType
+	}
+	if req.bodyKind == bodyKindJSON {
 		return bytes.NewReader(req.Body), req.ContentType
-	case bodyKindReader:
-		return req.BodyReader, req.ContentType
-	case bodyKindRaw:
-		return c.buildRawBody(req)
-	}
-	if req.FormData != nil {
-		return strings.NewReader(req.FormData.Encode()), "application/x-www-form-urlencoded"
-	}
-	if req.BodyReader != nil {
-		return req.BodyReader, req.ContentType
 	}
 	if len(req.Body) == 0 {
 		return nil, ""
@@ -172,30 +182,37 @@ func (c *Client) applyQueryParams(httpReq *http.Request, req *Request) {
 	httpReq.URL.RawQuery = q.Encode()
 }
 
+// Get 发送 GET 请求。
 func (c *Client) Get(ctx context.Context, url string, opts ...RequestOption) (*Response, error) {
 	return c.Do(ctx, NewRequest(url, http.MethodGet, opts...))
 }
 
+// Post 发送 POST 请求。
 func (c *Client) Post(ctx context.Context, url string, opts ...RequestOption) (*Response, error) {
 	return c.Do(ctx, NewRequest(url, http.MethodPost, opts...))
 }
 
+// Put 发送 PUT 请求。
 func (c *Client) Put(ctx context.Context, url string, opts ...RequestOption) (*Response, error) {
 	return c.Do(ctx, NewRequest(url, http.MethodPut, opts...))
 }
 
+// Delete 发送 DELETE 请求。
 func (c *Client) Delete(ctx context.Context, url string, opts ...RequestOption) (*Response, error) {
 	return c.Do(ctx, NewRequest(url, http.MethodDelete, opts...))
 }
 
+// Patch 发送 PATCH 请求。
 func (c *Client) Patch(ctx context.Context, url string, opts ...RequestOption) (*Response, error) {
 	return c.Do(ctx, NewRequest(url, http.MethodPatch, opts...))
 }
 
+// Head 发送 HEAD 请求。
 func (c *Client) Head(ctx context.Context, url string, opts ...RequestOption) (*Response, error) {
 	return c.Do(ctx, NewRequest(url, http.MethodHead, opts...))
 }
 
+// Options 发送 OPTIONS 请求。
 func (c *Client) Options(ctx context.Context, url string, opts ...RequestOption) (*Response, error) {
 	return c.Do(ctx, NewRequest(url, http.MethodOptions, opts...))
 }
@@ -212,25 +229,8 @@ func (c *Client) buildResponse(resp *http.Response, err error, start time.Time) 
 		return result, nil
 	}
 	defer resp.Body.Close()
-	if c.maxResponseBytes <= 0 {
-		data, readErr := io.ReadAll(resp.Body)
-		if readErr != nil {
-			return &Response{StatusCode: resp.StatusCode, Err: readErr, CostMs: costMs, CostFormatted: costFormatted}, nil
-		}
-		return &Response{
-			StatusCode:    resp.StatusCode,
-			Headers:       resp.Header.Clone(),
-			Data:          data,
-			CostMs:        costMs,
-			CostFormatted: costFormatted,
-			Success:       resp.StatusCode >= 200 && resp.StatusCode < 300,
-		}, nil
-	}
-	data, readErr := io.ReadAll(io.LimitReader(resp.Body, c.maxResponseBytes+1))
+	data, readErr := readLimitedBody(resp.Body, c.maxResponseBytes)
 	if readErr != nil {
-		return &Response{StatusCode: resp.StatusCode, Err: readErr, CostMs: costMs, CostFormatted: costFormatted}, nil
-	}
-	if int64(len(data)) > c.maxResponseBytes {
 		return &Response{
 			StatusCode:    http.StatusBadGateway,
 			Err:           fmt.Errorf("%w: limit %d bytes", ErrResponseTooLarge, c.maxResponseBytes),

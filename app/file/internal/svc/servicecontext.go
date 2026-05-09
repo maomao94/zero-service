@@ -54,7 +54,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		db.MustAutoMigrate(&gormmodel.Oss{})
 	}
 
-	httpcSvc := netx.InitHTTPC("file-httpc")
+	httpcSvc := netx.NewHTTPCService("file-httpc")
 	svc := &ServiceContext{
 		Config:          c,
 		DB:              db,

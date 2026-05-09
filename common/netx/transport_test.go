@@ -9,8 +9,8 @@ import (
 	"github.com/zeromicro/go-zero/rest/httpc"
 )
 
-func TestInitHTTPCUsesDefaultHTTPClient(t *testing.T) {
-	svc := InitHTTPC("test-httpc")
+func TestNewHTTPCServiceDefaultHTTPClient(t *testing.T) {
+	svc := NewHTTPCService("test-httpc")
 	if svc == nil {
 		t.Fatal("expected httpc service")
 	}
