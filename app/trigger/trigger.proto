@@ -101,7 +101,7 @@ service TriggerRpc {
   // 回调计划执行项 ongoing 回执
   rpc CallbackPlanExecItem(CallbackPlanExecItemReq) returns (CallbackPlanExecItemRes);
 
-  // 生成自增ID
+  // 生成业务唯一编码（如工单号、告警编码等），由中间件统一生成，非数据库自增序列
   rpc NextId (NextIdReq) returns (NextIdRes);
 
   // 并发调用调度
