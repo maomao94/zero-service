@@ -14,6 +14,9 @@
 
 - 默认使用中文沟通、提问、任务清单和总结；用户明确要求其他语言时再切换。
 - 修改前先阅读相邻实现、配置、Trellis task 和相关 spec，不基于猜测改动。
+- OpenCode 与 GoLand AI 规则分别放在 `.opencode/rules/**` 和 `.aiassistant/rules/**`，两边文件名和内容保持一致；不要把 OpenCode 规则追加到 `AGENTS.md` 的 Trellis 托管块后。
+- `.opencode/agents/**`、`.opencode/skills/**`、`.opencode/commands/**`、`.opencode/plugins/**`、`.opencode/lib/**` 属于 Trellis/OpenCode 适配层，除非用户明确要求修改适配器，否则不要改。
+- `.aiassistant/rules/**` 与 `.opencode/rules/**` 内容保持同步，分别供 GoLand AI 和 OpenCode 读取；修改时两边同步更新。
 - 能通过搜索代码和读取配置推断的低风险事项自主推进；意图多解且影响大、不可逆操作、缺关键参数或规则冲突时再提问。
 - 按最小影响范围修改，避免无关重构、无关格式化和大范围重排。
 - 不主动创建额外文档或注释；但 `.api`、`.proto`、导出公共能力和复杂协议字段必须保留必要说明。

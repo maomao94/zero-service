@@ -1,6 +1,6 @@
 # Trellis 工作流规范
 
-> 项目级 Trellis 使用规范。OpenCode 通过 `AGENTS.md` 和 `.trellis/spec/**` 获取项目规则；`.trae/**` 不再作为未来开发入口。
+> 项目级 Trellis 使用规范。OpenCode 与 GoLand AI 使用同名规则文件，规则内容放在 `.opencode/rules/**` 和 `.aiassistant/rules/**`，再按需读取 `.trellis/spec/**`。
 
 ## 0. 边界
 
@@ -13,10 +13,14 @@
 - `.trellis/scripts/**`
 - `.trellis/config.yaml`
 - `.trellis/worktree.yaml`
-- `.agent/workflows/**`
+- `.opencode/agents/**`
+- `.opencode/skills/**`
+- `.opencode/commands/**`
+- `.opencode/plugins/**`
+- `.opencode/lib/**`
 - `.trellis/workspace/**` 和 `.trellis/tasks/**` 的运行期记录，除非任务本身要求维护 Trellis 记录
 
-长期项目规则写入 `.trellis/spec/**`；OpenCode 会话入口规则写入 `AGENTS.md` 的非托管区域。
+长期项目规则写入 `.trellis/spec/**`；AI 工具规则写入 `.opencode/rules/**` 和 `.aiassistant/rules/**`，两边保持同名同内容，便于后续覆盖同步。`AGENTS.md` 保持 Trellis 托管块即可。
 
 ---
 
@@ -38,25 +42,21 @@ python3 ./.trellis/scripts/get_context.py --mode packages
 
 ---
 
-## 2. CP/Sprint 联通
+## 2. 任务上下文联通
 
-当任务涉及 CP 开发流程、Backlog、Sprint、任务拆解或角色调度时，采用最小上下文：
-
-```text
-Trellis context
-  -> Backlog.md 单入口
-  -> 当前 Sprint / 当前任务
-  -> Backend / Frontend / QA / DevOps 按需分工
-  -> 开发、验证、最小回填
-```
-
-老板需求唯一入口：
+当前项目不再依赖已删除的敏捷技能包、角色技能包或旧工作流入口。OpenCode + Trellis 的有效上下文来自：
 
 ```text
-CP-开发流程/{项目名}/Backlog.md
+用户当前消息
+  -> Trellis SessionStart / workflow-state
+  -> 当前 Trellis 任务材料（如存在）
+  -> .trellis/spec/** 相关索引和规范
+  -> 相邻代码、README、项目脚本
 ```
 
-新项目不创建 `需求输入.md`。旧项目只在用户明确指定或迁移旧需求时读取。
+读取任务材料时按以下顺序：`prd.md` -> `design.md` if present -> `implement.md` if present -> `implement.jsonl` / `check.jsonl` 引用文件。
+
+没有活跃 Trellis 任务时，不要为了简单问答或小改动强制创建任务；跨模块、需求不清或长期工作再进入 Trellis 规划。
 
 ---
 
@@ -66,7 +66,7 @@ CP-开发流程/{项目名}/Backlog.md
 | --- | --- | --- |
 | Level 0 查询解释 | 解释命令、说明机制、阅读少量文件、回答架构问题 | 只读必要文件，不启动完整开发流程，不改文件 |
 | Level 1 小改/Bugfix | 单点修复、小范围重构、补测试、改配置 | Trellis context -> 定位代码 -> 修改 -> 最小验证 -> 交付说明 |
-| Level 2 Sprint/Backlog | 需求梳理、任务拆解、跨文件功能开发 | Trellis context -> PM/Dev/QA 分工 -> 开发 -> 验证 -> 回填 |
+| Level 2 Trellis 任务 | 需求梳理、任务拆解、跨文件功能开发 | Trellis context -> PRD/设计/实现计划 -> 开发 -> 验证 -> 必要规范回填 |
 | Level 3 跨模块/架构/部署 | 跨服务契约、数据模型、基础设施、发布部署 | Level 2 + 相关 spec + 专项方案；部署必须有用户明确授权 |
 
 升级规则：
@@ -109,7 +109,7 @@ cat .trellis/spec/guides/index.md
 - 先检索现有代码、相邻实现和 `common/` 复用点，再新增工具函数或模块。
 - 修改 `.api` / `.proto` 时必须：定义 -> 执行 `gen.sh` -> 写 Logic -> 检查生成代码 diff。
 - 需要 go-zero、Eino、部署或架构细节时，优先读取相关 spec 和相邻实现；外部资料只作为补充。
-- 不修改 `.trellis/workflow.md`、`.trellis/scripts/**`、`.agent/workflows/**` 等工具托管文件。
+- 不修改 `.trellis/workflow.md`、`.trellis/scripts/**`、`.opencode/agents/**`、`.opencode/skills/**`、`.opencode/plugins/**` 等工具或生成适配文件。
 
 ### 4.3 编码后
 
@@ -130,16 +130,16 @@ git diff --name-only
 
 1. Index first：先读 index，再读具体规范。
 2. Task scoped：只读当前任务相关文件。
-3. CP scoped：CP 文档默认只读 Backlog 当前条目和任务清单当前 Sprint。
-4. Role scoped：角色材料只在职责边界、交接协议或权限冲突不清时按小节读取。
-5. Tool boundary：不修改工具托管文件，不把 `.trae/**` 作为未来运行时依赖。
+3. Task artifact scoped：Trellis 任务材料按 `prd.md` -> `design.md` -> `implement.md` -> JSONL 引用顺序读取。
+4. Tool boundary：不修改 Trellis 工具配置和 OpenCode 生成适配文件。
+5. Deleted skill boundary：不引用已删除的旧敏捷/角色/部署技能包作为运行时依赖。
 
 ---
 
 ## 6. 最佳实践
 
 1. Read before write：先启动 Trellis、读相关 index，再写代码。
-2. Backlog 单入口：老板需求只进 `Backlog.md`。
+2. AI 规则入口清晰：`.opencode/rules/**` 与 `.aiassistant/rules/**` 文件名和内容保持一致。
 3. 规范即代码：发现稳定规则后沉淀到 `.trellis/spec/**`。
 4. 自修复循环：检查发现问题后修复并重新验证。
 5. 不跳生成：`.api` / `.proto` 变更必须执行 `gen.sh`。
