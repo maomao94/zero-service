@@ -1,51 +1,32 @@
-# Logging Guidelines
+# 日志规范
 
-> How logging is done in this project.
+> 日志用于排查业务动作和外部系统交互，不用于暴露请求全文、密钥、连接串或个人信息。
 
----
+## 基本原则
 
-## Overview
+- 优先使用 go-zero `logx` 或相邻服务已有日志模式。
+- 日志应包含服务/模块、业务动作、关键 ID、外部系统名、失败阶段和错误原因。
+- 不在每一层重复打印同一个错误；边界层或关键上下文层记录即可。
+- 对高频路径保持克制，避免在数据采集、MQTT、Socket、SSE、Kafka 等路径制造过量日志。
 
-<!--
-Document your project's logging conventions here.
+## 推荐记录
 
-Questions to answer:
-- What logging library do you use?
-- What are the log levels and when to use each?
-- What should be logged?
-- What should NOT be logged (PII, secrets)?
--->
+- 服务启动、配置加载结果和依赖初始化状态，但不要打印敏感配置值。
+- 外部系统调用失败：RPC、MQTT、Kafka、Redis、数据库、OSS、Docker、DJI Cloud API、Eino Provider 等。
+- 状态机关键流转：任务调度、计划执行、设备上下线、航线/DRC 状态、Socket 房间和会话变更。
+- 批处理摘要：批次 ID、数量、耗时、成功/失败数，不记录完整大 payload。
 
-(To be filled by the team)
+## 禁止记录
 
----
+- 密码、Token、API Key、认证头、证书、SSH 凭据。
+- 数据库连接串、对象存储配置、MQTT Broker 账号密码、AI Provider 密钥。
+- 身份证号、手机号、个人隐私数据。
+- 内网地址、远程服务器账号、个人本地路径、IDE 配置路径。
+- 完整请求体、完整异常堆栈或大块协议报文，除非已脱敏且确实用于排障。
 
-## Log Levels
+## 常见错误
 
-<!-- When to use each level: debug, info, warn, error -->
-
-(To be filled by the team)
-
----
-
-## Structured Logging
-
-<!-- Log format, required fields -->
-
-(To be filled by the team)
-
----
-
-## What to Log
-
-<!-- Important events to log -->
-
-(To be filled by the team)
-
----
-
-## What NOT to Log
-
-<!-- Sensitive data, PII, secrets -->
-
-(To be filled by the team)
+- 为了方便调试直接打印配置结构体。
+- 在错误消息中拼接账号、密码、连接串或远程地址。
+- 多层重复 `Errorf`，导致同一失败被打印多次。
+- 对流式、采集、消息消费路径逐条打印成功日志，造成噪声和性能压力。

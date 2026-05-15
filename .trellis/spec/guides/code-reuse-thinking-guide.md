@@ -1,105 +1,70 @@
-# Code Reuse Thinking Guide
+# 代码复用思考指南
 
-> **Purpose**: Stop and think before creating new code - does it already exist?
+> 新增代码前先判断：项目里是否已经有相同能力、相邻模式或可扩展封装。
 
----
+## 问题
 
-## The Problem
+重复代码会导致行为分叉、bug 修复无法同步、配置和协议不一致。zero-service 服务多、协议多，重复封装尤其容易出现在 client、cache、SDK、model、消息体和状态转换中。
 
-**Duplicated code is the #1 source of inconsistency bugs.**
+## 新增代码前
 
-When you copy-paste or rewrite existing logic:
-- Bug fixes don't propagate
-- Behavior diverges over time
-- Codebase becomes harder to understand
+### 1. 先搜索
 
----
+使用当前可用搜索工具查找：
 
-## Before Writing New Code
+- 相似函数名、结构体名、常量名、topic、method、错误码。
+- 目标字段在 `.api`、`.proto`、Logic、model、Swagger、文档和测试中的引用。
+- `common/` 中是否已有 SDK、client、cache、config 或协议封装。
+- `go.mod` 中是否已有功能相近依赖。
 
-### Step 1: Search First
+### 2. 再判断
 
-```bash
-# Search for similar function names
-grep -r "functionName" .
+| 问题 | 如果是 |
+| --- | --- |
+| 已有相似函数或类型？ | 优先复用或小范围扩展 |
+| 相邻服务已有同类模式？ | 跟随相邻目录、命名、错误处理和测试方式 |
+| 能力会跨服务复用？ | 放入合适的 `common/` 子包 |
+| 只是单服务私有逻辑？ | 保留在该服务 `internal/` |
+| 只是一次性一行转换？ | 不要过度抽象 |
 
-# Search for similar logic
-grep -r "keyword" .
-```
+## 项目重点复用位置
 
-### Step 2: Ask These Questions
+- `common/djisdk/`：DJI Cloud API MQTT topic、method、协议体、Client 和回调。
+- `common/einox/`：Eino Agent、知识库、记忆、中断、协议适配。
+- `common/mcpx/`：MCP Server/Client、鉴权、异步结果、工具封装。
+- `common/mqttx/`：MQTT 客户端封装。
+- `common/ssex/`：SSE Writer 和流式响应。
+- `common/dbx/`：数据库扩展和多库支持。
+- `common/asynqx/`：asynq 任务队列扩展。
+- `common/dockerx/`：Docker 操作封装。
+- `model/`：数据库模型和生成脚本。
 
-| Question | If Yes... |
-|----------|-----------|
-| Does a similar function exist? | Use or extend it |
-| Is this pattern used elsewhere? | Follow the existing pattern |
-| Could this be a shared utility? | Create it in the right place |
-| Am I copying code from another file? | **STOP** - extract to shared |
+## 何时抽象
 
----
+适合抽象：
 
-## Common Duplication Patterns
+- 相同逻辑出现 3 次以上。
+- 协议转换、状态机、缓存 key、外部 SDK 调用容易出错。
+- 多个服务需要同一能力。
 
-### Pattern 1: Copy-Paste Functions
+不适合抽象：
 
-**Bad**: Copying a validation function to another file
+- 只用一次。
+- 逻辑很短且业务语义只属于一个服务。
+- 抽象后需要绕过 go-zero 分层或 `ServiceContext`。
+- 为了“以后可能复用”提前放进 `common/`。
 
-**Good**: Extract to shared utilities, import where needed
+## 批量修改后
 
-### Pattern 2: Similar Components
+1. 复查是否遗漏所有引用点。
+2. 再搜索旧字段、旧常量、旧 topic、旧 method 或旧错误码。
+3. 检查是否需要同步 `.api` / `.proto` / Swagger / 文档 / 测试 / SQL。
+4. 如果多个路径产生同一输出，确认所有路径都已更新，避免一个路径自动派生、另一个路径手工列表导致漂移。
 
-**Bad**: Creating a new component that's 80% similar to existing
+## 检查清单
 
-**Good**: Extend existing component with props/variants
-
-### Pattern 3: Repeated Constants
-
-**Bad**: Defining the same constant in multiple files
-
-**Good**: Single source of truth, import everywhere
-
----
-
-## When to Abstract
-
-**Abstract when**:
-- Same code appears 3+ times
-- Logic is complex enough to have bugs
-- Multiple people might need this
-
-**Don't abstract when**:
-- Only used once
-- Trivial one-liner
-- Abstraction would be more complex than duplication
-
----
-
-## After Batch Modifications
-
-When you've made similar changes to multiple files:
-
-1. **Review**: Did you catch all instances?
-2. **Search**: Run grep to find any missed
-3. **Consider**: Should this be abstracted?
-
----
-
-## Gotcha: Asymmetric Mechanisms Producing Same Output
-
-**Problem**: When two different mechanisms must produce the same file set (e.g., recursive directory copy for init vs. manual `files.set()` for update), structural changes (renaming, moving, adding subdirectories) only propagate through the automatic mechanism. The manual one silently drifts.
-
-**Symptom**: Init works perfectly, but update creates files at wrong paths or misses files entirely.
-
-**Prevention checklist**:
-- [ ] When migrating directory structures, search for ALL code paths that reference the old structure
-- [ ] If one path is auto-derived (glob/copy) and another is manually listed, the manual one needs updating
-- [ ] Add a regression test that compares outputs from both mechanisms
-
----
-
-## Checklist Before Commit
-
-- [ ] Searched for existing similar code
-- [ ] No copy-pasted logic that should be shared
-- [ ] Constants defined in one place
-- [ ] Similar patterns follow same structure
+- [ ] 已搜索现有相似代码和依赖。
+- [ ] 没有复制粘贴应共享的逻辑。
+- [ ] 常量、协议字段和错误码有单一来源。
+- [ ] 公共能力放在合适 `common/` 子包，服务私有逻辑仍在 `internal/`。
+- [ ] 新工具函数或复杂转换有必要测试。

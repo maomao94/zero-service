@@ -1,51 +1,36 @@
-# Error Handling
+# 错误处理规范
 
-> How errors are handled in this project.
+> 错误处理遵循 Go/go-zero/gRPC 习惯和项目错误码规范，避免 Java 异常式分层和无上下文的吞错。
 
----
+## 总原则
 
-## Overview
+- 每个 `err` 都要处理；不要空 `catch` 式吞错，不要仅为通过检查而忽略错误。
+- 错误返回要保留业务上下文，但不得泄露密钥、连接串、认证头、个人信息或完整内部路径。
+- 先参考相邻 Logic、Handler、Server 的错误返回和日志方式，再新增错误封装。
+- HTTP 和 gRPC 错误码以 [错误码规范](../../../code.md) 为准。
 
-<!--
-Document your project's error handling conventions here.
+## HTTP/API 错误
 
-Questions to answer:
-- What error types do you define?
-- How are errors propagated?
-- How are errors logged?
-- How are errors returned to clients?
--->
+- Handler 只做请求解析、基础校验、调用 Logic 和响应输出。
+- 返回错误时使用 go-zero 项目既有 `httpx`/错误响应模式，不直接 `w.Write` 或 `fmt.Fprintf` 拼响应。
+- `.api` 中的注释、请求响应结构和实际错误行为要保持一致。
 
-(To be filled by the team)
+## RPC/gRPC 错误
 
----
+- RPC Logic 返回符合 gRPC/status/google.rpc.Code 项目约定的错误。
+- `.proto` 注释应说明关键失败场景、业务限制和字段含义。
+- 下游 RPC、MQTT、Kafka、OSS、Docker、数据库等调用失败时，错误要能定位外部系统和业务动作，但不要泄露敏感参数。
 
-## Error Types
+## 日志与传播
 
-<!-- Custom error classes/types -->
+- 在边界层记录必要上下文，避免每一层重复打印同一个错误。
+- Logic 可以补充业务动作、关键 ID、外部系统名和失败阶段。
+- 不把用户可见错误直接等同于内部日志错误；用户返回保持稳定，内部日志保留排查线索。
 
-(To be filled by the team)
+## 常见错误
 
----
-
-## Error Handling Patterns
-
-<!-- Try-catch patterns, error propagation -->
-
-(To be filled by the team)
-
----
-
-## API Error Responses
-
-<!-- Standard error response format -->
-
-(To be filled by the team)
-
----
-
-## Common Mistakes
-
-<!-- Error handling mistakes your team has made -->
-
-(To be filled by the team)
+- 在 Handler 中写业务逻辑并直接拼接错误响应。
+- 为了快速返回而丢失底层错误原因。
+- 把完整请求体、认证头、连接串、路径或账号写入错误日志。
+- 新增一套与项目 `code.md` 不一致的错误码体系。
+- 用 Java 风格异常、Result 包装或 Builder 模式替代 Go 的显式错误返回。
