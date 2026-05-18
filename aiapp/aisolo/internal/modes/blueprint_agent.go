@@ -33,14 +33,6 @@ func (*agentBlueprint) Build(ctx context.Context, deps Dependencies) (*einoxagen
 		AllowCapabilities(tool.CapCompute, tool.CapIO, tool.CapHuman).
 		Apply(deps.Kit), deps.KnowledgeTools)
 
-	if deps.DemoSurveyEcho {
-		at, err := NewSurveyEchoAgentTool(ctx, deps)
-		if err != nil {
-			return nil, err
-		}
-		tools = append(tools, at)
-	}
-
 	return einoxagent.NewChatModelAgent(ctx, deps.ChatModel, appendSkillDirOpts(deps,
 		einoxagent.WithName("agent"),
 		einoxagent.WithDescription("Default ChatModel agent with all built-in tools"),

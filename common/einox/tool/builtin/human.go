@@ -50,10 +50,10 @@ type askConfirmParam struct {
 	UILang   string `json:"ui_lang,omitempty" jsonschema:"description=前端 UI 语言提示, 如 zh/en"`
 }
 
-// NewAskConfirm 返回一个"请用户确认/拒绝"的中断工具。
-func NewAskConfirm() tool.InvokableTool {
+// NewAskConfirmTool 返回一个"请用户确认/拒绝"的中断工具。
+func NewAskConfirmTool() (tool.InvokableTool, error) {
 	const name = "ask_confirm"
-	t, err := utils.InferTool(name, "AskConfirm: 向用户发起一个二选一审批 (approve / deny), 由用户点击按钮决定是否继续。",
+	return utils.InferTool(name, "AskConfirm: 向用户发起一个二选一审批 (approve / deny), 由用户点击按钮决定是否继续。",
 		func(ctx context.Context, in *askConfirmParam) (string, error) {
 			wasInterrupted, _, stored := tool.GetInterruptState[*askConfirmParam](ctx)
 			if !wasInterrupted {
@@ -84,6 +84,12 @@ func NewAskConfirm() tool.InvokableTool {
 				UILang:   stored.UILang,
 			}, stored)
 		})
+
+}
+
+// NewAskConfirm 返回一个"请用户确认/拒绝"的中断工具。
+func NewAskConfirm() tool.InvokableTool {
+	t, err := NewAskConfirmTool()
 	if err != nil {
 		panic(err)
 	}
@@ -107,10 +113,10 @@ type askSingleParam struct {
 	UILang   string         `json:"ui_lang,omitempty" jsonschema:"description=前端 UI 语言提示, 如 zh/en"`
 }
 
-// NewAskSingleChoice 单选类中断工具。
-func NewAskSingleChoice() tool.InvokableTool {
+// NewAskSingleChoiceTool 单选类中断工具。
+func NewAskSingleChoiceTool() (tool.InvokableTool, error) {
 	const name = "ask_single_choice"
-	t, err := utils.InferTool(name, "AskSingleChoice: 向用户提出单选题, 用户从候选项里选一个。",
+	return utils.InferTool(name, "AskSingleChoice: 向用户提出单选题, 用户从候选项里选一个。",
 		func(ctx context.Context, in *askSingleParam) (string, error) {
 			wasInterrupted, _, stored := tool.GetInterruptState[*askSingleParam](ctx)
 			if !wasInterrupted {
@@ -143,6 +149,11 @@ func NewAskSingleChoice() tool.InvokableTool {
 				UILang:   stored.UILang,
 			}, stored)
 		})
+}
+
+// NewAskSingleChoice 单选类中断工具。
+func NewAskSingleChoice() tool.InvokableTool {
+	t, err := NewAskSingleChoiceTool()
 	if err != nil {
 		panic(err)
 	}
@@ -161,10 +172,10 @@ type askMultiParam struct {
 	UILang    string         `json:"ui_lang,omitempty" jsonschema:"description=前端 UI 语言提示, 如 zh/en"`
 }
 
-// NewAskMultiChoice 多选类中断工具。
-func NewAskMultiChoice() tool.InvokableTool {
+// NewAskMultiChoiceTool 多选类中断工具。
+func NewAskMultiChoiceTool() (tool.InvokableTool, error) {
 	const name = "ask_multi_choice"
-	t, err := utils.InferTool(name, "AskMultiChoice: 向用户提出多选题, 用户从候选项里选任意个。",
+	return utils.InferTool(name, "AskMultiChoice: 向用户提出多选题, 用户从候选项里选任意个。",
 		func(ctx context.Context, in *askMultiParam) (string, error) {
 			wasInterrupted, _, stored := tool.GetInterruptState[*askMultiParam](ctx)
 			if !wasInterrupted {
@@ -199,6 +210,11 @@ func NewAskMultiChoice() tool.InvokableTool {
 				UILang:    stored.UILang,
 			}, stored)
 		})
+}
+
+// NewAskMultiChoice 多选类中断工具。
+func NewAskMultiChoice() tool.InvokableTool {
+	t, err := NewAskMultiChoiceTool()
 	if err != nil {
 		panic(err)
 	}
@@ -218,10 +234,10 @@ type askTextParam struct {
 	Fields      []formField `json:"fields,omitempty" jsonschema:"description=问卷字段。非空时按结构化表单交互, 可表达下拉/单选/多选等"`
 }
 
-// NewAskTextInput 自由文本输入类中断工具。
-func NewAskTextInput() tool.InvokableTool {
+// NewAskTextInputTool 自由文本输入类中断工具。
+func NewAskTextInputTool() (tool.InvokableTool, error) {
 	const name = "ask_text_input"
-	t, err := utils.InferTool(name, "AskTextInput: 向用户征集一段自由文本 (单行或多行)。",
+	return utils.InferTool(name, "AskTextInput: 向用户征集一段自由文本 (单行或多行)。",
 		func(ctx context.Context, in *askTextParam) (string, error) {
 			wasInterrupted, _, stored := tool.GetInterruptState[*askTextParam](ctx)
 			if !wasInterrupted {
@@ -278,6 +294,11 @@ func NewAskTextInput() tool.InvokableTool {
 				UILang:      stored.UILang,
 			}, stored)
 		})
+}
+
+// NewAskTextInput 自由文本输入类中断工具。
+func NewAskTextInput() tool.InvokableTool {
+	t, err := NewAskTextInputTool()
 	if err != nil {
 		panic(err)
 	}
@@ -309,10 +330,10 @@ type askFormParam struct {
 	UILang   string      `json:"ui_lang,omitempty" jsonschema:"description=前端 UI 语言提示, 如 zh/en"`
 }
 
-// NewAskFormInput 表单类中断工具。
-func NewAskFormInput() tool.InvokableTool {
+// NewAskFormInputTool 表单类中断工具。
+func NewAskFormInputTool() (tool.InvokableTool, error) {
 	const name = "ask_form_input"
-	t, err := utils.InferTool(name, "AskFormInput: 向用户征集一个结构化表单 (多字段, 每字段有名字/标签/类型)。",
+	return utils.InferTool(name, "AskFormInput: 向用户征集一个结构化表单 (多字段, 每字段有名字/标签/类型)。",
 		func(ctx context.Context, in *askFormParam) (string, error) {
 			wasInterrupted, _, stored := tool.GetInterruptState[*askFormParam](ctx)
 			if !wasInterrupted {
@@ -341,6 +362,11 @@ func NewAskFormInput() tool.InvokableTool {
 				UILang:   stored.UILang,
 			}, stored)
 		})
+}
+
+// NewAskFormInput 表单类中断工具。
+func NewAskFormInput() tool.InvokableTool {
+	t, err := NewAskFormInputTool()
 	if err != nil {
 		panic(err)
 	}
@@ -357,10 +383,10 @@ type askInfoParam struct {
 	UILang string `json:"ui_lang,omitempty" jsonschema:"description=前端 UI 语言提示, 如 zh/en"`
 }
 
-// NewAskInfoAck 展示-确认类中断工具。
-func NewAskInfoAck() tool.InvokableTool {
+// NewAskInfoAckTool 展示-确认类中断工具。
+func NewAskInfoAckTool() (tool.InvokableTool, error) {
 	const name = "ask_info_ack"
-	t, err := utils.InferTool(name, "AskInfoAck: 向用户展示一段信息, 要求用户点击 '我知道了' 才能继续。",
+	return utils.InferTool(name, "AskInfoAck: 向用户展示一段信息, 要求用户点击 '我知道了' 才能继续。",
 		func(ctx context.Context, in *askInfoParam) (string, error) {
 			wasInterrupted, _, stored := tool.GetInterruptState[*askInfoParam](ctx)
 			if !wasInterrupted {
@@ -386,6 +412,11 @@ func NewAskInfoAck() tool.InvokableTool {
 				UILang:   stored.UILang,
 			}, stored)
 		})
+}
+
+// NewAskInfoAck 展示-确认类中断工具。
+func NewAskInfoAck() tool.InvokableTool {
+	t, err := NewAskInfoAckTool()
 	if err != nil {
 		panic(err)
 	}

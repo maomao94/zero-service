@@ -28,12 +28,18 @@ type echoResult struct {
 	Result string `json:"result"`
 }
 
-// NewEcho 返回一个示例工具：原样返回输入。
-func NewEcho() tool.InvokableTool {
-	t, err := utils.InferTool("echo", "Echo: 原样返回输入的文本，常用于自检工具链路。",
+// NewEchoTool 返回一个示例工具：原样返回输入。
+func NewEchoTool() (tool.InvokableTool, error) {
+	return utils.InferTool("echo", "Echo: 原样返回输入的文本，常用于自检工具链路。",
 		func(_ context.Context, in *echoParam) (*echoResult, error) {
 			return &echoResult{Result: in.Text}, nil
 		})
+
+}
+
+// NewEcho 返回一个示例工具：原样返回输入。
+func NewEcho() tool.InvokableTool {
+	t, err := NewEchoTool()
 	if err != nil {
 		panic(err)
 	}
@@ -53,9 +59,9 @@ type calculatorResult struct {
 	Error  string `json:"error,omitempty" jsonschema:"description=表达式非法或无法求值时的说明; 若存在此字段应忽略 result 并向用户解释原因"`
 }
 
-// NewCalculator 返回一个简单计算器工具。
-func NewCalculator() tool.InvokableTool {
-	t, err := utils.InferTool("calculator", "Calculator: 对纯数字四则表达式求值（+ - * / 与括号）。重要：非法或无法解析的表达式不会使本工具报错中断；返回体中会出现 error 字段说明原因，此时无有效 result。每次调用后必须先检查返回 JSON：若 error 非空，向用户解释失败原因；仅当 error 为空时使用 result。",
+// NewCalculatorTool 返回一个简单计算器工具。
+func NewCalculatorTool() (tool.InvokableTool, error) {
+	return utils.InferTool("calculator", "Calculator: 对纯数字四则表达式求值（+ - * / 与括号）。重要：非法或无法解析的表达式不会使本工具报错中断；返回体中会出现 error 字段说明原因，此时无有效 result。每次调用后必须先检查返回 JSON：若 error 非空，向用户解释失败原因；仅当 error 为空时使用 result。",
 		func(_ context.Context, in *calculatorParam) (*calculatorResult, error) {
 			v, err := evalArith(in.Expr)
 			if err != nil {
@@ -64,6 +70,11 @@ func NewCalculator() tool.InvokableTool {
 			}
 			return &calculatorResult{Result: strconv.FormatFloat(v, 'f', -1, 64)}, nil
 		})
+}
+
+// NewCalculator 返回一个简单计算器工具。
+func NewCalculator() tool.InvokableTool {
+	t, err := NewCalculatorTool()
 	if err != nil {
 		panic(err)
 	}

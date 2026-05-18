@@ -18,6 +18,7 @@ import (
 	"zero-service/common/einox/memory"
 	"zero-service/common/einox/metrics"
 	exinoModel "zero-service/common/einox/model"
+	einoxruntime "zero-service/common/einox/runtime"
 	"zero-service/common/einox/tool"
 	"zero-service/common/einox/tool/builtin"
 	"zero-service/common/gormx"
@@ -33,6 +34,8 @@ import (
 //	 ├── SessionStore    (会话元数据 + 中断记录)
 //	 ├── CheckPointStore (ADK Agent 中断 checkpoint)
 //	 ├── ChatModel
+//	 ├── RuntimeRunner  (Eino runtime SDK facade)
+//	 ├── RuntimeTools   (runtime SDK tool registry)
 //	 ├── ToolKit         (所有内置工具)
 //	 ├── ModeRegistry    (5 个 Blueprint)
 //	 ├── ModePool        (按 mode 缓存 Agent 实例)
@@ -45,6 +48,8 @@ type ServiceContext struct {
 	Sessions        session.Store
 	CheckPointStore checkpoint.Store
 	ChatModel       model.BaseChatModel
+	RuntimeRunner   *einoxruntime.Runner
+	RuntimeTools    *einoxruntime.ToolRegistry
 	Kit             *tool.Kit
 	Registry        *modes.Registry
 	Pool            *modes.Pool
@@ -53,6 +58,8 @@ type ServiceContext struct {
 	Knowledge       *einoxkb.Service
 	// KnowledgeInitErr 非空表示 Knowledge 启用但初始化失败，供 Health RPC 摘要。
 	KnowledgeInitErr string
+	// KitInitErr 非空表示内置工具 Kit 初始化失败，供 Health RPC 摘要。
+	KitInitErr string
 }
 
 // NewServiceContext 构造并初始化。
@@ -69,6 +76,8 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	s.initChatModel(ctx)
 	s.initKnowledge(ctx)
 	s.initKit()
+	s.initRuntimeTools(ctx)
+	s.initRuntimeRunner()
 	s.initModes(ctx)
 	s.initExecutor()
 	s.recoverRunningSessions(ctx)
@@ -174,9 +183,12 @@ func (s *ServiceContext) initCheckPoint() {
 
 func (s *ServiceContext) initChatModel(ctx context.Context) {
 	cfg := exinoModel.Config{
-		Provider: exinoModel.Provider(s.Config.Model.Provider),
-		Model:    s.Config.Model.Model,
-		APIKey:   s.Config.Model.APIKey,
+		Provider:       exinoModel.Provider(s.Config.Model.Provider),
+		Model:          s.Config.Model.Model,
+		APIKey:         s.Config.Model.APIKey,
+		Temperature:    s.Config.Model.Temperature,
+		TemperatureSet: true,
+		MaxTokens:      s.Config.Model.MaxTokens,
 	}
 	if s.Config.Model.BaseURL != "" {
 		cfg.BaseURL = s.Config.Model.BaseURL
@@ -188,6 +200,27 @@ func (s *ServiceContext) initChatModel(ctx context.Context) {
 	}
 	s.ChatModel = cm
 	logx.Infof("[svc] chat model ready: %s/%s", s.Config.Model.Provider, s.Config.Model.Model)
+}
+
+func (s *ServiceContext) initRuntimeRunner() {
+	if s.ChatModel == nil {
+		logx.Info("[svc] chat model nil, skip runtime runner")
+		return
+	}
+	opts := make([]einoxruntime.RunnerOption, 0, 2)
+	if s.RuntimeTools != nil {
+		opts = append(opts, einoxruntime.WithTools(s.RuntimeTools))
+	}
+	if retriever := einoxruntime.NewKnowledgeRetriever(s.Knowledge); retriever != nil {
+		opts = append(opts, einoxruntime.WithRetriever(retriever, s.Config.Knowledge.EffectiveTopK()))
+	}
+	runner, err := einoxruntime.NewRunner(s.ChatModel, opts...)
+	if err != nil {
+		logx.Errorf("[svc] runtime runner: %v", err)
+		return
+	}
+	s.RuntimeRunner = runner
+	logx.Info("[svc] runtime runner ready")
 }
 
 func (s *ServiceContext) initKnowledge(ctx context.Context) {
@@ -205,8 +238,38 @@ func (s *ServiceContext) initKnowledge(ctx context.Context) {
 }
 
 func (s *ServiceContext) initKit() {
-	s.Kit = builtin.NewDefaultKit()
+	k, err := builtin.NewDefaultKit()
+	if err != nil {
+		logx.Errorf("[svc] tool kit: %v", err)
+		s.KitInitErr = truncateInitErr(err.Error())
+		return
+	}
+	s.Kit = k
 	logx.Infof("[svc] tool kit loaded: %d tools", len(s.Kit.All()))
+}
+
+func (s *ServiceContext) initRuntimeTools(ctx context.Context) {
+	if s.Kit == nil {
+		logx.Info("[svc] tool kit nil, skip runtime tools")
+		return
+	}
+	tools := tool.NewPolicy().AllowCapabilities(tool.CapCompute, tool.CapIO).Apply(s.Kit)
+	if s.Knowledge != nil {
+		kt, err := einoxkb.NewSearchTool(s.Knowledge)
+		if err != nil {
+			logx.Errorf("[svc] runtime knowledge search tool: %v", err)
+		} else if kt != nil {
+			tools = append(tools, kt)
+		}
+	}
+	registry, err := einoxruntime.NewToolRegistry(tools...)
+	if err != nil {
+		logx.Errorf("[svc] runtime tools: %v", err)
+		return
+	}
+	s.RuntimeTools = registry
+	logx.Infof("[svc] runtime tools ready: %d tools", len(tools))
+	_ = ctx
 }
 
 func (s *ServiceContext) initModes(ctx context.Context) {
@@ -265,7 +328,6 @@ func (s *ServiceContext) initModes(ctx context.Context) {
 		DeepEnableLocalFilesystem: s.Config.Agent.DeepLocalFilesystemEnabled(),
 		DeepFSConfig:              deepFS,
 		PlanMaxIterations:         s.Config.Agent.EffectivePlanMaxIterations(),
-		DemoSurveyEcho:            s.Config.Agent.DemoSurveyEcho,
 		KnowledgeTools:            kbTools,
 	})
 	_ = ctx
@@ -273,21 +335,24 @@ func (s *ServiceContext) initModes(ctx context.Context) {
 }
 
 func (s *ServiceContext) initExecutor() {
-	if s.Pool == nil {
-		logx.Info("[svc] pool nil, skip executor")
+	if s.Pool == nil && s.RuntimeRunner == nil {
+		logx.Info("[svc] pool and runtime runner nil, skip executor")
 		return
 	}
 	instanceID := s.Config.EffectiveRunInstanceID()
 	s.Executor = turn.New(turn.Config{
-		Pool:              s.Pool,
-		Registry:          s.Registry,
-		Messages:          s.Messages,
-		Sessions:          s.Sessions,
-		Metrics:           s.Metrics,
-		App:               &s.Config,
-		RunInstanceID:     instanceID,
-		RunLeaseTTL:       s.Config.EffectiveSessionRunLeaseTTL(),
-		RunNullLeaseGrace: s.Config.EffectiveNullLeaseRecoverGrace(),
+		Pool:                      s.Pool,
+		Registry:                  s.Registry,
+		Messages:                  s.Messages,
+		Sessions:                  s.Sessions,
+		Metrics:                   s.Metrics,
+		App:                       &s.Config,
+		RuntimeRunner:             s.RuntimeRunner,
+		RuntimeSystemPrompt:       modes.RuntimeAgentPrompt(),
+		RuntimeMaxHistoryMessages: s.Config.Agent.EffectiveRuntimeMaxHistoryMessages(),
+		RunInstanceID:             instanceID,
+		RunLeaseTTL:               s.Config.EffectiveSessionRunLeaseTTL(),
+		RunNullLeaseGrace:         s.Config.EffectiveNullLeaseRecoverGrace(),
 	})
 	logx.Info("[svc] turn executor ready")
 }
@@ -308,6 +373,11 @@ func (s *ServiceContext) Close() error {
 	}
 	if s.Knowledge != nil {
 		_ = s.Knowledge.Close()
+	}
+	if s.DB != nil && s.DB.DB != nil {
+		if sqlDB, err := s.DB.DB.DB(); err == nil {
+			_ = sqlDB.Close()
+		}
 	}
 	return nil
 }

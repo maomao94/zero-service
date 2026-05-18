@@ -123,6 +123,8 @@ func emitAssistantMessage(em *Emitter, role schema.RoleType, mo *adk.MessageVari
 // emitAssistantStream 把一条流式 assistant 消息拆成 message.start / delta... / end
 // + 若干 tool.call.start (工具调用在流末尾才有稳定的 args)。
 func emitAssistantStream(em *Emitter, role schema.RoleType, stream *schema.StreamReader[adk.Message], agentName string) string {
+	defer stream.Close()
+
 	msgID := uuid.NewString()
 	roleStr := toMessageRole(role)
 
@@ -276,6 +278,8 @@ func emitToolResult(em *Emitter, mo *adk.MessageVariant, agentName string) {
 	)
 
 	if mo.IsStreaming && mo.MessageStream != nil {
+		defer mo.MessageStream.Close()
+
 		for {
 			chunk, err := mo.MessageStream.Recv()
 			if errors.Is(err, io.EOF) {

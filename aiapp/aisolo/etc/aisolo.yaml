@@ -9,7 +9,7 @@ Log:
 Model:
   Provider: "ark"
   Model: "deepseek-v3-2-251201"
-  APIKey: "e09fbc83-9d4b-4b09-98aa-837145715808"
+  APIKey: ""
   BaseURL: ""
   MaxTokens: 32768
   Temperature: 0.7
@@ -40,7 +40,7 @@ Tools:
   MaxConcurrency: 10
 
 Skills:
-  # 子目录各含 SKILL.md；示例见 skills/survey_echo_flow（问卷→echo 说明 + 渐进披露）
+  # 子目录各含 SKILL.md，供 Eino skill 中间件渐进披露。
   Dir: "./skills"
   Enabled: true
   # Strict: true  # 为 true 时目录必须存在否则进程拒绝启动（go-zero Validate）
@@ -48,8 +48,8 @@ Skills:
 Agent:
   PoolMaxIdle: 10
   PoolMaxLive: 1h
-  # demoSurveyEcho: true   # 联调：挂载 Survey→Echo 子 Agent 工具（生产勿开）
   # planMaxIterations: 12      # Plan 模式最大迭代，默认 10
+  # runtimeMaxHistoryMessages: 32 # 默认 Agent runtime path 传给模型的最近历史消息数
   # Deep 本地文件系统默认关闭；需 grep 等工具时显式 enableLocalFilesystem: true
   # Deep:
   #   enableLocalFilesystem: true

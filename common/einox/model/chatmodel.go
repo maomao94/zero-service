@@ -42,7 +42,9 @@ type Config struct {
 	BaseURL     string  `json:"base_url"`    // API Base URL（可选）
 	Model       string  `json:"model"`       // 模型名称
 	Temperature float64 `json:"temperature"` // 温度参数
-	MaxTokens   int     `json:"max_tokens"`  // 最大 token 数
+	// TemperatureSet 表示 Temperature 是显式配置值；用于支持 temperature=0。
+	TemperatureSet bool `json:"temperature_set"`
+	MaxTokens      int  `json:"max_tokens"` // 最大 token 数
 
 	// Ollama
 	OllamaURL string `json:"ollama_url"` // Ollama 服务地址，默认 http://localhost:11434
@@ -89,7 +91,7 @@ func newOpenAI(ctx context.Context, cfg Config) (model.BaseChatModel, error) {
 	if cfg.BaseURL != "" {
 		config.BaseURL = cfg.BaseURL
 	}
-	if cfg.Temperature > 0 {
+	if cfg.TemperatureSet || cfg.Temperature > 0 {
 		t := float32(cfg.Temperature)
 		config.Temperature = &t
 	}
@@ -108,7 +110,7 @@ func newDeepSeek(ctx context.Context, cfg Config) (model.BaseChatModel, error) {
 	if cfg.BaseURL != "" {
 		config.BaseURL = cfg.BaseURL
 	}
-	if cfg.Temperature > 0 {
+	if cfg.TemperatureSet || cfg.Temperature > 0 {
 		config.Temperature = float32(cfg.Temperature)
 	}
 	if cfg.MaxTokens > 0 {
@@ -140,7 +142,7 @@ func newQwen(ctx context.Context, cfg Config) (model.BaseChatModel, error) {
 	if cfg.BaseURL != "" {
 		config.BaseURL = cfg.BaseURL
 	}
-	if cfg.Temperature > 0 {
+	if cfg.TemperatureSet || cfg.Temperature > 0 {
 		t := float32(cfg.Temperature)
 		config.Temperature = &t
 	}
@@ -181,7 +183,7 @@ func newArk(ctx context.Context, cfg Config) (model.BaseChatModel, error) {
 	}
 
 	// 设置温度
-	if cfg.Temperature > 0 {
+	if cfg.TemperatureSet || cfg.Temperature > 0 {
 		t := float32(cfg.Temperature)
 		config.Temperature = &t
 	}
@@ -199,6 +201,6 @@ func newArk(ctx context.Context, cfg Config) (model.BaseChatModel, error) {
 // 目前 eino-ext 暂不支持 Claude，如需使用请：
 // 1. 使用 OpenAI 兼容接口 + Claude API Base URL
 // 2. 或等待官方支持
-func newClaude(ctx context.Context, cfg Config) (model.BaseChatModel, error) {
+func newClaude(_ context.Context, _ Config) (model.BaseChatModel, error) {
 	return nil, fmt.Errorf("claude provider not implemented: please use provider=openai with base_url pointing to a Claude-compatible OpenAI proxy")
 }

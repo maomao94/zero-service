@@ -78,6 +78,39 @@ func (s *GormxStore) UpdateSession(ctx context.Context, sess *Session) error {
 	return nil
 }
 
+func (s *GormxStore) AcquireRun(ctx context.Context, sess *Session, expected aisolo.SessionStatus, owner string, leaseUntil time.Time, clearInterrupt bool) error {
+	if sess == nil || sess.ID == "" {
+		return fmt.Errorf("session.gormx: empty")
+	}
+	now := time.Now()
+	updates := map[string]any{
+		"status":          int32(aisolo.SessionStatus_SESSION_STATUS_RUNNING),
+		"run_owner":       owner,
+		"run_lease_until": leaseUntil,
+		"updated_at":      now,
+	}
+	if clearInterrupt {
+		updates["interrupt_id"] = ""
+	}
+	res := s.db.DB.WithContext(ctx).Model(&sessionRow{}).
+		Where("id = ? AND user_id = ? AND status = ?", sess.ID, sess.UserID, int32(expected)).
+		Updates(updates)
+	if res.Error != nil {
+		return fmt.Errorf("session.gormx: acquire run: %w", res.Error)
+	}
+	if res.RowsAffected == 0 {
+		return fmt.Errorf("session: run acquire conflict")
+	}
+	sess.Status = aisolo.SessionStatus_SESSION_STATUS_RUNNING
+	if clearInterrupt {
+		sess.InterruptID = ""
+	}
+	sess.RunOwner = owner
+	sess.RunLeaseUntil = leaseUntil
+	sess.UpdatedAt = now
+	return nil
+}
+
 func (s *GormxStore) ListSessions(ctx context.Context, userID string, page, pageSize int) ([]*Session, int64, error) {
 	if page <= 0 {
 		page = 1
@@ -225,36 +258,40 @@ func sessionToRow(s *Session) (*sessionRow, error) {
 		lease = &t
 	}
 	return &sessionRow{
-		ID:            s.ID,
-		UserID:        s.UserID,
-		Title:         s.Title,
-		Mode:          int32(s.Mode),
-		Status:        int32(s.Status),
-		InterruptID:   s.InterruptID,
-		MessageCount:  s.MessageCount,
-		LastMessage:   s.LastMessage,
-		UILang:        s.UILang,
-		RunOwner:      s.RunOwner,
-		RunLeaseUntil: lease,
-		CreatedAt:     s.CreatedAt,
-		UpdatedAt:     s.UpdatedAt,
+		ID:                s.ID,
+		UserID:            s.UserID,
+		Title:             s.Title,
+		Mode:              int32(s.Mode),
+		Status:            int32(s.Status),
+		InterruptID:       s.InterruptID,
+		MessageCount:      s.MessageCount,
+		LastMessage:       s.LastMessage,
+		UILang:            s.UILang,
+		KnowledgeBaseID:   s.KnowledgeBaseID,
+		KnowledgeBaseName: s.KnowledgeBaseName,
+		RunOwner:          s.RunOwner,
+		RunLeaseUntil:     lease,
+		CreatedAt:         s.CreatedAt,
+		UpdatedAt:         s.UpdatedAt,
 	}, nil
 }
 
 func rowToSession(r *sessionRow) (*Session, error) {
 	s := &Session{
-		ID:           r.ID,
-		UserID:       r.UserID,
-		Title:        r.Title,
-		Mode:         aisolo.AgentMode(r.Mode),
-		Status:       aisolo.SessionStatus(r.Status),
-		InterruptID:  r.InterruptID,
-		MessageCount: r.MessageCount,
-		LastMessage:  r.LastMessage,
-		UILang:       r.UILang,
-		RunOwner:     r.RunOwner,
-		CreatedAt:    r.CreatedAt,
-		UpdatedAt:    r.UpdatedAt,
+		ID:                r.ID,
+		UserID:            r.UserID,
+		Title:             r.Title,
+		Mode:              aisolo.AgentMode(r.Mode),
+		Status:            aisolo.SessionStatus(r.Status),
+		InterruptID:       r.InterruptID,
+		MessageCount:      r.MessageCount,
+		LastMessage:       r.LastMessage,
+		UILang:            r.UILang,
+		KnowledgeBaseID:   r.KnowledgeBaseID,
+		KnowledgeBaseName: r.KnowledgeBaseName,
+		RunOwner:          r.RunOwner,
+		CreatedAt:         r.CreatedAt,
+		UpdatedAt:         r.UpdatedAt,
 	}
 	if r.RunLeaseUntil != nil {
 		s.RunLeaseUntil = *r.RunLeaseUntil

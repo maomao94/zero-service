@@ -95,6 +95,38 @@ func (s *JSONLStore) UpdateSession(ctx context.Context, sess *Session) error {
 	return writeJSON(fp, sess)
 }
 
+func (s *JSONLStore) AcquireRun(ctx context.Context, sess *Session, expected aisolo.SessionStatus, owner string, leaseUntil time.Time, clearInterrupt bool) error {
+	_ = ctx
+	if sess == nil || sess.ID == "" {
+		return fmt.Errorf("session.jsonl: empty")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	fp := s.sessPath(sess.UserID, sess.ID)
+	var current Session
+	if err := readJSON(fp, &current); err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("session: not found")
+		}
+		return err
+	}
+	if current.Status != expected {
+		return fmt.Errorf("session: run acquire conflict")
+	}
+	current.Status = aisolo.SessionStatus_SESSION_STATUS_RUNNING
+	if clearInterrupt {
+		current.InterruptID = ""
+	}
+	current.RunOwner = owner
+	current.RunLeaseUntil = leaseUntil
+	current.UpdatedAt = time.Now()
+	if err := writeJSON(fp, &current); err != nil {
+		return err
+	}
+	*sess = current
+	return nil
+}
+
 func (s *JSONLStore) ListSessions(ctx context.Context, userID string, page, pageSize int) ([]*Session, int64, error) {
 	_ = ctx
 	if page <= 0 {

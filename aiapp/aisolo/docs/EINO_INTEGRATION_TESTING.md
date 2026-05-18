@@ -24,13 +24,8 @@
 | **Deep** | 选 **deep** mode；观察 `deep_research` / `deep_synthesis` 子 Agent 是否在合适步骤被 task 委派（前端 SSE 中带 `agent_name`）。 |
 | **Workflow** | **workflow** mode：顺序子 Agent 输出是否串联；并行/循环若启用则看事件顺序。 |
 | **Supervisor** | **supervisor** mode：`researcher` vs `interactor` 分工与中断归属。 |
-| **AgentTool** | **agent** mode：默认挂载 `NewSurveyEchoAgentTool`（TODO 标为演示）；让模型调用该工具跑问卷→echo；看工具卡片与子 Agent 的 `agent_name`。 |
 
 ## 4. 前端可观测性
 
 - 流式事件 `message.*` / `tool.call.*` / `interrupt` 的 `data.agent_name` 来自 ADK `AgentEvent.AgentName`。
-- Solo Web：消息区与中断面板顶部展示 **Agent 名**，便于区分主 Agent / 子 Agent / AgentTool 内层。
-
-## 5. 上线前清理（TODO）
-
-- 删除 `blueprint_agent.go` 中对 `NewSurveyEchoAgentTool` 的挂载及 `modes` 中联调专用构建/提示词/SKILL 目录（见代码内 `TODO(业务上线前删除)`）。
+- Solo Web：消息区与中断面板顶部展示 **Agent 名**，便于区分主 Agent / 子 Agent。

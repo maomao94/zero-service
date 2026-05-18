@@ -34,8 +34,7 @@ func main() {
 		c.Model.APIKey = apiKey
 	}
 	if c.Model.APIKey == "" {
-		fmt.Println("model api key is empty, set Model.APIKey or AISOLO_MODEL_API_KEY")
-		return
+		fmt.Fprintln(os.Stderr, "model api key is empty; Agent execution stays unavailable until Model.APIKey or AISOLO_MODEL_API_KEY is configured")
 	}
 	ctx := svc.NewServiceContext(c)
 
@@ -48,6 +47,7 @@ func main() {
 	})
 	s.AddUnaryInterceptors(interceptor.LoggerInterceptor)
 	s.AddStreamInterceptors(interceptor.StreamLoggerInterceptor)
+	defer func() { _ = ctx.Close() }()
 	defer s.Stop()
 
 	logx.AddGlobalFields(logx.Field("app", c.Name))

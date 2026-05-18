@@ -61,6 +61,7 @@ type Store interface {
 	ListSessions(ctx context.Context, userID string, page, pageSize int) ([]*Session, int64, error)
 	DeleteSession(ctx context.Context, userID, sessionID string) error
 	UpdateSession(ctx context.Context, s *Session) error
+	AcquireRun(ctx context.Context, s *Session, expected aisolo.SessionStatus, owner string, leaseUntil time.Time, clearInterrupt bool) error
 
 	// Interrupt 相关
 	SaveInterrupt(ctx context.Context, r *InterruptRecord) error

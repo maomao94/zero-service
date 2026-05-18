@@ -37,8 +37,8 @@ type AgentConfig struct {
 	Deep        DeepAgentConfig `json:"deep,optional"`
 	// PlanMaxIterations PlanExecute 模式最大迭代（默认 10，≤0 时按 10）。
 	PlanMaxIterations int `json:"planMaxIterations,optional"`
-	// DemoSurveyEcho 为 true 时在默认 Agent 模式挂载联调用 Survey→Echo 子 Agent（生产请关闭）。
-	DemoSurveyEcho bool `json:"demoSurveyEcho,optional"`
+	// RuntimeMaxHistoryMessages 默认 Agent runtime path 传给模型的最近历史消息数，≤0 时默认 32。
+	RuntimeMaxHistoryMessages int `json:"runtimeMaxHistoryMessages,optional"`
 }
 
 // DeepAgentConfig Deep 模式专属（见 blueprint_deep）。
@@ -79,6 +79,14 @@ func (a AgentConfig) EffectivePlanMaxIterations() int {
 		return a.PlanMaxIterations
 	}
 	return 10
+}
+
+// EffectiveRuntimeMaxHistoryMessages 返回 runtime path 的历史消息窗口。
+func (a AgentConfig) EffectiveRuntimeMaxHistoryMessages() int {
+	if a.RuntimeMaxHistoryMessages > 0 {
+		return a.RuntimeMaxHistoryMessages
+	}
+	return 32
 }
 
 // EffectiveSessionRunLeaseTTL RUNNING 租约时长；≤0 时默认 30m。

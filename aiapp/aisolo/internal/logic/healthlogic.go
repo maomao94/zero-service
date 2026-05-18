@@ -31,6 +31,24 @@ func (l *HealthLogic) Health(_ *aisolo.HealthReq) (*aisolo.HealthResp, error) {
 	} else {
 		deps["chat_model"] = "missing"
 	}
+	if l.svcCtx.Kit != nil {
+		deps["tool_kit"] = "ok"
+	} else {
+		deps["tool_kit"] = "missing"
+		if l.svcCtx.KitInitErr != "" {
+			deps["tool_kit_error"] = l.svcCtx.KitInitErr
+		}
+	}
+	if l.svcCtx.RuntimeRunner != nil {
+		deps["runtime_runner"] = "ok"
+	} else {
+		deps["runtime_runner"] = "missing"
+	}
+	if l.svcCtx.RuntimeTools != nil {
+		deps["runtime_tools"] = "ok"
+	} else {
+		deps["runtime_tools"] = "missing"
+	}
 	if l.svcCtx.Executor != nil {
 		deps["executor"] = "ok"
 	} else {

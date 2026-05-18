@@ -38,6 +38,9 @@ func (l *BindKnowledgeBaseLogic) BindKnowledgeBase(in *aisolo.BindKnowledgeBaseR
 	if err != nil {
 		return nil, err
 	}
+	if sess.Status == aisolo.SessionStatus_SESSION_STATUS_RUNNING {
+		return nil, errors.New("cannot bind knowledge base while session is running")
+	}
 	sess.KnowledgeBaseID = kb
 	sess.KnowledgeBaseName = strings.TrimSpace(in.GetKnowledgeBaseName())
 	sess.UpdatedAt = time.Now()

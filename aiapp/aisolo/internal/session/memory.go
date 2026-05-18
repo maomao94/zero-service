@@ -88,6 +88,34 @@ func (s *MemoryStore) UpdateSession(_ context.Context, sess *Session) error {
 	return nil
 }
 
+func (s *MemoryStore) AcquireRun(_ context.Context, sess *Session, expected aisolo.SessionStatus, owner string, leaseUntil time.Time, clearInterrupt bool) error {
+	if sess == nil || sess.ID == "" {
+		return fmt.Errorf("session: empty")
+	}
+	k := sessionKey(sess.UserID, sess.ID)
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	current, ok := s.sessions[k]
+	if !ok {
+		return fmt.Errorf("session: not found")
+	}
+	if current.Status != expected {
+		return fmt.Errorf("session: run acquire conflict")
+	}
+	cp := *current
+	cp.Status = aisolo.SessionStatus_SESSION_STATUS_RUNNING
+	if clearInterrupt {
+		cp.InterruptID = ""
+	}
+	cp.RunOwner = owner
+	cp.RunLeaseUntil = leaseUntil
+	cp.UpdatedAt = time.Now()
+	s.sessions[k] = &cp
+	*sess = cp
+	return nil
+}
+
 func (s *MemoryStore) ListSessions(_ context.Context, userID string, page, pageSize int) ([]*Session, int64, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

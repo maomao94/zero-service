@@ -37,8 +37,6 @@ type Dependencies struct {
 	DeepFSConfig fsrestrict.Config
 	// PlanMaxIterations PlanExecute 模式最大迭代（默认 10）。
 	PlanMaxIterations int
-	// DemoSurveyEcho 为 true 时在默认 Agent 模式挂载联调 Survey→Echo 子 Agent。
-	DemoSurveyEcho bool
 	// KnowledgeTools 会话级知识库检索等（由 svc 在 Knowledge 启用时注入）；可为 nil。
 	KnowledgeTools []ctool.BaseTool
 }

@@ -22,13 +22,14 @@ import (
 type ChatModelOption func(*chatModelOptions)
 
 type chatModelOptions struct {
-	apiKey      string
-	baseURL     string
-	model       string
-	temperature float32
-	maxTokens   int
-	timeout     time.Duration
-	arkRegion   string // ARK Region: cn-beijing, cn-shanghai
+	apiKey         string
+	baseURL        string
+	model          string
+	temperature    float32
+	temperatureSet bool
+	maxTokens      int
+	timeout        time.Duration
+	arkRegion      string // ARK Region: cn-beijing, cn-shanghai
 }
 
 // WithAPIKey 设置 API Key
@@ -56,6 +57,7 @@ func WithModel(model string) ChatModelOption {
 func WithTemperature(temp float32) ChatModelOption {
 	return func(o *chatModelOptions) {
 		o.temperature = temp
+		o.temperatureSet = true
 	}
 }
 
@@ -127,7 +129,7 @@ func newOpenAIByOption(ctx context.Context, cfg *chatModelOptions) (model.BaseCh
 	if cfg.baseURL != "" {
 		config.BaseURL = cfg.baseURL
 	}
-	if cfg.temperature > 0 {
+	if cfg.temperatureSet || cfg.temperature > 0 {
 		config.Temperature = &cfg.temperature
 	}
 	if cfg.maxTokens > 0 {
@@ -144,7 +146,7 @@ func newDeepSeekByOption(ctx context.Context, cfg *chatModelOptions) (model.Base
 	if cfg.baseURL != "" {
 		config.BaseURL = cfg.baseURL
 	}
-	if cfg.temperature > 0 {
+	if cfg.temperatureSet || cfg.temperature > 0 {
 		config.Temperature = cfg.temperature
 	}
 	if cfg.maxTokens > 0 {
@@ -173,7 +175,7 @@ func newQwenByOption(ctx context.Context, cfg *chatModelOptions) (model.BaseChat
 	if cfg.baseURL != "" {
 		config.BaseURL = cfg.baseURL
 	}
-	if cfg.temperature > 0 {
+	if cfg.temperatureSet || cfg.temperature > 0 {
 		config.Temperature = &cfg.temperature
 	}
 	if cfg.maxTokens > 0 {
@@ -200,7 +202,7 @@ func newArkByOption(ctx context.Context, cfg *chatModelOptions) (model.BaseChatM
 	}
 
 	// 设置温度
-	if cfg.temperature > 0 {
+	if cfg.temperatureSet || cfg.temperature > 0 {
 		config.Temperature = &cfg.temperature
 	}
 
@@ -212,6 +214,6 @@ func newArkByOption(ctx context.Context, cfg *chatModelOptions) (model.BaseChatM
 	return ark.NewChatModel(ctx, config)
 }
 
-func newClaudeByOption(ctx context.Context, cfg *chatModelOptions) (model.BaseChatModel, error) {
+func newClaudeByOption(_ context.Context, _ *chatModelOptions) (model.BaseChatModel, error) {
 	return nil, fmt.Errorf("claude provider not implemented: please use provider=openai with base_url pointing to a Claude-compatible OpenAI proxy")
 }

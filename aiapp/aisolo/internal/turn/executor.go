@@ -17,6 +17,8 @@ package turn
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -33,37 +35,52 @@ import (
 	"zero-service/aiapp/aisolo/internal/sessionworkdir"
 	"zero-service/aiapp/aisolo/internal/uilang"
 	"zero-service/aiapp/aisolo/modeweb"
+	einoxagent "zero-service/common/einox/agent"
 	"zero-service/common/einox/fsrestrict"
 	einoxkb "zero-service/common/einox/knowledge"
 	"zero-service/common/einox/memory"
 	"zero-service/common/einox/metrics"
 	mw "zero-service/common/einox/middleware"
 	"zero-service/common/einox/protocol"
+	einoxruntime "zero-service/common/einox/runtime"
 )
 
 // Executor 一次 turn 的执行器。每个 RPC 请求可以 new 一个, 或在 svcCtx 里复用,
 // 它本身是无状态的, 依赖都是指针。
 type Executor struct {
-	pool              *modes.Pool
+	pool              modePool
 	reg               *modes.Registry
 	messages          memory.Storage
 	sessions          session.Store
 	metrics           *metrics.Metrics
 	appCfg            *config.Config
+	runtimeRunner     *einoxruntime.Runner
+	runtimeSystem     string
+	runtimeMaxHistory int
 	runInstanceID     string
 	runLeaseTTL       time.Duration
 	runNullLeaseGrace time.Duration
 }
 
+type modePool interface {
+	Get(ctx context.Context, mode aisolo.AgentMode) (*einoxagent.Agent, error)
+}
+
 // Config Executor 依赖。
 type Config struct {
-	Pool     *modes.Pool
+	Pool     modePool
 	Registry *modes.Registry
 	Messages memory.Storage
 	Sessions session.Store
 	Metrics  *metrics.Metrics
 	// App 可选；用于会话工作区目录创建等。
 	App *config.Config
+	// RuntimeRunner 可选；默认 Agent mode 可走轻量 Eino runtime SDK。
+	RuntimeRunner *einoxruntime.Runner
+	// RuntimeSystemPrompt 是 RuntimeRunner 的默认 Agent 系统提示词。
+	RuntimeSystemPrompt string
+	// RuntimeMaxHistoryMessages 是 RuntimeRunner 传给模型的最近历史消息数；≤0 表示不限。
+	RuntimeMaxHistoryMessages int
 	// RunInstanceID / RunLeaseTTL / RunNullLeaseGrace：多实例下 RUNNING 租约（见 config.SessionRun）。
 	RunInstanceID     string
 	RunLeaseTTL       time.Duration
@@ -95,6 +112,9 @@ func New(cfg Config) *Executor {
 		sessions:          cfg.Sessions,
 		metrics:           m,
 		appCfg:            cfg.App,
+		runtimeRunner:     cfg.RuntimeRunner,
+		runtimeSystem:     cfg.RuntimeSystemPrompt,
+		runtimeMaxHistory: cfg.RuntimeMaxHistoryMessages,
 		runInstanceID:     inst,
 		runLeaseTTL:       ttl,
 		runNullLeaseGrace: grace,
@@ -143,7 +163,11 @@ func (e *Executor) Ask(ctx context.Context, em *protocol.Emitter, in AskInput) e
 	}
 	if sess.Status == aisolo.SessionStatus_SESSION_STATUS_RUNNING {
 		if session.LeaseStaleForRecover(sess, time.Now(), e.runNullLeaseGrace) {
-			e.markSessionIdle(ctx, sess)
+			if err := e.markSessionIdle(ctx, sess); err != nil {
+				logx.Errorf("[turn] recover stale running session: %v", err)
+				e.fail(em, "recover_running", err)
+				return err
+			}
 		}
 	}
 	if sess.Status == aisolo.SessionStatus_SESSION_STATUS_RUNNING {
@@ -164,7 +188,15 @@ func (e *Executor) Ask(ctx context.Context, em *protocol.Emitter, in AskInput) e
 		_ = e.sessions.UpdateSession(ctx, sess)
 	}
 	effMode := sess.Mode
+	if e.useRuntime(effMode) {
+		return e.askRuntime(ctx, em, in, sess, effMode, start)
+	}
 
+	if e.pool == nil {
+		err := fmt.Errorf("agent pool not ready")
+		e.fail(em, "build_agent", err)
+		return err
+	}
 	agent, err := e.pool.Get(ctx, effMode)
 	if err != nil {
 		e.fail(em, "build_agent", err)
@@ -182,18 +214,25 @@ func (e *Executor) Ask(ctx context.Context, em *protocol.Emitter, in AskInput) e
 
 	_ = em.TurnStart(protocol.TurnStartData{UserMessage: userContent})
 
-	if err := e.saveUserMessage(ctx, sess, userContent); err != nil {
-		logx.Errorf("[turn] save user msg: %v", err)
+	if err := e.markSessionRunning(ctx, sess, true); err != nil {
+		e.fail(em, "mark_running", err)
+		return err
 	}
-
-	sess.Status = aisolo.SessionStatus_SESSION_STATUS_RUNNING
-	sess.InterruptID = ""
-	sess.UpdatedAt = time.Now()
-	e.applyRunLease(sess)
-	_ = e.sessions.UpdateSession(ctx, sess)
+	if err := e.saveUserMessage(ctx, sess, userContent); err != nil {
+		if restoreErr := e.markSessionIdle(ctx, sess); restoreErr != nil {
+			logx.Errorf("[turn] restore session after save_user_msg: %v", restoreErr)
+			err = errors.Join(err, restoreErr)
+		}
+		e.fail(em, "save_user_msg", err)
+		return err
+	}
 
 	history, err := e.loadHistory(ctx, sess)
 	if err != nil {
+		if restoreErr := e.markSessionIdle(ctx, sess); restoreErr != nil {
+			logx.Errorf("[turn] restore session after load_history: %v", restoreErr)
+			err = errors.Join(err, restoreErr)
+		}
 		e.fail(em, "load_history", err)
 		return err
 	}
@@ -201,7 +240,10 @@ func (e *Executor) Ask(ctx context.Context, em *protocol.Emitter, in AskInput) e
 	iter := agent.Runner().Run(ctx, history, adk.WithCheckPointID(in.SessionID))
 	res, err := protocol.PipeEvents(em, iter, protocol.PipeOptions{SessionUILang: sess.UILang})
 	if err != nil {
-		e.markSessionIdle(ctx, sess)
+		if restoreErr := e.markSessionIdle(ctx, sess); restoreErr != nil {
+			logx.Errorf("[turn] restore session after pipe_events: %v", restoreErr)
+			err = errors.Join(err, restoreErr)
+		}
 		e.metrics.RecordTurn(ctx, modeStr(effMode), "error", time.Since(start))
 		if effMode == aisolo.AgentMode_AGENT_MODE_PLAN {
 			e.metrics.RecordAgent(ctx, "plan_execute", "error", time.Since(start))
@@ -211,7 +253,15 @@ func (e *Executor) Ask(ctx context.Context, em *protocol.Emitter, in AskInput) e
 	}
 
 	if res.HasInterrupt {
-		e.persistInterrupt(ctx, sess, res)
+		if err := e.persistInterrupt(ctx, sess, res); err != nil {
+			e.fail(em, "persist_interrupt", err)
+			e.metrics.RecordTurn(ctx, modeStr(effMode), "error", time.Since(start))
+			if effMode == aisolo.AgentMode_AGENT_MODE_PLAN {
+				e.metrics.RecordAgent(ctx, "plan_execute", "error", time.Since(start))
+			}
+			_ = em.TurnEnd(false, "", res.LastContent)
+			return err
+		}
 		e.metrics.RecordInterrupt(ctx, string(res.InterruptKind), interruptToolMetricLabel(res), res.InterruptID)
 		e.metrics.RecordTurn(ctx, modeStr(effMode), "interrupt", time.Since(start))
 		if effMode == aisolo.AgentMode_AGENT_MODE_PLAN {
@@ -226,7 +276,9 @@ func (e *Executor) Ask(ctx context.Context, em *protocol.Emitter, in AskInput) e
 			logx.Errorf("[turn] save assistant msg: %v", err)
 		}
 	}
-	e.markSessionIdle(ctx, sess)
+	if err := e.markSessionIdle(ctx, sess); err != nil {
+		return err
+	}
 	e.metrics.RecordTurn(ctx, modeStr(effMode), "ok", time.Since(start))
 	if effMode == aisolo.AgentMode_AGENT_MODE_PLAN {
 		e.metrics.RecordAgent(ctx, "plan_execute", "ok", time.Since(start))
@@ -270,6 +322,11 @@ func (e *Executor) Resume(ctx context.Context, em *protocol.Emitter, in ResumeIn
 		return err
 	}
 
+	if e.pool == nil {
+		err := fmt.Errorf("agent pool not ready")
+		e.fail(em, "build_agent", err)
+		return err
+	}
 	agent, err := e.pool.Get(ctx, sess.Mode)
 	if err != nil {
 		e.fail(em, "build_agent", err)
@@ -284,10 +341,11 @@ func (e *Executor) Resume(ctx context.Context, em *protocol.Emitter, in ResumeIn
 	ctx = fsrestrict.WithSessionID(ctx, in.SessionID)
 	ctx = einoxkb.WithAgentTurn(ctx, in.UserID, sess.KnowledgeBaseID)
 
-	sess.Status = aisolo.SessionStatus_SESSION_STATUS_RUNNING
-	sess.UpdatedAt = time.Now()
-	e.applyRunLease(sess)
-	_ = e.sessions.UpdateSession(ctx, sess)
+	if err := e.markSessionRunning(ctx, sess, false); err != nil {
+		e.fail(em, "mark_running", err)
+		e.metrics.RecordResume(ctx, aisoloInterruptKindLabel(rec.Kind), "error", modeStr(sess.Mode), in.InterruptID, resumeActionStr(in.Action), time.Since(start))
+		return err
+	}
 
 	_ = em.TurnStart(protocol.TurnStartData{UserMessage: ""})
 
@@ -295,6 +353,10 @@ func (e *Executor) Resume(ctx context.Context, em *protocol.Emitter, in ResumeIn
 		Targets: map[string]any{in.InterruptID: payload},
 	})
 	if err != nil {
+		if restoreErr := e.markSessionInterrupted(ctx, sess, in.InterruptID); restoreErr != nil {
+			logx.Errorf("[turn] restore session after resume_start: %v", restoreErr)
+			err = errors.Join(err, restoreErr)
+		}
 		e.fail(em, "resume_start", err)
 		e.metrics.RecordResume(ctx, aisoloInterruptKindLabel(rec.Kind), "error", modeStr(sess.Mode), in.InterruptID, resumeActionStr(in.Action), time.Since(start))
 		_ = em.TurnEnd(false, "", "")
@@ -303,7 +365,10 @@ func (e *Executor) Resume(ctx context.Context, em *protocol.Emitter, in ResumeIn
 
 	res, err := protocol.PipeEvents(em, iter, protocol.PipeOptions{SessionUILang: sess.UILang})
 	if err != nil {
-		e.markSessionIdle(ctx, sess)
+		if restoreErr := e.markSessionInterrupted(ctx, sess, in.InterruptID); restoreErr != nil {
+			logx.Errorf("[turn] restore session after resume pipe_events: %v", restoreErr)
+			err = errors.Join(err, restoreErr)
+		}
 		e.metrics.RecordTurn(ctx, modeStr(sess.Mode), "error", time.Since(start))
 		if sess.Mode == aisolo.AgentMode_AGENT_MODE_PLAN {
 			e.metrics.RecordAgent(ctx, "plan_execute", "error", time.Since(start))
@@ -314,7 +379,16 @@ func (e *Executor) Resume(ctx context.Context, em *protocol.Emitter, in ResumeIn
 	}
 
 	if res.HasInterrupt {
-		e.persistInterrupt(ctx, sess, res)
+		if err := e.persistInterrupt(ctx, sess, res); err != nil {
+			e.fail(em, "persist_interrupt", err)
+			e.metrics.RecordTurn(ctx, modeStr(sess.Mode), "error", time.Since(start))
+			if sess.Mode == aisolo.AgentMode_AGENT_MODE_PLAN {
+				e.metrics.RecordAgent(ctx, "plan_execute", "error", time.Since(start))
+			}
+			e.metrics.RecordResume(ctx, aisoloInterruptKindLabel(rec.Kind), "error", modeStr(sess.Mode), in.InterruptID, resumeActionStr(in.Action), time.Since(start))
+			_ = em.TurnEnd(false, "", res.LastContent)
+			return err
+		}
 		e.metrics.RecordInterrupt(ctx, string(res.InterruptKind), interruptToolMetricLabel(res), res.InterruptID)
 		e.metrics.RecordTurn(ctx, modeStr(sess.Mode), "interrupt", time.Since(start))
 		if sess.Mode == aisolo.AgentMode_AGENT_MODE_PLAN {
@@ -330,7 +404,9 @@ func (e *Executor) Resume(ctx context.Context, em *protocol.Emitter, in ResumeIn
 			logx.Errorf("[turn] save assistant msg: %v", err)
 		}
 	}
-	e.markSessionIdle(ctx, sess)
+	if err := e.markSessionIdle(ctx, sess); err != nil {
+		return err
+	}
 	e.metrics.RecordTurn(ctx, modeStr(sess.Mode), "ok", time.Since(start))
 	if sess.Mode == aisolo.AgentMode_AGENT_MODE_PLAN {
 		e.metrics.RecordAgent(ctx, "plan_execute", "ok", time.Since(start))
@@ -349,30 +425,163 @@ func (e *Executor) fail(em *protocol.Emitter, code string, err error) {
 	_ = em.EmitError(code, err.Error())
 }
 
-func (e *Executor) markSessionIdle(ctx context.Context, sess *session.Session) {
+func (e *Executor) useRuntime(mode aisolo.AgentMode) bool {
+	return e.runtimeRunner != nil && mode == aisolo.AgentMode_AGENT_MODE_AGENT
+}
+
+func (e *Executor) askRuntime(ctx context.Context, em *protocol.Emitter, in AskInput, sess *session.Session, effMode aisolo.AgentMode, start time.Time) error {
+	userContent := strings.TrimSpace(in.Message)
+	if e.appCfg != nil {
+		if err := sessionworkdir.EnsureSession(*e.appCfg, in.SessionID); err != nil {
+			logx.Errorf("[turn] session workspace: %v", err)
+		}
+	}
+	ctx = fsrestrict.WithSessionID(ctx, in.SessionID)
+	ctx = einoxkb.WithAgentTurn(ctx, in.UserID, sess.KnowledgeBaseID)
+	_ = em.TurnStart(protocol.TurnStartData{UserMessage: userContent})
+
+	if err := e.markSessionRunning(ctx, sess, true); err != nil {
+		e.fail(em, "mark_running", err)
+		return err
+	}
+	if err := e.saveUserMessage(ctx, sess, userContent); err != nil {
+		if restoreErr := e.markSessionIdle(ctx, sess); restoreErr != nil {
+			logx.Errorf("[turn] restore session after save_user_msg: %v", restoreErr)
+			err = errors.Join(err, restoreErr)
+		}
+		e.fail(em, "save_user_msg", err)
+		return err
+	}
+
+	history, err := e.loadHistory(ctx, sess)
+	if err != nil {
+		if restoreErr := e.markSessionIdle(ctx, sess); restoreErr != nil {
+			logx.Errorf("[turn] restore session after load_history: %v", restoreErr)
+			err = errors.Join(err, restoreErr)
+		}
+		e.fail(em, "load_history", err)
+		return err
+	}
+
+	events, runErr := e.runtimeRunner.Stream(ctx, einoxruntime.Request{
+		SessionID: in.SessionID,
+		TurnID:    em.Turn(),
+		System:    e.runtimeSystem,
+		History:   runtimeHistory(history, userContent, e.runtimeMaxHistory),
+		Input:     userContent,
+	})
+	turnEnd, emitErr := emitRuntimeEvents(em, events)
+	if runErr != nil || emitErr != nil {
+		var err error
+		if emitErr != nil {
+			err = emitErr
+		} else {
+			err = runErr
+		}
+		if restoreErr := e.markSessionIdle(ctx, sess); restoreErr != nil {
+			logx.Errorf("[turn] restore session after runtime_stream: %v", restoreErr)
+			err = errors.Join(err, restoreErr)
+		}
+		e.metrics.RecordTurn(ctx, modeStr(effMode), "error", time.Since(start))
+		if emitErr == nil {
+			_ = em.TurnEnd(false, "", turnEnd.LastMessage)
+		}
+		return err
+	}
+
+	lastContent := turnEnd.LastMessage
+	if lastContent != "" {
+		if err := e.saveAssistantMessage(ctx, sess, lastContent); err != nil {
+			logx.Errorf("[turn] save assistant msg: %v", err)
+		}
+	}
+	if err := e.markSessionIdle(ctx, sess); err != nil {
+		return err
+	}
+	e.metrics.RecordTurn(ctx, modeStr(effMode), "ok", time.Since(start))
+	_ = em.TurnEnd(false, "", lastContent)
+	return nil
+}
+
+func runtimeHistory(history []adk.Message, userContent string, maxMessages int) []*schema.Message {
+	out := make([]*schema.Message, 0, len(history))
+	for _, msg := range history {
+		if msg != nil {
+			out = append(out, msg)
+		}
+	}
+	if len(out) == 0 {
+		return out
+	}
+	last := out[len(out)-1]
+	if last != nil && last.Role == schema.User && last.Content == userContent {
+		out = out[:len(out)-1]
+	}
+	if maxMessages > 0 && len(out) > maxMessages {
+		out = out[len(out)-maxMessages:]
+	}
+	return out
+}
+
+func emitRuntimeEvents(em *protocol.Emitter, events []protocol.Event) (protocol.TurnEndData, error) {
+	var turnEnd protocol.TurnEndData
+	for _, event := range events {
+		if event.Type == protocol.EventTurnStart {
+			continue
+		}
+		if event.Type == protocol.EventTurnEnd {
+			if len(event.Data) > 0 {
+				if err := json.Unmarshal(event.Data, &turnEnd); err != nil {
+					return turnEnd, err
+				}
+			}
+			continue
+		}
+		if err := em.Emit(event.Type, event.Data); err != nil {
+			return turnEnd, err
+		}
+	}
+	return turnEnd, nil
+}
+
+func (e *Executor) markSessionIdle(ctx context.Context, sess *session.Session) error {
 	sess.Status = aisolo.SessionStatus_SESSION_STATUS_IDLE
 	sess.InterruptID = ""
 	sess.RunOwner = ""
 	sess.RunLeaseUntil = time.Time{}
 	sess.UpdatedAt = time.Now()
-	_ = e.sessions.UpdateSession(ctx, sess)
+	return e.sessions.UpdateSession(ctx, sess)
+}
+
+func (e *Executor) markSessionRunning(ctx context.Context, sess *session.Session, clearInterrupt bool) error {
+	expected := aisolo.SessionStatus_SESSION_STATUS_INTERRUPTED
+	if clearInterrupt {
+		expected = aisolo.SessionStatus_SESSION_STATUS_IDLE
+	}
+	owner, leaseUntil := e.runLease()
+	return e.sessions.AcquireRun(ctx, sess, expected, owner, leaseUntil, clearInterrupt)
+}
+
+func (e *Executor) markSessionInterrupted(ctx context.Context, sess *session.Session, interruptID string) error {
+	sess.Status = aisolo.SessionStatus_SESSION_STATUS_INTERRUPTED
+	sess.InterruptID = interruptID
+	sess.RunOwner = ""
+	sess.RunLeaseUntil = time.Time{}
+	sess.UpdatedAt = time.Now()
+	return e.sessions.UpdateSession(ctx, sess)
 }
 
 func (e *Executor) applyRunLease(sess *session.Session) {
-	sess.RunOwner = e.runInstanceID
-	sess.RunLeaseUntil = time.Now().Add(e.runLeaseTTL)
+	sess.RunOwner, sess.RunLeaseUntil = e.runLease()
+}
+
+func (e *Executor) runLease() (string, time.Time) {
+	return e.runInstanceID, time.Now().Add(e.runLeaseTTL)
 }
 
 // persistInterrupt 更新 session 为 INTERRUPTED + 落盘完整 InterruptData。
 // 前端刷新后通过 GetInterrupt 拿 Data 回填 UI。
-func (e *Executor) persistInterrupt(ctx context.Context, sess *session.Session, res protocol.RunResult) {
-	sess.Status = aisolo.SessionStatus_SESSION_STATUS_INTERRUPTED
-	sess.InterruptID = res.InterruptID
-	sess.RunOwner = ""
-	sess.RunLeaseUntil = time.Time{}
-	sess.UpdatedAt = time.Now()
-	_ = e.sessions.UpdateSession(ctx, sess)
-
+func (e *Executor) persistInterrupt(ctx context.Context, sess *session.Session, res protocol.RunResult) error {
 	rec := &session.InterruptRecord{
 		InterruptID: res.InterruptID,
 		SessionID:   sess.ID,
@@ -385,7 +594,19 @@ func (e *Executor) persistInterrupt(ctx context.Context, sess *session.Session, 
 		rec.ToolName = res.Interrupt.ToolName
 		rec.Question = res.Interrupt.Question
 	}
-	_ = e.sessions.SaveInterrupt(ctx, rec)
+	if err := e.sessions.SaveInterrupt(ctx, rec); err != nil {
+		return fmt.Errorf("persist interrupt record: %w", err)
+	}
+
+	sess.Status = aisolo.SessionStatus_SESSION_STATUS_INTERRUPTED
+	sess.InterruptID = res.InterruptID
+	sess.RunOwner = ""
+	sess.RunLeaseUntil = time.Time{}
+	sess.UpdatedAt = time.Now()
+	if err := e.sessions.UpdateSession(ctx, sess); err != nil {
+		return fmt.Errorf("persist interrupt session: %w", err)
+	}
+	return nil
 }
 
 func (e *Executor) loadHistory(ctx context.Context, sess *session.Session) ([]adk.Message, error) {
