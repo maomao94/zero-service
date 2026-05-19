@@ -902,3 +902,37 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 19: 统一 trace 上下文传播组件 common/trace
+
+**Date**: 2026-05-19
+**Task**: 统一 trace 上下文传播组件 common/trace
+**Branch**: `master`
+
+### Summary
+
+整体结构：common/trace/carrier.go 提供 Carrier/AnyCarrier 统一载体 + Inject/Extract 入口\n删除冗余：移除 mqttx.MessageCarrier、common.MapCarrier、mcpx.MapMetaCarrier、ctxprop.mapMetaCarrier\n迁移 msgbody：迁至 app/trigger/internal/taskpayload/，zerorpc 本地副本\n修复：zerorpc deferdelaytask consumer span 用 wireContext 代替原始 ctx\n全量构建通过
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d5a58677` | (see git log) |
+| `26e25c0f` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
