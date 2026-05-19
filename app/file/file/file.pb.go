@@ -390,8 +390,8 @@ type ImageMeta struct {
 	ImgWidth         int32                  `protobuf:"varint,5,opt,name=imgWidth,proto3" json:"imgWidth,omitempty"`                                                                    // 宽
 	Altitude         float64                `protobuf:"fixed64,6,opt,name=altitude,proto3" json:"altitude,omitempty"`                                                                   // 高度
 	CameraModel      string                 `protobuf:"bytes,7,opt,name=cameraModel,proto3" json:"cameraModel,omitempty"`                                                               // 相机型号
-	Extra            map[string]string      `protobuf:"bytes,8,rep,name=extra,proto3" json:"extra,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // 扩展元数据
-	BodySerialNumber string                 `protobuf:"bytes,9,opt,name=bodySerialNumber,proto3" json:"bodySerialNumber,omitempty"`                                                     // 机身序列号
+	BodySerialNumber string                 `protobuf:"bytes,8,opt,name=bodySerialNumber,proto3" json:"bodySerialNumber,omitempty"`                                                     // 机身序列号
+	Extra            map[string]string      `protobuf:"bytes,9,rep,name=extra,proto3" json:"extra,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // 扩展元数据
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -475,18 +475,18 @@ func (x *ImageMeta) GetCameraModel() string {
 	return ""
 }
 
-func (x *ImageMeta) GetExtra() map[string]string {
-	if x != nil {
-		return x.Extra
-	}
-	return nil
-}
-
 func (x *ImageMeta) GetBodySerialNumber() string {
 	if x != nil {
 		return x.BodySerialNumber
 	}
 	return ""
+}
+
+func (x *ImageMeta) GetExtra() map[string]string {
+	if x != nil {
+		return x.Extra
+	}
+	return nil
 }
 
 type OssFile struct {
@@ -2628,9 +2628,9 @@ const file_file_proto_rawDesc = "" +
 	"\timgHeight\x18\x04 \x01(\x05R\timgHeight\x12\x1a\n" +
 	"\bimgWidth\x18\x05 \x01(\x05R\bimgWidth\x12\x1a\n" +
 	"\baltitude\x18\x06 \x01(\x01R\baltitude\x12 \n" +
-	"\vcameraModel\x18\a \x01(\tR\vcameraModel\x120\n" +
-	"\x05extra\x18\b \x03(\v2\x1a.file.ImageMeta.ExtraEntryR\x05extra\x12*\n" +
-	"\x10bodySerialNumber\x18\t \x01(\tR\x10bodySerialNumber\x1a8\n" +
+	"\vcameraModel\x18\a \x01(\tR\vcameraModel\x12*\n" +
+	"\x10bodySerialNumber\x18\b \x01(\tR\x10bodySerialNumber\x120\n" +
+	"\x05extra\x18\t \x03(\v2\x1a.file.ImageMeta.ExtraEntryR\x05extra\x1a8\n" +
 	"\n" +
 	"ExtraEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
