@@ -25,11 +25,18 @@ func (l *DeleteKnowledgeBaseLogic) DeleteKnowledgeBase(req *types.KnowledgeDelet
 	if l.svcCtx.Knowledge == nil {
 		return nil, errors.New("knowledge is disabled")
 	}
+	if req == nil {
+		return nil, errors.New("delete knowledge base request is required")
+	}
 	uid := ctxdata.GetUserId(l.ctx)
 	if uid == "" {
 		return nil, errors.New("missing user id")
 	}
-	if err := l.svcCtx.Knowledge.DeleteBase(l.ctx, uid, req.BaseId); err != nil {
+	baseID, err := requireKnowledgeBaseID(req.BaseId)
+	if err != nil {
+		return nil, err
+	}
+	if err := l.svcCtx.Knowledge.DeleteBase(l.ctx, uid, baseID); err != nil {
 		return nil, err
 	}
 	return &types.KnowledgeDeleteBaseResponse{Success: true}, nil

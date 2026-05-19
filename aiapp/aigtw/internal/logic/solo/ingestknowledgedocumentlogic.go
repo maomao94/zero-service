@@ -3,7 +3,6 @@ package solo
 import (
 	"context"
 	"errors"
-	"strings"
 
 	"zero-service/aiapp/aigtw/internal/svc"
 	"zero-service/aiapp/aigtw/internal/types"
@@ -26,14 +25,22 @@ func (l *IngestKnowledgeDocumentLogic) IngestKnowledgeDocument(req *types.Knowle
 	if l.svcCtx.Knowledge == nil {
 		return nil, errors.New("knowledge is disabled")
 	}
+	if req == nil {
+		return nil, errors.New("ingest request is required")
+	}
 	uid := ctxdata.GetUserId(l.ctx)
 	if uid == "" {
 		return nil, errors.New("missing user id")
 	}
-	if strings.TrimSpace(req.Content) == "" {
-		return nil, errors.New("content is required")
+	baseID, err := requireKnowledgeBaseID(req.BaseId)
+	if err != nil {
+		return nil, err
 	}
-	src, err := l.svcCtx.Knowledge.IngestDocument(l.ctx, uid, req.BaseId, req.Filename, req.Content)
+	content, err := requireKnowledgeContent(req.Content)
+	if err != nil {
+		return nil, err
+	}
+	src, err := l.svcCtx.Knowledge.IngestDocument(l.ctx, uid, baseID, req.Filename, content)
 	if err != nil {
 		return nil, err
 	}

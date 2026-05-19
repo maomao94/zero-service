@@ -3,6 +3,7 @@ package solo
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"zero-service/aiapp/aigtw/internal/svc"
 	"zero-service/aiapp/aigtw/internal/types"
@@ -31,8 +32,12 @@ func (l *DeleteSessionLogic) DeleteSession(req *types.SoloDeleteSessionRequest) 
 	if userID == "" {
 		return nil, errors.New("missing user id in context")
 	}
+	sessionID := strings.TrimSpace(req.SessionId)
+	if sessionID == "" {
+		return nil, errors.New("sessionId is required")
+	}
 	resp, err := l.svcCtx.AiSoloCli.DeleteSession(l.ctx, &aisolo.DeleteSessionReq{
-		SessionId: req.SessionId,
+		SessionId: sessionID,
 		UserId:    userID,
 	})
 	if err != nil {

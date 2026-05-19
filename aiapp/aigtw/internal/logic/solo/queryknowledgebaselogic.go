@@ -3,7 +3,6 @@ package solo
 import (
 	"context"
 	"errors"
-	"strings"
 
 	"zero-service/aiapp/aigtw/internal/svc"
 	"zero-service/aiapp/aigtw/internal/types"
@@ -26,15 +25,22 @@ func (l *QueryKnowledgeBaseLogic) QueryKnowledgeBase(req *types.KnowledgeQueryRe
 	if l.svcCtx.Knowledge == nil {
 		return nil, errors.New("knowledge is disabled")
 	}
+	if req == nil {
+		return nil, errors.New("query request is required")
+	}
 	uid := ctxdata.GetUserId(l.ctx)
 	if uid == "" {
 		return nil, errors.New("missing user id")
 	}
-	q := strings.TrimSpace(req.Query)
-	if q == "" {
-		return &types.KnowledgeQueryResponse{}, nil
+	baseID, err := requireKnowledgeBaseID(req.BaseId)
+	if err != nil {
+		return nil, err
 	}
-	res, err := l.svcCtx.Knowledge.Search(l.ctx, uid, req.BaseId, q, req.TopK)
+	q, err := requireKnowledgeQuery(req.Query)
+	if err != nil {
+		return nil, err
+	}
+	res, err := l.svcCtx.Knowledge.Search(l.ctx, uid, baseID, q, req.TopK)
 	if err != nil {
 		return nil, err
 	}

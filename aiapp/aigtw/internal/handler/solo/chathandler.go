@@ -20,6 +20,10 @@ func ChatHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 			httpx.ErrorCtx(r.Context(), w, err)
 			return
 		}
+		if err := solo.ValidateChatRequest(&req); err != nil {
+			httpx.ErrorCtx(r.Context(), w, err)
+			return
+		}
 
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.Header().Set("Cache-Control", "no-cache")

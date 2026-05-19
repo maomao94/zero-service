@@ -27,14 +27,19 @@ func NewBindKnowledgeBaseLogic(ctx context.Context, svcCtx *svc.ServiceContext) 
 }
 
 func (l *BindKnowledgeBaseLogic) BindKnowledgeBase(in *aisolo.BindKnowledgeBaseReq) (*aisolo.BindKnowledgeBaseResp, error) {
-	if in.GetUserId() == "" || in.GetSessionId() == "" {
+	if in == nil {
+		return nil, errors.New("bind knowledge base request is required")
+	}
+	userID := strings.TrimSpace(in.GetUserId())
+	sessionID := strings.TrimSpace(in.GetSessionId())
+	if userID == "" || sessionID == "" {
 		return nil, errors.New("user_id and session_id are required")
 	}
 	kb := strings.TrimSpace(in.GetKnowledgeBaseId())
 	if kb == "" {
 		return nil, errors.New("knowledge_base_id is required")
 	}
-	sess, err := l.svcCtx.Sessions.GetSession(l.ctx, in.GetUserId(), in.GetSessionId())
+	sess, err := l.svcCtx.Sessions.GetSession(l.ctx, userID, sessionID)
 	if err != nil {
 		return nil, err
 	}

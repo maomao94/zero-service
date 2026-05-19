@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"zero-service/aiapp/aisolo/aisolo"
 	"zero-service/aiapp/aisolo/internal/svc"
@@ -31,15 +32,19 @@ func NewGetInterruptLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetI
 //  2. 记录必须存在
 //  3. 如果附带 user_id, 必须与记录的 user_id 一致, 防止跨用户越权查看。
 func (l *GetInterruptLogic) GetInterrupt(in *aisolo.GetInterruptReq) (*aisolo.GetInterruptResp, error) {
-	if in.GetInterruptId() == "" {
+	if in == nil {
+		return nil, errors.New("get interrupt request is required")
+	}
+	interruptID := strings.TrimSpace(in.GetInterruptId())
+	if interruptID == "" {
 		return nil, errors.New("interrupt_id is required")
 	}
 
-	rec, err := l.svcCtx.Sessions.GetInterrupt(l.ctx, in.GetInterruptId())
+	rec, err := l.svcCtx.Sessions.GetInterrupt(l.ctx, interruptID)
 	if err != nil {
 		return nil, err
 	}
-	if in.GetUserId() != "" && rec.UserID != in.GetUserId() {
+	if userID := strings.TrimSpace(in.GetUserId()); userID != "" && rec.UserID != userID {
 		return nil, errors.New("interrupt does not belong to current user")
 	}
 

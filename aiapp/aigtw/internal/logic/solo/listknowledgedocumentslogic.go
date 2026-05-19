@@ -25,11 +25,18 @@ func (l *ListKnowledgeDocumentsLogic) ListKnowledgeDocuments(req *types.Knowledg
 	if l.svcCtx.Knowledge == nil {
 		return nil, errors.New("knowledge is disabled")
 	}
+	if req == nil {
+		return nil, errors.New("list knowledge documents request is required")
+	}
 	uid := ctxdata.GetUserId(l.ctx)
 	if uid == "" {
 		return nil, errors.New("missing user id")
 	}
-	list, err := l.svcCtx.Knowledge.ListDocuments(l.ctx, uid, req.BaseId)
+	baseID, err := requireKnowledgeBaseID(req.BaseId)
+	if err != nil {
+		return nil, err
+	}
+	list, err := l.svcCtx.Knowledge.ListDocuments(l.ctx, uid, baseID)
 	if err != nil {
 		return nil, err
 	}

@@ -26,6 +26,9 @@ func (l *CreateKnowledgeBaseLogic) CreateKnowledgeBase(req *types.KnowledgeCreat
 	if l.svcCtx.Knowledge == nil {
 		return nil, errors.New("knowledge is disabled (configure knowledge.enabled and embedding in aigtw.yaml)")
 	}
+	if req == nil {
+		return nil, errors.New("create knowledge base request is required")
+	}
 	uid := ctxdata.GetUserId(l.ctx)
 	if uid == "" {
 		return nil, errors.New("missing user id")

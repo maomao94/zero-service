@@ -27,9 +27,16 @@ func (l *IngestKnowledgeDocumentsLogic) IngestKnowledgeDocuments(req *types.Know
 	if l.svcCtx.Knowledge == nil {
 		return nil, errors.New("knowledge is disabled")
 	}
+	if req == nil {
+		return nil, errors.New("ingest batch request is required")
+	}
 	uid := ctxdata.GetUserId(l.ctx)
 	if uid == "" {
 		return nil, errors.New("missing user id")
+	}
+	baseID, err := requireKnowledgeBaseID(req.BaseId)
+	if err != nil {
+		return nil, err
 	}
 	if len(req.Items) == 0 {
 		return nil, errors.New("items is required")
@@ -44,7 +51,7 @@ func (l *IngestKnowledgeDocumentsLogic) IngestKnowledgeDocuments(req *types.Know
 			results = append(results, types.KnowledgeIngestBatchResultItem{Filename: fn, Error: "empty content"})
 			continue
 		}
-		src, err := l.svcCtx.Knowledge.IngestDocument(l.ctx, uid, req.BaseId, fn, it.Content)
+		src, err := l.svcCtx.Knowledge.IngestDocument(l.ctx, uid, baseID, fn, strings.TrimSpace(it.Content))
 		if err != nil {
 			results = append(results, types.KnowledgeIngestBatchResultItem{Filename: fn, Error: err.Error()})
 			continue

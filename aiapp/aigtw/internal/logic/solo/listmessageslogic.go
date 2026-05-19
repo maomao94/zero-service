@@ -3,6 +3,7 @@ package solo
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"zero-service/aiapp/aigtw/internal/svc"
 	"zero-service/aiapp/aigtw/internal/types"
@@ -31,8 +32,12 @@ func (l *ListMessagesLogic) ListMessages(req *types.SoloListMessagesRequest) (*t
 	if userID == "" {
 		return nil, errors.New("missing user id in context")
 	}
+	sessionID := strings.TrimSpace(req.SessionId)
+	if sessionID == "" {
+		return nil, errors.New("sessionId is required")
+	}
 	resp, err := l.svcCtx.AiSoloCli.ListMessages(l.ctx, &aisolo.ListMessagesReq{
-		SessionId: req.SessionId,
+		SessionId: sessionID,
 		UserId:    userID,
 		Limit:     int32(req.Limit),
 	})

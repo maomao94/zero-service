@@ -654,10 +654,6 @@
             const savedToken = getToken();
             if (savedToken) {
                 document.getElementById('jwtToken').value = savedToken;
-            } else {
-                // 默认测试 token
-                document.getElementById('jwtToken').value = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXB0X2NvZGUiOiIxMDAwMSIsImRlcHRfaWQiOiIxMDAwMSIsImV4cCI6MTgwNjAyNDYxNywiaWF0IjoxNzc0NDg4NjE3LCJ1c2VyLWlkIjoidXNlcjoyMTIxIiwidXNlcl9pZCI6InVzZXJpZDFpMWpqazFuIiwidXNlcl9uYW1lIjoi5rWL6K-V55So5oi355uK5rW3In0.0l-eFx7sq8HMuAG_Amf_heCzs6LPUVlUzl4JSheCpGE';
-                setToken(document.getElementById('jwtToken').value);
             }
 
             // 检查服务状态

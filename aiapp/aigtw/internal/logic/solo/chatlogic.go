@@ -38,14 +38,14 @@ func (l *ChatLogic) Chat(req *types.SoloChatRequest, w io.Writer) error {
 	if userID == "" {
 		return errors.New("missing user id in context")
 	}
-	if strings.TrimSpace(req.SessionId) == "" {
-		return errors.New("sessionId is required")
+	if err := ValidateChatRequest(req); err != nil {
+		return err
 	}
 
 	stream, err := l.svcCtx.AiSoloCli.AskStream(l.ctx, &aisolo.AskReq{
-		SessionId: req.SessionId,
+		SessionId: strings.TrimSpace(req.SessionId),
 		UserId:    userID,
-		Message:   req.Message,
+		Message:   strings.TrimSpace(req.Message),
 		Mode:      modeweb.Parse(req.Mode),
 		UiLang:    strings.TrimSpace(req.UiLang),
 	})

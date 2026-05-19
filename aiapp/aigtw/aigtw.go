@@ -43,8 +43,8 @@ func main() {
 		c.JwtAuth.AccessSecret = secret
 	}
 	if c.JwtAuth.AccessSecret == "" {
-		fmt.Println("jwt access secret is empty, set JwtAuth.AccessSecret or AIGTW_JWT_ACCESS_SECRET")
-		return
+		fmt.Fprintln(os.Stderr, "jwt access secret is empty; set JwtAuth.AccessSecret or AIGTW_JWT_ACCESS_SECRET")
+		os.Exit(1)
 	}
 
 	// Print Go version
@@ -99,6 +99,7 @@ func main() {
 	}
 
 	ctx := svc.NewServiceContext(c)
+	defer func() { _ = ctx.Close() }()
 
 	logx.Infof("static root: %s", staticRoot)
 

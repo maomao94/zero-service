@@ -25,6 +25,9 @@ func NewDeleteSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Del
 }
 
 func (l *DeleteSessionLogic) DeleteSession(in *aisolo.DeleteSessionReq) (*aisolo.DeleteSessionResp, error) {
+	if in.GetUserId() == "" || in.GetSessionId() == "" {
+		return &aisolo.DeleteSessionResp{Success: false}, errors.New("user_id and session_id are required")
+	}
 	sess, err := l.svcCtx.Sessions.GetSession(l.ctx, in.UserId, in.SessionId)
 	if err != nil {
 		return &aisolo.DeleteSessionResp{Success: false}, err

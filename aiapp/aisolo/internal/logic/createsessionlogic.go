@@ -29,10 +29,14 @@ func NewCreateSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Cre
 
 // CreateSession 新建一个会话 (用户只挑 mode, 无需再指定 agent)。
 func (l *CreateSessionLogic) CreateSession(in *aisolo.CreateSessionReq) (*aisolo.CreateSessionResp, error) {
-	if in.UserId == "" {
+	if in == nil {
+		return nil, errors.New("create session request is required")
+	}
+	userID := strings.TrimSpace(in.GetUserId())
+	if userID == "" {
 		return nil, errors.New("user_id is required")
 	}
-	sess := newSession(in.UserId, in.Title, in.Mode)
+	sess := newSession(userID, strings.TrimSpace(in.GetTitle()), in.Mode)
 	if v := uilang.Normalize(in.GetUiLang()); v != "" {
 		sess.UILang = v
 	}

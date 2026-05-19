@@ -28,12 +28,16 @@ func (l *BindSessionKnowledgeLogic) BindSessionKnowledge(req *types.SoloBindKnow
 	if uid == "" {
 		return nil, errors.New("missing user id")
 	}
+	sessionID := strings.TrimSpace(req.SessionId)
+	if sessionID == "" {
+		return nil, errors.New("sessionId is required")
+	}
 	kb := strings.TrimSpace(req.KnowledgeBaseId)
 	if kb == "" {
 		return nil, errors.New("knowledgeBaseId is required")
 	}
 	resp, err := l.svcCtx.AiSoloCli.BindKnowledgeBase(l.ctx, &aisolo.BindKnowledgeBaseReq{
-		SessionId:         req.SessionId,
+		SessionId:         sessionID,
 		UserId:            uid,
 		KnowledgeBaseId:   kb,
 		KnowledgeBaseName: strings.TrimSpace(req.KnowledgeBaseName),

@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"errors"
 
 	"github.com/zeromicro/go-zero/core/logx"
 
@@ -24,6 +25,9 @@ func NewListMessagesLogic(ctx context.Context, svcCtx *svc.ServiceContext) *List
 }
 
 func (l *ListMessagesLogic) ListMessages(in *aisolo.ListMessagesReq) (*aisolo.ListMessagesResp, error) {
+	if in.GetUserId() == "" || in.GetSessionId() == "" {
+		return nil, errors.New("user_id and session_id are required")
+	}
 	if l.svcCtx.Messages == nil {
 		return &aisolo.ListMessagesResp{}, nil
 	}

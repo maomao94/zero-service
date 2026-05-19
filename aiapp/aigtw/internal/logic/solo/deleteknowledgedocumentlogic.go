@@ -25,11 +25,22 @@ func (l *DeleteKnowledgeDocumentLogic) DeleteKnowledgeDocument(req *types.Knowle
 	if l.svcCtx.Knowledge == nil {
 		return nil, errors.New("knowledge is disabled")
 	}
+	if req == nil {
+		return nil, errors.New("delete knowledge document request is required")
+	}
 	uid := ctxdata.GetUserId(l.ctx)
 	if uid == "" {
 		return nil, errors.New("missing user id")
 	}
-	if err := l.svcCtx.Knowledge.DeleteDocument(l.ctx, uid, req.BaseId, req.SourceId); err != nil {
+	baseID, err := requireKnowledgeBaseID(req.BaseId)
+	if err != nil {
+		return nil, err
+	}
+	sourceID, err := requireKnowledgeDocumentID(req.SourceId)
+	if err != nil {
+		return nil, err
+	}
+	if err := l.svcCtx.Knowledge.DeleteDocument(l.ctx, uid, baseID, sourceID); err != nil {
 		return nil, err
 	}
 	return &types.KnowledgeDeleteDocumentResponse{Success: true}, nil

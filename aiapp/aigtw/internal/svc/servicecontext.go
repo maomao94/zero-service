@@ -23,6 +23,42 @@ type ServiceContext struct {
 	KnowledgeInitErr string
 }
 
+func (s *ServiceContext) Dependencies() map[string]string {
+	deps := map[string]string{
+		"jwt":        "ok",
+		"aichat_rpc": "ok",
+		"aisolo_rpc": "ok",
+	}
+	if strings.TrimSpace(s.Config.JwtAuth.AccessSecret) == "" {
+		deps["jwt"] = "missing"
+	}
+	if s.AiChatCli == nil {
+		deps["aichat_rpc"] = "missing"
+	}
+	if s.AiSoloCli == nil {
+		deps["aisolo_rpc"] = "missing"
+	}
+	if s.Config.Knowledge.Enabled {
+		deps["knowledge_backend"] = s.Config.Knowledge.EffectiveBackend()
+	}
+	if s.Knowledge != nil {
+		deps["knowledge"] = "ok"
+	} else if s.Config.Knowledge.Enabled {
+		deps["knowledge"] = "misconfigured"
+		if s.KnowledgeInitErr != "" {
+			deps["knowledge_error"] = s.KnowledgeInitErr
+		}
+	} else {
+		deps["knowledge"] = "disabled"
+	}
+	return deps
+}
+
+func (s *ServiceContext) Ready() bool {
+	deps := s.Dependencies()
+	return deps["jwt"] == "ok" && deps["aichat_rpc"] == "ok" && deps["aisolo_rpc"] == "ok" && deps["knowledge"] != "misconfigured"
+}
+
 // NewServiceContext 构造 ServiceContext。
 func NewServiceContext(c config.Config) *ServiceContext {
 	logx.Must(logx.SetUp(c.Log))
@@ -46,6 +82,14 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		}
 	}
 	return s
+}
+
+// Close 释放 ServiceContext 持有的资源。
+func (s *ServiceContext) Close() error {
+	if s.Knowledge != nil {
+		_ = s.Knowledge.Close()
+	}
+	return nil
 }
 
 func truncateInitErr(s string) string {

@@ -2,12 +2,76 @@
 package solo
 
 import (
+	"errors"
 	"strings"
 
 	"zero-service/aiapp/aigtw/internal/types"
 	"zero-service/aiapp/aisolo/aisolo"
 	"zero-service/aiapp/aisolo/modeweb"
 )
+
+// ValidateChatRequest checks required Solo chat inputs before an SSE response is opened.
+func ValidateChatRequest(req *types.SoloChatRequest) error {
+	if req == nil {
+		return errors.New("chat request is required")
+	}
+	if strings.TrimSpace(req.SessionId) == "" {
+		return errors.New("sessionId is required")
+	}
+	if strings.TrimSpace(req.Message) == "" {
+		return errors.New("message is required")
+	}
+	return nil
+}
+
+// ValidateResumeRequest checks required Solo resume inputs before an SSE response is opened.
+func ValidateResumeRequest(req *types.SoloInterruptRequest) error {
+	if req == nil {
+		return errors.New("resume request is required")
+	}
+	if strings.TrimSpace(req.SessionId) == "" {
+		return errors.New("sessionId is required")
+	}
+	if strings.TrimSpace(req.InterruptId) == "" {
+		return errors.New("interruptId is required")
+	}
+	if parseResumeAction(req.Action) == aisolo.ResumeAction_RESUME_ACTION_UNSPECIFIED {
+		return errors.New("action must be yes or no")
+	}
+	return nil
+}
+
+func requireKnowledgeBaseID(baseID string) (string, error) {
+	baseID = strings.TrimSpace(baseID)
+	if baseID == "" {
+		return "", errors.New("baseId is required")
+	}
+	return baseID, nil
+}
+
+func requireKnowledgeDocumentID(sourceID string) (string, error) {
+	sourceID = strings.TrimSpace(sourceID)
+	if sourceID == "" {
+		return "", errors.New("sourceId is required")
+	}
+	return sourceID, nil
+}
+
+func requireKnowledgeQuery(query string) (string, error) {
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return "", errors.New("query is required")
+	}
+	return query, nil
+}
+
+func requireKnowledgeContent(content string) (string, error) {
+	content = strings.TrimSpace(content)
+	if content == "" {
+		return "", errors.New("content is required")
+	}
+	return content, nil
+}
 
 // sessionStatusToString 会话状态枚举 -> 字符串。
 func sessionStatusToString(s aisolo.SessionStatus) string {

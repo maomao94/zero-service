@@ -37,14 +37,14 @@ func (l *ResumeLogic) Resume(req *types.SoloInterruptRequest, w io.Writer) error
 	if userID == "" {
 		return errors.New("missing user id in context")
 	}
-	if strings.TrimSpace(req.InterruptId) == "" {
-		return errors.New("interruptId is required")
+	if err := ValidateResumeRequest(req); err != nil {
+		return err
 	}
 
 	rpcReq := &aisolo.ResumeReq{
-		SessionId:   req.SessionId,
+		SessionId:   strings.TrimSpace(req.SessionId),
 		UserId:      userID,
-		InterruptId: req.InterruptId,
+		InterruptId: strings.TrimSpace(req.InterruptId),
 		Action:      parseResumeAction(req.Action),
 		Reason:      req.Reason,
 		SelectedIds: req.SelectedIds,

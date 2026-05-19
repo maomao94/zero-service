@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -32,18 +33,30 @@ func (l *AskStreamLogic) AskStream(in *aisolo.AskReq, stream aisolo.AiSolo_AskSt
 	if l.svcCtx.Executor == nil {
 		return errors.New("executor not ready (chat model may be missing)")
 	}
-	if in.SessionId == "" {
+	if in == nil {
+		return errors.New("ask request is required")
+	}
+	sessionID := strings.TrimSpace(in.SessionId)
+	userID := strings.TrimSpace(in.UserId)
+	message := strings.TrimSpace(in.Message)
+	if sessionID == "" {
 		return errors.New("session_id is required")
+	}
+	if userID == "" {
+		return errors.New("user_id is required")
+	}
+	if message == "" {
+		return errors.New("message is required")
 	}
 
 	turnID := uuid.NewString()
-	sender := &askStreamSender{stream: stream, sessionID: in.SessionId}
-	em := protocol.NewEmitter(sender, in.SessionId, turnID)
+	sender := &askStreamSender{stream: stream, sessionID: sessionID}
+	em := protocol.NewEmitter(sender, sessionID, turnID)
 
 	err := l.svcCtx.Executor.Ask(stream.Context(), em, turn.AskInput{
-		SessionID: in.SessionId,
-		UserID:    in.UserId,
-		Message:   in.Message,
+		SessionID: sessionID,
+		UserID:    userID,
+		Message:   message,
 		Mode:      in.Mode,
 		UILang:    in.GetUiLang(),
 	})
@@ -51,7 +64,7 @@ func (l *AskStreamLogic) AskStream(in *aisolo.AskReq, stream aisolo.AiSolo_AskSt
 	// 最终一帧: 强制 is_final=true, 让客户端知道流结束
 	_ = stream.Send(&aisolo.AskStreamResp{
 		Chunk: &aisolo.AskStreamChunk{
-			SessionId: in.SessionId,
+			SessionId: sessionID,
 			IsFinal:   true,
 		},
 	})
