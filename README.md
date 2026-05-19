@@ -415,6 +415,7 @@ docker build -t zero-service/{service}:latest .
 | [SocketIO 客户端对接文档](./docs/socketiox-documentation.md) | 前端 SocketIO 对接指南、事件体系、数据结构、MQTT 桥接、鉴权 |
 | [KML/KMZ 文件指南](./docs/kml-kmz-guide.md) | 无人机航点任务 KML 文件结构和使用指南 |
 | [服务端口清单](./docs/service-ports.md) | 各微服务默认端口、协议和用途 |
+| [本地开发工具安装指南](./docs/local-development-tools.md) | macOS 本地开发、代码探索、Java/Maven、HTTP/gRPC/WebSocket 和网络排查工具清单 |
 | [错误码规范](./code.md) | google.rpc.Code 错误码映射和使用规范 |
 
 ## 许可证
