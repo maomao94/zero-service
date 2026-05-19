@@ -7,14 +7,14 @@ import (
 	"net/http"
 	"time"
 	"zero-service/app/trigger/internal/svc"
+	"zero-service/app/trigger/internal/taskpayload"
 	"zero-service/common/asynqx"
-	"zero-service/common/msgbody"
 
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stat"
 	"github.com/zeromicro/go-zero/core/timex"
-	"go.opentelemetry.io/otel"
+	"zero-service/common/trace"
 )
 
 type DeferTriggerTaskHandler struct {
@@ -34,11 +34,11 @@ func (l *DeferTriggerTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task
 	defer l.metrics.Add(stat.Task{
 		Duration: timex.Since(startTime),
 	})
-	var msg msgbody.MsgBody
+	var msg taskpayload.HttpPayload
 	if err := json.Unmarshal([]byte(t.Payload()), &msg); err != nil {
 		return err
 	} else {
-		ctx = otel.GetTextMapPropagator().Extract(ctx, msg.Carrier)
+		ctx = trace.Extract(ctx, msg.Carrier)
 		ctx, span := asynqx.StartAsynqConsumerSpan(ctx, t.Type())
 		defer span.End()
 		type Data struct {

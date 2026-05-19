@@ -7,8 +7,8 @@ import (
 	"time"
 	"zero-service/app/alarm/alarm"
 	"zero-service/common/asynqx"
-	"zero-service/common/msgbody"
 	"zero-service/zerorpc/internal/svc"
+	"zero-service/zerorpc/internal/taskpayload"
 	"zero-service/zerorpc/zerorpc"
 
 	"github.com/dromara/carbon/v2"
@@ -16,8 +16,8 @@ import (
 	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/netx"
 	"github.com/zeromicro/go-zero/core/trace"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
+	tracex "zero-service/common/trace"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -42,8 +42,8 @@ func (l *ForwardTaskLogic) ForwardTask(in *zerorpc.ForwardTaskReq) (*zerorpc.For
 	spanCtx, span := svc.StartAsynqProducerSpan(l.ctx, asynqx.DeferTriggerTask)
 	defer span.End()
 	carrier := &propagation.HeaderCarrier{}
-	otel.GetTextMapPropagator().Inject(spanCtx, carrier)
-	msg := &msgbody.MsgBody{
+	tracex.Inject(spanCtx, carrier)
+	msg := &taskpayload.HttpPayload{
 		MsgId:   in.MsgId,
 		Carrier: carrier,
 		Msg:     in.Body,

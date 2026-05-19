@@ -3,14 +3,14 @@ package logic
 import (
 	"context"
 	"zero-service/app/trigger/internal/svc"
+	"zero-service/app/trigger/internal/taskpayload"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/asynqx"
-	"zero-service/common/msgbody"
 
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/trace"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
+	tracex "zero-service/common/trace"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -35,9 +35,9 @@ func (l *SendTriggerLogic) SendTrigger(in *trigger.SendTriggerReq) (*trigger.Sen
 	defer span.End()
 
 	carrier := &propagation.HeaderCarrier{}
-	otel.GetTextMapPropagator().Inject(spanCtx, carrier)
+	tracex.Inject(spanCtx, carrier)
 
-	msg := &msgbody.MsgBody{
+	msg := &taskpayload.HttpPayload{
 		MsgId:   in.MsgId,
 		Carrier: carrier,
 		Msg:     in.Body,

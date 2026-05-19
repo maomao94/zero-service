@@ -1,15 +1,15 @@
-package msgbody
+package taskpayload
 
 import "go.opentelemetry.io/otel/propagation"
 
-type MsgBody struct {
+type HttpPayload struct {
 	MsgId   string                     `json:"msgId,omitempty"`
 	Carrier *propagation.HeaderCarrier `json:"carrier"`
 	Msg     string                     `json:"msg,omitempty"`
 	Url     string                     `json:"url" validate:"required"`
 }
 
-type ProtoMsgBody struct {
+type GrpcPayload struct {
 	MsgId          string                     `json:"msgId,omitempty"`
 	Carrier        *propagation.HeaderCarrier `json:"carrier"`
 	GrpcServer     string                     `json:"grpcServer" validate:"required"`

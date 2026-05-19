@@ -5,890 +5,558 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
+	"math/rand/v2"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/duke-git/lancet/v2/cryptor"
 	"github.com/gorilla/websocket"
-	"github.com/zeromicro/go-zero/core/fx"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/proc"
 	"github.com/zeromicro/go-zero/core/stat"
 	"github.com/zeromicro/go-zero/core/threading"
 	"github.com/zeromicro/go-zero/core/timex"
 )
 
-// 常量定义
-const (
-	DefaultHeartbeatInterval    = 30 * time.Second
-	DefaultReconnectInterval    = 5 * time.Second
-	DefaultDialTimeout          = 10 * time.Second
-	DefaultTokenRefreshInterval = 30 * time.Minute // 默认token刷新间隔
-	DefaultAuthTimeout          = 5 * time.Second  // 默认认证超时时间
-	DefaultMaxReconnectInterval = 30 * time.Second // 默认最大重连间隔（指数退避上限）
-)
-
-// ConnStatus 连接状态枚举
-type ConnStatus int
-
-const (
-	StatusDisconnected  ConnStatus = iota // 已断开连接
-	StatusConnecting                      // 正在连接
-	StatusConnected                       // 已连接（未认证）
-	StatusAuthenticated                   // 已认证（就绪）
-	StatusAuthFailed                      // 认证失败
-	StatusReconnecting                    // 正在重连
-)
-
-// String 状态枚举字符串化（便于日志和调试）
-func (s ConnStatus) String() string {
-	switch s {
-	case StatusDisconnected:
-		return "Disconnected"
-	case StatusConnecting:
-		return "Connecting"
-	case StatusConnected:
-		return "Connected(Unauthed)"
-	case StatusAuthenticated:
-		return "Authenticated(Ready)"
-	case StatusAuthFailed:
-		return "AuthFailed"
-	case StatusReconnecting:
-		return "Reconnecting"
-	default:
-		return "Unknown"
-	}
-}
-
-// Client 定义WebSocket客户端接口（含所有增强功能）
+// Client is the websocket client interface.
 type Client interface {
-	// Connect 连接到WebSocket服务器
-	Connect() error
-	// Send 发送消息到服务器
-	Send(message []byte) error
-	// SendJSON 发送JSON消息到服务器
-	SendJSON(data interface{}) error
-	// Close 关闭WebSocket连接
+	Connect(ctx context.Context) error
+	Send(ctx context.Context, msg []byte) error
+	SendJSON(ctx context.Context, data any) error
 	Close() error
-	// IsConnected 检查是否已连接（含认证）
-	IsConnected() bool
-	// IsAuthenticated 检查是否已认证就绪
-	IsAuthenticated() bool
-	// RefreshToken 手动触发token刷新
-	RefreshToken() error
+	State() ConnState
 }
 
-// Config 定义WebSocket客户端配置（含所有增强配置）
-type Config struct {
-	URL                  string
-	HeartbeatInterval    time.Duration `json:",default=30s"`
-	ReconnectInterval    time.Duration `json:",default=5s"`
-	ReconnectMaxRetries  int           `json:",default=0"`
-	DialTimeout          time.Duration `json:",default=10s"`
-	TokenRefreshInterval time.Duration `json:",default=30m"`
-	AuthTimeout          time.Duration `json:",default=5s"`   // 认证超时
-	ReconnectBackoff     bool          `json:",default=true"` // 是否启用重连指数退避
-	MaxReconnectInterval time.Duration `json:",default=30s"`  // 最大重连间隔
-}
-
-// ClientOptions 定义客户端选项（含所有增强回调，已添加ctx支持）
-type ClientOptions struct {
-	Headers                http.Header
-	Dialer                 *websocket.Dialer
-	OnMessage              func(ctx context.Context, msg []byte) error // 消息接收回调（带ctx）
-	metrics                *stat.Metrics
-	OnStatusChange         func(ctx context.Context, status ConnStatus, err error) // 状态变化回调（带ctx）
-	OnRefreshToken         func(ctx context.Context) (bool, error)                 // Token刷新回调（带ctx）
-	OnHeartbeat            func(ctx context.Context) ([]byte, error)               // 自定义心跳内容回调（带ctx）
-	ReconnectOnAuthFailed  bool                                                    // 认证失败是否重连
-	ReconnectOnTokenExpire bool                                                    // Token过期是否重连
-}
-
-// ClientOption 定义自定义ClientOptions的方法
-type ClientOption func(options *ClientOptions)
-
-// client 是WebSocket客户端实现（整合所有增强功能）
 type client struct {
-	conn                   *websocket.Conn
-	url                    string
-	dialer                 *websocket.Dialer
-	headers                http.Header
-	onMessage              func(ctx context.Context, msg []byte) error
-	metrics                *stat.Metrics
-	onStatusChange         func(ctx context.Context, status ConnStatus, err error)
-	onRefreshToken         func(ctx context.Context) (bool, error)
-	onHeartbeat            func(ctx context.Context) ([]byte, error)
-	reconnectOnAuthFailed  bool
-	reconnectOnTokenExpire bool
-	ctx                    context.Context
-	cancel                 context.CancelFunc
-	wg                     sync.WaitGroup
-	mu                     sync.Mutex
-	heartbeatInterval      time.Duration
-	reconnectInterval      time.Duration
-	reconnectMaxRetries    int
-	reconnectCount         int
-	running                int32 // 原子变量：客户端运行状态
-	authenticated          int32 // 原子变量：是否已认证
-	tokenRefreshInterval   time.Duration
-	tokenRefreshTicker     *time.Ticker
-	authTimeout            time.Duration
-	reconnectBackoff       bool
-	maxReconnectInterval   time.Duration
-	logger                 logx.Logger
-	connClosed             chan struct{} // 单次连接关闭通知
+	cfg    Config
+	opts   clientOptions
+	dialer *websocket.Dialer
+
+	conn *websocket.Conn
+
+	lifeCtx    context.Context
+	lifeCancel context.CancelFunc
+
+	connCtx    context.Context
+	connCancel context.CancelFunc
+
+	wg      sync.WaitGroup
+	mu      sync.Mutex
+	writeMu sync.Mutex
+
+	running       atomicBool
+	authenticated atomicBool
+
+	reconnectIdx int
+
+	logger  logx.Logger
+	metrics *stat.Metrics
 }
 
-// ------------------------------ 选项构造函数 ------------------------------
-// WithHeaders 设置WebSocket连接头信息
-func WithHeaders(headers http.Header) ClientOption {
-	return func(options *ClientOptions) {
-		options.Headers = headers
+type atomicBool struct {
+	v int32
+}
+
+func (b *atomicBool) store(val bool) {
+	if val {
+		atomic.StoreInt32(&b.v, 1)
+	} else {
+		atomic.StoreInt32(&b.v, 0)
 	}
 }
 
-// WithDialer 设置自定义的WebSocket拨号器
-func WithDialer(dialer *websocket.Dialer) ClientOption {
-	return func(options *ClientOptions) {
-		options.Dialer = dialer
-	}
+func (b *atomicBool) load() bool {
+	return atomic.LoadInt32(&b.v) == 1
 }
 
-// WithOnMessage 设置消息处理回调（带ctx支持）
-func WithOnMessage(fn func(ctx context.Context, msg []byte) error) ClientOption {
-	return func(options *ClientOptions) {
-		options.OnMessage = fn
-	}
-}
-
-func WithMetrics(metrics *stat.Metrics) ClientOption {
-	return func(options *ClientOptions) {
-		options.metrics = metrics
-	}
-}
-
-// WithOnStatusChange 设置连接状态变化统一回调（带ctx支持）
-func WithOnStatusChange(fn func(ctx context.Context, status ConnStatus, err error)) ClientOption {
-	return func(options *ClientOptions) {
-		options.OnStatusChange = fn
-	}
-}
-
-// WithOnRefreshToken 设置Token刷新回调（带ctx支持）
-func WithOnRefreshToken(fn func(ctx context.Context) (bool, error)) ClientOption {
-	return func(options *ClientOptions) {
-		options.OnRefreshToken = fn
-	}
-}
-
-// WithOnHeartbeat 设置自定义心跳内容回调（带ctx支持）
-func WithOnHeartbeat(fn func(ctx context.Context) ([]byte, error)) ClientOption {
-	return func(options *ClientOptions) {
-		options.OnHeartbeat = fn
-	}
-}
-
-// WithReconnectOnAuthFailed 设置认证失败时是否重连
-func WithReconnectOnAuthFailed(reconnect bool) ClientOption {
-	return func(options *ClientOptions) {
-		options.ReconnectOnAuthFailed = reconnect
-	}
-}
-
-// WithReconnectOnTokenExpire 设置Token过期时是否重连
-func WithReconnectOnTokenExpire(reconnect bool) ClientOption {
-	return func(options *ClientOptions) {
-		options.ReconnectOnTokenExpire = reconnect
-	}
-}
-
-// ------------------------------ 客户端构造函数 ------------------------------
-// MustNewClient 创建客户端（失败panic，go-zero风格）
-func MustNewClient(conf Config, opts ...ClientOption) Client {
-	cli, err := NewClient(conf, opts...)
+// MustNewClient creates a client, connects it, and panics on error.
+// A shutdown listener is registered so Close is called automatically on SIGTERM.
+func MustNewClient(cfg Config, opts ...ClientOption) Client {
+	cli, err := NewClient(cfg, opts...)
 	logx.Must(err)
+	if err := cli.Connect(context.Background()); err != nil {
+		logx.Must(err)
+	}
+	proc.AddShutdownListener(func() {
+		cli.Close()
+	})
 	return cli
 }
 
-// NewClient 创建客户端（核心构造函数）
-func NewClient(conf Config, opts ...ClientOption) (Client, error) {
-	// 初始化默认选项（带ctx的空实现）
-	options := ClientOptions{
-		Headers:                make(http.Header),
-		OnMessage:              func(ctx context.Context, msg []byte) error { return nil },
-		metrics:                stat.NewMetrics(conf.URL),
-		OnStatusChange:         func(ctx context.Context, status ConnStatus, err error) {},
-		OnRefreshToken:         func(ctx context.Context) (bool, error) { return true, nil },
-		OnHeartbeat:            nil,
-		ReconnectOnAuthFailed:  true,
-		ReconnectOnTokenExpire: true,
+// NewClient creates a websocket client. Call Connect to start.
+func NewClient(cfg Config, opts ...ClientOption) (Client, error) {
+	if cfg.URL == "" {
+		return nil, errors.New("[wsx] URL is required")
 	}
 
-	// 应用用户自定义选项
+	cfg = normalizeConfig(cfg)
+	o := defaultClientOptions()
 	for _, opt := range opts {
-		opt(&options)
+		opt(&o)
 	}
 
-	// 初始化拨号器（默认或自定义）
-	dialer := options.Dialer
+	dialer := o.dialer
 	if dialer == nil {
 		dialer = &websocket.Dialer{
-			HandshakeTimeout: conf.DialTimeout,
+			HandshakeTimeout: cfg.DialTimeout,
 		}
 	}
 
-	// 填充默认配置（优先级：用户配置 > 默认值）
-	conf = fillDefaultConfig(conf)
-
-	// 创建根上下文
-	ctx, cancel := context.WithCancel(context.Background())
-	ctx = logx.ContextWithFields(ctx, logx.Field("url", conf.URL))
-	ctx = logx.ContextWithFields(ctx, logx.Field("session", cryptor.Md5String(conf.URL)))
-	// 初始化客户端实例
-	c := &client{
-		url:                    conf.URL,
-		dialer:                 dialer,
-		headers:                options.Headers,
-		onMessage:              options.OnMessage,
-		metrics:                options.metrics,
-		onStatusChange:         options.OnStatusChange,
-		onRefreshToken:         options.OnRefreshToken,
-		onHeartbeat:            options.OnHeartbeat,
-		reconnectOnAuthFailed:  options.ReconnectOnAuthFailed,
-		reconnectOnTokenExpire: options.ReconnectOnTokenExpire,
-		ctx:                    ctx,
-		cancel:                 cancel,
-		heartbeatInterval:      conf.HeartbeatInterval,
-		reconnectInterval:      conf.ReconnectInterval,
-		reconnectMaxRetries:    conf.ReconnectMaxRetries,
-		tokenRefreshInterval:   conf.TokenRefreshInterval,
-		authTimeout:            conf.AuthTimeout,
-		reconnectBackoff:       conf.ReconnectBackoff,
-		maxReconnectInterval:   conf.MaxReconnectInterval,
-		logger:                 logx.WithContext(ctx),
-		connClosed:             make(chan struct{}),
+	metrics := o.metrics
+	if metrics == nil {
+		metrics = stat.NewMetrics(fmt.Sprintf("wsx-%s", cryptor.Md5String(cfg.URL)[:8]))
 	}
-	err := c.Connect()
-	return c, err
+
+	return &client{
+		cfg:     cfg,
+		opts:    o,
+		dialer:  dialer,
+		metrics: metrics,
+	}, nil
 }
 
-// fillDefaultConfig 填充配置默认值
-func fillDefaultConfig(conf Config) Config {
-	if conf.HeartbeatInterval <= 0 {
-		conf.HeartbeatInterval = DefaultHeartbeatInterval
-	}
-	if conf.ReconnectInterval <= 0 {
-		conf.ReconnectInterval = DefaultReconnectInterval
-	}
-	if conf.DialTimeout <= 0 {
-		conf.DialTimeout = DefaultDialTimeout
-	}
-	if conf.TokenRefreshInterval <= 0 {
-		conf.TokenRefreshInterval = DefaultTokenRefreshInterval
-	}
-	if conf.AuthTimeout <= 0 {
-		conf.AuthTimeout = DefaultAuthTimeout
-	}
-	if conf.MaxReconnectInterval <= 0 {
-		conf.MaxReconnectInterval = DefaultMaxReconnectInterval
-	}
-
-	return conf
-}
-
-// ------------------------------ 核心方法 ------------------------------
-// Connect 启动客户端（非阻塞）
-func (c *client) Connect() error {
+// Connect starts the connection lifecycle. It returns immediately;
+// connection progress is reported via WithOnStateChange.
+func (c *client) Connect(ctx context.Context) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if c.isRunning() {
-		err := errors.New("Websocket client already running")
-		c.logger.WithContext(c.ctx).Errorf(err.Error())
-		return err
+	if c.running.load() {
+		return ErrAlreadyRunning
 	}
 
-	// 初始化状态
-	atomic.StoreInt32(&c.running, 1)
-	atomic.StoreInt32(&c.authenticated, 0)
-	c.reconnectCount = 0
+	c.lifeCtx, c.lifeCancel = context.WithCancel(ctx)
+	c.lifeCtx = logx.ContextWithFields(c.lifeCtx, logx.Field("url", c.cfg.URL))
+	c.lifeCtx = logx.ContextWithFields(c.lifeCtx, logx.Field("session", cryptor.Md5String(c.cfg.URL)[:12]))
+	c.logger = logx.WithContext(c.lifeCtx)
 
-	// 启动连接管理器
+	c.running.store(true)
+
 	c.wg.Add(1)
 	go c.connectionManager()
 
-	c.logger.WithContext(c.ctx).Infof("WebSocket client started, target: %s", c.url)
-	c.onStatusChange(c.ctx, StatusConnecting, nil)
+	c.logger.Infof("[wsx] client started, target: %s", c.cfg.URL)
+	c.opts.onStateChange(c.lifeCtx, StateConnecting, nil)
 	return nil
 }
 
-// Send 发送消息到服务器
-func (c *client) Send(message []byte) error {
+// Send writes a binary message. The WriteTimeout from Config is used as the
+// write deadline; the supplied ctx is for tracing and cancellation checks.
+func (c *client) Send(ctx context.Context, msg []byte) error {
+	return c.write(ctx, websocket.TextMessage, msg)
+}
+
+// SendJSON marshals data as JSON and sends it as a text message.
+func (c *client) SendJSON(ctx context.Context, data any) error {
+	raw, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("[wsx] marshal json: %w", err)
+	}
+	return c.write(ctx, websocket.TextMessage, raw)
+}
+
+func (c *client) write(ctx context.Context, msgType int, data []byte) error {
+	c.writeMu.Lock()
+	defer c.writeMu.Unlock()
+
 	c.mu.Lock()
-	defer c.mu.Unlock()
+	conn := c.conn
+	c.mu.Unlock()
 
-	if c.conn == nil || !c.isRunning() {
-		return errors.New("not connected to server")
+	if conn == nil || !c.running.load() {
+		return ErrNotConnected
 	}
 
-	// 设置写入超时
-	if err := c.conn.SetWriteDeadline(time.Now().Add(c.heartbeatInterval)); err != nil {
+	if err := conn.SetWriteDeadline(time.Now().Add(c.cfg.WriteTimeout)); err != nil {
 		return err
 	}
 
-	// 发送文本消息
-	if err := c.conn.WriteMessage(websocket.TextMessage, message); err != nil {
-		c.logger.WithContext(c.ctx).Errorf("Failed to send message: %v", err)
-		// 发送失败时关闭连接，触发重连
-		go c.closeConnection()
+	if err := conn.WriteMessage(msgType, data); err != nil {
+		c.logger.Errorf("[wsx] write failed: %v", err)
+		c.cancelConn()
 		return err
 	}
 
-	c.logger.WithContext(c.ctx).Debugf("Message sent successfully (size: %d bytes)", len(message))
+	c.metrics.Add(stat.Task{Duration: timex.Since(timex.Now())})
 	return nil
 }
 
-// SendJSON 发送JSON消息到服务器
-func (c *client) SendJSON(data interface{}) error {
+// Close shuts down the client and waits for all goroutines to exit.
+func (c *client) Close() error {
 	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	if c.conn == nil || !c.isRunning() {
-		return errors.New("not connected to server")
+	if !c.running.load() {
+		c.mu.Unlock()
+		return nil
 	}
 
-	// 设置写入超时
-	if err := c.conn.SetWriteDeadline(time.Now().Add(c.heartbeatInterval)); err != nil {
-		return err
+	c.running.store(false)
+	c.authenticated.store(false)
+
+	c.logger.Info("[wsx] shutting down client")
+
+	if c.lifeCancel != nil {
+		c.lifeCancel()
 	}
 
-	// 序列化为JSON并发送
-	if err := c.conn.WriteJSON(data); err != nil {
-		// 区分序列化错误和发送错误
-		var jsonErr *json.MarshalerError
-		if errors.As(err, &jsonErr) {
-			c.logger.WithContext(c.ctx).Errorf("Failed to marshal JSON: %v", err)
-			return err
-		}
+	conn := c.conn
+	c.conn = nil
+	c.mu.Unlock()
 
-		c.logger.WithContext(c.ctx).Errorf("Failed to send JSON message: %v", err)
-		// 发送失败时关闭连接，触发重连
-		go c.closeConnection()
-		return err
+	if conn != nil {
+		c.writeMu.Lock()
+		closeMsg := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "client shutdown")
+		conn.SetWriteDeadline(time.Now().Add(c.cfg.WriteTimeout))
+		_ = conn.WriteMessage(websocket.CloseMessage, closeMsg)
+		_ = conn.Close()
+		c.writeMu.Unlock()
 	}
 
-	c.logger.WithContext(c.ctx).Debug("JSON message sent successfully")
+	c.wg.Wait()
+
+	c.logger.Info("[wsx] client shutdown complete")
+	c.opts.onStateChange(context.Background(), StateDisconnected, nil)
 	return nil
 }
 
-// connectionManager 连接生命周期管理器（核心循环）
+// State returns the current connection state.
+func (c *client) State() ConnState {
+	if !c.running.load() || (c.lifeCtx != nil && c.lifeCtx.Err() != nil) {
+		return StateDisconnected
+	}
+	if c.authenticated.load() {
+		return StateAuthenticated
+	}
+	c.mu.Lock()
+	hasConn := c.conn != nil
+	c.mu.Unlock()
+	if hasConn {
+		return StateConnected
+	}
+	return StateConnecting
+}
+
 func (c *client) connectionManager() {
 	defer c.wg.Done()
-	c.logger.WithContext(c.ctx).Info("Connection manager started")
+	defer c.running.store(false)
+	c.logger.Info("[wsx] connection manager started")
 
-	for c.isRunning() {
-		// 1. 尝试建立连接
+	for c.running.load() && c.lifeCtx.Err() == nil {
 		conn, err := c.dial()
 		if err != nil {
-			c.handleConnectError(err)
+			c.logger.Errorf("[wsx] dial failed: %v", err)
+			c.opts.onStateChange(c.lifeCtx, StateDisconnected, err)
 			if !c.shouldReconnect() {
-				break
+				return
 			}
 			c.waitBeforeReconnect()
 			continue
 		}
 
-		// 2. 连接成功（未认证）
 		c.setConnection(conn)
-		c.onStatusChange(c.ctx, StatusConnected, nil)
-		c.mu.Lock()
-		c.reconnectCount = 0
-		c.mu.Unlock()
+		c.opts.onStateChange(c.lifeCtx, StateConnected, nil)
 
-		// 3. 执行认证（带超时）
-		authSuccess, authErr := c.performAuthentication()
-		if !authSuccess {
-			c.handleAuthFailed(authErr)
-			if c.reconnectOnAuthFailed && c.shouldReconnect() {
+		if !c.authenticate() {
+			if c.opts.reconnectOnAuthFailed && c.shouldReconnect() {
 				c.waitBeforeReconnect()
 				continue
 			}
-			break
+			return
 		}
 
-		// 4. 认证成功（就绪状态）
-		atomic.StoreInt32(&c.authenticated, 1)
-		c.onStatusChange(c.ctx, StatusAuthenticated, nil)
+		c.authenticated.store(true)
+		c.opts.onStateChange(c.lifeCtx, StateAuthenticated, nil)
 		c.startTokenRefresh()
 
-		// 5. 等待连接关闭
-		<-c.connClosed
+		select {
+		case <-c.connCtx.Done():
+		case <-c.lifeCtx.Done():
+		}
 
-		// 6. 连接关闭后清理
-		c.clearConnection()
-		atomic.StoreInt32(&c.authenticated, 0)
-		c.stopTokenRefresh()
-		c.onStatusChange(c.ctx, StatusDisconnected, nil)
+		c.authenticated.store(false)
+		c.cancelConn()
+		c.cleanupConnection()
+		c.opts.onStateChange(c.lifeCtx, StateDisconnected, nil)
 
-		// 7. 决定是否重连
 		if !c.shouldReconnect() {
-			break
+			return
 		}
 		c.waitBeforeReconnect()
 	}
 
-	// 8. 管理器退出
-	c.logger.WithContext(c.ctx).Info("Connection manager exiting")
-	c.onStatusChange(c.ctx, StatusDisconnected, nil)
+	c.opts.onStateChange(c.lifeCtx, StateDisconnected, nil)
+	c.logger.Info("[wsx] connection manager exited")
 }
 
-// ------------------------------ 连接相关 ------------------------------
-// dial 建立WebSocket连接
 func (c *client) dial() (*websocket.Conn, error) {
-	c.logger.WithContext(c.ctx).Info("Trying to connect to WebSocket server")
-	conn, resp, err := c.dialer.Dial(c.url, c.headers)
+	ctx, cancel := context.WithTimeout(c.lifeCtx, c.cfg.DialTimeout)
+	defer cancel()
+
+	c.opts.onStateChange(c.lifeCtx, StateConnecting, nil)
+	c.logger.Info("[wsx] dialing...")
+
+	conn, resp, err := c.dialer.DialContext(ctx, c.cfg.URL, c.opts.headers)
 	if err != nil {
-		// 处理响应可能为nil的情况
-		var bodyContent string
-		var readErr error
-
-		// 仅在resp和resp.Body都不为空时才尝试读取
 		if resp != nil && resp.Body != nil {
-			// 确保响应体被关闭
-			defer resp.Body.Close()
-
-			// 读取响应体内容
-			var body []byte
-			body, readErr = io.ReadAll(resp.Body)
-			if readErr != nil {
-				bodyContent = "failed to read response body: " + readErr.Error()
-			} else {
-				bodyContent = string(body)
-			}
-		} else {
-			if resp == nil {
-				bodyContent = "no response received from server"
-			} else {
-				bodyContent = "response has no body"
-			}
+			resp.Body.Close()
 		}
-
-		// 记录详细错误信息
-		c.logger.WithContext(c.ctx).Errorf(
-			"Connect failed: %v, body: %s",
-			err,
-			bodyContent,
-		)
 		return nil, err
 	}
 	return conn, nil
 }
 
-// setConnection 设置连接并启动子goroutine
 func (c *client) setConnection(conn *websocket.Conn) {
 	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	// 重置连接关闭通道
-	c.connClosed = make(chan struct{})
+	c.connCtx, c.connCancel = context.WithCancel(c.lifeCtx)
 	c.conn = conn
+	c.mu.Unlock()
 
-	// 设置默认 PongHandler（刷新 ReadDeadline）
-	c.conn.SetPongHandler(func(appData string) error {
-		c.logger.WithContext(c.ctx).Debug("Received Pong, refresh ReadDeadline")
-		return c.conn.SetReadDeadline(time.Now().Add(2 * c.heartbeatInterval))
+	conn.SetPongHandler(func(string) error {
+		return conn.SetReadDeadline(time.Now().Add(c.cfg.ReadTimeout))
 	})
 
-	// 启动消息接收和心跳
 	c.wg.Add(2)
-	go c.receiveLoop()
-	go c.heartbeatLoop()
+	go c.readLoop(conn)
+	go c.heartbeatLoop(conn)
 }
 
-// clearConnection 清理连接资源
-func (c *client) clearConnection() {
+func (c *client) cancelConn() {
 	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.conn = nil
+	if c.connCancel != nil {
+		c.connCancel()
+		c.connCancel = nil
+	}
+	c.mu.Unlock()
 }
 
-// closeConnection 关闭当前连接（安全）
-func (c *client) closeConnection() {
+func (c *client) cleanupConnection() {
 	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	if c.conn == nil {
-		return
+	if c.conn != nil {
+		_ = c.conn.Close()
+		c.conn = nil
 	}
-
-	// 发送关闭帧（标准协议）
-	closeMsg := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "client close")
-	_ = c.conn.WriteMessage(websocket.CloseMessage, closeMsg)
-	_ = c.conn.Close()
-	c.conn = nil
-
-	// 通知连接关闭
-	safeClose(c.connClosed)
-	c.logger.WithContext(c.ctx).Info("Current connection closed")
+	c.mu.Unlock()
 }
 
-// ------------------------------ 认证相关 ------------------------------
-// performAuthentication 执行认证（带超时）
-func (c *client) performAuthentication() (bool, error) {
-	c.logger.WithContext(c.ctx).Info("Starting authentication")
-	err := fx.DoWithTimeout(func() error {
-		// fx 内部会创建带超时的上下文，通过 WithContext 传入的 c.ctx 作为父上下文
-		// 这里的 ctx 是 fx 内部生成的（带超时），但需要传递给 onRefreshToken
-		// 注意：fx.DoWithTimeout 内部的 ctx 可通过 fx.WithContext 传递父上下文，但任务函数中无法直接获取，需要间接传递
-		// 修正：通过闭包捕获 fx 生成的 ctx（但 fx 内部 ctx 不暴露，因此更简单的方式是在任务函数中基于父 ctx 创建超时，或直接使用 fx 的超时）
-		// 更合理的做法：任务函数中直接使用 fx 内部的超时逻辑，onRefreshToken 传入 c.ctx 结合 fx 的超时（实际等价于 authCtx）
-		success, err := c.onRefreshToken(c.ctx) // 这里的 c.ctx 会被 fx 的超时上下文覆盖（因为 fx 内部已设置超时）
-		if !success {
-			return fmt.Errorf("authentication failed: %w", err)
-		}
-		return nil
-	}, c.authTimeout, fx.WithContext(c.ctx)) // 传入客户端上下文作为父上下文，支持外部取消
+func (c *client) authenticate() bool {
+	ctx, cancel := context.WithTimeout(c.lifeCtx, c.cfg.AuthTimeout)
+	defer cancel()
 
-	// 处理 fx.DoWithTimeout 的返回结果
-	switch {
-	case err == nil:
-		c.logger.WithContext(c.ctx).Info("Authentication succeeded")
-		return true, nil
-	case errors.Is(err, fx.ErrTimeout):
-		timeoutErr := errors.New("Authentication timeout")
-		c.logger.WithContext(c.ctx).Errorf(timeoutErr.Error())
-		return false, timeoutErr
-	case errors.Is(err, fx.ErrCanceled):
-		cancelErr := errors.New("Authentication canceled")
-		c.logger.WithContext(c.ctx).Errorf(cancelErr.Error())
-		return false, cancelErr
-	default:
-		c.logger.WithContext(c.ctx).Errorf("Authentication failed: %v", err)
-		return false, err
-	}
-}
+	c.logger.Info("[wsx] authenticating...")
 
-// handleAuthFailed 处理认证失败
-func (c *client) handleAuthFailed(err error) {
-	c.onStatusChange(c.ctx, StatusAuthFailed, err)
-	c.closeConnection()
-}
-
-// ------------------------------ 重连相关 ------------------------------
-// shouldReconnect 判断是否需要重连
-func (c *client) shouldReconnect() bool {
-	if !c.isRunning() {
-		return false
-	}
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	// 无限重连（max=0）或未达最大次数
-	if c.reconnectMaxRetries == 0 || c.reconnectCount < c.reconnectMaxRetries {
-		c.onStatusChange(c.ctx, StatusReconnecting, nil)
+	err := c.opts.onAuthenticate(ctx)
+	if err == nil {
+		c.logger.Info("[wsx] authentication succeeded")
 		return true
 	}
-	c.logger.WithContext(c.ctx).Errorf("Reach max reconnect times (%d), stop reconnect", c.reconnectMaxRetries)
+
+	if errors.Is(err, context.DeadlineExceeded) {
+		c.logger.Errorf("[wsx] authentication timeout after %v", c.cfg.AuthTimeout)
+		c.opts.onStateChange(c.lifeCtx, StateAuthFailed, ErrAuthTimeout)
+	} else if errors.Is(err, context.Canceled) {
+		c.logger.Error("[wsx] authentication canceled")
+		c.opts.onStateChange(c.lifeCtx, StateAuthFailed, ErrAuthCanceled)
+	} else {
+		c.logger.Errorf("[wsx] authentication failed: %v", err)
+		c.opts.onStateChange(c.lifeCtx, StateAuthFailed, err)
+	}
+
+	c.cancelConn()
 	return false
 }
 
-// waitBeforeReconnect 重连前等待（支持指数退避）
-func (c *client) waitBeforeReconnect() {
-	c.mu.Lock()
-	currentCount := c.reconnectCount
-	baseInterval := c.reconnectInterval
-	useBackoff := c.reconnectBackoff
-	maxInterval := c.maxReconnectInterval
-	c.reconnectCount++
-	c.mu.Unlock()
-
-	// 计算等待间隔（指数退避：base * 2^count，不超过max）
-	waitInterval := baseInterval
-	if useBackoff {
-		waitInterval = baseInterval * time.Duration(1<<currentCount)
-		if waitInterval > maxInterval {
-			waitInterval = maxInterval
-		}
-	}
-
-	c.logger.WithContext(c.ctx).Infof("Reconnect %d after %v (base: %v, backoff: %v)",
-		currentCount+1, waitInterval, baseInterval, useBackoff)
-
-	// 安全等待（支持ctx取消）
-	timer := time.NewTimer(waitInterval)
-	defer timer.Stop()
-
-	select {
-	case <-c.ctx.Done():
-		c.logger.WithContext(c.ctx).Info("Context canceled, skip reconnect wait")
-		if !timer.Stop() {
-			<-timer.C // 排空通道避免泄漏
-		}
-	case <-timer.C:
-		// 等待结束，执行重连
-	}
-}
-
-// handleConnectError 处理连接错误
-func (c *client) handleConnectError(err error) {
-	c.onStatusChange(c.ctx, StatusDisconnected, err) // 带ctx的状态通知
-}
-
-// ------------------------------ 心跳相关 ------------------------------
-// heartbeatLoop 心跳循环（支持自定义心跳）
-func (c *client) heartbeatLoop() {
+func (c *client) readLoop(conn *websocket.Conn) {
 	defer c.wg.Done()
-	c.logger.WithContext(c.ctx).Infof("Heartbeat loop started (interval: %v)", c.heartbeatInterval)
+	defer c.cancelConn()
 
-	ticker := time.NewTicker(c.heartbeatInterval)
+	c.logger.Info("[wsx] read loop started")
+
+	for c.running.load() && c.lifeCtx.Err() == nil {
+		if err := conn.SetReadDeadline(time.Now().Add(c.cfg.ReadTimeout)); err != nil {
+			c.logger.Errorf("[wsx] set read deadline failed: %v", err)
+			return
+		}
+
+		msgType, msgData, err := conn.ReadMessage()
+		if err != nil {
+			if websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
+				c.logger.Info("[wsx] server closed connection normally")
+			} else if !c.running.load() {
+				c.logger.Info("[wsx] read loop: client stopped")
+			} else {
+				c.logger.Errorf("[wsx] read error: %v", err)
+			}
+			return
+		}
+
+		if msgType == websocket.PingMessage || msgType == websocket.PongMessage {
+			continue
+		}
+
+		msgCopy := make([]byte, len(msgData))
+		copy(msgCopy, msgData)
+
+		threading.GoSafe(func() {
+			startTime := timex.Now()
+			if err := c.opts.onMessage(c.lifeCtx, msgCopy); err != nil {
+				c.logger.Errorf("[wsx] message handler error: %v", err)
+				c.metrics.AddDrop()
+				return
+			}
+			c.metrics.Add(stat.Task{Duration: timex.Since(startTime)})
+		})
+	}
+
+	c.logger.Info("[wsx] read loop exited")
+}
+
+func (c *client) heartbeatLoop(conn *websocket.Conn) {
+	defer c.wg.Done()
+
+	c.logger.Infof("[wsx] heartbeat loop started (interval: %v)", c.cfg.HeartbeatInterval)
+
+	ticker := time.NewTicker(c.cfg.HeartbeatInterval)
 	defer ticker.Stop()
 
 	for {
 		select {
-		case <-c.ctx.Done():
-			c.logger.WithContext(c.ctx).Info("Context canceled, stop heartbeat")
+		case <-c.lifeCtx.Done():
+			c.logger.Info("[wsx] heartbeat loop: context canceled")
 			return
-		case <-c.connClosed:
-			c.logger.WithContext(c.ctx).Info("Connection closed, stop heartbeat")
+		case <-c.connCtx.Done():
+			c.logger.Info("[wsx] heartbeat loop: connection closed")
 			return
 		case <-ticker.C:
-			if !c.IsConnected() {
+			if !c.running.load() {
 				return
 			}
-			// 发送心跳（自定义或默认）
-			if err := c.sendHeartbeat(); err != nil {
-				c.logger.WithContext(c.ctx).Errorf("Heartbeat failed: %v", err)
-				return
+			if !c.authenticated.load() {
+				continue
 			}
+
+			deadline := time.Now().Add(c.cfg.WriteTimeout)
+			c.writeMu.Lock()
+			if c.opts.onHeartbeat != nil {
+				data, err := c.opts.onHeartbeat(c.lifeCtx)
+				if err != nil {
+					c.writeMu.Unlock()
+					c.logger.Errorf("[wsx] custom heartbeat failed: %v", err)
+					return
+				}
+				conn.SetWriteDeadline(deadline)
+				if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
+					c.writeMu.Unlock()
+					c.logger.Errorf("[wsx] heartbeat write failed: %v", err)
+					return
+				}
+			} else {
+				conn.SetWriteDeadline(deadline)
+				if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+					c.writeMu.Unlock()
+					c.logger.Errorf("[wsx] ping failed: %v", err)
+					return
+				}
+			}
+			c.writeMu.Unlock()
 		}
 	}
 }
 
-// sendHeartbeat 发送心跳消息（支持自定义）
-func (c *client) sendHeartbeat() error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	if c.conn == nil {
-		return errors.New("connection is nil")
-	}
-
-	// 设置写入超时
-	if err := c.conn.SetWriteDeadline(time.Now().Add(c.heartbeatInterval)); err != nil {
-		return err
-	}
-
-	// 优先使用自定义心跳（传递客户端根ctx）
-	if c.onHeartbeat != nil {
-		data, err := c.onHeartbeat(c.ctx)
-		if err != nil {
-			return err
-		}
-		c.logger.WithContext(c.ctx).Debugf("Send custom heartbeat (size: %d bytes)", len(data))
-		return c.conn.WriteMessage(websocket.TextMessage, data)
-	}
-
-	// 默认Ping消息（标准协议）
-	c.logger.WithContext(c.ctx).Debug("Send default Ping heartbeat")
-	return c.conn.WriteMessage(websocket.PingMessage, nil)
-}
-
-// ------------------------------ Token刷新相关 ------------------------------
-// startTokenRefresh 启动Token刷新循环
 func (c *client) startTokenRefresh() {
-	if c.onRefreshToken == nil || c.tokenRefreshInterval <= 0 {
+	if c.opts.onTokenRefresh == nil || c.cfg.TokenRefreshInterval <= 0 {
 		return
 	}
-
-	c.mu.Lock()
-	c.tokenRefreshTicker = time.NewTicker(c.tokenRefreshInterval)
-	ticker := c.tokenRefreshTicker
-	c.mu.Unlock()
 
 	c.wg.Add(1)
 	go func() {
 		defer c.wg.Done()
-		c.logger.WithContext(c.ctx).Infof("Token refresh loop started (interval: %v)", c.tokenRefreshInterval)
+		c.logger.Infof("[wsx] token refresh loop started (interval: %v)", c.cfg.TokenRefreshInterval)
+
+		ticker := time.NewTicker(c.cfg.TokenRefreshInterval)
+		defer ticker.Stop()
 
 		for {
 			select {
-			case <-c.ctx.Done():
-				c.logger.WithContext(c.ctx).Info("Context canceled, stop token refresh")
+			case <-c.lifeCtx.Done():
+				c.logger.Info("[wsx] token refresh: context canceled")
 				return
-			case <-c.connClosed:
-				c.logger.WithContext(c.ctx).Info("Connection closed, stop token refresh")
+			case <-c.connCtx.Done():
+				c.logger.Info("[wsx] token refresh: connection closed")
 				return
 			case <-ticker.C:
-				if !c.IsAuthenticated() {
+				if !c.authenticated.load() {
 					return
 				}
-				// 执行刷新
-				if err := c.doRefreshToken(); err != nil {
-					c.logger.WithContext(c.ctx).Errorf("Token refresh loop failed: %v", err)
+
+				ctx, cancel := context.WithTimeout(c.lifeCtx, 10*time.Second)
+				err := c.opts.onTokenRefresh(ctx)
+				cancel()
+
+				if err != nil {
+					c.logger.Errorf("[wsx] token refresh failed: %v", err)
+					if c.opts.reconnectOnTokenExpire {
+						c.cancelConn()
+					}
 					return
 				}
+				c.logger.Info("[wsx] token refreshed")
 			}
 		}
 	}()
 }
 
-// stopTokenRefresh 停止Token刷新
-func (c *client) stopTokenRefresh() {
+func (c *client) shouldReconnect() bool {
+	if !c.running.load() || c.lifeCtx.Err() != nil {
+		return false
+	}
+
 	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	if c.tokenRefreshTicker != nil {
-		c.tokenRefreshTicker.Stop()
-		c.tokenRefreshTicker = nil
-	}
-}
-
-// doRefreshToken 执行Token刷新（内部）
-func (c *client) doRefreshToken() error {
-	// 传递客户端根ctx，支持取消
-	success, err := c.onRefreshToken(c.ctx)
-	if success {
-		c.logger.WithContext(c.ctx).Info("Token refreshed successfully")
-		return nil
-	}
-	c.logger.WithContext(c.ctx).Errorf("Token refresh failed: %v", err)
-	// 刷新失败处理
-	if c.reconnectOnTokenExpire {
-		c.closeConnection()
-	}
-	return err
-}
-
-// RefreshToken 手动触发Token刷新（外部接口）
-func (c *client) RefreshToken() error {
-	if !c.IsAuthenticated() {
-		return errors.New("client not authenticated")
-	}
-	if c.onRefreshToken == nil {
-		return errors.New("token refresh handler not set")
-	}
-	return c.doRefreshToken()
-}
-
-// ------------------------------ 消息接收相关 ------------------------------
-// receiveLoop 消息接收循环
-func (c *client) receiveLoop() {
-	defer c.wg.Done()
-	c.logger.WithContext(c.ctx).Info("Receive loop started")
-
-	for c.IsConnected() {
-		// 设置读取超时（2倍心跳间隔，确保能检测静默断开）
-		if err := c.conn.SetReadDeadline(time.Now().Add(2 * c.heartbeatInterval)); err != nil {
-			c.logger.WithContext(c.ctx).Errorf("Set read deadline failed: %v", err)
-			break
-		}
-
-		// 读取消息
-		msgType, msgData, err := c.conn.ReadMessage()
-		if err != nil {
-			// 区分正常关闭和异常错误
-			if websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
-				c.logger.WithContext(c.ctx).Info("Server closed connection normally")
-			} else {
-				c.logger.WithContext(c.ctx).Errorf("Read message error: %v", err)
-			}
-			break
-		}
-
-		// 处理Ping/Pong（交给gorilla/websocket自动处理，这里仅日志）
-		if msgType == websocket.PingMessage || msgType == websocket.PongMessage {
-			c.logger.WithContext(c.ctx).Debugf("Received control message (type: %d)", msgType)
-			continue
-		}
-
-		threading.GoSafe(func() {
-			// 处理业务消息（传递客户端根ctx）
-			c.logger.WithContext(c.ctx).Debugf("Received message (size: %d bytes, type: %d)", len(msgData), msgType)
-			startTime := timex.Now()
-			if err := c.onMessage(c.ctx, msgData); err != nil {
-				c.logger.WithContext(c.ctx).Errorf("Handle message error: %v", err)
-				c.metrics.AddDrop()
-			}
-			c.metrics.Add(stat.Task{
-				Duration: timex.Since(startTime),
-			})
-		})
-	}
-
-	c.logger.WithContext(c.ctx).Info("Receive loop exiting")
-	c.closeConnection()
-}
-
-// ------------------------------ 关闭相关 ------------------------------
-// Close 关闭客户端（安全清理）
-func (c *client) Close() error {
-	c.mu.Lock()
-	if !c.isRunning() {
-		c.mu.Unlock()
-		return nil
-	}
-
-	// 1. 标记停止状态
-	atomic.StoreInt32(&c.running, 0)
-	atomic.StoreInt32(&c.authenticated, 0)
-	c.logger.WithContext(c.ctx).Info("Starting to close WebSocket client")
-
-	// 2. 取消上下文（触发所有goroutine退出）
-	c.cancel()
-
-	// 3. 关闭当前连接
-	var closeErr error
-	if c.conn != nil {
-		closeMsg := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "client shutdown")
-		closeErr = c.conn.WriteMessage(websocket.CloseMessage, closeMsg)
-		_ = c.conn.Close()
-		c.conn = nil
-	}
-
-	// 4. 停止定时器
-	c.stopTokenRefresh()
-
-	// 5. 通知连接关闭
-	safeClose(c.connClosed)
-
+	idx := c.reconnectIdx
+	c.reconnectIdx++
 	c.mu.Unlock()
 
-	// 6. 等待所有goroutine退出
-	c.wg.Wait()
-
-	// 7. 最终状态通知
-	c.logger.WithContext(c.ctx).Info("WebSocket client closed completely")
-	c.onStatusChange(c.ctx, StatusDisconnected, closeErr) // 带ctx的状态通知
-	return closeErr
-}
-
-// ------------------------------ 状态查询相关 ------------------------------
-// IsConnected 检查是否已连接（含物理连接，不含认证）
-func (c *client) IsConnected() bool {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	return c.conn != nil && c.isRunning()
-}
-
-// IsAuthenticated 检查是否已认证就绪
-func (c *client) IsAuthenticated() bool {
-	return atomic.LoadInt32(&c.authenticated) == 1 && c.IsConnected()
-}
-
-// isRunning 检查客户端是否运行中（原子读取）
-func (c *client) isRunning() bool {
-	return atomic.LoadInt32(&c.running) == 1
-}
-
-// ------------------------------ 工具函数 ------------------------------
-// safeClose 安全关闭通道（避免重复关闭）
-func safeClose(ch chan struct{}) {
-	select {
-	case <-ch:
-	default:
-		close(ch)
+	if c.cfg.MaxReconnectRetries > 0 && idx >= c.cfg.MaxReconnectRetries {
+		c.logger.Errorf("[wsx] reached max reconnect retries (%d)", c.cfg.MaxReconnectRetries)
+		c.opts.onStateChange(c.lifeCtx, StateDisconnected, ErrMaxReconnect)
+		return false
 	}
+
+	c.opts.onStateChange(c.lifeCtx, StateReconnecting, nil)
+	return true
+}
+
+func (c *client) waitBeforeReconnect() {
+	c.mu.Lock()
+	idx := c.reconnectIdx
+	c.mu.Unlock()
+
+	delay := backoffDelay(idx, c.cfg.MinReconnectDelay, c.cfg.MaxReconnectDelay)
+	c.logger.Infof("[wsx] reconnect attempt %d, waiting %v", idx+1, delay)
+
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+
+	select {
+	case <-c.lifeCtx.Done():
+		c.logger.Info("[wsx] context canceled during reconnect wait")
+		if !timer.Stop() {
+			<-timer.C
+		}
+	case <-timer.C:
+	}
+}
+
+func backoffDelay(attempt int, min, max time.Duration) time.Duration {
+	base := min
+	for i := 0; i < attempt; i++ {
+		base *= 2
+		if base > max {
+			base = max
+			break
+		}
+	}
+	if base <= 0 {
+		return 0
+	}
+	return time.Duration(rand.Int64N(int64(base)))
 }

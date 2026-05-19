@@ -4,14 +4,14 @@ import (
 	"context"
 	"time"
 	"zero-service/common/asynqx"
-	"zero-service/common/msgbody"
 	"zero-service/zerorpc/internal/svc"
+	"zero-service/zerorpc/internal/taskpayload"
 	"zero-service/zerorpc/zerorpc"
 
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/jsonx"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
+	"zero-service/common/trace"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -35,8 +35,8 @@ func (l *SendDelayTaskLogic) SendDelayTask(in *zerorpc.SendDelayTaskReq) (*zeror
 	spanCtx, span := svc.StartAsynqProducerSpan(l.ctx, asynqx.DeferDelayTask)
 	defer span.End()
 	carrier := &propagation.HeaderCarrier{}
-	otel.GetTextMapPropagator().Inject(spanCtx, carrier)
-	msg := &msgbody.MsgBody{
+	trace.Inject(spanCtx, carrier)
+	msg := &taskpayload.HttpPayload{
 		MsgId:   in.MsgId,
 		Carrier: carrier,
 		Msg:     in.Body,

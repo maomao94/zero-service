@@ -4,15 +4,15 @@ import (
 	"context"
 	"regexp"
 	"zero-service/app/trigger/internal/svc"
+	"zero-service/app/trigger/internal/taskpayload"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/asynqx"
-	"zero-service/common/msgbody"
 
 	"github.com/hibiken/asynq"
 	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/trace"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
+	tracex "zero-service/common/trace"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -39,14 +39,14 @@ func (l *SendProtoTriggerLogic) SendProtoTrigger(in *trigger.SendProtoTriggerReq
 	defer span.End()
 
 	carrier := &propagation.HeaderCarrier{}
-	otel.GetTextMapPropagator().Inject(spanCtx, carrier)
+	tracex.Inject(spanCtx, carrier)
 
 	match := GrpcServerRegexp.MatchString(in.GrpcServer)
 	if !match {
 		return nil, errors.New("grpcServer is invalid")
 	}
 
-	msg := &msgbody.ProtoMsgBody{
+	msg := &taskpayload.GrpcPayload{
 		MsgId:          in.MsgId,
 		Carrier:        carrier,
 		GrpcServer:     in.GrpcServer,

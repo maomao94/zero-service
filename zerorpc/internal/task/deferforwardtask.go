@@ -8,14 +8,14 @@ import (
 	"net/http"
 	"time"
 	"zero-service/app/alarm/alarm"
-	"zero-service/common/msgbody"
 	"zero-service/zerorpc/internal/svc"
+	"zero-service/zerorpc/internal/taskpayload"
 
 	"github.com/dromara/carbon/v2"
 	"github.com/hibiken/asynq"
 	"github.com/zeromicro/go-zero/core/netx"
 	"github.com/zeromicro/go-zero/core/trace"
-	"go.opentelemetry.io/otel"
+	tracex "zero-service/common/trace"
 )
 
 type DeferForwardTaskHandler struct {
@@ -29,11 +29,11 @@ func NewDeferForwardTask(svcCtx *svc.ServiceContext) *DeferForwardTaskHandler {
 }
 
 func (l *DeferForwardTaskHandler) ProcessTask(ctx context.Context, t *asynq.Task) error {
-	var msg msgbody.MsgBody
+	var msg taskpayload.HttpPayload
 	if err := json.Unmarshal([]byte(t.Payload()), &msg); err != nil {
 		return err
 	} else {
-		ctx = otel.GetTextMapPropagator().Extract(ctx, msg.Carrier)
+		ctx = tracex.Extract(ctx, msg.Carrier)
 		traceID := trace.TraceIDFromContext(ctx)
 		ctx, span := svc.StartAsynqConsumerSpan(ctx, t.Type())
 		defer span.End()

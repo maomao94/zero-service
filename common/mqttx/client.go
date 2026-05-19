@@ -18,6 +18,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	oteltrace "go.opentelemetry.io/otel/trace"
+	tracex "zero-service/common/trace"
 )
 
 // OpenTelemetry 属性 key
@@ -317,8 +318,7 @@ func (c *Client) tryUnwrapPayload(data []byte) (*Message, error) {
 
 // extractTraceContext 从消息中提取链路追踪上下文
 func (c *Client) extractTraceContext(ctx context.Context, msg *Message) context.Context {
-	carrier := NewMessageCarrier(msg)
-	return otel.GetTextMapPropagator().Extract(ctx, carrier)
+	return tracex.Extract(ctx, tracex.NewCarrier(msg.Headers))
 }
 
 // startSpan 启动追踪 span

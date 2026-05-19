@@ -4,9 +4,7 @@ import (
 	"context"
 
 	"zero-service/common/ctxdata"
-
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/propagation"
+	"zero-service/common/trace"
 )
 
 // CollectFromCtx 从 context values 中提取所有 PropFields，收集为 map。
@@ -46,32 +44,5 @@ func ExtractTraceFromMeta(ctx context.Context, meta map[string]any) context.Cont
 	if len(meta) == 0 {
 		return ctx
 	}
-	carrier := &mapMetaCarrier{meta: meta}
-	return otel.GetTextMapPropagator().Extract(ctx, carrier)
+	return trace.Extract(ctx, trace.NewAnyCarrier(meta))
 }
-
-// mapMetaCarrier _meta map 的 TextMapCarrier 实现
-type mapMetaCarrier struct {
-	meta map[string]any
-}
-
-func (c *mapMetaCarrier) Get(key string) string {
-	if v, ok := c.meta[key].(string); ok {
-		return v
-	}
-	return ""
-}
-
-func (c *mapMetaCarrier) Set(key string, value string) {
-	c.meta[key] = value
-}
-
-func (c *mapMetaCarrier) Keys() []string {
-	keys := make([]string, 0, len(c.meta))
-	for k := range c.meta {
-		keys = append(keys, k)
-	}
-	return keys
-}
-
-var _ propagation.TextMapCarrier = (*mapMetaCarrier)(nil)

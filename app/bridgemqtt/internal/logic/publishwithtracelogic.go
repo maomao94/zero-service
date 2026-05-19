@@ -10,7 +10,7 @@ import (
 	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/trace"
-	"go.opentelemetry.io/otel"
+	tracex "zero-service/common/trace"
 )
 
 type PublishWithTraceLogic struct {
@@ -31,8 +31,7 @@ func NewPublishWithTraceLogic(ctx context.Context, svcCtx *svc.ServiceContext) *
 func (l *PublishWithTraceLogic) PublishWithTrace(in *bridgemqtt.PublishWithTraceReq) (*bridgemqtt.PublishWithTraceRes, error) {
 	traceID := trace.TraceIDFromContext(l.ctx)
 	msg := mqttx.NewMessage(in.Topic, in.Payload)
-	carrier := mqttx.NewMessageCarrier(msg)
-	otel.GetTextMapPropagator().Inject(l.ctx, carrier)
+	tracex.Inject(l.ctx, tracex.NewCarrier(msg.Headers))
 	payload, err := jsonx.Marshal(msg)
 	if err != nil {
 		return nil, err

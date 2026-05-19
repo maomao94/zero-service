@@ -18,8 +18,7 @@ import (
 	"github.com/zeromicro/go-zero/core/stat"
 	"github.com/zeromicro/go-zero/core/threading"
 	"github.com/zeromicro/go-zero/core/timex"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/propagation"
+	"zero-service/common/trace"
 )
 
 // Client MCP 客户端，专注于连接管理和 MCP 协议完整支持
@@ -788,7 +787,7 @@ func (conn *Connection) callTool(ctx context.Context, name string, args map[stri
 
 	// 从 ctx 收集用户上下文，注入 trace 到 _meta
 	meta := ctxprop.CollectFromCtx(ctx)
-	otel.GetTextMapPropagator().Inject(ctx, NewMapMetaCarrier(meta))
+	trace.Inject(ctx, trace.NewAnyCarrier(meta))
 	params.SetMeta(meta)
 	result, err := session.CallTool(ctx, params)
 	if err != nil {
@@ -825,7 +824,7 @@ func (conn *Connection) callToolWithProgress(ctx context.Context, req *CallToolW
 	}
 
 	meta := ctxprop.CollectFromCtx(ctx)
-	otel.GetTextMapPropagator().Inject(ctx, NewMapMetaCarrier(meta))
+	trace.Inject(ctx, trace.NewAnyCarrier(meta))
 	params.SetMeta(meta)
 	if req.OnProgress != nil && progressSR != nil {
 		params.SetProgressToken(token)
@@ -1189,40 +1188,6 @@ func stripServerPrefix(name string) string {
 type ctxHeaderTransport struct {
 	base         http.RoundTripper
 	serviceToken string
-}
-
-var _ propagation.TextMapCarrier = (*MapMetaCarrier)(nil)
-
-// MapMetaCarrier MCP _meta 的 TextMapCarrier 实现，用于 OTel 链路注入
-type MapMetaCarrier struct {
-	meta map[string]any
-}
-
-// NewMapMetaCarrier 创建 MapMetaCarrier
-func NewMapMetaCarrier(meta map[string]any) MapMetaCarrier {
-	return MapMetaCarrier{meta: meta}
-}
-
-// Get 获取值
-func (c MapMetaCarrier) Get(key string) string {
-	if v, ok := c.meta[key].(string); ok {
-		return v
-	}
-	return ""
-}
-
-// Set 设置值
-func (c MapMetaCarrier) Set(key string, value string) {
-	c.meta[key] = value
-}
-
-// Keys 返回所有键
-func (c MapMetaCarrier) Keys() []string {
-	keys := make([]string, 0, len(c.meta))
-	for k := range c.meta {
-		keys = append(keys, k)
-	}
-	return keys
 }
 
 // RoundTrip 实现 http.RoundTripper 接口，在请求中注入服务 Token

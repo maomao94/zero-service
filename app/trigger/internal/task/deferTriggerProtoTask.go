@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 	"zero-service/app/trigger/internal/svc"
+	"zero-service/app/trigger/internal/taskpayload"
 	interceptor "zero-service/common/Interceptor/rpcclient"
 	"zero-service/common/asynqx"
-	"zero-service/common/msgbody"
 	"zero-service/common/tool"
 
 	"github.com/hibiken/asynq"
@@ -18,8 +18,8 @@ import (
 	"github.com/zeromicro/go-zero/core/stat"
 	"github.com/zeromicro/go-zero/core/timex"
 	"github.com/zeromicro/go-zero/zrpc"
-	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
+	"zero-service/common/trace"
 )
 
 type DeferTriggerProtoTaskHandler struct {
@@ -39,11 +39,11 @@ func (l *DeferTriggerProtoTaskHandler) ProcessTask(ctx context.Context, t *asynq
 	defer l.metrics.Add(stat.Task{
 		Duration: timex.Since(startTime),
 	})
-	var msg msgbody.ProtoMsgBody
+	var msg taskpayload.GrpcPayload
 	if err := json.Unmarshal([]byte(t.Payload()), &msg); err != nil {
 		return err
 	} else {
-		ctx = otel.GetTextMapPropagator().Extract(ctx, msg.Carrier)
+		ctx = trace.Extract(ctx, msg.Carrier)
 		ctx, span := asynqx.StartAsynqConsumerSpan(ctx, t.Type())
 		defer span.End()
 		grpcServer := tool.MayReplaceLocalhost(msg.GrpcServer)
