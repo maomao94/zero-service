@@ -136,6 +136,49 @@ func TestRunnerRAGErrorStopsBeforeModel(t *testing.T) {
 	}
 }
 
+func TestRunnerStreamRAGErrorStopsBeforeModel(t *testing.T) {
+	want := errors.New("retriever unavailable")
+	calls := &ModelCalls{}
+	runner, err := NewRunner(StaticChatModel{Chunks: []string{"unused"}, Calls: calls})
+	if err != nil {
+		t.Fatalf("NewRunner() error = %v", err)
+	}
+
+	events, err := runner.Stream(context.Background(), Request{
+		SessionID: "session-test-001",
+		Input:     "What is Eino?",
+		RAG:       RAGRequest{Retriever: StaticRetriever{Err: want}},
+	})
+	if !errors.Is(err, want) {
+		t.Fatalf("Stream() error = %v, want %v", err, want)
+	}
+	assertEventTypes(t, events, protocol.EventTurnStart, protocol.EventError, protocol.EventTurnEnd)
+	if len(calls.StreamInput) != 0 {
+		t.Fatalf("model was called after RAG error: %#v", calls.StreamInput)
+	}
+}
+
+func TestRunnerEmptyRAGResultKeepsSystemPromptUnchanged(t *testing.T) {
+	calls := &ModelCalls{}
+	runner, err := NewRunner(StaticChatModel{Response: "answer", Calls: calls})
+	if err != nil {
+		t.Fatalf("NewRunner() error = %v", err)
+	}
+
+	_, err = runner.Generate(context.Background(), Request{
+		SessionID: "session-test-001",
+		System:    "base system",
+		Input:     "What is Eino?",
+		RAG:       RAGRequest{Retriever: StaticRetriever{}},
+	})
+	if err != nil {
+		t.Fatalf("Generate() error = %v", err)
+	}
+	if len(calls.GenerateInput) == 0 || calls.GenerateInput[0].Content != "base system" {
+		t.Fatalf("model system prompt = %#v, want unchanged base system", calls.GenerateInput)
+	}
+}
+
 func TestRunnerGenerateUsesDefaultRAGRetriever(t *testing.T) {
 	calls := &ModelCalls{}
 	retriever := &capturingRetriever{docs: []*schema.Document{{ID: "doc-default", Content: "default runtime context"}}}

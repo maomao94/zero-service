@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/zeromicro/go-zero/core/logx"
 
@@ -25,7 +26,8 @@ func NewListSessionsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *List
 }
 
 func (l *ListSessionsLogic) ListSessions(in *aisolo.ListSessionsReq) (*aisolo.ListSessionsResp, error) {
-	if in.GetUserId() == "" {
+	userID := strings.TrimSpace(in.GetUserId())
+	if userID == "" {
 		return nil, errors.New("user_id is required")
 	}
 	page := int(in.Page)
@@ -36,7 +38,7 @@ func (l *ListSessionsLogic) ListSessions(in *aisolo.ListSessionsReq) (*aisolo.Li
 	if size <= 0 {
 		size = 20
 	}
-	sessions, total, err := l.svcCtx.Sessions.ListSessions(l.ctx, in.UserId, page, size)
+	sessions, total, err := l.svcCtx.Sessions.ListSessions(l.ctx, userID, page, size)
 	if err != nil {
 		return nil, err
 	}

@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/zeromicro/go-zero/core/logx"
 
@@ -25,10 +26,12 @@ func NewGetSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetSes
 }
 
 func (l *GetSessionLogic) GetSession(in *aisolo.GetSessionReq) (*aisolo.GetSessionResp, error) {
-	if in.GetUserId() == "" || in.GetSessionId() == "" {
+	userID := strings.TrimSpace(in.GetUserId())
+	sessionID := strings.TrimSpace(in.GetSessionId())
+	if userID == "" || sessionID == "" {
 		return nil, errors.New("user_id and session_id are required")
 	}
-	sess, err := l.svcCtx.Sessions.GetSession(l.ctx, in.UserId, in.SessionId)
+	sess, err := l.svcCtx.Sessions.GetSession(l.ctx, userID, sessionID)
 	if err != nil {
 		return nil, err
 	}

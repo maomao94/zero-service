@@ -42,6 +42,8 @@ func TestCreateSessionTrimsUserTitleAndKnowledgeFields(t *testing.T) {
 func TestGetSessionRequiresUserAndSessionID(t *testing.T) {
 	_, err := NewGetSessionLogic(context.Background(), &svc.ServiceContext{}).GetSession(&aisolo.GetSessionReq{})
 	assertRequiredIDError(t, err, "user_id and session_id are required")
+	_, err = NewGetSessionLogic(context.Background(), &svc.ServiceContext{}).GetSession(&aisolo.GetSessionReq{UserId: " user-1 ", SessionId: " \t"})
+	assertRequiredIDError(t, err, "user_id and session_id are required")
 }
 
 func TestBindKnowledgeBaseRequiresRequestUserSessionAndKnowledge(t *testing.T) {
@@ -105,6 +107,8 @@ func TestGetInterruptTrimsIDAndUserCheck(t *testing.T) {
 func TestListMessagesRequiresUserAndSessionID(t *testing.T) {
 	_, err := NewListMessagesLogic(context.Background(), &svc.ServiceContext{}).ListMessages(&aisolo.ListMessagesReq{})
 	assertRequiredIDError(t, err, "user_id and session_id are required")
+	_, err = NewListMessagesLogic(context.Background(), &svc.ServiceContext{}).ListMessages(&aisolo.ListMessagesReq{UserId: " user-1 ", SessionId: " \t"})
+	assertRequiredIDError(t, err, "user_id and session_id are required")
 }
 
 func TestListMessagesLimitBoundaries(t *testing.T) {
@@ -158,10 +162,17 @@ func TestListMessagesLimitBoundaries(t *testing.T) {
 func TestListSessionsRequiresUserID(t *testing.T) {
 	_, err := NewListSessionsLogic(context.Background(), &svc.ServiceContext{}).ListSessions(&aisolo.ListSessionsReq{})
 	assertRequiredIDError(t, err, "user_id is required")
+	_, err = NewListSessionsLogic(context.Background(), &svc.ServiceContext{}).ListSessions(&aisolo.ListSessionsReq{UserId: " \t"})
+	assertRequiredIDError(t, err, "user_id is required")
 }
 
 func TestDeleteSessionRequiresUserAndSessionID(t *testing.T) {
 	resp, err := NewDeleteSessionLogic(context.Background(), &svc.ServiceContext{}).DeleteSession(&aisolo.DeleteSessionReq{})
+	assertRequiredIDError(t, err, "user_id and session_id are required")
+	if resp == nil || resp.Success {
+		t.Fatalf("DeleteSession() resp = %#v, want unsuccessful response", resp)
+	}
+	resp, err = NewDeleteSessionLogic(context.Background(), &svc.ServiceContext{}).DeleteSession(&aisolo.DeleteSessionReq{UserId: " user-1 ", SessionId: " \t"})
 	assertRequiredIDError(t, err, "user_id and session_id are required")
 	if resp == nil || resp.Success {
 		t.Fatalf("DeleteSession() resp = %#v, want unsuccessful response", resp)

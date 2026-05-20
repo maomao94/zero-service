@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/zeromicro/go-zero/core/logx"
 
@@ -25,14 +26,16 @@ func NewListMessagesLogic(ctx context.Context, svcCtx *svc.ServiceContext) *List
 }
 
 func (l *ListMessagesLogic) ListMessages(in *aisolo.ListMessagesReq) (*aisolo.ListMessagesResp, error) {
-	if in.GetUserId() == "" || in.GetSessionId() == "" {
+	userID := strings.TrimSpace(in.GetUserId())
+	sessionID := strings.TrimSpace(in.GetSessionId())
+	if userID == "" || sessionID == "" {
 		return nil, errors.New("user_id and session_id are required")
 	}
 	if l.svcCtx.Messages == nil {
 		return &aisolo.ListMessagesResp{}, nil
 	}
 	limit := int(in.Limit)
-	msgs, err := l.svcCtx.Messages.GetMessages(l.ctx, in.UserId, in.SessionId, limit)
+	msgs, err := l.svcCtx.Messages.GetMessages(l.ctx, userID, sessionID, limit)
 	if err != nil {
 		return nil, err
 	}

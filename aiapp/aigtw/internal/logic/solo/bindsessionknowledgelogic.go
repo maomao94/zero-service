@@ -28,6 +28,9 @@ func (l *BindSessionKnowledgeLogic) BindSessionKnowledge(req *types.SoloBindKnow
 	if uid == "" {
 		return nil, errors.New("missing user id")
 	}
+	if req == nil {
+		return nil, errors.New("bind session knowledge request is required")
+	}
 	sessionID := strings.TrimSpace(req.SessionId)
 	if sessionID == "" {
 		return nil, errors.New("sessionId is required")

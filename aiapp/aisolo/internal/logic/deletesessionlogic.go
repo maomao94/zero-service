@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/zeromicro/go-zero/core/logx"
 
@@ -25,10 +26,12 @@ func NewDeleteSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Del
 }
 
 func (l *DeleteSessionLogic) DeleteSession(in *aisolo.DeleteSessionReq) (*aisolo.DeleteSessionResp, error) {
-	if in.GetUserId() == "" || in.GetSessionId() == "" {
+	userID := strings.TrimSpace(in.GetUserId())
+	sessionID := strings.TrimSpace(in.GetSessionId())
+	if userID == "" || sessionID == "" {
 		return &aisolo.DeleteSessionResp{Success: false}, errors.New("user_id and session_id are required")
 	}
-	sess, err := l.svcCtx.Sessions.GetSession(l.ctx, in.UserId, in.SessionId)
+	sess, err := l.svcCtx.Sessions.GetSession(l.ctx, userID, sessionID)
 	if err != nil {
 		return &aisolo.DeleteSessionResp{Success: false}, err
 	}
@@ -36,11 +39,11 @@ func (l *DeleteSessionLogic) DeleteSession(in *aisolo.DeleteSessionReq) (*aisolo
 		return &aisolo.DeleteSessionResp{Success: false}, errors.New("cannot delete running session")
 	}
 	if l.svcCtx.Messages != nil {
-		if err := l.svcCtx.Messages.DeleteSession(l.ctx, in.UserId, in.SessionId); err != nil {
+		if err := l.svcCtx.Messages.DeleteSession(l.ctx, userID, sessionID); err != nil {
 			return &aisolo.DeleteSessionResp{Success: false}, err
 		}
 	}
-	if err := l.svcCtx.Sessions.DeleteSession(l.ctx, in.UserId, in.SessionId); err != nil {
+	if err := l.svcCtx.Sessions.DeleteSession(l.ctx, userID, sessionID); err != nil {
 		return &aisolo.DeleteSessionResp{Success: false}, err
 	}
 	return &aisolo.DeleteSessionResp{Success: true}, nil

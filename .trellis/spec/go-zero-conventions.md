@@ -31,6 +31,11 @@ go-zero 遵循 Handler/Server → Logic → Model/SDK 的分层：
 
 业务逻辑不要写在 Handler/Server 中；依赖不要绕过 `ServiceContext` 临时创建。
 
+### Logic 入口约定
+
+- gRPC Logic 的 `in` 参数由框架保证非 nil，入口无需空指针判断。
+- API Handler 的 `req` 参数同理，由 go-zero 框架校验后传入，入口无需 nil 检查。
+
 ## 代码生成
 
 项目使用各服务目录下的 `gen.sh` 封装 goctl/protoc 命令，通常直接执行：

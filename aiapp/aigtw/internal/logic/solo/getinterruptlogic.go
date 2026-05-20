@@ -34,6 +34,9 @@ func (l *GetInterruptLogic) GetInterrupt(req *types.SoloGetInterruptRequest) (*t
 	if userID == "" {
 		return nil, errors.New("missing user id in context")
 	}
+	if req == nil {
+		return nil, errors.New("get interrupt request is required")
+	}
 	interruptID := strings.TrimSpace(req.InterruptId)
 	if interruptID == "" {
 		return nil, errors.New("interruptId is required")

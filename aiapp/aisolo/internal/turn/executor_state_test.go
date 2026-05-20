@@ -192,6 +192,65 @@ func TestAskUsesRuntimeRunnerForDefaultAgentMode(t *testing.T) {
 	}
 }
 
+func TestAskRuntimePassesSystemAndLimitedPreviousHistory(t *testing.T) {
+	ctx := context.Background()
+	sessions := session.NewMemoryStore()
+	messages := memory.NewMemoryStorage()
+	sess := &session.Session{
+		ID:     "sess-runtime-history",
+		UserID: "user-1",
+		Mode:   aisolo.AgentMode_AGENT_MODE_AGENT,
+		Status: aisolo.SessionStatus_SESSION_STATUS_IDLE,
+	}
+	if err := sessions.CreateSession(ctx, sess); err != nil {
+		t.Fatalf("CreateSession() error = %v", err)
+	}
+	for _, msg := range []*memory.ConversationMessage{
+		{ID: "m-1", SessionID: sess.ID, UserID: sess.UserID, Role: string(schema.User), Content: "old q1", CreatedAt: time.Unix(1, 0)},
+		{ID: "m-2", SessionID: sess.ID, UserID: sess.UserID, Role: string(schema.Assistant), Content: "old a1", CreatedAt: time.Unix(2, 0)},
+		{ID: "m-3", SessionID: sess.ID, UserID: sess.UserID, Role: string(schema.User), Content: "old q2", CreatedAt: time.Unix(3, 0)},
+		{ID: "m-4", SessionID: sess.ID, UserID: sess.UserID, Role: string(schema.Assistant), Content: "old a2", CreatedAt: time.Unix(4, 0)},
+	} {
+		if err := messages.SaveMessage(ctx, msg); err != nil {
+			t.Fatalf("SaveMessage() error = %v", err)
+		}
+	}
+	modelCalls := &einoxruntime.ModelCalls{}
+	runner, err := einoxruntime.NewRunner(einoxruntime.StaticChatModel{Chunks: []string{"runtime ok"}, Calls: modelCalls})
+	if err != nil {
+		t.Fatalf("NewRunner() error = %v", err)
+	}
+	executor := New(Config{
+		Messages:                  messages,
+		Sessions:                  sessions,
+		RuntimeRunner:             runner,
+		RuntimeSystemPrompt:       "runtime system",
+		RuntimeMaxHistoryMessages: 2,
+		RunInstanceID:             "worker-1",
+		RunLeaseTTL:               time.Minute,
+		RunNullLeaseGrace:         time.Minute,
+	})
+
+	err = executor.Ask(ctx, protocol.NewEmitter(&discardEventWriter{}, sess.ID, "turn-runtime-history"), AskInput{
+		SessionID: sess.ID,
+		UserID:    sess.UserID,
+		Message:   "new question",
+	})
+	if err != nil {
+		t.Fatalf("Ask() error = %v", err)
+	}
+	got := modelCalls.StreamInput
+	if len(got) != 4 {
+		t.Fatalf("runtime model messages = %#v, want system + two history + current user", got)
+	}
+	if got[0].Role != schema.System || got[0].Content != "runtime system" {
+		t.Fatalf("system message = %#v, want runtime system", got[0])
+	}
+	if got[1].Content != "old q2" || got[2].Content != "old a2" || got[3].Content != "new question" {
+		t.Fatalf("runtime model messages = %#v, want limited previous history plus current input", got)
+	}
+}
+
 func TestAskRuntimeReturnsRestoreErrorWithRunError(t *testing.T) {
 	ctx := context.Background()
 	base := session.NewMemoryStore()
@@ -230,6 +289,53 @@ func TestAskRuntimeReturnsRestoreErrorWithRunError(t *testing.T) {
 	}
 	if !errors.Is(err, restoreErr) {
 		t.Fatalf("Ask() error = %v, want restore failure joined", err)
+	}
+}
+
+func TestResumeAlwaysUsesADKPoolEvenWhenRuntimeRunnerConfigured(t *testing.T) {
+	ctx := context.Background()
+	sessions := session.NewMemoryStore()
+	sess := &session.Session{
+		ID:          "sess-resume",
+		UserID:      "user-1",
+		Mode:        aisolo.AgentMode_AGENT_MODE_AGENT,
+		Status:      aisolo.SessionStatus_SESSION_STATUS_INTERRUPTED,
+		InterruptID: "interrupt-1",
+	}
+	if err := sessions.CreateSession(ctx, sess); err != nil {
+		t.Fatalf("CreateSession() error = %v", err)
+	}
+	if err := sessions.SaveInterrupt(ctx, &session.InterruptRecord{
+		InterruptID: "interrupt-1",
+		SessionID:   sess.ID,
+		UserID:      sess.UserID,
+		Kind:        aisolo.InterruptKind_INTERRUPT_KIND_APPROVAL,
+		CreatedAt:   time.Now(),
+	}); err != nil {
+		t.Fatalf("SaveInterrupt() error = %v", err)
+	}
+	runner, err := einoxruntime.NewRunner(einoxruntime.StaticChatModel{Response: "runtime should not run"})
+	if err != nil {
+		t.Fatalf("NewRunner() error = %v", err)
+	}
+	executor := New(Config{
+		Pool:              failingModePool{},
+		Messages:          memory.NewMemoryStorage(),
+		Sessions:          sessions,
+		RuntimeRunner:     runner,
+		RunInstanceID:     "worker-1",
+		RunLeaseTTL:       time.Minute,
+		RunNullLeaseGrace: time.Minute,
+	})
+
+	err = executor.Resume(ctx, protocol.NewEmitter(&discardEventWriter{}, sess.ID, "turn-resume"), ResumeInput{
+		SessionID:   sess.ID,
+		UserID:      sess.UserID,
+		InterruptID: sess.InterruptID,
+		Action:      aisolo.ResumeAction_RESUME_ACTION_YES,
+	})
+	if err == nil || !strings.Contains(err.Error(), "pool should not be used") {
+		t.Fatalf("Resume() error = %v, want ADK pool path failure", err)
 	}
 }
 

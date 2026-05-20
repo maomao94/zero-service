@@ -31,6 +31,9 @@ func (l *ListSessionsLogic) ListSessions(req *types.SoloListSessionsRequest) (*t
 	if userID == "" {
 		return nil, errors.New("missing user id in context")
 	}
+	if req == nil {
+		req = &types.SoloListSessionsRequest{}
+	}
 	resp, err := l.svcCtx.AiSoloCli.ListSessions(l.ctx, &aisolo.ListSessionsReq{
 		UserId:   userID,
 		Page:     int32(req.Page),

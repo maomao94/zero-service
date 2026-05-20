@@ -32,6 +32,9 @@ func (l *GetSessionLogic) GetSession(req *types.SoloGetSessionRequest) (*types.S
 	if userID == "" {
 		return nil, errors.New("missing user id in context")
 	}
+	if req == nil {
+		return nil, errors.New("get session request is required")
+	}
 	sessionID := strings.TrimSpace(req.SessionId)
 	if sessionID == "" {
 		return nil, errors.New("sessionId is required")

@@ -55,6 +55,20 @@ func TestToolRegistryRejectsDuplicateTool(t *testing.T) {
 	}
 }
 
+func TestToolRegistryRejectsNilTool(t *testing.T) {
+	_, err := NewToolRegistry(nil)
+	if err == nil || !strings.Contains(err.Error(), "nil tool") {
+		t.Fatalf("NewToolRegistry(nil) error = %v, want nil tool error", err)
+	}
+}
+
+func TestToolRegistryRejectsEmptyToolName(t *testing.T) {
+	_, err := NewToolRegistry(StaticTool{Desc: "missing name"})
+	if err == nil || !strings.Contains(err.Error(), "tool info name is empty") {
+		t.Fatalf("NewToolRegistry(empty name) error = %v, want empty name error", err)
+	}
+}
+
 func TestToolRegistryRunInvokableTool(t *testing.T) {
 	calls := &ToolCalls{}
 	registry, err := NewToolRegistry(StaticTool{Name: "echo", Desc: "Echo args", Result: "ok", Calls: calls})

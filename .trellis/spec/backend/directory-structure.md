@@ -16,45 +16,11 @@
 | `deploy/` | Docker Compose、部署编排和环境相关材料 |
 | `docs/`、`swagger/`、`third_party/`、`util/` | 项目文档、Swagger、第三方 proto 和工具集 |
 
-## go-zero 服务布局
+## 服务内部结构
 
-典型服务遵循以下结构：
+单个 go-zero 服务的目录布局、分层职责和新增代码落点见 [`go-zero-conventions.md`](../go-zero-conventions.md)。
 
-```text
-app/{service}/
-├── {service}.api / {service}.proto
-├── {service}.go
-├── gen.sh
-├── etc/
-│   └── {service}.yaml
-└── internal/
-    ├── config/
-    ├── logic/
-    ├── server/ 或 handler/
-    └── svc/
-```
-
-- `.api` 和 `.proto` 是接口契约源头。
-- `gen.sh` 负责生成 Handler、Server、Types、pb 和路由等框架代码。
-- `internal/logic/` 是业务编排主落点。
-- `internal/svc/ServiceContext` 负责依赖注入和资源装配。
-- `internal/config/` 保存配置结构，不硬编码端口、连接串、密钥或环境参数。
-
-## 分层职责
-
-- Handler/Server：解析请求、基础校验、调用 Logic、返回结果；不要写业务编排。
-- Logic：承载业务流程、调用 model/client/cache/SDK/common 工具，并保持上下文 `context.Context` 传递。
-- Model/SDK/Client：封装数据库、缓存、消息队列、MQTT、OSS、Docker、第三方 API 等外部资源访问。
-- `common/`：只放跨服务复用且边界清晰的能力；单服务有状态逻辑保留在该服务 `internal/`。
-
-## 新增能力落点
-
-1. 新接口或 RPC：先改目标服务的 `.api` / `.proto`。
-2. 业务逻辑：放入目标服务 `internal/logic/`。
-3. 依赖装配：放入 `internal/svc/` 和 `internal/config/`。
-4. 跨服务通用协议、SDK、工具：优先放到 `common/` 的既有子包；新增子包前先确认没有可扩展封装。
-5. 数据模型：放到 `model/` 或服务既有 model 位置，并使用项目已有生成脚本。
-6. 独立 SQL：放到项目约定 SQL 目录，文件名关联 Trellis 任务或需求号。
+核心规则：`.api` / `.proto` 是契约源头 → `gen.sh` 生成框架代码 → `internal/logic/` 写业务编排。
 
 ## 命名和风格
 
