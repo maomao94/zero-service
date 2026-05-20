@@ -92,9 +92,16 @@ func PipeEvents(em *Emitter, iter *adk.AsyncIterator[*adk.AgentEvent], opt PipeO
 
 		switch role {
 		case schema.Tool:
-			emitToolResult(em, mo, ev.AgentName)
+			if err := emitToolResult(em, mo, ev.AgentName); err != nil {
+				_ = em.EmitError("tool_stream_error", err.Error())
+				return res, err
+			}
 		default:
-			text := emitAssistantMessage(em, role, mo, ev.AgentName)
+			text, err := emitAssistantMessage(em, role, mo, ev.AgentName)
+			if err != nil {
+				_ = em.EmitError("assistant_stream_error", err.Error())
+				return res, err
+			}
 			if text != "" {
 				res.LastContent = text
 			}
@@ -110,19 +117,19 @@ func PipeEvents(em *Emitter, iter *adk.AsyncIterator[*adk.AgentEvent], opt PipeO
 // assistant 消息
 // =============================================================================
 
-func emitAssistantMessage(em *Emitter, role schema.RoleType, mo *adk.MessageVariant, agentName string) string {
+func emitAssistantMessage(em *Emitter, role schema.RoleType, mo *adk.MessageVariant, agentName string) (string, error) {
 	if mo.IsStreaming && mo.MessageStream != nil {
 		return emitAssistantStream(em, role, mo.MessageStream, agentName)
 	}
 	if mo.Message == nil {
-		return ""
+		return "", nil
 	}
-	return emitAssistantOneShot(em, role, mo.Message, agentName)
+	return emitAssistantOneShot(em, role, mo.Message, agentName), nil
 }
 
 // emitAssistantStream 把一条流式 assistant 消息拆成 message.start / delta... / end
 // + 若干 tool.call.start (工具调用在流末尾才有稳定的 args)。
-func emitAssistantStream(em *Emitter, role schema.RoleType, stream *schema.StreamReader[adk.Message], agentName string) string {
+func emitAssistantStream(em *Emitter, role schema.RoleType, stream *schema.StreamReader[adk.Message], agentName string) (string, error) {
 	defer stream.Close()
 
 	msgID := uuid.NewString()
@@ -142,7 +149,7 @@ func emitAssistantStream(em *Emitter, role schema.RoleType, stream *schema.Strea
 		}
 		if err != nil {
 			logx.Errorf("[protocol] assistant stream recv: %v", err)
-			break
+			return content.String(), fmt.Errorf("protocol: assistant stream recv: %w", err)
 		}
 
 		for _, tc := range chunk.ToolCalls {
@@ -208,7 +215,7 @@ func emitAssistantStream(em *Emitter, role schema.RoleType, stream *schema.Strea
 		})
 	}
 
-	return content.String()
+	return content.String(), nil
 }
 
 func emitAssistantOneShot(em *Emitter, role schema.RoleType, msg *schema.Message, agentName string) string {
@@ -270,7 +277,7 @@ func toolPayloadForEmit(content string) (result, errMsg string) {
 	return s, ""
 }
 
-func emitToolResult(em *Emitter, mo *adk.MessageVariant, agentName string) {
+func emitToolResult(em *Emitter, mo *adk.MessageVariant, agentName string) error {
 	var (
 		content strings.Builder
 		callID  string
@@ -287,7 +294,7 @@ func emitToolResult(em *Emitter, mo *adk.MessageVariant, agentName string) {
 			}
 			if err != nil {
 				logx.Errorf("[protocol] tool stream recv: %v", err)
-				break
+				return fmt.Errorf("protocol: tool stream recv: %w", err)
 			}
 			content.WriteString(chunk.Content)
 			if callID == "" {
@@ -312,6 +319,7 @@ func emitToolResult(em *Emitter, mo *adk.MessageVariant, agentName string) {
 		Error:     errStr,
 		AgentName: agentName,
 	})
+	return nil
 }
 
 // =============================================================================

@@ -2,6 +2,7 @@ package svc
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/cloudwego/eino/components/model"
@@ -22,6 +23,7 @@ import (
 	"zero-service/common/einox/tool"
 	"zero-service/common/einox/tool/builtin"
 	"zero-service/common/gormx"
+	"zero-service/common/mcpx"
 )
 
 // ServiceContext 服务上下文。
@@ -34,7 +36,7 @@ import (
 //	 ├── SessionStore    (会话元数据 + 中断记录)
 //	 ├── CheckPointStore (ADK Agent 中断 checkpoint)
 //	 ├── ChatModel
-//	 ├── RuntimeRunner  (Eino runtime SDK facade)
+//	 ├── RuntimeRunner  (lite Eino runtime SDK facade)
 //	 ├── RuntimeTools   (runtime SDK tool registry)
 //	 ├── ToolKit         (所有内置工具)
 //	 ├── ModeRegistry    (5 个 Blueprint)
@@ -60,6 +62,10 @@ type ServiceContext struct {
 	KnowledgeInitErr string
 	// KitInitErr 非空表示内置工具 Kit 初始化失败，供 Health RPC 摘要。
 	KitInitErr string
+	// MCPClient MCP 客户端，nil 表示未配置/未连接。
+	MCPClient *mcpx.Client
+	// MCPTools MCP 服务器暴露的工具包装为 Eino BaseTool 后的列表。
+	MCPTools []ctool.BaseTool
 }
 
 // NewServiceContext 构造并初始化。
@@ -75,6 +81,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	s.initCheckPoint()
 	s.initChatModel(ctx)
 	s.initKnowledge(ctx)
+	s.initMCP(ctx)
 	s.initKit()
 	s.initRuntimeTools(ctx)
 	s.initRuntimeRunner()
@@ -225,15 +232,47 @@ func (s *ServiceContext) initRuntimeRunner() {
 
 func (s *ServiceContext) initKnowledge(ctx context.Context) {
 	kb, err := einoxkb.NewService(s.Config.Knowledge, s.Config.Model.APIKey)
+	if errors.Is(err, einoxkb.ErrKnowledgeDisabled) {
+		logx.Info("[svc] knowledge disabled by config")
+		return
+	}
 	if err != nil {
 		logx.Errorf("[svc] knowledge: %v", err)
 		s.KnowledgeInitErr = truncateInitErr(err.Error())
 		return
 	}
 	s.Knowledge = kb
-	if kb != nil {
-		logx.Infof("[svc] knowledge ready backend=%s", s.Config.Knowledge.EffectiveBackend())
+	logx.Infof("[svc] knowledge ready backend=%s", s.Config.Knowledge.EffectiveBackend())
+	_ = ctx
+}
+
+func (s *ServiceContext) initMCP(ctx context.Context) {
+	if !s.Config.MCP.Enabled || s.Config.MCP.Endpoint == "" {
+		return
 	}
+	mcpCfg := mcpx.Config{
+		Servers: []mcpx.ServerConfig{
+			{
+				Name:          "aisolo-mcp",
+				Endpoint:      s.Config.MCP.Endpoint,
+				ServiceToken:  s.Config.MCP.ServiceToken,
+				UseStreamable: false,
+			},
+		},
+		RefreshInterval: s.Config.MCP.EffectiveRefreshInterval(),
+		ConnectTimeout:  s.Config.MCP.EffectiveConnectTimeout(),
+	}
+	s.MCPClient = mcpx.NewClient(mcpCfg)
+	mcpTools := s.MCPClient.Tools()
+	if len(mcpTools) == 0 {
+		logx.Info("[svc] MCP client connected but no tools discovered")
+		return
+	}
+	for _, t := range mcpTools {
+		wrapper := tool.NewMCPTool(s.MCPClient, t.Name, t.Description)
+		s.MCPTools = append(s.MCPTools, wrapper)
+	}
+	logx.Infof("[svc] MCP client ready: endpoint=%s tools=%d", s.Config.MCP.Endpoint, len(s.MCPTools))
 	_ = ctx
 }
 
@@ -311,14 +350,15 @@ func (s *ServiceContext) initModes(ctx context.Context) {
 			}
 		}
 	}
-	var kbTools []ctool.BaseTool
+	var extraTools []ctool.BaseTool
 	if s.Knowledge != nil {
 		if kt, err := einoxkb.NewSearchTool(s.Knowledge); err != nil {
 			logx.Errorf("[svc] knowledge search tool: %v", err)
 		} else if kt != nil {
-			kbTools = []ctool.BaseTool{kt}
+			extraTools = append(extraTools, kt)
 		}
 	}
+	extraTools = append(extraTools, s.MCPTools...)
 
 	s.Pool = modes.NewPool(s.Registry, modes.Dependencies{
 		ChatModel:                 s.ChatModel,
@@ -328,15 +368,15 @@ func (s *ServiceContext) initModes(ctx context.Context) {
 		DeepEnableLocalFilesystem: s.Config.Agent.DeepLocalFilesystemEnabled(),
 		DeepFSConfig:              deepFS,
 		PlanMaxIterations:         s.Config.Agent.EffectivePlanMaxIterations(),
-		KnowledgeTools:            kbTools,
+		KnowledgeTools:            extraTools,
 	})
 	_ = ctx
 	logx.Infof("[svc] mode registry + pool ready: %d modes", len(s.Registry.List()))
 }
 
 func (s *ServiceContext) initExecutor() {
-	if s.Pool == nil && s.RuntimeRunner == nil {
-		logx.Info("[svc] pool and runtime runner nil, skip executor")
+	if s.Pool == nil {
+		logx.Info("[svc] mode pool nil, skip executor")
 		return
 	}
 	instanceID := s.Config.EffectiveRunInstanceID()
@@ -373,6 +413,9 @@ func (s *ServiceContext) Close() error {
 	}
 	if s.Knowledge != nil {
 		_ = s.Knowledge.Close()
+	}
+	if s.MCPClient != nil {
+		s.MCPClient.Close()
 	}
 	if s.DB != nil && s.DB.DB != nil {
 		if sqlDB, err := s.DB.DB.DB(); err == nil {

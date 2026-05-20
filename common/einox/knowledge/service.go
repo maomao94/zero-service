@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -16,6 +17,10 @@ import (
 	"zero-service/common/einox/metrics"
 )
 
+// ErrKnowledgeDisabled 表示知识库被显式关闭（Config.Enabled == false），
+// 调用方应将此视为 "disabled" 而非 "misconfigured"。
+var ErrKnowledgeDisabled = errors.New("knowledge: disabled")
+
 // Service 知识库：创建库、入库、检索。
 type Service struct {
 	cfg   Config
@@ -26,10 +31,10 @@ type Service struct {
 	embedDim   int // 进程内首次成功 embedding 的维数，用于与后续请求对齐
 }
 
-// NewService 构造服务；未启用时返回 (nil, nil)。
+// NewService 构造服务；未启用时返回 ErrKnowledgeDisabled。
 func NewService(cfg Config, fallbackAPIKey string) (*Service, error) {
 	if !cfg.Enabled {
-		return nil, nil
+		return nil, ErrKnowledgeDisabled
 	}
 	key := strings.TrimSpace(cfg.Embedding.APIKey)
 	if key == "" {
@@ -161,7 +166,7 @@ func (s *Service) IngestDocument(ctx context.Context, userID, baseID, filename, 
 	if fn == "" {
 		fn = "document.txt"
 	}
-	docs := SplitIntoDocuments(content, s.cfg.EffectiveMaxChunkRunes())
+	docs := SplitIntoDocumentsWithOverlap(content, s.cfg.EffectiveMaxChunkRunes(), s.cfg.EffectiveChunkOverlapRunes())
 	if len(docs) == 0 {
 		return nil, fmt.Errorf("knowledge: empty document after split")
 	}

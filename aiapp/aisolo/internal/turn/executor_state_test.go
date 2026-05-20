@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cloudwego/eino/adk"
+	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
 
 	"zero-service/aiapp/aisolo/aisolo"
@@ -127,7 +129,7 @@ func TestMarkSessionRunningReturnsUpdateError(t *testing.T) {
 	}
 }
 
-func TestAskUsesRuntimeRunnerForDefaultAgentMode(t *testing.T) {
+func TestAskUsesADKPoolForDefaultAgentModeWhenRuntimeRunnerConfigured(t *testing.T) {
 	ctx := context.Background()
 	sessions := session.NewMemoryStore()
 	messages := memory.NewMemoryStorage()
@@ -140,13 +142,19 @@ func TestAskUsesRuntimeRunnerForDefaultAgentMode(t *testing.T) {
 	if err := sessions.CreateSession(ctx, sess); err != nil {
 		t.Fatalf("CreateSession() error = %v", err)
 	}
-	runner, err := einoxruntime.NewRunner(einoxruntime.StaticChatModel{Chunks: []string{"hello ", "runtime"}})
+	agent, err := einoxagent.NewChatModelAgent(ctx, einoxruntime.StaticChatModel{Chunks: []string{"hello ", "adk"}})
+	if err != nil {
+		t.Fatalf("NewChatModelAgent() error = %v", err)
+	}
+	runtimeErr := fmt.Errorf("runtime should not run")
+	runner, err := einoxruntime.NewRunner(einoxruntime.StaticChatModel{Err: runtimeErr})
 	if err != nil {
 		t.Fatalf("NewRunner() error = %v", err)
 	}
+	pool := &singleAgentPool{agent: agent}
 	writer := &collectingEventWriter{}
 	executor := New(Config{
-		Pool:                failingModePool{},
+		Pool:                pool,
 		Messages:            messages,
 		Sessions:            sessions,
 		RuntimeRunner:       runner,
@@ -164,6 +172,9 @@ func TestAskUsesRuntimeRunnerForDefaultAgentMode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Ask() error = %v", err)
 	}
+	if pool.calls != 1 || len(pool.modes) != 1 || pool.modes[0] != aisolo.AgentMode_AGENT_MODE_AGENT {
+		t.Fatalf("pool calls = %d modes = %#v, want one AGENT call", pool.calls, pool.modes)
+	}
 	assertEventTypes(t, writer.events,
 		protocol.EventTurnStart,
 		protocol.EventMessageStart,
@@ -173,26 +184,26 @@ func TestAskUsesRuntimeRunnerForDefaultAgentMode(t *testing.T) {
 		protocol.EventTurnEnd,
 	)
 	end := eventData[protocol.TurnEndData](t, writer.events[len(writer.events)-1])
-	if end.LastMessage != "hello runtime" {
-		t.Fatalf("TurnEnd.LastMessage = %q, want hello runtime", end.LastMessage)
+	if end.LastMessage != "hello adk" {
+		t.Fatalf("TurnEnd.LastMessage = %q, want hello adk", end.LastMessage)
 	}
 	stored, err := messages.GetMessages(ctx, sess.UserID, sess.ID, 0)
 	if err != nil {
 		t.Fatalf("GetMessages() error = %v", err)
 	}
-	if len(stored) != 2 || stored[0].Role != string(schema.User) || stored[0].Content != "hello" || stored[1].Role != string(schema.Assistant) || stored[1].Content != "hello runtime" {
-		t.Fatalf("stored messages = %#v, want user + runtime assistant", stored)
+	if len(stored) != 2 || stored[0].Role != string(schema.User) || stored[0].Content != "hello" || stored[1].Role != string(schema.Assistant) || stored[1].Content != "hello adk" {
+		t.Fatalf("stored messages = %#v, want user + ADK assistant", stored)
 	}
 	got, err := sessions.GetSession(ctx, sess.UserID, sess.ID)
 	if err != nil {
 		t.Fatalf("GetSession() error = %v", err)
 	}
-	if got.Status != aisolo.SessionStatus_SESSION_STATUS_IDLE || got.MessageCount != 2 || got.LastMessage != "hello runtime" {
+	if got.Status != aisolo.SessionStatus_SESSION_STATUS_IDLE || got.MessageCount != 2 || got.LastMessage != "hello adk" {
 		t.Fatalf("session = %#v, want IDLE with assistant last message", got)
 	}
 }
 
-func TestAskRuntimePassesSystemAndLimitedPreviousHistory(t *testing.T) {
+func TestAskRuntimeHelperPassesSystemAndLimitedPreviousHistory(t *testing.T) {
 	ctx := context.Background()
 	sessions := session.NewMemoryStore()
 	messages := memory.NewMemoryStorage()
@@ -231,11 +242,11 @@ func TestAskRuntimePassesSystemAndLimitedPreviousHistory(t *testing.T) {
 		RunNullLeaseGrace:         time.Minute,
 	})
 
-	err = executor.Ask(ctx, protocol.NewEmitter(&discardEventWriter{}, sess.ID, "turn-runtime-history"), AskInput{
+	err = executor.askRuntime(ctx, protocol.NewEmitter(&discardEventWriter{}, sess.ID, "turn-runtime-history"), AskInput{
 		SessionID: sess.ID,
 		UserID:    sess.UserID,
 		Message:   "new question",
-	})
+	}, sess, aisolo.AgentMode_AGENT_MODE_AGENT, time.Now())
 	if err != nil {
 		t.Fatalf("Ask() error = %v", err)
 	}
@@ -251,7 +262,7 @@ func TestAskRuntimePassesSystemAndLimitedPreviousHistory(t *testing.T) {
 	}
 }
 
-func TestAskRuntimeReturnsRestoreErrorWithRunError(t *testing.T) {
+func TestAskRuntimeHelperReturnsRestoreErrorWithRunError(t *testing.T) {
 	ctx := context.Background()
 	base := session.NewMemoryStore()
 	messages := memory.NewMemoryStorage()
@@ -279,11 +290,11 @@ func TestAskRuntimeReturnsRestoreErrorWithRunError(t *testing.T) {
 		RunNullLeaseGrace: time.Minute,
 	})
 
-	err = executor.Ask(ctx, protocol.NewEmitter(&discardEventWriter{}, sess.ID, "turn-runtime-error"), AskInput{
+	err = executor.askRuntime(ctx, protocol.NewEmitter(&discardEventWriter{}, sess.ID, "turn-runtime-error"), AskInput{
 		SessionID: sess.ID,
 		UserID:    sess.UserID,
 		Message:   "hello",
-	})
+	}, sess, aisolo.AgentMode_AGENT_MODE_AGENT, time.Now())
 	if !errors.Is(err, runErr) {
 		t.Fatalf("Ask() error = %v, want runtime failure", err)
 	}
@@ -336,6 +347,33 @@ func TestResumeAlwaysUsesADKPoolEvenWhenRuntimeRunnerConfigured(t *testing.T) {
 	})
 	if err == nil || !strings.Contains(err.Error(), "pool should not be used") {
 		t.Fatalf("Resume() error = %v, want ADK pool path failure", err)
+	}
+}
+
+func TestADKRunOptionsPassesAgentModelOptions(t *testing.T) {
+	ctx := context.Background()
+	temp := float32(0.42)
+	modelCalls := &einoxruntime.ModelCalls{}
+	agent, err := einoxagent.NewChatModelAgent(ctx,
+		einoxruntime.StaticChatModel{Chunks: []string{"ok"}, Calls: modelCalls},
+		einoxagent.WithModelOption(model.WithTemperature(temp)),
+	)
+	if err != nil {
+		t.Fatalf("NewChatModelAgent() error = %v", err)
+	}
+
+	writer := &collectingEventWriter{}
+	iter := agent.Runner().Run(ctx, []adk.Message{schema.UserMessage("hello")}, adkRunOptions(agent, adk.WithCheckPointID("cp-1"))...)
+	_, err = protocol.PipeEvents(protocol.NewEmitter(writer, "session-1", "turn-1"), iter, protocol.PipeOptions{})
+	if err != nil {
+		t.Fatalf("PipeEvents() error = %v", err)
+	}
+	if modelCalls.StreamInput == nil {
+		t.Fatal("model stream was not called")
+	}
+	gotOpts := model.GetCommonOptions(&model.Options{}, modelCalls.StreamOptions...)
+	if gotOpts.Temperature == nil || *gotOpts.Temperature != temp {
+		t.Fatalf("Temperature = %#v, want %v", gotOpts.Temperature, temp)
 	}
 }
 
@@ -905,6 +943,18 @@ type staticModePool struct{}
 
 func (staticModePool) Get(context.Context, aisolo.AgentMode) (*einoxagent.Agent, error) {
 	return &einoxagent.Agent{}, nil
+}
+
+type singleAgentPool struct {
+	agent *einoxagent.Agent
+	calls int
+	modes []aisolo.AgentMode
+}
+
+func (p *singleAgentPool) Get(_ context.Context, mode aisolo.AgentMode) (*einoxagent.Agent, error) {
+	p.calls++
+	p.modes = append(p.modes, mode)
+	return p.agent, nil
 }
 
 type failingModePool struct{}

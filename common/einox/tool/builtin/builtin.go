@@ -13,7 +13,7 @@ import (
 // 分三类注册, 便于 Policy 做 capability 级别的白名单:
 //
 //	compute: echo, calculator
-//	io     : now, random_id
+//	io     : now, random_id, http_get
 //	human  : ask_confirm, ask_single_choice, ask_multi_choice,
 //	         ask_text_input, ask_form_input, ask_info_ack
 func RegisterAll(kit *tool.Kit) error {
@@ -30,6 +30,9 @@ func RegisterAll(kit *tool.Kit) error {
 		return err
 	}
 	if err := register(kit, tool.CapIO, NewRandomIDTool); err != nil {
+		return err
+	}
+	if err := register(kit, tool.CapIO, NewHTTPGetTool); err != nil {
 		return err
 	}
 

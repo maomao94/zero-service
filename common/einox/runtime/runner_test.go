@@ -9,6 +9,7 @@ import (
 	"github.com/cloudwego/eino/schema"
 
 	"zero-service/common/einox/protocol"
+	einoxTool "zero-service/common/einox/tool"
 )
 
 func TestRunnerGenerateWithStaticModel(t *testing.T) {
@@ -564,6 +565,60 @@ func TestRunnerStreamReturnsToolCallError(t *testing.T) {
 		protocol.EventError,
 		protocol.EventTurnEnd,
 	)
+}
+
+func TestRunnerGenerateCannotBypassPolicyFilteredRegistry(t *testing.T) {
+	allowedCalls := &ToolCalls{}
+	blockedCalls := &ToolCalls{}
+	kit := einoxTool.NewKit()
+	if err := kit.Register(einoxTool.CapCompute, StaticTool{Name: "allowed", Result: "allowed-result", Calls: allowedCalls}); err != nil {
+		t.Fatalf("register allowed tool: %v", err)
+	}
+	if err := kit.Register(einoxTool.CapIO, StaticTool{Name: "blocked", Result: "blocked-result", Calls: blockedCalls}); err != nil {
+		t.Fatalf("register blocked tool: %v", err)
+	}
+
+	tools, err := NewToolRegistry(einoxTool.NewPolicy().AllowCapabilities(einoxTool.CapCompute).Apply(kit)...)
+	if err != nil {
+		t.Fatalf("NewToolRegistry() error = %v", err)
+	}
+	runner, err := NewRunner(StaticChatModel{Responses: []*schema.Message{
+		schema.AssistantMessage("", []schema.ToolCall{{ID: "call-1", Function: schema.FunctionCall{Name: "blocked", Arguments: `{}`}}}),
+	}}, WithTools(tools))
+	if err != nil {
+		t.Fatalf("NewRunner() error = %v", err)
+	}
+
+	events, err := runner.Generate(context.Background(), Request{SessionID: "session-test-001", Input: "call blocked"})
+	if err == nil || !strings.Contains(err.Error(), `tool "blocked" not registered`) {
+		t.Fatalf("Generate() error = %v, want blocked tool lookup error", err)
+	}
+	if len(blockedCalls.Args) != 0 {
+		t.Fatalf("blocked tool was invoked: %#v", blockedCalls.Args)
+	}
+	if len(allowedCalls.Args) != 0 {
+		t.Fatalf("allowed tool unexpectedly invoked: %#v", allowedCalls.Args)
+	}
+	assertEventTypes(t, events,
+		protocol.EventTurnStart,
+		protocol.EventToolCallStart,
+		protocol.EventToolCallEnd,
+		protocol.EventError,
+		protocol.EventTurnEnd,
+	)
+}
+
+func TestRunnerLiteRuntimeHasNoResumeSurface(t *testing.T) {
+	runner, err := NewRunner(StaticChatModel{Response: "ok"})
+	if err != nil {
+		t.Fatalf("NewRunner() error = %v", err)
+	}
+	type adkResumeSurface interface {
+		Resume(context.Context, string)
+	}
+	if _, ok := any(runner).(adkResumeSurface); ok {
+		t.Fatal("runtime Runner exposes a Resume surface; lite runtime should remain non-resumable")
+	}
 }
 
 func TestMessagesAndLastText(t *testing.T) {

@@ -61,6 +61,15 @@ func New(ctx context.Context, opts ...Option) (*Agent, error) {
 // Runner 返回底层 adk.Runner, 业务层使用它执行 Run/Resume。
 func (a *Agent) Runner() *adk.Runner { return a.runner }
 
+// ModelOptions 返回 WithModelOption 收集的模型运行时选项副本。
+// 调用方需要在 Run / Resume 时通过 adk.WithChatModelOptions 显式传入这些选项。
+func (a *Agent) ModelOptions() []model.Option {
+	if a == nil || len(a.opts.modelOptions) == 0 {
+		return nil
+	}
+	return append([]model.Option(nil), a.opts.modelOptions...)
+}
+
 // GetAgent 返回底层 adk.Agent, 通常不直接使用。
 func (a *Agent) GetAgent() adk.Agent { return a.adkAgent }
 

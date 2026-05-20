@@ -18,6 +18,9 @@ type Config struct {
 	Memory       MemoryConfig       `json:"memory"`
 	SessionStore SessionStoreConfig `json:",optional"`
 	Knowledge    einoxkb.Config     `json:"knowledge,optional"`
+	// MCP MCP（Model Context Protocol）客户端配置，用于调用 MCP 服务器（如 aiapp/mcpserver）注册的工具。
+	// 多个 server 的工具会自动发现并注入 Agent 工具列表。
+	MCP MCPConfig `json:"mcp,optional"`
 	// SessionRun 控制 RUNNING 租约（多实例 / 持久化会话时避免误清与健康实例冲突）。
 	// YAML 键必须为 sessionRun（camelCase，与 json 标签一致）；勿写 SessionRun: 且仅注释子行，否则 conf 报 type mismatch。
 	SessionRun SessionRunConfig `json:"sessionRun,optional"`
@@ -37,7 +40,8 @@ type AgentConfig struct {
 	Deep        DeepAgentConfig `json:"deep,optional"`
 	// PlanMaxIterations PlanExecute 模式最大迭代（默认 10，≤0 时按 10）。
 	PlanMaxIterations int `json:"planMaxIterations,optional"`
-	// RuntimeMaxHistoryMessages 默认 Agent runtime path 传给模型的最近历史消息数，≤0 时默认 32。
+	// RuntimeMaxHistoryMessages lite RuntimeRunner helper 传给模型的最近历史消息数，≤0 时默认 32。
+	// 默认 session Ask/Resume 走 ADK mode pool，不使用该 runtime 窗口。
 	RuntimeMaxHistoryMessages int `json:"runtimeMaxHistoryMessages,optional"`
 }
 
@@ -81,7 +85,7 @@ func (a AgentConfig) EffectivePlanMaxIterations() int {
 	return 10
 }
 
-// EffectiveRuntimeMaxHistoryMessages 返回 runtime path 的历史消息窗口。
+// EffectiveRuntimeMaxHistoryMessages 返回 lite RuntimeRunner helper 的历史消息窗口。
 func (a AgentConfig) EffectiveRuntimeMaxHistoryMessages() int {
 	if a.RuntimeMaxHistoryMessages > 0 {
 		return a.RuntimeMaxHistoryMessages
@@ -191,6 +195,31 @@ type ToolsConfig struct {
 	Timeout        time.Duration `json:"timeout"`
 	MaxRetries     int           `json:"maxRetries"`
 	MaxConcurrency int           `json:"maxConcurrency"`
+}
+
+// MCPConfig MCP 客户端配置。Servers 为空时不启动 MCP 客户端。
+type MCPConfig struct {
+	Enabled         bool          `json:"enabled,optional"`
+	Endpoint        string        `json:"endpoint,optional"`        // MCP server endpoint
+	ServiceToken    string        `json:"serviceToken,optional"`    // 可选鉴权 token
+	ConnectTimeout  time.Duration `json:"connectTimeout,optional"`  // 连接超时（默认 10s）
+	RefreshInterval time.Duration `json:"refreshInterval,optional"` // 重连间隔（默认 30s）
+}
+
+// EffectiveConnectTimeout 返回有效的连接超时。
+func (m MCPConfig) EffectiveConnectTimeout() time.Duration {
+	if m.ConnectTimeout > 0 {
+		return m.ConnectTimeout
+	}
+	return 10 * time.Second
+}
+
+// EffectiveRefreshInterval 返回有效的重连间隔。
+func (m MCPConfig) EffectiveRefreshInterval() time.Duration {
+	if m.RefreshInterval > 0 {
+		return m.RefreshInterval
+	}
+	return 30 * time.Second
 }
 
 // SkillsConfig Skills 配置（go-zero / aisolo.yaml）。

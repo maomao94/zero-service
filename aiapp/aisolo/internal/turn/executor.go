@@ -75,11 +75,11 @@ type Config struct {
 	Metrics  *metrics.Metrics
 	// App 可选；用于会话工作区目录创建等。
 	App *config.Config
-	// RuntimeRunner 可选；默认 Agent mode 可走轻量 Eino runtime SDK。
+	// RuntimeRunner 可选；仅保留为显式 lite runtime helper，不参与 session Ask/Resume 选路。
 	RuntimeRunner *einoxruntime.Runner
-	// RuntimeSystemPrompt 是 RuntimeRunner 的默认 Agent 系统提示词。
+	// RuntimeSystemPrompt 是 lite RuntimeRunner 的默认 Agent 系统提示词。
 	RuntimeSystemPrompt string
-	// RuntimeMaxHistoryMessages 是 RuntimeRunner 传给模型的最近历史消息数；≤0 表示不限。
+	// RuntimeMaxHistoryMessages 是 lite RuntimeRunner 传给模型的最近历史消息数；≤0 表示不限。
 	RuntimeMaxHistoryMessages int
 	// RunInstanceID / RunLeaseTTL / RunNullLeaseGrace：多实例下 RUNNING 租约（见 config.SessionRun）。
 	RunInstanceID     string
@@ -188,9 +188,6 @@ func (e *Executor) Ask(ctx context.Context, em *protocol.Emitter, in AskInput) e
 		_ = e.sessions.UpdateSession(ctx, sess)
 	}
 	effMode := sess.Mode
-	if e.useRuntime(effMode) {
-		return e.askRuntime(ctx, em, in, sess, effMode, start)
-	}
 
 	if e.pool == nil {
 		err := fmt.Errorf("agent pool not ready")
@@ -237,7 +234,7 @@ func (e *Executor) Ask(ctx context.Context, em *protocol.Emitter, in AskInput) e
 		return err
 	}
 
-	iter := agent.Runner().Run(ctx, history, adk.WithCheckPointID(in.SessionID))
+	iter := agent.Runner().Run(ctx, history, adkRunOptions(agent, adk.WithCheckPointID(in.SessionID))...)
 	res, err := protocol.PipeEvents(em, iter, protocol.PipeOptions{SessionUILang: sess.UILang})
 	if err != nil {
 		if restoreErr := e.markSessionIdle(ctx, sess); restoreErr != nil {
@@ -351,7 +348,7 @@ func (e *Executor) Resume(ctx context.Context, em *protocol.Emitter, in ResumeIn
 
 	iter, err := agent.Runner().ResumeWithParams(ctx, in.SessionID, &adk.ResumeParams{
 		Targets: map[string]any{in.InterruptID: payload},
-	})
+	}, adkRunOptions(agent)...)
 	if err != nil {
 		if restoreErr := e.markSessionInterrupted(ctx, sess, in.InterruptID); restoreErr != nil {
 			logx.Errorf("[turn] restore session after resume_start: %v", restoreErr)
@@ -425,8 +422,15 @@ func (e *Executor) fail(em *protocol.Emitter, code string, err error) {
 	_ = em.EmitError(code, err.Error())
 }
 
-func (e *Executor) useRuntime(mode aisolo.AgentMode) bool {
-	return e.runtimeRunner != nil && mode == aisolo.AgentMode_AGENT_MODE_AGENT
+func adkRunOptions(agent *einoxagent.Agent, opts ...adk.AgentRunOption) []adk.AgentRunOption {
+	if agent == nil {
+		return opts
+	}
+	modelOptions := agent.ModelOptions()
+	if len(modelOptions) == 0 {
+		return opts
+	}
+	return append(opts, adk.WithChatModelOptions(modelOptions))
 }
 
 func (e *Executor) askRuntime(ctx context.Context, em *protocol.Emitter, in AskInput, sess *session.Session, effMode aisolo.AgentMode, start time.Time) error {

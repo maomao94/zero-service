@@ -92,7 +92,9 @@ func WithMiddlewares(mws ...adk.AgentMiddleware) Option {
 	return func(o *options) { o.middlewares = append(o.middlewares, mws...) }
 }
 
-// WithModelOption 添加模型参数选项
+// WithModelOption 添加模型运行时选项。
+// Deprecated: ADK 在 Run / Resume 时通过 adk.WithChatModelOptions 接收模型选项；
+// 本选项仅收集并暴露给调用方通过 Agent.ModelOptions() 显式传入运行时。
 func WithModelOption(opt model.Option) Option {
 	return func(o *options) { o.modelOptions = append(o.modelOptions, opt) }
 }

@@ -49,7 +49,7 @@ Agent:
   PoolMaxIdle: 10
   PoolMaxLive: 1h
   # planMaxIterations: 12      # Plan 模式最大迭代，默认 10
-  # runtimeMaxHistoryMessages: 32 # 默认 Agent runtime path 传给模型的最近历史消息数
+  # runtimeMaxHistoryMessages: 32 # lite RuntimeRunner helper 的最近历史消息数；session Ask/Resume 走 ADK pool
   # Deep 本地文件系统默认关闭；需 grep 等工具时显式 enableLocalFilesystem: true
   # Deep:
   #   enableLocalFilesystem: true
@@ -76,6 +76,14 @@ Limit:
   MaxConcurrency: 100
   RateLimit: 50
   RequestTimeout: 300s
+
+# MCP 客户端：连接 aiapp/mcpserver 等 MCP 服务器，自动注入工具
+# MCP:
+#   Enabled: false
+#   Endpoint: "http://127.0.0.1:23010/mcp"
+#   # ServiceToken: ""      # 可选鉴权
+#   # connectTimeout: 10s
+#   # refreshInterval: 30s
 
 # 与 aigtw 共用索引时可启用（memory 仅本进程；生产用 gorm/redis/milvus 对齐网关）
 # Knowledge:

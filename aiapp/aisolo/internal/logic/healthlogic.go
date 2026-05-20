@@ -54,6 +54,11 @@ func (l *HealthLogic) Health(_ *aisolo.HealthReq) (*aisolo.HealthResp, error) {
 	} else {
 		deps["executor"] = "missing"
 	}
+	if len(l.svcCtx.MCPTools) > 0 {
+		deps["mcp_tools"] = "ok"
+	} else if l.svcCtx.MCPClient != nil {
+		deps["mcp_tools"] = "connected_no_tools"
+	}
 	if l.svcCtx.Config.Knowledge.Enabled {
 		deps["knowledge_backend"] = l.svcCtx.Config.Knowledge.EffectiveBackend()
 	}

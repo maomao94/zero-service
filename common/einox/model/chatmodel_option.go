@@ -2,16 +2,9 @@ package model
 
 import (
 	"context"
-	"fmt"
 	"time"
 
-	"github.com/cloudwego/eino-ext/components/model/ark"
-	"github.com/cloudwego/eino-ext/components/model/deepseek"
-	"github.com/cloudwego/eino-ext/components/model/ollama"
-	"github.com/cloudwego/eino-ext/components/model/openai"
-	"github.com/cloudwego/eino-ext/components/model/qwen"
 	"github.com/cloudwego/eino/components/model"
-	"github.com/zeromicro/go-zero/core/logx"
 )
 
 // =============================================================================
@@ -102,118 +95,19 @@ func NewChatModelByOption(provider Provider, opts ...ChatModelOption) (model.Bas
 }
 
 func newChatModelByOption(ctx context.Context, provider Provider, cfg *chatModelOptions) (model.BaseChatModel, error) {
-	switch provider {
-	case ProviderOpenAI:
-		return newOpenAIByOption(ctx, cfg)
-	case ProviderDeepSeek:
-		return newDeepSeekByOption(ctx, cfg)
-	case ProviderOllama:
-		return newOllamaByOption(ctx, cfg)
-	case ProviderQwen:
-		return newQwenByOption(ctx, cfg)
-	case ProviderArk:
-		return newArkByOption(ctx, cfg)
-	case ProviderClaude:
-		return newClaudeByOption(ctx, cfg)
-	default:
-		logx.Errorf("unsupported provider: %s", provider)
-		return nil, fmt.Errorf("unsupported provider: %s", provider)
-	}
+	return NewChatModel(ctx, cfg.toConfig(provider))
 }
 
-func newOpenAIByOption(ctx context.Context, cfg *chatModelOptions) (model.BaseChatModel, error) {
-	config := &openai.ChatModelConfig{
-		APIKey: cfg.apiKey,
-		Model:  cfg.model,
+func (c chatModelOptions) toConfig(provider Provider) Config {
+	return Config{
+		Provider:       provider,
+		APIKey:         c.apiKey,
+		BaseURL:        c.baseURL,
+		Model:          c.model,
+		Temperature:    float64(c.temperature),
+		TemperatureSet: c.temperatureSet,
+		MaxTokens:      c.maxTokens,
+		OllamaURL:      c.baseURL,
+		ArkRegion:      c.arkRegion,
 	}
-	if cfg.baseURL != "" {
-		config.BaseURL = cfg.baseURL
-	}
-	if cfg.temperatureSet || cfg.temperature > 0 {
-		config.Temperature = &cfg.temperature
-	}
-	if cfg.maxTokens > 0 {
-		config.MaxTokens = &cfg.maxTokens
-	}
-	return openai.NewChatModel(ctx, config)
-}
-
-func newDeepSeekByOption(ctx context.Context, cfg *chatModelOptions) (model.BaseChatModel, error) {
-	config := &deepseek.ChatModelConfig{
-		APIKey: cfg.apiKey,
-		Model:  cfg.model,
-	}
-	if cfg.baseURL != "" {
-		config.BaseURL = cfg.baseURL
-	}
-	if cfg.temperatureSet || cfg.temperature > 0 {
-		config.Temperature = cfg.temperature
-	}
-	if cfg.maxTokens > 0 {
-		config.MaxTokens = cfg.maxTokens
-	}
-	return deepseek.NewChatModel(ctx, config)
-}
-
-func newOllamaByOption(ctx context.Context, cfg *chatModelOptions) (model.BaseChatModel, error) {
-	url := cfg.baseURL
-	if url == "" {
-		url = "http://localhost:11434"
-	}
-	config := &ollama.ChatModelConfig{
-		BaseURL: url,
-		Model:   cfg.model,
-	}
-	return ollama.NewChatModel(ctx, config)
-}
-
-func newQwenByOption(ctx context.Context, cfg *chatModelOptions) (model.BaseChatModel, error) {
-	config := &qwen.ChatModelConfig{
-		APIKey: cfg.apiKey,
-		Model:  cfg.model,
-	}
-	if cfg.baseURL != "" {
-		config.BaseURL = cfg.baseURL
-	}
-	if cfg.temperatureSet || cfg.temperature > 0 {
-		config.Temperature = &cfg.temperature
-	}
-	if cfg.maxTokens > 0 {
-		config.MaxTokens = &cfg.maxTokens
-	}
-	return qwen.NewChatModel(ctx, config)
-}
-
-// newArkByOption 火山引擎 ARK（Option 模式）
-func newArkByOption(ctx context.Context, cfg *chatModelOptions) (model.BaseChatModel, error) {
-	config := &ark.ChatModelConfig{
-		APIKey: cfg.apiKey,
-		Model:  cfg.model,
-	}
-
-	// 设置 Region
-	if cfg.arkRegion != "" {
-		config.Region = cfg.arkRegion
-	}
-
-	// 设置自定义 BaseURL
-	if cfg.baseURL != "" {
-		config.BaseURL = cfg.baseURL
-	}
-
-	// 设置温度
-	if cfg.temperatureSet || cfg.temperature > 0 {
-		config.Temperature = &cfg.temperature
-	}
-
-	// 设置最大 Token
-	if cfg.maxTokens > 0 {
-		config.MaxTokens = &cfg.maxTokens
-	}
-
-	return ark.NewChatModel(ctx, config)
-}
-
-func newClaudeByOption(_ context.Context, _ *chatModelOptions) (model.BaseChatModel, error) {
-	return nil, fmt.Errorf("claude provider not implemented: please use provider=openai with base_url pointing to a Claude-compatible OpenAI proxy")
 }

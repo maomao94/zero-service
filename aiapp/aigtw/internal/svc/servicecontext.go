@@ -1,6 +1,7 @@
 package svc
 
 import (
+	"errors"
 	"strings"
 
 	"zero-service/aiapp/aichat/aichat"
@@ -72,14 +73,14 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
 			zrpc.WithStreamClientInterceptor(interceptor.StreamTracingInterceptor)).Conn()),
 	}
-	if kb, err := einoxkb.NewService(c.Knowledge, ""); err != nil {
+	if kb, err := einoxkb.NewService(c.Knowledge, ""); errors.Is(err, einoxkb.ErrKnowledgeDisabled) {
+		logx.Info("[svc] knowledge disabled by config")
+	} else if err != nil {
 		logx.Errorf("[svc] knowledge: %v", err)
 		s.KnowledgeInitErr = truncateInitErr(err.Error())
 	} else {
 		s.Knowledge = kb
-		if kb != nil {
-			logx.Infof("[svc] knowledge ready backend=%s", c.Knowledge.EffectiveBackend())
-		}
+		logx.Infof("[svc] knowledge ready backend=%s", c.Knowledge.EffectiveBackend())
 	}
 	return s
 }
