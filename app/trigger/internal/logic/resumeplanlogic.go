@@ -6,13 +6,13 @@ import (
 	"time"
 	"zero-service/common/tool"
 	"zero-service/model"
+	"zero-service/third_party/extproto"
 
 	"zero-service/app/trigger/internal/planscope"
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
 
 	"github.com/duke-git/lancet/v2/strutil"
-	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
@@ -41,7 +41,7 @@ func (l *ResumePlanLogic) ResumePlan(in *trigger.ResumePlanReq) (*trigger.Resume
 
 	// 检查参数
 	if in.Id <= 0 && strutil.IsBlank(in.PlanId) {
-		return nil, errors.BadRequest("", "参数错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
 	}
 
 	// 查询计划
@@ -55,12 +55,12 @@ func (l *ResumePlanLogic) ResumePlan(in *trigger.ResumePlanReq) (*trigger.Resume
 		if err == sqlx.ErrNotFound {
 			return &trigger.ResumePlanRes{}, nil
 		}
-		return nil, err
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_DB, "查询计划失败")
 	}
 
 	// 只有暂停状态的计划才能恢复，已终止的计划无法恢复
 	if plan.Status != int64(model.PlanStatusPaused) {
-		return nil, errors.BadRequest("", "计划非暂停,不可恢复")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划非暂停,不可恢复")
 	}
 
 	// 执行事务
@@ -94,7 +94,7 @@ func (l *ResumePlanLogic) ResumePlan(in *trigger.ResumePlanReq) (*trigger.Resume
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "恢复计划事务失败")
 	}
 
 	planscope.PlanScope(plan).Logger(l.ctx).Info("RPC 恢复计划：计划状态已更新，事务已提交")

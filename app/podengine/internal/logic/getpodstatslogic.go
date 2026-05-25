@@ -9,6 +9,7 @@ import (
 	"zero-service/app/podengine/internal/svc"
 	"zero-service/app/podengine/podengine"
 	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/dromara/carbon/v2"
@@ -36,7 +37,7 @@ func (l *GetPodStatsLogic) GetPodStats(in *podengine.GetPodStatsReq) (*podengine
 	}
 	dockerClient, ok := l.svcCtx.GetDockerClient(in.Node)
 	if !ok {
-		return nil, fmt.Errorf("node %s not found", in.Node)
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "node: "+in.Node)
 	}
 
 	// Inspect container to get basic info

@@ -6,10 +6,10 @@ import (
 	"zero-service/app/djicloud/djicloud"
 	"zero-service/app/djicloud/internal/svc"
 	"zero-service/app/djicloud/model/gormmodel"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type ListDevicesLogic struct {
@@ -45,7 +45,7 @@ func (l *ListDevicesLogic) ListDevices(in *djicloud.ListDevicesReq) (*djicloud.L
 	}
 	var total int64
 	if err := db.Count(&total).Error; err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询设备总数失败")
 	}
 	var devices []gormmodel.DjiDevice
 	if err := db.
@@ -53,7 +53,7 @@ func (l *ListDevicesLogic) ListDevices(in *djicloud.ListDevicesReq) (*djicloud.L
 		Offset(int((page - 1) * pageSize)).
 		Limit(int(pageSize)).
 		Find(&devices).Error; err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询设备列表失败")
 	}
 	list := make([]*djicloud.DeviceInfo, 0, len(devices))
 	for i := range devices {

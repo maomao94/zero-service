@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/google/uuid"
@@ -12,6 +11,8 @@ import (
 	"zero-service/aiapp/aisolo/internal/svc"
 	"zero-service/aiapp/aisolo/internal/turn"
 	"zero-service/common/einox/protocol"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 )
 
 type ResumeStreamLogic struct {
@@ -28,25 +29,24 @@ func NewResumeStreamLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Resu
 	}
 }
 
-// ResumeStream 流式恢复中断的执行。
 func (l *ResumeStreamLogic) ResumeStream(in *aisolo.ResumeReq, stream aisolo.AiSolo_ResumeStreamServer) error {
 	if l.svcCtx.Executor == nil {
-		return errors.New("executor not ready (chat model may be missing)")
+		return tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "executor not ready (chat model may be missing)")
 	}
 	if in == nil {
-		return errors.New("resume request is required")
+		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "resume request is required")
 	}
 	sessionID := strings.TrimSpace(in.SessionId)
 	userID := strings.TrimSpace(in.UserId)
 	interruptID := strings.TrimSpace(in.InterruptId)
 	if sessionID == "" || interruptID == "" {
-		return errors.New("session_id and interrupt_id are required")
+		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "session_id and interrupt_id are required")
 	}
 	if userID == "" {
-		return errors.New("user_id is required")
+		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "user_id is required")
 	}
 	if in.Action != aisolo.ResumeAction_RESUME_ACTION_YES && in.Action != aisolo.ResumeAction_RESUME_ACTION_NO {
-		return errors.New("resume action must be yes or no")
+		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "resume action must be yes or no")
 	}
 
 	turnID := uuid.NewString()

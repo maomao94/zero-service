@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"zero-service/common/dockerx"
-
 	"zero-service/app/podengine/internal/svc"
 	"zero-service/app/podengine/podengine"
+	"zero-service/common/dockerx"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -37,11 +38,11 @@ func (l *CreatePodLogic) CreatePod(in *podengine.CreatePodReq) (*podengine.Creat
 		return nil, err
 	}
 	if len(in.Spec.Containers) == 0 {
-		return nil, fmt.Errorf("pod spec must have at least one container")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "pod spec must have at least one container")
 	}
 	dockerClient, ok := l.svcCtx.GetDockerClient(in.Node)
 	if !ok {
-		return nil, fmt.Errorf("node %s not found", in.Node)
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "node: "+in.Node)
 	}
 
 	containerSpec := in.Spec.Containers[0]
@@ -106,14 +107,14 @@ func (l *CreatePodLogic) CreatePod(in *podengine.CreatePodReq) (*podengine.Creat
 	resp, err := dockerClient.ContainerCreate(l.ctx, config, hostConfig, networkConfig, nil, containerName)
 	if err != nil {
 		l.Errorf("Failed to create container: %v", err)
-		return nil, fmt.Errorf("failed to create container: %w", err)
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "failed to create container")
 	}
 
 	// Inspect the container to get information
 	containerInfo, err := dockerClient.ContainerInspect(l.ctx, resp.ID)
 	if err != nil {
 		l.Errorf("Failed to inspect container %s: %v", resp.ID, err)
-		return nil, fmt.Errorf("failed to inspect container: %w", err)
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "failed to inspect container")
 	}
 
 	pod := &podengine.PodPb{

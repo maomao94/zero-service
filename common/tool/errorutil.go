@@ -5,6 +5,7 @@ import (
 	"zero-service/third_party/extproto"
 
 	gkiterrors "github.com/songzhibin97/gkit/errors"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -13,19 +14,16 @@ func NewErrorByPbCode(code extproto.Code, args ...interface{}) error {
 	errorName, httpCode := getErrorInfoByPbCode(code)
 	message := errorName
 	if len(args) > 0 {
-		hasFormat := false
-		for i := 0; i < len(message); i++ {
-			if message[i] == '%' && i+1 < len(message) {
-				hasFormat = true
-				break
-			}
-		}
-		if hasFormat {
+		if hasFormatPlaceholder(message) {
 			message = fmt.Sprintf(message, args...)
 		} else {
 			switch v := args[0].(type) {
 			case string:
-				message = v
+				if len(args) > 1 && hasFormatPlaceholder(v) {
+					message = fmt.Sprintf(v, args[1:]...)
+				} else {
+					message = v
+				}
 			case fmt.Stringer:
 				message = v.String()
 			default:
@@ -56,6 +54,47 @@ func NewErrorByPbCode(code extproto.Code, args ...interface{}) error {
 	default:
 		return gkiterrors.InternalServer(reason, message)
 	}
+}
+
+func hasFormatPlaceholder(message string) bool {
+	for i := 0; i < len(message); i++ {
+		if message[i] == '%' && i+1 < len(message) {
+			return true
+		}
+	}
+	return false
+}
+
+// NewErrorByPbCodeWrap wraps a cause error with a protobuf error code.
+// Implements Go 1.20 multi-error Unwrap, so both the structured code error and
+// the original cause are traversable via errors.Is/As and gkiterrors.Reason.
+// GRPCStatus returns the structured error so status.FromError resolves correctly.
+func NewErrorByPbCodeWrap(code extproto.Code, cause error, args ...interface{}) error {
+	if cause == nil {
+		return NewErrorByPbCode(code, args...)
+	}
+	return &withCause{
+		structured: NewErrorByPbCode(code, args...),
+		cause:      cause,
+	}
+}
+
+type withCause struct {
+	structured error
+	cause      error
+}
+
+func (w *withCause) Error() string {
+	return fmt.Sprintf("%s: %v", w.structured.Error(), w.cause)
+}
+
+func (w *withCause) Unwrap() []error {
+	return []error{w.structured, w.cause}
+}
+
+// GRPCStatus 满足 gRPC status.FromError 接口，使 HTTP 网关能正确映射状态码。
+func (w *withCause) GRPCStatus() *status.Status {
+	return status.Convert(w.structured)
 }
 
 func getErrorInfoByPbCode(code extproto.Code) (string, int) {

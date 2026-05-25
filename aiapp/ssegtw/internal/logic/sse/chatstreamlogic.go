@@ -13,6 +13,7 @@ import (
 	"zero-service/aiapp/ssegtw/internal/types"
 	"zero-service/common/ssex"
 	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -58,7 +59,7 @@ func (l *ChatStreamLogic) ChatStream(req *types.ChatStreamRequest) error {
 	// 1. 注册完成信号（PendingRegistry）
 	donePromise, err := l.svcCtx.PendingReg.Register(channel, 60*time.Second)
 	if err != nil {
-		return fmt.Errorf("register pending failed: %w", err)
+		return tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "register pending failed")
 	}
 
 	// 2. 订阅事件流（EventEmitter）

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"zero-service/aiapp/aichat/aichat"
 	"zero-service/aiapp/aichat/internal/provider"
@@ -16,8 +17,6 @@ import (
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/threading"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // ToolEvent 工具状态事件
@@ -70,7 +69,7 @@ func NewChatCompletionStreamLogic(ctx context.Context, svcCtx *svc.ServiceContex
 func (l *ChatCompletionStreamLogic) ChatCompletionStream(in *aichat.ChatCompletionReq, stream aichat.AiChat_ChatCompletionStreamServer) error {
 	p, backendModel, providerName, err := l.svcCtx.Registry.GetProvider(in.Model)
 	if err != nil {
-		return status.Errorf(codes.NotFound, "model %s not found", in.Model)
+		return tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "model %s not found", in.Model)
 	}
 
 	req := toProviderRequest(in, backendModel, providerName)
@@ -300,11 +299,11 @@ func (l *ChatCompletionStreamLogic) handleStreamError(awaitErr error, streamCtx 
 	case streamCtx.Err() != nil:
 		l.Logger.Errorf("stream total timeout (%v), awaitErr: %v",
 			l.svcCtx.Config.StreamTimeout, awaitErr)
-		return status.Errorf(codes.DeadlineExceeded, "stream total timeout")
+		return tool.NewErrorByPbCodeWrap(extproto.Code__1_00_TIMEOUT, awaitErr, "stream total timeout")
 	case errors.Is(awaitErr, context.DeadlineExceeded):
 		l.Logger.Errorf("stream idle timeout (%v), awaitErr: %v",
 			l.svcCtx.Config.StreamIdleTimeout, awaitErr)
-		return status.Errorf(codes.DeadlineExceeded, "stream idle timeout")
+		return tool.NewErrorByPbCodeWrap(extproto.Code__1_00_TIMEOUT, awaitErr, "stream idle timeout")
 	default:
 		l.Logger.Errorf("stream recv error: %v", awaitErr)
 		return provider.ToGrpcError(awaitErr)

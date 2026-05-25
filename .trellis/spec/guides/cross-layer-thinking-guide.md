@@ -9,6 +9,7 @@
 - 多个服务各自实现同一协议转换或状态判断。
 - 配置结构增加字段，但 yaml、ServiceContext 初始化或默认值未同步。
 - 外部系统返回异常时，错误码、日志和用户响应不一致。
+- 多个协议系统同时使用 `up/down` 表示方向但参照物不同（如 SocketIO 以服务端为锚点、DJI Cloud API 以设备为锚点），导致跨协议桥接时方向描述冲突。
 
 ## 实现前画清数据流
 
@@ -41,6 +42,7 @@ Swagger / gRPC client / HTTP client
 | Logic → Model/SDK | 数据格式、事务边界、缓存一致性、外部系统失败处理 |
 | Config → ServiceContext | yaml 是否同步、默认值是否明确、敏感信息是否脱敏 |
 | Backend → Frontend/外部系统 | 序列化格式、时间/枚举/状态码、分页和空值语义 |
+| 协议层间方向命名 | up/down 的方向锚点是哪个系统（SocketIO 以服务端、DJI 以设备），跨协议桥接时方向描述是否清晰 |
 
 ## 合同定义
 
@@ -59,6 +61,7 @@ Swagger / gRPC client / HTTP client
 - 在多个 Logic 中散落同一状态机判断。
 - 在日志中打印完整请求、密钥、连接串或内网地址。
 - 用临时硬编码配置绕过 `internal/config` 和 `ServiceContext`。
+- 跨协议描述桥接方向时，只写了 `up`/`down` 但没有指明方向锚点，导致读者误以为两个协议的 up 指向同一端。
 
 ## 检查清单
 
@@ -68,6 +71,7 @@ Swagger / gRPC client / HTTP client
 - [ ] 已识别所有层边界和消费者。
 - [ ] 已确定契约源文件和生成脚本。
 - [ ] 已确认复用位置或新增落点。
+- [ ] 如果涉及 `up`/`down` 方向命名，已明确方向锚点是哪个系统，跨协议桥接时已补充完整的流转方向说明。
 
 实现后：
 

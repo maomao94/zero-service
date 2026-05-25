@@ -2,7 +2,6 @@ package solo
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"zero-service/aiapp/aigtw/internal/svc"
@@ -30,14 +29,14 @@ func NewGetSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetSes
 func (l *GetSessionLogic) GetSession(req *types.SoloGetSessionRequest) (*types.SoloGetSessionResponse, error) {
 	userID := ctxdata.GetUserId(l.ctx)
 	if userID == "" {
-		return nil, errors.New("missing user id in context")
+		return nil, unauthenticatedError("missing user id in context")
 	}
 	if req == nil {
-		return nil, errors.New("get session request is required")
+		return nil, invalidRequestError("get session request is required")
 	}
 	sessionID := strings.TrimSpace(req.SessionId)
 	if sessionID == "" {
-		return nil, errors.New("sessionId is required")
+		return nil, invalidRequestError("sessionId is required")
 	}
 	resp, err := l.svcCtx.AiSoloCli.GetSession(l.ctx, &aisolo.GetSessionReq{
 		SessionId: sessionID,

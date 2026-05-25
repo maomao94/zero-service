@@ -2,13 +2,14 @@ package logic
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/zeromicro/go-zero/core/logx"
 
 	"zero-service/aiapp/aisolo/aisolo"
 	"zero-service/aiapp/aisolo/internal/svc"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 )
 
 type ListSessionsLogic struct {
@@ -28,7 +29,7 @@ func NewListSessionsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *List
 func (l *ListSessionsLogic) ListSessions(in *aisolo.ListSessionsReq) (*aisolo.ListSessionsResp, error) {
 	userID := strings.TrimSpace(in.GetUserId())
 	if userID == "" {
-		return nil, errors.New("user_id is required")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "user_id is required")
 	}
 	page := int(in.Page)
 	size := int(in.PageSize)

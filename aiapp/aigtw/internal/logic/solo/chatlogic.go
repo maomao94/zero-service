@@ -36,7 +36,7 @@ func NewChatLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ChatLogic {
 func (l *ChatLogic) Chat(req *types.SoloChatRequest, w io.Writer) error {
 	userID := ctxdata.GetUserId(l.ctx)
 	if userID == "" {
-		return errors.New("missing user id in context")
+		return unauthenticatedError("missing user id in context")
 	}
 	if err := ValidateChatRequest(req); err != nil {
 		return err

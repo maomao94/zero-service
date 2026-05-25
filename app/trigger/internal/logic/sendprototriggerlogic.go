@@ -7,9 +7,10 @@ import (
 	"zero-service/app/trigger/internal/taskpayload"
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/asynqx"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/hibiken/asynq"
-	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/trace"
 	"go.opentelemetry.io/otel/propagation"
 	tracex "zero-service/common/trace"
@@ -43,7 +44,7 @@ func (l *SendProtoTriggerLogic) SendProtoTrigger(in *trigger.SendProtoTriggerReq
 
 	match := GrpcServerRegexp.MatchString(in.GrpcServer)
 	if !match {
-		return nil, errors.New("grpcServer is invalid")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "grpcServer is invalid")
 	}
 
 	msg := &taskpayload.GrpcPayload{

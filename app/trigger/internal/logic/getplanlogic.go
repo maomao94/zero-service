@@ -12,7 +12,6 @@ import (
 
 	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/strutil"
-	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
@@ -39,7 +38,7 @@ func (l *GetPlanLogic) GetPlan(in *trigger.GetPlanReq) (*trigger.GetPlanRes, err
 		return nil, err
 	}
 	if in.Id <= 0 && strutil.IsBlank(in.PlanId) {
-		return nil, errors.BadRequest("", "参数错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
 	}
 	var plan *model.Plan
 	if in.Id > 0 {
@@ -51,13 +50,13 @@ func (l *GetPlanLogic) GetPlan(in *trigger.GetPlanReq) (*trigger.GetPlanRes, err
 		if err == sqlx.ErrNotFound {
 			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST)
 		}
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
 	}
 	// 解析规则
 	var pbRule trigger.PlanRulePb
 	err = json.Unmarshal([]byte(plan.RecurrenceRule), &pbRule)
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "计划规则格式错误")
 	}
 
 	// 构建响应
@@ -92,7 +91,7 @@ func (l *GetPlanLogic) GetPlan(in *trigger.GetPlanReq) (*trigger.GetPlanRes, err
 	}
 	progress, err := l.svcCtx.PlanBatchModel.CalculatePlanProgress(l.ctx, plan.Id)
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "计算计划进度失败")
 	}
 	pbPlan.Progress = progress
 	return &trigger.GetPlanRes{

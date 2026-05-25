@@ -6,6 +6,8 @@ import (
 
 	"zero-service/app/trigger/internal/svc"
 	"zero-service/app/trigger/trigger"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/dromara/carbon/v2"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -55,7 +57,7 @@ func (l *ListPlansLogic) ListPlans(in *trigger.ListPlansReq) (*trigger.ListPlans
 	// 查询计划列表
 	plans, total, err := l.svcCtx.PlanModel.FindPageListByPageWithTotal(l.ctx, builder, in.PageNum, in.PageSize, "id DESC")
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划列表失败")
 	}
 
 	// 构建响应
@@ -106,7 +108,7 @@ func (l *ListPlansLogic) ListPlans(in *trigger.ListPlansReq) (*trigger.ListPlans
 
 		progress, err := l.svcCtx.PlanBatchModel.CalculatePlanProgress(l.ctx, plan.Id)
 		if err != nil {
-			return nil, err
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "计算计划进度失败")
 		}
 		pbPlan.Progress = progress
 

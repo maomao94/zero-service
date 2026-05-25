@@ -6,10 +6,10 @@ import (
 	"zero-service/app/djicloud/djicloud"
 	"zero-service/app/djicloud/internal/svc"
 	"zero-service/app/djicloud/model/gormmodel"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type ListFlightTaskProgressLogic struct {
@@ -38,11 +38,11 @@ func (l *ListFlightTaskProgressLogic) ListFlightTaskProgress(in *djicloud.ListFl
 	}
 	var total int64
 	if err := db.Count(&total).Error; err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询航线任务总数失败")
 	}
 	var records []gormmodel.DjiDockFlightTask
 	if err := db.Order("reported_at DESC,id DESC").Offset(int((page - 1) * pageSize)).Limit(int(pageSize)).Find(&records).Error; err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询航线任务列表失败")
 	}
 	list := make([]*djicloud.FlightTaskProgressInfo, 0, len(records))
 	for i := range records {

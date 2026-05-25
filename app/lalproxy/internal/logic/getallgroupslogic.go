@@ -9,6 +9,8 @@ import (
 	"zero-service/app/lalproxy/internal/svc"
 	"zero-service/app/lalproxy/lalproxy"
 	"zero-service/common/lalx"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -37,21 +39,21 @@ func (l *GetAllGroupsLogic) GetAllGroups(in *lalproxy.GetAllGroupsReq) (*lalprox
 	resp, err := l.svcCtx.LalClient.Do(l.ctx, http.MethodGet, fullUrl, nil)
 	if err != nil {
 		l.Logger.Errorf("调用LAL API失败: %v, URL: %s", err, fullUrl)
-		return nil, fmt.Errorf("调用LAL API失败: %w", err)
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "调用LAL API失败")
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		body, _ := io.ReadAll(resp.Body)
 		l.Logger.Errorf("LAL API返回非200状态码: %d, 响应内容: %s", resp.StatusCode, string(body))
-		return nil, fmt.Errorf("LAL API返回异常状态码: %d", resp.StatusCode)
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_06_THIRD_PARTY, fmt.Sprintf("LAL API返回异常状态码: %d", resp.StatusCode))
 	}
 
 	// 读取响应体
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		l.Logger.Errorf("读取响应体失败: %v", err)
-		return nil, fmt.Errorf("读取响应体失败: %w", err)
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "读取响应体失败")
 	}
 
 	// 解析JSON响应
@@ -64,7 +66,7 @@ func (l *GetAllGroupsLogic) GetAllGroups(in *lalproxy.GetAllGroupsReq) (*lalprox
 	}
 	if err := json.Unmarshal(body, &httpResp); err != nil {
 		l.Logger.Errorf("解析响应JSON失败: %v, 响应内容: %s", err, string(body))
-		return nil, fmt.Errorf("解析响应JSON失败: %w", err)
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "解析响应JSON失败")
 	}
 
 	groups := make([]*lalproxy.GroupData, 0, len(httpResp.Data.Groups))

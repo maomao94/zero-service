@@ -2,10 +2,12 @@ package logic
 
 import (
 	"context"
-	"fmt"
+
 	"zero-service/app/podengine/internal/svc"
 	"zero-service/app/podengine/podengine"
 	"zero-service/common/dockerx"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/dromara/carbon/v2"
@@ -33,21 +35,19 @@ func (l *StartPodLogic) StartPod(in *podengine.StartPodReq) (*podengine.StartPod
 	}
 	dockerClient, ok := l.svcCtx.GetDockerClient(in.Node)
 	if !ok {
-		return nil, fmt.Errorf("node %s not found", in.Node)
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "node: "+in.Node)
 	}
 
-	// Start the container
 	err = dockerClient.ContainerStart(l.ctx, in.Id, container.StartOptions{})
 	if err != nil {
 		l.Errorf("Failed to start container %s: %v", in.Id, err)
-		return nil, fmt.Errorf("failed to start container: %w", err)
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "failed to start container")
 	}
 
-	// Inspect the container to get updated information
 	containerInfo, err := dockerClient.ContainerInspect(l.ctx, in.Id)
 	if err != nil {
 		l.Errorf("Failed to inspect container %s: %v", in.Id, err)
-		return nil, fmt.Errorf("failed to inspect container: %w", err)
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "failed to inspect container after start")
 	}
 
 	// Build the pod response

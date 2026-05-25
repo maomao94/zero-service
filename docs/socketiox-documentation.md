@@ -25,7 +25,25 @@ SocketIO 消息网关由两个服务组成：
 - 后端通过 gRPC 调用 socketpush，向前端推送消息
 - socketgtw 连接时通过 StreamEvent 服务加载用户初始房间列表
 
-### 1.2 服务端配置参考
+### 1.2 方向术语
+
+本文档中的 `up` / `down` 均以云平台或服务端为方向锚点：
+
+| 术语 | 通用含义 | SocketIO 场景 | DJI Cloud API 场景 |
+|------|----------|---------------|--------------------|
+| `up` / 上行 | 端侧 -> 云平台/服务端 | 浏览器客户端 -> socketgtw | DJI 设备 -> djicloud |
+| `down` / 下行 | 云平台/服务端 -> 端侧 | socketgtw/socketpush -> 浏览器客户端 | djicloud -> DJI 设备 |
+
+因此跨协议桥接时，同一条业务链路会在不同连接段使用不同方向名：
+
+```text
+设备状态到前端：DJI drc/up 或 events/osd/state -> djicloud -> SocketIO 自定义下行事件
+前端控制设备：SocketIO __up__ 或业务接口 -> djicloud -> DJI services 或 drc/down
+```
+
+这不是方向定义冲突，而是端侧对象不同：SocketIO 的端侧是浏览器，DJI Cloud API 的端侧是 DJI 设备。
+
+### 1.3 服务端配置参考
 
 **socketgtw 配置** (socketgtw.yaml)：
 
@@ -73,6 +91,17 @@ SocketGtwConf:                     # socketgtw 连接配置
 ### 2.2 基本连接示例
 
 ```javascript
+function normalizeSocketPayload(data) {
+    if (typeof data === 'string') {
+        try {
+            return JSON.parse(data);
+        } catch (e) {
+            return data;
+        }
+    }
+    return data;
+}
+
 // 建立连接
 const socket = io('http://your-server-url:port', {
     transports: ['websocket', 'polling'],
@@ -89,9 +118,9 @@ socket.on('disconnect', (reason) => {
     console.log('连接断开:', reason);
 });
 
-// 监听服务器推送消息
+// 监听非 ack 模式下的请求响应
 socket.on('__down__', (data) => {
-    console.log('收到服务器消息:', data);
+    console.log('收到服务器响应:', normalizeSocketPayload(data));
 });
 ```
 
@@ -147,19 +176,23 @@ const socket = io('http://your-server-url:port', {
 
 | 事件名称                      | 描述      | 数据格式              |
 |---------------------------|---------|-------------------|
-| `__up__`                  | 客户端上行消息 | `SocketUpReq`     |
-| `__join_room_up__`        | 加入房间    | `SocketUpRoomReq` |
-| `__leave_room_up__`       | 离开房间    | `SocketUpRoomReq` |
-| `__room_broadcast_up__`   | 房间广播    | `SocketUpReq`     |
-| `__global_broadcast_up__` | 全局广播    | `SocketUpReq`     |
+| `__up__`                  | 浏览器上行消息（浏览器 -> socketgtw） | `SocketUpReq`     |
+| `__join_room_up__`        | 浏览器请求加入房间 | `SocketUpRoomReq` |
+| `__leave_room_up__`       | 浏览器请求离开房间 | `SocketUpRoomReq` |
+| `__room_broadcast_up__`   | 浏览器请求房间广播 | `SocketUpReq`     |
+| `__global_broadcast_up__` | 浏览器请求全局广播 | `SocketUpReq`     |
 
 ### 4.2 服务器推送事件
 
 | 事件名称            | 描述      | 数据格式         |
 |-----------------|---------|--------------|
-| `__down__`      | 服务器响应消息 | `SocketResp` |
-| `__stat_down__` | 统计信息推送  | `StatDown`   |
-| 自定义事件           | 业务事件推送  | `SocketDown` |
+| `__down__`      | 非 ack 模式下的服务器异步响应（socketgtw -> 浏览器） | `SocketResp` |
+| `__stat_down__` | 统计信息下行推送 | `StatDown`   |
+| 自定义事件           | 服务器主动业务推送 | `SocketDown` |
+
+`__down__` 是系统保留事件，主要用于客户端请求的异步响应。后端主动推送业务通知时，推荐使用自定义事件名（如 `mqtt`、`alarm`、`drc:heart_beat`），数据结构仍使用 `SocketDown`。
+
+> 当前服务端实现会以 JSON 字符串形式发送 `__down__`、`__stat_down__` 和自定义事件的消息体。前端可按需使用 `JSON.parse` 或统一封装解析函数将其转换为对象。
 
 ## 5. 数据结构定义
 
@@ -293,7 +326,7 @@ const socket = io('http://your-server-url:port', {
 
 | 字段名        | 类型                  | 描述        |
 |------------|---------------------|-----------|
-| `sId`      | `string`            | 会话ID      |
+| `socketId` | `string`            | 会话ID      |
 | `rooms`    | `[]string`          | 当前加入的房间列表 |
 | `nps`      | `string`            | 命名空间      |
 | `metadata` | `map[string]string` | 会话元数据     |
@@ -303,7 +336,7 @@ const socket = io('http://your-server-url:port', {
 
 ```json
 {
-  "sId": "socket-123",
+  "socketId": "socket-123",
   "rooms": [
     "room1",
     "room2"
@@ -321,7 +354,7 @@ const socket = io('http://your-server-url:port', {
 
 ```json
 {
-  "sId": "3fcd4875-cbfb-4d93-85b6-6f00540e9d45",
+  "socketId": "3fcd4875-cbfb-4d93-85b6-6f00540e9d45",
   "rooms": [],
   "nps": "/",
   "roomLoadError": "rpc error: code = Unavailable desc = last connection error: connection error: desc = \"transport: Error while dialing: dial tcp 127.0.0.1:21009: connect: connection refused\""
@@ -352,12 +385,14 @@ const socket = io('http://your-server-url:port', {
 ```javascript
 // 监听自定义事件
 socket.on('chat_message', (data) => {
-    console.log('收到聊天消息:', data);
+    const message = normalizeSocketPayload(data);
+    console.log('收到聊天消息:', message);
 });
 
 // 监听订单状态变化
 socket.on('order_status_change', (data) => {
-    console.log('订单状态变化:', data);
+    const event = normalizeSocketPayload(data);
+    console.log('订单状态变化:', event);
 });
 ```
 
@@ -385,7 +420,8 @@ socket.emit('__up__', {
 });
 
 // 监听__down__事件获取响应
-socket.on('__down__', (response) => {
+socket.on('__down__', (data) => {
+    const response = normalizeSocketPayload(data);
     console.log('收到服务器响应:', response);
     
     // 根据reqId匹配请求和响应
@@ -417,11 +453,12 @@ socket.on('__down__', (response) => {
 ```javascript
 // 监听 __stat_down__ 事件
 socket.on('__stat_down__', (data) => {
-    console.log('收到统计信息:', data);
+    const stat = normalizeSocketPayload(data);
+    console.log('收到统计信息:', stat);
     
     // 检查房间加载错误
-    if (data.roomLoadError) {
-        console.error('房间加载失败:', data.roomLoadError);
+    if (stat.roomLoadError) {
+        console.error('房间加载失败:', stat.roomLoadError);
         
         // 根据业务需求决定处理方式
         // 方式1：断联重连
@@ -434,7 +471,7 @@ socket.on('__stat_down__', (data) => {
         // showErrorMessage('房间加载失败，请刷新页面重试');
     } else {
         // 房间加载成功，处理其他逻辑
-        console.log('房间加载成功，当前房间:', data.rooms);
+        console.log('房间加载成功，当前房间:', stat.rooms);
     }
 });
 ```
@@ -460,7 +497,8 @@ socket.on('__stat_down__', (data) => {
     - 自定义事件使用驼峰命名，如`chatMessage`、`orderStatusChange`
     - 避免使用特殊字符和空格
 3. **数据格式**：
-    - `payload`使用JSON对象格式，无需转换为字符串
+    - 客户端发送 `payload` 时使用 JSON 对象格式，无需转换为字符串
+    - 服务端当前下行消息体以 JSON 字符串发送，客户端监听后建议统一解析为对象再处理
     - 支持各种数据类型，包括字符串、数字、布尔值、数组、对象等
 4. **鉴权方式**：
     - 使用SocketIO原生的`auth`选项传递令牌，不要使用其他方式
@@ -538,10 +576,11 @@ SocketIO 推送给前端客户端。不同的 MQTT topic 会映射到不同的 S
 ```javascript
 // 监听 MQTT 桥接消息
 socket.on('mqtt', (data) => {
-    console.log('收到 MQTT 桥接消息:', data);
+    const message = normalizeSocketPayload(data);
+    console.log('收到 MQTT 桥接消息:', message);
 
     // 处理 IEC 104 协议数据（示例，基于 iec104-protocol.md 定义）
-    const payload = data.payload;
+    const payload = message.payload;
     if (payload.asdu === 'M_SP_NA_1') {
         // 处理单点信息
         const body = payload.body;
@@ -598,27 +637,27 @@ DefaultEvent: "mqtt"
 ```javascript
 // 监听IEC104设备消息
 socket.on('iec104', (data) => {
-    console.log('收到IEC104设备消息:', data);
+    console.log('收到IEC104设备消息:', normalizeSocketPayload(data));
 });
 
 // 监听告警消息
 socket.on('alarm', (data) => {
-    console.log('收到告警消息:', data);
+    console.log('收到告警消息:', normalizeSocketPayload(data));
 });
 
 // 监听设备状态消息
 socket.on('deviceStatus', (data) => {
-    console.log('收到设备状态消息:', data);
+    console.log('收到设备状态消息:', normalizeSocketPayload(data));
 });
 
 // 监听心跳消息
 socket.on('heartbeat', (data) => {
-    console.log('收到心跳消息:', data);
+    console.log('收到心跳消息:', normalizeSocketPayload(data));
 });
 
 // 监听默认MQTT消息（未匹配到映射规则的消息）
 socket.on('mqtt', (data) => {
-    console.log('收到其他MQTT消息:', data);
+    console.log('收到其他MQTT消息:', normalizeSocketPayload(data));
 });
 ```
 
@@ -638,6 +677,8 @@ socket.on('mqtt', (data) => {
 
 大疆云端服务通过 DRC（Direct Remote Control）通道实现对设备的远程操控。DRC 会话的生命周期事件通过 SocketIO 推送到前端，前端可根据这些事件实时感知 DRC 模式的开启、关闭和异常过期状态，同步 UI 状态（如 DRC 操控按钮的启停）。
 
+本章节同时涉及 DJI Cloud API 和 SocketIO 两套连接方向：DJI 的 `drc/up` 表示 DJI 设备上行到云平台，SocketIO 的 DRC 自定义事件表示云平台下行推送到浏览器。因此设备心跳到达前端的完整链路是 `DJI drc/up -> djicloud -> SocketIO drc:heart_beat`。
+
 ### 12.2 房间规则
 
 所有 DRC 相关事件共用一个房间，房间命名规则：
@@ -652,10 +693,10 @@ socket.on('mqtt', (data) => {
 
 | 事件名 | 触发时机 | 方向 | 说明 |
 |--------|---------|------|------|
-| `drc:heart_beat` | 设备心跳上行 | 设备 → 云 → 前端 | DRC 通道存活心跳，设备周期上报 |
-| `drc:session_enabled` | DRC 模式启用 | 云 → 前端 | gRPC 调用 `DrcModeEnter` 成功后推送，前端可开启 DRC 操控 UI |
-| `drc:session_disabled` | DRC 模式停用 | 云 → 前端 | gRPC 调用 `DrcModeExit` 成功后推送，前端应关闭 DRC 操控按钮 |
-| `drc:session_expired` | DRC 会话自动过期 | 云 → 前端 | 会话因 MaxDeadline 到期、设备心跳超时、cleanLoop 孤儿清理等非主动原因被清除时推送，前端应关闭 DRC 操控按钮 |
+| `drc:heart_beat` | 设备心跳上行 | DJI 设备 -> 云 -> 浏览器 | DRC 通道存活心跳，设备经 `drc/up` 周期上报，云平台再通过 SocketIO 下推给前端 |
+| `drc:session_enabled` | DRC 模式启用 | 云 -> 浏览器 | gRPC 调用 `DrcModeEnter` 成功后推送，前端可开启 DRC 操控 UI |
+| `drc:session_disabled` | DRC 模式停用 | 云 -> 浏览器 | gRPC 调用 `DrcModeExit` 成功后推送，前端应关闭 DRC 操控按钮 |
+| `drc:session_expired` | DRC 会话自动过期 | 云 -> 浏览器 | 会话因 MaxDeadline 到期、设备心跳超时、cleanLoop 孤儿清理等非主动原因被清除时推送，前端应关闭 DRC 操控按钮 |
 
 ### 12.4 数据结构
 
@@ -767,30 +808,34 @@ function leaveDrcRoom(gatewaySn) {
 
 // 监听 DRC 模式启用 — 开启操控 UI
 socket.on('drc:session_enabled', (data) => {
-  console.log('DRC 模式已启用:', data.payload.gateway_sn, data.payload.session_id);
+  const message = normalizeSocketPayload(data);
+  console.log('DRC 模式已启用:', message.payload.gateway_sn, message.payload.session_id);
   // 开启 DRC 操控按钮/面板
-  enableDrcControls(data.payload.gateway_sn);
+  enableDrcControls(message.payload.gateway_sn);
 });
 
 // 监听 DRC 模式停用 — 关闭操控 UI（主动退出）
 socket.on('drc:session_disabled', (data) => {
-  console.log('DRC 模式已停用:', data.payload.gateway_sn, data.payload.session_id);
+  const message = normalizeSocketPayload(data);
+  console.log('DRC 模式已停用:', message.payload.gateway_sn, message.payload.session_id);
   // 关闭 DRC 操控按钮/面板
-  disableDrcControls(data.payload.gateway_sn);
+  disableDrcControls(message.payload.gateway_sn);
 });
 
 // 监听 DRC 会话过期 — 关闭操控 UI（异常过期）
 socket.on('drc:session_expired', (data) => {
-  console.warn('DRC 会话已过期:', data.payload.gateway_sn, data.payload.reason);
+  const message = normalizeSocketPayload(data);
+  console.warn('DRC 会话已过期:', message.payload.gateway_sn, message.payload.reason);
   // 关闭 DRC 操控按钮/面板，提示用户会话已过期
-  disableDrcControls(data.payload.gateway_sn);
-  showDrcExpiredWarning(data.payload.reason);
+  disableDrcControls(message.payload.gateway_sn);
+  showDrcExpiredWarning(message.payload.reason);
 });
 
 // 监听设备心跳 — 更新存活状态
 socket.on('drc:heart_beat', (data) => {
+  const message = normalizeSocketPayload(data);
   // 心跳持续到达表示 DRC 通道正常
-  updateDrcAliveStatus(data.payload.gateway_sn);
+  updateDrcAliveStatus(message.payload.gateway_sn);
 });
 ```
 
@@ -803,10 +848,13 @@ socket.on('drc:heart_beat', (data) => {
    - `heartbeat_timeout`：设备心跳超时（设备与云端 DRC 通道断开），缓存 TTL 驱逐
 4. **心跳事件频率**：`drc:heart_beat` 事件频率较高（默认 2 秒间隔），前端监听时应避免在每次收到时执行重渲染，建议仅用于存活状态更新。
 5. **事件顺序**：`drc:session_enabled` 一定在 `drc:heart_beat` 之前到达；`drc:session_disabled` 或 `drc:session_expired` 到达后不会再有 `drc:heart_beat`。
+6. **方向转换**：前端控制设备时通常是 `SocketIO __up__ 或业务接口 -> djicloud -> DJI services/drc/down`；设备状态展示到前端时通常是 `DJI events/osd/state/drc/up -> djicloud -> SocketIO 自定义下行事件`。
 
 ## 13. 后端推送 API 参考
 
 后端服务通过 gRPC 调用 socketpush 向前端推送消息，以下为核心接口：
+
+当前 socketpush 到 socketgtw 的推送为集群扇出模型：socketpush 会把广播、单播、按元数据推送等请求转发到已发现的 socketgtw 节点。RPC 返回成功表示推送请求已被后端服务接受并发起转发，不等同于浏览器客户端已经收到消息；业务若需要端到端送达确认，应在业务协议中额外设计客户端 ack。
 
 | 方法 | 说明 |
 |------|------|
@@ -826,6 +874,7 @@ socket.on('drc:heart_beat', (data) => {
 
 | 版本  | 日期         | 说明                                        |
 |-----|------------|-------------------------------------------|
+| 2.7 | 2026-05-25 | 补充 up/down 方向锚点、DJI 与 SocketIO 桥接方向、下行解析和推送语义说明；修正 `StatDown.socketId` 字段名 |
 | 2.6 | 2026-05-09 | 添加 DRC 远程控制对接指导（房间规则、事件列表、数据结构、前端示例） |
 | 2.5 | 2026-03-19 | 添加架构概览、服务端配置参考、GenToken 接口说明、后端推送 API 参考 |
 | 2.4 | 2026-03-06 | 添加房间加载错误处理机制，在 `__stat_down__` 事件中包含 `roomLoadError` 字段 |

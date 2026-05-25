@@ -2,7 +2,6 @@ package solo
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"zero-service/aiapp/aigtw/internal/svc"
@@ -32,14 +31,14 @@ func NewGetInterruptLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetI
 func (l *GetInterruptLogic) GetInterrupt(req *types.SoloGetInterruptRequest) (*types.SoloGetInterruptResponse, error) {
 	userID := ctxdata.GetUserId(l.ctx)
 	if userID == "" {
-		return nil, errors.New("missing user id in context")
+		return nil, unauthenticatedError("missing user id in context")
 	}
 	if req == nil {
-		return nil, errors.New("get interrupt request is required")
+		return nil, invalidRequestError("get interrupt request is required")
 	}
 	interruptID := strings.TrimSpace(req.InterruptId)
 	if interruptID == "" {
-		return nil, errors.New("interruptId is required")
+		return nil, invalidRequestError("interruptId is required")
 	}
 	resp, err := l.svcCtx.AiSoloCli.GetInterrupt(l.ctx, &aisolo.GetInterruptReq{
 		InterruptId: interruptID,

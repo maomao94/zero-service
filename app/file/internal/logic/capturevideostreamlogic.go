@@ -2,13 +2,14 @@ package logic
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 
 	"zero-service/app/file/file"
 	"zero-service/app/file/internal/svc"
-	media "zero-service/common/mediax"
+	"zero-service/common/mediax"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -31,15 +32,15 @@ func NewCaptureVideoStreamLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 func (l *CaptureVideoStreamLogic) CaptureVideoStream(in *file.CaptureVideoStreamReq) (*file.CaptureVideoStreamRes, error) {
 	ossTemplate, err := l.svcCtx.GetOssTemplate(l.ctx, in.TenantId, in.Code)
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "获取OSS模板失败")
 	}
 	shot, err := media.NewScreenshotter(in.StreamUrl)
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "创建截图器失败")
 	}
 	cutFilePath, err := shot.CaptureFrameToFile(l.ctx, -1, shot.GenerateTempFilePath(l.svcCtx.Config.Upload.TempDir, ".jpg"))
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "视频截图失败")
 	}
 	defer func() {
 		if err := os.Remove(cutFilePath); err != nil {
@@ -49,13 +50,13 @@ func (l *CaptureVideoStreamLogic) CaptureVideoStream(in *file.CaptureVideoStream
 
 	cutFile, err := os.Open(cutFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("open capture file failed: %w", err)
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "open capture file failed")
 	}
 	defer cutFile.Close()
 
 	fileInfo, err := cutFile.Stat()
 	if err != nil {
-		return nil, fmt.Errorf("stat capture file failed: %w", err)
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "stat capture file failed")
 	}
 
 	uploadedFile, err := ossTemplate.PutObject(
@@ -63,7 +64,7 @@ func (l *CaptureVideoStreamLogic) CaptureVideoStream(in *file.CaptureVideoStream
 		cutFile, fileInfo.Size(), in.PathPrefix,
 	)
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "上传截图到OSS失败")
 	}
 
 	var pbFile file.File

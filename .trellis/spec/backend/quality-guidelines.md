@@ -30,6 +30,27 @@
 - 跨模块或公共组件变更后扩大到 `go build ./...`、`go test ./...` 或 `go vet ./...`。
 - 未执行的验证必须说明原因，例如缺少外部服务、环境变量、数据库或部署凭据。
 
+## 公共组件安全修复模式
+
+清理 `common/` 下的代码时，遵循以下边界，避免破坏已有协议：
+
+| 原则 | 说明 | 示例 |
+|------|------|------|
+| 不改公开事件名 | 事件字符串常量不变（如 `EventUp`/`EventDown`） | `EventUp = "__up__"` 不能改动 |
+| 不改 JSON 字段名 | 避免改动 `json:"xxx"` tag，除非文档对齐 | SocketIO 会话字段统一用 `socketId`，不新增 `sId` 兼容字段 |
+| 不改 payload 形态 | 下行消息的序列化方式（JSON object vs string）不变 | 当前是 JSON string emit，不改 object |
+| 不改推送语义 | socketpush 的 fan-out 和 best-effort 行为不变 | 不改成功/失败语义 |
+| 不改外部 API | gRPC 方法签名、返回类型、proto 字段不变 | 只修内部实现细节 |
+
+**允许的低风险改动**：
+
+- 日志脱敏：用 `token_present=%t` 替代明文 token
+- nil 保护：`Close`、`Emit*` 等方法增加 nil 检查
+- 幂等性：`Stop()` 改用 `sync.Once`
+- 校验前置：先校验参数再构造 payload
+- 错误记录：原被忽略的错误改为 `logx.Error` 记录
+- 风格升级：`interface{}` → `any`、nil length 简化、`maps.Copy`/`slices.Contains`
+
 ## 代码审查清单
 
 - [ ] 变更范围是否只覆盖用户需求。

@@ -35,7 +35,7 @@ func NewResumeLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ResumeLogi
 func (l *ResumeLogic) Resume(req *types.SoloInterruptRequest, w io.Writer) error {
 	userID := ctxdata.GetUserId(l.ctx)
 	if userID == "" {
-		return errors.New("missing user id in context")
+		return unauthenticatedError("missing user id in context")
 	}
 	if err := ValidateResumeRequest(req); err != nil {
 		return err

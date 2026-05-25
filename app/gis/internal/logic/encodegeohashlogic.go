@@ -2,10 +2,11 @@ package logic
 
 import (
 	"context"
-	"errors"
 	"zero-service/app/gis/gis"
 
 	"zero-service/app/gis/internal/svc"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/mmcloughlin/geohash"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -25,19 +26,15 @@ func NewEncodeGeoHashLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Enc
 	}
 }
 
-// 编码 geohash
 func (l *EncodeGeoHashLogic) EncodeGeoHash(in *gis.EncodeGeoHashReq) (*gis.EncodeGeoHashRes, error) {
 	if in.Point == nil {
-		return nil, errors.New("参数错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "point")
 	}
-	// 默认精度 9
 	precision := int(in.Precision)
 	if precision <= 0 {
 		precision = 7
 	}
-
 	hash := geohash.EncodeWithPrecision(in.Point.Lat, in.Point.Lon, uint(precision))
-
 	return &gis.EncodeGeoHashRes{
 		Geohash: hash,
 	}, nil

@@ -22,6 +22,89 @@
 - 不主动创建额外文档或注释；但 `.api`、`.proto`、导出公共能力和复杂协议字段必须保留必要说明。
 - 总结时说明改动内容、影响范围、已执行验证和未验证原因。
 
+## AI 工具诊断配置
+
+### 1. Scope / Trigger
+
+- Trigger: 当 `lsp_diagnostics` 对项目内文档、配置或脚本提示 `No LSP server configured for extension`，先补语言服务器和 OpenCode LSP 绑定，再把诊断作为验证手段使用。
+- Scope: 只记录可复用的命令、配置结构和验证方式；不要把个人绝对路径、API Key、Token 或本机账号写进 spec、规则、提交信息或总结。
+
+### 2. Signatures
+
+- Markdown LSP: `marksman server`
+- Homebrew 安装：`brew install marksman`
+- OpenCode 配置根节点：`lsp.<serverName>.command` + `lsp.<serverName>.extensions`
+
+### 3. Contracts
+
+```jsonc
+{
+  "lsp": {
+    "marksman": {
+      "command": ["marksman", "server"],
+      "extensions": [".md"]
+    }
+  }
+}
+```
+
+- `command` 必须是可在当前 shell `PATH` 中解析的命令和参数数组。
+- `extensions` 使用带点扩展名，例如 `.md`。
+- 优先把通用 LSP 绑定写入 OpenCode `opencode.json(c)` 的根级 `lsp`；不要写入旧 OhMyOpenAgent 插件私有配置的顶层 `lsp`。
+- 如果只配置 OhMyOpenAgent 的 LSP MCP 项目级 server map，使用项目内 `.opencode/lsp.json`，不要和 OpenCode 原生 `opencode.json(c)` 配置混用。
+- 优先使用 Homebrew 安装本地工具；只有 Homebrew 无可用公式或用户明确同意时，再考虑 npm 全局安装。
+
+### 4. Validation & Error Matrix
+
+| 条件 | 处理 |
+|------|------|
+| `command -v marksman` 为空 | 先通过 Homebrew 安装 `marksman` |
+| `marksman --version` 失败 | 修复安装或 PATH，不写 OpenCode 配置 |
+| `lsp_diagnostics` 仍提示 `.md` 未配置 | 检查 OpenCode 配置是否有根级 `lsp.marksman` |
+| OpenCode 启动或 `opencode --help` 失败 | 回退刚加入的 JSONC 配置并修正语法 |
+| Markdown 跨文件引用/补全异常 | 确认项目是 Git 仓库，或按 Marksman 规则补 `.marksman.toml` |
+| spec/总结需要描述本机配置 | 使用“用户级配置”这类泛称，不写个人绝对路径或密钥 |
+
+### 5. Good/Base/Bad Cases
+
+- Good: `marksman --version` 成功，`lsp_diagnostics` 对 `.md` 返回真实诊断或 `No diagnostics found`。
+- Base: `.md` 文件没有 Markdown LSP 时，用 `git diff --check` 做最低限度格式验证，并说明未执行 LSP 的原因。
+- Bad: 工具已安装但未绑定 OpenCode，仍把 `No LSP server configured` 当作文件无问题。
+
+### 6. Tests Required
+
+- 安装验证：执行 `marksman --version`。
+- 配置验证：执行 `opencode --help` 或同等只读命令，确认配置可解析。
+- 诊断验证：对一个项目内 `.md` 文件执行 `lsp_diagnostics`，断言不再出现 `No LSP server configured for extension: .md`。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```jsonc
+{
+  "lsp": {
+    "marksman": {
+      "command": ["marksman"],
+      "extensions": ["md"]
+    }
+  }
+}
+```
+
+#### Correct
+
+```jsonc
+{
+  "lsp": {
+    "marksman": {
+      "command": ["marksman", "server"],
+      "extensions": [".md"]
+    }
+  }
+}
+```
+
 ## 代码生成流程
 
 每个业务服务通常提供 `gen.sh` 脚本用于基础代码生成：

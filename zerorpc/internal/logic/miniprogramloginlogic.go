@@ -2,7 +2,8 @@ package logic
 
 import (
 	"context"
-	"github.com/songzhibin97/gkit/errors"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"zero-service/zerorpc/internal/svc"
 	"zero-service/zerorpc/zerorpc"
@@ -32,7 +33,7 @@ func (l *MiniProgramLoginLogic) MiniProgramLogin(in *zerorpc.MiniProgramLoginReq
 	}
 	if se.ErrCode != 0 {
 		l.WithContext(l.ctx).Errorf("小程序登录失败 errCode:%v", se.ErrCode)
-		return nil, errors.BadRequest("9999", "小程序登录失败")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_06_THIRD_PARTY, "小程序登录失败")
 	}
 	return &zerorpc.MiniProgramLoginRes{
 		OpenId:     se.OpenID,

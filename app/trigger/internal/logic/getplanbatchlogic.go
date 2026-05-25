@@ -12,7 +12,6 @@ import (
 
 	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/strutil"
-	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
@@ -40,7 +39,7 @@ func (l *GetPlanBatchLogic) GetPlanBatch(in *trigger.GetPlanBatchReq) (*trigger.
 	}
 
 	if in.Id <= 0 && strutil.IsBlank(in.BatchId) {
-		return nil, errors.BadRequest("", "参数错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
 	}
 	var planBatch *model.PlanBatch
 	if in.Id > 0 {
@@ -52,19 +51,19 @@ func (l *GetPlanBatchLogic) GetPlanBatch(in *trigger.GetPlanBatchReq) (*trigger.
 		if err == sqlx.ErrNotFound {
 			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST)
 		}
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划批次失败")
 	}
 
 	// 获取批次执行项状态统计
 	statusCounts, err := l.svcCtx.PlanExecItemModel.GetBatchStatusCounts(l.ctx, planBatch.Id)
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "获取批次状态统计失败")
 	}
 
 	// 获取批次总执行项数
 	totalExecItems, err := l.svcCtx.PlanExecItemModel.GetBatchTotalExecItems(l.ctx, planBatch.Id)
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "获取批次总数失败")
 	}
 
 	// 初始化状态统计

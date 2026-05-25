@@ -11,9 +11,9 @@ import (
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/tool"
 	"zero-service/model"
+	"zero-service/third_party/extproto"
 
 	"github.com/duke-git/lancet/v2/strutil"
-	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
@@ -42,7 +42,7 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 
 	// 检查参数
 	if in.Id <= 0 && strutil.IsBlank(in.PlanId) {
-		return nil, errors.BadRequest("", "参数错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
 	}
 
 	// 查询计划
@@ -53,11 +53,11 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 		plan, err = l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, in.PlanId)
 	}
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
 	}
 
 	if plan.Status == int64(model.PlanStatusTerminated) || plan.FinishedTime.Valid {
-		return nil, errors.BadRequest("", "计划状态已结束,无需终止")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划状态已结束,无需终止")
 	}
 
 	// 执行事务
@@ -93,7 +93,7 @@ func (l *TerminatePlanLogic) TerminatePlan(in *trigger.TerminatePlanReq) (*trigg
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "终止计划事务失败")
 	}
 	planPlanReq := streamevent.NotifyPlanEventReq{
 		EventType: streamevent.PlanEventType_PLAN_FINISHED,

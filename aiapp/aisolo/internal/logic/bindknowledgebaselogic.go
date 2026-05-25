@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"time"
 
@@ -10,6 +9,8 @@ import (
 
 	"zero-service/aiapp/aisolo/aisolo"
 	"zero-service/aiapp/aisolo/internal/svc"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 )
 
 type BindKnowledgeBaseLogic struct {
@@ -28,23 +29,23 @@ func NewBindKnowledgeBaseLogic(ctx context.Context, svcCtx *svc.ServiceContext) 
 
 func (l *BindKnowledgeBaseLogic) BindKnowledgeBase(in *aisolo.BindKnowledgeBaseReq) (*aisolo.BindKnowledgeBaseResp, error) {
 	if in == nil {
-		return nil, errors.New("bind knowledge base request is required")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "bind knowledge base request is required")
 	}
 	userID := strings.TrimSpace(in.GetUserId())
 	sessionID := strings.TrimSpace(in.GetSessionId())
 	if userID == "" || sessionID == "" {
-		return nil, errors.New("user_id and session_id are required")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "user_id and session_id are required")
 	}
 	kb := strings.TrimSpace(in.GetKnowledgeBaseId())
 	if kb == "" {
-		return nil, errors.New("knowledge_base_id is required")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "knowledge_base_id is required")
 	}
 	sess, err := l.svcCtx.Sessions.GetSession(l.ctx, userID, sessionID)
 	if err != nil {
 		return nil, err
 	}
 	if sess.Status == aisolo.SessionStatus_SESSION_STATUS_RUNNING {
-		return nil, errors.New("cannot bind knowledge base while session is running")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "cannot bind knowledge base while session is running")
 	}
 	sess.KnowledgeBaseID = kb
 	sess.KnowledgeBaseName = strings.TrimSpace(in.GetKnowledgeBaseName())

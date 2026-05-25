@@ -9,9 +9,9 @@ import (
 	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
 	"zero-service/model"
+	"zero-service/third_party/extproto"
 
 	"github.com/duke-git/lancet/v2/strutil"
-	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
@@ -40,7 +40,7 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 
 	// 检查参数
 	if in.Id <= 0 && strutil.IsBlank(in.ExecId) {
-		return nil, errors.BadRequest("", "参数错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
 	}
 
 	// 查询执行项
@@ -51,29 +51,29 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 		execItem, err = l.svcCtx.PlanExecItemModel.FindOneByExecId(l.ctx, in.ExecId)
 	}
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询执行项失败")
 	}
 
 	// 查询计划批次
 	planBatch, err := l.svcCtx.PlanBatchModel.FindOne(l.ctx, execItem.BatchPk)
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划批次失败")
 	}
 	// 查询计划
 	plan, err := l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, execItem.PlanId)
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
 	}
 	if plan.Status == int64(model.PlanStatusTerminated) || plan.FinishedTime.Valid {
-		return nil, errors.BadRequest("", "计划状态已结束,无需终止")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划状态已结束,无需终止")
 	}
 
 	if planBatch.Status == int64(model.PlanStatusTerminated) || planBatch.FinishedTime.Valid {
-		return nil, errors.BadRequest("", "计划批次状态已结束,无需终止")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划批次状态已结束,无需终止")
 	}
 
 	if execItem.Status == int64(model.StatusCompleted) || execItem.Status == int64(model.StatusTerminated) {
-		return nil, errors.BadRequest("", "执行项状态已结束,无需终止")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "执行项状态已结束,无需终止")
 	}
 
 	scope := planscope.ExecScope(execItem)
@@ -97,7 +97,7 @@ func (l *TerminatePlanExecItemLogic) TerminatePlanExecItem(in *trigger.Terminate
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "终止执行项事务失败")
 	}
 	batchCount, err := l.svcCtx.PlanBatchModel.UpdateBatchFinishedTime(l.ctx, execItem.BatchPk)
 	if err != nil {

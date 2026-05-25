@@ -2,10 +2,12 @@ package logic
 
 import (
 	"context"
-	"errors"
 	"zero-service/app/gis/gis"
+
 	"zero-service/app/gis/internal/svc"
 	"zero-service/common/gisx"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/paulmach/orb"
 	"github.com/uber/h3-go/v4"
@@ -38,10 +40,9 @@ func (l *GenerateFenceH3CellsLogic) GenerateFenceH3Cells(in *gis.GenFenceH3Cells
 			return nil, err
 		}
 	} else if in.FenceId != "" {
-		// TODO: 从数据库/缓存加载 polygon
-		return nil, errors.New("FenceId加载逻辑未实现")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "FenceId加载逻辑未实现")
 	} else {
-		return nil, errors.New("必须提供Points或有效的FenceId")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "points 或 fence_id")
 	}
 
 	resolution := in.Resolution
@@ -50,8 +51,8 @@ func (l *GenerateFenceH3CellsLogic) GenerateFenceH3Cells(in *gis.GenFenceH3Cells
 	}
 
 	// 验证分辨率范围
-	if resolution < 0 || resolution > 15 {
-		return nil, errors.New("H3分辨率必须在0-15之间")
+	if resolution > 15 {
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "H3分辨率必须在0-15之间")
 	}
 
 	geoPolygon, err := gisx.OrbPolygonToH3GeoPolygon(polygon)

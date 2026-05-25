@@ -2,10 +2,11 @@ package logic
 
 import (
 	"context"
-	"errors"
 	"zero-service/app/gis/gis"
 
 	"zero-service/app/gis/internal/svc"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/planar"
@@ -46,9 +47,9 @@ func (l *PointInFenceLogic) PointInFence(in *gis.PointInFenceReq) (*gis.PointInF
 		// if err != nil {
 		// 	return nil, err
 		// }
-		return nil, errors.New("FenceId加载逻辑未实现")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "FenceId加载逻辑未实现")
 	} else {
-		return nil, errors.New("必须提供Points或有效的FenceId")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "Points或FenceId")
 	}
 	point := orb.Point{in.Point.Lon, in.Point.Lat}
 	hit := planar.PolygonContains(polygon, point)

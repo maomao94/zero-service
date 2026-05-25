@@ -11,6 +11,8 @@ import (
 
 	"zero-service/app/lalproxy/internal/svc"
 	"zero-service/app/lalproxy/lalproxy"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -34,7 +36,7 @@ func NewGetGroupInfoLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetG
 func (l *GetGroupInfoLogic) GetGroupInfo(in *lalproxy.GetGroupInfoReq) (*lalproxy.GetGroupInfoRes, error) {
 	// 参数验证
 	if in.StreamName == "" {
-		return nil, fmt.Errorf("流名称不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "流名称不能为空")
 	}
 	// 构建请求URL
 	queryParams := url.Values{}
@@ -44,7 +46,7 @@ func (l *GetGroupInfoLogic) GetGroupInfo(in *lalproxy.GetGroupInfoReq) (*lalprox
 	resp, err := l.svcCtx.LalClient.Do(l.ctx, http.MethodGet, fullUrl, nil)
 	if err != nil {
 		l.Logger.Errorf("调用LAL API失败: %v, URL: %s", err, fullUrl)
-		return nil, fmt.Errorf("调用LAL API失败: %w", err)
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "调用LAL API失败")
 	}
 	defer resp.Body.Close()
 
@@ -52,13 +54,13 @@ func (l *GetGroupInfoLogic) GetGroupInfo(in *lalproxy.GetGroupInfoReq) (*lalprox
 	if resp.StatusCode != 200 {
 		body, _ := io.ReadAll(resp.Body)
 		l.Logger.Errorf("LAL API返回非200状态码: %d, 响应内容: %s", resp.StatusCode, string(body))
-		return nil, fmt.Errorf("LAL API返回异常状态码: %d", resp.StatusCode)
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_06_THIRD_PARTY, fmt.Sprintf("LAL API返回异常状态码: %d", resp.StatusCode))
 	}
 	// 读取响应体
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		l.Logger.Errorf("读取响应体失败: %v", err)
-		return nil, fmt.Errorf("读取响应体失败: %w", err)
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "读取响应体失败")
 	}
 
 	// 解析JSON响应
@@ -69,13 +71,13 @@ func (l *GetGroupInfoLogic) GetGroupInfo(in *lalproxy.GetGroupInfoReq) (*lalprox
 	}
 	if err := json.Unmarshal(body, &httpResp); err != nil {
 		l.Logger.Errorf("解析响应JSON失败: %v, 响应内容: %s", err, string(body))
-		return nil, fmt.Errorf("解析响应JSON失败: %w", err)
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "解析响应JSON失败")
 	}
 	data := &lalproxy.GroupData{}
 	err = copier.Copy(data, httpResp.Data)
 	if err != nil {
 		l.Logger.Errorf("转换数据结构失败: %v", err)
-		return nil, fmt.Errorf("转换数据结构失败: %w", err)
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "转换数据结构失败")
 	}
 	// LAL返回的错误通过响应结构体传递，不返回error
 	return &lalproxy.GetGroupInfoRes{

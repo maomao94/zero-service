@@ -2,11 +2,13 @@ package logic
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"zero-service/app/gis/gis"
+
 	"zero-service/app/gis/internal/svc"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/geo"
@@ -30,13 +32,12 @@ func NewBatchDistanceLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Bat
 // 批量计算两点之间的距离（米）
 func (l *BatchDistanceLogic) BatchDistance(in *gis.BatchDistanceReq) (*gis.BatchDistanceRes, error) {
 	if len(in.Pairs) == 0 {
-		return nil, errors.New("pairs 不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "pairs")
 	}
-
 	meters := make([]float64, len(in.Pairs))
 	for i, pair := range in.Pairs {
 		if err := ValidatePoints(pair.A, pair.B); err != nil {
-			return nil, fmt.Errorf("第 %d 个点对错误: %w", i, err)
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, fmt.Sprintf("第 %d 个点对错误", i))
 		}
 		a := orb.Point{pair.A.Lon, pair.A.Lat}
 		b := orb.Point{pair.B.Lon, pair.B.Lat}

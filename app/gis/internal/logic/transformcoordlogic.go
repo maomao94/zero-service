@@ -2,10 +2,12 @@ package logic
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"zero-service/app/gis/gis"
+
 	"zero-service/app/gis/internal/svc"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/qichengzx/coordtransform"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -28,7 +30,7 @@ func NewTransformCoordLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Tr
 // 单个坐标转换
 func (l *TransformCoordLogic) TransformCoord(in *gis.TransformCoordReq) (*gis.TransformCoordRes, error) {
 	if err := l.validateReq(in); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_01_PARAM_INVALID, err, "坐标转换请求参数无效")
 	}
 	if in.SourceType == in.TargetType {
 		return &gis.TransformCoordRes{
@@ -51,27 +53,22 @@ func (l *TransformCoordLogic) TransformCoord(in *gis.TransformCoordReq) (*gis.Tr
 
 func (l *TransformCoordLogic) validateReq(in *gis.TransformCoordReq) error {
 	if in.Point == nil {
-		return errors.New("point cannot be nil")
+		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "point")
 	}
-
-	// 校验经纬度范围（避免明显非法值）
 	if in.Point.Lat < -90 || in.Point.Lat > 90 {
-		return fmt.Errorf("invalid lat: %v (must be between -90 and 90)", in.Point.Lat)
+		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, fmt.Sprintf("invalid lat: %v (valid -90~90)", in.Point.Lat))
 	}
 	if in.Point.Lon < -180 || in.Point.Lon > 180 {
-		return fmt.Errorf("invalid lon: %v (must be between -180 and 180)", in.Point.Lon)
+		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, fmt.Sprintf("invalid lon: %v (valid -180~180)", in.Point.Lon))
 	}
-
 	sourceVal := uint32(in.SourceType)
 	if sourceVal < 1 || sourceVal > 3 {
-		return fmt.Errorf("invalid source_type: %v (only support 1=WGS84, 2=GCJ02, 3=BD09)", sourceVal)
+		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, fmt.Sprintf("invalid source_type: %v (only support 1=WGS84, 2=GCJ02, 3=BD09)", sourceVal))
 	}
-
 	targetVal := uint32(in.TargetType)
 	if targetVal < 1 || targetVal > 3 {
-		return fmt.Errorf("invalid target_type: %v (only support 1=WGS84, 2=GCJ02, 3=BD09)", targetVal)
+		return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, fmt.Sprintf("invalid target_type: %v (only support 1=WGS84, 2=GCJ02, 3=BD09)", targetVal))
 	}
-
 	return nil
 }
 

@@ -2,10 +2,11 @@ package logic
 
 import (
 	"context"
-	"errors"
 	"zero-service/app/gis/gis"
 
 	"zero-service/app/gis/internal/svc"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/mmcloughlin/geohash"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -28,7 +29,7 @@ func NewDecodeGeoHashLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Dec
 // 解码 geohash -> 经纬度
 func (l *DecodeGeoHashLogic) DecodeGeoHash(in *gis.DecodeGeoHashReq) (*gis.DecodeGeoHashRes, error) {
 	if in.Geohash == "" {
-		return nil, errors.New("参数错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "geohash")
 	}
 	// 中心点
 	lat, lon := geohash.DecodeCenter(in.Geohash)

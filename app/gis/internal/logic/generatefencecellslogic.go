@@ -2,11 +2,13 @@ package logic
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math"
 	"zero-service/app/gis/gis"
+
 	"zero-service/app/gis/internal/svc"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/mmcloughlin/geohash"
 	"github.com/paulmach/orb"
@@ -46,14 +48,9 @@ func (l *GenerateFenceCellsLogic) GenerateFenceCells(in *gis.GenFenceCellsReq) (
 			return nil, err
 		}
 	} else if in.FenceId != "" {
-		// TODO: 从数据库/缓存加载多边形（示例逻辑）
-		// polygon, err = l.loadPolygonByFenceId(in.FenceId)
-		// if err != nil {
-		// 	return nil, err
-		// }
-		return nil, errors.New("FenceId加载逻辑未实现")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "FenceId加载逻辑未实现")
 	} else {
-		return nil, errors.New("必须提供Points或有效的FenceId")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "points 或 fence_id")
 	}
 
 	// 计算多边形边界框（用于遍历范围）
@@ -271,13 +268,13 @@ func PolygonIntersect(p1, p2 orb.Polygon) bool {
 
 func pbPointToOrbPolygon(points []*gis.Point) (orb.Polygon, error) {
 	if len(points) < 3 {
-		return nil, errors.New("多边形至少需要3个点")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "多边形至少需要3个点")
 	}
 
 	var ring orb.Ring
 	for i, p := range points {
 		if p.Lon < -180 || p.Lon > 180 || p.Lat < -90 || p.Lat > 90 {
-			return nil, fmt.Errorf("第 %d 个点经纬度超出有效范围（经度-180~180，纬度-90~90）", i)
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, fmt.Sprintf("第 %d 个点经纬度超出有效范围（经度-180~180，纬度-90~90）", i))
 		}
 		ring = append(ring, orb.Point{p.Lon, p.Lat})
 	}

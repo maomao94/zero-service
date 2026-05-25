@@ -2,7 +2,6 @@ package solo
 
 import (
 	"context"
-	"errors"
 
 	"zero-service/aiapp/aigtw/internal/svc"
 	"zero-service/aiapp/aigtw/internal/types"
@@ -29,7 +28,7 @@ func NewListSessionsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *List
 func (l *ListSessionsLogic) ListSessions(req *types.SoloListSessionsRequest) (*types.SoloListSessionsResponse, error) {
 	userID := ctxdata.GetUserId(l.ctx)
 	if userID == "" {
-		return nil, errors.New("missing user id in context")
+		return nil, unauthenticatedError("missing user id in context")
 	}
 	if req == nil {
 		req = &types.SoloListSessionsRequest{}

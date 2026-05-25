@@ -10,9 +10,9 @@ import (
 	"zero-service/app/trigger/trigger"
 	"zero-service/common/tool"
 	"zero-service/model"
+	"zero-service/third_party/extproto"
 
 	"github.com/duke-git/lancet/v2/strutil"
-	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
@@ -41,7 +41,7 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 
 	// 检查参数
 	if in.Id <= 0 && strutil.IsBlank(in.PlanId) {
-		return nil, errors.BadRequest("", "参数错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
 	}
 
 	// 查询计划
@@ -52,13 +52,13 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 		plan, err = l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, in.PlanId)
 	}
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
 	}
 	if plan.Status == int64(model.PlanStatusTerminated) || plan.FinishedTime.Valid {
-		return nil, errors.BadRequest("", "计划状态已结束,无需暂停")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划状态已结束,无需暂停")
 	}
 	if plan.Status != int64(model.PlanStatusEnabled) {
-		return nil, errors.BadRequest("", "计划状态非启用状态,无需暂停")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "计划状态非启用状态,无需暂停")
 	}
 
 	// 执行事务
@@ -91,7 +91,7 @@ func (l *PausePlanLogic) PausePlan(in *trigger.PausePlanReq) (*trigger.PausePlan
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "暂停计划事务失败")
 	}
 
 	planscope.PlanScope(plan).Logger(l.ctx).Info("RPC 暂停计划：计划状态已更新，事务已提交")

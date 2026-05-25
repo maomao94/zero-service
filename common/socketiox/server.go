@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"sync"
 	"time"
 	"zero-service/common/ctxdata"
@@ -93,7 +95,7 @@ func buildDownJson(event string, payload any, reqId string) []byte {
 }
 
 func extractPayload(payload *socketio.EventPayload) []byte {
-	if payload.Data != nil && len(payload.Data) > 0 && payload.Data[0] != nil {
+	if len(payload.Data) > 0 && payload.Data[0] != nil {
 		switch data := payload.Data[0].(type) {
 		case string:
 			return []byte(data)
@@ -125,16 +127,19 @@ type Session struct {
 }
 
 func (s *Session) Close() error {
+	if s.checkSocketNil() {
+		return fmt.Errorf("socket is nil")
+	}
 	return s.socket.Disconnect()
 }
 
 func (s *Session) checkSocketNil() bool {
-	return s.socket == nil
+	return s == nil || s.socket == nil
 }
 
 func (s *Session) ID() string { return s.socketId }
 
-func (s *Session) GetMetadata(key string) interface{} {
+func (s *Session) GetMetadata(key string) any {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	return s.metadata[key]
@@ -144,13 +149,11 @@ func (s *Session) AllMetadata() map[string]string {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	cp := make(map[string]string, len(s.metadata))
-	for k, v := range s.metadata {
-		cp[k] = v
-	}
+	maps.Copy(cp, s.metadata)
 	return cp
 }
 
-func (s *Session) SetMetadata(key string, val interface{}) {
+func (s *Session) SetMetadata(key string, val any) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	if str, ok := val.(string); ok && str != "" {
@@ -211,10 +214,8 @@ func (s *Session) JoinRoom(room string) error {
 	}
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	for _, r := range s.socket.Rooms() {
-		if r == room {
-			return nil
-		}
+	if slices.Contains(s.socket.Rooms(), room) {
+		return nil
 	}
 	s.socket.Join(room)
 	return nil
@@ -245,7 +246,7 @@ type EventHandlers map[string]EventHandler
 
 type TokenValidator func(token string) bool
 
-type TokenValidatorWithClaims func(token string) (map[string]interface{}, bool)
+type TokenValidatorWithClaims func(token string) (map[string]any, bool)
 
 type ConnectHook func(ctx context.Context, session *Session) ([]string, error)
 
@@ -303,6 +304,7 @@ type Server struct {
 	lock                     sync.RWMutex
 	statInterval             time.Duration
 	stopChan                 chan struct{}
+	stopOnce                 sync.Once
 	contextKeys              []string // 从上下文提取的键列表
 	tokenValidator           TokenValidator
 	tokenValidatorWithClaims TokenValidatorWithClaims
@@ -337,11 +339,11 @@ func NewServer(opts ...Option) (*Server, error) {
 func (srv *Server) bindEvents() {
 	srv.OnAuthentication(func(params map[string]string) bool {
 		token := params["token"]
-		logx.Infof("[socketio] new connection auth: token=%s", token)
+		logx.Infof("[socketio] new connection auth: token_present=%t", token != "")
 		if srv.tokenValidator != nil {
 			valid := srv.tokenValidator(token)
 			if !valid {
-				logx.Errorf("[socketio] token validation failed: token=%s", token)
+				logx.Errorf("[socketio] token validation failed: token_present=%t", token != "")
 				return false
 			}
 		}
@@ -349,7 +351,7 @@ func (srv *Server) bindEvents() {
 	})
 	srv.OnConnection(func(socket *socketio.Socket) {
 		token := socket.Handshake["token"]
-		logx.Infof("[socketio] new connection: token=%s", token)
+		logx.Infof("[socketio] new connection: token_present=%t", token != "")
 		session := &Session{
 			socketId: socket.Id,
 			socket:   socket,
@@ -384,7 +386,10 @@ func (srv *Server) bindEvents() {
 				logx.WithContext(connectCtx).Errorf("[socketio] failed to load rooms: conn=%s, err=%v", socket.Id, err)
 			} else {
 				for _, r := range rooms {
-					session.JoinRoom(r)
+					if err := session.JoinRoom(r); err != nil {
+						session.roomLoadError = err.Error()
+						logx.WithContext(connectCtx).Errorf("[socketio] failed to join initial room: conn=%s, room=%s, err=%v", socket.Id, r, err)
+					}
 				}
 			}
 		}
@@ -619,7 +624,7 @@ func (srv *Server) bindEvents() {
 		})
 		socket.On("disconnect", func(payload *socketio.EventPayload) {
 			reason := "client disconnect"
-			if payload.Data != nil && len(payload.Data) > 0 {
+			if len(payload.Data) > 0 {
 				if r, ok := payload.Data[0].(string); ok {
 					reason = r
 				}
@@ -634,7 +639,9 @@ func (srv *Server) bindEvents() {
 			deleteSession, ok := srv.sessions[socket.Id]
 			srv.lock.RUnlock()
 			if ok && srv.disconnectHook != nil {
-				srv.disconnectHook(ctx, deleteSession, reason)
+				if err := srv.disconnectHook(ctx, deleteSession, reason); err != nil {
+					logx.WithContext(ctx).Errorf("[socketio] disconnect hook failed: conn=%s, err=%v", socket.Id, err)
+				}
 			}
 			logx.Infof("[socketio] disconnecting: conn=%s, reason=%s", socket.Id, reason)
 			srv.cleanInvalidSession(socket.Id)
@@ -653,7 +660,7 @@ func (srv *Server) bindEvents() {
 				)
 				ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
 				var handlerPayload []byte
-				if payload.Data != nil && len(payload.Data) > 0 && payload.Data[0] != nil {
+				if len(payload.Data) > 0 && payload.Data[0] != nil {
 					switch data := payload.Data[0].(type) {
 					case string:
 						handlerPayload = []byte(data)
@@ -676,25 +683,25 @@ func (srv *Server) bindEvents() {
 }
 
 func (srv *Server) BroadcastRoom(room, event string, payload any, reqId string) error {
-	data := buildDownJson(event, payload, reqId)
 	if len(event) == 0 {
 		return errors.New("event name is empty")
 	}
 	if event == EventDown {
 		return errors.New("event name is not allowed")
 	}
+	data := buildDownJson(event, payload, reqId)
 	srv.Io.To(room).Emit(event, string(data))
 	return nil
 }
 
 func (s *Server) BroadcastGlobal(event string, payload any, reqId string) error {
-	data := buildDownJson(event, payload, reqId)
 	if len(event) == 0 {
 		return errors.New("event name is empty")
 	}
 	if event == EventDown {
 		return errors.New("event name is not allowed")
 	}
+	data := buildDownJson(event, payload, reqId)
 	s.Io.Emit(event, string(data))
 	return nil
 }
@@ -786,7 +793,9 @@ func (srv *Server) JoinRoom(socketId string, room string) {
 	session, ok := srv.sessions[socketId]
 	srv.lock.RUnlock()
 	if ok {
-		session.JoinRoom(room)
+		if err := session.JoinRoom(room); err != nil {
+			logx.Errorf("[socketio] join room failed: socketId=%s, room=%s, err=%v", socketId, room, err)
+		}
 	}
 }
 
@@ -795,17 +804,21 @@ func (srv *Server) LeaveRoom(socketId string, room string) {
 	session, ok := srv.sessions[socketId]
 	srv.lock.RUnlock()
 	if ok {
-		session.LeaveRoom(room)
+		if err := session.LeaveRoom(room); err != nil {
+			logx.Errorf("[socketio] leave room failed: socketId=%s, room=%s, err=%v", socketId, room, err)
+		}
 	}
 }
 
 func (srv *Server) Stop() {
-	close(srv.stopChan)
-	srv.lock.Lock()
-	defer srv.lock.Unlock()
-	srv.sessions = make(map[string]*Session)
-	srv.Close()
-	logx.Info("[socketio] server stopped")
+	srv.stopOnce.Do(func() {
+		close(srv.stopChan)
+		srv.lock.Lock()
+		srv.sessions = make(map[string]*Session)
+		srv.lock.Unlock()
+		srv.Close()
+		logx.Info("[socketio] server stopped")
+	})
 }
 
 func (s *Server) randomUUID() string {

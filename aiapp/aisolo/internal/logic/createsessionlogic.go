@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -11,6 +10,8 @@ import (
 	"zero-service/aiapp/aisolo/internal/sessionworkdir"
 	"zero-service/aiapp/aisolo/internal/svc"
 	"zero-service/aiapp/aisolo/internal/uilang"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 )
 
 type CreateSessionLogic struct {
@@ -30,11 +31,11 @@ func NewCreateSessionLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Cre
 // CreateSession 新建一个会话 (用户只挑 mode, 无需再指定 agent)。
 func (l *CreateSessionLogic) CreateSession(in *aisolo.CreateSessionReq) (*aisolo.CreateSessionResp, error) {
 	if in == nil {
-		return nil, errors.New("create session request is required")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "create session request is required")
 	}
 	userID := strings.TrimSpace(in.GetUserId())
 	if userID == "" {
-		return nil, errors.New("user_id is required")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "user_id is required")
 	}
 	sess := newSession(userID, strings.TrimSpace(in.GetTitle()), in.Mode)
 	if v := uilang.Normalize(in.GetUiLang()); v != "" {

@@ -3,10 +3,11 @@ package user
 import (
 	"context"
 	"zero-service/common/ctxdata"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 	"zero-service/zerorpc/zerorpc"
 
 	"github.com/jinzhu/copier"
-	"github.com/pkg/errors"
 
 	"zero-service/gtw/internal/svc"
 	"zero-service/gtw/internal/types"
@@ -44,6 +45,6 @@ func (l *GetCurrentUserLogic) GetCurrentUser(req *types.GetCurrentUserRequest) (
 			User: user,
 		}, nil
 	} else {
-		return nil, errors.New("获取用户错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_03_UNAUTHORIZED, "未登录")
 	}
 }

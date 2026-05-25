@@ -2,10 +2,11 @@ package logic
 
 import (
 	"context"
-	"fmt"
 
 	"zero-service/app/podengine/internal/svc"
 	"zero-service/app/podengine/podengine"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -32,7 +33,7 @@ func (l *DeletePodLogic) DeletePod(in *podengine.DeletePodReq) (*podengine.Delet
 	}
 	dockerClient, ok := l.svcCtx.GetDockerClient(in.Node)
 	if !ok {
-		return nil, fmt.Errorf("node %s not found", in.Node)
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "node: "+in.Node)
 	}
 	removeOptions := container.RemoveOptions{
 		RemoveVolumes: in.RemoveVolumes,
@@ -42,7 +43,7 @@ func (l *DeletePodLogic) DeletePod(in *podengine.DeletePodReq) (*podengine.Delet
 
 	err = dockerClient.ContainerRemove(l.ctx, in.Id, removeOptions)
 	if err != nil {
-		return nil, fmt.Errorf("failed to delete container: %w", err)
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "failed to delete container")
 	}
 
 	return &podengine.DeletePodRes{}, nil

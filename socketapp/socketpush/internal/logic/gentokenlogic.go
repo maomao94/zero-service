@@ -4,11 +4,12 @@ import (
 	"context"
 	"time"
 	"zero-service/common/ctxdata"
+	"zero-service/common/tool"
 	"zero-service/socketapp/socketpush/internal/svc"
 	"zero-service/socketapp/socketpush/socketpush"
+	"zero-service/third_party/extproto"
 
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -26,10 +27,9 @@ func NewGenTokenLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GenToken
 	}
 }
 
-// 生成token
 func (l *GenTokenLogic) GenToken(in *socketpush.GenTokenReq) (*socketpush.GenTokenRes, error) {
 	if len(in.Uid) == 0 {
-		return nil, errors.BadRequest("uid is not empty", "参数错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "uid")
 	}
 	now := time.Now().Unix()
 	accessExpire := l.svcCtx.Config.JwtAuth.AccessExpire

@@ -7,11 +7,12 @@ import (
 	"github.com/ArtisanCloud/PowerWeChat/v3/src/payment/order/request"
 	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/duke-git/lancet/v2/random"
-	"github.com/songzhibin97/gkit/errors"
 	"strings"
 	"time"
 	"zero-service/common"
+	"zero-service/common/tool"
 	"zero-service/model"
+	"zero-service/third_party/extproto"
 
 	"zero-service/zerorpc/internal/svc"
 	"zero-service/zerorpc/zerorpc"
@@ -56,11 +57,11 @@ func (l *WxPayJsApiLogic) WxPayJsApi(in *zerorpc.WxPayJsApiReq) (*zerorpc.WxPayJ
 	}
 	if len(response.ResponseBase.Code) != 0 {
 		l.Errorf("JSAPI支付 %v", response.Code)
-		return nil, errors.BadRequest("9999", "JSAPI支付失败")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_06_THIRD_PARTY, "JSAPI支付失败")
 	}
 	if len(response.PrepayID) == 0 {
 		l.Errorf("JSAPI支付 %v", response.Code)
-		return nil, errors.BadRequest("9999", "JSAPI支付失败")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_06_THIRD_PARTY, "JSAPI支付失败")
 	}
 	// 因为PrepayID签名方式都一样，所以这个和App是一样的。
 	payConf, err := l.svcCtx.WxPayCli.JSSDK.BridgeConfig(response.PrepayID, true)

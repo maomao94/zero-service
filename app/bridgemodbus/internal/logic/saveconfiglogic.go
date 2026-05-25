@@ -3,16 +3,14 @@ package logic
 import (
 	"context"
 
+	"zero-service/app/bridgemodbus/bridgemodbus"
+	"zero-service/app/bridgemodbus/internal/svc"
 	"zero-service/common/gormx"
 	"zero-service/model/gormmodel"
 
 	"github.com/pkg/errors"
-	"gorm.io/gorm"
-
-	"zero-service/app/bridgemodbus/bridgemodbus"
-	"zero-service/app/bridgemodbus/internal/svc"
-
 	"github.com/zeromicro/go-zero/core/logx"
+	"gorm.io/gorm"
 )
 
 type SaveConfigLogic struct {

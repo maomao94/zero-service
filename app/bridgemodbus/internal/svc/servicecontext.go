@@ -2,7 +2,6 @@ package svc
 
 import (
 	"context"
-	"errors"
 	"zero-service/app/bridgemodbus/internal/config"
 	"zero-service/common/gormx"
 	"zero-service/common/modbusx"
@@ -48,23 +47,23 @@ func isDevOrTest(mode string) bool {
 
 func (s *ServiceContext) AddPool(ctx context.Context, modbusCode string) (*modbusx.ModbusClientPool, error) {
 	if modbusCode == "" {
-		return nil, errors.New("modbusCode不能为空")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "modbusCode")
 	}
 	var slaveConfig gormmodel.ModbusSlaveConfig
 	err := s.DB.WithContext(ctx).Where("modbus_code = ?", modbusCode).First(&slaveConfig).Error
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询Modbus配置失败")
 	}
 	if slaveConfig.Status != 1 {
-		return nil, errors.New("配置不存在或未启用: " + modbusCode)
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "配置不存在或未启用: "+modbusCode)
 	}
 	clientConf := s.ModbusConfigConverter.ToClientConf(&slaveConfig)
 	if clientConf == nil {
-		return nil, errors.New("配置转换失败")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "配置转换失败")
 	}
 	pool, err := s.Manager.AddPool(ctx, modbusCode, clientConf, s.Config.ModbusPool)
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "创建Modbus连接池失败")
 	}
 	return pool, nil
 }

@@ -18,7 +18,6 @@ import (
 
 	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/strutil"
-	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -48,7 +47,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 		return nil, err
 	}
 	if in.Id <= 0 && strutil.IsBlank(in.ExecId) {
-		return nil, errors.BadRequest("", "参数错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
 	}
 	// 查询执行项
 	var execItem *model.PlanExecItem
@@ -61,7 +60,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 		if err == sqlx.ErrNotFound {
 			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST)
 		}
-		return nil, err
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_DB, "查询执行项失败")
 	}
 	lockKey := fmt.Sprintf("trigger:lock:plan:exec:%s", execItem.ExecId)
 	lock := redis.NewRedisLock(l.svcCtx.Redis, lockKey)
@@ -73,29 +72,28 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 	b, lockErr := lock.AcquireCtx(l.ctx)
 	if lockErr != nil {
 		planscope.ExecCallback(execItem).Logger(l.ctx).Errorf("RPC 执行回调：获取 Redis 分布式锁失败: %v", lockErr)
-		return nil, lockErr
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_CACHE, lockErr, "获取 Redis 分布式锁失败")
 	}
 	if !b {
 		lockScope := planscope.ExecCallback(execItem)
 		lockScope.Logger(l.ctx).Error("RPC 执行回调：未获取到 Redis 锁（可能并发回调同一执行单）")
-		err = fmt.Errorf("执行回调未获取到 Redis 锁")
-		return nil, err
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_03_CACHE, "执行回调未获取到 Redis 锁")
 	}
 	defer lock.Release()
 	// 补 查询一次
 	execItem, err = l.svcCtx.PlanExecItemModel.FindOne(l.ctx, execItem.Id)
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询执行项失败")
 	}
 	// 查询计划
 	plan, err := l.svcCtx.PlanModel.FindOne(l.ctx, execItem.PlanPk)
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
 	}
 	// 查询计划批次
 	batch, err := l.svcCtx.PlanBatchModel.FindOne(l.ctx, execItem.BatchPk)
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询批次失败")
 	}
 	scope := planscope.CallbackScope(execItem, plan, batch)
 	log := scope.Logger(l.ctx)
@@ -107,10 +105,10 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 
 	// 检查执行项状态是否为终态
 	if execItem.Status == int64(model.StatusCompleted) || execItem.Status == int64(model.StatusTerminated) {
-		return nil, errors.BadRequest("", "执行项已结束")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "执行项已结束")
 	}
 	if execItem.Status != int64(model.StatusRunning) {
-		return nil, errors.BadRequest("", "执行项状态错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ_STATE, "执行项状态错误")
 	}
 	// 执行事务
 	err = l.svcCtx.PlanModel.Trans(l.ctx, func(ctx context.Context, tx sqlx.Session) error {
@@ -152,7 +150,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 				[]int{model.StatusRunning}, []int{model.StatusCompleted, model.StatusTerminated},
 			)
 		default:
-			return fmt.Errorf("invalid execResult: %s", in.GetExecResult())
+			return tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "无效的回执执行结果: "+in.GetExecResult())
 		}
 		if transErr != nil {
 			return transErr
@@ -187,7 +185,7 @@ func (l *CallbackPlanExecItemLogic) CallbackPlanExecItem(in *trigger.CallbackPla
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "回调事务失败")
 	}
 
 	batchCount, err := l.svcCtx.PlanBatchModel.UpdateBatchFinishedTime(l.ctx, execItem.BatchPk)

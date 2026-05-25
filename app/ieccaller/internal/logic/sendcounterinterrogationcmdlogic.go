@@ -5,6 +5,8 @@ import (
 
 	"zero-service/app/ieccaller/ieccaller"
 	"zero-service/app/ieccaller/internal/svc"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -27,14 +29,16 @@ func NewSendCounterInterrogationCmdLogic(ctx context.Context, svcCtx *svc.Servic
 func (l *SendCounterInterrogationCmdLogic) SendCounterInterrogationCmd(in *ieccaller.SendCounterInterrogationCmdReq) (*ieccaller.SendCounterInterrogationCmdRes, error) {
 	cli, err := l.svcCtx.ClientManager.GetClientOrNil(in.Host, int(in.Port))
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_RPC, err, "获取IEC客户端失败")
 	}
 	if cli == nil && l.svcCtx.IsBroadcast() {
 		err = l.svcCtx.PushPbBroadcast(l.ctx, ieccaller.IecCaller_SendCounterInterrogationCmd_FullMethodName, in)
-		return nil, err
+		if err != nil {
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_RPC, err, "广播推送失败")
+		}
 	} else if cli != nil {
 		if err = cli.SendCounterInterrogationCmd(uint16(in.Coa)); err != nil {
-			return nil, err
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "IEC发送累积量召唤失败")
 		}
 	} else {
 		logx.Errorf("cli is empty")

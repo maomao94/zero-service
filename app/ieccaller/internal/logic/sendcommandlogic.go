@@ -5,6 +5,8 @@ import (
 
 	"zero-service/app/ieccaller/ieccaller"
 	"zero-service/app/ieccaller/internal/svc"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/wendy512/go-iecp5/asdu"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -28,14 +30,16 @@ func NewSendCommandLogic(ctx context.Context, svcCtx *svc.ServiceContext) *SendC
 func (l *SendCommandLogic) SendCommand(in *ieccaller.SendCommandReq) (*ieccaller.SendCommandRes, error) {
 	cli, err := l.svcCtx.ClientManager.GetClientOrNil(in.Host, int(in.Port))
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_RPC, err, "获取IEC客户端失败")
 	}
 	if cli == nil && l.svcCtx.IsBroadcast() {
 		err = l.svcCtx.PushPbBroadcast(l.ctx, ieccaller.IecCaller_SendCommand_FullMethodName, in)
-		return nil, err
+		if err != nil {
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_RPC, err, "广播推送失败")
+		}
 	} else if cli != nil {
 		if err = cli.SendCmd(uint16(in.Coa), asdu.TypeID(in.TypeId), asdu.InfoObjAddr(in.Ioa), in.Value); err != nil {
-			return nil, err
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "IEC发送命令失败")
 		}
 	} else {
 		logx.Errorf("cli is empty")

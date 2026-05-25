@@ -3,7 +3,6 @@ package logic
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"time"
 	"zero-service/common/tool"
@@ -44,7 +43,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	querPlan, err := l.svcCtx.PlanModel.FindOneByPlanId(l.ctx, in.PlanId)
 	if err != nil {
 		if err != sqlx.ErrNotFound {
-			return nil, err
+			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询计划失败")
 		}
 	}
 	if querPlan != nil {
@@ -65,10 +64,10 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		return nil, endTime.Error
 	}
 	if endTime.Lt(startTime) {
-		return nil, errors.New("结束时间必须晚于开始时间")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "结束时间必须晚于开始时间")
 	}
 	if endTime.Gt(startTime.AddYears(3)) {
-		return nil, errors.New("计划时间跨度不能超过3年")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "计划时间跨度不能超过3年")
 	}
 	rruleOption, err := NewCalcPlanTaskDateLogic(l.ctx, l.svcCtx).ConvertToRRuleOption(in.Rule, startTime, endTime)
 	if err != nil {
@@ -77,14 +76,14 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 	set := rrule.Set{}
 	r, err := rrule.NewRRule(rruleOption)
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "计划规则格式无效")
 	}
 	set.RRule(r)
 	// 添加排除日期
 	for _, excludeDate := range in.ExcludeDates {
 		excludeTime := carbon.ParseByFormat(excludeDate, carbon.DateFormat)
 		if excludeTime.Error != nil || excludeTime.IsInvalid() {
-			return nil, fmt.Errorf("排除日期格式错误: %s", excludeDate)
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "排除日期格式错误: "+excludeDate)
 		}
 		// 为每个排除日期添加一天中的所有小时分钟组合
 		for _, hour := range in.Rule.Hours {
@@ -107,11 +106,11 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		}
 		dates = validDates
 		if len(dates) == 0 {
-			return nil, fmt.Errorf("计划任务时间段内没有触发时间")
+			return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "计划任务时间段内没有触发时间")
 		}
 	}
 	if len(dates)*len(in.ExecItems) > 5000 {
-		return nil, fmt.Errorf("计划任务时间段内调度项过多")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "计划任务时间段内调度项过多")
 	}
 	rule, _ := jsonx.Marshal(in.Rule)
 	currentUserId := tool.GetCurrentUserId(l.ctx, in.CurrentUser)
@@ -238,7 +237,7 @@ func (l *CreatePlanTaskLogic) CreatePlanTask(in *trigger.CreatePlanTaskReq) (*tr
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "创建计划事务失败")
 	}
 	return &trigger.CreatePlanTaskRes{
 		Id:       insertPlan.Id,

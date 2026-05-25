@@ -2,10 +2,11 @@ package logic
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"zero-service/app/gis/gis"
+
 	"zero-service/app/gis/internal/svc"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/uber/h3-go/v4"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -25,13 +26,12 @@ func NewEncodeH3Logic(ctx context.Context, svcCtx *svc.ServiceContext) *EncodeH3
 	}
 }
 
-// 编码 h3
 func (l *EncodeH3Logic) EncodeH3(in *gis.EncodeH3Req) (*gis.EncodeH3Res, error) {
 	if in.Point == nil {
-		return nil, errors.New("参数错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "point")
 	}
 	if in.Resolution > 15 {
-		return nil, fmt.Errorf("h3 resolution must be 0-15")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "h3分辨率必须为0-15")
 	}
 
 	latLng := h3.NewLatLng(in.Point.Lat, in.Point.Lon)

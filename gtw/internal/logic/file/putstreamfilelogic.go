@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"zero-service/app/file/file"
 	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"zero-service/gtw/internal/svc"
 	"zero-service/gtw/internal/types"
@@ -118,6 +119,6 @@ func (l *PutStreamFileLogic) PutStreamFile(req *types.PutFileRequest) (resp *typ
 			File: file,
 		}, nil
 	} else {
-		return nil, errors.New("文件上传错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_05_BIZ, "文件上传未完成")
 	}
 }

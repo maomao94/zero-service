@@ -2,7 +2,6 @@ package solo
 
 import (
 	"context"
-	"errors"
 
 	"zero-service/aiapp/aigtw/internal/svc"
 	"zero-service/aiapp/aigtw/internal/types"
@@ -23,11 +22,11 @@ func NewListKnowledgeBasesLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 
 func (l *ListKnowledgeBasesLogic) ListKnowledgeBases() (*types.KnowledgeListBasesResponse, error) {
 	if l.svcCtx.Knowledge == nil {
-		return nil, errors.New("knowledge is disabled")
+		return nil, invalidRequestError("knowledge is disabled")
 	}
 	uid := ctxdata.GetUserId(l.ctx)
 	if uid == "" {
-		return nil, errors.New("missing user id")
+		return nil, unauthenticatedError("missing user id")
 	}
 	list, err := l.svcCtx.Knowledge.ListBases(l.ctx, uid)
 	if err != nil {

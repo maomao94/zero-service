@@ -41,7 +41,7 @@ func (l *GetPlanExecLogLogic) GetPlanExecLog(in *trigger.GetPlanExecLogReq) (*tr
 		if err == sqlx.ErrNotFound {
 			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST)
 		}
-		return nil, err
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_DB, "查询执行日志失败")
 	}
 
 	// 构建响应

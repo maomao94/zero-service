@@ -2,7 +2,6 @@ package solo
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"zero-service/aiapp/aigtw/internal/svc"
@@ -24,14 +23,14 @@ func NewCreateKnowledgeBaseLogic(ctx context.Context, svcCtx *svc.ServiceContext
 
 func (l *CreateKnowledgeBaseLogic) CreateKnowledgeBase(req *types.KnowledgeCreateBaseRequest) (*types.KnowledgeCreateBaseResponse, error) {
 	if l.svcCtx.Knowledge == nil {
-		return nil, errors.New("knowledge is disabled (configure knowledge.enabled and embedding in aigtw.yaml)")
+		return nil, invalidRequestError("knowledge is disabled (configure knowledge.enabled and embedding in aigtw.yaml)")
 	}
 	if req == nil {
-		return nil, errors.New("create knowledge base request is required")
+		return nil, invalidRequestError("create knowledge base request is required")
 	}
 	uid := ctxdata.GetUserId(l.ctx)
 	if uid == "" {
-		return nil, errors.New("missing user id")
+		return nil, unauthenticatedError("missing user id")
 	}
 	id, err := l.svcCtx.Knowledge.CreateBase(l.ctx, uid, strings.TrimSpace(req.Name))
 	if err != nil {

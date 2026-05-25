@@ -3,10 +3,10 @@ package logic
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"zero-service/common/tool"
 	"zero-service/socketapp/socketpush/internal/svc"
 	"zero-service/socketapp/socketpush/socketpush"
+	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -28,7 +28,7 @@ func NewVerifyTokenLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Verif
 // 验证token
 func (l *VerifyTokenLogic) VerifyToken(in *socketpush.VerifyTokenReq) (*socketpush.VerifyTokenRes, error) {
 	if len(in.AccessToken) == 0 {
-		return nil, fmt.Errorf("access token is empty")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_MISSING, "access token is empty")
 	}
 	secrets := []string{l.svcCtx.Config.JwtAuth.AccessSecret}
 	if len(l.svcCtx.Config.JwtAuth.PrevAccessSecret) > 0 {
@@ -36,11 +36,11 @@ func (l *VerifyTokenLogic) VerifyToken(in *socketpush.VerifyTokenReq) (*socketpu
 	}
 	claims, err := tool.ParseToken(in.AccessToken, secrets...)
 	if err != nil {
-		return nil, fmt.Errorf("invalid access token: %v", err)
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_UNAUTHORIZED, err, "invalid access token")
 	}
 	claimJSON, err := json.Marshal(claims)
 	if err != nil {
-		return nil, fmt.Errorf("failed to process token claims: %v", err)
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_00_INTERNAL, "failed to process token claims")
 	}
 	res := &socketpush.VerifyTokenRes{
 		ClaimJson: string(claimJSON),

@@ -11,7 +11,6 @@ import (
 
 	"github.com/dromara/carbon/v2"
 	"github.com/duke-git/lancet/v2/strutil"
-	"github.com/songzhibin97/gkit/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
@@ -38,7 +37,7 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 		return nil, err
 	}
 	if in.Id <= 0 && strutil.IsBlank(in.ExecId) {
-		return nil, errors.BadRequest("", "参数错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "参数错误")
 	}
 	var execItem *model.PlanExecItem
 	if in.Id > 0 {
@@ -50,7 +49,7 @@ func (l *GetPlanExecItemLogic) GetPlanExecItem(in *trigger.GetPlanExecItemReq) (
 		if err == sqlx.ErrNotFound {
 			return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST)
 		}
-		return nil, err
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_DB, "查询执行项失败")
 	}
 
 	// 构建响应

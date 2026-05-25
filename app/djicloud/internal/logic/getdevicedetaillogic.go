@@ -6,10 +6,10 @@ import (
 	"zero-service/app/djicloud/djicloud"
 	"zero-service/app/djicloud/internal/svc"
 	"zero-service/app/djicloud/model/gormmodel"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type GetDeviceDetailLogic struct {
@@ -26,13 +26,12 @@ func NewGetDeviceDetailLogic(ctx context.Context, svcCtx *svc.ServiceContext) *G
 	}
 }
 
-// GetDeviceDetail 查询设备详情，聚合设备基础信息、OSD快照、State快照和拓扑信息。
 func (l *GetDeviceDetailLogic) GetDeviceDetail(in *djicloud.GetDeviceDetailReq) (*djicloud.DeviceDetailRes, error) {
 	var device gormmodel.DjiDevice
 	if err := l.svcCtx.DB.WithContext(l.ctx).
 		Where("device_sn = ?", in.DeviceSn).
 		First(&device).Error; err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_RECORD_NOT_EXIST, err, "查询设备详情失败")
 	}
 	res := &djicloud.DeviceDetailRes{Device: toDeviceInfo(&device)}
 	var osd gormmodel.DjiDeviceOsdSnapshot

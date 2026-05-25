@@ -4,11 +4,12 @@ import (
 	"context"
 	"time"
 	"zero-service/app/trigger/internal/svc"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/dromara/carbon/v2"
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
-	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/jsonx"
 )
 
@@ -32,7 +33,7 @@ func prepareEnqueue(
 
 	payload, err := jsonx.Marshal(msg)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, tool.NewErrorByPbCode(extproto.Code__1_03_MQ, "序列化消息失败")
 	}
 
 	err = svcCtx.Validate.Struct(msg)
@@ -49,11 +50,11 @@ func prepareEnqueue(
 	if len(triggerTime) > 0 {
 		t := carbon.Parse(triggerTime)
 		if t.Error != nil {
-			return nil, nil, t.Error
+			return nil, nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM_INVALID, "triggerTime格式错误")
 		}
 		internal := carbon.Now().DiffInSeconds(t)
 		if internal < 0 {
-			return nil, nil, errors.New("triggerTime is invalid")
+			return nil, nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, "triggerTime is invalid")
 		}
 		d = time.Duration(internal) * time.Second
 	} else {

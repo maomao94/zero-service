@@ -5,6 +5,8 @@ import (
 
 	"zero-service/app/ieccaller/ieccaller"
 	"zero-service/app/ieccaller/internal/svc"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -33,9 +35,8 @@ func (l *ClearPointMappingCacheLogic) ClearPointMappingCache(in *ieccaller.Clear
 		for _, key := range in.Keys {
 			if _, exists := l.svcCtx.DevicePointMappingModel.GetCache(l.ctx, key); exists {
 				if err := l.svcCtx.DevicePointMappingModel.RemoveCache(l.ctx, key); err != nil {
-					return nil, err
+					return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_CACHE, err, "清除缓存失败(key)")
 				}
-				clearedCount++
 			}
 		}
 	}
@@ -44,9 +45,8 @@ func (l *ClearPointMappingCacheLogic) ClearPointMappingCache(in *ieccaller.Clear
 			key := l.svcCtx.DevicePointMappingModel.GenerateCacheKey(info.TagStation, info.Coa, info.Ioa)
 			if _, exists := l.svcCtx.DevicePointMappingModel.GetCache(l.ctx, key); exists {
 				if err := l.svcCtx.DevicePointMappingModel.RemoveCache(l.ctx, key); err != nil {
-					return nil, err
+					return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_03_CACHE, err, "清除缓存失败(keyInfo)")
 				}
-				clearedCount++
 			}
 		}
 	}

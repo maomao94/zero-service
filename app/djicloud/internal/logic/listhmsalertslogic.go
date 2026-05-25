@@ -6,10 +6,10 @@ import (
 	"zero-service/app/djicloud/djicloud"
 	"zero-service/app/djicloud/internal/svc"
 	"zero-service/app/djicloud/model/gormmodel"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/zeromicro/go-zero/core/logx"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type ListHmsAlertsLogic struct {
@@ -44,11 +44,11 @@ func (l *ListHmsAlertsLogic) ListHmsAlerts(in *djicloud.ListHmsAlertsReq) (*djic
 	}
 	var total int64
 	if err := db.Count(&total).Error; err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询HMS告警总数失败")
 	}
 	var alerts []gormmodel.DjiHmsAlert
 	if err := db.Order("reported_at DESC,id DESC").Offset(int((page - 1) * pageSize)).Limit(int(pageSize)).Find(&alerts).Error; err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_DB, err, "查询HMS告警列表失败")
 	}
 	list := make([]*djicloud.HmsAlertInfo, 0, len(alerts))
 	for i := range alerts {

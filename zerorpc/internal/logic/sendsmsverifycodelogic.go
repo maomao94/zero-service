@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/duke-git/lancet/v2/random"
-	"github.com/songzhibin97/gkit/errors"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 	"zero-service/zerorpc/internal/svc"
 	"zero-service/zerorpc/zerorpc"
 
@@ -34,7 +35,7 @@ func (l *SendSMSVerifyCodeLogic) SendSMSVerifyCode(in *zerorpc.SendSMSVerifyCode
 	key := fmt.Sprintf("%s:%s:%s", l.svcCtx.Config.Name, in.Mobile, "smsCode")
 	b, _ := l.svcCtx.RedisClient.SetnxExCtx(l.ctx, key, code, 60*3)
 	if !b {
-		return nil, errors.BadRequest("9999", "验证码保存错误")
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_03_CACHE, "验证码保存错误")
 	}
 	return &zerorpc.SendSMSVerifyCodeRes{
 		Code: code,

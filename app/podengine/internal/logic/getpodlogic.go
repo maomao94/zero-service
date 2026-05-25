@@ -2,12 +2,13 @@ package logic
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 
 	"zero-service/app/podengine/internal/svc"
 	"zero-service/app/podengine/podengine"
 	"zero-service/common/dockerx"
+	"zero-service/common/tool"
+	"zero-service/third_party/extproto"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/dromara/carbon/v2"
@@ -35,11 +36,11 @@ func (l *GetPodLogic) GetPod(in *podengine.GetPodReq) (*podengine.GetPodRes, err
 	}
 	dockerClient, ok := l.svcCtx.GetDockerClient(in.Node)
 	if !ok {
-		return nil, fmt.Errorf("node %s not found", in.Node)
+		return nil, tool.NewErrorByPbCode(extproto.Code__1_02_RECORD_NOT_EXIST, "node: "+in.Node)
 	}
 	container, err := dockerClient.ContainerInspect(l.ctx, in.Id)
 	if err != nil {
-		return nil, fmt.Errorf("container not found: %s", in.Id)
+		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_02_RECORD_NOT_EXIST, err, "container: "+in.Id)
 	}
 	pod := &podengine.PodPb{
 		Id:          container.ID,
