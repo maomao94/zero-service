@@ -936,3 +936,37 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 20: 错误处理统一清理：16 个模块 errors.New/fmt.Errorf/errors.BadRequest → NewErrorByPbCode/NewErrorByPbCodeWrap
+
+**Date**: 2026-05-25
+**Task**: 错误处理统一清理：16 个模块 errors.New/fmt.Errorf/errors.BadRequest → NewErrorByPbCode/NewErrorByPbCodeWrap
+**Branch**: `master`
+
+### Summary
+
+跨 16 个模块统一 logic/grpc/HTTP 错误处理：修复 ~110 个文件，新增 NewErrorByPbCodeWrap 保留 cause 的包装函数，Go 1.20 多层 Unwrap()；修复 aigtw HTTP 网关本地校验 OpenAI 错误模型；补充 gtw/zerorpc/lalhook 等漏网模块；更新 .trellis/spec/backend/error-handling.md 沉淀新模式和禁止模式
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2a73ed5e` | (see git log) |
+| `84e7f9d1` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
