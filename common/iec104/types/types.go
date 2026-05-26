@@ -47,10 +47,13 @@ func (m *MsgBody) GetKey() (string, error) {
 	if err := mapping.ValidatePtr(rv); err != nil {
 		return "", err
 	}
-	//coaHex := fmt.Sprintf("0x%x", m.Coa)
 	coa := fmt.Sprintf("%d", m.Coa)
-	ioaHex := fmt.Sprintf("0x%06x", m.Body.GetIoa())
+	ioaHex := IoaHexAddress(m.Body.GetIoa())
 	return fmt.Sprintf("%s_%s_%s", m.Host, coa, ioaHex), nil
+}
+
+func IoaHexAddress[T ~uint](ioa T) string {
+	return fmt.Sprintf("0x%04x", ioa)
 }
 
 type IoaGetter interface {

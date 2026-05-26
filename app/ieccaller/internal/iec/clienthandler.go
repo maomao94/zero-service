@@ -95,7 +95,7 @@ func (c *ClientCall) OnDelayAcquisition(packet *asdu.ASDU) error {
 func (c *ClientCall) OnASDU(packet *asdu.ASDU) error {
 	ctx := c.asduLogContext(context.Background(), packet)
 	ctx = context.WithValue(ctx, "stationId", c.stationId)
-	logx.WithContext(ctx).Debug("received OnASDU")
+	logx.WithContext(ctx).Debug("OnASDU")
 	c.taskRunner.Schedule(func() {
 		dataType := client.GetDataType(packet.Type)
 		// 读取设备数据
@@ -179,7 +179,7 @@ func (c *ClientCall) onSinglePoint(ctx context.Context, packet *asdu.ASDU) {
 	// [M_SP_NA_1], [M_SP_TA_1] or [M_SP_TB_1] 获取单点信息信息体集合
 	for _, p := range asduDataList {
 		msgId, _ := tool.SimpleUUID()
-		logx.WithContext(ctx).Debugf("single point, msgId: %s, ioa: %d, value: %v", msgId, p.Ioa, p.Value)
+		logx.WithContext(ctx).Debugf("single point, msgId: %s, ioa: %d, ioaHex: %s, value: %v", msgId, p.Ioa, types.IoaHexAddress(p.Ioa), p.Value)
 		var obj types.SinglePointInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, copierx.Option)
@@ -200,7 +200,7 @@ func (c *ClientCall) onDoublePoint(ctx context.Context, packet *asdu.ASDU) {
 	// [M_DP_NA_1], [M_DP_TA_1] or [M_DP_TB_1] 获得双点信息体集合
 	for _, p := range asduDataList {
 		msgId, _ := tool.SimpleUUID()
-		logx.WithContext(ctx).Debugf("double point, msgId: %s, ioa: %d, value: %v, bl: %v, sb: %v, nt: %v, iv:%v", msgId, p.Ioa, p.Value,
+		logx.WithContext(ctx).Debugf("double point, msgId: %s, ioa: %d, ioaHex: %s, value: %v, bl: %v, sb: %v, nt: %v, iv:%v", msgId, p.Ioa, types.IoaHexAddress(p.Ioa), p.Value,
 			util.QdsIsBlocked(p.Qds), util.QdsIsSubstituted(p.Qds), util.QdsIsNotTopical(p.Qds), util.QdsIsInvalid(p.Qds))
 		logx.WithContext(ctx).Debugf("qds: %s", util.QdsString(p.Qds))
 		var obj types.DoublePointInfo
@@ -223,7 +223,7 @@ func (c *ClientCall) onMeasuredValueScaled(ctx context.Context, packet *asdu.ASD
 	// [M_ME_NB_1], [M_ME_TB_1] or [M_ME_TE_1] 获得测量值,标度化值信息体集合
 	for _, p := range asduDataList {
 		msgId, _ := tool.SimpleUUID()
-		logx.WithContext(ctx).Debugf("measured value scaled, msgId: %s, ioa: %d, value: %v", msgId, p.Ioa, p.Value)
+		logx.WithContext(ctx).Debugf("measured value scaled, msgId: %s, ioa: %d, ioaHex: %s, value: %v", msgId, p.Ioa, types.IoaHexAddress(p.Ioa), p.Value)
 		var obj types.MeasuredValueScaledInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, copierx.Option)
@@ -245,7 +245,7 @@ func (c *ClientCall) onMeasuredValueNormal(ctx context.Context, packet *asdu.ASD
 	for _, p := range asduDataList {
 		msgId, _ := tool.SimpleUUID()
 		nva := util.NormalizeToFloat(p.Value)
-		logx.WithContext(ctx).Debugf("measured value normal, msgId: %s, ioa: %d, value: %v, nva: %.5f", msgId, p.Ioa, p.Value, nva)
+		logx.WithContext(ctx).Debugf("measured value normal, msgId: %s, ioa: %d, ioaHex: %s, value: %v, nva: %.5f", msgId, p.Ioa, types.IoaHexAddress(p.Ioa), p.Value, nva)
 		var obj types.MeasuredValueNormalInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, copierx.Option)
@@ -268,7 +268,7 @@ func (c *ClientCall) onStepPosition(ctx context.Context, packet *asdu.ASDU) {
 	for _, p := range asduDataList {
 		msgId, _ := tool.SimpleUUID()
 		// state：false: 设备未在瞬变状态 true： 设备处于瞬变状态
-		logx.WithContext(ctx).Debugf("step position, msgId: %s, ioa: %d, state: %t, value: %d", msgId, p.Ioa, p.Value.HasTransient, p.Value.Val)
+		logx.WithContext(ctx).Debugf("step position, msgId: %s, ioa: %d, ioaHex: %s, state: %t, value: %d", msgId, p.Ioa, types.IoaHexAddress(p.Ioa), p.Value.HasTransient, p.Value.Val)
 		var obj types.StepPositionInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, copierx.Option)
@@ -289,7 +289,7 @@ func (c *ClientCall) onBitString32(ctx context.Context, packet *asdu.ASDU) {
 	// [M_BO_NA_1], [M_BO_TA_1] or [M_BO_TB_1] 获得比特位串信息体集合
 	for _, p := range asduDataList {
 		msgId, _ := tool.SimpleUUID()
-		logx.WithContext(ctx).Debugf("bigtstring32, msgId: %s, ioa: %d, value: %v, bsi: %032b", msgId, p.Ioa, p.Value, p.Value)
+		logx.WithContext(ctx).Debugf("bigtstring32, msgId: %s, ioa: %d, ioaHex: %s, value: %v, bsi: %032b", msgId, p.Ioa, types.IoaHexAddress(p.Ioa), p.Value, p.Value)
 		var obj types.BitString32Info
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, copierx.Option)
@@ -310,7 +310,7 @@ func (c *ClientCall) onMeasuredValueFloat(ctx context.Context, packet *asdu.ASDU
 	// [M_ME_NC_1], [M_ME_TC_1] or [M_ME_TF_1].获得测量值,短浮点数信息体集合
 	for _, p := range asduDataList {
 		msgId, _ := tool.SimpleUUID()
-		logx.WithContext(ctx).Debugf("measured value float, msgId: %s, ioa: %d, value: %v", msgId, p.Ioa, p.Value)
+		logx.WithContext(ctx).Debugf("measured value float, msgId: %s, ioa: %d, ioaHex: %s, value: %v", msgId, p.Ioa, types.IoaHexAddress(p.Ioa), p.Value)
 		var obj types.MeasuredValueFloatInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, copierx.Option)
@@ -331,8 +331,8 @@ func (c *ClientCall) onIntegratedTotals(ctx context.Context, packet *asdu.ASDU) 
 	// [M_IT_NA_1], [M_IT_TA_1] or [M_IT_TB_1]. 获得累计量信息体集合
 	for _, p := range asduDataList {
 		msgId, _ := tool.SimpleUUID()
-		logx.WithContext(ctx).Debugf("integrated totals, msgId: %s, ioa: %d, counter: %d, sq: %d, cy: %t, ca: %t, iv: %t",
-			msgId, p.Ioa, p.Value.CounterReading, p.Value.SeqNumber, p.Value.HasCarry, p.Value.IsAdjusted, p.Value.IsInvalid)
+		logx.WithContext(ctx).Debugf("integrated totals, msgId: %s, ioa: %d, ioaHex: %s, counter: %d, sq: %d, cy: %t, ca: %t, iv: %t",
+			msgId, p.Ioa, types.IoaHexAddress(p.Ioa), p.Value.CounterReading, p.Value.SeqNumber, p.Value.HasCarry, p.Value.IsAdjusted, p.Value.IsInvalid)
 		var obj types.BinaryCounterReadingInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, copierx.Option)
@@ -347,8 +347,8 @@ func (c *ClientCall) onEventOfProtectionEquipment(ctx context.Context, packet *a
 	// [M_EP_TA_1] [M_EP_TD_1] 获取继电器保护设备事件信息体
 	for _, p := range asduDataList {
 		msgId, _ := tool.SimpleUUID()
-		logx.WithContext(ctx).Debugf("event of protection equipment, msgId: %s, ioa: %d, event: %d, qdp: %d, mesc: %d, time: %d",
-			msgId, p.Ioa, p.Event, p.Qdp, p.Msec, p.Time.UnixMilli())
+		logx.WithContext(ctx).Debugf("event of protection equipment, msgId: %s, ioa: %d, ioaHex: %s, event: %d, qdp: %d, mesc: %d, time: %d",
+			msgId, p.Ioa, types.IoaHexAddress(p.Ioa), p.Event, p.Qdp, p.Msec, p.Time.UnixMilli())
 		var obj types.EventOfProtectionEquipmentInfo
 		//obj.Time = carbon.Now().ToDateTimeString()
 		copier.CopyWithOption(&obj, &p, copierx.Option)
@@ -367,8 +367,8 @@ func (c *ClientCall) onPackedStartEventsOfProtectionEquipment(ctx context.Contex
 	// [M_EP_TB_1] [M_EP_TE_1] 获取继电器保护设备事件信息体
 	p := packet.GetPackedStartEventsOfProtectionEquipment()
 	msgId, _ := tool.SimpleUUID()
-	logx.WithContext(ctx).Debugf("packed start events of protection equipment, msgId: %s, ioa: %d, event: %d, qdp: %d, mesc: %d, time: %d",
-		msgId, p.Ioa, p.Event, p.Qdp, p.Msec, p.Time.UnixMilli())
+	logx.WithContext(ctx).Debugf("packed start events of protection equipment, msgId: %s, ioa: %d, ioaHex: %s, event: %d, qdp: %d, mesc: %d, time: %d",
+		msgId, p.Ioa, types.IoaHexAddress(p.Ioa), p.Event, p.Qdp, p.Msec, p.Time.UnixMilli())
 	var obj types.PackedStartEventsOfProtectionEquipmentInfo
 	//obj.Time = carbon.Now().ToDateTimeString()
 	copier.CopyWithOption(&obj, &p, copierx.Option)
@@ -390,8 +390,8 @@ func (c *ClientCall) onPackedOutputCircuitInfo(ctx context.Context, packet *asdu
 	cl1 := (p.Oci & asdu.OCICommandL1) != 0
 	cl2 := (p.Oci & asdu.OCICommandL2) != 0
 	cl3 := (p.Oci & asdu.OCICommandL3) != 0
-	logx.WithContext(ctx).Debugf("packed Output circuit, msgId: %s, ioa: %d, qci: %d, gc: %v, cl1: %v, cl2: %v, cl3: %v, qdp: %d, mesc: %d, time: %d",
-		msgId, p.Ioa, p.Oci, gc, cl1, cl2, cl3, p.Qdp, p.Msec, p.Time.UnixMilli())
+	logx.WithContext(ctx).Debugf("packed Output circuit, msgId: %s, ioa: %d, ioaHex: %s, qci: %d, gc: %v, cl1: %v, cl2: %v, cl3: %v, qdp: %d, mesc: %d, time: %d",
+		msgId, p.Ioa, types.IoaHexAddress(p.Ioa), p.Oci, gc, cl1, cl2, cl3, p.Qdp, p.Msec, p.Time.UnixMilli())
 	var obj types.PackedOutputCircuitInfoInfo
 	//obj.Time = carbon.Now().ToDateTimeString()
 	copier.CopyWithOption(&obj, &p, copierx.Option)
@@ -415,7 +415,7 @@ func (c *ClientCall) onPackedSinglePointWithSCD(ctx context.Context, packet *asd
 	// [M_PS_NA_1]. 获得带变位检出的成组单点信息
 	for _, p := range asduDataList {
 		msgId, _ := tool.SimpleUUID()
-		logx.WithContext(ctx).Debugf("packed single point with SCD, msgId: %s, ioa: %d, scd: %d, qds: %d", msgId, p.Ioa, p.Scd, p.Qds)
+		logx.WithContext(ctx).Debugf("packed single point with SCD, msgId: %s, ioa: %d, ioaHex: %s, scd: %d, qds: %d", msgId, p.Ioa, types.IoaHexAddress(p.Ioa), p.Scd, p.Qds)
 		var obj types.PackedSinglePointWithSCDInfo
 		currentStatus := p.Scd & 0xFFFF // 低16位（当前状态）
 		stn := fmt.Sprintf("%016b", currentStatus)
