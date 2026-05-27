@@ -25,7 +25,7 @@
 
 import { existsSync, readFileSync } from "fs"
 import { join } from "path"
-import { TrellisContext, debugLog } from "../lib/trellis-context.js"
+import { TrellisContext, debugLog, isTrellisSubagent } from "../lib/trellis-context.js"
 
 // Supports STATUS values with letters, digits, underscores, hyphens
 // (so "in-review" / "blocked-by-team" work alongside "in_progress").
@@ -108,6 +108,13 @@ export default async ({ directory }) => {
       // so it persists in conversation history.
       "chat.message": async (input, output) => {
         try {
+          // Skip Trellis sub-agent turns — the per-turn breadcrumb is for the
+          // main session only; sub-agent context comes from the parent's
+          // tool.execute.before injection.
+          if (isTrellisSubagent(input)) {
+            debugLog("workflow-state", "Skipping trellis subagent turn:", input?.agent)
+            return
+          }
           if (process.env.TRELLIS_HOOKS === "0" || process.env.TRELLIS_DISABLE_HOOKS === "1") {
             return
           }

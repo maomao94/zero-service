@@ -63,6 +63,21 @@ function buildContextKey(platformName, kind, value) {
   return safeValue ? `${platformName}_${safeValue}` : `${platformName}_${hashValue(value)}`
 }
 
+// Matches `trellis-implement`, `trellis-check`, `trellis-research` exactly.
+// Used by chat.message plugins to skip injection inside Trellis sub-agent turns.
+const TRELLIS_SUBAGENT_RE = /^trellis-(implement|check|research)$/
+
+/**
+ * Return true when the OpenCode `chat.message` input represents a Trellis
+ * sub-agent turn. `input.agent` is set by OpenCode when a Task tool spawns a
+ * child session with a custom agent (see `packages/opencode/src/tool/task.ts`).
+ */
+export function isTrellisSubagent(input) {
+  if (!input || typeof input !== "object") return false
+  const agent = typeof input.agent === "string" ? input.agent.trim() : ""
+  return TRELLIS_SUBAGENT_RE.test(agent)
+}
+
 /**
  * Trellis Context Manager
  */
@@ -116,25 +131,72 @@ export class TrellisContext {
 
   /**
    * Get active task from session runtime context.
+   *
+   * Resolution order (mirrors Python `active_task.resolve_active_task`):
+   *   1. Lookup the runtime file for the input-derived context key.
+   *   2. If that misses and exactly one session runtime file exists locally,
+   *      use it (`_resolveSingleSessionFallback`). Refuses to guess when 0 or
+   *      ≥2 files exist so multi-window isolation holds.
    */
   getActiveTask(platformInput = null) {
     const contextKey = this.getContextKey(platformInput)
-    if (!contextKey) {
-      return { taskPath: null, source: "none", stale: false }
-    }
-
-    const context = this.readContext(contextKey)
-    const taskRef = this.normalizeTaskRef(context?.current_task || "")
-    if (taskRef) {
-      const taskDir = this.resolveTaskDir(taskRef)
-      return {
-        taskPath: taskRef,
-        source: `session:${contextKey}`,
-        stale: !taskDir || !existsSync(taskDir),
+    if (contextKey) {
+      const context = this.readContext(contextKey)
+      const taskRef = this.normalizeTaskRef(context?.current_task || "")
+      if (taskRef) {
+        const taskDir = this.resolveTaskDir(taskRef)
+        return {
+          taskPath: taskRef,
+          source: `session:${contextKey}`,
+          stale: !taskDir || !existsSync(taskDir),
+        }
       }
     }
 
+    const fallback = this._resolveSingleSessionFallback()
+    if (fallback) {
+      return fallback
+    }
+
     return { taskPath: null, source: "none", stale: false }
+  }
+
+  /**
+   * Mirror of Python `_resolve_single_session_fallback`. Returns the task
+   * pointed at by the sole session runtime file when exactly one exists,
+   * else null.
+   */
+  _resolveSingleSessionFallback() {
+    const sessionsDir = join(this.directory, ".trellis", ".runtime", "sessions")
+    if (!existsSync(sessionsDir)) return null
+
+    let files
+    try {
+      files = readdirSync(sessionsDir)
+        .filter(name => name.endsWith(".json"))
+        .sort()
+    } catch {
+      return null
+    }
+    if (files.length !== 1) return null
+
+    const sessionFile = join(sessionsDir, files[0])
+    let context
+    try {
+      context = JSON.parse(readFileSync(sessionFile, "utf-8"))
+    } catch {
+      return null
+    }
+    const taskRef = this.normalizeTaskRef(context?.current_task || "")
+    if (!taskRef) return null
+
+    const taskDir = this.resolveTaskDir(taskRef)
+    const fallbackKey = files[0].replace(/\.json$/, "")
+    return {
+      taskPath: taskRef,
+      source: `session-fallback:${fallbackKey}`,
+      stale: !taskDir || !existsSync(taskDir),
+    }
   }
 
   getCurrentTask(platformInput = null) {

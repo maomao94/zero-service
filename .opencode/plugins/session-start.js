@@ -6,7 +6,7 @@
  * Uses OpenCode's chat.message hook directly so the context persists in history.
  */
 
-import { TrellisContext, contextCollector, debugLog } from "../lib/trellis-context.js"
+import { TrellisContext, contextCollector, debugLog, isTrellisSubagent } from "../lib/trellis-context.js"
 import {
   buildSessionContext,
   hasPersistedInjectedContext,
@@ -42,6 +42,14 @@ export default async ({ directory, client }) => {
         const sessionID = input.sessionID
         const agent = input.agent || "unknown"
         debugLog("session", "chat.message called, sessionID:", sessionID, "agent:", agent)
+
+        // Skip Trellis sub-agent turns — sub-agent context is injected by
+        // `inject-subagent-context.js` on the parent's tool.execute.before;
+        // re-injecting the main-session SessionStart here would drown that.
+        if (isTrellisSubagent(input)) {
+          debugLog("session", "Skipping trellis subagent turn:", agent)
+          return
+        }
 
         if (process.env.TRELLIS_HOOKS === "0" || process.env.TRELLIS_DISABLE_HOOKS === "1") {
           debugLog("session", "Skipping - TRELLIS_HOOKS disabled")

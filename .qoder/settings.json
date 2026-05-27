@@ -7,7 +7,7 @@
           {
             "type": "command",
             "command": "python3 .qoder/hooks/session-start.py",
-            "timeout": 10
+            "timeout": 30
           }
         ]
       },
@@ -17,7 +17,7 @@
           {
             "type": "command",
             "command": "python3 .qoder/hooks/session-start.py",
-            "timeout": 10
+            "timeout": 30
           }
         ]
       },
@@ -27,7 +27,7 @@
           {
             "type": "command",
             "command": "python3 .qoder/hooks/session-start.py",
-            "timeout": 10
+            "timeout": 30
           }
         ]
       }
@@ -38,7 +38,7 @@
           {
             "type": "command",
             "command": "python3 .qoder/hooks/inject-workflow-state.py",
-            "timeout": 5
+            "timeout": 15
           }
         ]
       }

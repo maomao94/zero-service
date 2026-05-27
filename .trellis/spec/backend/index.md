@@ -19,6 +19,7 @@
 | [Error Handling](./error-handling.md) | HTTP/RPC 错误返回、错误码和传播策略 | Active |
 | [Quality Guidelines](./quality-guidelines.md) | 禁止模式、测试要求和交付检查 | Active |
 | [Logging Guidelines](./logging-guidelines.md) | logx 使用、日志内容和敏感信息边界 | Active |
+| [Trellis Template Policy](./trellis-template-policy.md) | Trellis 模板侧跟随最新版、用户数据区定位、更新后验证流程 | Active |
 
 同时阅读：
 - [Coding Standards](../coding-standards.md) — 命名、编码、AI 协作和 Git 约定

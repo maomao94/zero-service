@@ -15,3 +15,4 @@ gtw/env/
 # Claude directories
 #.claude/
 /.sisyphus
+/.omo

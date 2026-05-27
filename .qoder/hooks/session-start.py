@@ -72,14 +72,27 @@ First visible reply: say once in Chinese that Trellis SessionStart context is lo
 This notice is one-shot: do not repeat it after the first assistant reply in the same session.
 </first-reply-notice>"""
 
-# IMPORTANT: Force stdout to use UTF-8 on Windows
-# This fixes UnicodeEncodeError when outputting non-ASCII characters
+# Force UTF-8 on stdin/stdout/stderr on Windows. Default codepage there is
+# cp936 / cp1252 / etc. — non-ASCII content (Chinese task names, prd snippets)
+# both in stdin (hook payload from host CLI) and stdout (our emitted blocks)
+# raises UnicodeDecodeError / UnicodeEncodeError. Equivalent to `python -X utf8`
+# but applied per-stream so we don't depend on host CLI's command wiring.
 if sys.platform.startswith("win"):
     import io as _io
-    if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
-    elif hasattr(sys.stdout, "detach"):
-        sys.stdout = _io.TextIOWrapper(sys.stdout.detach(), encoding="utf-8", errors="replace")  # type: ignore[union-attr]
+    for _stream_name in ("stdin", "stdout", "stderr"):
+        _stream = getattr(sys, _stream_name, None)
+        if _stream is None:
+            continue
+        if hasattr(_stream, "reconfigure"):
+            try:
+                _stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
+            except Exception:
+                pass
+        elif hasattr(_stream, "detach"):
+            try:
+                setattr(sys, _stream_name, _io.TextIOWrapper(_stream.detach(), encoding="utf-8", errors="replace"))
+            except Exception:
+                pass
 
 
 
@@ -799,11 +812,15 @@ Trellis compact SessionStart context. Use it to orient the session; load details
 Context loaded. Follow <task-status>. Load workflow/spec/task details only when needed.
 </ready>""")
 
+    context_text = output.getvalue()
     result = {
+        # Claude Code / Qoder / CodeBuddy / Droid / Gemini / Copilot format
         "hookSpecificOutput": {
             "hookEventName": "SessionStart",
-            "additionalContext": output.getvalue(),
-        }
+            "additionalContext": context_text,
+        },
+        # Cursor sessionStart format (top-level snake_case per Cursor docs)
+        "additional_context": context_text,
     }
 
     # Output JSON - stdout is already configured for UTF-8
