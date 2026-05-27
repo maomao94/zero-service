@@ -970,3 +970,34 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 21: Optimize personal skills repository
+
+**Date**: 2026-05-27
+**Task**: Optimize personal skills repository
+**Branch**: `master`
+
+### Summary
+
+Removed ai-token-ledger skill and CLI, enhanced install-skill.sh/verify-skills.sh with gemini-cli support and --list flag, cleaned up skill-installation-guide stale references, migrated OpenCode symlinks to vendor clone from GitHub
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+(No commits - planning session)
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

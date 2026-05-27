@@ -337,6 +337,9 @@ func NewServer(opts ...Option) (*Server, error) {
 }
 
 func (srv *Server) bindEvents() {
+	srv.Use(func(socket *socketio.Socket, next func() error) error {
+		return next()
+	})
 	srv.OnAuthentication(func(params map[string]string) bool {
 		token := params["token"]
 		logx.Infof("[socketio] new connection auth: token_present=%t", token != "")
@@ -350,7 +353,7 @@ func (srv *Server) bindEvents() {
 		return true
 	})
 	srv.OnConnection(func(socket *socketio.Socket) {
-		token := socket.Handshake["token"]
+		token := socket.Handshake.Auth.Token
 		logx.Infof("[socketio] new connection: token_present=%t", token != "")
 		session := &Session{
 			socketId: socket.Id,
