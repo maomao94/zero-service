@@ -312,4 +312,4 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
-replace github.com/doquangtan/socketio/v4 => github.com/maomao94/socket.io-golang/v4 v4.0.0-20260527120802-cca61ee929af
+replace github.com/doquangtan/socketio/v4 => github.com/maomao94/socket.io-golang/v4 v4.0.0-20260529095836-ee518ac74809
