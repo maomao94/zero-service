@@ -431,3 +431,4 @@ Copyright (c) 2026 zero-service
 - go-zero: [https://github.com/zeromicro/go-zero](https://github.com/zeromicro/go-zero)
 - asynq: [https://github.com/hibiken/asynq](https://github.com/hibiken/asynq)
 - go-iecp5: [https://github.com/wendy512/iec104](https://github.com/wendy512/iec104)
+- socket.io-golang: [https://github.com/doquangtan/socket.io-golang](https://github.com/doquangtan/socket.io-golang)
