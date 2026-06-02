@@ -11,7 +11,7 @@
 | `socketapp/` | SocketIO 网关和推送服务 |
 | `gtw/` | BFF 网关，聚合 gRPC 后端并提供 HTTP/gRPC Gateway 入口 |
 | `facade/` | 对外协议层，当前重点是 `streamevent` 跨语言 gRPC 协议 |
-| `common/` | 跨服务复用能力，例如 `djisdk`、`einox`、`mcpx`、`mqttx`、`dbx`、`ssex`、`asynqx`、`dockerx` |
+| `common/` | 跨服务复用能力，例如 `socketiox`、`djisdk`、`einox`、`mcpx`、`mqttx`、`dbx`、`ssex`、`asynqx`、`dockerx` |
 | `model/` | 数据库模型和模型生成脚本 |
 | `deploy/` | Docker Compose、部署编排和环境相关材料 |
 | `docs/`、`swagger/`、`third_party/`、`util/` | 项目文档、Swagger、第三方 proto 和工具集 |
