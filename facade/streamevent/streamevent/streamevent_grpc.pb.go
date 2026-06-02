@@ -40,7 +40,9 @@ type StreamEventClient interface {
 	ReceiveKafkaMessage(ctx context.Context, in *ReceiveKafkaMessageReq, opts ...grpc.CallOption) (*ReceiveKafkaMessageRes, error)
 	// 推送 chunk asdu 104协议消息
 	PushChunkAsdu(ctx context.Context, in *PushChunkAsduReq, opts ...grpc.CallOption) (*PushChunkAsduRes, error)
-	// 上行socket标准消息, 可以用于__connection__/__disconnect__/__join_room_up__/__up__/和自定义up事件
+	// SocketIO 上行回调标准消息。
+	// socketgtw 在连接建立、断开、加入房间和浏览器业务上行时调用该 RPC,
+	// 业务服务可根据 event + payload 完成鉴权、房间授权或业务处理。
 	UpSocketMessage(ctx context.Context, in *UpSocketMessageReq, opts ...grpc.CallOption) (*UpSocketMessageRes, error)
 	// 计划任务事件处理
 	HandlerPlanTaskEvent(ctx context.Context, in *HandlerPlanTaskEventReq, opts ...grpc.CallOption) (*HandlerPlanTaskEventRes, error)
@@ -138,7 +140,9 @@ type StreamEventServer interface {
 	ReceiveKafkaMessage(context.Context, *ReceiveKafkaMessageReq) (*ReceiveKafkaMessageRes, error)
 	// 推送 chunk asdu 104协议消息
 	PushChunkAsdu(context.Context, *PushChunkAsduReq) (*PushChunkAsduRes, error)
-	// 上行socket标准消息, 可以用于__connection__/__disconnect__/__join_room_up__/__up__/和自定义up事件
+	// SocketIO 上行回调标准消息。
+	// socketgtw 在连接建立、断开、加入房间和浏览器业务上行时调用该 RPC,
+	// 业务服务可根据 event + payload 完成鉴权、房间授权或业务处理。
 	UpSocketMessage(context.Context, *UpSocketMessageReq) (*UpSocketMessageRes, error)
 	// 计划任务事件处理
 	HandlerPlanTaskEvent(context.Context, *HandlerPlanTaskEventReq) (*HandlerPlanTaskEventRes, error)

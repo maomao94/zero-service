@@ -47,7 +47,7 @@ func (s *StreamEventServer) PushChunkAsdu(ctx context.Context, in *streamevent.P
 	return l.PushChunkAsdu(in)
 }
 
-// 上行socket标准消息, 可以用于__connection__/__disconnect__/__join_room_up__/__up__/和自定义up事件
+// SocketIO 上行回调标准消息。
 func (s *StreamEventServer) UpSocketMessage(ctx context.Context, in *streamevent.UpSocketMessageReq) (*streamevent.UpSocketMessageRes, error) {
 	l := logic.NewUpSocketMessageLogic(ctx, s.svcCtx)
 	return l.UpSocketMessage(in)
