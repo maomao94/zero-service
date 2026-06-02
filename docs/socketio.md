@@ -179,6 +179,7 @@ const socket = io('http://your-server-url:port', {
 | `__up__`                  | 浏览器上行消息（浏览器 -> socketgtw） | `SocketUpReq`     |
 | `__join_room_up__`        | 浏览器请求加入房间 | `SocketUpRoomReq` |
 | `__leave_room_up__`       | 浏览器请求离开房间 | `SocketUpRoomReq` |
+| `__rooms_page_up__`       | 浏览器分页查询当前会话已加入房间 | `SocketRoomsPageReq` |
 | `__room_broadcast_up__`   | 浏览器请求房间广播 | `SocketUpReq`     |
 | `__global_broadcast_up__` | 浏览器请求全局广播 | `SocketUpReq`     |
 
@@ -322,12 +323,63 @@ const socket = io('http://your-server-url:port', {
 }
 ```
 
-### 5.5 StatDown（服务器统计信息）
+### 5.5 SocketRoomsPageReq（当前会话房间分页查询）
+
+客户端通过 `__rooms_page_up__` 查询当前 socket session 已加入的房间。该事件只返回当前连接自己的业务房间，不支持传入其他 `socketId`，且会过滤 SocketIO 自动加入的 socketId 内部房间。
+
+| 字段名       | 类型       | 必填 | 描述              |
+|-----------|----------|----|-----------------|
+| `reqId`   | `string` | ✅  | 请求唯一标识         |
+| `page`    | `number` | ❌  | 页码，从 1 开始，默认 1 |
+| `pageSize` | `number` | ❌ | 每页数量，默认 50，最大 200 |
+
+**请求示例**：
+
+```json
+{
+  "reqId": "uuid-rooms-page",
+  "page": 1,
+  "pageSize": 50
+}
+```
+
+**响应 payload 示例**：
+
+```json
+{
+  "total": 128,
+  "page": 1,
+  "pageSize": 50,
+  "totalPages": 3,
+  "rooms": [
+    "alarm:dept:001",
+    "device:dept:001"
+  ]
+}
+```
+
+服务端会先按房间名排序再分页，保证翻页结果稳定。
+
+**前端示例**：
+
+```javascript
+socket.emit('__rooms_page_up__', {
+    reqId: crypto.randomUUID(),
+    page: 1,
+    pageSize: 50
+}, (ack) => {
+    const resp = normalizeSocketPayload(ack);
+    console.log('当前会话房间分页:', resp.payload);
+});
+```
+
+### 5.6 StatDown（服务器统计信息）
 
 | 字段名        | 类型                  | 描述        |
 |------------|---------------------|-----------|
 | `socketId` | `string`            | 会话ID      |
-| `rooms`    | `[]string`          | 当前加入的房间列表 |
+| `roomCount` | `number`           | 当前加入的房间数量 |
+| `rooms`    | `[]string`          | 当前加入的房间列表样本，最多返回 50 个 |
 | `nps`      | `string`            | 命名空间      |
 | `metadata` | `map[string]string` | 会话元数据     |
 | `roomLoadError` | `string`        | 房间加载错误信息，为空表示加载成功 |
@@ -337,6 +389,7 @@ const socket = io('http://your-server-url:port', {
 ```json
 {
   "socketId": "socket-123",
+  "roomCount": 128,
   "rooms": [
     "room1",
     "room2"
@@ -355,7 +408,7 @@ const socket = io('http://your-server-url:port', {
 ```json
 {
   "socketId": "3fcd4875-cbfb-4d93-85b6-6f00540e9d45",
-  "rooms": [],
+  "roomCount": 0,
   "nps": "/",
   "roomLoadError": "rpc error: code = Unavailable desc = last connection error: connection error: desc = \"transport: Error while dialing: dial tcp 127.0.0.1:21009: connect: connection refused\""
 }

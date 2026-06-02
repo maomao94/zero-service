@@ -24,6 +24,7 @@ const (
 	EventUp              = "__up__"
 	EventJoinRoom        = "__join_room_up__"
 	EventLeaveRoom       = "__leave_room_up__"
+	EventRoomsPage       = "__rooms_page_up__"
 	EventRoomBroadcast   = "__room_broadcast_up__"
 	EventGlobalBroadcast = "__global_broadcast_up__"
 
@@ -51,6 +52,20 @@ type SocketUpRoomReq struct {
 	Room  string `json:"room"`
 }
 
+type SocketRoomsPageReq struct {
+	ReqId    string `json:"reqId"`
+	Page     int    `json:"page,omitempty"`
+	PageSize int    `json:"pageSize,omitempty"`
+}
+
+type SocketRoomsPageRes struct {
+	Total      int      `json:"total"`
+	Page       int      `json:"page"`
+	PageSize   int      `json:"pageSize"`
+	TotalPages int      `json:"totalPages"`
+	Rooms      []string `json:"rooms"`
+}
+
 type SocketResp struct {
 	Code    int    `json:"code"`
 	Msg     string `json:"msg"`
@@ -66,11 +81,19 @@ type SocketDown struct {
 
 type StatDown struct {
 	SocketId      string            `json:"socketId"`
-	Rooms         []string          `json:"rooms"`
+	RoomCount     int               `json:"roomCount"`
+	Rooms         []string          `json:"rooms,omitempty"`
 	Nps           string            `json:"nps"`
 	MetaData      map[string]string `json:"metadata,omitempty"`
 	RoomLoadError string            `json:"roomLoadError,omitempty"`
 }
+
+const (
+	maxStatRooms         = 50
+	defaultRoomsPage     = 1
+	defaultRoomsPageSize = 50
+	maxRoomsPageSize     = 200
+)
 
 func buildRespJson(code int, msg string, payload any, reqId string) []byte {
 	resp := SocketResp{
@@ -145,6 +168,79 @@ func parseRoomPayload(ctx context.Context, session *Session, payload *socketio.E
 		return nil, false
 	}
 	return &upReq, true
+}
+
+func parseRoomsPagePayload(ctx context.Context, session *Session, payload *socketio.EventPayload, socketId string) (*SocketRoomsPageReq, bool) {
+	handlerPayload := extractPayload(payload)
+	if handlerPayload == nil {
+		logx.WithContext(ctx).Errorf("[socketio] failed to marshal data for event: conn=%s", socketId)
+		sendErrorResponse(session, payload, CodeParamErr, "数据格式错误", "")
+		return nil, false
+	}
+	var req SocketRoomsPageReq
+	if err := jsonx.Unmarshal(handlerPayload, &req); err != nil {
+		logx.WithContext(ctx).Errorf("[socketio] failed to parse rooms page request: conn=%s, err=%v, raw_data=%s", socketId, err, string(handlerPayload))
+		sendErrorResponse(session, payload, CodeParamErr, "参数解析失败", req.ReqId)
+		return nil, false
+	}
+	if len(req.ReqId) == 0 {
+		logx.WithContext(ctx).Errorf("[socketio] missing required fields: conn=%s", socketId)
+		sendErrorResponse(session, payload, CodeParamErr, "reqId为必填项", req.ReqId)
+		return nil, false
+	}
+	return &req, true
+}
+
+func normalizeRoomsPage(page, pageSize int) (int, int) {
+	if page <= 0 {
+		page = defaultRoomsPage
+	}
+	if pageSize <= 0 {
+		pageSize = defaultRoomsPageSize
+	}
+	if pageSize > maxRoomsPageSize {
+		pageSize = maxRoomsPageSize
+	}
+	return page, pageSize
+}
+
+func visibleSessionRooms(rooms []string, socketId string) []string {
+	visibleRooms := make([]string, 0, len(rooms))
+	for _, room := range rooms {
+		if room != socketId {
+			visibleRooms = append(visibleRooms, room)
+		}
+	}
+	return visibleRooms
+}
+
+func buildRoomsPageRes(rooms []string, page, pageSize int) SocketRoomsPageRes {
+	page, pageSize = normalizeRoomsPage(page, pageSize)
+	slices.Sort(rooms)
+	total := len(rooms)
+	totalPages := 0
+	if total > 0 {
+		totalPages = (total + pageSize - 1) / pageSize
+	}
+	start := (page - 1) * pageSize
+	if start >= total {
+		return SocketRoomsPageRes{
+			Total:      total,
+			Page:       page,
+			PageSize:   pageSize,
+			TotalPages: totalPages,
+			Rooms:      []string{},
+		}
+	}
+	end := start + pageSize
+	end = min(end, total)
+	return SocketRoomsPageRes{
+		Total:      total,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: totalPages,
+		Rooms:      rooms[start:end],
+	}
 }
 
 // parseUpPayload 解析通用上行事件的 payload，失败时自动发送错误响应
@@ -490,6 +586,22 @@ func (srv *Server) bindEvents() {
 				sendResponse(session, payload, CodeSuccess, "处理成功", nil, upReq.ReqId)
 			})
 		})
+		socket.On(EventRoomsPage, func(payload *socketio.EventPayload) {
+			ctx := logx.WithFields(context.Background(),
+				logx.Field("socketId", payload.SID),
+				logx.Field("event", EventRoomsPage),
+			)
+			ctx = context.WithValue(ctx, ctxdata.CtxAuthorizationKey, token)
+			req, ok := parseRoomsPagePayload(ctx, session, payload, socket.Id)
+			if !ok {
+				return
+			}
+			threading.GoSafe(func() {
+				rooms := visibleSessionRooms(session.socket.Rooms(), session.ID())
+				res := buildRoomsPageRes(rooms, req.Page, req.PageSize)
+				sendResponse(session, payload, CodeSuccess, "处理成功", res, req.ReqId)
+			})
+		})
 		socket.On(EventUp, func(payload *socketio.EventPayload) {
 			ctx := logx.WithFields(context.Background(),
 				logx.Field("socketId", payload.SID),
@@ -714,9 +826,15 @@ func (srv *Server) statLoop() {
 			logx.Statf("[socketio] total sessions: %d", len(sessions))
 			for _, sess := range sessions {
 				threading.GoSafe(func() {
+					rooms := sess.socket.Rooms()
+					statRooms := rooms
+					if len(statRooms) > maxStatRooms {
+						statRooms = statRooms[:maxStatRooms]
+					}
 					stat := StatDown{
 						SocketId:      sess.socketId,
-						Rooms:         sess.socket.Rooms(),
+						RoomCount:     len(rooms),
+						Rooms:         statRooms,
 						Nps:           sess.socket.Nps,
 						MetaData:      sess.AllMetadata(),
 						RoomLoadError: sess.roomLoadError,

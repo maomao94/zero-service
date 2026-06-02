@@ -21,7 +21,8 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
-	SocketGtwConf   zrpc.RpcClientConf `json:",optional"`
-	SocketMetaData  []string           `json:",optional"`
-	StreamEventConf zrpc.RpcClientConf
+	SocketGtwConf           zrpc.RpcClientConf `json:",optional"`
+	SocketMetaData          []string           `json:",optional"`
+	StreamEventConf         zrpc.RpcClientConf
+	EnableStreamEventNotify bool `json:",default=true"`
 }

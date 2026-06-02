@@ -73,6 +73,9 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			return claims, true
 		}),
 		socketiox.WithConnectHook(func(ctx context.Context, session *socketiox.Session) ([]string, error) {
+			if !c.EnableStreamEventNotify {
+				return nil, nil
+			}
 			reqId, _ := tool.SimpleUUID()
 			payloadData := map[string]interface{}{
 				"metadata": session.AllMetadata(),
@@ -95,6 +98,9 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			return nil, nil
 		}),
 		socketiox.WithDisconnectHook(func(ctx context.Context, session *socketiox.Session, reason string) error {
+			if !c.EnableStreamEventNotify {
+				return nil
+			}
 			reqId, _ := tool.SimpleUUID()
 			payloadData := map[string]interface{}{
 				"metadata": session.AllMetadata(),
@@ -112,6 +118,9 @@ func NewServiceContext(c config.Config) *ServiceContext {
 			return nil
 		}),
 		socketiox.WithPreJoinRoomHook(func(ctx context.Context, session *socketiox.Session, reqId, room string) error {
+			if !c.EnableStreamEventNotify {
+				return nil
+			}
 			payloadData := map[string]interface{}{
 				"metadata": session.AllMetadata(),
 				"room":     room,

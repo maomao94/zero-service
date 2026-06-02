@@ -212,6 +212,233 @@ socketgtw 按 event 类型构造 payload，业务服务按对应结构解析：
 | `__join_room_up__` | 通过时正常返回；拒绝时返回 gRPC 错误 | socketgtw 拒绝加入 |
 | `__up__` | 业务数据 | socketgtw 包装成 SocketResp 返回给浏览器 |
 
+### Scenario: `__stat_down__` 房间统计下行契约
+
+#### 1. Scope / Trigger
+
+- Trigger: `common/socketiox` 向浏览器周期性发送统计事件，属于 SocketIO 服务端 → 前端的跨层响应契约。
+- Scope: 仅描述通用统计 payload；业务房间命名、机构层级和订阅策略不写入通用契约。
+
+#### 2. Signatures
+
+
+```go
+type StatDown struct {
+    SocketId      string            `json:"socketId"`
+    RoomCount     int               `json:"roomCount"`
+    Rooms         []string          `json:"rooms,omitempty"`
+    Nps           string            `json:"nps"`
+    MetaData      map[string]string `json:"metadata,omitempty"`
+    RoomLoadError string            `json:"roomLoadError,omitempty"`
+}
+```
+
+#### 3. Contracts
+
+- Event: `__stat_down__`
+- `socketId`: 当前 SocketIO session id。
+- `roomCount`: 当前 session 实际加入的房间总数，必须使用全量 room 列表长度。
+- `rooms`: 调试样本，最多返回 `50` 个房间；不得全量返回大量 room。
+- `nps`: SocketIO namespace。
+- `metadata`: 从 token claims 中按 `SocketMetaData` 配置提取的元数据。
+- `roomLoadError`: 初始房间加载失败或 JoinRoom 失败时写入错误信息；空值表示无加载错误。
+
+#### 4. Validation & Error Matrix
+
+| Condition | Behavior |
+|-----------|----------|
+| session 加入 0 个 room | `roomCount=0`，`rooms` 为空或省略 |
+| session 加入 1-50 个 room | `roomCount=len(allRooms)`，`rooms` 返回这些 room |
+| session 加入超过 50 个 room | `roomCount=len(allRooms)`，`rooms` 只返回前 50 个样本 |
+| connectHook 返回错误 | 不断开连接，`roomLoadError` 写入错误信息 |
+| 单个初始 JoinRoom 失败 | 继续处理后续 room，`roomLoadError` 写入失败信息 |
+
+#### 5. Good/Base/Bad Cases
+
+- Good: `roomCount=10000` 且 `len(rooms)<=50`，前端可知道真实订阅规模并抽样检查。
+- Base: `roomCount=4` 且 `rooms` 返回全部 4 个房间，便于本地调试。
+- Bad: `rooms` 返回全部 10000 个房间，导致周期性统计 payload 过大。
+
+#### 6. Tests Required
+
+- Unit or integration test should assert `RoomCount` equals full room count.
+- Test with more than 50 rooms should assert serialized `rooms` length is 50.
+- Test with zero rooms should assert payload remains valid and `roomCount=0`.
+- Test connectHook error path should assert `roomLoadError` appears in `__stat_down__`.
+
+#### 7. Wrong vs Correct
+
+##### Wrong
+
+```go
+stat := StatDown{
+    Rooms: sess.socket.Rooms(), // can emit thousands of room names every stat tick
+}
+```
+
+##### Correct
+
+```go
+rooms := sess.socket.Rooms()
+statRooms := rooms
+if len(statRooms) > maxStatRooms {
+    statRooms = statRooms[:maxStatRooms]
+}
+
+stat := StatDown{
+    RoomCount: len(rooms),
+    Rooms:     statRooms,
+}
+```
+
+### Scenario: `__rooms_page_up__` 当前会话房间分页查询
+
+#### 1. Scope / Trigger
+
+- Trigger: 前端需要按需查询当前 session 已加入的房间列表，用于排查订阅状态。属于 SocketIO 客户端 → 服务端的查询事件。
+- Scope: 仅查询当前连接自己的房间，不支持查其他 socketId。会过滤 SocketIO 自动加入的 socketId 内部房间。
+
+#### 2. Signatures
+
+```go
+const EventRoomsPage = "__rooms_page_up__"
+
+type SocketRoomsPageReq struct {
+    ReqId    string `json:"reqId"`
+    Page     int    `json:"page,omitempty"`
+    PageSize int    `json:"pageSize,omitempty"`
+}
+
+type SocketRoomsPageRes struct {
+    Total      int      `json:"total"`
+    Page       int      `json:"page"`
+    PageSize   int      `json:"pageSize"`
+    TotalPages int      `json:"totalPages"`
+    Rooms      []string `json:"rooms"`
+}
+```
+
+#### 3. Contracts
+
+- Event: `__rooms_page_up__`
+- `reqId`: 必填，请求唯一标识。
+- `page`: 可选，默认 1。
+- `pageSize`: 可选，默认 50，最大 200。
+- 响应通过 ack 或 `__down__` 返回，遵循现有 `sendResponse` 模式。
+- 返回的 rooms 已按名称排序，且过滤掉 socketId 内部房间。
+
+#### 4. Validation & Error Matrix
+
+| Condition | Behavior |
+|-----------|----------|
+| `reqId` 为空 | 返回 400 "reqId为必填项" |
+| `page <= 0` | 归一化为 1 |
+| `pageSize <= 0` | 归一化为 50 |
+| `pageSize > 200` | 截断为 200 |
+| `page` 超出总页数 | 返回空 rooms 列表 |
+
+#### 5. Good/Base/Bad Cases
+
+- Good: `page=1, pageSize=200`，前端一次拿到大量房间用于排查。
+- Base: `page=1, pageSize=50`（默认），前端分页翻页。
+- Bad: 不过滤 socketId 房间，前端看到内部自房间。
+
+#### 6. Tests Required
+
+- `TestBuildRoomsPageResSortsAndPaginates` — 排序 + 分页正确
+- `TestBuildRoomsPageResNormalizesDefaults` — 默认值归一化
+- `TestBuildRoomsPageResCapsPageSize` — 上限截断
+- `TestBuildRoomsPageResOutOfRangePage` — 越界页返回空
+- `TestVisibleSessionRoomsFiltersSocketIdRoom` — 过滤 socketId 房间
+
+#### 7. Wrong vs Correct
+
+##### Wrong
+
+```go
+rooms := session.socket.Rooms()
+res := buildRoomsPageRes(rooms, req.Page, req.PageSize)
+```
+
+##### Correct
+
+```go
+rooms := visibleSessionRooms(session.socket.Rooms(), session.ID())
+res := buildRoomsPageRes(rooms, req.Page, req.PageSize)
+```
+
+---
+
+### Scenario: `EnableStreamEventNotify` UpSocketMessage 通知开关
+
+#### 1. Scope / Trigger
+
+- Trigger: socketgtw 连接/断开/加入房间时会调用下游 StreamEvent 服务的 `UpSocketMessage` RPC。某些场景（本地调试、StreamEvent 不可用）需要关闭这些通知。
+- Scope: 仅控制 socketgtw → StreamEvent 的生命周期通知，不影响 `__up__` 业务消息转发。
+
+#### 2. Signatures
+
+```go
+// config.go
+type Config struct {
+    EnableStreamEventNotify bool `json:",default=true"`
+}
+```
+
+#### 3. Contracts
+
+- 默认 `true`，保持现有行为。
+- 设为 `false` 时，以下 hook 跳过 RPC 调用：
+  - `connectHook` (`__connection__`)：返回空 rooms，不调用 UpSocketMessage
+  - `disconnectHook` (`__disconnect__`)：直接返回 nil
+  - `preJoinRoomHook` (`__join_room_up__`)：直接返回 nil
+- `sockethandler` 的 `EventUp` (`__up__`) 不受此开关影响。
+
+#### 4. Validation & Error Matrix
+
+| Condition | Behavior |
+|-----------|----------|
+| `EnableStreamEventNotify = true` | 正常调用 UpSocketMessage |
+| `EnableStreamEventNotify = false` | 跳过调用，connectHook 返回空 rooms |
+| StreamEvent 服务不可用 + 开关为 true | 连接失败，`roomLoadError` 写入错误 |
+
+#### 5. Good/Base/Bad Cases
+
+- Good: 本地开发时设为 `false`，避免 StreamEvent 依赖。
+- Base: 生产环境保持 `true`。
+- Bad: 关闭后忘记开启，导致前端收不到初始房间列表。
+
+#### 6. Tests Required
+
+- 集成测试：关闭开关后连接不调用 UpSocketMessage。
+- 集成测试：开启开关后连接正常加载房间。
+
+#### 7. Wrong vs Correct
+
+##### Wrong
+
+```go
+// 全部硬编码调用，无法关闭
+socketiox.WithConnectHook(func(ctx context.Context, session *socketiox.Session) ([]string, error) {
+    res, err := svcCtx.StreamEventCli.UpSocketMessage(ctx, ...)
+    ...
+})
+```
+
+##### Correct
+
+```go
+socketiox.WithConnectHook(func(ctx context.Context, session *socketiox.Session) ([]string, error) {
+    if !c.EnableStreamEventNotify {
+        return nil, nil
+    }
+    res, err := svcCtx.StreamEventCli.UpSocketMessage(ctx, ...)
+    ...
+})
+```
+
+---
+
 ### 规则：proto 注释描述 payload 结构，不描述业务逻辑
 
 proto 需要说明 socketgtw 发送的 payload 结构，让业务服务知道怎么解析。但不描述业务层的房间命名、metadata 语义和鉴权规则。
@@ -328,3 +555,24 @@ logx.WithContext(ctx).Debugf("[socketio] processing request: conn=%s", socket.Id
 - go-zero 框架每个 RPC 方法对应一个 logic 文件
 - 文件结构清晰，易于维护和扩展
 - 去重收益不大（每个文件仅 40-50 行）
+
+### 决策: 场站级房间订阅策略
+
+**背景**: 机构有父子层级关系，需求是"儿子不能收到父亲消息，父亲可以收到儿子消息"。
+
+**选项**:
+1. 父级连接时订阅所有子场站 room（连接时 fan-out）
+2. 子级发送时广播给父链 inbox room（发送时 fan-out）
+3. 业务路由层统一计算目标 rooms（路由层 fan-out）
+
+**决策**: 选择方案 1（连接时 fan-out），原因：
+- 发送端最简单，只发数据所属场站的精确 room
+- Socket.IO room 本身轻量，大量 room 不是性能瓶颈
+- 避免发送端需要知道父链结构
+
+**规则**:
+- room 只绑定场站，不绑定父级机构
+- 父级用户连接时 join 所有下级场站 room
+- 场站用户连接时只 join 自己场站 room
+- `__stat_down__` 不全量上报 rooms，只返回 roomCount + 最多 50 个样本
+- `__rooms_page_up__` 按需分页查询完整房间列表

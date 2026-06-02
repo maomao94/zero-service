@@ -892,6 +892,7 @@
                     <div class="button-group">
                 <button id="joinRoomBtn" class="success">加入房间</button>
                 <button id="leaveRoomBtn" class="danger">离开房间</button>
+                <button id="queryRoomsPageBtn" class="primary">查询房间</button>
             </div>
                 </div>
                 
@@ -980,6 +981,7 @@
         const roomInput = document.getElementById('roomInput');
         const joinRoomBtn = document.getElementById('joinRoomBtn');
         const leaveRoomBtn = document.getElementById('leaveRoomBtn');
+        const queryRoomsPageBtn = document.getElementById('queryRoomsPageBtn');
         const logsDiv = document.getElementById('logs');
         
         // 广播相关元素
@@ -1386,6 +1388,27 @@
             addLog('message', `正在离开房间: ${room}`);
         }
         
+        // 查询当前会话已加入的房间（分页）
+        function queryRoomsPage() {
+            if (!isConnected) {
+                addLog('error', '请先连接服务器');
+                return;
+            }
+            
+            const reqId = generateReqId();
+            
+            // 发送__rooms_page_up__事件
+            socket.emit('__rooms_page_up__', {
+                reqId: reqId,
+                page: 1,
+                pageSize: 200
+            }, (ack) => {
+                addLog('receive', `收到房间分页查询ACK: ${JSON.stringify(ack, null, 2)}`);
+            });
+            
+            addLog('message', `发送__rooms_page_up__事件，查询当前会话房间列表`);
+        }
+        
         // 更新连接状态
         function updateConnectionStatus() {
             if (isConnected) {
@@ -1398,6 +1421,7 @@
                 sendGlobalBtn.disabled = false;
                 joinRoomBtn.disabled = false;
                 leaveRoomBtn.disabled = false;
+                queryRoomsPageBtn.disabled = false;
             } else {
                 connectionStatus.className = 'status disconnected';
                 connectionStatus.textContent = '未连接';
@@ -1408,6 +1432,7 @@
                 sendGlobalBtn.disabled = true;
                 joinRoomBtn.disabled = true;
                 leaveRoomBtn.disabled = true;
+                queryRoomsPageBtn.disabled = true;
             }
         }
         
@@ -1419,6 +1444,7 @@
         sendGlobalBtn.addEventListener('click', sendGlobal);
         joinRoomBtn.addEventListener('click', joinRoom);
         leaveRoomBtn.addEventListener('click', leaveRoom);
+        queryRoomsPageBtn.addEventListener('click', queryRoomsPage);
         
         // 初始化状态
         loadRegisteredEvents(); // 从localStorage加载已注册的事件
