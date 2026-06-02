@@ -2,12 +2,10 @@ package logic
 
 import (
 	"context"
-	"encoding/json"
 
 	"zero-service/socketapp/socketgtw/internal/svc"
 	"zero-service/socketapp/socketgtw/socketgtw"
 
-	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -28,14 +26,7 @@ func NewBroadcastGlobalLogic(ctx context.Context, svcCtx *svc.ServiceContext) *B
 // 向所有在线前端广播消息
 func (l *BroadcastGlobalLogic) BroadcastGlobal(in *socketgtw.BroadcastGlobalReq) (*socketgtw.BroadcastGlobalRes, error) {
 	l.Infof("BroadcastGlobal, event: %s, reqId: %s", in.Event, in.ReqId)
-	var payload any
-	raw := []byte(in.Payload)
-	var js json.RawMessage
-	if jsonx.Unmarshal(raw, &js) == nil {
-		payload = json.RawMessage(raw)
-	} else {
-		payload = in.Payload
-	}
+	payload := parseJsonPayload(in.Payload)
 	err := l.svcCtx.SocketServer.BroadcastGlobal(in.Event, payload, in.ReqId)
 	if err != nil {
 		return nil, err
