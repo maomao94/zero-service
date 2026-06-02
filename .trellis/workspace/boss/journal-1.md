@@ -1001,3 +1001,42 @@ Removed ai-token-ledger skill and CLI, enhanced install-skill.sh/verify-skills.s
 ### Next Steps
 
 - None - task complete
+
+
+## Session 22: SocketIO 代码优化
+
+**Date**: 2026-06-02
+**Task**: SocketIO 代码优化
+**Branch**: `master`
+
+### Summary
+
+优化 common/socketiox/ 和 socketapp/socketgtw/ 代码：server.go 事件处理去重（sendResponse/parseRoomPayload/parseUpPayload）、container.go 客户端创建去重（newSocketClient/syncClientMap）、锁优化、socketgtw JSON payload 解析去重、死代码清理、新增 socketiox 开发规范。代码减少约 100 行。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `54ee76a0` | (see git log) |
+| `dfdfc568` | (see git log) |
+| `00e54c6a` | (see git log) |
+| `c8fd9c0f` | (see git log) |
+| `3e25a71d` | (see git log) |
+| `abd05782` | (see git log) |
+| `ff3b0281` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
