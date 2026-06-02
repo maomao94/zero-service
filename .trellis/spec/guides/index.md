@@ -9,6 +9,7 @@
 | [Code Reuse Thinking Guide](./code-reuse-thinking-guide.md) | 查找已有实现，减少重复封装 | 新增工具函数、SDK、client、配置、常量或相似逻辑时 |
 | [Cross-Layer Thinking Guide](./cross-layer-thinking-guide.md) | 梳理 API/RPC、Logic、Model、配置和外部系统边界 | 功能跨 3 层以上、契约变化或数据格式变化时 |
 | [Documentation Guide](./documentation-guide.md) | 文档分层、清理和维护原则 | 修改 README、docs/ 或 CONTRIBUTING 时 |
+| [Release Tagging Thinking Guide](./release-tagging-guide.md) | 区分主项目与 fork 项目的 tag/release 流程 | 打 tag、创建 GitHub Release 或发布版本时 |
 
 ## 触发条件
 
@@ -25,6 +26,7 @@
 - 同一模式出现 3 次以上。
 - 正在新增工具函数、公共封装、常量、配置或客户端。
 - 正在修改字段、枚举、状态机、Topic、Method、错误码或配置 key。
+- 正在打 tag、创建 GitHub Release 或判断主项目 / fork 项目的版本坐标。
 
 ## 修改前规则
 
