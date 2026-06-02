@@ -80,49 +80,47 @@ const (
 	subsetSize = 32
 )
 
+func newSocketClient(endpoint string, c zrpc.RpcClientConf) socketgtw.SocketGtwClient {
+	c.Endpoints = []string{endpoint}
+	return socketgtw.NewSocketGtwClient(zrpc.MustNewClient(c,
+		zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
+		zrpc.WithDialOption(grpc.WithDefaultCallOptions(
+			//grpc.MaxCallSendMsgSize(math.MaxInt32), // 发送最大2GB
+			grpc.MaxCallSendMsgSize(50*1024*1024), // 发送最大50MB
+			//grpc.MaxCallRecvMsgSize(100 * 1024 * 1024),  // 接收最大100MB
+		)),
+	).Conn())
+}
+
+// syncClientMap 同步客户端映射，调用者需持有 p.lock
+func (p *SocketContainer) syncClientMap(addrs []string, c zrpc.RpcClientConf) {
+	target := make(map[string]bool, len(addrs))
+	for _, addr := range addrs {
+		target[addr] = true
+	}
+	for k := range p.ClientMap {
+		if !target[k] {
+			delete(p.ClientMap, k)
+		}
+	}
+	for addr := range target {
+		if _, ok := p.ClientMap[addr]; !ok {
+			p.ClientMap[addr] = newSocketClient(addr, c)
+		}
+	}
+	logx.Infof("[SocketContainer] update: total=%d", len(p.ClientMap))
+}
+
 func (p *SocketContainer) getConn4Etcd(c zrpc.RpcClientConf) error {
 	sub, err := discov.NewSubscriber(c.Etcd.Hosts, c.Etcd.Key)
 	if err != nil {
 		return err
 	}
 	update := func() {
-		var add []string
-		var remove []string
 		p.lock.Lock()
-		m := make(map[string]bool)
-		for _, val := range subset(sub.Values(), subsetSize) {
-			m[val] = true
-		}
-		for k, _ := range p.ClientMap {
-			if _, ok := m[k]; !ok {
-				remove = append(remove, k)
-			}
-		}
-		for k, _ := range m {
-			if _, ok := p.ClientMap[k]; !ok {
-				add = append(add, k)
-			}
-		}
-		for _, val := range add {
-			endpoints := make([]string, 1)
-			endpoints[0] = val
-			c.Endpoints = endpoints
-			client := socketgtw.NewSocketGtwClient(zrpc.MustNewClient(c,
-				zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
-				// 添加最大消息配置
-				zrpc.WithDialOption(grpc.WithDefaultCallOptions(
-					//grpc.MaxCallSendMsgSize(math.MaxInt32), // 发送最大2GB
-					grpc.MaxCallSendMsgSize(50*1024*1024), // 发送最大50MB
-					//grpc.MaxCallRecvMsgSize(100 * 1024 * 1024),  // 接收最大100MB
-				)),
-			).Conn())
-			p.ClientMap[val] = client
-		}
-		for _, val := range remove {
-			delete(p.ClientMap, val)
-		}
-		logx.Infof("[SocketContainer] ETCD update: added=%d, removed=%d, total=%d", len(add), len(remove), len(p.ClientMap))
-		p.lock.Unlock()
+		defer p.lock.Unlock()
+		addrs := subset(sub.Values(), subsetSize)
+		p.syncClientMap(addrs, c)
 	}
 	sub.AddListener(update)
 	update()
@@ -131,25 +129,13 @@ func (p *SocketContainer) getConn4Etcd(c zrpc.RpcClientConf) error {
 
 func (p *SocketContainer) getConn4Direct(c zrpc.RpcClientConf) error {
 	p.lock.Lock()
+	defer p.lock.Unlock()
 	for _, val := range c.Endpoints {
 		if _, ok := p.ClientMap[val]; ok {
 			continue
 		}
-		endpoints := make([]string, 1)
-		endpoints[0] = val
-		c.Endpoints = endpoints
-		client := socketgtw.NewSocketGtwClient(zrpc.MustNewClient(c,
-			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
-			// 添加最大消息配置
-			zrpc.WithDialOption(grpc.WithDefaultCallOptions(
-				//grpc.MaxCallSendMsgSize(math.MaxInt32), // 发送最大2GB
-				grpc.MaxCallSendMsgSize(50*1024*1024), // 发送最大50MB
-				//grpc.MaxCallRecvMsgSize(100 * 1024 * 1024),  // 接收最大100MB
-			)),
-		).Conn())
-		p.ClientMap[val] = client
+		p.ClientMap[val] = newSocketClient(val, c)
 	}
-	p.lock.Unlock()
 	return nil
 }
 
@@ -276,43 +262,9 @@ func (p *SocketContainer) populateClientMap(ctx context.Context, c zrpc.RpcClien
 	}
 }
 func (p *SocketContainer) updateClientMap(addrs []string, c zrpc.RpcClientConf) {
-	var add []string
-	var remove []string
 	p.lock.Lock()
-	m := make(map[string]bool)
-	for _, val := range subset(addrs, subsetSize) {
-		m[val] = true
-	}
-	for k, _ := range p.ClientMap {
-		if _, ok := m[k]; !ok {
-			remove = append(remove, k)
-		}
-	}
-	for k, _ := range m {
-		if _, ok := p.ClientMap[k]; !ok {
-			add = append(add, k)
-		}
-	}
-	for _, val := range add {
-		endpoints := make([]string, 1)
-		endpoints[0] = val
-		c.Endpoints = endpoints
-		client := socketgtw.NewSocketGtwClient(zrpc.MustNewClient(c,
-			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor),
-			// 添加最大消息配置
-			zrpc.WithDialOption(grpc.WithDefaultCallOptions(
-				//grpc.MaxCallSendMsgSize(math.MaxInt32), // 发送最大2GB
-				grpc.MaxCallSendMsgSize(50*1024*1024), // 发送最大50MB
-				//grpc.MaxCallRecvMsgSize(100 * 1024 * 1024),  // 接收最大100MB
-			)),
-		).Conn())
-		p.ClientMap[val] = client
-	}
-	for _, val := range remove {
-		delete(p.ClientMap, val)
-	}
-	logx.Infof("[SocketContainer] NACOS update: added=%d, removed=%d, total=%d", len(add), len(remove), len(p.ClientMap))
-	p.lock.Unlock()
+	defer p.lock.Unlock()
+	p.syncClientMap(addrs, c)
 }
 
 func extractHealthyGRPCInstances(instances []model.Instance) []string {
@@ -396,10 +348,6 @@ func parseURL(rawURL url.URL) (target, error) {
 		tgt.NamespaceID = "public"
 	}
 
-	tgt.LogLevel = os.Getenv("NACOS_LOG_LEVEL")
-	tgt.LogDir = os.Getenv("NACOS_LOG_DIR")
-	tgt.CacheDir = os.Getenv("NACOS_CACHE_DIR")
-
 	tgt.User = rawURL.User.Username()
 	tgt.Password, _ = rawURL.User.Password()
 	tgt.Addr = rawURL.Host
@@ -411,6 +359,10 @@ func parseURL(rawURL url.URL) (target, error) {
 
 	if logDir, exists := os.LookupEnv("NACOS_LOG_DIR"); exists {
 		tgt.LogDir = logDir
+	}
+
+	if cacheDir, exists := os.LookupEnv("NACOS_CACHE_DIR"); exists {
+		tgt.CacheDir = cacheDir
 	}
 
 	if notLoadCacheAtStart, exists := os.LookupEnv("NACOS_NOT_LOAD_CACHE_AT_START"); exists {
