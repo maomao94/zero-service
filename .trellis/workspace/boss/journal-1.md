@@ -1106,3 +1106,38 @@ Removed ai-token-ledger skill and CLI, enhanced install-skill.sh/verify-skills.s
 ### Next Steps
 
 - None - task complete
+
+
+## Session 25: SocketIO 房间管理增强：分页查询、统计限量、通知开关、场站房间策略
+
+**Date**: 2026-06-02
+**Task**: SocketIO 房间管理增强：分页查询、统计限量、通知开关、场站房间策略
+**Branch**: `master`
+
+### Summary
+
+1) __stat_down__ 增加 roomCount 字段，rooms 截断到最多 50 个样本；2) 新增 __rooms_page_up__ 事件支持分页查询当前 session 业务房间，过滤 socketId 内部房间；3) socketgtw 新增 EnableStreamEventNotify 配置开关，可关闭 UpSocketMessage 生命周期通知；4) 确立场站级房间订阅策略（连接时 fan-out）；5) 更新 socketiox-guidelines spec 记录上述契约。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ede524e4` | (see git log) |
+| `fd282e5a` | (see git log) |
+| `0d34fb71` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

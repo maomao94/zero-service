@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 24
+- **Total Sessions**: 25
 - **Last Active**: 2026-06-02
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1108 | Active |
+| `journal-1.md` | ~1143 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 25 | 2026-06-02 | SocketIO 房间管理增强：分页查询、统计限量、通知开关、场站房间策略 | `ede524e4`, `fd282e5a`, `0d34fb71` | `master` |
 | 24 | 2026-06-02 | UpSocketMessage proto 注释规范化 | `165d2aa0` | `master` |
 | 23 | 2026-06-02 | 优化项目文档体系 | `673e486f` | `master` |
 | 22 | 2026-06-02 | SocketIO 代码优化 | `54ee76a0`, `dfdfc568`, `00e54c6a`, `c8fd9c0f`, `3e25a71d`, `abd05782`, `ff3b0281` | `master` |
