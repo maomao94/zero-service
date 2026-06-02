@@ -30,7 +30,6 @@ func (l *SocketUpHandler) Handle(ctx context.Context, event string, upPayload *s
 	if err != nil {
 		return "", err
 	}
-	jsonx.Marshal(upReq.Payload)
 	res, err := l.cli.UpSocketMessage(ctx, &streamevent.UpSocketMessageReq{
 		ReqId:   upReq.ReqId,
 		SId:     upPayload.SID,
