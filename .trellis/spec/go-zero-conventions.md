@@ -77,6 +77,7 @@ goctl api go {service}.api --go_out=. --style=go_zero
 
 新增能力前先检索 `common/` 和相邻模块，优先复用：
 
+- `common/socketiox/`：SocketIO 实时通信服务器封装（Session 管理、事件处理、房间管理、服务发现）。
 - `common/djisdk/`：DJI Cloud API MQTT topic、协议体、Client 和回调。
 - `common/einox/`：Eino Agent、知识库、记忆、中断、协议适配。
 - `common/mcpx/`：MCP Server/Client、鉴权、异步结果、工具封装。
