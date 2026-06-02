@@ -1073,3 +1073,36 @@ Removed ai-token-ledger skill and CLI, enhanced install-skill.sh/verify-skills.s
 ### Next Steps
 
 - None - task complete
+
+
+## Session 24: UpSocketMessage proto 注释规范化
+
+**Date**: 2026-06-02
+**Task**: UpSocketMessage proto 注释规范化
+**Branch**: `master`
+
+### Summary
+
+补充 UpSocketMessageReq/Res 的 proto 注释，描述 socketgtw 按 event 类型构造的 payload 结构和返回值语义。修正多次迭代中的错误认知：先去掉业务属性示例，再修正为描述 payload 结构而非只描述回调机制。同步更新 socketiox-guidelines.md spec。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `165d2aa0` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
