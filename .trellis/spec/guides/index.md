@@ -8,6 +8,7 @@
 | --- | --- | --- |
 | [Code Reuse Thinking Guide](./code-reuse-thinking-guide.md) | 查找已有实现，减少重复封装 | 新增工具函数、SDK、client、配置、常量或相似逻辑时 |
 | [Cross-Layer Thinking Guide](./cross-layer-thinking-guide.md) | 梳理 API/RPC、Logic、Model、配置和外部系统边界 | 功能跨 3 层以上、契约变化或数据格式变化时 |
+| [Documentation Guide](./documentation-guide.md) | 文档分层、清理和维护原则 | 修改 README、docs/ 或 CONTRIBUTING 时 |
 
 ## 触发条件
 
