@@ -185,6 +185,60 @@ func (srv *Server) GetSessionByKey(key, value string) ([]*Session, bool) {
 
 ---
 
+## UpSocketMessage Proto 契约
+
+### 概念
+
+`UpSocketMessage` 是 socket 事件通知回调。socketgtw 在连接建立、断开、加入房间、业务上行等时机调用该 RPC，把事件通知给下游业务服务，由业务服务决定如何处理。
+
+### payload 结构（socketgtw → 业务服务）
+
+socketgtw 按 event 类型构造 payload，业务服务按对应结构解析：
+
+| event | payload 结构 | 说明 |
+|-------|-------------|------|
+| `__connection__` | `{"metadata": {...}}` | metadata 来自 token claims，具体 key 由网关配置决定 |
+| `__disconnect__` | `{"metadata": {...}}` | 同上 |
+| `__join_room_up__` | `{"metadata": {...}, "room": "房间名"}` | metadata + 浏览器请求的房间名 |
+| `__up__` | 浏览器原始请求 JSON | 包含 reqId、payload、room(可选)、event(可选) |
+| 自定义事件 | 由 socketgtw handler 决定 | 业务服务自行解析 |
+
+### 返回值语义（业务服务 → socketgtw）
+
+| event | res.Payload | 说明 |
+|-------|-------------|------|
+| `__connection__` | 房间名数组 JSON，如 `["room1","room2"]` | socketgtw 自动 JoinRoom |
+| `__disconnect__` | 通常为空 | |
+| `__join_room_up__` | 通过时正常返回；拒绝时返回 gRPC 错误 | socketgtw 拒绝加入 |
+| `__up__` | 业务数据 | socketgtw 包装成 SocketResp 返回给浏览器 |
+
+### 规则：proto 注释描述 payload 结构，不描述业务逻辑
+
+proto 需要说明 socketgtw 发送的 payload 结构，让业务服务知道怎么解析。但不描述业务层的房间命名、metadata 语义和鉴权规则。
+
+**禁止**：在 proto 注释中写业务属性
+```protobuf
+// ❌ 错误：把业务属性写进通用回调协议
+// metadata.user_id: 用户ID
+// metadata.dept_code: 机构编码
+// 返回 payload 示例: ["alarm:dept:001","fire_alarm:dept:001"]
+```
+
+**正确**：描述 payload 结构，不写业务语义
+```protobuf
+// ✅ 正确：描述 socketgtw 发送的 payload 结构
+// __connection__ payload: {"metadata": {...}}
+// metadata 来自 token claims, 具体 key 由 socketgtw 网关配置决定。
+// 返回: 房间名数组 JSON, socketgtw 会自动 JoinRoom。
+```
+
+**规则**：
+1. proto 注释描述 socketgtw 发送的 payload 结构，让业务服务知道怎么解析
+2. metadata key 由网关配置决定，不写死具体 key
+3. 房间命名、鉴权逻辑由业务服务自行定义，不写进 facade proto
+
+---
+
 ## 禁止模式
 
 ### Don't: 在锁内调用其他锁保护的方法
@@ -250,6 +304,17 @@ logx.WithContext(ctx).Debugf("[socketio] processing request: conn=%s", socket.Id
 - 职责独立（HTTP 集成 vs SocketIO 核心逻辑）
 - server.go 已 800+ 行，不宜再增加
 - 符合 Go 标准库按职责拆文件的惯例
+
+### 决策: UpSocketMessage proto 注释描述 payload 结构，不描述业务逻辑
+
+**背景**: `UpSocketMessage` 是 socket 事件通知回调，socketgtw 把事件通知给下游业务服务，业务服务自己决定怎么处理。某次实现中把 Java 业务层的 `dept_code`、`alarm:dept`、`FIRE_ALARM_ROOM_PREFIX` 等写进了 proto 注释。
+
+**决策**: proto 注释需要描述 socketgtw 发送的 payload 结构（让业务服务知道怎么解析），但不描述业务层的房间命名、metadata 语义和鉴权规则。
+
+**原因**：
+- payload 结构是 socketgtw → 业务服务的契约，业务服务需要知道怎么解析
+- metadata key 由网关配置决定，不写死具体 key
+- 房间命名和鉴权逻辑是业务服务自己定义的，不同服务可以有不同的规则
 
 ### 决策: socketpush logic 文件保持原样
 

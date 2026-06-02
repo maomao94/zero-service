@@ -450,57 +450,30 @@ message PackedSinglePointWithSCDInfo {
 // ----------------------------------------
 
 // SocketIO 上行回调请求。
+// socketgtw 在 socket 事件发生时调用该 RPC, 通知下游业务服务处理。
+// 业务服务根据 event 类型决定处理逻辑, 如初始化房间、校验权限、处理业务请求等。
 //
-// 调用来源:
-// - __connection__: SocketIO 连接建立后触发, payload 由 socketgtw 根据 token claims 生成。
-// - __disconnect__: SocketIO 断开连接时触发, payload 由 socketgtw 根据当前 session metadata 生成。
-// - __join_room_up__: 浏览器请求加入房间前触发, 业务服务可在此校验是否允许加入。
-// - __up__: 浏览器业务上行事件, 原始浏览器请求透传给业务服务处理。
-// - 自定义上行事件: socketgtw 注册对应 handler 时可透传自定义 event。
+// event 类型与 payload 结构:
 //
-// payload 为 JSON 字符串, 不同 event 的结构如下:
+// 1. __connection__ — 连接建立后触发
+//    payload: {"metadata": {...}}
+//    metadata 来自 token claims, 具体 key 由 socketgtw 网关配置决定。
+//    返回: 房间名数组 JSON, 如 ["room1","room2"], socketgtw 会自动 JoinRoom。
 //
-// 1. __connection__
-// {
-//   "metadata": {
-//     "key": "value"
-//   }
-// }
-// 业务处理: 校验连接是否允许建立, 并按需返回连接后自动加入的房间列表。
-// metadata 来自 socketgtw 从 token claims 中提取的上下文字段, 具体 key 由网关配置决定。
-// 返回 payload 示例: ["room:a","room:b"]
+// 2. __disconnect__ — 断开连接时触发
+//    payload: {"metadata": {...}}
+//    返回: 通常为空。
 //
-// 2. __disconnect__
-// {
-//   "metadata": {
-//     "key": "value"
-//   }
-// }
-// 业务处理: 连接断开通知, 当前实现通常无需返回 payload。
+// 3. __join_room_up__ — 浏览器请求加入房间前触发
+//    payload: {"metadata": {...}, "room": "房间名"}
+//    返回: 通过时正常返回; 拒绝时返回 gRPC 错误, socketgtw 拒绝加入。
 //
-// 3. __join_room_up__
-// {
-//   "metadata": {
-//     "key": "value"
-//   },
-//   "room": "room:a"
-// }
-// 业务处理: 校验当前连接是否允许加入 room。通过则正常返回;
-// 不通过应返回 gRPC 业务错误, socketgtw 将拒绝加入房间。
-// 返回 payload 通常为空; 如需回传可返回 room JSON 字符串, 例如: "room:a"。
-//
-// 4. __up__
-// {
-//   "reqId": "请求唯一标识",
-//   "payload": {},
-//   "room": "可选, 房间名",
-//   "event": "可选, 业务事件名"
-// }
-// 业务处理: 浏览器普通业务上行。socketgtw 会将业务返回的 payload 包装成 SocketResp
-// 返回给浏览器 ack; 若浏览器未传 ack, 则通过 __down__ 下行响应。
+// 4. __up__ — 浏览器业务上行事件
+//    payload: 浏览器原始请求 JSON, 包含 reqId、payload、room(可选)、event(可选)。
+//    返回: 业务数据, socketgtw 包装成 SocketResp 返回给浏览器。
 //
 // 5. 自定义上行事件
-// payload 结构由对应业务事件自行约定, socketgtw 仅透传 event、reqId、sId 和 payload。
+//    payload 结构由 socketgtw 对应 handler 决定, 业务服务自行解析。
 message UpSocketMessageReq{
   // 请求唯一标识。
   // __connection__ 和 __disconnect__ 由 socketgtw 生成;
@@ -511,15 +484,15 @@ message UpSocketMessageReq{
   // 上行事件名。系统保留值包括:
   // __connection__、__disconnect__、__join_room_up__、__up__。
   string event = 3;
-  // JSON 字符串负载。具体结构由 event 决定, 详见 UpSocketMessageReq 注释。
+  // JSON 字符串负载。结构由 event 决定, 详见 UpSocketMessageReq 注释。
   string payload = 4;
 }
 
 message UpSocketMessageRes{
   // JSON 字符串返回负载。
   // - __connection__: 返回房间名数组 JSON, socketgtw 会自动 JoinRoom。
-  // - __join_room_up__: 通过时可返回 room JSON 字符串; gRPC 返回错误表示拒绝加入。
-  // - __up__: 返回业务数据 JSON 或普通字符串, socketgtw 会包装为 SocketResp.payload。
+  // - __join_room_up__: 拒绝时返回 gRPC 错误。
+  // - __up__: 返回业务数据, socketgtw 包装成 SocketResp。
   // - __disconnect__: 通常为空。
   string payload = 1;
 }
