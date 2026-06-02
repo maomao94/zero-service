@@ -663,12 +663,19 @@ func (srv *Server) bindEvents() {
 	})
 }
 
-func (srv *Server) BroadcastRoom(room, event string, payload any, reqId string) error {
+func validateBroadcastEvent(event string) error {
 	if len(event) == 0 {
 		return errors.New("event name is empty")
 	}
 	if event == EventDown {
 		return errors.New("event name is not allowed")
+	}
+	return nil
+}
+
+func (srv *Server) BroadcastRoom(room, event string, payload any, reqId string) error {
+	if err := validateBroadcastEvent(event); err != nil {
+		return err
 	}
 	data := buildDownJson(event, payload, reqId)
 	srv.Io.To(room).Emit(event, string(data))
@@ -676,11 +683,8 @@ func (srv *Server) BroadcastRoom(room, event string, payload any, reqId string) 
 }
 
 func (s *Server) BroadcastGlobal(event string, payload any, reqId string) error {
-	if len(event) == 0 {
-		return errors.New("event name is empty")
-	}
-	if event == EventDown {
-		return errors.New("event name is not allowed")
+	if err := validateBroadcastEvent(event); err != nil {
+		return err
 	}
 	data := buildDownJson(event, payload, reqId)
 	s.Io.Emit(event, string(data))
@@ -756,9 +760,14 @@ func (srv *Server) GetSessionByUserId(userId string) ([]*Session, bool) {
 
 func (srv *Server) GetSessionByKey(key, value string) ([]*Session, bool) {
 	srv.lock.RLock()
-	defer srv.lock.RUnlock()
-	var sessions []*Session
+	snapshot := make([]*Session, 0, len(srv.sessions))
 	for _, sess := range srv.sessions {
+		snapshot = append(snapshot, sess)
+	}
+	srv.lock.RUnlock()
+
+	var sessions []*Session
+	for _, sess := range snapshot {
 		if sess.GetMetadata(key) == value {
 			sessions = append(sessions, sess)
 		}
