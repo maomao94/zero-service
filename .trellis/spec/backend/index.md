@@ -20,6 +20,7 @@
 | [Quality Guidelines](./quality-guidelines.md) | 禁止模式、测试要求和交付检查 | Active |
 | [Logging Guidelines](./logging-guidelines.md) | logx 使用、日志内容和敏感信息边界 | Active |
 | [SocketIO Guidelines](./socketiox-guidelines.md) | SocketIO 实时通信包使用约定和优化模式 | Active |
+| [antsx Invoke Guidelines](./antsx-invoke-guidelines.md) | antsx Invoke 并行任务编排：选型、错误处理、panic 防护、禁止模式 | Active |
 | [Trellis Template Policy](./trellis-template-policy.md) | Trellis 模板侧跟随最新版、用户数据区定位、更新后验证流程 | Active |
 
 同时阅读：
