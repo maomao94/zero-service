@@ -1141,3 +1141,37 @@ Removed ai-token-ledger skill and CLI, enhanced install-skill.sh/verify-skills.s
 ### Next Steps
 
 - None - task complete
+
+
+## Session 26: antsx Invoke 重构: panic 收集、并发安全、文档补全
+
+**Date**: 2026-06-03
+**Task**: antsx Invoke 重构: panic 收集、并发安全、文档补全
+**Branch**: `master`
+
+### Summary
+
+Invoke/InvokeWithReactor 用 errors.Join 收集所有 panic；用 invokeState 封装共享状态；InvokeWithReactor 闭包捕获循环变量 bug 修复；goTask/InvokeAllSettled 用 threading.GoSafe 启动协程；SettledResult 槽位预填兜底；新增 antsx-invoke-guidelines 规范、WebFlux 对比文档；项目 README 补上 antsx 链接
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `38e9db0c` | (see git log) |
+| `a906f260` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
