@@ -11,7 +11,7 @@
 | **Stream** | `stream.go` `select.go` | 流式管道：Pipe、Copy、Merge、Convert、FromArray |
 | **Promise** | `promise.go` | 异步结果容器：Await、Then、Map、FlatMap、All、Race |
 | **Reactor** | `reactor.go` | 协程池调度：Submit（带返回值）、Post（无返回值）、Go |
-| **Invoke** | `invoke.go` | 并行流程编排：多任务并发执行、快速失败、超时控制 |
+| **Invoke** | `invoke.go` | 并行流程编排：并发执行、快速失败、全量等待（AllSettled）、超时控制 |
 | **EventEmitter** | `emitter.go` | 发布/订阅：多 topic、ctx 取消自动退订 |
 | **PendingRegistry** | `pending.go` | 关联 ID 注册表：请求-响应模式、TTL 自动过期 |
 | **UnboundedChan** | `unbounded.go` | 无界通道：基于 mutex+cond 的无限缓冲 channel |
@@ -166,6 +166,24 @@ sum, err := antsx.InvokeCallback(ctx, tasks, func(vals []int) (int, error) {
     for _, v := range vals { total += v }
     return total, nil
 })
+
+// 等待所有任务完成，每个任务独立返回结果（不使用 fast-fail）
+// 适用于批量查询、容错降级等需要全部结果的场景
+results := antsx.InvokeAllSettled(ctx,
+    antsx.Task[int]{Name: "db", Fn: queryDB},
+    antsx.Task[int]{Name: "cache", Timeout: 500*time.Millisecond, Fn: queryCache},
+    antsx.Task[int]{Name: "api", Fn: callAPI},
+)
+for _, r := range results {
+    if r.Succeeded() {
+        fmt.Printf("%s: %d\n", r.Name, r.Val) // 成功
+    } else {
+        fmt.Printf("%s failed: %v\n", r.Name, r.Err) // 失败或 panic
+    }
+}
+
+// 使用 Reactor 协程池控制并发的 AllSettled
+results := antsx.InvokeAllSettledWithReactor(ctx, reactor, tasks...)
 ```
 
 ### EventEmitter（发布/订阅）
@@ -272,6 +290,20 @@ ch.Len()
 - 重新分配切片，释放已消费元素
 - 已消费位置显式清零，防止指针类型元素被底层数组持有导致 GC 无法回收
 
+### Invoke 三层 panic 防护
+
+Invoke 系列的 goroutine 启动采用三层 panic 防护，确保不会因 panic 导致 `WaitGroup` 泄漏：
+
+1. **业务方法层**：任务 `Fn` 内部的 `recover`
+2. **任务执行层**：`runTaskWithRecovery` / `settleTask` 的 `defer recover()`，将 panic 转为 error
+3. **goroutine 边界层**：`threading.GoSafe` 兜底保护（`InvokeAllSettled`）/ ants 协程池内置 recovery（`InvokeWithReactor`）
+
+`wg.Done()` 放在最外层 defer，任何一层 panic 都不会跳过，保证 `wg.Wait()` 一定能返回。
+
+### InvokeAllSettled 结果槽位预填
+
+每个 `SettledResult` 槽位在 goroutine 启动前预填 `Name`。即使 goroutine 异常退出（如极端情况下的 panic），调用方也能拿到带 `Name` 的结果条目，而不会是空结构体。
+
 ## 协程安全性
 
 | 类型 | 安全性 |
@@ -323,6 +355,8 @@ ch.Len()
 6. **ErrNoValue 仅在 convert 函数中使用** — 不要在其他场景返回该错误
 7. **Invoke 结果按定义顺序排列** — 不是按完成时间排列
 8. **Promise 的 Resolve/Reject 只有首次调用生效** — 后续调用被忽略
+9. **InvokeAllSettled 不取消其他任务** — 一个任务失败不影响其他任务继续执行，适合需要全部结果的场景
+10. **Invoke 用 errors.Join 收集所有错误** — 多个任务同时 panic 时会报告全部错误信息，不止第一个
 
 ## 实战示例
 
@@ -414,6 +448,35 @@ if err != nil {
     return
 }
 profile, orders := results[0], results[1]
+```
+
+### InvokeAllSettled 容错降级
+
+批量查询多个服务，部分失败不影响其他结果：
+
+```go
+results := antsx.InvokeAllSettled(ctx,
+    antsx.Task[*User]{
+        Name: "user",
+        Fn: func(ctx context.Context) (*User, error) {
+            return userClient.GetProfile(ctx, userID)
+        },
+    },
+    antsx.Task[*Order]{
+        Name:    "orders",
+        Timeout: 500 * time.Millisecond,
+        Fn: func(ctx context.Context) (*Order, error) {
+            return orderClient.GetRecent(ctx, userID)
+        },
+    },
+)
+for _, r := range results {
+    if r.Succeeded() {
+        log.Printf("%s succeeded", r.Name)
+    } else {
+        log.Printf("%s failed: %v", r.Name, r.Err) // 记录错误，继续其他逻辑
+    }
+}
 ```
 
 ### EventEmitter 多 topic 并发

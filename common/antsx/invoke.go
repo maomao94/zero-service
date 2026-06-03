@@ -2,8 +2,11 @@ package antsx
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
+
+	"github.com/zeromicro/go-zero/core/threading"
 )
 
 // Task 描述一个可并行执行的任务单元。
@@ -15,6 +18,82 @@ type Task[T any] struct {
 	Fn func(ctx context.Context) (T, error)
 	// Timeout 单任务超时时间。为 0 时使用 ctx 的全局超时。
 	Timeout time.Duration
+}
+
+// invokeState 封装 Invoke 系列函数的共享状态。
+type invokeState[T any] struct {
+	ctx     context.Context
+	cancel  context.CancelFunc
+	results []T
+	mu      sync.Mutex
+	errs    []error
+	wg      sync.WaitGroup
+}
+
+func newInvokeState[T any](ctx context.Context, n int) *invokeState[T] {
+	ctx, cancel := context.WithCancel(ctx)
+	return &invokeState[T]{
+		ctx:     ctx,
+		cancel:  cancel,
+		results: make([]T, n),
+	}
+}
+
+func (s *invokeState[T]) addErr(err error) {
+	s.mu.Lock()
+	s.errs = append(s.errs, err)
+	s.mu.Unlock()
+	s.cancel()
+}
+
+func (s *invokeState[T]) wait() ([]T, error) {
+	s.wg.Wait()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if len(s.errs) > 0 {
+		return nil, errors.Join(s.errs...)
+	}
+	return s.results, nil
+}
+
+// runTaskWithRecovery 执行单个任务，包含 panic 恢复和 wg 管理。
+func (s *invokeState[T]) runTaskWithRecovery(idx int, t Task[T]) {
+	defer func() {
+		if r := recover(); r != nil {
+			s.addErr(taskPanicErr(t.Name, r))
+		}
+		s.wg.Done()
+	}()
+	val, err := runTask(s.ctx, t)
+	if err != nil {
+		s.addErr(err)
+		return
+	}
+	s.results[idx] = val
+}
+
+func (s *invokeState[T]) goTask(idx int, t Task[T]) {
+	s.wg.Add(1)
+	threading.GoSafe(func() {
+		s.runTaskWithRecovery(idx, t)
+	})
+}
+
+func (s *invokeState[T]) runTaskSync(idx int, t Task[T]) {
+	s.wg.Add(1)
+	s.runTaskWithRecovery(idx, t)
+}
+
+func (s *invokeState[T]) submitTask(r *Reactor, idx int, t Task[T]) error {
+	s.wg.Add(1)
+	err := r.Go(s.ctx, func(ctx context.Context) {
+		s.runTaskWithRecovery(idx, t)
+	})
+	if err != nil {
+		s.wg.Done()
+		return err
+	}
+	return nil
 }
 
 // Invoke 并行执行多个任务，返回按输入顺序排列的结果。
@@ -29,73 +108,27 @@ func Invoke[T any](ctx context.Context, tasks ...Task[T]) ([]T, error) {
 		return []T{}, nil
 	}
 
-	results := make([]T, len(tasks))
-
 	if len(tasks) == 1 {
-		return invokeSingle(ctx, tasks[0], results)
+		val, err := invokeSingle(ctx, tasks[0])
+		if err != nil {
+			return nil, err
+		}
+		return []T{val}, nil
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	var (
-		wg       sync.WaitGroup
-		errOnce  sync.Once
-		firstErr error
-	)
+	s := newInvokeState[T](ctx, len(tasks))
+	defer s.cancel()
 
 	// 其余任务并行执行
-	wg.Add(len(tasks) - 1)
 	for i := 1; i < len(tasks); i++ {
-		go func(idx int, t Task[T]) {
-			defer func() {
-				if r := recover(); r != nil {
-					errOnce.Do(func() {
-						firstErr = taskPanicErr(t.Name, r)
-						cancel()
-					})
-				}
-				wg.Done()
-			}()
-			val, err := runTask(ctx, t)
-			if err != nil {
-				errOnce.Do(func() {
-					firstErr = err
-					cancel()
-				})
-				return
-			}
-			results[idx] = val
-		}(i, tasks[i])
+		s.goTask(i, tasks[i])
 	}
 
-	// 第一个任务在当前 goroutine 同步执行
-	func() {
-		t := tasks[0]
-		defer func() {
-			if r := recover(); r != nil {
-				errOnce.Do(func() {
-					firstErr = taskPanicErr(t.Name, r)
-					cancel()
-				})
-			}
-		}()
-		val, err := runTask(ctx, t)
-		if err != nil {
-			errOnce.Do(func() {
-				firstErr = err
-				cancel()
-			})
-			return
-		}
-		results[0] = val
-	}()
+	// 第一个任务在当前 goroutine 同步执行，放在最后启动
+	// 这样其他任务的错误可以先触发 cancel，让第一个任务检测到 ctx.Done()
+	s.runTaskSync(0, tasks[0])
 
-	wg.Wait()
-	if firstErr != nil {
-		return nil, firstErr
-	}
-	return results, nil
+	return s.wait()
 }
 
 // InvokeCallback 执行所有任务后将结果传入 callback 进行聚合转换。
@@ -117,59 +150,26 @@ func InvokeWithReactor[T any](ctx context.Context, r *Reactor, tasks ...Task[T])
 		return []T{}, nil
 	}
 
-	results := make([]T, len(tasks))
-
 	if len(tasks) == 1 {
-		return invokeSingle(ctx, tasks[0], results)
+		val, err := invokeSingle(ctx, tasks[0])
+		if err != nil {
+			return nil, err
+		}
+		return []T{val}, nil
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	var (
-		wg       sync.WaitGroup
-		errOnce  sync.Once
-		firstErr error
-	)
+	s := newInvokeState[T](ctx, len(tasks))
+	defer s.cancel()
 
 	for i, task := range tasks {
-		wg.Add(1)
-		idx, t := i, task
-		submitErr := r.Go(ctx, func(ctx context.Context) {
-			defer func() {
-				if p := recover(); p != nil {
-					errOnce.Do(func() {
-						firstErr = taskPanicErr(t.Name, p)
-						cancel()
-					})
-				}
-				wg.Done()
-			}()
-			val, err := runTask(ctx, t)
-			if err != nil {
-				errOnce.Do(func() {
-					firstErr = err
-					cancel()
-				})
-				return
-			}
-			results[idx] = val
-		})
-		if submitErr != nil {
-			wg.Done()
-			errOnce.Do(func() {
-				firstErr = submitErr
-				cancel()
-			})
+		err := s.submitTask(r, i, task)
+		if err != nil {
+			s.addErr(err)
 			break
 		}
 	}
 
-	wg.Wait()
-	if firstErr != nil {
-		return nil, firstErr
-	}
-	return results, nil
+	return s.wait()
 }
 
 // SettledResult 表示单个任务的最终结果，无论成功或失败。
@@ -186,32 +186,45 @@ type SettledResult[T any] struct {
 // Succeeded 返回任务是否执行成功。
 func (r SettledResult[T]) Succeeded() bool { return r.Err == nil }
 
-// InvokeAllSettled 并行执行所有任务，等待全部完成后返回每个任务的独立结果。
-// 与 Invoke 不同，不使用 fast-fail 策略：每个任务独立运行，互不影响。
-// 返回的 SettledResult 切片顺序与输入 tasks 一一对应。
-//
-// 适用于需要获取所有任务结果的场景，如批量查询、容错降级等。
-func InvokeAllSettled[T any](ctx context.Context, tasks ...Task[T]) []SettledResult[T] {
+// initSettledResults 处理空切片检查和单任务优化，返回 (results, done)。
+func initSettledResults[T any](ctx context.Context, tasks []Task[T]) ([]SettledResult[T], bool) {
 	if len(tasks) == 0 {
-		return []SettledResult[T]{}
+		return []SettledResult[T]{}, true
 	}
 
 	results := make([]SettledResult[T], len(tasks))
 
 	if len(tasks) == 1 {
 		results[0] = settleTask(ctx, tasks[0])
+		return results, true
+	}
+
+	return results, false
+}
+
+// InvokeAllSettled 并行执行所有任务，等待全部完成后返回每个任务的独立结果。
+// 与 Invoke 不同，不使用 fast-fail 策略：每个任务独立运行，互不影响。
+// 返回的 SettledResult 切片顺序与输入 tasks 一一对应。
+//
+// 适用于需要获取所有任务结果的场景，如批量查询、容错降级等。
+func InvokeAllSettled[T any](ctx context.Context, tasks ...Task[T]) []SettledResult[T] {
+	results, done := initSettledResults(ctx, tasks)
+	if done {
 		return results
 	}
 
 	var wg sync.WaitGroup
 	wg.Add(len(tasks) - 1)
 	for i := 1; i < len(tasks); i++ {
-		go func(idx int, t Task[T]) {
+		idx, t := i, tasks[i]
+		results[idx] = SettledResult[T]{Name: t.Name}
+		threading.GoSafe(func() {
 			defer wg.Done()
 			results[idx] = settleTask(ctx, t)
-		}(i, tasks[i])
+		})
 	}
 
+	results[0] = SettledResult[T]{Name: tasks[0].Name}
 	results[0] = settleTask(ctx, tasks[0])
 	wg.Wait()
 	return results
@@ -222,14 +235,8 @@ func InvokeAllSettled[T any](ctx context.Context, tasks ...Task[T]) []SettledRes
 //
 // 当协程池提交失败时，对应任务的 Err 为提交错误，后续任务不再提交。
 func InvokeAllSettledWithReactor[T any](ctx context.Context, r *Reactor, tasks ...Task[T]) []SettledResult[T] {
-	if len(tasks) == 0 {
-		return []SettledResult[T]{}
-	}
-
-	results := make([]SettledResult[T], len(tasks))
-
-	if len(tasks) == 1 {
-		results[0] = settleTask(ctx, tasks[0])
+	results, done := initSettledResults(ctx, tasks)
+	if done {
 		return results
 	}
 
@@ -237,6 +244,7 @@ func InvokeAllSettledWithReactor[T any](ctx context.Context, r *Reactor, tasks .
 	for i, task := range tasks {
 		wg.Add(1)
 		idx, t := i, task
+		results[idx] = SettledResult[T]{Name: t.Name}
 		submitErr := r.Go(ctx, func(ctx context.Context) {
 			defer wg.Done()
 			results[idx] = settleTask(ctx, t)
@@ -280,17 +288,12 @@ func runTask[T any](ctx context.Context, t Task[T]) (T, error) {
 }
 
 // invokeSingle 单任务快捷执行路径，包含 panic 恢复。
-func invokeSingle[T any](ctx context.Context, t Task[T], results []T) (ret []T, retErr error) {
+func invokeSingle[T any](ctx context.Context, t Task[T]) (val T, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			ret = nil
-			retErr = taskPanicErr(t.Name, r)
+			err = taskPanicErr(t.Name, r)
 		}
 	}()
-	val, err := runTask(ctx, t)
-	if err != nil {
-		return nil, err
-	}
-	results[0] = val
-	return results, nil
+	val, err = runTask(ctx, t)
+	return
 }

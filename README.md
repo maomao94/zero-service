@@ -11,6 +11,7 @@
 - **实时通信** -- SocketIO 消息网关，支持房间管理、广播推送、MQTT 桥接和 Token 鉴权
 - **容器管理** -- Docker 容器生命周期管理，提供 Kubernetes-like 的 Pod 抽象接口
 - **地理信息** -- H3 网格、GeoHash 编解码、电子围栏、坐标系转换
+- **响应式工具包** -- [antsx](common/antsx/README.md)：Stream/Promise/Invoke/EventEmitter，Go 原生的流式与异步编排
 
 ## 快速开始
 
@@ -109,6 +110,7 @@ docker-compose up -d
 | 消息队列 | Kafka (go-queue) |
 | 任务队列 | asynq + Redis |
 | 实时通信 | SocketIO / SSE |
+| 响应式工具 | antsx（Stream/Promise/Invoke/EventEmitter） |
 | 工业协议 | IEC 60870-5-104 / Modbus / MQTT / DJI Cloud API |
 | 关系数据库 | MySQL / PostgreSQL / SQLite |
 | 时序数据库 | TDengine |
@@ -125,6 +127,8 @@ docker-compose up -d
 | [架构概览](docs/architecture.md) | 系统架构、模块依赖、数据流 |
 | [服务端口清单](docs/service-ports.md) | 各服务默认端口 |
 | [错误码规范](docs/error-codes.md) | HTTP/gRPC 错误码映射 |
+| [antsx 工具包](common/antsx/README.md) | Stream/Promise/Invoke/EventEmitter 响应式工具 |
+| [为什么选 antsx](docs/antsx-vs-reactive.md) | 与 Java WebFlux/RxJava 的对比分析 |
 | [开发指南](docs/development.md) | 环境搭建、代码生成、调试技巧 |
 | [部署指南](docs/deployment.md) | Docker/集群部署、配置管理 |
 

@@ -59,8 +59,8 @@ func TestInvoke_OneFail_FastFail(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	if err.Error() != "task2 boom" {
-		t.Fatalf("expected 'task2 boom', got '%v'", err)
+	if !strings.Contains(err.Error(), "task2 boom") {
+		t.Fatalf("expected 'task2 boom' in error, got '%v'", err)
 	}
 	// fast-fail 应该在远少于 2s 内返回
 	if elapsed > 500*time.Millisecond {
