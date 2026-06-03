@@ -36,7 +36,7 @@ func DefaultGormLogger() logger.Interface {
 	return NewGormLogger(LoggerConfig{
 		LogLevel:             logger.Error,
 		SlowThreshold:        200 * time.Millisecond,
-		ParameterizedQueries: false,
+		ParameterizedQueries: true,
 	})
 }
 

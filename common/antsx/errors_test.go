@@ -3,6 +3,7 @@ package antsx_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"zero-service/common/antsx"
@@ -111,5 +112,28 @@ func TestPanicErr_ContainsStack(t *testing.T) {
 	errMsg := err.Error()
 	if !strings.Contains(errMsg, "goroutine") || !strings.Contains(errMsg, "stack trace test") {
 		t.Fatalf("error should contain stack trace, got: %s", errMsg)
+	}
+}
+
+func TestGetSourceName_WrappedError(t *testing.T) {
+	inner := &antsx.SourceEOF{}
+	wrapped := fmt.Errorf("outer: %w", inner)
+
+	name, ok := antsx.GetSourceName(wrapped)
+	if !ok {
+		t.Fatal("expected ok=true for wrapped SourceEOF")
+	}
+	if name != "" {
+		t.Fatalf("expected empty source name, got %q", name)
+	}
+}
+
+func TestGetSourceName_NilError(t *testing.T) {
+	name, ok := antsx.GetSourceName(nil)
+	if ok {
+		t.Fatal("expected ok=false for nil error")
+	}
+	if name != "" {
+		t.Fatalf("expected empty source name, got %q", name)
 	}
 }

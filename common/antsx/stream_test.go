@@ -50,6 +50,52 @@ func TestStream_BasicPipe(t *testing.T) {
 	}
 }
 
+func TestStream_PipeZero_Synchronous(t *testing.T) {
+	sr, sw := antsx.Pipe[int](0)
+	defer sr.Close()
+
+	sent := make(chan struct{})
+	received := make(chan int)
+
+	go func() {
+		sw.Send(42, nil)
+		close(sent)
+		sw.Close()
+	}()
+
+	time.Sleep(20 * time.Millisecond)
+
+	select {
+	case <-sent:
+		t.Fatal("Send should have blocked with zero-buffer pipe")
+	default:
+	}
+
+	go func() {
+		val, err := sr.Recv()
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+			return
+		}
+		received <- val
+	}()
+
+	select {
+	case val := <-received:
+		if val != 42 {
+			t.Fatalf("expected 42, got %d", val)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("Recv timed out")
+	}
+
+	select {
+	case <-sent:
+	case <-time.After(time.Second):
+		t.Fatal("Send did not complete after Recv")
+	}
+}
+
 func TestStream_EarlyClose(t *testing.T) {
 	sr, sw := antsx.Pipe[int](1)
 	sr.Close()

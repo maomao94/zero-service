@@ -80,9 +80,8 @@ func TestReactor_Post(t *testing.T) {
 	defer r.Release()
 
 	called := make(chan struct{}, 1)
-	err = antsx.Post(context.Background(), r, func(ctx context.Context) error {
+	err = antsx.Post(context.Background(), r, func(ctx context.Context) {
 		called <- struct{}{}
-		return nil
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -102,7 +101,7 @@ func TestReactor_PostPanic(t *testing.T) {
 	}
 	defer r.Release()
 
-	err = antsx.Post(context.Background(), r, func(ctx context.Context) error {
+	err = antsx.Post(context.Background(), r, func(ctx context.Context) {
 		panic("post boom")
 	})
 	if err != nil {
@@ -132,21 +131,53 @@ func TestReactor_Go(t *testing.T) {
 }
 
 func TestReactor_ActiveCount(t *testing.T) {
-	r, err := antsx.NewReactor(10)
+	reactor, err := antsx.NewReactor(10)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer r.Release()
+	defer reactor.Release()
 
-	start := make(chan struct{})
-	_ = r.Go(context.Background(), func(ctx context.Context) {
-		<-start
-	})
-	time.Sleep(20 * time.Millisecond)
-	if r.ActiveCount() < 1 {
-		t.Fatal("expected at least 1 active")
+	if reactor.ActiveCount() != 0 {
+		t.Fatalf("expected 0 active, got %d", reactor.ActiveCount())
 	}
-	close(start)
+
+	started := make(chan struct{})
+	block := make(chan struct{})
+
+	reactor.Go(context.Background(), func(ctx context.Context) {
+		close(started)
+		<-block
+	})
+
+	<-started
+	if reactor.ActiveCount() != 1 {
+		t.Fatalf("expected 1 active, got %d", reactor.ActiveCount())
+	}
+	close(block)
+}
+
+func TestReactor_SubmitNilReactor(t *testing.T) {
+	_, err := antsx.Submit(context.Background(), nil, func(ctx context.Context) (int, error) {
+		return 0, nil
+	})
+	if err == nil {
+		t.Fatal("expected error for nil reactor")
+	}
+}
+
+func TestReactor_PostNilReactor(t *testing.T) {
+	err := antsx.Post(context.Background(), nil, func(ctx context.Context) {})
+	if err == nil {
+		t.Fatal("expected error for nil reactor")
+	}
+}
+
+func TestReactor_GoNilReactor(t *testing.T) {
+	r := (*antsx.Reactor)(nil)
+	err := r.Go(context.Background(), func(ctx context.Context) {})
+	if err == nil {
+		t.Fatal("expected error for nil reactor")
+	}
 }
 
 func TestReactor_SubmitError(t *testing.T) {
@@ -270,9 +301,7 @@ func TestReactor_PostAfterRelease(t *testing.T) {
 	}
 	r.Release()
 
-	err = antsx.Post(context.Background(), r, func(ctx context.Context) error {
-		return nil
-	})
+	err = antsx.Post(context.Background(), r, func(ctx context.Context) {})
 	if err == nil {
 		t.Fatal("expected error after release")
 	}

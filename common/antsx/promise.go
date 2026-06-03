@@ -2,6 +2,7 @@ package antsx
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -147,12 +148,12 @@ func PromiseAll[T any](ctx context.Context, promises ...*Promise[T]) ([]T, error
 
 // PromiseRace 等待第一个完成的 Promise 并返回其结果。
 // 第一个 Promise 完成后，通过 cancel 通知其他等待 goroutine 退出。
-// 如果 promises 为空，返回 context.Canceled。
+// 如果 promises 为空，返回 ErrEmptyPromises。
 // 类似 JavaScript 的 Promise.race()。
 func PromiseRace[T any](ctx context.Context, promises ...*Promise[T]) (T, error) {
 	if len(promises) == 0 {
 		var zero T
-		return zero, context.Canceled
+		return zero, ErrEmptyPromises
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -186,6 +187,10 @@ func PromiseRace[T any](ctx context.Context, promises ...*Promise[T]) (T, error)
 // Then 对 Promise 的成功值执行转换函数 fn，返回一个新的 Promise。
 // 如果源 Promise 失败或 fn 返回错误，新 Promise 将以该错误 Reject。
 // fn 中的 panic 会被捕获并转换为 error。
+//
+// 注意：内部启动的 goroutine 依赖 ctx 取消或 Promise 完成来退出。
+// 如果 ctx 为 context.Background() 且源 Promise 永远不完成，goroutine 将泄漏。
+// 建议传入带超时的 ctx 以防止泄漏。
 func Then[T, U any](ctx context.Context, p *Promise[T], fn func(T) (U, error)) *Promise[U] {
 	next := NewPromise[U]()
 	go func() {
@@ -211,6 +216,9 @@ func Then[T, U any](ctx context.Context, p *Promise[T], fn func(T) (U, error)) *
 
 // Map 对 Promise 的成功值执行纯转换函数 fn（无 error 返回），返回新 Promise。
 // fn 中的 panic 会被捕获并转换为 error。
+//
+// 注意：内部启动的 goroutine 依赖 ctx 取消或 Promise 完成来退出。
+// 如果 ctx 为 context.Background() 且源 Promise 永远不完成，goroutine 将泄漏。
 func Map[T, U any](ctx context.Context, p *Promise[T], fn func(T) U) *Promise[U] {
 	next := NewPromise[U]()
 	go func() {
@@ -231,6 +239,9 @@ func Map[T, U any](ctx context.Context, p *Promise[T], fn func(T) U) *Promise[U]
 
 // FlatMap 对 Promise 的成功值执行返回另一个 Promise 的函数 fn，实现链式异步操作。
 // 等价于 Then + 自动展开内层 Promise。fn 中的 panic 会被捕获并转换为 error。
+//
+// 注意：内部启动的 goroutine 依赖 ctx 取消或 Promise 完成来退出。
+// 如果 ctx 为 context.Background() 且源 Promise 永远不完成，goroutine 将泄漏。
 func FlatMap[T, U any](ctx context.Context, p *Promise[T], fn func(T) *Promise[U]) *Promise[U] {
 	next := NewPromise[U]()
 	go func() {
@@ -280,6 +291,98 @@ func Go[T any](ctx context.Context, fn func(ctx context.Context) (T, error)) *Pr
 		}
 	}()
 	return p
+}
+
+// PromiseResult 表示单个 Promise 的最终结果，无论成功或失败。
+// 调用方通过检查 Err 是否为 nil 来判断状态。
+type PromiseResult[T any] struct {
+	Val T
+	Err error
+}
+
+func (r PromiseResult[T]) Succeeded() bool { return r.Err == nil }
+
+// PromiseAllSettled 等待所有 Promise 完成，返回每个 Promise 的独立结果。
+// 与 PromiseAll 不同，不使用 fast-fail 策略：每个 Promise 独立运行，互不影响。
+// 返回的 PromiseResult 切片顺序与输入 promises 一一对应。
+//
+// 适用于需要获取所有 Promise 结果的场景，如批量查询、容错降级等。
+// 类似 JavaScript 的 Promise.allSettled()。
+func PromiseAllSettled[T any](ctx context.Context, promises ...*Promise[T]) []PromiseResult[T] {
+	if len(promises) == 0 {
+		return []PromiseResult[T]{}
+	}
+
+	results := make([]PromiseResult[T], len(promises))
+	var wg sync.WaitGroup
+	wg.Add(len(promises))
+
+	for i, p := range promises {
+		go func(idx int, pr *Promise[T]) {
+			defer wg.Done()
+			val, err := pr.Await(ctx)
+			results[idx] = PromiseResult[T]{Val: val, Err: err}
+		}(i, p)
+	}
+
+	wg.Wait()
+	return results
+}
+
+// PromiseAny 等待第一个成功的 Promise 并返回其结果。
+// 只有当所有 Promise 都失败时才返回错误（聚合所有错误）。
+// 第一个 Promise 成功后，通过 cancel 通知其他等待 goroutine 退出。
+// 如果 promises 为空，返回 ErrEmptyPromises。
+// 类似 JavaScript 的 Promise.any()。
+func PromiseAny[T any](ctx context.Context, promises ...*Promise[T]) (T, error) {
+	if len(promises) == 0 {
+		var zero T
+		return zero, ErrEmptyPromises
+	}
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	type result struct {
+		val T
+		err error
+	}
+
+	ch := make(chan result, 1)
+	errs := make([]error, len(promises))
+	var mu sync.Mutex
+	done := 0
+
+	for i, p := range promises {
+		go func(idx int, pr *Promise[T]) {
+			val, err := pr.Await(ctx)
+			if err != nil {
+				mu.Lock()
+				errs[idx] = err
+				done++
+				if done == len(promises) {
+					select {
+					case ch <- result{err: errors.Join(errs...)}:
+					default:
+					}
+				}
+				mu.Unlock()
+				return
+			}
+			select {
+			case ch <- result{val: val}:
+			default:
+			}
+		}(i, p)
+	}
+
+	select {
+	case r := <-ch:
+		return r.val, r.err
+	case <-ctx.Done():
+		var zero T
+		return zero, ctx.Err()
+	}
 }
 
 // taskPanicErr 将 task 中捕获的 panic 包装为带任务名的错误。

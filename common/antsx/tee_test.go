@@ -236,3 +236,15 @@ func TestTeeWriter_WriteAfterReaderClosed(t *testing.T) {
 		t.Errorf("Write error = %v, want %v", err, io.ErrClosedPipe)
 	}
 }
+
+func TestTeeWriter_CloseIdempotent(t *testing.T) {
+	tee := NewTeeWriter()
+
+	go func() {
+		io.Copy(io.Discard, tee.Reader())
+	}()
+
+	tee.Close()
+	tee.Close()
+	tee.Close()
+}

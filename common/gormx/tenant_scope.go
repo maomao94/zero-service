@@ -12,9 +12,6 @@ func TenantScope(ctx context.Context) func(db *gorm.DB) *gorm.DB {
 		if userCtx == nil || userCtx.TenantID == "" {
 			return db
 		}
-		if !HasTenantField(db) {
-			return db
-		}
 		return db.Where("tenant_id = ?", userCtx.TenantID)
 	}
 }
@@ -24,9 +21,6 @@ func TenantScopeStrict(ctx context.Context) func(db *gorm.DB) *gorm.DB {
 		userCtx := GetUserContext(ctx)
 		if userCtx == nil || userCtx.TenantID == "" {
 			return db.Where("1 = 0")
-		}
-		if !HasTenantField(db) {
-			return db
 		}
 		return db.Where("tenant_id = ?", userCtx.TenantID)
 	}
@@ -38,16 +32,13 @@ func TenantScopeWithDelete(ctx context.Context) func(db *gorm.DB) *gorm.DB {
 		if userCtx == nil || userCtx.TenantID == "" {
 			return db.Unscoped()
 		}
-		if !HasTenantField(db) {
-			return db.Unscoped()
-		}
 		return db.Unscoped().Where("tenant_id = ?", userCtx.TenantID)
 	}
 }
 
 func TenantEq(tenantID string) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		if tenantID == "" || !HasTenantField(db) {
+		if tenantID == "" {
 			return db
 		}
 		return db.Where("tenant_id = ?", tenantID)
@@ -56,7 +47,7 @@ func TenantEq(tenantID string) func(db *gorm.DB) *gorm.DB {
 
 func TenantNotEq(tenantID string) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		if tenantID == "" || !HasTenantField(db) {
+		if tenantID == "" {
 			return db
 		}
 		return db.Where("tenant_id != ?", tenantID)
@@ -65,7 +56,7 @@ func TenantNotEq(tenantID string) func(db *gorm.DB) *gorm.DB {
 
 func TenantIn(tenantIDs ...string) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		if len(tenantIDs) == 0 || !HasTenantField(db) {
+		if len(tenantIDs) == 0 {
 			return db
 		}
 		return db.Where("tenant_id IN ?", tenantIDs)

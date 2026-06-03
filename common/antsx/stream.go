@@ -328,6 +328,9 @@ func WithErrWrapper(fn func(error) error) ConvertOption {
 //   - 返回 (_, ErrNoValue): 跳过当前元素，继续读取下一个
 //   - 返回 (_, otherErr): 将 otherErr 传递给调用方
 func StreamReaderWithConvert[T, D any](sr *StreamReader[T], fn func(T) (D, error), opts ...ConvertOption) *StreamReader[D] {
+	if fn == nil {
+		panic("antsx: StreamReaderWithConvert fn must not be nil")
+	}
 	opt := &convertOpts{}
 	for _, o := range opts {
 		o(opt)
@@ -355,7 +358,7 @@ func (cr *convertReader[T]) recv() (T, error) {
 		out, err := cr.sr.recvAny()
 		if err != nil {
 			var zero T
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				return zero, err
 			}
 			if cr.errWrapper != nil {
@@ -399,7 +402,7 @@ func toStream[T any](sr *StreamReader[T]) *stream[T] {
 		}()
 		for {
 			val, err := sr.Recv()
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				break
 			}
 			if ret.send(val, err) {

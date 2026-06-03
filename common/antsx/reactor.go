@@ -2,11 +2,14 @@ package antsx
 
 import (
 	"context"
+	"errors"
 	"log"
 	"runtime/debug"
 
 	"github.com/panjf2000/ants/v2"
 )
+
+var errNilReactor = errors.New("antsx: Reactor must not be nil")
 
 // Reactor 是基于 ants 协程池的任务调度器，用于控制并发 goroutine 数量。
 // 在高并发场景下，通过 Reactor 提交任务可以避免创建过多 goroutine 导致资源耗尽。
@@ -30,6 +33,9 @@ func NewReactor(size int) (*Reactor, error) {
 // fn 中的 panic 会被捕获并转换为 Promise 的 error，不会泄漏到调用方。
 // 如果协程池已满或已关闭，返回非 nil error。
 func Submit[T any](ctx context.Context, r *Reactor, fn func(ctx context.Context) (T, error)) (*Promise[T], error) {
+	if r == nil {
+		return nil, errNilReactor
+	}
 	p := NewPromise[T]()
 	err := r.pool.Submit(func() {
 		defer func() {
@@ -50,17 +56,20 @@ func Submit[T any](ctx context.Context, r *Reactor, fn func(ctx context.Context)
 	return p, nil
 }
 
-// Post 将一个带 context 的任务提交到 Reactor 协程池执行。
+// Post 将一个带 context 的任务提交到 Reactor 协程池执行（fire-and-forget）。
 // fn 中的 panic 会被内部恢复，不会导致进程崩溃。
 // 如果协程池已满或已关闭，返回非 nil error。
-func Post(ctx context.Context, r *Reactor, fn func(ctx context.Context) error) error {
+func Post(ctx context.Context, r *Reactor, fn func(ctx context.Context)) error {
+	if r == nil {
+		return errNilReactor
+	}
 	return r.pool.Submit(func() {
 		defer func() {
 			if p := recover(); p != nil {
 				log.Printf("antsx: Post panic recovered: %v\n%s", p, debug.Stack())
 			}
 		}()
-		_ = fn(ctx)
+		fn(ctx)
 	})
 }
 
@@ -69,6 +78,9 @@ func Post(ctx context.Context, r *Reactor, fn func(ctx context.Context) error) e
 // 内置 panic 恢复保护，fn 中的 panic 不会导致进程崩溃。
 // 如果协程池已满或已关闭，返回非 nil error。
 func (r *Reactor) Go(ctx context.Context, fn func(ctx context.Context)) error {
+	if r == nil {
+		return errNilReactor
+	}
 	return r.pool.Submit(func() {
 		defer func() {
 			if p := recover(); p != nil {

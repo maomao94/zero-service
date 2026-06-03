@@ -522,6 +522,43 @@ func TestInvokeWithReactor_Empty(t *testing.T) {
 	}
 }
 
+func TestInvokeWithReactor_FastFail(t *testing.T) {
+	reactor, err := antsx.NewReactor(5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reactor.Release()
+
+	ctx := context.Background()
+	start := time.Now()
+
+	_, err = antsx.InvokeWithReactor(ctx, reactor,
+		antsx.Task[string]{Name: "slow", Fn: func(ctx context.Context) (string, error) {
+			select {
+			case <-time.After(2 * time.Second):
+				return "slow-done", nil
+			case <-ctx.Done():
+				return "", ctx.Err()
+			}
+		}},
+		antsx.Task[string]{Name: "fast-fail", Fn: func(ctx context.Context) (string, error) {
+			time.Sleep(30 * time.Millisecond)
+			return "", errors.New("reactor boom")
+		}},
+	)
+
+	elapsed := time.Since(start)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "reactor boom") {
+		t.Fatalf("expected 'reactor boom' in error, got '%v'", err)
+	}
+	if elapsed > 500*time.Millisecond {
+		t.Fatalf("fast-fail took too long: %v", elapsed)
+	}
+}
+
 // ======================== InvokeAllSettled ========================
 
 func TestInvokeAllSettled_AllSuccess(t *testing.T) {

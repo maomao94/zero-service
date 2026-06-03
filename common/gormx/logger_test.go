@@ -196,12 +196,12 @@ func TestGormLoggerParamsFilterIgnoresNonFullSQLContext(t *testing.T) {
 	}
 }
 
-func TestGormLoggerParamsFilterDefaultGormLoggerShowsQueryParameters(t *testing.T) {
+func TestGormLoggerParamsFilterDefaultGormLoggerRedactsQueryParameters(t *testing.T) {
 	l := DefaultGormLogger()
 	_, params := l.(*gormLogger).ParamsFilter(context.Background(), "select * from users where phone = ?", "13800000000")
 
-	if len(params) != 1 || params[0] != "13800000000" {
-		t.Fatalf("params = %#v", params)
+	if len(params) != 0 {
+		t.Fatalf("expected params to be redacted, got %#v", params)
 	}
 }
 

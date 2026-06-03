@@ -27,6 +27,9 @@ var (
 
 	// ErrRecvAfterClosed 表示在 Copy 产生的 childReader 关闭后仍尝试 Recv。
 	ErrRecvAfterClosed = errors.New("antsx: recv after stream closed")
+
+	// ErrEmptyPromises 表示 PromiseRace/PromiseAny 收到了空的 promises 切片。
+	ErrEmptyPromises = errors.New("antsx: empty promises")
 )
 
 // panicErr 将 goroutine 中的 panic 信息包装为标准 error。

@@ -9,7 +9,7 @@
 | 模块 | 文件 | 核心能力 |
 |------|------|---------|
 | **Stream** | `stream.go` `select.go` | 流式管道：Pipe、Copy、Merge、Convert、FromArray |
-| **Promise** | `promise.go` | 异步结果容器：Await、Then、Map、FlatMap、All、Race |
+| **Promise** | `promise.go` | 异步结果容器：Await、Then、Map、FlatMap、All、AllSettled、Race、Any |
 | **Reactor** | `reactor.go` | 协程池调度：Submit（带返回值）、Post（无返回值）、Go |
 | **Invoke** | `invoke.go` | 并行流程编排：并发执行、快速失败、全量等待（AllSettled）、超时控制 |
 | **EventEmitter** | `emitter.go` | 发布/订阅：多 topic、ctx 取消自动退订 |
@@ -112,8 +112,21 @@ flat := antsx.FlatMap(ctx, promise, func(v int) *antsx.Promise[string] {
 // 并发等待全部完成（fast-fail，任一失败立即返回错误）
 results, err := antsx.PromiseAll(ctx, p1, p2, p3)
 
+// 并发等待全部完成（容错，每个独立返回结果）
+settled := antsx.PromiseAllSettled(ctx, p1, p2, p3)
+for _, r := range settled {
+    if r.Succeeded() {
+        fmt.Println(r.Val)
+    } else {
+        log.Printf("failed: %v", r.Err)
+    }
+}
+
 // 竞速取最快完成的
 val, err := antsx.PromiseRace(ctx, p1, p2)
+
+// 取第一个成功的（全部失败才报错）
+val, err := antsx.PromiseAny(ctx, p1, p2, p3)
 
 // 后台执行，返回 Promise
 p := antsx.Go(ctx, func(ctx context.Context) (int, error) {
@@ -134,9 +147,8 @@ p, _ := antsx.Submit(ctx, r, func(ctx context.Context) (int, error) {
 val, _ := p.Await(ctx)
 
 // Post：无返回值，内置 panic 保护和日志记录
-antsx.Post(ctx, r, func(ctx context.Context) error {
+antsx.Post(ctx, r, func(ctx context.Context) {
     doWork(ctx)
-    return nil
 })
 
 // Go：直接提交函数到协程池，内置 panic 保护和日志记录
@@ -339,6 +351,7 @@ Invoke 系列的 goroutine 启动采用三层 panic 防护，确保不会因 pan
 | `io.EOF` | `StreamReader.Recv` | 流数据已全部读取完毕 |
 | `ErrNoValue` | `StreamReaderWithConvert` | convert 函数跳过当前元素（过滤语义） |
 | `ErrRecvAfterClosed` | `StreamReader.Recv` (Copy) | 在已关闭的子流上调用 Recv |
+| `ErrEmptyPromises` | `PromiseRace` / `PromiseAny` | 传入空 promises 切片 |
 | `SourceEOF` | `MergeNamedStreamReaders` | 某条具名源流结束（其他源流可能仍在产出） |
 | `ErrDuplicateID` | `PendingRegistry.Register` | 注册了重复的关联 ID |
 | `ErrPendingExpired` | `PendingRegistry` | 条目超过 TTL 自动过期 |
@@ -357,6 +370,8 @@ Invoke 系列的 goroutine 启动采用三层 panic 防护，确保不会因 pan
 8. **Promise 的 Resolve/Reject 只有首次调用生效** — 后续调用被忽略
 9. **InvokeAllSettled 不取消其他任务** — 一个任务失败不影响其他任务继续执行，适合需要全部结果的场景
 10. **Invoke 用 errors.Join 收集所有错误** — 多个任务同时 panic 时会报告全部错误信息，不止第一个
+11. **PromiseAllSettled 与 PromiseAll 的选择** — 需要全部成功用 `All`（fast-fail），需要全部结果用 `AllSettled`（容错）
+12. **PromiseAny 与 PromiseRace 的选择** — 取第一个完成的用 `Race`（含错误），取第一个成功的用 `Any`（跳过失败）
 
 ## 实战示例
 

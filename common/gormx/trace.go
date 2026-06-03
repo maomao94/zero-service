@@ -43,7 +43,7 @@ func registerOpenTelemetry(db *gorm.DB, cfg TraceConfig) error {
 
 	opts := make([]tracing.Option, 0, 3)
 	if cfg.DBName != "" {
-		opts = append(opts, tracing.WithDBName(cfg.DBName))
+		opts = append(opts, tracing.WithDBSystem(cfg.DBName))
 	}
 	if !cfg.WithMetrics {
 		opts = append(opts, tracing.WithoutMetrics())

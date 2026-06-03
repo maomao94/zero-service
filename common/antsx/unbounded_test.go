@@ -42,6 +42,31 @@ func TestUnboundedChan_CloseReceive(t *testing.T) {
 	}
 }
 
+func TestUnboundedChan_DrainAfterClose(t *testing.T) {
+	ch := antsx.NewUnboundedChan[int]()
+
+	for i := 0; i < 100; i++ {
+		ch.Send(i)
+	}
+
+	ch.Close()
+
+	for i := 0; i < 100; i++ {
+		v, ok := ch.Receive()
+		if !ok {
+			t.Fatalf("expected item %d, got ok=false", i)
+		}
+		if v != i {
+			t.Fatalf("expected %d, got %d", i, v)
+		}
+	}
+
+	_, ok := ch.Receive()
+	if ok {
+		t.Fatal("expected ok=false after draining all items")
+	}
+}
+
 func TestUnboundedChan_CloseSendPanic(t *testing.T) {
 	ch := antsx.NewUnboundedChan[int]()
 	ch.Close()

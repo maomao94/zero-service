@@ -49,14 +49,6 @@ func GetDialector(dbType DatabaseType, dsn string) (gorm.Dialector, error) {
 	}
 }
 
-func Dialector(dbType DatabaseType, dsn string) (gorm.Dialector, error) {
-	return GetDialector(dbType, dsn)
-}
-
-func DatabaseTypeOf(db *gorm.DB) DatabaseType {
-	return GetDatabaseTypeFromDialector(db)
-}
-
 func GetDatabaseTypeFromDialector(db *gorm.DB) DatabaseType {
 	if db == nil || db.Dialector == nil {
 		return DatabaseMySQL

@@ -14,7 +14,7 @@ func TestDatabaseTypeOfUsesDBDialector(t *testing.T) {
 	}
 
 	db.Statement = nil
-	if got := DatabaseTypeOf(db); got != DatabaseSQLite {
+	if got := GetDatabaseTypeFromDialector(db); got != DatabaseSQLite {
 		t.Fatalf("database type = %s, want %s", got, DatabaseSQLite)
 	}
 }

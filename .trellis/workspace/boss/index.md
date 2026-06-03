@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 27
+- **Total Sessions**: 28
 - **Last Active**: 2026-06-03
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1210 | Active |
+| `journal-1.md` | ~1243 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 28 | 2026-06-03 | PendingRegistry 优化：Stats 统计、时间轮自动推导、原子计数器 | `e0234133` | `master` |
 | 27 | 2026-06-03 | 优化 Trellis spec 文档结构 | `fb1aaf60` | `master` |
 | 26 | 2026-06-03 | antsx Invoke 重构: panic 收集、并发安全、文档补全 | `38e9db0c`, `a906f260` | `master` |
 | 25 | 2026-06-02 | SocketIO 房间管理增强：分页查询、统计限量、通知开关、场站房间策略 | `ede524e4`, `fd282e5a`, `0d34fb71` | `master` |

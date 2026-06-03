@@ -42,14 +42,6 @@ func Upsert(ctx context.Context, db *DB, data any, columns []clause.Column, upda
 	return db.WithContext(ctx).Clauses(conflict).Create(data).Error
 }
 
-func UpsertByColumns(ctx context.Context, db *DB, data any, columns []clause.Column, updateColumns []string) error {
-	return Upsert(ctx, db, data, columns, updateColumns)
-}
-
-func UpsertByColumnNames(ctx context.Context, db *DB, data any, columnNames []string, updateColumns []string) error {
-	return Upsert(ctx, db, data, Columns(columnNames...), updateColumns)
-}
-
 func UpdateOrCreate(ctx context.Context, db *DB, model any, where map[string]any, createData any, updateData map[string]any) error {
 	if db == nil {
 		return errors.New("gormx db is nil")
@@ -91,10 +83,6 @@ func CreateRecord(ctx context.Context, db *DB, data any) error {
 		return errors.New("gormx db is nil")
 	}
 	return db.WithContext(ctx).Create(data).Error
-}
-
-func Create(ctx context.Context, db *DB, data any) error {
-	return CreateRecord(ctx, db, data)
 }
 
 func GormDB(db *DB) (*gorm.DB, error) {

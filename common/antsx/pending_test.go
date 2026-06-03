@@ -428,8 +428,7 @@ func TestPendingRegistry_MassiveRegisterResolve(t *testing.T) {
 
 func TestPendingRegistry_WithTimingWheel(t *testing.T) {
 	reg := antsx.NewPendingRegistry[string](
-		antsx.WithTimingWheel(50*time.Millisecond, 10),
-		antsx.WithDefaultTTL(200*time.Millisecond),
+		antsx.WithDefaultTTL(200 * time.Millisecond),
 	)
 	defer reg.Close()
 
@@ -442,7 +441,7 @@ func TestPendingRegistry_WithTimingWheel(t *testing.T) {
 
 	_, err = p.Await(context.Background())
 	if !errors.Is(err, antsx.ErrPendingExpired) {
-		t.Fatalf("expected ErrPendingExpired with custom TimingWheel, got: %v", err)
+		t.Fatalf("expected ErrPendingExpired with auto TimingWheel, got: %v", err)
 	}
 }
 
@@ -482,5 +481,211 @@ func TestRequestReply_CtxTimeout(t *testing.T) {
 	})
 	if err == nil {
 		t.Fatal("expected error from ctx timeout")
+	}
+}
+
+func TestRequestReply_CustomTTL(t *testing.T) {
+	reg := antsx.NewPendingRegistry[string](
+		antsx.WithDefaultTTL(30 * time.Second),
+	)
+	defer reg.Close()
+
+	ctx := context.Background()
+
+	_, err := antsx.RequestReply(ctx, reg, "custom-ttl", func() error {
+		return nil
+	}, 100*time.Millisecond)
+	if !errors.Is(err, antsx.ErrPendingExpired) {
+		t.Fatalf("expected ErrPendingExpired with custom TTL, got %v", err)
+	}
+}
+
+func TestPendingRegistry_Stats(t *testing.T) {
+	reg := antsx.NewPendingRegistry[string](antsx.WithDefaultTTL(200 * time.Millisecond))
+	defer reg.Close()
+
+	stats := reg.Stats()
+	if stats.Registered != 0 || stats.Resolved != 0 || stats.Rejected != 0 || stats.Expired != 0 || stats.Pending != 0 {
+		t.Fatalf("expected zero stats, got %+v", stats)
+	}
+
+	reg.Register("s1")
+	reg.Register("s2")
+	reg.Register("s3", 100*time.Millisecond)
+
+	stats = reg.Stats()
+	if stats.Registered != 3 || stats.Pending != 3 {
+		t.Fatalf("expected registered=3 pending=3, got %+v", stats)
+	}
+
+	reg.Resolve("s1", "ok")
+	stats = reg.Stats()
+	if stats.Resolved != 1 || stats.Pending != 2 {
+		t.Fatalf("expected resolved=1 pending=2, got %+v", stats)
+	}
+
+	reg.Reject("s2", errors.New("fail"))
+	stats = reg.Stats()
+	if stats.Rejected != 1 || stats.Pending != 1 {
+		t.Fatalf("expected rejected=1 pending=1, got %+v", stats)
+	}
+
+	time.Sleep(300 * time.Millisecond)
+	stats = reg.Stats()
+	if stats.Expired != 1 || stats.Pending != 0 {
+		t.Fatalf("expected expired=1 pending=0, got %+v", stats)
+	}
+}
+
+func TestPendingRegistry_StartStatsLoop(t *testing.T) {
+	reg := antsx.NewPendingRegistry[string]()
+	defer reg.Close()
+
+	reg.Register("loop-1")
+	reg.Resolve("loop-1", "done")
+
+	var mu sync.Mutex
+	var lastStats antsx.RegistryStats
+	stop := reg.StartStatsLoop(context.Background(), 50*time.Millisecond, func(s antsx.RegistryStats) {
+		mu.Lock()
+		lastStats = s
+		mu.Unlock()
+	})
+	defer stop()
+
+	time.Sleep(150 * time.Millisecond)
+
+	mu.Lock()
+	s := lastStats
+	mu.Unlock()
+
+	if s.Registered != 1 || s.Resolved != 1 {
+		t.Fatalf("expected stats from loop: registered=1 resolved=1, got %+v", s)
+	}
+}
+
+func TestPendingRegistry_HandleTimeoutVsRejectRace(t *testing.T) {
+	reg := antsx.NewPendingRegistry[string](
+		antsx.WithDefaultTTL(50 * time.Millisecond),
+	)
+	defer reg.Close()
+
+	const n = 100
+	for i := 0; i < n; i++ {
+		id := fmt.Sprintf("race-%d", i)
+		reg.Register(id)
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(n)
+	for i := 0; i < n; i++ {
+		go func(idx int) {
+			defer wg.Done()
+			id := fmt.Sprintf("race-%d", idx)
+			time.Sleep(time.Duration(idx%5) * time.Millisecond)
+			reg.Reject(id, errors.New("reject"))
+		}(i)
+	}
+
+	time.Sleep(100 * time.Millisecond)
+	wg.Wait()
+
+	stats := reg.Stats()
+	total := stats.Resolved + stats.Rejected + stats.Expired
+	if total != n {
+		t.Fatalf("expected total=%d, got resolved=%d rejected=%d expired=%d",
+			n, stats.Resolved, stats.Rejected, stats.Expired)
+	}
+	if stats.Pending != 0 {
+		t.Fatalf("expected pending=0, got %d", stats.Pending)
+	}
+}
+
+func TestPendingRegistry_StatsLoopNoActivity(t *testing.T) {
+	reg := antsx.NewPendingRegistry[string]()
+	defer reg.Close()
+
+	var mu sync.Mutex
+	callCount := 0
+	stop := reg.StartStatsLoop(context.Background(), 50*time.Millisecond, func(s antsx.RegistryStats) {
+		mu.Lock()
+		callCount++
+		mu.Unlock()
+	})
+	defer stop()
+
+	time.Sleep(200 * time.Millisecond)
+
+	mu.Lock()
+	count := callCount
+	mu.Unlock()
+
+	if count != 0 {
+		t.Fatalf("expected logFn not called (no activity), got %d calls", count)
+	}
+}
+
+func TestPendingRegistry_CloseStatsAccuracy(t *testing.T) {
+	reg := antsx.NewPendingRegistry[string]()
+	defer reg.Close()
+
+	for i := 0; i < 10; i++ {
+		reg.Register(fmt.Sprintf("close-%d", i))
+	}
+
+	reg.Resolve("close-0", "ok")
+	reg.Reject("close-1", errors.New("fail"))
+
+	stats := reg.Stats()
+	if stats.Registered != 10 || stats.Resolved != 1 || stats.Rejected != 1 || stats.Pending != 8 {
+		t.Fatalf("before close: expected registered=10 resolved=1 rejected=1 pending=8, got %+v", stats)
+	}
+
+	reg.Close()
+
+	stats = reg.Stats()
+	if stats.Rejected != 9 {
+		t.Fatalf("after close: expected rejected=9 (1 + 8 from close), got %d", stats.Rejected)
+	}
+	if stats.Pending != 0 {
+		t.Fatalf("after close: expected pending=0, got %d", stats.Pending)
+	}
+}
+
+func TestPendingRegistry_ConcurrentRegisterResolveStats(t *testing.T) {
+	reg := antsx.NewPendingRegistry[int]()
+	defer reg.Close()
+
+	const n = 200
+	var registerDone sync.WaitGroup
+	registerDone.Add(n)
+
+	for i := 0; i < n; i++ {
+		go func(idx int) {
+			defer registerDone.Done()
+			id := fmt.Sprintf("concurrent-%d", idx)
+			reg.Register(id, 5*time.Second)
+		}(i)
+	}
+
+	registerDone.Wait()
+
+	var resolveDone sync.WaitGroup
+	resolveDone.Add(n)
+	for i := 0; i < n; i++ {
+		go func(idx int) {
+			defer resolveDone.Done()
+			id := fmt.Sprintf("concurrent-%d", idx)
+			reg.Resolve(id, idx)
+		}(i)
+	}
+
+	resolveDone.Wait()
+
+	stats := reg.Stats()
+	total := stats.Resolved + stats.Rejected + stats.Expired
+	if total != n {
+		t.Fatalf("expected total=%d, got resolved=%d rejected=%d expired=%d",
+			n, stats.Resolved, stats.Rejected, stats.Expired)
 	}
 }

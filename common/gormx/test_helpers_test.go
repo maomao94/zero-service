@@ -5,6 +5,7 @@ import (
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 type legacyDeleteTestModel struct {
@@ -43,7 +44,9 @@ type pageTestModel struct {
 
 func openTestDB(t *testing.T, models ...any) *gorm.DB {
 	t.Helper()
-	db, err := gorm.Open(sqlite.Open("file:"+t.Name()+"?mode=memory&cache=shared&_loc=auto&parseTime=true"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("file:"+t.Name()+"?mode=memory&cache=shared&_loc=auto&parseTime=true"), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
 	if err != nil {
 		t.Fatalf("open db error = %v", err)
 	}

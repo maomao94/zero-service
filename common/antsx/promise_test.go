@@ -344,8 +344,8 @@ func TestPromiseRace_Success(t *testing.T) {
 
 func TestPromiseRace_Empty(t *testing.T) {
 	_, err := antsx.PromiseRace[int](context.Background())
-	if !errors.Is(err, context.Canceled) {
-		t.Fatalf("expected context.Canceled, got %v", err)
+	if !errors.Is(err, antsx.ErrEmptyPromises) {
+		t.Fatalf("expected ErrEmptyPromises, got %v", err)
 	}
 }
 
@@ -598,6 +598,245 @@ func TestThen_CtxCancelled(t *testing.T) {
 	_, err := result.Await(ctx)
 	if err == nil {
 		t.Fatal("expected error from cancelled ctx")
+	}
+}
+
+func TestPromiseAllSettled_Empty(t *testing.T) {
+	results := antsx.PromiseAllSettled[int](context.Background())
+	if len(results) != 0 {
+		t.Fatalf("expected empty, got %v", results)
+	}
+}
+
+func TestPromiseAllSettled_AllSuccess(t *testing.T) {
+	ctx := context.Background()
+	p1 := antsx.NewPromise[int]()
+	p2 := antsx.NewPromise[int]()
+	p3 := antsx.NewPromise[int]()
+
+	go func() { p1.Resolve(1) }()
+	go func() { p2.Resolve(2) }()
+	go func() { p3.Resolve(3) }()
+
+	results := antsx.PromiseAllSettled(ctx, p1, p2, p3)
+	if len(results) != 3 {
+		t.Fatalf("expected 3 results, got %d", len(results))
+	}
+	for i, r := range results {
+		if r.Err != nil {
+			t.Fatalf("result[%d] unexpected error: %v", i, r.Err)
+		}
+	}
+	if results[0].Val != 1 || results[1].Val != 2 || results[2].Val != 3 {
+		t.Fatalf("unexpected values: %v", results)
+	}
+}
+
+func TestPromiseAllSettled_Mixed(t *testing.T) {
+	ctx := context.Background()
+	p1 := antsx.NewPromise[int]()
+	p2 := antsx.NewPromise[int]()
+	p3 := antsx.NewPromise[int]()
+
+	go func() { p1.Resolve(10) }()
+	go func() { p2.Reject(errors.New("fail")) }()
+	go func() { p3.Resolve(30) }()
+
+	results := antsx.PromiseAllSettled(ctx, p1, p2, p3)
+	if len(results) != 3 {
+		t.Fatalf("expected 3 results, got %d", len(results))
+	}
+	if results[0].Err != nil || results[0].Val != 10 {
+		t.Fatalf("result[0] unexpected: %v", results[0])
+	}
+	if results[1].Err == nil || results[1].Err.Error() != "fail" {
+		t.Fatalf("result[1] expected error 'fail', got %v", results[1])
+	}
+	if results[2].Err != nil || results[2].Val != 30 {
+		t.Fatalf("result[2] unexpected: %v", results[2])
+	}
+}
+
+func TestPromiseAllSettled_AllFail(t *testing.T) {
+	ctx := context.Background()
+	p1 := antsx.NewPromise[int]()
+	p2 := antsx.NewPromise[int]()
+
+	go func() { p1.Reject(errors.New("err1")) }()
+	go func() { p2.Reject(errors.New("err2")) }()
+
+	results := antsx.PromiseAllSettled(ctx, p1, p2)
+	if len(results) != 2 {
+		t.Fatalf("expected 2 results, got %d", len(results))
+	}
+	for i, r := range results {
+		if r.Err == nil {
+			t.Fatalf("result[%d] expected error", i)
+		}
+	}
+}
+
+func TestPromiseAllSettled_CtxCancel(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+
+	p := antsx.NewPromise[int]()
+	// never resolves
+
+	results := antsx.PromiseAllSettled(ctx, p)
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(results))
+	}
+	if !errors.Is(results[0].Err, context.DeadlineExceeded) {
+		t.Fatalf("expected DeadlineExceeded, got %v", results[0].Err)
+	}
+}
+
+func TestPromiseAny_Empty(t *testing.T) {
+	_, err := antsx.PromiseAny[int](context.Background())
+	if !errors.Is(err, antsx.ErrEmptyPromises) {
+		t.Fatalf("expected ErrEmptyPromises, got %v", err)
+	}
+}
+
+func TestPromiseAny_FirstSuccess(t *testing.T) {
+	ctx := context.Background()
+	p1 := antsx.NewPromise[string]()
+	p2 := antsx.NewPromise[string]()
+
+	go func() {
+		time.Sleep(50 * time.Millisecond)
+		p1.Resolve("slow")
+	}()
+	go func() {
+		p2.Resolve("fast")
+	}()
+
+	result, err := antsx.PromiseAny(ctx, p1, p2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result != "fast" {
+		t.Fatalf("expected 'fast', got '%s'", result)
+	}
+}
+
+func TestPromiseAny_FirstFailsSecondSucceeds(t *testing.T) {
+	ctx := context.Background()
+	p1 := antsx.NewPromise[int]()
+	p2 := antsx.NewPromise[int]()
+
+	go func() { p1.Reject(errors.New("fail")) }()
+	go func() {
+		time.Sleep(10 * time.Millisecond)
+		p2.Resolve(42)
+	}()
+
+	result, err := antsx.PromiseAny(ctx, p1, p2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result != 42 {
+		t.Fatalf("expected 42, got %d", result)
+	}
+}
+
+func TestPromiseAny_AllFail(t *testing.T) {
+	ctx := context.Background()
+	p1 := antsx.NewPromise[int]()
+	p2 := antsx.NewPromise[int]()
+
+	go func() { p1.Reject(errors.New("err1")) }()
+	go func() { p2.Reject(errors.New("err2")) }()
+
+	_, err := antsx.PromiseAny(ctx, p1, p2)
+	if err == nil {
+		t.Fatal("expected error when all promises reject")
+	}
+}
+
+func TestPromiseAny_CtxCancel(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+
+	p := antsx.NewPromise[int]()
+	// never resolves
+
+	_, err := antsx.PromiseAny(ctx, p)
+	if err == nil {
+		t.Fatal("expected error from ctx timeout")
+	}
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("expected DeadlineExceeded, got %v", err)
+	}
+}
+
+func TestPromiseResult_Succeeded_True(t *testing.T) {
+	r := antsx.PromiseResult[int]{Val: 42, Err: nil}
+	if !r.Succeeded() {
+		t.Fatal("expected Succeeded() == true when Err is nil")
+	}
+}
+
+func TestPromiseResult_Succeeded_False(t *testing.T) {
+	r := antsx.PromiseResult[int]{Val: 0, Err: errors.New("failed")}
+	if r.Succeeded() {
+		t.Fatal("expected Succeeded() == false when Err is non-nil")
+	}
+}
+
+func TestPromise_Get_AfterReject(t *testing.T) {
+	p := antsx.NewPromise[int]()
+	p.Reject(errors.New("rejected"))
+
+	val, err, ok := p.Get()
+	if !ok {
+		t.Fatal("expected ok=true after reject")
+	}
+	if err == nil || err.Error() != "rejected" {
+		t.Fatalf("expected 'rejected' error, got %v", err)
+	}
+	if val != 0 {
+		t.Fatalf("expected zero value, got %d", val)
+	}
+}
+
+func TestPromiseRace_SinglePromise(t *testing.T) {
+	ctx := context.Background()
+	p := antsx.NewPromise[int]()
+	go func() { p.Resolve(42) }()
+
+	val, err := antsx.PromiseRace(ctx, p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if val != 42 {
+		t.Fatalf("expected 42, got %d", val)
+	}
+}
+
+func TestPromiseAny_SinglePromise(t *testing.T) {
+	ctx := context.Background()
+	p := antsx.NewPromise[int]()
+	go func() { p.Resolve(99) }()
+
+	val, err := antsx.PromiseAny(ctx, p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if val != 99 {
+		t.Fatalf("expected 99, got %d", val)
+	}
+}
+
+func TestPromiseAny_SinglePromiseFail(t *testing.T) {
+	ctx := context.Background()
+	p := antsx.NewPromise[int]()
+	go func() { p.Reject(errors.New("only one")) }()
+
+	_, err := antsx.PromiseAny(ctx, p)
+	if err == nil || err.Error() != "only one" {
+		t.Fatalf("expected 'only one', got %v", err)
 	}
 }
 
