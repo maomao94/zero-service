@@ -1,41 +1,20 @@
-# 思考指南
+# 思考指南索引
 
-> 这些指南用于在编码前补齐容易遗漏的跨层、复用和边界问题。只在任务相关时读取，不作为默认全文上下文。
+> Guides 只帮助 AI 判断“开始前要想什么”。实现契约放在 `../backend/*.md`，不要在 guide 中复制 backend 细节。
 
-## 可用指南
+## 路由表
 
-| Guide | Purpose | When to Use |
-| --- | --- | --- |
-| [Code Reuse Thinking Guide](./code-reuse-thinking-guide.md) | 查找已有实现，减少重复封装 | 新增工具函数、SDK、client、配置、常量或相似逻辑时 |
-| [Cross-Layer Thinking Guide](./cross-layer-thinking-guide.md) | 梳理 API/RPC、Logic、Model、配置和外部系统边界 | 功能跨 3 层以上、契约变化或数据格式变化时 |
-| [Documentation Guide](./documentation-guide.md) | 文档分层、清理和维护原则 | 修改 README、docs/ 或 CONTRIBUTING 时 |
-| [Release Tagging Thinking Guide](./release-tagging-guide.md) | 区分主项目与 fork 项目的 tag/release 流程 | 打 tag、创建 GitHub Release 或发布版本时 |
+| Guide | When to read | Output expected | Then read |
+| --- | --- | --- | --- |
+| [code-reuse-thinking-guide.md](./code-reuse-thinking-guide.md) | 新增工具、SDK、client、常量、配置、协议转换，或相似逻辑出现多次 | 找到可复用位置，决定复用、扩展还是保留服务私有 | [`go-zero-conventions.md`](../backend/go-zero-conventions.md)，必要时 [`directory-structure.md`](../backend/directory-structure.md) |
+| [cross-layer-thinking-guide.md](./cross-layer-thinking-guide.md) | 任务跨 `.api` / `.proto`、Logic、Model/SDK、配置、外部系统、前端或消息协议 | 画清数据流、契约源、生成脚本、消费者和验证点 | [`go-zero-conventions.md`](../backend/go-zero-conventions.md)、[`error-handling.md`](../backend/error-handling.md)，SocketIO 读 [`socketiox-contracts.md`](../backend/socketiox-contracts.md) |
+| [documentation-guide.md](./documentation-guide.md) | 修改 README、docs/、CONTRIBUTING 或文档索引 | 确认文档层级、保留内容、链接和重复清理范围 | 只读相关项目文档，不读 backend 代码规范 |
+| [release-tagging-guide.md](./release-tagging-guide.md) | 打 tag、创建 GitHub Release 或发布版本 | 先形成 release plan，等待用户批准后再执行 | 需要 Git 操作时遵循用户批准和仓库规则 |
 
-## 触发条件
+## Guide 使用规则
 
-### 跨层思考
-
-- 功能涉及 `.api` / `.proto`、Logic、Model/SDK、配置、数据库或前端多个层次。
-- 数据格式在 API、gRPC、数据库、消息队列、MQTT、SSE、Socket、AI Provider 之间转换。
-- 多个服务或消费者依赖同一字段、状态或事件。
-- 不确定某段逻辑应该放在 Logic、common、model、client 还是配置层。
-
-### 复用思考
-
-- 正在写与现有实现相似的代码。
-- 同一模式出现 3 次以上。
-- 正在新增工具函数、公共封装、常量、配置或客户端。
-- 正在修改字段、枚举、状态机、Topic、Method、错误码或配置 key。
-- 正在打 tag、创建 GitHub Release 或判断主项目 / fork 项目的版本坐标。
-
-## 修改前规则
-
-修改任何值、字段、枚举、常量、配置、Topic、Method 或错误码前，先用可用搜索工具查找所有引用，再决定是否需要同步修改。
-
-## 使用方式
-
-1. 编码前：只阅读当前任务触发的指南。
-2. 编码中：发现重复、跨层或边界不清时回到指南检查。
-3. 编码后：如果踩到稳定经验，沉淀到对应指南或 backend spec。
-
-核心原则：少量前置思考，换取更少返工和更少跨层 bug。
+- 只读当前任务触发的 guide。
+- Guide 产出是问题清单和路由决定，不是代码契约。
+- 需要签名、字段、错误矩阵、Good/Base/Bad、测试断言时，回到 `../backend/` 的 canonical spec。
+- 修改字段、枚举、常量、配置、Topic、Method 或错误码前，先搜索所有引用。
+- 如果踩到稳定实现规则，更新 backend spec；如果只是新的思考检查项，更新 guide。

@@ -27,17 +27,11 @@
 | 只是单服务私有逻辑？ | 保留在该服务 `internal/` |
 | 只是一次性一行转换？ | 不要过度抽象 |
 
-## 项目重点复用位置
+## 复用位置路由
 
-- `common/djisdk/`：DJI Cloud API MQTT topic、method、协议体、Client 和回调。
-- `common/einox/`：Eino Agent、知识库、记忆、中断、协议适配。
-- `common/mcpx/`：MCP Server/Client、鉴权、异步结果、工具封装。
-- `common/mqttx/`：MQTT 客户端封装。
-- `common/ssex/`：SSE Writer 和流式响应。
-- `common/dbx/`：数据库扩展和多库支持。
-- `common/asynqx/`：asynq 任务队列扩展。
-- `common/dockerx/`：Docker 操作封装。
-- `model/`：数据库模型和生成脚本。
+- 公共组件清单、ServiceContext 和服务内落点规则见 [`../backend/go-zero-conventions.md`](../backend/go-zero-conventions.md)。
+- 不确定放在服务内部、`common/`、`model/` 还是 `facade/` 时，继续读 [`../backend/directory-structure.md`](../backend/directory-structure.md)。
+- 本 guide 只要求先搜索、再判断复用边界；具体实现契约回到 backend code-spec。
 
 ## 何时抽象
 

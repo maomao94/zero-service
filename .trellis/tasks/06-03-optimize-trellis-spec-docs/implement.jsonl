@@ -1,0 +1,14 @@
+{"file":".trellis/spec/backend/index.md","reason":"Backend spec entry point; must stay accurate after file moves, splits, merges, and link fixes."}
+{"file":".trellis/spec/guides/index.md","reason":"Guide entry point; must reflect guide cleanup and keep guides as short thinking checklists."}
+{"file":".trellis/spec/backend/coding-standards.md","reason":"Global conventions file with duplicated code generation/naming/logging/LSP content to compress."}
+{"file":".trellis/spec/backend/go-zero-conventions.md","reason":"Canonical home for go-zero service layout, gen.sh workflow, ServiceContext, and common component list."}
+{"file":".trellis/spec/backend/socketiox-guidelines.md","reason":"Longest spec file; primary candidate for split or substantial compression while preserving protocol contracts."}
+{"file":".trellis/spec/backend/error-handling.md","reason":"Contains stale code.md links and project-wide error behavior; requires careful link and duplication cleanup."}
+{"file":".trellis/spec/backend/antsx-invoke-guidelines.md","reason":"Long focused concurrency spec; candidate for compression without losing signatures and cancellation/error semantics."}
+{"file":".trellis/spec/backend/directory-structure.md","reason":"Very short file overlapping go-zero conventions; candidate for merge or index-only reference."}
+{"file":".trellis/spec/backend/logging-guidelines.md","reason":"Short file overlapping coding-standards security/logging rules; candidate for merge or focused retention."}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"Quality checklist overlaps backend index; candidate for single-source cleanup."}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"Duplicates common component list; should link to canonical backend spec instead of restating details."}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"References gen.sh/error-code triggers; should remain checklist-level and link to backend specs."}
+{"file":"docs/error-codes.md","reason":"Canonical user-facing HTTP/RPC error mapping target for stale code.md links."}
+{"file":"third_party/extproto.proto","reason":"Canonical project error-code enum definition target for stale code.md links."}

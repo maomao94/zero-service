@@ -1,0 +1,10 @@
+{"file":".trellis/spec/backend/index.md","reason":"Verify backend index lists all final backend specs and contains no stale code.md or old root-level spec links."}
+{"file":".trellis/spec/guides/index.md","reason":"Verify guides index remains a short thinking-guide entry point after cleanup."}
+{"file":".trellis/spec/backend/socketiox-guidelines.md","reason":"Verify SocketIO contracts are preserved after split/compression and references point to any new contract file."}
+{"file":".trellis/spec/backend/error-handling.md","reason":"Verify stale code.md references are replaced with docs/error-codes.md and third_party/extproto.proto links."}
+{"file":".trellis/spec/backend/coding-standards.md","reason":"Verify duplicated go-zero/codegen/logging content was compressed or linked to canonical specs."}
+{"file":".trellis/spec/backend/go-zero-conventions.md","reason":"Verify it remains canonical for gen.sh workflow, service layout, ServiceContext, and common component list."}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"Verify common component details are not duplicated and guide remains checklist-level."}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"Verify cross-layer guide remains trigger/checklist-focused and links to code-spec details."}
+{"file":"docs/error-codes.md","reason":"Verify target exists for error-code mapping links from backend specs."}
+{"file":"third_party/extproto.proto","reason":"Verify target exists for project error-code enum links from backend specs."}

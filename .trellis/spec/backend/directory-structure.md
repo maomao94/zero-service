@@ -18,7 +18,7 @@
 
 ## 服务内部结构
 
-单个 go-zero 服务的目录布局、分层职责和新增代码落点见 [`go-zero-conventions.md`](../go-zero-conventions.md)。
+单个 go-zero 服务的目录布局、分层职责和新增代码落点见 [`go-zero-conventions.md`](./go-zero-conventions.md)。
 
 核心规则：`.api` / `.proto` 是契约源头 → `gen.sh` 生成框架代码 → `internal/logic/` 写业务编排。
 
