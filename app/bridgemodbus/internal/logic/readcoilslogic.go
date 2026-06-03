@@ -5,7 +5,6 @@ import (
 	"zero-service/app/bridgemodbus/bridgemodbus"
 	"zero-service/app/bridgemodbus/internal/svc"
 	"zero-service/common/bytex"
-	"zero-service/common/ctxdata"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -26,9 +25,6 @@ func NewReadCoilsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ReadCoi
 
 // 读取线圈状态 (Function Code 0x01)
 func (l *ReadCoilsLogic) ReadCoils(in *bridgemodbus.ReadCoilsReq) (*bridgemodbus.ReadCoilsRes, error) {
-	auth := ctxdata.GetAuthorization(l.ctx)
-	username := ctxdata.GetUserName(l.ctx)
-	l.Logger.Debugf("token: %s,username: %s", auth, username)
 	mdCliPool, err := l.svcCtx.GetModbusClientPool(l.ctx, in.ModbusCode)
 	if err != nil {
 		return nil, err
