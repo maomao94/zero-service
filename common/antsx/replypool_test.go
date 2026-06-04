@@ -10,10 +10,10 @@ import (
 	"zero-service/common/antsx"
 )
 
-// ======================== PendingRegistry ========================
+// ======================== ReplyPool ========================
 
-func TestPendingRegistry_RegisterResolve(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string]()
+func TestReplyPool_RegisterResolve(t *testing.T) {
+	reg := antsx.NewReplyPool[string]()
 	defer reg.Close()
 
 	p, err := reg.Register("req-1")
@@ -51,8 +51,8 @@ func TestPendingRegistry_RegisterResolve(t *testing.T) {
 	}
 }
 
-func TestPendingRegistry_RegisterReject(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string]()
+func TestReplyPool_RegisterReject(t *testing.T) {
+	reg := antsx.NewReplyPool[string]()
 	defer reg.Close()
 
 	p, err := reg.Register("req-2")
@@ -75,8 +75,8 @@ func TestPendingRegistry_RegisterReject(t *testing.T) {
 	}
 }
 
-func TestPendingRegistry_AutoExpiry(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string]()
+func TestReplyPool_AutoExpiry(t *testing.T) {
+	reg := antsx.NewReplyPool[string]()
 	defer reg.Close()
 
 	p, err := reg.Register("expire-1", 100*time.Millisecond)
@@ -86,8 +86,8 @@ func TestPendingRegistry_AutoExpiry(t *testing.T) {
 
 	ctx := context.Background()
 	_, err = p.Await(ctx)
-	if !errors.Is(err, antsx.ErrPendingExpired) {
-		t.Fatalf("expected ErrPendingExpired, got %v", err)
+	if !errors.Is(err, antsx.ErrReplyExpired) {
+		t.Fatalf("expected ErrReplyExpired, got %v", err)
 	}
 
 	if reg.Len() != 0 {
@@ -95,8 +95,8 @@ func TestPendingRegistry_AutoExpiry(t *testing.T) {
 	}
 }
 
-func TestPendingRegistry_ResolveBeforeExpiry(t *testing.T) {
-	reg := antsx.NewPendingRegistry[int]()
+func TestReplyPool_ResolveBeforeExpiry(t *testing.T) {
+	reg := antsx.NewReplyPool[int]()
 	defer reg.Close()
 
 	p, err := reg.Register("fast-1", 500*time.Millisecond)
@@ -120,8 +120,8 @@ func TestPendingRegistry_ResolveBeforeExpiry(t *testing.T) {
 	}
 }
 
-func TestPendingRegistry_DuplicateID(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string]()
+func TestReplyPool_DuplicateID(t *testing.T) {
+	reg := antsx.NewReplyPool[string]()
 	defer reg.Close()
 
 	_, err := reg.Register("dup-1")
@@ -135,8 +135,8 @@ func TestPendingRegistry_DuplicateID(t *testing.T) {
 	}
 }
 
-func TestPendingRegistry_Close(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string]()
+func TestReplyPool_Close(t *testing.T) {
+	reg := antsx.NewReplyPool[string]()
 
 	p1, _ := reg.Register("close-1")
 	p2, _ := reg.Register("close-2")
@@ -147,30 +147,30 @@ func TestPendingRegistry_Close(t *testing.T) {
 	ctx := context.Background()
 	for i, p := range []*antsx.Promise[string]{p1, p2, p3} {
 		_, err := p.Await(ctx)
-		if !errors.Is(err, antsx.ErrRegistryClosed) {
-			t.Fatalf("promise %d: expected ErrRegistryClosed, got %v", i, err)
+		if !errors.Is(err, antsx.ErrReplyClosed) {
+			t.Fatalf("promise %d: expected ErrReplyClosed, got %v", i, err)
 		}
 	}
 }
 
-func TestPendingRegistry_CloseIdempotent(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string]()
+func TestReplyPool_CloseIdempotent(t *testing.T) {
+	reg := antsx.NewReplyPool[string]()
 	reg.Close()
 	reg.Close() // 不应 panic
 }
 
-func TestPendingRegistry_RegisterAfterClose(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string]()
+func TestReplyPool_RegisterAfterClose(t *testing.T) {
+	reg := antsx.NewReplyPool[string]()
 	reg.Close()
 
 	_, err := reg.Register("after-close")
-	if !errors.Is(err, antsx.ErrRegistryClosed) {
-		t.Fatalf("expected ErrRegistryClosed, got %v", err)
+	if !errors.Is(err, antsx.ErrReplyClosed) {
+		t.Fatalf("expected ErrReplyClosed, got %v", err)
 	}
 }
 
-func TestPendingRegistry_Has(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string]()
+func TestReplyPool_Has(t *testing.T) {
+	reg := antsx.NewReplyPool[string]()
 	defer reg.Close()
 
 	if reg.Has("no-exist") {
@@ -190,8 +190,8 @@ func TestPendingRegistry_Has(t *testing.T) {
 	}
 }
 
-func TestPendingRegistry_ConcurrentResolve(t *testing.T) {
-	reg := antsx.NewPendingRegistry[int]()
+func TestReplyPool_ConcurrentResolve(t *testing.T) {
+	reg := antsx.NewReplyPool[int]()
 	defer reg.Close()
 
 	const n = 100
@@ -235,8 +235,8 @@ func TestPendingRegistry_ConcurrentResolve(t *testing.T) {
 	}
 }
 
-func TestPendingRegistry_ResolveNonExistent(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string]()
+func TestReplyPool_ResolveNonExistent(t *testing.T) {
+	reg := antsx.NewReplyPool[string]()
 	defer reg.Close()
 
 	ok := reg.Resolve("ghost", "value")
@@ -248,7 +248,7 @@ func TestPendingRegistry_ResolveNonExistent(t *testing.T) {
 // ======================== RequestReply ========================
 
 func TestRequestReply_Success(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string]()
+	reg := antsx.NewReplyPool[string]()
 	defer reg.Close()
 
 	ctx := context.Background()
@@ -272,7 +272,7 @@ func TestRequestReply_Success(t *testing.T) {
 }
 
 func TestRequestReply_SendFail(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string]()
+	reg := antsx.NewReplyPool[string]()
 	defer reg.Close()
 
 	ctx := context.Background()
@@ -292,7 +292,7 @@ func TestRequestReply_SendFail(t *testing.T) {
 }
 
 func TestRequestReply_CtxCancel(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string]()
+	reg := antsx.NewReplyPool[string]()
 	defer reg.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
@@ -307,8 +307,8 @@ func TestRequestReply_CtxCancel(t *testing.T) {
 	}
 }
 
-func TestPendingRegistry_WithDefaultTTL(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string](antsx.WithDefaultTTL(200 * time.Millisecond))
+func TestReplyPool_WithDefaultTTL(t *testing.T) {
+	reg := antsx.NewReplyPool[string](antsx.WithDefaultTTL(200 * time.Millisecond))
 	defer reg.Close()
 
 	p, err := reg.Register("ttl-default")
@@ -319,14 +319,14 @@ func TestPendingRegistry_WithDefaultTTL(t *testing.T) {
 	// 不 Resolve，等待默认 TTL 过期
 	ctx := context.Background()
 	_, err = p.Await(ctx)
-	if !errors.Is(err, antsx.ErrPendingExpired) {
-		t.Fatalf("expected ErrPendingExpired, got %v", err)
+	if !errors.Is(err, antsx.ErrReplyExpired) {
+		t.Fatalf("expected ErrReplyExpired, got %v", err)
 	}
 }
 
-func TestPendingRegistry_OverrideTTL(t *testing.T) {
+func TestReplyPool_OverrideTTL(t *testing.T) {
 	// defaultTTL=30s 但 Register 传 100ms
-	reg := antsx.NewPendingRegistry[string](antsx.WithDefaultTTL(30 * time.Second))
+	reg := antsx.NewReplyPool[string](antsx.WithDefaultTTL(30 * time.Second))
 	defer reg.Close()
 
 	p, err := reg.Register("ttl-override", 100*time.Millisecond)
@@ -336,13 +336,13 @@ func TestPendingRegistry_OverrideTTL(t *testing.T) {
 
 	ctx := context.Background()
 	_, err = p.Await(ctx)
-	if !errors.Is(err, antsx.ErrPendingExpired) {
-		t.Fatalf("expected ErrPendingExpired, got %v", err)
+	if !errors.Is(err, antsx.ErrReplyExpired) {
+		t.Fatalf("expected ErrReplyExpired, got %v", err)
 	}
 }
 
-func TestPendingRegistry_ConcurrentRegisterClose(t *testing.T) {
-	reg := antsx.NewPendingRegistry[int]()
+func TestReplyPool_ConcurrentRegisterClose(t *testing.T) {
+	reg := antsx.NewReplyPool[int]()
 
 	var wg sync.WaitGroup
 	for i := 0; i < 50; i++ {
@@ -366,20 +366,20 @@ func TestPendingRegistry_ConcurrentRegisterClose(t *testing.T) {
 }
 
 func TestRequestReply_TTL(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string](antsx.WithDefaultTTL(100 * time.Millisecond))
+	reg := antsx.NewReplyPool[string](antsx.WithDefaultTTL(100 * time.Millisecond))
 	defer reg.Close()
 
 	ctx := context.Background()
 	_, err := antsx.RequestReply(ctx, reg, "rr-ttl", func() error {
 		return nil
 	})
-	if !errors.Is(err, antsx.ErrPendingExpired) {
-		t.Fatalf("expected ErrPendingExpired, got %v", err)
+	if !errors.Is(err, antsx.ErrReplyExpired) {
+		t.Fatalf("expected ErrReplyExpired, got %v", err)
 	}
 }
 
-func TestPendingRegistry_RejectNonExistent(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string]()
+func TestReplyPool_RejectNonExistent(t *testing.T) {
+	reg := antsx.NewReplyPool[string]()
 	defer reg.Close()
 
 	ok := reg.Reject("ghost", errors.New("nope"))
@@ -388,8 +388,8 @@ func TestPendingRegistry_RejectNonExistent(t *testing.T) {
 	}
 }
 
-func TestPendingRegistry_MassiveRegisterResolve(t *testing.T) {
-	reg := antsx.NewPendingRegistry[int]()
+func TestReplyPool_MassiveRegisterResolve(t *testing.T) {
+	reg := antsx.NewReplyPool[int]()
 	defer reg.Close()
 
 	const n = 500
@@ -426,8 +426,8 @@ func TestPendingRegistry_MassiveRegisterResolve(t *testing.T) {
 	}
 }
 
-func TestPendingRegistry_WithTimingWheel(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string](
+func TestReplyPool_WithTimingWheel(t *testing.T) {
+	reg := antsx.NewReplyPool[string](
 		antsx.WithDefaultTTL(200 * time.Millisecond),
 	)
 	defer reg.Close()
@@ -440,13 +440,13 @@ func TestPendingRegistry_WithTimingWheel(t *testing.T) {
 	time.Sleep(300 * time.Millisecond)
 
 	_, err = p.Await(context.Background())
-	if !errors.Is(err, antsx.ErrPendingExpired) {
-		t.Fatalf("expected ErrPendingExpired with auto TimingWheel, got: %v", err)
+	if !errors.Is(err, antsx.ErrReplyExpired) {
+		t.Fatalf("expected ErrReplyExpired with auto TimingWheel, got: %v", err)
 	}
 }
 
-func TestPendingRegistry_RegisterResolveBeforeTimeout(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string](
+func TestReplyPool_RegisterResolveBeforeTimeout(t *testing.T) {
+	reg := antsx.NewReplyPool[string](
 		antsx.WithDefaultTTL(500 * time.Millisecond),
 	)
 	defer reg.Close()
@@ -468,7 +468,7 @@ func TestPendingRegistry_RegisterResolveBeforeTimeout(t *testing.T) {
 }
 
 func TestRequestReply_CtxTimeout(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string](
+	reg := antsx.NewReplyPool[string](
 		antsx.WithDefaultTTL(5 * time.Second),
 	)
 	defer reg.Close()
@@ -485,7 +485,7 @@ func TestRequestReply_CtxTimeout(t *testing.T) {
 }
 
 func TestRequestReply_CustomTTL(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string](
+	reg := antsx.NewReplyPool[string](
 		antsx.WithDefaultTTL(30 * time.Second),
 	)
 	defer reg.Close()
@@ -495,77 +495,64 @@ func TestRequestReply_CustomTTL(t *testing.T) {
 	_, err := antsx.RequestReply(ctx, reg, "custom-ttl", func() error {
 		return nil
 	}, 100*time.Millisecond)
-	if !errors.Is(err, antsx.ErrPendingExpired) {
-		t.Fatalf("expected ErrPendingExpired with custom TTL, got %v", err)
+	if !errors.Is(err, antsx.ErrReplyExpired) {
+		t.Fatalf("expected ErrReplyExpired with custom TTL, got %v", err)
 	}
 }
 
-func TestPendingRegistry_Stats(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string](antsx.WithDefaultTTL(200 * time.Millisecond))
+func TestReplyPool_Lifecycle(t *testing.T) {
+	reg := antsx.NewReplyPool[string](antsx.WithDefaultTTL(200 * time.Millisecond))
 	defer reg.Close()
 
-	stats := reg.Stats()
-	if stats.Registered != 0 || stats.Resolved != 0 || stats.Rejected != 0 || stats.Expired != 0 || stats.Pending != 0 {
-		t.Fatalf("expected zero stats, got %+v", stats)
+	// 初始状态为空
+	if reg.Len() != 0 {
+		t.Fatalf("expected empty pool, got Len=%d", reg.Len())
 	}
 
-	reg.Register("s1")
-	reg.Register("s2")
-	reg.Register("s3", 100*time.Millisecond)
-
-	stats = reg.Stats()
-	if stats.Registered != 3 || stats.Pending != 3 {
-		t.Fatalf("expected registered=3 pending=3, got %+v", stats)
+	// Register
+	p1, _ := reg.Register("s1")
+	p2, _ := reg.Register("s2")
+	p3, _ := reg.Register("s3", 100*time.Millisecond)
+	if reg.Len() != 3 {
+		t.Fatalf("expected Len=3, got %d", reg.Len())
+	}
+	if !reg.Has("s1") || !reg.Has("s2") || !reg.Has("s3") {
+		t.Fatal("expected Has=true for all IDs")
 	}
 
+	// Resolve
 	reg.Resolve("s1", "ok")
-	stats = reg.Stats()
-	if stats.Resolved != 1 || stats.Pending != 2 {
-		t.Fatalf("expected resolved=1 pending=2, got %+v", stats)
+	v, err := p1.Await(context.Background())
+	if err != nil || v != "ok" {
+		t.Fatalf("expected resolved, got val=%v err=%v", v, err)
+	}
+	if reg.Len() != 2 || reg.Has("s1") {
+		t.Fatalf("expected Len=2 Has(s1)=false after resolve, got Len=%d Has=%v", reg.Len(), reg.Has("s1"))
 	}
 
+	// Reject
 	reg.Reject("s2", errors.New("fail"))
-	stats = reg.Stats()
-	if stats.Rejected != 1 || stats.Pending != 1 {
-		t.Fatalf("expected rejected=1 pending=1, got %+v", stats)
+	_, err = p2.Await(context.Background())
+	if err == nil {
+		t.Fatal("expected reject error, got nil")
+	}
+	if reg.Len() != 1 || reg.Has("s2") {
+		t.Fatalf("expected Len=1 Has(s2)=false after reject, got Len=%d Has=%v", reg.Len(), reg.Has("s2"))
 	}
 
+	// Expire
 	time.Sleep(300 * time.Millisecond)
-	stats = reg.Stats()
-	if stats.Expired != 1 || stats.Pending != 0 {
-		t.Fatalf("expected expired=1 pending=0, got %+v", stats)
+	_, err = p3.Await(context.Background())
+	if !errors.Is(err, antsx.ErrReplyExpired) {
+		t.Fatalf("expected ErrReplyExpired, got %v", err)
+	}
+	if reg.Len() != 0 || reg.Has("s3") {
+		t.Fatalf("expected Len=0 Has(s3)=false after expire, got Len=%d Has=%v", reg.Len(), reg.Has("s3"))
 	}
 }
 
-func TestPendingRegistry_StartStatsLoop(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string]()
-	defer reg.Close()
-
-	reg.Register("loop-1")
-	reg.Resolve("loop-1", "done")
-
-	var mu sync.Mutex
-	var lastStats antsx.RegistryStats
-	stop := reg.StartStatsLoop(context.Background(), 50*time.Millisecond, func(s antsx.RegistryStats) {
-		mu.Lock()
-		lastStats = s
-		mu.Unlock()
-	})
-	defer stop()
-
-	time.Sleep(150 * time.Millisecond)
-
-	mu.Lock()
-	s := lastStats
-	mu.Unlock()
-
-	if s.Registered != 1 || s.Resolved != 1 {
-		t.Fatalf("expected stats from loop: registered=1 resolved=1, got %+v", s)
-	}
-}
-
-func TestPendingRegistry_HandleTimeoutVsRejectRace(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string](
+func TestReplyPool_HandleTimeoutVsRejectRace(t *testing.T) {
+	reg := antsx.NewReplyPool[string](
 		antsx.WithDefaultTTL(50 * time.Millisecond),
 	)
 	defer reg.Close()
@@ -590,70 +577,63 @@ func TestPendingRegistry_HandleTimeoutVsRejectRace(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 	wg.Wait()
 
-	stats := reg.Stats()
-	total := stats.Resolved + stats.Rejected + stats.Expired
-	if total != n {
-		t.Fatalf("expected total=%d, got resolved=%d rejected=%d expired=%d",
-			n, stats.Resolved, stats.Rejected, stats.Expired)
+	// 所有条目都应被处理（reject 或 expire），pending 必须归零
+	if reg.Len() != 0 {
+		t.Fatalf("expected Len=0 after all done, got %d", reg.Len())
 	}
-	if stats.Pending != 0 {
-		t.Fatalf("expected pending=0, got %d", stats.Pending)
-	}
+	t.Logf("race test passed: pending=%d", reg.Len())
 }
 
-func TestPendingRegistry_StatsLoopNoActivity(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string]()
+func TestReplyPool_CloseStatsAccuracy(t *testing.T) {
+	reg := antsx.NewReplyPool[string]()
 	defer reg.Close()
 
-	var mu sync.Mutex
-	callCount := 0
-	stop := reg.StartStatsLoop(context.Background(), 50*time.Millisecond, func(s antsx.RegistryStats) {
-		mu.Lock()
-		callCount++
-		mu.Unlock()
-	})
-	defer stop()
-
-	time.Sleep(200 * time.Millisecond)
-
-	mu.Lock()
-	count := callCount
-	mu.Unlock()
-
-	if count != 0 {
-		t.Fatalf("expected logFn not called (no activity), got %d calls", count)
-	}
-}
-
-func TestPendingRegistry_CloseStatsAccuracy(t *testing.T) {
-	reg := antsx.NewPendingRegistry[string]()
-	defer reg.Close()
-
+	promises := make([]*antsx.Promise[string], 10)
 	for i := 0; i < 10; i++ {
-		reg.Register(fmt.Sprintf("close-%d", i))
+		p, _ := reg.Register(fmt.Sprintf("close-%d", i))
+		promises[i] = p
 	}
 
 	reg.Resolve("close-0", "ok")
 	reg.Reject("close-1", errors.New("fail"))
 
-	stats := reg.Stats()
-	if stats.Registered != 10 || stats.Resolved != 1 || stats.Rejected != 1 || stats.Pending != 8 {
-		t.Fatalf("before close: expected registered=10 resolved=1 rejected=1 pending=8, got %+v", stats)
+	if reg.Len() != 8 {
+		t.Fatalf("before close: expected Len=8, got %d", reg.Len())
 	}
 
 	reg.Close()
 
-	stats = reg.Stats()
-	if stats.Rejected != 9 {
-		t.Fatalf("after close: expected rejected=9 (1 + 8 from close), got %d", stats.Rejected)
+	if reg.Len() != 0 {
+		t.Fatalf("after close: expected Len=0, got %d", reg.Len())
 	}
-	if stats.Pending != 0 {
-		t.Fatalf("after close: expected pending=0, got %d", stats.Pending)
+
+	// 剩余的 8 个应收到 ErrReplyClosed
+	closedCount := 0
+	for _, p := range promises {
+		_, err := p.Await(context.Background())
+		if errors.Is(err, antsx.ErrReplyClosed) {
+			closedCount++
+		}
+	}
+	if closedCount != 8 {
+		t.Fatalf("expected 8 ErrReplyClosed, got %d", closedCount)
 	}
 }
 
-func TestPendingRegistry_ConcurrentRegisterResolveStats(t *testing.T) {
-	reg := antsx.NewPendingRegistry[int]()
+func TestReplyPool_StatLoopLifecycle(t *testing.T) {
+	// 验证默认内置统计循环在 Close 时正确停止，不发生死锁
+	reg := antsx.NewReplyPool[string]()
+
+	// 做几笔操作让循环有数据可输出
+	reg.Register("lifecycle-1")
+	reg.Resolve("lifecycle-1", "done")
+
+	// Close 应停止 statLoop goroutine
+	reg.Close()
+}
+
+func TestReplyPool_ConcurrentRegisterResolveStats(t *testing.T) {
+	reg := antsx.NewReplyPool[int]()
 	defer reg.Close()
 
 	const n = 200
@@ -682,10 +662,7 @@ func TestPendingRegistry_ConcurrentRegisterResolveStats(t *testing.T) {
 
 	resolveDone.Wait()
 
-	stats := reg.Stats()
-	total := stats.Resolved + stats.Rejected + stats.Expired
-	if total != n {
-		t.Fatalf("expected total=%d, got resolved=%d rejected=%d expired=%d",
-			n, stats.Resolved, stats.Rejected, stats.Expired)
+	if reg.Len() != 0 {
+		t.Fatalf("expected Len=0 after all resolved, got %d", reg.Len())
 	}
 }

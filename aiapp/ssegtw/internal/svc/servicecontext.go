@@ -24,7 +24,7 @@ type ServiceContext struct {
 	Config     config.Config
 	ZeroRpcCli zerorpc.ZerorpcClient
 	Emitter    *antsx.EventEmitter[SSEEvent]
-	PendingReg *antsx.PendingRegistry[string]
+	PendingReg *antsx.ReplyPool[string]
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -33,6 +33,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		ZeroRpcCli: zerorpc.NewZerorpcClient(zrpc.MustNewClient(c.ZeroRpcConf,
 			zrpc.WithUnaryClientInterceptor(interceptor.UnaryMetadataInterceptor)).Conn()),
 		Emitter:    antsx.NewEventEmitter[SSEEvent](),
-		PendingReg: antsx.NewPendingRegistry[string](antsx.WithDefaultTTL(60 * time.Second)),
+		PendingReg: antsx.NewReplyPool[string](antsx.WithDefaultTTL(60 * time.Second)),
 	}
 }

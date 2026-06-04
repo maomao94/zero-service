@@ -83,7 +83,7 @@ func defaultClientOptions() clientOptions {
 // 含：services、events、property、osd/state、sys、requests、DRC 等，详情见包级 doc.go 与各 Topic 函数注释。
 type Client struct {
 	mqttClient           mqttClient
-	pending              *antsx.PendingRegistry[*ServiceReply]
+	pending              *antsx.ReplyPool[*ServiceReply]
 	replyOptions         ReplyOptions
 	eventMethodFallbacks map[string]EventMethodFallback
 	onlineChecker        func(gatewaySn string) bool
@@ -118,7 +118,7 @@ func newClient(mqttClient mqttClient, opts ...ClientOption) *Client {
 
 	return &Client{
 		mqttClient:           mqttClient,
-		pending:              antsx.NewPendingRegistry[*ServiceReply](antsx.WithDefaultTTL(options.pendingTTL)),
+		pending:              antsx.NewReplyPool[*ServiceReply](antsx.WithDefaultTTL(options.pendingTTL)),
 		replyOptions:         options.replyOptions,
 		eventMethodFallbacks: make(map[string]EventMethodFallback),
 	}

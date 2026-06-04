@@ -51,7 +51,7 @@ func (l *SseStreamLogic) SseStream(req *types.SSEStreamRequest) error {
 
 	l.Infof("sse stream connected, channel: %s", channel)
 
-	// 1. 注册完成信号（PendingRegistry）
+	// 1. 注册完成信号（ReplyPool）
 	donePromise, err := l.svcCtx.PendingReg.Register(channel, 60*time.Second)
 	if err != nil {
 		return tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "register pending failed")

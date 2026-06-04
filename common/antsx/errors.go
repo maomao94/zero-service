@@ -9,14 +9,14 @@ import (
 // 包级别哨兵错误，用于在不同模块中统一标识特定异常场景。
 // 调用方应使用 errors.Is 进行判断。
 var (
-	// ErrPendingExpired 表示 PendingRegistry 中的条目已超时过期。
-	ErrPendingExpired = errors.New("antsx: pending entry expired")
+	// ErrReplyExpired 表示 ReplyPool 中的条目已超时过期。
+	ErrReplyExpired = errors.New("antsx: reply pool entry expired")
 
-	// ErrDuplicateID 表示 PendingRegistry 中注册了重复的关联 ID。
+	// ErrDuplicateID 表示 ReplyPool 中注册了重复的关联 ID。
 	ErrDuplicateID = errors.New("antsx: duplicate id")
 
-	// ErrRegistryClosed 表示 PendingRegistry 已关闭，无法注册新的条目。
-	ErrRegistryClosed = errors.New("antsx: registry closed")
+	// ErrReplyClosed 表示 ReplyPool 已关闭，无法注册新的条目。
+	ErrReplyClosed = errors.New("antsx: reply pool closed")
 
 	// ErrChanClosed 表示向已关闭的 UnboundedChan 发送数据。
 	ErrChanClosed = errors.New("antsx: send on closed channel")

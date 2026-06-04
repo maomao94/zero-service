@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 29
-- **Last Active**: 2026-06-03
+- **Total Sessions**: 33
+- **Last Active**: 2026-06-04
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1276 | Active |
+| `journal-1.md` | ~1411 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,10 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 33 | 2026-06-04 | ReplyPool 调试日志和 spec 补充 | `c2b01405`, `dc961fef` | `master` |
+| 32 | 2026-06-04 | 移除 ReplyPool 累计计数器并同步 spec | `e3c5eba6`, `d8e5dab0` | `master` |
+| 31 | 2026-06-04 | ReplyPool 重命名：PendingRegistry → ReplyPool | `9ce50f6b`, `facc1976` | `master` |
+| 30 | 2026-06-04 | feat: PendingRegistry 默认 statLoop | `3886ee62` | `master` |
 | 29 | 2026-06-03 | gormx 生产配置最佳实践 | `435eba07` | `master` |
 | 28 | 2026-06-03 | PendingRegistry 优化：Stats 统计、时间轮自动推导、原子计数器 | `e0234133` | `master` |
 | 27 | 2026-06-03 | 优化 Trellis spec 文档结构 | `fb1aaf60` | `master` |

@@ -13,7 +13,7 @@
 | **Reactor** | `reactor.go` | 协程池调度：Submit（带返回值）、Post（无返回值）、Go |
 | **Invoke** | `invoke.go` | 并行流程编排：并发执行、快速失败、全量等待（AllSettled）、超时控制 |
 | **EventEmitter** | `emitter.go` | 发布/订阅：多 topic、ctx 取消自动退订 |
-| **PendingRegistry** | `pending.go` | 关联 ID 注册表：请求-响应模式、TTL 自动过期 |
+| **ReplyPool** | `replypool.go` | 关联 ID 注册表：请求-响应模式、TTL 自动过期 |
 | **UnboundedChan** | `unbounded.go` | 无界通道：基于 mutex+cond 的无限缓冲 channel |
 
 ## 快速使用
@@ -223,10 +223,10 @@ emitter.TopicCount()            // 活跃 topic 数
 emitter.SubscriberCount("chat") // 指定 topic 的订阅者数
 ```
 
-### PendingRegistry（请求-响应模式）
+### ReplyPool（请求-响应模式）
 
 ```go
-reg := antsx.NewPendingRegistry[Response](
+reg := antsx.NewReplyPool[Response](
     antsx.WithDefaultTTL(30 * time.Second),
     antsx.WithTimingWheel(100*time.Millisecond, 16), // 自定义时间轮参数
 )
@@ -324,7 +324,7 @@ Invoke 系列的 goroutine 启动采用三层 panic 防护，确保不会因 pan
 | `StreamWriter` | `Send` 和 `Close` 均可安全并发调用，`Close` 通过 atomic CAS 幂等 |
 | `StreamReader` | `Recv` **非**并发安全（单消费者模型），`Close` 可从任意 goroutine 调用 |
 | `EventEmitter` | 所有方法可并发调用。内部使用 `sync.RWMutex` 保护订阅者列表 |
-| `PendingRegistry` | 所有方法可并发调用。内部使用 `sync.Mutex` 保护注册表 |
+| `ReplyPool` | 所有方法可并发调用。内部使用 `sync.Mutex` 保护注册表 |
 | `UnboundedChan` | 所有方法可并发调用。支持 MPMC（多生产者多消费者） |
 | `Reactor` | `Submit/Post/Go` 可并发调用。`Release` 后调用其他方法返回错误 |
 
@@ -335,7 +335,7 @@ Invoke 系列的 goroutine 启动采用三层 panic 防护，确保不会因 pan
 - `StreamWriter.Close()` — 不调用会导致消费者永远阻塞在 `Recv`
 - `StreamReader.Close()` — 不调用会导致生产者 goroutine 泄漏（Send 阻塞）
 - `EventEmitter.Close()` — 不调用会导致所有订阅者 goroutine 泄漏
-- `PendingRegistry.Close()` — 不调用会导致内部 TimingWheel 协程泄漏
+- `ReplyPool.Close()` — 不调用会导致内部 TimingWheel 协程泄漏
 - `Reactor.Release()` — 不调用会导致协程池泄漏
 - `UnboundedChan.Close()` — 不调用会导致等待中的消费者永远阻塞
 
@@ -353,9 +353,9 @@ Invoke 系列的 goroutine 启动采用三层 panic 防护，确保不会因 pan
 | `ErrRecvAfterClosed` | `StreamReader.Recv` (Copy) | 在已关闭的子流上调用 Recv |
 | `ErrEmptyPromises` | `PromiseRace` / `PromiseAny` | 传入空 promises 切片 |
 | `SourceEOF` | `MergeNamedStreamReaders` | 某条具名源流结束（其他源流可能仍在产出） |
-| `ErrDuplicateID` | `PendingRegistry.Register` | 注册了重复的关联 ID |
-| `ErrPendingExpired` | `PendingRegistry` | 条目超过 TTL 自动过期 |
-| `ErrRegistryClosed` | `PendingRegistry` | 注册表已关闭 |
+| `ErrDuplicateID` | `ReplyPool.Register` | 注册了重复的关联 ID |
+| `ErrReplyExpired` | `ReplyPool` | 条目超过 TTL 自动过期 |
+| `ErrReplyClosed` | `ReplyPool` | 注册表已关闭 |
 | `ErrChanClosed` | `UnboundedChan.TrySend` | 向已关闭的通道发送（TrySend 返回 false） |
 
 ## 最佳实践
@@ -532,12 +532,12 @@ emitter.Emit("chat", Event{Type: "message", Data: "hello"})
 emitter.Emit("system-log", Event{Type: "info", Data: "user joined"})
 ```
 
-### PendingRegistry WebSocket 请求-响应
+### ReplyPool WebSocket 请求-响应
 
 WebSocket 场景的请求-响应关联：
 
 ```go
-reg := antsx.NewPendingRegistry[[]byte](
+reg := antsx.NewReplyPool[[]byte](
     antsx.WithDefaultTTL(30 * time.Second),
 )
 defer reg.Close()
@@ -555,7 +555,7 @@ defer cancel()
 resp, err := antsx.RequestReply(ctx, reg, "req-123", func() error {
     return conn.WriteMessage(Request{ID: "req-123", Action: "getUser"})
 })
-if errors.Is(err, antsx.ErrPendingExpired) {
+if errors.Is(err, antsx.ErrReplyExpired) {
     log.Println("请求超时")
 }
 ```

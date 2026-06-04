@@ -23,7 +23,7 @@
 | [socketiox-guidelines.md](./socketiox-guidelines.md) | 改 `common/socketiox/` API、Session、房间、事件处理、容器或并发实现 | SocketIO 包 API、并发规则、禁止模式 |
 | [socketiox-contracts.md](./socketiox-contracts.md) | 改 SocketIO 上下行 payload、事件名、`UpSocketMessage`、统计和房间分页协议 | SocketIO 跨层协议契约、payload、错误矩阵、测试断言 |
 | [antsx-invoke-guidelines.md](./antsx-invoke-guidelines.md) | 使用或修改 `antsx.Invoke`、`InvokeAllSettled`、Reactor 并行编排 | Invoke 签名、选型、取消、panic 防护、测试断言 |
-| [antsx-promise-guidelines.md](./antsx-promise-guidelines.md) | 使用或修改 `antsx.Promise`、并行组合（All/AllSettled/Race/Any）、`PendingRegistry` | Promise 签名、四象限选型、泄漏防护、错误语义、PendingRegistry 设计决策、Stats 统计 |
+| [antsx-promise-guidelines.md](./antsx-promise-guidelines.md) | 使用或修改 `antsx.Promise`、并行组合（All/AllSettled/Race/Any）、`ReplyPool` | Promise 签名、四象限选型、泄漏防护、错误语义、ReplyPool 设计决策、Stats 统计 |
 | [trellis-template-policy.md](./trellis-template-policy.md) | 修改 Trellis 模板、平台适配或用户数据区 | Trellis 模板更新和验证策略 |
 
 ## 外部契约链接
