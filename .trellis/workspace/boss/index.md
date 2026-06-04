@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 33
+- **Total Sessions**: 34
 - **Last Active**: 2026-06-04
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1411 | Active |
+| `journal-1.md` | ~1444 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 34 | 2026-06-04 | ReplyPool stat 日志优化及 Git squash 实践 | `942654d6` | `master` |
 | 33 | 2026-06-04 | ReplyPool 调试日志和 spec 补充 | `c2b01405`, `dc961fef` | `master` |
 | 32 | 2026-06-04 | 移除 ReplyPool 累计计数器并同步 spec | `e3c5eba6`, `d8e5dab0` | `master` |
 | 31 | 2026-06-04 | ReplyPool 重命名：PendingRegistry → ReplyPool | `9ce50f6b`, `facc1976` | `master` |

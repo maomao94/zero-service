@@ -1409,3 +1409,36 @@ ReplyPool 在 handleTimeout/Resolve/Reject 三个出口增加 debug 日志，通
 ### Next Steps
 
 - None - task complete
+
+
+## Session 34: ReplyPool stat 日志优化及 Git squash 实践
+
+**Date**: 2026-06-04
+**Task**: ReplyPool stat 日志优化及 Git squash 实践
+**Branch**: `master`
+
+### Summary
+
+分析 ReplyPool statLoop 日志中 req:0+expire:100% 的根因（跨窗口统计错位），将百分比改为绝对值消除误导。同步更新 antsx-promise-guidelines.md spec。演示 git log origin/master..HEAD 查看未推送 commit、git reset --soft 压缩 commit 的用法。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `942654d6` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
