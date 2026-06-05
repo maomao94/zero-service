@@ -1544,3 +1544,37 @@ IEC104控制命令ACK replyPool全量覆盖：CommandReplyPool sendWithAck内部
 ### Next Steps
 
 - None - task complete
+
+
+## Session 38: ieccaller 集群广播优化
+
+**Date**: 2026-06-05
+**Task**: ieccaller 集群广播优化
+**Branch**: `master`
+
+### Summary
+
+BroadcastGroupId 改为启动时自动生成 UUID 前缀 iec-caller-；PushPbBroadcast 和 PushPbBroadcastWithAck 统一命名为 Pb 前缀并共享 pushBroadcast 发送逻辑；删除废弃的 PushBroadcast；清理冗余测试。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `942654d6` | (see git log) |
+| `0740c77f` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
