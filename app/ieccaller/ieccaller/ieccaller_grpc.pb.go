@@ -25,6 +25,13 @@ const (
 	IecCaller_SendInterrogationCmd_FullMethodName        = "/ieccaller.IecCaller/SendInterrogationCmd"
 	IecCaller_SendCounterInterrogationCmd_FullMethodName = "/ieccaller.IecCaller/SendCounterInterrogationCmd"
 	IecCaller_SendCommand_FullMethodName                 = "/ieccaller.IecCaller/SendCommand"
+	IecCaller_SendSingleCommand_FullMethodName           = "/ieccaller.IecCaller/SendSingleCommand"
+	IecCaller_SendDoubleCommand_FullMethodName           = "/ieccaller.IecCaller/SendDoubleCommand"
+	IecCaller_SendStepCommand_FullMethodName             = "/ieccaller.IecCaller/SendStepCommand"
+	IecCaller_SendSetpointNormalized_FullMethodName      = "/ieccaller.IecCaller/SendSetpointNormalized"
+	IecCaller_SendSetpointScaled_FullMethodName          = "/ieccaller.IecCaller/SendSetpointScaled"
+	IecCaller_SendSetpointFloat_FullMethodName           = "/ieccaller.IecCaller/SendSetpointFloat"
+	IecCaller_SendBitstringCommand_FullMethodName        = "/ieccaller.IecCaller/SendBitstringCommand"
 	IecCaller_QueryPointMappingById_FullMethodName       = "/ieccaller.IecCaller/QueryPointMappingById"
 	IecCaller_QueryPointMappingByKey_FullMethodName      = "/ieccaller.IecCaller/QueryPointMappingByKey"
 	IecCaller_PageListPointMapping_FullMethodName        = "/ieccaller.IecCaller/PageListPointMapping"
@@ -44,8 +51,22 @@ type IecCallerClient interface {
 	SendInterrogationCmd(ctx context.Context, in *SendInterrogationCmdReq, opts ...grpc.CallOption) (*SendInterrogationCmdRes, error)
 	// 累积量召唤
 	SendCounterInterrogationCmd(ctx context.Context, in *SendCounterInterrogationCmdReq, opts ...grpc.CallOption) (*SendCounterInterrogationCmdRes, error)
-	// 发送命令
+	// 发送命令（通用，需指定typeId）注意 无 ack 响应
 	SendCommand(ctx context.Context, in *SendCommandReq, opts ...grpc.CallOption) (*SendCommandRes, error)
+	// 单点命令 (C_SC_NA_1=45 不带时标 / C_SC_TA_1=58 带CP56Time2a时标，由withTime字段控制)
+	SendSingleCommand(ctx context.Context, in *SendSingleCommandReq, opts ...grpc.CallOption) (*SendSingleCommandRes, error)
+	// 双点命令 (C_DC_NA_1=46 不带时标 / C_DC_TA_1=59 带CP56Time2a时标，由withTime字段控制)
+	SendDoubleCommand(ctx context.Context, in *SendDoubleCommandReq, opts ...grpc.CallOption) (*SendDoubleCommandRes, error)
+	// 档位调节命令 (C_RC_NA_1=47 不带时标 / C_RC_TA_1=60 带CP56Time2a时标，由withTime字段控制)
+	SendStepCommand(ctx context.Context, in *SendStepCommandReq, opts ...grpc.CallOption) (*SendStepCommandRes, error)
+	// 设点命令-归一化值 (C_SE_NA_1=48 不带时标 / C_SE_TA_1=61 带CP56Time2a时标，由withTime字段控制)
+	SendSetpointNormalized(ctx context.Context, in *SendSetpointNormalizedReq, opts ...grpc.CallOption) (*SendSetpointNormalizedRes, error)
+	// 设点命令-标度化值 (C_SE_NB_1=49 不带时标 / C_SE_TB_1=62 带CP56Time2a时标，由withTime字段控制)
+	SendSetpointScaled(ctx context.Context, in *SendSetpointScaledReq, opts ...grpc.CallOption) (*SendSetpointScaledRes, error)
+	// 设点命令-短浮点数 (C_SE_NC_1=50 不带时标 / C_SE_TC_1=63 带CP56Time2a时标，由withTime字段控制)
+	SendSetpointFloat(ctx context.Context, in *SendSetpointFloatReq, opts ...grpc.CallOption) (*SendSetpointFloatRes, error)
+	// 32位位串命令 (C_BO_NA_1=51 不带时标 / C_BO_TA_1=64 带CP56Time2a时标，由withTime字段控制)
+	SendBitstringCommand(ctx context.Context, in *SendBitstringCommandReq, opts ...grpc.CallOption) (*SendBitstringCommandRes, error)
 	// 根据ID查询点位绑定信息
 	QueryPointMappingById(ctx context.Context, in *QueryPointMappingByIdReq, opts ...grpc.CallOption) (*QueryPointMappingByIdRes, error)
 	// 根据tagStation、coa、ioa查询点位绑定信息
@@ -124,6 +145,76 @@ func (c *iecCallerClient) SendCommand(ctx context.Context, in *SendCommandReq, o
 	return out, nil
 }
 
+func (c *iecCallerClient) SendSingleCommand(ctx context.Context, in *SendSingleCommandReq, opts ...grpc.CallOption) (*SendSingleCommandRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendSingleCommandRes)
+	err := c.cc.Invoke(ctx, IecCaller_SendSingleCommand_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iecCallerClient) SendDoubleCommand(ctx context.Context, in *SendDoubleCommandReq, opts ...grpc.CallOption) (*SendDoubleCommandRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendDoubleCommandRes)
+	err := c.cc.Invoke(ctx, IecCaller_SendDoubleCommand_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iecCallerClient) SendStepCommand(ctx context.Context, in *SendStepCommandReq, opts ...grpc.CallOption) (*SendStepCommandRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendStepCommandRes)
+	err := c.cc.Invoke(ctx, IecCaller_SendStepCommand_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iecCallerClient) SendSetpointNormalized(ctx context.Context, in *SendSetpointNormalizedReq, opts ...grpc.CallOption) (*SendSetpointNormalizedRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendSetpointNormalizedRes)
+	err := c.cc.Invoke(ctx, IecCaller_SendSetpointNormalized_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iecCallerClient) SendSetpointScaled(ctx context.Context, in *SendSetpointScaledReq, opts ...grpc.CallOption) (*SendSetpointScaledRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendSetpointScaledRes)
+	err := c.cc.Invoke(ctx, IecCaller_SendSetpointScaled_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iecCallerClient) SendSetpointFloat(ctx context.Context, in *SendSetpointFloatReq, opts ...grpc.CallOption) (*SendSetpointFloatRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendSetpointFloatRes)
+	err := c.cc.Invoke(ctx, IecCaller_SendSetpointFloat_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iecCallerClient) SendBitstringCommand(ctx context.Context, in *SendBitstringCommandReq, opts ...grpc.CallOption) (*SendBitstringCommandRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendBitstringCommandRes)
+	err := c.cc.Invoke(ctx, IecCaller_SendBitstringCommand_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *iecCallerClient) QueryPointMappingById(ctx context.Context, in *QueryPointMappingByIdReq, opts ...grpc.CallOption) (*QueryPointMappingByIdRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(QueryPointMappingByIdRes)
@@ -177,8 +268,22 @@ type IecCallerServer interface {
 	SendInterrogationCmd(context.Context, *SendInterrogationCmdReq) (*SendInterrogationCmdRes, error)
 	// 累积量召唤
 	SendCounterInterrogationCmd(context.Context, *SendCounterInterrogationCmdReq) (*SendCounterInterrogationCmdRes, error)
-	// 发送命令
+	// 发送命令（通用，需指定typeId）注意 无 ack 响应
 	SendCommand(context.Context, *SendCommandReq) (*SendCommandRes, error)
+	// 单点命令 (C_SC_NA_1=45 不带时标 / C_SC_TA_1=58 带CP56Time2a时标，由withTime字段控制)
+	SendSingleCommand(context.Context, *SendSingleCommandReq) (*SendSingleCommandRes, error)
+	// 双点命令 (C_DC_NA_1=46 不带时标 / C_DC_TA_1=59 带CP56Time2a时标，由withTime字段控制)
+	SendDoubleCommand(context.Context, *SendDoubleCommandReq) (*SendDoubleCommandRes, error)
+	// 档位调节命令 (C_RC_NA_1=47 不带时标 / C_RC_TA_1=60 带CP56Time2a时标，由withTime字段控制)
+	SendStepCommand(context.Context, *SendStepCommandReq) (*SendStepCommandRes, error)
+	// 设点命令-归一化值 (C_SE_NA_1=48 不带时标 / C_SE_TA_1=61 带CP56Time2a时标，由withTime字段控制)
+	SendSetpointNormalized(context.Context, *SendSetpointNormalizedReq) (*SendSetpointNormalizedRes, error)
+	// 设点命令-标度化值 (C_SE_NB_1=49 不带时标 / C_SE_TB_1=62 带CP56Time2a时标，由withTime字段控制)
+	SendSetpointScaled(context.Context, *SendSetpointScaledReq) (*SendSetpointScaledRes, error)
+	// 设点命令-短浮点数 (C_SE_NC_1=50 不带时标 / C_SE_TC_1=63 带CP56Time2a时标，由withTime字段控制)
+	SendSetpointFloat(context.Context, *SendSetpointFloatReq) (*SendSetpointFloatRes, error)
+	// 32位位串命令 (C_BO_NA_1=51 不带时标 / C_BO_TA_1=64 带CP56Time2a时标，由withTime字段控制)
+	SendBitstringCommand(context.Context, *SendBitstringCommandReq) (*SendBitstringCommandRes, error)
 	// 根据ID查询点位绑定信息
 	QueryPointMappingById(context.Context, *QueryPointMappingByIdReq) (*QueryPointMappingByIdRes, error)
 	// 根据tagStation、coa、ioa查询点位绑定信息
@@ -214,6 +319,27 @@ func (UnimplementedIecCallerServer) SendCounterInterrogationCmd(context.Context,
 }
 func (UnimplementedIecCallerServer) SendCommand(context.Context, *SendCommandReq) (*SendCommandRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendCommand not implemented")
+}
+func (UnimplementedIecCallerServer) SendSingleCommand(context.Context, *SendSingleCommandReq) (*SendSingleCommandRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendSingleCommand not implemented")
+}
+func (UnimplementedIecCallerServer) SendDoubleCommand(context.Context, *SendDoubleCommandReq) (*SendDoubleCommandRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendDoubleCommand not implemented")
+}
+func (UnimplementedIecCallerServer) SendStepCommand(context.Context, *SendStepCommandReq) (*SendStepCommandRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendStepCommand not implemented")
+}
+func (UnimplementedIecCallerServer) SendSetpointNormalized(context.Context, *SendSetpointNormalizedReq) (*SendSetpointNormalizedRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendSetpointNormalized not implemented")
+}
+func (UnimplementedIecCallerServer) SendSetpointScaled(context.Context, *SendSetpointScaledReq) (*SendSetpointScaledRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendSetpointScaled not implemented")
+}
+func (UnimplementedIecCallerServer) SendSetpointFloat(context.Context, *SendSetpointFloatReq) (*SendSetpointFloatRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendSetpointFloat not implemented")
+}
+func (UnimplementedIecCallerServer) SendBitstringCommand(context.Context, *SendBitstringCommandReq) (*SendBitstringCommandRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendBitstringCommand not implemented")
 }
 func (UnimplementedIecCallerServer) QueryPointMappingById(context.Context, *QueryPointMappingByIdReq) (*QueryPointMappingByIdRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method QueryPointMappingById not implemented")
@@ -356,6 +482,132 @@ func _IecCaller_SendCommand_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IecCaller_SendSingleCommand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendSingleCommandReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IecCallerServer).SendSingleCommand(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IecCaller_SendSingleCommand_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IecCallerServer).SendSingleCommand(ctx, req.(*SendSingleCommandReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IecCaller_SendDoubleCommand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendDoubleCommandReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IecCallerServer).SendDoubleCommand(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IecCaller_SendDoubleCommand_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IecCallerServer).SendDoubleCommand(ctx, req.(*SendDoubleCommandReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IecCaller_SendStepCommand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendStepCommandReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IecCallerServer).SendStepCommand(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IecCaller_SendStepCommand_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IecCallerServer).SendStepCommand(ctx, req.(*SendStepCommandReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IecCaller_SendSetpointNormalized_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendSetpointNormalizedReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IecCallerServer).SendSetpointNormalized(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IecCaller_SendSetpointNormalized_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IecCallerServer).SendSetpointNormalized(ctx, req.(*SendSetpointNormalizedReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IecCaller_SendSetpointScaled_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendSetpointScaledReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IecCallerServer).SendSetpointScaled(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IecCaller_SendSetpointScaled_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IecCallerServer).SendSetpointScaled(ctx, req.(*SendSetpointScaledReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IecCaller_SendSetpointFloat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendSetpointFloatReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IecCallerServer).SendSetpointFloat(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IecCaller_SendSetpointFloat_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IecCallerServer).SendSetpointFloat(ctx, req.(*SendSetpointFloatReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IecCaller_SendBitstringCommand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendBitstringCommandReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IecCallerServer).SendBitstringCommand(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IecCaller_SendBitstringCommand_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IecCallerServer).SendBitstringCommand(ctx, req.(*SendBitstringCommandReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IecCaller_QueryPointMappingById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(QueryPointMappingByIdReq)
 	if err := dec(in); err != nil {
@@ -458,6 +710,34 @@ var IecCaller_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendCommand",
 			Handler:    _IecCaller_SendCommand_Handler,
+		},
+		{
+			MethodName: "SendSingleCommand",
+			Handler:    _IecCaller_SendSingleCommand_Handler,
+		},
+		{
+			MethodName: "SendDoubleCommand",
+			Handler:    _IecCaller_SendDoubleCommand_Handler,
+		},
+		{
+			MethodName: "SendStepCommand",
+			Handler:    _IecCaller_SendStepCommand_Handler,
+		},
+		{
+			MethodName: "SendSetpointNormalized",
+			Handler:    _IecCaller_SendSetpointNormalized_Handler,
+		},
+		{
+			MethodName: "SendSetpointScaled",
+			Handler:    _IecCaller_SendSetpointScaled_Handler,
+		},
+		{
+			MethodName: "SendSetpointFloat",
+			Handler:    _IecCaller_SendSetpointFloat_Handler,
+		},
+		{
+			MethodName: "SendBitstringCommand",
+			Handler:    _IecCaller_SendBitstringCommand_Handler,
 		},
 		{
 			MethodName: "QueryPointMappingById",

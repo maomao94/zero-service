@@ -19,14 +19,15 @@ const (
 	PackedStartEventsOfProtectionEquipment                 // 继电器保护设备事件信息
 	PackedOutputCircuitInfo                                // 继电器保护设备成组输出电路信息
 	PackedSinglePointWithSCD                               // 带变位检出的成组单点信息
-	SingleCommandInfo
-	DoubleCommandInfo
-	StepCommandInfo
-	SetPointCommandNormalInfo
-	SetPointCommandScaledInfo
-	SetPointCommandFloatInfo
-	BitsString32CommandInfo
-	UNKNOWN // 未知的
+	SetSingleCommand
+	SetDoubleCommand
+	SetStepCommand
+	SetSetpointNormalized
+	SetSetpointScaled
+	SetSetpointFloat
+	SetBitstringCommand
+	EndOfInitialization // 初始化结束 (M_EI_NA_1)
+	UNKNOWN             // 未知的
 )
 
 type DataType int
@@ -134,20 +135,22 @@ func GetDataType(typeId asdu.TypeID) DataType {
 		return PackedOutputCircuitInfo
 	case asdu.M_PS_NA_1:
 		return PackedSinglePointWithSCD
+	case asdu.M_EI_NA_1:
+		return EndOfInitialization
 	case asdu.C_SC_NA_1, asdu.C_SC_TA_1:
-		return SingleCommandInfo
+		return SetSingleCommand
 	case asdu.C_DC_NA_1, asdu.C_DC_TA_1:
-		return DoubleCommandInfo
+		return SetDoubleCommand
 	case asdu.C_RC_NA_1, asdu.C_RC_TA_1:
-		return StepCommandInfo
+		return SetStepCommand
 	case asdu.C_SE_NA_1, asdu.C_SE_TA_1:
-		return SetPointCommandNormalInfo
+		return SetSetpointNormalized
 	case asdu.C_SE_NB_1, asdu.C_SE_TB_1:
-		return SetPointCommandScaledInfo
+		return SetSetpointScaled
 	case asdu.C_SE_NC_1, asdu.C_SE_TC_1:
-		return SetPointCommandFloatInfo
+		return SetSetpointFloat
 	case asdu.C_BO_NA_1, asdu.C_BO_TA_1:
-		return BitsString32CommandInfo
+		return SetBitstringCommand
 	default:
 		return UNKNOWN
 	}

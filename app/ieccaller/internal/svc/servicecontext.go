@@ -8,6 +8,7 @@ import (
 	"time"
 	"zero-service/app/ieccaller/internal/config"
 	interceptor "zero-service/common/Interceptor/rpcclient"
+	"zero-service/common/antsx"
 	"zero-service/common/dbx"
 	"zero-service/common/executorx"
 	"zero-service/common/iec104/client"
@@ -31,13 +32,16 @@ import (
 )
 
 type ServiceContext struct {
-	Config               config.Config
-	ClientManager        *client.ClientManager
-	KafkaASDUPusher      *kq.Pusher
-	KafkaBroadcastPusher *kq.Pusher
-	MqttClient           *mqttx.Client
-	StreamEventCli       streamevent.StreamEventClient
-	ChunkAsduPusher      *executorx.ChunkMessagesPusher
+	Config                  config.Config
+	ClientManager           *client.ClientManager
+	KafkaASDUPusher         *kq.Pusher
+	KafkaBroadcastPusher    *kq.Pusher
+	KafkaBroadcastAckPusher *kq.Pusher
+	BroadcastReplyPool      *antsx.ReplyPool[*types.BroadcastAckBody]
+	MqttClient              *mqttx.Client
+	StreamEventCli          streamevent.StreamEventClient
+	ChunkAsduPusher         *executorx.ChunkMessagesPusher
+	broadcastInstanceId     string
 
 	DevicePointMappingModel model.DevicePointMappingModel
 }
@@ -54,9 +58,19 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	if svcCtx.IsBroadcast() && len(c.KafkaConfig.Brokers) == 0 {
 		logx.Must(fmt.Errorf("broadcast is enabled, but kafka config is empty"))
 	}
+	if uuid, err := tool.SimpleUUID(); err == nil {
+		svcCtx.broadcastInstanceId = "iec-caller-" + uuid
+	} else {
+		logx.Must(fmt.Errorf("generate broadcast instance id failed: %w", err))
+	}
 	if len(c.KafkaConfig.Brokers) > 0 {
 		svcCtx.KafkaASDUPusher = kq.NewPusher(c.KafkaConfig.Brokers, c.KafkaConfig.Topic)
 		svcCtx.KafkaBroadcastPusher = kq.NewPusher(c.KafkaConfig.Brokers, c.KafkaConfig.BroadcastTopic)
+		svcCtx.KafkaBroadcastAckPusher = kq.NewPusher(c.KafkaConfig.Brokers, c.KafkaConfig.BroadcastAckTopic)
+		svcCtx.BroadcastReplyPool = antsx.NewReplyPool[*types.BroadcastAckBody](
+			antsx.WithName(svcCtx.broadcastInstanceId),
+			antsx.WithDefaultTTL(10*time.Second),
+		)
 	}
 	if len(c.MqttConfig.Broker) > 0 {
 		svcCtx.MqttClient = mqttx.MustNewClient(c.MqttConfig.MqttConfig)
@@ -260,42 +274,86 @@ func asduPushLogContext(ctx context.Context, data *types.MsgBody, ioa uint, chan
 }
 
 func (svc ServiceContext) PushPbBroadcast(ctx context.Context, method string, in any) error {
-	if svc.IsBroadcast() {
-		pbData, err := json.Marshal(in)
-		if err != nil {
-			return err
+	if !svc.IsBroadcast() {
+		return nil
+	}
+	return svc.pushBroadcast(ctx, method, in)
+}
+
+func (svc ServiceContext) PushPbBroadcastWithAck(ctx context.Context, method string, in any, res any) error {
+	if !svc.IsBroadcast() {
+		return fmt.Errorf("not in cluster mode")
+	}
+	if svc.BroadcastReplyPool == nil {
+		return fmt.Errorf("broadcast reply pool is nil")
+	}
+
+	traceId, err := tool.SimpleUUID()
+	if err != nil {
+		return fmt.Errorf("generate traceId error: %w", err)
+	}
+
+	promise, err := svc.BroadcastReplyPool.Register(traceId)
+	if err != nil {
+		return fmt.Errorf("register reply pool error: %w", err)
+	}
+
+	if err := svc.pushBroadcast(ctx, method, in, traceId); err != nil {
+		return err
+	}
+
+	ack, err := promise.Await(ctx)
+	if err != nil {
+		return err
+	}
+
+	if !ack.Success {
+		switch ack.ErrorKind {
+		case "timeout":
+			return antsx.ErrReplyExpired
+		case "duplicate":
+			return antsx.ErrDuplicateID
+		default:
+			return fmt.Errorf("broadcast command error: %s", ack.Error)
 		}
-		data := &types.BroadcastBody{
-			Method: method,
-			Body:   string(pbData),
-		}
-		err = svc.PushBroadcast(ctx, data)
-		if err != nil {
-			return err
-		}
+	}
+
+	if err := jsonx.Unmarshal([]byte(ack.ResponseBody), res); err != nil {
+		return fmt.Errorf("unmarshal response error: %w", err)
 	}
 	return nil
 }
 
-func (svc ServiceContext) PushBroadcast(ctx context.Context, data *types.BroadcastBody) error {
-	if !svc.IsBroadcast() {
-		return nil
+func (svc ServiceContext) pushBroadcast(ctx context.Context, method string, in any, optTraceId ...string) error {
+	if svc.KafkaBroadcastPusher == nil {
+		return fmt.Errorf("kafka broadcast pusher is nil")
 	}
 
-	data.BroadcastGroupId = svc.Config.KafkaConfig.BroadcastGroupId
+	traceId := ""
+	if len(optTraceId) > 0 {
+		traceId = optTraceId[0]
+	} else {
+		id, _ := tool.SimpleUUID()
+		traceId = id
+	}
+
+	pbData, err := json.Marshal(in)
+	if err != nil {
+		return err
+	}
+	data := &types.BroadcastBody{
+		BroadcastGroupId: svc.broadcastInstanceId,
+		Method:           method,
+		Body:             string(pbData),
+	}
 	byteData, err := json.Marshal(data)
 	if err != nil {
 		return fmt.Errorf("json marshal error: %w", err)
 	}
 
-	if svc.KafkaBroadcastPusher == nil {
-		return fmt.Errorf("kafka broadcast pusher is nil")
-	}
-
-	// Kafka推送
 	pushCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	if err := svc.KafkaBroadcastPusher.Push(pushCtx, string(byteData)); err != nil {
+	if err := svc.KafkaBroadcastPusher.PushWithKey(pushCtx, traceId, string(byteData)); err != nil {
 		logx.WithContext(pushCtx).Errorf("failed to push broadcast to kafka: %v", err)
 		return err
 	}
@@ -304,6 +362,10 @@ func (svc ServiceContext) PushBroadcast(ctx context.Context, data *types.Broadca
 
 func (svc ServiceContext) IsBroadcast() bool {
 	return svc.Config.DeployMode == "cluster"
+}
+
+func (svc ServiceContext) BroadcastInstanceId() string {
+	return svc.broadcastInstanceId
 }
 
 // Close 关闭所有资源
@@ -319,6 +381,16 @@ func (svc ServiceContext) Close() {
 		if err := svc.KafkaBroadcastPusher.Close(); err != nil {
 			logx.Errorf("failed to close kafka broadcast pusher: %v", err)
 		}
+	}
+	if svc.KafkaBroadcastAckPusher != nil {
+		logx.Infof("closing kafka broadcast ack pusher")
+		if err := svc.KafkaBroadcastAckPusher.Close(); err != nil {
+			logx.Errorf("failed to close kafka broadcast ack pusher: %v", err)
+		}
+	}
+	if svc.BroadcastReplyPool != nil {
+		logx.Infof("closing broadcast reply pool")
+		svc.BroadcastReplyPool.Close()
 	}
 	if svc.MqttClient != nil {
 		logx.Infof("closing mqtt client")

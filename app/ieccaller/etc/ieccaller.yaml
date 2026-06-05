@@ -38,7 +38,7 @@ KafkaConfig:
   # 推送数据Topic
   Topic: asdu
   BroadcastTopic: iec-broadcast
-  BroadcastGroupId: iec-caller
+  BroadcastAckTopic: iec-broadcast-ack
 MqttConfig:
   Broker:
     - "tcp://localhost:1883"

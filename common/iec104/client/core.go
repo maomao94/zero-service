@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"fmt"
-	"log"
 	"strconv"
 	"sync/atomic"
 	"time"
@@ -47,15 +46,28 @@ const (
 
 // Client 104客户端
 type Client struct {
-	client104 *cs104.Client
-	cfg       ClientConfig
-	asduCall  ASDUCall
-	running   atomic.Bool
-	handler   *ClientHandler
+	client104    *cs104.Client
+	cfg          ClientConfig
+	asduCall     ASDUCall
+	running      atomic.Bool
+	handler      *ClientHandler
+	cmdReplyPool *CommandReplyPool
 }
 
 // Option 客户端选项
 type Option func(*Client)
+
+type CommandOption func(*commandOptions)
+
+type commandOptions struct {
+	awaitAck bool
+}
+
+func WithAck() CommandOption {
+	return func(o *commandOptions) {
+		o.awaitAck = true
+	}
+}
 
 // WithASDUHandler 设置ASDU处理器
 func WithASDUHandler(handler ASDUCall) Option {
@@ -90,10 +102,13 @@ func NewClient(cfg ClientConfig, opts ...Option) (*Client, error) {
 		return nil, err
 	}
 
+	cmdReplyTTL := 10 * time.Second
 	client := &Client{
 		cfg:      cfg,
 		asduCall: &emptyASDUCall{},
 	}
+
+	client.cmdReplyPool = NewCommandReplyPool(cfg.Host, cfg.Port, cmdReplyTTL)
 
 	// 应用选项
 	for _, opt := range opts {
@@ -147,9 +162,8 @@ func (c *Client) initClient104() (*cs104.Client, error) {
 }
 
 func (c *Client) Start() {
-	err := c.Connect()
-	if err != nil {
-		log.Fatal(err)
+	if err := c.Connect(); err != nil {
+		logx.Errorf("IEC104 client %s:%d start failed: %v", c.cfg.Host, c.cfg.Port, err)
 	}
 }
 
@@ -165,6 +179,7 @@ func (c *Client) Connect() error {
 
 // Close 关闭客户端连接
 func (c *Client) Close() error {
+	c.cmdReplyPool.Close()
 	c.client104.SendStopDt()
 	return c.client104.Close()
 }
@@ -230,6 +245,81 @@ func (c *Client) SendCmd(addr uint16, typeId asdu.TypeID, ioa asdu.InfoObjAddr, 
 	return c.doSend(cmd)
 }
 
+func (c *Client) sendWithAck(ctx context.Context, coa uint16, typeId asdu.TypeID, ioa asdu.InfoObjAddr, cmd *command, opts []CommandOption) (*CommandAck, error) {
+	var o commandOptions
+	for _, opt := range opts {
+		opt(&o)
+	}
+	if o.awaitAck {
+		key := CommandKey(uint(coa), int(typeId), uint(ioa))
+		promise, err := c.cmdReplyPool.Register(key)
+		if err != nil {
+			return nil, err
+		}
+		if err = c.doSend(cmd); err != nil {
+			return nil, err
+		}
+		return promise.Await(ctx)
+	}
+	return nil, c.doSend(cmd)
+}
+
+func (c *Client) SendSingleCmd(ctx context.Context, coa uint16, ioa asdu.InfoObjAddr, value bool, withTime bool, opts ...CommandOption) (*CommandAck, error) {
+	typeId := asdu.C_SC_NA_1
+	if withTime {
+		typeId = asdu.C_SC_TA_1
+	}
+	return c.sendWithAck(ctx, coa, typeId, ioa, &command{typeId: typeId, ca: asdu.CommonAddr(coa), ioa: ioa, value: value, qoc: asdu.QualifierOfCommand{Qual: asdu.QOCNoAdditionalDefinition, InSelect: false}, t: time.Now()}, opts)
+}
+
+func (c *Client) SendDoubleCmd(ctx context.Context, coa uint16, ioa asdu.InfoObjAddr, value asdu.DoubleCommand, withTime bool, opts ...CommandOption) (*CommandAck, error) {
+	typeId := asdu.C_DC_NA_1
+	if withTime {
+		typeId = asdu.C_DC_TA_1
+	}
+	return c.sendWithAck(ctx, coa, typeId, ioa, &command{typeId: typeId, ca: asdu.CommonAddr(coa), ioa: ioa, value: value, qoc: asdu.QualifierOfCommand{Qual: asdu.QOCNoAdditionalDefinition, InSelect: false}, t: time.Now()}, opts)
+}
+
+func (c *Client) SendStepCmd(ctx context.Context, coa uint16, ioa asdu.InfoObjAddr, value asdu.StepCommand, withTime bool, opts ...CommandOption) (*CommandAck, error) {
+	typeId := asdu.C_RC_NA_1
+	if withTime {
+		typeId = asdu.C_RC_TA_1
+	}
+	return c.sendWithAck(ctx, coa, typeId, ioa, &command{typeId: typeId, ca: asdu.CommonAddr(coa), ioa: ioa, value: value, qoc: asdu.QualifierOfCommand{Qual: asdu.QOCNoAdditionalDefinition, InSelect: false}, t: time.Now()}, opts)
+}
+
+func (c *Client) SendSetpointNormalizedCmd(ctx context.Context, coa uint16, ioa asdu.InfoObjAddr, value int16, withTime bool, opts ...CommandOption) (*CommandAck, error) {
+	typeId := asdu.C_SE_NA_1
+	if withTime {
+		typeId = asdu.C_SE_TA_1
+	}
+	return c.sendWithAck(ctx, coa, typeId, ioa, &command{typeId: typeId, ca: asdu.CommonAddr(coa), ioa: ioa, value: value, qos: asdu.QualifierOfSetpointCmd{Qual: 0, InSelect: false}, t: time.Now()}, opts)
+}
+
+func (c *Client) SendSetpointScaledCmd(ctx context.Context, coa uint16, ioa asdu.InfoObjAddr, value int16, withTime bool, opts ...CommandOption) (*CommandAck, error) {
+	typeId := asdu.C_SE_NB_1
+	if withTime {
+		typeId = asdu.C_SE_TB_1
+	}
+	return c.sendWithAck(ctx, coa, typeId, ioa, &command{typeId: typeId, ca: asdu.CommonAddr(coa), ioa: ioa, value: value, qos: asdu.QualifierOfSetpointCmd{Qual: 0, InSelect: false}, t: time.Now()}, opts)
+}
+
+func (c *Client) SendSetpointFloatCmd(ctx context.Context, coa uint16, ioa asdu.InfoObjAddr, value float32, withTime bool, opts ...CommandOption) (*CommandAck, error) {
+	typeId := asdu.C_SE_NC_1
+	if withTime {
+		typeId = asdu.C_SE_TC_1
+	}
+	return c.sendWithAck(ctx, coa, typeId, ioa, &command{typeId: typeId, ca: asdu.CommonAddr(coa), ioa: ioa, value: value, qos: asdu.QualifierOfSetpointCmd{Qual: 0, InSelect: false}, t: time.Now()}, opts)
+}
+
+func (c *Client) SendBitstringCmd(ctx context.Context, coa uint16, ioa asdu.InfoObjAddr, value uint32, withTime bool, opts ...CommandOption) (*CommandAck, error) {
+	typeId := asdu.C_BO_NA_1
+	if withTime {
+		typeId = asdu.C_BO_TA_1
+	}
+	return c.sendWithAck(ctx, coa, typeId, ioa, &command{typeId: typeId, ca: asdu.CommonAddr(coa), ioa: ioa, value: value, t: time.Now()}, opts)
+}
+
 // GetServerURL 获取服务器URL
 func (c *Client) GetServerURL() string {
 	return formatServerUrl(c.cfg)
@@ -248,6 +338,21 @@ func (c *Client) GetPort() int {
 // GetMetaData 获取元数据
 func (c *Client) GetMetaData() map[string]any {
 	return c.cfg.MetaData
+}
+
+// ResolveCommandAck resolves a pending command ACK. Used by clienthandler for ACK delivery.
+func (c *Client) ResolveCommandAck(key string, ack *CommandAck) bool {
+	return c.cmdReplyPool.Resolve(key, ack)
+}
+
+// RejectCommandAck rejects a pending command. Used by clienthandler for negative ACK.
+func (c *Client) RejectCommandAck(key string, err error) bool {
+	return c.cmdReplyPool.Reject(key, err)
+}
+
+// HasCommandAck checks whether a command key has a pending entry.
+func (c *Client) HasCommandAck(key string) bool {
+	return c.cmdReplyPool.Has(key)
 }
 
 // onConnectionEvent 处理连接事件，内部直接打印日志

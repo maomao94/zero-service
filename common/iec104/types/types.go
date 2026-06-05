@@ -14,6 +14,16 @@ type BroadcastBody struct {
 	Body             string `json:"body"`
 }
 
+// BroadcastAckBody 广播ACK响应体，用于集群模式下回传指令执行结果
+type BroadcastAckBody struct {
+	BroadcastGroupId string `json:"broadcastGroupId"`
+	Method           string `json:"method"`
+	Success          bool   `json:"success"`
+	ResponseBody     string `json:"responseBody"`
+	Error            string `json:"error,omitempty"`
+	ErrorKind        string `json:"errorKind,omitempty"` // timeout|duplicate|rejected|cot_error|unknown
+}
+
 type MsgBody struct {
 	MsgId    string         `json:"msgId"`
 	Host     string         `json:"host"`
@@ -53,7 +63,7 @@ func (m *MsgBody) GetKey() (string, error) {
 }
 
 func IoaHexAddress[T ~uint](ioa T) string {
-	return fmt.Sprintf("0x%04x", ioa)
+	return fmt.Sprintf("0x%06x", ioa)
 }
 
 type IoaGetter interface {

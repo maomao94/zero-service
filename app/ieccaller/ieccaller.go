@@ -44,6 +44,7 @@ func main() {
 	conf.MustLoad(*configFile, &c)
 	proc.SetTimeToForceQuit(c.GracePeriod)
 	ctx := svc.NewServiceContext(c)
+	serviceConfig := c.ServiceConf
 
 	// Print Go version
 	tool.PrintGoVersion()
@@ -73,7 +74,7 @@ func main() {
 			"preserved.register.source": "go-zero",
 			"deployMode":                c.DeployMode,
 			"broadcastTopic":            c.KafkaConfig.BroadcastTopic,
-			"broadcastGroupId":          c.KafkaConfig.BroadcastGroupId,
+			"broadcastGroupId":          ctx.BroadcastInstanceId(),
 			"isPush":                    convertor.ToString(c.KafkaConfig.IsPush),
 		}
 		opts := nacosx.NewNacosConfig(c.NacosConfig.ServiceName, c.ListenOn, sc, cc, nacosx.WithMetadata(m))
@@ -97,11 +98,9 @@ func main() {
 	// kafka 广播队列
 	if len(c.KafkaConfig.Brokers) > 0 {
 		kqConf := kq.KqConf{
-			ServiceConf: service.ServiceConf{
-				Name: "broadcast-" + c.KafkaConfig.BroadcastGroupId,
-			},
+			ServiceConf:   serviceConfig,
 			Brokers:       c.KafkaConfig.Brokers,
-			Group:         c.KafkaConfig.BroadcastGroupId,
+			Group:         ctx.BroadcastInstanceId(),
 			Topic:         c.KafkaConfig.BroadcastTopic,
 			Offset:        "last",
 			Conns:         3,
@@ -113,6 +112,23 @@ func main() {
 			CommitInOrder: false,
 		}
 		serviceGroup.Add(kq.MustNewQueue(kqConf, kafka.NewBroadcast(ctx)))
+
+		// kafka 广播ACK队列
+		ackKqConf := kq.KqConf{
+			ServiceConf:   serviceConfig,
+			Brokers:       c.KafkaConfig.Brokers,
+			Group:         ctx.BroadcastInstanceId() + "-ack",
+			Topic:         c.KafkaConfig.BroadcastAckTopic,
+			Offset:        "last",
+			Conns:         3,
+			Consumers:     3,
+			Processors:    18,
+			MinBytes:      10240,
+			MaxBytes:      10485760,
+			ForceCommit:   true,
+			CommitInOrder: false,
+		}
+		serviceGroup.Add(kq.MustNewQueue(ackKqConf, kafka.NewBroadcastAck(ctx)))
 	}
 
 	logx.Infof("Deploy mode: %s\n", c.DeployMode)

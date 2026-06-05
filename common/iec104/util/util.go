@@ -21,7 +21,7 @@ func QdsContainsAny(qds asdu.QualityDescriptor, flags ...asdu.QualityDescriptor)
 
 func QdsContainsAll(qds asdu.QualityDescriptor, flags ...asdu.QualityDescriptor) bool {
 	for _, flag := range flags {
-		if (qds & flag) == flag {
+		if (qds & flag) != flag {
 			return false
 		}
 	}
@@ -103,7 +103,7 @@ func QdpContainsAny(qdp asdu.QualityDescriptorProtection, flags ...asdu.QualityD
 
 func QdpContainsAll(qdp asdu.QualityDescriptorProtection, flags ...asdu.QualityDescriptorProtection) bool {
 	for _, flag := range flags {
-		if (qdp & flag) == flag {
+		if (qdp & flag) != flag {
 			return false
 		}
 	}

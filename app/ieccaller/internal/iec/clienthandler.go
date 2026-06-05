@@ -97,6 +97,10 @@ func (c *ClientCall) OnASDU(packet *asdu.ASDU) error {
 	ctx = context.WithValue(ctx, "stationId", c.stationId)
 	logx.WithContext(ctx).Debug("OnASDU")
 	c.taskRunner.Schedule(func() {
+		if packet.Type == asdu.C_RD_NA_1 {
+			c.onReadResponse(ctx, packet)
+			return
+		}
 		dataType := client.GetDataType(packet.Type)
 		// 读取设备数据
 		switch dataType {
@@ -124,8 +128,14 @@ func (c *ClientCall) OnASDU(packet *asdu.ASDU) error {
 			c.onPackedOutputCircuitInfo(ctx, packet)
 		case client.PackedSinglePointWithSCD:
 			c.onPackedSinglePointWithSCD(ctx, packet)
+		case client.EndOfInitialization:
+			c.onEndOfInitialization(ctx, packet)
+		case client.SetSingleCommand, client.SetDoubleCommand, client.SetStepCommand,
+			client.SetSetpointNormalized, client.SetSetpointScaled,
+			client.SetSetpointFloat, client.SetBitstringCommand:
+			c.onCommandAck(ctx, packet)
 		default:
-			return
+			c.onUnknownASDU(ctx)
 		}
 	})
 	return nil
@@ -155,6 +165,9 @@ func (c *ClientCall) asduLogContext(ctx context.Context, packet *asdu.ASDU) cont
 		logx.Field("typeId", int(packet.Type)),
 		logx.Field("dataType", int(client.GetDataType(packet.Type))),
 		logx.Field("coa", uint(packet.CommonAddr)),
+		logx.Field("cot", genCOTName(packet.Coa.Cause)),
+		logx.Field("cotCause", int(packet.Coa.Cause)),
+		logx.Field("isNegative", packet.Coa.IsNegative),
 	)
 }
 
@@ -448,6 +461,138 @@ func (c *ClientCall) onPackedSinglePointWithSCD(ctx context.Context, packet *asd
 	}
 }
 
+func (c *ClientCall) onEndOfInitialization(ctx context.Context, packet *asdu.ASDU) {
+	ioa, coi := packet.GetEndOfInitialization()
+	logx.WithContext(ctx).Infow("EndOfInitialization from slave",
+		logx.Field("coa", uint(packet.CommonAddr)),
+		logx.Field("ioa", uint(ioa)),
+		logx.Field("cause", fmt.Sprintf("0x%02X", byte(coi.Cause))),
+		logx.Field("isLocalChange", coi.IsLocalChange),
+		logx.Field("isNegative", packet.Coa.IsNegative),
+	)
+}
+
+func (c *ClientCall) onReadResponse(ctx context.Context, packet *asdu.ASDU) {
+	ioa := packet.GetReadCmd()
+	if packet.Coa.IsNegative {
+		logx.WithContext(ctx).Errorw("Read command rejected",
+			logx.Field("ioa", uint(ioa)),
+		)
+		return
+	}
+	logx.WithContext(ctx).Infow("Read command response",
+		logx.Field("ioa", uint(ioa)),
+	)
+}
+
+func (c *ClientCall) onCommandAck(ctx context.Context, packet *asdu.ASDU) {
+	logx.WithContext(ctx).Info("Command ACK received")
+	c.resolveCommandAck(ctx, packet)
+}
+
+func (c *ClientCall) resolveCommandAck(ctx context.Context, packet *asdu.ASDU) {
+	ioa, value := parseCommandAck(packet)
+
+	cli, err := c.svcCtx.ClientManager.GetClient(c.config.Host, c.config.Port)
+	if err != nil {
+		return
+	}
+
+	key := client.CommandKey(uint(packet.CommonAddr), int(packet.Type), uint(ioa))
+	if !cli.HasCommandAck(key) {
+		return
+	}
+
+	ack := &client.CommandAck{
+		TypeID:     int(packet.Type),
+		Coa:        uint(packet.CommonAddr),
+		Ioa:        uint(ioa),
+		Value:      value,
+		Cot:        genCOTName(packet.Coa.Cause),
+		CotCause:   int(packet.Coa.Cause),
+		IsNegative: packet.Coa.IsNegative,
+	}
+
+	if packet.Coa.IsNegative {
+		ack.Status = client.AckRejected
+		cli.RejectCommandAck(key, fmt.Errorf("command rejected: cot=%s isNegative=%v", ack.Cot, ack.IsNegative))
+		return
+	}
+
+	switch packet.Coa.Cause {
+	case asdu.ActivationCon, asdu.ActivationTerm:
+		ack.Status = client.AckAccepted
+		cli.ResolveCommandAck(key, ack)
+	default:
+		ack.Status = client.AckCotError
+		cli.RejectCommandAck(key, fmt.Errorf("unexpected COT: %s (%d)", ack.Cot, ack.CotCause))
+	}
+}
+
+func parseCommandAck(packet *asdu.ASDU) (ioa asdu.InfoObjAddr, value any) {
+	switch {
+	case packet.Type == asdu.C_SC_NA_1 || packet.Type == asdu.C_SC_TA_1:
+		cmd := packet.GetSingleCmd()
+		return cmd.Ioa, cmd.Value
+
+	case packet.Type == asdu.C_DC_NA_1 || packet.Type == asdu.C_DC_TA_1:
+		cmd := packet.GetDoubleCmd()
+		return cmd.Ioa, cmd.Value
+
+	case packet.Type == asdu.C_RC_NA_1 || packet.Type == asdu.C_RC_TA_1:
+		cmd := packet.GetStepCmd()
+		return cmd.Ioa, cmd.Value
+
+	case packet.Type == asdu.C_SE_NA_1 || packet.Type == asdu.C_SE_TA_1:
+		cmd := packet.GetSetpointNormalCmd()
+		return cmd.Ioa, cmd.Value
+
+	case packet.Type == asdu.C_SE_NB_1 || packet.Type == asdu.C_SE_TB_1:
+		cmd := packet.GetSetpointCmdScaled()
+		return cmd.Ioa, cmd.Value
+
+	case packet.Type == asdu.C_SE_NC_1 || packet.Type == asdu.C_SE_TC_1:
+		cmd := packet.GetSetpointFloatCmd()
+		return cmd.Ioa, cmd.Value
+
+	case packet.Type == asdu.C_BO_NA_1 || packet.Type == asdu.C_BO_TA_1:
+		cmd := packet.GetBitsString32Cmd()
+		return cmd.Ioa, cmd.Value
+
+	default:
+		return 0, nil
+	}
+}
+
+func (c *ClientCall) onUnknownASDU(ctx context.Context) {
+	logx.WithContext(ctx).Info("Unknown ASDU type")
+}
+
 func genASDUName(typeId asdu.TypeID) string {
 	return strutil.SubInBetween(typeId.String(), "<", ">")
+}
+
+func genCOTName(cause asdu.Cause) string {
+	switch cause {
+	case asdu.ActivationCon:
+		return "ActivationCon"
+	case asdu.DeactivationCon:
+		return "DeactivationCon"
+	case asdu.ActivationTerm:
+		return "ActivationTerm"
+	case asdu.Activation:
+		return "Activation(echo)"
+	case asdu.Request:
+		return "Request"
+	case asdu.UnknownTypeID:
+		return "UnknownTypeID"
+	case asdu.UnknownCOT:
+		return "UnknownCOT"
+	case asdu.UnknownCA:
+		return "UnknownCA"
+	case asdu.UnknownIOA:
+		return "UnknownIOA"
+	default:
+		return "Unknown"
+	}
 }

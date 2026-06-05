@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 34
-- **Last Active**: 2026-06-04
+- **Total Sessions**: 37
+- **Last Active**: 2026-06-05
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1444 | Active |
+| `journal-1.md` | ~1546 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,9 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 37 | 2026-06-05 | ieccaller 集群指令 ACK 回传 | `cb5d9996`, `fc25f7d6` | `master` |
+| 36 | 2026-06-05 | 全部Send指令ACK replyPool + WithAck() option + helpers | `133804a7`, `cc40cc43` | `master` |
+| 35 | 2026-06-05 | IEC 104 代码审查与文档优化 | `1b99a748`, `d4bd701c` | `master` |
 | 34 | 2026-06-04 | ReplyPool stat 日志优化及 Git squash 实践 | `942654d6` | `master` |
 | 33 | 2026-06-04 | ReplyPool 调试日志和 spec 补充 | `c2b01405`, `dc961fef` | `master` |
 | 32 | 2026-06-04 | 移除 ReplyPool 累计计数器并同步 spec | `e3c5eba6`, `d8e5dab0` | `master` |

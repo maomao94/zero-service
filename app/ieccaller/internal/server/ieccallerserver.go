@@ -52,10 +52,52 @@ func (s *IecCallerServer) SendCounterInterrogationCmd(ctx context.Context, in *i
 	return l.SendCounterInterrogationCmd(in)
 }
 
-// 发送命令
+// 发送命令（通用，需指定typeId）注意 无 ack 响应
 func (s *IecCallerServer) SendCommand(ctx context.Context, in *ieccaller.SendCommandReq) (*ieccaller.SendCommandRes, error) {
 	l := logic.NewSendCommandLogic(ctx, s.svcCtx)
 	return l.SendCommand(in)
+}
+
+// 单点命令 (C_SC_NA_1=45 不带时标 / C_SC_TA_1=58 带CP56Time2a时标，由withTime字段控制)
+func (s *IecCallerServer) SendSingleCommand(ctx context.Context, in *ieccaller.SendSingleCommandReq) (*ieccaller.SendSingleCommandRes, error) {
+	l := logic.NewSendSingleCommandLogic(ctx, s.svcCtx)
+	return l.SendSingleCommand(in)
+}
+
+// 双点命令 (C_DC_NA_1=46 不带时标 / C_DC_TA_1=59 带CP56Time2a时标，由withTime字段控制)
+func (s *IecCallerServer) SendDoubleCommand(ctx context.Context, in *ieccaller.SendDoubleCommandReq) (*ieccaller.SendDoubleCommandRes, error) {
+	l := logic.NewSendDoubleCommandLogic(ctx, s.svcCtx)
+	return l.SendDoubleCommand(in)
+}
+
+// 档位调节命令 (C_RC_NA_1=47 不带时标 / C_RC_TA_1=60 带CP56Time2a时标，由withTime字段控制)
+func (s *IecCallerServer) SendStepCommand(ctx context.Context, in *ieccaller.SendStepCommandReq) (*ieccaller.SendStepCommandRes, error) {
+	l := logic.NewSendStepCommandLogic(ctx, s.svcCtx)
+	return l.SendStepCommand(in)
+}
+
+// 设点命令-归一化值 (C_SE_NA_1=48 不带时标 / C_SE_TA_1=61 带CP56Time2a时标，由withTime字段控制)
+func (s *IecCallerServer) SendSetpointNormalized(ctx context.Context, in *ieccaller.SendSetpointNormalizedReq) (*ieccaller.SendSetpointNormalizedRes, error) {
+	l := logic.NewSendSetpointNormalizedLogic(ctx, s.svcCtx)
+	return l.SendSetpointNormalized(in)
+}
+
+// 设点命令-标度化值 (C_SE_NB_1=49 不带时标 / C_SE_TB_1=62 带CP56Time2a时标，由withTime字段控制)
+func (s *IecCallerServer) SendSetpointScaled(ctx context.Context, in *ieccaller.SendSetpointScaledReq) (*ieccaller.SendSetpointScaledRes, error) {
+	l := logic.NewSendSetpointScaledLogic(ctx, s.svcCtx)
+	return l.SendSetpointScaled(in)
+}
+
+// 设点命令-短浮点数 (C_SE_NC_1=50 不带时标 / C_SE_TC_1=63 带CP56Time2a时标，由withTime字段控制)
+func (s *IecCallerServer) SendSetpointFloat(ctx context.Context, in *ieccaller.SendSetpointFloatReq) (*ieccaller.SendSetpointFloatRes, error) {
+	l := logic.NewSendSetpointFloatLogic(ctx, s.svcCtx)
+	return l.SendSetpointFloat(in)
+}
+
+// 32位位串命令 (C_BO_NA_1=51 不带时标 / C_BO_TA_1=64 带CP56Time2a时标，由withTime字段控制)
+func (s *IecCallerServer) SendBitstringCommand(ctx context.Context, in *ieccaller.SendBitstringCommandReq) (*ieccaller.SendBitstringCommandRes, error) {
+	l := logic.NewSendBitstringCommandLogic(ctx, s.svcCtx)
+	return l.SendBitstringCommand(in)
 }
 
 // 根据ID查询点位绑定信息

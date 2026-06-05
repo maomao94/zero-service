@@ -25,6 +25,7 @@
 | [antsx-invoke-guidelines.md](./antsx-invoke-guidelines.md) | 使用或修改 `antsx.Invoke`、`InvokeAllSettled`、Reactor 并行编排 | Invoke 签名、选型、取消、panic 防护、测试断言 |
 | [antsx-promise-guidelines.md](./antsx-promise-guidelines.md) | 使用或修改 `antsx.Promise`、并行组合（All/AllSettled/Race/Any）、`ReplyPool` | Promise 签名、四象限选型、泄漏防护、错误语义、ReplyPool 设计决策、Stats 统计 |
 | [trellis-template-policy.md](./trellis-template-policy.md) | 修改 Trellis 模板、平台适配或用户数据区 | Trellis 模板更新和验证策略 |
+| [iec104-control-commands.md](./iec104-control-commands.md) | 新增/修改 ieccaller 控制方向 gRPC 接口、core.go Send*Cmd、Kafka 广播 consumer | IEC 104 typed 命令全链路、typeId 映射、qualifier 约定、六层文件修改清单 |
 
 ## 外部契约链接
 

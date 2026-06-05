@@ -1442,3 +1442,105 @@ ReplyPool 在 handleTimeout/Resolve/Reject 三个出口增加 debug 日志，通
 ### Next Steps
 
 - None - task complete
+
+
+## Session 35: IEC 104 代码审查与文档优化
+
+**Date**: 2026-06-05
+**Task**: IEC 104 代码审查与文档优化
+**Branch**: `master`
+
+### Summary
+
+1. DataType 枚举重命名（Set 前缀规范）2. 修复 QdsContainsAll/QdpContainsAll 逻辑 bug 3. IoaHexAddress 格式化改为 6 位 hex 4. Client.Start() 错误处理优化 5. 合并两份重复协议文档，删除废弃文档 6. 文档优化至 v1.4.0 7. 更新 spec 沉淀命名规范和 gotcha
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `1b99a748` | (see git log) |
+| `d4bd701c` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 36: 全部Send指令ACK replyPool + WithAck() option + helpers
+
+**Date**: 2026-06-05
+**Task**: 全部Send指令ACK replyPool + WithAck() option + helpers
+**Branch**: `master`
+
+### Summary
+
+IEC104控制命令ACK replyPool全量覆盖：CommandReplyPool sendWithAck内部helper；WithAck() option模式；command_ack_error.go helpers（wrapCommandAckError + ackXxxValue）；addr→coa参数名统一；CommandReplyPool()不对外暴露。覆盖7种控制命令，构建测试通过。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `133804a7` | (see git log) |
+| `cc40cc43` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 37: ieccaller 集群指令 ACK 回传
+
+**Date**: 2026-06-05
+**Task**: ieccaller 集群指令 ACK 回传
+**Branch**: `master`
+
+### Summary
+
+实现 ieccaller 集群部署下的 Kafka broadcast ACK reply 链路：新增 PushBroadcastWithAck、BroadcastReplyPool、broadcast_ack consumer；7 个 ACK 型指令 cluster 分支改用 PushBroadcastWithAck；broadcast consumer 改用 client.WithAck() 执行并发布 ACK reply；traceId 通过 Kafka key 传递；修复 GetClient 多实例撞车、更新 spec。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `cb5d9996` | (see git log) |
+| `fc25f7d6` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

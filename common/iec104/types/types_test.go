@@ -8,8 +8,8 @@ func TestIoaHexAddress(t *testing.T) {
 		ioa  uint
 		want string
 	}{
-		{name: "zero", ioa: 0, want: "0x0000"},
-		{name: "one", ioa: 1, want: "0x0001"},
+		{name: "zero", ioa: 0, want: "0x000000"},
+		{name: "one", ioa: 1, want: "0x000001"},
 		{name: "three bytes", ioa: 0x123456, want: "0x123456"},
 	}
 

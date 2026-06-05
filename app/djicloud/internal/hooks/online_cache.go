@@ -13,6 +13,6 @@ func IsOnline(onlineCache *collection.Cache, gatewaySn string) bool {
 	if onlineCache == nil {
 		return false
 	}
-	//_, ok := onlineCache.Get(gatewaySn)
-	return true
+	_, ok := onlineCache.Get(gatewaySn)
+	return ok
 }

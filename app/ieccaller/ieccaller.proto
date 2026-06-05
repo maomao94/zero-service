@@ -16,8 +16,22 @@ service IecCaller {
   rpc SendInterrogationCmd (SendInterrogationCmdReq) returns (SendInterrogationCmdRes);
   // 累积量召唤
   rpc SendCounterInterrogationCmd(SendCounterInterrogationCmdReq) returns (SendCounterInterrogationCmdRes);
-  // 发送命令
+  // 发送命令（通用，需指定typeId）注意 无 ack 响应
   rpc SendCommand(SendCommandReq) returns (SendCommandRes);
+  // 单点命令 (C_SC_NA_1=45 不带时标 / C_SC_TA_1=58 带CP56Time2a时标，由withTime字段控制)
+  rpc SendSingleCommand(SendSingleCommandReq) returns (SendSingleCommandRes);
+  // 双点命令 (C_DC_NA_1=46 不带时标 / C_DC_TA_1=59 带CP56Time2a时标，由withTime字段控制)
+  rpc SendDoubleCommand(SendDoubleCommandReq) returns (SendDoubleCommandRes);
+  // 档位调节命令 (C_RC_NA_1=47 不带时标 / C_RC_TA_1=60 带CP56Time2a时标，由withTime字段控制)
+  rpc SendStepCommand(SendStepCommandReq) returns (SendStepCommandRes);
+  // 设点命令-归一化值 (C_SE_NA_1=48 不带时标 / C_SE_TA_1=61 带CP56Time2a时标，由withTime字段控制)
+  rpc SendSetpointNormalized(SendSetpointNormalizedReq) returns (SendSetpointNormalizedRes);
+  // 设点命令-标度化值 (C_SE_NB_1=49 不带时标 / C_SE_TB_1=62 带CP56Time2a时标，由withTime字段控制)
+  rpc SendSetpointScaled(SendSetpointScaledReq) returns (SendSetpointScaledRes);
+  // 设点命令-短浮点数 (C_SE_NC_1=50 不带时标 / C_SE_TC_1=63 带CP56Time2a时标，由withTime字段控制)
+  rpc SendSetpointFloat(SendSetpointFloatReq) returns (SendSetpointFloatRes);
+  // 32位位串命令 (C_BO_NA_1=51 不带时标 / C_BO_TA_1=64 带CP56Time2a时标，由withTime字段控制)
+  rpc SendBitstringCommand(SendBitstringCommandReq) returns (SendBitstringCommandRes);
 
   // 根据ID查询点位绑定信息
   rpc QueryPointMappingById(QueryPointMappingByIdReq) returns (QueryPointMappingByIdRes);
@@ -84,6 +98,109 @@ message SendCommandReq {
 }
 
 message SendCommandRes {
+}
+
+message SendSingleCommandRes {
+  bool value = 1; // 从站回显的单点命令值（true=合, false=分）
+}
+
+message SendDoubleCommandRes {
+  DoubleCommandValue value = 1; // 从站回显的双点命令值（DCO_ON=合, DCO_OFF=分）
+}
+
+message SendStepCommandRes {
+  int32 value = 1; // 从站回显的档位调节命令值（1=降一步, 2=升一步）
+}
+
+message SendSetpointNormalizedRes {
+  int32 value = 1; // 从站回显的归一化设点值（-32768～32767，对应-1.0～1.0）
+}
+
+message SendSetpointScaledRes {
+  int32 value = 1; // 从站回显的标度化设点值（与请求相同的原始标度值）
+}
+
+message SendSetpointFloatRes {
+  double value = 1; // 从站回显的短浮点设点值（IEEE 754 单精度浮点）
+}
+
+message SendBitstringCommandRes {
+  uint64 value = 1; // 从站回显的32位位串命令值（低32位有效）
+}
+
+message SendSingleCommandReq {
+  string host = 1;
+  uint32 port = 2;
+  uint32 coa = 3;
+  uint32 ioa = 4;
+  bool value = 5;  // true=合, false=分
+  bool withTime = 6; // true=带CP56Time2a时标(C_SC_TA_1=58), false=不带(C_SC_NA_1=45)
+}
+
+message SendDoubleCommandReq {
+  string host = 1;
+  uint32 port = 2;
+  uint32 coa = 3;
+  uint32 ioa = 4;
+  DoubleCommandValue value = 5;  // DCO_ON=合, DCO_OFF=分
+  bool withTime = 6; // true=带CP56Time2a时标(C_DC_TA_1=59), false=不带(C_DC_NA_1=46)
+}
+
+enum DoubleCommandValue {
+  DCO_NOT_ALLOWED = 0;
+  DCO_ON = 1;
+  DCO_OFF = 2;
+}
+
+message SendStepCommandReq {
+  string host = 1;
+  uint32 port = 2;
+  uint32 coa = 3;
+  uint32 ioa = 4;
+  StepCommandValue value = 5;  // SCO_DOWN=降一步, SCO_UP=升一步
+  bool withTime = 6; // true=带CP56Time2a时标(C_RC_TA_1=60), false=不带(C_RC_NA_1=47)
+}
+
+enum StepCommandValue {
+  SCO_NOT_ALLOWED = 0;
+  SCO_DOWN = 1;
+  SCO_UP = 2;
+}
+
+message SendSetpointNormalizedReq {
+  string host = 1;
+  uint32 port = 2;
+  uint32 coa = 3;
+  uint32 ioa = 4;
+  int32 value = 5;
+  bool withTime = 6; // true=带CP56Time2a时标(C_SE_TA_1=61), false=不带(C_SE_NA_1=48)
+}
+
+message SendSetpointScaledReq {
+  string host = 1;
+  uint32 port = 2;
+  uint32 coa = 3;
+  uint32 ioa = 4;
+  int32 value = 5;
+  bool withTime = 6; // true=带CP56Time2a时标(C_SE_TB_1=62), false=不带(C_SE_NB_1=49)
+}
+
+message SendSetpointFloatReq {
+  string host = 1;
+  uint32 port = 2;
+  uint32 coa = 3;
+  uint32 ioa = 4;
+  double value = 5;
+  bool withTime = 6; // true=带CP56Time2a时标(C_SE_TC_1=63), false=不带(C_SE_NC_1=50)
+}
+
+message SendBitstringCommandReq {
+  string host = 1;
+  uint32 port = 2;
+  uint32 coa = 3;
+  uint32 ioa = 4;
+  uint64 value = 5;
+  bool withTime = 6; // true=带CP56Time2a时标(C_BO_TA_1=64), false=不带(C_BO_NA_1=51)
 }
 
 message PbDevicePointMapping {

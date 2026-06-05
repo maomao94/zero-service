@@ -21,6 +21,104 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type DoubleCommandValue int32
+
+const (
+	DoubleCommandValue_DCO_NOT_ALLOWED DoubleCommandValue = 0
+	DoubleCommandValue_DCO_ON          DoubleCommandValue = 1
+	DoubleCommandValue_DCO_OFF         DoubleCommandValue = 2
+)
+
+// Enum value maps for DoubleCommandValue.
+var (
+	DoubleCommandValue_name = map[int32]string{
+		0: "DCO_NOT_ALLOWED",
+		1: "DCO_ON",
+		2: "DCO_OFF",
+	}
+	DoubleCommandValue_value = map[string]int32{
+		"DCO_NOT_ALLOWED": 0,
+		"DCO_ON":          1,
+		"DCO_OFF":         2,
+	}
+)
+
+func (x DoubleCommandValue) Enum() *DoubleCommandValue {
+	p := new(DoubleCommandValue)
+	*p = x
+	return p
+}
+
+func (x DoubleCommandValue) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (DoubleCommandValue) Descriptor() protoreflect.EnumDescriptor {
+	return file_ieccaller_proto_enumTypes[0].Descriptor()
+}
+
+func (DoubleCommandValue) Type() protoreflect.EnumType {
+	return &file_ieccaller_proto_enumTypes[0]
+}
+
+func (x DoubleCommandValue) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use DoubleCommandValue.Descriptor instead.
+func (DoubleCommandValue) EnumDescriptor() ([]byte, []int) {
+	return file_ieccaller_proto_rawDescGZIP(), []int{0}
+}
+
+type StepCommandValue int32
+
+const (
+	StepCommandValue_SCO_NOT_ALLOWED StepCommandValue = 0
+	StepCommandValue_SCO_DOWN        StepCommandValue = 1
+	StepCommandValue_SCO_UP          StepCommandValue = 2
+)
+
+// Enum value maps for StepCommandValue.
+var (
+	StepCommandValue_name = map[int32]string{
+		0: "SCO_NOT_ALLOWED",
+		1: "SCO_DOWN",
+		2: "SCO_UP",
+	}
+	StepCommandValue_value = map[string]int32{
+		"SCO_NOT_ALLOWED": 0,
+		"SCO_DOWN":        1,
+		"SCO_UP":          2,
+	}
+)
+
+func (x StepCommandValue) Enum() *StepCommandValue {
+	p := new(StepCommandValue)
+	*p = x
+	return p
+}
+
+func (x StepCommandValue) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (StepCommandValue) Descriptor() protoreflect.EnumDescriptor {
+	return file_ieccaller_proto_enumTypes[1].Descriptor()
+}
+
+func (StepCommandValue) Type() protoreflect.EnumType {
+	return &file_ieccaller_proto_enumTypes[1]
+}
+
+func (x StepCommandValue) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use StepCommandValue.Descriptor instead.
+func (StepCommandValue) EnumDescriptor() ([]byte, []int) {
+	return file_ieccaller_proto_rawDescGZIP(), []int{1}
+}
+
 type Req struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Ping          string                 `protobuf:"bytes,1,opt,name=ping,proto3" json:"ping,omitempty"`
@@ -621,6 +719,902 @@ func (*SendCommandRes) Descriptor() ([]byte, []int) {
 	return file_ieccaller_proto_rawDescGZIP(), []int{11}
 }
 
+type SendSingleCommandRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         bool                   `protobuf:"varint,1,opt,name=value,proto3" json:"value,omitempty"` // 从站回显的单点命令值（true=合, false=分）
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendSingleCommandRes) Reset() {
+	*x = SendSingleCommandRes{}
+	mi := &file_ieccaller_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendSingleCommandRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendSingleCommandRes) ProtoMessage() {}
+
+func (x *SendSingleCommandRes) ProtoReflect() protoreflect.Message {
+	mi := &file_ieccaller_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendSingleCommandRes.ProtoReflect.Descriptor instead.
+func (*SendSingleCommandRes) Descriptor() ([]byte, []int) {
+	return file_ieccaller_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *SendSingleCommandRes) GetValue() bool {
+	if x != nil {
+		return x.Value
+	}
+	return false
+}
+
+type SendDoubleCommandRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         DoubleCommandValue     `protobuf:"varint,1,opt,name=value,proto3,enum=ieccaller.DoubleCommandValue" json:"value,omitempty"` // 从站回显的双点命令值（DCO_ON=合, DCO_OFF=分）
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendDoubleCommandRes) Reset() {
+	*x = SendDoubleCommandRes{}
+	mi := &file_ieccaller_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendDoubleCommandRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendDoubleCommandRes) ProtoMessage() {}
+
+func (x *SendDoubleCommandRes) ProtoReflect() protoreflect.Message {
+	mi := &file_ieccaller_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendDoubleCommandRes.ProtoReflect.Descriptor instead.
+func (*SendDoubleCommandRes) Descriptor() ([]byte, []int) {
+	return file_ieccaller_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *SendDoubleCommandRes) GetValue() DoubleCommandValue {
+	if x != nil {
+		return x.Value
+	}
+	return DoubleCommandValue_DCO_NOT_ALLOWED
+}
+
+type SendStepCommandRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         int32                  `protobuf:"varint,1,opt,name=value,proto3" json:"value,omitempty"` // 从站回显的档位调节命令值（1=降一步, 2=升一步）
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendStepCommandRes) Reset() {
+	*x = SendStepCommandRes{}
+	mi := &file_ieccaller_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendStepCommandRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendStepCommandRes) ProtoMessage() {}
+
+func (x *SendStepCommandRes) ProtoReflect() protoreflect.Message {
+	mi := &file_ieccaller_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendStepCommandRes.ProtoReflect.Descriptor instead.
+func (*SendStepCommandRes) Descriptor() ([]byte, []int) {
+	return file_ieccaller_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *SendStepCommandRes) GetValue() int32 {
+	if x != nil {
+		return x.Value
+	}
+	return 0
+}
+
+type SendSetpointNormalizedRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         int32                  `protobuf:"varint,1,opt,name=value,proto3" json:"value,omitempty"` // 从站回显的归一化设点值（-32768～32767，对应-1.0～1.0）
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendSetpointNormalizedRes) Reset() {
+	*x = SendSetpointNormalizedRes{}
+	mi := &file_ieccaller_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendSetpointNormalizedRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendSetpointNormalizedRes) ProtoMessage() {}
+
+func (x *SendSetpointNormalizedRes) ProtoReflect() protoreflect.Message {
+	mi := &file_ieccaller_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendSetpointNormalizedRes.ProtoReflect.Descriptor instead.
+func (*SendSetpointNormalizedRes) Descriptor() ([]byte, []int) {
+	return file_ieccaller_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *SendSetpointNormalizedRes) GetValue() int32 {
+	if x != nil {
+		return x.Value
+	}
+	return 0
+}
+
+type SendSetpointScaledRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         int32                  `protobuf:"varint,1,opt,name=value,proto3" json:"value,omitempty"` // 从站回显的标度化设点值（与请求相同的原始标度值）
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendSetpointScaledRes) Reset() {
+	*x = SendSetpointScaledRes{}
+	mi := &file_ieccaller_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendSetpointScaledRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendSetpointScaledRes) ProtoMessage() {}
+
+func (x *SendSetpointScaledRes) ProtoReflect() protoreflect.Message {
+	mi := &file_ieccaller_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendSetpointScaledRes.ProtoReflect.Descriptor instead.
+func (*SendSetpointScaledRes) Descriptor() ([]byte, []int) {
+	return file_ieccaller_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *SendSetpointScaledRes) GetValue() int32 {
+	if x != nil {
+		return x.Value
+	}
+	return 0
+}
+
+type SendSetpointFloatRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         float64                `protobuf:"fixed64,1,opt,name=value,proto3" json:"value,omitempty"` // 从站回显的短浮点设点值（IEEE 754 单精度浮点）
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendSetpointFloatRes) Reset() {
+	*x = SendSetpointFloatRes{}
+	mi := &file_ieccaller_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendSetpointFloatRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendSetpointFloatRes) ProtoMessage() {}
+
+func (x *SendSetpointFloatRes) ProtoReflect() protoreflect.Message {
+	mi := &file_ieccaller_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendSetpointFloatRes.ProtoReflect.Descriptor instead.
+func (*SendSetpointFloatRes) Descriptor() ([]byte, []int) {
+	return file_ieccaller_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *SendSetpointFloatRes) GetValue() float64 {
+	if x != nil {
+		return x.Value
+	}
+	return 0
+}
+
+type SendBitstringCommandRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         uint64                 `protobuf:"varint,1,opt,name=value,proto3" json:"value,omitempty"` // 从站回显的32位位串命令值（低32位有效）
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendBitstringCommandRes) Reset() {
+	*x = SendBitstringCommandRes{}
+	mi := &file_ieccaller_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendBitstringCommandRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendBitstringCommandRes) ProtoMessage() {}
+
+func (x *SendBitstringCommandRes) ProtoReflect() protoreflect.Message {
+	mi := &file_ieccaller_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendBitstringCommandRes.ProtoReflect.Descriptor instead.
+func (*SendBitstringCommandRes) Descriptor() ([]byte, []int) {
+	return file_ieccaller_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *SendBitstringCommandRes) GetValue() uint64 {
+	if x != nil {
+		return x.Value
+	}
+	return 0
+}
+
+type SendSingleCommandReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Host          string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	Port          uint32                 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	Coa           uint32                 `protobuf:"varint,3,opt,name=coa,proto3" json:"coa,omitempty"`
+	Ioa           uint32                 `protobuf:"varint,4,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	Value         bool                   `protobuf:"varint,5,opt,name=value,proto3" json:"value,omitempty"`       // true=合, false=分
+	WithTime      bool                   `protobuf:"varint,6,opt,name=withTime,proto3" json:"withTime,omitempty"` // true=带CP56Time2a时标(C_SC_TA_1=58), false=不带(C_SC_NA_1=45)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendSingleCommandReq) Reset() {
+	*x = SendSingleCommandReq{}
+	mi := &file_ieccaller_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendSingleCommandReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendSingleCommandReq) ProtoMessage() {}
+
+func (x *SendSingleCommandReq) ProtoReflect() protoreflect.Message {
+	mi := &file_ieccaller_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendSingleCommandReq.ProtoReflect.Descriptor instead.
+func (*SendSingleCommandReq) Descriptor() ([]byte, []int) {
+	return file_ieccaller_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *SendSingleCommandReq) GetHost() string {
+	if x != nil {
+		return x.Host
+	}
+	return ""
+}
+
+func (x *SendSingleCommandReq) GetPort() uint32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
+}
+
+func (x *SendSingleCommandReq) GetCoa() uint32 {
+	if x != nil {
+		return x.Coa
+	}
+	return 0
+}
+
+func (x *SendSingleCommandReq) GetIoa() uint32 {
+	if x != nil {
+		return x.Ioa
+	}
+	return 0
+}
+
+func (x *SendSingleCommandReq) GetValue() bool {
+	if x != nil {
+		return x.Value
+	}
+	return false
+}
+
+func (x *SendSingleCommandReq) GetWithTime() bool {
+	if x != nil {
+		return x.WithTime
+	}
+	return false
+}
+
+type SendDoubleCommandReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Host          string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	Port          uint32                 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	Coa           uint32                 `protobuf:"varint,3,opt,name=coa,proto3" json:"coa,omitempty"`
+	Ioa           uint32                 `protobuf:"varint,4,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	Value         DoubleCommandValue     `protobuf:"varint,5,opt,name=value,proto3,enum=ieccaller.DoubleCommandValue" json:"value,omitempty"` // DCO_ON=合, DCO_OFF=分
+	WithTime      bool                   `protobuf:"varint,6,opt,name=withTime,proto3" json:"withTime,omitempty"`                             // true=带CP56Time2a时标(C_DC_TA_1=59), false=不带(C_DC_NA_1=46)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendDoubleCommandReq) Reset() {
+	*x = SendDoubleCommandReq{}
+	mi := &file_ieccaller_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendDoubleCommandReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendDoubleCommandReq) ProtoMessage() {}
+
+func (x *SendDoubleCommandReq) ProtoReflect() protoreflect.Message {
+	mi := &file_ieccaller_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendDoubleCommandReq.ProtoReflect.Descriptor instead.
+func (*SendDoubleCommandReq) Descriptor() ([]byte, []int) {
+	return file_ieccaller_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *SendDoubleCommandReq) GetHost() string {
+	if x != nil {
+		return x.Host
+	}
+	return ""
+}
+
+func (x *SendDoubleCommandReq) GetPort() uint32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
+}
+
+func (x *SendDoubleCommandReq) GetCoa() uint32 {
+	if x != nil {
+		return x.Coa
+	}
+	return 0
+}
+
+func (x *SendDoubleCommandReq) GetIoa() uint32 {
+	if x != nil {
+		return x.Ioa
+	}
+	return 0
+}
+
+func (x *SendDoubleCommandReq) GetValue() DoubleCommandValue {
+	if x != nil {
+		return x.Value
+	}
+	return DoubleCommandValue_DCO_NOT_ALLOWED
+}
+
+func (x *SendDoubleCommandReq) GetWithTime() bool {
+	if x != nil {
+		return x.WithTime
+	}
+	return false
+}
+
+type SendStepCommandReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Host          string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	Port          uint32                 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	Coa           uint32                 `protobuf:"varint,3,opt,name=coa,proto3" json:"coa,omitempty"`
+	Ioa           uint32                 `protobuf:"varint,4,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	Value         StepCommandValue       `protobuf:"varint,5,opt,name=value,proto3,enum=ieccaller.StepCommandValue" json:"value,omitempty"` // SCO_DOWN=降一步, SCO_UP=升一步
+	WithTime      bool                   `protobuf:"varint,6,opt,name=withTime,proto3" json:"withTime,omitempty"`                           // true=带CP56Time2a时标(C_RC_TA_1=60), false=不带(C_RC_NA_1=47)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendStepCommandReq) Reset() {
+	*x = SendStepCommandReq{}
+	mi := &file_ieccaller_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendStepCommandReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendStepCommandReq) ProtoMessage() {}
+
+func (x *SendStepCommandReq) ProtoReflect() protoreflect.Message {
+	mi := &file_ieccaller_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendStepCommandReq.ProtoReflect.Descriptor instead.
+func (*SendStepCommandReq) Descriptor() ([]byte, []int) {
+	return file_ieccaller_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *SendStepCommandReq) GetHost() string {
+	if x != nil {
+		return x.Host
+	}
+	return ""
+}
+
+func (x *SendStepCommandReq) GetPort() uint32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
+}
+
+func (x *SendStepCommandReq) GetCoa() uint32 {
+	if x != nil {
+		return x.Coa
+	}
+	return 0
+}
+
+func (x *SendStepCommandReq) GetIoa() uint32 {
+	if x != nil {
+		return x.Ioa
+	}
+	return 0
+}
+
+func (x *SendStepCommandReq) GetValue() StepCommandValue {
+	if x != nil {
+		return x.Value
+	}
+	return StepCommandValue_SCO_NOT_ALLOWED
+}
+
+func (x *SendStepCommandReq) GetWithTime() bool {
+	if x != nil {
+		return x.WithTime
+	}
+	return false
+}
+
+type SendSetpointNormalizedReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Host          string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	Port          uint32                 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	Coa           uint32                 `protobuf:"varint,3,opt,name=coa,proto3" json:"coa,omitempty"`
+	Ioa           uint32                 `protobuf:"varint,4,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	Value         int32                  `protobuf:"varint,5,opt,name=value,proto3" json:"value,omitempty"`
+	WithTime      bool                   `protobuf:"varint,6,opt,name=withTime,proto3" json:"withTime,omitempty"` // true=带CP56Time2a时标(C_SE_TA_1=61), false=不带(C_SE_NA_1=48)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendSetpointNormalizedReq) Reset() {
+	*x = SendSetpointNormalizedReq{}
+	mi := &file_ieccaller_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendSetpointNormalizedReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendSetpointNormalizedReq) ProtoMessage() {}
+
+func (x *SendSetpointNormalizedReq) ProtoReflect() protoreflect.Message {
+	mi := &file_ieccaller_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendSetpointNormalizedReq.ProtoReflect.Descriptor instead.
+func (*SendSetpointNormalizedReq) Descriptor() ([]byte, []int) {
+	return file_ieccaller_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *SendSetpointNormalizedReq) GetHost() string {
+	if x != nil {
+		return x.Host
+	}
+	return ""
+}
+
+func (x *SendSetpointNormalizedReq) GetPort() uint32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
+}
+
+func (x *SendSetpointNormalizedReq) GetCoa() uint32 {
+	if x != nil {
+		return x.Coa
+	}
+	return 0
+}
+
+func (x *SendSetpointNormalizedReq) GetIoa() uint32 {
+	if x != nil {
+		return x.Ioa
+	}
+	return 0
+}
+
+func (x *SendSetpointNormalizedReq) GetValue() int32 {
+	if x != nil {
+		return x.Value
+	}
+	return 0
+}
+
+func (x *SendSetpointNormalizedReq) GetWithTime() bool {
+	if x != nil {
+		return x.WithTime
+	}
+	return false
+}
+
+type SendSetpointScaledReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Host          string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	Port          uint32                 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	Coa           uint32                 `protobuf:"varint,3,opt,name=coa,proto3" json:"coa,omitempty"`
+	Ioa           uint32                 `protobuf:"varint,4,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	Value         int32                  `protobuf:"varint,5,opt,name=value,proto3" json:"value,omitempty"`
+	WithTime      bool                   `protobuf:"varint,6,opt,name=withTime,proto3" json:"withTime,omitempty"` // true=带CP56Time2a时标(C_SE_TB_1=62), false=不带(C_SE_NB_1=49)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendSetpointScaledReq) Reset() {
+	*x = SendSetpointScaledReq{}
+	mi := &file_ieccaller_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendSetpointScaledReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendSetpointScaledReq) ProtoMessage() {}
+
+func (x *SendSetpointScaledReq) ProtoReflect() protoreflect.Message {
+	mi := &file_ieccaller_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendSetpointScaledReq.ProtoReflect.Descriptor instead.
+func (*SendSetpointScaledReq) Descriptor() ([]byte, []int) {
+	return file_ieccaller_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *SendSetpointScaledReq) GetHost() string {
+	if x != nil {
+		return x.Host
+	}
+	return ""
+}
+
+func (x *SendSetpointScaledReq) GetPort() uint32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
+}
+
+func (x *SendSetpointScaledReq) GetCoa() uint32 {
+	if x != nil {
+		return x.Coa
+	}
+	return 0
+}
+
+func (x *SendSetpointScaledReq) GetIoa() uint32 {
+	if x != nil {
+		return x.Ioa
+	}
+	return 0
+}
+
+func (x *SendSetpointScaledReq) GetValue() int32 {
+	if x != nil {
+		return x.Value
+	}
+	return 0
+}
+
+func (x *SendSetpointScaledReq) GetWithTime() bool {
+	if x != nil {
+		return x.WithTime
+	}
+	return false
+}
+
+type SendSetpointFloatReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Host          string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	Port          uint32                 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	Coa           uint32                 `protobuf:"varint,3,opt,name=coa,proto3" json:"coa,omitempty"`
+	Ioa           uint32                 `protobuf:"varint,4,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	Value         float64                `protobuf:"fixed64,5,opt,name=value,proto3" json:"value,omitempty"`
+	WithTime      bool                   `protobuf:"varint,6,opt,name=withTime,proto3" json:"withTime,omitempty"` // true=带CP56Time2a时标(C_SE_TC_1=63), false=不带(C_SE_NC_1=50)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendSetpointFloatReq) Reset() {
+	*x = SendSetpointFloatReq{}
+	mi := &file_ieccaller_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendSetpointFloatReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendSetpointFloatReq) ProtoMessage() {}
+
+func (x *SendSetpointFloatReq) ProtoReflect() protoreflect.Message {
+	mi := &file_ieccaller_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendSetpointFloatReq.ProtoReflect.Descriptor instead.
+func (*SendSetpointFloatReq) Descriptor() ([]byte, []int) {
+	return file_ieccaller_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *SendSetpointFloatReq) GetHost() string {
+	if x != nil {
+		return x.Host
+	}
+	return ""
+}
+
+func (x *SendSetpointFloatReq) GetPort() uint32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
+}
+
+func (x *SendSetpointFloatReq) GetCoa() uint32 {
+	if x != nil {
+		return x.Coa
+	}
+	return 0
+}
+
+func (x *SendSetpointFloatReq) GetIoa() uint32 {
+	if x != nil {
+		return x.Ioa
+	}
+	return 0
+}
+
+func (x *SendSetpointFloatReq) GetValue() float64 {
+	if x != nil {
+		return x.Value
+	}
+	return 0
+}
+
+func (x *SendSetpointFloatReq) GetWithTime() bool {
+	if x != nil {
+		return x.WithTime
+	}
+	return false
+}
+
+type SendBitstringCommandReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Host          string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	Port          uint32                 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	Coa           uint32                 `protobuf:"varint,3,opt,name=coa,proto3" json:"coa,omitempty"`
+	Ioa           uint32                 `protobuf:"varint,4,opt,name=ioa,proto3" json:"ioa,omitempty"`
+	Value         uint64                 `protobuf:"varint,5,opt,name=value,proto3" json:"value,omitempty"`
+	WithTime      bool                   `protobuf:"varint,6,opt,name=withTime,proto3" json:"withTime,omitempty"` // true=带CP56Time2a时标(C_BO_TA_1=64), false=不带(C_BO_NA_1=51)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendBitstringCommandReq) Reset() {
+	*x = SendBitstringCommandReq{}
+	mi := &file_ieccaller_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendBitstringCommandReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendBitstringCommandReq) ProtoMessage() {}
+
+func (x *SendBitstringCommandReq) ProtoReflect() protoreflect.Message {
+	mi := &file_ieccaller_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendBitstringCommandReq.ProtoReflect.Descriptor instead.
+func (*SendBitstringCommandReq) Descriptor() ([]byte, []int) {
+	return file_ieccaller_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *SendBitstringCommandReq) GetHost() string {
+	if x != nil {
+		return x.Host
+	}
+	return ""
+}
+
+func (x *SendBitstringCommandReq) GetPort() uint32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
+}
+
+func (x *SendBitstringCommandReq) GetCoa() uint32 {
+	if x != nil {
+		return x.Coa
+	}
+	return 0
+}
+
+func (x *SendBitstringCommandReq) GetIoa() uint32 {
+	if x != nil {
+		return x.Ioa
+	}
+	return 0
+}
+
+func (x *SendBitstringCommandReq) GetValue() uint64 {
+	if x != nil {
+		return x.Value
+	}
+	return 0
+}
+
+func (x *SendBitstringCommandReq) GetWithTime() bool {
+	if x != nil {
+		return x.WithTime
+	}
+	return false
+}
+
 type PbDevicePointMapping struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -644,7 +1638,7 @@ type PbDevicePointMapping struct {
 
 func (x *PbDevicePointMapping) Reset() {
 	*x = PbDevicePointMapping{}
-	mi := &file_ieccaller_proto_msgTypes[12]
+	mi := &file_ieccaller_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -656,7 +1650,7 @@ func (x *PbDevicePointMapping) String() string {
 func (*PbDevicePointMapping) ProtoMessage() {}
 
 func (x *PbDevicePointMapping) ProtoReflect() protoreflect.Message {
-	mi := &file_ieccaller_proto_msgTypes[12]
+	mi := &file_ieccaller_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -669,7 +1663,7 @@ func (x *PbDevicePointMapping) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PbDevicePointMapping.ProtoReflect.Descriptor instead.
 func (*PbDevicePointMapping) Descriptor() ([]byte, []int) {
-	return file_ieccaller_proto_rawDescGZIP(), []int{12}
+	return file_ieccaller_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *PbDevicePointMapping) GetId() int64 {
@@ -786,7 +1780,7 @@ type QueryPointMappingByIdReq struct {
 
 func (x *QueryPointMappingByIdReq) Reset() {
 	*x = QueryPointMappingByIdReq{}
-	mi := &file_ieccaller_proto_msgTypes[13]
+	mi := &file_ieccaller_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -798,7 +1792,7 @@ func (x *QueryPointMappingByIdReq) String() string {
 func (*QueryPointMappingByIdReq) ProtoMessage() {}
 
 func (x *QueryPointMappingByIdReq) ProtoReflect() protoreflect.Message {
-	mi := &file_ieccaller_proto_msgTypes[13]
+	mi := &file_ieccaller_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -811,7 +1805,7 @@ func (x *QueryPointMappingByIdReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryPointMappingByIdReq.ProtoReflect.Descriptor instead.
 func (*QueryPointMappingByIdReq) Descriptor() ([]byte, []int) {
-	return file_ieccaller_proto_rawDescGZIP(), []int{13}
+	return file_ieccaller_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *QueryPointMappingByIdReq) GetId() int64 {
@@ -830,7 +1824,7 @@ type QueryPointMappingByIdRes struct {
 
 func (x *QueryPointMappingByIdRes) Reset() {
 	*x = QueryPointMappingByIdRes{}
-	mi := &file_ieccaller_proto_msgTypes[14]
+	mi := &file_ieccaller_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -842,7 +1836,7 @@ func (x *QueryPointMappingByIdRes) String() string {
 func (*QueryPointMappingByIdRes) ProtoMessage() {}
 
 func (x *QueryPointMappingByIdRes) ProtoReflect() protoreflect.Message {
-	mi := &file_ieccaller_proto_msgTypes[14]
+	mi := &file_ieccaller_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -855,7 +1849,7 @@ func (x *QueryPointMappingByIdRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryPointMappingByIdRes.ProtoReflect.Descriptor instead.
 func (*QueryPointMappingByIdRes) Descriptor() ([]byte, []int) {
-	return file_ieccaller_proto_rawDescGZIP(), []int{14}
+	return file_ieccaller_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *QueryPointMappingByIdRes) GetMapping() *PbDevicePointMapping {
@@ -876,7 +1870,7 @@ type QueryPointMappingByKeyReq struct {
 
 func (x *QueryPointMappingByKeyReq) Reset() {
 	*x = QueryPointMappingByKeyReq{}
-	mi := &file_ieccaller_proto_msgTypes[15]
+	mi := &file_ieccaller_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -888,7 +1882,7 @@ func (x *QueryPointMappingByKeyReq) String() string {
 func (*QueryPointMappingByKeyReq) ProtoMessage() {}
 
 func (x *QueryPointMappingByKeyReq) ProtoReflect() protoreflect.Message {
-	mi := &file_ieccaller_proto_msgTypes[15]
+	mi := &file_ieccaller_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -901,7 +1895,7 @@ func (x *QueryPointMappingByKeyReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryPointMappingByKeyReq.ProtoReflect.Descriptor instead.
 func (*QueryPointMappingByKeyReq) Descriptor() ([]byte, []int) {
-	return file_ieccaller_proto_rawDescGZIP(), []int{15}
+	return file_ieccaller_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *QueryPointMappingByKeyReq) GetTagStation() string {
@@ -934,7 +1928,7 @@ type QueryPointMappingByKeyRes struct {
 
 func (x *QueryPointMappingByKeyRes) Reset() {
 	*x = QueryPointMappingByKeyRes{}
-	mi := &file_ieccaller_proto_msgTypes[16]
+	mi := &file_ieccaller_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -946,7 +1940,7 @@ func (x *QueryPointMappingByKeyRes) String() string {
 func (*QueryPointMappingByKeyRes) ProtoMessage() {}
 
 func (x *QueryPointMappingByKeyRes) ProtoReflect() protoreflect.Message {
-	mi := &file_ieccaller_proto_msgTypes[16]
+	mi := &file_ieccaller_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -959,7 +1953,7 @@ func (x *QueryPointMappingByKeyRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryPointMappingByKeyRes.ProtoReflect.Descriptor instead.
 func (*QueryPointMappingByKeyRes) Descriptor() ([]byte, []int) {
-	return file_ieccaller_proto_rawDescGZIP(), []int{16}
+	return file_ieccaller_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *QueryPointMappingByKeyRes) GetMapping() *PbDevicePointMapping {
@@ -982,7 +1976,7 @@ type PageListPointMappingReq struct {
 
 func (x *PageListPointMappingReq) Reset() {
 	*x = PageListPointMappingReq{}
-	mi := &file_ieccaller_proto_msgTypes[17]
+	mi := &file_ieccaller_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -994,7 +1988,7 @@ func (x *PageListPointMappingReq) String() string {
 func (*PageListPointMappingReq) ProtoMessage() {}
 
 func (x *PageListPointMappingReq) ProtoReflect() protoreflect.Message {
-	mi := &file_ieccaller_proto_msgTypes[17]
+	mi := &file_ieccaller_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1007,7 +2001,7 @@ func (x *PageListPointMappingReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PageListPointMappingReq.ProtoReflect.Descriptor instead.
 func (*PageListPointMappingReq) Descriptor() ([]byte, []int) {
-	return file_ieccaller_proto_rawDescGZIP(), []int{17}
+	return file_ieccaller_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *PageListPointMappingReq) GetPage() int64 {
@@ -1055,7 +2049,7 @@ type PageListPointMappingRes struct {
 
 func (x *PageListPointMappingRes) Reset() {
 	*x = PageListPointMappingRes{}
-	mi := &file_ieccaller_proto_msgTypes[18]
+	mi := &file_ieccaller_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1067,7 +2061,7 @@ func (x *PageListPointMappingRes) String() string {
 func (*PageListPointMappingRes) ProtoMessage() {}
 
 func (x *PageListPointMappingRes) ProtoReflect() protoreflect.Message {
-	mi := &file_ieccaller_proto_msgTypes[18]
+	mi := &file_ieccaller_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1080,7 +2074,7 @@ func (x *PageListPointMappingRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PageListPointMappingRes.ProtoReflect.Descriptor instead.
 func (*PageListPointMappingRes) Descriptor() ([]byte, []int) {
-	return file_ieccaller_proto_rawDescGZIP(), []int{18}
+	return file_ieccaller_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *PageListPointMappingRes) GetTotal() int64 {
@@ -1107,7 +2101,7 @@ type ClearPointMappingCacheReq struct {
 
 func (x *ClearPointMappingCacheReq) Reset() {
 	*x = ClearPointMappingCacheReq{}
-	mi := &file_ieccaller_proto_msgTypes[19]
+	mi := &file_ieccaller_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1119,7 +2113,7 @@ func (x *ClearPointMappingCacheReq) String() string {
 func (*ClearPointMappingCacheReq) ProtoMessage() {}
 
 func (x *ClearPointMappingCacheReq) ProtoReflect() protoreflect.Message {
-	mi := &file_ieccaller_proto_msgTypes[19]
+	mi := &file_ieccaller_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1132,7 +2126,7 @@ func (x *ClearPointMappingCacheReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClearPointMappingCacheReq.ProtoReflect.Descriptor instead.
 func (*ClearPointMappingCacheReq) Descriptor() ([]byte, []int) {
-	return file_ieccaller_proto_rawDescGZIP(), []int{19}
+	return file_ieccaller_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *ClearPointMappingCacheReq) GetKeys() []string {
@@ -1160,7 +2154,7 @@ type CacheKeyInfo struct {
 
 func (x *CacheKeyInfo) Reset() {
 	*x = CacheKeyInfo{}
-	mi := &file_ieccaller_proto_msgTypes[20]
+	mi := &file_ieccaller_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1172,7 +2166,7 @@ func (x *CacheKeyInfo) String() string {
 func (*CacheKeyInfo) ProtoMessage() {}
 
 func (x *CacheKeyInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_ieccaller_proto_msgTypes[20]
+	mi := &file_ieccaller_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1185,7 +2179,7 @@ func (x *CacheKeyInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CacheKeyInfo.ProtoReflect.Descriptor instead.
 func (*CacheKeyInfo) Descriptor() ([]byte, []int) {
-	return file_ieccaller_proto_rawDescGZIP(), []int{20}
+	return file_ieccaller_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *CacheKeyInfo) GetTagStation() string {
@@ -1218,7 +2212,7 @@ type ClearPointMappingCacheRes struct {
 
 func (x *ClearPointMappingCacheRes) Reset() {
 	*x = ClearPointMappingCacheRes{}
-	mi := &file_ieccaller_proto_msgTypes[21]
+	mi := &file_ieccaller_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1230,7 +2224,7 @@ func (x *ClearPointMappingCacheRes) String() string {
 func (*ClearPointMappingCacheRes) ProtoMessage() {}
 
 func (x *ClearPointMappingCacheRes) ProtoReflect() protoreflect.Message {
-	mi := &file_ieccaller_proto_msgTypes[21]
+	mi := &file_ieccaller_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1243,7 +2237,7 @@ func (x *ClearPointMappingCacheRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClearPointMappingCacheRes.ProtoReflect.Descriptor instead.
 func (*ClearPointMappingCacheRes) Descriptor() ([]byte, []int) {
-	return file_ieccaller_proto_rawDescGZIP(), []int{21}
+	return file_ieccaller_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *ClearPointMappingCacheRes) GetClearedCount() int64 {
@@ -1290,7 +2284,70 @@ const file_ieccaller_proto_rawDesc = "" +
 	"\x06typeId\x18\x04 \x01(\rR\x06typeId\x12\x10\n" +
 	"\x03ioa\x18\x05 \x01(\rR\x03ioa\x12\x14\n" +
 	"\x05value\x18\x06 \x01(\tR\x05value\"\x10\n" +
-	"\x0eSendCommandRes\"\x8c\x03\n" +
+	"\x0eSendCommandRes\",\n" +
+	"\x14SendSingleCommandRes\x12\x14\n" +
+	"\x05value\x18\x01 \x01(\bR\x05value\"K\n" +
+	"\x14SendDoubleCommandRes\x123\n" +
+	"\x05value\x18\x01 \x01(\x0e2\x1d.ieccaller.DoubleCommandValueR\x05value\"*\n" +
+	"\x12SendStepCommandRes\x12\x14\n" +
+	"\x05value\x18\x01 \x01(\x05R\x05value\"1\n" +
+	"\x19SendSetpointNormalizedRes\x12\x14\n" +
+	"\x05value\x18\x01 \x01(\x05R\x05value\"-\n" +
+	"\x15SendSetpointScaledRes\x12\x14\n" +
+	"\x05value\x18\x01 \x01(\x05R\x05value\",\n" +
+	"\x14SendSetpointFloatRes\x12\x14\n" +
+	"\x05value\x18\x01 \x01(\x01R\x05value\"/\n" +
+	"\x17SendBitstringCommandRes\x12\x14\n" +
+	"\x05value\x18\x01 \x01(\x04R\x05value\"\x94\x01\n" +
+	"\x14SendSingleCommandReq\x12\x12\n" +
+	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
+	"\x04port\x18\x02 \x01(\rR\x04port\x12\x10\n" +
+	"\x03coa\x18\x03 \x01(\rR\x03coa\x12\x10\n" +
+	"\x03ioa\x18\x04 \x01(\rR\x03ioa\x12\x14\n" +
+	"\x05value\x18\x05 \x01(\bR\x05value\x12\x1a\n" +
+	"\bwithTime\x18\x06 \x01(\bR\bwithTime\"\xb3\x01\n" +
+	"\x14SendDoubleCommandReq\x12\x12\n" +
+	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
+	"\x04port\x18\x02 \x01(\rR\x04port\x12\x10\n" +
+	"\x03coa\x18\x03 \x01(\rR\x03coa\x12\x10\n" +
+	"\x03ioa\x18\x04 \x01(\rR\x03ioa\x123\n" +
+	"\x05value\x18\x05 \x01(\x0e2\x1d.ieccaller.DoubleCommandValueR\x05value\x12\x1a\n" +
+	"\bwithTime\x18\x06 \x01(\bR\bwithTime\"\xaf\x01\n" +
+	"\x12SendStepCommandReq\x12\x12\n" +
+	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
+	"\x04port\x18\x02 \x01(\rR\x04port\x12\x10\n" +
+	"\x03coa\x18\x03 \x01(\rR\x03coa\x12\x10\n" +
+	"\x03ioa\x18\x04 \x01(\rR\x03ioa\x121\n" +
+	"\x05value\x18\x05 \x01(\x0e2\x1b.ieccaller.StepCommandValueR\x05value\x12\x1a\n" +
+	"\bwithTime\x18\x06 \x01(\bR\bwithTime\"\x99\x01\n" +
+	"\x19SendSetpointNormalizedReq\x12\x12\n" +
+	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
+	"\x04port\x18\x02 \x01(\rR\x04port\x12\x10\n" +
+	"\x03coa\x18\x03 \x01(\rR\x03coa\x12\x10\n" +
+	"\x03ioa\x18\x04 \x01(\rR\x03ioa\x12\x14\n" +
+	"\x05value\x18\x05 \x01(\x05R\x05value\x12\x1a\n" +
+	"\bwithTime\x18\x06 \x01(\bR\bwithTime\"\x95\x01\n" +
+	"\x15SendSetpointScaledReq\x12\x12\n" +
+	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
+	"\x04port\x18\x02 \x01(\rR\x04port\x12\x10\n" +
+	"\x03coa\x18\x03 \x01(\rR\x03coa\x12\x10\n" +
+	"\x03ioa\x18\x04 \x01(\rR\x03ioa\x12\x14\n" +
+	"\x05value\x18\x05 \x01(\x05R\x05value\x12\x1a\n" +
+	"\bwithTime\x18\x06 \x01(\bR\bwithTime\"\x94\x01\n" +
+	"\x14SendSetpointFloatReq\x12\x12\n" +
+	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
+	"\x04port\x18\x02 \x01(\rR\x04port\x12\x10\n" +
+	"\x03coa\x18\x03 \x01(\rR\x03coa\x12\x10\n" +
+	"\x03ioa\x18\x04 \x01(\rR\x03ioa\x12\x14\n" +
+	"\x05value\x18\x05 \x01(\x01R\x05value\x12\x1a\n" +
+	"\bwithTime\x18\x06 \x01(\bR\bwithTime\"\x97\x01\n" +
+	"\x17SendBitstringCommandReq\x12\x12\n" +
+	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
+	"\x04port\x18\x02 \x01(\rR\x04port\x12\x10\n" +
+	"\x03coa\x18\x03 \x01(\rR\x03coa\x12\x10\n" +
+	"\x03ioa\x18\x04 \x01(\rR\x03ioa\x12\x14\n" +
+	"\x05value\x18\x05 \x01(\x04R\x05value\x12\x1a\n" +
+	"\bwithTime\x18\x06 \x01(\bR\bwithTime\"\x8c\x03\n" +
 	"\x14PbDevicePointMapping\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1e\n" +
 	"\n" +
@@ -1351,14 +2408,31 @@ const file_ieccaller_proto_rawDesc = "" +
 	"\x03coa\x18\x02 \x01(\x03R\x03coa\x12\x10\n" +
 	"\x03ioa\x18\x03 \x01(\x03R\x03ioa\"?\n" +
 	"\x19ClearPointMappingCacheRes\x12\"\n" +
-	"\fclearedCount\x18\x01 \x01(\x03R\fclearedCount2\xe6\x06\n" +
+	"\fclearedCount\x18\x01 \x01(\x03R\fclearedCount*B\n" +
+	"\x12DoubleCommandValue\x12\x13\n" +
+	"\x0fDCO_NOT_ALLOWED\x10\x00\x12\n" +
+	"\n" +
+	"\x06DCO_ON\x10\x01\x12\v\n" +
+	"\aDCO_OFF\x10\x02*A\n" +
+	"\x10StepCommandValue\x12\x13\n" +
+	"\x0fSCO_NOT_ALLOWED\x10\x00\x12\f\n" +
+	"\bSCO_DOWN\x10\x01\x12\n" +
+	"\n" +
+	"\x06SCO_UP\x10\x022\xdc\v\n" +
 	"\tIecCaller\x12&\n" +
 	"\x04Ping\x12\x0e.ieccaller.Req\x1a\x0e.ieccaller.Res\x12C\n" +
 	"\vSendTestCmd\x12\x19.ieccaller.SendTestCmdReq\x1a\x19.ieccaller.SendTestCmdRes\x12C\n" +
 	"\vSendReadCmd\x12\x19.ieccaller.SendReadCmdReq\x1a\x19.ieccaller.SendReadCmdRes\x12^\n" +
 	"\x14SendInterrogationCmd\x12\".ieccaller.SendInterrogationCmdReq\x1a\".ieccaller.SendInterrogationCmdRes\x12s\n" +
 	"\x1bSendCounterInterrogationCmd\x12).ieccaller.SendCounterInterrogationCmdReq\x1a).ieccaller.SendCounterInterrogationCmdRes\x12C\n" +
-	"\vSendCommand\x12\x19.ieccaller.SendCommandReq\x1a\x19.ieccaller.SendCommandRes\x12a\n" +
+	"\vSendCommand\x12\x19.ieccaller.SendCommandReq\x1a\x19.ieccaller.SendCommandRes\x12U\n" +
+	"\x11SendSingleCommand\x12\x1f.ieccaller.SendSingleCommandReq\x1a\x1f.ieccaller.SendSingleCommandRes\x12U\n" +
+	"\x11SendDoubleCommand\x12\x1f.ieccaller.SendDoubleCommandReq\x1a\x1f.ieccaller.SendDoubleCommandRes\x12O\n" +
+	"\x0fSendStepCommand\x12\x1d.ieccaller.SendStepCommandReq\x1a\x1d.ieccaller.SendStepCommandRes\x12d\n" +
+	"\x16SendSetpointNormalized\x12$.ieccaller.SendSetpointNormalizedReq\x1a$.ieccaller.SendSetpointNormalizedRes\x12X\n" +
+	"\x12SendSetpointScaled\x12 .ieccaller.SendSetpointScaledReq\x1a .ieccaller.SendSetpointScaledRes\x12U\n" +
+	"\x11SendSetpointFloat\x12\x1f.ieccaller.SendSetpointFloatReq\x1a\x1f.ieccaller.SendSetpointFloatRes\x12^\n" +
+	"\x14SendBitstringCommand\x12\".ieccaller.SendBitstringCommandReq\x1a\".ieccaller.SendBitstringCommandRes\x12a\n" +
 	"\x15QueryPointMappingById\x12#.ieccaller.QueryPointMappingByIdReq\x1a#.ieccaller.QueryPointMappingByIdRes\x12d\n" +
 	"\x16QueryPointMappingByKey\x12$.ieccaller.QueryPointMappingByKeyReq\x1a$.ieccaller.QueryPointMappingByKeyRes\x12^\n" +
 	"\x14PageListPointMapping\x12\".ieccaller.PageListPointMappingReq\x1a\".ieccaller.PageListPointMappingRes\x12d\n" +
@@ -1377,61 +2451,95 @@ func file_ieccaller_proto_rawDescGZIP() []byte {
 	return file_ieccaller_proto_rawDescData
 }
 
-var file_ieccaller_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_ieccaller_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_ieccaller_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
 var file_ieccaller_proto_goTypes = []any{
-	(*Req)(nil),                            // 0: ieccaller.Req
-	(*Res)(nil),                            // 1: ieccaller.Res
-	(*SendTestCmdReq)(nil),                 // 2: ieccaller.SendTestCmdReq
-	(*SendTestCmdRes)(nil),                 // 3: ieccaller.SendTestCmdRes
-	(*SendReadCmdReq)(nil),                 // 4: ieccaller.SendReadCmdReq
-	(*SendReadCmdRes)(nil),                 // 5: ieccaller.SendReadCmdRes
-	(*SendInterrogationCmdReq)(nil),        // 6: ieccaller.SendInterrogationCmdReq
-	(*SendInterrogationCmdRes)(nil),        // 7: ieccaller.SendInterrogationCmdRes
-	(*SendCounterInterrogationCmdReq)(nil), // 8: ieccaller.SendCounterInterrogationCmdReq
-	(*SendCounterInterrogationCmdRes)(nil), // 9: ieccaller.SendCounterInterrogationCmdRes
-	(*SendCommandReq)(nil),                 // 10: ieccaller.SendCommandReq
-	(*SendCommandRes)(nil),                 // 11: ieccaller.SendCommandRes
-	(*PbDevicePointMapping)(nil),           // 12: ieccaller.PbDevicePointMapping
-	(*QueryPointMappingByIdReq)(nil),       // 13: ieccaller.QueryPointMappingByIdReq
-	(*QueryPointMappingByIdRes)(nil),       // 14: ieccaller.QueryPointMappingByIdRes
-	(*QueryPointMappingByKeyReq)(nil),      // 15: ieccaller.QueryPointMappingByKeyReq
-	(*QueryPointMappingByKeyRes)(nil),      // 16: ieccaller.QueryPointMappingByKeyRes
-	(*PageListPointMappingReq)(nil),        // 17: ieccaller.PageListPointMappingReq
-	(*PageListPointMappingRes)(nil),        // 18: ieccaller.PageListPointMappingRes
-	(*ClearPointMappingCacheReq)(nil),      // 19: ieccaller.ClearPointMappingCacheReq
-	(*CacheKeyInfo)(nil),                   // 20: ieccaller.CacheKeyInfo
-	(*ClearPointMappingCacheRes)(nil),      // 21: ieccaller.ClearPointMappingCacheRes
+	(DoubleCommandValue)(0),                // 0: ieccaller.DoubleCommandValue
+	(StepCommandValue)(0),                  // 1: ieccaller.StepCommandValue
+	(*Req)(nil),                            // 2: ieccaller.Req
+	(*Res)(nil),                            // 3: ieccaller.Res
+	(*SendTestCmdReq)(nil),                 // 4: ieccaller.SendTestCmdReq
+	(*SendTestCmdRes)(nil),                 // 5: ieccaller.SendTestCmdRes
+	(*SendReadCmdReq)(nil),                 // 6: ieccaller.SendReadCmdReq
+	(*SendReadCmdRes)(nil),                 // 7: ieccaller.SendReadCmdRes
+	(*SendInterrogationCmdReq)(nil),        // 8: ieccaller.SendInterrogationCmdReq
+	(*SendInterrogationCmdRes)(nil),        // 9: ieccaller.SendInterrogationCmdRes
+	(*SendCounterInterrogationCmdReq)(nil), // 10: ieccaller.SendCounterInterrogationCmdReq
+	(*SendCounterInterrogationCmdRes)(nil), // 11: ieccaller.SendCounterInterrogationCmdRes
+	(*SendCommandReq)(nil),                 // 12: ieccaller.SendCommandReq
+	(*SendCommandRes)(nil),                 // 13: ieccaller.SendCommandRes
+	(*SendSingleCommandRes)(nil),           // 14: ieccaller.SendSingleCommandRes
+	(*SendDoubleCommandRes)(nil),           // 15: ieccaller.SendDoubleCommandRes
+	(*SendStepCommandRes)(nil),             // 16: ieccaller.SendStepCommandRes
+	(*SendSetpointNormalizedRes)(nil),      // 17: ieccaller.SendSetpointNormalizedRes
+	(*SendSetpointScaledRes)(nil),          // 18: ieccaller.SendSetpointScaledRes
+	(*SendSetpointFloatRes)(nil),           // 19: ieccaller.SendSetpointFloatRes
+	(*SendBitstringCommandRes)(nil),        // 20: ieccaller.SendBitstringCommandRes
+	(*SendSingleCommandReq)(nil),           // 21: ieccaller.SendSingleCommandReq
+	(*SendDoubleCommandReq)(nil),           // 22: ieccaller.SendDoubleCommandReq
+	(*SendStepCommandReq)(nil),             // 23: ieccaller.SendStepCommandReq
+	(*SendSetpointNormalizedReq)(nil),      // 24: ieccaller.SendSetpointNormalizedReq
+	(*SendSetpointScaledReq)(nil),          // 25: ieccaller.SendSetpointScaledReq
+	(*SendSetpointFloatReq)(nil),           // 26: ieccaller.SendSetpointFloatReq
+	(*SendBitstringCommandReq)(nil),        // 27: ieccaller.SendBitstringCommandReq
+	(*PbDevicePointMapping)(nil),           // 28: ieccaller.PbDevicePointMapping
+	(*QueryPointMappingByIdReq)(nil),       // 29: ieccaller.QueryPointMappingByIdReq
+	(*QueryPointMappingByIdRes)(nil),       // 30: ieccaller.QueryPointMappingByIdRes
+	(*QueryPointMappingByKeyReq)(nil),      // 31: ieccaller.QueryPointMappingByKeyReq
+	(*QueryPointMappingByKeyRes)(nil),      // 32: ieccaller.QueryPointMappingByKeyRes
+	(*PageListPointMappingReq)(nil),        // 33: ieccaller.PageListPointMappingReq
+	(*PageListPointMappingRes)(nil),        // 34: ieccaller.PageListPointMappingRes
+	(*ClearPointMappingCacheReq)(nil),      // 35: ieccaller.ClearPointMappingCacheReq
+	(*CacheKeyInfo)(nil),                   // 36: ieccaller.CacheKeyInfo
+	(*ClearPointMappingCacheRes)(nil),      // 37: ieccaller.ClearPointMappingCacheRes
 }
 var file_ieccaller_proto_depIdxs = []int32{
-	12, // 0: ieccaller.QueryPointMappingByIdRes.mapping:type_name -> ieccaller.PbDevicePointMapping
-	12, // 1: ieccaller.QueryPointMappingByKeyRes.mapping:type_name -> ieccaller.PbDevicePointMapping
-	12, // 2: ieccaller.PageListPointMappingRes.mappings:type_name -> ieccaller.PbDevicePointMapping
-	20, // 3: ieccaller.ClearPointMappingCacheReq.keyInfos:type_name -> ieccaller.CacheKeyInfo
-	0,  // 4: ieccaller.IecCaller.Ping:input_type -> ieccaller.Req
-	2,  // 5: ieccaller.IecCaller.SendTestCmd:input_type -> ieccaller.SendTestCmdReq
-	4,  // 6: ieccaller.IecCaller.SendReadCmd:input_type -> ieccaller.SendReadCmdReq
-	6,  // 7: ieccaller.IecCaller.SendInterrogationCmd:input_type -> ieccaller.SendInterrogationCmdReq
-	8,  // 8: ieccaller.IecCaller.SendCounterInterrogationCmd:input_type -> ieccaller.SendCounterInterrogationCmdReq
-	10, // 9: ieccaller.IecCaller.SendCommand:input_type -> ieccaller.SendCommandReq
-	13, // 10: ieccaller.IecCaller.QueryPointMappingById:input_type -> ieccaller.QueryPointMappingByIdReq
-	15, // 11: ieccaller.IecCaller.QueryPointMappingByKey:input_type -> ieccaller.QueryPointMappingByKeyReq
-	17, // 12: ieccaller.IecCaller.PageListPointMapping:input_type -> ieccaller.PageListPointMappingReq
-	19, // 13: ieccaller.IecCaller.ClearPointMappingCache:input_type -> ieccaller.ClearPointMappingCacheReq
-	1,  // 14: ieccaller.IecCaller.Ping:output_type -> ieccaller.Res
-	3,  // 15: ieccaller.IecCaller.SendTestCmd:output_type -> ieccaller.SendTestCmdRes
-	5,  // 16: ieccaller.IecCaller.SendReadCmd:output_type -> ieccaller.SendReadCmdRes
-	7,  // 17: ieccaller.IecCaller.SendInterrogationCmd:output_type -> ieccaller.SendInterrogationCmdRes
-	9,  // 18: ieccaller.IecCaller.SendCounterInterrogationCmd:output_type -> ieccaller.SendCounterInterrogationCmdRes
-	11, // 19: ieccaller.IecCaller.SendCommand:output_type -> ieccaller.SendCommandRes
-	14, // 20: ieccaller.IecCaller.QueryPointMappingById:output_type -> ieccaller.QueryPointMappingByIdRes
-	16, // 21: ieccaller.IecCaller.QueryPointMappingByKey:output_type -> ieccaller.QueryPointMappingByKeyRes
-	18, // 22: ieccaller.IecCaller.PageListPointMapping:output_type -> ieccaller.PageListPointMappingRes
-	21, // 23: ieccaller.IecCaller.ClearPointMappingCache:output_type -> ieccaller.ClearPointMappingCacheRes
-	14, // [14:24] is the sub-list for method output_type
-	4,  // [4:14] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	0,  // 0: ieccaller.SendDoubleCommandRes.value:type_name -> ieccaller.DoubleCommandValue
+	0,  // 1: ieccaller.SendDoubleCommandReq.value:type_name -> ieccaller.DoubleCommandValue
+	1,  // 2: ieccaller.SendStepCommandReq.value:type_name -> ieccaller.StepCommandValue
+	28, // 3: ieccaller.QueryPointMappingByIdRes.mapping:type_name -> ieccaller.PbDevicePointMapping
+	28, // 4: ieccaller.QueryPointMappingByKeyRes.mapping:type_name -> ieccaller.PbDevicePointMapping
+	28, // 5: ieccaller.PageListPointMappingRes.mappings:type_name -> ieccaller.PbDevicePointMapping
+	36, // 6: ieccaller.ClearPointMappingCacheReq.keyInfos:type_name -> ieccaller.CacheKeyInfo
+	2,  // 7: ieccaller.IecCaller.Ping:input_type -> ieccaller.Req
+	4,  // 8: ieccaller.IecCaller.SendTestCmd:input_type -> ieccaller.SendTestCmdReq
+	6,  // 9: ieccaller.IecCaller.SendReadCmd:input_type -> ieccaller.SendReadCmdReq
+	8,  // 10: ieccaller.IecCaller.SendInterrogationCmd:input_type -> ieccaller.SendInterrogationCmdReq
+	10, // 11: ieccaller.IecCaller.SendCounterInterrogationCmd:input_type -> ieccaller.SendCounterInterrogationCmdReq
+	12, // 12: ieccaller.IecCaller.SendCommand:input_type -> ieccaller.SendCommandReq
+	21, // 13: ieccaller.IecCaller.SendSingleCommand:input_type -> ieccaller.SendSingleCommandReq
+	22, // 14: ieccaller.IecCaller.SendDoubleCommand:input_type -> ieccaller.SendDoubleCommandReq
+	23, // 15: ieccaller.IecCaller.SendStepCommand:input_type -> ieccaller.SendStepCommandReq
+	24, // 16: ieccaller.IecCaller.SendSetpointNormalized:input_type -> ieccaller.SendSetpointNormalizedReq
+	25, // 17: ieccaller.IecCaller.SendSetpointScaled:input_type -> ieccaller.SendSetpointScaledReq
+	26, // 18: ieccaller.IecCaller.SendSetpointFloat:input_type -> ieccaller.SendSetpointFloatReq
+	27, // 19: ieccaller.IecCaller.SendBitstringCommand:input_type -> ieccaller.SendBitstringCommandReq
+	29, // 20: ieccaller.IecCaller.QueryPointMappingById:input_type -> ieccaller.QueryPointMappingByIdReq
+	31, // 21: ieccaller.IecCaller.QueryPointMappingByKey:input_type -> ieccaller.QueryPointMappingByKeyReq
+	33, // 22: ieccaller.IecCaller.PageListPointMapping:input_type -> ieccaller.PageListPointMappingReq
+	35, // 23: ieccaller.IecCaller.ClearPointMappingCache:input_type -> ieccaller.ClearPointMappingCacheReq
+	3,  // 24: ieccaller.IecCaller.Ping:output_type -> ieccaller.Res
+	5,  // 25: ieccaller.IecCaller.SendTestCmd:output_type -> ieccaller.SendTestCmdRes
+	7,  // 26: ieccaller.IecCaller.SendReadCmd:output_type -> ieccaller.SendReadCmdRes
+	9,  // 27: ieccaller.IecCaller.SendInterrogationCmd:output_type -> ieccaller.SendInterrogationCmdRes
+	11, // 28: ieccaller.IecCaller.SendCounterInterrogationCmd:output_type -> ieccaller.SendCounterInterrogationCmdRes
+	13, // 29: ieccaller.IecCaller.SendCommand:output_type -> ieccaller.SendCommandRes
+	14, // 30: ieccaller.IecCaller.SendSingleCommand:output_type -> ieccaller.SendSingleCommandRes
+	15, // 31: ieccaller.IecCaller.SendDoubleCommand:output_type -> ieccaller.SendDoubleCommandRes
+	16, // 32: ieccaller.IecCaller.SendStepCommand:output_type -> ieccaller.SendStepCommandRes
+	17, // 33: ieccaller.IecCaller.SendSetpointNormalized:output_type -> ieccaller.SendSetpointNormalizedRes
+	18, // 34: ieccaller.IecCaller.SendSetpointScaled:output_type -> ieccaller.SendSetpointScaledRes
+	19, // 35: ieccaller.IecCaller.SendSetpointFloat:output_type -> ieccaller.SendSetpointFloatRes
+	20, // 36: ieccaller.IecCaller.SendBitstringCommand:output_type -> ieccaller.SendBitstringCommandRes
+	30, // 37: ieccaller.IecCaller.QueryPointMappingById:output_type -> ieccaller.QueryPointMappingByIdRes
+	32, // 38: ieccaller.IecCaller.QueryPointMappingByKey:output_type -> ieccaller.QueryPointMappingByKeyRes
+	34, // 39: ieccaller.IecCaller.PageListPointMapping:output_type -> ieccaller.PageListPointMappingRes
+	37, // 40: ieccaller.IecCaller.ClearPointMappingCache:output_type -> ieccaller.ClearPointMappingCacheRes
+	24, // [24:41] is the sub-list for method output_type
+	7,  // [7:24] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_ieccaller_proto_init() }
@@ -1444,13 +2552,14 @@ func file_ieccaller_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ieccaller_proto_rawDesc), len(file_ieccaller_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   22,
+			NumEnums:      2,
+			NumMessages:   36,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_ieccaller_proto_goTypes,
 		DependencyIndexes: file_ieccaller_proto_depIdxs,
+		EnumInfos:         file_ieccaller_proto_enumTypes,
 		MessageInfos:      file_ieccaller_proto_msgTypes,
 	}.Build()
 	File_ieccaller_proto = out.File
