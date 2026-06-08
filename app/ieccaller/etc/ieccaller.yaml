@@ -35,14 +35,11 @@ IecServerConfig:
 KafkaConfig:
   Brokers:
     - 127.0.0.1:9094
-  # 推送数据Topic
+  # 推送asdu数据Topic
   Topic: asdu
-  BroadcastTopic: iec-broadcast
-  BroadcastAckTopic: iec-broadcast-ack
 MqttConfig:
   Broker:
     - "tcp://localhost:1883"
-  #  ClientId: "my-mqtt-client"
   Username: "mqtt"
   Password: "password"
   Qos: 0

@@ -34,11 +34,9 @@ type Config struct {
 	} `json:",optional"`
 
 	KafkaConfig struct {
-		Brokers           []string `json:",optional"`
-		Topic             string   `json:",optional,default=asdu"`
-		BroadcastTopic    string   `json:",optional,default=iec-broadcast"`
-		BroadcastAckTopic string   `json:",optional,default=iec-broadcast-ack"`
-		IsPush            bool     `json:",optional,default=false"`
+		Brokers []string `json:",optional"`
+		Topic   string   `json:",optional,default=asdu"`
+		IsPush  bool     `json:",optional,default=false"`
 	} `json:",optional"`
 
 	MqttConfig struct {

@@ -1578,3 +1578,36 @@ BroadcastGroupId 改为启动时自动生成 UUID 前缀 iec-caller-；PushPbBro
 ### Next Steps
 
 - None - task complete
+
+
+## Session 39: ieccaller Kafka→MQTT broadcast migration
+
+**Date**: 2026-06-08
+**Task**: ieccaller Kafka→MQTT broadcast migration
+**Branch**: `master`
+
+### Summary
+
+Migrated ieccaller cluster-mode broadcast from Kafka to MQTT: per-instance ack topics, single MqttClient (ClientID=broadcastInstanceId), PublishWithTrace OTel propagation, Tid-based reply pool correlation, QoS 1 override for cluster mode. Removed Kafka legacy (BroadcastGroupId, MqttBroadcastConfig, dual client). Updated .trellis/spec/ iec104-control-commands.md with MQTT broadcast contracts.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `81ba9e0e` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

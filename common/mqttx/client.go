@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	tracex "zero-service/common/trace"
+
 	"github.com/duke-git/lancet/v2/random"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -18,7 +20,6 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	oteltrace "go.opentelemetry.io/otel/trace"
-	tracex "zero-service/common/trace"
 )
 
 // OpenTelemetry 属性 key
@@ -334,6 +335,20 @@ func (c *Client) startSpan(ctx context.Context, msg mqtt.Message, topic string) 
 		attribute.String(attrAction, "consume"),
 	)
 	return ctx, span
+}
+
+// PublishWithTrace 发布消息并注入 OTel 链路追踪上下文。
+func (c *Client) PublishWithTrace(ctx context.Context, topic string, payload []byte) (string, error) {
+	msg := NewMessage(topic, payload)
+	tracex.Inject(ctx, tracex.NewCarrier(msg.Headers))
+	jsonBytes, err := json.Marshal(msg)
+	if err != nil {
+		return "", fmt.Errorf("[mqtt] marshal trace message failed: %w", err)
+	}
+	if err := c.Publish(ctx, topic, jsonBytes); err != nil {
+		return "", err
+	}
+	return trace.TraceIDFromContext(ctx), nil
 }
 
 // Publish 发布消息到指定主题

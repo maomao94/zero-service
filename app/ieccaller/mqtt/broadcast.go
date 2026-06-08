@@ -1,8 +1,10 @@
-package kafka
+package mqtt
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"zero-service/app/ieccaller/ieccaller"
 	"zero-service/app/ieccaller/internal/svc"
@@ -13,7 +15,6 @@ import (
 	"github.com/wendy512/go-iecp5/asdu"
 	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
-	"golang.org/x/net/context"
 )
 
 type Broadcast struct {
@@ -26,22 +27,22 @@ func NewBroadcast(svcCtx *svc.ServiceContext) *Broadcast {
 	}
 }
 
-func (l Broadcast) Consume(ctx context.Context, key, value string) error {
-	logx.WithContext(ctx).Debugf("Consume broadcast, msg:%+v", value)
+func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, topicTemplate string) error {
+	logx.WithContext(ctx).Debugf("Consume mqtt broadcast, topic:%s payload:%s", topic, string(payload))
 	if !l.svcCtx.IsBroadcast() {
-		logx.Error("not setting cluster")
+		logx.WithContext(ctx).Error("not setting cluster")
 		return nil
 	}
 	broadcastBody := &types.BroadcastBody{}
-	err := jsonx.Unmarshal([]byte(value), broadcastBody)
+	err := jsonx.Unmarshal(payload, broadcastBody)
 	if err != nil {
 		return err
 	}
-	if broadcastBody.BroadcastGroupId == l.svcCtx.BroadcastInstanceId() {
-		logx.WithContext(ctx).Debug("broadcast, ignore broadcast")
+	if broadcastBody.AckTopic == l.svcCtx.BroadcastAckTopic() {
+		logx.WithContext(ctx).Debug("mqtt broadcast, ignore self broadcast")
 		return nil
 	}
-	logx.WithContext(ctx).Infof("broadcast, method:%s", broadcastBody.Method)
+	logx.WithContext(ctx).Infof("mqtt broadcast, method:%s", broadcastBody.Method)
 	switch broadcastBody.Method {
 	case ieccaller.IecCaller_SendCounterInterrogationCmd_FullMethodName:
 		in := &ieccaller.SendCounterInterrogationCmdReq{}
@@ -126,16 +127,16 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 		}
 		ack, err := cli.SendSingleCmd(ctx, uint16(in.Coa), asdu.InfoObjAddr(in.Ioa), in.Value, in.WithTime, client.WithAck())
 		if err != nil {
-			l.publishAckReply(ctx, key, broadcastBody.BroadcastGroupId, broadcastBody.Method, false, "", err)
+			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", err)
 			return nil
 		}
 		value, ok := ack.Value.(bool)
 		if !ok {
-			l.publishAckReply(ctx, key, broadcastBody.BroadcastGroupId, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
+			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
 			return nil
 		}
 		resJson, _ := jsonx.Marshal(&ieccaller.SendSingleCommandRes{Value: value})
-		l.publishAckReply(ctx, key, broadcastBody.BroadcastGroupId, broadcastBody.Method, true, string(resJson), nil)
+		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, string(resJson), nil)
 	case ieccaller.IecCaller_SendDoubleCommand_FullMethodName:
 		in := &ieccaller.SendDoubleCommandReq{}
 		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
@@ -149,16 +150,16 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 		}
 		ack, err := cli.SendDoubleCmd(ctx, uint16(in.Coa), asdu.InfoObjAddr(in.Ioa), asdu.DoubleCommand(in.Value), in.WithTime, client.WithAck())
 		if err != nil {
-			l.publishAckReply(ctx, key, broadcastBody.BroadcastGroupId, broadcastBody.Method, false, "", err)
+			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", err)
 			return nil
 		}
 		value, ok := ack.Value.(asdu.DoubleCommand)
 		if !ok {
-			l.publishAckReply(ctx, key, broadcastBody.BroadcastGroupId, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
+			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
 			return nil
 		}
 		resJson, _ := jsonx.Marshal(&ieccaller.SendDoubleCommandRes{Value: ieccaller.DoubleCommandValue(int32(value))})
-		l.publishAckReply(ctx, key, broadcastBody.BroadcastGroupId, broadcastBody.Method, true, string(resJson), nil)
+		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, string(resJson), nil)
 	case ieccaller.IecCaller_SendStepCommand_FullMethodName:
 		in := &ieccaller.SendStepCommandReq{}
 		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
@@ -172,16 +173,16 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 		}
 		ack, err := cli.SendStepCmd(ctx, uint16(in.Coa), asdu.InfoObjAddr(in.Ioa), asdu.StepCommand(in.Value), in.WithTime, client.WithAck())
 		if err != nil {
-			l.publishAckReply(ctx, key, broadcastBody.BroadcastGroupId, broadcastBody.Method, false, "", err)
+			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", err)
 			return nil
 		}
 		value, ok := ack.Value.(asdu.StepCommand)
 		if !ok {
-			l.publishAckReply(ctx, key, broadcastBody.BroadcastGroupId, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
+			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
 			return nil
 		}
 		resJson, _ := jsonx.Marshal(&ieccaller.SendStepCommandRes{Value: int32(value)})
-		l.publishAckReply(ctx, key, broadcastBody.BroadcastGroupId, broadcastBody.Method, true, string(resJson), nil)
+		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, string(resJson), nil)
 	case ieccaller.IecCaller_SendSetpointNormalized_FullMethodName:
 		in := &ieccaller.SendSetpointNormalizedReq{}
 		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
@@ -195,16 +196,16 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 		}
 		ack, err := cli.SendSetpointNormalizedCmd(ctx, uint16(in.Coa), asdu.InfoObjAddr(in.Ioa), int16(in.Value), in.WithTime, client.WithAck())
 		if err != nil {
-			l.publishAckReply(ctx, key, broadcastBody.BroadcastGroupId, broadcastBody.Method, false, "", err)
+			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", err)
 			return nil
 		}
 		value, ok := ack.Value.(asdu.Normalize)
 		if !ok {
-			l.publishAckReply(ctx, key, broadcastBody.BroadcastGroupId, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
+			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
 			return nil
 		}
 		resJson, _ := jsonx.Marshal(&ieccaller.SendSetpointNormalizedRes{Value: int32(value)})
-		l.publishAckReply(ctx, key, broadcastBody.BroadcastGroupId, broadcastBody.Method, true, string(resJson), nil)
+		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, string(resJson), nil)
 	case ieccaller.IecCaller_SendSetpointScaled_FullMethodName:
 		in := &ieccaller.SendSetpointScaledReq{}
 		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
@@ -218,16 +219,16 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 		}
 		ack, err := cli.SendSetpointScaledCmd(ctx, uint16(in.Coa), asdu.InfoObjAddr(in.Ioa), int16(in.Value), in.WithTime, client.WithAck())
 		if err != nil {
-			l.publishAckReply(ctx, key, broadcastBody.BroadcastGroupId, broadcastBody.Method, false, "", err)
+			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", err)
 			return nil
 		}
 		value, ok := ack.Value.(int16)
 		if !ok {
-			l.publishAckReply(ctx, key, broadcastBody.BroadcastGroupId, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
+			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
 			return nil
 		}
 		resJson, _ := jsonx.Marshal(&ieccaller.SendSetpointScaledRes{Value: int32(value)})
-		l.publishAckReply(ctx, key, broadcastBody.BroadcastGroupId, broadcastBody.Method, true, string(resJson), nil)
+		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, string(resJson), nil)
 	case ieccaller.IecCaller_SendSetpointFloat_FullMethodName:
 		in := &ieccaller.SendSetpointFloatReq{}
 		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
@@ -241,16 +242,16 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 		}
 		ack, err := cli.SendSetpointFloatCmd(ctx, uint16(in.Coa), asdu.InfoObjAddr(in.Ioa), float32(in.Value), in.WithTime, client.WithAck())
 		if err != nil {
-			l.publishAckReply(ctx, key, broadcastBody.BroadcastGroupId, broadcastBody.Method, false, "", err)
+			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", err)
 			return nil
 		}
 		value, ok := ack.Value.(float32)
 		if !ok {
-			l.publishAckReply(ctx, key, broadcastBody.BroadcastGroupId, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
+			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
 			return nil
 		}
 		resJson, _ := jsonx.Marshal(&ieccaller.SendSetpointFloatRes{Value: float64(value)})
-		l.publishAckReply(ctx, key, broadcastBody.BroadcastGroupId, broadcastBody.Method, true, string(resJson), nil)
+		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, string(resJson), nil)
 	case ieccaller.IecCaller_SendBitstringCommand_FullMethodName:
 		in := &ieccaller.SendBitstringCommandReq{}
 		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
@@ -264,16 +265,16 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 		}
 		ack, err := cli.SendBitstringCmd(ctx, uint16(in.Coa), asdu.InfoObjAddr(in.Ioa), uint32(in.Value), in.WithTime, client.WithAck())
 		if err != nil {
-			l.publishAckReply(ctx, key, broadcastBody.BroadcastGroupId, broadcastBody.Method, false, "", err)
+			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", err)
 			return nil
 		}
 		value, ok := ack.Value.(uint32)
 		if !ok {
-			l.publishAckReply(ctx, key, broadcastBody.BroadcastGroupId, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
+			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
 			return nil
 		}
 		resJson, _ := jsonx.Marshal(&ieccaller.SendBitstringCommandRes{Value: uint64(value)})
-		l.publishAckReply(ctx, key, broadcastBody.BroadcastGroupId, broadcastBody.Method, true, string(resJson), nil)
+		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, string(resJson), nil)
 	case ieccaller.IecCaller_ClearPointMappingCache_FullMethodName:
 		in := &ieccaller.ClearPointMappingCacheReq{}
 		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
@@ -313,8 +314,8 @@ func (l Broadcast) Consume(ctx context.Context, key, value string) error {
 	return nil
 }
 
-func (l Broadcast) publishAckReply(ctx context.Context, ackKey, originGroupId, method string, success bool, responseBody string, ackErr error) {
-	if ackKey == "" {
+func (l *Broadcast) publishAckReply(ctx context.Context, tId, ackTopic, method string, success bool, responseBody string, ackErr error) {
+	if tId == "" {
 		return
 	}
 	errorKind := ""
@@ -331,23 +332,29 @@ func (l Broadcast) publishAckReply(ctx context.Context, ackKey, originGroupId, m
 		}
 	}
 	ack := &types.BroadcastAckBody{
-		BroadcastGroupId: originGroupId,
-		Method:           method,
-		Success:          success,
-		ResponseBody:     responseBody,
-		Error:            errMsg,
-		ErrorKind:        errorKind,
+		Tid:          tId,
+		Method:       method,
+		Success:      success,
+		ResponseBody: responseBody,
+		Error:        errMsg,
+		ErrorKind:    errorKind,
 	}
 	data, err := jsonx.Marshal(ack)
 	if err != nil {
 		logx.WithContext(ctx).Errorf("marshal ack error: %v", err)
 		return
 	}
-	if l.svcCtx.KafkaBroadcastAckPusher == nil {
-		logx.WithContext(ctx).Errorf("kafka broadcast ack pusher is nil")
+	if l.svcCtx.MqttClient == nil {
+		logx.WithContext(ctx).Errorf("mqtt broadcast client is nil")
 		return
 	}
-	if err := l.svcCtx.KafkaBroadcastAckPusher.PushWithKey(ctx, ackKey, string(data)); err != nil {
-		logx.WithContext(ctx).Errorf("push ack error: %v", err)
+	pushCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	if ackTopic == "" {
+		logx.WithContext(ctx).Errorf("broadcast ack topic is empty")
+		return
+	}
+	if _, err := l.svcCtx.MqttClient.PublishWithTrace(pushCtx, ackTopic, data); err != nil {
+		logx.WithContext(pushCtx).Errorf("failed to push ack to mqtt: %v", err)
 	}
 }

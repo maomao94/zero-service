@@ -9,19 +9,20 @@ import (
 )
 
 type BroadcastBody struct {
-	BroadcastGroupId string `json:"broadcastGroupId"`
-	Method           string `json:"method"`
-	Body             string `json:"body"`
+	Tid      string `json:"tId,omitempty"`
+	AckTopic string `json:"ackTopic"`
+	Method   string `json:"method"`
+	Body     string `json:"body"`
 }
 
 // BroadcastAckBody 广播ACK响应体，用于集群模式下回传指令执行结果
 type BroadcastAckBody struct {
-	BroadcastGroupId string `json:"broadcastGroupId"`
-	Method           string `json:"method"`
-	Success          bool   `json:"success"`
-	ResponseBody     string `json:"responseBody"`
-	Error            string `json:"error,omitempty"`
-	ErrorKind        string `json:"errorKind,omitempty"` // timeout|duplicate|rejected|cot_error|unknown
+	Tid          string `json:"tId"`
+	Method       string `json:"method"`
+	Success      bool   `json:"success"`
+	ResponseBody string `json:"responseBody"`
+	Error        string `json:"error,omitempty"`
+	ErrorKind    string `json:"errorKind,omitempty"`
 }
 
 type MsgBody struct {

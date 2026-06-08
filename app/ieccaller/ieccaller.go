@@ -8,7 +8,7 @@ import (
 	"zero-service/app/ieccaller/internal/iec"
 	"zero-service/app/ieccaller/internal/server"
 	"zero-service/app/ieccaller/internal/svc"
-	"zero-service/app/ieccaller/kafka"
+	iecmqtt "zero-service/app/ieccaller/mqtt"
 	interceptor "zero-service/common/Interceptor/rpcserver"
 	_ "zero-service/common/carbonx"
 	"zero-service/common/iec104/client"
@@ -16,10 +16,8 @@ import (
 	"zero-service/common/tool"
 	"zero-service/facade/streamevent/streamevent"
 
-	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
-	"github.com/zeromicro/go-queue/kq"
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/proc"
@@ -44,7 +42,6 @@ func main() {
 	conf.MustLoad(*configFile, &c)
 	proc.SetTimeToForceQuit(c.GracePeriod)
 	ctx := svc.NewServiceContext(c)
-	serviceConfig := c.ServiceConf
 
 	// Print Go version
 	tool.PrintGoVersion()
@@ -73,9 +70,9 @@ func main() {
 			"gRPC_port":                 strutil.After(c.RpcServerConf.ListenOn, ":"),
 			"preserved.register.source": "go-zero",
 			"deployMode":                c.DeployMode,
-			"broadcastTopic":            c.KafkaConfig.BroadcastTopic,
-			"broadcastGroupId":          ctx.BroadcastInstanceId(),
-			"isPush":                    convertor.ToString(c.KafkaConfig.IsPush),
+			"broadcastTopic":            ctx.BroadcastTopic(),
+			"broadcastAckTopic":         ctx.BroadcastAckTopic(),
+			"broadcastInstanceId":       ctx.BroadcastInstanceId(),
 		}
 		opts := nacosx.NewNacosConfig(c.NacosConfig.ServiceName, c.ListenOn, sc, cc, nacosx.WithMetadata(m))
 		_ = nacosx.RegisterService(opts)
@@ -95,40 +92,19 @@ func main() {
 	// cron
 	serviceGroup.Add(cron.NewCronService(ctx))
 
-	// kafka 广播队列
-	if len(c.KafkaConfig.Brokers) > 0 {
-		kqConf := kq.KqConf{
-			ServiceConf:   serviceConfig,
-			Brokers:       c.KafkaConfig.Brokers,
-			Group:         ctx.BroadcastInstanceId(),
-			Topic:         c.KafkaConfig.BroadcastTopic,
-			Offset:        "last",
-			Conns:         3,
-			Consumers:     3,
-			Processors:    18,
-			MinBytes:      10240,
-			MaxBytes:      10485760,
-			ForceCommit:   true,
-			CommitInOrder: false,
+	if ctx.MqttClient != nil && ctx.IsBroadcast() {
+		if err := ctx.MqttClient.AddHandlerFunc(
+			ctx.BroadcastTopic(),
+			iecmqtt.NewBroadcast(ctx).Consume,
+		); err != nil {
+			logx.Must(err)
 		}
-		serviceGroup.Add(kq.MustNewQueue(kqConf, kafka.NewBroadcast(ctx)))
-
-		// kafka 广播ACK队列
-		ackKqConf := kq.KqConf{
-			ServiceConf:   serviceConfig,
-			Brokers:       c.KafkaConfig.Brokers,
-			Group:         ctx.BroadcastInstanceId() + "-ack",
-			Topic:         c.KafkaConfig.BroadcastAckTopic,
-			Offset:        "last",
-			Conns:         3,
-			Consumers:     3,
-			Processors:    18,
-			MinBytes:      10240,
-			MaxBytes:      10485760,
-			ForceCommit:   true,
-			CommitInOrder: false,
+		if err := ctx.MqttClient.AddHandlerFunc(
+			ctx.BroadcastAckTopic(),
+			iecmqtt.NewBroadcastAck(ctx).Consume,
+		); err != nil {
+			logx.Must(err)
 		}
-		serviceGroup.Add(kq.MustNewQueue(ackKqConf, kafka.NewBroadcastAck(ctx)))
 	}
 
 	logx.Infof("Deploy mode: %s\n", c.DeployMode)

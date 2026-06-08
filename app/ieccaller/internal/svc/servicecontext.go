@@ -32,16 +32,16 @@ import (
 )
 
 type ServiceContext struct {
-	Config                  config.Config
-	ClientManager           *client.ClientManager
-	KafkaASDUPusher         *kq.Pusher
-	KafkaBroadcastPusher    *kq.Pusher
-	KafkaBroadcastAckPusher *kq.Pusher
-	BroadcastReplyPool      *antsx.ReplyPool[*types.BroadcastAckBody]
-	MqttClient              *mqttx.Client
-	StreamEventCli          streamevent.StreamEventClient
-	ChunkAsduPusher         *executorx.ChunkMessagesPusher
-	broadcastInstanceId     string
+	Config              config.Config
+	ClientManager       *client.ClientManager
+	KafkaASDUPusher     *kq.Pusher
+	BroadcastReplyPool  *antsx.ReplyPool[*types.BroadcastAckBody]
+	MqttClient          *mqttx.Client
+	StreamEventCli      streamevent.StreamEventClient
+	ChunkAsduPusher     *executorx.ChunkMessagesPusher
+	broadcastInstanceId string
+	broadcastTopic      string
+	broadcastAckTopic   string
 
 	DevicePointMappingModel model.DevicePointMappingModel
 }
@@ -55,25 +55,32 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Config:        c,
 		ClientManager: client.NewClientManager(),
 	}
-	if svcCtx.IsBroadcast() && len(c.KafkaConfig.Brokers) == 0 {
-		logx.Must(fmt.Errorf("broadcast is enabled, but kafka config is empty"))
+	if svcCtx.IsBroadcast() && len(c.MqttConfig.Broker) == 0 {
+		logx.Must(fmt.Errorf("broadcast is enabled, but mqtt config is empty"))
 	}
-	if uuid, err := tool.SimpleUUID(); err == nil {
-		svcCtx.broadcastInstanceId = "iec-caller-" + uuid
-	} else {
-		logx.Must(fmt.Errorf("generate broadcast instance id failed: %w", err))
+	uid, err := tool.SimpleUUID()
+	if err != nil {
+		logx.Must(fmt.Errorf("generate instance id failed: %w", err))
 	}
+	svcCtx.broadcastInstanceId = "iec-caller-" + uid
 	if len(c.KafkaConfig.Brokers) > 0 {
 		svcCtx.KafkaASDUPusher = kq.NewPusher(c.KafkaConfig.Brokers, c.KafkaConfig.Topic)
-		svcCtx.KafkaBroadcastPusher = kq.NewPusher(c.KafkaConfig.Brokers, c.KafkaConfig.BroadcastTopic)
-		svcCtx.KafkaBroadcastAckPusher = kq.NewPusher(c.KafkaConfig.Brokers, c.KafkaConfig.BroadcastAckTopic)
+	}
+	if len(c.MqttConfig.Broker) > 0 {
+		cfg := c.MqttConfig.MqttConfig
+		cfg.ClientID = svcCtx.broadcastInstanceId
+		if svcCtx.IsBroadcast() {
+			cfg.Qos = 1
+		}
+		svcCtx.MqttClient = mqttx.MustNewClient(cfg)
+	}
+	if svcCtx.IsBroadcast() {
+		svcCtx.broadcastTopic = "iec/broadcast"
+		svcCtx.broadcastAckTopic = fmt.Sprintf("iec/broadcast-ack/%s", svcCtx.broadcastInstanceId)
 		svcCtx.BroadcastReplyPool = antsx.NewReplyPool[*types.BroadcastAckBody](
 			antsx.WithName(svcCtx.broadcastInstanceId),
 			antsx.WithDefaultTTL(10*time.Second),
 		)
-	}
-	if len(c.MqttConfig.Broker) > 0 {
-		svcCtx.MqttClient = mqttx.MustNewClient(c.MqttConfig.MqttConfig)
 	}
 	if len(c.StreamEventConf.Endpoints) > 0 || len(c.StreamEventConf.Target) > 0 {
 		streamEventCli := streamevent.NewStreamEventClient(zrpc.MustNewClient(c.StreamEventConf,
@@ -288,17 +295,13 @@ func (svc ServiceContext) PushPbBroadcastWithAck(ctx context.Context, method str
 		return fmt.Errorf("broadcast reply pool is nil")
 	}
 
-	traceId, err := tool.SimpleUUID()
-	if err != nil {
-		return fmt.Errorf("generate traceId error: %w", err)
-	}
-
-	promise, err := svc.BroadcastReplyPool.Register(traceId)
+	tId, _ := tool.SimpleUUID()
+	promise, err := svc.BroadcastReplyPool.Register(tId)
 	if err != nil {
 		return fmt.Errorf("register reply pool error: %w", err)
 	}
 
-	if err := svc.pushBroadcast(ctx, method, in, traceId); err != nil {
+	if err := svc.pushBroadcast(ctx, method, in, tId); err != nil {
 		return err
 	}
 
@@ -324,17 +327,9 @@ func (svc ServiceContext) PushPbBroadcastWithAck(ctx context.Context, method str
 	return nil
 }
 
-func (svc ServiceContext) pushBroadcast(ctx context.Context, method string, in any, optTraceId ...string) error {
-	if svc.KafkaBroadcastPusher == nil {
-		return fmt.Errorf("kafka broadcast pusher is nil")
-	}
-
-	traceId := ""
-	if len(optTraceId) > 0 {
-		traceId = optTraceId[0]
-	} else {
-		id, _ := tool.SimpleUUID()
-		traceId = id
+func (svc ServiceContext) pushBroadcast(ctx context.Context, method string, in any, optCorrelationId ...string) error {
+	if svc.MqttClient == nil {
+		return fmt.Errorf("mqtt client is nil")
 	}
 
 	pbData, err := json.Marshal(in)
@@ -342,9 +337,12 @@ func (svc ServiceContext) pushBroadcast(ctx context.Context, method string, in a
 		return err
 	}
 	data := &types.BroadcastBody{
-		BroadcastGroupId: svc.broadcastInstanceId,
-		Method:           method,
-		Body:             string(pbData),
+		AckTopic: svc.broadcastAckTopic,
+		Method:   method,
+		Body:     string(pbData),
+	}
+	if len(optCorrelationId) > 0 {
+		data.Tid = optCorrelationId[0]
 	}
 	byteData, err := json.Marshal(data)
 	if err != nil {
@@ -353,8 +351,8 @@ func (svc ServiceContext) pushBroadcast(ctx context.Context, method string, in a
 
 	pushCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	if err := svc.KafkaBroadcastPusher.PushWithKey(pushCtx, traceId, string(byteData)); err != nil {
-		logx.WithContext(pushCtx).Errorf("failed to push broadcast to kafka: %v", err)
+	if _, err := svc.MqttClient.PublishWithTrace(pushCtx, svc.broadcastTopic, byteData); err != nil {
+		logx.WithContext(pushCtx).Errorf("failed to push broadcast to mqtt: %v", err)
 		return err
 	}
 	return nil
@@ -368,24 +366,20 @@ func (svc ServiceContext) BroadcastInstanceId() string {
 	return svc.broadcastInstanceId
 }
 
+func (svc ServiceContext) BroadcastTopic() string {
+	return svc.broadcastTopic
+}
+
+func (svc ServiceContext) BroadcastAckTopic() string {
+	return svc.broadcastAckTopic
+}
+
 // Close 关闭所有资源
 func (svc ServiceContext) Close() {
 	if svc.KafkaASDUPusher != nil {
 		logx.Infof("closing kafka asdu pusher")
 		if err := svc.KafkaASDUPusher.Close(); err != nil {
 			logx.Errorf("failed to close kafka asdu pusher: %v", err)
-		}
-	}
-	if svc.KafkaBroadcastPusher != nil {
-		logx.Infof("closing kafka broadcast pusher")
-		if err := svc.KafkaBroadcastPusher.Close(); err != nil {
-			logx.Errorf("failed to close kafka broadcast pusher: %v", err)
-		}
-	}
-	if svc.KafkaBroadcastAckPusher != nil {
-		logx.Infof("closing kafka broadcast ack pusher")
-		if err := svc.KafkaBroadcastAckPusher.Close(); err != nil {
-			logx.Errorf("failed to close kafka broadcast ack pusher: %v", err)
 		}
 	}
 	if svc.BroadcastReplyPool != nil {

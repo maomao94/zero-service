@@ -2,15 +2,11 @@ package logic
 
 import (
 	"context"
-	"zero-service/common/mqttx"
 
 	"zero-service/app/bridgemqtt/bridgemqtt"
 	"zero-service/app/bridgemqtt/internal/svc"
 
-	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/trace"
-	tracex "zero-service/common/trace"
 )
 
 type PublishWithTraceLogic struct {
@@ -29,14 +25,7 @@ func NewPublishWithTraceLogic(ctx context.Context, svcCtx *svc.ServiceContext) *
 
 // 带 traceId 的发布消息 内部服务链路追踪
 func (l *PublishWithTraceLogic) PublishWithTrace(in *bridgemqtt.PublishWithTraceReq) (*bridgemqtt.PublishWithTraceRes, error) {
-	traceID := trace.TraceIDFromContext(l.ctx)
-	msg := mqttx.NewMessage(in.Topic, in.Payload)
-	tracex.Inject(l.ctx, tracex.NewCarrier(msg.Headers))
-	payload, err := jsonx.Marshal(msg)
-	if err != nil {
-		return nil, err
-	}
-	err = l.svcCtx.MqttClient.Publish(l.ctx, in.Topic, payload)
+	traceID, err := l.svcCtx.MqttClient.PublishWithTrace(l.ctx, in.Topic, in.Payload)
 	if err != nil {
 		return nil, err
 	}

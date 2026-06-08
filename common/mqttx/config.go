@@ -11,7 +11,7 @@ type MqttConfig struct {
 	// Password 密码（可选）
 	Password string `json:",optional"`
 	// Qos 服务质量等级 0=最多一次, 1=至少一次, 2=恰好一次，默认 1
-	Qos byte
+	Qos byte `json:",optional"`
 	// Timeout 连接和操作超时时间（毫秒），默认 30000
 	Timeout int64 `json:",default=30000"`
 	// KeepAlive 心跳间隔（毫秒），默认 60000

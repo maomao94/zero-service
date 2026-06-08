@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 38
-- **Last Active**: 2026-06-05
+- **Total Sessions**: 39
+- **Last Active**: 2026-06-08
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1580 | Active |
+| `journal-1.md` | ~1613 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 39 | 2026-06-08 | ieccaller Kafka→MQTT broadcast migration | `81ba9e0e` | `master` |
 | 38 | 2026-06-05 | ieccaller 集群广播优化 | `942654d6`, `0740c77f` | `master` |
 | 37 | 2026-06-05 | ieccaller 集群指令 ACK 回传 | `cb5d9996`, `fc25f7d6` | `master` |
 | 36 | 2026-06-05 | 全部Send指令ACK replyPool + WithAck() option + helpers | `133804a7`, `cc40cc43` | `master` |
