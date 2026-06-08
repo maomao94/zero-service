@@ -70,8 +70,10 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 			return nil
 		}
 		if err = cli.SendInterrogationCmd(uint16(in.Coa)); err != nil {
-			return err
+			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", err)
+			return nil
 		}
+		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, "{}", nil)
 	case ieccaller.IecCaller_SendReadCmd_FullMethodName:
 		in := &ieccaller.SendReadCmdReq{}
 		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
@@ -84,8 +86,10 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 			return nil
 		}
 		if err = cli.SendReadCmd(uint16(in.Coa), uint(in.Ioa)); err != nil {
-			return err
+			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", err)
+			return nil
 		}
+		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, "{}", nil)
 	case ieccaller.IecCaller_SendTestCmd_FullMethodName:
 		in := &ieccaller.SendTestCmdReq{}
 		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
