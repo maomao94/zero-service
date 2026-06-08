@@ -1021,6 +1021,25 @@ IEC 104 控制命令有两类后续反馈：
 4. 将新 `body.value` 与期望状态对比。
 5. 如果只收到 gRPC 成功但没有状态更新，应按业务超时处理。
 
+### 7.13.1 错误码
+
+gRPC 调用失败时，返回的错误码和 HTTP 状态码如下：
+
+| 场景 | 业务错误码 | HTTP | gRPC | 说明 |
+| --- | --- | --- | --- | --- |
+| 设备拒绝命令（isNegative=true） | 105102 | 409 | FailedPrecondition | 从站明确拒绝，如 UnknownIOA、UnknownTypeID |
+| ACK 超时 | 100997 | 504 | DeadlineExceeded | 从站未在规定时间内返回回执 |
+| 同一点位重复下发 | 105103 | 409 | Aborted | 同一控制点已有未完成命令 |
+| 找不到 IEC 客户端 | 106101 | 503 | Unavailable | 未连接到目标从站 |
+| 获取客户端失败 | 106101 | 503 | Unavailable | ClientManager 返回错误 |
+| 第三方服务异常 | 106102 | 503 | Unavailable | 其他 IEC 协议层错误 |
+
+错误消息格式示例：
+
+```
+IEC命令被设备拒绝: command rejected: cot=UnknownTypeID isNegative=true typeId=46 coa=1 ioa=1001
+```
+
 ### 7.14 全量 TypeId 双向对照表
 
 | TypeId | 方向 | ASDU | Body 结构体 | 推荐接口 |
