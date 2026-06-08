@@ -214,11 +214,12 @@ message PbDevicePointMapping {
   string deviceName = 8;
   string tdTableType = 9;
   int32 enablePush = 10; // 0: 禁用推送, 1: 启用推送
-  string ext1 = 11;
-  string ext2 = 12;
-  string ext3 = 13;
-  string ext4 = 14;
-  string ext5 = 15;
+  string description = 11; // 点位描述信息
+  string ext1 = 12;
+  string ext2 = 13;
+  string ext3 = 14;
+  string ext4 = 15;
+  string ext5 = 16;
 }
 
 message QueryPointMappingByIdReq {

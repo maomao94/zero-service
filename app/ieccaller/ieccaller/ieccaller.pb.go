@@ -1626,12 +1626,13 @@ type PbDevicePointMapping struct {
 	DeviceId      string                 `protobuf:"bytes,7,opt,name=deviceId,proto3" json:"deviceId,omitempty"`
 	DeviceName    string                 `protobuf:"bytes,8,opt,name=deviceName,proto3" json:"deviceName,omitempty"`
 	TdTableType   string                 `protobuf:"bytes,9,opt,name=tdTableType,proto3" json:"tdTableType,omitempty"`
-	EnablePush    int32                  `protobuf:"varint,10,opt,name=enablePush,proto3" json:"enablePush,omitempty"` // 0: 禁用推送, 1: 启用推送
-	Ext1          string                 `protobuf:"bytes,11,opt,name=ext1,proto3" json:"ext1,omitempty"`
-	Ext2          string                 `protobuf:"bytes,12,opt,name=ext2,proto3" json:"ext2,omitempty"`
-	Ext3          string                 `protobuf:"bytes,13,opt,name=ext3,proto3" json:"ext3,omitempty"`
-	Ext4          string                 `protobuf:"bytes,14,opt,name=ext4,proto3" json:"ext4,omitempty"`
-	Ext5          string                 `protobuf:"bytes,15,opt,name=ext5,proto3" json:"ext5,omitempty"`
+	EnablePush    int32                  `protobuf:"varint,10,opt,name=enablePush,proto3" json:"enablePush,omitempty"`  // 0: 禁用推送, 1: 启用推送
+	Description   string                 `protobuf:"bytes,11,opt,name=description,proto3" json:"description,omitempty"` // 点位描述信息
+	Ext1          string                 `protobuf:"bytes,12,opt,name=ext1,proto3" json:"ext1,omitempty"`
+	Ext2          string                 `protobuf:"bytes,13,opt,name=ext2,proto3" json:"ext2,omitempty"`
+	Ext3          string                 `protobuf:"bytes,14,opt,name=ext3,proto3" json:"ext3,omitempty"`
+	Ext4          string                 `protobuf:"bytes,15,opt,name=ext4,proto3" json:"ext4,omitempty"`
+	Ext5          string                 `protobuf:"bytes,16,opt,name=ext5,proto3" json:"ext5,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1734,6 +1735,13 @@ func (x *PbDevicePointMapping) GetEnablePush() int32 {
 		return x.EnablePush
 	}
 	return 0
+}
+
+func (x *PbDevicePointMapping) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
 }
 
 func (x *PbDevicePointMapping) GetExt1() string {
@@ -2347,7 +2355,7 @@ const file_ieccaller_proto_rawDesc = "" +
 	"\x03coa\x18\x03 \x01(\rR\x03coa\x12\x10\n" +
 	"\x03ioa\x18\x04 \x01(\rR\x03ioa\x12\x14\n" +
 	"\x05value\x18\x05 \x01(\x04R\x05value\x12\x1a\n" +
-	"\bwithTime\x18\x06 \x01(\bR\bwithTime\"\x8c\x03\n" +
+	"\bwithTime\x18\x06 \x01(\bR\bwithTime\"\xae\x03\n" +
 	"\x14PbDevicePointMapping\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1e\n" +
 	"\n" +
@@ -2369,12 +2377,13 @@ const file_ieccaller_proto_rawDesc = "" +
 	"\n" +
 	"enablePush\x18\n" +
 	" \x01(\x05R\n" +
-	"enablePush\x12\x12\n" +
-	"\x04ext1\x18\v \x01(\tR\x04ext1\x12\x12\n" +
-	"\x04ext2\x18\f \x01(\tR\x04ext2\x12\x12\n" +
-	"\x04ext3\x18\r \x01(\tR\x04ext3\x12\x12\n" +
-	"\x04ext4\x18\x0e \x01(\tR\x04ext4\x12\x12\n" +
-	"\x04ext5\x18\x0f \x01(\tR\x04ext5\"*\n" +
+	"enablePush\x12 \n" +
+	"\vdescription\x18\v \x01(\tR\vdescription\x12\x12\n" +
+	"\x04ext1\x18\f \x01(\tR\x04ext1\x12\x12\n" +
+	"\x04ext2\x18\r \x01(\tR\x04ext2\x12\x12\n" +
+	"\x04ext3\x18\x0e \x01(\tR\x04ext3\x12\x12\n" +
+	"\x04ext4\x18\x0f \x01(\tR\x04ext4\x12\x12\n" +
+	"\x04ext5\x18\x10 \x01(\tR\x04ext5\"*\n" +
 	"\x18QueryPointMappingByIdReq\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\"U\n" +
 	"\x18QueryPointMappingByIdRes\x129\n" +
