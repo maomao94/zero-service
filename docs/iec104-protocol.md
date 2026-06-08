@@ -841,8 +841,6 @@ print(point_key, body["value"])
 | `value` | 各接口不同 | 命令值。 |
 | `withTime` | bool | `false` 使用不带时标 TypeId，`true` 使用带 CP56Time2a 时标 TypeId。 |
 
-> **注意**：`SendReadCmdReq` 和 `SendInterrogationCmdReq` 中的 `port` 字段当前使用 `int32` 类型，与其他接口的 `uint32` 不一致。建议后续统一为 `uint32`。
-
 ### 7.4 单点命令 `SendSingleCommand`
 
 ```json
