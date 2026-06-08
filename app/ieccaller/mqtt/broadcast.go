@@ -12,6 +12,7 @@ import (
 	"zero-service/common/iec104/client"
 	"zero-service/common/iec104/types"
 
+	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/wendy512/go-iecp5/asdu"
 	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -250,17 +251,22 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 			logx.WithContext(ctx).Errorf("get client error: %v", err)
 			return nil
 		}
-		ack, err := cli.SendSetpointFloatCmd(ctx, uint16(in.Coa), asdu.InfoObjAddr(in.Ioa), in.Value, in.WithTime, client.WithAck())
+		fv, err := convertor.ToFloat(in.Value)
+		if err != nil {
+			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", fmt.Errorf("invalid float value: %s", in.Value))
+			return nil
+		}
+		ack, err := cli.SendSetpointFloatCmd(ctx, uint16(in.Coa), asdu.InfoObjAddr(in.Ioa), float32(fv), in.WithTime, client.WithAck())
 		if err != nil {
 			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", err)
 			return nil
 		}
-		value, ok := ack.Value.(float32)
+		ackValue, ok := ack.Value.(float32)
 		if !ok {
 			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
 			return nil
 		}
-		resJson, _ := jsonx.Marshal(&ieccaller.SendSetpointFloatRes{Value: value})
+		resJson, _ := jsonx.Marshal(&ieccaller.SendSetpointFloatRes{Value: convertor.ToString(ackValue)})
 		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, string(resJson), nil)
 	case ieccaller.IecCaller_SendBitstringCommand_FullMethodName:
 		in := &ieccaller.SendBitstringCommandReq{}

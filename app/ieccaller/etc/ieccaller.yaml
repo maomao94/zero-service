@@ -8,7 +8,7 @@ Log:
   Encoding: plain
   #  Mode: file
   Path: /opt/logs/ieccaller.rpc
-  Level: info
+  Level: debug
   KeepDays: 300
 NacosConfig:
   IsRegister: false

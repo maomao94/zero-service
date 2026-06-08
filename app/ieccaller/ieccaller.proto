@@ -121,7 +121,7 @@ message SendSetpointScaledRes {
 }
 
 message SendSetpointFloatRes {
-  float value = 1; // 从站回显的短浮点设点值（IEEE 754 单精度浮点）
+  string value = 1; // 从站回显的短浮点设点值（IEEE 754 单精度浮点，格式化为字符串）
 }
 
 message SendBitstringCommandRes {
@@ -190,7 +190,7 @@ message SendSetpointFloatReq {
   uint32 port = 2;
   uint32 coa = 3;
   uint32 ioa = 4;
-  float value = 5;
+  string value = 5;
   bool withTime = 6; // true=带CP56Time2a时标(C_SE_TC_1=63), false=不带(C_SE_NC_1=50)
 }
 
