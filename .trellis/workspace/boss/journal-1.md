@@ -1651,3 +1651,40 @@ Migrated ieccaller cluster-mode broadcast from Kafka to MQTT: per-instance ack t
 ### Next Steps
 
 - None - task complete
+
+
+## Session 41: ieccaller 集群 ACK 回复与文档完善
+
+**Date**: 2026-06-08
+**Task**: ieccaller 集群 ACK 回复与文档完善
+**Branch**: `master`
+
+### Summary
+
+1. 所有 fire-and-forget 命令集群模式改用 PushPbBroadcastWithAck + publishAckReply 2. 修复 cli != nil 发送成功后 fall through 返回错误的 bug 3. publishAckReply 增加关键日志（tId/method/success/errorKind） 4. iec104-protocol.md 新增 §7.13.1 错误码对照表 5. iec104.md 补上 7 个带类型命令和集群 ACK 行为 6. 更新 iec104-control-commands spec 集群广播契约
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d97d6da7` | (see git log) |
+| `c7691ec3` | (see git log) |
+| `2f2936b3` | (see git log) |
+| `2696fb22` | (see git log) |
+| `409c04b8` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
