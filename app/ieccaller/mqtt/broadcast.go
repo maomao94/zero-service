@@ -250,7 +250,7 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 			logx.WithContext(ctx).Errorf("get client error: %v", err)
 			return nil
 		}
-		ack, err := cli.SendSetpointFloatCmd(ctx, uint16(in.Coa), asdu.InfoObjAddr(in.Ioa), float32(in.Value), in.WithTime, client.WithAck())
+		ack, err := cli.SendSetpointFloatCmd(ctx, uint16(in.Coa), asdu.InfoObjAddr(in.Ioa), in.Value, in.WithTime, client.WithAck())
 		if err != nil {
 			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", err)
 			return nil
@@ -260,7 +260,7 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", fmt.Errorf("unexpected ack value type"))
 			return nil
 		}
-		resJson, _ := jsonx.Marshal(&ieccaller.SendSetpointFloatRes{Value: float64(value)})
+		resJson, _ := jsonx.Marshal(&ieccaller.SendSetpointFloatRes{Value: value})
 		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, string(resJson), nil)
 	case ieccaller.IecCaller_SendBitstringCommand_FullMethodName:
 		in := &ieccaller.SendBitstringCommandReq{}

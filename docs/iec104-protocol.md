@@ -825,7 +825,7 @@ print(point_key, body["value"])
 | `SendStepCommand` | `StepCommandValue` | 47 `C_RC_NA_1` | 60 `C_RC_TA_1` | QOC 无附加定义，直接执行。 |
 | `SendSetpointNormalized` | int32 | 48 `C_SE_NA_1` | 61 `C_SE_TA_1` | QOS `Qual=0`，直接执行。 |
 | `SendSetpointScaled` | int32 | 49 `C_SE_NB_1` | 62 `C_SE_TB_1` | QOS `Qual=0`，直接执行。 |
-| `SendSetpointFloat` | double | 50 `C_SE_NC_1` | 63 `C_SE_TC_1` | QOS `Qual=0`，直接执行。 |
+| `SendSetpointFloat` | float | 50 `C_SE_NC_1` | 63 `C_SE_TC_1` | QOS `Qual=0`，直接执行。 |
 | `SendBitstringCommand` | uint64 | 51 `C_BO_NA_1` | 64 `C_BO_TA_1` | 无限定词字段。 |
 
 `withTime=true` 时，服务端使用当前时间填充 CP56Time2a 时标。所有带类型接口都采用直接执行，未启用选择执行。
@@ -945,7 +945,7 @@ print(point_key, body["value"])
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| `value` | double | gRPC 使用 double，发送前转换为 IEC 104 短浮点数 float32。 |
+| `value` | float | IEEE 754 单精度浮点数，直接映射 IEC 104 短浮点值。 |
 
 ### 7.10 32 位位串命令 `SendBitstringCommand`
 
@@ -1054,7 +1054,7 @@ print(point_key, body["value"])
 | `SendStepCommand` | `SendStepCommandRes` | `int32 value` - 从站回显的档位调节命令值 |
 | `SendSetpointNormalized` | `SendSetpointNormalizedRes` | `int32 value` - 从站回显的归一化设点值 |
 | `SendSetpointScaled` | `SendSetpointScaledRes` | `int32 value` - 从站回显的标度化设点值 |
-| `SendSetpointFloat` | `SendSetpointFloatRes` | `double value` - 从站回显的短浮点设点值 |
+| `SendSetpointFloat` | `SendSetpointFloatRes` | `float value` - 从站回显的短浮点设点值 |
 | `SendBitstringCommand` | `SendBitstringCommandRes` | `uint64 value` - 从站回显的32位位串命令值 |
 
 IEC 104 控制命令有两类后续反馈：

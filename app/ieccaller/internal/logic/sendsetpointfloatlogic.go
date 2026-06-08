@@ -40,7 +40,7 @@ func (l *SendSetpointFloatLogic) SendSetpointFloat(in *ieccaller.SendSetpointFlo
 		}
 		return &res, nil
 	} else if cli != nil {
-		ack, err := cli.SendSetpointFloatCmd(l.ctx, uint16(in.Coa), asdu.InfoObjAddr(in.Ioa), float32(in.Value), in.WithTime, client.WithAck())
+		ack, err := cli.SendSetpointFloatCmd(l.ctx, uint16(in.Coa), asdu.InfoObjAddr(in.Ioa), in.Value, in.WithTime, client.WithAck())
 		if err != nil {
 			return nil, wrapCommandAckError(err, "IEC发送浮点设点命令失败")
 		}
@@ -48,7 +48,7 @@ func (l *SendSetpointFloatLogic) SendSetpointFloat(in *ieccaller.SendSetpointFlo
 		if err != nil {
 			return nil, wrapCommandAckError(err, "IEC浮点设点ACK解析失败")
 		}
-		return &ieccaller.SendSetpointFloatRes{Value: float64(value)}, nil
+		return &ieccaller.SendSetpointFloatRes{Value: value}, nil
 	}
 	return nil, tool.NewErrorByPbCode(extproto.Code__1_06_RPC, "IEC客户端不存在: %s:%d", in.Host, in.Port)
 }

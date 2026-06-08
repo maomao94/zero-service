@@ -941,7 +941,7 @@ func (x *SendSetpointScaledRes) GetValue() int32 {
 
 type SendSetpointFloatRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         float64                `protobuf:"fixed64,1,opt,name=value,proto3" json:"value,omitempty"` // 从站回显的短浮点设点值（IEEE 754 单精度浮点）
+	Value         float32                `protobuf:"fixed32,1,opt,name=value,proto3" json:"value,omitempty"` // 从站回显的短浮点设点值（IEEE 754 单精度浮点）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -976,7 +976,7 @@ func (*SendSetpointFloatRes) Descriptor() ([]byte, []int) {
 	return file_ieccaller_proto_rawDescGZIP(), []int{17}
 }
 
-func (x *SendSetpointFloatRes) GetValue() float64 {
+func (x *SendSetpointFloatRes) GetValue() float32 {
 	if x != nil {
 		return x.Value
 	}
@@ -1453,7 +1453,7 @@ type SendSetpointFloatReq struct {
 	Port          uint32                 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
 	Coa           uint32                 `protobuf:"varint,3,opt,name=coa,proto3" json:"coa,omitempty"`
 	Ioa           uint32                 `protobuf:"varint,4,opt,name=ioa,proto3" json:"ioa,omitempty"`
-	Value         float64                `protobuf:"fixed64,5,opt,name=value,proto3" json:"value,omitempty"`
+	Value         float32                `protobuf:"fixed32,5,opt,name=value,proto3" json:"value,omitempty"`
 	WithTime      bool                   `protobuf:"varint,6,opt,name=withTime,proto3" json:"withTime,omitempty"` // true=带CP56Time2a时标(C_SE_TC_1=63), false=不带(C_SE_NC_1=50)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1517,7 +1517,7 @@ func (x *SendSetpointFloatReq) GetIoa() uint32 {
 	return 0
 }
 
-func (x *SendSetpointFloatReq) GetValue() float64 {
+func (x *SendSetpointFloatReq) GetValue() float32 {
 	if x != nil {
 		return x.Value
 	}
@@ -2304,7 +2304,7 @@ const file_ieccaller_proto_rawDesc = "" +
 	"\x15SendSetpointScaledRes\x12\x14\n" +
 	"\x05value\x18\x01 \x01(\x05R\x05value\",\n" +
 	"\x14SendSetpointFloatRes\x12\x14\n" +
-	"\x05value\x18\x01 \x01(\x01R\x05value\"/\n" +
+	"\x05value\x18\x01 \x01(\x02R\x05value\"/\n" +
 	"\x17SendBitstringCommandRes\x12\x14\n" +
 	"\x05value\x18\x01 \x01(\x04R\x05value\"\x94\x01\n" +
 	"\x14SendSingleCommandReq\x12\x12\n" +
@@ -2347,7 +2347,7 @@ const file_ieccaller_proto_rawDesc = "" +
 	"\x04port\x18\x02 \x01(\rR\x04port\x12\x10\n" +
 	"\x03coa\x18\x03 \x01(\rR\x03coa\x12\x10\n" +
 	"\x03ioa\x18\x04 \x01(\rR\x03ioa\x12\x14\n" +
-	"\x05value\x18\x05 \x01(\x01R\x05value\x12\x1a\n" +
+	"\x05value\x18\x05 \x01(\x02R\x05value\x12\x1a\n" +
 	"\bwithTime\x18\x06 \x01(\bR\bwithTime\"\x97\x01\n" +
 	"\x17SendBitstringCommandReq\x12\x12\n" +
 	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
