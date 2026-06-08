@@ -172,7 +172,8 @@ CREATE TABLE IF NOT EXISTS device_point_mapping (
 | `device_name` | string | 映射到 `pm.deviceName`。 |
 | `td_table_type` | string | 映射到 `pm.tdTableType`。 |
 | `enable_push` | int | 是否允许推送，`0` 为不推送，`1` 为推送。 |
-| `enable_raw_insert` | int | 是否允许写入原始数据。 |
+| `enable_raw_insert` | int | 是否允许写入原始数据，`0` 为不写入，`1` 为写入。 |
+| `description` | string | 点位描述信息。 |
 | `ext_1` 至 `ext_5` | string | 映射到 `pm.ext1` 至 `pm.ext5`。 |
 
 唯一索引为 `UNIQUE(tag_station, coa, ioa)`，同一个站点、公共地址、信息对象地址只能绑定一条映射。
@@ -811,7 +812,7 @@ print(point_key, body["value"])
 | 协议 | gRPC，支持 Endpoints 直连或 Nacos 服务发现。 |
 | 服务名 | `ieccaller.IecCaller` |
 | Proto | [`app/ieccaller/ieccaller.proto`](../app/ieccaller/ieccaller.proto) |
-| 响应 | 7 个带类型命令均返回空的 `SendCommandRes`。 |
+| 响应 | 7 个带类型命令返回各自类型的响应，包含从站回显的命令值。 |
 
 ### 7.2 推荐接口总览
 
@@ -839,6 +840,8 @@ print(point_key, body["value"])
 | `ioa` | uint32 | 信息对象地址。 |
 | `value` | 各接口不同 | 命令值。 |
 | `withTime` | bool | `false` 使用不带时标 TypeId，`true` 使用带 CP56Time2a 时标 TypeId。 |
+
+> **注意**：`SendReadCmdReq` 和 `SendInterrogationCmdReq` 中的 `port` 字段当前使用 `int32` 类型，与其他接口的 `uint32` 不一致。建议后续统一为 `uint32`。
 
 ### 7.4 单点命令 `SendSingleCommand`
 
@@ -994,9 +997,67 @@ print(point_key, body["value"])
 | `SendReadCmd` | 102 `C_RD_NA_1` | 读命令，需要 `ioa`。 |
 | `SendTestCmd` | 107 `C_TS_TA_1` | 测试命令。 |
 
+### 7.12.1 点位缓存管理接口
+
+#### `ClearPointMappingCache`
+
+清除点位映射缓存，支持批量操作。
+
+**请求**：
+
+```json
+{
+  "keys": ["192.168.1.100_1_0x000001"],
+  "keyInfos": [
+    {
+      "tagStation": "192.168.1.100_2404",
+      "coa": 1,
+      "ioa": 1
+    }
+  ]
+}
+```
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `keys` | string[] | 缓存 key 列表，格式为 `{host}_{coa}_{ioaHex}`。 |
+| `keyInfos` | CacheKeyInfo[] | 缓存 key 信息列表，用于根据 tagStation、coa、ioa 生成 key。 |
+
+**响应**：
+
+```json
+{
+  "clearedCount": 2
+}
+```
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `clearedCount` | int64 | 清除的缓存数量。 |
+
+**CacheKeyInfo 结构**：
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `tagStation` | string | 站点标识。 |
+| `coa` | int64 | 公共地址。 |
+| `ioa` | int64 | 信息对象地址。 |
+
 ### 7.13 响应和回执机制
 
-所有控制命令的 gRPC 响应为空消息。gRPC 调用成功只表示命令已由 ieccaller 发送到本地 IEC 104 client 或已在集群模式下广播给其他实例，不等于设备已执行成功。
+7 个带类型控制命令的 gRPC 响应包含从站回显的命令值（如 `SendSingleCommandRes.value`）。gRPC 调用成功只表示命令已由 ieccaller 发送到本地 IEC 104 client 或已在集群模式下广播给其他实例，不等于设备已执行成功。
+
+**响应类型对照表**：
+
+| RPC | 响应类型 | 响应值说明 |
+| --- | --- | --- |
+| `SendSingleCommand` | `SendSingleCommandRes` | `bool value` - 从站回显的单点命令值 |
+| `SendDoubleCommand` | `SendDoubleCommandRes` | `DoubleCommandValue value` - 从站回显的双点命令值 |
+| `SendStepCommand` | `SendStepCommandRes` | `int32 value` - 从站回显的档位调节命令值 |
+| `SendSetpointNormalized` | `SendSetpointNormalizedRes` | `int32 value` - 从站回显的归一化设点值 |
+| `SendSetpointScaled` | `SendSetpointScaledRes` | `int32 value` - 从站回显的标度化设点值 |
+| `SendSetpointFloat` | `SendSetpointFloatRes` | `double value` - 从站回显的短浮点设点值 |
+| `SendBitstringCommand` | `SendBitstringCommandRes` | `uint64 value` - 从站回显的32位位串命令值 |
 
 IEC 104 控制命令有两类后续反馈：
 
