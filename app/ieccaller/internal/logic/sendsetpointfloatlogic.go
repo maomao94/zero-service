@@ -9,6 +9,7 @@ import (
 	"zero-service/common/tool"
 	"zero-service/third_party/extproto"
 
+	"github.com/duke-git/lancet/v2/mathutil"
 	"github.com/wendy512/go-iecp5/asdu"
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -40,7 +41,7 @@ func (l *SendSetpointFloatLogic) SendSetpointFloat(in *ieccaller.SendSetpointFlo
 		}
 		return &res, nil
 	} else if cli != nil {
-		ack, err := cli.SendSetpointFloatCmd(l.ctx, uint16(in.Coa), asdu.InfoObjAddr(in.Ioa), in.Value, in.WithTime, client.WithAck())
+		ack, err := cli.SendSetpointFloatCmd(l.ctx, uint16(in.Coa), asdu.InfoObjAddr(in.Ioa), float32(mathutil.RoundToFloat(in.Value, 2)), in.WithTime, client.WithAck())
 		if err != nil {
 			return nil, wrapCommandAckError(err, "IEC发送浮点设点命令失败")
 		}

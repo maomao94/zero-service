@@ -1688,3 +1688,41 @@ Migrated ieccaller cluster-mode broadcast from Kafka to MQTT: per-instance ack t
 ### Next Steps
 
 - None - task complete
+
+
+## Session 42: IEC 104 Proto 与文档同步修复
+
+**Date**: 2026-06-08
+**Task**: IEC 104 Proto 与文档同步修复
+**Branch**: `master`
+
+### Summary
+
+修复 IEC 104 文档与代码不一致问题：统一 port 类型为 uint32、添加 description 字段到 PbDevicePointMapping（与 model 顺序一致）、同步 SendSetpointFloat 类型从 double 改为 float。更新 spec 添加 proto 字段顺序规范。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b3037148` | (see git log) |
+| `def256dd` | (see git log) |
+| `75db51e7` | (see git log) |
+| `f6b3696c` | (see git log) |
+| `b0ab975f` | (see git log) |
+| `9fdde62a` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

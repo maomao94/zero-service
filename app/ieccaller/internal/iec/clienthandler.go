@@ -11,6 +11,7 @@ import (
 	"zero-service/common/iec104/util"
 	"zero-service/common/tool"
 
+	"github.com/duke-git/lancet/v2/mathutil"
 	"github.com/duke-git/lancet/v2/strutil"
 	"github.com/jinzhu/copier"
 	"github.com/wendy512/go-iecp5/asdu"
@@ -493,6 +494,13 @@ func (c *ClientCall) onCommandAck(ctx context.Context, packet *asdu.ASDU) {
 
 func (c *ClientCall) resolveCommandAck(ctx context.Context, packet *asdu.ASDU) {
 	ioa, value := parseCommandAck(packet)
+
+	// IEC104 短浮点设点 ACK：格式化为两位小数，避免 float32 二进制误差暴露给调用方
+	if packet.Type == asdu.C_SE_NC_1 || packet.Type == asdu.C_SE_TC_1 {
+		if fv, ok := value.(float32); ok {
+			value = float32(mathutil.RoundToFloat(fv, 2))
+		}
+	}
 
 	cli, err := c.svcCtx.ClientManager.GetClient(c.config.Host, c.config.Port)
 	if err != nil {
