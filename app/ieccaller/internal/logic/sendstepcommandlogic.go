@@ -49,8 +49,6 @@ func (l *SendStepCommandLogic) SendStepCommand(in *ieccaller.SendStepCommandReq)
 			return nil, wrapCommandAckError(err, "IEC档位命令ACK解析失败")
 		}
 		return &ieccaller.SendStepCommandRes{Value: int32(value)}, nil
-	} else {
-		logx.Errorf("cli is empty")
 	}
-	return &ieccaller.SendStepCommandRes{}, nil
+	return nil, tool.NewErrorByPbCode(extproto.Code__1_06_RPC, "IEC客户端不存在: %s:%d", in.Host, in.Port)
 }

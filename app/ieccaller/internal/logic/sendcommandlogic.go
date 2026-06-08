@@ -41,8 +41,6 @@ func (l *SendCommandLogic) SendCommand(in *ieccaller.SendCommandReq) (*ieccaller
 		if err = cli.SendCmd(uint16(in.Coa), asdu.TypeID(in.TypeId), asdu.InfoObjAddr(in.Ioa), in.Value); err != nil {
 			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "IEC发送命令失败")
 		}
-	} else {
-		logx.Errorf("cli is empty")
 	}
-	return &ieccaller.SendCommandRes{}, nil
+	return nil, tool.NewErrorByPbCode(extproto.Code__1_06_RPC, "IEC客户端不存在: %s:%d", in.Host, in.Port)
 }

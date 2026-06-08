@@ -127,6 +127,30 @@ return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, fmt.Errorf("第 %d 
 | 需要用户可见错误信息 | 文案稳定，不暴露内部路径、连接串、密钥或完整请求体 |
 | 需要排障上下文 | 日志记录关键 ID、外部系统名和失败阶段，避免多层重复打印 |
 
+## RPC 拦截器日志约定
+
+- 所有 error 日志统一在 `LoggerInterceptor` 打印，使用 `%+v` 直接输出完整错误链。
+- Logic 层只返回 error，**不在业务层单独打 error/warn 日志**，避免重复。
+- 格式：`logx.WithContext(ctx).Errorf("【RPC-SRV-ERR】%+v method=%s duration=%s", err, info.FullMethod, ...)`
+- `%+v` 会自动展开 `withCause` 链：`第三方服务异常(106102): IEC命令被设备拒绝: command rejected: cot=UnknownTypeID ...`
+
+Wrong:
+```go
+// Logic 层重复打日志
+if err != nil {
+    logx.WithContext(l.ctx).Errorw(...)
+    return nil, wrapCommandAckError(err, "IEC发送命令失败")
+}
+```
+
+Correct:
+```go
+// Logic 层只返回 error，拦截器统一打印
+if err != nil {
+    return nil, wrapCommandAckError(err, "IEC发送命令失败")
+}
+```
+
 ## Tests Required
 
 - 错误工厂单测：断言 `status.FromError`、`gkiterrors.Reason`、HTTP 映射和默认错误名。
@@ -141,3 +165,4 @@ return nil, tool.NewErrorByPbCode(extproto.Code__1_01_PARAM, fmt.Errorf("第 %d 
 - 把完整请求体、认证头、连接串、路径或账号写入错误日志。
 - 新增一套与项目 `extproto.Code` 不一致的错误码体系。
 - 用 Java 风格异常、Result 包装或 Builder 模式替代 Go 的显式错误返回。
+- **在 Logic 层打 error/warn 日志然后继续返回 error**，导致同一错误被打印多次。应只在 LoggerInterceptor 统一打印。

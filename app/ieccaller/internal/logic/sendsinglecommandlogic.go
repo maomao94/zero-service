@@ -49,8 +49,6 @@ func (l *SendSingleCommandLogic) SendSingleCommand(in *ieccaller.SendSingleComma
 			return nil, wrapCommandAckError(err, "IEC单点命令ACK解析失败")
 		}
 		return &ieccaller.SendSingleCommandRes{Value: value}, nil
-	} else {
-		logx.Errorf("cli is empty")
 	}
-	return &ieccaller.SendSingleCommandRes{}, nil
+	return nil, tool.NewErrorByPbCode(extproto.Code__1_06_RPC, "IEC客户端不存在: %s:%d", in.Host, in.Port)
 }

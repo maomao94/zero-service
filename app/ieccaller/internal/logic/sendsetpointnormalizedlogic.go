@@ -49,8 +49,6 @@ func (l *SendSetpointNormalizedLogic) SendSetpointNormalized(in *ieccaller.SendS
 			return nil, wrapCommandAckError(err, "IEC归一化设点ACK解析失败")
 		}
 		return &ieccaller.SendSetpointNormalizedRes{Value: int32(value)}, nil
-	} else {
-		logx.Errorf("cli is empty")
 	}
-	return &ieccaller.SendSetpointNormalizedRes{}, nil
+	return nil, tool.NewErrorByPbCode(extproto.Code__1_06_RPC, "IEC客户端不存在: %s:%d", in.Host, in.Port)
 }

@@ -40,8 +40,6 @@ func (l *SendCounterInterrogationCmdLogic) SendCounterInterrogationCmd(in *iecca
 		if err = cli.SendCounterInterrogationCmd(uint16(in.Coa)); err != nil {
 			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "IEC发送累积量召唤失败")
 		}
-	} else {
-		logx.Errorf("cli is empty")
 	}
-	return &ieccaller.SendCounterInterrogationCmdRes{}, nil
+	return nil, tool.NewErrorByPbCode(extproto.Code__1_06_RPC, "IEC客户端不存在: %s:%d", in.Host, in.Port)
 }

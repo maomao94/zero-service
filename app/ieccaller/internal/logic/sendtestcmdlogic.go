@@ -38,8 +38,6 @@ func (l *SendTestCmdLogic) SendTestCmd(in *ieccaller.SendTestCmdReq) (*ieccaller
 		if err = cli.SendTestCmd(uint16(in.Coa)); err != nil {
 			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "IEC发送测试命令失败")
 		}
-	} else {
-		logx.Errorf("cli is empty")
 	}
-	return &ieccaller.SendTestCmdRes{}, nil
+	return nil, tool.NewErrorByPbCode(extproto.Code__1_06_RPC, "IEC客户端不存在: %s:%d", in.Host, in.Port)
 }

@@ -49,8 +49,6 @@ func (l *SendBitstringCommandLogic) SendBitstringCommand(in *ieccaller.SendBitst
 			return nil, wrapCommandAckError(err, "IEC位串命令ACK解析失败")
 		}
 		return &ieccaller.SendBitstringCommandRes{Value: uint64(value)}, nil
-	} else {
-		logx.Errorf("cli is empty")
 	}
-	return &ieccaller.SendBitstringCommandRes{}, nil
+	return nil, tool.NewErrorByPbCode(extproto.Code__1_06_RPC, "IEC客户端不存在: %s:%d", in.Host, in.Port)
 }

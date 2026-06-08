@@ -327,6 +327,8 @@ func (l *Broadcast) publishAckReply(ctx context.Context, tId, ackTopic, method s
 			errorKind = "timeout"
 		case errors.Is(ackErr, antsx.ErrDuplicateID):
 			errorKind = "duplicate"
+		case isCommandRejectedError(ackErr):
+			errorKind = "iec_rejected"
 		default:
 			errorKind = "unknown"
 		}
@@ -357,4 +359,9 @@ func (l *Broadcast) publishAckReply(ctx context.Context, tId, ackTopic, method s
 	if _, err := l.svcCtx.MqttClient.PublishWithTrace(pushCtx, ackTopic, data); err != nil {
 		logx.WithContext(pushCtx).Errorf("failed to push ack to mqtt: %v", err)
 	}
+}
+
+func isCommandRejectedError(err error) bool {
+	var rejected *client.CommandRejectedError
+	return errors.As(err, &rejected)
 }

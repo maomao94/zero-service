@@ -1611,3 +1611,43 @@ Migrated ieccaller cluster-mode broadcast from Kafka to MQTT: per-instance ack t
 ### Next Steps
 
 - None - task complete
+
+
+## Session 40: 优化 ieccaller 错误日志与 gRPC 错误转换
+
+**Date**: 2026-06-08
+**Task**: 优化 ieccaller 错误日志与 gRPC 错误转换
+**Branch**: `master`
+
+### Summary
+
+1. 新增 CommandRejectedError 类型携带 ACK 元数据 2. 设备拒绝命令从 106102/503 改为 105102/409 3. Logic 层删除所有 logCommandError，错误只返回不打印 4. 集群 ACK 增加 iec_rejected 分类 5. LoggerInterceptor 保持原样 %+v 6. 更新 error-handling/iec104-control-commands/logging-guidelines 三个 spec
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0fed6d12` | (see git log) |
+| `ac16ddee` | (see git log) |
+| `26a9c389` | (see git log) |
+| `da47a52a` | (see git log) |
+| `a5bc9390` | (see git log) |
+| `cfdaa14d` | (see git log) |
+| `6e86827b` | (see git log) |
+| `be0b25d7` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

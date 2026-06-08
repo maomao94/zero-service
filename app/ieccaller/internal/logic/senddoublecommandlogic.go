@@ -49,8 +49,6 @@ func (l *SendDoubleCommandLogic) SendDoubleCommand(in *ieccaller.SendDoubleComma
 			return nil, wrapCommandAckError(err, "IEC双点命令ACK解析失败")
 		}
 		return &ieccaller.SendDoubleCommandRes{Value: ieccaller.DoubleCommandValue(int32(value))}, nil
-	} else {
-		logx.Errorf("cli is empty")
 	}
-	return &ieccaller.SendDoubleCommandRes{}, nil
+	return nil, tool.NewErrorByPbCode(extproto.Code__1_06_RPC, "IEC客户端不存在: %s:%d", in.Host, in.Port)
 }

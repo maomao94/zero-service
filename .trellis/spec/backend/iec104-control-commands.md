@@ -179,10 +179,30 @@ case ieccaller.IecCaller_SendSingleCommand_FullMethodName:
 | value 超出类型范围（如 int16 超限） | `cast.ToXxxE` 返回 error |
 | typeId 不在 doSend switch 中 | `fmt.Errorf("unknown type id %d")` |
 | 客户端未连接 | `NotConnected` sentinel error |
-| ACK 超时（`antsx.ErrReplyExpired`） | `wrapCommandAckError` → `Code__1_00_TIMEOUT` |
-| 同一控制点已有未完成命令（`antsx.ErrDuplicateID`） | `wrapCommandAckError` → `Code__1_05_BIZ_REPEAT` |
-| ACK 被拒绝（从站返回 IsNegative=true） | `wrapCommandAckError` → `Code__1_06_THIRD_PARTY` |
-| ACK 意外 COT | `wrapCommandAckError` → `Code__1_06_THIRD_PARTY` |
+| ACK 超时（`antsx.ErrReplyExpired`） | `wrapCommandAckError` → `Code__1_00_TIMEOUT` (504) |
+| 同一控制点已有未完成命令（`antsx.ErrDuplicateID`） | `wrapCommandAckError` → `Code__1_05_BIZ_REPEAT` (409) |
+| ACK 被拒绝（从站返回 IsNegative=true） | `wrapCommandAckError` → `Code__1_05_BIZ_STATE` (409) via `CommandRejectedError` |
+| ACK 意外 COT | `wrapCommandAckError` → `Code__1_05_BIZ_STATE` (409) via `CommandRejectedError` |
+
+#### 4.1 CommandRejectedError
+
+IEC 从站拒绝命令时，`clienthandler.go` 的 `resolveCommandAck` 创建 `CommandRejectedError`，携带完整 ACK 元数据：
+
+```go
+// common/iec104/client/errors.go
+type CommandRejectedError struct {
+    TypeID     int
+    Coa        uint
+    Ioa        uint
+    Cot        string
+    CotCause   int
+    IsNegative bool
+    Status     CommandAckStatus
+}
+```
+
+`wrapCommandAckError` 通过 `errors.As(err, &rejected)` 匹配该类型，映射到 `Code__1_05_BIZ_STATE` (409)。
+Logic 层**不需要**单独处理此类型；拦截器统一通过 `%+v` 打印完整错误链。
 
 ### 5. Good/Base/Bad Cases
 

@@ -316,6 +316,12 @@ func (svc ServiceContext) PushPbBroadcastWithAck(ctx context.Context, method str
 			return antsx.ErrReplyExpired
 		case "duplicate":
 			return antsx.ErrDuplicateID
+		case "iec_rejected":
+			return &client.CommandRejectedError{
+				Cot:        extractCotFromError(ack.Error),
+				IsNegative: true,
+				Status:     client.AckRejected,
+			}
 		default:
 			return fmt.Errorf("broadcast command error: %s", ack.Error)
 		}
@@ -391,4 +397,25 @@ func (svc ServiceContext) Close() {
 		svc.MqttClient.Close()
 	}
 	logx.Infof("service context closed")
+}
+
+func extractCotFromError(errMsg string) string {
+	// Extract COT from error message like "command rejected: cot=UnknownTypeID isNegative=true"
+	if idx := indexOf(errMsg, "cot="); idx >= 0 {
+		rest := errMsg[idx+4:]
+		if endIdx := indexOf(rest, " "); endIdx >= 0 {
+			return rest[:endIdx]
+		}
+		return rest
+	}
+	return "Unknown"
+}
+
+func indexOf(s, substr string) int {
+	for i := 0; i+len(substr) <= len(s); i++ {
+		if s[i:i+len(substr)] == substr {
+			return i
+		}
+	}
+	return -1
 }

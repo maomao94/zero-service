@@ -515,7 +515,15 @@ func (c *ClientCall) resolveCommandAck(ctx context.Context, packet *asdu.ASDU) {
 
 	if packet.Coa.IsNegative {
 		ack.Status = client.AckRejected
-		cli.RejectCommandAck(key, fmt.Errorf("command rejected: cot=%s isNegative=%v", ack.Cot, ack.IsNegative))
+		cli.RejectCommandAck(key, &client.CommandRejectedError{
+			TypeID:     int(packet.Type),
+			Coa:        uint(packet.CommonAddr),
+			Ioa:        uint(ioa),
+			Cot:        genCOTName(packet.Coa.Cause),
+			CotCause:   int(packet.Coa.Cause),
+			IsNegative: true,
+			Status:     client.AckRejected,
+		})
 		return
 	}
 
@@ -525,7 +533,15 @@ func (c *ClientCall) resolveCommandAck(ctx context.Context, packet *asdu.ASDU) {
 		cli.ResolveCommandAck(key, ack)
 	default:
 		ack.Status = client.AckCotError
-		cli.RejectCommandAck(key, fmt.Errorf("unexpected COT: %s (%d)", ack.Cot, ack.CotCause))
+		cli.RejectCommandAck(key, &client.CommandRejectedError{
+			TypeID:     int(packet.Type),
+			Coa:        uint(packet.CommonAddr),
+			Ioa:        uint(ioa),
+			Cot:        genCOTName(packet.Coa.Cause),
+			CotCause:   int(packet.Coa.Cause),
+			IsNegative: false,
+			Status:     client.AckCotError,
+		})
 	}
 }
 

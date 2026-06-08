@@ -49,8 +49,6 @@ func (l *SendSetpointFloatLogic) SendSetpointFloat(in *ieccaller.SendSetpointFlo
 			return nil, wrapCommandAckError(err, "IEC浮点设点ACK解析失败")
 		}
 		return &ieccaller.SendSetpointFloatRes{Value: float64(value)}, nil
-	} else {
-		logx.Errorf("cli is empty")
 	}
-	return &ieccaller.SendSetpointFloatRes{}, nil
+	return nil, tool.NewErrorByPbCode(extproto.Code__1_06_RPC, "IEC客户端不存在: %s:%d", in.Host, in.Port)
 }

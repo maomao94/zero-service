@@ -49,8 +49,6 @@ func (l *SendSetpointScaledLogic) SendSetpointScaled(in *ieccaller.SendSetpointS
 			return nil, wrapCommandAckError(err, "IEC标度化设点ACK解析失败")
 		}
 		return &ieccaller.SendSetpointScaledRes{Value: int32(value)}, nil
-	} else {
-		logx.Errorf("cli is empty")
 	}
-	return &ieccaller.SendSetpointScaledRes{}, nil
+	return nil, tool.NewErrorByPbCode(extproto.Code__1_06_RPC, "IEC客户端不存在: %s:%d", in.Host, in.Port)
 }

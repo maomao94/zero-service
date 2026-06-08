@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 39
+- **Total Sessions**: 40
 - **Last Active**: 2026-06-08
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1613 | Active |
+| `journal-1.md` | ~1653 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 40 | 2026-06-08 | 优化 ieccaller 错误日志与 gRPC 错误转换 | `0fed6d12`, `ac16ddee`, `26a9c389`, `da47a52a`, `a5bc9390`, `cfdaa14d`, `6e86827b`, `be0b25d7` | `master` |
 | 39 | 2026-06-08 | ieccaller Kafka→MQTT broadcast migration | `81ba9e0e` | `master` |
 | 38 | 2026-06-05 | ieccaller 集群广播优化 | `942654d6`, `0740c77f` | `master` |
 | 37 | 2026-06-05 | ieccaller 集群指令 ACK 回传 | `cb5d9996`, `fc25f7d6` | `master` |
