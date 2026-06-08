@@ -16,7 +16,7 @@ service IecCaller {
   rpc SendInterrogationCmd (SendInterrogationCmdReq) returns (SendInterrogationCmdRes);
   // 累积量召唤
   rpc SendCounterInterrogationCmd(SendCounterInterrogationCmdReq) returns (SendCounterInterrogationCmdRes);
-  // 发送命令（通用，需指定typeId）注意 无 ack 响应
+  // 发送命令（通用，需指定typeId）注意 无 104 ack 响应
   rpc SendCommand(SendCommandReq) returns (SendCommandRes);
   // 单点命令 (C_SC_NA_1=45 不带时标 / C_SC_TA_1=58 带CP56Time2a时标，由withTime字段控制)
   rpc SendSingleCommand(SendSingleCommandReq) returns (SendSingleCommandRes);

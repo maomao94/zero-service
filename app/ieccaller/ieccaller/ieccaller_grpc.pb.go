@@ -51,7 +51,7 @@ type IecCallerClient interface {
 	SendInterrogationCmd(ctx context.Context, in *SendInterrogationCmdReq, opts ...grpc.CallOption) (*SendInterrogationCmdRes, error)
 	// 累积量召唤
 	SendCounterInterrogationCmd(ctx context.Context, in *SendCounterInterrogationCmdReq, opts ...grpc.CallOption) (*SendCounterInterrogationCmdRes, error)
-	// 发送命令（通用，需指定typeId）注意 无 ack 响应
+	// 发送命令（通用，需指定typeId）注意 无 104 ack 响应
 	SendCommand(ctx context.Context, in *SendCommandReq, opts ...grpc.CallOption) (*SendCommandRes, error)
 	// 单点命令 (C_SC_NA_1=45 不带时标 / C_SC_TA_1=58 带CP56Time2a时标，由withTime字段控制)
 	SendSingleCommand(ctx context.Context, in *SendSingleCommandReq, opts ...grpc.CallOption) (*SendSingleCommandRes, error)
@@ -268,7 +268,7 @@ type IecCallerServer interface {
 	SendInterrogationCmd(context.Context, *SendInterrogationCmdReq) (*SendInterrogationCmdRes, error)
 	// 累积量召唤
 	SendCounterInterrogationCmd(context.Context, *SendCounterInterrogationCmdReq) (*SendCounterInterrogationCmdRes, error)
-	// 发送命令（通用，需指定typeId）注意 无 ack 响应
+	// 发送命令（通用，需指定typeId）注意 无 104 ack 响应
 	SendCommand(context.Context, *SendCommandReq) (*SendCommandRes, error)
 	// 单点命令 (C_SC_NA_1=45 不带时标 / C_SC_TA_1=58 带CP56Time2a时标，由withTime字段控制)
 	SendSingleCommand(context.Context, *SendSingleCommandReq) (*SendSingleCommandRes, error)

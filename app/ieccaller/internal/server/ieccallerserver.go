@@ -52,7 +52,7 @@ func (s *IecCallerServer) SendCounterInterrogationCmd(ctx context.Context, in *i
 	return l.SendCounterInterrogationCmd(in)
 }
 
-// 发送命令（通用，需指定typeId）注意 无 ack 响应
+// 发送命令（通用，需指定typeId）注意 无 104 ack 响应
 func (s *IecCallerServer) SendCommand(ctx context.Context, in *ieccaller.SendCommandReq) (*ieccaller.SendCommandRes, error) {
 	l := logic.NewSendCommandLogic(ctx, s.svcCtx)
 	return l.SendCommand(in)
