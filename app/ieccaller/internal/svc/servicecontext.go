@@ -78,7 +78,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		svcCtx.broadcastTopic = "iec/broadcast"
 		svcCtx.broadcastAckTopic = fmt.Sprintf("iec/broadcast-ack/%s", svcCtx.broadcastInstanceId)
 		svcCtx.BroadcastReplyPool = antsx.NewReplyPool[*types.BroadcastAckBody](
-			antsx.WithName(svcCtx.broadcastInstanceId),
+			antsx.WithName("mqtt-ack-reply-"+uid),
 			antsx.WithDefaultTTL(10*time.Second),
 		)
 	}

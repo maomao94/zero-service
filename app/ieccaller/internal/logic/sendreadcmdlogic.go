@@ -40,6 +40,7 @@ func (l *SendReadCmdLogic) SendReadCmd(in *ieccaller.SendReadCmdReq) (*ieccaller
 		if err = cli.SendReadCmd(uint16(in.Coa), uint(in.Ioa)); err != nil {
 			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "IEC发送读命令失败")
 		}
+		return &ieccaller.SendReadCmdRes{}, nil
 	}
 	return nil, tool.NewErrorByPbCode(extproto.Code__1_06_RPC, "IEC客户端不存在: %s:%d", in.Host, in.Port)
 }

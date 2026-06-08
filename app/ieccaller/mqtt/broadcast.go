@@ -56,8 +56,10 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 			return nil
 		}
 		if err = cli.SendCounterInterrogationCmd(uint16(in.Coa)); err != nil {
-			return err
+			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", err)
+			return nil
 		}
+		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, "{}", nil)
 	case ieccaller.IecCaller_SendInterrogationCmd_FullMethodName:
 		in := &ieccaller.SendInterrogationCmdReq{}
 		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
@@ -102,8 +104,10 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 			return nil
 		}
 		if err = cli.SendTestCmd(uint16(in.Coa)); err != nil {
-			return err
+			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", err)
+			return nil
 		}
+		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, "{}", nil)
 	case ieccaller.IecCaller_SendCommand_FullMethodName:
 		in := &ieccaller.SendCommandReq{}
 		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
@@ -116,8 +120,10 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 			return nil
 		}
 		if err = cli.SendCmd(uint16(in.Coa), asdu.TypeID(in.TypeId), asdu.InfoObjAddr(in.Ioa), in.Value); err != nil {
-			return err
+			l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, false, "", err)
+			return nil
 		}
+		l.publishAckReply(ctx, broadcastBody.Tid, broadcastBody.AckTopic, broadcastBody.Method, true, "{}", nil)
 	case ieccaller.IecCaller_SendSingleCommand_FullMethodName:
 		in := &ieccaller.SendSingleCommandReq{}
 		err = jsonx.Unmarshal([]byte(broadcastBody.Body), in)
@@ -320,6 +326,7 @@ func (l *Broadcast) Consume(ctx context.Context, payload []byte, topic string, t
 
 func (l *Broadcast) publishAckReply(ctx context.Context, tId, ackTopic, method string, success bool, responseBody string, ackErr error) {
 	if tId == "" {
+		logx.WithContext(ctx).Debugf("publishAckReply skipped: empty tId, method=%s", method)
 		return
 	}
 	errorKind := ""
@@ -336,6 +343,10 @@ func (l *Broadcast) publishAckReply(ctx context.Context, tId, ackTopic, method s
 		default:
 			errorKind = "unknown"
 		}
+		logx.WithContext(ctx).Infof("publishAckReply tId=%s method=%s success=%v errorKind=%s err=%s",
+			tId, method, success, errorKind, errMsg)
+	} else {
+		logx.WithContext(ctx).Infof("publishAckReply tId=%s method=%s success=true", tId, method)
 	}
 	ack := &types.BroadcastAckBody{
 		Tid:          tId,
@@ -361,7 +372,9 @@ func (l *Broadcast) publishAckReply(ctx context.Context, tId, ackTopic, method s
 		return
 	}
 	if _, err := l.svcCtx.MqttClient.PublishWithTrace(pushCtx, ackTopic, data); err != nil {
-		logx.WithContext(pushCtx).Errorf("failed to push ack to mqtt: %v", err)
+		logx.WithContext(pushCtx).Errorf("failed to push ack to mqtt: tId=%s method=%s ackTopic=%s err=%v", tId, method, ackTopic, err)
+	} else {
+		logx.WithContext(pushCtx).Debugf("ack reply sent: tId=%s method=%s ackTopic=%s", tId, method, ackTopic)
 	}
 }
 

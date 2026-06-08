@@ -32,14 +32,17 @@ func (l *SendCounterInterrogationCmdLogic) SendCounterInterrogationCmd(in *iecca
 		return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_RPC, err, "获取IEC客户端失败")
 	}
 	if cli == nil && l.svcCtx.IsBroadcast() {
-		err = l.svcCtx.PushPbBroadcast(l.ctx, ieccaller.IecCaller_SendCounterInterrogationCmd_FullMethodName, in)
+		var res ieccaller.SendCounterInterrogationCmdRes
+		err = l.svcCtx.PushPbBroadcastWithAck(l.ctx, ieccaller.IecCaller_SendCounterInterrogationCmd_FullMethodName, in, &res)
 		if err != nil {
-			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_RPC, err, "广播推送失败")
+			return nil, wrapCommandAckError(err, "集群推送ACK失败")
 		}
+		return &res, nil
 	} else if cli != nil {
 		if err = cli.SendCounterInterrogationCmd(uint16(in.Coa)); err != nil {
 			return nil, tool.NewErrorByPbCodeWrap(extproto.Code__1_06_THIRD_PARTY, err, "IEC发送累积量召唤失败")
 		}
+		return &ieccaller.SendCounterInterrogationCmdRes{}, nil
 	}
 	return nil, tool.NewErrorByPbCode(extproto.Code__1_06_RPC, "IEC客户端不存在: %s:%d", in.Host, in.Port)
 }

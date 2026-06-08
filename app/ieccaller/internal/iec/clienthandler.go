@@ -486,7 +486,8 @@ func (c *ClientCall) onReadResponse(ctx context.Context, packet *asdu.ASDU) {
 }
 
 func (c *ClientCall) onCommandAck(ctx context.Context, packet *asdu.ASDU) {
-	logx.WithContext(ctx).Info("Command ACK received")
+	uid, _ := tool.SimpleUUID()
+	logx.WithContext(ctx).Info("Command ACK received, seq: %s", uid)
 	c.resolveCommandAck(ctx, packet)
 }
 
