@@ -306,7 +306,7 @@ func (*SendTestCmdRes) Descriptor() ([]byte, []int) {
 type SendReadCmdReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Host          string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
-	Port          int32                  `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	Port          uint32                 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
 	Coa           uint32                 `protobuf:"varint,3,opt,name=coa,proto3" json:"coa,omitempty"`
 	Ioa           uint32                 `protobuf:"varint,4,opt,name=ioa,proto3" json:"ioa,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -350,7 +350,7 @@ func (x *SendReadCmdReq) GetHost() string {
 	return ""
 }
 
-func (x *SendReadCmdReq) GetPort() int32 {
+func (x *SendReadCmdReq) GetPort() uint32 {
 	if x != nil {
 		return x.Port
 	}
@@ -410,7 +410,7 @@ func (*SendReadCmdRes) Descriptor() ([]byte, []int) {
 type SendInterrogationCmdReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Host          string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
-	Port          int32                  `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	Port          uint32                 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
 	Coa           uint32                 `protobuf:"varint,3,opt,name=coa,proto3" json:"coa,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -453,7 +453,7 @@ func (x *SendInterrogationCmdReq) GetHost() string {
 	return ""
 }
 
-func (x *SendInterrogationCmdReq) GetPort() int32 {
+func (x *SendInterrogationCmdReq) GetPort() uint32 {
 	if x != nil {
 		return x.Port
 	}
@@ -2263,13 +2263,13 @@ const file_ieccaller_proto_rawDesc = "" +
 	"\x0eSendTestCmdRes\"\\\n" +
 	"\x0eSendReadCmdReq\x12\x12\n" +
 	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
-	"\x04port\x18\x02 \x01(\x05R\x04port\x12\x10\n" +
+	"\x04port\x18\x02 \x01(\rR\x04port\x12\x10\n" +
 	"\x03coa\x18\x03 \x01(\rR\x03coa\x12\x10\n" +
 	"\x03ioa\x18\x04 \x01(\rR\x03ioa\"\x10\n" +
 	"\x0eSendReadCmdRes\"S\n" +
 	"\x17SendInterrogationCmdReq\x12\x12\n" +
 	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
-	"\x04port\x18\x02 \x01(\x05R\x04port\x12\x10\n" +
+	"\x04port\x18\x02 \x01(\rR\x04port\x12\x10\n" +
 	"\x03coa\x18\x03 \x01(\rR\x03coa\"\x19\n" +
 	"\x17SendInterrogationCmdRes\"Z\n" +
 	"\x1eSendCounterInterrogationCmdReq\x12\x12\n" +

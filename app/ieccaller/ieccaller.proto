@@ -62,7 +62,7 @@ message SendTestCmdRes {
 
 message SendReadCmdReq {
   string host = 1;
-  int32 port = 2;
+  uint32 port = 2;
   uint32 coa = 3;
   uint32 ioa = 4;
 }
@@ -72,7 +72,7 @@ message SendReadCmdRes {
 
 message SendInterrogationCmdReq {
   string host = 1;
-  int32 port = 2;
+  uint32 port = 2;
   uint32 coa = 3;
 }
 
