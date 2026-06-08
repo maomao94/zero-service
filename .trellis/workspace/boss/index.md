@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 42
+- **Total Sessions**: 43
 - **Last Active**: 2026-06-08
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1728 | Active |
+| `journal-1.md` | ~1762 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 43 | 2026-06-08 | iec104 setpoint float precision analysis and spec update | `15a62cf9`, `2085cd4a` | `master` |
 | 42 | 2026-06-08 | IEC 104 Proto 与文档同步修复 | `b3037148`, `def256dd`, `75db51e7`, `f6b3696c`, `b0ab975f`, `9fdde62a` | `master` |
 | 41 | 2026-06-08 | ieccaller 集群 ACK 回复与文档完善 | `d97d6da7`, `c7691ec3`, `2f2936b3`, `2696fb22`, `409c04b8` | `master` |
 | 40 | 2026-06-08 | 优化 ieccaller 错误日志与 gRPC 错误转换 | `0fed6d12`, `ac16ddee`, `26a9c389`, `da47a52a`, `a5bc9390`, `cfdaa14d`, `6e86827b`, `be0b25d7` | `master` |
