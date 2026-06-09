@@ -73,10 +73,10 @@ message ReceiveKafkaMessageRes {
 }
 
 message KafkaMessage {
-  string sessionId = 1;
+  string msgId = 1;
   string topic = 2;
   string group = 3;
-  bytes key = 4;
+  string key = 4;
   bytes value = 5;
   string sendTime = 6;
 }

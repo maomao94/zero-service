@@ -1,0 +1,39 @@
+Name: bridgekafka.rpc
+ListenOn: 0.0.0.0:25006
+Timeout: 10000
+Mode: dev
+Log:
+  Encoding: plain
+  Path: /opt/logs/bridgekafka
+  Level: info
+  KeepDays: 300
+NacosConfig:
+  IsRegister: false
+  Host: 127.0.0.1
+  Port: 8848
+  Username: nacos
+  PassWord: nacos
+  NamespaceId: public
+  ServiceName: bridge-kafka
+KafkaPushConfig:
+  Brokers:
+    - 127.0.0.1:9094
+  Topics:
+    - asdu
+    - alarm
+    - event
+KafkaConsumeConfig:
+  Brokers:
+    - 127.0.0.1:9094
+  Topic: asdu
+  Group: bridge-kafka
+  Conns: 3
+  Consumers: 3
+  Processors: 18
+  MinBytes: 1048576
+  MaxBytes: 10485760
+StreamEventConf:
+  Endpoints:
+    - 127.0.0.1:21009
+  NonBlock: true
+  Timeout: 10000

@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package bridgekafka;
+option go_package = "./bridgekafka";
+option java_multiple_files = true;
+option java_package = "com.github.bridgekafka.grpc";
+option java_outer_classname = "BridgeKafkaProto";
+
+// Bridge Kafka 服务
+service BridgeKafka {
+  // 推送消息到 Kafka
+  rpc Publish(PublishReq) returns (PublishRes);
+}
+
+// -------------------- 通用请求/响应 --------------------
+message PublishReq {
+  string topic = 1;
+  string key = 2;
+  bytes value = 3;
+}
+
+message PublishRes {
+}

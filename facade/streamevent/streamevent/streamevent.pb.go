@@ -434,10 +434,10 @@ func (*ReceiveKafkaMessageRes) Descriptor() ([]byte, []int) {
 
 type KafkaMessage struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SessionId     string                 `protobuf:"bytes,1,opt,name=sessionId,proto3" json:"sessionId,omitempty"`
+	MsgId         string                 `protobuf:"bytes,1,opt,name=msgId,proto3" json:"msgId,omitempty"`
 	Topic         string                 `protobuf:"bytes,2,opt,name=topic,proto3" json:"topic,omitempty"`
 	Group         string                 `protobuf:"bytes,3,opt,name=group,proto3" json:"group,omitempty"`
-	Key           []byte                 `protobuf:"bytes,4,opt,name=key,proto3" json:"key,omitempty"`
+	Key           string                 `protobuf:"bytes,4,opt,name=key,proto3" json:"key,omitempty"`
 	Value         []byte                 `protobuf:"bytes,5,opt,name=value,proto3" json:"value,omitempty"`
 	SendTime      string                 `protobuf:"bytes,6,opt,name=sendTime,proto3" json:"sendTime,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -474,9 +474,9 @@ func (*KafkaMessage) Descriptor() ([]byte, []int) {
 	return file_streamevent_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *KafkaMessage) GetSessionId() string {
+func (x *KafkaMessage) GetMsgId() string {
 	if x != nil {
-		return x.SessionId
+		return x.MsgId
 	}
 	return ""
 }
@@ -495,11 +495,11 @@ func (x *KafkaMessage) GetGroup() string {
 	return ""
 }
 
-func (x *KafkaMessage) GetKey() []byte {
+func (x *KafkaMessage) GetKey() string {
 	if x != nil {
 		return x.Key
 	}
-	return nil
+	return ""
 }
 
 func (x *KafkaMessage) GetValue() []byte {
@@ -3336,12 +3336,12 @@ const file_streamevent_proto_rawDesc = "" +
 	"\x13ReceiveWSMessageRes\"O\n" +
 	"\x16ReceiveKafkaMessageReq\x125\n" +
 	"\bmessages\x18\x01 \x03(\v2\x19.streamevent.KafkaMessageR\bmessages\"\x18\n" +
-	"\x16ReceiveKafkaMessageRes\"\x9c\x01\n" +
-	"\fKafkaMessage\x12\x1c\n" +
-	"\tsessionId\x18\x01 \x01(\tR\tsessionId\x12\x14\n" +
+	"\x16ReceiveKafkaMessageRes\"\x94\x01\n" +
+	"\fKafkaMessage\x12\x14\n" +
+	"\x05msgId\x18\x01 \x01(\tR\x05msgId\x12\x14\n" +
 	"\x05topic\x18\x02 \x01(\tR\x05topic\x12\x14\n" +
 	"\x05group\x18\x03 \x01(\tR\x05group\x12\x10\n" +
-	"\x03key\x18\x04 \x01(\fR\x03key\x12\x14\n" +
+	"\x03key\x18\x04 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x05 \x01(\fR\x05value\x12\x1a\n" +
 	"\bsendTime\x18\x06 \x01(\tR\bsendTime\"T\n" +
 	"\x10PushChunkAsduReq\x12\x10\n" +

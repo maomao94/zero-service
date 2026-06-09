@@ -20,6 +20,7 @@
 | [error-handling.md](./error-handling.md) | 改 HTTP/gRPC 错误、错误码、错误包装、网关错误 handler 或日志传播 | 项目错误工厂、错误码行为、透传和包装规则 |
 | [quality-guidelines.md](./quality-guidelines.md) | 完成实现前做质量门禁，或修改公共组件和生成代码 | 禁止模式、测试范围、验证策略、公共组件安全修复边界 |
 | [logging-guidelines.md](./logging-guidelines.md) | 新增或修改日志，尤其是外部系统、高频路径、敏感数据路径 | 日志字段、脱敏、噪声控制 |
+| [messaging-guidelines.md](./messaging-guidelines.md) | 改 Kafka/go-queue、MQTT、消息 trace、consumer handler 或消息桥接模块 | 消息队列契约、trace header 传播、消费端上下文恢复、测试断言 |
 | [socketiox-guidelines.md](./socketiox-guidelines.md) | 改 `common/socketiox/` API、Session、房间、事件处理、容器或并发实现 | SocketIO 包 API、并发规则、禁止模式 |
 | [socketiox-contracts.md](./socketiox-contracts.md) | 改 SocketIO 上下行 payload、事件名、`UpSocketMessage`、统计和房间分页协议 | SocketIO 跨层协议契约、payload、错误矩阵、测试断言 |
 | [antsx-invoke-guidelines.md](./antsx-invoke-guidelines.md) | 使用或修改 `antsx.Invoke`、`InvokeAllSettled`、Reactor 并行编排 | Invoke 签名、选型、取消、panic 防护、测试断言 |
@@ -37,6 +38,7 @@
 - [ ] 读 `coding-standards.md`，确认全局协作、安全和命名边界。
 - [ ] 若改 go-zero 服务或契约，读 `go-zero-conventions.md`，确认 `.api` / `.proto` -> `gen.sh` -> Logic 流程。
 - [ ] 若改错误返回，读 `error-handling.md`，不要新建独立错误码体系。
+- [ ] 若改 Kafka/MQTT/消息 trace，读 `messaging-guidelines.md`，确认 header 传播和 consumer `ctx` 恢复路径。
 - [ ] 若改 SocketIO 协议，先读 `socketiox-guidelines.md`，再读 `socketiox-contracts.md`。
 - [ ] 若新增复用能力，先搜索 `common/` 和相邻服务，必要时读 `../guides/code-reuse-thinking-guide.md`。
 - [ ] 只加载命中的专题规范，避免把本目录所有 Markdown 注入上下文。
