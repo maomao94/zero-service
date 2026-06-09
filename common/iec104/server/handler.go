@@ -1,8 +1,9 @@
 package server
 
 import (
-	"github.com/wendy512/go-iecp5/asdu"
 	"time"
+
+	"github.com/wendy512/go-iecp5/asdu"
 )
 
 type ServerHandler struct {
@@ -26,6 +27,8 @@ type CommandHandler interface {
 	OnResetProcess(asdu.Connect, *asdu.ASDU, asdu.QualifierOfResetProcessCmd) error
 	// OnDelayAcquisition 延迟获取请求
 	OnDelayAcquisition(asdu.Connect, *asdu.ASDU, uint16) error
+	// OnTestCommand 测试命令请求
+	OnTestCommand(asdu.Connect, *asdu.ASDU) error
 	// OnASDU 控制命令请求
 	OnASDU(asdu.Connect, *asdu.ASDU) error
 }
@@ -52,6 +55,10 @@ func (s *ServerHandler) ResetProcessHandler(conn asdu.Connect, pack *asdu.ASDU, 
 
 func (s *ServerHandler) DelayAcquisitionHandler(conn asdu.Connect, pack *asdu.ASDU, msec uint16) error {
 	return s.handler.OnDelayAcquisition(conn, pack, msec)
+}
+
+func (s *ServerHandler) OnTestCommand(conn asdu.Connect, pack *asdu.ASDU) error {
+	return s.handler.OnTestCommand(conn, pack)
 }
 
 func (s *ServerHandler) ASDUHandler(conn asdu.Connect, pack *asdu.ASDU) error {

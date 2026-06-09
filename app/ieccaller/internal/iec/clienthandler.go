@@ -53,7 +53,7 @@ func (c *ClientCall) OnInterrogation(packet *asdu.ASDU) error {
 // OnCounterInterrogation 总计数器回复
 func (c *ClientCall) OnCounterInterrogation(packet *asdu.ASDU) error {
 	addr, value := packet.GetCounterInterrogationCmd()
-	logx.Debugf("counter interrogation reply, addr: %d, request: 0x%02X, rreeze: 0x%02X",
+	logx.Debugf("counter interrogation reply, addr: %d, request: 0x%02X, freeze: 0x%02X\n",
 		addr, value.Request, value.Freeze)
 	return nil
 }
@@ -299,7 +299,7 @@ func (c *ClientCall) onBitString32(ctx context.Context, packet *asdu.ASDU) {
 	coa := packet.CommonAddr
 	asduDataList := packet.GetBitString32()
 	logx.WithContext(ctx).Debugf("bitstring32, size: %d", len(asduDataList))
-	// [M_BO_NA_1], [M_BO_TA_1] or [M_BO_TB_1] 获得比特位串信息体集合
+	// [M_BO_NA_1], [M_BO_TA_1] or [M_BO_TB_1].获得比特位串信息体集合
 	for _, p := range asduDataList {
 		msgId, _ := tool.SimpleUUID()
 		logx.WithContext(ctx).Debugf("bigtstring32, msgId: %s, ioa: %d, ioaHex: %s, value: %v, bsi: %032b", msgId, p.Ioa, types.IoaHexAddress(p.Ioa), p.Value, p.Value)
