@@ -1,7 +1,8 @@
 package config
 
 import (
-	"github.com/zeromicro/go-queue/kq"
+	"zero-service/common/configx"
+
 	"github.com/zeromicro/go-zero/zrpc"
 )
 
@@ -16,12 +17,7 @@ type Config struct {
 		NamespaceId string
 		ServiceName string
 	} `json:",optional"`
-	KafkaPushConfig    KafkaPushConfig    `json:",optional"`
-	KafkaConsumeConfig kq.KqConf          `json:",optional"`
-	StreamEventConf    zrpc.RpcClientConf `json:",optional"`
-}
-
-type KafkaPushConfig struct {
-	Brokers []string
-	Topics  []string
+	KafkaPushConfig    configx.KafkaMultiPushConf  `json:",optional"`
+	KafkaConsumeConfig []configx.KafkaConsumerConf `json:",optional"`
+	StreamEventConf    zrpc.RpcClientConf          `json:",optional"`
 }

@@ -41,10 +41,14 @@ func main() {
 	serviceGroup := service.NewServiceGroup()
 	defer serviceGroup.Stop()
 
-	if len(c.KafkaConsumeConfig.Brokers) > 0 && c.KafkaConsumeConfig.Topic != "" {
-		h := handler.NewKafkaStreamHandler(c.KafkaConsumeConfig.Topic, c.KafkaConsumeConfig.Group, ctx.StreamEventCli)
-		c.KafkaConsumeConfig.ServiceConf = c.ServiceConf
-		serviceGroup.Add(kq.MustNewQueue(c.KafkaConsumeConfig, h))
+	for i := range c.KafkaConsumeConfig {
+		kc := c.KafkaConsumeConfig[i]
+		if len(kc.Brokers) == 0 || kc.Topic == "" {
+			continue
+		}
+		fullConf := kc.ToKqConf(c.ServiceConf)
+		h := handler.NewKafkaStreamHandler(kc.Topic, kc.Group, ctx.StreamEventCli)
+		serviceGroup.Add(kq.MustNewQueue(fullConf, h))
 	}
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {

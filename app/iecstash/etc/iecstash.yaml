@@ -16,7 +16,6 @@ NacosConfig:
   NamespaceId: public
   ServiceName: iec-stash
 KafkaASDUConfig:
-  Name: asdu
   Brokers:
     - 127.0.0.1:9094
   Topic: asdu

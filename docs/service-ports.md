@@ -44,6 +44,7 @@
 | podengine.rpc | `app/podengine/` | 21010 | 容器管理引擎 |
 | alarm.rpc | `app/alarm/` | 21011 | 告警服务 |
 | djicloud.rpc | `app/djicloud/` | 21012 | DJI 云平台服务 |
+| bridgekafka.rpc | `app/bridgekafka/` | 21013 | Kafka 桥接 |
 
 ### 23xxx — AI 应用
 
@@ -71,7 +72,7 @@
 | 11001 – 11003 | 通用 HTTP 网关 |
 | 13001 – 13003 | AI 应用 HTTP 服务 |
 | 15001 | 桥接 HTTP 网关 |
-| 21001 – 21012 | 核心业务 gRPC 服务 |
+| 21001 – 21013 | 核心业务 gRPC 服务 |
 | 23001 – 23002 | AI 应用 gRPC 服务 |
 | 25001 – 25007 | Socket / 桥接 / 扩展 gRPC 服务 |
 
