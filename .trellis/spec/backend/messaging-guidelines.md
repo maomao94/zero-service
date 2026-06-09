@@ -85,7 +85,55 @@ If ordered commits and trace continuity are both required, do not rely on `kq.Co
 
 ### 3. Contracts
 
-**Producer 配置**:
+**Kafka push config 类型**（`common/configx/kqConfig.go`）:
+
+项目提供三种 Kafka 配置类型，统一放在 `common/configx` 包中共享，各服务不在本地重复定义：
+
+| 类型 | 用途 | 字段 |
+|------|------|------|
+| `KafkaPushConf` | 单 topic push（xfusionmock） | `Brokers []string`, `Topic string` |
+| `KafkaMultiPushConf` | 同集群多 topic push（bridgekafka） | `Brokers []string`, `Topics []string` |
+| `KafkaConsumerConf` | 消费配置（bridgekafka/iecstash） | 全字段（Brokers/Topic/Group/Conns/...），不含 `service.ServiceConf` |
+
+**Design Decision: 单 topic 和多 topic push 不合并** — 合并为 `Topics []string` 会强制所有单 topic 配置写成数组语法（`Topics: [asdu]`），增加不必要的 YAML 层级。拆分为两种类型，单 topic 保持 `Topic` 标量。
+
+**KafkaConsumerConf 与 ServiceConf 注入**:
+
+`KafkaConsumerConf` 不内嵌 `service.ServiceConf`，`Name`/`Log`/`Mode` 等由 RPC 服务配置注入：
+
+```go
+// common/configx/kqConfig.go
+func (c KafkaConsumerConf) ToKqConf(svcConf service.ServiceConf) kq.KqConf {
+    return kq.KqConf{
+        ServiceConf: svcConf,
+        Brokers:     c.Brokers,
+        Group:       c.Group,
+        Topic:       c.Topic,
+        // ... 其余字段直接拷贝
+    }
+}
+```
+
+服务启动时注入：
+```go
+// bridgekafka.go — 多 consumer
+for i := range c.KafkaConsumeConfig {
+    kc := c.KafkaConsumeConfig[i]
+    if len(kc.Brokers) == 0 || kc.Topic == "" {
+        continue
+    }
+    fullConf := kc.ToKqConf(c.ServiceConf)
+    serviceGroup.Add(kq.MustNewQueue(fullConf, handler.NewKafkaStreamHandler(...)))
+}
+
+// iecstash.go — 单 consumer
+if kc.Brokers != nil && kc.Topic != "" {
+    fullConf := c.KafkaASDUConfig.ToKqConf(c.ServiceConf)
+    serviceGroup.Add(kq.MustNewQueue(fullConf, kafka.NewAsdu(ctx)))
+}
+```
+
+**Producer 配置**（bridgekafka 示例）:
 ```yaml
 KafkaPushConfig:
   Brokers:
@@ -96,7 +144,28 @@ KafkaPushConfig:
     - event
 ```
 
-**ServiceContext 中创建 Pusher map**:
+**Consumer 配置**（bridgekafka 多 consumer）:
+```yaml
+KafkaConsumeConfig:
+  - Brokers:
+      - 127.0.0.1:9094
+    Topic: asdu
+    Group: bridge-kafka-asdu
+    Conns: 3
+    Consumers: 3
+    Processors: 18
+```
+
+**Consumer 配置**（iecstash 单 consumer）:
+```yaml
+KafkaASDUConfig:
+  Brokers:
+    - 127.0.0.1:9094
+  Topic: asdu
+  Group: iec-stash
+```
+
+**ServiceContext 中创建 Pusher map**（bridgekafka）:
 ```go
 pushers := make(map[string]*kq.Pusher)
 for _, topic := range c.KafkaPushConfig.Topics {
@@ -137,9 +206,11 @@ message KafkaMessage {
 ### 4. Validation & Error Matrix
 - gRPC topic 不在 `KafkaPushConfig.Topics` 中 -> 返回 `kafka topic %s not configured` 错误
 - `KafkaPushConfig.Brokers` 为空 -> 不创建任何 Pusher（无报错，等待下次配置）
-- `KafkaConsumeConfig.Brokers` 为空或 `Topic` 为空 -> 不启动消费者
+- `KafkaConsumeConfig[i].Brokers` 为空或 `Topic` 为空 -> 跳过该 consumer（continue）
+- `KafkaASDUConfig`（单 consumer）Brokers 为空或 Topic 为空 -> 不启动消费者
 - handler 中 `streamEventCli` 为 nil -> 跳过 gRPC 转发（不报错）
 - KafkaMessage 遗漏 `Group` 或 `SessionId` -> 下游 streamevent 无法识别消息来源（可追溯性下降）
+- `KafkaConsumerConf` 的 `ServiceConf` 未注入 -> `Name` 字段为空，go-zero 运行可能异常
 
 ### 5. Good/Base/Bad Cases
 - Good: 配置 3-5 个核心 topic，每个创建独立 Pusher。gRPC Publish 按 topic 路由到对应 Pusher。consumer side 完整填充 KafkaMessage 7 字段。
@@ -207,3 +278,40 @@ if in.Key != "" {
 **Context**: bridgemqtt 同时转发到 streamevent 和 socketpush。bridgekafka 最初设计也包含 socket 转发，但讨论后移除。
 
 **Decision**: socket 推送由 bridgemqtt 覆盖，bridgekafka 保持轻量，只做 streamevent gRPC 转发。新增 bridge 模块时默认不包含 socket 转发，除非有明确需求。
+
+### Design Decision: Kafka 配置类型集中在 common/configx
+
+**Context**: 多个服务（bridgekafka、iecstash、xfusionmock）各自定义 Kafka 配置结构体，字段重复且命名不一致。
+
+**Options Considered**:
+1. 每个服务自定义 Kafka 配置类型
+2. 统一放在 `common/configx/`，所有服务引用
+
+**Decision**: 选择 Option 2。三种类型覆盖全部场景：`KafkaPushConf`（单 topic push）、`KafkaMultiPushConf`（多 topic push）、`KafkaConsumerConf`（消费，ServiceConf 注入）。
+
+**Naming Convention**: 所有类型使用 `Kafka` 前缀 + `Conf` 后缀，与 go-zero 的 `RpcServerConf`/`ServiceConf` 命名风格一致。
+
+**Example**:
+```go
+// bridgekafka config
+type Config struct {
+    zrpc.RpcServerConf
+    KafkaPushConfig    configx.KafkaMultiPushConf      `json:",optional"`
+    KafkaConsumeConfig []configx.KafkaConsumerConf     `json:",optional"`
+}
+
+// iecstash config
+type Config struct {
+    zrpc.RpcServerConf
+    KafkaASDUConfig configx.KafkaConsumerConf
+}
+
+// xfusionmock config
+type Config struct {
+    zrpc.RpcServerConf
+    KafkaPointConfig  configx.KafkaPushConf
+    KafkaAlarmConfig  configx.KafkaPushConf
+}
+```
+
+**Anti-pattern**: 在服务 `internal/config/` 中定义私有 Kafka 配置结构体。除非该配置包含服务独有的业务字段，否则应使用 `configx` 类型。
