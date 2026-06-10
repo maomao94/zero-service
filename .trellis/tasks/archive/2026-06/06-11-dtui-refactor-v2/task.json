@@ -1,0 +1,32 @@
+{
+  "id": "dtui-refactor-v2",
+  "name": "dtui-refactor-v2",
+  "title": "dtui 架构重构——研究 Lazydocker/LazyGit/k9s，重设计 TUI 架构",
+  "description": "",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "boss",
+  "assignee": "boss",
+  "createdAt": "2026-06-11",
+  "completedAt": "2026-06-11",
+  "branch": null,
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "06-11-dtui-containers",
+    "06-11-dtui-images",
+    "06-11-dtui-compose",
+    "06-11-dtui-deploy",
+    "06-11-dtui-settings"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}

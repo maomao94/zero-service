@@ -14,7 +14,25 @@
 | `common/` | 跨服务复用能力，例如 `socketiox`、`djisdk`、`einox`、`mcpx`、`mqttx`、`dbx`、`ssex`、`asynqx`、`dockerx` |
 | `model/` | 数据库模型和模型生成脚本 |
 | `deploy/` | Docker Compose、部署编排和环境相关材料 |
-| `docs/`、`swagger/`、`third_party/`、`util/` | 项目文档、Swagger、第三方 proto 和工具集 |
+| `docs/`、`swagger/`、`third_party/`、`util/`、`cli/` | 项目文档、Swagger、第三方 proto、工具集和独立 CLI 工具（如 dtui） |
+
+## CLI 工具
+
+```
+cli/<name>/
+  main.go              # Cobra 入口
+  build.sh             # 交叉编译脚本
+  README.md            # 使用说明 + Cobra/Bubble Tea 学习文档
+  internal/
+    cli/                # root command 组装
+    docker/             # exec.Command("docker", args...) 调用封装
+    tui/                # Bubble Tea Model/Update/View
+```
+
+规则：
+- 不接入 go-zero，不依赖 `app/` / `common/`。
+- Docker 调用用参数数组，禁止 shell 拼接。
+- 配置默认 `~/.<name>/config.json`，首次启动自动初始化。
 
 ## 服务内部结构
 

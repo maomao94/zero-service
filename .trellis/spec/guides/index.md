@@ -10,6 +10,7 @@
 | [cross-layer-thinking-guide.md](./cross-layer-thinking-guide.md) | 任务跨 `.api` / `.proto`、Logic、Model/SDK、配置、外部系统、前端或消息协议 | 画清数据流、契约源、生成脚本、消费者和验证点 | [`go-zero-conventions.md`](../backend/go-zero-conventions.md)、[`error-handling.md`](../backend/error-handling.md)，SocketIO 读 [`socketiox-contracts.md`](../backend/socketiox-contracts.md) |
 | [documentation-guide.md](./documentation-guide.md) | 修改 README、docs/、CONTRIBUTING 或文档索引 | 确认文档层级、保留内容、链接和重复清理范围 | 只读相关项目文档，不读 backend 代码规范 |
 | [release-tagging-guide.md](./release-tagging-guide.md) | 打 tag、创建 GitHub Release 或发布版本 | 先形成 release plan，等待用户批准后再执行 | 需要 Git 操作时遵循用户批准和仓库规则 |
+| [bubble-tea-tui-guide.md](./bubble-tea-tui-guide.md) | 使用 Bubble Tea 或 bubbles/table 开发 TUI 组件 | 确保 columns 初始化、窗口大小处理、列宽计算安全 | 本指南自包含，不需要读 backend 规范 |
 
 ## Guide 使用规则
 

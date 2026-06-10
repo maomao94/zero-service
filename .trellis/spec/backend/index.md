@@ -21,6 +21,8 @@
 | [quality-guidelines.md](./quality-guidelines.md) | 完成实现前做质量门禁，或修改公共组件和生成代码 | 禁止模式、测试范围、验证策略、公共组件安全修复边界 |
 | [logging-guidelines.md](./logging-guidelines.md) | 新增或修改日志，尤其是外部系统、高频路径、敏感数据路径 | 日志字段、脱敏、噪声控制 |
 | [messaging-guidelines.md](./messaging-guidelines.md) | 改 Kafka/go-queue、MQTT、消息 trace、consumer handler 或消息桥接模块 | 消息队列契约、trace header 传播、消费端上下文恢复、测试断言 |
+| [uix-framework.md](./uix-framework.md) | 开发或修改 `cli/uix/`、`cli/dtui/`、Bubble Tea TUI 插件 | uix 框架架构、Plugin 接口契约、组件库、消息系统、设计决策、反模式 |
+| [dtui-conventions.md](./dtui-conventions.md) | ⚠️ DEPRECATED — 参考 uix-framework.md | 旧 dtui Context/PanelManager 模式（已废弃） |
 | [socketiox-guidelines.md](./socketiox-guidelines.md) | 改 `common/socketiox/` API、Session、房间、事件处理、容器或并发实现 | SocketIO 包 API、并发规则、禁止模式 |
 | [socketiox-contracts.md](./socketiox-contracts.md) | 改 SocketIO 上下行 payload、事件名、`UpSocketMessage`、统计和房间分页协议 | SocketIO 跨层协议契约、payload、错误矩阵、测试断言 |
 | [antsx-invoke-guidelines.md](./antsx-invoke-guidelines.md) | 使用或修改 `antsx.Invoke`、`InvokeAllSettled`、Reactor 并行编排 | Invoke 签名、选型、取消、panic 防护、测试断言 |

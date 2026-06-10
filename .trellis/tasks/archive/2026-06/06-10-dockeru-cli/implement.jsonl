@@ -1,0 +1,8 @@
+{"type":"task","path":".trellis/tasks/06-10-dockeru-cli/prd.md","reason":"dockeru CLI 的中文需求和验收标准。"}
+{"type":"task","path":".trellis/tasks/06-10-dockeru-cli/design.md","reason":"技术设计、命令契约、文件布局、Docker 调用边界和 Cobra 学习要求。"}
+{"type":"task","path":".trellis/tasks/06-10-dockeru-cli/implement.md","reason":"中文实施清单和验证命令。"}
+{"type":"source","path":"util/dockeru/main.go","reason":"现有原型工作流：容器/镜像列表和 Docker 操作。"}
+{"type":"source","path":"/Users/hehanpeng/GolandProjects/cli/cmd/build.go","reason":"参考飞书 CLI 的 Cobra root 组装和子命令注册方式。"}
+{"type":"spec","path":".trellis/spec/backend/coding-standards.md","reason":"Go/后端编码、依赖和安全边界。"}
+{"type":"spec","path":".trellis/spec/backend/directory-structure.md","reason":"目录落点规则；本任务按用户要求放 cli/dockeru。"}
+{"type":"spec","path":".trellis/spec/backend/quality-guidelines.md","reason":"质量验证和禁止模式清单。"}

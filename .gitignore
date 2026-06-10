@@ -16,3 +16,4 @@ gtw/env/
 #.claude/
 /.sisyphus
 /.omo
+/cli/*/bin/

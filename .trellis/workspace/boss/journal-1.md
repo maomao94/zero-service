@@ -1795,3 +1795,202 @@ Analyzed IEEE 754 float32 precision behavior for SendSetpointFloat, confirmed pr
 ### Next Steps
 
 - None - task complete
+
+
+## Session 45: dtui: Bubble Tea Docker TUI CLI 开发
+
+**Date**: 2026-06-10
+**Task**: dtui: Bubble Tea Docker TUI CLI 开发
+**Branch**: `master`
+
+### Summary
+
+从 util/dockeru 原型出发，用 Go + Cobra + Bubble Tea 构建了 dtui 终端 UI。实现容器/镜像/编排/发布四个 tab、主列表+右侧命令日志双窗布局、键盘+鼠标+数字键选择、操作确认弹窗、内嵌日志查看(自动刷新+关键词搜索)、内嵌命令执行面板、镜像删除/tag/save、compose 配置驱动、nginx 前端发布流程、ANSI 彩色界面、列表视口滚动。沉淀了 dtui-conventions.md 规范到 .trellis/spec/backend。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d75e0937` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 46: dtui 全面重构 - 布局/Bubble Tea/Docker SDK/配置/日志/设置页
+
+**Date**: 2026-06-10
+**Task**: dtui 全面重构 - 布局/Bubble Tea/Docker SDK/配置/日志/设置页
+**Branch**: `master`
+
+### Summary
+
+修复 dtui 多个严重问题：1) 使用 lipgloss.JoinVertical + Height/MaxHeight 强制布局约束，解决多视图叠加；2) Docker 日志改用 stdcopy.StdCopy 统一处理多路复用和 TTY 格式；3) 去掉 WithMouseCellMotion，终端原生支持文本选中；4) 配置改用 encoding/json，增加增删方法；5) exec/log/stats 面板全屏渲染；6) SaveImage 超时 5min；7) 新增设置页可交互增删 compose dirs 和 deploy targets；8) 新增 logger 包(zap+lumberjack)；9) Docker client context.WithCancel 优雅关闭；10) 新增端口 tab 到 inspect；11) 编排视图显示文件不存在错误；12) 提供默认 compose 和 deploy 测试文件
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+(No commits - planning session)
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 47: dtui Panel架构重构 + 配置统一 + 备份路径优化
+
+**Date**: 2026-06-10
+**Task**: dtui Panel架构重构 + 配置统一 + 备份路径优化
+**Branch**: `master`
+
+### Summary
+
+Panel接口+PanelManager统一面板生命周期; 发布改名部署; 备份改为.dtui/; 命令日志改为操作历史; 修复面板bug(busy状态/patch引用/面板切换)
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `31413cd5` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 48: 修复 dtui Panel v3 架构迁移 & 日志流式/Exec 输入 Bug
+
+**Date**: 2026-06-11
+**Task**: 修复 dtui Panel v3 架构迁移 & 日志流式/Exec 输入 Bug
+**Branch**: `master`
+
+### Summary
+
+1. 完成 Panel Manager 统一架构迁移，移除 12 个旧 Model 字段\n2. StreamLogs stdcopy+io.Pipe 流式解码 + FetchLogs stdcopy 回退原始读取\n3. ExecPanelImpl 自管理输入，ExecLineMsg 路由 mode 业务\n4. 面板专属页脚( Esc 返回 + Help) / 面板状态(名称替代0/0)\n5. 更新 dtui-conventions.md spec: 日志流式场景、ExecLineMsg 模式、双轨反模式
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `28400820` | (see git log) |
+| `89116949` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 49: dtui 全模块重构
+
+**Date**: 2026-06-11
+**Task**: dtui 全模块重构
+**Branch**: `master`
+
+### Summary
+
+面板高度统一(PanelManager padding/visibleLines/确认弹窗全屏), 部署流程重构(文件夹+zip双模式/Go标准库解压/SDK CopyToContainer), 全操作历史记录, 1-9移除, H/h区分(操作记录/镜像层), 前端发布改名, SettingsView cursor修复, 备份目录初始化, testdata测试用例, dtui-conventions规范更新5条Don't
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `41e969f5` | (see git log) |
+| `2b65571e` | (see git log) |
+| `c9a20f3c` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 50: dtui 面板交互优化 + 配置表单化 + 发布包配置
+
+**Date**: 2026-06-11
+**Task**: dtui 面板交互优化 + 配置表单化 + 发布包配置
+**Branch**: `master`
+
+### Summary
+
+FormPanel 表单组件(Tab/Enter/Esc), 设置页表单化(编排目录/发布目标/发布包各带 placeholder), DeployPackage 配置类型 + 前端发布视图双区显示 + 选中包按 d 直接部署, 日志自动换行(续行无行号), 操作记录底部详情区, exec 输出动态分配+换行+截取尾部
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `bb950aa7` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

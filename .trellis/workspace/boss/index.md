@@ -7,9 +7,9 @@
 ## Current Status
 
 <!-- @@@auto:current-status -->
-- **Active File**: `journal-1.md`
-- **Total Sessions**: 44
-- **Last Active**: 2026-06-09
+- **Active File**: `journal-2.md`
+- **Total Sessions**: 53
+- **Last Active**: 2026-06-11
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,8 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1797 | Active |
+| `journal-2.md` | ~116 | Active |
+| `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +30,15 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 53 | 2026-06-11 | uix TUI framework refactoring and spec updates | `96f6acf5`, `1369b62a`, `e3283a6b`, `a67380ef`, `f70bc95e` | `master` |
+| 52 | 2026-06-11 | uix framework + dtui Docker management rewrite | `d722554b`, `6dc712ce`, `d1c0be30`, `312638c2`, `c79aae4c`, `af4b6041` | `master` |
+| 51 | 2026-06-11 | Fix dtui panic and usability | `5d11d4e6`, `6099ab16` | `master` |
+| 50 | 2026-06-11 | dtui 面板交互优化 + 配置表单化 + 发布包配置 | `bb950aa7` | `master` |
+| 49 | 2026-06-11 | dtui 全模块重构 | `41e969f5`, `2b65571e`, `c9a20f3c` | `master` |
+| 48 | 2026-06-11 | 修复 dtui Panel v3 架构迁移 & 日志流式/Exec 输入 Bug | `28400820`, `89116949` | `master` |
+| 47 | 2026-06-10 | dtui Panel架构重构 + 配置统一 + 备份路径优化 | `31413cd5` | `master` |
+| 46 | 2026-06-10 | dtui 全面重构 - 布局/Bubble Tea/Docker SDK/配置/日志/设置页 | - | `master` |
+| 45 | 2026-06-10 | dtui: Bubble Tea Docker TUI CLI 开发 | `d75e0937` | `master` |
 | 44 | 2026-06-09 | 实现 bridgekafka 模块 | `84ad2851`, `15a62cf9`, `2085cd4a` | `master` |
 | 43 | 2026-06-08 | iec104 setpoint float precision analysis and spec update | `15a62cf9`, `2085cd4a` | `master` |
 | 42 | 2026-06-08 | IEC 104 Proto 与文档同步修复 | `b3037148`, `def256dd`, `75db51e7`, `f6b3696c`, `b0ab975f`, `9fdde62a` | `master` |
