@@ -1,6 +1,6 @@
 # uix — Chat-like CLI/TUI Shell Code-Spec
 
-> Canonical executable contract for `cli/uix/` and TUI modules hosted by it. Last updated: 2026-06-12 (component enrichment).
+> Canonical executable contract for `cli/uix/` and TUI modules hosted by it. Last updated: 2026-06-12 (dtui module rewrite + review fixes).
 
 ## 1. Scope / Trigger
 
@@ -306,6 +306,39 @@ Do not enable `tea.WithMouseCellMotion()` unless a task requires mouse interacti
 
 Enrich `uix` with Bubbles wrappers first (no new dependencies), then ntcharts charts (MIT, v1-compatible). All components follow `SetSize(width, height int)` contract with safe defaults (80x24 minimum). Charts must call `Draw()` after data/size changes. No mouse capture by default.
 
+### D7: Lazy client initialization
+
+Business modules that need Docker (or other external services) must use lazy initialization via `ensureClient()` pattern. The client is created on first use, not at module construction or `Init()`. This allows `dtui` to start without Docker daemon running.
+
+```go
+type Module struct {
+    client *client.Client
+    // ...
+}
+
+func (m *Module) ensureClient() error {
+    if m.client != nil {
+        return nil
+    }
+    c, err := client.NewClientWithOpts(client.FromEnv)
+    if err != nil {
+        return fmt.Errorf("docker not available: %w", err)
+    }
+    m.client = c
+    return nil
+}
+```
+
+### D8: Form mode with IsRoot() toggle
+
+Modules with inline forms (text input, multi-field editing) should toggle `IsRoot()` based on form state. When form is active, `IsRoot()` returns `false` so ESC exits the form first before exiting the module.
+
+```go
+func (m *Module) IsRoot() bool {
+    return !m.formMode
+}
+```
+
 ## Bubble Tea Gotchas
 
 - `textinput.New()` is unfocused; call `Focus()` in prompt constructors.
@@ -325,3 +358,21 @@ Enrich `uix` with Bubbles wrappers first (no new dependencies), then ntcharts ch
 | Full-screen command palette | Loses context | Inline Dropdown above status/prompt |
 | Byte slicing visible strings | Breaks UTF-8 and width | `theme.Truncate` |
 | Real provider logic in `uix` core | Couples shell to LLM runtime | Use `Runner` interface |
+| Module migrated but not registered | Module unreachable from shell | Wire in `main.go` with `app.RegisterModule()` |
+| Config delete misses sections | Partial deletion, data inconsistency | Handle ALL sections in delete/confirm handlers |
+
+## Lessons Learned (2026-06-12)
+
+### Config section handling
+
+When a config module manages multiple sections (e.g., ComposeDirs + DeployTargets + DeployPackages), every operation (delete, add, edit) must handle ALL sections. The `currentEntry()` function must return correct section-aware indices, and `handleConfirm` must dispatch to the correct config method based on section name.
+
+### Test module as validation host
+
+`/test` module in `dtui` validates the entire `uix` shell contract without Docker: modal, file picker, log viewer, state views, chart demo, and module back behavior. This is the canonical pattern for validating `uix` before business module migration.
+
+### ntcharts integration
+
+- Use v1 path `github.com/NimbleMarkets/ntcharts` (not v2 which uses `charm.land/bubbletea/v2`)
+- Chart components must call `Draw()` after `SetData()`, `SetSize()`, or style changes
+- Sparkline and BarChart satisfy `ChartComponent` interface for polymorphic usage
