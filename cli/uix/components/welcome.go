@@ -23,6 +23,12 @@ func NewWelcomeScreen(logo string) WelcomeScreen {
 }
 
 func (w *WelcomeScreen) SetSize(width, height int) {
+	if width <= 0 {
+		width = 80
+	}
+	if height <= 0 {
+		height = 24
+	}
 	w.width = width
 	w.height = height
 }

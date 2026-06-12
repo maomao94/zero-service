@@ -14,7 +14,12 @@ func Truncate(s string, maxWidth int) string {
 		return s
 	}
 	if maxWidth <= 2 {
-		return s[:min(len(s), maxWidth)]
+		truncated := s
+		for lipgloss.Width(truncated) > maxWidth && len(truncated) > 0 {
+			_, size := lastRune(truncated)
+			truncated = truncated[:len(truncated)-size]
+		}
+		return truncated
 	}
 
 	truncated := s
@@ -55,18 +60,18 @@ var (
 				Padding(0, 1)
 
 	PaletteItemSelectedStyle = lipgloss.NewStyle().
-				Background(lipgloss.Color(ColorSelected)).
-				Foreground(lipgloss.Color(ColorFg)).
-				Bold(true).
-				Padding(0, 1)
+					Background(lipgloss.Color(ColorSelected)).
+					Foreground(lipgloss.Color(ColorFg)).
+					Bold(true).
+					Padding(0, 1)
 
 	PaletteDescStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(ColorDim)).
-			Padding(0, 0, 0, 1)
+				Foreground(lipgloss.Color(ColorDim)).
+				Padding(0, 0, 0, 1)
 
 	PaletteHintStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(ColorDim)).
-			Padding(0, 1)
+				Foreground(lipgloss.Color(ColorDim)).
+				Padding(0, 1)
 
 	PalettePrefixStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color(ColorAccent)).

@@ -2,7 +2,7 @@ package uix
 
 import tea "github.com/charmbracelet/bubbletea"
 
-type Plugin interface {
+type Module interface {
 	Name() string
 	Description() string
 	Aliases() []string
@@ -17,4 +17,11 @@ type Plugin interface {
 type HelpBinding struct {
 	Keys []string
 	Desc string
+}
+
+type Command struct {
+	Name        string
+	Description string
+	Aliases     []string
+	Run         func(*Shell) tea.Cmd
 }

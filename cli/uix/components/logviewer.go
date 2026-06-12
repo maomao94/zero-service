@@ -23,6 +23,12 @@ type LogViewer struct {
 
 // NewLogViewer creates a new LogViewer.
 func NewLogViewer(width, height int) LogViewer {
+	if width <= 0 {
+		width = 80
+	}
+	if height <= 0 {
+		height = 12
+	}
 	vp := viewport.New(width, height)
 	return LogViewer{
 		viewport: vp,
@@ -80,13 +86,26 @@ func (lv LogViewer) View() string {
 	if lv.loading {
 		return lipgloss.NewStyle().
 			Foreground(lipgloss.Color(theme.ColorYellow)).
+			Width(lv.safeWidth()).
 			Render("Loading...")
+	}
+	if len(lv.lines) == 0 {
+		return lipgloss.NewStyle().
+			Foreground(lipgloss.Color(theme.ColorDim)).
+			Width(lv.safeWidth()).
+			Render("No output yet")
 	}
 	return lv.viewport.View()
 }
 
 // SetSize updates dimensions.
 func (lv *LogViewer) SetSize(width, height int) {
+	if width <= 0 {
+		width = 80
+	}
+	if height <= 0 {
+		height = 12
+	}
 	lv.width = width
 	lv.height = height
 	lv.viewport.Width = width
@@ -141,6 +160,13 @@ func (lv LogViewer) LineCount() int {
 
 func (lv *LogViewer) updateContent() {
 	lv.viewport.SetContent(strings.Join(lv.lines, "\n"))
+}
+
+func (lv LogViewer) safeWidth() int {
+	if lv.width <= 0 {
+		return 80
+	}
+	return lv.width
 }
 
 // LogHeader renders a standard header for log panels.

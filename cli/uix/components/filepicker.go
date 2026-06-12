@@ -18,6 +18,9 @@ type FilePicker struct {
 }
 
 func NewFilePicker(width int) FilePicker {
+	if width <= 0 {
+		width = 80
+	}
 	fp := filepicker.New()
 	if home, err := os.UserHomeDir(); err == nil {
 		fp.CurrentDirectory = home
@@ -61,6 +64,14 @@ func (fp FilePicker) Update(msg tea.Msg) (FilePicker, tea.Cmd) {
 }
 
 func (fp FilePicker) View() string {
+	width := fp.width
+	if width <= 0 {
+		width = 80
+	}
+	panelWidth := width - 4
+	if panelWidth < 20 {
+		panelWidth = 20
+	}
 	header := lipgloss.NewStyle().
 		Foreground(lipgloss.Color(theme.ColorDim)).
 		Render("  " + fp.fp.CurrentDirectory)
@@ -77,7 +88,7 @@ func (fp FilePicker) View() string {
 		Foreground(lipgloss.Color(theme.ColorDim)).
 		Render("  j/k 导航  l/enter 进入  h 返回  esc 关闭  enter 选择文件")
 
-	return header + "\n" + border.Width(fp.width-4).Render(body) + "\n" + hints
+	return header + "\n" + border.Width(panelWidth).Render(body) + "\n" + hints
 }
 
 func (fp FilePicker) DidSelectFile(msg tea.Msg) (bool, string) {
@@ -85,6 +96,12 @@ func (fp FilePicker) DidSelectFile(msg tea.Msg) (bool, string) {
 }
 
 func (fp *FilePicker) SetSize(width, height int) {
+	if width <= 0 {
+		width = 80
+	}
+	if height <= 0 {
+		height = 12
+	}
 	fp.width = width
 	fp.height = height
 	if height > 5 {

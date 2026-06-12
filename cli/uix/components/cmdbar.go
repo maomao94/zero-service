@@ -36,9 +36,11 @@ var (
 type InputMode int
 
 const (
-	ModeFree   InputMode = iota
+	ModeFree InputMode = iota
 	ModeCommand
+	ModeReference
 	ModeFile
+	ModeShell
 )
 
 type CmdBar struct {
@@ -50,7 +52,7 @@ type CmdBar struct {
 func NewCmdBar(prompt string) CmdBar {
 	ti := textinput.New()
 	ti.Prompt = ""
-	ti.Placeholder = "输入 / 选择指令 | # 选择文件"
+	ti.Placeholder = "输入消息 | / 指令 | @ 引用 | # 文件"
 	ti.CharLimit = 0
 	ti.Width = 60
 	ti.Focus()
@@ -94,10 +96,14 @@ func (c CmdBar) View() string {
 	switch prefix {
 	case "/":
 		hints = "  搜索指令"
+	case "@":
+		hints = "  搜索引用"
 	case "#":
 		hints = "  搜索文件"
+	case "!":
+		hints = "  shell 命令已预留"
 	default:
-		hints = "  / 指令  # 文件"
+		hints = "  enter 发送  / 指令  @ 引用  # 文件"
 	}
 	helpLine := cmdbarHintStyle.Render(hints)
 
@@ -113,15 +119,21 @@ func (c *CmdBar) Prefix() string {
 	if strings.HasPrefix(v, "/") {
 		return "/"
 	}
+	if strings.HasPrefix(v, "@") {
+		return "@"
+	}
 	if strings.HasPrefix(v, "#") {
 		return "#"
+	}
+	if strings.HasPrefix(v, "!") {
+		return "!"
 	}
 	return ""
 }
 
 func (c *CmdBar) Query() string {
 	v := c.input.Value()
-	if strings.HasPrefix(v, "/") || strings.HasPrefix(v, "#") {
+	if strings.HasPrefix(v, "/") || strings.HasPrefix(v, "@") || strings.HasPrefix(v, "#") || strings.HasPrefix(v, "!") {
 		return strings.TrimPrefix(v[1:], " ")
 	}
 	return ""

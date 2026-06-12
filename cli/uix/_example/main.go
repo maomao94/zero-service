@@ -8,7 +8,7 @@ import (
 	"zero-service/cli/uix"
 )
 
-type basePlugin struct {
+type baseModule struct {
 	name        string
 	description string
 	aliases     []string
@@ -16,29 +16,27 @@ type basePlugin struct {
 	height      int
 }
 
-func (p *basePlugin) Name() string                  { return p.name }
-func (p *basePlugin) Description() string           { return p.description }
-func (p *basePlugin) Aliases() []string             { return p.aliases }
-func (p *basePlugin) Init() tea.Cmd                 { return nil }
-func (p *basePlugin) Update(msg tea.Msg) (tea.Model, tea.Cmd) { return p, nil }
-func (p *basePlugin) SetSize(w, h int)              { p.width = w; p.height = h }
-func (p *basePlugin) View() string {
-	return fmt.Sprintf("Plugin: %s\n\n%s\n\nSize: %dx%d\n\nType / to switch plugins.",
-		p.name, p.description, p.width, p.height)
+func (m *baseModule) Name() string                            { return m.name }
+func (m *baseModule) Description() string                     { return m.description }
+func (m *baseModule) Aliases() []string                       { return m.aliases }
+func (m *baseModule) Init() tea.Cmd                           { return nil }
+func (m *baseModule) Update(msg tea.Msg) (tea.Model, tea.Cmd) { return m, nil }
+func (m *baseModule) SetSize(w, h int)                        { m.width = w; m.height = h }
+func (m *baseModule) View() string {
+	return fmt.Sprintf("Module: %s\n\n%s\n\nSize: %dx%d\n\nType / to switch modules.",
+		m.name, m.description, m.width, m.height)
 }
-func (p *basePlugin) IsRoot() bool                         { return true }
-func (p *basePlugin) Bindings() []uix.HelpBinding {
-	return []uix.HelpBinding{{Keys: []string{"/"}, Desc: "切换插件"}, {Keys: []string{"q"}, Desc: "退出"}}
+func (m *baseModule) IsRoot() bool { return true }
+func (m *baseModule) Bindings() []uix.HelpBinding {
+	return []uix.HelpBinding{{Keys: []string{"/"}, Desc: "切换模块"}, {Keys: []string{"esc"}, Desc: "返回"}}
 }
 
 func main() {
 	app := uix.NewApp("dtui > ")
 
-	app.Register(&basePlugin{name: "containers", description: "Manage Docker containers", aliases: []string{"c"}})
-	app.Register(&basePlugin{name: "images", description: "Manage Docker images", aliases: []string{"i"}})
-	app.Register(&basePlugin{name: "compose", description: "Docker Compose orchestration", aliases: []string{"co"}})
-	app.Register(&basePlugin{name: "deploy", description: "Frontend deployment", aliases: []string{"d"}})
-	app.Register(&basePlugin{name: "config", description: "Configuration management", aliases: []string{"cfg"}})
+	app.RegisterModule(&baseModule{name: "notes", description: "Scratch module", aliases: []string{"n"}})
+	app.RegisterModule(&baseModule{name: "logs", description: "Output module", aliases: []string{"l"}})
+	app.AppendMessage(uix.RoleSystem, "Example ready. Type / to open modules or send a chat message.")
 
 	if err := app.Run(); err != nil {
 		panic(err)

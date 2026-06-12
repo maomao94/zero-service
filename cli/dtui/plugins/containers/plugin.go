@@ -37,18 +37,19 @@ var (
 )
 
 type Plugin struct {
-	client     *dt.Client
-	table      table.Model
-	detail     viewport.Model
-	tableW     int
-	detailW    int
-	height     int
-	containers []dt.Container
-	cursor     int
-	loading    bool
-	status     string
-	logViewer   components.LogViewer
-	showLog     bool
+	client          *dt.Client
+	table           table.Model
+	detail          viewport.Model
+	tableW          int
+	detailW         int
+	height          int
+	containers      []dt.Container
+	cursor          int
+	loading         bool
+	status          string
+	logViewer       components.LogViewer
+	showLog         bool
+	pendingRemoveID string
 }
 
 func New(client *dt.Client) *Plugin {
@@ -82,6 +83,7 @@ func (p *Plugin) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			p.status = msg.err.Error()
 		} else {
+			p.status = msg.status
 			p.containers = msg.containers
 			p.updateTable()
 		}
@@ -98,6 +100,9 @@ func (p *Plugin) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			p.logViewer.SetLines(msg.lines)
 		}
 		return p, nil
+
+	case uix.ConfirmMsg:
+		return p.handleConfirm(msg.Button)
 
 	case tea.KeyMsg:
 		return p.handleKey(msg)
@@ -116,12 +121,16 @@ func (p *Plugin) View() string {
 	if p.showLog {
 		return p.logView()
 	}
+	status := ""
+	if p.status != "" {
+		status = lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorYellow)).Render(p.status) + "\n\n"
+	}
 	left := panelBorder.Width(p.tableW).Render(p.table.View())
 	if p.detailW < 20 {
-		return left
+		return status + left
 	}
 	right := panelBorder.Width(p.detailW).Height(p.height - 2).Render(p.buildDetail())
-	return lipgloss.JoinHorizontal(lipgloss.Top, left, " ", right)
+	return status + lipgloss.JoinHorizontal(lipgloss.Top, left, " ", right)
 }
 
 func (p *Plugin) SetSize(width, height int) {
@@ -211,7 +220,7 @@ func (p *Plugin) updateTable() {
 	rows := make([]table.Row, len(p.containers))
 	for i, c := range p.containers {
 		status := statusIcon(c.State) + " " + c.Status
-		rows[i] = table.Row{c.Name, shortStr(c.Image, 20), status, c.Ports}
+		rows[i] = table.Row{c.Name, theme.Truncate(c.Image, 20), status, c.Ports}
 	}
 	p.table.SetRows(rows)
 	if p.cursor >= len(p.containers) {
@@ -232,7 +241,7 @@ func (p *Plugin) buildDetail() string {
 	c := p.containers[p.cursor]
 	var b strings.Builder
 
-	b.WriteString(detailTitleStyle.Render(" " + shortStr(c.Name, 25) + " "))
+	b.WriteString(detailTitleStyle.Render(" " + theme.Truncate(c.Name, 25) + " "))
 	b.WriteString("\n\n")
 
 	fields := [][2]string{
@@ -248,7 +257,7 @@ func (p *Plugin) buildDetail() string {
 		if f[1] != "" {
 			b.WriteString(detailLabelStyle.Render(f[0]))
 			b.WriteString("  ")
-			b.WriteString(detailValueStyle.Render(shortStr(f[1], 35)))
+			b.WriteString(detailValueStyle.Render(theme.Truncate(f[1], 35)))
 			b.WriteString("\n")
 		}
 	}
@@ -283,6 +292,7 @@ func (p *Plugin) showRemoveConfirm() (tea.Model, tea.Cmd) {
 	}
 	c := p.containers[p.cursor]
 	msg := fmt.Sprintf("Delete container %s (%s)?", c.Name, shortStr(c.ID, 12))
+	p.pendingRemoveID = c.ID
 	return p, func() tea.Msg {
 		return uix.ShowModalMsg{
 			Title:   "Confirm Delete",
@@ -293,6 +303,16 @@ func (p *Plugin) showRemoveConfirm() (tea.Model, tea.Cmd) {
 			},
 		}
 	}
+}
+
+func (p *Plugin) handleConfirm(button string) (tea.Model, tea.Cmd) {
+	id := p.pendingRemoveID
+	p.pendingRemoveID = ""
+	if button != "Force Delete" || id == "" {
+		return p, nil
+	}
+	p.status = "Deleting container..."
+	return p, p.runAction(func() error { return p.client.RemoveContainer(id, true) })
 }
 
 func (p *Plugin) loadContainers() tea.Cmd {
@@ -314,14 +334,18 @@ func (p *Plugin) stopContainer(id string) tea.Cmd {
 func (p *Plugin) runAction(fn func() error) tea.Cmd {
 	return func() tea.Msg {
 		err := fn()
-		containers, _ := p.client.ListContainers("")
-		return containersLoadedMsg{containers: containers, err: err}
+		containers, listErr := p.client.ListContainers("")
+		if err == nil {
+			err = listErr
+		}
+		return containersLoadedMsg{containers: containers, err: err, status: "Action complete"}
 	}
 }
 
 type containersLoadedMsg struct {
 	containers []dt.Container
 	err        error
+	status     string
 }
 
 type logLineMsg struct{ line string }
@@ -389,10 +413,7 @@ func statusIcon(state string) string {
 }
 
 func shortStr(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
-	}
-	return s[:maxLen-2] + ".."
+	return theme.Truncate(s, maxLen)
 }
 
 func containerTableStyles() table.Styles {

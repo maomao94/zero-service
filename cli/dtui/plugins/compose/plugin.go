@@ -25,13 +25,13 @@ type composeEntry struct {
 }
 
 type Plugin struct {
-	client  *dt.Client
-	cfg     config.Config
-	table   table.Model
-	width   int
-	height  int
-	entries      []composeEntry
-	cursor       int
+	client        *dt.Client
+	cfg           config.Config
+	table         table.Model
+	width         int
+	height        int
+	entries       []composeEntry
+	cursor        int
 	pendingAction string
 	status        string
 }
@@ -109,10 +109,16 @@ func (p *Plugin) View() string {
 }
 
 func (p *Plugin) SetSize(w, h int) {
+	if w <= 0 {
+		w = 80
+	}
+	if h <= 0 {
+		h = 20
+	}
 	p.width = w
 	p.height = h
-	p.table.SetWidth(w - 6)
-	p.table.SetHeight(h - 4)
+	p.table.SetWidth(max(20, w-6))
+	p.table.SetHeight(max(5, h-4))
 }
 
 func (p *Plugin) Bindings() []uix.HelpBinding {
@@ -141,6 +147,7 @@ func (p *Plugin) confirmUp() (tea.Model, tea.Cmd) {
 		return p, nil
 	}
 	e := p.entries[p.cursor]
+	p.pendingAction = "up"
 	return p, func() tea.Msg {
 		return uix.ShowModalMsg{
 			Title:   "Compose Up",
@@ -155,6 +162,7 @@ func (p *Plugin) confirmDown() (tea.Model, tea.Cmd) {
 		return p, nil
 	}
 	e := p.entries[p.cursor]
+	p.pendingAction = "down"
 	return p, func() tea.Msg {
 		return uix.ShowModalMsg{
 			Title:   "Compose Down",

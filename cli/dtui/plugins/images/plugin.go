@@ -2,7 +2,6 @@ package images
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
@@ -20,12 +19,14 @@ var panelBorder = lipgloss.NewStyle().
 	Padding(0, 1)
 
 type Plugin struct {
-	client *dt.Client
-	table  table.Model
-	width  int
-	height int
-	images []dt.Image
-	cursor int
+	client           *dt.Client
+	table            table.Model
+	width            int
+	height           int
+	images           []dt.Image
+	cursor           int
+	status           string
+	pendingRemoveRef string
 }
 
 func New(client *dt.Client) *Plugin {
@@ -56,9 +57,19 @@ func (p *Plugin) Init() tea.Cmd { return p.loadImages() }
 func (p *Plugin) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case imagesLoadedMsg:
+		if msg.err != nil {
+			p.status = "Error: " + msg.err.Error()
+			return p, nil
+		}
 		p.images = msg.images
+		p.status = msg.status
+		if msg.reclaimed > 0 {
+			p.status = fmt.Sprintf("Pruned images, reclaimed %d bytes", msg.reclaimed)
+		}
 		p.updateTable()
 		return p, nil
+	case uix.ConfirmMsg:
+		return p.handleConfirm(msg.Button)
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "up", "k":
@@ -83,14 +94,24 @@ func (p *Plugin) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (p *Plugin) View() string {
-	return panelBorder.Width(p.width - 2).Render(p.table.View())
+	status := ""
+	if p.status != "" {
+		status = lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorYellow)).Render(p.status) + "\n\n"
+	}
+	return status + panelBorder.Width(p.width-2).Render(p.table.View())
 }
 
 func (p *Plugin) SetSize(w, h int) {
+	if w <= 0 {
+		w = 80
+	}
+	if h <= 0 {
+		h = 20
+	}
 	p.width = w
 	p.height = h
-	p.table.SetWidth(w - 6)
-	p.table.SetHeight(h - 4)
+	p.table.SetWidth(max(20, w-6))
+	p.table.SetHeight(max(5, h-4))
 }
 
 func (p *Plugin) Bindings() []uix.HelpBinding {
@@ -105,8 +126,7 @@ func (p *Plugin) Bindings() []uix.HelpBinding {
 func (p *Plugin) updateTable() {
 	rows := make([]table.Row, len(p.images))
 	for i, img := range p.images {
-		repo, tag := splitImageName(img.Repository)
-		rows[i] = table.Row{repo, tag, img.ID[:12], img.Size}
+		rows[i] = table.Row{theme.Truncate(img.Repository, 30), img.Tag, theme.Truncate(img.ID, 12), img.Size}
 	}
 	p.table.SetRows(rows)
 	if p.cursor >= len(p.images) {
@@ -120,6 +140,7 @@ func (p *Plugin) confirmRemove() (tea.Model, tea.Cmd) {
 		return p, nil
 	}
 	img := p.images[p.cursor]
+	p.pendingRemoveRef = img.Ref()
 	return p, func() tea.Msg {
 		return uix.ShowModalMsg{
 			Title:   "Confirm Remove",
@@ -132,34 +153,43 @@ func (p *Plugin) confirmRemove() (tea.Model, tea.Cmd) {
 	}
 }
 
+func (p *Plugin) handleConfirm(button string) (tea.Model, tea.Cmd) {
+	ref := p.pendingRemoveRef
+	p.pendingRemoveRef = ""
+	if button != "Remove" || ref == "" {
+		return p, nil
+	}
+	p.status = "Removing image..."
+	return p, func() tea.Msg {
+		if err := p.client.RemoveImage(ref, true); err != nil {
+			return imagesLoadedMsg{err: err}
+		}
+		imgs, err := p.client.ListImages("")
+		return imagesLoadedMsg{images: imgs, err: err, status: "Image removed"}
+	}
+}
+
 func (p *Plugin) pruneImages() (tea.Model, tea.Cmd) {
 	return p, func() tea.Msg {
 		reclaimed, err := p.client.PruneImages()
 		if err != nil {
 			return imagesLoadedMsg{err: err}
 		}
-		imgs, _ := p.client.ListImages("")
-		return imagesLoadedMsg{images: imgs, reclaimed: reclaimed}
+		imgs, err := p.client.ListImages("")
+		return imagesLoadedMsg{images: imgs, err: err, reclaimed: reclaimed}
 	}
 }
 
 func (p *Plugin) loadImages() tea.Cmd {
 	return func() tea.Msg {
-		imgs, _ := p.client.ListImages("")
-		return imagesLoadedMsg{images: imgs}
+		imgs, err := p.client.ListImages("")
+		return imagesLoadedMsg{images: imgs, err: err}
 	}
-}
-
-func splitImageName(full string) (repo, tag string) {
-	parts := strings.SplitN(full, ":", 2)
-	if len(parts) == 2 {
-		return parts[0], parts[1]
-	}
-	return full, "latest"
 }
 
 type imagesLoadedMsg struct {
 	images    []dt.Image
 	err       error
 	reclaimed uint64
+	status    string
 }

@@ -39,12 +39,12 @@ type Plugin struct {
 	status     string
 	pending    string
 
-	formStep    formStep
-	formInputs  []textinput.Model
-	formFocus   int
+	formStep   formStep
+	formInputs []textinput.Model
+	formFocus  int
 }
 
-func New(cfg config.Config) *Plugin {
+func New(cfg config.Config, configPath string) *Plugin {
 	cols := []table.Column{
 		{Title: "Section", Width: 12},
 		{Title: "Name", Width: 20},
@@ -56,7 +56,10 @@ func New(cfg config.Config) *Plugin {
 	s.Selected = s.Selected.Background(lipgloss.Color(theme.ColorSelected)).Foreground(lipgloss.Color(theme.ColorFg))
 	s.Cell = s.Cell.Foreground(lipgloss.Color(theme.ColorFg))
 	t.SetStyles(s)
-	return &Plugin{cfg: cfg, table: t, configPath: config.DefaultPath()}
+	if configPath == "" {
+		configPath = config.DefaultPath()
+	}
+	return &Plugin{cfg: cfg, table: t, configPath: configPath}
 }
 
 func (p *Plugin) Name() string        { return "config" }
@@ -79,6 +82,9 @@ func (p *Plugin) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return p.handleConfirm(msg.Button)
 
 	case tea.KeyMsg:
+		if p.formStep != formNone {
+			return p.handleFormKey(msg)
+		}
 		return p.handleKey(msg)
 	}
 
@@ -95,10 +101,6 @@ func (p *Plugin) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (p *Plugin) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	key := msg.String()
-
-	if p.formStep != formNone {
-		return p.handleFormKey(key)
-	}
 
 	switch key {
 	case "up", "k":
@@ -139,10 +141,16 @@ func (p *Plugin) View() string {
 }
 
 func (p *Plugin) SetSize(w, h int) {
+	if w <= 0 {
+		w = 80
+	}
+	if h <= 0 {
+		h = 20
+	}
 	p.width = w
 	p.height = h
-	p.table.SetWidth(w - 8)
-	p.table.SetHeight(h - 10)
+	p.table.SetWidth(max(20, w-8))
+	p.table.SetHeight(max(5, h-10))
 }
 
 func (p *Plugin) Bindings() []uix.HelpBinding {
@@ -248,8 +256,7 @@ func (p *Plugin) currentEntry() (section string, index int) {
 func (p *Plugin) startAddCompose() (tea.Model, tea.Cmd) {
 	p.formStep = formAddCompose
 	p.formInputs = []textinput.Model{p.newTi("Name", ""), p.newTi("Path", "")}
-	p.formFocus = 0
-	return p, p.formInputs[0].Focus()
+	return p, p.focusFormInput(0)
 }
 
 func (p *Plugin) startAddDeploy() (tea.Model, tea.Cmd) {
@@ -260,12 +267,11 @@ func (p *Plugin) startAddDeploy() (tea.Model, tea.Cmd) {
 		p.newTi("HTML Path", "/usr/share/nginx/html"),
 		p.newTi("Backup Dir", config.DefaultBackupDir("")),
 	}
-	p.formFocus = 0
-	return p, p.formInputs[0].Focus()
+	return p, p.focusFormInput(0)
 }
 
-func (p *Plugin) handleFormKey(key string) (tea.Model, tea.Cmd) {
-	switch key {
+func (p *Plugin) handleFormKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
 	case "esc":
 		p.formStep = formNone
 		return p, p.reload()
@@ -274,9 +280,11 @@ func (p *Plugin) handleFormKey(key string) (tea.Model, tea.Cmd) {
 		if p.formFocus >= len(p.formInputs) {
 			return p.submitForm()
 		}
-		return p, p.formInputs[p.formFocus].Focus()
+		return p, p.focusFormInput(p.formFocus)
 	}
-	return p, nil
+	var cmd tea.Cmd
+	p.formInputs[p.formFocus], cmd = p.formInputs[p.formFocus].Update(msg)
+	return p, cmd
 }
 
 func (p *Plugin) submitForm() (tea.Model, tea.Cmd) {
@@ -323,6 +331,23 @@ func (p *Plugin) newTi(placeholder, value string) textinput.Model {
 	ti.SetValue(value)
 	ti.Width = 40
 	return ti
+}
+
+func (p *Plugin) focusFormInput(index int) tea.Cmd {
+	if len(p.formInputs) == 0 {
+		return nil
+	}
+	if index < 0 {
+		index = 0
+	}
+	if index >= len(p.formInputs) {
+		index = len(p.formInputs) - 1
+	}
+	for i := range p.formInputs {
+		p.formInputs[i].Blur()
+	}
+	p.formFocus = index
+	return p.formInputs[p.formFocus].Focus()
 }
 
 func (p *Plugin) renderForm() string {

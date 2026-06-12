@@ -21,14 +21,26 @@ type Modal struct {
 	Buttons []ModalButton
 	Active  int // index of selected button
 	Width   int
+	Height  int
 }
 
 // NewModal creates a new Modal.
 func NewModal(title, message string, buttons []ModalButton, width int) Modal {
+	if width <= 0 {
+		width = 80
+	}
+	active := 0
+	for i, button := range buttons {
+		if button.Key == "enter" {
+			active = i
+			break
+		}
+	}
 	return Modal{
 		Title:   title,
 		Message: message,
 		Buttons: buttons,
+		Active:  active,
 		Width:   width,
 	}
 }
@@ -55,16 +67,28 @@ func (m Modal) SelectedButton() *ModalButton {
 	return &m.Buttons[m.Active]
 }
 
+func (m Modal) ButtonByKey(key string) *ModalButton {
+	for i := range m.Buttons {
+		if m.Buttons[i].Key == key {
+			return &m.Buttons[i]
+		}
+	}
+	return nil
+}
+
 // View renders the modal as a centered overlay.
 func (m Modal) View() string {
 	width := m.Width
 	if width <= 0 {
-		width = 60
+		width = 80
 	}
-	// Cap width
+	if width < 24 {
+		width = 24
+	}
 	if width > 100 {
 		width = 100
 	}
+	height := m.Height
 
 	var b strings.Builder
 
@@ -94,7 +118,10 @@ func (m Modal) View() string {
 	}
 
 	content := theme.Border(m.Title).Width(width - 4).Render(b.String())
-	return lipgloss.Place(m.Width, lipgloss.Height(content),
+	if height <= 0 {
+		height = lipgloss.Height(content)
+	}
+	return lipgloss.Place(width, height,
 		lipgloss.Center, lipgloss.Center,
 		content,
 	)

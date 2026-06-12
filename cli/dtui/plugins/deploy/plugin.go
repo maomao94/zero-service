@@ -60,7 +60,7 @@ func New(client *dt.Client, cfg config.Config) *Plugin {
 func (p *Plugin) Name() string        { return "deploy" }
 func (p *Plugin) Description() string { return "Frontend deployment" }
 func (p *Plugin) Aliases() []string   { return []string{"dep"} }
-func (p *Plugin) IsRoot() bool        { return p.step == stepSelect }
+func (p *Plugin) IsRoot() bool        { return p.step == stepSelect && p.pendingTarget.Name == "" }
 func (p *Plugin) OnActivate() tea.Cmd { return p.loadTargets() }
 func (p *Plugin) OnDeactivate()       {}
 
@@ -121,6 +121,12 @@ func (p *Plugin) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return p, p.loadTargets()
 	case "d":
 		return p.startDeploy()
+	case "esc":
+		if p.pendingTarget.Name != "" {
+			p.pendingTarget = config.DeployTarget{}
+			p.selectedPath = ""
+			p.status = "Deploy cancelled"
+		}
 	}
 	return p, nil
 }
@@ -164,10 +170,16 @@ func (p *Plugin) View() string {
 }
 
 func (p *Plugin) SetSize(w, h int) {
+	if w <= 0 {
+		w = 80
+	}
+	if h <= 0 {
+		h = 20
+	}
 	p.width = w
 	p.height = h
-	p.table.SetWidth(w - 6)
-	p.table.SetHeight(h - 4)
+	p.table.SetWidth(max(20, w-6))
+	p.table.SetHeight(max(5, h-4))
 }
 
 func (p *Plugin) Bindings() []uix.HelpBinding {
