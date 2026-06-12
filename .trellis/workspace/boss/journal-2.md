@@ -114,3 +114,39 @@ Refactored uix TUI framework: moved CmdBar to bottom, replaced Palette overlay w
 ### Next Steps
 
 - None - task complete
+
+
+## Session 54: uix 组件库增强 + dtui 业务模块重写
+
+**Date**: 2026-06-12
+**Task**: uix 组件库增强 + dtui 业务模块重写
+**Branch**: `master`
+
+### Summary
+
+1) 为 uix 新增 Bubbles 组件包装器: Spinner, Progress, TextArea, Table, List, Help; 2) 引入 ntcharts v1 图表库: Sparkline, BarChart, ChartComponent 接口; 3) 按顺序重写 dtui 5 个业务模块(images, compose, containers, deploy, config) 使用新 uix.Module 接口; 4) 所有模块使用懒加载 Docker 客户端; 5) 全面代码/功能/UI 审查并修复 config 模块 DeployPackages 分区处理 bug; 6) 更新 uix-framework code-spec 捕获设计决策和经验教训
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0891feab` | (see git log) |
+| `1536be3e` | (see git log) |
+| `533d360c` | (see git log) |
+| `9de17cb3` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
