@@ -16,6 +16,7 @@
 | [coding-standards.md](./coding-standards.md) | 任意后端改动前，需要全局 AI 协作、安全、命名和 Git 边界 | 全局协作纪律、敏感信息边界、API/gRPC 命名摘要 |
 | [go-zero-conventions.md](./go-zero-conventions.md) | 改 `.api`、`.proto`、Handler/Server、Logic、ServiceContext、配置或服务目录 | go-zero 分层、`gen.sh` 流程、ServiceContext、公共组件清单 |
 | [directory-structure.md](./directory-structure.md) | 不确定代码应放在服务内部、`common/`、`model/`、`facade/`、`docs/` 时 | 顶层目录职责和落点判断 |
+| [uix-framework.md](./uix-framework.md) | 改 `cli/uix/`、`cli/dtui/` 或 Bubble Tea TUI 模块时 | chat-like `uix` shell、模块契约、prompt/overlay/key routing 规则 |
 | [database-guidelines.md](./database-guidelines.md) | 改 model、SQL、事务、缓存、DB 读写或持久化格式 | 数据库访问、事务和缓存约定 |
 | [error-handling.md](./error-handling.md) | 改 HTTP/gRPC 错误、错误码、错误包装、网关错误 handler 或日志传播 | 项目错误工厂、错误码行为、透传和包装规则 |
 | [quality-guidelines.md](./quality-guidelines.md) | 完成实现前做质量门禁，或修改公共组件和生成代码 | 禁止模式、测试范围、验证策略、公共组件安全修复边界 |
