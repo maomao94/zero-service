@@ -315,3 +315,191 @@ type Config struct {
 ```
 
 **Anti-pattern**: 在服务 `internal/config/` 中定义私有 Kafka 配置结构体。除非该配置包含服务独有的业务字段，否则应使用 `configx` 类型。
+
+## Scenario: MQTT request/reply routing with mqttx
+
+### 1. Scope / Trigger
+- Trigger: 修改 `common/mqttx` 的 reply/request 路由、MQTT handler 注册、订阅恢复、topic 命名或 `ReplyRouter` API 时必须读取本节。
+- Applies to: `common/mqttx.Client`、`handlerManager`、`messageDispatcher`、`ReplyRouter[T]`、`ReplyDecoder[T]`、调用方协议包（如 DJI SDK 适配层）。
+- Why: MQTT reply 抽象要复用 `antsx.ReplyPool` 的 request/reply `tid` 语义，同时避免把 DJI payload、设备 ID、topic builder、业务错误码泄漏进公共 `mqttx`。
+
+### 2. Signatures
+- Handler: `Consume(ctx context.Context, payload []byte, topic string, topicTemplate string) error`
+- Handler registration: `func (c *Client) AddHandler(topicTemplate string, handler ConsumeHandler) error`
+- Manual subscription: `func (c *Client) Subscribe(topicTemplate string) error`
+- Reply registration: `func WithReplyRouter[T any](topicTemplate string, router *ReplyRouter[T]) Option`
+- Reply message: `type ReplyMessage[T any] struct { Tid string; Value T }`
+- Reply decoder: `type ReplyDecoder[T any] interface { Decode(ctx context.Context, payload []byte, topic string, topicTemplate string) (ReplyMessage[T], error) }`
+- Function adapter: `type ReplyDecoderFunc[T any] func(ctx context.Context, payload []byte, topic string, topicTemplate string) (ReplyMessage[T], error)`
+- Request/reply call (public): `func (c *Client) RequestReply(ctx context.Context, topicTemplate string, tid string, send func() error, ttl ...time.Duration) (any, error)`
+- Request/reply call (private): `func (r *ReplyRouter[T]) do(ctx context.Context, tid string, send func() error, ttl ...time.Duration) (T, error)`
+
+### 3. Contracts
+- `topic` in handler/decoder signatures is the actual MQTT message topic from `msg.Topic()`.
+- `topicTemplate` is the subscription topic/filter whose callback fired; it may contain MQTT `+` or `#` wildcards.
+- Dispatcher uses `topicTemplate` as an exact lookup key. It must not scan all registered templates or run a second wildcard matcher; MQTT subscription matching belongs to the MQTT client.
+- `WithReplyRouter` registers reply routing metadata only. MQTT subscription is restored through `onConnect -> restoreSubscriptions -> getAllTopicTemplates`.
+- `getAllTopicTemplates()` returns de-duplicated subscription templates from regular handlers and reply routers. Ordering is not a contract.
+- Same `topicTemplate` regular handlers run in registration order.
+- For one message, reply router runs before regular handlers on the same `topicTemplate`; `ErrReplyNotMatched` is not logged as an error and does not block regular handlers.
+- `tid` is the canonical unique request/reply message ID, aligned with `antsx.ReplyPool` logs. It is not DJI-specific business meaning.
+- Protocol packages own payload schema, topic builders, device identifiers, business result codes, and domain errors.
+
+### 4. Validation & Error Matrix
+- `ReplyRouter` constructed with nil decoder + reply handled -> `ErrNilDecoder`.
+- Decoder returns empty `ReplyMessage.Tid` -> `ErrEmptyReplyTid` (`ErrEmptyReplyID` may exist only as compatibility alias).
+- Decoder returns error -> propagate decoder error from `HandleReply`/`Consume`.
+- Decoded `tid` has pending entry -> `HandleReply` returns `(true, nil)` and resolves waiting `RequestReply`.
+- Decoded `tid` has no pending entry -> `Consume` returns `ErrReplyNotMatched`; dispatcher suppresses it and continues regular handlers.
+- `RequestReply` send function returns error -> pending entry is rejected/cleaned by `antsx.RequestReply`, and the send error is returned.
+- `Client.RequestReply` called with unregistered `topicTemplate` -> `ErrNoReplyRouter`.
+- `Client.RequestReply` called but handler is not `replyCaller` -> `ErrReplyType`.
+- `ReplyRouter.Close()` while requests are pending -> pending `RequestReply` calls return `antsx.ErrReplyClosed`.
+- No reply router and no regular handler for `topicTemplate` -> dispatcher calls `onNoHandler`.
+- All errors are consolidated in `common/mqttx/errors.go`.
+
+### 5. Good/Base/Bad Cases
+- Good: Protocol package creates a typed `ReplyDecoder`, registers it with `WithReplyRouter`, then calls `Client.RequestReply(ctx, topicTemplate, tid, send)` and type-asserts the result. Protocol-specific error conversion stays outside `mqttx`.
+- Base: A notification-only consumer uses `AddHandler(topicTemplate, handler)` and receives actual `topic` plus callback `topicTemplate`.
+- Bad: Registering a `ReplyRouter` through `AddHandler`, exposing `ReplyRouter.do` publicly, calling `ReplyRouter.do` directly from outside the package, or running custom wildcard matching inside dispatcher.
+
+### 6. Tests Required
+- Unit: `ReplyDecoderFunc.Decode` returns `ReplyMessage{Tid, Value}` and preserves `topic/topicTemplate` args.
+- Unit: `ReplyRouter.HandleReply` resolves a pending `tid` and returns matched status.
+- Unit: nil decoder, decoder error, empty `Tid`, unmatched `tid`, send failure cleanup, reject, and close-pending behavior.
+- Unit: `WithReplyRouter` adds reply topic template to `getAllTopicTemplates()`.
+- Unit: `Client.RequestReply` resolves a pending `tid` through the registered router and returns the typed value as `any`.
+- Unit: `Client.RequestReply` returns `ErrNoReplyRouter` when no router is registered for the topic template.
+- Unit: dispatcher calls reply router before regular handlers for the same `topicTemplate`, and still calls regular handlers after `ErrReplyNotMatched`.
+- Unit: same `topicTemplate` regular handlers run in registration order.
+- Unit: `getAllTopicTemplates()` includes regular and reply templates once; do not assert map iteration order.
+- Search assertion: after changing public reply API, search `WithReplyRouter|NewReplyRouter|RequestReply|ReplyMessage\[` across repo and update all callers.
+
+### 7. Wrong vs Correct
+
+#### Wrong
+```go
+// Wrong: public reply registration accepts any ConsumeHandler, so ordinary handlers
+// can accidentally enter the reply path.
+func WithReplyHandler(topicTemplate string, h ConsumeHandler) Option { /* ... */ }
+```
+
+```go
+// Wrong: dispatcher re-runs wildcard matching across all templates.
+// MQTT client already matched the subscription and invoked the callback for topicTemplate.
+for topicTemplate, handlers := range m.handlers {
+    if topicFilterMatches(topicTemplate, msg.Topic()) {
+        dispatch(handlers)
+    }
+}
+```
+
+```go
+// Wrong: common/mqttx reply message leaks protocol-specific fields.
+type ReplyMessage[T any] struct {
+    DeviceID string
+    Method   string
+    Result   int
+    Value    T
+}
+```
+
+```go
+// Wrong: calling ReplyRouter.do directly from outside the package.
+// do is private; use Client.RequestReply instead.
+ack, err := router.do(ctx, tid, send)
+```
+
+#### Correct
+```go
+router := mqttx.NewReplyRouter[string](mqttx.ReplyDecoderFunc[string](
+    func(ctx context.Context, payload []byte, topic string, topicTemplate string) (mqttx.ReplyMessage[string], error) {
+        // Protocol package owns payload parsing and business error conversion.
+        tid, value, err := decodeProtocolReply(payload)
+        if err != nil {
+            return mqttx.ReplyMessage[string]{}, err
+        }
+        return mqttx.ReplyMessage[string]{Tid: tid, Value: value}, nil
+    },
+))
+
+client, err := mqttx.NewClient(cfg, mqttx.WithReplyRouter("thing/+/reply", router))
+```
+
+```go
+// Correct: use Client.RequestReply as the sole public request/reply entry point.
+raw, err := client.RequestReply(ctx, "thing/+/reply", tid, func() error {
+    return publishRequest(ctx, client, tid)
+})
+if err != nil {
+    return err
+}
+ack := raw.(*ProtocolAckType)
+```
+
+```go
+// Correct: dispatcher uses the callback topicTemplate as the exact routing key.
+replyHandler := manager.getReplyHandler(topicTemplate)
+handlers := manager.getHandlers(topicTemplate)
+```
+
+### Design Decision: Client.RequestReply 返回 any，不暴露 ReplyRouter.do
+
+**Context**: Go 方法不支持类型参数。`Client` 不是泛型类型，无法写 `Client.Reply[T any](...)` 方法。但 `ReplyRouter[T].do` 返回 `T`，调用方需要类型安全的请求/回复入口。
+
+**Options Considered**:
+1. 包级泛型函数 `DoReply[T any](c *Client, ...)` — 可行但暴露了 `Client` 内部结构
+2. `Client.RequestReply` 返回 `any` + 私有 `replyCaller` 接口做类型擦除 — 调用方只和 `Client` 交互
+3. 暴露 `ReplyRouter.do` 为公有方法 — 泄漏内部实现，调用方需要额外保存 router 引用
+
+**Decision**: 选择 Option 2。`ReplyRouter.do` 私有；`replyCaller` 接口在包内擦除泛型类型；`Client.RequestReply` 是唯一公开入口，返回 `any`，调用方类型断言回具体类型。
+
+**Type Erasure Pattern**:
+```go
+// 包内私有接口，擦除泛型 T
+type replyCaller interface {
+    callDo(ctx context.Context, tid string, send func() error, ttl ...time.Duration) (any, error)
+}
+
+func (r *ReplyRouter[T]) callDo(ctx context.Context, tid string, send func() error, ttl ...time.Duration) (any, error) {
+    return r.do(ctx, tid, send, ttl...)
+}
+
+// Client.RequestReply 通过 replyCaller 接口调用，不需要知道 T
+func (c *Client) RequestReply(ctx context.Context, topicTemplate string, tid string, send func() error, ttl ...time.Duration) (any, error) {
+    handler := c.handlerMgr.getReplyHandler(topicTemplate)
+    if handler == nil {
+        return nil, ErrNoReplyRouter
+    }
+    caller, ok := handler.(replyCaller)
+    if !ok {
+        return nil, ErrReplyType
+    }
+    return caller.callDo(ctx, tid, send, ttl...)
+}
+```
+
+**Caller Side**:
+```go
+raw, err := client.RequestReply(ctx, ackTopic, tId, sendFunc)
+ack := raw.(*types.BroadcastAckBody) // 调用方负责类型断言
+```
+
+### Design Decision: mqttx 包级错误集中在 errors.go
+
+**Context**: 错误变量散落在 `reply_router.go` 和 `dispatcher.go`，不便查找和维护。
+
+**Decision**: 所有包级错误统一放在 `common/mqttx/errors.go`，每个 error 附注释说明触发条件。`ErrEmptyReplyID` 保留为兼容别名。
+
+**Example**:
+```go
+// errors.go
+var (
+    ErrNilDecoder    = errors.New("mqttx: reply decoder cannot be nil")
+    ErrEmptyReplyTid = errors.New("mqttx: reply message tid cannot be empty")
+    ErrNoReplyRouter = errors.New("mqttx: reply router not registered")
+    ErrReplyType     = errors.New("mqttx: reply router type mismatch")
+    ErrReplyNotMatched = errors.New("mqttx: reply not matched")
+    ErrEmptyReplyID  = ErrEmptyReplyTid // compatibility alias
+)
+```

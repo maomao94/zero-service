@@ -2,6 +2,8 @@ package mqttx
 
 import (
 	"context"
+	"errors"
+	"slices"
 	"sync"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -15,7 +17,7 @@ type ConsumeHandler interface {
 	// Consume 消费消息
 	// ctx: 上下文
 	// payload: 消息内容
-	// topic: 完整主题（如 device/123/data）
+	// topic: MQTT 消息实际主题（如 device/123/data）
 	// topicTemplate: 主题模板（如 device/+/data）
 	Consume(ctx context.Context, payload []byte, topic string, topicTemplate string) error
 }
@@ -29,45 +31,80 @@ func (f ConsumeHandlerFunc) Consume(ctx context.Context, payload []byte, topic s
 }
 
 // handlerManager 处理器管理器
-// 维护主题到处理器列表的映射
+// 维护主题到处理器列表的映射；reply handler 独立存储，key = topic template。
 type handlerManager struct {
-	mu       sync.RWMutex
-	handlers map[string][]ConsumeHandler
+	mu            sync.RWMutex
+	handlers      map[string][]ConsumeHandler // key: topic template → ordered handler list
+	replyHandlers map[string]ConsumeHandler   // key: topic template → single reply handler
 }
 
 func newHandlerManager() *handlerManager {
 	return &handlerManager{
-		handlers: make(map[string][]ConsumeHandler),
+		handlers:      make(map[string][]ConsumeHandler),
+		replyHandlers: make(map[string]ConsumeHandler),
 	}
 }
 
-// addHandler 添加处理器到指定主题
-func (m *handlerManager) addHandler(topic string, handler ConsumeHandler) {
+// addHandler 添加普通处理器到指定订阅模板（保留注册顺序）。
+func (m *handlerManager) addHandler(topicTemplate string, h ConsumeHandler) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.handlers[topic] = append(m.handlers[topic], handler)
+	m.handlers[topicTemplate] = append(m.handlers[topicTemplate], h)
 }
 
-// getHandlers 获取主题对应的所有处理器
-func (m *handlerManager) getHandlers(topic string) []ConsumeHandler {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	return m.handlers[topic]
+// addReplyHandler 注册 reply handler 到指定订阅模板。
+// reply/普通 handler 的区别仅由注册路径区分，不依赖接口类型。
+func (m *handlerManager) addReplyHandler(topicTemplate string, h ConsumeHandler) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.replyHandlers[topicTemplate] = h
 }
 
-// getAllTopics 获取所有已注册处理器的主题
-func (m *handlerManager) getAllTopics() []string {
+// getReplyHandler returns the reply handler for a topic template, or nil.
+func (m *handlerManager) getReplyHandler(topicTemplate string) ConsumeHandler {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	topics := make([]string, 0, len(m.handlers))
-	for topic := range m.handlers {
-		topics = append(topics, topic)
+	return m.replyHandlers[topicTemplate]
+}
+
+// closeReplyHandlers closes any reply handler that implements Close().
+func (m *handlerManager) closeReplyHandlers() {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	for _, h := range m.replyHandlers {
+		if closer, ok := h.(interface{ Close() }); ok {
+			closer.Close()
+		}
 	}
-	return topics
 }
 
-// messageDispatcher 消息调度器
-// 负责将消息分发给对应的处理器
+// getHandlers 获取主题模板对应的所有普通处理器（保留注册顺序）。
+func (m *handlerManager) getHandlers(topicTemplate string) []ConsumeHandler {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return slices.Clone(m.handlers[topicTemplate])
+}
+
+// getAllTopicTemplates 获取所有已注册处理器的订阅模板（handler + replyHandler，去重，顺序不保证）。
+func (m *handlerManager) getAllTopicTemplates() []string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	seen := make(map[string]struct{}, len(m.handlers)+len(m.replyHandlers))
+	for topicTemplate := range m.handlers {
+		seen[topicTemplate] = struct{}{}
+	}
+	for topicTemplate := range m.replyHandlers {
+		seen[topicTemplate] = struct{}{}
+	}
+	topicTemplates := make([]string, 0, len(seen))
+	for topicTemplate := range seen {
+		topicTemplates = append(topicTemplates, topicTemplate)
+	}
+	return topicTemplates
+}
+
+// messageDispatcher 消息分发器。
+// 根据触发回调的订阅模板调用对应处理器；不负责合并订阅 topic。
 type messageDispatcher struct {
 	manager     *handlerManager
 	metrics     *stat.Metrics
@@ -84,22 +121,33 @@ func newMessageDispatcher(m *handlerManager, metrics *stat.Metrics) *messageDisp
 	}
 }
 
-// dispatch 调度消息到对应的处理器
+// dispatch 根据触发回调的订阅模板分发消息到对应的处理器。
+//
+// reply handler 先运行，无论是否匹配 pending，之后都会运行同 topic 的普通 handler。
+// 两者独立——reply 负责解析 tid、匹配 pending 请求；普通 handler 负责业务处理（通知、落库等）。
+// 仅当 topic 上既无 reply handler 也无普通 handler 时才触发 onNoHandler。
 func (d *messageDispatcher) dispatch(ctx context.Context, payload []byte, topic, topicTemplate string) {
 	startTime := timex.Now()
 	defer func() {
 		d.metrics.Add(stat.Task{Duration: timex.Since(startTime)})
 	}()
 
+	replyHandler := d.manager.getReplyHandler(topicTemplate)
 	handlers := d.manager.getHandlers(topicTemplate)
-	if len(handlers) == 0 {
+	if replyHandler == nil && len(handlers) == 0 {
 		d.onNoHandler(ctx, payload, topic, topicTemplate)
 		return
 	}
 
-	// 依次调用所有处理器
-	for _, h := range handlers {
-		if err := h.Consume(ctx, payload, topic, topicTemplate); err != nil {
+	if replyHandler != nil {
+		err := replyHandler.Consume(ctx, payload, topic, topicTemplate)
+		if err != nil && !errors.Is(err, ErrReplyNotMatched) {
+			logx.WithContext(ctx).Errorf("[mqttx] reply handler error for %s: %v", topicTemplate, err)
+		}
+	}
+
+	for _, handler := range handlers {
+		if err := handler.Consume(ctx, payload, topic, topicTemplate); err != nil {
 			logx.WithContext(ctx).Errorf("[mqttx] handler error for %s: %v", topicTemplate, err)
 		}
 	}

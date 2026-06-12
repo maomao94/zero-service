@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-2.md`
-- **Total Sessions**: 54
+- **Total Sessions**: 56
 - **Last Active**: 2026-06-12
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-2.md` | ~152 | Active |
+| `journal-2.md` | ~218 | Active |
 | `journal-1.md` | ~1996 | Archived |
 <!-- @@@/auto:active-documents -->
 
@@ -30,6 +30,8 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 56 | 2026-06-12 | 完善 mqttx reply 路由抽象 | `34bee974` | `master` |
+| 55 | 2026-06-12 | uix/dtui 生产级 TUI 框架实验 | `84cd51a0` | `master` |
 | 54 | 2026-06-12 | uix 组件库增强 + dtui 业务模块重写 | `0891feab`, `1536be3e`, `533d360c`, `9de17cb3` | `master` |
 | 53 | 2026-06-11 | uix TUI framework refactoring and spec updates | `96f6acf5`, `1369b62a`, `e3283a6b`, `a67380ef`, `f70bc95e` | `master` |
 | 52 | 2026-06-11 | uix framework + dtui Docker management rewrite | `d722554b`, `6dc712ce`, `d1c0be30`, `312638c2`, `c79aae4c`, `af4b6041` | `master` |

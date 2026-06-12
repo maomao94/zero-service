@@ -32,3 +32,15 @@ func WithOnReady(fn func(*Client)) Option {
 		c.onReady = fn
 	}
 }
+
+// WithReplyRouter registers a reply router that takes priority in dispatch.
+// topicTemplate may contain MQTT wildcards such as + or #.
+// Unlike AddHandler, this only registers the handler; MQTT subscription is deferred
+// to the connection event via restoreSubscriptions.
+func WithReplyRouter[T any](topicTemplate string, router *ReplyRouter[T]) Option {
+	return func(c *Client) {
+		if router != nil {
+			c.handlerMgr.addReplyHandler(topicTemplate, router)
+		}
+	}
+}

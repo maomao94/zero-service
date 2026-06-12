@@ -99,12 +99,6 @@ func main() {
 		); err != nil {
 			logx.Must(err)
 		}
-		if err := ctx.MqttClient.AddHandlerFunc(
-			ctx.BroadcastAckTopic(),
-			iecmqtt.NewBroadcastAck(ctx).Consume,
-		); err != nil {
-			logx.Must(err)
-		}
 	}
 
 	logx.Infof("Deploy mode: %s\n", c.DeployMode)

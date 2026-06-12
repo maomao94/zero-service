@@ -150,3 +150,69 @@ Refactored uix TUI framework: moved CmdBar to bottom, replaced Palette overlay w
 ### Next Steps
 
 - None - task complete
+
+
+## Session 55: uix/dtui 生产级 TUI 框架实验
+
+**Date**: 2026-06-12
+**Task**: uix/dtui 生产级 TUI 框架实验
+**Branch**: `master`
+
+### Summary
+
+尝试用 AI 将 cli/uix 和 cli/dtui 打造成生产级终端 UI 框架。实现了 6 个子任务：框架基础、host wiring、Docker 资源模块、config/compose/deploy 工作流、文档打包。最终结论：AI 生成的代码质量不可靠，状态机边界问题多，标记为实验性功能，生产不可用。归档全部 6 个任务。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `84cd51a0` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 56: 完善 mqttx reply 路由抽象
+
+**Date**: 2026-06-12
+**Task**: 完善 mqttx reply 路由抽象
+**Branch**: `master`
+
+### Summary
+
+完成 common/mqttx reply request/reply 抽象审查与修复：统一 tid 命名，改为 WithReplyRouter 和 ReplyDecoder 接口，明确 topic/topicTemplate 语义，恢复 dispatcher 按订阅模板精准路由，补齐 reply router 与 dispatcher 单测，并更新 messaging code-spec。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `34bee974` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

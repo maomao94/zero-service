@@ -12,6 +12,7 @@ import (
 	tracex "zero-service/common/trace"
 
 	"github.com/duke-git/lancet/v2/random"
+	"github.com/duke-git/lancet/v2/slice"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/proc"
@@ -24,11 +25,11 @@ import (
 
 // OpenTelemetry 属性 key
 const (
-	attrTopic    = "mqtt.topic"
-	attrClientID = "mqtt.client_id"
-	attrMsgID    = "mqtt.message_id"
-	attrQoS      = "mqtt.qos"
-	attrAction   = "mqtt.action"
+	attrTopicTemplate = "mqtt.topic_template"
+	attrClientID      = "mqtt.client_id"
+	attrMsgID         = "mqtt.message_id"
+	attrQoS           = "mqtt.qos"
+	attrAction        = "mqtt.action"
 )
 
 // Client MQTT 客户端
@@ -91,12 +92,10 @@ func NewClient(cfg MqttConfig, opts ...Option) (*Client, error) {
 		opt(c)
 	}
 
-	// 创建并连接
-	client, err := c.createMqttClient()
-	if err != nil {
+	c.client = c.createMqttClient()
+	if err := c.connect(); err != nil {
 		return nil, err
 	}
-	c.client = client
 
 	return c, nil
 }
@@ -114,8 +113,8 @@ func adjustConfig(cfg *MqttConfig) {
 	}
 }
 
-// createMqttClient 创建底层 MQTT 客户端并连接
-func (c *Client) createMqttClient() (mqtt.Client, error) {
+// createMqttClient 创建底层 MQTT 客户端
+func (c *Client) createMqttClient() mqtt.Client {
 	optsMqtt := mqtt.NewClientOptions()
 	for _, broker := range c.cfg.Broker {
 		optsMqtt.AddBroker(broker)
@@ -132,17 +131,20 @@ func (c *Client) createMqttClient() (mqtt.Client, error) {
 	optsMqtt.OnConnect = c.onConnect
 	optsMqtt.OnConnectionLost = c.onConnectionLost
 
-	client := mqtt.NewClient(optsMqtt)
-	token := client.Connect()
+	return mqtt.NewClient(optsMqtt)
+}
+
+func (c *Client) connect() error {
+	token := c.client.Connect()
 
 	if !token.WaitTimeout(time.Duration(c.cfg.Timeout) * time.Millisecond) {
-		return nil, fmt.Errorf("[mqtt] connect timeout after %dms", c.cfg.Timeout)
+		return fmt.Errorf("[mqtt] connect timeout after %dms", c.cfg.Timeout)
 	}
 	if err := token.Error(); err != nil {
-		return nil, fmt.Errorf("[mqtt] connect failed: %w", err)
+		return fmt.Errorf("[mqtt] connect failed: %w", err)
 	}
 
-	return client, nil
+	return nil
 }
 
 // onConnect 连接成功回调
@@ -176,78 +178,79 @@ func (c *Client) defaultHandler(_ mqtt.Client, msg mqtt.Message) {
 	logx.Errorf("[mqtt] No handler for topic %s", msg.Topic())
 }
 
-// AddHandler 为主题添加消息处理器
-// 如果 AutoSubscribe=true 且已连接，会自动订阅该主题
-func (c *Client) AddHandler(topic string, handler ConsumeHandler) error {
+// AddHandler 为订阅主题模板添加消息处理器
+// 如果 AutoSubscribe=true 且已连接，会自动订阅该主题。
+// reply router 请使用 WithReplyRouter，不要把 ReplyRouter 传入此方法。
+func (c *Client) AddHandler(topicTemplate string, handler ConsumeHandler) error {
 	if handler == nil {
 		return errors.New("[mqtt] handler cannot be nil")
 	}
 
-	c.handlerMgr.addHandler(topic, handler)
+	c.handlerMgr.addHandler(topicTemplate, handler)
 
 	c.mu.Lock()
-	needSubscribe := c.cfg.AutoSubscribe && !c.isSubscribed(topic)
+	needSubscribe := c.cfg.AutoSubscribe && !c.isSubscribed(topicTemplate)
 	c.mu.Unlock()
 
 	if needSubscribe && c.client.IsConnected() {
-		return c.subscribe(topic)
+		return c.subscribe(topicTemplate)
 	}
 	return nil
 }
 
 // AddHandlerFunc 快捷方法：用函数作为消息处理器
-func (c *Client) AddHandlerFunc(topic string, fn func(context.Context, []byte, string, string) error) error {
-	return c.AddHandler(topic, ConsumeHandlerFunc(fn))
+func (c *Client) AddHandlerFunc(topicTemplate string, fn func(context.Context, []byte, string, string) error) error {
+	return c.AddHandler(topicTemplate, ConsumeHandlerFunc(fn))
 }
 
-// Subscribe 手动订阅主题
-func (c *Client) Subscribe(topic string) error {
+// Subscribe 手动订阅主题模板
+func (c *Client) Subscribe(topicTemplate string) error {
 	if !c.client.IsConnected() {
 		return errors.New("[mqtt] cannot subscribe: client not connected")
 	}
-	return c.subscribe(topic)
+	return c.subscribe(topicTemplate)
 }
 
 // subscribe 内部订阅实现
-func (c *Client) subscribe(topic string) error {
+func (c *Client) subscribe(topicTemplate string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if c.isSubscribed(topic) {
+	if c.isSubscribed(topicTemplate) {
 		return nil
 	}
 
-	token := c.client.Subscribe(topic, c.qos, c.messageHandler(topic))
+	token := c.client.Subscribe(topicTemplate, c.qos, c.messageHandler(topicTemplate))
 	timeout := time.Duration(c.cfg.Timeout) * time.Millisecond
 
 	if !token.WaitTimeout(timeout) {
-		return fmt.Errorf("[mqtt] subscribe to %s timeout after %v", topic, timeout)
+		return fmt.Errorf("[mqtt] subscribe to %s timeout after %v", topicTemplate, timeout)
 	}
 	if err := token.Error(); err != nil {
 		return err
 	}
 
-	c.subscribed[topic] = struct{}{}
-	logx.Infof("[mqtt] Subscribed to %s", topic)
+	c.subscribed[topicTemplate] = struct{}{}
+	logx.Infof("[mqtt] Subscribed to %s", topicTemplate)
 	return nil
 }
 
 // isSubscribed 检查是否已订阅
-func (c *Client) isSubscribed(topic string) bool {
-	_, exists := c.subscribed[topic]
+func (c *Client) isSubscribed(topicTemplate string) bool {
+	_, exists := c.subscribed[topicTemplate]
 	return exists
 }
 
 // restoreSubscriptions 恢复所有订阅（连接重连后）
 func (c *Client) restoreSubscriptions() error {
-	topics := c.handlerMgr.getAllTopics()
-	topics = append(topics, c.cfg.SubscribeTopics...)
-	topics = uniqueTopics(topics)
+	topicTemplates := c.handlerMgr.getAllTopicTemplates()
+	topicTemplates = append(topicTemplates, c.cfg.SubscribeTopics...)
+	topicTemplates = uniqueTopics(topicTemplates)
 
 	var lastErr error
-	for _, topic := range topics {
-		if err := c.subscribe(topic); err != nil {
-			logx.Errorf("[mqtt] failed to subscribe to %s: %v", topic, err)
+	for _, topicTemplate := range topicTemplates {
+		if err := c.subscribe(topicTemplate); err != nil {
+			logx.Errorf("[mqtt] failed to subscribe to %s: %v", topicTemplate, err)
 			lastErr = err
 		}
 	}
@@ -255,31 +258,19 @@ func (c *Client) restoreSubscriptions() error {
 }
 
 func uniqueTopics(topics []string) []string {
-	if len(topics) < 2 {
-		return topics
-	}
-	seen := make(map[string]struct{}, len(topics))
-	result := make([]string, 0, len(topics))
-	for _, topic := range topics {
-		if _, ok := seen[topic]; ok {
-			continue
-		}
-		seen[topic] = struct{}{}
-		result = append(result, topic)
-	}
-	return result
+	return slice.Unique(topics)
 }
 
 // messageHandler 消息处理包装器
-// topic 参数为订阅时的主题模板（可能含通配符 +/#），用于 dispatcher 精确匹配处理器
-func (c *Client) messageHandler(topic string) mqtt.MessageHandler {
+// topicTemplate 参数为触发当前回调的订阅模板（可能含通配符 +/#），dispatcher 使用该模板精确路由。
+func (c *Client) messageHandler(topicTemplate string) mqtt.MessageHandler {
 	return func(_ mqtt.Client, msg mqtt.Message) {
-		c.processMessage(msg, topic)
+		c.processMessage(msg, topicTemplate)
 	}
 }
 
 // processMessage 处理接收到的消息
-// topicTemplate 为订阅时注册的主题模板，用于 dispatcher 查找对应处理器
+// topicTemplate 为触发当前 MQTT 回调的订阅模板。
 func (c *Client) processMessage(msg mqtt.Message, topicTemplate string) {
 	ctx := context.Background()
 	payload := msg.Payload()
@@ -323,13 +314,13 @@ func (c *Client) extractTraceContext(ctx context.Context, msg *Message) context.
 }
 
 // startSpan 启动追踪 span
-func (c *Client) startSpan(ctx context.Context, msg mqtt.Message, topic string) (context.Context, oteltrace.Span) {
+func (c *Client) startSpan(ctx context.Context, msg mqtt.Message, topicTemplate string) (context.Context, oteltrace.Span) {
 	ctx, span := c.tracer.Start(ctx, "mqtt-consume",
 		oteltrace.WithSpanKind(oteltrace.SpanKindConsumer),
 	)
 	span.SetAttributes(
 		attribute.String(attrClientID, c.cfg.ClientID),
-		attribute.String(attrTopic, topic),
+		attribute.String(attrTopicTemplate, topicTemplate),
 		attribute.String(attrMsgID, fmt.Sprintf("%d", msg.MessageID())),
 		attribute.Int(attrQoS, int(msg.Qos())),
 		attribute.String(attrAction, "consume"),
@@ -373,6 +364,7 @@ func (c *Client) Close() {
 	if c.client != nil {
 		c.client.Disconnect(250)
 	}
+	c.handlerMgr.closeReplyHandlers()
 	c.subscribed = make(map[string]struct{})
 	logx.Info("[mqtt] Connection closed")
 }
@@ -380,4 +372,21 @@ func (c *Client) Close() {
 // GetClientID 获取客户端 ID
 func (c *Client) GetClientID() string {
 	return c.cfg.ClientID
+}
+
+// RequestReply performs a request/reply call through a reply router registered on this Client.
+// topicTemplate identifies the reply route registered via WithReplyRouter.
+// tid is the correlation id that matches the reply message.
+// send publishes the request message; it is called after the reply entry is registered.
+// The returned value carries the typed reply; callers must type-assert to the expected type.
+func (c *Client) RequestReply(ctx context.Context, topicTemplate string, tid string, send func() error, ttl ...time.Duration) (any, error) {
+	handler := c.handlerMgr.getReplyHandler(topicTemplate)
+	if handler == nil {
+		return nil, ErrNoReplyRouter
+	}
+	caller, ok := handler.(replyCaller)
+	if !ok {
+		return nil, ErrReplyType
+	}
+	return caller.callDo(ctx, tid, send, ttl...)
 }

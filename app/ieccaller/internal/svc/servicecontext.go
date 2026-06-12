@@ -35,7 +35,6 @@ type ServiceContext struct {
 	Config              config.Config
 	ClientManager       *client.ClientManager
 	KafkaASDUPusher     *kq.Pusher
-	BroadcastReplyPool  *antsx.ReplyPool[*types.BroadcastAckBody]
 	MqttClient          *mqttx.Client
 	StreamEventCli      streamevent.StreamEventClient
 	ChunkAsduPusher     *executorx.ChunkMessagesPusher
@@ -66,21 +65,22 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	if len(c.KafkaConfig.Brokers) > 0 {
 		svcCtx.KafkaASDUPusher = kq.NewPusher(c.KafkaConfig.Brokers, c.KafkaConfig.Topic)
 	}
-	if len(c.MqttConfig.Broker) > 0 {
-		cfg := c.MqttConfig.MqttConfig
-		cfg.ClientID = svcCtx.broadcastInstanceId
-		if svcCtx.IsBroadcast() {
-			cfg.Qos = 1
-		}
-		svcCtx.MqttClient = mqttx.MustNewClient(cfg)
-	}
 	if svcCtx.IsBroadcast() {
 		svcCtx.broadcastTopic = "iec/broadcast"
 		svcCtx.broadcastAckTopic = fmt.Sprintf("iec/broadcast-ack/%s", svcCtx.broadcastInstanceId)
-		svcCtx.BroadcastReplyPool = antsx.NewReplyPool[*types.BroadcastAckBody](
-			antsx.WithName("mqtt-ack-reply-"+uid),
-			antsx.WithDefaultTTL(10*time.Second),
+		broadcastReplyRouter := mqttx.NewReplyRouter[*types.BroadcastAckBody](
+			mqttx.ReplyDecoderFunc[*types.BroadcastAckBody](decodeBroadcastAck),
+			mqttx.WithReplyRouterName("mqtt-ack-reply-"+uid),
+			mqttx.WithReplyRouterTTL(10*time.Second),
 		)
+		cfg := c.MqttConfig.MqttConfig
+		cfg.ClientID = svcCtx.broadcastInstanceId
+		cfg.Qos = 1
+		svcCtx.MqttClient = mqttx.MustNewClient(cfg, mqttx.WithReplyRouter(svcCtx.broadcastAckTopic, broadcastReplyRouter))
+	} else if len(c.MqttConfig.Broker) > 0 {
+		cfg := c.MqttConfig.MqttConfig
+		cfg.ClientID = svcCtx.broadcastInstanceId
+		svcCtx.MqttClient = mqttx.MustNewClient(cfg)
 	}
 	if len(c.StreamEventConf.Endpoints) > 0 || len(c.StreamEventConf.Target) > 0 {
 		streamEventCli := streamevent.NewStreamEventClient(zrpc.MustNewClient(c.StreamEventConf,
@@ -291,23 +291,21 @@ func (svc ServiceContext) PushPbBroadcastWithAck(ctx context.Context, method str
 	if !svc.IsBroadcast() {
 		return fmt.Errorf("not in cluster mode")
 	}
-	if svc.BroadcastReplyPool == nil {
-		return fmt.Errorf("broadcast reply pool is nil")
+	if svc.MqttClient == nil {
+		return fmt.Errorf("mqtt client is nil")
 	}
 
 	tId, _ := tool.SimpleUUID()
-	promise, err := svc.BroadcastReplyPool.Register(tId)
-	if err != nil {
-		return fmt.Errorf("register reply pool error: %w", err)
-	}
-
-	if err := svc.pushBroadcast(ctx, method, in, tId); err != nil {
-		return err
-	}
-
-	ack, err := promise.Await(ctx)
+	raw, err := svc.MqttClient.RequestReply(ctx, svc.broadcastAckTopic, tId, func() error {
+		return svc.pushBroadcast(ctx, method, in, tId)
+	})
 	if err != nil {
 		return err
+	}
+
+	ack, ok := raw.(*types.BroadcastAckBody)
+	if !ok {
+		return fmt.Errorf("unexpected broadcast reply type: %T", raw)
 	}
 
 	if !ack.Success {
@@ -388,15 +386,26 @@ func (svc ServiceContext) Close() {
 			logx.Errorf("failed to close kafka asdu pusher: %v", err)
 		}
 	}
-	if svc.BroadcastReplyPool != nil {
-		logx.Infof("closing broadcast reply pool")
-		svc.BroadcastReplyPool.Close()
-	}
 	if svc.MqttClient != nil {
 		logx.Infof("closing mqtt client")
 		svc.MqttClient.Close()
 	}
 	logx.Infof("service context closed")
+}
+
+func decodeBroadcastAck(ctx context.Context, payload []byte, topic string, topicTemplate string) (mqttx.ReplyMessage[*types.BroadcastAckBody], error) {
+	ackBody := &types.BroadcastAckBody{}
+	if err := jsonx.Unmarshal(payload, ackBody); err != nil {
+		logx.WithContext(ctx).Errorf("unmarshal broadcast ack error: topic=%s topicTemplate=%s err=%v", topic, topicTemplate, err)
+		return mqttx.ReplyMessage[*types.BroadcastAckBody]{}, err
+	}
+	if ackBody.Tid == "" {
+		logx.WithContext(ctx).Errorf("broadcast ack tId is empty: topic=%s topicTemplate=%s", topic, topicTemplate)
+	}
+	return mqttx.ReplyMessage[*types.BroadcastAckBody]{
+		Tid:   ackBody.Tid,
+		Value: ackBody,
+	}, nil
 }
 
 func extractCotFromError(errMsg string) string {
