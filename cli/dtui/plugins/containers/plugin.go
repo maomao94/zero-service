@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/table"
-	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
@@ -15,288 +13,348 @@ import (
 	"zero-service/cli/uix/theme"
 )
 
-var (
-	detailTitleStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color(theme.ColorAccent)).
-				Bold(true).
-				BorderStyle(lipgloss.NormalBorder()).
-				BorderBottom(true).
-				BorderForeground(lipgloss.Color(theme.ColorBorder)).
-				Padding(0, 1)
+// Module manages Docker containers with the new uix shell contract.
+type Module struct {
+	width  int
+	height int
 
-	detailLabelStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color(theme.ColorDim))
+	client    *dt.Client
+	clientErr error
+	containers []dt.Container
 
-	detailValueStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color(theme.ColorFg))
+	table   components.Table
+	spinner components.Spinner
+	log     components.LogViewer
+	state   components.StateKind
+	status  string
 
-	panelBorder = lipgloss.NewStyle().
-			BorderStyle(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color(theme.ColorBorder)).
-			Padding(0, 1)
-)
+	logMode bool
 
-type Plugin struct {
-	client          *dt.Client
-	table           table.Model
-	detail          viewport.Model
-	tableW          int
-	detailW         int
-	height          int
-	containers      []dt.Container
-	cursor          int
-	loading         bool
-	status          string
-	logViewer       components.LogViewer
-	showLog         bool
 	pendingRemoveID string
 }
 
-func New(client *dt.Client) *Plugin {
-	cols := []table.Column{
+// New creates a new containers module. Docker client is initialized lazily on Init().
+func New() *Module {
+	cols := []components.Column{
 		{Title: "Name", Width: 18},
 		{Title: "Image", Width: 22},
 		{Title: "Status", Width: 16},
 		{Title: "Ports", Width: 22},
 	}
-	t := table.New(table.WithColumns(cols), table.WithFocused(true))
-	t.SetStyles(containerTableStyles())
-
-	vp := viewport.New(30, 20)
-
-	return &Plugin{client: client, table: t, detail: vp, logViewer: components.NewLogViewer(80, 20)}
+	t := components.NewTable(cols, nil, 80)
+	sp := components.NewSpinner()
+	lv := components.NewLogViewer(80, 20)
+	return &Module{
+		width:   80,
+		height:  20,
+		table:   t,
+		spinner: sp,
+		log:     lv,
+		state:   components.StateLoading,
+		status:  "connecting...",
+	}
 }
 
-func (p *Plugin) Name() string        { return "containers" }
-func (p *Plugin) Description() string { return "Manage Docker containers" }
-func (p *Plugin) Aliases() []string   { return []string{"c", "cnt"} }
-func (p *Plugin) IsRoot() bool        { return !p.showLog }
-func (p *Plugin) OnActivate() tea.Cmd { return p.loadContainers() }
-func (p *Plugin) OnDeactivate()       {}
+func (m *Module) Name() string        { return "containers" }
+func (m *Module) Description() string { return "Manage Docker containers" }
+func (m *Module) Aliases() []string   { return []string{"ctr"} }
+func (m *Module) IsRoot() bool        { return !m.logMode }
 
-func (p *Plugin) Init() tea.Cmd { return p.loadContainers() }
+func (m *Module) Init() tea.Cmd {
+	return tea.Batch(m.spinner.Start(), m.loadContainers())
+}
 
-func (p *Plugin) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Module) Bindings() []uix.HelpBinding {
+	return []uix.HelpBinding{
+		{Keys: []string{"↑↓"}, Desc: "选择"},
+		{Keys: []string{"s"}, Desc: "启停"},
+		{Keys: []string{"S"}, Desc: "停止"},
+		{Keys: []string{"r"}, Desc: "重启"},
+		{Keys: []string{"x"}, Desc: "删除"},
+		{Keys: []string{"l"}, Desc: "日志"},
+		{Keys: []string{"R"}, Desc: "刷新"},
+	}
+}
+
+func (m *Module) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case containersLoadedMsg:
-		p.loading = false
-		if msg.err != nil {
-			p.status = msg.err.Error()
-		} else {
-			p.status = msg.status
-			p.containers = msg.containers
-			p.updateTable()
-		}
-		return p, nil
-
-	case logLineMsg:
-		p.logViewer.AppendLine(msg.line)
-		return p, nil
-
+		return m.handleContainersLoaded(msg)
+	case actionResultMsg:
+		return m.handleActionResult(msg)
 	case logDoneMsg:
-		if msg.err != nil {
-			p.logViewer.AppendLine("Error: " + msg.err.Error())
-		} else {
-			p.logViewer.SetLines(msg.lines)
-		}
-		return p, nil
-
+		return m.handleLogDone(msg)
 	case uix.ConfirmMsg:
-		return p.handleConfirm(msg.Button)
-
+		return m.handleConfirm(msg.Button)
 	case tea.KeyMsg:
-		return p.handleKey(msg)
+		if m.logMode {
+			return m.handleLogKey(msg)
+		}
+		return m.handleKey(msg)
 	}
 
+	// Forward spinner ticks.
 	var cmd tea.Cmd
-	if p.showLog {
-		p.logViewer, cmd = p.logViewer.Update(msg)
-		return p, cmd
-	}
-	p.table, cmd = p.table.Update(msg)
-	return p, cmd
+	m.spinner, cmd = m.spinner.Update(msg)
+	return m, cmd
 }
 
-func (p *Plugin) View() string {
-	if p.showLog {
-		return p.logView()
+func (m *Module) View() string {
+	if m.logMode {
+		return components.LogHeader("container logs", m.log.IsFollowing()) + "\n" + m.log.View()
 	}
-	status := ""
-	if p.status != "" {
-		status = lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorYellow)).Render(p.status) + "\n\n"
+
+	if m.state == components.StateLoading && len(m.containers) == 0 {
+		return m.renderLoading()
 	}
-	left := panelBorder.Width(p.tableW).Render(p.table.View())
-	if p.detailW < 20 {
-		return status + left
+	if m.state == components.StateError && len(m.containers) == 0 {
+		return m.renderError()
 	}
-	right := panelBorder.Width(p.detailW).Height(p.height - 2).Render(p.buildDetail())
-	return status + lipgloss.JoinHorizontal(lipgloss.Top, left, " ", right)
+	if m.state == components.StateEmpty || len(m.containers) == 0 {
+		return m.renderEmpty()
+	}
+	return m.renderTable()
 }
 
-func (p *Plugin) SetSize(width, height int) {
+func (m *Module) SetSize(width, height int) {
 	if width <= 0 {
 		width = 80
 	}
 	if height <= 0 {
 		height = 20
 	}
-	p.height = height
-	p.tableW = width * 55 / 100
-	p.detailW = width - p.tableW - 2
-	if p.detailW < 20 {
-		p.tableW = width
-		p.detailW = 0
+	m.width = width
+	m.height = height
+	m.table.SetSize(max(20, width-6), max(5, height-6))
+	logWidth := width - 8
+	if logWidth < 20 {
+		logWidth = 20
 	}
-	p.table.SetWidth(p.tableW - 4)
-	p.table.SetHeight(height - 4)
-	p.detail.Width = p.detailW - 4
-	p.detail.Height = height - 4
-	p.logViewer.SetSize(width-6, height-4)
-
-	if p.tableW > 20 {
-		cols := p.table.Columns()
-		tw := p.tableW - 6
-		cols[0].Width = max(10, tw*22/100)
-		cols[1].Width = max(10, tw*28/100)
-		cols[2].Width = max(10, tw*22/100)
-		cols[3].Width = max(10, tw*28/100)
-		p.table.SetColumns(cols)
+	logHeight := height - 4
+	if logHeight < 5 {
+		logHeight = 5
 	}
-}
-
-func (p *Plugin) Bindings() []uix.HelpBinding {
-	return []uix.HelpBinding{
-		{Keys: []string{"↑↓"}, Desc: "选择"},
-		{Keys: []string{"s"}, Desc: "启停"},
-		{Keys: []string{"R"}, Desc: "重启"},
-		{Keys: []string{"x"}, Desc: "删除"},
-		{Keys: []string{"l"}, Desc: "日志"},
-		{Keys: []string{"r"}, Desc: "刷新"},
-		{Keys: []string{"/"}, Desc: "模块"},
-	}
-}
-
-func (p *Plugin) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if p.showLog {
-		return p.handleLogKey(msg)
-	}
-
-	switch msg.String() {
-	case "up", "k":
-		p.moveCursor(-1)
-	case "down", "j":
-		p.moveCursor(1)
-	case "r":
-		return p, p.loadContainers()
-	case "s":
-		return p.toggleContainer()
-	case "R":
-		return p.restartContainer()
-	case "x":
-		return p.showRemoveConfirm()
-	case "l":
-		return p.openLogs()
-	default:
-		var cmd tea.Cmd
-		p.table, cmd = p.table.Update(msg)
-		return p, cmd
-	}
-	p.updateDetail()
-	return p, nil
-}
-
-func (p *Plugin) moveCursor(delta int) {
-	p.cursor += delta
-	if p.cursor < 0 {
-		p.cursor = 0
-	}
-	if len(p.containers) > 0 && p.cursor >= len(p.containers) {
-		p.cursor = len(p.containers) - 1
-	}
-	p.table.SetCursor(p.cursor)
-}
-
-func (p *Plugin) updateTable() {
-	rows := make([]table.Row, len(p.containers))
-	for i, c := range p.containers {
-		status := statusIcon(c.State) + " " + c.Status
-		rows[i] = table.Row{c.Name, theme.Truncate(c.Image, 20), status, c.Ports}
-	}
-	p.table.SetRows(rows)
-	if p.cursor >= len(p.containers) {
-		p.cursor = max(0, len(p.containers)-1)
-	}
-	p.table.SetCursor(p.cursor)
-	p.updateDetail()
-}
-
-func (p *Plugin) updateDetail() {
-	p.detail.SetContent(p.buildDetail())
-}
-
-func (p *Plugin) buildDetail() string {
-	if p.cursor < 0 || p.cursor >= len(p.containers) {
-		return ""
-	}
-	c := p.containers[p.cursor]
-	var b strings.Builder
-
-	b.WriteString(detailTitleStyle.Render(" " + theme.Truncate(c.Name, 25) + " "))
-	b.WriteString("\n\n")
-
-	fields := [][2]string{
-		{"ID", c.ID},
-		{"Image", c.Image},
-		{"Status", c.Status},
-		{"State", c.State},
-		{"Ports", c.Ports},
-		{"Command", c.Command},
-		{"Created", c.Created},
-	}
-	for _, f := range fields {
-		if f[1] != "" {
-			b.WriteString(detailLabelStyle.Render(f[0]))
-			b.WriteString("  ")
-			b.WriteString(detailValueStyle.Render(theme.Truncate(f[1], 35)))
-			b.WriteString("\n")
+	if m.logMode {
+		logHeight = height - 2
+		if logHeight < 5 {
+			logHeight = 5
 		}
 	}
-	return b.String()
+	m.log.SetSize(logWidth, logHeight)
 }
 
-func (p *Plugin) toggleContainer() (tea.Model, tea.Cmd) {
-	if p.cursor < 0 || p.cursor >= len(p.containers) {
-		return p, nil
+// --- Rendering ---
+
+func (m *Module) renderLoading() string {
+	var b strings.Builder
+	b.WriteString(m.spinner.View() + " Loading containers...")
+	if m.status != "" {
+		b.WriteString("\n\n")
+		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorDim)).Render(m.status))
 	}
-	c := p.containers[p.cursor]
+	panel := components.NewPanel("containers", m.width, m.height)
+	panel.Body = b.String()
+	return panel.View()
+}
+
+func (m *Module) renderError() string {
+	var b strings.Builder
+	b.WriteString(components.RenderState(components.StateError, "Failed to load containers", m.status, m.width-8))
+	b.WriteString("\n\n")
+	b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorDim)).Render("R retry | esc back"))
+	panel := components.NewPanel("containers", m.width, m.height)
+	panel.Body = b.String()
+	return panel.View()
+}
+
+func (m *Module) renderEmpty() string {
+	var b strings.Builder
+	b.WriteString(components.RenderState(components.StateEmpty, "No containers", "No Docker containers found. Run a container to get started.", m.width-8))
+	b.WriteString("\n\n")
+	b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorDim)).Render("R refresh | esc back"))
+	panel := components.NewPanel("containers", m.width, m.height)
+	panel.Body = b.String()
+	return panel.View()
+}
+
+func (m *Module) renderTable() string {
+	var b strings.Builder
+	if m.status != "" {
+		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorYellow)).Render(m.status))
+		b.WriteString("\n\n")
+	}
+	b.WriteString(m.table.View())
+	panel := components.NewPanel("containers", m.width, m.height)
+	panel.Body = b.String()
+	return panel.View()
+}
+
+// --- Message handlers ---
+
+func (m *Module) handleContainersLoaded(msg containersLoadedMsg) (tea.Model, tea.Cmd) {
+	m.spinner.Stop()
+	if msg.err != nil {
+		m.state = components.StateError
+		m.status = msg.err.Error()
+		return m, nil
+	}
+	m.containers = msg.containers
+	if len(m.containers) == 0 {
+		m.state = components.StateEmpty
+	} else {
+		m.state = components.StateSuccess
+	}
+	m.status = msg.status
+	m.updateTableRows()
+	return m, nil
+}
+
+func (m *Module) handleActionResult(msg actionResultMsg) (tea.Model, tea.Cmd) {
+	m.spinner.Stop()
+	if msg.err != nil {
+		m.state = components.StateError
+		m.status = "Action failed: " + msg.err.Error()
+		return m, nil
+	}
+	m.containers = msg.containers
+	m.state = components.StateSuccess
+	m.status = msg.status
+	m.updateTableRows()
+	return m, nil
+}
+
+func (m *Module) handleLogDone(msg logDoneMsg) (tea.Model, tea.Cmd) {
+	if msg.err != nil {
+		m.log.AppendLine("Error: " + msg.err.Error())
+	} else {
+		m.log.SetLines(msg.lines)
+	}
+	return m, nil
+}
+
+func (m *Module) handleConfirm(button string) (tea.Model, tea.Cmd) {
+	id := m.pendingRemoveID
+	m.pendingRemoveID = ""
+	if button != "Force Delete" || id == "" {
+		m.status = "cancelled"
+		return m, nil
+	}
+	m.status = "Deleting container..."
+	m.state = components.StateLoading
+	return m, tea.Batch(m.spinner.Start(), m.removeContainer(id))
+}
+
+func (m *Module) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "up", "k":
+		m.table.SetCursor(max(0, m.table.Cursor()-1))
+		return m, nil
+	case "down", "j":
+		m.table.SetCursor(min(len(m.containers)-1, m.table.Cursor()+1))
+		return m, nil
+	case "R":
+		m.status = "refreshing..."
+		m.state = components.StateLoading
+		return m, tea.Batch(m.spinner.Start(), m.loadContainers())
+	case "s":
+		return m.toggleContainer()
+	case "S":
+		return m.stopContainer()
+	case "r":
+		return m.restartContainer()
+	case "x":
+		return m.confirmRemove()
+	case "l":
+		return m.openLogs()
+	}
+	return m, nil
+}
+
+func (m *Module) handleLogKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "esc", "q":
+		m.logMode = false
+		m.SetSize(m.width, m.height)
+		return m, tea.Batch(m.spinner.Start(), m.loadContainers())
+	case "up", "k":
+		m.log.ScrollUp()
+	case "down", "j":
+		m.log.ScrollDown()
+	case "pgup":
+		m.log.PageUp()
+	case "pgdown":
+		m.log.PageDown()
+	case "g":
+		m.log.GotoTop()
+	case "G":
+		m.log.GotoBottom()
+	case "f":
+		m.log.ToggleFollow()
+	}
+	return m, nil
+}
+
+// --- Actions ---
+
+func (m *Module) toggleContainer() (tea.Model, tea.Cmd) {
+	if len(m.containers) == 0 {
+		return m, nil
+	}
+	idx := m.table.Cursor()
+	if idx < 0 || idx >= len(m.containers) {
+		return m, nil
+	}
+	c := m.containers[idx]
 	if c.State == "running" {
-		return p, p.stopContainer(c.ID)
+		return m, m.stopContainerByID(c.ID)
 	}
-	return p, p.startContainer(c.ID)
+	return m, m.startContainer(c.ID)
 }
 
-func (p *Plugin) restartContainer() (tea.Model, tea.Cmd) {
-	if p.cursor < 0 || p.cursor >= len(p.containers) {
-		return p, nil
+func (m *Module) stopContainer() (tea.Model, tea.Cmd) {
+	if len(m.containers) == 0 {
+		return m, nil
 	}
-	c := p.containers[p.cursor]
-	p.status = fmt.Sprintf("Restarting %s...", c.Name)
-	return p, p.runAction(func() error {
-		return p.client.RestartContainer(c.ID)
+	idx := m.table.Cursor()
+	if idx < 0 || idx >= len(m.containers) {
+		return m, nil
+	}
+	c := m.containers[idx]
+	if c.State != "running" {
+		return m, nil
+	}
+	return m, m.stopContainerByID(c.ID)
+}
+
+func (m *Module) restartContainer() (tea.Model, tea.Cmd) {
+	if len(m.containers) == 0 {
+		return m, nil
+	}
+	idx := m.table.Cursor()
+	if idx < 0 || idx >= len(m.containers) {
+		return m, nil
+	}
+	c := m.containers[idx]
+	m.status = fmt.Sprintf("Restarting %s...", c.Name)
+	return m, m.runAction(func() error {
+		return m.client.RestartContainer(c.ID)
 	})
 }
 
-func (p *Plugin) showRemoveConfirm() (tea.Model, tea.Cmd) {
-	if p.cursor < 0 || p.cursor >= len(p.containers) {
-		return p, nil
+func (m *Module) confirmRemove() (tea.Model, tea.Cmd) {
+	if len(m.containers) == 0 {
+		return m, nil
 	}
-	c := p.containers[p.cursor]
-	msg := fmt.Sprintf("Delete container %s (%s)?", c.Name, shortStr(c.ID, 12))
-	p.pendingRemoveID = c.ID
-	return p, func() tea.Msg {
+	idx := m.table.Cursor()
+	if idx < 0 || idx >= len(m.containers) {
+		return m, nil
+	}
+	c := m.containers[idx]
+	m.pendingRemoveID = c.ID
+	return m, func() tea.Msg {
 		return uix.ShowModalMsg{
 			Title:   "Confirm Delete",
-			Message: msg,
+			Message: fmt.Sprintf("Delete container %s (%s)?", c.Name, theme.Truncate(c.ID, 12)),
 			Buttons: []components.ModalButton{
 				{Label: "Cancel", Key: "esc"},
 				{Label: "Force Delete", Key: "enter"},
@@ -305,42 +363,101 @@ func (p *Plugin) showRemoveConfirm() (tea.Model, tea.Cmd) {
 	}
 }
 
-func (p *Plugin) handleConfirm(button string) (tea.Model, tea.Cmd) {
-	id := p.pendingRemoveID
-	p.pendingRemoveID = ""
-	if button != "Force Delete" || id == "" {
-		return p, nil
+func (m *Module) openLogs() (tea.Model, tea.Cmd) {
+	if len(m.containers) == 0 {
+		return m, nil
 	}
-	p.status = "Deleting container..."
-	return p, p.runAction(func() error { return p.client.RemoveContainer(id, true) })
+	idx := m.table.Cursor()
+	if idx < 0 || idx >= len(m.containers) {
+		return m, nil
+	}
+	c := m.containers[idx]
+	m.logMode = true
+	m.SetSize(m.width, m.height)
+	return m, m.fetchLogs(c.ID)
 }
 
-func (p *Plugin) loadContainers() tea.Cmd {
-	p.loading = true
+func (m *Module) updateTableRows() {
+	rows := make([]components.Row, len(m.containers))
+	for i, c := range m.containers {
+		status := statusIcon(c.State) + " " + c.Status
+		rows[i] = components.Row{c.Name, theme.Truncate(c.Image, 20), status, c.Ports}
+	}
+	m.table.SetRows(rows)
+	cursor := m.table.Cursor()
+	if cursor >= len(m.containers) {
+		m.table.SetCursor(max(0, len(m.containers)-1))
+	}
+}
+
+// --- Async commands ---
+
+func (m *Module) ensureClient() *dt.Client {
+	if m.client != nil || m.clientErr != nil {
+		return m.client
+	}
+	c, err := dt.NewClient()
+	if err != nil {
+		m.clientErr = err
+		return nil
+	}
+	m.client = c
+	return m.client
+}
+
+func (m *Module) loadContainers() tea.Cmd {
 	return func() tea.Msg {
-		containers, err := p.client.ListContainers("")
+		client := m.ensureClient()
+		if client == nil {
+			return containersLoadedMsg{err: m.clientErr}
+		}
+		containers, err := client.ListContainers("")
 		return containersLoadedMsg{containers: containers, err: err}
 	}
 }
 
-func (p *Plugin) startContainer(id string) tea.Cmd {
-	return p.runAction(func() error { return p.client.StartContainer(id) })
+func (m *Module) startContainer(id string) tea.Cmd {
+	return m.runAction(func() error { return m.client.StartContainer(id) })
 }
 
-func (p *Plugin) stopContainer(id string) tea.Cmd {
-	return p.runAction(func() error { return p.client.StopContainer(id) })
+func (m *Module) stopContainerByID(id string) tea.Cmd {
+	return m.runAction(func() error { return m.client.StopContainer(id) })
 }
 
-func (p *Plugin) runAction(fn func() error) tea.Cmd {
+func (m *Module) removeContainer(id string) tea.Cmd {
+	return m.runAction(func() error { return m.client.RemoveContainer(id, true) })
+}
+
+func (m *Module) runAction(fn func() error) tea.Cmd {
 	return func() tea.Msg {
+		client := m.ensureClient()
+		if client == nil {
+			return actionResultMsg{err: m.clientErr}
+		}
 		err := fn()
-		containers, listErr := p.client.ListContainers("")
+		containers, listErr := client.ListContainers("")
 		if err == nil {
 			err = listErr
 		}
-		return containersLoadedMsg{containers: containers, err: err, status: "Action complete"}
+		return actionResultMsg{containers: containers, err: err, status: "Action complete"}
 	}
 }
+
+func (m *Module) fetchLogs(id string) tea.Cmd {
+	return func() tea.Msg {
+		client := m.ensureClient()
+		if client == nil {
+			return logDoneMsg{err: m.clientErr}
+		}
+		lines, err := client.FetchLogs(id, dt.LogOptions{Tail: "200"})
+		if err != nil {
+			return logDoneMsg{err: err}
+		}
+		return logDoneMsg{lines: lines}
+	}
+}
+
+// --- Messages ---
 
 type containersLoadedMsg struct {
 	containers []dt.Container
@@ -348,58 +465,18 @@ type containersLoadedMsg struct {
 	status     string
 }
 
-type logLineMsg struct{ line string }
+type actionResultMsg struct {
+	containers []dt.Container
+	err        error
+	status     string
+}
 
 type logDoneMsg struct {
 	lines []string
 	err   error
 }
 
-func (p *Plugin) openLogs() (tea.Model, tea.Cmd) {
-	if p.cursor < 0 || p.cursor >= len(p.containers) {
-		return p, nil
-	}
-	c := p.containers[p.cursor]
-	p.showLog = true
-	return p, p.streamLogs(c.ID)
-}
-
-func (p *Plugin) logView() string {
-	return components.LogHeader("Logs", p.logViewer.IsFollowing()) + "\n" + p.logViewer.View()
-}
-
-func (p *Plugin) handleLogKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "esc":
-		p.showLog = false
-		return p, p.loadContainers()
-	case "f":
-		p.logViewer.ToggleFollow()
-	case "up", "k":
-		p.logViewer.ScrollUp()
-	case "down", "j":
-		p.logViewer.ScrollDown()
-	case "pgup":
-		p.logViewer.PageUp()
-	case "pgdown":
-		p.logViewer.PageDown()
-	case "g":
-		p.logViewer.GotoTop()
-	case "G":
-		p.logViewer.GotoBottom()
-	}
-	return p, nil
-}
-
-func (p *Plugin) streamLogs(id string) tea.Cmd {
-	return func() tea.Msg {
-		lines, err := p.client.FetchLogs(id, dt.LogOptions{Tail: "200"})
-		if err != nil {
-			return logDoneMsg{err: err}
-		}
-		return logDoneMsg{lines: lines}
-	}
-}
+// --- Helpers ---
 
 func statusIcon(state string) string {
 	switch state {
@@ -410,24 +487,4 @@ func statusIcon(state string) string {
 	default:
 		return lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorYellow)).Render("●")
 	}
-}
-
-func shortStr(s string, maxLen int) string {
-	return theme.Truncate(s, maxLen)
-}
-
-func containerTableStyles() table.Styles {
-	s := table.DefaultStyles()
-	s.Header = s.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color(theme.ColorBorder)).
-		BorderBottom(true).
-		Bold(false).
-		Foreground(lipgloss.Color(theme.ColorAccent))
-	s.Selected = s.Selected.
-		Foreground(lipgloss.Color(theme.ColorFg)).
-		Background(lipgloss.Color(theme.ColorSelected)).
-		Bold(false)
-	s.Cell = s.Cell.Foreground(lipgloss.Color(theme.ColorFg))
-	return s
 }
