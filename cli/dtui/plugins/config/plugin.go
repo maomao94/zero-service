@@ -242,6 +242,9 @@ func (m *Module) handleConfirm(button string) (tea.Model, tea.Cmd) {
 			case "Deploy":
 				config.RemoveDeployTarget(m.configPath, idx)
 				m.status = "Deleted deploy target"
+			case "Package":
+				config.RemoveDeployPackage(m.configPath, idx)
+				m.status = "Deleted deploy package"
 			}
 			return m, m.reload()
 		}
@@ -339,6 +342,10 @@ func (m *Module) currentEntry() (section string, index int) {
 	i -= len(m.cfg.ComposeDirs)
 	if i < len(m.cfg.DeployTargets) {
 		return "Deploy", i
+	}
+	i -= len(m.cfg.DeployTargets)
+	if i < len(m.cfg.DeployPackages) {
+		return "Package", i
 	}
 	return "", -1
 }
